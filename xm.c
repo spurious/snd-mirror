@@ -13,10 +13,12 @@
 #define HAVE_XP 0
 
 
-#define XM_DATE "6-Mar-14"
+#define XM_DATE "29-Oct-15"
 
 /* HISTORY: 
  *
+ *   29-Oct-15: removed ->string.
+ *   --------
  *   6-Mar:     more macro name changes.
  *   21-Feb-14: _P changed to use _is_.
  *   --------
@@ -125,7 +127,7 @@
  *   29-Mar:    XmParseProc.
  *   20-Mar:    XpmGetErrorString omitted inadvertently earlier.
  *   4-Mar:     XWindowChanges and XSetWindowAttributes struct creators.
- *   1-Mar:     XmTabListFree, various ->* conversions (->strings etc).
+ *   1-Mar:     XmTabListFree, various ->* conversions(->strings etc).
  *   25-Feb:    XmTextBlock fields
  *   22-Feb:    #f = NULL and vice-versa throughout
  *   21-Feb:    added various callback struct makers, changed XtCallCallbacks to be compatible with them.
@@ -1015,17 +1017,6 @@ static Xen c_to_xen_strings(Xen array, Xen len)
   #define H_to_strings "->strings translates a Motif string array (from a .value reference for example) into a scheme list of strings"
   Xen_check_type(Xen_is_wrapped_c_pointer(array), array, 1, "->strings", "char**");
   return(C_to_Xen_Strings((char **)Xen_unwrap_C_pointer(array), Xen_integer_to_C_int(len)));
-}
-
-static Xen c_to_xen_string(Xen str)
-{
-  #define H_to_string "->string translates a Motif string (from a .value reference for example) into a scheme string"
-  char *tmp;
-  Xen_check_type(Xen_is_wrapped_c_pointer(str), str, 1, "->string", "char*");
-  tmp = (char *)Xen_unwrap_C_pointer(str);
-  if (tmp)
-    return(C_string_to_Xen_string(tmp));
-  return(Xen_false);
 }
 #endif
 
@@ -21620,7 +21611,6 @@ Xen_wrap_3_args(gxm_XpmColorSymbol_w, gxm_XpmColorSymbol)
 Xen_wrap_no_args(gxm_XpmAttributes_w, gxm_XpmAttributes)
 
 #if HAVE_SCHEME
-Xen_wrap_1_arg(c_to_xen_string_w, c_to_xen_string)
 Xen_wrap_2_args(c_to_xen_strings_w, c_to_xen_strings)
 Xen_wrap_2_args(c_to_xen_ints_w, c_to_xen_ints)
 Xen_wrap_2_args(c_to_xen_atoms_w, c_to_xen_atoms)
@@ -22820,7 +22810,6 @@ static void define_procedures(void)
   XM_define_procedure(XpmColorSymbol?, g_is_XpmColorSymbol_w, 1, 0, 0, PROC_TRUE " if arg is a XpmColorSymbol");
 
 #if HAVE_SCHEME
-  Xen_define_safe_procedure("->string", c_to_xen_string_w, 1, 0, 0, H_to_string);
   Xen_define_safe_procedure("->strings", c_to_xen_strings_w, 2, 0, 0, H_to_strings);
   Xen_define_safe_procedure("->ints", c_to_xen_ints_w, 2, 0, 0, H_to_ints);
   Xen_define_safe_procedure("->Atoms", c_to_xen_atoms_w, 2, 0, 0, H_to_Atoms);

@@ -11,6 +11,7 @@ end
 # so for example, to see the current local variables, s7p sc->envir
 # source ~/.gdbinit reloads
 
+
 define s7eval
 print s7_object_to_c_string(sc, s7_eval_c_string(sc, $arg0))
 end
@@ -18,12 +19,6 @@ document s7eval
 eval the argument (a string)
 end
 
-define s7bits
-print describe_type_bits(sc, $arg0)
-end
-document s7bits
-show the type bits of the argument
-end
 
 define s7stack
 print s7_object_to_c_string(sc, s7_stacktrace(sc))
@@ -32,12 +27,14 @@ document s7stack
 display the currently active local environments
 end
 
+
 define s7value
 print s7_object_to_c_string(sc, s7_name_to_value(sc, $arg0))
 end
 document s7value
 print the value of the variable passed by its print name: s7v "*features*"
 end
+
 
 define s7bt
 set logging overwrite on
@@ -65,6 +62,7 @@ print a full backtrace with s7 objects decoded as much as possible
 end
 
 
+# this requires -g3 compilation
 define s7cell
   set $escape = 27
   set $cell = (s7_cell *)$arg0

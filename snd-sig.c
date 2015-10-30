@@ -3889,11 +3889,13 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   eval = NULL;
 
   body = s7_closure_body(s7, proc);
-  if (s7_is_pair(body))
+  if ((s7_is_pair(body)) &&
+      (s7_is_pair(s7_closure_args(s7, proc))))
     {
       s7_pointer arg, expr;
 
       arg = s7_car(s7_closure_args(s7, proc));
+      if (s7_is_pair(arg)) arg = s7_car(arg);
       expr = s7_car(body);
 
       if (expr == xen_false)		       

@@ -73700,15 +73700,23 @@ int main(int argc, char **argv)
  * perhaps make-complex -> complex
  * need a way to break (insert cr) a line and reindent in repl
  * (let ((v (int-vector 0))) (set! (v 0) (bignum "99999999999999999999999999999999999")) (v 0)): 3136633892082024447 [if safety>0?]
+ *
  * append: 44522: what if method not first arg?  use 'value?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
  *   s7 44522 -- method check is unfinished -- should look for append and make arglists, not length
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
- * can opt'd *|+ etc use new overflow checks?
+ *
+ * can opt'd *|+ etc use new overflow checks? right now we get:
+ *   t7: (* 0 9223372036854775807): 0 error ; (* 0 922337203685477580) is 0
+ *   <2> (apply * '(0 9223372036854775807))
+ *   0.0
+ *   <3> (let ((x (int-vector 0))) (set! (x 0) (apply * '(0 9223372036854775807))))
+ *   error: int_vector_set! argument 3, 0.0, is a real but should be an integer
+ *   t9: (- -1 9223372036854775807): 1 -1.844674407370955e+19
+ *   t9: (- 0 9223372036854775807): 2 -1.844674407370955e+19
+ *  
  * is define-constant consistent in use of local/global slots? check gc mark
  * help(old local)->s7_symbol_value can access free value?
- * gdbinit s7clobbered: init != glob [5824]
- * hash_equal can get into a loop? table as key in itself reverse+equal??
- *   finish t705 after ^
+ * need a pretty example of s7bt(full) for s7.html
  */

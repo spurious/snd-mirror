@@ -9151,8 +9151,17 @@ static Xen g_ssb_am(Xen obj, Xen insig, Xen fm)
 #define S_mus_frandom "mus-frandom"
 #define S_mus_irandom "mus-irandom"
 
-static Xen g_mus_frandom(Xen val) {return(C_double_to_Xen_real(mus_frandom(Xen_real_to_C_double_with_caller(val, S_mus_frandom))));}
-static Xen g_mus_irandom(Xen val) {return(C_int_to_Xen_integer(mus_irandom(Xen_integer_to_C_int(val))));}
+static Xen g_mus_frandom(Xen val) 
+{
+  return(C_double_to_Xen_real(mus_frandom(Xen_real_to_C_double_with_caller(val, S_mus_frandom))));
+}
+
+static Xen g_mus_irandom(Xen val) 
+{
+  mus_long_t ind;
+  Xen_to_C_integer_or_error(val, ind, S_mus_irandom, 1);
+  return(C_int_to_Xen_integer(mus_irandom(ind)));
+}
 
 
 static Xen mus_clm_output(void);

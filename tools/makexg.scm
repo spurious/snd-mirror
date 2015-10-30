@@ -1353,7 +1353,6 @@
 (hey " *~%")
 (hey " * added funcs:~%")
 (hey " *    (xg-version): date string.~%")
-(hey " *    (->string val) interprets 'val' as a string.~%")
 (hey " *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array~%")
 (hey " *    (list->c-array lst ctype) packages each member of list as c-type \"type\" returning (wrapped) c array~%")
 (hey " *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)~%")
@@ -1370,6 +1369,7 @@
 (hey " *~%")
 (hey " * HISTORY:~%")
 (hey " *~%")
+(hey " *     29-Oct:    removed ->string.~%")
 (hey " *     21-Aug-15: procedure-signature changes.~%")
 (hey " *     --------~%")
 (hey " *     27-Dec:    integer procedure stuff.~%")
@@ -1677,11 +1677,6 @@
 (hey "#define XLG(a, b) Xen_to_C_GType(Xen_list_ref(a, b))~%")
 (hey "#define XLT(a, b) Xen_to_C_GtkTextTag_(Xen_list_ref(a, b))~%")
 (hey "#define XLA(a, b) ((Xen_is_integer(Xen_list_ref(a, b))) ? ((gpointer)XLL(a, b)) : ((Xen_is_string(Xen_list_ref(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))~%~%")
-
-(hey "static Xen c_to_xen_string(Xen str)~%")
-(hey "{~%")
-(hey "  return(C_string_to_Xen_string((char *)Xen_unwrap_C_pointer(str)));~%")
-(hey "}~%~%")
 
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
@@ -2587,7 +2582,6 @@
 (hey "Xen_wrap_2_args(c_array_to_xen_list_w, c_array_to_xen_list)~%")
 (hey "Xen_wrap_2_args(xen_list_to_c_array_w, xen_list_to_c_array)~%")
 (hey "Xen_wrap_1_arg(gxg_make_target_entry_w, gxg_make_target_entry)~%")
-(hey "Xen_wrap_1_arg(c_to_xen_string_w, c_to_xen_string)~%")
 (hey "Xen_wrap_3_args(xg_object_get_w, xg_object_get)~%")
 (hey "Xen_wrap_3_args(xg_object_set_w, xg_object_set)~%")
 (hey "Xen_wrap_1_arg(xg_gtk_event_keyval_w, xg_gtk_event_keyval)~%")
@@ -2799,7 +2793,6 @@
 
 (hey "  Xg_define_procedure(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL, NULL);~%")
 (hey "  Xg_define_procedure(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL, NULL);~%")
-(hey "  Xg_define_procedure(->string, c_to_xen_string_w, 1, 0, 0, NULL, NULL);~%")
 (hey "  Xg_define_procedure(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry, NULL);~%")
 (hey "  Xg_define_procedure(g_object_get, xg_object_get_w, 3, 0, 0, NULL, NULL);~%")
 (hey "  Xg_define_procedure(g_object_set, xg_object_set_w, 3, 0, 0, NULL, NULL);~%")

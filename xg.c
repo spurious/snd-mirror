@@ -9,7 +9,6 @@
  *
  * added funcs:
  *    (xg-version): date string.
- *    (->string val) interprets 'val' as a string.
  *    (c-array->list arr len) derefs each member of arr, returning lisp list, len=#f: null terminated array
  *    (list->c-array lst ctype) packages each member of list as c-type "type" returning (wrapped) c array
  *    (make-target-entry lst) returns a GtkTargetEntry table, each member of 'lst' should be (list target flags info)
@@ -26,6 +25,7 @@
  *
  * HISTORY:
  *
+ *     29-Oct:    removed ->string.
  *     21-Aug-15: procedure-signature changes.
  *     --------
  *     27-Dec:    integer procedure stuff.
@@ -1028,11 +1028,6 @@ Xm_type_no_p_2(cairo_region_overlap_t, cairo_region_overlap_t)
 #define XLG(a, b) Xen_to_C_GType(Xen_list_ref(a, b))
 #define XLT(a, b) Xen_to_C_GtkTextTag_(Xen_list_ref(a, b))
 #define XLA(a, b) ((Xen_is_integer(Xen_list_ref(a, b))) ? ((gpointer)XLL(a, b)) : ((Xen_is_string(Xen_list_ref(a, b))) ? ((gpointer)XLS(a, b)) : ((gpointer)XLG(a, b))))
-
-static Xen c_to_xen_string(Xen str)
-{
-  return(C_string_to_Xen_string((char *)Xen_unwrap_C_pointer(str)));
-}
 
 /* -------------------------------- gc protection -------------------------------- */
 
@@ -39046,7 +39041,6 @@ Xen_wrap_1_arg(gxg_GPOINTER_w, gxg_GPOINTER)
 Xen_wrap_2_args(c_array_to_xen_list_w, c_array_to_xen_list)
 Xen_wrap_2_args(xen_list_to_c_array_w, xen_list_to_c_array)
 Xen_wrap_1_arg(gxg_make_target_entry_w, gxg_make_target_entry)
-Xen_wrap_1_arg(c_to_xen_string_w, c_to_xen_string)
 Xen_wrap_3_args(xg_object_get_w, xg_object_get)
 Xen_wrap_3_args(xg_object_set_w, xg_object_set)
 Xen_wrap_1_arg(xg_gtk_event_keyval_w, xg_gtk_event_keyval)
@@ -43604,7 +43598,6 @@ pl_unused = NULL;
 
   Xg_define_procedure(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL, NULL);
   Xg_define_procedure(list->c-array, xen_list_to_c_array_w, 2, 0, 0, NULL, NULL);
-  Xg_define_procedure(->string, c_to_xen_string_w, 1, 0, 0, NULL, NULL);
   Xg_define_procedure(make-target-entry, gxg_make_target_entry_w, 1, 0, 0, H_make_target_entry, NULL);
   Xg_define_procedure(g_object_get, xg_object_get_w, 3, 0, 0, NULL, NULL);
   Xg_define_procedure(g_object_set, xg_object_set_w, 3, 0, 0, NULL, NULL);
@@ -45755,7 +45748,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("28-Oct-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("29-Oct-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

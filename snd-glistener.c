@@ -465,18 +465,24 @@ static s7_pointer g_cursor_position(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_set_cursor_position(s7_scheme *sc, s7_pointer args)
 {
-  glistener_set_cursor_position(unwrap_glistener(sc, "set listener cursor-position", s7_car(args)), s7_integer(s7_cadr(args)));
+  if (s7_is_integer(s7_cadr(args)))
+    glistener_set_cursor_position(unwrap_glistener(sc, "set listener cursor-position", s7_car(args)), s7_integer(s7_cadr(args)));
   return(s7_cadr(args));
 }
 
 static s7_pointer g_text(s7_scheme *sc, s7_pointer args)
 {
-  char *str;
-  s7_pointer result;
-  str = glistener_text(unwrap_glistener(sc, "listener text", s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)));
-  result = s7_make_string(s7, str);
-  if (str) g_free(str);
-  return(result);
+  if ((s7_is_integer(s7_cadr(args))) &&
+      (s7_is_integer(s7_caddr(args))))
+    {
+      char *str;
+      s7_pointer result;
+      str = glistener_text(unwrap_glistener(sc, "listener text", s7_car(args)), s7_integer(s7_cadr(args)), s7_integer(s7_caddr(args)));
+      result = s7_make_string(s7, str);
+      if (str) g_free(str);
+      return(result);
+    }
+  return(s7_f(sc));
 }
 
 static s7_pointer g_clear(s7_scheme *sc, s7_pointer args)

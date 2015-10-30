@@ -45736,8 +45736,6 @@ EDITS: 1
 			   (CB_TARGETS (XmInternAtom dpy "_MOTIF_CLIPBOARD_TARGETS" #f)))
 		      (if (equal? (.target info) XA_STRING)
 			  (begin
-					;(XmTextInsert w (XmTextGetInsertionPosition w) (->string (.value info)))
-					;I think the .value field here is an XmString
 			    (XmTransferDone (.transfer_id info) XmTRANSFER_DONE_SUCCEED))
 			  (if (and (or (equal? (.target info) TARGETS)
 				       (equal? (.target info) CB_TARGETS))
