@@ -1714,7 +1714,7 @@ static const char *Random_Numbers_xrefs[] = {
   "noise-making instrument: {noise.scm, noise.rb}",
   "physical modeling of noisy instruments: {maraca.scm, maraca.rb}",
   "arbitrary distribution via rejection method: {any-random}",
-  "CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!",
+  "s7: random, random-state: random number between 0 and arg",
   "Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1",
   "{mus-random, mus_random}: random float between -arg and arg",
   "mus-rand-seed (settable)",

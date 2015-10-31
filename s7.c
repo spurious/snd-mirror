@@ -1284,7 +1284,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TNum(P) check_ref7(P,                     __func__, __LINE__) /* any number (not bignums I think) */
   #define _TSeq(P) check_ref8(P,                     __func__, __LINE__) /* any sequence or structure */
   #define _TMet(P) check_ref9(P,                     __func__, __LINE__) /* anything that might contain a method */
-  #define _NFre(P) check_nref(P,                     __func__, __LINE__)
+  #define _NFre(P) check_nref(P,                     __func__, __LINE__) /* not free */
 
 #else
   #define unchecked_type(p)           ((p)->tf.type_field)
@@ -1946,11 +1946,16 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define let_set_slots(p, Slot)        (_TLet(p))->object.envr.slots = Slot
 #define outlet(p)                     (_TLet(p))->object.envr.nxt
 #define set_outlet(p, ol)             (_TLet(p))->object.envr.nxt = _TLid(ol)
-#define funclet_function(p)           (_TLet(p))->object.envr.edat.efnc.function
+#define funclet_function(p)           _TSym((_TLet(p))->object.envr.edat.efnc.function)
+#define funclet_set_function(p, F)    (_TLet(p))->object.envr.edat.efnc.function = _TSym(F)
 #define let_line(p)                   (_TLet(p))->object.envr.edat.efnc.line
+#define let_set_line(p, L)            (_TLet(p))->object.envr.edat.efnc.line = L
 #define let_file(p)                   (_TLet(p))->object.envr.edat.efnc.file
-#define dox_slot1(p)                  (_TLet(p))->object.envr.edat.dox.dox1
-#define dox_slot2(p)                  (_TLet(p))->object.envr.edat.dox.dox2
+#define let_set_file(p, F)            (_TLet(p))->object.envr.edat.efnc.file = F
+#define dox_slot1(p)                  _TSlt((_TLet(p))->object.envr.edat.dox.dox1)
+#define dox_set_slot1(p, S)           (_TLet(p))->object.envr.edat.dox.dox1 = _TSlt(S)
+#define dox_slot2(p)                  _TSlt((_TLet(p))->object.envr.edat.dox.dox2)
+#define dox_set_slot2(p, S)           (_TLet(p))->object.envr.edat.dox.dox2 = _TSlt(S)
 
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
@@ -2127,8 +2132,11 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define catch_handler(p)              (_TCat(p))->object.rcatch.handler
 
 #define catch_all_goto_loc(p)         (_TLet(p))->object.envr.edat.ctall.goto_loc
+#define catch_all_set_goto_loc(p, L)  (_TLet(p))->object.envr.edat.ctall.goto_loc = L
 #define catch_all_op_loc(p)           (_TLet(p))->object.envr.edat.ctall.op_stack_loc
-#define catch_all_result(p)           (_TLet(p))->object.envr.edat.ctall.result
+#define catch_all_set_op_loc(p, L)    (_TLet(p))->object.envr.edat.ctall.op_stack_loc = L
+#define catch_all_result(p)           _NFre((_TLet(p))->object.envr.edat.ctall.result)
+#define catch_all_set_result(p, R)    (_TLet(p))->object.envr.edat.ctall.result = R
 
 enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define dynamic_wind_state(p)         (_TDyn(p))->object.winder.state
@@ -6058,7 +6066,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
   #define Q_cutlet s7_make_circular_signature(sc, 2, 3, sc->IS_LET, sc->IS_LET, sc->IS_SYMBOL)
 
   s7_pointer e, syms;
-  #define THE_UN_ID -1
+  #define THE_UN_ID ++sc->let_number
 
   e = car(args);
   if (is_null(e))
@@ -6070,7 +6078,8 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, 1, e, A_LET));
     }
   /* besides removing the slot we have to make sure the symbol_id does not match else
-   *   let-ref and others will use the old slot!  What's the un-id?  I'll try -1.  0 means global.
+   *   let-ref and others will use the old slot!  What's the un-id?  Perhaps the next one?
+   *   (let ((b 1)) (let ((b 2)) (cutlet (curlet) 'b)) b)
    */
   for (syms = cdr(args); is_pair(syms); syms = cdr(syms))
     {
@@ -6107,7 +6116,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 			{
 			  symbol_set_id(sym, THE_UN_ID);
 			  next_slot(last_slot) = next_slot(slot);
-			  break; /* let cutlet act as an unshadower */
+			  break; 
 			}
 		    }
 		}
@@ -30722,8 +30731,7 @@ static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur
   for (e = cur_env; is_let(e); e = outlet(e))
     {
       if ((is_function_env(e)) &&
-	  (is_symbol(funclet_function(e))) &&
-	  (is_global(funclet_function(e))) && /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
+	  (is_global(funclet_function(e))) &&         /* (define (f1) (lambda () 1)) shouldn't say the returned closure is named f1 */
 	  (slot_value(global_slot(funclet_function(e))) == closure))
 	return(funclet_function(e));
 
@@ -30994,7 +31002,7 @@ static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 	   ((full_typ & T_SYNTACTIC) != 0) ?             " syntactic" : "",
 	   ((full_typ & T_OVERLAY) != 0) ?               " overlay" : "",
 	   ((full_typ & T_CHECKED) != 0) ?               " checked" : "",
-	   ((full_typ & T_UNSAFE) != 0) ?                " unsafe" : "",
+	   ((full_typ & T_UNSAFE) != 0) ?                ((is_symbol(obj)) ? " clean" : " unsafe") : "",
 	   ((full_typ & T_OPTIMIZED) != 0) ?             " optimized" : "",
 	   ((full_typ & T_SAFE_CLOSURE) != 0) ?          " safe-closure" : "",
 	   ((full_typ & T_SAFE_PROCEDURE) != 0)  ?       " safe-procedure" : "",
@@ -42708,6 +42716,7 @@ static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	 (port_is_closed(x)) &&     /* closed ports of same type are morally equal */
 	 (port_type(x) == port_type(y)) &&
 	 (port_is_closed(y)));
+  /* also types= and positions= and underlying data= ? at least for string ports */
 }
 
 static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
@@ -43082,38 +43091,39 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
 
 static bool iterator_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  /* morally_equal is a lot work here because we have to check iterator_current/length (lw.len|slow|hcur) as well as iterator_sequence.
-   *   morally_equal(seq, seq) + (by type) either len == len or morally_equal(cur, cur)? or how to check hcur? and what is current?
-   *   and in hash-table|let|list how to decide that current positions are equal?
-   */
   if (x == y) return(true);
   if (!is_iterator(y)) return(false);
 
-  if (morally)
+  switch (type(iterator_sequence(x)))
     {
-      switch (type(iterator_sequence(x)))
-	{
-	case T_STRING:
-	  return((is_string(iterator_sequence(y))) &&
-		 (string_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)) &&
-		 (iterator_position(x) == iterator_position(y)));
+    case T_STRING:
+      return((is_string(iterator_sequence(y))) &&
+	     (iterator_position(x) == iterator_position(y)) &&
+	     (string_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)));
 
-	case T_VECTOR:
-	case T_INT_VECTOR:
-	case T_FLOAT_VECTOR:
-	  return((s7_is_vector(iterator_sequence(y))) &&
-		 (vector_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)) &&
-		 (iterator_position(x) == iterator_position(y)));
-	  
-	default:
-	  break;
-	}
+    case T_VECTOR:
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
+      return((s7_is_vector(iterator_sequence(y))) &&
+	     (iterator_position(x) == iterator_position(y)) &&
+	     (vector_equal(sc, iterator_sequence(x), iterator_sequence(y), ci, morally)));
+
+    case T_PAIR:
+      return((iterator_sequence(x) == iterator_sequence(y)) &&
+	     (iterator_next(x) == iterator_next(y)) &&           /* even if seqs are equal, one might be at end */
+	     (iterator_current(x) == iterator_current(y)));      /* current pointer into the sequence */
+
+    case T_HASH_TABLE:
+      return((iterator_sequence(x) == iterator_sequence(y)) &&
+	     (iterator_next(x) == iterator_next(y)) &&
+	     (iterator_current(x) == iterator_current(y)) &&
+	     (iterator_hash_current(x) == iterator_hash_current(y)) &&
+	     (iterator_position(x) == iterator_position(y)));
+
+    default:
+      break;
     }
-  return((iterator_sequence(x) == iterator_sequence(y)) &&
-	 (iterator_next(x) == iterator_next(y)) &&           /* even if seqs are equal, one might be at end */
-	 (iterator_position(x) == iterator_position(y)) &&   /* next three are problematic... */
-	 (iterator_current(x) == iterator_current(y)) &&
-	 (iterator_length(x) == iterator_length(y)));        /* len|slow|hcur: the latter two might differ */
+  return(false);
 }
 
 static bool bignum_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
@@ -49122,8 +49132,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
     {
       s7_pointer env;
       env = find_closure_let(sc, sc->envir);
-      if ((is_let(env)) &&
-	  (is_symbol(funclet_function(env))))
+      if (is_let(env))
 	{
 	  /* for C-defined things like hooks and dilambda, let_file and let_line are 0 */
 	  if ((let_file(env) > 0) && 
@@ -55446,7 +55455,7 @@ static void define_funchecked(s7_scheme *sc)
       let_set_slots(new_env, sc->NIL);
       set_outlet(new_env, sc->envir);
       closure_set_let(new_func, new_env);
-      funclet_function(new_env) = sc->value;
+      funclet_set_function(new_env, sc->value);
       
       for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	make_slot_1(sc, new_env, car(arg), sc->NIL);
@@ -58204,7 +58213,7 @@ static int safe_do_ex(s7_scheme *sc)
 
   /* (let ((sum 0)) (define (hi) (do ((i 10 (+ i 1))) ((= i 10) i) (set! sum (+ sum i)))) (hi)) */
   sc->envir = new_frame_in_env(sc, sc->envir);
-  dox_slot1(sc->envir) = make_slot_1(sc, sc->envir, caaar(code), init_val); /* define the step var -- might be needed in the end clauses */
+  dox_set_slot1(sc->envir, make_slot_1(sc, sc->envir, caaar(code), init_val)); /* define the step var -- might be needed in the end clauses */
 
   if ((s7_integer(init_val) == s7_integer(end_val)) ||
       ((s7_integer(init_val) > s7_integer(end_val)) &&
@@ -58217,7 +58226,7 @@ static int safe_do_ex(s7_scheme *sc)
   if (is_symbol(end))
     sc->args = find_symbol(sc, end);
   else sc->args = make_slot(sc, sc->dox_slot_symbol, end); /* here and elsewhere sc->args is used for GC protection */
-  dox_slot2(sc->envir) = sc->args;
+  dox_set_slot2(sc->envir, sc->args);
   
   if ((!is_unsafe_do(sc->code)) &&
       ((!is_optimized(caadr(code))) ||
@@ -58277,8 +58286,8 @@ static int dotimes_p_ex(s7_scheme *sc)
     }
 
   sc->envir = new_frame_in_env(sc, sc->envir);
-  dox_slot1(sc->envir) = make_slot_1(sc, sc->envir, caaar(code), init_val);
-  dox_slot2(sc->envir) = sc->args;
+  dox_set_slot1(sc->envir, make_slot_1(sc, sc->envir, caaar(code), init_val));
+  dox_set_slot2(sc->envir, sc->args);
   
   car(sc->T2_1) = slot_value(dox_slot1(sc->envir));
   car(sc->T2_2) = slot_value(dox_slot2(sc->envir));
@@ -59834,20 +59843,20 @@ static void define2_ex(s7_scheme *sc)
       set_outlet(new_env, closure_let(new_func));
       closure_set_let(new_func, new_env);
       let_set_slots(new_env, sc->NIL);
-      funclet_function(new_env) = sc->code;
+      funclet_set_function(new_env, sc->code);
       
       if ((!is_let(sc->envir)) &&
 	  (port_filename(sc->input_port)) &&
 	  (port_file(sc->input_port) != stdin))
 	{
 	  /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
-	  let_file(new_env) = port_file_number(sc->input_port);
-	  let_line(new_env) = port_line_number(sc->input_port);
+	  let_set_file(new_env, port_file_number(sc->input_port));
+	  let_set_line(new_env, port_line_number(sc->input_port));
 	}
       else
 	{
-	  let_file(new_env) = 0;
-	  let_line(new_env) = 0;
+	  let_set_file(new_env, 0);
+	  let_set_line(new_env, 0);
 	}
       
       /* this should happen only if the closure* default values do not refer in any way to
@@ -60691,7 +60700,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->value = c_call(init)(sc, cdr(init));
 		else sc->value = init;
 	      }
-	    dox_slot1(sc->envir) = make_slot_1(sc, sc->envir, caaar(code), sc->value);
+	    dox_set_slot1(sc->envir, make_slot_1(sc, sc->envir, caaar(code), sc->value));
 	    end = caddr(caadr(code));
 	    if (is_symbol(end))
 	      sc->args = find_symbol(sc, end);
@@ -60703,7 +60712,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		slot_set_value(slot, end);
 		sc->args = slot;
 	      }
-	    dox_slot2(sc->envir) = sc->args;
+	    dox_set_slot2(sc->envir, sc->args);
 	    car(sc->T2_1) = slot_value(dox_slot1(sc->envir));
 	    car(sc->T2_2) = slot_value(dox_slot2(sc->envir));
 	    if (is_true(sc, c_call(caadr(code))(sc, sc->T2_1)))
@@ -63038,9 +63047,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		     *   the locs are unsigned ints, so this fits in the new frame's dox1/2 fields.
 		     */
 		    p = sc->envir;
-		    catch_all_goto_loc(p) = s7_stack_top(sc);
-		    catch_all_op_loc(p) = (int)(sc->op_stack_now - sc->op_stack);
-		    catch_all_result(p) = opt_con2(code);
+		    catch_all_set_goto_loc(p, s7_stack_top(sc));
+		    catch_all_set_op_loc(p, (int)(sc->op_stack_now - sc->op_stack));
+		    catch_all_set_result(p, opt_con2(code));
 		    push_stack_no_args(sc, OP_CATCH_ALL, code);
 		    sc->code = opt_pair1(cdr(code));                   /* the body of the first lambda */
 		    goto BEGIN1;                                  /* removed one_liner check here -- rare */
@@ -65751,7 +65760,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->x = make_closure(sc, sc->NIL, cddr(sc->code), T_CLOSURE); /* args = () in new closure, see NAMED_LET_NO_VARS above */
 		    /* if this is a safe closure, we can build its env in advance and name it (a thunk in this case) */
 		    set_function_env(closure_let(sc->x));
-		    funclet_function(closure_let(sc->x)) = car(sc->code);
+		    funclet_set_function(closure_let(sc->x), car(sc->code));
 		    make_slot_1(sc, sc->envir, car(sc->code), sc->x);
 		    sc->code = cddr(sc->code);
 		    sc->x = sc->NIL;
@@ -67576,13 +67585,9 @@ static s7_pointer s7_number_to_big_real(s7_scheme *sc, s7_pointer p)
   switch (type(p))
     {
     case T_INTEGER:
-      {
-	s7_int val;
-	val = s7_integer(p);
-	if ((val <= s7_int32_max) && (val >= s7_int32_min))
-	  mpfr_init_set_si(big_real(x), (int)val, GMP_RNDN);
-	else mpfr_init_set_ld(big_real(x), (long double)val, GMP_RNDN);
-      }
+      if (sizeof(s7_int) == sizeof(long int))
+	mpfr_init_set_si(big_real(x), integer(p), GMP_RNDN);
+      else mpfr_init_set_ld(big_real(x), (long double)integer(p), GMP_RNDN);
       break;
       
     case T_RATIO:
@@ -67680,13 +67685,9 @@ static s7_pointer s7_number_to_big_complex(s7_scheme *sc, s7_pointer p)
   switch (type(p))
     {
     case T_INTEGER:
-      {
-	s7_int val;
-	val = s7_integer(p);
-	if ((val <= s7_int32_max) && (val >= s7_int32_min))
-	  mpc_set_si(big_complex(x), (long int)val, MPC_RNDNN);
-	else mpc_set_d(big_complex(x), (double)val, MPC_RNDNN);
-      }
+      if (sizeof(s7_int) == sizeof(long int))
+	mpc_set_si(big_complex(x), integer(p), MPC_RNDNN);
+      else mpc_set_d(big_complex(x), (double)integer(p), MPC_RNDNN);
       break;
 
     case T_RATIO:
@@ -67815,9 +67816,8 @@ static s7_pointer make_big_complex(s7_scheme *sc, mpfr_t rl, mpfr_t im)
 }
 
 
-/* gmp.h mpz_init_set_si the "si" part is "signed long int", so in the 64-bit case,
- *   s7_int already fits.  I guess we can catch this (since no configure script)
- *   by noticing that sizeof(s7_int) == sizeof(long int).
+/* gmp.h mpz_init_set_si the "si" part is "signed long int", so in 64-bit machines, s7_int already fits (if it's long long int).  
+ *   I guess we can catch the 4-byte long int (since no configure script) by noticing that sizeof(s7_int) == sizeof(long int)?
  */
 
 static void mpz_init_set_s7_int(mpz_t n, s7_int uval)
@@ -67826,26 +67826,21 @@ static void mpz_init_set_s7_int(mpz_t n, s7_int uval)
     mpz_init_set_si(n, uval);
   else
     {
-      if ((uval <= s7_int32_max) && (uval >= s7_int32_min))
-	mpz_init_set_si(n, (int)uval);
+      /* long long int to gmp mpz_t */
+      bool need_sign;
+      long long int val;
+      val = (long long int)uval;
+      /* handle one special case (sigh) */
+      if (val == s7_int_min)
+	mpz_init_set_str(n, "-9223372036854775808", 10);
       else
 	{
-	  /* long long int to gmp mpz_t */
-	  bool need_sign;
-	  long long int val;
-	  val = (long long int)uval;
-	  /* handle one special case (sigh) */
-	  if (val == s7_int_min)
-	    mpz_init_set_str(n, "-9223372036854775808", 10);
-	  else
-	    {
-	      need_sign = (val < 0);
-	      if (need_sign) val = -val;
-	      mpz_init_set_si(n, val >> 32);
-	      mpz_mul_2exp(n, n, 32);
-	      mpz_add_ui(n, n, (unsigned int)(val & 0xffffffff));
-	      if (need_sign) mpz_neg(n, n);
-	    }
+	  need_sign = (val < 0);
+	  if (need_sign) val = -val;
+	  mpz_init_set_si(n, val >> 32);
+	  mpz_mul_2exp(n, n, 32);
+	  mpz_add_ui(n, n, (unsigned int)(val & 0xffffffff));
+	  if (need_sign) mpz_neg(n, n);
 	}
     }
 }
@@ -67868,12 +67863,17 @@ static s7_int big_integer_to_s7_int(mpz_t n)
   mpz_t x;
   bool need_sign = false;
 
-  if (sizeof(s7_int) == sizeof(long int))
+  if (mpz_fits_slong_p(n))
     return(mpz_get_si(n));
 
-  if (mpz_fits_sint_p(n))
-    return((s7_int)mpz_get_si(n));
-  /* special case as always is most-negative-fixnum */
+  if ((hidden_sc->safety > 0) &&
+      (sizeof(s7_int) == sizeof(long int)))
+    {
+      char *str;
+      str = mpz_get_str(NULL, 10, n);
+      s7_warn(hidden_sc, 256, "can't convert %s to s7_int\n", str);
+      free(str);
+    }
 
   mpz_init_set(x, n);
   if (mpz_cmp_ui(x, 0) < 0)
@@ -67893,8 +67893,6 @@ static s7_int big_integer_to_s7_int(mpz_t n)
   return(low + (high << 32));
 }
 
-/* (expt 1/2 9223372036854775807) */
-
 
 static mpq_t *s7_ints_to_mpq(s7_int num, s7_int den)
 {
@@ -67902,8 +67900,8 @@ static mpq_t *s7_ints_to_mpq(s7_int num, s7_int den)
   mpq_t *n;
   n = (mpq_t *)malloc(sizeof(mpq_t));
   mpq_init(*n);
-  if ((num <= s7_int32_max) && (num >= s7_int32_min) && (den <= s7_int32_max))
-    mpq_set_si(*n, (long int)num, (long int)den);
+  if (sizeof(s7_int) == sizeof(long int))
+    mpq_set_si(*n, num, den);
   else
     {
       mpz_t n1, d1;
@@ -67942,13 +67940,11 @@ static s7_pointer s7_ratio_to_big_ratio(s7_scheme *sc, s7_int num, s7_int den)
 {
   /* den here always comes from denominator(x) or some positive constant so it is not negative */
   s7_pointer x;
-
   new_cell(sc, x, T_BIG_RATIO);
   add_bigratio(sc, x);
   mpq_init(big_ratio(x));
-
-  if ((num <= s7_int32_max) && (num >= s7_int32_min) && (den <= s7_int32_max))
-    mpq_set_si(big_ratio(x), (long int)num, (long int)den);
+  if (sizeof(s7_int) == sizeof(long int))
+    mpq_set_si(big_ratio(x), num, den);
   else
     {
       mpz_t n1, d1;
@@ -72075,12 +72071,21 @@ char *s7_decode_bt(void)
 			      if ((is_decodable(sc, p)) &&
 				  (!is_free(p)))
 				{
-				  char *str;
 				  if (bt[i + 1] == ' ') fputc(' ', stdout);
 				  i = k - 1;
-				  str = s7_object_to_c_string(sc, p);
-				  fprintf(stdout, "%s%s%s", BOLD_TEXT, str, UNBOLD_TEXT);
-				  free(str);
+				  if (s7_is_valid(sc, p))
+				    {
+				      char *str;
+				      str = s7_object_to_c_string(sc, p);
+				      fprintf(stdout, "%s%s%s", BOLD_TEXT, str, UNBOLD_TEXT);
+				      free(str);
+				    }
+				  else 
+				    {
+				      if (is_free(p))
+					fprintf(stderr, "%p: %sfree cell%s", p, BOLD_TEXT, UNBOLD_TEXT);
+				      else fprintf(stderr, "%p: %sunprintable?%s", p, BOLD_TEXT, UNBOLD_TEXT);
+				    }
 				}
 			    }
 			}
@@ -73698,8 +73703,6 @@ int main(int argc, char **argv)
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position
  * perhaps make-complex -> complex
- * need a way to break (insert cr) a line and reindent in repl
- * (let ((v (int-vector 0))) (set! (v 0) (bignum "99999999999999999999999999999999999")) (v 0)): 3136633892082024447 [if safety>0?]
  *
  * append: 44522: what if method not first arg?  use 'value?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
@@ -73717,6 +73720,7 @@ int main(int argc, char **argv)
  *   t9: (- 0 9223372036854775807): 2 -1.844674407370955e+19
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
- * help(old local)->s7_symbol_value can access free value?
- * need a pretty example of s7bt(full) for s7.html
+ * morally-equal of ports? (open-input-file #u8(1 1 1)): <input-file-port> <input-file-port>: is there such a file? yes!
+ *   (open-input-string #u8()): <input-string-port> <input-string-port> [42712]
+ * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
  */

@@ -8789,9 +8789,26 @@ end
 </pre>
 
 <p>gdbinit also has s7cell to decode every field of an s7_pointer, and two backtrace
-decoders: s7bt and s7btfull (heh heh).  The bt replacements print the backtrace info,
-replacing bare pointer numbers with their s7 value, wherever possible.
+decoders: s7bt and s7btfull (heh heh).  The bt replacements print the gdb backtrace info,
+replacing bare pointer numbers with their s7 value, wherever possible:
 </p>
+
+<pre class="indented">
+#1  0x000000000042104e in find_symbol_unchecked (sc=0x97edf0, symbol=<b>vars</b>) at s7.c:6677
+        x = <b>(inlet 'f import-lambda-definition-2)</b>
+        __FUNCTION__ = "find_symbol_unchecked"
+#2  0x00000000006e3424 in eval (sc=0x97edf0, first_op=9) at s7.c:63673
+        _x_ = <b>import-lambda-definition-2</b>
+        _slot_ = <b>'form import-lambda-definition-2</b>
+        _sym_ = <b>env</b>
+        _val_ = <b>import-lambda-definition-2</b>
+        args = <b>(vars)</b>
+        p = <b>(env)</b>
+        func = <b>lint-walk</b>
+        e = <b>(inlet 'name import-lambda-definition-2 'form import-lambda-definition-2)</b>
+        code = <b>(lint-walk name f vars)</b>
+        __FUNCTION__ = "eval"
+</pre>
 
 <br><br>
 
