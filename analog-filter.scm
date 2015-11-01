@@ -426,7 +426,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	  (set! (cv (+ j 1)) cn)
 	  (set! (cv (+ j 2)) dn)
 	  (let* ((z (/ 0.0-i (* (sqrt m) sn)))
-		 (pz (real-part (* z (make-complex (real-part z) (- (imag-part z)))))))
+		 (pz (real-part (* z (complex (real-part z) (- (imag-part z)))))))
 	    (set! g (/ g pz))
 	    (set! (num    j   ) 1.0)
 	    (set! (num (+ j 1)) (* -2.0 (real-part z)))
@@ -447,7 +447,7 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 			    (* 0.0+i (cv j) dn)))
 		      (- 1.0 (* (cv (+ j 2)) sn
 				(cv (+ j 2)) sn)))))
-	    (let ((pp (real-part (* p (make-complex (real-part p) (- (imag-part p)))))))
+	    (let ((pp (real-part (* p (complex (real-part p) (- (imag-part p)))))))
 	      (set! g (* g pp))
 	      (set! (den    j   ) 1.0)
 	      (set! (den (+ j 1)) (* -2.0 (real-part p)))

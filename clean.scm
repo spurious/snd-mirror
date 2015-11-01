@@ -17,7 +17,7 @@
 	    (two-pole flt (next-sample reader)))
 	  (let ((y1 (two-pole flt (next-sample reader)))
 		(y0 (two-pole flt (next-sample reader))))
-	    (magnitude (- y0 (* y1 (exp (make-complex 0.0 (- rfreq))))))))))))
+	    (magnitude (- y0 (* y1 (exp (complex 0.0 (- rfreq))))))))))))
 
 
 (define* (check-freq freq snd chn)

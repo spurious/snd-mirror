@@ -21,7 +21,7 @@
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
-	(make-complex (* mag (cos ang)) (* mag (sin ang)))
+	(complex (* mag (cos ang)) (* mag (sin ang)))
 	(error 'wrong-type-arg "make-polar args should be real"))))
 
 ;; since we might be loading this locally, reader-cond (in that case) won't find gsl-version unless...
@@ -46,7 +46,7 @@
 	(define GSL_COMPLEX_ZERO 0.0)
 	(define GSL_COMPLEX_NEGONE -1.0)
 	(define gsl_complex_polar make-polar)
-	(define gsl_complex_rect make-complex)
+	(define gsl_complex_rect complex)
 	(define GSL_IS_ODD odd?)
 	(define GSL_IS_EVEN even?)
 	(define (GSL_IS_REAL n) (and (number? n) (not (nan? n)) (not (infinite? n))))

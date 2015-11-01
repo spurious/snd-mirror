@@ -962,7 +962,7 @@ struct s7_scheme {
   s7_pointer TAN, TANH, THROW, TO_BYTE_VECTOR, TRUNCATE, VALUES, VECTOR, VECTOR_APPEND, VECTOR_FILL;
   s7_pointer IS_VECTOR, VECTOR_DIMENSIONS, VECTOR_REF, VECTOR_SET, WITH_INPUT_FROM_FILE;
   s7_pointer WITH_INPUT_FROM_STRING, WITH_OUTPUT_TO_FILE, WITH_OUTPUT_TO_STRING, WRITE, WRITE_BYTE, WRITE_CHAR, WRITE_STRING, IS_ZERO;
-  s7_pointer S7_FEATURES, LOAD_PATH, PI, MAGNITUDE, MAKE_COMPLEX;
+  s7_pointer S7_FEATURES, LOAD_PATH, PI, MAGNITUDE, COMPLEX;
 #if (!WITH_PURE_S7)
   s7_pointer IS_CHAR_READY, CHAR_CI_LEQ, CHAR_CI_LT, CHAR_CI_EQ, CHAR_CI_GEQ, CHAR_CI_GT, LET_TO_LIST, INTEGER_LENGTH;
   s7_pointer STRING_CI_LEQ, STRING_CI_LT, STRING_CI_EQ, STRING_CI_GEQ, STRING_CI_GT, STRING_TO_LIST, VECTOR_TO_LIST;
@@ -12064,7 +12064,7 @@ static char *number_to_string_base_10(s7_pointer obj, int width, int precision, 
 		    ip = ibuf;
 		  }
 	      }
-	    len = snprintf(num_to_str, num_to_str_size, "(make-complex %s %s)", rp, ip);
+	    len = snprintf(num_to_str, num_to_str_size, "(complex %s %s)", rp, ip);
 	  }
 	else
 	  {
@@ -14159,12 +14159,12 @@ PF2_TO_PF(make_polar, c_make_polar_2)
 #endif
 
 
-/* -------------------------------- make-complex -------------------------------- */
-static s7_pointer g_make_complex(s7_scheme *sc, s7_pointer args)
+/* -------------------------------- complex -------------------------------- */
+static s7_pointer g_complex(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer x, y;
-  #define H_make_complex "(make-complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
-  #define Q_make_complex s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
+  #define H_complex "(complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+  #define Q_complex s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
 
   x = car(args);
   y = cadr(args);
@@ -14187,7 +14187,7 @@ static s7_pointer g_make_complex(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_complex(sc, real(x), (s7_double)integer(y)));
 
 	default:
-	  method_or_bust(sc, x, sc->MAKE_COMPLEX, args, T_REAL, 1);
+	  method_or_bust(sc, x, sc->COMPLEX, args, T_REAL, 1);
 	}
 
     case T_RATIO:
@@ -14197,7 +14197,7 @@ static s7_pointer g_make_complex(s7_scheme *sc, s7_pointer args)
 	case T_RATIO:   return(s7_make_complex(sc, (s7_double)fraction(x), (s7_double)fraction(y)));
 	case T_REAL:    return(s7_make_complex(sc, real(x), (s7_double)fraction(y)));
 	default:
-	  method_or_bust(sc, x, sc->MAKE_COMPLEX, args, T_REAL, 1);
+	  method_or_bust(sc, x, sc->COMPLEX, args, T_REAL, 1);
 	}
 
     case T_REAL:
@@ -14216,15 +14216,15 @@ static s7_pointer g_make_complex(s7_scheme *sc, s7_pointer args)
 	  return(s7_make_complex(sc, real(x), real(y)));
 
 	default:
-	  method_or_bust(sc, x, sc->MAKE_COMPLEX, args, T_REAL, 1);
+	  method_or_bust(sc, x, sc->COMPLEX, args, T_REAL, 1);
 	}
 
     default:
-      method_or_bust(sc, (is_let(x)) ? x : y, sc->MAKE_COMPLEX, args, T_REAL, 2);
+      method_or_bust(sc, (is_let(x)) ? x : y, sc->COMPLEX, args, T_REAL, 2);
     }
 }
 
-static s7_pointer c_make_complex_2(s7_scheme *sc, s7_pointer x, s7_pointer y) {return(g_make_complex(sc, set_plist_2(sc, x, y)));}
+static s7_pointer c_make_complex_2(s7_scheme *sc, s7_pointer x, s7_pointer y) {return(g_complex(sc, set_plist_2(sc, x, y)));}
 PF2_TO_PF(make_complex, c_make_complex_2)
 
 
@@ -15135,7 +15135,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (is_rational(n))                                 /* (expt 3 0) */
 	    return(small_int(1));
 	  if ((is_NaN(s7_real_part(n))) ||                    /* (expt 1/0 0) -> NaN */
-	      (is_NaN(s7_imag_part(n))))                      /* (expt (make-complex 0 1/0) 0) -> NaN */
+	      (is_NaN(s7_imag_part(n))))                      /* (expt (complex 0 1/0) 0) -> NaN */
 	    return(n);
 	  return(real_one);                                   /* (expt 3.0 0) */
 	}
@@ -43277,7 +43277,7 @@ static bool complex_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 	     (fabs(imag_part(x)) <= sc->morally_equal_float_epsilon));
     }
 
-  /* should (morally-equal? nan.0 (make-complex nan.0 nan.0)) be #t (it's #f above)? */
+  /* should (morally-equal? nan.0 (complex nan.0 nan.0)) be #t (it's #f above)? */
   if (is_NaN(real_part(x)))
     return((is_NaN(real_part(y))) &&
 	   (((is_NaN(imag_part(x))) && (is_NaN(imag_part(y)))) ||
@@ -51051,7 +51051,7 @@ static void init_choosers(s7_scheme *sc)
 #endif
   s7_rf_set_function(slot_value(global_slot(sc->MAGNITUDE)), magnitude_rf);
   s7_if_set_function(slot_value(global_slot(sc->MAGNITUDE)), magnitude_if);
-  s7_gf_set_function(slot_value(global_slot(sc->MAKE_COMPLEX)), make_complex_pf); /* actually make-complex */
+  s7_gf_set_function(slot_value(global_slot(sc->COMPLEX)), make_complex_pf); /* actually complex */
 
   s7_pf_set_function(slot_value(global_slot(sc->EQ)), equal_pf);
   s7_pf_set_function(slot_value(global_slot(sc->LT)), less_pf);
@@ -67402,7 +67402,7 @@ static char *mpc_to_string(mpc_t val, int radix, use_write_t use_write)
   tmp = (char *)malloc(len * sizeof(char));
   
   if (use_write == USE_READABLE_WRITE)
-    snprintf(tmp, len, "(make-complex %s %s)", rl, im);
+    snprintf(tmp, len, "(complex %s %s)", rl, im);
   else snprintf(tmp, len, "%s%s%si", rl, (im[0] == '-') ? "" : "+", im);
   
   free(rl);
@@ -69060,10 +69060,10 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer big_make_complex(s7_scheme *sc, s7_pointer args)
+static s7_pointer c_big_complex(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_complex "(make-complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
-  #define Q_make_complex s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
+  #define H_complex "(complex x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+  #define Q_complex s7_make_signature(sc, 3, sc->IS_NUMBER, sc->IS_REAL, sc->IS_REAL)
 
   s7_pointer p0, p1, p;
   mpfr_t rl, im;
@@ -69071,13 +69071,13 @@ static s7_pointer big_make_complex(s7_scheme *sc, s7_pointer args)
 
   p0 = car(args);
   if (!s7_is_real(p0))
-    method_or_bust(sc, p0, sc->MAKE_COMPLEX, args, T_REAL, 1);
+    method_or_bust(sc, p0, sc->COMPLEX, args, T_REAL, 1);
 
   p1 = cadr(args);
   if (!s7_is_real(p1))
-    method_or_bust(sc, p1, sc->MAKE_COMPLEX, args, T_REAL, 2);
+    method_or_bust(sc, p1, sc->COMPLEX, args, T_REAL, 2);
 
-  if ((!is_big_number(p1)) && (real_to_double(sc, p1, "make-complex") == 0.0)) /* imag-part is not bignum and is 0.0 */
+  if ((!is_big_number(p1)) && (real_to_double(sc, p1, "complex") == 0.0)) /* imag-part is not bignum and is 0.0 */
     return(p0);
 
   mpfr_init_set(im, big_real(promote_number(sc, T_BIG_REAL, p1)), GMP_RNDN);
@@ -71498,6 +71498,7 @@ s7_double s7_random(s7_scheme *sc, s7_pointer state)
 static void s7_gmp_init(s7_scheme *sc)
 {
   #define big_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, big_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
+  #define c_big_defun(Scheme_Name, C_Name, Req, Opt, Rst) s7_define_typed_function(sc, Scheme_Name, c_big_ ## C_Name, Req, Opt, Rst, H_ ## C_Name, Q_ ## C_Name)
 
   sc->ADD =              big_defun("+",                add,              0, 0, true);
   sc->SUBTRACT =         big_defun("-",                subtract,         1, 0, true);
@@ -71515,7 +71516,7 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->EXACT_TO_INEXACT = big_defun("exact->inexact",   exact_to_inexact, 1, 0, false);
   sc->INEXACT_TO_EXACT = big_defun("inexact->exact",   inexact_to_exact, 1, 0, false);
   sc->INTEGER_LENGTH =   big_defun("integer-length",   integer_length,   1, 0, false);
-  sc->MAKE_RECTANGULAR = big_defun("make-rectangular", make_complex,     2, 0, false);
+  sc->MAKE_RECTANGULAR = c_big_defun("make-rectangular", complex,        2, 0, false);
   sc->MAKE_POLAR =       big_defun("make-polar",       make_polar,       2, 0, false);
 #endif
   sc->FLOOR =            big_defun("floor",            floor,            1, 0, false);
@@ -71527,7 +71528,7 @@ static void s7_gmp_init(s7_scheme *sc)
   sc->MODULO =           big_defun("modulo",           modulo,           2, 0, false);
   sc->GCD =              big_defun("gcd",              gcd,              0, 0, true);
   sc->LCM =              big_defun("lcm",              lcm,              0, 0, true);
-  sc->MAKE_COMPLEX =     big_defun("make-complex",     make_complex,     2, 0, false);
+  sc->COMPLEX =          c_big_defun("complex",        complex,          2, 0, false);
   sc->MAGNITUDE =        big_defun("magnitude",        magnitude,        1, 0, false);
   sc->ANGLE =            big_defun("angle",            angle,            1, 0, false);
   sc->ABS =              big_defun("abs",              abs,              1, 0, false);
@@ -71835,7 +71836,11 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
     }
 
-  if (sym == sc->symbol_table_is_locked_symbol) {sc->symbol_table_is_locked = (val != sc->F); return(val);}
+  if (sym == sc->symbol_table_is_locked_symbol) 
+    {
+      if (s7_is_boolean(val)) {sc->symbol_table_is_locked = (val == sc->T); return(val);}
+      return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
+    }
 
   if (sym == sc->max_stack_size_symbol)
     {
@@ -71946,6 +71951,15 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 	}
       return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
     }
+
+  if ((sym == sc->cpu_time_symbol) || 
+      (sym == sc->heap_size_symbol) || (sym == sc->free_heap_size_symbol) ||
+      (sym == sc->gc_freed_symbol) || (sym == sc->gc_protected_objects_symbol) ||
+      (sym == sc->file_names_symbol) || (sym == sc->c_types_symbol) || (sym == sc->catches_symbol) || (sym == sc->exits_symbol) || 
+      (sym == sc->rootlet_size_symbol) ||
+      (sym == sc->stack_top_symbol) || (sym == sc->stack_size_symbol))
+    return(s7_error(sc, sc->ERROR, set_elist_2(sc, make_string_wrapper(sc, "can't set (*s7* '~S)"), sym)));
+      
   return(sc->UNDEFINED);
 }
 
@@ -72951,7 +72965,7 @@ s7_scheme *s7_init(void)
   sc->IS_NAN =                defun("nan?",		is_nan,			1, 0, false);
 
 #if (!WITH_GMP)
-  sc->MAKE_COMPLEX =          defun("make-complex",	make_complex,	        2, 0, false);
+  sc->COMPLEX =               defun("complex",	        complex,	        2, 0, false);
   sc->MAGNITUDE =             defun("magnitude",	magnitude,		1, 0, false);
   sc->ANGLE =                 defun("angle",		angle,			1, 0, false);
   sc->RATIONALIZE =           defun("rationalize",	rationalize,		1, 1, false);
@@ -73004,7 +73018,7 @@ s7_scheme *s7_init(void)
   sc->EXACT_TO_INEXACT =      defun("exact->inexact",	exact_to_inexact,	1, 0, false);
   sc->INTEGER_LENGTH =        defun("integer-length",	integer_length,		1, 0, false);
   sc->MAKE_POLAR =            defun("make-polar",	make_polar,		2, 0, false);
-  sc->MAKE_RECTANGULAR =      defun("make-rectangular", make_complex,	        2, 0, false);
+  sc->MAKE_RECTANGULAR =      defun("make-rectangular", complex,	        2, 0, false);
 #endif
 #endif /* !gmp */
 
@@ -73593,6 +73607,7 @@ s7_scheme *s7_init(void)
                         (define make-procedure-with-setter dilambda) \n\
                         (define procedure-with-setter?     dilambda?)\n\
                         (define make-random-state          random-state) \n\
+                        (define make-complex               complex) \n\
                         (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
 #endif
 
@@ -73702,7 +73717,6 @@ int main(int argc, char **argv)
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position
- * perhaps make-complex -> complex
  *
  * append: 44522: what if method not first arg?  use 'value?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
@@ -73724,3 +73738,4 @@ int main(int argc, char **argv)
  *   (open-input-string #u8()): <input-string-port> <input-string-port> [42712]
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
  */
+ 

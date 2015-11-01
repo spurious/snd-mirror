@@ -9,7 +9,7 @@
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
-	(make-complex (* mag (cos ang)) (* mag (sin ang)))
+	(complex (* mag (cos ang)) (* mag (sin ang)))
 	(error 'wrong-type-arg "make-polar args should be real"))))
 
 
@@ -631,7 +631,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (mus-fft rl im len)
     (do ((i 0 (+ i 1)))
 	((= i len))
-      (let* ((c (make-complex (rl i) (im i)))
+      (let* ((c (complex (rl i) (im i)))
 	     (ph (angle c))
 	     (mag (magnitude c)))
 	(if (< i (/ len 2))
@@ -1211,7 +1211,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((documentation "(z-transform data n z) performs a Z transform on data; if z=e^2*pi*j/n you get a Fourier transform; complex results in returned vector"))
     (lambda (f n z)
       ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
-      ;;   (z-transform data n (exp (make-complex 0.0 (* (/ 2.0 n) pi))))
+      ;;   (z-transform data n (exp (complex 0.0 (* (/ 2.0 n) pi))))
       (let ((res (if (float-vector? f) (make-float-vector n) (make-vector n))))
 	(do ((w 0 (+ 1 w)))
 	    ((= w n))
@@ -1281,7 +1281,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	    (two-pole flt (next-sample reader)))
 	  (let ((y1 (two-pole flt (next-sample reader)))
 		(y0 (two-pole flt (next-sample reader))))
-	    (magnitude (- y0 (* y1 (exp (make-complex 0.0 (- rfreq))))))))))))
+	    (magnitude (- y0 (* y1 (exp (complex 0.0 (- rfreq))))))))))))
 
 #|
 ;; old version:
@@ -2844,7 +2844,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
     (do ((lg 0 (+ lg 1))
 	 (mmax 2 (* mmax 2))
 	 (pow (/ n 2) (/ pow 2))
-	 (theta (make-complex 0.0 (* pi dir)) (* theta 0.5)))
+	 (theta (complex 0.0 (* pi dir)) (* theta 0.5)))
 	((= lg ipow))
       (let ((wpc (exp theta))
 	    (wc 1.0))
@@ -2873,7 +2873,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;; > (let ((rl (float-vector 0.0 1.0 0.0 0.0)) 
 ;;;         (im (float-vector 0.0 1.0 0.0 0.0))) 
 ;;;     (mus-fft rl im) 
-;;;     (map make-complex rl im))
+;;;     (map complex rl im))
 ;;; (1+1i -1+1i -1-1i 1-1i)
 
 |#
