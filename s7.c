@@ -73737,5 +73737,6 @@ int main(int argc, char **argv)
  * morally-equal of ports? (open-input-file #u8(1 1 1)): <input-file-port> <input-file-port>: is there such a file? yes!
  *   (open-input-string #u8()): <input-string-port> <input-string-port> [42712]
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
+ * gsl diffs
  */
  

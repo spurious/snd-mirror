@@ -397,8 +397,12 @@
 	   (double gsl_sf_ellint_E (double double int))
 	   (int gsl_sf_ellint_P_e (double double double int gsl_sf_result*))
 	   (double gsl_sf_ellint_P (double double double int))
-	   (int gsl_sf_ellint_D_e (double double double int gsl_sf_result*))
-	   (double gsl_sf_ellint_D (double double double int))
+	   (reader-cond ((< gsl-version 2.0)
+			 (int gsl_sf_ellint_D_e (double double double int gsl_sf_result*))
+			 (double gsl_sf_ellint_D (double double double int)))
+			(#t 
+			 (int gsl_sf_ellint_D_e (double double int gsl_sf_result*))
+			 (double gsl_sf_ellint_D (double double int))))
 	   (int gsl_sf_ellint_RC_e (double double int gsl_sf_result*))
 	   (double gsl_sf_ellint_RC (double double int))
 	   (int gsl_sf_ellint_RD_e (double double double int gsl_sf_result*))
@@ -937,6 +941,9 @@
 	   (reader-cond ((>= gsl-version 1.16)
 			 (c-pointer (gsl_multifit_robust_default gsl_multifit_robust_bisquare gsl_multifit_robust_cauchy gsl_multifit_robust_fair
 				     gsl_multifit_robust_huber gsl_multifit_robust_ols gsl_multifit_robust_welsch))))
+
+	   (reader-cond ((>= gsl-version 2.0)
+			 (c-pointer gsl_interp_steffen)))
 	   
 	   (int (gsl_message_mask gsl_check_range))
 	   
@@ -1318,10 +1325,11 @@
 	   (int gsl_bspline_knots_uniform (double double gsl_bspline_workspace*))
 	   (int gsl_bspline_eval (double gsl_vector* gsl_bspline_workspace*))
 	   (int gsl_bspline_eval_nonzero (double gsl_vector* size_t* size_t* gsl_bspline_workspace*))
-	   (gsl_bspline_deriv_workspace* gsl_bspline_deriv_alloc (size_t))
-	   (void gsl_bspline_deriv_free (gsl_bspline_deriv_workspace*))
-	   (int gsl_bspline_deriv_eval (double size_t gsl_matrix* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
-	   (int gsl_bspline_deriv_eval_nonzero (double size_t gsl_matrix* size_t* size_t* gsl_bspline_workspace* gsl_bspline_deriv_workspace*))
+	   ;;; out 2.0 (gsl_bspline_deriv_workspace* gsl_bspline_deriv_alloc (size_t))
+	   ;;; out 2.0 (void gsl_bspline_deriv_free (gsl_bspline_deriv_workspace*))
+	   (reader-cond ((>= gsl-version 2.0)
+			 (int gsl_bspline_deriv_eval (double size_t gsl_matrix* gsl_bspline_workspace*))
+			 (int gsl_bspline_deriv_eval_nonzero (double size_t gsl_matrix* size_t* size_t* gsl_bspline_workspace*))))
 	   
 	   ;; sort
 	   ;; perhaps size_t* -> int vector?
@@ -2286,6 +2294,10 @@
 	   (int gsl_linalg_QR_QTvec (gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_QR_Qvec (gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_QR_QTmat (gsl_matrix* gsl_vector* gsl_matrix*))
+	   (reader-cond ((>= gsl-version 2.0)
+			 (int gsl_linalg_QR_matQ (gsl_matrix* gsl_vector* gsl_matrix*))
+			 (void gsl_linalg_givens (double double double* double*))
+			 (void gsl_linalg_givens_gv (gsl_vector* size_t size_t double double))))
 	   (int gsl_linalg_QR_unpack (gsl_matrix* gsl_vector* gsl_matrix* gsl_matrix*))
 	   (int gsl_linalg_R_solve (gsl_matrix* gsl_vector* gsl_vector*))
 	   (int gsl_linalg_R_svx (gsl_matrix* gsl_vector*))
@@ -2814,3 +2826,5 @@
 
 *libgsl*
 
+;;; TODO: gsl_interp2d, multifit.h and multifit_nlin additions, rstat, legendre and mathieu additions,
+;;;       spblas, splinalg, spline2d, spmatrix, add new h to list above
