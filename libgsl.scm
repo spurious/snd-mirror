@@ -209,7 +209,8 @@
                   }")
 	   (C-init "gsl_error_s7 = sc;")
 	   (C-init "gsl_set_error_handler(g_gsl_error);")
-	   
+
+	   (C-macro (int (GSL_SF_LEGENDRE_SCHMIDT GSL_SF_LEGENDRE_SPHARM GSL_SF_LEGENDRE_FULL GSL_SF_LEGENDRE_NONE)))
 	   
 	   ;; special functions
 	   ;; ((*libgsl* 'gsl_sf_bessel_J0) 1.0) -> 0.7651976865579666
@@ -594,13 +595,30 @@
 	   (double gsl_sf_legendre_Ql (int double))
 	   (int gsl_sf_legendre_Plm_e (int int double gsl_sf_result*))
 	   (double gsl_sf_legendre_Plm (int int double))
-	   (int gsl_sf_legendre_Plm_array (int int double double*))
-	   (int gsl_sf_legendre_Plm_deriv_array (int int double double* double*))
 	   (int gsl_sf_legendre_sphPlm_e (int int double gsl_sf_result*))
 	   (double gsl_sf_legendre_sphPlm (int int double))
-	   (int gsl_sf_legendre_sphPlm_array (int int double double*))
-	   (int gsl_sf_legendre_sphPlm_deriv_array (int int double double* double*))
-	   (int gsl_sf_legendre_array_size (int int))
+	   
+	   (reader-cond ((< gsl-version 2.0)
+			 (int gsl_sf_legendre_array_size (int int))
+			 (int gsl_sf_legendre_Plm_array (int int double double*))
+			 (int gsl_sf_legendre_Plm_deriv_array (int int double double* double*))
+			 (int gsl_sf_legendre_sphPlm_array (int int double double*))
+			 (int gsl_sf_legendre_sphPlm_deriv_array (int int double double* double*)))
+			(#t
+			 (int gsl_sf_legendre_array (int size_t double double*))
+			 (int gsl_sf_legendre_array_e (int size_t double double double*))
+			 (int gsl_sf_legendre_deriv_array (int size_t double double* double*))
+			 (int gsl_sf_legendre_deriv_array_e (int size_t double double double* double*))
+			 (int gsl_sf_legendre_deriv_alt_array (int size_t double double* double*))
+			 (int gsl_sf_legendre_deriv_alt_array_e (int size_t double double double* double*))
+			 (int gsl_sf_legendre_deriv2_array (int size_t double double* double* double*))
+			 (int gsl_sf_legendre_deriv2_array_e (int size_t double double double* double* double*))
+			 (int gsl_sf_legendre_deriv2_alt_array (int size_t double double* double* double*))
+			 (int gsl_sf_legendre_deriv2_alt_array_e (int size_t double double double* double* double*))
+			 (size_t gsl_sf_legendre_array_n (size_t))
+			 (size_t gsl_sf_legendre_array_index (size_t size_t))
+			 (size_t gsl_sf_legendre_nlm (size_t))))
+
 	   (int gsl_sf_conicalP_half_e (double double gsl_sf_result*))
 	   (double gsl_sf_conicalP_half (double double))
 	   (int gsl_sf_conicalP_mhalf_e (double double gsl_sf_result*))
@@ -631,18 +649,32 @@
 	   (double gsl_sf_log_1plusx_mx (double))
 	   (int gsl_sf_mathieu_a_array (int int double gsl_sf_mathieu_workspace* double*))
 	   (int gsl_sf_mathieu_b_array (int int double gsl_sf_mathieu_workspace* double*))
-	   (int gsl_sf_mathieu_a (int double gsl_sf_result*))
-	   (int gsl_sf_mathieu_b (int double gsl_sf_result*))
 	   (int gsl_sf_mathieu_a_coeff (int double double double*))
 	   (int gsl_sf_mathieu_b_coeff (int double double double*))
 	   (gsl_sf_mathieu_workspace* gsl_sf_mathieu_alloc (size_t double))
 	   (void gsl_sf_mathieu_free (gsl_sf_mathieu_workspace*))
-	   (int gsl_sf_mathieu_ce (int double double gsl_sf_result*))
-	   (int gsl_sf_mathieu_se (int double double gsl_sf_result*))
 	   (int gsl_sf_mathieu_ce_array (int int double double gsl_sf_mathieu_workspace* double*))
 	   (int gsl_sf_mathieu_se_array (int int double double gsl_sf_mathieu_workspace* double*))
-	   (int gsl_sf_mathieu_Mc (int int double double gsl_sf_result*))
-	   (int gsl_sf_mathieu_Ms (int int double double gsl_sf_result*))
+	   (reader-cond ((< gsl-version 2.0)
+			 (int gsl_sf_mathieu_Mc (int int double double gsl_sf_result*))
+			 (int gsl_sf_mathieu_Ms (int int double double gsl_sf_result*))
+			 (int gsl_sf_mathieu_ce (int double double gsl_sf_result*))
+			 (int gsl_sf_mathieu_se (int double double gsl_sf_result*))
+			 (int gsl_sf_mathieu_a (int double gsl_sf_result*))
+			 (int gsl_sf_mathieu_b (int double gsl_sf_result*)))
+			(#t
+			 (int gsl_sf_mathieu_Mc_e (int int double double gsl_sf_result*))
+			 (double gsl_sf_mathieu_Mc (int int double double))
+			 (int gsl_sf_mathieu_Ms_e (int int double double gsl_sf_result*))
+			 (double gsl_sf_mathieu_Ms (int int double double))
+			 (int gsl_sf_mathieu_a_e (int double gsl_sf_result*))
+			 (double gsl_sf_mathieu_a (int double))
+			 (int gsl_sf_mathieu_b_e (int double gsl_sf_result*))
+			 (double gsl_sf_mathieu_b (int double))
+			 (int gsl_sf_mathieu_ce_e (int double double gsl_sf_result*))
+			 (double gsl_sf_mathieu_ce (int double double))
+			 (int gsl_sf_mathieu_se_e (int double double gsl_sf_result*))
+			 (double gsl_sf_mathieu_se (int double double))))
 	   (int gsl_sf_mathieu_Mc_array (int int int double double gsl_sf_mathieu_workspace* double*))
 	   (int gsl_sf_mathieu_Ms_array (int int int double double gsl_sf_mathieu_workspace* double*))
 	   (int gsl_sf_pow_int_e (double int gsl_sf_result*))
@@ -2499,17 +2531,15 @@
 	   (int gsl_min_test_interval (double double double double))
 	   (int gsl_min_find_bracket (gsl_function* double* double* double* double* double* double* size_t))
 	   
-           ;; gsl_monte* is not doable -- they chose to pass a bare double* array to the gsl_monte_function,
+           ;; gsl_monte* is not doable -- they chose to pass a bare double* array to the (parameter) gsl_monte_function,
 	   ;;   and there's nothing I can do with that.  To wrap and unwrap it on every call would make it unusable.
 	   ;;   I could keep wrappers around of all so-far-used sizes, but not until someone actually needs them.
-	   ;; the fdf cases are similar, I think, and the ode functions.  GSL also assumes direct access to their
+	   ;; the fdf cases [removed in gsl 2.0?] are similar, I think, and the ode functions.  GSL also assumes direct access to their
 	   ;; structs (as in matrix size1/2) -- not very nice for our style of use.
 	   
 	   (gsl_multifit_linear_workspace* gsl_multifit_linear_alloc (size_t size_t))
 	   (void gsl_multifit_linear_free (gsl_multifit_linear_workspace*))
 	   (int gsl_multifit_linear (gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
-	   (int gsl_multifit_linear_svd (gsl_matrix* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
-	   (int gsl_multifit_linear_usvd (gsl_matrix* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
 	   (int gsl_multifit_wlinear (gsl_matrix* gsl_vector* gsl_vector* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
 	   (int gsl_multifit_wlinear_svd (gsl_matrix* gsl_vector* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
 	   (int gsl_multifit_wlinear_usvd (gsl_matrix* gsl_vector* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
@@ -2534,7 +2564,33 @@
 	   (gsl_vector* gsl_multifit_fsolver_position (gsl_multifit_fsolver*))
 	   (int gsl_multifit_test_delta (gsl_vector* gsl_vector* double double))
 	   (int gsl_multifit_test_gradient (gsl_vector* double))
-	   
+
+	   (reader-cond ((< gsl-version 2.0)
+			 (int gsl_multifit_linear_svd (gsl_matrix* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_usvd (gsl_matrix* gsl_vector* double size_t* gsl_vector* gsl_matrix* double* gsl_multifit_linear_workspace*)))
+			(#t 
+			 (int gsl_multifit_linear_svd (gsl_matrix* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_bsvd (gsl_matrix* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_solve (double gsl_matrix* gsl_vector* gsl_vector* double* double* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_applyW (gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_stdform1 (gsl_vector* gsl_matrix* gsl_vector* gsl_matrix* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_wstdform1 (gsl_vector* gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_stdform2 (gsl_matrix* gsl_matrix* gsl_vector* gsl_matrix* gsl_vector* gsl_matrix* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_wstdform2 (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* gsl_vector* gsl_matrix* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_genform1 (gsl_vector* gsl_vector* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_genform2 (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector* gsl_matrix* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_wgenform2 (gsl_matrix* gsl_matrix* gsl_vector* gsl_vector* gsl_vector* gsl_matrix* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_lreg (double double gsl_vector*))
+			 (int gsl_multifit_linear_lcurve (gsl_vector* gsl_vector* gsl_vector* gsl_vector* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_linear_lcorner (gsl_vector* gsl_vector* size_t*))
+			 (int gsl_multifit_linear_lcorner2 (gsl_vector* gsl_vector* size_t*))
+			 (int gsl_multifit_linear_Lk (size_t size_t gsl_matrix*))
+			 (int gsl_multifit_linear_Lsobolev (size_t size_t gsl_vector* gsl_matrix* gsl_multifit_linear_workspace*))
+			 (int gsl_multifit_robust_maxiter (size_t gsl_multifit_robust_workspace*))
+			 (int gsl_multifit_robust_weights (gsl_vector* gsl_vector* gsl_multifit_robust_workspace*))
+			 (int gsl_multifit_robust_residuals (gsl_matrix* gsl_vector* gsl_vector* gsl_vector* gsl_multifit_robust_workspace*))
+			 (int gsl_multifit_covar_QRPT (gsl_matrix* gsl_permutation* double gsl_matrix*))))
+ 	   
 	   (gsl_multimin_fminimizer* gsl_multimin_fminimizer_alloc (gsl_multimin_fminimizer_type* size_t))
 	   (void gsl_multimin_fminimizer_free (gsl_multimin_fminimizer*))
 	   (char* gsl_multimin_fminimizer_name (gsl_multimin_fminimizer*))
@@ -2701,7 +2757,115 @@
 	   (int gsl_wavelet2d_nstransform_matrix (gsl_wavelet* gsl_matrix* int gsl_wavelet_workspace*))
 	   (int gsl_wavelet2d_nstransform_matrix_forward (gsl_wavelet* gsl_matrix* gsl_wavelet_workspace*))
 	   (int gsl_wavelet2d_nstransform_matrix_inverse (gsl_wavelet* gsl_matrix* gsl_wavelet_workspace*))
-	   
+
+	   (reader-cond ((>= gsl-version 2.0)
+			 ;; rstat
+			 (gsl_rstat_quantile_workspace* gsl_rstat_quantile_alloc (double))
+			 (void gsl_rstat_quantile_free (gsl_rstat_quantile_workspace*))
+			 (int gsl_rstat_quantile_add (double gsl_rstat_quantile_workspace*))
+			 (double gsl_rstat_quantile_get (gsl_rstat_quantile_workspace*))
+			 (gsl_rstat_workspace* gsl_rstat_alloc (void))
+			 (void gsl_rstat_free (gsl_rstat_workspace*))
+			 (size_t gsl_rstat_n (gsl_rstat_workspace*))
+			 (int gsl_rstat_add (double gsl_rstat_workspace*))
+			 (double gsl_rstat_min (gsl_rstat_workspace*))
+			 (double gsl_rstat_max (gsl_rstat_workspace*))
+			 (double gsl_rstat_mean (gsl_rstat_workspace*))
+			 (double gsl_rstat_variance (gsl_rstat_workspace*))
+			 (double gsl_rstat_sd (gsl_rstat_workspace*))
+			 (double gsl_rstat_sd_mean (gsl_rstat_workspace*))
+			 (double gsl_rstat_median (gsl_rstat_workspace*))
+			 (double gsl_rstat_skew (gsl_rstat_workspace*))
+			 (double gsl_rstat_kurtosis (gsl_rstat_workspace*))
+			 (int gsl_rstat_reset (gsl_rstat_workspace*))
+
+			 ;; spblas
+			 (int gsl_spblas_dgemv (int double gsl_spmatrix* gsl_vector* double gsl_vector*))
+			 (int gsl_spblas_dgemm (double gsl_spmatrix* gsl_spmatrix* gsl_spmatrix*))
+			 (size_t gsl_spblas_scatter (gsl_spmatrix* size_t double size_t* double* size_t gsl_spmatrix* size_t))
+
+			 ;; splinalg
+			 (c-pointer gsl_splinalg_itersolve_gmres)
+
+			 (gsl_splinalg_itersolve* gsl_splinalg_itersolve_alloc (gsl_splinalg_itersolve_type* size_t size_t))
+			 (void gsl_splinalg_itersolve_free (gsl_splinalg_itersolve*))
+			 (char* gsl_splinalg_itersolve_name (gsl_splinalg_itersolve*))
+			 (int gsl_splinalg_itersolve_iterate (gsl_spmatrix* gsl_vector* double gsl_vector* gsl_splinalg_itersolve*))
+			 (double gsl_splinalg_itersolve_normr (gsl_splinalg_itersolve*))
+
+			 ;; spmatrix
+			 (C-macro (int (GSL_SPMATRIX_TRIPLET GSL_SPMATRIX_CCS)))
+			 ;; #define GSL_SPMATRIX_ISTRIPLET (m)  ((m)->sptype == GSL_SPMATRIX_TRIPLET)
+			 ;; #define GSL_SPMATRIX_ISCCS (m)  ((m)->sptype == GSL_SPMATRIX_CCS)
+
+			 (gsl_spmatrix* gsl_spmatrix_alloc (size_t size_t))
+			 (gsl_spmatrix* gsl_spmatrix_alloc_nzmax (size_t size_t size_t size_t))
+			 (void gsl_spmatrix_free (gsl_spmatrix*))
+			 (int gsl_spmatrix_realloc (size_t gsl_spmatrix*))
+			 (int gsl_spmatrix_set_zero (gsl_spmatrix*))
+			 (size_t gsl_spmatrix_nnz (gsl_spmatrix*))
+			 (int gsl_spmatrix_compare_idx (size_t size_t size_t size_t))
+			 (int gsl_spmatrix_memcpy (gsl_spmatrix* gsl_spmatrix*))
+			 (double gsl_spmatrix_get (gsl_spmatrix* size_t size_t))
+			 (int gsl_spmatrix_set (gsl_spmatrix* size_t size_t double))
+			 (gsl_spmatrix* gsl_spmatrix_compcol (gsl_spmatrix*))
+			 (void gsl_spmatrix_cumsum (size_t size_t*))
+			 (int gsl_spmatrix_scale (gsl_spmatrix* double))
+			 (int gsl_spmatrix_minmax (gsl_spmatrix* double* double*))
+			 (int gsl_spmatrix_add (gsl_spmatrix* gsl_spmatrix* gsl_spmatrix*))
+			 (int gsl_spmatrix_d2sp (gsl_spmatrix* gsl_matrix*))
+			 (int gsl_spmatrix_sp2d (gsl_matrix* gsl_spmatrix*))
+			 (int gsl_spmatrix_equal (gsl_spmatrix* gsl_spmatrix*))
+			 (int gsl_spmatrix_transpose_memcpy (gsl_spmatrix* gsl_spmatrix*))
+
+			 ;; interp2d
+			 (c-pointer (gsl_interp2d_bilinear gsl_interp2d_bicubic))
+
+			 (gsl_interp2d* gsl_interp2d_alloc (gsl_interp2d_type* size_t size_t))
+			 (char* gsl_interp2d_name (gsl_interp2d*))
+			 (size_t gsl_interp2d_min_size (gsl_interp2d*))
+			 (size_t gsl_interp2d_type_min_size (gsl_interp2d_type*))
+			 (int gsl_interp2d_set (gsl_interp2d* double* size_t size_t double))
+			 (double gsl_interp2d_get (gsl_interp2d* double* size_t size_t))
+			 (size_t gsl_interp2d_idx (gsl_interp2d* size_t size_t))
+			 (int gsl_interp2d_init (gsl_interp2d* double* double* double* size_t size_t))
+			 (void gsl_interp2d_free (gsl_interp2d*))
+			 (double gsl_interp2d_eval (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (double gsl_interp2d_eval_extrap (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (int gsl_interp2d_eval_e_extrap (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_interp2d_eval_deriv_x (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_deriv_x_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_interp2d_eval_deriv_y (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_deriv_y_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_interp2d_eval_deriv_xx (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_deriv_xx_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_interp2d_eval_deriv_yy (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_deriv_yy_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_interp2d_eval_deriv_xy (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_interp2d_eval_deriv_xy_e (gsl_interp2d* double* double* double* double double gsl_interp_accel* gsl_interp_accel* double*))
+
+			 ;; spline2n
+			 (gsl_spline2d* gsl_spline2d_alloc (gsl_interp2d_type* size_t size_t))
+			 (int gsl_spline2d_init (gsl_spline2d* double* double* double* size_t size_t))
+			 (void gsl_spline2d_free (gsl_spline2d*))
+			 (double gsl_spline2d_eval (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_spline2d_eval_deriv_x (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_deriv_x_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_spline2d_eval_deriv_y (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_deriv_y_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_spline2d_eval_deriv_xx (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_deriv_xx_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_spline2d_eval_deriv_yy (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_deriv_yy_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (double gsl_spline2d_eval_deriv_xy (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel*))
+			 (int gsl_spline2d_eval_deriv_xy_e (gsl_spline2d* double double gsl_interp_accel* gsl_interp_accel* double*))
+			 (size_t gsl_spline2d_min_size (gsl_spline2d*))
+			 (char* gsl_spline2d_name (gsl_spline2d*))
+			 (int gsl_spline2d_set (gsl_spline2d* double* size_t size_t double))
+			 (double gsl_spline2d_get (gsl_spline2d* double* size_t size_t))
+			 ))
 	   )
 	 "" (list "gsl/gsl_blas.h"
 		  "gsl/gsl_blas_types.h"
@@ -2739,6 +2903,8 @@
 		  "gsl/gsl_inline.h"
 		  "gsl/gsl_integration.h"
 		  "gsl/gsl_interp.h"
+		  (reader-cond ((>= gsl-version 2.0)
+				"gsl/gsl_interp2d.h"))
 		  "gsl/gsl_linalg.h"
 		  "gsl/gsl_machine.h"
 		  "gsl/gsl_math.h"
@@ -2769,6 +2935,8 @@
 		  "gsl/gsl_randist.h"
 		  "gsl/gsl_rng.h"
 		  "gsl/gsl_roots.h"
+		  (reader-cond ((>= gsl-version 2.0)
+				"gsl/gsl_rstat.h"))
 		  "gsl/gsl_sf.h"
 		  "gsl/gsl_sf_airy.h"
 		  "gsl/gsl_sf_bessel.h"
@@ -2796,6 +2964,11 @@
 		  "gsl/gsl_sf_pow_int.h"
 		  "gsl/gsl_sf_psi.h"
 		  "gsl/gsl_sf_result.h"
+		  (reader-cond ((>= gsl-version 2.0) 
+				"gsl/gsl_spblas.h"
+				"gsl/gsl_splinalg.h"
+				"gsl/gsl_spline2d.h"
+				"gsl/gsl_spmatrix.h"))
 		  "gsl/gsl_sf_synchrotron.h"
 		  "gsl/gsl_sf_transport.h"
 		  "gsl/gsl_sf_trig.h"
@@ -2825,6 +2998,3 @@
 	(curlet))))
 
 *libgsl*
-
-;;; TODO: gsl_interp2d, multifit.h and multifit_nlin additions, rstat, legendre and mathieu additions,
-;;;       spblas, splinalg, spline2d, spmatrix, add new h to list above

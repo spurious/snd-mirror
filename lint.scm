@@ -1766,8 +1766,15 @@
 	   (let ((cleared-form (cons = (remove-if (lambda (x) (not (number? x))) (cdr form)))))
 	     (if (and (> (length cleared-form) 2)
 		      (not (checked-eval cleared-form)))
-		 (lint-format "this comparison can't be true:~A" name (truncated-list->string form)))))
-	  
+		 (lint-format "this comparison can't be true:~A" name (truncated-list->string form))))
+	   (when (and (= (length form) 3)
+		      (equal? (caddr form) 0))
+	     (let ((arg (cadr form)))
+	       (if (and (pair? arg)
+			(eq? (car arg) '-)
+			(= (length arg) 3))
+		   (lint-format "possible simplification:~A" name (lists->string form `(= ,(cadr arg) ,(caddr arg))))))))
+
 	  ((memq assq)
 	   (if (and (= (length form) 3)
 		    (or (and (number? (cadr form))
@@ -1911,8 +1918,16 @@
 						(cdr form)))))
 	     (if (and (> (length cleared-form) 2)
 		      (not (checked-eval cleared-form)))
-		 (lint-format "this comparison can't be true:~A" name (truncated-list->string form)))))
-	     
+		 (lint-format "this comparison can't be true:~A" name (truncated-list->string form))))
+	   (when (and (= (length form) 3)
+		      (equal? (caddr form) 0))
+	     (let ((arg (cadr form)))
+	       (if (and (pair? arg)
+			(eq? (car arg) '-)
+			(= (length arg) 3))
+		   (lint-format "possible simplification:~A" name (lists->string form `(,(car form) ,(cadr arg) ,(caddr arg))))))))
+		   ;; could change (> x 0) to (positive? x) and so on, but the former is clear and ubiquitous
+
 	  ((char<? char>? char<=? char>=? char=? 
 	    char-ci<? char-ci>? char-ci<=? char-ci>=? char-ci=?)
 	   (let ((cleared-form (cons (car form) ; keep operator

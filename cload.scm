@@ -95,11 +95,12 @@
 ;;;   (closedir dir))
 ;;;
 ;;; (define (memory-usage)
-;;;   (let ((v (rusage.make))) 
-;;;     (getrusage (*libc* 'RUSAGE_SELF) v)
-;;;     (let ((mem (rusage.ru_maxrss v))) 
-;;;       (free v) 
-;;;       (* 1024 mem))))
+;;;   (with-let *libc*
+;;;     (let ((v (rusage.make))) 
+;;;       (getrusage RUSAGE_SELF v)
+;;;       (let ((mem (rusage.ru_maxrss v))) 
+;;;         (free v) 
+;;;         (* 1024 mem)))))
 ;;; --------------------------------------------------------------------------------
 
 (define *cload-cflags* "") 

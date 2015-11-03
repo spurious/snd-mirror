@@ -32249,6 +32249,7 @@ static void format_append_chars(s7_scheme *sc, format_data *fdat, char pad, int 
 	{
 	  for (j = 0; j < chars; j++)
 	    sc->tmpbuf[j] = pad;
+	  sc->tmpbuf[chars] = '\0';
 	  format_append_string(sc, fdat, sc->tmpbuf, chars, port);
 	}
       else
@@ -42709,14 +42710,13 @@ static bool c_object_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_inf
 
 static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  if (x == y)
-    return(true);
-  return((morally) &&
-	 (type(x) == type(y)) &&
-	 (port_is_closed(x)) &&     /* closed ports of same type are morally equal */
-	 (port_type(x) == port_type(y)) &&
-	 (port_is_closed(y)));
-  /* also types= and positions= and underlying data= ? at least for string ports */
+  if (x == y) return(true);
+  if ((!morally) || (type(x) != type(y)) || (port_type(x) != port_type(y))) return(false);
+  if ((port_is_closed(x)) && (port_is_closed(y))) return(true);
+  return((is_string_port(x)) &&
+	 (port_position(x) == port_position(y)) &&
+	 (port_data_size(x) == port_data_size(y)) &&
+	 (local_strncmp((const char *)port_data(x), (const char *)port_data(y), (is_input_port(x)) ? port_data_size(x) : port_position(x))));
 }
 
 static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
@@ -48386,7 +48386,8 @@ static bool is_simple_code(s7_scheme *sc, s7_pointer form)
   for (tmp = form; is_pair(tmp); tmp = cdr(tmp))
     if (is_pair(car(tmp)))
       {
-	if (!is_simple_code(sc, car(tmp)))
+	if ((tmp == car(tmp)) || /* try to protect against #1=(#1) -- do we actually need cyclic_sequences here? */
+	    (!is_simple_code(sc, car(tmp))))
 	  return(false);
       }
     else
@@ -63954,10 +63955,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 		case HOP_ENVIRONMENT_A:
 		  {
-		    s7_pointer s;
+		    s7_pointer s, sym;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sc->value = let_ref_1(sc, s, c_call(cdr(code))(sc, cadr(code)));
+		    sym = c_call(cdr(code))(sc, cadr(code));
+		    if (is_symbol(sym))
+		      sc->value = let_ref_1(sc, s, sym);
+		    else return(wrong_type_argument_with_type(sc, sc->LET_REF, 2, sym, A_SYMBOL)); /* (e expr) where expr->#f */
 		    goto START;
 		  }
 		  
@@ -71650,7 +71654,20 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   fprintf(stderr, "process size: %lld\n", (s7_int)(info.ru_maxrss * 1024));
 #endif
 
-  fprintf(stderr, "heap: %u (%lld bytes)\n", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  fprintf(stderr, "heap: %u (%lld bytes)", sc->heap_size, (s7_int)(sc->heap_size * (sizeof(s7_pointer) + sizeof(s7_cell))));
+  {
+    unsigned int k;
+    int ts[NUM_TYPES];
+    for (i = 0; i < NUM_TYPES; i++) ts[i] = 0;
+    for (k = 0; k < sc->heap_size; k++)
+      ts[unchecked_type(sc->heap[k])]++;
+    for (i = 0; i < NUM_TYPES; i++)
+      {
+	if ((i % 10) == 0) fprintf(stderr, "\n ");
+	fprintf(stderr, " %d", ts[i]);
+      }
+    fprintf(stderr, "\n");
+  }
   fprintf(stderr, "permanent cells: %d (%lld bytes)\n", permanent_cells, (s7_int)(permanent_cells * sizeof(s7_cell)));
 
   for (i = 0; i < vector_length(sc->symbol_table); i++)
@@ -71667,6 +71684,25 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     len += string_length(sc->strings[i]);
   fprintf(stderr, "strings: %u, %d bytes\n", sc->strings_loc, len); /* also doc strings, permanent strings, etc */
 
+  {
+    int hs;
+    hash_entry_t *p;
+    for (hs = 0, p = hash_free_list; p; p = (hash_entry_t *)(p->next), hs++);
+
+    len = 0;
+    for (i = 0; i < (int)(sc->hash_tables_loc); i++)
+      len += (hash_table_mask(sc->hash_tables[i]) + 1);
+    
+    fprintf(stderr, "hash tables: %d (%d %d), ", (int)(sc->hash_tables_loc), len, hs);
+  }
+
+  {
+    int fs;
+    port_t *p;
+    for (fs = 0, p = sc->port_heap; p; p = (port_t *)(p->next), fs++);
+    fprintf(stderr, "vectors: %d, input: %d, output: %d, free port: %d\ncontinuations: %d, c_objects: %d, gensyms: %d, setters: %d\n",
+	    sc->vectors_loc, sc->input_ports_loc, sc->output_ports_loc, fs, sc->continuations_loc, sc->c_objects_loc, sc->gensyms_loc, sc->setters_loc);
+  }
   return(sc->F);
 }
 
@@ -72180,7 +72216,7 @@ s7_scheme *s7_init(void)
 
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
-  sc->tmpbuf = (char *)malloc(TMPBUF_SIZE * sizeof(char));
+  sc->tmpbuf = (char *)calloc(TMPBUF_SIZE, sizeof(char));
   sc->print_width = sc->max_string_length;
 
   sc->initial_string_port_length = 128;
@@ -73734,9 +73770,9 @@ int main(int argc, char **argv)
  *   t9: (- 0 9223372036854775807): 2 -1.844674407370955e+19
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
- * morally-equal of ports? (open-input-file #u8(1 1 1)): <input-file-port> <input-file-port>: is there such a file? yes!
- *   (open-input-string #u8()): <input-string-port> <input-string-port> [42712]
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
- * gsl diffs
+ * lint similar cases: (= (+ x 1) 0) -> (= x -1) etc, (= (* x x) 0) -> (= x 0), i.e. solve the equation if solution is unique
+ *    (cond (a b) (else (cond (c d)...))) -> (cond (a b) (c d))
+ *    (case s (a b) (else (case s ...))) -- probably never happens
  */
  
