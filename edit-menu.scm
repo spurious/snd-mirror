@@ -12,11 +12,10 @@
 (define selection->new
   (let ((documentation "(selection-<new) saves the selection in a new file, then opens that file"))
     (lambda ()
-      (if (selection?)
-	  (let ((new-file-name (snd-tempnam)))
-	    (save-selection new-file-name)
-	    (open-sound new-file-name))
-	  #f))))
+      (and (selection?)
+	   (let ((new-file-name (snd-tempnam)))
+	     (save-selection new-file-name)
+	     (open-sound new-file-name))))))
 
 (add-to-menu edit-menu "Selection->new" selection->new 8) ;pos=8 puts this in the selection section in the Edit menu
 
@@ -26,12 +25,11 @@
 (define cut-selection->new
   (let ((documentation "(cut-selection->new) saves the selection, deletes it, then opens the saved file"))
     (lambda ()
-      (if (selection?)
-	  (let ((new-file-name (snd-tempnam)))
-	    (save-selection new-file-name)
-	    (delete-selection)
-	    (open-sound new-file-name))
-	  #f))))
+      (and (selection?)
+	   (let ((new-file-name (snd-tempnam)))
+	     (save-selection new-file-name)
+	     (delete-selection)
+	     (open-sound new-file-name))))))
 
 (add-to-menu edit-menu "Cut selection->new" cut-selection->new 9)
 

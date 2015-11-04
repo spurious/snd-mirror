@@ -37,9 +37,8 @@
 		(begin
 		  (set! diffs (+ diffs 1))
 		  (set! diff-data (cons (list i (v0 i) (v1 i)) diff-data)))))
-	  (if (< diffs 10)
-	      (list 'differences diff-data)
-	      #f)))))
+	  (and (< diffs 10)
+	       (list 'differences diff-data))))))
 
 
 (define (float-vector-size v)
@@ -83,9 +82,8 @@
 	       (float-vector-move! v0 0 trim)
 	       (float-vector-move! v1 0 trim)))
 	 (let ((result (unconvolve-1 v0 (copy v1) ())))
-	   (if (pair? result)
-	       (list 'filter (reverse result))
-	       #f)))))
+	   (and (pair? result)
+		(list 'filter (reverse result)))))))
   
 
 (define (snddiff-2 snd0 chn0 snd1 chn1)
@@ -105,9 +103,8 @@
 
 		     (if (eq? diff 'no-difference)
 			 (list 'scale scl)
-			 (if (list? diff)
-			     (list 'scale scl 'differences diff)
-			     #f))))))
+			 (and (list? diff)
+			      (list 'scale scl 'differences diff)))))))
 
 	;; align sounds and  zero out any non-overlapping sections, keeping track of whether they are zero beforehand
 	(let ((lag (lag? snd0 chn0 snd1 chn1))
@@ -143,11 +140,10 @@
 	  (let ((s0 (channel->float-vector 0 #f snd0 chn0))
 		(s1 (channel->float-vector 0 #f snd1 chn1)))
 	    (or (let ((res (snddiff-1 s0 s1 0.0)))
-		  (if res
-		      (if (> lag 0)
-			  (list 'lag lag res pre0 pre1 post0 post1)
-			  (list res pre0 pre1 post0 post1))
-		      #f))
+		  (and res
+		       (if (> lag 0)
+			   (list 'lag lag res pre0 pre1 post0 post1)
+			   (list res pre0 pre1 post0 post1))))
 		(let* ((pos (maxamp-position snd0 chn0))
 		       (mx0 (sample pos snd0 chn0))
 		       (mx1 (sample pos snd1 chn1)) ; use actual values to keep possible sign difference
@@ -156,10 +152,8 @@
 		  
 		  (if (eq? diff 'no-difference)
 		      (list 'scale scl 'lag lag pre0 pre1 post0 post1)
-		      (if (list? diff)
-			  (list 'scale scl 'differences diff 'lag lag pre0 pre1 post0 post1)
-			  #f))))))
-	
+		      (and (list? diff)
+			   (list 'scale scl 'differences diff 'lag lag pre0 pre1 post0 post1)))))))
 	;; align and zero + scaling didn't find a match
 	)))
 

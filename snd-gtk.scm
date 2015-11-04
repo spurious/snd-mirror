@@ -564,16 +564,15 @@
       ;; (list (list widget inuse func title help) ...)
       
       (define (find-free-dialog ds)
-	(if (null? ds)
-	    #f
-	    (if (not (cadr (car ds)))
-		(begin
-		  (set! ((car ds) 1) #t)
-		  (caar ds))
-		(find-free-dialog (cdr ds)))))
+	(and (pair? ds)
+	     (if (not (cadr (car ds)))
+		 (begin
+		   (set! ((car ds) 1) #t)
+		   (caar ds))
+		 (find-free-dialog (cdr ds)))))
       (lambda args
 	;; (file-select func title dir filter help)
-	(let* ((func (if (> (length args) 0) (args 0) #f))
+	(let* ((func (and (> (length args) 0) (args 0)))
 	       (title (if (> (length args) 1) (args 1) "select file"))
 	       (dir (if (> (length args) 2) (args 2) "."))
 	       (dialog (or (find-free-dialog file-selector-dialogs)

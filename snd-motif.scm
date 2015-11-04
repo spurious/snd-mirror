@@ -651,22 +651,21 @@
   (define make-pixmap 
     (let ((documentation "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"))
       (lambda (widget strs) ; strs is list of strings as in arrow-strs above
-	(if (defined? 'XpmAttributes)
-	    (let* ((attr (XpmAttributes))
-		   (symb (XpmColorSymbol "basiccolor" #f *basic-color*))
-		   (dpy (XtDisplay widget))
-		   (win (XtWindow widget))
-		   (scr (DefaultScreen dpy))
-		   (depth (cadr (XtGetValues widget (list XmNdepth 0))))
-		   (colormap (cadr (XtGetValues widget (list XmNcolormap 0)))))
-	      (set! (.depth attr) depth)
-	      (set! (.colormap attr) colormap)
-	      (set! (.visual attr) (DefaultVisual dpy scr))
-	      (set! (.colorsymbols attr) (list symb))
-	      (set! (.numsymbols attr) 1)
-	      (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
-	      (cadr (XpmCreatePixmapFromData dpy win strs attr)))
-	    #f))))
+	(and (defined? 'XpmAttributes)
+	     (let* ((attr (XpmAttributes))
+		    (symb (XpmColorSymbol "basiccolor" #f *basic-color*))
+		    (dpy (XtDisplay widget))
+		    (win (XtWindow widget))
+		    (scr (DefaultScreen dpy))
+		    (depth (cadr (XtGetValues widget (list XmNdepth 0))))
+		    (colormap (cadr (XtGetValues widget (list XmNcolormap 0)))))
+	       (set! (.depth attr) depth)
+	       (set! (.colormap attr) colormap)
+	       (set! (.visual attr) (DefaultVisual dpy scr))
+	       (set! (.colorsymbols attr) (list symb))
+	       (set! (.numsymbols attr) 1)
+	       (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+	       (cadr (XpmCreatePixmapFromData dpy win strs attr)))))))
   
 					; (XtSetValues ((sound-widgets) 8) (list XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
   
@@ -1016,13 +1015,12 @@
   (define (add-mark-pane)
     
     (define (find-mark-list snd chn dats)
-      (if (pair? dats)
-	  (let ((cur (car dats)))
-	    (if (and (equal? (car cur) snd)
-		     (= (cadr cur) chn))
-		(caddr cur)
-		(find-mark-list snd chn (cdr dats))))
-	  #f))
+      (and (pair? dats)
+	   (let ((cur (car dats)))
+	     (if (and (equal? (car cur) snd)
+		      (= (cadr cur) chn))
+		 (caddr cur)
+		 (find-mark-list snd chn (cdr dats))))))
     
     (define mark-list-length
       (let ((mark-list-lengths ()))
@@ -1188,26 +1186,24 @@
     (let ((file-selector-dialogs ()))
       ;; (list (list widget inuse func title help) ...)
       (define (find-free-dialog ds)
-	(if (null? ds)
-	    #f
-	    (if (not (cadr (car ds)))
-		(begin
-		  (set! ((car ds) 1) #t)
-		  (caar ds))
-		(find-free-dialog (cdr ds)))))
+	(and (pair? ds)
+	     (if (not (cadr (car ds)))
+		 (begin
+		   (set! ((car ds) 1) #t)
+		   (caar ds))
+		 (find-free-dialog (cdr ds)))))
       (define (find-dialog-widget wid ds)
-	(if (null? ds)
-	    #f
-	    (if (equal? wid (caar ds))
-		(car ds)
-		(find-dialog-widget wid (cdr ds)))))
+	(and (pair? ds)
+	     (if (equal? wid (caar ds))
+		 (car ds)
+		 (find-dialog-widget wid (cdr ds)))))
       (lambda args
 	;; (file-select func title dir filter help)
-	(let* ((func (if (> (length args) 0) (args 0) #f))
+	(let* ((func (and (> (length args) 0) (args 0)))
 	       (title (if (> (length args) 1) (args 1) "select file"))
 	       (dir (if (> (length args) 2) (args 2) "."))
 	       (filter (if (> (length args) 3) (args 3) "*"))
-	       (help (if (> (length args) 4) (args 4) #f))
+	       (help (and (> (length args) 4) (args 4)))
 	       (dialog (or (find-free-dialog file-selector-dialogs)
 			   (let ((new-dialog (XmCreateFileSelectionDialog 
 					      (cadr (main-widgets)) 
@@ -2022,9 +2018,8 @@
 		      (let ((ampc (find-child snd-amp (label-name i)))
 			    (ampn (find-child snd-amp (number-name i)))
 			    (amp (find-child snd-amp (scroller-name i)))
-			    (next-amp (if (< i (- chns 1))
-					  (find-child snd-amp (label-name (+ i 1)))
-					  #f)))
+			    (next-amp (and (< i (- chns 1))
+					   (find-child snd-amp (label-name (+ i 1))))))
 			(reset-to-one amp ampn)
 			(if next-amp
 			    (XtSetValues ampc (list XmNtopAttachment XmATTACH_WIDGET
@@ -2474,17 +2469,16 @@
       (lambda ()
 	;; it might be a better use of this space to put dlp's icon row in it
 	(let ((notebook ((main-widgets) 3)))
-	  (if (XmIsNotebook notebook)
-	      (let ((text (XtCreateManagedWidget "notebook-text" xmTextFieldWidgetClass notebook
-						 (list XmNbackground *basic-color*))))
-		(XtAddCallback text XmNfocusCallback
-			       (lambda (w c i)
-				 (XtSetValues w (list XmNbackground (white-pixel)))))
-		(XtAddCallback text XmNlosingFocusCallback
-			       (lambda (w c i)
-				 (XtSetValues w (list XmNbackground *basic-color*))))
-		text)
-	      #f)))))
+	  (and (XmIsNotebook notebook)
+	       (let ((text (XtCreateManagedWidget "notebook-text" xmTextFieldWidgetClass notebook
+						  (list XmNbackground *basic-color*))))
+		 (XtAddCallback text XmNfocusCallback
+				(lambda (w c i)
+				  (XtSetValues w (list XmNbackground (white-pixel)))))
+		 (XtAddCallback text XmNlosingFocusCallback
+				(lambda (w c i)
+				  (XtSetValues w (list XmNbackground *basic-color*))))
+		 text))))))
   
   
 ;;; -------- variable display panel --------

@@ -540,25 +540,23 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
     (if (or (= py qy ty) 
 	    (= px qx tx))
 	:within
-	(if (< (abs (- (* (- qy py) (- tx px))
-		       (* (- ty py) (- qx px))))
-	       (max (abs (- qx px))
-		    (abs (- qy py))))
-	    (if (or (and (< qx px) (< px tx))
-		    (and (< qy py) (< py ty)))
-		:before
-		(if (or (and (< tx px) (< px qx))
-			(and (< ty py) (< py qy)))
-		    :before
-		    (if (or (and (< px qx) (< qx tx))
-			    (and (< py qy) (< qy ty)))
-			:after
-			(if (or (and (< tx qx) (< qx px))
-				(and (< ty qy) (< qy py)))
-			    :after
-			    :within))))
-	    #f)))
-  
+	(and (< (abs (- (* (- qy py) (- tx px))
+			(* (- ty py) (- qx px))))
+		(max (abs (- qx px))
+		     (abs (- qy py))))
+	     (if (or (and (< qx px) (< px tx))
+		     (and (< qy py) (< py ty)))
+		 :before
+		 (if (or (and (< tx px) (< px qx))
+			 (and (< ty py) (< py qy)))
+		     :before
+		     (if (or (and (< px qx) (< qx tx))
+			     (and (< py qy) (< qy ty)))
+			 :after
+			 (if (or (and (< tx qx) (< qx px))
+				 (and (< ty qy) (< qy py)))
+			     :after
+			     :within)))))))
   (if (and env1
 	   (> (length env1) 4))
       (let ((new-env (list (cadr env1) (car env1)))

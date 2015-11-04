@@ -34,9 +34,8 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 						     "/usr/share/doc/snd-15"
 						     (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
 							 "/usr/local/share/doc/snd-15"
-							 (if (file-exists? "/usr/doc/snd-15/snd.html")
-							     "/usr/doc/snd-15"
-							     #f))))))))))
+							 (and (file-exists? "/usr/doc/snd-15/snd.html")
+							      "/usr/doc/snd-15"))))))))))
 		    (if dir
 			(system (string-append *html-program* " file:" dir "/" n)))))))
 	
@@ -49,9 +48,8 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 			      (if (and (string? doc)
 				       (char=? (doc 0) #\())
 				  (let ((pos (find-close-paren doc)))
-				    (if pos
-					(substring doc 1 pos)
-					#f))))))))
+				    (and pos
+					 (substring doc 1 pos)))))))))
 	  (if (and name (string? name))
 	      (let ((url (snd-url name)))
 		(if url 

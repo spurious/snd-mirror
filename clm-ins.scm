@@ -1056,9 +1056,9 @@ is a physical model of a flute:
 	   (allpass3 (make-all-pass -0.700 0.700 (dly-len 8)))
 	   (allpass4 (make-all-pass -0.700 0.700 (dly-len 9))) ; 10 for quad
 	   (allpass5 (make-all-pass -0.700 0.700 (dly-len 11)))
-	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (dly-len 12)) #f))
-	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
-	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
+	   (allpass6 (and chan2 (make-all-pass -0.700 0.700 (dly-len 12))))
+	   (allpass7 (and chan4 (make-all-pass -0.700 0.700 (dly-len 13))))
+	   (allpass8 (and chan4 (make-all-pass -0.700 0.700 (dly-len 14)))))
 
       (let ((filts (if (not chan2)
 		       (vector allpass5)
@@ -1841,19 +1841,16 @@ is a physical model of a flute:
 	  (f2 (make-two-pole :radius r2 :frequency frq2))
 	  (f3 (make-two-pole :radius r3 :frequency frq3))
 	  (loc (make-locsig degree distance reverb-amount))
-	  (frqf (if (not with-noise)
-		    (make-env freqcosfun  :duration dur
-			      :scaler (hz->radians (- cosfreq1 cosfreq0)))
-		    #f))
+	  (frqf (and (not with-noise)
+		     (make-env freqcosfun  :duration dur
+			       :scaler (hz->radians (- cosfreq1 cosfreq0)))))
 	  (ampf (if with-noise
 		    (make-env noifun :scaler noiamp :duration dur)
 		    (make-env ampcosfun :scaler cosamp :duration dur)))
-	  (rn (if with-noise
-		  (make-rand :frequency ranfreq)
-		  #f))
-	  (cn (if (not with-noise)
-		  (make-ncos cosfreq0 cosnum)
-		  #f)))
+	  (rn (and with-noise
+		   (make-rand :frequency ranfreq)))
+	  (cn (and (not with-noise)
+		   (make-ncos cosfreq0 cosnum))))
       (set! (mus-xcoeff f1 0) g1)
       (set! (mus-xcoeff f2 0) g2)
       (set! (mus-xcoeff f3 0) g3)
@@ -2459,9 +2456,8 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (RdA (make-readin :file file :start or-start))
 	  (half-list (/ (length gain-freq-list) 2))
 	  (ampenv (make-env amp-env :scaler amp :duration durata :base amp-base))
-	  (env-size (if (pair? (car gain-list))
-			(make-vector (length freq-list))
-			#f))
+	  (env-size (and (pair? (car gain-list))
+			 (make-vector (length freq-list))))
 	  (if-list-in-gain (pair? (car gain-list)))
 	  (frm-size (make-vector (length freq-list)))
 	  (gains (make-float-vector (length freq-list) 1.0)))

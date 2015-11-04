@@ -14,7 +14,7 @@
     (lambda (obj) 
       (if (hash-table? obj)
 	  (zero? (hash-table-entries obj)) ; length here is table size
-	  (equal? (length obj) 0)))))
+	  (eqv? (length obj) 0)))))
 
 (define applicable? arity)
 
@@ -302,7 +302,7 @@
     (if (pair? tree)
 	(or (X-marks-the-spot (cons 'car accessor) (car tree))
 	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
-	(if (eq? tree 'X) accessor #f)))
+	(and (eq? tree 'X) accessor)))
   (let ((body 'lst))
     (for-each
      (lambda (f)
@@ -1123,9 +1123,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (define (symbol->let sym ce)
     (if (defined? sym ce #t)
 	ce
-	(if (eq? ce (rootlet))
-	    #f
-	    (symbol->let sym (outlet ce)))))
+	(and (not (eq? ce (rootlet)))
+	     (symbol->let sym (outlet ce)))))
   (if (symbol? expr)
       (if (and (not (memq expr lst))
 	       (not (memq expr ignore))

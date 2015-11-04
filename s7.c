@@ -1664,9 +1664,7 @@ static int not_heap = -1;
 #define pair_raw_name(p)              (p)->object.sym_cons.fstr
 #define pair_set_raw_name(p, X)       (p)->object.sym_cons.fstr = X
 
-/* opt1 == raw_hash, opt2 == raw_name, opt3 == line+op|len, but hash/name/len only apply to
- *   the symbol table so there's no collision.
- */
+/* opt1 == raw_hash, opt2 == raw_name, opt3 == line+op|len, but hash/name/len only apply to the symbol table so there's no collision */
 
 #else
 
@@ -2098,12 +2096,12 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define continuation_op_loc(p)        (_TCon(p))->object.cwcc.continuation->op_stack_loc
 #define continuation_op_size(p)       (_TCon(p))->object.cwcc.continuation->op_stack_size
 #define continuation_key(p)           (_TCon(p))->object.cwcc.continuation->local_key
-#define temp_stack_top(p)             (_TStk(p))->object.stk.top
 
 #define call_exit_goto_loc(p)         (_TGot(p))->object.rexit.goto_loc
 #define call_exit_op_loc(p)           (_TGot(p))->object.rexit.op_stack_loc
 #define call_exit_active(p)           (_TGot(p))->object.rexit.active
 
+#define temp_stack_top(p)             (_TStk(p))->object.stk.top
 #define s7_stack_top(Sc)              ((Sc)->stack_end - (Sc)->stack_start)
 
 #define is_continuation(p)            (type(p) == T_CONTINUATION)
@@ -73771,8 +73769,15 @@ int main(int argc, char **argv)
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
- * lint similar cases: (= (+ x 1) 0) -> (= x -1) etc, (= (* x x) 0) -> (= x 0), i.e. solve the equation if solution is unique
- *    (cond (a b) (else (cond (c d)...))) -> (cond (a b) (c d))
- *    (case s (a b) (else (case s ...))) -- probably never happens
+ * lint: (= (+ x 1) 0) -> (= x -1) etc, (= (* x x) 0) -> (= x 0), i.e. solve the equation if solution is unique
+ *    repeated or negated clause in cond?
+ *    (eq?|eqv? etc expr #t|#f) if boolean expr
+ *    (eq? (f ...) val) where sig says f can't produce val
+ *    member|assoc where func is not boolean? [like sort! -- and lambda simplification]
+ *    multiple range checks to one? (cond ((> x 0) 0) ((<= x 0) 1) (else 2)) ; same for if
+ *    (list-ref (list-ref x 0) 0): caar? -- or (x 0 0)? similarly for vector-ref|set!
+ *    (vector-ref (vector-ref #(#(0 1) #(2 3)) 1) 0) -> (#(#(0 1) #(2 3)) 1 0) [-> 2]
+ *       (vr (vr x 1) 0) -> (x 1 0)
+ * (or x ... #t) where x... have no side-effects -> #t, similarly and, but does this happen?
  */
  

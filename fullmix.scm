@@ -31,13 +31,12 @@
 			  ((= i ochans))
 			(set! (v i i) 1.0))
 		      v))))
-	  (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
-		      (let ((rmx (make-float-vector (list in-chans in-chans) 0.0)))
-			(do ((i 0 (+ i 1)))
-			    ((= i in-chans))
-			  (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
-			rmx)
-		      #f))
+	  (rev-mx (and (and *reverb* reverb-amount (> reverb-amount 0.0))
+		       (let ((rmx (make-float-vector (list in-chans in-chans) 0.0)))
+			 (do ((i 0 (+ i 1)))
+			     ((= i in-chans))
+			   (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
+			 rmx)))
 	  
 	  (file (if (or (not srate) 
 			(and (number? srate) 
@@ -49,9 +48,8 @@
 			(vector-set! vect i (make-readin in-file i inloc :direction (if reversed -1 1))))
 		      vect)))
 	  (envs #f)
-	  (srcenv (if (pair? srate)
-		      (make-env srate :duration dur :scaler (if reversed -1.0 1.0))
-		      #f)))
+	  (srcenv (and (pair? srate)
+		       (make-env srate :duration dur :scaler (if reversed -1.0 1.0)))))
       
       (if matrix
 	  (if (pair? matrix) ; matrix is list of scalers, envelopes (lists), or env gens

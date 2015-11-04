@@ -265,7 +265,7 @@
 		     (sounds))
 		    (graph ffts "spectra" 0.0 0.5 y0 y1 snd chn)))))))))
 
-					;(hook-push graph-hook superimpose-ffts)
+;;(hook-push graph-hook superimpose-ffts)
 
 
 ;;; -------- translate mpeg input to 16-bit linear and read into Snd
@@ -320,17 +320,16 @@
     (lambda (filename)
       ;; check for "OggS" first word, if found, translate to something Snd can read
       ;; (open-sound (read-ogg "/home/bil/sf1/oboe.ogg"))
-      (if (call-with-input-file filename 
-	    (lambda (fd)
-	      (and (char=? (read-char fd) #\O)
-		   (char=? (read-char fd) #\g)
-		   (char=? (read-char fd) #\g)
-		   (char=? (read-char fd) #\S))))
-	  (let ((aufile (string-append filename ".au")))
-	    (if (file-exists? aufile) (delete-file aufile))
-	    (system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
-	    aufile)
-	  #f))))
+      (and (call-with-input-file filename 
+	     (lambda (fd)
+	       (and (char=? (read-char fd) #\O)
+		    (char=? (read-char fd) #\g)
+		    (char=? (read-char fd) #\g)
+		    (char=? (read-char fd) #\S))))
+	   (let ((aufile (string-append filename ".au")))
+	     (if (file-exists? aufile) (delete-file aufile))
+	     (system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
+	     aufile)))))
 
 #|  
 (hook-push open-hook
@@ -477,11 +476,10 @@ read an ASCII sound file"))
 	     (current-left-sample (left-sample keysnd keychn))
 	     (chan-marks (marks keysnd keychn)))
 	(define (find-leftmost-mark samps)
-	  (if (null? samps)
-	      #f
-	      (if (> (car samps) current-left-sample)
-		  (car samps)
-		  (find-leftmost-mark (cdr samps)))))
+	  (and (pair? samps)
+	       (if (> (car samps) current-left-sample)
+		   (car samps)
+		   (find-leftmost-mark (cdr samps)))))
 	(if (= (length chan-marks) 0)
 	    (status-report "no marks!")
 	    (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
@@ -1724,7 +1722,7 @@ starting at the cursor in the currently selected channel: (add-notes '((\"oboe.s
 	    (lambda (note)
 	      (let* ((file (car note))
 		     (offset (if (> (length note) 1) (cadr note) 0.0))
-		     (amp (if (> (length note) 2) (caddr note) #f))
+		     (amp (and (> (length note) 2) (caddr note)))
 		     (beg (+ start (floor (* (srate snd) offset)))))
 		(if (and (number? amp)
 			 (not (= amp 1.0)))

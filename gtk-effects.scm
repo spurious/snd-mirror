@@ -76,7 +76,7 @@
 						(format #f "~A ~A ~A" 
 							(origin target (- end beg))
 							(if (eq? target 'sound) 0 beg)
-							(if (eq? target 'sound) #f (+ 1 (- end beg))))))))
+							(and (not (eq? target 'sound)) (+ 1 (- end beg))))))))
 			   
 			   (if (> snc 0) 
 			       (all-chans) 
@@ -145,9 +145,7 @@
       (if no-silence
 	  (map-channel (lambda (y)
 			 (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-			   (if (zero? val)
-			       #f
-			       val)))
+			   (and (not (zero? val)) val)))
 		       0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))
 	  (map-channel (lambda (y) 
 			 (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))
@@ -465,7 +463,7 @@
 					  echo-target
 					  (lambda (target input-samps) 
 					    (format #f "effects-echo ~A ~A ~A" 
-						    (if (eq? target 'sound) #f input-samps)
+						    (and (not (eq? target 'sound)) input-samps)
 						    delay-time echo-amount))
 					  (and (not echo-truncate) 
 					       (* 4 delay-time))))
@@ -549,7 +547,7 @@
 					  (lambda (target input-samps) 
 					    (format #f "effects-flecho-1 ~A ~A ~A"
 						    flecho-scaler flecho-delay
-						    (if (eq? target 'sound) #f input-samps)))
+						    (and (not (eq? target 'sound)) input-samps)))
 					  (and (not flecho-truncate) 
 					       (* 4 flecho-delay))))
 				       
@@ -638,7 +636,7 @@
 					  (lambda (target input-samps) 
 					    (format #f "effects-zecho-1 ~A ~A ~A ~A ~A"
 						    zecho-scaler zecho-delay zecho-freq zecho-amp
-						    (if (eq? target 'sound) #f input-samps)))
+						    (and (not (eq? target 'sound)) input-samps)))
 					  (and (not zecho-truncate)
 					       (* 4 zecho-delay))))
 				       
@@ -1527,7 +1525,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		       (lambda (inval)
 			 (amplitude-modulate 1.0 inval (oscil os))))
 		   beg dur snd chn #f
-		   (format #f "effects-am ~A ~A ~A ~A" freq (if en (format #f "'~A" en) #f) beg dur))))
+		   (format #f "effects-am ~A ~A ~A ~A" freq (and en (format #f "'~A" en)) beg dur))))
   
   (define* (effects-rm freq gliss-env beg dur snd chn)
     (let ((os (make-oscil freq))
@@ -1538,7 +1536,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		       (lambda (inval)
 			 (* inval (oscil os))))
 		   beg dur snd chn #f
-		   (format #f "effects-rm ~A ~A ~A ~A" freq (if gliss-env (format #f "'~A" gliss-env) #f) beg dur))))
+		   (format #f "effects-rm ~A ~A ~A ~A" freq (and gliss-env (format #f "'~A" gliss-env)) beg dur))))
   
   (let ((mod-menu-list ())
 	(mod-menu (gtk_menu_item_new_with_label "Modulation Effects"))
@@ -1587,8 +1585,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					    (format #f "effects-am ~A ~A" am-effect-amount
 						    (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
 							   (e (and need-env (xe-envelope am-effect-envelope))))
-						      (if e (format #f "'~A" e)
-							  #f))))
+						      (and e (format #f "'~A" e)))))
 					  #f))
 				       
 				       (lambda (w data)
@@ -1673,8 +1670,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					    (format #f "effects-rm ~A ~A" rm-frequency
 						    (let* ((need-env (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))))
 							   (e (and need-env (xe-envelope rm-envelope))))
-						      (if e (format #f "'~A" e)
-							  #f))))
+						      (and e (format #f "'~A" e)))))
 					  #f))
 				       
 				       (lambda (w data)
@@ -1998,7 +1994,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	  (map-channel
 	   (lambda (y)
 	     (src rd (rand-interp rn)))
-	   beg len snd chn #f (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (if (= len (framples snd chn)) #f len)))))))
+	   beg len snd chn #f (format #f "effects-hello-dentist ~A ~A ~A ~A" frq amp beg (and (not (= len (framples snd chn))) len)))))))
   
   
   (define* (effects-fp sr osamp osfrq beg dur snd chn)
@@ -2009,7 +2005,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
       (map-channel
        (lambda (y)
 	 (src s (* osamp (oscil os))))
-       beg len snd chn #f (format #f "effects-fp ~A ~A ~A ~A ~A" sr osamp osfrq beg (if (= len (framples snd chn)) #f len)))))
+       beg len snd chn #f (format #f "effects-fp ~A ~A ~A ~A ~A" sr osamp osfrq beg (and (not (= len (framples snd chn))) len)))))
   
   
   (define* (effects-position-sound mono-snd pos snd chn)
@@ -2041,7 +2037,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 				      inval
 				      (rand-interp ri)))))
 		   beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
-					      amount speed time beg (if (and (number? dur) (not (= dur (framples snd chn)))) dur #f)))))
+					      amount speed time beg (and (number? dur) (not (= dur (framples snd chn))) dur)))))
   
   (define (effects-cross-synthesis cross-snd amp fftsize r)
     ;; cross-snd is the index of the other sound (as opposed to the map-channel sound)

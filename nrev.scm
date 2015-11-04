@@ -53,9 +53,9 @@
 	   (allpass3 (make-all-pass -0.700 0.700 (dly-len 8)))
 	   (allpass4 (make-all-pass -0.700 0.700 (dly-len 9))) ; 10 for quad
 	   (allpass5 (make-all-pass -0.700 0.700 (dly-len 11)))
-	   (allpass6 (if chan2 (make-all-pass -0.700 0.700 (dly-len 12)) #f))
-	   (allpass7 (if chan4 (make-all-pass -0.700 0.700 (dly-len 13)) #f))
-	   (allpass8 (if chan4 (make-all-pass -0.700 0.700 (dly-len 14)) #f)))
+	   (allpass6 (and chan2 (make-all-pass -0.700 0.700 (dly-len 12))))
+	   (allpass7 (and chan4 (make-all-pass -0.700 0.700 (dly-len 13))))
+	   (allpass8 (and chan4 (make-all-pass -0.700 0.700 (dly-len 14)))))
 
       (let ((filts (if (not chan2)
 		       (vector allpass5)

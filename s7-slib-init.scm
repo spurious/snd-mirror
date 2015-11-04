@@ -418,15 +418,13 @@
 
 (set! *#readers* 
 	  (cons (cons #\F (lambda (str)
-			    (if (string=? str "")
-				#f)))
+			    (not (string=? str ""))))
 		*#readers*))
 
 ;;; for r4syn.scm
 
 (set! *#readers* 
 	  (cons (cons #\T (lambda (str)
-			    (if (string=? str "")
-				#t)))
+			    (string=? str "")))
 		*#readers*))
 

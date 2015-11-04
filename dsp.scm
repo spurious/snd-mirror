@@ -1967,10 +1967,8 @@ and replaces it with the spectrum given in coeffs"))
   ;; click in lisp-graph to change the tick placement choice
   
   (let ((snd-color-1 (lambda args
-		       (if (defined? 'snd-color)
-			   (apply snd-color args)
-			   #f)))) ; no-gui case I guess
-    
+		       (and (defined? 'snd-color)
+			    (apply snd-color args)))))
     (let ((bark-fft-size 0)
 	  (bark-tick-function 0)
 	  (color1 (snd-color-1 8))  ; selected-data-color

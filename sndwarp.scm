@@ -152,7 +152,7 @@
     (let* ((stereo-i (= (mus-sound-chans file) 2))
 	   (stereo-o #f) ; (= (channels  *output*) 2))
 	   (f-a (make-readin file :channel 0))
-           (f-b (if stereo-i (make-readin file :channel 1) #f)) ; explicit #f needed here for optimizer
+           (f-b (and stereo-i (make-readin file :channel 1)))
 	   (fsr (mus-sound-srate file))
 	   ;; (fsize (framples file))
 	   (fdur (mus-sound-duration file))
@@ -162,7 +162,7 @@
 	   (time-env (clmsw-envelope-or-number stretch))
            (wsize-env (clmsw-envelope-or-number wsize))
 	   (rdA (make-src :input (lambda (dir) (readin f-a)) :srate 0.0 :width srcwidth))
-	   (rdB (if stereo-i (make-src :input (lambda (dir) (readin f-b)) :srate 0.0 :width srcwidth) #f))
+	   (rdB (and stereo-i (make-src :input (lambda (dir) (readin f-b)) :srate 0.0 :width srcwidth)))
 	   (windf (make-oscil))
            (wsizef (make-env wsize-env :duration dur))
 	   (ampf (make-env amp-env :scaler amp :duration dur))

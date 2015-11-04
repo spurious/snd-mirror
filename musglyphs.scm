@@ -213,9 +213,8 @@
       (list pclass octave 
 	    (if (or (= pclass 1) (= pclass 6))
 		:sharp
-		(if (or (= pclass 3) (= pclass 8) (= pclass 10))
-		    :flat
-		    #f))
+		(and (or (= pclass 3) (= pclass 8) (= pclass 10))
+		     :flat))
 	    cclass
 	    pitch)))
   

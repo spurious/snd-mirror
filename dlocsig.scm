@@ -207,25 +207,24 @@
 (define third 
   (let ((documentation "(third lst) returns the 3rd element of 'lst'"))
     (lambda (a) 
-      (if (>= (length a) 3) (a 2) #f))))
+      (and (>= (length a) 3) (a 2)))))
 
 (define fourth 
   (let ((documentation "(fourth lst) returns the 4th element of 'lst'"))
     (lambda (a) 
-      (if (>= (length a) 4) (a 3) #f))))
+      (and (>= (length a) 4) (a 3)))))
 
 (define last 
   (let ((documentation "(last lst n) returns the last 'n' elements of 'lst' as a list"))
     (lambda* (a n) 
-      (if (null? a)
-	  #f
-	  (if (not n)
-	      (list (a (- (length a) 1)))
-	      (let ((res ()))
-		(do ((i 0 (+ i 1)))
-		    ((= i n))
-		  (set! res (cons (a (- (length a) (+ i 1))) res)))
-		res))))))
+      (and (not (null? a))
+	   (if (not n)
+	       (list (a (- (length a) 1)))
+	       (let ((res ()))
+		 (do ((i 0 (+ i 1)))
+		     ((= i n))
+		   (set! res (cons (a (- (length a) (+ i 1))) res)))
+		 res))))))
 
 (define listp pair?)
 
