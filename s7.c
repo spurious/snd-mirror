@@ -5232,7 +5232,7 @@ static char *pos_int_to_str(s7_int num, unsigned int *len, char endc)
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 {
   #define H_gensym "(gensym (prefix \"gensym\")) returns a new, unused symbol"
-  #define Q_gensym s7_make_signature(sc, 2, sc->IS_SYMBOL, sc->IS_STRING)
+  #define Q_gensym s7_make_signature(sc, 2, sc->IS_GENSYM, sc->IS_STRING)
 
   const char *prefix;
   char *name, *p;
@@ -24932,7 +24932,7 @@ end: (substring \"01234\" 1 2) -> \"1\""
 static s7_pointer substring_to_temp;
 static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, str;
+  s7_pointer str;
   s7_int start = 0, end;
 
   str = car(args);
@@ -24942,6 +24942,7 @@ static s7_pointer g_substring_to_temp(s7_scheme *sc, s7_pointer args)
   end = string_length(str);
   if (!is_null(cdr(args)))
     {
+      s7_pointer x;
       x = start_and_end(sc, sc->SUBSTRING, NULL, cdr(args), args, 2, &start, &end);
       if (x != sc->GC_NIL) return(x);
     }
@@ -73727,7 +73728,7 @@ int main(int argc, char **argv)
  * tform         |      |      | 6816 | 3627  3589
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
- * lg            |      |      | 6547 | 7201  7204
+ * lg            |      |      | 6547 | 7201  8107
  * thash         |      |      | 50.7 | 8491  8484
  *               |      |      |      |      
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
@@ -73749,8 +73750,11 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
+ *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
- *   port-data port-position
+ *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
+ *   also port-filename|line-number could use let syntax, then maybe add position|data etc -- mock let like *s7*
+ *   gc troubles with the string wrapper. Another such case: iterator.
  *
  * append: 44522: what if method not first arg?  use 'value?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
@@ -73769,15 +73773,5 @@ int main(int argc, char **argv)
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
- * lint: (= (+ x 1) 0) -> (= x -1) etc, (= (* x x) 0) -> (= x 0), i.e. solve the equation if solution is unique
- *    repeated or negated clause in cond?
- *    (eq?|eqv? etc expr #t|#f) if boolean expr
- *    (eq? (f ...) val) where sig says f can't produce val
- *    member|assoc where func is not boolean? [like sort! -- and lambda simplification]
- *    multiple range checks to one? (cond ((> x 0) 0) ((<= x 0) 1) (else 2)) ; same for if
- *    (list-ref (list-ref x 0) 0): caar? -- or (x 0 0)? similarly for vector-ref|set!
- *    (vector-ref (vector-ref #(#(0 1) #(2 3)) 1) 0) -> (#(#(0 1) #(2 3)) 1 0) [-> 2]
- *       (vr (vr x 1) 0) -> (x 1 0)
- * (or x ... #t) where x... have no side-effects -> #t, similarly and, but does this happen?
  */
  

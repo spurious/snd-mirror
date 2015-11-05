@@ -418,7 +418,7 @@ Other math-related differences between s7 and r5rs:
 <em class="gray">0.5</em>
 &gt; (rationalize 1.5)
 <em class="gray">3/2</em>
-&gt; (make-rectangular 1/2 0)
+&gt; (complex 1/2 0)
 <em class="gray">1/2</em>
 &gt; (logbit? 6 1) ; argument order, (logbit? int index), follows gmp, not CL
 <em class="gray">#t</em>
@@ -1509,7 +1509,7 @@ value passed to set!:
     (if (pair? tree)
 	(or (X-marks-the-spot (cons 'car accessor) (car tree))
 	    (X-marks-the-spot (cons 'cdr accessor) (cdr tree)))
-	(if (eq? tree 'X) accessor #f)))
+	(and (eq? tree 'X) accessor)))
 
   (let ((body 'lst))
     (for-each
@@ -1676,7 +1676,7 @@ Here's a generic FFT:
     (do ((lg 0 (+ lg 1))
 	 (mmax 2 (* mmax 2))
 	 (pow (/ n 2) (/ pow 2))
-	 (theta (make-rectangular 0.0 (* pi dir)) (* theta 0.5)))
+	 (theta (complex 0.0 (* pi dir)) (* theta 0.5)))
 	((= lg ipow))
       (let ((wpc (exp theta))
 	    (wc 1.0))
@@ -4478,7 +4478,7 @@ map-with-exit would be
     (for-each (lambda (clause)
 	        (let ((tag (car clause)))
 	          (set! base `(lambda () 
-			        (catch ',(if (eq? tag 'else) #t tag)
+			        (catch ',(or (eq? tag 'else) tag)
 			          ,base 
 			          ,@(cdr clause))))))
 	      clauses)
@@ -5024,7 +5024,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
 
 <pre class="indented">
-(set! *#readers* (cons (cons #\c (lambda (str) (apply make-rectangular (read)))) *#readers*))
+(set! *#readers* (cons (cons #\c (lambda (str) (apply complex (read)))) *#readers*))
 
 &gt; #c(1 2)
 <em class="gray">1+2i</em>
@@ -5043,9 +5043,8 @@ I need to know where something unexpected happened.  So:
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
 			    (port-line-number)
-			    (if (string=? str "__file__")
-			        (port-filename)
-			        #f))))
+			    (and (string=? str "__file__")
+			         (port-filename)))))
             *#readers*))
 </pre>
 
@@ -5055,7 +5054,7 @@ I need to know where something unexpected happened.  So:
 <pre class="indented">
 (set! *#readers*
   (cons (cons #\. (lambda (str)
-		    (if (string=? str ".") (eval (read)) #f)))
+		    (and (string=? str ".") (eval (read)))))
 	*#readers*))
 
 &gt; '(1 2 #.(* 3 4) 5)
@@ -6040,9 +6039,9 @@ then it is part of the language, and it doesn't look like the rest of the langua
       ;; str is whatever followed the #, first char is a digit
       (let* ((len (length str))
 	     (last-char (str (- len 1))))
-	(if (memq last-char '(#\= #\#))             ; is it #n= or #n#?
+	(and (memq last-char '(#\= #\#))             ; is it #n= or #n#?
 	    (let ((n (string-&gt;number (substring str 0 (- len 1)))))
-	      (if (integer? n)
+	      (and (integer? n)
 		  (begin
 		    (if (not known-vals)            ; save n so we know when we're done
 			(begin
@@ -6050,7 +6049,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 			  (set! top-n n))) 
 
 		    (if (char=? last-char #\=)      ; #n=
-			(if (char=? (peek-char) #\()
+			(and (char=? (peek-char) #\()
 			    (let ((cur-val (assoc n known-vals)))
 			      ;; associate the number and the list it points to
 			      ;;    if cur-val, perhaps complain? (#n# redefined)
@@ -6069,16 +6068,15 @@ then it is part of the language, and it doesn't look like the rest of the langua
 				  (let ((result (replace-syms cur-val)))
 				    (set! known-vals #f) ; '#1=(#+gsl #1#) -&gt; '(:1)!
 				    result)
-				  (cdr cur-val)))
-			    #f)                     ; #n=&lt;not a list&gt;?
-
+				  (cdr cur-val))))
+			                         ; #n=&lt;not a list&gt;?
 			;; else it's #n# &mdash; set a marker for now since we may not 
 			;;   have its associated value yet.  We use a symbol name that 
                         ;;   string-&gt;number accepts.
 			(symbol-&gt;keyword 
-                          (symbol (string-append (number-&gt;string n) (string #\null) " ")))))
-		  #f))                             ; #n&lt;not an integer&gt;?
-	    #f)))))                                ; #n&lt;something else&gt;?
+                          (symbol (string-append (number-&gt;string n) (string #\null) " ")))))))
+		                                 ; #n&lt;not an integer&gt;?
+	    )))))                                ; #n&lt;something else&gt;?
 
 (do ((i 0 (+ i 1)))
     ((= i 10))

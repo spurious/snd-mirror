@@ -604,13 +604,12 @@ Snd does not exit.</p>
 
 <pre class="indented">
 (define (unsaved-edits? lst)
-  (if (pair? lst)
-      (if (&gt; (car (<a class=quiet href="#edits">edits</a> (car lst))) 0)
-	  (begin
-	    (<a class=quiet href="#statusreport">status-report</a> "there are unsaved edits")
-	    #t)
-	  (unsaved-edits? (cdr lst)))
-      #f))
+  (and (pair? lst)
+       (if (&gt; (car (<a class=quiet href="#edits">edits</a> (car lst))) 0)
+	   (begin
+	     (<a class=quiet href="#statusreport">status-report</a> "there are unsaved edits")
+	     #t)
+	   (unsaved-edits? (cdr lst)))))
 
 (hook-push <em class=red>before-exit-hook</em> 
   (lambda (hook) 
@@ -2616,14 +2615,13 @@ hook's responsibility.  See <a href="sndscm.html#snapmarktobeat">snap-mix-to-bea
 <pre class="indented">
 (define (click-to-center snd chn x axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
-  (if (= axis <a class=quiet>time-graph</a>)
-      (let ((samp (floor (* (<a class=quiet href="#srate">srate</a> snd) (<a class=quiet href="#positiontox">position-&gt;x</a> x snd chn)))))
-	(set! (<a class=quiet href="#cursor">cursor</a> snd chn) samp)
-	(set! (<a class=quiet href="#rightsample">right-sample</a> snd chn) 
-          (- samp (floor (* .5 (- (<a class=quiet href="#leftsample">left-sample</a> snd chn) (<a class=quiet href="#rightsample">right-sample</a> snd chn))))))
-	(<a class=quiet href="#updatetimegraph">update-time-graph</a>)
-	#t)
-      #f))
+  (and (= axis <a class=quiet>time-graph</a>)
+       (let ((samp (floor (* (<a class=quiet href="#srate">srate</a> snd) (<a class=quiet href="#positiontox">position-&gt;x</a> x snd chn)))))
+	 (set! (<a class=quiet href="#cursor">cursor</a> snd chn) samp)
+	 (set! (<a class=quiet href="#rightsample">right-sample</a> snd chn) 
+           (- samp (floor (* .5 (- (<a class=quiet href="#leftsample">left-sample</a> snd chn) (<a class=quiet href="#rightsample">right-sample</a> snd chn))))))
+	 (<a class=quiet href="#updatetimegraph">update-time-graph</a>)
+	 #t)))
 
 (hook-push <em class=red>mouse-click-hook</em> 
   (lambda (hook) 
@@ -8313,7 +8311,7 @@ the "P" key to play the previous version of the current sound:
 
 <pre class="indented">
 (define (play-from-cursor current)
-  (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor">cursor</a>) :edit-position (if current #f (- (<a class=quiet href="#editposition">edit-position</a>) 1))))
+  (<em class=red>play</em> (selected-sound) (<a class=quiet href="#cursor">cursor</a>) :edit-position (and (not current) (- (<a class=quiet href="#editposition">edit-position</a>) 1))))
 
 (<a class=quiet href="#bindkey">bind-key</a> (char-&gt;integer #\p) 0 
   (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet>keyboard-no-action</a>))
@@ -8376,9 +8374,8 @@ function option to time the playing of each mix in a sequence of mixes.  Another
             (osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq)))
         (<em class=red>play</em> (lambda ()
 	        (set! len (- len 1))
-	        (if (&lt;= len 0)        ; we've sent 22050 samples, so it's time to stop
-		    #f
-		    (* amp (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)))))))))
+	        (and (positive? len)        ; we've sent 22050 samples, so it's time to stop
+		     (* amp (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)))))))))
 </pre>
 
 <p>Here's another example that plays a sound file, skipping any portion that looks like silence:
@@ -8395,11 +8392,10 @@ function option to time the playing of each mix in a sequence of mixes.  Another
 	    (let loop ()
 	      (set! y (rd))
 	      (set! sum-of-squares (moving-average buffer (* y y)))
-	      (if (sampler-at-end? rd)
-		  #f
-		  (if (&gt; sum-of-squares silence)
-		      y
-		      (loop))))))))
+	      (and (not (sampler-at-end? rd))
+		   (if (&gt; sum-of-squares silence)
+		       y
+		       (loop))))))))
 </pre>
 
 <!-- INDEX playexamples:Playing -->
@@ -11220,7 +11216,7 @@ into an independent Snd process:
 	 (scm1 (string-append (substring tmpf 0 (- (string-length tmpf) 4)) "-1.scm"))
 	 (oldsnd (or snd (<a class=quiet href="#selectedsound">selected-sound</a>)))
 	 (name (<a class=quiet href="#filename">file-name</a> oldsnd)))
-    (if (not (string? (<a class=quiet href="#savedir">save-dir</a>))) (set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp"))
+    (if (string=? (<a class=quiet href="#savedir">save-dir</a>) "") (set! (<a class=quiet href="#savedir">save-dir</a>) "/tmp"))
     (<em class=red>save-edit-history</em> scm oldsnd)
     (<a class=quiet href="#closesound">close-sound</a> oldsnd)
     (with-output-to-file

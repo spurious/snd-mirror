@@ -1104,10 +1104,9 @@
 				   (lambda (w c i)
 				     (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
 					    (txt (cadr (XtGetValues w (list XmNvalue 0))))
-					    (samp (if (and (string? txt) 
-							   (> (length txt) 0))
-						      (string->number txt)
-						      #f)))
+					    (samp (and (string? txt) 
+						       (> (length txt) 0)
+						       (string->number txt))))
 				       (if samp
 					   (if (mark? id)
 					       (set! (mark-sample id) samp))

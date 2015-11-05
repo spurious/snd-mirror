@@ -1103,7 +1103,7 @@ So I bound a few keys:
 
 <pre class="indented">
 (define (play-from-cursor current)
-  (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (- (<a class=quiet href="extsnd.html#editposition">edit-position</a>) 1))))
+  (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (and (not current) (- (<a class=quiet href="extsnd.html#editposition">edit-position</a>) 1))))
 
 (define (play-from-cursor-with-tracking current)
   ;; patterned after pfc in extsnd.html
@@ -1112,7 +1112,7 @@ So I bound a few keys:
     (hook-push <a class=quiet href="extsnd.html#stopplayinghook">stop-playing-hook</a> 
 	       (lambda (hook)
 		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor">with-tracking-cursor</a>) old-tracking)))
-    (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (if current #f (- (<a class=quiet href="extsnd.html#editposition">edit-position</a>) 1)))))
+    (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) #f #f #f #f (and (not current) (- (<a class=quiet href="extsnd.html#editposition">edit-position</a>) 1)))))
 
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\p 0 (lambda () 
                   "play from cursor" 

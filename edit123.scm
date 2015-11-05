@@ -378,20 +378,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (bind-key #xFFBE 0 (lambda () (case status
-				((0) (mark-start 50000))
-				((1) (mark-start 50000))
-				((2) (mark-end   50000))
-				((3) (mark-end   40000))
+				((0 1) (mark-start 50000))
+				((2) (mark-end     50000))
+				((3) (mark-end     40000))
 				(else (set! status 0))
 				)))
 
 
 (bind-key (char->integer #\1) 0 (lambda () (case status
-					     ((0) (mark-start 50000))
-					     ((1) (mark-start 50000))
-					     ((2) (mark-end   50000))
-					     ((3) (mark-end   40000))
-					     (else (set! status 0))
+					     ((0 1) (mark-start 50000))
+					     ((2)   (mark-end   50000))
+					     ((3)   (mark-end   40000))
+					     (else  (set! status 0))
 					     )))
 
 (bind-key (char->integer #\1) 4 (lambda () (case status
@@ -405,7 +403,6 @@
 (bind-key (char->integer #\1) 8 (lambda () (case status
 					     ((0) (set! status 2))
 					     ((1) (set! status 3))
-					     ((2) (set! status 0))
 					     ((3) (set! status 1))
 					     (else (set! status 0))
 					     )))
