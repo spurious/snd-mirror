@@ -414,7 +414,7 @@ void check_for_event(void)
   int i = 0;
   if (ss->checking_explicitly) return;
   ss->checking_explicitly = true;
-  while ((i < 500) && (gtk_events_pending())) /* was 50, but gtk generates a huge number of these events */
+  while ((i < 100) && (gtk_events_pending()))
     {
       gtk_main_iteration();
       i++; /* don't hang! */

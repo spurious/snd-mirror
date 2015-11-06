@@ -1909,7 +1909,11 @@ static int not_heap = -1;
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
+#if 0
+#define slot_set_value(p, Val)        do {if (is_immutable(slot_symbol(p))) fprintf(stderr, "%s[%d]: %p %s %s\n", __func__, __LINE__, p, symbol_name(slot_symbol(p)), s7_object_to_c_string(hidden_sc, Val)); (_TSlt(p))->object.slt.val = _NFre(Val);} while (0)
+#else
 #define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
+#endif
 #define slot_symbol(p)                _TSym((_TSlt(p))->object.slt.sym)
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
@@ -55656,7 +55660,7 @@ static s7_pointer check_define_macro(s7_scheme *sc, opcode_t op)
 		      set_elist_3(sc, make_string_wrapper(sc, "define-macro ~A argument name is not a symbol: ~S"), x, y)));
 
   if ((sc->op == OP_DEFINE_MACRO_STAR) || (sc->op == OP_DEFINE_BACRO_STAR))
-    check_lambda_star_args(sc, cdar(sc->code), NULL);
+    cdar(sc->code) = check_lambda_star_args(sc, cdar(sc->code), NULL);
   else check_lambda_args(sc, cdar(sc->code), NULL);
 
   return(sc->code);
@@ -73754,7 +73758,7 @@ int main(int argc, char **argv)
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
  *   also port-filename|line-number could use let syntax, then maybe add position|data etc -- mock let like *s7*
- *   gc troubles with the string wrapper. Another such case: iterator.
+ *   gc troubles with the string wrapper. Another such case: iterator.  But how to handle default port as in (port-line-number)?
  *
  * append: 44522: what if method not first arg?  use 'value?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
@@ -73773,5 +73777,16 @@ int main(int argc, char **argv)
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
+ *
+ * for pure-s7, get rid of :optional, :key, :rest, and somehow :allow-other-keys -- can this
+ *   be a local value (like procedure-signature) 'allow-other-keys, or maybe 'with-keys [#f #t 'any]
+ *   or perhaps T_ALLOW_OTHER_KEYS on arglist? and T_REST on the :rest args, so no keywords in arglist
+ *   also we are setting the :alloc-other-keys symbol's slots repeatedly! in fill_safe_closure_star 55605 -- it should not be in the arg list
+ *   (define* (f1 a :allow-other-keys) :allow-other-keys), not (f1 1) -> ()!
+ *   and >:allow-other-keys
+ *        error: new-eval: unknown key: (:allow-other-keys (inlet '** () 'exit #<lambda ()> ...
+ *        ; because it is set local?
+ *   I think Rick does not use :key|:optional so it's safe to get rid of them(?)
+ *   lint.scm, s7test.scm, stuff.scm, a ton of doc cases in snd, define** in s7test [remove :optional from resultant arglist]
  */
  

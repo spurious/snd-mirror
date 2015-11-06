@@ -843,39 +843,37 @@
 (define (type-it type)
   (let ((typ (assoc type direct-types)))
     (if typ
-	(if (cdr typ)
-	    (begin
-	      (if (string? (cdr typ))
+	(when (cdr typ)
+	  (if (string? (cdr typ))
+	      (begin
+		(if (not (member type no-c-to-xen))
+		    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ))))
+		(if (not (member type no-xen-to-c))
+		    (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+		(if (not (member type no-xen-p))
+		    (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+			 (no-stars (car typ))
+			 (if (string=? (cdr typ) "INT") 
+			     "integer" 
+			     (if (string=? (cdr typ) "DOUBLE")
+				 "number"
+				 (if (string=? (cdr typ) "ULONG")
+				     "ulong"
+				     (apply string (map char-downcase (cdr typ)))))))))
+	      (if (not (cdr typ)) ; void special case
 		  (begin
-		    (if (not (member type no-c-to-xen))
-			(hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ))))
-		    (if (not (member type no-xen-to-c))
-			(hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
 		    (if (not (member type no-xen-p))
-			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			     (no-stars (car typ))
-			     (if (string=? (cdr typ) "INT") 
-				 "integer" 
-				 (if (string=? (cdr typ) "DOUBLE")
-				     "number"
-				     (if (string=? (cdr typ) "ULONG")
-					 "ulong"
-					 (apply string (map char-downcase (cdr typ)))))))))
-		  (begin
-		    (if (not (cdr typ)) ; void special case
-			(begin
-			  (if (not (member type no-xen-p))
-			      (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
-			  (if (not (member type no-xen-to-c))
-			      (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
-			(begin          ; xen special case
-			  (if (string=? type "etc")
-			      (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%")
-			      (begin
-				(if (not (member type no-xen-p))
-				    (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars (car typ))))
-				(if (not (member type no-xen-to-c))
-				    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))))))
+			(hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
+		    (if (not (member type no-xen-to-c))
+			(hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
+		  (if (string=? type "etc") ; xen special case
+		      (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%")
+		      (begin
+			(if (not (member type no-xen-p))
+			    (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars (car typ))))
+			(if (not (member type no-xen-to-c))
+			    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))
+
 	(if (and (not (string=? type "lambda"))
 		 (not (string=? type "lambda_data"))
 		 (not (string=? type "GError*"))
@@ -1265,13 +1263,12 @@
 (for-each
  (lambda (type)
    (let* ((len (length type))
-	  (dereftype (if (and (char=? (type (- len 1)) #\*)
-			      (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
-			      (not (string=? type "GError*"))
-			      (not (string=? type "GError**"))
-			      (not (string=? type "gchar*")))
-			 (substring type 0 (- len 1)) 
-			 #f)))
+	  (dereftype (and (char=? (type (- len 1)) #\*)
+			  (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
+			  (not (string=? type "GError*"))
+			  (not (string=? type "GError**"))
+			  (not (string=? type "gchar*"))
+			  (substring type 0 (- len 1)))))
      (if (and dereftype
 	      (assoc dereftype direct-types))
 	 (set! listable-types (cons type listable-types)))))
@@ -2621,9 +2618,7 @@
 		((string=? direct "DOUBLE")                'real?)
 		((string=? direct "String")                'string?)
 		(#t #t)))
-	(if (has-stars gtk)
-	    'pair?
-	    #t))))
+	(or (not (has-stars gtk)) 'pair?))))
 	       
 (define (make-signature fnc)
   (define (compress sig)

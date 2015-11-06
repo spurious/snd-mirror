@@ -509,8 +509,6 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int
 
   /* In s7, (define* (name . args) body) or (define name (lambda* args body))
    *   define a function that takes optional (keyword) named arguments.
-   *   The keywords :key and :optional are ok, but they are ignored --
-   *   they exist to be compatible with other define* implementations.  
    *   The "args" is a list that can contain either names (normal arguments),
    *   or lists of the form (name default-value), in any order.  When called,
    *   the names are bound to their default values (or #f), then the function's
@@ -520,17 +518,11 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, int
    *   (as normal for a function).  So,
    *   
    *   (define* (hi a (b 32) (c "hi")) (list a b c))
+   *     (hi 1) -> '(1 32 "hi")
+   *     (hi :b 2 :a 3) -> '(3 2 "hi")
+   *     (hi 3 2 1) -> '(3 2 1)
    *
-   *   is equivalent to other implementations (define* (hi a :key (b 32) ...))
-   *   or (define* (hi a :optional (b 32) ...)) -- these args are all
-   *   "optional-key" args in CLM jargon.
-   *
-   *   (hi 1) -> '(1 32 "hi")
-   *   (hi :b 2 :a 3) -> '(3 2 "hi")
-   *   (hi 3 2 1) -> '(3 2 1)
-   *
-   *   and so on.  :rest causes its argument to be bound to the rest
-   *   of the arguments at that point.
+   *   :rest causes its argument to be bound to the rest of the arguments at that point.
    *
    * The C connection to this takes the function name, the C function to call, the argument 
    *   list as written in Scheme, and the documentation string.  s7 makes sure the arguments

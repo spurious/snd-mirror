@@ -47,7 +47,7 @@
 	 (utargs (let ((arg-names ()))
 		   (for-each
 		    (lambda (a)
-		      (if (not (keyword? a)) ; redundant :optional or something
+		      (if (not (keyword? a))
 			  (if (symbol? a)
 			      (set! arg-names (cons a arg-names))
 			      (set! arg-names (cons (car a) arg-names)))))

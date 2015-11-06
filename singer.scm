@@ -420,7 +420,7 @@
 	    
 	    ;; next tract tick
 	    (let ((j 0)
-		  (temp1 0.0)
+		  ;(temp1 0.0)
 		  (temp (dline2 2)))
 	      (set! lt1 (one-pole lp (+ (dline1 2) temp)))
 

@@ -664,8 +664,6 @@ The last argument
 can be preceded by :rest or a dot to indicate that all other trailing arguments
 should be packaged as a list under that argument's name.  A trailing or rest
 argument's default value is ().
-You can use
-:optional and :key, but they are ignored.  
 </p>
 
 <pre class="indented">
@@ -778,10 +776,6 @@ in the key position.  These problems arise in a case such as
 argument keyword: <code>(f :a :c)</code>, or make the default value a keyword:
 <code>(define* (f (a :c) ...))</code>.
 To turn off this error check, add :allow-other-keys at the end of the parameter list.
-</p>
-
-<p>See define** in s7test.scm for a version of define* that complains
-if any arguments before :optional are omitted.
 </p>
 
 </div>
