@@ -988,7 +988,7 @@ struct s7_scheme {
   s7_pointer WRONG_TYPE_ARG, wrong_type_arg_info, OUT_OF_RANGE, out_of_range_info;
   s7_pointer simple_wrong_type_arg_info, simple_out_of_range_info, DIVISION_BY_ZERO, DIVISION_BY_ZERO_ERROR, NO_CATCH, IO_ERROR, INVALID_ESCAPE_FUNCTION;
   s7_pointer FORMAT_ERROR, WRONG_NUMBER_OF_ARGS, READ_ERROR, STRING_READ_ERROR, SYNTAX_ERROR, TOO_MANY_ARGUMENTS, NOT_ENOUGH_ARGUMENTS;
-  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE, BAFFLED;
+  s7_pointer KEY_REST, KEY_ALLOW_OTHER_KEYS, KEY_READABLE, BAFFLED;
   s7_pointer __FUNC__;
   s7_pointer Object_Set;               /* applicable object set method */
   s7_pointer FEED_TO;                  /* => */
@@ -1530,9 +1530,16 @@ static s7_scheme *hidden_sc = NULL;
  */
 
 #define T_SETTER                      (1 << (TYPE_BITS + 17))
-#define set_setter(p)                 typeflag(_NFre(p)) |= T_SETTER
-#define is_setter(p)                  ((typeflag(_NFre(p)) & T_SETTER) != 0)
+#define set_setter(p)                 typeflag(_TSym(p)) |= T_SETTER
+#define is_setter(p)                  ((typeflag(_TSym(p)) & T_SETTER) != 0)
 /* optimizer flag for a procedure that sets some variable (set-car! for example). */
+
+#define T_ALLOW_OTHER_KEYS            T_SETTER
+#define set_allow_other_keys(p)       typeflag(_TLst(p)) |= T_ALLOW_OTHER_KEYS
+#define allows_other_keys(p)          ((typeflag(_TLst(p)) & T_ALLOW_OTHER_KEYS) != 0)
+/* marks arglist that allows keyword args other than those in the parameter list; can't allow
+ *   (define* (f :allow-other-keys)...) because there's only one nil, and besides, it does say "other".
+ */
 
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(_TNum(p)) & T_MUTABLE) != 0)
@@ -1909,11 +1916,7 @@ static int not_heap = -1;
 
 #define is_slot(p)                    (type(p) == T_SLOT)
 #define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
-#if 0
-#define slot_set_value(p, Val)        do {if (is_immutable(slot_symbol(p))) fprintf(stderr, "%s[%d]: %p %s %s\n", __func__, __LINE__, p, symbol_name(slot_symbol(p)), s7_object_to_c_string(hidden_sc, Val)); (_TSlt(p))->object.slt.val = _NFre(Val);} while (0)
-#else
 #define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
-#endif
 #define slot_symbol(p)                _TSym((_TSlt(p))->object.slt.sym)
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
@@ -6939,7 +6942,7 @@ static bool direct_memq(s7_pointer symbol, s7_pointer symbols)
 }
 
 static bool indirect_memq(s7_pointer symbol, s7_pointer symbols)
-{
+{ /* used only below in do_symbol_is_safe */
   s7_pointer x;
   for (x = symbols; is_pair(x); x = cdr(x))
     if (caar(x) == symbol)
@@ -30870,7 +30873,15 @@ static void write_closure_readably_1(s7_scheme *sc, s7_pointer obj, s7_pointer a
   if (type(obj) == T_CLOSURE_STAR)  
     port_write_string(port)(sc, "(lambda* ", 9, port);
   else port_write_string(port)(sc, "(lambda ", 8, port);
-  object_out(sc, arglist, port, USE_WRITE); /* here we just want the straight output (a b) not (list 'a 'b) */
+
+  if ((is_pair(arglist)) &&
+      (allows_other_keys(arglist)))
+    {
+      sc->temp9 = s7_append(sc, arglist, cons(sc, sc->KEY_ALLOW_OTHER_KEYS, sc->NIL));
+      object_out(sc, sc->temp9, port, USE_WRITE);
+      sc->temp9 = sc->NIL;
+    }
+  else object_out(sc, arglist, port, USE_WRITE); /* here we just want the straight output (a b) not (list 'a 'b) */
 
   old_print_length = sc->print_length;
   sc->print_length = 1048576;
@@ -42113,27 +42124,31 @@ static s7_pointer closure_arity_to_cons(s7_scheme *sc, s7_pointer x, s7_pointer 
 
 static void closure_star_arity_1(s7_scheme *sc, s7_pointer x, s7_pointer args)
 {
-  /* The lambda* list can contain the pure noise words :key and :optional (removed earlier),
-   *   :rest = any number ok, :allow-other-keywords = any number of key/value pairs
-   * but all args are optional, so here arity reflects the max args possible, min is always 0.
-   * arity = mx or -1
-   */
   if (closure_arity_unknown(x))
     {
-      s7_pointer p;
-      int i;
-      for (i = 0, p = args; is_pair(p); p = cdr(p))
+      if (is_null(args))
+	closure_arity(x) = 0;
+      else
 	{
-	  s7_pointer arg;
-	  arg = car(p);
-	  if ((arg == sc->KEY_REST) ||
-	      (arg == sc->KEY_ALLOW_OTHER_KEYS))
-	    break;
-	  i++;
+	  if (allows_other_keys(args))
+	    closure_arity(x) = -1;
+	  else
+	    {
+	      s7_pointer p;
+	      int i;
+	      for (i = 0, p = args; is_pair(p); p = cdr(p))
+		{
+		  s7_pointer arg;
+		  arg = car(p);
+		  if (arg == sc->KEY_REST)
+		    break;
+		  i++;
+		}
+	      if (is_null(p))
+		closure_arity(x) = i;
+	      else closure_arity(x) = -1; /* see below */
+	    }
 	}
-      if (is_null(p))
-	closure_arity(x) = i;
-      else closure_arity(x) = -1; /* see below */
     }
 }
 
@@ -49398,128 +49413,116 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    * :key and :optional are just noise words, so these have already been spliced out of the arg list
    */
 
-  bool allow_other_keys = false;
+  bool allow_other_keys;
   s7_pointer lx, cx, zx;
 
   /* get the current args, re-setting args that have explicit values */
   cx = closure_args(sc->code);
+  allow_other_keys = ((is_pair(cx)) && (allows_other_keys(cx)));
   lx = sc->args;
 
   zx = sc->NIL;
   while ((is_pair(cx)) &&
 	 (is_pair(lx)))
     {
-      if (car(cx) == sc->KEY_ALLOW_OTHER_KEYS)
+      if (car(cx) == sc->KEY_REST)           /* the rest arg */
 	{
-	  allow_other_keys = true;
+	  /* next arg is bound to trailing args from this point as a list */
+	  zx = sc->KEY_REST;
+	  cx = cdr(cx);
+	  
+	  if (is_pair(car(cx)))
+	    lambda_star_argument_set_value(sc, caar(cx), lx);
+	  else lambda_star_argument_set_value(sc, car(cx), lx);
+	  
+	  lx = cdr(lx);
 	  cx = cdr(cx);
 	}
       else
 	{
-	  if (car(cx) == sc->KEY_REST)           /* the rest arg */
+	  /* mock-symbols introduce an ambiguity here; if the object's value is a keyword, is that
+	   *   intended to be used as an argument name or value?
+	   */
+	  s7_pointer car_lx;
+	  car_lx = car(lx);
+	  if (has_methods(car_lx))
+	    car_lx = check_values(sc, car_lx, lx);
+	  if ((is_pair(cdr(lx))) &&
+	      (is_keyword(car_lx)))
 	    {
-	      /* next arg is bound to trailing args from this point as a list */
-	      zx = sc->KEY_REST;
-	      cx = cdr(cx);
-
-	      if (is_pair(car(cx)))
-		lambda_star_argument_set_value(sc, caar(cx), lx);
-	      else lambda_star_argument_set_value(sc, car(cx), lx);
-
-	      lx = cdr(lx);
-	      cx = cdr(cx);
-	      if (unchecked_car(cx) == sc->KEY_ALLOW_OTHER_KEYS)
-		break;
-	    }
-	  else
-	    {
-	      /* mock-symbols introduce an ambiguity here; if the object's value is a keyword, is that
-	       *   intended to be used as an argument name or value?
-	       */
-	      s7_pointer car_lx;
-	      car_lx = car(lx);
-	      if (has_methods(car_lx))
-		car_lx = check_values(sc, car_lx, lx);
-	      if ((is_pair(cdr(lx))) &&
-		  (is_keyword(car_lx)))
+	      /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
+	      s7_pointer sym;
+	      sym = keyword_symbol(car_lx);
+	      
+	      if (lambda_star_argument_set_value(sc, sym, car(cdr(lx))) == sc->NO_VALUE)
 		{
-		  /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
-		  s7_pointer sym;
-		  sym = keyword_symbol(car_lx);
-
-		  if (lambda_star_argument_set_value(sc, sym, car(cdr(lx))) == sc->NO_VALUE)
+		  /* if default value is a key, go ahead and use this value.
+		   *    (define* (f (a :b)) a) (f :c)
+		   * this has become much trickier than I anticipated...
+		   */
+		  if (allow_other_keys)
 		    {
-		      /* if default value is a key, go ahead and use this value.
-		       *    (define* (f (a :b)) a) (f :c)
-		       * this has become much trickier than I anticipated...
+		      /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3
+		       * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
 		       */
-
-		      if ((allow_other_keys) ||
-			  (direct_memq(sc->KEY_ALLOW_OTHER_KEYS, cx)))
+		      lx = cddr(lx);
+		      continue;
+		    }
+		  else
+		    {
+		      if ((is_pair(car(cx))) &&
+			  (is_keyword(cadar(cx))))
 			{
-			  allow_other_keys = true;
-			  /* in CL: (defun hi (&key (a 1) &allow-other-keys) a) (hi :b :a :a 3) -> 3
-			   * in s7: (define* (hi (a 1) :allow-other-keys) a)    (hi :b :a :a 3) -> 3
-			   */
-			  lx = cddr(lx);
-			  continue;
-			}
-		      else
-			{
-			  if ((is_pair(car(cx))) &&
-			      (is_keyword(cadar(cx))))
+			  /* cx is the closure args list, not the copy of it in the curlet */
+			  s7_pointer x;
+			  
+			  x = find_symbol(sc, caar(cx));
+			  if (is_slot(x))
 			    {
-			      /* cx is the closure args list, not the copy of it in the curlet */
-			      s7_pointer x;
-
-			      x = find_symbol(sc, caar(cx));
-			      if (is_slot(x))
+			      if (is_not_checked_slot(x))
 				{
-				  if (is_not_checked_slot(x))
-				    {
-				      set_checked_slot(x);
-				      slot_set_value(x, car(lx));
-				    }
-				  else
-				    {
-				      /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
-				      return(s7_error(sc, sc->WRONG_TYPE_ARG,
-						      set_elist_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
-								      closure_name(sc, sc->code), lx, sc->args)));
-				    }
+				  set_checked_slot(x);
+				  slot_set_value(x, car(lx));
 				}
 			      else
 				{
+				  /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
 				  return(s7_error(sc, sc->WRONG_TYPE_ARG,
-						  set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-								  closure_name(sc, sc->code), lx, sc->args)));
+						  set_elist_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
+							      closure_name(sc, sc->code), lx, sc->args)));
 				}
-			      /* (define* (f a (b :c)) b) (f :b 1 :d) */
 			    }
 			  else
 			    {
 			      return(s7_error(sc, sc->WRONG_TYPE_ARG,
 					      set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-							      closure_name(sc, sc->code), lx, sc->args)));
+							  closure_name(sc, sc->code), lx, sc->args)));
 			    }
+			  /* (define* (f a (b :c)) b) (f :b 1 :d) */
+			}
+		      else
+			{
+			  return(s7_error(sc, sc->WRONG_TYPE_ARG,
+					  set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
+						      closure_name(sc, sc->code), lx, sc->args)));
 			}
 		    }
-		  lx = cdr(lx);
-		  if (is_pair(lx)) lx = cdr(lx);
 		}
-	      else                                  /* not a key/value pair */
-		{
-		  /* this is always a positional (i.e. direct) change, but the closure_args are in the
-		   *   definition order whereas currently the environment slots are in reverse order.
-		   */
-		  if (is_pair(car(cx)))
-		    lambda_star_argument_set_value(sc, caar(cx), car(lx));
-		  else lambda_star_argument_set_value(sc, car(cx), car(lx));
-
-		  lx = cdr(lx);
-		}
-	      cx = cdr(cx);
+	      lx = cdr(lx);
+	      if (is_pair(lx)) lx = cdr(lx);
 	    }
+	  else                                  /* not a key/value pair */
+	    {
+	      /* this is always a positional (i.e. direct) change, but the closure_args are in the
+	       *   definition order whereas currently the environment slots are in reverse order.
+	       */
+	      if (is_pair(car(cx)))
+		lambda_star_argument_set_value(sc, caar(cx), car(lx));
+	      else lambda_star_argument_set_value(sc, car(cx), car(lx));
+	      
+	      lx = cdr(lx);
+	    }
+	  cx = cdr(cx);
 	}
     }
 
@@ -54217,28 +54220,19 @@ static s7_pointer check_lambda_star_args(s7_scheme *sc, s7_pointer args, int *ar
 	    {
 	      if (s7_is_constant(car_w))
 		{
-		  if ((car_w == sc->KEY_KEY) ||
-		      (car_w == sc->KEY_OPTIONAL))
+		  if (car_w == sc->KEY_ALLOW_OTHER_KEYS)
 		    {
-		      if ((!is_pair(cdr(w))) ||                   /* (lambda* (:key) 1) or (lambda* (:key . b) 1) */
-			  (is_immutable(cadr(w))))                /* (lambda* (:key :optional) 1) */
-			eval_error(sc, "lambda* :key or :optional parameter must be a normal symbol: ~A", w);
+		      if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
+			eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
 		      if (w == top)
-			top = cdr(w);
-		      else cdr(v) = cdr(w);
+			eval_error(sc, ":allow-other-keys can't be the only parameter: ~A", args);
+		      set_allow_other_keys(top);
+		      cdr(v) = sc->NIL;
 		    }
-		  else
-		    {
-		      if (car_w == sc->KEY_ALLOW_OTHER_KEYS)
-			{
-			  if (is_not_null(cdr(w)))                /* (lambda* (:allow-other-keys x) x) */
-			    eval_error(sc, ":allow-other-keys should be the last parameter: ~A", args);
-			}
-		      else                                        /* (lambda* (pi) ...) */
-			eval_error(sc, "lambda* parameter '~A is a constant", car_w);
-		    }
+		  else                                        /* (lambda* (pi) ...) */
+		    eval_error(sc, "lambda* parameter '~A is a constant", car_w);
 		}
-	      if (symbol_is_in_arg_list(car_w, cdr(w)))          /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
+	      if (symbol_is_in_arg_list(car_w, cdr(w)))       /* (lambda* (a a) ...) or (lambda* (a . a) ...) */
 		eval_error(sc, "lambda* parameter '~A is used twice in the argument list", car_w);
 
 	      if (!is_keyword(car_w)) set_local(car_w);
@@ -57058,7 +57052,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 		    return(false);
 		  else
 		    {
-		      if (is_setter(car(expr))) /* "setter" includes stuff like cons and vector */
+		      if (is_setter(x)) /* "setter" includes stuff like cons and vector -- x is a symbol */
 			{
 			  /* (hash-table-set! ht i 0) -- caddr is being saved, so this is not safe
 			   *   similarly (vector-set! v 0 i) etc
@@ -57069,7 +57063,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 				  (!is_pair(cddr(expr))) ||
 				  (!is_pair(cdddr(expr))) ||
 				  (is_pair(cddddr(expr))) ||
-				  ((car(expr) == sc->HASH_TABLE_SET) &&
+				  ((x == sc->HASH_TABLE_SET) &&
 				   (is_symbol(caddr(expr))) && 
 				   (direct_memq(caddr(expr), steppers))) ||
 				  ((is_symbol(cadddr(expr))) && 
@@ -72776,8 +72770,6 @@ s7_scheme *s7_init(void)
   sc->INVALID_ESCAPE_FUNCTION = make_symbol(sc, "invalid-escape-function");
   sc->BAFFLED =              make_symbol(sc, "baffled!");
 
-  sc->KEY_KEY =              s7_make_keyword(sc, "key");
-  sc->KEY_OPTIONAL =         s7_make_keyword(sc, "optional");
   sc->KEY_ALLOW_OTHER_KEYS = s7_make_keyword(sc, "allow-other-keys");
   sc->KEY_REST =             s7_make_keyword(sc, "rest");
   sc->KEY_READABLE =         s7_make_keyword(sc, "readable");
@@ -73203,7 +73195,6 @@ s7_scheme *s7_init(void)
   sc->VECTOR =                defun("vector",		vector,			0, 0, true);
   set_setter(sc->VECTOR); /* like cons, I guess */
   sc->Vector = slot_value(global_slot(sc->VECTOR));
-  set_setter(sc->Vector);
 
   sc->FLOAT_VECTOR =          defun("float-vector",	float_vector,		0, 0, true);
   sc->MAKE_FLOAT_VECTOR =     defun("make-float-vector", make_float_vector,	1, 1, false);
@@ -73407,32 +73398,25 @@ s7_scheme *s7_init(void)
 
 
   sc->Vector_Set = slot_value(global_slot(sc->VECTOR_SET));
-  set_setter(sc->Vector_Set);
   set_setter(sc->VECTOR_SET);
   /* not float-vector-set! here */
 
   sc->List_Set = slot_value(global_slot(sc->LIST_SET));
-  set_setter(sc->List_Set);
   set_setter(sc->LIST_SET);
 
   sc->Hash_Table_Set = slot_value(global_slot(sc->HASH_TABLE_SET));
-  set_setter(sc->Hash_Table_Set);
   set_setter(sc->HASH_TABLE_SET);
 
   sc->Let_Set = slot_value(global_slot(sc->LET_SET));
-  set_setter(sc->Let_Set);
   set_setter(sc->LET_SET);
 
   set_setter(sc->CONS); /* (this blocks an over-eager do loop optimization -- see do-test-15 in s7test) */
 
   sc->String_Set = slot_value(global_slot(sc->STRING_SET));
-  set_setter(sc->String_Set);
   set_setter(sc->STRING_SET);
 
   set_setter(sc->SET_CAR);
-  set_setter(slot_value(global_slot(sc->SET_CAR)));
   set_setter(sc->SET_CDR);
-  set_setter(slot_value(global_slot(sc->SET_CDR)));
 
 #if (!WITH_PURE_S7)
   set_setter(s7_make_symbol(sc, "set-current-input-port"));
@@ -73732,7 +73716,7 @@ int main(int argc, char **argv)
  * tform         |      |      | 6816 | 3627  3589
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
- * lg            |      |      | 6547 | 7201  8107
+ * lg            |      |      | 6547 | 7201  7870
  * thash         |      |      | 50.7 | 8491  8484
  *               |      |      |      |      
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
@@ -73778,15 +73762,11 @@ int main(int argc, char **argv)
  * is define-constant consistent in use of local/global slots? check gc mark
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
  *
- * for pure-s7, get rid of :optional, :key, :rest, and somehow :allow-other-keys -- can this
- *   be a local value (like procedure-signature) 'allow-other-keys, or maybe 'with-keys [#f #t 'any]
- *   or perhaps T_ALLOW_OTHER_KEYS on arglist? and T_REST on the :rest args, so no keywords in arglist
- *   also we are setting the :alloc-other-keys symbol's slots repeatedly! in fill_safe_closure_star 55605 -- it should not be in the arg list
- *   (define* (f1 a :allow-other-keys) :allow-other-keys), not (f1 1) -> ()!
- *   and >:allow-other-keys
- *        error: new-eval: unknown key: (:allow-other-keys (inlet '** () 'exit #<lambda ()> ...
- *        ; because it is set local?
- *   I think Rick does not use :key|:optional so it's safe to get rid of them(?)
- *   lint.scm, s7test.scm, stuff.scm, a ton of doc cases in snd, define** in s7test [remove :optional from resultant arglist]
+ * perhaps T_REST on the :rest args, so no keywords in (runtime) arglist
+ *   this is tricky -- closure_name for example assumes :rest is still in the list
+ *   need readable o->str of func* with these args,
+ *
+ * s7 version as number for reader-cond, also snd-version also dates? NEWS? move to *s7*?
+ * (safety>0): if string|vector|list-set or set-car|cdr to immutable val? can lint get this info?
  */
  

@@ -210,7 +210,9 @@
       (set! (procedure-setter cadddr) set-cadddr!)
       (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
       (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
-      (define make-var (lambda* (name ref set fnc typ val :allow-other-keys) (list name ref set fnc typ val)))
+      ;; (define make-var (lambda* (name ref set fnc typ val :allow-other-keys) (list name ref set fnc typ val)))
+      ;;   this :allow-other-keys is protecting us from bizarre keyword uses in non-s7 code.  
+      (define* (make-var name ref set fnc typ val) (list name ref set fnc typ val))
       (define-constant var? pair?)
       (define-constant var-member assq)
 
@@ -1508,7 +1510,8 @@
 		   (if (and (rational? (car args))
 			    (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
 		       (sqrt (car args)) ; don't collapse (sqrt (* a a)), a=-1 for example
-		       form)))
+		       `(sqrt ,@args))
+		   form))
 	      
 	      ((floor round ceiling truncate)
 	       (if (= len 1)
@@ -1593,7 +1596,7 @@
 	       (if (and (= len 2)
 			(morally-equal? (cadr args) 0.0)) ; morally so that 0 matches
 		   (car args)
-		   form))
+		   `(complex ,@args)))
 	       
 	      ((rationalize lognot ash modulo remainder quotient)
 	       (if (just-rationals? args)
@@ -2093,18 +2096,6 @@
 	   (if (every? (lambda (x) (and (char? x) (not (member x '(#\null #\newline #\escape #\linefeed))))) (cdr form))
 	       (lint-format "~A could be ~S" name form (apply string (cdr form)))))
 
-	  ((string-append)
-	   ;; also (string-append . constants)? and (string-append)->""
-	   (if (not (= line-number last-simplify-boolean-line-number))
-	       (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
-		 (if (null? args)
-		     (lint-format "this is pointless:~A" name (truncated-list->string form))
-		     (if (null? (cdr args))
-			 (lint-format "possible simplification:~A" name (lists->string form (car args)))
-			 (if (< (length args) (length (cdr form)))
-			     (lint-format "possible simplification:~A" name (lists->string form `(string-append ,@args))))))
-		 (set! last-simplify-boolean-line-number line-number))))
-
 	  ((vector-ref list-ref hash-table-ref let-ref)
 	   (if (= (length form) 3)
 	       (let ((seq (cadr form)))
@@ -2188,10 +2179,63 @@
 		      (eq? (caadr form) (let ((p (assq head inverses))) (and (pair? p) (cdr p)))))
 		 (lint-format "~A could be ~A" name form (cadadr form)))))
 	  
+	  ((string-append)
+	   (if (not (= line-number last-simplify-boolean-line-number))
+	       (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
+		 (if (null? args)
+		     (lint-format "possible simplification:~A" name (lists->string form ""))
+		     (if (null? (cdr args))
+			 (lint-format "possible simplification:~A" name (lists->string form (car args)))
+			 (if (every? string? args)
+			     (lint-format "possible simplification:~A" name (lists->string form (apply string-append args)))
+			     (if (not (equal? args (cdr form)))
+				 (lint-format "possible simplification:~A" name (lists->string form `(string-append ,@args)))))))
+		 (set! last-simplify-boolean-line-number line-number))))
+
+	  ((vector-append)
+	   (if (not (= line-number last-simplify-boolean-line-number))
+	       (let ((args (remove-all #() (splice-if (lambda (x) (eq? x 'vector-append)) (cdr form)))))
+		 (if (null? args)
+		     (lint-format "possible simplification:~A" name (lists->string form #()))
+		     (if (null? (cdr args))
+			 (lint-format "possible simplification:~A" name (lists->string form (car args)))
+			 (if (every? vector? args)
+			     (lint-format "possible simplification:~A" name (lists->string form (apply vector-append args)))
+			     (if (not (equal? args (cdr form)))
+				 (lint-format "possible simplification:~A" name (lists->string form `(vector-append ,@args)))))))
+		 (set! last-simplify-boolean-line-number line-number))))
+
 	  ((append)
-	   ;; also (append . constants)? and (append)->()
-	   (if (= (length form) 2)
-	       (lint-format "~A could be ~A" name form (cadr form))))
+	   (unless (= line-number last-simplify-boolean-line-number)
+	     (set! last-simplify-boolean-line-number line-number)
+	     (letrec ((splice-append (lambda (lst)
+				       (cond ((null? lst) ())
+					     ((pair? lst)
+					      (if (and (pair? (car lst))
+						       (eq? (caar lst) 'append))
+						  (if (null? (cdar lst))
+						      (cons () (splice-append (cdr lst)))
+						      (append (splice-append (cdar lst)) (splice-append (cdr lst))))
+						  (cons (car lst) (splice-append (cdr lst)))))
+					     (#t lst)))))
+	       (let ((new-args (splice-append (cdr form))))
+					;(format *stderr* "args: ~A -> ~A~%" (cdr form) new-args)
+		 (let ((len1 (length new-args)))
+		   (case len1
+		     ((0)					; (append) -> ()
+		      (lint-format "possible simplification:~A" name (lists->string form ())))
+		     ((1)                                 ; (append x) -> x
+		      (lint-format "possible simplification:~A" name (lists->string form (car new-args))))
+		     ((2)
+		      (if (null? (cadr new-args))         ; (append (list x) ()) -> (list x)
+			  (lint-format "possible simplification:~A" name (lists->string form (car new-args)))
+			  (if (null? (car new-args))      ; (append () x) -> x
+			      (lint-format "possible simplification:~A" name (lists->string form (cadr new-args)))
+			      (if (not (equal? (cdr form) new-args))
+				  (lint-format "possible simplification:~A" name (lists->string form `(append ,@new-args)))))))
+		     (else                                ; (append '(1) (append '(2) '(3))) -> (append '(1) '(2) '(3))
+		      (if (not (equal? (cdr form) new-args))
+			  (lint-format "possible simplification:~A" name (lists->string form `(append ,@new-args)))))))))))
 
 	  ((apply) 
 	   (if (and (pair? (cdr form))
@@ -2368,7 +2412,7 @@
 			      (for-each
 			       (lambda (arg)
 				 (if (and (keyword? arg)
-					  (not (memq arg '(:rest :key :optional)))
+					  (not (eq? arg :rest))
 					  (not (member (keyword->symbol arg) pargs 
 						       (lambda (a b)
 							 (if (pair? b) 
@@ -2414,7 +2458,7 @@
 						  (for-each
 						   (lambda (arg)
 						     (if (and (keyword? arg)
-							      (not (memq arg '(:rest :key :optional)))
+							      (not (eq? arg :rest))
 							      (not (member arg decls 
 									   (lambda (a b) 
 									     (if (pair? b) 
@@ -2617,10 +2661,15 @@
 	     (hash-table-set! globals (cadr form) (make-var (cadr form) :fnc (list head (caddr form)))))
 	    
 	    ((define)
-	     (if (pair? (cadr form))
-		 (if (symbol? (caadr form))
-		     (hash-table-set! globals (caadr form) (make-var (caadr form) :fnc (list head (cdadr form)))))
-		 (hash-table-set! globals (cadr form) (make-var (cadr form) :val (and (pair? (cddr form)) (caddr form))))))
+	     (let ((name (cadr form)))
+	       (if (pair? name)
+		   (let ((fname (car name)))
+		     (if (symbol? fname)
+			 (if (keyword? fname)
+			     (lint-format "in s7 keywords are constants ~A" name form)
+			     (hash-table-set! globals fname (make-var fname :fnc (list head (cdr name)))))
+			 (lint-format "what is this? ~A" name form)))
+		   (hash-table-set! globals name (make-var name :val (and (pair? (cddr form)) (caddr form)))))))
 
 	    ((define* definstrument defanimal define-expansion define-macro define-macro* define-bacro define-bacro*)
 	     (hash-table-set! globals (car (cadr form)) (make-var (car (cadr form)) :fnc (list head (cdr (cadr form))))))
@@ -2901,7 +2950,7 @@
 				      (map
 				       (lambda (arg)
 					 (if (symbol? arg)
-					     (if (memq arg '(:optional :key :rest :allow-other-keys))
+					     (if (memq arg '(:rest :allow-other-keys))
 						 (values)                  ; map omits this entry 
 						 (make-var arg))
 					     (if (or (not (pair? arg))
@@ -2969,6 +3018,9 @@
 			       (begin
 				 ;(set! env (cons (list (make-var sym :typ (->type val))) env))
 				 ;(format *stderr* "env: ~A~%" env)
+				 
+				 (if (keyword? sym)
+				     (lint-format "in s7, keywords are constants. ~A" name sym))
 
 				 (if (memq head '(define define-constant define-envelope))
 				     (let ((len (length form)))
@@ -3002,7 +3054,10 @@
 				     (if (and (eq? head 'definstrument)
 					      (string? (car val)))
 					 (set! val (cdr val)))
-				     (lint-walk-function head (car sym) (cdr sym) val env))
+
+				     (if (keyword? (car sym))
+					 (lint-format "in s7, keywords are constants ~A" name (car sym))
+					 (lint-walk-function head (car sym) (cdr sym) val env)))
 				   
 				   (begin
 				     (lint-format "strange form: ~S" head form)
@@ -3285,7 +3340,10 @@
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (begin
 				     (lint-walk name (cadar bindings) env)
-				     (set! vars (append (list (make-var (caar bindings) :typ (->type (cadar bindings)))) vars)))))
+				     (set! vars (append (list (make-var :name (caar bindings) 
+									:typ (->type (cadar bindings)) 
+									:val (and (pair? (cddar bindings)) (caddar bindings))))
+							vars)))))
 			     
 			     ;; walk the step exprs
 			     (do ((bindings step-vars (cdr bindings)))
@@ -3305,13 +3363,37 @@
 				 (let ((end+result (caddr form)))
 				   (lint-walk-body name head (cddr form) (append vars env))
 				   (if (pair? end+result)
-				       (if (never-false (car end+result))
-					   (lint-format "end test is never false: ~A" name (car end+result))
-					   (if (car end+result) ; not #f
-					       (if (never-true (car end+result))
-						   (lint-format "end test is never true: ~A" name (car end+result)))
-					       (if (pair? (cdr end+result))
-						   (lint-format "result is unreachable: ~A" name end+result))))))
+				       (let ((end (car end+result)))
+					 (if (never-false end)
+					     (lint-format "end test is never false: ~A" name end)
+					     (if end ; it's not #f
+						 (if (never-true end)
+						     (lint-format "end test is never true: ~A" name end)
+						     (let ((v (and (pair? end)
+								   (memq (car end) '(< > <= >=))
+								   (pair? (cdr end))
+								   (symbol? (cadr end))
+								   (member (cadr end) vars (lambda (a b) (eq? a (var-name b)))))))
+						       ;; if found, v is the var info
+						       (when (pair? v)
+							 (let ((step (var-value (car v))))
+							   (when (pair? step)
+							     (let ((inc (and (memq (car step) '(+ -))
+									     (pair? (cdr step))
+									     (pair? (cddr step))
+									     (or (and (real? (cadr step)) (cadr step))
+										 (and (real? (caddr step)) (caddr step))))))
+							       (when (real? inc)
+								 (if (or (and (eq? (car step) '+)
+									      (positive? inc)
+									      (memq (car end) '(< <=)))
+									 (and (eq? (car step) '-)
+									      (positive? inc)
+									      (memq (car end) '(> >=))))
+								     (lint-format "do step looks like it doesn't match end test:~A" name 
+										  (lists->string step end))))))))))
+						 (if (pair? (cdr end+result))
+						     (lint-format "result is unreachable: ~A" name end+result)))))))
 				 (lint-walk-body name head (cdddr form) (append vars env)))
 			     (report-usage name 'variable head vars)
 
