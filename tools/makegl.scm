@@ -120,8 +120,7 @@
   (let ((len (length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (- len 1) (- i 1))
-	    (ctr 0 (+ 1 ctr)))
+       (do ((i (- len 1) (- i 1)))
 	   ((= i 0) #f)
 	 (if (char=? (type i) #\*)
 	     (return #t)))

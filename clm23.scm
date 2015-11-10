@@ -17,13 +17,13 @@
 ;;; array of gen -> vector (and setf aref to vector-set! in this case)
 ;;; nil -> #f, t -> #t
 ;;; incf, decf to explicit sets
-;;; length sometimes length, length etc
+;;; length sometimes length, vector-length etc
 ;;; make-filter in scm requires coeffs arrays
 ;;; &optional, &key -> define*
 ;;; two-pi -> (* 2 pi)
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
 ;;; make-locsig channel arg is in a different place
-;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes -> do
+;;; progn -> begin, dotimes -> do
 ;;; string= -> string=? (also string-equal)
 ;;; integerp -> integer? and others like it (null -> null? is the tricky one)
 ;;; sound-duration -> mus-sound-duration and similarly for others

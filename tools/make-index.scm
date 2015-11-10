@@ -946,8 +946,7 @@
 	)
     (fill! ids ())
     
-    (do ((file file-names (cdr file))
-	 (file-ctr 0 (+ file-ctr 1)))
+    (do ((file file-names (cdr file)))
 	((null? file))
       (set! local-ids ())
       (call-with-input-file (car file)

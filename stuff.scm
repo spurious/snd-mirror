@@ -366,12 +366,12 @@ If func approves of one, index-if returns the index that gives that element's po
 	count))))
 
 (define every? 
-  (let ((documentation "(every func sequence) returns #t if func approves of every member of sequence"))
+  (let ((documentation "(every? func sequence) returns #t if func approves of every member of sequence"))
     (lambda (f sequence)
       (not (member #f sequence (lambda (a b) (not (f b))))))))
 
 (define any? 
-  (let ((documentation "(any func sequence) returns #t if func approves of any member of sequence"))
+  (let ((documentation "(any? func sequence) returns #t if func approves of any member of sequence"))
     (lambda (f sequence)
       (member #f sequence (lambda (a b) (f b))))))
 

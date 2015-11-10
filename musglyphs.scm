@@ -198,18 +198,13 @@
     (let* ((pclass (modulo pitch 12))
 	   (octave (floor (/ pitch 12)))
 	   (cclass (case pclass
-		     ((0) 0) 
-		     ((1) 0) ; c-sharp
+		     ((0 1) 0) ; c-sharp
 		     ((2) 1) 
-		     ((3) 2) ; e-flat
-		     ((4) 2) 
-		     ((5) 3) 
-		     ((6) 3) ; f-sharp
+		     ((3 4) 2) ; e-flat
+		     ((5 6) 3) ; f-sharp
 		     ((7) 4) 
-		     ((8) 5) ; a-flat
-		     ((9) 5) 
-		     ((10) 6); b-flat
-		     ((11) 6))))
+		     ((8 9) 5) ; a-flat
+		     (else 6)))) ; b-flat
       (list pclass octave 
 	    (if (or (= pclass 1) (= pclass 6))
 		:sharp

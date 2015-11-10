@@ -330,6 +330,9 @@
   #define NAN (INFINITY / INFINITY)
 #endif
 
+#define BOLD_TEXT "\033[1m"
+#define UNBOLD_TEXT "\033[22m"
+
 #define WRITE_REAL_PRECISION 16
 static int float_format_precision = WRITE_REAL_PRECISION;
 
@@ -1434,7 +1437,20 @@ static s7_scheme *hidden_sc = NULL;
 #define T_GLOBAL                      (1 << (TYPE_BITS + 8))
 #define is_global(p)                  ((typeflag(_TSym(p)) & T_GLOBAL) != 0)
 #define set_global(p)                 typeflag(_TSym(p)) |= T_GLOBAL
+#if 0
+  /* to find who is stomping on our symbols: */
+  static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
+
+  static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line)
+  {
+    if ((is_global(symbol)) || (is_syntactic(symbol)))
+      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
+    typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
+  }
+  #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
+#else
 #define set_local(p)                  typeflag(_TSym(p)) &= ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC)
+#endif
 /* this marks something defined (bound) at the top-level, and never defined locally */
 
 #define T_UNSAFE_DO                   T_GLOBAL
@@ -4693,9 +4709,6 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 /* -------------------------------- stacks -------------------------------- */
 
 #define OP_STACK_INITIAL_SIZE 32
-
-#define BOLD_TEXT "\033[1m"
-#define UNBOLD_TEXT "\033[22m"
 
 #if DEBUGGING
 #define stop_at_error true
@@ -27285,6 +27298,7 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_filename_length(x) = 0;
   port_filename(x) = NULL;
   port_file_number(x) = -1;
+  port_line_number(x) = 0;
   port_needs_free(x) = false;
   port_gc_loc(x) = -1;
   port_read_character(x) = string_read_char;
@@ -31200,19 +31214,6 @@ static void print_gc_info(s7_pointer obj, int line)
 	  UNBOLD_TEXT);
   abort();
 }
-
-#if 0
-  /* to find who is stomping on our symbols: */
-  static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
-
-  static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line)
-  {
-    if ((is_global(symbol)) || (is_syntactic(symbol)))
-      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
-    typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
-  }
-  #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
-#endif
 
 static void show_opt1_bits(s7_scheme *sc, s7_pointer p, const char *func, int line)
 {
@@ -45559,8 +45560,8 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 /* error reporting info -- save filename and line number */
 
 #define remember_location(Line, File) (((File) << 20) | (Line))
-#define remembered_line_number(Line) (Line & 0xfffff)
-#define remembered_file_name(Line)   (((Line >> 20) <= sc->file_names_top) ? sc->file_names[Line >> 20] : sc->F)
+#define remembered_line_number(Line) ((Line) & 0xfffff)
+#define remembered_file_name(Line)   ((((Line) >> 20) <= sc->file_names_top) ? sc->file_names[Line >> 20] : sc->F)
 /* this gives room for 4000 files each of 1000000 lines */
 
 
@@ -46706,7 +46707,7 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
-  #define Q_apply s7_make_circular_signature(sc, 1, 2, sc->IS_PROCEDURE, sc->T)
+  #define Q_apply s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->T)
 
   /* can apply always be replaced with apply values?
    *   (apply + '(1 2 3)) is the same as (+ (apply values '(1 2 3)))
@@ -49354,7 +49355,11 @@ static s7_int c_pair_line_number(s7_scheme *sc, s7_pointer p)
     int_method_or_bust(sc, p, sc->PAIR_LINE_NUMBER, set_plist_1(sc, p), T_PAIR, 0);
 
   if (has_line_number(p))
-    return(remembered_line_number(pair_line(p)));
+    {
+      unsigned int x;
+      x = pair_line(p);
+      return(remembered_line_number(x));
+    }
   return(0);
 }
 
@@ -73228,7 +73233,7 @@ s7_scheme *s7_init(void)
   sc->EVAL_STRING =           unsafe_defun("eval-string", eval_string,		1, 1, false);
   sc->APPLY =                 unsafe_defun("apply",	apply,			1, 0, true);
   sc->Apply = slot_value(global_slot(sc->APPLY));
-  set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS);
+  set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS | T_PROCEDURE);
   /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
   sc->FOR_EACH =              unsafe_defun("for-each",	for_each,		2, 0, true); 
@@ -73716,7 +73721,7 @@ int main(int argc, char **argv)
  * tform         |      |      | 6816 | 3627  3589
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
- * lg            |      |      | 6547 | 7201  7870
+ * lg            |      |      |      | 7201  7870
  * thash         |      |      | 50.7 | 8491  8484
  *               |      |      |      |      
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
@@ -73761,12 +73766,31 @@ int main(int argc, char **argv)
  *  
  * is define-constant consistent in use of local/global slots? check gc mark
  * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
+ * shouldn't (cond) -> ()? (case x) -> x?
  *
  * perhaps T_REST on the :rest args, so no keywords in (runtime) arglist
  *   this is tricky -- closure_name for example assumes :rest is still in the list
- *   need readable o->str of func* with these args,
+ *   need readable o->str of func* with these args
  *
  * s7 version as number for reader-cond, also snd-version also dates? NEWS? move to *s7*?
  * (safety>0): if string|vector|list-set or set-car|cdr to immutable val? can lint get this info?
+ *
+ * in repl, help str is ok, but sig is not?
+ *   define2_ex[59881]: help in (define (help c) (when (pair? (*repl* 'helpers)) (let ((coords...
+ *   make_slot_1[5714]: object->string in (lambda (obj str) ((*libc* 'chdir) str) ((*libc* 'getcwd) (make-string 256...
+ *   (procedure-signature eval): #f
+ *
+ * lint: ->format nits (write-string+substring etc)
+ *       let -> let*
+ *       directly repeated cond clause and other cond cases
+ *       misspellings, string= for string=? (if no string= in env)
+ *       nan?'s argument should be a number?: (string->number "+nan.0"): because +nan.0 is not defined in s7 but nan? here should be number? 
+ *       str->num sig '((number? boolean?)...)
+ *       reduced scope
+ *         for-each let var, remove inner binding like let
+ *         get unref'd
+ *         for-each, look in removed cases and recurse
+ *           if in only one such branch, report
+ *       do/for-each/map expr that does not refer to any local vars and has no side-effect?
  */
  
