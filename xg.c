@@ -39483,7 +39483,7 @@ Xen_wrap_1_arg(gxg_GTK_IS_STACK_SIDEBAR_w, gxg_GTK_IS_STACK_SIDEBAR)
 
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_pair_false;
-static s7_pointer pl_t, pl_dusr, pl_dust, pl_dut, pl_du, pl_dus, pl_pr, pl_tts, pl_tti, pl_s, pl_tsb, pl_st, pl_tsu, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_ssi, pl_tusiuiuit, pl_tubu, pl_tuurru, pl_tuurrrrir, pl_tuurrrri, pl_tuuur, pl_tuuuui, pl_tuusb, pl_turru, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_turis, pl_tubi, pl_tuttiisi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrri, pl_turrrb, pl_tuubbi, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuibu, pl_tuut, pl_tuiui, pl_tuubr, pl_tuuub, pl_tuuui, pl_tuuiuui, pl_tuiu, pl_tuuir, pl_tuir, pl_tuib, pl_tusu, pl_tuusi, pl_tuit, pl_tuis, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tusui, pl_tuuubr, pl_tuiiiu, pl_tuuiu, pl_tuurbr, pl_tuusit, pl_psibiiiit, pl_psrrrb, pl_sui, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psi, pl_psuit, pl_psut, pl_suuub, pl_pur, pl_puiu, pl_pusiiiu, pl_pusiiuiu, pl_puur, pl_puiiui, pl_pubi, pl_puiiu, pl_puuusuui, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_put, pl_pusiiu, pl_pusi, pl_puui, pl_pub, pl_pust, pl_pusub, pl_puri, pl_bi, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsiib, pl_bsiiuusu, pl_bur, pl_buut, pl_buuti, pl_buttiiiu, pl_butib, pl_buiui, pl_buuusuui, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_busu, pl_bui, pl_bu, pl_buuubu, pl_bus, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buuiiu, pl_buui, pl_buuui, pl_buus, pl_buurbr, pl_busiu, pl_buttu, pl_buuub, pl_buuuub, pl_busib, pl_buusib, pl_iiit, pl_iit, pl_i, pl_itiiub, pl_itsub, pl_itsttti, pl_itiiiut, pl_tiu, pl_it, pl_ti, pl_isiiutttiiu, pl_isi, pl_isit, pl_si, pl_is, pl_trrru, pl_iur, pl_iussitu, pl_iurrsiu, pl_iuut, pl_iuuut, pl_pir, pl_iuisi, pl_pibi, pl_iuuui, pl_iuuuui, pl_ius, pl_iusi, pl_iu, pl_iuiu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_iuis, pl_unused;
+static s7_pointer pl_tsb, pl_st, pl_tsu, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_t, pl_psibiiiit, pl_psrrrb, pl_sui, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psi, pl_psuit, pl_psut, pl_suuub, pl_p, pl_tts, pl_tti, pl_tusiuiuit, pl_tubu, pl_tuurru, pl_tuurrrrir, pl_tuurrrri, pl_tuuur, pl_tuuuui, pl_tuusb, pl_turru, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_turis, pl_tubi, pl_tuttiisi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrri, pl_turrrb, pl_tuubbi, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuibu, pl_tuut, pl_tuiui, pl_tuubr, pl_tuuub, pl_tuuui, pl_tuuiuui, pl_tuiu, pl_tuuir, pl_tuir, pl_tuib, pl_tusu, pl_tuusi, pl_tuit, pl_tuis, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tusui, pl_tuuubr, pl_tuiiiu, pl_tuuiu, pl_tuurbr, pl_tuusit, pl_pur, pl_puiu, pl_pusiiiu, pl_pusiiuiu, pl_puur, pl_puiiui, pl_pubi, pl_puiiu, pl_puuusuui, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_put, pl_pusiiu, pl_pusi, pl_puui, pl_pub, pl_pust, pl_pusub, pl_puri, pl_bi, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsiib, pl_bsiiuusu, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bur, pl_buut, pl_buuti, pl_buttiiiu, pl_butib, pl_buiui, pl_buuusuui, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_busu, pl_bui, pl_bu, pl_buuubu, pl_bus, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buuiiu, pl_buui, pl_buuui, pl_buus, pl_buurbr, pl_busiu, pl_buttu, pl_buuub, pl_buuuub, pl_busib, pl_buusib, pl_iiit, pl_iit, pl_isiiutttiiu, pl_isi, pl_isit, pl_si, pl_is, pl_i, pl_itiiub, pl_itsub, pl_itsttti, pl_itiiiut, pl_tiu, pl_it, pl_ti, pl_iur, pl_iussitu, pl_iurrsiu, pl_iuut, pl_iuuut, pl_pir, pl_iuisi, pl_pibi, pl_iuuui, pl_iuuuui, pl_ius, pl_iusi, pl_iu, pl_iuiu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_iuis, pl_trrru, pl_dusr, pl_dust, pl_dut, pl_du, pl_dus, pl_pr, pl_ssi, pl_s, pl_unused;
 #endif
 
 static void define_functions(void)
@@ -39504,16 +39504,6 @@ static void define_functions(void)
   s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);
   s_any = s7_t(s7);
 
-  pl_t = s7_make_circular_signature(s7, 0, 1, s_any);
-  pl_dusr = s7_make_circular_signature(s7, 3, 4, s_float, s_pair_false, s_string, s_real);
-  pl_dust = s7_make_circular_signature(s7, 3, 4, s_float, s_pair_false, s_string, s_any);
-  pl_dut = s7_make_circular_signature(s7, 2, 3, s_float, s_pair_false, s_any);
-  pl_du = s7_make_circular_signature(s7, 1, 2, s_float, s_pair_false);
-  pl_dus = s7_make_circular_signature(s7, 2, 3, s_float, s_pair_false, s_string);
-  pl_pr = s7_make_circular_signature(s7, 1, 2, s_pair, s_real);
-  pl_tts = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_string);
-  pl_tti = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_integer);
-  pl_s = s7_make_circular_signature(s7, 0, 1, s_string);
   pl_tsb = s7_make_circular_signature(s7, 2, 3, s_any, s_string, s_boolean);
   pl_st = s7_make_circular_signature(s7, 1, 2, s_string, s_any);
   pl_tsu = s7_make_circular_signature(s7, 2, 3, s_any, s_string, s_pair_false);
@@ -39522,8 +39512,22 @@ static void define_functions(void)
   pl_tsiu = s7_make_circular_signature(s7, 3, 4, s_any, s_string, s_integer, s_pair_false);
   pl_tsiiuui = s7_make_circular_signature(s7, 6, 7, s_any, s_string, s_integer, s_integer, s_pair_false, s_pair_false, s_integer);
   pl_tsiuui = s7_make_circular_signature(s7, 5, 6, s_any, s_string, s_integer, s_pair_false, s_pair_false, s_integer);
+  pl_t = s7_make_circular_signature(s7, 0, 1, s_any);
+  pl_psibiiiit = s7_make_circular_signature(s7, 8, 9, s_pair, s_string, s_integer, s_boolean, s_integer, s_integer, s_integer, s_integer, s_any);
+  pl_psrrrb = s7_make_circular_signature(s7, 5, 6, s_pair, s_string, s_real, s_real, s_real, s_boolean);
+  pl_sui = s7_make_circular_signature(s7, 2, 3, s_string, s_pair_false, s_integer);
+  pl_psu = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_pair_false);
+  pl_psb = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_boolean);
+  pl_su = s7_make_circular_signature(s7, 1, 2, s_string, s_pair_false);
+  pl_sus = s7_make_circular_signature(s7, 2, 3, s_string, s_pair_false, s_string);
+  pl_ps = s7_make_circular_signature(s7, 1, 2, s_pair, s_string);
+  pl_psi = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_integer);
+  pl_psuit = s7_make_circular_signature(s7, 4, 5, s_pair, s_string, s_pair_false, s_integer, s_any);
+  pl_psut = s7_make_circular_signature(s7, 3, 4, s_pair, s_string, s_pair_false, s_any);
+  pl_suuub = s7_make_circular_signature(s7, 4, 5, s_string, s_pair_false, s_pair_false, s_pair_false, s_boolean);
   pl_p = s7_make_circular_signature(s7, 0, 1, s_pair);
-  pl_ssi = s7_make_circular_signature(s7, 2, 3, s_string, s_string, s_integer);
+  pl_tts = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_string);
+  pl_tti = s7_make_circular_signature(s7, 2, 3, s_any, s_any, s_integer);
   pl_tusiuiuit = s7_make_circular_signature(s7, 8, 9, s_any, s_pair_false, s_string, s_integer, s_pair_false, s_integer, s_pair_false, s_integer, s_any);
   pl_tubu = s7_make_circular_signature(s7, 3, 4, s_any, s_pair_false, s_boolean, s_pair_false);
   pl_tuurru = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_pair_false, s_real, s_real, s_pair_false);
@@ -39600,18 +39604,6 @@ static void define_functions(void)
   pl_tuuiu = s7_make_circular_signature(s7, 4, 5, s_any, s_pair_false, s_pair_false, s_integer, s_pair_false);
   pl_tuurbr = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_pair_false, s_real, s_boolean, s_real);
   pl_tuusit = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_pair_false, s_string, s_integer, s_any);
-  pl_psibiiiit = s7_make_circular_signature(s7, 8, 9, s_pair, s_string, s_integer, s_boolean, s_integer, s_integer, s_integer, s_integer, s_any);
-  pl_psrrrb = s7_make_circular_signature(s7, 5, 6, s_pair, s_string, s_real, s_real, s_real, s_boolean);
-  pl_sui = s7_make_circular_signature(s7, 2, 3, s_string, s_pair_false, s_integer);
-  pl_psu = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_pair_false);
-  pl_psb = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_boolean);
-  pl_su = s7_make_circular_signature(s7, 1, 2, s_string, s_pair_false);
-  pl_sus = s7_make_circular_signature(s7, 2, 3, s_string, s_pair_false, s_string);
-  pl_ps = s7_make_circular_signature(s7, 1, 2, s_pair, s_string);
-  pl_psi = s7_make_circular_signature(s7, 2, 3, s_pair, s_string, s_integer);
-  pl_psuit = s7_make_circular_signature(s7, 4, 5, s_pair, s_string, s_pair_false, s_integer, s_any);
-  pl_psut = s7_make_circular_signature(s7, 3, 4, s_pair, s_string, s_pair_false, s_any);
-  pl_suuub = s7_make_circular_signature(s7, 4, 5, s_string, s_pair_false, s_pair_false, s_pair_false, s_boolean);
   pl_pur = s7_make_circular_signature(s7, 2, 3, s_pair, s_pair_false, s_real);
   pl_puiu = s7_make_circular_signature(s7, 3, 4, s_pair, s_pair_false, s_integer, s_pair_false);
   pl_pusiiiu = s7_make_circular_signature(s7, 6, 7, s_pair, s_pair_false, s_string, s_integer, s_integer, s_integer, s_pair_false);
@@ -39635,16 +39627,16 @@ static void define_functions(void)
   pl_pusub = s7_make_circular_signature(s7, 4, 5, s_pair, s_pair_false, s_string, s_pair_false, s_boolean);
   pl_puri = s7_make_circular_signature(s7, 3, 4, s_pair, s_pair_false, s_real, s_integer);
   pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
-  pl_b = s7_make_circular_signature(s7, 0, 1, s_boolean);
-  pl_btiib = s7_make_circular_signature(s7, 4, 5, s_boolean, s_any, s_integer, s_integer, s_boolean);
-  pl_bti = s7_make_circular_signature(s7, 2, 3, s_boolean, s_any, s_integer);
-  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
-  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
   pl_bsiu = s7_make_circular_signature(s7, 3, 4, s_boolean, s_string, s_integer, s_pair_false);
   pl_bsiuub = s7_make_circular_signature(s7, 5, 6, s_boolean, s_string, s_integer, s_pair_false, s_pair_false, s_boolean);
   pl_bsu = s7_make_circular_signature(s7, 2, 3, s_boolean, s_string, s_pair_false);
   pl_bsiib = s7_make_circular_signature(s7, 4, 5, s_boolean, s_string, s_integer, s_integer, s_boolean);
   pl_bsiiuusu = s7_make_circular_signature(s7, 7, 8, s_boolean, s_string, s_integer, s_integer, s_pair_false, s_pair_false, s_string, s_pair_false);
+  pl_b = s7_make_circular_signature(s7, 0, 1, s_boolean);
+  pl_btiib = s7_make_circular_signature(s7, 4, 5, s_boolean, s_any, s_integer, s_integer, s_boolean);
+  pl_bti = s7_make_circular_signature(s7, 2, 3, s_boolean, s_any, s_integer);
+  pl_bt = s7_make_circular_signature(s7, 1, 2, s_boolean, s_any);
+  pl_tb = s7_make_circular_signature(s7, 1, 2, s_any, s_boolean);
   pl_bur = s7_make_circular_signature(s7, 2, 3, s_boolean, s_pair_false, s_real);
   pl_buut = s7_make_circular_signature(s7, 3, 4, s_boolean, s_pair_false, s_pair_false, s_any);
   pl_buuti = s7_make_circular_signature(s7, 4, 5, s_boolean, s_pair_false, s_pair_false, s_any, s_integer);
@@ -39684,6 +39676,11 @@ static void define_functions(void)
   pl_buusib = s7_make_circular_signature(s7, 5, 6, s_boolean, s_pair_false, s_pair_false, s_string, s_integer, s_boolean);
   pl_iiit = s7_make_circular_signature(s7, 3, 4, s_integer, s_integer, s_integer, s_any);
   pl_iit = s7_make_circular_signature(s7, 2, 3, s_integer, s_integer, s_any);
+  pl_isiiutttiiu = s7_make_circular_signature(s7, 10, 11, s_integer, s_string, s_integer, s_integer, s_pair_false, s_any, s_any, s_any, s_integer, s_integer, s_pair_false);
+  pl_isi = s7_make_circular_signature(s7, 2, 3, s_integer, s_string, s_integer);
+  pl_isit = s7_make_circular_signature(s7, 3, 4, s_integer, s_string, s_integer, s_any);
+  pl_si = s7_make_circular_signature(s7, 1, 2, s_string, s_integer);
+  pl_is = s7_make_circular_signature(s7, 1, 2, s_integer, s_string);
   pl_i = s7_make_circular_signature(s7, 0, 1, s_integer);
   pl_itiiub = s7_make_circular_signature(s7, 5, 6, s_integer, s_any, s_integer, s_integer, s_pair_false, s_boolean);
   pl_itsub = s7_make_circular_signature(s7, 4, 5, s_integer, s_any, s_string, s_pair_false, s_boolean);
@@ -39692,12 +39689,6 @@ static void define_functions(void)
   pl_tiu = s7_make_circular_signature(s7, 2, 3, s_any, s_integer, s_pair_false);
   pl_it = s7_make_circular_signature(s7, 1, 2, s_integer, s_any);
   pl_ti = s7_make_circular_signature(s7, 1, 2, s_any, s_integer);
-  pl_isiiutttiiu = s7_make_circular_signature(s7, 10, 11, s_integer, s_string, s_integer, s_integer, s_pair_false, s_any, s_any, s_any, s_integer, s_integer, s_pair_false);
-  pl_isi = s7_make_circular_signature(s7, 2, 3, s_integer, s_string, s_integer);
-  pl_isit = s7_make_circular_signature(s7, 3, 4, s_integer, s_string, s_integer, s_any);
-  pl_si = s7_make_circular_signature(s7, 1, 2, s_string, s_integer);
-  pl_is = s7_make_circular_signature(s7, 1, 2, s_integer, s_string);
-  pl_trrru = s7_make_circular_signature(s7, 4, 5, s_any, s_real, s_real, s_real, s_pair_false);
   pl_iur = s7_make_circular_signature(s7, 2, 3, s_integer, s_pair_false, s_real);
   pl_iussitu = s7_make_circular_signature(s7, 6, 7, s_integer, s_pair_false, s_string, s_string, s_integer, s_any, s_pair_false);
   pl_iurrsiu = s7_make_circular_signature(s7, 6, 7, s_integer, s_pair_false, s_real, s_real, s_string, s_integer, s_pair_false);
@@ -39719,6 +39710,15 @@ static void define_functions(void)
   pl_piu = s7_make_circular_signature(s7, 2, 3, s_pair, s_integer, s_pair_false);
   pl_pit = s7_make_circular_signature(s7, 2, 3, s_pair, s_integer, s_any);
   pl_iuis = s7_make_circular_signature(s7, 3, 4, s_integer, s_pair_false, s_integer, s_string);
+  pl_trrru = s7_make_circular_signature(s7, 4, 5, s_any, s_real, s_real, s_real, s_pair_false);
+  pl_dusr = s7_make_circular_signature(s7, 3, 4, s_float, s_pair_false, s_string, s_real);
+  pl_dust = s7_make_circular_signature(s7, 3, 4, s_float, s_pair_false, s_string, s_any);
+  pl_dut = s7_make_circular_signature(s7, 2, 3, s_float, s_pair_false, s_any);
+  pl_du = s7_make_circular_signature(s7, 1, 2, s_float, s_pair_false);
+  pl_dus = s7_make_circular_signature(s7, 2, 3, s_float, s_pair_false, s_string);
+  pl_pr = s7_make_circular_signature(s7, 1, 2, s_pair, s_real);
+  pl_ssi = s7_make_circular_signature(s7, 2, 3, s_string, s_string, s_integer);
+  pl_s = s7_make_circular_signature(s7, 0, 1, s_string);
 pl_unused = NULL;
 #endif
 
@@ -45748,7 +45748,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("30-Oct-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("10-Nov-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

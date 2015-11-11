@@ -10783,6 +10783,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation func) is always a mistake!"
   #define Q_call_cc s7_make_signature(sc, 2, sc->VALUES, sc->IS_PROCEDURE)
+  /* I think the intent is that sc->VALUES as the proc-sig return type indicates multiple values are possible (otherwise use #t). */
 
   s7_pointer p;
   p = car(args);                             /* this is the procedure passed to call/cc */
@@ -24668,6 +24669,8 @@ PIF_TO_PF(string_ref, c_string_ref)
 
 
 /* -------------------------------- string-set! -------------------------------- */
+enum {NO_ARTICLE, INDEFINITE_ARTICLE};
+
 static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
@@ -24680,6 +24683,13 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   x = car(args);
   if (!is_string(x))
     method_or_bust(sc, x, sc->STRING_SET, args, T_STRING, 1);
+#if DEBUGGING
+  if (is_immutable(x)) 
+    {
+      fprintf(stderr, "%s%s[%d]: set! immutable %s: %s%s\n", BOLD_TEXT, __func__, __LINE__, type_name(sc, x, NO_ARTICLE), DISPLAY(x), UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+#endif
 
   index = cadr(args);
   if (!s7_is_integer(index))
@@ -25853,7 +25863,7 @@ static s7_pointer c_port_line_number(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
-  #define Q_port_line_number s7_make_signature(sc, 2, sc->T, sc->IS_INPUT_PORT)
+  #define Q_port_line_number s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_INPUT_PORT)
 
   if (is_null(args))
     return(c_port_line_number(sc, sc->input_port));
@@ -31002,8 +31012,6 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg)
   return(result);
 }
 
-
-enum {NO_ARTICLE, INDEFINITE_ARTICLE};
 
 static char *describe_type_bits(s7_scheme *sc, s7_pointer obj)
 {
@@ -41641,6 +41649,7 @@ static s7_pointer c_procedure_signature(s7_scheme *sc, s7_pointer p)
 	return(sc->F);
     }
   check_method(sc, p, sc->PROCEDURE_SIGNATURE, list_1(sc, p));
+  
   if (!is_procedure(p))
     return(sc->F);
   return(s7_procedure_signature(sc, p));
@@ -46707,7 +46716,7 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
-  #define Q_apply s7_make_circular_signature(sc, 2, 3, sc->T, sc->IS_PROCEDURE, sc->T)
+  #define Q_apply s7_make_circular_signature(sc, 2, 3, sc->VALUES, sc->IS_PROCEDURE, sc->T)
 
   /* can apply always be replaced with apply values?
    *   (apply + '(1 2 3)) is the same as (+ (apply values '(1 2 3)))
@@ -46805,7 +46814,7 @@ pass (rootlet):\n\
     (eval 'x (rootlet)))\n\
 \n\
   returns 32"
-  #define Q_eval s7_make_signature(sc, 3, sc->T, sc->IS_LIST, sc->IS_LET)
+  #define Q_eval s7_make_signature(sc, 3, sc->VALUES, sc->IS_LIST, sc->IS_LET)
 
   if (is_not_null(cdr(args)))
     {
@@ -64801,7 +64810,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      set_immutable(sc->code);
 	      if (!is_slot(global_slot(sc->code)))
-		global_slot(sc->code) = permanent_slot(sc->code, sc->value);
+		global_slot(sc->code) = s7_make_slot(sc, sc->rootlet, sc->code, sc->value); /* not permanent_slot directly here else value never GC marked */
 	      else slot_set_value(global_slot(sc->code), sc->value);
 	    }
 	  break;
@@ -73721,9 +73730,9 @@ int main(int argc, char **argv)
  * tform         |      |      | 6816 | 3627  3589
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
- * lg            |      |      |      | 7201  7870
+ * lg            |      |      |      |       7870
  * thash         |      |      | 50.7 | 8491  8484
- *               |      |      |      |      
+ *               |      |      |      |       10.1
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1  37.0
@@ -73749,11 +73758,12 @@ int main(int argc, char **argv)
  *   also port-filename|line-number could use let syntax, then maybe add position|data etc -- mock let like *s7*
  *   gc troubles with the string wrapper. Another such case: iterator.  But how to handle default port as in (port-line-number)?
  *
- * append: 44522: what if method not first arg?  use 'value?
+ * append: 44522: what if method not first arg?  use 'values: check_values?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
  *   s7 44522 -- method check is unfinished -- should look for append and make arglists, not length
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
+ *   append in string case uses string_append, not g_string_append!
  *
  * can opt'd *|+ etc use new overflow checks? right now we get:
  *   t7: (* 0 9223372036854775807): 0 error ; (* 0 922337203685477580) is 0
@@ -73764,33 +73774,25 @@ int main(int argc, char **argv)
  *   t9: (- -1 9223372036854775807): 1 -1.844674407370955e+19
  *   t9: (- 0 9223372036854775807): 2 -1.844674407370955e+19
  *  
- * is define-constant consistent in use of local/global slots? check gc mark
- * debugging autochecks immutable entity not changed? or has_accessor but it's ignored? or hash_current only in hash iter case?
- * shouldn't (cond) -> ()? (case x) -> x?
+ * debugging accessors
+ * (safety>0): if string|vector|list-set or set-car|cdr to immutable val? can lint get this info?
+ *   there are the implicit set cases also
+ *   at least add this to debugging code: see g_string_set, add to check_ref cases so #ifs are removed
+ *   but this is the value, not the slot or symbol: in string case, symbol-names
  *
  * perhaps T_REST on the :rest args, so no keywords in (runtime) arglist
  *   this is tricky -- closure_name for example assumes :rest is still in the list
  *   need readable o->str of func* with these args
  *
- * s7 version as number for reader-cond, also snd-version also dates? NEWS? move to *s7*?
- * (safety>0): if string|vector|list-set or set-car|cdr to immutable val? can lint get this info?
- *
- * in repl, help str is ok, but sig is not?
- *   define2_ex[59881]: help in (define (help c) (when (pair? (*repl* 'helpers)) (let ((coords...
- *   make_slot_1[5714]: object->string in (lambda (obj str) ((*libc* 'chdir) str) ((*libc* 'getcwd) (make-string 256...
- *   (procedure-signature eval): #f
- *
- * lint: ->format nits (write-string+substring etc)
- *       let -> let*
- *       directly repeated cond clause and other cond cases
- *       misspellings, string= for string=? (if no string= in env)
- *       nan?'s argument should be a number?: (string->number "+nan.0"): because +nan.0 is not defined in s7 but nan? here should be number? 
- *       str->num sig '((number? boolean?)...)
+ * lint: directly repeated cond clause and other cond cases
+ *          combine all repeated into one or and simplify, repeat across form
+ *          if just 2 branches (possibly implicit else(=()) included), if, then reduce if 2nd #f to 1st
+ *          in any case (cond ... (expr res) (else res)) -> (cond ... (else res)) if expr has no side-effects
+ *       misspellings?
  *       reduced scope
  *         for-each let var, remove inner binding like let
  *         get unref'd
  *         for-each, look in removed cases and recurse
  *           if in only one such branch, report
- *       do/for-each/map expr that does not refer to any local vars and has no side-effect?
  */
  

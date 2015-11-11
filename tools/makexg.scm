@@ -2750,7 +2750,8 @@
 	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
 	 (args (- cargs refargs))
 	 (return-type (cadr func))
-	 (typ (assoc return-type direct-types)))
+	 ;(typ (assoc return-type direct-types))
+	 )
     (hey "  Xg_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
 	 (car func) (car func) 
 	 (if (>= cargs max-args) 0 args)

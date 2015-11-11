@@ -787,13 +787,13 @@
 			  (end (car (last path))))
 		      (and (= (car start) (car end))
 			   (= (cadr start) (cadr end))
-			   (if path-3d
-			       (= (third start) (third end)) #t)))
+			   (or (not path-3d)
+			       (= (third start) (third end)))))
 		    (let ((end (last path (if path-3d 3 2))))
 		      (and (= (car path) (car end))
 			   (= (cadr path) (cadr end))
-			   (if path-3d
-			       (= (third path) (third end)) #t))))))
+			   (or (not path-3d)
+			       (= (third path) (third end))))))))
       (error 'mus-error "ERROR: Closed path ~A is not closed~%" path))
   
   ;; create the path structure
@@ -1850,7 +1850,7 @@
 	   (A (vector (vector 0.0 dz (- dy)) (vector (- dz) 0.0 dx) (vector dy (- dx) 0.0)))
 	   (AA (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
 	   (sn (sin (- angle)))
-	   (omcs (- 1 (cos (- angle)))))
+	   (omcs (- 1 (cos angle)))) ; (cos (- angle)) == (cos angle)
       
       (do ((row 0 (+ 1 row)))
 	  ((= row 3))
@@ -1880,12 +1880,11 @@
       (render-path path))
   (if (or scaling translation rotation)
       ;; there's at least one transformation to execute
-      (let* ((rotation (if rotation (* 2 pi (/ rotation dlocsig-one-turn)) #f))
-	     (matrix (if rotation (rotation-matrix (car rotation-axis)
+      (let* ((rotation (and rotation (* 2 pi (/ rotation dlocsig-one-turn))))
+	     (matrix (and rotation (rotation-matrix (car rotation-axis)
 						   (cadr rotation-axis)
 						   (third rotation-axis)
-						   rotation)
-			 #f))
+						   rotation)))
 	     (xc (path-x path))
 	     (yc (path-y path))
 	     (zc (path-z path)))
@@ -1988,7 +1987,7 @@
 (define* (mirror-path path (axis 'y) (around 0))
   (if (not-transformed path)
       (transform-path path))
-  (if (equal? axis 'y)
+  (if (eq? axis 'y)
       (let ((val ()))
 	(for-each
 	 (lambda (x)
@@ -2269,10 +2268,9 @@
 	     (Cy (- ya))
 	     (d (- (* By Cx) (* Bx Cy)))
 	     (f (- (* Ay Bx) (* Ax By))))
-	(if (= f 0)
-	    #f
-	    (list (/ (* d Ax) f)
-		  (/ (* d Ay) f)))))
+	(and (not (= f 0))
+	     (list (/ (* d Ax) f)
+		   (/ (* d Ay) f)))))
     
     ;; calculate speaker gains for group
     (define (calculate-gains x y z group)
@@ -2357,11 +2355,10 @@
       (define (position-1 val lst pos)
 	(call-with-exit
 	 (lambda (return)
-	   (if (null? lst)
-	       #f
-	       (if (= val (car lst))
-		   (return pos)
-		   (position-1 val (cdr lst) (+ 1 pos)))))))
+	   (and (not (null? lst))
+		(if (= val (car lst))
+		    (return pos)
+		    (position-1 val (cdr lst) (+ 1 pos)))))))
       (position-1 val lst 0))
     
     ;; push gain and time into envelopes
@@ -2425,13 +2422,12 @@
 		    (set! (channel-rev-gains i) (cons (rev-outputs i) (channel-rev-gains i)))))))
 	
 	;; push reverb gain into envelope for mono reverb
-	(if (= rev-channels 1)
+	(if (and (= rev-channels 1)
+		 (or (null? (channel-rev-gains 0))
+		     (> time (cadr (channel-rev-gains 0)))))
 	    (begin
-	      (if (or (null? (channel-rev-gains 0))
-		      (> time (cadr (channel-rev-gains 0))))
-		  (begin
-		    (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
-		    (set! (channel-rev-gains 0) (cons ratt (channel-rev-gains 0)))))))))
+	      (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
+	      (set! (channel-rev-gains 0) (cons ratt (channel-rev-gains 0)))))))
     
     ;; Render a trajectory breakpoint through amplitude panning
     (define (famplitude-panning x y z dist time q)

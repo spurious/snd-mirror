@@ -238,15 +238,20 @@
 		  (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
 		  (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))
 		
-		(define* (new-load file (e (*repl* 'top-level-let)))
-		  (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))
+		(define new-load (let ((documentation "this is the repl's load replacement; its default is to use the repl's top-level-let.")
+				       (signature '(values string? let?)))
+				   (lambda* (file (e (*repl* 'top-level-let)))
+				     (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))))
 		
-		(define* (new-eval form (e (*repl* 'top-level-let))) 
-		  (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))
+		(define new-eval (let ((documentation "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
+				       (signature '(values list? let?)))
+				   (lambda* (form (e (*repl* 'top-level-let)))
+				     (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))))
 		
-		(define* (new-eval-string str (e (*repl* 'top-level-let)))
-		  (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))
-		
+		(define new-eval-string (let ((documentation "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
+					      (signature '(values string? let?)))
+					  (lambda* (str (e (*repl* 'top-level-let)))
+					    (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))))
 		(dynamic-wind
 		    (lambda ()
 		      (repl-hooks)

@@ -189,10 +189,7 @@
 			    (set! min-samps (floor wgt))
 			    (set! min-i k))))))
 		(if (not (= current-mark min-i))
-		    (begin
-		      ;; these are confused, so effectively erase them
-		      (set! (cross-weights i) 1000.0)
-		      )
+		    (set! (cross-weights i) 1000.0) ; these are confused, so effectively erase them
 		    (begin
 		      (set! (cross-weights i) current-min)
 		      (set! (cross-marks i) current-mark)
