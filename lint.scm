@@ -76,8 +76,10 @@
 	       (any-real? (cdr lst)))))
     
     (define (code-constant? x)
-      (not (or (pair? x)
-	       (symbol? x))))
+      (and (not (symbol? x))
+	   (or (not (pair? x))
+	       (and (eq? (car x) 'quote)
+		    (pair? (cdr x))))))
 
     (let ((no-side-effect-functions 
 	   ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
@@ -1118,39 +1120,67 @@
 					 (caddr form)
 					 (cadr form))
 
-				     (let ((new-form ()))
-				       (do ((exprs (cdr form) (cdr exprs)))
-					   ((null? exprs) 
-					    (if (null? new-form)
-						#f
-						(if (null? (cdr new-form))
-						    (car new-form)
-						    `(or ,@(reverse new-form)))))
-					 (let* ((e (car exprs))
-						(val (classify e)))
-					   
-					   (if (and (pair? val)
-						    (memq (car val) '(and or not)))
-					       (set! val (classify (set! e (simplify-boolean e true false env)))))
-					   
-					   (if val                                ; #f in or is ignored
-					       (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-						       (code-constant? val))
-						   (begin
-						     (if (null? new-form)         ; (or x1 123) -> value of x1 first
-							 (set! new-form (list val))           ;was `(,val))
-							 (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
-						     (set! exprs '(#t)))
+				       ;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
+				       ;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
+				       (let ((sym #f)
+					     (eqf #f))
+					 (if (every? (lambda (p)
+						       (and (pair? p)
+							    (if (not eqf)
+								(and (memq (car p) '(eq? eqv? equal? char=? string=? =))
+								     (set! eqf (car p)))
+								(eq? eqf (car p)))
+							    (if (not sym) 
+								(and (not (side-effect? (cadr p) env))
+								     (set! sym (cadr p)))
+								(equal? sym (cadr p)))
+							    (code-constant? (caddr p))))
+						     (cdr form))
+					     (let* ((vals (map caddr (cdr form)))
+						    (func (case eqf 
+							    ((eq?) 'memq) 
+							    ((eqv? char=?) 'memv) 
+							    ((=) (if (every? rational? vals) 'memv 'member))
+							    (else 'member)))
+						    (equals (if (and (eq? func 'member)
+								     (not (eq? eqf 'equal?)))
+								(list eqf)
+								())))
+					       `(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))
+
+					     (let ((new-form ()))
+					       (do ((exprs (cdr form) (cdr exprs)))
+						   ((null? exprs) 
+						    (if (null? new-form)
+							#f
+							(if (null? (cdr new-form))
+							    (car new-form)
+							    `(or ,@(reverse new-form)))))
+						 (let* ((e (car exprs))
+							(val (classify e)))
 						   
-						   ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
+						   (if (and (pair? val)
+							    (memq (car val) '(and or not)))
+						       (set! val (classify (set! e (simplify-boolean e true false env)))))
 						   
-						   (if (and (pair? e)             ; (or ...) -> splice into current
-							    (eq? (car e) 'or))
-						       (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-						       (begin                     ; else add it to our new expression with value #f
-							 (store e val 'or)
-							 (if (not (memq val new-form))
-							     (set! new-form (cons val new-form))))))))))))))))
+						   (if val                                ; #f in or is ignored
+						       (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+							       (code-constant? val))
+							   (begin
+							     (if (null? new-form)         ; (or x1 123) -> value of x1 first
+								 (set! new-form (list val))           ;was `(,val))
+								 (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
+							     (set! exprs '(#t)))
+							   
+							   ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
+							   
+							   (if (and (pair? e)             ; (or ...) -> splice into current
+								    (eq? (car e) 'or))
+							       (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
+							       (begin                     ; else add it to our new expression with value #f
+								 (store e val 'or)
+								 (if (not (memq val new-form))
+								     (set! new-form (cons val new-form))))))))))))))))))
 		  
 		  ((and)
 		   (if (= len 1)
@@ -2534,7 +2564,7 @@
 						       (char? arg1)
 						       (rational? arg2)
 						       (char? arg2))
-						   (lint-format "eq? doesn't work reliably with args like ~S" name form)
+						   (lint-format "eq? should be eqv? in ~S" name form)
 						   (if (or (and (number? arg1)
 								(not (rational? arg1)))
 							   (string? arg1)
@@ -2543,7 +2573,7 @@
 								(not (rational? arg2)))
 							   (string? arg2)
 							   (vector? arg2))
-						       (lint-format "~A is always #f" name form)))
+						       (lint-format "~A is always #f (perhaps change eq? to equal?)" name form)))
 					       
 					       (if *report-minor-stuff*  ; (eq? e #f) or (eq? #f e) -> (not e)
 						   (let ((expr 'unset))
@@ -3334,12 +3364,18 @@
 			     (for-each
 			      (lambda (clause)
 				(set! ctr (+ ctr 1))
-#|
-				(if (pair? clause)
-				    (if (equal? (cdr clause) prev-clause)
-					;(format *stderr* "~S~%" form)
-					(set! prev-clause (cdr clause)))
-				    (set! prev-clause #f))
+				
+				;; just a start on this -- (cond ... (x z) (else z)) -> (cond ... (else z))
+				(if (and (> len 2) prev-clause (pair? clause))
+				    (if (equal? (cdr clause) (cdr prev-clause))
+					(if (memq (car clause) '(else #t))
+					    (if (not (side-effect? (car prev-clause) env))
+						(lint-format "this clause could be omitted: ~A" name prev-clause))
+					    (let ((expr (simplify-boolean `(or ,(car prev-clause) ,(car clause)) () () env)))
+					      (lint-format "clauses could be combined: ~A" name `(,expr ,@(cdr clause)))))))
+
+				(set! prev-clause clause)
+
 				; (cond (bit-range #t) (concat-bus #t) (single-bit #t) (simple-id #t) (else #f))
 				;    -> (or ....), also if no clause, non-#f test is the result: (cond ((+ 1 2)) (else 4)): 3
 				;    but do we need to preserve the explicit #t?
@@ -3349,7 +3385,7 @@
 				; all clauses same -- this case is caught now
 				; lots that omit result: (cond ((eof-object? o)) ((not seen-at?)) ((not (list? o)))...)
 				;  -> (or (eof-object? o) ...), if no else add () at end
-|#
+
 
 				(if (not (pair? clause))
 				    (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))
