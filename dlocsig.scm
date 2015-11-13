@@ -653,8 +653,7 @@
 					;(define (make-path) (list 'path () () () () () () () () ()))
 
 (define (describe path)
-  (cond ((or (eq? (car path) 'bezier-path)
-	     (eq? (car path) 'open-bezier-path))
+  (cond ((memq (car path) '(bezier-path open-bezier-path))
 	 (format #f "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
                          x: ~A~%  y: ~A~%  z: ~A~%  v: ~A~%  bx: ~A~%  by: ~A~%  bz: ~A~%  error: ~A~%  curvature: ~A~%"
 		 (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path) (path-ty path) (path-tz path) (path-tt path)
@@ -1806,8 +1805,7 @@
 
 
 (define (render-path path)
-  (cond ((or (eq? (car path) 'bezier-path)
-	     (eq? (car path) 'open-bezier-path))
+  (cond ((memq (car path) '(bezier-path open-bezier-path))
 	 (bezier-render path))
 	((eq? (car path) 'literal-path)
 	 (literal-render path))
@@ -2959,7 +2957,7 @@
 		   (rin  (- (- bsq) root))
 		   (rout (+ (- bsq) root))
 		   (xi #f) (yi #f) (zi #f) (ti #f) (xo #f) (yo #f) (zo #f) (to #f))
-	      (if (and (> rin 0) (< rin mag))
+	      (if (> mag rin 0) ;(and (> rin 0) (< rin mag))
 		  ;; intersects entering sphere
 		  (begin
 		    (set! xi (+ xa (* vx rin)))

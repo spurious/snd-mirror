@@ -258,7 +258,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 				       newe))
 			   xd)))
       (let ((len (length e)))
-	(if (or (= len 0) (= len 2))
+	(if (memv len '(0 2))
 	    e
 	    (let ((xmax (e (- len 2))))
 	      (reverse-env-1 e () xmax)))))))
@@ -544,6 +544,12 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 			(* (- ty py) (- qx px))))
 		(max (abs (- qx px))
 		     (abs (- qy py))))
+	     (if (or (< qx px tx) (< qy py ty) (< tx px qx) (< ty py qy)) 
+		 :before
+		 (if (or (< px qx tx) (< py qy ty) (< tx qx px) (< ty qy py)) 
+		     :after
+		     :within)))))
+#|
 	     (if (or (and (< qx px) (< px tx))
 		     (and (< qy py) (< py ty)))
 		 :before
@@ -557,6 +563,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 				 (and (< ty qy) (< qy py)))
 			     :after
 			     :within)))))))
+|#
   (if (and env1
 	   (> (length env1) 4))
       (let ((new-env (list (cadr env1) (car env1)))

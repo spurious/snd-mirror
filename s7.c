@@ -142,6 +142,12 @@
 /* the heap grows as needed, this is its initial size.
  * If the initial heap is small, s7 can run in about 2.5 Mbytes of memory. There are (many) cases where a bigger heap is faster.
  * The heap size must be a multiple of 32.  Each object takes about 50 bytes.
+ *
+ * repl runs in    4Mb (18v) (64bit) if heap is 8192
+ *                11Mb (25v)         if 128k heap
+ *  snd (no gui)  15Mb (151v)
+ *  snd (motif)   12Mb (285v)
+ *  snd (gtk)     32Mb (515v!)
  */
 #endif
 
@@ -1656,12 +1662,12 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 static int not_heap = -1;
 #define heap_location(p)              (p)->hloc
-#define not_in_heap(p)                ((p)->hloc < 0)
+#define not_in_heap(p)                ((_NFre(p))->hloc < 0)
 #define unheap(p)                     (p)->hloc = not_heap--
 
-#define is_eof(p)                     (p == sc->EOF_OBJECT)
-#define is_true(Sc, p)                ((p) != Sc->F)
-#define is_false(Sc, p)               ((p) == Sc->F)
+#define is_eof(p)                     (_NFre(p) == sc->EOF_OBJECT)
+#define is_true(Sc, p)                ((_NFre(p)) != Sc->F)
+#define is_false(Sc, p)               ((_NFre(p)) == Sc->F)
 
 #ifdef _MSC_VER
   #define MS_WINDOWS 1
@@ -1672,8 +1678,8 @@ static int not_heap = -1;
 #endif
 
 #define is_pair(p)                    (type(p) == T_PAIR)
-#define is_null(p)                    (p == sc->NIL)
-#define is_not_null(p)                (p != sc->NIL)
+#define is_null(p)                    ((_NFre(p)) == sc->NIL)
+#define is_not_null(p)                ((_NFre(p)) != sc->NIL)
 
 
 #if (!DEBUGGING)
@@ -5431,7 +5437,7 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 #define new_frame(Sc, Old_Env, New_Env)		      \
   do {						      \
     s7_pointer _x_;				      \
-      new_cell(Sc, _x_, T_LET | T_IMMUTABLE); \
+      new_cell(Sc, _x_, T_LET); \
       let_id(_x_) = ++sc->let_number;		      \
       let_set_slots(_x_, Sc->NIL);	              \
       set_outlet(_x_, Old_Env);	      \
@@ -5443,7 +5449,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 {
   /* return(cons(sc, sc->NIL, old_env)); */
   s7_pointer x;
-  new_cell(sc, x, T_LET | T_IMMUTABLE);
+  new_cell(sc, x, T_LET);
   let_id(x) = ++sc->let_number;
   let_set_slots(x, sc->NIL);
   set_outlet(x, old_env);
@@ -5454,7 +5460,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
-  new_cell(sc, frame, T_LET | T_IMMUTABLE);
+  new_cell(sc, frame, T_LET);
   let_id(frame) = sc->let_number + 1;
   let_set_slots(frame, sc->NIL);
   set_outlet(frame, sc->envir);
@@ -5495,7 +5501,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {								 \
     s7_pointer _x_, _slot_, _sym_, _val_;			 \
     _sym_ = Symbol; _val_ = Value;				\
-    new_cell(Sc, _x_, T_LET | T_IMMUTABLE);			\
+    new_cell(Sc, _x_, T_LET);			\
     let_id(_x_) = ++sc->let_number;				\
     set_outlet(_x_, Old_Env);			\
     New_Env = _x_;						\
@@ -5513,7 +5519,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;		\
     _sym1_ = Symbol1; _val1_ = Value1;					\
     _sym2_ = Symbol2; _val2_ = Value2;					\
-    new_cell(Sc, _x_, T_LET | T_IMMUTABLE);				\
+    new_cell(Sc, _x_, T_LET);				\
     let_id(_x_) = ++sc->let_number;					\
     set_outlet(_x_, Old_Env);				\
     New_Env = _x_;							\
@@ -5533,7 +5539,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 
 static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
-  set_type(frame, T_LET | T_IMMUTABLE);
+  set_type(frame, T_LET);
   let_set_slots(frame, sc->NIL);
   set_outlet(frame, next_frame);
   let_id(frame) = ++sc->let_number;
@@ -22848,7 +22854,7 @@ bool s7_is_ulong(s7_pointer arg)
 
 unsigned long s7_ulong(s7_pointer p)
 {
-  return(p->object.number.ul_value);
+  return((_NFre(p))->object.number.ul_value);
 }
 
 
@@ -22869,7 +22875,7 @@ bool s7_is_ulong_long(s7_pointer arg)
 
 unsigned long long s7_ulong_long(s7_pointer p)
 {
-  return(p->object.number.ull_value);
+  return((_NFre(p))->object.number.ull_value);
 }
 
 
@@ -55470,7 +55476,7 @@ static void define_funchecked(s7_scheme *sc)
       s7_pointer arg;
       set_safe_closure(new_func);
       
-      new_cell_no_check(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
+      new_cell_no_check(sc, new_env, T_LET | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
       let_set_slots(new_env, sc->NIL);
       set_outlet(new_env, sc->envir);
@@ -59853,7 +59859,7 @@ static void define2_ex(s7_scheme *sc)
        *   cases (via sc->envir == sc->NIL).
        */
       
-      new_cell_no_check(sc, new_env, T_LET | T_IMMUTABLE | T_FUNCTION_ENV);
+      new_cell_no_check(sc, new_env, T_LET | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
       set_outlet(new_env, closure_let(new_func));
       closure_set_let(new_func, new_env);
@@ -60415,10 +60421,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case OP_FOR_EACH_1:
 	  {
-	    s7_pointer code, counter, p;
+	    s7_pointer code, counter, p, arg;
 	    counter = sc->args;
 	    p = counter_list(counter);
-	    sc->value = s7_iterate(sc, p);
+	    arg = s7_iterate(sc, p);
 	    if (iterator_is_at_end(p))
 	      {
 		sc->value = sc->UNSPECIFIED;
@@ -60427,11 +60433,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    code = sc->code;
 	    if (counter_capture(counter) != sc->capture_let_counter)
 	      {
-		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
+		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(counter, sc->envir);
 		counter_capture(counter) = sc->capture_let_counter;
 	      }
-	    else sc->envir = old_frame_with_slot(sc, counter_let(counter), sc->value);
+	    else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
 	    push_stack(sc, OP_FOR_EACH_1, counter, code);
 	    sc->code = closure_body(code);
 	    goto BEGIN1;
@@ -60440,7 +60446,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_FOR_EACH_3:
 	case OP_FOR_EACH_2:
 	  {
-	    s7_pointer code, c, lst;
+	    s7_pointer code, c, lst, arg;
 	    c = sc->args; /* the counter */
 	    lst = counter_list(c);
 	    if (!is_pair(lst))  /* '(1 2 . 3) as arg? */
@@ -60449,7 +60455,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto START;
 	      }
 	    code = sc->code;
-	    sc->value = car(lst);
+	    arg = car(lst);
 	    counter_list(c) = cdr(lst);
 	    if (sc->op == OP_FOR_EACH_3)
 	      {
@@ -60464,11 +60470,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    else push_stack(sc, OP_FOR_EACH_3, c, code);
 	    if (counter_capture(c) != sc->capture_let_counter)
 	      {
-		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
+		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(c, sc->envir);
 		counter_capture(c) = sc->capture_let_counter;
 	      }
-	    else sc->envir = old_frame_with_slot(sc, counter_let(c), sc->value);
+	    else sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
 	    sc->code = closure_body(code);
 	    goto BEGIN1;
 	  }
@@ -72098,7 +72104,7 @@ char *s7_decode_bt(void)
 	{
 	  fclose(fp);
 	  free(bt);
-	  return(" oops ");
+	  return((char *)" oops ");
 	}
       bt[size] = '\0';
       fclose(fp);
@@ -72154,7 +72160,7 @@ char *s7_decode_bt(void)
 	}
       free(bt);
     }
-  return("");
+  return((char *)"");
 }
 #endif
 
@@ -73749,7 +73755,6 @@ int main(int argc, char **argv)
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
- * for define* how to show in sig/pos the individual types? -- take in decl order and reorder if keys? (does this work at all in lint?)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -73776,28 +73781,10 @@ int main(int argc, char **argv)
  *   this is tricky -- closure_name for example assumes :rest is still in the list
  *   need readable o->str of func* with these args
  *
- * lint: directly repeated cond clause and other cond cases
- *          combine all repeated into one or and simplify, repeat across form
- *          if just 2 branches (possibly implicit else(=()) included), if, then reduce if 2nd #f to 1st
- *          in any case (cond ... (expr res) (else res)) -> (cond ... (else res)) if expr has no side-effects
- *       misspellings?
- *       reduced scope
- *         for-each let var, remove inner binding like let
- *         get unref'd
- *         for-each, look in removed cases and recurse
- *           if in only one such branch, report
- *       (and (integer? x) (eqv? x 0)) -- and as tightener
- *       (or (not (eqf ...) ...) -> (not (memx...))?
- *       similar collapse of if's: (if (= x 1) 2 (if (= x 3) 2 3))
- *       (list-tail l n) == (c(nd)r l), ie (list-tail l 3)==(cdddr l), so for (cdddr (cdddr l)): (list-tail l 6) but does this ever happen?
- *       (and (> x 3) (< x 6)) -> (< 3 x 6), also (and (= x y) (= x|y z)): (= x y z), (and (> x y) (> y z)): (> x y z)
- *       (equal? x '()) -> (null? x) etc
- *       (apply (lambda (x) (abs x))...) [like map/for-each now -- wherever func]
- *
- * repl runs in    4Mb (18v) (64b) if heap is 8192
- *  if 128k heap, 11Mb (25v)
- *  snd (not gui) 15Mb (151v)
- *  snd (gtk)     32Mb (515v!)
- *  snd (motif)   12Mb (285v)
+ * lint: misspellings?
+ *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
+ *       (or (not (eqx ...) ...) -> (not (memx...))?
+ *       arg-type-checks if lambda* [check-call 2503, and check-args arg-data]
+ *       test other flags, env.scm check?, reduce range output, lint-walk recursion for cond
  */
  

@@ -1454,8 +1454,7 @@
 				      XmNbackground             *basic-color*
 				      XmNvisualPolicy           XmVARIABLE
 				      XmNscrollingPolicy        XmAUTOMATIC))
-	 (lambda (file) 
-	   (open-sound file))
+	 open-sound
 	 (lambda (file chn)
 	   (format #f "~~/peaks/~A-peaks-~D"                              
 		   (xm-clean-string (file-name file))

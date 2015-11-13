@@ -23,8 +23,7 @@
 		  (let* ((lw (left-sample snd chn))
 			 (rw (right-sample snd chn))
 			 (cw (cursor snd chn))
-			 (favor (if (and (>= cw lw)
-					 (<= cw rw))
+			 (favor (if (>= rw cw lw)
 				    cw
 				    (* .5 (+ lw rw)))))
 		    ;; favor is the point we center the search on
@@ -71,8 +70,7 @@
 				      0)))
 		    (apply for-each
 			   (lambda (snd chn)
-			     (let ((end (if (or (eq? target 'sound)
-						(eq? target 'cursor))
+			     (let ((end (if (memq target '(sound cursor))
 					    (- (framples snd chn) 1)
 					    (if (eq? target 'selection)
 						(+ (selection-position) (selection-framples))

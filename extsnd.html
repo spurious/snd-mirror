@@ -2645,7 +2645,7 @@ turning the wheel zooms the graph in or out:
     (let ((button (hook 'button))
           (axis (hook 'axis)))
       (if (and (= axis <a class=quiet>time-graph</a>)
-	       (or (= button 4) (= button 5))) ; mouse scroll wheel
+	       (memv button '(4 5))) ; mouse scroll wheel
   	  (let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds">x-bounds</a>))))
 	        (dur (/ (<a class=quiet href="#framples">framples</a>) (<a class=quiet href="#srate">srate</a>)))
 	        (range (if (= button 4)

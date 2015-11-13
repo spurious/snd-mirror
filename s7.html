@@ -1399,7 +1399,7 @@ Here's one way out:
   (let ((gensyms (map (lambda (n) (gensym)) names)))
     `(let (,@(map (lambda (g) (list g '(gensym))) gensyms))
        `(let (,,@(map (lambda (g n) (list list g n)) gensyms names))
-          ,(let (,@(map (lambda (n g) (list n g)) names gensyms))
+          ,(let (,@(map list names gensyms))
              ,@body)))))
 </pre>
 

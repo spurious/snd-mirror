@@ -7641,8 +7641,7 @@ EDITS: 5
 	(test-channel-func (lambda* (beg dur index chan edpos)
 			     (delete-samples beg dur index chan edpos)
 			     (pad-channel beg dur index chan edpos))
-			   (lambda (dur)
-			     (make-float-vector dur))
+			   make-float-vector
 			   1.0)
 	
 	(test-channel-func (lambda* (beg dur index chan edpos)
@@ -31473,13 +31472,13 @@ EDITS: 2
 		 (snd-display #__line__ ";(~A ~A ~A) with ~A -> ~A (~A)?" func beg dur old-len (framples ind) len))))
 	 (list (lambda (beg dur) (env-channel '(0 0 1 1) beg dur))
 	       (lambda (beg dur) (map-channel (lambda (y) (* y .5)) beg dur))
-	       (lambda (beg dur) (reverse-channel beg dur))
+	       reverse-channel
 	       (lambda (beg dur) (scale-channel 2.0 beg dur))
 	       (lambda (beg dur) (float-vector->channel (make-float-vector dur) beg dur))
-	       (lambda (beg dur) (smooth-channel beg dur))
-	       (lambda (beg dur) (pad-channel beg dur))
+	       smooth-channel
+	       pad-channel
 	       (lambda (beg dur) (src-channel 0.5 beg dur))
-	       (lambda (beg dur) (insert-silence beg dur)))
+	       insert-silence)
 	 (list 0 0 0 0 0 0 0 0 0)
 	 (list 1000 1000 1000 1000 1000 1000 1000 1000 1000)
 	 (list 50828 50828 50828 50828 50828 50828 51828 52829 53829))
@@ -31505,14 +31504,14 @@ EDITS: 2
 	     (if (not (= (framples ind) len)) 
 		 (snd-display #__line__ ";(~A ~A) with ~A -> ~A (~A)?" func dur old-len (framples ind) len))))
 	 (list (lambda (beg dur) (env-channel '(0 0 1 1) beg dur))
-	       (lambda (beg dur) (reverse-channel beg dur))
+	       reverse-channel
 	       (lambda (beg dur) (scale-channel 2.0 beg dur))
 	       (lambda (beg dur) (scale-sound-by 2.0 beg dur))
 	       (lambda (beg dur) (float-vector->channel (make-float-vector dur) beg dur))
-	       (lambda (beg dur) (smooth-channel beg dur))
-	       (lambda (beg dur) (pad-channel beg dur))
+	       smooth-channel
+	       pad-channel
 	       (lambda (beg dur) (src-channel 0.5 beg dur))
-	       (lambda (beg dur) (insert-silence beg dur)) ; diff from pad-channel
+	       insert-silence
 	       (lambda (beg dur) (env-sound '(0 0 1 1) beg dur))
 	       )
 	 (list 1000 1000 1000 1000 1000 1000 1000 1000 1000 1000)
@@ -32133,8 +32132,7 @@ EDITS: 1
 	     (set! (edit-position ind 0) start-pos))
 	   
 	   (list
-	    (lambda (scl beg dur)
-	      (scale-channel scl beg dur))
+	    scale-channel
 	    (lambda (scl beg dur)
 	      (map-channel (lambda (y) (* y scl)) beg dur)))))
 	(close-sound ind)

@@ -4262,8 +4262,7 @@ current spectrum value.
 	     (hi (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate">srate</a>)))))
         (<em class=red>filter-fft</em> (lambda (y)
 		      (set! ctr (+ 1 ctr))
-		      (if (and (&gt;= ctr lo)
-			       (&lt;= ctr hi))
+		      (if (&gt;= hi ctr lo)
 		          0.0
 		          y)))))))
 </pre>
@@ -10242,8 +10241,7 @@ This is actually a bad idea since the menu names can change without warning.
  (<a class=quiet href="extsnd.html#addtomenu">add-to-menu</a> 0 "Insert File" 
    (lambda () 
      (<em class=red>select-file</em>
-       (lambda (filename)
-         (<a class=quiet href="extsnd.html#insertsound">insert-sound</a> filename))
+       <a class=quiet href="extsnd.html#insertsound">insert-sound</a>
        "Insert File" "." "*" "file will be inserted at cursor")))
 </pre>
 
@@ -10293,8 +10291,7 @@ mouse location in that channel.
 <pre class="indented">
 (make-sound-box "sounds"
 		((<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>) 3)
-		(lambda (file) 
-                  (<a class=quiet href="extsnd.html#sndprint">snd-print</a> file))
+                <a class=quiet href="extsnd.html#sndprint">snd-print</a>
 		*peak-env-dir*
 		(list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 		())
