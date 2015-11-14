@@ -39490,8 +39490,7 @@ EDITS: 1
     (test (fv127) (float-vector -10.0 -9.0 -8.0 13.0))
     
     (define (fv128)
-      (let ((fv (make-float-vector 4))
-	    (j 2))
+      (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (if (or (= i 1)

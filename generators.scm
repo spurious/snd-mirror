@@ -6160,7 +6160,7 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 (define* (make-waveshape (frequency *clm-default-frequency*) 
 			 (partials '(1 1)) 
 			 wave 
-			 (size *clm-table-size*))
+			 (size *clm-table-size*)) ; size arg is for backwards compatibility
   (if (not wave)
       (make-polyshape frequency :partials partials)
       (make-polyshape frequency :coeffs wave)))

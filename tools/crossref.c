@@ -352,6 +352,7 @@ int main(int argc, char **argv)
   add_file("tools/gcall.c");
 
   add_file("/home/bil/test/s7webserver/s7webserver.cpp");
+  add_file("/home/bil/test/radium-3.4.2/embedded_scheme/scheme.cpp");
 
   add_file("/home/bil/test/cm308/cm-3.8.0/src/CmSupport.cpp");
   add_file("/home/bil/test/cm308/cm-3.8.0/src/Scheme.cpp");

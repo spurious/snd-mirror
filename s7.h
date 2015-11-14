@@ -421,7 +421,7 @@ bool s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
    *   a symbol's current binding (s7_name_to_value takes the symbol name as a char*,
    *   s7_symbol_value takes the symbol itself, s7_symbol_set_value changes the
    *   current binding, and s7_symbol_local_value uses the environment passed
-   *   as its third argument.
+   *   as its third argument).
    *
    * To iterate over the complete symbol table, use s7_for_each_symbol_name,
    *   and s7_for_each_symbol.  The latter calls the 'symbol_func' on each
@@ -448,7 +448,7 @@ bool s7_is_constant(s7_pointer p);
    *
    * in s7.c is equivalent to the top level form
    *
-   *    (define *features* '())
+   *    (define *features* ())
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
    * s7_define_constant is s7_define but makes its "definee" immutable.

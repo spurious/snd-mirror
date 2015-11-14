@@ -73784,7 +73784,7 @@ int main(int argc, char **argv)
  * lint: misspellings?
  *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
  *       (or (not (eqx ...) ...) -> (not (memx...))?
- *       arg-type-checks if lambda* [check-call 2503, and check-args arg-data]
- *       test other flags, env.scm check?, reduce range output, lint-walk recursion for cond
+ *
+ * pretty-print uses {list} et al!
  */
  

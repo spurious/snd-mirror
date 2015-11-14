@@ -125,8 +125,7 @@
 	      (set! (allpasses (+ (* c numallpasses) i))
 		    (make-all-pass :size len :feedforward -1 :feedback 0.5)))))
 	
-	(if (and (= out-chans 1)
-		 (= in-chans 1))
+	(if (= out-chans in-chans 1)
 	    
 	    (let ((amp (out-mix 0 0))
 		  (pdelay (predelays 0)))
@@ -157,8 +156,7 @@
 		(set! (fcmb-c c) (make-filtered-comb-bank (fcmb-c c))))
 	      
 
-	      (if (and (= in-chans 5)
-		       (= out-chans 5))
+	      (if (= in-chans out-chans 5)
 		  (let ((allp0 (vector-ref allp-c 0))
 			(allp1 (vector-ref allp-c 1))
 			(allp2 (vector-ref allp-c 2))
