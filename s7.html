@@ -3627,7 +3627,9 @@ These can also be ~N or ~n in which case the numeric argument is read from the l
 
 <p>
 <code>(format #f ...)</code> simply returns the formatted string; <code>(format #t ...)</code>
-also sends it to *stdout*.  To send the string to *stderr* instead, <code>(format *stderr* ...)</code>.
+also sends the string to the current-output-port.  <code>(format () ...)</code> sends the output to 
+the current-output-port without returning the string (this mimics the other IO routines
+such as display and newline).  Other built-in port choices are *stdout* and *stderr*.
 </p>
 
 

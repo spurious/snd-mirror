@@ -1429,9 +1429,17 @@
 			   (apply * val)
 			   (if (member 0 val)             ; (* x 0 2) -> 0
 			       0 
-			       (if (and (= (length val) 2)
-					(member -1 val))
-				   `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
+			       (if (= (length val) 2)
+				   (if (member -1 val)
+				       `(- ,@(remove -1 val)) ; (* -1 x) -> (- x)
+				       (if (and (pair? (car val))
+						(pair? (cadr val))
+						(= (length (car val)) 3)
+						(equal? (cdar val) (cdadr val))
+						(or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
+						    (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
+					   `(abs (* ,@(cdar val))) ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+					   `(* ,@val)))
 				   `(* ,@val))))))))))
 
 	      ((-)
@@ -1827,10 +1835,11 @@
 			       `(gcd ,@args)))
 			   (if (null? (cdr args))
 			       `(abs ,(car args))
-			       `(gcd ,@args))))))
-
-	      ;; (gcd x 0) -> (abs x)
-	      ;; (* (gcd a b) (lcm a b)) -> (abs (* a b))
+			       (if (eqv? (car args) 0)
+				   `(abs ,(cadr args))
+				   (if (eqv? (cadr args) 0)
+				       `(abs ,(car args))
+				       `(gcd ,@args))))))))
 	      
 	      ((lcm)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
@@ -2312,7 +2321,7 @@
 						      (append (splice-append (cdar lst)) (splice-append (cdr lst))))
 						  (cons (car lst) (splice-append (cdr lst)))))
 					     (#t lst)))))
-	       (let ((new-args (splice-append (cdr form))))
+	       (let ((new-args (splice-append (cdr form))))     ; (append '(1) (append '(2) '(3))) -> (append '(1) '(2) '(3))
 		 (let ((len1 (length new-args)))
 		   (case len1
 		     ((0)					; (append) -> ()
@@ -2320,13 +2329,14 @@
 		     ((1)                                 ; (append x) -> x
 		      (lint-format "possible simplification:~A" name (lists->string form (car new-args))))
 		     ((2)
-		      (if (null? (cadr new-args))         ; (append (list x) ()) -> (list x)
-			  (lint-format "possible simplification:~A" name (lists->string form (car new-args)))
+		      (if (or (null? (cadr new-args))         ; (append (list x) ()) -> (list x)
+			      (quoted-null? (cadr new-args)))
+			  (lint-format "perhaps clearer:~A" name (lists->string form `(copy ,(car new-args))))
 			  (if (null? (car new-args))      ; (append () x) -> x
 			      (lint-format "possible simplification:~A" name (lists->string form (cadr new-args)))
 			      (if (not (equal? (cdr form) new-args))
 				  (lint-format "possible simplification:~A" name (lists->string form `(append ,@new-args)))))))
-		     (else                                ; (append '(1) (append '(2) '(3))) -> (append '(1) '(2) '(3))
+		     (else
 		      (if (not (equal? (cdr form) new-args))
 			  (lint-format "possible simplification:~A" name (lists->string form `(append ,@new-args)))))))))))
 
@@ -2459,14 +2469,45 @@
 				    (not (eq? (car sig) 'boolean?)))
 			       (lint-format "~A is a questionable sort! function" name func))))))))
 
-	  ((substring) ; and others? -- but this sort of thing never happens in real code
+	  ((substring) 
 	   (if (every? code-constant? (cdr form))
 	       (catch #t
 		 (lambda ()
 		   (let ((val (eval form)))
 		     (lint-format "possible simplification:~S" name val)))
 		 (lambda (type info)
-		   (lint-format "~A -> ~A~%" name form (apply format #f info))))))
+		   (lint-format "~A -> ~A~%" name form (apply format #f info))))
+	       (begin
+	       (if (and (pair? (cadr form))
+			(eq? (caadr form) 'substring))
+		   (if (and (null? (cdddr form))
+			    (null? (cdddr (cadr form))))
+		       (if (and (integer? (caddr form))
+				(integer? (caddr (cadr form))))
+			   (lint-format "possible simplification:~A" name 
+					(lists->string form `(substring ,(cadr (cadr form)) ,(+ (caddr (cadr form)) (caddr form)))))
+			   (lint-format "possible simplification:~A" name 
+					(lists->string form `(substring ,(cadr (cadr form)) (+ ,(caddr (cadr form)) ,(caddr form))))))))
+	       ;; end indices are complicated -- since this rarely happens, not worth the trouble
+	       (if (and (integer? (caddr form))
+			(zero? (caddr form))
+			(null? (cdddr form)))
+		   (lint-format "perhaps clearer: ~A" name (lists->string form `(copy ,(cadr form)))))))
+	   )
+
+	  ((list-tail)
+	   (if (= (length form) 3)
+	       (if (and (integer? (caddr form))
+			(zero? (caddr form)))
+		   (lint-format "possible simplification:~A" name (lists->string form (cadr form)))
+		   (if (and (pair? (cadr form))
+			    (eq? (caadr form) 'list-tail))
+		       (if (and (integer? (caddr form))
+				(integer? (caddr (cadr form))))
+			   (lint-format "possible simplification:~A" name 
+					(lists->string form `(list-tail ,(cadr (cadr form)) ,(+ (caddr (cadr form)) (caddr form)))))
+			   (lint-format "possible simplification:~A" name 
+					(lists->string form `(list-tail ,(cadr (cadr form)) (+ ,(caddr (cadr form)) ,(caddr form))))))))))
 
 	  ((*s7*)
 	   (if (= (length form) 2)
@@ -3036,15 +3077,8 @@
 				((newline)
 				 (set! ctrl-string (string-append ctrl-string "~%"))))
 				
-			      (when (eq? d dpy-last)
-				(lint-format "possible simplification:~A" name 
-					     (lists->string exprs
-							    `(format ,(if (or (null? op) (equal? op '(current-output-port)))
-									  '*stdout*
-									  (if (equal? op '(current-error-port))
-									      '*stderr*
-									      op))
-								     ,ctrl-string ,@(reverse args))))
+			      (when (eq? d dpy-last) ; op can be null => send to (current-output-port), return #f or #<unspecified>
+				(lint-format "possible simplification:~A" name (lists->string exprs `(format ,op ,ctrl-string ,@(reverse args))))
 				(done)))
 			    dpy-f))))
 		      (set! dpy-start #f))
@@ -3510,6 +3544,7 @@
 				 (ctr 0)
 				 (result :unset)
 				 (exprs-repeated #f)
+				 (else-foldable #f)
 				 (has-else #f)
 				 (len (length (cddr form))))
 			     (for-each
@@ -3544,18 +3579,20 @@
 					  (if (not (eq? keys 'else))
 					      (lint-format "bad case key ~S in ~S" name keys clause)
 					      (begin
-						(set! has-else #t)
-						(if (and (pair? exprs)
-							 (pair? (car exprs))
-							 (null? (cdr exprs))
-							 (eq? (caar exprs) 'case)
-							 (equal? selector (cadar exprs))
-							 (not (side-effect? selector env)))
-						    (lint-format "else clause case could be folded into the outer case: ~A" name (truncated-list->string clause)))
+						(set! has-else clause)
+						;; exprs: (res) or if case, ((case ...)...)
 						(if (not (= ctr len))
 						    (lint-format "case else clause is not the last:~A"
 								 name 
-								 (truncated-list->string (cddr form)))))))
+								 (truncated-list->string (cddr form)))
+						    (when (and (pair? exprs)
+							       (pair? (car exprs))
+							       (null? (cdr exprs))         ; just the case statement in the else clause
+							       (eq? (caar exprs) 'case)
+							       (equal? selector (cadar exprs))
+							       (not (side-effect? selector env)))
+						      (lint-format "else clause case could be folded into the outer case: ~A" name (truncated-list->string clause))
+						      (set! else-foldable (cddar exprs)))))))
 				      (set! all-keys (append (if (and (proper-list? keys)
 								      (pair? keys))
 								 keys 
@@ -3564,11 +3601,66 @@
 				      (lint-walk-body name head exprs env))))
 			      (cddr form))
 			     (if (and has-else (pair? result))
-				 (if (null? (cdr result))
-				     (lint-format "possible simplification: ~A" name (lists->string form (car result)))
-				     (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@result))))
+				 (begin
+				   (if (null? (cdr result))
+				       (lint-format "possible simplification: ~A" name (lists->string form (car result)))
+				       (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@result))))
+				   (set! exprs-repeated #f))
 				 (if exprs-repeated
-				     (lint-format "clauses repeated, so keys could be combined: ~A" name exprs-repeated))))))
+				     (lint-format "clauses repeated, so keys could be combined: ~A" name exprs-repeated)))
+
+			     (when (or exprs-repeated else-foldable)
+			       (let* ((new-keys-and-exprs ())
+				      (old-form (copy form)) ; TODO: why didn't this fix the rewrite?
+				      (else-clause (if else-foldable
+						       (call-with-exit
+							(lambda (return)
+							  (for-each (lambda (c) (if (memq (car c) '(else #t)) (return c))) else-foldable)
+							  ()))
+						       (or has-else ())))
+				      (else-exprs (and (pair? else-clause) (cdr else-clause))))
+
+				 (define (merge-case-keys clause)
+				   ;(format *stderr* "clause: ~S~%" clause)
+				   (let ((keys (car clause))
+					 (exprs (cdr clause)))
+				     (when (and (not (memq keys '(else #t)))
+						(not (equal? exprs else-exprs)))
+				       (let ((prev (member exprs new-keys-and-exprs (lambda (a b) (equal? a (cdr b))))))
+					 (if prev
+					     (let* ((cur-clause (car prev))
+						    (cur-keys (car cur-clause)))
+					       (set-car! cur-clause
+							 (append cur-keys
+								 (map (lambda (key)
+									(if (memv key cur-keys)
+									    (values)
+									    key))
+								      keys))))
+					     (set! new-keys-and-exprs (cons clause new-keys-and-exprs)))))))
+
+				 (for-each merge-case-keys (cddr form))
+				 (if else-foldable
+				     (for-each merge-case-keys else-foldable))
+
+				 ;(format *stderr* "new: ~A, else: ~A~%" new-keys-and-exprs else-clause)
+
+				 (if (null? new-keys-and-exprs)
+				     (if (or (null? else-clause)
+					     (null? (cdr else-clause)))
+					 (lint-format "possible simplification: ~A" name (lists->string old-form ()))
+					 (if (null? (cddr else-clause))
+					     (lint-format "possible simplification: ~A" name (lists->string old-form (cadr else-clause)))
+					     (lint-format "possible simplification: ~A" name (lists->string old-form `(begin ,@(cdr else-clause))))))
+				     (lint-format "possible simplification:~A" name 
+						  (lists->string old-form 
+								 (if (pair? else-clause)
+								     `(case ,(cadr old-form) ,@(reverse new-keys-and-exprs) ,else-clause)
+								     `(case ,(cadr old-form) ,@(reverse new-keys-and-exprs))))))))
+
+			     ;; check this also for cond (just the cond as else)
+
+			     )))
 		     env)
 		    
 		    ;; ---------------- do ----------------		  

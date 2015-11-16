@@ -33049,6 +33049,7 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
 
   if (is_string(pt))
     return(format_to_port_1(sc, sc->F, string_value(pt), cdr(args), NULL, true, true, string_length(pt), pt));
+  if (is_null(pt)) pt = sc->output_port;     /* () -> (current-output-port) */
 
   if (!((s7_is_boolean(pt)) ||               /* #f or #t */
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
@@ -49708,6 +49709,7 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer pt, str;
   pt = car(args);
+  if (is_null(pt)) pt = sc->output_port;
 
   if (!((s7_is_boolean(pt)) ||
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
@@ -73782,9 +73784,18 @@ int main(int argc, char **argv)
  *   need readable o->str of func* with these args
  *
  * lint: misspellings?
+ *          repl.scm and snd-help.c have levenshtein (need tests -- this is tricky)
+ *       (f (f...)...): object->string ->bytevector string-up|downcase copy sort, dynamic-wind in a sense
+ *       case collect finish/test (nil clause result->complaint?)
+ *       no-op? write|read-string+0 chars [ws str port start end] [rs 0 port] also (write-string "")?
  *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
  *       (or (not (eqx ...) ...) -> (not (memx...))?
- *
+ *       check else folded cond/case for collisions etc
+ *       macro count nestings? call/port port not used?
+ *       (sort func seq) and (map seq func), also (sort (*->list...))
+ *          also (list->vector|apply vector (vector->list)) -> copy 
+ *       check rest of quoted nil cases 
+ *       case rewrite needs pretty-print
  * pretty-print uses {list} et al!
  */
  
