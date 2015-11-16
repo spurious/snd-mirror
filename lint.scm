@@ -95,40 +95,42 @@
 	      (lambda (op) 
 		(hash-table-set! ht op #t))
 	      '(* + - / < <= = > >= 
-		  abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
-		  begin boolean? boolean=?
-		  caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr 
-		  call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr 
-		  cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=? char-ci<? 
-		  char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? char-position char-ready? char-upcase 
-		  char-upper-case? char-whitespace? char<=? char<? char=? char>=? char>? char? complex? cond 
-		  cons constant? continuation? cos cosh curlet current-error-port current-input-port current-output-port 
-		  defined? denominator do dynamic-wind 
-		  inlet let-ref let?
-		  eof-object? eq? equal? eqv? owlet even? exact->inexact exact? exp expt 
-		  floor 
-		  gcd gensym gensym? rootlet
-		  hash-table hash-table* hash-table-ref hash-table-entries hash-table? iterator? hook-functions 
-		  if imag-part inexact->exact inexact? infinite? unlet input-port? integer->char integer-decode-float 
-		  integer-length integer? 
-		  keyword->symbol keyword? 
-		  lcm length let let* letrec letrec* list list->string list->vector list-ref list-tail 
-		  list? log logand logbit? logior lognot logxor 
-		  macro? magnitude make-hash-table make-iterator make-hook make-keyword make-list make-polar make-rectangular
-		  random-state complex make-string make-vector map max member memq memv min modulo morally-equal?
-		  nan? negative? not null? number->string number? numerator 
-		  object->string odd? openlet? or outlet output-port? 
-		  pair? pair-line-number port-closed? port-filename port-line-number positive? 
-		  procedure-documentation funclet
-		  procedure-setter procedure-source dilambda? procedure? provided? 
-		  quasiquote quote quotient 
-		  random-state? rational? rationalize real-part real? remainder reverse round 
-		  s7-version sin sinh sqrt string string->list string->number string->symbol string-append string-ci<=? string-ci<? 
-		  string-ci=? string-ci>=? string-ci>? string-length string-position string-ref string<=? string<? string=? string>=? 
-		  string>? string? string-downcase string-upcase substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol? symbol=?
-		  tan tanh truncate 
-		  vector vector->list vector-dimensions vector-length vector-ref vector? 
-		  zero?))
+		abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
+		begin boolean=? boolean?
+		caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr
+		call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr
+		cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
+		char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
+		char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<?
+		char=? char>=? char>? char? complex complex? cond cons constant? continuation? cos
+		cosh curlet current-error-port current-input-port current-output-port 
+		defined? denominator dilambda? do dynamic-wind
+		eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
+		floor funclet 
+		gcd gensym gensym?
+		hash-table hash-table* hash-table-entries hash-table-ref hash-table? hook-functions
+		if imag-part inexact->exact inexact? infinite? inlet input-port? integer->char
+		integer-decode-float integer-length integer? iterator?
+		keyword->symbol keyword?
+		lcm length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
+		list-tail list? log logand logbit? logior lognot logxor
+		macro? magnitude make-hash-table make-hook make-iterator make-keyword make-list make-polar
+		make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
+		nan? negative? not null? number->string number? numerator
+		object->string odd? openlet? or outlet output-port? owlet
+		pair-line-number pair? port-closed? port-filename port-line-number positive? procedure-documentation
+		procedure-setter procedure-source procedure? provided?
+		quasiquote quote quotient
+		random-state random-state? rational? rationalize real-part real? remainder reverse rootlet round
+		s7-version sin sinh sqrt string string->list string->number string->symbol string-append 
+		string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
+		string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
+		substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol=? symbol?
+		tan tanh truncate
+		unless unlet
+		vector vector->list vector-dimensions vector-length vector-ref vector?
+		when with-baffle with-let
+		zero?))
 	     ht))
 
 	  (deprecated-ops '((global-environment . rootlet)
@@ -383,31 +385,91 @@
 	    (apply format outport (string-append "  ~A (line ~D): " str "~%") name line-number args)
 	    (apply format outport (string-append "  ~A: " str "~%") name args)))
       
+#|
       (define (side-effect? form env)
+	(format *stderr* "(side-effect ~A) -> " form)
+	(let ((result (side-effect-1 form env)))
+	  (format *stderr* "~A~%" result)
+	  result))
+|#
+
+      (define (side-effect? form env)
+	;(format *stderr* "form: ~A~%" form)
 	;; could evaluation of form have any side effects (like IO etc)
+
 	(if (and (proper-list? form)                   ; we don't want dotted lists or () here
 		 (not (null? form)))
 	    ;; can't optimize ((...)...) because the car might eval to a function
 	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
-		     (or (not (eq? (car form) 'format))                 ; (format #f ...)
+		     (or (not (eq? (car form) 'format))                         ; (format #f ...)
 			 (cadr form)))
-		(any? (lambda (f) 
-			(side-effect? f env))
-		      (cdr form))
-		(let ((sig (procedure-signature (car form))))
-		  (and sig
-		       (memq 'procedure? (cdr sig))
-		       (call-with-exit
-			(lambda (return)
-			  (for-each
-			   (lambda (sg arg)
-			     (when (eq? sg 'procedure?)
-			       ;(format *stderr* "sg: ~A, arg:~A ~A ~A~%" sg arg sig form)
-			       (if (or (not (symbol? arg))
-				       (not (hash-table-ref no-side-effect-functions arg)))
-				   (return #t))))
-			   (cdr sig) (cdr form))
-			  #f)))))
+		(case (car form)
+		  ((set! define define* define-macro define-macro* define-bacro define-bacro* define-constant define-expansion) #t)
+
+		  ((quote) #f)
+
+		  ((case)
+		   (or (not (pair? (cdr form)))
+		       (side-effect? (cadr form) env) ; the selector
+		       (letrec ((case-effect? (lambda (f e)
+						(and (pair? f)
+						     (or (not (pair? (car f)))
+							 (any? (lambda (ff) (side-effect? ff e)) (cdar f))
+							 (case-effect? (cdr f) e))))))
+			 (case-effect? (cddr form) env))))
+
+		  ((cond)
+		   (letrec ((cond-effect? (lambda (f e)
+					    (and (pair? f)
+						 (or (any? (lambda (ff) (side-effect? ff e)) (car f))
+						     (cond-effect? (cdr f) e))))))
+		     (cond-effect? (cdr form) env)))
+
+		  ((let let* letrec letrec*)
+		   (letrec ((let-effect? (lambda (f e)
+					   (and (pair? f)
+						(or (not (pair? (car f)))
+						    (not (pair? (cdar f))) ; an error in s7, reported elsewhere: (let ((x)) x)
+						    (side-effect? (cadar f) e)
+						    (let-effect? (cdr f) e))))))
+		     (if (symbol? (cadr form))
+			 (or (let-effect? (caddr form) env)
+			     (any? (lambda (ff) (side-effect? ff env)) (cdddr form)))
+			 (or (let-effect? (cadr form) env)
+			     (any? (lambda (ff) (side-effect? ff env)) (cddr form))))))
+		   
+		  ((do)
+		   (letrec ((do-effect? (lambda (f e)
+					  (and (pair? f)
+						(or (not (pair? (car f)))
+						    (not (pair? (cdar f)))
+						    (side-effect? (cadar f) e)
+						    (and (pair? (cddar f))
+							 (side-effect? (caddar f) e))
+						    (do-effect? (cdr f) e))))))
+		     (or (< (length form) 3)
+			 (do-effect? (cadr form) env)
+			 (any? (lambda (ff) (side-effect? ff env)) (caddr form))
+			 (any? (lambda (ff) (side-effect? ff env)) (cdddr form)))))
+
+		  ;; ((lambda lambda*) (any? (lambda (ff) (side-effect? ff env)) (cddr form))) ; this is trickier than it looks
+
+		  (else
+		   (or (any? (lambda (f) (side-effect? f env)) (cdr form)) ; any subform has a side-effect
+		       (let ((sig (procedure-signature (car form))))       ; sig has func arg and it is not known safe
+			 (and sig
+			      (memq 'procedure? (cdr sig))
+			      (call-with-exit
+			       (lambda (return)
+				 (for-each
+				  (lambda (sg arg)
+				    (when (eq? sg 'procedure?)
+				      (if (or (not (symbol? arg))
+					      (not (hash-table-ref no-side-effect-functions arg)))
+					  (return #t))))
+				  (cdr sig) (cdr form))
+				 #f))))))))
+
 	    (and (symbol? form)
 		 (not (hash-table-ref no-side-effect-functions form))
 		 (let ((e (or (var-member form env) (hash-table-ref globals form))))
@@ -704,7 +766,7 @@
       (define (checked-eval form)
 	(catch #t
 	  (lambda ()
-	    (eval form))
+	    (eval (copy-tree form)))
 	  (lambda args
 	    #t)))   ; just ignore errors in this context
 
@@ -2161,7 +2223,20 @@
 	     (if (symbol? return)
 		 (let ((body (cddadr form)))
 		   (if (not (tree-member return body))
-		       (lint-format "call-with-exit exit-function appears to be unused:~A" name head (truncated-list->string form)))))))
+		       (lint-format "exit-function appears to be unused:~A" name (truncated-list->string form)))))))
+
+	  ((call-with-input-string call-with-input-file call-with-output-file)
+	   (let ((port (and (pair? (cdr form))
+			    (pair? (cddr form))
+			    (pair? (caddr form))
+			    (eq? (caaddr form) 'lambda)
+			    (pair? (cdaddr form))
+			    (pair? (cadr (caddr form)))
+			    (car (cadr (caddr form))))))
+	     (if (symbol? port)
+		 (let ((body (cddr (caddr form))))
+		   (if (not (tree-member port body))
+		       (lint-format "port appears to be unused:~A" name (truncated-list->string form)))))))
 
 	  ((/)
 	   (if (pair? (cdr form))
@@ -2473,7 +2548,7 @@
 	   (if (every? code-constant? (cdr form))
 	       (catch #t
 		 (lambda ()
-		   (let ((val (eval form)))
+		   (let ((val (checked-eval form)))
 		     (lint-format "possible simplification:~S" name val)))
 		 (lambda (type info)
 		   (lint-format "~A -> ~A~%" name form (apply format #f info))))
@@ -3524,6 +3599,7 @@
 		    ;; ---------------- case ----------------		  
 		    ((case)
 		     ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
+		     ;; also unlike cond, only 'else marks a default branch (not #t)
 		     (if (< (length form) 3)
 			 (lint-format "case is messed up: ~A" name (truncated-list->string form))
 			 (let ((sel-type #t)
@@ -3554,6 +3630,8 @@
 				    (lint-format "case clause should be a list: ~A" name (truncated-list->string clause))
 				    (let ((keys (car clause))
 					  (exprs (cdr clause)))
+				      (if (null? exprs)
+					  (lint-format "clause result is missing: ~A" name clause))
 				      (if (eq? result :unset)
 					  (set! result exprs)
 					  (if (not (equal? result exprs))
@@ -3591,7 +3669,6 @@
 							       (eq? (caar exprs) 'case)
 							       (equal? selector (cadar exprs))
 							       (not (side-effect? selector env)))
-						      (lint-format "else clause case could be folded into the outer case: ~A" name (truncated-list->string clause))
 						      (set! else-foldable (cddar exprs)))))))
 				      (set! all-keys (append (if (and (proper-list? keys)
 								      (pair? keys))
@@ -3600,22 +3677,21 @@
 							     all-keys))
 				      (lint-walk-body name head exprs env))))
 			      (cddr form))
-			     (if (and has-else (pair? result))
+			     (if (and has-else 
+				      (pair? result)
+				      (not else-foldable))
 				 (begin
 				   (if (null? (cdr result))
 				       (lint-format "possible simplification: ~A" name (lists->string form (car result)))
 				       (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@result))))
-				   (set! exprs-repeated #f))
-				 (if exprs-repeated
-				     (lint-format "clauses repeated, so keys could be combined: ~A" name exprs-repeated)))
+				   (set! exprs-repeated #f)))
 
 			     (when (or exprs-repeated else-foldable)
 			       (let* ((new-keys-and-exprs ())
-				      (old-form (copy form)) ; TODO: why didn't this fix the rewrite?
 				      (else-clause (if else-foldable
 						       (call-with-exit
 							(lambda (return)
-							  (for-each (lambda (c) (if (memq (car c) '(else #t)) (return c))) else-foldable)
+							  (for-each (lambda (c) (if (eq? (car c) 'else) (return c))) else-foldable)
 							  ()))
 						       (or has-else ())))
 				      (else-exprs (and (pair? else-clause) (cdr else-clause))))
@@ -3624,7 +3700,8 @@
 				   ;(format *stderr* "clause: ~S~%" clause)
 				   (let ((keys (car clause))
 					 (exprs (cdr clause)))
-				     (when (and (not (memq keys '(else #t)))
+				     (when (and (pair? exprs)             ; ignore clauses that are messed up
+						(not (eq? keys 'else))
 						(not (equal? exprs else-exprs)))
 				       (let ((prev (member exprs new-keys-and-exprs (lambda (a b) (equal? a (cdr b))))))
 					 (if prev
@@ -3637,26 +3714,26 @@
 									    (values)
 									    key))
 								      keys))))
-					     (set! new-keys-and-exprs (cons clause new-keys-and-exprs)))))))
+					     (set! new-keys-and-exprs (cons (cons (copy (car clause)) (cdr clause)) new-keys-and-exprs)))))))
 
 				 (for-each merge-case-keys (cddr form))
 				 (if else-foldable
 				     (for-each merge-case-keys else-foldable))
 
-				 ;(format *stderr* "new: ~A, else: ~A~%" new-keys-and-exprs else-clause)
+				 ;(format *stderr* "~%~A -> new: ~A, else: ~A~%" form new-keys-and-exprs else-clause)
 
 				 (if (null? new-keys-and-exprs)
-				     (if (or (null? else-clause)
+				     (if (or (null? else-clause)    ; can this happen? (it's caught above as an error)
 					     (null? (cdr else-clause)))
-					 (lint-format "possible simplification: ~A" name (lists->string old-form ()))
+					 (lint-format "possible simplification: ~A" name (lists->string form ()))
 					 (if (null? (cddr else-clause))
-					     (lint-format "possible simplification: ~A" name (lists->string old-form (cadr else-clause)))
-					     (lint-format "possible simplification: ~A" name (lists->string old-form `(begin ,@(cdr else-clause))))))
+					     (lint-format "possible simplification: ~A" name (lists->string form (cadr else-clause)))
+					     (lint-format "possible simplification: ~A" name (lists->string form `(begin ,@(cdr else-clause))))))
 				     (lint-format "possible simplification:~A" name 
-						  (lists->string old-form 
+						  (lists->string form 
 								 (if (pair? else-clause)
-								     `(case ,(cadr old-form) ,@(reverse new-keys-and-exprs) ,else-clause)
-								     `(case ,(cadr old-form) ,@(reverse new-keys-and-exprs))))))))
+								     `(case ,(cadr form) ,@(reverse new-keys-and-exprs) ,else-clause)
+								     `(case ,(cadr form) ,@(reverse new-keys-and-exprs))))))))
 
 			     ;; check this also for cond (just the cond as else)
 
@@ -3820,7 +3897,7 @@
 				       (cddr form))
 				 (catch #t
 				   (lambda ()
-				     (let ((val (eval form (rootlet))))
+				     (let ((val (eval (copy-tree form) (rootlet))))
 				       (lint-format "possible simplification:~A" name (lists->string form val))))
 				   (lambda args
 				     'error))))
@@ -3930,7 +4007,10 @@
 			   (if (null? (cadr form))
 			       (lint-format "~A could be let:~A" name head (truncated-list->string form))
 			       (if (not (pair? (cadr form)))
-				   (lint-format "~A is messed up: ~A" name head (truncated-list->string form))))
+				   (lint-format "~A is messed up: ~A" name head (truncated-list->string form))
+				   (if (and (null? (cdadr form))
+					    (eq? head 'letrec*)) ; this happens all the time!
+				       (lint-format "letrec* could be letrec? ~A" name (truncated-list->string form)))))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((not (pair? bindings))
 				(if (pair? bindings)

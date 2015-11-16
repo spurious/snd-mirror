@@ -29,7 +29,7 @@
  *
  * --------------------------------------------------------------------------------
  *
- * s7, Bill Schottstaedt, Aug-08
+ * s7, Bill Schottstaedt, Aug-08, bil@ccrma.stanford.edu
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  * Rick Taube, Andrew Burnson, Donny Ward, and Greg Santucci provided the MS Visual C++ support
@@ -51337,7 +51337,7 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->CALL_WITH_INPUT_STRING)), call_with_input_string_pf);
   s7_pf_set_function(slot_value(global_slot(sc->CALL_WITH_INPUT_FILE)), call_with_input_file_pf);
 
-#ifndef _MSC_VER
+#if WITH_SYSTEM_EXTRAS
   s7_gf_set_function(slot_value(global_slot(sc->DIRECTORY_TO_LIST)), directory_to_list_pf);
 #endif
   s7_if_set_function(slot_value(global_slot(sc->WRITE_BYTE)), write_byte_if);
@@ -73786,16 +73786,14 @@ int main(int argc, char **argv)
  * lint: misspellings?
  *          repl.scm and snd-help.c have levenshtein (need tests -- this is tricky)
  *       (f (f...)...): object->string ->bytevector string-up|downcase copy sort, dynamic-wind in a sense
- *       case collect finish/test (nil clause result->complaint?)
  *       no-op? write|read-string+0 chars [ws str port start end] [rs 0 port] also (write-string "")?
  *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
  *       (or (not (eqx ...) ...) -> (not (memx...))?
- *       check else folded cond/case for collisions etc
- *       macro count nestings? call/port port not used?
+ *       macro count nestings? call-with-output-string port not used?
  *       (sort func seq) and (map seq func), also (sort (*->list...))
  *          also (list->vector|apply vector (vector->list)) -> copy 
  *       check rest of quoted nil cases 
- *       case rewrite needs pretty-print
+ *       for-each list has duplicates?
  * pretty-print uses {list} et al!
  */
  
