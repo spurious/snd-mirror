@@ -162,7 +162,7 @@ Bill Schottstaedt
 Michael Scholz
 
 Rick Taube, Andrew Burnson, Donny Ward: C++ and Windows wizardry.
-Kjetil S. Matheussen                    the Jack support and many other improvements.
+Kjetil S. Matheussen:                   the Jack support and many other improvements.
 Dave Phillips:                          the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano:                 the current ALSA support.
 Rick Taube and Anders Vinjar:           CM scheme files ported to Snd
@@ -172,7 +172,7 @@ Nick Bailey:                            the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo:     the Solaris port.
 Seppo Ingalsuo:                         the HPUX port.
 Juan Reyes:                             the DEC Alpha port.
-Guenter Geiger and Stefan Schwandter    : the Linux Alpha port.
+Guenter Geiger and Stefan Schwandter:   the Linux Alpha port.
 Paul Davis:                             the original ALSA support.
 Steven Schultz and Mike Scholz:         the *BSD ports.
 Ludger Brummer and Charles Nichols:     the Mac-OSX port.

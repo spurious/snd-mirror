@@ -194,7 +194,7 @@
 	   (set! (mus-location sratef) writestart)
 	   (set! (mus-location wsizef) writestart)
 	   (set! wsize (env wsizef))
-	   (let* ((winlen (if (and (= overlap 0) (= section 0)) ; first section of first overlap isn't randomized
+	   (let* ((winlen (if (= overlap 0 section) ; first section of first overlap isn't randomized
 			      wsize
 			      (+ wsize (random randw))))
 		  (winsamps (seconds->samples winlen))

@@ -71717,7 +71717,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     int fs;
     port_t *p;
     for (fs = 0, p = sc->port_heap; p; p = (port_t *)(p->next), fs++);
-    fprintf(stderr, "vectors: %d, input: %d, output: %d, free port: %d\ncontinuations: %d, c_objects: %d, gensyms: %d, setters: %d\n",
+    fprintf(stderr, "vectors: %u, input: %u, output: %u, free port: %u\ncontinuations: %u, c_objects: %u, gensyms: %u, setters: %u\n",
 	    sc->vectors_loc, sc->input_ports_loc, sc->output_ports_loc, fs, sc->continuations_loc, sc->c_objects_loc, sc->gensyms_loc, sc->setters_loc);
   }
   return(sc->F);
@@ -73738,7 +73738,7 @@ int main(int argc, char **argv)
  * titer         |      |      | 7503 | 5218  5219
  * lg            |      |      |      |       7870
  * thash         |      |      | 50.7 | 8491  8484
- *               |      |      |      |       10.1
+ *               |      |      |      |       10.8
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1  37.0
@@ -73783,17 +73783,17 @@ int main(int argc, char **argv)
  *   this is tricky -- closure_name for example assumes :rest is still in the list
  *   need readable o->str of func* with these args
  *
- * lint: misspellings?
- *          repl.scm and snd-help.c have levenshtein (need tests -- this is tricky)
+ * lint: perhaps a switch for the misspelled id search -- the ffi context/base scheme would have to agree first
+ *         then watch var-ref|set, undef'd name, levenshtein from repl.scm -- perhaps too slow?
  *       (f (f...)...): object->string ->bytevector string-up|downcase copy sort, dynamic-wind in a sense
  *       no-op? write|read-string+0 chars [ws str port start end] [rs 0 port] also (write-string "")?
  *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
  *       (or (not (eqx ...) ...) -> (not (memx...))?
- *       macro count nestings? call-with-output-string port not used?
+ *       macro count nestings?
  *       (sort func seq) and (map seq func), also (sort (*->list...))
  *          also (list->vector|apply vector (vector->list)) -> copy 
  *       check rest of quoted nil cases 
- *       for-each list has duplicates?
+ *       do the or/and changes check side-effect? (short-circuit diff)
  * pretty-print uses {list} et al!
  */
  

@@ -210,23 +210,23 @@
 	  (last-checker-line-number -1)
 	  (line-number -1))
 
-      (define-constant var-name car)
-      (define-constant var-ref cadr)
-      (define-constant var-set caddr)
-      (define-constant var-func-info cadddr)
+      (define var-name car)
+      (define var-ref cadr)
+      (define var-set caddr)
+      (define var-func-info cadddr)
       (define (set-cadr! v val) (list-set! v 1 val))
       (define (set-caddr! v val) (list-set! v 2 val))
       (define (set-cadddr! v val) (list-set! v 3 val))
       (set! (procedure-setter cadr) set-cadr!)
       (set! (procedure-setter caddr) set-caddr!)
       (set! (procedure-setter cadddr) set-cadddr!)
-      (define-constant var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
-      (define-constant var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
+      (define var-type (dilambda (lambda (v) (list-ref v 4)) (lambda (v x) (list-set! v 4 x))))
+      (define var-value (dilambda (lambda (v) (list-ref v 5)) (lambda (v x) (list-set! v 5 x))))
       ;; (define make-var (lambda* (name ref set fnc typ val :allow-other-keys) (list name ref set fnc typ val)))
       ;;   this :allow-other-keys is protecting us from bizarre keyword uses in non-s7 code.  
       (define* (make-var name ref set fnc typ val) (list name ref set fnc typ val))
-      (define-constant var? pair?)
-      (define-constant var-member assq)
+      (define var? pair?)
+      (define var-member assq)
 
       (define (return-type sym)
 	(let ((f (if (symbol? sym) (symbol->value sym *e*) sym)))
@@ -385,14 +385,6 @@
 	    (apply format outport (string-append "  ~A (line ~D): " str "~%") name line-number args)
 	    (apply format outport (string-append "  ~A: " str "~%") name args)))
       
-#|
-      (define (side-effect? form env)
-	(format *stderr* "(side-effect ~A) -> " form)
-	(let ((result (side-effect-1 form env)))
-	  (format *stderr* "~A~%" result)
-	  result))
-|#
-
       (define (side-effect? form env)
 	;(format *stderr* "form: ~A~%" form)
 	;; could evaluation of form have any side effects (like IO etc)
@@ -423,7 +415,8 @@
 					    (and (pair? f)
 						 (or (any? (lambda (ff) (side-effect? ff e)) (car f))
 						     (cond-effect? (cdr f) e))))))
-		     (cond-effect? (cdr form) env)))
+		     (or (not (pair? (cadr form)))
+			 (cond-effect? (cdr form) env))))
 
 		  ((let let* letrec letrec*)
 		   (letrec ((let-effect? (lambda (f e)
@@ -448,6 +441,8 @@
 							 (side-effect? (caddar f) e))
 						    (do-effect? (cdr f) e))))))
 		     (or (< (length form) 3)
+			 (not (list? (cadr form)))
+			 (not (list? (caddr form)))
 			 (do-effect? (cadr form) env)
 			 (any? (lambda (ff) (side-effect? ff env)) (caddr form))
 			 (any? (lambda (ff) (side-effect? ff env)) (cdddr form)))))
@@ -681,16 +676,15 @@
       (define (set-ref? name env)
 	;; if name is in env, set its "I've been referenced" flag
 	(let ((data (or (var-member name env) (hash-table-ref globals name))))
-	  (if (var? data)
-	      (set! (var-ref data) #t)))
+	  (when (var? data)
+	    (set! (var-ref data) #t)))
 	env)
       
       (define (set-set? name new-val env)
 	(let ((data (or (var-member name env) (hash-table-ref globals name))))
-	  (if (var? data)
-	      (begin
-		(set! (var-value data) new-val)
-		(set! (var-set data) #t)))))
+	  (when (var? data)
+	    (set! (var-value data) new-val)
+	    (set! (var-set data) #t))))
       
       (define (proper-list lst)
 	;; return lst as a proper list
@@ -1273,7 +1267,7 @@
 						  (equal? arg1 arg2))
 					     arg1
 
-					     ;; TODO: (and (= ...)...) for more than 2 args? 
+					     ;; (and (= ...)...) for more than 2 args? 
 					     ;;   (and (< x y z) (< z w)) -> (< x y z w) ?
 					     ;;   (and (< x y) (< y z) (< z w)) -> (< x y z w)
 
@@ -2226,6 +2220,7 @@
 		       (lint-format "exit-function appears to be unused:~A" name (truncated-list->string form)))))))
 
 	  ((call-with-input-string call-with-input-file call-with-output-file)
+	   ;; call-with-output-string func is the first arg, not second, but these checks get no hits
 	   (let ((port (and (pair? (cdr form))
 			    (pair? (cddr form))
 			    (pair? (caddr form))
@@ -3707,13 +3702,12 @@
 					 (if prev
 					     (let* ((cur-clause (car prev))
 						    (cur-keys (car cur-clause)))
-					       (set-car! cur-clause
-							 (append cur-keys
-								 (map (lambda (key)
-									(if (memv key cur-keys)
-									    (values)
-									    key))
-								      keys))))
+					       (when (pair? cur-keys)
+						 (set-car! cur-clause
+							   (append cur-keys
+								   (map (lambda (key)
+									  (if (memv key cur-keys) (values) key))
+									keys)))))
 					     (set! new-keys-and-exprs (cons (cons (copy (car clause)) (cdr clause)) new-keys-and-exprs)))))))
 
 				 (for-each merge-case-keys (cddr form))
@@ -3733,11 +3727,7 @@
 						  (lists->string form 
 								 (if (pair? else-clause)
 								     `(case ,(cadr form) ,@(reverse new-keys-and-exprs) ,else-clause)
-								     `(case ,(cadr form) ,@(reverse new-keys-and-exprs))))))))
-
-			     ;; check this also for cond (just the cond as else)
-
-			     )))
+								     `(case ,(cadr form) ,@(reverse new-keys-and-exprs)))))))))))
 		     env)
 		    
 		    ;; ---------------- do ----------------		  

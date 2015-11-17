@@ -130,8 +130,7 @@
 	 (signif (car data))
 	 (expon (cadr data))
 	 (sign (caddr data)))
-    (if (and (= expon 0)
-	     (= signif 0))
+    (if (= expon signif 0)
 	0
 	;; we're assuming floats are (64-bit) doubles in s7, so this is coercing to a 32-bit float in a sense
 	;;   this causes some round-off error
@@ -168,8 +167,7 @@
 	 (signif (car data))
 	 (expon (cadr data))
 	 (sign (caddr data)))
-    (if (and (= expon 0)
-	     (= signif 0))
+    (if (= expon signif 0)
 	0
 	(logior (if (negative? sign) #x8000000000000000 0)
 		(ash (+ expon 52 1023) 52)

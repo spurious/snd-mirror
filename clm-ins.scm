@@ -2094,8 +2094,7 @@ is a physical model of a flute:
 			      (do ((j 0 (+ j 1)))
 				  ((or (not (= new-place -1))
 				       (= j max-oscils)))
-				(if (and (= (last-peak-amps j) 0.0) 
-					 (= (current-peak-amps j) 0.0))
+				(if (= (last-peak-amps j) 0.0 (current-peak-amps j))
 				    (set! new-place j)))
 			      (set! (current-peak-amps new-place) (peak-amps k))
 			      (set! (peak-amps k) 0.0)
@@ -2168,7 +2167,7 @@ is a physical model of a flute:
 
 (define* (clm-expsrc beg dur input-file exp-ratio src-ratio amp rev start-in-file)
   (let ((stf (floor (* (or start-in-file 0) (srate input-file))))
-	(two-chans (and (= (channels input-file) 2) (= (channels *output*) 2)))
+	(two-chans (= (channels input-file) 2 (channels *output*)))
 	(revit (and *reverb* rev)))
     (let ((st (seconds->samples beg))
 	  (exA (make-granulate (make-readin input-file :channel 0 :start stf) :expansion exp-ratio))
