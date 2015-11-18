@@ -96,41 +96,43 @@
 		(hash-table-set! ht op #t))
 	      '(* + - / < <= = > >= 
 		abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
-		begin boolean=? boolean?
+		begin boolean=? boolean? byte-vector byte-vector?
 		caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr
-		call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr
+		c-pointer c-pointer? c-object? call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr
 		cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 		char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
 		char-position char-ready? char-upcase char-upper-case? char-whitespace? char<=? char<?
 		char=? char>=? char>? char? complex complex? cond cons constant? continuation? cos
-		cosh curlet current-error-port current-input-port current-output-port 
+		cosh curlet current-error-port current-input-port current-output-port cyclic-sequences
 		defined? denominator dilambda? do dynamic-wind
 		eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
-		floor funclet 
+		float? float-vector float-vector-ref float-vector? floor for-each funclet 
 		gcd gensym gensym?
-		hash-table hash-table* hash-table-entries hash-table-ref hash-table? hook-functions
-		if imag-part inexact->exact inexact? infinite? inlet input-port? integer->char
+		hash-table hash-table* hash-table-entries hash-table-ref hash-table? help hook-functions
+		if imag-part inexact->exact inexact? infinite? inlet input-port? 
+		int-vector int-vector-ref int-vector? iterator-at-end? iterator-sequence integer->char
 		integer-decode-float integer-length integer? iterator?
 		keyword->symbol keyword?
-		lcm length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
+		let->list lcm length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
 		list-tail list? log logand logbit? logior lognot logxor
-		macro? magnitude make-hash-table make-hook make-iterator make-keyword make-list make-polar
-		make-rectangular make-string make-vector map max member memq memv min modulo morally-equal?
+		macro? magnitude make-byte-vector make-float-vector make-int-vector make-hash-table make-hook make-iterator make-keyword make-list make-polar
+		make-rectangular make-shared-vector make-string make-vector map max member memq memv min modulo morally-equal?
 		nan? negative? not null? number->string number? numerator
 		object->string odd? openlet? or outlet output-port? owlet
-		pair-line-number pair? port-closed? port-filename port-line-number positive? procedure-documentation
-		procedure-setter procedure-source procedure? provided?
+		pair-line-number pair? peek-char port-closed? port-filename port-line-number positive? procedure-documentation
+		procedure-setter procedure-signature procedure-source procedure? proper-list? provided?
 		quasiquote quote quotient
-		random-state random-state? rational? rationalize real-part real? remainder reverse rootlet round
-		s7-version sin sinh sqrt string string->list string->number string->symbol string-append 
+		random-state random-state->list random-state? rational? rationalize real-part real? remainder reverse rootlet round
+		s7-version sequence? sin sinh sqrt stacktrace string string->list string->number string->symbol string-append 
 		string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 		string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
-		substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol=? symbol?
+		sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol=? symbol?
 		tan tanh truncate
 		unless unlet
-		vector vector->list vector-dimensions vector-length vector-ref vector?
+		vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 		when with-baffle with-let
 		zero?))
+	     ;; do not include file-exists? or directory?
 	     ht))
 
 	  (deprecated-ops '((global-environment . rootlet)
@@ -1276,10 +1278,10 @@
 						      (pair? arg2)
 						      (reversible? (car arg1))
 						      (null? (cdddr arg1))
-						      ;(reversible? (car arg2))
 						      (pair? (cdr arg2))
 						      (pair? (cddr arg2))
 						      (null? (cdddr arg2))
+						      (not (side-effect? arg2 env)) ; arg1 is hit in any case
 						      (or (eq? (car arg1) (car arg2))
 							  (let ((rf (reversed (car arg2))))
 							    (and (eq? (car arg1) rf)
@@ -2562,8 +2564,7 @@
 	       (if (and (integer? (caddr form))
 			(zero? (caddr form))
 			(null? (cdddr form)))
-		   (lint-format "perhaps clearer: ~A" name (lists->string form `(copy ,(cadr form)))))))
-	   )
+		   (lint-format "perhaps clearer: ~A" name (lists->string form `(copy ,(cadr form))))))))
 
 	  ((list-tail)
 	   (if (= (length form) 3)
@@ -3157,7 +3158,7 @@
 		  (if (and (pair? f)
 			   (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
 			   (tree-member 'unquote f))
-		      (lint-format "~A possibly has too many unquotes:~A" name head (truncated-list->string f)))
+		      (lint-format "~A probably has too many unquotes:~A" name head (truncated-list->string f)))
 		  
 		  (set! prev-f f)
 		  (set! env (lint-walk name f env))))))
@@ -3375,25 +3376,42 @@
 			     (lint-format "~A is messed up in ~A"	name head (truncated-list->string form))
 			     env)
 			   (let ((args (cadr form)))
-			     (when (pair? args)
-			       (if (repeated-member? (proper-list args) env)
-				   (lint-format "~A parameter is repeated:~A" name head (truncated-list->string args)))
-			       
-			       (if (eq? head 'lambda*)
-				   (check-star-parameters name args)
-				   (if (list-any? keyword? args)
-				       (lint-format "lambda arglist can't handle keywords (use lambda*)" name)))
-			       
-			       (if (and (eq? head 'lambda)
-					(= len 3))
-				   (let ((body (caddr form)))
-				     (if (and (pair? body)
-					      (symbol? (car body)))
-					 (if (equal? args (cdr body))
-					     (lint-format "possible simplification: ~A" name (lists->string form (car body)))
-					     (if (equal? (reverse args) (cdr body))
-						 (let ((rf (reversed (car body))))
-						   (if rf (lint-format "possible simplification: ~A" name (lists->string form rf))))))))))
+
+			     (if (list? args)
+				 (let ((arglen (length args)))
+				   (if (null? args)
+				       (if (eq? head 'lambda*)             ; (lambda* ()...) -> (lambda () ...)
+					   (lint-format "lambda* could be lambda: ~A" name form))
+				       (begin ; args is a pair             ; (lambda (a a) ...)
+					 (if (repeated-member? (proper-list args) env)
+					     (lint-format "~A parameter is repeated:~A" name head (truncated-list->string args)))
+					 (if (eq? head 'lambda*)           ; (lambda* (a :b) ...)
+					     (check-star-parameters name args)
+					     (if (list-any? keyword? args) ; (lambda (:key) ...)
+						 (lint-format "lambda arglist can't handle keywords (use lambda*)" name)))))
+				   
+				   (if (and (eq? head 'lambda)             ; (lambda () (f)) -> f, (lambda (a b) (f a b)) -> f
+					    (= len 3)
+					    (>= arglen 0)) ; not a dotted list
+				       (let ((body (caddr form)))
+					 (when (and (pair? body)
+						    (symbol? (car body)))
+					   (if (equal? args (cdr body))
+					       (lint-format "possible simplification: ~A" name (lists->string form (car body)))
+					       (if (equal? (reverse args) (cdr body))
+						   (let ((rf (reversed (car body))))
+						     (if rf (lint-format "possible simplification: ~A" name (lists->string form rf))))))))))
+				 
+				 (if (and (symbol? args)                   ; (lambda args (apply f args)) -> f
+					  (eq? head 'lambda)
+					  (= len 3))
+				     (let ((body (caddr form)))
+				       (if (and (pair? body)
+						(= (length body) 3)
+						(eq? (car body) 'apply)
+						(symbol? (cadr body))
+						(eq? args (caddr body)))
+					   (lint-format "possible simplification: ~A" name (lists->string form (cadr body)))))))
 			     
 			     (lint-walk-function head name args (cddr form) env)))))
 		    ;; the lambda case includes stuff like call/cc
@@ -3853,15 +3871,7 @@
 				     (lint-format "possible simplification: ~A" name 
 						  (lists->string form `(fill! ,(cadar body) ,(car (cdddar body)) 0 ,(caddr end-test))))
 				     (lint-format "possible simplification: ~A" name 
-						  (lists->string form `(copy ,(cadr setv) ,(cadar body) 0 ,(caddr end-test)))))))
-			     ))
-
-		       ;; if end=#f, result can't be reached?
-
-		       ;; if while walking the do loop body we see an expression involving
-		       ;;    no-side-effect-function[but not random] + args-not-local-or-step-vars
-		       ;; can that be lifted out of the body?
-
+						  (lists->string form `(copy ,(cadr setv) ,(cadar body) 0 ,(caddr end-test)))))))))
 		       env))
 		    
 		    ;; ---------------- let ----------------		  
@@ -4344,9 +4354,8 @@
 				    (catch #t
 				      (lambda ()
 					(let ((ncode (with-input-from-string 
-							 (fixup-html (remove-markups code)) 
-						       (lambda () 
-							 (read)))))
+							 (fixup-html (remove-markups code))
+						       read)))
 					  (call-with-output-file "t631-temp.scm"
 					    (lambda (fout)
 					      (format fout "~S~%" ncode)))

@@ -2728,8 +2728,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	    (float-vector-set! data i lasty))))
       (float-vector->channel data 0 len snd chn current-edit-position "effects-remove-dc")))
   
-  (add-to-menu effects-menu "Remove DC" (lambda () (effects-remove-dc)))
-  (add-to-menu effects-menu "Spiker" (lambda () (spike)))
+  (add-to-menu effects-menu "Remove DC" effects-remove-dc)
+  (add-to-menu effects-menu "Spiker" spike)
   
   (define* (effects-compand snd chn)
     (let ((tbl (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
@@ -2742,10 +2742,10 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	    (float-vector-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)))
 	  (float-vector->channel data 0 len snd chn current-edit-position "effects-compand")))))
   
-  (add-to-menu effects-menu "Compand" (lambda () (effects-compand)))
+  (add-to-menu effects-menu "Compand" effects-compand)
   
   (add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
-  (add-to-menu effects-menu "Reverse" (lambda () (reverse-sound)))
-  (add-to-menu effects-menu "Null phase" (lambda () (zero-phase)))
+  (add-to-menu effects-menu "Reverse" reverse-sound)
+  (add-to-menu effects-menu "Null phase" zero-phase)
   
   ) ; *gtk*

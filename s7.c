@@ -6885,6 +6885,8 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 }
 
 
+/* -------------------------------- symbol->dynamic-value -------------------------------- */
+
 static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym, long long int *id)
 {
   for (; symbol_id(sym) < let_id(x); x = outlet(x));
@@ -6908,7 +6910,6 @@ static s7_pointer find_dynamic_value(s7_scheme *sc, s7_pointer x, s7_pointer sym
 }
 
 
-/* -------------------------------- symbol->dynamic-value -------------------------------- */
 static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_dynamic_value "(symbol->dynamic-value sym) returns the dynamic binding of the symbol sym"
@@ -45545,19 +45546,14 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
   s7_pointer p, proc, err;
 
-  proc = cadr(args);
-  if (!is_thunk(sc, proc))
-    return(wrong_type_argument_with_type(sc, sc->CATCH, 2, proc, A_THUNK));
-
-  err = caddr(args);
-  if (!is_applicable(err))
-    return(wrong_type_argument_with_type(sc, sc->CATCH, 3, err, SOMETHING_APPLICABLE));
-
-  /* if (is_let(err)) check_method(sc, err, sc->CATCH, args); */ /* causes exit from s7! */
-  /* should we check here for (aritable? err 2)? -- right now:
-   *  (catch #t (lambda () 1) "hiho") -> 1
-   * currently this is checked only if the error handler is called
+  /* Guile sets up the catch before looking for arg errors:
+   *   (catch #t log (lambda args "hiho")) -> "hiho"
+   * which is consistent in that (catch #t (lambda () (log))...) should probably be the same as (catch #t log ...)
    */
+
+  proc = cadr(args);
+  err = caddr(args);
+  /* if (is_let(err)) check_method(sc, err, sc->CATCH, args); */ /* causes exit from s7! */
 
   new_cell(sc, p, T_CATCH);
   catch_tag(p) = car(args);
@@ -45569,6 +45565,18 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
     push_stack(sc, OP_CATCH_2, args, p);
   else push_stack(sc, OP_CATCH, args, p);      /* args ignored but maybe safer for GC? */
 
+  /* not sure about these error checks -- they can be omitted */
+  if (!is_thunk(sc, proc))
+    return(wrong_type_argument_with_type(sc, sc->CATCH, 2, proc, A_THUNK));
+
+  if (!is_applicable(err))
+    return(wrong_type_argument_with_type(sc, sc->CATCH, 3, err, SOMETHING_APPLICABLE));
+
+  /* should we check here for (aritable? err 2)? -- right now:
+   *  (catch #t (lambda () 1) "hiho") -> 1
+   * currently this is checked only if the error handler is called
+   */
+
   if (is_closure(proc))                        /* not also lambda* here because we need to handle the arg defaults */
     {
       sc->code = closure_body(proc);
@@ -45576,6 +45584,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
       push_stack(sc, OP_BEGIN_UNCHECKED, sc->args, sc->code);
     }
   else push_stack(sc, OP_APPLY, sc->NIL, proc);
+
   return(sc->F);
 }
 
@@ -73736,9 +73745,9 @@ int main(int argc, char **argv)
  * tform         |      |      | 6816 | 3627  3589
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
- * lg            |      |      |      |       7870
  * thash         |      |      | 50.7 | 8491  8484
- *               |      |      |      |       10.8
+ * lg            |      |      |      |       17.4
+ *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1  37.0
@@ -73783,17 +73792,6 @@ int main(int argc, char **argv)
  *   this is tricky -- closure_name for example assumes :rest is still in the list
  *   need readable o->str of func* with these args
  *
- * lint: perhaps a switch for the misspelled id search -- the ffi context/base scheme would have to agree first
- *         then watch var-ref|set, undef'd name, levenshtein from repl.scm -- perhaps too slow?
- *       (f (f...)...): object->string ->bytevector string-up|downcase copy sort, dynamic-wind in a sense
- *       no-op? write|read-string+0 chars [ws str port start end] [rs 0 port] also (write-string "")?
- *       (and (integer? x) (eqv? x 0)) -- and as tightener: any type? + eqx? + constant of type?
- *       (or (not (eqx ...) ...) -> (not (memx...))?
- *       macro count nestings?
- *       (sort func seq) and (map seq func), also (sort (*->list...))
- *          also (list->vector|apply vector (vector->list)) -> copy 
- *       check rest of quoted nil cases 
- *       do the or/and changes check side-effect? (short-circuit diff)
- * pretty-print uses {list} et al!
+ * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
  */
  

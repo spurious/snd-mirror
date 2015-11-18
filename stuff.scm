@@ -496,29 +496,27 @@ If func approves of one, index-if returns the index that gives that element's po
 				result))))))))))
 
      (let ((iter (make-careful-iterator obj)))
-       (define (iterloop)
-	 (let ((result (iter)))
-	   (if (length result)
-	       (if (or (memq result seen-cycles) ; we've dealt with it already, so skip it
-		       (eq? result (iterator-sequence iter))
-		       (iter-memq result iters)) ; we're dealing with it the right now
-		   (iterloop) ; this means the outermost sequence is ignored if encountered during the traversal
-		   (begin
-		     (set! iters (cons iter iters))
-		     (set! iter (make-careful-iterator result))
-		     result))
-	       (if (eq? result #<eof>)
-		   (if (null? iters)
-		       #<eof>
-		       (begin
-			 (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
-			 (set! iter (car iters))
-			 (set! iters (cdr iters))
-			 (iterloop)))
-		   result))))
-       (let ((iterator? #t))
-	 (lambda () 
-	   (iterloop)))))))
+       (let ((iterator? #t))       
+	 (define (iterloop) ; define returns the new value
+	   (let ((result (iter)))
+	     (if (length result)
+		 (if (or (memq result seen-cycles) ; we've dealt with it already, so skip it
+			 (eq? result (iterator-sequence iter))
+			 (iter-memq result iters)) ; we're dealing with it the right now
+		     (iterloop) ; this means the outermost sequence is ignored if encountered during the traversal
+		     (begin
+		       (set! iters (cons iter iters))
+		       (set! iter (make-careful-iterator result))
+		       result))
+		 (if (eq? result #<eof>)
+		     (if (null? iters)
+			 #<eof>
+			 (begin
+			   (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
+			   (set! iter (car iters))
+			   (set! iters (cdr iters))
+			   (iterloop)))
+		     result)))))))))
 
 
 (define safe-find-if 

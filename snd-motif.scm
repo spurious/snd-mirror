@@ -78,8 +78,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i len) new-str)
 	    (let ((c (str i)))
-	      (if (or (char=? c #\\)
-		      (char=? c #\/))
+	      (if (memq c '(#\\ #\/))
 		  (set! (new-str i) #\_)
 		  (set! (new-str i) c))))))))
   

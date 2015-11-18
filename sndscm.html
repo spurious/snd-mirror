@@ -4991,8 +4991,7 @@ will move the window left edge to that mark.
 <pre class="indented">
 (<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\l 0 
   (let ((documentation "move window to align with mark"))
-    (lambda () 
-      (first-mark-in-window-at-left))))
+    first-mark-in-window-at-left))
 </pre>
 
 <div class="spacer"></div>

@@ -9444,7 +9444,7 @@ EDITS: 2
 	  
 	  (hook-push after-apply-controls-hook (lambda (hook) 
 						 (let ((tag (catch #t 
-							      (lambda () (apply-controls)) 
+							      apply-controls 
 							      (lambda args args))))
 						   (if (not (eq? (car tag) 'cannot-apply-controls))
 						       (snd-display #__line__ ";after-apply-controls-hook: recursive attempt apply-controls: ~A" tag)))))
@@ -25434,17 +25434,6 @@ EDITS: 2
 	  (let ((var (catch #t (lambda () (add-to-menu -1 "fm-violin" (lambda () #f))) (lambda args args))))
 	    (if (not (eq? (car var) 'no-such-menu))
 		(snd-display #__line__ ";add-to-menu bad menu: ~A" var)))
-	  
-	  (let ((tag (catch #t (lambda () (add-to-main-menu "oops" (make-delay 11)))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'bad-arity))
-		(snd-display #__line__ ";add-to-main-menu non-thunk: ~A" tag)))
-	  (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
-			    (lambda args (car args)))))
-	    (if (and (not (eq? tag 'bad-arity))
-		     (not (eq? tag 'wrong-type-arg)))
-		(snd-display #__line__ ";add-to-menu non-thunk: ~A" tag)))
-	  
 	  (set! (cursor fd) 2000)
 	  (set! *transform-graph-type* graph-once)
 	  (set! (transform-graph? fd) #t)
@@ -26742,7 +26731,7 @@ EDITS: 2
 	       (sounds))))
       (log-mem test-ctr)
       
-      (if (and (> test-ctr 0) (< test-ctr 10)) ; this creates too many leftover save-state sound files
+      (if (> 10 test-ctr 0)  ; this creates too many leftover save-state sound files
 	  (let ((files (length (sounds))))
 	    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	    (for-each
@@ -30072,8 +30061,8 @@ EDITS: 2
 		      (lambda args (apply scale-sound-by (cons 2.0 args)))
 		      (lambda args (apply ramp-channel (cons 2.0 (cons 2.0 args)))))
 	(funcs-equal? "smooth-sound"
-		      (lambda args (apply smooth-sound args))
-		      (lambda args (apply smooth-channel args)))
+		      smooth-sound
+		      smooth-channel)
 	(funcs-equal? "env-sound"
 		      (lambda args (apply env-sound (list (list 0 0 1 1)
 							  (if (> (length args) 0) (car args) 0)
@@ -30098,7 +30087,7 @@ EDITS: 2
 		      (lambda args (apply src-channel (cons 2.0 args))))
 	(funcs-equal? "reverse-sound"
 		      (lambda args (apply reverse-sound (list (and (> (length args) 2) (caddr args)))))
-		      (lambda args (apply reverse-channel args)))
+		      reverse-channel)
 	(funcs-equal? "mix"
 		      (lambda args (apply mix (list "pistol.snd" 0 0 (and (> (length args) 2) (caddr args)))))
 		      (lambda args (apply mix-channel "pistol.snd" args)))
@@ -31090,7 +31079,7 @@ EDITS: 2
 					     (revert-sound)
 					     (- (real-time) start)))
 					 (list (lambda () (scale-channel 2.0))
-					       (lambda () (reverse-channel))
+					       reverse-channel
 					       (lambda () (env-channel '(0 0 1 1)))
 					       (lambda () (map-channel (lambda (y) (* y 2.0))))
 					       (lambda () (scan-channel (lambda (y) (> y 1.0))))
@@ -34473,13 +34462,13 @@ EDITS: 1
 		 (revert-sound ind))
 	       (list 
 		(lambda () (insert-float-vector (float-vector 1.0 0.5) 0 2))
-		(lambda () (clm-channel-test))
+		clm-channel-test
 		
 		;; examp.scm
 		(lambda () (fft-edit 1000 3000))
 		(lambda () (fft-squelch .01))
 		(lambda () (fft-cancel 1000 3000))
-		(lambda () (squelch-vowels))
+		squelch-vowels
 		(lambda () (fft-env-edit '(0 0 1 1 2 0)))
 		(lambda () (fft-env-interp '(0 0 1 1 2 0) '(0 1 1 0 2 0) '(0 0 1 1)))
 		(lambda () (hello-dentist 10.0 .1))
@@ -34510,8 +34499,8 @@ EDITS: 1
 		(lambda () (ssb-bank 550 600 10))
 		(lambda () (ssb-bank-env 550 600 '(0 1 1 2) 10))	   
 		(lambda () (down-oct 1))
-		(lambda () (spike))
-		(lambda () (zero-phase))
+		spike
+		zero-phase
 		(lambda () (rotate-phase (lambda (x) (random pi))))
 		(lambda () (brighten-slightly .5))
 		(lambda () (shift-channel-pitch 100))
@@ -34526,8 +34515,8 @@ EDITS: 1
 		(lambda () (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f))
 		;;		      (lambda () (effects-comb-filter 0.1 50 0 #f))
 		(lambda () (effects-moog 10000 0.5 0 #f))
-		(lambda () (effects-remove-dc))
-		(lambda () (effects-compand))
+		effects-remove-dc
+		effects-compand
 		(lambda () (effects-am 100.0 #f))
 		(lambda () (effects-rm 100.0 #f))
 		(lambda () (effects-bbp 1000.0 100.0 0 #f))
@@ -36856,8 +36845,7 @@ EDITS: 1
 		(text-width (* 6 (length text)))
 		(ls (left-sample snd chn))
 		(rs (right-sample snd chn)))
-	   (if (and (< ls samp)
-		    (> rs samp))
+	   (if (< ls samp rs)
 	       (let ((xpos (x->position (/ samp (srate))))
 		     (ypos (y->position (sample samp))))
 		 (catch #t
@@ -36918,8 +36906,7 @@ EDITS: 1
   (define* (show-greeting (snd 0) (chn 0))
     (let ((ls (left-sample snd chn))
 	  (rs (right-sample snd chn)))
-      (if (and (< ls 1000)
-	       (> rs 1000))
+      (if (< ls 1000 rs)
 	  (let ((pos (x->position (/ 1000.0 (srate))))
 		(old-color (foreground-color))
 		(cr (make-cairo (car (channel-widgets snd chn)))))
@@ -38086,8 +38073,7 @@ EDITS: 1
 	  (float-vector-set! fv i (oscil g)))))
     
     (test (catch #t
-	    (lambda ()
-	      (fv01))
+	    fv01
 	    (lambda args 
 	      (apply format #f (cadr args))))    ; float-vector-set! argument 2, 3, is out of range (it is too large)
 	  "float-vector-set! argument 2, 3, is out of range (it is too large)")
@@ -39151,8 +39137,7 @@ EDITS: 1
 	  (set! i (* i 0.5))
 	  (set! (fv i) x))))
     (test (catch #t
-	    (lambda ()
-	      (fv98))
+	    fv98
 	    (lambda args 
 	      (apply format #f (cadr args)))) "vector-set!: index must be an integer: ((fv i) x)")
 
@@ -47164,8 +47149,7 @@ EDITS: 1
 	(for-each 
 	 (lambda (n)
 	   (catch #t
-	     (lambda () 
-	       (n))
+	     n
 	     (lambda args (car args))))
 	 xm-procs0)
 	
@@ -47298,10 +47282,9 @@ EDITS: 1
 	   (lambda (n name)
 	     (let ((tag
 		    (catch #t
-		      (lambda () 
-			(n))
+		      n
 		      (lambda args (car args)))))
-	       (if (not (eq? tag 'wrong-number-of-args))
+	       (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
 		   (snd-display #__line__ ";(~A) -> ~A" name tag)))
 	     (if (dilambda? n)
 		 (let ((tag
@@ -48027,8 +48010,7 @@ EDITS: 1
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
-			       (lambda ()
-				 (n))
+			       n
 			       (lambda args (car args)))))
 			(if (not (eq? tag 'no-active-selection))
 			    (snd-display #__line__ ";selection ~A: ~A" n tag))))
@@ -48122,20 +48104,6 @@ EDITS: 1
 			       (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display #__line__ ";mus-sound ~A: ~A" n tag))))
-		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
-			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
-			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
-			  mus-sound-maxamp-exists? mus-header-type->string mus-sample-type->string))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n))
-			       (lambda args (car args)))))
-			(if (not (member tag '(error wrong-number-of-args) eq?))
-			    (snd-display #__line__ ";no arg mus-sound ~A: ~A" n tag))))
 		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
 			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
 			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
@@ -48526,7 +48494,7 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
 		(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
 		(check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
-		(check-error-tag 'cannot-print (lambda () (graph->ps)))
+		(check-error-tag 'cannot-print graph->ps)
 		(let ((ind (open-sound "oboe.snd"))) 
 		  (set! *selection-creates-region* #t)
 		  (select-all)
@@ -48868,8 +48836,7 @@ EDITS: 1
 	  (for-each 
 	   (lambda (n)
 	     (let ((err (catch #t
-			  (lambda ()
-			    (n))
+			  n
 			  (lambda args (car args)))))
 	       (if (eq? err 'wrong-number-of-args)
 		   (snd-display #__line__ ";procs0: ~A ~A" err (procedure-documentation n)))))

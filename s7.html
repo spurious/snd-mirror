@@ -6050,8 +6050,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 			      ;; associate the number and the list it points to
 			      ;;    if cur-val, perhaps complain? (#n# redefined)
 			      (let ((lst (catch #t 
-					   (lambda () 
-					     (read))
+					   read
 					   (lambda args             ; a read error
 					     (set! known-vals #f)   ;   so clear our state
 					     (apply throw args))))) ;   and pass the error on up

@@ -293,11 +293,11 @@
 			 (begin
 			   (outb i outb-val)	     
 			   (if *reverb* (outa i (* rev-val outa-val) *reverb*)))))))
-	     (if (not eow-flag )
-		 (begin
-		   ;; For first section, have to backup readstart
-		   (if (and (= section 0) (> overlap 0) (not time-ptr))
-		       (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))))
+	     (if (and (not eow-flag)   ;; For first section, have to backup readstart
+		      (= section 0) 
+		      (> overlap 0) 
+		      (not time-ptr))
+		 (set! readstart (- readstart (round (* fsr winlen overlap-ratio-compl)))))
 	     (set! writestart (+ writestart winsamps))))))))
 
 

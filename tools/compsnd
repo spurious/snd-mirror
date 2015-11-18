@@ -53,7 +53,20 @@ cp tools/ffitest.c .
 gcc -o ffitest ffitest.c -g3 -Wall s7.o -lm -I. -ldl
 ffitest
 
-gcc s7.c -o repl -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
+gcc s7.c -o repl -Wall -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
+
+echo '#define WITH_SYSTEM_EXTRAS 0' >mus-config.h
+cc -c s7.c -o s7.o -Wall
+rm s7.o
+echo '#define WITH_QUASIQUOTE_VECTOR 1' >mus-config.h
+cc -c s7.c -o s7.o -Wall
+rm s7.o
+echo '#define WITH_C_LOADER 0' >mus-config.h
+cc -c s7.c -o s7.o -Wall
+rm s7.o
+echo '#define WITH_EXTRA_EXPONENT_MARKERS 1' >mus-config.h
+cc -c s7.c -o s7.o -Wall
+rm s7.o
 
 make clmclean
 make sndinfo

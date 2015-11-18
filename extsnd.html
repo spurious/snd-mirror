@@ -11634,8 +11634,7 @@ Snd menus are numbered from 0 ('File') to 4 ('Help').  If the label and callback
 </p>
 
 <pre class="indented">
-  (<em class=red>add-to-menu</em> 1 "Stop Playing" 
-    (lambda () (<a class=quiet href="#stopplaying">stop-playing</a>)))
+  (<em class=red>add-to-menu</em> 1 "Stop Playing" <a class=quiet href="#stopplaying">stop-playing</a>)
 
   (<em class=red>add-to-menu</em> 5 "Reduce height" 
     (lambda () (set! (<a class=quiet href="#windowheight">window-height</a>) (/ (<a class=quiet href="#windowheight">window-height</a>) 2))))

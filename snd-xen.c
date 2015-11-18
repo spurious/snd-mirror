@@ -677,10 +677,6 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 	if ((rargs + oargs) < args)
 	  return(mus_format(" %s function should accept at least %d argument%s, but instead accepts only %d",
 			    (arg_name) ? arg_name : caller, args, (args != 1) ? "s" : "", rargs + oargs));
-
-	if ((args == 0) &&
-	    ((rargs != 0) || (oargs != 0)))
-	  return(mus_format(" %s function should take no args, not %d", (arg_name) ? arg_name : caller, rargs + oargs));
       }
 #endif
 

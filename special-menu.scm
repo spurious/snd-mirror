@@ -135,7 +135,7 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 
         (activate-dialog play-panned-dialog))
 
-      (set! play-panned-menu-label (add-to-menu special-menu "Play panned" (lambda () (post-play-panned-dialog)))))
+      (set! play-panned-menu-label (add-to-menu special-menu "Play panned" post-play-panned-dialog)))
 
     (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned)))
 
@@ -211,7 +211,7 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 				 1))))))
         (activate-dialog save-as-mp3-dialog))
 
-      (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" (lambda () (post-save-as-mp3-dialog)))))
+      (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" post-save-as-mp3-dialog)))
 
     (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3)))
 
@@ -286,7 +286,7 @@ Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vor
 				 1))))))
         (activate-dialog save-as-ogg-dialog))
 
-      (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" (lambda () (post-save-as-ogg-dialog)))))
+      (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" post-save-as-ogg-dialog)))
 
     (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg)))
 

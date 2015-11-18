@@ -316,7 +316,7 @@
 (define (defmacro:eval x) (base:eval (defmacro:expand* x)))
 
 (define (defmacro:expand* x)
-  (slib:require 'defmacroexpand) (apply defmacro:expand* x '()))
+  (slib:require 'defmacroexpand) (apply defmacro:expand* x ()))
 ;@
 (define (defmacro:load <pathname>)
   (slib:eval-load <pathname> defmacro:eval))

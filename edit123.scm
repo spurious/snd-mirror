@@ -350,24 +350,24 @@
   (open-next-file-in-directory)
   )
 
-(bind-key (char->integer #\d) 0  (lambda ()(delete-selection)))
-(bind-key (char->integer #\s) 0  (lambda () ( my_save)))
-(bind-key (char->integer #\c) 0  (lambda () (my_crop)))
-(bind-key (char->integer #\n) 0  (lambda () (open-next-file-in-directory)))
-(bind-key (char->integer #\ ) 8  (lambda () (stop-song)))
-(bind-key (char->integer #\c) 0  (lambda () (my_crop)))
-(bind-key (char->integer #\x) 0  (lambda () (half-selection)))
-(bind-key (char->integer #\X) 1  (lambda () (double-selection)))
-(bind-key (char->integer #\y) 0  (lambda () (double-selection)));german version
-(bind-key (char->integer #\z) 0  (lambda () (double-selection)));english version
+(bind-key (char->integer #\d) 0  delete-selection)
+(bind-key (char->integer #\s) 0  my_save)
+(bind-key (char->integer #\c) 0  my_crop)
+(bind-key (char->integer #\n) 0  open-next-file-in-directory)
+(bind-key (char->integer #\ ) 8  stop-song)
+(bind-key (char->integer #\c) 0  my_crop)
+(bind-key (char->integer #\x) 0  half-selection)
+(bind-key (char->integer #\X) 1  double-selection)
+(bind-key (char->integer #\y) 0  double-selection);german version
+(bind-key (char->integer #\z) 0  double-selection);english version
 (bind-key (char->integer #\^) 0 (lambda () (my-play-selection-forw 50000 50000)))
 (bind-key (char->integer #\^) 4 (lambda () (my-play-selection-backw 50000 50000)))
 (bind-key (char->integer #\t) 8 (lambda () (play (selection))))
-(bind-key (char->integer #\p) 0 (lambda () (play-song)))
-(bind-key (char->integer #\P) 1 (lambda () (play-end)))
-(bind-key (char->integer #\p) 8 (lambda () (toggle-play)))
-(bind-key (char->integer #\3) 8 (lambda () (forward-selection)))
-(bind-key (char->integer #\2) 8 (lambda () (backward-selection)))
+(bind-key (char->integer #\p) 0 play-song)
+(bind-key (char->integer #\P) 1 play-end)
+(bind-key (char->integer #\p) 8 toggle-play)
+(bind-key (char->integer #\3) 8 forward-selection)
+(bind-key (char->integer #\2) 8 backward-selection)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; status 
@@ -439,9 +439,9 @@
 					     (else (set! status 0))
 					     )))
 
-(bind-key (char->integer #\p) 4 (lambda () (toggle-play)))
-(bind-key (char->integer #\p) 0 (lambda () (play-song)))
-(bind-key (char->integer #\P) 1 (lambda () (play-end)))
+(bind-key (char->integer #\p) 4 toggle-play)
+(bind-key (char->integer #\p) 0 play-song)
+(bind-key (char->integer #\P) 1 play-end)
 
 					; f fade in or out  selection
 (bind-key (char->integer #\f) 0  (lambda()  (case status

@@ -171,7 +171,7 @@
 	      (if play-between-marks-dialog
 		  (activate-dialog play-between-marks-dialog)))))
       
-      (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" (lambda () (post-play-between-marks-dialog)))))
+      (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" post-play-between-marks-dialog)))
     
     (set! play-between-marks-menu-label (add-to-menu marks-menu play-between-marks-label cp-play-between-marks)))
 
@@ -333,7 +333,7 @@
                     (XmStringFree s1)))))
         (activate-dialog loop-between-marks-dialog))
       
-      (set! loop-between-marks-menu-label (add-to-menu marks-menu "Loop play between marks" (lambda () (post-loop-between-marks-dialog))))
+      (set! loop-between-marks-menu-label (add-to-menu marks-menu "Loop play between marks" post-loop-between-marks-dialog))
       
       (set! marks-list (cons (lambda ()
 			       (let ((new-label (format #f "Loop play between marks (~D ~D ~D)"
@@ -484,7 +484,7 @@ using the granulate generator to fix up the selection duration (this still is no
 				 1))))))
 	(activate-dialog fit-to-mark-dialog))
       
-      (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" (lambda () (post-fit-to-mark-dialog)))))
+      (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" post-fit-to-mark-dialog)))
     
     (set! fit-to-mark-menu-label (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks)))
 
@@ -574,7 +574,7 @@ using the granulate generator to fix up the selection duration (this still is no
 				 1))))))
 	(activate-dialog define-by-mark-dialog))
       
-      (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" (lambda () (post-define-by-mark-dialog)))))
+      (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" post-define-by-mark-dialog)))
     
     (set! define-by-mark-menu-label (add-to-menu marks-menu define-by-mark-label cp-define-by-marks)))
 
@@ -946,7 +946,7 @@ using the granulate generator to fix up the selection duration (this still is no
 
 ;;; -------- Delete all marks 
 
-(add-to-menu marks-menu "Delete all marks" (lambda () (delete-marks)))
+(add-to-menu marks-menu "Delete all marks" delete-marks)
 
 (add-to-menu marks-menu #f #f)
 

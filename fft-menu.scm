@@ -100,7 +100,7 @@ removes all energy below the low frequency and above the high frequency, then co
 				 1))))))
         (activate-dialog fft-edit-dialog))
       
-      (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" (lambda () (post-fft-edit-dialog)))))
+      (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" post-fft-edit-dialog)))
     
     (set! fft-edit-menu-label (add-to-menu fft-menu fft-edit-label cp-fft-edit)))
 
@@ -172,7 +172,7 @@ removes all energy below the low frequency and above the high frequency, then co
 	
         (activate-dialog fft-squelch-dialog))
       
-      (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" (lambda () (post-fft-squelch-dialog)))))
+      (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" post-fft-squelch-dialog)))
     
     (set! fft-squelch-menu-label (add-to-menu fft-menu fft-squelch-label cp-fft-squelch)))
 
@@ -184,4 +184,4 @@ removes all energy below the low frequency and above the high frequency, then co
 
 (add-to-menu fft-menu #f #f)
 
-(add-to-menu fft-menu "Squelch vowels" (lambda () (squelch-vowels)))
+(add-to-menu fft-menu "Squelch vowels" squelch-vowels)
