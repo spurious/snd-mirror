@@ -16778,7 +16778,17 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(x))
 	    {
+#if HAVE_OVERFLOW_CHECKS
+	    case T_INTEGER:
+	      {
+		s7_int val;
+		if (add_overflow(integer(x), integer(y), &val))
+		  return(make_real(sc, (double)integer(x) + (double)integer(y)));
+		return(make_integer(sc, val));
+	      }
+#else
 	    case T_INTEGER: return(make_integer(sc, integer(x) + integer(y)));
+#endif
 	    case T_RATIO:   return(add_ratios(sc, x, y));
 	    case T_REAL:    return(make_real(sc, real(x) + real(y)));
 	    case T_COMPLEX: return(make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
@@ -16846,7 +16856,17 @@ static s7_pointer g_add_s1_1(s7_scheme *sc, s7_pointer x, s7_pointer args)
 {
   switch (type(x))
     {
+#if HAVE_OVERFLOW_CHECKS
+    case T_INTEGER:
+      {
+	s7_int val;
+	if (add_overflow(integer(x), 1, &val))
+	  return(make_real(sc, (double)integer(x) + 1.0));
+	return(make_integer(sc, val));
+      }
+#else
     case T_INTEGER: return(make_integer(sc, integer(x) + 1));
+#endif
     case T_RATIO:   return(add_ratios(sc, x, small_int(1)));
     case T_REAL:    return(make_real(sc, real(x) + 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
@@ -17844,7 +17864,17 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	{
 	  switch (type(x))
 	    {
+#if HAVE_OVERFLOW_CHECKS
+	    case T_INTEGER:
+	      {
+		s7_int val;
+		if (subtract_overflow(integer(x), integer(y), &val))
+		  return(make_real(sc, (double)integer(x) - (double)integer(y)));
+		return(make_integer(sc, val));
+	      }
+#else
 	    case T_INTEGER: return(make_integer(sc, integer(x) - integer(y)));
+#endif
 	    case T_RATIO:   return(g_subtract(sc, args));
 	    case T_REAL:    return(make_real(sc, real(x) - real(y)));
 	    case T_COMPLEX: return(make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
@@ -17918,7 +17948,17 @@ static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
+#if HAVE_OVERFLOW_CHECKS
+    case T_INTEGER:
+      {
+	s7_int val;
+	if (subtract_overflow(integer(x), 1, &val))
+	  return(make_real(sc, (double)integer(x) - 1.0));
+	return(make_integer(sc, val));
+      }
+#else
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
+#endif
     case T_RATIO:   return(subtract_ratios(sc, x, small_int(1)));
     case T_REAL:    return(make_real(sc, real(x) - 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
@@ -17935,7 +17975,17 @@ static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
   /* this one seems to hit reals as often as integers */
   switch (type(x))
     {
+#if HAVE_OVERFLOW_CHECKS
+    case T_INTEGER:
+      {
+	s7_int val;
+	if (subtract_overflow(integer(x), 1, &val))
+	  return(make_real(sc, (double)integer(x) - 1.0));
+	return(make_integer(sc, val));
+      }
+#else
     case T_INTEGER: return(make_integer(sc, integer(x) - 1));
+#endif
     case T_RATIO:   return(subtract_ratios(sc, x, small_int(1)));
     case T_REAL:    return(make_real(sc, real(x) - 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
@@ -17957,7 +18007,17 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
+#if HAVE_OVERFLOW_CHECKS
+    case T_INTEGER:
+      {
+	s7_int val;
+	if (subtract_overflow(integer(x), n, &val))
+	  return(make_real(sc, (double)integer(x) - (double)n));
+	return(make_integer(sc, val));
+      }
+#else
     case T_INTEGER: return(make_integer(sc, integer(x) - n));
+#endif
     case T_RATIO:   return(subtract_ratios(sc, x, cadr(args)));
     case T_REAL:    return(make_real(sc, real(x) - n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
@@ -18979,10 +19039,17 @@ static s7_pointer g_multiply_si(s7_scheme *sc, s7_pointer args)
 	  return(make_real(sc, (double)integer(x) * (double)n));
 	return(make_integer(sc, val));
       }
+    case T_RATIO:
+      {
+	s7_int val;
+	if (multiply_overflow(numerator(x), n, &val))
+	  return(make_real(sc, fraction(x) * (double)n));
+	return(s7_make_ratio(sc, val, denominator(x)));
+      }
 #else
     case T_INTEGER: return(make_integer(sc, integer(x) * n));
-#endif
     case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * n, denominator(x)));
+#endif
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:
@@ -19009,10 +19076,17 @@ static s7_pointer g_multiply_is(s7_scheme *sc, s7_pointer args)
 	  return(make_real(sc, (double)integer(x) * (double)n));
 	return(make_integer(sc, val));
       }
+    case T_RATIO:
+      {
+	s7_int val;
+	if (multiply_overflow(numerator(x), n, &val))
+	  return(make_real(sc, fraction(x) * (double)n));
+	return(s7_make_ratio(sc, val, denominator(x)));
+      }
 #else
     case T_INTEGER: return(make_integer(sc, integer(x) * n));
-#endif
     case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * n, denominator(x)));
+#endif
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:
@@ -19069,8 +19143,26 @@ static s7_pointer g_sqr_ss(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
+#if HAVE_OVERFLOW_CHECKS
+    case T_INTEGER: 
+      {
+	s7_int val;
+	if (multiply_overflow(integer(x), integer(x), &val))
+	  return(make_real(sc, (double)integer(x) * (double)integer(x)));
+	return(make_integer(sc, val));
+      }
+    case T_RATIO:
+      {
+	s7_int num, den;
+	if ((multiply_overflow(numerator(x), numerator(x), &num)) ||
+	    (multiply_overflow(denominator(x), denominator(x), &den)))
+	  return(make_real(sc, fraction(x) * fraction(x)));
+	return(s7_make_ratio(sc, num, den));
+      }
+#else
     case T_INTEGER: return(s7_make_integer(sc, integer(x) * integer(x)));
     case T_RATIO:   return(s7_make_ratio(sc, numerator(x) * numerator(x), denominator(x) * denominator(x)));
+#endif
     case T_REAL:    return(make_real(sc, real(x) * real(x)));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * real_part(x) - imag_part(x) * imag_part(x), 2.0 * real_part(x) * imag_part(x)));
     default:
@@ -71726,7 +71818,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
     int fs;
     port_t *p;
     for (fs = 0, p = sc->port_heap; p; p = (port_t *)(p->next), fs++);
-    fprintf(stderr, "vectors: %u, input: %u, output: %u, free port: %u\ncontinuations: %u, c_objects: %u, gensyms: %u, setters: %u\n",
+    fprintf(stderr, "vectors: %u, input: %u, output: %u, free port: %d\ncontinuations: %u, c_objects: %u, gensyms: %u, setters: %u\n",
 	    sc->vectors_loc, sc->input_ports_loc, sc->output_ports_loc, fs, sc->continuations_loc, sc->c_objects_loc, sc->gensyms_loc, sc->setters_loc);
   }
   return(sc->F);
@@ -73746,7 +73838,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
  * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       17.4
+ * lg            |      |      |      |       18.5
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
@@ -73779,19 +73871,8 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * can opt'd *|+ etc use new overflow checks? right now we get:
- *   t7: (* 0 9223372036854775807): 0 error ; (* 0 922337203685477580) is 0
- *   <2> (apply * '(0 9223372036854775807))
- *   0.0
- *   <3> (let ((x (int-vector 0))) (set! (x 0) (apply * '(0 9223372036854775807))))
- *   error: int_vector_set! argument 3, 0.0, is a real but should be an integer
- *   t9: (- -1 9223372036854775807): 1 -1.844674407370955e+19
- *   t9: (- 0 9223372036854775807): 2 -1.844674407370955e+19
- *
- * perhaps T_REST on the :rest args, so no keywords in (runtime) arglist
- *   this is tricky -- closure_name for example assumes :rest is still in the list
- *   need readable o->str of func* with these args
- *
  * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
+ * lint: in case, => type should be checkable via sig, can closure target check arity?
+ *       accept (case '() ...) currently says "unlikely to work" -- but it's dumb!
  */
  

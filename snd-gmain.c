@@ -578,7 +578,7 @@ void snd_doit(int argc, char **argv)
   ss->orig_listener_font = mus_strdup(listener_font(ss));
   ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
-#if (!GTK_CHECK_VERSION(3, 0, 0))
+#if (!(GTK_CHECK_VERSION(3, 0, 0)))
   init_gtk();
 #endif
 

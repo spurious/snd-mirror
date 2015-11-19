@@ -1180,68 +1180,83 @@
 				       (if (eq? t1 (car arg1))
 					   arg2
 					   arg1)
-				       
-				       ;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
-				       ;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
-				       (let ((sym #f)
-					     (eqf #f))
-					 (if (every? (lambda (p)
-						       (and (pair? p)
-							    (if (not eqf)
-								(and (memq (car p) '(eq? eqv? equal? char=? string=? =))
-								     (set! eqf (car p)))
-								(eq? eqf (car p)))
-							    (if (not sym) 
-								(and (not (side-effect? (cadr p) env))
-								     (set! sym (cadr p)))
-								(equal? sym (cadr p)))
-							    (code-constant? (caddr p))))
-						     (cdr form))
-					     (let* ((vals (map caddr (cdr form)))
-						    (func (case eqf 
-							    ((eq?) 'memq) 
-							    ((eqv? char=?) 'memv) 
-							    ((=) (if (every? rational? vals) 'memv 'member))
-							    (else 'member)))
-						    (equals (if (and (eq? func 'member)
-								     (not (eq? eqf 'equal?)))
-								(list eqf)
-								())))
-					       `(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))
-					     
-					     (let ((new-form ()))
-					       (do ((exprs (cdr form) (cdr exprs)))
-						   ((null? exprs) 
-						    (if (null? new-form)
-							#f
-							(if (null? (cdr new-form))
-							    (car new-form)
-							    `(or ,@(reverse new-form)))))
-						 (let* ((e (car exprs))
-							(val (classify e)))
+				       (let ((sf #f))
+					 (if (and (every? (lambda (p)
+							    (and (pair? p)
+								 (pair? (cdr p))
+								 (eq? (car p) 'not)))
+							  (cdr form))
+						  (let ()
+						    (set! sf (simplify-boolean `(not (and ,@(map cadr (cdr form)))) true false env))
+						    (or (not (pair? sf))
+							(not (eq? (car sf) 'not))
+							(not (pair? (cadr sf)))
+							(not (eq? (caadr sf) 'and)))))
+					     sf
+					     ;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
+					     ;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
+
+					     ;; (or (pair? x) (null? x)) -> (list? x)
+
+					     (let ((sym #f)
+						   (eqf #f))
+					       (if (every? (lambda (p)
+							     (and (pair? p)
+								  (if (not eqf)
+								      (and (memq (car p) '(eq? eqv? equal? char=? string=? =))
+									   (set! eqf (car p)))
+								      (eq? eqf (car p)))
+								  (if (not sym) 
+								      (and (not (side-effect? (cadr p) env))
+									   (set! sym (cadr p)))
+								      (equal? sym (cadr p)))
+								  (code-constant? (caddr p))))
+							   (cdr form))
+						   (let* ((vals (map caddr (cdr form)))
+							  (func (case eqf 
+								  ((eq?) 'memq) 
+								  ((eqv? char=?) 'memv) 
+								  ((=) (if (every? rational? vals) 'memv 'member))
+								  (else 'member)))
+							  (equals (if (and (eq? func 'member)
+									   (not (eq? eqf 'equal?)))
+								      (list eqf)
+								      ())))
+						     `(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))
 						   
-						   (if (and (pair? val)
-							    (memq (car val) '(and or not)))
-						       (set! val (classify (set! e (simplify-boolean e true false env)))))
-						   
-						   (if val                                ; #f in or is ignored
-						       (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-							       (code-constant? val))
-							   (begin
-							     (if (null? new-form)         ; (or x1 123) -> value of x1 first
-								 (set! new-form (list val))           ;was `(,val))
-								 (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
-							     (set! exprs '(#t)))
-							   
-							   ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
-							   
-							   (if (and (pair? e)             ; (or ...) -> splice into current
-								    (eq? (car e) 'or))
-							       (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-							       (begin                     ; else add it to our new expression with value #f
-								 (store e val 'or)
-								 (if (not (memq val new-form))
-								     (set! new-form (cons val new-form)))))))))))))))))))
+						   (let ((new-form ()))
+						     (do ((exprs (cdr form) (cdr exprs)))
+							 ((null? exprs) 
+							  (if (null? new-form)
+							      #f
+							      (if (null? (cdr new-form))
+								  (car new-form)
+								  `(or ,@(reverse new-form)))))
+						       (let* ((e (car exprs))
+							      (val (classify e)))
+							 
+							 (if (and (pair? val)
+								  (memq (car val) '(and or not)))
+							     (set! val (classify (set! e (simplify-boolean e true false env)))))
+							 
+							 (if val                                ; #f in or is ignored
+							     (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+								     (code-constant? val))
+								 (begin
+								   (if (null? new-form)         ; (or x1 123) -> value of x1 first
+								       (set! new-form (list val))           ;was `(,val))
+								       (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) ; reversed when returned
+								   (set! exprs '(#t)))
+								 
+								 ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, so trailing x1 would still be #f
+								 
+								 (if (and (pair? e)             ; (or ...) -> splice into current
+									  (eq? (car e) 'or))
+								     (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
+								     (begin                     ; else add it to our new expression with value #f
+								       (store e val 'or)
+								       (if (not (memq val new-form))
+									   (set! new-form (cons val new-form)))))))))))))))))))))
 		  
 		  ((and)
 		   (or (= len 1)
@@ -1265,8 +1280,8 @@
 				       (let ((new-form ()))
 					 
 					 (if (and (= len 3)
-						  (not (side-effect? arg1 env))                ; (and x x) -> x
-						  (equal? arg1 arg2))
+						  (not (side-effect? arg1 env))
+						  (equal? arg1 arg2))                  ; (and x x) -> x
 					     arg1
 
 					     ;; (and (= ...)...) for more than 2 args? 
@@ -3287,7 +3302,7 @@
 		    ((defmacro defmacro*)
 		     (if (or (< (length form) 4)
 			     (not (symbol? (cadr form))))
-			 (lint-format "~A declaration is messed up: ~S" name head form)
+			 (lint-format "~A declaration is messed up: ~S" name head (truncated-list->string form))
 			 (let ((sym (cadr form))
 			       (args (caddr form))
 			       (body (cdddr form)))
@@ -3324,7 +3339,7 @@
 							name form 
 							(if (< len 3) "no" "too many") 
 							(if (< len 3) "" "s"))))
-				     (lint-format "~S is messed up" name form))
+				     (lint-format "~S is messed up" name (truncated-list->string form)))
 				 
 				 (if (and (pair? val)
 					  (null? (cdr val))
@@ -3520,46 +3535,69 @@
 				    (begin
 				      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))
 				      (set! has-combinations #f))
-				    (let ((expr (simplify-boolean (car clause) () falses env)))
-				      (when (memq (car clause) '(else #t))
+
+				    (let ((expr (simplify-boolean (car clause) () falses env))
+					  (test (car clause))
+					  (sequel (cdr clause)))
+
+				      (when (memq test '(else #t))
 					(set! has-else #t)
-					(if (and (pair? (cdr clause))
-						 (pair? (cadr clause))
-						 (null? (cddr clause))
-						 (eq? (caadr clause) 'cond))
+					(if (and (pair? sequel)
+						 (pair? (car sequel))
+						 (null? (cdr sequel))
+						 (eq? (caar sequel) 'cond))
 					    (lint-format "else clause cond could be folded into the outer cond: ~A" name (truncated-list->string clause))))
 				      (if (never-false expr)
 					  (if (not (= ctr len))
 					      (lint-format "cond test is never false: ~A" name form)
 					      (if (and (not (memq expr '(#t else)))
-						       (not (side-effect? (car clause) env)))
+						       (not (side-effect? test env)))
 						  (lint-format "cond last test could be #t: ~A" name form)))
 					  (if (never-true expr)
 					      (lint-format "cond test is never true: ~A" name form)))
-				      (if (not (side-effect? (car clause) env))
-					  (if (member (car clause) exprs)
-					      (lint-format "cond test repeated:~A" name (truncated-list->string clause))
-					      (set! exprs (cons (car clause) exprs))))
+				      (if (not (side-effect? test env))
+					  (begin
+					    (if (and (not (memq test '(else #t)))
+						     (pair? sequel)
+						     (null? (cdr sequel)))
+						(if (equal? test (car sequel))
+						    (lint-format "no need to repeat the test: ~A" name (lists->string clause (list test)))
+						    (if (and (pair? (car sequel))
+							     (pair? (cdar sequel))
+							     (null? (cddar sequel))
+							     (equal? test (cadar sequel)))
+							(lint-format "perhaps use => here: ~A" name 
+								     (lists->string clause (list test '=> (caar sequel)))))))
+					    (if (member test exprs)
+						(lint-format "cond test repeated:~A" name (truncated-list->string clause))
+						(set! exprs (cons test exprs)))))
 				      (if (boolean? expr)
 					  (if (not expr)
 					      (lint-format "cond test is always false:~A" name (truncated-list->string clause))
 					      (if (not (= ctr len))
 						  (lint-format "cond #t clause is not the last: ~A" name (truncated-list->string form))))
-					  (if (eq? (car clause) 'else)
+					  (if (eq? test 'else)
 					      (if (not (= ctr len))
 						  (lint-format "cond else clause is not the last: ~A" name (truncated-list->string form)))
-					      (lint-walk name (car clause) env)))
+					      (lint-walk name test env)))
 				      (if (eq? result :unset)
-					  (set! result (cdr clause))
-					  (if (not (equal? result (cdr clause)))
+					  (set! result sequel)
+					  (if (not (equal? result sequel))
 					      (set! result :unequal)))
-				      (if (pair? (cdr clause))
-					  (if (eq? (cadr clause) '=>)
-					      (if (not (pair? (cddr clause)))
+				      (if (pair? sequel)
+					  (if (eq? (car sequel) '=>)
+					      (if (or (not (pair? (cdr sequel)))
+						      (pair? (cddr sequel)))
 						  (lint-format "cond => target is messed up: ~A" name (truncated-list->string clause))
-						  (lint-walk name (caddr clause) env))
-					      (lint-walk-body name head (cdr clause) env))
-					  (if (not (null? (cdr clause)))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
+						  (let ((f (cadr sequel)))
+						    (if (symbol? f)
+							(let ((val (symbol->value f *e*)))
+							  (if (procedure? val)
+							      (if (not (aritable? val 1)) ; here values might be in test expr
+								  (lint-format "=> target (~A) may be unhappy: ~A" name f clause)))))
+						    (lint-walk name f env)))
+					      (lint-walk-body name head sequel env))
+					  (if (not (null? sequel))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
 					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))))
 				      (if (not (side-effect? expr env))
 					  (set! falses (cons expr falses))
@@ -3652,6 +3690,14 @@
 				      (if (member exprs all-exprs)
 					  (set! exprs-repeated exprs)
 					  (set! all-exprs (cons exprs all-exprs)))
+				      (if (and (pair? exprs)
+					       (null? (cdr exprs))
+					       (pair? (car exprs))
+					       (pair? (cdar exprs))
+					       (null? (cddar exprs))
+					       (equal? selector (cadar exprs)))
+					  (lint-format "perhaps use => here: ~A" name 
+						       (lists->string clause (list keys '=> (caar exprs)))))
 				      (if (pair? keys)
 					  (if (not (proper-list? keys))
 					      (lint-format "stray dot in case case key list: ~A" name (truncated-list->string clause))
@@ -3758,6 +3804,15 @@
 			   
 			   (let ((step-vars (cadr form)))
 			     
+			     (if (not (side-effect? form env))
+				 (let ((end+result (caddr form)))
+				   (if (or (not (pair? end+result))
+					   (null? (cdr end+result)))
+				       (lint-format "this do-loop could be replaced by ():~A" name (truncated-list->string form))
+				       (if (and (null? (cddr end+result))
+						(code-constant? (cadr end+result)))
+					   (lint-format "this do-loop could be replaced by ~A:~A" name (cadr end+result) (truncated-list->string form))))))
+
 			     ;; walk the init forms before adding the step vars to env
 			     (do ((bindings step-vars (cdr bindings)))
 				 ((not (pair? bindings))
@@ -3778,7 +3833,8 @@
 				 (when (and (binding-ok? name head stepper env #t)
 					    (pair? (cddr stepper)))
 				   (lint-walk name (caddr stepper) (append vars env))
-				   ;(format *stderr* "~S: ~S~%" stepper (var-member (car stepper) vars))
+				   (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
+				       (lint-format "possible simplification:~A" name (lists->string stepper (list (car stepper) (cadr stepper)))))
 				   (let ((data (var-member (car stepper) vars)))
 				     (set! (var-ref data) #f))
 				   (when (and (pair? (caddr stepper))
@@ -3878,8 +3934,7 @@
 		    ((let)
 		     (if (or (< (length form) 3)
 			     (and (not (symbol? (cadr form)))
-				  (not (null? (cadr form)))
-				  (not (pair? (cadr form)))))
+				  (not (list? (cadr form)))))
 			 (lint-format "let is messed up: ~A" name (truncated-list->string form))
 			 (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 			   (if (keyword? named-let)
@@ -3913,15 +3968,21 @@
 									     (caddr form))
 								     (list 'define (map car (caddr form))))))
 					   ()))
-				 (varlist (if named-let (caddr form) (cadr form))))
-			     (if (and (not (null? varlist))
-				      (not (pair? varlist)))
-				 (lint-format "let is messed up: ~A" name (truncated-list->string form)))
+				 (varlist (if named-let (caddr form) (cadr form)))
+				 (body (if named-let (cdddr form) (cddr form))))
+
+			     (if (not (list? varlist))
+				 (lint-format "let is messed up: ~A" name (truncated-list->string form))
+				 (if (and (null? varlist)
+					  (pair? body)
+					  (null? (cdr body))
+					  (not (side-effect? (car body) env)))
+				     (lint-format "possible simplification:~A" name (lists->string form (car body)))))
+				     
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))
 				  (if (pair? bindings)
-				      (lint-format "let variable list is not a proper list? ~S" 
-						   name (if named-let (caddr form) (cadr form)))))
+				      (lint-format "let variable list is not a proper list? ~S" name varlist)))
 			       (if (binding-ok? name head (car bindings) env #f)
 				   (let ((val (cadar bindings)))
 				     (if (and (pair? val)
@@ -3943,7 +4004,7 @@
 			     ;; each var is (sym ref set opt-func-data opt-type-data)
 			     
 			     (let* ((cur-env (append vars env))
-				    (e (lint-walk-body name head (if named-let (cdddr form) (cddr form)) cur-env))
+				    (e (lint-walk-body name head body cur-env))
 				    (nvars (if (null? cur-env)
 					       e
 					       (and (not (eq? e cur-env))
@@ -3961,8 +4022,7 @@
 			   (let ((vars (if named-let (list (make-var named-let)) ()))
 				 (varlist (if named-let (caddr form) (cadr form)))
 				 (side-effects #f))
-			     (if (and (not (null? varlist))
-				      (not (pair? varlist)))
+			     (if (not (list? varlist))
 				 (lint-format "let* is messed up: ~A" name (truncated-list->string form)))
 			     (do ((bindings varlist (cdr bindings)))
 				 ((not (pair? bindings))

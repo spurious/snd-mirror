@@ -4983,15 +4983,13 @@ than changing speed (pitch).  Here we dawdle for awhile, then race at the end to
 <p>first-mark-in-window-at-left moves the (time domain) 
 graph so that the leftmost visible mark is at the left edge.
 In large sounds it can be pain to get the left edge of the window
-aligned with a specific spot in the sound.  In the following code, we assume
+aligned with a specific spot in the sound.  In the following example, we assume
 the desired left edge has a mark, and the 'l' key (without control)
 will move the window left edge to that mark.
 </p>
 
 <pre class="indented">
-(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\l 0 
-  (let ((documentation "move window to align with mark"))
-    first-mark-in-window-at-left))
+(<a class=quiet href="extsnd.html#bindkey">bind-key</a> #\l 0 first-mark-in-window-at-left)
 </pre>
 
 <div class="spacer"></div>

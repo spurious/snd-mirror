@@ -1014,7 +1014,7 @@ enum {NO_SCALE, SIMPLE_SCALE, SCALE_R, SCALE_X};
 #define MIXED true
 #define RAMPED true
 
-static fragment_type_info type_info[NUM_OPS] = { /* this name (type_info apparently) makes C++ shriek and howl if using namespace std */
+static fragment_type_info type_info[NUM_OPS] = {
 
   {ED_SIMPLE, ED_RAMP1, ED_XRAMP1, ED_MIX, -1, 
    NO_RAMP, ON_DATA, NO_MIX, SIMPLE_SCALE,

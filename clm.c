@@ -9097,7 +9097,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
   if (!(is_power_of_2(order)))
     {
       int m;
-      mus_float_t am, q, xt = 0.0, xt0, qj, x;
+      mus_float_t am, q, xt0, x;
       m = (n + 1) / 2;
       am = 0.5 * (n + 1) - 1.0;
       scl = 2.0 / (mus_float_t)n;
@@ -9105,6 +9105,7 @@ mus_float_t *mus_make_fir_coeffs(int order, mus_float_t *envl, mus_float_t *aa)
       xt0 = envl[0] * 0.5;
       for (j = 0, jj = n - 1; j < m; j++, jj--)
 	{
+	  mus_float_t xt, qj;
 #if HAVE_SINCOS
 	  double s1, c1, s2, c2, qj1;
 	  xt = xt0;
@@ -12018,7 +12019,7 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
     arr[0] = scaler;
   else
     {
-      mus_float_t deg, pos, frac, degs_per_chan, ldeg, c, s;
+      mus_float_t deg, pos, frac, degs_per_chan;
       int left, right;
       /* this used to check for degree < 0.0 first, but as Michael Klingbeil noticed, that
        *   means that in the stereo case, the location can jump to 90 => click.
@@ -12060,6 +12061,7 @@ static void mus_locsig_fill(mus_float_t *arr, int chans, mus_float_t degree, mus
 	}
       else
 	{
+	  mus_float_t ldeg, c, s;
 	  ldeg = M_PI_2 * (0.5 - frac);
 	  scaler *= sqrt(2.0) / 2.0;
 	  c = cos(ldeg);
@@ -13155,7 +13157,7 @@ mus_any *mus_make_src(mus_float_t (*input)(void *arg, int direction), mus_float_
 mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(void *arg, int direction))
 {
   sr *srp = (sr *)srptr;
-  mus_float_t sum, x, zf, srx, factor;
+  mus_float_t sum, zf, srx, factor;
   int lim, loc, xi;
   bool int_ok;
   mus_float_t *data, *sinc_table;
@@ -13255,7 +13257,7 @@ mus_float_t mus_src(mus_any *srptr, mus_float_t sr_change, mus_float_t (*input)(
     }
   else
     {
-      mus_float_t sinc_loc, sinc_incr;
+      mus_float_t sinc_loc, sinc_incr, x;
       int last, last10;
 
       x = zf * (srp->width_1 - srp->x);
@@ -15692,7 +15694,6 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    */
   pv_info *pv;
   int N2, D;
-  mus_float_t scl;
 
   N2 = (int)(fftsize / 2);
   if (N2 == 0) return(NULL);
@@ -15731,6 +15732,7 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   else
     {
       int i;
+      mus_float_t scl;
       if (pv_last_window) free(pv_last_window);
       pv_last_fftsize = fftsize;
       pv_last_window = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));

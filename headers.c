@@ -3405,6 +3405,7 @@ static int read_voc_header(const char *filename, int fd)
 		    {
 		      if (type == 8) /* voc_extended */
 			{
+			  /* should voc_extended be set to 1 here? */
 			  srate = (256000000 / (65536 - mus_char_to_lshort((unsigned char *)(hdrbuf + 4))));
 			  if ((int)(hdrbuf[7]) == 0) chans = 1; else chans = 2;
 			  if ((int)(hdrbuf[6]) != 0) sample_type = MUS_UNKNOWN_SAMPLE;
