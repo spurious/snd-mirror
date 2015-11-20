@@ -102,7 +102,7 @@
 		  (lambda any 
 		    (if (and (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error))
 			     (pair? (cdadr any))
-			     (pair? (cddr (cadr any)))
+			     (pair? (cddadr any))
 			     (integer? (caddr (cadr any))) ; if just 1 arg, arg num can be omitted
 			     (< (caddr (cadr any)) low))
 			(quit))))

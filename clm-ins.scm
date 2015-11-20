@@ -99,8 +99,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
     ;;formant center frequencies for a male speaker
     
     (define (find-phoneme phoneme forms)
-      (if (eq? phoneme (car (car forms)))
-	  (cdr (car forms))
+      (if (eq? phoneme (caar forms))
+	  (cdar forms)
 	  (find-phoneme phoneme (cdr forms))))
     
     (define (vox-fun phons which)
@@ -258,8 +258,8 @@ vocal sounds using phase quadrature waveshaping"
                    ;;formant center frequencies for a male speaker
 
   (define (find-phoneme phoneme form)
-    (if (eq? (car (car form)) phoneme)
-	(cdr (car form))
+    (if (eq? (caar form) phoneme)
+	(cdar form)
 	(find-phoneme phoneme (cdr form))))
 
   (define (vox-fun phons which newenv)

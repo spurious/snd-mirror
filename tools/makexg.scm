@@ -2190,7 +2190,7 @@
 			      ;; refargs = 0
 			      (begin
 				(if (member name idlers)
-				    (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadr (car args))))
+				    (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args)))
 				(if (string=? return-type "void")
 				    (hey "  return(Xen_false);~%")))))))
 		  (begin ; 'lambda (see line 1846)

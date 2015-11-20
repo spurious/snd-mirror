@@ -1772,7 +1772,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 			     (start (cadr vals))
 			     (end (if (null? (cdr lst))
 				      (framples)
-				      (cadr (cadr lst))))
+				      (cadadr lst)))
 			     (loop-start (- (caddr vals) start))
 			     (loop-end (- (cadddr vals) start))
 			     (filename (string-append name ".aif")))

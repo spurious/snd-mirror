@@ -73872,7 +73872,10 @@ int main(int argc, char **argv)
  *   append in string case uses string_append, not g_string_append!
  *
  * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
- * lint: in case, => type should be checkable via sig, can closure target check arity?
- *       accept (case '() ...) currently says "unlikely to work" -- but it's dumb!
+ * _type checks on eval locals
+ *
+ * lint: repeated if test...(3077)
+ *       finish member/assoc stuff, do eqx|= etc follow these lines (proc-sig in particular)?
+ *       3-way and ranges? outer cxr cases
  */
  
