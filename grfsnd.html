@@ -2078,13 +2078,9 @@ than one input is required, the first argument to apply-ladspa should be a list 
 	     (if (not (= (logand hint LADSPA_HINT_INTEGER) 0)) (set! ldata (cons "integer" ldata)))
 	     (if (not (= (logand hint LADSPA_HINT_SAMPLE_RATE) 0)) (set! ldata (cons "sample_rate" ldata)))
 	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_ABOVE) 0)) 
-		 (begin
-		   (set! ldata (cons hi ldata))
-		   (set! ldata (cons "maximum" ldata))))
-	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_BELOW) 0) )
-		 (begin
-		   (set! ldata (cons lo ldata))
-		   (set! ldata (cons "minimum" ldata))))
+		 (set! ldata (cons "maximum" (cons hi ldata))))
+	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_BELOW) 0))
+	         (set! ldata (cons "minimum" (cons lo ldata))))
 	     (set! ldata (cons port-name ldata))
 	     (set! data (cons ldata data)))))
      descriptors hints names)

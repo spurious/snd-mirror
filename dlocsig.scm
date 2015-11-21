@@ -3057,9 +3057,8 @@
 	  (do ((channel 0 (+ 1 channel)))
 	      ((= channel len))
 	    (let ((delayo (delays channel)))
-	      (set! (out-delays channel) (if (not (= delayo 0.0))
-					     (make-delay (time->samples delayo))
-					     #f))
+	      (set! (out-delays channel) (and (not (= delayo 0.0))
+					      (make-delay (time->samples delayo))))
 	      (set! max-out-delay (max max-out-delay delayo))))))
     
     ;; delay from the minimum distance to the listener

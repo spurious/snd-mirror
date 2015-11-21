@@ -2031,7 +2031,7 @@
 				  (begin
 				    (if (member name idlers)
 					(begin
-					  (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadr (car args)))
+					  (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
 					  (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
 				  (hey-on "  return(C_to_Xen_~A(" (no-stars return-type)))))
 			  (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))

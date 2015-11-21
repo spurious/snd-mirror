@@ -271,8 +271,8 @@
 	     (lambda (select)
 	       (let ((pos (apply selection-position select))
 		     (len (apply selection-framples select)))
-		 (set! ms (cons (apply add-mark pos select) ms))
-		 (set! ms (cons (apply add-mark (+ pos len) select) ms))))
+		 (set! ms (cons (apply add-mark (+ pos len) select) 
+				(cons (apply add-mark pos select) ms)))))
 	     (selection-members)))
 	(reverse ms)))))
 

@@ -266,7 +266,7 @@
       (if (string=? str "DOUBLE") "C_double_to_Xen_real"
 	  (if (string=? str "BOOLEAN") "C_bool_to_Xen_boolean"
 	      (if (string=? str "ULONG") "C_ulong_to_Xen_ulong"
-		  (if (or (string=? str "String") (string=? str "STRING"))
+		  (if (string-ci=? str "String")
 		      (if (string=? (car typ) "guchar*") 
 			  "C_to_Xen_String"
 			  "C_string_to_Xen_string")
@@ -277,7 +277,7 @@
       (if (string=? str "DOUBLE") "Xen_real_to_C_double"
 	  (if (string=? str "BOOLEAN") "Xen_boolean_to_C_bool"
 	      (if (string=? str "ULONG") "Xen_ulong_to_C_ulong"
-		  (if (or (string=? str "String") (string=? str "STRING"))
+		  (if (string-ci=? str "String")
 		      "Xen_string_to_C_string"
 		      (format #f "~A unknown" str)))))))
 
@@ -299,12 +299,10 @@
 			    (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
 			    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
 
-		    (if (not (member (car typ)
-				     (list "constchar*")))
+		    (if (not (string=? (car typ) "constchar*"))
 			(hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
 
-		    (if (not (member (car typ)
-				     (list "constchar*")))
+		    (if (not (string=? (car typ) "constchar*"))
 			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
 			     (no-stars (car typ))
 			     (if (string=? (cdr typ) "INT") 

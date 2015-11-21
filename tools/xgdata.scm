@@ -4609,8 +4609,8 @@
 ;;; (CFNC "void gtk_alignment_set_padding GtkAlignment* alignment guint padding_top guint padding_bottom guint padding_left guint padding_right")
 ;;; (CFNC "void gtk_alignment_get_padding GtkAlignment* alignment guint* [padding_top] guint* [padding_bottom] guint* [padding_left] guint* [padding_right]")
 (CFNC "gboolean gtk_button_box_get_child_secondary GtkButtonBox* widget GtkWidget* child")
-(CFNC "void gtk_button_set_focus_on_click GtkButton* button gboolean focus_on_click")
-(CFNC "gboolean gtk_button_get_focus_on_click GtkButton* button")
+;;; 3.19.2 (CFNC "void gtk_button_set_focus_on_click GtkButton* button gboolean focus_on_click")
+;;; 3.19.2 (CFNC "gboolean gtk_button_get_focus_on_click GtkButton* button")
 (CFNC "void gtk_calendar_set_display_options GtkCalendar* calendar GtkCalendarDisplayOptions flags")
 (CFNC "GtkCalendarDisplayOptions gtk_calendar_get_display_options GtkCalendar* calendar")
 (CFNC "void gtk_check_menu_item_set_draw_as_radio GtkCheckMenuItem* check_menu_item gboolean draw_as_radio")
@@ -5412,8 +5412,8 @@
 ;;; 2.90.6 (CFNC "gboolean gdk_rgb_colormap_ditherable GdkColormap* cmap")
 ;;; (CFNC "void gtk_action_set_sensitive GtkAction* action gboolean sensitive")
 ;;; (CFNC "void gtk_action_set_visible GtkAction* action gboolean visible")
-(CFNC "gboolean gtk_combo_box_get_focus_on_click GtkComboBox* combo")
-(CFNC "void gtk_combo_box_set_focus_on_click GtkComboBox* combo gboolean focus_on_click")
+;;; 3.19.2 (CFNC "gboolean gtk_combo_box_get_focus_on_click GtkComboBox* combo")
+;;; 3.19.2 (CFNC "void gtk_combo_box_set_focus_on_click GtkComboBox* combo gboolean focus_on_click")
 ;;; already included? (CFNC "PangoLayout* gtk_entry_get_layout GtkEntry* entry")
 (CFNC "gint gtk_entry_layout_index_to_text_index GtkEntry* entry gint layout_index")
 (CFNC "gint gtk_entry_text_index_to_layout_index GtkEntry* entry gint text_index")
@@ -5810,8 +5810,8 @@
 (CFNC "gboolean gtk_drag_dest_get_track_motion GtkWidget* widget")
 ;(CFNC "GtkBorder* gtk_entry_get_inner_border GtkEntry* entry") ; 'const
 ;(CFNC "void gtk_entry_set_inner_border GtkEntry* entry GtkBorder* border") ; arg is const
-(CFNC "gboolean gtk_file_chooser_button_get_focus_on_click GtkFileChooserButton* button")
-(CFNC "void gtk_file_chooser_button_set_focus_on_click GtkFileChooserButton* button gboolean focus_on_click")
+;;; 3.19.2 (CFNC "gboolean gtk_file_chooser_button_get_focus_on_click GtkFileChooserButton* button")
+;;; 3.19.2 (CFNC "void gtk_file_chooser_button_set_focus_on_click GtkFileChooserButton* button gboolean focus_on_click")
 ;(CFNC "void gtk_file_info_set_icon_name GtkFileInfo* info gchar* con_name")
 ;(CFNC "gchar* gtk_file_info_get_icon_name GtkFileInfo* info") ; 'const
 ;(CFNC "GdkPixbuf* gtk_file_info_render_icon GtkFileInfo* info GtkWidget* widget gint pixel_size GError** [error]")
@@ -6846,7 +6846,7 @@
 (CCHK "GTK_IS_TOOLTIP(obj)" "GtkTooltip*")
 
 
-;;; for 2.13.0
+;;; for 2.13.0, mostly deprecated in 3.19
 (CINT-2.14 "GTK_CALENDAR_SHOW_DETAILS" "GtkCalendarDisplayOptions")
 (CFNC-2.14 "void gtk_calendar_set_detail_func GtkCalendar* calendar GtkCalendarDetailFunc func gpointer data GDestroyNotify destroy")
 (CFNC-2.14 "void gtk_calendar_set_detail_width_chars GtkCalendar* calendar gint chars")
@@ -9232,8 +9232,11 @@
 (CFNC-3.20 "char* gtk_widget_path_iter_get_object_name GtkWidgetPath* path gint pos" 'const-return)
 (CFNC-3.20 "void gtk_widget_path_iter_set_object_name GtkWidgetPath* path gint pos char* name" 'const)
 
-#|
-! gboolean gtk_text_buffer_get_iter_at_line_offset (GtkTextBuffer* buffer 
-! gboolean gtk_text_buffer_get_iter_at_line (GtkTextBuffer* buffer 
- change of type -- perhaps do this by hand?
-|#
+
+;;; 3.19.2:
+
+(CFNC-3.20 "void gtk_widget_queue_allocate GtkWidget* widget")
+(CFNC-3.20 "void gtk_widget_set_focus_on_click GtkWidget* widget gboolean focus_on_click")
+(CFNC-3.20 "gboolean gtk_widget_get_focus_on_click GtkWidget* widget")
+(CFNC-3.20 "void gtk_widget_get_allocated_size GtkWidget* widget GtkAllocation* [allocation] int* [baseline]")
+  

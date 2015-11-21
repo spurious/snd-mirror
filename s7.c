@@ -73838,7 +73838,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
  * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       18.5
+ * lg            |      |      |      |       20.5
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
@@ -73873,9 +73873,5 @@ int main(int argc, char **argv)
  *
  * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
  * _type checks on eval locals
- *
- * lint: repeated if test...(3077)
- *       finish member/assoc stuff, do eqx|= etc follow these lines (proc-sig in particular)?
- *       3-way and ranges? outer cxr cases
  */
  
