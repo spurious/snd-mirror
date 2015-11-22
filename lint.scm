@@ -1679,7 +1679,7 @@
 	      ((abs magnitude)
 	       (if (= len 1)
 		   (if (and (pair? (car args))
-			    (memq (caar args) '(abs magnitude)))
+			    (memq (caar args) '(abs magnitude denominator)))
 		       (car args)
 		       (if (rational? (car args))
 			   (abs (car args))
@@ -1826,7 +1826,7 @@
 		   0
 		   (if (null? (cdr args)) ; (logior x) -> x
 		       (car args)
-		       (if (member -1 args)
+		       (if (memv -1 args)
 			   -1
 			   (if (just-integers? args)
 			       (apply logior args)
@@ -1845,7 +1845,7 @@
 		   -1
 		   (if (null? (cdr args)) ; (logand x) -> x
 		       (car args)
-		       (if (member 0 args)
+		       (if (memv 0 args)
 			   0
 			   (if (just-integers? args)
 			       (apply logand args)
@@ -1873,7 +1873,7 @@
 	       (if (null? args)
 		   0
 		   ;; here and in lcm, if just 1 arg -> (abs arg) 
-		   (if (member 1 args)
+		   (if (memv 1 args)
 		       1
 		       (if (just-integers? args)
 			   (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
@@ -1893,7 +1893,7 @@
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
 	       (if (null? args)
 		   1
-		   (if (member 0 args)
+		   (if (memv 0 args)
 		       0
 		       (if (just-integers? args)
 			   (catch #t
@@ -2061,8 +2061,18 @@
 			     (lint-format "~A: perhaps ~A -> ~A" name form head 
 					  (if (memq head '(memq memv member))
 					      (case (car selector-eqf) ((eq?) 'memq) ((eqv?) 'memv) ((equal?) 'member))
-					      (case (car selector-eqf) ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)))))))))))
-	   
+					      (case (car selector-eqf) ((eq?) 'assq) ((eqv?) 'assv) ((equal?) 'assoc)))))))
+		   (when (and (eq? head 'memq)
+			      (pair? items)
+			      (eq? (car items) 'quote))
+		     (let ((bad (find-if pair? (cadr items))))
+		       (if bad
+			   (if (eq? (car bad) 'quote)
+			       (lint-format "stray quote? ~A" name form)
+			       (if (eq? (car bad) 'unquote)
+				   (lint-format "stray comma? ~A" name form)
+				   (lint-format "pointless list member: ~A in ~A" name bad form))))))))))
+
 	  ((if)
 	   (let ((len (length form)))
 	     (if (> len 4)
@@ -2173,6 +2183,15 @@
 					     (lint-format "if is not needed here: ~A" name (lists->string form true))
 					     (lint-format "if is not needed here: ~A" name (lists->string form `(begin ,expr ,true))))))))))))))
 
+	  ((cddddr)
+	   (if (and (pair? (cdr form))
+		    (pair? (cadr form))
+		    (pair? (cdadr form))
+		    (memq (caadr form) '(cdr cddr cdddr cddddr)))
+	       (lint-format "perhaps ~A -> ~A" name form 
+			    `(list-tail ,(cadadr form) ,(+ 4 (case (caadr form) ((cdr) 1) ((cddr) 2) ((cdddr) 3) ((cddddr) 4)))))))
+	  ;; TODO also (cdr (cddddr)) etc below
+
 	  ((car cdr caar cadr cddr cdar
 	    caaar caadr caddr cdddr cdaar cddar caddr cadar)
 	   (let ((cxr? (lambda (s)
@@ -2205,7 +2224,10 @@
 			    (truncated-list->string (cadr form))
 			    (if (eq? head 'car)
 				(truncated-list->string (cadadr form))
-				(truncated-list->string (caddr (cadr form)))))))
+				(truncated-list->string (caddr (cadr form))))))
+
+	   ;; look inward counting cdrs -- if more than 4, list-tail as above
+	   )
 
 	  ((and or not)
 	   (if (not (= line-number last-simplify-boolean-line-number))
@@ -2300,7 +2322,7 @@
 			(zero? (cadr form)))
 		   (lint-format "attempt to invert zero: ~A" name (truncated-list->string form))
 		   (if (and (pair? (cddr form))
-			    (member 0 (cddr form)))
+			    (memv 0 (cddr form)))
 		       (lint-format "attempt to divide by 0: ~A" name (truncated-list->string form))))))
 	  
 	  ((copy)
@@ -2374,9 +2396,9 @@
 	  ((display)
 	   (if (and (= (length form) 2)
 		    (pair? (cadr form))
-		    (eq? (car (cadr form)) 'format)
+		    (eq? (caadr form) 'format)
 		    (not (cadadr form)))
-	       (lint-format "~A could be ~A" name form `(format #t ,@(cddr (cadr form))))))
+	       (lint-format "~A could be ~A" name form `(format #t ,@(cddadr form)))))
 
 	  ((make-vector)
 	   (if (and (= (length form) 4)
@@ -2470,16 +2492,20 @@
 		      (if (not (equal? (cdr form) new-args))
 			  (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args)))))))))))
 
-	  ((apply) 
+	  ((apply)
 	   (if (and (pair? (cdr form))
 		    (not (symbol? (cadr form)))
 		    (not (applicable? (cadr form))))
 	       (lint-format "~S is not applicable: ~A" name (cadr form) (truncated-list->string form))
 	       (let ((len (length form)))
-		 (if (and (> len 2)
-			  (not (list? (form (- len 1))))
-			  (code-constant? (form (- len 1))))
-		     (lint-format "last argument should be a list: ~A" name (truncated-list->string form))))))
+		 (when (> len 2)
+		   (if (and (not (list? (form (- len 1))))
+			    (code-constant? (form (- len 1))))
+		       (lint-format "last argument should be a list: ~A" name (truncated-list->string form)))
+		 (if (and (= len 3)
+			  (pair? (caddr form))
+			  (eq? (caaddr form) 'list))
+		     (lint-format "perhaps ~A" name (lists->string form `(,(cadr form) ,@(cdaddr form)))))))))
 
 	  ((format snd-display)
 	   (if (< (length form) 3)
@@ -2637,6 +2663,15 @@
 					(lists->string form `(list-tail ,(cadadr form) ,(+ (caddr (cadr form)) (caddr form)))))
 			   (lint-format "perhaps ~A" name 
 					(lists->string form `(list-tail ,(cadadr form) (+ ,(caddr (cadr form)) ,(caddr form))))))))))
+
+	  ((magnitude)
+	   (if (and (= (length form) 2)
+		    (memq (->type (cadr form)) '(integer? rational? real?)))
+	       (lint-format "perhaps use abs here: ~A" name form)))
+
+	  ((null eq eqv equal) ; (null (cdr...)) 
+	   (if (not (var-member head env))
+	       (lint-format "misspelled '~A? in ~A?" name head form)))
 
 	  ((*s7*)
 	   (if (= (length form) 2)
@@ -2896,7 +2931,7 @@
       
       (define (get-generator form name head) ; defgenerator funcs
 	(let ((name (if (pair? (cadr form))
-			(car (cadr form))
+			(caadr form)
 			(cadr form))))
 	  ;; auto-define make-name, name?
 	  (let ((make-name (string->symbol (string-append "make-" (symbol->string name))))
@@ -2931,7 +2966,7 @@
 		   (hash-table-set! globals name (make-var name :val (and (pair? (cddr form)) (caddr form)))))))
 
 	    ((define* definstrument defanimal define-expansion define-macro define-macro* define-bacro define-bacro*)
-	     (hash-table-set! globals (car (cadr form)) (make-var (car (cadr form)) :fnc (list head (cdr (cadr form))))))
+	     (hash-table-set! globals (caadr form) (make-var (caadr form) :fnc (list head (cdadr form)))))
 
 	    ((defgenerator)
 	     (get-generator form 'defgenerator head))
@@ -3419,7 +3454,6 @@
 			   (if (symbol? sym)
 			       (begin
 				 ;(set! env (cons (list (make-var sym :typ (->type val))) env))
-				 ;(format *stderr* "env: ~A~%" env)
 				 
 				 (if (keyword? sym)
 				     (lint-format "keywords are constants ~A" name sym))
