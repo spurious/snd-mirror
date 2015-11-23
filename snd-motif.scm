@@ -2536,7 +2536,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 							  (list XmNorientation XmVERTICAL
 								XmNpaneMinimum 30
 								XmNbackground  *basic-color*))))
-		(set! page-info (cons page-name (list panes simple-cases)))
+		(set! page-info (list page-name panes simple-cases))
 		(XtCreateManagedWidget page-name xmPushButtonWidgetClass variables-notebook
 				       (list XmNnotebookChildType XmMAJOR_TAB
 					     XmNbackground        *basic-color*))

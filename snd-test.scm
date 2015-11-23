@@ -927,7 +927,7 @@
 	(snd-display #__line__ ";remember-sound-state set default: ~A" *remember-sound-state*))
     (if *with-smpte-label*
 	(snd-display #__line__ ";with-smpte-label set default: ~A" *with-smpte-label*))
-    (if (not (equal? *with-toolbar* (provided? 'snd-gtk)))
+    (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
 	(snd-display #__line__ ";with-toolbar set default: ~A" *with-toolbar*))
     (if (not *with-tooltips*)
 	(snd-display #__line__ ";with-tooltips set default: ~A" *with-tooltips*))
@@ -1145,7 +1145,7 @@
 	(snd-display #__line__ ";* remember-sound-state set default: ~A" *remember-sound-state*))
     (if *with-smpte-label*
 	(snd-display #__line__ ";* with-smpte-label set default: ~A" *with-smpte-label*))
-    (if (not (equal? *with-toolbar* (provided? 'snd-gtk)))
+    (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
 	(snd-display #__line__ ";* with-toolbar set default: ~A" *with-toolbar*))
     (if (not *with-tooltips*)
 	(snd-display #__line__ ";* with-tooltips set default: ~A" *with-tooltips*))
@@ -24196,7 +24196,7 @@ EDITS: 2
 		  (m6 (find-mark 123456787))
 		  (m7 (mark-name->id "hiho!")))
 	      (if (or (not (equal? m2 m3)) (not (equal? m4 m7)) (not (equal? m2 m4))) (snd-display #__line__ ";find-mark: ~A ~A ~A ~A?" m2 m3 m4 m7))
-	      (if (or (not (equal? m5 m6)) (not (equal? m5 #f))) (snd-display #__line__ ";find-not-a-mark: ~A ~A?" m5 m6))
+	      (if (or (not (equal? m5 m6)) m5) (snd-display #__line__ ";find-not-a-mark: ~A ~A?" m5 m6))
 	      (set! (mark-sample m2) 2000)
 	      (set! m1 (add-mark 1000))
 	      (set! m3 (add-mark 3000))
@@ -27311,17 +27311,17 @@ EDITS: 2
 				 (maxval ((car lst) 4)))
 			    
 			    (if index
-				(if (equal? minval #f)
+				(if (not minval)
 				    (setfnc #t index)
 				    (if (rational? minval)
-					(if (equal? name #t)
+					(if (eq? name #t)
 					    (setfnc (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2))))) index)
 					    (setfnc (+ minval (floor (random (- maxval minval)))) index))
 					(setfnc (+ minval (random (- maxval minval))) index)))
-				(if (equal? minval #f)
+				(if (not minval)
 				    (setfnc-1 #t)
 				    (if (rational? minval)
-					(if (equal? name #t)
+					(if (eq? name #t)
 					    (setfnc-1 (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2))))))
 					    (setfnc-1 (+ minval (floor (random (- maxval minval))))))
 					(setfnc-1 (+ minval (random (- maxval minval)))))))
@@ -30073,16 +30073,16 @@ EDITS: 2
 										    (selected-sound)))))
 						args))))
 	(funcs-equal? "src-sound"
-		      (lambda args (apply src-sound (list 2.0 1.0 (and (> (length args) 2) (caddr args)))))
+		      (lambda args (src-sound 2.0 1.0 (and (> (length args) 2) (caddr args))))
 		      (lambda args (apply src-channel (cons 2.0 args))))
 	(funcs-equal? "reverse-sound"
-		      (lambda args (apply reverse-sound (list (and (> (length args) 2) (caddr args)))))
+		      (lambda args (reverse-sound (and (> (length args) 2) (caddr args))))
 		      reverse-channel)
 	(funcs-equal? "mix"
-		      (lambda args (apply mix (list "pistol.snd" 0 0 (and (> (length args) 2) (caddr args)))))
+		      (lambda args (mix "pistol.snd" 0 0 (and (> (length args) 2) (caddr args))))
 		      (lambda args (apply mix-channel "pistol.snd" args)))
 	(funcs-equal? "insert-sound"
-		      (lambda args (apply insert-sound (list "pistol.snd" 0 0 (and (> (length args) 2) (caddr args)))))
+		      (lambda args (insert-sound "pistol.snd" 0 0 (and (> (length args) 2) (caddr args))))
 		      (lambda args (apply insert-channel "pistol.snd" args)))
 	(close-sound oboe0)
 	(close-sound oboe1))
@@ -43590,7 +43590,7 @@ EDITS: 1
 	 (if (not (isit gen))
 	     (format *stderr* ";~A is not a ~A?" gen name))
 	 (run gen)
-	 (apply run (list gen))))
+	 (run gen)))
      
      (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
 	   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
@@ -44369,7 +44369,7 @@ EDITS: 1
 		(snd-display #__line__ ";ts_y_origin: ~A ~A" (.ts_y_origin val1) 0))
 	    (if (not (equal? (.subwindow_mode val1) IncludeInferiors)) 
 		(snd-display #__line__ ";subwindow_mode: ~A ~A" (.subwindow_mode val1) IncludeInferiors))
-	    (if (not (equal? (.graphics_exposures val1) #t)) 
+	    (if (not (.graphics_exposures val1))
 		(snd-display #__line__ ";graphics_exposures: ~A ~A" (.graphics_exposures val1) #t))
 	    (if (not (eqv? (.clip_x_origin val1) 1)) 
 		(snd-display #__line__ ";clip_x_origin: ~A ~A" (.clip_x_origin val1) 1))

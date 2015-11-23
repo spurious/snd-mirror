@@ -73874,20 +73874,19 @@ int main(int argc, char **argv)
  * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
  * _type checks on eval locals
  * lint: 
- *       how used: vector->list? remainder/quotient?
+ *       how used: remainder/quotient? floor(round->-inf) vs truncate(round->0)?
+ *         string->symbol with strconst?
  *       cd..dr->list-tail completed, also (cadr (cddddr ...))?
- *       floor vs truncate?
  *       dangling ptr after reverse! or sort!
- *       closure sig from body, expand args in code for internal lint?
- *       can wo->s and i<-str be no-side-effect? wo->str but result not used
+ *       closure sig from body (and side-effects), expand args in code for internal lint?
  *       (*|/ (/...) (/...))?
  *       apply: (apply + '(...)) evalled, and check argnum and arg types if possible
  *       the memq list check could be extended to memv, any uncheckable types like #(1 2): 2074
  *         assoc cases similarly (where are type-restricted quoted lists used?), maybe apply (check arg types here if ascertainable)
  *       (abs|negative? (modulo x 3)) (zero? (denominator)) (real? (real-part...)) (null? (cons...)) etc
  *       (*set! allocd-seq|constant-seq? ...)
- *       (append (list...) (list...)) -> (list....) similarly (cons x (list))->list
- *       (string <non-char-expr>)
- *       stray comma (what is '(a ,b c)? (a (unquote b) c): add to other memx cases
+ *       stray comma (what is '(a ,b c)? (a (unquote b) c): add to other memx cases, '(a `,b c) -> (a b c) in the reader
+ *       lint call in *load-hook*
+ *       why is (string <non-char>) reported twice?
  */
  

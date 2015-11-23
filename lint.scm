@@ -76,12 +76,19 @@
 		    (not (= (car lst) 1.0)))
 	       (any-real? (cdr lst)))))
     
+    (define (quoted-undotted-pair? x)
+      (and (pair? x)
+	   (eq? (car x) 'quote)
+	   (pair? (cdr x))
+	   (pair? (cadr x))
+	   (positive? (length (cadr x)))))
+
     (define (quoted-null? x)
       (and (pair? x)
 	   (eq? (car x) 'quote)
 	   (pair? (cdr x))
 	   (null? (cadr x))))
-	   
+
     (define (code-constant? x)
       (and (not (symbol? x))
 	   (or (not (pair? x))
@@ -98,6 +105,7 @@
 		abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
 		begin boolean=? boolean? byte-vector byte-vector?
 		caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr
+		call-with-input-from-string call-with-input-from-file
 		c-pointer c-pointer? c-object? call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr
 		cddar cdddar cddddr cdddr cddr cdr ceiling char->integer char-alphabetic? char-ci<=?
 		char-ci<? char-ci=? char-ci>=? char-ci>? char-downcase char-lower-case? char-numeric? 
@@ -130,7 +138,7 @@
 		tan tanh truncate
 		unless unlet
 		vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
-		when with-baffle with-let
+		when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
 		zero?))
 	     ;; do not include file-exists? or directory?
 	     ht))
@@ -901,7 +909,7 @@
 										       positive? negative? zero? exact? inexact?)))
 						 ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
 						 ((rational?) (memq (car b) '(integer? even? odd?)))
-						 ((integer?)  (memq (car b) '(even? 'odd?)))
+						 ((integer?)  (memq (car b) '(even? odd?)))
 						 (else #f)))
 					  (and (> (length b) 2)
 					       (member (cadr a) (cdr b))
@@ -2407,7 +2415,7 @@
 		    (eq? (cadddr form) #t))
 	       (lint-format "~A won't create an homogenous vector" name form)))
 
-	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
+	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string string->number)
 	   (let ((inverses '((reverse . reverse) 
 			     (list->vector . vector->list)
 			     (vector->list . list->vector)
@@ -2415,6 +2423,7 @@
 			     (string->symbol . symbol->string)
 			     (list->string . string->list)
 			     (string->list . list->string)
+			     (string->number . number->string)
 			     (number->string . string->number))))
 	     (if (and (pair? (cdr form))
 		      (pair? (cadr form))
@@ -2460,6 +2469,12 @@
 				 (lint-format "perhaps ~A" name (lists->string form `(vector-append ,@args)))))))
 		 (set! last-checker-line-number line-number))))
 
+	  ((cons)
+	   (if (and (= (length form) 3)
+		    (pair? (caddr form))
+		    (eq? (caaddr form) 'list))
+	       (lint-format "perhaps ~A" name (lists->string form `(list ,(cadr form) ,@(cdaddr form))))))
+
 	  ((append)
 	   (unless (= line-number last-checker-line-number)
 	     (set! last-checker-line-number line-number)
@@ -2475,22 +2490,54 @@
 					     (#t lst)))))
 	       (let ((new-args (splice-append (cdr form))))     ; (append '(1) (append '(2) '(3))) -> (append '(1) '(2) '(3))
 		 (let ((len1 (length new-args)))
+
+		   (define (distribute-quote x)
+		     (map (lambda (item)
+			    (if (or (symbol? item)
+				    (pair? item))
+				`(quote ,item)
+				item))
+			  x))
+	   
+		   (define (append->list . items)
+		     (let ((lst (list 'list)))
+		       (for-each (lambda (item)
+				   (set! lst (append lst (if (eq? (car item) 'list)
+							     (cdr item)
+							     (distribute-quote (cadr item))))))
+				 items)
+		       lst))
+				   
 		   (case len1
 		     ((0)					; (append) -> ()
 		      (lint-format "perhaps ~A" name (lists->string form ())))
 		     ((1)                                 ; (append x) -> x
 		      (lint-format "perhaps ~A" name (lists->string form (car new-args))))
 		     ((2)
-		      (if (or (null? (cadr new-args))         ; (append (list x) ()) -> (list x)
-			      (quoted-null? (cadr new-args)))
+		      (if (or (null? (cadr new-args))           ; (append (list x) ()) -> (list x)
+			      (quoted-null? (cadr new-args))
+			      (equal? (cadr new-args) '(list)))
 			  (lint-format "perhaps clearer: ~A" name (lists->string form `(copy ,(car new-args))))
-			  (if (null? (car new-args))      ; (append () x) -> x
+			  (if (null? (car new-args))            ; (append () x) -> x
 			      (lint-format "perhaps ~A" name (lists->string form (cadr new-args)))
-			      (if (not (equal? (cdr form) new-args))
-				  (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args)))))))
+			      (if (and (pair? (car new-args))   ; (append (list x y) '(z)) -> (list x y 'z)
+				       (or (eq? (caar new-args) 'list)
+					   (quoted-undotted-pair? (car new-args)))
+				       (pair? (cadr new-args))
+				       (or (eq? (caadr new-args) 'list)
+					   (quoted-undotted-pair? (cadr new-args))))
+				  (lint-format "perhaps ~A" name (lists->string form (apply append->list new-args)))
+				  (if (not (equal? (cdr form) new-args))
+				      (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args))))))))
 		     (else
-		      (if (not (equal? (cdr form) new-args))
-			  (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args)))))))))))
+		      (if (every? (lambda (item)
+				    (and (pair? item)
+					 (or (eq? (car item) 'list)
+					     (quoted-undotted-pair? item))))
+				  new-args)
+			  (lint-format "perhaps ~A" name (lists->string form (apply append->list new-args)))
+			  (if (not (equal? (cdr form) new-args))
+			      (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args))))))))))))
 
 	  ((apply)
 	   (if (and (pair? (cdr form))
