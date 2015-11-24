@@ -73838,7 +73838,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
  * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       20.5
+ * lg            |      |      |      |       20.7
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
@@ -73873,20 +73873,9 @@ int main(int argc, char **argv)
  *
  * ow! in stuff or stacktrace from owlet should correlate stack entries with lets, showing calls/code as much as possible
  * _type checks on eval locals
- * lint: 
- *       how used: remainder/quotient? floor(round->-inf) vs truncate(round->0)?
- *         string->symbol with strconst?
- *       cd..dr->list-tail completed, also (cadr (cddddr ...))?
- *       dangling ptr after reverse! or sort!
+ *
+ * lint: simple type->bool outside if et al?? [if car sig boolean? simplify]
  *       closure sig from body (and side-effects), expand args in code for internal lint?
- *       (*|/ (/...) (/...))?
- *       apply: (apply + '(...)) evalled, and check argnum and arg types if possible
- *       the memq list check could be extended to memv, any uncheckable types like #(1 2): 2074
- *         assoc cases similarly (where are type-restricted quoted lists used?), maybe apply (check arg types here if ascertainable)
- *       (abs|negative? (modulo x 3)) (zero? (denominator)) (real? (real-part...)) (null? (cons...)) etc
- *       (*set! allocd-seq|constant-seq? ...)
- *       stray comma (what is '(a ,b c)? (a (unquote b) c): add to other memx cases, '(a `,b c) -> (a b c) in the reader
- *       lint call in *load-hook*
- *       why is (string <non-char>) reported twice?
+ *       if closure depends only on arg (no free var, no funcs other than built-ins) and has no side-effects, and gets constant arg, eval?
  */
  

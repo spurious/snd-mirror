@@ -235,8 +235,7 @@
 						(set! vtemp vb)
 						(set! f (* zslope (- vtemp vh)))
 						(if (and (<= f (* mus fb)) (> f 0))
-						    (begin
-						      (set! v vtemp))
+						    (set! v vtemp)
 						    (begin
 						      (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
 						      (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
