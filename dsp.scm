@@ -1146,8 +1146,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
        (set! freq-response (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response)) ; right upper y hz
        (set! freq-response (cons 1.0 freq-response))) ; right upper y resp
      freqs)
-    (set! freq-response (cons 1.0 freq-response))
-    (set! freq-response (cons 1.0 freq-response)) 
+    (set! freq-response (cons 1.0 (cons 1.0 freq-response)))
     (reverse freq-response)))
 
 (define notch-channel
@@ -2308,14 +2307,10 @@ is assumed to be outside -1.0 to 1.0."))
 			   (next-beg (if (< clip (- clips 3)) (clip-data (+ clip 2)) (framples snd chn))))
 		       
 		       (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
-			   (begin
-			     ;; (format #t ";[~A] collision at ~A -> [~A : ~A]" clip previous-end clip-beg clip-end)
-			     (set! forward-data-len (max 4 (- clip-beg previous-end)))))
+			   (set! forward-data-len (max 4 (- clip-beg previous-end))))
 		       
 		       (if (> (+ clip-end data-len) next-beg)    ; current end + data collides with next
-			   (begin
-			     ;; (format #t ";[~A] collision at [~A : ~A] -> ~A" clip clip-beg clip-end next-beg)
-			     (set! backward-data-len (max 4 (- next-beg clip-end)))))
+			   (set! backward-data-len (max 4 (- next-beg clip-end))))
 		       
 		       (let ((forward-predict-len (min (max clip-len (floor (/ forward-data-len 2))) forward-data-len))
 			     (backward-predict-len (min (max clip-len (floor (/ backward-data-len 2))) backward-data-len)))

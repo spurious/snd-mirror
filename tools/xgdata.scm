@@ -9240,3 +9240,15 @@
 (CFNC-3.20 "gboolean gtk_widget_get_focus_on_click GtkWidget* widget")
 (CFNC-3.20 "void gtk_widget_get_allocated_size GtkWidget* widget GtkAllocation* [allocation] int* [baseline]")
   
+
+;;; 3.19.3:
+
+(CINT-3.20 "GTK_SHORTCUT_ACCELERATOR" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_PINCH" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_STRETCH" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_ROTATE_CLOCKWISE" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_ROTATE_COUNTERCLOCKWISE" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_LEFT" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_RIGHT" "GtkShortcutType")
+(CINT-3.20 "GTK_SHORTCUT_GESTURE" "GtkShortcutType")
+

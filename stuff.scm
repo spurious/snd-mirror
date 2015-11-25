@@ -33,6 +33,19 @@
 	  ((eq? e (rootlet))) 
 	(format p "~{~A ~}~%" e)))))
 
+#|
+(set! (hook-functions *error-hook*) 
+      (list (lambda (hook) 
+	      (apply format *stderr* (hook 'data))
+	      (newline *stderr*)
+	      (when ((owlet) 'error-line)
+		(format *stderr* "~S line ~A~%" ((owlet) 'error-file) ((owlet) 'error-line)))
+	      (do ((e (outlet (owlet)) (outlet e))) 
+		  ((eq? e (rootlet))) 
+		(format *stderr* "~{  ~A~%~}~%" e))
+	      (format *stderr* "~%~A~%" (stacktrace)))))
+|#
+
 
 ;;; ----------------
 (define (first obj)  (if (sequence? obj) (obj 0) (error "first argument, ~S, is not a sequence" obj)))

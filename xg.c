@@ -44954,6 +44954,17 @@ static void define_integers(void)
   define_integer(GDK_MODIFIER_INTENT_DEFAULT_MOD_MASK);
 #endif
 
+#if GTK_CHECK_VERSION(3, 20, 0)
+  define_integer(GTK_SHORTCUT_ACCELERATOR);
+  define_integer(GTK_SHORTCUT_GESTURE_PINCH);
+  define_integer(GTK_SHORTCUT_GESTURE_STRETCH);
+  define_integer(GTK_SHORTCUT_GESTURE_ROTATE_CLOCKWISE);
+  define_integer(GTK_SHORTCUT_GESTURE_ROTATE_COUNTERCLOCKWISE);
+  define_integer(GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_LEFT);
+  define_integer(GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_RIGHT);
+  define_integer(GTK_SHORTCUT_GESTURE);
+#endif
+
   define_integer(CAIRO_STATUS_SUCCESS);
   define_integer(CAIRO_STATUS_NO_MEMORY);
   define_integer(CAIRO_STATUS_INVALID_RESTORE);
@@ -45731,7 +45742,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("20-Nov-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("24-Nov-15"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
