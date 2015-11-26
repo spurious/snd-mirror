@@ -73878,10 +73878,23 @@ int main(int argc, char **argv)
  *       closure sig from body (and side-effects), expand args in code for internal lint?
  *       if closure depends only on arg (no free var, no funcs other than built-ins) and has no side-effects, and gets constant arg, eval?
  *       define* lambda* key-opt-key ordering and recognition -- split out arity/type/side-effect/self-contained (are globals in the var list?)
+ *         first step done, now make-var -> sublet/inlet, handle the todo's in lint.scm, t330 lambda case (and fold into s7test)
+ *         also are defines in begin exported?  also when etc.
+ *         for class let: arity, procedure?, macro?, object->string, for var: sig and side decisions, macro tests
  *       can we match cc/exit args to the caller? error-args to the catcher?
  *       :rest with default
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       variable not used can be confused (prepend-spaces and display-let in stuff.scm)
  *       catch func arg checks (thunk, any args)
+ *       code that can be make-list|string or vector|string etc
+ *       quoted list type checks (memq etc) could be extended to list
+ *       morally-equal? for vector equality
+ *       do we catch (not (when...))?
+ *       
+ * find-close-paren in index.scm: (char-position ") " doc)
+ * static s7_int abs_if_i(s7_scheme *sc, s7_pointer **p){s7_if_t f; s7_int x; f = (s7_if_t)(**p); (*p)++; x = f(sc, p); return(abs(x));}
+ *   in libc_s7.c -- this should use llabs or cast the argument, or do abs by hand.
+ * netbsd segfault snd-test 16 2nd
+ * (define (f f) (define* (f (f f)) f) (f)) (f 0): error: lambda* defaults: f is unbound??
  */
  

@@ -138,7 +138,7 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-gui '
+echo ' -----                --without-gui                                          ---  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include -DWITH_MAIN" --without-gui
 make

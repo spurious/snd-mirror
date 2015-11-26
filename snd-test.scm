@@ -38,7 +38,9 @@
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
 	(complex (* mag (cos ang)) (* mag (sin ang)))
-	(error 'wrong-type-arg "make-polar args should be real"))))
+	(error 'wrong-type-arg "make-polar args should be real")))
+  (define (memq a b) (member a b eq?))
+  (define (memv a b) (member a b eqv?)))
 
 (define tests 1)
 (define keep-going #f)
