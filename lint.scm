@@ -98,7 +98,7 @@
       (and (not (symbol? x))
 	   (or (not (pair? x))
 	       (and (eq? (car x) 'quote)
-		    (pair? (cdr x))))))
+		    (list? (cdr x)))))) ; was pair?
 
     (let ((no-side-effect-functions 
 	   ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
@@ -235,6 +235,9 @@
         (inlet :var :var :name name :ref ref :set set :fnc fnc :type typ :value val :new new))
       (define (var? v) (and (let? v) (eq? (v :var) :var)))
       ;; but need var-member -- (assoc x y var-name)?
+
+      ;; var-type is set in make-var in do and the various lets, so new needs closure-type? and set var-type to procedure? or macro? etc
+      ;;   define et al could also set the type
 |#
 
       (define var? pair?)
@@ -1983,6 +1986,7 @@
 			(->eqf (return-type (car selector)))
 			'(#t #t))))))
 	   
+
       (define (check-special-cases name head form env)
 
 	(case head
@@ -2051,18 +2055,29 @@
 						     (not (eq? (car target) 'quote))))
 					    (lists->string form `(,(cadr iter-eqf) ,selector ',target))
 					    (lists->string form `(,(cadr iter-eqf) ,selector ,target)))))
+
 			 (letrec ((duplicates? (lambda (lst fnc)
 						 (and (pair? lst)
 						      (or (fnc (car lst) (cdr lst))
-							  (duplicates? (cdr lst) fnc))))))
+							  (duplicates? (cdr lst) fnc)))))
+				  (duplicate-constants? (lambda (lst fnc)
+						 (and (pair? lst)
+						      (or (and (constant? (car lst))
+							       (fnc (car lst) (cdr lst)))
+							  (duplicate-constants? (cdr lst) fnc))))))
 			   (if (and (pair? items)
-				    (eq? (car items) 'quote)
-				    (pair? (cadr items))
-				    (catch #t 
-				      (lambda () 
-					(duplicates? (cadr items) (symbol->value head))) 
-				      (lambda args #f)))
-			       (lint-format "duplicated entry in ~A list: ~A" name head items))
+				    (or (eq? (car items) 'list)
+					(and (eq? (car items) 'quote)
+					     (pair? (cadr items)))))
+			       (let ((baddy #f))
+				 (catch #t 
+				   (lambda () 
+				     (if (eq? (car items) 'list) ; TODO: restrict to constants?
+					 (set! baddy (duplicate-constants? (cdr items) (symbol->value head)))
+					 (set! baddy (duplicates? (cadr items) (symbol->value head)))))
+				   (lambda args #f))
+				 (if (pair? baddy)
+				     (lint-format "duplicated entry ~S in ~A" name (car baddy) items))))
 					    
 			   (if (and (symbol? (car selector-eqf))
 				    (not (eq? (car selector-eqf) current-eqf)))
@@ -4581,11 +4596,11 @@
 		    
 		    ((defmacro defmacro*) (defmacro-case))
 		    ((defgenerator)       (generator-case))
-		    ((define-syntax let-syntax letrec-syntax define-module re-export case-lambda) ; for other's code
+		    ((define-syntax let-syntax letrec-syntax define-module) ; all meaningless in s7
 		     ;; actually the real problem with checking other schemes' code is that they use a large number
 		     ;; of non-standard # and \ forms.  The # forms can mostly be kludged up via #*readers, but I'm
 		     ;; not going to start building in all the crazy \ stuff.  
-		     ;; Some schemes use the execrable [] substitutes for ().  Humbug.
+		     ;; Some schemes use the execrable [] substitutes for () -- Gauche in particular.
 		     env)
 		    
 		    (else

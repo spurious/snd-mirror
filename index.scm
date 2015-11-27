@@ -6,38 +6,29 @@
   (let ((documentation "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url 
 and if one is found, and the Snd documentation can be found, calls *html-program* with that url"))
     (lambda (obj)
-      (letrec ((find-close-paren
-		(lambda (str)
-		  (let loop ((pos 0)) ;from slib/strsrch.scm
-		    (cond
-		     ((>= pos (length str)) #f)
-		     ((char=? #\) (str pos)) pos)
-		     ((char=? #\space (str pos)) pos)
-		     (else (loop (+ 1 pos)))))))
-	       
-	       (goto-html
-		(lambda (n)
-		  ;; look for doc on current dir, then html dir, then global dir
-		  ;; snd.html is what we'll search for
-		  (let ((dir (if (file-exists? "snd.html") 
-				 (getcwd)
-				 (if (and (string? *html-dir*)
-					  (file-exists? (string-append *html-dir* "/snd.html")))
-				     *html-dir*
-				     (if (file-exists? "/usr/share/doc/snd-16/snd.html")
-					 "/usr/share/doc/snd-16"
-					 (if (file-exists? "/usr/local/share/doc/snd-16/snd.html")
-					     "/usr/local/share/doc/snd-16"
-					     (if (file-exists? "/usr/doc/snd-16/snd.html")
-						 "/usr/doc/snd-16"
-						 (if (file-exists? "/usr/share/doc/snd-15/snd.html")
-						     "/usr/share/doc/snd-15"
-						     (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
-							 "/usr/local/share/doc/snd-15"
-							 (and (file-exists? "/usr/doc/snd-15/snd.html")
-							      "/usr/doc/snd-15"))))))))))
-		    (if dir
-			(system (string-append *html-program* " file:" dir "/" n)))))))
+      (let ((goto-html
+	     (lambda (n)
+	       ;; look for doc on current dir, then html dir, then global dir
+	       ;; snd.html is what we'll search for
+	       (let ((dir (if (file-exists? "snd.html") 
+			      (getcwd)
+			      (if (and (string? *html-dir*)
+				       (file-exists? (string-append *html-dir* "/snd.html")))
+				  *html-dir*
+				  (if (file-exists? "/usr/share/doc/snd-16/snd.html")
+				      "/usr/share/doc/snd-16"
+				      (if (file-exists? "/usr/local/share/doc/snd-16/snd.html")
+					  "/usr/local/share/doc/snd-16"
+					  (if (file-exists? "/usr/doc/snd-16/snd.html")
+					      "/usr/doc/snd-16"
+					      (if (file-exists? "/usr/share/doc/snd-15/snd.html")
+						  "/usr/share/doc/snd-15"
+						  (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
+						      "/usr/local/share/doc/snd-15"
+						      (and (file-exists? "/usr/doc/snd-15/snd.html")
+							   "/usr/doc/snd-15"))))))))))
+		 (if dir
+		     (system (string-append *html-program* " file:" dir "/" n)))))))
 	
 	(let ((name (if (string? obj) 
 			obj
@@ -47,7 +38,7 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 					    (procedure-documentation obj))))
 			      (if (and (string? doc)
 				       (char=? (doc 0) #\())
-				  (let ((pos (find-close-paren doc)))
+				  (let ((pos (char-position ") " doc)))
 				    (and pos
 					 (substring doc 1 pos)))))))))
 	  (if (and name (string? name))

@@ -292,7 +292,7 @@
 				     (list "Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
 					   "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
 					   "GLboolean*" "void*" "GLint*" "GLshort*"
-					   "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLubyte" "GLbyte"
+					   "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
 					   "unsigned_long"
 					   "void**")))
 			(if (string=? (car typ) "constchar*")
@@ -327,7 +327,7 @@
 	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
 		   (if (has-stars type) "_PTR" "")
 		   (if (member type (list "int*" "Pixmap" "Font" "GLubyte*" 
-					  "GLubyte*" "GLdouble*" "GLfloat*" "GLvoid*" 
+					  "GLdouble*" "GLfloat*" "GLvoid*" 
 					  "GLuint*" "GLboolean*" "GLint*" "GLshort*"
 					  "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"
 					  ))
