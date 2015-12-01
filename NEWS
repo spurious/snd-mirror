@@ -1,11 +1,11 @@
-Snd 16.0:
+Snd 16.1:
 
-in s7, the d,f,s,l exponents are now disabled by default (use e,E,@)
-       hash-table-size -> length
-       append is generic
-       make-random-state -> random-state
+most of my time went into lint.scm, but the harder I work
+on it, the longer my TODO list.
 
-checked: gtk 3.18.0|1|2, FC 23, OSX 10.11, sbcl 1.2.16
+s7: :key and :optional removed.
 
-Thanks!: Greg Santucci, Tito Latini
+checked: gtk 3.19.1|2|3, sbcl 1.3.0, GSL 2.0
+
+Thanks!: Norman Gray
 

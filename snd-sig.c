@@ -5444,8 +5444,10 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 }
 
 
-#if defined(__sun) && defined(__SVR4)
-  static bool isinf(s7_double x) {return((x == x) && (is_NaN(x - x)));}
+#if (defined(__sun) && defined(__SVR4))
+  static bool is_inf(s7_double x) {return((x == x) && (is_NaN(x - x)));} /* there's no isinf in Solaris */
+#else
+  #define is_inf(x) isinf(x)
 #endif
 
 static Xen g_src_1(Xen ratio_or_env, Xen ebase, Xen snd, Xen chn_n, Xen edpos, const char *caller, bool over_selection)
@@ -5461,7 +5463,7 @@ static Xen g_src_1(Xen ratio_or_env, Xen ebase, Xen snd, Xen chn_n, Xen edpos, c
       mus_float_t ratio;
 
       ratio = Xen_real_to_C_double(ratio_or_env);
-      if ((is_NaN(ratio)) || (isinf(ratio)))
+      if ((is_NaN(ratio)) || (is_inf(ratio)))
 	Xen_out_of_range_error(caller, 1, ratio_or_env, "src ratio must be a normal number");
 
       if (ratio != 1.0)

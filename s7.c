@@ -6350,6 +6350,9 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* (let ((a 1)) ((curlet) 'a))
    * ((rootlet) 'abs)
    */
+  if (is_keyword(symbol))
+    symbol = keyword_symbol(symbol);
+
   if (env == sc->rootlet)
     {
       y = global_slot(symbol);
@@ -6450,9 +6453,12 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 {
   s7_pointer x, y;
 
+  if (is_keyword(symbol))
+    symbol = keyword_symbol(symbol);
+
   if (env == sc->rootlet)
     {
-      if (is_immutable_symbol(symbol))  /* (let-set! (rootlet) :key #f) */
+      if (is_immutable_symbol(symbol))  /* (let-set! (rootlet) :rest #f) */
 	return(wrong_type_argument_with_type(sc, sc->LET_SET, 2, symbol, A_NON_CONSTANT_SYMBOL));
       y = global_slot(symbol);
       if (is_slot(y))
@@ -7385,7 +7391,7 @@ bool s7_is_keyword(s7_pointer obj)
 
 static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword, (keyword? :key) -> #t"
+  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword, (keyword? :rest) -> #t"
   #define Q_is_keyword pl_bt
   check_boolean_method(sc, is_keyword, sc->IS_KEYWORD, args);
 }
@@ -12542,7 +12548,7 @@ static s7_pointer check_sharp_readers(s7_scheme *sc, const char *name)
 	{
 	  if (args == sc->F)
 	    args = list_1(sc, s7_make_string(sc, name));
-	  /* args is GC protected by s7_apply_function (placed on the stack */
+	  /* args is GC protected by s7_apply_function?? (placed on the stack) */
 	  value = s7_apply_function(sc, cdar(reader), args); /* this is much less error-safe than s7_call */
 	  if (value != sc->F)
 	    break;
@@ -27405,7 +27411,7 @@ static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int
   port_position(x) = 0;
   port_filename_length(x) = 0;
   port_filename(x) = NULL;
-  port_file_number(x) = -1;
+  port_file_number(x) = 0; /* unsigned int */
   port_line_number(x) = 0;
   port_needs_free(x) = false;
   port_gc_loc(x) = -1;
@@ -41522,7 +41528,7 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
   local_args = s7_eval_c_string(sc, internal_arglist);
   gc_loc = s7_gc_protect(sc, local_args);
   tmpbuf_free(internal_arglist, len);
-  n_args = safe_list_length(sc, local_args);  /* currently rest arg not supported, and we don't notice :key :allow-other-keys etc */
+  n_args = safe_list_length(sc, local_args);  /* currently rest arg not supported, and we don't notice :allow-other-keys etc */
 
   func = s7_make_function(sc, name, fnc, 0, n_args, false, doc);
   if (safe)
@@ -48763,7 +48769,7 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       }
       break;
 
-    case ':':  /* turn #: into : -- this is for compatibility with Guile, #:optional in particular.
+    case ':':  /* turn #: into : -- this is for compatibility with Guile, sigh.
 		*   I just noticed that Rick is using this -- I'll just leave it alone.
 		*   but that means : readers need to handle this case specially.
 		* I don't think #! is special anymore -- maybe remove that code?
@@ -49533,17 +49539,13 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    *
    * for each actual arg, if it's not a keyword that matches a member of the
    *   template, bind it to its current (place-wise) arg, else bind it to
-   *   that arg.  If it's the symbol :key or :optional, just go on.
-   *   If it's :rest bind the next arg to the trailing args at this point.
+   *   that arg.  If it's :rest bind the next arg to the trailing args at this point.
    *   All args can be accessed by their name as a keyword.
-   *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
    *
    * all args are optional, any arg with no default value defaults to #f.
    *   but the rest arg should default to ().
    * I later decided to add two warnings: if a parameter is set twice and if
    *   an unknown keyword is seen in a keyword position and there is no rest arg.
-   *
-   * :key and :optional are just noise words, so these have already been spliced out of the arg list
    */
 
   bool allow_other_keys;
@@ -49563,11 +49565,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 	  /* next arg is bound to trailing args from this point as a list */
 	  zx = sc->KEY_REST;
 	  cx = cdr(cx);
-	  
-	  if (is_pair(car(cx)))
-	    lambda_star_argument_set_value(sc, caar(cx), lx);
-	  else lambda_star_argument_set_value(sc, car(cx), lx);
-	  
+	  lambda_star_argument_set_value(sc, car(cx), lx); /* default arg not allowed here (see check_lambda_star_args) */
 	  lx = cdr(lx);
 	  cx = cdr(cx);
 	}
@@ -49619,7 +49617,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				}
 			      else
 				{
-				  /* this case is not caught yet: ((lambda* (a :optional b :allow-other-keys ) a) :b 1 :c :a :a ) */
+				  /* this case is not caught yet: ((lambda* (a b :allow-other-keys ) a) :b 1 :c :a :a ) */
 				  return(s7_error(sc, sc->WRONG_TYPE_ARG,
 						  set_elist_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
 							      closure_name(sc, sc->code), lx, sc->args)));
@@ -49687,7 +49685,6 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		  /* errors not caught?
 		   *    ((lambda* (a :allow-other-keys) a) :a 1 :a 2)
 		   *    ((lambda* (:allow-other-keys ) #f) :b :a :a :b)
-		   *    ((lambda* (:key b :allow-other-keys ) b) 1 :b 2)
 		   */
 		  lx = cddr(lx);
 		}
@@ -54489,8 +54486,6 @@ static s7_pointer check_unless(s7_scheme *sc)
   return(sc->code);
 }
 
-/* (apply unless (list values :key #f)) */
-
 
 static s7_pointer check_case(s7_scheme *sc)
 {
@@ -55620,8 +55615,25 @@ static int lambda_star_default(s7_scheme *sc)
 		    {
 		      slot_set_value(z, find_symbol_checked(sc, val));
 		      if (slot_value(z) == sc->UNDEFINED)
-			eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda* defaults: ~A is unbound", slot_symbol(z));
-		      /* but #f is default if no expr, so there's some inconsistency here */
+			{
+			  /* the current environment here contains the function parameters which
+			   *   defaulted to #<undefined> earlier in apply_lambda_star,
+			   *   so (define (f f) (define* (f (f f)) f) (f)) (f 0) looks for the
+			   *   default f, finds itself currently undefined, and raises an error!
+			   *   So, before claiming it is unbound, we need to check outlet as well.
+			   *   But in the case above, the inner define* shadows the caller's
+			   *   parameter before checking the default arg values, so the default f
+			   *   refers to the define* -- I'm not sure this is a bug.  It means 
+			   *   that (define* (f (a f)) a) returns f: (equal? f (f)) -> #t, so
+			   *   any outer f needs an extra let and endless outlets:
+			   *   (let ((f 3)) (let () (define* (f (a ((outlet (outlet (outlet (curlet)))) 'f))) a) (f))) -> 3
+			   *   We want the shadowing once the define* is done, so the current mess is simplest.
+			   */
+			  slot_set_value(z, s7_symbol_local_value(sc, val, outlet(sc->envir)));
+			  if (slot_value(z) == sc->UNDEFINED)
+			    eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda* defaults: ~A is unbound", slot_symbol(z));
+			  /* but #f is default if no expr, so there's some inconsistency here */
+			}
 		    }
 		  else
 		    {
@@ -59824,6 +59836,7 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
   s7_pointer z, top, nxt;
   top = NULL;
   nxt = NULL;
+
   for (z = closure_args(sc->code); is_pair(z); z = cdr(z))
     {
       s7_pointer car_z;
@@ -59880,7 +59893,6 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
       if (lambda_star_default(sc) == goto_EVAL) return(goto_EVAL);
       pop_stack_no_op(sc);              /* get original args and code back */
     }
-
   sc->code = closure_body(sc->code);
   return(goto_BEGIN1);
 }
@@ -64803,7 +64815,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      new_frame(sc, closure_let(sc->code), sc->envir);
 	      apply_lambda(sc);
 	      goto BEGIN1;
-
 	      
 	    case T_MACRO_STAR:
 	      push_stack(sc, OP_EVAL_MACRO, sc->NIL, sc->NIL);
@@ -73829,7 +73840,7 @@ int main(int argc, char **argv)
 
 /* ----------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.1
+ *           12  |  13  |  14  |  15  | 16.0  16.1  16.2
  *                                           
  * s7test   1721 | 1358 |  995 | 1194 | 1122  1117
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1158
@@ -73877,26 +73888,32 @@ int main(int argc, char **argv)
  * lint: simple type->bool outside if et al?? [if car sig boolean? simplify]
  *       closure sig from body (and side-effects), expand args in code for internal lint?
  *       if closure depends only on arg (no free var, no funcs other than built-ins) and has no side-effects, and gets constant arg, eval?
- *       define* lambda* key-opt-key ordering and recognition -- split out arity/type/side-effect/self-contained (are globals in the var list?)
- *         first step done, now make-var -> sublet/inlet, handle the todo's in lint.scm, t330 lambda case
- *         also are defines in begin exported?  also when etc.
- *         for class let: arity, procedure?, macro?, object->string, for var: sig and side decisions, macro tests
+ *       split out arity/type/side-effect/self-contained (are globals in the var list?)
  *       can we match cc/exit args to the caller? error-args to the catcher?
- *       :rest with default
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       variable not used can be confused (prepend-spaces and display-let in stuff.scm)
- *       catch func arg checks (thunk, any args)
+ *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind?
  *       code that can be make-list|string or vector|string etc
  *       morally-equal? for vector equality
- *       do we catch (not (when...))? it's not necessarily a mistake.
- *       letrec -> let (as in index.scm) [if none of letrec vars (including current) occurs in any of the bindings, use let]
- *         can letrec* -> let* if there are no forward refs? ->letrec if no cross dependencies?
- *         can the reverse be recognized (i.e. no occurrence of name in outer env, use in let before decl)?
+ *       non-hygienic macro problem (these should be obvious from the calling args and current env)
+ *       need profiler for lg.scm!
+ *       pass caller-type to syntax checks (abs (cond (#t "a"))) both lint-walk and check-special-case(or check-call?)
+ *         check-args currently uses return-type, but this gives up on syntactic forms
+ *         perhaps an extension of [anonymous] -- extra arg to lint-walk at 4607 from sig? -- would need to pass caller as well for error msg
+ *         list-memq? (list-memq '(abs magnitude) '(...))
+ *       bacro-shaker -- can we get set-member?
+ *       *s7* field types for return-type?
  *
- * static s7_int abs_if_i(s7_scheme *sc, s7_pointer **p){s7_if_t f; s7_int x; f = (s7_if_t)(**p); (*p)++; x = f(sc, p); return(abs(x));}
- *   in libc_s7.c -- this should use llabs or cast the argument, or do abs by hand.
- * (define (f f) (define* (f (f f)) f) (f)) (f 0): error: lambda* defaults: f is unbound??
- * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? 
- * (define (f1 f1) f1) is also ok?
+ * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
+ *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
+ *   but a kw there could not be meant as a kw -- it evaluates to itself in any context
+ *   and the map in arg->kw is not confusing
+ *   add kw let ref/set tests and try to find problematic cases
+ *
+ * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
+ * (define (f1 f1) f1) is also ok? which is it?  (define* (f (a f)) a) -> f
+ * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
+ *    where is this!? report-usage I think
+ * should we accept #xC as the same as #xc?  (we do now, but it's slightly inconsistent -- other cases matter)
+ * are there extra always-empty lets in the closure process?
  */
- 

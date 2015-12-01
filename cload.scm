@@ -404,7 +404,7 @@
 	    ((int)
 	     (format p "static s7_int ~A_if_i(s7_scheme *sc, s7_pointer **p)~
                          {s7_if_t f; s7_int x; f = (s7_if_t)(**p); (*p)++; x = f(sc, p); return(~A(x));}~%" 
-		     func-name func-name)
+		     func-name (if (string=? func-name "abs") "llabs" func-name))
 	     (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) ~
                          {if (s7_arg_to_if(sc, s7_cadr(expr))) return(~A_if_i); return(NULL);}~%" 
 		     func-name func-name))

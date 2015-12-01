@@ -5,7 +5,7 @@
 #   gmp, mpfr, and mpc deliberately have none!
 
 
-AC_INIT(snd, 16.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-16.tar.gz)
+AC_INIT(snd, 16.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-16.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST # needed by case $host below
@@ -24,12 +24,12 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=16.1
+VERSION=16.2
 
 #--------------------------------------------------------------------------------
 # configuration options
-#   --with-motif          use Motif (the default)
-#   --with-gtk            use Gtk+	
+#   --with-motif          use Motif
+#   --with-gtk            use Gtk+ (the default)
 #   --with-alsa           use ALSA if possible (the default)
 #   --with-oss            use OSS 
 #   --with-jack           use Jack
