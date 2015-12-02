@@ -7,6 +7,14 @@
 (require stuff.scm)
 ;(require write.scm)
 
+(define *report-unused-parameters* #f)
+(define *report-unused-top-level-functions* #f)
+(define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
+(define *report-shadowed-variables* #f)
+(define *report-minor-stuff* #t)                          ; now obsolete (#t)
+(define *report-doc-strings* #f)                          ; report old-style (CL) doc strings
+(define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
+
 (if (provided? 'pure-s7)
     (begin
       (define (make-polar mag ang) (complex (* mag (cos ang)) (* mag (sin ang))))
@@ -34,14 +42,6 @@
 	    (error 'wrong-type-arg "let->list argument should be an environment: ~A" str)))
       ))
 
-(define *report-unused-parameters* #f)
-(define *report-unused-top-level-functions* #f)
-(define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-shadowed-variables* #f)
-(define *report-minor-stuff* #t)                          ; now obsolete (#t)
-(define *report-doc-strings* #f)                          ; report old-style (CL) doc strings
-
-(define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 (define start-up-let (rootlet))
 (define *current-file* "")
 (define *top-level-objects* (make-hash-table))
@@ -62,7 +62,7 @@
 			     (port-line-number))))
 	    *#readers*))
 
-(when (not (provided? 'snd))
+(unless (provided? 'snd)
   (define defanimal define*)
   (define definstrument define*)
   (define defgenerator define*))
@@ -97,8 +97,17 @@
     (define (code-constant? x)
       (and (not (symbol? x))
 	   (or (not (pair? x))
-	       (and (eq? (car x) 'quote)
-		    (list? (cdr x)))))) ; was pair?
+	       (eq? (car x) 'quote))))
+
+    (define (eqv-code-constant? x)
+      (or (number? x)
+	  (char? x)
+	  (boolean? x)
+	  (and (pair? x)
+	       (eq? (car x) 'quote)
+	       (or (symbol? (cadr x))
+		   (null? (cadr x))))
+	  (memq x '(#<unspecified> #<undefined> #<eof>))))
 
     (let ((no-side-effect-functions 
 	   ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
@@ -234,6 +243,7 @@
       (define var-value (dilambda (lambda (v) (let-ref (cdr v) 'value)) (lambda (v x) (let-set! (cdr v) 'value x))))
 
       (define var-ftype (dilambda (lambda (v) (let-ref (cdr v) 'ftype)) (lambda (v x) (let-set! (cdr v) 'ftype x))))
+      (define var-side-effect (dilambda (lambda (v) (let-ref (cdr v) 'side-effect)) (lambda (v x) (let-set! (cdr v) 'side-effect x))))
       (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
 
       (define (var? v) (and (pair? v) (let? (cdr v))))
@@ -243,11 +253,12 @@
 	;(inlet 'name name 'set #f 'ref #f 'type type 'value value)
 	(cons name (inlet 'value value 'type type 'set #f 'ref #f)))
 
-      (define* (make-fvar name ftype arglist decl value location)
+      (define* (make-fvar name ftype arglist decl value location env)
 	(cons name 
 	      (inlet 'type 'closure
 		     'signature #f
-		     'side-effect #t
+		     'side-effect (or (not (memq ftype '(define define* lambda lambda*)))
+				      (any? (lambda (f) (side-effect? f env)) (cddr value)))
 		     'allow-other-keys (and (pair? arglist)
 					    (memq ftype '(define* define-macro* define-bacro* defmacro*))
 					    (eq? (last-par arglist) 'allow-other-keys))
@@ -272,7 +283,9 @@
       (define (->type c)
 	(cond ((pair? c)
 	       (if (symbol? (car c))
-		   (return-type (car c))
+		   (if (eq? (car c) 'quote)
+		       (->type (cadr c))
+		       (return-type (car c)))
 		   (or (pair? (car c)) 'pair?)))
 	      ((integer? c)	  'integer?)
 	      ((rational? c)	  'rational?)
@@ -421,9 +434,20 @@
 	(if (and (proper-list? form)                   ; we don't want dotted lists or () here
 		 (not (null? form)))
 	    ;; can't optimize ((...)...) because the car might eval to a function
-	    (or (and (not (hash-table-ref no-side-effect-functions (car form))) ; if func is not in that list, make no assumptions about it
+	    (or (and (not (hash-table-ref no-side-effect-functions (car form)))
+		     ;; if it's not in the no-side-effect table and ...
+
+		     (let ((e (or (var-member (car form) env) (hash-table-ref globals (car form)))))
+		       (or (not (var? e))
+			   (not (symbol? (var-ftype e)))
+			   (var-side-effect e)))
+		     ;; it's either not known to be a local function, or it has side-effects, and...
+
 		     (or (not (eq? (car form) 'format))                         ; (format #f ...)
 			 (cadr form)))
+		     ;; it's not the common (format #f ...) special case, then...(goto case below) 
+		     ;; else return #t: side-effects are possible -- this is too hard to read
+
 		(case (car form)
 		  ((set! define define* define-macro define-macro* define-bacro define-bacro* define-constant define-expansion) #t)
 
@@ -455,9 +479,11 @@
 						    (side-effect? (cadar f) e)
 						    (let-effect? (cdr f) e))))))
 		     (if (symbol? (cadr form))
-			 (or (let-effect? (caddr form) env)
+			 (or (< (length form) 4)
+			     (let-effect? (caddr form) env)
 			     (any? (lambda (ff) (side-effect? ff env)) (cdddr form)))
-			 (or (let-effect? (cadr form) env)
+			 (or (< (length form) 3) 
+			     (let-effect? (cadr form) env)
 			     (any? (lambda (ff) (side-effect? ff env)) (cddr form))))))
 		   
 		  ((do)
@@ -588,6 +614,38 @@
 		  (or at-end 'integer?)
 		  checker)))
 
+	(define (prettify-checker-unq op)
+	  (if (pair? op)
+	      (string-append (prettify-checker-unq (car op)) " or " (prettify-checker-unq (cadr op)))
+	      (case op
+		((rational?) "rational")
+		((real?) "real")
+		((complex?) "complex")
+		(else 
+		 (let ((op-name (symbol->string op)))
+		   (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ")
+				  (substring op-name 0 (- (length op-name) 1))))))))
+
+	(define (prettify-checker op)
+	  (if (pair? op)
+	      (string-append (prettify-checker-unq (car op)) " or " (prettify-checker (cadr op)))
+	      (let ((op-name (symbol->string op)))
+		(case op
+		  ((rational? real? complex?) op-name)
+		  (else (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
+
+	(define (report-arg-trouble name form head arg-number checker arg uop)
+	  (let ((op (if (and (eq? checker 'real?)
+			     (eq? uop 'number?))
+			'complex?
+			uop)))
+	    (lint-format "in ~A, ~A's argument ~Ashould be ~A, but ~S is ~A"
+			 name (truncated-list->string form) head 
+			 (prettify-arg-number arg-number)
+			 (prettify-checker-unq checker)
+			 arg
+			 (prettify-checker op))))
+
 	(let ((arg-number 1))
 	  (call-with-exit
 	   (lambda (done)
@@ -599,43 +657,62 @@
 			    (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
 		    (if (pair? arg)                  ; arg is expr -- try to guess its type
 			(if (eq? (car arg) 'quote)   ; '1 -> 1
-
-			    ;; arg is quoted expression
-			    (if (not (any-compatible? checker (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
-				(lint-format "~A's argument ~Ashould be a~A ~A: ~S: ~A" 
-					     name head 
-					     (prettify-arg-number arg-number)
-					     (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					     checker arg 
-					     (truncated-list->string form)))
+			    (let ((op (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
+			      ;; arg is quoted expression
+			      (if (and (not (memq op '(#f #t values)))
+				       (not (any-compatible? checker op)))
+				  (report-arg-trouble name form head arg-number checker arg op)))
 
 			    ;; arg is an evaluated expression
-			    (let ((op (return-type (car arg))))
-			      ;; checker is arg-type, op is expression type (can also be a pair)
-			      (unless (memq op '(#t #f values))
+			    (case (car arg)
 
-				(if (or (not (any-compatible? checker op))
-					(and (just-constants? arg env) ; try to eval the arg
-					     (catch #t 
-					       (lambda ()
-						 (not (any-checker? checker (eval arg))))
-					       (lambda ignore-catch-error-args
-						 #f))))
-				    (lint-format "~A's argument ~Ashould be a~A ~A: ~S: ~A" 
-						 name head 
-						 (prettify-arg-number arg-number)
-						 (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-						 checker arg 
-						 (truncated-list->string form))))))
+			      ((begin let let* letrec letrec* with-let)
+			       (let ((last-expr (and (pair? (cdr arg))
+						     (list-ref arg (- (length arg) 1)))))
+				 (when (not (symbol? last-expr))
+				   (let ((op (->type last-expr)))
+				     (if (and (not (memq op '(#f #t values)))
+					      (not (any-compatible? checker op)))
+					 (report-arg-trouble name form head arg-number checker last-expr op))))))
+						    
+			      ((cond)
+			       (for-each
+				(lambda (clause)
+				  (let ((expr (if (pair? clause)
+						  (if (pair? (cdr clause))
+						      (list-ref clause (- (length clause) 1))
+						      (car clause))
+						  clause)))
+				    (when (not (symbol? expr))
+				      (let ((op (->type expr)))
+					;(format *stderr* "~S ~S: ~S~%" clause expr op)
+					(if (and (not (memq op '(#f #t values)))
+						 (not (any-compatible? checker op)))
+					    (report-arg-trouble name form head arg-number checker expr op))))))
+				(cdr arg)))
+			      ;; TODO: also if no else, check () and report as default possibility
+			      ;; TODO: case if do, also the values cases like call-with-exit, and values itself!
+			      ;; (values x) -> x in special-cases?
+
+			      (else 
+			       (let ((op (return-type (car arg))))
+				 ;; checker is arg-type, op is expression type (can also be a pair)
+				 (if (and (not (memq op '(#f #t values)))
+					  (or (not (any-compatible? checker op))
+					      (and (just-constants? arg env) ; try to eval the arg
+						   (catch #t 
+						     (lambda ()
+						       (not (any-checker? checker (eval arg))))
+						     (lambda ignore-catch-error-args
+						       #f)))))
+				     (report-arg-trouble name form head arg-number checker arg op))))))
+
 			;; arg is not a pair
 			(if (and (not (symbol? arg))
 				 (not (any-checker? checker arg)))
-			    (lint-format "~A's argument ~Ashould be a~A ~A: ~S: ~A" 
-					 name head
-					 (prettify-arg-number arg-number)
-					 (if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
-					 checker arg 
-					 (truncated-list->string form)))))
+			    (let ((op (->type arg)))
+			      (when (not (memq op '(#f #t values)))
+				(report-arg-trouble name form head arg-number checker arg op))))))
 
 		  (if (list? checkers)
 		      (if (null? (cdr checkers))
@@ -712,6 +789,15 @@
 		      (tree-car-member sym (car tree)))
 		 (and (pair? (cdr tree))
 		      (member sym (cdr tree) tree-car-member)))))
+      
+      (define (tree-set-member sym set tree) ; sym as arg, set as car
+	(and (pair? tree)
+	     (or (memq (car tree) set)
+		 (and (pair? (car tree))
+		      (tree-set-member sym set (car tree)))
+		 (and (pair? (cdr tree))
+		      (or (member sym (cdr tree))
+			  (member #f (cdr tree) (lambda (a b) (tree-set-member sym set b))))))))
       
       (define (remove item sequence)
 	(let ((got-it #f))
@@ -2225,6 +2311,20 @@
 		   (if (not (tree-member return body))
 		       (lint-format "exit-function appears to be unused: ~A" name (truncated-list->string form)))))))
 
+	  ((call/cc call-with-current-continuation)
+	   (let ((continuation (and (pair? (cdr form))
+				    (pair? (cadr form))
+				    (eq? (caadr form) 'lambda)
+				    (pair? (cdadr form))
+				    (pair? (cddadr form))
+				    (pair? (cadadr form))
+				    (car (cadadr form)))))
+	     (if (symbol? continuation)
+		 (let ((body (cddadr form)))
+		   (if (and (not (eq? continuation (car body)))
+			    (not (tree-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
+		       (lint-format "perhaps ~A could be call-with-exit: ~A" name head (truncated-list->string form)))))))
+
 	  ((call-with-input-string call-with-input-file call-with-output-file)
 	   ;; call-with-output-string func is the first arg, not second, but these checks get no hits
 	   (let ((port (and (pair? (cdr form))
@@ -2382,7 +2482,7 @@
 		 (if (null? args)
 		     (lint-format "perhaps ~A" name (lists->string form #()))
 		     (if (null? (cdr args))
-			 (lint-format "perhaps ~A" name (lists->string form (car args)))
+			 (lint-format "perhaps ~A" name (lists->string form `(copy ,(car args))))
 			 (if (every? vector? args)
 			     (lint-format "perhaps ~A" name (lists->string form (apply vector-append args)))
 			     (if (not (equal? args (cdr form)))
@@ -3014,6 +3114,7 @@
 							     :decl (eval (list head '_ (caddr form) #f))
 							     :arglist (caddr form)
 							     :value form
+							     :env ()
 							     :location #__line__)))
 	    ((define)
 	     (let ((name (cadr form)))
@@ -3028,6 +3129,7 @@
 							 :decl (eval (list 'define (cons '_ (cdadr form)) #f))
 							 :arglist (cdr name)
 							 :value form
+							 :env ()
 							 :location #__line__)))
 			 (lint-format "what is this? ~A" name form)))
 		   (hash-table-set! globals name (make-var :name name :value (and (pair? (cddr form)) (caddr form)))))))
@@ -3038,6 +3140,7 @@
 							      :decl (eval (list head (cons '_ (cdadr form)) #f))
 							      :arglist (cdadr form)
 							      :value form
+							      :env ()
 							      :location #__line__)))
 
 	    ((defgenerator)
@@ -3442,6 +3545,7 @@
 			  (make-fvar :name (if (not (memq head '(lambda lambda*))) name '[anonymous])
 				     :ftype head
 				     :value form
+				     :env env
 				     :location #__line__))))
 	  (when data
 	    (let ((ldata (cdr data)))
@@ -3734,11 +3838,24 @@
 				 (has-else #f)
 				 (has-combinations #f)
 				 (falses ())
-				 (prev-clause #f))
+				 (prev-clause #f)
+				 (all-eqv #t)
+				 (eqv-select #f))
 			     (for-each
 			      (lambda (clause)
 				(set! ctr (+ ctr 1))
-				
+				(if all-eqv
+				    (set! all-eqv (and (pair? clause)
+						       (or (and (pair? (car clause))
+								(memq (caar clause) '(eq? eqv? =))
+								(= (length (car clause)) 3)
+								(or (and (eqv-code-constant? (cadar clause))
+									 (or (and (not eqv-select) (set! eqv-select (caddar clause)))
+									     (equal? eqv-select (caddar clause))))
+								    (and (eqv-code-constant? (caddar clause))
+									 (or (and (not eqv-select) (set! eqv-select (cadar clause)))
+									     (equal? eqv-select (cadar clause))))))
+							   (memq (car clause) '(else #t))))))
 				(if (and prev-clause
 					 (not has-combinations)
 					 (> len 2) 
@@ -3867,7 +3984,29 @@
 									result)
 								  new-clauses))
 					       (set! current-clauses ()))
-					     (set! new-clauses (cons clause new-clauses))))))))))
+					     (set! new-clauses (cons clause new-clauses))))))))
+
+			     (when (and all-eqv
+					(> len (if has-else 2 1))) ; (cond (x y)) -- kinda dumb, but (if x y ()) isn't much shorter
+			       (define (unquoted x)
+				 (if (and (pair? x)
+					  (eq? (car x) 'quote))
+				     (cadr x)
+				     x))
+			       (lint-format "perhaps use case instead of cond: ~A" name
+					    (lists->string 
+					     form
+					     `(case ,eqv-select 
+						,@(map (lambda (clause)
+							 (let ((test (car clause))
+							       (exprs (cdr clause)))
+							   (if (memq test '(else #t))
+							       `(else ,@exprs)
+							       (if (equal? eqv-select (cadr test))
+								   `((,(unquoted (caddr test))) ,@exprs)
+								   `((,(unquoted (cadr test))) ,@exprs)))))
+						       (cdr form))
+						,@(if has-else () `((else ()))))))) ))
 		       env))
 		    
 		    ((case)
@@ -4190,6 +4329,7 @@
 							    :decl (eval (list 'define (cons '_ (map car (caddr form))) #f))
 							    :arglist (map car (caddr form))
 							    :value form
+							    :env env
 							    :location #__line__))  ; TODO: named-let*
 					   ()))
 				 (varlist (if named-let (caddr form) (cadr form)))

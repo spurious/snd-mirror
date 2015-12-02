@@ -73886,23 +73886,21 @@ int main(int argc, char **argv)
  *   append in string case uses string_append, not g_string_append!
  *
  * lint: simple type->bool outside if et al?? [if car sig boolean? simplify]
- *       closure sig from body (and side-effects), expand args in code for internal lint?
- *       if closure depends only on arg (no free var, no funcs other than built-ins) and has no side-effects, and gets constant arg, eval?
- *       split out arity/type/side-effect/self-contained (are globals in the var list?)
+ *       closure sig from body, expand args in code for internal lint?
  *       can we match cc/exit args to the caller? error-args to the catcher?
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       variable not used can be confused (prepend-spaces and display-let in stuff.scm)
- *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind?
- *       code that can be make-list|string or vector|string etc
+ *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
  *       morally-equal? for vector equality
- *       non-hygienic macro problem (these should be obvious from the calling args and current env)
+ *       non-hygienic macro problem (these should be obvious from the calling args and current env) and make clean version
  *       need profiler for lg.scm!
- *       pass caller-type to syntax checks (abs (cond (#t "a"))) both lint-walk and check-special-case(or check-call?)
- *         check-args currently uses return-type, but this gives up on syntactic forms
- *         perhaps an extension of [anonymous] -- extra arg to lint-walk at 4607 from sig? -- would need to pass caller as well for error msg
- *         list-memq? (list-memq '(abs magnitude) '(...))
+ *       finish caller-type to syntax checks
  *       bacro-shaker -- can we get set-member?
  *       *s7* field types for return-type?
+ *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))
+ *       if vars trackable, catch gcable set of code-constant, or set of constant?
+ *       (eval x) -> x if x is constant?
+ *       case-op of cond->case
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
@@ -73911,9 +73909,6 @@ int main(int argc, char **argv)
  *   add kw let ref/set tests and try to find problematic cases
  *
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
- * (define (f1 f1) f1) is also ok? which is it?  (define* (f (a f)) a) -> f
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
- * should we accept #xC as the same as #xc?  (we do now, but it's slightly inconsistent -- other cases matter)
- * are there extra always-empty lets in the closure process?
  */
