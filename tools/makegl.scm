@@ -316,9 +316,8 @@
 		    (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
 
-	(if (not (or (string=? type "Display*")     ; why are these 2 handled specially?
-		     (string=? type "XVisualInfo*")
-		     (string=? type "GLXContext"))) ; Snd g_snd_gl_context (snd-motif.c) calls this a pointer
+	(if (not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
+	    ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer
 	    (begin
 	      (if (member type glu-1-2) 
 		  (hey "#ifdef GLU_VERSION_1_2~%")
