@@ -6,14 +6,15 @@
 
   (let ((*pretty-print-length* 100)
 	(*pretty-print-spacing* 2)
-	(*pretty-print-float-format* "~,4F"))
+	(*pretty-print-float-format* "~,4F")
+	(*pretty-print-left-margin* 0))
     
     (lambda* (obj (port (current-output-port)) (column 0))
       
       (define (pretty-print-1 obj port column)
 	(define (spaces n) 
 	  (write-char #\newline port)
-	  (do ((i 0 (+ i 1))) ((= i n)) (write-char #\space port)))
+	  (do ((i 0 (+ i 1))) ((= i (+ n *pretty-print-left-margin*))) (write-char #\space port)))
 	
 	(define (stacked-list lst col)
 	  (do ((l1 lst (cdr l1)))
@@ -157,7 +158,22 @@
 		   
 		   ((cond)
 		    (format port "(cond ")
-		    (stacked-list (cdr obj) (+ column 6))
+		    (do ((lst (cdr obj) (cdr lst)))
+			((not (pair? lst)))
+		      (if (not (eq? lst (cdr obj)))
+			  (spaces (+ column 6)))
+		      (write-char #\( port)
+		      (pretty-print-1 (caar lst) port (+ column 6))
+		      (if (and (pair? (cdar lst))
+			       (null? (cddar lst))
+			       (< (length (object->string (cadar lst))) 60))
+			  (begin
+			    (write-char #\space port)
+			    (write (cadar lst) port))
+			  (begin
+			    (spaces (+ column 7))
+			    (stacked-list (cdar lst) (+ column 7))))
+		      (write-char #\) port))
 		    (write-char #\) port))
 		   
 		   ((or and)

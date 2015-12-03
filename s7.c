@@ -46939,7 +46939,7 @@ pass (rootlet):\n\
     (eval 'x (rootlet)))\n\
 \n\
   returns 32"
-  #define Q_eval s7_make_signature(sc, 3, sc->VALUES, sc->IS_LIST, sc->IS_LET)
+  #define Q_eval s7_make_signature(sc, 3, sc->VALUES, sc->T, sc->IS_LET)
 
   if (is_not_null(cdr(args)))
     {
@@ -73852,7 +73852,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
  * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       20.7
+ * lg            |      |      |      |       27
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
@@ -73872,6 +73872,7 @@ int main(int argc, char **argv)
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
+ * profiler
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -73885,22 +73886,23 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * lint: simple type->bool outside if et al?? [if car sig boolean? simplify]
- *       closure sig from body, expand args in code for internal lint?
- *       can we match cc/exit args to the caller? error-args to the catcher?
+ * lint: closure sig from body, expand args in code for internal lint?
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
- *       variable not used can be confused (prepend-spaces and display-let in stuff.scm)
  *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
- *       morally-equal? for vector equality
- *       non-hygienic macro problem (these should be obvious from the calling args and current env) and make clean version
- *       need profiler for lg.scm!
- *       finish caller-type to syntax checks
+ *       non-hygienic macro problem and fixup:
+ *         fixup: anything in with-let is safe.  To provide a safe version, wrap in outer with-let renaming the parameters
+ *           `(with-let (inlet :arg1 arg1...) ,@body) -- include free-vars in the inlet args (the ops are safer in this case)
+ *         defmac: tree-walk: quoted symbol: if after {list} -> op else arg, ignore ({list} 'with-let ...) 
+ *           [what about ((lambda...)...)? -- no quoted symbols -- same if gensym so both are ok]
+ *         call: tree-walk args collecting (unquoted) symbols
+ *           if any arg symbols collide with mac symbols -- possible trouble
+ *           if any mac ops are locally shadowed -- possible trouble
+ *       finish caller-type to syntax checks [values call/cc call/exit]
  *       bacro-shaker -- can we get set-member?
- *       *s7* field types for return-type?
  *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))
  *       if vars trackable, catch gcable set of code-constant, or set of constant?
- *       (eval x) -> x if x is constant?
- *       case-op of cond->case
+ *       if no side effect func call not last, but side effect args, -> args?
+ *       move special-cases into hash-table (via macro?)
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
