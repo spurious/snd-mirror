@@ -77,13 +77,12 @@
 		      (find-if-b (make-iterator lt p))
 		      (find-if-c (make-iterator lt p))
 		      (find-if-d (make-iterator lt p)))))
-	   (h (if with-blocks
-		  (let ((blk (make-block size)))
-		    (list (find-if-a (make-iterator blk))
-			  (find-if-b (make-iterator blk))
-			  (find-if-c (make-iterator blk))
-			  (find-if-d (make-iterator blk))))
-		  #f)))
+	   (h (and with-blocks
+		   (let ((blk (make-block size)))
+		     (list (find-if-a (make-iterator blk))
+			   (find-if-b (make-iterator blk))
+			   (find-if-c (make-iterator blk))
+			   (find-if-d (make-iterator blk)))))))
        
        (if (not (equal? a '(#f #f #f #f))) (format *stderr* "a: ~A " a))
        (if (not (equal? b '(#f #f #f #f))) (format *stderr* "b: ~A " b))

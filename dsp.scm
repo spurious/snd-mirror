@@ -1137,14 +1137,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
   (let ((freq-response (list 1.0 0.0)))
     (for-each
      (lambda (i)
-       (set! freq-response (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response)) ; left upper y hz
-       (set! freq-response (cons 1.0 freq-response)) ; left upper y resp
-       (set! freq-response (cons (/ (* 2 (- i (/ notch-width 2))) cur-srate) freq-response)) ; left bottom y hz
-       (set! freq-response (cons 0.0 freq-response)) ; left bottom y resp
-       (set! freq-response (cons (/ (* 2 (+ i (/ notch-width 2))) cur-srate) freq-response)) ; right bottom y hz
-       (set! freq-response (cons 0.0 freq-response)) ; right bottom y resp
-       (set! freq-response (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response)) ; right upper y hz
-       (set! freq-response (cons 1.0 freq-response))) ; right upper y resp
+       (set! freq-response (cons 1.0 (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response)))       ; left upper y resp hz
+       (set! freq-response (cons 0.0 (cons (/ (* 2 (- i (/ notch-width 2))) cur-srate) freq-response))) ; left bottom y resp hz
+       (set! freq-response (cons 0.0 (cons (/ (* 2 (+ i (/ notch-width 2))) cur-srate) freq-response))) ; right bottom y resp hz
+       (set! freq-response (cons 1.0 (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response))))      ; right upper y resp hz
      freqs)
     (set! freq-response (cons 1.0 (cons 1.0 freq-response)))
     (reverse freq-response)))

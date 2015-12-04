@@ -346,56 +346,55 @@
 					      (- iy0 iy1)))))))))
 
 	  (if (> py0 py1)
-	      (begin
-		(if (provided? 'snd-motif)
-		    (begin
-		      ((*motif* 'XClearWindow) dpy wn)
-		      (draw-axes widget gc name ix0 ix1 iy0 iy1)
-		      (let ((lx #f)
-			    (ly #f))
-			(do ((i 0 (+ i 2)))
-			    ((= i len))
-			  (let ((cx (xe-grfx drawer (cur-env i)))
-				(cy (xe-grfy drawer (cur-env (+ i 1)))))
-			    ((*motif* 'XFillArc)
-			     dpy wn gc 
-			     (- cx mouse-r)
-			     (- cy mouse-r)
-			     mouse-d mouse-d
-			     0 (* 360 64))
-			    (if lx
-				((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
-			    (set! lx cx)
-			    (set! ly cy)))))
-		    ;; *gtk* 
+	      (if (provided? 'snd-motif)
+		  (begin
+		    ((*motif* 'XClearWindow) dpy wn)
+		    (draw-axes widget gc name ix0 ix1 iy0 iy1)
 		    (let ((lx #f)
-			  (ly #f)
-			  (cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn)))
-			  (size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
-		      
-		      ((*gtk* 'cairo_push_group) cr)
-		      ((*gtk* 'cairo_set_source_rgb) cr 1.0 1.0 1.0)
-		      ((*gtk* 'cairo_rectangle) cr 0 0 (car size) (cadr size))
-		      ((*gtk* 'cairo_fill) cr)
-
-		      (draw-axes widget gc name ix0 ix1 iy0 iy1 x-axis-in-seconds show-all-axes cr)
-
-		      ((*gtk* 'cairo_set_line_width) cr 1.0)
-		      ((*gtk* 'cairo_set_source_rgb) cr 0.0 0.0 0.0)
+			  (ly #f))
 		      (do ((i 0 (+ i 2)))
 			  ((= i len))
 			(let ((cx (xe-grfx drawer (cur-env i)))
 			      (cy (xe-grfy drawer (cur-env (+ i 1)))))
-			  ((*gtk* 'cairo_arc) cr cx cy mouse-r 0.0 (* 2 pi))
-			  ((*gtk* 'cairo_fill) cr)
+			  ((*motif* 'XFillArc)
+			   dpy wn gc 
+			   (- cx mouse-r)
+			   (- cy mouse-r)
+			   mouse-d mouse-d
+			   0 (* 360 64))
 			  (if lx
-			      (begin
-				((*gtk* 'cairo_move_to) cr lx ly)
-				((*gtk* 'cairo_line_to) cr cx cy)
-				((*gtk* 'cairo_stroke) cr)))
+			      ((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
 			  (set! lx cx)
-			  (set! ly cy)))
-		      ((*gtk* 'cairo_pop_group_to_source) cr)
-		      ((*gtk* 'cairo_paint) cr)
-		      ((*gtk* 'cairo_destroy) cr)))))))))
+			  (set! ly cy)))))
+		  ;; *gtk* 
+		  (let ((lx #f)
+			(ly #f)
+			(cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn)))
+			(size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
+		    
+		    ((*gtk* 'cairo_push_group) cr)
+		    ((*gtk* 'cairo_set_source_rgb) cr 1.0 1.0 1.0)
+		    ((*gtk* 'cairo_rectangle) cr 0 0 (car size) (cadr size))
+		    ((*gtk* 'cairo_fill) cr)
+		    
+		    (draw-axes widget gc name ix0 ix1 iy0 iy1 x-axis-in-seconds show-all-axes cr)
+		    
+		    ((*gtk* 'cairo_set_line_width) cr 1.0)
+		    ((*gtk* 'cairo_set_source_rgb) cr 0.0 0.0 0.0)
+		    (do ((i 0 (+ i 2)))
+			((= i len))
+		      (let ((cx (xe-grfx drawer (cur-env i)))
+			    (cy (xe-grfy drawer (cur-env (+ i 1)))))
+			((*gtk* 'cairo_arc) cr cx cy mouse-r 0.0 (* 2 pi))
+			((*gtk* 'cairo_fill) cr)
+			(if lx
+			    (begin
+			      ((*gtk* 'cairo_move_to) cr lx ly)
+			      ((*gtk* 'cairo_line_to) cr cx cy)
+			      ((*gtk* 'cairo_stroke) cr)))
+			(set! lx cx)
+			(set! ly cy)))
+		    ((*gtk* 'cairo_pop_group_to_source) cr)
+		    ((*gtk* 'cairo_paint) cr)
+		    ((*gtk* 'cairo_destroy) cr))))))))
   

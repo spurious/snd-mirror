@@ -127,8 +127,7 @@
          (out-position (if out-mark (mark-sample out-mark) 0)))
   (define (play-next reason)
     (if (= reason 0)
-        (begin
-          (play (selected-sound) in-position (+ in-position preview-length)))))
+	(play (selected-sound) in-position (+ in-position preview-length))))
   (if (and
         in-mark
         out-mark)

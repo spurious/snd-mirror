@@ -27,11 +27,13 @@
 	   (applicable? obj)))))
 
 (define (ow!)
-  (call-with-output-string
-    (lambda (p)
-      (do ((e (outlet (owlet)) (outlet e))) 
-	  ((eq? e (rootlet))) 
-	(format p "~{~A ~}~%" e)))))
+  (let ((elist (list (rootlet))))
+    (call-with-output-string
+     (lambda (p)
+       (do ((e (outlet (owlet)) (outlet e))) 
+	   ((memq e elist))
+	 (format p "~{~A ~}~%" e)
+	 (set! elist (cons e elist)))))))
 
 #|
 (set! (hook-functions *error-hook*) 

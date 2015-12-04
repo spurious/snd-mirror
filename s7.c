@@ -73886,17 +73886,10 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * lint: closure sig from body, expand args in code for internal lint?
+ * lint: closure sig from body
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
- *       non-hygienic macro problem and fixup:
- *         fixup: anything in with-let is safe.  To provide a safe version, wrap in outer with-let renaming the parameters
- *           `(with-let (inlet :arg1 arg1...) ,@body) -- include free-vars in the inlet args (the ops are safer in this case)
- *         defmac: tree-walk: quoted symbol: if after {list} -> op else arg, ignore ({list} 'with-let ...) 
- *           [what about ((lambda...)...)? -- no quoted symbols -- same if gensym so both are ok]
- *         call: tree-walk args collecting (unquoted) symbols
- *           if any arg symbols collide with mac symbols -- possible trouble
- *           if any mac ops are locally shadowed -- possible trouble
+ *       unquasiquote for pp and lint (fixup) to make macro body like presumed pre-reader original (as a string obviously)
  *       finish caller-type to syntax checks [values call/cc call/exit]
  *       bacro-shaker -- can we get set-member?
  *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))

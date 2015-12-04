@@ -1260,9 +1260,22 @@ control over the environment at any point:
 
 &gt; (let ((a 1) (+ *)) (mac a))
 <em class="gray">13</em>
+
+(define-macro (mac1 . b)         ; originally `(let ((a 12)) (+ a ,@b ,@b))
+  `(with-let (inlet 'e (curlet)) ; this 'e will not collide with the calling env
+     (let ((a 12))               ;   nor will 'a (so no gensyms are needed etc)
+       (+ a (with-let e ,@b) (with-let e ,@b)))))
+
+&gt; (let ((a 1) (e 2)) (mac1 (display a) (+ a e)))
+<em class="gray">18</em>  ; (and it displays "11")
 </pre>
 
 <p>So s7 does not have syntax-rules because it is not needed.
+s7's lint.scm will warn you about any such problematic macro expansion, so I'd
+say just write macros as simply as possible, then let lint tell you
+that it's time to do the with-let shuffle. When that happens, just wrap the macro body in
+a with-let that captures the current environment, and each macro argument use
+in a with-let that re-establishes that environment. 
 </p>
 
 <div class="indented">

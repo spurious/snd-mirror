@@ -5438,7 +5438,7 @@ EDITS: 5
 	(let ((baddy (scan-channel (lambda (y)
 				     (if (or (and (> ctr 5) (fneq y (vals ctr)))
 					     (and (< ctr 4) (fneq y (vals ctr)))
-					     (and (or (= ctr 4) (= ctr 5)) (fneq y (* 0.5 (vals ctr)))))
+					     (and (memv ctr '(4 5)) (fneq y (* 0.5 (vals ctr)))))
 					 #t
 					 (begin (set! ctr (+ ctr 1)) #f))))))
 	  (if baddy (snd-display #__line__ ";trouble in xramp 8: ~A" baddy)))

@@ -132,18 +132,17 @@
 
      (lambda ()
        (if output-to-file
-	   (begin
-	     (if continue-old-file
-		 (begin
-		   (set! *output* (continue-sample->file output-1))
-		   (set! *clm-srate* (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
-		   (let ((ind (find-sound output-1)))
-		     (if (sound? ind)
-			 (close-sound ind))))
-		 (begin
-		   (if (file-exists? output-1) 
-		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels sample-type header-type comment)))))
+	   (if continue-old-file
+	       (begin
+		 (set! *output* (continue-sample->file output-1))
+		 (set! *clm-srate* (mus-sound-srate output-1)) ; "srate" arg shadows the generic func
+		 (let ((ind (find-sound output-1)))
+		   (if (sound? ind)
+		       (close-sound ind))))
+	       (begin
+		 (if (file-exists? output-1) 
+		     (delete-file output-1))
+		 (set! *output* (make-sample->file output-1 channels sample-type header-type comment))))
 	   (begin
 	     (if (and (not continue-old-file)
 		      (vector? output-1))
@@ -152,18 +151,17 @@
        
        (if reverb
 	   (if reverb-to-file
-	       (begin
-		 (if continue-old-file
-		     (set! *reverb* (continue-sample->file reverb-1))
-		     (begin
-		       (if (file-exists? reverb-1) 
-			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 
-							 reverb-channels 
-							 (if (mus-header-writable header-type mus-ldouble)
-							     mus-ldouble
-							     sample-type)
-							 header-type)))))
+	       (if continue-old-file
+		   (set! *reverb* (continue-sample->file reverb-1))
+		   (begin
+		     (if (file-exists? reverb-1) 
+			 (delete-file reverb-1))
+		     (set! *reverb* (make-sample->file reverb-1 
+						       reverb-channels 
+						       (if (mus-header-writable header-type mus-ldouble)
+							   mus-ldouble
+							   sample-type)
+						       header-type))))
 	       (begin
 		 (if (and (not continue-old-file)
 			  (vector? reverb-1))

@@ -283,6 +283,7 @@
       (define var-ftype (dilambda (lambda (v) (let-ref (cdr v) 'ftype)) (lambda (v x) (let-set! (cdr v) 'ftype x))))
       (define var-side-effect (dilambda (lambda (v) (let-ref (cdr v) 'side-effect)) (lambda (v x) (let-set! (cdr v) 'side-effect x))))
       (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
+      (define var-signature (dilambda (lambda (v) (let-ref (cdr v) 'signature)) (lambda (v x) (let-set! (cdr v) 'signature x))))
 
       (define (var? v) (and (pair? v) (let? (cdr v))))
       (define var-member assq)
@@ -294,12 +295,42 @@
       (define* (make-fvar name ftype arglist decl value location env)
 	(cons name 
 	      (inlet 'type 'closure
-		     'signature #f
+		     'signature (let ((body (and (memq ftype '(define define* lambda lambda*))
+						 (cddr value))))
+				  ;(format *stderr* "~A ~A -> ~A~%" name value body)
+				  (if (and (pair? body)
+					   (null? (cdr body)))
+				      (if (not (pair? (car body)))
+					  (and (not (symbol? (car body)))
+					       (list (->type (car body)) #t))
+					  (let ((sig (and (symbol? (caar body))
+							  (let ((f (symbol->value (caar body) *e*)))
+							    (if (procedure? f)
+								(procedure-signature f)
+								(let ((fd (or (var-member (caar body) env)
+									      (hash-table-ref globals (caar body)))))
+								  (and (var? fd)
+								       (symbol? (var-ftype fd))
+								       (list? (var-signature fd))
+								       (var-signature fd))))))))
+					    (when sig
+					      ;; we know the new fvar's return type is (car sig)
+					      (let ((new-sig (list (car sig))))
+						;(format *stderr* "args: ~A, sig: ~A, body: ~A~%" arglist sig body)
+						new-sig))))))
+#|
+						(for-each
+						 (lambda (arg)
+
+						  ;; for each arg, search body and correlate to arg type
+|#
+
 		     'side-effect (or (not (memq ftype '(define define* lambda lambda*)))
 				      (any? (lambda (f) (side-effect? f env)) (cddr value)))
 		     'allow-other-keys (and (pair? arglist)
 					    (memq ftype '(define* define-macro* define-bacro* defmacro*))
 					    (eq? (last-par arglist) 'allow-other-keys))
+		     'env env
 		     'value value
 		     'location location
 		     'decl decl
@@ -308,23 +339,27 @@
 		     'set #f 
 		     'ref #f)))
       
-      ;; var-type is set in make-var in do and the various lets, so new needs closure-type? and set var-type to procedure? or macro? etc
-      ;;   define et al could also set the type
-
-      (define (return-type sym)
-	(let ((f (if (symbol? sym) (symbol->value sym *e*) sym)))
-	  (and (procedure? f)
-	       (let ((sig (procedure-signature f)))
-		 (and (pair? sig)
-		      (or (eq? (car sig) 'values) ; turn it into #t for now
-			  (car sig)))))))         ; this might be undefined in the current context (eg oscil? outside clm)
-
+      (define (return-type sym e)
+	(let ((f (if (symbol? sym) (symbol->value sym *e*) sym))) ; backwards -- should lookup locals first
+	  (if (procedure? f)
+	      (let ((sig (procedure-signature f)))
+		(and (pair? sig)
+		     (or (eq? (car sig) 'values) ; turn it into #t for now
+			 (car sig))))        ; this might be undefined in the current context (eg oscil? outside clm)
+	      (let ((fd (or (var-member sym e)
+			    (hash-table-ref globals sym))))
+		(and (var? fd)
+		     (symbol? (var-ftype fd))
+		     (list? (var-signature fd))
+		     (or (eq? (car (var-signature fd)) 'values)
+			 (car (var-signature fd))))))))
+	      
       (define (->type c)
 	(cond ((pair? c)
 	       (if (symbol? (car c))
 		   (if (eq? (car c) 'quote)
 		       (->type (cadr c))
-		       (return-type (car c)))
+		       (return-type (car c) ()))
 		   (or (pair? (car c)) 'pair?)))
 	      ((integer? c)	  'integer?)
 	      ((rational? c)	  'rational?)
@@ -420,7 +455,7 @@
 	(or (eq? expr #t)
 	    (let ((type (if (pair? expr)
 			    (and (hash-table-ref no-side-effect-functions (car expr))
-				 (return-type (car expr)))
+				 (return-type (car expr) ()))
 			    (->type expr))))
 	      (and (symbol? type)
 		   (not (symbol? expr))
@@ -698,6 +733,14 @@
 		      (tree-member sym (car tree)))
 		 (tree-member sym (cdr tree)))))
       
+      (define (tree-unquoted-member sym tree)
+	(and (pair? tree)
+	     (not (eq? (car tree) 'quote))
+	     (or (eq? (car tree) sym)
+		 (and (pair? (car tree))
+		      (tree-unquoted-member sym (car tree)))
+		 (tree-unquoted-member sym (cdr tree)))))
+      
       (define (tree-car-member sym tree)
 	(and (pair? tree)
 	     (or (eq? (car tree) sym)
@@ -714,7 +757,25 @@
 		 (and (pair? (cdr tree))
 		      (or (member sym (cdr tree))
 			  (member #f (cdr tree) (lambda (a b) (tree-set-member sym set b))))))))
-      
+
+      (define (tree-symbol-walk tree syms)
+	(if (pair? tree)
+	    (if (eq? (car tree) 'quote)
+		(if (and (pair? (cdr tree))
+			 (symbol? (cadr tree))
+			 (not (memq (cadr tree) (car syms))))
+		    (tree-symbol-walk (cddr tree) (begin (set-car! syms (cons (cadr tree) (car syms))) syms)))
+		(if (eq? (car tree) {list})
+		    (if (and (pair? (cdr tree))
+			     (pair? (cadr tree))
+			     (eq? (caadr tree) 'quote)
+			     (symbol? (cadadr tree))
+			     (not (memq (cadadr tree) (cadr syms))))
+			(tree-symbol-walk (cddr tree) (begin (set-car! (cdr syms) (cons (cadadr tree) (cadr syms))) syms)))
+		    (begin
+		      (tree-symbol-walk (car tree) syms)
+		      (tree-symbol-walk (cdr tree) syms))))))
+
       (define (remove item sequence)
 	(let ((got-it #f))
 	  (map (lambda (x)
@@ -914,8 +975,8 @@
 						 (else #f)))))))
 		       (and (pair? (cadr e))
 			    (memq (car e) bools)
-			    (memq (return-type (caadr e)) bools)
-			    (subsumes? (car e) (return-type (caadr e))))))))
+			    (memq (return-type (caadr e) env) bools)
+			    (subsumes? (car e) (return-type (caadr e) env)))))))
 	
 	(define (false? e)
 	  
@@ -969,8 +1030,8 @@
 					     (bad-arg-match (car a) (car b)))))
 		       (and (pair? (cadr e))
 			    (memq (car e) bools)
-			    (memq (return-type (caadr e)) bools)
-			    (not (any-compatible? (car e) (return-type (caadr e)))))))))
+			    (memq (return-type (caadr e) env) bools)
+			    (not (any-compatible? (car e) (return-type (caadr e) env))))))))
 	
 	(define (contradictory? ands)
 	  (let ((vars ()))
@@ -1077,7 +1138,7 @@
 					  (symbol? (car arg))
 					  (hash-table-ref no-side-effect-functions (car arg))
 					  (not (hash-table-ref globals (car arg)))
-					  (let ((ret (return-type (car arg))))
+					  (let ((ret (return-type (car arg) env)))
 					    (and (or (symbol? ret) (pair? ret))
 						 (not (return-type-ok? 'boolean? ret))))
 					  (not (var-member (car arg) env))))
@@ -1332,7 +1393,7 @@
 						     (if (eq? val #t)
 							 (if (null? (cdr exprs))     ; (and x y #t) should not remove the #t
 							     (if (or (and (pair? e)
-									  (eq? (return-type (car e)) 'boolean?))
+									  (eq? (return-type (car e) env) 'boolean?))
 								     (eq? e #t))
 								 (set! new-form (cons val new-form))
 								 (if (or (null? new-form)
@@ -1991,15 +2052,45 @@
 				'(eqv? char=?)
 				'(equal? equal?))))
 		    (if (symbol? (car selector))
-			(->eqf (return-type (car selector)))
+			(->eqf (return-type (car selector) ()))
 			'(#t #t))))))
 	   
 
       (define (check-special-cases name head form env)
 	;; here curlet won't change (except for and/or/not, possibly apply, and map/for-each with a macro)
+#|
+	(if (member 'append form (lambda (a b) 
+				    (and (pair? b)
+					 (eq? (car b) a))))
+	    (format *stderr* "~A~%" form))
+|#
 	(case head
 
 	  ((memq assq memv assv member assoc)
+
+#|
+	   ;; TODO
+	   (if (and (= (length form) 3)
+		    (pair? (caddr form))
+		    (memq (caaddr form) '(cons reverse))) ; 'list)) ;'append))
+	       (format *stderr* "~A~%" form))
+	   ;; this does happen! (member slot-id (append (list waste) reserves)) etc
+	   ;; (member code (list 'N521 'N522)) -- list happens a lot, perhaps qusaiquote if not all constants?
+	   ;; (member type (list "GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
+	   ;; this could be under list|vector|string etc -- use the constant form if not binding to var
+	   ;; also check map/for-each -- any built-ins taking these args?
+	   ;; (member start-slot (cons waste tableau))
+	   ;; (memq val (reverse lst))!!
+
+	   ;; check (cxr|list-tail|ref etc (reverse...))
+	   ;;   (car|cdr (reverse lst)) happens a lot, caar and cadr sometimes
+	   ;; some sort! cases can be evalled
+	   ;; (list->string (reverse chars)) might be better as (reverse (apply string chars)) (list->vector too)
+	   ;; (reverse (cdr (reverse lst))) = all but last of lst -> copy to len-1
+	   ;; (reverse (cons x (reverse lst))) -- adds x to end -- (append lst (list x))?
+	   ;; (list->string (reverse! r)) (length (reverse))? (equal? (reverse)(reverse))?
+|#
+
 	   (define (list-one? p)
 	     (and (pair? p)
 		  (pair? (cdr p))
@@ -2118,6 +2209,7 @@
 	    caar cadr cddr cdar
 	    caaar caadr caddr cdddr cdaar cddar cadar cdadr
             cadddr cddddr)
+
 	   (let ((cxr? (lambda (s)
 			 (and (pair? (cdr s))
 			      (pair? (cadr s))
@@ -2367,9 +2459,10 @@
 		    (eq? (cadddr form) #t))
 	       (lint-format "~A won't create an homogenous vector" name form)))
 
-	  ((reverse list->vector vector->list list->string string->list symbol->string string->symbol number->string)
+	  ((reverse reverse! list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	   ;; not string->number -- no point in copying a number and it's caught below
 	   (let ((inverses '((reverse . reverse) 
+			     (reverse! . reverse!) 
 			     (list->vector . vector->list)
 			     (vector->list . list->vector)
 			     (symbol->string . string->symbol)
@@ -2720,11 +2813,11 @@
 				   (set! expr `(null? ,arg1))
 				   (if (and (eq? arg1 #t)
 					    (pair? arg2)
-					    (eq? (return-type (car arg2)) 'boolean?))
+					    (eq? (return-type (car arg2) env) 'boolean?))
 				       (set! expr arg2)
 				       (if (and (eq? arg2 #t)
 						(pair? arg1)
-						(eq? (return-type (car arg1)) 'boolean?))
+						(eq? (return-type (car arg1) env) 'boolean?))
 					   (set! expr arg1)))))))
 		   (if (not (eq? expr 'unset))
 		       (lint-format "perhaps ~A" name (lists->string form expr)))))))
@@ -2905,7 +2998,7 @@
 		  ((rational? real? complex?) op-name)
 		  (else (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
 
-	(define (report-arg-trouble name form head arg-number checker arg uop)
+	(define (report-arg-trouble name form head arg-number checker arg uop env)
 	  (let ((op (if (and (eq? checker 'real?)
 			     (eq? uop 'number?))
 			'complex?
@@ -2932,7 +3025,7 @@
 			      ;; arg is quoted expression
 			      (if (and (not (memq op '(#f #t values)))
 				       (not (any-compatible? checker op)))
-				  (report-arg-trouble name form head arg-number checker arg op)))
+				  (report-arg-trouble name form head arg-number checker arg op env)))
 
 			    ;; arg is an evaluated expression
 			    (case (car arg)
@@ -2944,7 +3037,7 @@
 				   (let ((op (->type last-expr)))
 				     (if (and (not (memq op '(#f #t values)))
 					      (not (any-compatible? checker op)))
-					 (report-arg-trouble name form head arg-number checker last-expr op))))))
+					 (report-arg-trouble name form head arg-number checker last-expr op env))))))
 
 			      ((if)
 			       (if (> (length arg) 2)
@@ -2954,12 +3047,12 @@
 				       (let ((op (->type t)))
 					 (if (and (not (memq op '(#f #t values)))
 						  (not (any-compatible? checker op)))
-					     (report-arg-trouble name form head arg-number checker t op))))
+					     (report-arg-trouble name form head arg-number checker t op env))))
 				     (when (and f (not (symbol? f)))
 				       (let ((op (->type f)))
 					 (if (and (not (memq op '(#f #t values)))
 						  (not (any-compatible? checker op)))
-					     (report-arg-trouble name form head arg-number checker f op)))))))
+					     (report-arg-trouble name form head arg-number checker f op env)))))))
 					 
 			      ((dynamic-wind)
 			       (if (= (length arg) 4)
@@ -2973,7 +3066,7 @@
 						   (let ((op (->type res)))
 						     (if (and (not (memq op '(#f #t values)))
 							      (not (any-compatible? checker op)))
-							 (report-arg-trouble name form head arg-number checker res op)))))))))))
+							 (report-arg-trouble name form head arg-number checker res op env)))))))))))
 			      
 			      ((do)
 			       (if (> (length arg) 2)
@@ -2985,7 +3078,7 @@
 					 (let ((op (->type res)))
 					   (if (and (not (memq op '(#f #t values)))
 						    (not (any-compatible? checker op)))
-					       (report-arg-trouble name form head arg-number checker res op))))))))
+					       (report-arg-trouble name form head arg-number checker res op env))))))))
 
 			      ((case)
 			       (for-each
@@ -2997,7 +3090,7 @@
 					  (let ((op (->type expr)))
 					    (if (and (not (memq op '(#f #t values)))
 						     (not (any-compatible? checker op)))
-						(report-arg-trouble name form head arg-number checker expr op)))))))
+						(report-arg-trouble name form head arg-number checker expr op env)))))))
 				(cddr arg)))
 
 			      ((cond)
@@ -3012,14 +3105,14 @@
 				      (let ((op (->type expr)))
 					(if (and (not (memq op '(#f #t values)))
 						 (not (any-compatible? checker op)))
-					    (report-arg-trouble name form head arg-number checker expr op))))))
+					    (report-arg-trouble name form head arg-number checker expr op env))))))
 				(cdr arg)))
 
 			      ;; TODO: also if no else, check ()|#<unspecified> and report as default possibility
 			      ;; TODO: values, call-with-exit, call/cc
 
 			      (else 
-			       (let ((op (return-type (car arg))))
+			       (let ((op (return-type (car arg) env)))
 				 ;; checker is arg-type, op is expression type (can also be a pair)
 				 (if (and (not (memq op '(#f #t values)))
 					  (or (not (any-compatible? checker op))
@@ -3029,14 +3122,14 @@
 						       (not (any-checker? checker (eval arg))))
 						     (lambda ignore-catch-error-args
 						       #f)))))
-				     (report-arg-trouble name form head arg-number checker arg op))))))
+				     (report-arg-trouble name form head arg-number checker arg op env))))))
 
 			;; arg is not a pair
 			(if (and (not (symbol? arg))
 				 (not (any-checker? checker arg)))
 			    (let ((op (->type arg)))
 			      (unless (memq op '(#f #t values))
-				(report-arg-trouble name form head arg-number checker arg op))))))
+				(report-arg-trouble name form head arg-number checker arg op env))))))
 
 		  (if (list? checkers)
 		      (if (null? (cdr checkers))
@@ -3101,6 +3194,66 @@
 				   (if (pair? rest)
 				       (set! rest (cdr rest))))
 				 (cdr form))))
+			    
+			    ;; look for problematic macro expansion
+			    (when (memq (fdata 'ftype) '(define-macro define-macro* defmacro defmacro*))
+
+			      (unless (list? (fdata 'macro-ops))
+				(let ((syms (list () ())))
+				  (if (memq (fdata 'ftype) '(define-macro define-macro*))
+				      (tree-symbol-walk (cddr (fdata 'value)) syms)
+				      (tree-symbol-walk (cdddr (fdata 'value)) syms))
+				  (varlet fdata 'macro-locals (car syms) 'macro-ops (cadr syms))))
+
+			      (when (or (pair? (fdata 'macro-locals))
+					(pair? (fdata 'macro-ops)))
+				(let ((bad-locals ())
+				      (bad-quoted-locals ())
+				      (bad-ops ()))
+				  (for-each
+				   (lambda (local)
+				     (if (tree-unquoted-member local (cdr form))
+					 (set! bad-locals (cons local bad-locals))))
+				   (fdata 'macro-locals))
+				  (when (null? bad-locals)
+				    (for-each
+				     (lambda (local)
+				       (if (tree-member local (cdr form))
+					   (set! bad-quoted-locals (cons local bad-quoted-locals))))
+				     (fdata 'macro-locals)))
+				  (for-each
+				   (lambda (op)
+				     (let ((curf (var-member op env))
+					   (oldf (var-member op (fdata 'env))))
+				       (if (and (not (eq? curf oldf))
+						(or (pair? (fdata 'env))
+						    (hash-table-ref globals op)
+						    (defined? op (rootlet))))
+					   (set! bad-ops (cons op bad-ops)))))
+				   (fdata 'macro-ops))
+
+				  (when (or (pair? bad-locals)
+					    (pair? bad-quoted-locals) 
+					    ;; (define-macro (mac8 b) `(let ((a 12)) (+ (symbol->value ,b) a)))
+					    ;; (let ((a 1)) (mac8 'a))
+					    ;; far-fetched!
+					    (pair? bad-ops))
+				    (lint-format "possible problematic macro expansion:~%  ~A ~A collide with subsequently defined ~A~A~A" 
+						 name 
+						 form
+						 (if (or (pair? bad-locals)
+							 (pair? bad-ops))
+						     "may"
+						     "could conceivably")
+						 (if (pair? bad-locals)
+						     (format #f "~{'~A~^, ~}" bad-locals)
+						     (if (pair? bad-quoted-locals)
+							 (format #f "~{'~A~^, ~}" bad-quoted-locals)
+							 ""))
+						 (if (and (pair? bad-locals) (pair? bad-ops)) ", " "")
+						 (if (pair? bad-ops)
+						     (format #f "~{~A~^, ~}" bad-ops)
+						     ""))))))
 			    )))))
 	      ;; not local var
 	      (when (symbol? head)
@@ -3246,9 +3399,19 @@
 							 :env ()
 							 :location #__line__)))
 			 (lint-format "what is this? ~A" name form)))
-		   (hash-table-set! globals name (make-var :name name :value (and (pair? (cddr form)) (caddr form)))))))
+		   (hash-table-set! globals name (make-var :name name 
+							   :value (and (pair? (cddr form)) (caddr form)))))))
 
-	    ((define* define-expansion define-macro define-macro* define-bacro define-bacro* definstrument defanimal)
+	    ((define*)
+	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
+							      :ftype head
+							      :decl (eval (list head (cons '_ (cdadr form)) #f))
+							      :arglist (cdadr form)
+							      :value form
+							      :env ()
+							      :location #__line__)))
+
+	    ((define-expansion define-macro define-macro* define-bacro define-bacro* definstrument defanimal)
 	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
 							      :ftype head
 							      :decl (eval (list head (cons '_ (cdadr form)) #f))
@@ -3656,11 +3819,16 @@
 			    ((3) (lint-format "~A could be (define ~A cadddr)" name name name))))))))
 	    
 	(let ((data (and (symbol? name)
-			  (make-fvar :name (if (not (memq head '(lambda lambda*))) name '[anonymous])
-				     :ftype head
-				     :value form
-				     :env env
-				     :location #__line__))))
+			 (make-fvar :name (if (not (memq head '(lambda lambda*))) name '[anonymous])
+				    :ftype head
+				    :value form
+				    :env env
+				    :arglist (if (memq head '(lambda lambda*))
+						 (cadr form)
+						 (if (memq head '(defmacro defmacro*))
+						     (caddr form)
+						     (cdadr form)))
+				    :location #__line__))))
 	  (when data
 	    (let ((ldata (cdr data)))
 	    (set! (ldata 'decl)
@@ -3668,28 +3836,27 @@
 		    (lambda ()
 		      (case head
 			((lambda)
-			 (set! (ldata 'arglist) (cadr form))
 			 (set! (ldata 'allow-other-keys) #t)
 			 (eval (list head (cadr form) #f)))
+
 			((lambda*)
-			 (set! (ldata 'arglist) (cadr form))
 			 (set! (ldata 'allow-other-keys) (eq? (last-par (cadr form)) :allow-other-keys))
 			 (eval (list head (copy (cadr form)) #f)))         ; eval can remove :allow-other-keys!
+
 			((define*)
-			 (set! (ldata 'arglist) (cdadr form))
 			 (set! (ldata 'allow-other-keys) (eq? (last-par (cdadr form)) :allow-other-keys))
 			 (eval (list head (cons '_ (copy (cdadr form))) #f)))
+
 			((defmacro defmacro*)
-			 (set! (ldata 'arglist) (caddr form))
 			 (set! (ldata 'allow-other-keys) (or (not (eq? head 'defmacro*))
 							     (eq? (last-par (caddr form)) :allow-other-keys)))
 			 (eval (list head '_ (caddr form) #f)))
+
 			((define-constant)
-			 (set! (ldata 'arglist) (cdadr form))
 			 (set! (ldata 'allow-other-keys) #t)
 			 (eval (list 'define (cons '_ (cdadr form)) #f)))
+
 			(else
-			 (set! (ldata 'arglist) (cdadr form))
 			 (set! (ldata 'allow-other-keys) (or (not (memq head '(define-macro* define-bacro*)))
 							     (eq? (last-par (cdadr form)) :allow-other-keys)))
 			 (eval (list head (cons '_ (cdadr form)) #f)))))
@@ -3794,6 +3961,7 @@
 			       
 			       ;; not (symbol? sym)
 			       (if (and (pair? sym)
+					(pair? val)
 					(not (pair? (car sym))))
 				   (begin
 				     (when (pair? (cdr sym))
@@ -4145,7 +4313,7 @@
 			   (if (and (pair? selector)
 				    (symbol? (car selector)))
 			       (begin
-				 (set! sel-type (return-type (car selector)))
+				 (set! sel-type (return-type (car selector) env))
 				 (if (and (symbol? sel-type)
 					  (not (memq sel-type selector-types)))
 				     (lint-format "case selector may not work with eqv: ~A" name (truncated-list->string selector)))))
@@ -4742,7 +4910,7 @@
 					(defined? e)
 					(not (let? (symbol->value e))))
 				   (and (pair? e)
-					(let ((op (return-type (car e))))
+					(let ((op (return-type (car e) env)))
 					  (and op
 					       (not (return-type-ok? 'let? op))))))
 			       (lint-format "~A: first argument should be an environment: ~A" head name (truncated-list->string form)))
@@ -4909,6 +5077,19 @@
 		      (last-form #f)
 		      (last-line-number -1))
 		  (do ((form (read fp) (read fp)))
+#|
+		  (do ((form 
+			(catch #t
+			  (lambda ()
+			    (read fp))
+			  (lambda args
+			    (format *stderr* "~A: ~A~%" file args)))
+			(catch #t
+			  (lambda ()
+			    (read fp))
+			  (lambda args
+			    (format *stderr* "~A: ~A~%" file args)))))
+|#
 		      ((eof-object? form))
 		    (if (pair? form)
 			(set! line (max line (pair-line-number form))))

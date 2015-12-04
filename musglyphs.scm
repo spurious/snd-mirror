@@ -206,9 +206,9 @@
 		     ((8 9) 5) ; a-flat
 		     (else 6)))) ; b-flat
       (list pclass octave 
-	    (if (or (= pclass 1) (= pclass 6))
+	    (if (memv pclass '(1 6))
 		:sharp
-		(and (or (= pclass 3) (= pclass 8) (= pclass 10))
+		(and (memv pclass '(3 8 10)) 
 		     :flat))
 	    cclass
 	    pitch)))
