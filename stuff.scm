@@ -200,7 +200,7 @@
 
 (define-macro (rotatef . places)
   (let ((tmp (gensym))
-	(last (car (list-tail places (- (length places) 1)))))
+	(last (places (- (length places) 1))))
     `(let ((,tmp ,(car places)))
        ,@(map (lambda (a b)
 		`(set! ,a ,b))

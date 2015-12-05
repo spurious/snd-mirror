@@ -77,8 +77,8 @@
 ;;;                       always get a bit of the attack of the sound even
 ;;;                       if you try to run the time pointer starting in 
 ;;;                       the middle or end.
-;;;                       [NIL = 1st section starts according to time-ptr,
-;;;                        T = 1st section always starts at time-ptr = 0]
+;;;                       [NIL = first section starts according to time-ptr,
+;;;                        T = first section always starts at time-ptr = 0]
 ;;;
 ;;; sndwarp-window-offset = Flag to determine how the windows are offset
 ;;;                         in time. T = Csound sndwarp style, windows 
@@ -200,10 +200,10 @@
 		  (winsamps (seconds->samples winlen))
 		  (srate-val (env sratef))
 		  (time-val (env timef)))
-	     ;; Even for the 1st section's truncated envelopes, the frequency of the envelope must be as if the envelope were full duration.
+	     ;; Even for the first section's truncated envelopes, the frequency of the envelope must be as if the envelope were full duration.
 	     (set! (mus-frequency windf) (* .5 (/ fsr winsamps)))
 	     ;; Set windowing oscillator to starting phase and appropriate frequency to provide half-sine envelope over window.
-	     ;; Phase must be altered for 1st envelope of each overlap stream.
+	     ;; Phase must be altered for first envelope of each overlap stream.
 	     (set! (mus-phase windf) 
 		   (if (= section 0)
 		       (if (= overlap 0)
@@ -225,8 +225,8 @@
 				    (round (* winlen overlap-ratio-compl)))
 				;; Alternative style - start each overlap series at 0
 				0))
-			   ;; To match csound version, 1st section must start reading at 0. Using zero-start-time-ptr 
-			   ;; flag = #f,  however, allows 1st section to start as determined by time-ptr instead.
+			   ;; To match csound version, first section must start reading at 0. Using zero-start-time-ptr 
+			   ;; flag = #f,  however, allows first section to start as determined by time-ptr instead.
 			   (adj-time-val (if zero-start-time-ptr 0.0 time-val)))
 		       (set! readstart (round (* fsr (+ inputbeg overlap-start adj-time-val))))
 		       (if (not (= overlap 0)) (set! winsamps (floor (* winsamps overlap-ratio)))))

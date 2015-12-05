@@ -11,8 +11,11 @@
     
     (lambda* (obj (port (current-output-port)) (column 0))
       
+      (define newlines 0)
+
       (define (pretty-print-1 obj port column)
 	(define (spaces n) 
+	  (set! newlines (+ newlines 1))
 	  (format port "~%~NC" (+ n *pretty-print-left-margin*) #\space))
 
 	(define (stacked-list lst col)
@@ -161,16 +164,18 @@
 		      (if (not (eq? lst (cdr obj)))
 			  (spaces (+ column 6)))
 		      (write-char #\( port)
-		      (pretty-print-1 (caar lst) port (+ column 7))
-		      (if (and (pair? (cdar lst))
-			       (null? (cddar lst))
-			       (< (length (object->string (cadar lst))) 60))
-			  (begin
-			    (write-char #\space port)
-			    (write (cadar lst) port))
-			  (begin
-			    (spaces (+ column 7))
-			    (stacked-list (cdar lst) (+ column 7))))
+		      (let ((oldlines newlines))
+			(pretty-print-1 (caar lst) port (+ column 7))
+			(if (and (= oldlines newlines)
+				 (pair? (cdar lst))
+				 (null? (cddar lst))
+				 (< (length (object->string (cadar lst))) 60))
+			    (begin
+			      (write-char #\space port)
+			      (write (cadar lst) port))
+			    (begin
+			      (spaces (+ column 7))
+			      (stacked-list (cdar lst) (+ column 7)))))
 		      (write-char #\) port))
 		    (write-char #\) port))
 		   

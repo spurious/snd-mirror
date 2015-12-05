@@ -1273,9 +1273,9 @@ control over the environment at any point:
 <p>So s7 does not have syntax-rules because it is not needed.
 s7's lint.scm will warn you about any such problematic macro expansion, so I'd
 say just write macros as simply as possible, then let lint tell you
-that it's time to do the with-let shuffle. When that happens, just wrap the macro body in
-a with-let that captures the current environment, and each macro argument use
-in a with-let that re-establishes that environment. 
+that it's time to do the with-let shuffle. When that happens, wrap the macro body in
+a with-let that captures the current environment, and at each use of a macro argument
+wrap it in a with-let that re-establishes that environment. 
 </p>
 
 <div class="indented">

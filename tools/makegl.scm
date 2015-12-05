@@ -289,12 +289,12 @@
 	      (if (string? (cdr typ))
 		  (begin
 		    (if (not (member (car typ)
-				     (list "Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
-					   "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
-					   "GLboolean*" "void*" "GLint*" "GLshort*"
-					   "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
-					   "unsigned_long"
-					   "void**")))
+				     '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
+				       "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
+				       "GLboolean*" "void*" "GLint*" "GLshort*"
+				       "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
+				       "unsigned_long"
+				       "void**")))
 			(if (string=? (car typ) "constchar*")
 			    (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
 			    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
@@ -321,23 +321,23 @@
 	    (begin
 	      (if (member type glu-1-2) 
 		  (hey "#ifdef GLU_VERSION_1_2~%")
-		  (if (member type (list "GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
+		  (if (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
 		      (hey "#if HAVE_GLU~%")))
 	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
 		   (if (has-stars type) "_PTR" "")
-		   (if (member type (list "int*" "Pixmap" "Font" "GLubyte*" 
-					  "GLdouble*" "GLfloat*" "GLvoid*" 
-					  "GLuint*" "GLboolean*" "GLint*" "GLshort*"
-					  "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"
-					  ))
+		   (if (member type '("int*" "Pixmap" "Font" "GLubyte*" 
+				      "GLdouble*" "GLfloat*" "GLvoid*" 
+				      "GLuint*" "GLboolean*" "GLint*" "GLshort*"
+				      "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"
+				      ))
 		       "_1" 
-		       (if (member type (list "GdkVisual*" "PangoFont*" "GdkColormap*"))
+		       (if (member type '("GdkVisual*" "PangoFont*" "GdkColormap*"))
 			   "_2" 
 			   ""))
 		   (no-stars type)
 		   type)
 	      (if (or (member type glu-1-2) 
-		      (member type (list "GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr")))
+		      (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr")))
 		  (hey "#endif~%")))
 	    (if (string=? type "Display*")
 		(hey "XL_TYPE_PTR(Display, Display*)~%")

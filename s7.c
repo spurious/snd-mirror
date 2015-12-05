@@ -73889,7 +73889,6 @@ int main(int argc, char **argv)
  * lint: closure sig from body
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
- *       unquasiquote for pp and lint (fixup) to make macro body like presumed pre-reader original (as a string obviously)
  *       finish caller-type to syntax checks [values call/cc call/exit]
  *       bacro-shaker -- can we get set-member?
  *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))

@@ -2198,7 +2198,7 @@ and replaces it with the spectrum given in coeffs"))
 	    (let ((d-k (d k)))
 	      (do ((i 0 (+ i 1))
 		   (k1 (- k 1) (- k1 1)))
-		  ((= i k)) ; 1st time is skipped presumably
+		  ((= i k)) ; first time is skipped presumably
 		(float-vector-set! d i (- (float-vector-ref wkm i) (* d-k (float-vector-ref wkm k1))))))
 	    (if (< k (- m 1))
 		(let ((end (- n k 2)))

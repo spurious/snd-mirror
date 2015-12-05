@@ -813,7 +813,7 @@
 	(snd-display #__line__ ";fft-log-magnitude set default: ~A" *fft-log-magnitude*))
     (if *fft-with-phases*
 	(snd-display #__line__ ";fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (member *transform-size* (list 1024 4096)))
+    (if (not (member *transform-size* '(1024 4096)))
 	(snd-display #__line__ ";transform-size set default: ~A" *transform-size*))
     (if (not (equal? *transform-graph-type* graph-once))
 	(snd-display #__line__ ";transform-graph-type set default: ~A" *transform-graph-type*))
@@ -1059,7 +1059,7 @@
 	(snd-display #__line__ ";* fft-log-magnitude set default: ~A" *fft-log-magnitude*))
     (if *fft-with-phases*
 	(snd-display #__line__ ";* fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (member *transform-size* (list 1024 4096)))
+    (if (not (member *transform-size* '(1024 4096)))
 	(snd-display #__line__ ";* transform-size set default: ~A" *transform-size*))
     (if (not (equal? *transform-graph-type* graph-once))
 	(snd-display #__line__ ";* transform-graph-type set default: ~A" *transform-graph-type*))
@@ -9040,7 +9040,7 @@ EDITS: 2
       (if clip (snd-display #__line__ ";channel-clipped? oboe.snd -> ~A" clip)))
     (scale-to 1.5 ind0 0)
     (let ((clip (channel-clipped? ind0 0)))
-      (if (not (member clip (list 4502 4503))) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
+      (if (not (member clip '(4502 4503))) (snd-display #__line__ ";channel-clipped after scale: ~A" clip)))
     (revert-sound ind0)
     
     (ramp-channel 0.0 1.0 0 #f ind1 0)
@@ -25403,12 +25403,12 @@ EDITS: 2
 			     ((*motif* 'XtIsManaged) menu)
 			     ((*motif* 'XtIsSensitive) menu)
 			     (not (member ((*motif* 'XtName) menu)
-					  (list "Exit" "New" 
-						"Save   C-x C-s" 
-						"Close  C-x k"
-						"Close all"
-						"Save current settings"
-						"Mixes" "clm" "fm-violin"))))
+					  '("Exit" "New" 
+					    "Save   C-x C-s" 
+					    "Close  C-x k"
+					    "Close all"
+					    "Save current settings"
+					    "Mixes" "clm" "fm-violin"))))
 			((*motif* 'XtCallCallbacks) menu (*motif* 'XmNactivateCallback) (snd-global-state))))))))))
     (for-each close-sound (sounds))
     (dismiss-all-dialogs))

@@ -2171,7 +2171,7 @@
 
     (do ((i start (+ i long-pulse-samps)))
 	((>= i stop))
-      ;; do the 1st 0.5 amp pulse
+      ;; do the first 0.5 amp pulse
       (let ((pstop (+ i pulse-samps))
 	    (next-start i)
 	    (pulses (+ 8 (random 3))))
@@ -2589,7 +2589,7 @@
 ;;;
 ;;; White-throated sparrow
 ;;;
-;;; probably music of birds 14, 1st song
+;;; probably music of birds 14, first song
 
 (defanimal (white-throated-sparrow beg amp)
   (let ((dur (+ 3.25 (random .2)))
@@ -6446,7 +6446,7 @@
 
 (define (western-meadowlark beg1 amp1)
   
-  ;; 1st sequence of notes
+  ;; first sequence of notes
   (defanimal (western-meadowlark-1 beg amp)
     (let ((dur 1.075))
       (let ((start (seconds->samples beg))
@@ -8794,7 +8794,7 @@
   ;; east 12 3.5
   
   (defanimal (chestnut-sided-warbler-1 beg amp)
-    ;; 1st 6 notes
+    ;; first 6 notes
     (let ((dur 0.11))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
