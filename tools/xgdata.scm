@@ -7699,7 +7699,7 @@
 (CFNC-3.0 "void gtk_widget_queue_compute_expand GtkWidget* widget")
 (CFNC-3.0 "gboolean gtk_widget_compute_expand GtkWidget* widget GtkOrientation orientation")
 (CFNC-3.0 "void gtk_window_set_default_geometry GtkWindow* window gint width gint height")
-(CFNC-3.0 "void gtk_window_resize_to_geometry GtkWindow* window gint width gint height")
+;;; 3.19.4 (CFNC-3.0 "void gtk_window_resize_to_geometry GtkWindow* window gint width gint height")
 ;;; 3.13.4 (CFNC-3.0 "void gtk_window_set_has_resize_grip GtkWindow* window gboolean value")
 ;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_get_has_resize_grip GtkWindow* window")
 ;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_resize_grip_is_visible GtkWindow* window")
@@ -9251,4 +9251,13 @@
 (CINT-3.20 "GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_LEFT" "GtkShortcutType")
 (CINT-3.20 "GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_RIGHT" "GtkShortcutType")
 (CINT-3.20 "GTK_SHORTCUT_GESTURE" "GtkShortcutType")
+
+;;; 3.19.4:
+
+(CFNC-3.20 "GdkWindow* gdk_drag_context_get_drag_window GdkDragContext* context")
+(CFNC-3.20 "void gtk_popover_set_constrain_to GtkPopover* popover GtkPopoverConstraint constraint")
+(CFNC-3.20 "GtkPopoverConstraint gtk_popover_get_constrain_to GtkPopover* popover")
+(CINT-3.20 "GTK_STATE_FLAG_DND" "GtkStateFlags")
+(CINT-3.20 "GTK_POPOVER_CONSTRAINT_NONE" "GtkPopoverConstraint")
+(CINT-3.20 "GTK_POPOVER_CONSTRAINT_WINDOW" "GtkPopoverConstraint")
 

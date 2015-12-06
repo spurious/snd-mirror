@@ -820,6 +820,7 @@
 	(cons "GtkAlign" "INT")
 	(cons "GdkGLFlags" "INT")
 	(cons "GtkShortcutType" "INT")
+	(cons "GtkPopoverConstraint" "INT")
 	))
 
 (define (c-to-xen-macro-name typ str)

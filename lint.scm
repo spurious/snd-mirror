@@ -2085,37 +2085,38 @@
       (define (check-special-cases name head form env)
 	;; here curlet won't change (except for and/or/not, possibly apply, and map/for-each with a macro)
 
+	;; this happens a lot!
+	;;   (for-each (lambda (x) (write x) (newline)) more) 
+	;;   (for-each (lambda (x) (display #\space cep) (write x cep)) args) [no 'do, only a dozen 'map cases]
+	;; treat body as currently in lint-walk-body but expr lim == body len, then wrap in ~{~}?
+	;;   will need to split out the formatter in lint-walk-body
+	;; are the map cases for-each in disguise?
+	;;   (map (lambda (x) (display x) (newline)) to-print)
 #|
-	(if (member #f form (lambda (a b)
-			      (and (pair? b)
-				   (memq (car b) '(eval eval-string)))))
+	(if (and (eq? head 'do) ;'for-each)
+		 (tree-set-member 'not-a-symbol '(display write write-string write-line write-char newline) form))
 	    (format *stderr* "~A~%" form))
 |#
+	;; what else? could we dive into funcs?
 
-	;; TODO:
-	;; (list->vector (list-tail l n)) -- copy from n
-	;; (reverse (list-tail (reverse slist) index)) -- another form of copy (up to end - index)
-
-	;; (apply func (cons port params)) -> (apply func port params)
-	;; (apply string (reverse chars)) -> (reverse (aplpy string chars))
-	;; (apply (spell-handler spell) (list kchar)) -> ((spell...) kchar)
-	;; (apply (svc-proc svc) (list kchar knpc)) -> same
-	;; (apply select (list utt)) -> (select utt)?!
-	;; (apply proc) -> (proc)
-	;; (apply (lambda (stone) stone) stone) -- this is (car stone)?!
-	;; (apply (lambda (o) (make-vector size o)) rest) -> (make-vector size (car rest))?
-	;; (apply cerr (append (list nl "XPointer parser error: ") text (list nl))) -> (apply cerr nl "X..." (append text (list nl)))?
-
+	;; TODO: extend define-macro stuff
 	;; (eval (read (open-input-string expr))) -> eval-string?
-	;; (eval (string->symbol "lcg:method:makeCodeVector")) (eval (list 'Utterance 'Text text)) (eval 'p_lost_halls_r1)
+	;; (eval (string->symbol "lcg:method:makeCodeVector"))=eval-string (eval 'p_lost_halls_r1)=sym
+
+	;; (string-ref (substring...)) (string-set! (substring...))--an error
+	;; (string-ref (symbol->string 't) 0) (string-ref (make-string 3 #\a) 2)
+
+	;; better format checks, and accept %...[fsl] ? -> rewrite with ~
+	;; (format (_ "Add to the sequence in row ~a.") (number->string (+ row 1))))
+	;; (string-append (format...)) and (format ... (string-append))
+	;;    in this case, if format port not #f/#t -> error
 #|
-	(if (member 'list-tail form (lambda (a b) 
+	(if (member 'format form (lambda (a b) 
 				    (and (pair? b)
 					 (eq? (car b) a))))
 	    (format *stderr* "~A~%" form))
 |#
 	(case head
-
 	  ((memq assq memv assv member assoc)
 
 	   (define (list-one? p)
@@ -2287,15 +2288,16 @@
 
 	   (when (and (memq head '(car cadr caddr cadddr))
 		    (pair? (cadr form)))
-	     (if (memq (caadr form) '(string->list vector->list))
-		 (lint-format "perhaps ~A" name (lists->string form `(,(cadadr form) 
+	     (if (memq (caadr form) '(string->list vector->list))    ; (car (string->list x)) -> (string-ref x 0)
+		 (lint-format "perhaps ~A" name (lists->string form `(,(if (eq? (caadr form) 'string->list) 'string-ref 'vector-ref)
+								      ,(cadadr form) 
 								      ,(case head ((car) 0) ((cadr) 1) ((caddr) 2) (else 3)))))
 		 (if (and (memq (caadr form) '(reverse reverse!))
 			  (symbol? (cadadr form)))
-		     (lint-format "perhaps ~A" name 
-                       (lists->string form `(,(cadadr form) 
-					     (- (length ,(cadadr form)) 
-						,(case head ((car) 1) ((cadr) 2) ((caddr) 3) (else 4))))))))))
+		     (lint-format "perhaps ~A" name    ; (car (reverse x)) -> (list-ref x (- (length x) 1))
+				  (lists->string form `(list-ref ,(cadadr form) 
+							(- (length ,(cadadr form)) 
+							   ,(case head ((car) 1) ((cadr) 2) ((caddr) 3) (else 4))))))))))
 
 	  ((set-car!)
 	   (when (and (= (length form) 3)
@@ -2531,7 +2533,11 @@
 		    (pair? (cadr form))
 		    (eq? (caadr form) 'format)
 		    (not (cadadr form)))
-	       (lint-format "~A could be ~A" name form `(format #t ,@(cddadr form)))))
+	       (lint-format "perhaps ~A" name (lists->string form `(format () ,@(cddadr form))))))
+
+	  ((format)
+	   (if (= (length form) 3)
+	       (lint-format "perhaps ~A" name (lists->string form (cadr form)))))
 
 	  ((make-vector)
 	   (if (and (= (length form) 4)
@@ -2577,13 +2583,13 @@
 		      (pair? (cdr form))
 		      (pair? (cadr form)))
 	     (let ((arg (cadr form)))
-	       (if (and (eq? (car arg) 'cdr)       ; (reverse (cdr (reverse lst))) = all but last of lst -> copy to len-1
+	       (if (and (memq (car arg) '(cdr list-tail)) ; (reverse (cdr (reverse lst))) = all but last of lst -> copy to len-1
 			(pair? (cadr arg))
 			(eq? (caadr arg) 'reverse)
-			(symbol? (cadadr arg))
-			(not (eq? (cadadr arg) 'len)))
-		   (lint-format "perhaps ~A" name (lists->string form `(let ((len (- (length ,(cadadr arg)) 1)))
-									 (copy ,(cadadr arg) (make-list len) 0 len)))))
+			(symbol? (cadadr arg)))
+		   (lint-format "perhaps ~A" name 
+                     (lists->string form `(copy ,(cadadr arg) (make-list (- (length ,(cadadr arg)) ,(if (eq? (car arg) 'cdr) 1 (caddr arg))))))))
+
 	       (if (and (eq? (car arg) 'cons)      ; (reverse (cons x (reverse lst))) -- adds x to end -- (append lst (list x))
 			(pair? (caddr arg))
 			(eq? (car (caddr arg)) 'reverse))
@@ -2698,6 +2704,17 @@
 			      (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args))))))))))))
 
 	  ((apply)
+
+	;; (apply func (cons port params)) -> (apply func port params)
+	;; (apply string (reverse chars)) -> (reverse (aplpy string chars))
+	;; (apply (spell-handler spell) (list kchar)) -> ((spell...) kchar)
+	;; (apply (svc-proc svc) (list kchar knpc)) -> same
+	;; (apply select (list utt)) -> (select utt)?!
+	;; (apply proc) -> (proc)
+	;; (apply (lambda (stone) stone) stone) -- this is (car stone)?!
+	;; (apply (lambda (o) (make-vector size o)) rest) -> (make-vector size (car rest))?
+	;; (apply cerr (append (list nl "XPointer parser error: ") text (list nl))) -> (apply cerr nl "X..." (append text (list nl)))?
+
 	   (let ((function? (lambda (f)
 			      (or (and (symbol? f)
 				       (let ((func (symbol->value f *e*)))
@@ -2718,7 +2735,7 @@
 			      (code-constant? (form (- len 1))))
 			 (lint-format "last argument should be a list: ~A" name (truncated-list->string form))
 			 (if (and (= len 3)
-				  (pair? (caddr form))
+				  (pair? (caddr form))         ; (apply f (list a b)) -> (f a b)
 				  (eq? (caaddr form) 'list)
 				  ;; macros are different here
 				  (function? (cadr form)))
@@ -3776,6 +3793,8 @@
 				 (not (side-effect? (caddr f) env)))
 			    (lint-format "this could be omitted: ~A" name (truncated-list->string f)))))
 		  
+		  ;; needs f fs prev-f dpy-f dpy-start ctr len
+		  ;;   trap lint-format
 		  (let ((dpy-case (and (pair? f)
 				       (memq (car f) '(display write newline write-char write-string))))) ; flush-output-port?
 		    (define (out-port expr) ; ()=not specified (*stdout*), #f=something is wrong (not enough args)
@@ -3816,6 +3835,14 @@
 			      (set! dctr (+ dctr 1))
 			      (case (car d)
 				((display) 
+
+				 ;; TODO: string-append as arg: (display (string-append...) p)
+				 ;;   (display (number->string... [possible-radix])
+				 ;;   (display (make-string ...)
+				 ;;   (display (apply format ...)
+				 ;; same happen with write
+				 ;; (write-char #\a p)
+
 				 (if (string? (cadr d))
 				     (set! ctrl-string (string-append ctrl-string (cadr d)))
 				     (begin
@@ -4248,7 +4275,8 @@
 				 (unless (= last-if-line-number line-number)
 				   (do ((iff form (cadddr iff))
 					(iffs 0 (+ iffs 1)))
-				       ((or (not (pair? iff))
+				       ((or (> iffs 3)
+					    (not (pair? iff))
 					    (not (= (length iff) 4))
 					    (not (eq? (car iff) 'if)))
 					(when (or (> iffs 2)

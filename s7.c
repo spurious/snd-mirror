@@ -49092,7 +49092,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	    sc->strbuf[i++] = c;
 	  else
 	    {
-	      if (c == 'n')
+	      if ((c == 'n') || (c == 'r'))
 		sc->strbuf[i++] = '\n';
 	      else
 		{
