@@ -1246,6 +1246,8 @@ static s7_scheme *hidden_sc = NULL;
 	{								\
 	  if (((typeflag(p) & T_IMMUTABLE) != 0) && ((typeflag(p) != (f))))						\
 	    fprintf(stderr, "%d: set immutable %p type %x to %x\n", __LINE__, p, unchecked_type(p), f); \
+	  if (((typeflag(p) & T_LINE_NUMBER) != 0) && (((typeflag(p)) & 0xff) == T_PAIR) && (((f) & T_LINE_NUMBER) == 0)) \
+            fprintf(stderr, "%d unsets line_number\n", __LINE__); \
 	}								\
       typeflag(p) = f;							\
     } while (0)
@@ -1394,6 +1396,7 @@ static s7_scheme *hidden_sc = NULL;
 #define SYNTACTIC_TYPE                (unsigned short)(T_SYMBOL | T_DONT_EVAL_ARGS | T_SYNTACTIC)
 #define SYNTACTIC_PAIR                (unsigned short)(T_PAIR | T_SYNTACTIC)
 /* this marks symbols that represent syntax objects, it should be in the second byte */
+#define set_syntactic_pair(p)         typeflag(p) = (SYNTACTIC_PAIR | (typeflag(p) & 0xffff0000))
 
 #define T_PROCEDURE                   (1 << (TYPE_BITS + 2))
 #define is_procedure(p)               ((typesflag(_NFre(p)) & T_PROCEDURE) != 0)
@@ -1482,7 +1485,9 @@ static s7_scheme *hidden_sc = NULL;
 #define T_LINE_NUMBER                 (1 << (TYPE_BITS + 10))
 #define has_line_number(p)            ((typeflag(_TLst(p)) & T_LINE_NUMBER) != 0)
 #define set_has_line_number(p)        typeflag(_TLst(p)) |= T_LINE_NUMBER
-/* pair in question has line/file info added during read, or the environment has function placement info */
+/* pair in question has line/file info added during read, or the environment has function placement info 
+ *   this bit should not be in the first byte -- SYNTACTIC_PAIR ignores it.
+ */
 
 #define T_LOADER_PORT                 T_LINE_NUMBER
 #define is_loader_port(p)             ((typeflag(_TPrt(p)) & T_LOADER_PORT) != 0)
@@ -51831,7 +51836,9 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-			      set_type(car(body), SYNTACTIC_PAIR);
+			      /* set_type(car(body), SYNTACTIC_PAIR); */
+			      /* typeflag(car(body)) |= T_SYNTACTIC; */
+			      set_syntactic_pair(car(body));
 			    }
 			}
 		    }
@@ -52284,7 +52291,9 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
 				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-				  set_type(car(body), SYNTACTIC_PAIR);
+				  /* set_type(car(body), SYNTACTIC_PAIR); */
+				  /* typeflag(car(body)) |= T_SYNTACTIC; */
+				  set_syntactic_pair(car(body));
 				}
 			    }
 			}
@@ -57787,7 +57796,9 @@ static int dox_ex(s7_scheme *sc)
 	    {
 	      sc->op = (opcode_t)symbol_syntax_op(car(code));
 	      pair_set_syntax_op(code, sc->op);
-	      set_type(code, SYNTACTIC_PAIR);
+	      /* set_type(code, SYNTACTIC_PAIR); */
+	      /* typeflag(code) |= T_SYNTACTIC; */
+	      set_syntactic_pair(code);
 	    }
 	  sc->code = cdr(code);
 	  return(goto_START_WITHOUT_POP_STACK);
@@ -58282,7 +58293,9 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		    {
 		      sc->op = (opcode_t)symbol_syntax_op(car(sc->code));
 		      pair_set_syntax_op(sc->code, sc->op);
-		      set_type(sc->code, SYNTACTIC_PAIR);
+		      /* set_type(sc->code, SYNTACTIC_PAIR); */
+		      /* typeflag(sc->code) |= T_SYNTACTIC; */
+		      set_syntactic_pair(sc->code);
 		    }
 		  sc->code = cdr(sc->code);
 		  return(goto_START_WITHOUT_POP_STACK);
@@ -58651,7 +58664,9 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-			      set_type(car(body), SYNTACTIC_PAIR);
+			      /* set_type(car(body), SYNTACTIC_PAIR); */
+			      /* typeflag(car(body)) |= T_SYNTACTIC; */
+			      set_syntactic_pair(car(body));
 			    }
 			}
 		    }
@@ -58738,7 +58753,9 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
 				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-				  set_type(car(body), SYNTACTIC_PAIR);
+				  /* set_type(car(body), SYNTACTIC_PAIR); */
+				  /* typeflag(car(body)) |= T_SYNTACTIC; */
+				  set_syntactic_pair(car(body));
 				}
 			    }
 			}
@@ -64210,7 +64227,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		if (typesflag(carc) == SYNTACTIC_TYPE)
 		  {
-		    set_type(code, SYNTACTIC_PAIR);
+		    /* set_type(code, SYNTACTIC_PAIR); */
+		    /* typeflag(code) |= T_SYNTACTIC; */ /* leave other bits (T_LINE_NUMBER) intact */
+		    set_syntactic_pair(code);
+
 		    car(code) = syntax_symbol(slot_value(initial_slot(carc))); /* clear possible optimization confusion */
 		    sc->op = (opcode_t)symbol_syntax_op(car(code));
 		    pair_set_syntax_op(code, sc->op);
