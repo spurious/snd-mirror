@@ -12,9 +12,10 @@
 (define empty? 
   (let ((documentation "(empty? obj) returns #t if obj is an empty sequence"))
     (lambda (obj) 
-      (if (hash-table? obj)
-	  (zero? (hash-table-entries obj)) ; length here is table size
-	  (eqv? (length obj) 0)))))
+      (and (not (pair? obj))
+	   (if (hash-table? obj)
+	       (zero? (hash-table-entries obj)) ; length here is table size
+	       (eqv? (length obj) 0))))))
 
 (define applicable? arity)
 

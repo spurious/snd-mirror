@@ -49092,7 +49092,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 	    sc->strbuf[i++] = c;
 	  else
 	    {
-	      if ((c == 'n') || (c == 'r'))
+	      if (c == 'n')
 		sc->strbuf[i++] = '\n';
 	      else
 		{
@@ -73895,6 +73895,8 @@ int main(int argc, char **argv)
  *       if vars trackable, catch gcable set of code-constant, or set of constant?
  *       if no side effect func call not last, but side effect args, -> args?
  *       move special-cases into hash-table (via macro?)
+ * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
+ *  perhaps some way to show history of a value? -- cur_code chain?
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

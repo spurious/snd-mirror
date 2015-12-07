@@ -2101,15 +2101,16 @@
 
 	;; TODO: extend define-macro stuff
 	;; (eval (read (open-input-string expr))) -> eval-string?
-	;; (eval (string->symbol "lcg:method:makeCodeVector"))=eval-string (eval 'p_lost_halls_r1)=sym
+	;; (eval (string->symbol "lcg:method:makeCodeVector"))=eval-string or symbol->value?
+	;; (eval 'p_lost_halls_r1)=sym
 
-	;; (string-ref (substring...)) (string-set! (substring...))--an error
-	;; (string-ref (symbol->string 't) 0) (string-ref (make-string 3 #\a) 2)
+	;; if somehow we know x is a pair, (= (length x) 1) -> (null? (cdr x))
+	;; compare current/old animals and clm23 [snd10 or snd11 --snd12 might be close]
 
 	;; better format checks, and accept %...[fsl] ? -> rewrite with ~
 	;; (format (_ "Add to the sequence in row ~a.") (number->string (+ row 1))))
 	;; (string-append (format...)) and (format ... (string-append))
-	;;    in this case, if format port not #f/#t -> error
+	;;    in this case, if format port not #f/#t -> error [but how to be sure? -- would need local var vals]
 #|
 	(if (member 'format form (lambda (a b) 
 				    (and (pair? b)
@@ -2483,6 +2484,26 @@
 		 (if (not (equal? expr form))
 		     (lint-format "perhaps ~A" name (lists->string form expr))))))
 
+	  ((string-ref)
+	   (when (and (= (length form) 3)
+		      (pair? (cadr form)))
+	     (let ((target (cadr form)))
+	       (case (car target)
+		 ((substring)
+		  (if (= (length target) 3)
+		      (lint-format "perhaps ~A" name (lists->string form `(string-ref ,(cadr target) (+ ,(caddr form) ,(caddr target)))))))
+		 ((symbol->string)
+		  (if (and (integer? (caddr form))
+			   (pair? (cadr target))
+			   (eq? (caadr target) 'quote)
+			   (symbol? (cadadr target)))
+		      (lint-format "perhaps ~A" name (lists->string form (string-ref (symbol->string (cadadr target)) (caddr form))))))
+		 ((make-string)
+		  (if (and (integer? (cadr target))
+			   (integer? (caddr form))
+			   (> (cadr target) (caddr form)))
+		      (lint-format "perhaps ~A" name (lists->string form (if (= (length target) 3) (caddr target) #\space)))))))))
+	   
 	  ((vector-ref list-ref hash-table-ref let-ref int-vector-ref float-vector-ref)
 	   (unless (= line-number last-checker-line-number)
 	     (if (= (length form) 3)
@@ -2534,10 +2555,6 @@
 		    (eq? (caadr form) 'format)
 		    (not (cadadr form)))
 	       (lint-format "perhaps ~A" name (lists->string form `(format () ,@(cddadr form))))))
-
-	  ((format)
-	   (if (= (length form) 3)
-	       (lint-format "perhaps ~A" name (lists->string form (cadr form)))))
 
 	  ((make-vector)
 	   (if (and (= (length form) 4)
@@ -2705,15 +2722,13 @@
 
 	  ((apply)
 
-	;; (apply func (cons port params)) -> (apply func port params)
-	;; (apply string (reverse chars)) -> (reverse (aplpy string chars))
-	;; (apply (spell-handler spell) (list kchar)) -> ((spell...) kchar)
-	;; (apply (svc-proc svc) (list kchar knpc)) -> same
-	;; (apply select (list utt)) -> (select utt)?!
-	;; (apply proc) -> (proc)
-	;; (apply (lambda (stone) stone) stone) -- this is (car stone)?!
-	;; (apply (lambda (o) (make-vector size o)) rest) -> (make-vector size (car rest))?
-	;; (apply cerr (append (list nl "XPointer parser error: ") text (list nl))) -> (apply cerr nl "X..." (append text (list nl)))?
+	   ;; (apply (spell-handler spell) (list kchar)) -> ((spell...) kchar) -- how to distinguish from macro case?
+	   ;; (apply select (list utt)) -> (select utt)?! -- macro again but it happens a lot (maybe point out but mention macros? -- why are macros different?)
+	   ;; (apply (lambda (stone) stone) stone) -- this is (car stone)?!
+	   ;; (apply (lambda (o) (make-vector size o)) rest) -> (make-vector size (car rest))?
+	   ;; (apply cerr (append (list nl "XPointer parser error: ") text (list nl))) -> (apply cerr nl "X..." (append text (list nl)))?
+	   ;; is (apply f [...] ()) or (apply f [...] '()) -> (f [...])?
+	   ;; (apply list x) -> x?
 
 	   (let ((function? (lambda (f)
 			      (or (and (symbol? f)
@@ -2724,37 +2739,47 @@
 						    (memq (var-ftype e) '(define define* lambda lambda*)))))))
 				  (and (pair? f)
 				       (memq (car f) '(lambda lambda*)))))))
+	     (if (= (length form) 2)
+		 (lint-format "perhaps ~A" name (lists->string form (list (cadr form))))
+		 (if (and (pair? (cdr form))
+			  (not (symbol? (cadr form)))
+			  (not (applicable? (cadr form))))
+		     (lint-format "~S is not applicable: ~A" name (cadr form) (truncated-list->string form))
+		     (let ((len (length form)))
+		       (when (> len 2)
+			 (let ((f (cadr form)))
 
-	     (if (and (pair? (cdr form))
-		      (not (symbol? (cadr form)))
-		      (not (applicable? (cadr form))))
-		 (lint-format "~S is not applicable: ~A" name (cadr form) (truncated-list->string form))
-		 (let ((len (length form)))
-		   (when (> len 2)
-		     (if (and (not (list? (form (- len 1))))
-			      (code-constant? (form (- len 1))))
-			 (lint-format "last argument should be a list: ~A" name (truncated-list->string form))
-			 (if (and (= len 3)
-				  (pair? (caddr form))         ; (apply f (list a b)) -> (f a b)
-				  (eq? (caaddr form) 'list)
-				  ;; macros are different here
-				  (function? (cadr form)))
-			     (lint-format "perhaps ~A" name (lists->string form `(,(cadr form) ,@(cdaddr form))))
-			     (if (and (or (not (every? code-constant? (cddr form)))
-					  (catch #t
-					    (lambda ()
-					      (let ((val (eval form)))
-						(lint-format "perhaps ~A -> ~S" name form val)
-						#t))
-					    (lambda args #f)))
-				      (symbol? (cadr form)))
-				 (let ((func (symbol->value (cadr form) *e*)))
-				   (if (procedure? func)
-				       (let ((ary (arity func)))
-					 (if (and (pair? ary)
-						  (> (- (length (cddr form)) 1) (cdr ary))) ; last apply arg might be var=()
-					     (lint-format "too many arguments for ~A: ~A" name (cadr form) form)))))))))))))
-
+			   (if (and (or (not (every? code-constant? (cddr form)))
+					(catch #t
+					  (lambda ()
+					    (let ((val (eval form)))
+					      (lint-format "perhaps ~A -> ~S" name form val)
+					      #t))
+					  (lambda args #f)))
+				    (symbol? f))
+			       (let ((func (symbol->value f *e*)))
+				 (if (procedure? func)
+				     (let ((ary (arity func)))
+				       (if (and (pair? ary)
+						(> (- (length (cddr form)) 1) (cdr ary))) ; last apply arg might be var=()
+					   (lint-format "too many arguments for ~A: ~A" name f form))))))
+			   
+			   (if (and (not (list? (form (- len 1))))
+				    (code-constant? (form (- len 1))))
+			       (lint-format "last argument should be a list: ~A" name (truncated-list->string form))
+			       (if (and (= len 3)
+					(pair? (caddr form))
+					(function? f))                  ; macros are different here
+				   (let ((args (caddr form)))
+				     (if (eq? (car args) 'list)         ; (apply f (list a b)) -> (f a b)
+					 (lint-format "perhaps ~A" name (lists->string form `(,f ,@(cdaddr form))))
+					 (if (eq? (car args) 'cons)     ; (apply f (cons a b)) -> (apply f a b)
+					     (lint-format "perhaps ~A" name (lists->string form `(apply ,f ,@(cdr args))))
+					     (if (and (memq f '(string vector int-vector float-vector))
+						      (pair? args)      ; (apply vector (reverse x)) -> (reverse (apply vector x))
+						      (memq (car args) '(reverse reverse!)))
+						 (lint-format "perhaps ~A" name (lists->string form `(reverse (apply ,f ,(cadr args))))))))))))))))))
+	  
 	  ((format snd-display)
 	   (if (< (length form) 3)
 	       (begin
@@ -2765,7 +2790,10 @@
 			 (lint-format "redundant format: ~A" name (truncated-list->string form))
 			 (if (and (code-constant? (cadr form))
 				  (not (string? (cadr form))))
-			     (lint-format "format with one argument takes a string: ~A" name (truncated-list->string form)))))
+			     (lint-format "format with one argument takes a string: ~A" name (truncated-list->string form))
+			     (if (and (not (cadr form))
+				      (string? (caddr form)))
+				 (lint-format "perhaps ~A" name (lists->string form (caddr form)))))))
 		 env)
 	       (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 		     (args (if (string? (cadr form)) (cddr form) (cdddr form))))
