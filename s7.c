@@ -30701,8 +30701,7 @@ static void slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_wri
 
 static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  /* if outer env points to (say) method list, the object needs to specialize object->string itself
-   */
+  /* if outer env points to (say) method list, the object needs to specialize object->string itself */
   if (has_methods(obj))
     {
       s7_pointer print_func;
@@ -51836,8 +51835,6 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-			      /* set_type(car(body), SYNTACTIC_PAIR); */
-			      /* typeflag(car(body)) |= T_SYNTACTIC; */
 			      set_syntactic_pair(car(body));
 			    }
 			}
@@ -52291,8 +52288,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
 				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-				  /* set_type(car(body), SYNTACTIC_PAIR); */
-				  /* typeflag(car(body)) |= T_SYNTACTIC; */
 				  set_syntactic_pair(car(body));
 				}
 			    }
@@ -57796,8 +57791,6 @@ static int dox_ex(s7_scheme *sc)
 	    {
 	      sc->op = (opcode_t)symbol_syntax_op(car(code));
 	      pair_set_syntax_op(code, sc->op);
-	      /* set_type(code, SYNTACTIC_PAIR); */
-	      /* typeflag(code) |= T_SYNTACTIC; */
 	      set_syntactic_pair(code);
 	    }
 	  sc->code = cdr(code);
@@ -58293,8 +58286,6 @@ static int safe_dotimes_ex(s7_scheme *sc)
 		    {
 		      sc->op = (opcode_t)symbol_syntax_op(car(sc->code));
 		      pair_set_syntax_op(sc->code, sc->op);
-		      /* set_type(sc->code, SYNTACTIC_PAIR); */
-		      /* typeflag(sc->code) |= T_SYNTACTIC; */
 		      set_syntactic_pair(sc->code);
 		    }
 		  sc->code = cdr(sc->code);
@@ -58664,8 +58655,6 @@ static int unknown_ex(s7_scheme *sc, s7_pointer f)
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-			      /* set_type(car(body), SYNTACTIC_PAIR); */
-			      /* typeflag(car(body)) |= T_SYNTACTIC; */
 			      set_syntactic_pair(car(body));
 			    }
 			}
@@ -58753,8 +58742,6 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 			      if (typesflag(car(body)) != SYNTACTIC_PAIR)
 				{
 				  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-				  /* set_type(car(body), SYNTACTIC_PAIR); */
-				  /* typeflag(car(body)) |= T_SYNTACTIC; */
 				  set_syntactic_pair(car(body));
 				}
 			    }
@@ -64227,10 +64214,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		
 		if (typesflag(carc) == SYNTACTIC_TYPE)
 		  {
-		    /* set_type(code, SYNTACTIC_PAIR); */
-		    /* typeflag(code) |= T_SYNTACTIC; */ /* leave other bits (T_LINE_NUMBER) intact */
-		    set_syntactic_pair(code);
-
+		    set_syntactic_pair(code);      /* leave other bits (T_LINE_NUMBER) intact */
 		    car(code) = syntax_symbol(slot_value(initial_slot(carc))); /* clear possible optimization confusion */
 		    sc->op = (opcode_t)symbol_syntax_op(car(code));
 		    pair_set_syntax_op(code, sc->op);
@@ -73915,6 +73899,8 @@ int main(int argc, char **argv)
  *       if vars trackable, catch gcable set of code-constant, or set of constant?
  *       if no side effect func call not last, but side effect args, -> args?
  *       move special-cases into hash-table (via macro?)
+ *       need values->func arg check escape
+ *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
  *  perhaps some way to show history of a value? -- cur_code chain?
  *

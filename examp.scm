@@ -449,13 +449,10 @@ read an ASCII sound file"))
 	     (chn (hook 'chn))
 	     (dots (- (right-sample snd chn)
 		      (left-sample snd chn))))
-	(if (> dots 100) 
-	    (set! (dot-size snd chn) 1)
-	    (if (> dots 50)
-		(set! (dot-size snd chn) 2)
-		(if (> dots 25)
-		    (set! (dot-size snd chn) 3)
-		    (set! (dot-size snd chn) 5))))))))
+	(cond ((> dots 100) (set! (dot-size snd chn) 1))
+	      ((> dots 50)  (set! (dot-size snd chn) 2))
+	      ((> dots 25)  (set! (dot-size snd chn) 3))
+	      (else         (set! (dot-size snd chn) 5)))))))
 
 					;(hook-push graph-hook auto-dot)
 
@@ -1885,7 +1882,7 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
       ;;        the calls are ordered out->in (or last first)
       ;; we take this list and create and evaluate a new function
       
-      (let ((dsp-chain (apply vector (reverse (map (lambda (gen)
+      (let ((dsp-chain (reverse (apply vector (map (lambda (gen)
 						     (if (pair? gen)
 							 (make-env gen :duration dur)
 							 gen))

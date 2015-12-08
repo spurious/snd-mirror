@@ -237,60 +237,53 @@
 
 
 (define (scheme->ruby scheme-name)
-  (if (string=? scheme-name "frame*")
-      "frame_multiply"
-      (if (string=? scheme-name "frame+")
-	  "frame_add"
-	  (if (string=? scheme-name "float-vector*")
-	      "float-vector_multiply"
-	      (if (string=? scheme-name "float-vector+")
-		  "float-vector_add"
-		  (if (string=? scheme-name "mixer*")
-		      "mixer_multiply"
-		      (if (string=? scheme-name "mixer+")
-			  "mixer_add"
-			  (if (string=? scheme-name "redo")
-			      "redo_edit"
-			      (if (string=? scheme-name "in")
-				  "call_in"
-				  (let* ((len (length scheme-name))
-					 (var-case (hash-table-ref scheme-variable-names scheme-name))
-					 (strlen (if var-case (+ len 1) len))
-					 (rb-name (make-string strlen #\space))
-					 (i 0)
-					 (j 0))
-				    (if var-case
-					(begin
-					 (set! (rb-name 0) #\$)
-					 (set! j 1))
-					(if (hash-table-ref scheme-constant-names scheme-name)
-					    (begin
-					     (set! (rb-name 0) (char-upcase (scheme-name 0)))
-					     (set! i 1)
-					     (set! j 1))))
-				    (do ()
-					((>= i len))
-				      (let ((c (scheme-name i)))
-					(if (or (alphanumeric? c)
-						(char=? c #\?)
-						(char=? c #\!))
-					    (begin
-					     (set! (rb-name j) c)
-					     (set! i (+ i 1))
-					     (set! j (+ j 1)))
-					    (if (and (char=? c #\-)
-						     (char=? (scheme-name (+ i 1)) #\>))
-						(begin
-						 (set! (rb-name j) #\2)
-						 (set! j (+ j 1))
-						 (set! i (+ i 2)))
-						(begin
-						 (set! (rb-name j) #\_)
-						 (set! i (+ i 1))
-						 (set! j (+ j 1)))))))
-				    (if (not (= j strlen))
-					(substring rb-name 0 j)
-					rb-name)))))))))))
+  (cond ((string=? scheme-name "frame*")        "frame_multiply")
+	((string=? scheme-name "frame+")        "frame_add")
+	((string=? scheme-name "float-vector*") "float-vector_multiply")
+	((string=? scheme-name "float-vector+") "float-vector_add")
+	((string=? scheme-name "mixer*")        "mixer_multiply")
+	((string=? scheme-name "mixer+")        "mixer_add")
+	((string=? scheme-name "redo")          "redo_edit")
+	((string=? scheme-name "in")            "call_in")
+	(else
+	 (let* ((len (length scheme-name))
+		(var-case (hash-table-ref scheme-variable-names scheme-name))
+		(strlen (if var-case (+ len 1) len))
+		(rb-name (make-string strlen #\space))
+		(i 0)
+		(j 0))
+	   (if var-case
+	       (begin
+		 (set! (rb-name 0) #\$)
+		 (set! j 1))
+	       (if (hash-table-ref scheme-constant-names scheme-name)
+		   (begin
+		     (set! (rb-name 0) (char-upcase (scheme-name 0)))
+		     (set! i 1)
+		     (set! j 1))))
+	   (do ()
+	       ((>= i len))
+	     (let ((c (scheme-name i)))
+	       (if (or (alphanumeric? c)
+		       (char=? c #\?)
+		       (char=? c #\!))
+		   (begin
+		     (set! (rb-name j) c)
+		     (set! i (+ i 1))
+		     (set! j (+ j 1)))
+		   (if (and (char=? c #\-)
+			    (char=? (scheme-name (+ i 1)) #\>))
+		       (begin
+			 (set! (rb-name j) #\2)
+			 (set! j (+ j 1))
+			 (set! i (+ i 2)))
+		       (begin
+			 (set! (rb-name j) #\_)
+			 (set! i (+ i 1))
+			 (set! j (+ j 1)))))))
+	   (if (not (= j strlen))
+	       (substring rb-name 0 j)
+	       rb-name)))))
 
 (define (clean-up-xref xref file)
   (let* ((len (length xref))

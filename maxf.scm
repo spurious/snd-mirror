@@ -43,7 +43,7 @@
 (define *locsig-type* mus-interp-sinusoidal)
 
 (define (snd-msg frm . args)
-  (let ((str (apply format (append (list #f frm) args))))
+  (let ((str (apply format #f frm args)))
     (if (getenv "EMACS")
 	(display str)
 	(snd-print str))))

@@ -6133,7 +6133,7 @@ sequences in its argument, or nil.
   ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
   (define (pinner cur nvals len)
     (if (= len 1)
-        (apply func (cons (car nvals) cur))
+        (apply func (car nvals) cur)
         (do ((i 0 (+ i 1)))                       ; I suppose a named let would be more Schemish
             ((= i len))
           (let ((start nvals))

@@ -490,14 +490,14 @@
 	  (func arg (start 'value))
 	  (if (not (let? start))
 	      (func arg start (end 'value))
-	      (apply func arg (start 'value) end ()))))
+	      (func arg (start 'value) end))))
 
     (define* (range-method-2 func arg1 arg2 start end)
       (if (not end)
 	  (func arg1 arg2 (start 'value))
 	  (if (not (let? start))
 	      (func arg1 arg2 start (end 'value))
-	      (apply func arg1 arg2 (start 'value) end ()))))
+	      (func arg1 arg2 (start 'value) end))))
 
     (let ((mock-number-class
 	   (openlet

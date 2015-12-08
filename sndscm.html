@@ -8515,9 +8515,7 @@ the search each time from the new best point, slowly reducing the search radius 
       (set! (phases i) (random 1.0)))
     (do ()
 	((&lt; cur-incr .001))
-      (let ((vals (<em class=red>fpsap</em> (if (eq? choice :all) 0 
-                           (if (eq? choice :odd) 1 
-                             (if (eq? choice :even) 2 3))) 
+      (let ((vals (<em class=red>fpsap</em> (case choice ((:all) 0) ((:odd) 1) ((:even) 2) (else 3))
                          n phases 5000 cur-incr)))
 	(let ((pk (car vals))
 	      (new-phases (cadr vals)))

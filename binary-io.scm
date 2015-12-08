@@ -14,7 +14,7 @@
     (do ((c (read-byte) (read-byte)))
 	((or (eof-object? c)
 	     (= c 0))
-	 (apply string (reverse chars)))
+	 (reverse (apply string chars)))
       (set! chars (cons (integer->char c) chars)))))
 
 (define (io-write-string str)

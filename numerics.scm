@@ -637,21 +637,20 @@
 	   
 	  ((or (= (modulo n 2) 0) (= (modulo n 3) 0) (= (modulo n 5) 0) (= (modulo n 7) 0) 
 	       (= (modulo n 17) 0) (= (modulo n 13) 0) (= (modulo n 257) 0) (= (modulo n 11) 0))
-	   (let ((divisor (if (= (modulo n 2) 0) 2
-			      (if (= (modulo n 3) 0) 3
-				  (if (= (modulo n 5) 0) 5
-				      (if (= (modulo n 7) 0) 7
-					  (if (= (modulo n 17) 0) 17
-					      (if (= (modulo n 13) 0) 13
-						  (if (= (modulo n 11) 0) 11
-						      257)))))))))
+	   (let ((divisor (cond ((= (modulo n 2) 0) 2)
+				((= (modulo n 3) 0) 3)
+				((= (modulo n 5) 0) 5)
+				((= (modulo n 7) 0) 7)
+				((= (modulo n 17) 0) 17)
+				((= (modulo n 13) 0) 13)
+				((= (modulo n 11) 0) 11)
+				(else 257))))
 	     (let ((val (sin-m*pi/n 1 (/ n divisor))))
 	       (and val
 		    `(let ((ex ,val))
 		       (/ (- (expt (+ (sqrt (- 1 (* ex ex))) (* 0+i ex)) (/ 1 ,divisor))
 			     (expt (- (sqrt (- 1 (* ex ex))) (* 0+i ex)) (/ 1 ,divisor)))
 			  0+2i))))))
-	   
 	  (else #f))))
 
 #|
