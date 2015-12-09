@@ -1329,7 +1329,7 @@
 		(let ((obj (%alloc-pattern))
 		      (flags 0)
 		      )
-		  (initialize-pattern obj (list) for stop
+		  (initialize-pattern obj (list) for limit
 				      flags
 				      0
 				      1
@@ -1365,3 +1365,6 @@
 	  (pattern-data-set! obj (cdr data))
 	  (car data)))))
 
+
+;; (define aaa (make-repeater (make-weighting '(a b c d)) :for 2))
+;; (next aaa #t)
