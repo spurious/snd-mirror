@@ -206,13 +206,11 @@
 					      (lambda (n)
 						(XmStringGenerate 
 						 n #f XmCHARSET_TEXT 
-						 (if (= (channels n) 1)
-						     "one"
-						     (if (= (channels n) 2)
-							 "two"
-							 (if (= (channels n) 4)
-							     "four"
-							     "three")))))
+						 (case (channels n)
+						   ((1) "one")
+						   ((2) "two")
+						   ((3) "three")
+						   (else "four"))))
 					      files)))
 			     (XtSetValues widget
 					  (list XmNfileListItems fileTable
@@ -1868,20 +1866,16 @@
 	(define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
 	
 	(define (amp->scroll minval val maxval)
-	  (if (<= val minval) 0
-	      (if (>= val maxval) 9000
-		  (if (>= val 1.0)
-		      (floor (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
-		      (floor (* 4500 (/ (- val minval) (- 1.0 minval))))))))
+	  (cond ((<= val minval) 0)
+		((>= val maxval) 9000)
+		((>= val 1.0)    (floor (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0))))))
+		(else            (floor (* 4500 (/ (- val minval) (- 1.0 minval)))))))
 	
 	(define (scroll->amp snd val)
-	  (if (<= val 0)
-	      (car (amp-control-bounds snd))
-	      (if (>= val 9000)
-		  (cadr (amp-control-bounds snd))
-		  (if (> val 4500)
-		      (+ (* (- (/ val 4500.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0)
-		      (+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 4500.0)) (car (amp-control-bounds snd)))))))
+	  (cond ((<= val 0)    (car (amp-control-bounds snd)))
+		((>= val 9000) (cadr (amp-control-bounds snd)))
+		((> val 4500)  (+ (* (- (/ val 4500.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0))
+		(else          (+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 4500.0)) (car (amp-control-bounds snd))))))
 	
 	(define (amp-callback w c info)
 	  ;; c is (list number-widget snd chan)

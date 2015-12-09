@@ -73101,14 +73101,14 @@ s7_scheme *s7_init(void)
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example) */
 
   sc->CALL_WITH_INPUT_STRING = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
-  sc->CALL_WITH_INPUT_FILE =   unsafe_defun("call-with-input-file", call_with_input_file, 2, 0, false);
+  sc->CALL_WITH_INPUT_FILE =   unsafe_defun("call-with-input-file",   call_with_input_file,   2, 0, false);
   sc->WITH_INPUT_FROM_STRING = unsafe_defun("with-input-from-string", with_input_from_string, 2, 0, false);
-  sc->WITH_INPUT_FROM_FILE =   unsafe_defun("with-input-from-file", with_input_from_file, 2, 0, false);
+  sc->WITH_INPUT_FROM_FILE =   unsafe_defun("with-input-from-file",   with_input_from_file,   2, 0, false);
 
   sc->CALL_WITH_OUTPUT_STRING = unsafe_defun("call-with-output-string", call_with_output_string, 1, 0, false);
-  sc->CALL_WITH_OUTPUT_FILE =   unsafe_defun("call-with-output-file", call_with_output_file, 2, 0, false);
-  sc->WITH_OUTPUT_TO_STRING =   unsafe_defun("with-output-to-string", with_output_to_string, 1, 0, false);
-  sc->WITH_OUTPUT_TO_FILE =     unsafe_defun("with-output-to-file", with_output_to_file, 2, 0, false);
+  sc->CALL_WITH_OUTPUT_FILE =   unsafe_defun("call-with-output-file",   call_with_output_file,   2, 0, false);
+  sc->WITH_OUTPUT_TO_STRING =   unsafe_defun("with-output-to-string",   with_output_to_string,   1, 0, false);
+  sc->WITH_OUTPUT_TO_FILE =     unsafe_defun("with-output-to-file",     with_output_to_file,     2, 0, false);
 
 #if WITH_SYSTEM_EXTRAS
   sc->IS_DIRECTORY =          defun("directory?",	is_directory,		1, 0, false);
@@ -73856,7 +73856,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177
  * titer         |      |      | 7503 | 5218  5219
  * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       27
+ * lg            |      |      |      |       31
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
@@ -73898,11 +73898,15 @@ int main(int argc, char **argv)
  *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))
  *       if vars trackable, catch gcable set of code-constant, or set of constant?
  *       if no side effect func call not last, but side effect args, -> args?
+ *       named let not used for value but returns value -- somehow edit out? [also display->format here]
  *       move special-cases into hash-table (via macro?)
- *       need values->func arg check escape
+ *       need values->func arg check escape (define*)
+ *       unclosed port: make-var sees it with 'input|output-port? type + its code
+ *       could (map...(map)) or (for-each...(map)) avoid the arg map?
+ *         yes, but maybe less readable (map x (map y z)) -> (map (lambda (a) (x (y a))) z)
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
- *  perhaps some way to show history of a value? -- cur_code chain?
+ *   perhaps some way to show history of a value? -- cur_code chain?
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

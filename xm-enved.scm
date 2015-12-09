@@ -27,15 +27,12 @@
   (define (xe-add-envelope-point x y cur-env)
     (let ((new-env ()))
       (define (search-point e)
-	(if (null? e)
-	    (append new-env (list x y))
-	    (if (= (car e) x)
-		(append new-env (list x y) (cddr e))
-		(if (> (car e) x)
-		    (append new-env (list x y) e)
-		    (begin
-		      (set! new-env (append new-env (list (car e) (cadr e))))
-		      (search-point (cddr e)))))))
+	(cond ((null? e)     (append new-env (list x y)))
+	      ((= (car e) x) (append new-env (list x y) (cddr e)))
+	      ((> (car e) x) (append new-env (list x y) e))
+	      (else
+	       (set! new-env (append new-env (list (car e) (cadr e))))
+	       (search-point (cddr e)))))
       (search-point cur-env)))
 
   (define (xe-edit-envelope-point pos x y cur-env)

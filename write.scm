@@ -89,7 +89,9 @@
 		   (display (messy-number obj) port)))
 	      
 	      ((pair? obj)
-	       (let ((cobj (if (symbol? (car obj)) (string->symbol (symbol->string (car obj))) (car obj)))) ; this clears out some optimization confusion
+	       (let ((cobj (if (symbol? (car obj)) 
+			       (string->symbol (symbol->string (car obj))) ; this clears out some optimization confusion -- use (copy ... :readable)?
+			       (car obj))))
 		 (case cobj
 		   
 		   ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-let when unless

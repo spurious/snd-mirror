@@ -325,9 +325,7 @@
   (lambda args
     (let ((cep (current-error-port)))
       (if (provided? 'trace) (print-call-stack cep))
-      (display "Warn: " cep)
-      (for-each (lambda (x) (display #\space cep) (write x cep)) args)
-      (newline cep))))
+      (format cep "Warn: ~{ ~S~}~%" args))))
 
 ;;@ define an error procedure for the library
 (define slib:error error)
