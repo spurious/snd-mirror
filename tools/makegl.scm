@@ -164,24 +164,14 @@
 		  (if type
 		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i)))
 			    (reftype #f))
-			(if (char=? (given-name 0) #\@)
-			    (set! data (cons (list type 
-						   (substring given-name 1 (length given-name))
-						   'null)
-					       data))
-			    (if (char=? (given-name 0) #\#)
-				(set! data (cons (list type 
-						       (substring given-name 1 (length given-name))
-						       'opt)
-						 data))
-				(if (char=? (given-name 0) #\[) 
-				    (begin
-				      (set! reftype (deref-type (list type)))
-				      (set! data (cons (list type 
-							     (substring given-name 1 (- (length given-name) 1))
-							     given-name) 
-						       data)))
-				    (set! data (cons (list type given-name) data)))))
+			(cond ((char=? (given-name 0) #\@)
+			       (set! data (cons (list type (substring given-name 1 (length given-name)) 'null) data)))
+			      ((char=? (given-name 0) #\#)
+			       (set! data (cons (list type (substring given-name 1 (length given-name)) 'opt) data)))
+			      ((char=? (given-name 0) #\[)
+			       (set! reftype (deref-type (list type)))
+			       (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
+			      (else (set! data (cons (list type given-name) data))))
 			(if reftype (set! type reftype))
 			(if (eq? x 'x)
 			    (if (not (member type x-types))
@@ -262,24 +252,23 @@
 		  "gluTessNormal" "gluTessProperty" "gluNewTess"))
 
 (define (c-to-xen-macro-name typ str)
-  (if (string=? str "INT") "C_int_to_Xen_integer"
-      (if (string=? str "DOUBLE") "C_double_to_Xen_real"
-	  (if (string=? str "BOOLEAN") "C_bool_to_Xen_boolean"
-	      (if (string=? str "ULONG") "C_ulong_to_Xen_ulong"
-		  (if (string-ci=? str "String")
-		      (if (string=? (car typ) "guchar*") 
-			  "C_to_Xen_String"
-			  "C_string_to_Xen_string")
-		      (format #f "~A unknown" str)))))))
+  (cond ((string=? str "INT")     "C_int_to_Xen_integer")
+	((string=? str "DOUBLE")  "C_double_to_Xen_real")
+	((string=? str "BOOLEAN") "C_bool_to_Xen_boolean")
+	((string=? str "ULONG")   "C_ulong_to_Xen_ulong")
+	((string-ci=? str "String")
+	 (if (string=? (car typ) "guchar*")
+	     "C_to_Xen_String"
+	     "C_string_to_Xen_string"))
+	(else (format #f "~A unknown" str))))
 
 (define (xen-to-c-macro-name str)
-  (if (string=? str "INT") "Xen_integer_to_C_int"
-      (if (string=? str "DOUBLE") "Xen_real_to_C_double"
-	  (if (string=? str "BOOLEAN") "Xen_boolean_to_C_bool"
-	      (if (string=? str "ULONG") "Xen_ulong_to_C_ulong"
-		  (if (string-ci=? str "String")
-		      "Xen_string_to_C_string"
-		      (format #f "~A unknown" str)))))))
+  (cond ((string=? str "INT")       "Xen_integer_to_C_int")
+	((string=? str "DOUBLE")    "Xen_real_to_C_double")
+	((string=? str "BOOLEAN")   "Xen_boolean_to_C_bool")
+	((string=? str "ULONG")     "Xen_ulong_to_C_ulong")
+	((string-ci=? str "String") "Xen_string_to_C_string")
+	(else (format #f "~A unknown" str))))
 
 (define (type-it type)
   (let ((typ (assoc type direct-types)))
@@ -795,16 +784,15 @@
 
 (define (gtk-type->s7-type gtk)
   (let ((dt (assoc gtk direct-types)))
-    (if (and (pair? dt)
-	     (string? (cdr dt)))
+    (or (not (and (pair? dt)
+		  (string? (cdr dt))))
 	(let ((direct (cdr dt)))
 	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
 		((string=? direct "BOOLEAN")               'boolean?)
 		((string=? direct "DOUBLE")                'real?)
 		((string=? direct "CHAR")                  'char?)
 		((string=? direct "String")                'string?)
-		(#t #t)))
-	#t)))
+		(#t #t))))))
 	       
 (define (make-signature fnc)
   (define (compress sig)

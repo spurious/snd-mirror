@@ -155,29 +155,22 @@
 
 (define* (gegenbauer n x (alpha 0.0))
   (if (< alpha -0.5) (set! alpha -0.5))
-  (if (= n 0)
-      1.0
-      (if (= alpha 0.0) ; maxima and A&S 22.3.14 (gsl has bogus values here)
-	  (* (/ 2.0 n) 
-	     (cos (* n x)))
-	  (if (= n 1)   ; gsl splits out special cases 
-	      (* 2 alpha x)                             ; G&R 8.93(2)
-	      (if (= n 2)
-		  (- (* 2 alpha (+ alpha 1) x x) alpha) ; G&R 8.93(3)
-		  (let ((fn1 (* 2 x alpha))
-			(fn 0.0)
-			(fn2 1.0))
-		    (if (= n 1)
-			fn1
-			(do ((k 2 (+ k 1))
-			     (k0 2.0 (+ k0 1.0)))
-			    ((> k n) fn)
-			  (set! fn (/ (- (* 2 x fn1 (+ k alpha -1.0))
-					 (* fn2 (+ k (* 2 alpha) -2.0)))
-				      k0))
-			  (set! fn2 fn1)
-			  (set! fn1 fn)))))))))
-
+  (cond ((= n 0)       1.0)
+	((= alpha 0.0) (* (/ 2.0 n) (cos (* n x))))           ; maxima and A&S 22.3.14 (gsl has bogus values here)
+	((= n 1)       (* 2 alpha x))                         ; G&R 8.93(2)
+	((= n 2)       (- (* 2 alpha (+ alpha 1) x x) alpha)) ; G&R 8.93(3)
+	(else
+	 (let ((fn1 (* 2 x alpha))
+	       (fn 0.0)
+	       (fn2 1.0))
+	   (if (= n 1)
+	       fn1
+	       (do ((k 2 (+ k 1))
+		    (k0 2.0 (+ k0 1.0)))
+		   ((> k n) fn)
+		 (set! fn (/ (- (* 2 x fn1 (+ k alpha -1.0)) (* fn2 (+ k (* 2 alpha) -2.0))) k0))
+		 (set! fn2 fn1)
+		 (set! fn1 fn)))))))
 
 ;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ i 1)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
 

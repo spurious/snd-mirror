@@ -158,37 +158,30 @@ a list (file-name-or-sound-object [beg [channel]])."))
 	(if (< start 0) 
 	    (error 'no-such-sample "mix-channel: begin time < 0: ~A" beg)
 	    (if (> len 0)
-		(if (not with-tag)
-		    
-		    ;; not a virtual mix
-		    (let ((d1 (samples input-beg len input input-channel))
-			  (d2 (samples start len snd chn edpos)))
-		      (float-vector-add! d1 d2)
-		      (float-vector->channel d1 start len snd chn current-edit-position
-					     (if (string? input-data)
-						 (format #f "mix-channel ~S ~A ~A" input-data beg dur)
-						 (format #f "mix-channel '~A ~A ~A" input-data beg dur))))
-		    
-		    ;; a virtual mix -- use simplest method available
-		    (if (sound? input)
-			
-			;; sound object case
-			(channel->mix input input-channel input-beg len snd chn start)
-			
-			;; file input
-			(if (and (= start 0) 
-				 (= len (framples input)))
-			    
-			    ;; mixing entire file
-			    (mix input start 0 snd chn #t #f) ; don't delete it!
-			    
-			    ;; mixing part of file
-			    (let* ((output-name (snd-tempnam))
-				   (output (new-sound output-name :size len)))
-			      (float-vector->channel (samples input-beg len input input-channel) 0 len output 0)
-			      (save-sound output)
-			      (close-sound output)
-			      (mix output-name start 0 snd chn #t #t)))))))))))
+		(cond ((not with-tag)
+		       ;; not a virtual mix
+		       (let ((d1 (samples input-beg len input input-channel))
+			     (d2 (samples start len snd chn edpos)))
+			 (float-vector-add! d1 d2)
+			 (float-vector->channel d1 start len snd chn
+						current-edit-position
+						(if (string? input-data)
+						    (format #f "mix-channel ~S ~A ~A" input-data beg dur)
+						    (format #f "mix-channel '~A ~A ~A" input-data beg dur)))))
+		      ;; a virtual mix -- use simplest method available
+		      ((sound? input)          ; sound object case
+		       (channel->mix input input-channel input-beg len snd chn start))
+		      ((and (= start 0)        ; file input
+			    (= len (framples input)))
+		       (mix input start 0 snd chn #t #f)) ; mix entire file (don't delete it)
+		      (else
+		       ;; mix part of file
+		       (let* ((output-name (snd-tempnam))
+			      (output (new-sound output-name :size len)))
+			 (float-vector->channel (samples input-beg len input input-channel) 0 len output 0)
+			 (save-sound output)
+			 (close-sound output)
+			 (mix output-name start 0 snd chn #t #t))))))))))
 
 
 (define insert-channel 
@@ -556,9 +549,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (lambda* (snd1 chn1 snd2 chn2 (allowable-difference 0.0))
       (let ((len1 (framples snd1 chn1))
 	    (len2 (framples snd2 chn2)))
-	(if (not (= len1 len2))
-	    #f
-	    (channels=? snd1 chn1 snd2 chn2 allowable-difference))))))
+	(and (= len1 len2)
+	     (channels=? snd1 chn1 snd2 chn2 allowable-difference))))))
 
 
 ;;; -------- mono->stereo, mono-files->stereo

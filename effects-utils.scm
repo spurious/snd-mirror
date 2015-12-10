@@ -266,11 +266,7 @@ and returns a list of widgets (for reset callbacks)"))
 								 XmNminimum       (floor (* low scale))
 								 XmNmaximum       (floor (* high scale))
 								 XmNvalue         (floor (* initial scale))
-								 XmNdecimalPoints (cond ((= scale 10000) 4)
-											((= scale 1000) 3)
-											((= scale 100) 2)
-											((= scale 10) 1)
-											(else 0))
+								 XmNdecimalPoints (case scale ((10000) 4) ((1000) 3) ((100) 2) ((10) 1) (else 0))
 								 XmNtitleString   title
 								 XmNleftAttachment XmATTACH_FORM
 								 XmNrightAttachment XmATTACH_FORM

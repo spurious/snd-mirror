@@ -777,11 +777,11 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	    ((null? old) nlst)
 	  (if (pair? (car old))
 	      (begin
-		(set-car! (cdr nsym) (caar old))
-		(set-car! nsym (list 'quote (caar old))))
+		(list-set! nsym 1 (caar old))
+		(list-set! nsym 0 (list 'quote (caar old))))
 	      (begin
-		(set-car! (cdr nsym) (car old))
-		(set-car! nsym (list 'quote (car old)))))))))
+		(list-set! nsym 1 (car old))
+		(list-set! nsym 0 (list 'quote (car old)))))))))
 
   (let* ((name (if (pair? struct-name) 
 		   (car struct-name) 

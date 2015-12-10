@@ -239,8 +239,8 @@
 			  (stacked-list (cdr obj) (+ column *pretty-print-spacing*))))
 		    (write-char #\) port))
 		   
-		   ((dynamic-wind)
-		    (format port "(dynamic-wind")
+		   ((dynamic-wind call-with-values)
+		    (format port "(~A" cobj)
 		    (spaces (+ column *pretty-print-spacing*))
 		    (stacked-list (cdr obj) (+ column *pretty-print-spacing*))
 		    (write-char #\) port))
@@ -321,7 +321,13 @@
 			(begin
 			  (write-char #\' port)
 			  (pretty-print-1 (cadr obj) port column))))
-		   
+
+		   ((catch)
+		    (format port "(~A ~S" catch (cadr obj))
+		    (spaces (+ column *pretty-print-spacing*))
+		    (stacked-list (cddr obj) (+ column *pretty-print-spacing*))
+		    (write-char #\) port))
+
 		   (else
 		    (let* ((objstr (object->string obj))
 			   (strlen (length objstr)))

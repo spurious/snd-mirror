@@ -163,9 +163,11 @@
 	     )
 	 (gtk_widget_show label)
 	 (gtk_scale_set_digits (GTK_SCALE scale)
-			       (if use-log
-				   0
-				   (if (= scaler 1000) 3 (if (= scaler 100) 2 (if (= scaler 10) 1 0)))))
+			       (cond (use-log 0)
+				     ((= scaler 1000) 3)
+				     ((= scaler 100) 2)
+				     ((= scaler 10) 1)
+				     (else 0)))
 	 (gtk_scale_set_draw_value (GTK_SCALE scale) (not use-log))
 	 (if use-hbox
 	     (gtk_box_pack_start (GTK_BOX hbox) scale #t #t 0)

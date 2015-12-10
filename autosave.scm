@@ -60,7 +60,7 @@
 			  (if (> (unsaved-edits snd) 0)
 			      (let ((save-name (auto-save-temp-name snd)))
 				(status-report (string-append "auto-saving as " save-name "...") snd)
-				(in (* 1000 3) (lambda () (status-report "" snd)))
+				(in 3000 (lambda () (status-report "" snd)))
 				(save-sound-as save-name snd)
 				(clear-unsaved-edits snd))))
 			(sounds))

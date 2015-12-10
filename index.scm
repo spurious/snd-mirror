@@ -10,23 +10,16 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 	     (lambda (n)
 	       ;; look for doc on current dir, then html dir, then global dir
 	       ;; snd.html is what we'll search for
-	       (let ((dir (if (file-exists? "snd.html") 
-			      (getcwd)
-			      (if (and (string? *html-dir*)
-				       (file-exists? (string-append *html-dir* "/snd.html")))
-				  *html-dir*
-				  (if (file-exists? "/usr/share/doc/snd-16/snd.html")
-				      "/usr/share/doc/snd-16"
-				      (if (file-exists? "/usr/local/share/doc/snd-16/snd.html")
-					  "/usr/local/share/doc/snd-16"
-					  (if (file-exists? "/usr/doc/snd-16/snd.html")
-					      "/usr/doc/snd-16"
-					      (if (file-exists? "/usr/share/doc/snd-15/snd.html")
-						  "/usr/share/doc/snd-15"
-						  (if (file-exists? "/usr/local/share/doc/snd-15/snd.html")
-						      "/usr/local/share/doc/snd-15"
-						      (and (file-exists? "/usr/doc/snd-15/snd.html")
-							   "/usr/doc/snd-15"))))))))))
+	       (let ((dir (cond ((file-exists? "snd.html") (getcwd))
+				((and (string? *html-dir*)
+				      (file-exists? (string-append *html-dir* "/snd.html")))
+				 *html-dir*)
+				((file-exists? "/usr/share/doc/snd-16/snd.html")       "/usr/share/doc/snd-16")
+				((file-exists? "/usr/local/share/doc/snd-16/snd.html") "/usr/local/share/doc/snd-16")
+				((file-exists? "/usr/doc/snd-16/snd.html")             "/usr/doc/snd-16")
+				((file-exists? "/usr/share/doc/snd-15/snd.html")       "/usr/share/doc/snd-15")
+				((file-exists? "/usr/local/share/doc/snd-15/snd.html") "/usr/local/share/doc/snd-15")
+				(else (and (file-exists? "/usr/doc/snd-15/snd.html")   "/usr/doc/snd-15")))))
 		 (if dir
 		     (system (string-append *html-program* " file:" dir "/" n)))))))
 	

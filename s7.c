@@ -73846,21 +73846,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0  16.1  16.2
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1117
- * index    44.3 | 3291 | 1725 | 1276 | 1156  1158
- * teq           |      |      | 6612 | 2380  2376
- * tauto     265 |   89 |  9   |  8.4 | 2638  2643
- * tcopy         |      |      | 13.6 | 3204  3203
- * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229
- * tform         |      |      | 6816 | 3627  3589
- * tmap          |      |      |  9.3 | 4176  4177
- * titer         |      |      | 7503 | 5218  5219
- * thash         |      |      | 50.7 | 8491  8484
- * lg            |      |      |      |       31
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1254
+ * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159
+ * teq           |      |      | 6612 | 2380  2376  2382
+ * tauto     265 |   89 |  9   |  8.4 | 2638  2643  2644
+ * tcopy         |      |      | 13.6 | 3204  3203  3204
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229  3218
+ * tform         |      |      | 6816 | 3627  3589  3621
+ * tmap          |      |      |  9.3 | 4176  4177  4173
+ * titer         |      |      | 7503 | 5218  5219  5211
+ * thash         |      |      | 50.7 | 8491  8484  8477
+ * lg            |      |      |      |             31
  *               |      |      |      |       
- * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7
- * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0
- * calls     359 |  275 | 54   | 34.7 | 37.1  37.0
+ * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.7
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
+ * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2
  * 
  * ----------------------------------------------------
  *
@@ -73893,20 +73893,16 @@ int main(int argc, char **argv)
  * lint: closure sig from body
  *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
  *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
- *       finish caller-type to syntax checks [values call/cc call/exit]
  *       bacro-shaker -- can we get set-member?
- *       macro->func -- args are only used once and with evalling func ((mac x) `(+ 1 ,x)) -> ((fun x) (+ 1 x))
  *       if vars trackable, catch gcable set of code-constant, or set of constant?
  *       if no side effect func call not last, but side effect args, -> args?
  *       named let not used for value but returns value -- somehow edit out? [also display->format here]
  *       move special-cases into hash-table (via macro?)
  *       need values->func arg check escape (define*)
  *       unclosed port: make-var sees it with 'input|output-port? type + its code
- *       could (map...(map)) or (for-each...(map)) avoid the arg map?
- *         yes, but maybe less readable (map x (map y z)) -> (map (lambda (a) (x (y a))) z)
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
- *   perhaps some way to show history of a value? -- cur_code chain?
+ *   perhaps some way to show history of a value? -- cur_code chain or circular buffer?
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
