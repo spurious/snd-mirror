@@ -231,6 +231,17 @@
    */
 #endif
 
+#ifndef WITH_HISTORY
+  #define WITH_HISTORY 0
+  /* this includes a circular buffer of previous evaluations for debugging */
+#endif
+
+#ifndef HISTORY_SIZE
+  #define HISTORY_SIZE 8
+  /* this is the length of the eval history buffer */
+#endif
+
+
 #define WITH_GCC (defined(__GNUC__) || defined(__clang__))
 
 /* in case mus-config.h forgets these */
@@ -827,6 +838,10 @@ struct s7_scheme {
   unsigned int heap_size;
   int gc_freed;
 
+#if WITH_HISTORY
+  s7_pointer eval_history1, eval_history2, error_history;
+  bool using_history1;
+#endif
   /* "int" or "unsigned int" seems safe here:
    *      sizeof(s7_cell) = 48 bytes
    *      so to get more than 2^32 actual objects would require ca 206 GBytes RAM
@@ -1186,6 +1201,15 @@ static void init_types(void)
   t_simple_p[T_OUTPUT_PORT] = true;
 }
 
+#if WITH_HISTORY
+#define current_code(Sc) car(Sc->cur_code)
+#define set_current_code(Sc, Code) do {Sc->cur_code = cdr(Sc->cur_code); car(Sc->cur_code) = Code;} while (0)
+#define mark_current_code(Sc) do {int i; s7_pointer p; for (p = Sc->cur_code, i = 0; i < HISTORY_SIZE; i++, p = cdr(p)) S7_MARK(car(p));} while (0)
+#else
+#define current_code(Sc) Sc->cur_code
+#define set_current_code(Sc, Code) Sc->cur_code = Code
+#define mark_current_code(Sc) S7_MARK(Sc->cur_code)
+#endif
 
 #define typeflag(p)  ((p)->tf.flag)
 #define typesflag(p) ((p)->tf.sflag)
@@ -1458,7 +1482,7 @@ static s7_scheme *hidden_sc = NULL;
   static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line)
   {
     if ((is_global(symbol)) || (is_syntactic(symbol)))
-      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
+      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(current_code(sc)));
     typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
   }
   #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
@@ -4199,7 +4223,7 @@ static int gc(s7_scheme *sc)
   check_types = true;
 #endif
   S7_MARK(sc->code);
-  S7_MARK(sc->cur_code);
+  mark_current_code(sc);
   mark_stack_1(sc->stack, s7_stack_top(sc));
   S7_MARK(sc->v);
   S7_MARK(sc->w);
@@ -30990,8 +31014,8 @@ static s7_pointer closure_name(s7_scheme *sc, s7_pointer closure)
   if (is_symbol(x))
     return(x);
 
-  if (is_pair(sc->cur_code))
-    return(sc->cur_code);
+  if (is_pair(current_code(sc)))
+    return(current_code(sc));
 
   return(closure); /* desperation -- the parameter list (caar here) will cause endless confusion in OP_APPLY errors! */
 }
@@ -45745,14 +45769,22 @@ static s7_pointer init_owlet(s7_scheme *sc)
   sc->error_code = make_slot_1(sc, e, make_symbol(sc, "error-code"), sc->F);  /* the code that s7 thinks triggered the error */
   sc->error_line = make_slot_1(sc, e, make_symbol(sc, "error-line"), sc->F);  /* the line number of that code */
   sc->error_file = make_slot_1(sc, e, make_symbol(sc, "error-file"), sc->F);  /* the file name of that code */
+#if WITH_HISTORY
+  sc->error_history = make_slot_1(sc, e, make_symbol(sc, "error-history"), sc->F); /* buffer of previous evaluations */
+#endif
   return(e);
 }
 
 
 static s7_pointer g_owlet(s7_scheme *sc, s7_pointer args)
 {
+#if WITH_HISTORY
+  #define H_owlet "(owlet) returns the environment at the point of the last error. \
+It has the additional local variables: error-type, error-data, error-code, error-line, error-file, and error-history."
+#else
   #define H_owlet "(owlet) returns the environment at the point of the last error. \
 It has the additional local variables: error-type, error-data, error-code, error-line, and error-file."
+#endif
   #define Q_owlet s7_make_signature(sc, 1, sc->IS_LET)
   /* if owlet is not copied, (define e (owlet)), e changes as owlet does!
    */
@@ -45762,10 +45794,11 @@ It has the additional local variables: error-type, error-data, error-code, error
   e = let_copy(sc, sc->owlet);
   gc_loc = s7_gc_protect(sc, e);
 
-  /* also make sure the pairs are copied: should be error-data and error-code */
+  /* also make sure the pairs are copied: should be error-data, error-code, and possibly error-history */
   for (x = let_slots(e); is_slot(x); x = next_slot(x))
     if (is_pair(slot_value(x)))
       slot_set_value(x, protected_list_copy(sc, slot_value(x)));
+
   s7_gc_unprotect_at(sc, gc_loc);
   return(e);
 }
@@ -46177,8 +46210,16 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   set_outlet(sc->owlet, sc->envir);
 
-  cur_code = sc->cur_code;
+  cur_code = current_code(sc);
   slot_set_value(sc->error_code, cur_code);
+#if WITH_HISTORY
+  slot_set_value(sc->error_history, sc->cur_code);
+  if (sc->using_history1)
+    sc->cur_code = sc->eval_history2;
+  else sc->cur_code = sc->eval_history1;
+  sc->using_history1 = (!sc->using_history1);
+#endif
+
   if (has_line_number(cur_code))
     {
       int line;
@@ -46803,7 +46844,7 @@ static bool call_begin_hook(s7_scheme *sc)
       /* set (owlet) in case we were interrupted and need to see why something was hung */
       slot_set_value(sc->error_type, sc->F);
       slot_set_value(sc->error_data, sc->value); /* was sc->F but we now clobber this below */
-      slot_set_value(sc->error_code, sc->cur_code);
+      slot_set_value(sc->error_code, current_code(sc));
       slot_set_value(sc->error_line, sc->F);
       slot_set_value(sc->error_file, sc->F);
       set_outlet(sc->owlet, sc->envir);
@@ -49284,7 +49325,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
   /* but if the thing we want to hit this fallback happens to exist at a higher level, oops... */
 
   if (sym == sc->UNQUOTE)
-    eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", sc->cur_code);
+    eval_error(sc, "unquote (',') occurred outside quasiquote: ~S", current_code(sc));
 
   if (sym == sc->__FUNC__) /* __func__ is a sort of symbol macro */
     {
@@ -49313,8 +49354,8 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
     {
       s7_pointer result, cur_code, value, code, args, cur_env, x, z;
       /* sc->args and sc->code are pushed on the stack by s7_call, then
-       *   restored by eval, so they are normally protected, but sc->value and sc->cur_code are
-       *   not protected (yet).  We need sc->cur_code so that the possible eventual error
+       *   restored by eval, so they are normally protected, but sc->value and current_code(sc) are
+       *   not protected (yet).  We need current_code(sc) so that the possible eventual error
        *   call can tell where the error occurred, and we need sc->value because it might
        *   be awaiting addition to sc->args in e.g. OP_EVAL_ARGS5, and then be clobbered
        *   by the hook function.  (+ 1 asdf) will end up evaluating (+ asdf asdf) if sc->value
@@ -49324,7 +49365,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       args = sc->args;
       code = sc->code;
       value = sc->value;
-      cur_code = sc->cur_code;
+      cur_code = current_code(sc);
       cur_env = sc->envir;
       result = sc->UNDEFINED;
       x = sc->x;
@@ -49334,7 +49375,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       if (!is_pair(cur_code))
 	{
 	  /* isolated typo perhaps -- no pair to hold the position info, so make one.
-	   *   sc->cur_code is GC-protected, so this should be safe.
+	   *   current_code(sc) is GC-protected, so this should be safe.
 	   */
 	  cur_code = cons(sc, sym, sc->NIL);     /* the error will say "(sym)" which is not too misleading */
 	  pair_set_line(cur_code, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
@@ -49406,7 +49447,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	}
 
       sc->value = _NFre(value);
-      sc->cur_code = cur_code;
+      set_current_code(sc, cur_code);
       sc->args = args;
       sc->code = code;
       sc->envir = cur_env;
@@ -54412,7 +54453,7 @@ static void check_lambda(s7_scheme *sc)
 
   code = sc->code;
   if (!is_pair(code))                                 /* (lambda) or (lambda . 1) */
-    eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda: no args? ~A", sc->cur_code);
+    eval_error_no_return(sc, sc->SYNTAX_ERROR, "lambda: no args? ~A", current_code(sc));
 
   body = cdr(code);
   if (!is_pair(body))                                 /* (lambda #f) */
@@ -59797,9 +59838,9 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       /* reuse the value cells as the new frame slots */
       
       if (is_null(z))
-	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code));
+	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), current_code(sc)));
       /* now that args are being reused as slots, the error message can't use sc->args,
-       *  so fallback on sc->cur_code in this section.
+       *  so fallback on current_code(sc) in this section.
        *  But that can be #f, and closure_name can be confusing in this context, so we need a better error message!
        */
       
@@ -59817,7 +59858,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   if (is_null(x))
     {
       if (is_not_null(z))
-	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), sc->cur_code));
+	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), current_code(sc)));
     }
   else
     {
@@ -60930,7 +60971,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (sc->op == OP_SIMPLE_DO_STEP_P)
 	      {
 		code = caddr(code);
-		sc->cur_code = code;
+		set_current_code(sc, code);
 		sc->op = (opcode_t)pair_syntax_op(code);
 		sc->code = cdr(code);
 		goto START_WITHOUT_POP_STACK;
@@ -61061,7 +61102,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 	    push_stack(sc, OP_DOTIMES_STEP_P, sc->args, code);
 	    code = caddr(code);
-	    sc->cur_code = code;
+	    set_current_code(sc, code);
 	    sc->op = (opcode_t)pair_syntax_op(code);
 	    sc->code = cdr(code);
 	    goto START_WITHOUT_POP_STACK;
@@ -61378,7 +61419,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
-	      sc->cur_code = sc->code;                /* in case an error occurs, this helps tell us where we are */
+	      set_current_code(sc, sc->code);         /* in case an error occurs, this helps tell us where we are */
 	      sc->op = (opcode_t)pair_syntax_op(sc->code);
 	      sc->code = cdr(sc->code);
 	      goto START_WITHOUT_POP_STACK;	      /* it is only slightly faster to use labels as values (computed gotos) here */
@@ -61391,7 +61432,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    OPT_EVAL:
 	      code = sc->code;
-	      sc->cur_code = code;
+	      set_current_code(sc, code);
 	      
 	      switch (optimize_op(code))
 		{
@@ -64209,7 +64250,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (is_pair(code))
 	      {
-		sc->cur_code = code;
+		set_current_code(sc, code);
 		carc = car(code);
 		
 		if (typesflag(carc) == SYNTACTIC_TYPE)
@@ -67414,7 +67455,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	default:
-	  fprintf(stderr, "unknown operator: %d in %s\n", (int)(sc->op), DISPLAY(sc->cur_code));
+	  fprintf(stderr, "unknown operator: %d in %s\n", (int)(sc->op), DISPLAY(current_code(sc)));
 #if DEBUGGING
 	  abort();
 #endif
@@ -72424,7 +72465,20 @@ s7_scheme *s7_init(void)
 
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
+#if WITH_HISTORY
+  sc->eval_history1 = permanent_list(sc, HISTORY_SIZE);
+  sc->eval_history2 = permanent_list(sc, HISTORY_SIZE);
+  {
+    s7_pointer p1, p2;
+    for (p1 = sc->eval_history1, p2 = sc->eval_history2; is_pair(cdr(p1)); p1 = cdr(p1), p2 = cdr(p2));
+    cdr(p1) = sc->eval_history1;
+    cdr(p2) = sc->eval_history2;
+    sc->cur_code = sc->eval_history1;
+    sc->using_history1 = true;
+  }
+#else
   sc->cur_code = sc->F;
+#endif
   sc->args = sc->NIL;
   sc->value = sc->NIL;
   sc->v = sc->NIL;

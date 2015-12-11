@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "4.2"
-#define S7_DATE "6-Nov-15"
+#define S7_DATE "11-Dec-15"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -770,6 +770,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 11-Dec:    owlet error-history field if WITH_HISTORY=1
  * 6-Nov:     removed :key and :optional.
  * 16-Oct:    s7_make_random_state -> s7_random_state.
  * 16-Aug:    remove s7_define_integer_function, s7_function_set_removes_temp, 

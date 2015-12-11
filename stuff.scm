@@ -28,13 +28,36 @@
 	   (applicable? obj)))))
 
 (define (ow!)
-  (let ((elist (list (rootlet))))
-    (call-with-output-string
-     (lambda (p)
-       (do ((e (outlet (owlet)) (outlet e))) 
-	   ((memq e elist))
-	 (format p "~{~A ~}~%" e)
-	 (set! elist (cons e elist)))))))
+  (call-with-output-string
+   (lambda (p)
+     (let ((ow (owlet))
+	   (elist (list (rootlet))))
+       
+       ;; show current error data
+       (format p "error: ~A" (ow 'error-type))
+       (when (pair? (ow 'error-data))
+	 (format p ": ~A" (apply format #f (ow 'error-data))))
+       (format p "~%error-code: ~S~%" (ow 'error-code))
+       (when (ow 'error-line)
+	 (format p "~%error-file/line: ~S[~A]~%" (ow 'error-file) (ow 'error-line)))
+
+       ;; show history, if available
+       (when (pair? (ow 'error-history)) ; a circular list, starts at error-code, entries stored backwards
+	 (let ((history ())
+	       (start (ow 'error-history)))
+	   (do ((x (cdr start) (cdr x)))
+	       ((eq? x start)
+		(format p "~%error-history:~%    ~S~{~%    ~S~}~%" (car start) history))
+	     (set! history (cons (car x) history)))))
+       
+       ;; show the enclosing contexts
+       (let ((old-print-length (*s7* 'print-length)))
+	 (set! (*s7* 'print-length) 8)
+	 (do ((e (outlet ow) (outlet e))) 
+	     ((memq e elist)
+	      (set! (*s7* 'print-length) old-print-length))
+	   (format p "~%~{~A~| ~}~%" e)
+	   (set! elist (cons e elist))))))))
 
 #|
 (set! (hook-functions *error-hook*) 

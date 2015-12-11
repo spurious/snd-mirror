@@ -4557,7 +4557,12 @@ additional info about that error:
 <li>error-code: the code that s7 thinks triggered the error
 <li>error-line: the line number of that code
 <li>error-file: the file name of that code
+<li>error-history: previous evaluations leading to the error (a circular list)
 </ul>
+
+<p>The error-history field depends on the compiler flag WITH_HISTORY.  See ow! in
+stuff.scm for one way to display this data.
+</p>
 
 <blockquote>
 
