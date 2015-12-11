@@ -73903,6 +73903,7 @@ int main(int argc, char **argv)
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
  *   perhaps some way to show history of a value? -- cur_code chain or circular buffer?
+ *   eval history adds 1/200 to time (1/2percent) -- we need at least to copy it into owlet, or switch between histories
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

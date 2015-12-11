@@ -39,47 +39,46 @@
     ;;         'cursor -> beg=cursor, dur=samples to end of sound
     ;; decay is how long to run the effect past the end of the sound
     (lambda (func target origin decay)
-      (if (and (eq? target 'selection)
-	       (not (selection?)))
-	  (snd-print ";no selection")
-	  (if (and (eq? target 'sound)
-		   (null? (sounds)))
-	      (snd-print ";no sound")
-	      (if (and (eq? target 'marks)
-		       (or (null? (sounds))
-			   (< (length (marks (selected-sound) (selected-channel))) 2)))
-		  (snd-print ";no marks")
-		  (let* ((snc (sync))
-			 (ms (and (eq? target 'marks)
-				  (plausible-mark-samples)))
-			 (beg (if (eq? target 'sound)
-				  0
-				  (if (eq? target 'selection)
-				      (selection-position)
-				      (if (eq? target 'cursor)
-					  (cursor (selected-sound) (selected-channel))
-					  (car ms)))))
-			 (overlap (if decay
-				      (floor (* (srate) decay))
-				      0)))
-		    (apply for-each
-			   (lambda (snd chn)
-			     (let ((end (if (memq target '(sound cursor))
-					    (- (framples snd chn) 1)
-					    (if (eq? target 'selection)
-						(+ (selection-position) (selection-framples))
-						(cadr ms)))))
-			       (if (= (sync snd) snc)
-				   (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f
-						(format #f "~A ~A ~A" 
-							(origin target (- end beg))
-							(if (eq? target 'sound) 0 beg)
-							(and (not (eq? target 'sound)) (+ 1 (- end beg))))))))
-			   
-			   (if (> snc 0) 
-			       (all-chans) 
-			       (list (list (selected-sound)) 
-				     (list (selected-channel)))))))))))
+      (cond ((and (eq? target 'selection)
+		  (not (selection?)))
+	     (snd-print ";no selection"))
+	    ((and (eq? target 'sound)
+		  (null? (sounds)))
+	     (snd-print ";no sound"))
+	    ((and (eq? target 'marks)
+		  (or (null? (sounds))
+		      (< (length (marks (selected-sound) (selected-channel))) 2)))
+	     (snd-print ";no marks"))
+	    (else
+	     (let* ((snc (sync))
+		    (ms (and (eq? target 'marks)
+			     (plausible-mark-samples)))
+		    (beg (case target
+			   ((sound) 0)
+			   ((selection) (selection-position))
+			   ((cursor) (cursor (selected-sound) (selected-channel)))
+			   (else (car ms))))
+		    (overlap (if decay
+				 (floor (* (srate) decay))
+				 0)))
+	       (apply for-each
+		      (lambda (snd chn)
+			(let ((end (if (memq target '(sound cursor))
+				       (- (framples snd chn) 1)
+				       (if (eq? target 'selection)
+					   (+ (selection-position) (selection-framples))
+					   (cadr ms)))))
+			  (if (= (sync snd) snc)
+			      (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f
+					   (format #f "~A ~A ~A" 
+						   (origin target (- end beg))
+						   (if (eq? target 'sound) 0 beg)
+						   (and (not (eq? target 'sound)) (+ 1 (- end beg))))))))
+		      
+		      (if (> snc 0) 
+			  (all-chans) 
+			  (list (list (selected-sound)) 
+				(list (selected-channel))))))))))
   
   
   (define (add-target mainform target-callback truncate-callback)

@@ -5871,15 +5871,9 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 		      ((even)  (set! (amps j) (max 1 (* 2 (- i 1))))))
 		    
 		    (set! (amps (+ j 1)) (/ 1.0 n))
-		    
-		    (if (vector? phases)
-			(set! (amps (+ j 2)) (phases (- i 1)))
-			(if (not phases)
-			    (set! (amps (+ j 2)) (random (* 2 pi)))
-			    (if (eq? phases 'max-peak)
-				(set! (amps (+ j 2)) (/ pi 2))
-				;; else min-peak, handled below
-				))))
+		    (cond ((vector? phases)	  (set! (amps (+ j 2)) (phases (- i 1))))
+			  ((not phases)           (set! (amps (+ j 2)) (random (* 2 pi))))
+			  ((eq? phases 'max-peak) (set! (amps (+ j 2)) (/ pi 2)))))
 		  
 		  (if (eq? phases 'min-peak)
 		      (let ((vector-find-if (lambda (func vect)
