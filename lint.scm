@@ -1595,19 +1595,15 @@
 				     `(- ,@args)))
 			    (else `(- ,@args))))))
 		 ((2) 
-		  (if (just-rationals? args)
-		      (apply - args)
-		      (if (eqv? (car args) 0)
-			  `(- ,(cadr args))                ; (- 0 x) -> (- x)
-			  (if (eqv? (cadr args) 0)
-			      (car args)                   ; (- x 0) -> x
-			      (if (equal? (car args) (cadr args))
-				  0                        ; (- x x)
-				  (if (and (pair? (car args))
-					   (eq? (caar args) '-)
-					   (> (length (car args)) 2))
-				      `(- ,@(cdar args) ,(cadr args)) ; (- (- x y) z) -> (- x y z) but leave (- (- x) ...)
-				      `(- ,@args)))))))
+		  (cond ((just-rationals? args) (apply - args))     ; (- 3 2) -> 1
+			((eqv? (car args) 0)    `(- ,(cadr args)))  ; (- 0 x) -> (- x)
+			((eqv? (cadr args) 0)   (car args))         ; (- x 0) -> x
+			((equal? (car args) (cadr args)) 0)         ; (- x x) -> 0
+			((and (pair? (car args))                    ; (- (- x y) z) -> (- x y z) but leave (- (- x) ...)
+			      (eq? (caar args) '-)
+			      (> (length (car args)) 2))
+			 `(- ,@(cdar args) ,(cadr args)))
+			(else `(- ,@args))))
 		 (else 
 		  (let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args)))))
 		    (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
@@ -1964,40 +1960,32 @@
 		   
 	      ((gcd)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'gcd)) args)))
-	       (if (null? args)
-		   0
-		   ;; here and in lcm, if just 1 arg -> (abs arg) 
-		   (if (memv 1 args)
-		       1
-		       (if (just-integers? args)
-			   (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
-			     (lambda ()
-			       (apply gcd args))
-			     (lambda ignore
-			       `(gcd ,@args)))
-			   (if (null? (cdr args))
-			       `(abs ,(car args))
-			       (if (eqv? (car args) 0)
-				   `(abs ,(cadr args))
-				   (if (eqv? (cadr args) 0)
-				       `(abs ,(car args))
-				       `(gcd ,@args))))))))
+	       (cond ((null? args) 0)
+		     ((memv 1 args) 1)
+		     ((just-integers? args)
+		      (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
+			(lambda ()
+			  (apply gcd args))
+			(lambda ignore
+			  `(gcd ,@args))))
+		     ((null? (cdr args))   `(abs ,(car args)))
+		     ((eqv? (car args) 0)  `(abs ,(cadr args)))
+		     ((eqv? (cadr args) 0) `(abs ,(car args)))
+		     (else `(gcd ,@args))))
 	      
 	      ((lcm)
 	       (set! args (remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args)))
-	       (if (null? args)
-		   1
-		   (if (memv 0 args)
-		       0
-		       (if (just-integers? args)
-			   (catch #t
-			     (lambda ()
-			       (apply lcm args))
-			     (lambda ignore
-			       `(lcm ,@args)))
-			   (if (null? (cdr args))
-			       `(abs ,(car args))
-			       `(lcm ,@args))))))
+	       (cond ((null? args) 1)         ; (lcm) -> 1
+		     ((memv 0 args) 0)        ; (lcm ... 0 ...) -> 0
+		     ((just-integers? args)   ; (lcm 3 4) -> 12
+		      (catch #t
+			(lambda ()
+			  (apply lcm args))
+			(lambda ignore
+			  `(lcm ,@args))))
+		     ((null? (cdr args))      ; (lcm x) -> (abs x)
+		      `(abs ,(car args)))
+		     (else `(lcm ,@args))))
 	      
 	      ((max min)
 	       (if (pair? args)
@@ -2229,7 +2217,6 @@
 	;; keyword head here if args to func/macro that we don't know about
 
 	;; (if...) as func par in pp ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
-	;; '(...) as part of stacked list of arglist turns into (quote (...))
 	;;
 	;; (cond ((or ...) #t) (else #f)) after reorganization
 	;; define-macro that is define f g, and (define-macro (x . a) `(y ,@a)) [4351] (lambda a ({list} 'y ({apply_values} a)))
@@ -2237,10 +2224,10 @@
 	;;    also it's saying morally-equal? could be eqv? if real/complex (even nan) involved
 	;;    finish s7test out -- perhaps show which tests got no complaint? -- in top read loop, print each form bold
 	;;    perhaps test->lint-test + test and compare -- if either unhappy but not other etc
-	;; eqv?[etc] with code-constant args
-	;; #f is ok as output port (write-string for example)
+	;;
+	;; #f is ok as output port (write-string for example) -- should output-port? change or lint?
 	;; collapse cxr isn't correct if it's the target of set! -- (set! (cdr (cdr...)))
-	;; format arg counter gets confused by ~4,T etc 
+	;; format arg counter gets confused by ~4,T etc
 	;; perhaps (apply lambda 'a '(-1)) -> #<lambda a> -- in other cases we really need '(...) not just (...) ~W if closure?
 #|
 	(if (and (member 'length form (lambda (a b) (and (pair? b) (eq? (car b) a))))
@@ -3030,9 +3017,16 @@
 				     (case c 
 				       ((#\{) (set! curlys (+ curlys 1)))
 				       ((#\}) (set! curlys (- curlys 1)))
+				       ((#\&)
+					(if (and (> i 2)
+						 (char=? (str (- i 2)) #\%)
+						 (char=? (str (- i 3)) #\~)
+						 (or (= i 3) 
+						     (not (char=? (str (- i 4)) #\~))))
+					    (lint-format "~~%~~& in ~A could be ~~%" name str)))
 				       ((#\^ #\|)
 					(if (zero? curlys)
-					    (lint-format "~A has ~C outside ~~{~~}?" name str c)))))
+					    (lint-format "~A has ~~~C outside ~~{~~}?" name str c)))))
 				   (begin
 				     (set! pos (char-position #\~ str i))
 				     (if pos 

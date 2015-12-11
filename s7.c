@@ -973,7 +973,7 @@ struct s7_scheme {
   s7_pointer IS_MACRO, MAKE_BYTE_VECTOR, MAKE_HASH_TABLE, MAKE_KEYWORD, MAKE_LIST, RANDOM_STATE;
   s7_pointer MAKE_STRING, MAKE_SHARED_VECTOR, MAKE_VECTOR, MAP, MAX, MEMBER, MEMQ, MEMV, MIN, MODULO, IS_MORALLY_EQUAL, IS_NAN, IS_NEGATIVE, NEWLINE;
   s7_pointer NOT, IS_NULL, IS_NUMBER, NUMBER_TO_STRING, NUMERATOR, OBJECT_TO_STRING, IS_ODD, OPENLET, IS_OPENLET, OPEN_INPUT_FILE;
-  s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, OWLET, IS_PAIR, PAIR_LINE_NUMBER, PEEK_CHAR;
+  s7_pointer OPEN_INPUT_STRING, OPEN_OUTPUT_FILE, OUTLET, IS_OUTPUT_PORT, OWLET, IS_PAIR, PAIR_FILENAME, PAIR_LINE_NUMBER, PEEK_CHAR;
   s7_pointer IS_PORT_CLOSED, PORT_FILENAME, PORT_LINE_NUMBER, IS_PROPER_LIST;
   s7_pointer IS_POSITIVE, IS_PROCEDURE, PROCEDURE_DOCUMENTATION, PROCEDURE_SIGNATURE, FUNCLET, PROCEDURE_SOURCE;
   s7_pointer IS_DILAMBDA, PROVIDE, ROOTLET;
@@ -49552,6 +49552,28 @@ static s7_pointer g_pair_line_number(s7_scheme *sc, s7_pointer args)
 PF_TO_IF(pair_line_number, c_pair_line_number)
 
 
+static s7_pointer g_pair_filename(s7_scheme *sc, s7_pointer args)
+{
+  #define H_pair_filename "(pair-filename pair) returns the name of the file containing 'pair'"
+  #define Q_pair_filename s7_make_signature(sc, 2, sc->IS_STRING, sc->IS_PAIR)
+  s7_pointer p;
+  p = car(args);
+
+  if (!is_pair(p))
+    {
+      check_method(sc, p, sc->PAIR_FILENAME, args);
+      return(simple_wrong_type_argument(sc, sc->PAIR_FILENAME, p, T_PAIR));	
+    }
+  if (has_line_number(p))
+    {
+      int x;
+      x = pair_line(p);
+      return(remembered_file_name(x));
+    }
+  return(sc->F);
+}
+
+
 static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
@@ -73117,6 +73139,7 @@ s7_scheme *s7_init(void)
   sc->PORT_LINE_NUMBER =      defun("port-line-number", port_line_number,	0, 1, false);
   sc->PORT_FILENAME =         defun("port-filename",	port_filename,		0, 1, false);
   sc->PAIR_LINE_NUMBER =      defun("pair-line-number", pair_line_number,	1, 0, false);
+  sc->PAIR_FILENAME =         defun("pair-filename",    pair_filename,	        1, 0, false);
 
   sc->IS_PORT_CLOSED =        defun("port-closed?",	is_port_closed,		1, 0, false);
 
@@ -73956,8 +73979,7 @@ int main(int argc, char **argv)
  *       unclosed port: make-var sees it with 'input|output-port? type + its code
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
- *   perhaps some way to show history of a value? -- cur_code chain or circular buffer?
- *   eval history adds 1/200 to time (1/2percent) -- we need at least to copy it into owlet, or switch between histories
+ *  doc/test pair-filename
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

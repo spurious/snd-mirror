@@ -294,13 +294,10 @@
 		    (if (not (string=? (car typ) "constchar*"))
 			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
 			     (no-stars (car typ))
-			     (if (string=? (cdr typ) "INT") 
-				 "integer" 
-				 (if (string=? (cdr typ) "ULONG")
-				     "ulong"
-				     (if (string=? (cdr typ) "DOUBLE")
-					 "number"
-					 (apply string (map char-downcase (cdr typ)))))))))
+			     (cond ((string=? (cdr typ) "INT") "integer")
+				   ((string=? (cdr typ) "ULONG") "ulong")
+				   ((string=? (cdr typ) "DOUBLE") "number")
+				   (else (apply string (map char-downcase (cdr typ))))))))
 		  (begin
 		    (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
 		    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))

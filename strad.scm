@@ -229,30 +229,29 @@
 					(begin
 					  (set! v vb)
 					  (set! stick 1))
-					(begin
-					  (if (= stick 1)
-					      (begin
-						(set! vtemp vb)
-						(set! f (* zslope (- vtemp vh)))
-						(if (and (<= f (* mus fb)) (> f 0))
-						    (set! v vtemp)
-						    (begin
-						      (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
-						      (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
-						      (set! vtemp (min v1 v2))
-						      (set! stick 0)
-						      (if (> vtemp vb)
-							  (begin
-							    (set! v vb)
-							    (set! stick 1))
-							  (begin
-							    (set! v vtemp)
-							    (set! f (* zslope (- v vh) )))))))
-					      (begin
-						(set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
-						(set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
-						(set! v (min v1 v2))
-						(set! stick 0)))))
+					(if (= stick 1)
+					    (begin
+					      (set! vtemp vb)
+					      (set! f (* zslope (- vtemp vh)))
+					      (if (and (<= f (* mus fb)) (> f 0))
+						  (set! v vtemp)
+						  (begin
+						    (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
+						    (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
+						    (set! vtemp (min v1 v2))
+						    (set! stick 0)
+						    (if (> vtemp vb)
+							(begin
+							  (set! v vb)
+							  (set! stick 1))
+							(begin
+							  (set! v vtemp)
+							  (set! f (* zslope (- v vh) )))))))
+					    (begin
+					      (set! v1 (/ (- (- bb2) (sqrt delta2)) (* 2 aa)))
+					      (set! v2 (/ (+ (- bb2) (sqrt delta2)) (* 2 aa)))
+					      (set! v (min v1 v2))
+					      (set! stick 0))))
 				    (if (> v vb)
 					(begin
 					  (set! v vb)

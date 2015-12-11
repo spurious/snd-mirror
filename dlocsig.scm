@@ -1193,17 +1193,11 @@
 	       ((path-ak-even (- un 2)) (- k 1))))
 	   
 	   (define (ref z j i)
-	     (if (> i n) 
-		 ((z j) (- i n))
-		 (if (< i 0) 
-		     ((z j) (+ i n))
-		     (if (= i n) 
-			 (- ((z j) n) 
-			    ((d j) n))
-			 (if (= i 0) 
-			     (+ ((z j) 0) 
-				((d j) 0))
-			     ((z j) i))))))
+	     (cond ((> i n) ((z j) (- i n)))
+		   ((< i 0) ((z j) (+ i n)))
+		   ((= i n) (- ((z j) n) ((d j) n)))
+		   ((= i 0) (+ ((z j) 0) ((d j) 0)))
+		   (else    ((z j) i))))
 	   
 	   ;; forced initial direction
 	   (if (initial-direction path)

@@ -37,21 +37,19 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
 	     (let ((x (e i))
 		   (y (e (+ i 1))))
 	       (set! lasty y)
-	       (if (null? nenv)
-		   (if (>= x beg)
-		       (begin
-			 (set! nenv (append nenv (list beg (envelope-interp beg e))))
-			 (if (not (= x beg))
-			     (if (>= x end)
-				 (return-early (append nenv (list end (envelope-interp end e))))
-				 (set! nenv (append nenv (list x y)))))))
-		   (if (<= x end)
-		       (begin
-			 (set! nenv (append nenv (list x y)))
-			 (if (= x end)
-			     (return-early nenv)))
-		       (if (> x end)
-			   (return-early (append nenv (list end (envelope-interp end e)))))))))
+	       (cond ((null? nenv)
+		      (when (>= x beg)
+			(set! nenv (append nenv (list beg (envelope-interp beg e))))
+			(if (not (= x beg))
+			    (if (>= x end)
+				(return-early (append nenv (list end (envelope-interp end e))))
+				(set! nenv (append nenv (list x y)))))))
+		     ((<= x end)
+		      (set! nenv (append nenv (list x y)))
+		      (if (= x end) (return-early nenv)))
+		     ((> x end)
+		      (return-early
+		       (append nenv (list end (envelope-interp end e))))))))
 	   (append nenv (list end lasty))))))))
 
 
@@ -170,64 +168,58 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
   (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) -> (0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)"))
     (lambda* (fn old-att new-att old-dec new-dec)
       
-      (if (and old-att
-	       (not new-att))
-	  (error 'wrong-number-of-args (list "stretch-envelope" 
-					     old-att
-					     "old-attack but no new-attack?"))
-	  (if (not new-att)
-	      fn
-	      (if (and old-dec
-		       (not new-dec))
-		  (error 'wrong-number-of-args (list "stretch-envelope" 
-						     old-att new-att old-dec
-						     "old-decay but no new-decay?"))
-		  (let* ((x0 (car fn))
-			 (new-x x0)
-			 (last-x (fn (- (length fn) 2)))
-			 (y0 (cadr fn))
-			 (new-fn (list y0 x0))
-			 (scl (/ (- new-att x0) (max .0001 (- old-att x0)))))
-		    (define (stretch-envelope-1 new-fn old-fn)
-		      (if (null? old-fn)
-			  new-fn
-			  (let ((x1 (car old-fn))
-				(y1 (cadr old-fn)))
-			    (if (and (< x0 old-att)
-				     (>= x1 old-att))
-				(begin
-				  (if (= x1 old-att)
-				      (set! y0 y1)
-				      (set! y0 (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
-				  (set! x0 old-att)
-				  (set! new-x new-att)
-				  (set! new-fn (cons y0 (cons new-x new-fn)))
-				  (set! scl (if old-dec 
-						(/ (- new-dec new-att) (- old-dec old-att))
-						(/ (- last-x new-att) (- last-x old-att))))))
-			    (if (and old-dec
-				     (< x0 old-dec)
-				     (>= x1 old-dec))
-				(begin
-				  (if (= x1 old-dec)
-				      (set! y0 y1)
-				      (set! y0 (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
-				  (set! x0 old-dec)
-				  (set! new-x new-dec)
-				  (set! new-fn (cons y0 (cons new-x new-fn)))
-				  (set! scl (/ (- last-x new-dec) (- last-x old-dec)))))
-			    (if (not (= x0 x1))
-				(begin
-				  (set! new-x (+ new-x (* scl (- x1 x0))))
-				  (set! new-fn (cons y1 (cons new-x new-fn)))
-				  (set! x0 x1)
-				  (set! y0 y1)))
-			    (stretch-envelope-1 new-fn (cddr old-fn)))))
-		    
-		    (if (and old-dec 
-			     (= old-dec old-att)) 
-			(set! old-dec (* .000001 last-x)))
-		    (reverse (stretch-envelope-1 new-fn (cddr fn))))))))))
+      (cond ((and old-att (not new-att))
+	     (error 'wrong-number-of-args "stretch-envelope: ~A, old-attack but no new-attack?" old-att))
+	    ((not new-att) fn)
+	    ((and old-dec (not new-dec))
+	     (error 'wrong-number-of-args "stretch-envelope:~A ~A ~A, old-decay but no new-decay?" old-att new-att old-dec))
+	    (else
+	     (let* ((x0 (car fn))
+		    (new-x x0)
+		    (last-x (fn (- (length fn) 2)))
+		    (y0 (cadr fn))
+		    (new-fn (list y0 x0))
+		    (scl (/ (- new-att x0) (max .0001 (- old-att x0)))))
+	       (define (stretch-envelope-1 new-fn old-fn)
+		 (if (null? old-fn)
+		     new-fn
+		     (let ((x1 (car old-fn))
+			   (y1 (cadr old-fn)))
+		       (if (and (< x0 old-att)
+				(>= x1 old-att))
+			   (begin
+			     (if (= x1 old-att)
+				 (set! y0 y1)
+				 (set! y0 (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
+			     (set! x0 old-att)
+			     (set! new-x new-att)
+			     (set! new-fn (cons y0 (cons new-x new-fn)))
+			     (set! scl (if old-dec 
+					   (/ (- new-dec new-att) (- old-dec old-att))
+					   (/ (- last-x new-att) (- last-x old-att))))))
+		       (if (and old-dec
+				(< x0 old-dec)
+				(>= x1 old-dec))
+			   (begin
+			     (if (= x1 old-dec)
+				 (set! y0 y1)
+				 (set! y0 (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
+			     (set! x0 old-dec)
+			     (set! new-x new-dec)
+			     (set! new-fn (cons y0 (cons new-x new-fn)))
+			     (set! scl (/ (- last-x new-dec) (- last-x old-dec)))))
+		       (if (not (= x0 x1))
+			   (begin
+			     (set! new-x (+ new-x (* scl (- x1 x0))))
+			     (set! new-fn (cons y1 (cons new-x new-fn)))
+			     (set! x0 x1)
+			     (set! y0 y1)))
+		       (stretch-envelope-1 new-fn (cddr old-fn)))))
+	       
+	       (if (and old-dec 
+			(= old-dec old-att)) 
+		   (set! old-dec (* .000001 last-x)))
+	       (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
 
 
 ;;; -------- scale-envelope

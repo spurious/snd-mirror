@@ -10,7 +10,7 @@
 	(*pretty-print-left-margin* 0))
     
     (lambda* (obj (port (current-output-port)) (column 0))
-      
+
       (define newlines 0)
 
       (define (pretty-print-1 obj port column)
@@ -38,11 +38,15 @@
 			     (null? (cddar l1))
 			     (> len (/ *pretty-print-length* 2)))
 			(begin
-			  (write-char #\( port)
-			  (pretty-print-1 (caar l1) port col)
-			  (spaces (+ col 1))
+			  (if (eq? (caar l1) 'quote)
+			      (write-char #\' port)
+			      (begin
+				(write-char #\( port)
+				(pretty-print-1 (caar l1) port col)
+				(spaces (+ col 1))))
 			  (pretty-print-1 (cadar l1) port (+ col 1))
-			  (write-char #\) port))
+			  (if (not (eq? (caar l1) 'quote))
+			      (write-char #\) port)))
 			(pretty-print-1 (car l1) port (+ col added)))
 		    (format port " . ~S" l1)))
 	      (set! added 0))))

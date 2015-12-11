@@ -824,23 +824,20 @@
 	))
 
 (define (c-to-xen-macro-name typ str)
-  (if (string=? str "INT") "C_int_to_Xen_integer"
-      (if (string=? str "DOUBLE") "C_double_to_Xen_real"
-	  (if (string=? str "BOOLEAN") "C_bool_to_Xen_boolean"
-	      (if (string=? str "ULONG") "C_ulong_to_Xen_ulong"
-		  (if (string=? str "String") 
-		      (if (string=? (car typ) "guchar*") 
-			  "C_to_Xen_String"
-			  "C_string_to_Xen_string")
-		      (format #f "~A unknown" str)))))))
+  (cond ((string=? str "INT")     "C_int_to_Xen_integer")
+	((string=? str "DOUBLE")  "C_double_to_Xen_real")
+	((string=? str "BOOLEAN") "C_bool_to_Xen_boolean")
+	((string=? str "ULONG")   "C_ulong_to_Xen_ulong")
+	((string=? str "String")  (if (string=? (car typ) "guchar*") "C_to_Xen_String" "C_string_to_Xen_string"))
+	(else (format #f "~A unknown" str))))
 
 (define (xen-to-c-macro-name str)
-  (if (string=? str "INT") "Xen_integer_to_C_int"
-      (if (string=? str "DOUBLE") "Xen_real_to_C_double"
-	  (if (string=? str "BOOLEAN") "Xen_boolean_to_C_bool"
-	      (if (string=? str "ULONG") "Xen_ulong_to_C_ulong"
-		  (if (string=? str "String") "Xen_string_to_C_string"
-		      (format #f "~A unknown" str)))))))
+  (cond ((string=? str "INT")     "Xen_integer_to_C_int")
+	((string=? str "DOUBLE")  "Xen_real_to_C_double")
+	((string=? str "BOOLEAN") "Xen_boolean_to_C_bool")
+	((string=? str "ULONG")   "Xen_ulong_to_C_ulong")
+	((string=? str "String")  "Xen_string_to_C_string")
+	(else (format #f "~A unknown" str))))
 
 (define (type-it type)
   (let ((typ (assoc type direct-types)))
@@ -2093,15 +2090,11 @@
 		      (let ((type (types modctr)))
 			(set! modctr (+ 1 modctr))
 			(if (>= modctr modlen) (set! modctr 0))
-			(if (string=? type "int")
-			    (hey "XLI(")
-			    (if (string=? type "gchar*")
-				(hey "XLS(")
-				(if (string=? type "GtkTextTag*")
-				    (hey "XLT(")
-				    (if (string=? type "GType")
-					(hey "XLG(")
-					(hey "XLA("))))))
+			(cond ((string=? type "int")         (hey "XLI("))
+			      ((string=? type "gchar*")      (hey "XLS("))
+			      ((string=? type "GtkTextTag*") (hey "XLT("))
+			      ((string=? type "GType")       (hey "XLG("))
+			      (else                          (hey "XLA("))))
 		      (hey "~A, ~D)" list-name j)
 		      (if (or with-null with-minus-one (< j (- i 1)))
 			  (hey ", "))))

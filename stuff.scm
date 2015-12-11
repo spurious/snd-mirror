@@ -37,18 +37,33 @@
        (format p "error: ~A" (ow 'error-type))
        (when (pair? (ow 'error-data))
 	 (format p ": ~A" (apply format #f (ow 'error-data))))
+
        (format p "~%error-code: ~S~%" (ow 'error-code))
        (when (ow 'error-line)
 	 (format p "~%error-file/line: ~S[~A]~%" (ow 'error-file) (ow 'error-line)))
-
+	   
        ;; show history, if available
        (when (pair? (ow 'error-history)) ; a circular list, starts at error-code, entries stored backwards
 	 (let ((history ())
+	       (lines ())
+	       (files ())
 	       (start (ow 'error-history)))
 	   (do ((x (cdr start) (cdr x)))
 	       ((eq? x start)
-		(format p "~%error-history:~%    ~S~{~%    ~S~}~%" (car start) history))
-	     (set! history (cons (car x) history)))))
+		(format p "~%error-history:~%    ~S" (car start))
+		(do ((x history (cdr x))
+		     (l lines (cdr l))
+		     (f files (cdr f)))
+		    ((null? x))
+		  (if (and (integer? (car l))
+			   (string? (car f))
+			   (not (string=? (car f) "*stdout*")))
+		      (format p "~%    ~S~40T;~A[~A]" (car x) (car f) (car l))
+		      (format p "~%    ~S" (car x))))
+		(format p "~%"))
+	     (set! history (cons (car x) history))
+	     (set! lines (cons (pair-line-number (car x)) lines))
+	     (set! files (cons (pair-filename (car x)) files)))))
        
        ;; show the enclosing contexts
        (let ((old-print-length (*s7* 'print-length)))
@@ -56,7 +71,8 @@
 	 (do ((e (outlet ow) (outlet e))) 
 	     ((memq e elist)
 	      (set! (*s7* 'print-length) old-print-length))
-	   (format p "~%~{~A~| ~}~%" e)
+	   (if (> (length e) 0)
+	       (format p "~%~{~A~| ~}~%" e))
 	   (set! elist (cons e elist))))))))
 
 #|
