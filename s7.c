@@ -39004,7 +39004,11 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 
   p = car(x);
   if (is_global(p)) p = slot_value(global_slot(p)); else p = find_symbol_unchecked(sc, p);
-  /* this is nearly always global and p == opt_cfunc(x) */
+  /* this is nearly always global and p == opt_cfunc(x) 
+   * p can be null if we evaluate some code, optimizing it, then eval it again in a context
+   *   where the incoming p was undefined(!) -- explicit use of eval and so on.
+   *   I guess ideally eval would ignore optimization info -- copy :readable or something.
+   */
   return((p == opt_any1(x)) ||
 	 ((is_any_c_function(p)) && (opt_cfunc(x)) &&
 	  (c_function_class(p) == c_function_class(opt_cfunc(x)))));
@@ -46158,7 +46162,8 @@ It looks for an existing catch with a matching tag, and jumps to it if found.  O
 	}
     }
   if (is_let(car(args))) check_method(sc, car(args), sc->THROW, args);
-  return(s7_error(sc, make_symbol(sc, "uncaught-throw"), args));
+  return(s7_error(sc, make_symbol(sc, "uncaught-throw"), 
+		  set_elist_3(sc, make_string_wrapper(sc, "no catch found for (throw ~W~{~^ ~S~~})"), type, info)));
 }
 
 
@@ -73978,8 +73983,10 @@ int main(int argc, char **argv)
  *       need values->func arg check escape (define*)
  *       unclosed port: make-var sees it with 'input|output-port? type + its code
  *
+ * eval outside optimized context segfault: return some unique s7_pointer, not null from unchecked_find
+ *   that is probably worse than fixing eval! copy_body can't handle cycles, unoptimize is problematic
+ *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
- *  doc/test pair-filename
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

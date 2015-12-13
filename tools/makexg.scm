@@ -852,13 +852,10 @@
 		(if (not (member type no-xen-p))
 		    (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
 			 (no-stars (car typ))
-			 (if (string=? (cdr typ) "INT") 
-			     "integer" 
-			     (if (string=? (cdr typ) "DOUBLE")
-				 "number"
-				 (if (string=? (cdr typ) "ULONG")
-				     "ulong"
-				     (apply string (map char-downcase (cdr typ)))))))))
+			 (cond ((string=? (cdr typ) "INT")    "integer")
+			       ((string=? (cdr typ) "DOUBLE") "number")
+			       ((string=? (cdr typ) "ULONG")  "ulong")
+			       (else (apply string (map char-downcase (cdr typ))))))))
 	      (if (not (cdr typ)) ; void special case
 		  (begin
 		    (if (not (member type no-xen-p))
@@ -913,12 +910,9 @@
 		      (lambda (func)
 			(and (string=? (car arg) (symbol->string (callback-name func)))
 			     func)))))
-	  (if callb
-	      (return (callback-name callb))
-	      (if (string=? (car arg) "lambda")
-		  (return 'lambda)
-		  (if (string=? (car arg) "GCallback")
-		      (return 'GCallback))))))
+	  (cond (callb                            (return (callback-name callb)))
+		((string=? (car arg) "lambda")    (return 'lambda))
+		((string=? (car arg) "GCallback") (return 'GCallback)))))
       strs)
      'fnc)))
 

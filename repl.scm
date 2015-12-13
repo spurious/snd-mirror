@@ -910,8 +910,12 @@
 				 (return))))
 			   
 			   (lambda (type info)
-			     (format *stderr* "~A: " (red "error"))
-			     (apply format *stderr* info)
+			     (format *stderr* "~A: ~A" (red "error") type)
+			     (if (and (pair? info)
+				      (string? (car info)))
+				 (format *stderr* ": ~A" (apply format #f info))
+				 (if (not (null? info))
+				     (format *stderr* ": ~A" info)))
 			     (newline *stderr*)))
 			 
 			 (push-line (copy cur-line))

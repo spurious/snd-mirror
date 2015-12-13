@@ -35,8 +35,12 @@
        
        ;; show current error data
        (format p "error: ~A" (ow 'error-type))
-       (when (pair? (ow 'error-data))
-	 (format p ": ~A" (apply format #f (ow 'error-data))))
+       (let ((info (ow 'error-data)))
+	 (if (and (pair? info)
+		  (string? (car info)))
+	     (format p ": ~A" (apply format #f info))
+	     (if (not (null? info))
+		 (format p ": ~A" info))))
 
        (format p "~%error-code: ~S~%" (ow 'error-code))
        (when (ow 'error-line)
