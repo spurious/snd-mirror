@@ -659,7 +659,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (collect-if type (lambda (obj) 
 			     (not (member obj (car sequences))))
 		      (apply union list (cdr sequences)))
-	  (apply type ())))))
+	  (type)))))
 
 (define cl-set-difference 
   (let ((documentation "(cl-set-difference type .sequences) returns the elements in the first sequence that are not in the rest of the sequences:\n\
@@ -671,7 +671,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	    (collect-if type (lambda (obj) 
 			       (not (member obj others)))
 			(car sequences)))
-	  (apply type ())))))
+	  (type)))))
 
 (define symmetric-difference 
   (let ((documentation "(symmetric-difference type .sequences) returns the elements that are in an odd number of the sequences:\n\
