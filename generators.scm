@@ -416,7 +416,7 @@ returns n odd-numbered cosines spaced by frequency."))
 	      (den (* 2 n (sin angle)))) ; "n" here is normalization
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs den) nearly-zero)
-	      (let ((fang (modulo (abs cx) (* 2 pi))))
+	      (let ((fang (modulo cx (* 2 pi))))
 		;; hopefully this almost never happens...
 		(if (or (< fang 0.001)
 			(< (abs (- fang (* 2 pi))) 0.001))
@@ -458,7 +458,7 @@ returns n sinusoids from frequency spaced by 2 * ratio * frequency."))
 	       (den (* n (sin mx)))) ; "n" is normalization
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs den) nearly-zero)
-	      (if (< (modulo (abs mx) (* 2 pi)) .1)
+	      (if (< (modulo mx (* 2 pi)) .1)
 		  -1.0
 		  1.0)
 	      (- (* (sin x)

@@ -7025,6 +7025,11 @@ static bool let_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
   return((is_slot(global_slot(sym))) || ((!is_with_let_let(e)) && (is_slot(find_symbol(sc, sym)))));
 }
 
+static bool let_symbol_is_not_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
+{
+  return(is_slot(global_slot(sym)));
+}
+
 static bool pair_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 {
   return((is_slot(global_slot(sym))) || (direct_memq(sym, e)));
@@ -47830,6 +47835,7 @@ static void all_x_function_init(void)
 
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_sym_t *checker)
 {
+  /* fprintf(stderr, "all_x_eval: %s %s\n", DISPLAY(arg), DISPLAY(e)); */
   if (is_pair(arg))
     {
       if (is_optimized(arg))
@@ -53663,7 +53669,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 		}
 
 	      for (p = cdr(expr); is_pair(p); p = cdr(p))
-		set_c_call(p, all_x_eval(sc, car(p), e, pair_symbol_is_safe));
+		set_c_call(p, all_x_eval(sc, car(p), e, let_symbol_is_not_safe));
 
 	      if (op == OP_OR)
 		{
@@ -53702,7 +53708,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 			  if ((is_pair(car(test))) &&
 			      (caar(test) == sc->NOT))
 			    {
-			      set_c_call(test, all_x_eval(sc, cadar(test), e, pair_symbol_is_safe));
+			      set_c_call(test, all_x_eval(sc, cadar(test), e, let_symbol_is_not_safe));
 			      if (is_null(b2))
 				set_c_function(expr, if_all_not_x1);
 			      else set_c_function(expr, if_all_not_x2);
@@ -54979,7 +54985,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = start; is_pair(p); p = cdr(p))
-	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_safe));
+	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_not_safe));
 	}
     }
   return(sc->code);
@@ -55111,7 +55117,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_safe));
+	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_not_safe));
 	}
     }
   return(sc->code);
@@ -73972,17 +73978,6 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * lint: closure sig from body
- *       macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
- *       catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
- *       bacro-shaker -- can we get set-member?
- *       if vars trackable, catch gcable set of code-constant, or set of constant?
- *       if no side effect func call not last, but side effect args, -> args?
- *       named let not used for value but returns value -- somehow edit out? [also display->format here]
- *       move special-cases into hash-table (via macro?)
- *       need values->func arg check escape (define*)
- *       unclosed port: make-var sees it with 'input|output-port? type + its code
- *
  * eval outside optimized context segfault: return some unique s7_pointer, not null from unchecked_find
  *   that is probably worse than fixing eval! copy_body can't handle cycles, unoptimize is problematic
  *
@@ -73993,6 +73988,11 @@ int main(int argc, char **argv)
  *   but a kw there could not be meant as a kw -- it evaluates to itself in any context
  *   and the map in arg->kw is not confusing
  *   add kw let ref/set tests and try to find problematic cases
+ *
+ * debugger checks for all unchecked+unexamined symbol lookups -- especially do [t336]
+ *   add arg to find_symbol_unchecked macro, used if debugging => whether it is subsequently assumed ok
+ *   (define (hi x y) (let ((m (memq x y)) (loc (and m (- x (length m))))) loc)) (hi 'a '(a b c))
+ *   should check_let split body scan from var scan?  and optimize_syntax? <- this is the culprit I think, not check_let(*)
  *
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?

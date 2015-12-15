@@ -4898,7 +4898,7 @@ that call the lambda body if one of the variables is set.
 <b><em class=def id="loadhook">*load-hook*</em></b> is a hook whose functions are called just before a file is loaded.  
 The hook function argument, named 'name, is the filename.
 While loading, the port-filename and port-line-number of the current-input-port can tell you
-where you are in the file.
+where you are in the file.  This data is available after loading via pair-line-number and pair-filename.
 </p>
 
 <pre class="indented">
