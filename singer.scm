@@ -32,10 +32,10 @@
 	 (durs (map car data))
 	 (dur (apply + durs))
 	 (begs (let ((bg beg))
-		 (append (list beg)
-			 (map (lambda (x)
-				(set! bg (+ bg x)))
-			      durs))))
+		 (cons beg
+		       (map (lambda (x)
+			      (set! bg (+ bg x)))
+			    durs))))
 	 (beg-samps (map seconds->samples begs)))
 
     (let ((change-times (let* ((len (length beg-samps))

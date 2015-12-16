@@ -2512,7 +2512,6 @@ static token_t token(s7_scheme *sc);
 static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indices);
 static bool s7_is_morally_equal(s7_scheme *sc, s7_pointer x, s7_pointer y);
 static void remove_gensym_from_symbol_table(s7_scheme *sc, s7_pointer sym);
-static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
 static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym);
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body);
 static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
@@ -2525,10 +2524,24 @@ static s7_int big_integer_to_s7_int(mpz_t n);
 static double next_random(s7_pointer r);
 #endif
 
-#if WITH_GCC
-#define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
+#if DEBUGGING && WITH_GCC
+  static s7_pointer find_symbol_unchecked_1(s7_scheme *sc, s7_pointer symbol);
+  #define find_symbol_unchecked(Sc, Sym) check_null_sym(Sc, find_symbol_unchecked_1(Sc, Sym), Sym, __LINE__, __func__)
+  static s7_pointer check_null_sym(s7_scheme *sc, s7_pointer p, s7_pointer sym, int line, const char *func);
+  #define find_symbol_unexamined(Sc, Sym) find_symbol_unchecked_1(Sc, Sym)
 #else
-#define find_symbol_checked(Sc, Sym) find_symbol_unchecked(Sc, Sym)
+  static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol);
+  #define find_symbol_unexamined(Sc, Sym) find_symbol_unchecked(Sc, Sym)
+#endif
+
+#if WITH_GCC
+  #if DEBUGGING
+    #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked_1(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
+  #else
+    #define find_symbol_checked(Sc, Sym) ({s7_pointer _x_; _x_ = find_symbol_unchecked(Sc, Sym); ((_x_) ? _x_ : unbound_variable(Sc, Sym));})
+  #endif
+#else
+  #define find_symbol_checked(Sc, Sym) find_symbol_unchecked(Sc, Sym)
 #endif
 
 static s7_pointer find_method(s7_scheme *sc, s7_pointer env, s7_pointer symbol);
@@ -6741,8 +6754,11 @@ static s7_pointer find_symbol(s7_scheme *sc, s7_pointer symbol)
   return(global_slot(symbol));
 }
 
-
+#if WITH_GCC && DEBUGGING
+static s7_pointer find_symbol_unchecked_1(s7_scheme *sc, s7_pointer symbol)
+#else
 static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* find_symbol_checked includes the unbound_variable call */
+#endif
 {
   s7_pointer x;
 
@@ -7025,16 +7041,10 @@ static bool let_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
   return((is_slot(global_slot(sym))) || ((!is_with_let_let(e)) && (is_slot(find_symbol(sc, sym)))));
 }
 
-static bool let_symbol_is_not_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
-{
-  return(is_slot(global_slot(sym)));
-}
-
 static bool pair_symbol_is_safe(s7_scheme *sc, s7_pointer sym, s7_pointer e)
 {
   return((is_slot(global_slot(sym))) || (direct_memq(sym, e)));
 }
-
 
 
 /* make macros and closures */
@@ -21965,7 +21975,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_PAIR:         return(make_boolean(sc, s7_list_length(sc, val) < ilen));
     case T_NIL:          return(make_boolean(sc, ilen > 0));
     case T_STRING:       return(make_boolean(sc, string_length(val) < ilen));
-    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_mask(val) <= ilen));
+    case T_HASH_TABLE:   return(make_boolean(sc, hash_table_mask(val) < ilen)); /* was <=? -- changed 15-Dec-15 */
     case T_ITERATOR:     return(make_boolean(sc, iterator_length(val) < ilen));
     case T_C_OBJECT:     return(make_boolean(sc, object_length_to_int(sc, val) < ilen));
     case T_LET:          return(make_boolean(sc, let_length(sc, val) < ilen));  /* this works because let_length handles the length method itself! */
@@ -31635,6 +31645,16 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   else port_write_string(port)(sc, str, nlen, port);
   tmpbuf_free(str, len);
 }
+
+static s7_pointer check_null_sym(s7_scheme *sc, s7_pointer p, s7_pointer sym, int line, const char *func)
+{
+  if (!p)
+    {
+      fprintf(stderr, "%s%s[%d]: %s unbound%s\n", BOLD_TEXT, func, line, symbol_name(sym), UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(p);
+}
 #endif
 
 static void iterator_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
@@ -31717,12 +31737,10 @@ static void rng_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
   port_write_string(port)(sc, buf, nlen, port);
 }
 
-
 static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   int nlen;
   char *str;
-
   switch (type(obj))
     {
     case T_FLOAT_VECTOR:
@@ -53515,13 +53533,16 @@ static bool optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, s7_pointer e)
 {
   opcode_t op;
-  s7_pointer p;
+  s7_pointer p, orig_e, body;
 
   if (!is_pair(cdr(expr))) /* cddr(expr) might be null if, for example, (begin (let ...)) */
     return(false);
 
   op = (opcode_t)syntax_opcode(func);
   sc->w = e;
+  orig_e = e;
+  body = cdr(expr);
+
   switch (op)
     {
     case OP_QUOTE:
@@ -53531,13 +53552,21 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
     case OP_LET:
     case OP_LET_STAR:
       if (is_symbol(cadr(expr)))
-	e = collect_collisions(sc, caddr(expr), cons(sc, add_sym_to_list(sc, cadr(expr)), e));
-      else e = collect_collisions(sc, cadr(expr), e);
+	{
+	  e = collect_collisions(sc, caddr(expr), cons(sc, add_sym_to_list(sc, cadr(expr)), e));
+	  body = cdddr(expr);
+	}
+      else 
+	{
+	  e = collect_collisions(sc, cadr(expr), e);
+	  body = cddr(expr);
+	}
       break;
 
     case OP_LETREC:
     case OP_LETREC_STAR:
       e = collect_collisions(sc, cadr(expr), e);
+      body = cddr(expr);
       break;
 
     case OP_DEFINE_MACRO:
@@ -53559,6 +53588,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 	  else e = collect_collisions_star(sc, cdr(name_args), e);
 	  /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
 	}
+      body = cddr(expr);
       break;
 
     case OP_LAMBDA:
@@ -53566,20 +53596,24 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
       if (is_symbol(cadr(expr))) /* (lambda args ...) */
 	e = cons(sc, add_sym_to_list(sc, cadr(expr)), e);
       else e = collect_collisions_star(sc, cadr(expr), e);
+      body = cddr(expr);
       break;
 
     case OP_SET:
       if (is_symbol(cadr(expr)))
 	e = cons(sc, add_sym_to_list(sc, cadr(expr)), e);
+      body = sc->NIL;
       break;
 
     case OP_DO:
       e = collect_collisions(sc, cadr(expr), e);
+      body = cddr(expr);
       break;
 
     case OP_WITH_LET:
       if (sc->safety != 0)
 	hop = 0;
+      orig_e = sc->NIL;
       e = sc->NIL;
       /* we can't trust anything here, so hop ought to be off.  For example,
        *    (define (hi)
@@ -53597,8 +53631,11 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
   /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
 
   for (p = cdr(expr); is_pair(p); p = cdr(p))
-    if ((is_pair(car(p))) && (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
-      optimize_expression(sc, car(p), hop, e);
+    {
+      if (p == body) orig_e = e;
+      if ((is_pair(car(p))) && (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
+	optimize_expression(sc, car(p), hop, orig_e);
+    }
 
   if ((hop == 1) &&
       (symbol_id(car(expr)) == 0))
@@ -53669,7 +53706,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 		}
 
 	      for (p = cdr(expr); is_pair(p); p = cdr(p))
-		set_c_call(p, all_x_eval(sc, car(p), e, let_symbol_is_not_safe));
+		set_c_call(p, all_x_eval(sc, car(p), e, pair_symbol_is_safe));
 
 	      if (op == OP_OR)
 		{
@@ -53708,7 +53745,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 			  if ((is_pair(car(test))) &&
 			      (caar(test) == sc->NOT))
 			    {
-			      set_c_call(test, all_x_eval(sc, cadar(test), e, let_symbol_is_not_safe));
+			      set_c_call(test, all_x_eval(sc, cadar(test), e, pair_symbol_is_safe));
 			      if (is_null(b2))
 				set_c_function(expr, if_all_not_x1);
 			      else set_c_function(expr, if_all_not_x2);
@@ -54985,7 +55022,7 @@ static s7_pointer check_let(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = start; is_pair(p); p = cdr(p))
-	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_not_safe));
+	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_safe));
 	}
     }
   return(sc->code);
@@ -55117,7 +55154,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_not_safe));
+	    set_c_call(cdar(p), all_x_eval(sc, cadar(p), sc->envir, let_symbol_is_safe));
 	}
     }
   return(sc->code);
@@ -57215,7 +57252,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			    if ((!is_pair(settee)) ||
 				(!is_symbol(car(settee))))
 			      return(false);
-			    setv = find_symbol_unchecked(sc, car(settee));
+			    setv = find_symbol_unexamined(sc, car(settee));
 			    if (!((setv) &&
 				  ((is_sequence(setv)) ||
 				   ((is_c_function(setv)) && 
@@ -58645,7 +58682,7 @@ static int do_init_ex(s7_scheme *sc)
  *   opt_lambda(_code_) here can (legitimately) be a free cell or almost anything.
  */
 #define closure_is_ok(Sc, Code, Type, Args) \
-  ({ s7_pointer _code_, _val_; _code_ = Code; _val_ = find_symbol_unchecked(Sc, car(_code_)); \
+  ({ s7_pointer _code_, _val_; _code_ = Code; _val_ = find_symbol_unexamined(Sc, car(_code_)); \
      ((_val_ == opt_any1(_code_)) || \
       ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
@@ -58654,7 +58691,7 @@ static int do_init_ex(s7_scheme *sc)
 static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
 {
   s7_pointer f;
-  f = find_symbol_unchecked(sc, car(code));
+  f = find_symbol_unexamined(sc, car(code));
   return ((f == opt_lambda(code)) ||
 	  ((f) &&
 	   (typesflag(f) == type) &&
@@ -58664,7 +58701,7 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 #endif
 
 #define closure_star_is_ok(Sc, Code, Type, Args) \
-  ({ s7_pointer _val_; _val_ = find_symbol_unchecked(Sc, car(Code)); \
+  ({ s7_pointer _val_; _val_ = find_symbol_unexamined(Sc, car(Code)); \
      ((_val_ == opt_any1(Code)) || \
       ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
        ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
@@ -63304,7 +63341,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_E:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_E:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -63313,7 +63350,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_P:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_P:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -63337,7 +63374,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_S_P:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_S_P:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
@@ -63651,7 +63688,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_CLOSURE_STAR_S0:
-		  if (find_symbol_unchecked(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S0:
 		  /* here we know we have (let-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
@@ -73944,9 +73981,9 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177  4173
  * titer         |      |      | 7503 | 5218  5219  5211
  * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |             31
+ * lg            |      |      |      |             32
  *               |      |      |      |       
- * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.7
+ * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2
  * 
@@ -73978,8 +74015,9 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * eval outside optimized context segfault: return some unique s7_pointer, not null from unchecked_find
- *   that is probably worse than fixing eval! copy_body can't handle cycles, unoptimize is problematic
+ * eval outside optimized context segfault: copy_body can't handle cycles, unoptimize is problematic
+ *
+ * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
  *
@@ -73988,11 +74026,6 @@ int main(int argc, char **argv)
  *   but a kw there could not be meant as a kw -- it evaluates to itself in any context
  *   and the map in arg->kw is not confusing
  *   add kw let ref/set tests and try to find problematic cases
- *
- * debugger checks for all unchecked+unexamined symbol lookups -- especially do [t336]
- *   add arg to find_symbol_unchecked macro, used if debugging => whether it is subsequently assumed ok
- *   (define (hi x y) (let ((m (memq x y)) (loc (and m (- x (length m))))) loc)) (hi 'a '(a b c))
- *   should check_let split body scan from var scan?  and optimize_syntax? <- this is the culprit I think, not check_let(*)
  *
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?

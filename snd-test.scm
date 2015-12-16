@@ -21358,13 +21358,13 @@ EDITS: 2
 	  (snd-display #__line__ ";outa -1 -> ~A" tag)))
     
     (let ((tag (catch #t
-		      (lambda () (let ((v (with-sound ((make-float-vector 10)) (outa -1 .1)))) v))
+		      (lambda () (with-sound ((make-float-vector 10)) (outa -1 .1)))
 		      (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range))
 	  (snd-display #__line__ ";outa (float-vector) -1 -> ~A" tag)))
     
     (let ((tag (catch #t
-		      (lambda () (let ((v (with-sound ((make-float-vector (list 1 10) 0.0)) (outa -1 .1)))) v))
+		      (lambda () (with-sound ((make-float-vector (list 1 10) 0.0)) (outa -1 .1)))
 		      (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range))
 	  (snd-display #__line__ ";outa (vector 2) -1 -> ~A" tag)))
@@ -31368,9 +31368,7 @@ EDITS: 2
       (let ((ind (open-sound "oboe.snd")))
 	(for-each
 	 (lambda (n)
-	   (let ((val (scan-channel (lambda (y) 
-				      (let ((bigger (scan-channel (lambda (n5) (> n5 .1)))))
-					bigger)))))
+	   (let ((val (scan-channel (lambda (y) (scan-channel (lambda (n5) (> n5 .1)))))))
 	     (if (not (eqv? val 0))
 		 (snd-display #__line__ ";scan-channel in scan-channel (opt ~A): ~A" n val)))
 	   (let ((hi (make-float-vector 3))

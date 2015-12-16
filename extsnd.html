@@ -6439,7 +6439,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 <pre class="indented">
 (define (make-section . members)
   ;; each member is '(beg dur snd chn)
-  (append (list 'Section) members))
+  (cons 'Section members))
 
 (define (section-for-each func section)
   ;; call func on each member of the section
@@ -6448,7 +6448,7 @@ It's easy to extend the notion of a selection to an arbitrary list of sound port
 ;; an example that scales each member of the section by .5
 (section-for-each 
  (lambda (sect)
-   (apply <a class=quiet href="#scalechannel">scale-channel</a> (append (list .5) sect)))
+   (apply <a class=quiet href="#scalechannel">scale-channel</a> (cons .5 sect)))
  (make-section (list 0 10000 0 0) (list 30000 10000 0 0)))
 </pre>
 

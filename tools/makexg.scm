@@ -278,31 +278,30 @@
 		  (if type
 		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i)))
 			    (reftype #f))
-			(if (char=? (given-name 0) #\@)
-			    (set! data (cons (list type 
-						   (substring given-name 1 (length given-name))
-						   'null)
-					     data))
-			    (if (char=? (given-name 0) #\#)
-				(set! data (cons (list type 
-						       (substring given-name 1 (length given-name))
-						       'opt)
-						 data))
-				(if (or (char=? (given-name 0) #\[)
-					(char=? (given-name 0) #\{)
-					(char=? (given-name 0) #\|))
-				    (begin
-				      (set! reftype (deref-type (list type)))
-				      (set! data (cons (list type 
-							     (substring given-name 1 (- (length given-name) 1))
-							     given-name) 
-						       data)))
-				    (if (char=? (given-name 0) #\&)
-					(set! data (cons (list type 
-							       (substring given-name 1 (length given-name))
-							       'set)
-							 data))
-					(set! data (cons (list type given-name) data))))))
+			(cond ((char=? (given-name 0) #\@)
+			       (set! data (cons (list type 
+						      (substring given-name 1 (length given-name))
+						      'null)
+						data)))
+			      ((char=? (given-name 0) #\#)
+			       (set! data (cons (list type 
+						      (substring given-name 1 (length given-name))
+						      'opt)
+						data)))
+			      ((or (char=? (given-name 0) #\[)
+				   (char=? (given-name 0) #\{)
+				   (char=? (given-name 0) #\|))
+			       (set! reftype (deref-type (list type)))
+			       (set! data (cons (list type 
+						      (substring given-name 1 (- (length given-name) 1))
+						      given-name) 
+						data)))
+			      ((char=? (given-name 0) #\&)
+			       (set! data (cons (list type 
+						      (substring given-name 1 (length given-name))
+						      'set)
+						data)))
+			      (else (set! data (cons (list type given-name) data))))
 			(if reftype (set! type reftype))
 			
 			(if (not (member type all-types))
@@ -843,61 +842,52 @@
   (let ((typ (assoc type direct-types)))
     (if typ
 	(when (cdr typ)
-	  (if (string? (cdr typ))
-	      (begin
-		(if (not (member type no-c-to-xen))
-		    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ))))
-		(if (not (member type no-xen-to-c))
-		    (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
-		(if (not (member type no-xen-p))
-		    (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			 (no-stars (car typ))
-			 (cond ((string=? (cdr typ) "INT")    "integer")
-			       ((string=? (cdr typ) "DOUBLE") "number")
-			       ((string=? (cdr typ) "ULONG")  "ulong")
-			       (else (apply string (map char-downcase (cdr typ))))))))
-	      (if (not (cdr typ)) ; void special case
-		  (begin
-		    (if (not (member type no-xen-p))
-			(hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
-		    (if (not (member type no-xen-to-c))
-			(hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
-		  (if (string=? type "etc") ; xen special case
-		      (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%")
-		      (begin
-			(if (not (member type no-xen-p))
-			    (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars (car typ))))
-			(if (not (member type no-xen-to-c))
-			    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))
+	  (cond ((string? (cdr typ))
+		 (if (not (member type no-c-to-xen))
+		     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ))))
+		 (if (not (member type no-xen-to-c))
+		     (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+		 (if (not (member type no-xen-p))
+		     (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+			  (no-stars (car typ))
+			  (cond ((string=? (cdr typ) "INT")    "integer")
+				((string=? (cdr typ) "DOUBLE") "number")
+				((string=? (cdr typ) "ULONG")  "ulong")
+				(else (apply string (map char-downcase (cdr typ))))))))
+		((not (cdr typ)) ; void special case
+		 (if (not (member type no-xen-p))
+		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
+		 (if (not (member type no-xen-to-c))
+		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
+		((string=? type "etc") ; xen special case
+		 (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%"))
+		(else
+		 (if (not (member type no-xen-p))
+		     (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars (car typ))))
+		 (if (not (member type no-xen-to-c))
+		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
 
-	(if (and (not (string=? type "lambda"))
-		 (not (string=? type "lambda_data"))
-		 (not (string=? type "GError*"))
+	(if (and (not (member type '("lambda" "lambda_data" "GError*") string=?))
 		 (not (find-callback 
 		       (lambda (func)
 			 (string=? type (symbol->string (car func))))))
 		 (not (string=? type "GCallback")))
 	    (hey "Xm_type~A(~A, ~A)~%" 
-		 (if (or (has-stars type) 
-			 (string=? type "gpointer")
-			 (string=? type "GClosureNotify"))
-		     (if (member type no-c-to-xen)
-			 "_Ptr_1"
-			 (if (member type no-xen-p)
-			     (if (member type no-xen-to-c)
-				 "_Ptr_2"
-				 "_Ptr_no_P")
-			     (if (or (string=? type "guint8*")
-				     (string=? type "GtkRecentFilterInfo*"))
-				 "_Ptr_const"
-				 "_Ptr")))
-		     (if (member type no-c-to-xen)
-			 "_1"
-			 (if (member type no-xen-p)
-			     (if (member type no-xen-to-c)
-				 "_no_p_2"
-				 "_no_p")
-			     "")))
+		 (cond ((or (has-stars type) 
+			    (string=? type "gpointer")
+			    (string=? type "GClosureNotify"))
+			(cond ((member type no-c-to-xen)
+			       "_Ptr_1")
+			      ((member type no-xen-p)
+			       (if (member type no-xen-to-c) "_Ptr_2" "_Ptr_no_P"))
+			      ((member type '("guint8*" "GtkRecentFilterInfo*") string=?)
+			       "_Ptr_const")
+			      (else "_Ptr")))
+		       ((member type no-c-to-xen)
+			"_1")
+		       ((member type no-xen-p)
+			(if (member type no-xen-to-c) "_no_p_2" "_no_p"))
+		       (else ""))
 		 (no-stars type) 
 		 type)))))
 
