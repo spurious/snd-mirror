@@ -74016,8 +74016,9 @@ int main(int argc, char **argv)
  *   append in string case uses string_append, not g_string_append!
  *
  * eval outside optimized context segfault: copy_body can't handle cycles, unoptimize is problematic
- *
+ * "," ignored in arg list?! -- (string-append "a" , "b") -> "ab" because (unquote "b") -> "b" -- need a warning I think (reader?)
  * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
+ * clean up opt_syn 53677
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
  *

@@ -46248,9 +46248,8 @@ EDITS: 1
 							       XmNbackground       *basic-color*)))
 			(fnts (make-dialog mainform)))
 		   (XtManageChild fnts)
-		   (if (not colors-dialog)
-		       (XtManageChild fonts-dialog)
-		       (XtManageChild colors-dialog)))))
+		   (XtManageChild (or colors-dialog fonts-dialog)))))
+
 	     (list 
 	      (lambda (mainform)
 		(XmCreateFontSelector mainform "Fonts" 
