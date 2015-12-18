@@ -74019,6 +74019,7 @@ int main(int argc, char **argv)
  * "," ignored in arg list?! -- (string-append "a" , "b") -> "ab" because (unquote "b") -> "b" -- need a warning I think (reader?)
  * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
  * clean up opt_syn 53677
+ * doc/test (copy x :readable) -- see current notes here and in s7.html comments
  *
  * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
  *
