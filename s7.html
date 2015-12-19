@@ -3793,7 +3793,7 @@ a modern GUI leaves formatting decisions to a text or table widget.
 <p>A hook is a function created by make-hook, and called (normally from C) when something interesting happens.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
-hooks: <a href="#errorhook">*error-hook*</a>, 
+hooks: <a href="#errorhook">*error-hook*</a>, <a href="#readerrorhook">*read-error-hook*</a>,
 <a href="#unboundvariablehook">*unbound-variable-hook*</a>, *missing-close-paren-hook*,
 and <a href="#loadhook">*load-hook*</a>.
 make-hook is:
@@ -4615,6 +4615,18 @@ Its arguments are named 'type and 'data.
               (newline *stderr*))))
 </pre>
 
+<p><em class=def id="readerrorhook">*read-error-hook*</em> provides two hooks into the reader.
+A major problem when reading code written for other Schemes is that each Scheme provides
+a plethora of idiosyncratic #-names (even special character names), and \ escapes in string
+constants.  *read-error-hook* provides a way to handle these weird cases.  If a #-name
+is encountered that s7 can't deal with, *read-error-hook* is called with two arguments,
+ #t and the string representing the constant.  If you set (hook 'result), that result is
+returned to the reader.  Otherwise a 'read-error is raised and you drop into the error handler.
+Similarly, if some bizaare \ use occurs, *read-error-hook* is called with two arguments,
+#f and the offending character.  If you return a character, it is passed to the reader;
+otherwise you get an error.  lint.scm has an example.
+</p>
+
 <p>
 There is a break macro defined in Snd (snd-xen.c)
 which allows you to stop at some point, then evaluate arbitrary expressions in that context.
@@ -4898,8 +4910,10 @@ that call the lambda body if one of the variables is set.
 <b><em class=def id="loadpath">*load-path*</em></b> is a list of directories to search when loading a file.
 <b><em class=def id="loadhook">*load-hook*</em></b> is a hook whose functions are called just before a file is loaded.  
 The hook function argument, named 'name, is the filename.
-While loading, the port-filename and port-line-number of the current-input-port can tell you
-where you are in the file.  This data is available after loading via pair-line-number and pair-filename.
+While loading, the <em class=def id="portfilename">port-filename</em> and 
+<em class=def id="portlinenumber">port-line-number</em> of the current-input-port can tell you
+where you are in the file.  This data is available after loading via <em class=def id="pairlinenumber">pair-line-number</em>
+and <em class=def id="pairfilename">pair-filename</em>.
 </p>
 
 <pre class="indented">
@@ -5059,9 +5073,9 @@ I need to know where something unexpected happened.  So:
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
-			    (port-line-number)
+			    (<a href="portlinenumber">port-line-number</a>)
 			    (and (string=? str "__file__")
-			         (port-filename)))))
+			         (<a href="portfilename">port-filename</a>)))))
             *#readers*))
 </pre>
 
@@ -5819,7 +5833,7 @@ Better ideas are always welcome!
 <li>*s7*
 <li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum
-<li>*unbound-variable-hook* *missing-close-paren-hook* *load-hook* *error-hook*
+<li>*unbound-variable-hook* *missing-close-paren-hook* *load-hook* *error-hook* *read-error-hook*
 </ul>
 
 <p>__func__ is the name (or name and location) of the function currently being called, as in C.

@@ -881,7 +881,7 @@ struct s7_scheme {
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
   s7_pointer missing_close_paren_hook;
-  s7_pointer error_hook;              /* *error-hook* hook object */
+  s7_pointer error_hook, read_error_hook; /* *error-hook* hook object, and *read-error-hook* */
   s7_pointer direct_str;
 
   bool gc_off;                        /* gc_off: if true, the GC won't run */
@@ -12664,6 +12664,18 @@ static bool is_abnormal(s7_pointer x)
     }
 }
 
+static s7_pointer unknown_sharp_constant(s7_scheme *sc, char *name)
+{
+  /* check *read-error-hook* */
+  if (!is_null(sc->read_error_hook))
+    {
+      s7_pointer result;
+      result = s7_call(sc, sc->read_error_hook, list_2(sc, sc->T, make_string_wrapper(sc, name)));
+      if (result != sc->UNSPECIFIED)
+	return(result);
+    }
+  return(sc->NIL);
+}
 
 #define NESTED_SHARP false
 #define UNNESTED_SHARP true
@@ -12694,7 +12706,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 
   len = safe_strlen5(name); /* just count up to 5 */
   if (len < 2)
-    return(sc->NIL);
+    return(unknown_sharp_constant(sc, name));
 
   switch (name[0])
     {
@@ -12709,7 +12721,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       if (strings_are_equal(name, "<eof>"))
 	return(sc->EOF_OBJECT);
 
-      return(sc->NIL);
+      return(unknown_sharp_constant(sc, name));
 
 
       /* -------- #o #d #x #b -------- */
@@ -12725,16 +12737,16 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	if (name[1] == '#')
 	  {
 	    if (!at_top)
-	      return(sc->NIL);
+	      return(unknown_sharp_constant(sc, name));
 	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i'))) /* r6rs includes caps here */
 	      {
 		if ((len > 3) && (name[3] == '#'))
-		  return(sc->NIL);
+		  return(unknown_sharp_constant(sc, name));
 		to_inexact = (name[2] == 'i');
 		to_exact = (name[2] == 'e');
 		num_at = 3;
 	      }
-	    else return(sc->NIL);
+	    else return(unknown_sharp_constant(sc, name));
 	  }
 #endif
 	/* the #b or whatever overrides any radix passed in earlier */
@@ -12746,14 +12758,14 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	 *   #x#e1+i should also be an error, but #e1+0i is not an error I guess since there actually isn't any imaginary part
 	 */
 	if (is_abnormal(x))
-	  return(sc->NIL);
+	  return(unknown_sharp_constant(sc, name));
 
 #if (!WITH_PURE_S7)
 	if ((!to_exact) && (!to_inexact))
 	  return(x);
 
 	if ((s7_imag_part(x) != 0.0) && (to_exact))  /* #x#e1+i */
-	  return(sc->NIL);
+	  return(unknown_sharp_constant(sc, name));
 
 #if WITH_GMP
 	if (s7_is_bignum(x))
@@ -12786,24 +12798,24 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 
 	  if ((name[2] == 'e') ||                        /* #i#e1 -- assume these aren't redefinable? */
 	      (name[2] == 'i'))
-	    return(sc->NIL);
+	    return(unknown_sharp_constant(sc, name));
 
 	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
 	  if (s7_is_number(x))
 	    {
 	      if (is_abnormal(x))
-		return(sc->NIL);
+		return(unknown_sharp_constant(sc, name));
 #if WITH_GMP
 	      if (s7_is_bignum(x))                        /* (string->number "#b#e-11e+111") */
 		return(big_exact_to_inexact(sc, set_plist_1(sc, x)));
 #endif
 	      return(exact_to_inexact(sc, x));
 	    }
-	  return(sc->NIL);
+	  return(unknown_sharp_constant(sc, name));
 	}
       x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
       if (!s7_is_number(x))  /* not is_abnormal(x) -- #i0/0 -> nan etc */
-	return(sc->NIL);
+	return(unknown_sharp_constant(sc, name));
 #if WITH_GMP
       if (s7_is_bignum(x))
 	return(big_exact_to_inexact(sc, set_plist_1(sc, x)));
@@ -12817,21 +12829,21 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	{
 	  if ((name[2] == 'e') ||                        /* #e#e1 */
 	      (name[2] == 'i'))
-	    return(sc->NIL);
+	    return(unknown_sharp_constant(sc, name));
 
 	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
 	  if (s7_is_number(x))
 	    {
 	      if (is_abnormal(x))                        /* (string->number "#e#b0/0") */
-		return(sc->NIL);
+		return(unknown_sharp_constant(sc, name));
 	      if (!s7_is_real(x))                        /* (string->number "#e#b1+i") */
-		return(sc->NIL);
+		return(unknown_sharp_constant(sc, name));
 #if WITH_GMP
 	      return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
 #endif
 	      return(inexact_to_exact(sc, x, with_error));
 	    }
-	  return(sc->NIL);
+	  return(unknown_sharp_constant(sc, name));
 	}
 
       x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
@@ -12841,9 +12853,9 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
 #endif
       if (is_abnormal(x))                                /* (string->number "#e0/0") */
-	return(sc->NIL);
+	return(unknown_sharp_constant(sc, name));
       if (!s7_is_real(x))                                /* (string->number "#e1+i") */
-	return(sc->NIL);
+	return(unknown_sharp_constant(sc, name));
 
 #if WITH_GMP
       /* there are non-big floats that are greater than most-positive-fixnum:
@@ -12962,7 +12974,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	  break;
 	}
     }
-  return(sc->NIL);
+  return(unknown_sharp_constant(sc, name));
 }
 
 
@@ -45900,7 +45912,13 @@ static s7_pointer stack_entries(s7_scheme *sc)
 	  (s7_is_valid(sc, e)) &&
 	  (op < OP_MAX_DEFINED))
 	{
+#if DEBUGGING
+	  if (op < OP_MAX_DEFINED_1)
+	    lst = cons(sc, list_4(sc, func, args, e, make_string_wrapper(sc, op_names[op])), lst);
+	  else lst = cons(sc, list_4(sc, func, args, e, make_integer(sc, op)), lst);
+#else
 	  lst = cons(sc, list_4(sc, func, args, e, make_integer(sc, op)), lst);
+#endif
 	  sc->w = lst;
 	}
     }
@@ -46683,75 +46701,30 @@ static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len)
 }
 
 
-static char *missing_close_paren_syntax_check(s7_scheme *sc, s7_pointer lst)
+static s7_pointer tree_descend(s7_scheme *sc, s7_pointer p, unsigned int line)
 {
-  s7_pointer p, old_hook;
-  int old_hook_loc;
-  char *msg = NULL;
-
-  /* this can get into an infinite loop if unbound variable hook gets involved so...
-   */
-  old_hook = s7_hook_functions(sc, sc->unbound_variable_hook);
-  old_hook_loc = s7_gc_protect(sc, old_hook);
-  s7_hook_set_functions(sc, sc->unbound_variable_hook, sc->NIL);
-
-  for (p = lst; is_pair(p); p = cdr(p))
+  s7_pointer tp;
+  if (!is_pair(p)) return(NULL);
+  if (has_line_number(p))
     {
-      if (is_pair(car(p)))
+      unsigned int x;
+      x = remembered_line_number(pair_line(p));
+      if (x > 0)
 	{
-	  s7_pointer sym;
-	  sym = caar(p);
-	  if (is_symbol(sym))
+	  if (line == 0) /* first line number we encounter will be the current reader location (i.e. the end of the form) */
+	    line = x;
+	  else
 	    {
-	      int len;
-
-	      len = s7_list_length(sc, car(p));
-	      if (((sym == make_symbol_with_length(sc, "if", 2)) &&
-		   (len > 4)) ||
-		  /* some care is needed -- we can't risk autoloading the very same file we're complaining about! */
-		  ((is_slot(global_slot(sym))) &&
-		   (s7_is_procedure(slot_value(global_slot(sym)))) &&
-		   (!s7_is_aritable(sc, slot_value(global_slot(sym)), len))) ||
-		  ((sym == make_symbol_with_length(sc, "define", 6)) &&
-		   (is_pair(cdr(p))) &&
-		   (is_symbol(cadr(p))) &&
-		   (len > 3)))
-		{
-		  int msg_len, form_len;
-		  char *form;
-		  /* it's very tricky to try to see other errors here, especially because 'case'
-		   *   can have syntax names in its key lists.  Even this may get fooled, but
-		   *   I'm hoping that more often than not, it will help track down the missing
-		   *   close paren.
-		   */
-
-		  form = object_to_truncated_string(sc, car(p), 80);
-		  form_len = safe_strlen(form);
-		  msg_len = form_len + 128;
-		  msg = (char *)malloc(msg_len * sizeof(char));
-		  snprintf(msg, msg_len, ";  this looks bogus: %s", form);
-		  free(form);
-
-		  s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
-		  s7_gc_unprotect_at(sc, old_hook_loc);
-
-		  return(msg);
-		}
-	    }
-	  msg = missing_close_paren_syntax_check(sc, car(p));
-	  if (msg)
-	    {
-	      s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
-	      s7_gc_unprotect_at(sc, old_hook_loc);
-	      return(msg);
+	      if (x < line)
+		return(p);
 	    }
 	}
     }
-  s7_hook_set_functions(sc, sc->unbound_variable_hook, old_hook);
-  s7_gc_unprotect_at(sc, old_hook_loc);
-
-  return(NULL);
+  tp = tree_descend(sc, car(p), line);
+  if (tp) return(tp);
+  return(tree_descend(sc, cdr(p), line));
 }
+
 
 static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
@@ -46772,25 +46745,25 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 	return(g_throw(sc, list_1(sc, result)));
     }
 
-  pt = sc->input_port;
-
-  /* it's hard to give a good idea here of where the missing paren is because we've already
-   *   popped off all the stacked info, following ')' until eof.
-   * but the current incoming program code is in sc->args, reversed at its top level,
-   *   so it's worth looking for some problem involving too many clauses (if) or arguments, etc.
-   * another gotcha: since we're in the reader, we can't depend on sc->envir!
-   * this can be a hard bug to track down in a large program, so s7 really has to make an effort to help.
-   */
-
   if (is_pair(sc->args))
     {
-      s7_pointer lx;
-      lx = s7_reverse(sc, sc->args);
-      syntax_msg = missing_close_paren_syntax_check(sc, lx);
-      /* if syntax_msg is null, we didn't find the problem, so perhaps show it indented?
-       */
+      s7_pointer p;
+      p = tree_descend(sc, sc->args, 0);
+      if ((p) && (is_pair(p)) &&
+	  (has_line_number(p)))
+	{
+	  int msg_len, form_len;
+	  char *form;
+	  form = object_to_truncated_string(sc, p, 40);
+	  form_len = safe_strlen(form);
+	  msg_len = form_len + 128;
+	  syntax_msg = (char *)malloc(msg_len * sizeof(char));
+	  snprintf(syntax_msg, msg_len, ";  current form awaiting a close paren starts around line %u: %s", remembered_line_number(pair_line(p)), form);
+	  free(form);
+	}
     }
 
+  pt = sc->input_port;
   if ((port_line_number(pt) > 0) &&
       (port_filename(pt)))
     {
@@ -49061,6 +49034,19 @@ static int read_x_char(s7_pointer pt)
 }
 
 
+static s7_pointer unknown_string_constant(s7_scheme *sc, int c)
+{
+  /* check *read-error-hook* */
+  if (!is_null(sc->read_error_hook))
+    {
+      s7_pointer result;
+      result = s7_call(sc, sc->read_error_hook, list_2(sc, sc->F, s7_make_character(sc, (unsigned char)c)));
+      if (s7_is_character(result))
+	return(result);
+    }
+  return(sc->T);
+}
+
 static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 {
   /* sc->F => error
@@ -49178,15 +49164,26 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			{
 			  c = read_x_char(pt);
 			  if (c == NOT_AN_X_CHAR)
-			    return(sc->T);
+			    {
+			      s7_pointer result;
+			      result = unknown_string_constant(sc, c);
+			      if (s7_is_character(result))
+				sc->strbuf[i++] = character(result);
+			      else return(result);
+			    }
 			  sc->strbuf[i++] = (unsigned char)c;
 			}
 		      else
 			{
 			  /* if (!is_white_space(c)) */ /* changed 8-Apr-12 */
 			  if ((c != '\n') && (c != '\r'))
-			    return(sc->T);
-
+			    {
+			      s7_pointer result;
+			      result = unknown_string_constant(sc, c);
+			      if (s7_is_character(result))
+				sc->strbuf[i++] = character(result);
+			      else return(result);
+			    }
 			  /* #f here would give confusing error message "end of input", so return #t=bad backslash.
 			   *     this is not optimal. It's easy to forget that backslash needs to be backslashed.
 			   *
@@ -67250,10 +67247,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      car(x) = sc->value;
 		      cdr(x) = sc->NIL;
 		      sc->args = x;
-		      /*
-		      if (port_position(pt) >= port_data_size(pt))
-			return(missing_close_paren_error(sc));
-		      */
 		      c = port_read_white_space(pt)(sc, pt);
 		      goto READ_C;
 		    }
@@ -67269,10 +67262,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(x) = sc->value;
 		    cdr(x) = sc->NIL;
 		    sc->args = x;
-		    /*
-		    if (port_position(pt) >= port_data_size(pt))
-		      return(missing_close_paren_error(sc));
-		    */
 		    c = port_read_white_space(pt)(sc, pt);
 		    goto READ_C;
 		  }
@@ -67350,10 +67339,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      default:
 		sc->strbuf[0] = c;
 		sc->value = port_read_name(pt)(sc, pt);
-		/*
-		if (port_position(pt) >= port_data_size(pt))
-		  return(missing_close_paren_error(sc));
-		*/
 		goto READ_LIST;
 	      }
 	  }
@@ -67385,10 +67370,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      
 	    case TOKEN_ATOM:
 	      sc->value = port_read_name(sc->input_port)(sc, sc->input_port);
-	      /*
-	      if (port_position(sc->input_port) >= port_data_size(sc->input_port)) 
-		return(missing_close_paren_error(sc));
-	      */
 	      goto READ_LIST;
 	      
 	    case TOKEN_SHARP_CONST:
@@ -73881,6 +73862,11 @@ s7_scheme *s7_init(void)
   s7_define_constant_with_documentation(sc, "*error-hook*", sc->error_hook, 
 					"*error-hook* functions are called in the error handler, passed (hook 'type) and (hook 'data).");
 
+  /* -------- *read-error-hook* -------- */
+  sc->read_error_hook = s7_eval_c_string(sc, "(make-hook 'type 'data)");
+  s7_define_constant_with_documentation(sc, "*read-error-hook*", sc->read_error_hook, 
+					"*read-error-hook* functions are called by the reader if it is unhappy, passing the current program string as (hook 'data).");
+
   s7_define_constant(sc, "*s7*",
     s7_openlet(sc, s7_inlet(sc,
        s7_list(sc, 2,
@@ -74021,7 +74007,8 @@ int main(int argc, char **argv)
  * clean up opt_syn 53677
  * doc/test (copy x :readable) -- see current notes here and in s7.html comments
  *
- * make ow! display (*s7* 'stack) in some reasonable way, also why is repl's error handling less informative than snd's?
+ * make ow! display (*s7* 'stack) in some reasonable way
+ *   (*s7* 'stack) itself is a problem -- need saved list so cycle check is not fooled?
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

@@ -2549,10 +2549,12 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, graphics_context *ax, 
 	  color_t old_color;
 	  old_color = get_foreground_color(ax);
 	  set_foreground_color(ax, cp->combined_data_color);
-	  draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+	  /* draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style); */
+	  /*   ^ this messes up dB graph if line-style is lollipops or filled -- see also below */
+	  draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, fap->y0, cp->transform_graph_style);
 	  set_foreground_color(ax, old_color);
 	}
-      else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, 0.0, cp->transform_graph_style);
+      else draw_grf_points(cp->dot_size, ax, lines_to_draw, fap, fap->y0, cp->transform_graph_style);
     }
   
   if (cp->printing) 
