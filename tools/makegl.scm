@@ -52,9 +52,7 @@
   (let ((sp1 (char-position #\space data)))
     (let ((sp2 (char-position #\space data (+ sp1 1))))
       (let ((sp3 (char-position #\space data (+ sp2 1))))
-	(if sp3
-	    (substring data (+ sp2 1))
-	    (substring data sp2))))))
+	(substring data (if sp3 (+ sp2 1) sp2))))))
 
 (define (car-str data)
   (let ((sp (char-position #\space data)))

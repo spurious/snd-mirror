@@ -4509,9 +4509,7 @@ Along the same lines:
   (catch #t
     func
     (lambda args
-      (if (test (car args))
-	  (apply err args)
-	  (apply throw args))))) ; if not caught, re-raise the error
+      (apply (if (test (car args)) err throw) args)))) ; if not caught, re-raise the error via throw
 
 (define (catch-member lst func err)
   (catch-if (lambda (tag) (member tag lst)) func err))
@@ -8890,17 +8888,12 @@ variables at the start of lint.scm to control additional output:
 *report-unused-top-level-functions*  ; if #t, report unused functions
 *report-undefined-variables*         ; if #t, report undefined identifiers
 *report-shadowed-variables*          ; if #t, report function parameters that are shadowed
-*report-minor-stuff*                 ; if #t, report all sorts of other stuff
 </pre>
 
 
 <p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
-sometimes gets confused.  *report-minor-stuff* adds output about overly complicated boolean and numerical
-expressions, dangerous floating point operations, and
-whatever else it thinks is odd.
-</p>
-
-<p>Also in lint.scm is html-lint.  It reads an HTML file looking for
+sometimes gets confused. 
+Also in lint.scm is html-lint.  It reads an HTML file looking for
 Scheme code.  If any is found, it runs s7 and then lint over it, reporting troubles.
 </p>
 
@@ -9225,8 +9218,8 @@ The special symbol '** holds the last value.
 
 <p>Meta keys are a problem on the Mac.  You can use ESC instead, but that requires
 super-human capacities.  I stared at replacement control keys, and nothing seemed
-right.  I don't know how to remap these commands, but it's easy to do: see repl.scm
-which has a small table of mappings, and try out your own.
+right.  If you can think of something, it's easy to define replacements: see repl.scm
+which has a small table of mappings.
 </p>
 
 <p>To run the repl, either build s7 with the compiler flag -DWITH_MAIN,

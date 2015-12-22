@@ -173,9 +173,7 @@
   (let ((sp1 (char-position #\space data)))
     (let ((sp2 (char-position #\space data (+ sp1 1))))
       (let ((sp3 (char-position #\space data (+ sp2 1))))
-	(if sp3
-	    (substring data (+ sp2 1))
-	    (substring data sp2))))))
+	(substring data (if sp3 (+ sp2 1) sp2))))))
 
 (define (car-str data)
   (let ((sp (char-position #\space data)))
@@ -1043,9 +1041,10 @@
 	  (if (not (member type types))
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args 'ok)))
-	    (if spec
-		(set! funcs (cons (list name type strs args spec spec-data) funcs))
-		(set! funcs (cons (list name type strs args) funcs)))
+	    (set! funcs 
+		  (if spec
+		      (cons (list name type strs args spec spec-data) funcs)
+		      (cons (list name type strs args) funcs)))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define (CFNC-PA data min-len max-len types)
@@ -1065,9 +1064,10 @@
 		(set! all-types (cons type all-types))
 		(set! cairo-types (cons type cairo-types))))
 	  (let ((strs (parse-args args 'cairo)))
-	    (if spec
-		(set! cairo-funcs (cons (list name type strs args spec) cairo-funcs))
-		(set! cairo-funcs (cons (list name type strs args) cairo-funcs)))
+	    (set! cairo-funcs 
+		  (if spec
+		      (cons (list name type strs args spec) cairo-funcs)
+		      (cons (list name type strs args) cairo-funcs)))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-PNG-FUNC data spec)
@@ -1081,9 +1081,10 @@
 		(set! all-types (cons type all-types))
 		(set! cairo-types (cons type cairo-types))))
 	  (let ((strs (parse-args args 'cairo)))
-	    (if spec
-		(set! cairo-png-funcs (cons (list name type strs args spec) cairo-png-funcs))
-		(set! cairo-png-funcs (cons (list name type strs args) cairo-png-funcs)))
+	    (set! cairo-png-funcs 
+		  (if spec
+		      (cons (list name type strs args spec) cairo-png-funcs)
+		      (cons (list name type strs args) cairo-png-funcs)))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-810 data spec)
@@ -1097,9 +1098,10 @@
 		(set! all-types (cons type all-types))
 		(set! cairo-types-810 (cons type cairo-types-810))))
 	  (let ((strs (parse-args args 'cairo-810)))
-	    (if spec
-		(set! cairo-funcs-810 (cons (list name type strs args spec) cairo-funcs-810))
-		(set! cairo-funcs-810 (cons (list name type strs args) cairo-funcs-810)))
+	    (set! cairo-funcs-810 
+		  (if spec
+		      (cons (list name type strs args spec) cairo-funcs-810)
+		      (cons (list name type strs args) cairo-funcs-810)))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-912 data spec)
@@ -1113,9 +1115,10 @@
 		(set! all-types (cons type all-types))
 		(set! cairo-types-912 (cons type cairo-types-912))))
 	  (let ((strs (parse-args args 'cairo-912)))
-	    (if spec
-		(set! cairo-funcs-912 (cons (list name type strs args spec) cairo-funcs-912))
-		(set! cairo-funcs-912 (cons (list name type strs args) cairo-funcs-912)))
+	    (set! cairo-funcs-912 
+		  (if spec
+		      (cons (list name type strs args spec) cairo-funcs-912)
+		      (cons (list name type strs args) cairo-funcs-912)))
 	    (hash-table-set! names name (func-type strs)))))))
 
 
@@ -2627,9 +2630,7 @@
      (let ((sig (make-signature f)))
        (if (pair? sig)
 	   (let ((count (signatures sig)))
-	     (if (not count)
-		 (set! (signatures sig) 0)
-		 (set! (signatures sig) (+ count 1)))))))
+	     (set! (signatures sig) (if (not count) 0 (+ count 1)))))))
    lst))
 
 (make-signatures funcs)

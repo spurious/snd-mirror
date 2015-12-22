@@ -41,7 +41,7 @@
  * cload.scm and lib*.scm tie in various C libraries.
  * lint.scm checks Scheme code for infelicities.
  * r7rs.scm implements some of r7rs (small).
- * write.scm currrenly has pretty-print.
+ * write.scm currrently has pretty-print.
  * mockery.scm has the mock-data definitions.
  * stuff.scm has some stuff.
  *
@@ -74019,4 +74019,5 @@ int main(int argc, char **argv)
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
+ *
  */

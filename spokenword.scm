@@ -49,8 +49,7 @@
 
 (define local-peak
   (lambda (position)
-    (let ((data (local-data position)))
-      (float-vector-peak data))))
+    (float-vector-peak (local-data position))))
 
 (define local-smooth
   (lambda (position)

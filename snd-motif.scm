@@ -78,9 +78,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i len) new-str)
 	    (let ((c (str i)))
-	      (if (memq c '(#\\ #\/))
-		  (set! (new-str i) #\_)
-		  (set! (new-str i) c))))))))
+	      (set! (new-str i) (if (memq c '(#\\ #\/)) #\_ c))))))))
   
   
 ;;; -------- apply func to every widget belonging to w (and w) --------
@@ -1039,9 +1037,7 @@
       (let ((mark-lists ()))
 	(dilambda
 	 (lambda (snd chn)
-	   (let ((dat (find-mark-list snd chn mark-lists)))
-	     (and dat
-		  (caddr dat))))
+	   (cond ((find-mark-list snd chn mark-lists) => caddr) (else #f)))
 	 (lambda (snd chn wid)
 	   (set! mark-lists (cons (list snd chn wid) mark-lists))))))
     
@@ -2616,9 +2612,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 		  (set! (data loc) var)
 		  (if (time-graph? snd) (update-time-graph snd))
 		  (if (transform-graph? snd) (update-transform-graph snd))
-		  (if (= (+ loc 1) len)
-		      (set! (cursor snd 0) 0)
-		      (set! (cursor snd 0) (+ loc 1))))))
+		  (set! cursor (if (= (+ loc 1) len) 0 (+ loc 1))))))
 	var)))
   
   (define variable-display-reset 

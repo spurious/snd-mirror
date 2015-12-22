@@ -10744,8 +10744,7 @@ EDITS: 2
       
       (let ((ind (open-sound "oboe.snd")))
 	(map-channel (make-eliminate-hum 550))
-	(let ((peaker (make-peaking-2 500 1000 1.0)))
-	  (map-channel peaker))
+	(map-channel (make-peaking-2 500 1000 1.0))
 	(map-channel (chordalize))
 	(close-sound ind))
 
@@ -21378,7 +21377,7 @@ EDITS: 2
 		(snd-display #__line__ ";outa to file at -1: ~A" v))
 	    (if (> (mus-sound-chans v) 1)
 		(snd-display #__line__ ";outa to file at -1 chans: ~A" (mus-sound-chans v)))
-	    (if (find-sound v) (close-sound (find-sound v)))
+	    (cond ((find-sound v) => close-sound))
 	    (delete-file v))))
     (let ((v (with-sound ((make-float-vector 10)) (catch #t (lambda () 
 							      (outa -1 .1)) 

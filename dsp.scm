@@ -2488,8 +2488,7 @@ is assumed to be outside -1.0 to 1.0."))
 	   (list matrix b)))))))
 
 (define (matrix-solve A b)
-  (let ((val (invert-matrix A b)))
-    (and val (cadr val))))
+  (cond ((invert-matrix A b) => cadr) (else #f)))
 
 (define* (make-savitzky-golay-filter size (order 2)) ;assuming symmetric filter (left = right)
   (if (even? size) 

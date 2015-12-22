@@ -5746,9 +5746,9 @@ The Hilbert transform can be implemented with an fir-filter:
       (let ((k (+ i len))
             (denom (* pi i))
             (num (- 1.0 (cos (* pi i)))))
-        (if (or (= num 0.0) (= i 0))
-            (set! (arr k) 0.0)
-            (set! (arr k) (* (/ num denom) 
+        (set! (arr k) (if (or (= num 0.0) (= i 0)) 
+                          0.0
+                          (* (/ num denom) 
                              (+ .54 (* .46 (cos (/ (* i pi) len)))))))))
     (<em class=red>make-fir-filter</em> arrlen arr)))
 

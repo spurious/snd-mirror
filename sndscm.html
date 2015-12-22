@@ -417,8 +417,7 @@ elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script 
 </p>
 
 <pre class="indented">
-(let ((flt (make-elliptic-lowpass 8 .1))) ; 8th order elliptic with cutoff at .1 * srate
-  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> flt))                       ; flt is a clm filter generator
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (make-elliptic-lowpass 8 .1)) ; 8th order elliptic with cutoff at .1 * srate
 </pre>
 
 <p>
@@ -3240,8 +3239,7 @@ and returns a sample):
 </p>
 
 <pre class="indented">
-(let ((peaker (make-peaking-2 500 1000 1.0)))
-  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> peaker))
+(<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (make-peaking-2 500 1000 1.0))
 </pre>
 
 <p>In this case 'm' is the gain in the pass band.
@@ -4272,8 +4270,8 @@ current spectrum value.
 
 
 <pre class="indented">
-(let ((op (<a class=quiet href="sndclm.html#make-one-zero">make-one-zero</a> .5 .5))) (filter-fft op))
-(let ((op (<a class=quiet href="sndclm.html#make-one-pole">make-one-pole</a> .05 .95))) (filter-fft op))
+(filter-fft (<a class=quiet href="sndclm.html#make-one-zero">make-one-zero</a> .5 .5))
+(filter-fft (<a class=quiet href="sndclm.html#make-one-pole">make-one-pole</a> .05 .95))
 (filter-fft (lambda (y) (if (&lt; y .1) 0.0 y))) ; like fft-squelch
 (let ((rd (<a class=quiet href="extsnd.html#makesampler">make-sampler</a> 0 0 0 1 0))) 
   (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 0) 

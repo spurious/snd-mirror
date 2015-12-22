@@ -143,8 +143,7 @@
 
 (define (delete-named-mark name)
   (select-channel 0)
-  (if (find-mark name)
-      (delete-mark (find-mark name))))
+  (cond ((find-mark name) => delete-mark)))
 
 (define (my-play-selection pos1 pos2)
   (stop-playing)
