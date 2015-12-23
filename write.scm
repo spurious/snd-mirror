@@ -194,7 +194,7 @@
 			(stacked-list (cdr obj) (+ column *pretty-print-spacing* (length (symbol->string (car obj)))))
 			(write-char #\) port))
 		      (write obj port)))
-		 
+
 		 ((case)
 		  (if (not (pair? (cdr obj)))
 		      (write obj port)
@@ -379,7 +379,7 @@
 							(let ((str (format #f "~S" (car lst))))
 							  (if (> (length str) (- *pretty-print-length* line-start))
 							      (begin
-								(if (not (zero? k)) (spaces line-start))
+								(if (not (zero? k)) (spaces line-start) (if (= i 1) (write-char #\space port)))
 								(pretty-print-1 (car lst) port line-start))
 							      (begin
 								(if (or (not (zero? k)) (= i 1)) (write-char #\space port))

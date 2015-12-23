@@ -2114,9 +2114,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 				       
 				       (lambda (w data)
 					 (let ((e (xe-envelope place-sound-envelope)))
-					   (if (not (equal? e (list 0.0 1.0 1.0 1.0)))
-					       (place-sound mono-snd stereo-snd e)
-					       (place-sound mono-snd stereo-snd pan-pos))))
+					   (place-sound mono-snd stereo-snd (if (not (equal? e '(0.0 1.0 1.0 1.0))) e pan-pos))))
 				       
 				       (lambda (w data)
 					 (help-dialog "Place sound"

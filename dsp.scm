@@ -2726,9 +2726,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
       (do ((i 0 (+ i 2)))
 	  ((>= i len))
 	(let ((hnum (new-partials i)))
-	  (if (= hnum 0)
-	      (set! (new-partials (+ i 1)) DC)
-	      (set! (new-partials (+ i 1)) (new-amps (- hnum 1))))))
+	  (set! (new-partials (+ i 1)) (if (= hnum 0) DC (new-amps (- hnum 1))))))
       new-partials)))
 
 

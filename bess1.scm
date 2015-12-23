@@ -525,9 +525,9 @@
 		       (if cplay
 			   (begin
 			     (set-defaults)
-			     (if (= which-play 0)
-				 (set! func (apply make-agn (or args ())))
-				 (set! func (apply make-float-vector-test (or args ()))))
+			     (set! func (if (= which-play 0)
+					    (apply make-agn (or args ()))
+					    (apply make-float-vector-test (or args ()))))
 			     (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
 			   (if proc (XtRemoveWorkProc proc)))))
       (XmToggleButtonSetState play-button cplay #f)

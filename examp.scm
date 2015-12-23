@@ -304,7 +304,7 @@
 	      (let* ((chans (if (= channel-mode 3) 1 2))
 		     (mpegnum (if (= id 0) 4 (if (= id 2) 2 1)))
 		     (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))
-		     (srate (/ (list-ref (list 44100 48000 32000 0) srate-index) mpegnum)))
+		     (srate (/ (#(44100 48000 32000 0) srate-index) mpegnum)))
 		(snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
 				   mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
 		(system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))
@@ -1390,8 +1390,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	     (val1 (abs (next-sample sf)) (abs (next-sample sf))))
 	    ((or (sampler-at-end? sf)
 		 (< (+ val0 val1) limit))
-	     (set! (cursor) n)
-	     n))))))
+	     (set! (cursor) n)))))))
 
 
 ;;; -------- sound interp
