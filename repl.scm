@@ -193,7 +193,10 @@
 	    
 	    ;; -------- evaluation ---------
 	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
-	      (set! (h 'result) 'string-read-error))
+	      (let ((ow (owlet)))
+		(if (ow 'error-file)
+		    (error "missing close paren in ~S" (ow 'error-file))
+		    (set! (h 'result) 'string-read-error))))
 	    
 	    (define (shell? h)             ; *unbound-variable-hook* function, also for Enter
 	      ;; examine cur-line -- only call system if the unbound variable matches the first non-whitespace chars
@@ -910,12 +913,12 @@
 				 (return))))
 			   
 			   (lambda (type info)
-			     (format *stderr* "~A: ~A" (red "error") type)
+			     (format *stderr* "~A:" (red "error"))
 			     (if (and (pair? info)
 				      (string? (car info)))
-				 (format *stderr* ": ~A" (apply format #f info))
+				 (format *stderr* " ~A" (apply format #f info))
 				 (if (not (null? info))
-				     (format *stderr* ": ~A" info)))
+				     (format *stderr* " ~A" info)))
 			     (newline *stderr*)))
 			 
 			 (push-line (copy cur-line))

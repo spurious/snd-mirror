@@ -32583,24 +32583,41 @@ static bool format_method(s7_scheme *sc, const char *str, format_data *fdat, s7_
 }
 
 
+#define MAX_FORMAT_NUMERIC_ARG 10000
+static int format_n_arg(s7_scheme *sc, const char *str, int str_len, format_data *fdat, s7_pointer args)
+{
+  int n;
+
+  if (is_null(fdat->args))          /* (format #f "~nT") */
+    just_format_error(sc, "~~N: missing argument", str, args, fdat);
+  if (!s7_is_integer(car(fdat->args)))
+    just_format_error(sc, "~~N: integer argument required", str, args, fdat);
+  n = (int)s7_integer(car(fdat->args));
+
+  if (n < 0)
+    just_format_error(sc, "~~N value is negative?", str, args, fdat);
+  else
+    {
+      if (n > MAX_FORMAT_NUMERIC_ARG)
+	just_format_error(sc, "~~N value is too big", str, args, fdat);
+    }
+
+  fdat->args = cdr(fdat->args);    /* I don't think fdat->ctr should be incremented here -- it's for *vector-print-length* etc */
+  return(n);
+}
+
+
 static int format_numeric_arg(s7_scheme *sc, const char *str, int str_len, format_data *fdat, s7_pointer args, int *i)
 {
-  #define MAX_FORMAT_WIDTH 10000
   int width;
-  if ((str[*i] == 'n') || (str[*i] == 'N'))
+  width = format_read_integer(sc, i, str_len, str, args, fdat);
+  if (width < 0)
+    just_format_error(sc, "width value is negative?", str, fdat->args, fdat);
+  else
     {
-      *i = *i + 1;
-      if (is_null(fdat->args))          /* (format #f "~nT") */
-	just_format_error(sc, "~~N: missing argument", str, args, fdat);
-      if (!s7_is_integer(car(fdat->args)))
-	just_format_error(sc, "~~N: integer argument required", str, args, fdat);
-      width = (int)s7_integer(car(fdat->args));
-      fdat->args = cdr(fdat->args); /* I don't think fdat->ctr should be incremented here -- it's for *vector-print-length* etc */
+      if (width > MAX_FORMAT_NUMERIC_ARG)
+	just_format_error(sc, "width value is too big", str, fdat->args, fdat);
     }
-  else width = format_read_integer(sc, i, str_len, str, args, fdat);
-  if ((width < 0) ||                   /* maybe overflow somewhere? */
-      (width > MAX_FORMAT_WIDTH))
-    just_format_error(sc, "width argument too big", str, args, fdat);
   return(width);
 }
 
@@ -32931,25 +32948,39 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 		char pad = ' ';
 		i++;                                      /* str[i] == '~' */
 
-		if ((isdigit((int)(str[i]))) ||
-		    (str[i] == 'N') || (str[i] == 'n'))   /* this is faster than the equivalent strchr */
-		  width = format_numeric_arg(sc, str, str_len, fdat, args, &i);
+		if (isdigit((int)(str[i])))
+		  width = format_numeric_arg(sc, str, str_len, fdat, args, &i); 
+		else
+		  {
+		    if ((str[i] == 'N') || (str[i] == 'n'))
+		      {
+			i++;
+			width = format_n_arg(sc, str, str_len, fdat, args); 
+		      }
+		  }
 		if (str[i] == ',')
 		  {
 		    i++;                                  /* is (format #f "~12,12D" 1) an error?  The precision has no use here. */
-		    if ((isdigit((int)(str[i]))) ||
-			(str[i] == 'N') || (str[i] == 'n'))
-		      precision = format_numeric_arg(sc, str, str_len, fdat, args, &i);
+		    if (isdigit((int)(str[i])))
+		      precision = format_numeric_arg(sc, str, str_len, fdat, args, &i); 
 		    else
 		      {
-			if (str[i] == '\'')              /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
+			if ((str[i] == 'N') || (str[i] == 'n'))
 			  {
-			    pad = str[i + 1];
-			    i += 2;
-			    if (i >= str_len)            /* (format #f "~,'") */
-			      format_error(sc, "incomplete numeric argument", str, args, fdat);
+			    i++;
+			    precision = format_n_arg(sc, str, str_len, fdat, args); 
 			  }
-			/* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
+			else
+			  {
+			    if (str[i] == '\'')              /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
+			      {
+				pad = str[i + 1];
+				i += 2;
+				if (i >= str_len)            /* (format #f "~,'") */
+				  format_error(sc, "incomplete numeric argument", str, args, fdat);
+			      }
+			    /* is (let ((str "~12,'xD")) (set! (str 5) #\null) (format #f str 1)) an error? */
+			  }
 		      }
 		  }
 
@@ -35683,7 +35714,7 @@ static s7_pointer c_memq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
-  #define Q_memq pl_tp
+  #define Q_memq pl_tl
   return(c_memq(sc, car(args), cadr(args)));
 }
 
@@ -35883,7 +35914,7 @@ static s7_pointer c_memv(s7_scheme *sc, s7_pointer x, s7_pointer y)
 static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
 {
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
-  #define Q_memv pl_tp
+  #define Q_memv pl_tl
 
   return(c_memv(sc, car(args), cadr(args)));
 }
@@ -36278,7 +36309,7 @@ static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
-  #define Q_list s7_make_circular_signature(sc, 1, 2, sc->IS_PAIR, sc->T)
+  #define Q_list s7_make_circular_signature(sc, 1, 2, sc->IS_LIST, sc->T)
   return(copy_list(sc, args));
 }
 
@@ -46736,10 +46767,18 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
       (sc->envir != sc->NIL))
     sc->envir = sc->NIL;
 
+  pt = sc->input_port;
+
   /* check *missing-close-paren-hook* */
   if (!is_null(sc->missing_close_paren_hook))
     {
       s7_pointer result;
+      if ((port_line_number(pt) > 0) &&
+	  (port_filename(pt)))
+	{
+	  slot_set_value(sc->error_line, make_integer(sc, port_line_number(pt)));
+	  slot_set_value(sc->error_file, make_string_wrapper(sc, port_filename(pt)));
+	}
       result = s7_call(sc, sc->missing_close_paren_hook, sc->NIL);
       if (result != sc->UNSPECIFIED)
 	return(g_throw(sc, list_1(sc, result)));
@@ -46763,7 +46802,6 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
 	}
     }
 
-  pt = sc->input_port;
   if ((port_line_number(pt) > 0) &&
       (port_filename(pt)))
     {
@@ -48498,7 +48536,7 @@ s7_pointer s7_values(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
-  #define Q_qq_list pcl_t
+  #define Q_qq_list s7_make_circular_signature(sc, 1, 2, sc->IS_LIST, sc->T)
 
   s7_pointer x, y, px;
 
@@ -67540,7 +67578,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 /* needed in s7_gmp_init and s7_init, initialized in s7_init before we get to gmp */
 static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
 #if (!WITH_PURE_S7)
-static s7_pointer pl_tp;
+static s7_pointer pl_tl;
 #endif
 
 
@@ -73103,7 +73141,7 @@ s7_scheme *s7_init(void)
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->IS_PAIR);
 #if (!WITH_PURE_S7)
-  pl_tp =  s7_make_signature(sc, 3, sc->T, sc->T, sc->IS_PAIR);
+  pl_tl =  s7_make_signature(sc, 3, sc->T, sc->T, sc->IS_LIST);
 #endif
   pl_bc =  s7_make_signature(sc, 2, sc->IS_BOOLEAN, sc->IS_CHAR);
   pl_bn =  s7_make_signature(sc, 2, sc->IS_BOOLEAN, sc->IS_NUMBER);

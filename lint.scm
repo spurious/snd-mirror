@@ -300,59 +300,82 @@
 
       (define* (make-var name type value)
 	(cons name (inlet 'value value 'type type 'set #f 'ref #f)))
-#|
+
       (define (tree-arg-member sym tree)
-	(and (pair? tree)
+	(and (proper-list? tree)
 	     (or (and (memq sym (cdr tree))
-		      (car tree))
+		      tree)
+		 (and (pair? (car tree))
+		      (tree-arg-member sym (car tree)))
 		 (and (pair? (cdr tree))
-		      (let ((p (member sym (cdr tree) (lambda (a b) 
-							(and (pair? b) 
-							     (tree-arg-member sym b))))))
-			(and p (car p)))))))
-|#
+		      (call-with-exit
+		       (lambda (return)
+			 (for-each
+			  (lambda (b)
+			    (cond ((and (pair? b)
+					(tree-arg-member sym b))
+				   => return)))
+			  (cdr tree))
+			 #f))))))
+				     
+      (define (arg-signature fnc env)
+	(and (symbol? fnc)
+	     (let ((fd (or (var-member fnc env)
+			   (hash-table-ref globals fnc))))
+	       (if (var? fd)
+		   (and (symbol? (var-ftype fd))
+			(var-signature fd))
+		   (let ((f (symbol->value fnc *e*)))
+		     (and (procedure? f)
+			  (procedure-signature f)))))))
+	
       (define* (make-fvar name ftype arglist decl value location env)
 	(cons name 
 	      (inlet 'type 'closure
 		     'signature (let ((body (and (memq ftype '(define define* lambda lambda*))
 						 (cddr value))))
-				  (if (and (pair? body)
-					   (null? (cdr body)))
-				      (if (not (pair? (car body)))
-					  (and (not (symbol? (car body)))
-					       (list (->type (car body)) #t))
-					  (let ((sig (and (symbol? (caar body))
-							  (let ((f (symbol->value (caar body) *e*)))
-							    (if (procedure? f)
-								(procedure-signature f)
-								(let ((fd (or (var-member (caar body) env)
-									      (hash-table-ref globals (caar body)))))
-								  (and (var? fd)
-								       (symbol? (var-ftype fd))
-								       (list? (var-signature fd))
-								       (var-signature fd))))))))
-					    (when sig
-					      ;; we know the new fvar's return type is (car sig)
-					      (let ((new-sig (list (car sig)))
-						    (body-args (cdar body))
-						    (body-arg-num (length (cdar body)))
-						    (sig-len (length sig)))
-						(if (infinite? sig-len) (set! sig-len 123123123))
-						(if (proper-list? arglist)
-						    (begin
-						      (for-each
-						       (lambda (arg) ; new function's parameter
-							 (let* ((m (memq arg body-args))
-								(loc (and m (+ 1 (- body-arg-num (length m))))))
-							   (set! new-sig (if (and loc (< loc sig-len))
-									     (cons (list-ref sig loc) new-sig)
-									     (cons #t new-sig)))))
-						       arglist)
-						      (reverse new-sig))
-						    new-sig)))))))
+				  ;(format *stderr* "~A ~A~%" value arglist)
+				  (and (pair? body)
+				       (let ((sig #f))
+					 (if (null? (cdr body))
+					     (if (not (pair? (car body)))
+						 (if (not (symbol? (car body)))
+						     (set! sig (list (->type (car body)))))
+						 (set! sig (cond ((arg-signature (caar body) env) => (lambda (a) (and (pair? a) (list (car a)))))
+								 (else #f)))))
+					 (if (not (pair? sig))
+					     (set! sig (list #t)))
+					 
+					 (when (and (proper-list? arglist)
+						    (not (any? keyword? arglist)))
+					   (for-each
+					    (lambda (arg)       ; new function's parameter
+					      (set! sig (cons #t sig))
+					      (if (= (tree-count arg body) 1)
+						  (let ((p (tree-arg-member arg body)))
+						    ;(format *stderr* "  ~A: ~A~%" arg p)
+						    (when (pair? p)
+						      (let ((f (car p))
+							    (m (memq arg (cdr p))))
+							(if (pair? m)
+							    (let ((fsig (arg-signature f env)))
+							      ;(format *stderr* "    f: ~A -> ~A, m: ~A, p: ~A~%" f fsig m p)
+							      (if (pair? fsig)
+								  (let ((loc (- (length p) (length m))))
+								    (let ((chk (catch #t (lambda () (fsig loc)) (lambda args #f))))
+								      ;(format *stderr* "chk: ~A~%" chk)
+								      (if (and (symbol? chk)
+									       (not (memq chk '(integer:any? integer:real?))))
+									  (set-car! sig chk))))))))))))
+					    arglist))
+					 
+					 (and (any? (lambda (a) (not (eq? a #t))) sig)
+					      (reverse sig)))))
 
 		     'side-effect (or (not (memq ftype '(define define* lambda lambda*)))
-				      (any? (lambda (f) (side-effect? f env)) (cddr value)))
+				      (any? (lambda (f) 
+					      (side-effect? f env))
+					    (cddr value)))
 		     'allow-other-keys (and (pair? arglist)
 					    (memq ftype '(define* define-macro* define-bacro* defmacro*))
 					    (eq? (last-par arglist) 'allow-other-keys))
@@ -366,20 +389,11 @@
 		     'ref #f)))
       
       (define (return-type sym e)
-	(let ((f (if (symbol? sym) (symbol->value sym *e*) sym))) ; backwards -- should lookup locals first
-	  (if (procedure? f)
-	      (let ((sig (procedure-signature f)))
-		(and (pair? sig)
-		     (or (eq? (car sig) 'values) ; turn it into #t for now
-			 (car sig))))        ; this might be undefined in the current context (eg oscil? outside clm)
-	      (let ((fd (or (var-member sym e)
-			    (hash-table-ref globals sym))))
-		(and (var? fd)
-		     (symbol? (var-ftype fd))
-		     (list? (var-signature fd))
-		     (or (eq? (car (var-signature fd)) 'values)
-			 (car (var-signature fd))))))))
-
+	(let ((sig (arg-signature sym e)))
+	  (and (pair? sig)
+	       (or (eq? (car sig) 'values) ; turn it into #t for now
+		   (car sig)))))           ; this might be undefined in the current context (eg oscil? outside clm)
+	  
       (define (any-macro? f env)
 	(let ((fd (or (var-member f env)
 		      (hash-table-ref globals f))))
@@ -1073,7 +1087,7 @@
 			    (subsumes? (car e) (return-type (caadr e) env)))))))
 	
 	(define (false? e)
-	  
+
 	  (define (bad-arg-match a b)
 	    
 	    ;; these accept only the given type and can return a boolean (so their value in a boolean expression is not known in advance)
@@ -1122,6 +1136,10 @@
 					     (>= (length b) 2)
 					     (member (cadr a) (cdr b))
 					     (bad-arg-match (car a) (car b)))))
+		       (and (eq? (car e) 'null?)
+			    (pair? (cadr e))
+			    (eq? (caadr e) 'list)
+			    (not (null? (cdadr e))))
 		       (and (pair? (cadr e))
 			    (memq (car e) bools)
 			    (memq (return-type (caadr e) env) bools)
@@ -1294,279 +1312,283 @@
 		       form))
 		  
 		  ((or)
-		   (and (> len 1)
-		       (let ((arg1 (cadr form)))
-			 (if (= len 2)
-			     (if (code-constant? arg1)
-				 arg1
-				 (classify arg1))
-			     ;; len >= 3
-			     (or (true? arg1)        ; no need to check anything else, side-effect? here is a nightmare
-				 (let* ((arg2 (caddr form))
-					(t1 (and (= len 3)
-						 (pair? arg1)
-						 (pair? arg2)
-						 (pair? (cdr arg1))
-						 (pair? (cdr arg2))
-						 (equal? (cadr arg1) (cadr arg2))
-						 (not (side-effect? arg1 env))
-						 (and-redundant? (car arg1) (car arg2)))))
-				   (if t1
-				       (if (eq? t1 (car arg1))
-					   arg2
-					   arg1)
-				       (let ((sf #f))
-					 (if (and (every? (lambda (p)
-							    (and (pair? p)
-								 (pair? (cdr p))
-								 (eq? (car p) 'not)))
-							  (cdr form))
-						  (let ()
-						    (set! sf (simplify-boolean `(not (and ,@(map cadr (cdr form)))) true false env))
-						    (or (not (pair? sf))
-							(not (eq? (car sf) 'not))
-							(not (pair? (cadr sf)))
-							(not (eq? (caadr sf) 'and)))))
-					     sf
-					     ;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
-					     ;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
-
-					     ;; (or (pair? x) (null? x)) -> (list? x)
-
-					     (let ((sym #f)
-						   (eqf #f))
-					       (if (every? (lambda (p)
-							     (and (pair? p)
-								  (if (not eqf)
-								      (and (memq (car p) '(eq? eqv? equal? char=? string=? = char-ci=? string-ci=?))
-									   (set! eqf (car p)))
-								      (eq? eqf (car p)))
-								  (if (not sym) 
-								      (and (not (side-effect? (cadr p) env))
-									   (set! sym (cadr p)))
-								      (equal? sym (cadr p)))
-								  (code-constant? (caddr p))))
-							   (cdr form))
-						   (let* ((vals (map caddr (cdr form)))
-							  (func (case eqf 
-								  ((eq?) 'memq) 
-								  ((eqv? char=?) 'memv) 
-								  ((=) (if (every? rational? vals) 'memv 'member))
-								  (else 'member)))
-							  (equals (if (and (eq? func 'member)
-									   (not (eq? eqf 'equal?)))
-								      (list eqf)
-								      ()))
-							  (elements (map (lambda (v) (if (pair? v) (cadr v) v)) vals)))
-						     (if (and (eq? eqf 'char=?)
-							      (= (length elements) 2)
-							      (char-ci=? (car elements) (cadr elements)))
-							 `(char-ci=? ,sym ,(car elements))
-							 (if (and (eq? eqf 'string=?)
-								  (= (length elements) 2)
-								  (string-ci=? (car elements) (cadr elements)))
-							     `(string-ci=? ,sym ,(car elements))
-							     `(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))))
-						   
-						   ;; not every? above
-						   (let ((new-form ()))
-						     ;; (or (and A B) (and (not A) (not B))) -> (eq? (not A) (not B))
-						     ;; more accurately (if A B (not B)), but every case I've seen is just boolean
-						     ;; perhaps also (or (not (or A B)) (not (or (not A) (not B)))), but it never happens
-						     (if (and (= len 3) 
-							      (let ((a1 (cadr form))
-								    (a2 (caddr form)))
-								(and (pair? a1)
-								     (pair? a2)
-								     (eq? (car a1) 'and)
-								     (eq? (car a2) 'and)
-								     (= (length a1) 3)
-								     (= (length a2) 3)
-								     (let ((A (if (and (pair? (cadr a1)) (eq? (caadr a1) 'not)) (cadr (cadr a1)) (cadr a1)))
-									   (B (if (and (pair? (caddr a1)) (eq? (caaddr a1) 'not)) (cadr (caddr a1)) (caddr a1))))
-								       (or (and (or (equal? form `(or (and ,A ,B) (and (not ,A) (not ,B))))
-										    (equal? form `(or (and (not ,A) (not ,B)) (and ,A ,B))))
-										(set! new-form `(eq? (not ,A) (not ,B))))
-									   (and (or (equal? form `(or (and ,A (not ,B)) (and (not ,A) ,B)))
-										    (equal? form `(or (and (not ,A) ,B) (and ,A (not ,B)))))
-										(set! new-form `(not (eq? (not ,A) (not ,B))))))))))
-							 new-form
-							 
-							 (do ((exprs (cdr form) (cdr exprs)))
-							     ((null? exprs) 
-							      (if (null? new-form)
-								  #f
-								  (if (null? (cdr new-form))
-								      (car new-form)
-								      `(or ,@(reverse new-form)))))
-							   (let* ((e (car exprs))
-								  (val (classify e)))
-							     
-							     (if (and (pair? val)
-								      (memq (car val) '(and or not)))
-								 (set! val (classify (set! e (simplify-boolean e true false env)))))
-							     
-							     (if val                                ; #f in or is ignored
-								 (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-									 (code-constant? val))
-								     (begin
-								       (if (null? new-form)         ; (or x1 123) -> value of x1 first
-									   (set! new-form (list val))           ;was `(,val))
-									   (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) 
-								       ;; reversed when returned
-								       (set! exprs '(#t)))
-								     
-								     ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, 
-								     ;;   so trailing x1 would still be #f
-								     
-								     (if (and (pair? e)             ; (or ...) -> splice into current
-									      (eq? (car e) 'or))
-									 (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-									 (begin                     ; else add it to our new expression with value #f
-									   (store e val 'or)
-									   (if (not (memq val new-form))
-									       (set! new-form (cons val new-form))))))))))))))))))))))
+		   (case len
+		     ((1) #f)
+		     ((2) (if (code-constant? (cadr form)) (cadr form) (classify (cadr form))))
+		     (else
+		      (let ((arg1 (cadr form)))
+			(or (true? arg1)        ; no need to check anything else, side-effect? here is a nightmare
+			    (let* ((arg2 (caddr form))
+				   (t1 (and (= len 3)
+					    (pair? arg1)
+					    (pair? arg2)
+					    (pair? (cdr arg1))
+					    (pair? (cdr arg2))
+					    (equal? (cadr arg1) (cadr arg2))
+					    (not (side-effect? arg1 env))
+					    (and-redundant? (car arg1) (car arg2)))))
+			      (if t1
+				  (if (eq? t1 (car arg1))
+				      arg2
+				      arg1)
+				  (let ((sf #f))
+				    (if (and (every? (lambda (p)
+						       (and (pair? p)
+							    (pair? (cdr p))
+							    (eq? (car p) 'not)))
+						     (cdr form))
+					     (let ()
+					       (set! sf (simplify-boolean `(not (and ,@(map cadr (cdr form)))) true false env))
+					       (or (not (pair? sf))
+						   (not (eq? (car sf) 'not))
+						   (not (pair? (cadr sf)))
+						   (not (eq? (caadr sf) 'and)))))
+					sf
+					;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
+					;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
+					
+					;; (or (pair? x) (null? x)) -> (list? x)
+					
+					(let ((sym #f)
+					      (eqf #f))
+					  (if (every? (lambda (p)
+							(and (pair? p)
+							     (if (not eqf)
+								 (and (memq (car p) '(eq? eqv? equal? char=? string=? = char-ci=? string-ci=?))
+								      (set! eqf (car p)))
+								 (eq? eqf (car p)))
+							     (if (not sym) 
+								 (and (not (side-effect? (cadr p) env))
+								      (set! sym (cadr p)))
+								 (equal? sym (cadr p)))
+							     (code-constant? (caddr p))))
+						      (cdr form))
+					      (let* ((vals (map caddr (cdr form)))
+						     (func (case eqf 
+							     ((eq?) 'memq) 
+							     ((eqv? char=?) 'memv) 
+							     ((=) (if (every? rational? vals) 'memv 'member))
+							     (else 'member)))
+						     (equals (if (and (eq? func 'member)
+								      (not (eq? eqf 'equal?)))
+								 (list eqf)
+								 ()))
+						     (elements (map (lambda (v) (if (pair? v) (cadr v) v)) vals)))
+						(if (and (eq? eqf 'char=?)
+							 (= (length elements) 2)
+							 (char-ci=? (car elements) (cadr elements)))
+						    `(char-ci=? ,sym ,(car elements))
+						    (if (and (eq? eqf 'string=?)
+							     (= (length elements) 2)
+							     (string-ci=? (car elements) (cadr elements)))
+							`(string-ci=? ,sym ,(car elements))
+							`(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))))
+					      
+					      ;; not every? above
+					      (let ((new-form ()))
+						;; (or (and A B) (and (not A) (not B))) -> (eq? (not A) (not B))
+						;; more accurately (if A B (not B)), but every case I've seen is just boolean
+						;; perhaps also (or (not (or A B)) (not (or (not A) (not B)))), but it never happens
+						(if (and (= len 3) 
+							 (let ((a1 (cadr form))
+							       (a2 (caddr form)))
+							   (and (pair? a1)
+								(pair? a2)
+								(eq? (car a1) 'and)
+								(eq? (car a2) 'and)
+								(= (length a1) 3)
+								(= (length a2) 3)
+								(let ((A (if (and (pair? (cadr a1)) (eq? (caadr a1) 'not)) (cadr (cadr a1)) (cadr a1)))
+								      (B (if (and (pair? (caddr a1)) (eq? (caaddr a1) 'not)) (cadr (caddr a1)) (caddr a1))))
+								  (or (and (or (equal? form `(or (and ,A ,B) (and (not ,A) (not ,B))))
+									       (equal? form `(or (and (not ,A) (not ,B)) (and ,A ,B))))
+									   (set! new-form `(eq? (not ,A) (not ,B))))
+								      (and (or (equal? form `(or (and ,A (not ,B)) (and (not ,A) ,B)))
+									       (equal? form `(or (and (not ,A) ,B) (and ,A (not ,B)))))
+									   (set! new-form `(not (eq? (not ,A) (not ,B))))))))))
+						    new-form
+						    
+						    (do ((exprs (cdr form) (cdr exprs)))
+							((null? exprs) 
+							 (if (null? new-form)
+							     #f
+							     (if (null? (cdr new-form))
+								 (car new-form)
+								 `(or ,@(reverse new-form)))))
+						      (let* ((e (car exprs))
+							     (val (classify e)))
+							
+							(if (and (pair? val)
+								 (memq (car val) '(and or not)))
+							    (set! val (classify (set! e (simplify-boolean e true false env)))))
+							
+							(if val                                ; #f in or is ignored
+							    (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+								    (code-constant? val))
+								(begin
+								  (if (null? new-form)         ; (or x1 123) -> value of x1 first
+								      (set! new-form (list val))           ;was `(,val))
+								      (set! new-form (cons val new-form))) ;was (append `(,val) new-form))) 
+								  ;; reversed when returned
+								  (set! exprs '(#t)))
+								
+								;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, 
+								;;   so trailing x1 would still be #f
+								
+								(if (and (pair? e)             ; (or ...) -> splice into current
+									 (eq? (car e) 'or))
+								    (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
+								    (begin                     ; else add it to our new expression with value #f
+								      (store e val 'or)
+								      (if (not (memq val new-form))
+									  (set! new-form (cons val new-form))))))))))))))))))))))
 		   
 		  ((and)
-		   (or (= len 1)
-		       (let ((arg1 (cadr form)))
-			 (if (= len 2)
-			     (classify arg1)
-			     (and (not (contradictory? (cdr form)))
-				 (let* ((arg2 (caddr form))
-					(t1 (and (= len 3)
+		   (case len
+		    ((1) #t)
+		    ((2) (classify (cadr form)))
+		    (else
+		     (let ((arg1 (cadr form)))
+		       (and (not (contradictory? (cdr form)))
+			    (let* ((arg2 (caddr form))
+				   (t1 (and (= len 3)
+					    (pair? arg1)
+					    (pair? arg2)
+					    (pair? (cdr arg1))
+					    (pair? (cdr arg2))
+					    (equal? (cadr arg1) (cadr arg2))
+					    (not (side-effect? arg1 env))
+					    (and-redundant? (car arg1) (car arg2))))) ; (and (integer? x) (number? x)) -> (integer? x)
+			      (if t1
+				  (if (eq? t1 (car arg1))
+				      arg1
+				      arg2)
+				  (let ((new-form ()))
+				    
+				    (if (and (= len 3)
+					     (not (side-effect? arg1 env))
+					     (equal? arg1 arg2))                  ; (and x x) -> x
+					arg1
+					(if (and (= len 3)
 						 (pair? arg1)
 						 (pair? arg2)
-						 (pair? (cdr arg1))
+						 (reversible? (car arg1))
+						 (null? (cdddr arg1))
 						 (pair? (cdr arg2))
-						 (equal? (cadr arg1) (cadr arg2))
-						 (not (side-effect? arg1 env))
-						 (and-redundant? (car arg1) (car arg2))))) ; (and (integer? x) (number? x)) -> (integer? x)
-				   (if t1
-				       (if (eq? t1 (car arg1))
-					   arg1
-					   arg2)
-				       (let ((new-form ()))
-					 
-					 (if (and (= len 3)
-						  (not (side-effect? arg1 env))
-						  (equal? arg1 arg2))                  ; (and x x) -> x
-					     arg1
-					     (if (and (= len 3)
-						      (pair? arg1)
-						      (pair? arg2)
-						      (reversible? (car arg1))
-						      (null? (cdddr arg1))
-						      (pair? (cdr arg2))
-						      (pair? (cddr arg2))
-						      (null? (cdddr arg2))
-						      (not (side-effect? arg2 env))          ; arg1 is hit in any case
-						      (or (eq? (car arg1) (car arg2))        ; either ops are equal or
-							  (let ((rf (reversed (car arg2))))  ;    try reversed op for arg2
-							    (and (eq? (car arg1) rf)
-								 (set! arg2 (cons rf (reverse (cdr arg2)))))))
-						      (or (equal? (caddr arg1) (cadr arg2))     ; (and (op x y) (op y z))
-							  (equal? (cadr arg1) (caddr arg2))     ; (and (op x y) (op z x))
-							  (and (memq (car arg1) '(= char=? string=? char-ci=? string-ci=?))
-							       (or (equal? (cadr arg1) (cadr arg2))
-								   (equal? (caddr arg1) (caddr arg2))))))
-						 
-						 (cond ((equal? (caddr arg1) (cadr arg2))       ; (and (op x y) (op y z)) -> (op x y z)
-							(if (equal? (cadr arg1) (caddr arg2))
-							    (and (memq (car arg1) '(= char=? string=? char-ci=? string-ci=?))
-								 arg1)
-							    (and (or (not (code-constant? (cadr arg1)))
-								     (not (code-constant? (caddr arg2)))
-								     ((symbol->value (car arg1)) (cadr arg1) (caddr arg2)))
-								 `(,(car arg1) ,(cadr arg1) ,(cadr arg2) ,(caddr arg2)))))
-
-						       ((equal? (cadr arg1) (caddr arg2))       ; (and (op x y) (op z x)) -> (op z x y)
-							(if (equal? (caddr arg1) (cadr arg2))
-							    (and (memq (car arg1) '(= char=? string=? char-ci=? string-ci=?))
-								 arg1)
-							    (and (or (not (code-constant? (cadr arg2)))
-								     (not (code-constant? (caddr arg1)))
-								     ((symbol->value (car arg1)) (cadr arg2) (caddr arg1)))
-								 `(,(car arg1) ,(cadr arg2) ,(cadr arg1) ,(caddr arg1)))))
-
-						       ;; here we're restricted to equalities and we know arg1 != arg2
-						       ((equal? (cadr arg1) (cadr arg2))        ; (and (op x y) (op x z)) -> (op x y z)
-							(if (and (code-constant? (caddr arg1))
-								 (code-constant? (caddr arg2)))
-							    (and ((symbol->value (car arg1)) (caddr arg1) (caddr arg2))
-								 arg1)
-							    `(,(car arg1) ,(cadr arg1) ,(caddr arg1) ,(caddr arg2))))
-
-						       (else ; equalities again
-							(if (and (code-constant? (cadr arg1))
-								 (code-constant? (cadr arg2)))
-							    (and ((symbol->value (car arg1)) (cadr arg1) (cadr arg2))
-								 arg1)
-							    `(,(car arg1) ,(cadr arg1) ,(caddr arg1) ,(cadr arg2)))))
-
-						 (do ((exprs (cdr form) (cdr exprs)))
-						     ((null? exprs) 
-						      (if (null? new-form)
-							  #t                                ; (and) -> #t
-							  (let* ((nform (reverse new-form)) 
-								 (newer-form (map (lambda (x cdr-x)
-										    (if (and x (code-constant? x))
-											(values)
-											x))
-										  nform (cdr nform))))
-							    (if (null? newer-form)
-								(car new-form)
-								`(and ,@newer-form ,(car new-form))))))
-						   
-						   (let* ((e (car exprs))
-							  (val (classify e)))
-						     
-						     (if (and (pair? val)
-							      (memq (car val) '(and or not)))
-							 (set! val (classify (set! e (simplify-boolean e () false env)))))
-						     
-						     ;; (and x1 x2 x1) is not reducible
-						     ;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
-						     ;;   but if there are expressions following the first x1, we can't be sure that it is not
-						     ;;   protecting them:
-						     ;;       (and false-or-0 (display (list-ref lst false-or-0)) false-or-0)
-						     ;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
-						     
-						     (if (eq? val #t)
-							 (if (null? (cdr exprs))     ; (and x y #t) should not remove the #t
-							     (if (or (and (pair? e)
-									  (eq? (return-type (car e) env) 'boolean?))
-								     (eq? e #t))
-								 (set! new-form (cons val new-form))
-								 (if (or (null? new-form)
-									 (not (equal? e (car new-form))))
-								     (set! new-form (cons e new-form))))
-							     (if (and (not (eq? e #t))
-								      (or (null? new-form)
-									  (not (member e new-form))))
-								 (set! new-form (cons e new-form))))
-							 
-							 (if (not val)             ; #f in 'and' ends the expression
-							     (begin
-							       (if (or (null? new-form)   
-								       (just-symbols? new-form))
-								   (set! new-form '(#f))
-								   (set! new-form (cons #f new-form))) ;was (append '(#f) new-form)))
-							       (set! exprs '(#f)))
-							     (if (and (pair? e)       ; if (and ...) splice into current
-								      (eq? (car e) 'and))
-								 (set! exprs (append e (cdr exprs)))
-								 (unless (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
-									      (pair? (cdr exprs))
-									      (eq? (car e) 'or)
-									      (pair? (cdr e))
-									      (pair? (cddr e))
-									      (cond ((list-ref e (- (length e) 1)) => code-constant?) ; (or ... #f)
-										    (else #f))) 
-								   (store e val 'and)    ; else add it to our new expression with value #t
-								   (if (or (not (pair? new-form))
-									   (not (eq? val (car new-form))))
-								       (set! new-form (cons val new-form))))))))))))))))))))))))
+						 (pair? (cddr arg2))
+						 (null? (cdddr arg2))
+						 (not (side-effect? arg2 env))          ; arg1 is hit in any case
+						 (or (eq? (car arg1) (car arg2))        ; either ops are equal or
+						     (let ((rf (reversed (car arg2))))  ;    try reversed op for arg2
+						       (and (eq? (car arg1) rf)
+							    (set! arg2 (cons rf (reverse (cdr arg2)))))))
+						 (or (equal? (caddr arg1) (cadr arg2))     ; (and (op x y) (op y z))
+						     (equal? (cadr arg1) (caddr arg2))     ; (and (op x y) (op z x))
+						     (and (memq (car arg1) '(= char=? string=? char-ci=? string-ci=?))
+							  (or (equal? (cadr arg1) (cadr arg2))
+							      (equal? (caddr arg1) (caddr arg2))))))
+					    (let ((op1 (car arg1))
+						  (arg1-1 (cadr arg1))
+						  (arg1-2 (caddr arg1))
+						  (arg2-1 (cadr arg2))
+						  (arg2-2 (caddr arg2)))
+					    
+					      (cond ((equal? arg1-2 arg2-1)       ; (and (op x y) (op y z)) -> (op x y z)
+						     (if (equal? arg1-1 arg2-2)
+							 (and (memq op1 '(= char=? string=? char-ci=? string-ci=?))
+							      arg1)
+							 (and (or (not (code-constant? arg1-1))
+								  (not (code-constant? arg2-2))
+								  ((symbol->value op1) arg1-1 arg2-2))
+							      `(,op1 ,arg1-1 ,arg2-1 ,arg2-2))))
+						    
+						    ((equal? arg1-1 arg2-2)       ; (and (op x y) (op z x)) -> (op z x y)
+						     (if (equal? arg1-2 arg2-1)
+							 (and (memq op1 '(= char=? string=? char-ci=? string-ci=?))
+							      arg1)
+							 (and (or (not (code-constant? arg2-1))
+								  (not (code-constant? arg1-2))
+								  ((symbol->value op1) arg2-1 arg1-2))
+							      `(,op1 ,arg2-1 ,arg1-1 ,arg1-2))))
+						    
+						    ;; here we're restricted to equalities and we know arg1 != arg2
+						    ((equal? arg1-1 arg2-1)        ; (and (op x y) (op x z)) -> (op x y z)
+						     (if (and (code-constant? arg1-2)
+							      (code-constant? arg2-2))
+							 (and ((symbol->value op1) arg1-2 arg2-2)
+							      arg1)
+							 `(,op1 ,arg1-1 ,arg1-2 ,arg2-2)))
+						    
+						    (else ; equalities again
+						     (if (and (code-constant? arg1-1)
+							      (code-constant? arg2-1))
+							 (and ((symbol->value op1) arg1-1 arg2-1)
+							      arg1)
+							 `(,op1 ,arg1-1 ,arg1-2 ,arg2-1)))))
+					    
+					    (do ((exprs (cdr form) (cdr exprs)))
+						((null? exprs) 
+						 (if (null? new-form)
+						     #t                                ; (and) -> #t
+						     (let* ((nform (reverse new-form)) 
+							    (newer-form (map (lambda (x cdr-x)
+									       (if (and x (code-constant? x))
+										   (values)
+										   x))
+									     nform (cdr nform))))
+						       (if (null? newer-form)
+							   (car new-form)
+							   `(and ,@newer-form ,(car new-form))))))
+					      
+					      (let* ((e (car exprs))
+						     (val (classify e)))
+						
+						(if (and (pair? val)
+							 (memq (car val) '(and or not)))
+						    (set! val (classify (set! e (simplify-boolean e () false env)))))
+						
+						;; (and x1 x2 x1) is not reducible
+						;;   the final thing has to remain at the end, but can be deleted earlier if it can't short-circuit the evaluation,
+						;;   but if there are expressions following the first x1, we can't be sure that it is not
+						;;   protecting them:
+						;;       (and false-or-0 (display (list-ref lst false-or-0)) false-or-0)
+						;;   so I'll not try to optimize that case.  But (and x x) is optimizable.
+						
+						(if (eq? val #t)
+						    (if (null? (cdr exprs))     ; (and x y #t) should not remove the #t
+							(if (or (and (pair? e)
+								     (eq? (return-type (car e) env) 'boolean?))
+								(eq? e #t))
+							    (set! new-form (cons val new-form))
+							    (if (or (null? new-form)
+								    (not (equal? e (car new-form))))
+								(set! new-form (cons e new-form))))
+							(if (and (not (eq? e #t))
+								 (or (null? new-form)
+								     (not (member e new-form))))
+							    (set! new-form (cons e new-form))))
+						    
+						    (if (not val)             ; #f in 'and' ends the expression
+							(begin
+							  (if (or (null? new-form)   
+								  (just-symbols? new-form))
+							      (set! new-form '(#f))
+							      (set! new-form (cons #f new-form))) ;was (append '(#f) new-form)))
+							  (set! exprs '(#f)))
+							(if (and (pair? e)       ; if (and ...) splice into current
+								 (eq? (car e) 'and))
+							    (set! exprs (append e (cdr exprs)))
+							    (unless (and (pair? e)                   ; (and ... (or ... 123) ...) -> splice out or
+									 (pair? (cdr exprs))
+									 (eq? (car e) 'or)
+									 (pair? (cdr e))
+									 (pair? (cddr e))
+									 (cond ((list-ref e (- (length e) 1)) => code-constant?) ; (or ... #f)
+									       (else #f))) 
+							      (store e val 'and)    ; else add it to our new expression with value #t
+							      (if (or (not (pair? new-form))
+								      (not (eq? val (car new-form))))
+								  (set! new-form (cons val new-form))))))))))))))))))))))))
       
       (define (splice-if f lst)
 	(cond ((null? lst) ())
@@ -2366,8 +2388,6 @@
 	;; keyword head here if args to func/macro that we don't know about
 
 	;; TODO:
-	;; closure sig from body continued -- if arg occurs once and we can deduce its type...
-	;;   tree-arg-member returns the enclosing form, so use car->sig and count to sym, but how to protect against case et al?
 	;; macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
 	;; catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
 	;; bacro-shaker -- can we get set-member?
@@ -2376,24 +2396,25 @@
 	;; need values->func arg check escape (define*)
 	;;
 	;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
-	;;   pp unquasiquote -- right! simple cases probably work -- t339.scm
 	;;   pp sketch mode would be useful, and truncate at right margin
+	;; unquasiquote innards pretty-printed and check quotes, doubled ,@
+	;;
+	;; s7test:
+	;;  (eval `(case ,+ ((,-) 0) ((,+) 1) (else 2))) -> 1
+	;;  (case + ((#_-) 0) ((#_+) 2) (else 3)) -> 2
 	;;
 	;; do any of the if/cond changes end up with (and|or ...) at top? (use if instead?)
 	;;   yes -- need to see caller here:
 	;;   (begin (if x (set! y 1) #t) x) -> (begin (or (not x) (set! y 1)) x)
 	;;   maybe should be (begin (if x (set! y 1)) x)
 	;;
-	;; use unique-name where now (lambda (a b)...): 2532 and below
-	;; cons cons cons ... -> list?
-	;;
 	;; forgotten vars in let (caar x) when y=(car x) etc) -- no set/rebind of y since, no macros ?
 	;;   (let ((x A)...) ... A ...) with x and A's contents unchanged/unshadowed/no side, and A as arg, replace A with x
 	;;   if fequal? this could apply to x=(cddr y) (caddr y)->(car x) etc [cdr/list-tail, (+ x y)=(+ y x)]
 	;;
-	;; min/max if code-constant twice in and to get one arg: (and (< x 1) (< x 2)) :(min 1 2): -> (< x 1) etc
-	;;   first-arg/last-arg and any length inner + more outer?
-	;;   or cases here? (or (< x 1) (> x 2)) (not (<= 1 x 2)) ?
+	;; (apply append (map...)) -> (map... (append...))?
+	;; (apply string-append "etags " (apply append (map (lambda (x) (list x " ")) loaded-files))) -> format?
+
 
 	;(if (member '(begin) form) (format *stderr* "~A~%" form))
 
@@ -2519,8 +2540,9 @@
 					 (if (eq? mapf 'null?)
 					     (lint-format "perhaps ~A" name 
 							  (lists->string form `(memq () ,map-items)))
-					     (lint-format "perhaps avoid 'map: ~A" name 
-							  (lists->string form `(member #t ,map-items (lambda (a b) (,mapf b)))))))
+					     (let ((b (if (eq? mapf 'b) 'c 'b)))
+					       (lint-format "perhaps avoid 'map: ~A" name 
+							    (lists->string form `(member #t ,map-items (lambda (a ,b) (,mapf ,b))))))))
 
 					((and (pair? selector)
 					      (eq? (car selector) 'string->symbol) ; this could be extended, but it doesn't happen
@@ -2529,8 +2551,11 @@
 						  (not (eq? (car map-items) 'quote))))
 					 (lint-format "perhaps ~A" name
 						      (lists->string form `(member ,(cadr selector) ,map-items string=?))))
-					(else (lint-format "perhaps avoid 'map: ~A" name 
-							   (lists->string form `(member ,selector ,map-items (lambda (a b) (,current-eqf a (,mapf b)))))))))))
+					(else 
+					 (let ((b (if (eq? mapf 'b) 'c 'b))) ; a below can't collide because eqf won't return 'a
+					   (lint-format "perhaps avoid 'map: ~A" name 
+							(lists->string form `(member ,selector ,map-items 
+										     (lambda (a ,b) (,current-eqf a (,mapf ,b))))))))))))
 			     ((cons)
 			      (if (not (pair? selector))
 				  (lint-format "perhaps avoid 'cons: ~A" name
@@ -6269,6 +6294,7 @@
 				(truncated-list->string last-form)))
 		    (set! last-form form)
 		    (set! last-line-number line)
+
 		    (set! vars (lint-walk (if (symbol? form) 
 					      form 
 					      (and (pair? form) 
