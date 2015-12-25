@@ -43,7 +43,7 @@
 	      ((quote)
 	       (if (= depth 1)
 		   (object->string (cadr x))
-		   (string-append (unquasiquote (cadr x) (max 0 (- depth 1))))))
+		   (unquasiquote (cadr x) (max 0 (- depth 1)))))
 	      
 	      (else (format #f "~NC(~{~A~^ ~})" depth #\, (map (lambda (y) (unquasiquote y (max 0 (- depth 1)))) x))))))
 

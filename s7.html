@@ -2299,9 +2299,7 @@ an entry, <code>'(key . value)</code>, in whatever order the entries are encount
   (map values table))
 
 (define (merge-hash-tables . tables) ; probably faster: (define merge-hash-tables append)
-  (apply hash-table 
-    (apply append 
-      (map hash-table-&gt;alist tables))))
+  (apply hash-table (apply map values hash-tables)))
 </pre>
 
 <p>reverse of a hash-table returns a new table with the keys and values reversed.

@@ -25820,7 +25820,7 @@ static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
 static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_list "(string->list str start end) returns the elements of the string str in a list; (map values str)"
-  #define Q_string_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_STRING, sc->IS_INTEGER)
+  #define Q_string_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_PROPER_LIST, sc->IS_STRING, sc->IS_INTEGER)
 
   s7_int i, start = 0, end;
   s7_pointer p, str;
@@ -29790,7 +29790,7 @@ static s7_pointer cyclic_sequences(s7_scheme *sc, s7_pointer obj, bool return_li
 static s7_pointer g_cyclic_sequences(s7_scheme *sc, s7_pointer args)
 {
   #define H_cyclic_sequences "(cyclic-sequences obj) returns a list of elements that are cyclic."
-  #define Q_cyclic_sequences s7_make_signature(sc, 2, sc->IS_LIST, sc->T)
+  #define Q_cyclic_sequences s7_make_signature(sc, 2, sc->IS_PROPER_LIST, sc->T)
   return(cyclic_sequences(sc, car(args), true));
 }
 
@@ -34263,6 +34263,7 @@ bool s7_is_list(s7_scheme *sc, s7_pointer p)
 
 static bool is_proper_list(s7_scheme *sc, s7_pointer lst)
 {
+  /* #t if () or undotted/non-circular pair */
   s7_pointer slow, fast;
 
   fast = lst;
@@ -34338,7 +34339,7 @@ static s7_pointer make_list(s7_scheme *sc, int len, s7_pointer init)
 static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_list "(make-list length (initial-element #f)) returns a list of 'length' elements whose value is 'initial-element'."
-  #define Q_make_list s7_make_signature(sc, 3, sc->IS_LIST, sc->IS_INTEGER, sc->T)
+  #define Q_make_list s7_make_signature(sc, 3, sc->IS_PROPER_LIST, sc->IS_INTEGER, sc->T)
 
   s7_pointer init;
   s7_int len;
@@ -36309,7 +36310,7 @@ static s7_pointer g_features_set(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
-  #define Q_list s7_make_circular_signature(sc, 1, 2, sc->IS_LIST, sc->T)
+  #define Q_list s7_make_circular_signature(sc, 1, 2, sc->IS_PROPER_LIST, sc->T)
   return(copy_list(sc, args));
 }
 
@@ -37151,7 +37152,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   s7_int i, start = 0, end;
   s7_pointer p, vec;
   #define H_vector_to_list "(vector->list v start end) returns the elements of the vector v as a list; (map values v)"
-  #define Q_vector_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_VECTOR, sc->IS_INTEGER)
+  #define Q_vector_to_list s7_make_circular_signature(sc, 2, 3, sc->IS_PROPER_LIST, sc->IS_VECTOR, sc->IS_INTEGER)
 
   vec = car(args);
   if (!s7_is_vector(vec))
@@ -48176,7 +48177,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
-  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->IS_LIST, sc->IS_PROCEDURE, sc->LENGTH)
+  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->IS_PROPER_LIST, sc->IS_PROCEDURE, sc->LENGTH)
 
   s7_pointer p, f;
   int len;
