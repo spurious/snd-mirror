@@ -269,66 +269,66 @@
 	(else (format #f "~A unknown" str))))
 
 (define (type-it type)
-  (let ((typ (assoc type direct-types)))
-    (if typ
-	(if (cdr typ)
-	    (begin
-	      (if (string? (cdr typ))
-		  (begin
-		    (if (not (member (car typ)
-				     '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
-				       "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
-				       "GLboolean*" "void*" "GLint*" "GLshort*"
-				       "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
-				       "unsigned_long"
-				       "void**")))
-			(if (string=? (car typ) "constchar*")
-			    (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
-			    (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
-
-		    (if (not (string=? (car typ) "constchar*"))
-			(hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
-
-		    (if (not (string=? (car typ) "constchar*"))
-			(hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			     (no-stars (car typ))
-			     (cond ((string=? (cdr typ) "INT") "integer")
-				   ((string=? (cdr typ) "ULONG") "ulong")
-				   ((string=? (cdr typ) "DOUBLE") "number")
-				   (else (apply string (map char-downcase (cdr typ))))))))
-		  (begin
-		    (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
-		    (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))
-
-	(if (not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
-	    ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer
-	    (begin
-	      (if (member type glu-1-2) 
-		  (hey "#ifdef GLU_VERSION_1_2~%")
-		  (if (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
-		      (hey "#if HAVE_GLU~%")))
-	      (hey "XL_TYPE~A~A(~A, ~A)~%" 
-		   (if (has-stars type) "_PTR" "")
-		   (if (member type '("int*" "Pixmap" "Font" "GLubyte*" 
-				      "GLdouble*" "GLfloat*" "GLvoid*" 
-				      "GLuint*" "GLboolean*" "GLint*" "GLshort*"
-				      "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"
-				      ))
-		       "_1" 
-		       (if (member type '("GdkVisual*" "PangoFont*" "GdkColormap*"))
-			   "_2" 
-			   ""))
-		   (no-stars type)
-		   type)
-	      (if (or (member type glu-1-2) 
-		      (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr")))
-		  (hey "#endif~%")))
-	    (if (string=? type "Display*")
-		(hey "XL_TYPE_PTR(Display, Display*)~%")
-		(if (string=? type "XVisualInfo*")
-		    (hey "XL_TYPE_PTR(XVisualInfo, XVisualInfo*)~%")
-		    (hey "XL_TYPE_PTR(GLXContext, GLXContext)~%")
-		    ))))))
+  (cond ((assoc type direct-types) => 
+	 (lambda (typ)
+	   (if (cdr typ)
+	       (begin
+		 (if (string? (cdr typ))
+		     (begin
+		       (if (not (member (car typ)
+					'("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
+					  "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
+					  "GLboolean*" "void*" "GLint*" "GLshort*"
+					  "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
+					  "unsigned_long"
+					  "void**")))
+			   (if (string=? (car typ) "constchar*")
+			       (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
+			       (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
+		       
+		       (if (not (string=? (car typ) "constchar*"))
+			   (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+		       
+		       (if (not (string=? (car typ) "constchar*"))
+			   (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+				(no-stars (car typ))
+				(cond ((string=? (cdr typ) "INT") "integer")
+				      ((string=? (cdr typ) "ULONG") "ulong")
+				      ((string=? (cdr typ) "DOUBLE") "number")
+				      (else (apply string (map char-downcase (cdr typ))))))))
+		     (begin
+		       (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
+		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))
+	 
+	((not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
+	 ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer
+	 (if (member type glu-1-2) 
+	     (hey "#ifdef GLU_VERSION_1_2~%")
+	     (if (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr"))
+		 (hey "#if HAVE_GLU~%")))
+	 (hey "XL_TYPE~A~A(~A, ~A)~%" 
+	      (if (has-stars type) "_PTR" "")
+	      (if (member type '("int*" "Pixmap" "Font" "GLubyte*" 
+				 "GLdouble*" "GLfloat*" "GLvoid*" 
+				 "GLuint*" "GLboolean*" "GLint*" "GLshort*"
+				 "PangoFontDescription*" "GtkWidget*" "GdkGLConfigMode"))
+		  "_1" 
+		  (if (member type '("GdkVisual*" "PangoFont*" "GdkColormap*"))
+		      "_2" 
+		      ""))
+	      (no-stars type)
+	      type)
+	 (if (or (member type glu-1-2) 
+		 (member type '("GLUnurbs*" "GLUtesselator*" "GLUquadric*" "_GLUfuncptr")))
+	     (hey "#endif~%")))
+	
+	((string=? type "Display*")
+	 (hey "XL_TYPE_PTR(Display, Display*)~%"))
+	
+	((string=? type "XVisualInfo*")
+	 (hey "XL_TYPE_PTR(XVisualInfo, XVisualInfo*)~%"))
+	
+	(else (hey "XL_TYPE_PTR(GLXContext, GLXContext)~%"))))
 
 (define* (CFNC data spec spec-name)
   (let ((name (cadr-str data))

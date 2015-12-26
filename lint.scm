@@ -329,6 +329,13 @@
 		     (and (procedure? f)
 			  (procedure-signature f)))))))
 	
+      (define (dummy-func name form f)
+	(catch #t 
+	  (lambda ()
+	    (eval f))
+	  (lambda args
+	    (lint-format "in ~A, ~A" name form (apply format #f (cadr args))))))
+
       (define* (make-fvar name ftype arglist decl value location env)
 	(cons name 
 	      (inlet 'type 'closure
@@ -1183,33 +1190,32 @@
 			    args)))))))))
 	
 	(define (and-redundant? type1 type2)
-	  (if (or (not (symbol? type1))
-		  (not (symbol? type2))
-		  (not (memq type1 bools))
-		  (not (memq type2 bools)))
-	      #f ; return #f if not (obviously) redundant, else return which of the two to keep
-	      (if (eq? type1 type2)
-		  type1
-		  (case type1
-		    ((number? complex?) (or (and (memq type2 '(float? real? rational? integer?)) type2)
-					    (and (memq type2 '(number? complex?)) type1)))
-		    ((real?)            (or (and (memq type2 '(float? rational? integer?)) type2)
-					    (and (memq type2 '(number? complex?)) type1)))
-		    ((float?)           (and (memq type2 '(real? complex? number?)) type1))
-		    ((rational?)        (or (and (eq? type2 'integer?) type2)
-					    (and (memq type2 '(real? complex? number?)) type1)))
-		    ((integer?)         (and (memq type2 '(real? rational? complex? number?)) type1))
-		    ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
-		    ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
-		    ((symbol?)          (and (memq type2 '(keyword? gensym?)) type2))
-		    ((keyword? gensym?) (and (eq? type2 'symbol?) type1))
-		    ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
-		    ((null?)            (and (memq type2 '(list? proper-list?)) type1))
-		    ((pair?)            (and (eq? type2 'list?) type1))
-		    ((proper-list?)     (and (eq? type2 'null?) type2))
-		    ((string?)          (and (eq? type2 'byte-vector?) type2))
-		    ((byte-vector?)     (and (eq? type2 'string?) type1))
-		    (else #f)))))
+	  (and (symbol? type1)
+	       (symbol? type2)
+	       (memq type1 bools)
+	       (memq type2 bools)       ; return #f if not (obviously) redundant, else return which of the two to keep
+	       (if (eq? type1 type2)
+		   type1
+		   (case type1
+		     ((number? complex?) (or (and (memq type2 '(float? real? rational? integer?)) type2)
+					     (and (memq type2 '(number? complex?)) type1)))
+		     ((real?)            (or (and (memq type2 '(float? rational? integer?)) type2)
+					     (and (memq type2 '(number? complex?)) type1)))
+		     ((float?)           (and (memq type2 '(real? complex? number?)) type1))
+		     ((rational?)        (or (and (eq? type2 'integer?) type2)
+					     (and (memq type2 '(real? complex? number?)) type1)))
+		     ((integer?)         (and (memq type2 '(real? rational? complex? number?)) type1))
+		     ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
+		     ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
+		     ((symbol?)          (and (memq type2 '(keyword? gensym?)) type2))
+		     ((keyword? gensym?) (and (eq? type2 'symbol?) type1))
+		     ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
+		     ((null?)            (and (memq type2 '(list? proper-list?)) type1))
+		     ((pair?)            (and (eq? type2 'list?) type1))
+		     ((proper-list?)     (and (eq? type2 'null?) type2))
+		     ((string?)          (and (eq? type2 'byte-vector?) type2))
+		     ((byte-vector?)     (and (eq? type2 'string?) type1))
+		     (else #f)))))
 
 	(define (classify e)
 	  ;; do we already know that e is true or false?
@@ -1240,7 +1246,6 @@
 		    (set! false (cons e false))))))
 	
 	(let ((form (bsimp in-form)))
-	  ;(format *stderr* "form: ~S~%" form)
 	  (if (or (not (pair? form))
 		  (not (memq (car form) '(or and not))))
 	      (classify form)
@@ -1272,6 +1277,16 @@
 				     (pair? (cdr arg))
 				     (eq? (car arg) 'not))
 				(cadr arg))
+
+			       ((and (pair? arg)               ; (not (or|and (not x) (not y)...)) -> (and|or x y ...)
+				     (memq (car arg) '(and or))
+				     (pair? (cdr arg))
+				     (every? (lambda (p)
+					       (and (pair? p)
+						    (eq? (car p) 'not)))
+					     (cdr arg)))
+				`(,(if (eq? (car arg) 'or) 'and 'or)
+				  ,@(map cadr (cdr arg))))
 
 			       ((not (equal? val arg))
 				`(not ,val))
@@ -2424,6 +2439,19 @@
 	;;   (apply append (map hash-table->alist tables)) -> (apply map values tables)
 	;;   (apply append (map (lambda (sequence) (map values sequence)) sequences)) -> (apply append () sequences) -- not quite exact
 	;;
+	;; (apply string-append "etags " (apply append (map (lambda (x) (list x " ")) loaded-files))) -> format?
+	;;        (format #f "etags ~{~A ~}" loaded-files)
+	;;    (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", ")) (reverse (cdr (sounds)))))
+	;;        (format #f "~{~A, ~}" (map short-file-name (reverse (cdr (sounds)))))
+	;;    (apply string-append (map (lambda (arg) (cond ((symbol? arg) (symbol->string arg)) ((string? arg) arg) ((number? arg) (number->string arg)))) args))
+	;;    (apply string-append (map (lambda (subdir) (string-append (namestring-component subdir) directory-component-separator)) subdirs))
+	;;    (apply string-append (map (lambda (f) "pw") fields))
+	;;        (format #f "~{pw~*~}" fields)
+	;;    (apply string-append (map symbol->string args))
+	;;    (apply string-append (map (lambda (command) (string-append " " command)) (bm.exprs benchmark)))
+	;;    (apply string-append (map (lambda (x) (string-append x " ")) input-files))
+	;;    (apply string-append (map (lambda (x) (string-append separator (tostring x))) (cdr e)))
+	;;
 	;; do any of the if/cond changes end up with (and|or ...) at top? (use if instead?)
 	;;   yes -- need to see caller here:
 	;;   (begin (if x (set! y 1) #t) x) -> (begin (or (not x) (set! y 1)) x)
@@ -2449,29 +2477,31 @@
 	;;         but see above -- (<= x x y) -> (<= x y) but (<= x y x) -> (= x y)
 	;; (or (<= x y) (<= y x)) -> #t
 	;;
-	;; (apply append (map...)) -> (map... (append...))?
-	;; (apply string-append "etags " (apply append (map (lambda (x) (list x " ")) loaded-files))) -> format?
-	;;        (format #f "etags ~{~A ~}" loaded-files)
-	;;    (apply string-append (map (lambda (snd) (string-append (short-file-name snd) ", ")) (reverse (cdr (sounds)))))
-	;;        (format #f "~{~A, ~}" (map short-file-name (reverse (cdr (sounds)))))
-	;;    (apply string-append (map (lambda (arg) (cond ((symbol? arg) (symbol->string arg)) ((string? arg) arg) ((number? arg) (number->string arg)))) args))
-	;;    (apply string-append (map (lambda (subdir) (string-append (namestring-component subdir) directory-component-separator)) subdirs))
-	;;    (apply string-append (map (lambda (f) "pw") fields))
-	;;        (format #f "~{pw~*~}" fields)
-	;;    (apply string-append (map symbol->string args))
-	;;    (apply string-append (map (lambda (command) (string-append " " command)) (bm.exprs benchmark)))
-	;;    (apply string-append (map (lambda (x) (string-append x " ")) input-files))
-	;;    (apply string-append (map (lambda (x) (string-append separator (tostring x))) (cdr e)))
-	;;
 	;; exact->inexact in ops where pointless? (* 1.0 (exact->inexact x)) -> (* 1.0 x)
-	;; or abs: (abs (* 1.0 (abs x))) -> (abs (* 1.0 x)), (modulo (modulo x y) y)?? -- unlikely
-	;;         (abs (* (- x) (sin (- y)))), (* (- x) (- y))
+	;;   (/ 1.0 (exact->inexact n_15))
+	;;   (* 2.0 (exact->inexact (real-part z)))
+	;;   (inexact->exact (- (floor (/ ncof 2))))
+	;;   (inexact->exact (random 10))
+	;;   (exact->inexact (/ 1 100))
+	;;   (exact->inexact (* (expt 2.0 ...)))
+	;;   (inexact->exact (numerator x))
+	;;   (/ (exact->inexact (* sign numerator)) (exact->inexact 0))
+	;;   (/ (exact->inexact f) (exact->inexact (expt 10 (- e))))
+	;;   (* (exact->inexact f) (exact->inexact (expt 10 e)))
+	;;   (truncate (exact (* (car z) inexact-m-min)))
+	;;   (+ -50.0 (/ (inexact x) (inexact res)))
+	;; (*|/ (- x) (- y))?
 	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;;
 	;; (gcd (random x) (random x)) should not be (abs (random x)) -- similarly for (gcd (f) (f)) I guess -- check (not (side-effect? ...)) here
+	;; cond with eq? and (or (eq?...) (eq?...)) -> case
+	;; pi as func par should be caught (see s7test.scm)
+	;; (car (string->list (symbol->string x))) -> ((symbol->string x) 0) or any other op (ref|substr)
+	;;    or list->string in the same sequence
+	;; the extended (not (or|and (not ...)) could include the not table backwards (not-able so to speak)
 
 
-	;(if (member '(begin) form) (format *stderr* "~A~%" form))
+	;(if (member 'iota form) (format *stderr* "~A~%" form))
 
 	(case head
 	  
@@ -3536,22 +3566,19 @@
 	  ((eq?) 
 	   (if (< (length form) 3)
 	       (lint-format "eq? needs 2 arguments: ~A" name (truncated-list->string form))
-	       (let ((arg1 (cadr form))
-		     (arg2 (caddr form)))
-		 (let ((eq1 (eqf arg1))
-		       (eq2 (eqf arg2)))
-		   (if (or (eq? (car eq1) 'equal?)
-			   (eq? (car eq2) 'equal?))
-		       (if (and (eq? (cadr eq1) (cadr eq2))
-				(not (eq? (cadr eq1) 'equal?)))
-			   (lint-format "eq? should be equal? or ~A in ~S" name (cadr eq1) form)
-			   (lint-format "eq? should be equal? in ~S" name form))
-		       (if (or (eq? (car eq1) 'eqv?)
-			       (eq? (car eq2) 'eqv?))
-			   (if (and (eq? (cadr eq1) (cadr eq2))
-				    (not (eq? (cadr eq1) 'eqv?)))
-			       (lint-format "eq? should be eqv? or ~A in ~S" name (cadr eq1) form)
-			       (lint-format "eq? should be eqv? in ~S" name form)))))
+	       (let* ((arg1 (cadr form))
+		      (arg2 (caddr form))
+		      (eq1 (eqf arg1))
+		      (eq2 (eqf arg2))
+		      (specific-op (and (eq? (cadr eq1) (cadr eq2))
+					(not (memq (cadr eq1) '(eqv? equal?)))
+					(cadr eq1))))
+		 (if (or (eq? (car eq1) 'equal?)
+			 (eq? (car eq2) 'equal?))
+		     (lint-format "eq? should be equal?~A in ~S" name (if specific-op (format #f " or ~A" specific-op) "") form)
+		     (if (or (eq? (car eq1) 'eqv?)
+			     (eq? (car eq2) 'eqv?))
+			 (lint-format "eq? should be eqv?~A in ~S" name (if specific-op (format #f " or ~A" specific-op) "") form)))
 		 
 		 (let ((expr 'unset))
 		   (cond ((or (not arg1)                  ; (eq? #f x) -> (not x)
@@ -3583,48 +3610,50 @@
 	  ((eqv? equal? morally-equal?) 
 	   (if (< (length form) 3)
 	       (lint-format "~A needs 2 arguments: ~A" name head (truncated-list->string form))
-	       (let ((arg1 (cadr form))
-		     (arg2 (caddr form)))
-		 (let ((eq1 (eqf arg1))
-		       (eq2 (eqf arg2)))
-		   (if (or (eq? (car eq1) 'equal?)
-			   (eq? (car eq2) 'equal?))
-		       (if (not (memq head '(equal? morally-equal?)))
-			   (if (and (eq? (cadr eq1) (cadr eq2))
-				    (not (eq? (cadr eq1) 'equal?)))
-			       (lint-format "~A should be equal? or ~A in ~S" name head (cadr eq1) form)
-			       (lint-format "~A should be equal? in ~S" name head form))
-			   (if (and (eq? (cadr eq1) (cadr eq2))
-				    (not (eq? head (cadr eq1))))
-			       (lint-format "~A could be ~A in ~S" name head (cadr eq1) form)))
-		       (if (or (eq? (car eq1) 'eqv?)
-			       (eq? (car eq2) 'eqv?))
-			   (if (not (memq head '(eqv? morally-equal?)))
-			       (if (and (eq? (cadr eq1) (cadr eq2))
-					(not (eq? (cadr eq1) 'eqv?)))
-				   (lint-format "~A ~A be eqv? or ~A in ~S" name head (if (eq? head 'eq?) "should" "could") (cadr eq1) form)
-				   (lint-format "~A ~A be eqv? in ~S" name head (if (eq? head 'eq?) "should" "could") form))
-			       (if (and (eq? (cadr eq1) (cadr eq2))
-					(not (eq? (cadr eq1) head)))
-				   (lint-format "~A could be ~A in ~S" name head (cadr eq1) form)))
-			   (if (or (eq? (car eq1) 'eq?)
-				   (eq? (car eq2) 'eq?))
-			       (if (or (not arg1) (not arg2))
-				   (lint-format "~A could be not: ~A" name head
-						(lists->string form `(not ,(or arg1 arg2))))
-				   (if (or (null? arg1) (null? arg2)
-					   (quoted-null? arg1) (quoted-null? arg2))
-				       (lint-format "~A could be null?: ~A" name head
-						    (lists->string form 
-								   (if (or (null? arg1) (quoted-null? arg1))
-								       `(null? ,arg2)
-								       `(null? ,arg1))))
-				       (if (not (eq? head 'eq?))
-					   (if (and (eq? (cadr eq1) (cadr eq2))
-						    (not (eq? (cadr eq1) 'eq?)))
-					       (lint-format "~A could be eq? or ~A in ~S" name head (cadr eq1) form)
-					       (lint-format "~A could be eq? in ~S" name head form))))))))))))
-				  
+	       (let* ((arg1 (cadr form))
+		      (arg2 (caddr form))
+		      (eq1 (eqf arg1))
+		      (eq2 (eqf arg2))
+		      (specific-op (and (eq? (cadr eq1) (cadr eq2))
+					(not (memq (cadr eq1) '(eq? eqv? equal?)))
+					(cadr eq1))))
+
+		 (cond ((or (eq? (car eq1) 'equal?)
+			    (eq? (car eq2) 'equal?))
+			(if (not (memq head '(equal? morally-equal?)))
+			    (lint-format "~A should be equal?~A in ~S" name head 
+					 (if specific-op (format #f " or ~A" specific-op) "") 
+					 form)
+			    (if specific-op
+				(lint-format "~A could be ~A in ~S" name head specific-op form))))
+		       
+		       ((or (eq? (car eq1) 'eqv?)
+			    (eq? (car eq2) 'eqv?))
+			(if (not (memq head '(eqv? morally-equal?)))
+			    (lint-format "~A ~A be eqv?~A in ~S" name head 
+					 (if (eq? head 'eq?) "should" "could") 
+					 (if specific-op (format #f " or ~A" specific-op) "")
+					 form)
+			    (if specific-op
+				(lint-format "~A could be ~A in ~S" name head specific-op form))))
+		       
+		       ((or (eq? (car eq1) 'eq?)
+			    (eq? (car eq2) 'eq?))
+			(if (or (not arg1) (not arg2))
+			    (lint-format "~A could be not: ~A" name head
+					 (lists->string form `(not ,(or arg1 arg2))))
+			    (if (or (null? arg1) (null? arg2)
+				    (quoted-null? arg1) (quoted-null? arg2))
+				(lint-format "~A could be null?: ~A" name head
+					     (lists->string form 
+							    (if (or (null? arg1) (quoted-null? arg1))
+								`(null? ,arg2)
+								`(null? ,arg1))))
+				(if (not (eq? head 'eq?))
+				    (lint-format "~A could be eq?~A in ~S" name head 
+						 (if specific-op (format #f " or ~A" specific-op) "") 
+						 form)))))))))
+	  
 	  ;; ----------------
 	  ((map for-each)
 	   (let* ((len (length form))
@@ -3683,6 +3712,22 @@
 		   (when (and (eq? head 'map)
 			      (identity? func)) ; to check f here as var is more work
 		     (lint-format "perhaps ~A" name (lists->string form (caddr form))))
+
+		   (let ((arg1 (caddr form)))
+		     (when (and (pair? arg1)
+				(memq (car arg1) '(cdr cddr cdddr cddddr list-tail))
+				(pair? (cdr arg1))
+				(pair? (cadr arg1))
+				(memq (caadr arg1) '(string->list vector->list)))
+		       (let ((string-case (eq? (caadr arg1) 'string->list))
+			     (len-diff (if (eq? (car arg1) 'list-tail)
+					   (caddr arg1)
+					   (cdr-count (car arg1)))))
+			 (lint-format "~A accepts ~A arguments, so perhaps ~A" name head 
+				      (if string-case 'string 'vector)
+				      (lists->string arg1 (if string-case
+							      `(substring ,(cadadr arg1) ,len-diff)
+							      `(make-shared-vector ,(cadadr arg1) (- (length ,(cadadr arg1)) ,len-diff) ,len-diff)))))))
 
 		   (when (and (eq? head 'for-each)
 			      (pair? (cadr form))
@@ -4359,7 +4404,7 @@
 	    ((defmacro defmacro*)
 	     (hash-table-set! globals (cadr form) (make-fvar :name (cadr form) 
 							     :ftype head
-							     :decl (eval (list head '_ (caddr form) #f))
+							     :decl (dummy-func name form (list head '_ (caddr form) #f))
 							     :arglist (caddr form)
 							     :value form
 							     :env ()
@@ -4374,7 +4419,7 @@
 			     (hash-table-set! globals fname 
 					      (make-fvar :name fname 
 							 :ftype 'define
-							 :decl (eval (list 'define (cons '_ (cdadr form)) #f))
+							 :decl (dummy-func name form (list 'define (cons '_ (cdadr form)) #f))
 							 :arglist (cdr name)
 							 :value form
 							 :env ()
@@ -4386,7 +4431,7 @@
 	    ((define*)
 	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
 							      :ftype head
-							      :decl (eval (list head (cons '_ (cdadr form)) #f))
+							      :decl (dummy-func name form (list head (cons '_ (cdadr form)) #f))
 							      :arglist (cdadr form)
 							      :value form
 							      :env ()
@@ -4395,7 +4440,7 @@
 	    ((define-expansion define-macro define-macro* define-bacro define-bacro* definstrument defanimal)
 	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
 							      :ftype head
-							      :decl (eval (list head (cons '_ (cdadr form)) #f))
+							      :decl (dummy-func name form (list head (cons '_ (cdadr form)) #f))
 							      :arglist (cdadr form)
 							      :value form
 							      :env ()
@@ -5888,7 +5933,7 @@
 							 (every? pair? (caddr form)))))
 					   (list (make-fvar :name named-let 
 							    :ftype head
-							    :decl (eval (list 'define (cons '_ (map car (caddr form))) #f))
+							    :decl (dummy-func name form (list 'define (cons '_ (map car (caddr form))) #f))
 							    :arglist (map car (caddr form))
 							    :value form
 							    :env env

@@ -5069,9 +5069,9 @@ I need to know where something unexpected happened.  So:
 (set! *#readers* 
       (cons (cons #\_ (lambda (str)
 			(if (string=? str "__line__")
-			    (<a href="portlinenumber">port-line-number</a>)
+			    (<a href="#portlinenumber">port-line-number</a>)
 			    (and (string=? str "__file__")
-			         (<a href="portfilename">port-filename</a>)))))
+			         (<a href="#portfilename">port-filename</a>)))))
             *#readers*))
 </pre>
 
@@ -5560,8 +5560,9 @@ is simply returned, unevaluated.
       ()
       (if (null? (cdr args))
 	  `(display ',(car args))
-	  (append (list 'begin `(display ',(car args)))
-		  (list (apply macroexpand (list (append '(rmac) (cdr args)))))))))
+	  (list 'begin
+                `(display ',(car args))
+		(apply macroexpand (list (append '(rmac) (cdr args))))))))
 
 &gt; (macroexpand (rmac a b c))
 <em class="gray">(begin (display 'a) (begin (display 'b) (display 'c)))</em>

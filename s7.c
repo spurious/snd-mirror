@@ -734,7 +734,7 @@ typedef struct s7_cell {
     } unq;
 
     struct {                        /* counter (internal) */
-      s7_pointer result, list, env; /* env = counter_let (curlet after map/for-each frame created) */
+      s7_pointer result, list, env, slots; /* env = counter_let (curlet after map/for-each frame created) */
       unsigned long long int cap;   /* sc->capture_let_counter for frame reuse */
     } ctr;
 
@@ -2248,6 +2248,7 @@ static int num_object_types = 0;
 #define counter_capture(p)            (_TCtr(p))->object.ctr.cap
 #define counter_let(p)                _TLid((_TCtr(p))->object.ctr.env)
 #define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
+#define counter_slots(p)              (_TCtr(p))->object.ctr.slots
 
 #define is_baffle(p)                  (type(p) == T_BAFFLE)
 #define baffle_key(p)                 (_TBfl(p))->object.baffle_key
@@ -6761,6 +6762,8 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* fin
 #endif
 {
   s7_pointer x;
+  
+  /* fprintf(stderr, "let_id: %lld, %s id: %lld\n", let_id(sc->envir), DISPLAY(symbol), symbol_id(symbol)); */
 
   if (let_id(sc->envir) == symbol_id(symbol))
     return(slot_value(local_slot(symbol)));
@@ -10435,6 +10438,7 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   counter_list(nobj) = counter_list(obj);
   counter_capture(nobj) = counter_capture(obj);
   counter_set_let(nobj, counter_let(obj));
+  counter_slots(nobj) = counter_slots(obj);
   return(nobj);
 }
 
@@ -48011,6 +48015,7 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
   counter_list(x) = iter;        /* iterator */
   counter_capture(x) = 0;        /* will be capture_let_counter */
   counter_set_let(x, sc->NIL);   /* will be the saved env */
+  counter_slots(x) = sc->NIL;    /* local env slots before body is evalled */
   return(x);
 }
 
@@ -60612,9 +60617,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
 		counter_set_let(args, sc->envir);
+		counter_slots(args) = let_slots(sc->envir);
 		counter_capture(args) = sc->capture_let_counter;
 	      }
-	    else sc->envir = old_frame_with_slot(sc, counter_let(args), x);
+	    else 
+	      {
+		/* the counter_slots field saves the original local let slot(s) representing the function
+		 *   argument.  If the function has internal defines, they get added to the front of the
+		 *   slots list, but old_frame_with_slot (maybe stupidly) assumes only the one original
+		 *   slot exists when it updates its symbol_id from the (possibly changed) let_id.  So,
+		 *   a subsequent reference to the parameter name causes "unbound variable", or a segfault
+		 *   if the check has been optimized away.  I think each function call should start with
+		 *   the original let slots, so counter_slots saves that pointer, and resets it here.
+		 */
+		let_slots(counter_let(args)) = counter_slots(args);
+		sc->envir = old_frame_with_slot(sc, counter_let(args), x);
+	      }
 	    sc->code = closure_body(code);
 	    goto BEGIN1;
 	  }
@@ -60704,9 +60722,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(counter, sc->envir);
+		counter_slots(counter) = let_slots(sc->envir);
 		counter_capture(counter) = sc->capture_let_counter;
 	      }
-	    else sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
+	    else 
+	      {
+		let_slots(counter_let(counter)) = counter_slots(counter);
+		sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
+	      }
 	    push_stack(sc, OP_FOR_EACH_1, counter, code);
 	    sc->code = closure_body(code);
 	    goto BEGIN1;
@@ -60741,9 +60764,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(c, sc->envir);
+		counter_slots(c) = let_slots(sc->envir);
 		counter_capture(c) = sc->capture_let_counter;
 	      }
-	    else sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
+	    else 
+	      {
+		let_slots(counter_let(c)) = counter_slots(c);
+		sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
+	      }
 	    sc->code = closure_body(code);
 	    goto BEGIN1;
 	  }
@@ -74048,6 +74076,8 @@ int main(int argc, char **argv)
  *
  * make ow! display (*s7* 'stack) in some reasonable way
  *   (*s7* 'stack) itself is a problem -- need saved list so cycle check is not fooled?
+ *      this is still happening
+ *   repl: if error is in format, subsequent formatted error report clobbers original arglist!
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
@@ -74059,4 +74089,8 @@ int main(int argc, char **argv)
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
  *
+ * it should be possible to mimic map values handling elsewhere but:
+ *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
+ *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
+ *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
  */

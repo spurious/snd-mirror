@@ -130,9 +130,7 @@
 	 w
 	 (lambda (n)
 	   (if (XtIsWidget n)
-	       (if (XmIsScrollBar n)
-		   (XmChangeColor n *position-color*)
-		   (XmChangeColor n *basic-color*))))))))
+	       (XmChangeColor n (if (XmIsScrollBar n) *position-color* *basic-color*))))))))
   
   (define host-name
     (let ((documentation "(host-name) -> name of current machine"))
