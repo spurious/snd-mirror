@@ -1283,10 +1283,17 @@
 				     (pair? (cdr arg))
 				     (every? (lambda (p)
 					       (and (pair? p)
-						    (eq? (car p) 'not)))
-					     (cdr arg)))
+						    (memq (car p) '(not < > <= >= odd? even? exact? inexact?
+								    char<? char>? char<=? char>=? string<? string>? string<=? string>=?
+								    char-ci<? char-ci>? char-ci<=? char-ci>=? string-ci<? string-ci>? string-ci<=? string-ci>=?))))
+					     (cdr arg))
+				     (any? (lambda (p) (eq? (car p) 'not)) (cdr arg)))
 				`(,(if (eq? (car arg) 'or) 'and 'or)
-				  ,@(map cadr (cdr arg))))
+				  ,@(map (lambda (p)
+					   (if (eq? (car p) 'not)
+					       (cadr p)
+					       (simplify-boolean `(not ,p) () () env)))
+					 (cdr arg))))
 
 			       ((not (equal? val arg))
 				`(not ,val))
@@ -2494,11 +2501,10 @@
 	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;;
 	;; (gcd (random x) (random x)) should not be (abs (random x)) -- similarly for (gcd (f) (f)) I guess -- check (not (side-effect? ...)) here
-	;; cond with eq? and (or (eq?...) (eq?...)) -> case
 	;; pi as func par should be caught (see s7test.scm)
 	;; (car (string->list (symbol->string x))) -> ((symbol->string x) 0) or any other op (ref|substr)
 	;;    or list->string in the same sequence
-	;; the extended (not (or|and (not ...)) could include the not table backwards (not-able so to speak)
+	;; let (line 236): (string #\return) could be "\x0d"
 
 
 	;(if (member 'iota form) (format *stderr* "~A~%" form))
@@ -2745,21 +2751,23 @@
 	   (when (and (= (length form) 3)
 		      (pair? (cadr form)))
 	     (let ((target (cadr form)))
-	       (cond ((eq? (car target) 'list-tail)        ; (set-car! (list-tail x y) z) -> (list-set! x y z)
-		      (lint-format "perhaps ~A" name 
-                        (lists->string form `(list-set! ,(cadr target) ,(caddr target) ,(caddr form)))))
-		     ((memq (car target) '(cdr cddr cdddr cddddr))
-		      (set! last-simplify-boolean-line-number line-number)
-		      (if (and (pair? (cadr target))
-			       (memq (caadr target) '(cdr cddr cdddr cddddr)))
-			  (lint-format "perhaps ~A" name       ; (set-car! (cdr (cddr x)) y) -> (list-set! x 3 y)
-				       (lists->string form `(list-set! ,(cadadr target)
-								       ,(+ (cdr-count (car target)) (cdr-count (caadr target))) 
-								       ,(caddr form))))
-			  (lint-format "perhaps ~A" name       ; (set-car! (cdr x) y) -> (list-set! x 1 y)
-				       (lists->string form `(list-set! ,(cadr target) 
-								       ,(cdr-count (car target)) 
-								       ,(caddr form))))))))))
+	       (case (car target)
+
+		 ((list-tail)        ; (set-car! (list-tail x y) z) -> (list-set! x y z)
+		  (lint-format "perhaps ~A" name (lists->string form `(list-set! ,(cadr target) ,(caddr target) ,(caddr form)))))
+
+		 ((cdr cddr cdddr cddddr)
+		  (set! last-simplify-boolean-line-number line-number)
+		  (if (and (pair? (cadr target))
+			   (memq (caadr target) '(cdr cddr cdddr cddddr)))
+		      (lint-format "perhaps ~A" name       ; (set-car! (cdr (cddr x)) y) -> (list-set! x 3 y)
+				   (lists->string form `(list-set! ,(cadadr target)
+								   ,(+ (cdr-count (car target)) (cdr-count (caadr target))) 
+								   ,(caddr form))))
+		      (lint-format "perhaps ~A" name       ; (set-car! (cdr x) y) -> (list-set! x 1 y)
+				   (lists->string form `(list-set! ,(cadr target) 
+								   ,(cdr-count (car target)) 
+								   ,(caddr form))))))))))
 
 	  ;; ----------------
 	  ((and or not)
@@ -4404,7 +4412,7 @@
 	    ((defmacro defmacro*)
 	     (hash-table-set! globals (cadr form) (make-fvar :name (cadr form) 
 							     :ftype head
-							     :decl (dummy-func name form (list head '_ (caddr form) #f))
+							     :decl (dummy-func head form (list head '_ (caddr form) #f))
 							     :arglist (caddr form)
 							     :value form
 							     :env ()
@@ -4419,7 +4427,7 @@
 			     (hash-table-set! globals fname 
 					      (make-fvar :name fname 
 							 :ftype 'define
-							 :decl (dummy-func name form (list 'define (cons '_ (cdadr form)) #f))
+							 :decl (dummy-func head form (list 'define (cons '_ (cdadr form)) #f))
 							 :arglist (cdr name)
 							 :value form
 							 :env ()
@@ -4431,7 +4439,7 @@
 	    ((define*)
 	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
 							      :ftype head
-							      :decl (dummy-func name form (list head (cons '_ (cdadr form)) #f))
+							      :decl (dummy-func head form (list head (cons '_ (cdadr form)) #f))
 							      :arglist (cdadr form)
 							      :value form
 							      :env ()
@@ -4440,7 +4448,7 @@
 	    ((define-expansion define-macro define-macro* define-bacro define-bacro* definstrument defanimal)
 	     (hash-table-set! globals (caadr form) (make-fvar :name (caadr form) 
 							      :ftype head
-							      :decl (dummy-func name form (list head (cons '_ (cdadr form)) #f))
+							      :decl (dummy-func head form (list head (cons '_ (cdadr form)) #f))
 							      :arglist (cdadr form)
 							      :value form
 							      :env ()
@@ -4918,11 +4926,68 @@
 			  (exprs (cdr clause)))
 		      (if (memq test '(else #t))
 			  `(else ,@exprs)
-			  (if (equal? eqv-select (cadr test))
-			      `((,(unquoted (caddr test))) ,@exprs)
-			      `((,(unquoted (cadr test))) ,@exprs)))))
+			  (case (car test)
+			    ((eq? eqv? =)
+			     (if (equal? eqv-select (cadr test))
+				 `((,(unquoted (caddr test))) ,@exprs)
+				 `((,(unquoted (cadr test))) ,@exprs)))
+			    ((memq memv)
+			     `(,(unquoted (caddr test)) ,@exprs))
+			    (else 
+			     `(,(map (lambda (p)
+				       (case (car p)
+					 ((eq? eqv? =)
+					  (unquoted (if (equal? eqv-select (cadr p)) (caddr p) (cadr p))))
+					 ((memq memv)
+					  (apply values (caddr p)))
+					 (else (error "oops"))))
+				     (cdr test))
+			       ,@exprs))))))
 		  new-clauses)
 	   ,@(if has-else () `((else ())))))
+
+      (define (cond-eqv-select clause)
+	(if (pair? clause)
+	    (case (car clause)
+	      ((memq memv) 
+	       (and (= (length clause) 3)
+		    (cadr clause)))
+	      ((eq? eqv? =)
+	       (and (= (length clause) 3)
+		    (if (code-constant? (cadr clause))
+			(caddr clause)
+			(cadr clause))))
+	      ((or) 
+	       (and (pair? (cdr clause))
+		    (cond-eqv-select (cadr clause))))
+	      (else #f))
+	    (memq clause '(else #t))))
+
+      (define (cond-eqv? clause eqv-select or-ok)
+	(if (pair? clause)
+	    ;; it's eqv-able either directly or via memq/memv, or via (or ... eqv-able clauses)
+	    ;;   all clauses involve the same (eventual case) selector
+	    (case (car clause)
+	      ((eq? eqv? =)
+	       (if (eqv-code-constant? (cadr clause))
+		   (equal? eqv-select (caddr clause))
+		   (and (eqv-code-constant? (caddr clause))
+			(equal? eqv-select (cadr clause)))))
+
+	      ((memq memv)
+	       (and (equal? eqv-select (cadr clause))
+		    (pair? (caddr clause))
+		    (eq? (caaddr clause) 'quote)))
+
+	      ((or)
+	       (and or-ok
+		    (every? (lambda (p)
+			      (cond-eqv? p eqv-select #f))
+			    (cdr clause))))
+
+	      (else #f))
+	    (memq clause '(else #t))))
+							   
 
       (define (lint-walk name form env)
 	;; walk a form, here curlet can change
@@ -5436,18 +5501,18 @@
 			     (for-each
 			      (lambda (clause)
 				(set! ctr (+ ctr 1))
-				(if all-eqv
-				    (set! all-eqv (and (pair? clause)
-						       (or (and (pair? (car clause))
-								(memq (caar clause) '(eq? eqv? =))
-								(= (length (car clause)) 3)
-								(or (and (eqv-code-constant? (cadar clause))
-									 (or (and (not eqv-select) (set! eqv-select (caddar clause)))
-									     (equal? eqv-select (caddar clause))))
-								    (and (eqv-code-constant? (caddar clause))
-									 (or (and (not eqv-select) (set! eqv-select (cadar clause)))
-									     (equal? eqv-select (cadar clause))))))
-							   (memq (car clause) '(else #t))))))
+
+				(when all-eqv
+				  (if (not (pair? clause))
+				      (set! all-eqv #f)
+				      (begin
+					;(format *stderr* "clause: ~A~%" clause)
+					(when (not eqv-select)
+					  (set! eqv-select (cond-eqv-select (car clause))))
+					(set! all-eqv (and eqv-select (cond-eqv? (car clause) eqv-select #t)))
+					;(format *stderr* "  -> ~A ~A~%" all-eqv eqv-select)
+					)))
+
 				(if (and prev-clause
 					 (not has-combinations)
 					 (> len 2) 
@@ -6403,7 +6468,7 @@
 				      (line (port-line-number)))
 				  (if (h 'type)
 				      (begin
-					(format outport "reader[~A]: unknown # object: #~A~%" line data)
+					(format outport " reader[~A]: unknown # object: #~A~%" line data)
 					(set! (h 'result)
 					      (case (data 0)
 						((#\_) (if (string=? data "__line__")
@@ -6421,7 +6486,7 @@
 							     (else (symbol->keyword (string->symbol data)))))
 						(else (symbol->keyword (string->symbol data))))))
 				      (begin
-					(format outport "reader[~A]: unknown \\ usage: \\~C~%" line data)
+					(format outport " reader[~A]: unknown \\ usage: \\~C~%" line data)
 					(set! (h 'result) data)))))))
 
 		  (do ((form (read fp) (read fp)))

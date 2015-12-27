@@ -50033,9 +50033,10 @@ static s7_pointer g_is_eq_car_q(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_eq_caar_q(s7_scheme *sc, s7_pointer args)
 {
+  /* (eq? (caar x) 'y), but x is not guaranteed to be list(list) */
   s7_pointer lst;
   lst = find_symbol_checked(sc, cadar(args));
-  if (!is_pair(lst))
+  if ((!is_pair(lst)) || (!is_pair(car(lst))))
     return(g_is_eq(sc, set_plist_2(sc, g_caar(sc, set_plist_1(sc, lst)), cadr(cadr(args)))));
   return(make_boolean(sc, caar(lst) == cadr(cadr(args))));
 }
@@ -74088,6 +74089,7 @@ int main(int argc, char **argv)
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
+ * need much more thorough testing/debugging checks for the reused let cases (make sure they stay the same length etc, check counter_slots type, etc)
  *
  * it should be possible to mimic map values handling elsewhere but:
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
