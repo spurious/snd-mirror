@@ -786,19 +786,21 @@
 		(set! count (+ count 1))))))
       ;(count-if keyword? lst))
       
-      (define (check-star-parameters name args)
+      (define (check-star-parameters f args)
 	(if (list-any? (lambda (k) (memq k '(:key :optional))) args)
-	    (lint-format ":optional and key are no longer accepted: ~A" name args))
+	    (format outport "~A: :optional and key are no longer accepted: ~A~%" f args))
+	(if (member 'pi args (lambda (a b) (or (eq? b 'pi) (and (pair? b) (eq? (car b) 'pi)))))
+	    (format outport "~A: parameter can't be a constant: ~A~%" f args))
 	(let ((r (memq :rest args)))
 	  (when (pair? r)
 	    (if (not (pair? (cdr r)))
-		(lint-format ":rest parameter needs a name: ~A" name args)
+		(format outport "~A: :rest parameter needs a name: ~A~%" f args)
 		(if (pair? (cadr r))
-		    (lint-format ":rest parameter can't specify a default value: ~A" name args)))))
+		    (format outport "~A: :rest parameter can't specify a default value: ~A~%" f args)))))
 	(let ((a (memq :allow-other-keys args)))
 	  (if (and (pair? a)
 		   (pair? (cdr a)))
-	      (lint-format ":allow-other-keys should be at the end of the parameter list: ~A" name args))))
+	      (format outport "~A: :allow-other-keys should be at the end of the parameter list: ~A~%" f args))))
 
       (define (tree-member sym tree)
 	(and (pair? tree)
@@ -1939,9 +1941,21 @@
 			  (catch #t 
 			    (lambda () (apply (symbol->value (car form)) args)) 
 			    (lambda any `(,(car form) ,@args))))
-			 ((and (pair? (car args))
-			       (integer-result? (caar args)))
-			  (car args))
+			 ((pair? (car args))
+			  (cond ((or (integer-result? (caar args))
+				     (and (eq? (caar args) 'random)
+					  (integer? (cadar args))))
+				 (car args))
+				((memq (caar args) '(inexact->exact exact))
+				 `(,(car form) ,(cadar args)))
+				((memq (caar args) '(* + / -)) ; maybe extend this list
+				 `(,(car form) (,(caar args) ,@(map (lambda (p)
+								      (if (and (pair? p)
+									       (memq (car p) '(inexact->exact exact)))
+									  (cadr p)
+									  p))
+								    (cdar args)))))
+				(else `(,(car form) ,@args))))
 			 (else `(,(car form) ,@args)))
 		   form))
 	      
@@ -2096,16 +2110,18 @@
 	      
 	      ((inexact->exact exact)
 	       (if (= len 1)
-		   (if (or (rational? (car args))
-			   (and (pair? (car args))
-				(or (rational-result? (caar args))
-				    (integer-result? (caar args)))))
-		       (car args)
-		       (if (number? (car args))
-			   (catch #t (lambda () (inexact->exact (car args))) (lambda any `(,(car form) ,@args)))
-			   `(,(car form) ,@args)))
+		   (cond ((or (rational? (car args))
+			      (and (pair? (car args))
+				   (or (rational-result? (caar args))
+				       (integer-result? (caar args))
+				       (and (eq? (caar args) 'random)
+					    (rational? (cadar args))))))
+			  (car args))
+			 ((number? (car args))
+			  (catch #t (lambda () (inexact->exact (car args))) (lambda any `(,(car form) ,@args))))
+			 (else `(,(car form) ,@args)))
 		   form))
-	      
+
 	      ((logior)
 	       (set! args (remove-duplicates (remove-all 0 (splice-if (lambda (x) (eq? x 'logior)) args))))
 	       (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
@@ -2488,26 +2504,22 @@
 	;;   (/ 1.0 (exact->inexact n_15))
 	;;   (* 2.0 (exact->inexact (real-part z)))
 	;;   (inexact->exact (- (floor (/ ncof 2))))
-	;;   (inexact->exact (random 10))
-	;;   (exact->inexact (/ 1 100))
 	;;   (exact->inexact (* (expt 2.0 ...)))
-	;;   (inexact->exact (numerator x))
 	;;   (/ (exact->inexact (* sign numerator)) (exact->inexact 0))
 	;;   (/ (exact->inexact f) (exact->inexact (expt 10 (- e))))
 	;;   (* (exact->inexact f) (exact->inexact (expt 10 e)))
-	;;   (truncate (exact (* (car z) inexact-m-min)))
 	;;   (+ -50.0 (/ (inexact x) (inexact res)))
+	;;
 	;; (*|/ (- x) (- y))?
 	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;;
-	;; (gcd (random x) (random x)) should not be (abs (random x)) -- similarly for (gcd (f) (f)) I guess -- check (not (side-effect? ...)) here
-	;; pi as func par should be caught (see s7test.scm)
+	;; (gcd (random x) (random x)) should not be (abs (random x)) -- similarly for (gcd (f) (f)) I guess -- check (not (side-effect? ...))
 	;; (car (string->list (symbol->string x))) -> ((symbol->string x) 0) or any other op (ref|substr)
 	;;    or list->string in the same sequence
-	;; let (line 236): (string #\return) could be "\x0d"
+	;; sort case key list if ints?
 
 
-	;(if (member 'iota form) (format *stderr* "~A~%" form))
+	;(if (member 'rationalize form) (format *stderr* "~A~%" form))
 
 	(case head
 	  
@@ -2718,7 +2730,7 @@
 											  ,(- (length cxr) 1)))))
 			   (else (set! last-simplify-boolean-line-number -1)))))))
 
-	   (when (and (eq? head 'car)          ; (car (list-tail x y)) -> (list-ref x y)
+	   (when (and (eq? head 'car)                             ; (car (list-tail x y)) -> (list-ref x y)
 		      (pair? (cadr form))
 		      (eq? (caadr form) 'list-tail))
 	     (lint-format "perhaps ~A" name (lists->string form `(list-ref ,(cadadr form) ,(caddr (cadr form))))))
@@ -2741,7 +2753,7 @@
 								      ,(case head ((car) 0) ((cadr) 1) ((caddr) 2) (else 3)))))
 		 (if (and (memq (caadr form) '(reverse reverse!))
 			  (symbol? (cadadr form)))
-		     (lint-format "perhaps ~A" name    ; (car (reverse x)) -> (list-ref x (- (length x) 1))
+		     (lint-format "perhaps ~A" name                  ; (car (reverse x)) -> (list-ref x (- (length x) 1))
 				  (lists->string form `(list-ref ,(cadadr form) 
 							(- (length ,(cadadr form)) 
 							   ,(case head ((car) 1) ((cadr) 2) ((caddr) 3) (else 4))))))))))
@@ -2753,7 +2765,7 @@
 	     (let ((target (cadr form)))
 	       (case (car target)
 
-		 ((list-tail)        ; (set-car! (list-tail x y) z) -> (list-set! x y z)
+		 ((list-tail)                              ; (set-car! (list-tail x y) z) -> (list-set! x y z)
 		  (lint-format "perhaps ~A" name (lists->string form `(list-set! ,(cadr target) ,(caddr target) ,(caddr form)))))
 
 		 ((cdr cddr cdddr cddddr)
@@ -2919,7 +2931,10 @@
 
 	  ;; ----------------
 	  ((string)
-	   (if (every? (lambda (x) (and (char? x) (not (member x '(#\null #\newline #\escape))))) (cdr form)) ;#\linefeed -> #\newline in reader
+	   (if (every? (lambda (x) 
+			 (and (char? x)
+			      (char<=? #\space x #\~))) ; #\0xx chars here look dumb
+		       (cdr form))
 	       (lint-format "~A could be ~S" name form (apply string (cdr form)))))
 
 	  ;; ----------------
@@ -5044,13 +5059,16 @@
 					(pair? val)
 					(not (pair? (car sym))))
 				   (begin
+				     ;(format *stderr* "sym: ~A, val: ~A~%" sym val)
 				     (when (pair? (cdr sym))
 				       (if (repeated-member? (proper-list (cdr sym)) env)
 					   (lint-format "~A parameter is repeated: ~A" name head (truncated-list->string sym)))
 				       (if (memq head '(define* define-macro* define-bacro*))
-					   (check-star-parameters name (cdr sym))
+					   (check-star-parameters (car sym) (cdr sym))
 					   (if (list-any? keyword? (cdr sym))
-					       (lint-format "~A arglist can't handle keywords" name head))))
+					       (lint-format "~A parameter can't be a keyword: ~A" name (car sym) sym)
+					       (if (memq 'pi (cdr sym))
+						   (lint-format "~A parameter can't be a constant: ~A" name (car sym) sym)))))
 
 				     (when (and (eq? head 'define-macro)
 						(null? (cdr sym))
@@ -5091,7 +5109,7 @@
 					 (if (repeated-member? (proper-list args) env)
 					     (lint-format "~A parameter is repeated: ~A" name head (truncated-list->string args)))
 					 (if (eq? head 'lambda*)           ; (lambda* (a :b) ...)
-					     (check-star-parameters name args)
+					     (check-star-parameters head args)
 					     (if (list-any? keyword? args) ; (lambda (:key) ...)
 						 (lint-format "lambda arglist can't handle keywords (use lambda*)" name)))))
 				   
@@ -6461,7 +6479,7 @@
 		      (last-line-number -1))
 
 		  ;; try to get past all the # and \ stuff in other Schemes
-		  ;;   main remaining problem: [] used as parentheses (Gauche for example)
+		  ;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example), and #!optional (Chicken and MIT-scheme)
 		  (set! (hook-functions *read-error-hook*)  
 			(list (lambda (h)
 				(let ((data (h 'data))

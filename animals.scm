@@ -770,11 +770,7 @@
 	    ((= pulse pulses))
 	  (let ((pulse-amp (pulse-amps pulse))
 		(pulse-stop (+ pulse-start pulse-samps)))
-		  
-	    (if (< pulse 3)
-		(set! (mus-frequency gen1) (* pitch 10))
-		(set! (mus-frequency gen1) (* pitch 11)))
-
+	    (set! (mus-frequency gen1) (* pitch (if (< pulse 3) 10 11)))
 	    (do ((k pulse-start (+ k 1)))
 		((= k pulse-stop))
 	      (let ((noise (rand-interp rnd)))
@@ -863,9 +859,7 @@
 	      ((= k reset-stop))
 	    (outa k (* (env pulsef) (polywave gen1))))
 	  (mus-reset pulsef)
-	  (if (> (random 1.0) .8)
-	      (set! next-pulse (seconds->samples (+ .25 (random .3))))
-	      (set! next-pulse (seconds->samples .4))))))))
+	  (set! next-pulse (seconds->samples (if (> (random 1.0) .8) (+ .25 (random .3)) .4))))))))
 
 ;; (with-sound (:play #t) (ornate-chorus-frog 0 4 .5))
 
@@ -1245,13 +1239,12 @@
 	      (outa i (* (env pulse-ampf)
 			 (polywave gen (env pulse-frqf)))))
 	    
-	    (if cur-is-long
-		(set! cur-start (+ cur-end
-				   (seconds->samples (+ .015 (if (> (random 1.0) .8) 
-								 (random .15) 
-								 (random .04))))))
-		(set! cur-start (+ cur-end
-				   (seconds->samples (+ .01 (random .01))))))
+	    (set! cur-start (+ cur-end 
+			       (seconds->samples
+				(if cur-is-long
+				    (+ .015 (random (if (> (random 1.0) .8) .15 .04)))
+				    (+ .01 (random .01))))))
+
 	    (set! cur-is-long (or (not cur-is-long) (> (random 1.0) .3)))))))))
 
 ;; (with-sound (:play #t) (western-toad  0 2 .5))
@@ -2266,9 +2259,9 @@
 		(set! current-pulse-samps (+ pulse-samps (seconds->samples (+ .2 (random .1)))))
 		(set! pulses (+ 30 (random 70))))
 	      (begin
-		(if (> (random 1.0) .95)
-		    (set! pulse-samps (seconds->samples (+ pulse-dur .005 (random .01))))
-		    (set! pulse-samps (seconds->samples pulse-dur)))
+		(set! pulse-samps (seconds->samples (if (> (random 1.0) .95)
+							(+ pulse-dur .005 (random .01)) 
+							pulse-dur)))
 		(set! current-pulse-samps pulse-samps))))))))
 
 ;; (with-sound (:play #t) (southeastern-field-cricket 0 5 .3))
