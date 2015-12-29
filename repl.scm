@@ -96,13 +96,9 @@
 					  (let loop ((oldpos histpos)
 						     (newpos new-end))
 					    (set! (new-hist newpos) (histbuf oldpos))
-					    (if (zero? newpos)
-						(set! newpos (- new-size 1))
-						(set! newpos (- newpos 1)))
+					    (set! newpos (if (zero? newpos) (- new-size 1) (- newpos 1)))
 					    (unless (= newpos new-end)
-					      (if (zero? oldpos)
-						  (set! oldpos (- histsize 1))
-						  (set! oldpos (- oldpos 1)))
+					      (set! oldpos (if (zero? oldpos) (- histsize 1) (- oldpos 1)))
 					      (unless (= oldpos histpos)
 						(loop oldpos newpos))))
 					  (set! histsize new-size)
@@ -322,9 +318,7 @@
 		      (if (pair? oparens)
 			  (set! new-red-pos (car oparens)))
 		      (unless (equal? new-red-pos red-par-pos)
-			(if (number? new-red-pos)
-			    (set! red-par-pos new-red-pos)
-			    (set! red-par-pos #f))))
+			(set! red-par-pos (if (number? new-red-pos) new-red-pos #f))))
 		    (if (number? red-par-pos)
 			(set! red-par-pos #f)))))
 	    
@@ -344,9 +338,7 @@
 		  (let ((col 0))
 		    (do ((i 0 (+ i 1)))
 			((= i new-red))
-		      (if (char=? (cur-line i) #\newline)
-			  (set! col 0)
-			  (set! col (+ col 1))))
+		      (set! col (if (char=? (cur-line i) #\newline) 0 (+ col 1))))
 		    (let ((sym (do ((i (+ new-red 1) (+ i 1)))
 				   ((not (char-alphabetic? (cur-line i)))
 				    (substring cur-line (+ new-red 1) i)))))
@@ -643,9 +635,9 @@
 				  (if (<= chars 1) (save-line))
 				  (if (= cursor-pos (length cur-line))
 				      (set! cur-line (string-append cur-line (string c)))
-				      (if (= cursor-pos 0)
-					  (set! cur-line (string-append (string c) cur-line))
-					  (set! cur-line (string-append 
+				      (set! cur-line (if (= cursor-pos 0)
+							 (string-append (string c) cur-line)
+							 (string-append 
 							  (substring cur-line 0 cursor-pos) 
 							  (string c) 
 							  (substring cur-line cursor-pos)))))
@@ -775,9 +767,9 @@
 		      (save-line)
 		      (if (zero? cursor-pos)
 			  (set! cur-line (string-append selection cur-line))
-			  (if (>= cursor-pos (length cur-line))
-			      (set! cur-line (string-append cur-line selection))
-			      (set! cur-line (string-append (substring cur-line 0 cursor-pos)
+			  (set! cur-line (if (>= cursor-pos (length cur-line))
+					     (string-append cur-line selection)
+					     (string-append (substring cur-line 0 cursor-pos)
 							    selection
 							    (substring cur-line cursor-pos)))))
 		      (set! cursor-pos (+ cursor-pos (length selection))))))
@@ -847,9 +839,9 @@
 						  i))))
 				    (if (< loc 0)
 					(set! completion (symbol-completion cur-line))
-					(if (char=? (cur-line loc) #\")
-					    (set! completion (filename-completion (substring cur-line (+ loc 1))))
-					    (set! completion (symbol-completion (substring cur-line (+ loc 1))))))
+					(set! completion (if (char=? (cur-line loc) #\")
+							     (filename-completion (substring cur-line (+ loc 1)))
+							     (symbol-completion (substring cur-line (+ loc 1))))))
 				    (when (and completion
 					       (> (length completion) (- end loc 1)))
 				      (save-line)
@@ -1037,7 +1029,7 @@
 		    (tty #t))
 		
 		;; we're in libc here, so exit is libc's exit!
-		(define (tty-reset no)
+		(define (tty-reset)
 		  (if tty (tcsetattr terminal-fd TCSAFLUSH saved))
 		  (if (not (equal? input-fd terminal-fd)) (close input-fd))
 		  (#_exit))
@@ -1046,7 +1038,7 @@
 		  :exit (let ((documentation "(exit) resets the repl tty and exits the repl"))
 			  (lambda ()
 			    (newline *stderr*)
-			    (tty-reset 0))))
+			    (tty-reset))))
 		
 		;; check for dumb terminal
 		(if (or (zero? (isatty terminal-fd))        ; not a terminal -- input from pipe probably
@@ -1089,7 +1081,7 @@
 				 (set! ctr 0)
 				 (set! chars (read input-fd cc read-size))
 				 (if (= chars 0)
-				     (tty-reset terminal-fd))
+				     (tty-reset))
 				 
 				 (when (= chars read-size)
 				   ;; concatenate buffers until we get the entire selection
@@ -1102,7 +1094,7 @@
 				     
 				     ;; look for simple cut/paste -- no control chars etc
 				     (when (= input-fd terminal-fd)
-				       (let ((bcksp (integer->char 127))
+				       (let ((bcksp #\delete)
 					     (ok-chars (list #\newline #\linefeed #\return #\tab)))
 					 (do ((i 0 (+ i 1)))
 					     ((or (= i chars)
@@ -1191,7 +1183,7 @@
 		  (termios.set_c_cc buf VMIN 1)
 		  (termios.set_c_cc buf VTIME 0)
 		  (when (negative? (tcsetattr terminal-fd TCSAFLUSH buf))
-		    (tty-reset terminal-fd))
+		    (tty-reset))
 		  
 		  
 		  ;; -------- the repl --------
@@ -1357,12 +1349,11 @@
 		    (lambda ()
 		      (let ((result (iter)))
 			(if (and (eof-object? result)
-				 (iterator-at-end? iter))
-			    (if (eq? stop (iterator-sequence iter))
-				result
-				(begin 
-				  (set! iter (make-iterator (outlet (iterator-sequence iter))))
-				  (iterloop)))
+				 (iterator-at-end? iter)
+				 (not (eq? stop (iterator-sequence iter))))
+			    (begin 
+			      (set! iter (make-iterator (outlet (iterator-sequence iter))))
+			      (iterloop))
 			    result))))))
 	    (make-iterator iterloop))))
   

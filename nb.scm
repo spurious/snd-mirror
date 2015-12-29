@@ -111,13 +111,13 @@ It causes a description of the file to popup when the mouse crosses the filename
 								(+ (cadr files-position) 10))))))))))))
 
 
-(define (files-popdown-info type position name)
+(define (files-popdown-info)
   (let ((cur-time (get-internal-real-time)))
     (in 1000 (lambda ()
 	       (if (> cur-time nb-mouse-response-time)
 		   (hide-widget (list-ref (dialog-widgets) 15)))))))
 
 (hook-push mouse-enter-label-hook (lambda (hook) (files-popup-info (hook 'type) (hook 'position) (hook 'label))))
-(hook-push mouse-leave-label-hook (lambda (hook) (files-popdown-info (hook 'type) (hook 'position) (hook 'label))))
+(hook-push mouse-leave-label-hook (lambda (hook) (files-popdown-info)))
 
 

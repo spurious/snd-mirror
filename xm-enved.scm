@@ -138,7 +138,7 @@
 	    (xe-edit-envelope-point xe-mouse-pos lx y cur-env))
       (xe-redraw drawer)))
 
-  (define (xe-mouse-release drawer xx yy)
+  (define (xe-mouse-release drawer)
     (let ((cur-env (xe-envelope drawer)))
       (set! xe-mouse-up (get-internal-real-time))
       (if (and (not xe-mouse-new)
@@ -187,7 +187,7 @@
 			       (xe-mouse-drag editor (.x ev) (.y ev))))
 	  (XtAddEventHandler drawer ButtonReleaseMask #f 
 			     (lambda (w context ev flag)
-			       (xe-mouse-release editor (.x ev) (.y ev))))
+			       (xe-mouse-release editor)))
 	  (XtAddEventHandler drawer EnterWindowMask #f
 			     (lambda (w context ev flag)
 			       (XDefineCursor (XtDisplay w) (XtWindow w) arrow-cursor)))
@@ -264,7 +264,7 @@
 								     (x (cadr coords))
 								     (y (caddr coords)))
 								(set! dragging #f)
-								(xe-mouse-release editor x y))
+								(xe-mouse-release editor))
 							      #f)
 							    #f #f)
 					  #f)
@@ -324,7 +324,7 @@
 	      (mouse-d 10)
 	      (mouse-r 5))
 
-	  (define (xe-grfx drawer x)
+	  (define (xe-grfx x)
 	    (if (= px0 px1)
 		px0
 		(min px1
@@ -333,7 +333,7 @@
 					   (/ (- x ix0)
 					      (- ix1 ix0)))))))))
 	  
-	  (define (xe-grfy drawer y)
+	  (define (xe-grfy y)
 	    (if (= py0 py1)
 		py0
 		(min py0 ; grows downward so y1 < y0
@@ -351,8 +351,8 @@
 			  (ly #f))
 		      (do ((i 0 (+ i 2)))
 			  ((= i len))
-			(let ((cx (xe-grfx drawer (cur-env i)))
-			      (cy (xe-grfy drawer (cur-env (+ i 1)))))
+			(let ((cx (xe-grfx (cur-env i)))
+			      (cy (xe-grfy (cur-env (+ i 1)))))
 			  ((*motif* 'XFillArc)
 			   dpy wn gc 
 			   (- cx mouse-r)
@@ -380,8 +380,8 @@
 		    ((*gtk* 'cairo_set_source_rgb) cr 0.0 0.0 0.0)
 		    (do ((i 0 (+ i 2)))
 			((= i len))
-		      (let ((cx (xe-grfx drawer (cur-env i)))
-			    (cy (xe-grfy drawer (cur-env (+ i 1)))))
+		      (let ((cx (xe-grfx (cur-env i)))
+			    (cy (xe-grfy (cur-env (+ i 1)))))
 			((*gtk* 'cairo_arc) cr cx cy mouse-r 0.0 (* 2 pi))
 			((*gtk* 'cairo_fill) cr)
 			(if lx

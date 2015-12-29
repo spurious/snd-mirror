@@ -112,7 +112,7 @@
 		  (if (= z pi)
 		      "pi"
 		      (format #f *pretty-print-float-format* z)))
-	      (format "~A~A~Ai" 
+	      (format #f "~A~A~Ai" 
 		      (messy-number (real-part z))
 		      (if (negative? (imag-part z)) "-" "+")
 		      (messy-number (abs (imag-part z))))))

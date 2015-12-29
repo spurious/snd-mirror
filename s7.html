@@ -5757,6 +5757,7 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
 <li>remove *-ci functions (they are completely useless)
+<li>remove #d
 </ul>
 
 <p>(most of these are removed if you set the compiler flag WITH_PURE_S7), and perhaps:
@@ -8883,7 +8884,6 @@ variables at the start of lint.scm to control additional output:
 
 
 <pre class="indented">
-*report-unused-parameters*           ; if #t, report unused function/macro parameters
 *report-unused-top-level-functions*  ; if #t, report unused functions
 *report-undefined-variables*         ; if #t, report undefined identifiers
 *report-shadowed-variables*          ; if #t, report function parameters that are shadowed

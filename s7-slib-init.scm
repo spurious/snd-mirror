@@ -61,7 +61,7 @@
     (and home
 	 (case (software-type)
 	   ((unix coherent ms-dos)	;V7 unix has a / on HOME
-	    (if (eqv? #\/ (string-ref home (+ -1 (string-length home))))
+	    (if (char=? #\/ (string-ref home (+ -1 (string-length home))))
 		home
 		(string-append home "/")))
 	   (else home)))))
@@ -363,7 +363,7 @@
       (try "netscape '" "'")))
 
 ;;@ define these as appropriate for your system.
-(define slib:tab (integer->char 9))
+(define slib:tab #\tab)
 (define slib:form-feed (integer->char 12))
 
 ;;@ Support for older versions of Scheme.  Not enough code for its own file.
