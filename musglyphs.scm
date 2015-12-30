@@ -257,9 +257,7 @@
 	      (draw-treble-clef x0 (+ y0 (* size .76)) size)
 	      (draw-bass-clef (+ x0 (* size .075)) (+ y0 (* size .26)) size))
 	  (set! x0 (+ x0 (* size .8))))
-	(if accidental
-	    (set! x0 (+ x0 (* size .1)))
-	    (set! x0 (+ x0 (* size .25)))))
+	(set! x0 (if accidental (+ x0 (* size .1)) (+ x0 (* size .25)))))
 
     ;; accidental
     (if accidental

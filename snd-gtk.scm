@@ -866,9 +866,7 @@
 		  (set! (data loc) var)
 		  (if (time-graph? snd) (update-time-graph snd))
 		  (if (transform-graph? snd) (update-transform-graph snd))
-		  (if (= (+ loc 1) len)
-		      (set! (cursor snd 0) 0)
-		      (set! (cursor snd 0) (+ loc 1))))
+		  (set! (cursor snd 0) (if (= (+ loc 1) len) 0 (+ loc 1))))
 		(if (GTK_IS_PROGRESS_BAR (car widget))
 		    ;; "thermometer"
 		    (let ((y0 (cadr widget))

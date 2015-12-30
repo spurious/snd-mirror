@@ -272,33 +272,32 @@
   (cond ((assoc type direct-types) => 
 	 (lambda (typ)
 	   (if (cdr typ)
-	       (begin
-		 (if (string? (cdr typ))
-		     (begin
-		       (if (not (member (car typ)
-					'("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
-					  "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
-					  "GLboolean*" "void*" "GLint*" "GLshort*"
-					  "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
-					  "unsigned_long"
-					  "void**")))
-			   (if (string=? (car typ) "constchar*")
-			       (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
-			       (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
-		       
-		       (if (not (string=? (car typ) "constchar*"))
-			   (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
-		       
-		       (if (not (string=? (car typ) "constchar*"))
-			   (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-				(no-stars (car typ))
-				(cond ((string=? (cdr typ) "INT") "integer")
-				      ((string=? (cdr typ) "ULONG") "ulong")
-				      ((string=? (cdr typ) "DOUBLE") "number")
-				      (else (apply string (map char-downcase (cdr typ))))))))
-		     (begin
-		       (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
-		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))))))
+	       (if (string? (cdr typ))
+		   (begin
+		     (if (not (member (car typ)
+				      '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
+					"GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
+					"GLboolean*" "void*" "GLint*" "GLshort*"
+					"GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
+					"unsigned_long"
+					"void**")))
+			 (if (string=? (car typ) "constchar*")
+			     (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
+			     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
+		     
+		     (if (not (string=? (car typ) "constchar*"))
+			 (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+		     
+		     (if (not (string=? (car typ) "constchar*"))
+			 (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+			      (no-stars (car typ))
+			      (cond ((string=? (cdr typ) "INT") "integer")
+				    ((string=? (cdr typ) "ULONG") "ulong")
+				    ((string=? (cdr typ) "DOUBLE") "number")
+				    (else (apply string (map char-downcase (cdr typ))))))))
+		   (begin
+		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
+		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))
 	 
 	((not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
 	 ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer
@@ -339,9 +338,9 @@
 	  (if (not (member type types))
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args)))
-	    (if spec
-		(set! funcs (cons (list name type strs args spec spec-name) funcs))
-		(set! funcs (cons (list name type strs args) funcs)))
+	    (set! funcs (if spec 
+			    (cons (list name type strs args spec spec-name) funcs)
+			    (cons (list name type strs args) funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
 (define* (CINT name type)
@@ -360,9 +359,9 @@
 	  (if (not (member type x-types))
 	      (set! x-types (cons type x-types)))
 	  (let ((strs (parse-args args 'x)))
-	    (if spec
-		(set! x-funcs (cons (list name type strs args spec spec-name) x-funcs))
-		(set! x-funcs (cons (list name type strs args) x-funcs)))
+	    (set! x-funcs (if spec
+			      (cons (list name type strs args spec spec-name) x-funcs)
+			      (cons (list name type strs args) x-funcs)))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
 (define* (CINT-X name type)
@@ -665,9 +664,10 @@
 	     (hey "    Xen result;~%")))
        (hey-start)
        (if (not (string=? return-type "void"))
-	   (if (= refargs 0)
-	       (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))
-	       (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
+	   (hey-on (if (= refargs 0)
+		       "  return(C_to_Xen_~A("
+		       "    result = C_to_Xen_~A(")
+		   (no-stars return-type))
 	   (hey-on "  "))
 
        (hey-on "~A(" name)
@@ -812,9 +812,7 @@
      (let ((sig (make-signature f)))
        (if (pair? sig)
 	   (let ((count (signatures sig)))
-	     (if (not count)
-		 (set! (signatures sig) 0)
-		 (set! (signatures sig) (+ count 1)))))))
+	     (set! (signatures sig) (if (not count) 0 (+ count 1)))))))
    lst))
 
 (make-signatures funcs)

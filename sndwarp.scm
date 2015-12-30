@@ -205,10 +205,9 @@
 	     ;; Set windowing oscillator to starting phase and appropriate frequency to provide half-sine envelope over window.
 	     ;; Phase must be altered for first envelope of each overlap stream.
 	     (set! (mus-phase windf) 
-		   (if (= section 0)
-		       (if (= overlap 0)
-			   0.0
-			   (* .5 clmsw-2pi overlap-ratio-compl))
+		   (if (and (= section 0)
+			    (not (= overlap 0)))
+		       (* .5 clmsw-2pi overlap-ratio-compl)
 		       0.0))
 	     ;; Either use the absolute time pointer or a scaled increment.
 	     ;; If first section in scaled mode, must initialize section readstart to beginning plus first overlap position.

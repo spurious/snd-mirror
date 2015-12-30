@@ -837,9 +837,9 @@
 						      (char-whitespace? (cur-line i))
 						      (member (cur-line i) '(#\( #\' #\" #\)) eqv?))
 						  i))))
-				    (if (< loc 0)
-					(set! completion (symbol-completion cur-line))
-					(set! completion (if (char=? (cur-line loc) #\")
+				    (set! completion (if (< loc 0)
+							 (symbol-completion cur-line)
+							 (if (char=? (cur-line loc) #\")
 							     (filename-completion (substring cur-line (+ loc 1)))
 							     (symbol-completion (substring cur-line (+ loc 1))))))
 				    (when (and completion

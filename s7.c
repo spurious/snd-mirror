@@ -20306,6 +20306,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       if (is_null(p)) return(x);
       y = car(p);
       p = cdr(p);
+      /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(x), DISPLAY(y)); */
 
       switch (type(y))
 	{
@@ -20345,6 +20346,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       if (is_null(p)) return(x);
       y = car(p);
       p = cdr(p);
+      /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(x), DISPLAY(y)); */
 
       switch (type(y))
 	{
@@ -20383,7 +20385,16 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 	   *    (max #i9223372036854776/9223372036854775807 9223372036854775/9223372036854775000)
 	   * I guess if the user is using "inexact" numbers (#i...), he accepts their inexactness.
 	   */
-
+	  
+	  /* fprintf(stderr, "num_a: %lld, den_a: %lld, num_b: %lld, den_b: %lld\n", num_a, den_a, num_b, den_b); */
+	  if ((num_a < 0) && (num_b >= 0)) /* x < 0, y >= 0 -> y */
+	    x = y;
+	  else
+	    {
+	      if ((num_a >= 0) && (num_b < 0))
+		{}
+	      else
+	    {
 	  if (den_a == den_b)
 	    {
 	      if (num_a < num_b)
@@ -20404,6 +20415,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 		  s7_int vala, valb;
 		  vala = num_a / den_a;
 		  valb = num_b / den_b;
+		  /* fprintf(stderr, "val: %lld %lld %d %d\n", vala, valb, -1/2, 0); */
 
 		  if (!((vala > valb) ||
 			((vala == valb) && (is_t_integer(y)))))
@@ -20416,6 +20428,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 		    }
 		}
 	    }
+	    }}
 	  if (is_t_ratio(x))
 	    goto MAX_RATIOS;
 	  goto MAX_INTEGERS;
@@ -20583,6 +20596,14 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 	  den_b = denominator(y);
 
 	RATIO_MIN_RATIO:
+	  if ((num_a >= 0) && (num_b < 0))
+	    x = y;
+	  else
+	    {
+	      if ((num_a < 0) && (num_b >= 0))
+		{}
+	      else
+	    {
 	    if (den_a == den_b)
 	      {
 		if (num_a > num_b)
@@ -20614,6 +20635,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 		      }
 		  }
 	      }
+	    }}
 	  if (is_t_ratio(x))
 	    goto MIN_RATIOS;
 	  goto MIN_INTEGERS;
@@ -74090,9 +74112,16 @@ int main(int argc, char **argv)
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
  * need much more thorough testing/debugging checks for the reused let cases (make sure they stay the same length etc, check counter_slots type, etc)
+ * \" where " meant -- why not warning of weird \ from reader?
+ *   \ outside string is a symbol, following " starts a string-constant, next \" is a quoted " in the constant, so we keep looking...
+ *   can we catch \"...\" somehow?  If \ does not yet exist as a symbol, it can't be a variable name, so \" is an error unless
+ *   we're in (say) (let ((\"a\"")) \) -- gah
  *
  * it should be possible to mimic map values handling elsewhere but:
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
+ *
+ * how could (max -1/2 0) return 0, and (min -1/2 0) 0 -- are the names reversed somewhere?
+ *   it's specific to 0 (0.0 is ok etc)
  */
