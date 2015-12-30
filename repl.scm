@@ -318,7 +318,7 @@
 		      (if (pair? oparens)
 			  (set! new-red-pos (car oparens)))
 		      (unless (equal? new-red-pos red-par-pos)
-			(set! red-par-pos (if (number? new-red-pos) new-red-pos #f))))
+			(set! red-par-pos (and (number? new-red-pos) new-red-pos))))
 		    (if (number? red-par-pos)
 			(set! red-par-pos #f)))))
 	    

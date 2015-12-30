@@ -151,6 +151,7 @@ XL_TYPE_PTR_1(GLvoid_, GLvoid*)
 #define Xen_is_GLshort(Arg) Xen_is_integer(Arg)
 #define Xen_to_C_GLbyte(Arg) (GLbyte)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLbyte(Arg) Xen_is_integer(Arg)
+#define C_to_Xen_GLubyte(Arg) C_int_to_Xen_integer(Arg)
 #define Xen_to_C_GLubyte(Arg) (GLubyte)(Xen_integer_to_C_int(Arg))
 #define Xen_is_GLubyte(Arg) Xen_is_integer(Arg)
 XL_TYPE_PTR(void_, void*)
@@ -4454,7 +4455,7 @@ static void define_functions(void)
 {
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_any;
-static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_tb, pl_bt, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_irrrt, pl_irrrrtttrrt, pl_i, pl_ittit, pl_tiirrrrt, pl_tiiiit, pl_tiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tiit, pl_tibiit, pl_tiib, pl_bit, pl_bi, pl_trrrrt, pl_tr, pl_unused;
+static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, pl_ttb, pl_tti, pl_ttiti, pl_ttrriir, pl_ttititiiti, pl_ttititi, pl_ttrri, pl_ttrrri, pl_tb, pl_bt, pl_iiiiitiiit, pl_iiiiiiiit, pl_iiiiiiiiiiit, pl_iiiiiiit, pl_iiiiiiiiiit, pl_iiiiiit, pl_iiiiiiiiit, pl_irrrt, pl_irrrrtttrrt, pl_i, pl_ittit, pl_tiirrrrt, pl_tiiiit, pl_tiiit, pl_tiiiiiiit, pl_tiiiiiiiit, pl_tirriit, pl_tirriirriit, pl_tirrir, pl_tir, pl_tit, pl_tiiiiiiiiit, pl_tiiiiiiiiiit, pl_tiiib, pl_ti, pl_tiiiiiit, pl_tiir, pl_tiiiiit, pl_tiit, pl_tibiit, pl_tiib, pl_trrrrt, pl_tr, pl_bit, pl_bi, pl_unused;
   s_boolean = s7_make_symbol(s7, "boolean?");
   s_integer = s7_make_symbol(s7, "integer?");
   s_real = s7_make_symbol(s7, "real?");
@@ -4508,10 +4509,10 @@ static s7_pointer pl_t, pl_tttti, pl_ttttb, pl_ttri, pl_ttit, pl_ttr, pl_ttir, p
   pl_tiit = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_any);
   pl_tibiit = s7_make_circular_signature(s7, 5, 6, s_any, s_integer, s_boolean, s_integer, s_integer, s_any);
   pl_tiib = s7_make_circular_signature(s7, 3, 4, s_any, s_integer, s_integer, s_boolean);
-  pl_bit = s7_make_circular_signature(s7, 2, 3, s_boolean, s_integer, s_any);
-  pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
   pl_trrrrt = s7_make_circular_signature(s7, 5, 6, s_any, s_real, s_real, s_real, s_real, s_any);
   pl_tr = s7_make_circular_signature(s7, 1, 2, s_any, s_real);
+  pl_bit = s7_make_circular_signature(s7, 2, 3, s_boolean, s_integer, s_any);
+  pl_bi = s7_make_circular_signature(s7, 1, 2, s_boolean, s_integer);
 pl_unused = NULL;
 #endif
 
@@ -5720,7 +5721,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("30-Oct-15"));
+      Xen_define("gl-version", C_string_to_Xen_string("29-Dec-15"));
       gl_already_inited = true;
     }
 }

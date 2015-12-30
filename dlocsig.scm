@@ -2861,7 +2861,7 @@
 		(set! (channel-rev-gains i) (cons signal (channel-rev-gains i))))))))
     
     ;; Loop through all virtual rooms for one breakpoint in the trajectory
-    (define (walk-all-rooms x y z time num)
+    (define (walk-all-rooms x y z time num) ; 'num is for debugging?
       (let ((room 0)
 	    (dist (distance x y z)))
 	;; remember first and last distances

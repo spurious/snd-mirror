@@ -140,15 +140,12 @@
     (define (eqv-code-constant? x)
       (or (number? x)
 	  (char? x)
-	  (boolean? x)
 	  (and (pair? x)
 	       (eq? (car x) 'quote)
 	       (or (symbol? (cadr x))
-		   (null? (cadr x))
-		   (char? (cadr x))
-		   (number? (cadr x))
-		   (memq (cadr x) '(#t #f #<unspecified> #<undefined> #<eof>))))
-	  (memq x '(#<unspecified> #<undefined> #<eof>))))
+		   (and (not (pair? (cadr x)))
+			(eqv-code-constant? (cadr x)))))
+	  (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
 
     (let ((no-side-effect-functions 
 	   ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
@@ -1695,7 +1692,6 @@
 	  
 	  (let* ((args (map simplify-arg (cdr form)))
 		 (len (length args)))
-
 	    (case (car form)
 	      ((+)
 	       (case len
@@ -1733,6 +1729,41 @@
 		    (case (length val)
 		      ((0) 1)
 		      ((1) (car val))                         ; (* x) -> x
+		      ((2)
+		       (cond ((just-rationals? val)
+			      (let ((new-val (apply * val))) ; huge numbers here are less readable
+				(if (< (abs new-val) 1000000)
+				    new-val
+				    `(* ,@val))))
+			     ((memv 0 val)                    ; (* x 0) -> 0
+			      0) 
+			     ((memv -1 val)
+			      `(- ,@(remove -1 val)))         ; (* -1 x) -> (- x)
+			     ((and (pair? (car val))
+				   (pair? (cadr val)))
+			      (if (and (eq? (caar val) '-)    ; (* (- x) (- y)) -> (* x y)
+				       (null? (cddar val))
+				       (eq? (caadr val) '-)
+				       (null? (cddadr val)))
+				  `(* ,(cadar val) ,(cadadr val))
+				  (if (and (= (length (car val)) 3)
+					   (equal? (cdar val) (cdadr val))
+					   (or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
+					       (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
+				      `(abs (* ,@(cdar val))) ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+				      `(* ,@val))))
+			     ((and (pair? (car val))          ; (* (inexact->exact x) 2.0) -> (* x 2.0)
+				   (memq (caar val) '(exact->inexact inexact))
+				   (number? (cadr val))
+				   (not (rational? (cadr val))))
+			      `(* ,(cadar val) ,(cadr val)))
+			     ((and (pair? (cadr val))         ; (* 2.0 (inexact x)) -> (* 2.0 x)
+				   (memq (caadr val) '(exact->inexact inexact))
+				   (number? (car val))
+				   (not (rational? (car val))))
+			      `(* ,(car val) ,(cadadr val)))
+						  
+			     (else `(* ,@val))))
 		      (else 
 		       (cond ((just-rationals? val)
 			      (let ((new-val (apply * val))) ; huge numbers here are less readable
@@ -1741,23 +1772,6 @@
 				    `(* ,@val))))
 			     ((memv 0 val)                    ; (* x 0 2) -> 0
 			      0) 
-			     ((= (length val) 2)
-			      (if (memv -1 val)
-				  `(- ,@(remove -1 val))      ; (* -1 x) -> (- x)
-				  (if (and (pair? (car val))
-					   (pair? (cadr val)))
-				      (if (and (eq? (caar val) '-) ; (* (- x) (- y)) -> (* x y)
-					       (null? (cddar val))
-					       (eq? (caadr val) '-)
-					       (null? (cddadr val)))
-					  `(* ,(cadar val) ,(cadadr val))
-					  (if (and (= (length (car val)) 3)
-						   (equal? (cdar val) (cdadr val))
-						   (or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
-						       (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
-					      `(abs (* ,@(cdar val))) ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
-					      `(* ,@val)))
-				      `(* ,@val))))
 			     (else `(* ,@val)))))))))
 
 	      ((-)
@@ -1863,6 +1877,16 @@
 				  (if (= (length n) 1)
 				      `(/ ,@n)               ; (/ x (* y x)) -> (/ y)
 				      `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
+			      ((and (pair? arg1)             ; (/ (inexact x) 2.0) -> (/ x 2.0)
+				    (memq (car arg1) '(exact->inexact inexact))
+				    (number? arg2)
+				    (not (rational? arg2)))
+			       `(/ ,(cadr arg1) ,arg2))
+			       ((and (pair? arg2)            ; (/ 2.0 (inexact x)) -> (/ 2.0 x)
+				     (memq (car arg2) '(exact->inexact inexact))
+				     (number? arg1)
+				     (not (rational? arg1)))
+				`(/ ,arg1 ,(cadr arg2)))
 			      (else `(/ ,@args))))))
 
 		 (else 
@@ -2135,6 +2159,13 @@
 			 ((number? (car args))
 			  (catch #t (lambda () (inexact->exact (car args))) (lambda any `(,(car form) ,@args))))
 			 (else `(,(car form) ,@args)))
+		   form))
+
+	      ((exact->inexact inexact)
+	       (if (= len 1)
+		   (if (memv (car args) '(0 0.0))
+		       0.0
+		       `(,(car form) ,@args))
 		   form))
 
 	      ((logior)
@@ -2500,25 +2531,13 @@
 	;; (= (+ x y) 0) -> (= x (- y))??  (= (log x) 0.0) -> (= x 1.0)?
 	;;   (= (log x) constant) -> (= x e^constant) but the constant will be ugly
 	;;
-	;; exact->inexact in ops where pointless? (* 1.0 (exact->inexact x)) -> (* 1.0 x)
-	;;   (/ 1.0 (exact->inexact n_15))
-	;;   (inexact->exact (- (floor (/ ncof 2))))
-	;;   (exact->inexact (* (expt 2.0 ...)))
-	;;   (* (exact->inexact f) (exact->inexact (expt 10 e)))
-	;;   (+ -50.0 (/ (inexact x) (inexact res)))
-	;;
 	;; func unused value + no export
 	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;; arg type checks for named let(*?) (gets argnum now) and define, recursive calls all checks in letrec(*)
-	;; warn about format string with null
-	;;
-	;; cond eqv could also accept (eof-object? x) -> #<eof>
-	;;   also (zero? x) is (memq x '(0 0.0)) so if is also ok, maybe also nan? and infinite?, and (= x pi)
-	;;   and (= x (char->integer #\a)) or any constant-expr, (complex 0 1) etc, (null? x)
-	;;   and (equal? x 'a) -> (eq?...) and (not x) -> #f
 	;; ((lambda (x) (abs x)) y) -> (abs y)? 
+	;; do loop returns result but it is ignored (in midst of body, no side-effects), similarly for other such forms?
 	;;
-	;; 228
+	;; 238
 
 	(case head
 	  ;; ----------------
@@ -3550,6 +3569,9 @@
 			 (lint-format "~S looks suspicious" name form))
 		     (let ((ndirs (count-directives control-string name form))
 			   (nargs (if (or (null? args) (pair? args)) (length args) 0)))
+		       (let ((pos (char-position #\null control-string)))
+			 (if (and pos (< pos (length control-string)))
+			     (lint-format "#\\null in a format control string will confuse both lint and format: ~S in ~A" name control-string form)))
 		       (if (not (= ndirs nargs))
 			   (lint-format "~A has ~A arguments: ~A" 
 					name head 
@@ -4997,27 +5019,47 @@
 		   #t))))
 
       (define (cond->case eqv-select new-clauses has-else)
+	;(format *stderr* "cond->case ~A ~A ~A~%" eqv-select new-clauses has-else)
 	`(case ,eqv-select 
 	   ,@(map (lambda (clause)
 		    (let ((test (car clause))
 			  (exprs (cdr clause)))
 		      (if (memq test '(else #t))
 			  `(else ,@exprs)
+
 			  (case (car test)
-			    ((eq? eqv? =)
+			    ((eq? eqv? = equal?)
 			     (if (equal? eqv-select (cadr test))
 				 `((,(unquoted (caddr test))) ,@exprs)
 				 `((,(unquoted (cadr test))) ,@exprs)))
-			    ((memq memv)
+
+			    ((memq memv member)
 			     `(,(unquoted (caddr test)) ,@exprs))
+
+			    ((not)
+			     `((#f) ,@exprs))
+
+			    ((null?)
+			     `((()) ,@exprs))
+
+			    ((eof-object?)
+			     `((#<eof>) ,@exprs))
+
+			    ((zero?)
+			     `((0 0.0) ,@exprs))
+
 			    (else 
 			     `(,(map (lambda (p)
 				       (case (car p)
-					 ((eq? eqv? =)
+					 ((eq? eqv? = equal?)  
 					  (unquoted (if (equal? eqv-select (cadr p)) (caddr p) (cadr p))))
-					 ((memq memv)
+					 ((memq memv member)
 					  (apply values (caddr p)))
-					 (else (error "oops"))))
+					 ((not)         #f)
+					 ((null?)       ())
+					 ((eof-object?) #<eof>)
+					 ((zero?)       (values 0 0.0))
+					 (else          (error "oops"))))
 				     (cdr test))
 			       ,@exprs))))))
 		  new-clauses)
@@ -5026,10 +5068,10 @@
       (define (cond-eqv-select clause)
 	(if (pair? clause)
 	    (case (car clause)
-	      ((memq memv) 
+	      ((memq memv member) 
 	       (and (= (length clause) 3)
 		    (cadr clause)))
-	      ((eq? eqv? =)
+	      ((eq? eqv? = equal?)
 	       (and (= (length clause) 3)
 		    (if (code-constant? (cadr clause))
 			(caddr clause)
@@ -5037,30 +5079,42 @@
 	      ((or) 
 	       (and (pair? (cdr clause))
 		    (cond-eqv-select (cadr clause))))
+	      ((not null? eof-object? zero?)
+	       (and (pair? (cdr clause))
+		    (cadr clause)))
 	      (else #f))
 	    (memq clause '(else #t))))
 
       (define (cond-eqv? clause eqv-select or-ok)
+	;(format *stderr* "cond-eqv? ~A ~A ~A~%" clause eqv-select or-ok)
 	(if (pair? clause)
 	    ;; it's eqv-able either directly or via memq/memv, or via (or ... eqv-able clauses)
 	    ;;   all clauses involve the same (eventual case) selector
 	    (case (car clause)
-	      ((eq? eqv? =)
+	      ((eq? eqv? = equal?)
 	       (if (eqv-code-constant? (cadr clause))
 		   (equal? eqv-select (caddr clause))
 		   (and (eqv-code-constant? (caddr clause))
 			(equal? eqv-select (cadr clause)))))
 
-	      ((memq memv)
+	      ((memq memv member)
 	       (and (equal? eqv-select (cadr clause))
 		    (pair? (caddr clause))
-		    (eq? (caaddr clause) 'quote)))
-
+		    (eq? (caaddr clause) 'quote)
+		    (or (not (eq? (car clause) 'member))
+			(every? (lambda (x)
+				  (or (number? x)
+				      (char? x)
+				      (symbol? x)
+				      (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
+				(cdr (caddr clause))))))
 	      ((or)
 	       (and or-ok
 		    (every? (lambda (p)
 			      (cond-eqv? p eqv-select #f))
 			    (cdr clause))))
+	      ((not null? eof-object? zero?)
+	       (equal? eqv-select (cadr clause)))
 
 	      (else #f))
 	    (memq clause '(else #t))))
@@ -5615,13 +5669,19 @@
 					    (test (car clause))
 					    (sequel (cdr clause)))
 					
-					(when (memq test '(else #t))
-					  (set! has-else #t)
-					  (if (and (pair? sequel)
-						   (pair? (car sequel))
-						   (null? (cdr sequel))
-						   (eq? (caar sequel) 'cond))
-					      (lint-format "else clause cond could be folded into the outer cond: ~A" name (truncated-list->string clause))))
+					(if (memq test '(else #t))
+					    (begin
+					      (set! has-else #t)
+					      (if (and (pair? sequel)
+						       (pair? (car sequel))
+						       (null? (cdr sequel))
+						       (eq? (caar sequel) 'cond))
+						  (lint-format "else clause cond could be folded into the outer cond: ~A" name (truncated-list->string clause))))
+					    (if (and (eq? test 't)
+						     (= ctr len)
+						     (not (var-member 't env))
+						     (not (hash-table-ref globals 't)))
+						(lint-format "odd cond clause test: is 't supposed to be #t? ~A in ~A~%" name clause (truncated-list->string form))))
 					
 					(if (never-false expr)
 					    (if (not (= ctr len))
