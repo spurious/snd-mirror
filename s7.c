@@ -236,9 +236,9 @@
   /* this includes a circular buffer of previous evaluations for debugging */
 #endif
 
-#ifndef HISTORY_SIZE
-  #define HISTORY_SIZE 8
-  /* this is the length of the eval history buffer */
+#ifndef DEFAULT_HISTORY_SIZE
+  #define DEFAULT_HISTORY_SIZE 8
+  /* this is the default length of the eval history buffer */
 #endif
 
 
@@ -892,7 +892,8 @@ struct s7_scheme {
   bool symbol_table_is_locked;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
-  s7_int default_hash_table_length, initial_string_port_length, print_length, max_vector_length, max_string_length, max_list_length, max_vector_dimensions;
+  s7_int default_hash_table_length, initial_string_port_length, print_length, history_size, true_history_size;
+  s7_int max_vector_length, max_string_length, max_list_length, max_vector_dimensions;
   s7_pointer stacktrace_defaults;
   vdims_t *wrap_only;
 
@@ -1064,7 +1065,7 @@ struct s7_scheme {
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
   s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol, memory_usage_symbol;
-  s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol, stacktrace_defaults_symbol;
+  s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol, stacktrace_defaults_symbol, history_size_symbol;
   bool undefined_identifier_warnings;
 };
 
@@ -1204,7 +1205,7 @@ static void init_types(void)
 #if WITH_HISTORY
 #define current_code(Sc) car(Sc->cur_code)
 #define set_current_code(Sc, Code) do {Sc->cur_code = cdr(Sc->cur_code); car(Sc->cur_code) = Code;} while (0)
-#define mark_current_code(Sc) do {int i; s7_pointer p; for (p = Sc->cur_code, i = 0; i < HISTORY_SIZE; i++, p = cdr(p)) S7_MARK(car(p));} while (0)
+#define mark_current_code(Sc) do {int i; s7_pointer p; for (p = Sc->cur_code, i = 0; i < sc->history_size; i++, p = cdr(p)) S7_MARK(car(p));} while (0)
 #else
 #define current_code(Sc) Sc->cur_code
 #define set_current_code(Sc, Code) Sc->cur_code = Code
@@ -66501,7 +66502,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  if (is_null(sc->code))
 	    {
-	      /* sc->value = sc->NIL; */
 	      sc->value = sc->UNSPECIFIED; /* changed 31-Dec-15 */
 	      /* r7rs sez the value if no else clause is unspecified, and this choice makes cond consistent with if and case,
 	       *   and rewrite choices between the three are simpler if they are consistent.
@@ -66538,7 +66538,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdr(sc->code);
 	      if (is_null(sc->code))
 		{
-		  /* sc->value = sc->NIL; */
 		  sc->value = sc->UNSPECIFIED; 
 		  goto START;
 		}
@@ -66581,7 +66580,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN1;
 		  }
 	      }
-	    /* sc->value = sc->NIL; */
 	    sc->value = sc->UNSPECIFIED; 
 	  }
 	  break;
@@ -66597,7 +66595,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(car(p))(sc, caar(p));
 		if (!is_true(sc, sc->value))
 		  {
-		    /* sc->value = sc->NIL; */
 		    sc->value = sc->UNSPECIFIED; 
 		    goto START;
 		  }
@@ -66630,7 +66627,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN1;
 		  }
 	      }
-	    /* sc->value = sc->NIL; */
 	    sc->value = sc->UNSPECIFIED; 
 	  }
 	  break;
@@ -71957,6 +71953,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->bignum_precision_symbol =              s7_make_symbol(sc, "bignum-precision");
   sc->memory_usage_symbol =                  s7_make_symbol(sc, "memory-usage");
   sc->float_format_precision_symbol =        s7_make_symbol(sc, "float-format-precision");
+  sc->history_size_symbol =                  s7_make_symbol(sc, "history-size");
 }
 
 #ifdef __linux__
@@ -72085,6 +72082,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->default_random_state_symbol)                            /* default-random-state */
     return(sc->default_rng);
 
+  if (sym == sc->history_size_symbol)                                    /* history-size (eval history circular buffer size) */
+    return(s7_make_integer(sc, sc->history_size));
   if (sym == sc->max_list_length_symbol)                                 /* max-list-length (as arg to make-list) */
     return(s7_make_integer(sc, sc->max_list_length));
   if (sym == sc->max_vector_length_symbol)                               /* max-vector-length (as arg to make-vector and make-hash-table) */
@@ -72158,6 +72157,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       (sym == sc->max_vector_length_symbol) ||
       (sym == sc->max_vector_dimensions_symbol) ||
       (sym == sc->max_list_length_symbol) ||
+      (sym == sc->history_size_symbol) ||
       (sym == sc->max_string_length_symbol))
     {
       if (s7_is_integer(val))
@@ -72178,9 +72178,42 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 		    sc->max_vector_dimensions = iv;
 		  else
 		    {
-		      if (sym == sc->max_list_length_symbol)
-			sc->max_list_length = iv;
-		      else sc->max_string_length = iv;
+		      if (sym == sc->history_size_symbol)
+			{
+#if WITH_HISTORY
+			  s7_pointer p1, p2;
+			  if (iv > sc->true_history_size)
+			    {
+			      /* splice in the new cells, reattach the circles */
+			      s7_pointer next1, next2;
+			      next1 = cdr(sc->eval_history1);
+			      next2 = cdr(sc->eval_history2);
+			      cdr(sc->eval_history1) = permanent_list(sc, iv - sc->true_history_size);
+			      cdr(sc->eval_history2) = permanent_list(sc, iv - sc->true_history_size);
+			      for (p1 = sc->eval_history1, p2 = sc->eval_history2; is_pair(cdr(p1)); p1 = cdr(p1), p2 = cdr(p2));
+			      cdr(p1) = next1;
+			      cdr(p2) = next2;
+			      sc->true_history_size = iv;
+			    }
+			  sc->history_size = iv;
+			  /* clear out both bufffers to avoid GC confusion */
+			  for (p1 = sc->eval_history1, p2 = sc->eval_history2; ; p2 = cdr(p2))
+			    {
+			      car(p1) = sc->NIL;
+			      car(p2) = sc->NIL;
+			      p1 = cdr(p1);
+			      if (p1 == sc->eval_history1) break;
+			    }
+#else
+			  sc->history_size = iv;
+#endif
+			}
+		      else
+			{
+			  if (sym == sc->max_list_length_symbol)
+			    sc->max_list_length = iv;
+			  else sc->max_string_length = iv;
+			}
 		    }
 		}
 	    }
@@ -72613,8 +72646,8 @@ s7_scheme *s7_init(void)
   sc->input_port_stack = sc->NIL;
   sc->code = sc->NIL;
 #if WITH_HISTORY
-  sc->eval_history1 = permanent_list(sc, HISTORY_SIZE);
-  sc->eval_history2 = permanent_list(sc, HISTORY_SIZE);
+  sc->eval_history1 = permanent_list(sc, DEFAULT_HISTORY_SIZE);
+  sc->eval_history2 = permanent_list(sc, DEFAULT_HISTORY_SIZE);
   {
     s7_pointer p1, p2;
     for (p1 = sc->eval_history1, p2 = sc->eval_history2; is_pair(cdr(p1)); p1 = cdr(p1), p2 = cdr(p2));
@@ -72752,6 +72785,8 @@ s7_scheme *s7_init(void)
   sc->s7_call_name = NULL;
   sc->safety = 0;
   sc->print_length = 8;
+  sc->history_size = DEFAULT_HISTORY_SIZE;
+  sc->true_history_size = DEFAULT_HISTORY_SIZE;
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
   sc->CLASS_NAME = make_symbol(sc, "class-name");

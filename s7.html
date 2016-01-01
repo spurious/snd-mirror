@@ -4558,7 +4558,7 @@ additional info about that error:
 </ul>
 
 <p>The error-history field depends on the compiler flag WITH_HISTORY.  See ow! in
-stuff.scm for one way to display this data.
+stuff.scm for one way to display this data.  The *s7* field 'history-size sets the size of the buffer.
 </p>
 
 <blockquote>
@@ -5614,6 +5614,7 @@ max-vector-length             max size arg to make-vector and make-hash-table
 max-vector-dimensions         make-vector dimensions limit
 default-hash-table-length     default size for make-hash-table (8, tables resize as needed)
 initial-string-port-length    128, initial size of a string port's buffer
+history-size                  eval history buffer size if s7 built WITH_HISTORY=1
 
 default-rationalize-error     1e-12 (settable)
 morally-equal-float-epsilon   1e-15 (settable)

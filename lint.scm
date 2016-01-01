@@ -399,13 +399,8 @@
 	      (and (symbol? f)
 		   (macro? (symbol->value f *e*))))))
 	      
-      (define (->type c)
-	(cond ((pair? c)
-	       (if (symbol? (car c))
-		   (if (eq? (car c) 'quote)
-		       (->type (cadr c))
-		       (return-type (car c) ()))
-		   (or (pair? (car c)) 'pair?)))
+      (define (->simple-type c)
+	(cond ((pair? c)          'pair?)
 	      ((integer? c)	  'integer?)
 	      ((rational? c)	  'rational?)
 	      ((real? c)	  'real?)
@@ -433,6 +428,15 @@
 	      ((eof-object? c)    'eof-object?)
 	      ((c-pointer? c)     'c-pointer?)
 	      (#t #t)))
+
+      (define (->type c)
+	(if (pair? c)
+	    (if (symbol? (car c))
+		(if (eq? (car c) 'quote)
+		    (->simple-type (cadr c))   ; don't look for return type!
+		    (return-type (car c) ()))
+		(or (pair? (car c)) 'pair?))
+	    (->simple-type c)))
       
       (define bools '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list?
 		      char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
@@ -2505,6 +2509,7 @@
 	;; if no side effect func call not last, but side effect args, -> args?
 	;; move special-cases into hash-table (via macro?)
 	;; need values->func arg check escape (define*), or can these be correlated?
+	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;;
 	;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
 	;;   pp sketch mode would be useful, and truncate at right margin
@@ -2529,10 +2534,11 @@
 	;;   (or (<= x y) (<= y x)) -> #t
 	;; (= x y) <- (and (<= x y) (<= y x)) or any = op: (and (= x y) (>= y x))
 	;; (= 0 (length x)) happens a lot, but how to know null? is ok?
+	;;   currently make-var is not setting the type even when it has a value, or it's #t even when obviously 'pair?
 	;;
 	;; func unused value + no export
-	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
 	;; arg type checks for named let(*?) (gets argnum now) and define, recursive calls all checks in letrec(*)
+	;;
 	;; (let(*) ((a..)) (let(*) ((b...))...)) -> let*
 	;; (let ((x val)) (set! x ...) -> (let ((x ...))...)
 	;; redundant do step var
@@ -2825,7 +2831,26 @@
 	       (if (and (> (length cleared-form) 2)
 			(not (checked-eval cleared-form)))
 		   (lint-format "this comparison can't be true: ~A" name (truncated-list->string form))))
-
+#|	     
+	     ;; no var type info yet
+	     (if (= len 3)
+		 (let ((arg1 (cadr form))
+		       (arg2 (caddr form)))
+		 (let ((var (or (and (eqv? arg1 0)
+				     (pair? arg2)
+				     (eq? (car arg2) 'length)
+				     (symbol? (cadr arg2))
+				     (cadr arg2))
+				(and (eqv? arg2 0)
+				     (pair? arg1)
+				     (eq? (car arg1) 'length)
+				     (symbol? (cadr arg1))
+				     (cadr arg1)))))
+		   (if var
+		       (let ((v (var-member var env)))
+			 (if (var? v)
+			     (format *stderr* "v: ~A~%" v)))))))
+|#
 	     (when (= len 3)
 	       (unrelop name '= form))
 	     (check-char-cmp name head form)))
@@ -4043,7 +4068,7 @@
 				       gc-protected-objects file-names rootlet-size c-types stack-top stack-size stacktrace-defaults
 				       max-stack-size stack catches exits float-format-precision bignum-precision default-rationalize-error 
 				       default-random-state morally-equal-float-epsilon hash-table-float-epsilon undefined-identifier-warnings 
-				       gc-stats symbol-table-locked? c-objects))))
+				       gc-stats symbol-table-locked? c-objects history-size))))
 		     (lint-format "unknown *s7* field: ~A" name (cadr form))))))
 	  
 	  )) ; end check-special-cases
@@ -4055,6 +4080,8 @@
       (define (check-args name head form checkers env max-arity)
 	;; check for obvious argument type problems
 	;; name = overall caller, head = current caller, checkers = proc or list of procs for checking args
+
+	;(format *stderr* "check ~A ~A ~A ~A ~A ~A~%" name head form checkers env max-arity)
 
 	(define (prettify-arg-number argn)
 	  (if (or (not (= argn 1))
@@ -4115,8 +4142,10 @@
 		  ;(format *stderr* "check-arg ~A check ~S via ~S~%" head arg checker)
 
 		  (define (check-arg expr)
+		    ;(format *stderr* "check-arg ~A~%" expr)
 		    (unless (symbol? expr)
 		      (let ((op (->type expr)))
+			;(format *stderr* "type: ~A~%" op)
 			(if (and (not (memq op '(#f #t values)))
 				 (not (any-compatible? checker op)))
 			    (report-arg-trouble name form head arg-number checker expr op)))))
@@ -5536,7 +5565,7 @@
 
 				   (if (pair? false)
 				       (begin
-					 (if (and (eq? (car false) 'if)
+					 (if (and (eq? (car false) 'if)   ; (if x 3 (if (not x) 4)) -> (if x 3 4)
 						  (pair? (cdr false))
 						  (pair? (cadr false))
 						  (eq? (caadr false) 'not)
@@ -5544,12 +5573,11 @@
 						  (not (side-effect? test env)))
 					     (lint-format "pointless repetition of if test: ~A" name (lists->string form `(if ,expr ,true ,(caddr false)))))
 
-					 (if (and (eq? (car false) 'if) ; (if test0 expr (if test1 expr)) -> if (or test0 test1) expr) 
-						  (null? (cdddr false)) ; other case is dealt with above
+					 (if (and (eq? (car false) 'if)   ; (if test0 expr (if test1 expr)) -> if (or test0 test1) expr) 
+						  (null? (cdddr false))   ; other case is dealt with above
 						  (equal? true (caddr false)))
 					     (let ((test1 (simplify-boolean `(or ,expr ,(cadr false)) () () env)))
-					       (lint-format "perhaps ~A" name (lists->string form `(if ,test1 ,true ,@(cdddr false))))))
-					 )
+					       (lint-format "perhaps ~A" name (lists->string form `(if ,test1 ,true ,@(cdddr false)))))))
 
 				       (if (and (eq? false 'no-false)                         ; no false branch
 						(pair? true))
@@ -5561,7 +5589,8 @@
 							    (memq true-op '(map for-each))
 							    (eq? (cadr test) (caddr true)))
 						       (lint-format "perhaps ~A" name (lists->string form true))
-
+						       
+						       ;; the min+max case is seldom hit, and takes about 50 lines
 						       (if (and (memq test-op '(< > <= >=))  ; (if (< x y) (set! x y) -> (set! x (max x y))
 								(eq? true-op 'set!)
 								(null? (cdddr test))
@@ -5572,7 +5601,7 @@
 									 (if (eq? target (cadr test)) 'max 'min)
 									 (if (eq? target (caddr test)) 'max 'min))))
 							     (lint-format "perhaps ~A" name
-									  (lists->string form `(set! ,(cadr true) (,f ,@(cdr true))))))))))
+									  (lists->string form `(set! ,target (,f ,@(cdr true))))))))))
 					     
 					     (if (and (eq? (car true) 'if) ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr)
 						      (null? (cdddr true)))
