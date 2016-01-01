@@ -9403,10 +9403,11 @@ argument to pvocoder can be a function.
 </p>
 
 <pre class="indented">
-(let ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd"))
-      (pv (<em class=red>make-pvocoder</em> 256 4 64))
-      (rd (<a class=quiet href="extsnd.html#makesampler">make-sampler</a> 0)))
-  (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>pvocoder</em> pv rd))))
+(begin
+  (<a class=quiet href="extsnd.html#opensound">open-sound</a> "oboe.snd")
+  (let ((pv (<em class=red>make-pvocoder</em> 256 4 64))
+        (rd (<a class=quiet href="extsnd.html#makesampler">make-sampler</a> 0)))
+    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) (<em class=red>pvocoder</em> pv rd)))))
 </pre>
 
 <p>

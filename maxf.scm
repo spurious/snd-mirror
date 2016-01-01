@@ -72,10 +72,7 @@
       ;; Conditions for JOS constraints
       ;; maxdecay: Filter may be unstable
       ;; mindecay: Filter may not oscillate
-      (if (>= fdecay maxdecay)
-	  (set! fdecay maxdecay)
-	  (if (<= fdecay mindecay)
-	      (set! fdecay mindecay)))
+      (set! fdecay (max mindecay (min fdecay maxdecay)))
       (set! (b 'pp1) (- 1.0 (/ i2s fdecay)))
       (set! (b 'pp2) (* ffreq pi2s))
       (set! (b 'pp3) (* (b 'pp2) famp)))))

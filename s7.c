@@ -66501,7 +66501,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  if (is_null(sc->code))
 	    {
-	      sc->value = sc->NIL;
+	      /* sc->value = sc->NIL; */
+	      sc->value = sc->UNSPECIFIED; /* changed 31-Dec-15 */
+	      /* r7rs sez the value if no else clause is unspecified, and this choice makes cond consistent with if and case,
+	       *   and rewrite choices between the three are simpler if they are consistent.
+	       */
 	      goto START;
 	    }
 	  
@@ -66534,7 +66538,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdr(sc->code);
 	      if (is_null(sc->code))
 		{
-		  sc->value = sc->NIL;
+		  /* sc->value = sc->NIL; */
+		  sc->value = sc->UNSPECIFIED; 
 		  goto START;
 		}
 	      if (is_pair(caar(sc->code)))
@@ -66576,7 +66581,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN1;
 		  }
 	      }
-	    sc->value = sc->NIL;
+	    /* sc->value = sc->NIL; */
+	    sc->value = sc->UNSPECIFIED; 
 	  }
 	  break;
 	  
@@ -66591,7 +66597,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = c_call(car(p))(sc, caar(p));
 		if (!is_true(sc, sc->value))
 		  {
-		    sc->value = sc->NIL;
+		    /* sc->value = sc->NIL; */
+		    sc->value = sc->UNSPECIFIED; 
 		    goto START;
 		  }
 	      }
@@ -66623,9 +66630,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto BEGIN1;
 		  }
 	      }
-	    sc->value = sc->NIL;
+	    /* sc->value = sc->NIL; */
+	    sc->value = sc->UNSPECIFIED; 
 	  }
 	  break;
+
 	  
 	  /* -------------------------------- AND -------------------------------- */
 	case OP_AND:

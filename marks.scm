@@ -78,7 +78,7 @@
 		   (descr ())
 		   (header (list id sound: snd (short-file-name snd) 'channel: chn)))
 	      (do ((i max-edits (- i 1)))
-		  ((< i 0) descr)
+		  ((< i 0))
 		(set! descr (if (member id (marks snd chn i))
 				(cons (mark-sample id i) descr)
 				(cons #f descr))))

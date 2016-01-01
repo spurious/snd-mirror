@@ -43,7 +43,7 @@
     ;;fill xy-array with values from init-array
     (do ((iy 0 (+ iy 2));;index for reading values from init-array (a 2-dimensional list)
 	 (jy 0 (+ jy 1)));;index for writing to xy-array (a 1-dimensional float-vector)
-	((= iy xy-array-l) xy-array)
+	((= iy xy-array-l))
       (set! (xy-array iy) ((init-array jy) 0))
       (set! (xy-array (+ iy 1))
 	    ;;convert signed float y values into signed integers 

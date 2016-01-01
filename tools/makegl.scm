@@ -119,7 +119,7 @@
     (call-with-exit
      (lambda (return)
        (do ((i (- len 1) (- i 1)))
-	   ((= i 0) #f)
+	   ((= i 0))
 	 (if (char=? (type i) #\*)
 	     (return #t)))
        #f))))

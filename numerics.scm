@@ -154,7 +154,7 @@
 
 
 (define* (gegenbauer n x (alpha 0.0))
-  (if (< alpha -0.5) (set! alpha -0.5))
+  (set! alpha (max alpha -0.5))
   (cond ((= n 0)       1.0)
 	((= alpha 0.0) (* (/ 2.0 n) (cos (* n x))))           ; maxima and A&S 22.3.14 (gsl has bogus values here)
 	((= n 1)       (* 2 alpha x))                         ; G&R 8.93(2)
