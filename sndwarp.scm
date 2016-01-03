@@ -217,11 +217,10 @@
 		 (if (= section 0)
 		     ;; initial section
 		     (let ((overlap-start 
-			    (if window-offset
+			    (if (and window-offset
+				     (not (= overlap 0)))
 				;; Csound style - start each overlap series further into the soundfile
-				(if (= overlap 0)
-				    0
-				    (round (* winlen overlap-ratio-compl)))
+				(round (* winlen overlap-ratio-compl))
 				;; Alternative style - start each overlap series at 0
 				0))
 			   ;; To match csound version, first section must start reading at 0. Using zero-start-time-ptr 
@@ -235,11 +234,10 @@
 		 (if (= section 0)
 		     ;; initial section
 		     (let ((init-read-start 
-			    (if window-offset
+			    (if (and window-offset
+				     (not (= overlap 0)))
 				;; Csound style - start each overlap series further into the soundfile
-				(if (= overlap 0)
-				    0
-				    (round (* winlen overlap-ratio-compl)))
+				(round (* winlen overlap-ratio-compl))
 				;; Alternative style - start each overlap series at 0
 				0)))
 		       (set! readstart (round (* fsr (+ inputbeg init-read-start))))

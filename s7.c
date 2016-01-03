@@ -1647,7 +1647,6 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 #define set_has_set_fallback(p)       typeflag(_TLet(p)) |= T_HAS_SET_FALLBACK
 #define set_all_methods(p, e)         typeflag(_TLet(p)) |= (typeflag(e) & (T_HAS_METHODS | T_HAS_REF_FALLBACK | T_HAS_SET_FALLBACK))
 
-
 #define T_COPY_ARGS                   (1 << (TYPE_BITS + 20))
 #define needs_copied_args(p)          ((typeflag(_NFre(p)) & T_COPY_ARGS) != 0)
 /* this marks something that might mess with its argument list, it should not be in the second byte */
@@ -2191,6 +2190,8 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define MAX_ARITY                     0x20000000
 #define closure_arity_unknown(p)      (closure_arity(p) == CLOSURE_ARITY_NOT_SET)
 #define is_thunk(Sc, Fnc)             ((type(Fnc) >= T_GOTO) && (s7_is_aritable(Sc, Fnc, 0)))
+
+#define hook_has_functions(p)         (is_pair(s7_hook_functions(sc, _TClo(p))))
 
 #define catch_tag(p)                  (_TCat(p))->object.rcatch.tag
 #define catch_goto_loc(p)             (_TCat(p))->object.rcatch.goto_loc
@@ -12672,7 +12673,7 @@ static bool is_abnormal(s7_pointer x)
 static s7_pointer unknown_sharp_constant(s7_scheme *sc, char *name)
 {
   /* check *read-error-hook* */
-  if (!is_null(sc->read_error_hook))
+  if (hook_has_functions(sc->read_error_hook))
     {
       s7_pointer result;
       result = s7_call(sc, sc->read_error_hook, list_2(sc, sc->T, make_string_wrapper(sc, name)));
@@ -28205,7 +28206,7 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   if (!fp)
     return(file_error(sc, "load", "can't open", filename));
 
-  if (is_pair(s7_hook_functions(sc, sc->load_hook)))
+  if (hook_has_functions(sc->load_hook))
     s7_call(sc, sc->load_hook, list_1(sc, sc->temp4 = s7_make_string(sc, filename)));
 
   port = read_file(sc, fp, (new_filename) ? (const char *)new_filename : filename, -1, "load");   /* -1 means always read its contents into a local string */
@@ -28398,7 +28399,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
    *   to where we were.  Call *load-hook* if it is a procedure.
    */
 
-  if (is_not_null(s7_hook_functions(sc, sc->load_hook)))
+  if (hook_has_functions(sc->load_hook))
     s7_apply_function(sc, sc->load_hook, list_1(sc, sc->temp4 = s7_make_string(sc, fname)));
 
   return(sc->UNSPECIFIED);
@@ -45033,7 +45034,7 @@ static bool stacktrace_error_hook_function(s7_scheme *sc, s7_pointer sym)
       f = s7_symbol_value(sc, sym);
       return((is_procedure(f)) &&
 	     (is_procedure(sc->error_hook)) &&
-	     (is_pair(s7_hook_functions(sc, sc->error_hook))) &&
+	     (hook_has_functions(sc->error_hook)) &&
 	     (direct_memq(f, s7_hook_functions(sc, sc->error_hook))));
     }
   return(false);
@@ -45758,6 +45759,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 
   eval(sc, OP_APPLY);
   sc->longjmp_ok = old_longjmp;
+
   memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
   return(sc->value);
 }
@@ -46033,7 +46035,7 @@ static bool catch_1_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
       (catch_tag(x) == type) ||
       (type == sc->T))
     {
-      int loc;
+      unsigned int loc;
       opcode_t op;
       s7_pointer catcher, error_func, body;
 
@@ -46357,8 +46359,9 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	if ((catcher) &&
 	    (catcher(sc, i, type, info, &reset_error_hook)))
 	  {
-	    if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
-	    return(type); /* throw returns sc->value here? */
+	    if (sc->longjmp_ok) longjmp(sc->goto_start, 1); 
+	    /* all the rest of the code expects s7_error to jump, not return */
+	    /* return(type); */
 	  }
       }
   }
@@ -46368,7 +46371,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 
   if ((!reset_error_hook) &&
       (is_procedure(sc->error_hook)) &&
-      (is_pair(s7_hook_functions(sc, sc->error_hook))))
+      (hook_has_functions(sc->error_hook)))
     {
       s7_pointer error_hook_func;
       /* (set! (hook-functions *error-hook*) (list (lambda (h) (format *stderr* "got error ~A~%" (h 'args))))) */
@@ -46530,7 +46533,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       stack_reset(sc);
       sc->op = OP_ERROR_QUIT;
     }
-
+  
   if (sc->longjmp_ok) longjmp(sc->goto_start, 1);
   return(type);
 }
@@ -46795,7 +46798,7 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
   pt = sc->input_port;
 
   /* check *missing-close-paren-hook* */
-  if (!is_null(sc->missing_close_paren_hook))
+  if (hook_has_functions(sc->missing_close_paren_hook))
     {
       s7_pointer result;
       if ((port_line_number(pt) > 0) &&
@@ -47096,9 +47099,10 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    */
 
   sc->longjmp_ok = true;
+
   if (setjmp(sc->goto_start) != 0) /* returning from s7_error catch handler */
     {
-      sc->longjmp_ok = old_longjmp;
+      sc->longjmp_ok = old_longjmp; 
       memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
 
       if ((sc->op == OP_ERROR_QUIT) &&
@@ -47119,6 +47123,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 
   sc->longjmp_ok = old_longjmp;
   memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+
   return(sc->value);
 }
 
@@ -47222,6 +47227,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 void s7_quit(s7_scheme *sc)
 {
   sc->longjmp_ok = false;
+
   pop_input_port(sc);
   stack_reset(sc);
   push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
@@ -49101,7 +49107,7 @@ static int read_x_char(s7_pointer pt)
 static s7_pointer unknown_string_constant(s7_scheme *sc, int c)
 {
   /* check *read-error-hook* */
-  if (!is_null(sc->read_error_hook))
+  if (hook_has_functions(sc->read_error_hook))
     {
       s7_pointer result;
       result = s7_call(sc, sc->read_error_hook, list_2(sc, sc->F, s7_make_character(sc, (unsigned char)c)));
@@ -49440,7 +49446,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
    */
   if ((sc->autoload_names) ||
       (is_hash_table(sc->autoload_table)) ||
-      (is_not_null(s7_hook_functions(sc, sc->unbound_variable_hook))))
+      (hook_has_functions(sc->unbound_variable_hook)))
     {
       s7_pointer result, cur_code, value, code, args, cur_env, x, z;
       /* sc->args and sc->code are pushed on the stack by s7_call, then
@@ -49523,7 +49529,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 
 	  /* check *unbound-variable-hook* */
 	  if ((result == sc->UNDEFINED) &&
-	      (is_not_null(sc->unbound_variable_hook)))
+	      (hook_has_functions(sc->unbound_variable_hook)))
 	    {
 	      /* (let () (set! (hook-functions *unbound-variable-hook*) (list (lambda (v) _asdf_))) _asdf_) */
 	      s7_pointer old_hook;
@@ -63378,8 +63384,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_C_CATCH_ALL:
 		  {
-		    /* (catch #t (lambda () ...) (lambda args #f)
-		     */
+		    /* (catch #t (lambda () ...) (lambda args #f) */
 		    s7_pointer p;
 		    new_frame(sc, sc->envir, sc->envir);
 		    /* catch_all needs 3 pieces of info: the goto/op locs and the result
@@ -74162,4 +74167,6 @@ int main(int argc, char **argv)
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
+ * 
+ * s7_call unnecessarily longjmps causing catch confusion
  */

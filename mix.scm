@@ -342,9 +342,9 @@ last end of the mixes in 'mix-list'"))
 	      (let* ((beg-x (+ first-x (* x-scale (- (mix-position m) beg))))
 		     (end-x (+ first-x (* x-scale (- (+ (mix-position m) (framples m)) beg))))
 		     (wenv (window-envelope beg-x end-x overall-amp-env)))
-		(if (null? (mix-amp-env m))
-		    (set! (mix-amp-env m) wenv)
-		    (set! (mix-amp-env m) (multiply-envelopes (mix-amp-env m) wenv)))))
+		(set! (mix-amp-env m) (if (null? (mix-amp-env m)) 
+					  wenv
+					  (multiply-envelopes (mix-amp-env m) wenv)))))
 	    mix-list)))))))
 
 
