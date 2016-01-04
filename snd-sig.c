@@ -3446,6 +3446,8 @@ static bool tree_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer tree)
 	   (tree_memq(sc, symbol, s7_cdr(tree))));
   return(false);
 }
+
+static s7_pointer gc_vect;
 #endif
 
 static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t beg, mus_long_t num, int pos, const char *caller)
@@ -3461,13 +3463,11 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   int gc_loc, proc_loc;
   bool use_apply;
   s7_pointer arg_list, body, e, slot;
-  s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
   body = xen_nil;
   e = xen_nil;
   slot = xen_nil;
-  eval = NULL;
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
@@ -3607,10 +3607,14 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
       use_apply = false;
       if (s7_is_null(s7, s7_cdr(body)))
 	{
-	  eval = s7_eval_form;
 	  body = s7_car(body);
 	}
-      else eval = s7_eval;
+      else 
+	{
+	  body = s7_cons(s7, s7_make_symbol(s7, "begin"), body);
+	  s7_vector_set(s7, gc_vect, 0, body);
+	}
+      /* fprintf(stderr, "eval %s\n", DISPLAY(body)); */
     }
   else
     {
@@ -3643,7 +3647,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
       else
 	{
 	  s7_slot_set_value(s7, slot, s7_make_real(s7, in_data[kp]));
-	  res = eval(s7, body, e);
+	  res = s7_eval(s7, body, e);
 	}
 #else
       res = Xen_unprotected_call_with_1_arg(proc, C_double_to_Xen_real((double)read_sample(sf)));
@@ -3880,13 +3884,11 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   int gc_loc;
   bool use_apply;
   s7_pointer body, e, slot;
-  s7_pointer (*eval)(s7_scheme *sc, s7_pointer code, s7_pointer e);
 
   arg_list = xen_nil;
   body = xen_nil;
   e = xen_nil;
   slot = xen_nil;
-  eval = NULL;
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
@@ -3976,10 +3978,14 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 
       if (s7_is_null(s7, s7_cdr(body)))
 	{
-	  eval = s7_eval_form;
 	  body = s7_car(body);
 	}
-      else eval = s7_eval;
+      else
+	{
+	  body = s7_cons(s7, s7_make_symbol(s7, "begin"), body);
+	  s7_vector_set(s7, gc_vect, 0, body);
+	}
+      /* fprintf(stderr, "eval %s\n", DISPLAY(body)); */
     }
   else
     {
@@ -4009,7 +4015,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
       else
 	{
 	  s7_slot_set_value(s7, slot, s7_make_real(s7, read_sample(sf)));
-	  res = eval(s7, body, e);
+	  res = s7_eval(s7, body, e);
 	}
 
 #else
@@ -6526,6 +6532,9 @@ void g_init_sig(void)
 
   s7_symbol_set_access(s7, ss->sinc_width_symbol, s7_make_function(s7, "[acc-" S_sinc_width "]", acc_sinc_width, 2, 0, false, "accessor"));
   s7_symbol_set_documentation(s7, ss->sinc_width_symbol, "*sinc-width*: sampling rate conversion sinc width (10).");
+
+  gc_vect = s7_make_vector(s7, 1);
+  s7_gc_protect(s7, gc_vect);
 #endif
 }
 

@@ -2510,27 +2510,7 @@
 		       (pair? arg2)
 		       (eq? (car arg2) '-)
 		       (= (length arg2) 3))
-		  (lint-format "perhaps ~A" name (lists->string form `(,(reversed head) ,(cadr arg2) ,(caddr arg2))))))
-
-	  ;; it would be nice to include (> (length x) 0), but in s7 that means (and (proper-list? x) (pair? x))
-	  (if (eq? head '=)                    ; (= (length x) 0) -> (null? x) assuming it's a list unfortunately -- need var types!
-	      (let ((var (or (and (memv arg1 '(0 1))
-				  (pair? arg2)
-				  (eq? (car arg2) 'length)
-				  (cadr arg2))
-			     (and (memv arg2 '(0 1))
-				  (pair? arg1)
-				  (eq? (car arg1) 'length)
-				  (cadr arg1)))))
-		;; TODO: if it's (f y) -- check return type of f -- and we need Snd function signatures!
-		(if var
-		    (if (or (eqv? arg1 0) 
-			    (eqv? arg2 0))
-			(lint-format "perhaps (assuming ~A is a list), ~A" name var 
-				     (lists->string form `(null? ,var)))
-			(if (symbol? var)
-			    (lint-format "perhaps (assuming ~A is a list), ~A" name var 
-					 (lists->string form `(and (pair? ,var) (null? (cdr ,var))))))))))))
+		  (lint-format "perhaps ~A" name (lists->string form `(,(reversed head) ,(cadr arg2) ,(caddr arg2))))))))
 
       (define (check-special-cases name head form env)
 	;; here curlet won't change (except for and/or/not, possibly apply, and map/for-each with a macro)
@@ -2849,6 +2829,28 @@
 		   (lint-format "this comparison can't be true: ~A" name (truncated-list->string form))))
 
 	     (when (= len 3)
+
+	       ;; it would be nice to include (> (length x) 0), but in s7 that means (and (proper-list? x) (pair? x))
+	       (let ((arg1 (cadr form))
+		     (arg2 (caddr form)))
+		 (let ((var (or (and (memv arg1 '(0 1))
+				     (pair? arg2)
+				     (eq? (car arg2) 'length)
+				     (cadr arg2))
+				(and (memv arg2 '(0 1))
+				     (pair? arg1)
+				     (eq? (car arg1) 'length)
+				     (cadr arg1)))))
+		   ;; TODO: if it's (f y) -- check return type of f -- and we need Snd function signatures!
+		   (if var
+		       (if (or (eqv? arg1 0) 
+			       (eqv? arg2 0))
+			   (lint-format "perhaps (assuming ~A is a list), ~A" name var 
+					(lists->string form `(null? ,var)))
+			   (if (symbol? var)
+			       (lint-format "perhaps (assuming ~A is a list), ~A" name var 
+					    (lists->string form `(and (pair? ,var) (null? (cdr ,var))))))))))
+
 	       (unrelop name '= form env))
 	     (check-char-cmp name head form)))
 

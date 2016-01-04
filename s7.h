@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.2"
-#define S7_DATE "11-Dec-15"
+#define S7_VERSION "4.3"
+#define S7_DATE "4-Jan-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -83,7 +83,7 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
    */
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);    /* (eval code e) -- e is the optional environment */
-s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e);
+#define s7_eval_form(Sc, Form, E) s7_eval(Sc, Form, E)               /* backwards compatibility */
 
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provided? feature) */
@@ -770,6 +770,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 4-Jan-16:  remove s7_eval_form, change s7_eval to take its place.
+ * --------
  * 11-Dec:    owlet error-history field if WITH_HISTORY=1
  * 6-Nov:     removed :key and :optional.
  * 16-Oct:    s7_make_random_state -> s7_random_state.

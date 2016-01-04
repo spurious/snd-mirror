@@ -844,7 +844,7 @@ int main(int argc, char **argv)
     free(s1);    
 
     s7_set_car(c1234, s7_make_symbol(sc, "+")); 
-    p = s7_eval(sc, s7_list(sc, 2, s7_make_symbol(sc, "quote"), c1234), s7_sublet(sc, s7_rootlet(sc), s7_nil(sc)));
+    p = s7_eval(sc, c1234, s7_sublet(sc, s7_rootlet(sc), s7_nil(sc)));
     if (s7_integer(p) != 9)
       {fprintf(stderr, "%d: (eval '(+ 2 3 4)) is %s?\n", __LINE__, s1 = TO_STR(p)); free(s1);}
     p = s7_eval_form(sc, c1234, s7_sublet(sc, s7_rootlet(sc), s7_nil(sc)));
