@@ -105,6 +105,21 @@
 		    (copy-tree (cdr lis)))
 	      lis))))
 
+    (define* (tree-count x tree (count 0))
+      (if (and (pair? tree)
+	       (not (eq? (car tree) 'quote)))
+	  (tree-count x (cdr tree)
+		      (+ (tree-count x (car tree) (+ count (if (eq? x (car tree)) 1 0)))
+			 (if (eq? x (cdr tree)) 1 0)))
+	  count))
+
+    (define (tree-length tree len)
+      (if (pair? tree)
+	  (tree-length (car tree) (tree-length (cdr tree) len))
+	  (if (null? tree)
+	      len
+	      (+ len 1))))
+
     (define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
       (and (pair? lst)
 	   (or (and (number? (car lst))
@@ -2442,21 +2457,6 @@
 	     (null? (cdddr x))
 	     (eq? (caddr x) (caadr x))))
 
-      (define* (tree-count x tree (count 0))
-	(if (and (pair? tree)
-		 (not (eq? (car tree) 'quote)))
-	    (tree-count x (cdr tree)
-			(+ (tree-count x (car tree) (+ count (if (eq? x (car tree)) 1 0)))
-			   (if (eq? x (cdr tree)) 1 0)))
-	    count))
-
-      (define (tree-length tree len)
-	(if (pair? tree)
-	    (tree-length (car tree) (tree-length (cdr tree) len))
-	    (if (null? tree)
-		len
-		(+ len 1))))
-
       (define (cdr-count c)
 	(case c ((cdr) 1) ((cddr) 2) ((cdddr) 3) (else 4)))
 
@@ -2498,7 +2498,7 @@
 	      sym
 	      (find-unique-name f1 f2 (+ i 1)))))
 	    
-      (define (unrelop name head form env)     ; assume len=3 
+      (define (unrelop name head form)         ; assume len=3 
 	(let ((arg1 (cadr form))
 	      (arg2 (caddr form)))
 	  (if (memv arg2 '(0 0.0))             ; (< (- x y) 0) -> (< x y), need both 0 and 0.0 because (eqv? 0 0.0) is #f
@@ -2547,6 +2547,7 @@
 	;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
 	;; flag redef at same level?
 	;;
+	;; (set! x y) (set! x (+ x z)) etc
 	;; 230/37
 
 	(case head
@@ -2851,7 +2852,7 @@
 			       (lint-format "perhaps (assuming ~A is a list), ~A" name var 
 					    (lists->string form `(and (pair? ,var) (null? (cdr ,var))))))))))
 
-	       (unrelop name '= form env))
+	       (unrelop name '= form))
 	     (check-char-cmp name head form)))
 
 	  ;; ----------------
@@ -2865,7 +2866,7 @@
 		 (lint-format "this comparison can't be true: ~A" name (truncated-list->string form))))
 
 	   (if (= (length form) 3)
-	       (unrelop name head form env)
+	       (unrelop name head form)
 	       (when (> (length form) 3)
 		 (if (and (memq head '(< >))
 			  (repeated-member? (cdr form) env))
@@ -4723,12 +4724,13 @@
 			   (eq? (cadr f) (cadr prev-f)))
 		      (let ((arg1 (caddr prev-f))
 			    (arg2 (caddr f)))
-			(if (or (not (pair? arg2))
+			(if (or (not (pair? arg2)) ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
 				(not (tree-member (cadr f) arg2)))
 			    (if (and (not (side-effect? arg1 env))
 				     (not (side-effect? arg2 env)))
 				(lint-format "this could be omitted: ~A" name prev-f))
-			    (if (and (pair? arg1)
+
+			    (if (and (pair? arg1)              ; (set! x (cons 1 z)) (set! x (cons 2 x)) -> (set! x (cons 2 (cons 1 z)))
 				     (pair? arg2)
 				     (eq? (car arg1) 'cons)
 				     (eq? (car arg2) 'cons)
@@ -4736,7 +4738,23 @@
 				     (not (eq? (cadr f) (cadr arg2))))
 				(lint-format "perhaps ~A ~A -> ~A" name
 					     prev-f f
-					     `(set! ,(cadr f) (cons ,(cadr arg2) (cons ,@(cdr arg1)))))))))
+					     `(set! ,(cadr f) (cons ,(cadr arg2) (cons ,@(cdr arg1)))))
+
+				(if (and (= (tree-count (cadr f) arg2) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
+					 (or (not (pair? arg1))
+					     (< (tree-length arg1 0) 5)))
+				    (lint-format "perhaps ~A ~A ->~%~NC~A" name prev-f f 4 #\space
+						 (object->string `(set! ,(cadr f) ,(tree-subst arg1 (cadr f) arg2)))))
+				))))
+						 
+			    ;; perhaps: (set! x <>) (set! x (f ... x ...)) -> (set! x (f ... <> ...)) 
+			      ;; (set! msb (ash msb 3)) (set! msb (logior msb (ash t -29)))
+			      ;; (set! n 1025) (set! n (- n 1))
+			      ;; (set! time (* time 4)) (set! time (+ time priority))
+			      ;; (set! snd-test (random 23)) (set! snd-test (min snd-test 22)) kinda dumb!
+
+			      ;; if more than 2 conses -> list? (needs display-like handling)
+
 
 		  (let ((repeated-if (and (= f-len prev-len 3)
 					  (eq? (car f) 'if)

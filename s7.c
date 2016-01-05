@@ -334,11 +334,13 @@
 #include "s7.h"
 
 enum {NO_JUMP, CALL_WITH_EXIT_JUMP, DYNAMIC_WIND_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, S7_CALL_JUMP, ERROR_QUIT_JUMP};
-enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, EVAL_STRING_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP};
+enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, EVAL_STRING_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
 #if DEBUGGING
-static const char* setjmp_names[6] = {"no_set_jump", "read_set_jump", "load_set_jump", "eval_string_set_jump", "dynamic_wind_set_jump", "s7_call_set_jump"};
-static const char* jump_names[8] = {"no_jump", "call_with_exit_jump", "dynamic_wind_jump", "throw_jump", "catch_jump", "error_jump", "s7_call_jump", "error_quit_jump"};
+static const char* setjmp_names[7] = {"no_set_jump", "read_set_jump", "load_set_jump", "eval_string_set_jump", 
+				      "dynamic_wind_set_jump", "s7_call_set_jump", "eval_set_jump"};
+static const char* jump_names[8] = {"no_jump", "call_with_exit_jump", "dynamic_wind_jump", "throw_jump", 
+				    "catch_jump", "error_jump", "s7_call_jump", "error_quit_jump"};
 static bool print_jumps = false;
 #endif
 
@@ -28098,43 +28100,36 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
   if (is_input_port(port))
     {
       bool old_longjmp;
-      int old_jump_loc;
+      int old_jump_loc, jump_loc;
       jmp_buf old_goto_start;
       s7_pointer old_envir;
+
       old_envir = sc->envir;
       sc->envir = sc->NIL;
-      if (sc->longjmp_ok)
-	{
-	  push_input_port(sc, port);
-	  push_stack(sc, OP_BARRIER, port, sc->NIL);
-	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-	  eval(sc, OP_READ_INTERNAL);
-	  pop_input_port(sc);
-	  sc->envir = old_envir;
-	  return(sc->value);
-	}
-      stack_reset(sc);
-      push_stack(sc, OP_EVAL_DONE, old_envir, sc->NIL); /* GC protect envir */
       push_input_port(sc, port);
+
       old_longjmp = sc->longjmp_ok;
       old_jump_loc = sc->setjmp_loc;
       memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 #if DEBUGGING
       if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
 #endif
-      if (!sc->longjmp_ok)
-	{
-	  int jump_loc;
-	  sc->longjmp_ok = true;
-	  sc->setjmp_loc = READ_SET_JUMP;
-	  jump_loc = setjmp(sc->goto_start);
+
+      sc->longjmp_ok = true;
+      sc->setjmp_loc = READ_SET_JUMP;
+      jump_loc = setjmp(sc->goto_start);
 #if DEBUGGING
-	  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
+      if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
 #endif
-	  if (jump_loc != NO_JUMP)
-	    eval(sc, sc->op);
-	  else eval(sc, OP_READ_INTERNAL);
+      if (jump_loc != NO_JUMP)
+	eval(sc, sc->op);
+      else 
+	{
+	  push_stack(sc, OP_BARRIER, port, sc->NIL);
+	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+	  eval(sc, OP_READ_INTERNAL);
 	}
+      
       sc->longjmp_ok = old_longjmp;  /* TODO: doesn't this need memcpy of old buf? */
       sc->setjmp_loc = old_jump_loc;
       memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
@@ -28702,80 +28697,48 @@ The symbols refer to the argument to \"provide\"."
 
 /* -------------------------------- eval-string -------------------------------- */
 
-static s7_pointer eval_string_1(s7_scheme *sc, const char *str)
-{
-  s7_pointer port;
-
-  port = s7_open_input_string(sc, str);
-  push_input_port(sc, port);
-
-  push_stack(sc, OP_BARRIER, port, sc->NIL);
-  /* we're being called directly from C here, not as part of a scheme program.
-   *    Use this op to protect the port, I guess.
-   */
-  push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
-  /* eval-string is not tail-recursive because it pushes markers in eval to catch
-   *    multiple statements in one eval-string call.
-   */
-  eval(sc, OP_READ_INTERNAL);
-
-  pop_input_port(sc);
-  s7_close_input_port(sc, port);
-  if (is_multiple_value(sc->value))                    /* (+ 1 (eval-string "(values 2 3)")) */
-    sc->value = splice_in_values(sc, multiple_value(sc->value));
-
-  return(sc->value);
-}
-
-
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e)
 {
   bool old_longjmp;
-  int old_jump_loc;
+  int old_jump_loc, jump_loc;
+  jmp_buf old_goto_start;
   s7_pointer port, old_envir;
-  /* this can be called recursively via s7_call */
 
   sc->v = sc->envir;          /* old envir needs GC protection even given the push_stack below */
   old_envir = sc->envir;
   sc->envir = e;
-  if (sc->longjmp_ok)
-    {
-      s7_pointer result;
-      result = eval_string_1(sc, str);
-      sc->envir = old_envir;
-      return(result);
-    }
-
-  stack_reset(sc);
-  push_stack(sc, OP_EVAL_STRING, old_envir, sc->NIL); /* GC protect envir */
-
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
   old_longjmp = sc->longjmp_ok;
   old_jump_loc = sc->setjmp_loc;
+  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 #if DEBUGGING
   if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
 #endif
-  if (!sc->longjmp_ok)
-    {
-      int jump_loc;
-      sc->longjmp_ok = true;
-      sc->setjmp_loc = EVAL_STRING_SET_JUMP;
-      jump_loc = setjmp(sc->goto_start);
+
+  sc->longjmp_ok = true;
+  sc->setjmp_loc = EVAL_STRING_SET_JUMP;
+  jump_loc = setjmp(sc->goto_start);
 #if DEBUGGING
-      if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
+  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
 #endif
-      if (jump_loc != NO_JUMP)
-	eval(sc, sc->op);
-      else eval(sc, OP_READ_INTERNAL);
+  if (jump_loc != NO_JUMP)
+    eval(sc, sc->op);
+  else
+    {
+      push_stack(sc, OP_EVAL_STRING, old_envir, sc->NIL); /* GC protect envir */
+      /* eval-string is not tail-recursive because it pushes markers in eval to catch multiple statements in one eval-string call */
+      eval(sc, OP_READ_INTERNAL);
     }
 
   sc->longjmp_ok = old_longjmp;
   sc->setjmp_loc = old_jump_loc;
+  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
 #if DEBUGGING
   if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (uncopied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
 #endif
+
   pop_input_port(sc);
   s7_close_input_port(sc, port);
   sc->envir = old_envir;
@@ -47090,29 +47053,48 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-  sc->code = code;
-  if ((e != sc->rootlet) &&
-      (is_let(e)))
-    sc->envir = e;
-  else sc->envir = sc->NIL; /* can't check is_let(e) because sc->rootlet sets its type to t_env! */
-  eval(sc, OP_EVAL); /* was OP_BEGIN -- we were calling it in snd-sig to handle a complete function body */
-  return(sc->value);
-}
+  bool old_longjmp;
+  int old_jump_loc, jump_loc;
+  jmp_buf old_goto_start;
 
-#if 0
-s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form, s7_pointer e)
-{
-  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-  sc->code = form;
-  if ((e != sc->rootlet) &&
-      (is_let(e)))
-    sc->envir = e;
-  else sc->envir = sc->NIL;
-  eval(sc, OP_EVAL);
+  /* save incoming jmpbuf */
+  old_longjmp = sc->longjmp_ok;
+  old_jump_loc = sc->setjmp_loc;
+  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
+#if DEBUGGING
+  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
+#endif
+
+  /* set new jmpbuf to point here */
+  sc->longjmp_ok = true;
+  sc->setjmp_loc = EVAL_SET_JUMP;
+  jump_loc = setjmp(sc->goto_start);
+#if DEBUGGING
+  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
+#endif
+  if (jump_loc != NO_JUMP)
+    eval(sc, sc->op);
+  else 
+    {
+      push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+      sc->code = code;
+      if ((e != sc->rootlet) &&
+	  (is_let(e)))
+	sc->envir = e;
+      else sc->envir = sc->NIL; /* can't check is_let(e) because sc->rootlet sets its type to t_env! */
+      eval(sc, OP_EVAL); /* was OP_BEGIN -- we were calling it in snd-sig to handle a complete function body */
+    }
+
+  /* restore incoming jmpbuf */
+  sc->longjmp_ok = old_longjmp;
+  sc->setjmp_loc = old_jump_loc;
+  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+#if DEBUGGING
+  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
+#endif
+
   return(sc->value);
 }
-#endif
 
 
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
@@ -72596,22 +72578,6 @@ char *s7_decode_bt(void)
 }
 #endif
 
-#if DEBUGGING
-/* temporary debugging */
-static s7_pointer sload(s7_scheme *sc, s7_pointer args) {return(s7_load(sc, string_value(car(args))));}
-static s7_pointer scall(s7_scheme *sc, s7_pointer args) {return(s7_call(sc, car(args), cadr(args)));}
-static s7_pointer sread(s7_scheme *sc, s7_pointer args) {return(s7_read(sc, car(args)));}
-static s7_pointer swind(s7_scheme *sc, s7_pointer args) {return(s7_dynamic_wind(sc, car(args), cadr(args), caddr(args)));}
-static s7_pointer seval(s7_scheme *sc, s7_pointer args) {return(s7_eval(sc, car(args), sc->NIL));}
-static s7_pointer sevalstr(s7_scheme *sc, s7_pointer args) {return(s7_eval_c_string(sc, string_value(car(args))));}
-/* eval/eval-string are only 1-direction, from C calling Scheme code -- callback as here will not work */
-/* add read, check the c_function_star business when an evalable default arg is given (set_c_function_call_args calls s7_eval) 
- *   -- how can that work?
- */
-#endif
-/* end debugging hooks */
-
-
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -73764,14 +73730,6 @@ s7_scheme *s7_init(void)
                               defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
                               s7_define_function(sc, "abort",  g_abort,         0, 0, false, "drop into gdb I hope");
-
-			      /* temp stuff */
-			      s7_define_function(sc, "sload",  sload,        1, 0, false, "fake s7_load");
-			      s7_define_function(sc, "scall",  scall,        2, 0, false, "fake s7_call");
-			      s7_define_function(sc, "sread",  sread,        1, 0, false, "fake s7_read");
-			      s7_define_function(sc, "swind",  swind,        3, 0, false, "fake s7_dynamic_wind");
-			      s7_define_function(sc, "seval",  seval,        1, 0, false, "fake s7_eval");
-			      s7_define_function(sc, "sevalstr",  sevalstr,  1, 0, false, "fake s7_eval_c_string");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
@@ -74266,6 +74224,7 @@ int main(int argc, char **argv)
  * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
  *    where is this!? report-usage I think
  * need much more thorough testing/debugging checks for the reused let cases (make sure they stay the same length etc, check counter_slots type, etc)
+ *
  * \" where " meant -- why not warning of weird \ from reader?
  *   \ outside string is a symbol, following " starts a string-constant, next \" is a quoted " in the constant, so we keep looking...
  *   can we catch \"...\" somehow?  If \ does not yet exist as a symbol, it can't be a variable name, so \" is an error unless
@@ -74275,6 +74234,4 @@ int main(int argc, char **argv)
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
- * 
- * s7_call unnecessarily longjmps causing catch confusion
  */
