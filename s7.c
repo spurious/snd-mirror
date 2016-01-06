@@ -28136,6 +28136,9 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 
       pop_input_port(sc);
       sc->envir = old_envir;
+      if ((sc->op == OP_EVAL_DONE) &&
+	  (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER))
+	pop_stack(sc); 
       return(sc->value);
     }
   return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
@@ -28211,7 +28214,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 }
 
 
-static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
+s7_pointer s7_load_with_environment(s7_scheme *sc, const char *filename, s7_pointer e)
 {
   s7_pointer port;
   FILE *fp;
@@ -28253,13 +28256,16 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   pop_input_port(sc);
   if (is_input_port(port))
     s7_close_input_port(sc, port);
-  return(sc->value);
+
+ if (is_multiple_value(sc->value))
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
+ return(sc->value);
 }
 
 
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
-  return(s7_load_1(sc, filename, sc->NIL));
+  return(s7_load_with_environment(sc, filename, sc->NIL));
 }
 
 
@@ -28649,7 +28655,7 @@ The symbols refer to the argument to \"provide\"."
 	      s7_pointer f;
 	      f = g_autoloader(sc, p);
 	      if (is_string(f))
-		s7_load_1(sc, string_value(f), sc->envir);
+		s7_load_with_environment(sc, string_value(f), sc->envir);
 	      else
 		{
 		  sc->temp5 = sc->NIL;
@@ -28675,6 +28681,7 @@ The symbols refer to the argument to \"provide\"."
 
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e)
 {
+#if 0
   s7_pointer port, old_envir;
   declare_jump_info();
 
@@ -28700,6 +28707,15 @@ s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_
   s7_close_input_port(sc, port);
   sc->envir = old_envir;
   return(sc->value);
+#else
+  s7_pointer code, port;
+  port = s7_open_input_string(sc, str);
+  code = s7_read(sc, port);
+  s7_close_input_port(sc, port);
+  return(s7_eval(sc, code, e));
+#endif
+  /* if using second block, OP_EVAL_STRING is not used, and eval_string_ex, and EVAL_STRING_SET_JUMP
+   */
 }
 
 
@@ -45733,9 +45749,11 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 	}
       eval(sc, OP_APPLY);
     }
-
   restore_jump_info(sc);
-  return(sc->value);
+
+  if (is_multiple_value(sc->value))
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
+ return(sc->value);
 }
 
 
@@ -47012,6 +47030,8 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
     }
   restore_jump_info(sc);
 
+  if (is_multiple_value(sc->value))
+    sc->value = splice_in_values(sc, multiple_value(sc->value));
   return(sc->value);
 }
 
@@ -73971,13 +73991,14 @@ s7_scheme *s7_init(void)
 
 
 #if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(sc, "(define global-environment         rootlet)  \n\
-                        (define current-environment        curlet)   \n\
-                        (define make-procedure-with-setter dilambda) \n\
-                        (define procedure-with-setter?     dilambda?)\n\
-                        (define make-random-state          random-state) \n\
-                        (define make-complex               complex) \n\
-                        (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000))))");
+  s7_eval_c_string(sc, "(begin
+                          (define global-environment         rootlet)  \n\
+                          (define current-environment        curlet)   \n\
+                          (define make-procedure-with-setter dilambda) \n\
+                          (define procedure-with-setter?     dilambda?)\n\
+                          (define make-random-state          random-state) \n\
+                          (define make-complex               complex) \n\
+                          (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
@@ -74128,8 +74149,4 @@ int main(int argc, char **argv)
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
- *
- * another setjmp test: replace eval with seval (etc) in s7test.scm
- *   see s7test 1042
- *   perhaps add s7_load_with_environment
  */
