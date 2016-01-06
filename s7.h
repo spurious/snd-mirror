@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.3"
-#define S7_DATE "4-Jan-16"
+#define S7_VERSION "4.4"
+#define S7_DATE "7-Jan-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -67,6 +67,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);          /* same as 
                                                                      /*   the returned value should be freed by the caller */
 
 s7_pointer s7_load(s7_scheme *sc, const char *file);                 /* (load file) */
+s7_pointer s7_load_with_environment(s7_scheme *sc, const char *filename, s7_pointer e);
 s7_pointer s7_load_path(s7_scheme *sc);                              /* *load-path* */
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *load-path* (cons dir *load-path*)) */
 s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_function);  /* (autoload symbol file-or-function) */
@@ -396,14 +397,14 @@ s7_pointer s7_shadow_rootlet(s7_scheme *sc);
 s7_pointer s7_set_shadow_rootlet(s7_scheme *sc, s7_pointer let);
 s7_pointer s7_curlet(s7_scheme *sc);                                        /* (curlet) */
 s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* returns previous curlet */
-  s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e);                        /* (outlet e) */
+s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e);                          /* (outlet e) */
 s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);   /* (sublet e ...) */
 s7_pointer s7_inlet(s7_scheme *sc, s7_pointer bindings);                    /* (inlet ...) */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (let->list env) */
 bool s7_is_let(s7_pointer e);                                               /* )let? e) */
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (let-ref e sym) */
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer sym, s7_pointer val); /* (let-set! e sym val) */
-  s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e);                       /* (openlet e) */
+s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e);                         /* (openlet e) */
 bool s7_is_openlet(s7_pointer e);                                           /* (openlet? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
@@ -770,6 +771,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 7-Jan:     s7_load_with_environment.
+ *            s7_eval_c_string takes only one statement now (use begin to handle multiple statements)
  * 4-Jan-16:  remove s7_eval_form, change s7_eval to take its place.
  * --------
  * 11-Dec:    owlet error-history field if WITH_HISTORY=1

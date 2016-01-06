@@ -5920,7 +5920,7 @@ if test "$with_audio" != no ; then
   if test "$with_pulseaudio" = yes ; then
     $as_echo "#define MUS_PULSEAUDIO 1" >>confdefs.h
 
-    AUDIO_LIB="-lpulse-simple"
+    AUDIO_LIB="-lpulse-simple -lpulse"
     AUDIO_SYSTEM=pulseaudio
   fi
 

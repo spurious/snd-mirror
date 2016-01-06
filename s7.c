@@ -73991,7 +73991,7 @@ s7_scheme *s7_init(void)
 
 
 #if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(sc, "(begin
+  s7_eval_c_string(sc, "(begin                                         \n\
                           (define global-environment         rootlet)  \n\
                           (define current-environment        curlet)   \n\
                           (define make-procedure-with-setter dilambda) \n\

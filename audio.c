@@ -5086,16 +5086,14 @@ static pa_simple *pa_out = NULL, *pa_in = NULL;
 
 int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type, int size) 
 {
-  pa_sample_spec *spec;
+  pa_sample_spec spec = {0};
   int error;
 
-  spec = (pa_sample_spec *)malloc(sizeof(pa_sample_spec));
-  spec->format = sndlib_to_pa_format(samp_type);
-  spec->rate = srate;
-  spec->channels = chans;
+  spec.format = sndlib_to_pa_format(samp_type);
+  spec.rate = srate;
+  spec.channels = chans;
 
-  pa_out = pa_simple_new(NULL, "snd", PA_STREAM_PLAYBACK, NULL, "playback", spec, NULL, NULL, &error);
-  free(spec);
+  pa_out = pa_simple_new(NULL, "snd", PA_STREAM_PLAYBACK, NULL, "playback", &spec, NULL, NULL, &error);
   if (!pa_out)
     {
       fprintf(stderr, "can't play: %s\n", pa_strerror(error));

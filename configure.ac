@@ -521,7 +521,7 @@ if test "$with_audio" != no ; then
 
   if test "$with_pulseaudio" = yes ; then
     AC_DEFINE(MUS_PULSEAUDIO)
-    AUDIO_LIB="-lpulse-simple"
+    AUDIO_LIB="-lpulse-simple -lpulse"
     AUDIO_SYSTEM=pulseaudio
   fi
   
