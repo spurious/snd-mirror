@@ -517,8 +517,7 @@
 		;; check for out of bounds condition in in-file pointers
 		(if (> (+ in-start in-samples) last-in-sample)
 		    (set! in-start (- last-in-sample in-samples))
-		    (if (< in-start 0)
-			(set! in-start 0)))
+		    (set! in-start (max in-start 0)))
 		;; reset position of input file reader
 		(set! (mus-location rd) in-start)
 		

@@ -1281,7 +1281,7 @@
 					    (memq (car arg) '(and or not)))
 				       (classify (simplify-boolean arg true false env))
 				       (classify arg))))
-			 ;(format *stderr* "val ~S, arg: ~S~%" val arg)
+
 			 (cond ((boolean? val) 
 				(not val))
 
@@ -1349,11 +1349,8 @@
 				  ((exact?)       `(inexact? ,@(cdr arg)))
 				  ((inexact?)     `(exact? ,@(cdr arg)))
 				  ;; ((null?)        `(pair? ,@(cdr arg)))
-				  ;;      this is not quite right
+				  ;;    this is not quite right because (not (null? 3)) -> #t
 				  ;; char-upper-case? and lower are not switchable here
-				  
-				  ;; if stuff loaded, (not (every? ...)) => any? and so on
-				  
 				  ((zero?)       ; (not (zero? (logand p (ash 1 i)))) -> (logbit? p i)
 				   (let ((zarg (cadr arg)))  ; (logand...)
 				     (if (and (pair? zarg)
@@ -2524,6 +2521,7 @@
 	;; move special-cases into hash-table (via macro?)
 	;; need values->func arg check escape (define*), or can these be correlated?
 	;; if (make-list n (list 1)) -- warn about copies? (let ((x (make-list 3 (list 1)))) (set! (x 0 0) 2) x) -> '((2) (2) (2))
+	;; case-lambda confuses the local-var checker: each clause has pars/body so pars->env for the body
 	;;
 	;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
 	;;   pp sketch mode would be useful, and truncate at right margin
@@ -2540,14 +2538,12 @@
 	;;
 	;; func unused value + no export
 	;; arg type checks for named let(*?) (gets argnum now) and define, recursive calls all checks in letrec(*)
-	;; cond -> partial case (trailing eqvs)
 	;; to find local-reducible vars, number binding points incrementally, keep as _let_ or something in every var list
 	;;   if ref|set, mark via min(cur, _let_) 
 	;;   at end, check cur _let_ against ref/set -- if higher, it's localizable
 	;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
-	;; flag redef at same level?
+	;; flag redef at same level? 
 	;;
-	;; (set! x y) (set! x (+ x z)) etc
 	;; 230/37
 
 	(case head
@@ -2830,8 +2826,6 @@
 		   (lint-format "this comparison can't be true: ~A" name (truncated-list->string form))))
 
 	     (when (= len 3)
-
-	       ;; it would be nice to include (> (length x) 0), but in s7 that means (and (proper-list? x) (pair? x))
 	       (let ((arg1 (cadr form))
 		     (arg2 (caddr form)))
 		 (let ((var (or (and (memv arg1 '(0 1))
@@ -3369,18 +3363,20 @@
 			       (lint-format "perhaps ~A" name (lists->string form arg2)))
 
 			      ((pair? arg1)            
-			       (if (and (pair? arg2)                    ; (append (list x y) '(z)) -> (list x y 'z)
-					(or (eq? (car arg1) 'list)
-					    (quoted-undotted-pair? arg1))
-					(or (eq? (car arg2) 'list)
-					    (quoted-undotted-pair? arg2)))
-				   (lint-format "perhaps ~A" name (lists->string form (apply append->list new-args)))
-				   (if (and (eq? (car arg1) 'list)      ; (append (list x) y) -> (cons x y)
-					    (pair? (cdr arg1))
-					    (null? (cddr arg1)))
-				       (lint-format "perhaps ~A" name (lists->string form `(cons ,(cadr arg1) ,arg2)))
-				       (if (not (equal? (cdr form) new-args))
-					   (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args))))))))))
+			       (cond ((and (pair? arg2)                 ; (append (list x y) '(z)) -> (list x y 'z)
+					   (or (eq? (car arg1) 'list)
+					       (quoted-undotted-pair? arg1))
+					   (or (eq? (car arg2) 'list)
+					       (quoted-undotted-pair? arg2)))
+				      (lint-format "perhaps ~A" name (lists->string form (apply append->list new-args))))
+
+				     ((and (eq? (car arg1) 'list)       ; (append (list x) y) -> (cons x y)
+					   (pair? (cdr arg1))
+					   (null? (cddr arg1)))
+				      (lint-format "perhaps ~A" name (lists->string form `(cons ,(cadr arg1) ,arg2))))
+
+				     ((not (equal? (cdr form) new-args))
+				      (lint-format "perhaps ~A" name (lists->string form `(append ,@new-args)))))))))
 		     (else
 		      (if (every? (lambda (item)
 				    (and (pair? item)
@@ -4724,37 +4720,27 @@
 			   (eq? (cadr f) (cadr prev-f)))
 		      (let ((arg1 (caddr prev-f))
 			    (arg2 (caddr f)))
-			(if (or (not (pair? arg2)) ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
-				(not (tree-member (cadr f) arg2)))
-			    (if (and (not (side-effect? arg1 env))
-				     (not (side-effect? arg2 env)))
-				(lint-format "this could be omitted: ~A" name prev-f))
+			(cond ((or (not (pair? arg2))          ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
+				   (not (tree-member (cadr f) arg2)))
+			       (if (and (not (side-effect? arg1 env))
+					(not (side-effect? arg2 env)))
+				   (lint-format "this could be omitted: ~A" name prev-f)))
 
-			    (if (and (pair? arg1)              ; (set! x (cons 1 z)) (set! x (cons 2 x)) -> (set! x (cons 2 (cons 1 z)))
-				     (pair? arg2)
-				     (eq? (car arg1) 'cons)
-				     (eq? (car arg2) 'cons)
-				     (eq? (cadr f) (caddr arg2))
-				     (not (eq? (cadr f) (cadr arg2))))
-				(lint-format "perhaps ~A ~A -> ~A" name
-					     prev-f f
-					     `(set! ,(cadr f) (cons ,(cadr arg2) (cons ,@(cdr arg1)))))
+			      ((and (pair? arg1)               ; (set! x (cons 1 z)) (set! x (cons 2 x)) -> (set! x (cons 2 (cons 1 z)))
+				    (pair? arg2)
+				    (eq? (car arg1) 'cons)
+				    (eq? (car arg2) 'cons)
+				    (eq? (cadr f) (caddr arg2))
+				    (not (eq? (cadr f) (cadr arg2))))
+			       (lint-format "perhaps ~A ~A -> ~A" name
+					    prev-f f
+					    `(set! ,(cadr f) (cons ,(cadr arg2) (cons ,@(cdr arg1))))))
 
-				(if (and (= (tree-count (cadr f) arg2) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
-					 (or (not (pair? arg1))
-					     (< (tree-length arg1 0) 5)))
-				    (lint-format "perhaps ~A ~A ->~%~NC~A" name prev-f f 4 #\space
-						 (object->string `(set! ,(cadr f) ,(tree-subst arg1 (cadr f) arg2)))))
-				))))
-						 
-			    ;; perhaps: (set! x <>) (set! x (f ... x ...)) -> (set! x (f ... <> ...)) 
-			      ;; (set! msb (ash msb 3)) (set! msb (logior msb (ash t -29)))
-			      ;; (set! n 1025) (set! n (- n 1))
-			      ;; (set! time (* time 4)) (set! time (+ time priority))
-			      ;; (set! snd-test (random 23)) (set! snd-test (min snd-test 22)) kinda dumb!
-
-			      ;; if more than 2 conses -> list? (needs display-like handling)
-
+			      ((and (= (tree-count (cadr f) arg2) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
+				    (or (not (pair? arg1))
+					(< (tree-length arg1 0) 5)))
+			       (lint-format "perhaps ~A ~A ->~%~NC~A" name prev-f f 4 #\space
+					    (object->string `(set! ,(cadr f) ,(tree-subst arg1 (cadr f) arg2))))))))
 
 		  (let ((repeated-if (and (= f-len prev-len 3)
 					  (eq? (car f) 'if)
@@ -5076,17 +5062,35 @@
       
       
       (define (check-bool-cond name form c1 c2 env)
-	(and (pair? c1) (= (length c1) 2)
-	     (pair? c2) (= (length c2) 2)
+	;; (cond (x #f) (#t #t)) -> (not x)
+	;; c1/c2 = possibly combined, so in (cond (x #t) (y #t) (else #f)), c1: ((or x y) #t), so -> (or x y)
+	(and (pair? c1) 
+	     (= (length c1) 2) 
+	     (pair? c2) 
+	     (pair? (cdr c2))
 	     (boolean? (cadr c1))
-	     (boolean? (cadr c2))
 	     (memq (car c2) '(#t else))
-	     (if (equal? (cadr c1) (cadr c2))
-		 (and (not (side-effect? (car c1) env))
-		      (begin (lint-format "perhaps ~A" name (lists->string form (cadr c1))) #t))
-		 (begin
-		   (lint-format "perhaps ~A" name (lists->string form (if (eq? (cadr c1) #t) (car c1) `(not ,(car c1)))))
-		   #t))))
+	     (or (and (null? (cddr c2))
+		      (boolean? (cadr c2))
+		      (not (equal? (cadr c1) (cadr c2))) ; handled elsewhere
+		      (lint-format "perhaps ~A" name 
+				   (lists->string form (if (eq? (cadr c1) #t) 
+							   (car c1)
+							   (simplify-boolean `(not ,(car c1)) () () env)))))
+		 (and (not (cadr c1))   ; (cond (x #f) (else y)) -> (and (not x) y)
+		      (let ((cc1 (simplify-boolean `(not ,(car c1)) () () env)))
+			(lint-format "perhaps ~A" name 
+				     (lists->string form 
+						    (if (null? (cddr c2)) 
+							`(and ,cc1 ,(cadr c2))
+							`(and ,cc1 (begin ,@(cdr c2))))))))
+		 (and (pair? (car c1))  ; (cond ((null? x) #t) (else y)) -> (or (null? x) y)
+		      (eq? (return-type (caar c1) env) 'boolean?)
+		      (lint-format "perhaps ~A" name
+				   (lists->string form 
+						  (if (null? (cddr c2)) 
+						      `(or ,(car c1) ,(cadr c2))
+						      `(or ,(car c1) (begin ,@(cdr c2))))))))))
 
       (define (cond->case eqv-select new-clauses)
 	;(format *stderr* "cond->case ~A ~A ~A~%" eqv-select new-clauses has-else)
@@ -5856,9 +5860,10 @@
 			      
 			     (if has-else 
 				 (if (pair? result) ; all result clauses are the same (and not implicit)
-				     (if (null? (cdr result))
-					 (lint-format "perhaps ~A" name (lists->string form (car result)))
-					 (lint-format "perhaps ~A" name (lists->string form `(begin ,@result)))))
+				     (lint-format "perhaps ~A" name (lists->string form 
+										   (if (null? (cdr result))
+										       (car result)
+										       `(begin ,@result)))))
 				 (let* ((last-clause (and (> len 1)
 							  (list-ref form len)))
 					(clen (and (pair? last-clause)
@@ -5879,6 +5884,7 @@
 				 (do ((clauses (cdr form) (cdr clauses)))
 				     ((null? clauses)
 				      (let ((len (length new-clauses)))
+					;; len is very rarely 1
 					(if (or (not (= len 2))
 						(not (check-bool-cond name form (cadr new-clauses) (car new-clauses) env)))
 					    (lint-format "perhaps ~A" name 
@@ -6004,9 +6010,10 @@
 				      (pair? result)
 				      (not else-foldable))
 				 (begin
-				   (if (null? (cdr result))
-				       (lint-format "perhaps ~A" name (lists->string form (car result)))
-				       (lint-format "perhaps ~A" name (lists->string form `(begin ,@result))))
+				   (lint-format "perhaps ~A" name (lists->string form 
+										 (if (null? (cdr result))
+										     (car result)
+										     `(begin ,@result))))
 				   (set! exprs-repeated #f)))
 			     
 			     (when (or exprs-repeated else-foldable)
@@ -6050,6 +6057,7 @@
 					     (lint-format "perhaps ~A" name (lists->string form (cadr else-clause)))
 					     (lint-format "perhaps ~A" name (lists->string form `(begin ,@(cdr else-clause))))))
 				     (begin
+				       ;; (null? (cdr new-keys-and-exprs)) is rare and kinda dumb -- cases look like test suite entries
 				       (for-each 
 					(lambda (clause)
 					  (if (and (pair? (car clause))

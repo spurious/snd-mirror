@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 09/10/14 23:02:57
-# Changed: 14/11/30 18:00:42
+# Changed: 16/01/05 22:49:21
 
 # Ruby extensions:
 # 
@@ -1615,11 +1615,11 @@ end
 class Numeric
   def positive?
     self > 0
-  end
+  end unless defined? 1.positive?
 
   def negative?
     self < 0
-  end
+  end unless defined? 1.negative?
 
   # According to Ruby's ChangeLog-2.0.0:
   # Wed Nov 21 21:53:29 2012  Tadayoshi Funaba  <tadf@dotrb.org>

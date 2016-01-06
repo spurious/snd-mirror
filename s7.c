@@ -336,13 +336,6 @@
 enum {NO_JUMP, CALL_WITH_EXIT_JUMP, DYNAMIC_WIND_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, S7_CALL_JUMP, ERROR_QUIT_JUMP};
 enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, EVAL_STRING_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
-#if DEBUGGING
-static const char* setjmp_names[7] = {"no_set_jump", "read_set_jump", "load_set_jump", "eval_string_set_jump", 
-				      "dynamic_wind_set_jump", "s7_call_set_jump", "eval_set_jump"};
-static const char* jump_names[8] = {"no_jump", "call_with_exit_jump", "dynamic_wind_jump", "throw_jump", 
-				    "catch_jump", "error_jump", "s7_call_jump", "error_quit_jump"};
-static bool print_jumps = false;
-#endif
 
 #ifndef M_PI
   #define M_PI 3.1415926535897932384626433832795029L
@@ -28094,33 +28087,43 @@ static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer c_read_string_1(s7_scheme *sc, s7_int chars) {return(c_read_string(sc, chars, input_port_if_not_loading(sc)));}
 IF_TO_PF(read_string, c_read_string_1)
 
+#define declare_jump_info() bool old_longjmp; int old_jump_loc, jump_loc; jmp_buf old_goto_start
+
+#define store_jump_info(Sc)						\
+  do {									\
+      old_longjmp = Sc->longjmp_ok;					\
+      old_jump_loc = Sc->setjmp_loc;					\
+      memcpy((void *)old_goto_start, (void *)(Sc->goto_start), sizeof(jmp_buf));\
+  } while (0)
+
+#define restore_jump_info(Sc)						\
+  do {									\
+      Sc->longjmp_ok = old_longjmp;					\
+      Sc->setjmp_loc = old_jump_loc;					\
+      memcpy((void *)(Sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));\
+  } while (0)
+
+#define set_jump_info(Sc, Tag)			\
+  do {						\
+      sc->longjmp_ok = true;			\
+      sc->setjmp_loc = Tag;				\
+      jump_loc = setjmp(sc->goto_start);		\
+  } while (0)
+
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
   if (is_input_port(port))
     {
-      bool old_longjmp;
-      int old_jump_loc, jump_loc;
-      jmp_buf old_goto_start;
       s7_pointer old_envir;
+      declare_jump_info();
 
       old_envir = sc->envir;
       sc->envir = sc->NIL;
       push_input_port(sc, port);
 
-      old_longjmp = sc->longjmp_ok;
-      old_jump_loc = sc->setjmp_loc;
-      memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-#if DEBUGGING
-      if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-
-      sc->longjmp_ok = true;
-      sc->setjmp_loc = READ_SET_JUMP;
-      jump_loc = setjmp(sc->goto_start);
-#if DEBUGGING
-      if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+      store_jump_info(sc);
+      set_jump_info(sc, READ_SET_JUMP);
       if (jump_loc != NO_JUMP)
 	eval(sc, sc->op);
       else 
@@ -28129,13 +28132,8 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
 	  eval(sc, OP_READ_INTERNAL);
 	}
-      
-      sc->longjmp_ok = old_longjmp;  /* TODO: doesn't this need memcpy of old buf? */
-      sc->setjmp_loc = old_jump_loc;
-      memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-#if DEBUGGING
-      if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (uncopied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
+      restore_jump_info(sc);
+
       pop_input_port(sc);
       sc->envir = old_envir;
       return(sc->value);
@@ -28218,9 +28216,7 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   s7_pointer port;
   FILE *fp;
   char *new_filename = NULL;
-  bool old_longjmp;
-  int old_jump_loc, jump_loc;
-  jmp_buf old_goto_start;
+  declare_jump_info();
 
   fp = fopen(filename, "r");
   if (!fp)
@@ -28247,32 +28243,12 @@ static s7_pointer s7_load_1(s7_scheme *sc, const char *filename, s7_pointer e)
   sc->envir = e;
   push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->code);
 
-  /* save incoming jmpbuf */
-  old_longjmp = sc->longjmp_ok;
-  old_jump_loc = sc->setjmp_loc;
-  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-
-  /* set new jmpbuf to point here */
-  sc->longjmp_ok = true;
-  sc->setjmp_loc = LOAD_SET_JUMP;
-  jump_loc = setjmp(sc->goto_start);
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+  store_jump_info(sc);
+  set_jump_info(sc, LOAD_SET_JUMP);
   if (jump_loc != NO_JUMP)
     eval(sc, sc->op);
   else eval(sc, OP_READ_INTERNAL);
-
-  /* restore incoming jmpbuf */
-  sc->longjmp_ok = old_longjmp;
-  sc->setjmp_loc = old_jump_loc;
-  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
+  restore_jump_info(sc);
 
   pop_input_port(sc);
   if (is_input_port(port))
@@ -28699,10 +28675,8 @@ The symbols refer to the argument to \"provide\"."
 
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e)
 {
-  bool old_longjmp;
-  int old_jump_loc, jump_loc;
-  jmp_buf old_goto_start;
   s7_pointer port, old_envir;
+  declare_jump_info();
 
   sc->v = sc->envir;          /* old envir needs GC protection even given the push_stack below */
   old_envir = sc->envir;
@@ -28710,19 +28684,8 @@ s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
 
-  old_longjmp = sc->longjmp_ok;
-  old_jump_loc = sc->setjmp_loc;
-  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-
-  sc->longjmp_ok = true;
-  sc->setjmp_loc = EVAL_STRING_SET_JUMP;
-  jump_loc = setjmp(sc->goto_start);
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+  store_jump_info(sc);
+  set_jump_info(sc, EVAL_STRING_SET_JUMP);
   if (jump_loc != NO_JUMP)
     eval(sc, sc->op);
   else
@@ -28731,13 +28694,7 @@ s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_
       /* eval-string is not tail-recursive because it pushes markers in eval to catch multiple statements in one eval-string call */
       eval(sc, OP_READ_INTERNAL);
     }
-
-  sc->longjmp_ok = old_longjmp;
-  sc->setjmp_loc = old_jump_loc;
-  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (uncopied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
+  restore_jump_info(sc);
 
   pop_input_port(sc);
   s7_close_input_port(sc, port);
@@ -45739,24 +45696,13 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
 {
   /* this is essentially s7_call with a dynamic-wind wrapper around "body" */
   s7_pointer p;
-  bool old_longjmp;
-  jmp_buf old_goto_start;
-  int jump_loc, old_jump_loc;
+  declare_jump_info();
 
   sc->temp1 = ((init == sc->F) ? finish : init);
   sc->temp2 = body;
-  old_longjmp = sc->longjmp_ok;
-  old_jump_loc = sc->setjmp_loc;
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-  sc->longjmp_ok = true;
-  sc->setjmp_loc = DYNAMIC_WIND_SET_JUMP;
-  jump_loc = setjmp(sc->goto_start);  /* returning from s7_error catch handler */
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+
+  store_jump_info(sc);
+  set_jump_info(sc, DYNAMIC_WIND_SET_JUMP); 
   if (jump_loc != NO_JUMP)
     {
       if ((sc->op == OP_ERROR_QUIT) &&
@@ -45788,12 +45734,7 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
       eval(sc, OP_APPLY);
     }
 
-  sc->longjmp_ok = old_longjmp;
-  sc->setjmp_loc = old_jump_loc;
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+  restore_jump_info(sc);
   return(sc->value);
 }
 
@@ -46398,7 +46339,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	     *   so presumably if we get here, we're in trouble -- try to send out an error message
 	     */
 	    /* return(type); */
-	    fprintf(stderr, "falling through now\n");
+	    /* fprintf(stderr, "falling through now\n"); */
 	  }
       }
   }
@@ -47053,25 +46994,10 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
-  bool old_longjmp;
-  int old_jump_loc, jump_loc;
-  jmp_buf old_goto_start;
+  declare_jump_info();
 
-  /* save incoming jmpbuf */
-  old_longjmp = sc->longjmp_ok;
-  old_jump_loc = sc->setjmp_loc;
-  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-
-  /* set new jmpbuf to point here */
-  sc->longjmp_ok = true;
-  sc->setjmp_loc = EVAL_SET_JUMP;
-  jump_loc = setjmp(sc->goto_start);
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+  store_jump_info(sc);
+  set_jump_info(sc, EVAL_SET_JUMP);
   if (jump_loc != NO_JUMP)
     eval(sc, sc->op);
   else 
@@ -47084,14 +47010,7 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
       else sc->envir = sc->NIL; /* can't check is_let(e) because sc->rootlet sets its type to t_env! */
       eval(sc, OP_EVAL); /* was OP_BEGIN -- we were calling it in snd-sig to handle a complete function body */
     }
-
-  /* restore incoming jmpbuf */
-  sc->longjmp_ok = old_longjmp;
-  sc->setjmp_loc = old_jump_loc;
-  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
+  restore_jump_info(sc);
 
   return(sc->value);
 }
@@ -47132,9 +47051,7 @@ pass (rootlet):\n\
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 {
-  bool old_longjmp;
-  jmp_buf old_goto_start;
-  int jump_loc, old_jump_loc;
+  declare_jump_info();
 
   /* this can be called while we are in the eval loop (within eval_c_string for instance),
    *   and if we reset the stack, the previously running evaluation steps off the end
@@ -47146,26 +47063,8 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   sc->temp1 = func; /* this is just GC protection */
   sc->temp2 = args;
 
-  old_longjmp = sc->longjmp_ok;
-  old_jump_loc = sc->setjmp_loc;
-  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: store old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-
-  /* if an error occurs during s7_call, and it is caught, catch (above) wants to longjmp
-   *   to its caller to complete the error handler evaluation so that the C stack is
-   *   cleaned up -- this means we have to have the longjmp location set here, but
-   *   we could get here from anywhere, so we need to save and restore the incoming
-   *   longjmp location.
-   */
-
-  sc->longjmp_ok = true;
-  sc->setjmp_loc = S7_CALL_SET_JUMP;
-  jump_loc = setjmp(sc->goto_start); /* returning from s7_error catch handler */
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: setjmp: %s, from: %s\n", __func__, __LINE__, setjmp_names[sc->setjmp_loc], jump_names[jump_loc]);
-#endif
+  store_jump_info(sc);
+  set_jump_info(sc, S7_CALL_SET_JUMP);
   if (jump_loc != NO_JUMP)
     {
       if ((sc->op == OP_ERROR_QUIT) &&
@@ -47183,13 +47082,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       
       eval(sc, OP_APPLY);
     }
-
-  sc->longjmp_ok = old_longjmp;
-  sc->setjmp_loc = old_jump_loc;
-#if DEBUGGING
-  if (print_jumps) fprintf(stderr, "%s[%d]: restore old setjmp (copied): %s, from: %s\n", __func__, __LINE__, setjmp_names[old_jump_loc], jump_names[old_longjmp]);
-#endif
-  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+  restore_jump_info(sc);
 
   return(sc->value);
 }
@@ -72633,6 +72526,7 @@ s7_scheme *s7_init(void)
   init_gc_caches(sc);
 
   sc->longjmp_ok = false;
+  sc->setjmp_loc = NO_SET_JUMP;
   sc->symbol_table_is_locked = false;
 
   if (sizeof(s7_int) == 4)
@@ -74159,7 +74053,7 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0  16.1  16.2
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1254
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159
  * teq           |      |      | 6612 | 2380  2376  2382
  * tauto     265 |   89 |  9   |  8.4 | 2638  2643  2644
@@ -74169,7 +74063,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177  4173
  * titer         |      |      | 7503 | 5218  5219  5211
  * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |             32
+ * lg            |      |      |      |             59
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
@@ -74234,4 +74128,8 @@ int main(int argc, char **argv)
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
+ *
+ * another setjmp test: replace eval with seval (etc) in s7test.scm
+ *   see s7test 1042
+ *   perhaps add s7_load_with_environment
  */

@@ -4799,7 +4799,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 #include <fcntl.h>
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
-
+#include <sys/param.h>
 
 #define return_error_exit(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
@@ -4871,6 +4871,11 @@ static int cur_chans = 1, cur_srate = 22050;
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 700000000)
+  if (write(line, buf, bytes) != bytes)
+    return_error_exit(MUS_AUDIO_WRITE_ERROR, line,
+		      mus_format("write error: %s", strerror(errno)));
+#else
   /* trouble... AUDIO_WSEEK always returns 0, no way to tell that I'm about to
    *   hit "hiwat", but when I do, it hangs.  Can't use AUDIO_DRAIN --
    *   it introduces interruptions.  Not sure what to do...
@@ -4888,6 +4893,7 @@ int mus_audio_write(int line, char *buf, int bytes)
       else usleep(10000);
       mus_audio_write(line, (char *)(buf + b), bytes - b);
     }
+#endif
   return(MUS_NO_ERROR);
 }
 

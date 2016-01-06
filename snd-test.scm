@@ -31029,9 +31029,7 @@ EDITS: 2
 			     (close-sound ind)
 			     times))))
 		   (let ((away (string-append home-dir "/test/sound/away.snd")))
-		     (if (file-exists? away)
-			 (list "1a.snd" "oboe.snd" "storm.snd" away)
-			 (list "1a.snd" "oboe.snd" "storm.snd" "lola.snd"))))))
+		     (list "1a.snd" "oboe.snd" "storm.snd" (if (file-exists? away) away "lola.snd"))))))
 	
 	(snd-display #__line__ ";         scl    rev    env    map    scn    pad    wrt    clm    mix    src    del")
 	(snd-display #__line__ ";1a:   ~{~A ~}" (map (lambda (a) (if (< a .005) "   0.0" (format #f "~6,2F" a))) (car data)))
@@ -31085,14 +31083,12 @@ EDITS: 2
 		      (if (null? a)
 			  (null? b)
 			  (and (not (null? b))
-			       (if (and (integer? (car a))
-					(not (= (car a) (car b))))
-				   #f
-				   (if (and (number? (car a))
-					    (fneq (car a) (car b)))
-				       #f
-				       (fieql (cdr a) (cdr b)))))))))
-	    
+			       (and (not (or (and (integer? (car a))
+						  (not (= (car a) (car b))))
+					     (and (number? (car a))
+						  (fneq (car a) (car b)))))
+				    (fieql (cdr a) (cdr b))))))))
+
 	    (set! (hook-functions after-graph-hook) ())
 	    (set! (hook-functions mouse-click-hook) ())
 	    
@@ -48514,7 +48510,7 @@ EDITS: 1
 		  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
 		  (check-error-tag 'no-such-sound (lambda () (play 1234 0)))
 					;		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 1234)))
-		  (if (= (length (regions)) 0) (make-region 0 100))
+		  (if (null? (regions)) (make-region 0 100))
 		  (check-error-tag 'no-such-channel (lambda () (region-sample (car (regions)) 0 1234)))
 		  (check-error-tag 'no-such-channel (lambda () (region-framples (car (regions)) 1234)))
 		  (check-error-tag 'no-such-channel (lambda () (region-position (car (regions)) 1234)))
