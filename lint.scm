@@ -2543,7 +2543,7 @@
 	;;   at end, check cur _let_ against ref/set -- if higher, it's localizable
 	;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
 	;; flag redef at same level? 
-	;;
+
 	;; 230/37
 
 	(case head
@@ -4904,9 +4904,7 @@
 		      (let* ((cval (caar bval))
 			     (p (symbol->value cval *e*))
 			     (ary (arity p)))
-			(if (or (and (procedure? p)
-				     (or (= (car ary) (cdr ary))
-					 (= (length args) (cdr ary))))
+			(if (or (procedure? p)
 				(let ((e (or (var-member cval env) 
 					     (hash-table-ref globals cval))))
 				  (and e
@@ -4924,7 +4922,13 @@
 					      (and (pair? args)
 						   (pair? e-args)
 						   (= (length args) (length e-args)))))))))
-			    (lint-format "~A could be (define ~A ~A)" name name name cval)))
+			    (lint-format "~A~A could be (define ~A ~A)" name 
+					 (if (and (procedure? p)
+						  (not (= (car ary) (cdr ary)))
+						  (not (= (length args) (cdr ary))))
+					     (format #f "leaving aside ~A's optional arg~P, " cval (- (cdr ary) (length args)))
+					     "")
+					 name name cval)))
 		      (if (and (eq? (caar bval) 'list-ref)
 			       (pair? (cdar bval))
 			       (pair? (cddar bval))
@@ -5092,6 +5096,11 @@
 						      `(or ,(car c1) ,(cadr c2))
 						      `(or ,(car c1) (begin ,@(cdr c2))))))))))
 
+      (define (other-case c)
+	(if (char-upper-case? c)
+	    (char-downcase c)
+	    (char-upcase c)))
+
       (define (cond->case eqv-select new-clauses)
 	;(format *stderr* "cond->case ~A ~A ~A~%" eqv-select new-clauses has-else)
 	`(case ,eqv-select 
@@ -5102,7 +5111,7 @@
 			  `(else ,@exprs)
 
 			  (case (car test)
-			    ((eq? eqv? = equal?)
+			    ((eq? eqv? = equal? char=?)
 			     (if (equal? eqv-select (cadr test))
 				 `((,(unquoted (caddr test))) ,@exprs)
 				 `((,(unquoted (cadr test))) ,@exprs)))
@@ -5122,10 +5131,15 @@
 			    ((zero?)
 			     `((0 0.0) ,@exprs))
 
+			    ((char-ci=?)
+			     (if (equal? eqv-select (cadr test))
+				 `(,(list (caddr test) (other-case (caddr test))) ,@exprs)
+				 `(,(list (cadr test) (other-case (cadr test))) ,@exprs)))
+
 			    (else 
 			     `(,(map (lambda (p)
 				       (case (car p)
-					 ((eq? eqv? = equal?)  
+					 ((eq? eqv? = equal? char=?)  
 					  (unquoted (if (equal? eqv-select (cadr p)) (caddr p) (cadr p))))
 					 ((memq memv member)
 					  (apply values (caddr p)))
@@ -5133,6 +5147,9 @@
 					 ((null?)       ())
 					 ((eof-object?) #<eof>)
 					 ((zero?)       (values 0 0.0))
+					 ((char-ci=?)   (if (equal? eqv-select (cadr p)) 
+							    (values (caddr p) (other-case (caddr p)))
+							    (values (cadr p) (other-case (cadr p)))))
 					 (else          (error "oops"))))
 				     (cdr test))
 			       ,@exprs))))))
@@ -5144,7 +5161,7 @@
 	      ((memq memv member) 
 	       (and (= (length clause) 3)
 		    (cadr clause)))
-	      ((eq? eqv? = equal?)
+	      ((eq? eqv? = equal? char=? char-ci=?)
 	       (and (= (length clause) 3)
 		    (if (code-constant? (cadr clause))
 			(caddr clause)
@@ -5164,7 +5181,7 @@
 	    ;; it's eqv-able either directly or via memq/memv, or via (or ... eqv-able clauses)
 	    ;;   all clauses involve the same (eventual case) selector
 	    (case (car clause)
-	      ((eq? eqv? = equal?)
+	      ((eq? eqv? = equal? char=? char-ci=?)
 	       (if (eqv-code-constant? (cadr clause))
 		   (equal? eqv-select (caddr clause))
 		   (and (eqv-code-constant? (caddr clause))
@@ -6199,14 +6216,15 @@
 			     ;; check for do-loop as copy/fill! stand-in
 			     (let ((end-test (and (pair? (caddr form)) (caaddr form)))
 				   (body (cdddr form))
+				   (varslen (length vars))
 				   (setv #f))
 			       (when (and (pair? end-test)
-					  (= (length vars) 1)
+					  (= varslen 1)
 					  (= (length body) 1)
 					  (pair? (car body)) 
 					  (memq (caar body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set!))
 					  (eq? (var-type (car vars)) 'integer?)
-					  (eq? (car end-test) '=)
+					  (memq (car end-test) '(>= =))
 					  (eq? (cadr end-test) (var-name (car vars)))
 					  (eq? (caddar body) (var-name (car vars)))
 					  (let ((val (car (cdddar body))))

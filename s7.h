@@ -84,8 +84,6 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
    */
 
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);    /* (eval code e) -- e is the optional environment */
-#define s7_eval_form(Sc, Form, E) s7_eval(Sc, Form, E)               /* backwards compatibility */
-
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provided? feature) */
 
@@ -763,6 +761,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 
 #define s7_define_integer_function s7_define_safe_function
 #define s7_make_random_state s7_random_state
+#define s7_eval_form s7_eval
 #endif
 
 

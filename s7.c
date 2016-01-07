@@ -334,7 +334,7 @@
 #include "s7.h"
 
 enum {NO_JUMP, CALL_WITH_EXIT_JUMP, DYNAMIC_WIND_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, S7_CALL_JUMP, ERROR_QUIT_JUMP};
-enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, EVAL_STRING_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
+enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
 
 #ifndef M_PI
@@ -2614,7 +2614,7 @@ enum {OP_NO_OP,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
       OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
       OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_DONE,
-      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_DONE,
+      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1,
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
       OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_LAMBDA_STAR_DEFAULT, OP_ERROR_QUIT, OP_UNWIND_INPUT, OP_UNWIND_OUTPUT,
@@ -2791,7 +2791,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
       "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
       "read_vector", "read_byte_vector", "read_done",
-      "load_return_if_eof", "load_close_and_pop_if_eof", "eval_string", "eval_done",
+      "load_return_if_eof", "load_close_and_pop_if_eof", "eval_done",
       "catch", "dynamic_wind", "define_constant", "define_constant1",
       "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
       "define_star", "lambda_star", "lambda_star_default", "error_quit", "unwind_input", "unwind_output",
@@ -4952,6 +4952,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 static void stack_reset(s7_scheme *sc)
 {
   sc->stack_end = sc->stack_start;
+  push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->NIL);
   push_stack(sc, OP_BARRIER, sc->NIL, sc->NIL);
 }
 
@@ -28101,6 +28102,9 @@ IF_TO_PF(read_string, c_read_string_1)
       Sc->longjmp_ok = old_longjmp;					\
       Sc->setjmp_loc = old_jump_loc;					\
       memcpy((void *)(Sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));\
+      if ((jump_loc == ERROR_JUMP) &&\
+          (sc->longjmp_ok))\
+        longjmp(sc->goto_start, ERROR_JUMP);\
   } while (0)
 
 #define set_jump_info(Sc, Tag)			\
@@ -28125,20 +28129,25 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       store_jump_info(sc);
       set_jump_info(sc, READ_SET_JUMP);
       if (jump_loc != NO_JUMP)
-	eval(sc, sc->op);
+	{
+	  if (jump_loc != ERROR_JUMP)
+	    eval(sc, sc->op);
+	}
       else 
 	{
 	  push_stack(sc, OP_BARRIER, port, sc->NIL);
 	  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-	  eval(sc, OP_READ_INTERNAL);
-	}
-      restore_jump_info(sc);
 
+	  eval(sc, OP_READ_INTERNAL);
+
+	  if ((sc->op == OP_EVAL_DONE) &&
+	      (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER))
+	    pop_stack(sc); 
+	}
       pop_input_port(sc);
       sc->envir = old_envir;
-      if ((sc->op == OP_EVAL_DONE) &&
-	  (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER))
-	pop_stack(sc); 
+
+      restore_jump_info(sc);
       return(sc->value);
     }
   return(simple_wrong_type_argument_with_type(sc, sc->READ, port, AN_INPUT_PORT));
@@ -28249,15 +28258,18 @@ s7_pointer s7_load_with_environment(s7_scheme *sc, const char *filename, s7_poin
   store_jump_info(sc);
   set_jump_info(sc, LOAD_SET_JUMP);
   if (jump_loc != NO_JUMP)
-    eval(sc, sc->op);
+    {
+      if (jump_loc != ERROR_JUMP)
+	eval(sc, sc->op);
+    }
   else eval(sc, OP_READ_INTERNAL);
-  restore_jump_info(sc);
 
   pop_input_port(sc);
   if (is_input_port(port))
     s7_close_input_port(sc, port);
 
- if (is_multiple_value(sc->value))
+  restore_jump_info(sc);
+  if (is_multiple_value(sc->value))
     sc->value = splice_in_values(sc, multiple_value(sc->value));
  return(sc->value);
 }
@@ -28681,41 +28693,11 @@ The symbols refer to the argument to \"provide\"."
 
 s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, const char *str, s7_pointer e)
 {
-#if 0
-  s7_pointer port, old_envir;
-  declare_jump_info();
-
-  sc->v = sc->envir;          /* old envir needs GC protection even given the push_stack below */
-  old_envir = sc->envir;
-  sc->envir = e;
-  port = s7_open_input_string(sc, str);
-  push_input_port(sc, port);
-
-  store_jump_info(sc);
-  set_jump_info(sc, EVAL_STRING_SET_JUMP);
-  if (jump_loc != NO_JUMP)
-    eval(sc, sc->op);
-  else
-    {
-      push_stack(sc, OP_EVAL_STRING, old_envir, sc->NIL); /* GC protect envir */
-      /* eval-string is not tail-recursive because it pushes markers in eval to catch multiple statements in one eval-string call */
-      eval(sc, OP_READ_INTERNAL);
-    }
-  restore_jump_info(sc);
-
-  pop_input_port(sc);
-  s7_close_input_port(sc, port);
-  sc->envir = old_envir;
-  return(sc->value);
-#else
   s7_pointer code, port;
   port = s7_open_input_string(sc, str);
   code = s7_read(sc, port);
   s7_close_input_port(sc, port);
-  return(s7_eval(sc, code, e));
-#endif
-  /* if using second block, OP_EVAL_STRING is not used, and eval_string_ex, and EVAL_STRING_SET_JUMP
-   */
+  return(s7_eval(sc, _NFre(code), e));
 }
 
 
@@ -45721,11 +45703,8 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
   set_jump_info(sc, DYNAMIC_WIND_SET_JUMP); 
   if (jump_loc != NO_JUMP)
     {
-      if ((sc->op == OP_ERROR_QUIT) &&
-	  (old_longjmp))
-	longjmp(old_goto_start, DYNAMIC_WIND_JUMP);
-
-      eval(sc, sc->op);
+      if (jump_loc != ERROR_JUMP)
+	eval(sc, sc->op);
     }
   else
     {
@@ -46349,6 +46328,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       {
 	catch_function catcher;
 	catcher = catchers[stack_op(sc->stack, i)];
+	/* fprintf(stderr, "catching %s %s\n", DISPLAY(type), DISPLAY(info)); */
 	if ((catcher) &&
 	    (catcher(sc, i, type, info, &reset_error_hook)))
 	  {
@@ -46526,7 +46506,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
        *   go into repl here with access to continuation?  Or expect *error-handler* to deal with it?
        */
       sc->value = type;
-      stack_reset(sc);
+      /* stack_reset(sc); */
       sc->op = OP_ERROR_QUIT;
     }
   
@@ -46559,6 +46539,7 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
   int len;
   s7_pointer pt;
 
+  /* fprintf(stderr, "read error: %s\n", errmsg); */
   pt = sc->input_port;
   if (!string_error)
     {
@@ -47017,7 +46998,10 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
   store_jump_info(sc);
   set_jump_info(sc, EVAL_SET_JUMP);
   if (jump_loc != NO_JUMP)
-    eval(sc, sc->op);
+    {
+      if (jump_loc != ERROR_JUMP)
+	eval(sc, sc->op);
+    }
   else 
     {
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
@@ -47073,10 +47057,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 {
   declare_jump_info();
 
-  /* this can be called while we are in the eval loop (within eval_c_string for instance),
-   *   and if we reset the stack, the previously running evaluation steps off the end
-   *   of the stack == segfault.
-   */
   if (is_c_function(func))
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
@@ -47087,11 +47067,8 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   set_jump_info(sc, S7_CALL_SET_JUMP);
   if (jump_loc != NO_JUMP)
     {
-      if ((sc->op == OP_ERROR_QUIT) &&
-	  (old_longjmp))
-	longjmp(old_goto_start, S7_CALL_JUMP); /* this is trying to clear the C stack back to some clean state */
-
-      eval(sc, sc->op);
+      if (jump_loc != ERROR_JUMP)
+	eval(sc, sc->op);
     }
   else
     {
@@ -47099,7 +47076,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       sc->args = args;
       sc->code = func;
       /* besides a closure, "func" can also be an object (T_C_OBJECT) -- in Snd, a generator for example  */
-      
       eval(sc, OP_APPLY);
     }
   restore_jump_info(sc);
@@ -48290,7 +48266,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  
 	  iter = car(sc->z);
 	  sc->z = sc->NIL;
-	  push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->NIL, f));
+	  push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->NIL, cons(sc, f, iter))); /* second cons is GC protection */
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
 	  func = all_x_eval(sc, expr, sc->envir, let_symbol_is_safe);
@@ -59404,35 +59380,6 @@ static int read_s_ex(s7_scheme *sc)
   return(goto_START);
 }
 		  
-static void eval_string_ex(s7_scheme *sc)
-{
-  /* read and evaluate string expression(s?)
-   *    assume caller (C via g_eval_c_string) is dealing with the string port
-   */
-  /* (eval-string (string-append "(list 1 2 3)" (string #\newline) (string #\newline)))
-   *    needs to be sure to get rid of the trailing white space before checking for EOF
-   *    else it tries to eval twice and gets "attempt to apply 1?, line 2"
-   */
-  if ((sc->tok != TOKEN_EOF) &&
-      (port_position(sc->input_port) < port_data_size(sc->input_port))) /* ran past end somehow? */
-    {
-      unsigned char c;
-      while (white_space[c = port_data(sc->input_port)[port_position(sc->input_port)++]])
-	if (c == '\n')
-	  port_line_number(sc->input_port)++;
-      
-      if (c != 0)
-	{
-	  backchar(c, sc->input_port);
-	  push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->value);
-	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
-	}
-      else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
-    }
-  else push_stack(sc, OP_EVAL_DONE, sc->NIL, sc->value);
-  sc->code = sc->value;
-}  
-
 static void eval_string_1_ex(s7_scheme *sc)
 {
   if ((sc->tok != TOKEN_EOF) &&
@@ -60420,10 +60367,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = splice_in_values(sc, multiple_value(sc->value));
 	  break;
 	  
-	  
-	case OP_EVAL_STRING:
-	  eval_string_ex(sc);
-	  goto EVAL;
 	  
 	case OP_EVAL_STRING_2:
 	  s7_close_input_port(sc, sc->input_port);

@@ -1460,7 +1460,8 @@ int main(int argc, char **argv)
   }
 
   {                            
-    s7_pointer old_port, result;
+    int gc_loc1;
+    s7_pointer old_port, result, func;
     const char *errmsg = NULL;
 
     s7_define_function(sc, "error-handler", test_error_handler, 1, 0, false, "our error handler");
@@ -1488,6 +1489,54 @@ int main(int argc, char **argv)
     s7_close_output_port(sc, s7_current_error_port(sc));
     s7_set_current_error_port(sc, old_port);
     s7_gc_unprotect_at(sc, gc_loc);
+
+
+    old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
+    gc_loc = s7_gc_protect(sc, old_port);
+
+    func = s7_eval_c_string(sc, "(lambda (x) (+ x 1))");
+    result = s7_call(sc, func, s7_list(sc, 1, s7_make_integer(sc, 2)));
+    if ((!s7_is_integer(result)) || (s7_integer(result) != 3))
+      {fprintf(stderr, "%d: s7_call (x+1) result: %s\n", __LINE__, s1 = TO_STR(result)); free(s1);}
+
+    result = s7_call(sc, func, s7_list(sc, 1, s7_make_vector(sc, 0)));
+    if (result != s7_make_symbol(sc, "our-error"))
+      {fprintf(stderr, "%d: s7_call error hook result: %s\n", __LINE__, s1 = TO_STR(result)); free(s1);}
+    errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
+    if ((errmsg) && (*errmsg))
+      {
+	if (strcmp(errmsg, "error!") != 0)
+	  fprintf(stderr, "%d: error: %s\n", __LINE__, errmsg);
+      }
+    else fprintf(stderr, "%d: no error!\n", __LINE__);
+
+    s7_close_output_port(sc, s7_current_error_port(sc));
+    s7_set_current_error_port(sc, old_port);
+    s7_gc_unprotect_at(sc, gc_loc);
+
+
+    old_port = s7_set_current_error_port(sc, s7_open_output_string(sc));
+    gc_loc = s7_gc_protect(sc, old_port);
+
+    func = s7_eval_c_string(sc, "(let ((x 0)) (list (lambda () (set! x 1)) (lambda () (set! x (+ x #()))) (lambda () (set! x (+ x 1))) (lambda () x)))");
+    gc_loc1 = s7_gc_protect(sc, func);
+    result = s7_dynamic_wind(sc, s7_car(func), s7_cadr(func), s7_caddr(func));
+
+    if (result != s7_make_symbol(sc, "our-error"))
+      {fprintf(stderr, "%d: s7_dynamic_wind error hook result: %s\n", __LINE__, s1 = TO_STR(result)); free(s1);}
+    errmsg = s7_get_output_string(sc, s7_current_error_port(sc));
+    if ((errmsg) && (*errmsg))
+      {
+	if (strcmp(errmsg, "error!") != 0)
+	  fprintf(stderr, "%d: error: %s\n", __LINE__, errmsg);
+      }
+    else fprintf(stderr, "%d: no error!\n", __LINE__);
+
+    s7_close_output_port(sc, s7_current_error_port(sc));
+    s7_set_current_error_port(sc, old_port);
+    s7_gc_unprotect_at(sc, gc_loc);
+    s7_gc_unprotect_at(sc, gc_loc1);
+
 
     s7_eval_c_string(sc, "(set! (hook-functions *error-hook*) ())");
   }
