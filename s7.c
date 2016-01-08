@@ -31379,6 +31379,11 @@ static s7_pointer check_nref(s7_pointer p, const char *func, int line)
       fprintf(stderr, "%s%s[%d]: attempt to use cleared type%s\n", BOLD_TEXT, func, line, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
+  if ((typ < 0) || (typ >= NUM_TYPES))
+    {
+      fprintf(stderr, "%s%s[%d]: attempt to use messed up cell (type: %d)%s\n", BOLD_TEXT, func, line, typ, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
   return(p);
 }
 
@@ -36363,7 +36368,13 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 
   p = sc->w;
   sc->w = sc->NIL;
-
+#if DEBUGGING
+  {
+    s7_pointer x;
+    for (x = p; is_pair(x); x = cdr(x))
+      _NFre(car(x));
+  }
+#endif
   return(safe_reverse_in_place(sc, p));
 }
 
@@ -46977,6 +46988,16 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
+#if DEBUGGING
+  {
+    s7_pointer p;
+    int argnum;
+    _NFre(fnc);
+    for (argnum = 0, p = _NFre(args); is_pair(p); argnum++, p = _NFre(cdr(p)))
+      _NFre(car(p));
+  }
+#endif
+
   if (is_c_function(fnc))
     return(c_function_call(fnc)(sc, args));
 
@@ -46994,6 +47015,9 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
   declare_jump_info();
+#if DEBUGGING
+  _NFre(code);
+#endif
 
   store_jump_info(sc);
   set_jump_info(sc, EVAL_SET_JUMP);
@@ -47072,6 +47096,15 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     }
   else
     {
+#if DEBUGGING
+      {
+	s7_pointer p;
+	int argnum;
+	_NFre(func);
+	for (argnum = 0, p = _NFre(args); is_pair(p); argnum++, p = _NFre(cdr(p)))
+	  _NFre(car(p));
+      }
+#endif
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
       sc->args = args;
       sc->code = func;
@@ -48128,7 +48161,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	  
 	  iter = caar(sc->z);
 	  sc->z = sc->NIL;
-	  push_stack(sc, OP_NO_OP, iter, f); /* temporary GC protection?? */
+	  push_stack(sc, OP_NO_OP, iter, f);
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
 	  func = all_x_eval(sc, expr, sc->envir, let_symbol_is_safe);
@@ -48224,10 +48257,10 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
       val1 = cons(sc, sc->z, make_list(sc, len, sc->NIL));
       iter_list = sc->z;
-      sc->z = sc->NIL;
       old_args = sc->args;
       func = c_function_call(f);
       push_stack(sc, OP_NO_OP, iter_list, val = cons(sc, sc->NIL, sc->code)); /* temporary GC protection */
+      sc->z = sc->NIL;
 
       while (true)
 	{
@@ -48265,11 +48298,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  s7_pointer slot, iter, val, z;
 	  
 	  iter = car(sc->z);
-	  sc->z = sc->NIL;
 	  push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->NIL, cons(sc, f, iter))); /* second cons is GC protection */
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
 	  func = all_x_eval(sc, expr, sc->envir, let_symbol_is_safe);
+	  sc->z = sc->NIL;
 	  if (func == all_x_c_c)
 	    {
 	      func = c_callee(expr);
@@ -59910,7 +59943,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
        */
       
       sym = car(x);
-      val = car(z);
+      val = _NFre(car(z));
       args = cdr(z);
       set_type(z, T_SLOT);
       slot_set_symbol(z, sym);
@@ -74092,4 +74125,6 @@ int main(int argc, char **argv)
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
+ *
+ * perhaps check all incoming data in debugging
  */

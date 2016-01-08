@@ -68,9 +68,10 @@
 				  (begin
 				    (if (not envs)
 					(set! envs (make-vector (* in-chans out-chans) #f)))
-				    (if (env? outn)
-					(vector-set! envs (+ off outp) outn)
-					(vector-set! envs (+ off outp) (make-env outn :duration dur))))
+				    (vector-set! envs (+ off outp) 
+						 (if (env? outn) 
+						     outn
+						     (make-env outn :duration dur))))
 				  (format #t "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))

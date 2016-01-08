@@ -32,7 +32,7 @@
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
-;(set! (*s7* 'gc-stats) 6)
+;(set! (*s7* 'gc-stats) #t)
 
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
@@ -5431,11 +5431,10 @@ EDITS: 5
 	    (snd-display #__line__ ";xramp 13: ~A" (safe-display-edits ind 0 3)))
 	(set! ctr 0)
 	(let ((baddy (scan-channel (lambda (y)
-				     (if (or (and (> ctr 5) (fneq y (vals ctr)))
-					     (and (< ctr 4) (fneq y (vals ctr)))
-					     (and (memv ctr '(4 5)) (fneq y (* 0.5 (vals ctr)))))
-					 #t
-					 (begin (set! ctr (+ ctr 1)) #f))))))
+				     (or (and (> ctr 5) (fneq y (vals ctr)))
+					 (and (< ctr 4) (fneq y (vals ctr)))
+					 (and (memv ctr '(4 5)) (fneq y (* 0.5 (vals ctr)))))
+					 (begin (set! ctr (+ ctr 1)) #f)))))
 	  (if baddy (snd-display #__line__ ";trouble in xramp 8: ~A" baddy)))
 	(undo)
 	(scale-channel 0.5 0 2)
@@ -31083,11 +31082,11 @@ EDITS: 2
 		      (if (null? a)
 			  (null? b)
 			  (and (not (null? b))
-			       (and (not (or (and (integer? (car a))
-						  (not (= (car a) (car b))))
-					     (and (number? (car a))
-						  (fneq (car a) (car b)))))
-				    (fieql (cdr a) (cdr b))))))))
+			       (not (or (and (integer? (car a))
+					     (not (= (car a) (car b))))
+					(and (number? (car a))
+					     (fneq (car a) (car b)))))
+			       (fieql (cdr a) (cdr b)))))))
 
 	    (set! (hook-functions after-graph-hook) ())
 	    (set! (hook-functions mouse-click-hook) ())
@@ -48919,7 +48918,6 @@ EDITS: 1
     (do ((i 0 (+ i 1)))           ; run tests in any random order
 	((= i test-at-random))
       (set! snd-test (random 23))
-      (set! snd-test (min snd-test 22))
       (format *stderr* "~%~A: ~A~%" i snd-test)
       (before-test-hook snd-test)
       ((vector-ref test-funcs snd-test))

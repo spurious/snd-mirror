@@ -2473,9 +2473,7 @@ nil doesnt print anything, which will speed up a bit the process.
 		(set! (frm-size k) (make-formant fval a1)))
 	      (begin
 		(set! (frm-size k) (make-formant fval a1))
-		(set! (gains k) (if (< (+ offset-gain gval) 0) 
-				    0
-				    (+ offset-gain gval)))))))
+		(set! (gains k) (max 0 (+ offset-gain gval)))))))
       (set! frm-size (make-formant-bank frm-size gains))
 
       (if if-list-in-gain

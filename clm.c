@@ -15780,7 +15780,6 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       if (pv_analyze == NULL) pv_analyze = pv->analyze;
       if (pv_edit == NULL) pv_edit = pv->edit;
       if (input) {pv->input = input; pv->block_input = NULL;}
-
       pv->outctr = 0;
 
       if ((pv_analyze == NULL) || 

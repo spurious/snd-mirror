@@ -8253,7 +8253,8 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
     }
 
 #if HAVE_SCHEME
-  if (Xen_is_procedure(obj))
+  if ((Xen_is_procedure(obj)) &&
+      (!Xen_is_procedure(gn->vcts[MUS_ANALYZE_FUNCTION]))) /* this assumes scheme-ready input function at least in phase-vocoder case */
     {
       s7_pointer body;
       body = s7_closure_body(s7, obj);
@@ -8285,7 +8286,6 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 			  rf = s7_rf_function(s7, fcar)(s7, res);
 			  if (rf)
 			    {
-			      /* fprintf(stderr, "try %s\n", DISPLAY(res)); */
 			      gn->vcts[MUS_INPUT_DATA] = (s7_pointer)s7_xf_detach(s7);
 			      gn->vcts[MUS_INPUT_FUNCTION] = (s7_pointer)rf;
 			      gn->free_data = true;
@@ -8805,10 +8805,13 @@ static mus_float_t pvsynthesize(void *ptr)
 static bool pvanalyze(void *ptr, mus_float_t (*input)(void *arg1, int direction))
 {
   mus_xen *gn = (mus_xen *)ptr;
-  /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here */
+  /* we can only get input func if it's already set up by the outer gen call, so (?) we can use that function here.
+   *   but the gc might be called during this call, and scan the args, so the input function should be
+   *   in the arg list only if its a legit pointer?
+   */
   return(Xen_boolean_to_C_bool(Xen_unprotected_call_with_2_args(gn->vcts[MUS_ANALYZE_FUNCTION], 
-					      gn->vcts[MUS_SELF_WRAPPER], 
-					      gn->vcts[MUS_INPUT_FUNCTION])));
+								gn->vcts[MUS_SELF_WRAPPER], 
+								gn->vcts[MUS_INPUT_FUNCTION])));
 }
 
 

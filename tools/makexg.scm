@@ -276,30 +276,14 @@
 		  (if type
 		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i)))
 			    (reftype #f))
-			(cond ((char=? (given-name 0) #\@)
-			       (set! data (cons (list type 
-						      (substring given-name 1 (length given-name))
-						      'null)
-						data)))
-			      ((char=? (given-name 0) #\#)
-			       (set! data (cons (list type 
-						      (substring given-name 1 (length given-name))
-						      'opt)
-						data)))
-			      ((or (char=? (given-name 0) #\[)
-				   (char=? (given-name 0) #\{)
-				   (char=? (given-name 0) #\|))
-			       (set! reftype (deref-type (list type)))
-			       (set! data (cons (list type 
-						      (substring given-name 1 (- (length given-name) 1))
-						      given-name) 
-						data)))
-			      ((char=? (given-name 0) #\&)
-			       (set! data (cons (list type 
-						      (substring given-name 1 (length given-name))
-						      'set)
-						data)))
-			      (else (set! data (cons (list type given-name) data))))
+			(case (given-name 0)
+			  ((#\@) (set! data (cons (list type (substring given-name 1 (length given-name)) 'null) data)))
+			  ((#\#) (set! data (cons (list type (substring given-name 1 (length given-name)) 'opt) data)))
+			  ((#\&) (set! data (cons (list type (substring given-name 1 (length given-name)) 'set) data)))
+			  ((#\[ #\{ #\|)
+			   (set! reftype (deref-type (list type)))
+			   (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
+			  (else (set! data (cons (list type given-name) data))))
 			(if reftype (set! type reftype))
 			
 			(if (not (member type all-types))
@@ -1456,7 +1440,7 @@
 (hey "#endif~%")
 (hey "#include <glib-object.h>~%")
 (hey "#include <pango/pango.h>~%")
-(with-cairo hey (lambda () (hey "#include <cairo/cairo.h>~%")))
+(with-cairo #f (lambda () (hey "#include <cairo/cairo.h>~%")))
 
 (hey "#if USE_SND~%")
 (hey "  /* USE_SND causes xm to use Snd's error handlers which are much smarter than xen's fallback versions */~%")

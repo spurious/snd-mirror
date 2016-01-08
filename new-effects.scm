@@ -2314,10 +2314,8 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		     
 		     (lambda (w context info) 
 		       (let ((e (xe-envelope place-sound-envelope)))
-			 (if (not (equal? e (list 0.0 1.0 1.0 1.0)))
-			     (place-sound mono-snd stereo-snd e)
-			     (place-sound mono-snd stereo-snd pan-pos))))
-		     
+			 (place-sound mono-snd stereo-snd (if (not (equal? e (list 0.0 1.0 1.0 1.0))) e pan-pos))))
+
 		     (lambda (w context info)
 		       (help-dialog "Place sound"
 				    "Mixes mono sound into stereo sound field."))
