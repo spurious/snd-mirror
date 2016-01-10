@@ -6013,11 +6013,15 @@ few times.  You can turn off the optimization in question by setting the variabl
 to 1.  <code>(*s7* 'safety)</code> defaults to 0.  
 </p>
 
-<!-- there is another problem here: if the list constant in question is a program fragment
-     that can be optimized, then reapplied elsewhere, the optimization info remains in the
-     new, possibly inappropriate context.  This can cause segfaults.  The fix is to copy
-     the list with 2nd arg :readable. see tgen.scm
--->
+<p>A similar problem arises when you want to walk a function's source or reuse a piece of
+code directly.  When the function is evaluated, the optimizer changes the program source
+to speed up subsequent evaluation.  This annotation process means that nothing in that
+source is what it appears to be, so a tree walker will be confused, and if you copy that
+source and try to insert it into some other program source, the existing annotations
+will not fit the new context.  In both cases, you can get a clean version of the code
+by copying it with :readable as the second argument to copy.  There is an example
+in lint.scm, and in the snd file tools/tgen.scm.
+</p>
 
 </div>
 </details>

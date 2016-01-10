@@ -33959,7 +33959,7 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
   for (x = lst, i = 0; (i < num) && (is_pair(x)); i++, x = cdr(x)) {}
   if ((i == num) &&
       (is_pair(x)))
-    car(x) = val;
+    car(x) = _NFre(val);
   return(val);
 }
 
@@ -36938,7 +36938,7 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_pointer
   if (index >= vector_length(vec))
     return(out_of_range(sc, sc->VECTOR_SET, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
 
-  vector_setter(vec)(sc, vec, index, a);
+  vector_setter(vec)(sc, vec, index, _NFre(a));
   return(a);
 }
 
@@ -40947,7 +40947,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
     {
       if (value == sc->F)
 	return(remove_from_hash_table(sc, table, key, x));
-      x->value = value;
+      x->value = _NFre(value);
     }
   else 
     {
@@ -40974,7 +40974,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, s7_pointer key, s7
       p = hash_free_list;
       hash_free_list = p->next;
       p->key = key;
-      p->value = value;
+      p->value = _NFre(value);
       p->raw_hash = raw_hash;
 
       loc = raw_hash & hash_len;
@@ -45723,9 +45723,9 @@ s7_pointer s7_dynamic_wind(s7_scheme *sc, s7_pointer init, s7_pointer body, s7_p
       sc->args = sc->NIL;
       
       new_cell(sc, p, T_DYNAMIC_WIND);
-      dynamic_wind_in(p) = init;
-      dynamic_wind_body(p) = body;
-      dynamic_wind_out(p) = finish;
+      dynamic_wind_in(p) = _NFre(init);
+      dynamic_wind_body(p) = _NFre(body);
+      dynamic_wind_out(p) = _NFre(finish);
       push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);
       if (init != sc->F)
 	{
@@ -47033,8 +47033,8 @@ s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
       if ((e != sc->rootlet) &&
 	  (is_let(e)))
 	sc->envir = e;
-      else sc->envir = sc->NIL; /* can't check is_let(e) because sc->rootlet sets its type to t_env! */
-      eval(sc, OP_EVAL); /* was OP_BEGIN -- we were calling it in snd-sig to handle a complete function body */
+      else sc->envir = sc->NIL; 
+      eval(sc, OP_EVAL);
     }
   restore_jump_info(sc);
 
@@ -47084,7 +47084,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   if (is_c_function(func))
     return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
 
-  sc->temp1 = func; /* this is just GC protection */
+  sc->temp1 = func; /* this is feeble GC protection */
   sc->temp2 = args;
 
   store_jump_info(sc);
@@ -47100,6 +47100,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       {
 	s7_pointer p;
 	int argnum;
+	/* incoming args may be non-s7 cells -- check now before they reach the GC */
 	_NFre(func);
 	for (argnum = 0, p = _NFre(args); is_pair(p); argnum++, p = _NFre(cdr(p)))
 	  _NFre(car(p));
@@ -67559,8 +67560,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	default:
-	  fprintf(stderr, "unknown operator: %d in %s\n", (int)(sc->op), DISPLAY(current_code(sc)));
+	  fprintf(stderr, "unknown operator: " INT_FORMAT " in %s\n", sc->op, DISPLAY(current_code(sc)));
 #if DEBUGGING
+	  if (sc->stack_end < sc->stack_start) 
+	    fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
+	  if (sc->stack_end >= sc->stack_start + sc->stack_size) 
+	    fprintf(stderr, "%sstack overflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
 	  abort();
 #endif
 	  return(sc->F);
@@ -74046,9 +74051,9 @@ int main(int argc, char **argv)
 #endif
 
 
-/* ----------------------------------------------------
+/* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.1  16.2
+ *           12  |  13  |  14  |  15  | 16.0  16.1  16.2  16.3
  *                                           
  * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159
@@ -74066,7 +74071,7 @@ int main(int argc, char **argv)
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
  * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2
  * 
- * ----------------------------------------------------
+ * --------------------------------------------------------------------
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
@@ -74076,7 +74081,6 @@ int main(int argc, char **argv)
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
  * remove the #t=all sounds business! = (map f (sounds)) 
- * gf cases (rf/if also): substring [inlet list vector float-vector int-vector] hash-table(*) sublet string format vector-append string-append append
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
@@ -74097,13 +74101,12 @@ int main(int argc, char **argv)
  * eval outside optimized context segfault: copy_body can't handle cycles, unoptimize is problematic
  * "," ignored in arg list?! -- (string-append "a" , "b") -> "ab" because (unquote "b") -> "b" -- need a warning I think (reader?)
  * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
- * clean up opt_syn 53677
- * doc/test (copy x :readable) -- see current notes here and in s7.html comments
  *
  * make ow! display (*s7* 'stack) in some reasonable way
  *   (*s7* 'stack) itself is a problem -- need saved list so cycle check is not fooled?
  *      this is still happening
  *   repl: if error is in format, subsequent formatted error report clobbers original arglist!
+ * perhaps (*s7* 'history-buffer) -- no reason to sequester it in owlet
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
@@ -74112,9 +74115,6 @@ int main(int argc, char **argv)
  *   add kw let ref/set tests and try to find problematic cases
  *
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
- * "let variable name is undefined": let(-ref) field 'name ...? or implicit let-ref field? or "let object has no variable 'name"?
- *    where is this!? report-usage I think
- * need much more thorough testing/debugging checks for the reused let cases (make sure they stay the same length etc, check counter_slots type, etc)
  *
  * \" where " meant -- why not warning of weird \ from reader?
  *   \ outside string is a symbol, following " starts a string-constant, next \" is a quoted " in the constant, so we keep looking...
@@ -74122,9 +74122,7 @@ int main(int argc, char **argv)
  *   we're in (say) (let ((\"a\"")) \) -- gah
  *
  * it should be possible to mimic map values handling elsewhere but:
- *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>)
+ *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>) ; () or error? or #<no-value>??
  *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
  *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
- *
- * perhaps check all incoming data in debugging
  */

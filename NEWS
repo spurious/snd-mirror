@@ -1,11 +1,12 @@
-Snd 16.1:
+Snd 16.2:
 
-most of my time went into lint.scm, but the harder I work
-on it, the longer my TODO list.
+owlet error-history field if WITH_HISTORY=1, (*s7* 'history-size) sets its size
+added *read-error-hook*
+removed s7_eval_form, changed s7_eval to take its place
+s7_eval_c_string takes only one statement now (use begin to handle multiple statements)
+added s7_load_with_environment
 
-s7: :key and :optional removed.
+checked: gtk 3.19.4|5, ruby 2.4
 
-checked: gtk 3.19.1|2|3, sbcl 1.3.0, GSL 2.0
-
-Thanks!: Norman Gray
+Thanks!: Kjetil Matheussen, Anders Vinjar, Tito Latini, Mike Scholz.
 

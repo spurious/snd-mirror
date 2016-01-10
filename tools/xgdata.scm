@@ -9257,7 +9257,7 @@
 (CFNC-3.20 "GdkWindow* gdk_drag_context_get_drag_window GdkDragContext* context")
 (CFNC-3.20 "void gtk_popover_set_constrain_to GtkPopover* popover GtkPopoverConstraint constraint")
 (CFNC-3.20 "GtkPopoverConstraint gtk_popover_get_constrain_to GtkPopover* popover")
-(CINT-3.20 "GTK_STATE_FLAG_DND" "GtkStateFlags")
+;;; 3-19.6 (CINT-3.20 "GTK_STATE_FLAG_DND" "GtkStateFlags")
 (CINT-3.20 "GTK_POPOVER_CONSTRAINT_NONE" "GtkPopoverConstraint")
 (CINT-3.20 "GTK_POPOVER_CONSTRAINT_WINDOW" "GtkPopoverConstraint")
 
@@ -9300,3 +9300,8 @@
 (CFNC-3.20 "GList* gdk_seat_get_slaves GdkSeat* seat GdkSeatCapabilities capabilities")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_pointer GdkSeat* seat")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_keyboard GdkSeat* seat")
+
+
+;;; 3.19.6:
+
+(CINT-3.20 "GTK_STATE_FLAG_DROP_ACTIVE" "GtkStateFlags")

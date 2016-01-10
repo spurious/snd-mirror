@@ -195,7 +195,9 @@
 	(line-number -1))
     
     (set! *e* (curlet))
-    
+
+    (define* (peek-char p) (error 'peek "oops")) ; circular-list *#reader* in s7test.scm??
+
     (define var-name car)
     (define (var? v) (and (pair? v) (let? (cdr v))))
     (define var-member assq)
@@ -348,7 +350,7 @@
     (define* (make-fvar name ftype arglist decl value env)
       (cons name 
 	    (inlet 'type 'closure
-		   'signature (let ((body (and (memq ftype '(define define* lambda lambda*))
+		   'signature (let ((body (and (memq ftype '(define define* lambda lambda* let))
 					       (cddr value))))
 				(and (pair? body)
 				     (let ((sig #f))
@@ -366,6 +368,8 @@
 					 (for-each
 					  (lambda (arg)       ; new function's parameter
 					    (set! sig (cons #t sig))
+					    ;(if (pair? arg) (set! arg (car arg)))
+					    ;; causes trouble when tree-count sees keyword args in s7test.scm
 					    (if (= (tree-count arg body) 1)
 						(let ((p (tree-arg-member arg body)))
 						  (when (pair? p)
@@ -380,7 +384,6 @@
 									     (not (memq chk '(integer:any? integer:real?))))
 									(set-car! sig chk))))))))))))
 					  arglist))
-				       
 				       (and (any? (lambda (a) (not (eq? a #t))) sig)
 					    (reverse sig)))))
 		   
@@ -2519,7 +2522,6 @@
       
       ;; TODO:
       ;; macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
-      ;; catch func arg checks (thunk, any args) also other such cases like dynamic-wind? in dyn-wind init/end rtn is ignored
       ;; bacro-shaker -- can we get set-member?
       ;; if no side effect func call not last, but side effect args, -> args?
       ;; move special-cases into hash-table (via macro?)
@@ -2534,13 +2536,15 @@
       ;;   yes -- need to see caller here:
       ;;   (begin (if x (set! y 1) #t) x) -> (begin (or (not x) (set! y 1)) x)
       ;;   maybe should be (begin (if x (set! y 1)) x)
+      ;; if-when-if?
+      ;;
+      ;; cond->case use boolean? -> #t #f if there are others, and the reverse in or
       ;;
       ;; forgotten vars in let (caar x) when y=(car x) etc) -- no set/rebind of y since, no macros ?
       ;;   (let ((x A)...) ... A ...) with x and A's contents unchanged/unshadowed/no side, and A as arg, replace A with x
       ;;   if fequal? this could apply to x=(cddr y) (caddr y)->(car x) etc [cdr/list-tail, (+ x y)=(+ y x)]
       ;;
       ;; func unused value + no export
-      ;; arg type checks for named let(*?) (gets argnum now) and define, recursive calls all checks in letrec(*)
       ;; to find local-reducible vars, number binding points incrementally, keep as _let_ or something in every var list
       ;;   if ref|set, mark via min(cur, _let_) 
       ;;   at end, check cur _let_ against ref/set -- if higher, it's localizable
@@ -2553,6 +2557,11 @@
       
       (case head
 	;; ----------------
+#|
+	((unquote unquote-splicing)
+	 (format *stderr* "~A~%" form))
+|#
+
 	((memq assq memv assv member assoc)
 	 
 	 (define (list-one? p)
@@ -4067,7 +4076,51 @@
 	 (if (and (= (length form) 2)
 		  (vector? (cadr form)))
 	     (lint-format "perhaps ~A -> ~A" name form (vector-length (cadr form)))))
-	
+
+	;; ----------------
+	((dynamic-wind)
+	 (if (= (length form) 4)
+	     (let ((init (cadr form))
+		   (body (caddr form))
+		   (end (cadddr form))
+		   (empty 0))
+	       (when (and (pair? init)
+			  (eq? (car init) 'lambda))
+		 (if (not (null? (cadr init)))
+		     (lint-format "dynamic-wind init function should be a thunk: ~A" name init))
+		 (if (pair? (cddr init))
+		     (let ((last-expr (list-ref init (- (length init) 1))))
+		       (if (not (pair? last-expr))
+			   (if (null? (cdddr init))
+			       (set! empty 1))
+			   (unless (side-effect? last-expr env)
+			     (if (null? (cdddr init))
+				 (set! empty 1))
+			     (lint-format "this could be omitted: ~A in ~A" name last-expr init))))))
+
+	       (if (and (pair? body)
+			(eq? (car body) 'lambda))
+		   (if (not (null? (cadr body)))
+		       (lint-format "dynamic-wind body function should be a thunk: ~A" name body))
+		   (set! empty 3)) ; don't try to access body below
+
+	       (when (and (pair? end)
+			  (eq? (car end) 'lambda))
+		 (if (not (null? (cadr end)))
+		     (lint-format "dynamic-wind end function should be a thunk: ~A" name end))
+		 (if (pair? (cddr end))
+		     (let ((last-expr (list-ref end (- (length end) 1))))
+		       (if (not (pair? last-expr))
+			   (if (null? (cdddr end))
+			       (set! empty (+ empty 1)))
+			   (unless (side-effect? last-expr env) ; or if no side-effects in any (also in init)
+			     (if (null? (cdddr end))
+				 (set! empty (+ empty 1)))
+			     (lint-format "this could be omitted: ~A in ~A" name last-expr end)))
+		       (if (= empty 2)
+			   (lint-format "this dynamic-wind is pointless, ~A" name 
+					(lists->string form (if (null? (cdddr body)) (caddr body) `(begin ,@(cddr body))))))))))))
+
 	;; ----------------
 	((*s7*)
 	 (if (= (length form) 2)

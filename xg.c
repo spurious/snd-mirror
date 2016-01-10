@@ -45172,7 +45172,6 @@ static void define_integers(void)
   define_integer(GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_LEFT);
   define_integer(GTK_SHORTCUT_GESTURE_TWO_FINGER_SWIPE_RIGHT);
   define_integer(GTK_SHORTCUT_GESTURE);
-  define_integer(GTK_STATE_FLAG_DND);
   define_integer(GTK_POPOVER_CONSTRAINT_NONE);
   define_integer(GTK_POPOVER_CONSTRAINT_WINDOW);
   define_integer(GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
@@ -45192,6 +45191,7 @@ static void define_integers(void)
   define_integer(GDK_SEAT_CAPABILITY_KEYBOARD);
   define_integer(GDK_SEAT_CAPABILITY_ALL_POINTING);
   define_integer(GDK_SEAT_CAPABILITY_ALL);
+  define_integer(GTK_STATE_FLAG_DROP_ACTIVE);
 #endif
 
   define_integer(CAIRO_STATUS_SUCCESS);
@@ -45977,7 +45977,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("24-Dec-15"));
+      Xen_define("xg-version", C_string_to_Xen_string("09-Jan-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
