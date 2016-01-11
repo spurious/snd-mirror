@@ -892,7 +892,7 @@ struct s7_scheme {
   unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
   unsigned long long int capture_let_counter;
-  bool symbol_table_is_locked;
+  bool symbol_table_is_locked, short_print;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_int default_hash_table_length, initial_string_port_length, print_length, history_size, true_history_size;
@@ -30779,43 +30779,48 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
     port_write_string(port)(sc, "(rootlet)", 9, port);
   else
     {
-      /* circles can happen here:
-       *    (let () (let ((b (curlet))) (curlet)))
-       *    #<let 'b #<let>>
-       * or (let ((b #f)) (set! b (curlet)) (curlet))
-       *    #1=#<let 'b #1#>
-       */
-      if ((use_write == USE_READABLE_WRITE) &&
-	  (ci) &&
-	  (peek_shared_ref(ci, obj) != 0))
-	{
-	  s7_pointer x;
-	  port_write_string(port)(sc, "(let (({e} (inlet))) ", 21, port);
-	  if ((ci) &&
-	      (shared_ref(ci, obj) < 0))
-	    {
- 	      int plen;
-	      char buf[64];
-	      plen = snprintf(buf, 64, "(set! {%d} {e}) ", -shared_ref(ci, obj));
-	      port_write_string(port)(sc, buf, plen, port);
-	    }
-
-	  port_write_string(port)(sc, "(apply varlet {e} (reverse (list ", 33, port);
-	  for (x = let_slots(obj); is_slot(x); x = next_slot(x))
-	    {
-	      port_write_string(port)(sc, "(cons ", 6, port);
-	      symbol_to_port(sc, slot_symbol(x), port, use_write);
-	      port_write_character(port)(sc, ' ', port);
-	      object_to_port_with_circle_check(sc, slot_value(x), port, use_write, ci);
-	      port_write_character(port)(sc, ')', port);
-	    }
-	  port_write_string(port)(sc, "))) {e})", 8, port);
-	}
+      if (sc->short_print)
+	port_write_string(port)(sc, "#<let>", 6, port);
       else
 	{
-	  port_write_string(port)(sc, "(inlet", 6, port);
-	  slot_to_port_1(sc, let_slots(obj), port, use_write, ci);
-	  port_write_character(port)(sc, ')', port);
+	  /* circles can happen here:
+	   *    (let () (let ((b (curlet))) (curlet)))
+	   *    #<let 'b #<let>>
+	   * or (let ((b #f)) (set! b (curlet)) (curlet))
+	   *    #1=#<let 'b #1#>
+	   */
+	  if ((use_write == USE_READABLE_WRITE) &&
+	      (ci) &&
+	      (peek_shared_ref(ci, obj) != 0))
+	    {
+	      s7_pointer x;
+	      port_write_string(port)(sc, "(let (({e} (inlet))) ", 21, port);
+	      if ((ci) &&
+		  (shared_ref(ci, obj) < 0))
+		{
+		  int plen;
+		  char buf[64];
+		  plen = snprintf(buf, 64, "(set! {%d} {e}) ", -shared_ref(ci, obj));
+		  port_write_string(port)(sc, buf, plen, port);
+		}
+	      
+	      port_write_string(port)(sc, "(apply varlet {e} (reverse (list ", 33, port);
+	      for (x = let_slots(obj); is_slot(x); x = next_slot(x))
+		{
+		  port_write_string(port)(sc, "(cons ", 6, port);
+		  symbol_to_port(sc, slot_symbol(x), port, use_write);
+		  port_write_character(port)(sc, ' ', port);
+		  object_to_port_with_circle_check(sc, slot_value(x), port, use_write, ci);
+		  port_write_character(port)(sc, ')', port);
+		}
+	      port_write_string(port)(sc, "))) {e})", 8, port);
+	    }
+	  else
+	    {
+	      port_write_string(port)(sc, "(inlet", 6, port);
+	      slot_to_port_1(sc, let_slots(obj), port, use_write, ci);
+	      port_write_character(port)(sc, ')', port);
+	    }
 	}
     }
 }
@@ -45057,15 +45062,21 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  char *objstr, *str;
 		  const char *spaces;
 		  int objlen, new_note_len, notes_max, cur_line_len = 0, spaces_len;
-		  bool new_notes_line = false;
+		  bool new_notes_line = false, old_short_print;
+		  s7_int old_len;
 
 		  spaces = "                                                                                ";
 		  spaces_len = strlen(spaces);
 
 		  if (notes_start_col < 0) notes_start_col = 50;
 		  notes_max = total_cols - notes_start_col;
+
+		  old_short_print = sc->short_print;
+		  sc->short_print = true;
+		  old_len = sc->print_length;
+		  if (sc->print_length > 4) sc->print_length = 4;
 		  objstr = s7_object_to_c_string(sc, val);
-		  objlen = strlen(objstr);
+		  objlen = safe_strlen(objstr);
 		  if (objlen > notes_max)
 		    {
 		      objstr[notes_max - 4] = '.';
@@ -45074,6 +45085,8 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		      objstr[notes_max - 1] = '\0';
 		      objlen = notes_max;
 		    }
+		  sc->short_print = old_short_print;
+		  sc->print_length = old_len;
 
 		  new_note_len = symbol_name_length(code) + 3 + objlen;
 		  /* we want to append this much info to the notes, but does it need a new line?
@@ -72541,6 +72554,7 @@ s7_scheme *s7_init(void)
   sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   sc->tmpbuf = (char *)calloc(TMPBUF_SIZE, sizeof(char));
   sc->print_width = sc->max_string_length;
+  sc->short_print = false;
 
   sc->initial_string_port_length = 128;
   sc->format_depth = -1;
@@ -74103,10 +74117,8 @@ int main(int argc, char **argv)
  * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
  *
  * make ow! display (*s7* 'stack) in some reasonable way
- *   (*s7* 'stack) itself is a problem -- need saved list so cycle check is not fooled?
- *      this is still happening
  *   repl: if error is in format, subsequent formatted error report clobbers original arglist!
- * perhaps (*s7* 'history-buffer) -- no reason to sequester it in owlet
+ * slot|let_to_port ignores sc->print_length
  *
  * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
  *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??

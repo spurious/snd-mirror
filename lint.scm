@@ -1422,21 +1422,34 @@
 					  ;; (or (pair? x) (null? x)) -> (list? x)
 					  
 					  (let ((sym #f)
-						(eqf #f))
+						(eqf #f)
+						(vals ()))
+
 					    (if (every? (lambda (p)
 							  (and (pair? p)
 							       (if (not eqf)
 								   (and (memq (car p) '(eq? eqv? equal? char=? string=? = char-ci=? string-ci=?))
 									(set! eqf (car p)))
-								   (eq? eqf (car p)))
-							       (if (not sym) 
-								   (and (not (side-effect? (cadr p) env))
-									(set! sym (cadr p)))
-								   (equal? sym (cadr p)))
-							       (code-constant? (caddr p))))
+								   (or (eq? eqf (car p))
+								       (and (memq eqf '(eq? eqv? equal? =)) 
+									    (memq (car p) '(eq? eqv? equal? =))
+									    (set! eqf (if (not (eq? (car p) 'eq?)) 'equal? eqf)))
+								       (and (memq eqf '(char=? char-ci=?)) 
+									    (memq (car p) '(char=? char-ci=?)))))
+							       (or (and (code-constant? (caddr p))
+									(set! vals (cons (caddr p) vals))
+									(if (not sym) 
+									    (and (not (side-effect? (cadr p) env))
+										 (set! sym (cadr p)))
+									    (equal? sym (cadr p))))
+								   (and (code-constant? (cadr p))
+									(set! vals (cons (cadr p) vals))
+									(if (not sym) 
+									    (and (not (side-effect? (caddr p) env))
+										 (set! sym (caddr p)))
+									    (equal? sym (caddr p)))))))
 							(cdr form))
-						(let* ((vals (map caddr (cdr form)))
-						       (func (case eqf 
+						(let* ((func (case eqf 
 							       ((eq?) 'memq) 
 							       ((eqv? char=?) 'memv) 
 							       ((=) (if (every? rational? vals) 'memv 'member))
@@ -1446,15 +1459,25 @@
 								   (list eqf)
 								   ()))
 						       (elements (map (lambda (v) (if (pair? v) (cadr v) v)) vals)))
-						  (if (and (eq? eqf 'char=?)
-							   (= (length elements) 2)
-							   (char-ci=? (car elements) (cadr elements)))
-						      `(char-ci=? ,sym ,(car elements))
-						      (if (and (eq? eqf 'string=?)
-							       (= (length elements) 2)
-							       (string-ci=? (car elements) (cadr elements)))
-							  `(string-ci=? ,sym ,(car elements))
-							  `(,func ,sym ',(map (lambda (v) (if (pair? v) (cadr v) v)) vals) ,@equals))))
+
+						  ;; (or (eq? 'quote (car expr)) (eq? 'QUOTE (car expr))) -> (memq (car expr) ''QUOTE)
+						  ;; TODO: if '(quote ...) don't double it -- where did that happen?
+						  
+						  (cond ((and (eq? eqf 'char=?)
+							      (= (length elements) 2)
+							      (char-ci=? (car elements) (cadr elements)))
+							 `(char-ci=? ,sym ,(car elements)))
+
+							((and (eq? eqf 'string=?)
+							      (= (length elements) 2)
+							      (string-ci=? (car elements) (cadr elements)))
+							 `(string-ci=? ,sym ,(car elements)))
+
+							((member elements '((#t #f) (#f #t)))
+							 `(boolean? ,sym))		; zero? doesn't happen
+
+							(else 
+							 `(,func ,sym ',(reverse elements) ,@equals))))
 						
 						;; not every? above
 						(let ((new-form ()))
@@ -2538,8 +2561,6 @@
       ;;   maybe should be (begin (if x (set! y 1)) x)
       ;; if-when-if?
       ;;
-      ;; cond->case use boolean? -> #t #f if there are others, and the reverse in or
-      ;;
       ;; forgotten vars in let (caar x) when y=(car x) etc) -- no set/rebind of y since, no macros ?
       ;;   (let ((x A)...) ... A ...) with x and A's contents unchanged/unshadowed/no side, and A as arg, replace A with x
       ;;   if fequal? this could apply to x=(cddr y) (caddr y)->(car x) etc [cdr/list-tail, (+ x y)=(+ y x)]
@@ -2554,14 +2575,13 @@
       ;;   if any, use end first? [also track previous bindings = local escape], but there are millions of false positives...
       ;;
       ;; 230/37
-      
+
       (case head
 	;; ----------------
 #|
 	((unquote unquote-splicing)
 	 (format *stderr* "~A~%" form))
 |#
-
 	((memq assq memv assv member assoc)
 	 
 	 (define (list-one? p)
@@ -5197,6 +5217,9 @@
 			  ((zero?)
 			   `((0 0.0) ,@exprs))
 			  
+			  ((boolean?)
+			   `((#t #f) ,@exprs))
+			  
 			  ((char-ci=?)
 			   (if (equal? eqv-select (cadr test))
 			       `(,(list (caddr test) (other-case (caddr test))) ,@exprs)
@@ -5235,7 +5258,7 @@
 	    ((or) 
 	     (and (pair? (cdr clause))
 		  (cond-eqv-select (cadr clause))))
-	    ((not null? eof-object? zero?)
+	    ((not null? eof-object? zero? boolean?)
 	     (and (pair? (cdr clause))
 		  (cadr clause)))
 	    (else #f))
@@ -5268,7 +5291,8 @@
 		  (every? (lambda (p)
 			    (cond-eqv? p eqv-select #f))
 			  (cdr clause))))
-	    ((not null? eof-object? zero?)
+
+	    ((not null? eof-object? zero? boolean?)
 	     (equal? eqv-select (cadr clause)))
 	    
 	    (else #f))
@@ -5850,7 +5874,7 @@
 					    (set! has-combinations #t)))          ; handle these later
 				    (set! prev-clause clause)
 				    
-				    (let ((expr (simplify-boolean (car clause) () falses env))
+				    (let ((expr (simplify-boolean (car clause) () () env))
 					  (test (car clause))
 					  (sequel (cdr clause)))
 				      
