@@ -6169,8 +6169,13 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer sym, slot;
       sym = car(syms);
+
       if (!is_symbol(sym))
 	return(wrong_type_argument_with_type(sc, sc->CUTLET, position_of(syms, args), sym, A_SYMBOL));
+
+      if (is_keyword(sym))
+	sym = keyword_symbol(sym);
+
       if (e == sc->rootlet)
 	{
 	  if (is_slot(global_slot(sym)))
@@ -30741,14 +30746,20 @@ static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, 
 }
 
 
-static void slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, shared_info *ci)
+static int slot_to_port_1(s7_scheme *sc, s7_pointer x, s7_pointer port, use_write_t use_write, shared_info *ci, int n)
 {
   if (is_slot(x))
     {
-      slot_to_port_1(sc, next_slot(x), port, use_write, ci);
-      port_write_character(port)(sc, ' ', port);
-      object_to_port_with_circle_check(sc, x, port, use_write, ci);
+      n = slot_to_port_1(sc, next_slot(x), port, use_write, ci, n);
+      if (n <= sc->print_length)
+	{
+	  port_write_character(port)(sc, ' ', port);
+	  object_to_port_with_circle_check(sc, x, port, use_write, ci);
+	}
+      if (n == (sc->print_length + 1))
+	port_write_string(port)(sc, " ...", 4, port);
     }
+  return(n + 1);
 }
 
 static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_write_t use_write, shared_info *ci)
@@ -30818,7 +30829,7 @@ static void let_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_writ
 	  else
 	    {
 	      port_write_string(port)(sc, "(inlet", 6, port);
-	      slot_to_port_1(sc, let_slots(obj), port, use_write, ci);
+	      slot_to_port_1(sc, let_slots(obj), port, use_write, ci, 0);
 	      port_write_character(port)(sc, ')', port);
 	    }
 	}
@@ -67550,7 +67561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 	  
 	case OP_READ_UNQUOTE:
-	  /* here if sc->value is a constant, the unquote is pointless (what about ,pi?) */
+	  /* here if sc->value is a constant, the unquote is pointless (should we complain?) */
 	  if ((is_pair(sc->value)) ||
 	      (is_symbol(sc->value)))
 	    sc->value = list_2(sc, sc->UNQUOTE, sc->value);
@@ -74094,11 +74105,10 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
- * remove the #t=all sounds business! = (map f (sounds)) 
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
- * profiler
+ * profiler -- use file->line+code counted by interrupt
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74112,26 +74122,7 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * eval outside optimized context segfault: copy_body can't handle cycles, unoptimize is problematic
- * "," ignored in arg list?! -- (string-append "a" , "b") -> "ab" because (unquote "b") -> "b" -- need a warning I think (reader?)
- * where is the cyclic display triggered? in the error handler -- it is the cause of the loop, not the printer
- *
- * make ow! display (*s7* 'stack) in some reasonable way
- *   repl: if error is in format, subsequent formatted error report clobbers original arglist!
- * slot|let_to_port ignores sc->print_length
- *
- * since let fields can be set via kw, why not ref'd: ((inlet :name 'hi) :name) -> #<undefined>!
- *   but that is ambiguous in cases where the let is an actual let: ((rootlet) :rest)??
- *   but a kw there could not be meant as a kw -- it evaluates to itself in any context
- *   and the map in arg->kw is not confusing
- *   add kw let ref/set tests and try to find problematic cases
- *
  * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
- *
- * \" where " meant -- why not warning of weird \ from reader?
- *   \ outside string is a symbol, following " starts a string-constant, next \" is a quoted " in the constant, so we keep looking...
- *   can we catch \"...\" somehow?  If \ does not yet exist as a symbol, it can't be a variable name, so \" is an error unless
- *   we're in (say) (let ((\"a\"")) \) -- gah
  *
  * it should be possible to mimic map values handling elsewhere but:
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>) ; () or error? or #<no-value>??

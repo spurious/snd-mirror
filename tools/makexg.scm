@@ -1762,7 +1762,7 @@
 			    (hey "return(Xen_to_C_~A("
 				 (no-stars type)))
 			(hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
-			     (if (zero? (length args)) "no" (length args))
+			     (if (null? args) "no" (length args))
 			     (if (= (length args) 1) "" "s")
 			     (if (eq? fname 'GtkClipboardClearFunc)
 				 "Xen_caddr"
@@ -1872,7 +1872,7 @@
 	      (set! line-len arg-start))))
       
       (hey "static Xen gxg_~A(" name)
-      (if (= (length args) 0)
+      (if (null? args)
 	  (heyc "void")
 	  (if (>= (length args) max-args)
 	      (heyc "Xen arglist")
@@ -2122,11 +2122,11 @@
 				   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
 			   args)))
 		    (if (not (string=? return-type "void"))
-			(if (not (eq? lambda-type 'fnc))
+			(if (or (not (eq? lambda-type 'fnc))
+				(not (= refargs 0)))
 			    (heyc ")")
-			    (if (= refargs 0)
-				(if (not (eq? spec 'free)) (heyc "))"))
-				(heyc ")"))))
+			    (if (not (eq? spec 'free)) 
+				(heyc "))"))))
 		    (hey ");~%")
 		    (if (not (eq? lambda-type 'fnc))
 			(begin

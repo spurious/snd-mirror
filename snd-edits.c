@@ -7321,7 +7321,7 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
   if (!mcf) return(Xen_false);
 
   fd = FOPEN(mcf, "w");
-  if (mcf) free(mcf);
+  free(mcf);
 
   if (fd)
     {

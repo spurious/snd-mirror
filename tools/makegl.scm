@@ -591,7 +591,7 @@
 	      (eq? (data 4) 'if))
 	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (data 5)))))
      (hey "static Xen gxg_~A(" name)
-     (if (= (length args) 0)
+     (if (null? args)
 	 (heyc "void")
 	 (if (>= (length args) max-args)
 	     (heyc "Xen arglist")

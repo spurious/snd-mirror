@@ -87,7 +87,7 @@
 	      defined? denominator dilambda? do dynamic-wind
 	      eof-object? eq? equal? eqv? even? exact->inexact exact? exp expt
 	      float? float-vector float-vector-ref float-vector? floor for-each funclet 
-	      gcd gensym gensym?
+	      gcd gensym?
 	      hash-table hash-table* hash-table-entries hash-table-ref hash-table? help hook-functions
 	      if imag-part inexact->exact inexact? infinite? inlet input-port? 
 	      int-vector int-vector-ref int-vector? iterator-at-end? iterator-sequence integer->char
@@ -99,7 +99,7 @@
 	      make-rectangular make-shared-vector make-string make-vector map max member memq memv min modulo morally-equal?
 	      nan? negative? not null? number->string number? numerator
 	      object->string odd? openlet? or outlet output-port? owlet
-	      pair-line-number pair? peek-char port-closed? port-filename port-line-number positive? procedure-documentation
+	      pair-line-number pair? port-closed? port-filename port-line-number positive? procedure-documentation
 	      procedure-setter procedure-signature procedure-source procedure? proper-list? provided?
 	      quasiquote quote quotient
 	      random-state random-state->list random-state? rational? rationalize real-part real? remainder reverse rootlet round
@@ -108,11 +108,12 @@
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol=? symbol?
 	      tan tanh truncate
-	      unless unlet
+	      unless
 	      vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
 	      zero?))
 	   ;; do not include file-exists? or directory?
+	   ;; should this include peek-char or unlet ?
 	   ht))
 	
 	(deprecated-ops '((global-environment . rootlet)
@@ -195,8 +196,6 @@
 	(line-number -1))
     
     (set! *e* (curlet))
-
-    (define* (peek-char p) (error 'peek "oops")) ; circular-list *#reader* in s7test.scm??
 
     (define var-name car)
     (define (var? v) (and (pair? v) (let? (cdr v))))
@@ -822,15 +821,13 @@
     (define (tree-member sym tree)
       (and (pair? tree)
 	   (or (eq? (car tree) sym)
-	       (and (pair? (car tree))
-		    (tree-member sym (car tree)))
+	       (tree-member sym (car tree))
 	       (tree-member sym (cdr tree)))))
     
     (define (tree-list-member syms tree)
       (and (pair? tree)
 	   (or (memq (car tree) syms)
-	       (and (pair? (car tree))
-		    (tree-list-member syms (car tree)))
+	       (tree-list-member syms (car tree))
 	       (tree-list-member syms (cdr tree)))))
     
     (define (tree-args tree)
@@ -852,8 +849,7 @@
       (and (pair? tree)
 	   (not (eq? (car tree) 'quote))
 	   (or (eq? (car tree) sym)
-	       (and (pair? (car tree))
-		    (tree-unquoted-member sym (car tree)))
+	       (tree-unquoted-member sym (car tree))
 	       (tree-unquoted-member sym (cdr tree)))))
     
     (define (tree-car-member sym tree)
@@ -890,26 +886,6 @@
 		  (begin
 		    (tree-symbol-walk (car tree) syms)
 		    (tree-symbol-walk (cdr tree) syms))))))
-    
-    (define (var-unchanged? var tree env)
-					;(format *stderr* "~A ~A~%" var tree)
-      ;; not named let here
-      (if (and (pair? tree)
-	       (not (eq? (car tree) 'quote)))
-	  (and (or (not (memq var tree))
-		   (not (side-effect? tree env))
-		   (null? (cdr tree))
-		   (and (not (eq? var (car tree))) 
-			(or (not (eq? var (cadr tree)))
-			    (not (memq (car tree) '(set! string-set! vector-set! list-set! hash-table-set! let-set!
-							 float-vector-set! int-vector-set! byte-vector-set! set-car! set-cdr!
-							 fill! reverse! copy sort!))))))
-	       (or (not (pair? (car tree)))
-		   (var-unchanged? var (car tree) env))
-	       (or (not (pair? (cdr tree)))
-		   (every? (lambda (arg)
-			     (var-unchanged? var arg env))
-			   (cdr tree))))))
     
     (define (remove item sequence)
       (cond ((null? sequence) ())
@@ -1520,9 +1496,9 @@
 							      (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
 								      (code-constant? val))
 								  (begin
-								    (if (null? new-form)         ; (or x1 123) -> value of x1 first
-									(set! new-form (list val))           ;was `(,val))
-									(set! new-form (cons val new-form))) ;was (append `(,val) new-form))) 
+								    (set! new-form (if (null? new-form)         ; (or x1 123) -> value of x1 first
+										       (list val)
+										       (cons val new-form)))
 								    ;; reversed when returned
 								    (set! exprs '(#t)))
 								  
@@ -1622,8 +1598,7 @@
 					   
 					   (do ((exprs (cdr form) (cdr exprs)))
 					       ((null? exprs) 
-						(if (null? new-form)
-						    #t                                ; (and) -> #t
+						(or (null? new-form)      ; (and) -> #t
 						    (let* ((nform (reverse new-form)) 
 							   (newer-form (map (lambda (x cdr-x)
 									      (if (and x (code-constant? x))
@@ -2546,8 +2521,6 @@
       ;; TODO:
       ;; macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
       ;; bacro-shaker -- can we get set-member?
-      ;; if no side effect func call not last, but side effect args, -> args?
-      ;; move special-cases into hash-table (via macro?)
       ;; need values->func arg check escape (define*), or can these be correlated?
       ;; case-lambda confuses the local-var checker: each clause has pars/body so pars->env for the body
       ;;
@@ -2555,33 +2528,18 @@
       ;;   pp sketch mode would be useful, and truncate at right margin
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
       ;;
-      ;; do any of the if/cond changes end up with (and|or ...) at top? (use if instead?)
-      ;;   yes -- need to see caller here:
-      ;;   (begin (if x (set! y 1) #t) x) -> (begin (or (not x) (set! y 1)) x)
-      ;;   maybe should be (begin (if x (set! y 1)) x)
-      ;; if-when-if?
+      ;; (and (...) (f etc)) where f source starts (and (...) etc) -> just (f etc) (need to track arg here)
       ;;
-      ;; forgotten vars in let (caar x) when y=(car x) etc) -- no set/rebind of y since, no macros ?
-      ;;   (let ((x A)...) ... A ...) with x and A's contents unchanged/unshadowed/no side, and A as arg, replace A with x
-      ;;   if fequal? this could apply to x=(cddr y) (caddr y)->(car x) etc [cdr/list-tail, (+ x y)=(+ y x)]
-      ;;
-      ;; func unused value + no export
       ;; to find local-reducible vars, number binding points incrementally, keep as _let_ or something in every var list
       ;;   if ref|set, mark via min(cur, _let_) 
       ;;   at end, check cur _let_ against ref/set -- if higher, it's localizable
       ;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
       ;; flag redef at same level? 
-      ;; misspelled word: else here, not in vars/globals/*e*, look at len[-1..1] across these envs for 1-char changes,
-      ;;   if any, use end first? [also track previous bindings = local escape], but there are millions of false positives...
       ;;
-      ;; 230/37
+      ;; 246/39
 
       (case head
 	;; ----------------
-#|
-	((unquote unquote-splicing)
-	 (format *stderr* "~A~%" form))
-|#
 	((memq assq memv assv member assoc)
 	 
 	 (define (list-one? p)
@@ -4156,14 +4114,7 @@
 				     default-random-state morally-equal-float-epsilon hash-table-float-epsilon undefined-identifier-warnings 
 				     gc-stats symbol-table-locked? c-objects history-size))))
 		   (lint-format "unknown *s7* field: ~A" name (cadr form))))))
-	#|
-	(else
-	(if (not (or (var-member head env) 
-	(hash-table-ref globals head)
-	(defined? head *e*)))
-	(format *stderr* "~A~%" head)))
-	|#
-	
+
 	)) ; end check-special-cases
     
     
@@ -4864,7 +4815,7 @@
 		      
 		      (if (not (side-effect? f env))
 			  (lint-format "this could be omitted: ~A" name (truncated-list->string f))
-			  
+
 			  (if (and (pair? f)
 				   (eq? (car f) 'do)) ; other syntactic forms almost never happen in this context
 			      (let ((returned (if (and (pair? (cdr f))
@@ -4969,13 +4920,6 @@
 	(set! body (cdr body))) ; ignore old-style doc-string
       (lint-walk-body name head body env)
       env)
-    
-    #|
-    (define (fequal? f f-pars inner-args)
-    (and (memq f '(+ *))
-    (= (length f-pars) (length inner-args))
-    (every? (lambda (a) (memq a inner-args)) f-pars)))
-    |#
     
     (define (lint-walk-function head name args val form env)
 					;(format *stderr* "function: ~A ~A ~A ~A~%" head name args val)
@@ -5301,7 +5245,7 @@
     
     (define (lint-walk name form env)
       ;; walk a form, here curlet can change
-      ;;(format *stderr* "walk ~A, env: ~A~%~%" form env)
+      ;(format *stderr* "walk ~A~%" form)
       
       (if (symbol? form)
 	  (set-ref? form env) ; returns env
@@ -6442,17 +6386,7 @@
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars)))))
 			   (report-usage name 'variable head vars)
-			   #|
-			   (let ((vs ()))
-			   (for-each
-			   (lambda (v)
-			   (if (var-unchanged? (car v) (cddr form) env)
-			   (set! vs (cons (car v) vs))))
-			   vars)
-			   (if (pair? vs)
-			   (format *stderr* "~A in ~A~%" vs form)))
-			   |#
-			   
+
 			   (if (and (pair? body)
 				    (null? (cdr body))
 				    (pair? varlist)             ; (let ()...)
@@ -6808,7 +6742,7 @@
 	(set! line-number -1)
 	(set! quote-warnings 0)
 	
-	;;(format *stderr* "lint ~S~%" file)
+	;(format *stderr* "lint ~S~%" file)
 	
 	(let ((fp (if (input-port? file)
 		      file
