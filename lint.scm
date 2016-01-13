@@ -379,7 +379,7 @@
 							    (if (pair? fsig)
 								(let ((loc (- (length p) (length m))))
 								  (let ((chk (catch #t (lambda () (fsig loc)) (lambda args #f))))
-								    (if (and (symbol? chk)
+								    (if (and (symbol? chk) ; it defaults to #t
 									     (not (memq chk '(integer:any? integer:real?))))
 									(set-car! sig chk))))))))))))
 					  arglist))
@@ -1064,6 +1064,7 @@
 				  uform))))))))))
       
       (define (true? e)
+	;(format *stderr* "true? ~A~%" e)
 	(or (member e true)
 	    (and (pair? e)
 		 (= (length e) 2)
@@ -1346,6 +1347,7 @@
 		     form))
 		
 		((or)
+		 ;(format *stderr* "or: ~A~%" form)
 		 (case len
 		   ((1) #f)
 		   ((2) (if (code-constant? (cadr form)) (cadr form) (classify (cadr form))))
@@ -1481,13 +1483,14 @@
 						      
 						      (do ((exprs (cdr form) (cdr exprs)))
 							  ((null? exprs) 
+							   ;(format *stderr* "new-form: ~A~%" new-form)
 							   (and (pair? new-form)
 								(if (null? (cdr new-form))
 								    (car new-form)
 								    `(or ,@(reverse new-form)))))
 							(let* ((e (car exprs))
 							       (val (classify e)))
-							  
+							  ;(format *stderr* "e: ~A, val: ~A~%" e val)
 							  (if (and (pair? val)
 								   (memq (car val) '(and or not)))
 							      (set! val (classify (set! e (simplify-boolean e true false env)))))
@@ -2522,13 +2525,15 @@
       ;; macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
       ;; bacro-shaker -- can we get set-member?
       ;; need values->func arg check escape (define*), or can these be correlated?
-      ;; case-lambda confuses the local-var checker: each clause has pars/body so pars->env for the body
+      ;;   display->format returns values, gather-format is recipient, takes 1 or 2 args -- check d->f
+      ;;   can this info be saved in var? if (car sig) includes values, what are possibilities?
       ;;
       ;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
       ;;   pp sketch mode would be useful, and truncate at right margin
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
       ;;
-      ;; (and (...) (f etc)) where f source starts (and (...) etc) -> just (f etc) (need to track arg here)
+      ;;  save-session-to-file (line 153): port appears to be unused: (call-with-output-file f (lambda (port) (write s f)))
+      ;;   it's also a type error
       ;;
       ;; to find local-reducible vars, number binding points incrementally, keep as _let_ or something in every var list
       ;;   if ref|set, mark via min(cur, _let_) 
@@ -2536,9 +2541,10 @@
       ;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
       ;; flag redef at same level? 
       ;;
-      ;; 246/39
+      ;; 254/45
 
       (case head
+	
 	;; ----------------
 	((memq assq memv assv member assoc)
 	 
@@ -2943,20 +2949,24 @@
 		     (lint-format "perhaps ~A could be call-with-exit: ~A" name head (truncated-list->string form)))))))
 	
 	;; ----------------
-	((call-with-input-string call-with-input-file call-with-output-file)
-	 ;; call-with-output-string func is the first arg, not second, but these checks get no hits
-	 (let ((port (and (pair? (cdr form))
-			  (pair? (cddr form))
-			  (pair? (caddr form))
-			  (eq? (caaddr form) 'lambda)
-			  (pair? (cdaddr form))
-			  (pair? (cadr (caddr form)))
-			  (car (cadr (caddr form))))))
-	   (if (symbol? port)
-	       (let ((body (cddr (caddr form))))
-		 (if (not (tree-member port body))
-		     (lint-format "port appears to be unused: ~A" name (truncated-list->string form)))))))
-	
+	((call-with-input-string call-with-input-file call-with-output-file call-with-output-string)
+	 ;; call-with-output-string func is the first arg, not second
+	 (let ((len (if (eq? head 'call-with-output-string) 2 3)))
+	   (when (= (length form) len)
+	     (let ((func (list-ref form (- len 1))))
+	       (when (and (pair? func)
+			  (eq? (car func) 'lambda))
+		 (let* ((args (cadr func))
+			(body (cddr func))
+			(port (and (pair? args) (car args))))
+		   (if (or (not port)
+			   (pair? (cdr args)))
+		       (lint-format "~A argument should be a function of one argument: ~A" name head func)
+		       (if (and (symbol? port)
+				(not (tree-member port body)))
+			   (lint-format "port ~A appears to be unused: ~A" name port (truncated-list->string form))))))))))
+	;; checking for port matches in the lambda body is very tricky and never gets hits
+
 	;; ----------------
 	((/)
 	 (if (pair? (cdr form))
@@ -3993,7 +4003,8 @@
 				   (null? (cdddr producer)))
 			      (let ((body (caddr producer)))
 				(if (or (code-constant? body)
-					(and (symbol? (car body))
+					(and (pair? body)
+					     (symbol? (car body))
 					     (not (memq (return-type (car body) ()) '(#t #f values)))))
 				    (lint-format "~A does not return multiple values" name body)
 				    (if (and (pair? body)
@@ -5137,6 +5148,10 @@
 	 ,@(map (lambda (clause)
 		  (let ((test (car clause))
 			(exprs (cdr clause)))
+		    
+		    (if (null? exprs)                   ; cond returns the test result if no explicit results
+			(set! exprs (list #t)))         ;   but all tests here return a boolean, and we win only if #t?? (memx is an exception)
+
 		    (if (memq test '(else #t))
 			`(else ,@exprs)
 			
@@ -5174,16 +5189,17 @@
 				     (case (car p)
 				       ((eq? eqv? = equal? char=?)  
 					(unquoted (if (equal? eqv-select (cadr p)) (caddr p) (cadr p))))
-				       ((memq memv member)
-					(apply values (caddr p)))
-				       ((not)         #f)
-				       ((null?)       ())
-				       ((eof-object?) #<eof>)
-				       ((zero?)       (values 0 0.0))
-				       ((char-ci=?)   (if (equal? eqv-select (cadr p)) 
-							  (values (caddr p) (other-case (caddr p)))
-							  (values (cadr p) (other-case (cadr p)))))
-				       (else          (error "oops"))))
+				       ((memq memv member) (apply values (caddr p)))
+				       ((not)              #f)
+				       ((null?)            ())
+				       ((eof-object?)      #<eof>)
+				       ((zero?)            (values 0 0.0))
+				       ((boolean?)         (values #t #f))
+				       ((char-ci=?)   
+					(if (equal? eqv-select (cadr p)) 
+					    (values (caddr p) (other-case (caddr p)))
+					    (values (cadr p) (other-case (cadr p)))))
+				       (else               (error "oops"))))
 				   (cdr test))
 			     ,@exprs))))))
 		new-clauses)))
@@ -5353,7 +5369,8 @@
 					   (if (list-any? keyword? args) ; (lambda (:key) ...)
 					       (lint-format "lambda arglist can't handle keywords (use lambda*)" name)))))
 				 
-				 (if (and (eq? head 'lambda)             ; (lambda () (f)) -> f, (lambda (a b) (f a b)) -> f
+				 (if (and (eq? head 'lambda)           ; (lambda () (f)) -> f, (lambda (a b) (f a b)) -> f
+					  (not (eq? name 'case-lambda))    
 					  (= len 3)
 					  (>= arglen 0)) ; not a dotted list
 				     (let ((body (caddr form)))
@@ -5365,9 +5382,10 @@
 					     (if (equal? (reverse args) (cdr body))
 						 (let ((rf (reversed (car body))))
 						   (if rf (lint-format "perhaps ~A" name (lists->string form rf))))))))))
-			       
-			       (if (and (symbol? args)                   ; (lambda args (apply f args)) -> f
+				 
+			       (if (and (symbol? args)                 ; (lambda args (apply f args)) -> f
 					(eq? head 'lambda)
+					(not (eq? name 'case-lambda))    
 					(= len 3))
 				   (let ((body (caddr form)))
 				     (if (and (pair? body)
@@ -6642,7 +6660,21 @@
 		  
 		  ((let-syntax letrec-syntax)
 		   (lint-walk-body name head (cddr form) env))
-		  
+
+		  ((case-lambda)
+		   (if (pair? (cdr form))
+		       (let ((lens ()))
+			 (for-each 
+			  (lambda (choice)
+			    (if (pair? choice)
+				(let ((len (length (car choice))))
+				  (if (member len lens)
+				      (lint-format "repeated parameter list? ~A in ~A" name (car choice) form))
+				  (set! lens (cons len lens))
+				  (lint-walk 'case-lambda `(lambda ,@choice) env))))
+			  (if (not (pair? (cadr form))) (cddr form) (cdr form)))))
+		   env)
+
 		  (else
 		   ;; ---------------- everything else ----------------		  
 		   

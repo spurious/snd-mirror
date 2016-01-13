@@ -135,8 +135,7 @@
 								      (* (mus-sound-duration fnam) 
 									 (/ (mus-sound-srate fnam) *clm-srate*)
 									 (/ expand srate)))))))
-			    (if (> end file-end)
-				(set! end file-end))
+			    (set! end (min end file-end))
 			  
 			    (do ((i beg (+ i 1)))
 				((= i end))

@@ -9375,8 +9375,8 @@ EDITS: 2
 	      ((= i 20))
 	    (let ((val (mus-random 1.0)))
 	      (set! (v i) val)
-	      (if (< val mn) (set! mn val))
-	      (if (> val mx) (set! mx val))))
+	      (set! mn (min mn val))
+	      (set! mx (max mx val))))
 	  (if (fneq (float-vector-min v) mn) (snd-display #__line__ ";float-vector-min ran: ~A ~A" (float-vector-min v) mn))
 	  (if (fneq (float-vector-max v) mx) (snd-display #__line__ ";float-vector-max ran: ~A ~A" (float-vector-max v) mx))
 	  (if (fneq (float-vector-peak v) (max (abs mn) (abs mx))) (snd-display #__line__ ";float-vector-peak ran: ~A ~A ~A" (float-vector-peak v) mn mx)))
@@ -12490,8 +12490,7 @@ EDITS: 2
 	     (x -10.0 (+ x .01)))
 	    ((= i 2000))
 	  (let ((diff (abs (- (cos x) (new-cos x)))))
-	    (if (> diff err)
-		(set! err diff))))
+	    (set! err (max err diff))))
 	(if (> err 1.1e-7) (snd-display #__line__ ";new-cos poly err: ~A" err))))
     
     (let ((val (poly+ (float-vector .1 .2 .3) (float-vector 0.0 1.0 2.0 3.0 4.0))))
@@ -37187,8 +37186,7 @@ EDITS: 1
 			      (snd-display #__line__ ";~A set no arg: ~A ~A" name (func) new-val))
 			  (if (not (eq-func (func) (func sel-snd)))
 			      (snd-display #__line__ ";~A set no arg sel: ~A ~A" name (func) (func sel-snd)))
-			  (if (or (and global (not (eq-func (func) (func unsel-snd))))
-				  (and (not global) (eq-func (func) (func unsel-snd))))
+			  (if (not (eq? (not global) (not (eq-func (func) (func unsel-snd)))))
 			      (snd-display #__line__ ";~A set no arg unsel: ~A ~A (sel: ~A)" name (func) (func unsel-snd) (func sel-snd)))
 			  (if (not (or (leq-func (func #t) (list (func sel-snd) (func unsel-snd)))
 				       (leq-func (func #t) (list (func unsel-snd) (func sel-snd)))))
@@ -43891,11 +43889,7 @@ EDITS: 1
 	      (kcd (list 'KeyCode 50)))
 	  (if (not (XModifierKeymap? lmapk))
 	      (snd-display #__line__ ";xNewModifiermap: ~A" lmapk)
-	      (begin
-		(set! lmapk (XInsertModifiermapEntry lmapk kcd ShiftMapIndex))
-		(set! lmapk (XDeleteModifiermapEntry lmapk kcd ShiftMapIndex))
-					;		      (XFreeModifiermap lmapk) ;prone to segfault in X
-		)))
+	      (set! lmapk (XDeleteModifiermapEntry (XInsertModifiermapEntry lmapk kcd ShiftMapIndex) kcd ShiftMapIndex))))
 	
 	(if (not (= (XExtendedMaxRequestSize dpy) 4194303))
 	    (snd-display #__line__ ";XExtendedMaxRequestSize ~A" (XExtendedMaxRequestSize dpy)))

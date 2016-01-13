@@ -2236,10 +2236,8 @@ is assumed to be outside -1.0 to 1.0."))
 	    ;; added this block
 	    (if clipped
 		(if (> sum 0.0)
-		    (if (< sum 1.0)
-			(set! sum 1.0))
-		    (if (> sum -1.0)
-			(set! sum -1.0))))
+		    (set! sum (max sum 1.0))
+		    (set! sum (min sum -1.0))))
 	    (set! (reg 0) sum)
 	    (set! (future j) sum)))))))
 
@@ -2294,8 +2292,7 @@ is assumed to be outside -1.0 to 1.0."))
 			  (clip-len (+ 1 (- clip-end clip-beg)))
 			  (data-len (max min-data-len (* clip-len 4))))
 		     
-		     (if (> clip-len max-len) 
-			 (set! max-len clip-len))
+		     (set! max-len (max max-len clip-len))
 		     
 		     (let ((forward-data-len data-len)
 			   (backward-data-len data-len)

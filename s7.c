@@ -74108,7 +74108,8 @@ int main(int argc, char **argv)
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
- * profiler -- use file->line+code counted by interrupt
+ * profiler -- use file->line+code counted by interrupt [smsg]
+ *   get the time.h and sys/time.h timer functions/struct/enums in libc.scm, then see if this can be done in scheme
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74122,7 +74123,7 @@ int main(int argc, char **argv)
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
  *
- * (define* (f2 a :rest b) (list a b)), (f2 1 :a 1) is not an error? at least in lint point out that here :a does not set a
+ * should strings follow print-length? [currently vector hash-table let do, pairs and c-objects don't, but c-objects can if desired]
  *
  * it should be possible to mimic map values handling elsewhere but:
  *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>) ; () or error? or #<no-value>??

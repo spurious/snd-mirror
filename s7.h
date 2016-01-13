@@ -217,12 +217,14 @@ s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x);             /* 
 s7_pointer s7_member(s7_scheme *sc, s7_pointer obj, s7_pointer lst);         /* (member obj lst) */
 s7_pointer s7_memq(s7_scheme *sc, s7_pointer obj, s7_pointer x);             /* (memq obj lst) */
 
+
 bool s7_is_string(s7_pointer p);                                             /* (string? p) */
 const char *s7_string(s7_pointer p);                                         /* Scheme string -> C string (do not free the string) */
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> Scheme string (str is copied) */
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
 s7_pointer s7_make_permanent_string(const char *str);                        /* make a string that will never be GC'd */
 unsigned int s7_string_length(s7_pointer str);                               /* (string-length str) */
+
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
 char s7_character(s7_pointer p);                                             /* Scheme character -> C char */
@@ -295,8 +297,9 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj);             
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect);
 s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);                         /* (vector->list vec) */
 
+
 s7_int s7_print_length(s7_scheme *sc);                                                /* value of (*s7* 'print-length) */
-s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);
+s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);                            /* sets (*s7* 'print-length), returns old value */
 
   /* 
    *  (vect i) is the same as (vector-ref vect i)
@@ -369,10 +372,10 @@ s7_pointer s7_make_signature(s7_scheme *sc, int len, ...);                  /* p
 s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, ...);
 bool s7_is_aritable(s7_scheme *sc, s7_pointer x, int args);                 /* (aritable? x args) */
 s7_pointer s7_arity(s7_scheme *sc, s7_pointer x);                           /* (arity x) */
-
 const char *s7_help(s7_scheme *sc, s7_pointer obj);                         /* (help obj) */
-
 s7_pointer s7_make_continuation(s7_scheme *sc);                             /* call/cc... (see example below) */
+
+
 bool s7_is_syntax(s7_pointer p);
 bool s7_is_symbol(s7_pointer p);                                            /* (symbol? p) */
 const char *s7_symbol_name(s7_pointer p);                                   /* (symbol->string p) -- don't free the string */
@@ -385,10 +388,12 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);                 /* (
 s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func);
 
+
 s7_pointer s7_slot(s7_scheme *sc, s7_pointer symbol);
 s7_pointer s7_slot_value(s7_pointer slot);
 s7_pointer s7_slot_set_value(s7_scheme *sc, s7_pointer slot, s7_pointer value);
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
+
 
 s7_pointer s7_rootlet(s7_scheme *sc);                                       /* (rootlet) */
 s7_pointer s7_shadow_rootlet(s7_scheme *sc);
