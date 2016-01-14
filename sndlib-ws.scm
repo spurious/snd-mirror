@@ -154,7 +154,7 @@
 	 (catch 'mus-error
 		thunk
 		(lambda args
-		  (format #t ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
+		  (format () ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
 		  (set! flush-reverb #t)))
 		  
 	 (if (and reverb 
@@ -180,7 +180,7 @@
 	 (if statistics 
 	     (begin
 	       (set! cycles (- (get-internal-real-time) start))
-	       (format #t "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
+	       (format () "~%;~A:~%  maxamp~A:~{ ~,4F~}~%~A  compute time: ~,3F~%"
 		       (if output-to-file
 			   (if (or scaled-to scaled-by)
 			       (substring output-1 0 (- (length output-1) 5))

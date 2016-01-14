@@ -11222,8 +11222,8 @@ into an independent Snd process:
     (with-output-to-file
 	scm1
       (lambda ()
-	(<a class=quiet>format</a> #t "(define sfile (<a class=quiet href="#opensound">open-sound</a> ~S))~%" name)
-	(<a class=quiet>format</a> #t "(load ~S)~%" scm)))
+	(<a class=quiet>format</a> () "(define sfile (<a class=quiet href="#opensound">open-sound</a> ~S))~%" name)
+	(<a class=quiet>format</a> () "(load ~S)~%" scm)))
     (system (<a class=quiet>format</a> #f "snd ~A &amp;" scm1))))
 </pre>
 <div class="separator"></div>

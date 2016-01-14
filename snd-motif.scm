@@ -115,7 +115,7 @@
 	    (if (or (not (string? name))
 		    (= (length name) 0))
 		(set! name "<unnamed>"))
-	    (format #t "~A~A~%" spaces name)
+	    (format () "~A~A~%" spaces name)
 	    (if (XtIsComposite w)
 		(for-each 
 		 (lambda (n)
@@ -235,7 +235,7 @@
 			 (lambda (widget context info)
 			   ;; same as built-in "ok" callback, but does not "unmanage" the dialog
 			   (let ((filename (XmStringUnparse (.value info) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-			     (format #t "filename: ~A~%" filename)
+			     (format () "filename: ~A~%" filename)
 			     
 			     (if (file-exists? filename)
 				 (if (not (directory? filename))
@@ -2328,7 +2328,7 @@
 	  (while happy
 		 (let ((name (XGetAtomName dpy (list 'Atom i))))
 		   (if (string? name)
-		       (format #t "~D: ~A~%" i name)
+		       (format () "~D: ~A~%" i name)
 		       (set! happy #f)))
 		 (set! i (+ i 1)))
 	  (XSetErrorHandler #f)))))

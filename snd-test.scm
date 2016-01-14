@@ -235,7 +235,7 @@
      (lambda (file)
        (if (not (file-exists? file))
 	   (begin
-	     (format #t "copying ~A~%" file)
+	     (format () "copying ~A~%" file)
 	     (copy-file (string-append home-dir "/cl/" file) (string-append (getcwd) "/" file)))))
      (list "4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" "fyow.snd"
 	   "storm.snd" "z.snd" "1.snd" "cardinal.snd" "now.snd.scm" "2a.snd" "4a.snd" "zero.snd"
@@ -4592,7 +4592,7 @@
 		 (y (next-sample reader)))
 	     (if (fneq val y)
 		 (begin
-		   (format #t "~%;check-env-vals ~A at ~D: ~A ~A" name i val y)
+		   (format () "~%;check-env-vals ~A at ~D: ~A ~A" name i val y)
 		   (quit)))))))))
 
   (define (our-x->position ind x) 
@@ -8123,7 +8123,7 @@ EDITS: 5
 		       (and (> i 700) (<= i 900)
 			    (fneq new 0.0)))
 		   (begin
-		     (format #t "~%;trouble in reverse read 2 at ~D ~A ~A" i old new)
+		     (format () "~%;trouble in reverse read 2 at ~D ~A ~A" i old new)
 		     (quit)))))))
 	(close-sound ind))
       (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
@@ -10060,7 +10060,7 @@ EDITS: 2
 	    (o5 (nrxysin g5 (* x1 x2)))
 	    (o6 (* 1.0 (nrxysin g6 (* 20.0 x4)))))
 	(if (> (abs (- (+ o2 o3 o4 o5 o6) (* 5 o1))) 1e-6)
-	    (format #t "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F~%" i o1 o2 o3 o4 o5 o6))))))
+	    (format () "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F~%" i o1 o2 o3 o4 o5 o6))))))
 
 (define (polywave-opt)
   (let ((g1 (make-polywave 1000 '(1 .5 2 .5)))
@@ -10081,7 +10081,7 @@ EDITS: 2
 	    (o5 (polywave g5 (* x1 x2)))
 	    (o6 (* 1.0 (polywave g6 (* 20.0 x4)))))
 	(if (> (abs (- (+ o2 o3 o4 o5 o6) (* 5 o1))) 1e-6)
-	    (format #t "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F~%" i o1 o2 o3 o4 o5 o6))))))
+	    (format () "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F~%" i o1 o2 o3 o4 o5 o6))))))
 
 (define (test-simple-polywave n offset kind)
   (let ((p (make-polywave 400.0 
@@ -18369,11 +18369,11 @@ EDITS: 2
 	  (move-locsig loc x 1.0)
 	  (if (or (< (float-vector-min data) 0.0)
 		  (> (float-vector-max data) 1.0))
-	      (format #t ";locsig, chans: ~D, degree: ~F, ~A~%" chans x data))
+	      (format () ";locsig, chans: ~D, degree: ~F, ~A~%" chans x data))
 	  (let ((diff (float-vector-peak (float-vector-subtract! last data))))
 	    (copy data last)
 	    (if (> diff .25)
-		(format #t ";locsig, increment ~F with deg ~F~%" diff x))))))
+		(format () ";locsig, increment ~F with deg ~F~%" diff x))))))
      (list 1 2 4 5 8))
     
     (for-each 
@@ -19086,7 +19086,7 @@ EDITS: 2
 	    (let ((x2 (src s2 ex2))
 		  (x3 (so1 s3 e3)))
 	      (if (not (= x1 x2 x3))
-		  (format #t "~D ~A ~A ~A~%" i x1 x2 x3)))))))
+		  (format () "~D ~A ~A ~A~%" i x1 x2 x3)))))))
 
     (let ((gen (make-granulate :expansion 2.0 :input (make-readin "oboe.snd" 0 4000 1 2048)))
 	  (v0 (make-float-vector 1000))
@@ -21849,7 +21849,7 @@ EDITS: 2
 		(v3 (rxyk!cos-direct x x 0.5 12)))
 	    (if (or (> (abs (- v1 v2)) 1e-6)
 		    (> (abs (- v1 v3)) 1e-6))
-		(format #t ";rxyk!cos ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
+		(format () ";rxyk!cos ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
       
       (let ((g1 (make-rxyk!sin 100.0))
 	    (g2 (make-old-rxyk!sin 100.0))
@@ -21862,7 +21862,7 @@ EDITS: 2
 		(v3 (rxyk!sin-direct x x 0.5 12)))
 	    (if (or (> (abs (- v1 v2)) 1e-6)
 		    (> (abs (- v1 v3)) 1e-6))
-		(format #t ";rxyk!sin ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
+		(format () ";rxyk!sin ~A ~A: ~A ~A ~A -> ~A~%" i x v1 v2 v3 (max (abs (- v1 v2)) (abs (- v1 v3))))))))
       
       (let ((g1 (make-rxyk!cos 100.0 :ratio 2.0 :r 0.25))
 	    (g2 (make-old-rxyk!cos 100.0 :ratio 2.0 :r 0.25)))
@@ -21871,7 +21871,7 @@ EDITS: 2
 	  (let ((v1 (rxyk!cos g1))
 		(v2 (old-rxyk!cos g2)))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";rxyk!cos ratio:2: ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+		(format () ";rxyk!cos ratio:2: ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       
       (let ((g1 (make-rxyk!sin 100.0 :ratio 2.0 :r 0.25))
 	    (g2 (make-old-rxyk!sin 100.0 :ratio 2.0 :r 0.25)))
@@ -21880,7 +21880,7 @@ EDITS: 2
 	  (let ((v1 (rxyk!sin g1))
 		(v2 (old-rxyk!sin g2)))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";rxyk!sin ratio:2: ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+		(format () ";rxyk!sin ratio:2: ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       
       (let ((g1 (make-rxyk!cos 100.0 :ratio 2.0 :r 0.25))
 	    (o1 (make-oscil 400.0))
@@ -21891,7 +21891,7 @@ EDITS: 2
 	  (let ((v1 (rxyk!cos g1 (oscil o1)))
 		(v2 (old-rxyk!cos g2 (oscil o2))))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";rxyk!cos fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+		(format () ";rxyk!cos fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       
       (let ((g1 (make-rxyk!sin 100.0 :ratio 2.0 :r 0.25))
 	    (o1 (make-oscil 400.0))
@@ -21902,7 +21902,7 @@ EDITS: 2
 	  (let ((v1 (rxyk!sin g1 (oscil o1)))
 		(v2 (old-rxyk!sin g2 (oscil o2))))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";rxyk!sin fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2))))))))
+		(format () ";rxyk!sin fm ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2))))))))
 
     (let ()
       (defgenerator one-pole-allpass coeff input x1 y1)
@@ -21952,7 +21952,7 @@ EDITS: 2
 	  (let ((v1 (one-pole-all-pass o1 impulse))
 		(v2 (one-pole-allpass o2 impulse)))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+		(format () ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       
       (let ((o1 (make-one-pole-all-pass 8 .5))
 	    (o2 (make-one-pole-allpass-bank .5)))
@@ -21962,7 +21962,7 @@ EDITS: 2
 	  (let ((v1 (one-pole-all-pass o1 impulse))
 		(v2 (one-pole-allpass-bank o2 impulse)))
 	    (if (> (abs (- v1 v2)) 1e-6)
-		(format #t ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
+		(format () ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       )
 
     (let ((old-srate *clm-srate*))
@@ -33139,7 +33139,7 @@ EDITS: 1
 		 (lambda (hook) 
 		   (with-output-to-file (hook 'name)
 		     (lambda ()
-		       (format #t ";this comment will be at the top of the saved state file.~%~%")
+		       (format () ";this comment will be at the top of the saved state file.~%~%")
 		       (set! (hook 'result) #t)))))
       (if (file-exists? *save-state-file*) (delete-file *save-state-file*))
       (save-state *save-state-file*)
@@ -41084,7 +41084,7 @@ EDITS: 1
 			(and (< i 100)
 			     (fneq y (sin (* 2 pi i (/ 1000.0 44100.0))))
 			     (begin
-			       (format #t "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 pi i (/ 1000.0 44100.0))))
+			       (format () "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 pi i (/ 1000.0 44100.0))))
 			       #t)))))
       (close-sound ind))
     
@@ -41109,12 +41109,12 @@ EDITS: 1
     (let ((old-srate *clm-srate*))
       (with-sound ()
 	(if (not (= old-srate *clm-srate*))
-	    (format #t ";srates: ~A ~A~%" old-srate, *clm-srate*))
+	    (format () ";srates: ~A ~A~%" old-srate, *clm-srate*))
 	(with-sound (:srate 12345)
 	  (if (not (= *clm-srate* 12345))
-	      (format #t ";clm-srate: ~A (12345)~%" *clm-srate*)))
+	      (format () ";clm-srate: ~A (12345)~%" *clm-srate*)))
 	(if (not (= old-srate *clm-srate*))
-	    (format #t ";returned srates: ~A ~A~%" old-srate, *clm-srate*))))
+	    (format () ";returned srates: ~A ~A~%" old-srate, *clm-srate*))))
     (for-each close-sound (sounds))
     
     (if (file-exists? "ii.scm")
@@ -41178,9 +41178,9 @@ EDITS: 1
       (defgenerator (g1 :methods (list (cons 'g1-method (lambda (g) 440)))))
       (let ((g (make-g1)))
 	(if (not (g1? g)) 
-	    (format #t ";not g1: ~A~%" (reverse (map values g))))
+	    (format () ";not g1: ~A~%" (reverse (map values g))))
 	(if (not (= ((g 'g1-method) g) 440))
-	    (format #t ";g1-method: ~A~%" ((g 'g1-method) g)))))
+	    (format () ";g1-method: ~A~%" ((g 'g1-method) g)))))
 
     (if (file-exists? "test.snd") (delete-file "test.snd"))
     (set! *clm-srate* 22050)
@@ -44644,7 +44644,7 @@ EDITS: 1
       (let ((hook-id (XtAppAddActionHook 
 		      (car (main-widgets))
 		      (lambda (w data name e p)
-			(format #t "~A ~A ~A ~A ~A~%" w data name e p))
+			(format () "~A ~A ~A ~A ~A~%" w data name e p))
 		      #f)))
 	(XtRemoveActionHook hook-id))
       
@@ -48949,7 +48949,7 @@ EDITS: 1
 (clear-listener)
 (set! (show-listener) #t)
 
-(format #t "~%;all done!~%~A" original-prompt)
+(format () "~%;all done!~%~A" original-prompt)
 
 (set! *print-length* 64)
 (format *stderr* "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
@@ -48990,19 +48990,19 @@ EDITS: 1
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)
     (begin
-      ;(format #t "ls ~A/snd_* | wc~%" original-save-dir)
+      ;(format () "ls ~A/snd_* | wc~%" original-save-dir)
       ;(system (format #f "ls ~A/snd_* | wc" original-save-dir))
       (system (format #f "rm -f ~A/snd_*" original-save-dir))))
 
 (if (file-exists? original-temp-dir)
     (begin
-      ;(format #t "ls ~A/snd_* | wc~%" original-temp-dir)
+      ;(format () "ls ~A/snd_* | wc~%" original-temp-dir)
       ;(system (format #f "ls ~A/snd_* | wc" original-temp-dir))
       (system (format #f "rm -f ~A/snd_*" original-temp-dir))))
 
 (if (file-exists? "/tmp")
     (begin
-      ;(format #t "ls /tmp/snd_* | wc~%")
+      ;(format () "ls /tmp/snd_* | wc~%")
       ;(system "ls /tmp/snd_* | wc")
       (system "rm -f /tmp/snd_*")
       ;(system "ls /tmp/file*.snd | wc")
@@ -49010,7 +49010,7 @@ EDITS: 1
 
 (if (file-exists? "/var/tmp")
     (begin
-      ;(format #t "ls /var/tmp/snd_* | wc~%")
+      ;(format () "ls /var/tmp/snd_* | wc~%")
       ;(system "ls /var/tmp/snd_* | wc")
       (system "rm -f /var/tmp/snd_*")
       ;(system "ls /var/tmp/file*.snd | wc")

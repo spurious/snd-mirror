@@ -296,7 +296,7 @@
 		(else
 		 `(let ((sym (symbol (object->string ',lib))))
 		    (if (not (defined? sym))
-			(format #t "~A not loaded~%" sym)
+			(format () "~A not loaded~%" sym)
 			(symbol->value sym))))))
 	    libs)))
 

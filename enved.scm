@@ -225,6 +225,6 @@
 				 (set! samp (+ samp bufsize))
 				 (>= samp len))))
 		      (res)))
-		(lambda args (format #t ";play-panned error: ~A" args)))
+		(lambda args (format () ";play-panned error: ~A" args)))
 	      (mus-audio-close audio-fd)))))))
 |#

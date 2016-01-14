@@ -663,7 +663,7 @@
 		  (begin
 		    (set! maxerr err)
 		    (set! max-case (/ m n)))))))))
-  (format #t "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))
+  (format () "sin-m*pi/n (~A cases) max err ~A at ~A~%" cases maxerr max-case))
 
 :(sin (/ pi (* 257 17)))
 0.00071906440440859

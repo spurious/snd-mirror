@@ -4,7 +4,7 @@
 (if (provided? 'pure-s7)
     (define (char-ci=? . chars) (apply char=? (map char-upcase chars))))
 
-;(set! (hook-functions *load-hook*) (list (lambda (hook) (format #t "loading ~S~%" (hook 'name)))))
+;(set! (hook-functions *load-hook*) (list (lambda (hook) (format () "loading ~S~%" (hook 'name)))))
 (set! (hook-functions *unbound-variable-hook*) ())
 
 (define scheme-variable-names
@@ -145,7 +145,7 @@
   (if (char=? (str 0) #\|)
       ;; this is a main-index entry
       (let* ((colonpos (or (char-position #\: str) 
-			   (format #t "no : in ~A~%" str)))
+			   (format () "no : in ~A~%" str)))
 	     (line (string-append "<a href=\"" 
 				  (or file "") 
 				  "#"
@@ -161,7 +161,7 @@
       (begin 
        (let ((def-pos (string-position " class=def" str)))
 	 (when def-pos
-	       ;(format #t "str: ~S, def-pos: ~A~%" str def-pos)
+	       ;(format () "str: ~S, def-pos: ~A~%" str def-pos)
 	   (set! str (string-append "<a "
 				    (if (char=? (str (+ def-pos 10)) #\n)
 					(substring str (+ def-pos 10))
@@ -178,7 +178,7 @@
 				       (substring line (+ ipos 14) ispos) 
 				       (substring line (+ ispos 5))))
 	     (if (not line) 
-		 (format #t "<em...> but no </em> for ~A~%" str))))
+		 (format () "<em...> but no </em> for ~A~%" str))))
 	 
 	 (let ((hpos (let ((start (string-position "<h" line)))
 		       (and start
@@ -197,7 +197,7 @@
 					 (substring line (+ hpos 4) hspos) 
 					 (substring line (+ hspos 5))))
 	       (if (not line) 
-		   (format #t "<hn> but no </hn> for ~A~%" str)))))
+		   (format () "<hn> but no </hn> for ~A~%" str)))))
 	 
 	 (letrec ((search-caps ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
 		   (lambda (ln)
@@ -971,18 +971,18 @@
 			(if (not (hash-table-ref ids sym-name))
 			    (hash-table-set! ids sym-name 0)
 			    (if (memq sym-name local-ids)
-				(format #t "~S: id ~S is set twice~%" file sym-name)))
+				(format () "~S: id ~S is set twice~%" file sym-name)))
 			(set! local-ids (cons sym-name local-ids)))))
 		
 		(cond (tpos
 		       (let ((epos (string-position " -->" dline)))
 			 (if (not epos) 
-			     (format #t "<!-- TOPIC but no --> for ~A~%" dline)
+			     (format () "<!-- TOPIC but no --> for ~A~%" dline)
 			     (set! topic (substring dline (+ tpos 11) epos)))))
 		      (compos
 		       (let ((epos (string-position " -->" dline)))
 			 (if (not epos) 
-			     (format #t "<!-- INDEX but no --> for ~A~%" dline)
+			     (format () "<!-- INDEX but no --> for ~A~%" dline)
 			     (when (or (not no-bold)
 				       with-scm)
 			       (set! current-general g)
@@ -993,7 +993,7 @@
 		      (indpos
 		       (let ((epos (string-position " -->" dline)))
 			 (if (not epos) 
-			     (format #t "<!-- main-index but no --> for ~A~%" dline)
+			     (format () "<!-- main-index but no --> for ~A~%" dline)
 			     (when (or (not no-bold)
 				       with-scm)
 			       (set! (names n) (substring dline (+ indpos 16) epos))
@@ -1009,7 +1009,7 @@
 					 (string-position "</em>" dline) 
 					 (string-position "</A>" dline))))
 			   (if (not epos) 
-			       (format #t "<a> but no </a> for ~A~%" dline)
+			       (format () "<a> but no </a> for ~A~%" dline)
 			       (begin
 				 (set! (names n) (string-append (substring dline 0 epos) "</a>"))
 				 (set! (files n) (car file))
@@ -1164,7 +1164,7 @@
 				  "</em>")
 			      )
 		      (if (ind-indexed name) 
-			  (format #t "~A indexed twice~%" (ind-name name)))
+			  (format () "~A indexed twice~%" (ind-name name)))
 		      (set! (ind-indexed name) #t))
 		    (format ofil "~%")))
 
@@ -1183,7 +1183,7 @@
       (do ((i 0 (+ i 1)))
 	  ((= i n))
 	(if (not (ind-indexed (tnames i)))
-	    (format #t "unindexed: ~A (~A)~%" (ind-name (tnames i)) i)))
+	    (format () "unindexed: ~A (~A)~%" (ind-name (tnames i)) i)))
 
       (do ((i 0 (+ i 1)))
 	  ((= i (- n 1)))
@@ -1193,7 +1193,7 @@
 		   (string? (ind-sortby n2))
 		   (string=? (ind-sortby n1) (ind-sortby n2))
 		   (string=? (ind-name n1) (ind-name n2)))
-	      (format #t "duplicated name: ~A (~A ~A)~%" (ind-sortby n1) (ind-name n1) (ind-name n2)))))
+	      (format () "duplicated name: ~A (~A ~A)~%" (ind-sortby n1) (ind-name n1) (ind-name n2)))))
       
       (if with-scm
 	  (begin
@@ -1326,7 +1326,7 @@
 				 in-comment
 				 (string-position " -- " line))))
 		 (when cpos
-		   (format #t "~A[~D]: possible -- in comment: ~A~%" file linectr line))
+		   (format () "~A[~D]: possible -- in comment: ~A~%" file linectr line))
 		 (when opos
 		   ;; open/close html entities
 		   (do ((i opos (or (char-position "<>\"(){}&" line (+ i 1)) len)))
@@ -1337,7 +1337,7 @@
 			  (if (and (not (zero? openctr))
 				   (not (positive? p-quotes))
 				   (not in-comment))
-			      (format #t "~A[~D]: ~A has unclosed <?~%" file linectr line))
+			      (format () "~A[~D]: ~A has unclosed <?~%" file linectr line))
 			  (set! openctr (+ openctr 1))
 			  (if (and (< i (- len 3))
 				   (char=? (line (+ i 1)) #\!)
@@ -1347,13 +1347,13 @@
 				(set! comments (+ comments 1))
 				(if (> comments 1)
 				    (begin 
-				      (format #t "~A[~D]: nested <!--?~%" file linectr)
+				      (format () "~A[~D]: nested <!--?~%" file linectr)
 				      (set! comments (- comments 1))))
 				(set! in-comment #t)))
 			  (if (and (not in-comment)
 				   (< i (- len 1))
 				   (char=? (line (+ i 1)) #\space))
-			      (format #t "~A[~D]: '< ' in ~A?~%" file linectr line))))
+			      (format () "~A[~D]: '< ' in ~A?~%" file linectr line))))
 		       ;; else c != <
 		       
 		       ((#\>)
@@ -1367,12 +1367,12 @@
 				(set! comments (- comments 1))
 				(if (< comments 0)
 				    (begin
-				      (format #t "~A[~D]: extra -->?~%" file linectr)
+				      (format () "~A[~D]: extra -->?~%" file linectr)
 				      (set! comments 0))))
 			      (if (and (not (zero? openctr))
 				       (not (positive? p-quotes))
 				       (not in-comment))
-				  (format #t "~A[~D]: ~A has unmatched >?~%" file linectr line)))
+				  (format () "~A[~D]: ~A has unmatched >?~%" file linectr line)))
 			  (set! openctr 0)
 			  (if (and (not in-comment)
 				   (>= i 2)
@@ -1380,7 +1380,7 @@
 				   (not (char=? (line (- i 2)) #\-))
 				   (< i (- len 1))
 				   (alphanumeric? (line (+ i 1))))
-			      (format #t "~A[~D]: untranslated '>': ~A~%" file linectr line))))
+			      (format () "~A[~D]: untranslated '>': ~A~%" file linectr line))))
 		       ;; else c != < or >
 		       
 		       ((#\()
@@ -1409,7 +1409,7 @@
 				   ((#\&) (not (string=? "&&" (substring line i (min len (+ i 2))))))
 				   ((#\space) (not (string=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
 				   (else #t)))
-			    (format #t "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
+			    (format () "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
 		       
 		       ((#\{) 
 			(set! p-curlys (+ p-curlys 1)))
@@ -1433,12 +1433,12 @@
 					    (let ((closer (string->symbol (substring line (+ start 2) i))))
 					      (if (eq? closer 'TABLE) (set! closer 'table))
 					      (cond ((memq closer '(center big font))
-						     (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
+						     (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
 						    ((eq? closer 'script)
 						     (set! scripting #f))
 						    ((not scripting)
 						     (if (not (memq closer commands))
-							 (format #t "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+							 (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
 								 file linectr closer line (+ start 2) i commands)
 							 
 							 (if (memq closer '(ul tr td table small sub blockquote p details summary
@@ -1446,26 +1446,26 @@
 									       em head h4 sup map smaller bigger th tbody div))
 							     (begin
 							       (if (not (eq? (car commands) closer))
-								   (format #t "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+								   (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
 							       
 							       (if (memq closer '(p td pre))
 								   (begin
 								     (if (odd? p-quotes)
-									 (format #t "~A[~D]: unmatched quote~%" file linectr))
+									 (format () "~A[~D]: unmatched quote~%" file linectr))
 								     (set! p-quotes 0)
 								     (cond ((= p-curlys 1) 
-									    (format #t "~A[~D]: extra '{'~%" file linectr))
+									    (format () "~A[~D]: extra '{'~%" file linectr))
 									   ((= p-curlys -1) 
-									    (format #t "~A[~D]: extra '}'~%" file linectr))
+									    (format () "~A[~D]: extra '}'~%" file linectr))
 									   ((not (= p-curlys 0)) 
-									    (format #t "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
+									    (format () "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
 								     (set! p-curlys 0)
 								     (cond ((= p-parens 1) 
-									    (format #t "~A[~D]: extra '('~%" file linectr))
+									    (format () "~A[~D]: extra '('~%" file linectr))
 									   ((= p-parens -1) 
-									    (format #t "~A[~D]: extra ')'~%" file linectr))
+									    (format () "~A[~D]: extra ')'~%" file linectr))
 									   ((not (= p-parens 0)) 
-									    (format #t "~A[~D]: parens: ~D~%" file linectr p-parens)))
+									    (format () "~A[~D]: parens: ~D~%" file linectr p-parens)))
 								     (set! p-parens 0)))
 							       
 							       (set! commands (remove-one closer commands))
@@ -1478,12 +1478,12 @@
 									       (begin
 										 (set! warned #t)
 										 (set! commands (remove-all 'tr commands))
-										 (format #t "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+										 (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
 									   (if (memq 'td commands)
 									       (begin
 										 (set! warned #t)
 										 (set! commands (remove-all 'td commands))
-										 (format #t "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
+										 (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
 							     (set! commands (remove-all closer commands))))))
 					      (set! closing #f))
 					    
@@ -1492,7 +1492,7 @@
 						(let ((opener (string->symbol (substring line (+ start 1) i))))
 						  (if (eq? opener 'TABLE) (set! opener 'table))
 						  (cond ((memq opener '(center big font))
-							 (format #t "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
+							 (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
 						      
 							((eq? opener 'script)
 							 (set! scripting #t))
@@ -1502,57 +1502,57 @@
 								(alt-pos (string-position "alt=" rest-line))
 								(src-pos (string-position "src=" rest-line)))
 							   (if (not alt-pos)
-							       (format #t "~A[~D]: img but no alt: ~A~%" file linectr line))
+							       (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
 							   (if src-pos
 							       (let ((png-pos (string-position ".png" rest-line)))
 								 (if png-pos
 								     (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
 								       (if (not (file-exists? file))
-									   (format #t "~A[~D]: src not found: ~S~%" file linectr file))))))))
+									   (format () "~A[~D]: src not found: ~S~%" file linectr file))))))))
 							
 							((and (not (memq opener '(br spacer li hr area 
 										     ul tr td table small sub blockquote)))
 							      (memq opener commands)
 							      (= p-quotes 0))
-							 (format #t "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands))
+							 (format () "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands))
 							(else
 							 (case opener
 							   ((td)
 							    (if (not (eq? 'tr (car commands)))
-								(format #t "~A[~D]: td without tr?~%" file linectr))
+								(format () "~A[~D]: td without tr?~%" file linectr))
 							    (if (and (not warned)
 								     (memq 'td commands)
 								     (< (count-table commands) 2))
 								(begin
 								  (set! warned #t)
 								  (set! commands (remove-one 'td commands))
-								  (format #t "~A[~D]: unclosed td at table~%" file linectr))))
+								  (format () "~A[~D]: unclosed td at table~%" file linectr))))
 							   ((tr)
 							    (if (and (not (eq? (car commands) 'table))
 								     (not (eq? (cadr commands) 'table)))
-								(format #t "~A[~D]: tr without table?~%" file linectr))
+								(format () "~A[~D]: tr without table?~%" file linectr))
 							    (if (and (not warned)
 								     (memq 'tr commands)
 								     (< (count-table commands) 2))
 								(begin
 								  (set! warned #t)
 								  (set! commands (remove-one 'tr commands))
-								  (format #t "~A[~D]: unclosed tr at table~%" file linectr))))
+								  (format () "~A[~D]: unclosed tr at table~%" file linectr))))
 							   ((p)
 							    (if (eq? (car commands) 'table)
-								(format #t "~A[~D]: unclosed table?~%" file linectr)))
+								(format () "~A[~D]: unclosed table?~%" file linectr)))
 							   
 							   ((pre br table hr img ul)
 							    (if (memq 'p commands)
-								(format #t "~A[~D]: ~A within <p>?~%" file linectr opener)))
+								(format () "~A[~D]: ~A within <p>?~%" file linectr opener)))
 							   ((li)
 							    (if (not (memq 'ul commands))
-								(format #t "~A[~D]: li without ul~%" file linectr)))
+								(format () "~A[~D]: li without ul~%" file linectr)))
 							   ((small)
 							    (if (memq (car commands) '(pre code))
-								(format #t "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
+								(format () "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
 							   ((--)
-							    (format #t "~A[~D]: <-- missing !?~%" file linectr)))
+							    (format () "~A[~D]: <-- missing !?~%" file linectr)))
 							 (if (not (memq opener '(br meta spacer li hr area)))
 							     (set! commands (cons opener commands))))))))
 					;; end if closing
@@ -1562,7 +1562,7 @@
 				  (if start
 				      (if (and (not scripting)
 					       (not (positive? p-quotes)))
-					  (format #t "~A[~D]: nested < ~A~%" file linectr line))
+					  (format () "~A[~D]: nested < ~A~%" file linectr line))
 				      (set! start i)))
 				 ((#\/)
 				  (if (and start (= start (- i 1)))
@@ -1586,7 +1586,7 @@
 				       (string-position "</A>" dline))))
 			 ;;actually should look for close double quote
 			 (if (not epos) 
-			     (begin (format #t "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline) (abort))
+			     (begin (format () "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline) (abort))
 			     (let ((min-epos (char-position #\space dline)))
 			       (set! epos (char-position #\> dline))
 			       (if (and (number? min-epos)
@@ -1595,7 +1595,7 @@
 			       
 			       (let ((new-name (string-append file "#" (substring dline 0 (- epos 1)))))
 				 (if (hash-table-ref names new-name)
-				     (format #t "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
+				     (format () "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
 				 (hash-table-set! names new-name file))
 			       
 			       (set! name (+ name 1))
@@ -1609,12 +1609,12 @@
 			  (pos-len 7))
 		     (do ()
 			 ((not pos))
-		       ;; (format #t "~A dline: ~A~%" pos dline)
+		       ;; (format () "~A dline: ~A~%" pos dline)
 		       (if (zero? (length dline)) (exit))
 		       (set! dline (substring dline (+ pos pos-len)))
 		       (let ((epos (char-position #\> dline)))
 			 (if (not epos) 
-			     (format #t "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
+			     (format () "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
 			     (let ((cur-href #f))
 			       (set! epos (char-position #\" dline 1))
 			       (if (char=? (dline 0) #\#)
@@ -1627,7 +1627,7 @@
 						(not (file-exists? cur-href))
 						(not (string=? (substring cur-href 0 4) "ftp:"))
 						(not (string=? (substring cur-href 0 5) "http:")))
-					   (format #t "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
+					   (format () "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
 			       
 			       ;; cur-href here is the full link: sndclm.html#make-filetosample for example
 			       ;;   it can also be a bare file name
@@ -1638,7 +1638,7 @@
 						 (hash-table-ref ids name))))
 				 (if name 
 				     (if (not data)
-					 (format #t ";can't find id ~A~%" name)
+					 (format () ";can't find id ~A~%" name)
 					 (hash-table-set! ids name (+ data 1)))))
 			       
 			       (set! href (+ href 1))
@@ -1647,16 +1647,16 @@
 			       (set! pos-len 7))))))))
 	       )
 	     (if (pair? commands) 
-		 (format #t "open directives at end of ~A: ~A~%" file commands))))))
+		 (format () "open directives at end of ~A: ~A~%" file commands))))))
      files)
     ;; end file scan
     
-    (format #t "found ~D names and ~D references~%" name href)
+    (format () "found ~D names and ~D references~%" name href)
 
     (for-each
      (lambda (data)
        (if (zero? (cdr data))
-	   (format #t ";~A unref'd~%" (car data))))
+	   (format () ";~A unref'd~%" (car data))))
      ids)
     ))
 

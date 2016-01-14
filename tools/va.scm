@@ -43,7 +43,7 @@
 		 (if (and ok
 			  (not (= precount count 0))
 			  (not (= count (- precount 1))))
-		     (format #t "calloc ~D->~D: ~A~%" precount count line))
+		     (format () "calloc ~D->~D: ~A~%" precount count line))
 		 (loop (read-line file #t))))))))
    (list "calloc" "malloc" "realloc"))
   
@@ -77,7 +77,7 @@
 							 (or (string-ci=? "pango_" (substring name 0 6))
 							     (string-ci=? "cairo_" (substring name 0 6)))))
 						(not (defined? (string->symbol name) *gtk*)))
-					   (format #t "~A (~A[~D]) is not defined~%" name filename line-number))))
+					   (format () "~A (~A[~D]) is not defined~%" name filename line-number))))
 				 (if (and (not (char=? chr #\_))
 					  (not (char-alphabetic? chr))
 					  (not (char-numeric? chr)))
@@ -209,11 +209,10 @@
 			       (if start
 				   (let* ((name (substring line start i))
 					  (name-len (length name)))
-				     ;(format #t "~C: ~A~%" chr name)
 				     (if (and (> name-len 0)
 					      (char-alphabetic? (name 0))
 					      (string=? name last-name))
-					 (format #t ";~A[~D]: ~A repeats in ~A~%" filename line-number name line))
+					 (format () ";~A[~D]: ~A repeats in ~A~%" filename line-number name line))
 				     (set! last-name name)
 				     (set! start #f))))))))
 		 (loop (read-line file #t)))))))))
@@ -231,7 +230,7 @@
 
 
 #|
-(format #t "--------------------------------------------------------------------------------~%")
+(format () "--------------------------------------------------------------------------------~%")
 (let ((png-files (directory->list "/home/bil/cl/pix"))
       (baddies ()))
   (for-each
@@ -242,9 +241,9 @@
    png-files)
   (if (not (null? baddies))
       (begin
-	(format #t "--------------------------------------------------------------------------------~%")
-	(format #t ";unused pix/png: ~{~A ~}~%" baddies)
-	(format #t "--------------------------------------------------------------------------------~%"))))
+	(format () "--------------------------------------------------------------------------------~%")
+	(format () ";unused pix/png: ~{~A ~}~%" baddies)
+	(format () "--------------------------------------------------------------------------------~%"))))
 |#
 
 #|

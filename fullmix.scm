@@ -72,7 +72,7 @@
 						 (if (env? outn) 
 						     outn
 						     (make-env outn :duration dur))))
-				  (format #t "unknown element in matrix: ~A" outn))))))))
+				  (format () "unknown element in matrix: ~A" outn))))))))
 	      (do ((inp 0 (+ inp 1))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)

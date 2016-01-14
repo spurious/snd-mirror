@@ -83,7 +83,7 @@
 			    (/ (- out-chans (* local-gain out-chans))
 			       (- (* out-chans out-chans) out-chans))))
       (if verbose
-	  (format #t ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
+	  (format () ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
       (if (and (> in-chans 1)
 	       (not (= in-chans out-chans)))
 	  (error "input must be mono or input channels must equal output channels"))

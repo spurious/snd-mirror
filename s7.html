@@ -850,9 +850,9 @@ implement the standard old-time macros.
 &gt; (define-macro (<em class=def id="trace">trace</em> f)
     `(define ,f 
        (apply lambda 'args 
-         `((format #t "(~A ~{~A~^ ~}) -&gt; " ',',f args)
+         `((format () "(~A ~{~A~^ ~}) -&gt; " ',',f args)
            (let ((val (apply ,,f args))) 
-             (format #t "~A~%" val) 
+             (format () "~A~%" val) 
              val)))))
 <em class="gray">trace</em>
 &gt; (trace abs)
@@ -2645,7 +2645,7 @@ such as abs, we need to put it back to its original form:
       (for-each                       ; see if any built-in functions were stepped on
        (lambda (sym)
 	 (unless (assoc (car sym) e)
-	   (format #t "~S clobbered ~A~%" file (car sym))
+	   (format () "~S clobbered ~A~%" file (car sym))
 	   (apply set! (car sym) (list (cdr (assoc (car sym) new-e))))))
        new-e))))
 
@@ -3995,13 +3995,13 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 		   (list (car source)
 			 (cadr source)
 			 (caddr source)
-			 `(format #t "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (curlet)))
+			 `(format () "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (curlet)))
 		   (cdddr source))
 		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
 		  (append 
 		   (list (car source)
 			 (cadr source)
-			 `(format #t "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
+			 `(format () "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
 		    (proc-walk (cdr source))))
@@ -4014,15 +4014,15 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 	       (let ((,result #&lt;undefined&gt;))
 		 (dynamic-wind
 		     (lambda ()       ; upon entry, show procedure name and args
-		       (format #t "(~A~{ ~A~})~%" 
+		       (format () "(~A~{ ~A~})~%" 
                                ',proc 
 			       (outlet (outlet (curlet)))))
 		     (lambda ()
 		       (set! ,result (,new-body ,@(cadr orig))))
 		     (lambda ()       ; at exit, show result
 		       (if (eq? ,result #&lt;undefined&gt;)
-			   (format #t "  ~A returns early~%" ',proc)
-			   (format #t "  ~A returns ~A~%" ',proc ,result))))))))
+			   (format () "  ~A returns early~%" ',proc)
+			   (format () "  ~A returns ~A~%" ',proc ,result))))))))
 
       `(define ,proc ,new-source))))
 
@@ -4049,7 +4049,7 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
     `(let ,(map (lambda (var/val)
 		  `(,(car var/val) 
 		    (let ((,temp-symbol ,(cadr var/val))) 
-		      (format #t ";~S: ~S -&gt; ~S~%" 
+		      (format () ";~S: ~S -&gt; ~S~%" 
 			      ',(car var/val) 
 			      ',(cadr var/val) 
 			      ,temp-symbol)
@@ -4061,7 +4061,7 @@ its bindings (this is borrowed from "nuntius" at reddit lisp):
 
 (define-macro (print-let bindings . body)
   `(let ,bindings 
-     (format #t "~{;~A~%~}" (curlet))
+     (format () "~{;~A~%~}" (curlet))
      ,@body))	      
 </pre>
 
@@ -4915,7 +4915,7 @@ and <em class=def id="pairfilename">pair-filename</em>.
 <pre class="indented">
 (set! (hook-functions *load-hook*)
        (list (lambda (hook) 
-               (format #t "loading ~S...~%" (hook 'name)))))
+               (format () "loading ~S...~%" (hook 'name)))))
 
 (set! (hook-functions *load-hook*) 
       (cons (lambda (hook) 
@@ -5252,9 +5252,9 @@ Here we scan the symbol table looking for any function that doesn't have documen
 	          (let ((max-args (cdr (arity val))))
 	            (if (or (&gt; max-args 4)
 	       	            (memq sym '(exit abort)))
-		        (format #t ";skip ~S for now~%" sym)
+		        (format () ";skip ~S for now~%" sym)
 		        (begin
-		          (format #t ";whack on ~S...~%" sym)
+		          (format () ";whack on ~S...~%" sym)
 		          (autotest val () max-args))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
@@ -5297,7 +5297,7 @@ The function takes one argument, the environment in which loads and evals should
       (do ((i 0 (+ i 1)))
           ((= i call))
         (if (&gt; (cdr (calls i)) 0)
-	    (format #t "~S: ~S~%" (car (calls i)) (cdr (calls i))))))))
+	    (format () "~S: ~S~%" (car (calls i)) (cdr (calls i))))))))
 
 &gt; (profile (lambda (e) 
              (load "lint.scm" e) 
@@ -6140,7 +6140,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 </p>
 
 <pre class="indented">
-(let ((ctr 0)) #1=(begin (format #t "~D " ctr) (set! ctr (+ ctr 1)) (if (&lt; ctr 4) #1# (newline))))
+(let ((ctr 0)) #1=(begin (format () "~D " ctr) (set! ctr (+ ctr 1)) (if (&lt; ctr 4) #1# (newline))))
 </pre>
 
 <p>which prints "0 1 2 3" and a newline.
@@ -6166,7 +6166,7 @@ sequences in its argument, or nil.
 <pre class="indented">
 (define (for-each-permutation func vals)
   ;; apply func to every permutation of vals: 
-  ;;   (for-each-permutation (lambda args (format #t "~{~A~^ ~}~%" args)) '(1 2 3))
+  ;;   (for-each-permutation (lambda args (format () "~{~A~^ ~}~%" args)) '(1 2 3))
   (define (pinner cur nvals len)
     (if (= len 1)
         (apply func (car nvals) cur)
@@ -7862,7 +7862,7 @@ int main(int argc, char **argv)
 }
 
 /*
- *    &gt; (do ((i 0 (+ i 1))) ((= i -1)) (format #t "~D " i) (sleep))
+ *    &gt; (do ((i 0 (+ i 1))) ((= i -1)) (format () "~D " i) (sleep))
  *      ;;; now type C-C to break out of this loop
  *    0 1 2 ^Cinterrupted!
  *      ;;; call the continuation to continue from where we were interrupted

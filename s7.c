@@ -46419,14 +46419,17 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	  bool use_format = false;
 
 	  /* it's possible that the error string is just a string -- not intended for format */
-	  carstr = string_value(car(info));
-	  len = string_length(car(info));
-	  for (i = 0; i < len; i++)
-	    if (carstr[i] == '~')
-	      {
-		use_format = true;
-		break;
-	      }
+	  if (type != sc->FORMAT_ERROR)          /* avoid an infinite loop of format errors */
+	    {
+	      carstr = string_value(car(info));
+	      len = string_length(car(info));
+	      for (i = 0; i < len; i++)
+		if (carstr[i] == '~')
+		  {
+		    use_format = true;
+		    break;
+		  }
+	    }
 
 	  if (use_format)
 	    {
@@ -46484,6 +46487,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	{
 	  const char *call_name;
 	  call_name = sc->s7_call_name;
+
 	  /* sc->s7_call_name = NULL; */
 	  if (call_name)
 	    {
@@ -46544,7 +46548,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       /* stack_reset(sc); */
       sc->op = OP_ERROR_QUIT;
     }
-  
+
   if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_JUMP);
   return(type);
 }
@@ -48303,6 +48307,11 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  z = func(sc, cdr(val1)); /* can this contain multiple-values? */
 	  if (z != sc->NO_VALUE)
 	    car(val) = cons(sc, z, car(val));
+
+	  /* to mimic map values handling elsewhere:
+	   *   ((lambda args (format *stderr* "~A~%" (map values args))) (values)):   ()
+	   *   ((lambda args (format *stderr* "~A~%" (map values args))) (values #<unspecified>)): #<unspecified> etc
+	   */
 	}
     }
 
@@ -48599,6 +48608,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
   /* this is not maximally efficient, but it's not important:
    *   we've hit the rare special case where ({apply_values} ())) needs to be ignored
    *   in the splicing process (i.e. the arglist acts as if the thing never happened)
+   *   ({list} ({apply_values} ())) -> (), also ({list} ({apply_values})) -> ()
    */
   px = sc->NIL;
   for (x = args, y = args; is_pair(y); y = cdr(y))
@@ -74108,8 +74118,11 @@ int main(int argc, char **argv)
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
+ *   need some semi-automated approach here
  * profiler -- use file->line+code counted by interrupt [smsg]
  *   get the time.h and sys/time.h timer functions/struct/enums in libc.scm, then see if this can be done in scheme
+ *   also need cur_code from scheme: (*s7* 'history)?
+ * ~N| in format? also ~N* I guess
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74122,11 +74135,4 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
- *
- * should strings follow print-length? [currently vector hash-table let do, pairs and c-objects don't, but c-objects can if desired]
- *
- * it should be possible to mimic map values handling elsewhere but:
- *   ((lambda args (format *stderr* "~A~%" args)) (values)):                (#<unspecified>) ; () or error? or #<no-value>??
- *   ((lambda args (format *stderr* "~A~%" args)) (values #<unspecified>)): (#<unspecified>)
- *   ((lambda args (format *stderr* "~A~%" args)) (values 1 2 3)):          (1 2 3)
  */

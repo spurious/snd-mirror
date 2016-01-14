@@ -565,7 +565,8 @@
 	(for-each
 	 (lambda (q)
 	   (let ((dx (magnitude (poly-as-vector-eval v1 q))))
-	     (if (> dx poly-roots-epsilon) (format #t ";poly.scm 502: (poly-roots ~A) numerical trouble (polynomial root is not very good): ~A at ~A: ~A" p1 v1 q dx))))
+	     (if (> dx poly-roots-epsilon) 
+		 (format () ";poly.scm 502: (poly-roots ~A) numerical trouble (polynomial root is not very good): ~A at ~A: ~A" p1 v1 q dx))))
 	 roots)
 	roots))))
 

@@ -256,7 +256,7 @@
 	   (*clm-notehook* (symbol->string ',name) ,@targs))
        (let ((start (get-internal-real-time)))
 	 ,@body
-	 (format #t "~A: ~A~%" (- (get-internal-real-time) start) ,name)))
+	 (format () "~A: ~A~%" (- (get-internal-real-time) start) ,name)))
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))

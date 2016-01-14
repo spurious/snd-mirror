@@ -1053,13 +1053,10 @@
   (define (same a0 b0 c0 a1 b1 c1)
     (and (= a0 a1) (= b0 b1) (= c0 c1)))
   
-  (if (same x0 y0 z0 px py pz)
-      (list x0 y0 z0)
-      (if (same x1 y1 z1 px py pz)
-	  (list x1 y1 z1)
-	  (if (same x0 y0 z0 x1 y1 z1)
-	      (list x0 y0 z0)
-	      (let* ((xm0 (- x1 x0))
+  (cond ((same x0 y0 z0 px py pz) (list x0 y0 z0))
+	((same x1 y1 z1 px py pz) (list x1 y1 z1))
+	((same x0 y0 z0 x1 y1 z1) (list x0 y0 z0))
+	(else (let* ((xm0 (- x1 x0))
 		     (ym0 (- y1 y0))
 		     (zm0 (- z1 z0))
 		     (xm1 (- px x0))
@@ -1070,7 +1067,7 @@
 		     (ratio (/ p l)))
 		(list (+ x0 (* xm0 ratio))
 		      (+ y0 (* ym0 ratio))
-		      (+ z0 (* zm0 ratio))))))))
+		      (+ z0 (* zm0 ratio)))))))
 
 ;;; Bezier curve fitting auxilliary functions
 
@@ -2086,7 +2083,7 @@
       (if *output*
 	  (set! out-channels (channels *output*))
 	  (begin
-	    (format #t "WARNING: no *output*?  Will set out-channels to 2~%")
+	    (format () "WARNING: no *output*?  Will set out-channels to 2~%")
 	    (set! out-channels 2))))
   (if (not rev-channels)
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
@@ -2432,7 +2429,7 @@
 	    (if (not (= time prev-time))
 		(let ((speed (/ (- dist prev-dist) (- time prev-time))))
 		  (if (> speed speed-limit)
-		      (format #t "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
+		      (format () "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
 	    (if inside
 		;; still in the same group
 		(begin
@@ -2509,7 +2506,7 @@
 						(if inside
 						    (push-gains group gains di ti 5)
 						    ;; how did we get here?
-						    (format #t "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
+						    (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
 				(if (= (length edge) 1)
 				    ;; groups share only one point... for now a warning
 				    ;; we should calculate two additional interpolated
@@ -2525,13 +2522,13 @@
 										(group-vertices prev-group)))
 						   (edge2 (equalp-intersection (group-vertices int-group)
 										(group-vertices group))))
-					       (format #t "e1=~A; e2=~A~%~%" edge1 edge2))))
+					       (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
 				       (speaker-config-groups speakers))
-				      (format #t "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+				      (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
 				    
 				    ;; groups don't share points... how did we get here?
 				    (if (= (length edge) 0)
-					(format #t "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
+					(format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
 						(group-id prev-group) (group-speakers prev-group)
 						(group-id group) (group-speakers group))))))
 			
@@ -3061,7 +3058,7 @@
     ;;
     ;; this does not work quite right but the error leads to a longer
     ;; run with zeroed samples at the end so it should be fine
-    ; (format #t "doppler: ~S~%" doppler)
+    ; (format () "doppler: ~S~%" doppler)
 
     (set! real-dur (* duration (if (null? doppler) 1.0 (src-duration (reverse doppler)))))
 
@@ -3109,7 +3106,7 @@
     ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
     (if (<= real-dur 0.0)
 	(begin
-	  (format #t ";;; ERROR: resetting real duration to 0.1 (was ~A)~%" real-dur)
+	  (format () ";;; ERROR: resetting real duration to 0.1 (was ~A)~%" real-dur)
 	(set! real-dur 0.1)))
 
     (list 

@@ -658,7 +658,7 @@
      'fnc)))
 
 (define (no-way str arg)
-  (format #t str arg))
+  (format () str arg))
 
 
 (define-macro (make-fnc vname)
@@ -691,7 +691,7 @@
 	 (let ((name (cadr-str data))
 	       (args (caddr-str data)))
 	   (if (hash-table-ref names name)
-	       (format #t "~A: ~A ~A~%" ',cfnc name data)
+	       (format () "~A: ~A ~A~%" ',cfnc name data)
 	       (let ((type (car-str data)))
 		 (if (not (member type all-types))
 		     (begin
@@ -705,7 +705,7 @@
 
        (define (,strfnc name)            ; CSTR-2.12
 	 (if (assoc name ,names)
-	     (format #t "~A ~A~%" name ',strfnc)
+	     (format () "~A ~A~%" name ',strfnc)
 	     (begin
 	       (set! ,strings (cons name ,strings))
 	       (set! ,names (cons (cons name 'string) ,names)))))
@@ -715,21 +715,21 @@
 	 (if (and type (not (assoc type direct-types)))
 	     (format *stderr* "could be direct int: ~S (~S)~%" type name))
 	 (if (hash-table-ref names name)
-	     (format #t "~A ~A~%" name ',intfnc)
+	     (format () "~A ~A~%" name ',intfnc)
 	     (begin
 	       (set! ,ints (cons name ,ints))
 	       (hash-table-set! names name 'int))))
 
        (define (,castfnc name type)      ; CCAST-2.12
 	 (if (hash-table-ref names name)
-	     (format #t "~A ~A~%" name ',castfnc)
+	     (format () "~A ~A~%" name ',castfnc)
 	     (begin
 	       (set! ,casts (cons (list name type) ,casts))
 	       (hash-table-set! names name 'def))))
 
        (define (,chkfnc name type)       ; CCHK-2.12
 	 (if (hash-table-ref names name)
-	     (format #t "~A ~A~%" name ',chkfnc)
+	     (format () "~A ~A~%" name ',chkfnc)
 	     (begin
 	       (set! ,checks (cons (list name type) ,checks))
 	       (hash-table-set! names name 'def))))
@@ -2930,13 +2930,13 @@
 (for-each
  (lambda (type)
    (if (not (assoc type direct-types))
-       (format #t ";not direct: ~A~%" type)))
+       (format () ";not direct: ~A~%" type)))
  declared-types)
 
 (for-each
  (lambda (v)
    (if (not (member (car v) declared-types))
-       (format #t "~A " (car v))))
+       (format () "~A " (car v))))
  direct-types)
 |#
 

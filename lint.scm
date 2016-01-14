@@ -75,7 +75,7 @@
 	      (hash-table-set! ht op #t))
 	    '(* + - / < <= = > >= 
 	      abs acos acosh and angle append aritable? arity ash asin asinh assoc assq assv atan atanh 
-	      begin boolean=? boolean? byte-vector byte-vector?
+	      begin boolean? byte-vector byte-vector?
 	      caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr cadr
 	      call-with-input-from-string call-with-input-from-file
 	      c-pointer c-pointer? c-object? call-with-exit car case catch cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr
@@ -106,11 +106,11 @@
 	      s7-version sequence? sin sinh sqrt stacktrace string string->list string->number string->symbol string-append 
 	      string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
-	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol=? symbol?
+	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
 	      tan tanh truncate
 	      unless
 	      vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
-	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
+	      when with-baffle with-let with-input-from-file with-input-from-stringwith-output-to-string
 	      zero?))
 	   ;; do not include file-exists? or directory?
 	   ;; should this include peek-char or unlet ?
@@ -147,8 +147,8 @@
 				(lambda (op)
 				  (set! (h op) #t))
 				'(= / max min < > <= >= - quotient remainder modulo and or
-				  string=? string<=? string>=? string<? string>?
-				  char=? char<=? char>=? char<? char>?
+				  string=? string<=? string>=? string<? string>? string-ci=? string-ci<=? string-ci>=? string-ci<? string-ci>?
+				  char=? char<=? char>=? char<? char>? char-ci=? char-ci<=? char-ci>=? char-ci<? char-ci>?
 				  boolean=? symbol=?))
 			       h))
 	
@@ -157,8 +157,8 @@
 				  (lambda (op)
 				    (set! (h op) #t))
 				  '(= max min < > <= >= and or
-				    string=? string<=? string>=? string<? string>?
-				    char=? char<=? char>=? char<? char>?
+				    string=? string<=? string>=? string<? string>? string-ci=? string-ci<=? string-ci>=? string-ci<? string-ci>?
+				    char=? char<=? char>=? char<? char>? char-ci=? char-ci<=? char-ci>=? char-ci<? char-ci>?
 				    boolean=? symbol=?))
 				 h))
 	
@@ -182,7 +182,7 @@
 				  #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
 			       chars))
 	
-	(selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number?))
+	(selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?))
 	(outport #t)
 	(loaded-files #f)
 	(globals #f)
@@ -193,7 +193,8 @@
 	(last-simplify-numeric-line-number -1)
 	(last-if-line-number -1)
 	(last-checker-line-number -1)
-	(line-number -1))
+	(line-number -1)
+	(lambda-marker '[lambda]))
     
     (set! *e* (curlet))
 
@@ -205,7 +206,6 @@
     (define var-set (dilambda (lambda (v) (let-ref (cdr v) 'set)) (lambda (v x) (let-set! (cdr v) 'set x))))
     (define var-type (dilambda (lambda (v) (let-ref (cdr v) 'type)) (lambda (v x) (let-set! (cdr v) 'type x))))
     (define var-value (dilambda (lambda (v) (let-ref (cdr v) 'value)) (lambda (v x) (let-set! (cdr v) 'value x))))
-    
     (define var-ftype (dilambda (lambda (v) (let-ref (cdr v) 'ftype)) (lambda (v x) (let-set! (cdr v) 'ftype x))))
     (define var-side-effect (dilambda (lambda (v) (let-ref (cdr v) 'side-effect)) (lambda (v x) (let-set! (cdr v) 'side-effect x))))
     (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
@@ -635,7 +635,8 @@
 		((cond)
 		 (letrec ((cond-effect? (lambda (f e)
 					  (and (pair? f)
-					       (or (any? (lambda (ff) (side-effect? ff e)) (car f))
+					       (or (and (pair? (car f))
+							(any? (lambda (ff) (side-effect? ff e)) (car f)))
 						   (cond-effect? (cdr f) e))))))
 		   (or (not (pair? (cadr form)))
 		       (cond-effect? (cdr form) env))))
@@ -1077,9 +1078,9 @@
 					     (equal? (cadr a) (cadr b))
 					     (case (car a)
 					       ((complex?)  (memq (car b) '(number? real? rational? integer? even? odd? 
-										    positive? negative? zero? exact? inexact?)))
+									    positive? negative? zero? exact? inexact?)))
 					       ((number?)   (memq (car b) '(complex? real? rational? integer? even? odd? 
-										     positive? negative? zero? exact? inexact?)))
+									    positive? negative? zero? exact? inexact?)))
 					       ((real?)     (memq (car b) '(rational? integer? even? odd? positive? negative? exact? inexact?)))
 					       ((rational?) (memq (car b) '(integer? even? odd?)))
 					       ((integer?)  (memq (car b) '(even? odd?)))
@@ -1110,10 +1111,10 @@
 	  ;; these accept only the given type and can return a boolean (so their value in a boolean expression is not known in advance)
 	  (define (number-op? x) (memq x '(= < > <= >= even? odd? positive? negative? zero?)))
 	  (define (char-op? x)   (memq x '(char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=? 
-						  char-alphabetic? char-numeric? char-whitespace? char-lower-case? char-upper-case?)))
+					   char-alphabetic? char-numeric? char-whitespace? char-lower-case? char-upper-case?)))
 	  (define (list-op? x)   (memq x '(caaaar caaadr caaar caadar caaddr caadr caar cadaar cadadr cadar caddar cadddr caddr 
-						  cadr car cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr cddar cdddar 
-						  cddddr cdddr cddr cdr list-ref)))
+					   cadr car cdaaar cdaadr cdaar cdadar cdaddr cdadr cdar cddaar cddadr cddar cdddar 
+					   cddddr cdddr cddr cdr list-ref)))
 	  (define (string-op? x) (memq x '(string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))
 	  
 	  (case a
@@ -2378,7 +2379,7 @@
 			     (and (pair? x) 
 				  (eq? (car x) 'char->integer))))
 		       (cdr form)))
-	  (lint-format "perhaps ~A" name 
+	  (lint-format "perhaps ~A" name
 		       (lists->string form
 				      `(,(case op ((=) 'char=?) ((>) 'char>?) ((<) 'char<?) ((>=) 'char>=?) (else 'char<=?))
 					,@(map (lambda (arg)
@@ -2532,16 +2533,7 @@
       ;;   pp sketch mode would be useful, and truncate at right margin
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
       ;;
-      ;;  save-session-to-file (line 153): port appears to be unused: (call-with-output-file f (lambda (port) (write s f)))
-      ;;   it's also a type error
-      ;;
-      ;; to find local-reducible vars, number binding points incrementally, keep as _let_ or something in every var list
-      ;;   if ref|set, mark via min(cur, _let_) 
-      ;;   at end, check cur _let_ against ref/set -- if higher, it's localizable
-      ;;   (need to put off pushnew until bindings read in let/first of let*/do inits etc)+do-step=ref at new level
-      ;; flag redef at same level? 
-      ;;
-      ;; 254/45
+      ;; 255/40
 
       (case head
 	
@@ -2931,7 +2923,7 @@
 	   (if (symbol? return)
 	       (let ((body (cddadr form)))
 		 (if (not (tree-member return body))
-		     (lint-format "exit-function appears to be unused: ~A" name (truncated-list->string form)))))))
+		     (lint-format "exit-function ~A appears to be unused: ~A" name return (truncated-list->string form)))))))
 	
 	;; ----------------
 	((call/cc call-with-current-continuation)
@@ -3901,7 +3893,7 @@
 			  (larg (and (pair? (cadr func))
 				     (caadr func))))
 		     (when (and (symbol? larg)
-				(null? (cdadr func)) ; just one arg for now
+				(null? (cdadr func)) ; just one arg (one sequence to for-each) for now
 				(every? (lambda (x)
 					  (and (pair? x)
 					       (memq (car x) '(display write newline write-char write-string))
@@ -4827,19 +4819,23 @@
 		      (if (not (side-effect? f env))
 			  (lint-format "this could be omitted: ~A" name (truncated-list->string f))
 
-			  (if (and (pair? f)
-				   (eq? (car f) 'do)) ; other syntactic forms almost never happen in this context
-			      (let ((returned (if (and (pair? (cdr f))
-						       (pair? (cddr f)))
-						  (let ((end+res (caddr f)))
-						    (if (pair? (cdr end+res))
-							(list-ref (cdr end+res) (- (length end+res) 2)))))))
-				(if (and (not (eq? returned #<unspecified>))
-					 (or (not (pair? returned))
-					     (not (side-effect? returned env))))
-				    (lint-format "~A: result ~A is not used" name 
-						 (truncated-list->string f) 
-						 (truncated-list->string returned)))))))
+			  (if (pair? f)
+			      (if (eq? (car f) 'do) ; other syntactic forms almost never happen in this context
+				  (let ((returned (if (and (pair? (cdr f))
+							   (pair? (cddr f)))
+						      (let ((end+res (caddr f)))
+							(if (pair? (cdr end+res))
+							    (list-ref (cdr end+res) (- (length end+res) 2)))))))
+				    (if (and (not (eq? returned #<unspecified>))
+					     (or (not (pair? returned))
+						 (not (side-effect? returned env))))
+					(lint-format "~A: result ~A is not used" name 
+						     (truncated-list->string f) 
+						     (truncated-list->string returned))))
+				  (if (and (eq? (car f) 'format)
+					   (pair? (cdr f))
+					   (eq? (cadr f) #t))
+				      (lint-format "perhaps use () with format since the string value is discarded:~%    ~A" name `(format () ,@(cddr f))))))))
 		    
 		    ;; here f is the last form in the body
 		    (when (and (pair? prev-f)
@@ -4988,7 +4984,7 @@
 			  ((3) (lint-format "~A could be (define ~A cadddr)" name name name))))))))
       
       (let ((data (and (symbol? name)
-		       (make-fvar :name (if (not (memq head '(lambda lambda*))) name '[anonymous])
+		       (make-fvar :name (if (not (memq head '(lambda lambda*))) name lambda-marker)
 				  :ftype head
 				  :value form
 				  :env env
@@ -5304,7 +5300,7 @@
 			       (if (pair? (cddr form))
 				   (let ((e (lint-walk sym (caddr form) env)))
 				     (if (and (pair? e)
-					      (eq? (var-name (car e)) '[anonymous])) ; (define x (lambda ...)) but it misses closures
+					      (eq? (var-name (car e)) lambda-marker)) ; (define x (lambda ...)) but it misses closures
 					 (set! (var-name (car e)) sym)
 					 (cons (make-var :name sym) env)))
 				   (cons (make-var :name sym) env)))
@@ -6150,7 +6146,8 @@
 			     (not (proper-list? (caddr form))))
 			 (lint-format "do is messed up: ~A" name (truncated-list->string form))
 			 
-			 (let ((step-vars (cadr form)))
+			 (let ((step-vars (cadr form))
+			       (inner-env #f))
 			   
 			   (if (not (side-effect? form env))
 			       (let ((end+result (caddr form)))
@@ -6173,14 +6170,16 @@
 							      :type (->type (cadar bindings)) 
 							      :value (and (pair? (cddar bindings)) (caddar bindings)))
 						    vars)))))
-			   
+
+			   (set! inner-env (append vars env))
+
 			   ;; walk the step exprs
 			   (do ((bindings step-vars (cdr bindings)))
 			       ((not (pair? bindings)))
 			     (let ((stepper (car bindings))) ; the entire binding: '(i 0 (+ i 1))
 			       (when (and (binding-ok? name head stepper env #t)
 					  (pair? (cddr stepper)))
-				 (lint-walk name (caddr stepper) (append vars env))
+				 (lint-walk name (caddr stepper) inner-env)
 				 (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
 				     (lint-format "perhaps ~A" name (lists->string stepper (list (car stepper) (cadr stepper)))))
 				 (let ((data (var-member (car stepper) vars)))
@@ -6196,11 +6195,11 @@
 			       (let ((end+result (caddr form)))
 				 (if (pair? end+result)
 				     (let ((end (car end+result)))
-				       (lint-walk name end (append vars env))
+				       (lint-walk name end inner-env)
 				       (if (pair? (cdr end+result))
 					   (if (null? (cddr end+result))
-					       (lint-walk name (cadr end+result) (append vars env))
-					       (lint-walk-body name 'do-result (cdr end+result) (append vars env))))
+					       (lint-walk name (cadr end+result) inner-env)
+					       (lint-walk-body name 'do-result (cdr end+result) inner-env)))
 				       (if (and (symbol? end) (memq end '(= > < >= <= null? not)))
 					   (lint-format "perhaps missing parens: ~A" name end+result))
 				       
@@ -6242,7 +6241,7 @@
 						(procedure? (symbol->value end *e*)))
 					   (lint-format "strange do end-test: ~A in ~A is a procedure" name end end+result))))))
 			   
-			   (lint-walk-body name head (cdddr form) (append vars env))
+			   (lint-walk-body name head (cdddr form) inner-env)
 			   ;; before report-usage, check for unused variables, and don't complain about them if
 			   ;;   they are referenced in an earlier step expr?(!)
 			   (do ((v vars (cdr v)))
@@ -6398,7 +6397,7 @@
 					     (and (not (eq? e cur-env))
 						  (env-difference name e cur-env ())))))
 			     (if (pair? nvars)
-				 (if (eq? (var-name (car nvars)) '[anonymous])
+				 (if (eq? (var-name (car nvars)) lambda-marker)
 				     (begin
 				       (set! env (cons (car nvars) env))
 				       (set! nvars (cdr nvars)))
@@ -6952,7 +6951,7 @@
 						((string=? substr "lt") "<")
 						((string=? substr "mdash") "-")
 						((string=? substr "amp") "&")
-						(else (format #t "unknown: ~A~%" substr)))
+						(else (format () "unknown: ~A~%" substr)))
 					  (fixup-html (substring str (+ epos 1)))))))))
   
   (call-with-input-file file
@@ -7000,7 +6999,7 @@
 							     (lint "t631-temp.scm" p #f)
 							     (set! *report-shadowed-variables* old-shadow))))))
 					    (if (> (length outstr) 0)
-						(format #t ";~A ~D: ~A~%" file line-num outstr)))))
+						(format () ";~A ~D: ~A~%" file line-num outstr)))))
 				      (lambda args
-					(format #t ";~A ~D, error in read: ~A ~A~%" file line-num args
+					(format () ";~A ~D, error in read: ~A ~A~%" file line-num args
 						(fixup-html (remove-markups code)))))))))))))))))))

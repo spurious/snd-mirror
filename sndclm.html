@@ -9684,7 +9684,7 @@ via mus-data.
       (set! last-pitch pitch)
       (set! pitch (<em class=red>moving-pitch</em> scn))
       (if (not (= last-pitch pitch))
-	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
+	  (format () "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
   (set! *clm-srate* old-srate))
 </pre>
 <div class="separator"></div>

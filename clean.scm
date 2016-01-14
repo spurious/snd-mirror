@@ -93,7 +93,7 @@
       (let ((mx (maxamp))
 	    (loc (maxamp-position)))
 	(if (> mx 0.06)
-	    (format #t "~%;remove-single-sample-clicks 0: ~A (at ~D)" mx loc)))
+	    (format () "~%;remove-single-sample-clicks 0: ~A (at ~D)" mx loc)))
       (revert-sound)
       (do ((i 0 (+ i 1))
 	   (ang 0.0 (+ ang .01)))
@@ -102,7 +102,7 @@
       (float-vector->channel data)
       (remove-single-sample-clicks)
       (if (fneq (maxamp) .2)
-	  (format #t "~%;remove-single-sample-clicks sin max: ~A" (maxamp)))
+	  (format () "~%;remove-single-sample-clicks sin max: ~A" (maxamp)))
       (let ((cur-data (channel->float-vector 0))
 	    (diff 0.0))
 	(do ((i 0 (+ i 1))
@@ -110,7 +110,7 @@
 	    ((= i 1000))
 	  (set! diff (max diff (abs (- ( cur-data i) (* .2 (sin ang)))))))
 	(if (> diff .2)
-	    (format #t "~%;remove-single-sample-clicks sine max diff: ~A" diff))))
+	    (format () "~%;remove-single-sample-clicks sine max diff: ~A" diff))))
     (close-sound test)))
 
 ;;; -------- pops
@@ -234,7 +234,7 @@
     (remove-pops)
     (let ((mx (maxamp)))
       (if (> mx .01)
-	  (format #t "~%;test remove-pops 0 case: ~A" mx)))
+	  (format () "~%;test remove-pops 0 case: ~A" mx)))
     (revert-sound)
     (do ((i 0 (+ i 1))
 	 (ang 0.0 (+ ang .01)))
@@ -245,7 +245,7 @@
     (remove-pops)
     (let ((mx (maxamp)))
       (if (fneq mx .2)
-	  (format #t "~%;test remove-pops sine case: ~A" mx)))
+	  (format () "~%;test remove-pops sine case: ~A" mx)))
     (close-sound)))
 	
 
@@ -262,7 +262,7 @@
     (notch-channel (list 60.0) #f #f #f #f #f #f #t 8)
     (let ((mx (maxamp)))
       (if (> mx .02)
-	  (format #t "~%;notch hum 0: ~A" mx)))
+	  (format () "~%;notch hum 0: ~A" mx)))
     (close-sound (find-sound test)))
   (let ((test (with-sound ("test.snd" :srate 22050)
 		(let ((p (make-polywave 20.0 (list 2 1 3 1 4 1)))
@@ -281,7 +281,7 @@
 	(if (or (fneq (/ e60 v60) 0.0)
 		(fneq (/ e40 v40) 1.0)
 		(fneq (/ e80 v80) 1.0))
-	    (format #t "~%;notch 60: ~A ~A ~A -> ~A ~A ~A" v40 v60 v80 e40 e60 e80))))
+	    (format () "~%;notch 60: ~A ~A ~A -> ~A ~A ~A" v40 v60 v80 e40 e60 e80))))
     (close-sound (find-sound test)))
 
   (let ((test (with-sound ("test.snd" :srate 22050)
@@ -301,7 +301,7 @@
 	(if (or (> (/ e60 v60) 0.01)
 		(< (/ e40 v40) 0.99)
 		(< (/ e80 v80) 0.99))
-	    (format #t "~%;notch 60 tight: ~A ~A ~A -> ~A ~A ~A" v40 v60 v80 e40 e60 e80))))
+	    (format () "~%;notch 60 tight: ~A ~A ~A -> ~A ~A ~A" v40 v60 v80 e40 e60 e80))))
     (close-sound (find-sound test))))
 
 
@@ -323,7 +323,7 @@
 	      (nsig (goertzel 35.0)))
 	  (if (or (> (/ ndc dc) .1)
 		  (< (/ nsig sig) .4))
-	      (format #t "~%;remove-DC: ~A -> ~A (~A), ~A -> ~A (~A)" dc ndc (/ ndc dc) sig nsig (/ nsig sig))))))
+	      (format () "~%;remove-DC: ~A -> ~A (~A), ~A -> ~A (~A)" dc ndc (/ ndc dc) sig nsig (/ nsig sig))))))
     (close-sound test)))
 
 
@@ -373,7 +373,7 @@
     (let ((mx1 (maxamp snd chn)))
       (scale-channel (/ mx mx1) snd chn))
 
-;    (format #t ";K ~A to ~A, avg ~A to ~A" minK maxK ming maxg)
+;    (format () ";K ~A to ~A, avg ~A to ~A" minK maxK ming maxg)
 ;    avg-data
     ))
 
@@ -384,17 +384,17 @@
   ;; look for obvious simple clicks
   (let ((clicks (as-one-edit (lambda () (remove-single-sample-clicks 8 snd chn)))))
     (if (> clicks 0)
-	(format #t "~%; fixed ~D single sample clicks" clicks)
-	(format #t "~%; no single-sample clicks found")))
+	(format () "~%; fixed ~D single sample clicks" clicks)
+	(format () "~%; no single-sample clicks found")))
 
   ;; look for obvious clipping and try to reconstruct
   (let ((mx (maxamp snd chn)))
     (if (>= mx 1.0)
 	(let ((clips (unclip-channel snd chn)))
 	  (if (eq? clips 'no-clips)
-	      (format #t "~%; no clipped portions found")
-	      (format #t "~%; reconstructed ~D clipped portions" (list-ref clips 3))))
-	(format #t "~%; no obvious clipping (max amp: ~A)" mx)))
+	      (format () "~%; no clipped portions found")
+	      (format () "~%; reconstructed ~D clipped portions" (list-ref clips 3))))
+	(format () "~%; no obvious clipping (max amp: ~A)" mx)))
 
   ;; look for pops
   (let ((total-pops 0))
@@ -405,11 +405,11 @@
 	  (let ((pops (as-one-edit (lambda () (remove-pops size snd chn)))))
 	    (set! total-pops (+ total-pops pops))
 	    (if (> pops 0)
-		(format #t "~%; fixed ~D ~D-sample ~A" pops size (if (= pops 1) "pop" "pops"))
+		(format () "~%; fixed ~D ~D-sample ~A" pops size (if (= pops 1) "pop" "pops"))
 		(quit))))
 	(list 4 8 16 32))))
     (if (= total-pops 0)
-	(format #t "~%; no pops found")))
+	(format () "~%; no pops found")))
 
   ;; look for hum
   (let* ((hum60 (check-freq 60.0 snd chn))
@@ -418,14 +418,14 @@
     (if (> hum 30.0)
 	(let ((humf (if (> hum60 hum55) 60.0 55.0)))
 	  (notch-channel (list humf) 4096 0 (framples snd chn) snd chn #f #t 4)
-	  (format #t "~%; notch out ~D cycle hum: ~A -> ~A" (floor humf) hum (check-freq humf snd chn)))))
+	  (format () "~%; notch out ~D cycle hum: ~A -> ~A" (floor humf) hum (check-freq humf snd chn)))))
 
   ;; look for DC
   (let ((dc (check-freq 0.0 snd chn)))
     (if (> dc 30.0)
 	(let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
 	  (map-channel (lambda (y) (filter dcflt y)) 0 (framples snd chn) snd chn)
-	  (format #t "~%; block DC: ~A -> ~A" dc (check-freq 0.0 snd chn)))))
+	  (format () "~%; block DC: ~A -> ~A" dc (check-freq 0.0 snd chn)))))
 
   ;; time-varying low-pass filter
   (tvf-channel snd chn)

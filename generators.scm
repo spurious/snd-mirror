@@ -719,7 +719,7 @@ returns n sines spaced by frequency. All are equal amplitude except last at half
 			((= i 20000))
 		      (outa i (nsin5 gen))))))
 	   (snd (find-sound res)))
-      (format #t ";~D: ~A" i (maxamp snd 0))
+      (format () ";~D: ~A" i (maxamp snd 0))
       (set! norms (cons (maxamp snd 0) norms))))
   (reverse norms))
 
@@ -3145,7 +3145,7 @@ returns many sines spaced by frequency with amplitude kr^k."))
 			(do ((i 0 (+ i 1)))
 			    ((= i 10000))
 			  (outa i (krksin gen))))))))
-    (format #t ";~A: ~A" (* 0.1 i) mx)))
+    (format () ";~A: ~A" (* 0.1 i) mx)))
 
 ;;; relation between 1/(1-x)^2 and peak amp:
 (with-sound (:clipped #f)
@@ -3465,7 +3465,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 				  ((= i 1000))
 				(outa i (asymmetric-fm gen index))))))))
 	(if (> (abs (- peak 1.0)) .1)
-	    (format #t ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
+	    (format () ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
  (list 1.0 3.0 10.0))
 |#
@@ -3545,7 +3545,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
       (let ((val (bes-jn i k)))
 	(if (> (abs val) mx)
 	    (set! mx (abs val)))))
-    (format #t ";~A" (+ mx .001))))
+    (format () ";~A" (+ mx .001))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-bess 400.0 :n 1))
@@ -3733,7 +3733,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (let ((base (* (bes-jn 4 5.0) (bes-jn 4 5.0)))) ; max (fft norms -> 1.0)
   (do ((i 1 (+ i 1)))
       ((= i 11))
-    (format #t ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
+    (format () ";~A: ~A ~A" i (* (bes-jn i 5.0) (bes-jn i 5.0)) (/ (* (bes-jn i 5.0) (bes-jn i 5.0)) base))))
 					;1: 0.107308091385168 0.701072497819036
 					;2: 0.00216831005396058 0.0141661502497507
 					;3: 0.133101826831083 0.86958987897572
@@ -4038,7 +4038,7 @@ returns a sum of cosines scaled in a very complicated way."))
 		 (do ((i 0 (+ i 1)))
 		     ((= i 10000))
 		   (outa i (j0j1cos gen))))))))
-    (format #t ";~A: ~A" i pk)))
+    (format () ";~A: ~A" i pk)))
 					;0: 0.0
 					;1: 0.555559098720551
 					;2: 0.938335597515106
@@ -4076,9 +4076,9 @@ returns a sum of cosines scaled in a very complicated way."))
 			       (let ((a (g 'a)) ; "c"
 				     (r (g 'r))); "b"
 				 (if (<= r a)
-				     (format #t ";jycos a: ~A must be < r: ~A" a r))
+				     (format () ";jycos a: ~A must be < r: ~A" a r))
 				 (if (<= (+ (* a a) (* r r)) (* 2 a r))
-				     (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
+				     (format () ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
 			       g))
   (frequency *clm-default-frequency*) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0) fm)
@@ -5037,7 +5037,7 @@ generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass f
 	   (val1 (oscil gen1 0.0 pm))
 	   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
       (if (fneq val1 val2)
-	  (format #t ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
+	  (format () ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
 |#
 
 
@@ -6483,7 +6483,7 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 	(let ((val (moving-scentroid scn (data i))))
 	  (if (= (modulo j (scn 'hop)) 0)
 	      (begin
-		(format #t "[~A ~A]~%" val (vals k))
+		(format () "[~A ~A]~%" val (vals k))
 		(set! k (+ k 1)))))))
     (set! *clm-srate* old-srate)))
 |#
@@ -6599,7 +6599,7 @@ input from the readin generator 'reader'.  The output data is available via mus-
       (set! last-pitch pitch)
       (set! pitch (moving-pitch scn))
       (if (not (= last-pitch pitch))
-	  (format #t "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
+	  (format () "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
   (set! *clm-srate* old-srate))
 |#
 

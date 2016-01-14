@@ -187,7 +187,7 @@
 		  ;;   (with-sound () (fm-violin 0 1 440 .1 :amp-env '(0 0 1 1 1 2 3 0)))
 
 		  ;; user might have listener closed, or no listener so...
-		  (format #t ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
+		  (format () ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
 
 		  ;; now try to get something to listener, since there may be no stdout
 		  (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))

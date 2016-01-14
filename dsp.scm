@@ -2412,7 +2412,7 @@ is assumed to be outside -1.0 to 1.0."))
     (lambda* (matrix b (zero 1.0e-7))
       ;; translated from Numerical Recipes (gaussj)
       
-					;(format #t "~%~%invert-matrix n: ~D, ~S, b: ~A, ~S~%" (length matrix) matrix (and b (length b)) b)
+					;(format () "~%~%invert-matrix n: ~D, ~S, b: ~A, ~S~%" (length matrix) matrix (and b (length b)) b)
       (call-with-exit
        (lambda (return)
 	 (let* ((n (car (vector-dimensions matrix)))
@@ -2426,7 +2426,7 @@ is assumed to be outside -1.0 to 1.0."))
 		   (row 0))
 	       (do ((j 0 (+ j 1)))
 		   ((= j n))
-					;(format #t "j: ~A, n: ~A~%" j n)
+					;(format () "j: ~A, n: ~A~%" j n)
 		 (if (not (= (pivots j) 1))
 		     (do ((k 0 (+ k 1)))
 			 ((= k n))
@@ -2436,13 +2436,13 @@ is assumed to be outside -1.0 to 1.0."))
 				 (begin
 				   (set! col k)
 				   (set! row j)
-					;(format #t "k: ~A, row: ~D, col: ~A~%" k row col)
+					;(format () "k: ~A, row: ~D, col: ~A~%" k row col)
 				   (set! biggest val))))
 			   (if (> (pivots k) 1)
 			       (return #f))))))
 	       (if (< biggest zero) (return #f)) ; this can be fooled (floats...): (invert-matrix (make-share-vector (float-vector 1 2 3 3 2 1 4 5 6) (list 3 3)))
 	       (set! (pivots col) (+ (pivots col) 1))
-					;(format #t "i: ~D, row: ~D, col: ~A~%" i row col)
+					;(format () "i: ~D, row: ~D, col: ~A~%" i row col)
 	       (if (not (= row col))
 		   (let ((temp (if b (b row) 0.0)))
 		     (if b
@@ -2574,7 +2574,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 		   (set! bmult (* bmult (bes-jn n index))))
 		 ns bs)
 		(if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
-					;(format #t ";add ~A from ~A ~A" bmult ns bs)
+					;(format () ";add ~A from ~A ~A" bmult ns bs)
 		bmult)
 	      0.0)))))
 
@@ -2597,7 +2597,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (expt 0.0+1.0i j))))
 	      (set! sum (+ sum curJI))
 	      (if (> (magnitude curJI) 0.001)
-		  (format #t ";fm-complex-component add ~,3f from J~D(~A) = ~,3f and I~D(~A) = ~,3f~%"
+		  (format () ";fm-complex-component add ~,3f from J~D(~A) = ~,3f and I~D(~A) = ~,3f~%"
 			       curJI 
 			       k a (bes-jn k a)
 			       j b (bes-in (abs j) b)))))))
@@ -2623,7 +2623,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 			    (bes-jn j (* k b)))))
 	      (set! sum (+ sum curJJ))
 	      (if (> (magnitude curJJ) 0.001)
-		  (format #t ";fm-cascade-component add ~,3f from J~D(~A) = ~,3f and J~D(~A) = ~,3f~%"
+		  (format () ";fm-cascade-component add ~,3f from J~D(~A) = ~,3f and J~D(~A) = ~,3f~%"
 			       curJJ 
 			       k a (bes-jn k a)
 			       j b (bes-jn j (* k b))))))))

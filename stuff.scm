@@ -1022,7 +1022,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define for-each-permutation 
   (let ((documentation "(for-each-permutation func vals) applies func to every permutation of vals:\n\
-    (for-each-permutation (lambda args (format #t \"~{~A~^ ~}~%\" args)) '(1 2 3))"))
+    (for-each-permutation (lambda args (format () \"~{~A~^ ~}~%\" args)) '(1 2 3))"))
     (lambda (func vals)
       (define (pinner cur nvals len)
 	(if (= len 1)
