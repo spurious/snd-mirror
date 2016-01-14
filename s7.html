@@ -5258,52 +5258,6 @@ Here we scan the symbol table looking for any function that doesn't have documen
 		          (autotest val () max-args))))))))
     (<em class=red>symbol-table</em>)))
 </pre>
-
-<p>Equally useful, a profiler:
-</p>
-
-<pre class="indented">
-(define <em class=def id="profile">profile</em> 
-  (let ((documentation "(profile func) evaluates the function, then reports profiling information. \
-The function takes one argument, the environment in which loads and evals should operate."))
-    (lambda (expression)
-      (define calls (make-vector 1024 (cons 'unused -1)))
-      (define call 0)
-
-      (define (profile-1 n)
-        (set! (cdr (calls n)) (+ (cdr (calls n)) 1)))
-  
-      (define (wrap-all)
-        (let ((e (inlet)))
-          (for-each
-            (lambda (sym)
-              (if (and (<em class=red>defined?</em> sym)
-	               (not (constant? sym)))
-	          (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-	            (if (procedure? val)
-	                (let ((new-val (apply lambda 'args `((profile-1 ,call) (apply ,val args)))))
-		          (set! (calls call) (cons sym 0))
-		          (set! call (+ call 1))
-		          (if (&gt;= call (length calls))
-			      (set! calls (copy calls (make-vector (* 2 (length calls)) (cons 'unused -1)))))
-		          (if (procedure-setter val)
-		              (set! (procedure-setter new-val) (procedure-setter val)))
-		          (varlet e sym new-val))))))
-           (<em class=red>symbol-table</em>))
-          e))
-
-      (expression (wrap-all))
-      (sort! calls (lambda (a b) (&gt; (cdr a) (cdr b))))
-      (do ((i 0 (+ i 1)))
-          ((= i call))
-        (if (&gt; (cdr (calls i)) 0)
-	    (format () "~S: ~S~%" (car (calls i)) (cdr (calls i))))))))
-
-&gt; (profile (lambda (e) 
-             (load "lint.scm" e) 
-             (with-let e (lint "dsp.scm"))))
-;;; many lines of data print out
-</pre>
 </div>
 
 <details id="weaselwords">
@@ -5615,6 +5569,7 @@ max-vector-dimensions         make-vector dimensions limit
 default-hash-table-length     default size for make-hash-table (8, tables resize as needed)
 initial-string-port-length    128, initial size of a string port's buffer
 history-size                  eval history buffer size if s7 built WITH_HISTORY=1
+profile-info                  profiling data if s7 built WITH_PROFILE=1
 
 default-rationalize-error     1e-12 (settable)
 morally-equal-float-epsilon   1e-15 (settable)

@@ -233,12 +233,17 @@
 
 #ifndef WITH_HISTORY
   #define WITH_HISTORY 0
-  /* this includes a circular buffer of previous evaluations for debugging */
+  /* this includes a circular buffer of previous evaluations for debugging, ((owlet) 'error-history) and (*s7* 'history-size) */
 #endif
 
 #ifndef DEFAULT_HISTORY_SIZE
   #define DEFAULT_HISTORY_SIZE 8
   /* this is the default length of the eval history buffer */
+#endif
+
+#ifndef WITH_PROFILE
+  #define WITH_PROFILE 0
+  /* this includes profiling data collection accessible from scheme via the hash-table (*s7* 'profile-info) */
 #endif
 
 
@@ -1048,7 +1053,7 @@ struct s7_scheme {
 
   s7_pointer *safe_lists, *syn_docs; /* prebuilt evaluator arg lists, syntax doc strings */
 
-  s7_pointer autoload_table, libraries;
+  s7_pointer autoload_table, libraries, profile_info;
   const char ***autoload_names;
   int *autoload_names_sizes;
   bool **autoloaded_already;
@@ -1068,7 +1073,7 @@ struct s7_scheme {
   s7_pointer stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol;
   s7_pointer strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, hash_tables_symbol, gensyms_symbol;
   s7_pointer catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol;
-  s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol;
+  s7_pointer max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol, profile_info_symbol;
   s7_pointer hash_table_float_epsilon_symbol, morally_equal_float_epsilon_symbol, initial_string_port_length_symbol, memory_usage_symbol;
   s7_pointer undefined_identifier_warnings_symbol, print_length_symbol, bignum_precision_symbol, stacktrace_defaults_symbol, history_size_symbol;
   bool undefined_identifier_warnings;
@@ -2962,13 +2967,6 @@ static bool is_h_optimized(s7_pointer p)
 #define is_h_safe_c_c(P) ((is_optimized(P)) && (optimize_op(P) == HOP_SAFE_C_C))
 #define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_op(P) == HOP_SAFE_C_S))
 #define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
-
-
-#define WITH_COUNTS 0
-#if WITH_COUNTS
-  #include "profile.h"
-#endif
-
 
 static int position_of(s7_pointer p, s7_pointer args)
 {
@@ -46334,7 +46332,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       (has_line_number(cur_code)))
     {
       int line;
-      line = pair_line(cur_code);
+      line = (int)pair_line(cur_code); /* cast to int (from unsigned int) for last_line */
       if (line != last_line)
 	{
 	  last_line = line;
@@ -46783,7 +46781,7 @@ static s7_pointer tree_descend(s7_scheme *sc, s7_pointer p, unsigned int line)
   if (has_line_number(p))
     {
       unsigned int x;
-      x = remembered_line_number(pair_line(p));
+      x = (unsigned int)remembered_line_number(pair_line(p));
       if (x > 0)
 	{
 	  if (line == 0) /* first line number we encounter will be the current reader location (i.e. the end of the form) */
@@ -47234,10 +47232,6 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
   #define Q_s7_version pcl_s
-
-#if WITH_COUNTS
-  report_counts(sc);
-#endif
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -60091,8 +60085,6 @@ static void apply_c_object(s7_scheme *sc)                          /* -------- a
 }
 
 
-
-
 /* -------------------------------------------------------------------------------- */
 
 static int define1_ex(s7_scheme *sc)
@@ -60261,6 +60253,27 @@ static bool a_is_ok(s7_scheme *sc, s7_pointer p)
 #define a_is_ok_caddr(Sc, P) ((c_function_is_ok(Sc, P)) && (a_is_ok(Sc, caddr(P))))
 #define a_is_ok_cadddr(Sc, P) ((c_function_is_ok(Sc, P)) && (a_is_ok(Sc, cadddr(P))))
 
+
+#if WITH_PROFILE
+static void profile(s7_scheme *sc, s7_pointer expr)
+{
+  if (is_null(sc->profile_info))
+    {
+      sc->profile_info = s7_make_hash_table(sc, 65536);
+      s7_gc_protect(sc, sc->profile_info);
+    }
+  if ((is_pair(expr)) &&
+      (has_line_number(expr)))
+    {
+      s7_pointer val, key;
+      key = s7_make_integer(sc, pair_line(expr));
+      val = s7_hash_table_ref(sc, sc->profile_info, key);
+      if (val == sc->F)
+	s7_hash_table_set(sc, sc->profile_info, key, cons(sc, make_mutable_integer(sc, 1), expr));
+      else integer(car(val))++;
+    }
+}
+#endif
 
 
 
@@ -61568,6 +61581,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   at this point, it's sc->code we care about; sc->args is not relevant.
 	   */
 	  /* fprintf(stderr, "    eval: %s %d %d\n", DISPLAY_80(sc->code), (typesflag(sc->code) == SYNTACTIC_PAIR), (is_optimized(sc->code))); */
+
+#if WITH_PROFILE
+	  profile(sc, sc->code);
+#endif
 
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
@@ -71954,6 +71971,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->memory_usage_symbol =                  s7_make_symbol(sc, "memory-usage");
   sc->float_format_precision_symbol =        s7_make_symbol(sc, "float-format-precision");
   sc->history_size_symbol =                  s7_make_symbol(sc, "history-size");
+  sc->profile_info_symbol =                  s7_make_symbol(sc, "profile-info");
 }
 
 #ifdef __linux__
@@ -72084,6 +72102,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
 
   if (sym == sc->history_size_symbol)                                    /* history-size (eval history circular buffer size) */
     return(s7_make_integer(sc, sc->history_size));
+  if (sym == sc->profile_info_symbol)                                    /* profile-info -- profiling data hash-table */
+    return(sc->profile_info);
   if (sym == sc->max_list_length_symbol)                                 /* max-list-length (as arg to make-list) */
     return(s7_make_integer(sc, sc->max_list_length));
   if (sym == sc->max_vector_length_symbol)                               /* max-vector-length (as arg to make-vector and make-hash-table) */
@@ -72349,7 +72369,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
       (sym == sc->heap_size_symbol) || (sym == sc->free_heap_size_symbol) ||
       (sym == sc->gc_freed_symbol) || (sym == sc->gc_protected_objects_symbol) ||
       (sym == sc->file_names_symbol) || (sym == sc->c_types_symbol) || (sym == sc->catches_symbol) || (sym == sc->exits_symbol) || 
-      (sym == sc->rootlet_size_symbol) ||
+      (sym == sc->rootlet_size_symbol) || (sym == sc->profile_info_symbol) ||
       (sym == sc->stack_top_symbol) || (sym == sc->stack_size_symbol))
     return(s7_error(sc, sc->ERROR, set_elist_2(sc, make_string_wrapper(sc, "can't set (*s7* '~S)"), sym)));
       
@@ -72788,6 +72808,7 @@ s7_scheme *s7_init(void)
   sc->print_length = 8;
   sc->history_size = DEFAULT_HISTORY_SIZE;
   sc->true_history_size = DEFAULT_HISTORY_SIZE;
+  sc->profile_info = sc->NIL;
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
   sc->CLASS_NAME = make_symbol(sc, "class-name");
@@ -72897,9 +72918,6 @@ s7_scheme *s7_init(void)
       }
     }
 
-#if WITH_COUNTS
-  init_hashes(sc);
-#endif
   make_standard_ports(sc);
 
   sc->syn_docs = (s7_pointer *)calloc(OP_MAX_DEFINED, sizeof(s7_pointer));
@@ -73732,6 +73750,9 @@ s7_scheme *s7_init(void)
 #if DEBUGGING
   s7_provide(sc, "debugging");
 #endif
+#if WITH_PROFILE
+  s7_provide(sc, "profiling");
+#endif
 #if HAVE_COMPLEX_NUMBERS
   s7_provide(sc, "complex-numbers");
 #endif
@@ -74024,9 +74045,6 @@ s7_scheme *s7_init(void)
     fprintf(stderr, "s7_int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_int), (int)sizeof(void *));
 
   save_unlet(sc);
-#if WITH_COUNTS
-  clear_counts();
-#endif
   init_s7_let(sc);          /* set up *s7* */
   already_inited = true;
 
@@ -74100,7 +74118,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177  4173
  * titer         |      |      | 7503 | 5218  5219  5211
  * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |             59
+ * lg            |      |      |      |             66.0
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
@@ -74119,9 +74137,6 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
- * profiler -- use file->line+code counted by interrupt [smsg]
- *   get the time.h and sys/time.h timer functions/struct/enums in libc.scm, then see if this can be done in scheme
- *   also need cur_code from scheme: (*s7* 'history)?
  * ~N| in format? also ~N* I guess
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
@@ -74135,4 +74150,6 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
+ *
+ * profiler: need docs (alongside WITH_HISTORY?) split counter in 3?
  */
