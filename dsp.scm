@@ -120,7 +120,7 @@
 		((= k N))
 	      (set! sum (+ sum (* (vals k) (exp (/ (* 2.0 0+1.0i pi k i) N))))))
 	    (set! (w i) (magnitude sum))
-	    (if (> (w i) pk) (set! pk (w i)))))
+	    (set! pk (max pk (w i)))))
 	;; scale to 1.0 (it's usually pretty close already, that is pk is close to 1.0)
 	(do ((i 0 (+ i 1)))
 	    ((= i N))
@@ -302,9 +302,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	    (set! mx (float-vector-max vals))
 	    (do ((k 0 (+ k 1)))
 		((= k size))
-	      (if (negative? (float-vector-ref vals k))
-		  (float-vector-set! data (+ i k) mn)
-		  (float-vector-set! data (+ i k) mx))))
+	      (float-vector-set! data (+ i k) (if (negative? (float-vector-ref vals k)) mn mx))))
 	  (float-vector->channel data beg len snd chn current-edit-position (format #f "adsat ~A ~A ~A" size beg dur)))))))
 
 

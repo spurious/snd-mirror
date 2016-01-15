@@ -32778,7 +32778,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      fdat->args = cdr(fdat->args);
 	      break;
 
-	    case '|':                           /* -------- exit if args nil or ctr > *vector-print-length* -------- */
+	    case '|':                           /* -------- exit if args nil or ctr > (*s7* 'print-length) -------- */
 	      if ((is_pair(fdat->args)) &&
 		  (fdat->ctr >= sc->print_length))
 		{
@@ -61582,12 +61582,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 	  /* fprintf(stderr, "    eval: %s %d %d\n", DISPLAY_80(sc->code), (typesflag(sc->code) == SYNTACTIC_PAIR), (is_optimized(sc->code))); */
 
-#if WITH_PROFILE
-	  profile(sc, sc->code);
-#endif
-
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
+#if WITH_PROFILE
+	      profile(sc, sc->code);
+#endif
 	      set_current_code(sc, sc->code);         /* in case an error occurs, this helps tell us where we are */
 	      sc->op = (opcode_t)pair_syntax_op(sc->code);
 	      sc->code = cdr(sc->code);
@@ -61600,6 +61599,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* fprintf(stderr, "    %s\n", opt_names[optimize_op(sc->code)]); */
 
 	    OPT_EVAL:
+#if WITH_PROFILE
+	      profile(sc, sc->code);
+#endif
 	      code = sc->code;
 	      set_current_code(sc, code);
 	      
@@ -64418,6 +64420,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    if (is_pair(code))
 	      {
+
+#if WITH_PROFILE
+		profile(sc, code);
+#endif
 		set_current_code(sc, code);
 		carc = car(code);
 		
@@ -73935,17 +73941,6 @@ s7_scheme *s7_init(void)
                                `((lambda* (,@vars . ,(gensym)) ,@body) ,expression)))");
   /* (multiple-value-bind (a b) (values 1 2) (+ a b)), named "receive" in srfi-8 which strikes me as perverse */
 
-  s7_eval_c_string(sc, "(define-macro (multiple-value-set! vars expr . body)                                  \n\
-                          (if (pair? vars)                                                                    \n\
-                              (let ((local-vars (map (lambda (n) (gensym)) vars)))                            \n\
-                                `((lambda* (,@local-vars . ,(gensym))                                         \n\
-                                    ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)                    \n\
-                                    ,@body)                                                                   \n\
-                                  ,expr))                                                                     \n\
-                            (if (and (null? vars) (null? expr))                                               \n\
-                                `(begin ,@body)                                                               \n\
-                                (error \"multiple-value-set! vars/exprs messed up\"))))");
-
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\
 		                               (if (pair? tree)                                               \n\
@@ -74137,7 +74132,7 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
- * ~N| in format? also ~N* I guess
+ * ~N| in format? also ~N* I guess, ambiguous?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74150,6 +74145,4 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
- *
- * profiler: need docs (alongside WITH_HISTORY?) split counter in 3?
  */

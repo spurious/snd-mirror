@@ -197,6 +197,19 @@
 	(else #f)))
 
 
+;;; this used to be built into s7.c, but no one uses it.
+(define-macro (multiple-value-set! vars expr . body)
+  (if (pair? vars)
+      (let ((local-vars (map (lambda (n) (gensym)) vars)))
+	`((lambda* (,@local-vars . ,(gensym))
+	    ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)
+	    ,@body)
+	  ,expr))
+      (if (and (null? vars) (null? expr))
+	  `(begin ,@body)
+	  (error "multiple-value-set! vars/exprs messed up"))))
+
+
 
 ;;; ----------------
 (define-macro (fully-macroexpand form)

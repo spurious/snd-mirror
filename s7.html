@@ -227,7 +227,7 @@ indented and on a sort of brownish background.
     <li><a href="#makelist">make-list</a>, <a href="#charposition">char-position</a>, <a href="#keywords">keywords</a>
     <li><a href="#symboltable">symbol-table</a>, <a href="#s7help">help</a>, <a href="#s7gc">gc</a>, <a href="#morallyequalp">morally-equal?</a>
     <li><a href="#expansion">define-expansion</a>, <a href="#s7env">*s7*</a>, <a href="#s7vsr5rs">r5rs</a>, <a href="#r7rs">r7rs</a>, 
-    <li><a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
+    <li><a href="#profiling">profiling</a>, <a href="#circle">circular lists</a>, <a href="#legolambda">legolambda</a>, etc...
     </ul>
 
   <li class="li_header"><a href="#FFIexamples">FFI examples</a>
@@ -2951,7 +2951,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
 <em class="gray">v3</em>
 &gt; (all-methods v3 'multiply)
 <em class="gray">(#&lt;lambda (obj num)&gt; #&lt;lambda (obj)&gt;)</em>
-&gt; (for-each (lambda (p) (format #t "~A~%" (procedure-source p))) (all-methods v3 'multiply))
+&gt; (for-each (lambda (p) (format () "~A~%" (procedure-source p))) (all-methods v3 'multiply))
 <em class="gray">(lambda (obj num) (* num ((class-2 'multiply) obj) (add obj)))</em>
 <em class="gray">(lambda (obj) (with-let obj (* a b c)))</em>
 </pre>
@@ -4472,7 +4472,7 @@ map-with-exit would be
 	(catch 'wrong-type-arg
 	  (lambda () 
 	    (abs -1))
-	  (lambda args (format #t "got a bad arg~%") -1)))
+	  (lambda args (format () "got a bad arg~%") -1)))
       (lambda args 0)))
   (lambda args 123))
 </pre>
@@ -4493,7 +4493,7 @@ map-with-exit would be
     (caddr base)))
 
 ;;; the code above becomes:
-(catch-case ((wrong-type-arg   (lambda args (format #t "got a bad arg~%") -1))
+(catch-case ((wrong-type-arg   (lambda args (format () "got a bad arg~%") -1))
 	     (division-by-zero (lambda args 0))
 	     (else             (lambda args 123)))
   (abs -1))
@@ -4573,7 +4573,7 @@ To list all the local bindings from the error outward:
 <pre class="indented">
 (do ((e (outlet (owlet)) (outlet e))) 
     ((eq? e (rootlet))) 
-  (format #t "~{~A ~}~%" e))
+  (format () "~{~A ~}~%" e))
 </pre>
 
 <p>To see the current s7 stack, <code>(stacktrace)</code>.  You'll probably
@@ -5556,6 +5556,15 @@ is the same (in that context) as:
 		 (lambda (s) ((conj* ,@(cdr args)) s))))))
 -->
 
+
+<div class="separator"></div>
+<p id="profiling">If you build s7 with the flag -DWITH_PROFILE=1, s7 accumulates profiling data
+in the (*s7* 'profile-info) hash-table.  The line number reported sometimes points to the end of the form.
+Also, do loops and other iterations are sometimes highly optimized, so only the outer form is counted.
+profile.scm shows one way to sort and display this data. To clear the counts, <code>(fill! (*s7* 'profile-info) #f)</code>.
+</p>
+
+
 <div class="separator"></div>
 <p id="s7env"><b>*s7*</b> is an environment that gives access to some of s7's internal
 state: 
@@ -5980,7 +5989,6 @@ in lint.scm, and in the snd file tools/tgen.scm.
 
 </div>
 </details>
-
 
 
 <details id="circle">

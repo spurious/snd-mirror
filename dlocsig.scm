@@ -1257,75 +1257,75 @@
 	     (xparse-path path))
 	 
 	 (let ((points (length (bezier-x path))))
-	   (if (> points 2)
-	       (let* ((vals (calculate-fit path))
-		      (n (car vals))
-		      (p (cadr vals))
-		      (d (caddr vals)))
-		 (let ((c (bezier-curvature path))
-		       (cs (make-vector n)))
-		   ;; setup the curvatures array
-		   (if (or (not c) (null? c))                          ; no curvature specified, default is 1.0
-		       (do ((i 0 (+ i 1)))
-			   ((= i n))
-			 (set! (cs i) (list 1.0 1.0)))
-		       (if (number? c)                    ; same curvature for all segments
-			   (do ((i 0 (+ i 1)))
-			       ((= i n))
-			     (set! (cs i) (list c c)))
-			   (if (and (pair? c) (= n (length c)))   ; list of curvatures
-			       (let ((i 0))
-				 (for-each
-				  (lambda (ci)
-				    (set! (cs i) (if (pair? ci) 
-						     (if (not (= (length ci) 2))
-							 (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci)
-							 ci)
-						     (list ci ci)))
-				    (set! i (+ i 1)))
-				  c))
-			       (error 'mus-error "ERROR: bad curvature argument ~A to path, need ~A elements~%" c n))))
-		   
-		   ;; calculate control points
-		   (let ((xc ())
-			 (yc ())
-			 (zc ()))
-		     (do ((i 0 (+ i 1)))
-			 ((= i n))
-		       
-		       (set! xc (cons (list ((p 0) i)
-					    (+ ((p 0) i) (* ((d 0) i) (car (cs i))))
-					    (- ((p 0) (+ i 1)) (* ((d 0) (+ i 1)) (cadr (cs i))))
-					    ((p 0) (+ i 1))) xc))
-		       (set! yc (cons (list ((p 1) i)
-					    (+ ((p 1) i) (* ((d 1) i) (car (cs i))))
-					    (- ((p 1) (+ i 1)) (* ((d 1) (+ i 1)) (cadr (cs i))))
-					    ((p 1) (+ i 1))) yc))
-		       (set! zc (cons (list ((p 2) i)
-					    (+ ((p 2) i) (* ((d 2) i) (car (cs i))))
-					    (- ((p 2) (+ i 1)) (* ((d 2) (+ i 1)) (cadr (cs i))))
-					    ((p 2) (+ i 1))) zc)))
-		     (set! (bezier-bx path) (reverse xc))
-		     (set! (bezier-by path) (reverse yc))
-		     (set! (bezier-bz path) (reverse zc)))))
-	       
-	       (if (= points 2)
-		   ;; just a line, stays a line
-		   (let ((x1 (car (bezier-x path)))
-			 (x2 (cadr (bezier-x path)))
-			 (y1 (car (bezier-y path)))
-			 (y2 (cadr (bezier-y path)))
-			 (z1 (car (bezier-z path)))
-			 (z2 (cadr (bezier-z path))))
-		     (set! (bezier-bx path) (list (list x1 x1 x2 x2)))
-		     (set! (bezier-by path) (list (list y1 y1 y2 y2)))
-		     (set! (bezier-bz path) (list (list z1 z1 z2 z2))))
-		   (if (= points 1)
-		       ;; just one point, bezier won't do much here
-		       (begin
-			 (set! (bezier-bx path) ())
-			 (set! (bezier-by path) ())
-			 (set! (bezier-bz path) ())))))
+	   (cond ((> points 2)
+		  (let* ((vals (calculate-fit path))
+			 (n (car vals))
+			 (p (cadr vals))
+			 (d (caddr vals)))
+		    (let ((c (bezier-curvature path))
+			  (cs (make-vector n)))
+		      ;; setup the curvatures array
+		      (cond ((or (not c) (null? c))                          ; no curvature specified, default is 1.0
+			     (do ((i 0 (+ i 1)))
+				 ((= i n))
+			       (set! (cs i) (list 1.0 1.0))))
+			    ((number? c)                    ; same curvature for all segments
+			     (do ((i 0 (+ i 1)))
+				 ((= i n))
+			       (set! (cs i) (list c c))))
+			    ((and (pair? c) (= n (length c)))   ; list of curvatures
+			     (let ((i 0))
+			       (for-each
+				(lambda (ci)
+				  (set! (cs i) (if (pair? ci) 
+						   (if (not (= (length ci) 2))
+						       (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci)
+						       ci)
+						   (list ci ci)))
+				  (set! i (+ i 1)))
+				c)))
+			    (else (error 'mus-error "ERROR: bad curvature argument ~A to path, need ~A elements~%" c n)))
+		      
+		      ;; calculate control points
+		      (let ((xc ())
+			    (yc ())
+			    (zc ()))
+			(do ((i 0 (+ i 1)))
+			    ((= i n))
+			  
+			  (set! xc (cons (list ((p 0) i)
+					       (+ ((p 0) i) (* ((d 0) i) (car (cs i))))
+					       (- ((p 0) (+ i 1)) (* ((d 0) (+ i 1)) (cadr (cs i))))
+					       ((p 0) (+ i 1))) xc))
+			  (set! yc (cons (list ((p 1) i)
+					       (+ ((p 1) i) (* ((d 1) i) (car (cs i))))
+					       (- ((p 1) (+ i 1)) (* ((d 1) (+ i 1)) (cadr (cs i))))
+					       ((p 1) (+ i 1))) yc))
+			  (set! zc (cons (list ((p 2) i)
+					       (+ ((p 2) i) (* ((d 2) i) (car (cs i))))
+					       (- ((p 2) (+ i 1)) (* ((d 2) (+ i 1)) (cadr (cs i))))
+					       ((p 2) (+ i 1))) zc)))
+			(set! (bezier-bx path) (reverse xc))
+			(set! (bezier-by path) (reverse yc))
+			(set! (bezier-bz path) (reverse zc))))))
+		 
+		 ((= points 2)
+		  ;; just a line, stays a line
+		  (let ((x1 (car (bezier-x path)))
+			(x2 (cadr (bezier-x path)))
+			(y1 (car (bezier-y path)))
+			(y2 (cadr (bezier-y path)))
+			(z1 (car (bezier-z path)))
+			(z2 (cadr (bezier-z path))))
+		    (set! (bezier-bx path) (list (list x1 x1 x2 x2)))
+		    (set! (bezier-by path) (list (list y1 y1 y2 y2)))
+		    (set! (bezier-bz path) (list (list z1 z1 z2 z2)))))
+		 ((= points 1)
+		  ;; just one point, bezier won't do much here
+		  (set! (bezier-bx path) ())
+		  (set! (bezier-by path) ())
+		  (set! (bezier-bz path) ())))
+
 	   (reset-rendering path)))
 	
 	(else
@@ -1796,11 +1796,10 @@
 
 
 (define (render-path path)
-  (cond ((memq (car path) '(bezier-path open-bezier-path))
-	 (bezier-render path))
-	((eq? (car path) 'literal-path)
-	 (literal-render path))
-	(#t (spiral-render path))))
+  (case (car path) 
+    ((bezier-path open-bezier-path) (bezier-render path))
+    ((literal-path)   	            (literal-render path))
+    (else                           (spiral-render path))))
 
 
 

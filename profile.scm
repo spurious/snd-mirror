@@ -22,8 +22,9 @@
 				(string-append (substring val 0 36) " ...")
 				val))))))))))
 
+#|
 (define old-version s7-version)
 (define (s7-version)
   (show-profile)
   (old-version))
-
+|#

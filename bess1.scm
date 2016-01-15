@@ -118,7 +118,7 @@
 		  (if (> (random 1.0) 0.5) (set! cellsiz (+ 1 cellsiz)))
 		  (set! cellctr cellbeg)))
 
-	    (format #t "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
+	    (format () "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
 		    dur
 		    (let ((freq (* cfreq 16.351 16
 				   (expt 2 (/ (vmode (vpits cellctr))
