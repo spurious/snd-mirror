@@ -19768,7 +19768,7 @@ EDITS: 2
 		 (incr (/ mx len)))
 	    (scan-channel (lambda (y) 
 			    (let ((diff (abs (- cur y)))) 
-			      (if (> diff mxoff) (set! mxoff diff))
+			      (set! mxoff (max mxoff diff))
 			      (set! cur (+ cur incr))
 			      #f)))
 	    (if (> mxoff .02) (snd-display #__line__ ";granulate ramped 5 mxoff: ~A" mxoff))) ; .0108 actually
@@ -19827,7 +19827,7 @@ EDITS: 2
 		 (incr (/ mx len)))
 	    (scan-channel (lambda (y) 
 			    (let ((diff (abs (- cur y)))) 
-			      (if (> diff mxoff) (set! mxoff diff))
+			      (set! mxoff (max mxoff diff))
 			      (set! cur (+ cur incr))
 			      #f)))
 	    (if (> mxoff .01) (snd-display #__line__ ";granulate ramped 7 mxoff: ~A" mxoff))) ; .0097 actually
@@ -19850,7 +19850,7 @@ EDITS: 2
 		 (incr (/ (- mx cur) len)))
 	    (scan-channel (lambda (y) 
 			    (let ((diff (abs (- cur y)))) 
-			      (if (> diff mxoff) (set! mxoff diff))
+			      (set! mxoff (max mxoff diff))
 			      (set! cur (+ cur incr))
 			      #f))
 			  2000)
@@ -36099,7 +36099,7 @@ EDITS: 1
 	       (fill! d1 0.0)
 	       (set! (d1 2) 1.0)
 	       (if (not (vequal d1 d2))
-		   (if (or (= i 9) (= i 10))
+		   (if (memv i '(9 10))
 		       (begin
 			 (set! (d2 2) 0.0)
 			 (if (> (float-vector-peak d2) .1)
@@ -36193,9 +36193,7 @@ EDITS: 1
 		  (do ((i 0 (+ i 1))
 		       (arg args (cdr arg)))
 		      ((= i len) v)
-		    (if (bignum? (car arg))
-			(vector-set! v i (car arg))
-			(vector-set! v i (bignum (number->string (car arg))))))))
+		    (vector-set! v i (if (bignum? (car arg)) (car arg) (bignum (number->string (car arg))))))))
 
 	      ;; -------- -1 -1 at 1
 	      (let ((rl (make-vector 8))
@@ -42008,7 +42006,7 @@ EDITS: 1
 	(gen (make-ssb-fm 1000))
 	(ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next)))
     (pad-channel 0 1000 ind 0)
-    (catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg) arg))
+    (catch #t (lambda () (map-channel (lambda (y) (ssb-fm gen (* .02 (oscil mg)))))) (lambda arg (display arg)))
     (close-sound ind))
   
   ;; dlocsig tests

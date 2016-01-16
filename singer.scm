@@ -384,7 +384,7 @@
 			  (temp 0.0))
 		      ;; nasal tract (set nasal shape)
 		      (set! temp (- rightradius velumradius))
-		      (if (< temp 0.0) (set! temp 0.0))
+		      (set! temp (max temp 0.0))
 		      (set! alpha1 (* leftradius leftradius))
 		      (set! alpha2 (* temp temp))
 		      (set! alpha3 (* velumradius velumradius))
