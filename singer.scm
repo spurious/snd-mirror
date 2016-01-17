@@ -383,8 +383,7 @@
 		    (let ((temp1 0.0) 
 			  (temp 0.0))
 		      ;; nasal tract (set nasal shape)
-		      (set! temp (- rightradius velumradius))
-		      (set! temp (max temp 0.0))
+		      (set! temp (max (- rightradius velumradius) 0.0))
 		      (set! alpha1 (* leftradius leftradius))
 		      (set! alpha2 (* temp temp))
 		      (set! alpha3 (* velumradius velumradius))
@@ -462,9 +461,8 @@
 			  (set! nose-last-plus-refl (- nose-reftemp minussamp))
 			  (set! nose-reftemp (* (nose-coeffs 1) (- plus-in (nose2 2))))
 			  (set! (nose2 1) (+ (nose2 2) nose-reftemp))
-			  (set! nose-temp (+ plus-in nose-reftemp))
 			  
-			  (set! nose-temp (singer-nose-filter noselength-1 nose-temp nose1 nose2 nose-coeffs))
+			  (set! nose-temp (singer-nose-filter noselength-1 (+ plus-in nose-reftemp) nose1 nose2 nose-coeffs))
 #|
 			  (do ((j 2 (+ j 1))
 			       (k 1 (+ k 1)))
@@ -484,12 +482,10 @@
 			  (set! nose-filt (nose1 noselength-1))
 			  (set! nose-last-output (* (+ nose-filt nose-filt1) 0.5))))))
 		(set! (dline2 j) nose-last-minus-refl))
-		
 	      (set! (dline1 (- j 1)) temp)
-	      (set! temp nose-last-plus-refl)
 	      
 	      ;; j always starts at 4, goes to 8 so this loop can be unrolled, but doing so doesn't make a big difference
-	      (set! temp (singer-filter noseposition tractlength-1 temp dline1 dline2 coeffs))
+	      (set! temp (singer-filter noseposition tractlength-1 nose-last-plus-refl dline1 dline2 coeffs))
 #|
 	      (let ((x 0.0))
 		(do ((j (+ noseposition 1) (+ j 1))

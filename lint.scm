@@ -2209,11 +2209,8 @@
 	     (if (= len 1)
 		 (if (memv (car args) '(0 0.0))
 		     0.0
-		     (if (and (pair? (car args))
-			      (eq? (caar args) 'random)
-			      (rational? (cadar args)))
-			 `(random ,(* 1.0 (cadar args)))
-			 `(,(car form) ,@args)))
+		     ;; not (inexact (random 3)) -> (random 3.0) because results are different
+		     `(,(car form) ,@args))
 		 form))
 	    
 	    ((logior)
@@ -2551,11 +2548,6 @@
       
       ;; TODO:
       ;; macros that cause definitions are ignored (this also affects variable usage stats) and cload'ed identifiers are missed
-      ;; bacro-shaker -- can we get set-member?
-      ;; need values->func arg check escape (define*), or can these be correlated?
-      ;;   display->format returns values, gather-format is recipient, takes 1 or 2 args -- check d->f
-      ;;   can this info be saved in var? if (car sig) includes values, what are possibilities?
-      ;;
       ;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
       ;;   pp sketch mode would be useful, and truncate at right margin
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
@@ -4279,7 +4271,7 @@
 			     (if (and (pair? (cdr arg))
 				      (pair? (cddr arg)))
 				 (let ((t (caddr arg))
-				       (f (if (pair? (cdddr arg)) (cadddr arg) #<unspecified>)))
+				       (f (if (pair? (cdddr arg)) (cadddr arg))))
 				   (check-arg t)
 				   (when (and f (not (symbol? f)))
 				     (check-arg f)))))
@@ -4787,7 +4779,7 @@
     
     (define (lint-walk-body name head body env)
       ;; walk a body (a list of forms, the value of the last of which might be returned)
-					;(format *stderr* "lint-walk-body ~A~%" body)
+      ;; (format *stderr* "lint-walk-body ~A~%" body)
       
       (if (not (proper-list? body))
 	  (lint-format "stray dot? ~A" name (truncated-list->string body))
@@ -4796,6 +4788,7 @@
 		(prev-fs #f)
 		(prev-len 0)
 		(f-len 0)
+		(repeats 0)
 		(block-fs #f)
 		(dpy-f #f)
 		(dpy-start #f)
@@ -4806,7 +4799,23 @@
 		 (ctr 0 (+ ctr 1)))
 		((not (pair? fs)))
 	      (let ((f (car fs)))
-		
+
+		(let ((feq (equal? f prev-f)))
+		  (if feq
+		      (set! repeats (+ repeats 1)))
+		  (if (or (not feq)
+			  (= ctr (- len 1)))
+		      (begin
+			(if (> repeats 3)
+			    (let ((step 'i))
+			      (if (tree-member step prev-f)
+				  (set! step (find-unique-name prev-f #f)))
+			      (lint-format "perhaps ~A... ->~%    (do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
+					   (truncated-list->string prev-f)
+					   step step step (+ repeats 1)
+					   prev-f)))
+			(set! repeats 0))))
+
 		(if (pair? f)
 		    (begin
 		      (set! f-len (length f))
@@ -4894,6 +4903,19 @@
 		    ;; here f is the last form in the body
 		    (when (and (pair? prev-f)
 			       (pair? (cdr prev-f)))
+
+#|
+		      (if (equal? f prev-f)
+			  (set! repeats (+ repeats 1)))
+		      (if (> repeats 3)
+			  (let ((ctr 'i))
+			    (if (tree-member ctr prev-f)
+				(set! ctr (find-unique-name prev-f #f)))
+			    (lint-format "perhaps ~A... ->~%    (do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
+					 (truncated-list->string prev-f)
+					 ctr ctr ctr (+ repeats 1)
+					 prev-f)))
+|#
 
 		      (if (and (memq (car prev-f) '(display write write-char))
 			       (equal? f (cadr prev-f))
@@ -5369,8 +5391,17 @@
 			 
 			 (if (symbol? sym)
 			     (begin
-			       (if (keyword? sym)
-				   (lint-format "keywords are constants ~A" name sym))
+
+			       (if (keyword? sym)               ; (define :x 1)
+				   (lint-format "keywords are constants ~A" name sym)
+				   (if (and (eq? sym 'pi)       ; (define pi (atan 0 -1))
+					    (member (car val) '((atan 0 -1)
+								(acos -1)
+								(* 2 (acos 0))
+								(* 4 (atan 1)))))
+				       (lint-format "~A is one of its many names, but pi a predefined constant in s7" name (car val))
+				       (if (constant? sym)      ; (define most-positive-fixnum 432)
+					   (lint-format "~A is a constant in s7: ~A" name sym form))))
 			       
 			       (if (memq head '(define define-constant define-envelope))
 				   (let ((len (length form)))
@@ -5610,6 +5641,9 @@
 					     (cons (tree-subst-eq new old (car tree))
 						   (tree-subst-eq new old (cdr tree))))
 					 tree)))
+
+			       (if (eq? false #<unspecified>)
+				   (lint-format "this #<unspecified> is redundant: ~A" name form))
 			       
 			       (when (and (pair? true)
 					  (pair? false)
@@ -5935,6 +5969,11 @@
 				      (if (memq test '(else #t))
 					  (begin
 					    (set! has-else #t)
+
+					    (if (and (pair? sequel)
+						     (eq? sequel #<unspecified>))
+						(lint-format "this #<unspecified> is redundant: ~A" name test))
+
 					    (if (and (pair? sequel)
 						     (pair? (car sequel))
 						     (null? (cdr sequel))
@@ -6494,34 +6533,54 @@
 				      (pair? (cadar varlist)))
 			     (let ((p (car body))
 				   (var (car varlist)))
+
 			       (when (and (pair? p)
-					  (pair? (cdr p)))
-				 (if (and (or (and (memq (car p) '(if and)) ; (let ((x (f y))) (and x (g x))) -> (cond ((f y) => g) (else #f))
-						   (eq? (cadr p) (car var)))
-					      (and (eq? (car p) 'or)
-						   (equal? (cadr p) `(not ,(car var)))))   
-					  (pair? (cddr p))
-					  (pair? (caddr p))
-					  (or (eq? (car p) 'if)
-					      (null? (cdddr p)))
-					  (pair? (cdaddr p))
-					  (not (eq? (caaddr p) (car var))) ; (let ((x A)) (if x (x x))) !?
-					  (null? (cddr (caddr p)))
-					  (eq? (car var) (cadr (caddr p))))
-				     (let ((else-clause (cond ((pair? (cdddr p))
-							       (if (not (eq? (cadddr p) (car var)))
-								   (if (and (pair? (cadddr p))
-									    (tree-member (car var) (cadddr p)))
-								       :oops! ; if the let var appears in the else portion, we can't do anything with =>
-								       `((else ,(cadddr p))))
-								   `((else #f)))) ; this stands in for the local var
-							      ((eq? (car p) 'and)
-							       `((else #f)))
-							      ((eq? (car p) 'or)
-							       `((else #t)))
-							      (else ()))))
-				       (unless (eq? else-clause :oops!)
-					 (lint-format "perhaps ~A" name (lists->string form `(cond (,(cadr var) => ,(caaddr p)) ,@else-clause)))))))))
+					  (pair? (cdr p))
+					  (pair? (cddr p)))
+
+				 (when (and (pair? (cdddr p))
+					    (eq? (car p) 'if) ; (let ((x (f y))) (if (not x) B (g x))) -> (cond ((f y) => g) (else B))
+					    (pair? (cadr p))
+					    (eq? (caadr p) 'not)
+					    (eq? (cadadr p) (car var))
+					    (pair? (cadddr p))
+					    (pair? (cdr (cadddr p)))
+					    (null? (cddr (cadddr p)))
+					    (eq? (car var) (cadr (cadddr p))))
+				   (let ((else-clause (if (eq? (caddr p) (car var))
+							  `((else #f))
+							  (if (and (pair? (caddr p))
+								   (tree-member (car var) (caddr p)))
+							      :oops! ; if the let var appears in the else portion, we can't do anything with =>
+							      `((else ,(caddr p)))))))
+				     (unless (eq? else-clause :oops!)
+				       (lint-format "perhaps ~A" name (lists->string form `(cond (,(cadr var) => ,(car (cadddr p))) ,@else-clause))))))
+
+				 (when (and (or (and (memq (car p) '(if and)) ; (let ((x (f y))) (and x (g x))) -> (cond ((f y) => g) (else #f))
+						     (eq? (cadr p) (car var)))
+						(and (eq? (car p) 'or)
+						     (equal? (cadr p) `(not ,(car var)))))   
+					    (pair? (caddr p))
+					    (or (eq? (car p) 'if)
+						(null? (cdddr p)))
+					    (pair? (cdaddr p))
+					    (not (eq? (caaddr p) (car var))) ; (let ((x A)) (if x (x x))) !?
+					    (null? (cddr (caddr p)))
+					    (eq? (car var) (cadr (caddr p))))
+				   (let ((else-clause (cond ((pair? (cdddr p))
+							     (if (not (eq? (cadddr p) (car var)))
+								 (if (and (pair? (cadddr p))
+									  (tree-member (car var) (cadddr p)))
+								     :oops! ; if the let var appears in the else portion, we can't do anything with =>
+								     `((else ,(cadddr p))))
+								 `((else #f)))) ; this stands in for the local var
+							    ((eq? (car p) 'and)
+							     `((else #f)))
+							    ((eq? (car p) 'or)
+							     `((else #t)))
+							    (else ()))))
+				     (unless (eq? else-clause :oops!)
+				       (lint-format "perhaps ~A" name (lists->string form `(cond (,(cadr var) => ,(caaddr p)) ,@else-clause)))))))))
 			   
 			   (let* ((cur-env (append vars env))
 				  (e (lint-walk-body name head body cur-env))
@@ -6609,6 +6668,7 @@
 			     (let* ((varlen (length varlist))
 				    (var (and (positive? varlen)
 					      (varlist (- varlen 1)))))
+
 			       (when (and (pair? var)
 					  (positive? varlen)
 					  (pair? (cdr var)))
