@@ -802,11 +802,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define (log-none-of . ints)  ; bits on in none of ints
   (lognot (apply logior ints)))
 
-(define (log-all-of . ints)   ; bits on in all of ints
-  (apply logand ints))
-
-(define (log-any-of . ints)   ; bits on in at least 1 of ints
-  (apply logior ints))
+(define log-all-of logand)    ; bits on in all of ints
+(define log-any-of logior)    ; bits on in at least 1 of ints
 
 (define (log-n-of n . ints)   ; return the bits on in exactly n of ints
   (if (integer? n)

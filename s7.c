@@ -73683,7 +73683,7 @@ s7_scheme *s7_init(void)
                               defun("emergency-exit",	emergency_exit,		0, 1, false);
                               defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
-                              s7_define_function(sc, "abort",  g_abort,         0, 0, false, "drop into gdb I hope");
+                              s7_define_function(sc, "abort",  g_abort,         0, 1, false, "drop into gdb I hope");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
@@ -74133,6 +74133,7 @@ int main(int argc, char **argv)
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
  * ~N| in format? also ~N* I guess, ambiguous?
+ * can port-line-number be settable? (for #readers that go past newlines) or should read-char (et al) increment it?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

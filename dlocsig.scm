@@ -3072,9 +3072,7 @@
     ;; sample at which signal first arrives to the listener
     (set! start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
     ;; minimum distance for unity gain calculation
-    (set! min-dist-unity (if (< min-dist inside-radius)
-			     inside-radius 
-			     min-dist))
+    (set! min-dist-unity (max min-dist inside-radius))
     ;; unity-gain gain scalers
     (set! unity-gain (* scaler
 			(if (number? unity-gain-dist)
