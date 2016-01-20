@@ -775,7 +775,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 14-Jan:    profile.scm. Moved multiple-value-set! to stuff.scm.
+ * 14-Jan:    profile.scm. Moved multiple-value-set! to stuff.scm. Setter for port-line-number.
  * 7-Jan:     s7_load_with_environment.
  *            s7_eval_c_string takes only one statement now (use begin to handle multiple statements)
  * 4-Jan-16:  remove s7_eval_form, change s7_eval to take its place.

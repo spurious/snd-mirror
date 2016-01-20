@@ -4909,7 +4909,7 @@ The hook function argument, named 'name, is the filename.
 While loading, the <em class=def id="portfilename">port-filename</em> and 
 <em class=def id="portlinenumber">port-line-number</em> of the current-input-port can tell you
 where you are in the file.  This data is available after loading via <em class=def id="pairlinenumber">pair-line-number</em>
-and <em class=def id="pairfilename">pair-filename</em>.
+and <em class=def id="pairfilename">pair-filename</em>.  port-line-number is settable (for fancy *#readers*).
 </p>
 
 <pre class="indented">
@@ -5087,6 +5087,23 @@ I need to know where something unexpected happened.  So:
 &gt; '(1 2 #.(* 3 4) 5)
 <em class="gray">(1 2 12 5)</em>
 </pre>
+
+
+<p>And a reader that implements #[...]# for literal hash-tables:
+</p>
+
+<pre class="indented">
+&gt; (set! *#readers* 
+    (list (cons #\[ (lambda (str)
+		      (let ((h (make-hash-table)))
+		        (do ((c (read) (read)))
+		            ((eq? c ']#) h) ; ]# is a symbol from the reader's point of view
+		          (set! (h (car c)) (cdr c))))))))
+<em class="gray">((#\[ . #&lt;lambda (str)&gt;))</em>
+&gt; #[(a . 1) (b . #[(c . 3)]#)]#
+<em class="gray">(hash-table '(b . (hash-table '(c . 3))) '(a . 1))</em>
+</pre>
+
 
 <p>To return no value from a reader, use <code>(values)</code>.
 </p>

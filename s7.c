@@ -6728,11 +6728,11 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
 
   env = car(args);
   if (!is_let(env))
-    method_or_bust_with_type(sc, env, sc->OUTLET, args, A_LET, 0);
+    return(s7_wrong_type_arg_error(sc, "set! outlet", 1, env, "a let"));
 
   new_outer = cadr(args);
   if (!is_let(new_outer))
-    return(wrong_type_argument_with_type(sc, sc->OUTLET, 2, new_outer, A_LET));
+    return(s7_wrong_type_arg_error(sc, "set! outlet", 2, new_outer, "a let"));
   if (new_outer == sc->rootlet)
     new_outer = sc->NIL;
 
@@ -26057,9 +26057,9 @@ static s7_pointer c_port_line_number(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
-  #define Q_port_line_number s7_make_signature(sc, 2, sc->IS_INTEGER, sc->IS_INPUT_PORT)
+  #define Q_port_line_number s7_make_signature(sc, 2, sc->IS_INTEGER, s7_make_signature(sc, 2, sc->IS_INPUT_PORT, sc->IS_NULL))
 
-  if (is_null(args))
+  if ((is_null(args)) || (is_null(car(args))))
     return(c_port_line_number(sc, sc->input_port));
   return(c_port_line_number(sc, car(args)));
 }
@@ -26071,6 +26071,27 @@ int s7_port_line_number(s7_pointer p)
   if (is_input_port(p))
     return(port_line_number(p));
   return(0);
+}
+
+static s7_pointer g_set_port_line_number(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer p, line;
+
+  if ((is_null(car(args))) || 
+      ((is_null(cdr(args))) && (is_integer(car(args)))))
+    p = sc->input_port;
+  else 
+    {
+      p = car(args);
+      if (!(is_input_port(p)))
+	return(s7_wrong_type_arg_error(sc, "set! port-line-number", 1, p, "an input port"));
+    }
+
+  line = (is_null(cdr(args)) ? car(args) : cadr(args));
+  if (!is_integer(line))
+    return(s7_wrong_type_arg_error(sc, "set! port-line-number", 2, line, "an integer"));
+  port_line_number(p) = integer(line);
+  return(line);
 }
 
 
@@ -73683,7 +73704,7 @@ s7_scheme *s7_init(void)
                               defun("emergency-exit",	emergency_exit,		0, 1, false);
                               defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
-                              s7_define_function(sc, "abort",  g_abort,         0, 1, false, "drop into gdb I hope");
+                              s7_define_function(sc, "abort",  g_abort,         0, 0, true, "drop into gdb I hope");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
@@ -73837,6 +73858,7 @@ s7_scheme *s7_init(void)
    *    current-error-port should simply be an s7 variable with a name like *error-port* and an accessor to
    *    ensure its new value, if any, is an output port.
    */
+  
 
   s7_function_set_setter(sc, "car",              "set-car!");
   s7_function_set_setter(sc, "cdr",              "set-cdr!");
@@ -73848,7 +73870,7 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "let-ref",          "let-set!");
   s7_function_set_setter(sc, "string-ref",       "string-set!");
   c_function_setter(slot_value(global_slot(sc->OUTLET))) = s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter");
-
+  c_function_setter(slot_value(global_slot(sc->PORT_LINE_NUMBER))) = s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter");
   {
     int i, top;
 #if WITH_GMP
@@ -74133,7 +74155,7 @@ int main(int argc, char **argv)
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
  * ~N| in format? also ~N* I guess, ambiguous?
- * can port-line-number be settable? (for #readers that go past newlines) or should read-char (et al) increment it?
+ * need set port-line-number tests, s7test for recursive #reader (see t348.scm)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

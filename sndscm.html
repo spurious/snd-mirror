@@ -1001,8 +1001,6 @@ end points.  (This is also "just-good-enough" software).
 </p>
 
 <pre class="indented">
-(if (not (defined? 'pi)) (define pi 3.141592653589793))
-
 (define (fix-clip clip-beg-1 clip-end-1)
   (if (&gt; clip-end-1 clip-beg-1)
       (let* ((dur (+ 1 (- clip-end-1 clip-beg-1)))
