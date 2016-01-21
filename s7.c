@@ -49505,7 +49505,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
       result = sc->UNDEFINED;
       x = sc->x;
       z = sc->z;
-      sc->temp7 = s7_list(sc, 6, code, args, value, cur_code, x, z);
+      sc->temp7 = cons(sc, code, cons(sc, args, cons(sc, value, cons(sc, cur_code, cons(sc, x, cons(sc, z, sc->NIL)))))); /* not s7_list (debugger checks) */
 
       if (!is_pair(cur_code))
 	{
@@ -74154,8 +74154,8 @@ int main(int argc, char **argv)
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
+ *   also need rest of Snd signatures
  * ~N| in format? also ~N* I guess, ambiguous?
- * need set port-line-number tests, s7test for recursive #reader (see t348.scm)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

@@ -66,10 +66,9 @@
 	    (lambda (chan-marks)
 	      (for-each 
 	       (lambda (m)
-		 (if (or (= (mark->integer m) play-between-marks-m1)
-			 (= (mark->integer m) play-between-marks-m2))
-		     (set! (sync m) 1)
-		     (set! (sync m) 0)))
+		 (set! (sync m) (if (or (= (mark->integer m) play-between-marks-m1)
+					(= (mark->integer m) play-between-marks-m2))
+				    1 0)))
 	       chan-marks))
 	    snd-marks))
 	 (marks))
@@ -846,9 +845,7 @@ using the granulate generator to fix up the selection duration (this still is no
 		       (XtAddCallback bottom-left-button
 				      XmNactivateCallback
 				      (lambda (w context info)
-					(if (= mode 1)
-					    (set! mode 2)
-					    (set! mode 1))
+					(set! mode (if (= mode 1) 2 1))
 					(set! (loop-data (+ offset 6)) mode)
 					(change-label w (if (= mode 1) "forward" "forw/back")))))
 		     (XtAddCallback leftrange XmNactivateCallback
