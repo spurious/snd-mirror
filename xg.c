@@ -32265,6 +32265,32 @@ static Xen gxg_gdk_seat_get_keyboard(Xen seat)
   return(C_to_Xen_GdkDevice_(gdk_seat_get_keyboard(Xen_to_C_GdkSeat_(seat))));
 }
 
+static Xen gxg_gdk_drag_context_manage_dnd(Xen context, Xen ipc_window, Xen actions)
+{
+  #define H_gdk_drag_context_manage_dnd "gboolean gdk_drag_context_manage_dnd(GdkDragContext* context, \
+GdkWindow* ipc_window, GdkDragAction actions)"
+  Xen_check_type(Xen_is_GdkDragContext_(context), context, 1, "gdk_drag_context_manage_dnd", "GdkDragContext*");
+  Xen_check_type(Xen_is_GdkWindow_(ipc_window), ipc_window, 2, "gdk_drag_context_manage_dnd", "GdkWindow*");
+  Xen_check_type(Xen_is_GdkDragAction(actions), actions, 3, "gdk_drag_context_manage_dnd", "GdkDragAction");
+  return(C_to_Xen_gboolean(gdk_drag_context_manage_dnd(Xen_to_C_GdkDragContext_(context), Xen_to_C_GdkWindow_(ipc_window), 
+                                                       Xen_to_C_GdkDragAction(actions))));
+}
+
+static Xen gxg_gdk_event_is_scroll_stop_event(Xen event)
+{
+  #define H_gdk_event_is_scroll_stop_event "gboolean gdk_event_is_scroll_stop_event(GdkEvent* event)"
+  Xen_check_type(Xen_is_GdkEvent_(event), event, 1, "gdk_event_is_scroll_stop_event", "GdkEvent*");
+  return(C_to_Xen_gboolean(gdk_event_is_scroll_stop_event(Xen_to_C_GdkEvent_(event))));
+}
+
+static Xen gxg_gtk_text_view_reset_cursor_blink(Xen text_view)
+{
+  #define H_gtk_text_view_reset_cursor_blink "void gtk_text_view_reset_cursor_blink(GtkTextView* text_view)"
+  Xen_check_type(Xen_is_GtkTextView_(text_view), text_view, 1, "gtk_text_view_reset_cursor_blink", "GtkTextView*");
+  gtk_text_view_reset_cursor_blink(Xen_to_C_GtkTextView_(text_view));
+  return(Xen_false);
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -38930,6 +38956,9 @@ Xen_wrap_1_arg(gxg_gdk_seat_get_capabilities_w, gxg_gdk_seat_get_capabilities)
 Xen_wrap_2_args(gxg_gdk_seat_get_slaves_w, gxg_gdk_seat_get_slaves)
 Xen_wrap_1_arg(gxg_gdk_seat_get_pointer_w, gxg_gdk_seat_get_pointer)
 Xen_wrap_1_arg(gxg_gdk_seat_get_keyboard_w, gxg_gdk_seat_get_keyboard)
+Xen_wrap_3_args(gxg_gdk_drag_context_manage_dnd_w, gxg_gdk_drag_context_manage_dnd)
+Xen_wrap_1_arg(gxg_gdk_event_is_scroll_stop_event_w, gxg_gdk_event_is_scroll_stop_event)
+Xen_wrap_1_arg(gxg_gtk_text_view_reset_cursor_blink_w, gxg_gtk_text_view_reset_cursor_blink)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -43283,6 +43312,9 @@ pl_unused = NULL;
   Xg_define_procedure(gdk_seat_get_slaves, gxg_gdk_seat_get_slaves_w, 2, 0, 0, H_gdk_seat_get_slaves, pl_pui);
   Xg_define_procedure(gdk_seat_get_pointer, gxg_gdk_seat_get_pointer_w, 1, 0, 0, H_gdk_seat_get_pointer, pl_pu);
   Xg_define_procedure(gdk_seat_get_keyboard, gxg_gdk_seat_get_keyboard_w, 1, 0, 0, H_gdk_seat_get_keyboard, pl_pu);
+  Xg_define_procedure(gdk_drag_context_manage_dnd, gxg_gdk_drag_context_manage_dnd_w, 3, 0, 0, H_gdk_drag_context_manage_dnd, pl_buui);
+  Xg_define_procedure(gdk_event_is_scroll_stop_event, gxg_gdk_event_is_scroll_stop_event_w, 1, 0, 0, H_gdk_event_is_scroll_stop_event, pl_bu);
+  Xg_define_procedure(gtk_text_view_reset_cursor_blink, gxg_gtk_text_view_reset_cursor_blink_w, 1, 0, 0, H_gtk_text_view_reset_cursor_blink, pl_tu);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create, pl_pu);
@@ -45977,7 +46009,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("09-Jan-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("21-Jan-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

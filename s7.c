@@ -74156,6 +74156,9 @@ int main(int argc, char **argv)
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
  * ~N| in format? also ~N* I guess, ambiguous?
+ * confusing error: ((lambda (a b) (+ a b)) ((lambda () (values 1)))) -> error: (values 1): not enough arguments: (values 1)
+ *   it looks like values is complaining, but actually it's the lambda*
+ * not much better is (define* (f1 a b) (+ a b)) (f1 ((lambda () (values 1)))) -> error: + argument 2, #f, is boolean but should be a number
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

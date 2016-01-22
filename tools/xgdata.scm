@@ -9305,3 +9305,9 @@
 ;;; 3.19.6:
 
 (CINT-3.20 "GTK_STATE_FLAG_DROP_ACTIVE" "GtkStateFlags")
+
+;;; 3.19.7:
+
+(CFNC-3.20 "gboolean gdk_drag_context_manage_dnd GdkDragContext* context GdkWindow* ipc_window GdkDragAction actions")
+(CFNC-3.20 "gboolean gdk_event_is_scroll_stop_event GdkEvent* event" 'const)
+(CFNC-3.20 "void gtk_text_view_reset_cursor_blink GtkTextView* text_view")

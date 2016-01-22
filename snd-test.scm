@@ -12315,8 +12315,9 @@ EDITS: 2
       (mus-fft xdat ydat 17 -1) ; mistake is deliberate
       (do ((i 0 (+ i 1)))
 	  ((= i 16))
-	(if (or (and (= i 3) (or (fneq (rdat i) 16.0) (fneq (xdat i) 16.0)))
-		(and (not (= i 3)) (or (fneq (rdat i) 0.0) (fneq (xdat i) 0.0))))
+	(if (if (= i 3)
+		(or (fneq (rdat i) 16.0) (fneq (xdat i) 16.0))
+		(or (fneq (rdat i) 0.0) (fneq (xdat i) 0.0)))
 	    (snd-display #__line__ ";fft real[~D]: ~A ~A?" i (rdat i) (xdat i)))
 	(if (or (fneq (idat i) 0.0) (fneq (ydat i) 0.0))
 	    (snd-display #__line__ ";fft imag[~D]: ~A ~A?" i (idat i) (ydat i))))
