@@ -1002,52 +1002,50 @@ end points.  (This is also "just-good-enough" software).
 
 <pre class="indented">
 (define (fix-clip clip-beg-1 clip-end-1)
-  (if (&gt; clip-end-1 clip-beg-1)
-      (let* ((dur (+ 1 (- clip-end-1 clip-beg-1)))
-	     (samps (channel-&gt;float-vector (- clip-beg-1 4) (+ dur 9)))
-	     (clip-beg 3)
-	     (clip-end (+ dur 4)))
-	(let ((samp0 (samps clip-beg))
-	      (samp1 (samps clip-end)))
-	  (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
-	      (begin
-	        ;; weird!  some of the clipped passages have "knees"
-		;;   this looks nuts, but no time to scratch my head
-		(set! clip-beg (- clip-beg 1))
-		(set! samp0 (samps clip-beg))
-		(if (or (&gt; samp0 .99) (&lt; samp0 -.99))
-		    (begin
-		      (set! clip-beg (- clip-beg 1))
-		      (set! samp0 (samps clip-beg))))))
-	  (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
-	      (begin
-		(set! clip-end (+ 1 clip-end))
-		(set! samp1 (samps clip-end))
-		(if (or (&gt; samp1 .99) (&lt; samp1 -.99))
-		    (begin
-		      (set! clip-end (+ 1 clip-end))
-		      (set! samp1 (samps clip-end))))))
-          ;; now we have semi-plausible bounds
-          ;; make sine dependent on rate of change of current 
-	  (let* ((samp00 (samps (- clip-beg 1)))
-		 (samp11 (samps (+ 1 clip-end)))
-		 (dist (- clip-end clip-beg))
-		 (incr (/ pi dist))
-		 (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
-	    (if (&gt; samp0 0.0)
-                ;; clipped at 1.0
-		(do ((i (+ 1 clip-beg) (+ i 1))
-		     (angle incr (+ angle incr)))
-		    ((= i clip-end))
-		  (set! (samps i) (+ 1.0 (* amp (sin angle)))))
-                ;; clipped at -1.0
-		(do ((i (+ 1 clip-beg) (+ i 1))
-		     (angle incr (+ angle incr)))
-		    ((= i clip-end))
-		  (set! (samps i) (- -1.0 (* amp (sin angle))))))
-	    (float-vector-&gt;channel samps (- clip-beg-1 4))))
-	#t) ; return values so I can tell when I hit a 1-sample section during testing
-      #f))
+  (and (&gt; clip-end-1 clip-beg-1)
+       (let* ((dur (+ 1 (- clip-end-1 clip-beg-1)))
+	      (samps (channel-&gt;float-vector (- clip-beg-1 4) (+ dur 9)))
+	      (clip-beg 3)
+	      (clip-end (+ dur 4)))
+	 (let ((samp0 (samps clip-beg))
+	       (samp1 (samps clip-end)))
+	   (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+	       (begin
+	         ;; weird!  some of the clipped passages have "knees"
+		 ;;   this looks nuts, but no time to scratch my head
+		 (set! clip-beg (- clip-beg 1))
+		 (set! samp0 (samps clip-beg))
+		 (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+		     (begin
+		       (set! clip-beg (- clip-beg 1))
+		       (set! samp0 (samps clip-beg))))))
+	   (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+	       (begin
+		 (set! clip-end (+ 1 clip-end))
+		 (set! samp1 (samps clip-end))
+		 (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+		     (begin
+		       (set! clip-end (+ 1 clip-end))
+		       (set! samp1 (samps clip-end))))))
+           ;; now we have semi-plausible bounds
+           ;; make sine dependent on rate of change of current 
+	   (let* ((samp00 (samps (- clip-beg 1)))
+		  (samp11 (samps (+ 1 clip-end)))
+		  (dist (- clip-end clip-beg))
+		  (incr (/ pi dist))
+		  (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
+	     (if (&gt; samp0 0.0)
+                 ;; clipped at 1.0
+		 (do ((i (+ 1 clip-beg) (+ i 1))
+		      (angle incr (+ angle incr)))
+		     ((= i clip-end))
+		   (set! (samps i) (+ 1.0 (* amp (sin angle)))))
+                 ;; clipped at -1.0
+		 (do ((i (+ 1 clip-beg) (+ i 1))
+		      (angle incr (+ angle incr)))
+		     ((= i clip-end))
+		   (set! (samps i) (- -1.0 (* amp (sin angle))))))
+	     (float-vector-&gt;channel samps (- clip-beg-1 4)))))))
 
 (define (fix-it n)
   ;; turn off graphics and fix all the clipped sections

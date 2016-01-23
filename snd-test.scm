@@ -27478,7 +27478,7 @@ EDITS: 2
 	    (equal? nv new-value))))
     (define chan-equal? 
       (lambda (vals new-value)
-	(cond ((null? vals) #t)
+	(cond ((null? vals))
 	      ((pair? vals) (and (chan-equal? (car vals) new-value)
 				  (chan-equal? (cdr vals) new-value)))
 	      (else (test-equal vals new-value)))))

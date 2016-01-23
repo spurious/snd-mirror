@@ -59986,7 +59986,12 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       /* reuse the value cells as the new frame slots */
       
       if (is_null(z))
-	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, closure_name(sc, sc->code), current_code(sc)));
+	{
+	  s7_pointer name, ccode;
+	  name = closure_name(sc, sc->code);
+	  ccode = current_code(sc);
+	  s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->NOT_ENOUGH_ARGUMENTS, (name == ccode) ? sc->code : name, ccode));
+	}
       /* now that args are being reused as slots, the error message can't use sc->args,
        *  so fallback on current_code(sc) in this section.
        *  But that can be #f, and closure_name can be confusing in this context, so we need a better error message!
@@ -60006,7 +60011,12 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   if (is_null(x))
     {
       if (is_not_null(z))
-	s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, closure_name(sc, sc->code), current_code(sc)));
+	{
+	  s7_pointer name, ccode;
+	  name = closure_name(sc, sc->code);
+	  ccode = current_code(sc);
+	  s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, set_elist_3(sc, sc->TOO_MANY_ARGUMENTS, (name == ccode) ? sc->code : name, ccode));
+	}
     }
   else
     {
@@ -74156,9 +74166,6 @@ int main(int argc, char **argv)
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
  * ~N| in format? also ~N* I guess, ambiguous?
- * confusing error: ((lambda (a b) (+ a b)) ((lambda () (values 1)))) -> error: (values 1): not enough arguments: (values 1)
- *   it looks like values is complaining, but actually it's the lambda*
- * not much better is (define* (f1 a b) (+ a b)) (f1 ((lambda () (values 1)))) -> error: + argument 2, #f, is boolean but should be a number
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
