@@ -270,29 +270,27 @@
       (set! det (+ (* (m 0 0) (mat 0 0))
 		   (* (m 0 1) (mat 1 0))
 		   (* (m 0 2) (mat 2 0))))
-      (if (<= (abs det) 1e-06)
-	  #f
-	  (begin
-	    (set! invdet (/ 1.0 det))
-	    (do ((row 0 (+ 1 row)))
-		((= row 3))
-	      (do ((col 0 (+ 1 col)))
-		  ((= col 3))
-		(set! (mat row col) (* (mat row col) invdet))))
-	    mat))))
+      (and (> (abs det) 1e-06)
+	   (begin
+	     (set! invdet (/ 1.0 det))
+	     (do ((row 0 (+ 1 row)))
+		 ((= row 3))
+	       (do ((col 0 (+ 1 col)))
+		   ((= col 3))
+		 (set! (mat row col) (* (mat row col) invdet))))
+	     mat))))
   
   (define (invert2x2 mat) ; invert a 2x2 matrix
     (let ((m (make-float-vector (list 2 2) 0.0))
 	  (det (- (* (mat 0 0) (mat 1 1))
 		  (* (mat 1 0) (mat 0 1)))))
-      (if (<= (abs det) 1e-06)
-	  #f
-	  (begin
-	    (set! (m 0 0) (/ (mat 1 1) det))
-	    (set! (m 1 1) (/ (mat 0 0) det))
-	    (set! (m 0 1) (- (/ (mat 0 1) det)))
-	    (set! (m 1 0) (- (/ (mat 1 0) det)))
-	    m))))
+      (and (> (abs det) 1e-06)
+	   (begin
+	     (set! (m 0 0) (/ (mat 1 1) det))
+	     (set! (m 1 1) (/ (mat 0 0) det))
+	     (set! (m 0 1) (- (/ (mat 0 1) det)))
+	     (set! (m 1 0) (- (/ (mat 1 0) det)))
+	     m))))
   
   (if (null? speakers)
       (error 'mus-error "ERROR: a speaker configuration must have at least one speaker!~%"))
@@ -380,7 +378,7 @@
 		       (let ((mind (car distances)))
 			 (for-each 
 			  (lambda (d)
-			    (if (< d mind) (set! mind d)))
+			    (set! mind (min mind d)))
 			  distances)
 			 mind)
 		       0.0))
@@ -412,15 +410,14 @@
 						 ((= j 3))
 					       (set! (m i j) ((vertices i) j))))
 					   (invert3x3 m))
-					 (if (= size 2)
-					     (let ((m (make-float-vector (list 2 2) 0.0)))
-					       (do ((i 0 (+ i 1)))
-						   ((= i 2))
-						 (do ((j 0 (+ j 1)))
-						     ((= j 2))
-						   (set! (m i j) ((vertices i) j))))
-					       (invert2x2 m))
-					     #f))))
+					 (and (= size 2)
+					      (let ((m (make-float-vector (list 2 2) 0.0)))
+						(do ((i 0 (+ i 1)))
+						    ((= i 2))
+						  (do ((j 0 (+ j 1)))
+						      ((= j 2))
+						    (set! (m i j) ((vertices i) j))))
+						(invert2x2 m))))))
 			(set! vals (cons (make-group :id id
 						     :size size
 						     :speakers group
@@ -949,7 +946,7 @@
 	     (lambda (p)
 	       (let* ((d (car p))
 		      (a (cadr p))
-		      (e (if 3d (if (pair? (cddr p)) (caddr p) 0.0) 0.0))
+		      (e (if (and 3d (pair? (cddr p))) (caddr p) 0.0))
 		      (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
 		      (dxy (* d (real-part evec)))
 		      (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
@@ -2088,9 +2085,8 @@
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
   
   (let* (;; speaker configuration for current number of channels
-	 (speakers (if (= render-using ambisonics)
-		       #f
-		       (get-speaker-configuration out-channels)))
+	 (speakers (and (not (= render-using ambisonics))
+			(get-speaker-configuration out-channels)))
 	 
 	 ;; array of gains -- envelopes
 	 (channel-gains (make-vector out-channels ()))
@@ -2241,9 +2237,8 @@
 	     (line-m (sub (list xb yb zb) line-b))
 	     (normal (cross vert-a vert-b))
 	     (denominator (dot normal line-m)))
-	(if (<= (abs denominator) tolerance)
-	    #f
-	    (add line-b (scale line-m (/ (- (dot normal line-b)) denominator))))))
+	(and (> (abs denominator) tolerance)
+	     (add line-b (scale line-m (/ (- (dot normal line-b)) denominator))))))
     
     ;; calculate transition point between two adjacent two-speaker groups
     ;; original line intersection code from Graphic Gems III
@@ -2266,51 +2261,51 @@
 	    (zero-gain 1.0e-10)
 	    (size (group-size group))
 	    (mat (group-matrix group))) ; returns float-vector
-	(if (and (< (abs x) zero-coord)
-		 (< (abs y) zero-coord)
-		 (< (abs z) zero-coord))
-	    (list #t (list 1.0 1.0 1.0))
-	    
-	    (if (= size 3)
-		(let* ((gain-a (+ (* (mat 0 0) x)
-				  (* (mat 1 0) y)
-				  (* (mat 2 0) z)))
-		       (gain-b (+ (* (mat 0 1) x)
-				  (* (mat 1 1) y)
-				  (* (mat 2 1) z)))
-		       (gain-c (+ (* (mat 0 2) x)
-				  (* (mat 1 2) y)
-				  (* (mat 2 2) z)))
-		       (mag (sqrt (+ (* gain-a gain-a)
-				     (* gain-b gain-b)
-				     (* gain-c gain-c)))))
-		  ;; truncate to zero roundoff errors
-		  (if (< (abs gain-a) zero-gain)
-		      (set! gain-a 0.0))
-		  (if (< (abs gain-b) zero-gain)
-		      (set! gain-b 0.0))
-		  (if (< (abs gain-c) zero-gain)
-		      (set! gain-c 0.0))
-		  (list (and (>= gain-a 0) (>= gain-b 0) (>= gain-c 0))
-			(list (/ gain-a mag) (/ gain-b mag) (/ gain-c mag))))
-		
-		(if (= size 2)
-		    (let* ((gain-a (+ (* (mat 0 0) x)
-				      (* (mat 1 0) y)))
-			   (gain-b (+ (* (mat 0 1) x)
-				      (* (mat 1 1) y)))
-			   (mag (sqrt (+ (* gain-a gain-a)
-					 (* gain-b gain-b)))))
-		      ;; truncate to zero roundoff errors
-		      (if (< (abs gain-a) zero-gain)
-			  (set! gain-a 0.0))
-		      (if (< (abs gain-b) zero-gain)
-			  (set! gain-b 0.0))
-		      (list (and (>= gain-a 0) (>= gain-b 0))
-			    (list (/ gain-a mag) (/ gain-b mag))))
-		    
-		    (if (= size 1)
-			(list #t (list 1.0))))))))
+	(cond ((and (< (abs x) zero-coord)
+		    (< (abs y) zero-coord)
+		    (< (abs z) zero-coord))
+	       (list #t (list 1.0 1.0 1.0)))
+	      
+	      ((= size 3)
+	       (let* ((gain-a (+ (* (mat 0 0) x)
+				 (* (mat 1 0) y)
+				 (* (mat 2 0) z)))
+		      (gain-b (+ (* (mat 0 1) x)
+				 (* (mat 1 1) y)
+				 (* (mat 2 1) z)))
+		      (gain-c (+ (* (mat 0 2) x)
+				 (* (mat 1 2) y)
+				 (* (mat 2 2) z)))
+		      (mag (sqrt (+ (* gain-a gain-a)
+				    (* gain-b gain-b)
+				    (* gain-c gain-c)))))
+		 ;; truncate to zero roundoff errors
+		 (if (< (abs gain-a) zero-gain)
+		     (set! gain-a 0.0))
+		 (if (< (abs gain-b) zero-gain)
+		     (set! gain-b 0.0))
+		 (if (< (abs gain-c) zero-gain)
+		     (set! gain-c 0.0))
+		 (list (and (>= gain-a 0) (>= gain-b 0) (>= gain-c 0))
+		       (list (/ gain-a mag) (/ gain-b mag) (/ gain-c mag)))))
+	      
+	      ((= size 2)
+	       (let* ((gain-a (+ (* (mat 0 0) x)
+				 (* (mat 1 0) y)))
+		      (gain-b (+ (* (mat 0 1) x)
+				 (* (mat 1 1) y)))
+		      (mag (sqrt (+ (* gain-a gain-a)
+				    (* gain-b gain-b)))))
+		 ;; truncate to zero roundoff errors
+		 (if (< (abs gain-a) zero-gain)
+		     (set! gain-a 0.0))
+		 (if (< (abs gain-b) zero-gain)
+		     (set! gain-b 0.0))
+		 (list (and (>= gain-a 0) (>= gain-b 0))
+		       (list (/ gain-a mag) (/ gain-b mag)))))
+	      
+	      ((= size 1)
+	       (list #t (list 1.0))))))
     
     ;; find the speaker group that contains a point
     (define (find-group x y z)
@@ -2446,90 +2441,91 @@
 		      ;; the edge have zero gain when the trajectory switches groups
 		      (let ((edge (equalp-intersection (group-vertices group)
 							(group-vertices prev-group))))
-			(if (= (length edge) 2)
-			    ;; the groups have two shared points (ie: share an edge)
-			    ;; this must be a three speaker groups transition
-			    (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
-			      (if pint
-				  (let* ((xi (car pint))
-					 (yi (cadr pint))
-					 (zi (third pint))
-					 (di (distance xi yi zi))
-					 (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-										      (- yi prev-y)
-										      (- zi prev-z))
-									    (distance (- x prev-x)
-										      (- y prev-y)
-										      (- z prev-z)))
-									 (- time prev-time))))))
-				    ;; see if we are inside the previous group
-				    ;; we can be on either side due to roundoff errors
-				    (let* ((vals (calculate-gains xi yi zi prev-group))
-					   (inside (car vals))
-					   (gains (cadr vals)))
-				      (if inside
-					  (push-gains prev-group gains di ti 2)
-					  (let* ((val1 (calculate-gains xi yi zi group))
-						 (inside (car val1))
-						 (gains (cadr val1)))
-					    (if inside
-						(push-gains group gains di ti 3)
-						;; how did we get here?
-						(error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti))))))))
-			    
-			    (if (and (= (length edge) 1) (= (group-size group) 2))
-				;; two two-speaker groups share one point
-				;; z coordinates are silently ignored
-				(let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
-				  (if pint
-				      (let* ((xi (car pint))
-					     (yi (cadr pint))
-					     (di (distance xi yi 0.0))
-					     (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											  (- yi prev-y)
-											  0.0)
-										(distance (- x prev-x)
-											  (- y prev-y)
-											  0.0))
-									     (- time prev-time))))))
-					;; see if we are inside the previous group
-					;; we can be on either side due to roundoff errors
-					(let* ((vals (calculate-gains xi yi 0.0 prev-group))
-					       (inside (car vals))
-					       (gains (cadr vals)))
-					  (if inside 
-					      (push-gains prev-group gains di ti 4)
-					      (let* ((val1 (calculate-gains xi yi 0.0 group))
-						     (inside (car val1))
-						     (gains (cadr val1)))
-						(if inside
-						    (push-gains group gains di ti 5)
-						    ;; how did we get here?
-						    (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
-				(if (= (length edge) 1)
-				    ;; groups share only one point... for now a warning
-				    ;; we should calculate two additional interpolated
-				    ;; points as the trajectory must be crossing a third
-				    ;; group
-				    (begin
-				      (for-each
-				       (lambda (int-group)
-					 (if (and (member (car edge) (group-vertices int-group))
-						  (not (equal? int-group group))
-						  (not (equal? int-group prev-group)))
-					     (let ((edge1 (equalp-intersection (group-vertices int-group)
-										(group-vertices prev-group)))
-						   (edge2 (equalp-intersection (group-vertices int-group)
-										(group-vertices group))))
-					       (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
-				       (speaker-config-groups speakers))
-				      (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
-				    
-				    ;; groups don't share points... how did we get here?
-				    (if (= (length edge) 0)
-					(format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
-						(group-id prev-group) (group-speakers prev-group)
-						(group-id group) (group-speakers group))))))
+			(cond ((= (length edge) 2)
+			       ;; the groups have two shared points (ie: share an edge)
+			       ;; this must be a three speaker groups transition
+			       (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
+				 (if pint
+				     (let* ((xi (car pint))
+					    (yi (cadr pint))
+					    (zi (third pint))
+					    (di (distance xi yi zi))
+					    (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											 (- yi prev-y)
+											 (- zi prev-z))
+									       (distance (- x prev-x)
+											 (- y prev-y)
+											 (- z prev-z)))
+									    (- time prev-time))))))
+				       ;; see if we are inside the previous group
+				       ;; we can be on either side due to roundoff errors
+				       (let* ((vals (calculate-gains xi yi zi prev-group))
+					      (inside (car vals))
+					      (gains (cadr vals)))
+					 (if inside
+					     (push-gains prev-group gains di ti 2)
+					     (let* ((val1 (calculate-gains xi yi zi group))
+						    (inside (car val1))
+						    (gains (cadr val1)))
+					       (if inside
+						   (push-gains group gains di ti 3)
+						   ;; how did we get here?
+						   (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+			      
+			      ((and (= (length edge) 1) 
+				    (= (group-size group) 2))
+			       ;; two two-speaker groups share one point
+			       ;; z coordinates are silently ignored
+			       (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
+				 (if pint
+				     (let* ((xi (car pint))
+					    (yi (cadr pint))
+					    (di (distance xi yi 0.0))
+					    (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											 (- yi prev-y)
+											 0.0)
+									       (distance (- x prev-x)
+											 (- y prev-y)
+											 0.0))
+									    (- time prev-time))))))
+				       ;; see if we are inside the previous group
+				       ;; we can be on either side due to roundoff errors
+				       (let* ((vals (calculate-gains xi yi 0.0 prev-group))
+					      (inside (car vals))
+					      (gains (cadr vals)))
+					 (if inside 
+					     (push-gains prev-group gains di ti 4)
+					     (let* ((val1 (calculate-gains xi yi 0.0 group))
+						    (inside (car val1))
+						    (gains (cadr val1)))
+					       (if inside
+						   (push-gains group gains di ti 5)
+						   ;; how did we get here?
+						   (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
+			      
+			      ((= (length edge) 1)
+			       ;; groups share only one point... for now a warning
+			       ;; we should calculate two additional interpolated
+			       ;; points as the trajectory must be crossing a third
+			       ;; group
+			       (for-each
+				(lambda (int-group)
+				  (if (and (member (car edge) (group-vertices int-group))
+					   (not (equal? int-group group))
+					   (not (equal? int-group prev-group)))
+				      (let ((edge1 (equalp-intersection (group-vertices int-group)
+									(group-vertices prev-group)))
+					    (edge2 (equalp-intersection (group-vertices int-group)
+									(group-vertices group))))
+					(format () "e1=~A; e2=~A~%~%" edge1 edge2))))
+				(speaker-config-groups speakers))
+			       (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+			      
+			      ;; groups don't share points... how did we get here?
+			      ((= (length edge) 0)
+			       (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
+				       (group-id prev-group) (group-speakers prev-group)
+				       (group-id group) (group-speakers group))))
 			
 			;; finally push gains for current group
 			(push-gains group gains dist time 6)
@@ -2886,16 +2882,17 @@
 				   (* duration (- time prev-time) dlocsig-speed-of-sound))))
 		    (set! doppler (cons (/ (+ prev-time time) 2) doppler))
 		    (set! doppler (cons (* (/ 1.0 (+ 1 ratio)) (sqrt (- 1 (* ratio ratio)))) doppler))))))
+
 	;; do the rendering of the point
-	(if (= render-using amplitude-panning)
-	    ;; amplitude panning
-	    (famplitude-panning x y z dist time 1)
-	    (if (= render-using ambisonics)
-		;; ambisonics b format
-		(render-ambisonics x y z dist time)
-		(if (= render-using decoded-ambisonics)
-		    ;; ambisonics decoded
-		    (fdecoded-ambisonics x y z dist time))))
+	(cond ((= render-using amplitude-panning)
+	       ;; amplitude panning
+	       (famplitude-panning x y z dist time 1))
+	      ((= render-using ambisonics)
+	       ;; ambisonics b format
+	       (render-ambisonics x y z dist time))
+	      ((= render-using decoded-ambisonics)
+	       ;; ambisonics decoded
+	       (fdecoded-ambisonics x y z dist time)))
 	
 	(set! room (+ 1 room))
 	;; remember current time and distance for next point
@@ -3139,15 +3136,14 @@
 				 :duration real-dur)))
 	 v)
        ;; :rev-gains 
-       (if (> rev-channels 0)
-	   (let ((v (make-vector rev-channels)))
-	     (do ((i 0 (+ i 1)))
-		 ((= i rev-channels))
-	       (set! (v i) (make-env (reverse (channel-rev-gains i))
-				     :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
-				     :duration real-dur)))
-	     v)
-	   #f)
+       (and (> rev-channels 0)
+	    (let ((v (make-vector rev-channels)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i rev-channels))
+		(set! (v i) (make-env (reverse (channel-rev-gains i))
+				      :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
+				      :duration real-dur)))
+	      v))
        ;; :out-map 
        (if speakers 
 	   (speaker-config-map speakers) 

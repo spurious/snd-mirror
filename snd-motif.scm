@@ -113,7 +113,7 @@
 	(define (display-widget w spaces)
 	  (let ((name (XtName w)))
 	    (if (or (not (string? name))
-		    (= (length name) 0))
+		    (string=? name ""))
 		(set! name "<unnamed>"))
 	    (format () "~A~A~%" spaces name)
 	    (if (XtIsComposite w)
@@ -2006,10 +2006,10 @@
 			    (next-amp (and (< i (- chns 1))
 					   (find-child snd-amp (label-name (+ i 1))))))
 			(reset-to-one amp ampn)
-			(if next-amp
-			    (XtSetValues ampc (list XmNtopAttachment XmATTACH_WIDGET
-						    XmNtopWidget     next-amp))
-			    (XtSetValues ampc (list XmNtopAttachment XmATTACH_FORM)))
+			(XtSetValues ampc (if next-amp 
+					      (list XmNtopAttachment XmATTACH_WIDGET
+						    XmNtopWidget     next-amp)
+					      (list XmNtopAttachment XmATTACH_FORM)))
 			(XtManageChild ampc)
 			(XtManageChild ampn)
 			(XtManageChild amp))))

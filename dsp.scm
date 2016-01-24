@@ -2233,9 +2233,7 @@ is assumed to be outside -1.0 to 1.0."))
 	    
 	    ;; added this block
 	    (if clipped
-		(if (> sum 0.0)
-		    (set! sum (max sum 1.0))
-		    (set! sum (min sum -1.0))))
+		(set! sum (if (> sum 0.0) (max sum 1.0) (min sum -1.0))))
 	    (set! (reg 0) sum)
 	    (set! (future j) sum)))))))
 
