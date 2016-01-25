@@ -2811,8 +2811,8 @@
       ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
       ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
       ;;   list/vector/let underlying: both ref/set and implicit cases
-      ;;   for any vars if not set shouldn't the value be ok? no -- need complete history -- can do type checks and set checks aat report-usage
-      ;;     but currently the calling forms are not accessible
+      ;; for any vars if not set shouldn't the value be ok? no -- need complete history -- can do type checks and set checks aat report-usage
+      ;;   but currently the calling forms are not accessible
       ;;   check *-set! of par/constant/var -- see comment under string-set! et al below [3250]
       ;; tree-congruency+func->macro->tree to find missed calls
       ;;
@@ -3674,7 +3674,7 @@
 		     lst))
 		 
 		 (case len1
-		   ((0)					        ; (append) -> ()
+		   ((0)					              ; (append) -> ()
 		    (lint-format "perhaps ~A" name (lists->string form ())))
 		   ((1)                                               ; (append x) -> x
 		    (lint-format "perhaps ~A" name (lists->string form (car new-args))))
@@ -7498,7 +7498,9 @@
 			     (body (cdddr form)))
 			 (if (and (pair? args)
 				  (repeated-member? args env))
-			     (lint-format "~A parameter is repeated: ~A" name head (truncated-list->string args)))
+			     (lint-format "~A parameter is repeated: ~A" name head (truncated-list->string args))
+			     (lint-format "~A is deprecated; perhaps ~A" name head
+					  (truncated-lists->string form `(,(if (eq? head 'defmacro) 'define-macro 'define-macro*) ,(cons sym args) ,@body))))
 			 (lint-walk-function head sym args body form env)))
 		   env)
 		  
@@ -7529,9 +7531,6 @@
 
 		  (else
 		   ;; ---------------- everything else ----------------		  
-		   
-		   ;(format *stderr* "else ~A~%" form)
-
 		   (if (not (proper-list? form))
 		       (begin
 			 ;; these appear to be primarily macro/match arguments
@@ -7631,7 +7630,8 @@
 		env))))
     
     ;;; --------------------------------------------------------------------------------
-    (let ((documentation "(lint file port) looks for infelicities in file's scheme code"))
+    (let ((documentation "(lint file port) looks for infelicities in file's scheme code")
+	  (signature (list #t string? output-port? boolean?)))
       (lambda* (file (outp *lint-output-port*) (report-input #t))
 	(set! outport outp)
 	(set! globals (make-hash-table))
@@ -7735,7 +7735,7 @@
 							 (char=? c #\#)) 
 						    (values))
 						 (if (char=? c #\newline)
-						     (set! (port-line-number ()) (+ (port-line-number) 1)))))
+						     (set! (port-line-number ()) (+ (port-line-number) 1)))))					      
 
 					      ((#\<) ; Chicken also, #<<EOF -> EOF
 					       (if (and (char=? (data 1) #\<)
@@ -7754,6 +7754,7 @@
 								    ("\\null"      . #\null)
 								    ("\\linefeed"  . #\linefeed)
 								    ("\\alarm"     . #\alarm)
+								    ("\\esc"       . #\escape)
 								    ("\\escape"    . #\escape)
 								    ("\\delete"    . #\delete)
 								    ("\\backspace" . #\backspace)
@@ -7776,7 +7777,8 @@
 							   (cdr c)))
 						     (else 
 						      (symbol->keyword (string->symbol (substring data 1))))))
-					      (else (symbol->keyword (string->symbol data))))))
+					      (else 
+					       (symbol->keyword (string->symbol data))))))
 				    (begin
 				      (format outport " reader[~A]: unknown \\ usage: \\~C~%" line data)
 				      (set! (h 'result) data)))))))

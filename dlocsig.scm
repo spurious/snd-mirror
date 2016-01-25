@@ -1,12 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Copyright (c) 92, 93, 94, 98, 99, 2000, 2001 Fernando Lopez Lezcano. 
-;;; All rights reserved.
-;;; Use and copying of this software and preparation of derivative works
-;;; based upon this software are permitted and may be copied as long as 
-;;; no fees or compensation are charged for use, copying, or accessing
-;;; this software and all copies of this software include this copyright
-;;; notice. Suggestions, comments and bug reports are welcome. Please 
+;;; Suggestions, comments and bug reports are welcome. Please 
 ;;; address email to: nando@ccrma.stanford.edu
+;;;
+;;; see the file COPYING for license info.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
