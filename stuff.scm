@@ -201,7 +201,7 @@
 (define-macro (multiple-value-set! vars expr . body)
   (if (pair? vars)
       (let ((local-vars (map (lambda (n) (gensym)) vars)))
-	`((lambda* (,@local-vars . ,(gensym))
+	`((lambda ,local-vars
 	    ,@(map (lambda (n ln) `(set! ,n ,ln)) vars local-vars)
 	    ,@body)
 	  ,expr))

@@ -1832,6 +1832,7 @@ static int not_heap = -1;
 #define has_opt_back(P)               (cdr(opt_back(P)) == P )
 #define opt_cfunc(P)                  opt1(P,                    E_CFUNC)
 #define set_opt_cfunc(P, X)           set_opt1(P, X,             E_CFUNC)
+#define opt_lambda_unchecked(P)       opt1(P,                    E_LAMBDA)
 #define opt_lambda(P)                 _TClo(opt1(P,              E_LAMBDA))
 #define set_opt_lambda(P, X)          set_opt1(P, X,             E_LAMBDA)
 #define opt_goto(P)                   _TGot(opt1(P,              E_GOTO))
@@ -58774,8 +58775,8 @@ static int do_init_ex(s7_scheme *sc)
   
   
 #if (!WITH_GCC)
-#define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == opt_lambda(Code))
-#define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda(Code))
+#define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
+#define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
 #else
 
 /* it is almost never the case that we already have the value and can see it in the current environment directly,
@@ -58799,7 +58800,7 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 {
   s7_pointer f;
   f = find_symbol_unexamined(sc, car(code));
-  return ((f == opt_lambda(code)) ||
+  return ((f == opt_lambda_unchecked(code)) ||
 	  ((f) &&
 	   (typesflag(f) == type) &&
 	   ((closure_arity(f) == args) || (closure_arity_to_int(sc, f) == args)) &&
@@ -63957,7 +63958,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_GLOSURE_A:
 		  if ((symbol_id(car(code)) != 0) ||
-		      (opt_lambda(code) != slot_value(global_slot(car(code)))))
+		      (opt_lambda_unchecked(code) != slot_value(global_slot(car(code)))))
 		    {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  if (!indirect_c_function_is_ok(sc, cadr(code))) break;
 		  
@@ -63971,7 +63972,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GLOSURE_P:
-		  if ((symbol_id(car(code)) != 0) || (opt_lambda(code) != slot_value(global_slot(car(code))))) break;
+		  if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) break;
 		  
 		case HOP_GLOSURE_P:
 		  push_stack(sc, OP_CLOSURE_P_1, sc->NIL, code);
@@ -73968,10 +73969,7 @@ s7_scheme *s7_init(void)
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
-                           (if (or (symbol? vars) (negative? (length vars)))                                  \n\
-                               `((lambda ,vars ,@body) ,expression)                                           \n\
-                               `((lambda* (,@vars . ,(gensym)) ,@body) ,expression)))");
-  /* (multiple-value-bind (a b) (values 1 2) (+ a b)), named "receive" in srfi-8 which strikes me as perverse */
+                          `((lambda ,vars ,@body) ,expression))");
 
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\

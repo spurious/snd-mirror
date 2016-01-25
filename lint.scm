@@ -428,15 +428,20 @@
 	    (mx #f))
 	(define (counter sym tree)
 	  (if (pair? tree)
-	      (begin
-		(if (eq? (car tree) 'values)
-		    (let ((args (length (cdr tree))))
-		      (set! mn (min (or mn args) args))
-		      (set! mx (max (or mx args) args)))
+	      (if (eq? (car tree) 'values)
+		  (let ((args (length (cdr tree))))
+		    (for-each (lambda (p)
+				(if (and (pair? p)
+					 (eq? (car p) 'values))
+				    (set! args (+ args (- (length (cdr p)) 1)))))
+			      (cdr tree))
+		    (set! mn (min (or mn args) args))
+		    (set! mx (max (or mx args) args)))
+		  (begin
 		    (if (pair? (car tree))
-			(counter 'values (car tree))))
-		(if (pair? (cdr tree))
-		    (member #f (cdr tree) counter))))
+			(counter 'values (car tree)))
+		    (if (pair? (cdr tree))
+			(member #f (cdr tree) counter)))))
 	  #f) ; return #f so member doesn't quit early
 	(if (pair? body) 
 	    (counter 'values (list-ref body (- (length body) 1))))
@@ -2756,6 +2761,28 @@
 				      (if arg3 (innards (car arg3)) ""))
 		       (cadr (or arg3 arg2 arg1)))))))
 
+    (define (mv-range producer env)
+      (define (mv-range-1 p)
+	(let ((v (or (var-member p env)
+		     (hash-table-ref globals p))))
+	  (and (var? v)
+	       ((cdr v) 'values))))
+      (if (pair? producer)
+	  (if (symbol? (car producer))
+	      (if (eq? (car producer) 'values)
+		  (let ((len (length (cdr producer))))
+		    (for-each (lambda (p)
+				(if (and (pair? p)
+					 (eq? (car p) 'values))
+				    (set! len (+ len (- (length (cdr p)) 1)))))
+			      (cdr producer))
+		    (list len len))
+		  (mv-range-1 (car producer)))
+	      (and (pair? (car producer))
+		   (if (memq (caar producer) '(lambda lambda*))
+		       (count-values (cddar producer))
+		       (mv-range-1 (caar producer)))))))
+
 
     (define (check-special-cases name head form env)
       ;; here curlet won't change (leaving aside additions via define)
@@ -4287,6 +4314,11 @@
 	 (if (= (length form) 3)
 	     (let ((producer (cadr form))
 		   (consumer (caddr form)))
+#|
+	       (let ((produced-values (mv-range (list producer) env))
+		     (consumed-values (if (symbol? consumer)
+|#					  
+
 	       (if (not (pair? producer))
 		   (if (and (symbol? producer)
 			    (not (memq (return-type producer ()) '(#t #f values))))
@@ -4315,36 +4347,42 @@
 		       (lint-format "perhaps ~A" name (lists->string form `(,consumer (,producer)))))))))
 	
 	;; ----------------
-	((multiple-value-bind) ; apparently no-one uses multiple-value-set!
-	 ;; mvbind: (mvbind (a b) (f) (cons a b)) -> (cons (f)) 
+	((multiple-value-bind) 
 	 (if (= (length form) 4)
 	     (let ((vars (cadr form))
 		   (producer (caddr form))
 		   (body (cdddr form)))
 
-	       ;; check arity of producer has some hope of matching vars
-	       (let ((v (or (var-member producer env)
-			    (hash-table-ref globals producer))))
-		 (if (and (var? v)
-			  ((cdr v) 'values))
-		     (let ((args (length vars))
-			   (vals ((cdr v) 'values)))
-		       (if (or (< args (car vals))
-			       (> args (cadr vals)))
-			   (lint-format "multipler-value-bind wants ~D values, but ~A returns ~A" 
-					name args 
-					(truncated-list->string producer)
-					(if (< args (car vals)) (car vals) (cadr vals)))))))
+	       (if (null? vars)
+		   (lint-format "this multiple-value-bind is pointless; perhaps ~A" name
+				(lists->string form 
+					       (if (side-effect? producer env)
+						   `(begin ,producer ,@body)
+						   (if (null? (cdr body))
+						       (car body)
+						       `(begin ,@body)))))
 
-	       (if (and (symbol? producer)
-			(not (memq (return-type producer ()) '(#t #f values))))
-		   (lint-format "~A does not return multiple values" name producer))
-	       (if (and (pair? body)
-			(null? (cdr body)))
-		   (if (not (pair? (car body)))
-		       (lint-format "perhaps ~A" name (lists->string form `((lambda ,vars ,(car body)) ,producer)))
-		       (if (equal? vars (cdar body))
-			   (lint-format "perhaps ~A" name (lists->string form `(,(caar body) ,producer)))))))))
+		   (if (not (symbol? vars)) ; else any number of values is ok
+		       (let ((vals (mv-range producer env))
+			     (args (length vars)))
+			 (if (and vals
+				  (or (< args (car vals))
+				      (> args (cadr vals))))
+			     (lint-format "multiple-value-bind wants ~D values, but ~A returns ~A" 
+					  name args 
+					  (truncated-list->string producer)
+					  (if (< args (car vals)) (car vals) (cadr vals))))
+
+			 (if (and (pair? producer)
+				  (symbol? (car producer))
+				  (not (memq (return-type (car producer) ()) '(#t #f values))))
+			     (lint-format "~A does not return multiple values" name (car producer))
+			     (if (and (null? (cdr body))
+				      (pair? (car body))
+				      (equal? vars (cdar body))
+				      (defined? (caar body))
+				      (equal? (arity (symbol->value (caar body))) (cons args args)))
+				 (lint-format "perhaps ~A" name (lists->string form `(,(caar body) ,producer)))))))))))
 	
 	;; ----------------
 	((eval)
