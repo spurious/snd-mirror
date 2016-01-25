@@ -109,7 +109,7 @@
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
 	      tan tanh truncate
 	      unless
-	      vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
+	      values vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
 	      zero?))
 	   ;; do not include file-exists? or directory?
@@ -415,6 +415,17 @@
 		 (let ((f (symbol->value fnc *e*)))
 		   (and (procedure? f)
 			(procedure-signature f)))))))
+
+    (define (arg-arity fnc env)
+      (and (symbol? fnc)
+	   (let ((fd (or (var-member fnc env)
+			 (hash-table-ref globals fnc))))
+	     (if (var? fd)
+		 (and (not (eq? (fdata 'decl) 'error))
+		      (arity (fdata 'decl)))
+		 (let ((f (symbol->value fnc *e*)))
+		   (and (procedure? f)
+			(arity f)))))))
     
     (define (dummy-func name form f)
       (catch #t 
@@ -2766,22 +2777,23 @@
 	(let ((v (or (var-member p env)
 		     (hash-table-ref globals p))))
 	  (and (var? v)
+	       (pair? ((cdr v) 'values)) ; not #<undefined> if v is a var, but not known to be a function (so possibly no 'values field)
 	       ((cdr v) 'values))))
-      (if (pair? producer)
-	  (if (symbol? (car producer))
-	      (if (eq? (car producer) 'values)
-		  (let ((len (length (cdr producer))))
-		    (for-each (lambda (p)
-				(if (and (pair? p)
-					 (eq? (car p) 'values))
-				    (set! len (+ len (- (length (cdr p)) 1)))))
-			      (cdr producer))
-		    (list len len))
-		  (mv-range-1 (car producer)))
-	      (and (pair? (car producer))
-		   (if (memq (caar producer) '(lambda lambda*))
-		       (count-values (cddar producer))
-		       (mv-range-1 (caar producer)))))))
+
+	  (if (symbol? producer)
+	      (mv-range-1 producer)
+	      (and (pair? producer)
+		   (if (memq (car producer) '(lambda lambda*))
+		       (count-values (cddr producer))
+		       (if (eq? (car producer) 'values)
+			   (let ((len (length (cdr producer))))
+			     (for-each (lambda (p)
+					 (if (and (pair? p)
+						  (eq? (car p) 'values))
+					     (set! len (+ len (- (length (cdr p)) 1)))))
+				       (cdr producer))
+			     (list len len))
+			   (mv-range (car producer) env))))))
 
 
     (define (check-special-cases name head form env)
@@ -2795,8 +2807,7 @@
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
       ;;
       ;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
-      ;; nvals to values as a range, checkable if called
-      ;;   needed now in call-with-values and check-args
+      ;; nvals to values as a range, checkable if called -- needed in check-args
       ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
       ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
       ;;   list/vector/let underlying: both ref/set and implicit cases
@@ -4306,18 +4317,42 @@
 	
 	;; ----------------
 	((values)
-	 (if (= (length form) 2)
-	     (lint-format "perhaps ~A" name (lists->string form (cadr form)))))
+	 (if (member 'values (cdr form) (lambda (a b)
+					  (and (pair? b)
+					       (eq? (car b) 'values))))
+	     (lint-format "perhaps ~A" name (lists->string form `(values ,@(splice-if (lambda (x) (eq? x 'values)) (cdr form)))))
+	     (if (= (length form) 2)
+		 (lint-format "perhaps ~A" name (lists->string form (cadr form))))))
 	
 	;; ----------------
 	((call-with-values)  ; (call/values p c) -> (c (p))
 	 (if (= (length form) 3)
 	     (let ((producer (cadr form))
 		   (consumer (caddr form)))
-#|
-	       (let ((produced-values (mv-range (list producer) env))
-		     (consumed-values (if (symbol? consumer)
-|#					  
+
+	       (let* ((produced-values (mv-range producer env))
+		      (consumed-values (and produced-values
+					   (or (and (symbol? consumer)
+						    (arg-arity consumer env)) ; TODO: use elsewhere
+					       (and (pair? consumer)
+						    (eq? (car consumer) 'lambda)
+						    (pair? (cadr consumer))
+						    (let ((len (length (cadr consumer))))
+						      (if (negative? len)
+							  (cons (abs len) 536870912)
+							  (cons len len))))))))
+
+		 ;(format *stderr* "~A ~A ~A~%~%" form produced-values consumed-values)
+		 (if (and consumed-values
+			  (or (> (car consumed-values) (car produced-values))
+			      (< (cdr consumed-values) (cadr produced-values))))
+		     (let ((clen ((if (> (car consumed-values) (car produced-values)) car cdr) consumed-values)))
+		       (lint-format "call-with-values consumer ~A wants ~D value~P, but producer ~A returns ~A" 
+				    name
+				    (truncated-list->string consumer)
+				    clen clen
+				    (truncated-list->string producer)
+				    ((if (> (car consumed-values) (car produced-values)) car cadr) produced-values)))))
 
 	       (if (not (pair? producer))
 		   (if (and (symbol? producer)
