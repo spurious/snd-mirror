@@ -372,6 +372,12 @@
 	   (pair? (cdr x))
 	   (not (cadr x))))
 
+    (define (quoted-symbol? x)
+      (and (pair? x)
+	   (eq? (car x) 'quote)
+	   (pair? (cdr x))
+	   (symbol? (cadr x))))
+
     (define (code-constant? x)
       (and (not (symbol? x))
 	   (or (not (pair? x))
@@ -437,7 +443,7 @@
     (define (count-values body)
       (let ((mn #f)
 	    (mx #f))
-	(define (counter sym tree)
+	(define (counter ignored tree) ; 'ignored is for member's benefit
 	  (if (pair? tree)
 	      (if (eq? (car tree) 'values)
 		  (let ((args (length (cdr tree))))
@@ -455,7 +461,7 @@
 			(member #f (cdr tree) counter)))))
 	  #f) ; return #f so member doesn't quit early
 	(if (pair? body) 
-	    (counter 'values (list-ref body (- (length body) 1))))
+	    (counter #f (list-ref body (- (length body) 1))))
 	(and mn (list mn mx))))
 
     (define* (make-fvar name ftype arglist decl value env)
@@ -569,8 +575,8 @@
 	  (->simple-type c)))
     
     (define bools '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list?
-			    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
-			    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?))
+		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
+		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?))
     
     (define (compatible? type1 type2) ; we want type1, we have type2 -- is type2 ok?
       (or (eq? type1 type2)
@@ -801,8 +807,8 @@
 			       (for-each
 				(lambda (sg arg)
 				  (when (eq? sg 'procedure?)
-				    (if (or (not (symbol? arg))
-					    (not (hash-table-ref no-side-effect-functions arg)))
+				    (if (not (and (symbol? arg)
+						  (hash-table-ref no-side-effect-functions arg)))
 					(return #t))))
 				(cdr sig) (cdr form))
 			       #f))))))))
@@ -1322,33 +1328,73 @@
 					  (return #t))))))
 			  args)))))))))
       
-      (define (and-redundant? type1 type2)
+      (define (and-redundant? arg1 arg2)
+	(let ((type1 (car arg1))
+	      (type2 (car arg2)))
 	(and (symbol? type1)
 	     (symbol? type2)
 	     (memq type1 bools)
-	     (memq type2 bools)       ; return #f if not (obviously) redundant, else return which of the two to keep
+	     (or (memq type2 bools)       ; return #f if not (obviously) redundant, else return which of the two to keep
+		 (memq type2 '(= char=? string=?)))
 	     (if (eq? type1 type2)
 		 type1
 		 (case type1
 		   ((number? complex?) (or (and (memq type2 '(float? real? rational? integer?)) type2)
-					   (and (memq type2 '(number? complex?)) type1)))
+					   (and (memq type2 '(number? complex?)) type1)
+					   (and (eq? type2 '=)
+						(let ((x (if (number? (caddr arg2)) (caddr arg2) (cadr arg2))))
+						  (and (number? x)
+						       (if (= x (floor x))
+							   :memv
+							   :eqv))))))
 		   ((real?)            (or (and (memq type2 '(float? rational? integer?)) type2)
-					   (and (memq type2 '(number? complex?)) type1)))
+					   (and (memq type2 '(number? complex?)) type1)
+					   (and (eq? type2 '=)
+						(let ((x (if (real? (caddr arg2)) (caddr arg2) (cadr arg2))))
+						  (and (real? x)
+						       (if (= x (floor x))
+							   :memv
+							   :eqv))))))
 		   ((float?)           (and (memq type2 '(real? complex? number?)) type1))
 		   ((rational?)        (or (and (eq? type2 'integer?) type2)
-					   (and (memq type2 '(real? complex? number? exact?)) type1)))
-		   ((integer?)         (and (memq type2 '(real? rational? complex? number? exact?)) type1))
+					   (and (memq type2 '(real? complex? number? exact?)) type1)
+					   (and (eq? type2 '=)
+						(or (rational? (caddr arg2))
+						    (rational? (cadr arg2)))
+						:eqv)))
+		   ((integer?)         (or (and (memq type2 '(real? rational? complex? number? exact?)) type1)
+					   (and (eq? type2 '=)
+						(or (integer? (caddr arg2))
+						    (integer? (cadr arg2)))
+						:eqv)))
 		   ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
 		   ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
-		   ((symbol?)          (and (memq type2 '(keyword? gensym?)) type2))
-		   ((keyword? gensym?) (and (eq? type2 'symbol?) type1))
+		   ((symbol?)          (or (and (memq type2 '(keyword? gensym?)) type2)
+					   (and (eq? type2 'eq)
+						(or (quoted-symbol? (cadr arg2))
+						    (quoted-symbol? (caddr arg2)))
+						:eq)))
+		   ((keyword?)         (or (and (eq? type2 'symbol?) type1)
+					   (and (eq? type2 'eq)
+						(or (keyword? (cadr arg2))
+						    (keyword? (caddr arg2)))
+						:eq)))
+		   ((gensym?)          (and (eq? type2 'symbol?) type1))
 		   ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
 		   ((null?)            (and (memq type2 '(list? proper-list?)) type1))
 		   ((pair?)            (and (eq? type2 'list?) type1))
 		   ((proper-list?)     (and (eq? type2 'null?) type2))
-		   ((string?)          (and (eq? type2 'byte-vector?) type2))
+		   ((string?)          (or (and (eq? type2 'byte-vector?) type2)
+					   (and (eq? type2 'string=?)
+						(or (string? (cadr arg2))
+						    (string? (caddr arg2)))
+						:equal)))
+		   ((char?)            (and (eq? type2 'char=?)
+					    (or (char? (cadr arg2))
+						(char? (caddr arg2)))
+					    :eqv))
 		   ((byte-vector?)     (and (eq? type2 'string?) type1))
-		   (else #f)))))
+		   (else #f))))))
       
       (define (classify e)
 	;; do we already know that e is true or false?
@@ -1369,8 +1415,8 @@
 	;; we can't make any assumptions about the expression if it might have side effects
 	;;   for example (or (= (oscil o) 0.0) (= (oscil o) 0.0)) can't be reduced
 	
-	(if (or (not (pair? e))
-		(not (side-effect? e env)))
+	(if (not (and (pair? e)
+		      (side-effect? e env)))
 	    (let ((its-true (if (eq? and/or 'or)
 				(eq? value #t)             ; or, so it's false if unknown
 				value)))
@@ -1381,6 +1427,7 @@
       ;; start of simplify-boolean code
       ;;   this is not really simplify boolean as in boolean algebra because in scheme there are many unequal truths, but only one falsehood
       ;;   'and and 'or are not boolean operators in a sense
+
       (let ((form (bsimp in-form)))
 	(if (or (not (pair? form))
 		(not (memq (car form) '(or and not))))
@@ -1414,7 +1461,7 @@
 					  (memq (car arg) '(and or not)))
 				     (classify (simplify-boolean arg true false env))
 				     (classify arg))))
-		       
+
 		       (cond ((boolean? val) 
 			      (not val))
 			     
@@ -1496,7 +1543,6 @@
 					    (eqv? (cadr (caddr zarg)) 1))
 				       `(logbit? ,(cadr zarg) ,(caddr (caddr zarg)))
 				       form)))
-				
 				(else form)))
 			     (else form)))
 		     form))
@@ -1515,10 +1561,41 @@
 					  (pair? arg2)
 					  (pair? (cdr arg1))
 					  (pair? (cdr arg2))
-					  (equal? (cadr arg1) (cadr arg2))
+					  (or (equal? (cadr arg1) (cadr arg2))
+					      (and (pair? (cddr arg2))
+						   (null? (cdddr arg2))
+						   (equal? (cadr arg1) (caddr arg2))))
 					  (not (side-effect? arg1 env))
-					  (and-redundant? (car arg1) (car arg2)))))
+					  (and-redundant? arg1 arg2))))
+#|
+				   (if (and (pair? arg1)
+					    (pair? arg2)
+					    (pair? (cdr arg1))
+					    (pair? (cdr arg2))
+					    (or (and (not (eq? (car arg1) 'not))
+						     (eq? (return-type (car arg1) env) 'boolean?))
+						(and (eq? (car arg1) 'not)
+						     (pair? (cadr arg1))
+						     (eq? (return-type (caadr arg1) env) 'boolean?)))
+					    (or (and (not (eq? (car arg2) 'not))
+						     (eq? (return-type (car arg2) env) 'boolean?))
+						(and (eq? (car arg2) 'not)
+						     (pair? (cadr arg2))
+						     (eq? (return-type (caadr arg2) env) 'boolean?)))
+					    (or (eq? (car arg1) 'not)
+						(eq? (car arg2) 'not))
+					    (and (equal? (if (eq? (car arg1) 'not) (cadadr arg1) (cadr arg1))
+							 (if (eq? (car arg2) 'not) (cadadr arg2) (cadr arg2)))))
+				       (format *stderr* "~A~%" form))
+				   ;; (or (not (list? term)) (null? term)) -- (not pair?)??
+				   ;; (or (not (pair? expr)) (null? expr)...) -- null? is redundant
+				   ;; (or (eof-object? o) (not (list? o)) (< (length o) 2)) -- drop eof
+				   ;;   (or (string? exp) (not (pair? exp)))
+				   ;; (or (not (number? tempo)) (<= tempo 0)) -- should this recommend real?
 
+			           ;; (or (not (or x y)) (not z)) -> (not (or x y z))??
+			           ;; (or (not p) (not (integer? p)) (not (> p 0))) currently just changes the last
+|#
 			    ;; the other side: (and (or A B) (or (not A) C)) -> (if A C (and B #t)), but it never happens
 			    (when (and (= len 3)    ; kinda dumb, but common: (or (and A B) (and (not A) C)) -> (if A B C)
 				       (not (= line-number last-simplify-boolean-line-number))
@@ -1540,10 +1617,10 @@
 							      `(if ,(cadr arg2) ,(caddr arg2) ,(caddr arg1))
 							      `(if ,(cadr arg1) ,(caddr arg1) ,(caddr arg2))))))
 			    (if t1
-				(if (eq? t1 (car arg1))
+				(if (eq? t1 (car arg1)) 
 				    arg2
 				    arg1)
-				(let ((sf #f))
+
 				  (if (and (= len 3)
 					   (pair? arg1)
 					   (pair? arg2)
@@ -1558,27 +1635,31 @@
 					     '<= '>=)
 					,@(cdr arg1))
 				      
-				      (if (and (every? (lambda (p)
+				      ;; there are a few cases where the 'not-infested form is actually clearer
+				      (if (every? (lambda (p) ; (or (not x) (not y)) -> (not (and x y))
 							 (and (pair? p)
 							      (pair? (cdr p))
 							      (eq? (car p) 'not)))
 						       (cdr form))
-					       (let ()
-						 (set! sf (simplify-boolean `(not (and ,@(map cadr (cdr form)))) true false env))
-						 (or (not (pair? sf))
-						     (not (eq? (car sf) 'not))
-						     (not (pair? (cadr sf)))
-						     (not (eq? (caadr sf) 'and)))))
-					  sf
+					  (let ((sf (simplify-boolean `(and ,@(map cadr (cdr form))) true false env)))
+					    (simplify-boolean `(not ,sf) () () env))
+
 					  ;; if all clauses are (eq-func x y) where one of x/y is a symbol|simple-expr repeated throughout
 					  ;;   and the y is a code-constant, or -> memq and friends.  This could also handle cadr|caddr reversed.
 					  
 					  ;; (or (pair? x) (null? x)) -> (list? x)
+					  (if (and (= len 3)
+						   (pair? arg1)
+						   (pair? arg2)
+						   (memq (car arg1) '(null? pair?))
+						   (memq (car arg2) '(null? pair?))
+						   (not (eq? (car arg1) (car arg2)))
+						   (equal? (cadr arg1) (cadr arg2)))
+					      `(list? ,(cadr arg1))
 					  
 					  (let ((sym #f)
 						(eqf #f)
 						(vals ()))
-
 					    (if (every? (lambda (p)
 							  (and (pair? p)
 							       (if (not eqf)
@@ -1694,8 +1775,12 @@
 									(store e val 'or)
 									(if (not (memq val new-form))
 									    (set! new-form (cons val new-form)))))))))))))))))))))))
+		 
 		
 		((and)
+		 ;; perhaps: (and (= x 0) (inexact? x)) -> (eqv? x 0.0)
+		 ;;          (and (= x 0.0) (exact? x)) (eqv? x 0) or any such constant -- these probably never happen
+		 ;;          (and (real? x) (not (rational? x))) -> float? etc
 		 (case len
 		   ((1) #t)
 		   ((2) (classify (cadr form)))
@@ -1708,16 +1793,74 @@
 					   (pair? arg2)
 					   (pair? (cdr arg1))
 					   (pair? (cdr arg2))
-					   (equal? (cadr arg1) (cadr arg2))
+					   (or (equal? (cadr arg1) (cadr arg2))
+					       (and (pair? (cddr arg2))
+						    (null? (cdddr arg2))
+						    (equal? (cadr arg1) (caddr arg2))))
 					   (not (side-effect? arg1 env))
-					   (and-redundant? (car arg1) (car arg2))))) ; (and (integer? x) (number? x)) -> (integer? x)
-
+					   (and-redundant? arg1 arg2)))) ; (and (integer? x) (number? x)) -> (integer? x)
 			     (if t1
-				 (if (eq? t1 (car arg1))
-				     arg1
-				     arg2)
+				 (cond ((eq? t1 :equal) `(equal? ,(cadr arg1) ,((if (equal? (cadr arg1) (cadr arg2)) caddr cadr) arg2)))
+				       ((eq? t1 :eqv)   `(eqv? ,(cadr arg1) ,((if (equal? (cadr arg1) (cadr arg2)) caddr cadr) arg2)))
+				       ((eq? t1 :eq)    `(eq? ,(cadr arg1) ,((if (equal? (cadr arg1) (cadr arg2)) caddr cadr) arg2)))
+				       ((eq? t1 :memv)
+					(let ((x (if (equal? (cadr arg1) (cadr arg2)) (caddr arg2) (cadr arg2))))
+					  (if (rational? x)
+					      `(memv ,(cadr arg1) '(,x ,(* 1.0 x)))
+					      `(memv ,(cadr arg1) '(,(floor x) ,x)))))
+				       ((eq? t1 (car arg1)) arg1)
+				       (else arg2))
+
+				   (if (every? (lambda (a) ; (and (not (pair? x)) (not (null? x))) -> (not (list? x))
+						 (and (pair? a)
+						      (eq? (car a) 'not)))
+					       (cdr form))
+				       (let ((nf (simplify-boolean `(or ,@(map cadr (cdr form))) () () env)))
+					 (simplify-boolean `(not ,nf) () () env))
+
+				       (if (every? (lambda (a)
+						     (and (pair? a)
+							  (eq? (car a) 'zero?)))
+						   (cdr form))
+					   `(= 0 ,@(map cadr (cdr form)))
+
+					   (if (and (= len 3)
+						    (symbol? arg1)
+						    (pair? arg2)
+						    (memq (car arg2) bools)
+						    (eq? arg1 (cadr arg2)))
+					       arg2
+#|
+				   (if (and (pair? arg1)
+					    (pair? arg2)
+					    (pair? (cdr arg1))
+					    (pair? (cdr arg2))
+					    (or (and (not (eq? (car arg1) 'not))
+						     (eq? (return-type (car arg1) env) 'boolean?))
+						(and (eq? (car arg1) 'not)
+						     (pair? (cadr arg1))
+						     (eq? (return-type (caadr arg1) env) 'boolean?)))
+					    (or (and (not (eq? (car arg2) 'not))
+						     (eq? (return-type (car arg2) env) 'boolean?))
+						(and (eq? (car arg2) 'not)
+						     (pair? (cadr arg2))
+						     (eq? (return-type (caadr arg2) env) 'boolean?)))
+					    (or (eq? (car arg1) 'not)
+						(eq? (car arg2) 'not))
+					    (and (equal? (if (eq? (car arg1) 'not) (cadadr arg1) (cadr arg1))
+							 (if (eq? (car arg2) 'not) (cadadr arg2) (cadr arg2)))))
+				       (format *stderr* "~A~%" form))
+
+				   ;; (and (not (eof-object? c)) (char=? c #\-)) -> eqv?
+				   ;; (and (list? form) (not (null? form))) -> pair?
+				   ;; (and (pair? (car data)) (not (list? (car data)))) -- is this proper-list?
+				   ;; (and (list? second) (not (null? second)) ...)
+				   ;; (and (pair? obj) (not (null? obj)) ...) or (and (not (null? alot)) (pair? alot))
+				   ;; (and (not (pair? gen)) (symbol? gen) (capitol-first? gen)) -- drop not pair
+				   ;; (and (number? x) (not (= x 0))) -> memv
+				   ;; (and (real? n) (not (exact? n))) -> float?
+|#				   
 				 (let ((new-form ()))
-				   
 				   (if (and (= len 3)
 					    (not (side-effect? arg1 env))
 					    (equal? arg1 arg2))                  ; (and x x) -> x
@@ -1851,6 +1994,7 @@
 						      (if (or (not (pair? new-form))
 							      (not (eq? val (car new-form))))
 							  (set! new-form (cons val new-form))))))))))))))))))))))
+      )))
     
     (define (splice-if f lst)
       (cond ((null? lst) ())
@@ -2289,8 +2433,7 @@
 	    ((random)
 	     (if (and (= len 1)
 		      (number? (car args)))
-		 (if (and (integer? (car args))
-			  (= (car args) 0))
+		 (if (eqv? (car args) 0)
 		     0
 		     (if (morally-equal? (car args) 0.0)
 			 0.0
@@ -2815,8 +2958,15 @@
       ;;   but currently the calling forms are not accessible
       ;;   check *-set! of par/constant/var -- see comment under string-set! et al below [3250]
       ;; tree-congruency+func->macro->tree to find missed calls
+      ;; how to trap funny numbers using dfsl exponents?
       ;;
-      ;; 266/44
+      ;; does (let ((x x)) ... no set!/define etc ...) ever do any good?  if string? has been subverted, why go on?
+      ;;    maybe look at these cases
+      ;; see and/or/not for more
+      ;; and-redundant could also accept funcs with correct return-type (as well as constants)
+      ;; (not (not x)) should suggest (and x #t) and list? should mention proper-list?
+      ;;
+      ;; 266/45
 
       (case head
 
@@ -3944,7 +4094,7 @@
 		   (if (not (proper-list? args))
 		       (lint-format "~S looks suspicious" name form))
 		   (let ((ndirs (count-directives control-string name form))
-			 (nargs (if (or (null? args) (pair? args)) (length args) 0)))
+			 (nargs (if (list? args) (length args) 0)))
 		     (let ((pos (char-position #\null control-string)))
 		       (if (and pos (< pos (length control-string)))
 			   (lint-format "#\\null in a format control string will confuse both lint and format: ~S in ~A" name control-string form)))
@@ -4093,8 +4243,7 @@
 		     
 		     ((or (eq? (car eq1) 'eq?)
 			  (eq? (car eq2) 'eq?))
-		      (cond ((or (not arg1) 
-				 (not arg2))
+		      (cond ((not (and arg1 arg2))
 			     (lint-format "~A could be not: ~A" name head (lists->string form `(not ,(or arg1 arg2)))))
 			    ((or (null? arg1) 
 				 (null? arg2)
@@ -4156,15 +4305,14 @@
 				     head)))
 		  (cddr form))
 		 
-		 (when (and (eq? head 'map)
-			    (memq func '(char-downcase char-upcase))
-			    (pair? (caddr form))
-			    (eq? (caaddr form) 'string->list))
-		   (lint-format "perhaps ~A" name (lists->string form `(string->list (,(if (eq? func 'char-upcase) 'string-upcase 'string-downcase) 
+		 (when (eq? head 'map)
+		   (when (and (memq func '(char-downcase char-upcase))
+			      (pair? (caddr form))
+			      (eq? (caaddr form) 'string->list))
+		     (lint-format "perhaps ~A" name (lists->string form `(string->list (,(if (eq? func 'char-upcase) 'string-upcase 'string-downcase) 
 										      ,(cadr (caddr form)))))))
-		 (when (and (eq? head 'map)
-			    (identity? func)) ; to check f here as var is more work
-		   (lint-format "perhaps ~A" name (lists->string form (caddr form))))
+		   (when (identity? func) ; to check f here as var is more work
+		     (lint-format "perhaps ~A" name (lists->string form (caddr form)))))
 		 
 		 (let ((arg1 (caddr form)))
 		   (when (and (pair? arg1)
@@ -4181,14 +4329,13 @@
 				    (lists->string arg1 (if string-case
 							    `(substring ,(cadadr arg1) ,len-diff)
 							    `(make-shared-vector ,(cadadr arg1) (- (length ,(cadadr arg1)) ,len-diff) ,len-diff)))))))
-		 
 		 (when (and (eq? head 'for-each)
 			    (pair? (cadr form))
 			    (eq? (caadr form) 'lambda)
 			    (pair? (cdadr form))
 			    (not (any? (lambda (x) (side-effect? x env)) (cddadr form))))
 		   (lint-format "pointless for-each: ~A" name (truncated-list->string form)))
-		 
+
 		 (when (= args 1)
 		   (let ((seq (caddr form)))
 		     (when (and (pair? seq)
@@ -4243,8 +4390,7 @@
 					       (or (eq? (car x) 'newline)
 						   (eq? (cadr x) larg)
 						   (string? (cadr x))
-						   (and (char? (cadr x)) 
-							(char=? (cadr x) #\space))
+						   (eqv? (cadr x) #\space)
 						   (and (pair? (cadr x))
 							(pair? (cdadr x))
 							(eq? (caadr x) 'number->string)
@@ -4287,6 +4433,9 @@
 	 (if (and (not (var-member head env))
 		  (not (hash-table-ref globals head)))
 	     (lint-format "misspelled '~A? in ~A?" name head form)))
+
+	((interaction-environment)
+	 (lint-format "interaction-environment is probably curlet in s7" name))
 
 	;; ----------------
 	((open-input-file open-output-file)
@@ -5767,7 +5916,7 @@
     (define (lint-walk name form env)
       ;; walk a form, here curlet can change
       ;(format *stderr* "walk ~A~%" form)
-      
+
       (if (symbol? form)
 	  (set-ref? form env) ; returns env
 	  
@@ -7405,7 +7554,15 @@
 				  (lint-format "~A variable list is not a proper list? ~S" name head (cadr form))))
 			   (when (binding-ok? name head (car bindings) env #f)
 			     (set! vars (cons (make-var :name (caar bindings) 
-							:value (cadar bindings) 
+							:value (if (and (eq? (caar bindings) (cadar bindings))
+									(or (eq? head 'letrec)
+									    (not (var-member (caar bindings) vars))))
+								   (begin
+								     (lint-format "~A is the same as (~A #<undefined>) in ~A" name
+										  (car bindings) (caar bindings) head)
+								     ;; in letrec* ((x 12) (x x)) is an error
+								     #<undefined>)
+								   (cadar bindings))
 							:definer head)
 					      vars))))
 			 
@@ -7535,8 +7692,8 @@
 		       (begin
 			 ;; these appear to be primarily macro/match arguments
 			 (if (and (pair? form)
-				  (symbol? (car form))
-				  (procedure? (symbol->value (car form) *e*)))
+				  (symbol? head)
+				  (procedure? (symbol->value head *e*)))
 			     (lint-format "unexpected dot: ~A" name (truncated-list->string form)))
 			 env)
 		       (begin
@@ -7548,7 +7705,7 @@
 			       (check-special-cases name head form env))
 			   (if (assq head deprecated-ops)
 			       (lint-format "~A is deprecated; use ~A" name head (cdr (assq head deprecated-ops))))
-			   
+
 			   (if (and (not (= line-number last-simplify-numeric-line-number))
 				    (not (hash-table-ref globals head))
 				    (hash-table-ref numeric-ops head)
@@ -7756,20 +7913,20 @@
 								    ("\\alarm"     . #\alarm)
 								    ("\\esc"       . #\escape)
 								    ("\\escape"    . #\escape)
+								    ("\\rubout"    . #\delete)
 								    ("\\delete"    . #\delete)
 								    ("\\backspace" . #\backspace)
 								    ("\\page"      . #\xc)
-								    ("\\rubout"    . #\x7f)
 								    
 								    ;; rest are for Guile
 								    ("\\vt"        . #\xb)
 								    ("\\bs"        . #\backspace)
 								    ("\\cr"        . #\newline)
 								    ("\\sp"        . #\space)
-								    ("\\ff"        . #\xc)
 								    ("\\lf"        . #\linefeed)
 								    ("\\nl"        . #\null)
 								    ("\\ht"        . #\tab)
+								    ("\\ff"        . #\xc)
 								    ("\\np"        . #\xc))
 							     string-ci=?)
 						      => (lambda (c)
@@ -7869,8 +8026,7 @@
 					   (substring str (+ epos 4)))))
 	  (let ((apos (string-position "<a " str))
 		(epos (string-position "<em " str)))
-	    (if (and (not apos)
-		     (not epos))
+	    (if (not (or apos epos))
 		str
 		(let* ((pos (if (and apos epos) (min apos epos) (or apos epos)))
 		       (bpos (char-position #\> str (+ pos 1)))

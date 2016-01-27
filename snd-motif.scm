@@ -1738,8 +1738,8 @@
 		 XmNdropProc 
 		 (lambda (w c i)
 		   ;; i is the callback data (XmDropProcCallbackStruct), c is always #f
-		   (if (or (not (= (.dropAction i) XmDROP))
-			   (not (= (.operation i) XmDROP_COPY)))
+		   (if (not (and (= (.dropAction i) XmDROP)
+				 (= (.operation i) XmDROP_COPY)))
 		       (set! (.dropSiteStatus i) XmINVALID_DROP_SITE)
 		       (begin
 			 (set! (.operation i) XmDROP_COPY) ; tell system drop has succeeded
@@ -1765,8 +1765,8 @@
 	 (car (channel-widgets snd chn))
 	 (list XmNdropProc
 	       (lambda (w c i)
-		 (if (or (not (= (.dropAction i) XmDROP))
-			 (not (= (.operation i) XmDROP_COPY)))
+		 (if (not (and (= (.dropAction i) XmDROP)
+			       (= (.operation i) XmDROP_COPY)))
 		     (set! (.dropSiteStatus i) XmINVALID_DROP_SITE)
 		     (begin
 		       (set! (.operation i) XmDROP_COPY)

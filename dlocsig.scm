@@ -371,6 +371,9 @@
 	 
 	 ;; minimum distance
 	 (min-dist (if (pair? distances)
+		       (apply min distances)
+		       0.0))
+#|
 		       (let ((mind (car distances)))
 			 (for-each 
 			  (lambda (d)
@@ -378,7 +381,7 @@
 			  distances)
 			 mind)
 		       0.0))
-	 
+|#	 
 	 ;; find delay times from specified distances or delays
 	 (times (let ((v (make-float-vector (length speakers))))
 		  (do ((i 0 (+ i 1)))

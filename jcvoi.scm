@@ -197,7 +197,7 @@
 	      (i3 (if (< pitch (/ c 2)) 
 		      (fncval (i3fun1 sex) pitch) 
 		      (fncval (i3fun2 sex) pitch)))
-	      (indx0 (if (or (= vowel 3) (= vowel 4)) 0 1.5)))
+	      (indx0 (if (memv vowel '(3 4)) 0 1.5)))
 	  (let ((caramp1sc (* (fncval (aref fnc sex vowel 1 2) pitch) (- 1 formscl1) amp1))
 		(caramp2sc (* (fncval (aref fnc sex vowel 2 2) pitch) (- 1 formscl2) amp2))
 		(caramp3sc (* (fncval (aref fnc sex vowel 3 2) pitch) (- 1 formscl3) amp3))

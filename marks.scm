@@ -375,8 +375,7 @@
 			   (for-each
 			    (lambda (m)
 			      (let ((mp (mark-properties m)))
-				(if (and mp
-					 (pair? mp))
+				(if (pair? mp)
 				    (let ((mhome (mark-home m))
 					  (msamp (mark-sample m)))
 				      (format fd "(let ((s (find-sound ~S)))~%" (file-name (car mhome)))

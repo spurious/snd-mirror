@@ -47772,8 +47772,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (and (not (eq? tag 'wrong-type-arg))
-					     (not (eq? tag 'mus-error)))
+				    (if (not (memq tag '(wrong-type-arg mus-error)))
 					(snd-display #__line__ ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
 				(list amp-control apply-controls close-sound comment contrast-control 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -47795,9 +47794,7 @@ EDITS: 1
 					   (lambda ()
 					     (set! (n arg) 0))
 					   (lambda args (car args)))))
-				    (if (and (not (eq? tag 'wrong-type-arg))
-					     (not (eq? tag 'syntax-error))
-					     (not (eq? tag 'error)))
+				    (if (not (memq tag '(wrong-type-arg syntax-error error)))
 					(snd-display #__line__ ";snd set wrong-type-arg: ~A: ~A ~A" n tag arg))))
 				(list amp-control channels chans comment contrast-control contrast-control-amp 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -48880,9 +48877,9 @@ EDITS: 1
 (set! (test-funcs 10) snd_test_10)
 (set! (test-funcs 11) snd_test_11)
 (set! (test-funcs 12) snd_test_12)
-(if (or (and (not (provided? 'openbsd))
-	     (not (provided? 'freebsd)))
-	(not (provided? 'snd-gtk)))
+(if (not (or (provided? 'openbsd)
+	     (provided? 'freebsd)
+	     (provided? 'snd-gtk)))
     (begin
       (set! (test-funcs 13) snd_test_13)
       (set! (test-funcs 14) snd_test_14)

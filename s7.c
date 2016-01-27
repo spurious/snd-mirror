@@ -955,12 +955,6 @@ struct s7_scheme {
   int ht_iter_tag, baffle_ctr, bignum_precision;
   s7_pointer default_rng;
 
-#if WITH_GMP
-  s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
-  int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
-  int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
-#endif
-
   /* these symbols are primarily for the generic function search */
   s7_pointer abs_symbol, acos_symbol, acosh_symbol, add_symbol, angle_symbol, append_symbol, apply_symbol, arity_symbol,
              ash_symbol, asin_symbol, asinh_symbol, assoc_symbol, assq_symbol, assv_symbol, atan_symbol, atanh_symbol,
@@ -1026,6 +1020,14 @@ struct s7_scheme {
              with_input_from_file_symbol, with_input_from_string_symbol, with_output_to_file_symbol, with_output_to_string_symbol,
              write_byte_symbol, write_char_symbol, write_string_symbol, write_symbol;
          
+#if (!WITH_PURE_S7)
+  s7_pointer is_char_ready_symbol, char_ci_leq_symbol, char_ci_lt_symbol, char_ci_eq_symbol, char_ci_geq_symbol, char_ci_gt_symbol, 
+             let_to_list_symbol, integer_length_symbol, string_ci_leq_symbol, string_ci_lt_symbol, string_ci_eq_symbol,
+             string_ci_geq_symbol, string_ci_gt_symbol, string_to_list_symbol, vector_to_list_symbol, string_length_symbol, 
+             string_copy_symbol, list_to_string_symbol, list_to_vector_symbol, vector_length_symbol, make_polar_symbol, 
+             make_rectangular_symbol;
+#endif
+
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol,
              free_heap_size_symbol, file_names_symbol, symbol_table_symbol, cpu_time_symbol, c_objects_symbol, float_format_precision_symbol,
@@ -1047,55 +1049,51 @@ struct s7_scheme {
              wrong_number_of_args_symbol, read_error_symbol, string_read_error_symbol, syntax_error_symbol, division_by_zero_symbol, 
              no_catch_symbol, io_error_symbol, invalid_escape_function_symbol, wrong_type_arg_symbol, out_of_range_symbol;
 
-  s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string;
-
-#if (!WITH_PURE_S7)
-  s7_pointer is_char_ready_symbol, char_ci_leq_symbol, char_ci_lt_symbol, char_ci_eq_symbol, char_ci_geq_symbol, char_ci_gt_symbol, 
-             let_to_list_symbol, integer_length_symbol, string_ci_leq_symbol, string_ci_lt_symbol, string_ci_eq_symbol,
-             string_ci_geq_symbol, string_ci_gt_symbol, string_to_list_symbol, vector_to_list_symbol, string_length_symbol, 
-             string_copy_symbol, list_to_string_symbol, list_to_vector_symbol, vector_length_symbol, make_polar_symbol, 
-             make_rectangular_symbol;
-#endif
+  /* optimizer symbols */
+  s7_pointer and_p2_symbol, and_p_symbol, and_unchecked_symbol, begin_unchecked_symbol, case_simple_symbol, case_simpler_1_symbol,
+             case_simpler_ss_symbol, case_simpler_symbol, case_simplest_ss_symbol, case_simplest_symbol, case_unchecked_symbol,
+             cond_all_x_2_symbol, cond_all_x_symbol, cond_s_symbol, cond_simple_symbol, cond_unchecked_symbol, decrement_1_symbol,
+             define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
+             do_unchecked_symbol, dotimes_p_symbol, dox_symbol, if_a_p_p_symbol, if_a_p_symbol, if_and2_p_p_symbol, if_and2_p_symbol,
+             if_andp_p_p_symbol, if_andp_p_symbol, if_cc_p_p_symbol, if_cc_p_symbol, if_cs_p_p_symbol, if_cs_p_symbol, if_csc_p_p_symbol,
+             if_csc_p_symbol, if_csq_p_p_symbol, if_csq_p_symbol, if_css_p_p_symbol, if_css_p_symbol, if_is_pair_p_p_symbol,
+             if_is_pair_p_symbol, if_is_symbol_p_p_symbol, if_is_symbol_p_symbol, if_not_s_p_p_symbol, if_not_s_p_symbol,
+             if_opssq_p_p_symbol, if_opssq_p_symbol, if_orp_p_p_symbol, if_orp_p_symbol, if_p_feed_symbol, if_p_p_p_symbol,
+             if_p_p_symbol, if_s_opcq_p_p_symbol, if_s_opcq_p_symbol, if_s_p_p_symbol, if_s_p_symbol, if_unchecked_symbol,
+             if_z_p_p_symbol, if_z_p_symbol, increment_1_symbol, increment_sa_symbol, increment_saa_symbol, increment_ss_symbol,
+             increment_sss_symbol, increment_sz_symbol, lambda_star_unchecked_symbol, lambda_unchecked_symbol, let_all_c_symbol,
+             let_all_opsq_symbol, let_all_s_symbol, let_all_x_symbol, let_c_symbol, let_no_vars_symbol, let_one_symbol,
+             let_opcq_symbol, let_opsq_p_symbol, let_opsq_symbol, let_opssq_symbol, let_s_symbol, let_star2_symbol,
+             let_star_all_x_symbol, let_star_unchecked_symbol, let_unchecked_symbol, let_z_symbol, letrec_star_unchecked_symbol,
+             letrec_unchecked_symbol, named_let_no_vars_symbol, named_let_star_symbol, named_let_symbol, or_p2_symbol, or_p_symbol,
+             or_unchecked_symbol, quote_unchecked_symbol, safe_do_symbol, safe_dotimes_symbol, set_cons_symbol, set_let_all_x_symbol,
+             set_let_s_symbol, set_normal_symbol, set_pair_a_symbol, set_pair_c_p_symbol, set_pair_c_symbol, set_pair_p_symbol,
+             set_pair_symbol, set_pair_z_symbol, set_pair_za_symbol, set_pws_symbol, set_symbol_a_symbol, set_symbol_c_symbol,
+             set_symbol_opcq_symbol, set_symbol_opsq_symbol, set_symbol_opssq_symbol, set_symbol_opsssq_symbol, set_symbol_p_symbol,
+             set_symbol_q_symbol, set_symbol_s_symbol, set_symbol_z_symbol, set_unchecked_symbol, simple_do_a_symbol,
+             simple_do_e_symbol, simple_do_p_symbol, simple_do_symbol, unless_s_symbol, unless_unchecked_symbol, when_s_symbol,
+             when_unchecked_symbol, with_baffle_unchecked_symbol, with_let_s_symbol, with_let_unchecked_symbol, 
+             dox_slot_symbol;
 
 #if WITH_GMP
   s7_pointer bignum_symbol, is_bignum_symbol;
+  s7_pointer *bigints, *bigratios, *bigreals, *bignumbers;
+  int bigints_size, bigratios_size, bigreals_size, bignumbers_size;
+  int bigints_loc, bigratios_loc, bigreals_loc, bignumbers_loc;
 #endif
+
 #if WITH_SYSTEM_EXTRAS
   s7_pointer is_directory_symbol, file_exists_symbol, delete_file_symbol, getenv_symbol, system_symbol, directory_to_list_symbol, file_mtime_symbol;
 #endif
 
   /* these are the associated functions, not symbols */
   s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
-
   s7_pointer QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
   s7_pointer Apply, Vector;
-  s7_pointer wrong_type_arg_info, out_of_range_info;
-  s7_pointer simple_wrong_type_arg_info, simple_out_of_range_info;
   s7_pointer Object_Set;               /* applicable object set method */
 
-  s7_pointer QUOTE_UNCHECKED, BEGIN_UNCHECKED, CASE_UNCHECKED, SET_UNCHECKED, LAMBDA_UNCHECKED, LET_UNCHECKED, WITH_LET_UNCHECKED, WITH_LET_S;
-  s7_pointer LET_STAR_UNCHECKED, LETREC_UNCHECKED, LETREC_STAR_UNCHECKED, COND_UNCHECKED, COND_SIMPLE, WITH_BAFFLE_UNCHECKED;
-  s7_pointer SET_SYMBOL_C, SET_SYMBOL_S, SET_SYMBOL_Q, SET_SYMBOL_P, SET_SYMBOL_Z, SET_SYMBOL_A;
-  s7_pointer SET_SYMBOL_opSq, SET_SYMBOL_opSSq, SET_SYMBOL_opSSSq, SET_SYMBOL_opCq;
-  s7_pointer SET_NORMAL, SET_PAIR, SET_PAIR_Z, SET_PAIR_A, SET_PAIR_ZA, SET_PAIR_P, SET_PWS, SET_LET_S, SET_LET_ALL_X, SET_PAIR_C, SET_PAIR_C_P;
-  s7_pointer LAMBDA_STAR_UNCHECKED, DO_UNCHECKED, DEFINE_UNCHECKED, DEFINE_FUNCHECKED, DEFINE_STAR_UNCHECKED, DEFINE_CONSTANT_UNCHECKED;
-  s7_pointer CASE_SIMPLE, CASE_SIMPLER, CASE_SIMPLER_1, CASE_SIMPLER_SS, CASE_SIMPLEST, CASE_SIMPLEST_SS;
-  s7_pointer LET_C, LET_S, LET_ALL_C, LET_ALL_S, LET_ALL_X;
-  s7_pointer LET_STAR_ALL_X, LET_opCq, LET_opSSq;
-  s7_pointer LET_NO_VARS, NAMED_LET, NAMED_LET_NO_VARS, NAMED_LET_STAR, LET_STAR2, IF_UNCHECKED, AND_UNCHECKED, AND_P, AND_P2, OR_UNCHECKED, OR_P, OR_P2;
-  s7_pointer IF_P_P_P, IF_P_P, IF_S_P_P, IF_S_P, IF_P_FEED;
-  s7_pointer IF_Z_P, IF_Z_P_P, IF_A_P, IF_A_P_P, IF_ANDP_P, IF_ANDP_P_P, IF_ORP_P, IF_ORP_P_P, IF_CC_P_P;
-  s7_pointer IF_CS_P_P, IF_CC_P, IF_CS_P, IF_AND2_P, IF_AND2_P_P;
-  s7_pointer IF_CSQ_P, IF_CSQ_P_P, IF_CSS_P, IF_CSS_P_P, IF_CSC_P, IF_CSC_P_P;
-  s7_pointer IF_IS_PAIR_P, IF_IS_PAIR_P_P, IF_opSSq_P, IF_opSSq_P_P, IF_S_opCq_P, IF_S_opCq_P_P;
-  s7_pointer IF_IS_SYMBOL_P, IF_IS_SYMBOL_P_P, IF_NOT_S_P, IF_NOT_S_P_P;
-  s7_pointer WHEN_UNCHECKED, UNLESS_UNCHECKED, WHEN_S, UNLESS_S;
-  s7_pointer COND_ALL_X, COND_ALL_X_2, COND_S;
-  s7_pointer INCREMENT_1, DECREMENT_1, SET_CONS, INCREMENT_SS, INCREMENT_SSS, INCREMENT_SZ, INCREMENT_SA, INCREMENT_SAA;
-  s7_pointer LET_opSq, LET_ALL_opSq, LET_opSq_P, LET_ONE, LET_Z;
-  s7_pointer SIMPLE_DO, SAFE_DOTIMES, SAFE_DO, SIMPLE_DO_P, DOTIMES_P, SIMPLE_DO_A, SIMPLE_DO_E;
-  s7_pointer DOX, dox_slot_symbol;
-
+  s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
+  s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string;
   s7_pointer *safe_lists, *syn_docs; /* prebuilt evaluator arg lists, syntax doc strings */
 
   s7_pointer autoload_table, libraries, profile_info;
@@ -11460,7 +11458,6 @@ static s7_pointer make_permanent_integer(s7_int i)
   if (i == CLOSURE_ARITY_NOT_SET) return(arity_not_set);
   if (i == -1) return(minus_one);
   if (i == -2) return(minus_two);
-
   /* a few -3 */
 
   return(make_permanent_integer_unchecked(i));
@@ -11664,7 +11661,8 @@ s7_double s7_number_to_real_with_caller(s7_scheme *sc, s7_pointer x, const char 
     case T_REAL:        return(real(x));
 #if WITH_GMP
     case T_BIG_INTEGER: return((s7_double)big_integer_to_s7_int(big_integer(x)));
-    case T_BIG_RATIO:   return((s7_double)((long double)big_integer_to_s7_int(mpq_numref(big_ratio(x))) / (long double)big_integer_to_s7_int(mpq_denref(big_ratio(x)))));
+    case T_BIG_RATIO:   return((s7_double)((long double)big_integer_to_s7_int(mpq_numref(big_ratio(x))) / 
+					   (long double)big_integer_to_s7_int(mpq_denref(big_ratio(x)))));
     case T_BIG_REAL:    return((s7_double)mpfr_get_d(big_real(x), GMP_RNDN));
 #endif
     }
@@ -30587,7 +30585,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
     }
 
   if (((car(lst) == sc->quote_symbol) ||
-       (car(lst) == sc->QUOTE_UNCHECKED)) && /* this can happen (see lint.scm) */
+       (car(lst) == sc->quote_unchecked_symbol)) && /* this can happen (see lint.scm) */
       (true_len == 2))
     {
       /* len == 1 is important, otherwise (list 'quote 1 2) -> '1 2 which looks weird
@@ -54690,7 +54688,7 @@ static void check_lambda(s7_scheme *sc)
   
   if ((is_overlaid(code)) &&
       (has_opt_back(code)))
-    pair_set_syntax_symbol(code, sc->LAMBDA_UNCHECKED);
+    pair_set_syntax_symbol(code, sc->lambda_unchecked_symbol);
 }
 
 static void check_lambda_star(s7_scheme *sc)
@@ -54709,7 +54707,7 @@ static void check_lambda_star(s7_scheme *sc)
   
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
-    pair_set_syntax_symbol(sc->code, sc->LAMBDA_STAR_UNCHECKED);
+    pair_set_syntax_symbol(sc->code, sc->lambda_star_unchecked_symbol);
 }
 
 static s7_pointer check_when(s7_scheme *sc)
@@ -54722,9 +54720,9 @@ static s7_pointer check_when(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      pair_set_syntax_symbol(sc->code, sc->WHEN_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->when_unchecked_symbol);
       if (is_symbol(car(sc->code)))
-	pair_set_syntax_symbol(sc->code, sc->WHEN_S);
+	pair_set_syntax_symbol(sc->code, sc->when_s_symbol);
     }
   return(sc->code);
 }
@@ -54740,9 +54738,9 @@ static s7_pointer check_unless(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      pair_set_syntax_symbol(sc->code, sc->UNLESS_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->unless_unchecked_symbol);
       if (is_symbol(car(sc->code)))
-	pair_set_syntax_symbol(sc->code, sc->UNLESS_S);
+	pair_set_syntax_symbol(sc->code, sc->unless_s_symbol);
     }
   return(sc->code);
 }
@@ -54849,7 +54847,7 @@ static s7_pointer check_case(s7_scheme *sc)
 	  set_opt_key(x, caar(x));
 	  if (is_pair(opt_key(x))) set_opt_clause(x, cadar(x));
 	}
-      pair_set_syntax_symbol(sc->code, sc->CASE_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->case_unchecked_symbol);
 
       if ((!has_feed_to) &&
 	  (keys_simple))
@@ -54857,7 +54855,7 @@ static s7_pointer check_case(s7_scheme *sc)
 	  if (have_else) /* don't combine ifs ! */
 	    {
 	      if (is_symbol(car(sc->code)))
-		pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLE);
+		pair_set_syntax_symbol(sc->code, sc->case_simple_symbol);
 	    }
 	  else
 	    {
@@ -54865,12 +54863,12 @@ static s7_pointer check_case(s7_scheme *sc)
 		{
 		  if ((bodies_simple) &&
 		      (is_symbol(car(sc->code))))
-		    pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLEST);
+		    pair_set_syntax_symbol(sc->code, sc->case_simplest_symbol);
 		  else
 		    {
 		      if ((is_optimized(car(sc->code))) &&
 			  (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
-			pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLEST_SS);
+			pair_set_syntax_symbol(sc->code, sc->case_simplest_ss_symbol);
 		    }
 		  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 		    set_opt_key(x, caaar(x));
@@ -54880,18 +54878,18 @@ static s7_pointer check_case(s7_scheme *sc)
 		  if (bodies_simple)
 		    {
 		      if (is_symbol(car(sc->code)))
-			pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLER_1);
+			pair_set_syntax_symbol(sc->code, sc->case_simpler_1_symbol);
 		      else
 			{
 			  if ((is_optimized(car(sc->code))) &&
 			      (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
-			    pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLER_SS);
+			    pair_set_syntax_symbol(sc->code, sc->case_simpler_ss_symbol);
 			}
 		    }
 		  else
 		    {
 		      if (is_symbol(car(sc->code)))
-			pair_set_syntax_symbol(sc->code, sc->CASE_SIMPLER);
+			pair_set_syntax_symbol(sc->code, sc->case_simpler_symbol);
 		    }
 		}
 	    }
@@ -54905,7 +54903,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 {
   s7_pointer binding;
 
-  pair_set_syntax_symbol(sc->code, sc->LET_ONE);
+  pair_set_syntax_symbol(sc->code, sc->let_one_symbol);
   binding = car(start);
 
   if (is_pair(cadr(binding)))
@@ -54916,12 +54914,12 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	    {
 	      set_opt_sym2(cdr(sc->code), car(binding));
 	      set_opt_pair2(sc->code, cadr(binding));
-	      pair_set_syntax_symbol(sc->code, sc->LET_Z);
+	      pair_set_syntax_symbol(sc->code, sc->let_z_symbol);
 
 	      if ((is_h_safe_c_s(cadr(binding))) &&
 		  (is_pair(cadr(sc->code))))          /* one body expr is a pair */
 		{
-		  pair_set_syntax_symbol(sc->code, sc->LET_opSq_P);
+		  pair_set_syntax_symbol(sc->code, sc->let_opsq_p_symbol);
 		  set_opt_sym2(sc->code, cadr(cadr(binding)));
 
 		  if ((!is_optimized(cadr(sc->code))) &&
@@ -54942,7 +54940,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 
 	  if (is_h_safe_c_s(cadr(binding)))
 	    {
-	      pair_set_syntax_symbol(sc->code, sc->LET_opSq);
+	      pair_set_syntax_symbol(sc->code, sc->let_opsq_symbol);
 	      set_opt_sym2(sc->code, cadr(cadr(binding)));
 	      return(sc->code);
 	    }
@@ -54950,7 +54948,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	  set_opt_pair2(sc->code, cadr(binding));
 	  if (optimize_op(cadr(binding)) == HOP_SAFE_C_SS)
 	    {
-	      pair_set_syntax_symbol(sc->code, sc->LET_opSSq);
+	      pair_set_syntax_symbol(sc->code, sc->let_opssq_symbol);
 	      set_opt_sym3(sc->code, caddr(cadr(binding)));
 	    }
 	  else
@@ -54958,7 +54956,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	      if (optimize_op(cadr(binding)) == HOP_SAFE_C_C)
 		{
 		  set_opt_sym3(sc->code, car(binding));
-		  pair_set_syntax_symbol(sc->code, sc->LET_opCq);
+		  pair_set_syntax_symbol(sc->code, sc->let_opcq_symbol);
 		}
 	      /* let_all_x here is slightly slower than fallback let_z */
 	    }
@@ -54972,12 +54970,12 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
       if (is_symbol(p))
 	{
 	  set_opt_sym2(sc->code, p);
-	  pair_set_syntax_symbol(sc->code, sc->LET_S);
+	  pair_set_syntax_symbol(sc->code, sc->let_s_symbol);
 	}
       else 
 	{
 	  set_opt_con2(sc->code, p);
-	  pair_set_syntax_symbol(sc->code, sc->LET_C);
+	  pair_set_syntax_symbol(sc->code, sc->let_c_symbol);
 	}
     }
   return(sc->code);
@@ -55088,8 +55086,8 @@ static s7_pointer check_let(s7_scheme *sc)
 	  s7_pointer ex;
 
 	  if (is_null(start))
-	    pair_set_syntax_symbol(sc->code, sc->NAMED_LET_NO_VARS);
-	  else pair_set_syntax_symbol(sc->code, sc->NAMED_LET);
+	    pair_set_syntax_symbol(sc->code, sc->named_let_no_vars_symbol);
+	  else pair_set_syntax_symbol(sc->code, sc->named_let_symbol);
 
 	  /* this is (let name ...) so the initial values need to be removed from the closure arg list */
 	  sc->args = sc->nil; /* sc->args is set to nil in named_let below */
@@ -55102,10 +55100,10 @@ static s7_pointer check_let(s7_scheme *sc)
 	}
 
       if (is_null(start))
-	pair_set_syntax_symbol(sc->code, sc->LET_NO_VARS);
+	pair_set_syntax_symbol(sc->code, sc->let_no_vars_symbol);
       else
 	{
-	  pair_set_syntax_symbol(sc->code, sc->LET_UNCHECKED);
+	  pair_set_syntax_symbol(sc->code, sc->let_unchecked_symbol);
 	  if (is_null(cdr(start)))                                    /* one binding */
 	    check_let_one_var(sc, start);
 	  else
@@ -55122,22 +55120,22 @@ static s7_pointer check_let(s7_scheme *sc)
 		      if (is_pair(cadr(x)))
 			{
 			  if (car(cadr(x)) == sc->quote_symbol)
-			    op = sc->LET_ALL_X;
+			    op = sc->let_all_x_symbol;
 			  else
 			    {
 			      if (is_h_safe_c_s(cadr(x)))
 				{
-				  if ((op == sc->nil) || (op == sc->LET_ALL_opSq))
-				    op = sc->LET_ALL_opSq;
-				  else op = sc->LET_ALL_X;
+				  if ((op == sc->nil) || (op == sc->let_all_opsq_symbol))
+				    op = sc->let_all_opsq_symbol;
+				  else op = sc->let_all_x_symbol;
 				}
 			      else
 				{
 				  if (is_all_x_safe(sc, cadr(x)))
-				    op = sc->LET_ALL_X;
+				    op = sc->let_all_x_symbol;
 				  else
 				    {
-				      op = sc->LET_UNCHECKED;
+				      op = sc->let_unchecked_symbol;
 				      break;
 				    }
 				}
@@ -55147,24 +55145,24 @@ static s7_pointer check_let(s7_scheme *sc)
 			{
 			  if (is_symbol(cadr(x)))
 			    {
-			      if ((op == sc->nil) || (op == sc->LET_ALL_S))
-				op = sc->LET_ALL_S;
-			      else op = sc->LET_ALL_X;
+			      if ((op == sc->nil) || (op == sc->let_all_s_symbol))
+				op = sc->let_all_s_symbol;
+			      else op = sc->let_all_x_symbol;
 			    }
 			  else
 			    {
-			      if ((op == sc->nil) || (op == sc->LET_ALL_C))
-				op = sc->LET_ALL_C;
-			      else op = sc->LET_ALL_X;
+			      if ((op == sc->nil) || (op == sc->let_all_c_symbol))
+				op = sc->let_all_c_symbol;
+			      else op = sc->let_all_x_symbol;
 			    }
 			}
 		    }
 		  pair_set_syntax_symbol(sc->code, op);
 		}
-	      else pair_set_syntax_symbol(sc->code, sc->LET_UNCHECKED);
+	      else pair_set_syntax_symbol(sc->code, sc->let_unchecked_symbol);
 	    }
 	}
-      if (pair_syntax_symbol(sc->code) == sc->LET_ALL_X)
+      if (pair_syntax_symbol(sc->code) == sc->let_all_x_symbol)
 	{
 	  s7_pointer p;
 	  for (p = start; is_pair(p); p = cdr(p))
@@ -55257,18 +55255,18 @@ static s7_pointer check_let_star(s7_scheme *sc)
       if (named_let)
 	{
 	  if (is_null(cadr(sc->code)))
-	    pair_set_syntax_symbol(sc->code, sc->NAMED_LET_NO_VARS);
+	    pair_set_syntax_symbol(sc->code, sc->named_let_no_vars_symbol);
 	  else
 	    {
-	      pair_set_syntax_symbol(sc->code, sc->NAMED_LET_STAR);
+	      pair_set_syntax_symbol(sc->code, sc->named_let_star_symbol);
 	      set_opt_con2(sc->code, cadr(car(cadr(sc->code))));
 	    }
 	  return(sc->code);
 	}
 
-      pair_set_syntax_symbol(sc->code, sc->LET_STAR_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->let_star_unchecked_symbol);
       if (is_null(car(sc->code)))
-	pair_set_syntax_symbol(sc->code, sc->LET_NO_VARS); /* (let* () ...) */
+	pair_set_syntax_symbol(sc->code, sc->let_no_vars_symbol); /* (let* () ...) */
       else
 	{
 	  if (is_null(cdar(sc->code)))
@@ -55276,7 +55274,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	  else  /* more than one entry */
 	    {
 	      s7_pointer p, op;
-	      op = sc->LET_STAR_ALL_X;
+	      op = sc->let_star_all_x_symbol;
 	      set_opt_con2(sc->code, cadaar(sc->code));
 	      for (p = car(sc->code); is_pair(p); p = cdr(p))
 		{
@@ -55287,7 +55285,7 @@ static s7_pointer check_let_star(s7_scheme *sc)
 		      if ((!is_all_x_safe(sc, cadr(x))) &&
 			  (car(cadr(x)) != sc->quote_symbol))
 			{
-			  op = sc->LET_STAR2;
+			  op = sc->let_star2_symbol;
 			  break;
 			}
 		    }
@@ -55295,8 +55293,8 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	      pair_set_syntax_symbol(sc->code, op);
 	    }
 	}
-      if ((pair_syntax_symbol(sc->code) == sc->LET_ALL_X) ||
-	  (pair_syntax_symbol(sc->code) == sc->LET_STAR_ALL_X))
+      if ((pair_syntax_symbol(sc->code) == sc->let_all_x_symbol) ||
+	  (pair_syntax_symbol(sc->code) == sc->let_star_all_x_symbol))
 	{
 	  s7_pointer p;
 	  for (p = car(sc->code); is_pair(p); p = cdr(p))
@@ -55352,7 +55350,7 @@ static s7_pointer check_letrec(s7_scheme *sc, bool letrec)
 
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
-    pair_set_syntax_symbol(sc->code, (letrec) ? sc->LETREC_UNCHECKED : sc->LETREC_STAR_UNCHECKED);
+    pair_set_syntax_symbol(sc->code, (letrec) ? sc->letrec_unchecked_symbol : sc->letrec_star_unchecked_symbol);
 
   return(sc->code);
 }
@@ -55372,7 +55370,7 @@ static s7_pointer check_quote(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      pair_set_syntax_symbol(sc->code, sc->QUOTE_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->quote_unchecked_symbol);
     }
 #endif
   return(sc->code);
@@ -55407,10 +55405,10 @@ static s7_pointer check_and(s7_scheme *sc)
 	  if ((c_callee(sc->code)) &&
 	      (is_pair(cdr(sc->code))) &&
 	      (is_null(cddr(sc->code))))
-	    pair_set_syntax_symbol(sc->code, sc->AND_P2);
-	  else pair_set_syntax_symbol(sc->code, sc->AND_P);
+	    pair_set_syntax_symbol(sc->code, sc->and_p2_symbol);
+	  else pair_set_syntax_symbol(sc->code, sc->and_p_symbol);
 	}
-      else pair_set_syntax_symbol(sc->code, sc->AND_UNCHECKED);
+      else pair_set_syntax_symbol(sc->code, sc->and_unchecked_symbol);
     }
   return(sc->code);
 }
@@ -55445,10 +55443,10 @@ static s7_pointer check_or(s7_scheme *sc)
 	  if ((c_callee(sc->code)) &&
 	      (is_pair(cdr(sc->code))) &&
 	      (is_null(cddr(sc->code))))
-	    pair_set_syntax_symbol(sc->code, sc->OR_P2);
-	  else pair_set_syntax_symbol(sc->code, sc->OR_P);
+	    pair_set_syntax_symbol(sc->code, sc->or_p2_symbol);
+	  else pair_set_syntax_symbol(sc->code, sc->or_p_symbol);
 	}
-      else pair_set_syntax_symbol(sc->code, sc->OR_UNCHECKED);
+      else pair_set_syntax_symbol(sc->code, sc->or_unchecked_symbol);
     }
   return(sc->code);
 }
@@ -55481,7 +55479,7 @@ static s7_pointer check_if(s7_scheme *sc)
     {
       s7_pointer test;
       bool one_branch;
-      pair_set_syntax_symbol(sc->code, sc->IF_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->if_unchecked_symbol);
 
       one_branch = (is_null(cdr(cdr_code)));
       test = car(sc->code);
@@ -55493,10 +55491,10 @@ static s7_pointer check_if(s7_scheme *sc)
 		{
 		  if (c_callee(test) == g_and_all_x_2)
 		    {
-		      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_AND2_P : sc->IF_AND2_P_P);
+		      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_and2_p_symbol : sc->if_and2_p_p_symbol);
 		      set_opt_and_2_test(sc->code, cddr(test));
 		    }
-		  else pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_CC_P : sc->IF_CC_P_P);
+		  else pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_cc_p_symbol : sc->if_cc_p_p_symbol);
 		  set_opt_pair2(sc->code, cdr(test));
 		}
 	      else
@@ -55505,16 +55503,16 @@ static s7_pointer check_if(s7_scheme *sc)
 		    {
 		      /* these miss methods? */
 		      if (car(test) == sc->is_pair_symbol)
-			pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_IS_PAIR_P : sc->IF_IS_PAIR_P_P);
+			pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_is_pair_p_symbol : sc->if_is_pair_p_p_symbol);
 		      else
 			{
 			  if (car(test) == sc->is_symbol_symbol)
-			    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_IS_SYMBOL_P : sc->IF_IS_SYMBOL_P_P);
+			    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_is_symbol_p_symbol : sc->if_is_symbol_p_p_symbol);
 			  else
 			    {
 			      if (car(test) == sc->not_symbol)
-				pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_NOT_S_P : sc->IF_NOT_S_P_P);
-			      else pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_CS_P : sc->IF_CS_P_P);
+				pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_not_s_p_symbol : sc->if_not_s_p_p_symbol);
+			      else pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_cs_p_symbol : sc->if_cs_p_p_symbol);
 			    }
 			}
 		      set_opt_sym2(sc->code, cadr(test));
@@ -55523,7 +55521,7 @@ static s7_pointer check_if(s7_scheme *sc)
 		    {
 		      if (optimize_op(test) == HOP_SAFE_C_SQ)
 			{
-			  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_CSQ_P : sc->IF_CSQ_P_P);
+			  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_csq_p_symbol : sc->if_csq_p_p_symbol);
 			  set_opt_con2(sc->code, cadr(caddr(test)));
 			  set_opt_sym3(sc->code, cadr(test));
 			}
@@ -55531,7 +55529,7 @@ static s7_pointer check_if(s7_scheme *sc)
 			{
 			  if (optimize_op(test) == HOP_SAFE_C_SS)
 			    {
-			      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_CSS_P : sc->IF_CSS_P_P);
+			      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_css_p_symbol : sc->if_css_p_p_symbol);
 			      set_opt_sym2(sc->code, caddr(test));
 			      set_opt_sym3(sc->code, cadr(test));
 			    }
@@ -55539,7 +55537,7 @@ static s7_pointer check_if(s7_scheme *sc)
 			    {
 			      if (optimize_op(test) == HOP_SAFE_C_SC)
 				{
-				  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_CSC_P : sc->IF_CSC_P_P);
+				  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_csc_p_symbol : sc->if_csc_p_p_symbol);
 				  set_opt_con2(sc->code, caddr(test));
 				  set_opt_sym3(sc->code, cadr(test));
 				}
@@ -55547,7 +55545,7 @@ static s7_pointer check_if(s7_scheme *sc)
 				{
 				  if (optimize_op(test) == HOP_SAFE_C_S_opCq)
 				    {
-				      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_S_opCq_P : sc->IF_S_opCq_P_P);
+				      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_s_opcq_p_symbol : sc->if_s_opcq_p_p_symbol);
 				      set_opt_pair2(sc->code, caddr(test));
 				      set_opt_sym3(sc->code, cadr(test));
 				    }
@@ -55555,7 +55553,7 @@ static s7_pointer check_if(s7_scheme *sc)
 				    {
 				      if (optimize_op(test) == HOP_SAFE_C_opSSq)
 					{
-					  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_opSSq_P : sc->IF_opSSq_P_P);
+					  pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_opssq_p_symbol : sc->if_opssq_p_p_symbol);
 					  set_opt_pair2(sc->code, cadar(sc->code));
 					  set_opt_sym3(sc->code, caddr(opt_pair2(sc->code)));
 					}
@@ -55563,12 +55561,12 @@ static s7_pointer check_if(s7_scheme *sc)
 					{
 					  if (is_all_x_safe(sc, test))
 					    {
-					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_A_P : sc->IF_A_P_P);
+					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_a_p_symbol : sc->if_a_p_p_symbol);
 					      set_c_call(sc->code, all_x_eval(sc, test, sc->envir, let_symbol_is_safe));
 					    }
 					  else
 					    {
-					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_Z_P : sc->IF_Z_P_P);
+					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_z_p_symbol : sc->if_z_p_p_symbol);
 					      set_opt_con2(sc->code, cadr(sc->code));
 					    }
 					}
@@ -55581,7 +55579,7 @@ static s7_pointer check_if(s7_scheme *sc)
 	    }
 	  else
 	    {
-	      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_P_P : sc->IF_P_P_P);
+	      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_p_p_symbol : sc->if_p_p_p_symbol);
 	      if (is_syntactic_symbol(car(test)))
 		{
 		  pair_set_syntax_op(test, symbol_syntax_op(car(test)));
@@ -55597,11 +55595,11 @@ static s7_pointer check_if(s7_scheme *sc)
 		      new_op = symbol_syntax_op(car(test));
 		      sc->code = old_code;
 		      if ((new_op == OP_AND_P) || (new_op == OP_AND_P2))
-			pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_ANDP_P : sc->IF_ANDP_P_P);
+			pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_andp_p_symbol : sc->if_andp_p_p_symbol);
 		      else
 			{
 			  if ((new_op == OP_OR_P) || (new_op == OP_OR_P2))
-			    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_ORP_P : sc->IF_ORP_P_P);
+			    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_orp_p_symbol : sc->if_orp_p_p_symbol);
 			}
 		    }
 		}
@@ -55610,7 +55608,7 @@ static s7_pointer check_if(s7_scheme *sc)
       else /* test is symbol or constant, but constant here is nutty */
 	{
 	  if (is_symbol(test))
-	    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->IF_S_P : sc->IF_S_P_P);
+	    pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_s_p_symbol : sc->if_s_p_p_symbol);
 	}
     }
   return(sc->code);
@@ -55754,14 +55752,14 @@ static s7_pointer check_define(s7_scheme *sc)
 	  if ((is_pair(car(sc->code))) &&
 	      (!symbol_has_accessor(func)) &&
 	      (!is_immutable_symbol(func)))
-	    pair_set_syntax_symbol(sc->code, sc->DEFINE_FUNCHECKED);
-	  else pair_set_syntax_symbol(sc->code, sc->DEFINE_UNCHECKED);
+	    pair_set_syntax_symbol(sc->code, sc->define_funchecked_symbol);
+	  else pair_set_syntax_symbol(sc->code, sc->define_unchecked_symbol);
 	}
       else 
 	{
 	  if (starred)
-	    pair_set_syntax_symbol(sc->code, sc->DEFINE_STAR_UNCHECKED);
-	  else pair_set_syntax_symbol(sc->code, sc->DEFINE_CONSTANT_UNCHECKED); 
+	    pair_set_syntax_symbol(sc->code, sc->define_star_unchecked_symbol);
+	  else pair_set_syntax_symbol(sc->code, sc->define_constant_unchecked_symbol); 
 	}
     }
   return(sc->code);
@@ -56161,10 +56159,10 @@ static s7_pointer check_with_let(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      pair_set_syntax_symbol(sc->code, sc->WITH_LET_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->with_let_unchecked_symbol);
       if ((is_symbol(car(sc->code))) &&
 	  (is_pair(cadr(sc->code))))
-	pair_set_syntax_symbol(sc->code, sc->WITH_LET_S);
+	pair_set_syntax_symbol(sc->code, sc->with_let_s_symbol);
     }
   return(sc->code);
 }
@@ -56212,7 +56210,7 @@ static s7_pointer check_cond(s7_scheme *sc)
     {
       if (has_feed_to)
 	{
-	  pair_set_syntax_symbol(sc->code, sc->COND_UNCHECKED);
+	  pair_set_syntax_symbol(sc->code, sc->cond_unchecked_symbol);
 	  if (is_null(cdr(sc->code)))
 	    {
 	      s7_pointer expr, f;
@@ -56230,7 +56228,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 		    {
 		      /* (define (hi) (cond (#t => (lambda (s) s)))) */
 		      set_opt_lambda2(sc->code, caddar(sc->code));  /* (lambda ...) above */
-		      pair_set_syntax_symbol(sc->code, sc->IF_P_FEED);
+		      pair_set_syntax_symbol(sc->code, sc->if_p_feed_symbol);
 		    }
 		}
 	    }
@@ -56239,7 +56237,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 	{
 	  s7_pointer p, sym = NULL;
 	  bool xopt = true, c_s_is_ok = true;
-	  pair_set_syntax_symbol(sc->code, sc->COND_SIMPLE);
+	  pair_set_syntax_symbol(sc->code, sc->cond_simple_symbol);
 
 	  for (p = sc->code; xopt && (is_pair(p)); p = cdr(p))
 	    {
@@ -56256,17 +56254,17 @@ static s7_pointer check_cond(s7_scheme *sc)
 		}
 	    }
 	  if (c_s_is_ok)
-	    pair_set_syntax_symbol(sc->code, sc->COND_S);
+	    pair_set_syntax_symbol(sc->code, sc->cond_s_symbol);
 	  else
 	    {
 	      if (xopt)
 		{
 		  int i;
-		  pair_set_syntax_symbol(sc->code, sc->COND_ALL_X);
+		  pair_set_syntax_symbol(sc->code, sc->cond_all_x_symbol);
 		  for (i = 0, p = sc->code; is_pair(p); i++, p = cdr(p))
 		    set_c_call(car(p), cond_all_x_eval(sc, caar(p), sc->envir)); /* handle 'else' specially here */
 		  if (i == 2)
-		    pair_set_syntax_symbol(sc->code, sc->COND_ALL_X_2);
+		    pair_set_syntax_symbol(sc->code, sc->cond_all_x_2_symbol);
 		}
 	    }
 	}
@@ -56323,7 +56321,7 @@ static s7_pointer check_set(s7_scheme *sc)
 	  inner = car(sc->code);
 	  value = cadr(sc->code);
 
-	  pair_set_syntax_symbol(sc->code, sc->SET_UNCHECKED);
+	  pair_set_syntax_symbol(sc->code, sc->set_unchecked_symbol);
 	  if (is_symbol(car(inner)))
 	    {
 	      if ((is_null(cdr(inner))) &&
@@ -56331,7 +56329,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		  (is_global(car(inner))) &&
 		  (is_c_function(slot_value(global_slot(car(inner))))) &&
 		  (c_function_required_args(slot_value(global_slot(car(inner)))) == 0))
-		pair_set_syntax_symbol(sc->code, sc->SET_PWS);
+		pair_set_syntax_symbol(sc->code, sc->set_pws_symbol);
 	      else
 		{
 		  if ((is_pair(cdr(inner))) &&
@@ -56341,24 +56339,24 @@ static s7_pointer check_set(s7_scheme *sc)
 			{
 			  /* (set! (f s) ...) */
 			  if (!is_pair(value))
-			    pair_set_syntax_symbol(sc->code, sc->SET_PAIR);
+			    pair_set_syntax_symbol(sc->code, sc->set_pair_symbol);
 			  else
 			    {
-			      pair_set_syntax_symbol(sc->code, sc->SET_PAIR_P);
+			      pair_set_syntax_symbol(sc->code, sc->set_pair_p_symbol);
 			      /* splice_in_values protects us here from values */
 			      if (is_h_optimized(value)) /* this excludes h_unknown_g etc */
 				{
-				  pair_set_syntax_symbol(sc->code, sc->SET_PAIR_Z);
+				  pair_set_syntax_symbol(sc->code, sc->set_pair_z_symbol);
 				  if (is_all_x_safe(sc, value))
 				    {
 				      s7_pointer obj;
 				      annotate_arg(sc, cdr(sc->code), sc->envir);
-				      pair_set_syntax_symbol(sc->code, sc->SET_PAIR_ZA);
+				      pair_set_syntax_symbol(sc->code, sc->set_pair_za_symbol);
 				      obj = find_symbol_checked(sc, car(inner));
 				      if ((is_c_function(obj)) &&
 					  (is_c_function(c_function_setter(obj))))
 					{
-					  pair_set_syntax_symbol(sc->code, sc->SET_PAIR_A);
+					  pair_set_syntax_symbol(sc->code, sc->set_pair_a_symbol);
 					}
 				    }
 				}
@@ -56371,10 +56369,10 @@ static s7_pointer check_set(s7_scheme *sc)
 			      ((is_symbol(value)) || (is_all_x_safe(sc, value))))
 			    {
 			      if (is_symbol(value))
-				pair_set_syntax_symbol(sc->code, sc->SET_LET_S);
+				pair_set_syntax_symbol(sc->code, sc->set_let_s_symbol);
 			      else
 				{
-				  pair_set_syntax_symbol(sc->code, sc->SET_LET_ALL_X);
+				  pair_set_syntax_symbol(sc->code, sc->set_let_all_x_symbol);
 				  set_c_call(cdr(sc->code), all_x_eval(sc, value, sc->envir, let_symbol_is_safe));
 				}
 			    }
@@ -56383,11 +56381,11 @@ static s7_pointer check_set(s7_scheme *sc)
 			      if (is_h_safe_c_c(cadr(inner)))
 				{
 				  if (!is_pair(value))
-				    pair_set_syntax_symbol(sc->code, sc->SET_PAIR_C);
+				    pair_set_syntax_symbol(sc->code, sc->set_pair_c_symbol);
 				  else
 				    {
 				      /* splice_in_values protects us here from values */
-				      pair_set_syntax_symbol(sc->code, sc->SET_PAIR_C_P);
+				      pair_set_syntax_symbol(sc->code, sc->set_pair_c_p_symbol);
 				    }
 				}
 			    }
@@ -56396,7 +56394,7 @@ static s7_pointer check_set(s7_scheme *sc)
 		}
 	    }
 	}
-      else pair_set_syntax_symbol(sc->code, sc->SET_NORMAL);
+      else pair_set_syntax_symbol(sc->code, sc->set_normal_symbol);
 
       if (is_symbol(car(sc->code)))
 	{
@@ -56408,15 +56406,15 @@ static s7_pointer check_set(s7_scheme *sc)
 	      (!is_syntactic(settee)))
 	    {
 	      if (is_symbol(value))
-		pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_S);
+		pair_set_syntax_symbol(sc->code, sc->set_symbol_s_symbol);
 	      else
 		{
 		  if (!is_pair(value))
-		    pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_C);
+		    pair_set_syntax_symbol(sc->code, sc->set_symbol_c_symbol);
 		  else
 		    {
 		      if (car(value) == sc->quote_symbol)
-			pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_Q);
+			pair_set_syntax_symbol(sc->code, sc->set_symbol_q_symbol);
 		      else
 			{
 			  /* if cadr(cadr) == car, or cdr(cadr) not null and cadr(cadr) == car, and cddr(cadr) == null,
@@ -56432,20 +56430,20 @@ static s7_pointer check_set(s7_scheme *sc)
 			   *   (let () (define (hi) (let ((x 0)) (set! x (values 1 2)) x)) (catch #t hi (lambda a a)) (hi))
 			   *   which is caught in splice_in_values
 			   */
-			  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_P);
+			  pair_set_syntax_symbol(sc->code, sc->set_symbol_p_symbol);
 			  if (is_h_safe_c_s(value))
 			    {
-			      pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSq);
+			      pair_set_syntax_symbol(sc->code, sc->set_symbol_opsq_symbol);
 			      set_opt_sym2(sc->code, cadr(value));
 			    }
 			  else
 			    {
 			      if (is_h_optimized(value))
 				{
-				  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_Z);
+				  pair_set_syntax_symbol(sc->code, sc->set_symbol_z_symbol);
 				  if (optimize_op(value) == HOP_SAFE_C_C)
 				    {
-				      pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opCq);
+				      pair_set_syntax_symbol(sc->code, sc->set_symbol_opcq_symbol);
 				      /* opt1 here points back? */
 				      set_opt_pair2(sc->code, cdr(value));
 				    }
@@ -56455,8 +56453,8 @@ static s7_pointer check_set(s7_scheme *sc)
 				      if (optimize_op(value) == HOP_SAFE_C_SS)
 					{
 					  if (settee == cadr(value))
-					    pair_set_syntax_symbol(sc->code, sc->INCREMENT_SS);
-					  else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSSq);
+					    pair_set_syntax_symbol(sc->code, sc->increment_ss_symbol);
+					  else pair_set_syntax_symbol(sc->code, sc->set_symbol_opssq_symbol);
 					  set_opt_pair2(sc->code, cdr(value));
 					}
 				      else
@@ -56465,15 +56463,15 @@ static s7_pointer check_set(s7_scheme *sc)
 					    {
 					      if ((settee == cadr(value)) &&
 						  (car(value) == sc->add_symbol))
-						pair_set_syntax_symbol(sc->code, sc->INCREMENT_SSS);
-					      else pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_opSSSq);
+						pair_set_syntax_symbol(sc->code, sc->increment_sss_symbol);
+					      else pair_set_syntax_symbol(sc->code, sc->set_symbol_opsssq_symbol);
 					      set_opt_pair2(sc->code, cdr(value));
 					    }
 					  else
 					    {
 					      if (is_all_x_safe(sc, value)) /* value = cadr(sc->code) */
 						{
-						  pair_set_syntax_symbol(sc->code, sc->SET_SYMBOL_A);
+						  pair_set_syntax_symbol(sc->code, sc->set_symbol_a_symbol);
 						  annotate_arg(sc, cdr(sc->code), sc->envir);
 						}
 					      if (is_callable_c_op(optimize_op(value)))
@@ -56486,7 +56484,7 @@ static s7_pointer check_set(s7_scheme *sc)
 							  if (is_all_x_safe(sc, caddr(value)))
 							    {
 							      /* this appears to give a slight savings over the SZ case */
-							      pair_set_syntax_symbol(sc->code, sc->INCREMENT_SA);
+							      pair_set_syntax_symbol(sc->code, sc->increment_sa_symbol);
 							      annotate_arg(sc, cddr(value), sc->envir); /* this sets c_callee(arg) */
 							      set_opt_pair2(sc->code, cddr(value));
 							    }
@@ -56494,7 +56492,7 @@ static s7_pointer check_set(s7_scheme *sc)
 							    {
 							      if (is_optimized(caddr(value)))
 								{
-								  pair_set_syntax_symbol(sc->code, sc->INCREMENT_SZ);
+								  pair_set_syntax_symbol(sc->code, sc->increment_sz_symbol);
 								  set_opt_pair2(sc->code, caddr(value));
 								}
 							    }
@@ -56505,7 +56503,7 @@ static s7_pointer check_set(s7_scheme *sc)
 							      (is_all_x_safe(sc, caddr(value))) &&
 							      (is_all_x_safe(sc, cadddr(value))))
 							    {
-							      pair_set_syntax_symbol(sc->code, sc->INCREMENT_SAA);
+							      pair_set_syntax_symbol(sc->code, sc->increment_saa_symbol);
 							      annotate_arg(sc, cddr(value), sc->envir);
 							      annotate_arg(sc, cdddr(value), sc->envir);
 							      set_opt_pair2(sc->code, cddr(value));
@@ -56530,12 +56528,12 @@ static s7_pointer check_set(s7_scheme *sc)
 				    {
 				      if ((opt_cfunc(value) == add_s1) ||
 					  (opt_cfunc(value) == add_cs1))
-					pair_set_syntax_symbol(sc->code, sc->INCREMENT_1);
+					pair_set_syntax_symbol(sc->code, sc->increment_1_symbol);
 				      else
 					{
 					  if ((opt_cfunc(value) == subtract_s1) ||
 					      (opt_cfunc(value) == subtract_cs1))
-					    pair_set_syntax_symbol(sc->code, sc->DECREMENT_1);
+					    pair_set_syntax_symbol(sc->code, sc->decrement_1_symbol);
 					}
 				    }
 				  else
@@ -56543,14 +56541,14 @@ static s7_pointer check_set(s7_scheme *sc)
 				      if ((cadr(value) == small_int(1)) &&
 					  (caddr(value) == settee) &&
 					  (opt_cfunc(value) == add_1s))
-					pair_set_syntax_symbol(sc->code, sc->INCREMENT_1);
+					pair_set_syntax_symbol(sc->code, sc->increment_1_symbol);
 				      else
 					{
 					  if ((settee == caddr(value)) &&
 					      (is_symbol(cadr(value))) &&
 					      (caadr(sc->code) == sc->cons_symbol))
 					    {
-					      pair_set_syntax_symbol(sc->code, sc->SET_CONS);
+					      pair_set_syntax_symbol(sc->code, sc->set_cons_symbol);
 					      set_opt_sym2(sc->code, cadr(value));
 					    }
 					}
@@ -57579,7 +57577,7 @@ static s7_pointer check_do(s7_scheme *sc)
       body = cddr(sc->code);
 
       one_line = ((safe_list_length(sc, body) == 1) && (is_pair(car(body))));
-      pair_set_syntax_symbol(sc->code, sc->DO_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
 
       /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
       /* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
@@ -57648,19 +57646,19 @@ static s7_pointer check_do(s7_scheme *sc)
 			  (s7_is_integer(caddr(step_expr))) &&
 			  (s7_integer(caddr(step_expr)) == 1))
 			{
-			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_A);
+			  pair_set_syntax_symbol(sc->code, sc->simple_do_a_symbol);
 			  if ((one_line) &&
 			      (is_optimized(car(body))))
-			    pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_E);
+			    pair_set_syntax_symbol(sc->code, sc->simple_do_e_symbol);
 			}
-		      else pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO);
+		      else pair_set_syntax_symbol(sc->code, sc->simple_do_symbol);
 
 		      if ((one_line) &&
 			  ((!is_optimized(car(body))) || (op_no_hop(car(body)) != OP_SAFE_C_C)) &&
 			  (is_syntactic_symbol(caar(body))))
 			{
 			  pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
-			  pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO_P);
+			  pair_set_syntax_symbol(sc->code, sc->simple_do_p_symbol);
 			  set_opt_pair2(sc->code, caddr(caar(sc->code)));
 
 			  if ((s7_is_integer(caddr(step_expr))) &&
@@ -57671,7 +57669,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			       */
 			      ((c_function_class(opt_cfunc(end)) == sc->equal_class) ||
 			       (opt_cfunc(end) == geq_2)))
-			    pair_set_syntax_symbol(sc->code, sc->DOTIMES_P);
+			    pair_set_syntax_symbol(sc->code, sc->dotimes_p_symbol);
 			}
 
 		      if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->nil, &has_set))
@@ -57690,10 +57688,10 @@ static s7_pointer check_do(s7_scheme *sc)
 			      /* we're stepping by +1 and going to =
 			       *   the final integer check has to wait until run time (symbol value dependent)
 			       */
-			      pair_set_syntax_symbol(sc->code, sc->SAFE_DO);
+			      pair_set_syntax_symbol(sc->code, sc->safe_do_symbol);
 			      if ((!has_set) &&
 				  (c_function_class(opt_cfunc(end)) == sc->equal_class))
-				pair_set_syntax_symbol(sc->code, sc->SAFE_DOTIMES);
+				pair_set_syntax_symbol(sc->code, sc->safe_dotimes_symbol);
 			    }
 			}
 		      return(sc->nil); 
@@ -57767,7 +57765,7 @@ static s7_pointer check_do(s7_scheme *sc)
 	}
 
       /* end and steps look ok! */
-      pair_set_syntax_symbol(sc->code, sc->DOX);
+      pair_set_syntax_symbol(sc->code, sc->dox_symbol);
       set_opt_pair2(sc->code, car(end));      /* end expr */
 
       /* each step expr is safe so not an explicit set!
@@ -58612,7 +58610,7 @@ static int safe_do_ex(s7_scheme *sc)
 
   if ((!s7_is_integer(init_val)) || (!s7_is_integer(end_val)))
     {
-      pair_set_syntax_symbol(sc->code, sc->DO_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
       return(goto_DO_UNCHECKED);
     }
 
@@ -58686,7 +58684,7 @@ static int dotimes_p_ex(s7_scheme *sc)
 
   if ((!s7_is_integer(init_val)) || (!s7_is_integer(end_val)))
     {
-      pair_set_syntax_symbol(sc->code, sc->DO_UNCHECKED);
+      pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
       return(goto_DO_UNCHECKED);
     }
 
@@ -60967,7 +60965,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (choice == goto_BEGIN1) goto BEGIN1;
 	    if (choice == goto_OPT_EVAL) goto OPT_EVAL;
 	    if (choice == goto_START_WITHOUT_POP_STACK) goto START_WITHOUT_POP_STACK;
-	    pair_set_syntax_symbol(sc->code, sc->SIMPLE_DO);
+	    pair_set_syntax_symbol(sc->code, sc->simple_do_symbol);
 	    goto SIMPLE_DO;
 	  }
 	  
@@ -61489,13 +61487,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      s7_pointer op;
 	      op = car(opt_back(sc->code));
-	      if (op == sc->DOX)	         goto DOX;
-	      if (op == sc->SAFE_DOTIMES)        goto SAFE_DOTIMES;
-	      if (op == sc->DOTIMES_P)           goto DOTIMES_P;
-	      if (op == sc->SAFE_DO)	         goto SAFE_DO;
-	      if (op == sc->SIMPLE_DO_A)         goto SIMPLE_DO_A;
-	      if (op == sc->SIMPLE_DO_E)         goto SIMPLE_DO_E;
-	      if (op == sc->SIMPLE_DO)           goto SIMPLE_DO;
+	      if (op == sc->dox_symbol)	         goto DOX;
+	      if (op == sc->safe_dotimes_symbol) goto SAFE_DOTIMES;
+	      if (op == sc->dotimes_p_symbol)    goto DOTIMES_P;
+	      if (op == sc->safe_do_symbol)	 goto SAFE_DO;
+	      if (op == sc->simple_do_a_symbol)  goto SIMPLE_DO_A;
+	      if (op == sc->simple_do_e_symbol)  goto SIMPLE_DO_E;
+	      if (op == sc->simple_do_symbol)    goto SIMPLE_DO;
 	      goto SIMPLE_DO_P;
 	    }
 	  
@@ -61623,7 +61621,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      (!is_null(cdr(sc->code))) &&
 	      (is_overlaid(sc->code)) &&
 	      (has_opt_back(sc->code)))
-	    pair_set_syntax_symbol(sc->code, sc->BEGIN_UNCHECKED);
+	    pair_set_syntax_symbol(sc->code, sc->begin_unchecked_symbol);
 	  
 	case OP_BEGIN_UNCHECKED:
 	  /* if ((sc->begin_hook) && (call_begin_hook(sc))) return(sc->F); */
@@ -67359,7 +67357,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((!is_null(sc->code)) &&
 	      (is_overlaid(sc->code)) &&
 	      (has_opt_back(sc->code)))
-	    pair_set_syntax_symbol(sc->code, sc->WITH_BAFFLE_UNCHECKED);
+	    pair_set_syntax_symbol(sc->code, sc->with_baffle_unchecked_symbol);
 	  
 	case OP_WITH_BAFFLE_UNCHECKED:
 	  if (is_null(sc->code))
@@ -73077,137 +73075,137 @@ s7_scheme *s7_init(void)
   syntax_pp(slot_value(global_slot(sc->quote_symbol))) = quote_pf;
 #endif
 
-  sc->QUOTE_UNCHECKED =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
-  sc->BEGIN_UNCHECKED =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED);
-  sc->WITH_BAFFLE_UNCHECKED = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED);
-  sc->LET_UNCHECKED =         assign_internal_syntax(sc, "let",         OP_LET_UNCHECKED);
-  sc->LET_STAR_UNCHECKED =    assign_internal_syntax(sc, "let*",        OP_LET_STAR_UNCHECKED);
-  sc->LETREC_UNCHECKED =      assign_internal_syntax(sc, "letrec",      OP_LETREC_UNCHECKED);
-  sc->LETREC_STAR_UNCHECKED = assign_internal_syntax(sc, "letrec*",     OP_LETREC_STAR_UNCHECKED);
-  sc->LET_NO_VARS =           assign_internal_syntax(sc, "let",         OP_LET_NO_VARS);
-  sc->LET_C =                 assign_internal_syntax(sc, "let",         OP_LET_C);
-  sc->LET_S =                 assign_internal_syntax(sc, "let",         OP_LET_S);
-  sc->LET_ALL_C =             assign_internal_syntax(sc, "let",         OP_LET_ALL_C);
-  sc->LET_ALL_S =             assign_internal_syntax(sc, "let",         OP_LET_ALL_S);
-  sc->LET_ALL_X =             assign_internal_syntax(sc, "let",         OP_LET_ALL_X);
-  sc->LET_STAR_ALL_X =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X);
-  sc->LET_opCq =              assign_internal_syntax(sc, "let",         OP_LET_opCq);
-  sc->LET_opSSq =             assign_internal_syntax(sc, "let",         OP_LET_opSSq);
-  sc->LET_opSq =              assign_internal_syntax(sc, "let",         OP_LET_opSq);
-  sc->LET_opSq_P =            assign_internal_syntax(sc, "let",         OP_LET_opSq_P);
-  sc->LET_ONE =               assign_internal_syntax(sc, "let",         OP_LET_ONE);
-  sc->LET_Z =                 assign_internal_syntax(sc, "let",         OP_LET_Z);
-  sc->LET_ALL_opSq =          assign_internal_syntax(sc, "let",         OP_LET_ALL_opSq);
-  sc->NAMED_LET_NO_VARS =     assign_internal_syntax(sc, "let",         OP_NAMED_LET_NO_VARS);
-  sc->NAMED_LET =             assign_internal_syntax(sc, "let",         OP_NAMED_LET);
-  sc->NAMED_LET_STAR =        assign_internal_syntax(sc, "let*",        OP_NAMED_LET_STAR);
-  sc->LET_STAR2 =             assign_internal_syntax(sc, "let*",        OP_LET_STAR2);
-  sc->WITH_LET_UNCHECKED =    assign_internal_syntax(sc, "with-let",    OP_WITH_LET_UNCHECKED);
-  sc->WITH_LET_S =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S);
-  sc->CASE_UNCHECKED =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
-  sc->CASE_SIMPLE =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE);
-  sc->CASE_SIMPLER =          assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER);
-  sc->CASE_SIMPLER_1 =        assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_1);
-  sc->CASE_SIMPLER_SS =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS);
-  sc->CASE_SIMPLEST =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST);
-  sc->CASE_SIMPLEST_SS =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS);
-  sc->COND_UNCHECKED =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
-  sc->COND_SIMPLE =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
-  sc->DO_UNCHECKED =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
-  sc->LAMBDA_UNCHECKED =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED);
-  sc->LAMBDA_STAR_UNCHECKED = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED);
-  sc->DEFINE_UNCHECKED =      assign_internal_syntax(sc, "define",      OP_DEFINE_UNCHECKED);
-  sc->DEFINE_FUNCHECKED =     assign_internal_syntax(sc, "define",      OP_DEFINE_FUNCHECKED);
-  sc->DEFINE_STAR_UNCHECKED = assign_internal_syntax(sc, "define*",     OP_DEFINE_STAR_UNCHECKED);
-  sc->DEFINE_CONSTANT_UNCHECKED = assign_internal_syntax(sc, "define-constant", OP_DEFINE_CONSTANT_UNCHECKED);
-  sc->SET_UNCHECKED =         assign_internal_syntax(sc, "set!",        OP_SET_UNCHECKED);
-  sc->SET_SYMBOL_C =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C);
-  sc->SET_SYMBOL_S =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
-  sc->SET_SYMBOL_Q =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q);
-  sc->SET_SYMBOL_opSq =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSq);
-  sc->SET_SYMBOL_opSSq =      assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSq);
-  sc->SET_SYMBOL_opSSSq =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSSq);
-  sc->SET_SYMBOL_opCq =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opCq);
-  sc->SET_SYMBOL_P =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
-  sc->SET_SYMBOL_Z =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z);
-  sc->SET_SYMBOL_A =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_A);
-  sc->SET_NORMAL =            assign_internal_syntax(sc, "set!",        OP_SET_NORMAL);
-  sc->SET_PWS =               assign_internal_syntax(sc, "set!",        OP_SET_PWS);
-  sc->SET_PAIR =              assign_internal_syntax(sc, "set!",        OP_SET_PAIR);
-  sc->SET_PAIR_P =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_P);
-  sc->SET_PAIR_Z =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_Z);
-  sc->SET_PAIR_A =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_A);
-  sc->SET_PAIR_ZA =           assign_internal_syntax(sc, "set!",        OP_SET_PAIR_ZA);
-  sc->SET_LET_S =             assign_internal_syntax(sc, "set!",        OP_SET_LET_S);
-  sc->SET_LET_ALL_X =         assign_internal_syntax(sc, "set!",        OP_SET_LET_ALL_X);
-  sc->SET_PAIR_C =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C);
-  sc->SET_PAIR_C_P =          assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C_P);
-  sc->INCREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_INCREMENT_1);
-  sc->INCREMENT_SS =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SS);
-  sc->INCREMENT_SSS =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SSS);
-  sc->INCREMENT_SZ =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SZ);
-  sc->INCREMENT_SA =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SA);
-  sc->INCREMENT_SAA =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SAA);
-  sc->DECREMENT_1 =           assign_internal_syntax(sc, "set!",        OP_DECREMENT_1);
-  sc->SET_CONS =              assign_internal_syntax(sc, "set!",        OP_SET_CONS);
-  sc->AND_UNCHECKED =         assign_internal_syntax(sc, "and",         OP_AND_UNCHECKED);
-  sc->AND_P =                 assign_internal_syntax(sc, "and",         OP_AND_P);
-  sc->AND_P2 =                assign_internal_syntax(sc, "and",         OP_AND_P2);
-  sc->OR_UNCHECKED =          assign_internal_syntax(sc, "or",          OP_OR_UNCHECKED);
-  sc->OR_P =                  assign_internal_syntax(sc, "or",          OP_OR_P);
-  sc->OR_P2 =                 assign_internal_syntax(sc, "or",          OP_OR_P2);
-  sc->IF_UNCHECKED =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED);
+  sc->quote_unchecked_symbol =       assign_internal_syntax(sc, "quote",       OP_QUOTE_UNCHECKED);
+  sc->begin_unchecked_symbol =       assign_internal_syntax(sc, "begin",       OP_BEGIN_UNCHECKED);
+  sc->with_baffle_unchecked_symbol = assign_internal_syntax(sc, "with-baffle", OP_WITH_BAFFLE_UNCHECKED);
+  sc->let_unchecked_symbol =         assign_internal_syntax(sc, "let",         OP_LET_UNCHECKED);
+  sc->let_star_unchecked_symbol =    assign_internal_syntax(sc, "let*",        OP_LET_STAR_UNCHECKED);
+  sc->letrec_unchecked_symbol =      assign_internal_syntax(sc, "letrec",      OP_LETREC_UNCHECKED);
+  sc->letrec_star_unchecked_symbol = assign_internal_syntax(sc, "letrec*",     OP_LETREC_STAR_UNCHECKED);
+  sc->let_no_vars_symbol =           assign_internal_syntax(sc, "let",         OP_LET_NO_VARS);
+  sc->let_c_symbol =                 assign_internal_syntax(sc, "let",         OP_LET_C);
+  sc->let_s_symbol =                 assign_internal_syntax(sc, "let",         OP_LET_S);
+  sc->let_all_c_symbol =             assign_internal_syntax(sc, "let",         OP_LET_ALL_C);
+  sc->let_all_s_symbol =             assign_internal_syntax(sc, "let",         OP_LET_ALL_S);
+  sc->let_all_x_symbol =             assign_internal_syntax(sc, "let",         OP_LET_ALL_X);
+  sc->let_star_all_x_symbol =        assign_internal_syntax(sc, "let*",        OP_LET_STAR_ALL_X);
+  sc->let_opcq_symbol =              assign_internal_syntax(sc, "let",         OP_LET_opCq);
+  sc->let_opssq_symbol =             assign_internal_syntax(sc, "let",         OP_LET_opSSq);
+  sc->let_opsq_symbol =              assign_internal_syntax(sc, "let",         OP_LET_opSq);
+  sc->let_opsq_p_symbol =            assign_internal_syntax(sc, "let",         OP_LET_opSq_P);
+  sc->let_one_symbol =               assign_internal_syntax(sc, "let",         OP_LET_ONE);
+  sc->let_z_symbol =                 assign_internal_syntax(sc, "let",         OP_LET_Z);
+  sc->let_all_opsq_symbol =          assign_internal_syntax(sc, "let",         OP_LET_ALL_opSq);
+  sc->named_let_no_vars_symbol =     assign_internal_syntax(sc, "let",         OP_NAMED_LET_NO_VARS);
+  sc->named_let_symbol =             assign_internal_syntax(sc, "let",         OP_NAMED_LET);
+  sc->named_let_star_symbol =        assign_internal_syntax(sc, "let*",        OP_NAMED_LET_STAR);
+  sc->let_star2_symbol =             assign_internal_syntax(sc, "let*",        OP_LET_STAR2);
+  sc->with_let_unchecked_symbol =    assign_internal_syntax(sc, "with-let",    OP_WITH_LET_UNCHECKED);
+  sc->with_let_s_symbol =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S);
+  sc->case_unchecked_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
+  sc->case_simple_symbol =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE);
+  sc->case_simpler_symbol =          assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER);
+  sc->case_simpler_1_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_1);
+  sc->case_simpler_ss_symbol =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS);
+  sc->case_simplest_symbol =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST);
+  sc->case_simplest_ss_symbol =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS);
+  sc->cond_unchecked_symbol =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
+  sc->cond_simple_symbol =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
+  sc->do_unchecked_symbol =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
+  sc->lambda_unchecked_symbol =      assign_internal_syntax(sc, "lambda",      OP_LAMBDA_UNCHECKED);
+  sc->lambda_star_unchecked_symbol = assign_internal_syntax(sc, "lambda*",     OP_LAMBDA_STAR_UNCHECKED);
+  sc->define_unchecked_symbol =      assign_internal_syntax(sc, "define",      OP_DEFINE_UNCHECKED);
+  sc->define_funchecked_symbol =     assign_internal_syntax(sc, "define",      OP_DEFINE_FUNCHECKED);
+  sc->define_star_unchecked_symbol = assign_internal_syntax(sc, "define*",     OP_DEFINE_STAR_UNCHECKED);
+  sc->define_constant_unchecked_symbol = assign_internal_syntax(sc, "define-constant", OP_DEFINE_CONSTANT_UNCHECKED);
+  sc->set_unchecked_symbol =         assign_internal_syntax(sc, "set!",        OP_SET_UNCHECKED);
+  sc->set_symbol_c_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_C);
+  sc->set_symbol_s_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_S);
+  sc->set_symbol_q_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Q);
+  sc->set_symbol_opsq_symbol =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSq);
+  sc->set_symbol_opssq_symbol =      assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSq);
+  sc->set_symbol_opsssq_symbol =     assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opSSSq);
+  sc->set_symbol_opcq_symbol =       assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_opCq);
+  sc->set_symbol_p_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_P);
+  sc->set_symbol_z_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_Z);
+  sc->set_symbol_a_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_SYMBOL_A);
+  sc->set_normal_symbol =            assign_internal_syntax(sc, "set!",        OP_SET_NORMAL);
+  sc->set_pws_symbol =               assign_internal_syntax(sc, "set!",        OP_SET_PWS);
+  sc->set_pair_symbol =              assign_internal_syntax(sc, "set!",        OP_SET_PAIR);
+  sc->set_pair_p_symbol =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_P);
+  sc->set_pair_z_symbol =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_Z);
+  sc->set_pair_a_symbol =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_A);
+  sc->set_pair_za_symbol =           assign_internal_syntax(sc, "set!",        OP_SET_PAIR_ZA);
+  sc->set_let_s_symbol =             assign_internal_syntax(sc, "set!",        OP_SET_LET_S);
+  sc->set_let_all_x_symbol =         assign_internal_syntax(sc, "set!",        OP_SET_LET_ALL_X);
+  sc->set_pair_c_symbol =            assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C);
+  sc->set_pair_c_p_symbol =          assign_internal_syntax(sc, "set!",        OP_SET_PAIR_C_P);
+  sc->increment_1_symbol =           assign_internal_syntax(sc, "set!",        OP_INCREMENT_1);
+  sc->increment_ss_symbol =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SS);
+  sc->increment_sss_symbol =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SSS);
+  sc->increment_sz_symbol =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SZ);
+  sc->increment_sa_symbol =          assign_internal_syntax(sc, "set!",        OP_INCREMENT_SA);
+  sc->increment_saa_symbol =         assign_internal_syntax(sc, "set!",        OP_INCREMENT_SAA);
+  sc->decrement_1_symbol =           assign_internal_syntax(sc, "set!",        OP_DECREMENT_1);
+  sc->set_cons_symbol =              assign_internal_syntax(sc, "set!",        OP_SET_CONS);
+  sc->and_unchecked_symbol =         assign_internal_syntax(sc, "and",         OP_AND_UNCHECKED);
+  sc->and_p_symbol =                 assign_internal_syntax(sc, "and",         OP_AND_P);
+  sc->and_p2_symbol =                assign_internal_syntax(sc, "and",         OP_AND_P2);
+  sc->or_unchecked_symbol =          assign_internal_syntax(sc, "or",          OP_OR_UNCHECKED);
+  sc->or_p_symbol =                  assign_internal_syntax(sc, "or",          OP_OR_P);
+  sc->or_p2_symbol =                 assign_internal_syntax(sc, "or",          OP_OR_P2);
+  sc->if_unchecked_symbol =          assign_internal_syntax(sc, "if",          OP_IF_UNCHECKED);
 
-  sc->IF_P_P =                assign_internal_syntax(sc, "if",          OP_IF_P_P);
-  sc->IF_P_P_P =              assign_internal_syntax(sc, "if",          OP_IF_P_P_P);
-  sc->IF_ANDP_P =             assign_internal_syntax(sc, "if",          OP_IF_ANDP_P);
-  sc->IF_ANDP_P_P =           assign_internal_syntax(sc, "if",          OP_IF_ANDP_P_P);
-  sc->IF_ORP_P =              assign_internal_syntax(sc, "if",          OP_IF_ORP_P);
-  sc->IF_ORP_P_P =            assign_internal_syntax(sc, "if",          OP_IF_ORP_P_P);
-  sc->IF_S_P =                assign_internal_syntax(sc, "if",          OP_IF_S_P);
-  sc->IF_S_P_P =              assign_internal_syntax(sc, "if",          OP_IF_S_P_P);
-  sc->IF_P_FEED =             assign_internal_syntax(sc, "cond",        OP_IF_P_FEED);
-  sc->COND_ALL_X =            assign_internal_syntax(sc, "cond",        OP_COND_ALL_X);
-  sc->COND_ALL_X_2 =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_X_2);
-  sc->COND_S =                assign_internal_syntax(sc, "cond",        OP_COND_S);
-  sc->IF_Z_P =                assign_internal_syntax(sc, "if",          OP_IF_Z_P);
-  sc->IF_Z_P_P =              assign_internal_syntax(sc, "if",          OP_IF_Z_P_P);
-  sc->IF_A_P =                assign_internal_syntax(sc, "if",          OP_IF_A_P);
-  sc->IF_A_P_P =              assign_internal_syntax(sc, "if",          OP_IF_A_P_P);
-  sc->IF_CC_P =               assign_internal_syntax(sc, "if",          OP_IF_CC_P);
-  sc->IF_CC_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CC_P_P);
-  sc->IF_CS_P =               assign_internal_syntax(sc, "if",          OP_IF_CS_P);
-  sc->IF_CS_P_P =             assign_internal_syntax(sc, "if",          OP_IF_CS_P_P);
-  sc->IF_CSQ_P =              assign_internal_syntax(sc, "if",          OP_IF_CSQ_P);
-  sc->IF_CSQ_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSQ_P_P);
-  sc->IF_CSS_P =              assign_internal_syntax(sc, "if",          OP_IF_CSS_P);
-  sc->IF_CSS_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSS_P_P);
-  sc->IF_CSC_P =              assign_internal_syntax(sc, "if",          OP_IF_CSC_P);
-  sc->IF_CSC_P_P =            assign_internal_syntax(sc, "if",          OP_IF_CSC_P_P);
-  sc->IF_S_opCq_P =           assign_internal_syntax(sc, "if",          OP_IF_S_opCq_P);
-  sc->IF_S_opCq_P_P =         assign_internal_syntax(sc, "if",          OP_IF_S_opCq_P_P);
-  sc->IF_opSSq_P =            assign_internal_syntax(sc, "if",          OP_IF_opSSq_P);
-  sc->IF_opSSq_P_P =          assign_internal_syntax(sc, "if",          OP_IF_opSSq_P_P);
-  sc->IF_IS_PAIR_P =          assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P);
-  sc->IF_IS_PAIR_P_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P_P);
-  sc->IF_IS_SYMBOL_P =        assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P);
-  sc->IF_IS_SYMBOL_P_P =      assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P_P);
-  sc->IF_NOT_S_P =            assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P);
-  sc->IF_NOT_S_P_P =          assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P_P);
-  sc->IF_AND2_P =             assign_internal_syntax(sc, "if",          OP_IF_AND2_P);
-  sc->IF_AND2_P_P =           assign_internal_syntax(sc, "if",          OP_IF_AND2_P_P);
-  sc->WHEN_S =                assign_internal_syntax(sc, "when",        OP_WHEN_S);
-  sc->UNLESS_S =              assign_internal_syntax(sc, "unless",      OP_UNLESS_S);
-  sc->WHEN_UNCHECKED =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED);
-  sc->UNLESS_UNCHECKED =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED);
-  sc->DOTIMES_P =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P);
-  sc->SIMPLE_DO =             assign_internal_syntax(sc, "do",          OP_SIMPLE_DO);
-  sc->SIMPLE_DO_P =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_P);
-  sc->SIMPLE_DO_A =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_A);
-  sc->SIMPLE_DO_E =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_E);
-  sc->SAFE_DOTIMES =          assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES);
-  sc->SAFE_DO =               assign_internal_syntax(sc, "do",          OP_SAFE_DO);
-  sc->DOX =                   assign_internal_syntax(sc, "do",          OP_DOX);
+  sc->if_p_p_symbol =                assign_internal_syntax(sc, "if",          OP_IF_P_P);
+  sc->if_p_p_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_P_P_P);
+  sc->if_andp_p_symbol =             assign_internal_syntax(sc, "if",          OP_IF_ANDP_P);
+  sc->if_andp_p_p_symbol =           assign_internal_syntax(sc, "if",          OP_IF_ANDP_P_P);
+  sc->if_orp_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_ORP_P);
+  sc->if_orp_p_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_ORP_P_P);
+  sc->if_s_p_symbol =                assign_internal_syntax(sc, "if",          OP_IF_S_P);
+  sc->if_s_p_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_S_P_P);
+  sc->if_p_feed_symbol =             assign_internal_syntax(sc, "cond",        OP_IF_P_FEED);
+  sc->cond_all_x_symbol =            assign_internal_syntax(sc, "cond",        OP_COND_ALL_X);
+  sc->cond_all_x_2_symbol =          assign_internal_syntax(sc, "cond",        OP_COND_ALL_X_2);
+  sc->cond_s_symbol =                assign_internal_syntax(sc, "cond",        OP_COND_S);
+  sc->if_z_p_symbol =                assign_internal_syntax(sc, "if",          OP_IF_Z_P);
+  sc->if_z_p_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_Z_P_P);
+  sc->if_a_p_symbol =                assign_internal_syntax(sc, "if",          OP_IF_A_P);
+  sc->if_a_p_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_A_P_P);
+  sc->if_cc_p_symbol =               assign_internal_syntax(sc, "if",          OP_IF_CC_P);
+  sc->if_cc_p_p_symbol =             assign_internal_syntax(sc, "if",          OP_IF_CC_P_P);
+  sc->if_cs_p_symbol =               assign_internal_syntax(sc, "if",          OP_IF_CS_P);
+  sc->if_cs_p_p_symbol =             assign_internal_syntax(sc, "if",          OP_IF_CS_P_P);
+  sc->if_csq_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_CSQ_P);
+  sc->if_csq_p_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_CSQ_P_P);
+  sc->if_css_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_CSS_P);
+  sc->if_css_p_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_CSS_P_P);
+  sc->if_csc_p_symbol =              assign_internal_syntax(sc, "if",          OP_IF_CSC_P);
+  sc->if_csc_p_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_CSC_P_P);
+  sc->if_s_opcq_p_symbol =           assign_internal_syntax(sc, "if",          OP_IF_S_opCq_P);
+  sc->if_s_opcq_p_p_symbol =         assign_internal_syntax(sc, "if",          OP_IF_S_opCq_P_P);
+  sc->if_opssq_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_opSSq_P);
+  sc->if_opssq_p_p_symbol =          assign_internal_syntax(sc, "if",          OP_IF_opSSq_P_P);
+  sc->if_is_pair_p_symbol =          assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P);
+  sc->if_is_pair_p_p_symbol =        assign_internal_syntax(sc, "if",          OP_IF_IS_PAIR_P_P);
+  sc->if_is_symbol_p_symbol =        assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P);
+  sc->if_is_symbol_p_p_symbol =      assign_internal_syntax(sc, "if",          OP_IF_IS_SYMBOL_P_P);
+  sc->if_not_s_p_symbol =            assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P);
+  sc->if_not_s_p_p_symbol =          assign_internal_syntax(sc, "if",          OP_IF_NOT_S_P_P);
+  sc->if_and2_p_symbol =             assign_internal_syntax(sc, "if",          OP_IF_AND2_P);
+  sc->if_and2_p_p_symbol =           assign_internal_syntax(sc, "if",          OP_IF_AND2_P_P);
+  sc->when_s_symbol =                assign_internal_syntax(sc, "when",        OP_WHEN_S);
+  sc->unless_s_symbol =              assign_internal_syntax(sc, "unless",      OP_UNLESS_S);
+  sc->when_unchecked_symbol =        assign_internal_syntax(sc, "when",        OP_WHEN_UNCHECKED);
+  sc->unless_unchecked_symbol =      assign_internal_syntax(sc, "unless",      OP_UNLESS_UNCHECKED);
+  sc->dotimes_p_symbol =             assign_internal_syntax(sc, "do",          OP_DOTIMES_P);
+  sc->simple_do_symbol =             assign_internal_syntax(sc, "do",          OP_SIMPLE_DO);
+  sc->simple_do_p_symbol =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_P);
+  sc->simple_do_a_symbol =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_A);
+  sc->simple_do_e_symbol =           assign_internal_syntax(sc, "do",          OP_SIMPLE_DO_E);
+  sc->safe_dotimes_symbol =          assign_internal_syntax(sc, "do",          OP_SAFE_DOTIMES);
+  sc->safe_do_symbol =               assign_internal_syntax(sc, "do",          OP_SAFE_DO);
+  sc->dox_symbol =                   assign_internal_syntax(sc, "do",          OP_DOX);
 
   sc->documentation_symbol =  make_symbol(sc, "documentation");
   sc->signature_symbol =      make_symbol(sc, "signature");

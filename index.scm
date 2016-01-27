@@ -34,7 +34,7 @@ and if one is found, and the Snd documentation can be found, calls *html-program
 				  (let ((pos (char-position ") " doc)))
 				    (and pos
 					 (substring doc 1 pos)))))))))
-	  (if (and name (string? name))
+	  (if (string? name)
 	      (cond ((snd-url name) => goto-html)
 		    (else (snd-print (format #f "no url for ~A?" name))))
 	      (snd-print (format #f "no doc for ~A?" name))))))))

@@ -8872,11 +8872,12 @@ variables at the start of lint.scm to control additional output:
 *report-unused-top-level-functions*  ; if #t, report unused functions
 *report-undefined-variables*         ; if #t, report undefined identifiers
 *report-shadowed-variables*          ; if #t, report function parameters that are shadowed
+*report-repeated-long-forms*         ; if #t, report long statements that are repeated a lot
 </pre>
 
-
 <p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
-sometimes gets confused. 
+sometimes gets confused. You'll sometimes get a recommendation from lint that is less than helpful; nobody's perfect.
+If it's actually wrong, and not just wrong-headed, please let me know.
 Also in lint.scm is html-lint.  It reads an HTML file looking for
 Scheme code.  If any is found, it runs s7 and then lint over it, reporting troubles.
 </p>
