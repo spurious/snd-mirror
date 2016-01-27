@@ -74,8 +74,8 @@
 	 (do ((i 0 (+ i 1)))
 	     ((or (> trim -1)
 		  (= i len)))
-	   (if (or (not (= (v0 i) 0.0))
-		   (not (= (v1 i) 0.0)))
+	   (if (not (and (= (v0 i) 0.0)
+			 (= (v1 i) 0.0)))
 	       (set! trim i)))
 	 (if (> trim 0)
 	     (begin
