@@ -41069,9 +41069,9 @@ EDITS: 1
       (if (not ind) (snd-display #__line__ ";with-sound (raw out): ~A" (map file-name (sounds))))
       (if (not (= (header-type ind) mus-raw)) 
 	  (snd-display #__line__ ";with-sound type raw: ~A (~A)" (header-type ind) (mus-header-type-name (header-type ind))))
-      (if (and (not (= (sample-type ind) mus-bshort)) 
-	       (not (= (sample-type ind) mus-bfloat))
-	       (not (= (sample-type ind) mus-lfloat)))
+      (if (not (or (= (sample-type ind) mus-bshort)
+		   (= (sample-type ind) mus-bfloat)
+		   (= (sample-type ind) mus-lfloat)))
 	  (snd-display #__line__ ";with-sound format raw: ~A (~A)" (sample-type ind) (mus-sample-type-name (sample-type ind))))
       (close-sound ind))
     
@@ -42197,23 +42197,25 @@ EDITS: 1
   (let ((stats-string ""))
     (with-sound ((make-float-vector 2210) :statistics (lambda (str) (set! stats-string str)))
       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-    (if (and (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
+    (if (not (member stats-string '("\n;vector:\n  maxamp: 0.1000\n  compute time: 0.000\n"
+				    "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.001\n"
+				    "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.002\n"
+				    "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.010\n"
+				    "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.001\n"
+				    "\n;vector:\n  maxamp: 0.09999998\n  compute time: 0.000\n"
+				    "\n;vector:\n  maxamp: 0.1000\n  compute time: 0.180\n")
+		     string=?))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     (with-sound ((make-float-vector (list 1 2210) 0.0) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
       (fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))
-    (if (and (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.001\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.000\n"))
-	     (not (string=? stats-string "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")))
+    (if (not (member stats-string '("\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.000\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.001\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.002\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.010\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.001\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.09999998\n  compute time: 0.000\n"
+				    "\n;vector:\n  maxamp (before scaling): 0.1000\n  compute time: 0.009\n")
+		     string=?))
 	(snd-display #__line__ ";with-sound to float-vector stats: [~A]" stats-string))
     
     (with-sound ((make-float-vector (list 4 2210) 0.0) :channels 4 :statistics (lambda (str) (set! stats-string str)))
@@ -45673,11 +45675,11 @@ EDITS: 1
 	    (XmTextPasteLink untext))
 	  (let ((val (XmTextGetSubstring txt 2 3))
 		(valf (XmTextFieldGetSubstring txtf 2 3)))
-	    (if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSubstring: ~A" val))
-	    (if (or (not (string? valf)) (not (string=? valf "234"))) (snd-display #__line__ ";XmTextFieldGetSubstring: ~A" valf)))
+	    (if (not (equal? val "234")) (snd-display #__line__ ";XmTextGetSubstring: ~A" val))
+	    (if (not (equal? valf "234")) (snd-display #__line__ ";XmTextFieldGetSubstring: ~A" valf)))
 	  (XmTextSetSelection txt 2 5 current-time)
 	  (let ((val (XmTextGetSelection txt)))
-	    (if (or (not (string? val)) (not (string=? val "234"))) (snd-display #__line__ ";XmTextGetSelection: ~A" val)))
+	    (if (not (equal? val "234")) (snd-display #__line__ ";XmTextGetSelection: ~A" val)))
 	  (XmTextClearSelection txt current-time)
 	  (let ((val (XmTextGetSelection txt)))
 	    (if val (snd-display #__line__ ";XmTextClearSelection: ~A" val)))
