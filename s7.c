@@ -1086,11 +1086,10 @@ struct s7_scheme {
   s7_pointer is_directory_symbol, file_exists_symbol, delete_file_symbol, getenv_symbol, system_symbol, directory_to_list_symbol, file_mtime_symbol;
 #endif
 
-  /* these are the associated functions, not symbols */
-  s7_pointer Vector_Set, String_Set, List_Set, Hash_Table_Set, Let_Set; /* Cons (see the setter stuff at the end) */
-  s7_pointer QQ_List, QQ_Apply_Values, QQ_Append, Multivector;
-  s7_pointer Apply, Vector;
-  s7_pointer Object_Set;               /* applicable object set method */
+  /* setter and quasiquote functions */
+  s7_pointer vector_set_function, string_set_function, list_set_function, hash_table_set_function, let_set_function, object_set_function,
+             qq_list_function, qq_apply_values_function, qq_append_function, multivector_function, 
+             apply_function, vector_function;
 
   s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
   s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string;
@@ -48803,7 +48802,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     for (i = 0; i <= len; i++)
       sc->w = cons(sc, sc->nil, sc->w);
 
-    car(sc->w) = sc->QQ_List;
+    car(sc->w) = sc->qq_list_function;
 
     if (!dotted)
       {
@@ -48820,7 +48819,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		 */
 		car(bq) = g_quasiquote_1(sc, car(orig));
 		cdr(bq) = sc->nil;
-		sc->w = list_3(sc, sc->QQ_Append, sc->w, caddr(orig));
+		sc->w = list_3(sc, sc->qq_append_function, sc->w, caddr(orig));
 		break;
 	      }
 	    else car(bq) = g_quasiquote_1(sc, car(orig));
@@ -48834,7 +48833,7 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 	  car(bq) = g_quasiquote_1(sc, car(orig));
 	car(bq) = g_quasiquote_1(sc, car(orig));
 
-	sc->w = list_3(sc, sc->QQ_Append, sc->w, g_quasiquote_1(sc, cdr(orig)));
+	sc->w = list_3(sc, sc->qq_append_function, sc->w, g_quasiquote_1(sc, cdr(orig)));
 	/* quasiquote might quote a symbol in cdr(orig), so it's not completely pointless */
       }
 
@@ -56817,7 +56816,7 @@ static int set_pair_ex(s7_scheme *sc)
 	     *  TODO: ambiguity here -- is (set! (obj a b) v) actually (set! ((obj a) b) v)?
 	     *  perhaps look at setter? c-object-set takes 1 arg -- is this a bug?
 	     */
-	    push_op_stack(sc, sc->Object_Set);
+	    push_op_stack(sc, sc->object_set_function);
 	    if (is_null(cdr(settee)))
 	      {
 		push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cddr(sc->code));
@@ -56847,7 +56846,7 @@ static int set_pair_ex(s7_scheme *sc)
 		sc->value = (*(c_object_set(cx)))(sc, cx, sc->T2_1);
 		return(goto_START);
 	      }
-	    push_op_stack(sc, sc->Object_Set);
+	    push_op_stack(sc, sc->object_set_function);
 	    sc->args = list_2(sc, index, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -56855,7 +56854,7 @@ static int set_pair_ex(s7_scheme *sc)
 	else
 	  {
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->Object_Set);
+	    push_op_stack(sc, sc->object_set_function);
 	    sc->code = cadr(settee);
 	  }
 	return(goto_EVAL);
@@ -56892,7 +56891,7 @@ static int set_pair_ex(s7_scheme *sc)
 	    (vector_rank(cx) > 1))
 	  {
 	    /* multi-index case -- use slow version */
-	    push_op_stack(sc, sc->Vector_Set);
+	    push_op_stack(sc, sc->vector_set_function);
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), s7_append(sc, cddr(settee), cdr(sc->code)));
 	    sc->code = cadr(settee);
 	    return(goto_EVAL);
@@ -56920,7 +56919,7 @@ static int set_pair_ex(s7_scheme *sc)
 		sc->value = _NFre(val);
 		return(goto_START);
 	      }
-	    push_op_stack(sc, sc->Vector_Set);
+	    push_op_stack(sc, sc->vector_set_function);
 	    sc->args = list_2(sc, index, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -56930,7 +56929,7 @@ static int set_pair_ex(s7_scheme *sc)
 	    /* here the index calc might be trivial -- (+ i 1) or (- j 1) but this branch hardly ever happens
 	     */
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->Vector_Set);
+	    push_op_stack(sc, sc->vector_set_function);
 	    sc->code = cadr(settee);
 	  }
       }
@@ -56938,7 +56937,7 @@ static int set_pair_ex(s7_scheme *sc)
       
     case T_STRING:
       {
-	/* sc->code = cons(sc, sc->String_Set, s7_append(sc, car(sc->code), cdr(sc->code)));
+	/* sc->code = cons(sc, sc->string_set_function, s7_append(sc, car(sc->code), cdr(sc->code)));
 	 *
 	 * here only one index makes sense, and it is required, so
 	 *   (set! ("str") #\a), (set! ("str" . 1) #\a) and (set! ("str" 1 2) #\a)
@@ -57002,7 +57001,7 @@ static int set_pair_ex(s7_scheme *sc)
 		  }
 		eval_error_no_return(sc, sc->wrong_type_arg_symbol, "string-set!: value must be a character: ~S", sc->code);
 	      }
-	    push_op_stack(sc, sc->String_Set);
+	    push_op_stack(sc, sc->string_set_function);
 	    sc->args = list_2(sc, index, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -57010,7 +57009,7 @@ static int set_pair_ex(s7_scheme *sc)
 	else
 	  {
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->String_Set);
+	    push_op_stack(sc, sc->string_set_function);
 	    sc->code = cadar(sc->code);
 	  }
       }
@@ -57046,7 +57045,7 @@ static int set_pair_ex(s7_scheme *sc)
 	if ((is_pair(index)) ||
 	    (is_pair(val)))
 	  {
-	    push_op_stack(sc, sc->List_Set);
+	    push_op_stack(sc, sc->list_set_function);
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), s7_append(sc, cddr(settee), cdr(sc->code)));
 	    sc->code = index;
 	    return(goto_EVAL);
@@ -57099,7 +57098,7 @@ static int set_pair_ex(s7_scheme *sc)
 		sc->value = s7_hash_table_set(sc, cx, key, val);
 		return(goto_START);
 	      }
-	    push_op_stack(sc, sc->Hash_Table_Set);
+	    push_op_stack(sc, sc->hash_table_set_function);
 	    sc->args = list_2(sc, key, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -57107,7 +57106,7 @@ static int set_pair_ex(s7_scheme *sc)
 	else
 	  {
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->Hash_Table_Set);
+	    push_op_stack(sc, sc->hash_table_set_function);
 	    sc->code = cadar(sc->code);
 	  }
       }
@@ -57115,7 +57114,7 @@ static int set_pair_ex(s7_scheme *sc)
       
       
     case T_LET:
-      /* sc->code = cons(sc, sc->Let_Set, s7_append(sc, car(sc->code), cdr(sc->code))); */
+      /* sc->code = cons(sc, sc->let_set_function, s7_append(sc, car(sc->code), cdr(sc->code))); */
       {
 	s7_pointer settee, key;
 	/* code: ((gen 'input) input) from (set! (gen 'input) input)
@@ -57151,7 +57150,7 @@ static int set_pair_ex(s7_scheme *sc)
 		sc->value = s7_let_set(sc, cx, key, val);
 		return(goto_START);
 	      }
-	    push_op_stack(sc, sc->Let_Set);
+	    push_op_stack(sc, sc->let_set_function);
 	    sc->args = list_2(sc, key, cx);
 	    sc->code = cdr(sc->code);
 	    return(goto_EVAL_ARGS);
@@ -57159,7 +57158,7 @@ static int set_pair_ex(s7_scheme *sc)
 	else
 	  {
 	    push_stack(sc, OP_EVAL_ARGS1, list_1(sc, cx), cdr(sc->code));
-	    push_op_stack(sc, sc->Let_Set);
+	    push_op_stack(sc, sc->let_set_function);
 	    sc->code = cadar(sc->code);
 	  }
       }
@@ -59711,7 +59710,7 @@ static void read_quasiquote_vector_ex(s7_scheme *sc)
    *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply_values} (list 1 2)) 4)) -> #(1 1 2 4)
    *
    * Originally, I used:
-   *   sc->value = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value));
+   *   sc->value = list_3(sc, sc->apply_function, sc->vector_function, g_quasiquote_1(sc, sc->value));
    *   goto START;
    * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
    *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
@@ -59725,8 +59724,8 @@ static void read_quasiquote_vector_ex(s7_scheme *sc)
    * The tricky part in s7 is that we might have quasiquoted multidimensional vectors
    */
   if (sc->args == small_int(1))
-    sc->code = list_3(sc, sc->Apply, sc->Vector, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
-  else sc->code = list_4(sc, sc->Apply, sc->Multivector, sc->args, g_quasiquote_1(sc, sc->value));
+    sc->code = list_3(sc, sc->apply_function, sc->vector_function, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
+  else sc->code = list_4(sc, sc->apply_function, sc->multivector_function, sc->args, g_quasiquote_1(sc, sc->value));
 }
 #endif
 
@@ -65546,7 +65545,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (sc->args != sc->nil)
 		    {
-		      push_op_stack(sc, sc->List_Set);
+		      push_op_stack(sc, sc->list_set_function);
 		      push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 		      sc->code = car(sc->args);
 		    }
@@ -65563,7 +65562,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   */
 		  if (sc->args != sc->nil)
 		    {
-		      push_op_stack(sc, sc->Vector_Set);
+		      push_op_stack(sc, sc->vector_set_function);
 		      push_stack(sc, OP_EVAL_ARGS1, list_1(sc, sc->value), s7_append(sc, cdr(sc->args), sc->code));
 		      sc->code = car(sc->args);
 		    }
@@ -67673,12 +67672,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_symbol(sc->value))
 	    {
 	      s7_pointer lst;
-	      lst = list_2(sc, sc->QQ_Apply_Values, sc->value);
+	      lst = list_2(sc, sc->qq_apply_values_function, sc->value);
 	      set_unsafe_optimize_op(lst, HOP_C_S);
-	      set_c_function(lst, sc->QQ_Apply_Values);
+	      set_c_function(lst, sc->qq_apply_values_function);
 	      sc->value = list_2(sc, sc->unquote_symbol, lst);
 	    }
-	  else sc->value = list_2(sc, sc->unquote_symbol, list_2(sc, sc->QQ_Apply_Values, sc->value));
+	  else sc->value = list_2(sc, sc->unquote_symbol, list_2(sc, sc->qq_apply_values_function, sc->value));
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -73662,7 +73661,7 @@ s7_scheme *s7_init(void)
   sc->make_shared_vector_symbol =    defun("make-shared-vector", make_shared_vector,	2, 1, false);
   sc->vector_symbol =                defun("vector",		vector,			0, 0, true);
   set_setter(sc->vector_symbol); /* like cons, I guess */
-  sc->Vector = slot_value(global_slot(sc->vector_symbol));
+  sc->vector_function = slot_value(global_slot(sc->vector_symbol));
 
   sc->float_vector_symbol =          defun("float-vector",	float_vector,		0, 0, true);
   sc->make_float_vector_symbol =     defun("make-float-vector", make_float_vector,	1, 1, false);
@@ -73695,8 +73694,8 @@ s7_scheme *s7_init(void)
   sc->eval_symbol =                  unsafe_defun("eval",	eval,			1, 1, false);
   sc->eval_string_symbol =           unsafe_defun("eval-string", eval_string,		1, 1, false);
   sc->apply_symbol =                 unsafe_defun("apply",	apply,			1, 0, true);
-  sc->Apply = slot_value(global_slot(sc->apply_symbol));
-  set_type(sc->Apply, type(sc->Apply) | T_COPY_ARGS | T_PROCEDURE);
+  sc->apply_function = slot_value(global_slot(sc->apply_symbol));
+  set_type(sc->apply_function, type(sc->apply_function) | T_COPY_ARGS | T_PROCEDURE);
   /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
   sc->for_each_symbol =              unsafe_defun("for-each",	for_each,		2, 0, true); 
@@ -73713,20 +73712,20 @@ s7_scheme *s7_init(void)
     s7_pointer sym;
     sym = unsafe_defun("{apply_values}", apply_values, 0, 0, true);
     set_immutable(sym);
-    sc->QQ_Apply_Values = slot_value(global_slot(sym));
+    sc->qq_apply_values_function = slot_value(global_slot(sym));
 
     sym = unsafe_defun("{append}", append, 0, 0, true);
     set_immutable(sym);
-    sc->QQ_Append = slot_value(global_slot(sym));
+    sc->qq_append_function = slot_value(global_slot(sym));
 
     sym = unsafe_defun("{multivector}", qq_multivector, 1, 0, true);
     set_immutable(sym);
-    sc->Multivector = slot_value(global_slot(sym));
+    sc->multivector_function = slot_value(global_slot(sym));
 
     sym = unsafe_defun("{list}", qq_list, 0, 0, true);
     set_immutable(sym);
-    sc->QQ_List = slot_value(global_slot(sym));
-    set_type(sc->QQ_List, T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS);
+    sc->qq_list_function = slot_value(global_slot(sym));
+    set_type(sc->qq_list_function, T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS);
   }
   
   sc->procedure_documentation_symbol = defun("procedure-documentation", procedure_documentation, 1, 0, false);
@@ -73754,7 +73753,7 @@ s7_scheme *s7_init(void)
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
-  sc->Object_Set = slot_value(global_slot(sym));
+  sc->object_set_function = slot_value(global_slot(sym));
 
 
   /* -------- *features* -------- */
@@ -73868,22 +73867,22 @@ s7_scheme *s7_init(void)
 #endif
 
 
-  sc->Vector_Set = slot_value(global_slot(sc->vector_set_symbol));
+  sc->vector_set_function = slot_value(global_slot(sc->vector_set_symbol));
   set_setter(sc->vector_set_symbol);
   /* not float-vector-set! here */
 
-  sc->List_Set = slot_value(global_slot(sc->list_set_symbol));
+  sc->list_set_function = slot_value(global_slot(sc->list_set_symbol));
   set_setter(sc->list_set_symbol);
 
-  sc->Hash_Table_Set = slot_value(global_slot(sc->hash_table_set_symbol));
+  sc->hash_table_set_function = slot_value(global_slot(sc->hash_table_set_symbol));
   set_setter(sc->hash_table_set_symbol);
 
-  sc->Let_Set = slot_value(global_slot(sc->let_set_symbol));
+  sc->let_set_function = slot_value(global_slot(sc->let_set_symbol));
   set_setter(sc->let_set_symbol);
 
   set_setter(sc->cons_symbol); /* (this blocks an over-eager do loop optimization -- see do-test-15 in s7test) */
 
-  sc->String_Set = slot_value(global_slot(sc->string_set_symbol));
+  sc->string_set_function = slot_value(global_slot(sc->string_set_symbol));
   set_setter(sc->string_set_symbol);
 
   set_setter(sc->set_car_symbol);
@@ -74198,7 +74197,8 @@ int main(int argc, char **argv)
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
- * ~N| in format? also ~N* I guess, ambiguous?
+ * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
+ * perhaps lowercase for sc->Tn/An etc? and the prebuilt strings like CAR_A_LIST
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

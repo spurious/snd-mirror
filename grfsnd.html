@@ -2067,8 +2067,8 @@ than one input is required, the first argument to apply-ladspa should be a list 
 	 (copy (.Copyright descriptor)))
     (for-each
      (lambda (port ranges port-name)
-       (if (and (not (= (logand port LADSPA_PORT_CONTROL) 0))
-		(not (= (logand port LADSPA_PORT_INPUT) 0)))
+       (if (not (or (= (logand port LADSPA_PORT_CONTROL) 0)
+		    (= (logand port LADSPA_PORT_INPUT) 0)))
 	   (let ((ldata ())
 		 (hint (car ranges))
 		 (lo (cadr ranges))

@@ -388,7 +388,7 @@
   (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
     (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
 	  (del (make-delay (round (* secs (srate snd))))))
-      (if (and (not input-samps-1) (not dur))
+      (if (not (or input-samps-1 dur))
 	  (map-channel (lambda (inval)
 			 (+ inval 
 			    (delay del 
@@ -2014,7 +2014,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 		       0 len snd chn #f
 		       (format #f "effects-position-sound ~A ~A" mono-snd pos))
 	  (let ((e1 (make-env pos :length len)))
-	    (if (and (number? chn) (= chn 1))
+	    (if (eqv? chn 1)
 		(map-channel (lambda (y)
 			       (+ y (* (env e1) (read-sample reader1))))
 			     0 len snd chn #f
