@@ -1384,9 +1384,8 @@
 					"~C[38;5;208m~A~C[0m: ~S~%"))                              ; orange for less likely choices
 				#\escape (caar b) #\escape
 				(if (procedure? (cdar b))
-				    (let ((doc (procedure-documentation (cdar b))))
-				      (if (and (string? doc)
-					       (positive? (length doc)))
+				    (let ((doc (procedure-documentation (cdar b)))) ; returns "" if no doc
+				      (if (positive? (length doc))
 					  doc
 					  'procedure))
 				    (cdar b))))

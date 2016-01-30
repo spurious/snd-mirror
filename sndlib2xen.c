@@ -1088,7 +1088,7 @@ Xen_wrap_1_arg(g_mus_set_sound_path_w, g_mus_set_sound_path)
 void mus_sndlib_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b;
+  s7_pointer pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b, pl_ls;
   s7_pointer pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
 #endif
 
@@ -1155,6 +1155,7 @@ void mus_sndlib_xen_initialize(void)
     pl_si = s7_make_signature(s7, 2, s, i);
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_ts = s7_make_signature(s7, 2, t, s);
+    pl_ls = s7_make_signature(s7, 2, l, s);
     pl_ps = s7_make_signature(s7, 2, p, s);
     pl_psp = s7_make_signature(s7, 3, p, s, p);
     pl_i = s7_make_circular_signature(s7, 0, 1, i);
@@ -1198,7 +1199,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_typed_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment,         pl_ts);
   Xen_define_typed_procedure(S_mus_sound_write_date,     g_mus_sound_write_date_w,       1, 0, 0, H_mus_sound_write_date,      pl_is);
   Xen_define_typed_procedure(S_mus_bytes_per_sample,     g_mus_bytes_per_sample_w,       1, 0, 0, H_mus_bytes_per_sample,      pl_i);
-  Xen_define_typed_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info,       pl_ps);
+  Xen_define_typed_procedure(S_mus_sound_loop_info,      g_mus_sound_loop_info_w,        1, 0, 0, H_mus_sound_loop_info,       pl_ls);
   Xen_define_typed_procedure(S_mus_sound_mark_info,      g_mus_sound_mark_info_w,        1, 0, 0, H_mus_sound_mark_info,       pl_ps);
   Xen_define_typed_procedure(S_mus_sound_maxamp_exists,  g_mus_sound_maxamp_exists_w,    1, 0, 0, H_mus_sound_maxamp_exists,   pl_bs);
   Xen_define_typed_procedure(S_mus_sound_forget,         g_mus_sound_forget_w,           1, 0, 0, H_mus_sound_forget,          pl_is);
