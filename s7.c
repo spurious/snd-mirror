@@ -2624,16 +2624,20 @@ static s7_pointer simple_out_of_range_error_prepackaged(s7_scheme *sc, s7_pointe
   out_of_range_error_prepackaged(Sc, symbol_name_cell(Caller), Arg_Num, Arg, Description)
 
 
-static s7_pointer CAR_A_LIST, CDR_A_LIST;
-static s7_pointer CAAR_A_LIST, CADR_A_LIST, CDAR_A_LIST, CDDR_A_LIST;
-static s7_pointer CAAAR_A_LIST, CAADR_A_LIST, CADAR_A_LIST, CADDR_A_LIST, CDAAR_A_LIST, CDADR_A_LIST, CDDAR_A_LIST, CDDDR_A_LIST;
-static s7_pointer A_LIST, AN_ASSOCIATION_LIST, AN_OUTPUT_PORT, AN_INPUT_PORT, AN_OPEN_PORT, A_NORMAL_REAL, A_RATIONAL, A_BOOLEAN;
-static s7_pointer A_NUMBER, A_LET, A_PROCEDURE, A_PROPER_LIST, A_THUNK, SOMETHING_APPLICABLE, A_SYMBOL, A_NON_NEGATIVE_INTEGER;
-static s7_pointer A_FORMAT_PORT, AN_UNSIGNED_BYTE, A_BINDING, A_NON_CONSTANT_SYMBOL, AN_EQ_FUNC, A_SEQUENCE, ITS_TOO_SMALL, A_NORMAL_PROCEDURE;
-static s7_pointer ITS_TOO_LARGE, ITS_NEGATIVE, RESULT_IS_TOO_LARGE, ITS_NAN, ITS_INFINITE, TOO_MANY_INDICES, A_VALID_RADIX;
-static s7_pointer AN_INPUT_STRING_PORT, AN_INPUT_FILE_PORT, AN_OUTPUT_STRING_PORT, AN_OUTPUT_FILE_PORT, A_RANDOM_STATE_OBJECT;
+static s7_pointer car_a_list_string, cdr_a_list_string, caar_a_list_string, cadr_a_list_string, cdar_a_list_string,
+                  cddr_a_list_string, caaar_a_list_string, caadr_a_list_string, cadar_a_list_string, caddr_a_list_string,
+                  cdaar_a_list_string, cdadr_a_list_string, cddar_a_list_string, cdddr_a_list_string, a_list_string, 
+                  an_association_list_string, an_output_port_string, an_input_port_string, an_open_port_string, 
+                  a_normal_real_string, a_rational_string, a_boolean_string, a_number_string, a_let_string, 
+                  a_procedure_string, a_proper_list_string, a_thunk_string, something_applicable_string, a_symbol_string, 
+                  a_non_negative_integer_string, a_format_port_string, an_unsigned_byte_string, a_binding_string, 
+                  a_non_constant_symbol_string, an_eq_func_string, a_sequence_string, its_too_small_string, 
+                  a_normal_procedure_string, its_too_large_string, its_negative_string, result_is_too_large_string, 
+                  its_nan_string, its_infinite_string, too_many_indices_string, a_valid_radix_string, an_input_string_port_string, 
+                  an_input_file_port_string, an_output_string_port_string, an_output_file_port_string, a_random_state_object_string;
+
 #if (!HAVE_COMPLEX_NUMBERS)
-static s7_pointer NO_COMPLEX_NUMBERS;
+static s7_pointer no_complex_numbers_string;
 #endif
 
 
@@ -4763,12 +4767,13 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 	   *   continues to be valid.  symbol_hmap is abs(heap_location), and the possible overlap with other not-in-heap
 	   *   ints is not problematic (they'll just hash to the same location).
 	   */
-	  for (i = 0; i < sc->gensyms_loc; i++)
+	  for (i = 0; i < sc->gensyms_loc; i++) /* sc->gensyms reaches size 512 during s7test, but this search is called 3 times and costs nothing */
 	    if (sc->gensyms[i] == x)
 	      {
 		unsigned int j;
-		for (j = i + 1; i < sc->gensyms_loc; i++, j++)
+		for (j = i + 1; i < sc->gensyms_loc - 1; i++, j++)
 		  sc->gensyms[i] = sc->gensyms[j];
+		sc->gensyms[i] = NULL;
 		sc->gensyms_loc--;
 		if (sc->gensyms_loc == 0) mark_function[T_SYMBOL] = mark_noop;
 		break;
@@ -6032,7 +6037,7 @@ static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
       set_has_methods(e);
       return(e);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->openlet_symbol, e, A_LET));
+  return(simple_wrong_type_argument_with_type(sc, sc->openlet_symbol, e, a_let_string));
 }
 
 
@@ -6048,7 +6053,7 @@ static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
       clear_has_methods(e);
       return(e);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->coverlet_symbol, e, A_LET));
+  return(simple_wrong_type_argument_with_type(sc, sc->coverlet_symbol, e, a_let_string));
 }
 
 static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
@@ -6091,7 +6096,7 @@ static s7_pointer check_c_obj_env(s7_scheme *sc, s7_pointer old_e, s7_pointer ca
   if (is_c_object(old_e))
     old_e = c_object_let(old_e);
   if (!is_let(old_e))
-    return(simple_wrong_type_argument_with_type(sc, caller, old_e, A_LET));
+    return(simple_wrong_type_argument_with_type(sc, caller, old_e, a_let_string));
   return(old_e);
 }
 
@@ -6110,7 +6115,7 @@ to the environment env, and returns the environment."
     {
       check_method(sc, e, sc->varlet_symbol, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 1, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, 1, e, a_let_string));
     }
 
   for (x = cdr(args); is_pair(x); x = cdr(x))
@@ -6123,7 +6128,7 @@ to the environment env, and returns the environment."
 	    sym = keyword_symbol(p);
 	  else sym = p;
 	  if (!is_pair(cdr(x)))
-	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, A_BINDING));
+	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, a_binding_string));
 	  x = cdr(x);
 	  val = car(x);
 	  break;
@@ -6131,7 +6136,7 @@ to the environment env, and returns the environment."
 	case T_PAIR:
 	  sym = car(p);
 	  if (!is_symbol(sym))
-	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, A_SYMBOL));
+	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, a_symbol_string));
 	  val = cdr(p);
 	  break;
 
@@ -6140,11 +6145,11 @@ to the environment env, and returns the environment."
 	  continue;
 
 	default:
-	  return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, A_SYMBOL));
+	  return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, a_symbol_string));
 	}
 
       if (is_immutable_symbol(sym))
-	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), sym, A_NON_CONSTANT_SYMBOL));
+	return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), sym, a_non_constant_symbol_string));
 
       if (e == sc->rootlet)
 	{
@@ -6190,7 +6195,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
     {
       check_method(sc, e, sc->cutlet_symbol, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->cutlet_symbol, 1, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->cutlet_symbol, 1, e, a_let_string));
     }
   /* besides removing the slot we have to make sure the symbol_id does not match else
    *   let-ref and others will use the old slot!  What's the un-id?  Perhaps the next one?
@@ -6202,7 +6207,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
       sym = car(syms);
 
       if (!is_symbol(sym))
-	return(wrong_type_argument_with_type(sc, sc->cutlet_symbol, position_of(syms, args), sym, A_SYMBOL));
+	return(wrong_type_argument_with_type(sc, sc->cutlet_symbol, position_of(syms, args), sym, a_symbol_string));
 
       if (is_keyword(sym))
 	sym = keyword_symbol(sym);
@@ -6273,7 +6278,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 		sym = keyword_symbol(p);
 	      else sym = p;
 	      if (!is_pair(cdr(x)))
-		return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, A_BINDING));
+		return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, a_binding_string));
 	      x = cdr(x);
 	      val = car(x);
 	      break;
@@ -6281,7 +6286,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	    case T_PAIR:
 	      sym = car(p);
 	      if (!is_symbol(sym))
-		return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, A_SYMBOL));
+		return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, a_symbol_string));
 	      val = cdr(p);
 	      break;
 
@@ -6290,11 +6295,11 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 	      continue;
 
 	    default:
-	      return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, A_SYMBOL));
+	      return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, a_symbol_string));
 	    }
 
 	  if (is_immutable_symbol(sym))
-	    return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), sym, A_NON_CONSTANT_SYMBOL));
+	    return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), sym, a_non_constant_symbol_string));
 
 	  /* here we know new_e is a let and is not rootlet */
 	  make_slot_1(sc, new_e, sym, val);
@@ -6332,7 +6337,7 @@ new environment."
     {
       check_method(sc, e, sc->sublet_symbol, args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->sublet_symbol, 1, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->sublet_symbol, 1, e, a_let_string));
     }
   return(sublet_1(sc, e, cdr(args), sc->sublet_symbol));
 }
@@ -6423,7 +6428,7 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
       if (is_c_object(env))
 	env = c_object_let(env);
       if (!is_let(env))
-        return(simple_wrong_type_argument_with_type(sc, sc->let_to_list_symbol, env, A_LET));
+        return(simple_wrong_type_argument_with_type(sc, sc->let_to_list_symbol, env, a_let_string));
     }
   return(s7_let_to_list(sc, env));
 }
@@ -6470,14 +6475,14 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
   if (!is_let(env))
-    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, A_LET));
+    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, a_let_string));
     
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->let_ref_symbol, sc->w = list_2(sc, env, symbol));
       if (has_ref_fallback(env))
 	check_method(sc, env, sc->let_ref_fallback_symbol, sc->w = list_2(sc, env, symbol));
-      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, a_symbol_string));
     }
   return(let_ref_1(sc, env, symbol));
 }
@@ -6490,7 +6495,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 
   e = car(args);
   if (!is_let(e))
-    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, e, A_LET));
+    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, e, a_let_string));
 
   s = cadr(args);
   if (!is_symbol(s))
@@ -6498,7 +6503,7 @@ static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
       check_method(sc, e, sc->let_ref_symbol, args);
       if (has_ref_fallback(e))
 	check_method(sc, e, sc->let_ref_fallback_symbol, args);
-      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, s, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, s, a_symbol_string));
     }
   return(let_ref_1(sc, e, s));
 }
@@ -6546,7 +6551,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
   if (env == sc->rootlet)
     {
       if (is_immutable_symbol(symbol))  /* (let-set! (rootlet) :rest #f) */
-	return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, A_NON_CONSTANT_SYMBOL));
+	return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, a_non_constant_symbol_string));
       y = global_slot(symbol);
       if (is_slot(y))
 	{
@@ -6576,14 +6581,14 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
   if (!is_let(env))
-    return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, env, A_LET));
+    return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 1, env, a_let_string));
 
   if (!is_symbol(symbol))
     {
       check_method(sc, env, sc->let_set_symbol, sc->w = list_3(sc, env, symbol, value));
       if (has_set_fallback(env))
 	check_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
-      return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, A_SYMBOL));
+      return(wrong_type_argument_with_type(sc, sc->let_set_symbol, 2, symbol, a_symbol_string));
     }
 
   return(let_set_1(sc, env, symbol, value));
@@ -6746,7 +6751,7 @@ static s7_pointer g_outlet(s7_scheme *sc, s7_pointer args)
   s7_pointer env;
   env = car(args);
   if (!is_let(env))
-    method_or_bust_with_type(sc, env, sc->outlet_symbol, args, A_LET, 0);
+    method_or_bust_with_type(sc, env, sc->outlet_symbol, args, a_let_string, 0);
 
   if ((env == sc->rootlet) ||
       (is_null(outlet(env))))
@@ -6954,7 +6959,7 @@ symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
 	return((is_slot(initial_slot(sym))) ? slot_value(initial_slot(sym)) : sc->undefined);
 
       if (!is_let(local_env))
-	method_or_bust_with_type(sc, local_env, sc->symbol_to_value_symbol, args, A_LET, 2);
+	method_or_bust_with_type(sc, local_env, sc->symbol_to_value_symbol, args, a_let_string, 2);
 
       if (local_env == sc->rootlet)
 	{
@@ -7326,13 +7331,13 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       s7_pointer e, b, x;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->is_defined_symbol, 2, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->is_defined_symbol, 2, e, a_let_string));
 
       if (is_pair(cddr(args)))
 	{
 	  b = caddr(args);
 	  if (!s7_is_boolean(b))
-	    method_or_bust_with_type(sc, b, sc->is_defined_symbol, args, A_BOOLEAN, 3);
+	    method_or_bust_with_type(sc, b, sc->is_defined_symbol, args, a_boolean_string, 3);
 	}
       else b = sc->F;
 
@@ -10903,7 +10908,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
   if (!is_procedure(p))                      /* this includes continuations */
     {
       check_two_methods(sc, p, sc->call_cc_symbol, sc->call_with_current_continuation_symbol, args);
-      return(simple_wrong_type_argument_with_type(sc, sc->call_cc_symbol, p, A_PROCEDURE));
+      return(simple_wrong_type_argument_with_type(sc, sc->call_cc_symbol, p, a_procedure_string));
     }
   if (!s7_is_aritable(sc, p, 1))
     return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "call/cc procedure, ~A, should take one argument"), p)));
@@ -10930,7 +10935,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* (call-with-exit (lambda (return) ...)) */
   p = car(args);
   if (!is_procedure(p))                           /* this includes continuations */
-    method_or_bust_with_type(sc, p, sc->call_with_exit_symbol, args, A_PROCEDURE, 0);
+    method_or_bust_with_type(sc, p, sc->call_with_exit_symbol, args, a_procedure_string, 0);
 
   x = make_goto(sc);
   push_stack(sc, OP_DEACTIVATE_GOTO, x, p); /* this means call-with-exit is not tail-recursive */
@@ -11601,7 +11606,7 @@ static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
     case T_REAL:                  
     case T_COMPLEX: return(x); /* apparently (exact->inexact 1+i) is not an error */
     default: 
-      method_or_bust_with_type(sc, x, sc->exact_to_inexact_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->exact_to_inexact_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -11622,7 +11627,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	if ((is_inf(val)) || (is_NaN(val)))
 	  {
 	    if (with_error)
-	      return(simple_wrong_type_argument_with_type(sc, sc->inexact_to_exact_symbol, x, A_NORMAL_REAL));
+	      return(simple_wrong_type_argument_with_type(sc, sc->inexact_to_exact_symbol, x, a_normal_real_string));
 	    return(sc->nil);
 	  }
 
@@ -11630,7 +11635,7 @@ static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x, bool with_error)
 	    (val < s7_int_min))
 	  {
 	    if (with_error)
-	      return(simple_out_of_range(sc, sc->inexact_to_exact_symbol, x, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->inexact_to_exact_symbol, x, its_too_large_string));
 	    return(sc->nil);
 	  }
 
@@ -11835,7 +11840,7 @@ static s7_pointer s7_invert(s7_scheme *sc, s7_pointer p)      /* s7_ to be consi
       }
 
     default:
-      return(wrong_type_argument_with_type(sc, sc->divide_symbol, 1, p, A_NUMBER));
+      return(wrong_type_argument_with_type(sc, sc->divide_symbol, 1, p, a_number_string));
     }
 }
 
@@ -12412,7 +12417,7 @@ static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temp
 
   x = car(args);
   if (!s7_is_number(x))
-    method_or_bust_with_type(sc, x, sc->number_to_string_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, x, sc->number_to_string_symbol, args, a_number_string, 1);
 
   if (is_pair(cdr(args)))
     {
@@ -12422,7 +12427,7 @@ static s7_pointer g_number_to_string_1(s7_scheme *sc, s7_pointer args, bool temp
 	radix = s7_integer(y);
       else method_or_bust(sc, y, sc->number_to_string_symbol, args, T_INTEGER, 2);
       if ((radix < 2) || (radix > 16))
-	return(out_of_range(sc, sc->number_to_string_symbol, small_int(2), y, A_VALID_RADIX));
+	return(out_of_range(sc, sc->number_to_string_symbol, small_int(2), y, a_valid_radix_string));
     }
 
 #if WITH_GMP
@@ -13549,13 +13554,14 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol,
 
 
 		/* -------- exponent marker -------- */
-	      case 'e': case 'E':
 #if WITH_EXTRA_EXPONENT_MARKERS
+		/* 1st 3d-perspective 0.0f 128.0f 3d 1s -- in 2 million lines of public scheme code, not one actual use! */
 	      case 's': case 'S':
 	      case 'd': case 'D':
 	      case 'f': case 'F':
 	      case 'l': case 'L':
 #endif
+	      case 'e': case 'E':
 		if (current_radix > 10)
 		  return((want_symbol) ? make_symbol(sc, q) : sc->F);
 		/* see note above */
@@ -13872,7 +13878,7 @@ the 'radix' it is ignored: (string->number \"#x11\" 2) -> 17 not 3."
       radix = s7_integer(rad);
       if ((radix < 2) ||              /* what about negative int as base (Knuth), reals such as phi, and some complex like -1+i */
 	  (radix > 16))               /* the only problem here is printing the number; perhaps put each digit in "()" in base 10: (123)(0)(34) */
-	return(out_of_range(sc, caller, small_int(2), rad, A_VALID_RADIX));
+	return(out_of_range(sc, caller, small_int(2), rad, a_valid_radix_string));
     }
   else radix = 10;
 
@@ -14056,7 +14062,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, hypot(imag_part(x), real_part(x))));
 
     default:
-      method_or_bust_with_type(sc, x, sc->magnitude_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->magnitude_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14086,7 +14092,7 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 
       err = real_to_double(sc, ex, "rationalize");
       if (is_NaN(err))
-	return(out_of_range(sc, sc->rationalize_symbol, small_int(2), cadr(args), ITS_NAN));
+	return(out_of_range(sc, sc->rationalize_symbol, small_int(2), cadr(args), its_nan_string));
       if (err < 0.0) err = -err;
     }
   else err = sc->default_rationalize_error;
@@ -14119,13 +14125,13 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
 	rat = real_to_double(sc, x, "rationalize");
 
 	if ((is_NaN(rat)) || (is_inf(rat)))
-	  return(wrong_type_argument_with_type(sc, sc->rationalize_symbol, 1, x, A_NORMAL_REAL));
+	  return(wrong_type_argument_with_type(sc, sc->rationalize_symbol, 1, x, a_normal_real_string));
 
 	if (err >= fabs(rat))
 	  return(small_int(0));
 
 	if ((rat > 9.2233720368548e+18) || (rat < -9.2233720368548e+18))
-	  return(out_of_range(sc, sc->rationalize_symbol, small_int(1), x, ITS_TOO_LARGE));
+	  return(out_of_range(sc, sc->rationalize_symbol, small_int(1), x, its_too_large_string));
 
 	if ((fabs(rat) + fabs(err)) < 1.0e-18)
 	  err = 1.0e-18;
@@ -14182,7 +14188,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
       return(make_real(sc, atan2(imag_part(x), real_part(x))));
 
     default:
-      method_or_bust_with_type(sc, x, sc->angle_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->angle_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14400,11 +14406,11 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
        *   (exp 0+1e20i) -> -0.66491178990701-0.74692189125949i, not 7.639704044417283004001468027378811228331E-1-6.45251285265780844205811711312523007406E-1i
        */
 #else
-      return(out_of_range(sc, sc->exp_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->exp_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->exp_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->exp_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14427,7 +14433,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   s7_pointer x;
   x = car(args);
   if (!s7_is_number(x))
-    method_or_bust_with_type(sc, x, sc->log_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, x, sc->log_symbol, args, a_number_string, 1);
 
   if (is_pair(cdr(args)))
     {
@@ -14435,7 +14441,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 
       y = cadr(args);
       if (!(s7_is_number(y)))
-	method_or_bust_with_type(sc, y, sc->log_symbol, args, A_NUMBER, 2);
+	method_or_bust_with_type(sc, y, sc->log_symbol, args, a_number_string, 2);
 
       if (y == small_int(2))
 	{
@@ -14543,11 +14549,11 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csin(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->sin_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->sin_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->sin_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->sin_symbol, args, a_number_string, 0);
     }
 
   /* sin is totally inaccurate over about 1e18.  There's a way to get true results,
@@ -14589,11 +14595,11 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccos(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->cos_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->cos_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->cos_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->cos_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14628,11 +14634,11 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 	return(s7_make_complex(sc, 0.0, -1.0));
       return(s7_from_c_complex(sc, ctan(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->tan_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->tan_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->tan_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->tan_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14689,11 +14695,11 @@ static s7_pointer g_asin_1(s7_scheme *sc, s7_pointer n)
 	}
       return(s7_from_c_complex(sc, casin(as_c_complex(n))));
 #else
-      return(out_of_range(sc, sc->asin_symbol, small_int(1), n, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->asin_symbol, small_int(1), n, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, n, sc->asin_symbol, list_1(sc, n), A_NUMBER, 0);
+      method_or_bust_with_type(sc, n, sc->asin_symbol, list_1(sc, n), a_number_string, 0);
     }
 }
 
@@ -14757,11 +14763,11 @@ static s7_pointer g_acos_1(s7_scheme *sc, s7_pointer n)
 	}
       return(s7_from_c_complex(sc, cacos(s7_to_c_complex(n))));
 #else
-      return(out_of_range(sc, sc->acos_symbol, small_int(1), n, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->acos_symbol, small_int(1), n, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, n, sc->acos_symbol, list_1(sc, n), A_NUMBER, 0);
+      method_or_bust_with_type(sc, n, sc->acos_symbol, list_1(sc, n), a_number_string, 0);
     }
 }
 
@@ -14808,11 +14814,11 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
 	  return(s7_from_c_complex(sc, catan(as_c_complex(x))));
 #else
-	  return(out_of_range(sc, sc->atan_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+	  return(out_of_range(sc, sc->atan_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->atan_symbol, args, A_NUMBER, 0);
+	  method_or_bust_with_type(sc, x, sc->atan_symbol, args, a_number_string, 0);
 	}
     }
 
@@ -14852,11 +14858,11 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csinh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->sinh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->sinh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->sinh_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->sinh_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14892,11 +14898,11 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, ccosh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->cosh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->cosh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->cosh_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->cosh_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14928,11 +14934,11 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 	return(make_real(sc, -1.0));              /* closer than ctanh's -0.0 */
       return(s7_from_c_complex(sc, ctanh(as_c_complex(x))));
 #else
-      return(out_of_range(sc, sc->tanh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->tanh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->tanh_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->tanh_symbol, args, a_number_string, 0);
     }
 }
 
@@ -14962,11 +14968,11 @@ static s7_pointer c_asinh_1(s7_scheme *sc, s7_pointer x)
       return(s7_from_c_complex(sc, casinh(as_c_complex(x))));
   #endif
 #else
-      return(out_of_range(sc, sc->asinh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->asinh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->asinh_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->asinh_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -15012,11 +15018,11 @@ static s7_pointer c_acosh_1(s7_scheme *sc, s7_pointer x)
   #endif
 #else
       /* since we can fall through to this branch, we need a better error message than "must be a number, not 0.0" */
-      return(out_of_range(sc, sc->acosh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->acosh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->acosh_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->acosh_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -15066,11 +15072,11 @@ static s7_pointer c_atanh_1(s7_scheme *sc, s7_pointer x)
       return(s7_from_c_complex(sc, catanh(s7_to_c_complex(x))));
   #endif
 #else
-      return(out_of_range(sc, sc->atanh_symbol, small_int(1), x, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->atanh_symbol, small_int(1), x, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->atanh_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->atanh_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -15159,11 +15165,11 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 #if HAVE_COMPLEX_NUMBERS
       return(s7_from_c_complex(sc, csqrt(as_c_complex(n))));
 #else
-      return(out_of_range(sc, sc->sqrt_symbol, small_int(1), n, NO_COMPLEX_NUMBERS));
+      return(out_of_range(sc, sc->sqrt_symbol, small_int(1), n, no_complex_numbers_string));
 #endif
 
     default:
-      method_or_bust_with_type(sc, n, sc->sqrt_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, n, sc->sqrt_symbol, args, a_number_string, 0);
     }
 }
 
@@ -15214,11 +15220,11 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 
   n = car(args);
   if (!s7_is_number(n))
-    method_or_bust_with_type(sc, n, sc->expt_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, n, sc->expt_symbol, args, a_number_string, 1);
 
   pw = cadr(args);
   if (!s7_is_number(pw))
-    method_or_bust_with_type(sc, pw, sc->expt_symbol, args, A_NUMBER, 2);
+    method_or_bust_with_type(sc, pw, sc->expt_symbol, args, a_number_string, 2);
 
   /* this provides more than 2 args to expt:
    *  if (is_not_null(cddr(args)))
@@ -15378,7 +15384,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 #else
-	  return(out_of_range(sc, sc->expt_symbol, small_int(2), n, NO_COMPLEX_NUMBERS));
+	  return(out_of_range(sc, sc->expt_symbol, small_int(2), n, no_complex_numbers_string));
 #endif
 	  break;
 	}
@@ -15461,7 +15467,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
   if (!is_pair(cdr(args)))
     {
       if (!is_rational(car(args)))
-	method_or_bust_with_type(sc, car(args), sc->lcm_symbol, args, A_RATIONAL, 1);
+	method_or_bust_with_type(sc, car(args), sc->lcm_symbol, args, a_rational_string, 1);
       return(g_abs(sc, args));
     }
 
@@ -15498,14 +15504,14 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 	  break;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->lcm_symbol, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p), A_RATIONAL, position_of(p, args));
+	  method_or_bust_with_type(sc, x, sc->lcm_symbol, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p), a_rational_string, position_of(p, args));
 	}
-      if (n < 0) return(simple_out_of_range(sc, sc->lcm_symbol, args, RESULT_IS_TOO_LARGE));
+      if (n < 0) return(simple_out_of_range(sc, sc->lcm_symbol, args, result_is_too_large_string));
       if (n == 0)
 	{
 	  for (p = cdr(p); is_pair(p); p = cdr(p))
 	    if (!is_rational_via_method(sc, car(p)))
-	      return(wrong_type_argument_with_type(sc, sc->lcm_symbol, position_of(p, args), x, A_RATIONAL));
+	      return(wrong_type_argument_with_type(sc, sc->lcm_symbol, position_of(p, args), x, a_rational_string));
 	  return(small_int(0));
 	}
     }
@@ -15540,7 +15546,7 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
   if (!is_pair(cdr(args)))
     {
       if (!is_rational(car(args)))
-	method_or_bust_with_type(sc, car(args), sc->gcd_symbol, args, A_RATIONAL, 1);
+	method_or_bust_with_type(sc, car(args), sc->gcd_symbol, args, a_rational_string, 1);
       return(g_abs(sc, args));
     }
 
@@ -15560,13 +15566,13 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 	  b = s7_denominator(x);
 	  if (b < 0) b = -b;
 	  d = (d / c_gcd(d, b)) * b;
-	  if (d < 0) return(simple_out_of_range(sc, sc->gcd_symbol, args, RESULT_IS_TOO_LARGE));
+	  if (d < 0) return(simple_out_of_range(sc, sc->gcd_symbol, args, result_is_too_large_string));
 	  break;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->gcd_symbol, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p), A_RATIONAL, position_of(p, args));
+	  method_or_bust_with_type(sc, x, sc->gcd_symbol, cons(sc, (d <= 1) ? make_integer(sc, n) : s7_make_ratio(sc, n, d), p), a_rational_string, position_of(p, args));
 	}
-      if (n < 0) return(simple_out_of_range(sc, sc->gcd_symbol, args, RESULT_IS_TOO_LARGE));
+      if (n < 0) return(simple_out_of_range(sc, sc->gcd_symbol, args, result_is_too_large_string));
     }
 
   if (d <= 1)
@@ -15583,7 +15589,7 @@ static s7_pointer s7_truncate(s7_scheme *sc, s7_pointer caller, s7_double xf)   
 {
   if ((xf > s7_int_max) ||
       (xf < s7_int_min))
-    return(simple_out_of_range(sc, caller, make_real(sc, xf), ITS_TOO_LARGE));
+    return(simple_out_of_range(sc, caller, make_real(sc, xf), its_too_large_string));
 
   if (xf > 0.0)
     return(make_integer(sc, (s7_int)floor(xf)));
@@ -15595,7 +15601,7 @@ static s7_int c_quo_int(s7_scheme *sc, s7_int x, s7_int y)
   if (y == 0)
     division_by_zero_error(sc, sc->quotient_symbol, set_elist_2(sc, make_integer(sc, x), make_integer(sc, y)));
   if ((y == -1) && (x == s7_int_min))   /* (quotient most-negative-fixnum -1) */
-    simple_out_of_range(sc, sc->quotient_symbol, set_elist_2(sc, make_integer(sc, x), make_integer(sc, y)), ITS_TOO_LARGE);
+    simple_out_of_range(sc, sc->quotient_symbol, set_elist_2(sc, make_integer(sc, x), make_integer(sc, y)), its_too_large_string);
   return(x / y);
 }
 
@@ -15606,12 +15612,12 @@ static s7_double c_quo_dbl(s7_scheme *sc, s7_double x, s7_double y)
   if (y == 0.0)
     division_by_zero_error(sc, sc->quotient_symbol, set_elist_2(sc, make_real(sc, x), make_real(sc, y)));
   if ((is_inf(y)) || (is_NaN(y)))
-    wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, make_real(sc, y), A_NORMAL_REAL);
+    wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, make_real(sc, y), a_normal_real_string);
 
   xf = x / y;
   if ((xf > s7_int_max) ||
       (xf < s7_int_min))
-    simple_out_of_range(sc, sc->quotient_symbol, make_real(sc, xf), ITS_TOO_LARGE);
+    simple_out_of_range(sc, sc->quotient_symbol, make_real(sc, xf), its_too_large_string);
 
   if (xf > 0.0)
     return(floor(xf));
@@ -15649,7 +15655,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	  if (real(y) == 0.0)
 	    return(division_by_zero_error(sc, sc->quotient_symbol, args));
 	  if ((is_inf(real(y))) || (is_NaN(real(y))))
-	    return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, y, A_NORMAL_REAL));
+	    return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, y, a_normal_real_string));
 	  return(s7_truncate(sc, sc->quotient_symbol, (s7_double)integer(x) / real(y)));
 
 	default:
@@ -15701,7 +15707,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 	  if (real(y) == 0.0)
 	    return(division_by_zero_error(sc, sc->quotient_symbol, args));
 	  if ((is_inf(real(y))) || (is_NaN(real(y))))
-	    return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, y, A_NORMAL_REAL));
+	    return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 2, y, a_normal_real_string));
 	  return(s7_truncate(sc, sc->quotient_symbol, (s7_double)fraction(x) / real(y)));
 
 	default:
@@ -15710,7 +15716,7 @@ static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
       if ((is_inf(real(x))) || (is_NaN(real(x))))
-	return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 1, x, A_NORMAL_REAL));
+	return(wrong_type_argument_with_type(sc, sc->quotient_symbol, 1, x, a_normal_real_string));
 
       /* if infs allowed we need to return infs/nans, else:
        *    (quotient inf.0 1e-309) -> -9223372036854775808
@@ -15760,11 +15766,11 @@ static s7_double c_rem_dbl(s7_scheme *sc, s7_double x, s7_double y)
   if (y == 0.0)
     division_by_zero_error(sc, sc->remainder_symbol, set_elist_2(sc, make_real(sc, x), make_real(sc, y)));
   if ((is_inf(y)) || (is_NaN(y)))
-    wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, set_elist_1(sc, make_real(sc, y)), A_NORMAL_REAL);
+    wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, set_elist_1(sc, make_real(sc, y)), a_normal_real_string);
 
   pre_quo = x / y;
   if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-    simple_out_of_range(sc, sc->remainder_symbol, set_elist_2(sc, make_real(sc, x), make_real(sc, y)), ITS_TOO_LARGE);
+    simple_out_of_range(sc, sc->remainder_symbol, set_elist_2(sc, make_real(sc, x), make_real(sc, y)), its_too_large_string);
   if (pre_quo > 0.0) 
     quo = (s7_int)floor(pre_quo); 
   else quo = (s7_int)ceil(pre_quo);
@@ -15803,11 +15809,11 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	  if (real(y) == 0.0)
 	    return(division_by_zero_error(sc, sc->remainder_symbol, args));
 	  if ((is_inf(real(y))) || (is_NaN(real(y))))
-	    return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, y, A_NORMAL_REAL));
+	    return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, y, a_normal_real_string));
 
 	  pre_quo = (s7_double)integer(x) / real(y);
 	  if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-	    return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 	  if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 	  return(make_real(sc, integer(x) - real(y) * quo));
 
@@ -15848,7 +15854,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 		    {
 		      pre_quo = ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1);
 		      if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-			return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+			return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 		      if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 		    }
 		  else quo = n1d2 / n2d1;
@@ -15858,7 +15864,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 		    {
 		      pre_quo = ((long double)n1 / (long double)n2) * ((long double)d2 / (long double)d1);
 		      if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-			return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+			return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 		      if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 		    }
 		  else quo = (n1 * d2) / (n2 * d1);
@@ -15902,11 +15908,11 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    if (real(y) == 0.0)
 	      return(division_by_zero_error(sc, sc->remainder_symbol, args));
 	    if ((is_inf(real(y))) || (is_NaN(real(y))))
-	      return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, y, A_NORMAL_REAL));
+	      return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 2, y, a_normal_real_string));
 	    frac = (s7_double)fraction(x);
 	    pre_quo = frac / real(y);
 	    if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-	      return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 	    if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 	    return(make_real(sc, frac - real(y) * quo));
 	  }
@@ -15917,7 +15923,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 
     case T_REAL:
       if ((is_inf(real(x))) || (is_NaN(real(x))))
-	return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 1, x, A_NORMAL_REAL));
+	return(wrong_type_argument_with_type(sc, sc->remainder_symbol, 1, x, a_normal_real_string));
 
       switch (type(y))
 	{
@@ -15926,7 +15932,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    return(division_by_zero_error(sc, sc->remainder_symbol, args));
 	  pre_quo = real(x) / (s7_double)integer(y);
 	  if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-	    return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+	    return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 	  if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 	  return(make_real(sc, real(x) - integer(y) * quo));
 	  /* but... (remainder 1e+18 9223372036854775807) -> 1e+18 */
@@ -15940,7 +15946,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 	    frac = (s7_double)fraction(y);
 	    pre_quo = real(x) / frac;
 	    if ((pre_quo > s7_int_max) || (pre_quo < s7_int_min))
-	      return(simple_out_of_range(sc, sc->remainder_symbol, args, ITS_TOO_LARGE));
+	      return(simple_out_of_range(sc, sc->remainder_symbol, args, its_too_large_string));
 	    if (pre_quo > 0.0) quo = (s7_int)floor(pre_quo); else quo = (s7_int)ceil(pre_quo);
 	    return(make_real(sc, real(x) - frac * quo));
 	  }
@@ -16006,9 +16012,9 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 	s7_double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range(sc, sc->floor_symbol, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->floor_symbol, x, its_nan_string));
 	if (fabs(z) > REAL_TO_INT_LIMIT)
-	  return(simple_out_of_range(sc, sc->floor_symbol, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->floor_symbol, x, its_too_large_string));
 	return(make_integer(sc, (s7_int)floor(z)));
 	/* floor here rounds down, whereas a straight int<=real coercion apparently rounds towards 0 */
       }
@@ -16051,11 +16057,11 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 	s7_double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range(sc, sc->ceiling_symbol, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->ceiling_symbol, x, its_nan_string));
 	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
-	  return(simple_out_of_range(sc, sc->ceiling_symbol, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->ceiling_symbol, x, its_too_large_string));
 	return(make_integer(sc, (s7_int)ceil(real(x))));
       }
 
@@ -16090,9 +16096,9 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 	s7_double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range(sc, sc->truncate_symbol, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->truncate_symbol, x, its_nan_string));
 	if (is_inf(z))
-	  return(simple_out_of_range(sc, sc->truncate_symbol, x, ITS_INFINITE));
+	  return(simple_out_of_range(sc, sc->truncate_symbol, x, its_infinite_string));
 	return(s7_truncate(sc, sc->truncate_symbol, real(x)));
       }
 
@@ -16105,7 +16111,7 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 static s7_int c_trunc(s7_scheme *sc, s7_double x)
 {
   if ((x > s7_int_max) || (x < s7_int_min))
-    simple_out_of_range(sc, sc->truncate_symbol, make_real(sc, x), ITS_TOO_LARGE);
+    simple_out_of_range(sc, sc->truncate_symbol, make_real(sc, x), its_too_large_string);
   if (x > 0.0)
     return((s7_int)floor(x));
   return((s7_int)ceil(x));
@@ -16167,11 +16173,11 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 	s7_double z;
 	z = real(x);
 	if (is_NaN(z))
-	  return(simple_out_of_range(sc, sc->round_symbol, x, ITS_NAN));
+	  return(simple_out_of_range(sc, sc->round_symbol, x, its_nan_string));
 	if ((is_inf(z)) ||
 	    (z > REAL_TO_INT_LIMIT) ||
 	    (z < -REAL_TO_INT_LIMIT))
-	  return(simple_out_of_range(sc, sc->round_symbol, x, ITS_TOO_LARGE));
+	  return(simple_out_of_range(sc, sc->round_symbol, x, its_too_large_string));
 	return(make_integer(sc, (s7_int)round_per_R5RS(z)));
       }
 
@@ -16525,7 +16531,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     {
       if (!is_number(x))
-	method_or_bust_with_type(sc, x, sc->add_symbol, args, A_NUMBER, 0);
+	method_or_bust_with_type(sc, x, sc->add_symbol, args, a_number_string, 0);
       return(x);
     }
 
@@ -16630,7 +16636,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16752,7 +16758,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16787,7 +16793,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -16825,12 +16831,12 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 	  goto ADD_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->add_symbol, args, a_number_string, 1);
     }
 }
 
@@ -16906,8 +16912,8 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	    case T_COMPLEX: return(make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
 	    default:
 	      if (!is_number(x))
-		method_or_bust_with_type(sc, x, sc->add_symbol, args, A_NUMBER, 1);
-	      method_or_bust_with_type(sc, y, sc->add_symbol, args, A_NUMBER, 2);
+		method_or_bust_with_type(sc, x, sc->add_symbol, args, a_number_string, 1);
+	      method_or_bust_with_type(sc, y, sc->add_symbol, args, a_number_string, 2);
 	    }
 	}
     }
@@ -16922,7 +16928,7 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, integer(x) + real(y)));
 	case T_COMPLEX: return(make_complex(sc, integer(x) + real_part(y), imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->add_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->add_symbol, args, a_number_string, 2);
 	}
 
     case T_RATIO:
@@ -16933,7 +16939,7 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, fraction(x) + real(y)));
 	case T_COMPLEX: return(s7_make_complex(sc, fraction(x) + real_part(y), imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->add_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->add_symbol, args, a_number_string, 2);
 	}
 
     case T_REAL:
@@ -16944,7 +16950,7 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, real(x) + real(y)));
 	case T_COMPLEX: return(make_complex(sc, real(x) + real_part(y), imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->add_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->add_symbol, args, a_number_string, 2);
 	}
 
     case T_COMPLEX:
@@ -16955,11 +16961,11 @@ static s7_pointer g_add_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) + real(y), imag_part(x)));
 	case T_COMPLEX: return(make_complex(sc, real_part(x) + real_part(y), imag_part(x) + imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->add_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->add_symbol, args, a_number_string, 2);
 	}
 
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->add_symbol, args, a_number_string, 1);
     }
   return(x);
 }
@@ -16983,7 +16989,7 @@ static s7_pointer g_add_s1_1(s7_scheme *sc, s7_pointer x, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, x, cdr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->add_symbol, cons(sc, x, cdr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -17028,7 +17034,7 @@ static s7_pointer g_add_1s(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + 1.0, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, args, A_NUMBER, 2);
+      method_or_bust_with_type(sc, x, sc->add_symbol, args, a_number_string, 2);
     }
   return(x);
 }
@@ -17058,7 +17064,7 @@ static s7_pointer g_add_si(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, cadr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -17077,7 +17083,7 @@ static s7_pointer g_add_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, cadr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -17096,7 +17102,7 @@ static s7_pointer g_add_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) + n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) + n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, car(args)), A_NUMBER, 2);
+      method_or_bust_with_type(sc, x, sc->add_symbol, list_2(sc, x, car(args)), a_number_string, 2);
     }
   return(x);
 }
@@ -17127,7 +17133,7 @@ static s7_pointer g_add_f_sf(s7_scheme *sc, s7_pointer args)
 	s7_pointer func;
 	if ((func = find_method(sc, find_let(sc, s), sc->multiply_symbol)) != sc->undefined)
 	  return(g_add_2(sc, set_plist_2(sc, car(args), s7_apply_function(sc, func, list_2(sc, s, cadr(vargs))))));
-	return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 1, s, A_NUMBER));
+	return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 1, s, a_number_string));
       }
     }
   return(s);
@@ -17629,7 +17635,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     {
       if (!is_number(x))
-	method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 0);
+	method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 0);
       return(s7_negate(sc, x));
     }
 #endif
@@ -17727,7 +17733,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -17847,7 +17853,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -17882,7 +17888,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -17920,12 +17926,12 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 	  goto SUBTRACT_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->subtract_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 1);
     }
 }
 
@@ -17957,7 +17963,7 @@ static s7_pointer g_subtract_1(s7_scheme *sc, s7_pointer args)
       return(s7_make_complex(sc, -real_part(p), -imag_part(p)));
 
     default:
-      method_or_bust_with_type(sc, p, sc->subtract_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, p, sc->subtract_symbol, args, a_number_string, 1);
     }
 }
 
@@ -17992,8 +17998,8 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	    case T_COMPLEX: return(make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
 	    default:
 	      if (!is_number(x))
-		method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 1);
-	      method_or_bust_with_type(sc, y, sc->subtract_symbol, args, A_NUMBER, 2);
+		method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 1);
+	      method_or_bust_with_type(sc, y, sc->subtract_symbol, args, a_number_string, 2);
 	    }
 	}
     }
@@ -18008,7 +18014,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, integer(x) - real(y)));
 	case T_COMPLEX: return(make_complex(sc, integer(x) - real_part(y), -imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, a_number_string, 2);
 	}
 
     case T_RATIO:
@@ -18019,7 +18025,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, fraction(x) - real(y)));
 	case T_COMPLEX: return(s7_make_complex(sc, fraction(x) - real_part(y), -imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, a_number_string, 2);
 	}
 
     case T_REAL:
@@ -18030,7 +18036,7 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, real(x) - real(y)));
 	case T_COMPLEX: return(make_complex(sc, real(x) - real_part(y), -imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, a_number_string, 2);
 	}
 
     case T_COMPLEX:
@@ -18041,11 +18047,11 @@ static s7_pointer g_subtract_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(s7_make_complex(sc, real_part(x) - real(y), imag_part(x)));
 	case T_COMPLEX: return(make_complex(sc, real_part(x) - real_part(y), imag_part(x) - imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->subtract_symbol, args, a_number_string, 2);
 	}
 
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 1);
     }
   return(x);
 }
@@ -18075,7 +18081,7 @@ static s7_pointer g_subtract_cs1(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, small_int(1)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, small_int(1)), a_number_string, 1);
     }
   return(x);
 }
@@ -18102,7 +18108,7 @@ static s7_pointer g_subtract_s1(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - 1.0));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - 1.0, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 1);
     }
   return(x);
 }
@@ -18134,7 +18140,7 @@ static s7_pointer g_subtract_csn(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, cadr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -18154,7 +18160,7 @@ static s7_pointer g_subtract_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, x, cadr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -18174,7 +18180,7 @@ static s7_pointer g_subtract_2f(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) - n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) - n, imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, args, a_number_string, 1);
     }
   return(x);
 }
@@ -18194,7 +18200,7 @@ static s7_pointer g_subtract_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, n - real(x)));
     case T_COMPLEX: return(s7_make_complex(sc, n - real_part(x), -imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, car(args), x), A_NUMBER, 2);
+      method_or_bust_with_type(sc, x, sc->subtract_symbol, list_2(sc, car(args), x), a_number_string, 2);
     }
   return(x);
 }
@@ -18224,7 +18230,7 @@ static s7_pointer g_subtract_f_sqr(s7_scheme *sc, s7_pointer args)
         s7_pointer func;
 	if ((func = find_method(sc, find_let(sc, x), sc->multiply_symbol)) != sc->undefined)
 	  return(g_subtract_2(sc, set_plist_2(sc, car(args), s7_apply_function(sc, func, list_2(sc, x, x)))));
-	return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 1, x, A_NUMBER));
+	return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 1, x, a_number_string));
       }
     }
   return(x);
@@ -18703,7 +18709,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     {
       if (!is_number(x))
-	method_or_bust_with_type(sc, x, sc->multiply_symbol, args, A_NUMBER, 0);
+	method_or_bust_with_type(sc, x, sc->multiply_symbol, args, a_number_string, 0);
       return(x);
     }
 
@@ -18797,7 +18803,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  goto MULTIPLY_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -18914,7 +18920,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -18949,7 +18955,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  goto MULTIPLY_COMPLEX;
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -19002,12 +19008,12 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->multiply_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, args, a_number_string, 1);
     }
 }
 
@@ -19052,8 +19058,8 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	      }
 	    default:
 	      if (!is_number(x))
-		method_or_bust_with_type(sc, x, sc->multiply_symbol, args, A_NUMBER, 1);
-	      method_or_bust_with_type(sc, y, sc->multiply_symbol, args, A_NUMBER, 2);
+		method_or_bust_with_type(sc, x, sc->multiply_symbol, args, a_number_string, 1);
+	      method_or_bust_with_type(sc, y, sc->multiply_symbol, args, a_number_string, 2);
 	    }
 	}
     }
@@ -19068,7 +19074,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, integer(x) * real(y)));
 	case T_COMPLEX: return(s7_make_complex(sc, integer(x) * real_part(y), integer(x) * imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, a_number_string, 2);
 	}
 
     case T_RATIO:
@@ -19084,7 +19090,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	    return(s7_make_complex(sc, frac * real_part(y), frac * imag_part(y)));
 	  }
 	default:
-	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, a_number_string, 2);
 	}
 
     case T_REAL:
@@ -19095,7 +19101,7 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	case T_REAL:    return(make_real(sc, real(x) * real(y)));
 	case T_COMPLEX: return(s7_make_complex(sc, real(x) * real_part(y), real(x) * imag_part(y)));
 	default:
-	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, a_number_string, 2);
 	}
 
     case T_COMPLEX:
@@ -19119,11 +19125,11 @@ static s7_pointer g_multiply_2(s7_scheme *sc, s7_pointer args)
 	    return(s7_make_complex(sc, r1 * r2 - i1 * i2, r1 * i2 + r2 * i1));
 	  }
 	default:
-	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->multiply_symbol, args, a_number_string, 2);
 	}
 
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, args, a_number_string, 1);
     }
   return(x);
 }
@@ -19165,7 +19171,7 @@ static s7_pointer g_multiply_si(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, cadr(args)), a_number_string, 1);
     }
   return(x);
 }
@@ -19202,7 +19208,7 @@ static s7_pointer g_multiply_is(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * n));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * n, imag_part(x) * n));
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, car(args), x), A_NUMBER, 2);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, car(args), x), a_number_string, 2);
     }
   return(x);
 }
@@ -19222,7 +19228,7 @@ static s7_pointer g_multiply_fs(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * scl));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * scl, imag_part(x) * scl));
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, car(args), x), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, car(args), x), a_number_string, 1);
     }
   return(x);
 }
@@ -19242,7 +19248,7 @@ static s7_pointer g_multiply_sf(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * scl));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * scl, imag_part(x) * scl));
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, cadr(args)), A_NUMBER, 2);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, cadr(args)), a_number_string, 2);
     }
   return(x);
 }
@@ -19278,7 +19284,7 @@ static s7_pointer g_sqr_ss(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_real(sc, real(x) * real(x)));
     case T_COMPLEX: return(s7_make_complex(sc, real_part(x) * real_part(x) - imag_part(x) * imag_part(x), 2.0 * real_part(x) * imag_part(x)));
     default:
-      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, x), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->multiply_symbol, list_2(sc, x, x), a_number_string, 1);
     }
   return(x);
 }
@@ -19311,14 +19317,14 @@ static s7_pointer g_mul_1ss(s7_scheme *sc, s7_pointer args)
 	  s7_pointer func;
 	  if ((func = find_method(sc, find_let(sc, x), sc->subtract_symbol)) != sc->undefined)
 	    return(g_multiply_2(sc, set_plist_2(sc, s7_apply_function(sc, func, list_2(sc, real_one, x)), y)));
-	  return(wrong_type_argument_with_type(sc, sc->subtract_symbol, 2, x, A_NUMBER));
+	  return(wrong_type_argument_with_type(sc, sc->subtract_symbol, 2, x, a_number_string));
 	}
       if (!is_number(y))
 	{
 	  s7_pointer func;
 	  if ((func = find_method(sc, find_let(sc, y), sc->multiply_symbol)) != sc->undefined)
 	    return(s7_apply_function(sc, func, list_2(sc, g_subtract(sc, list_2(sc, real_one, x)), y)));
-	  return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 2, y, A_NUMBER));
+	  return(wrong_type_argument_with_type(sc, sc->multiply_symbol, 2, y, a_number_string));
 	}
 
       r1 = 1.0 - s7_real_part(x);
@@ -19845,7 +19851,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   if (is_null(p))
     {
       if (!is_number(x))
-	method_or_bust_with_type(sc, x, sc->divide_symbol, args, A_NUMBER, 0);
+	method_or_bust_with_type(sc, x, sc->divide_symbol, args, a_number_string, 0);
       if (s7_is_zero(x))
 	return(division_by_zero_error(sc, sc->divide_symbol, args));
       return(s7_invert(sc, x));
@@ -19866,7 +19872,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		{
 		  n = check_values(sc, n, p);
 		  if (!s7_is_number(n))
-		    return(wrong_type_argument_with_type(sc, sc->divide_symbol, position_of(p, args), n, A_NUMBER));
+		    return(wrong_type_argument_with_type(sc, sc->divide_symbol, position_of(p, args), n, a_number_string));
 		}
 	      if (s7_is_zero(n))
 		return(division_by_zero_error(sc, sc->divide_symbol, args));
@@ -19966,7 +19972,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -20099,7 +20105,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -20116,7 +20122,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 		{
 		  n = check_values(sc, n, p);
 		  if (!s7_is_number(n))
-		    return(wrong_type_argument_with_type(sc, sc->divide_symbol, position_of(p, args), n, A_NUMBER));
+		    return(wrong_type_argument_with_type(sc, sc->divide_symbol, position_of(p, args), n, a_number_string));
 		}
 	      if (s7_is_zero(n))
 		return(division_by_zero_error(sc, sc->divide_symbol, args));
@@ -20168,7 +20174,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
@@ -20232,12 +20238,12 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 	  }
 
 	default:
-	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	  method_or_bust_with_type(sc, x, sc->divide_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	}
       break;
 
     default:
-      method_or_bust_with_type(sc, x, sc->divide_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->divide_symbol, args, a_number_string, 1);
     }
 }
 
@@ -20274,7 +20280,7 @@ static s7_pointer g_invert_1(s7_scheme *sc, s7_pointer args)
       }
 
     default:
-      method_or_bust_with_type(sc, p, sc->divide_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, p, sc->divide_symbol, args, a_number_string, 1);
     }
 }
 
@@ -20827,7 +20833,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_integer(sc, num_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_integer(sc, num_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -20858,7 +20864,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_ratio(sc, num_a, den_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -20892,7 +20898,7 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      goto NOT_EQUAL;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, make_real(sc, rl_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
@@ -20919,20 +20925,20 @@ static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
 	      break;
 
 	    default:
-	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), A_NUMBER, position_of(p, args) - 1);
+	      method_or_bust_with_type(sc, x, sc->eq_symbol, cons(sc, s7_make_complex(sc, rl_a, im_a), cons(sc, x, p)), a_number_string, position_of(p, args) - 1);
 	    }
 	  if (is_null(p))
 	    return(sc->T);
 	}
 
     default:
-      method_or_bust_with_type(sc, x, sc->eq_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->eq_symbol, args, a_number_string, 1);
     }
 
  NOT_EQUAL:
   for (; is_pair(p); p = cdr(p))
     if (!is_number_via_method(sc, car(p)))
-      return(wrong_type_argument_with_type(sc, sc->eq_symbol, position_of(p, args), car(p), A_NUMBER));
+      return(wrong_type_argument_with_type(sc, sc->eq_symbol, position_of(p, args), car(p), a_number_string));
 
   return(sc->F);
 }
@@ -20956,7 +20962,7 @@ static s7_pointer g_equal_s_ic(s7_scheme *sc, s7_pointer args)
     case T_REAL:    return(make_boolean(sc, real(val) == y));
     case T_COMPLEX: return(sc->F);
     default:
-      method_or_bust_with_type(sc, val, sc->eq_symbol, list_2(sc, val, cadr(args)), A_NUMBER, 1);
+      method_or_bust_with_type(sc, val, sc->eq_symbol, list_2(sc, val, cadr(args)), a_number_string, 1);
     }
   return(sc->T);
 }
@@ -20987,7 +20993,7 @@ static s7_pointer g_equal_length_ic(s7_scheme *sc, s7_pointer args)
     case T_VECTOR:       return(make_boolean(sc, vector_length(val) == ilen));
     case T_CLOSURE:
     case T_CLOSURE_STAR: if (has_methods(val)) return(make_boolean(sc, closure_length(sc, val) == ilen));
-    default:             return(simple_wrong_type_argument_with_type(sc, sc->length_symbol, val, A_SEQUENCE));
+    default:             return(simple_wrong_type_argument_with_type(sc, sc->length_symbol, val, a_sequence_string));
       /* here we already lost because we checked for the length above */
     }
   return(sc->F);
@@ -21007,7 +21013,7 @@ static s7_pointer c_equal_2_1(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	case T_REAL:    return(make_boolean(sc, integer(x) == real(y)));
 	case T_COMPLEX: return(sc->F);
 	default:
-	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), a_number_string, 2);
 	}
       break;
 
@@ -21019,7 +21025,7 @@ static s7_pointer c_equal_2_1(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	case T_REAL:    return(make_boolean(sc, fraction(x) == real(y)));            /* this could avoid the divide via numerator == denominator * x */
 	case T_COMPLEX: return(sc->F);
 	default:
-	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), a_number_string, 2);
 	}
       break;
 
@@ -21031,7 +21037,7 @@ static s7_pointer c_equal_2_1(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	case T_REAL:    return(make_boolean(sc, real(x) == real(y)));
 	case T_COMPLEX: return(sc->F);
 	default:
-	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), a_number_string, 2);
 	}
       break;
 
@@ -21051,12 +21057,12 @@ static s7_pointer c_equal_2_1(s7_scheme *sc, s7_pointer x, s7_pointer y)
 	  if ((real_part(x) == real_part(y)) && (imag_part(x) == imag_part(y))) return(sc->T); else return(sc->F);
 #endif
 	default:
-	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), A_NUMBER, 2);
+	  method_or_bust_with_type(sc, y, sc->eq_symbol, list_2(sc, x, y), a_number_string, 2);
 	}
       break;
 
     default:
-      method_or_bust_with_type(sc, x, sc->eq_symbol, list_2(sc, x, y), A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->eq_symbol, list_2(sc, x, y), a_number_string, 1);
     }
   return(sc->F);
 }
@@ -22063,7 +22069,7 @@ static s7_pointer g_less_length_ic(s7_scheme *sc, s7_pointer args)
     case T_VECTOR:       return(make_boolean(sc, vector_length(val) < ilen));
     case T_CLOSURE:
     case T_CLOSURE_STAR: if (has_methods(val)) return(make_boolean(sc, closure_length(sc, val) < ilen));
-    default:             return(simple_wrong_type_argument_with_type(sc, sc->length_symbol, val, A_SEQUENCE)); /* no check method here because we checked above */
+    default:             return(simple_wrong_type_argument_with_type(sc, sc->length_symbol, val, a_sequence_string)); /* no check method here because we checked above */
     }
   return(sc->F);
 }
@@ -22313,7 +22319,7 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, real(x) > y));
 
     default:
-      method_or_bust_with_type(sc, x, sc->gt_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->gt_symbol, args, a_number_string, 1);
     }
   return(sc->T);
 }
@@ -22344,7 +22350,7 @@ static s7_pointer g_greater_s_fc(s7_scheme *sc, s7_pointer args)
       return(make_boolean(sc, real(x) > y));
 
     default:
-      method_or_bust_with_type(sc, x, sc->gt_symbol, args, A_NUMBER, 1);
+      method_or_bust_with_type(sc, x, sc->gt_symbol, args, a_number_string, 1);
     }
   return(sc->T);
 }
@@ -22681,7 +22687,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      method_or_bust_with_type(sc, p, sc->real_part_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, p, sc->real_part_symbol, args, a_number_string, 0);
     }
 }
 
@@ -22732,7 +22738,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      method_or_bust_with_type(sc, p, sc->imag_part_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, p, sc->imag_part_symbol, args, a_number_string, 0);
     }
 }
 
@@ -22759,7 +22765,7 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
     case T_BIG_INTEGER: return(x);
     case T_BIG_RATIO:   return(mpz_to_big_integer(sc, mpq_numref(big_ratio(x))));
 #endif
-    default:            method_or_bust_with_type(sc, x, sc->numerator_symbol, args, A_RATIONAL, 0);
+    default:            method_or_bust_with_type(sc, x, sc->numerator_symbol, args, a_rational_string, 0);
     }
 }
 
@@ -22784,7 +22790,7 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
     case T_BIG_INTEGER: return(small_int(1));
     case T_BIG_RATIO:   return(mpz_to_big_integer(sc, mpq_denref(big_ratio(x))));
 #endif
-    default:            method_or_bust_with_type(sc, x, sc->denominator_symbol, args, A_RATIONAL, 0);
+    default:            method_or_bust_with_type(sc, x, sc->denominator_symbol, args, a_rational_string, 0);
     }
 }
 
@@ -22828,7 +22834,7 @@ static s7_pointer g_is_nan(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->is_nan_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->is_nan_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -22872,7 +22878,7 @@ static s7_pointer g_is_infinite(s7_scheme *sc, s7_pointer args)
 #endif
 
     default:
-      method_or_bust_with_type(sc, x, sc->is_infinite_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->is_infinite_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -22991,7 +22997,7 @@ static s7_pointer c_is_zero(s7_scheme *sc, s7_pointer x)
     case T_BIG_COMPLEX: return(sc->F);
 #endif
     default:
-      method_or_bust_with_type(sc, x, sc->is_zero_symbol, list_1(sc, x), A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->is_zero_symbol, list_1(sc, x), a_number_string, 0);
     }
 }
 
@@ -23154,7 +23160,7 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX: return(sc->F);
 #endif
     default:
-      method_or_bust_with_type(sc, x, sc->is_exact_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->is_exact_symbol, args, a_number_string, 0);
     }
 }
 
@@ -23179,7 +23185,7 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
     case T_BIG_COMPLEX: return(sc->T);
 #endif
     default:
-      method_or_bust_with_type(sc, x, sc->is_inexact_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, x, sc->is_inexact_symbol, args, a_number_string, 0);
     }
 }
 
@@ -23367,7 +23373,7 @@ order here follows gmp, and is the opposite of the CL convention.  (logbit? int 
 
   index = s7_integer(y);
   if (index < 0)
-    return(out_of_range(sc, sc->logbit_symbol, small_int(2), y, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->logbit_symbol, small_int(2), y, its_negative_string));
 
 #if WITH_GMP
   if (is_t_big_integer(x))
@@ -23392,7 +23398,7 @@ static s7_int c_ash(s7_scheme *sc, s7_int arg1, s7_int arg2)
   if (arg1 == 0) return(0);
 
   if (arg2 >= s7_int_bits)
-    out_of_range(sc, sc->ash_symbol, small_int(2), make_integer(sc, arg2), ITS_TOO_LARGE);
+    out_of_range(sc, sc->ash_symbol, small_int(2), make_integer(sc, arg2), its_too_large_string);
 
   if (arg2 < -s7_int_bits)
     {
@@ -23465,7 +23471,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
     method_or_bust(sc, r1, sc->random_state_symbol, args, T_INTEGER, 1);
   i1 = s7_integer(r1);
   if (i1 < 0)
-    return(out_of_range(sc, sc->random_state_symbol, small_int(1), r1, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->random_state_symbol, small_int(1), r1, its_negative_string));
 
   if (is_null(cdr(args)))
     {
@@ -23480,7 +23486,7 @@ Pass this as the second argument to 'random' to get a repeatable random number s
     method_or_bust(sc, r2, sc->random_state_symbol, args, T_INTEGER, 2);
   i2 = s7_integer(r2);
   if (i2 < 0)
-    return(out_of_range(sc, sc->random_state_symbol, small_int(2), r2, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->random_state_symbol, small_int(2), r2, its_negative_string));
 
   new_cell(sc, p, T_RANDOM_STATE);
   random_seed(p) = (unsigned long long int)i1;
@@ -23530,7 +23536,7 @@ You can later apply random-state to this list to continue a random number sequen
 #if WITH_GMP
   if ((is_pair(args)) &&
       (!is_random_state(car(args))))
-    method_or_bust_with_type(sc, car(args), sc->random_state_to_list_symbol, args, A_RANDOM_STATE_OBJECT, 1);
+    method_or_bust_with_type(sc, car(args), sc->random_state_to_list_symbol, args, a_random_state_object_string, 1);
   return(sc->nil);
 #else
   s7_pointer r;
@@ -23540,7 +23546,7 @@ You can later apply random-state to this list to continue a random number sequen
     {
       r = car(args);
       if (!is_random_state(r))
-	method_or_bust_with_type(sc, r, sc->random_state_to_list_symbol, args, A_RANDOM_STATE_OBJECT, 1);
+	method_or_bust_with_type(sc, r, sc->random_state_to_list_symbol, args, a_random_state_object_string, 1);
     }
   return(list_2(sc, make_integer(sc, random_seed(r)), make_integer(sc, random_carry(r))));
 #endif
@@ -23610,13 +23616,13 @@ static s7_pointer g_random(s7_scheme *sc, s7_pointer args)
 
   num = car(args);
   if (!s7_is_number(num))
-    method_or_bust_with_type(sc, num, sc->random_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, num, sc->random_symbol, args, a_number_string, 1);
 
   if (is_not_null(cdr(args)))
     {
       r = cadr(args);
       if (!is_random_state(r))
-	method_or_bust_with_type(sc, r, sc->random_symbol, args, A_RANDOM_STATE_OBJECT, 2);
+	method_or_bust_with_type(sc, r, sc->random_symbol, args, a_random_state_object_string, 2);
     }
   else r = sc->default_rng;
 
@@ -24434,7 +24440,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
 	}
       start = s7_integer(arg3);
       if (start < 0)
-	return(wrong_type_argument_with_type(sc, sc->char_position_symbol, 3, arg3, A_NON_NEGATIVE_INTEGER));
+	return(wrong_type_argument_with_type(sc, sc->char_position_symbol, 3, arg3, a_non_negative_integer_string));
     }
   else start = 0;
   if (start >= len) return(sc->F);
@@ -24499,7 +24505,7 @@ static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
 	return(g_char_position(sc, args));
       start = s7_integer(arg3);
       if (start < 0)
-	return(wrong_type_argument_with_type(sc, sc->char_position_symbol, 3, arg3, A_NON_NEGATIVE_INTEGER));
+	return(wrong_type_argument_with_type(sc, sc->char_position_symbol, 3, arg3, a_non_negative_integer_string));
       if (start >= len) return(sc->F);
     }
   else start = 0;
@@ -24541,7 +24547,7 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
 	}
       start = s7_integer(arg3);
       if (start < 0)
-	return(wrong_type_argument_with_type(sc, sc->string_position_symbol, 3, arg3, A_NON_NEGATIVE_INTEGER));
+	return(wrong_type_argument_with_type(sc, sc->string_position_symbol, 3, arg3, a_non_negative_integer_string));
     }
 
   if (string_length(s1p) == 0)
@@ -24725,7 +24731,7 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
 
   len = s7_integer(n);
   if ((len < 0) || (len > sc->max_string_length))
-    return(out_of_range(sc, sc->make_string_symbol, small_int(1), n, (len < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->make_string_symbol, small_int(1), n, (len < 0) ? its_negative_string : its_too_large_string));
 
   if (is_not_null(cdr(args)))
     {
@@ -24851,9 +24857,9 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
     }
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, index, A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, index, a_non_negative_integer_string));
   if (ind >= string_length(strng))
-    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, its_too_large_string));
 
   str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
@@ -24882,9 +24888,9 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
     }
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, index, A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, index, a_non_negative_integer_string));
   if (ind >= string_length(strng))
-    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, its_too_large_string));
 
   str = string_value(strng);
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
@@ -24895,9 +24901,9 @@ static s7_pointer c_string_ref(s7_scheme *sc, s7_pointer str, s7_int ind)
   if (!is_string(str))
     method_or_bust(sc, str, sc->string_ref_symbol, list_2(sc, str, make_integer(sc, ind)), T_STRING, 1);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, make_integer(sc, ind), A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, make_integer(sc, ind), a_non_negative_integer_string));
   if (ind >= string_length(str))
-    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), make_integer(sc, ind), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), make_integer(sc, ind), its_too_large_string));
   return(s7_make_character(sc, ((unsigned char *)string_value(str))[ind]));
 }
 
@@ -24928,9 +24934,9 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
     }
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 2, index, A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 2, index, a_non_negative_integer_string));
   if (ind >= string_length(x))
-    return(out_of_range(sc, sc->string_set_symbol, small_int(2), index, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->string_set_symbol, small_int(2), index, its_too_large_string));
   str = string_value(_TSet(x));
 
   c = caddr(args);
@@ -24942,7 +24948,7 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 	  s7_int ic;  /* not int here! */
 	  ic = s7_integer(c);
 	  if ((ic < 0) || (ic > 255))
-	    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 3, c, AN_UNSIGNED_BYTE));
+	    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 3, c, an_unsigned_byte_string));
 	  str[ind] = (char)ic;
 	  return(c);
 	}
@@ -24996,7 +25002,7 @@ static s7_pointer c_string_set_s(s7_scheme *sc, s7_pointer vec, s7_int index, s7
     method_or_bust(sc, val, sc->string_set_symbol, list_3(sc, vec, make_integer(sc, index), val), T_CHARACTER, 3);    
   if ((index < 0) ||
       (index >= string_length(vec)))
-    return(out_of_range(sc, sc->string_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->string_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
   string_value(vec)[index] = (char)character(val);
   return(val);
@@ -25131,7 +25137,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   index = s7_integer(pstart);
   if ((index < 0) ||
       (index > *end)) /* *end == length here */
-    return(out_of_range(sc, caller, small_int(position), pstart, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, caller, small_int(position), pstart, (index < 0) ? its_negative_string : its_too_large_string));
   *start = index;
 
   if (is_null(cdr(start_and_end_args)))
@@ -25151,7 +25157,7 @@ static s7_pointer start_and_end(s7_scheme *sc, s7_pointer caller, s7_pointer fal
   index = s7_integer(pend);
   if ((index < *start) ||
       (index > *end))
-    return(out_of_range(sc, caller, small_int(position + 1), pend, (index < *start) ? ITS_TOO_SMALL : ITS_TOO_LARGE));
+    return(out_of_range(sc, caller, small_int(position + 1), pend, (index < *start) ? its_too_small_string : its_too_large_string));
   *end = index;
   return(sc->gc_nil);
 }
@@ -25769,7 +25775,7 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 	}
       byte = integer(chr);
       if ((byte < 0) || (byte > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->string_fill_symbol, chr, AN_UNSIGNED_BYTE));
+	return(simple_wrong_type_argument_with_type(sc, sc->string_fill_symbol, chr, an_unsigned_byte_string));
     }
 
   end = string_length(x);
@@ -25988,7 +25994,7 @@ static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
 
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->make_byte_vector_symbol, byte, AN_UNSIGNED_BYTE));
+	return(simple_wrong_type_argument_with_type(sc, sc->make_byte_vector_symbol, byte, an_unsigned_byte_string));
       str = g_make_string(sc, set_plist_2(sc, len, chars[b]));
     }
   set_byte_vector(str);
@@ -26034,7 +26040,7 @@ static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
 	}
       b = s7_integer(byte);
       if ((b < 0) || (b > 255))
-	return(simple_wrong_type_argument_with_type(sc, sc->byte_vector_symbol, byte, AN_UNSIGNED_BYTE));
+	return(simple_wrong_type_argument_with_type(sc, sc->byte_vector_symbol, byte, an_unsigned_byte_string));
       str[i] = (unsigned char)b;
     }
   set_byte_vector(vec);
@@ -26083,7 +26089,7 @@ static s7_pointer c_port_line_number(s7_scheme *sc, s7_pointer x)
 {
   if ((!(is_input_port(x))) ||
       (port_is_closed(x)))
-    method_or_bust_with_type(sc, x, sc->port_line_number_symbol, list_1(sc, x), AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, x, sc->port_line_number_symbol, list_1(sc, x), an_input_port_string, 0);
   return(make_integer(sc, port_line_number(x)));
 }
 
@@ -26149,7 +26155,7 @@ static s7_pointer c_port_filename(s7_scheme *sc, s7_pointer x)
       return(s7_make_string_with_length(sc, "", 0));
       /* otherwise (eval-string (port-filename)) and (string->symbol (port-filename)) segfault */
     }
-  method_or_bust_with_type(sc, x, sc->port_filename_symbol, list_1(sc, x), AN_OPEN_PORT, 0);
+  method_or_bust_with_type(sc, x, sc->port_filename_symbol, list_1(sc, x), an_open_port_string, 0);
 }
 
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
@@ -26333,9 +26339,9 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer pt = car(args);
       if (!is_input_port(pt))
-	method_or_bust_with_type(sc, pt, sc->is_char_ready_symbol, args, AN_INPUT_PORT, 0);
+	method_or_bust_with_type(sc, pt, sc->is_char_ready_symbol, args, an_input_port_string, 0);
       if (port_is_closed(pt))
-	return(simple_wrong_type_argument_with_type(sc, sc->is_char_ready_symbol, pt, AN_OPEN_PORT));
+	return(simple_wrong_type_argument_with_type(sc, sc->is_char_ready_symbol, pt, an_open_port_string));
 
       if (is_function_port(pt))
 	return((*(port_input_function(pt)))(sc, S7_IS_CHAR_READY, pt));
@@ -26413,7 +26419,7 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 static s7_pointer c_close_input_port(s7_scheme *sc, s7_pointer pt)
 {
   if (!is_input_port(pt))
-    method_or_bust_with_type(sc, pt, sc->close_input_port_symbol, set_plist_1(sc, pt), AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, pt, sc->close_input_port_symbol, set_plist_1(sc, pt), an_input_port_string, 0);
   if (!is_immutable_port(pt))
     s7_close_input_port(sc, pt);
   return(sc->unspecified);
@@ -26463,7 +26469,7 @@ static s7_pointer g_flush_output_port(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(pt))
     {
       if (pt == sc->F) return(pt);
-      method_or_bust_with_type(sc, pt, sc->flush_output_port_symbol, args, AN_OUTPUT_PORT, 0);
+      method_or_bust_with_type(sc, pt, sc->flush_output_port_symbol, args, an_output_port_string, 0);
     }
   s7_flush_output_port(sc, pt);
   return(pt);
@@ -26531,7 +26537,7 @@ static s7_pointer c_close_output_port(s7_scheme *sc, s7_pointer pt)
   if (!is_output_port(pt))
     {
       if (pt == sc->F) return(sc->unspecified);
-      method_or_bust_with_type(sc, pt, sc->close_output_port_symbol, set_plist_1(sc, pt), AN_OUTPUT_PORT, 0);
+      method_or_bust_with_type(sc, pt, sc->close_output_port_symbol, set_plist_1(sc, pt), an_output_port_string, 0);
     }
   if (!(is_immutable_port(pt)))
     s7_close_output_port(sc, pt);
@@ -26572,14 +26578,14 @@ static int string_read_char(s7_scheme *sc, s7_pointer port)
 
 static int output_read_char(s7_scheme *sc, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->read_char_symbol, port, AN_INPUT_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->read_char_symbol, port, an_input_port_string);
   return(0);
 }
 
 
 static int closed_port_read_char(s7_scheme *sc, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->read_char_symbol, port, AN_OPEN_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->read_char_symbol, port, an_open_port_string);
   return(0);
 }
 
@@ -26589,13 +26595,13 @@ static int closed_port_read_char(s7_scheme *sc, s7_pointer port)
 
 static s7_pointer output_read_line(s7_scheme *sc, s7_pointer port, bool with_eol, bool copied)
 {
-  return(simple_wrong_type_argument_with_type(sc, sc->read_line_symbol, port, AN_INPUT_PORT));
+  return(simple_wrong_type_argument_with_type(sc, sc->read_line_symbol, port, an_input_port_string));
 }
 
 
 static s7_pointer closed_port_read_line(s7_scheme *sc, s7_pointer port, bool with_eol, bool copied)
 {
-  return(simple_wrong_type_argument_with_type(sc, sc->read_line_symbol, port, AN_OPEN_PORT));
+  return(simple_wrong_type_argument_with_type(sc, sc->read_line_symbol, port, an_open_port_string));
 }
 
 
@@ -26744,13 +26750,13 @@ static void file_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static void input_write_char(s7_scheme *sc, int c, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_char_symbol, port, AN_OUTPUT_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_char_symbol, port, an_output_port_string);
 }
 
 
 static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_char_symbol, port, AN_OPEN_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_char_symbol, port, an_open_port_string);
 }
 
 
@@ -26759,24 +26765,24 @@ static void closed_port_write_char(s7_scheme *sc, int c, s7_pointer port)
 
 static void input_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, AN_OUTPUT_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_output_port_string);
 }
 
 
 static void closed_port_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, AN_OPEN_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_open_port_string);
 }
 
 
 static void input_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, AN_OUTPUT_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_output_port_string);
 }
 
 static void closed_port_display(s7_scheme *sc, const char *s, s7_pointer port)
 {
-  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, AN_OPEN_PORT);
+  simple_wrong_type_argument_with_type(sc, sc->write_symbol, port, an_open_port_string);
 }
 
 static void stdout_write_string(s7_scheme *sc, const char *str, int len, s7_pointer port)
@@ -26934,7 +26940,7 @@ static s7_pointer g_write_string(s7_scheme *sc, s7_pointer args)
 	  string_value(x)[len] = 0;
 	  return(x);
 	}
-      method_or_bust_with_type(sc, port, sc->write_string_symbol, args, AN_OUTPUT_PORT, 2);
+      method_or_bust_with_type(sc, port, sc->write_string_symbol, args, an_output_port_string, 2);
     }
 
   if (start == 0)
@@ -27844,7 +27850,7 @@ static s7_pointer g_read_char(s7_scheme *sc, s7_pointer args)
       if (!port) return(sc->eof_object);
     }
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->read_char_symbol, args, AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, port, sc->read_char_symbol, args, an_input_port_string, 0);
   return(chars[port_read_character(port)(sc, port)]);
 }
 
@@ -27865,7 +27871,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args)
   s7_pointer port;
   port = car(args);
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->read_char_symbol, args, AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, port, sc->read_char_symbol, args, an_input_port_string, 0);
   return(chars[port_read_character(port)(sc, port)]);
 }
 
@@ -27909,7 +27915,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   else port = sc->output_port;
   if (port == sc->F) return(chr);
   if (!is_output_port(port))
-    method_or_bust_with_type(sc, port, sc->write_char_symbol, args, AN_OUTPUT_PORT, 2);
+    method_or_bust_with_type(sc, port, sc->write_char_symbol, args, an_output_port_string, 2);
 
   port_write_character(port)(sc, s7_character(chr), port);
   return(chr);
@@ -27955,9 +27961,9 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
   else port = sc->input_port;
 
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->peek_char_symbol, args, AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, port, sc->peek_char_symbol, args, an_input_port_string, 0);
   if (port_is_closed(port))
-    return(simple_wrong_type_argument_with_type(sc, sc->peek_char_symbol, port, AN_OPEN_PORT));
+    return(simple_wrong_type_argument_with_type(sc, sc->peek_char_symbol, port, an_open_port_string));
 
   if (is_function_port(port))
     return((*(port_input_function(port)))(sc, S7_PEEK_CHAR, port));
@@ -27983,7 +27989,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
       if (!port) return(sc->eof_object);
     }
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->read_byte_symbol, args, AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, port, sc->read_byte_symbol, args, an_input_port_string, 0);
 
   c = port_read_character(port)(sc, port);
   if (c == EOF)
@@ -28019,7 +28025,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 
   val = s7_integer(b);
   if ((val < 0) || (val > 255)) /* need to check this before port==#f, else (write-byte most-positive-fixnum #f) is not an error */
-    return(wrong_type_argument_with_type(sc, sc->write_byte_symbol, 1, b, AN_UNSIGNED_BYTE));
+    return(wrong_type_argument_with_type(sc, sc->write_byte_symbol, 1, b, an_unsigned_byte_string));
 
   if (is_pair(cdr(args)))
     port = cadr(args);
@@ -28028,7 +28034,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(port))
     {
       if (port == sc->F) return(car(args));
-      method_or_bust_with_type(sc, port, sc->write_byte_symbol, args, AN_OUTPUT_PORT, 0);
+      method_or_bust_with_type(sc, port, sc->write_byte_symbol, args, an_output_port_string, 0);
     }
 
   s7_write_char(sc, (int)(s7_integer(b)), port);
@@ -28038,7 +28044,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 static s7_int c_write_byte(s7_scheme *sc, s7_int x)
 {
   if ((x < 0) || (x > 255))
-    wrong_type_argument_with_type(sc, sc->write_byte_symbol, 1, make_integer(sc, x), AN_UNSIGNED_BYTE);
+    wrong_type_argument_with_type(sc, sc->write_byte_symbol, 1, make_integer(sc, x), an_unsigned_byte_string);
   s7_write_char(sc, (int)x, sc->output_port);
   return(x);
 }
@@ -28059,7 +28065,7 @@ If 'with-eol' is not #f, read-line includes the trailing end-of-line character."
     {
       port = car(args);
       if (!is_input_port(port))
-	method_or_bust_with_type(sc, port, sc->read_line_symbol, args, AN_INPUT_PORT, 1);
+	method_or_bust_with_type(sc, port, sc->read_line_symbol, args, an_input_port_string, 1);
 
       if (is_not_null(cdr(args)))
 	with_eol = (cadr(args) != sc->F);
@@ -28097,13 +28103,13 @@ static s7_pointer c_read_string(s7_scheme *sc, s7_int chars, s7_pointer port)
   unsigned char *str;
 
   if (chars < 0)
-    return(wrong_type_argument_with_type(sc, sc->read_string_symbol, 1, make_integer(sc, chars), A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->read_string_symbol, 1, make_integer(sc, chars), a_non_negative_integer_string));
   if (chars > sc->max_string_length)
-    return(out_of_range(sc, sc->read_string_symbol, small_int(1), make_integer(sc, chars), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->read_string_symbol, small_int(1), make_integer(sc, chars), its_too_large_string));
 
   if (!port) return(sc->eof_object);
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->read_string_symbol, list_2(sc, make_integer(sc, chars), port), AN_INPUT_PORT, 2);
+    method_or_bust_with_type(sc, port, sc->read_string_symbol, list_2(sc, make_integer(sc, chars), port), an_input_port_string, 2);
 
   if (chars == 0)
     return(make_empty_string(sc, 0, 0));
@@ -28207,7 +28213,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       restore_jump_info(sc);
       return(sc->value);
     }
-  return(simple_wrong_type_argument_with_type(sc, sc->read_symbol, port, AN_INPUT_PORT));
+  return(simple_wrong_type_argument_with_type(sc, sc->read_symbol, port, an_input_port_string));
 }
 
 
@@ -28235,7 +28241,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
     }
 
   if (!is_input_port(port))
-    method_or_bust_with_type(sc, port, sc->read_symbol, args, AN_INPUT_PORT, 0);
+    method_or_bust_with_type(sc, port, sc->read_symbol, args, an_input_port_string, 0);
 
   if (is_function_port(port))
     return((*(port_input_function(port)))(sc, S7_READ, port));
@@ -28378,7 +28384,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->load_symbol, 2, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->load_symbol, 2, e, a_let_string));
       if (e == sc->rootlet)
 	sc->envir = sc->nil;
       else sc->envir = e;
@@ -28778,7 +28784,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
- 	return(wrong_type_argument_with_type(sc, sc->eval_string_symbol, 2, e, A_LET));
+ 	return(wrong_type_argument_with_type(sc, sc->eval_string_symbol, 2, e, a_let_string));
       if (e == sc->rootlet)
 	sc->envir = sc->nil;
       else sc->envir = e;
@@ -28834,7 +28840,7 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 					 make_string_wrapper(sc, "a procedure of one argument (the port)")));
 
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->call_with_input_string_symbol, 2, proc, A_NORMAL_PROCEDURE));
+    return(wrong_type_argument_with_type(sc, sc->call_with_input_string_symbol, 2, proc, a_normal_procedure_string));
 
   return(call_with_input(sc, open_and_protect_input_string(sc, str), args));
 }
@@ -28860,7 +28866,7 @@ static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
     return(wrong_type_argument_with_type(sc, sc->call_with_input_file_symbol, 2, proc,
 					 make_string_wrapper(sc, "a procedure of one argument (the port)")));
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->call_with_input_file_symbol, 2, proc, A_NORMAL_PROCEDURE));
+    return(wrong_type_argument_with_type(sc, sc->call_with_input_file_symbol, 2, proc, a_normal_procedure_string));
 
   return(call_with_input(sc, open_input_file_1(sc, string_value(str), "r", "call-with-input-file"), args));
 }
@@ -28895,7 +28901,7 @@ static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, str, sc->with_input_from_string_symbol, args, T_STRING, 1);
 
   if (!is_thunk(sc, cadr(args)))
-    method_or_bust_with_type(sc, cadr(args), sc->with_input_from_string_symbol, args, A_THUNK, 2);
+    method_or_bust_with_type(sc, cadr(args), sc->with_input_from_string_symbol, args, a_thunk_string, 2);
 
   /* since the arguments are evaluated before we get here, we can get some confusing situations:
    *   (with-input-from-string "#x2.1" (read))
@@ -28920,7 +28926,7 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, car(args), sc->with_input_from_file_symbol, args, T_STRING, 1);
 
   if (!is_thunk(sc, cadr(args)))
-    method_or_bust_with_type(sc, cadr(args), sc->with_input_from_file_symbol, args, A_THUNK, 2);
+    method_or_bust_with_type(sc, cadr(args), sc->with_input_from_file_symbol, args, a_thunk_string, 2);
 
   return(with_input(sc, open_input_file_1(sc, string_value(car(args)), "r", "with-input-from-file"), args));
 }
@@ -29305,7 +29311,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
       break;
 
     default:
-      return(simple_wrong_type_argument_with_type(sc, sc->make_iterator_symbol, e, A_SEQUENCE));
+      return(simple_wrong_type_argument_with_type(sc, sc->make_iterator_symbol, e, a_sequence_string));
     }
   return(iter);
 }
@@ -32249,7 +32255,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(port))
     {
       if (port == sc->F) return(sc->unspecified);
-      method_or_bust_with_type(sc, port, sc->newline_symbol, args, AN_OUTPUT_PORT, 0);
+      method_or_bust_with_type(sc, port, sc->newline_symbol, args, an_output_port_string, 0);
     }
   s7_newline(sc, port);
   return(sc->unspecified);
@@ -32283,7 +32289,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(port))
     {
       if (port == sc->F) return(car(args));
-      method_or_bust_with_type(sc, port, sc->write_symbol, args, AN_OUTPUT_PORT, 2);
+      method_or_bust_with_type(sc, port, sc->write_symbol, args, an_output_port_string, 2);
     }
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, "write", 2, port, "an open output port"));
@@ -32320,7 +32326,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   if (!is_output_port(port))
     {
       if (port == sc->F) return(car(args));
-      method_or_bust_with_type(sc, port, sc->display_symbol, args, AN_OUTPUT_PORT, 2);
+      method_or_bust_with_type(sc, port, sc->display_symbol, args, an_output_port_string, 2);
     }
   if (port_is_closed(port))
     return(s7_wrong_type_arg_error(sc, "display", 2, port, "an open output port"));
@@ -32345,7 +32351,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
     method_or_bust_with_type(sc, proc, sc->call_with_output_string_symbol, args, make_string_wrapper(sc, "a procedure of one argument (the port)"), 1);
 
   if ((is_continuation(proc)) || (is_goto(proc)))
-    return(wrong_type_argument_with_type(sc, sc->call_with_output_string_symbol, 1, proc, A_NORMAL_PROCEDURE));
+    return(wrong_type_argument_with_type(sc, sc->call_with_output_string_symbol, 1, proc, a_normal_procedure_string));
 
   port = s7_open_output_string(sc);
   push_stack(sc, OP_GET_OUTPUT_STRING_1, sc->F, port);
@@ -32373,7 +32379,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
     method_or_bust_with_type(sc, proc, sc->call_with_output_file_symbol, args, make_string_wrapper(sc, "a procedure of one argument (the port)"), 2);
 
   if ((is_continuation(proc)) || is_goto(proc))
-    return(wrong_type_argument_with_type(sc, sc->call_with_output_file_symbol, 2, proc, A_NORMAL_PROCEDURE));
+    return(wrong_type_argument_with_type(sc, sc->call_with_output_file_symbol, 2, proc, a_normal_procedure_string));
 
   port = s7_open_output_file(sc, string_value(file), "w");
   push_stack(sc, OP_UNWIND_OUTPUT, sc->F, port);
@@ -32394,7 +32400,7 @@ static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!is_thunk(sc, p))
-    method_or_bust_with_type(sc, p, sc->with_output_to_string_symbol, args, A_THUNK, 1);
+    method_or_bust_with_type(sc, p, sc->with_output_to_string_symbol, args, a_thunk_string, 1);
 
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_string(sc);
@@ -32425,7 +32431,7 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 
   proc = cadr(args);
   if (!is_thunk(sc, proc))
-    method_or_bust_with_type(sc, proc, sc->with_output_to_file_symbol, args, A_THUNK, 2);
+    method_or_bust_with_type(sc, proc, sc->with_output_to_file_symbol, args, a_thunk_string, 2);
 
   old_output_port = sc->output_port;
   sc->output_port = s7_open_output_file(sc, string_value(file), "w");
@@ -33323,7 +33329,7 @@ static s7_pointer g_format_1(s7_scheme *sc, s7_pointer args)
   if (!((s7_is_boolean(pt)) ||               /* #f or #t */
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
 	 (!port_is_closed(pt)))))
-    method_or_bust_with_type(sc, pt, sc->format_symbol, args, AN_OUTPUT_PORT, 1);
+    method_or_bust_with_type(sc, pt, sc->format_symbol, args, an_output_port_string, 1);
 
   str = cadr(args);
   if (!is_string(str))
@@ -34423,10 +34429,10 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
 
   len = s7_integer(car(args));            /* needs to be s7_int here so that (make-list most-negative-fixnum) is handled correctly */
   if (len < 0)
-    return(out_of_range(sc, sc->make_list_symbol, small_int(1), car(args), ITS_NEGATIVE));
+    return(out_of_range(sc, sc->make_list_symbol, small_int(1), car(args), its_negative_string));
   if (len == 0) return(sc->nil);          /* what about (make-list 0 123)? */
   if (len > sc->max_list_length)
-    return(out_of_range(sc, sc->make_list_symbol, small_int(1), car(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->make_list_symbol, small_int(1), car(args), its_too_large_string));
 
   if (is_pair(cdr(args)))
     init = cadr(args);
@@ -34456,8 +34462,8 @@ static s7_pointer g_list_ref_ic(s7_scheme *sc, s7_pointer args)
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
-      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, lst, A_PROPER_LIST));
+	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), cadr(args), its_too_large_string));
+      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, lst, a_proper_list_string));
     }
   return(car(p));
 }
@@ -34476,15 +34482,15 @@ static s7_pointer list_ref_1(s7_scheme *sc, s7_pointer lst, s7_pointer ind)
     }
   index = s7_integer(ind);
   if ((index < 0) || (index > sc->max_list_length))
-    return(out_of_range(sc, sc->list_ref_symbol, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->list_ref_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string));
 
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
 
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), ind, ITS_TOO_LARGE));
-      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, lst, A_PROPER_LIST));
+	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), ind, its_too_large_string));
+      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, lst, a_proper_list_string));
     }
   return(car(p));
 }
@@ -34527,13 +34533,13 @@ static s7_pointer c_list_ref(s7_scheme *sc, s7_pointer x, s7_int index)
   if (!s7_is_pair(x))
     method_or_bust(sc, x, sc->list_ref_symbol, list_2(sc, x, make_integer(sc, index)), T_PAIR, 1);
   if (index < 0)
-    return(out_of_range(sc, sc->list_ref_symbol, small_int(2), make_integer(sc, index), ITS_NEGATIVE));
+    return(out_of_range(sc, sc->list_ref_symbol, small_int(2), make_integer(sc, index), its_negative_string));
   for (i = 0, p = x; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
-      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, x, A_PROPER_LIST));
+	return(out_of_range(sc, sc->list_ref_symbol, small_int(2), make_integer(sc, index), its_too_large_string));
+      return(wrong_type_argument_with_type(sc, sc->list_ref_symbol, 1, x, a_proper_list_string));
     }
   return(car(p));
 }
@@ -34565,15 +34571,15 @@ static s7_pointer g_list_set_1(s7_scheme *sc, s7_pointer lst, s7_pointer args, i
     }
   index = s7_integer(ind);
   if ((index < 0) || (index > sc->max_list_length))
-    return(out_of_range(sc, sc->list_set_symbol, small_int(arg_num), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->list_set_symbol, small_int(arg_num), ind, (index < 0) ? its_negative_string : its_too_large_string));
 
   for (i = 0, p = _TSet(lst); (i < index) && is_pair(p); i++, p = cdr(p)) {}
 
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range(sc, sc->list_set_symbol, small_int(arg_num), ind, ITS_TOO_LARGE));
-      return(wrong_type_argument_with_type(sc, sc->list_set_symbol, 1, lst, A_PROPER_LIST));
+	return(out_of_range(sc, sc->list_set_symbol, small_int(arg_num), ind, its_too_large_string));
+      return(wrong_type_argument_with_type(sc, sc->list_set_symbol, 1, lst, a_proper_list_string));
     }
   if (is_null(cddr(args)))
     car(p) = cadr(args);
@@ -34630,14 +34636,14 @@ static s7_pointer c_list_set_s(s7_scheme *sc, s7_pointer lst, s7_int index, s7_p
   s7_pointer p;
 
   if ((index < 0) || (index > sc->max_list_length))
-    return(out_of_range(sc, sc->list_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->list_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
   for (i = 0, p = lst; (i < index) && is_pair(p); i++, p = cdr(p)) {}
   if (!is_pair(p))
     {
       if (is_null(p))
-	return(out_of_range(sc, sc->list_set_symbol, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
-      return(wrong_type_argument_with_type(sc, sc->list_set_symbol, 1, lst, A_PROPER_LIST));
+	return(out_of_range(sc, sc->list_set_symbol, small_int(2), make_integer(sc, index), its_too_large_string));
+      return(wrong_type_argument_with_type(sc, sc->list_set_symbol, 1, lst, a_proper_list_string));
     }
   car(p) = val;
   return(val);
@@ -34670,14 +34676,14 @@ static s7_pointer c_list_tail(s7_scheme *sc, s7_pointer lst, s7_int index)
   s7_pointer p;
 
   if (!s7_is_list(sc, lst))
-    method_or_bust_with_type(sc, lst, sc->list_tail_symbol, list_2(sc, lst, make_integer(sc, index)), A_LIST, 1);
+    method_or_bust_with_type(sc, lst, sc->list_tail_symbol, list_2(sc, lst, make_integer(sc, index)), a_list_string, 1);
 
   if ((index < 0) || (index > sc->max_list_length))
-    return(out_of_range(sc, sc->list_tail_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->list_tail_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
   for (i = 0, p = lst; (i < index) && (is_pair(p)); i++, p = cdr(p)) {}
   if (i < index)
-    return(out_of_range(sc, sc->list_tail_symbol, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->list_tail_symbol, small_int(2), make_integer(sc, index), its_too_large_string));
   return(p);
 }
 
@@ -34727,61 +34733,61 @@ PF2_TO_PF(cons, s7_cons)
 
 static void init_car_a_list(void)
 {
-  CAR_A_LIST = s7_make_permanent_string("a list whose car is also a list");
-  CDR_A_LIST = s7_make_permanent_string("a list whose cdr is also a list");
+  car_a_list_string = s7_make_permanent_string("a list whose car is also a list");
+  cdr_a_list_string = s7_make_permanent_string("a list whose cdr is also a list");
 
-  CAAR_A_LIST = s7_make_permanent_string("a list whose caar is also a list");
-  CADR_A_LIST = s7_make_permanent_string("a list whose cadr is also a list");
-  CDAR_A_LIST = s7_make_permanent_string("a list whose cdar is also a list");
-  CDDR_A_LIST = s7_make_permanent_string("a list whose cddr is also a list");
+  caar_a_list_string = s7_make_permanent_string("a list whose caar is also a list");
+  cadr_a_list_string = s7_make_permanent_string("a list whose cadr is also a list");
+  cdar_a_list_string = s7_make_permanent_string("a list whose cdar is also a list");
+  cddr_a_list_string = s7_make_permanent_string("a list whose cddr is also a list");
 
-  CAAAR_A_LIST = s7_make_permanent_string("a list whose caaar is also a list");
-  CAADR_A_LIST = s7_make_permanent_string("a list whose caadr is also a list");
-  CADAR_A_LIST = s7_make_permanent_string("a list whose cadar is also a list");
-  CADDR_A_LIST = s7_make_permanent_string("a list whose caddr is also a list");
-  CDAAR_A_LIST = s7_make_permanent_string("a list whose cdaar is also a list");
-  CDADR_A_LIST = s7_make_permanent_string("a list whose cdadr is also a list");
-  CDDAR_A_LIST = s7_make_permanent_string("a list whose cddar is also a list");
-  CDDDR_A_LIST = s7_make_permanent_string("a list whose cdddr is also a list");
+  caaar_a_list_string = s7_make_permanent_string("a list whose caaar is also a list");
+  caadr_a_list_string = s7_make_permanent_string("a list whose caadr is also a list");
+  cadar_a_list_string = s7_make_permanent_string("a list whose cadar is also a list");
+  caddr_a_list_string = s7_make_permanent_string("a list whose caddr is also a list");
+  cdaar_a_list_string = s7_make_permanent_string("a list whose cdaar is also a list");
+  cdadr_a_list_string = s7_make_permanent_string("a list whose cdadr is also a list");
+  cddar_a_list_string = s7_make_permanent_string("a list whose cddar is also a list");
+  cdddr_a_list_string = s7_make_permanent_string("a list whose cdddr is also a list");
 
-  A_LIST =                 s7_make_permanent_string("a list");
-  AN_EQ_FUNC =             s7_make_permanent_string("a procedure that can take 2 arguments");
-  AN_ASSOCIATION_LIST =    s7_make_permanent_string("an association list");
-  A_NORMAL_REAL =          s7_make_permanent_string("a normal real");
-  A_RATIONAL =             s7_make_permanent_string("an integer or a ratio");
-  A_NUMBER =               s7_make_permanent_string("a number");
-  A_PROCEDURE =            s7_make_permanent_string("a procedure");
-  A_NORMAL_PROCEDURE =     s7_make_permanent_string("a normal procedure (not a continuation)");
-  A_LET =                  s7_make_permanent_string("a let (environment)");
-  A_PROPER_LIST =          s7_make_permanent_string("a proper list");
-  A_BOOLEAN =              s7_make_permanent_string("a boolean");
-  AN_INPUT_PORT =          s7_make_permanent_string("an input port");
-  AN_OPEN_PORT =           s7_make_permanent_string("an open port");
-  AN_OUTPUT_PORT =         s7_make_permanent_string("an output port");
-  AN_INPUT_STRING_PORT =   s7_make_permanent_string("an input string port");
-  AN_INPUT_FILE_PORT =     s7_make_permanent_string("an input file port");
-  AN_OUTPUT_STRING_PORT =  s7_make_permanent_string("an output string port");
-  AN_OUTPUT_FILE_PORT =    s7_make_permanent_string("an output file port");
-  A_THUNK =                s7_make_permanent_string("a thunk");
-  A_SYMBOL =               s7_make_permanent_string("a symbol");
-  A_NON_NEGATIVE_INTEGER = s7_make_permanent_string("a non-negative integer");
-  AN_UNSIGNED_BYTE =       s7_make_permanent_string("an unsigned byte");
-  SOMETHING_APPLICABLE =   s7_make_permanent_string("a procedure or something applicable");
-  A_RANDOM_STATE_OBJECT =  s7_make_permanent_string("a random-state object");
-  A_FORMAT_PORT =          s7_make_permanent_string("#f, #t, or an open output port");
-  A_BINDING =              s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
-  A_NON_CONSTANT_SYMBOL =  s7_make_permanent_string("a non-constant symbol");
-  A_SEQUENCE =             s7_make_permanent_string("a sequence");
-  A_VALID_RADIX =          s7_make_permanent_string("should be between 2 and 16");
-  RESULT_IS_TOO_LARGE =    s7_make_permanent_string("result is too large");
-  ITS_TOO_LARGE =          s7_make_permanent_string("it is too large");
-  ITS_TOO_SMALL =          s7_make_permanent_string("it is less than the start position");
-  ITS_NEGATIVE =           s7_make_permanent_string("it is negative");
-  ITS_NAN =                s7_make_permanent_string("NaN usually indicates a numerical error");
-  ITS_INFINITE =           s7_make_permanent_string("it is infinite");
-  TOO_MANY_INDICES =       s7_make_permanent_string("too many indices");
+  a_list_string =                 s7_make_permanent_string("a list");
+  an_eq_func_string =             s7_make_permanent_string("a procedure that can take 2 arguments");
+  an_association_list_string =    s7_make_permanent_string("an association list");
+  a_normal_real_string =          s7_make_permanent_string("a normal real");
+  a_rational_string =             s7_make_permanent_string("an integer or a ratio");
+  a_number_string =               s7_make_permanent_string("a number");
+  a_procedure_string =            s7_make_permanent_string("a procedure");
+  a_normal_procedure_string =     s7_make_permanent_string("a normal procedure (not a continuation)");
+  a_let_string =                  s7_make_permanent_string("a let (environment)");
+  a_proper_list_string =          s7_make_permanent_string("a proper list");
+  a_boolean_string =              s7_make_permanent_string("a boolean");
+  an_input_port_string =          s7_make_permanent_string("an input port");
+  an_open_port_string =           s7_make_permanent_string("an open port");
+  an_output_port_string =         s7_make_permanent_string("an output port");
+  an_input_string_port_string =   s7_make_permanent_string("an input string port");
+  an_input_file_port_string =     s7_make_permanent_string("an input file port");
+  an_output_string_port_string =  s7_make_permanent_string("an output string port");
+  an_output_file_port_string =    s7_make_permanent_string("an output file port");
+  a_thunk_string =                s7_make_permanent_string("a thunk");
+  a_symbol_string =               s7_make_permanent_string("a symbol");
+  a_non_negative_integer_string = s7_make_permanent_string("a non-negative integer");
+  an_unsigned_byte_string =       s7_make_permanent_string("an unsigned byte");
+  something_applicable_string =   s7_make_permanent_string("a procedure or something applicable");
+  a_random_state_object_string =  s7_make_permanent_string("a random-state object");
+  a_format_port_string =          s7_make_permanent_string("#f, #t, or an open output port");
+  a_binding_string =              s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
+  a_non_constant_symbol_string =  s7_make_permanent_string("a non-constant symbol");
+  a_sequence_string =             s7_make_permanent_string("a sequence");
+  a_valid_radix_string =          s7_make_permanent_string("should be between 2 and 16");
+  result_is_too_large_string =    s7_make_permanent_string("result is too large");
+  its_too_large_string =          s7_make_permanent_string("it is too large");
+  its_too_small_string =          s7_make_permanent_string("it is less than the start position");
+  its_negative_string =           s7_make_permanent_string("it is negative");
+  its_nan_string =                s7_make_permanent_string("NaN usually indicates a numerical error");
+  its_infinite_string =           s7_make_permanent_string("it is infinite");
+  too_many_indices_string =       s7_make_permanent_string("too many indices");
 #if (!HAVE_COMPLEX_NUMBERS)
-  NO_COMPLEX_NUMBERS =     s7_make_permanent_string("this version of s7 does not support complex numbers");
+  no_complex_numbers_string =     s7_make_permanent_string("this version of s7 does not support complex numbers");
 #endif
 }
 
@@ -34887,7 +34893,7 @@ PF2_TO_PF(set_cdr, c_set_cdr)
 static s7_pointer g_caar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caar_symbol, lst, CAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caar_symbol, lst, car_a_list_string));
   /* it makes no difference in timing to move lst here or below (i.e. lst=car(lst) then return(car(lst)) and so on) */
   return(caar(lst));
 }
@@ -34900,7 +34906,7 @@ static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caar_symbol, args, T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caar_symbol, lst, CAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caar_symbol, lst, car_a_list_string));
   /* it makes no difference in timing to move lst here or below (i.e. lst=car(lst) then return(car(lst)) and so on) */
   return(caar(lst));
 }
@@ -34912,7 +34918,7 @@ PF_TO_PF(caar, g_caar_1)
 static s7_pointer g_cadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadr_symbol, lst, CDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadr_symbol, lst, cdr_a_list_string));
   return(cadr(lst));
 }
 
@@ -34924,7 +34930,7 @@ static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadr_symbol, args, T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadr_symbol, lst, CDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadr_symbol, lst, cdr_a_list_string));
   return(cadr(lst));
 }
 
@@ -34935,7 +34941,7 @@ PF_TO_PF(cadr, g_cadr_1)
 static s7_pointer g_cdar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdar_symbol, lst, CAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdar_symbol, lst, car_a_list_string));
   return(cdar(lst));
 }
 
@@ -34947,7 +34953,7 @@ static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdar_symbol, args, T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdar_symbol, lst, CAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdar_symbol, lst, car_a_list_string));
   return(cdar(lst));
 }
 
@@ -34958,7 +34964,7 @@ PF_TO_PF(cdar, g_cdar_1)
 static s7_pointer g_cddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddr_symbol, lst, CDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddr_symbol, lst, cdr_a_list_string));
   return(cddr(lst));
 }
 
@@ -34970,7 +34976,7 @@ static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
   s7_pointer lst;
   lst = car(args);
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddr_symbol, args, T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddr_symbol, lst, CDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddr_symbol, lst, cdr_a_list_string));
   return(cddr(lst));
 }
 
@@ -34981,8 +34987,8 @@ PF_TO_PF(cddr, g_cddr_1)
 static s7_pointer g_caaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(car(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caaar_symbol, lst, CAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaar_symbol, lst, car_a_list_string));
+  if (!is_pair(car(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caaar_symbol, lst, caar_a_list_string));
   return(caaar(lst));
 }
 
@@ -35001,8 +35007,8 @@ PF_TO_PF(caaar, g_caaar_1)
 static s7_pointer g_caadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(car(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caadr_symbol, lst, CADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(car(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caadr_symbol, lst, cadr_a_list_string));
   return(caadr(lst));
 }
 
@@ -35021,8 +35027,8 @@ PF_TO_PF(caadr, g_caadr_1)
 static s7_pointer g_cadar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdr(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cadar_symbol, lst, CDAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdr(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cadar_symbol, lst, cdar_a_list_string));
   return(cadar(lst));
 }
 
@@ -35041,8 +35047,8 @@ PF_TO_PF(cadar, g_cadar_1)
 static s7_pointer g_cdaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(car(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdaar_symbol, lst, CAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaar_symbol, lst, car_a_list_string));
+  if (!is_pair(car(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdaar_symbol, lst, caar_a_list_string));
   return(cdaar(lst));
 }
 
@@ -35061,8 +35067,8 @@ PF_TO_PF(cdaar, g_cdaar_1)
 static s7_pointer g_caddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cdr(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caddr_symbol, lst, CDDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cdr(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->caddr_symbol, lst, cddr_a_list_string));
   return(caddr(lst));
 }
 
@@ -35081,8 +35087,8 @@ PF_TO_PF(caddr, g_caddr_1)
 static s7_pointer g_cdddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cdr(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdddr_symbol, lst, CDDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cdr(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdddr_symbol, lst, cddr_a_list_string));
   return(cdddr(lst));
 }
 
@@ -35101,8 +35107,8 @@ PF_TO_PF(cdddr, g_cdddr_1)
 static s7_pointer g_cdadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(car(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdadr_symbol, lst, CADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(car(cdr(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cdadr_symbol, lst, cadr_a_list_string));
   return(cdadr(lst));
 }
 
@@ -35121,8 +35127,8 @@ PF_TO_PF(cdadr, g_cdadr_1)
 static s7_pointer g_cddar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdr(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cddar_symbol, lst, CDAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdr(car(lst)))) return(simple_wrong_type_argument_with_type(sc, sc->cddar_symbol, lst, cdar_a_list_string));
   return(cddar(lst));
 }
 
@@ -35141,9 +35147,9 @@ PF_TO_PF(cddar, g_cddar_1)
 static s7_pointer g_caaaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caaaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, CAAR_A_LIST));
-  if (!is_pair(caaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, CAAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, car_a_list_string));
+  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, caar_a_list_string));
+  if (!is_pair(caaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaaar_symbol, lst, caaar_a_list_string));
   return(caaaar(lst));
 }
 
@@ -35162,9 +35168,9 @@ PF_TO_PF(caaaar, g_caaaar_1)
 static s7_pointer g_caaadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caaadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, CADR_A_LIST));
-  if (!is_pair(caadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, CAADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, cadr_a_list_string));
+  if (!is_pair(caadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaadr_symbol, lst, caadr_a_list_string));
   return(caaadr(lst));
 }
 
@@ -35183,9 +35189,9 @@ PF_TO_PF(caaadr, g_caaadr_1)
 static s7_pointer g_caadar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caadar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, CDAR_A_LIST));
-  if (!is_pair(cadar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, CADAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, cdar_a_list_string));
+  if (!is_pair(cadar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caadar_symbol, lst, cadar_a_list_string));
   return(caadar(lst));
 }
 
@@ -35204,9 +35210,9 @@ PF_TO_PF(caadar, g_caadar_1)
 static s7_pointer g_cadaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, CAAR_A_LIST));
-  if (!is_pair(cdaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, CDAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, car_a_list_string));
+  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, caar_a_list_string));
+  if (!is_pair(cdaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadaar_symbol, lst, cdaar_a_list_string));
   return(cadaar(lst));
 }
 
@@ -35225,9 +35231,9 @@ PF_TO_PF(cadaar, g_cadaar_1)
 static s7_pointer g_caaddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caaddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, CDDR_A_LIST));
-  if (!is_pair(caddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, CADDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, cddr_a_list_string));
+  if (!is_pair(caddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caaddr_symbol, lst, caddr_a_list_string));
   return(caaddr(lst));
 }
 
@@ -35246,9 +35252,9 @@ PF_TO_PF(caaddr, g_caaddr_1)
 static s7_pointer g_cadddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, CDDR_A_LIST));
-  if (!is_pair(cdddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, CDDDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, cddr_a_list_string));
+  if (!is_pair(cdddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadddr_symbol, lst, cdddr_a_list_string));
   return(cadddr(lst));
 }
 
@@ -35267,9 +35273,9 @@ PF_TO_PF(cadddr, g_cadddr_1)
 static s7_pointer g_cadadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cadadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, CADR_A_LIST));
-  if (!is_pair(cdadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, CDADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, cadr_a_list_string));
+  if (!is_pair(cdadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cadadr_symbol, lst, cdadr_a_list_string));
   return(cadadr(lst));
 }
 
@@ -35288,9 +35294,9 @@ PF_TO_PF(cadadr, g_cadadr_1)
 static s7_pointer g_caddar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->caddar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, CDAR_A_LIST));
-  if (!is_pair(cddar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, CDDAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, cdar_a_list_string));
+  if (!is_pair(cddar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->caddar_symbol, lst, cddar_a_list_string));
   return(caddar(lst));
 }
 
@@ -35309,9 +35315,9 @@ PF_TO_PF(caddar, g_caddar_1)
 static s7_pointer g_cdaaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdaaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, CAAR_A_LIST));
-  if (!is_pair(caaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, CAAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, car_a_list_string));
+  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, caar_a_list_string));
+  if (!is_pair(caaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaaar_symbol, lst, caaar_a_list_string));
   return(cdaaar(lst));
 }
 
@@ -35330,9 +35336,9 @@ PF_TO_PF(cdaaar, g_cdaaar_1)
 static s7_pointer g_cdaadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdaadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, CADR_A_LIST));
-  if (!is_pair(caadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, CAADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, cadr_a_list_string));
+  if (!is_pair(caadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaadr_symbol, lst, caadr_a_list_string));
   return(cdaadr(lst));
 }
 
@@ -35351,9 +35357,9 @@ PF_TO_PF(cdaadr, g_cdaadr_1)
 static s7_pointer g_cdadar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdadar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, CDAR_A_LIST));
-  if (!is_pair(cadar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, CADAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, cdar_a_list_string));
+  if (!is_pair(cadar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdadar_symbol, lst, cadar_a_list_string));
   return(cdadar(lst));
 }
 
@@ -35372,9 +35378,9 @@ PF_TO_PF(cdadar, g_cdadar_1)
 static s7_pointer g_cddaar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddaar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, CAAR_A_LIST));
-  if (!is_pair(cdaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, CDAAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, car_a_list_string));
+  if (!is_pair(caar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, caar_a_list_string));
+  if (!is_pair(cdaar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddaar_symbol, lst, cdaar_a_list_string));
   return(cddaar(lst));
 }
 
@@ -35393,9 +35399,9 @@ PF_TO_PF(cddaar, g_cddaar_1)
 static s7_pointer g_cdaddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdaddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, CDDR_A_LIST));
-  if (!is_pair(caddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, CADDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, cddr_a_list_string));
+  if (!is_pair(caddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdaddr_symbol, lst, caddr_a_list_string));
   return(cdaddr(lst));
 }
 
@@ -35414,9 +35420,9 @@ PF_TO_PF(cdaddr, g_cdaddr_1)
 static s7_pointer g_cddddr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddddr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, CDDR_A_LIST));
-  if (!is_pair(cdddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, CDDDR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, cddr_a_list_string));
+  if (!is_pair(cdddr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddddr_symbol, lst, cdddr_a_list_string));
   return(cddddr(lst));
 }
 
@@ -35434,9 +35440,9 @@ PF_TO_PF(cddddr, g_cddddr_1)
 static s7_pointer g_cddadr_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cddadr_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, CDR_A_LIST));
-  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, CADR_A_LIST));
-  if (!is_pair(cdadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, CDADR_A_LIST));
+  if (!is_pair(cdr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, cdr_a_list_string));
+  if (!is_pair(cadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, cadr_a_list_string));
+  if (!is_pair(cdadr(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cddadr_symbol, lst, cdadr_a_list_string));
   return(cddadr(lst));
 }
 
@@ -35454,9 +35460,9 @@ PF_TO_PF(cddadr, g_cddadr_1)
 static s7_pointer g_cdddar_1(s7_scheme *sc, s7_pointer lst)
 {
   if (!is_pair(lst)) method_or_bust(sc, lst, sc->cdddar_symbol, set_plist_1(sc, lst), T_PAIR, 0);
-  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, CAR_A_LIST));
-  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, CDAR_A_LIST));
-  if (!is_pair(cddar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, CDDAR_A_LIST));
+  if (!is_pair(car(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, car_a_list_string));
+  if (!is_pair(cdar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, cdar_a_list_string));
+  if (!is_pair(cddar(lst))) return(simple_wrong_type_argument_with_type(sc, sc->cdddar_symbol, lst, cddar_a_list_string));
   return(cdddar(lst));
 }
 
@@ -35521,7 +35527,7 @@ static s7_pointer c_assq(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (!is_pair(y))
     {
       if (is_null(y)) return(sc->F);
-      method_or_bust_with_type(sc, y, sc->assq_symbol, list_2(sc, x, y), AN_ASSOCIATION_LIST, 2);
+      method_or_bust_with_type(sc, y, sc->assq_symbol, list_2(sc, x, y), an_association_list_string, 2);
     }
   /* we don't check for (pair? (car x)) here (or in assv) so we get some inconsistency with assoc:
    *  (assq #f '(#f 2 . 3)) -> #f
@@ -35547,7 +35553,7 @@ static s7_pointer c_assv(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (!is_pair(y))
     {
       if (is_null(y)) return(sc->F);
-      method_or_bust_with_type(sc, y, sc->assv_symbol, list_2(sc, x, y), AN_ASSOCIATION_LIST, 2);
+      method_or_bust_with_type(sc, y, sc->assv_symbol, list_2(sc, x, y), an_association_list_string, 2);
     }
 
   if (is_simple(x))
@@ -35599,10 +35605,10 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
   if (!is_null(x))
     {
       if (!is_pair(x))
-	method_or_bust_with_type(sc, x, sc->assoc_symbol, args, AN_ASSOCIATION_LIST, 2);
+	method_or_bust_with_type(sc, x, sc->assoc_symbol, args, an_association_list_string, 2);
 
       if ((is_pair(x)) && (!is_pair(car(x))))
-	return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 2, x, AN_ASSOCIATION_LIST)); /* we're assuming caar below so it better exist */
+	return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 2, x, an_association_list_string)); /* we're assuming caar below so it better exist */
     }
 
   if (is_not_null(cddr(args)))
@@ -35611,10 +35617,10 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
       eq_func = caddr(args);
 
       if (type(eq_func) < T_GOTO)
-	method_or_bust_with_type(sc, eq_func, sc->assoc_symbol, args, A_PROCEDURE, 0);
+	method_or_bust_with_type(sc, eq_func, sc->assoc_symbol, args, a_procedure_string, 0);
 
       if (!s7_is_aritable(sc, eq_func, 2))
-	return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 3, eq_func, AN_EQ_FUNC));
+	return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 3, eq_func, an_eq_func_string));
     }
   if (is_null(x)) return(sc->F);
 
@@ -35643,7 +35649,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 		      /* I wonder if the assoc equality function should get the cons, not just caar?
 		       */
 		    }
-		  else return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 2, cadr(args), AN_ASSOCIATION_LIST));
+		  else return(wrong_type_argument_with_type(sc, sc->assoc_symbol, 2, cadr(args), an_association_list_string));
 		}
 	      return(sc->F);
 	    }
@@ -35781,7 +35787,7 @@ static s7_pointer c_memq(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (!is_pair(y))
     {
       if (is_null(y)) return(sc->F);
-      method_or_bust_with_type(sc, y, sc->memq_symbol, list_2(sc, x, y), A_LIST, 2);
+      method_or_bust_with_type(sc, y, sc->memq_symbol, list_2(sc, x, y), a_list_string, 2);
     }
   return(s7_memq(sc, x, y));
 }
@@ -35963,7 +35969,7 @@ static s7_pointer c_memv(s7_scheme *sc, s7_pointer x, s7_pointer y)
   if (!is_pair(y))
     {
       if (is_null(y)) return(sc->F);
-      method_or_bust_with_type(sc, y, sc->memv_symbol, list_2(sc, x, y), A_LIST, 2);
+      method_or_bust_with_type(sc, y, sc->memv_symbol, list_2(sc, x, y), a_list_string, 2);
     }
 
   if (is_simple(x)) return(s7_memq(sc, x, y));
@@ -36071,7 +36077,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
   x = cadr(args);
 
   if ((!is_pair(x)) && (!is_null(x)))
-    method_or_bust_with_type(sc, x, sc->member_symbol, args, A_LIST, 2);
+    method_or_bust_with_type(sc, x, sc->member_symbol, args, a_list_string, 2);
 
   if (is_not_null(cddr(args)))
     {
@@ -36079,10 +36085,10 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       eq_func = caddr(args);
 
       if (type(eq_func) < T_GOTO)
-	method_or_bust_with_type(sc, eq_func, sc->member_symbol, args, A_PROCEDURE, 3);
+	method_or_bust_with_type(sc, eq_func, sc->member_symbol, args, a_procedure_string, 3);
 
       if (!s7_is_aritable(sc, eq_func, 2))
-	return(wrong_type_argument_with_type(sc, sc->member_symbol, 3, eq_func, AN_EQ_FUNC));
+	return(wrong_type_argument_with_type(sc, sc->member_symbol, 3, eq_func, an_eq_func_string));
     }
 
   if (is_null(x)) return(sc->F);
@@ -36206,7 +36212,7 @@ static s7_pointer g_member_num_s(s7_scheme *sc, s7_pointer args)
   if (!is_pair(lst))
     {
       if (is_null(lst)) return(sc->F);
-      method_or_bust_with_type(sc, lst, sc->member_symbol, list_2(sc, car(args), lst), A_LIST, 2);
+      method_or_bust_with_type(sc, lst, sc->member_symbol, list_2(sc, car(args), lst), a_list_string, 2);
     }
   return(memv_number(sc, car(args), lst));
 }
@@ -36221,7 +36227,7 @@ static s7_pointer g_member_ss(s7_scheme *sc, s7_pointer args)
   if (!is_pair(x))
     {
       if (is_null(x)) return(sc->F);
-      method_or_bust_with_type(sc, x, sc->member_symbol, list_2(sc, obj, x), A_LIST, 2);
+      method_or_bust_with_type(sc, x, sc->member_symbol, list_2(sc, obj, x), a_list_string, 2);
     }
 
   if (is_simple(obj))
@@ -36485,7 +36491,7 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	}
 
       if (!is_sequence(p))
-	return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, A_SEQUENCE));
+	return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, a_sequence_string));
 
       if (!is_null(p))
 	{
@@ -36494,7 +36500,7 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	      if (!is_proper_list(sc, p))
 		{
 		  sc->y = sc->nil;
-		  return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, A_PROPER_LIST));
+		  return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, a_proper_list_string));
 		}
 	      /* is this error correct?
 	       *     (append '(3) '(1 . 2)) -> '(3 1 . 2) ; (old) guile also returns this
@@ -36530,7 +36536,7 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	      else 
 		{
 		  if (len < 0)
-		    return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, A_SEQUENCE));
+		    return(wrong_type_argument_with_type(sc, sc->append_symbol, position_of(y, args), p, a_sequence_string));
 		}
 	    }
 	}
@@ -36612,9 +36618,9 @@ static s7_pointer make_vector_1(s7_scheme *sc, s7_int len, bool filled, unsigned
 {
   s7_pointer x;
   if (len < 0)
-    return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, make_integer(sc, len), A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, make_integer(sc, len), a_non_negative_integer_string));
   if (len > sc->max_vector_length)
-    return(out_of_range(sc, sc->make_vector_symbol, small_int(1), make_integer(sc, len), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->make_vector_symbol, small_int(1), make_integer(sc, len), its_too_large_string));
 
   /* this has to follow the error checks! (else garbage in free_heap temps portion confuses GC when "vector" is finalized) */
   new_cell(sc, x, typ | T_SAFE_PROCEDURE); /* (v 0) as vector-ref is safe */
@@ -36995,7 +37001,7 @@ PF2_TO_PF(vector_fill, c_vector_fill)
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_int index)
 {
   if (index >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), make_integer(sc, index), its_too_large_string));
 
   return(vector_getter(vec)(sc, vec, index));
 }
@@ -37004,7 +37010,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_int index)
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_pointer a)
 {
   if (index >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), its_too_large_string));
 
   vector_setter(vec)(sc, vec, index, _NFre(a));
   return(a);
@@ -37136,7 +37142,7 @@ s7_pointer s7_vector_ref_n(s7_scheme *sc, s7_pointer vector, int indices, ...)
 		  (ind >= dimensions[i]))
 		{
 		  va_end(ap);
-		  return(out_of_range(sc, sc->vector_ref_symbol, small_int(i), make_integer(sc, ind), (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+		  return(out_of_range(sc, sc->vector_ref_symbol, small_int(i), make_integer(sc, ind), (ind < 0) ? its_negative_string : its_too_large_string));
 		}
 	      index += (ind * offsets[i]);
 	    }
@@ -37370,7 +37376,7 @@ static s7_pointer c_list_to_vector(s7_scheme *sc, s7_pointer p)
     return(s7_make_vector(sc, 0));
 
   if (!is_proper_list(sc, p))
-    method_or_bust_with_type(sc, p, sc->list_to_vector_symbol, list_1(sc, p), A_PROPER_LIST, 0);
+    method_or_bust_with_type(sc, p, sc->list_to_vector_symbol, list_1(sc, p), a_proper_list_string, 0);
 
   return(g_vector(sc, p));
 }
@@ -37483,7 +37489,7 @@ a vector that points to the same elements as the original-vector but with differ
 	  offset = s7_integer(off);
 	  if ((offset < 0) ||
 	      (offset >= orig_len))  /* we need this if, for example, offset == 9223372036854775807 */
-	    return(out_of_range(sc, sc->make_shared_vector_symbol, small_int(3), off, (offset < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->make_shared_vector_symbol, small_int(3), off, (offset < 0) ? its_negative_string : its_too_large_string));
 	}
       else method_or_bust(sc, off, sc->make_shared_vector_symbol, args, T_INTEGER, 3);
     }
@@ -37493,7 +37499,7 @@ a vector that points to the same elements as the original-vector but with differ
     {
       if ((s7_integer(dims) < 0) ||
 	  (s7_integer(dims) >= orig_len))
-	return(out_of_range(sc, sc->make_shared_vector_symbol, small_int(2), dims, (s7_integer(dims) < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->make_shared_vector_symbol, small_int(2), dims, (s7_integer(dims) < 0) ? its_negative_string : its_too_large_string));
       dims = list_1(sc, dims);
     }
   else
@@ -37606,7 +37612,7 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 {
   s7_int index = 0;
   if (vector_length(vect) == 0)
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(1), vect, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(1), vect, its_too_large_string));
 
   if (vector_rank(vect) > 1)
     {
@@ -37626,14 +37632,14 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
 	  n = s7_integer(p);
 	  if ((n < 0) ||
 	      (n >= vector_dimension(vect, i)))
-	    return(out_of_range(sc, sc->vector_ref_symbol, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->vector_ref_symbol, make_integer(sc, i + 2), p, (n < 0) ? its_negative_string : its_too_large_string));
 
 	  index += n * vector_offset(vect, i);
 	}
       if (is_not_null(x))
 	{
 	  if (type(vect) != T_VECTOR)
-	    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), indices, TOO_MANY_INDICES));
+	    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), indices, too_many_indices_string));
 	  return(implicit_index(sc, vector_element(vect, index), x));
 	}
 
@@ -37656,12 +37662,12 @@ static s7_pointer vector_ref_1(s7_scheme *sc, s7_pointer vect, s7_pointer indice
       index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vect)))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), p, (index < 0) ? its_negative_string : its_too_large_string));
 
       if (is_not_null(cdr(indices)))                /* (let ((L #(#(1 2 3) #(4 5 6)))) (vector-ref L 1 2)) */
 	{
 	  if (type(vect) != T_VECTOR)
-	    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), indices, TOO_MANY_INDICES));
+	    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), indices, too_many_indices_string));
 	  return(implicit_index(sc, vector_element(vect, index), cdr(indices)));
 	}
     }
@@ -37690,11 +37696,11 @@ static s7_pointer g_vector_ref_ic_n(s7_scheme *sc, s7_pointer args, s7_int index
     method_or_bust(sc, vec, sc->vector_ref_symbol, list_2(sc, vec, cadr(args)), T_VECTOR, 1);
 
   if (index >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), its_too_large_string));
   if (vector_rank(vec) > 1)
     {
       if (index >= vector_dimension(vec, 0))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), its_too_large_string));
       return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
     }
   return(vector_getter(vec)(sc,vec, index));
@@ -37813,12 +37819,12 @@ static s7_pointer g_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   index = s7_integer(x);
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
 
   if (vector_rank(vec) > 1)
     {
       if (index >= vector_dimension(vec, 0))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), its_too_large_string));
       return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
     }
   return(vector_getter(vec)(sc, vec, index));
@@ -37843,12 +37849,12 @@ static s7_pointer g_vector_ref_add1(s7_scheme *sc, s7_pointer args)
 
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
 
   if (vector_rank(vec) > 1)
     {
       if (index >= vector_dimension(vec, 0))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), its_too_large_string));
       return(make_shared_vector(sc, vec, 1, index * vector_offset(vec, 0)));
     }
   return(vector_getter(vec)(sc, vec, index));
@@ -37867,7 +37873,7 @@ static s7_pointer g_constant_vector_ref_gs(s7_scheme *sc, s7_pointer args)
   index = s7_integer(x);
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
   return(vector_element(vec, index));
 }
 
@@ -37889,7 +37895,7 @@ static s7_pointer g_vector_ref_2(s7_scheme *sc, s7_pointer args)
 
   index = s7_integer(ind);
   if ((index < 0) || (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string));
 
   return(vector_getter(vec)(sc, vec, index));
 }
@@ -37909,7 +37915,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, vec, sc->vector_set_symbol, args, T_VECTOR, 1);
 
   if (vector_length(_TSet(vec)) == 0)
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(1), vec, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(1), vec, its_too_large_string));
 
   if (vector_rank(vec) > 1)
     {
@@ -37930,7 +37936,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
 	  n = s7_integer(p);
 	  if ((n < 0) ||
 	      (n >= vector_dimension(vec, i)))
-	    return(out_of_range(sc, sc->vector_set_symbol, make_integer(sc, i + 2), p, (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->vector_set_symbol, make_integer(sc, i + 2), p, (n < 0) ? its_negative_string : its_too_large_string));
 
 	  index += n * vector_offset(vec, i);
 	}
@@ -37955,7 +37961,7 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
       index = s7_integer(p);
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range(sc, sc->vector_set_symbol, small_int(2), p, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_set_symbol, small_int(2), p, (index < 0) ? its_negative_string : its_too_large_string));
 
       if (is_not_null(cdddr(args)))
 	{
@@ -37988,7 +37994,7 @@ static s7_pointer g_vector_set_ic(s7_scheme *sc, s7_pointer args)
 
   index = s7_integer(cadr(args));
   if (index >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), cadr(args), ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), cadr(args), its_too_large_string));
 
   val = find_symbol_checked(sc, caddr(args));
   vector_setter(vec)(sc, vec, index, val);
@@ -38015,11 +38021,11 @@ static s7_pointer g_vector_set_vref(s7_scheme *sc, s7_pointer args)
 
   index1 = s7_integer(val1);
   if (index1 >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), val1, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), val1, its_too_large_string));
 
   index2 = s7_integer(val2);
   if (index2 >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), val2, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), val2, its_too_large_string));
 
   vector_setter(vec)(sc, vec, index1, val1 = vector_getter(vec)(sc, vec, index2));
   return(val1);
@@ -38047,7 +38053,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 
   index1 = s7_integer(val);
   if (index1 >= vector_length(vec))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), val, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), val, its_too_large_string));
 
   if (val2 != cadr(args))
     {
@@ -38061,7 +38067,7 @@ static s7_pointer g_vector_set_vector_ref(s7_scheme *sc, s7_pointer args)
 	}
       index2 = s7_integer(val2);
       if (index2 >= vector_length(vec))
-	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), val, ITS_TOO_LARGE));
+	return(out_of_range(sc, sc->vector_ref_symbol, small_int(2), val, its_too_large_string));
     }
   else index2 = index1;
 
@@ -38083,7 +38089,7 @@ static s7_pointer c_vector_set_3(s7_scheme *sc, s7_pointer vec, s7_int index, s7
 
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
   vector_setter(vec)(sc, vec, index, val);
   return(val);
@@ -38094,7 +38100,7 @@ static s7_pointer c_vector_set_s(s7_scheme *sc, s7_pointer vec, s7_int index, s7
   /* (vector-set! vec ind val) where are all predigested, vector is prechecked */
   if ((index < 0) ||
       (index >= vector_length(vec)))
-    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
   vector_elements(vec)[index] = val;
   return(val);
@@ -38137,7 +38143,7 @@ or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
     {
       len = s7_integer(x);
       if (len < 0)
-	return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, A_NON_NEGATIVE_INTEGER));
+	return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, a_non_negative_integer_string));
     }
   else
     {
@@ -38156,9 +38162,9 @@ or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
 
 	  dims = s7_list_length(sc, x);
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
-	    return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, A_PROPER_LIST));
+	    return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, a_proper_list_string));
 	  if (dims > sc->max_vector_dimensions)
-	    return(out_of_range(sc, sc->make_vector_symbol, small_int(1), x, ITS_TOO_LARGE));
+	    return(out_of_range(sc, sc->make_vector_symbol, small_int(1), x, its_too_large_string));
 
 	  for (len = 1, y = x; is_not_null(y); y = cdr(y))
 	    {
@@ -38166,7 +38172,7 @@ or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
 		return(wrong_type_argument(sc, sc->make_vector_symbol, position_of(y, x), car(y), T_INTEGER));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
-		return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, position_of(y, x), car(y), A_NON_NEGATIVE_INTEGER));
+		return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, position_of(y, x), car(y), a_non_negative_integer_string));
 	    }
 	}
     }
@@ -38191,7 +38197,7 @@ or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
 	  else
 	    {
 	      if (caddr(args) != sc->F)
-		method_or_bust_with_type(sc, caddr(args), sc->make_vector_symbol, args, A_BOOLEAN, 3);
+		method_or_bust_with_type(sc, caddr(args), sc->make_vector_symbol, args, a_boolean_string, 3);
 	    }
 	}
     }
@@ -38262,9 +38268,9 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 
   len = s7_integer(p);
   if (len < 0)
-    return(wrong_type_argument_with_type(sc, sc->make_float_vector_symbol, 1, p, A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->make_float_vector_symbol, 1, p, a_non_negative_integer_string));
   if (len > sc->max_vector_length)
-    return(out_of_range(sc, sc->make_float_vector_symbol, small_int(1), p, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->make_float_vector_symbol, small_int(1), p, its_too_large_string));
 
   if (len > 0)
     arr = (s7_double *)calloc(len, sizeof(s7_double));
@@ -38311,9 +38317,9 @@ static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
 
   len = s7_integer(p);
   if (len < 0)
-    return(wrong_type_argument_with_type(sc, sc->make_int_vector_symbol, 1, p, A_NON_NEGATIVE_INTEGER));
+    return(wrong_type_argument_with_type(sc, sc->make_int_vector_symbol, 1, p, a_non_negative_integer_string));
   if (len > sc->max_vector_length)
-    return(out_of_range(sc, sc->make_int_vector_symbol, small_int(1), p, ITS_TOO_LARGE));
+    return(out_of_range(sc, sc->make_int_vector_symbol, small_int(1), p, its_too_large_string));
 
   if (len > 0)
     arr = (s7_int *)calloc(len, sizeof(s7_int));
@@ -38549,9 +38555,9 @@ static s7_pointer univect_ref(s7_scheme *sc, s7_pointer args, bool flt)
 	}
       ind = s7_integer(index);
       if ((ind < 0) || (ind >= vector_length(v)))
-	return(simple_out_of_range(sc, caller, index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(simple_out_of_range(sc, caller, index, (ind < 0) ? its_negative_string : its_too_large_string));
       if (!is_null(cddr(args)))
-	return(out_of_range(sc, caller, small_int(2), cdr(args), TOO_MANY_INDICES));
+	return(out_of_range(sc, caller, small_int(2), cdr(args), too_many_indices_string));
     }
   else
     {
@@ -38571,12 +38577,12 @@ static s7_pointer univect_ref(s7_scheme *sc, s7_pointer args, bool flt)
 	  else n = s7_integer(car(x));
 	  if ((n < 0) ||
 	      (n >= vector_dimension(v, i)))
-	    return(out_of_range(sc, caller, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, caller, make_integer(sc, i + 2), car(x), (n < 0) ? its_negative_string : its_too_large_string));
 
 	  ind += n * vector_offset(v, i);
 	}
       if (is_not_null(x))
-	return(out_of_range(sc, caller, small_int(2), cdr(args), TOO_MANY_INDICES));
+	return(out_of_range(sc, caller, small_int(2), cdr(args), too_many_indices_string));
 
       /* if not enough indices, return a shared vector covering whatever is left */
       if (i < vector_ndims(v))
@@ -38619,7 +38625,7 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
 	  else n = s7_integer(car(x));
 	  if ((n < 0) ||
 	      (n >= vector_dimension(vec, i)))
-	    return(out_of_range(sc, caller, make_integer(sc, i + 2), car(x), (n < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	    return(out_of_range(sc, caller, make_integer(sc, i + 2), car(x), (n < 0) ? its_negative_string : its_too_large_string));
 
 	  index += n * vector_offset(vec, i);
 	}
@@ -38643,7 +38649,7 @@ static s7_pointer univect_set(s7_scheme *sc, s7_pointer args, bool flt)
       else index = s7_integer(cadr(args));
       if ((index < 0) ||
 	  (index >= vector_length(vec)))
-	return(out_of_range(sc, caller, small_int(2), cadr(args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE));
+	return(out_of_range(sc, caller, small_int(2), cadr(args), (index < 0) ? its_negative_string : its_too_large_string));
 
       if (is_not_null(cdddr(args)))
 	return(s7_wrong_number_of_args_error(sc, "too many args: ~S", args));
@@ -38710,7 +38716,7 @@ static s7_int int_vector_ref_if_a(s7_scheme *sc, s7_pointer **p)
   xf = (s7_if_t)(**p); (*p)++;
   y = xf(sc, p);
   if ((y < 0) || (y >= vector_length(x)))
-    out_of_range(sc, sc->int_vector_ref_symbol, small_int(2), make_integer(sc, y), (y < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->int_vector_ref_symbol, small_int(2), make_integer(sc, y), (y < 0) ? its_negative_string : its_too_large_string);
   return(int_vector_elements(x)[y]);
 }
 
@@ -38754,7 +38760,7 @@ static s7_int int_vector_set_if_a(s7_scheme *sc, s7_pointer **p)
   xf = (s7_if_t)(**p); (*p)++;
   y = xf(sc, p);
   if ((y < 0) || (y >= vector_length(x)))
-    out_of_range(sc, sc->int_vector_set_symbol, small_int(2), make_integer(sc, y), (y < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->int_vector_set_symbol, small_int(2), make_integer(sc, y), (y < 0) ? its_negative_string : its_too_large_string);
   xf = (s7_if_t)(**p); (*p)++;
   z = xf(sc, p);
   int_vector_elements(x)[y] = z;
@@ -38800,7 +38806,7 @@ static s7_double fv_set_rf_checked(s7_scheme *sc, s7_pointer **p)
     wrong_type_argument(sc, sc->float_vector_set_symbol, 2, ind, T_INTEGER);
   index = integer(ind);
   if ((index < 0) || (index >= vector_length(fv)))
-    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string);
   rf = (s7_rf_t)(**p); (*p)++;
   val = rf(sc, p);
   float_vector_element(fv, index) = val;
@@ -38818,7 +38824,7 @@ static s7_double fv_set_rf_r(s7_scheme *sc, s7_pointer **p)
     wrong_type_argument(sc, sc->float_vector_set_symbol, 2, ind, T_INTEGER);
   index = integer(ind);
   if ((index < 0) || (index >= vector_length(fv)))
-    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string);
   x = **p; (*p)++;
   val = real_to_double(sc, x, "float-vector-set!");
   float_vector_element(fv, index) = val;
@@ -38836,7 +38842,7 @@ static s7_double fv_set_rf_s(s7_scheme *sc, s7_pointer **p)
     wrong_type_argument(sc, sc->float_vector_set_symbol, 2, ind, T_INTEGER);
   index = integer(ind);
   if ((index < 0) || (index >= vector_length(fv)))
-    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), ind, (index < 0) ? its_negative_string : its_too_large_string);
   x = slot_value(**p); (*p)++;
   val = real_to_double(sc, x, "float-vector-set!");
   float_vector_element(fv, index) = val;
@@ -38870,7 +38876,7 @@ static s7_double fv_set_rf_if(s7_scheme *sc, s7_pointer **p)
   xf = (s7_if_t)(**p); (*p)++;
   index = xf(sc, p);
   if ((index < 0) || (index >= vector_length(fv)))
-    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+    out_of_range(sc, sc->float_vector_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string);
   rf = (s7_rf_t)(**p); (*p)++;
   val = rf(sc, p);
   float_vector_element(fv, index) = val;
@@ -38956,7 +38962,7 @@ static s7_double fv_ref_rf_ss(s7_scheme *sc, s7_pointer **p)
   s2 = slot_value(**p); (*p)++;
   ind = s7_integer(s2);
   if ((ind < 0) || (ind >= vector_length(s1)))
-    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), s2, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);    
+    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), s2, (ind < 0) ? its_negative_string : its_too_large_string);    
   return(float_vector_elements(s1)[ind]);
 }
 
@@ -38968,7 +38974,7 @@ static s7_double fv_ref_rf_si(s7_scheme *sc, s7_pointer **p)
   s2 = (**p); (*p)++;
   ind = s7_integer(s2);
   if ((ind < 0) || (ind >= vector_length(s1)))
-    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), s2, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);    
+    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), s2, (ind < 0) ? its_negative_string : its_too_large_string);    
   return(float_vector_elements(s1)[ind]);
 }
 
@@ -38981,7 +38987,7 @@ static s7_double fv_ref_rf_sx(s7_scheme *sc, s7_pointer **p)
   i1 = (s7_if_t)(**p); (*p)++;
   ind = i1(sc, p);
   if ((ind < 0) || (ind >= vector_length(s1)))
-    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), make_integer(sc, ind), (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);    
+    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), make_integer(sc, ind), (ind < 0) ? its_negative_string : its_too_large_string);    
   return(float_vector_elements(s1)[ind]);
 }
 
@@ -38998,7 +39004,7 @@ static s7_double fv_ref_rf_pf(s7_scheme *sc, s7_pointer **p)
   i1 = (s7_if_t)(**p); (*p)++;
   ind = i1(sc, p);
   if ((ind < 0) || (ind >= vector_length(s1)))
-    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), make_integer(sc, ind), (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);    
+    out_of_range(sc, sc->float_vector_ref_symbol, small_int(2), make_integer(sc, ind), (ind < 0) ? its_negative_string : its_too_large_string);    
   return(float_vector_elements(s1)[ind]);
 }
 
@@ -39308,20 +39314,20 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       /* (apply sort! () #f) should be an error I think */
       lessp = cadr(args);
       if (type(lessp) < T_GOTO)
-	method_or_bust_with_type(sc, lessp, sc->sort_symbol, args, A_PROCEDURE, 2);
+	method_or_bust_with_type(sc, lessp, sc->sort_symbol, args, a_procedure_string, 2);
       if (!s7_is_aritable(sc, lessp, 2))
-	return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, AN_EQ_FUNC));
+	return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, an_eq_func_string));
       return(sc->nil);
     }
 
   lessp = cadr(args);
   if (type(lessp) < T_GOTO)
-    method_or_bust_with_type(sc, lessp, sc->sort_symbol, args, A_PROCEDURE, 2);
+    method_or_bust_with_type(sc, lessp, sc->sort_symbol, args, a_procedure_string, 2);
   if (!s7_is_aritable(sc, lessp, 2))
-    return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, AN_EQ_FUNC));
+    return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, an_eq_func_string));
 
   if ((is_continuation(lessp)) || is_goto(lessp))
-    return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, A_NORMAL_PROCEDURE));
+    return(wrong_type_argument_with_type(sc, sc->sort_symbol, 2, lessp, a_normal_procedure_string));
 
   sort_func = vector_compare;
   compare_func = NULL;
@@ -39652,7 +39658,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
       break;
 
     default:
-      method_or_bust_with_type(sc, data, sc->sort_symbol, args, A_SEQUENCE, 1);
+      method_or_bust_with_type(sc, data, sc->sort_symbol, args, a_sequence_string, 1);
     }
   if (sort_func == pf_compare) s7_xf_free(sc);
 
@@ -40549,7 +40555,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
       if (size <= 0)                      /* we need s7_int here to catch (make-hash-table most-negative-fixnum) etc */
 	return(simple_out_of_range(sc, sc->make_hash_table_symbol, p, make_string_wrapper(sc, "should be a positive integer")));
       if (size > sc->max_vector_length)
-	return(simple_out_of_range(sc, sc->make_hash_table_symbol, p, ITS_TOO_LARGE));
+	return(simple_out_of_range(sc, sc->make_hash_table_symbol, p, its_too_large_string));
 
       if (is_not_null(cdr(args)))
 	{
@@ -40559,7 +40565,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	  if (is_c_function(proc))
 	    {
 	      if (!s7_is_aritable(sc, proc, 2))
-		return(wrong_type_argument_with_type(sc, sc->make_hash_table_symbol, 3, proc, AN_EQ_FUNC));
+		return(wrong_type_argument_with_type(sc, sc->make_hash_table_symbol, 3, proc, an_eq_func_string));
 
 	      ht = s7_make_hash_table(sc, size);
 	      if (c_function_call(proc) == g_is_equal)
@@ -41869,7 +41875,7 @@ static s7_pointer c_procedure_documentation(s7_scheme *sc, s7_pointer p)
   check_method(sc, p, sc->procedure_documentation_symbol, list_1(sc, p));
   if ((!is_procedure(p)) &&
       (!s7_is_macro(sc, p)))
-    return(simple_wrong_type_argument_with_type(sc, sc->procedure_documentation_symbol, p, A_PROCEDURE));
+    return(simple_wrong_type_argument_with_type(sc, sc->procedure_documentation_symbol, p, a_procedure_string));
 
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
@@ -42689,7 +42695,7 @@ static s7_pointer g_is_aritable(s7_scheme *sc, s7_pointer args)
 
   num = s7_integer(n);
   if (num < 0)
-    return(out_of_range(sc, sc->is_aritable_symbol, small_int(2), n, ITS_NEGATIVE));
+    return(out_of_range(sc, sc->is_aritable_symbol, small_int(2), n, its_negative_string));
   if (num > MAX_ARITY) num = MAX_ARITY;
 
   return(make_boolean(sc, s7_is_aritable(sc, car(args), (int)num)));
@@ -43826,7 +43832,7 @@ static s7_pointer byte_vector_setter(s7_scheme *sc, s7_pointer str, s7_int loc, 
       byte = s7_integer(val);
       if ((byte >= 0) && (byte < 256))
 	string_value(str)[loc] = (unsigned char)byte;
-      else return(simple_wrong_type_argument_with_type(sc, sc->copy_symbol, val, AN_UNSIGNED_BYTE));
+      else return(simple_wrong_type_argument_with_type(sc, sc->copy_symbol, val, an_unsigned_byte_string));
       return(val);
     }
 #if DEBUGGING
@@ -43892,7 +43898,7 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_int loc, s7_
    * if key is already in e, its value is changed, otherwise a new slot is added to e
    */
   if (!is_pair(val))
-    return(wrong_type_argument_with_type(sc, sc->copy_symbol, 1, e, A_LIST));
+    return(wrong_type_argument_with_type(sc, sc->copy_symbol, 1, e, a_list_string));
   return(s7_hash_table_set(sc, e, car(val), cdr(val)));
 }
 
@@ -44063,7 +44069,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	break;
 
     default:
-      return(wrong_type_argument_with_type(sc, sc->copy_symbol, 1, source, A_SEQUENCE));
+      return(wrong_type_argument_with_type(sc, sc->copy_symbol, 1, source, a_sequence_string));
       /* copy doesn't have to duplicate fill!, so (copy 1 #(...)) need not be supported */
     }
 
@@ -44127,7 +44133,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
       return(sc->nil);
 
     default:
-      return(wrong_type_argument_with_type(sc, sc->copy_symbol, 2, dest, A_SEQUENCE));
+      return(wrong_type_argument_with_type(sc, sc->copy_symbol, 2, dest, a_sequence_string));
     }
 
   if ((source_len == 0) || (dest_len == 0))
@@ -44502,7 +44508,7 @@ also accepts a string or vector argument."
       eval_error(sc, "attempt to reverse ~S?", p);
 
     default:
-      method_or_bust_with_type(sc, p, sc->reverse_symbol, args, A_SEQUENCE, 0);
+      method_or_bust_with_type(sc, p, sc->reverse_symbol, args, a_sequence_string, 0);
     }
   return(np);
 }
@@ -44522,7 +44528,7 @@ static s7_pointer c_reverse_in_place(s7_scheme *sc, s7_pointer p)
 	s7_pointer np;
 	np = reverse_in_place(sc, sc->nil, p);
 	if (is_null(np))
-	  return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, A_PROPER_LIST));
+	  return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, a_proper_list_string));
 	return(np);
       }
       break;
@@ -44530,7 +44536,7 @@ static s7_pointer c_reverse_in_place(s7_scheme *sc, s7_pointer p)
        * so in a sense this is different from the other cases: it assumes (set! p (reverse! p))
        * To make (reverse! p) direct:
        *    for (l = p, r = cdr(p); is_pair(r); l = r, r = cdr(r)) opt1(r) = l;
-       *    if (!is_null(r)) return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, A_PROPER_LIST));
+       *    if (!is_null(r)) return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, a_proper_list_string));
        *    for (r = l, l = p; l != r; l = cdr(l)) {t = car(l); car(l) = car(r); car(r) = t; if (cdr(l) != r) r = opt1(r);}
        */
 
@@ -44586,7 +44592,7 @@ static s7_pointer c_reverse_in_place(s7_scheme *sc, s7_pointer p)
       if ((is_simple_sequence(p)) &&
 	  (!has_methods(p)))
 	return(simple_wrong_type_argument_with_type(sc, sc->reverseb_symbol, p, make_string_wrapper(sc, "a vector, string, or list")));
-      method_or_bust_with_type(sc, p, sc->reverseb_symbol, list_1(sc, p), A_SEQUENCE, 0);
+      method_or_bust_with_type(sc, p, sc->reverseb_symbol, list_1(sc, p), a_sequence_string, 0);
     }
   return(p);
 }
@@ -44687,7 +44693,7 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
     default:
       check_method(sc, p, sc->fill_symbol, args);
     }
-  return(wrong_type_argument_with_type(sc, sc->fill_symbol, 1, p, A_SEQUENCE)); /* (fill! 1 0) */
+  return(wrong_type_argument_with_type(sc, sc->fill_symbol, 1, p, a_sequence_string)); /* (fill! 1 0) */
 }
 
 #define g_fill s7_fill
@@ -44749,7 +44755,7 @@ static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer c
 	}
       if (n < 0)
 	{
-	  wrong_type_argument_with_type(sc, sc->append_symbol, i, seq, (is_pair(seq)) ? A_PROPER_LIST : A_SEQUENCE);
+	  wrong_type_argument_with_type(sc, sc->append_symbol, i, seq, (is_pair(seq)) ? a_proper_list_string : a_sequence_string);
 	  return(0);
 	}
       len += n;
@@ -44904,7 +44910,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
      default:
       check_method(sc, a1, sc->append_symbol, args);
     }
-  return(wrong_type_argument_with_type(sc, sc->append_symbol, 1, a1, A_SEQUENCE)); /* (append 1 0) */
+  return(wrong_type_argument_with_type(sc, sc->append_symbol, 1, a1, a_sequence_string)); /* (append 1 0) */
 }
 
 static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
@@ -45613,8 +45619,8 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
   switch (type(x))
     {
     case T_C_OBJECT:    return(object_types[c_object_type(x)]->scheme_name);
-    case T_INPUT_PORT:  return((is_file_port(x)) ? AN_INPUT_FILE_PORT : ((is_string_port(x)) ? AN_INPUT_STRING_PORT : AN_INPUT_PORT));
-    case T_OUTPUT_PORT: return((is_file_port(x)) ? AN_OUTPUT_FILE_PORT : ((is_string_port(x)) ? AN_OUTPUT_STRING_PORT : AN_OUTPUT_PORT));
+    case T_INPUT_PORT:  return((is_file_port(x)) ? an_input_file_port_string : ((is_string_port(x)) ? an_input_string_port_string : an_input_port_string));
+    case T_OUTPUT_PORT: return((is_file_port(x)) ? an_output_file_port_string : ((is_string_port(x)) ? an_output_string_port_string : an_output_port_string));
     }
   return(make_string_wrapper(sc, "unknown type!"));
 }
@@ -45735,11 +45741,11 @@ each a function of no arguments, guaranteeing that finish is called even if body
   s7_pointer p;
 
   if (!is_thunk(sc, car(args)))
-    method_or_bust_with_type(sc, car(args), sc->dynamic_wind_symbol, args, A_THUNK, 1);
+    method_or_bust_with_type(sc, car(args), sc->dynamic_wind_symbol, args, a_thunk_string, 1);
   if (!is_thunk(sc, cadr(args)))
-    method_or_bust_with_type(sc, cadr(args), sc->dynamic_wind_symbol, args, A_THUNK, 2);
+    method_or_bust_with_type(sc, cadr(args), sc->dynamic_wind_symbol, args, a_thunk_string, 2);
   if (!is_thunk(sc, caddr(args)))
-    method_or_bust_with_type(sc, caddr(args), sc->dynamic_wind_symbol, args, A_THUNK, 3);
+    method_or_bust_with_type(sc, caddr(args), sc->dynamic_wind_symbol, args, a_thunk_string, 3);
 
   /* this won't work:
 
@@ -45854,10 +45860,10 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 
   /* not sure about these error checks -- they can be omitted */
   if (!is_thunk(sc, proc))
-    return(wrong_type_argument_with_type(sc, sc->catch_symbol, 2, proc, A_THUNK));
+    return(wrong_type_argument_with_type(sc, sc->catch_symbol, 2, proc, a_thunk_string));
 
   if (!is_applicable(err))
-    return(wrong_type_argument_with_type(sc, sc->catch_symbol, 3, err, SOMETHING_APPLICABLE));
+    return(wrong_type_argument_with_type(sc, sc->catch_symbol, 3, err, something_applicable_string));
 
   /* should we check here for (aritable? err 2)? -- right now:
    *  (catch #t (lambda () 1) "hiho") -> 1
@@ -47145,7 +47151,7 @@ pass (rootlet):\n\
       s7_pointer e;
       e = cadr(args);
       if (!is_let(e))
-	return(wrong_type_argument_with_type(sc, sc->eval_symbol, 2, e, A_LET));
+	return(wrong_type_argument_with_type(sc, sc->eval_symbol, 2, e, a_let_string));
       if (e == sc->rootlet)
 	sc->envir = sc->nil;
       else sc->envir = e;
@@ -48118,7 +48124,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
 Each object can be a list, string, vector, hash-table, or any other sequence."
-  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_procedure_symbol, sc->length_symbol)
+  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_procedure_symbol, sc->is_sequence_symbol)
 
   s7_pointer p, f;
   int len;
@@ -48143,12 +48149,12 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
     }
 
   if (!is_applicable(f))
-    method_or_bust_with_type(sc, f, sc->for_each_symbol, args, SOMETHING_APPLICABLE, 1);
+    method_or_bust_with_type(sc, f, sc->for_each_symbol, args, something_applicable_string, 1);
 
   for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
       if ((!is_sequence(car(p))) && (!is_iterator(car(p))))
-	return(simple_wrong_type_argument_with_type(sc, sc->for_each_symbol, car(p), A_SEQUENCE));
+	return(simple_wrong_type_argument_with_type(sc, sc->for_each_symbol, car(p), a_sequence_string));
       if (is_null(car(p)))
 	got_nil = true;
     }
@@ -48277,7 +48283,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc object . objects) applies proc to a list made up of the next element of each of its arguments, returning \
 a list of the results.  Its arguments can be lists, vectors, strings, hash-tables, or any applicable objects."
-  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->is_proper_list_symbol, sc->is_procedure_symbol, sc->length_symbol)
+  #define Q_map s7_make_circular_signature(sc, 2, 3, sc->is_list_symbol, sc->is_procedure_symbol, sc->is_sequence_symbol)
 
   s7_pointer p, f;
   int len;
@@ -48285,12 +48291,12 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 
   f = car(args);                               /* the function */
   if (!is_applicable(f))
-    method_or_bust_with_type(sc, f, sc->map_symbol, args, SOMETHING_APPLICABLE, 1);
+    method_or_bust_with_type(sc, f, sc->map_symbol, args, something_applicable_string, 1);
 
   for (len = 0, p = cdr(args); is_not_null(p); p = cdr(p), len++)
     {
       if ((!is_sequence(car(p))) && (!is_iterator(car(p))))
-	return(simple_wrong_type_argument_with_type(sc, sc->map_symbol, car(p), A_SEQUENCE));
+	return(simple_wrong_type_argument_with_type(sc, sc->map_symbol, car(p), a_sequence_string));
       if (is_null(car(p)))
 	got_nil = true;
     }
@@ -50037,7 +50043,7 @@ static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
 
   if ((!is_output_port(pt)) ||
       (port_is_closed(pt)))
-    method_or_bust_with_type(sc, pt, sc->format_symbol, args, A_FORMAT_PORT, 1);
+    method_or_bust_with_type(sc, pt, sc->format_symbol, args, a_format_port_string, 1);
 
   port_write_string(pt)(sc, string_value(str), string_length(str), pt);
   return(sc->F);
@@ -50053,7 +50059,7 @@ static s7_pointer g_format_allg_no_column(s7_scheme *sc, s7_pointer args)
   if (!((s7_is_boolean(pt)) ||
 	((is_output_port(pt)) &&             /* (current-output-port) or call-with-open-file arg, etc */
 	 (!port_is_closed(pt)))))
-    method_or_bust_with_type(sc, pt, sc->format_symbol, args, A_FORMAT_PORT, 1);
+    method_or_bust_with_type(sc, pt, sc->format_symbol, args, a_format_port_string, 1);
 
   str = cadr(args);
   sc->format_column = 0;
@@ -56909,7 +56915,7 @@ static int set_pair_ex(s7_scheme *sc)
 	    ind = s7_integer(index);
 	    if ((ind < 0) ||
 		(ind >= vector_length(cx)))
-	      out_of_range(sc, sc->vector_set_symbol, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+	      out_of_range(sc, sc->vector_set_symbol, small_int(2), index, (ind < 0) ? its_negative_string : its_too_large_string);
 	    val = cadr(sc->code);
 	    if (!is_pair(val))
 	      {
@@ -56972,7 +56978,7 @@ static int set_pair_ex(s7_scheme *sc)
 	    ind = s7_integer(index);
 	    if ((ind < 0) ||
 		(ind >= string_length(cx)))
-	      out_of_range(sc, sc->string_set_symbol, small_int(2), index, (ind < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+	      out_of_range(sc, sc->string_set_symbol, small_int(2), index, (ind < 0) ? its_negative_string : its_too_large_string);
 	    
 	    val = cadr(sc->code);
 	    if (!is_pair(val))
@@ -59463,7 +59469,7 @@ static int read_s_ex(s7_scheme *sc)
     }
   /* I guess this port_is_closed check is needed because we're going down a level below */
   if (port_is_closed(port))
-    simple_wrong_type_argument_with_type(sc, sc->read_symbol, port, AN_OPEN_PORT);
+    simple_wrong_type_argument_with_type(sc, sc->read_symbol, port, an_open_port_string);
   
   if (is_function_port(port))
     sc->value = (*(port_input_function(port)))(sc, S7_READ, port);
@@ -59932,7 +59938,7 @@ static void apply_vector(s7_scheme *sc)                            /* -------- v
       if ((index >= 0) &&
 	  (index < vector_length(sc->code)))
 	sc->value = vector_getter(sc->code)(sc, sc->code, index);
-      else out_of_range(sc, sc->vector_ref_symbol, small_int(2), car(sc->args), (index < 0) ? ITS_NEGATIVE : ITS_TOO_LARGE);
+      else out_of_range(sc, sc->vector_ref_symbol, small_int(2), car(sc->args), (index < 0) ? its_negative_string : its_too_large_string);
     }
   else sc->value = vector_ref_1(sc, sc->code, sc->args);
 }
@@ -64365,7 +64371,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sym = cadr(cadr(code));
 		    if (is_symbol(sym))
 		      sc->value = let_ref_1(sc, s, sym);
-		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, A_SYMBOL)); /* (e '(1)) */
+		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, a_symbol_string)); /* (e '(1)) */
 		    goto START;
 		  }
 		  
@@ -64380,7 +64386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sym = c_call(cdr(code))(sc, cadr(code));
 		    if (is_symbol(sym))
 		      sc->value = let_ref_1(sc, s, sym);
-		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, A_SYMBOL)); /* (e expr) where expr->#f */
+		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, a_symbol_string)); /* (e expr) where expr->#f */
 		    goto START;
 		  }
 		  
@@ -69003,7 +69009,7 @@ static s7_pointer big_subtract(s7_scheme *sc, s7_pointer args)
   s7_pointer x, result;
 
   if (!s7_is_number(car(args)))
-    method_or_bust_with_type(sc, car(args), sc->subtract_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, car(args), sc->subtract_symbol, args, a_number_string, 1);
 
   if (is_null(cdr(args)))
     return(big_negate(sc, args));
@@ -69230,7 +69236,7 @@ static s7_pointer big_divide(s7_scheme *sc, s7_pointer args)
   s7_pointer x, divisor, result;
 
   if (!s7_is_number(car(args)))
-    method_or_bust_with_type(sc, car(args), sc->divide_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, car(args), sc->divide_symbol, args, a_number_string, 1);
 
   if (is_null(cdr(args)))
     return(big_invert(sc, args));
@@ -69389,7 +69395,7 @@ static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->magnitude_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->magnitude_symbol, args, a_number_string, 0);
 
   if (is_t_big_complex(p))
     {
@@ -69468,7 +69474,7 @@ static s7_pointer big_angle(s7_scheme *sc, s7_pointer args)
       }
 
     default:
-      method_or_bust_with_type(sc, p, sc->angle_symbol, args, A_NUMBER, 0);
+      method_or_bust_with_type(sc, p, sc->angle_symbol, args, a_number_string, 0);
     }
 }
 
@@ -69601,13 +69607,13 @@ static s7_pointer big_log(s7_scheme *sc, s7_pointer args)
 
   p0 = car(args);
   if (!s7_is_number(p0))
-    method_or_bust_with_type(sc, p0, sc->log_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, p0, sc->log_symbol, args, a_number_string, 1);
 
   if (is_not_null(cdr(args)))
     {
       p1 = cadr(args);
       if (!s7_is_number(p1))
-	method_or_bust_with_type(sc, p1, sc->log_symbol, args, A_NUMBER, 2);
+	method_or_bust_with_type(sc, p1, sc->log_symbol, args, a_number_string, 2);
     }
 
   if ((s7_is_real(p0)) &&
@@ -69725,7 +69731,7 @@ static s7_pointer big_sqrt(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->sqrt_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->sqrt_symbol, args, a_number_string, 0);
   p = to_big(sc, p);
 
   /* if big integer, try to return int if perfect square */
@@ -69846,7 +69852,7 @@ static s7_pointer big_trig(s7_scheme *sc, s7_pointer args,
   /* I think here we should always promote to bignum (otherwise, for example, (exp 800) -> inf)
    */
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sym, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sym, args, a_number_string, 0);
   if (s7_is_real(p))
     {
       mpfr_t n;
@@ -69994,11 +70000,11 @@ static s7_pointer big_expt(s7_scheme *sc, s7_pointer args)
 
   x = car(args);
   if (!s7_is_number(x))
-    method_or_bust_with_type(sc, x, sc->expt_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, x, sc->expt_symbol, args, a_number_string, 1);
 
   y = cadr(args);
   if (!s7_is_number(y))
-    method_or_bust_with_type(sc, y, sc->expt_symbol, args, A_NUMBER, 2);
+    method_or_bust_with_type(sc, y, sc->expt_symbol, args, a_number_string, 2);
 
   if (s7_is_zero(x))
     {
@@ -70244,7 +70250,7 @@ static s7_pointer big_asinh(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->asinh_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->asinh_symbol, args, a_number_string, 0);
 
   if (s7_is_real(p))
     {
@@ -70281,7 +70287,7 @@ static s7_pointer big_acosh(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->acosh_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->acosh_symbol, args, a_number_string, 0);
   p = promote_number(sc, T_BIG_COMPLEX, p);
 
   mpc_init(n);
@@ -70306,7 +70312,7 @@ static s7_pointer big_atanh(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->atanh_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->atanh_symbol, args, a_number_string, 0);
 
   if (s7_is_real(p))
     {
@@ -70349,7 +70355,7 @@ static s7_pointer big_atan(s7_scheme *sc, s7_pointer args)
 
   p0 = car(args);
   if (!s7_is_number(p0))
-    method_or_bust_with_type(sc, p0, sc->atan_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p0, sc->atan_symbol, args, a_number_string, 0);
 
   if (is_not_null(cdr(args)))
     {
@@ -70397,7 +70403,7 @@ static s7_pointer big_acos(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->acos_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->acos_symbol, args, a_number_string, 0);
 
   if (s7_is_real(p))
     {
@@ -70440,7 +70446,7 @@ static s7_pointer big_asin(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))
-    method_or_bust_with_type(sc, p, sc->asin_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->asin_symbol, args, a_number_string, 0);
 
   if (s7_is_real(p))
     {
@@ -70552,7 +70558,7 @@ static s7_pointer big_ash(s7_scheme *sc, s7_pointer args)
 	  if (!mpz_fits_sint_p(big_integer(p1)))
 	    {
 	      if (mpz_cmp_ui(big_integer(p1), 0) > 0)
-		return(out_of_range(sc, sc->ash_symbol, small_int(2), p1, ITS_TOO_LARGE));
+		return(out_of_range(sc, sc->ash_symbol, small_int(2), p1, its_too_large_string));
 
 	      /* here if p0 is negative, we need to return -1 */
 	      if (p0_compared_to_zero == 1)
@@ -70720,7 +70726,7 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
       if (is_NaN(err_x))
 	{
 	  mpfr_clear(error);
-	  return(out_of_range(sc, sc->rationalize_symbol, small_int(2), cadr(args), ITS_NAN));
+	  return(out_of_range(sc, sc->rationalize_symbol, small_int(2), cadr(args), its_nan_string));
 	}
       if (mpfr_inf_p(error) != 0)
 	{
@@ -70740,13 +70746,13 @@ static s7_pointer big_rationalize(s7_scheme *sc, s7_pointer args)
     {
       mpfr_clear(ux);
       mpfr_clear(error);
-      return(out_of_range(sc, sc->rationalize_symbol, small_int(1), car(args), ITS_NAN));
+      return(out_of_range(sc, sc->rationalize_symbol, small_int(1), car(args), its_nan_string));
     }
   if (mpfr_inf_p(ux) != 0)
     {
       mpfr_clear(ux);
       mpfr_clear(error);
-      return(out_of_range(sc, sc->rationalize_symbol, small_int(1), car(args), ITS_INFINITE));
+      return(out_of_range(sc, sc->rationalize_symbol, small_int(1), car(args), its_infinite_string));
     }
 
   mpfr_init_set(x0, ux, GMP_RNDN);        /* x0 = ux - error */
@@ -70928,7 +70934,7 @@ static s7_pointer big_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 
   p = car(args);
   if (!s7_is_number(p))   /* apparently (exact->inexact 1+i) is not an error */
-    method_or_bust_with_type(sc, p, sc->exact_to_inexact_symbol, args, A_NUMBER, 0);
+    method_or_bust_with_type(sc, p, sc->exact_to_inexact_symbol, args, a_number_string, 0);
 
   if (!s7_is_rational(p))
     return(p);
@@ -70983,7 +70989,7 @@ static s7_pointer big_convert_to_int(s7_scheme *sc, s7_pointer args, s7_pointer 
     {
       if ((g_is_nan(sc, args) == sc->T) ||
 	  (g_is_infinite(sc, args)) == sc->T)
-	return(simple_out_of_range(sc, sym, p, (g_is_nan(sc, args) == sc->T) ? ITS_NAN : ITS_INFINITE));
+	return(simple_out_of_range(sc, sym, p, (g_is_nan(sc, args) == sc->T) ? its_nan_string : its_infinite_string));
 
       mpz_init(n);
       mpfr_get_z(n, big_real(p), mode);
@@ -71068,7 +71074,7 @@ static s7_pointer big_round(s7_scheme *sc, s7_pointer args)
 
   if ((g_is_nan(sc, args) == sc->T) ||
       (g_is_infinite(sc, args)) == sc->T)
-    return(simple_out_of_range(sc, sc->round_symbol, p, (g_is_nan(sc, args) == sc->T) ? ITS_NAN : ITS_INFINITE));
+    return(simple_out_of_range(sc, sc->round_symbol, p, (g_is_nan(sc, args) == sc->T) ? its_nan_string : its_infinite_string));
 
   {
     int cmp_res;
@@ -71516,7 +71522,7 @@ static s7_pointer big_equal(s7_scheme *sc, s7_pointer args)
       if (!s7_is_number(p))
 	{
 	  check_method(sc, car(args), sc->eq_symbol, x);
-	  return(wrong_type_argument_with_type(sc, sc->eq_symbol, position_of(x, args), p, A_NUMBER));
+	  return(wrong_type_argument_with_type(sc, sc->eq_symbol, position_of(x, args), p, a_number_string));
 	}
 
       result_type = get_result_type(sc, result_type, p);
@@ -71578,7 +71584,7 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
   for (x = args; is_not_null(x); x = cdr(x))
     {
       if (!is_rational_via_method(sc, car(x)))
-	return(wrong_type_argument_with_type(sc, sc->gcd_symbol, position_of(x, args), car(x), A_RATIONAL));
+	return(wrong_type_argument_with_type(sc, sc->gcd_symbol, position_of(x, args), car(x), a_rational_string));
       if (!rats)
 	rats = (!is_integer_via_method(sc, car(x)));
     }
@@ -71632,7 +71638,7 @@ static s7_pointer big_gcd(s7_scheme *sc, s7_pointer args)
 	    mpz_clear(n);
 	    mpz_clear(d);
 	    mpq_clear(q);
-	    method_or_bust_with_type(sc, car(x), sc->gcd_symbol, lst, A_RATIONAL, position_of(x, args));
+	    method_or_bust_with_type(sc, car(x), sc->gcd_symbol, lst, a_rational_string, position_of(x, args));
 	  }
 	rat = promote_number(sc, T_BIG_RATIO, car(x));
 	mpz_gcd(n, n, mpq_numref(big_ratio(rat)));
@@ -71670,7 +71676,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
   for (x = args; is_not_null(x); x = cdr(x))
     {
       if (!is_rational_via_method(sc, car(x)))
-	return(wrong_type_argument_with_type(sc, sc->lcm_symbol, position_of(x, args), car(x), A_RATIONAL));
+	return(wrong_type_argument_with_type(sc, sc->lcm_symbol, position_of(x, args), car(x), a_rational_string));
       if (!rats)
 	rats = (!is_integer_via_method(sc, car(x)));
     }
@@ -71731,7 +71737,7 @@ static s7_pointer big_lcm(s7_scheme *sc, s7_pointer args)
 	    mpz_clear(n);
 	    mpz_clear(d);
 	    mpq_clear(q);
-	    method_or_bust_with_type(sc, car(x), sc->lcm_symbol, lst, A_RATIONAL, position_of(x, args));
+	    method_or_bust_with_type(sc, car(x), sc->lcm_symbol, lst, a_rational_string, position_of(x, args));
 	  }
 
 	rat = promote_number(sc, T_BIG_RATIO, car(x));
@@ -71809,14 +71815,14 @@ static s7_pointer big_random(s7_scheme *sc, s7_pointer args)
 
   num = car(args);
   if (!s7_is_number(num))
-    method_or_bust_with_type(sc, num, sc->random_symbol, args, A_NUMBER, 1);
+    method_or_bust_with_type(sc, num, sc->random_symbol, args, a_number_string, 1);
 
   state = sc->default_rng;
   if (is_not_null(cdr(args)))
     {
       state = cadr(args);
       if (!is_random_state(state))
-	return(wrong_type_argument_with_type(sc, sc->random_symbol, 2, state, A_RANDOM_STATE_OBJECT));
+	return(wrong_type_argument_with_type(sc, sc->random_symbol, 2, state, a_random_state_object_string));
     }
 
   if (s7_is_zero(num))
@@ -72401,7 +72407,7 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
 #endif
 	  return(val);
 	}
-      return(wrong_type_argument_with_type(sc, sym, 1, val, A_RANDOM_STATE_OBJECT));
+      return(wrong_type_argument_with_type(sc, sym, 1, val, a_random_state_object_string));
     }
 
   if (sym == sc->stacktrace_defaults_symbol)
@@ -73315,7 +73321,7 @@ s7_scheme *s7_init(void)
   sc->is_procedure_symbol =          defun("procedure?",	is_procedure,		1, 0, false);
   sc->is_dilambda_symbol =           defun("dilambda?",	        is_dilambda,		1, 0, false);
   /* set above */                    defun("boolean?",		is_boolean,		1, 0, false);
-  sc->is_float_symbol =                     defun("float?",            is_float,               1, 0, false);
+  sc->is_float_symbol =              defun("float?",            is_float,               1, 0, false);
   sc->is_proper_list_symbol =        defun("proper-list?",      is_proper_list,         1, 0, false);
   sc->is_sequence_symbol =           defun("sequence?",	        is_sequence,		1, 0, false);
   sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false);
@@ -74198,7 +74204,6 @@ int main(int argc, char **argv)
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
- * perhaps lowercase for the prebuilt strings like CAR_A_LIST
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

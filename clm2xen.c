@@ -12495,7 +12495,7 @@ static void mus_xen_init(void)
   s7_pointer pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
     pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, pcl_zt, 
     pl_sc, pl_sssrs, pl_tc, pl_ct, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
-    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d;
+    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_dcf, pl_dcrt;
 #endif
 
   mus_initialize();
@@ -12526,6 +12526,8 @@ static void mus_xen_init(void)
   
   pl_d = s7_make_signature(s7, 1, d);
   pl_dcr = s7_make_circular_signature(s7, 2, 3, d, c, r);
+  pl_dcf = s7_make_signature(s7, 3, d, c, s7_make_signature(s7, 2, r, f));
+  pl_dcrt = s7_make_signature(s7, 4, d, c, r, t);
   pl_dct = s7_make_signature(s7, 3, d, c, t);
   pl_dci = s7_make_circular_signature(s7, 2, 3, d, c, i);
   pl_dcir = s7_make_signature(s7, 4, d, c, i, r);
@@ -12906,7 +12908,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		pcl_ct);
   Xen_define_typed_procedure(S_formant,			g_formant_w,               1, 2, 0, H_formant,			pl_dcr);
 
-  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          1, 1, 0, H_formant_bank,		pl_dcr);
+  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          1, 1, 0, H_formant_bank,		pl_dcf);
   Xen_define_typed_procedure(S_is_formant_bank,		g_is_formant_bank_w,       1, 0, 0, H_is_formant_bank,		pl_bt);
   Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	pcl_zt);
 
@@ -13052,7 +13054,7 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_clear_sincs,		g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables", NULL);
   Xen_define_typed_procedure(S_is_src,			g_is_src_w,                1, 0, 0, H_is_src,			pl_bt);
-  Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			pl_dcr);
+  Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			pl_dcrt);
   Xen_define_typed_procedure(S_make_src,		g_make_src_w,              0, 6, 0, H_make_src,                 pcl_ct);
 
 

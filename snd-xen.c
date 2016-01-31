@@ -2714,7 +2714,7 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 void g_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_dr, pl_dir, pl_ss, pl_b;
+  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, pl_pr;
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   s7_pointer pl_pf;
 #endif
@@ -2825,14 +2825,16 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 
 #if HAVE_SCHEME
   {
-    s7_pointer s, i, b, r, d;
+    s7_pointer s, i, b, r, d, p;
     s = s7_make_symbol(s7, "string?");
     i = s7_make_symbol(s7, "integer?");
     b = s7_make_symbol(s7, "boolean?");
     r = s7_make_symbol(s7, "real?");
     d = s7_make_symbol(s7, "float?");
+    p = s7_make_symbol(s7, "pair?");
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_dr = s7_make_circular_signature(s7, 1, 2, d, r);
+    pl_pr = s7_make_signature(s7, 2, p, r);
     pl_dir = s7_make_signature(s7, 3, d, i, r);
     pl_b = s7_make_signature(s7, 1, b);
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
@@ -2871,7 +2873,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_define_typed_procedure(S_bes_kn, g_kn_w,     2, 0, 0, H_kn,	pl_dir);
 
   Xen_define_typed_procedure("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk, pl_dr);
-  Xen_define_typed_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj, pl_dr);
+  Xen_define_typed_procedure("gsl-ellipj", g_gsl_ellipj_w, 2, 0, 0, H_gsl_ellipj, pl_pr);
 
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   Xen_define_typed_procedure("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors", pl_pf);
