@@ -247,8 +247,8 @@
 	     sum))))))
 
 (define (poly-as-vector-resultant p1 p2)
-  (if (or (not (vector? p1)) 
-	  (not (vector? p2)))
+  (if (not (and (vector? p1)
+		(vector? p2)))
       (error 'wrong-type-arg "poly-as-vector-resultant arguments should be vectors")
       (let* ((m (length p1))
 	     (n (length p2))

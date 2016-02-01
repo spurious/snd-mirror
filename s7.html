@@ -4290,9 +4290,7 @@ the dumb "lambda".  Here are more useful examples:
 <pre class="indented">
 (openlet          ; a soft port for format that sends its output to *stderr* and returns the string
   (inlet 'format (lambda (port str . args)
- 	           (let ((result (apply format #f str args)))
-	             (display result *stderr*)
-	             result))))
+ 	           (display (apply format #f str args) *stderr*))))
 
 (define (open-output-log name)
   ;; return a soft output port that does not hold its output file open

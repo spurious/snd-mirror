@@ -3949,7 +3949,7 @@
 (CFNC "void gtk_window_get_size GtkWindow* window gint* [width] gint* [height]")
 (CFNC "void gtk_window_move GtkWindow* window gint x gint y")
 (CFNC "void gtk_window_get_position GtkWindow* window gint* [root_x] gint* [root_y]")
-(CFNC "gboolean gtk_window_parse_geometry GtkWindow* window gchar* geometry")
+;;; 3.19.8 (CFNC "gboolean gtk_window_parse_geometry GtkWindow* window gchar* geometry")
 ;;; (CFNC "void gtk_window_reshow_with_initial_size GtkWindow* window")
 
 ;;; (CFNC-gtk2 "void gtk_window_remove_embedded_xid GtkWindow* window guint xid")
@@ -7698,7 +7698,7 @@
 (CFNC-3.0 "void gtk_widget_set_vexpand_set GtkWidget* widget gboolean set")
 (CFNC-3.0 "void gtk_widget_queue_compute_expand GtkWidget* widget")
 (CFNC-3.0 "gboolean gtk_widget_compute_expand GtkWidget* widget GtkOrientation orientation")
-(CFNC-3.0 "void gtk_window_set_default_geometry GtkWindow* window gint width gint height")
+;;; 3.19.8 (CFNC-3.0 "void gtk_window_set_default_geometry GtkWindow* window gint width gint height")
 ;;; 3.19.4 (CFNC-3.0 "void gtk_window_resize_to_geometry GtkWindow* window gint width gint height")
 ;;; 3.13.4 (CFNC-3.0 "void gtk_window_set_has_resize_grip GtkWindow* window gboolean value")
 ;;; 3.13.4 (CFNC-3.0 "gboolean gtk_window_get_has_resize_grip GtkWindow* window")
@@ -9222,7 +9222,7 @@
 ;;; 3.19.1:
 
 (CFNC-3.20 "gboolean gdk_gl_context_is_legacy GdkGLContext* context")
-(CFNC-3.20 "gboolean gdk_rectangle_equal GdkRectangle* rect1 GdkRectangle*rect2" 'const)
+(CFNC-3.20 "gboolean gdk_rectangle_equal GdkRectangle* rect1 GdkRectangle* rect2" 'const)
 (CFNC-3.20 "void gtk_application_window_set_help_overlay GtkApplicationWindow* window GtkShortcutsWindow* help_overlay")
 ;;; (CFNC-3.20 "GtkShortcutsWindow* gtk_application_window_get_help_overlay GtkApplicationWindow* window")
 (CFNC-3.20 "void gtk_settings_reset_property GtkSettings* settings gchar* name" 'const)
@@ -9311,3 +9311,7 @@
 (CFNC-3.20 "gboolean gdk_drag_context_manage_dnd GdkDragContext* context GdkWindow* ipc_window GdkDragAction actions")
 (CFNC-3.20 "gboolean gdk_event_is_scroll_stop_event GdkEvent* event" 'const)
 (CFNC-3.20 "void gtk_text_view_reset_cursor_blink GtkTextView* text_view")
+
+;;; 3.19.8:
+
+(CFNC-3.20 "void gtk_render_background_get_clip GtkStyleContext* context gdouble x gdouble y gdouble width gdouble height GdkRectangle* [out_clip]")

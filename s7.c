@@ -72694,7 +72694,7 @@ s7_scheme *s7_init(void)
   sc->F =           make_unique_object("#f",             T_BOOLEAN);
   sc->eof_object =  make_unique_object("#<eof>",         T_UNIQUE);
   sc->undefined =   make_unique_object("#<undefined>",   T_UNIQUE);
-  sc->else_object =        make_unique_object("else",           T_UNIQUE);
+  sc->else_object = make_unique_object("else",           T_UNIQUE);
   /* "else" is added to the rootlet below -- can't do it here because the symbol table and environment don't exist yet. */
   sc->unspecified = make_unique_object("#<unspecified>", T_UNSPECIFIED);
   sc->no_value =    make_unique_object("#<unspecified>", T_UNSPECIFIED);

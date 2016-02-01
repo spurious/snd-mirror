@@ -4959,7 +4959,7 @@ but 0.5 should happen three times as often as either of the others:
 (let ((vals (float-vector 0.0 0.5 0.5 0.5 1.0)))
   (do ((i 0 (+ i 1)))
       ((= i 10))
-    (<a class=quiet>format</a> () ";~A " (vals (floor (random 5.0))))))
+    (<a class=quiet>format</a> () ";~A " (vals (random 5)))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number

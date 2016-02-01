@@ -47693,12 +47693,12 @@ EDITS: 1
 	       :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
 	       :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
 	     
-	     (procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 0)))) procs))
-	     (set-procs0 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 1)))) set-procs))
-	     (procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 1)))) procs))
-	     (set-procs1 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 2)))) set-procs))
-	     (procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (aritable? n 2)))) procs))
-	     (set-procs2 (remove-if (lambda (n) (or (not (procedure? n)) (not (set-arity-ok n 3)))) set-procs))
+	     (procs0 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
+	     (set-procs0 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
+	     (procs1 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
+	     (set-procs1 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
+	     (procs2 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
+	     (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs))
 	     )
 	
 	(reset-all-hooks)
