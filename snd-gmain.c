@@ -582,7 +582,7 @@ void snd_doit(int argc, char **argv)
   init_gtk();
 #endif
 
-  MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogenous, spacing 0 */
+  MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogeneous, spacing 0 */
 
 #if (GTK_CHECK_VERSION(3, 0, 0))
   init_gtk();

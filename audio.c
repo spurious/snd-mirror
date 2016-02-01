@@ -83,7 +83,13 @@
 /* these pull in stdbool.h apparently, so they have to precede sndlib.h */
 #endif
 
-#define HAVE_JACK_IN_LINUX (MUS_JACK && __linux__)
+/* #define HAVE_JACK_IN_LINUX (MUS_JACK && __linux__) */
+/* using JACK on GNU/linux, GNU/kFreeBSD and GNU/Hurd is all the same */
+#if ((defined __linux__) || ((defined __FreeBSD_kernel__) && (defined __GLIBC__)) || (defined __GNU__))
+  #define HAVE_JACK_IN_LINUX MUS_JACK
+#else
+  #define HAVE_JACK_IN_LINUX 0
+#endif
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"

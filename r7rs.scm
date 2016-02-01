@@ -388,9 +388,9 @@
 ;; records
 (define-macro (define-record-type type make ? . fields)
   (let ((new-type (if (pair? type) (car type) type))
-	(inherited (if (pair? type) `(list ,@(cdr type)) ())))
+	(inherited (if (pair? type) (cdr type) ())))
     `(begin
-       (define-class ,new-type ,inherited
+       (define-class ,new-type ,inherited   ; from stuff.scm
          (map (lambda (f) (if (pair? f) (car f) f)) ',fields))
        
        (define (,? obj)    ; perhaps the define-class type predicate should use this 

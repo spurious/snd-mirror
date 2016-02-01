@@ -37300,14 +37300,14 @@ PF_TO_PF(vector, c_vector_1)
 
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogenous float vector"
+  #define H_is_float_vector "(float-vector? obj) returns #t if obj is an homogeneous float vector"
   #define Q_is_float_vector pl_bt
   check_boolean_method(sc, s7_is_float_vector, sc->is_float_vector_symbol, args);
 }
 
 static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_float_vector "(float-vector ...) returns an homogenous float vector whose elements are the arguments"
+  #define H_float_vector "(float-vector ...) returns an homogeneous float vector whose elements are the arguments"
   #define Q_float_vector s7_make_circular_signature(sc, 1, 2, sc->is_float_vector_symbol, sc->is_real_symbol)
 
   s7_int len;
@@ -37335,14 +37335,14 @@ PF_TO_PF(float_vector, c_float_vector_1)
 
 static s7_pointer g_is_int_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_int_vector "(int-vector? obj) returns #t if obj is an homogenous int vector"
+  #define H_is_int_vector "(int-vector? obj) returns #t if obj is an homogeneous int vector"
   #define Q_is_int_vector pl_bt
   check_boolean_method(sc, is_int_vector, sc->is_int_vector_symbol, args);
 }
 
 static s7_pointer g_int_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_int_vector "(int-vector ...) returns an homogenous int vector whose elements are the arguments"
+  #define H_int_vector "(int-vector ...) returns an homogeneous int vector whose elements are the arguments"
   #define Q_int_vector s7_make_circular_signature(sc, 1, 2, sc->is_int_vector_symbol, sc->is_integer_symbol)
 
   s7_int len;
@@ -38126,10 +38126,10 @@ PIPF_TO_PF(vector_set, c_vector_set_s, c_vector_set_3, c_vector_tester)
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_vector "(make-vector len (value #f) (homogenous #f)) returns a vector of len elements initialized to value. \
+  #define H_make_vector "(make-vector len (value #f) (homogeneous #f)) returns a vector of len elements initialized to value. \
 To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
-returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogenous is #t, and value is either an integer \
+returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogeneous is #t, and value is either an integer \
 or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
   #define Q_make_vector s7_make_signature(sc, 4, sc->is_vector_symbol, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_pair_symbol), sc->T, sc->is_boolean_symbol)
 
@@ -38191,7 +38191,7 @@ or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
 		{
 		  if (s7_is_real(fill)) /* might be gmp with big_real by accident (? see above) */
 		    result_type = T_FLOAT_VECTOR;
-		  else method_or_bust_with_type(sc, fill, sc->make_vector_symbol, args, make_string_wrapper(sc, "an integer or a real since 'homogenous' is #t"), 2);
+		  else method_or_bust_with_type(sc, fill, sc->make_vector_symbol, args, make_string_wrapper(sc, "an integer or a real since 'homogeneous' is #t"), 2);
 		}
 	    }
 	  else
@@ -39607,7 +39607,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	    return(data);
 	  }
 
-	push_stack(sc, OP_SORT_VECTOR_END, cons(sc, data, lessp), sc->code); /* save and gc protect the original homogenous vector and func */
+	push_stack(sc, OP_SORT_VECTOR_END, cons(sc, data, lessp), sc->code); /* save and gc protect the original homogeneous vector and func */
 	car(args) = vec;
 	s7_gc_unprotect_at(sc, gc_loc);
       }
@@ -47247,7 +47247,7 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
    * is currently an error (too many arguments)
    * it should be (((lambda (arg) arg) "hi") 0) -> #\h
    *
-   * this applies to non-homogenous cases, so float|int-vectors don't get here
+   * this applies to non-homogeneous cases, so float|int-vectors don't get here
    */
 
   switch (type(obj))
@@ -74032,7 +74032,8 @@ s7_scheme *s7_init(void)
 	                          (let ((val (eval (car clause))))                                            \n\
                                     (if val                                                                   \n\
                                         (if (null? (cdr clause)) (return val)                                 \n\
-	                                    (if (null? (cddr clause)) (return (cadr clause))                  \n\
+	                                    (if (null? (cddr clause))                                         \n\
+                                                (return (cadr clause))                                        \n\
                                                 (return (apply values (map quote (cdr clause)))))))))         \n\
                                 clauses)                                                                      \n\
                               (values))))");

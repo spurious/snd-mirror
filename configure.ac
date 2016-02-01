@@ -657,6 +657,34 @@ case "$host" in
     fi
     ;;
 
+  *-*-kfreebsd*|*-*-gnu*)
+      LDSO_FLAGS="-shared"
+      LIBS="$LIBS -lm -ldl"
+      if test "$GCC" = yes ; then
+        SO_FLAGS="-fPIC $SO_FLAGS"
+      fi
+
+      AUDIO_SYSTEM=OSS
+
+      if test "$with_jack" = yes ; then
+             if test "$with_oss" != yes ; then
+               AUDIO_SYSTEM=JACK
+             fi
+      fi
+
+      case $AUDIO_SYSTEM in
+          JACK)
+              AC_DEFINE(HAVE_JACK_IN_LINUX)
+              AC_DEFINE(HAVE_OSS)
+              AUDIO_LIB="-lsamplerate"
+              ;;
+          OSS)
+              AC_DEFINE(HAVE_OSS)
+              AUDIO_SYSTEM=OSS
+              ;;
+      esac
+      ;;
+
   *-*-sunos4*) 
     LIBS="$LIBS -lm"
     ;;

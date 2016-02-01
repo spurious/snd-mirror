@@ -812,7 +812,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
- * 28-Aug:    s7_int|float_vector_elements (homogenous vectors), libc.scm.
+ * 28-Aug:    s7_int|float_vector_elements (homogeneous vectors), libc.scm.
  * 16-Aug:    ~W directive in format, make-shared-vector.
  * 23-Jul:    s7_autoload_set_names, libm.scm, libdl.scm, libgdbm.scm, r7rs.scm, s7libtest.scm.
  * 21-Jul:    s7_is_valid (replaces deprecated s7_is_valid_pointer).

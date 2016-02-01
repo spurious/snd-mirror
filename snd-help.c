@@ -370,7 +370,7 @@ char *version_info(void)
 	      ", mpfr: ", mpfr_get_version(), 
 	      ", mpc: ",  mpc_get_version(),
 #endif
-#ifdef __DATE__
+#if (defined(__DATE__)) && (!(defined(REPRODUCIBLE_BUILD)))
 	  "\n    Compiled ", __DATE__, " ", __TIME__,
 #endif
 #ifdef __VERSION__
@@ -1693,7 +1693,7 @@ The control filter functions are:\n\
     filter coefficients (read-only currently)\n\
 \n\
   " S_filter_control_envelope " (:optional snd)\n\
-    filter (frequency reponse) envelope\n\
+    filter (frequency response) envelope\n\
 \n\
   " S_filter_control_in_dB " (:optional snd)\n\
     The filter dB button. If " PROC_TRUE ", the graph is displayed in dB.\n\
