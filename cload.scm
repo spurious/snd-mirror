@@ -104,7 +104,9 @@
 ;;; --------------------------------------------------------------------------------
 
 (define *cload-cflags* "") 
-(define *cload-ldflags* "") 
+(define *cload-ldflags* "")
+(if (not (defined? '*cload-directory*))
+    (define *cload-directory* ""))
 
 
 (define-macro (defvar name value) 
@@ -228,7 +230,7 @@
 
   (set! c-define-output-file-counter (+ c-define-output-file-counter 1))
 
-  (let* ((file-name (or output-name (format "temp-s7-output-~D" c-define-output-file-counter)))
+  (let* ((file-name (string-append *cload-directory* (or output-name (format "temp-s7-output-~D" c-define-output-file-counter))))
 	 (c-file-name (string-append file-name ".c"))
 	 (o-file-name (string-append file-name ".o"))
 	 (so-file-name (string-append file-name ".so"))

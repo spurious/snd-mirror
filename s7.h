@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.4"
-#define S7_DATE "7-Jan-16"
+#define S7_VERSION "4.5"
+#define S7_DATE "3-Feb-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -775,6 +775,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 3-Feb:     *cload-directory*.
  * 14-Jan:    profile.scm. Moved multiple-value-set! to stuff.scm. Setter for port-line-number.
  * 7-Jan:     s7_load_with_environment.
  *            s7_eval_c_string takes only one statement now (use begin to handle multiple statements)

@@ -967,13 +967,13 @@ struct s7_scheme {
              catch_symbol, cdaaar_symbol, cdaadr_symbol, cdaar_symbol, cdadar_symbol, cdaddr_symbol, cdadr_symbol, cdar_symbol,
              cddaar_symbol, cddadr_symbol, cddar_symbol, cdddar_symbol, cddddr_symbol, cdddr_symbol, cddr_symbol, cdr_symbol,
              ceiling_symbol, char_downcase_symbol, char_eq_symbol, char_geq_symbol, char_gt_symbol, char_leq_symbol, char_lt_symbol,
-             char_position_symbol, char_to_integer_symbol, char_upcase_symbol, close_input_port_symbol, close_output_port_symbol,
-             complex_symbol, cons_symbol, copy_symbol, cos_symbol, cosh_symbol, coverlet_symbol, curlet_symbol, 
-             current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, 
+             char_position_symbol, char_to_integer_symbol, char_upcase_symbol, cload_directory_symbol, close_input_port_symbol, 
+             close_output_port_symbol, complex_symbol, cons_symbol, copy_symbol, cos_symbol, cosh_symbol, coverlet_symbol, 
+             curlet_symbol, current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, 
              denominator_symbol, display_symbol, divide_symbol, dynamic_wind_symbol,
              eq_symbol, error_symbol, eval_string_symbol, eval_symbol, exact_to_inexact_symbol, exp_symbol, expt_symbol,
-             fill_symbol, float_vector_ref_symbol, float_vector_set_symbol, float_vector_symbol, floor_symbol, flush_output_port_symbol,
-             for_each_symbol, format_symbol, funclet_symbol,
+             features_symbol, fill_symbol, float_vector_ref_symbol, float_vector_set_symbol, float_vector_symbol, floor_symbol, 
+             flush_output_port_symbol, for_each_symbol, format_symbol, funclet_symbol,
              gc_symbol, gcd_symbol, gensym_symbol, geq_symbol, get_output_string_symbol, gt_symbol,
              hash_table_entries_symbol, hash_table_ref_symbol, hash_table_set_symbol, hash_table_star_symbol, hash_table_symbol,
              help_symbol, 
@@ -1007,7 +1007,7 @@ struct s7_scheme {
              random_state_symbol, random_state_to_list_symbol, random_symbol, rationalize_symbol, read_byte_symbol,
              read_char_symbol, read_line_symbol, read_string_symbol, read_symbol, real_part_symbol, remainder_symbol,
              require_symbol, reverse_symbol, reverseb_symbol, rootlet_symbol, round_symbol,
-             s7_features_symbol, set_car_symbol, set_cdr_symbol, sin_symbol, sinh_symbol, sort_symbol, sqrt_symbol,
+             set_car_symbol, set_cdr_symbol, sin_symbol, sinh_symbol, sort_symbol, sqrt_symbol,
              stacktrace_symbol, string_append_symbol, string_downcase_symbol, string_eq_symbol, string_fill_symbol,
              string_geq_symbol, string_gt_symbol, string_leq_symbol, string_lt_symbol, string_position_symbol, string_ref_symbol,
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
@@ -28534,6 +28534,18 @@ static s7_pointer g_load_path_set(s7_scheme *sc, s7_pointer args)
   return(sc->error_symbol);
 }
 
+static s7_pointer g_cload_directory_set(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer cl_dir;
+  cl_dir = cadr(args);
+  if (!is_string(cl_dir))
+    return(sc->error_symbol);
+  s7_symbol_set_value(sc, sc->cload_directory_symbol, cl_dir);
+  if (safe_strlen(string_value(cl_dir)) > 0)
+    s7_add_to_load_path(sc, (const char *)(string_value(cl_dir)));
+  return(cl_dir);
+}
+
 
 /* ---------------- autoload ---------------- */
 
@@ -36061,7 +36073,7 @@ static s7_pointer g_member(s7_scheme *sc, s7_pointer args)
 {
   #define H_member "(member obj list (func #f)) looks for obj in list and returns the list from that point if it is found, otherwise #f. \
 member uses equal?  If 'func' is a function of 2 arguments, it is used for the comparison instead of 'equal?"
-  #define Q_member s7_make_signature(sc, 4, sc->T, sc->T, sc->is_list_symbol, sc->is_procedure_symbol)
+  #define Q_member s7_make_signature(sc, 4, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->T, sc->is_list_symbol, sc->is_procedure_symbol)
 
   /* this could be extended to accept sequences:
    *    (member #\a "123123abnfc" char=?) -> "abnfc"
@@ -36301,18 +36313,18 @@ static s7_pointer c_is_provided(s7_scheme *sc, s7_pointer sym)
    *   Since *features* grows via cons (newest first), we can stop the scan if we hit the shared
    *   top-level at least.
    */
-  topf = slot_value(global_slot(sc->s7_features_symbol));
+  topf = slot_value(global_slot(sc->features_symbol));
   if (is_memq(sym, topf))
     return(sc->T);
 
-  if (is_global(sc->s7_features_symbol))
+  if (is_global(sc->features_symbol))
     return(sc->F);
-  for (x = sc->envir; symbol_id(sc->s7_features_symbol) < let_id(x); x = outlet(x));
+  for (x = sc->envir; symbol_id(sc->features_symbol) < let_id(x); x = outlet(x));
   for (; is_let(x); x = outlet(x))
     {
       s7_pointer y;
       for (y = let_slots(x); is_slot(y); y = next_slot(y))
-	if (slot_symbol(y) == sc->s7_features_symbol)
+	if (slot_symbol(y) == sc->features_symbol)
 	  {
 	    if ((slot_value(y) != topf) &&
 		(is_memq(sym, slot_value(y))))
@@ -36332,7 +36344,7 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 
 bool s7_is_provided(s7_scheme *sc, const char *feature)
 {
-  return(is_memq(s7_make_symbol(sc, feature), s7_symbol_value(sc, sc->s7_features_symbol))); /* this goes from local outward */
+  return(is_memq(s7_make_symbol(sc, feature), s7_symbol_value(sc, sc->features_symbol))); /* this goes from local outward */
 }
 
 PF_TO_PF(is_provided, c_is_provided)
@@ -36347,11 +36359,11 @@ static s7_pointer c_provide(s7_scheme *sc, s7_pointer sym)
   if (!is_symbol(sym))
     method_or_bust(sc, sym, sc->provide_symbol, list_1(sc, sym), T_SYMBOL, 0);
 
-  p = find_local_symbol(sc, sc->s7_features_symbol, sc->envir); /* if sc->envir is nil, this returns the global slot, else local slot */
-  lst = slot_value(find_symbol(sc, sc->s7_features_symbol));    /* in either case, we want the current *feartures* list */
+  p = find_local_symbol(sc, sc->features_symbol, sc->envir); /* if sc->envir is nil, this returns the global slot, else local slot */
+  lst = slot_value(find_symbol(sc, sc->features_symbol));    /* in either case, we want the current *feartures* list */
 
   if (p == sc->undefined)
-    make_slot_1(sc, sc->envir, sc->s7_features_symbol, cons(sc, sym, lst));
+    make_slot_1(sc, sc->envir, sc->features_symbol, cons(sc, sym, lst));
   else
     {
       if (!is_memq(sym, lst))
@@ -49559,6 +49571,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	  set_has_line_number(cur_code);
 	}
 
+#if (!DISABLE_AUTOLOAD)
       /* check sc->autoload_names */
       if (sc->autoload_names)
 	{
@@ -49587,9 +49600,11 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 		}
 	    }
 	}
+#endif
 
       if (result == sc->undefined)
 	{
+#if (!DISABLE_AUTOLOAD)
 	  /* check the *autoload* hash table */
 	  if (is_hash_table(sc->autoload_table))
 	    {
@@ -49607,6 +49622,7 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 		}
 	      result = s7_symbol_value(sc, sym); /* calls find_symbol, does not trigger unbound_variable search */
 	    }
+#endif
 
 	  /* check *unbound-variable-hook* */
 	  if ((result == sc->undefined) &&
@@ -73331,7 +73347,7 @@ s7_scheme *s7_init(void)
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->is_pair_symbol);
 #if (!WITH_PURE_S7)
-  pl_tl =  s7_make_signature(sc, 3, sc->T, sc->T, sc->is_list_symbol);
+  pl_tl =  s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->T, sc->is_list_symbol); /* memq and memv signature */
 #endif
   pl_bc =  s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_char_symbol);
   pl_bn =  s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_number_symbol);
@@ -73763,12 +73779,22 @@ s7_scheme *s7_init(void)
 
 
   /* -------- *features* -------- */
-  sc->s7_features_symbol = s7_define_variable(sc, "*features*", sc->nil);
-  s7_symbol_set_access(sc, sc->s7_features_symbol, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* accessor"));
+  sc->features_symbol = s7_define_variable(sc, "*features*", sc->nil);
+  s7_symbol_set_access(sc, sc->features_symbol, s7_make_function(sc, "(set *features*)", g_features_set, 2, 0, false, "*features* accessor"));
 
   /* -------- *load-path* -------- */
-  sc->load_path_symbol = s7_define_variable_with_documentation(sc, "*load-path*", sc->nil, "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
+  sc->load_path_symbol = s7_define_variable_with_documentation(sc, "*load-path*", sc->nil, 
+			   "*load-path* is a list of directories (strings) that the load function searches if it is passed an incomplete file name");
   s7_symbol_set_access(sc, sc->load_path_symbol, s7_make_function(sc, "(set *load-path*)", g_load_path_set, 2, 0, false, "*load-path* accessor"));
+
+#ifdef CLOAD_DIR
+  sc->cload_directory_symbol = s7_define_variable(sc, "*cload-directory*", s7_make_string(sc, (char *)CLOAD_DIR));
+  s7_add_to_load_path(sc, (const char *)CLOAD_DIR);
+#else
+  sc->cload_directory_symbol = s7_define_variable(sc, "*cload-directory*", make_empty_string(sc, 0, 0));
+#endif
+  s7_symbol_set_access(sc, sc->cload_directory_symbol, s7_make_function(sc, "(set *cload-directory*)", g_cload_directory_set, 2, 0, false, 
+                           "*cload-directory* accessor"));
 
 
   /* -------- *autoload* --------
@@ -74217,4 +74243,7 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
+ *
+ * doc/test no-autoload compile-time switch to Snd, and *cload-directory*
+ *   also need to add code to look for non-null *cload-directory* to lib*.scm, adding (prepending) it to *load-path*
  */
