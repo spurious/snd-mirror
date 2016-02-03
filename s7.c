@@ -73863,6 +73863,9 @@ s7_scheme *s7_init(void)
 #if WITH_C_LOADER
   s7_provide(sc, "dlopen");
 #endif
+#if (!DISABLE_AUTOLOAD)
+  s7_provide(sc, "autoload");
+#endif
 
 #ifdef __APPLE__
   s7_provide(sc, "osx");
@@ -74019,11 +74022,14 @@ s7_scheme *s7_init(void)
 
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
-  s7_eval_c_string(sc, "(define (dilambda g s)                                                                \n\
-                          (if (or (not (arity g)) (not (arity s)))                                            \n\
-                              (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)              \n\
-                              (set! (procedure-setter g) s))                                                  \n\
-                          g)");
+  s7_eval_c_string(sc, "(define dilambda                                                                      \n\
+                          (let ((signature '(procedure? procedure? procedure?))                               \n\
+                                (documentation \"(dilambda getter setter) sets getter's procedure-setter to be setter\")) \n\
+                            (lambda (g s)                                                                     \n\
+                              (if (or (not (arity g)) (not (arity s)))                                        \n\
+                                  (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)          \n\
+                                  (set! (procedure-setter g) s))                                              \n\
+                              g)))");
 
 #if (!WITH_PURE_S7)
   s7_eval_c_string(sc, "(define hash-table-size length)"); /* backwards compatibility */
@@ -74064,28 +74070,33 @@ s7_scheme *s7_init(void)
                                 clauses)                                                                      \n\
                               (values))))");
 
-  s7_eval_c_string(sc, "(define (make-hook . args)                                                            \n\
-                          (let ((body ()))                                                                    \n\
-                            (apply lambda* args                                                               \n\
-                              '(let ((result #<unspecified>))                                                 \n\
-                                 (let ((e (curlet)))                                                          \n\
-                                   (for-each (lambda (f) (f e)) body)                                         \n\
-                                   result))                                                                   \n\
-                              ())))");
+  s7_eval_c_string(sc, "(define make-hook                                                                     \n\
+                          (let ((signature '(procedure? #t))                                                  \n\
+                                (documentation \"(make-hook . pars) returns a new hook (a function) that passes the parameters to its function list.\")) \n\
+                            (lambda args                                                                      \n\
+                              (let ((body ()))                                                                \n\
+                                (apply lambda* args                                                           \n\
+                                  '(let ((result #<unspecified>))                                             \n\
+                                     (let ((e (curlet)))                                                      \n\
+                                       (for-each (lambda (f) (f e)) body)                                     \n\
+                                       result))                                                               \n\
+                                  ())))))");
 
   s7_eval_c_string(sc, "(define hook-functions                                                                \n\
-                          (dilambda                                                                           \n\
-                            (lambda (hook)                                                                    \n\
-                              ((funclet hook) 'body))                                                         \n\
-                            (lambda (hook lst)                                                                \n\
-                              (if (or (null? lst)                                                             \n\
-                                      (and (pair? lst)                                                        \n\
-                                           (apply and (map (lambda (f)                                        \n\
-                                                             (and (procedure? f)                              \n\
-                                                                  (aritable? f 1)))                           \n\
-                                                           lst))))                                            \n\
-                                  (set! ((funclet hook) 'body) lst)                                           \n\
-                                  (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))");
+                          (let ((signature '(list? procedure?))                                               \n\
+                                (documentation \"(hook-functions hook) gets or sets the list of functions associated with the hook\")) \n\
+                            (dilambda                                                                         \n\
+                              (lambda (hook)                                                                  \n\
+                                ((funclet hook) 'body))                                                       \n\
+                              (lambda (hook lst)                                                              \n\
+                                (if (or (null? lst)                                                           \n\
+                                        (and (pair? lst)                                                      \n\
+                                             (apply and (map (lambda (f)                                      \n\
+                                                               (and (procedure? f)                            \n\
+                                                                    (aritable? f 1)))                         \n\
+                                                             lst))))                                          \n\
+                                    (set! ((funclet hook) 'body) lst)                                         \n\
+                                    (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))))");
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");

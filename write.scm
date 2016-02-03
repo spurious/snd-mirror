@@ -23,8 +23,8 @@
 	      ((#_{list})
 	       (do ((form x (cdr form))
 		    (d 0 (+ d 1)))
-		   ((or (not (pair? form))
-			(not (eq? (car form) {list})))
+		   ((not (and (pair? form)
+			      (eq? (car form) {list})))
 		    (if (eq? (car form) {apply_values})
 			",@"                             ; TODO: this is broken
 			(if (= d depth)
@@ -133,8 +133,8 @@
 		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-let when unless
 			  call-with-input-string call-with-input-file call-with-output-file
 			  with-input-from-file with-input-from-string with-output-to-file)
-		  (if (or (not (pair? (cdr obj))) ; (when) or (when . #t)
-			  (not (pair? (cddr obj))))
+		  (if (not (and (pair? (cdr obj)) ; (when) or (when . #t)
+				(pair? (cddr obj))))
 		      (write obj port)
 		      (begin
 			(format port "(~A ~A" (car obj) (cadr obj))
@@ -143,8 +143,8 @@
 			(write-char #\) port))))
 		 
 		 ((defmacro defmacro*)
-		  (if (or (not (pair? (cdr obj)))
-			  (not (pair? (cddr obj))))
+		  (if (not (and (pair? (cdr obj))
+				(pair? (cddr obj))))
 		      (write obj port)
 		      (begin
 			(format port "(~A ~A ~A" (car obj) (cadr obj) (caddr obj))
@@ -306,8 +306,8 @@
 			  (write-char #\) port)))))
 		 
 		 ((let let* letrec letrec*)
-		  (if (or (not (pair? (cdr obj)))
-			  (not (pair? (cddr obj))))
+		  (if (not (and (pair? (cdr obj))
+				(pair? (cddr obj))))
 		      (write obj port)
 		      (let ((head-len (length (symbol->string (car obj)))))
 			(if (symbol? (cadr obj))
@@ -333,8 +333,8 @@
 		  (format port "(inlet")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
-			  ((or (not (pair? lst))
-			       (not (pair? (cdr lst)))))
+			  ((not (and (pair? lst)
+				     (pair? (cdr lst)))))
 			(spaces (+ column *pretty-print-spacing*))
 			(if (pair? (cdr lst))
 			    (begin

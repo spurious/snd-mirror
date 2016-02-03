@@ -9,6 +9,7 @@
 (define *report-unused-top-level-functions* #f)
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
 (define *report-shadowed-variables* #f)
+(define *report-undefined-identifiers* #f)
 (define *report-minor-stuff* #t)                          ; now obsolete
 (define *report-doc-strings* #f)                          ; report old-style (CL) doc strings
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
@@ -563,6 +564,7 @@
 	    ((macro? c)        'macro?)
 	    ((random-state? c) 'random-state?)
 	    ((c-pointer? c)    'c-pointer?)
+	    ((c-object? c)     'c-object?)
 	    ((or (eof-object? c)
 		 (eq? c #<eof>)) 'eof-object?)
 	    ((eq? c #<unspecified>) 'unspecified?)
@@ -597,13 +599,13 @@
     (define bools '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified?
+		    unspecified? c-object?
 		    ))
 
     (define bools1 '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
-		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified? exact? inexact?
+		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
+		    unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
 		    ))
     
     (define (compatible? type1 type2) ; we want type1, we have type2 -- is type2 ok?
@@ -617,15 +619,16 @@
 	    ((real?)             (memq type2 '(float? rational? integer? complex? number? exact? inexact?)))
 	    ((float?)            (memq type2 '(real? complex? number? exact? inexact?)))
 	    ((rational?)         (memq type2 '(integer? real? complex? number? exact?)))
-	    ((integer?)          (memq type2 '(real? rational? complex? number? exact?)))
+	    ((integer?)          (memq type2 '(real? rational? complex? number? exact? even? odd?)))
+	    ((odd? even?)        (memq type2 '(real? rational? complex? number? exact? integer?)))
 	    ((exact?)            (memq type2 '(real? rational? complex? number? integer?)))
 	    ((inexact?)          (memq type2 '(real? number? complex? float?)))
 	    ((vector?)           (memq type2 '(float-vector? int-vector? sequence?)))
 	    ((float-vector? int-vector?) (memq type2 '(vector? sequence?)))
 	    ((sequence?)         (memq type2 '(list? pair? null? proper-list? vector? float-vector? int-vector? byte-vector? 
 					       string? let? hash-table? c-object? iterator? procedure?))) ; procedure? for extended iterator
-	    ((symbol?)           (memq type2 '(gensym? keyword?)))
-	    ((keyword? gensym?)  (eq? type2 'symbol?))
+	    ((symbol?)           (memq type2 '(gensym? keyword? defined? provided?)))
+	    ((keyword? gensym? defined? provided?)  (eq? type2 'symbol?))
 	    ((list?)             (memq type2 '(null? pair? proper-list? sequence?)))
 	    ((proper-list?)      (memq type2 '(null? pair? list? sequence?)))
 	    ((pair? null?)       (memq type2 '(list? proper-list? sequence?)))
@@ -637,6 +640,8 @@
 	    ((hash-table? let?)  (eq? type2 'sequence?))
 	    ((byte-vector?)      (memq type2 '(string? sequence?)))
 	    ((input-port? output-port?) (eq? type2 'boolean?))
+	    ((char? char-whitespace? char-numeric? char-alphabetic?) 
+	     (memq type2 '(char? char-whitespace? char-numeric? char-alphabetic?)))
 	    (else #f))))
     
     (define (any-compatible? type1 type2)
@@ -654,6 +659,7 @@
     (define (subsumes? type1 type2)
       (or (eq? type1 type2)
 	  (case type1
+	    ((integer?)         (memq type2 '(even? odd?)))
 	    ((rational?)        (memq type2 '(integer? exact?)))
 	    ((exact?)           (memq type2 '(integer? rational?)))
 	    ((real?)            (memq type2 '(integer? rational? float?)))
@@ -661,8 +667,9 @@
 	    ((list?)            (memq type2 '(pair? null? proper-list?)))
 	    ((proper-list?)     (eq? type2 'null?))
 	    ((vector?)          (memq type2 '(float-vector? int-vector?)))
-	    ((symbol?)          (memq type2 '(keyword? gensym?)))
+	    ((symbol?)          (memq type2 '(keyword? gensym? defined? provided?)))
 	    ((sequence?)        (memq type2 '(list? pair? null? proper-list? vector? float-vector? int-vector? byte-vector? string? let? hash-table? c-object?)))
+	    ((char?)            (memq type2 '(char-whitespace? char-numeric? char-alphabetic?)))
 	    (else #f))))
     
     (define (any-checker? types arg)
@@ -1132,39 +1139,25 @@
       (define (and-redundant? arg1 arg2)
 	(let ((type1 (car arg1))
 	      (type2 (car arg2)))
-#|
-	  (if (not (and (memq type1 bools)
-			(memq type2 bools)))
-	      (format *stderr* "and: ~A ~A (~A ~A) ~A ~A~%" type1 type2 (and (memq type1 bools) #t) (and (memq type2 bools) #t) arg1 arg2))
-|#
-	  ;; (in)exact? infinite? nan? not <et al -- these have to be numeric, same for string> char<
+
+	  ;; infinite? nan? not <et al -- these have to be numeric, same for string> char<
 	  ;; char-upper-case? char-*? -> char, 2 char=s (etc) to different constants? -- that's for contradictory
 	  ;;    see above--left out (and (= x 1) (= x 2)) zero? -> numeric 
-#|
+	;; perhaps: (and (= x 0) (inexact? x)) -> (eqv? x 0.0)
+	;;          (and (zero? x) (exact? x)) (eqv? x 0)
 
-< = > provided? positive? input-port? complex? pair? sequence? directory? char-ci>=? char-whitespace? string-ci<=? number? infinite? logbit? char-alphabetic? random-state? string=? <= >= string-ci>=? eqv? null? nan? char-ci<? aritable? char-ready? eof-object? gensym? output-port? iterator-at-end? let? integer? string<? equal? macro? int-vector? char<? keyword? hash-table? dilambda? not char-ci=? c-object? vector? eq? proper-list? char-upper-case? constant? string-ci<? boolean? string-ci=? char>? string-ci>? char? string>=? char<=? symbol? rational? float-vector? char-ci>? even? defined? char-ci<=? port-closed? char>=? file-exists? exact? zero? list? real? char-lower-case? char-numeric? morally-equal? c-pointer? float? string? negative? string<=? continuation? byte-vector? openlet? char=? inexact? string>? iterator? odd? procedure?
+;; need: < = > positive? infinite? logbit? nan? zero? <= >= negative? 
+;;       char-ci>=? char-ci<? char-ready? char<? char-ci=? char-upper-case? char>? char<=? char-ci>? char-ci<=? char>=? char-lower-case? char=? 
+;;       string-ci<=? string=? string-ci>=? string<? string-ci<? string-ci=? string-ci>? string>=? string<=? string>?
+;;       eqv? equal? eq? morally-equal? 
+;;       directory?[string] aritable? iterator-at-end?[iterator] not constant? port-closed?[port] file-exists?[string] openlet?[let]
 
-procedure-signature char-position string-position format assoc assq assv help string->number memq memv member
-|#
-	  ;; (lint-test "(and (char-alphabetic? x) (char? x))" "")
-	  ;; (lint-test "(or (char-alphabetic? x) (pair? x))" "")
-	  ;; (lint-test "(or (number? x) (nan? x))" "")
-	  ;; (lint-test "(and (infinite? x) (nan? x))" "")
-	  ;; (lint-test "(and (< x 3) (< x 4))" "")
-	  ;; (lint-test "(and (inexact? x) (exact? x))" "")
-	  ;; (lint-test "(and (inexact? x) (rational? x))" "")
-	  ;; (lint-test "(and (char-upper-case? c) (char-ci=? c #\\x))" "")
-	  ;; (lint-test "(and (char-upper-case? c) (char=? c #\\x))" "")
-	  ;; (lint-test "(and (inexact? x) (even? x))" "")
-	  ;; (lint-test "(and (= x 0) (zero? x))" "")
-	  ;; (lint-test "(and (pair? x) #f (even? y))" "...") ; should be #f
-	  ;; (lint-test "(or (pair? x) #t (even? y))" "...") ; should be #t
-	  ;; (lint-test "(if (and (<= 12 x) (<= x 15)) 2 3)" "") ; but it works outside if??
+;; done: defined? provided? exact? inexact? even? odd? char-numeric? char-whitespace? char-alphabetic?
 
-	  ;; (lint-test "(and x (set! x (zero? (random 2))) (not x))" "")
+;; special: procedure-signature char-position string-position format assoc assq assv help string->number memq memv member
 
-	  ;; (lint-test "(and (char=? x #\\a) (char=? x #\\b))" " and: perhaps (and (char=? x #\\a) (char=? x #\\b)) -> #f") ; same for string=?
-	  ;; (lint-test "(and (integer? x) (exact? x))" " and: perhaps (and (integer? x) (exact? x)) -> (integer? x)")
+;; look at non-bools in this context
+
 
 	  (and (symbol? type1)
 	       (symbol? type2)
@@ -1190,7 +1183,7 @@ procedure-signature char-position string-position format assoc assq assv help st
 							 (if (= x (floor x))
 							     'memv
 							     'eqv?))))))
-		     ((float?)           (and (memq type2 '(real? complex? number?)) type1))
+		     ((float?)           (and (memq type2 '(real? complex? number? inexact?)) type1))
 		     ((rational?)        (or (and (eq? type2 'integer?) type2)
 					     (and (memq type2 '(real? complex? number? exact?)) type1)
 					     (and (eq? type2 '=)
@@ -1203,6 +1196,7 @@ procedure-signature char-position string-position format assoc assq assv help st
 						      (integer? (cadr arg2)))
 						  'eqv?)))
 		     ((exact?)           (and (memq type2 '(rational? integer?)) type2))
+		     ((even? odd?)       (and (eq? type2 'integer?) type1))
 		     ((inexact?)         (and (eq? type2 'float?) type2))
 		     ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
 		     ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
@@ -1216,7 +1210,7 @@ procedure-signature char-position string-position format assoc assq assv help st
 						  (or (keyword? (cadr arg2))
 						      (keyword? (caddr arg2)))
 						  'eq?)))
-		     ((gensym?)          (and (eq? type2 'symbol?) type1))
+		     ((gensym? defined? provided?) (and (eq? type2 'symbol?) type1))
 		     ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
 		     ((null?)            (and (memq type2 '(list? proper-list?)) type1))
 		     ((pair?)            (and (eq? type2 'list?) type1))
@@ -1230,6 +1224,7 @@ procedure-signature char-position string-position format assoc assq assv help st
 					      (or (char? (cadr arg2))
 						  (char? (caddr arg2)))
 					      'eqv?))
+		     ((char-numeric? char-whitespace? char-alphabetic?) (and (eq? type2 'char?) type1))
 		     ((byte-vector?)     (and (eq? type2 'string?) type1))
 		     (else #f))))))
       
@@ -1272,18 +1267,15 @@ procedure-signature char-position string-position format assoc assq assv help st
 				     (and (not (eq? type2 'integer?)) arg1))))
 		     ((exact?) (and (eq? type2 'rational?)
 				    'contradictory))
+		     ((even? odd?) (and (eq? type2 'integer?)
+					'contradictory))
+		     ((char-whitespace? char-numeric? char-alphabetic?)
+		      (and (eq? type2 'char?)
+			   'contradictory))
 		     (else 
 		      ;(format *stderr* "not: ~A ~A~%" arg1 arg2)
 		      ;; none of the rest happen
 		      #f))))))
-
-;;    integer? rational? number? complex? float? keyword? gensym? byte-vector? string? = string=?
-;;		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? 
-;;		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-
-	;; perhaps: (and (= x 0) (inexact? x)) -> (eqv? x 0.0)
-	;;          (and (= x 0.0) (exact? x)) (eqv? x 0) or any such constant -- these probably never happen
-
 
       (define (or-not-redundant arg1 arg2)
 	(let ((type1 (car arg1))    ; (? ...)
@@ -1324,25 +1316,23 @@ procedure-signature char-position string-position format assoc assq assv help st
 				 (->simple-type (cadadr x))
 				 (return-type (caadr x) env)))
 			 (head (car x)))
-		     ;(format *stderr* "~A: ~A ~A ~A ~A~%" x rt head (subsumes? head rt) (any-compatible? head rt))
 		     (or (subsumes? head rt)
-			 (if (not (or (memq rt '(#t #f values))
-				      (any-compatible? head rt)))
-			     #f
-			     (case head
-			       ((null?) (if (eq? (caadr x) 'list)
-					    (null? (cdadr x))
-					    x))
-			       ((pair?) (if (eq? (caadr x) 'list)
-					    (pair? (cdadr x))
-					    x))
-			       ((negative?) (and (not (memq (caadr x) '(abs magnitude denominator gcd lcm char->integer byte-vector-ref byte-vector-set!)))
-						 x))
-			       (else x)))))
+			 (and (or (memq rt '(#t #f values))
+				      (any-compatible? head rt))
+			      (case head
+				((null?) (if (eq? (caadr x) 'list)
+					     (null? (cdadr x))
+					     x))
+				((pair?) (if (eq? (caadr x) 'list)
+					     (pair? (cdadr x))
+					     x))
+				((negative?) (and (not (memq (caadr x) '(abs magnitude denominator gcd lcm char->integer byte-vector-ref byte-vector-set!)))
+						  x))
+				(else x)))))
 		   x)))
 	    x))
 
-      (define (bcomp x) ; no so quick...
+      (define (bcomp x) ; not so quick...
 	(if (pair? x)
 	    (if (eq? (car x) 'and)
 		(call-with-exit
@@ -1363,8 +1353,9 @@ procedure-signature char-position string-position format assoc assq assv help st
 				     (member next sidex))   ; if a member, and no side-effects since, it must be true
 				 (if (and (null? (cdr p))
 					  (not (equal? next (car endx))))
-				     ;; here and below we're being careless because next might have a side-effect so it should be repeated?
-				     ;;   but the other side appears to be much more common (unneeded repetition)
+				     ;; here and below we're being careless because next might have a side-effect so it should be repeated,
+				     ;;   but the other side appears to be much more common (unneeded repetition) -- perhaps a warning?
+				     ;;   but where to trigger the warning?
 				     (set-cdr! endx (list next)))
 				 (begin
 				   (set-cdr! endx (list next))
@@ -1412,6 +1403,9 @@ procedure-signature char-position string-position format assoc assq assv help st
 	(if (not (and (pair? form)
 		      (memq (car form) '(or and not))))
 	    (classify form)
+
+	    ;; TODO: are the other classify calls of any importance?
+	    
 	    (let ((len (length form)))
 
 	      (let ((op (if (eq? (car form) 'or) 'and 
@@ -1726,24 +1720,21 @@ procedure-signature char-position string-position format assoc assq assv help st
 					    (equal? e (car exprs))))
 				   (set! retry #t))
 			       
-			       (if val                                ; #f in or is ignored
-				   (if (or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
-					   (code-constant? val))
-				       (begin
-					 (set! new-form (if (null? new-form)         ; (or x1 123) -> value of x1 first
-							    (list val)
-							    (cons val new-form)))
-					 ;; reversed when returned
-					 (set! exprs '(#t)))
+			       (if val                                   ; #f in or is ignored
+				   (cond ((or (eq? val #t)               ; #t or any non-#f constant in or ends the expression
+					      (code-constant? val))
+					  (set! new-form (if (null? new-form) ; (or x1 123) -> value of x1 first
+							     (list val)
+							     (cons val new-form)))
+					  ;; reversed when returned
+					  (set! exprs '(#t)))
 				       
-				       ;; (or x1 x2 x1) -> (or x1 x2) is ok because if we get to x2, x1 is #f, 
-				       ;;   so trailing x1 would still be #f
-				       
-				       (if (and (pair? e)             ; (or ...) -> splice into current
-						(eq? (car e) 'or))
-					   (set! exprs (append e (cdr exprs))) ; we'll skip the 'or in do step
-					   (if (not (memq val new-form))
-					       (set! new-form (cons val new-form)))))))))))))))
+					 ((and (pair? e)                       ; (or ...) -> splice into current
+					       (eq? (car e) 'or))
+					  (set! exprs (append e (cdr exprs)))) ; we'll skip the 'or in do step
+
+					 ((not (memq val new-form))
+					  (set! new-form (cons val new-form))))))))))))))
 		((and)
 		 (case len
 		   ((1) #t)
@@ -2927,6 +2918,8 @@ procedure-signature char-position string-position format assoc assq assv help st
       ;; hash-table cons -- this is an arg to make-iterator
       ;; define-class and define-record-type for the function names
       ;;
+      ;; other-idents needs to take require into account
+      ;;
       ;; 310/52
 
       (case head
@@ -3426,7 +3419,7 @@ procedure-signature char-position string-position format assoc assq assv help st
 	
 	;; ----------------
 	((symbol? integer? rational? real? complex? float? keyword? gensym? byte-vector? list? proper-list?
-		  char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair?
+		  char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? c-object?
 		  output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?)
 	 (check-boolean-affinity name form env))
 
@@ -6482,9 +6475,9 @@ procedure-signature char-position string-position format assoc assq assv help st
 				   (if (and (never-true test) true) ; complain about (if #f #f) later
 				       (lint-format "if test is never true: ~A" name (truncated-list->string form))))
 			       
-			       (let ((expr (simplify-boolean test () () env)))
-				 (if (not (equal? expr test))
-				     (lint-format "perhaps ~A" name (lists->string test expr)))
+			       (let ((expr (simplify-boolean test () () env))
+				     (suggest made-suggestion))
+
 				 (if (not (side-effect? test env))
 				     (cond ((or (equal? test true)               ; (if x x y) -> (or x y)
 						(equal? expr true))
@@ -6660,7 +6653,12 @@ procedure-signature char-position string-position format assoc assq assv help st
 					(lint-format "if is not needed here: ~A" name 
 						     (lists->string form (if (not (side-effect? test env))
 									     true
-									     `(begin ,expr ,true)))))))
+									     `(begin ,expr ,true))))))
+
+				 (if (and (= suggest made-suggestion)
+					  (not (equal? expr test)))
+				     (lint-format "perhaps ~A" name (lists->string test expr))))
+				 
 			       (if (and (pair? test)
 					(pair? true)
 					(pair? (cdr true))
@@ -8191,6 +8189,12 @@ procedure-signature char-position string-position format assoc assq assv help st
 			 (pair? vars)
 			 *report-unused-top-level-functions*)
 		    (report-usage file 'top-level-var "" vars vars))
+
+		(if (and *report-undefined-identifiers*
+			 (positive? (hash-table-entries other-identifiers)))
+		    (begin ; TODO: show uses etc
+		      (format outport "the following identifiers were undefined: ~{~S~^ ~}" (map car other-identifiers))
+		      (fill! other-identifiers #f)))
 
 		;(if (and (string? file) (string=? file "profile.scm")) (format *stderr* "calls: ~A ~A~%" calls made-suggestion))
 
