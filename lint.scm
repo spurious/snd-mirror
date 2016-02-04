@@ -249,7 +249,78 @@
 	(lambda-marker '[lambda]))
     
     (set! *e* (curlet))
+;    (define calls 0)
 
+
+    ;; -------- lint-format --------
+    (define (truncated-list->string form)
+      ;; return form -> string with limits on its length
+      (let* ((str (object->string form))
+	     (len (length str)))
+	(if (< len 80)
+	    str
+	    (do ((i 67 (- i 1)))
+		((or (= i 40)
+		     (char-whitespace? (str i)))
+		 (string-append (substring str 0 (if (<= i 40) 67 i)) "..."))))))
+    
+    (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-var also collides)
+    (define lint-pretty-print #f)
+    (let ()
+      (require write.scm)
+      (set! lint-pp pp);
+      (set! lint-pretty-print pretty-print))
+    
+    (define (lists->string f1 f2)
+      ;; same but 2 strings that may need to be lined up vertically
+      (let* ((str1 (object->string f1))
+	     (len1 (length str1))
+	     (str2 (object->string f2))
+	     (len2 (length str2))
+	     (N 4))
+	(when (> len1 80)
+	  (set! str1 (truncated-list->string f1))
+	  (set! len1 (length str1)))
+	(when (> len2 80)
+	  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) N)
+	  (set! ((funclet lint-pretty-print) '*pretty-print-length*) 110)
+	  (set! str2 (lint-pp f2))
+	  (set! len2 (length str2)))
+	(if (< (+ len1 len2) 80)
+	    (format #f "~A -> ~A" str1 str2)
+	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
+    
+    (define (truncated-lists->string f1 f2)
+      ;; same but 2 strings that may need to be lined up vertically and both are truncated
+      (let* ((str1 (object->string f1))
+	     (len1 (length str1))
+	     (str2 (object->string f2))
+	     (len2 (length str2))
+	     (N 4))
+	(when (> len1 80)
+	  (set! str1 (truncated-list->string f1))
+	  (set! len1 (length str1)))
+	(when (> len2 80)
+	  (set! str2 (truncated-list->string f2))
+	  (set! len2 (length str2)))
+	(if (< (+ len1 len2) 80)
+	    (format #f "~A -> ~A" str1 str2)
+	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
+    
+    (define made-suggestion 0)
+
+    (define (lint-format str name . args)
+      (let ((outstr (if (and (positive? line-number)
+			     (< line-number 100000))
+			(apply format #f (string-append " ~A (line ~D): " str "~%") (truncated-list->string name) line-number args)
+			(apply format #f (string-append " ~A: " str "~%") (truncated-list->string name) args))))
+	(set! made-suggestion (+ made-suggestion 1))
+	(display outstr outport)
+	(if (> (length outstr) 120)
+	    (newline outport))))
+
+
+    ;; -------- vars -------- 
     (define var-name car)
     (define (var? v) (and (pair? v) (let? (cdr v))))
     (define var-member assq)
@@ -276,6 +347,7 @@
 			  'set 0 
 			  'ref (if old (length old) 0)))))
     
+
     (define applicable? arity)
     
     (define every? 
@@ -599,13 +671,14 @@
     (define bools '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified? c-object?
+		    unspecified? c-object? constant?
 		    ))
 
     (define bools1 '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
 		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
 		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
 		    unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
+		    negative? positive? zero? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?
 		    ))
     
     (define (compatible? type1 type2) ; we want type1, we have type2 -- is type2 ok?
@@ -615,19 +688,22 @@
 	  (not (memq type1 bools1))
 	  (not (memq type2 bools1))
 	  (case type1
-	    ((number? complex?)  (memq type2 '(float? real? rational? integer? number? complex? exact? inexact?)))
-	    ((real?)             (memq type2 '(float? rational? integer? complex? number? exact? inexact?)))
-	    ((float?)            (memq type2 '(real? complex? number? exact? inexact?)))
-	    ((rational?)         (memq type2 '(integer? real? complex? number? exact?)))
-	    ((integer?)          (memq type2 '(real? rational? complex? number? exact? even? odd?)))
-	    ((odd? even?)        (memq type2 '(real? rational? complex? number? exact? integer?)))
-	    ((exact?)            (memq type2 '(real? rational? complex? number? integer?)))
-	    ((inexact?)          (memq type2 '(real? number? complex? float?)))
+	    ((number? complex?)  (memq type2 '(float? real? rational? integer? number? complex? exact? inexact? zero? negative? positive? even? odd? infinite? nan?)))
+	    ((real?)             (memq type2 '(float? rational? integer? complex? number? exact? inexact? zero? negative? positive? even? odd? infinite? nan?)))
+	    ((zero?)             (memq type2 '(float? real? rational? integer? number? complex? exact? inexact? even?)))
+	    ((negative? positive?) (memq type2 '(float? real? rational? integer? complex? number? exact? inexact? even? odd? infinite? nan?)))
+	    ((float?)            (memq type2 '(real? complex? number? inexact? zero? negative? positive? infinite? nan?)))
+	    ((rational?)         (memq type2 '(integer? real? complex? number? exact? zero? negative? positive? even? odd?)))
+	    ((integer?)          (memq type2 '(real? rational? complex? number? exact? even? odd? zero? negative? positive?)))
+	    ((odd? even?)        (memq type2 '(real? rational? complex? number? exact? integer? zero? negative? positive?)))
+	    ((exact?)            (memq type2 '(real? rational? complex? number? integer? zero? negative? positive?)))
+	    ((inexact?)          (memq type2 '(real? number? complex? float? zero? negative? positive? infinite? nan?)))
+	    ((infinite? nan?)    (memq type2 '(real? number? complex? positive? negative? inexact? float?)))
 	    ((vector?)           (memq type2 '(float-vector? int-vector? sequence?)))
 	    ((float-vector? int-vector?) (memq type2 '(vector? sequence?)))
 	    ((sequence?)         (memq type2 '(list? pair? null? proper-list? vector? float-vector? int-vector? byte-vector? 
 					       string? let? hash-table? c-object? iterator? procedure?))) ; procedure? for extended iterator
-	    ((symbol?)           (memq type2 '(gensym? keyword? defined? provided?)))
+	    ((symbol? constant?) (memq type2 '(gensym? keyword? defined? provided? constant?)))
 	    ((keyword? gensym? defined? provided?)  (eq? type2 'symbol?))
 	    ((list?)             (memq type2 '(null? pair? proper-list? sequence?)))
 	    ((proper-list?)      (memq type2 '(null? pair? list? sequence?)))
@@ -636,12 +712,12 @@
 	    ((procedure?)        (memq type2 '(dilambda? iterator? macro?)))
 	    ((macro?)            (memq type2 '(dilambda? iterator? procedure?)))
 	    ((iterator?)         (memq type2 '(dilambda? procedure? sequence?)))
-	    ((string?)           (memq type2 '(byte-vector? sequence?)))
+	    ((string?)           (memq type2 '(byte-vector? sequence? directory? file-exists?)))
 	    ((hash-table? let?)  (eq? type2 'sequence?))
-	    ((byte-vector?)      (memq type2 '(string? sequence?)))
+	    ((byte-vector? directory? file-exists?) (memq type2 '(string? sequence?)))
 	    ((input-port? output-port?) (eq? type2 'boolean?))
-	    ((char? char-whitespace? char-numeric? char-alphabetic?) 
-	     (memq type2 '(char? char-whitespace? char-numeric? char-alphabetic?)))
+	    ((char? char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)
+	     (memq type2 '(char? char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)))
 	    (else #f))))
     
     (define (any-compatible? type1 type2)
@@ -660,16 +736,17 @@
       (or (eq? type1 type2)
 	  (case type1
 	    ((integer?)         (memq type2 '(even? odd?)))
-	    ((rational?)        (memq type2 '(integer? exact?)))
+	    ((rational?)        (memq type2 '(integer? exact? odd? even?)))
 	    ((exact?)           (memq type2 '(integer? rational?)))
-	    ((real?)            (memq type2 '(integer? rational? float?)))
-	    ((complex? number?) (memq type2 '(integer? rational? float? real? complex? number?)))
+	    ((real?)            (memq type2 '(integer? rational? float? negative? positive? zero? odd? even?)))
+	    ((complex? number?) (memq type2 '(integer? rational? float? real? complex? number? negative? positive? zero? even? odd? exact? inexact? nan? infinite?)))
 	    ((list?)            (memq type2 '(pair? null? proper-list?)))
 	    ((proper-list?)     (eq? type2 'null?))
 	    ((vector?)          (memq type2 '(float-vector? int-vector?)))
-	    ((symbol?)          (memq type2 '(keyword? gensym? defined? provided?)))
-	    ((sequence?)        (memq type2 '(list? pair? null? proper-list? vector? float-vector? int-vector? byte-vector? string? let? hash-table? c-object?)))
-	    ((char?)            (memq type2 '(char-whitespace? char-numeric? char-alphabetic?)))
+	    ((symbol?)          (memq type2 '(keyword? gensym? defined? provided? constant?)))
+	    ((sequence?)        (memq type2 '(list? pair? null? proper-list? vector? float-vector? int-vector? byte-vector? 
+					      string? let? hash-table? c-object? directory? file-exists?)))
+	    ((char?)            (memq type2 '(char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)))
 	    (else #f))))
     
     (define (any-checker? types arg)
@@ -695,73 +772,6 @@
 	  (and (pair? expr)
 	       (eq? (car expr) 'not)
 	       (never-false (cadr expr)))))
-    
-    (define (truncated-list->string form)
-      ;; return form -> string with limits on its length
-      (let* ((str (object->string form))
-	     (len (length str)))
-	(if (< len 80)
-	    str
-	    (do ((i 67 (- i 1)))
-		((or (= i 40)
-		     (char-whitespace? (str i)))
-		 (string-append (substring str 0 (if (<= i 40) 67 i)) "..."))))))
-    
-    (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-var also collides)
-    (define lint-pretty-print #f)
-    (let ()
-      (require write.scm)
-      (set! lint-pp pp);
-      (set! lint-pretty-print pretty-print))
-    
-    (define (lists->string f1 f2)
-      ;; same but 2 strings that may need to be lined up vertically
-      (let* ((str1 (object->string f1))
-	     (len1 (length str1))
-	     (str2 (object->string f2))
-	     (len2 (length str2))
-	     (N 4))
-	(when (> len1 80)
-	  (set! str1 (truncated-list->string f1))
-	  (set! len1 (length str1)))
-	(when (> len2 80)
-	  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) N)
-	  (set! ((funclet lint-pretty-print) '*pretty-print-length*) 110)
-	  (set! str2 (lint-pp f2))
-	  (set! len2 (length str2)))
-	(if (< (+ len1 len2) 80)
-	    (format #f "~A -> ~A" str1 str2)
-	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
-    
-    (define (truncated-lists->string f1 f2)
-      ;; same but 2 strings that may need to be lined up vertically and both are truncated
-      (let* ((str1 (object->string f1))
-	     (len1 (length str1))
-	     (str2 (object->string f2))
-	     (len2 (length str2))
-	     (N 4))
-	(when (> len1 80)
-	  (set! str1 (truncated-list->string f1))
-	  (set! len1 (length str1)))
-	(when (> len2 80)
-	  (set! str2 (truncated-list->string f2))
-	  (set! len2 (length str2)))
-	(if (< (+ len1 len2) 80)
-	    (format #f "~A -> ~A" str1 str2)
-	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
-    
-    (define made-suggestion 0)
-;    (define calls 0)
-
-    (define (lint-format str name . args)
-      (let ((outstr (if (and (positive? line-number)
-			     (< line-number 100000))
-			(apply format #f (string-append " ~A (line ~D): " str "~%") (truncated-list->string name) line-number args)
-			(apply format #f (string-append " ~A: " str "~%") (truncated-list->string name) args))))
-	(set! made-suggestion (+ made-suggestion 1))
-	(display outstr outport)
-	(if (> (length outstr) 120)
-	    (newline outport))))
     
     (define (side-effect? form env)
       ;; could evaluation of form have any side effects (like IO etc)
@@ -1137,26 +1147,29 @@
 			  args)))))))))
       
       (define (and-redundant? arg1 arg2)
+	;(format *stderr* "~A ~A~%" arg1 arg2)
 	(let ((type1 (car arg1))
 	      (type2 (car arg2)))
 
-	  ;; infinite? nan? not <et al -- these have to be numeric, same for string> char<
-	  ;; char-upper-case? char-*? -> char, 2 char=s (etc) to different constants? -- that's for contradictory
+	  ;; 2 char=s (etc) to different constants? -- that's for contradictory
 	  ;;    see above--left out (and (= x 1) (= x 2)) zero? -> numeric 
-	;; perhaps: (and (= x 0) (inexact? x)) -> (eqv? x 0.0)
-	;;          (and (zero? x) (exact? x)) (eqv? x 0)
+	  ;; perhaps: (and (= x 0) (inexact? x)) -> (eqv? x 0.0)
+	  ;;          (and (zero? x) (exact? x)) (eqv? x 0)
 
-;; need: < = > positive? infinite? logbit? nan? zero? <= >= negative? 
-;;       char-ci>=? char-ci<? char-ready? char<? char-ci=? char-upper-case? char>? char<=? char-ci>? char-ci<=? char>=? char-lower-case? char=? 
-;;       string-ci<=? string=? string-ci>=? string<? string-ci<? string-ci=? string-ci>? string>=? string<=? string>?
-;;       eqv? equal? eq? morally-equal? 
-;;       directory?[string] aritable? iterator-at-end?[iterator] not constant? port-closed?[port] file-exists?[string] openlet?[let]
+	  ;; need: < = > logbit? <= >= 
+	  ;;       char-ci>=? char-ci<? char-ready? char<? char-ci=? char>? char<=? char-ci>? char-ci<=? char>=? char=? 
+	  ;;       string-ci<=? string=? string-ci>=? string<? string-ci<? string-ci=? string-ci>? string>=? string<=? string>?
+	  ;;       eqv? equal? eq? morally-equal? not
+	  ;;       aritable? iterator-at-end?[iterator] port-closed?[port] openlet?[let]
 
-;; done: defined? provided? exact? inexact? even? odd? char-numeric? char-whitespace? char-alphabetic?
+	  ;; done: defined? provided? exact? inexact? even? odd? char-numeric? char-whitespace? char-alphabetic? constant? infinite? nan?
+	  ;;       char-upper-case? char-lower-case? directory? file-exists?
+	  ;;       negative? positive? zero?
 
-;; special: procedure-signature char-position string-position format assoc assq assv help string->number memq memv member
+	  ;; currently arg2 can be len=3, but not arg1 (the = char=? string=? cases are handled specially already)
 
-;; look at non-bools in this context
+	  ;; special: procedure-signature char-position string-position format assoc assq assv help string->number memq memv member
+	  ;; look at non-bools in this context: (and (pair? x) (+ x 1))...
 
 
 	  (and (symbol? type1)
@@ -1196,21 +1209,24 @@
 						      (integer? (cadr arg2)))
 						  'eqv?)))
 		     ((exact?)           (and (memq type2 '(rational? integer?)) type2))
-		     ((even? odd?)       (and (eq? type2 'integer?) type1))
+		     ((even? odd?)       (and (memq type2 '(integer? rational? real? complex? number?)) type1))
+		     ((zero?)            (and (memq type2 '(complex? number? real?)) type1))
+		     ((negative? positive?) (and (eq? type2 'real?) type1))
 		     ((inexact?)         (and (eq? type2 'float?) type2))
+		     ((infinite? nan?)   (and (memq type2 '(number? complex? inexact?)) type1))
 		     ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
 		     ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
-		     ((symbol?)          (or (and (memq type2 '(keyword? gensym?)) type2)
+		     ((symbol?)          (or (and (memq type2 '(keyword? gensym? constant?)) type2)
 					     (and (eq? type2 'eq)
 						  (or (quoted-symbol? (cadr arg2))
 						      (quoted-symbol? (caddr arg2)))
 						  'eq?)))
-		     ((keyword?)         (or (and (eq? type2 'symbol?) type1)
+		     ((keyword?)         (or (and (memq type2 '(symbol? constant?)) type1)
 					     (and (eq? type2 'eq)
 						  (or (keyword? (cadr arg2))
 						      (keyword? (caddr arg2)))
 						  'eq?)))
-		     ((gensym? defined? provided?) (and (eq? type2 'symbol?) type1))
+		     ((gensym? defined? provided? constant?) (and (eq? type2 'symbol?) type1))
 		     ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
 		     ((null?)            (and (memq type2 '(list? proper-list?)) type1))
 		     ((pair?)            (and (eq? type2 'list?) type1))
@@ -1224,8 +1240,8 @@
 					      (or (char? (cadr arg2))
 						  (char? (caddr arg2)))
 					      'eqv?))
-		     ((char-numeric? char-whitespace? char-alphabetic?) (and (eq? type2 'char?) type1))
-		     ((byte-vector?)     (and (eq? type2 'string?) type1))
+		     ((char-numeric? char-whitespace? char-alphabetic? char-upper-case? char-lower-case?) (and (eq? type2 'char?) type1))
+		     ((byte-vector? directory? file-exists?) (and (eq? type2 'string?) type1))
 		     (else #f))))))
       
 
@@ -1254,23 +1270,55 @@
 		     ((proper-list?) (if (memq type2 '(list? pair?))
 					 'contradictory
 					 (and (not (eq? type2 'null?)) arg1)))
-		     ((symbol?) (and (not (memq type2 '(keyword? gensym?))) arg1))
+		     ((symbol?) (and (not (memq type2 '(keyword? gensym? constant?))) arg1))
+		     ((constant?) (and (eq? type2 'symbol?)
+				       'contradictory))
 		     ((char=?)  (if (eq? type2 'char?)
 				    'contradictory
 				    (and (or (char? (cadr arg1))
 					     (char? (caddr arg1)))
 					 `(eqv? ,@(cdr arg1))))) ; arg2 might be (not (eof-object?...))
-		     ((real?) (if (memq type2 '(rational? exact?))
-				 `(float? ,@(cdr arg1))
-				 (if (memq type2 '(complex? number?))
+		     ((real?) (cond ((memq type2 '(rational? exact?))
+				     `(float? ,@(cdr arg1)))
+				    ((eq? type2 'inexact?)
+				     `(rational? ,@(cdr arg1)))
+				    ((memq type2 '(complex? number?))
+				     'contradictory)
+				    (else (and (not (memq type2 '(negative? positive? even? odd? zero? integer?))) 
+					       arg1))))
+		     ((integer?) (if (memq type2 '(real? complex? number? rational? exact?))
 				     'contradictory
-				     (and (not (eq? type2 'integer?)) arg1))))
-		     ((exact?) (and (eq? type2 'rational?)
-				    'contradictory))
-		     ((even? odd?) (and (eq? type2 'integer?)
-					'contradictory))
-		     ((char-whitespace? char-numeric? char-alphabetic?)
+				     (and (memq type2 '(float? inexact? infinite? nan?))
+					  arg1)))
+		     ((rational?) (if (memq type2 '(real? complex? number? exact?))
+				      'contradictory
+				     (and (memq type2 '(float? inexact? infinite? nan?))
+					  arg1)))
+		     ((complex? number?) (and (memq type2 '(complex? number?))
+					      'contradictory))
+		     ((float?) (if (memq type2 '(real? complex? number? inexact?))
+				    'contradictory
+				    (and (memq type2 '(rational? integer? exact?))
+					arg1)))
+		     ((exact?) (if (eq? type2 'rational?)
+				   'contradictory
+				   (and (memq type2 '(inexact? infinite? nan?))
+					arg1)))
+		     ((even? odd?) (if (memq type2 '(integer? exact? rational? real? number? complex?))
+				       'contradictory
+				       (and (memq type2 '(infinite? nan?))
+					    arg1)))
+		     ((zero? negative? positive?) (and (memq type2 '(complex? number? real?))
+						       'contradictory))
+		     ((infinite? nan?) (if (memq type2 '(number? complex? inexact?))
+					   'contradictory
+					   (and (memq type2 '(integer? rational? exact? even? odd?))
+						arg1)))
+		     ((char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)
 		      (and (eq? type2 'char?)
+			   'contradictory))
+		     ((directory? file-exists?)
+		      (and (memq type2 '(string? sequence?))
 			   'contradictory))
 		     (else 
 		      ;(format *stderr* "not: ~A ~A~%" arg1 arg2)
@@ -1316,7 +1364,7 @@
 				 (->simple-type (cadadr x))
 				 (return-type (caadr x) env)))
 			 (head (car x)))
-		     (or (subsumes? head rt)
+		     (or (and (subsumes? head rt) #t) ; don't return the memq list!
 			 (and (or (memq rt '(#t #f values))
 				      (any-compatible? head rt))
 			      (case head
@@ -1564,6 +1612,7 @@
 						     (equal? (cadr arg1) (caddr arg2))))
 					    (not (side-effect? arg1 env))
 					    (and-redundant? arg1 arg2))))
+			       ;(format *stderr* "t1: ~A~%" t1)
 			       (if t1
 				   (return (if (eq? t1 (car arg1)) arg2 arg1))))
 			     
@@ -1611,6 +1660,11 @@
 			     (when (and (pair? (cdr arg1))
 					(pair? (cdr arg2))
 					(not (eq? (car arg1) (car arg2))))
+
+			       (when (subsumes? (car arg1) (car arg2))
+				 ;(format *stderr* "subsumes: ~A~%" arg1)
+				 (return arg1))
+					       
 			       (if (eq? (car arg1) 'not)
 				   (let ((temp arg1))
 				     (set! arg1 arg2)
@@ -1625,6 +1679,7 @@
 					(eq? (return-type (car arg1) env) 'boolean?)
 					(eq? (return-type (caadr arg2) env) 'boolean?))
 				   (let ((t2 (or-not-redundant arg1 arg2)))
+				     ;(format *stderr* "t2: ~A~%" t2)
 				     (when t2 
 				       (if (eq? t2 'fatuous)
 					   (return #t)
@@ -1704,6 +1759,7 @@
 			       (retry #f))
 			   (do ((exprs (cdr form) (cdr exprs)))
 			       ((null? exprs) 
+				;(format *stderr* "end: ~A~%" new-form)
 				(return (and (pair? new-form)
 					     (if (null? (cdr new-form))
 						 (car new-form)
@@ -1747,11 +1803,26 @@
 			      (let ((arg1 (cadr form))
 				    (arg2 (caddr form)))
 				
-				(if (and (symbol? arg1)
-					 (pair? arg2)
-					 (memq (car arg2) bools)
-					 (eq? arg1 (cadr arg2)))
-				    (return arg2))
+				(when (and (symbol? arg1)                       ; (and x (pair? x)) -> (pair? x)
+					   (pair? arg2)
+					   (pair? (cdr arg2))
+					   (eq? arg1 (cadr arg2)))
+				  (if (eq? (car arg2) 'not)
+				      (return #f))
+				  (if (and (not (side-effect? arg2 env))
+					   (not (memq (car arg2) '(and or not list cons vector))))
+				      (let ((sig (arg-signature (car arg2) env)))
+					(let ((arg-type (and (pair? sig)
+							     (pair? (cdr sig))
+							     (symbol? (cadr sig)))))
+					  (format outport "why do you check in ~A that ~A is not #f?~A~%"
+						  (truncated-list->string form) 
+						  arg1
+						  (if arg-type
+						      (format #f "  Perhaps (and (~A ~A) ...) instead." (cadr sig) arg1)
+						      "")))))
+				  (if (memq (car arg2) bools1)
+				      (return arg2)))
 				
 				(if (and (not (side-effect? arg1 env))
 					 (equal? arg1 arg2))                  ; (and x x) -> x
@@ -2919,6 +2990,7 @@
       ;; define-class and define-record-type for the function names
       ;;
       ;; other-idents needs to take require into account
+      ;; check for non-applicable car somewhere
       ;;
       ;; 310/52
 
@@ -6405,7 +6477,7 @@
 
 			       (if (eq? false #<unspecified>)
 				   (lint-format "this #<unspecified> is redundant: ~A" name form))
-			       
+
 			       (when (and (pair? true)
 					  (pair? false)
 					  (not (memq (car true) (list 'quote {list})))

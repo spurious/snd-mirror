@@ -74254,7 +74254,4 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
- *
- * doc/test no-autoload compile-time switch to Snd, and *cload-directory*
- *   also need to add code to look for non-null *cload-directory* to lib*.scm, adding (prepending) it to *load-path*
  */
