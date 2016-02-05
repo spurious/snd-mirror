@@ -257,7 +257,6 @@ indented and on a sort of brownish background.
 
   <li class="li_header"><a href="#s7examples">s7 examples</a>
   <ul>
-      <li><a href="#lint">lint.scm</a>
       <li><a href="#cload">cload.scm</a>
       <ul>
            <li><a href="#libc">libc</a>
@@ -265,6 +264,7 @@ indented and on a sort of brownish background.
            <li><a href="#libgdbm">libgdbm</a>
       </ul>
       <li><a href="#schemerepl">repl.scm</a>
+      <li><a href="#lint">lint.scm</a>
   </ul>
 </ul>
 
@@ -8851,38 +8851,6 @@ repl.scm is a repl.
 </p>
 
 
-<div class="header" id="lint"><h4>lint.scm</h4></div>
-
-<p>lint tries to find errors or infelicities in your scheme code.
-To try  it:
-</p>
-
-<pre class="indented">
-(load "lint.scm")
-(lint "some-code.scm")
-</pre>
-
-
-<p>lint tries to reduce false positives, so its default behavior is somewhat laconic.  There are several
-variables at the start of lint.scm to control additional output:
-</p>
-
-
-<pre class="indented">
-*report-unused-top-level-functions*  ; if #t, report unused functions
-*report-undefined-variables*         ; if #t, report undefined identifiers
-*report-shadowed-variables*          ; if #t, report function parameters that are shadowed
-</pre>
-
-<p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
-sometimes gets confused. You'll sometimes get a recommendation from lint that is less than helpful; nobody's perfect.
-If it's actually wrong, and not just wrong-headed, please let me know.
-Also in lint.scm is html-lint.  It reads an HTML file looking for
-Scheme code.  If any is found, it runs s7 and then lint over it, reporting troubles.
-</p>
-
-
-
 <div class="header" id="cload"><h4>cload.scm</h4></div>
 
 <p>cload.scm defines the macro c-define that reduces the overhead
@@ -9347,6 +9315,50 @@ not tested:
 (load "/home/bil/test/libxm/libxm.so" (inlet 'init_func 'Init_libxm))
 
 -->
+
+
+<div class="header" id="lint"><h4>lint.scm</h4></div>
+
+<p>lint tries to find errors or infelicities in your scheme code.
+To try  it:
+</p>
+
+<pre class="indented">
+(load "lint.scm")
+(lint "some-code.scm")
+</pre>
+
+
+<p>lint tries to reduce false positives, so its default behavior is somewhat laconic.  There are several
+variables at the start of lint.scm to control additional output:
+</p>
+
+
+<pre class="indented">
+*report-unused-top-level-functions*  ; if #t, report unused functions
+*report-undefined-variables*         ; if #t, report undefined identifiers
+*report-shadowed-variables*          ; if #t, report function parameters that are shadowed
+</pre>
+
+<p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
+sometimes gets confused. You'll sometimes get a recommendation from lint that is less than helpful; nobody's perfect.
+If it's actually wrong, and not just wrong-headed, please let me know.
+Also in lint.scm is html-lint.  It reads an HTML file looking for
+Scheme code.  If any is found, it runs s7 and then lint over it, reporting troubles.
+</p>
+
+
+<blockquote>
+<div class="indented">
+<p>After months of intense typing,
+Insanely Great declares his labors complete.  "Ship it!" says Mr Big, and hands
+him a million stock options. Meanwhile, in the basement behind an old door
+with the eldritch sign "eep Ou", in a labyrinth of pounding pipes and fluorescent lights,
+a forgotten shadow types <code>(lint "insanely-great.scm")</code>...
+</p>
+</div>
+</blockquote>
+
 
 
 <!-- ================================================================================ -->

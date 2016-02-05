@@ -5,13 +5,14 @@
 
 (provide 'lint.scm)
 
-(define *report-unused-parameters* #f)
-(define *report-unused-top-level-functions* #f)
+(define *report-unused-parameters* #f)                    ; many of these are reported anyway if they are passed some non-#f value
+(define *report-unused-top-level-functions* #f)           
 (define *report-multiply-defined-top-level-functions* #f) ; same name defined at top level in more than one file
-(define *report-shadowed-variables* #f)
-(define *report-undefined-identifiers* #f)
-(define *report-minor-stuff* #t)                          ; now obsolete
-(define *report-doc-strings* #f)                          ; report old-style (CL) doc strings
+(define *report-shadowed-variables* #f)                   ; shadowed parameters, etc
+(define *report-undefined-identifiers* #f)                ; names we can't account for
+(define *report-function-stuff* #t)                       ; still very much work-in-progress (and slow!)
+(define *report-doc-strings* #f)                          ; old-style (CL) doc strings
+
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 
 (if (provided? 'pure-s7)
@@ -333,6 +334,8 @@
     (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
     (define var-signature (dilambda (lambda (v) (let-ref (cdr v) 'signature)) (lambda (v x) (let-set! (cdr v) 'signature x))))
     (define var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
+    (define var-leaves (dilambda (lambda (v) (let-ref (cdr v) 'leaves)) (lambda (v x) (let-set! (cdr v) 'leaves x))))
+    (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
     
     (define* (make-var name initial-value definer)
       (let ((old (hash-table-ref other-identifiers name)))
@@ -439,6 +442,15 @@
 	  (if (null? tree)
 	      len
 	      (+ len 1))))
+
+    (define (tree-length-to tree len)
+      (let loop ((x tree) (i 0))
+	(if (pair? x)
+	    (loop (car x) (loop (cdr x) i))
+	    (if (or (null? x)
+		    (>= i len))
+		i
+		(+ i 1)))))
 
     (define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
       (and (pair? lst)
@@ -614,6 +626,8 @@
 		   'env env
 		   'initial-value initial-value
 		   'values (count-values (cddr initial-value))
+		   'leaves #f
+		   'match-list #f
 		   'decl decl
 		   'arglist arglist
 		   'ftype ftype
@@ -5626,7 +5640,7 @@
 				
 				((and (= (tree-count1 (cadr f) arg2 0) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
 				      (or (not (pair? arg1))
-					  (< (tree-length arg1 0) 5)))
+					  (< (tree-length-to arg1 5) 5)))
 				 (lint-format "perhaps ~A ~A ->~%~NC~A" name prev-f f 4 #\space
 					      (object->string `(set! ,(cadr f) ,(tree-subst arg1 (cadr f) arg2))))))
 
@@ -6197,42 +6211,25 @@
 	  (and (pair? l2)
 	       (structures-equal? (car l1) (car l2) matches)
 	       (structures-equal? (cdr l1) (cdr l2) matches))
-	  (let ((match (assoc l1 matches)))
+	  (let ((match (assq l1 matches)))
 	    (if match
 		(or (and (eq? (cdr match) :unset)
 			 (set-cdr! match l2))
 		    (equal? (cdr match) l2))
 		(equal? l1 l2)))))
     
-    (define (sequal? name v code)
-      (when (and (var? v)
-		 (var-ftype v))
-	(let ((source (var-initial-value v))
-	      (args (var-arglist v)))
-	  (if (not (eq? args #<undefined>))
-	      ;(format *stderr* "~A: ~A ~A~%" v args source)
-	      (let ((body (cddr source))
-		    (match-list (if (symbol? args)
-				    (list (cons args :unset))
-				    (map (lambda (arg)
-					   (cons arg :unset))
-					 (proper-list args)))))
-		(if (and (structures-equal? body (list code) match-list)
-			 (not (memq :unset (map cdr match-list))))
-		    (lint-format "~S could be ~S~%" name
-				 code `(,(var-name v) ,@(map cdr match-list)))))))))
+    (define func-cutoff 6)
+
+
+    ;; function/let*/letrec/letrec* return lambda -- how often? other common cases?
+    ;;   what about (let () (define...))?
+    ;; *lint-hook* ?
+    ;; suggest only if new is shorter than (not equal to) original?
+    ;; 5 is too small a cutoff -- lets through (define (c a b) (cons a b))?? apparently this is the form not the func? -- no, was counting decl!
 
     (define (lint-walk name form env)
       ;; walk a form, here curlet can change
       ;; (format *stderr* "walk ~A~%" form)
-#|
-      (if (> (tree-length form 0) 8)
-	  (for-each (lambda (v)
-		      (if (and (not (equal? name (var-name v)))
-			       (not (eq? (var-name v) lambda-marker)))
-			  (sequal? name v form)))
-		    env))
-|#
 
       (if (symbol? form)
 	  (set-ref form #f env) ; returns env
@@ -6240,6 +6237,43 @@
 	  (if (pair? form)
 	      (let ((head (car form)))
 		(set! line-number (pair-line-number form))
+
+		;; --------
+		(when *report-function-stuff* 
+		  (if (>= (tree-length-to form func-cutoff) func-cutoff)
+		      (let ((leaves (tree-length form 0)))
+			(do ((vs env (cdr vs)))
+			    ((or (null? vs)
+				 (let ((v (car vs)))
+				   (and (not (eq? (var-name v) lambda-marker))
+					(memq (var-ftype v) '(define lambda))
+					(not (equal? name (var-name v)))
+
+					(let ((body (cddr (var-initial-value v)))
+					      (args (var-arglist v)))
+					  (when (not (var-leaves v))
+					    (set! (var-leaves v) (tree-length body 0))
+					    (set! (var-match-list v) (if (symbol? args)
+									 (list (cons args :unset))
+									 (map (lambda (arg)
+										(cons arg :unset))
+									      (proper-list args)))))
+					  (and (<= func-cutoff (var-leaves v) leaves)
+					       (let ((match-list (do ((p (var-match-list v) (cdr p))) 
+								     ((null? p) 
+								      (var-match-list v))
+								   (set-cdr! (car p) :unset))))
+						 (and (structures-equal? body (list form) match-list)
+						      (not (member :unset match-list (lambda (a b) 
+										       (or (eq? (cdr b) :unset)
+											   (>= (tree-length-to (cdr b) func-cutoff) func-cutoff)))))
+						      (let ((new-args (map cdr match-list)))
+							(if (equal? (proper-list args) new-args)
+							    (lint-format "~A could be ~A" name name `(define ,name ,(var-name v)))
+							    (lint-format "perhaps ~A" name
+									 (lists->string form `(,(var-name v) ,@new-args))))
+							#t)))))))))))))
+		;; --------
 
 		(case head
 
@@ -6415,7 +6449,7 @@
 				     (lint-format "perhaps ~A" name (lists->string form (cadr body))))))
 			   
 			   (lint-walk-function head name args (cddr form) form env)
-			   ;env
+			   ;env -- not this -- return the lambda-marker+old env via lint-walk-function
 			   ))))
 		  
 		  ((set!)
@@ -6587,7 +6621,7 @@
 					     ;; (format *stderr* "seqdiff: ~A ~A ~A~%" seqdiff true false)
 					     ;; cadr replacement is too messy, looks good about 1 in 10 times
 					     (if (and (pair? seqdiff)
-						      (< (tree-length (cadr seqdiff) 0) 25)) ; 100 is too big, 30 is ok perhaps
+						      (< (tree-length-to (cadr seqdiff) 25) 25)) ; 100 is too big, 30 is ok perhaps
 						 (lint-format "perhaps ~A" name
 							      (lists->string form (tree-subst-eq `(if ,test ,@(cadr seqdiff)) (car seqdiff) true)))))))))
 			       
@@ -8011,7 +8045,7 @@
 		   env)
 
 		  (else
-		   ;; ---------------- everything else ----------------		  
+		   ;; ---------------- everything else ----------------	
 		   (if (not (proper-list? form))
 		       (begin
 			 ;; these appear to be primarily macro/match arguments
@@ -8147,7 +8181,7 @@
 	(set! line-number -1)
 	(set! quote-warnings 0)
 	
-	;; (format *stderr* "lint ~S~%" file)
+	;(format *stderr* "lint ~S~%" file)
 	
 	(let ((fp (if (input-port? file)
 		      file

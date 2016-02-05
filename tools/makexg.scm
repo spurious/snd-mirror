@@ -1035,9 +1035,6 @@
 (define (CFNC-PA data min-len max-len types)
   (CFNC data 'etc (list min-len max-len types)))
 
-(define (CFNC-23-PA data min-len max-len types)
-  (CFNC data 'etc (list min-len max-len types)))
-
 (define* (CAIRO-FUNC data spec)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))

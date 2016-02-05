@@ -72495,6 +72495,27 @@ static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {r
 static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
 
+#if 0
+/* an experiment */
+static s7_int c_tree_length(s7_scheme *sc, s7_pointer tree, s7_int len)
+{
+  if (is_pair(tree))
+    return(c_tree_length(sc, car(tree), c_tree_length(sc, cdr(tree), len)));
+  if (is_null(tree))
+    return(len);
+  return(len + 1);
+}
+
+static s7_pointer g_tree_length(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer tree;
+  tree = car(args);
+  if (!is_pair(tree)) return(0);
+  return(s7_make_integer(sc, (s7_int)c_tree_length(sc, tree, 0)));
+}
+#endif
+
+
 #ifndef _MSC_VER
 /* gdb stacktrace decoding */
 
@@ -73772,6 +73793,10 @@ s7_scheme *s7_init(void)
                                      defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
                               s7_define_function(sc, "abort",  g_abort,         0, 0, true, "drop into gdb I hope");
+#endif
+
+#if 0
+			      s7_define_function(sc, "tree-length", g_tree_length, 1, 0, false, "an experiment");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
