@@ -74242,6 +74242,7 @@ int main(int argc, char **argv)
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
+ * display of let can still get into infinite recursion!
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
