@@ -135,7 +135,7 @@
 	;; we're assuming floats are (64-bit) doubles in s7, so this is coercing to a 32-bit float in a sense
 	;;   this causes some round-off error
 	(logior (if (negative? sign) #x80000000 0)
-		(ash (+ expon 52 127) 23)
+		(ash (+ expon 179) 23)   ; 179 = (+ 52 127)
 		(logand (ash signif -29) #x7fffff)))))
 
 (define (write-bfloat32 flt)
@@ -170,7 +170,7 @@
     (if (= expon signif 0)
 	0
 	(logior (if (negative? sign) #x8000000000000000 0)
-		(ash (+ expon 52 1023) 52)
+		(ash (+ expon 1075) 52) ; 1075 = (+ 52 1023)
 		(logand signif #xfffffffffffff)))))
 
 (define (write-bfloat64 flt)
@@ -216,7 +216,7 @@
     (if (not (zero? val))
 	(begin
 	  (set! exp (round (+ (log val 2.0) 16383.0)))
-	  (set! val (* val (expt 2 (- (+ 16383 31) exp))))
+	  (set! val (* val (expt 2 (- 16414 exp)))) ; 16414 = (+ 16383 31)
 	  (set! mant1 (floor val))
 	  (set! val (- val mant1))
 	  (set! mant0 (floor (* val (expt 2 32))))))
@@ -286,8 +286,7 @@
 	      (let (;(size (read-bint32))
 		    (magic (read-chars 4)))
 		(set! current-location 12)
-		(if (and (not (string=? magic "AIFF"))
-			 (not (string=? magic "AIFC")))
+		(if (not (member magic '("AIFF" "AIFC") string=?))
 		    (error 'bad-header "~A is not an aif file: ~A" file magic)
 		    ;; now look for the "SSND" and "COMM" chunks
 		    (call-with-exit

@@ -411,6 +411,8 @@
 		       sequence)
 	     #f)))))
 
+
+    ;; -------- trees --------
     (define copy-tree 
       (let ((documentation "(copy-tree lst) returns a full copy of lst"))
 	(lambda (lis)
@@ -453,6 +455,87 @@
 		i
 		(+ i 1)))))
 
+    (define (proper-tree? tree)
+      (or (not (pair? tree))
+	  (and (proper-list? tree)
+	       (every? proper-tree? (cdr tree)))))
+
+    (define (tree-arg-member sym tree)
+      (and (proper-list? tree)
+	   (or (and (memq sym (cdr tree))
+		    tree)
+	       (and (pair? (car tree))
+		    (tree-arg-member sym (car tree)))
+	       (and (pair? (cdr tree))
+		    (call-with-exit
+		     (lambda (return)
+		       (for-each
+			(lambda (b)
+			  (cond ((and (pair? b)
+				      (tree-arg-member sym b))
+				 => return)))
+			(cdr tree))
+		       #f))))))
+    
+    (define (tree-member sym tree)
+      (and (pair? tree)
+	   (or (eq? (car tree) sym)
+	       (tree-member sym (car tree))
+	       (tree-member sym (cdr tree)))))
+    
+    (define (tree-list-member syms tree)
+      (and (pair? tree)
+	   (or (memq (car tree) syms)
+	       (tree-list-member syms (car tree))
+	       (tree-list-member syms (cdr tree)))))
+    
+    (define (tree-unquoted-member sym tree)
+      (and (pair? tree)
+	   (not (eq? (car tree) 'quote))
+	   (or (eq? (car tree) sym)
+	       (tree-unquoted-member sym (car tree))
+	       (tree-unquoted-member sym (cdr tree)))))
+    
+    (define (tree-car-member sym tree)
+      (and (pair? tree)
+	   (or (eq? (car tree) sym)
+	       (and (pair? (car tree))
+		    (tree-car-member sym (car tree)))
+	       (and (pair? (cdr tree))
+		    (member sym (cdr tree) tree-car-member)))))
+
+    (define (tree-set-member sym set tree) ; sym as arg, set as car
+      (and (pair? tree)
+	   (or (memq (car tree) set)
+	       (and (pair? (car tree))
+		    (tree-set-member sym set (car tree)))
+	       (and (pair? (cdr tree))
+		    (or (member sym (cdr tree))
+			(member #f (cdr tree) (lambda (a b) (tree-set-member sym set b))))))))
+
+    (define (maker? tree)
+      (tree-set-member #f makers tree))
+    
+    (define (tree-symbol-walk tree syms)
+      (if (pair? tree)
+	  (if (eq? (car tree) 'quote)
+	      (if (and (pair? (cdr tree))
+		       (symbol? (cadr tree))
+		       (not (memq (cadr tree) (car syms))))
+		  (tree-symbol-walk (cddr tree) (begin (set-car! syms (cons (cadr tree) (car syms))) syms)))
+	      (if (eq? (car tree) {list})
+		  (if (and (pair? (cdr tree))
+			   (pair? (cadr tree))
+			   (eq? (caadr tree) 'quote)
+			   (symbol? (cadadr tree))
+			   (not (memq (cadadr tree) (cadr syms))))
+		      (tree-symbol-walk (cddr tree) (begin (list-set! syms 1 (cons (cadadr tree) (cadr syms))) syms)))
+		  (begin
+		    (tree-symbol-walk (car tree) syms)
+		    (tree-symbol-walk (cdr tree) syms))))))
+    
+
+    ;; -------- types --------
     (define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
       (and (pair? lst)
 	   (or (and (number? (car lst))
@@ -501,28 +584,21 @@
 			(eqv-code-constant? (cadr x)))))
 	  (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
 
-    (define (proper-tree? tree)
-      (or (not (pair? tree))
-	  (and (proper-list? tree)
-	       (every? proper-tree? (cdr tree)))))
-
-    (define (tree-arg-member sym tree)
-      (and (proper-list? tree)
-	   (or (and (memq sym (cdr tree))
-		    tree)
-	       (and (pair? (car tree))
-		    (tree-arg-member sym (car tree)))
-	       (and (pair? (cdr tree))
-		    (call-with-exit
-		     (lambda (return)
-		       (for-each
-			(lambda (b)
-			  (cond ((and (pair? b)
-				      (tree-arg-member sym b))
-				 => return)))
-			(cdr tree))
-		       #f))))))
+    (define (just-symbols? form)
+      (or (null? form)
+	  (symbol? form)
+	  (and (pair? form)
+	       (symbol? (car form))
+	       (just-symbols? (cdr form)))))
     
+    (define (list-any? f lst)
+      (if (pair? lst)
+	  (or (f (car lst))
+	      (list-any? f (cdr lst)))
+	  (f lst)))
+    
+    
+    ;; -------- func info --------
     (define (arg-signature fnc env)
       (and (symbol? fnc)
 	   (let ((fd (or (var-member fnc env)
@@ -950,19 +1026,6 @@
 	       (equal-ignoring-constants? (cdr a) (cdr b)))))
     
     
-    (define (just-symbols? form)
-      (or (null? form)
-	  (symbol? form)
-	  (and (pair? form)
-	       (symbol? (car form))
-	       (just-symbols? (cdr form)))))
-    
-    (define (list-any? f lst)
-      (if (pair? lst)
-	  (or (f (car lst))
-	      (list-any? f (cdr lst)))
-	  (f lst)))
-    
     (define (reversible? func)
       (memq func '(* + = char=? string=? eq? eqv? equal? morally-equal? logand logxor logior max min lcm gcd
 		     < > <= >=
@@ -1046,63 +1109,6 @@
 	(if (and (pair? a)
 		 (pair? (cdr a)))
 	    (format outport " ~A: :allow-other-keys should be at the end of the parameter list: ~A~%" f args))))
-    
-    (define (tree-member sym tree)
-      (and (pair? tree)
-	   (or (eq? (car tree) sym)
-	       (tree-member sym (car tree))
-	       (tree-member sym (cdr tree)))))
-    
-    (define (tree-list-member syms tree)
-      (and (pair? tree)
-	   (or (memq (car tree) syms)
-	       (tree-list-member syms (car tree))
-	       (tree-list-member syms (cdr tree)))))
-    
-    (define (tree-unquoted-member sym tree)
-      (and (pair? tree)
-	   (not (eq? (car tree) 'quote))
-	   (or (eq? (car tree) sym)
-	       (tree-unquoted-member sym (car tree))
-	       (tree-unquoted-member sym (cdr tree)))))
-    
-    (define (tree-car-member sym tree)
-      (and (pair? tree)
-	   (or (eq? (car tree) sym)
-	       (and (pair? (car tree))
-		    (tree-car-member sym (car tree)))
-	       (and (pair? (cdr tree))
-		    (member sym (cdr tree) tree-car-member)))))
-
-    (define (tree-set-member sym set tree) ; sym as arg, set as car
-      (and (pair? tree)
-	   (or (memq (car tree) set)
-	       (and (pair? (car tree))
-		    (tree-set-member sym set (car tree)))
-	       (and (pair? (cdr tree))
-		    (or (member sym (cdr tree))
-			(member #f (cdr tree) (lambda (a b) (tree-set-member sym set b))))))))
-
-    (define (maker? tree)
-      (tree-set-member #f makers tree))
-    
-    (define (tree-symbol-walk tree syms)
-      (if (pair? tree)
-	  (if (eq? (car tree) 'quote)
-	      (if (and (pair? (cdr tree))
-		       (symbol? (cadr tree))
-		       (not (memq (cadr tree) (car syms))))
-		  (tree-symbol-walk (cddr tree) (begin (set-car! syms (cons (cadr tree) (car syms))) syms)))
-	      (if (eq? (car tree) {list})
-		  (if (and (pair? (cdr tree))
-			   (pair? (cadr tree))
-			   (eq? (caadr tree) 'quote)
-			   (symbol? (cadadr tree))
-			   (not (memq (cadadr tree) (cadr syms))))
-		      (tree-symbol-walk (cddr tree) (begin (list-set! syms 1 (cons (cadadr tree) (cadr syms))) syms)))
-		  (begin
-		    (tree-symbol-walk (car tree) syms)
-		    (tree-symbol-walk (cdr tree) syms))))))
     
     (define (checked-eval form)
       (and (not (infinite? (length form)))
@@ -1797,8 +1803,8 @@
 				      (if (eq? (car arg2) 'not)
 					  (return #f))
 				      
-				      (if (and (not (memq (car arg2) '(and or not list cons vector))) 
-					       (not (side-effect? arg2 env)))
+				      (if (not (or (memq (car arg2) '(and or not list cons vector))
+						   (side-effect? arg2 env)))
 					  (let ((v (or (var-member arg1 env)
 						       (hash-table-ref globals arg1))))
 					    (if (not (and (var? v)
@@ -3030,13 +3036,16 @@
       ;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
       ;; nvals to values as a range, checkable if called -- needed in check-args
       ;;
-      ;; tree-congruency+func->macro->tree to find missed possibilities (starting from let I think)
-      ;;
       ;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
       ;; call/exit if all (any?) returns are at exits
       ;; hash-table cons -- this is an arg to make-iterator
       ;; define-class and define-record-type for the function names
       ;; other-idents needs to take require into account
+      ;;
+      ;; currently (or (not x) (and (number? x) (= x 1.0))) -> (or (not x) (memv x '(1 1.0))), but better: (memv x '(#f 1 1.0))
+      ;;   i.e. (or (not x) (memx|eqx|=|char=?|eof-object?|null?|etc x '(...))) -- same as cond->case
+      ;;   why doesn't the first case already collapse?
+      ;; similarly (or (not (string? x)) (not (string=? x "asdasd"))) -> (equal? x "asdasd") -- this currently gets changed to (not (and...))
       ;;
       ;; 310/52
 
@@ -5379,7 +5388,7 @@
 		   (var-initial-value arg)
 		   (reverse (var-history arg)))
 |#
-	   (when (not (eq? vname lambda-marker))
+	   (unless (eq? vname lambda-marker)
 	     
 	     (when *report-function-stuff*
 	       (let ((scope (var-scope arg)))
@@ -5565,6 +5574,7 @@
 			     (let ((repeats ()))
 			       (for-each (lambda (call)
 					   (if (and (> (cdr call) 5)
+						    (not (memq (car call) '(make-vector make-float-vector)))
 						    (or (null? (cddar call))
 							(every? (lambda (p)
 								  (or (not (symbol? p))
@@ -6228,14 +6238,18 @@
     (define func-max-cutoff 120)
 
     ;; what about (let () (define...))? or define*/lambda*
-    ;; s7test t356 et al
+    ;; s7test t356 et al t354 has the numeric for-each tests
+    ;;
     ;; *lint-hook* could pass the current form to each function and let it do special analysis
     ;;    maybe specialize on the name?
     ;;    *linters* -> alist of car/function
     ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
-    ;; function return value ignored, or packed then always unpacked [is this in var-history? -- not yet]
-    ;;   return value will be harder -- lint-walk-body itself does not add to var-history
-    ;; t354 has the numeric for-each tests
+    ;;
+    ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
+    ;;   or if function found later, note possible change of scope?
+    ;;   count above=var num in bindings -> args in func
+    ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
+    ;;   the match would happen in report-usage?
 
     (define (lint-walk name form env)
       ;; walk a form, here curlet can change
@@ -6264,7 +6278,7 @@
 					  
 					  (let ((body (cddr (var-initial-value v)))
 						(args (var-arglist v)))
-					    (when (not (var-leaves v))
+					    (unless (var-leaves v)
 					      (set! (var-leaves v) (tree-length body 0))
 					      (set! (var-match-list v) (if (symbol? args)
 									   (list (cons args :unset))
@@ -6284,7 +6298,10 @@
 											 (eq? (cdr b) :unset))))
 							(let ((new-args (map cdr match-list)))
 							  (if (equal? (proper-list args) new-args)
-							      (lint-format "~A could be ~A" name name `(define ,name ,(var-name v)))
+							      (if (and (null? new-args)
+								       (not (var-member name env)))
+								  (format outport "~A could be (~A)~%" (truncated-list->string form) (var-name v))
+								  (lint-format "~A could be ~A" name name `(define ,name ,(var-name v))))
 							      (lint-format "perhaps ~A" name
 									   (lists->string form `(,(var-name v) ,@new-args))))
 							  #t))))))))))))))
@@ -8396,7 +8413,7 @@
 			 (pair? vars)
 			 *report-unused-top-level-functions*)
 		    (report-usage file 'top-level-var "" vars vars))
-
+		
 		(if (and *report-undefined-identifiers*
 			 (positive? (hash-table-entries other-identifiers)))
 		    (begin ; TODO: show uses etc

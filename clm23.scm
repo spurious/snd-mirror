@@ -504,12 +504,7 @@
 	  ((= i end))
 	(outa i (* amp (src sr)))))))
 
-(define (simple-sr2a beg dur amp speed file)
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-src :input (make-readin file) :srate speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (src sr))))))
+(define simple-sr2a simple-src)
 
 (define (simple-sro beg dur amp speed freq)
   (let ((os (make-oscil freq)))
@@ -567,12 +562,7 @@
 	((= i end))
       (outa i (* amp (file->sample fil ctr))))))
 
-(define (simple-rdf beg dur amp file)
-  (let ((rd (make-readin file))
-	(start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (readin rd))))))
+(define simple-rdf simple-rd)
 
 (define (simple-loc beg dur freq amp)
   (let ((os (make-oscil freq))
@@ -909,28 +899,18 @@
       (if (not bool) (format () "bool: ~A~%" bool))
       (set! j (if bool 1 2))
       (if (not (= j 1)) (format () "if expr: ~A~%" j))
-      (if bool (set! j 3) (set! j 4))
+      (set! j (if bool 3 4))
       (if (not (= j 3)) (format () "if statement: ~A~%" j))
       (if (integer? k) (set! j 5))
       (if (not (= j 5)) (format () "int k? ~A ~A~%" (integer? k) j))
       (if (= j k) (set! j 6))
       (if (= j 6) (format () "j if false: ~A~%" j))
-      (set! j (if (= j k) (+ k 7) (+ k 8)))
+      (set! j (+ k (if (= j k) 7 8)))
       (if (not (= j (+ k 8))) (format () "if false expr: ~A ~A~%" j k))
       (set! j (if (> j -1234) (if (> k -1234) 9 10) 11))
       (if (not (= j 9)) (format () "if 2 expr: ~A~%" j))
       (set! j (if (> j -1234) (begin (set! k 0) 12) 13))
       (if (not (= j 12)) (format () "if begin expr: ~A~%" j))
-      (if (> j -1234) (begin (set! j 1234) (set! j 14)) (set! j 15))
-      (if (not (= j 14)) (format () "if begin: ~A~%" j))
-					;	 (if (> j -1234) (set! j (prog1 16 (set! k 0))))
-					;	 (if (not (= j 16)) (format () "if prog1: ~A~%" j))
-					;	 (if (> j -1234) (set! j (prog2 (set! k 0) 17 (set! k 0))))
-					;	 (if (not (= j 17)) (format () "if prog2: ~A~%" j))
-					;       (set! k (loop for j from 1 to 4 sum j))
-					;       (if (not (= k 10)) (format () "loop sum: ~A~%" k))
-					;	 (if (> j -1234) (set! j (prog2 (set! k 0) (if (> j -1234) (begin (set! k 123) 18) 19) (set! k 0))))
-					;	 (if (not (= j 18)) (format () "if nested prog2: ~A~%" j))
       (set! j 123)
       (case j
 	((0) (set! k -1))
@@ -1003,23 +983,9 @@
       (outa i (* amp (granulate sr))))))
 
 					;(with-sound () (simple-grn-f2 0 1 1 2 "oboe.snd"))
-
-(define (simple-grn-f3 beg dur amp speed file)
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-granulate :input (make-readin file) :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr))))))
-
+(define simple-grn-f3 simple-grn-f2)
 					;(with-sound () (simple-grn-f3 0 1 1 2 "oboe.snd"))
-
-(define (simple-grn-f4 beg dur amp speed file)
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-granulate :input (make-readin file) :expansion speed)))
-    (do ((i start (+ i 1))) ((= i end))
-      (outa i (* amp (granulate sr))))))
-
+(define simple-grn-f4 simple-grn-f2)
 					;(with-sound () (simple-grn-f4 0 1 1 2 "oboe.snd"))
 
 (define (simple-grn-f5 beg dur amp speed file)
@@ -1463,9 +1429,9 @@
 	      (outa i (* (env ampf)
 			 (oscil carrier
 				(+ vib 
-				   (+ (* (env indf1) (oscil fmosc1 vib))
-				      (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-				      (* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))))))
+				   (* (env indf1) (oscil fmosc1 vib))
+				   (* (env indf2) (oscil fmosc2 (* 3.0 vib)))
+				   (* (env indf3) (oscil fmosc3 (* 4.0 vib))))))))))))))
 
 (define (fmdoc-cascade beg dur freq amp modrat modind casrat casind caspha)
   (let ((start (seconds->samples beg))
@@ -1593,29 +1559,9 @@
 	((= i end))
       (outa i (* amp (oscil os))))))
 
-(define (sndclmdoc-simp-1 beg dur freq amp)
-  (let ((os (make-oscil freq))
-	(start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
-    (do ((i start (+ i 1))) 
-	((= i end))
-      (outa i (* amp (oscil os))))))
-
-(define (sndclmdoc-simp-2 beg dur freq amp)
-  (let ((os (make-oscil freq))
-	(start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
-    (do ((i start (+ i 1))) 
-	((= i end))
-      (outa i (* amp (oscil os))))))
-
-(definstrument (sndclmdoc-simp-3 beg dur freq amp)
-  (let ((os (make-oscil freq))
-	(start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
-    (do ((i start (+ i 1))) 
-	((= i end))
-      (outa i (* amp (oscil os))))))
+(define sndclmdoc-simp-1 simple-out)
+(define sndclmdoc-simp-2 simple-out)
+(define sndclmdoc-simp-3 simple-out)
 
 (define (sndclmdoc-telephone start telephone-number)
   (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
@@ -1690,7 +1636,7 @@
       (let ((zval (env zv))) 
 	(outa i 
 	      (* amp 
-		 (sin (* pi2 zval (* zval zval)))
+		 (sin (* pi2 zval zval zval))
 		 (oscil osc)))))))
 
 (definstrument (sndclmdoc-simple-table dur)
@@ -1764,10 +1710,10 @@
 		      (polynomial cos-coeffs ax))))))))
 
 (definstrument (sndclmdoc-bl-saw start dur frequency order)
-  (let ((norm (if (= order 1) 1.0           ; these peak amps were determined empirically
-		  (if (= order 2) 1.3       ;   actual limit is supposed to be pi/2 (G&R 1.441)
-		      (if (< order 9) 1.7   ;   but Gibbs phenomenon pushes it to 1.851
-			  1.9))))           ;   if order>25, numerical troubles -- use table-lookup
+  (let ((norm (cond ((= order 1) 1.0)      ; these peak amps were determined empirically
+		    ((= order 2) 1.3)      ;   actual limit is supposed to be pi/2 (G&R 1.441)
+		    ((< order 9) 1.7)      ;   but Gibbs phenomenon pushes it to 1.851
+		    (else 1.9)))           ;   if order>25, numerical troubles -- use table-lookup
 	(freqs ()))
     (do ((i 1 (+ i 1)))
 	((> i order))
@@ -1805,9 +1751,9 @@
     (let ((top (* 0.5 range))
 	  (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
 	  (new-ang (+ ang frq fm)))
-      (if (> new-ang top)
-	  (set! (gen 0) (- new-ang range))
-	  (set! (gen 0) new-ang))
+      (set! (gen 0) (if (> new-ang top)
+			(- new-ang range)
+			new-ang))
       val)))
 
 (define (sndclmdoc-make-sum-of-odd-sines frequency n)
@@ -1991,13 +1937,7 @@
 	((= i stop))
       (outa i (granulate exA)))))
 
-(definstrument (sndclmdoc-simple-pvoc beg dur amp size file)
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(sr (make-phase-vocoder (make-readin file) :fft-size size)))
-    (do ((i start (+ i 1)))
-	((= i end))
-      (outa i (* amp (phase-vocoder sr))))))
+(define sndclmdoc-simple-pvoc sample-pvoc1)
 
 (definstrument (sndclmdoc-asy beg dur freq amp index (r 1.0) (ratio 1.0))
   (let ((st (seconds->samples beg))
@@ -2007,14 +1947,7 @@
 	((= i nd))
       (outa i (* amp (asymmetric-fm asyf index))))))
 
-(define (sndclmdoc-simple-f2s beg dur amp file)
-  (let ((start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur)))
-	(fil (make-file->sample file)))
-    (do ((i start (+ i 1))
-	 (ctr 0 (+ ctr 1)))
-	((= i end))
-      (outa i (* amp (file->sample fil ctr))))))
+(define sndclmdoc-simple-f2s simple-f2s)
 
 (definstrument (sndclmdoc-simple-ina beg dur amp file)
   (let ((start (seconds->samples beg))
@@ -2072,24 +2005,7 @@
 	  (if *reverb* (locsig-reverb-set! loc 0 (* reverb-amount (sqrt dist-scaler))))
 	  (locsig loc i (* (env amp-env) (readin rdA)))))))
 
-(define (sndclmdoc-simple-dloc beg dur freq amp)
-  (let ((os (make-oscil freq))
-	(start (seconds->samples beg))
-	(end (seconds->samples (+ beg dur))))
-    (let ((loc (make-move-sound (list start end 4 0
-				      (make-delay 12) 
-				      (make-env '(0 0 10 1) :duration dur)
-				      #f
-				      (make-vector 4 #f)
-				      (vector (make-env '(0 0 1 1 2 0 3 0 4 0) :duration dur)
-					      (make-env '(0 0 1 0 2 1 3 0 4 0) :duration dur)
-					      (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
-					      (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
-				      #f
-				      (vector 0 1 2 3)))))
-      (do ((i start (+ i 1)))
-	  ((= i end))
-	(move-sound loc i (* amp (oscil os)))))))
+(define sndclmdoc-simple-dloc simple-dloc-4)
 
 (definstrument (when? start-time duration start-freq end-freq grain-file)
   (let ((beg (seconds->samples start-time))
@@ -2423,7 +2339,7 @@
   (with-sound () ; one of JC's favorite demos
     (sndclmdoc-fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
 		      '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0))
-    (sndclmdoc-fofins 0 4 (* 6/5 540) .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
+    (sndclmdoc-fofins 0 4 648 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
 		      '(0 0 .5 .5 3 .25 6 .1 10 .1 50 .1 60 .2 85 1 100 0))
     (sndclmdoc-fofins 0 4 135 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
 		      '(0 0 1 3 3 1 6 .2 10 .1 50 .1 60 .2 85 1 100 0)))

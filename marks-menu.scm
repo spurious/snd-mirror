@@ -783,12 +783,6 @@ using the granulate generator to fix up the selection duration (this still is no
 			  (rowrightmid (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 							      (list XmNorientation         XmHORIZONTAL
 								    XmNbackground          *position-color*)))
-			  (rightsep (XtCreateManagedWidget "rsep"  xmSeparatorWidgetClass rowrightmid
-							   (list XmNseparatorType       XmNO_LINE
-								 XmNorientation         XmVERTICAL
-								 XmNbackground          *position-color*
-								 XmNwidth               20)))
-			  (rightlock (XtCreateManagedWidget "lock" xmToggleButtonWidgetClass rowrightmid ()))
 			  
 			  (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 								 (list XmNorientation         XmHORIZONTAL
@@ -823,12 +817,6 @@ using the granulate generator to fix up the selection duration (this still is no
 								    XmNrightAttachment     XmATTACH_NONE
 								    XmNtopAttachment       XmATTACH_FORM
 								    XmNbottomAttachment    XmATTACH_FORM)))
-			  (bottom-right (XtCreateManagedWidget "bright" xmFrameWidgetClass bottom-form
-							       (list XmNleftAttachment      XmATTACH_WIDGET
-								     XmNleftWidget          bottom-left
-								     XmNrightAttachment     XmATTACH_FORM
-								     XmNtopAttachment       XmATTACH_FORM
-								     XmNbottomAttachment    XmATTACH_FORM)))
 			  (bottom-left-label (XtCreateManagedWidget "Loop Mode" xmLabelWidgetClass bottom-left
 								    (list XmNleftAttachment      XmATTACH_FORM
 									  XmNrightAttachment     XmATTACH_FORM

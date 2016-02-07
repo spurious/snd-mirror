@@ -166,8 +166,8 @@
 	(format #f "~,2F" (scale-linear->log lo val hi)))))
   
   (define create-log-scale-widget 
-    (let ((documentation "(create-log-scale-widget parent title low initial high callback scale) returns a log scale widget"))
-      (lambda (parent title low initial high callback scale)
+    (let ((documentation "(create-log-scale-widget parent title low initial high) returns a log scale widget"))
+      (lambda (parent title low initial high)
 	(let ((label (XtCreateManagedWidget (format #f "~,2F" initial) xmLabelWidgetClass parent
 					    (list XmNbackground          *basic-color*)))
 	      (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
@@ -211,8 +211,8 @@
 	(round (* 12 (log ratio 2))))))
   
   (define create-semi-scale-widget 
-    (let ((documentation "(create-semi-scale-widget parent title initial callback) returns a semitone scale widget"))
-      (lambda (parent title initial callback)
+    (let ((documentation "(create-semi-scale-widget parent title initial) returns a semitone scale widget"))
+      (lambda (parent title initial)
 	(let ((label (XtCreateManagedWidget (format #f "semitones: ~D" (ratio->semitones initial)) xmLabelWidgetClass parent
 					    (list XmNbackground          *basic-color*)))
 	      (scale (XtCreateManagedWidget "scale" xmScaleWidgetClass parent
@@ -254,12 +254,10 @@ and returns a list of widgets (for reset callbacks)"))
 		    (low (slider-data 1))
 		    (initial (slider-data 2))
 		    (high (slider-data 3))
-		    (func (slider-data 4))
-		    (scale (slider-data 5))
 		    (new-slider (if (= (length slider-data) 7)
 				    (if (eq? (slider-data 6) 'log)
-					(create-log-scale-widget mainform title low initial high func scale)
-					(create-semi-scale-widget mainform title initial func))
+					(create-log-scale-widget mainform title low initial high)
+					(create-semi-scale-widget mainform title initial))
 				    (XtCreateManagedWidget (car slider-data) xmScaleWidgetClass mainform
 							   (list XmNorientation   XmHORIZONTAL
 								 XmNshowValue     #t

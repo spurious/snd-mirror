@@ -416,7 +416,7 @@
 	(if (<= num 0)
 	    "disk full!"
 	    (if (> num 1024)
-		(if (> num (* 1024 1024))
+		(if (> num 1048576)
 		    (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0)))
 		    (format #f "space: ~6,3FM" (/ num 1024.0)))
 		(format #f "space: ~10DK" num))))
@@ -565,7 +565,7 @@
       
       (define (find-free-dialog ds)
 	(and (pair? ds)
-	     (if (not (cadr (car ds)))
+	     (if (not (cadar ds))
 		 (begin
 		   (set! ((car ds) 1) #t)
 		   (caar ds))

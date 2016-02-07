@@ -354,7 +354,7 @@
 			   (- cx mouse-r)
 			   (- cy mouse-r)
 			   mouse-d mouse-d
-			   0 (* 360 64))
+			   0 23040) ; (* 360 64))
 			  (if lx
 			      ((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
 			  (set! lx cx)

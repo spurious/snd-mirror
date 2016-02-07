@@ -942,11 +942,7 @@
    (hey "  DEFINE_INTEGER(~A);~%" val)) 
  (reverse ints))
 
-(if in-glu
-    (begin
-      (hey "#endif~%")
-      (set! in-glu #f)))
-
+(uncheck-glu)
 
 (hey "}~%~%")
 

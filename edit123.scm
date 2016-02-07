@@ -76,8 +76,7 @@
 	(set! last-file-opened filename)
 	(display last-file-opened)
 	(let ((new-path (directory-from-path (mus-expand-filename filename))))
-	  (if (or (not (string? current-directory))
-		  (not (string=? current-directory new-path)))
+	  (if (not (equal? current-directory new-path))
 	      (get-current-files new-path)))))
     
     (lambda ()

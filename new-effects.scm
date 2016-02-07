@@ -1811,7 +1811,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		     (lambda (w context info)
 		       (map-chan-over-target-with-sync
 			(lambda (ignored) 
-			  (rm-effect rm-frequency (list 0 0 1 (hz->radians rm-radians)))) 
+			  (rm-effect rm-frequency #f)) ;(list 0 0 1 (hz->radians rm-radians)) -- gliss-env is not implemented above
 			rm-target 
 			(lambda (target samps)
 			  (format #f "effects-rm ~A ~A" rm-frequency

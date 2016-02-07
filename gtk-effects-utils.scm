@@ -120,7 +120,7 @@
   ;; sliders is a list of lists, each inner list being (title low initial high callback scale ['log])
   ;; returns list of widgets (for reset callbacks)
   (let* ((mainform (gtk_box_new GTK_ORIENTATION_VERTICAL 2))
-	 (use-hbox (= (length sliders) 1))
+	 (use-hbox (and (pair? sliders) (null? (cdr sliders))))
 	 (table (if (not use-hbox) (gtk_grid_new)))
 	 (slider 0))
     (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG dialog))) mainform #f #f 4)

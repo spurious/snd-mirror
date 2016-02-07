@@ -38,9 +38,7 @@
 			   (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 			 rmx)))
 	  
-	  (file (if (or (not srate) 
-			(and (number? srate) 
-			     (= srate 1.0)))
+	  (file (if (memv srate '(#f 1 1.0))
 		    (make-file->frample in-file)
 		    (let ((vect (make-vector in-chans #f)))
 		      (do ((i 0 (+ i 1)))
@@ -78,9 +76,7 @@
 		(if (< inp out-chans)
 		    (set! (mx inp inp) matrix)))))
       
-      (if (or (not srate)
-	      (and (number? srate)
-		   (= srate 1.0)))
+      (if (memv srate '(#f 1 1.0))
 	  (let ((mxe (and envs
 			  (let ((v (make-vector in-chans)))
 			    (do ((i 0 (+ i 1))

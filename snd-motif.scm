@@ -1177,7 +1177,7 @@
       ;; (list (list widget inuse func title help) ...)
       (define (find-free-dialog ds)
 	(and (pair? ds)
-	     (if (not (cadr (car ds)))
+	     (if (not (cadar ds))
 		 (begin
 		   (set! ((car ds) 1) #t)
 		   (caar ds))
@@ -1267,9 +1267,9 @@
 	  (XSetForeground dpy dgc *basic-color*)
 	  (XFillRectangle dpy pixwin dgc 0 0 16 16)
 	  (XSetForeground dpy dgc (white-pixel))
-	  (XFillArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	  (XFillArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
 	  (XSetForeground dpy dgc (black-pixel))
-	  (XDrawArc dpy pixwin dgc 1 1 14 14 0 (* 64 360))
+	  (XDrawArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
 	  (XDrawLine dpy pixwin dgc 8 8
 		     (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
 		     (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
@@ -1797,7 +1797,7 @@
 	(if (<= num 0)
 	    "disk full!"
 	    (if (> num 1024)
-		(if (> num (* 1024 1024))
+		(if (> num 1048576)
 		    (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0)))
 		    (format #f "space: ~6,3FM" (/ num 1024.0)))
 		(format #f "space: ~10DK" num))))

@@ -39,7 +39,7 @@
 	 (samp2 0.0)
 	 (fixed 0)
 	 (len (framples snd chn))
-	 (block-size (min len (* 1024 1024))) ; do edits by blocks rather than sample-at-a-time (saves time, memory etc)
+	 (block-size (min len 1048576)) ; do edits by blocks rather than sample-at-a-time (saves time, memory etc) 1048576=1024*1024
 	 (block-ctr 0)
 	 (block-beg 0)
 	 (block (make-float-vector block-size))
@@ -143,7 +143,7 @@
 	 (len (framples snd chn))
 
 	 (pad (* 8 size))
-	 (block-size (min (+ len pad) (* 1024 1024)))
+	 (block-size (min (+ len pad) 1048576)) ; 1048576=1024*1024
 	 (block-ctr 0)
 	 (block-beg 0)
 	 (block (make-float-vector block-size))

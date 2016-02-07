@@ -31,15 +31,15 @@
 	  100)))
 
 (define (setf-aref vect a b c d val)
-  (set! (vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d))) val))
+  (set! (vect (+ a (* 3 b) (* 18 c) (* 72 d))) val))
   
 (define (aref vect a b c d)
-  (vect (+ a (* 3 b) (* 3 6 c) (* 3 6 4 d))))
+  (vect (+ a (* 3 b) (* 18 c) (* 72 d))))
   
 (define (fillfnc)
   (if (not fnc)
       (begin
-	(set! fnc (make-vector (* 3 6 4 4) ()))
+	(set! fnc (make-vector 288 ())) ; 288 = (* 3 6 4 4)
 	(set! vibfreqfun (make-vector 3 ()))
 	(set! i3fun1 (make-vector 3 ()))
 	(set! i3fun2 (make-vector 3 ()))

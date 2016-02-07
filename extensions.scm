@@ -165,9 +165,10 @@ a list (file-name-or-sound-object [beg [channel]])."))
 			 (float-vector-add! d1 d2)
 			 (float-vector->channel d1 start len snd chn
 						current-edit-position
-						(if (string? input-data)
-						    (format #f "mix-channel ~S ~A ~A" input-data beg dur)
-						    (format #f "mix-channel '~A ~A ~A" input-data beg dur)))))
+						(format #f (if (string? input-data)
+							       "mix-channel ~S ~A ~A"
+							       "mix-channel '~A ~A ~A")
+							input-data beg dur))))
 		      ;; a virtual mix -- use simplest method available
 		      ((sound? input)          ; sound object case
 		       (channel->mix input input-channel input-beg len snd chn start))
@@ -203,9 +204,10 @@ a list (file-name-or-sound-object [beg [channel]])."))
 	    (insert-samples start len 
 			    (samples file-beg len file-name file-channel)
 			    snd chn edpos #f 
-			    (if (string? file-data)
-				(format #f "insert-channel ~S ~A ~A" file-data beg dur)
-				(format #f "insert-channel '~A ~A ~A" file-data beg dur))))))))
+			    (format #f (if (string? file-data)
+					   "insert-channel ~S ~A ~A"
+					   "insert-channel '~A ~A ~A")
+				    file-data beg dur)))))))
 
 
 ;;; -------- redo-channel, undo-channel

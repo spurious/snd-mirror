@@ -162,8 +162,9 @@
 						  (set! sample-1 (* vol (granulate ingen)))))
 					    (set! ex-samp (+ ex-samp samps))))
 				      (if (= next-samp ex-samp) 
-					  (outa i sample-0) 
-					  (outa i (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))))))))
+					  (outa i (if (= next-samp ex-samp)
+						      sample-0
+						      (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))))))))
 			  
 			  (do ((i beg (+ i 1)))
 			      ((= i end))
@@ -201,12 +202,9 @@
 						(set! sample-0 sample-1)
 						(set! sample-1 (* vol (granulate ingen)))))
 					  (set! ex-samp (+ ex-samp samps))))))
-			      
-			      (if (= next-samp ex-samp)
-				  ;; output actual samples
-				  (set! (invals 0) sample-0)
-				  ;; output interpolated samples
-				  (set! (invals 0) (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))
+			      (set! (invals 0) (if (= next-samp ex-samp)
+						   sample-0                      ; output actual samples
+						   (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))) ; output interpolated samples
 			      
 			      ;; output mixed result
 			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
