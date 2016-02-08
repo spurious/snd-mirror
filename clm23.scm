@@ -2134,11 +2134,7 @@
   freq phase fm res)
 
 (define* (sndscm-osc1 gen fm)
-  (let-set! gen 'fm fm)
-  (with-let gen
-    (set! res (sin phase))
-    (set! phase (+ phase freq fm))
-    res))
+  (sndscm-osc gen fm))
 
 (definstrument (sndscm-osc1-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))
@@ -2176,11 +2172,7 @@
   freq phase fm res)
 
 (define* (sndscm-osc2 gen fm)
-  (let-set! gen 'fm fm)
-  (with-let gen
-    (set! res (sin phase))
-    (set! phase (+ phase freq fm))
-    res))
+  (sndscm-osc gen fm))
 
 (definstrument (sndscm-osc2-fm beg dur freq amp mc-ratio (fm-index 1.0))
   (let ((start (seconds->samples beg))

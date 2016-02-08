@@ -373,15 +373,7 @@
 	 (min-dist (if (pair? distances)
 		       (apply min distances)
 		       0.0))
-#|
-		       (let ((mind (car distances)))
-			 (for-each 
-			  (lambda (d)
-			    (set! mind (min mind d)))
-			  distances)
-			 mind)
-		       0.0))
-|#	 
+
 	 ;; find delay times from specified distances or delays
 	 (times (let ((v (make-float-vector (length speakers))))
 		  (do ((i 0 (+ i 1)))
@@ -1039,8 +1031,7 @@
 
 (define (nearest-point x0 y0 z0 x1 y1 z1 px py pz)
   
-  (define (vmag a b c) 
-    (sqrt (+ (* a a) (* b b) (* c c))))
+  (define vmag distance)
   
   (define (vcos a0 b0 c0 a1 b1 c1)
     (/ (+ (* a0 a1) (* b0 b1) (* c0 c1))
@@ -1822,7 +1813,7 @@
     ;; (http://www.magic-software.com/)
     
     (define (normalize a b c)
-      (let ((mag (sqrt (+ (* a a) (* b b) (* c c)))))
+      (let ((mag (distance a b c)))
 	(list (/ a mag) (/ b mag) (/ c mag))))
     
     (let* ((vals (normalize x y z))
@@ -2029,7 +2020,7 @@
 	      (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
 	      (set! now (cons (/ dist velocity) now))))
 	  (set! now (reverse now))
-	  (set! (path-rt path) (append (list start-time) now))
+	  (set! (path-rt path) (cons start-time) now)
 	  (set! (path-tx path) (copy (path-rx path)))
 	  (set! (path-ty path) (copy (path-ry path)))
 	  (set! (path-tz path) (copy (path-rz path)))))
@@ -2275,9 +2266,7 @@
 		      (gain-c (+ (* (mat 0 2) x)
 				 (* (mat 1 2) y)
 				 (* (mat 2 2) z)))
-		      (mag (sqrt (+ (* gain-a gain-a)
-				    (* gain-b gain-b)
-				    (* gain-c gain-c)))))
+		      (mag (distance gain-a gain-b gain-c)))
 		 ;; truncate to zero roundoff errors
 		 (if (< (abs gain-a) zero-gain)
 		     (set! gain-a 0.0))

@@ -548,6 +548,7 @@
    (let* ((name (car data))
 	  (return-type (cadr data))
 	  (args (caddr data))
+	  (argslen (length args))
 	  (cargs (length args))
 	  (refargs (ref-args args))
 	  (xgargs (- cargs refargs))
@@ -592,7 +593,7 @@
      (hey "static Xen gxg_~A(" name)
      (if (null? args)
 	 (heyc "void")
-	 (if (>= (length args) max-args)
+	 (if (>= argslen max-args)
 	     (heyc "Xen arglist")
 	     (let ((previous-arg #f))
 	       (for-each 
@@ -614,7 +615,7 @@
 		    (hey "  ~A ~A[16];~%" (deref-type arg) (deref-name arg))
 		    (hey "  ~A ~A[1];~%" (deref-type arg) (deref-name arg)))))
 	  args))
-     (if (and (>= (length args) max-args)
+     (if (and (>= argslen max-args)
 	      (> xgargs 0))
 	 (let ((previous-arg #f))
 	   (heyc "  Xen ")
@@ -634,7 +635,7 @@
 		    (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
 		(set! ctr (+ 1 ctr)))
 	      args))))
-     (if (> (length args) 0)
+     (if (> argslen 0)
 	 (let ((ctr 1))
 	   (for-each
 	    (lambda (arg)
@@ -670,7 +671,7 @@
 
        (hey-on "~A(" name)
        (hey-mark)
-       (if (> (length args) 0)
+       (if (> argslen 0)
 	   (let ((previous-arg #f))
 	     (for-each
 	      (lambda (arg)
@@ -703,8 +704,8 @@
 		   (hey "    result = Xen_empty_list;~%")
 		   (hey "    for (i = 0; i < vals; i++)~%")
 		   (hey "      result = Xen_cons(C_to_Xen_~A(~A[i]), result);~%" 
-			(no-stars (deref-type (args (- (length args) 1))))
-			(deref-name (args (- (length args) 1))))
+			(no-stars (deref-type (args (- argslen 1))))
+			(deref-name (args (- argslen 1))))
 		   (hey "    return(result);~%")
 		   (hey "  }~%"))
 		 (begin

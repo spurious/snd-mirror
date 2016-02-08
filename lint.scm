@@ -574,16 +574,6 @@
 	   (or (not (pair? x))
 	       (eq? (car x) 'quote))))
 
-    (define (eqv-code-constant? x)
-      (or (number? x)
-	  (char? x)
-	  (and (pair? x)
-	       (eq? (car x) 'quote)
-	       (or (symbol? (cadr x))
-		   (and (not (pair? (cadr x)))
-			(eqv-code-constant? (cadr x)))))
-	  (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
-
     (define (just-symbols? form)
       (or (null? form)
 	  (symbol? form)
@@ -1093,6 +1083,26 @@
 	  (if (keyword? (car p))
 	      (set! count (+ count 1))))))
 					;(count-if keyword? lst))
+    
+    (define (eqv-selector clause)
+      (if (pair? clause)
+	  (case (car clause)
+	    ((memq memv member) 
+	     (and (= (length clause) 3)
+		  (cadr clause)))
+	    ((eq? eqv? = equal? char=? char-ci=? string=? string-ci=?)
+	     (and (= (length clause) 3)
+		  (if (code-constant? (cadr clause))
+		      (caddr clause)
+		      (cadr clause))))
+	    ((or) 
+	     (and (pair? (cdr clause))
+		  (eqv-selector (cadr clause))))
+	    ((not null? eof-object? zero? boolean?)
+	     (and (pair? (cdr clause))
+		  (cadr clause)))
+	    (else #f))
+	  (memq clause '(else #t))))
     
     (define (check-star-parameters f args)
       (if (list-any? (lambda (k) (memq k '(:key :optional))) args)
@@ -1693,42 +1703,103 @@
 			   (let ((sym #f)
 				 (eqf #f)
 				 (vals ()))
+
+			     (define (constant-arg p)
+			       (if (code-constant? (cadr p))
+				   (set! vals (cons (cadr p) vals))
+				   (and (code-constant? (caddr p))
+					(set! vals (cons (caddr p) vals)))))
+
+			     (define (upgrade-eqf)
+			       (if (memq eqf '(string=? string-ci=?))
+				   (set! eqf 'equal?)
+				   (if (memq eqf '(#f eq?)) 
+				       (set! eqf 'eq?)
+				       (set! eqf 'eqv?))))
+
 			     (if (every? (lambda (p)
 					   (and (pair? p)
-						(= (length p) 3)
-						(if (not eqf)
-						    (and (memq (car p) '(eq? eqv? equal? char=? string=? = char-ci=? string-ci=?))
-							 (set! eqf (car p)))
-						    (or (eq? eqf (car p))
-							(and (memq eqf '(eq? eqv? equal? =)) 
-							     (memq (car p) '(eq? eqv? equal? =))
-							     (set! eqf (if (not (eq? (car p) 'eq?)) 'equal? eqf)))
-							(and (memq eqf '(char=? char-ci=?)) 
-							     (memq (car p) '(char=? char-ci=?)))))
-						(or (and (code-constant? (caddr p))
-							 (set! vals (cons (caddr p) vals))
-							 (if (not sym) 
-							     (and (not (side-effect? (cadr p) env))
-								  (set! sym (cadr p)))
-							     (equal? sym (cadr p))))
-						    (and (code-constant? (cadr p))
-							 (set! vals (cons (cadr p) vals))
-							 (if (not sym) 
-							     (and (not (side-effect? (caddr p) env))
-								  (set! sym (caddr p)))
-							     (equal? sym (caddr p)))))))
+						(if (not sym)
+						    (set! sym (eqv-selector p))
+						    (equal? sym (eqv-selector p)))
+						(case (car p) 
+						  ((string=? equal?)
+						   (if (memq eqf '(#f string=?)) (set! eqf (car p)) (set! eqf 'equal?))
+						   (and (= (length p) 3)
+							(constant-arg p)))
+
+						  ((char=?)
+						   (if (memq eqf '(#f char=?))
+						       (set! eqf 'char=?)
+						       (if (not (eq? eqf 'equal?))
+							   (set! eqf 'eqv?)))
+						   (and (= (length p) 3)
+							(constant-arg p)))
+
+						  ((eq? eqv?)
+						   (if (memq eqf '(#f eq?)) (set! eqf (car p)))
+						   (and (= (length p) 3)
+							(constant-arg p)))
+
+						  ((char-ci=? string-ci=? =)
+						   (and (or (not eqf)
+							    (eq? eqf (car p)))
+							(set! eqf (car p))
+							(= (length p) 3)
+							(constant-arg p)))
+
+						  ((eof-object?)
+						   (upgrade-eqf)
+						   (set! vals (cons #<eof> vals)))
+
+						  ((not)
+						   (upgrade-eqf)
+						   (set! vals (cons #f vals)))
+
+						  ((boolean?) 
+						   (upgrade-eqf)
+						   (set! vals (cons #f (cons #t vals))))
+
+						  ((zero?)
+						   (if (memq eqf '(#f eq?)) (set! eqf 'eqv?))
+						   (set! vals (cons 0 (cons 0.0 vals))))
+
+						  ((null?)
+						   (upgrade-eqf)
+						   (set! vals (cons () vals)))
+
+						  ((memq memv member)
+						   (if (eq? (car p) 'member)
+						       (set! eqf 'equal?)
+						       (if (eq? (car p) 'memv)
+							   (if (eq? eqf 'string=?)
+							       (set! eqf 'equal?)
+							       (set! eqf 'eqv?))
+							   (if (not eqf)
+							       (set! eqf 'eq?))))
+						   (and (= (length p) 3)
+							(pair? (caddr p))
+							(eq? 'quote (caaddr p))
+							(pair? (cadr (caddr p)))
+							(set! vals (append (cadr (caddr p)) vals))))
+
+						  (else #f))))
 					 (cdr form))
+
 				 (let* ((func (case eqf 
 						((eq?) 'memq) 
 						((eqv? char=?) 'memv) 
-						((=) (if (every? rational? vals) 'memv 'member))
 						(else 'member)))
 					(equals (if (and (eq? func 'member)
 							 (not (eq? eqf 'equal?)))
 						    (list eqf)
 						    ()))
-					(elements (lint-remove-duplicates (map (lambda (v) (if (pair? v) (cadr v) v)) vals) env)))
-				   
+					(elements (lint-remove-duplicates (map (lambda (v) 
+										 (if (pair? v) ; quoted case
+										     (cadr v)  ;   so unquote for quoted list below
+										     v)) 
+									       vals) 
+									  env)))
 				   (return (cond ((null? (cdr elements))
 						  (cadr form))
 						 
@@ -3044,10 +3115,12 @@
       ;;
       ;; currently (or (not x) (and (number? x) (= x 1.0))) -> (or (not x) (memv x '(1 1.0))), but better: (memv x '(#f 1 1.0))
       ;;   i.e. (or (not x) (memx|eqx|=|char=?|eof-object?|null?|etc x '(...))) -- same as cond->case
-      ;;   why doesn't the first case already collapse?
       ;; similarly (or (not (string? x)) (not (string=? x "asdasd"))) -> (equal? x "asdasd") -- this currently gets changed to (not (and...))
+      ;;   so recursion is missing? no -- why wasn't this caught? -- needs string constant -- perhaps check return-type?
+      ;; need s7test for various or -> member cases
       ;;
-      ;; 310/52
+      ;; 310/52 (no func), 1159/151
+      ;;                        167
 
       (case head
 
@@ -5574,7 +5647,7 @@
 			     (let ((repeats ()))
 			       (for-each (lambda (call)
 					   (if (and (> (cdr call) 5)
-						    (not (memq (car call) '(make-vector make-float-vector)))
+						    (not (memq (caar call) '(make-vector make-float-vector)))
 						    (or (null? (cddar call))
 							(every? (lambda (p)
 								  (or (not (symbol? p))
@@ -5589,9 +5662,100 @@
        vars))
     
     
+    (define (structures-equal? l1 l2 matches)
+      (if (pair? l1)
+	  (and (pair? l2)
+	       (structures-equal? (car l1) (car l2) matches)
+	       (structures-equal? (cdr l1) (cdr l2) matches))
+	  (let ((match (assq l1 matches)))
+	    (if match
+		(or (and (eq? (cdr match) :unset)
+			 (set-cdr! match l2))
+		    (equal? (cdr match) l2))
+		(equal? l1 l2)))))
+    
+    (define func-min-cutoff 6)
+    (define func-max-cutoff 120)
+
+    ;; what about (let () (define...))? or define*/lambda*
+    ;; t354 has the numeric for-each tests [extend...]
+    ;;
+    ;; *lint-hook* could pass the current form to each function and let it do special analysis
+    ;;    maybe specialize on the name?
+    ;;    *linters* -> alist of car/function
+    ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
+    ;;
+    ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
+    ;;   or if function found later, note possible change of scope?
+    ;;   count above=var num in bindings -> args in func
+    ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
+    ;;   the match would happen in report-usage?
+    ;; for possible,  hash on car, keep tree-len + pointers to matches
+    ;; here can we assume car is not a par and check it before tree count or anything?
+    ;;
+    ;; also in structure-equal, local lets need not match names if no shadowing: yow...would need complete map, not just arg map
+    ;;   perhaps keep syntax junk as var with definer 'syntax so we don't make any assumptions about it
+    ;; why aren't definer and ftype the same field? -- using ftype to see that var is a function apparently
+    ;;  if (define f (lambda*...)) -- ftype is define?
+
+    (define (function-match name form env)
+
+      (if (>= (tree-length-to form func-min-cutoff) func-min-cutoff)
+	  (let* ((leaves (tree-length-to form (+ func-max-cutoff 8)))
+		 (cutoff (max func-min-cutoff (- leaves 12))))
+	    (when (< leaves func-max-cutoff)
+
+	      (let ((new-form (if (not (pair? (car form)))
+				  (list form)
+				  form))
+		    (name-args (let ((v (var-member name env)))
+				 (and (var? v)
+				      (memq (var-ftype v) '(define lambda))
+				      (or (eq? form (cddr (var-initial-value v)))    ; only check args if this is the complete body
+					  (and (null? (cdddr (var-initial-value v))) 
+					       (eq? form (caddr (var-initial-value v)))))
+				      (if (symbol? (var-arglist v))
+					  (list (var-arglist v))
+					  (proper-list (var-arglist v)))))))
+
+		(do ((vs env (cdr vs)))
+		    ((or (null? vs)
+			 (let ((v (car vs)))
+			   (and (not (eq? (var-name v) lambda-marker))
+				(memq (var-ftype v) '(define lambda))
+				(not (equal? name (var-name v)))
+				
+				(let ((body (cddr (var-initial-value v)))
+				      (args (var-arglist v)))
+				  (unless (var-leaves v)
+				    (set! (var-leaves v) (tree-length body 0))
+				    (set! (var-match-list v) (if (symbol? args)
+								 (list (cons args :unset))
+								 (map (lambda (arg)
+									(cons arg :unset))
+								      (proper-list args)))))
+				  
+				  ;; var-leaves is size of func (v) body
+				  ;; leaves is size of form which we want to match with func
+				  ;; func-min-cutoff avoids millions of uninteresting matches
+				  (and (<= cutoff (var-leaves v) leaves)
+				       (let ((match-list (do ((p (var-match-list v) (cdr p))) 
+							     ((null? p) 
+							      (var-match-list v))
+							   (set-cdr! (car p) :unset))))
+					 (and (structures-equal? body new-form match-list)
+					      (not (member :unset match-list (lambda (a b) 
+									       (eq? (cdr b) :unset))))
+					      
+					      (let ((new-args (map cdr match-list)))
+						(if (equal? new-args name-args)
+						    (lint-format "~A could be ~A" name name `(define ,name ,(var-name v)))
+						    (lint-format "perhaps ~A" name (lists->string form `(,(var-name v) ,@new-args))))
+						#t)))))))))))))))
+
     (define (lint-walk-body name head body env)
       ;; walk a body (a list of forms, the value of the last of which might be returned)
-      ;; (format *stderr* "lint-walk-body ~A~%" body)
+      ;; (format *stderr* "lint-walk-body ~A ~A ~A~%" name head body)
       
       (if (not (proper-list? body))
 	  (lint-format "stray dot? ~A" name (truncated-list->string body))
@@ -5606,6 +5770,11 @@
 		(dpy-start #f)
 		(len (length body)))
 	    (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
+
+	    (when (and (pair? body)
+		       *report-function-stuff*
+		       (not (null? (cdr body))))
+	      (function-match name body env))
 	    
 	    (do ((fs body (cdr fs))
 		 (ctr 0 (+ ctr 1)))
@@ -6162,26 +6331,16 @@
 			(case-branch test eqv-select exprs))))
 		new-clauses)))
     
-    (define (cond-eqv-select clause)
-      (if (pair? clause)
-	  (case (car clause)
-	    ((memq memv member) 
-	     (and (= (length clause) 3)
-		  (cadr clause)))
-	    ((eq? eqv? = equal? char=? char-ci=?)
-	     (and (= (length clause) 3)
-		  (if (code-constant? (cadr clause))
-		      (caddr clause)
-		      (cadr clause))))
-	    ((or) 
-	     (and (pair? (cdr clause))
-		  (cond-eqv-select (cadr clause))))
-	    ((not null? eof-object? zero? boolean?)
-	     (and (pair? (cdr clause))
-		  (cadr clause)))
-	    (else #f))
-	  (memq clause '(else #t))))
-    
+    (define (eqv-code-constant? x)
+      (or (number? x)
+	  (char? x)
+	  (and (pair? x)
+	       (eq? (car x) 'quote)
+	       (or (symbol? (cadr x))
+		   (and (not (pair? (cadr x)))
+			(eqv-code-constant? (cadr x)))))
+	  (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
+
     (define (cond-eqv? clause eqv-select or-ok)
       (if (pair? clause)
 	  ;; it's eqv-able either directly or via memq/memv, or via (or ... eqv-able clauses)
@@ -6222,38 +6381,9 @@
 	  (cdr x)
 	  (list x)))
 
-    (define (structures-equal? l1 l2 matches)
-      (if (pair? l1)
-	  (and (pair? l2)
-	       (structures-equal? (car l1) (car l2) matches)
-	       (structures-equal? (cdr l1) (cdr l2) matches))
-	  (let ((match (assq l1 matches)))
-	    (if match
-		(or (and (eq? (cdr match) :unset)
-			 (set-cdr! match l2))
-		    (equal? (cdr match) l2))
-		(equal? l1 l2)))))
-    
-    (define func-min-cutoff 6)
-    (define func-max-cutoff 120)
-
-    ;; what about (let () (define...))? or define*/lambda*
-    ;; s7test t356 et al t354 has the numeric for-each tests
-    ;;
-    ;; *lint-hook* could pass the current form to each function and let it do special analysis
-    ;;    maybe specialize on the name?
-    ;;    *linters* -> alist of car/function
-    ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
-    ;;
-    ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
-    ;;   or if function found later, note possible change of scope?
-    ;;   count above=var num in bindings -> args in func
-    ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
-    ;;   the match would happen in report-usage?
-
     (define (lint-walk name form env)
       ;; walk a form, here curlet can change
-      ;; (format *stderr* "walk ~A~%" form)
+      ;; (format *stderr* "lint-walk ~A~%" form)
 
       (if (symbol? form)
 	  (set-ref form #f env) ; returns env
@@ -6262,50 +6392,8 @@
 	      (let ((head (car form)))
 		(set! line-number (pair-line-number form))
 
-		;; --------
 		(when *report-function-stuff* 
-
-		  (if (>= (tree-length-to form func-min-cutoff) func-min-cutoff)
-		      (let* ((leaves (tree-length-to form (+ func-max-cutoff 8)))
-			     (cutoff (max func-min-cutoff (- leaves 12))))
-			(when (< leaves func-max-cutoff)
-			  (do ((vs env (cdr vs)))
-			      ((or (null? vs)
-				   (let ((v (car vs)))
-				     (and (not (eq? (var-name v) lambda-marker))
-					  (memq (var-ftype v) '(define lambda))
-					  (not (equal? name (var-name v)))
-					  
-					  (let ((body (cddr (var-initial-value v)))
-						(args (var-arglist v)))
-					    (unless (var-leaves v)
-					      (set! (var-leaves v) (tree-length body 0))
-					      (set! (var-match-list v) (if (symbol? args)
-									   (list (cons args :unset))
-									   (map (lambda (arg)
-										  (cons arg :unset))
-										(proper-list args)))))
-					    ;; var-leaves is size of func (v) body
-					    ;; leaves is size of form which we want to match with func
-					    ;; func-min-cutoff avoids millions of uninteresting matches
-					    (and (<= cutoff (var-leaves v) leaves)
-						 (let ((match-list (do ((p (var-match-list v) (cdr p))) 
-								       ((null? p) 
-									(var-match-list v))
-								     (set-cdr! (car p) :unset))))
-						   (and (structures-equal? body (list form) match-list)
-							(not (member :unset match-list (lambda (a b) 
-											 (eq? (cdr b) :unset))))
-							(let ((new-args (map cdr match-list)))
-							  (if (equal? (proper-list args) new-args)
-							      (if (and (null? new-args)
-								       (not (var-member name env)))
-								  (format outport "~A could be (~A)~%" (truncated-list->string form) (var-name v))
-								  (lint-format "~A could be ~A" name name `(define ,name ,(var-name v))))
-							      (lint-format "perhaps ~A" name
-									   (lists->string form `(,(var-name v) ,@new-args))))
-							  #t))))))))))))))
-		;; --------
+		  (function-match name form env))
 		
 		(case head
 		  
@@ -6966,7 +7054,7 @@
 				    
 				    (when all-eqv
 				      (unless eqv-select
-					(set! eqv-select (cond-eqv-select (car clause))))
+					(set! eqv-select (eqv-selector (car clause))))
 				      (set! all-eqv (and eqv-select
 							 (not (and (pair? (cdr clause))
 								   (eq? (cadr clause) '=>))) ; case sends selector, but cond sends test result

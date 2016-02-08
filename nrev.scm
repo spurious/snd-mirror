@@ -21,17 +21,19 @@
 	
     (if (not dly-len)
 	(let ((srscale (/ *clm-srate* 25641)))
-	  (define (prime? val)
-	    (or (= val 2)
-		(and (odd? val)
-		     (do ((i 3 (+ i 2))
-			  (lim (sqrt val)))
-			 ((or (= 0 (modulo val i)) (> i lim))
-			  (> i lim))))))
+
 	  (define (next-prime val)
+	    (define (prime? val)
+	      (or (= val 2)
+		  (and (odd? val)
+		       (do ((i 3 (+ i 2))
+			    (lim (sqrt val)))
+			   ((or (= 0 (modulo val i)) (> i lim))
+			    (> i lim))))))
 	    (if (prime? val)
 		val
 		(next-prime (+ val 2))))
+
 	  (set! dly-len (vector 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 15))

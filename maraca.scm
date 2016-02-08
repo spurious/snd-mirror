@@ -126,10 +126,9 @@
 	  (do ((j 0 (+ j 1)))
 	      ((= j resn))
 	    (set! sum (+ sum (two-pole (vector-ref tzs j) input))))
-
-	  (if with-filters
-	      (outa k (one-zero oz (- sum last-sum)))
-	      (outa k (* sndamp sum))))))))
+	  (outa k (if with-filters
+		      (one-zero oz (- sum last-sum))
+		      (* sndamp sum))))))))
 	  
 ;;; tambourine: (with-sound (:play #t :statistics #t) (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01))
 ;;; sleighbells: (with-sound (:play #t :statistics #t) (big-maraca 0 2 .15 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) '(0.999 0.999 0.999 0.999 0.999)))

@@ -188,9 +188,9 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 		       (if (and (< x0 old-att)
 				(>= x1 old-att))
 			   (begin
-			     (if (= x1 old-att)
-				 (set! y0 y1)
-				 (set! y0 (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
+			     (set! y0 (if (= x1 old-att)
+					  y1
+					  (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
 			     (set! x0 old-att)
 			     (set! new-x new-att)
 			     (set! new-fn (cons y0 (cons new-x new-fn)))
@@ -201,9 +201,9 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 				(< x0 old-dec)
 				(>= x1 old-dec))
 			   (begin
-			     (if (= x1 old-dec)
-				 (set! y0 y1)
-				 (set! y0 (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
+			     (set! y0 (if (= x1 old-dec) 
+					  y1
+					  (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
 			     (set! x0 old-dec)
 			     (set! new-x new-dec)
 			     (set! new-fn (cons y0 (cons new-x new-fn)))
@@ -216,7 +216,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 			     (set! y0 y1)))
 		       (stretch-envelope-1 new-fn (cddr old-fn)))))
 	       
-	       (if (and old-dec 
+	       (if (and (number? old-dec)
 			(= old-dec old-att)) 
 		   (set! old-dec (* .000001 last-x)))
 	       (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
@@ -490,11 +490,11 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 	      (moving-average rms (float-vector-ref data j)))
 	    (set! e (cons (* 1.0 (/ i fsr)) e))
 	    (set! rms-val (sqrt (* (mus-scaler rms) (mus-increment rms))))
-	    (if db 
-		(if (< rms-val .00001)
-		    (set! e (cons -100.0 e))
-		    (set! e (cons (* 20.0 (log rms-val 10.0)) e)))
-		(set! e (cons rms-val e)))))))))
+	    (set! e (if db 
+			(if (< rms-val .00001)
+			    (cons -100.0 e)
+			    (cons (* 20.0 (log rms-val 10.0)) e))
+			(cons rms-val e)))))))))
 
 
 (define* (normalize-envelope env1 (new-max 1.0))
