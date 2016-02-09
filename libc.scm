@@ -6,8 +6,7 @@
 
 ;; if loading from a different directory, pass that info to C
 (let ((current-file (port-filename (current-input-port))))
-  (let ((directory (and (or (char=? (current-file 0) #\/)
-			    (char=? (current-file 0) #\~))
+  (let ((directory (and (memv (current-file 0) '(#\/ #\~))
 			(substring current-file 0 (- (length current-file) 9)))))
     (when (and directory (not (member directory *load-path*)))
       (set! *load-path* (cons directory *load-path*)))

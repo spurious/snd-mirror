@@ -194,6 +194,27 @@
 			  floor round truncate ceiling ash))
 		       h))
 	
+	(bools (let ((h (make-hash-table)))
+		 (for-each
+		  (lambda (op)
+		    (set! (h op) #t))
+		  '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
+		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
+		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
+		    unspecified? c-object? constant?))
+		 h))
+
+	(bools1 (let ((h (make-hash-table)))
+		  (for-each
+		   (lambda (op)
+		     (set! (h op) #t))
+		   '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
+		     char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
+		     output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
+		     unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
+		     negative? positive? zero? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
+		  h))
+    
 	(repeated-args-table (let ((h (make-hash-table)))
 			       (for-each
 				(lambda (op)
@@ -748,8 +769,7 @@
 	    ((random-state? c) 'random-state?)
 	    ((c-pointer? c)    'c-pointer?)
 	    ((c-object? c)     'c-object?)
-	    ((or (eof-object? c)
-		 (eq? c #<eof>)) 'eof-object?)
+	    ((eof-object? c)   'eof-object?)
 	    ((eq? c #<unspecified>) 'unspecified?)
 	    (#t #t))) ; this includes symbol? which at this level refers to a variable name (unknown type)
     
@@ -779,25 +799,12 @@
 	      (or (pair? (car c)) 'pair?))
 	  (->simple-type c)))
     
-    (define bools '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
-		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
-		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?
-		    unspecified? c-object? constant?
-		    ))
-
-    (define bools1 '(symbol? integer? rational? real? number? complex? float? keyword? gensym? byte-vector? string? list? sequence?
-		    char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? proper-list?
-		    output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer? c-object?
-		    unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
-		    negative? positive? zero? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?
-		    ))
-    
     (define (compatible? type1 type2) ; we want type1, we have type2 -- is type2 ok?
       (or (eq? type1 type2)
 	  (not (symbol? type1))
 	  (not (symbol? type2))
-	  (not (memq type1 bools1))
-	  (not (memq type2 bools1))
+	  (not (hash-table-ref bools1 type1))
+	  (not (hash-table-ref bools1 type2))
 	  (case type1
 	    ((number? complex?)  (memq type2 '(float? real? rational? integer? number? complex? exact? inexact? zero? negative? positive? even? odd? infinite? nan?)))
 	    ((real?)             (memq type2 '(float? rational? integer? complex? number? exact? inexact? zero? negative? positive? even? odd? infinite? nan?)))
@@ -1101,8 +1108,49 @@
 	    ((not null? eof-object? zero? boolean?)
 	     (and (pair? (cdr clause))
 		  (cadr clause)))
-	    (else #f))
+ 	    (else #f))
 	  (memq clause '(else #t))))
+    
+    (define (->eqf x)
+      (case x
+	((char?) '(eqv? char=?))
+	((integer? rational? real? number? complex?) '(eqv? =))
+	((symbol? keyword? boolean? null?)'(eq? eq?))
+	((string? byte-vector?) '(equal? string=?))
+	((pair? vector? float-vector? int-vector? hash-table?) '(equal? equal?))
+	(else '(#t #t))))
+    
+    (define (eqf selector)
+      (cond ((symbol? selector)      '(#t #t))
+	    ((not (pair? selector))  (->eqf (->type selector)))
+	    ((eq? (car selector) 'quote)
+	     (cond ((or (symbol? (cadr selector))
+			(null? (cadr selector))
+			(memq (cadr selector) '(#f #t #<unspecified> #<undefined> #<eof> ())))
+		    '(eq? eq?))
+		   ((char? (cadr selector))   '(eqv? char=?))
+		   ((string? (cadr selector)) '(equal? string=?))
+		   ((number? (cadr selector)) '(eqv? =))
+		   (else                      '(equal? equal?))))
+	    ((and (eq? (car selector) 'list)
+		  (null? (cdr selector)))
+	     '(eq? eq?))
+	    ((symbol? (car selector)) (->eqf (return-type (car selector) ())))
+	    (else                     '(#t #t))))
+    
+    (define (unquoted x)
+      (if (and (pair? x)
+	       (eq? (car x) 'quote))
+	  (cadr x)
+	  x))
+    
+    (define (distribute-quote x)
+      (map (lambda (item)
+	     (if (or (symbol? item)
+		     (pair? item))
+		 `(quote ,item)
+		 item))
+	   x))
     
     (define (check-star-parameters f args)
       (if (list-any? (lambda (k) (memq k '(:key :optional))) args)
@@ -1183,8 +1231,8 @@
 	      (type2 (car arg2)))
 	  (and (symbol? type1)
 	       (symbol? type2)
-	       (memq type1 bools1)
-	       (or (memq type2 bools1)       ; return #f if not (obviously) redundant, else return which of the two to keep
+	       (hash-table-ref bools1 type1)
+	       (or (hash-table-ref bools1 type2)     ; return #f if not (obviously) redundant, else return which of the two to keep
 		   (memq type2 '(= char=? string=?)))
 	       (if (eq? type1 type2)
 		   type1
@@ -1226,12 +1274,12 @@
 		     ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
 		     ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
 		     ((symbol?)          (or (and (memq type2 '(keyword? gensym? constant?)) type2)
-					     (and (eq? type2 'eq)
+					     (and (eq? type2 'eq?)
 						  (or (quoted-symbol? (cadr arg2))
 						      (quoted-symbol? (caddr arg2)))
 						  'eq?)))
 		     ((keyword?)         (or (and (memq type2 '(symbol? constant?)) type1)
-					     (and (eq? type2 'eq)
+					     (and (eq? type2 'eq?)
 						  (or (keyword? (cadr arg2))
 						      (keyword? (caddr arg2)))
 						  'eq?)))
@@ -1242,12 +1290,12 @@
 		     ((proper-list?)     (and (eq? type2 'null?) type2))
 		     ((string?)          (or (and (eq? type2 'byte-vector?) type2)
 					     (and (eq? type2 'string=?)
-						  (or (string? (cadr arg2))
-						      (string? (caddr arg2)))
+						  (or (eq? (->type (cadr arg2)) 'string?)
+						      (eq? (->type (caddr arg2)) 'string?))
 						  'equal?)))
 		     ((char?)            (and (eq? type2 'char=?)
-					      (or (char? (cadr arg2))
-						  (char? (caddr arg2)))
+					      (or (eq? (->type (cadr arg2)) 'char?)
+						  (eq? (->type (caddr arg2)) 'char?))
 					      'eqv?))
 		     ((char-numeric? char-whitespace? char-alphabetic? char-upper-case? char-lower-case?) (and (eq? type2 'char?) type1))
 		     ((byte-vector? directory? file-exists?) (and (eq? type2 'string?) type1))
@@ -1259,9 +1307,9 @@
 	      (type2 (caadr arg2))) ; (not (? ...))
 	  (and (symbol? type1)
 	       (symbol? type2)
-	       (or (memq type1 bools1)
+	       (or (hash-table-ref bools1 type1)
 		   (memq type1 '(= char=? string=?)))
-	       (memq type2 bools1)
+	       (hash-table-ref bools1 type2)
 	       (if (eq? type1 type2)     ; (and (?) (not (?))) -> #f
 		   'contradictory
 		   (case type1
@@ -1337,9 +1385,9 @@
 	      (type2 (caadr arg2))) ; (not (? ...))
 	  (and (symbol? type1)
 	       (symbol? type2)
-	       (or (memq type1 bools)
+	       (or (hash-table-ref bools type1)
 		   (memq type1 '(= char=? string=?)))
-	       (memq type2 bools)
+	       (hash-table-ref bools type2)
 	       (if (eq? type1 type2)     ; (or (?) (not (?))) -> #t
 		   'fatuous
 		   (case type1
@@ -1711,20 +1759,38 @@
 					(set! vals (cons (caddr p) vals)))))
 
 			     (define (upgrade-eqf)
-			       (if (memq eqf '(string=? string-ci=?))
+			       (if (memq eqf '(string=? string-ci=? = equal?))
 				   (set! eqf 'equal?)
-				   (if (memq eqf '(#f eq?)) 
-				       (set! eqf 'eq?)
-				       (set! eqf 'eqv?))))
+				   (set! eqf (if (memq eqf '(#f eq?)) 'eq? 'eqv?))))
 
 			     (if (every? (lambda (p)
 					   (and (pair? p)
 						(if (not sym)
 						    (set! sym (eqv-selector p))
 						    (equal? sym (eqv-selector p)))
+						(or (not (memq eqf '(char-ci=? string-ci=? =)))
+						    (memq (car p) '(char-ci=? string-ci=? =)))
+
+						;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
+						;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
+						;;   We could add both: 1 1.0 as in cond?
+						;;
+						;; another problem: using memx below means the returned value of the expression
+						;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
+						;;   warning about this, and wrap it in (pair? (mem...)) as an example.
+						;;
+						;; and another thing... the original might be broken: (eq? x #(1)) where equal?
+						;;   is more sensible, but that also changes the behavior of the expression:
+						;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
+						;;
+						;; I think I'll try to turn out a more-or-less working expression, but warn about it.
+
 						(case (car p) 
 						  ((string=? equal?)
-						   (if (memq eqf '(#f string=?)) (set! eqf (car p)) (set! eqf 'equal?))
+						   (if (or (not eqf)
+							   (eq? eqf (car p)))
+						       (set! eqf (car p)) 
+						       (set! eqf 'equal?))
 						   (and (= (length p) 3)
 							(constant-arg p)))
 
@@ -1737,7 +1803,16 @@
 							(constant-arg p)))
 
 						  ((eq? eqv?)
-						   (if (memq eqf '(#f eq?)) (set! eqf (car p)))
+						   (let ((leqf (car (->eqf (->type (if (code-constant? (cadr p)) (cadr p) (caddr p)))))))
+						     (cond ((not eqf) 
+							    (set! eqf leqf))
+
+							    ((or (memq leqf '(#t 'equal?))
+								 (not (eq? eqf leqf)))
+							     (set! eqf 'equal?))
+
+							    ((memq eqf '(#f eq?))
+							     (set! eqf leqf))))
 						   (and (= (length p) 3)
 							(constant-arg p)))
 
@@ -1769,14 +1844,14 @@
 						   (set! vals (cons () vals)))
 
 						  ((memq memv member)
-						   (if (eq? (car p) 'member)
-						       (set! eqf 'equal?)
-						       (if (eq? (car p) 'memv)
-							   (if (eq? eqf 'string=?)
-							       (set! eqf 'equal?)
-							       (set! eqf 'eqv?))
-							   (if (not eqf)
-							       (set! eqf 'eq?))))
+						   (cond ((eq? (car p) 'member)
+							  (set! eqf 'equal?))
+
+							 ((eq? (car p) 'memv)
+							  (set! eqf (if (eq? eqf 'string=?) 'equal? 'eqv?)))
+
+							 ((not eqf)
+							  (set! eqf 'eq?)))
 						   (and (= (length p) 3)
 							(pair? (caddr p))
 							(eq? 'quote (caaddr p))
@@ -1785,7 +1860,7 @@
 
 						  (else #f))))
 					 (cdr form))
-
+				 
 				 (let* ((func (case eqf 
 						((eq?) 'memq) 
 						((eqv? char=?) 'memv) 
@@ -1800,8 +1875,9 @@
 										     v)) 
 									       vals) 
 									  env)))
+
 				   (return (cond ((null? (cdr elements))
-						  (cadr form))
+						  `(,eqf ,sym ,@elements))
 						 
 						 ((and (eq? eqf 'char=?)
 						       (= (length elements) 2)
@@ -1895,7 +1971,7 @@
 								`(and ,arg1 ...)
 								`(and (,(cadr sig) ,arg1) ...))))))))
 				      
-				      (if (memq (car arg2) bools1)
+				      (if (hash-table-ref bools1 (car arg2))
 					  (return arg2)))
 				    
 				    (if (and (not (side-effect? arg1 env))
@@ -1988,7 +2064,7 @@
 						     (and (pair? (cddr arg2))
 							  (null? (cdddr arg2))
 							  (equal? (cadr arg1) (caddr arg2))))
-						 (memq (car arg1) bools1))
+						 (hash-table-ref bools1 (car arg1)))
 					
 					(when (or (eq? (car arg1) 'zero?)  ; perhaps rational? and integer? here -- not many hits
 						  (eq? (car arg2) 'zero?))
@@ -2036,7 +2112,7 @@
 						      ((symbol? t2)	       (return `(,t2 ,@(cdr arg1))))
 						      ((pair? t2)	       (return t2)))))))
 				      
-				      (if (memq (car arg1) bools)
+				      (if (hash-table-ref bools (car arg1))
 					  (let ((p (member (cadr arg1) (cdr arg2))))
 					    (when p
 					      (let ((sig (arg-signature (car arg2) env))
@@ -2827,47 +2903,6 @@
 	    (else `(,(car form) ,@args))))))
     
     
-    (define (->eqf x)
-      (case x
-	((char?) '(eqv? char=?))
-	((integer? rational? real? number? complex?) '(eqv? =))
-	((symbol? keyword? boolean? null?)'(eq? eq?))
-	((string? byte-vector?) '(equal? string=?))
-	((pair? vector? float-vector? int-vector? hash-table?) '(equal? equal?))
-	(else '(#t #t))))
-    
-    (define (eqf selector)
-      (cond ((symbol? selector)      '(#t #t))
-	    ((not (pair? selector))  (->eqf (->type selector)))
-	    ((eq? (car selector) 'quote)
-	     (cond ((or (symbol? (cadr selector))
-			(null? (cadr selector))
-			(memq (cadr selector) '(#f #t #<unspecified> #<undefined> #<eof> ())))
-		    '(eq? eq?))
-		   ((char? (cadr selector))   '(eqv? char=?))
-		   ((string? (cadr selector)) '(equal? string=?))
-		   ((number? (cadr selector)) '(eqv? =))
-		   (else                      '(equal? equal?))))
-	    ((and (eq? (car selector) 'list)
-		  (null? (cdr selector)))
-	     '(eq? eq?))
-	    ((symbol? (car selector)) (->eqf (return-type (car selector) ())))
-	    (else                     '(#t #t))))
-    
-    (define (unquoted x)
-      (if (and (pair? x)
-	       (eq? (car x) 'quote))
-	  (cadr x)
-	  x))
-    
-    (define (distribute-quote x)
-      (map (lambda (item)
-	     (if (or (symbol? item)
-		     (pair? item))
-		 `(quote ,item)
-		 item))
-	   x))
-    
     (define (check-char-cmp name op form)
       (if (and (any? (lambda (x) 
 		       (and (pair? x) 
@@ -3112,15 +3147,44 @@
       ;; hash-table cons -- this is an arg to make-iterator
       ;; define-class and define-record-type for the function names
       ;; other-idents needs to take require into account
+      ;; what about (let () (define...))? or define*/lambda*
       ;;
-      ;; currently (or (not x) (and (number? x) (= x 1.0))) -> (or (not x) (memv x '(1 1.0))), but better: (memv x '(#f 1 1.0))
-      ;;   i.e. (or (not x) (memx|eqx|=|char=?|eof-object?|null?|etc x '(...))) -- same as cond->case
-      ;; similarly (or (not (string? x)) (not (string=? x "asdasd"))) -> (equal? x "asdasd") -- this currently gets changed to (not (and...))
-      ;;   so recursion is missing? no -- why wasn't this caught? -- needs string constant -- perhaps check return-type?
-      ;; need s7test for various or -> member cases
+      ;; *lint-hook* could pass the current form to each function and let it do special analysis
+      ;;    maybe specialize on the name?
+      ;;    *linters* -> a list of car/function
+      ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
+      ;;
+      ;; t354/t359 lint for-each tests [extend...]
+      ;;
+      ;; ---- from structures-equal:
+      ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
+      ;;   or if function found later, note possible change of scope?
+      ;;   count above=var num in bindings -> args in func
+      ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
+      ;;   the match would happen in report-usage?
+      ;; for possible,  hash on car, keep tree-len + pointers to matches
+      ;; here can we assume car is not a par and check it before tree count or anything?
+      ;;
+      ;; also in structure-equal, local lets need not match names if no shadowing: yow...would need complete map, not just arg map
+      ;;   perhaps keep syntax junk as var with definer 'syntax so we don't make any assumptions about it
+      ;; why aren't definer and ftype the same field? -- using ftype to see that var is a function apparently
+      ;;  if (define f (lambda*...)) -- ftype is define?
+      ;;
+      ;; ---- from report-usage:
+      ;; parameter initial value is currently #f which should be ignored in typing
+      ;; parameter vals from func calls? and fixup the initial-value from first history setting?
+      ;;
+      ;; reverse! missing type checks
+      ;; ref count can be confused by with-let if it's a reference to the current env (as in Display in stuff.scm)
+      ;; set subsumes type -> new ntype
+      ;;
+      ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
+      ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
+      ;; accessor: all refs involve (sym-*) or (make-sym...) or (sym?) but then there's *-ref or implicit index
+      ;; on setters, types of values can be compared, then used with readers
       ;;
       ;; 310/52 (no func), 1159/151
-      ;;                        167
+      ;;     53            1267/164
 
       (case head
 
@@ -5549,7 +5613,7 @@
 							    (prettify-checker desired-type))))))))
 				 
 				 ;; check for pointless type checks
-				 (when (and (memq func bools)
+				 (when (and (hash-table-ref bools func)
 					    (not (eq? vname func)))
 				   
 				   (when (or (eq? type func)
@@ -5617,19 +5681,6 @@
 							      `(set! ,@(cdr call)) 
 							      (prettify-checker val-type)))))
 				       ))))
-			       
-			       ;; parameter initial value is currently #f which should be ignored in typing
-			       ;; parameter vals from func calls? and fixup the initial-value from first history setting?
-			       
-			       ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
-			       ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
-			       ;;
-			       ;; reverse! missing type checks
-			       ;; ref count can be confused by with-let if it's a reference to the current env (as in Display in stuff.scm)
-			       ;; set subsumes type -> new ntype
-			       
-			       ;; accessor: all refs involve (sym-*) or (make-sym...) or (sym?) but then there's *-ref or implicit index
-			       ;; on setters, types of values can be compared, then used with readers
 			       )
 			     )))
 		       
@@ -5676,27 +5727,6 @@
     
     (define func-min-cutoff 6)
     (define func-max-cutoff 120)
-
-    ;; what about (let () (define...))? or define*/lambda*
-    ;; t354 has the numeric for-each tests [extend...]
-    ;;
-    ;; *lint-hook* could pass the current form to each function and let it do special analysis
-    ;;    maybe specialize on the name?
-    ;;    *linters* -> alist of car/function
-    ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
-    ;;
-    ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
-    ;;   or if function found later, note possible change of scope?
-    ;;   count above=var num in bindings -> args in func
-    ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
-    ;;   the match would happen in report-usage?
-    ;; for possible,  hash on car, keep tree-len + pointers to matches
-    ;; here can we assume car is not a par and check it before tree count or anything?
-    ;;
-    ;; also in structure-equal, local lets need not match names if no shadowing: yow...would need complete map, not just arg map
-    ;;   perhaps keep syntax junk as var with definer 'syntax so we don't make any assumptions about it
-    ;; why aren't definer and ftype the same field? -- using ftype to see that var is a function apparently
-    ;;  if (define f (lambda*...)) -- ftype is define?
 
     (define (function-match name form env)
 
