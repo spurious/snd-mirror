@@ -694,10 +694,7 @@ using the granulate generator to fix up the selection duration (this still is no
 	      (XtAddCallback loop-dialog
 			     XmNokCallback (lambda (w context info)
 					     (set! (sound-loop-info) loop-data)))
-	      (XmStringFree xhelp)
-	      (XmStringFree xdismiss)
-	      (XmStringFree titlestr)
-	      (XmStringFree xsave)
+	      (for-each XmStringFree (vector xhelp xdismiss titlestr xsave))
 	      (let* ((mainform
 		      (XtCreateManagedWidget "form" xmFormWidgetClass loop-dialog
 					     (list XmNleftAttachment      XmATTACH_FORM
@@ -780,10 +777,6 @@ using the granulate generator to fix up the selection duration (this still is no
 							      (list XmNorientation         XmHORIZONTAL
 								    XmNbackground          *position-color*
 								    XmNspacing             0)))
-			  (rowrightmid (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
-							      (list XmNorientation         XmHORIZONTAL
-								    XmNbackground          *position-color*)))
-			  
 			  (rowrightbottom (XtCreateManagedWidget "r1" xmRowColumnWidgetClass right-column
 								 (list XmNorientation         XmHORIZONTAL
 								       XmNbackground          *position-color*

@@ -633,9 +633,9 @@
 	    
 	    (let ((main-keyfunc (lambda (c)
 				  (if (<= chars 1) (save-line))
-				  (if (= cursor-pos (length cur-line))
-				      (set! cur-line (string-append cur-line (string c)))
-				      (set! cur-line (if (= cursor-pos 0)
+				  (set! cur-line (if (= cursor-pos (length cur-line))
+						     (string-append cur-line (string c))
+						     (if (= cursor-pos 0)
 							 (string-append (string c) cur-line)
 							 (string-append 
 							  (substring cur-line 0 cursor-pos) 
@@ -765,9 +765,9 @@
 		  (lambda (c)
 		    (when selection
 		      (save-line)
-		      (if (zero? cursor-pos)
-			  (set! cur-line (string-append selection cur-line))
-			  (set! cur-line (if (>= cursor-pos (length cur-line))
+		      (set! cur-line (if (zero? cursor-pos)
+					 (string-append selection cur-line)
+					 (if (>= cursor-pos (length cur-line))
 					     (string-append cur-line selection)
 					     (string-append (substring cur-line 0 cursor-pos)
 							    selection
@@ -845,9 +845,9 @@
 				    (when (and completion
 					       (> (length completion) (- end loc 1)))
 				      (save-line)
-				      (if (= end (length cur-line))
-					  (set! cur-line (string-append (substring cur-line 0 (+ loc 1)) completion))
-					  (set! cur-line (string-append (substring cur-line 0 (+ loc 1)) 
+				      (set! cur-line (if (= end (length cur-line))
+							 (string-append (substring cur-line 0 (+ loc 1)) completion)
+							 (string-append (substring cur-line 0 (+ loc 1)) 
 									completion
 									(substring cur-line (+ end 1)))))
 				      (set! cursor-pos (end-of-line cursor-pos))))))))))

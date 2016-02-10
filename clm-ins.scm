@@ -2276,9 +2276,9 @@ is a physical model of a flute:
 			    (do ((k 0 (+ k 1)))
 				((= k (- samps 2)))
 			      (granulate exA)))
-			(if (>= samps 2)
-			    (set! valA0 (* vol (granulate exA)))
-			    (set! valA0 valA1))
+			(set! valA0 (if (>= samps 2)
+					(* vol (granulate exA))
+					(set! valA0 valA1)))
 			(set! valA1 (* vol (granulate exA)))
 			(set! ex-samp (+ ex-samp samps))))
 		  

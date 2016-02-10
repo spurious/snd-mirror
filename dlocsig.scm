@@ -2020,7 +2020,7 @@
 	      (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
 	      (set! now (cons (/ dist velocity) now))))
 	  (set! now (reverse now))
-	  (set! (path-rt path) (cons start-time) now)
+	  (set! (path-rt path) (cons start-time now))
 	  (set! (path-tx path) (copy (path-rx path)))
 	  (set! (path-ty path) (copy (path-ry path)))
 	  (set! (path-tz path) (copy (path-rz path)))))

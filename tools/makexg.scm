@@ -1825,6 +1825,7 @@
   (lambda (data)
     (let* ((name (car data))
 	   (return-type (cadr data))
+	   (return-type-void (string=? return-type "void"))
 	   (args (caddr data))
 	   (cargs (length args))
 	   (refargs (ref-args args))
@@ -1960,9 +1961,8 @@
 	    (begin
 	      (set! using-loc (or (eq? lambda-type 'GCallback)
 				  (and callback-data
-				       (or (eq? (callback-gc callback-data) 'temporary)
-					   (eq? (callback-gc callback-data) 'semi-permanent)))))
-	      (set! using-result (not (or (string=? return-type "void")
+				       (memq (callback-gc callback-data) '(temporary semi-permanent)))))
+	      (set! using-result (not (or return-type-void
 					  (eq? lambda-type 'lambda))))
 	      (hey "  {~%")
 	      (if using-result (hey "    Xen result;~%"))
@@ -1999,7 +1999,7 @@
 		  (heyc "    ")))
 	    (begin ; lambda-type = 'fnc
 	      (set! using-result (and (> refargs 0)
-				      (not (string=? return-type "void"))))
+				      (not return-type-void)))
 	      (if using-result
 		  (begin
 		    (hey "  {~%")
@@ -2007,7 +2007,7 @@
 	      (hey-start)
 
 	      (if (not (eq? spec 'etc))
-		  (if (not (string=? return-type "void"))
+		  (if (not return-type-void)
 		      (if (= refargs 0)
 			  (if (eq? spec 'free)
 			      (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type)
@@ -2038,7 +2038,7 @@
 		     (modlen (length types)))
 		(hey "  {~%")
 		(hey "    int etc_len = 0;~%")
-		(if (not (string=? return-type "void"))
+		(if (not return-type-void)
 		    (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
 		(do ((i 0 (+ i 1)))
 		    ((= i (- cargs 1)))
@@ -2061,7 +2061,7 @@
 		(hey "      {~%")
 		(do ((i min-len (+ i modlen)))
 		    ((> i max-len))
-		  (if (not (string=? return-type "void"))
+		  (if (not return-type-void)
 		      (hey "        case ~D: result = ~A(" i name)
 		      (hey "        case ~D: ~A(" i name))
 		  (do ((j 0 (+ 1 j)))
@@ -2093,7 +2093,7 @@
 			  (hey "); break;~%"))))
 		(hey "      }~%")
 
-		(if (not (string=? return-type "void"))
+		(if (not return-type-void)
 		    (hey "    return(C_to_Xen_~A(result));~%" (no-stars return-type))
 		    (hey "    return(Xen_false);~%"))
 		(hey "  }~%")
@@ -2118,7 +2118,7 @@
 				   (hey-on "&~A" (deref-name arg))
 				   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
 			   args)))
-		    (if (not (string=? return-type "void"))
+		    (if (not return-type-void)
 			(if (not (and (eq? lambda-type 'fnc)
 				      (= refargs 0)))
 			    (heyc ")")
@@ -2133,7 +2133,7 @@
 			  (if (and callback-data
 				   (eq? (callback-gc callback-data) 'semi-permanent))
 			      (hey "    Xen_list_set(gxg_ptr, 2, Xen_list_3(xg_idler_symbol, ~A, C_int_to_Xen_integer(loc)));~%"
-				   (if (string=? return-type "void") "Xen_false" "result")))
+				   (if return-type-void "Xen_false" "result")))
 			  (if using-result
 			      (hey "    return(result);~%")
 			      (hey "    return(Xen_false);~%"))
@@ -2170,12 +2170,12 @@
 			      (begin
 				(if (member name idlers)
 				    (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args)))
-				(if (string=? return-type "void")
+				(if return-type-void
 				    (hey "  return(Xen_false);~%")))))))
 		  (begin ; 'lambda (see line 1846)
 		    (hey "if (Xen_is_aritable(func, 2))~%")
 		    (hey-start)
-		    (if (not (string=? return-type "void"))
+		    (if (not return-type-void)
 			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name)
 			(hey-on "       ~A(" name))
 		    (hey-mark)
@@ -2188,12 +2188,12 @@
 			   (set! previous-arg #t)
 			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
 		       args))
-		    (if (not (string=? return-type "void"))
+		    (if (not return-type-void)
 			(hey ")));~%")
 			(hey ");~%"))
 		    (hey "     else~%")
 		    (hey-start)
-		    (if (not (string=? return-type "void"))
+		    (if (not return-type-void)
 			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name)
 			(hey-on "       ~A(" name))
 		    (hey-mark)
@@ -2206,7 +2206,7 @@
 			   (set! previous-arg #t)
 			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
 		       args))
-		    (if (string=? return-type "void")
+		    (if return-type-void
 			(begin
 			  (hey ");~%")
 			  (hey "    return(Xen_false);~%"))
@@ -2562,7 +2562,8 @@
 			(for-each ruby-cast (reverse cast-list))))))
  all-casts all-cast-withs)
 
-(define (ruby-check func) (hey "Xen_wrap_1_arg(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
+;;(define (ruby-check func) (hey "Xen_wrap_1_arg(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func))))
+(define ruby-check ruby-cast)
 (for-each ruby-check (reverse checks))
 (for-each
  (lambda (check-list check-func)

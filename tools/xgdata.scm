@@ -4761,7 +4761,7 @@
 (CINT "GTK_FILE_CHOOSER_ACTION_OPEN" "GtkFileChooserAction")
 (CINT "GTK_FILE_CHOOSER_ACTION_SAVE" "GtkFileChooserAction")
 
-(CFNC-23-PA "GtkWidget* gtk_file_chooser_dialog_new gchar* title GtkWindow* @parent GtkFileChooserAction action etc #buttons" 0 10 '("gchar*" "int"))
+(CFNC-PA "GtkWidget* gtk_file_chooser_dialog_new gchar* title GtkWindow* @parent GtkFileChooserAction action etc #buttons" 0 10 '("gchar*" "int"))
 
 ;;;;(CFNC "GType gtk_file_chooser_dialog_get_type void") 
 ;;;;(CFNC "GType gtk_file_chooser_widget_get_type void") 
@@ -4953,7 +4953,7 @@
 (CFNC "void gtk_cell_layout_pack_start GtkCellLayout* cell_layout GtkCellRenderer* cell gboolean expand") 
 (CFNC "void gtk_cell_layout_pack_end GtkCellLayout* cell_layout GtkCellRenderer* cell gboolean expand") 
 (CFNC "void gtk_cell_layout_clear GtkCellLayout* cell_layout") 
-(CFNC-23-PA "void gtk_cell_layout_set_attributes GtkCellLayout* cell_layout GtkCellRenderer* cell etc attributes" 2 10 '("gchar*" "int"))
+(CFNC-PA "void gtk_cell_layout_set_attributes GtkCellLayout* cell_layout GtkCellRenderer* cell etc attributes" 2 10 '("gchar*" "int"))
 (CFNC "void gtk_cell_layout_add_attribute GtkCellLayout* cell_layout GtkCellRenderer* cell gchar* attribute gint column") 
 (CFNC "void gtk_cell_layout_set_cell_data_func GtkCellLayout* cell_layout GtkCellRenderer* cell GtkCellLayoutDataFunc func lambda_data func_info GtkDestroyNotify destroy") 
 (CFNC "void gtk_cell_layout_clear_attributes GtkCellLayout* cell_layout GtkCellRenderer* cell") 

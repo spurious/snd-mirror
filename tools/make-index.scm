@@ -136,9 +136,7 @@
 	       (if (char=? (string-ref b 0) #\*)
 		   (string<? a b)                ; both start with *
 		   (string<? (substring a 1) b))
-	       (if (char=? (string-ref b 0) #\*)
-		   (string<? a (substring b 1))
-		   (string<? a b))))))           ; neither starts with *
+	       (string<? a (if (char=? (string-ref b 0) #\*) (substring b 1) b))))))
 
 
 (define (clean-and-downcase-first-char str caps topic file)
@@ -181,14 +179,14 @@
 		 (format () "<em...> but no </em> for ~A~%" str))))
 	 
 	 (let ((hpos (let ((start (string-position "<h" line)))
-		       (and start
+		       (and (integer? start)
 			    (or (string-position "<h2>" line start) 
 				(string-position "<h1>" line start) 
 				(string-position "<h3>" line start) 
 				(string-position "<h4>" line start))))))
 	   (when hpos
 	     (let ((hspos (let ((start (string-position "</h" line)))
-			    (and start
+			    (and (integer? start)
 				 (or (string-position "</h2>" line start) 
 				     (string-position "</h1>" line start) 
 				     (string-position "</h3>" line start) 
@@ -310,7 +308,7 @@
 	       (href (and href-start href-end (substring xref (+ href-start href-len) href-end))))
 	  (if href
 	      (if (char=? (href 1) #\#)
-		  (set! url-str (string-append url-str (string #\") file (substring href 1) (format #f ",~%  ")))
+		  (set! url-str (string-append url-str "\"" file (substring href 1) (format #f ",~%  ")))
 		  (set! url-str (string-append url-str href (format #f ",~%  "))))
 	      (set! url-str (string-append url-str (format #f "NULL,~%  "))))
 	  (set! loc (+ leof 1))
@@ -488,6 +486,7 @@
 (load "stuff.scm")
 (load "mockery.scm")
 ;(load "repl.scm")
+(load "profile.scm")
 
 (let ((names (make-hash-table)))
   
@@ -529,9 +528,7 @@
 	   (format *stderr* ";~S says it is in ~S which does not exist~%" symbol file))
        
        (let ((cur-names (hash-table-ref names file)))
-	 (if cur-names
-	     (hash-table-set! names file (cons symbol cur-names))
-	     (hash-table-set! names file (list symbol))))))
+	 (hash-table-set! names file (if cur-names (cons symbol cur-names) (list symbol))))))
    (list 
     (list '*libm* "libm.scm")
     (list '*libgdbm* "libgdbm.scm")
@@ -1142,11 +1139,10 @@
 		    (let ((name (tnames x)))
 		      (format ofil 
 			      "<td~A>~A~A~A</td>" 
-			      (if (not (ind-name name))
+			      (if (or (not (ind-name name))
+				      (ind-sortby name))
 				  ""
-				  (if (not (ind-sortby name))
-				      " class=\"green\""
-				      ""))
+				  " class=\"green\"")
 			      (if (ind-char name)
 				  "<div class=\"centered\">"
 				  "<em class=tab>")
@@ -1216,9 +1212,7 @@
 			     (set! ind (string-append (substring ind 0 gpos) 
 						      ">" 
 						      (substring ind (+ gpos 4)))))
-			 (when (and ind
-				    (string? ind)
-				    (positive? (length ind)))
+			 (when (positive? (length ind))
 			   (set! help-names (cons ind help-names))
 			   (set! help-urls (cons url help-urls))))))
 
@@ -1334,9 +1328,9 @@
 		     (case (string-ref line i)
 		       ((#\<)
 			(unless scripting
-			  (if (and (not (zero? openctr))
-				   (not (positive? p-quotes))
-				   (not in-comment))
+			  (if (not (or (zero? openctr)
+				       (positive? p-quotes)
+				       in-comment))
 			      (format () "~A[~D]: ~A has unclosed <?~%" file linectr line))
 			  (set! openctr (+ openctr 1))
 			  (if (and (< i (- len 3))
@@ -1369,9 +1363,9 @@
 				    (begin
 				      (format () "~A[~D]: extra -->?~%" file linectr)
 				      (set! comments 0))))
-			      (if (and (not (zero? openctr))
-				       (not (positive? p-quotes))
-				       (not in-comment))
+			      (if (not (or (zero? openctr)
+					   (positive? p-quotes)
+					   in-comment))
 				  (format () "~A[~D]: ~A has unmatched >?~%" file linectr line)))
 			  (set! openctr 0)
 			  (if (and (not in-comment)
@@ -1528,8 +1522,8 @@
 								  (set! commands (remove-one 'td commands))
 								  (format () "~A[~D]: unclosed td at table~%" file linectr))))
 							   ((tr)
-							    (if (and (not (eq? (car commands) 'table))
-								     (not (eq? (cadr commands) 'table)))
+							    (if (not (or (eq? (car commands) 'table)
+									 (eq? (cadr commands) 'table)))
 								(format () "~A[~D]: tr without table?~%" file linectr))
 							    (if (and (not warned)
 								     (memq 'tr commands)
@@ -1560,16 +1554,16 @@
 
 				 ((#\<)
 				  (if start
-				      (if (and (not scripting)
-					       (not (positive? p-quotes)))
+				      (if (not (or scripting
+						   (positive? p-quotes)))
 					  (format () "~A[~D]: nested < ~A~%" file linectr line))
 				      (set! start i)))
 				 ((#\/)
-				  (if (and start (= start (- i 1)))
+				  (if (and (integer? start) (= start (- i 1)))
 				      (set! closing #t)))
 				 
 				 ((#\!)
-				  (if (and start (= start (- i 1)))
+				  (if (and (integer? start) (= start (- i 1)))
 				      (set! start #f)))))))
 		       ) ; if not in-comment...
 		   

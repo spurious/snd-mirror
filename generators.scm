@@ -5549,10 +5549,12 @@ the rms of the values in a window over the last n inputs."))
 returns the length of the values in a window over the last few inputs."))
 
     (lambda (gen y)
+      (moving-rms gen y))))
+#|
       (let-set! gen 'y y)
       (with-let gen
 	(sqrt (max 0.0 (moving-average gen (* y y))))))))
-
+|#
 
 #|
 (let ((ml (make-moving-length 128))

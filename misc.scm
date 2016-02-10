@@ -58,33 +58,8 @@
 
 (add-mark-pane)
 
-(add-sound-file-extension "ogg")
-(add-sound-file-extension "OGG")
-(add-sound-file-extension "sf")
-(add-sound-file-extension "SF2")
-(add-sound-file-extension "mp3")
-(add-sound-file-extension "MP3")
-(add-sound-file-extension "W01")
-(add-sound-file-extension "W02")
-(add-sound-file-extension "W03")
-(add-sound-file-extension "W04")
-(add-sound-file-extension "W05")
-(add-sound-file-extension "W06")
-(add-sound-file-extension "W07")
-(add-sound-file-extension "W08")
-(add-sound-file-extension "W09")
-(add-sound-file-extension "W10")
-(add-sound-file-extension "w01")
-(add-sound-file-extension "w02")
-(add-sound-file-extension "w03")
-(add-sound-file-extension "w04")
-(add-sound-file-extension "w05")
-(add-sound-file-extension "w06")
-(add-sound-file-extension "w07")
-(add-sound-file-extension "w08")
-(add-sound-file-extension "w09")
-(add-sound-file-extension "w10")
-
+(for-each add-sound-file-extension '("ogg" "OGG" "sf" "SF2" "mp3" "MP3" "W01" "W02" "W03" "W04" "W05" "W06" "W07" 
+				     "W08" "W09" "W10" "w01" "w02" "w03" "w04" "w05" "w06" "w07" "w08" "w09" "w10"))
 
 ;;;
 ;;; disable original Play radio button
@@ -163,10 +138,7 @@
 					;; (delete-file current-name) perhaps?
 					(open-sound new-name)
 					(XtUnmanageChild w))))))
-	      (XmStringFree xhelp)
-	      (XmStringFree xok)
-	      (XmStringFree xdismiss)
-	      (XmStringFree titlestr)
+	      (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
 	      (set! rename-dialog new-dialog)
 	      (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
 				     (list XmNleftAttachment      XmATTACH_FORM

@@ -607,10 +607,7 @@
 				(* gen1trp-1 (+ (* gen4trp-1 (oscil gen1 gen2trp))
 						(* gen4trp (oscil gen3 (+ gen3trp
 									  (polywave gen6))))))))))))
-	    (mus-reset pulsef1)
-	    (mus-reset pulsef2)
-	    (mus-reset gen1)
-	    (mus-reset gen2)
+	    (for-each mus-reset (vector pulsef1 pulsef2 gen1 gen2))
 	    (set! (mus-location pulf) (- (+ i pulse-sep) start))
 	    (set! pulse-sep (seconds->samples (env pulf)))))))))
 
@@ -828,10 +825,7 @@
 			    (* (env indf-1) (oscil gen3 (* 24.0 ind)))
 			    (* .1 (oscil gen5 (* 14.0 ind)))
 			    (* .1 (oscil gen6 (* 6.0 ind))))))))
-	  (mus-reset frqf)
-	  (mus-reset pulsef)
-	  (mus-reset indf-1)
-	  (mus-reset indf))))))
+	  (for-each mus-reset (vector frqf pulsef indf-1 indf)))))))
 
 ;;; (with-sound (:play #t) (squirrel-tree-frog 0 1.0 .5))
 
@@ -4512,11 +4506,7 @@
 				 (polywave gen2 (* pulse-frq (+ noise (env frqf2))))))))))
 	    (set! pulse-frq (frqs pulse-ctr))
 	    (set! pulse-ctr (+ pulse-ctr 1))
-	    (mus-reset pulse-ampf)
-	    (mus-reset ampf1)
-	    (mus-reset ampf2)
-	    (mus-reset frqf1)
-	    (mus-reset frqf2)))))))
+	    (for-each mus-reset (vector pulse-ampf ampf1 ampf2 frqf1 frqf2))))))))
 
 ;; (with-sound (:play #t) (loggerhead-shrike-2 0 .5))
 
@@ -6825,10 +6815,7 @@
 					      (env frqf))))
 			 (* (env pulse-ampf2)
 			    (polywave gen2 (env pulse-frqf2))))))
-	    (mus-reset pulse-ampf)
-	    (mus-reset pulse-frqf)
-	    (mus-reset pulse-ampf2)
-	    (mus-reset pulse-frqf2)))))))
+	    (for-each mus-reset (vector pulse-ampf pulse-frqf pulse-ampf2 pulse-frqf2))))))))
 
 ;; (with-sound (:play #t) (bushtit 0 .5))
 

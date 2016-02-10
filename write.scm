@@ -390,7 +390,7 @@
 					(write-char #\( port)
 					(pretty-print-1 (car obj) port column)
 					(spaces (+ column 1))
-					(display (cadr obj) port)
+					(stacked-list (cdr obj) (+ column 1)) ; the args?
 					(write-char #\) port))
 				      (let* ((carstr (object->string (car obj)))
 					     (carstrlen (length carstr)))

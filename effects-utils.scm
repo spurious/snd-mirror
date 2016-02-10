@@ -109,11 +109,7 @@
 							       XmNforeground (BlackPixelOfScreen (current-screen))
 							       XmNarmColor   *selection-color*))))
 		(XtAddCallback reset-button XmNactivateCallback reset-callback)))
-	  
-	  (XmStringFree xhelp)
-	  (XmStringFree xok)
-	  (XmStringFree xdismiss)
-	  (XmStringFree titlestr)
+	  (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
 	  
 	  (if target-ok-callback
 	      (begin

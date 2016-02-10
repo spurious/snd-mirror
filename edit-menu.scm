@@ -159,14 +159,11 @@
 			 (for-each-child 
 			  edit-menu
 			  (lambda (child)
-			    (cond ((or (string=? (XtName child) "Selection->new")
-				       (string=? (XtName child) "Cut selection->new")
-				       (string=? (XtName child) "Append selection"))
+			    (cond ((member (XtName child) '("Selection->new" "Cut selection->new" "Append selection") string=?)
 				   (XtSetSensitive child (selection?)))
 				  ((string=? (XtName child) "Crop")
 				   (XtSetSensitive child (and (selected-sound)
 							      (> (length (marks (selected-sound) (selected-channel))) 1))))
-				  ((or (string=? (XtName child) "Trim front")
-				       (string=? (XtName child) "Trim back"))
+				  ((member (XtName child) '("Trim front" "Trim back") string=?)
 				   (XtSetSensitive child (and (selected-sound)
 							      (>= (length (marks (selected-sound) (selected-channel))) 1))))))))))))

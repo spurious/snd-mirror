@@ -72,16 +72,15 @@
       int)))
 
 (define (write-bint32 int)
-  (write-byte (logand (ash int -24) #xff))
-  (write-byte (logand (ash int -16) #xff))
-  (write-byte (logand (ash int -8) #xff))
-  (write-byte (logand int #xff)))
-
+  (for-each write-byte (vector (logand (ash int -24) 255) 
+			       (logand (ash int -16) 255) 
+			       (logand (ash int -8) 255) 
+			       (logand int 255))))
 (define (write-lint32 int)
-  (write-byte (logand int #xff))
-  (write-byte (logand (ash int -8) #xff))
-  (write-byte (logand (ash int -16) #xff))
-  (write-byte (logand (ash int -24) #xff)))
+  (for-each write-byte (vector (logand int 255) 
+			       (logand (ash int -8) 255) 
+			       (logand (ash int -16) 255) 
+			       (logand (ash int -24) 255))))
 
 
 ;;; -------- 64-bit ints
@@ -257,11 +256,7 @@
 	     (data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
 	     (curloc 24))
 	(write-chars ".snd")
-	(write-bint32 data-location)
-	(write-bint32 data-size)
-	(write-bint32 sample-type)
-	(write-bint32 srate)
-	(write-bint32 chns)
+	(for-each write-bint32 (vector data-location data-size sample-type srate chns))
 	(if (> comlen 0)
 	    (begin
 	      (io-write-string comment)
