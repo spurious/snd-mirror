@@ -631,7 +631,7 @@
 		 (let ((f (symbol->value fnc *e*)))
 		   (and (procedure? f)
 			(arity f)))))))
-    
+
     (define (dummy-func name form f)
       (catch #t 
 	(lambda ()
@@ -3148,6 +3148,13 @@
       ;; define-class and define-record-type for the function names
       ;; other-idents needs to take require into account
       ;; what about (let () (define...))? or define*/lambda*
+      ;; or|and nots with reversible ops -- if more than (2?) nots, reverse and rewrite?
+      ;; perhaps keep syntax junk as var with definer 'syntax so we don't make any assumptions about it
+      ;; why aren't definer and ftype the same field? -- using ftype to see that var is a function apparently
+      ;;  if (define f (lambda*...)) -- ftype is define?
+      ;; pprint needs to handle lists much better
+      ;; repetition->for-each can be by twos also -- does this happen? yes, apparently a lot
+      ;;   would map be a subset of these that calls set!+cons?
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name?
@@ -3162,13 +3169,15 @@
       ;;   count above=var num in bindings -> args in func
       ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
       ;;   the match would happen in report-usage?
-      ;; for possible,  hash on car, keep tree-len + pointers to matches
+      ;; for possible, hash on car, keep tree-len + pointers to matches
       ;; here can we assume car is not a par and check it before tree count or anything?
-      ;;
-      ;; also in structure-equal, local lets need not match names if no shadowing: yow...would need complete map, not just arg map
-      ;;   perhaps keep syntax junk as var with definer 'syntax so we don't make any assumptions about it
-      ;; why aren't definer and ftype the same field? -- using ftype to see that var is a function apparently
-      ;;  if (define f (lambda*...)) -- ftype is define?
+      ;; could also hash the built-ins in this way:
+      ;;   use code-equal? to catch built-in procedure-source possibilities, maybe use rather than explicit matching (as in fill! etc)
+      ;;   also code-equal? needs named-let* support
+      ;;   should code-equal? try to match internal defines? (symbol as well as func)
+      ;;   what about simple syntactic equalities: (if a b c) <-> (cond (a b) (else c)), (if a (begin ...)) <-> (when a ...)
+      ;;   or not so simple: named-let <-> define/1
+      ;;   also things like call/exit (any lambda) name their args
       ;;
       ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
@@ -3184,7 +3193,7 @@
       ;; on setters, types of values can be compared, then used with readers
       ;;
       ;; 310/52 (no func), 1159/151
-      ;;     53            1267/164
+      ;;     53            1267/167
 
       (case head
 
@@ -5450,7 +5459,7 @@
 			   (null? (cdddr binding))))))
 	  
 	    ((not (pair? binding)) 	   (lint-format "~A binding is not a list? ~S" name head binding) #f)
-	    ((not (symbol? (car binding)))   (lint-format "~A variable is not a symbol? ~S" name head binding) #f)
+	    ((not (symbol? (car binding))) (lint-format "~A variable is not a symbol? ~S" name head binding) #f)
 	    ((keyword? (car binding))	   (lint-format "~A variable is a keyword? ~S" name head binding) #f)
 	    ((constant? (car binding))	   (lint-format "can't bind a constant: ~S" name binding) #f)
 	    ((not (pair? (cdr binding)))
@@ -5713,10 +5722,93 @@
        vars))
     
     
+    (define (match-vars r1 r2 mat)
+      (and (pair? r1)
+	   (pair? r2)
+	   (pair? (cdr r1))
+	   (pair? (cdr r2))
+	   (structures-equal? (cadr r1) (cadr r2) mat)
+	   (cons (car r1) (car r2))))
+	
+    (define (code-equal? l1 l2 matches)
+      (and (pair? l1)
+	   (pair? l2)
+	   (memq (car l1) '(let let* letrec letrec* do))
+	   (let ((f1 (car l1))
+		 (f2 (car l2)))
+	     (and (eq? f1 f2)
+		  (let ((rest1 (cdr l1))
+			(rest2 (cdr l2)))
+		    (and (pair? rest1)
+			 (pair? rest2)
+			 (call-with-exit
+			  (lambda (return)
+			    (case f1
+			      ((let)
+			       (let ((name ()))
+				 (if (symbol? (car rest1))                      ; named let -- match funcs too
+				     (if (symbol? (car rest2))
+					 (begin
+					   (set! name (list (cons (car rest1) (car rest2))))
+					   (set! rest1 (cdr rest1))
+					   (set! rest2 (cdr rest2)))
+					 (return #f))
+				     (if (symbol? (car rest2))
+					 (return #f)))
+				 (structures-equal? (cdr rest1) (cdr rest2)     ; refs in values are to outer matches
+						    (append (map (lambda (var1 var2)
+								   (or (match-vars var1 var2 matches)
+								       (return #f)))
+								 (car rest1)
+								 (car rest2))
+							    name                  ; append will splice out nil
+							    matches))))
+			      ((let*)                                           ; refs move with the vars TODO: named let*
+			       (let ((new-matches matches))
+				 (for-each (lambda (var1 var2)
+					     (cond ((match-vars var1 var2 new-matches) =>
+						    (lambda (v)
+						      (set! new-matches (cons v new-matches))))
+						   (else (return #f))))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches)))
+			      
+			      ((do)                                             ; matches at init are outer, but at step are inner
+			       (let ((new-matches matches))
+				 (for-each (lambda (var1 var2)
+					     (cond ((match-vars var1 var2 matches) =>
+						    (lambda (v)
+						      (set! new-matches (cons v new-matches))))
+						   (else (return #f))))
+					   (car rest1)
+					   (car rest2))
+				 (for-each (lambda (var1 var2)
+					     (unless (structures-equal? (cddr var1) (cddr var2) new-matches)
+					       (return #f)))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches)))
+			      
+			      ((letrec letrec*)                                ; ??? refs are local I think
+			       (let ((new-matches (append (map (lambda (var1 var2)
+								 (cons (car var1) (car var2)))
+							       (car rest1)
+							       (car rest2))
+							  matches)))
+				 (for-each (lambda (var1 var2)
+					     (unless (structures-equal? (cadr var1) (cadr var2) new-matches)
+					       (return #f)))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches)))
+			      (else #f)))))))))) ; can't happen I hope
+
     (define (structures-equal? l1 l2 matches)
       (if (pair? l1)
 	  (and (pair? l2)
-	       (structures-equal? (car l1) (car l2) matches)
+	       (or (code-equal? (car l1) (car l2) matches) ; need this first to make sure matches are correct (if shadowing)
+		   (structures-equal? (car l1) (car l2) matches))
 	       (structures-equal? (cdr l1) (cdr l2) matches))
 	  (let ((match (assq l1 matches)))
 	    (if match
@@ -5724,12 +5816,11 @@
 			 (set-cdr! match l2))
 		    (equal? (cdr match) l2))
 		(equal? l1 l2)))))
-    
+
     (define func-min-cutoff 6)
     (define func-max-cutoff 120)
 
     (define (function-match name form env)
-
       (if (>= (tree-length-to form func-min-cutoff) func-min-cutoff)
 	  (let* ((leaves (tree-length-to form (+ func-max-cutoff 8)))
 		 (cutoff (max func-min-cutoff (- leaves 12))))
@@ -5795,12 +5886,28 @@
 		(prev-len 0)
 		(f-len 0)
 		(repeats 0)
+		(start-repeats body)
+		(repeat-arg 0)
 		(block-fs #f)
 		(dpy-f #f)
 		(dpy-start #f)
 		(len (length body)))
 	    (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
-
+#|
+	    ;; look for 2-way repeats
+	    (if (and (pair? body)
+		     (pair? (cdr body))
+		     (pair? (cddr body)))
+		(let ((repeats 0))
+		  (for-each (lambda (p1 p2 p3)
+			      (if (and (pair? p1) (pair? p3) (pair? p2) (eq? (car p1) (car p3)) (not (eq? (car p1) (car p2))))
+				  (set! repeats (+ repeats 1))
+				  (begin
+				    (if (> repeats 3)
+					(format *stderr* "~A~%~A~%~A~%~%" (truncated-list->string p1) (truncated-list->string p2) (truncated-list->string body)))
+				    (set! repeats 0))))
+			    body (cdr body) (cddr body))))
+|#
 	    (when (and (pair? body)
 		       *report-function-stuff*
 		       (not (null? (cdr body))))
@@ -5810,20 +5917,89 @@
 		 (ctr 0 (+ ctr 1)))
 		((not (pair? fs)))
 	      (let ((f (car fs)))
-		(let ((feq (equal? f prev-f)))
+
+		;; --------
+		;; check for repeated calls, but only one arg currently can change (more args = confusing separation in code)
+		(let ((feq (and (pair? prev-f)
+				(pair? f)
+				(eq? (car f) (car  prev-f))
+				(or (equal? (cdr f) (cdr prev-f))
+				    (do ((fp (cdr f) (cdr fp))
+					 (pp (cdr prev-f) (cdr pp))
+					 (i 1 (+ i 1)))
+					((or (and (null? pp) 
+						  (null? fp))
+					     (not (pair? pp))
+					     (not (pair? fp))
+					     (if (= i repeat-arg)                   ; ignore the arg that's known to be changing
+						 (side-effect? (car pp) env)
+						 (and (not (equal? (car pp) (car fp)))
+						      (or (positive? repeat-arg)
+							  (and (set! repeat-arg i)  ; call this one the changer
+							       #f)))))
+					 (and (null? pp)
+					      (null? fp))))))))
 		  (if feq
 		      (set! repeats (+ repeats 1)))
 		  (when (or (not feq)
 			    (= ctr (- len 1))) ; this assumes we're not returning the last value?
-		    (if (> repeats 2)
-			(let ((step 'i))
-			  (if (tree-member step prev-f)
-			      (set! step (find-unique-name prev-f #f)))
-			  (lint-format "perhaps ~A... ->~%    (do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
-				       (truncated-list->string prev-f)
-				       step step step (+ repeats 1)
-				       prev-f)))
-		    (set! repeats 0)))
+		    (when (and (> repeats 2)
+			       (not (hash-table-ref syntaces (car prev-f)))) ; macros should be ok here if args are constants
+		      (let ((fs-end (if (not feq) fs (cdr fs))))
+
+			(if (zero? repeat-arg)		    ; simple case -- all exprs are identical
+			    (let ((step 'i))
+			      (if (tree-member step prev-f)
+				  (set! step (find-unique-name prev-f #f)))
+			      (lint-format "perhaps ~A... ->~%    (do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
+					   (truncated-list->string prev-f)
+					   step step step (+ repeats 1)
+					   prev-f))
+
+			    (let ((args ())
+				  (constants? #t)
+				  (func-name (car prev-f))
+				  (new-arg (if (tree-member 'arg prev-f)
+					       (find-unique-name prev-f #f)
+					       'arg)))
+			      (do ((p start-repeats (cdr p)))
+				  ((eq? p fs-end))
+				(set! args (cons (list-ref (car p) repeat-arg) args))
+				(set! constants? (and constants? (code-constant? (car args)))))
+			      
+			      (let ((func (if (and (= repeat-arg 1)
+						   (null? (cddar start-repeats)))
+					      func-name
+					      `(lambda (,new-arg)
+						 ,(let ((call (copy prev-f)))
+						    (list-set! call repeat-arg new-arg)
+						    call)))))
+				(if constants?
+				    (lint-format "perhaps ~A... ->~%    (for-each ~S '(~{~S~^ ~}))" name
+						 (truncated-list->string (car start-repeats))
+						 func
+						 (map unquoted (reverse args)))
+				    (let ((v (or (var-member func-name env)
+						 (hash-table-ref globals func-name))))
+				      (if (or (and (var? v)
+						   (memq (var-ftype v) '(define define* lambda lambda*)))
+					      (procedure? (symbol->value func-name *e*)))
+					  (lint-format "perhaps ~A... ->~%    (for-each ~S (vector ~{~S~^ ~}))" name 
+						       ;; vector rather than list because it is easier on the GC (list copies in s7)
+						       (truncated-list->string (car start-repeats))
+						       func
+						       (reverse args))
+					  (if (and (not (var? v))
+						   (not (macro? (symbol->value func-name *e*))))
+					      (lint-format "assuming ~A is not a macro, perhaps ~A... ->~%    (for-each ~S (vector ~{~S~^ ~}))" name 
+							   func-name
+							   (truncated-list->string (car start-repeats))
+							   func
+							   (reverse args)))))))))))
+		    (set! repeats 0)
+		    (set! repeat-arg 0)
+		    (set! start-repeats fs)))
+		;; --------
 
 		(if (pair? f)
 		    (begin
@@ -5896,7 +6072,7 @@
 		    (begin
 		      (when (pair? f)
 			(if (eq? (car f) 'map)
-			    (lint-format "map could be for-each: ~A" name (truncated-list->string f))
+			    (lint-format "map could be for-each: ~A" name (truncated-list->string `(for-each ,@(cdr f))))
 			    (if (eq? (car f) 'reverse!)
 				(lint-format "~A might leave ~A in an undefined state; perhaps ~A" name (car f) (cadr f)
 					     `(set! ,(cadr f) ,f)))))

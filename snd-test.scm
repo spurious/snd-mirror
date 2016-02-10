@@ -3676,14 +3676,7 @@
     (with-output-to-file "test.snd"
       (lambda ()
 	(display ".snd")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o034) ; location
-	(write-byte #o000) (write-byte #o001) (write-byte #o215) (write-byte #o030) ; nominal size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o022) ; format
-	(write-byte #o000) (write-byte #o000) (write-byte #o126) (write-byte #o042) ; srate
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o001) ; chans
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; comment
-	(write-byte #o000) (write-byte #o001) ; samp 1
-	))
+	(for-each write-byte '(0 0 0 28 0 1 141 24 0 0 0 18 0 0 86 34 0 0 0 1 0 0 0 0 0 1))))
     (if (not (= (mus-sound-sample-type "test.snd") mus-bshort))
 	(snd-display #__line__ ";next 18: ~A" (mus-sound-sample-type "test.snd")))
     (delete-file "test.snd")
@@ -3691,14 +3684,7 @@
     (with-output-to-file "test.snd"
       (lambda ()
 	(display ".snd")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; location
-	(write-byte #o000) (write-byte #o001) (write-byte #o215) (write-byte #o030) ; nominal size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o022) ; format
-	(write-byte #o000) (write-byte #o000) (write-byte #o126) (write-byte #o042) ; srate
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o001) ; chans
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; comment
-	(write-byte #o000) (write-byte #o001) ; samp 1
-	))
+	(for-each write-byte '(0 0 0 4 0 1 141 24 0 0 0 18 0 0 86 34 0 0 0 1 0 0 0 0 0 1))))
     (let ((tag (catch #t
 		      (lambda ()
 			(open-sound "test.snd"))
@@ -3716,32 +3702,22 @@
 		(with-output-to-file "test.aif"
 		  (lambda ()
 		    (display "FORM")
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o146) ; len
+		    (for-each write-byte '(0 0 0 102))
 		    (display "AIFCFVER")
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; version chunk size
-		    (write-byte #o242) (write-byte #o200) (write-byte #o121) (write-byte #o100) ; version  
+		    (for-each write-byte '(0 0 0 4 162 128 81 64))
 		    (display "COMM")
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-		    (write-byte #o000) (write-byte #o001) ; 1 chan
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte len) ; framples
-		    (write-byte #o000) (write-byte bits) ; bits
-		    (write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ;
+		    (for-each write-byte (list 0 0 0 38 0 1 0 0 0 len 0 bits 64 14 172 68 0 0 0 0 0 0))
 		    ;; srate as 80-bit float (sheesh)
 		    (display "NONE") ; compression
 		    (write-byte #o016) ; pascal string len
 		    (display "not compressed")
 		    (write-byte #o000)
 		    (display "AUTH")
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte auth-lo) ; AUTH chunk size
+		    (for-each write-byte (list 0 0 0 auth-lo))
 		    (display "bil")
 		    (write-byte #o000)
 		    (display "SSND")
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-		    (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-		    (write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
-		    )))))
+		    (for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64)))))))
       (if (file-exists? "test.aif") (delete-file "test.aif"))
       (mus-sound-forget "test.aif")
       ;;correct (make-aifc-file #o002 #o004 #o020)
@@ -3796,39 +3772,29 @@
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o176) ; len
+	(for-each write-byte '(0 0 0 126))
 	(display "AIFCFVER")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; version chunk size
-	(write-byte #o242) (write-byte #o200) (write-byte #o121) (write-byte #o100) ; version  
+	(for-each write-byte '(0 0 0 4 162 128 81 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o002) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 0 2 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "AUTH")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "bil")
 	(write-byte #o000)
 	(display "ANNO")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "cat")
 	(write-byte #o000)
 	(display "NAME")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "dog")
 	(write-byte #o000)
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
-	))
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))))
     (catch #t
 	   (lambda ()
 	     (if (not (= (length (mus-sound-comment "test.aif")) 15))
@@ -3839,31 +3805,20 @@
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o142) ; len
+	(for-each write-byte '(0 0 0 98))
 	(display "AIFC")
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o002) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 0 2 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "COMT")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) 
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0))
 	(display "bil")
-	(write-byte #o000)
-	))
+	(write-byte #o000)))
 
     (catch #t
 	   (lambda ()
@@ -3887,31 +3842,20 @@
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o142) ; len
+	(for-each write-byte '(0 0 0 98))
 	(display "AIFC")
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o100) (write-byte #o102) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 64 66 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "COMT")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) 
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0))
 	(display "bil")
-	(write-byte #o000)
-	))
+	(write-byte #o000)))
     (if (not (and (string? (mus-sound-comment "test.aif"))
 		  (string=? (substring (mus-sound-comment "test.aif") 0 3) "bil")))
 	(snd-display #__line__ ";aifc trailing comt comment: ~A?" (mus-sound-comment "test.aif")))
@@ -3932,30 +3876,18 @@
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o142) ; len
+	(for-each write-byte '(0 0 0 98))
 	(display "AIFC")
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o100) (write-byte #o102) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 64 66 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
-	))
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))))
 
     (let ((tag (catch #t
 		      (lambda ()
@@ -3972,14 +3904,10 @@
     (with-output-to-file "test.aif"
       (lambda ()
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o040) ; len
+	(for-each write-byte '(0 0 0 32))
 	(display "AIFC")
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o000) (write-byte #o101) (write-byte #o000) (write-byte #o100) ; two samples
-	))
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 0 65 0 64))))
     (let ((tag (catch #t
 		      (lambda ()
 			(open-sound "test.aif"))
@@ -3997,39 +3925,29 @@
       (lambda ()
 					;write AIFC with trailing chunks to try to confuse file->sample
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o176) ; len
+	(for-each write-byte '(0 0 0 126))
 	(display "AIFCFVER")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; version chunk size
-	(write-byte #o242) (write-byte #o200) (write-byte #o121) (write-byte #o100) ; version  
+	(for-each write-byte '(0 0 0 4 162 128 81 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o002) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 0 2 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o170) (write-byte #o101) (write-byte #o100) (write-byte #o100) ; two samples
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 120 65 64 64))
 	(display "AUTH")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "bil")
 	(write-byte #o000)
 	(display "ANNO")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "cat")
 	(write-byte #o000)
 	(display "NAME")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; AUTH chunk size
+	(for-each write-byte '(0 0 0 4))
 	(display "dog")
-	(write-byte #o000)
-	))
+	(write-byte #o000)))
     (catch #t
 	   (lambda ()
 	     (let ((gen (make-file->sample "test.aif")))
@@ -4056,31 +3974,21 @@
       (lambda ()
 					;write AIFC with trailing chunks to try to confuse file->sample
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o176) ; len
+	(for-each write-byte '(0 0 0 126))
 	(display "AIFCFVER")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; version chunk size
-	(write-byte #o242) (write-byte #o200) (write-byte #o121) (write-byte #o100) ; version  
+	(for-each write-byte '(0 0 0 4 162 128 81 64))
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o170) (write-byte #o101) (write-byte #o100) (write-byte #o100) ; two samples
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 120 65 64 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o001) ; 1 chan
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o002) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 1 0 0 0 2 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "APPL")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte (char->integer #\h))
+	(for-each write-byte (list 0 0 0 (char->integer #\h)))
 	(display "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")
-	(write-byte #o000)
-	))
+	(write-byte #o000)))
     (catch #t
 	   (lambda ()
 	     (let ((gen (make-file->sample "test.aif")))
@@ -4106,31 +4014,21 @@
       (lambda ()
 					;write AIFC with trailing chunks to try to confuse file->sample
 	(display "FORM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o176) ; len
+	(for-each write-byte '(0 0 0 126))
 	(display "AIFCFVER")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o004) ; version chunk size
-	(write-byte #o242) (write-byte #o200) (write-byte #o121) (write-byte #o100) ; version  
+	(for-each write-byte '(0 0 0 4 162 128 81 64))
 	(display "SSND")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o014) ; SSND chunk size
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; SSND data loc
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; block size?
-	(write-byte #o170) (write-byte #o101) (write-byte #o100) (write-byte #o100) ; two samples (one frame)
+	(for-each write-byte '(0 0 0 12 0 0 0 0 0 0 0 0 120 65 64 64))
 	(display "COMM")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o046) ; COMM chunk size
-	(write-byte #o000) (write-byte #o002) ; 2 chans
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o001) ; framples
-	(write-byte #o000) (write-byte #o020) ; bits
-	(write-byte #o100) (write-byte #o016) (write-byte #o254) (write-byte #o104) (write-byte #o000) 
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte #o000) ; srate as 80-bit float (sheesh)
+	(for-each write-byte '(0 0 0 38 0 2 0 0 0 1 0 16 64 14 172 68 0 0 0 0 0 0))
 	(display "NONE") ; compression
 	(write-byte #o016) ; pascal string len
 	(display "not compressed")
 	(write-byte #o000)
 	(display "APPL")
-	(write-byte #o000) (write-byte #o000) (write-byte #o000) (write-byte (char->integer #\h))
+	(for-each write-byte (list 0 0 0 (char->integer #\h)))
 	(display "CLM ;Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")
-	(write-byte #o000)
-	))
+	(write-byte #o000)))
     (catch #t
 	   (lambda ()
 	     (let ((gen (make-file->sample "test.aif")))
