@@ -4903,11 +4903,22 @@ int mus_audio_write(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
+/* from Mike Scholz, 11-Feb-16 (edited):
+ *   On Netbsd sound output with Snd and Sndplay stops before the sound is really at the end.  
+ *   [In audioplay] after the read-write loop they call ioctl(fd, AUDIO_DRAIN, NULL).  
+ *   Before closing sound output they call ioctl(fd, AUDIO_FLUSH, NULL) (like in audio.c),
+ *   and in addition ioctl(fd, AUDIO_SETINFO, &info).  The latter requires that 
+ *   audio_info_t a_info be a global variable.  The AUDIO_DRAIN call has been in their 
+ *   sources since version 1.1 of /usr/src/usr.bin/audio/play/play.c from March 1999.
+ */
+
+static audio_info_t a_info;
 
 int mus_audio_close(int line) 
 {
-  usleep(100000);
-  ioctl(line, AUDIO_FLUSH, 0);
+  ioctl(line, AUDIO_DRAIN, NULL);
+  ioctl(line, AUDIO_FLUSH, NULL);
+  ioctl(line, AUDIO_SETINFO, &a_info);
   close(line);
   return(MUS_NO_ERROR);
 }
@@ -4918,7 +4929,6 @@ static int netbsd_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SP
 int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type, int size) 
 {
   int line, encode;
-  audio_info_t a_info;
 
   line = open("/dev/sound", O_WRONLY); /* /dev/audio assumes mono 8-bit mulaw */
   if (line == -1)

@@ -64,7 +64,7 @@
 				(save-sound-as save-name snd)
 				(clear-unsaved-edits snd))))
 			(sounds))
-	      (in (* 1000 auto-save-interval) auto-save-func))))
+	      (in (floor (* 1000 auto-save-interval)) auto-save-func))))
       
       (if (not (member auto-save-done (hook-functions close-hook)))
 	  (begin
