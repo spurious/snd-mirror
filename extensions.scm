@@ -112,13 +112,11 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   (let ((documentation "(match-sound-files func dir) applies func to each sound file in dir and returns a list of files for which func does not return #f"))
     (lambda* (func dir)
       (let ((matches ()))
-	(for-each
-	 (lambda (file)
-	   (if (func file)
-	       (set! matches (cons file matches))))
-	 (sound-files-in-directory (or dir ".")))
+	(for-each-sound-file (lambda (file) 
+			       (if (func file) 
+				   (set! matches (cons file matches)))) 
+			     dir)
 	matches))))
-
 
 
 ;;; -------- mix-channel, insert-channel, c-channel

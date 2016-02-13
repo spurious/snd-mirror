@@ -401,33 +401,29 @@
 					    (begin
 					      (spaces (+ column *pretty-print-spacing*))
 					      (stacked-list (cdr obj) (+ column *pretty-print-spacing*)))
-					    (let ((line-len (ceiling (/ (- strlen carstrlen) 40)))
-						  (line-start (+ column *pretty-print-spacing* carstrlen)))
+					    (let ((line-start (+ column *pretty-print-spacing* carstrlen)))
 					      (if (= lstlen 2)
 						  (begin
 						    (write-char #\space port)
 						    (pretty-print-1 (cadr obj) port line-start))
-						  (if (< lstlen 5)
+						  (if (< lstlen 5) ; TODO: why this?
 						      (begin
 							(write-char #\space port)
 							(stacked-list (cdr obj) line-start))
-						      (let ((lst (cdr obj)))
-							(do ((i 1 (+ i line-len)))
-							    ((>= i lstlen))
-							  (do ((k 0 (+ k 1)))
-							      ((or (null? lst)
-								   (= k line-len)))
-							    (let ((str (format #f "~S" (car lst))))
-							      (if (> (length str) (- *pretty-print-length* line-start))
-								  (begin
-								    (if (not (zero? k)) (spaces line-start) (if (= i 1) (write-char #\space port)))
-								    (pretty-print-1 (car lst) port line-start))
-								  (begin
-								    (if (or (not (zero? k)) (= i 1)) (write-char #\space port))
-								    (display str port))))
-							    (set! lst (cdr lst)))
-							  (if (pair? lst)
-							      (spaces line-start))))))))
+						      (let ((obj-start line-start))
+							(do ((lst (cdr obj) (cdr lst)))
+							    ((null? lst))
+							  (let* ((str (format #f "~S" (car lst)))
+								 (strlen1 (length str)))
+							    (if (> strlen1 (- *pretty-print-length* obj-start))
+								(begin
+								  (set! obj-start (+ line-start 1 strlen1))
+								  (spaces line-start)
+								  (pretty-print-1 (car lst) port line-start))
+								(begin
+								  (set! obj-start (+ obj-start 1 strlen1))
+								  (write-char #\space port)
+								  (display str port))))))))))
 					(if (not (eq? (car obj) 'quote))
 					    (write-char #\) port))))))))))))
 	      (else

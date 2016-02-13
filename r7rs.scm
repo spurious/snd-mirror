@@ -19,15 +19,8 @@
     (copy s (make-vector (- stop start)) start stop)))
 
 (define list-copy copy)
-
-(define* (vector-copy v (start 0) end)
-  (let ((stop (or end (length v)))) 
-    (copy v (make-vector (- stop start)) start stop)))
-
-(define* (r7rs-string-copy s (start 0) end) 
-  (let ((stop (or end (length s)))) 
-    (copy s (make-string (- stop start)) start stop)))
-
+(define vector-copy string->vector)
+(define r7rs-string-copy vector->string) ; the latter doesn't know its not a vector
 (define r7rs-vector-fill! fill!) ; or do these return the sequence, not the filler?
 (define r7rs-string-fill! fill!)
 
@@ -133,7 +126,7 @@
 (define u8-ready? char-ready?) 
 (define peek-u8 peek-char)
 (define* (utf8->string v (start 0) end) (substring v start (or end (length v))))
-(define* (string->utf8 s (start 0) end) (->byte-vector (substring s start (or end (length s)))))
+(define* (string->utf8 s (start 0) end) (->byte-vector (utf8->string s start end)))
 (define write-simple write)
 
 (define (eof-object) #<eof>)

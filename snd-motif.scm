@@ -2118,11 +2118,7 @@
 					;(system (format #f "mv ~A ~A" new-name current-name)) ; surely it should be (delete-file current-name)?
 							(open-sound new-name)
 							(XtUnmanageChild w))))))
-			       
-			       (XmStringFree xhelp)
-			       (XmStringFree xok)
-			       (XmStringFree xdismiss)
-			       (XmStringFree titlestr)
+			       (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
 			       (set! rename-dialog new-dialog)
 			       
 			       (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog

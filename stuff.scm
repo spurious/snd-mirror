@@ -1647,8 +1647,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 ;;; ----------------
 
-(if (and (not (defined? 'apropos))
-	 (not (provided? 'snd)))
+(if (not (or (defined? 'apropos)
+	     (provided? 'snd)))
     (define* (apropos name (port *stdout*) (e (rootlet)))
       (let ((ap-name (if (string? name) 
 			 name 

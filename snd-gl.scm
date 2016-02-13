@@ -161,14 +161,10 @@
 	    (glGetFloatv i AMBIENT)
 	    (glGetFloatv i DIFFUSE)
 	    (glGetFloatv i SPECULAR)
-	    (glGetLightfv i POSITION)
-	    (glGetLightfv i CONSTANT_ATTENUATION)
-	    (glGetLightfv i LINEAR_ATTENUATION)
-	    (glGetLightfv i QUADRATIC_ATTENUATION)
-	    (glGetLightfv i SPOT_DIRECTION)
-	    (glGetLightfv i SPOT_EXPONENT)
-	    (glGetLightfv i SPOT_CUTOFF)
-	    ))))
+	    (for-each 
+	     (lambda (arg) 
+	       (glGetLightfv i arg)) 
+	     (vector POSITION CONSTANT_ATTENUATION LINEAR_ATTENUATION QUADRATIC_ATTENUATION SPOT_DIRECTION SPOT_EXPONENT SPOT_CUTOFF))))))
 
   (format () "GL_POINT_SIZE: ~A~%" (glGetFloatv GL_POINT_SIZE))
   (format () "GL_POINT_SMOOTH: ~A~%" (glGetBooleanv GL_POINT_SMOOTH))
