@@ -19,11 +19,6 @@
     (begin
       (define (make-polar mag ang) (complex (* mag (cos ang)) (* mag (sin ang))))
 
-      (define (memq a b) (member a b eq?))
-      (define (memv a b) (member a b eqv?))
-      (define (assq a b) (assoc a b eq?))
-      (define (assv a b) (assoc a b eqv?))
-
       (define (char-ci=? . chars) (apply char=? (map char-upcase chars)))
       (define (char-ci<=? . chars) (apply char<=? (map char-upcase chars)))
       (define (char-ci>=? . chars) (apply char>=? (map char-upcase chars)))
@@ -810,6 +805,7 @@
 	     ((define* lambda lambda* case-lambda) 'procedure?)
 	     ((dilambda) 'dilambda?)
 	     ((define-macro define-macro* define-bacro define-bacro* defmacro defmacro* define-expansion) 'macro?)
+	     (([call/cc] [call/exit]) 'continuation?)
 	     (else #t))))
     
     (define (->type c)
@@ -1772,9 +1768,9 @@
 					(set! vals (cons (caddr p) vals)))))
 			     
 			     (define (upgrade-eqf)
-			       (if (memq eqf '(string=? string-ci=? = equal?))
-				   (set! eqf 'equal?)
-				   (set! eqf (if (memq eqf '(#f eq?)) 'eq? 'eqv?))))
+			       (set! eqf (if (memq eqf '(string=? string-ci=? = equal?))
+					     'equal?
+					     (if (memq eqf '(#f eq?)) 'eq? 'eqv?))))
 			     
 			     (if (every? (lambda (p)
 					   (and (pair? p)
@@ -1800,10 +1796,10 @@
 						
 						(case (car p) 
 						  ((string=? equal?)
-						   (if (or (not eqf)
-							   (eq? eqf (car p)))
-						       (set! eqf (car p)) 
-						       (set! eqf 'equal?))
+						   (set! eqf (if (or (not eqf)
+								     (eq? eqf (car p)))
+								 (car p)
+								 'equal?))
 						   (and (= (length p) 3)
 							(constant-arg p)))
 						  
@@ -3162,6 +3158,8 @@
       ;; pp (if...) as func par ->cr+indent if long?, and look-ahead for long pars and cr+indent all, also (lambda...)
       ;;   pp sketch mode would be useful, and truncate at right margin
       ;;   pp lstlen<5 oddities, and go down one if long func name (10205)
+      ;;     if list is short, don't stack, first in list either down+2 or not down at col+1
+      ;;     alists are indented stupidly
       ;; unquasiquote innards pretty-printed and check quotes, doubled ,@
       ;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
       ;; nvals to values as a range, checkable if called -- needed in check-args
@@ -3172,10 +3170,8 @@
       ;; can we catch missing paren error and keep its analysis? or read the code by hand and track nesting?
       ;;   the read-error catch could add parens until its happy, then backtrace
       ;; smarter signature decisions for local funcs (follow simple tail calls)
-      ;; port args from call/file->port type, call/exit goto etc
-      ;;   call/exit if all (any?) returns are at exits
-      ;; (cond ((op x c1) c2)...) -> (cond ((assoc x '((c1 . c2)...) op) => cdr)...)
-      ;;   cond with one branch -> if/when/unless??
+      ;; or->member using the 4th arg is independent of side-effects [like cond->assoc]
+      ;;   simpler than cond because it's just the "test" and no results
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name?
@@ -3193,7 +3189,8 @@
       ;; for possible, hash on car, keep tree-len + pointers to matches
       ;;   here can we assume car is not a par and check it before tree count or anything?
       ;;   what about simple syntactic equalities: (if a b c) <-> (cond (a b) (else c)), (if a (begin ...)) <-> (when a ...) (= a b) <-> (= b a)
-      ;; code-equal? -> s7?
+      ;; better built-in use: look for things like the do-loop->fill! cases and predigest
+      ;; test call/cc call/exit with arbitrary func: is arg got etc -- can both ways work with one func? can it(the arg func) return mv without values?
       ;;
       ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
@@ -3233,10 +3230,16 @@
 	 (when (= (length form) 4)
 	   (let ((func (list-ref form 3)))
 	     (if (symbol? func)
-		 (let ((sig (procedure-signature (symbol->value func))))
-		   (if (and sig
-			    (not (eq? (car sig) 'boolean?)))
-		       (lint-format "~A is a questionable ~A function" name func head)))
+		 (if (memq func '(eq? eqv? equal?))   ; (member x y eq?) -> (memq x y)
+		     (let ((op (if (eq? head 'member)
+				   (case func ((eq?) 'memq) ((eqv?) 'memv) (else 'member))
+				   (case func ((eq?) 'assq) ((eqv?) 'assv) (else 'assoc)))))
+		       (lint-format "perhaps ~A" name (lists->string form `(,op ,(cadr form) ,(caddr form)))))
+		     (let ((sig (procedure-signature (symbol->value func)))) ; arg-signature here is too cranky
+		       (if (and sig
+				(not (eq? (car sig) 'boolean?)))
+			   (lint-format "~A is a questionable ~A function" name func head))))
+		 ;; func not a symbol
 		 (if (and (pair? func)
 			  (= (length func) 3)
 			  (eq? (car func) 'lambda)
@@ -3262,7 +3265,7 @@
 						    (if (eq? (car (caddr func)) 'eqv?) 
 							'assv 
 							'assoc)))))))))))
-	 
+	   
 	 (when (= (length form) 3)
 	   (let ((selector (cadr form))
 		 (items (caddr form)))
@@ -3611,58 +3614,6 @@
 						     (if (null? (cdddr arg))
 							 `(,(cadr (assq head op)) ,(cadr arg) ,(caddr arg))
 							 `(,(cadr (assq head op)) ,(cadr arg) (+ ,@(cddr arg))))))))))))
-	
-	;; ----------------
-	((call-with-exit)
-	 (let ((return (and (pair? (cdr form))
-			    (pair? (cadr form))
-			    (eq? (caadr form) 'lambda)
-			    (pair? (cdadr form))
-			    (pair? (cadadr form))
-			    (car (cadadr form)))))
-	   (if (symbol? return)
-	       (let ((body (cddadr form)))
-		 (if (not (tree-member return body))
-		     (lint-format "exit-function ~A appears to be unused: ~A" name return (truncated-list->string form))
-		     (let ((last (and (proper-list? body)
-				      (list-ref body (- (length body) 1)))))
-		       (if (and (pair? last)
-				(eq? (car last) return))
-			   (lint-format "~A is redundant here: ~A" name return (truncated-list->string last)))))))))
-	
-	;; ----------------
-	((call/cc call-with-current-continuation)
-	 (let ((continuation (and (pair? (cdr form))
-				  (pair? (cadr form))
-				  (eq? (caadr form) 'lambda)
-				  (pair? (cdadr form))
-				  (pair? (cddadr form))
-				  (pair? (cadadr form))
-				  (car (cadadr form)))))
-	   (if (symbol? continuation)
-	       (let ((body (cddadr form)))
-		 (if (not (or (eq? continuation (car body))
-			      (tree-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
-		     (lint-format "perhaps ~A could be call-with-exit: ~A" name head (truncated-list->string form)))))))
-	
-	;; ----------------
-	((call-with-input-string call-with-input-file call-with-output-file call-with-output-string)
-	 ;; call-with-output-string func is the first arg, not second
-	 (let ((len (if (eq? head 'call-with-output-string) 2 3)))
-	   (when (= (length form) len)
-	     (let ((func (list-ref form (- len 1))))
-	       (when (and (pair? func)
-			  (eq? (car func) 'lambda))
-		 (let* ((args (cadr func))
-			(body (cddr func))
-			(port (and (pair? args) (car args))))
-		   (if (or (not port)
-			   (pair? (cdr args)))
-		       (lint-format "~A argument should be a function of one argument: ~A" name head func)
-		       (if (and (symbol? port)
-				(not (tree-member port body)))
-			   (lint-format "port ~A appears to be unused: ~A" name port (truncated-list->string form))))))))))
-	;; checking for port matches in the lambda body is very tricky and never gets hits
 	
 	;; ----------------
 	((/)
@@ -4112,15 +4063,15 @@
 		 (suggestion made-suggestion))
 	     (if (= len 2)
 		 (lint-format "perhaps ~A" name (lists->string form (list (cadr form))))
-		 (if (and (> len 2) ; it might be (apply)...
-			  (not (symbol? (cadr form)))
-			  (not (applicable? (cadr form))))
+		 (if (not (or (<= len 2) ; it might be (apply)...
+			      (symbol? (cadr form))
+			      (applicable? (cadr form))))
 		     (lint-format "~S is not applicable: ~A" name (cadr form) (truncated-list->string form))
 		     (let ((happy #f)
 			   (f (cadr form)))
-		       (when (and (> len 2)
-				  (not (any-macro? f env))
-				  (not (eq? f 'macroexpand))) ; handled specially (syntactic, not a macro)
+		       (when (not (or (<= len 2)
+				      (any-macro? f env)
+				      (eq? f 'macroexpand))) ; handled specially (syntactic, not a macro)
 			 
 			 (when (and (symbol? f)
 				    (not (var-member f env)))
@@ -5411,7 +5362,7 @@
 			      lst
 			      (cons (car e1) lst)))))
     
-    (define (report-usage name type head vars env)
+    (define (report-usage name type head vars env) ; type = caller's view, 'parameter etc
       ;; report unused or set-but-unreferenced variables, then look at the overall history
     
       (define (all-types-agree v)
@@ -5516,7 +5467,7 @@
 			      (all-types-agree arg)))
 		     (let ((type (->type (var-initial-value arg)))
 			   (lit? (code-constant? (var-initial-value arg))))
-		       
+
 		       (do ((clause (var-history arg) (cdr clause)))
 			   ((null? (cdr clause))) ; ignore the initial value which depends on a different env
 			 (let ((call (car clause)))
@@ -7458,7 +7409,7 @@
 							    (lint-format "=> target (~A) may be unhappy: ~A" name f clause)))
 						    (lint-walk name f env)))
 					      (lint-walk-body name head sequel env))
-					  (if (not (null? sequel))  ; (not (null?...)) here is correct -- we're looking for stray dots (lint is confused)
+					  (if (not (null? sequel))  ; (not (null?...)) here is correct -- we're looking for stray dots
 					      (lint-format "cond clause is messed up: ~A" name (truncated-list->string clause))))
 				      (if (not (side-effect? expr env))
 					  (set! falses (cons expr falses))
@@ -7545,34 +7496,116 @@
 						      `(begin ,@(cdr (caddr form))))))
 				 (lint-format "perhaps ~A" name (lists->string form `(or ,(caadr form) ,else-clause)))))
 
-			   (when (= suggest made-suggestion) 
-			     (when (= len 1)
-			       (let ((clause (cadr form)))
-				 (if (null? (cdr clause))
-				     (lint-format "perhaps ~A" name (lists->string form (car clause)))
-				     (if (not (eq? (cadr clause) '=>))
-					 (if (null? (cddr clause))
-					     (lint-format "perhaps ~A" name (lists->string form `(if ,(car clause) ,(cadr clause))))
-					     (if (and (pair? (car clause))
-						      (eq? (caar clause) 'not))
-						 (lint-format "perhaps ~A" name (lists->string form `(unless ,@(cdar clause) ,@(cdr clause))))
-						 (lint-format "perhaps ~A" name (lists->string form `(when ,(car clause) ,@(cdr clause))))))))))
+			   ;; --------
+			   (when (not (or has-combinations all-eqv)) ; (= suggest made-suggestion) 
+			     ;; look for repeated ((op x c1) c2) -> ((assoc x '((c1 . c2)...)) => cdr) anywhere in the clause list
+			     (let ((nc ())
+				   (op #f)
+				   (c #f)
+				   (start #f)
+				   (changed #f))
+			       
+			       (define (start-search clauses test)
+				 (if (code-constant? (cadr test))
+				     (if (memq (car test) '(= string=? string-ci=? eq? eqv? equal? char=? char-ci=?))
+					 (set! c caddr))
+				     (if (code-constant? (caddr test))
+					 (set! c cadr)))
+				 (if c 
+				     (begin
+				       (set! start clauses)
+				       (set! op (car test)))
+				     (set! nc (cons (car clauses) nc))))
+			       
+			       (do ((clauses (cdr form) (cdr clauses)))
+				   ((or (null? clauses)
+					(not (pair? (car clauses))))
+				    (if (and changed 
+					     (null? clauses))
+					(lint-format "perhaps ~A" name
+						     (lists->string form `(cond ,@(reverse nc))))))
+				 (let* ((test (caar clauses))
+					(result (cdar clauses))
+					(ok-but-at-end #f)
+					(looks-ok (and (pair? test)
+						       (pair? (cdr test))
+						       (pair? (cddr test))
+						       (null? (cdddr test))
+						       (pair? result)
+						       (null? (cdr result))
+						       (code-constant? (car result)))))
+				   (if (not start)
+				       (if (and looks-ok
+						(not (null? (cdr clauses))))
+					   (start-search clauses test)
+					   (set! nc (cons (car clauses) nc)))
+				       
+				       (if (or (not looks-ok)
+					       (not (eq? (car test) op))
+					       (not (equal? (c test) (c (caar start))))
+					       (not (code-constant? ((if (eq? c cadr) caddr cadr) test)))
+					       (set! ok-but-at-end (null? (cdr clauses))))
+					   
+					   (if (eq? (cdr start) clauses) ; only one item in the block, or two but it's just two at the end
+					       (begin
+						 (set! nc (cons (car start) nc))
+						 (if (and looks-ok
+							  (not (null? (cdr clauses))))
+						     (start-search clauses test)
+						     (begin
+						       (set! start #f)
+						       (set! nc (cons (car clauses) nc)))))
+					       
+					       ;; multiple hits -- can we combine them?
+					       (let ((alist ())
+						     (cc (if (eq? c cadr) caddr cadr)))
+						 (set! changed #t)
+						 (do ((sc start (cdr sc)))
+						     ((if ok-but-at-end
+							  (null? sc)
+							  (eq? sc clauses))
+						      (case op
+							((eq?)         (set! nc (cons `((assq ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+							((eqv? char=?) (set! nc (cons `((assv ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+							((equal?)      (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+							(else          (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist) ,op) => cdr) nc)))))
+						   (set! alist (cons (cons (unquoted (cc (caar sc))) (unquoted (cadar sc))) alist)))
 
-			     (if (and (>= len 2)                  ; (cond ((A) B) ((or C D)) (else E)) -> (cond ((A) B) (else (or C D E)))
-				      has-else)
-				 (let ((last-clause (list-ref form (- len 1))))
-				   (if (and (pair? last-clause)
-					    (null? (cdr last-clause))
-					    (pair? (car last-clause))
-					    (eq? (caar last-clause) 'or))
-				       (let ((e (list-ref form len)))
-					 (let ((else-clause (if (null? (cddr e))
-								(cadr e)
-								`(begin ,@(cdr e)))))
-					   (lint-format "perhaps ~A" name
-							(lists->string form
-								       `(cond ,@(copy (cdr form) (make-list (- len 2)))
-									      (else (or ,@(cdar last-clause) ,else-clause)))))))))))))
+						 (if (and looks-ok
+							  (not (null? (cdr clauses))))
+						     (start-search clauses test)
+						     (begin
+						       (set! start #f)
+						       (set! nc (cons (car clauses) nc))))))))))))
+			   ;; --------
+			   
+			   (when (= suggest made-suggestion) 
+			     (if (= len 1)
+				 (let ((clause (cadr form)))       ; (cond (a)) -> a, (cond (a b)) -> (if a b) etc
+				   (if (null? (cdr clause))
+				       (lint-format "perhaps ~A" name (lists->string form (car clause)))
+				       (if (not (eq? (cadr clause) '=>))
+					   (if (null? (cddr clause))
+					       (lint-format "perhaps ~A" name (lists->string form `(if ,(car clause) ,(cadr clause))))
+					       (if (and (pair? (car clause))
+							(eq? (caar clause) 'not))
+						   (lint-format "perhaps ~A" name (lists->string form `(unless ,@(cdar clause) ,@(cdr clause))))
+						   (lint-format "perhaps ~A" name (lists->string form `(when ,(car clause) ,@(cdr clause)))))))))
+			     
+				 (if has-else ; len > 1 here
+				     (let ((last-clause (list-ref form (- len 1))))
+				       (if (and (pair? last-clause)
+						(null? (cdr last-clause))
+						(pair? (car last-clause))
+						(eq? (caar last-clause) 'or))
+					   (let ((e (list-ref form len)))
+					     (let ((else-clause (if (null? (cddr e))
+								    (cadr e)
+								    `(begin ,@(cdr e)))))
+					       (lint-format "perhaps ~A" name
+							    (lists->string form
+									   `(cond ,@(copy (cdr form) (make-list (- len 2)))
+										  (else (or ,@(cdar last-clause) ,else-clause))))))))))))))
 		     env))
 		  
 		  ((case)
@@ -8428,6 +8461,80 @@
 		   ;; ---------------- defgenerator ----------------
 		   (append (get-generator form) env))
 		  
+		  ;; ----------------
+		  ((call-with-input-string call-with-input-file call-with-output-file call-with-output-string)
+		   (let ((len (if (eq? head 'call-with-output-string) 2 3))) ; call-with-output-string func is the first arg, not second
+		     (when (= (length form) len)
+		       (let ((func (list-ref form (- len 1))))
+			 (if (= len 3)
+			     (lint-walk name (cadr form) env))
+			 (if (and (pair? func)
+				    (eq? (car func) 'lambda))
+			   (let* ((args (cadr func))
+				  (body (cddr func))
+				  (port (and (pair? args) (car args))))
+			     (if (or (not port)
+				     (pair? (cdr args)))
+				 (lint-format "~A argument should be a function of one argument: ~A" name head func)
+				 (if (and (null? (cdr body))
+					  (pair? (car body))
+					  (pair? (cdar body))
+					  (eq? (cadar body) port)
+					  (null? (cddar body)))
+				     (lint-format "perhaps ~A" name 
+						  (lists->string form 
+								 (if (= len 2)
+								     `(,head ,(caar body))
+								     `(,head ,(cadr form) ,(caar body)))))
+				     (let ((cc (make-var :name port
+							 :initial-value (list (case head 
+										((call-with-input-string) 'open-input-string)
+										((call-with-output-string) 'open-output-string)
+										((call-with-input-file) 'open-input-file)
+										((call-with-output-file) 'open-output-file)))
+							 :definer head)))
+				       (lint-walk-body name head body (cons cc env))
+				       (report-usage name 'variable head (list cc) env)))))
+			   (lint-walk name func env)))))
+		   env)
+		  
+		  ;; ----------------
+		  ((call/cc call-with-current-continuation call-with-exit)
+		   (let ((continuation (and (pair? (cdr form))
+					    (pair? (cadr form))
+					    (eq? (caadr form) 'lambda)
+					    (pair? (cdadr form))
+					    (pair? (cddadr form))
+					    (pair? (cadadr form))
+					    (car (cadadr form)))))
+		     (if (symbol? continuation)
+			 (let ((body (cddadr form)))
+
+			   (if (not (or (eq? head 'call-with-exit)
+					(eq? continuation (car body))
+					(tree-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
+					;; this checks for continuation as arg (of anything), and any of set as car
+			       (lint-format "perhaps ~A could be call-with-exit: ~A" name head (truncated-list->string form)))
+
+			   (if (not (tree-member continuation body))
+			       (lint-format "~A ~A ~A appears to be unused: ~A" name head 
+					    (if (eq? head 'call-with-exit) "exit function" "continuation")
+					    continuation
+					    (truncated-list->string form))
+			       (let ((last (and (proper-list? body)
+						(list-ref body (- (length body) 1)))))
+				 (if (and (pair? last)
+					  (eq? (car last) continuation))
+				     (lint-format "~A is redundant here: ~A" name continuation (truncated-list->string last)))))
+
+			   (let ((cc (make-var :name continuation 
+					       :initial-value (list (if (eq? head 'call-with-exit) '[call/exit] '[call/cc]))
+					       :definer head)))
+			     (lint-walk-body name head body (cons cc env))
+			     (report-usage name 'variable head (list cc) env)))
+			 (lint-walk name (cdr form) env)))
+		   env)
+
 		  ((define-syntax define-module)
 		   env)
 		  

@@ -385,7 +385,7 @@
 				      (< lstlen 2))
 				  (display objstr port)
 				  (if (and (pair? (car obj))
-					   (member (caar obj) '(lambda lambda*) eq?))
+					   (memq (caar obj) '(lambda lambda*)))
 				      (begin
 					(write-char #\( port)
 					(pretty-print-1 (car obj) port column)
@@ -401,12 +401,17 @@
 					    (begin
 					      (spaces (+ column *pretty-print-spacing*))
 					      (stacked-list (cdr obj) (+ column *pretty-print-spacing*)))
-					    (let ((line-start (+ column *pretty-print-spacing* carstrlen)))
+					    (let ((line-start (if (or (> carstrlen 16)
+								      (pair? (cadr obj)))
+								  (let ((new-col (+ column *pretty-print-spacing*)))
+								    (spaces (- new-col 1))
+								    new-col)
+								  (+ column *pretty-print-spacing* carstrlen))))
 					      (if (= lstlen 2)
 						  (begin
 						    (write-char #\space port)
 						    (pretty-print-1 (cadr obj) port line-start))
-						  (if (< lstlen 5) ; TODO: why this?
+						  (if (< lstlen 5)
 						      (begin
 							(write-char #\space port)
 							(stacked-list (cdr obj) line-start))
@@ -415,7 +420,8 @@
 							    ((null? lst))
 							  (let* ((str (format #f "~S" (car lst)))
 								 (strlen1 (length str)))
-							    (if (> strlen1 (- *pretty-print-length* obj-start))
+							    (if (and (> strlen1 (- *pretty-print-length* obj-start))
+								     (not (eq? lst (cdr obj))))
 								(begin
 								  (set! obj-start (+ line-start 1 strlen1))
 								  (spaces line-start)

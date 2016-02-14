@@ -50,20 +50,18 @@
 			   (acgreensize (cadr (glXGetConfig dpy visual GLX_ACCUM_GREEN_SIZE)))
 			   (acbluesize (cadr (glXGetConfig dpy visual GLX_ACCUM_BLUE_SIZE)))
 			   (acalphasize (cadr (glXGetConfig dpy visual GLX_ACCUM_ALPHA_SIZE))))
-		       (snd-print (format #f "  id: #x~X depth: ~D class: ~S~%" ((*motif* '.visualid) visual) ((*motif* '.depth) visual) (class-of ((*motif* '.class) visual))))
-		       (snd-print (format #f "      buffersize: ~D, level: ~D, rgba: ~A, doublebuffer: ~A, stereo: ~A~%"
-					  buffersize level
-					  (if (= rgba 1) "#t" "#f")
-					  (if (= doublebuffer 1) "#t" "#f")
-					  (if (= stereo 1) "#t" "#f")))
-		       (snd-print (format #f "      r: ~A, g: ~D, b: ~D, alpha: ~D, accum-r: ~D, accum-g: ~D, accum-b: ~D, accum-alpha: ~D~%"
-					  redsize greensize bluesize alphasize 
-					  acredsize acgreensize acbluesize acalphasize))
-		       (snd-print (format #f "      auxbuffs: ~D, depth: ~D, acalpha: ~D~%"
-					  auxbuffers depthsize stencilsize))
-		       
-		       
-		       )))
+		       (for-each snd-print (vector (format #f "  id: #x~X depth: ~D class: ~S~%" 
+							   ((*motif* '.visualid) visual) ((*motif* '.depth) visual) (class-of ((*motif* '.class) visual)))
+						   (format #f "      buffersize: ~D, level: ~D, rgba: ~A, doublebuffer: ~A, stereo: ~A~%"
+							   buffersize level
+							   (if (= rgba 1) "#t" "#f")
+							   (if (= doublebuffer 1) "#t" "#f")
+							   (if (= stereo 1) "#t" "#f"))
+						   (format #f "      r: ~A, g: ~D, b: ~D, alpha: ~D, accum-r: ~D, accum-g: ~D, accum-b: ~D, accum-alpha: ~D~%"
+							   redsize greensize bluesize alphasize 
+							   acredsize acgreensize acbluesize acalphasize)
+						   (format #f "      auxbuffs: ~D, depth: ~D, acalpha: ~D~%"
+							   auxbuffers depthsize stencilsize))))))
 	       visuals))
 	    (snd-print "no GL found!"))))))
 

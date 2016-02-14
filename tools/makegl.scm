@@ -142,8 +142,7 @@
      (lambda (return)
        (do ((i 0 (+ i 1)))
 	   ((= i len) name)
-	 (if (or (char=? (name i) #\()
-		 (char=? (name i) #\*))
+	 (if (memv (name i) '(#\( #\*))
 	     (return (substring name 0 i))))))))
 
 (define* (parse-args args x)

@@ -38,9 +38,7 @@
   (define (make-polar mag ang)
     (if (and (real? mag) (real? ang))
 	(complex (* mag (cos ang)) (* mag (sin ang)))
-	(error 'wrong-type-arg "make-polar args should be real")))
-  (define (memq a b) (member a b eq?))
-  (define (memv a b) (member a b eqv?)))
+	(error 'wrong-type-arg "make-polar args should be real"))))
 
 (define tests 1)
 (define keep-going #f)
@@ -47673,7 +47671,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (not (member tag '(wrong-type-arg no-data no-such-method bad-type error arg-error) eq?))
+				    (if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
 					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
 				(list all-pass asymmetric-fm comb filtered-comb convolve db->linear moving-average moving-max moving-norm
 				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
@@ -47704,7 +47702,7 @@ EDITS: 1
 				 (n (make-oscil) float-vector-5)
 				 )
 			       (lambda args (car args)))))
-			(if (not (member tag '(wrong-type-arg bad-arity error mus-error) eq?))
+			(if (not (memq tag '(wrong-type-arg bad-arity error mus-error)))
 			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
 		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
 			  convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
@@ -47727,7 +47725,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n (make-oscil)) vector-0))
 			       (lambda args (car args)))))
-			(if (not (member tag '(wrong-type-arg syntax-error error) eq?))
+			(if (not (memq tag '(wrong-type-arg syntax-error error)))
 			    (snd-display #__line__ ";mus-gen ~A: ~A" n tag))))
 		    (list mus-channel mus-channels mus-data
 			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
@@ -47769,7 +47767,7 @@ EDITS: 1
 			       (lambda ()
 				 (n float-vector-5))
 			       (lambda args (car args)))))
-			(if (not (member tag '(wrong-type-arg error no-such-sound) eq?))
+			(if (not (memq tag '(wrong-type-arg error no-such-sound)))
 			    (snd-display #__line__ "; chn (no snd) procs ~A: ~A" n tag))))
 		    (list channel-widgets cursor channel-properties channel-property 
 			  cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
@@ -47885,7 +47883,7 @@ EDITS: 1
 				 (lambda ()
 				   (n index 1234))
 				 (lambda args (car args)))))
-			  (if (not (member tag '(no-such-channel no-such-sound) eq?))
+			  (if (not (memq tag '(no-such-channel no-such-sound)))
 			      (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
 		      (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
 			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
@@ -47910,7 +47908,7 @@ EDITS: 1
 				 (lambda ()
 				   (set! (n index 0) float-vector-5))
 				 (lambda args (car args)))))
-			  (if (not (member tag '(wrong-type-arg syntax-error error) eq?))
+			  (if (not (memq tag '(wrong-type-arg syntax-error error)))
 			      (snd-display #__line__ "; set chn procs ~A: ~A" n tag))))
 		      (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
 			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
@@ -47935,7 +47933,7 @@ EDITS: 1
 			       (lambda ()
 				 (n float-vector-5))
 			       (lambda args (car args)))))
-			(if (not (member tag '(error wrong-type-arg syntax-error) eq?))
+			(if (not (memq tag '(error wrong-type-arg syntax-error)))
 			    (snd-display #__line__ ";[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		    (list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
 		    (list 'mix-amp 'mix-amp-env 'mix-length 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
@@ -47956,7 +47954,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n (integer->mix 1234)) float-vector-5))
 			       (lambda args (car args)))))
-			(if (not (member tag '(error wrong-type-arg syntax-error no-such-mix) eq?))
+			(if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
 			    (snd-display #__line__ ";[2]: mix procs ~A: ~A" n tag))))
 		    (list mix-name mix-position mix-home mix-speed mix-tag-y))
 	  
@@ -47968,7 +47966,7 @@ EDITS: 1
 				 (lambda ()
 				   (set! (n id) float-vector-5))
 				 (lambda args (car args)))))
-			  (if (not (member tag '(error wrong-type-arg syntax-error) eq?))
+			  (if (not (memq tag '(error wrong-type-arg syntax-error)))
 			      (snd-display #__line__ ";[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		      (list  mix-name mix-position mix-home mix-speed mix-tag-y)
 		      (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
@@ -48018,7 +48016,7 @@ EDITS: 1
 					   (lambda ()
 					     (n arg))
 					   (lambda args (car args)))))
-				    (if (not (member tag '(wrong-type-arg wrong-number-of-args) eq?))
+				    (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
 					(snd-display #__line__ "; region procs ~A: ~A ~A" n tag arg))))
 				(list region-chans region-home region-framples 
 				      region-position region-maxamp region-maxamp-position region-sample 
@@ -48042,7 +48040,7 @@ EDITS: 1
 			       (lambda ()
 				 (set! (n) float-vector-5))
 			       (lambda args (car args)))))
-			(if (not (member tag '(error wrong-type-arg syntax-error) eq?))
+			(if (not (memq tag '(error wrong-type-arg syntax-error)))
 			    (snd-display #__line__ "; misc procs ~A: ~A" n tag))))
 		    (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
 			  auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
@@ -48645,9 +48643,7 @@ EDITS: 1
       ((vector-ref test-funcs snd-test))
       (after-test-hook snd-test))
     
-    (if (and (not full-test)
-	     (not keep-going)
-	     (>= snd-test 0))
+    (if (not (or full-test keep-going (< snd-test 0)))
 	(begin                                   ; run one test
 	  (before-test-hook snd-test)
 	  ((vector-ref test-funcs snd-test))
