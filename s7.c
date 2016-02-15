@@ -35533,7 +35533,6 @@ s7_pointer s7_assq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
   return(sc->F); /* not reached */
 }
 
-#if (!WITH_PURE_S7)
 static s7_pointer c_assq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   if (!is_pair(y))
@@ -35556,7 +35555,6 @@ static s7_pointer g_assq(s7_scheme *sc, s7_pointer args)
 }
 
 PF2_TO_PF(assq, c_assq)
-#endif
 
 
 static s7_pointer c_assv(s7_scheme *sc, s7_pointer x, s7_pointer y)
@@ -35596,9 +35594,7 @@ static s7_pointer g_assv(s7_scheme *sc, s7_pointer args)        /* g_assv is cal
   return(c_assv(sc, car(args), cadr(args)));
 }
 
-#if (!WITH_PURE_S7)
 PF2_TO_PF(assv, c_assv)
-#endif
 
 static s7_pointer all_x_c_ss(s7_scheme *sc, s7_pointer arg);
 static s7_pointer all_x_c_uu(s7_scheme *sc, s7_pointer arg);
@@ -35793,7 +35789,7 @@ s7_pointer s7_memq(s7_scheme *sc, s7_pointer obj, s7_pointer x)
   return(sc->F);
 }
 
-#if (!WITH_PURE_S7)
+
 static s7_pointer c_memq(s7_scheme *sc, s7_pointer x, s7_pointer y)
 {
   if (!is_pair(y))
@@ -35812,7 +35808,7 @@ static s7_pointer g_memq(s7_scheme *sc, s7_pointer args)
 }
 
 PF2_TO_PF(memq, c_memq)
-#endif
+
 /* I think (memq 'c '(a b . c)) should return #f because otherwise
  *   (memq () ...) would return the () at the end.
  */
@@ -36012,9 +36008,8 @@ static s7_pointer g_memv(s7_scheme *sc, s7_pointer args)
   return(c_memv(sc, car(args), cadr(args)));
 }
 
-#if (!WITH_PURE_S7)
 PF2_TO_PF(memv, c_memv)
-#endif
+
 
 static s7_pointer member(s7_scheme *sc, s7_pointer obj, s7_pointer x)
 {
@@ -46487,13 +46482,14 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	format_to_port(sc, sc->error_port, "\n;~S ~S", set_plist_2(sc, type, info), NULL, false, 7);
       else
 	{
-	  const char *carstr;
-	  int i, len;
+	  int len = 0;
 	  bool use_format = false;
 
 	  /* it's possible that the error string is just a string -- not intended for format */
 	  if (type != sc->format_error_symbol)          /* avoid an infinite loop of format errors */
 	    {
+	      int i;
+	      const char *carstr;
 	      carstr = string_value(car(info));
 	      len = string_length(car(info));
 	      for (i = 0; i < len; i++)
@@ -51587,11 +51583,11 @@ static void init_choosers(s7_scheme *sc)
   s7_gf_set_function(slot_value(global_slot(sc->make_list_symbol)), make_list_pf);
   s7_gf_set_function(slot_value(global_slot(sc->make_string_symbol)), make_string_pf);
 
-#if (!WITH_PURE_S7)
   s7_pf_set_function(slot_value(global_slot(sc->memq_symbol)), memq_pf);
   s7_pf_set_function(slot_value(global_slot(sc->memv_symbol)), memv_pf);
   s7_pf_set_function(slot_value(global_slot(sc->assq_symbol)), assq_pf);
   s7_pf_set_function(slot_value(global_slot(sc->assv_symbol)), assv_pf);
+#if (!WITH_PURE_S7)
   s7_gf_set_function(slot_value(global_slot(sc->list_to_vector_symbol)), list_to_vector_pf);
   s7_gf_set_function(slot_value(global_slot(sc->vector_to_list_symbol)), vector_to_list_pf);
   s7_gf_set_function(slot_value(global_slot(sc->string_to_list_symbol)), string_to_list_pf);
@@ -51981,10 +51977,8 @@ static void init_choosers(s7_scheme *sc)
   member_num_s = make_function_with_class(sc, f, "member", g_member_num_s, 2, 0, false, "member opt");
 
   /* memq */
-#if (!WITH_PURE_S7)
   f = set_function_chooser(sc, sc->memq_symbol, memq_chooser);
   /* is pure-s7, use member here */
-#endif
   memq_3 = make_function_with_class(sc, f, "memq", g_memq_3, 2, 0, false, "memq opt");
   memq_4 = make_function_with_class(sc, f, "memq", g_memq_4, 2, 0, false, "memq opt");
   memq_any = make_function_with_class(sc, f, "memq", g_memq_any, 2, 0, false, "memq opt");
@@ -73367,9 +73361,7 @@ s7_scheme *s7_init(void)
   sc->is_integer_or_any_at_end_symbol =  s7_define_function(sc, "integer:any?",  g_is_integer_or_any_at_end,  1, 0, false, "internal signature helper");
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->is_pair_symbol);
-#if (!WITH_PURE_S7)
   pl_tl =  s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->T, sc->is_list_symbol); /* memq and memv signature */
-#endif
   pl_bc =  s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_char_symbol);
   pl_bn =  s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_number_symbol);
   pl_sf =  s7_make_signature(sc, 3, sc->T, sc->is_string_symbol, sc->is_procedure_symbol);
@@ -73663,8 +73655,12 @@ s7_scheme *s7_init(void)
   sc->cddadr_symbol =                defun("cddadr",		cddadr,			1, 0, false);
   sc->cdddar_symbol =                defun("cdddar",		cdddar,			1, 0, false);
 
+  sc->assq_symbol =                  defun("assq",		assq,			2, 0, false);
+  sc->assv_symbol =                  defun("assv",		assv,			2, 0, false);
   sc->assoc_symbol =                 unsafe_defun("assoc",	assoc,			2, 1, false); 
   set_is_possibly_safe(slot_value(global_slot(sc->assoc_symbol)));
+  sc->memq_symbol =                  defun("memq",		memq,			2, 0, false);
+  sc->memv_symbol =                  defun("memv",		memv,			2, 0, false);
   sc->member_symbol =                unsafe_defun("member",	member,			2, 1, false); 
   set_is_possibly_safe(slot_value(global_slot(sc->member_symbol)));
 
@@ -73683,10 +73679,6 @@ s7_scheme *s7_init(void)
   sc->append_symbol =                defun("append",		append,			0, 0, true);
 
 #if (!WITH_PURE_S7)
-  sc->assq_symbol =                  defun("assq",		assq,			2, 0, false);
-  sc->assv_symbol =                  defun("assv",		assv,			2, 0, false);
-  sc->memq_symbol =                  defun("memq",		memq,			2, 0, false);
-  sc->memv_symbol =                  defun("memv",		memv,			2, 0, false);
   sc->vector_append_symbol =         defun("vector-append",	vector_append,		0, 0, true);
   sc->list_to_vector_symbol =        defun("list->vector",	list_to_vector,		1, 0, false);
   sc->vector_fill_symbol =           defun("vector-fill!",	vector_fill,		2, 2, false);

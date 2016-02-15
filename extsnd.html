@@ -3522,16 +3522,19 @@ in the Scheme, Ruby, and Forth files.
 
 <pre class="indented">
 (define* (region-&gt;float-vector reg (chn 0))
-  (if (<a class=quiet href="#regionok">region?</a> reg)
-      (if (&lt; chn (channels reg))
-	  (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
-		 (len (<a class=quiet href="#regionframples">region-framples</a> reg))
-		 (data (make-float-vector len 0.0)))
-	    (do ((i 0 (+ i 1)))
-		((= i len) data)
-	      (set! (data i) (<em class=red>reader</em>))))
-	  (error 'no-such-channel (list "region-&gt;float-vector" reg chn)))
-      (error 'no-such-region (list "region-&gt;float-vector" reg))))
+  (cond ((not (region? reg))
+         (error 'no-such-region (list "region-&gt;float-vector" reg)))
+
+        ((&lt; chn (channels reg))
+         (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
+                (len (region-framples reg))
+                (data (make-float-vector len 0.0)))
+           (do ((i 0 (+ i 1)))
+               ((= i len) data)
+             (set! (data i) (<em class=red>reader</em>)))))
+
+        (else
+         (error 'no-such-channel (list "region-&gt;float-vector" reg chn)))))
 </pre>
 <div class="spacer"></div>
 
@@ -6777,15 +6780,15 @@ so the function call is:
 
 <pre class="indented">
 (define* (selection-&gt;vct snd chn)
-  (if (<a class=quiet href="#selectionmember">selection-member?</a> snd chn)
-      (<em class=red>channel-&gt;vct</em> (<a class=quiet href="#selectionposition">selection-position</a> snd chn)
-		    (<a class=quiet href="#selectionframples">selection-framples</a> snd chn)
-		    snd chn)
-      (if (<a class=quiet href="#selectionok">selection?</a>)
-          (error 'no-such-channel 
-                 (list "selection-&gt;vct"
-     	               (<a class=quiet>format</a> #f "snd ~A channel ~D is not a member of the selection" snd chn)))
-	  (error 'no-active-selection (list "selection-&gt;vct")))))
+  (cond ((selection-member? snd chn)
+         (channel-&gt;vct (selection-position snd chn) (selection-framples snd chn) snd chn))
+
+        ((selection?)
+         (error 'no-such-channel
+                (list "selection-&gt;vct" 
+                      (format #f "snd ~A channel ~D is not a member of the selection" snd chn))))
+        (else
+         (error 'no-active-selection (list "selection-&gt;vct")))))
 </pre>
 
 <p>See also mark-explode in marks.scm.
@@ -11564,8 +11567,9 @@ to longer:
    (lambda (a b)
      (let ((dur1 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> a))
 	   (dur2 (<a class=quiet href="#mussoundduration">mus-sound-duration</a> b)))
-       (if (&gt; dur1 dur2) 1
-	   (if (&lt; dur1 dur2) -1 0)))))
+       (cond ((&gt; dur1 dur2) 1) 
+             ((&lt; dur1 dur2) -1) 
+             (else 0)))))
 </pre>
 <div class="spacer"></div>
 
