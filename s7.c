@@ -1810,8 +1810,7 @@ static int not_heap = -1;
 #define opt1(p, Role)                 opt1_1(hidden_sc, _TLst(p), Role, __func__, __LINE__)
 #define set_opt1(p, x, Role)          set_opt1_1(hidden_sc, _TLst(p), x, Role, __func__, __LINE__)
 
-#define F_SET                         (1 << 1)
-#define F_C_CALL                      (1 << 18)  /* c_function invocation */
+#define F_SET                         (1 << 1)   /* bit 18 is free */
 #define F_KEY                         (1 << 19)  /* case key */
 #define F_SLOW                        (1 << 20)  /* slow list in member/assoc circular list check */
 #define F_SYM                         (1 << 21)  /* symbol */
@@ -1819,7 +1818,7 @@ static int not_heap = -1;
 #define F_CON                         (1 << 23)  /* constant as above */
 #define F_CALL                        (1 << 24)  /* c-func */
 #define F_LAMBDA                      (1 << 25)  /* lambda form */
-#define F_MASK                        (F_C_CALL | F_KEY | F_SLOW | F_SYM | F_PAIR | F_CON | F_CALL | F_LAMBDA | S_NAME)
+#define F_MASK                        (F_KEY | F_SLOW | F_SYM | F_PAIR | F_CON | F_CALL | F_LAMBDA | S_NAME)
 
 #define opt2_is_set(p)                (((p)->debugger_bits & F_SET) != 0)
 #define set_opt2_is_set(p)            (p)->debugger_bits |= F_SET
@@ -31543,11 +31542,13 @@ static void set_s_hash_1(s7_scheme *sc, s7_pointer p, unsigned long long int x, 
   set_opt1_is_set(p);
 }
 
-static void show_opt2_bits(s7_scheme *sc, s7_pointer p, const char *func, int line)
+static void show_opt2_bits(s7_scheme *sc, s7_pointer p, const char *func, int line, unsigned int role)
 {
-  fprintf(stderr, "%s%s[%d]: opt2: %p->%p %x%s%s%s%s%s%s%s%s%s%s%s\n", BOLD_TEXT, func, line, p, p->object.cons.opt2, p->debugger_bits,
+  fprintf(stderr, "%s%s[%d]: opt2: %p->%p is %x%s%s%s%s%s%s%s%s%s but expects %x%s%s%s%s%s%s%s%s%s%s\n", 
+	  BOLD_TEXT, func, line, p, p->object.cons.opt2, 
+
+	  p->debugger_bits,
 	  ((p->debugger_bits & F_SET) != 0) ? " f-set" : "",
-	  ((p->debugger_bits & F_C_CALL) != 0) ? " c-call" : "",
 	  ((p->debugger_bits & F_KEY) != 0) ? " key" : "",
 	  ((p->debugger_bits & F_SLOW) != 0) ? " slow" : "",
 	  ((p->debugger_bits & F_SYM) != 0) ? " sym" : "",
@@ -31556,6 +31557,18 @@ static void show_opt2_bits(s7_scheme *sc, s7_pointer p, const char *func, int li
 	  ((p->debugger_bits & F_CALL) != 0) ? " call" : "",
 	  ((p->debugger_bits & F_LAMBDA) != 0) ? " lambda" : "",
 	  ((p->debugger_bits & S_NAME) != 0) ? " raw-name" : "",
+
+	  role,
+	  ((role & F_SET) != 0) ? " f-set" : "",
+	  ((role & F_KEY) != 0) ? " key" : "",
+	  ((role & F_SLOW) != 0) ? " slow" : "",
+	  ((role & F_SYM) != 0) ? " sym" : "",
+	  ((role & F_PAIR) != 0) ? " pair" : "",
+	  ((role & F_CON) != 0) ? " con" : "",
+	  ((role & F_CALL) != 0) ? " call" : "",
+	  ((role & F_LAMBDA) != 0) ? " lambda" : "",
+	  ((role & S_NAME) != 0) ? " raw-name" : "",
+
 	  UNBOLD_TEXT);
 }
 
@@ -31564,7 +31577,8 @@ static s7_pointer opt2_1(s7_scheme *sc, s7_pointer p, unsigned int role, const c
   if ((!opt2_is_set(p)) ||
       (!opt2_role_matches(p, role)))
     {
-      show_opt2_bits(sc, p, func, line);
+      show_opt2_bits(sc, p, func, line, role);
+      fprintf(stderr, "p: %s\n", DISPLAY(p));
       if (stop_at_error) abort();
     }
   return(p->object.cons.opt2);
@@ -31582,7 +31596,7 @@ static const char *s_name_1(s7_scheme *sc, s7_pointer p, const char *func, int l
   if ((!opt2_is_set(p)) ||
       (!opt2_role_matches(p, S_NAME)))
     {
-      show_opt2_bits(sc, p, func, line);
+      show_opt2_bits(sc, p, func, line, (unsigned int)S_NAME);
       if (stop_at_error) abort();
     }
   return(p->object.sym_cons.fstr);
@@ -60303,8 +60317,10 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);
+#if 1
 	  set_opt_con1(p, sc->nil);
 	  set_opt_con2(p, sc->nil);
+#endif
 
 	}
       clear_all_optimizations(sc, cdr(p));

@@ -14,7 +14,7 @@
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
-(define *report-loaded-files* #t)                         ; if load/include/require is encountered, include that file in the lint process
+(define *report-loaded-files* #f)                         ; if load/include/require is encountered, include that file in the lint process
 
 
 (if (provided? 'pure-s7)
@@ -283,7 +283,7 @@
 	
 	(selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?))
 	(outport #t)
-	(loaded-files #f)
+	(linted-files ())
 	(*e* #f)
 	(other-identifiers #f)
 	(quote-warnings 0)
@@ -293,10 +293,11 @@
 	(last-if-line-number -1)
 	(last-checker-line-number -1)
 	(line-number -1)
-	(lambda-marker '[lambda]))
+	(lambda-marker '[lambda])
+	(pp-left-margin 4)
+	(lint-left-margin 1))
     
     (set! *e* (curlet))
-;    (define calls 0)
 
 
     ;; -------- lint-format --------
@@ -323,27 +324,25 @@
       (let* ((str1 (object->string f1))
 	     (len1 (length str1))
 	     (str2 (object->string f2))
-	     (len2 (length str2))
-	     (N 4))
+	     (len2 (length str2)))
 	(when (> len1 80)
 	  (set! str1 (truncated-list->string f1))
 	  (set! len1 (length str1)))
 	(when (> len2 80)
-	  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) N)
-	  (set! ((funclet lint-pretty-print) '*pretty-print-length*) 110)
+	  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) pp-left-margin)
+	  (set! ((funclet lint-pretty-print) '*pretty-print-length*) (- 114 pp-left-margin))
 	  (set! str2 (lint-pp f2))
 	  (set! len2 (length str2)))
 	(if (< (+ len1 len2) 80)
 	    (format #f "~A -> ~A" str1 str2)
-	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
+	    (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))
     
     (define (truncated-lists->string f1 f2)
       ;; same but 2 strings that may need to be lined up vertically and both are truncated
       (let* ((str1 (object->string f1))
 	     (len1 (length str1))
 	     (str2 (object->string f2))
-	     (len2 (length str2))
-	     (N 4))
+	     (len2 (length str2)))
 	(when (> len1 80)
 	  (set! str1 (truncated-list->string f1))
 	  (set! len1 (length str1)))
@@ -352,14 +351,19 @@
 	  (set! len2 (length str2)))
 	(if (< (+ len1 len2) 80)
 	    (format #f "~A -> ~A" str1 str2)
-	    (format #f "~%~NC~A ->~%~NC~A" N #\space str1 N #\space str2))))
+	    (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))
     
     (define made-suggestion 0)
     
     (define (lint-format str name . args)
       (let ((outstr (if (< 0 line-number 100000)
-			(apply format #f (string-append " ~A (line ~D): " str "~%") (truncated-list->string name) line-number args)
-			(apply format #f (string-append " ~A: " str "~%") (truncated-list->string name) args))))
+			(apply format #f (string-append "~NC~A (line ~D): " str "~%") 
+			       lint-left-margin #\space
+			       (truncated-list->string name) 
+			       line-number args)
+			(apply format #f (string-append "~NC~A: " str "~%") 
+			       lint-left-margin #\space
+			       (truncated-list->string name) args))))
 	(set! made-suggestion (+ made-suggestion 1))
 	(display outstr outport)
 	(if (> (length outstr) 120)
@@ -1167,24 +1171,24 @@
     (define (check-star-parameters f args)
       (if (list-any? (lambda (k) (memq k '(:key :optional))) args)
 	  (let ((kw (if (memq :key args) :key :optional)))
-	    (format outport " ~A: ~A is no longer accepted: ~A~%" f kw 
+	    (format outport "~NC~A: ~A is no longer accepted: ~A~%" lint-left-margin #\space f kw 
 		    (focus-str (object->string args) (symbol->string kw)))))
       
       (if (member 'pi args (lambda (a b) (or (eq? b 'pi) (and (pair? b) (eq? (car b) 'pi)))))
-	  (format outport " ~A: parameter can't be a constant: ~A~%" f 
+	  (format outport "~NC~A: parameter can't be a constant: ~A~%" lint-left-margin #\space f 
 		  (focus-str (object->string args) "pi")))
       
       (let ((r (memq :rest args)))
 	(when (pair? r)
 	  (if (not (pair? (cdr r)))
-	      (format outport " ~A: :rest parameter needs a name: ~A~%" f args)
+	      (format outport "~NC~A: :rest parameter needs a name: ~A~%" lint-left-margin #\space f args)
 	      (if (pair? (cadr r))
-		  (format outport " ~A: :rest parameter can't specify a default value: ~A~%" f args)))))
+		  (format outport "~NC~A: :rest parameter can't specify a default value: ~A~%" lint-left-margin #\space f args)))))
       
       (let ((a (memq :allow-other-keys args)))
 	(if (and (pair? a)
 		 (pair? (cdr a)))
-	    (format outport " ~A: :allow-other-keys should be at the end of the parameter list: ~A~%" f 
+	    (format outport "~NC~A: :allow-other-keys should be at the end of the parameter list: ~A~%" lint-left-margin #\space f 
 		    (focus-str (object->string args) ":allow-other-keys")))))
     
     (define (checked-eval form)
@@ -1484,7 +1488,7 @@
 				     ;;   but the other side appears to be much more common (inadvertent repetition)
 				     (set-cdr! endx (list next))
 				     (if (side-effect? next env) ; perhaps look for IO funcs?
-					 (format outport " I'm just guessing here that this repetition is a typo...~%")))
+					 (format outport "~NCI'm just guessing here that this repetition is a typo...~%" lint-left-margin #\space)))
 				 (begin
 				   (set-cdr! endx (list next))
 				   (set! endx (cdr endx))
@@ -1511,7 +1515,7 @@
 					      (not (equal? next (car endx))))
 					 (set-cdr! endx (list next))
 					 (if (side-effect? next env)
-					     (format outport " I'm just guessing here that this repetition is a typo...~%")))
+					     (format outport "~NCI'm just guessing here that this repetition is a typo...~%" lint-left-margin #\space)))
 				     (begin
 				       (set-cdr! endx (list next))
 				       (set! endx (cdr endx))
@@ -1975,7 +1979,8 @@
 								       (pair? (cdr sig))
 								       (symbol? (cadr sig)))))
 						    (if arg-type
-							(format outport " in ~A, perhaps change ~S to ~S~%"
+							(format outport "~NCin ~A, perhaps change ~S to ~S~%"
+								lint-left-margin #\space 
 								(truncated-list->string form) 
 								`(and ,arg1 ...)
 								`(and (,(cadr sig) ,arg1) ...))))))))
@@ -2133,7 +2138,8 @@
 							(let ((ln (and (positive? line-number)
 								       (< line-number 100000)
 								       line-number)))
-							  (format outport "in ~A~A, ~A is ~A, but ~A wants ~A"
+							  (format outport "~NCin ~A~A, ~A is ~A, but ~A wants ~A"
+								  lint-left-margin #\space 
 								  (truncated-list->string form) 
 								  (if ln (format #f " (line ~D)" ln) "")
 								  (cadr arg1) 
@@ -3169,6 +3175,7 @@
       ;;   simpler than cond because it's just the "test" and no results
       ;;   but is it readable? -- need to test this
       ;; 8309: are there more let reductions (t347)?
+      ;; if locals unaffected by block in let, move block out?
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -5412,7 +5419,7 @@
 			    (not (var-member (car scope) env))
 			    (var-member name env) ; not 'let etc
 			    (not (eq? vname (car scope))))
-		   (format outport " ~A is called only in ~A~%" vname (car (var-scope arg))))))
+		   (format outport "~NC~A is called only in ~A~%" lint-left-margin #\space vname (car (var-scope arg))))))
 	     
 	     ;; redundant vars are hard to find -- tons of false positives
 	     
@@ -8570,6 +8577,15 @@
 		   ;; ---------------- defgenerator ----------------
 		   (append (get-generator form) env))
 		  
+		  ((load)
+		   (if *report-loaded-files*
+		       (catch #t
+			 (lambda ()
+			   (lint-file (cadr form) env))
+			 (lambda args
+			   env))
+		       env))
+
 		  ;; ----------------
 		  ((call-with-input-string call-with-input-file call-with-output-file call-with-output-string)
 		   (let ((len (if (eq? head 'call-with-output-string) 2 3))) ; call-with-output-string func is the first arg, not second
@@ -8785,6 +8801,100 @@
 		      (if (not happy)
 			  (lint-format "quasiquoted vectors are a really bad idea: ~A" name form))))
 		env))))
+
+
+    ;; -------- lint-file --------
+    (define *report-input* #t)
+
+    (define (lint-file-1 file env)
+      (set! linted-files (cons file linted-files))
+      (let ((fp (if (input-port? file)
+		    file
+		    (begin
+		      (set! *current-file* file)
+		      (catch #t
+			(lambda ()
+			  (let ((p (open-input-file file)))
+			    (if *report-input*
+				(if (and (output-port? outport)
+					 (not (member outport (list *stderr* *stdout*))))
+				    (format outport "~%~NC~%;~A~%" (+ lint-left-margin 16) #\- file)
+				    (format outport ";~A~%" file)))
+			    p))
+			(lambda args
+			  (format outport "~NCcan't open ~S: ~A~%" lint-left-margin #\space file (apply format #f (cadr args)))
+			  #f))))))
+	
+	(if (input-port? fp)
+	    (let ((vars env)
+		  (line 0)
+		  (last-form #f)
+		  (last-line-number -1))
+	      
+	      (do ((form (read fp) (read fp)))
+		  ((eof-object? form))
+		(if (pair? form)
+		    (set! line (max line (pair-line-number form))))
+		
+		(if (not (or (= last-line-number -1)
+			     (side-effect? last-form vars)))
+		    (format outport "~NCtop-level (line ~D): this has no effect: ~A~%" 
+			    lint-left-margin #\space last-line-number
+			    (truncated-list->string last-form)))
+		(set! last-form form)
+		(set! last-line-number line)
+		
+		(if (and (pair? form)
+			 (memq (car form) '(define define-macro))
+			 (pair? (cdr form))
+			 (pair? (cadr form)))
+		    (let ((f (caadr form)))
+		      (if (and (symbol? f)
+			       (hash-table-ref built-in-functions f))
+			  (format outport "~NCtop-level ~Aredefinition of built-in function ~A: ~A~%" 
+				  lint-left-margin #\space 
+				  (if (> (pair-line-number form) 0)
+				      (format #f "(line ~D) " (pair-line-number form))
+				      "")
+				  f 
+				  (truncated-list->string form)))))
+		
+		(set! vars (lint-walk (if (symbol? form) 
+					  form 
+					  (and (pair? form) 
+					       (car form)))
+				      form 
+				      vars)))
+	      
+	      (if (not (input-port? file))
+		  (close-input-port fp))
+	      
+	      vars))))
+    
+    (define (lint-file file env)
+      ;; (format *stderr* "lint ~S~%" file)
+      
+      (let ((old-current-file *current-file*)
+	    (old-pp-left-margin pp-left-margin)
+	    (old-lint-left-margin lint-left-margin))
+
+	(dynamic-wind
+	    (lambda ()
+	      (set! pp-left-margin (+ pp-left-margin 4))
+	      (set! lint-left-margin (+ lint-left-margin 4)))
+	    
+	    (lambda ()
+	      (if (not (member file linted-files))
+		  (lint-file-1 file env)
+		  env))
+	    
+	    (lambda ()
+	      (set! pp-left-margin old-pp-left-margin)
+	      (set! lint-left-margin old-lint-left-margin)
+	      (set! *current-file* old-current-file)
+	      (newline outport)))))
+    
+
     
     ;;; --------------------------------------------------------------------------------'
     ;;; lint itself
@@ -8794,7 +8904,7 @@
       (lambda* (file (outp *lint-output-port*) (report-input #t))
 	(set! outport outp)
 	(set! other-identifiers (make-hash-table))
-	(set! loaded-files ())
+	(set! linted-files ())
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! last-simplify-cxr-line-number -1)
@@ -8802,208 +8912,153 @@
 	(set! last-if-line-number -1)
 	(set! line-number -1)
 	(set! quote-warnings 0)
+	(set! pp-left-margin 0)
+	(set! lint-left-margin -3)
 
-	;(format *stderr* "lint ~S~%" file)
+	(set! *report-input* report-input)
+	(set! *report-nested-if* (max 3 *report-nested-if*))
+	(set! *report-short-branch* (max 0 *report-short-branch*))
 
-	(let ((fp (if (input-port? file)
-		      file
-		      (begin
-			(set! *current-file* file)
-			(catch #t
-			  (lambda ()
-			    (let ((p (open-input-file file)))
-			      (if report-input 
-				  (if (and (output-port? outport)
-					   (not (member outport (list *stderr* *stdout*))))
-				      (format outport "~%~NC~%;~A~%" 16 #\- file)
-				      (format outport ";~A~%" file)))
-			      (set! loaded-files (cons file loaded-files))
-			      p))
-			  (lambda args
-			    (format outport " can't open ~S: ~A~%" file (apply format #f (cadr args)))
-			    #f))))))
+	(set! *#readers*
+	      (list (cons #\e (lambda (str)
+				(if (not (string=? str "e"))
+				    (let ((num (string->number (substring str 1))))
+				      (if num 
+					  (cond ((rational? num)
+						 (format outport "~NCthis #e is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
+						((not (real? num))
+						 (format outport "~NC#e can't handle complex numbers, #~A -> ~A~%" lint-left-margin #\space str num))
+						((= num (floor num))
+						 (format outport "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (floor num)))))))
+				#f))
+		    (cons #\i (lambda (str)
+				(if (not (string=? str "i"))
+				    (let ((num (string->number (substring str 1))))
+				      (if num 
+					  (if (not (rational? num))
+					      (format outport "~NCthis #i is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1))
+					      (format outport "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (* 1.0 num))))))
+				#f))
+		    (cons #\d (lambda (str)
+				(if (and (not (string=? str "d"))
+					 (string->number (substring str 1)))
+				    (format outport "~NC#d is pointless, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
+				#f))
+		    (cons #\_ (lambda (str)
+				(and (string=? str "__line__")
+				     (port-line-number))))))
+	
+	;; try to get past all the # and \ stuff in other Schemes
+	;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example), and #!optional (Chicken and MIT-scheme)
+	(set! (hook-functions *read-error-hook*)  
+	      (list (lambda (h)
+		      (let ((data (h 'data))
+			    (line (port-line-number)))
+			(if (h 'type)
+			    (begin
+			      (format outport "~NCreader[~A]: unknown # object: #~A~%" lint-left-margin #\space line data)
+			      (set! (h 'result)
+				    (case (data 0)
+				      ((#\_) (if (string=? data "__line__")
+						 (port-line-number)
+						 (symbol->keyword (string->symbol data))))
+				      
+				      ((#\;) (read) (values))
+				      
+				      ((#\T) (string=? data "T"))
+				      ((#\F) (and (string=? data "F") (list 'not #t)))
+				      
+				      ((#\u) ; for Bigloo
+				       (if (string=? data "unspecified")
+					   (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
+				       ;; #<unspecified> seems to hit the no-values check?
+				       (symbol->keyword (string->symbol data)))
+				      
+				      ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
+				       (do ((last #\# c) 
+					    (c (read-char) (read-char))) 
+					   ((and (char=? last #\<) 
+						 (char=? c #\#)) 
+					    (values))
+					 (if (char=? c #\newline)
+					     (set! (port-line-number ()) (+ (port-line-number) 1)))))					      
+				      
+				      ((#\<) ; Chicken also, #<<EOF -> EOF
+				       (if (and (char=? (data 1) #\<)
+						(> (length data) 2))
+					   (let ((end (substring data 2)))
+					     (do ((c (read-line) (read-line)))
+						 ((string-position end c)
+						  (values))))
+					   (symbol->keyword (string->symbol data))))
+				      
+				      ((#\\) 
+				       (cond ((assoc data '(("\\newline"   . #\newline)
+							    ("\\return"    . #\return)
+							    ("\\space"     . #\space)
+							    ("\\tab"       . #\tab)
+							    ("\\null"      . #\null)
+							    ("\\linefeed"  . #\linefeed)
+							    ("\\alarm"     . #\alarm)
+							    ("\\esc"       . #\escape)
+							    ("\\escape"    . #\escape)
+							    ("\\rubout"    . #\delete)
+							    ("\\delete"    . #\delete)
+							    ("\\backspace" . #\backspace)
+							    ("\\page"      . #\xc)
+							    
+							    ;; rest are for Guile
+							    ("\\vt"        . #\xb)
+							    ("\\bs"        . #\backspace)
+							    ("\\cr"        . #\newline)
+							    ("\\sp"        . #\space)
+							    ("\\lf"        . #\linefeed)
+							    ("\\nl"        . #\null)
+							    ("\\ht"        . #\tab)
+							    ("\\ff"        . #\xc)
+							    ("\\np"        . #\xc))
+						     string-ci=?)
+					      => (lambda (c)
+						   (format outport "~NCperhaps use ~W instead~%" lint-left-margin #\space (cdr c))
+						   (cdr c)))
+					     (else 
+					      (symbol->keyword (string->symbol (substring data 1))))))
+				      (else 
+				       (symbol->keyword (string->symbol data))))))
+			    (begin
+			      (format outport "~NCreader[~A]: unknown \\ usage: \\~C~%" lint-left-margin #\space line data)
+			      (set! (h 'result) data)))))))
+	
+	(let ((vars (lint-file file ())))
+
+	  (if (and (pair? vars)
+		   *report-multiply-defined-top-level-functions*)
+	      (for-each
+	       (lambda (var)
+		 (let ((var-file (hash-table-ref *top-level-objects* (car var))))
+		   (if (not var-file)
+		       (hash-table-set! *top-level-objects* (car var) *current-file*)
+		       (if (and (string? *current-file*)
+				(not (string=? var-file *current-file*)))
+			   (format outport "~NC~S is defined at the top level in ~S and ~S~%" 
+				   lint-left-margin #\space 
+				   (car var) var-file *current-file*)))))
+	       vars))
 	  
-	  (if (input-port? fp)
-	      (let ((vars ()) ; initial "env"
-		    (line 0)
-		    (last-form #f)
-		    (last-line-number -1))
-		
-		(set! *#readers*
-		      (list (cons #\e (lambda (str)
-					(if (not (string=? str "e"))
-					    (let ((num (string->number (substring str 1))))
-					      (if num 
-						  (cond ((rational? num)
-							 (format outport " this #e is dumb, #~A -> ~A~%" str (substring str 1)))
-							((not (real? num))
-							 (format outport " #e can't handle complex numbers, #~A -> ~A~%" str num))
-							((= num (floor num))
-							 (format outport "perhaps #~A -> ~A~%" str (floor num)))))))
-					#f))
-			    (cons #\i (lambda (str)
-					(if (not (string=? str "i"))
-					    (let ((num (string->number (substring str 1))))
-					      (if num 
-						  (if (not (rational? num))
-						      (format outport " this #i is dumb, #~A -> ~A~%" str (substring str 1))
-						      (format outport " perhaps #~A -> ~A~%" str (* 1.0 num))))))
-					#f))
-			    (cons #\d (lambda (str)
-					(if (and (not (string=? str "d"))
-						 (string->number (substring str 1)))
-					    (format outport " #d is pointless, #~A -> ~A~%" str (substring str 1)))
-					#f))
-			    (cons #\_ (lambda (str)
-					(and (string=? str "__line__")
-					     (port-line-number))))))
-		
-		;; try to get past all the # and \ stuff in other Schemes
-		;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example), and #!optional (Chicken and MIT-scheme)
-		(set! (hook-functions *read-error-hook*)  
-		      (list (lambda (h)
-			      (let ((data (h 'data))
-				    (line (port-line-number)))
-				(if (h 'type)
-				    (begin
-				      (format outport " reader[~A]: unknown # object: #~A~%" line data)
-				      (set! (h 'result)
-					    (case (data 0)
-					      ((#\_) (if (string=? data "__line__")
-							 (port-line-number)
-							 (symbol->keyword (string->symbol data))))
-
-					      ((#\;) (read) (values))
-
-					      ((#\T) (string=? data "T"))
-					      ((#\F) (and (string=? data "F") (list 'not #t)))
-
-					      ((#\u) ; for Bigloo
-					       (if (string=? data "unspecified")
-						   (format outport "  use #<unspecified>, not #unspecified~%"))
-					       ;; #<unspecified> seems to hit the no-values check?
-					       (symbol->keyword (string->symbol data)))
-
-					      ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
-					       (do ((last #\# c) 
-						    (c (read-char) (read-char))) 
-						   ((and (char=? last #\<) 
-							 (char=? c #\#)) 
-						    (values))
-						 (if (char=? c #\newline)
-						     (set! (port-line-number ()) (+ (port-line-number) 1)))))					      
-
-					      ((#\<) ; Chicken also, #<<EOF -> EOF
-					       (if (and (char=? (data 1) #\<)
-							(> (length data) 2))
-						   (let ((end (substring data 2)))
-						     (do ((c (read-line) (read-line)))
-							 ((string-position end c)
-							  (values))))
-						   (symbol->keyword (string->symbol data))))
-
-					      ((#\\) 
-					       (cond ((assoc data '(("\\newline"   . #\newline)
-								    ("\\return"    . #\return)
-								    ("\\space"     . #\space)
-								    ("\\tab"       . #\tab)
-								    ("\\null"      . #\null)
-								    ("\\linefeed"  . #\linefeed)
-								    ("\\alarm"     . #\alarm)
-								    ("\\esc"       . #\escape)
-								    ("\\escape"    . #\escape)
-								    ("\\rubout"    . #\delete)
-								    ("\\delete"    . #\delete)
-								    ("\\backspace" . #\backspace)
-								    ("\\page"      . #\xc)
-								    
-								    ;; rest are for Guile
-								    ("\\vt"        . #\xb)
-								    ("\\bs"        . #\backspace)
-								    ("\\cr"        . #\newline)
-								    ("\\sp"        . #\space)
-								    ("\\lf"        . #\linefeed)
-								    ("\\nl"        . #\null)
-								    ("\\ht"        . #\tab)
-								    ("\\ff"        . #\xc)
-								    ("\\np"        . #\xc))
-							     string-ci=?)
-						      => (lambda (c)
-							   (format outport "  perhaps use ~W instead~%" (cdr c))
-							   (cdr c)))
-						     (else 
-						      (symbol->keyword (string->symbol (substring data 1))))))
-					      (else 
-					       (symbol->keyword (string->symbol data))))))
-				    (begin
-				      (format outport " reader[~A]: unknown \\ usage: \\~C~%" line data)
-				      (set! (h 'result) data)))))))
-
-		(do ((form (read fp) (read fp)))
-		    ((eof-object? form))
-		  (if (pair? form)
-		      (set! line (max line (pair-line-number form))))
-
-		  (if (not (or (= last-line-number -1)
-			       (side-effect? last-form vars)))
-		      (format outport " top-level (line ~D): this has no effect: ~A~%" 
-			      last-line-number
-			      (truncated-list->string last-form)))
-		  (set! last-form form)
-		  (set! last-line-number line)
-
-		  (if (and (pair? form)
-			   (memq (car form) '(define define-macro))
-			   (pair? (cdr form))
-			   (pair? (cadr form)))
-		      (let ((f (caadr form)))
-			(if (and (symbol? f)
-				 (hash-table-ref built-in-functions f))
-			    (format outport " top-level ~Aredefinition of built-in function ~A: ~A~%" 
-				    (if (> (pair-line-number form) 0)
-					(format #f "(line ~D) " (pair-line-number form))
-					"")
-				    f 
-				    (truncated-list->string form)))))
-		  
-		  (set! vars (lint-walk (if (symbol? form) 
-					    form 
-					    (and (pair? form) 
-						 (car form)))
-					form 
-					vars))
-		  ;(set! calls (+ calls 1))
-		  )
-		
-		(if (and (pair? vars)
-			 *report-multiply-defined-top-level-functions*)
-		    (for-each
-		     (lambda (var)
-		       (let ((var-file (hash-table-ref *top-level-objects* (car var))))
-			 (if (not var-file)
-			     (hash-table-set! *top-level-objects* (car var) *current-file*)
-			     (if (and (string? *current-file*)
-				      (not (string=? var-file *current-file*)))
-				 (format outport ";~S is defined at the top level in ~S and ~S~%" (car var) var-file *current-file*)))))
-		     vars))
-		
-		(if (and (string? file)
-			 (pair? vars)
-			 *report-unused-top-level-functions*)
-		    (report-usage file 'top-level-var "" vars vars))
-		
-		(if (and *report-undefined-identifiers*
-			 (positive? (hash-table-entries other-identifiers)))
-		    (begin
-		      (format outport "the following identifiers were not defined~A: ~{~S~^ ~}~%"
-			      (if (string? file) (format #f " in ~S" file) "")
-			      (map car other-identifiers))
-		      (fill! other-identifiers #f)))
-
-		;(if (and (string? file) (string=? file "profile.scm")) (format *stderr* "calls: ~A ~A~%" calls made-suggestion))
-
-		(if (not (input-port? file))
-		    (close-input-port fp)))))))))
+	  (if (and (string? file)
+		   (pair? vars)
+		   *report-unused-top-level-functions*)
+	      (report-usage file 'top-level-var "" vars vars))
+	  
+	  (if (and *report-undefined-identifiers*
+		   (positive? (hash-table-entries other-identifiers)))
+	      (begin
+		(format outport "~NCthe following identifiers were not defined~A: ~{~S~^ ~}~%"
+			lint-left-margin #\space 
+			(if (string? file) (format #f " in ~S" file) "")
+			(map car other-identifiers))
+		(fill! other-identifiers #f))))))))
+	      
 
 
 
