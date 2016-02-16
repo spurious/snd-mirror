@@ -12,6 +12,7 @@
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc (slow)
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-multiply-defined-top-level-functions* #f)
+(define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 
 (define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 
@@ -2272,7 +2273,6 @@
 	    ((sinh) 'asinh) ((cosh) 'acosh) ((tanh) 'atanh) ((asinh) 'sinh) ((acosh) 'cosh) ((atanh) 'tanh)
 	    ((log) exp) ((exp) log)))
 	
-	
 	(define (just-rationals? form)
 	  (or (null? form)
 	      (rational? form)
@@ -3159,23 +3159,15 @@
       ;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
       ;; nvals to values as a range, checkable if called -- needed in check-args
       ;;
-      ;; modulo range checks?
-      ;; throw/error to unknown tag --can these be saved to the end?
-      ;; export of call/io* port and other uses of closed ports -- rw after close?
-      ;; allocate vector|list without init|fill|set! etc, then ref -- unspecified result -- can this be caught in report-usage?
-      ;; set of func par as last ref to it
       ;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
-      ;; other-idents needs to take require into account
       ;; what about (let () (define...))? or define*/lambda*, i.e. (set! x (let () (define (f a) a)))
       ;; can we catch missing paren error and keep its analysis? or read the code by hand and track nesting?
       ;;   the read-error catch could add parens until its happy, then backtrace
       ;; smarter signature decisions for local funcs (follow simple tail calls)
       ;; or->member using the 4th arg is independent of side-effects [like cond->assoc]
       ;;   simpler than cond because it's just the "test" and no results
-      ;; case else is (if (eq? ...) [or any case-eqv] where selector matches -- move true branch out into the case clauses
-      ;;   check for duplicate keys here
-      ;;   do we combine (if eqv...(case ...))?
-      ;;   similarly cond else (if ...) could be moved out [and collapsed via swap-clauses]
+      ;;   but is it readable? -- need to test this
+      ;; 8309: are there more let reductions (t347)?
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -3192,26 +3184,24 @@
       ;;   the match would happen in report-usage?
       ;; for possible, hash on car, keep tree-len + pointers to matches
       ;;   here can we assume car is not a par and check it before tree count or anything?
-      ;;   what about simple syntactic equalities: (if a b c) <-> (cond (a b) (else c)), (if a (begin ...)) <-> (when a ...) (= a b) <-> (= b a)
-      ;;   this could notice unmatched car that is reversible, and check the reversed case, similarly for 'not
       ;; better built-in use: look for things like the do-loop->fill! cases and predigest
       ;;
       ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
       ;; parameter vals from func calls? and fixup the initial-value from first history setting?
-      ;; free var used only in func -- move to local closure?
-      ;; reverse! missing type checks
       ;; ref count can be confused by with-let if it's a reference to the current env (as in Display in stuff.scm)
       ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
       ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
       ;; accessor: all refs involve (sym-*) or (make-sym...) or (sym?) but then there's *-ref or implicit index
       ;; on setters, types of values can be compared, then used with readers
       ;;
+      ;; with-let var undefined?  each has to be in the let (how to examine?)
+      ;;
       ;; 1159/151
       ;; 1309/176
       
       (case head
-	
+
 	;; ----------------
 	((memq assq memv assv member assoc)
 	 
@@ -5496,33 +5486,49 @@
 							      func (truncated-list->string call) 
 							      (prettify-checker desired-type))))))))
 				   
-				   ;; check for pointless type checks
-				   (when (and (hash-table-ref bools func)
-					      (not (eq? vname func)))
+				   (let ((suggest made-suggestion))
+				     ;; check for pointless type checks
+				     (when (and (hash-table-ref bools func)
+						(not (eq? vname func)))
+				       
+				       (when (or (eq? type func)
+						 (and (compatible? type func)
+						      (not (subsumes? type func))))
+					 (lint-format "~A is ~A, so ~A is #t" name vname (prettify-checker-unq type) call))
+				       
+				       (unless (compatible? type func)
+					 (lint-format "~A is ~A, so ~A is #f" name vname (prettify-checker-unq type) call)))
 				     
-				     (when (or (eq? type func)
-					       (and (compatible? type func)
-						    (not (subsumes? type func))))
-				       (lint-format "~A is ~A, so ~A is #t" name vname (prettify-checker-unq type) call))
+				     ;; (and (pair? x) (eq? x #\a)) etc
+				     (when (and (memq func '(eq? eqv? equal?))
+						(or (and (code-constant? arg1)
+							 (not (compatible? type (->type arg1))))
+						    (and (code-constant? (caddr call))
+							 (not (compatible? type (->type (caddr call)))))))
+				       (lint-format "~A is ~A, so ~A is #f" name vname (prettify-checker-unq type) call))
 				     
-				     (unless (compatible? type func)
-				       (lint-format "~A is ~A, so ~A is #f" name vname (prettify-checker-unq type) call)))
-				   
-				   ;; (and (pair? x) (eq? x #\a)) etc
-				   (when (and (memq func '(eq? eqv? equal?))
-					      (or (and (code-constant? arg1)
-						       (not (compatible? type (->type arg1))))
-						  (and (code-constant? (caddr call))
-						       (not (compatible? type (->type (caddr call)))))))
-				     (lint-format "~A is ~A, so ~A is #f" name vname (prettify-checker-unq type) call))
-				   
-				   ;; the usual eqx confusion
-				   (when (memq type '(char? number? integer? real? float? rational? complex?))
-				     (if (memq func '(eq? equal?))
-					 (lint-format "~A is ~A, so ~A ~A be eqv? in ~A" name 
-						      vname (prettify-checker-unq type) func
-						      (if (eq? func 'eq?) "should" "could")
-						      call)))
+				     
+				     ;; the usual eqx confusion
+				     (when (and (= suggest made-suggestion)
+						(memq type '(char? number? integer? real? float? rational? complex?)))
+				       (if (memq func '(eq? equal?))
+					   (lint-format "~A is ~A, so ~A ~A be eqv? in ~A" name 
+							vname (prettify-checker-unq type) func
+							(if (eq? func 'eq?) "should" "could")
+							call))
+				       ;; check other boolean exprs
+				       (when (and (zero? (var-set arg))
+						  (number? (var-initial-value arg))
+						  (eq? vname arg1)
+						  (null? (cddr call))
+						  (hash-table-ref bools1 func))
+					 (let ((val (catch #t 
+						      (lambda ()
+							((symbol->value func (rootlet)) (var-initial-value arg)))
+						      (lambda args 
+							'error))))
+					   (if (boolean? val)
+					       (lint-format "~A is ~A, so ~A is ~A~%" name vname (var-initial-value arg) call val))))))
 				   
 				   ;; implicit index checks -- these are easily fooled by macros
 				   (when (and (memq type '(vector? float-vector? int-vector? string? list? byte-vector?))
@@ -5538,15 +5544,18 @@
 					     (if (negative? arg1)
 						 (lint-format "~A's index ~A is negative" name vname arg1)
 						 (if (zero? (var-set arg))
-						     (let ((lim (if (code-constant? init)
-								    (length init)
-								    (if (memq (car init) '(vector float-vector int-vector string list byte-vector))
-									(length (cdr init))
-									(and (pair? (cdr init))
-									     (integer? (cadr init))
-									     (memq (car init) '(make-vector make-float-vector make-int-vector 
-													    make-string make-list make-byte-vector))
-									     (cadr init))))))
+						     (let ((lim (cond ((code-constant? init)
+								       (length init))
+
+								      ((memq (car init) '(vector float-vector int-vector string list byte-vector))
+								       (length (cdr init)))
+
+								      (else
+								       (and (pair? (cdr init))
+									    (integer? (cadr init))
+									    (memq (car init) '(make-vector make-float-vector make-int-vector 
+											       make-string make-list make-byte-vector))
+									    (cadr init))))))
 						       (if (and lim (>= arg1 lim))
 							   (lint-format "~A has length ~A, but index is ~A" name vname lim arg1))))))))
 				     
@@ -5567,7 +5576,7 @@
 					 ))))
 				 )
 			       ))) ; do loop through clauses
-			 
+
 			 ;; check for duplicated calls involving arg
 			 (if (and (> (var-ref arg) 8)
 				  (zero? (var-set arg))
@@ -5599,7 +5608,7 @@
 				  (zero? (var-set arg))
 				  (memq (var-ftype arg) '(define define* lambda lambda*))
 				  (pair? (var-arglist arg)))
-			     (let ((pars (map (lambda (p) (list p)) (proper-list (var-arglist arg)))))
+			     (let ((pars (map list (proper-list (var-arglist arg)))))
 			       (do ((clauses (var-history arg) (cdr clauses)))
 				   ((null? (cdr clauses))) ; ignore the initial value
 				 (if (and (pair? (car clauses))
@@ -5654,155 +5663,156 @@
 
     (define (code-equal? l1 l2 matches)
       ;; (format *stderr* "equal: ~A ~A~%" l1 l2)
-      (and (pair? l1)
-	   (pair? l2)
-	   (let ((f1 (car l1))
-		 (f2 (car l2)))
-	     (and (eq? f1 f2)
-		  (let ((rest1 (cdr l1))
-			(rest2 (cdr l2)))
-		    (and (pair? rest1)
-			 (pair? rest2)
-			 (call-with-exit
-			  (lambda (return)
-			    (case f1
-			      ((let)
-			       (let ((name ()))
-				 (if (symbol? (car rest1))                      ; named let -- match funcs too
-				     (if (symbol? (car rest2))
-					 (begin
-					   (set! name (list (cons (car rest1) (car rest2))))
-					   (set! rest1 (cdr rest1))
-					   (set! rest2 (cdr rest2)))
-					 (return #f))
-				     (if (symbol? (car rest2))
-					 (return #f)))
-				 (and (= (length (car rest1)) (length (car rest2)))
-				      (structures-equal? (cdr rest1) (cdr rest2)     ; refs in values are to outer matches
-							 (append (map (lambda (var1 var2)
-									(or (match-vars var1 var2 matches)
-									    (return #f)))
-								      (car rest1)
-								      (car rest2))
-								 name           ; append will splice out nil
-								 matches)))))
-			      ((let*)                                           ; refs move with the vars 
-			       (and (= (length (car rest1)) (length (car rest2)))
-				    (let ((new-matches matches))
-				      (for-each (lambda (var1 var2)
-						  (cond ((match-vars var1 var2 new-matches) =>
-							 (lambda (v)
-							   (set! new-matches (cons v new-matches))))
-							(else (return #f))))
-						(car rest1)
-						(car rest2))
-				      (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
-			      
-			      ((do)                                             ; matches at init are outer, but at step are inner
-			       (and (= (length (car rest1)) (length (car rest2)))
-				    (let ((new-matches matches))
-				      (for-each (lambda (var1 var2)
-						  (cond ((match-vars var1 var2 matches) =>
-							 (lambda (v)
-							   (set! new-matches (cons v new-matches))))
-							(else (return #f))))
-						(car rest1)
-						(car rest2))
-				      (for-each (lambda (var1 var2)
-						  (unless (structures-equal? (cddr var1) (cddr var2) new-matches)
-						    (return #f)))
-						(car rest1)
-						(car rest2))
-				      (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
-			      
-			      ((letrec letrec*)                                ; ??? refs are local I think
-			       (and (= (length (car rest1)) (length (car rest2)))
-				    (let ((new-matches (append (map (lambda (var1 var2)
-								      (cons (car var1) (car var2)))
-								    (car rest1)
-								    (car rest2))
-							       matches)))
-				      (for-each (lambda (var1 var2)
-						  (unless (structures-equal? (cadr var1) (cadr var2) new-matches)
-						    (return #f)))
-						(car rest1)
-						(car rest2))
-				      (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
-			       
-			      ((lambda) 
-			       (if (symbol? (car rest1))
-				   (and (symbol? (car rest2))
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (cons (cons (car rest1) (car rest2)) matches)))
-				   (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (append (map cons (proper-list (car rest1)) (proper-list (car rest2)))
-								   matches)))))
-			      ((define define-constant define-macro define-bacro define-expansion)
-			       (if (symbol? (car rest1))
-				   (and (symbol? (car rest2))
-					(let ((new-matches (cons (cons (car rest1) (car rest2)) matches)))
-					  (and (structures-equal? (cdr rest1) (cdr rest2) new-matches)
-					       new-matches)))
-				   (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (append (map cons (proper-list (car rest1)) (proper-list (car rest2)))
-								   matches))
-					(cons (cons (caar rest1) (caar rest2)) matches))))
-			      ;; for define we add the new name to matches before walking the body (shadow is immediate),
-			      ;;   but then the new name is added to matches and returned (see below)
-
-			      ((lambda*)
-			       (if (symbol? (car rest1))
-				   (and (symbol? (car rest2))
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (cons (cons (car rest1) (car rest2)) matches)))
-				   (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (append (map (lambda (a b)
-									  (if (or (pair? a)  ; if default, both must have the same value
-										  (pair? b))
-									      (if (not (and (pair? a)
-											    (pair? b)
-											    (equal? (cadr a) (cadr b))))
-										  (return #f)
-										  (cons (car a) (car b)))
-									      (cons a b)))
-									(proper-list (car rest1)) (proper-list (car rest2)))
-								   matches)))))
-			       
-			      ((define* define-macro* define-bacro*)
-			       ;; (format *stderr* "~A ~A~%" rest1 rest2)
-			       (if (symbol? (car rest1))
-				   (and (symbol? (car rest2))
-					(let ((new-matches (cons (cons (car rest1) (car rest2)) matches)))
-					  (and (structures-equal? (cdr rest1) (cdr rest2) new-matches)
-					       new-matches)))
-				   (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
-					(structures-equal? (cdr rest1) (cdr rest2)
-							   (append (map (lambda (a b)
-									  (if (or (pair? a)  ; if default, both must have the same value
-										  (pair? b))
-									      (if (not (and (pair? a)
-											    (pair? b)
-											    (equal? (cadr a) (cadr b))))
-										  (return #f)
-										  (cons (car a) (car b)))
-									      (cons a b)))
-									(proper-list (car rest1)) (proper-list (car rest2)))
-								   matches))
-					(cons (cons (caar rest1) (caar rest2)) matches))))
-
-			      (else #f)))))))))) ; can't happen I hope
+      (let ((f1 (car l1))
+	    (f2 (car l2)))
+	(and (eq? f1 f2)
+	     (let ((rest1 (cdr l1))
+		   (rest2 (cdr l2)))
+	       (and (pair? rest1)
+		    (pair? rest2)
+		    (call-with-exit
+		     (lambda (return)
+		       (case f1
+			 ((let)
+			  (let ((name ()))
+			    (if (symbol? (car rest1))                      ; named let -- match funcs too
+				(if (symbol? (car rest2))
+				    (begin
+				      (set! name (list (cons (car rest1) (car rest2))))
+				      (set! rest1 (cdr rest1))
+				      (set! rest2 (cdr rest2)))
+				    (return #f))
+				(if (symbol? (car rest2))
+				    (return #f)))
+			    (and (= (length (car rest1)) (length (car rest2)))
+				 (structures-equal? (cdr rest1) (cdr rest2)     ; refs in values are to outer matches
+						    (append (map (lambda (var1 var2)
+								   (or (match-vars var1 var2 matches)
+								       (return #f)))
+								 (car rest1)
+								 (car rest2))
+							    name           ; append will splice out nil
+							    matches)))))
+			 ((let*)                                           ; refs move with the vars 
+			  (and (= (length (car rest1)) (length (car rest2)))
+			       (let ((new-matches matches))
+				 (for-each (lambda (var1 var2)
+					     (cond ((match-vars var1 var2 new-matches) =>
+						    (lambda (v)
+						      (set! new-matches (cons v new-matches))))
+						   (else (return #f))))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
+			 
+			 ((do)                                             ; matches at init are outer, but at step are inner
+			  (and (= (length (car rest1)) (length (car rest2)))
+			       (let ((new-matches matches))
+				 (for-each (lambda (var1 var2)
+					     (cond ((match-vars var1 var2 matches) =>
+						    (lambda (v)
+						      (set! new-matches (cons v new-matches))))
+						   (else (return #f))))
+					   (car rest1)
+					   (car rest2))
+				 (for-each (lambda (var1 var2)
+					     (unless (structures-equal? (cddr var1) (cddr var2) new-matches)
+					       (return #f)))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
+			 
+			 ((letrec letrec*)                                ; ??? refs are local I think
+			  (and (= (length (car rest1)) (length (car rest2)))
+			       (let ((new-matches (append (map (lambda (var1 var2)
+								 (cons (car var1) (car var2)))
+							       (car rest1)
+							       (car rest2))
+							  matches)))
+				 (for-each (lambda (var1 var2)
+					     (unless (structures-equal? (cadr var1) (cadr var2) new-matches)
+					       (return #f)))
+					   (car rest1)
+					   (car rest2))
+				 (structures-equal? (cdr rest1) (cdr rest2) new-matches))))
+			 
+			 ((lambda) 
+			  (if (symbol? (car rest1))
+			      (and (symbol? (car rest2))
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (cons (cons (car rest1) (car rest2)) matches)))
+			      (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (append (map cons (proper-list (car rest1)) (proper-list (car rest2)))
+							      matches)))))
+			 ((define define-constant define-macro define-bacro define-expansion)
+			  (if (symbol? (car rest1))
+			      (and (symbol? (car rest2))
+				   (let ((new-matches (cons (cons (car rest1) (car rest2)) matches)))
+				     (and (structures-equal? (cdr rest1) (cdr rest2) new-matches)
+					  new-matches)))
+			      (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (append (map cons (proper-list (car rest1)) (proper-list (car rest2)))
+							      matches))
+				   (cons (cons (caar rest1) (caar rest2)) matches))))
+			 ;; for define we add the new name to matches before walking the body (shadow is immediate),
+			 ;;   but then the new name is added to matches and returned (see below)
+			 
+			 ((lambda*)
+			  (if (symbol? (car rest1))
+			      (and (symbol? (car rest2))
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (cons (cons (car rest1) (car rest2)) matches)))
+			      (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (append (map (lambda (a b)
+								     (if (or (pair? a)  ; if default, both must have the same value
+									     (pair? b))
+									 (if (not (and (pair? a)
+										       (pair? b)
+										       (equal? (cadr a) (cadr b))))
+									     (return #f)
+									     (cons (car a) (car b)))
+									 (cons a b)))
+								   (proper-list (car rest1)) (proper-list (car rest2)))
+							      matches)))))
+			 
+			 ((define* define-macro* define-bacro*)
+			  ;; (format *stderr* "~A ~A~%" rest1 rest2)
+			  (if (symbol? (car rest1))
+			      (and (symbol? (car rest2))
+				   (let ((new-matches (cons (cons (car rest1) (car rest2)) matches)))
+				     (and (structures-equal? (cdr rest1) (cdr rest2) new-matches)
+					  new-matches)))
+			      (and (equal? (length (car rest1)) (length (car rest2))) ; (car rest2) might be a symbol, dotted lists ok here
+				   (structures-equal? (cdr rest1) (cdr rest2)
+						      (append (map (lambda (a b)
+								     (if (or (pair? a)  ; if default, both must have the same value
+									     (pair? b))
+									 (if (not (and (pair? a)
+										       (pair? b)
+										       (equal? (cadr a) (cadr b))))
+									     (return #f)
+									     (cons (car a) (car b)))
+									 (cons a b)))
+								   (proper-list (car rest1)) (proper-list (car rest2)))
+							      matches))
+				   (cons (cons (caar rest1) (caar rest2)) matches))))
+			 
+			 (else #f))))))))) ; can't happen I hope
 
     (define (structures-equal? l1 l2 matches)
+      ;; (format *stderr* "    equal ~A ~A~%" l1 l2)
       (if (pair? l1)
 	  (if (eq? (car l1) 'quote)
 	      (and (pair? l2)
 		   (eq? (car l2) 'quote)
 		   (equal? (cdr l1) (cdr l2)))
 	      (and (pair? l2)
-		   (if (pair? (car l1))
+		   (if (and (pair? (car l1))
+			    (pair? (car l2)))
+
 		       (if (memq (caar l1) '(let let* letrec letrec* do lambda lambda*))
 			   (code-equal? (car l1) (car l2) matches)
 			   (if (memq (caar l1) '(define define-constant define-macro define-bacro define-expansion
@@ -5810,7 +5820,25 @@
 			       (let ((mat (code-equal? (car l1) (car l2) matches)))
 				 (and (pair? mat)
 				      (set! matches mat)))
-			       (structures-equal? (car l1) (car l2) matches)))
+
+			       ;; this ignores possible reversible equivalence (i.e. (< x 0) is the same as (> 0 x)
+			       ;;   (structures-equal? (car l1) (car l2) matches)))
+
+			       ;; check for reversible equivalence
+			       ;;   half-humorous problem: infinite loop here switching back and forth!
+		               ;;   so I guess we have to check cdar by hand
+			       ;; we could also check for not+notable here, but lint will complain
+			       ;;   about that elsewhere, causing this check to be ignored.
+			       (or (structures-equal? (car l1) (car l2) matches)
+				   (and (eq? (hash-table-ref reversibles (caar l1)) (caar l2))
+					(do ((a (cdar l1) (cdr a))
+					     (b (reverse (cdar l2)) (cdr b)))
+					    ((or (null? a)
+						 (null? b)
+						 (not (structures-equal? a b matches)))
+					     (and (null? a)
+						  (null? b))))))))
+
 		       (structures-equal? (car l1) (car l2) matches))
 		   (structures-equal? (cdr l1) (cdr l2) matches)))
 	  (let ((match (assq l1 matches)))
@@ -6126,7 +6154,7 @@
 			       (equal? f (cadr prev-f))
 			       (not (side-effect? f env)))
 			  (lint-format "this could be omitted: ~A" name (truncated-list->string f)))
-		      
+
 		      (when (pair? (cddr prev-f))                ; (set! ((L 1) 2)) an error, but lint should keep going
 			(if (and (memq (car prev-f) '(set! define define* define-macro define-constant define-macro*
 						      defmacro defmacro* define-expansion define-bacro define-bacro*))
@@ -6137,8 +6165,8 @@
 				     (and (not (eq? (car prev-f) 'set!))
 					  (pair? (cadr prev-f))        ; (begin ... (define (x...)...) x)
 					  (eq? f (caadr prev-f)))))
-			    (lint-format "this could be omitted: ~A (~A returns its value)" name
-					 (truncated-list->string f) (car prev-f)))
+			    (lint-format "~A returns its value, so this could be omitted: ~A" name
+					 (car prev-f) (truncated-list->string f)))
 			
 			(if (and (pair? f)
 				 (pair? (cdr f))
@@ -6161,8 +6189,8 @@
 					  (not (pair? (cddddr prev-f)))
 					  (not (pair? (cdddr f)))
 					  (not (side-effect? (caddr f) env)))))
-			    (lint-format "this could be omitted: ~A (~A returns its value)" name 
-					 (truncated-list->string f) (car prev-f))))))
+			    (lint-format "~A returns its value, so this could be omitted: ~A" name
+					 (car prev-f) (truncated-list->string f))))))
 	      
 		;; needs f fs prev-f dpy-f dpy-start ctr len
 		;;   trap lint-format
@@ -7181,7 +7209,7 @@
 									     `(begin ,expr ,true))))))
 
 				 (when (and (= suggestion made-suggestion)
-					    (not (equal? expr test)))
+					    (not (equal? expr test))) ; make sure the boolean simplification gets reported
 				   (lint-format "perhaps ~A" name (lists->string test expr)))
 
 				 (if (and (pair? test)
@@ -7222,7 +7250,23 @@
 				 ;; --------
 				 (when (and (= suggestion made-suggestion)
 					    (not (= line-number last-if-line-number)))
-				   ;; unravel complicated if-then-else nestings into a single cond, if possible
+				   ;; unravel complicated if-then-else nestings into a single cond, if possible.
+				   ;;
+				   ;; The (> len 3) below means (nearly) all nested ifs are turned into conds.
+				   ;;   For a long time I thought the if form was easier to read, but now
+				   ;;   I like cond better.  But cond also has serious readability issues:
+				   ;;   it needs to be clearer where the test separates from the result,
+				   ;;   and in a stack of these clauses, it's hard to see anything at all.
+				   ;;   Maybe a different color for the test than the result?
+				   ;;
+				   ;; Also, the check for tree-lengths being hugely different is taken
+				   ;;   from C -- I think it is easier to read a large if statement if
+				   ;;   the shortest clause is at the start -- especially in a nested if where
+				   ;;   it can be nearly impossible to see which dangling one-liner matches
+				   ;;   which if (this even in emacs because it unmarks or doesn't remark the matching
+				   ;;   paren as you're trying to scroll up to it). 
+				   ;;
+				   ;; Anyway, this block is obtrusive and a matter of whimsical preference.
 
 				   (define (swap-clauses form)
 				     (if (not (pair? (cdddr form)))
@@ -7261,16 +7305,16 @@
 				   
 				   (let ((new-if (swap-clauses form)))
 				     (if (eq? (car new-if) 'cond)
-					 (if (> (length new-if) 3)
+					 (if (> (length new-if) *report-nested-if*)
 					     (begin
 					       (set! last-if-line-number line-number)
 					       (lint-format "perhaps ~A" name (lists->string form new-if)))
 					     (if (< (tree-length (cadddr form) 0)
 						    (/ (tree-length (caddr form) 0) 12))
 						 (let ((new-expr (simplify-boolean `(not ,(cadr form)) () () env)))
-						   (set! last-if-line-number line-number)
-						   (lint-format "perhaps ~A" name
-								(lists->string form `(if ,new-expr ,false ,true)))))))))
+						   ;(set! last-if-line-number line-number)
+						   (lint-format "perhaps place the much shorter branch first: ~A" name
+								(truncated-lists->string form `(if ,new-expr ,false ,true)))))))))
 				 ;; --------
 
 				 (lint-walk name expr env)
@@ -7775,13 +7819,23 @@
 						  (lint-format "case else clause is not the last: ~A"
 							       name 
 							       (truncated-list->string (cddr form)))
-						  (when (and (pair? exprs)
-							     (pair? (car exprs))
-							     (null? (cdr exprs))         ; just the case statement in the else clause
-							     (eq? (caar exprs) 'case)
-							     (equal? selector (cadar exprs))
-							     (not (side-effect? selector env)))
-						    (set! else-foldable (cddar exprs)))))))
+						  (and (pair? exprs)
+						       (pair? (car exprs))
+						       (null? (cdr exprs))         
+						       (or (and (eq? (caar exprs) 'case) ; just the case statement in the else clause
+								(equal? selector (cadar exprs))
+								(not (side-effect? selector env))
+								(set! else-foldable (cddar exprs)))
+							   (and (eq? (caar exprs) 'if)   ; just if -- if foldable, make it look like it came from case
+								(equal? selector (eqv-selector (cadar exprs)))
+								(cond-eqv? (cadar exprs) selector #t)
+								(not (side-effect? selector env))
+								;; else-foldable as (((keys-from-test) true-branch) (else false-branch))
+								(set! else-foldable 
+								      (if (pair? (cdddar exprs))
+									  `(,(case-branch (cadar exprs) selector (list (caddar exprs)))
+									    (else ,(car (cdddar exprs))))
+									  (list (case-branch (cadar exprs) selector (cddar exprs))))))))))))
 				    (lint-walk-body name head exprs env))))
 			    (cddr form))
 			   
@@ -7806,7 +7860,6 @@
 				    (else-exprs (and (pair? else-clause) (cdr else-clause))))
 			       
 			       (define (merge-case-keys clause)
-					;(format *stderr* "clause: ~S~%" clause)
 				 (let ((keys (car clause))
 				       (exprs (cdr clause)))
 				   (when (and (pair? exprs)             ; ignore clauses that are messed up

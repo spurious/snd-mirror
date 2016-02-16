@@ -48634,30 +48634,32 @@ EDITS: 1
 (set! (test-funcs 25) snd_test_25)
 (set! (test-funcs 26) snd_test_26)
 
-(if (> test-at-random 0)
-    (do ((i 0 (+ i 1)))           ; run tests in any random order
-	((= i test-at-random))
-      (set! snd-test (random 23))
-      (format *stderr* "~%~A: ~A~%" i snd-test)
-      (before-test-hook snd-test)
-      ((vector-ref test-funcs snd-test))
-      (after-test-hook snd-test))
-    
-    (if (not (or full-test keep-going (< snd-test 0)))
-	(begin                                   ; run one test
-	  (before-test-hook snd-test)
-	  ((vector-ref test-funcs snd-test))
-	  (after-test-hook snd-test))
-	
-	(do ((i 0 (+ i 1)))                       ; run all tests except the irritating ones
-	    ((> i total-tests))
-	  (if (and (or (< i 23) (> i 24))
-		   (or full-test 
-		       (and keep-going (<= snd-test i))))
-	      (begin
-		(before-test-hook i)
-		((vector-ref test-funcs i))
-		(after-test-hook i))))))
+(cond ((> test-at-random 0)             ; run tests in any random order
+       (do ((i 0 (+ i 1)))
+	   ((= i test-at-random))
+	 (set! snd-test (random 23))
+	 (format *stderr* "~%~A: ~A~%" i snd-test)
+	 (before-test-hook snd-test)
+	 ((vector-ref test-funcs snd-test))
+	 (after-test-hook snd-test)))
+
+      ((not (or full-test 
+		keep-going
+		(< snd-test 0)))
+       (before-test-hook snd-test)
+       ((vector-ref test-funcs snd-test))
+       (after-test-hook snd-test))
+
+      (else
+       (do ((i 0 (+ i 1)))
+	   ((> i total-tests))
+	 (when (and (or (< i 23) 
+			(> i 24))
+		    (or full-test
+			(and keep-going (<= snd-test i))))
+	   (before-test-hook i)
+	   ((vector-ref test-funcs i))
+	   (after-test-hook i)))))
 
 
 ;;; ---------------- test all done
