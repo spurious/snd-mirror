@@ -6,15 +6,16 @@
 (provide 'lint.scm)
 
 (define *report-unused-parameters* #f)                    ; many of these are reported anyway if they are passed some non-#f value
-(define *report-unused-top-level-functions* #f)           
+(define *report-unused-top-level-functions* #f)           ; these are very common in Scheme, only questionable in self-contained code
 (define *report-shadowed-variables* #f)                   ; shadowed parameters, etc
 (define *report-undefined-identifiers* #f)                ; names we can't account for
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc (slow)
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
+(define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
+(define *report-loaded-files* #t)                         ; if load/include/require is encountered, include that file in the lint process
 
-(define *load-file-first* #f)                             ; this will actually load the file, so errors will stop lint
 
 (if (provided? 'pure-s7)
     (begin
@@ -7252,7 +7253,7 @@
 					    (not (= line-number last-if-line-number)))
 				   ;; unravel complicated if-then-else nestings into a single cond, if possible.
 				   ;;
-				   ;; The (> len 3) below means (nearly) all nested ifs are turned into conds.
+				   ;; The (> new-len *report-nested-if*) below can mean (nearly) all nested ifs are turned into conds.
 				   ;;   For a long time I thought the if form was easier to read, but now
 				   ;;   I like cond better.  But cond also has serious readability issues:
 				   ;;   it needs to be clearer where the test separates from the result,
@@ -7265,8 +7266,6 @@
 				   ;;   it can be nearly impossible to see which dangling one-liner matches
 				   ;;   which if (this even in emacs because it unmarks or doesn't remark the matching
 				   ;;   paren as you're trying to scroll up to it). 
-				   ;;
-				   ;; Anyway, this block is obtrusive and a matter of whimsical preference.
 
 				   (define (swap-clauses form)
 				     (if (not (pair? (cdddr form)))
@@ -7309,12 +7308,14 @@
 					     (begin
 					       (set! last-if-line-number line-number)
 					       (lint-format "perhaps ~A" name (lists->string form new-if)))
-					     (if (< (tree-length (cadddr form) 0)
-						    (/ (tree-length (caddr form) 0) 12))
-						 (let ((new-expr (simplify-boolean `(not ,(cadr form)) () () env)))
-						   ;(set! last-if-line-number line-number)
-						   (lint-format "perhaps place the much shorter branch first: ~A" name
-								(truncated-lists->string form `(if ,new-expr ,false ,true)))))))))
+					     
+					     (if (= len 4) ; unneccessary?
+						 (let ((true-len (tree-length (caddr form) 0)))
+						   (if (and (> true-len *report-short-branch*)
+							    (< (tree-length (cadddr form) 0) (/ true-len *report-short-branch*)))
+						       (let ((new-expr (simplify-boolean `(not ,(cadr form)) () () env)))
+							 (lint-format "perhaps place the much shorter branch first: ~A" name
+								      (truncated-lists->string form `(if ,new-expr ,false ,true)))))))))))
 				 ;; --------
 
 				 (lint-walk name expr env)
@@ -8808,8 +8809,6 @@
 		      file
 		      (begin
 			(set! *current-file* file)
-			(if *load-file-first* ; this can improve the error checks
-			    (load file))
 			(catch #t
 			  (lambda ()
 			    (let ((p (open-input-file file)))
