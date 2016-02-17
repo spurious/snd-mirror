@@ -55592,6 +55592,7 @@ static s7_pointer check_if(s7_scheme *sc)
 					    {
 					      pair_set_syntax_symbol(sc->code, (one_branch) ? sc->if_a_p_symbol : sc->if_a_p_p_symbol);
 					      set_c_call(sc->code, all_x_eval(sc, test, sc->envir, let_symbol_is_safe));
+					      /* fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
 					    }
 					  else
 					    {

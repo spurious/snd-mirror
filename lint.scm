@@ -14,7 +14,7 @@
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
-(define *report-loaded-files* #f)                         ; if load/include/require is encountered, include that file in the lint process
+(define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 
 
 (if (provided? 'pure-s7)
@@ -3176,6 +3176,9 @@
       ;;   but is it readable? -- need to test this
       ;; 8309: are there more let reductions (t347)?
       ;; if locals unaffected by block in let, move block out?
+      ;;    (not (tree-list-member (map car bindings) p)) + no (previous?) internal defines + no defines in p (blocked by let)
+      ;; report-loaded-files with require and current directory [and check linted-files]
+      ;;   current-directory -> *load-path* undone at end of lint-file, but how to get the directory?
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -3193,6 +3196,7 @@
       ;; for possible, hash on car, keep tree-len + pointers to matches
       ;;   here can we assume car is not a par and check it before tree count or anything?
       ;; better built-in use: look for things like the do-loop->fill! cases and predigest
+      ;; other equalities: cadr->car+cdr,->list-ref+0->(x 0)
       ;;
       ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
@@ -6009,8 +6013,9 @@
 			    (let ((step 'i))
 			      (if (tree-member step prev-f)
 				  (set! step (find-unique-name prev-f #f)))
-			      (lint-format "perhaps ~A... ->~%    (do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
+			      (lint-format "perhaps ~A... ->~%~NC(do ((~A 0 (+ ~A 1))) ((= ~A ~D)) ~A)" name 
 					   (truncated-list->string prev-f)
+					   pp-left-margin #\space
 					   step step step (+ repeats 1)
 					   prev-f))
 
@@ -6033,17 +6038,19 @@
 						    (list-set! call repeat-arg new-arg)
 						    call)))))
 				(if constants?
-				    (lint-format "perhaps ~A... ->~%    (for-each ~S '(~{~S~^ ~}))" name
+				    (lint-format "perhaps ~A... ->~%~NC(for-each ~S '(~{~S~^ ~}))" name
 						 (truncated-list->string (car start-repeats))
+						 pp-left-margin #\space
 						 func
 						 (map unquoted (reverse args)))
 				    (let ((v (var-member func-name env)))
 				      (if (or (and (var? v)
 						   (memq (var-ftype v) '(define define* lambda lambda*)))
 					      (procedure? (symbol->value func-name *e*)))
-					  (lint-format "perhaps ~A... ->~%    (for-each ~S (vector ~{~S~^ ~}))" name 
+					  (lint-format "perhaps ~A... ->~%~NC(for-each ~S (vector ~{~S~^ ~}))" name 
 						       ;; vector rather than list because it is easier on the GC (list copies in s7)
 						       (truncated-list->string (car start-repeats))
+						       pp-left-margin #\space
 						       func
 						       (reverse args))
 					  (if (and (not (var? v))
@@ -6089,7 +6096,8 @@
 				((and (= (tree-count1 (cadr f) arg2 0) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
 				      (or (not (pair? arg1))
 					  (< (tree-length-to arg1 5) 5)))
-				 (lint-format "perhaps ~A ~A ->~%~NC~A" name prev-f f 4 #\space
+				 (lint-format "perhaps ~A ~A ->~%~NC~A" name 
+					      prev-f f pp-left-margin #\space
 					      (object->string `(set! ,(cadr f) ,(tree-subst arg1 (cadr f) arg2))))))
 
 			  (if (and (symbol? (cadr prev-f)) ; (set! x (A)) (set! y (A)) -> (set! x (A)) (set! y x)
@@ -6101,28 +6109,7 @@
 				   (not (side-effect? arg1 env))
 				   (not (maker? arg1)))
 			      (lint-format "perhaps ~A" name (lists->string f `(set! ,(cadr f) ,(cadr prev-f))))))))
-		
-		(let ((repeated-if (and (= f-len prev-len 3)
-					(eq? (car f) 'if)
-					(eq? (car prev-f) 'if)
-					(equal? (cadr f) (cadr prev-f))))
-		      (combine #f))
-		  (if (not repeated-if)
-		      (if block-fs
-			  (if (not (eq? (cdr block-fs) prev-fs))
-			      (set! combine prev-f)
-			      (set! block-fs #f)))
-		      (if block-fs
-			  (set! combine (and (null? (cdr fs)) f))
-			  (set! block-fs prev-fs)))
-		  
-		  (when combine
-		    (if (not (side-effect? (caadr block-fs) env))
-			(lint-format "perhaps combine repeated if's: ~A ... ~A -> (when ~A ~A ... ~A)" name
-				     (car block-fs) combine
-				     (cadr combine) (caddar block-fs) (caddr combine)))
-		    (set! block-fs #f)))
-		
+
 		(if (< ctr (- len 1)) 
 		    ;; f is not the last form, so its value is ignored
 		    (begin
@@ -7436,14 +7423,14 @@
 											    `(((not ,(cadar sequel)) ,@(cddar sequel)))))))))))
 					  ((and (equal? test ''else)
 						(= ctr len))
-					   (lint-format "odd cond clause test: is 'else supposed to be else? ~A in ~A~%" 
-							name clause (truncated-list->string form)))
+					   (lint-format "odd cond clause test: is 'else supposed to be else? ~A" name
+							(truncated-list->string clause)))
 					      
 					  ((and (eq? test 't)
 						(= ctr len)
 						(not (var-member 't env)))
-					   (lint-format "odd cond clause test: is t supposed to be #t? ~A in ~A~%" 
-							name clause (truncated-list->string form))))
+					   (lint-format "odd cond clause test: is t supposed to be #t? ~A" name
+							(truncated-list->string clause))))
 				      
 				      (if (never-false expr)
 					  (if (not (= ctr len))
@@ -8972,6 +8959,11 @@
 				       (if (string=? data "unspecified")
 					   (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
 				       ;; #<unspecified> seems to hit the no-values check?
+				       (symbol->keyword (string->symbol data)))
+
+				      ((#\v) ; r6rs byte-vectors?
+				       (if (string=? data "vu8")
+					   (format outport "~NCuse #u8 in s7, not #vu8~%" lint-left-margin #\space))
 				       (symbol->keyword (string->symbol data)))
 				      
 				      ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
