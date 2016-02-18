@@ -171,8 +171,8 @@
 
 (set! counts (reader))
 
-(if (or (not (string=? (car (counts 0)) "the"))
-	(not (= (cdr (counts 0)) 62063)))
+(if (not (and (string=? (car (counts 0)) "the")
+	      (= (cdr (counts 0)) 62063)))
     (do ((i 0 (+ i 1))) 
 	((= i 40)) 
       (format *stderr* "~A: ~A~%" (car (counts i)) (cdr (counts i)))))

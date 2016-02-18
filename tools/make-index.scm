@@ -235,14 +235,16 @@
 
 
 (define (scheme->ruby scheme-name)
-  (cond ((string=? scheme-name "frame*")        "frame_multiply")
-	((string=? scheme-name "frame+")        "frame_add")
-	((string=? scheme-name "float-vector*") "float-vector_multiply")
-	((string=? scheme-name "float-vector+") "float-vector_add")
-	((string=? scheme-name "mixer*")        "mixer_multiply")
-	((string=? scheme-name "mixer+")        "mixer_add")
-	((string=? scheme-name "redo")          "redo_edit")
-	((string=? scheme-name "in")            "call_in")
+  (cond ((assoc scheme-name
+		'(("frame*"        . "frame_multiply")
+		  ("frame+"        . "frame_add")
+		  ("float-vector*" . "float-vector_multiply")
+		  ("float-vector+" . "float-vector_add")
+		  ("mixer*"        . "mixer_multiply")
+		  ("mixer+"        . "mixer_add")
+		  ("redo"          . "redo_edit")
+		  ("in"            . "call_in"))
+		string=?) => cdr)
 	(else
 	 (let* ((len (length scheme-name))
 		(var-case (hash-table-ref scheme-variable-names scheme-name))

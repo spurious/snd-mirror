@@ -1431,7 +1431,7 @@ Here's the scale-dialog in xg/gtk:
   (define scale-dialog #f)
   (define current-scaler 1.0)
 
-  (define (create-scale-dialog parent)
+  (define (create-scale-dialog)
     (unless scale-dialog
 	(set! scale-dialog (gtk_dialog_new))
 	(g_signal_connect scale-dialog "delete-event"
@@ -1462,7 +1462,7 @@ Here's the scale-dialog in xg/gtk:
 	    (gtk_widget_show scale))))
     (gtk_widget_show scale-dialog))
 
-(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))))
+  (create-scale-dialog))
 </pre>
 
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
@@ -2344,7 +2344,7 @@ bignum-fft performs an FFT using big floats; rl and im are vectors of big floats
 
 
 <!-- bignum-precision -->
-<div class="bluish"><em class=emdef>(*s7* 'bignum-precision)</em> <code></code></div>
+<div class="bluish"><em class=emdef>(*s7* 'bignum-precision)</em></div>
 
 <p>bignum-precision sets the number of bits used in floating-point big numbers (integer 
 bignums have whatever size it takes to represent them).  The default is 128 which gives

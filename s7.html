@@ -3515,7 +3515,7 @@ with-baffle blocks all that &mdash; no continuation can jump into its body:
 	 (call/cc
 	  (lambda (biscuit?)
 	    (set! bad-dog biscuit?) ; bad-dog smells a biscuit!
-	    (biscuit? 'biscuit!)))))
+	    'biscuit!))))
   (if (eq? what's-for-breakfast 'biscuit!) 
       (bad-dog 'biscuit!))     ; now, outside the baffled block, bad-dog wants that biscuit!
   what's-for-breakfast)        ;   but s7 says "No!": baffled! ("continuation can't jump into with-baffle")
@@ -3988,7 +3988,8 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
   (let ((orig (<em class=red>procedure-source</em> proc))) ; this assumes we haven't called "proc" yet
 
     (define (proc-walk source)
-      (if (pair? source)
+      (if (not (pair? source))
+	  source
 	  (if (memq (car source) '(let let*))     ; if let or let*, show local variables
 	      (if (symbol? (cadr source))         ; named let?
 		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
@@ -4005,8 +4006,7 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
 			 `(format () "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
 		   (cddr source)))
 	      (cons (proc-walk (car source))
-		    (proc-walk (cdr source))))
-	  source))
+		    (proc-walk (cdr source))))))
     
     (let* ((new-body (proc-walk orig))
 	   (result (gensym))
@@ -5125,7 +5125,8 @@ I need to know where something unexpected happened.  So:
         (if (provided? e)
 	    expr
 	    (values))
-	(if (pair? e)
+	(if (not (pair? e))
+	    (error "strange #+ chooser: ~S~%" e)
 	    (begin      ; evaluate the #+(...) expression as in cond-expand
 	      (define (traverse tree)
 		(if (pair? tree)                                             
@@ -5135,8 +5136,7 @@ I need to know where something unexpected happened.  So:
 			(and (symbol? tree) (provided? tree)))))
 	      (if (eval (traverse e))
 		  expr
-		  (values)))
-	    (error "strange #+ chooser: ~S~%" e)))))
+		  (values)))))))
 </pre>
 <p>See also the <a href="#circularlistreader">#n=</a> reader below.</p>
 </div>

@@ -571,24 +571,27 @@ If func approves of one, index-if returns the index that gives that element's po
        (let ((iterator? #t))       
 	 (define (iterloop) ; define returns the new value
 	   (let ((result (iter)))
-	     (if (length result)
-		 (if (or (memq result seen-cycles) ; we've dealt with it already, so skip it
-			 (eq? result (iterator-sequence iter))
-			 (iter-memq result iters)) ; we're dealing with it the right now
-		     (iterloop) ; this means the outermost sequence is ignored if encountered during the traversal
-		     (begin
-		       (set! iters (cons iter iters))
-		       (set! iter (make-careful-iterator result))
-		       result))
-		 (if (eq? result #<eof>)
-		     (if (null? iters)
-			 #<eof>
-			 (begin
-			   (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
-			   (set! iter (car iters))
-			   (set! iters (cdr iters))
-			   (iterloop)))
-		     result)))))))))
+	     (cond ((length result)
+		    (if (or (memq result seen-cycles)             ; we've dealt with it already, so skip it
+			    (eq? result (iterator-sequence iter))
+			    (iter-memq result iters))             ; we're dealing with it the right now
+			(iterloop)                                ; this means the outermost sequence is ignored if encountered during the traversal
+			(begin
+			  (set! iters (cons iter iters))
+			  (set! iter (make-careful-iterator result))
+			  result)))
+
+		   ((not (eq? result #<eof>)) 
+		    result)
+
+		   ((null? iters) 
+		    #<eof>)
+
+		   (else
+		    (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
+		    (set! iter (car iters))
+		    (set! iters (cdr iters))
+		    (iterloop))))))))))
 
 
 (define safe-find-if 
@@ -2055,7 +2058,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 				     (set! dir-name (car dir-names))
 				     (set! dir-names (cdr dir-names))
 				     (reader))))
-			     (if (not (member file '("." "..") string=?))
+			     (if (member file '("." "..") string=?)
+				 (reader)
 				 (let ((full-dir-name (string-append dir-name "/" file)))
 				   (if (and recursive 
 					    (reader-cond 
@@ -2068,14 +2072,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 						     result)))))
 				       (let ((new-dir (opendir full-dir-name)))
 					 (if (equal? new-dir NULL)  ; inner directory is unreadable?
-					     (begin
-					       (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
-					       (reader))
+					     (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
 					     (begin
 					       (set! dirs (cons dir dirs))
 					       (set! dir new-dir)
 					       (set! dir-names (cons dir-name dir-names))
-					       (set! dir-name full-dir-name)
-					       (reader))))
-				       (string-append dir-name "/" file)))
-				 (reader)))))))))))))
+					       (set! dir-name full-dir-name)))
+					 (reader))
+				       (string-append dir-name "/" file)))))))))))))))
+

@@ -413,13 +413,10 @@
     (let ((labelled-snds ()))
       
       (define (kmg num)
-	(if (<= num 0)
-	    "disk full!"
-	    (if (> num 1024)
-		(if (> num 1048576)
-		    (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0)))
-		    (format #f "space: ~6,3FM" (/ num 1024.0)))
-		(format #f "space: ~10DK" num))))
+	(cond ((<= num 0)      "disk full!")
+	      ((<= num 1024)   (format #f "space: ~10DK" num))
+	      ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
+	      (else            (format #f "space: ~6,3FM" (/ num 1024.0)))))
       
       (define (show-label data)
 	(if (sound? (car data))

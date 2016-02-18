@@ -1890,7 +1890,6 @@
 										     v)) 
 									       vals) 
 									  env)))
-				   
 				   (return (cond ((null? (cdr elements))
 						  `(,eqf ,sym ,@elements))
 						 
@@ -1909,7 +1908,7 @@
 						 
 						 (else 
 						  `(,func ,sym ',(reverse elements) ,@equals))))))
-			     
+
 			     (let ((new-form ())
 				   (retry #f))
 			       (do ((exprs (cdr form) (cdr exprs)))
@@ -2702,12 +2701,18 @@
 	    ;; what about (* 2.0 (random 1.0)) and the like?
 	    ;;   this is trickier than it appears: (* 2.0 (random 3)) etc
 	    
-	    ((complex)
+	    ((complex make-rectangular)
 	     (if (and (= len 2)
 		      (morally-equal? (cadr args) 0.0)) ; morally so that 0 matches
 		 (car args)
 		 `(complex ,@args)))
 	    
+	    ((make-polar)
+	     (if (and (= len 2)
+		      (morally-equal? (cadr args) 0.0))
+		 (car args)
+		 `(make-polar ,@args)))
+
 	    ((rationalize lognot ash modulo remainder quotient)
 	     (cond ((just-rationals? args)
 		    (catch #t ; catch needed here for things like (ash 2 64)
@@ -3167,18 +3172,14 @@
       ;; nvals to values as a range, checkable if called -- needed in check-args
       ;;
       ;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
-      ;; what about (let () (define...))? or define*/lambda*, i.e. (set! x (let () (define (f a) a)))
-      ;; can we catch missing paren error and keep its analysis? or read the code by hand and track nesting?
-      ;;   the read-error catch could add parens until its happy, then backtrace
+      ;;   perhaps also in macros/functions track free vars and keep in the var record
       ;; smarter signature decisions for local funcs (follow simple tail calls)
-      ;; or->member using the 4th arg is independent of side-effects [like cond->assoc]
-      ;;   simpler than cond because it's just the "test" and no results
-      ;;   but is it readable? -- need to test this
-      ;; 8309: are there more let reductions (t347)?
       ;; if locals unaffected by block in let, move block out?
       ;;    (not (tree-list-member (map car bindings) p)) + no (previous?) internal defines + no defines in p (blocked by let)
-      ;; report-loaded-files with require and current directory [and check linted-files]
-      ;;   current-directory -> *load-path* undone at end of lint-file, but how to get the directory?
+      ;;    also split let to localize?
+      ;; perhaps report an overall order to definitions in a block that maximizes locality
+      ;; reuse of let var where value is if no intervening change -- this is hard to track
+      ;;   if used immediately, and not target of set, and func is not a macro, and val contents unchanged...
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -3196,7 +3197,6 @@
       ;; for possible, hash on car, keep tree-len + pointers to matches
       ;;   here can we assume car is not a par and check it before tree count or anything?
       ;; better built-in use: look for things like the do-loop->fill! cases and predigest
-      ;; other equalities: cadr->car+cdr,->list-ref+0->(x 0)
       ;;
       ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
@@ -7309,9 +7309,107 @@
 							    (< (tree-length (cadddr form) 0) (/ true-len *report-short-branch*)))
 						       (let ((new-expr (simplify-boolean `(not ,(cadr form)) () () env)))
 							 (lint-format "perhaps place the much shorter branch first: ~A" name
-								      (truncated-lists->string form `(if ,new-expr ,false ,true)))))))))))
-				 ;; --------
+								      (truncated-lists->string form `(if ,new-expr ,false ,true))))))))))
+				   ;; --------
 
+				   (if (and (= len 4) ; move repeated test to top, if no inner false branches
+					    (pair? true)
+					    (pair? false)
+					    (eq? (car true) 'if)
+					    (eq? (car false) 'if)
+					    (equal? (cadr true) (cadr false))
+					    (null? (cdddr true))
+					    (null? (cdddr false)))
+				       (lint-format "perhaps ~A" name
+						    (lists->string form `(if ,(cadr (caddr form))
+									     (if ,(cadr form)
+										 ,(caddr (caddr form))
+										 ,(caddr (cadddr form)))))))
+
+				   (if (and (= len 4) ; move repeated start/end statements out of the if
+					    (pair? true)
+					    (pair? false)
+					    (eq? (car true) 'begin)
+					    (eq? (car false) 'begin))
+				       (let ((true-len (length true))
+					     (false-len (length false)))
+					 (if (and (> true-len 2)
+						  (> false-len 2))
+					     (let ((start (if (and (equal? (cadr true) (cadr false))
+								   (not (side-effect? expr env))) ; expr might affect start, so we can't pull it ahead
+							      (list (cadr true))
+							      ()))
+						   (end (if (equal? (list-ref true (- true-len 1))
+								    (list-ref false (- false-len 1)))
+							    (list (list-ref true (- true-len 1)))
+							    ())))
+					       (when (or (pair? start)
+							 (pair? end))
+						 (let ((new-true (cdr true))
+						       (new-false (cdr false)))
+						   (when (pair? end)
+						     (set! new-true (copy new-true (make-list (- true-len 2))))
+						     (set! new-false (copy new-false (make-list (- false-len 2)))))
+						   (when (pair? start)
+						     (set! new-true (cdr new-true))
+						     (set! new-false (cdr new-false)))
+						   (if (null? (cdr new-true))
+						       (set! new-true (car new-true))
+						       (set! new-true (cons 'begin new-true)))
+						   (if (null? (cdr new-false))
+						       (set! new-false (car new-false))
+						       (set! new-false (cons 'begin new-false)))
+						   (lint-format "perhaps ~A" name
+								(lists->string form `(begin ,@start
+											    (if ,(cadr form)
+												,new-true
+												,new-false)
+											    ,@end)))))))))
+
+				   ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
+				   ;;   TODO: this should check that the gathered code does not affect the original test
+				   (if (and (= len 4)
+					    (pair? true)
+					    (pair? false)
+					    (eq? (car true) 'let)
+					    (eq? (car false) 'let)
+					    (pair? (cadr true))
+					    (pair? (cadr false)))
+				       (let ((true-vars (map car (cadr true)))
+					     (false-vars (map car (cadr false)))
+					     (shared-vars ()))
+					 (for-each (lambda (v)
+						     (if (and (memq v false-vars)
+							      (let ((tv (assq v (cadr true)))
+								    (fv (assq v (cadr false))))
+								(equal? (cadr tv) (cadr fv))))
+							 (set! shared-vars (cons v shared-vars))))
+						   true-vars)
+					 (if (pair? shared-vars)
+					     ;; now remake true/false lets (maybe nil) without shared-vars
+					     (let ((ntv ())
+						   (nfv ())
+						   (sv ()))
+					       (for-each (lambda (v)
+							   (if (memq (car v) shared-vars)
+							       (set! sv (cons v sv))
+							       (set! ntv (cons v ntv))))
+							 (cadr true))
+					       (if (or (pair? ntv)
+						       (pair? (cdddr true))) ; even define is safe here because outer let blocks just as inner let used to
+						   (set! ntv `(let (,@(reverse ntv)) ,@(cddr true)))
+						   (set! ntv (caddr true)))
+					       (for-each (lambda (v)
+							   (if (not (memq (car v) shared-vars))
+							       (set! nfv (cons v nfv))))
+							 (cadr false))
+					       (if (or (pair? nfv)
+						       (pair? (cdddr false)))
+						   (set! nfv `(let (,@(reverse nfv)) ,@(cddr false)))
+						   (set! nfv (caddr false)))
+					       (lint-format "perhaps ~A" name
+							    (lists->string form `(let (,@(reverse sv)) (if ,(cadr form) ,ntv ,nfv)))))))))
+				   
 				 (lint-walk name expr env)
 				 (set! env (lint-walk name true env))
 				 (if (= len 4) (set! env (lint-walk name false env)))))))
@@ -7591,7 +7689,7 @@
 				 (lint-format "perhaps ~A" name (lists->string form `(or ,(caadr form) ,else-clause)))))
 
 			   ;; --------
-			   (when (not (or has-combinations all-eqv)) ; (= suggest made-suggestion) 
+			   (when (not (or has-combinations all-eqv))
 			     ;; look for repeated ((op x c1) c2) -> ((assoc x '((c1 . c2)...)) => cdr) anywhere in the clause list
 			     (let ((nc ())
 				   (op #f)
@@ -8082,8 +8180,7 @@
 				 (if (null? (cadr form))
 				     (lint-format "pointless let: ~A" name (lists->string form (car body)))
 				     (if (null? (cadar body))
-					 (lint-format "pointless let: ~A" name (lists->string form `(let ,(cadr form) ,@(cddar body))))))))
-			   )
+					 (lint-format "pointless let: ~A" name (lists->string form `(let ,(cadr form) ,@(cddar body)))))))))
 			 
 			 (let ((vars (if (and named-let 
 					      (not (keyword? named-let))
@@ -8097,6 +8194,7 @@
 							  :initial-value form
 							  :env env))
 					 ()))
+			       (suggest made-suggestion)
 			       (varlist (if named-let (caddr form) (cadr form)))
 			       (body (if named-let (cdddr form) (cddr form))))
 			   
@@ -8564,13 +8662,33 @@
 		   ;; ---------------- defgenerator ----------------
 		   (append (get-generator form) env))
 		  
+
 		  ((load)
-		   (if *report-loaded-files*
+		   ;; ---------------- load ----------------
+		   (if (and *report-loaded-files*
+			    (string? (cadr form)))
 		       (catch #t
 			 (lambda ()
 			   (lint-file (cadr form) env))
 			 (lambda args
 			   env))
+		       env))
+
+		  ((require)
+		   ;; ---------------- require ----------------
+		   (if *report-loaded-files*
+		       (let ((vars env))
+			 (for-each 
+			  (lambda (f)
+			    (let ((file (*autoload* f)))
+			      (if (string? file)
+				  (catch #t
+				    (lambda ()
+				      (set! vars (lint-file file vars)))
+				    (lambda args
+				      #f)))))
+			  (cdr form))
+			 vars)
 		       env))
 
 		  ;; ----------------
@@ -8863,13 +8981,22 @@
       
       (let ((old-current-file *current-file*)
 	    (old-pp-left-margin pp-left-margin)
-	    (old-lint-left-margin lint-left-margin))
+	    (old-lint-left-margin lint-left-margin)
+	    (old-load-path *load-path*))
 
 	(dynamic-wind
 	    (lambda ()
 	      (set! pp-left-margin (+ pp-left-margin 4))
-	      (set! lint-left-margin (+ lint-left-margin 4)))
-	    
+	      (set! lint-left-margin (+ lint-left-margin 4))
+	      (when (and (string? file)
+			 (char=? (file 0) #\/))
+		(let ((last-pos 0))
+		  (do ((pos (char-position #\/ file (+ last-pos 1)) (char-position #\/ file (+ last-pos 1))))
+		      ((not pos)
+		       (if (> last-pos 0)
+			   (set! *load-path* (cons (substring file 0 last-pos) *load-path*))))
+		    (set! last-pos pos)))))
+
 	    (lambda ()
 	      (if (not (member file linted-files))
 		  (lint-file-1 file env)
@@ -8879,7 +9006,9 @@
 	      (set! pp-left-margin old-pp-left-margin)
 	      (set! lint-left-margin old-lint-left-margin)
 	      (set! *current-file* old-current-file)
-	      (newline outport)))))
+	      (set! *load-path* old-load-path)
+	      (if (positive? (length *current-file*))
+		  (newline outport))))))
     
 
     
@@ -8954,6 +9083,14 @@
 				      
 				      ((#\T) (string=? data "T"))
 				      ((#\F) (and (string=? data "F") (list 'not #t)))
+
+				      ((#\l #\z)
+				       (let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
+					 (if (number? num)
+					     (begin
+					       (format outport "~NCjust omit this silly #~C!~%" lint-left-margin #\space (data 0))
+					       num)
+					     (symbol->keyword (string->symbol data)))))
 				      
 				      ((#\u) ; for Bigloo
 				       (if (string=? data "unspecified")
@@ -9085,10 +9222,12 @@
 	  (string-append (substring str 0 pos)
 			 (let* ((epos (char-position #\; str pos))
 				(substr (substring str (+ pos 1) epos)))
-			   (string-append (cond ((string=? substr "gt") ">")
-						((string=? substr "lt") "<")
-						((string=? substr "mdash") "-")
-						((string=? substr "amp") "&")
+
+			   (string-append (cond ((assoc substr '(("gt"    . ">") 
+								 ("lt"    . "<") 
+								 ("mdash" . "-") 
+								 ("amp"   . "&"))
+							string=?) => cdr)
 						(else (format () "unknown: ~A~%" substr)))
 					  (fixup-html (substring str (+ epos 1)))))))))
   
@@ -9136,7 +9275,7 @@
 							     (set! *report-shadowed-variables* #t)
 							     (lint "t631-temp.scm" p #f)
 							     (set! *report-shadowed-variables* old-shadow))))))
-					    (if (> (length outstr) 0)
+					    (if (> (length outstr) 1) ; possible newline at end
 						(format () ";~A ~D: ~A~%" file line-num outstr)))))
 				      (lambda args
 					(format () ";~A ~D, error in read: ~A ~A~%" file line-num args

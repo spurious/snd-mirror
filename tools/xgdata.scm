@@ -3293,7 +3293,8 @@
 (CFNC "void gtk_text_view_set_cursor_visible GtkTextView* text_view gboolean setting")
 (CFNC "gboolean gtk_text_view_get_cursor_visible GtkTextView* text_view")
 (CFNC "void gtk_text_view_get_iter_location GtkTextView* text_view GtkTextIter* iter GdkRectangle* location")
-(CFNC "void gtk_text_view_get_iter_at_location GtkTextView* text_view GtkTextIter* iter gint x gint y")
+;;; (CFNC "void gtk_text_view_get_iter_at_location GtkTextView* text_view GtkTextIter* iter gint x gint y")
+;;; gboolean return in 3.20
 (CFNC "void gtk_text_view_get_line_yrange GtkTextView* text_view GtkTextIter* iter gint* [y] gint* [height]")
 (CFNC "void gtk_text_view_get_line_at_y GtkTextView* text_view GtkTextIter* target_iter gint y gint* [line_top]")
 (CFNC "void gtk_text_view_buffer_to_window_coords GtkTextView* text_view GtkTextWindowType win gint buffer_x gint buffer_y gint* [window_x] gint* [window_y]")
@@ -5579,7 +5580,8 @@
 (CFNC "void gtk_list_store_insert_with_valuesv GtkListStore* list_store GtkTreeIter* iter gint position gint* columns GValue* values gint n_values")
 ;;; (CFNC "void gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* [trailing] gint x gint y")
 ;;; apparently buggy
-(CFNC "void gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")
+;;; (CFNC "void gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")
+;;; gboolean in 3.20
 
 (CFNC "PangoAttribute* pango_attr_size_new_absolute int size")
 (CFNC "void pango_font_description_set_absolute_size PangoFontDescription* desc double size")
@@ -9315,3 +9317,19 @@
 ;;; 3.19.8:
 
 (CFNC-3.20 "void gtk_render_background_get_clip GtkStyleContext* context gdouble x gdouble y gdouble width gdouble height GdkRectangle* [out_clip]")
+
+
+;;; 3.19.9:
+
+(CSTR-3.20 "GTK_LEVEL_BAR_OFFSET_FULL")
+(CINT-3.20 "GDK_DRAG_CANCEL_NO_TARGET" "GdkDragCancelReason")
+(CINT-3.20 "GDK_DRAG_CANCEL_USER_CANCELLED" "GdkDragCancelReason")
+(CINT-3.20 "GDK_DRAG_CANCEL_ERROR" "GdkDragCancelReason")
+
+(CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_pixel GtkTextLayout* layout GtkTextIter* iter gint x gint y")
+(CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* [trailing] gint x gint y")
+
+;;; these two used to return void so we do them by hand in makexg.scm
+;;; (CFNC-3.20 "gboolean gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")
+;;; (CFNC-3.20 "gboolean gtk_text_view_get_iter_at_location GtkTextView* text_view GtkTextIter* iter gint x gint y")
+

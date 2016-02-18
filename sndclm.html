@@ -425,9 +425,9 @@ do everything by hand:
 </p>
 
 <pre class="indented">
-(let ((sound (<a class=quiet href="extsnd.html#newsound">new-sound</a> "test.snd" :size 22050))
-      (increment (/ (* 440.0 2.0 pi) 22050.0))
+(let ((increment (/ (* 440.0 2.0 pi) 22050.0))
       (current-phase 0.0))
+  (<a class=quiet href="extsnd.html#newsound">new-sound</a> "test.snd" :size 22050)
   (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y)
  	         (let ((val (* .1 (sin current-phase))))
                    (set! current-phase (+ current-phase increment))

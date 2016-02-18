@@ -60314,15 +60314,14 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
    */
   if (is_pair(p))
     {
-      if (is_optimized(p))
+      if ((is_optimized(p)) &&
+	  ((optimize_op(p) & 1) == 0)) /* protect possibly shared code?  Elsewhere we assume these aren't changed */
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);
-#if 1
+	  /* these apparently make no difference */
 	  set_opt_con1(p, sc->nil);
 	  set_opt_con2(p, sc->nil);
-#endif
-
 	}
       clear_all_optimizations(sc, cdr(p));
       clear_all_optimizations(sc, car(p));
@@ -64508,6 +64507,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* there is a problem with this -- if the caller still insists on goto OPT_EVAL, for example,
 	       *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
 	       */
+#if DEBUGGING
+	      if (is_h_optimized(sc->code))
+		fprintf(stderr, "%s[%d]: clearing %s in %s\n", __func__, __LINE__, opt_names[optimize_op(sc->code)], DISPLAY(sc->code));
+#endif
 	      clear_all_optimizations(sc, code);
 	      /* and fall into the normal evaluator */
 	    }
