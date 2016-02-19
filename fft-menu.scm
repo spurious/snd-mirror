@@ -41,10 +41,10 @@
 (define (cp-fft-edit)
   (fft-edit fft-edit-low-frequency fft-edit-high-frequency))
 
-(if (or (provided? 'xg) 
-	(provided? 'xm))
+(if (not (or (provided? 'xg) 
+	     (provided? 'xm)))
+    (set! fft-edit-menu-label (add-to-menu fft-menu fft-edit-label cp-fft-edit))
     (begin
-      
       (define (post-fft-edit-dialog)
         (if (not fft-edit-dialog)
             ;; if fft-edit-dialog doesn't exist, create it
@@ -99,10 +99,7 @@ removes all energy below the low frequency and above the high frequency, then co
 				     (lambda (w context info) (set! fft-edit-high-frequency ((*motif* '.value) info))))
 				 1))))))
         (activate-dialog fft-edit-dialog))
-      
-      (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" post-fft-edit-dialog)))
-    
-    (set! fft-edit-menu-label (add-to-menu fft-menu fft-edit-label cp-fft-edit)))
+      (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" post-fft-edit-dialog))))
 
 (set! fft-list (cons (lambda ()
 		       (let ((new-label (format #f "FFT notch filter (~D ~D)" fft-edit-low-frequency fft-edit-high-frequency)))

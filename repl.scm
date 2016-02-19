@@ -72,7 +72,7 @@
 	  (define (push-line line)
 	    (if (null? histtop)
 		(begin
-		  (set! histtop (list line))
+		  (set! histtop (list (copy line)))
 		  (set! histtail histtop))
 		(begin
 		  (set-cdr! histtail (list line))
@@ -109,11 +109,11 @@
 	  (define history (dilambda 
 			   (lambda (back)
 			     (let ((i (+ histpos back)))
-			       (if (< i 0)
-				   (histbuf (+ histsize i))
-				   (if (>= i histsize)
-				       (histbuf (- i histsize))
-				       (histbuf i)))))
+			       (copy (if (< i 0)
+					 (histbuf (+ histsize i))
+					 (if (>= i histsize)
+					     (histbuf (- i histsize))
+					     (histbuf i))))))
 
 			   (lambda (new-line)
 			     (let ((pos (history-member new-line)))
@@ -130,7 +130,7 @@
 				   (set! (histbuf i) (histbuf (+ i 1))))
 				 (set! histpos (- histpos 1)))
 
-			       (set! (histbuf histpos) new-line)
+			       (set! (histbuf histpos) (copy new-line))
 			       (set! histpos (+ histpos 1))
 			       (if (= histpos histsize)
 				   (set! histpos 0))))))
@@ -884,7 +884,7 @@
 				 (if (or (= chars 1)
 					 (not (= input-fd terminal-fd)))
 				     (display-lines))
-				 (set! (history) (copy cur-line))
+				 (set! (history) cur-line)
 				 (set! m-p-pos 0)
 				 
 				 (with-repl-let
@@ -946,7 +946,7 @@
 		  (let ((len (length histtop)))
 		    (let ((pos (or (string->number cur-line) len)))
 		      (set! pos (min len (max pos 1)))
-		      (set! cur-line (histtop (- pos 1)))
+		      (set! cur-line (copy (histtop (- pos 1))))
 		      (fixup-new-line))))
 
 		(define (move-forward-in-history c)

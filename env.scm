@@ -291,7 +291,8 @@ to have the same extent as the original's. 'reflected' causes every other
 repetition to be in reverse."))
     (lambda* (ur-env repeats reflected normalized)
       (let* ((times (if reflected (floor (/ repeats 2)) repeats))
-	     (e (if reflected
+	     (e (if (not reflected)
+		    ur-env
 		    (let ((lastx (ur-env (- (length ur-env) 2)))
 			  (rev-env (cddr (reverse ur-env)))
 			  (new-env (reverse ur-env)))
@@ -299,8 +300,7 @@ repetition to be in reverse."))
 			     (set! new-env (cons (+ lastx (- lastx (cadr rev-env))) new-env))
 			     (set! new-env (cons (car rev-env) new-env))
 			     (set! rev-env (cddr rev-env)))
-		      (reverse new-env))
-		    ur-env))
+		      (reverse new-env))))
 	     (first-y (cadr e))
 	     (x-max (e (- (length e) 2)))
 	     (x (car e))
@@ -535,8 +535,9 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 		 (if (or (< px qx tx) (< py qy ty) (< tx qx px) (< ty qy py)) 
 		     :after
 		     :within)))))
-  (if (and env1
-	   (> (length env1) 4))
+  (if (not (and env1
+		(> (length env1) 4)))
+      env1
       (let ((new-env (list (cadr env1) (car env1)))
 	    (ymax (max-envelope env1))
 	    (ymin (min-envelope env1))
@@ -570,5 +571,4 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 		  (set! qtx ttx)
 		  (set! qty tty)))
 	      (set! new-env (cons qty (cons qtx new-env)))
-	      (reverse new-env))))
-      env1))
+	      (reverse new-env))))))

@@ -1278,13 +1278,10 @@
 	       (not (or i1 i2))
 	       (or e1 e2))
 	  (format () ";or4 1~%"))
-      (if f1
-	  (if e1
-	      (if (not e2)
-		  (format () ";or4 2~%")
-		  (set! oki (+ oki 1)))
-	      (format () ";or4 3~%"))
-	  (format () ";or4 4~%")))))
+      (cond ((not f1) (format () ";or4 4~%"))
+	    ((not e1) (format () ";or4 3~%"))
+	    ((not e2) (format () ";or4 2~%"))
+	    (else (set! oki (+ oki 1)))))))
 
 
 ;;; --------------------------------------------------------------------------------

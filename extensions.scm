@@ -55,14 +55,14 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (let ((original-maxamp (maxamp snd chn)))
 	(mix filename beg in-chan snd chn)
 	(let ((new-maxamp (maxamp snd chn)))
-	  (if (not (= original-maxamp new-maxamp))
+	  (if (= original-maxamp new-maxamp)
+	      1.0
 	      (let ((scaler (/ original-maxamp new-maxamp))
 		    (old-sync (sync snd)))
 		(set! (sync snd) (+ (sync-max) 1))
 		(scale-by scaler snd chn)
 		(set! (sync snd) old-sync)
-		scaler)
-	      1.0))))))
+		scaler)))))))
 
 
 ;;;-------- mix with envelope on mixed-in file

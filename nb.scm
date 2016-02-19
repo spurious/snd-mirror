@@ -86,15 +86,15 @@ It causes a description of the file to popup when the mouse crosses the filename
 			     (> (length comment) 0))
 			(format #f "~%  comment: ~A" comment)
 			""))
-		  (if (and use-gdbm
-			   (file-exists? nb-database))
+		  (if (not (and use-gdbm
+				(file-exists? nb-database)))
+		      ""
 		      (let* ((ptr (gdbm-open nb-database 'read))
 			     (note (gdbm-fetch ptr file)))
 			(gdbm-close! ptr)
 			(if (string? note)
 			    (format #f "~%~A" note)
-			    ""))
-		      ""))))
+			    ""))))))
 
       (let ((region-viewer 2))
 	(set! nb-mouse-response-time (get-internal-real-time))

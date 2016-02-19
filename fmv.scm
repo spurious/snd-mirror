@@ -110,14 +110,14 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	       (oscil carrier 
 		      (+ vib 
 			 (* (if ind-noi (+ 1.0 (rand-interp ind-noi)) 1.0)
-			    (if fmosc1
+			    (if (not fmosc1)
+				0.0
 				(if coeffs
 				    (* (indf1)
 				       (polynomial coeffs (oscil fmosc1 vib)))
 				    (+ (* (indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
 				       (* (indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
-				       (* (indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz)))))
-				0.0)))))))))))
+				       (* (indf3) (oscil fmosc3 (+ (* fm3-rat vib) fuzz))))))))))))))))
 
 #|
 (define test-v 

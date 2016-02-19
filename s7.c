@@ -67721,6 +67721,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	default:
 	  fprintf(stderr, "unknown operator: " INT_FORMAT " in %s\n", sc->op, DISPLAY(current_code(sc)));
 #if DEBUGGING
+	  fprintf(stderr, "stack size: %u\n", sc->stack_size);
 	  if (sc->stack_end < sc->stack_start) 
 	    fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
 	  if (sc->stack_end >= sc->stack_start + sc->stack_size) 
@@ -67755,10 +67756,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 /* needed in s7_gmp_init and s7_init, initialized in s7_init before we get to gmp */
-static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c;
-#if (!WITH_PURE_S7)
-static s7_pointer pl_tl;
-#endif
+static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c, pl_tl;
+
 
 
 

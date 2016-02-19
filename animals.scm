@@ -2962,9 +2962,7 @@
     (do ((i 0 (+ i 1)))
 	((= i 40))
       (savannah-2 (+ beg 1.29 .36 (* i .0145)) (* amp af) 5600)
-      (if (< i 20)
-	  (set! af (+ af .004))
-	  (set! af (- af .004)))))
+      (set! af (if (< i 20) (+ af .004) (- af .004)))))
   
   (savannah-7 (+ beg 2.27) (* .4 amp))
   
@@ -10917,11 +10915,11 @@
 
 (define (calling-all-animals)
   (with-sound (:srate 44100) ;(srate needed by snd-test)
-	      (let ((beg 0.0))
-		(set! beg (calling-all-frogs beg))
-		(set! beg (calling-all-mammals beg))
-		(set! beg (calling-all-insects beg))
-		(set! beg (calling-all-birds beg)))))
+    (calling-all-birds 
+     (calling-all-insects 
+      (calling-all-mammals 
+       (calling-all-frogs 0.0))))))
+
 
 
 

@@ -4386,7 +4386,7 @@
       (undo)
       (close-sound ind))
     
-    (define-constant (string-=? a b) ;(format *stderr* "str: ~A ~A~%" a b)
+    (define (string-=? a b) ;(format *stderr* "str: ~A ~A~%" a b)
       (or (string=? a b)
 	  (and (or (char-position #\- a) 
 		   (char-position #\- b))

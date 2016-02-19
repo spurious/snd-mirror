@@ -54,7 +54,8 @@
       (if (not (= (v1 i) 0.0))
 	  (set! pos i)))
     
-    (if (>= pos 0) ; if still -1, must be all zero 
+    (if (< pos 0) ; if still -1, must be all zero 
+	impulse-response
 	(let ((scl (/ (v1 pos) (v0 0)))
 	      (size (float-vector-size v1)))
 	  (float-vector-subtract! 
@@ -63,8 +64,7 @@
 
 	  (if (< (float-vector-size v1) size)
 	      (unconvolve-1 v0 v1 (cons (list scl pos) impulse-response))
-	      impulse-response))
-	impulse-response)))
+	      impulse-response)))))
 
 (define (unconvolve v0 v1)
   (and (float-vector? v0) 
