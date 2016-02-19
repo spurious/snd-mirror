@@ -110,7 +110,7 @@
 	      values vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
 	      zero?
-	      #_{list} #_{apply_values} #_{append} #_{multivector} unquote))
+	      #_{list} #_{apply_values} #_{append} unquote))
 	   ;; do not include file-exists? or directory?
 	   ;; should this include peek-char or unlet ?
 	   ht))
@@ -158,14 +158,14 @@
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
 			         exit dilambda hash-table-size make-hook hook-functions
-				 #_{list} #_{apply_values} #_{append} #_{multivector} unquote))
+				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
 	(makers '(gensym sublet inlet make-iterator let->list random-state random-state->list number->string
 		  make-string string string-copy copy list->string string->list string-append substring object->string
 		  format cons list make-list reverse append vector-append list->vector vector->list make-vector
 		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
-		  byte-vector hash-table hash-table* make-hash-table make-hook #_{list} #_{append} #_{multivector}))
+		  byte-vector hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
 	
 	(deprecated-ops '((global-environment . rootlet)
 			  (current-environment . curlet)
@@ -1972,7 +1972,7 @@
 								  (lambda (a b)
 								    (and (pair? b)
 									 (memq (car b) '(char-position string-position format string->number
-												       assoc assq assv memq memv member)))))))
+											 assoc assq assv memq memv member)))))))
 						(let ((sig (arg-signature (car arg2) env)))
 						  (let ((arg-type (and (pair? sig)
 								       (pair? (cdr sig))
@@ -3205,6 +3205,11 @@
       ;; call/* exiters, track return points better (reuse sig code?), and fix the message to be less confusing
       ;; the *#readers* might notice local reader settings -- cancel default if collision -- restore in lint-file etc (lint itself then becomes a mess)
       ;; (cond (A b) (C b)..) -- under has-combinations I think?  (cond (A b) ((or A B) c))? (cond (A b) (B c) (else b)) -> (if (or A (not B)) b c)
+      ;; char-position from (memx c (string->list...)) and equivalents
+      ;;  (memv #\= (string->list s))
+      ;;  (null? (string->list string))
+      ;;  (car (string->list (symbol->string old)))
+      ;;  (member (string-ref s 0) (string->list (*haskell-open-parens*)))
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -3236,7 +3241,12 @@
       ;;
       ;; 1159/151
       ;; 1309/176
-      
+#|
+      (if (member 'string->list form (lambda (a b) 
+				       (and (pair? b)
+					    (eq? (car b) 'string->list))))
+	  (format *stderr* "~A~%~%" form))
+|#    
       (case head
 
 	;; ----------------
@@ -9037,8 +9047,8 @@
 			   (lint-walk name (cadr x) env) ; register refs
 			   (set! happy #f)))
 		       form)
-		      (if (not happy)
-			  (lint-format "quasiquoted vectors are a really bad idea: ~A" name form))))
+		      (if (not happy)   ; these are used exactly 4 times in 2.5 million lines of randomly gathered open source scheme code
+			  (lint-format "quasiquoted vectors are not supported: ~A" name form))))
 		env))))
 
 

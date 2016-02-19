@@ -195,7 +195,6 @@
 #if WITH_PURE_S7
   #define WITH_EXTRA_EXPONENT_MARKERS 0
   #define WITH_IMMUTABLE_UNQUOTE 1
-  #define WITH_QUASIQUOTE_VECTOR 0
   /* also omitted: *-ci* functions, char-ready?, cond-expand, multiple-values-bind|set!, call-with-values, defmacro(*)
    *   and a lot more (inexact/exact, integer-length,  etc) -- see s7.html.
    */
@@ -216,11 +215,6 @@
 #ifndef WITH_IMMUTABLE_UNQUOTE
   #define WITH_IMMUTABLE_UNQUOTE 0
   /* this removes the name "unquote" */
-#endif
-
-#ifndef WITH_QUASIQUOTE_VECTOR
-  #define WITH_QUASIQUOTE_VECTOR 0
-  /* this determines whether we include support for quasiquoted vector constants `#(...) */
 #endif
 
 #ifndef WITH_C_LOADER
@@ -2653,7 +2647,7 @@ enum {OP_NO_OP,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
-      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
+      OP_READ_QUASIQUOTE, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
       OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_DONE,
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1,
@@ -2830,7 +2824,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
-      "read_quasiquote", "read_quasiquote_vector", "read_unquote", "read_apply_values",
+      "read_quasiquote", "read_unquote", "read_apply_values",
       "read_vector", "read_byte_vector", "read_done",
       "load_return_if_eof", "load_close_and_pop_if_eof", "eval_done",
       "catch", "dynamic_wind", "define_constant", "define_constant1",
@@ -38502,15 +38496,6 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
 }
 
 
-static s7_pointer g_qq_multivector(s7_scheme *sc, s7_pointer args)
-{
-  /* `#2d((1 2) ,(list 3 4)) */
-  #define H_qq_multivector "quasiquote internal support for multidimensional vector constants"
-  #define Q_qq_multivector s7_make_signature(sc, 2, sc->is_vector_symbol, sc->T)
-  return(g_multivector(sc, s7_integer(car(args)), cdr(args)));
-}
-
-
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
   s7_int len;
@@ -49429,15 +49414,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 
 	case TOKEN_BACK_QUOTE:
 	  sc->tok = token(sc);
-#if WITH_QUASIQUOTE_VECTOR
-	  if (sc->tok == TOKEN_VECTOR)
-	    {
-	      push_stack_no_code(sc, OP_READ_QUASIQUOTE_VECTOR, sc->w);
-	      sc->tok = TOKEN_LEFT_PAREN;
-	    }
-	  else
-#endif
-	    push_stack_no_code(sc, OP_READ_QUASIQUOTE, sc->nil);
+	  push_stack_no_code(sc, OP_READ_QUASIQUOTE, sc->nil);
 	  break;
 
 	case TOKEN_COMMA:
@@ -59734,32 +59711,6 @@ static int vector_a_ex(s7_scheme *sc)
   return(goto_START);
 }
 
-#if WITH_QUASIQUOTE_VECTOR
-static void read_quasiquote_vector_ex(s7_scheme *sc)
-{
-  /* this works only if the quasiquoted list elements can be evaluated in the read-time environment.
-   *    `#(1 ,@(list 1 2) 4) -> (apply vector ({list} 1 ({apply_values} (list 1 2)) 4)) -> #(1 1 2 4)
-   *
-   * Originally, I used:
-   *   sc->value = list_3(sc, sc->apply_function, sc->vector_function, g_quasiquote_1(sc, sc->value));
-   *   goto START;
-   * which means that #(...) makes a vector at read time, but `#(...) is just like (vector ...).
-   *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
-   *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
-   *      (eq? (f1) (f1)))
-   *   #t
-   *   :(let ((f1 (lambda () (let ((x 32)) #(x 0))))
-   *          (f2 (lambda () (let ((x 32)) `#(,x 0)))))
-   *      (eq? (f2) (f2)))
-   *   #f
-   * The tricky part in s7 is that we might have quasiquoted multidimensional vectors
-   */
-  if (sc->args == small_int(1))
-    sc->code = list_3(sc, sc->apply_function, sc->vector_function, g_quasiquote_1(sc, sc->value)); /* qq result will be evaluated (might include {list} etc) */
-  else sc->code = list_4(sc, sc->apply_function, sc->multivector_function, sc->args, g_quasiquote_1(sc, sc->value));
-}
-#endif
-
 static void increment_1_ex(s7_scheme *sc)
 {
   /* ([set!] ctr (+ ctr 1)) */
@@ -67689,12 +67640,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 	  
 	  
-#if WITH_QUASIQUOTE_VECTOR
-	case OP_READ_QUASIQUOTE_VECTOR:
-	  read_quasiquote_vector_ex(sc);
-	  goto EVAL;
-#endif
-	  
 	case OP_READ_UNQUOTE:
 	  /* here if sc->value is a constant, the unquote is pointless (should we complain?) */
 	  if ((is_pair(sc->value)) ||
@@ -73771,10 +73716,6 @@ s7_scheme *s7_init(void)
     sym = unsafe_defun("{append}", append, 0, 0, true);
     set_immutable(sym);
     sc->qq_append_function = slot_value(global_slot(sym));
-
-    sym = unsafe_defun("{multivector}", qq_multivector, 1, 0, true);
-    set_immutable(sym);
-    sc->multivector_function = slot_value(global_slot(sym));
 
     sym = unsafe_defun("{list}", qq_list, 0, 0, true);
     set_immutable(sym);
