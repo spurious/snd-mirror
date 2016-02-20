@@ -3988,25 +3988,27 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
   (let ((orig (<em class=red>procedure-source</em> proc))) ; this assumes we haven't called "proc" yet
 
     (define (proc-walk source)
-      (if (not (pair? source))
-	  source
-	  (if (memq (car source) '(let let*))     ; if let or let*, show local variables
-	      (if (symbol? (cadr source))         ; named let?
-		  ;; (let name vars . body) -&gt; (let name vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 (caddr source)
-			 `(format () "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (curlet)))
-		   (cdddr source))
-		  ;; (let(*) vars . body) -&gt; (let vars print-vars . body)
-		  (append 
-		   (list (car source)
-			 (cadr source)
-			 `(format () "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
-		   (cddr source)))
-	      (cons (proc-walk (car source))
-		    (proc-walk (cdr source))))))
+      (cond ((not (pair? source))
+	     source)
+
+	    ((not (memq (car source) '(let let*))  ; if let or let*, show local variables
+	     (cons (proc-walk (car source))
+		   (proc-walk (cdr source)))))
+
+	    ((symbol? (cadr source))               ; named let?
+	     (append               ; (let name vars . body) -&gt; (let name vars print-vars . body)
+	       (list (car source)
+		     (cadr source)
+		     (caddr source)
+		     `(format () "    (let ~A (~{~A~^ ~}) ...)~%" ,(cadr source) (curlet)))
+	       (cdddr source)))
+         
+            (else                  ; (let(*) vars . body) -&gt; (let vars print-vars . body)
+	      (append 
+	        (list (car source)
+		      (cadr source)
+		      `(format () "    (~A (~{~A~^ ~}) ...)~%" ,(car source) (curlet)))
+	        (cddr source)))))
     
     (let* ((new-body (proc-walk orig))
 	   (result (gensym))

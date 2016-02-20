@@ -1913,7 +1913,6 @@
 				   (retry #f))
 			       (do ((exprs (cdr form) (cdr exprs)))
 				   ((null? exprs) 
-					;(format *stderr* "end: ~A~%" new-form)
 				    (return (and (pair? new-form)
 						 (if (null? (cdr new-form))
 						     (car new-form)
@@ -1943,7 +1942,14 @@
 						   (eq? (car e) 'or))
 					      (set! exprs (append e (cdr exprs)))) ; we'll skip the 'or in do step
 					     
-					     ((not (memq val new-form))
+					     ((not (or (memq val new-form)
+						       (and (pair? val)         ;   and redundant tests
+							    (hash-table-ref bools1 (car val))
+							    (any? (lambda (p)
+								    (and (pair? p)
+									 (subsumes? (car p) (car val))
+									 (equal? (cadr val) (cadr p))))
+								  new-form))))
 					      (set! new-form (cons val new-form))))))))))))))
 		    ((and)
 		     (case len
@@ -2254,7 +2260,14 @@
 						       (cond ((list-ref e (- (length e) 1)) => code-constant?) ; (or ... #f)
 							     (else #f))))
 					     (if (not (and (pair? new-form)
-							   (eq? val (car new-form))))
+							   (or (eq? val (car new-form)) ; omit repeated tests
+							       (and (pair? val)         ;   and redundant tests
+								    (hash-table-ref bools1 (car val))
+								    (any? (lambda (p)
+									    (and (pair? p)
+										 (subsumes? (car val) (car p))
+										 (equal? (cadr val) (cadr p))))
+									  new-form)))))
 						 (set! new-form (cons val new-form))))))))))))))))))))
     
     (define (splice-if f lst)
@@ -3205,11 +3218,13 @@
       ;; call/* exiters, track return points better (reuse sig code?), and fix the message to be less confusing
       ;; the *#readers* might notice local reader settings -- cancel default if collision -- restore in lint-file etc (lint itself then becomes a mess)
       ;; (cond (A b) (C b)..) -- under has-combinations I think?  (cond (A b) ((or A B) c))? (cond (A b) (B c) (else b)) -> (if (or A (not B)) b c)
-      ;; char-position from (memx c (string->list...)) and equivalents
-      ;;  (memv #\= (string->list s))
-      ;;  (null? (string->list string))
-      ;;  (car (string->list (symbol->string old)))
-      ;;  (member (string-ref s 0) (string->list (*haskell-open-parens*)))
+      ;;   very common: (cond ((and A B)..) ((B)..)...) or A or both
+      ;;                 (cond ((B) (if A ... ...))?  (cond ((A) (if B.. ..)) ((B)..)
+      ;;   also (cond ((A)...) ((or A...)))! -- dead code
+      ;;   also (cond ((A) ... (A)...) ((B) ...(A)...))!
+      ;;   (cond ((and A B C D) E) ((A) F) (else E)) -> (cond ((not A) E) (else F))?
+      ;;   check below for any repeated result+else or any repeated test [and if?]
+      ;;   lots of (cond ((A) a) ((B) b) (else a)) in some cases (A) and (B) are exclusive so (if B b a) or (and B b) a=#f, etc
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -3405,6 +3420,13 @@
 					     (lists->string form `(or (,current-eqf ,selector ,(cadadr items))
 								      (,head ,selector ,(caddr items)))))))))))))
 	     
+	     (when (and (eq? (->type (cadr form)) 'char?)
+			(pair? (caddr form))
+			(eq? (caaddr form) 'string->list)
+			(null? (cdddr form)))
+	       (lint-format "perhaps ~A" name
+			    (lists->string form `(char-position ,(cadr form) ,@(cdaddr form)))))
+
 	     (when (and (memq head '(memq memv))
 			(pair? items)
 			(eq? (car items) 'quote)
@@ -3708,9 +3730,18 @@
 	
 	;; ----------------
 	((symbol? integer? rational? real? complex? float? keyword? gensym? byte-vector? list? proper-list?
-		  char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? null? pair? c-object?
+		  char? boolean? float-vector? int-vector? vector? let? hash-table? input-port? pair? c-object?
 		  output-port? iterator? continuation? dilambda? procedure? macro? random-state? eof-object? c-pointer?)
 	 (check-boolean-affinity name form env))
+
+	;; ----------------
+	((null?)
+	 (check-boolean-affinity name form env)
+	 (if (and (pair? (cdr form))
+		  (pair? (cadr form))
+		  (memq (caadr form) '(vector->list string->list let->list)))
+	     (lint-format "perhaps ~A" name
+			  (lists->string form `(zero? (length ,(cadadr form)))))))
 	
 	;; ----------------
 	((string-ref)
@@ -6293,10 +6324,15 @@
 		    (when (and (pair? prev-f)
 			       (pair? (cdr prev-f)))
 		      
-		      (if (and (memq (car prev-f) '(display write write-char write-byte))
-			       (equal? f (cadr prev-f))
-			       (not (side-effect? f env)))
-			  (lint-format "this could be omitted: ~A" name (truncated-list->string f)))
+		      (if (or (and (memq (car prev-f) '(display write write-char write-byte))
+				   (equal? f (cadr prev-f))
+				   (not (side-effect? f env)))
+			      (and (memq (car prev-f) '(vector-set! float-vector-set! int-vector-set! byte-vector-set!
+							string-set! list-set! hash-table-set! let-set!
+							set-car! set-cdr!))
+				   (equal? f (list-ref prev-f (- (length prev-f) 1)))))
+			  (lint-format "~A returns its value, so this could be omitted: ~A" name 
+				       (car prev-f) (truncated-list->string f)))
 
 		      (when (pair? (cddr prev-f))                ; (set! ((L 1) 2)) an error, but lint should keep going
 			(if (and (memq (car prev-f) '(set! define define* define-macro define-constant define-macro*
@@ -6325,8 +6361,8 @@
 					  (eq? (car f) 'car))
 				     (and (eq? (car prev-f) 'set-cdr!)
 					  (eq? (car f) 'cdr)))
-				 (or (memq (car f) '(car cdr))
-				     (and (pair? (cddr f))
+				 (or (memq (car f) '(car cdr)) ; no indices
+				     (and (pair? (cddr f))     ; for the others check that indices match
 					  (equal? (caddr f) (caddr prev-f))
 					  (pair? (cdddr prev-f))
 					  (not (pair? (cddddr prev-f)))
@@ -7596,10 +7632,32 @@
 			       (result :unset)
 			       (has-else #f)
 			       (has-combinations #f)
+			       (simplifications ())
 			       (falses ())
 			       (prev-clause #f)
 			       (all-eqv #t)
 			       (eqv-select #f))
+#|
+			   (if (and (> len 1)
+				    (pair? (cadr form))
+				    (pair? (caddr form))
+				    (pair? (caadr form))
+				    (pair? (caaddr form))
+				    (or (member (caadr form) (caaddr form))
+					(member (caaddr form) (caadr form))))
+			       (format *stderr* "~A~%~%" form))
+
+			   (when (and (pair? (list-ref form (- (length form) 1)))
+				      (memq (car (list-ref form (- (length form) 1))) '(else #t)))
+			     (let ((result (cdr (list-ref form (- (length form) 1)))))
+			       (if (any? (lambda (p)
+					   (and (pair? p)
+						(pair? (cdr p))
+						(equal? (cdr p) result)
+						(not (eq? (cdr p) result))))
+					 (cdr form))
+				   (format *stderr* "~A~%~%" form))))
+|#
 			   (for-each
 			    (lambda (clause)
 			      (set! ctr (+ ctr 1))
@@ -7632,6 +7690,8 @@
 				    (let ((expr (simplify-boolean (car clause) () () env))
 					  (test (car clause))
 					  (sequel (cdr clause)))
+				      (if (not (equal? expr test))
+					  (set! simplifications (cons (cons clause expr) simplifications)))
 				      
 				      (cond ((memq test '(else #t))
 					     (set! has-else #t)
@@ -7803,10 +7863,15 @@
 								    `(or ,@(cdaadr new-clauses) (begin ,@(cdar new-clauses))))
 								`(cond ,@(reverse new-clauses)))
 							    (cond->case eqv-select (reverse new-clauses))))))
+				      (set! simplifications ())
 				      (set! all-eqv #f)))
 				 
 				 (let* ((clause (car clauses))
 					(result (cdr clause))) ; can be null in which case the test is the result
+				   (cond ((and (pair? simplifications)
+					       (assq clause simplifications))
+					  => (lambda (e)
+					       (set! clause (cons (cdr e) result)))))
 				   (if (and (pair? (cdr clauses))
 					    (equal? result (cdadr clauses)))
 				       (set! current-clauses (cons clause current-clauses))
@@ -7841,6 +7906,14 @@
 				   (c #f)
 				   (start #f)
 				   (changed #f))
+
+			       (define (car-with-expr cls)
+				 (cond ((and (pair? simplifications)
+					     (assq cls simplifications))
+					=> (lambda (e)
+					     (set! changed #t)
+					     (cons (cdr e) (cdr cls))))
+				       (else cls)))
 			       
 			       (define (start-search clauses test)
 				 (if (code-constant? (cadr test))
@@ -7852,7 +7925,7 @@
 				     (begin
 				       (set! start clauses)
 				       (set! op (car test)))
-				     (set! nc (cons (car clauses) nc))))
+				     (set! nc (cons (car-with-expr (car clauses)) nc))))
 			       
 			       (do ((clauses (cdr form) (cdr clauses)))
 				   ((or (null? clauses)
@@ -7875,7 +7948,7 @@
 				       (if (and looks-ok
 						(not (null? (cdr clauses))))
 					   (start-search clauses test)
-					   (set! nc (cons (car clauses) nc)))
+					   (set! nc (cons (car-with-expr (car clauses)) nc)))
 				       
 				       (if (or (not looks-ok)
 					       (not (eq? (car test) op))
@@ -7891,7 +7964,7 @@
 						     (start-search clauses test)
 						     (begin
 						       (set! start #f)
-						       (set! nc (cons (car clauses) nc)))))
+						       (set! nc (cons (car-with-expr (car clauses)) nc)))))
 					       
 					       ;; multiple hits -- can we combine them?
 					       (let ((alist ())
@@ -7913,7 +7986,7 @@
 						     (start-search clauses test)
 						     (begin
 						       (set! start #f)
-						       (set! nc (cons (car clauses) nc))))))))))))
+						       (set! nc (cons (car-with-expr (car clauses)) nc))))))))))))
 			   ;; --------
 			   
 			   (when (= suggest made-suggestion) 
