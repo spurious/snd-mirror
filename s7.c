@@ -74206,6 +74206,7 @@ int main(int argc, char **argv)
  * 
  * --------------------------------------------------------------------
  *
+ * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area

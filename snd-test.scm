@@ -1465,7 +1465,8 @@
 		  (if (pair? base-files)
 		      (let ((testf (car base-files)))
 			(let ((file (string-append sf-dir (testf 0))))
-			  (if (file-exists? file)
+			  (if (not (file-exists? file))
+			      (snd-display #__line__ ";~A missing?" file)
 			      (begin
 				(if (not (equal? (mus-sound-chans file) (testf 1)))
 				    (snd-display #__line__ ";~A: chans ~A is not ~A" 
@@ -1519,8 +1520,7 @@
 					    (snd-display #__line__ ";~A: loop end: ~A" (cadr lst) (testf 7))))
 				      (if (pair? lst)
 					  (snd-display #__line__ ";~A thinks it has loop info: ~A" file lst))))
-				(mus-sound-forget file))
-			      (snd-display #__line__ ";~A missing?" file))
+				(mus-sound-forget file)))
 			  (test-headers (cdr base-files))))))))
 	
 	;; need to make sure raw defaults are consistent with following tests
@@ -45828,7 +45828,8 @@ EDITS: 1
 	  (make-channel-drop-site ind 0)
 	  (set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
 	  (let ((drop-site (find-child (XtParent (XtParent ((channel-widgets ind 0) 7))) "drop here")))
-	    (if drop-site
+	    (if (not drop-site)
+		(snd-display #__line__ ";no drop site?")
 		(begin
 		  (XtVaGetValues drop-site (list XmNdropRectangles 0))
 		  (let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
@@ -45836,8 +45837,7 @@ EDITS: 1
 		  (XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
 		  (if (not (XmDropSiteRegistered drop-site))
 		      (snd-display #__line__ ";XmDropSiteRegistered?"))
-		  (XmDropSiteUnregister drop-site))
-		(snd-display #__line__ ";no drop site?"))))
+		  (XmDropSiteUnregister drop-site)))))
 	
 	(add-mark 123)
 	(let ((container
@@ -46870,11 +46870,12 @@ EDITS: 1
 		       .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
 		       .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
 		       .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
-	       (struct-accessors (if (defined? 'XpmImage?)
+	       (struct-accessors (if (not (defined? 'XpmImage?))
+				     struct-accessors-1
 				     (append struct-accessors-1
 					     (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
-						   .y_hotspot .x_hotspot .colormap_size))
-				     struct-accessors-1))
+						   .y_hotspot .x_hotspot .colormap_size))))
+				     
 	       
 	       (struct-accessor-names-1
 		(list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
@@ -46906,11 +46907,12 @@ EDITS: 1
 		       '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
 		       '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
 		       '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt))
-	       (struct-accessor-names (if (defined? 'XpmImage?)
+	       (struct-accessor-names (if (not (defined? 'XpmImage?))
+					  struct-accessor-names-1
 					  (append struct-accessor-names-1
 						  (list '.valuemask '.ncolors '.cpp
-							'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))
-					  struct-accessor-names-1))
+							'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))))
+
 	       (dpy (XtDisplay (cadr (main-widgets))))
 	       (win (XtWindow (cadr (main-widgets)))))
 	  
@@ -47016,13 +47018,13 @@ EDITS: 1
 		glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
 		glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D ))
 	      (glu-procs 
-	       (if (defined? 'gluBeginPolygon)
+	       (if (not (defined? 'gluBeginPolygon))
+		   ()
 		   (list
 		    gluBeginPolygon gluBuild1DMipmaps gluLookAt gluNewTess gluNextContour gluTessEndContour
 		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty 
 		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon 
-		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject)
-		   ())))
+		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject))))
 	  
 	  ;; ---------------- 1 Arg
 	  (for-each 
