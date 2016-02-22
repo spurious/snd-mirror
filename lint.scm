@@ -1399,6 +1399,7 @@
 				(set! gts  '(string<? string>?))
 				(set! eqop 'string=?)))
 			     
+			     ;(format *stderr* "~A ~A ~A ~A ~A ~A ~A ~A~%" A B op1 op2 c1 c2 gtes eqop )
 			     (if (eq? rel-op 'and)
 				 ;; and
 				 (if (equal? c1 c2)
@@ -2291,6 +2292,7 @@
 						     ((eq? t1 (car arg1)) arg1)
 						     (else arg2)))))
 				      
+				      ;(format *stderr* "~A ~A~%" arg1 arg2)
 				      (if (and (hash-table-ref reversibles (car arg1))
 					       (pair? (cddr arg1))
 					       (null? (cdddr arg1))
@@ -2312,11 +2314,21 @@
 						(arg2-1 (cadr arg2))
 						(arg2-2 (caddr arg2)))
 					    
+					    ;(format *stderr* "~A ~A ~A ~A ~A~%" op1 arg1-1 arg1-2 arg2-1 arg2-2)
 					    (return
 					     (cond ((equal? arg1-2 arg2-1)       ; (and (op x y) (op y z)) -> (op x y z)
 						    (if (equal? arg1-1 arg2-2)
-							(and (memq op1 '(= char=? string=? char-ci=? string-ci=?))
-							     arg1)
+							(if (memq op1 '(= char=? string=? char-ci=? string-ci=?))
+							    arg1 
+							    (and (memq op1 '(<= >= char<=? char>=? string<=? string>=?
+									    char-ci<=? char-ci>=? string-ci<=? string-ci>=?))
+								`(,(case op1 
+								     ((>= <=) '=)
+								     ((char<= char>=) 'char=?)
+								     ((char-ci<= char-ci>=) 'char-ci=?)
+								     ((string<= string>=) 'string=?)
+								     ((string-ci<= string-ci>=) 'string-ci=?))
+								  ,@(cdr arg1))))
 							(and (or (not (code-constant? arg1-1))
 								 (not (code-constant? arg2-2))
 								 ((symbol->value op1) arg1-1 arg2-2))
@@ -3480,6 +3492,11 @@
       ;;   perhaps also in macros/functions track free vars and keep in the var record
       ;; smarter signature decisions for local funcs (follow simple tail calls)
       ;;   could we use report-arg-trouble?
+      ;; (and (<= 1 x) (<= x 1)) -> (= x 1) -- right now it returns #f??
+      ;; (list-ref|pair? (make-list...))
+      ;; cond true/false decisions
+      ;; tests for string-len<0, side-effect set! in define
+      ;; some way for ffi code to indicate no-side-effects
       ;;
       ;; if locals unaffected by block in let, move block out?
       ;;    (not (tree-list-member (map car bindings) p)) + no (previous?) internal defines + no defines in p (blocked by let)
@@ -3889,23 +3906,23 @@
 		    (eq? head '>)
 		    (pair? (caddr form))
 		    (memq (caaddr form) '(string-length vector-length abs magnitude denominator gcd lcm char->integer byte-vector-ref byte-vector-set!)))
-	       (lint-format "~A can't be negative: ~A" caller (caaddr) form))
-	   (if (and (eqv? (caddr form) 0)
-		    (eq? head '<)
-		    (pair? (cadr form))
-		    (memq (caadr form) '(string-length vector-length abs magnitude denominator gcd lcm char->integer byte-vector-ref byte-vector-set!)))
-	       (lint-format "~A can't be negative: ~A" caller (caadr) form))
-	   (if (or (and (eq? (car form) '>)
-			(eqv? (cadr form) 1)
-			(pair? (caddr form))
-			(eq? (caaddr form) 'length))
-		   (and (eq? (car form) '<)
-			(eqv? (caddr form) 1)
+	       (lint-format "~A can't be negative: ~A" caller (caaddr form) (truncated-list->string form))
+	       (if (and (eqv? (caddr form) 0)
+			(eq? head '<)
 			(pair? (cadr form))
-			(eq? (caadr form) 'length)))
-	       (let ((arg (if (pair? (cadr form)) (cadadr form) (cadr (caddr form)))))
-		 (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
-			      (lists->string form `(null? ,arg))))))
+			(memq (caadr form) '(string-length vector-length abs magnitude denominator gcd lcm char->integer byte-vector-ref byte-vector-set!)))
+		   (lint-format "~A can't be negative: ~A" caller (caadr form) (truncated-list->string form))
+		   (if (or (and (eq? head '>)
+				(eqv? (cadr form) 1)
+				(pair? (caddr form))
+				(eq? (caaddr form) 'length))
+			   (and (eq? head '<)
+				(eqv? (caddr form) 1)
+				(pair? (cadr form))
+				(eq? (caadr form) 'length)))
+		       (let ((arg (if (pair? (cadr form)) (cadadr form) (cadr (caddr form)))))
+			 (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
+				      (lists->string form `(null? ,arg))))))))
 
 	 (check-char-cmp caller head form))
 	;; could change (> x 0) to (positive? x) and so on, but the former is clear and ubiquitous
