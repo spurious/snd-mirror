@@ -120,12 +120,12 @@ removes all energy below the low frequency and above the high frequency, then co
 (define (cp-fft-squelch)
   (fft-squelch fft-squelch-amount))
 
-(if (or (provided? 'xg) 
-	(provided? 'xm))
+(if (not (or (provided? 'xg) 
+	     (provided? 'xm)))
+    (set! fft-squelch-menu-label (add-to-menu fft-menu fft-squelch-label cp-fft-squelch))
     (begin
       
       (define (post-fft-squelch-dialog)
-	
         (if (not fft-squelch-dialog)
             ;; if fft-squelch-dialog doesn't exist, create it
             (let ((initial-fft-squelch-amount 0.0)
@@ -168,10 +168,8 @@ removes all energy below the low frequency and above the high frequency, then co
 				 100))))))
 	
         (activate-dialog fft-squelch-dialog))
-      
-      (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" post-fft-squelch-dialog)))
+      (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" post-fft-squelch-dialog))))
     
-    (set! fft-squelch-menu-label (add-to-menu fft-menu fft-squelch-label cp-fft-squelch)))
 
 (set! fft-list (cons (lambda ()
 		       (let ((new-label (format #f "FFT squelch (~1,2F)" fft-squelch-amount)))

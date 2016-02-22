@@ -1707,10 +1707,13 @@
 		      (polynomial cos-coeffs ax))))))))
 
 (definstrument (sndclmdoc-bl-saw start dur frequency order)
-  (let ((norm (cond ((= order 1) 1.0)      ; these peak amps were determined empirically
-		    ((= order 2) 1.3)      ;   actual limit is supposed to be pi/2 (G&R 1.441)
-		    ((< order 9) 1.7)      ;   but Gibbs phenomenon pushes it to 1.851
-		    (else 1.9)))           ;   if order>25, numerical troubles -- use table-lookup
+  (let ((norm (cond ((assoc order '((1 . 1.0) (2 . 1.3)) =) => cdr)
+		    ((< order 9) 1.7)
+		    (else 1.9)))
+	;; these peak amps were determined empirically
+	;;   actual limit is supposed to be pi/2 (G&R 1.441)
+	;;   but Gibbs phenomenon pushes it to 1.851
+	;;   if order>25, numerical troubles -- use table-lookup
 	(freqs ()))
     (do ((i 1 (+ i 1)))
 	((> i order))

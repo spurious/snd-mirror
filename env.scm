@@ -168,9 +168,10 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
   (stretch-envelope '(0 0 1 1 2 0) .1 .2 1.5 1.6) -> (0 0 0.2 0.1 1.1 1 1.6 0.5 2.0 0)"))
     (lambda* (fn old-att new-att old-dec new-dec)
       
-      (cond ((and old-att (not new-att))
-	     (error 'wrong-number-of-args "stretch-envelope: ~A, old-attack but no new-attack?" old-att))
-	    ((not new-att) fn)
+      (cond ((not new-att)
+	     (if old-att
+		 (error 'wrong-number-of-args "stretch-envelope: ~A, old-attack but no new-attack?" old-att)
+		 fn))
 	    ((and old-dec (not new-dec))
 	     (error 'wrong-number-of-args "stretch-envelope:~A ~A ~A, old-decay but no new-decay?" old-att new-att old-dec))
 	    (else

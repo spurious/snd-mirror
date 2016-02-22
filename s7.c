@@ -60265,8 +60265,12 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
    */
   if (is_pair(p))
     {
+#if 1
       if ((is_optimized(p)) &&
 	  ((optimize_op(p) & 1) == 0)) /* protect possibly shared code?  Elsewhere we assume these aren't changed */
+#else
+	if (is_optimized(p))
+#endif
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);

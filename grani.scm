@@ -68,7 +68,8 @@
 			  ;; is the linear approximation accurate enough?
 			  ;; are we still over the cutoff limit?
 			  (if (and (> (abs (- yexp yinte)) yerr)
-				   (or (not ycutoff) (> yinte ycutoff)))
+				   (or (not ycutoff)
+				       (> yinte ycutoff)))
 			      ;; no --> add a breakpoint and recurse right and left
 			      (call-with-values
 				  (lambda () (exp-seg xl yle xint yexp yl yint error))

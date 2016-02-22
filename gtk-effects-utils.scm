@@ -164,9 +164,7 @@
 	 (gtk_widget_show label)
 	 (gtk_scale_set_digits (GTK_SCALE scale)
 			       (cond (use-log 0)
-				     ((= scaler 1000) 3)
-				     ((= scaler 100) 2)
-				     ((= scaler 10) 1)
+				     ((assoc scaler '((1000 . 3) (100 . 2) (10 . 1)) =) => cdr)
 				     (else 0)))
 	 (gtk_scale_set_draw_value (GTK_SCALE scale) (not use-log))
 	 (if use-hbox
@@ -177,14 +175,14 @@
 	       (set! slider (+ 1 slider))))
 	 (gtk_widget_show scale)
 	 (g_signal_connect adj "value_changed"
-			   (if use-log
+			   (if (not use-log)
+			       func
 			       (lambda (w d) 
 				 (func w d)
 				 (change-label label 
 					       (format #f "~A: ~,2F" 
 						       title 
-						       (scale-linear->log low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high))))
-			       func)
+						       (scale-linear->log low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high)))))
 			   #f)
 	 adj))
      sliders)))
