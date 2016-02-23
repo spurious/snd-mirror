@@ -270,31 +270,31 @@
 	   (if (cdr typ)
 	       (if (string? (cdr typ))
 		   (begin
-		     (if (not (member (car typ)
+		     (if (not (member type
 				      '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
 					"GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
 					"GLboolean*" "void*" "GLint*" "GLshort*"
 					"GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
 					"unsigned_long"
 					"void**")))
-			 (if (string=? (car typ) "constchar*")
-			     (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars (car typ)))
-			     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ (cdr typ)))))
+			 (if (string=? type "constchar*")
+			     (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars type))
+			     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars type) (c-to-xen-macro-name typ (cdr typ)))))
 		     
-		     (if (not (string=? (car typ) "constchar*"))
-			 (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name (cdr typ))))
+		     (if (not (string=? type "constchar*"))
+			 (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name (cdr typ))))
 		     
-		     (if (not (string=? (car typ) "constchar*"))
+		     (if (not (string=? type "constchar*"))
 			 (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			      (no-stars (car typ))
+			      (no-stars type)
 			      (cond ((assoc (cdr typ) '(("INT"    . "integer") 
 							("ULONG"  . "ulong") 
 							("DOUBLE" . "number")) string=?)
 				     => cdr)
 				    (else (apply string (map char-downcase (cdr typ))))))))
 		   (begin
-		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ)))
-		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))
+		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type))
+		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))
 	 
 	((not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
 	 ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer

@@ -557,8 +557,8 @@ bool scale_to(snd_info *sp, chan_info *cp, mus_float_t *ur_scalers, int len, boo
 		      (datum_size <= 2))
 		    {
 		      if (datum_size == 2)
-			scalers[0] = 32767.0 / 32768.0;
-		      else scalers[0] = 127.0 / 128.0;
+			scalers[i] = 32767.0 / 32768.0;
+		      else scalers[i] = 127.0 / 128.0;
 		    }
 		  scalers[i] /= val;
 		}

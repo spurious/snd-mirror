@@ -166,7 +166,7 @@
 		  format cons list make-list reverse append vector-append list->vector vector->list make-vector
 		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
 		  byte-vector hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
-	
+
 	(deprecated-ops '((global-environment . rootlet)
 			  (current-environment . curlet)
 			  (make-procedure-with-setter . dilambda)
@@ -288,6 +288,7 @@
 	(selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?))
 	(outport #t)
 	(linted-files ())
+	(big-constants ())
 	(*e* #f)
 	(other-identifiers #f)
 	(quote-warnings 0)
@@ -298,6 +299,8 @@
 	(last-checker-line-number -1)
 	(line-number -1)
 	(lambda-marker '[lambda])
+	(goto-marker '[call/exit])
+	(call/cc-marker '[call/cc])
 	(pp-left-margin 4)
 	(lint-left-margin 1))
     
@@ -3551,9 +3554,8 @@
       ;; smarter signature decisions for local funcs (follow simple tail calls)
       ;;   could we use report-arg-trouble?
       ;; some way for ffi code to indicate no-side-effects
-      ;; repeated list constants -> var? or count all complex constants (hashed->sorted vector etc)
       ;;
-      ;; if locals unaffected by block in let, move block out?
+      ;; if locals unaffected by block in let, move block out? -- what if this is an ordering choice?
       ;;    (not (tree-list-member (map car bindings) p)) + no (previous?) internal defines + no defines in p (blocked by let)
       ;;    also split let to localize?
       ;;    need set-intersection + gather outer-vars|macro-args, then gather locals of expr
@@ -3572,7 +3574,6 @@
       ;;   this applies also to step exprs, recursive funcs (closure?), map/for-each -- same as locality above
       ;; call/* exiters, track return points better (reuse sig code?), and fix the message to be less confusing
       ;; the *#readers* might notice local reader settings -- cancel default if collision -- restore in lint-file etc (lint itself then becomes a mess)
-      ;; error/throw followed by more in block without continuation?
       ;;
       ;; *lint-hook* could pass the current form to each function and let it do special analysis
       ;;    maybe specialize on the name? (like *#readers*)
@@ -6509,6 +6510,7 @@
 					      (procedure? (symbol->value func-name *e*)))
 					  (lint-format "perhaps ~A... ->~%~NC(for-each ~S (vector ~{~S~^ ~}))" caller 
 						       ;; vector rather than list because it is easier on the GC (list copies in s7)
+						       ;; but what if it's a bunch of chars -- use string?
 						       (truncated-list->string (car start-repeats))
 						       pp-left-margin #\space
 						       func
@@ -6574,6 +6576,21 @@
 		    ;; f is not the last form, so its value is ignored
 		    (begin
 		      (when (pair? f)
+			(if (and (eq? (car f) 'error)
+				 (not (var-member 'error env))
+				 (every? (lambda (arg)
+					   (not (and (symbol? arg)
+						     (let ((v (var-member arg env)))
+						       (and (var? v)
+							    (eq? (var-initial-value v) call/cc-marker))))))
+					 (cdr f)))
+			    (if (= ctr (- len 2))
+				(lint-format "~A make this pointless: ~A" caller
+					     (truncated-list->string f)
+					     (truncated-list->string (cadr fs)))
+				(lint-format "~A makes the rest of the body unreachable: ~A" caller
+					     (truncated-list->string f)
+					     (truncated-list->string (list '... (cadr fs) '...)))))
 			(if (eq? (car f) 'map)
 			    (lint-format "map could be for-each: ~A" caller (truncated-list->string `(for-each ,@(cdr f))))
 			    (if (eq? (car f) 'reverse!)
@@ -7371,7 +7388,10 @@
 				     (set! quote-warnings (+ quote-warnings 1))
 				     (lint-format "quote is not needed here: ~A~A" 
 						  caller (truncated-list->string form)
-						  (if (= quote-warnings 20) "; will ignore this error henceforth." ""))))))))
+						  (if (= quote-warnings 20) "; will ignore this error henceforth." "")))
+				   (if (and (pair? arg) 
+					    (> (length arg) 8))
+				       (hash-table-set! big-constants arg (+ 1 (or (hash-table-ref big-constants arg) 0)))))))))
 		   env)
 		  
 		  ((if)
@@ -8927,7 +8947,7 @@
 				     (set! vars (append nvars vars))))
 			     (report-usage caller 'variable head vars cur-env))
 
-			   (if (and (pair? body)
+			   (if (and (pair? body)                ; (let ((x y)) x) -> y
 				    (null? (cdr body))
 				    (pair? varlist)             ; (let ()...)
 				    (pair? (car varlist))       ; (let (x) ...)
@@ -8939,14 +8959,14 @@
 				   (let* ((len (length varlist))
 					  (last-var (and (positive? len)
 							 (list-ref varlist (- len 1)))))
-				     (if (and (> len 1)
+				     (if (and (> len 1)         ; (let (... (x y)) x) -> (let (...) y) -- more aimed at let* below [almost never happens]
 					      (pair? last-var)
 					      (pair? (cdr last-var))
 					      (null? (cddr last-var))
 					      (eq? (car body) (car last-var)))
 					 (lint-format "perhaps ~A" caller 
 						      (lists->string form `(let ,(copy varlist (make-list (- len 1))) ,(cadr last-var))))))))
-			   )))
+			   ))) ; messed up let
 		   env)
 		  
 		  ((let*)
@@ -9051,7 +9071,7 @@
 								  (lists->string form `(let* (,@(copy varlist (make-list (- varlen 1))))
 											 (cond (,(cadr var) => ,(caaddr p)) 
 											       ,@else-clause)))))))))))))
-			   (if (and (pair? body)
+			   (if (and (pair? body)                ; same as let: (let* ((x y)) x) -> y
 				    (null? (cdr body))
 				    (pair? varlist)             ; (let* ()...)
 				    (pair? (car varlist))       ; (let* (x) ...)
@@ -9063,7 +9083,7 @@
 				   (let* ((len (length varlist))
 					  (last-var (and (positive? len)
 							 (list-ref varlist (- len 1)))))
-				     (if (and (> len 1)
+				     (if (and (> len 1)         ; (let* (... (x y)) x) -> (let(*)(...) y)
 					      (pair? last-var)
 					      (pair? (cdr last-var))
 					      (null? (cddr last-var))
@@ -9303,7 +9323,7 @@
 				     (lint-format "~A is redundant here: ~A" caller continuation (truncated-list->string last)))))
 
 			   (let ((cc (make-var :name continuation 
-					       :initial-value (list (if (eq? head 'call-with-exit) '[call/exit] '[call/cc]))
+					       :initial-value (list (if (eq? head 'call-with-exit) goto-marker call/cc-marker))
 					       :definer head)))
 			     (lint-walk-body caller head body (cons cc env))
 			     (report-usage caller 'variable head (list cc) env)))))
@@ -9558,6 +9578,8 @@
 	(set! quote-warnings 0)
 	(set! pp-left-margin 0)
 	(set! lint-left-margin -3)
+	
+	(set! big-constants (make-hash-table))
 
 	(set! *report-input* report-input)
 	(set! *report-nested-if* (if (integer? *report-nested-if*) (max 3 *report-nested-if*) 4))
@@ -9706,6 +9728,14 @@
 		   (pair? vars)
 		   *report-unused-top-level-functions*)
 	      (report-usage file 'top-level-var "" vars vars))
+
+	  (for-each 
+	   (lambda (p)
+	     (if (> (cdr p) 4)
+		 (format outport "~A~A occurs ~D times~%"
+			 (if (pair? (car p)) "'" "")
+			 (truncated-list->string (car p)) (cdr p))))
+	   big-constants)
 	  
 	  (if (and *report-undefined-identifiers*
 		   (positive? (hash-table-entries other-identifiers)))
