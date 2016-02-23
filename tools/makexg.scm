@@ -273,7 +273,9 @@
 	    (if (or (char=? ch #\space)
 		    (= i (- len 1)))
 		(begin
-		  (if type
+		  (if (not type)
+		      (if (> i (+ 1 sp))
+			  (set! type (substring args (+ 1 sp) i)))
 		      (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i)))
 			    (reftype #f))
 			(case (given-name 0)
@@ -310,9 +312,7 @@
 				((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
 				(else  	      (if (not (member type types))
 						  (set! types (cons type types)))))))
-			(set! type #f))
-		      (if (> i (+ 1 sp))
-			  (set! type (substring args (+ 1 sp) i))))
+			(set! type #f)))
 		  (set! sp i))))))))
 
 (define direct-types 
@@ -600,12 +600,12 @@
 	  (let ((c-name (cdr typ)))
 	    (cond ((string? c-name)
 		   (if (not (member type no-c-to-xen))
-		       (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars (car typ)) (c-to-xen-macro-name typ c-name)))
+		       (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars type) (c-to-xen-macro-name typ c-name)))
 		   (if (not (member type no-xen-to-c))
-		       (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars (car typ)) (car typ) (xen-to-c-macro-name c-name)))
+		       (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name c-name)))
 		   (if (not (member type no-xen-p))
 		       (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			    (no-stars (car typ))
+			    (no-stars type)
 			    (cond ((assoc c-name '(("INT"    . "integer") 
 						   ("DOUBLE" . "number") 
 						   ("ULONG"  . "ulong")) 
@@ -613,16 +613,16 @@
 				  (else (apply string (map char-downcase c-name)))))))
 		  ((not c-name) ; void special case
 		   (if (not (member type no-xen-p))
-		       (hey "#define Xen_is_~A(Arg) 1~%" (no-stars (car typ))))
+		       (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type)))
 		   (if (not (member type no-xen-to-c))
-		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ)))))
+		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type))))
 		  ((string=? type "etc") ; xen special case
 		   (hey "#define Xen_is_etc(Arg) (Xen_is_list(Arg))~%"))
 		  (else
 		   (if (not (member type no-xen-p))
-		       (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars (car typ))))
+		       (hey "#define Xen_is_~A(Arg) ((Xen_is_list(Arg)) && (Xen_list_length(Arg) > 2))~%" (no-stars type)))
 		   (if (not (member type no-xen-to-c))
-		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars (car typ))))))))
+		       (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))
 	
 	(if (not (or (member type '("lambda" "lambda_data" "GError*") string=?)
 		     (find-callback 
@@ -2633,9 +2633,10 @@
 	     (string? (cdr dt)))
 	(let ((direct (cdr dt)))
 	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
-		((string=? direct "BOOLEAN")               'boolean?)
-		((string=? direct "DOUBLE")                'real?)
-		((string=? direct "String")                'string?)
+		((assoc direct '(("BOOLEAN" . boolean?) 
+				 ("DOUBLE"  . real?) 
+				 ("String"  . string?)) string=?)
+		 => cdr)
 		(#t #t)))
 	(or (not (has-stars gtk)) 'pair?))))
 	       

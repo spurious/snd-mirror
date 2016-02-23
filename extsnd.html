@@ -2902,10 +2902,7 @@ If it returns a string (a filename), that file is opened instead of the original
                ;; check for "OggS" first word, if found, translate to something Snd can read
 	       (call-with-input-file filename 
 	        (lambda (fd)
-		  (and (char=? (read-char fd) #\O)
-		       (char=? (read-char fd) #\g)
-		       (char=? (read-char fd) #\g)
-		       (char=? (read-char fd) #\S)))))
+		  (string=? (read-string 4 fd) "OggS"))))
 	(let ((aufile (string-append filename ".au")))
 	  (if (file-exists? aufile) (delete-file aufile))
 	  (system (<a class=quiet>format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))

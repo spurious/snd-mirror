@@ -322,10 +322,7 @@
       ;; (open-sound (read-ogg "/home/bil/sf1/oboe.ogg"))
       (and (call-with-input-file filename 
 	     (lambda (fd)
-	       (and (char=? (read-char fd) #\O)
-		    (char=? (read-char fd) #\g)
-		    (char=? (read-char fd) #\g)
-		    (char=? (read-char fd) #\S))))
+	       (string=? (read-string 4 fd) "OggS")))
 	   (let ((aufile (string-append filename ".au")))
 	     (if (file-exists? aufile) (delete-file aufile))
 	     (system (format #f "ogg123 -d au -f ~A ~A" aufile filename))
