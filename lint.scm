@@ -838,6 +838,7 @@
 				       (cadr tree))
 			     (for-each (lambda (v)
 					 (if (and (pair? v)
+						  (pair? (cdr v))
 						  (pair? (cddr v)))
 					     (var-walk (caddr v) (append vars e))))
 				       (cadr tree)))
@@ -3551,24 +3552,8 @@
       ;;
       ;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
       ;;   perhaps also in macros/functions track free vars and keep in the var record
-      ;; smarter signature decisions for local funcs (follow simple tail calls)
-      ;;   could we use report-arg-trouble?
-      ;; some way for ffi code to indicate no-side-effects
+      ;; some way for ffi code to indicate no-side-effects, arity?
       ;;
-      ;; if locals unaffected by block in let, move block out? -- what if this is an ordering choice?
-      ;;    (not (tree-list-member (map car bindings) p)) + no (previous?) internal defines + no defines in p (blocked by let)
-      ;;    also split let to localize?
-      ;;    need set-intersection + gather outer-vars|macro-args, then gather locals of expr
-      ;;    then also set* within the body etc
-      ;;    in make-fvar, track free vars/affected vars [macros can be no-side-effect] -- list of outside vars ref'd/set or changed
-      ;;      see free-vars below, if no free-set/free-ref in fvar, call (free-vars func-name arglist body)
-      ;;      need macro handlers here both as expansions and defs
-      ;;    locality scan: for each fvar, check for free-set-vars intersection with current expr
-      ;;    if current expr only uses local vars (no local funcs), then we can ignore this whole issue
-      ;;      just look for setters in the block
-      ;;
-      ;; reuse of let var where value is if no intervening change -- this is hard to track [i.e. (let ((x (* y 2))) (set! z (* y 2)))]
-      ;;   if used immediately, and not target of set, and func is not a macro, and val contents unchanged...
       ;; perhaps report an overall order to definitions in a block that maximizes locality
       ;; constant expr in do: make list of all do-local/side-effected vars in body, then look for exprs unaffected?
       ;;   this applies also to step exprs, recursive funcs (closure?), map/for-each -- same as locality above
@@ -3581,26 +3566,10 @@
       ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
       ;;
       ;; t354/t359 lint for-each tests [extend...]
-      ;;
-      ;; ---- from structures-equal:
-      ;; to find possible function perhaps save lets (via hash+count?), look for structure equality in that set? [save lets that aren't already functions?]
-      ;;   or if function found later, note possible change of scope?
-      ;;   count above=var num in bindings -> args in func
-      ;;   then if match, perhaps some of these match even in constants, so can be relet/unpard
-      ;;   the match would happen in report-usage?
-      ;; for possible, hash on car, keep tree-len + pointers to matches
-      ;;   here can we assume car is not a par and check it before tree count or anything?
       ;; better built-in use: look for things like the do-loop->fill! cases and predigest
-      ;;
-      ;; ---- from report-usage:
       ;; parameter initial value is currently #f which should be ignored in typing
       ;; parameter vals from func calls? and fixup the initial-value from first history setting?
       ;; ref count can be confused by with-let if it's a reference to the current env (as in Display in stuff.scm)
-      ;; catch direct access when accessor exists? -- (*-x z) (accessor z n) -> watch for (accessor zz n) where zz value is make-*?
-      ;;   if vector-ref|set v -- var? v -- value = make-* and *-ref|set! equivalent exists
-      ;; accessor: all refs involve (sym-*) or (make-sym...) or (sym?) but then there's *-ref or implicit index
-      ;; on setters, types of values can be compared, then used with readers
-      ;;
       ;; with-let var undefined?  each has to be in the let (how to examine?)
       ;;
       ;; 1159/151
@@ -3957,27 +3926,29 @@
 			     (set! new-args (cons last-arg new-args)))))))))
 
 	 (when (= (length form) 3)
-	   (if (and (eqv? (cadr form) 0)
-		    (eq? head '>)
-		    (pair? (caddr form))
-		    (memq (caaddr form) non-negative-ops))
-	       (lint-format "~A can't be negative: ~A" caller (caaddr form) (truncated-list->string form))
-	       (if (and (eqv? (caddr form) 0)
-			(eq? head '<)
-			(pair? (cadr form))
-			(memq (caadr form) non-negative-ops))
-		   (lint-format "~A can't be negative: ~A" caller (caadr form) (truncated-list->string form))
-		   (if (or (and (eq? head '>)
-				(eqv? (cadr form) 1)
-				(pair? (caddr form))
-				(eq? (caaddr form) 'length))
-			   (and (eq? head '<)
-				(eqv? (caddr form) 1)
-				(pair? (cadr form))
-				(eq? (caadr form) 'length)))
-		       (let ((arg (if (pair? (cadr form)) (cadadr form) (cadr (caddr form)))))
-			 (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
-				      (lists->string form `(null? ,arg))))))))
+	   (cond ((and (eqv? (cadr form) 0)
+		       (eq? head '>)
+		       (pair? (caddr form))
+		       (memq (caaddr form) non-negative-ops))
+		  (lint-format "~A can't be negative: ~A" caller (caaddr form) (truncated-list->string form)))
+
+		 ((and (eqv? (caddr form) 0)
+		       (eq? head '<)
+		       (pair? (cadr form))
+		       (memq (caadr form) non-negative-ops))
+		  (lint-format "~A can't be negative: ~A" caller (caadr form) (truncated-list->string form)))
+
+		 ((or (and (eq? head '>)
+			   (eqv? (cadr form) 1)
+			   (pair? (caddr form))
+			   (eq? (caaddr form) 'length))
+		      (and (eq? head '<)
+			   (eqv? (caddr form) 1)
+			   (pair? (cadr form))
+			   (eq? (caadr form) 'length)))
+		  (let ((arg (if (pair? (cadr form)) (cadadr form) (cadr (caddr form)))))
+		    (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
+				 (lists->string form `(null? ,arg)))))))
 
 	 (check-char-cmp caller head form))
 	;; could change (> x 0) to (positive? x) and so on, but the former is clear and ubiquitous
@@ -5879,15 +5850,15 @@
 	   
 	   (unless (eq? vname lambda-marker)
 	     
-	     (when *report-function-stuff*
-	       (let ((scope (var-scope arg)))
+	     (when (and *report-function-stuff*
+			(memq (var-ftype arg) '(define lambda define* lambda*)))
+	       (let ((scope (var-scope arg))) ; might be #<undefined>?
+		 (if (pair? scope) (set! scope (remove vname scope)))
 		 (when (and (pair? scope)
 			    (null? (cdr scope))
-			    (memq (var-ftype arg) '(define lambda))
-			    (not (var-member (car scope) env))
-			    (var-member caller env) ; not 'let etc
-			    (not (eq? vname (car scope))))
-		   (format outport "~NC~A is called only in ~A~%" lint-left-margin #\space vname (car (var-scope arg))))))
+			    (symbol? (car scope))
+			    (not (var-member (car scope) env)))
+		   (format outport "~NC~A is called only in ~A~%" lint-left-margin #\space vname (car scope)))))
 	     
 	     ;; redundant vars are hard to find -- tons of false positives
 	     
@@ -6888,7 +6859,7 @@
 		  (lint-format "~A could be ~A" 
 			       caller head
 			       (symbol (substring (symbol->string head) 0 (- (length (symbol->string head)) 1)))))
-	      (lint-walk-function-body caller head val env)
+	      (lint-walk-function-body caller head val (if data (cons data env) env)) ; was just env
 	      (if data
 		  (cons data env)
 		  env))
@@ -8737,7 +8708,7 @@
 		       (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 			 (if (keyword? named-let)
 			     (lint-format "bad let name: ~A" caller named-let))
-			 
+			
 			 (unless named-let
 			   (let ((body (cddr form)))
 			     (if (and (null? (cdr body))
@@ -8977,28 +8948,32 @@
 			 (let ((vars (if named-let (list (make-var :name named-let 
 								   :definer 'let*)) ())) ; TODO: fvar
 			       (varlist (if named-let (caddr form) (cadr form)))
-			       (body (if named-let (cdddr form) (cddr form)))
-			       (side-effects #f))
+			       (body (if named-let (cdddr form) (cddr form))))
 			   (if (not (list? varlist))
 			       (lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
-			   (do ((bindings varlist (cdr bindings)))
-			       ((not (pair? bindings))
-				(if (not (null? bindings))
-				    (lint-format "let* variable list is not a proper list? ~S" 
-						 caller (if named-let (caddr form) (cadr form)))))
-			     (if (binding-ok? caller head (car bindings) env #f)
-				 (begin
-				   (if (not side-effects)
-				       (set! side-effects (side-effect? (cadar bindings) env)))
-				   (lint-walk caller (cadar bindings) (append vars env))
-				   (set! vars (cons (make-var :name (caar bindings) 
-							      :initial-value (cadar bindings) 
-							      :definer (if named-let 'named-let* 'let*))
-						    vars)))))
-			   
-			   (if (not (or side-effects
-					(any? (lambda (v) (positive? (var-ref v))) vars)))
-			       (lint-format "let* could be let: ~A" caller (truncated-list->string form)))
+
+			   (let ((side-effects #f))
+			     (do ((bindings varlist (cdr bindings)))
+				 ((not (pair? bindings))
+				  (if (not (null? bindings))
+				      (lint-format "let* variable list is not a proper list? ~S" 
+						   caller (if named-let (caddr form) (cadr form)))))
+			       (if (binding-ok? caller head (car bindings) env #f)
+				   (begin
+				     (if (and (not (eq? bindings varlist)) 
+					      ;; first var side-effect is innocuous (especially if it's the only one!)
+					      ;;    does this need to protect against a side-effect that the next var accesses?
+					      ;;    I think we're ok -- the accessed var must be exterior, and we go down in order
+					      (not side-effects))
+					 (set! side-effects (side-effect? (cadar bindings) env)))
+				     (lint-walk caller (cadar bindings) (append vars env))
+				     (set! vars (cons (make-var :name (caar bindings) 
+								:initial-value (cadar bindings) 
+								:definer (if named-let 'named-let* 'let*))
+						      vars)))))
+			     (if (not (or side-effects
+					  (any? (lambda (v) (positive? (var-ref v))) vars)))
+				 (lint-format "let* could be let: ~A" caller (truncated-list->string form))))
 			   
 			   ;; in s7, let evaluates var values top down, so this message is correct
 			   ;;   even in cases like (let ((ind (open-sound...)) (mx (maxamp))) ...)
@@ -9381,9 +9356,13 @@
 
 			     (if (not (var? v))
 				 (check-special-cases caller head form env)
-				 (if (and (memq (var-ftype v) '(define lambda))
+				 (if (and (memq (var-ftype v) '(define lambda define* lambda*))
 					  (not (memq caller (var-scope v))))
-				     (set! (var-scope v) (cons caller (var-scope v)))))
+				     (let ((cv (var-member caller env)))
+				       (if (or (not (var? cv))
+					       (not (memq (var-ftype cv) '(define lambda define* lambda*)))) ; named-let does not define ftype
+					   (set! (var-scope v) (cons (cons caller #f) (var-scope v)))
+					   (set! (var-scope v) (cons caller (var-scope v)))))))
 
 			     (if (assq head deprecated-ops)
 				 (lint-format "~A is deprecated; use ~A" caller head (cdr (assq head deprecated-ops))))
@@ -9577,7 +9556,7 @@
 	(set! line-number -1)
 	(set! quote-warnings 0)
 	(set! pp-left-margin 0)
-	(set! lint-left-margin -3)
+	(set! lint-left-margin -3) ; lint-file above adds 4
 	
 	(set! big-constants (make-hash-table))
 
@@ -9731,7 +9710,9 @@
 
 	  (for-each 
 	   (lambda (p)
-	     (if (> (cdr p) 4)
+	     (if (or (> (cdr p) 5)
+		     (and (> (cdr p) 3) 
+			  (> (length (car p)) 12)))
 		 (format outport "~A~A occurs ~D times~%"
 			 (if (pair? (car p)) "'" "")
 			 (truncated-list->string (car p)) (cdr p))))

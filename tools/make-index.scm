@@ -907,14 +907,14 @@
 
 (define (make-vector-name str)
   (let ((pos (char-position #\space str)))
-    (if pos
+    (if (not pos)
+	str
 	(let ((len (length str)))
 	  (string-set! str pos #\_)
 	  (do ((i (+ pos 1) (+ i 1)))
 	      ((= i len) str)
 	    (if (char=? (string-ref str i) #\space)
-		(string-set! str i #\_))))
-	str)))
+		(string-set! str i #\_)))))))
 
 (define ids (make-hash-table))
 (define n-array-length 2048)
@@ -1137,7 +1137,8 @@
 	    (do ((i 0 (+ i 1)))
 		((>= row offset))
 	      (let ((x (+ row (* ctr offset))))
-		(if (< x n)
+		(if (>= x n)
+		    (format ofil "~%")
 		    (let ((name (tnames x)))
 		      (format ofil 
 			      "<td~A>~A~A~A</td>" 
@@ -1163,9 +1164,7 @@
 			      )
 		      (if (ind-indexed name) 
 			  (format () "~A indexed twice~%" (ind-name name)))
-		      (set! (ind-indexed name) #t))
-		    (format ofil "~%")))
-
+		      (set! (ind-indexed name) #t))))
 	      (set! ctr (+ ctr 1))
 	      (when (< ctr cols)
 	        (format ofil "<td></td>"))
@@ -1284,7 +1283,7 @@
 ;;; --------------------------------------------------------------------------------
 ;;; html-check
 
-(define array-size (* 4 8192))
+(define array-size 32768) ; (* 4 8192))
 
 ;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html" "s7.html"))
 
@@ -1430,9 +1429,11 @@
 							 (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
 								 file linectr closer line (+ start 2) i commands)
 							 
-							 (if (memq closer '(ul tr td table small sub blockquote p details summary
+							 (if (not (memq closer '(ul tr td table small sub blockquote p details summary
 									       a A i b title pre span h1 h2 h3 code body html
-									       em head h4 sup map smaller bigger th tbody div))
+									       em head h4 sup map smaller bigger th tbody div)))
+							     (set! commands (remove-all closer commands))
+
 							     (begin
 							       (if (not (eq? (car commands) closer))
 								   (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
@@ -1472,8 +1473,7 @@
 									       (begin
 										 (set! warned #t)
 										 (set! commands (remove-all 'td commands))
-										 (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
-							     (set! commands (remove-all closer commands))))))
+										 (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))))))
 					      (set! closing #f))
 					    
 					    ;; not closing

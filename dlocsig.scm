@@ -884,32 +884,30 @@
 	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
 	  
 	  ;; decode a plain list
-	  (if 3d
-	      ;; it's a three dimensional list
-	      ;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
-	      ;;     x, y, z: coordinates of source
-	      (let ((px ())
-		    (py ())
-		    (pz ())
-		    (len (length points)))
-		(do ((i 0 (+ i 3)))
-		    ((>= i len))
-		  (set! px (cons (points i) px))
-		  (set! py (cons (points (+ i 1)) py))
-		  (set! pz (cons (points (+ i 2)) pz)))
-		(list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
+	  (let ((px ())
+		(py ())
+		(len (length points)))
+	    (if 3d
+		;; it's a three dimensional list
+		;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
+		;;     x, y, z: coordinates of source
+		(let ((pz ()))
+		  (do ((i 0 (+ i 3)))
+		      ((>= i len))
+		    (set! px (cons (points i) px))
+		    (set! py (cons (points (+ i 1)) py))
+		    (set! pz (cons (points (+ i 2)) pz)))
+		  (list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
 	      
-	      ;; it's a two dimensional list
-	      ;; '(x0 y0 x1 y1 ... xn yn)
-	      ;;     x, y, z: coordinates of source [missing z's assumed 0.0]
-	      (let ((px ())
-		    (py ())
-		    (len (length points)))
-		(do ((i 0 (+ i 2)))
-		    ((>= i len))
-		  (set! px (cons (points i) px))
-		  (set! py (cons (points (+ i 1)) py)))
-		(list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f))))))))
+		;; it's a two dimensional list
+		;; '(x0 y0 x1 y1 ... xn yn)
+		;;     x, y, z: coordinates of source [missing z's assumed 0.0]
+		(let ()
+		  (do ((i 0 (+ i 2)))
+		      ((>= i len))
+		    (set! px (cons (points i) px))
+		    (set! py (cons (points (+ i 1)) py)))
+		  (list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f)))))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 

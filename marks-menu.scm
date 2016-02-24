@@ -55,8 +55,9 @@
     (lambda ()
       (play-between-marks (integer->mark play-between-marks-m1) (integer->mark play-between-marks-m2)))))
 
-(if (or (provided? 'xm) 
-	(provided? 'xg))
+(if (not (or (provided? 'xm) 
+	     (provided? 'xg)))
+    (set! play-between-marks-menu-label (add-to-menu marks-menu play-between-marks-label cp-play-between-marks))
     (begin
       
       (define (set-syncs)
@@ -170,9 +171,9 @@
 	      (if play-between-marks-dialog
 		  (activate-dialog play-between-marks-dialog)))))
       
-      (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" post-play-between-marks-dialog)))
+      (set! play-between-marks-menu-label (add-to-menu marks-menu "Play between marks" post-play-between-marks-dialog))))
     
-    (set! play-between-marks-menu-label (add-to-menu marks-menu play-between-marks-label cp-play-between-marks)))
+    
 
 (set! marks-list (cons (lambda ()
 			 (let ((new-label (format #f "Play between marks (~D ~D)" play-between-marks-m1 play-between-marks-m2)))
@@ -351,7 +352,7 @@
     (lambda ()
       (let ((snc (sync)))
 	(define (trim-front-one-channel snd chn)
-	  (if (< (length (marks snd chn)) 1)
+	  (if (null? (marks snd chn))
 	      (status-report "trim-front needs a mark" snd)
 	      (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
 	(if (> snc 0)
@@ -369,7 +370,7 @@
     (lambda ()
       (let ((snc (sync)))
 	(define (trim-back-one-channel snd chn)
-	  (if (< (length (marks snd chn)) 1)
+	  (if (null? (marks snd chn))
 	      (status-report "trim-back needs a mark" snd)
 	      (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
 		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
@@ -427,8 +428,9 @@
 	  (fit-selection-between-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))
 	  (define-selection-via-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))))))
 
-(if (or (provided? 'xm) 
-	(provided? 'xg))
+(if (not (or (provided? 'xm) 
+	     (provided? 'xg)))
+    (set! fit-to-mark-menu-label (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks))
     (begin
       
       (define (post-fit-to-mark-dialog)
@@ -483,9 +485,8 @@ using the granulate generator to fix up the selection duration (this still is no
 				 1))))))
 	(activate-dialog fit-to-mark-dialog))
       
-      (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" post-fit-to-mark-dialog)))
-    
-    (set! fit-to-mark-menu-label (add-to-menu marks-menu fit-to-mark-label cp-fit-to-marks)))
+      (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" post-fit-to-mark-dialog))))
+
 
 (set! marks-list (cons (lambda ()
 			 (let ((new-label (format #f "Fit selection to marks (~D ~D)" fit-to-mark-one fit-to-mark-two)))
@@ -520,7 +521,9 @@ using the granulate generator to fix up the selection duration (this still is no
 (define (cp-define-by-marks)
   (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))
 
-(if (or (provided? 'xm) (provided? 'xg))
+(if (not (or (provided? 'xm) 
+	     (provided? 'xg)))
+    (set! define-by-mark-menu-label (add-to-menu marks-menu define-by-mark-label cp-define-by-marks))
     (begin
       
       (define (post-define-by-mark-dialog)
@@ -573,9 +576,8 @@ using the granulate generator to fix up the selection duration (this still is no
 				 1))))))
 	(activate-dialog define-by-mark-dialog))
       
-      (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" post-define-by-mark-dialog)))
-    
-    (set! define-by-mark-menu-label (add-to-menu marks-menu define-by-mark-label cp-define-by-marks)))
+      (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" post-define-by-mark-dialog))))
+
 
 (set! marks-list (cons (lambda ()
 			 (let ((new-label (format #f "Define selection by marks (~D ~D)" define-by-mark-one define-by-mark-two)))

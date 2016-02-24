@@ -481,13 +481,13 @@
 	    
 	    ;; -------- help/debugging --------
 	    (define (one-line text)
-	      (if (string? text)
+	      (if (not (string? text))
+		  text
 		  (let ((ntext (copy text)))
 		    (do ((i 0 (+ i 1)))
 			((= i (length ntext))
 			 ntext)
-		      (if (char=? (ntext i) #\newline) (set! (ntext i) #\|))))
-		  text))
+		      (if (char=? (ntext i) #\newline) (set! (ntext i) #\|))))))
 	    
 	    (define (help c)
 	      (when (pair? (*repl* 'helpers))
@@ -513,10 +513,10 @@
 		     (lambda (c) 
 		       (format #f "cursor: ~A, ~C, line: ~S"
 			       cursor-pos
-			       (if (> (length cur-line) 0)
+			       (if (zero? (length cur-line))
+				   #\space
 				   (let ((c (cur-line (max 0 (min cursor-pos (- (length cur-line) 1))))))
-				     (if (char=? c #\newline) #\| c))
-				   #\space)
+				     (if (char=? c #\newline) #\| c)))
 			       (one-line cur-line)))
 		     (lambda (c)
 		       (format #f "len: ~D, selection: ~S, previous: ~S" 
@@ -835,7 +835,7 @@
 				  (let ((loc (do ((i (- end 1) (- i 1)))
 						 ((or (< i 0)
 						      (char-whitespace? (cur-line i))
-						      (member (cur-line i) '(#\( #\' #\" #\)) eqv?))
+						      (memv (cur-line i) '(#\( #\' #\" #\))))
 						  i))))
 				    (set! completion (if (< loc 0)
 							 (symbol-completion cur-line)
@@ -1100,7 +1100,7 @@
 					     ((or (= i chars)
 						  (char>=? (str i) bcksp)
 						  (and (char<? (str i) #\space)
-						       (not (member (str i) ok-chars eq?))))
+						       (not (memv (str i) ok-chars))))
 					      
 					      (when (= i chars)
 						(let ((search-chars (string #\tab #\return #\newline))
@@ -1375,7 +1375,8 @@
 			 (set! strs (cons (cons binding distance) strs))))))))
        (make-full-let-iterator ap-env))
 
-      (if (pair? strs)
+      (if (not (pair? strs))
+	  'no-match
 	  (begin
 	    (for-each (lambda (b)
 			(format *stderr*
@@ -1391,8 +1392,7 @@
 				    (cdar b))))
 		      (sort! strs (lambda (a b)
 				    (string<? (symbol->string (caar a)) (symbol->string (caar b))))))
-	    '----)
-	  'no-match))))
+	    '----)))))
 
 
 ;;; --------------------------------------------------------------------------------

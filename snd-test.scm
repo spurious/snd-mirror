@@ -16090,6 +16090,7 @@ EDITS: 2
 	  (snd-display #__line__ ";make-env env of non-number: ~A" var)))
     
     ;; env-any
+    (define env-any-env '(0 0 1 1 2 0.25 3 1 4 0))
     (let* ((env-any-1 (lambda (e func)
 			(let* ((pts (mus-data e))
 			       (mus-position mus-channels)
@@ -16125,19 +16126,19 @@ EDITS: 2
       ;; assume sine-env square-env blackman4-env and multi-exp-env are available from generators.scm (8)
       
       (let ((val1 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (sine-env e))))))
 	    
 	    (val2 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i 20))
 				   (outa i (sine-env e))))))
 	    
 	    (val3 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (sine-env-1 e)))))))
@@ -16148,19 +16149,19 @@ EDITS: 2
       
       
       (let ((val1 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (square-env e))))))
 	    
 	    (val2 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i 20))
 				   (outa i (square-env e))))))
 	    
 	    (val3 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (square-env-1 e)))))))
@@ -16170,13 +16171,13 @@ EDITS: 2
 	    (snd-display #__line__ ";square-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
       
       (let ((val1 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (blackman4-env e))))))
 	    
 	    (val3 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+			      (let ((e (make-env env-any-env :length 20)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (blackman4-env-1 e)))))))
@@ -16185,21 +16186,21 @@ EDITS: 2
       
       
       (let ((val1 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+			      (let ((e (make-env env-any-env :length 20))
 				    (bases (float-vector 32.0 0.3 1.5)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
 				  (outa i (multi-expt-env e bases))))))
 	    
 	    (val2 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+			      (let ((e (make-env env-any-env :length 20))
 				    (bases (float-vector 32.0 0.3 1.5)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i 20))
 				   (outa i (multi-expt-env e bases))))))
 	    
 	    (val3 (with-sound ((make-float-vector 20))
-			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+			      (let ((e (make-env env-any-env :length 20))
 				    (bases (float-vector 32.0 0.3 1.5)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 20))
@@ -16210,8 +16211,8 @@ EDITS: 2
 	    (snd-display #__line__ ";multi-expt-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
       
       (let ((val1 (with-sound ((make-float-vector 220))
-			      (let ((e1 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220))
-				    (e2 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220)))
+			      (let ((e1 (make-env env-any-env :length 220))
+				    (e2 (make-env env-any-env :length 220)))
 				(do ((i 0 (+ i 1)))
 				    ((= i 220))
 				  (outa i (env-any e1
@@ -16220,8 +16221,8 @@ EDITS: 2
 								    (lambda (y2)
 								      y2))))))))))
 	    (val2 (with-sound ((make-float-vector 220))
-			      (let ((e1 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220))
-				    (e2 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220)))
+			      (let ((e1 (make-env env-any-env :length 220))
+				    (e2 (make-env env-any-env :length 220)))
 				 (do ((i 0 (+ i 1)))
 				     ((= i 220))
 				   (outa i (env-any e1 ; try it with and without "declare"
@@ -43436,16 +43437,17 @@ EDITS: 1
 	    (snd-display #__line__ ";screen width: ~A" (.width scr)))
 	(if (not (= (.ndepths scr) 7))
 	    (snd-display #__line__ ";screen ndepths: ~A" (.ndepths scr)))
-	(let ((dps (.depths scr)))
+	(let* ((dps (.depths scr))
+	       (cdp (car dps)))
 	  (if (not (and (= (length dps) (.ndepths scr))
-			(Depth? (car dps))))
+			(Depth? cdp)))
 	      (snd-display #__line__ ";depths: ~A" (.depths scr)))
-	  (if (not (= (.depth (car dps)) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
+	  (if (not (= (.depth cdp) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
 	  (if (pair? (.visuals (car dps)))
-	      (if (not (Visual? (car (.visuals (car dps))))) 
+	      (if (not (Visual? (car (.visuals cdp)))) 
 		  (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
-		  (if (not (= (.bits_per_rgb (car (.visuals (car dps)))) 8))
-		      (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals (car dps))))))
+		  (if (not (= (.bits_per_rgb (car (.visuals cdp))) 8))
+		      (snd-display #__line__ ";bits/visuals: ~A" (map .bits_per_rgb (.visuals cdp)))))
 	      (if (and (cadr dps)
 		       (pair? (.visuals (cadr dps))))
 		  (if (not (Visual? (car (.visuals (cadr dps))))) 
@@ -46769,13 +46771,14 @@ EDITS: 1
 	       XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?
 	       
 	       ))
-	     (xm-procs (if (defined? 'XpmImage?)
+	     (xm-procs (if (not (defined? 'XpmImage?))
+			   xm-procs-1
 			   (append xm-procs-1
 				   (list 
 				    XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
 				    XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
-				    XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))
-			   xm-procs-1))
+				    XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))))
+			   
 	     (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
 	     (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
 	     (xm-procs2 (remove-if (lambda (n) (not (aritable? n 2))) xm-procs))

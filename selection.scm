@@ -139,12 +139,12 @@ restores the previous selection (if any).  It returns whatever 'thunk' returned.
 	    (set! seldata (append seldata (list (selection-position) (selection-framples)))))
 	(make-selection beg (- (+ beg dur) 1) snd chn)
 	(let ((result (thunk)))
-	  (if seldata
+	  (if (not seldata)
+	      (unselect-all)
 	      (make-selection (caddr seldata) 
 			      (- (+ (caddr seldata) (cadddr seldata)) 1)
 			      (car seldata)
-			      (cadr seldata))
-	      (unselect-all))
+			      (cadr seldata)))
 	  result)))))
 
 
