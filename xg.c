@@ -43864,216 +43864,395 @@ pl_unused = NULL;
   Xg_define_procedure(gtk_event_keyval, xg_gtk_event_keyval_w, 1, 0, 0, NULL, NULL);
   Xg_define_procedure(gtk_init, gxg_gtk_init_w, 0, 2, 0, H_gtk_init, NULL);
   Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check, NULL);
-  Xg_define_procedure(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_DRAG_CONTEXT", NULL);
-  Xg_define_procedure(GDK_IS_DEVICE, gxg_GDK_IS_DEVICE_w, 1, 0, 0, "(GDK_IS_DEVICE obj): " PROC_TRUE " if obj is a GDK_IS_DEVICE", NULL);
-  Xg_define_procedure(GDK_IS_KEYMAP, gxg_GDK_IS_KEYMAP_w, 1, 0, 0, "(GDK_IS_KEYMAP obj): " PROC_TRUE " if obj is a GDK_IS_KEYMAP", NULL);
-  Xg_define_procedure(GDK_IS_VISUAL, gxg_GDK_IS_VISUAL_w, 1, 0, 0, "(GDK_IS_VISUAL obj): " PROC_TRUE " if obj is a GDK_IS_VISUAL", NULL);
-  Xg_define_procedure(GDK_IS_WINDOW, gxg_GDK_IS_WINDOW_w, 1, 0, 0, "(GDK_IS_WINDOW obj): " PROC_TRUE " if obj is a GDK_IS_WINDOW", NULL);
-  Xg_define_procedure(GDK_IS_PIXBUF, gxg_GDK_IS_PIXBUF_w, 1, 0, 0, "(GDK_IS_PIXBUF obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF", NULL);
-  Xg_define_procedure(GDK_IS_PIXBUF_ANIMATION, gxg_GDK_IS_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION", NULL);
-  Xg_define_procedure(GDK_IS_PIXBUF_ANIMATION_ITER, gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_IS_PIXBUF_ANIMATION_ITER obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION_ITER", NULL);
-  Xg_define_procedure(GTK_IS_ACCEL_GROUP, gxg_GTK_IS_ACCEL_GROUP_w, 1, 0, 0, "(GTK_IS_ACCEL_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_GROUP", NULL);
-  Xg_define_procedure(GTK_IS_ACCEL_LABEL, gxg_GTK_IS_ACCEL_LABEL_w, 1, 0, 0, "(GTK_IS_ACCEL_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_LABEL", NULL);
-  Xg_define_procedure(GTK_IS_ACCESSIBLE, gxg_GTK_IS_ACCESSIBLE_w, 1, 0, 0, "(GTK_IS_ACCESSIBLE obj): " PROC_TRUE " if obj is a GTK_IS_ACCESSIBLE", NULL);
-  Xg_define_procedure(GTK_IS_ADJUSTMENT, gxg_GTK_IS_ADJUSTMENT_w, 1, 0, 0, "(GTK_IS_ADJUSTMENT obj): " PROC_TRUE " if obj is a GTK_IS_ADJUSTMENT", NULL);
-  Xg_define_procedure(GTK_IS_ASPECT_FRAME, gxg_GTK_IS_ASPECT_FRAME_w, 1, 0, 0, "(GTK_IS_ASPECT_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_ASPECT_FRAME", NULL);
-  Xg_define_procedure(GTK_IS_BUTTON_BOX, gxg_GTK_IS_BUTTON_BOX_w, 1, 0, 0, "(GTK_IS_BUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_BUTTON_BOX", NULL);
-  Xg_define_procedure(GTK_IS_BIN, gxg_GTK_IS_BIN_w, 1, 0, 0, "(GTK_IS_BIN obj): " PROC_TRUE " if obj is a GTK_IS_BIN", NULL);
-  Xg_define_procedure(GTK_IS_BOX, gxg_GTK_IS_BOX_w, 1, 0, 0, "(GTK_IS_BOX obj): " PROC_TRUE " if obj is a GTK_IS_BOX", NULL);
-  Xg_define_procedure(GTK_IS_BUTTON, gxg_GTK_IS_BUTTON_w, 1, 0, 0, "(GTK_IS_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_CALENDAR, gxg_GTK_IS_CALENDAR_w, 1, 0, 0, "(GTK_IS_CALENDAR obj): " PROC_TRUE " if obj is a GTK_IS_CALENDAR", NULL);
-  Xg_define_procedure(GTK_IS_CELL_EDITABLE, gxg_GTK_IS_CELL_EDITABLE_w, 1, 0, 0, "(GTK_IS_CELL_EDITABLE obj): " PROC_TRUE " if obj is a GTK_IS_CELL_EDITABLE", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER, gxg_GTK_IS_CELL_RENDERER_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_PIXBUF, gxg_GTK_IS_CELL_RENDERER_PIXBUF_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_PIXBUF obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_PIXBUF", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_TEXT, gxg_GTK_IS_CELL_RENDERER_TEXT_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_TEXT", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_TOGGLE, gxg_GTK_IS_CELL_RENDERER_TOGGLE_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_TOGGLE obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_TOGGLE", NULL);
-  Xg_define_procedure(GTK_IS_CHECK_BUTTON, gxg_GTK_IS_CHECK_BUTTON_w, 1, 0, 0, "(GTK_IS_CHECK_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_CHECK_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_CHECK_MENU_ITEM, gxg_GTK_IS_CHECK_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_CHECK_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_CHECK_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_CONTAINER, gxg_GTK_IS_CONTAINER_w, 1, 0, 0, "(GTK_IS_CONTAINER obj): " PROC_TRUE " if obj is a GTK_IS_CONTAINER", NULL);
-  Xg_define_procedure(GTK_IS_DIALOG, gxg_GTK_IS_DIALOG_w, 1, 0, 0, "(GTK_IS_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_DRAWING_AREA, gxg_GTK_IS_DRAWING_AREA_w, 1, 0, 0, "(GTK_IS_DRAWING_AREA obj): " PROC_TRUE " if obj is a GTK_IS_DRAWING_AREA", NULL);
-  Xg_define_procedure(GTK_IS_EDITABLE, gxg_GTK_IS_EDITABLE_w, 1, 0, 0, "(GTK_IS_EDITABLE obj): " PROC_TRUE " if obj is a GTK_IS_EDITABLE", NULL);
-  Xg_define_procedure(GTK_IS_ENTRY, gxg_GTK_IS_ENTRY_w, 1, 0, 0, "(GTK_IS_ENTRY obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY", NULL);
-  Xg_define_procedure(GTK_IS_EVENT_BOX, gxg_GTK_IS_EVENT_BOX_w, 1, 0, 0, "(GTK_IS_EVENT_BOX obj): " PROC_TRUE " if obj is a GTK_IS_EVENT_BOX", NULL);
-  Xg_define_procedure(GTK_IS_FIXED, gxg_GTK_IS_FIXED_w, 1, 0, 0, "(GTK_IS_FIXED obj): " PROC_TRUE " if obj is a GTK_IS_FIXED", NULL);
-  Xg_define_procedure(GTK_IS_FRAME, gxg_GTK_IS_FRAME_w, 1, 0, 0, "(GTK_IS_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_FRAME", NULL);
-  Xg_define_procedure(GTK_IS_IMAGE, gxg_GTK_IS_IMAGE_w, 1, 0, 0, "(GTK_IS_IMAGE obj): " PROC_TRUE " if obj is a GTK_IS_IMAGE", NULL);
-  Xg_define_procedure(GTK_IS_IM_CONTEXT, gxg_GTK_IS_IM_CONTEXT_w, 1, 0, 0, "(GTK_IS_IM_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT", NULL);
-  Xg_define_procedure(GTK_IS_IM_CONTEXT_SIMPLE, gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IS_IM_CONTEXT_SIMPLE obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT_SIMPLE", NULL);
-  Xg_define_procedure(GTK_IS_INVISIBLE, gxg_GTK_IS_INVISIBLE_w, 1, 0, 0, "(GTK_IS_INVISIBLE obj): " PROC_TRUE " if obj is a GTK_IS_INVISIBLE", NULL);
-  Xg_define_procedure(GTK_IS_LABEL, gxg_GTK_IS_LABEL_w, 1, 0, 0, "(GTK_IS_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_LABEL", NULL);
-  Xg_define_procedure(GTK_IS_LAYOUT, gxg_GTK_IS_LAYOUT_w, 1, 0, 0, "(GTK_IS_LAYOUT obj): " PROC_TRUE " if obj is a GTK_IS_LAYOUT", NULL);
-  Xg_define_procedure(GTK_IS_LIST_STORE, gxg_GTK_IS_LIST_STORE_w, 1, 0, 0, "(GTK_IS_LIST_STORE obj): " PROC_TRUE " if obj is a GTK_IS_LIST_STORE", NULL);
-  Xg_define_procedure(GTK_IS_MENU_BAR, gxg_GTK_IS_MENU_BAR_w, 1, 0, 0, "(GTK_IS_MENU_BAR obj): " PROC_TRUE " if obj is a GTK_IS_MENU_BAR", NULL);
-  Xg_define_procedure(GTK_IS_MENU, gxg_GTK_IS_MENU_w, 1, 0, 0, "(GTK_IS_MENU obj): " PROC_TRUE " if obj is a GTK_IS_MENU", NULL);
-  Xg_define_procedure(GTK_IS_MENU_ITEM, gxg_GTK_IS_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_MENU_SHELL, gxg_GTK_IS_MENU_SHELL_w, 1, 0, 0, "(GTK_IS_MENU_SHELL obj): " PROC_TRUE " if obj is a GTK_IS_MENU_SHELL", NULL);
-  Xg_define_procedure(GTK_IS_NOTEBOOK, gxg_GTK_IS_NOTEBOOK_w, 1, 0, 0, "(GTK_IS_NOTEBOOK obj): " PROC_TRUE " if obj is a GTK_IS_NOTEBOOK", NULL);
-  Xg_define_procedure(GTK_IS_PANED, gxg_GTK_IS_PANED_w, 1, 0, 0, "(GTK_IS_PANED obj): " PROC_TRUE " if obj is a GTK_IS_PANED", NULL);
-  Xg_define_procedure(GTK_IS_PROGRESS_BAR, gxg_GTK_IS_PROGRESS_BAR_w, 1, 0, 0, "(GTK_IS_PROGRESS_BAR obj): " PROC_TRUE " if obj is a GTK_IS_PROGRESS_BAR", NULL);
-  Xg_define_procedure(GTK_IS_RADIO_BUTTON, gxg_GTK_IS_RADIO_BUTTON_w, 1, 0, 0, "(GTK_IS_RADIO_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_RADIO_MENU_ITEM, gxg_GTK_IS_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_RADIO_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_RANGE, gxg_GTK_IS_RANGE_w, 1, 0, 0, "(GTK_IS_RANGE obj): " PROC_TRUE " if obj is a GTK_IS_RANGE", NULL);
-  Xg_define_procedure(GTK_IS_SCALE, gxg_GTK_IS_SCALE_w, 1, 0, 0, "(GTK_IS_SCALE obj): " PROC_TRUE " if obj is a GTK_IS_SCALE", NULL);
-  Xg_define_procedure(GTK_IS_SCROLLBAR, gxg_GTK_IS_SCROLLBAR_w, 1, 0, 0, "(GTK_IS_SCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLBAR", NULL);
-  Xg_define_procedure(GTK_IS_SCROLLED_WINDOW, gxg_GTK_IS_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_IS_SCROLLED_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLED_WINDOW", NULL);
-  Xg_define_procedure(GTK_IS_SEPARATOR, gxg_GTK_IS_SEPARATOR_w, 1, 0, 0, "(GTK_IS_SEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR", NULL);
-  Xg_define_procedure(GTK_IS_SEPARATOR_MENU_ITEM, gxg_GTK_IS_SEPARATOR_MENU_ITEM_w, 1, 0, 0, "(GTK_IS_SEPARATOR_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_SETTINGS, gxg_GTK_IS_SETTINGS_w, 1, 0, 0, "(GTK_IS_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_SETTINGS", NULL);
-  Xg_define_procedure(GTK_IS_SIZE_GROUP, gxg_GTK_IS_SIZE_GROUP_w, 1, 0, 0, "(GTK_IS_SIZE_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_SIZE_GROUP", NULL);
-  Xg_define_procedure(GTK_IS_SPIN_BUTTON, gxg_GTK_IS_SPIN_BUTTON_w, 1, 0, 0, "(GTK_IS_SPIN_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_SPIN_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_STATUSBAR, gxg_GTK_IS_STATUSBAR_w, 1, 0, 0, "(GTK_IS_STATUSBAR obj): " PROC_TRUE " if obj is a GTK_IS_STATUSBAR", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_BUFFER, gxg_GTK_IS_TEXT_BUFFER_w, 1, 0, 0, "(GTK_IS_TEXT_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_BUFFER", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_CHILD_ANCHOR, gxg_GTK_IS_TEXT_CHILD_ANCHOR_w, 1, 0, 0, "(GTK_IS_TEXT_CHILD_ANCHOR obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_CHILD_ANCHOR", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_MARK, gxg_GTK_IS_TEXT_MARK_w, 1, 0, 0, "(GTK_IS_TEXT_MARK obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_MARK", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_TAG, gxg_GTK_IS_TEXT_TAG_w, 1, 0, 0, "(GTK_IS_TEXT_TAG obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_TAG", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_TAG_TABLE, gxg_GTK_IS_TEXT_TAG_TABLE_w, 1, 0, 0, "(GTK_IS_TEXT_TAG_TABLE obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_TAG_TABLE", NULL);
-  Xg_define_procedure(GTK_IS_TEXT_VIEW, gxg_GTK_IS_TEXT_VIEW_w, 1, 0, 0, "(GTK_IS_TEXT_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_VIEW", NULL);
-  Xg_define_procedure(GTK_IS_TOGGLE_BUTTON, gxg_GTK_IS_TOGGLE_BUTTON_w, 1, 0, 0, "(GTK_IS_TOGGLE_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOGGLE_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_TOOLBAR, gxg_GTK_IS_TOOLBAR_w, 1, 0, 0, "(GTK_IS_TOOLBAR obj): " PROC_TRUE " if obj is a GTK_IS_TOOLBAR", NULL);
-  Xg_define_procedure(GTK_IS_TREE_DRAG_SOURCE, gxg_GTK_IS_TREE_DRAG_SOURCE_w, 1, 0, 0, "(GTK_IS_TREE_DRAG_SOURCE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_DRAG_SOURCE", NULL);
-  Xg_define_procedure(GTK_IS_TREE_DRAG_DEST, gxg_GTK_IS_TREE_DRAG_DEST_w, 1, 0, 0, "(GTK_IS_TREE_DRAG_DEST obj): " PROC_TRUE " if obj is a GTK_IS_TREE_DRAG_DEST", NULL);
-  Xg_define_procedure(GTK_IS_TREE_MODEL, gxg_GTK_IS_TREE_MODEL_w, 1, 0, 0, "(GTK_IS_TREE_MODEL obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL", NULL);
-  Xg_define_procedure(GTK_IS_TREE_MODEL_SORT, gxg_GTK_IS_TREE_MODEL_SORT_w, 1, 0, 0, "(GTK_IS_TREE_MODEL_SORT obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL_SORT", NULL);
-  Xg_define_procedure(GTK_IS_TREE_SELECTION, gxg_GTK_IS_TREE_SELECTION_w, 1, 0, 0, "(GTK_IS_TREE_SELECTION obj): " PROC_TRUE " if obj is a GTK_IS_TREE_SELECTION", NULL);
-  Xg_define_procedure(GTK_IS_TREE_SORTABLE, gxg_GTK_IS_TREE_SORTABLE_w, 1, 0, 0, "(GTK_IS_TREE_SORTABLE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_SORTABLE", NULL);
-  Xg_define_procedure(GTK_IS_TREE_STORE, gxg_GTK_IS_TREE_STORE_w, 1, 0, 0, "(GTK_IS_TREE_STORE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_STORE", NULL);
-  Xg_define_procedure(GTK_IS_TREE_VIEW_COLUMN, gxg_GTK_IS_TREE_VIEW_COLUMN_w, 1, 0, 0, "(GTK_IS_TREE_VIEW_COLUMN obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW_COLUMN", NULL);
-  Xg_define_procedure(GTK_IS_TREE_VIEW, gxg_GTK_IS_TREE_VIEW_w, 1, 0, 0, "(GTK_IS_TREE_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW", NULL);
-  Xg_define_procedure(GTK_IS_VIEWPORT, gxg_GTK_IS_VIEWPORT_w, 1, 0, 0, "(GTK_IS_VIEWPORT obj): " PROC_TRUE " if obj is a GTK_IS_VIEWPORT", NULL);
-  Xg_define_procedure(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET_w, 1, 0, 0, "(GTK_IS_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_WIDGET", NULL);
-  Xg_define_procedure(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW_w, 1, 0, 0, "(GTK_IS_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW", NULL);
-  Xg_define_procedure(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT_w, 1, 0, 0, "(PANGO_IS_CONTEXT obj): " PROC_TRUE " if obj is a PANGO_IS_CONTEXT", NULL);
-  Xg_define_procedure(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY_w, 1, 0, 0, "(PANGO_IS_FONT_FAMILY obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_FAMILY", NULL);
-  Xg_define_procedure(PANGO_IS_FONT_FACE, gxg_PANGO_IS_FONT_FACE_w, 1, 0, 0, "(PANGO_IS_FONT_FACE obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_FACE", NULL);
-  Xg_define_procedure(PANGO_IS_FONT, gxg_PANGO_IS_FONT_w, 1, 0, 0, "(PANGO_IS_FONT obj): " PROC_TRUE " if obj is a PANGO_IS_FONT", NULL);
-  Xg_define_procedure(PANGO_IS_FONT_MAP, gxg_PANGO_IS_FONT_MAP_w, 1, 0, 0, "(PANGO_IS_FONT_MAP obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_MAP", NULL);
-  Xg_define_procedure(PANGO_IS_LAYOUT, gxg_PANGO_IS_LAYOUT_w, 1, 0, 0, "(PANGO_IS_LAYOUT obj): " PROC_TRUE " if obj is a PANGO_IS_LAYOUT", NULL);
-  Xg_define_procedure(G_IS_OBJECT, gxg_G_IS_OBJECT_w, 1, 0, 0, "(G_IS_OBJECT obj): " PROC_TRUE " if obj is a G_IS_OBJECT", NULL);
-  Xg_define_procedure(GDK_IS_SCREEN, gxg_GDK_IS_SCREEN_w, 1, 0, 0, "(GDK_IS_SCREEN obj): " PROC_TRUE " if obj is a GDK_IS_SCREEN", NULL);
-  Xg_define_procedure(GDK_IS_DISPLAY, gxg_GDK_IS_DISPLAY_w, 1, 0, 0, "(GDK_IS_DISPLAY obj): " PROC_TRUE " if obj is a GDK_IS_DISPLAY", NULL);
-  Xg_define_procedure(GTK_IS_FILE_CHOOSER_DIALOG, gxg_GTK_IS_FILE_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_FILE_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_FILE_CHOOSER_WIDGET, gxg_GTK_IS_FILE_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_FILE_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_WIDGET", NULL);
-  Xg_define_procedure(GTK_IS_TREE_MODEL_FILTER, gxg_GTK_IS_TREE_MODEL_FILTER_w, 1, 0, 0, "(GTK_IS_TREE_MODEL_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL_FILTER", NULL);
-  Xg_define_procedure(GTK_IS_COMBO_BOX, gxg_GTK_IS_COMBO_BOX_w, 1, 0, 0, "(GTK_IS_COMBO_BOX obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX", NULL);
-  Xg_define_procedure(GTK_IS_EXPANDER, gxg_GTK_IS_EXPANDER_w, 1, 0, 0, "(GTK_IS_EXPANDER obj): " PROC_TRUE " if obj is a GTK_IS_EXPANDER", NULL);
-  Xg_define_procedure(GTK_IS_FONT_BUTTON, gxg_GTK_IS_FONT_BUTTON_w, 1, 0, 0, "(GTK_IS_FONT_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_FONT_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_COLOR_BUTTON, gxg_GTK_IS_COLOR_BUTTON_w, 1, 0, 0, "(GTK_IS_COLOR_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_ENTRY_COMPLETION, gxg_GTK_IS_ENTRY_COMPLETION_w, 1, 0, 0, "(GTK_IS_ENTRY_COMPLETION obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_COMPLETION", NULL);
-  Xg_define_procedure(GTK_IS_RADIO_TOOL_BUTTON, gxg_GTK_IS_RADIO_TOOL_BUTTON_w, 1, 0, 0, "(GTK_IS_RADIO_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_SEPARATOR_TOOL_ITEM, gxg_GTK_IS_SEPARATOR_TOOL_ITEM_w, 1, 0, 0, "(GTK_IS_SEPARATOR_TOOL_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR_TOOL_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_TOGGLE_TOOL_BUTTON, gxg_GTK_IS_TOGGLE_TOOL_BUTTON_w, 1, 0, 0, "(GTK_IS_TOGGLE_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOGGLE_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_FILE_FILTER, gxg_GTK_IS_FILE_FILTER_w, 1, 0, 0, "(GTK_IS_FILE_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_FILE_FILTER", NULL);
-  Xg_define_procedure(GTK_IS_CELL_LAYOUT, gxg_GTK_IS_CELL_LAYOUT_w, 1, 0, 0, "(GTK_IS_CELL_LAYOUT obj): " PROC_TRUE " if obj is a GTK_IS_CELL_LAYOUT", NULL);
-  Xg_define_procedure(GTK_IS_CLIPBOARD, gxg_GTK_IS_CLIPBOARD_w, 1, 0, 0, "(GTK_IS_CLIPBOARD obj): " PROC_TRUE " if obj is a GTK_IS_CLIPBOARD", NULL);
-  Xg_define_procedure(GTK_IS_FILE_CHOOSER, gxg_GTK_IS_FILE_CHOOSER_w, 1, 0, 0, "(GTK_IS_FILE_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER", NULL);
-  Xg_define_procedure(GTK_IS_ICON_THEME, gxg_GTK_IS_ICON_THEME_w, 1, 0, 0, "(GTK_IS_ICON_THEME obj): " PROC_TRUE " if obj is a GTK_IS_ICON_THEME", NULL);
-  Xg_define_procedure(GTK_IS_TOOL_BUTTON, gxg_GTK_IS_TOOL_BUTTON_w, 1, 0, 0, "(GTK_IS_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_TOOL_ITEM, gxg_GTK_IS_TOOL_ITEM_w, 1, 0, 0, "(GTK_IS_TOOL_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM", NULL);
-  Xg_define_procedure(GTK_IS_ACCEL_MAP, gxg_GTK_IS_ACCEL_MAP_w, 1, 0, 0, "(GTK_IS_ACCEL_MAP obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_MAP", NULL);
-  Xg_define_procedure(GTK_IS_CELL_VIEW, gxg_GTK_IS_CELL_VIEW_w, 1, 0, 0, "(GTK_IS_CELL_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_CELL_VIEW", NULL);
-  Xg_define_procedure(GTK_IS_ABOUT_DIALOG, gxg_GTK_IS_ABOUT_DIALOG_w, 1, 0, 0, "(GTK_IS_ABOUT_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_ABOUT_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_COMBO, gxg_GTK_IS_CELL_RENDERER_COMBO_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_COMBO obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_COMBO", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_PROGRESS, gxg_GTK_IS_CELL_RENDERER_PROGRESS_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_PROGRESS obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_PROGRESS", NULL);
-  Xg_define_procedure(GTK_IS_ICON_VIEW, gxg_GTK_IS_ICON_VIEW_w, 1, 0, 0, "(GTK_IS_ICON_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_ICON_VIEW", NULL);
-  Xg_define_procedure(GTK_IS_FILE_CHOOSER_BUTTON, gxg_GTK_IS_FILE_CHOOSER_BUTTON_w, 1, 0, 0, "(GTK_IS_FILE_CHOOSER_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_MENU_TOOL_BUTTON, gxg_GTK_IS_MENU_TOOL_BUTTON_w, 1, 0, 0, "(GTK_IS_MENU_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_MENU_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_ASSISTANT, gxg_GTK_IS_ASSISTANT_w, 1, 0, 0, "(GTK_IS_ASSISTANT obj): " PROC_TRUE " if obj is a GTK_IS_ASSISTANT", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_ACCEL, gxg_GTK_IS_CELL_RENDERER_ACCEL_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_ACCEL obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_ACCEL", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_SPIN, gxg_GTK_IS_CELL_RENDERER_SPIN_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_SPIN obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPIN", NULL);
-  Xg_define_procedure(GTK_IS_LINK_BUTTON, gxg_GTK_IS_LINK_BUTTON_w, 1, 0, 0, "(GTK_IS_LINK_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_LINK_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_DIALOG, gxg_GTK_IS_RECENT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_RECENT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_CHOOSER, gxg_GTK_IS_RECENT_CHOOSER_w, 1, 0, 0, "(GTK_IS_RECENT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_MENU, gxg_GTK_IS_RECENT_CHOOSER_MENU_w, 1, 0, 0, "(GTK_IS_RECENT_CHOOSER_MENU obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_MENU", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_WIDGET, gxg_GTK_IS_RECENT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_RECENT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_WIDGET", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_FILTER, gxg_GTK_IS_RECENT_FILTER_w, 1, 0, 0, "(GTK_IS_RECENT_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_FILTER", NULL);
-  Xg_define_procedure(GTK_IS_RECENT_MANAGER, gxg_GTK_IS_RECENT_MANAGER_w, 1, 0, 0, "(GTK_IS_RECENT_MANAGER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_MANAGER", NULL);
-  Xg_define_procedure(GTK_IS_PRINT_CONTEXT, gxg_GTK_IS_PRINT_CONTEXT_w, 1, 0, 0, "(GTK_IS_PRINT_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_CONTEXT", NULL);
-  Xg_define_procedure(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION", NULL);
-  Xg_define_procedure(GTK_IS_PRINT_OPERATION_PREVIEW, gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_IS_PRINT_OPERATION_PREVIEW obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION_PREVIEW", NULL);
-  Xg_define_procedure(GTK_IS_PRINT_SETTINGS, gxg_GTK_IS_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_IS_PRINT_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_SETTINGS", NULL);
-  Xg_define_procedure(GTK_IS_TOOLTIP, gxg_GTK_IS_TOOLTIP_w, 1, 0, 0, "(GTK_IS_TOOLTIP obj): " PROC_TRUE " if obj is a GTK_IS_TOOLTIP", NULL);
+  Xg_define_procedure(GDK_IS_DRAG_CONTEXT, gxg_GDK_IS_DRAG_CONTEXT_w, 1, 0, 0,
+                      "(GDK_IS_DRAG_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_DRAG_CONTEXT", pl_bt);
+  Xg_define_procedure(GDK_IS_DEVICE, gxg_GDK_IS_DEVICE_w, 1, 0, 0,
+                      "(GDK_IS_DEVICE obj): " PROC_TRUE " if obj is a GDK_IS_DEVICE", pl_bt);
+  Xg_define_procedure(GDK_IS_KEYMAP, gxg_GDK_IS_KEYMAP_w, 1, 0, 0,
+                      "(GDK_IS_KEYMAP obj): " PROC_TRUE " if obj is a GDK_IS_KEYMAP", pl_bt);
+  Xg_define_procedure(GDK_IS_VISUAL, gxg_GDK_IS_VISUAL_w, 1, 0, 0,
+                      "(GDK_IS_VISUAL obj): " PROC_TRUE " if obj is a GDK_IS_VISUAL", pl_bt);
+  Xg_define_procedure(GDK_IS_WINDOW, gxg_GDK_IS_WINDOW_w, 1, 0, 0,
+                      "(GDK_IS_WINDOW obj): " PROC_TRUE " if obj is a GDK_IS_WINDOW", pl_bt);
+  Xg_define_procedure(GDK_IS_PIXBUF, gxg_GDK_IS_PIXBUF_w, 1, 0, 0,
+                      "(GDK_IS_PIXBUF obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF", pl_bt);
+  Xg_define_procedure(GDK_IS_PIXBUF_ANIMATION, gxg_GDK_IS_PIXBUF_ANIMATION_w, 1, 0, 0,
+                      "(GDK_IS_PIXBUF_ANIMATION obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION", pl_bt);
+  Xg_define_procedure(GDK_IS_PIXBUF_ANIMATION_ITER, gxg_GDK_IS_PIXBUF_ANIMATION_ITER_w, 1, 0, 0,
+                      "(GDK_IS_PIXBUF_ANIMATION_ITER obj): " PROC_TRUE " if obj is a GDK_IS_PIXBUF_ANIMATION_ITER", pl_bt);
+  Xg_define_procedure(GTK_IS_ACCEL_GROUP, gxg_GTK_IS_ACCEL_GROUP_w, 1, 0, 0,
+                      "(GTK_IS_ACCEL_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_GROUP", pl_bt);
+  Xg_define_procedure(GTK_IS_ACCEL_LABEL, gxg_GTK_IS_ACCEL_LABEL_w, 1, 0, 0,
+                      "(GTK_IS_ACCEL_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_LABEL", pl_bt);
+  Xg_define_procedure(GTK_IS_ACCESSIBLE, gxg_GTK_IS_ACCESSIBLE_w, 1, 0, 0,
+                      "(GTK_IS_ACCESSIBLE obj): " PROC_TRUE " if obj is a GTK_IS_ACCESSIBLE", pl_bt);
+  Xg_define_procedure(GTK_IS_ADJUSTMENT, gxg_GTK_IS_ADJUSTMENT_w, 1, 0, 0,
+                      "(GTK_IS_ADJUSTMENT obj): " PROC_TRUE " if obj is a GTK_IS_ADJUSTMENT", pl_bt);
+  Xg_define_procedure(GTK_IS_ASPECT_FRAME, gxg_GTK_IS_ASPECT_FRAME_w, 1, 0, 0,
+                      "(GTK_IS_ASPECT_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_ASPECT_FRAME", pl_bt);
+  Xg_define_procedure(GTK_IS_BUTTON_BOX, gxg_GTK_IS_BUTTON_BOX_w, 1, 0, 0,
+                      "(GTK_IS_BUTTON_BOX obj): " PROC_TRUE " if obj is a GTK_IS_BUTTON_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_BIN, gxg_GTK_IS_BIN_w, 1, 0, 0,
+                      "(GTK_IS_BIN obj): " PROC_TRUE " if obj is a GTK_IS_BIN", pl_bt);
+  Xg_define_procedure(GTK_IS_BOX, gxg_GTK_IS_BOX_w, 1, 0, 0,
+                      "(GTK_IS_BOX obj): " PROC_TRUE " if obj is a GTK_IS_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_BUTTON, gxg_GTK_IS_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_CALENDAR, gxg_GTK_IS_CALENDAR_w, 1, 0, 0,
+                      "(GTK_IS_CALENDAR obj): " PROC_TRUE " if obj is a GTK_IS_CALENDAR", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_EDITABLE, gxg_GTK_IS_CELL_EDITABLE_w, 1, 0, 0,
+                      "(GTK_IS_CELL_EDITABLE obj): " PROC_TRUE " if obj is a GTK_IS_CELL_EDITABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER, gxg_GTK_IS_CELL_RENDERER_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_PIXBUF, gxg_GTK_IS_CELL_RENDERER_PIXBUF_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_PIXBUF obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_PIXBUF", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_TEXT, gxg_GTK_IS_CELL_RENDERER_TEXT_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_TEXT", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_TOGGLE, gxg_GTK_IS_CELL_RENDERER_TOGGLE_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_TOGGLE obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_TOGGLE", pl_bt);
+  Xg_define_procedure(GTK_IS_CHECK_BUTTON, gxg_GTK_IS_CHECK_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_CHECK_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_CHECK_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_CHECK_MENU_ITEM, gxg_GTK_IS_CHECK_MENU_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_CHECK_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_CHECK_MENU_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_CONTAINER, gxg_GTK_IS_CONTAINER_w, 1, 0, 0,
+                      "(GTK_IS_CONTAINER obj): " PROC_TRUE " if obj is a GTK_IS_CONTAINER", pl_bt);
+  Xg_define_procedure(GTK_IS_DIALOG, gxg_GTK_IS_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_DRAWING_AREA, gxg_GTK_IS_DRAWING_AREA_w, 1, 0, 0,
+                      "(GTK_IS_DRAWING_AREA obj): " PROC_TRUE " if obj is a GTK_IS_DRAWING_AREA", pl_bt);
+  Xg_define_procedure(GTK_IS_EDITABLE, gxg_GTK_IS_EDITABLE_w, 1, 0, 0,
+                      "(GTK_IS_EDITABLE obj): " PROC_TRUE " if obj is a GTK_IS_EDITABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_ENTRY, gxg_GTK_IS_ENTRY_w, 1, 0, 0,
+                      "(GTK_IS_ENTRY obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY", pl_bt);
+  Xg_define_procedure(GTK_IS_EVENT_BOX, gxg_GTK_IS_EVENT_BOX_w, 1, 0, 0,
+                      "(GTK_IS_EVENT_BOX obj): " PROC_TRUE " if obj is a GTK_IS_EVENT_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_FIXED, gxg_GTK_IS_FIXED_w, 1, 0, 0,
+                      "(GTK_IS_FIXED obj): " PROC_TRUE " if obj is a GTK_IS_FIXED", pl_bt);
+  Xg_define_procedure(GTK_IS_FRAME, gxg_GTK_IS_FRAME_w, 1, 0, 0,
+                      "(GTK_IS_FRAME obj): " PROC_TRUE " if obj is a GTK_IS_FRAME", pl_bt);
+  Xg_define_procedure(GTK_IS_IMAGE, gxg_GTK_IS_IMAGE_w, 1, 0, 0,
+                      "(GTK_IS_IMAGE obj): " PROC_TRUE " if obj is a GTK_IS_IMAGE", pl_bt);
+  Xg_define_procedure(GTK_IS_IM_CONTEXT, gxg_GTK_IS_IM_CONTEXT_w, 1, 0, 0,
+                      "(GTK_IS_IM_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT", pl_bt);
+  Xg_define_procedure(GTK_IS_IM_CONTEXT_SIMPLE, gxg_GTK_IS_IM_CONTEXT_SIMPLE_w, 1, 0, 0,
+                      "(GTK_IS_IM_CONTEXT_SIMPLE obj): " PROC_TRUE " if obj is a GTK_IS_IM_CONTEXT_SIMPLE", pl_bt);
+  Xg_define_procedure(GTK_IS_INVISIBLE, gxg_GTK_IS_INVISIBLE_w, 1, 0, 0,
+                      "(GTK_IS_INVISIBLE obj): " PROC_TRUE " if obj is a GTK_IS_INVISIBLE", pl_bt);
+  Xg_define_procedure(GTK_IS_LABEL, gxg_GTK_IS_LABEL_w, 1, 0, 0,
+                      "(GTK_IS_LABEL obj): " PROC_TRUE " if obj is a GTK_IS_LABEL", pl_bt);
+  Xg_define_procedure(GTK_IS_LAYOUT, gxg_GTK_IS_LAYOUT_w, 1, 0, 0,
+                      "(GTK_IS_LAYOUT obj): " PROC_TRUE " if obj is a GTK_IS_LAYOUT", pl_bt);
+  Xg_define_procedure(GTK_IS_LIST_STORE, gxg_GTK_IS_LIST_STORE_w, 1, 0, 0,
+                      "(GTK_IS_LIST_STORE obj): " PROC_TRUE " if obj is a GTK_IS_LIST_STORE", pl_bt);
+  Xg_define_procedure(GTK_IS_MENU_BAR, gxg_GTK_IS_MENU_BAR_w, 1, 0, 0,
+                      "(GTK_IS_MENU_BAR obj): " PROC_TRUE " if obj is a GTK_IS_MENU_BAR", pl_bt);
+  Xg_define_procedure(GTK_IS_MENU, gxg_GTK_IS_MENU_w, 1, 0, 0,
+                      "(GTK_IS_MENU obj): " PROC_TRUE " if obj is a GTK_IS_MENU", pl_bt);
+  Xg_define_procedure(GTK_IS_MENU_ITEM, gxg_GTK_IS_MENU_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_MENU_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_MENU_SHELL, gxg_GTK_IS_MENU_SHELL_w, 1, 0, 0,
+                      "(GTK_IS_MENU_SHELL obj): " PROC_TRUE " if obj is a GTK_IS_MENU_SHELL", pl_bt);
+  Xg_define_procedure(GTK_IS_NOTEBOOK, gxg_GTK_IS_NOTEBOOK_w, 1, 0, 0,
+                      "(GTK_IS_NOTEBOOK obj): " PROC_TRUE " if obj is a GTK_IS_NOTEBOOK", pl_bt);
+  Xg_define_procedure(GTK_IS_PANED, gxg_GTK_IS_PANED_w, 1, 0, 0,
+                      "(GTK_IS_PANED obj): " PROC_TRUE " if obj is a GTK_IS_PANED", pl_bt);
+  Xg_define_procedure(GTK_IS_PROGRESS_BAR, gxg_GTK_IS_PROGRESS_BAR_w, 1, 0, 0,
+                      "(GTK_IS_PROGRESS_BAR obj): " PROC_TRUE " if obj is a GTK_IS_PROGRESS_BAR", pl_bt);
+  Xg_define_procedure(GTK_IS_RADIO_BUTTON, gxg_GTK_IS_RADIO_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_RADIO_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_RADIO_MENU_ITEM, gxg_GTK_IS_RADIO_MENU_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_RADIO_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_MENU_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_RANGE, gxg_GTK_IS_RANGE_w, 1, 0, 0,
+                      "(GTK_IS_RANGE obj): " PROC_TRUE " if obj is a GTK_IS_RANGE", pl_bt);
+  Xg_define_procedure(GTK_IS_SCALE, gxg_GTK_IS_SCALE_w, 1, 0, 0,
+                      "(GTK_IS_SCALE obj): " PROC_TRUE " if obj is a GTK_IS_SCALE", pl_bt);
+  Xg_define_procedure(GTK_IS_SCROLLBAR, gxg_GTK_IS_SCROLLBAR_w, 1, 0, 0,
+                      "(GTK_IS_SCROLLBAR obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLBAR", pl_bt);
+  Xg_define_procedure(GTK_IS_SCROLLED_WINDOW, gxg_GTK_IS_SCROLLED_WINDOW_w, 1, 0, 0,
+                      "(GTK_IS_SCROLLED_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLED_WINDOW", pl_bt);
+  Xg_define_procedure(GTK_IS_SEPARATOR, gxg_GTK_IS_SEPARATOR_w, 1, 0, 0,
+                      "(GTK_IS_SEPARATOR obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR", pl_bt);
+  Xg_define_procedure(GTK_IS_SEPARATOR_MENU_ITEM, gxg_GTK_IS_SEPARATOR_MENU_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_SEPARATOR_MENU_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR_MENU_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_SETTINGS, gxg_GTK_IS_SETTINGS_w, 1, 0, 0,
+                      "(GTK_IS_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_SETTINGS", pl_bt);
+  Xg_define_procedure(GTK_IS_SIZE_GROUP, gxg_GTK_IS_SIZE_GROUP_w, 1, 0, 0,
+                      "(GTK_IS_SIZE_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_SIZE_GROUP", pl_bt);
+  Xg_define_procedure(GTK_IS_SPIN_BUTTON, gxg_GTK_IS_SPIN_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_SPIN_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_SPIN_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_STATUSBAR, gxg_GTK_IS_STATUSBAR_w, 1, 0, 0,
+                      "(GTK_IS_STATUSBAR obj): " PROC_TRUE " if obj is a GTK_IS_STATUSBAR", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_BUFFER, gxg_GTK_IS_TEXT_BUFFER_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_BUFFER", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_CHILD_ANCHOR, gxg_GTK_IS_TEXT_CHILD_ANCHOR_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_CHILD_ANCHOR obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_CHILD_ANCHOR", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_MARK, gxg_GTK_IS_TEXT_MARK_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_MARK obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_MARK", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_TAG, gxg_GTK_IS_TEXT_TAG_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_TAG obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_TAG", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_TAG_TABLE, gxg_GTK_IS_TEXT_TAG_TABLE_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_TAG_TABLE obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_TAG_TABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_TEXT_VIEW, gxg_GTK_IS_TEXT_VIEW_w, 1, 0, 0,
+                      "(GTK_IS_TEXT_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_TEXT_VIEW", pl_bt);
+  Xg_define_procedure(GTK_IS_TOGGLE_BUTTON, gxg_GTK_IS_TOGGLE_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_TOGGLE_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOGGLE_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOLBAR, gxg_GTK_IS_TOOLBAR_w, 1, 0, 0,
+                      "(GTK_IS_TOOLBAR obj): " PROC_TRUE " if obj is a GTK_IS_TOOLBAR", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_DRAG_SOURCE, gxg_GTK_IS_TREE_DRAG_SOURCE_w, 1, 0, 0,
+                      "(GTK_IS_TREE_DRAG_SOURCE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_DRAG_SOURCE", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_DRAG_DEST, gxg_GTK_IS_TREE_DRAG_DEST_w, 1, 0, 0,
+                      "(GTK_IS_TREE_DRAG_DEST obj): " PROC_TRUE " if obj is a GTK_IS_TREE_DRAG_DEST", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_MODEL, gxg_GTK_IS_TREE_MODEL_w, 1, 0, 0,
+                      "(GTK_IS_TREE_MODEL obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_MODEL_SORT, gxg_GTK_IS_TREE_MODEL_SORT_w, 1, 0, 0,
+                      "(GTK_IS_TREE_MODEL_SORT obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL_SORT", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_SELECTION, gxg_GTK_IS_TREE_SELECTION_w, 1, 0, 0,
+                      "(GTK_IS_TREE_SELECTION obj): " PROC_TRUE " if obj is a GTK_IS_TREE_SELECTION", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_SORTABLE, gxg_GTK_IS_TREE_SORTABLE_w, 1, 0, 0,
+                      "(GTK_IS_TREE_SORTABLE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_SORTABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_STORE, gxg_GTK_IS_TREE_STORE_w, 1, 0, 0,
+                      "(GTK_IS_TREE_STORE obj): " PROC_TRUE " if obj is a GTK_IS_TREE_STORE", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_VIEW_COLUMN, gxg_GTK_IS_TREE_VIEW_COLUMN_w, 1, 0, 0,
+                      "(GTK_IS_TREE_VIEW_COLUMN obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW_COLUMN", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_VIEW, gxg_GTK_IS_TREE_VIEW_w, 1, 0, 0,
+                      "(GTK_IS_TREE_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_TREE_VIEW", pl_bt);
+  Xg_define_procedure(GTK_IS_VIEWPORT, gxg_GTK_IS_VIEWPORT_w, 1, 0, 0,
+                      "(GTK_IS_VIEWPORT obj): " PROC_TRUE " if obj is a GTK_IS_VIEWPORT", pl_bt);
+  Xg_define_procedure(GTK_IS_WIDGET, gxg_GTK_IS_WIDGET_w, 1, 0, 0,
+                      "(GTK_IS_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_WIDGET", pl_bt);
+  Xg_define_procedure(GTK_IS_WINDOW, gxg_GTK_IS_WINDOW_w, 1, 0, 0,
+                      "(GTK_IS_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW", pl_bt);
+  Xg_define_procedure(PANGO_IS_CONTEXT, gxg_PANGO_IS_CONTEXT_w, 1, 0, 0,
+                      "(PANGO_IS_CONTEXT obj): " PROC_TRUE " if obj is a PANGO_IS_CONTEXT", pl_bt);
+  Xg_define_procedure(PANGO_IS_FONT_FAMILY, gxg_PANGO_IS_FONT_FAMILY_w, 1, 0, 0,
+                      "(PANGO_IS_FONT_FAMILY obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_FAMILY", pl_bt);
+  Xg_define_procedure(PANGO_IS_FONT_FACE, gxg_PANGO_IS_FONT_FACE_w, 1, 0, 0,
+                      "(PANGO_IS_FONT_FACE obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_FACE", pl_bt);
+  Xg_define_procedure(PANGO_IS_FONT, gxg_PANGO_IS_FONT_w, 1, 0, 0,
+                      "(PANGO_IS_FONT obj): " PROC_TRUE " if obj is a PANGO_IS_FONT", pl_bt);
+  Xg_define_procedure(PANGO_IS_FONT_MAP, gxg_PANGO_IS_FONT_MAP_w, 1, 0, 0,
+                      "(PANGO_IS_FONT_MAP obj): " PROC_TRUE " if obj is a PANGO_IS_FONT_MAP", pl_bt);
+  Xg_define_procedure(PANGO_IS_LAYOUT, gxg_PANGO_IS_LAYOUT_w, 1, 0, 0,
+                      "(PANGO_IS_LAYOUT obj): " PROC_TRUE " if obj is a PANGO_IS_LAYOUT", pl_bt);
+  Xg_define_procedure(G_IS_OBJECT, gxg_G_IS_OBJECT_w, 1, 0, 0,
+                      "(G_IS_OBJECT obj): " PROC_TRUE " if obj is a G_IS_OBJECT", pl_bt);
+  Xg_define_procedure(GDK_IS_SCREEN, gxg_GDK_IS_SCREEN_w, 1, 0, 0,
+                      "(GDK_IS_SCREEN obj): " PROC_TRUE " if obj is a GDK_IS_SCREEN", pl_bt);
+  Xg_define_procedure(GDK_IS_DISPLAY, gxg_GDK_IS_DISPLAY_w, 1, 0, 0,
+                      "(GDK_IS_DISPLAY obj): " PROC_TRUE " if obj is a GDK_IS_DISPLAY", pl_bt);
+  Xg_define_procedure(GTK_IS_FILE_CHOOSER_DIALOG, gxg_GTK_IS_FILE_CHOOSER_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_FILE_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_FILE_CHOOSER_WIDGET, gxg_GTK_IS_FILE_CHOOSER_WIDGET_w, 1, 0, 0,
+                      "(GTK_IS_FILE_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_WIDGET", pl_bt);
+  Xg_define_procedure(GTK_IS_TREE_MODEL_FILTER, gxg_GTK_IS_TREE_MODEL_FILTER_w, 1, 0, 0,
+                      "(GTK_IS_TREE_MODEL_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_TREE_MODEL_FILTER", pl_bt);
+  Xg_define_procedure(GTK_IS_COMBO_BOX, gxg_GTK_IS_COMBO_BOX_w, 1, 0, 0,
+                      "(GTK_IS_COMBO_BOX obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_EXPANDER, gxg_GTK_IS_EXPANDER_w, 1, 0, 0,
+                      "(GTK_IS_EXPANDER obj): " PROC_TRUE " if obj is a GTK_IS_EXPANDER", pl_bt);
+  Xg_define_procedure(GTK_IS_FONT_BUTTON, gxg_GTK_IS_FONT_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_FONT_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_FONT_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_COLOR_BUTTON, gxg_GTK_IS_COLOR_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_COLOR_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_ENTRY_COMPLETION, gxg_GTK_IS_ENTRY_COMPLETION_w, 1, 0, 0,
+                      "(GTK_IS_ENTRY_COMPLETION obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_COMPLETION", pl_bt);
+  Xg_define_procedure(GTK_IS_RADIO_TOOL_BUTTON, gxg_GTK_IS_RADIO_TOOL_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_RADIO_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_RADIO_TOOL_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_SEPARATOR_TOOL_ITEM, gxg_GTK_IS_SEPARATOR_TOOL_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_SEPARATOR_TOOL_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_SEPARATOR_TOOL_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_TOGGLE_TOOL_BUTTON, gxg_GTK_IS_TOGGLE_TOOL_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_TOGGLE_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOGGLE_TOOL_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_FILE_FILTER, gxg_GTK_IS_FILE_FILTER_w, 1, 0, 0,
+                      "(GTK_IS_FILE_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_FILE_FILTER", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_LAYOUT, gxg_GTK_IS_CELL_LAYOUT_w, 1, 0, 0,
+                      "(GTK_IS_CELL_LAYOUT obj): " PROC_TRUE " if obj is a GTK_IS_CELL_LAYOUT", pl_bt);
+  Xg_define_procedure(GTK_IS_CLIPBOARD, gxg_GTK_IS_CLIPBOARD_w, 1, 0, 0,
+                      "(GTK_IS_CLIPBOARD obj): " PROC_TRUE " if obj is a GTK_IS_CLIPBOARD", pl_bt);
+  Xg_define_procedure(GTK_IS_FILE_CHOOSER, gxg_GTK_IS_FILE_CHOOSER_w, 1, 0, 0,
+                      "(GTK_IS_FILE_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER", pl_bt);
+  Xg_define_procedure(GTK_IS_ICON_THEME, gxg_GTK_IS_ICON_THEME_w, 1, 0, 0,
+                      "(GTK_IS_ICON_THEME obj): " PROC_TRUE " if obj is a GTK_IS_ICON_THEME", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOL_BUTTON, gxg_GTK_IS_TOOL_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOL_ITEM, gxg_GTK_IS_TOOL_ITEM_w, 1, 0, 0,
+                      "(GTK_IS_TOOL_ITEM obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM", pl_bt);
+  Xg_define_procedure(GTK_IS_ACCEL_MAP, gxg_GTK_IS_ACCEL_MAP_w, 1, 0, 0,
+                      "(GTK_IS_ACCEL_MAP obj): " PROC_TRUE " if obj is a GTK_IS_ACCEL_MAP", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_VIEW, gxg_GTK_IS_CELL_VIEW_w, 1, 0, 0,
+                      "(GTK_IS_CELL_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_CELL_VIEW", pl_bt);
+  Xg_define_procedure(GTK_IS_ABOUT_DIALOG, gxg_GTK_IS_ABOUT_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_ABOUT_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_ABOUT_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_COMBO, gxg_GTK_IS_CELL_RENDERER_COMBO_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_COMBO obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_COMBO", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_PROGRESS, gxg_GTK_IS_CELL_RENDERER_PROGRESS_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_PROGRESS obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_PROGRESS", pl_bt);
+  Xg_define_procedure(GTK_IS_ICON_VIEW, gxg_GTK_IS_ICON_VIEW_w, 1, 0, 0,
+                      "(GTK_IS_ICON_VIEW obj): " PROC_TRUE " if obj is a GTK_IS_ICON_VIEW", pl_bt);
+  Xg_define_procedure(GTK_IS_FILE_CHOOSER_BUTTON, gxg_GTK_IS_FILE_CHOOSER_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_FILE_CHOOSER_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_FILE_CHOOSER_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_MENU_TOOL_BUTTON, gxg_GTK_IS_MENU_TOOL_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_MENU_TOOL_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_MENU_TOOL_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_ASSISTANT, gxg_GTK_IS_ASSISTANT_w, 1, 0, 0,
+                      "(GTK_IS_ASSISTANT obj): " PROC_TRUE " if obj is a GTK_IS_ASSISTANT", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_ACCEL, gxg_GTK_IS_CELL_RENDERER_ACCEL_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_ACCEL obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_ACCEL", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_SPIN, gxg_GTK_IS_CELL_RENDERER_SPIN_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_SPIN obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPIN", pl_bt);
+  Xg_define_procedure(GTK_IS_LINK_BUTTON, gxg_GTK_IS_LINK_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_LINK_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_LINK_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_DIALOG, gxg_GTK_IS_RECENT_CHOOSER_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_CHOOSER, gxg_GTK_IS_RECENT_CHOOSER_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_MENU, gxg_GTK_IS_RECENT_CHOOSER_MENU_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_CHOOSER_MENU obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_MENU", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_CHOOSER_WIDGET, gxg_GTK_IS_RECENT_CHOOSER_WIDGET_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_CHOOSER_WIDGET", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_FILTER, gxg_GTK_IS_RECENT_FILTER_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_FILTER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_FILTER", pl_bt);
+  Xg_define_procedure(GTK_IS_RECENT_MANAGER, gxg_GTK_IS_RECENT_MANAGER_w, 1, 0, 0,
+                      "(GTK_IS_RECENT_MANAGER obj): " PROC_TRUE " if obj is a GTK_IS_RECENT_MANAGER", pl_bt);
+  Xg_define_procedure(GTK_IS_PRINT_CONTEXT, gxg_GTK_IS_PRINT_CONTEXT_w, 1, 0, 0,
+                      "(GTK_IS_PRINT_CONTEXT obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_CONTEXT", pl_bt);
+  Xg_define_procedure(GTK_IS_PRINT_OPERATION, gxg_GTK_IS_PRINT_OPERATION_w, 1, 0, 0,
+                      "(GTK_IS_PRINT_OPERATION obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION", pl_bt);
+  Xg_define_procedure(GTK_IS_PRINT_OPERATION_PREVIEW, gxg_GTK_IS_PRINT_OPERATION_PREVIEW_w, 1, 0, 0,
+                      "(GTK_IS_PRINT_OPERATION_PREVIEW obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_OPERATION_PREVIEW", pl_bt);
+  Xg_define_procedure(GTK_IS_PRINT_SETTINGS, gxg_GTK_IS_PRINT_SETTINGS_w, 1, 0, 0,
+                      "(GTK_IS_PRINT_SETTINGS obj): " PROC_TRUE " if obj is a GTK_IS_PRINT_SETTINGS", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOLTIP, gxg_GTK_IS_TOOLTIP_w, 1, 0, 0,
+                      "(GTK_IS_TOOLTIP obj): " PROC_TRUE " if obj is a GTK_IS_TOOLTIP", pl_bt);
 #if GTK_CHECK_VERSION(2, 18, 0)
-  Xg_define_procedure(GTK_IS_INFO_BAR, gxg_GTK_IS_INFO_BAR_w, 1, 0, 0, "(GTK_IS_INFO_BAR obj): " PROC_TRUE " if obj is a GTK_IS_INFO_BAR", NULL);
-  Xg_define_procedure(GTK_IS_ENTRY_BUFFER, gxg_GTK_IS_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_IS_ENTRY_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_BUFFER", NULL);
+  Xg_define_procedure(GTK_IS_INFO_BAR, gxg_GTK_IS_INFO_BAR_w, 1, 0, 0,
+                      "(GTK_IS_INFO_BAR obj): " PROC_TRUE " if obj is a GTK_IS_INFO_BAR", pl_bt);
+  Xg_define_procedure(GTK_IS_ENTRY_BUFFER, gxg_GTK_IS_ENTRY_BUFFER_w, 1, 0, 0,
+                      "(GTK_IS_ENTRY_BUFFER obj): " PROC_TRUE " if obj is a GTK_IS_ENTRY_BUFFER", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(2, 20, 0)
-  Xg_define_procedure(GTK_IS_SPINNER, gxg_GTK_IS_SPINNER_w, 1, 0, 0, "(GTK_IS_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_SPINNER", NULL);
-  Xg_define_procedure(GTK_IS_CELL_RENDERER_SPINNER, gxg_GTK_IS_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_IS_CELL_RENDERER_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPINNER", NULL);
-  Xg_define_procedure(GTK_IS_TOOL_PALETTE, gxg_GTK_IS_TOOL_PALETTE_w, 1, 0, 0, "(GTK_IS_TOOL_PALETTE obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_PALETTE", NULL);
-  Xg_define_procedure(GTK_IS_TOOL_ITEM_GROUP, gxg_GTK_IS_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_IS_TOOL_ITEM_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM_GROUP", NULL);
+  Xg_define_procedure(GTK_IS_SPINNER, gxg_GTK_IS_SPINNER_w, 1, 0, 0,
+                      "(GTK_IS_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_SPINNER", pl_bt);
+  Xg_define_procedure(GTK_IS_CELL_RENDERER_SPINNER, gxg_GTK_IS_CELL_RENDERER_SPINNER_w, 1, 0, 0,
+                      "(GTK_IS_CELL_RENDERER_SPINNER obj): " PROC_TRUE " if obj is a GTK_IS_CELL_RENDERER_SPINNER", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOL_PALETTE, gxg_GTK_IS_TOOL_PALETTE_w, 1, 0, 0,
+                      "(GTK_IS_TOOL_PALETTE obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_PALETTE", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOL_ITEM_GROUP, gxg_GTK_IS_TOOL_ITEM_GROUP_w, 1, 0, 0,
+                      "(GTK_IS_TOOL_ITEM_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_ITEM_GROUP", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  Xg_define_procedure(GTK_IS_COMBO_BOX_TEXT, gxg_GTK_IS_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_IS_COMBO_BOX_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX_TEXT", NULL);
-  Xg_define_procedure(GTK_IS_GRID, gxg_GTK_IS_GRID_w, 1, 0, 0, "(GTK_IS_GRID obj): " PROC_TRUE " if obj is a GTK_IS_GRID", NULL);
-  Xg_define_procedure(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0, "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE", NULL);
-  Xg_define_procedure(GTK_IS_SWITCH, gxg_GTK_IS_SWITCH_w, 1, 0, 0, "(GTK_IS_SWITCH obj): " PROC_TRUE " if obj is a GTK_IS_SWITCH", NULL);
-  Xg_define_procedure(GTK_IS_ORIENTABLE, gxg_GTK_IS_ORIENTABLE_w, 1, 0, 0, "(GTK_IS_ORIENTABLE obj): " PROC_TRUE " if obj is a GTK_IS_ORIENTABLE", NULL);
-  Xg_define_procedure(GTK_IS_WINDOW_GROUP, gxg_GTK_IS_WINDOW_GROUP_w, 1, 0, 0, "(GTK_IS_WINDOW_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW_GROUP", NULL);
-  Xg_define_procedure(GTK_IS_TOOL_SHELL, gxg_GTK_IS_TOOL_SHELL_w, 1, 0, 0, "(GTK_IS_TOOL_SHELL obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_SHELL", NULL);
+  Xg_define_procedure(GTK_IS_COMBO_BOX_TEXT, gxg_GTK_IS_COMBO_BOX_TEXT_w, 1, 0, 0,
+                      "(GTK_IS_COMBO_BOX_TEXT obj): " PROC_TRUE " if obj is a GTK_IS_COMBO_BOX_TEXT", pl_bt);
+  Xg_define_procedure(GTK_IS_GRID, gxg_GTK_IS_GRID_w, 1, 0, 0,
+                      "(GTK_IS_GRID obj): " PROC_TRUE " if obj is a GTK_IS_GRID", pl_bt);
+  Xg_define_procedure(GTK_IS_SCROLLABLE, gxg_GTK_IS_SCROLLABLE_w, 1, 0, 0,
+                      "(GTK_IS_SCROLLABLE obj): " PROC_TRUE " if obj is a GTK_IS_SCROLLABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_SWITCH, gxg_GTK_IS_SWITCH_w, 1, 0, 0,
+                      "(GTK_IS_SWITCH obj): " PROC_TRUE " if obj is a GTK_IS_SWITCH", pl_bt);
+  Xg_define_procedure(GTK_IS_ORIENTABLE, gxg_GTK_IS_ORIENTABLE_w, 1, 0, 0,
+                      "(GTK_IS_ORIENTABLE obj): " PROC_TRUE " if obj is a GTK_IS_ORIENTABLE", pl_bt);
+  Xg_define_procedure(GTK_IS_WINDOW_GROUP, gxg_GTK_IS_WINDOW_GROUP_w, 1, 0, 0,
+                      "(GTK_IS_WINDOW_GROUP obj): " PROC_TRUE " if obj is a GTK_IS_WINDOW_GROUP", pl_bt);
+  Xg_define_procedure(GTK_IS_TOOL_SHELL, gxg_GTK_IS_TOOL_SHELL_w, 1, 0, 0,
+                      "(GTK_IS_TOOL_SHELL obj): " PROC_TRUE " if obj is a GTK_IS_TOOL_SHELL", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 2, 0)
-  Xg_define_procedure(GTK_IS_OVERLAY, gxg_GTK_IS_OVERLAY_w, 1, 0, 0, "(GTK_IS_OVERLAY obj): " PROC_TRUE " if obj is a GTK_IS_OVERLAY", NULL);
-  Xg_define_procedure(GTK_IS_FONT_CHOOSER, gxg_GTK_IS_FONT_CHOOSER_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER", NULL);
-  Xg_define_procedure(GTK_IS_FONT_CHOOSER_DIALOG, gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_FONT_CHOOSER_WIDGET, gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_FONT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_WIDGET", NULL);
+  Xg_define_procedure(GTK_IS_OVERLAY, gxg_GTK_IS_OVERLAY_w, 1, 0, 0,
+                      "(GTK_IS_OVERLAY obj): " PROC_TRUE " if obj is a GTK_IS_OVERLAY", pl_bt);
+  Xg_define_procedure(GTK_IS_FONT_CHOOSER, gxg_GTK_IS_FONT_CHOOSER_w, 1, 0, 0,
+                      "(GTK_IS_FONT_CHOOSER obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER", pl_bt);
+  Xg_define_procedure(GTK_IS_FONT_CHOOSER_DIALOG, gxg_GTK_IS_FONT_CHOOSER_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_FONT_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_FONT_CHOOSER_WIDGET, gxg_GTK_IS_FONT_CHOOSER_WIDGET_w, 1, 0, 0,
+                      "(GTK_IS_FONT_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_FONT_CHOOSER_WIDGET", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 4, 0)
-  Xg_define_procedure(GTK_IS_APPLICATION_WINDOW, gxg_GTK_IS_APPLICATION_WINDOW_w, 1, 0, 0, "(GTK_IS_APPLICATION_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_APPLICATION_WINDOW", NULL);
-  Xg_define_procedure(GTK_IS_COLOR_CHOOSER_DIALOG, gxg_GTK_IS_COLOR_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_IS_COLOR_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_IS_COLOR_CHOOSER_WIDGET, gxg_GTK_IS_COLOR_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_IS_COLOR_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_CHOOSER_WIDGET", NULL);
+  Xg_define_procedure(GTK_IS_APPLICATION_WINDOW, gxg_GTK_IS_APPLICATION_WINDOW_w, 1, 0, 0,
+                      "(GTK_IS_APPLICATION_WINDOW obj): " PROC_TRUE " if obj is a GTK_IS_APPLICATION_WINDOW", pl_bt);
+  Xg_define_procedure(GTK_IS_COLOR_CHOOSER_DIALOG, gxg_GTK_IS_COLOR_CHOOSER_DIALOG_w, 1, 0, 0,
+                      "(GTK_IS_COLOR_CHOOSER_DIALOG obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_CHOOSER_DIALOG", pl_bt);
+  Xg_define_procedure(GTK_IS_COLOR_CHOOSER_WIDGET, gxg_GTK_IS_COLOR_CHOOSER_WIDGET_w, 1, 0, 0,
+                      "(GTK_IS_COLOR_CHOOSER_WIDGET obj): " PROC_TRUE " if obj is a GTK_IS_COLOR_CHOOSER_WIDGET", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 6, 0)
-  Xg_define_procedure(GTK_IS_MENU_BUTTON, gxg_GTK_IS_MENU_BUTTON_w, 1, 0, 0, "(GTK_IS_MENU_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_MENU_BUTTON", NULL);
-  Xg_define_procedure(GTK_IS_SEARCH_ENTRY, gxg_GTK_IS_SEARCH_ENTRY_w, 1, 0, 0, "(GTK_IS_SEARCH_ENTRY obj): " PROC_TRUE " if obj is a GTK_IS_SEARCH_ENTRY", NULL);
-  Xg_define_procedure(GTK_IS_LEVEL_BAR, gxg_GTK_IS_LEVEL_BAR_w, 1, 0, 0, "(GTK_IS_LEVEL_BAR obj): " PROC_TRUE " if obj is a GTK_IS_LEVEL_BAR", NULL);
+  Xg_define_procedure(GTK_IS_MENU_BUTTON, gxg_GTK_IS_MENU_BUTTON_w, 1, 0, 0,
+                      "(GTK_IS_MENU_BUTTON obj): " PROC_TRUE " if obj is a GTK_IS_MENU_BUTTON", pl_bt);
+  Xg_define_procedure(GTK_IS_SEARCH_ENTRY, gxg_GTK_IS_SEARCH_ENTRY_w, 1, 0, 0,
+                      "(GTK_IS_SEARCH_ENTRY obj): " PROC_TRUE " if obj is a GTK_IS_SEARCH_ENTRY", pl_bt);
+  Xg_define_procedure(GTK_IS_LEVEL_BAR, gxg_GTK_IS_LEVEL_BAR_w, 1, 0, 0,
+                      "(GTK_IS_LEVEL_BAR obj): " PROC_TRUE " if obj is a GTK_IS_LEVEL_BAR", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-  Xg_define_procedure(GTK_IS_PLACES_SIDEBAR, gxg_GTK_IS_PLACES_SIDEBAR_w, 1, 0, 0, "(GTK_IS_PLACES_SIDEBAR obj): " PROC_TRUE " if obj is a GTK_IS_PLACES_SIDEBAR", NULL);
-  Xg_define_procedure(GTK_IS_STACK_SWITCHER, gxg_GTK_IS_STACK_SWITCHER_w, 1, 0, 0, "(GTK_IS_STACK_SWITCHER obj): " PROC_TRUE " if obj is a GTK_IS_STACK_SWITCHER", NULL);
-  Xg_define_procedure(GTK_IS_STACK, gxg_GTK_IS_STACK_w, 1, 0, 0, "(GTK_IS_STACK obj): " PROC_TRUE " if obj is a GTK_IS_STACK", NULL);
-  Xg_define_procedure(GTK_IS_REVEALER, gxg_GTK_IS_REVEALER_w, 1, 0, 0, "(GTK_IS_REVEALER obj): " PROC_TRUE " if obj is a GTK_IS_REVEALER", NULL);
-  Xg_define_procedure(GTK_IS_HEADER_BAR, gxg_GTK_IS_HEADER_BAR_w, 1, 0, 0, "(GTK_IS_HEADER_BAR obj): " PROC_TRUE " if obj is a GTK_IS_HEADER_BAR", NULL);
-  Xg_define_procedure(GTK_IS_LIST_BOX, gxg_GTK_IS_LIST_BOX_w, 1, 0, 0, "(GTK_IS_LIST_BOX obj): " PROC_TRUE " if obj is a GTK_IS_LIST_BOX", NULL);
-  Xg_define_procedure(GTK_IS_LIST_BOX_ROW, gxg_GTK_IS_LIST_BOX_ROW_w, 1, 0, 0, "(GTK_IS_LIST_BOX_ROW obj): " PROC_TRUE " if obj is a GTK_IS_LIST_BOX_ROW", NULL);
-  Xg_define_procedure(GTK_IS_SEARCH_BAR, gxg_GTK_IS_SEARCH_BAR_w, 1, 0, 0, "(GTK_IS_SEARCH_BAR obj): " PROC_TRUE " if obj is a GTK_IS_SEARCH_BAR", NULL);
+  Xg_define_procedure(GTK_IS_PLACES_SIDEBAR, gxg_GTK_IS_PLACES_SIDEBAR_w, 1, 0, 0,
+                      "(GTK_IS_PLACES_SIDEBAR obj): " PROC_TRUE " if obj is a GTK_IS_PLACES_SIDEBAR", pl_bt);
+  Xg_define_procedure(GTK_IS_STACK_SWITCHER, gxg_GTK_IS_STACK_SWITCHER_w, 1, 0, 0,
+                      "(GTK_IS_STACK_SWITCHER obj): " PROC_TRUE " if obj is a GTK_IS_STACK_SWITCHER", pl_bt);
+  Xg_define_procedure(GTK_IS_STACK, gxg_GTK_IS_STACK_w, 1, 0, 0,
+                      "(GTK_IS_STACK obj): " PROC_TRUE " if obj is a GTK_IS_STACK", pl_bt);
+  Xg_define_procedure(GTK_IS_REVEALER, gxg_GTK_IS_REVEALER_w, 1, 0, 0,
+                      "(GTK_IS_REVEALER obj): " PROC_TRUE " if obj is a GTK_IS_REVEALER", pl_bt);
+  Xg_define_procedure(GTK_IS_HEADER_BAR, gxg_GTK_IS_HEADER_BAR_w, 1, 0, 0,
+                      "(GTK_IS_HEADER_BAR obj): " PROC_TRUE " if obj is a GTK_IS_HEADER_BAR", pl_bt);
+  Xg_define_procedure(GTK_IS_LIST_BOX, gxg_GTK_IS_LIST_BOX_w, 1, 0, 0,
+                      "(GTK_IS_LIST_BOX obj): " PROC_TRUE " if obj is a GTK_IS_LIST_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_LIST_BOX_ROW, gxg_GTK_IS_LIST_BOX_ROW_w, 1, 0, 0,
+                      "(GTK_IS_LIST_BOX_ROW obj): " PROC_TRUE " if obj is a GTK_IS_LIST_BOX_ROW", pl_bt);
+  Xg_define_procedure(GTK_IS_SEARCH_BAR, gxg_GTK_IS_SEARCH_BAR_w, 1, 0, 0,
+                      "(GTK_IS_SEARCH_BAR obj): " PROC_TRUE " if obj is a GTK_IS_SEARCH_BAR", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-  Xg_define_procedure(GTK_IS_FLOW_BOX, gxg_GTK_IS_FLOW_BOX_w, 1, 0, 0, "(GTK_IS_FLOW_BOX obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX", NULL);
-  Xg_define_procedure(GTK_IS_FLOW_BOX_CHILD, gxg_GTK_IS_FLOW_BOX_CHILD_w, 1, 0, 0, "(GTK_IS_FLOW_BOX_CHILD obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX_CHILD", NULL);
-  Xg_define_procedure(GTK_IS_ACTION_BAR, gxg_GTK_IS_ACTION_BAR_w, 1, 0, 0, "(GTK_IS_ACTION_BAR obj): " PROC_TRUE " if obj is a GTK_IS_ACTION_BAR", NULL);
-  Xg_define_procedure(GTK_IS_POPOVER, gxg_GTK_IS_POPOVER_w, 1, 0, 0, "(GTK_IS_POPOVER obj): " PROC_TRUE " if obj is a GTK_IS_POPOVER", NULL);
+  Xg_define_procedure(GTK_IS_FLOW_BOX, gxg_GTK_IS_FLOW_BOX_w, 1, 0, 0,
+                      "(GTK_IS_FLOW_BOX obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX", pl_bt);
+  Xg_define_procedure(GTK_IS_FLOW_BOX_CHILD, gxg_GTK_IS_FLOW_BOX_CHILD_w, 1, 0, 0,
+                      "(GTK_IS_FLOW_BOX_CHILD obj): " PROC_TRUE " if obj is a GTK_IS_FLOW_BOX_CHILD", pl_bt);
+  Xg_define_procedure(GTK_IS_ACTION_BAR, gxg_GTK_IS_ACTION_BAR_w, 1, 0, 0,
+                      "(GTK_IS_ACTION_BAR obj): " PROC_TRUE " if obj is a GTK_IS_ACTION_BAR", pl_bt);
+  Xg_define_procedure(GTK_IS_POPOVER, gxg_GTK_IS_POPOVER_w, 1, 0, 0,
+                      "(GTK_IS_POPOVER obj): " PROC_TRUE " if obj is a GTK_IS_POPOVER", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 14, 0)
-  Xg_define_procedure(GTK_IS_GESTURE, gxg_GTK_IS_GESTURE_w, 1, 0, 0, "(GTK_IS_GESTURE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_DRAG, gxg_GTK_IS_GESTURE_DRAG_w, 1, 0, 0, "(GTK_IS_GESTURE_DRAG obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_DRAG", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_LONG_PRESS, gxg_GTK_IS_GESTURE_LONG_PRESS_w, 1, 0, 0, "(GTK_IS_GESTURE_LONG_PRESS obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_LONG_PRESS", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_ZOOM, gxg_GTK_IS_GESTURE_ZOOM_w, 1, 0, 0, "(GTK_IS_GESTURE_ZOOM obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_ZOOM", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_SWIPE, gxg_GTK_IS_GESTURE_SWIPE_w, 1, 0, 0, "(GTK_IS_GESTURE_SWIPE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_SWIPE", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_SINGLE, gxg_GTK_IS_GESTURE_SINGLE_w, 1, 0, 0, "(GTK_IS_GESTURE_SINGLE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_SINGLE", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_PAN, gxg_GTK_IS_GESTURE_PAN_w, 1, 0, 0, "(GTK_IS_GESTURE_PAN obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_PAN", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_MULTI_PRESS, gxg_GTK_IS_GESTURE_MULTI_PRESS_w, 1, 0, 0, "(GTK_IS_GESTURE_MULTI_PRESS obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_MULTI_PRESS", NULL);
-  Xg_define_procedure(GTK_IS_GESTURE_ROTATE, gxg_GTK_IS_GESTURE_ROTATE_w, 1, 0, 0, "(GTK_IS_GESTURE_ROTATE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_ROTATE", NULL);
-  Xg_define_procedure(GTK_IS_EVENT_CONTROLLER, gxg_GTK_IS_EVENT_CONTROLLER_w, 1, 0, 0, "(GTK_IS_EVENT_CONTROLLER obj): " PROC_TRUE " if obj is a GTK_IS_EVENT_CONTROLLER", NULL);
+  Xg_define_procedure(GTK_IS_GESTURE, gxg_GTK_IS_GESTURE_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_DRAG, gxg_GTK_IS_GESTURE_DRAG_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_DRAG obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_DRAG", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_LONG_PRESS, gxg_GTK_IS_GESTURE_LONG_PRESS_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_LONG_PRESS obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_LONG_PRESS", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_ZOOM, gxg_GTK_IS_GESTURE_ZOOM_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_ZOOM obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_ZOOM", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_SWIPE, gxg_GTK_IS_GESTURE_SWIPE_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_SWIPE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_SWIPE", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_SINGLE, gxg_GTK_IS_GESTURE_SINGLE_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_SINGLE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_SINGLE", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_PAN, gxg_GTK_IS_GESTURE_PAN_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_PAN obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_PAN", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_MULTI_PRESS, gxg_GTK_IS_GESTURE_MULTI_PRESS_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_MULTI_PRESS obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_MULTI_PRESS", pl_bt);
+  Xg_define_procedure(GTK_IS_GESTURE_ROTATE, gxg_GTK_IS_GESTURE_ROTATE_w, 1, 0, 0,
+                      "(GTK_IS_GESTURE_ROTATE obj): " PROC_TRUE " if obj is a GTK_IS_GESTURE_ROTATE", pl_bt);
+  Xg_define_procedure(GTK_IS_EVENT_CONTROLLER, gxg_GTK_IS_EVENT_CONTROLLER_w, 1, 0, 0,
+                      "(GTK_IS_EVENT_CONTROLLER obj): " PROC_TRUE " if obj is a GTK_IS_EVENT_CONTROLLER", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-  Xg_define_procedure(GTK_IS_GL_AREA, gxg_GTK_IS_GL_AREA_w, 1, 0, 0, "(GTK_IS_GL_AREA obj): " PROC_TRUE " if obj is a GTK_IS_GL_AREA", NULL);
-  Xg_define_procedure(GDK_IS_GL_CONTEXT, gxg_GDK_IS_GL_CONTEXT_w, 1, 0, 0, "(GDK_IS_GL_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_GL_CONTEXT", NULL);
-  Xg_define_procedure(GTK_IS_POPOVER_MENU, gxg_GTK_IS_POPOVER_MENU_w, 1, 0, 0, "(GTK_IS_POPOVER_MENU obj): " PROC_TRUE " if obj is a GTK_IS_POPOVER_MENU", NULL);
-  Xg_define_procedure(GTK_IS_STACK_SIDEBAR, gxg_GTK_IS_STACK_SIDEBAR_w, 1, 0, 0, "(GTK_IS_STACK_SIDEBAR obj): " PROC_TRUE " if obj is a GTK_IS_STACK_SIDEBAR", NULL);
+  Xg_define_procedure(GTK_IS_GL_AREA, gxg_GTK_IS_GL_AREA_w, 1, 0, 0,
+                      "(GTK_IS_GL_AREA obj): " PROC_TRUE " if obj is a GTK_IS_GL_AREA", pl_bt);
+  Xg_define_procedure(GDK_IS_GL_CONTEXT, gxg_GDK_IS_GL_CONTEXT_w, 1, 0, 0,
+                      "(GDK_IS_GL_CONTEXT obj): " PROC_TRUE " if obj is a GDK_IS_GL_CONTEXT", pl_bt);
+  Xg_define_procedure(GTK_IS_POPOVER_MENU, gxg_GTK_IS_POPOVER_MENU_w, 1, 0, 0,
+                      "(GTK_IS_POPOVER_MENU obj): " PROC_TRUE " if obj is a GTK_IS_POPOVER_MENU", pl_bt);
+  Xg_define_procedure(GTK_IS_STACK_SIDEBAR, gxg_GTK_IS_STACK_SIDEBAR_w, 1, 0, 0,
+                      "(GTK_IS_STACK_SIDEBAR obj): " PROC_TRUE " if obj is a GTK_IS_STACK_SIDEBAR", pl_bt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 20, 0)
-  Xg_define_procedure(GDK_IS_SEAT, gxg_GDK_IS_SEAT_w, 1, 0, 0, "(GDK_IS_SEAT obj): " PROC_TRUE " if obj is a GDK_IS_SEAT", NULL);
+  Xg_define_procedure(GDK_IS_SEAT, gxg_GDK_IS_SEAT_w, 1, 0, 0,
+                      "(GDK_IS_SEAT obj): " PROC_TRUE " if obj is a GDK_IS_SEAT", pl_bt);
 #endif
 
 }
@@ -46059,7 +46238,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("23-Feb-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("24-Feb-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

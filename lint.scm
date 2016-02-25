@@ -771,6 +771,14 @@
 	      (for-each (lambda (p)
 			  (set! e (var-walk p e)))
 			tree)))
+
+	  (define (shadowed v)
+	    ;(format *stderr* "v: ~A, e: ~A~%" v e)
+	    (if (and (or (memq v e)
+			 (memq v ref))
+		     (not (memq v set)))
+		(set! set (cons v set)))
+	    v)
 	  
 	  (if (symbol? tree)
 	      (if (not (or (memq tree e)
@@ -783,26 +791,24 @@
 		      (var-walk (car tree) e)
 		      (case (car tree)
 			((set! vector-set! list-set! hash-table-set! float-vector-set! int-vector-set! string-set! let-set! 
-			       fill! string-fill! list-fill! vector-fill! reverse! sort!)
+			       fill! string-fill! list-fill! vector-fill! reverse! sort! set-car! set-cdr!)
 			 (let ((sym (if (symbol? (cadr tree))
 					(cadr tree)
 					(if (pair? (cadr tree))
 					    (caadr tree)))))
-					;(format *stderr* "sym: ~A, e: ~A, set: ~A~%" sym e set)
 			   (if (not (or (memq sym e)
 					(memq sym set)))
 			       (set! set (cons sym set)))
-					;(format *stderr* "  set: ~A~%" set)
 			   (var-walk (cddr tree) e)))
 			
 			((let letrec)
 			 (let* ((named (symbol? (cadr tree)))
-				(vars (if named (list (cadr tree)) ())))
+				(vars (if named (list (shadowed (cadr tree))) ())))
 			   (for-each (lambda (v)
 				       (when (and (pair? v)            ; protect against []
 						  (pair? (cdr v)))     ; and other similar stupidity
 					 (var-walk (cadr v) e)				   
-					 (set! vars (cons (car v) vars))))
+					 (set! vars (cons (shadowed (car v)) vars))))
 				     (if named (caddr tree) (cadr tree)))
 			   (var-walk-body (if named (cdddr tree) (cddr tree)) (append vars e))))
 			
@@ -823,18 +829,19 @@
 				       (when (and (pair? v)
 						  (pair? (cdr v)))
 					 (var-walk (cadr v) (append vars e))				   
-					 (set! vars (cons (car v) vars))))
+					 (set! vars (cons (shadowed (car v)) vars))))
 				     (if named (caddr tree) (cadr tree)))
 			   (var-walk-body (if named (cdddr tree) (cddr tree)) (append vars e))))
 			
 			((do)
+			 ;(format *stderr* "inner do: ~A, e: ~A, refs: ~A ~A~%" tree e ref set)
 			 (let ((vars ()))
 			   (when (pair? (cadr tree))
 			     (for-each (lambda (v)
 					 (when (and (pair? v)
 						    (pair? (cdr v)))
 					   (var-walk (cadr v) e)
-					   (set! vars (cons (car v) vars))))
+					   (set! vars (cons (shadowed (car v)) vars))))
 				       (cadr tree))
 			     (for-each (lambda (v)
 					 (if (and (pair? v)
@@ -1829,10 +1836,12 @@
       (and (not (or (member in-form false)
 		    (and (pair? in-form)
 			 (eq? (car in-form) 'not)
+			 (pair? (cdr in-form)) ; (not)!
 			 (member (cadr in-form) true))))
 	   (or (and (member in-form true) #t)
 	       (and (pair? in-form)
 		    (eq? (car in-form) 'not)
+		    (pair? (cdr in-form))
 		    (member (cadr in-form) false) 
 		    #t)
       (if (not (pair? in-form))
@@ -3555,8 +3564,9 @@
       ;; some way for ffi code to indicate no-side-effects, arity?
       ;;
       ;; perhaps report an overall order to definitions in a block that maximizes locality
-      ;; constant expr in do: make list of all do-local/side-effected vars in body, then look for exprs unaffected?
-      ;;   this applies also to step exprs, recursive funcs (closure?), map/for-each -- same as locality above
+      ;; constant expr in do: add also to recursive funcs, map/for-each?
+      ;;   can this also work for the let-var value forgotten business?
+      ;;   also why are case key lists sneaking in?
       ;; call/* exiters, track return points better (reuse sig code?), and fix the message to be less confusing
       ;; the *#readers* might notice local reader settings -- cancel default if collision -- restore in lint-file etc (lint itself then becomes a mess)
       ;;
@@ -3564,6 +3574,9 @@
       ;;    maybe specialize on the name? (like *#readers*)
       ;;    *linters* -> a list of car/function
       ;;    or a linter local (like signature) that gets run whenever we check a call to that function -- could check bounds etc
+      ;;
+      ;; in xg, we have the enum names->types mappings and could add special typers
+      ;;   these should be ok because we won't have any signature unless the whole package is loaded
       ;;
       ;; t354/t359 lint for-each tests [extend...]
       ;; better built-in use: look for things like the do-loop->fill! cases and predigest
@@ -6481,7 +6494,6 @@
 					      (procedure? (symbol->value func-name *e*)))
 					  (lint-format "perhaps ~A... ->~%~NC(for-each ~S (vector ~{~S~^ ~}))" caller 
 						       ;; vector rather than list because it is easier on the GC (list copies in s7)
-						       ;; but what if it's a bunch of chars -- use string?
 						       (truncated-list->string (car start-repeats))
 						       pp-left-margin #\space
 						       func
@@ -6549,6 +6561,7 @@
 		      (when (pair? f)
 			(if (and (eq? (car f) 'error)
 				 (not (var-member 'error env))
+				 (pair? (cdr fs)) ; do special case
 				 (every? (lambda (arg)
 					   (not (and (symbol? arg)
 						     (let ((v (var-member arg env)))
@@ -6562,6 +6575,7 @@
 				(lint-format "~A makes the rest of the body unreachable: ~A" caller
 					     (truncated-list->string f)
 					     (truncated-list->string (list '... (cadr fs) '...)))))
+
 			(if (eq? (car f) 'map)
 			    (lint-format "map could be for-each: ~A" caller (truncated-list->string `(for-each ,@(cdr f))))
 			    (if (eq? (car f) 'reverse!)
@@ -8219,7 +8233,10 @@
 						       (null? (cdddr test))
 						       (pair? result)
 						       (null? (cdr result))
-						       (code-constant? (car result)))))
+						       (not (symbol? (car result)))
+						       (or (not (pair? (car result))) ; quoted lists look bad in this context
+							   (and (eq? (caar result) 'quote)
+								(not (pair? (cadar result))))))))
 				   (if (not start)
 				       (if (and looks-ok
 						(not (null? (cdr clauses))))
@@ -8541,7 +8558,8 @@
 		  
 		  ((do)
 		   ;; ---------------- do ----------------
-		   (let ((vars ()))
+		   (let ((vars ())
+			 (suggest made-suggestion))
 		     (if (not (and (>= (length form) 3)
 				   (proper-list? (cadr form))
 				   (proper-list? (caddr form))))
@@ -8648,8 +8666,9 @@
 						(not (var-member end env))
 						(procedure? (symbol->value end *e*)))
 					   (lint-format "strange do end-test: ~A in ~A is a procedure" caller end end+result))))))
-			   
+
 			   (lint-walk-body caller head (cdddr form) inner-env)
+
 			   ;; before report-usage, check for unused variables, and don't complain about them if
 			   ;;   they are referenced in an earlier step expr?(!)
 			   (do ((v vars (cdr v)))
@@ -8670,33 +8689,109 @@
 				      (cdr v))))))
 			   (report-usage caller 'variable head vars inner-env)
 			   
-			   ;; check for do-loop as copy/fill! stand-in
-			   (let ((end-test (and (pair? (caddr form)) (caaddr form)))
-				 (body (cdddr form))
-				 (varslen (length vars))
-				 (setv #f))
-			     (when (and (pair? end-test)
-					(= varslen 1)
-					(pair? body)
-					(null? (cdr body))
-					(pair? (car body)) 
-					(memq (caar body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set!))
-					;; integer type check here isn't needed because we're using this as an index below
-					;;   the type error will be seen in report-usage if not earlier
-					(memq (car end-test) '(>= =))
-					(eq? (cadr end-test) (var-name (car vars)))
-					(eq? (caddar body) (var-name (car vars)))
-					(let ((val (car (cdddar body))))
-					  (set! setv val)
-					  (or (code-constant? val)
-					      (and (pair? val)
-						   (memq (car val) '(vector-ref float-vector-ref int-vector-ref list-ref string-ref))
-						   (eq? (caddr val) (var-name (car vars)))))))
-			       (if (code-constant? setv)
-				   (lint-format "perhaps ~A" caller 
-						(lists->string form `(fill! ,(cadar body) ,(car (cdddar body)) 0 ,(caddr end-test))))
-				   (lint-format "perhaps ~A" caller 
-						(lists->string form `(copy ,(cadr setv) ,(cadar body) 0 ,(caddr end-test)))))))))
+			   ;; --------
+			   ;; look for constant expressions in the do body
+			   (when (not (tree-list-member '(call/cc call-with-current-continuation lambda lambda* define define* 
+							  define-macro define-macro* define-bacro define-bacro* define-constant define-expansion)
+							(cdddr form)))
+			     (let* ((vs (out-vars 'do (map var-name vars) (cdddr form)))
+				    (refs (remove-if (lambda (v)
+						       (or (assq v vars)        ; vars = do-loop steppers
+							   (memq v (cadr vs)))) ; (cadr vs) = sets
+						     (car vs))))
+			       ;; refs are the external variables accessed in the do-loop body
+			       ;;   that are not set or shadowed or changed (vector-set! etc)
+			       (let ((constant-exprs ()))
+				 
+				 (define (all-ok? tree)
+				   (if (symbol? tree)
+				       (memq tree refs)
+				       (or (not (pair? tree))
+					   (eq? (car tree) 'quote)
+					   (and (hash-table-ref no-side-effect-functions (car tree)) ; super-careful...
+						(or (not (hash-table-ref syntaces (car tree))) ; someday??
+						    (memq (car tree) '(if begin cond or and unless when)))
+						(not (memq (car tree) makers))
+						(list? (cdr tree))
+						(every? all-ok? (cdr tree))))))
+				 
+				 (define (expr-walk tree)
+				   (if (pair? tree)
+				       (if (all-ok? tree)
+					   (if (and (not (eq? (car tree) 'quote))
+						    (not (member tree constant-exprs)))
+					       (set! constant-exprs (cons tree constant-exprs)))
+					   (begin
+					     (if (pair? (car tree))
+						 (expr-walk (car tree)))
+					     (if (and (pair? (cdr tree))
+						      (not (memq (car tree) '(case do let let* letrec letrec*)))) ; and define etc
+						 (for-each expr-walk (cdr tree)))))))
+				 
+				 (expr-walk (cdddr form))
+				 
+				 (when (pair? constant-exprs)
+				   (set! constant-exprs (remove-if (lambda (p)
+								     (or (null? (cdr p)) ; omit (x) (not x) (- x)
+									 (and (null? (cddr p))
+									      (memq (car p) '(not -))
+				                                              (symbol? (cadr p)))))
+								   constant-exprs))
+				   (if (pair? constant-exprs)
+				       (if (null? (cdr constant-exprs))
+					   (lint-format "in ~A, ~A appears to be constant" caller
+							(truncated-list->string form)
+							(car constant-exprs))
+					   (lint-format "in ~A, the following expressions appear to be constant:~%~NC~A" caller
+							(truncated-list->string form)
+							(+ lint-left-margin 4) #\space
+							(format #f "~{~A~^, ~}" constant-exprs))))))))
+			   ;; --------
+
+			   ;; check for do-loop as copy/fill! stand-in and other similar cases
+			   (when (and (pair? vars)
+				      (null? (cdr vars)))
+			     (let ((end-test (and (pair? (caddr form)) (caaddr form)))
+				   (first-var (caadr form))
+				   (body (cdddr form))
+				   (setv #f))
+			       (when (and (pair? end-test)
+					  (pair? body)
+					  (null? (cdr body))
+					  (pair? (car body)) 
+					  (memq (car end-test) '(>= =)))
+				 (let ((vname (car first-var))
+				       (start (cadr first-var))
+				       (step (and (pair? (cddr first-var))
+						  (caddr first-var)))
+				       (end (caddr end-test)))
+				   (when (and step
+					      (eq? (car step) '+)
+					      (memq vname step)
+					      (memv 1 step)
+					      (null? (cdddr step))
+					      (or (eq? (cadr end-test) vname)
+						  (and (eq? (car end-test) '=)
+						       (eq? (caddr end-test) vname)
+						       (set! end (cadr end-test)))))
+				     ;; we have (do ((v start (+ v 1)|(+ 1 v))) ((= v end)|(= end v)|(>= v end)) one-statement)
+				     (set! body (car body))
+				     ;; write-char is the only other common case here -> write-string in a few cases
+				     (when (and (memq (car body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set! byte-vector-set!))
+						;; integer type check here isn't needed because we're using this as an index below
+						;;   the type error will be seen in report-usage if not earlier
+						(eq? (caddr body) vname)
+						(let ((val (car (cdddr body))))
+						  (set! setv val)
+						  (or (code-constant? val)
+						      (and (pair? val)
+							   (memq (car val) '(vector-ref float-vector-ref int-vector-ref list-ref string-ref byte-vector-ref))
+							   (eq? (caddr val) vname)))))
+				       (if (code-constant? setv)
+					   (lint-format "perhaps ~A" caller 
+							(lists->string form `(fill! ,(cadr body) ,(car (cdddr body)) ,start ,end)))
+					   (lint-format "perhaps ~A" caller 
+							(lists->string form `(copy ,(cadr setv) ,(cadr body) ,start ,end))))))))))))
 		     env))
 		  
 		  ((let)

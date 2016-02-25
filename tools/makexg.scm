@@ -2816,9 +2816,10 @@
 (hey "  Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check, NULL);~%")
 
 (define (check-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj): \" PROC_TRUE \" if obj is a ~A\", NULL);~%" 
+  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0,~%~NC\"(~A obj): \" PROC_TRUE \" if obj is a ~A\", pl_bt);~%" 
        (no-arg (car func)) 
        (no-arg (car func))
+       22 #\space
        (no-arg (car func))
        (no-arg (car func))))
 
