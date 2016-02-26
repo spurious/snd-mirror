@@ -22,18 +22,19 @@
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
 'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (with-sound () (pluck 0 1 330 .3 .7 .995))"
 
-  (define (getOptimumC S o p)
-    (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
-	   (tmpInt (floor (- p pa)))
-	   (pc (- p pa tmpInt)))
-      (if (< pc .1)
-	  (do ()
-	      ((>= pc .1))
-	    (set! tmpInt (- tmpInt 1))
-	    (set! pc (+ pc 1.0))))
-      (list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
-  
   (define (tuneIt f s1)
+
+    (define (getOptimumC S o p)
+      (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
+	     (tmpInt (floor (- p pa)))
+	     (pc (- p pa tmpInt)))
+	(if (< pc .1)
+	    (do ()
+		((>= pc .1))
+	      (set! tmpInt (- tmpInt 1))
+	      (set! pc (+ pc 1.0))))
+	(list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
+    
     (let ((p (/ *clm-srate* f))	;period as float
 	  (s (if (= s1 0.0) 0.5 s1))
 	  (o (hz->radians f)))
@@ -98,12 +99,11 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	   (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400))))
     ;;formant center frequencies for a male speaker
     
-    (define (find-phoneme phoneme forms)
-      (if (eq? phoneme (caar forms))
-	  (cdar forms)
-	  (find-phoneme phoneme (cdr forms))))
-    
     (define (vox-fun phons which)
+      (define (find-phoneme phoneme forms)
+	(if (eq? phoneme (caar forms))
+	    (cdar forms)
+	    (find-phoneme phoneme (cdr forms))))
       (let ((f1 ())
 	    (len (length phons)))
 	(do ((i 0 (+ i 2)))
@@ -1019,18 +1019,19 @@ is a physical model of a flute:
   ;; reverb-factor controls the length of the decay -- it should not exceed (/ 1.0 .823)
   ;; lp-coeff controls the strength of the low pass filter inserted in the feedback loop
   ;; output-scale can be used to boost the reverb output
-  (define (prime? val)
-    (or (= val 2)
-	(and (odd? val)
-	     (do ((i 3 (+ i 2))
-		  (lim (sqrt val)))
-		 ((or (= 0 (modulo val i)) (> i lim))
-		  (> i lim))))))
+
   (define (next-prime val)
+    (define (prime? val)
+      (or (= val 2)
+	  (and (odd? val)
+	       (do ((i 3 (+ i 2))
+		    (lim (sqrt val)))
+		   ((or (= 0 (modulo val i)) (> i lim))
+		    (> i lim))))))
     (if (prime? val)
 	val
 	(next-prime (+ val 2))))
-       
+  
   (let ((srscale (/ *clm-srate* 25641))
 	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
 	(chan2 (> (channels *output*) 1))
@@ -2459,7 +2460,8 @@ nil doesnt print anything, which will speed up a bit the process.
 			 (make-vector (length freq-list))))
 	  (if-list-in-gain (pair? (car gain-list)))
 	  (frm-size (make-vector (length freq-list)))
-	  (gains (make-float-vector (length freq-list) 1.0)))
+	  (gains (make-float-vector (length freq-list) 1.0))
+	  (filt-scl (* filt-gain-scale (- 1.0 a1))))
 
       (do ((k 0 (+ k 1)))
 	  ((= k half-list))
@@ -2468,7 +2470,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (if (pair? gval)
 	      (begin
 		(set! (env-size k) (make-env gval
-					     :scaler (* filt-gain-scale (- 1.0 a1))
+					     :scaler filt-scl
 					     :duration durata :base filt-gain-base))
 		(set! (frm-size k) (make-formant fval a1)))
 	      (begin
