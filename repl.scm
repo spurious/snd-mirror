@@ -897,6 +897,11 @@
 					    (set! unbound-case #f)
 					    (begin
 					      (format *stderr* "~S~%" val)
+					      ;; this set! of '** has one odd consequence: if val is a lambda expression
+					      ;;   find_closure in s7 will fallback on the current environment trying to
+					      ;;   find an associated name, and the only thing it finds is '**!  So,
+					      ;;   when we type **, we get back **, which seems perverse.  I suppose
+					      ;;   we could trap the string above, see "**" and change to ~W or something.
 					      (set! ((*repl* 'top-level-let) '**) val))))))))
 			       
 			       (lambda (type info)

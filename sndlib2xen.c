@@ -346,7 +346,6 @@ static Xen g_mus_sound_write_date(Xen filename)
   return(result);
 }
 
-
 static Xen g_mus_header_writable(Xen head, Xen data)
 {
   #define H_mus_header_writable "(" S_mus_header_writable " header-type sample-type) returns " PROC_TRUE " if the header can handle the sample type"
@@ -1089,7 +1088,7 @@ void mus_sndlib_xen_initialize(void)
 {
 #if HAVE_SCHEME
   s7_pointer pl_is, pl_isi, pl_si, pl_ss, pl_ps, pl_psp, pl_i, pl_bii, pl_p, pl_rs, pl_bi, pl_bib, pl_b, pl_ls;
-  s7_pointer pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts;
+  s7_pointer pl_l, pl_isfiii, pl_fsiiif, pl_bs, pl_ts, pl_sh, pl_bhi;
 #endif
 
   mus_sound_initialize();
@@ -1140,8 +1139,17 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
 
 #if HAVE_SCHEME
+  /* an experiment for lint */
+  s7_eval_c_string(s7, 
+    "(define-macro (mus_header_t? h) \
+       (or (and (memq h '(mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-voc mus-svx mus-soundfont mus-rf64 mus-caff)) #t) \
+           (if (integer? h) \
+               (case h ((1) \"mus-next\") ((2) \"mus-aifc\") ((3) \"mus-riff\") ((12) \"mus-raw\") \
+                       (else (or (< 0 h 71) \"an integer between 1 and 70\"))) \
+               ''integer?)))");
+
   {
-    s7_pointer s, i, p, b, r, f, t, l;
+    s7_pointer s, i, p, b, r, f, t, l, h;
     s = s7_make_symbol(s7, "string?");
     i = s7_make_symbol(s7, "integer?");
     p = s7_make_symbol(s7, "pair?");
@@ -1149,10 +1157,12 @@ void mus_sndlib_xen_initialize(void)
     b = s7_make_symbol(s7, "boolean?");
     r = s7_make_symbol(s7, "real?");
     f = s7_make_symbol(s7, "float-vector?");
+    h = s7_make_symbol(s7, "mus_header_t?");
     t = s7_t(s7);
     pl_is = s7_make_signature(s7, 2, i, s);
     pl_isi = s7_make_signature(s7, 3, i, s, i);
     pl_si = s7_make_signature(s7, 2, s, i);
+    pl_sh = s7_make_signature(s7, 2, s, h);
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_ts = s7_make_signature(s7, 2, t, s);
     pl_ls = s7_make_signature(s7, 2, l, s);
@@ -1160,6 +1170,7 @@ void mus_sndlib_xen_initialize(void)
     pl_psp = s7_make_signature(s7, 3, p, s, p);
     pl_i = s7_make_circular_signature(s7, 0, 1, i);
     pl_bii = s7_make_signature(s7, 3, b, i, i);
+    pl_bhi = s7_make_signature(s7, 3, b, h, i);
     pl_p = s7_make_circular_signature(s7, 0, 1, p);
     pl_l = s7_make_circular_signature(s7, 0, 1, l);
     pl_rs = s7_make_signature(s7, 2, r, s);
@@ -1191,9 +1202,9 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_typed_procedure(S_mus_sound_datum_size,     g_mus_sound_datum_size_w,       1, 0, 0, H_mus_sound_datum_size,      pl_is);
   Xen_define_typed_procedure(S_mus_sound_length,         g_mus_sound_length_w,           1, 0, 0, H_mus_sound_length,          pl_is);
   Xen_define_typed_procedure(S_mus_sound_type_specifier, g_mus_sound_type_specifier_w,   1, 0, 0, H_mus_sound_type_specifier,  pl_is);
-  Xen_define_typed_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name,      pl_si);
-  Xen_define_typed_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string, pl_si);
-  Xen_define_typed_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable,       pl_bii);
+  Xen_define_typed_procedure(S_mus_header_type_name,     g_mus_header_type_name_w,       1, 0, 0, H_mus_header_type_name,      pl_sh);
+  Xen_define_typed_procedure(S_mus_header_type_to_string,g_mus_header_type_to_string_w,  1, 0, 0, H_mus_header_type_to_string, pl_sh);
+  Xen_define_typed_procedure(S_mus_header_writable,      g_mus_header_writable_w,        2, 0, 0, H_mus_header_writable,       pl_bhi);
   Xen_define_typed_procedure(S_mus_sample_type_name,     g_mus_sample_type_name_w,       1, 0, 0, H_mus_sample_type_name,      pl_si);
   Xen_define_typed_procedure(S_mus_sample_type_to_string,g_mus_sample_type_to_string_w,  1, 0, 0, H_mus_sample_type_to_string, pl_si);
   Xen_define_typed_procedure(S_mus_sound_comment,        g_mus_sound_comment_w,          1, 0, 0, H_mus_sound_comment,         pl_ts);

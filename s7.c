@@ -7443,7 +7443,7 @@ s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name
   sym = s7_define_constant(sc, name, value);
   symbol_set_has_help(sym);
   symbol_help(sym) = copy_string(help);
-  return(value);
+  return(value); /* inconsistent with variable above, but consistent with define_function? */
 }
 
 
@@ -36363,7 +36363,7 @@ static s7_pointer c_provide(s7_scheme *sc, s7_pointer sym)
     method_or_bust(sc, sym, sc->provide_symbol, list_1(sc, sym), T_SYMBOL, 0);
 
   p = find_local_symbol(sc, sc->features_symbol, sc->envir); /* if sc->envir is nil, this returns the global slot, else local slot */
-  lst = slot_value(find_symbol(sc, sc->features_symbol));    /* in either case, we want the current *feartures* list */
+  lst = slot_value(find_symbol(sc, sc->features_symbol));    /* in either case, we want the current *features* list */
 
   if (p == sc->undefined)
     make_slot_1(sc, sc->envir, sc->features_symbol, cons(sc, sym, lst));
@@ -42768,7 +42768,9 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
   /* these refer to the rootlet */
   if ((is_slot(global_slot(sym))) &&
       (slot_has_accessor(global_slot(sym))))
-    return(s7_gc_protected_at(sc, symbol_global_accessor_index(sym)));
+    /* return(s7_gc_protected_at(sc, symbol_global_accessor_index(sym))); */ /* 26-Feb-16 */
+    return(vector_element(sc->protected_accessors, symbol_global_accessor_index(sym)));
+
   return(sc->F);
 }
 
@@ -42831,6 +42833,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
   if ((is_slot(p)) &&
       (slot_has_accessor(p)))
     return(slot_accessor(p));
+
   return(sc->F);
 }
 
@@ -65616,7 +65619,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			    car(sc->t2_1) = sc->code;
 			    car(sc->t2_2) = sc->value;
 			    sc->value = c_function_call(func)(sc, sc->t2_1);
-			    if (sc->value == sc->error_symbol) /* backwards compatibility... */
+			    if (sc->value == sc->error_symbol) /* backwards compatibility... (but still used I think in g_features_set) */
 			      return(s7_error(sc, sc->error_symbol, set_elist_3(sc, make_string_wrapper(sc, "can't set ~S to ~S"), car(sc->t2_1), car(sc->t2_2))));
 			  }
 			else

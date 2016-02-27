@@ -29138,10 +29138,9 @@ EDITS: 2
 		    (beg (random (floor (/ end 2)))))
 	       (for-each
 		(lambda (s c)
-		  (if (not (or (and (= (sync cursnd) 0) 
-				    (not (and (equal? s cursnd) 
-					      (= c curchn))))
-			       (not (= (sync s) (sync cursnd)))))
+		  (if (and (or (not (= (sync cursnd) 0))
+			       (and (equal? s cursnd) (= c curchn)))
+			   (= (sync s) (sync cursnd)))
 		      (let ((val (undo-env s c)))
 			(set! recalc (or recalc val)))))
 		(car chan-list)

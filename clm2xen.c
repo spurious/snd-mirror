@@ -12490,12 +12490,12 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 static void mus_xen_init(void)
 {
 #if HAVE_SCHEME
-  s7_pointer s, i, p, t, r, c, f, v, b, d;
+  s7_pointer s, i, p, t, r, c, f, v, b, d, j;
 
   s7_pointer pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
     pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, pcl_zt, 
     pl_sc, pl_sssrs, pl_tc, pl_ct, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
-    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_dcf, pl_dcrt;
+    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_dcf, pl_dcrt, pl_djr, pl_it, pl_iti;
 #endif
 
   mus_initialize();
@@ -12515,6 +12515,7 @@ static void mus_xen_init(void)
   r = s7_make_symbol(s7, "real?");
   c = s7_make_symbol(s7, "c-object?");
   f = s7_make_symbol(s7, "float-vector?");
+  j = s7_make_symbol(s7, "int-vector?");
   v = s7_make_symbol(s7, "vector?");
   b = s7_make_symbol(s7, "boolean?");
   d = s7_make_symbol(s7, "float?");
@@ -12526,6 +12527,7 @@ static void mus_xen_init(void)
   
   pl_d = s7_make_signature(s7, 1, d);
   pl_dcr = s7_make_circular_signature(s7, 2, 3, d, c, r);
+  pl_djr = s7_make_circular_signature(s7, 2, 3, d, j, r);
   pl_dcf = s7_make_signature(s7, 3, d, c, s7_make_signature(s7, 2, r, f));
   pl_dcrt = s7_make_signature(s7, 4, d, c, r, t);
   pl_dct = s7_make_signature(s7, 3, d, c, t);
@@ -12548,6 +12550,7 @@ static void mus_xen_init(void)
   pl_ct = s7_make_signature(s7, 2, c, t);
   pl_cc = s7_make_circular_signature(s7, 1, 2, c, c);
   pl_ici = s7_make_signature(s7, 3, i, c, i);
+  pl_iti = s7_make_signature(s7, 3, i, t, i);
   pl_ccic = s7_make_signature(s7, 3, c, c, i, c);
   pl_ccrr = s7_make_signature(s7, 4, c, c, r, r);
   pl_fc = s7_make_signature(s7, 2, s7_make_signature(s7, 2, f, b), c);
@@ -12563,6 +12566,7 @@ static void mus_xen_init(void)
   pl_fiir = s7_make_signature(s7, 4, f, i, i, r);
   pl_fttb = s7_make_signature(s7, 4, f, t, t, b);
   pl_ic = s7_make_signature(s7, 2, i, c);
+  pl_it = s7_make_signature(s7, 2, i, t);
   pl_rciir = s7_make_signature(s7, 5, r, c, i, i, r);
   pl_rcir = s7_make_signature(s7, 4, r, c, i, r);
   pl_ririt = s7_make_signature(s7,5, r, i, r, i, t);
@@ -12774,7 +12778,7 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_set S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0, pl_dc, pl_dcr);
   Xen_define_typed_dilambda(S_mus_width,     g_mus_width_w,     H_mus_width,     S_set S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0, pl_ic, pl_ici);
   Xen_define_typed_dilambda(S_mus_frequency, g_mus_frequency_w, H_mus_frequency, S_set S_mus_frequency, g_mus_set_frequency_w,  1, 0, 2, 0, pl_dc, pl_dcr);
-  Xen_define_typed_dilambda(S_mus_length,    g_mus_length_w,    H_mus_length,    S_set S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0, pl_ic, pl_ici);
+  Xen_define_typed_dilambda(S_mus_length,    g_mus_length_w,    H_mus_length,    S_set S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0, pl_it, pl_iti);
   Xen_define_typed_dilambda(S_mus_data,      g_mus_data_w,      H_mus_data,      S_set S_mus_data,      g_mus_set_data_w,       1, 0, 2, 0, pl_fc, pl_fcf);
   Xen_define_typed_dilambda(S_mus_xcoeff,    g_mus_xcoeff_w,    H_mus_xcoeff,    S_set S_mus_xcoeff,    g_mus_set_xcoeff_w,     2, 0, 3, 0, pl_dci, pl_dcir);
   Xen_define_typed_dilambda(S_mus_ycoeff,    g_mus_ycoeff_w,    H_mus_ycoeff,    S_set S_mus_ycoeff,    g_mus_set_ycoeff_w,     2, 0, 3, 0, pl_dci, pl_dcir);
@@ -12976,7 +12980,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			pl_rcr);
   Xen_define_typed_procedure(S_make_locsig,		g_make_locsig_w,           0, 0, 1, H_make_locsig,		pcl_ct);
   Xen_define_typed_procedure(S_move_locsig,		g_move_locsig_w,           3, 0, 0, H_move_locsig,		pl_ccrr);
-  Xen_define_typed_procedure(S_mus_channels,		g_mus_channels_w,          1, 0, 0, H_mus_channels,		pl_ic);
+  Xen_define_typed_procedure(S_mus_channels,		g_mus_channels_w,          1, 0, 0, H_mus_channels,		pl_it);
 
 #if HAVE_RUBY
   Xen_define_procedure(S_locsig_ref,			g_locsig_ref_w,            2, 0, 0, H_locsig_ref);
@@ -13106,7 +13110,7 @@ static void mus_xen_init(void)
 #endif
 
 #if HAVE_SCHEME
-  Xen_define_typed_procedure(S_piano_noise,		g_piano_noise_w,            2, 0, 0, H_piano_noise,		pl_dcr);
+  Xen_define_typed_procedure(S_piano_noise,		g_piano_noise_w,            2, 0, 0, H_piano_noise,		pl_djr);
   Xen_define_typed_procedure(S_singer_filter,		g_singer_filter_w,          6, 0, 0, H_singer_filter,		pl_riirfff);
   Xen_define_typed_procedure(S_singer_nose_filter,	g_singer_nose_filter_w,     5, 0, 0, H_singer_nose_filter,	pl_rirfff);
 #endif
