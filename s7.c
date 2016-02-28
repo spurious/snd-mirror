@@ -7226,15 +7226,19 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
   return(-1);
 }
 
-#define check_closure_for(Sc, Fnc, Sym)				    \
-  if ((has_closure_let(Fnc)) && (is_let(closure_let(Fnc))))	    \
-    {								    \
-      s7_pointer val;						    \
-      val = find_local_symbol(Sc, Sym, closure_let(Fnc));	    \
-      if ((!is_slot(val)) && (is_let(outlet(closure_let(Fnc)))))    \
-	val = find_local_symbol(Sc, Sym, outlet(closure_let(Fnc))); \
-      if (is_slot(val))						    \
-	return(slot_value(val));				    \
+#define check_closure_for(Sc, Fnc, Sym)					\
+  if ((has_closure_let(Fnc)) && (is_let(closure_let(Fnc))))		\
+    {									\
+      s7_pointer val;							\
+      val = find_local_symbol(Sc, Sym, closure_let(Fnc));		\
+      if ((!is_slot(val)) && (is_let(outlet(closure_let(Fnc)))))	\
+        {								\
+	  val = find_local_symbol(Sc, Sym, outlet(closure_let(Fnc)));	\
+          if ((!is_slot(val)) && (is_let(outlet(outlet(closure_let(Fnc)))))) \
+	    val = find_local_symbol(Sc, Sym, outlet(outlet(closure_let(Fnc)))); \
+	}								\
+      if (is_slot(val))							\
+	return(slot_value(val));					\
     }
 
 
@@ -74193,7 +74197,7 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.1  16.2  16.3
+ *           12  |  13  |  14  |  15  | 16.0  16.1  16.2  16.4
  *                                           
  * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159
@@ -74240,4 +74244,7 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
+ *
+ * proc-sig|doc can be confused by inserted glosure env(?) -- need another level of outlet in check_closure_for?
+ *   but that searches too far in non-opt cases -- need a flag that the outlet is an insertion
  */

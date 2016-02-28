@@ -26290,18 +26290,18 @@ EDITS: 2
 		 (feql (func #t) (map func (reverse (sounds))))))
 	(snd-display #__line__ ";test-panel ~A: ~A ~A?" name (func #t) (map func (sounds)))))
   
-  (define (all-chans-reversed)
-    (let ((sndlist ())
-	  (chnlist ()))
-      (for-each (lambda (snd)
-		  (do ((i (- (channels snd) 1) (- i 1)))
-		      ((< i 0))
-		    (set! sndlist (cons snd sndlist))
-		    (set! chnlist (cons i chnlist))))
-		(reverse (sounds)))
-      (list sndlist chnlist)))
-  
   (define (test-channel func name)
+    (define (all-chans-reversed)
+      (let ((sndlist ())
+	    (chnlist ()))
+	(for-each (lambda (snd)
+		    (do ((i (- (channels snd) 1) (- i 1)))
+			((< i 0))
+		      (set! sndlist (cons snd sndlist))
+		      (set! chnlist (cons i chnlist))))
+		  (reverse (sounds)))
+	(list sndlist chnlist)))
+    
     (if (not (or (equal? (flatten (func #t #t)) (apply map func (all-chans)))
 		 (equal? (flatten (func #t #t)) (apply map func (all-chans-reversed)))))
 	(snd-display #__line__ ";test-channel ~A: ~A ~A?" name (flatten (func #t #t)) (apply map func (all-chans)))))
@@ -28867,21 +28867,21 @@ EDITS: 2
 
 (define (snd_test_16)
   
-  (define (undo-env s c)
-    (let ((len (car (edits s c))))
-      (and (> len 0)
-	  (let ((unhappy #f))
-	    (do ((i 1 (+ i 1)))
-		((or unhappy (> i len))
-		 unhappy)
-	      (let ((ed (edit-fragment i s c)))
-		(if (and ed
-			 (string=? (cadr ed) "env"))
-		    (begin
-		      (set! (edit-position s c) (- i 1))
-		      (set! unhappy #t)))))))))
-  
   (define (opt-test choice)
+    (define (undo-env s c)
+      (let ((len (car (edits s c))))
+	(and (> len 0)
+	     (let ((unhappy #f))
+	       (do ((i 1 (+ i 1)))
+		   ((or unhappy (> i len))
+		    unhappy)
+		 (let ((ed (edit-fragment i s c)))
+		   (if (and ed
+			    (string=? (cadr ed) "env"))
+		       (begin
+			 (set! (edit-position s c) (- i 1))
+			 (set! unhappy #t)))))))))
+    
     (let* ((snds (sounds))
 	   (cursnd (snds (random (length snds))))
 	   (curchn (random (chans cursnd)))
@@ -29296,15 +29296,6 @@ EDITS: 2
 			    ; (error 'uhoh1)
 			    )))))))))
   
-  (define (reversed-read snd chn)
-    (let* ((len (framples snd chn))
-	   (data (make-float-vector len))
-	   (sf (make-sampler (- len 1) snd chn -1)))
-      (do ((i (- len 1) (- i 1)))
-	  ((< i 0))
-	(set! (data i) (read-sample sf)))
-      data))
-  
   (define (zigzag-read snd chn)
     (let* ((len (framples snd chn))
 	   (data (make-float-vector len))
@@ -29343,6 +29334,15 @@ EDITS: 2
       ind))
   
   (define (check-back-and-forth ind name v)
+    (define (reversed-read snd chn)
+      (let* ((len (framples snd chn))
+	     (data (make-float-vector len))
+	     (sf (make-sampler (- len 1) snd chn -1)))
+	(do ((i (- len 1) (- i 1)))
+	    ((< i 0))
+	  (set! (data i) (read-sample sf)))
+	data))
+    
     (let ((happy #t))
       (if (not (vequal v (channel->float-vector 0 (framples) ind 0)))
 	  (begin
@@ -34432,59 +34432,59 @@ EDITS: 1
 	(if (fneq (bes-j1 x) (bes-j1-1 x))
 	    (snd-display #__line__ ";(bes-j1 ~A) -> ~A ~A" x (bes-j1 x) (bes-j1-1 x))))))
   
-  (define (bes-jn-1 nn x)				;return Jn(x) for any integer n, real x
-    (let* ((n (abs nn))
-	   (besn (cond ((= n 0) (bes-j0-1 x))
-		       ((= n 1) (bes-j1-1 x))
-		       ((= x 0.0) 0.0)
-		       (else
-			(let ((iacc 40)
-			      (ans 0.0000)
-			      (bigno 1.0e10)
-			      (bigni 1.0e-10))
-			  (if (> (abs x) n)
-			      (do ((tox (/ 2.0 (abs x)))
-				   (bjm (bes-j0-1 (abs x)))
-				   (bj (bes-j1-1 (abs x)))
-				   (j 1 (+ j 1))
-				   (bjp 0.0))
-				  ((= j n) (set! ans bj))
-				(set! bjp (- (* j tox bj) bjm))
-				(set! bjm bj)
-				(set! bj bjp))
-			      (let ((tox (/ 2.0 (abs x)))
-				    (m (* 2 (floor (/ (+ n (sqrt (* iacc n))) 2))))
-				    (jsum 0)
-				    (bjm 0.0000)
-				    (sum 0.0000)
-				    (bjp 0.0000)
-				    (bj 1.0000))
-				(do ((j m (- j 1)))
-				    ((= j 0))
-				  (set! bjm (- (* j tox bj) bjp))
-				  (set! bjp bj)
-				  (set! bj bjm)
-				  (if (> (abs bj) bigno)
-				      (begin
-					(set! bj (* bj bigni))
-					(set! bjp (* bjp bigni))
-					(set! ans (* ans bigni))
-					(set! sum (* sum bigni))))
-				  (if (not (= 0 jsum))
-				      (set! sum (+ sum bj)))
-				  (set! jsum (- 1 jsum))
-				  (if (= j n) (set! ans bjp)))
-				(set! sum (- (* 2.0 sum) bj))
-				(set! ans (/ ans sum))))
-			  (if (and (< x 0.0) (odd? n))
-			      (- ans)
-			      ans))))))
-      (if (and (< nn 0)
-	       (odd? nn))
-	  (- besn)
-	  besn)))
-  
   (define (test-jn)
+    (define (bes-jn-1 nn x)				;return Jn(x) for any integer n, real x
+      (let* ((n (abs nn))
+	     (besn (cond ((= n 0) (bes-j0-1 x))
+			 ((= n 1) (bes-j1-1 x))
+			 ((= x 0.0) 0.0)
+			 (else
+			  (let ((iacc 40)
+				(ans 0.0000)
+				(bigno 1.0e10)
+				(bigni 1.0e-10))
+			    (if (> (abs x) n)
+				(do ((tox (/ 2.0 (abs x)))
+				     (bjm (bes-j0-1 (abs x)))
+				     (bj (bes-j1-1 (abs x)))
+				     (j 1 (+ j 1))
+				     (bjp 0.0))
+				    ((= j n) (set! ans bj))
+				  (set! bjp (- (* j tox bj) bjm))
+				  (set! bjm bj)
+				  (set! bj bjp))
+				(let ((tox (/ 2.0 (abs x)))
+				      (m (* 2 (floor (/ (+ n (sqrt (* iacc n))) 2))))
+				      (jsum 0)
+				      (bjm 0.0000)
+				      (sum 0.0000)
+				      (bjp 0.0000)
+				      (bj 1.0000))
+				  (do ((j m (- j 1)))
+				      ((= j 0))
+				    (set! bjm (- (* j tox bj) bjp))
+				    (set! bjp bj)
+				    (set! bj bjm)
+				    (if (> (abs bj) bigno)
+					(begin
+					  (set! bj (* bj bigni))
+					  (set! bjp (* bjp bigni))
+					  (set! ans (* ans bigni))
+					  (set! sum (* sum bigni))))
+				    (if (not (= 0 jsum))
+					(set! sum (+ sum bj)))
+				    (set! jsum (- 1 jsum))
+				    (if (= j n) (set! ans bjp)))
+				  (set! sum (- (* 2.0 sum) bj))
+				  (set! ans (/ ans sum))))
+			    (if (and (< x 0.0) (odd? n))
+				(- ans)
+				ans))))))
+	(if (and (< nn 0)
+		 (odd? nn))
+	    (- besn)
+	    besn)))
+  
     (do ((k 0 (+ k 1)))
 	((= k 10))
       (do ((i 0 (+ i 1)))
@@ -34582,22 +34582,22 @@ EDITS: 1
 	(if (fneq (bes-y1 x) (bes-y1-1 x))
 	    (snd-display #__line__ ";(bes-y1 ~A) -> ~A ~A" x (bes-y1 x) (bes-y1-1 x))))))
   
-  (define (bes-yn-1 n x)				;return Yn(x) for any integer n, real x
-    (if (= n 0) 
-	(bes-y0-1 x)
-	(if (= n 1) 
-	    (bes-y1-1 x)
-	    (do ((tox (/ 2.0 x))
-		 (byp 0.0)
-		 (by (bes-y1-1 x))
-		 (bym (bes-y0-1 x))
-		 (j 1 (+ j 1)))
-		((= j n) by)
-	      (set! byp (- (* j tox by) bym))
-	      (set! bym by)
-	      (set! by byp)))))
-  
   (define (test-yn)
+    (define (bes-yn-1 n x)				;return Yn(x) for any integer n, real x
+      (if (= n 0) 
+	  (bes-y0-1 x)
+	  (if (= n 1) 
+	      (bes-y1-1 x)
+	      (do ((tox (/ 2.0 x))
+		   (byp 0.0)
+		   (by (bes-y1-1 x))
+		   (bym (bes-y0-1 x))
+		   (j 1 (+ j 1)))
+		  ((= j n) by)
+		(set! byp (- (* j tox by) bym))
+		(set! bym by)
+		(set! by byp)))))
+  
     (do ((k 0 (+ k 1)))
 	((= k 10))
       (do ((i 0 (+ i 1)))
@@ -34607,30 +34607,30 @@ EDITS: 1
 	      (snd-display #__line__ ";(bes-yn ~A ~A) -> ~A ~A" k x (bes-yn k x) (bes-yn-1 k x)))))))
   
   
-  (define (bes-i0-1 x)			;I0(x)
-    (if (< (abs x) 3.75)
-	(let ((y (expt (/ x 3.75) 2)))
-	  (+ 1.0
-	     (* y (+ 3.5156229
-		     (* y (+ 3.0899424
-			     (* y (+ 1.2067492
-				     (* y (+ 0.2659732
-					     (* y (+ 0.360768e-1
-						     (* y 0.45813e-2)))))))))))))
-	(let* ((ax (abs x))
-	       (y (/ 3.75 ax)))
-	  (* (/ (exp ax) (sqrt ax)) 
-	     (+ 0.39894228
-		(* y (+ 0.1328592e-1
-			(* y (+ 0.225319e-2
-				(* y (+ -0.157565e-2
-					(* y (+ 0.916281e-2
-						(* y (+ -0.2057706e-1
-							(* y (+ 0.2635537e-1
-								(* y (+ -0.1647633e-1
-									(* y 0.392377e-2))))))))))))))))))))
-  
   (define (test-i0)
+    (define (bes-i0-1 x)			;I0(x)
+      (if (< (abs x) 3.75)
+	  (let ((y (expt (/ x 3.75) 2)))
+	    (+ 1.0
+	       (* y (+ 3.5156229
+		       (* y (+ 3.0899424
+			       (* y (+ 1.2067492
+				       (* y (+ 0.2659732
+					       (* y (+ 0.360768e-1
+						       (* y 0.45813e-2)))))))))))))
+	  (let* ((ax (abs x))
+		 (y (/ 3.75 ax)))
+	    (* (/ (exp ax) (sqrt ax)) 
+	       (+ 0.39894228
+		  (* y (+ 0.1328592e-1
+			  (* y (+ 0.225319e-2
+				  (* y (+ -0.157565e-2
+					  (* y (+ 0.916281e-2
+						  (* y (+ -0.2057706e-1
+							  (* y (+ 0.2635537e-1
+								  (* y (+ -0.1647633e-1
+									  (* y 0.392377e-2))))))))))))))))))))
+    
     (for-each 
      (lambda (x)
        (if (fneq (bes-i0 x) (bes-i0-1 x))
@@ -34672,36 +34672,36 @@ EDITS: 1
     (if (fneq (bes-i1 5.0) 24.33564) (snd-display #__line__ ";bes-i1 5.0: ~A" (bes-i1 5.0)))
     (if (fneq (bes-i1 10.0) 2670.9883) (snd-display #__line__ ";bes-i1 10.0: ~A" (bes-i1 10.0))))
   
-  (define (bes-in n x)			;return In(x) for any integer n, real x
-    (cond ((= n 0) (bes-i0 x))
-          ((= n 1) (bes-i1 x))
-          ((= x 0.0) 0.0)
-          (else
-           (let* ((iacc 40)
-                  (bigno 10000000000.0000)
-                  (bigni 0.0000)
-                  (ans 0.0000)
-                  (tox (/ 2.0 (abs x)))
-                  (bip 0.0000)
-                  (bi 1.0000)
-                  (m (* 2 (+ n (truncate (sqrt (* iacc n))))))
-                  (bim 0.0000))
-             (do ((j m (- j 1)))
-                 ((= j 0))
-               (set! bim (+ bip (* j tox bi)))
-               (set! bip bi)
-               (set! bi bim)
-               (if (> (abs bi) bigno)
-                   (begin
-                     (set! ans (* ans bigni))
-                     (set! bi (* bi bigni))
-                     (set! bip (* bip bigni))))
-               (if (= j n) (set! ans bip)))
-             (if (and (< x 0.0) (odd? n))
-                 (set! ans (- ans)))
-             (* ans (/ (bes-i0 x) bi))))))
-  
   (define (test-in)
+    (define (bes-in n x)			;return In(x) for any integer n, real x
+      (cond ((= n 0) (bes-i0 x))
+	    ((= n 1) (bes-i1 x))
+	    ((= x 0.0) 0.0)
+	    (else
+	     (let* ((iacc 40)
+		    (bigno 10000000000.0000)
+		    (bigni 0.0000)
+		    (ans 0.0000)
+		    (tox (/ 2.0 (abs x)))
+		    (bip 0.0000)
+		    (bi 1.0000)
+		    (m (* 2 (+ n (truncate (sqrt (* iacc n))))))
+		    (bim 0.0000))
+	       (do ((j m (- j 1)))
+		   ((= j 0))
+		 (set! bim (+ bip (* j tox bi)))
+		 (set! bip bi)
+		 (set! bi bim)
+		 (if (> (abs bi) bigno)
+		     (begin
+		       (set! ans (* ans bigni))
+		       (set! bi (* bi bigni))
+		       (set! bip (* bip bigni))))
+		 (if (= j n) (set! ans bip)))
+	       (if (and (< x 0.0) (odd? n))
+		   (set! ans (- ans)))
+	       (* ans (/ (bes-i0 x) bi))))))
+  
     (if (fneq (bes-in 1 1.0) 0.565159) (snd-display #__line__ ";bes-in 1 1.0: ~A" (bes-in 1 1.0)))
     (if (fneq (bes-in 2 1.0) 0.13574767) (snd-display #__line__ ";bes-in 2 1.0: ~A" (bes-in 2 1.0)))
     (if (fneq (bes-in 3 1.0) 0.02216842) (snd-display #__line__ ";bes-in 3 1.0: ~A" (bes-in 3 1.0)))
@@ -34720,75 +34720,75 @@ EDITS: 1
     (if (fneq (bes-in 5 5.0) 2.157974) (snd-display #__line__ ";bes-in 5 5.0: ~A" (bes-in 5 5.0)))
     (if (fneq (bes-in 10 5.0) 0.004580044) (snd-display #__line__ ";bes-in 10 5.0: ~A" (bes-in 10 5.0))))
   
-  (define (bes-k0 x)				;K0(x)
-    (if (<= x 2.0)
-	(let ((y (* x (/ x 4.0))))
-	  (+ (* (- (log (/ x 2.0))) (bes-i0 x)) -0.57721566
-	     (* y (+ 0.42278420
-		     (* y (+ 0.23069756
-			     (* y (+ 0.3488590e-1
-				     (* y (+ 0.262698e-2
-					     (* y (+ 0.10750e-3
-						     (* y 0.74e-5)))))))))))))
-	(let ((y (/ 2.0 x)))
-	  (* (/ (exp (- x)) (sqrt x)) 
-	     (+ 1.25331414
-		(* y (+ -0.7832358e-1
-			(* y (+ 0.2189568e-1
-				(* y (+ -0.1062446e-1
-					(* y (+ 0.587872e-2
-						(* y (+ -0.251540e-2
-							(* y -0.53208e-3))))))))))))))))
-  
   (define (test-k0)
+    (define (bes-k0 x)				;K0(x)
+      (if (<= x 2.0)
+	  (let ((y (* x (/ x 4.0))))
+	    (+ (* (- (log (/ x 2.0))) (bes-i0 x)) -0.57721566
+	       (* y (+ 0.42278420
+		       (* y (+ 0.23069756
+			       (* y (+ 0.3488590e-1
+				       (* y (+ 0.262698e-2
+					       (* y (+ 0.10750e-3
+						       (* y 0.74e-5)))))))))))))
+	  (let ((y (/ 2.0 x)))
+	    (* (/ (exp (- x)) (sqrt x)) 
+	       (+ 1.25331414
+		  (* y (+ -0.7832358e-1
+			  (* y (+ 0.2189568e-1
+				  (* y (+ -0.1062446e-1
+					  (* y (+ 0.587872e-2
+						  (* y (+ -0.251540e-2
+							  (* y -0.53208e-3))))))))))))))))
+    
     (if (fneq (bes-k0 1.0) 0.4210244) (snd-display #__line__ ";bes-k0 1.0: ~A" (bes-k0 1.0)))
     (if (fneq (bes-k0 2.0) 0.1138938) (snd-display #__line__ ";bes-k0 2.0: ~A" (bes-k0 2.0)))
     (if (fneq (bes-k0 10.0) 1.7780e-5) (snd-display #__line__ ";bes-k0 10.0: ~A" (bes-k0 10.0))))
   
-  (define (bes-k1 x)				;K1(x)
-    (if (<= x 2.0)
-	(let ((y (* x (/ x 4.0))))
-	  (+ (* (log (/ x 2)) (bes-i1 x)) 
-	     (* (/ 1.0 x)
-		(+ 1.0
-		   (* y (+ 0.15443144
-			   (* y (+ -0.67278579
-				   (* y (+ -0.18156897
-					   (* y (+ -0.1919402e-1
-						   (* y (+ -0.110404e-2
-							   (* y -0.4686e-4)))))))))))))))
-	(let ((y (/ 2.0 x)))
-	  (* (/ (exp (- x)) (sqrt x)) 
-	     (+ 1.25331414 
-		(* y (+ 0.23498619
-			(* y (+ -0.3655620e-1
-				(* y (+ 0.1504268e-1
-					(* y (+ -0.780353e-2
-						(* y (+ 0.325614e-2
-							(* y -0.68245e-3))))))))))))))))
-  
   (define (test-k1)
+    (define (bes-k1 x)				;K1(x)
+      (if (<= x 2.0)
+	  (let ((y (* x (/ x 4.0))))
+	    (+ (* (log (/ x 2)) (bes-i1 x)) 
+	       (* (/ 1.0 x)
+		  (+ 1.0
+		     (* y (+ 0.15443144
+			     (* y (+ -0.67278579
+				     (* y (+ -0.18156897
+					     (* y (+ -0.1919402e-1
+						     (* y (+ -0.110404e-2
+							     (* y -0.4686e-4)))))))))))))))
+	  (let ((y (/ 2.0 x)))
+	    (* (/ (exp (- x)) (sqrt x)) 
+	       (+ 1.25331414 
+		  (* y (+ 0.23498619
+			  (* y (+ -0.3655620e-1
+				  (* y (+ 0.1504268e-1
+					  (* y (+ -0.780353e-2
+						  (* y (+ 0.325614e-2
+							  (* y -0.68245e-3))))))))))))))))
+  
     (if (fneq (bes-k1 1.0) 0.60190723) (snd-display #__line__ ";bes-k1 1.0: ~A" (bes-k1 1.0)))
     (if (fneq (bes-k1 2.0) 0.1398658) (snd-display #__line__ ";bes-k1 2.0: ~A" (bes-k1 2.0)))
     (if (fneq (bes-k1 10.0) 1.86487e-5) (snd-display #__line__ ";bes-k1 10.0: ~A" (bes-k1 10.0))))
   
   
-  (define (bes-kn n x)			;return Kn(x) for any integer n, real x
-    (if (= n 0) 
-	(bes-k0 x)
-	(if (= n 1) 
-	    (bes-k1 x)
-	    (do ((tox (/ 2.0 x))
-		 (bkm (bes-k0 x))
-		 (bk (bes-k1 x))
-		 (bkp 0.0)
-		 (j 1 (+ j 1)))
-		((= j n) bk)
-	      (set! bkp (+ bkm (* j tox bk)))
-	      (set! bkm bk)
-	      (set! bk bkp)))))
-  
   (define (test-kn)
+    (define (bes-kn n x)			;return Kn(x) for any integer n, real x
+      (if (= n 0) 
+	  (bes-k0 x)
+	  (if (= n 1) 
+	      (bes-k1 x)
+	      (do ((tox (/ 2.0 x))
+		   (bkm (bes-k0 x))
+		   (bk (bes-k1 x))
+		   (bkp 0.0)
+		   (j 1 (+ j 1)))
+		  ((= j n) bk)
+		(set! bkp (+ bkm (* j tox bk)))
+		(set! bkm bk)
+		(set! bk bkp)))))
+    
     (if (fneq (bes-kn 1 1.0) 0.6019072) (snd-display #__line__ ";bes-kn 1 1.0: ~A" (bes-kn 1 1.0)))
     (if (fneq (bes-kn 2 1.0) 1.6248389) (snd-display #__line__ ";bes-kn 2 1.0: ~A" (bes-kn 2 1.0)))
     (if (fneq (bes-kn 3 1.0) 7.1012629) (snd-display #__line__ ";bes-kn 3 1.0: ~A" (bes-kn 3 1.0)))
@@ -34805,21 +34805,20 @@ EDITS: 1
     (if (fneq (bes-kn 5 5.0) 0.0327062) (snd-display #__line__ ";bes-kn 5 5.0: ~A" (bes-kn 5 5.0))))
   
   
-  (define (gammln xx)			;Ln(gamma(xx)), xx>0 
-    (let* ((stp 2.5066282746310005e0)
-	   (x xx)
-	   (tmp (+ x 5.5))
-	   (tmp1 (- tmp (* (+ x 0.5) (log tmp))))
-	   (ser (+ 1.000000000190015
-		   (/ 76.18009172947146 (+ x 1.0))
-		   (/ -86.50532032941677 (+ x 2.0))
-		   (/ 24.01409824083091 (+ x 3.0))
-		   (/ -1.231739572450155 (+ x 4))
-		   (/ 0.1208650973866179e-2 (+ x 5.0))
-		   (/ -0.5395239384953e-5 (+ x 6.0)))))
-      (- (log (/ (* stp ser) x)) tmp1)))
-  
   (define (test-lgamma)
+    (define (gammln xx)			;Ln(gamma(xx)), xx>0 
+      (let* ((stp 2.5066282746310005e0)
+	     (x xx)
+	     (tmp (+ x 5.5))
+	     (tmp1 (- tmp (* (+ x 0.5) (log tmp))))
+	     (ser (+ 1.000000000190015
+		     (/ 76.18009172947146 (+ x 1.0))
+		     (/ -86.50532032941677 (+ x 2.0))
+		     (/ 24.01409824083091 (+ x 3.0))
+		     (/ -1.231739572450155 (+ x 4))
+		     (/ 0.1208650973866179e-2 (+ x 5.0))
+		     (/ -0.5395239384953e-5 (+ x 6.0)))))
+	(- (log (/ (* stp ser) x)) tmp1)))
     (do ((i 0 (+ i 1)))
 	((= i 10))
       (let ((x (random 100.0)))
@@ -37703,8 +37702,6 @@ EDITS: 1
 
   (let ()
     (define (for-each-permutation func vals)          ; for-each-combination -- use for-each-subset below
-      "(for-each-permutation func vals) applies func to every permutation of vals"
-      ;;   (for-each-permutation (lambda args (format-logged #t "~{~A~^ ~}~%" args)) '(1 2 3))
       (define (pinner cur nvals len)
 	(if (= len 1)
 	    (apply func (car nvals) cur)
