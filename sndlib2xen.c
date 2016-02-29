@@ -696,7 +696,7 @@ static Xen g_mus_sound_preload(Xen file)
 	  mus_float_t **bufs;
 	  mus_long_t framples;
 	  chans = mus_sound_chans(str);
-	  framples = mus_sound_framples(str) + 8; /* + 8 for readers than wander off the end */
+	  framples = mus_sound_framples(str) + 8; /* + 8 for readers that wander off the end */
 	  bufs = (mus_float_t **)malloc(chans * sizeof(mus_float_t *));
 	  for (i = 0; i < chans; i++)
 	    bufs[i] = (mus_float_t *)malloc(framples * sizeof(mus_float_t));

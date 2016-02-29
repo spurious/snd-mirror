@@ -2460,9 +2460,9 @@ If it returns a thunk, that function is called rather than the standard graph ro
 		      ""))
 	        (<a class=quiet href="#marksample">mark-sample</a> n)
 	        (* 1.0 (/ (<a class=quiet href="#marksample">mark-sample</a> n) (<a class=quiet href="#srate">srate</a> (car (<a class=quiet href="#markhome">mark-home</a> n)))))
-	        (if (not (= (<a class=quiet href="#marksync">mark-sync</a> n) 0))
-	          (<a class=quiet>format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync">mark-sync</a> n))
-	          "")
+	        (if (zero? (<a class=quiet href="#marksync">mark-sync</a> n))
+                    ""
+	            (<a class=quiet>format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync">mark-sync</a> n)))
 	        (let ((props (<a class=quiet href="#markproperties">mark-properties</a> n)))
 	          (if (pair? props)
 	            (<a class=quiet>format</a> #f "~%  properties: '~A" props)

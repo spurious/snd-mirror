@@ -332,7 +332,7 @@
 
 #include "s7.h"
 
-enum {NO_JUMP, CALL_WITH_EXIT_JUMP, DYNAMIC_WIND_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, S7_CALL_JUMP, ERROR_QUIT_JUMP};
+enum {NO_JUMP, CALL_WITH_EXIT_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, ERROR_QUIT_JUMP};
 enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
 
@@ -7226,21 +7226,16 @@ static int closure_length(s7_scheme *sc, s7_pointer e)
   return(-1);
 }
 
-#define check_closure_for(Sc, Fnc, Sym)					\
-  if ((has_closure_let(Fnc)) && (is_let(closure_let(Fnc))))		\
-    {									\
-      s7_pointer val;							\
-      val = find_local_symbol(Sc, Sym, closure_let(Fnc));		\
-      if ((!is_slot(val)) && (is_let(outlet(closure_let(Fnc)))))	\
-        {								\
-	  val = find_local_symbol(Sc, Sym, outlet(closure_let(Fnc)));	\
-          if ((!is_slot(val)) && (is_let(outlet(outlet(closure_let(Fnc)))))) \
-	    val = find_local_symbol(Sc, Sym, outlet(outlet(closure_let(Fnc)))); \
-	}								\
-      if (is_slot(val))							\
-	return(slot_value(val));					\
+#define check_closure_for(Sc, Fnc, Sym)				    \
+  if ((has_closure_let(Fnc)) && (is_let(closure_let(Fnc))))	    \
+    {								    \
+      s7_pointer val;						    \
+      val = find_local_symbol(Sc, Sym, closure_let(Fnc));	    \
+      if ((!is_slot(val)) && (is_let(outlet(closure_let(Fnc)))))    \
+	val = find_local_symbol(Sc, Sym, outlet(closure_let(Fnc))); \
+      if (is_slot(val))						    \
+	return(slot_value(val));				    \
     }
-
 
 static s7_pointer copy_tree(s7_scheme *sc, s7_pointer tree)
 {
@@ -52379,7 +52374,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	  if (func_is_safe)                  /* safe c function */
 	    {
 	      set_safe_optimize_op(expr, hop + ((symbols == 0) ? OP_SAFE_C_C : OP_SAFE_C_S));
-
 	      /* we can't simply check is_global here to forego symbol value lookup later because we aren't
 	       *    tracking local vars, so the global bit may be on right now, but won't be when
 	       *    this code is evaluated.  But memq(sym, e) would catch such cases.
@@ -52387,7 +52381,6 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	       *    But global symbols are rare, and I don't see a huge savings in the lookup time --
 	       *    in callgrind it's about 7/lookup in both cases.
 	       */
-
 	      choose_c_function(sc, expr, func, 1);
 	      return(true);
 	    }
@@ -53975,7 +53968,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		   *   of the current function being optimized from being confused with some previous definition
 		   *   of the same name.  But method lists have global names so the global bit is off even though the
 		   *   thing is actually a safe global.  But no closure can be considered safe in the hop sense --
-		   *   even a global function might be redefined at anuy time, and previous uses of it in other functions
+		   *   even a global function might be redefined at any time, and previous uses of it in other functions
 		   *   need to reflect its new value.
 		   *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
 		   *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
@@ -60193,7 +60186,9 @@ static int define1_ex(s7_scheme *sc)
 
 static void define2_ex(s7_scheme *sc)
 {
-  if (is_any_closure(sc->value))
+  if ((is_any_closure(sc->value)) &&
+      ((!(is_let(closure_let(sc->value)))) ||
+       (!(is_function_env(closure_let(sc->value))))))  /* otherwise it's (define f2 f1) or something similar */
     {
       s7_pointer new_func, new_env;
       new_func = sc->value;
@@ -60202,7 +60197,6 @@ static void define2_ex(s7_scheme *sc)
        *   but the port info is not relevant here, so restrict the __func__ list making to top-level
        *   cases (via sc->envir == sc->nil).
        */
-      
       new_cell_no_check(sc, new_env, T_LET | T_FUNCTION_ENV);
       let_id(new_env) = ++sc->let_number;
       set_outlet(new_env, closure_let(new_func));
@@ -72464,27 +72458,6 @@ static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {r
 static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
 
-#if 0
-/* an experiment */
-static s7_int c_tree_length(s7_scheme *sc, s7_pointer tree, s7_int len)
-{
-  if (is_pair(tree))
-    return(c_tree_length(sc, car(tree), c_tree_length(sc, cdr(tree), len)));
-  if (is_null(tree))
-    return(len);
-  return(len + 1);
-}
-
-static s7_pointer g_tree_length(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer tree;
-  tree = car(args);
-  if (!is_pair(tree)) return(0);
-  return(s7_make_integer(sc, (s7_int)c_tree_length(sc, tree, 0)));
-}
-#endif
-
-
 #ifndef _MSC_VER
 /* gdb stacktrace decoding */
 
@@ -72622,6 +72595,21 @@ static s7_pointer make_unique_object(const char* name, unsigned int typ)
   unique_name(p) = copy_string_with_length(name, unique_name_length(p));
   unheap(p);
   return(p);
+}
+
+/* an experiment */
+static int tl(s7_scheme *sc, s7_pointer p, int i)
+{
+  if (is_null(p))
+    return(i);
+  if (!is_pair(p))
+    return(i + 1);
+  return(tl(sc, car(p), tl(sc, cdr(p), i)));
+}
+
+static s7_pointer g_tree_length(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(sc, tl(sc, car(args), 0)));
 }
 
 
@@ -73758,12 +73746,10 @@ s7_scheme *s7_init(void)
                               s7_define_function(sc, "abort",  g_abort,         0, 0, true, "drop into gdb I hope");
 #endif
 
-#if 0
-			      s7_define_function(sc, "tree-length", g_tree_length, 1, 0, false, "an experiment");
-#endif
-
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->object_set_function = slot_value(global_slot(sym));
+
+  s7_define_safe_function(sc, "tree-length", g_tree_length, 1, 0, false, "an experiment");
 
 
   /* -------- *features* -------- */
@@ -74209,7 +74195,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177  4173
  * titer         |      |      | 7503 | 5218  5219  5211
  * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |             66.0
+ * lg            |      |      |      |                   365
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
@@ -74232,6 +74218,8 @@ int main(int argc, char **argv)
  *   also need rest of Snd signatures
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
  * display of let can still get into infinite recursion!
+ * when trying to display a big 128-channel file, Snd cores up until it crashes?
+ * dilambda should be built-in (not eval-string)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74244,7 +74232,4 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
- *
- * proc-sig|doc can be confused by inserted glosure env(?) -- need another level of outlet in check_closure_for?
- *   but that searches too far in non-opt cases -- need a flag that the outlet is an insertion
  */

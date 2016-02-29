@@ -1339,20 +1339,6 @@ static char *file_extension(char *arg)
 #endif
 
 
-#if (!DISABLE_DEPRECATED)
-static Xen start_hook;
-
-static bool dont_start(char *filename)
-{
-  Xen res = Xen_false;
-  if (Xen_hook_has_list(start_hook))
-    res = run_or_hook(start_hook,
-		      Xen_list_1(C_string_to_Xen_string(filename)),
-		      S_start_hook);
-  return(Xen_is_true(res));
-}
-#endif
-
 static char *startup_filename = NULL;
 static int script_arg = 0, script_argn = 0;
 static char **script_args;
@@ -1508,12 +1494,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			      else
 				{
 				  if (startup_filename == NULL)
-				    {
-				      startup_filename = mus_strdup(argname);
-#if (!DISABLE_DEPRECATED)
-				      if (dont_start(startup_filename)) snd_exit(1);
-#endif
-				    }
+				    startup_filename = mus_strdup(argname);
 				  ss->open_requestor = FROM_STARTUP;
 				  if (snd_open_file(argname, FILE_READ_WRITE) == NULL)
 				    {
@@ -2363,11 +2344,6 @@ void g_init_main(void)
 			    S_set S_temp_dir, g_set_temp_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
   Xen_define_typed_dilambda(S_ladspa_dir, g_ladspa_dir_w, H_ladspa_dir, 
 			    S_set S_ladspa_dir, g_set_ladspa_dir_w,  0, 0, 1, 0, pl_s, pl_ss);
-  
-#if (!DISABLE_DEPRECATED)
-#define H_start_hook S_start_hook " (name): called upon start-up. If it returns " PROC_TRUE ", snd exits immediately."
-  start_hook = Xen_define_hook(S_start_hook, "(make-hook 'name)", 1, H_start_hook); 
-#endif
   
   #define H_before_exit_hook S_before_exit_hook " (): called upon exit. If it returns " PROC_TRUE ", Snd does not exit."
   

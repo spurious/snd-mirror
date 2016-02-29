@@ -591,7 +591,6 @@
 #define S_src_channel                   "src-channel"
 #define S_src_selection                 "src-selection"
 #define S_src_sound                     "src-sound"
-#define S_start_hook                    "start-hook"
 #define S_start_playing                 "start-playing"
 #define S_start_playing_hook            "start-playing-hook"
 #define S_start_playing_selection_hook  "start-playing-selection-hook"

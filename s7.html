@@ -6086,11 +6086,11 @@ then it is part of the language, and it doesn't look like the rest of the langua
 					   (lambda args             ; a read error
 					     (set! known-vals #f)   ;   so clear our state
 					     (apply throw args))))) ;   and pass the error on up
-				(if (not cur-val)
+				(if cur-val
+                                    (set! (cdr cur-val) lst)
 				    (set! known-vals 
-					  (cons (set! cur-val (cons n lst)) known-vals))
-				    (set! (cdr cur-val) lst)))
-			      
+					  (cons (set! cur-val (cons n lst)) known-vals))))
+
 			      (if (= n top-n)            ; replace our special keywords
 				  (let ((result (replace-syms cur-val)))
 				    (set! known-vals #f) ; '#1=(#+gsl #1#) -&gt; '(:1)!
