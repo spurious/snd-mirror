@@ -4707,7 +4707,7 @@ throw 'mus-error upon encountering an error, rather than returning -1 like the u
      ", " (<a class=quiet href="#mussampletypename">mus-sample-type-name</a> (<a class=quiet href="#mussoundsampletype">mus-sound-sample-type</a> file))
      ", len: " (number-&gt;string 
                 (/ (<a class=quiet href="#mussoundsamples">mus-sound-samples</a> file) 
-                   (* (channels file) (srate file)))))))
+                   (channels file) (srate file))))))
 </pre>
 
 
@@ -5603,7 +5603,7 @@ example, if you know the frequency of the mix sound, you can reflect that in the
 </p>
 
 <pre class="indented">
-(set! (mix-tag-y mix-id) (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (* (log 2.0) 7))))))
+(set! (mix-tag-y mix-id) (round (* 100 (- 1.0 (/ (log (/ freq 40.0)) (log 2.0) 7)))))
 </pre>
 
 <p>See, for example, check-mix-tags in sndscm.html.
@@ -9697,7 +9697,7 @@ how long the resultant note will be given an src envelope:
 	     (y0 (e (+ i 1))) ; 1/x x points
 	     (y1 (e (+ i 3)))
 	     (area (if (&lt; (abs (- y0 y1)) .0001)
-		       (/ (- x1 x0) (* y0 all-x))
+		       (/ (- x1 x0) y0 all-x)
 		       (* (/ (- (log y1) (log y0)) 
 			     (- y1 y0)) 
 			  (/ (- x1 x0) all-x)))))

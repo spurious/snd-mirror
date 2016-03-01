@@ -964,7 +964,7 @@ struct s7_scheme {
              char_position_symbol, char_to_integer_symbol, char_upcase_symbol, cload_directory_symbol, close_input_port_symbol, 
              close_output_port_symbol, complex_symbol, cons_symbol, copy_symbol, cos_symbol, cosh_symbol, coverlet_symbol, 
              curlet_symbol, current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, 
-             denominator_symbol, display_symbol, divide_symbol, dynamic_wind_symbol,
+             denominator_symbol, dilambda_symbol, display_symbol, divide_symbol, dynamic_wind_symbol,
              eq_symbol, error_symbol, eval_string_symbol, eval_symbol, exact_to_inexact_symbol, exp_symbol, expt_symbol,
              features_symbol, fill_symbol, float_vector_ref_symbol, float_vector_set_symbol, float_vector_symbol, floor_symbol, 
              flush_output_port_symbol, for_each_symbol, format_symbol, funclet_symbol,
@@ -1432,6 +1432,7 @@ static s7_scheme *hidden_sc = NULL;
 #define is_any_macro(P)               t_any_macro_p[type(P)]
 #define is_any_closure(P)             t_any_closure_p[type(P)]
 #define is_procedure_or_macro(P)      ((t_any_macro_p[type(P)]) || ((typeflag(P) & T_PROCEDURE) != 0))
+#define is_any_procedure(P)           (type(P) >= T_CLOSURE)
 #define has_closure_let(P)            t_has_closure_let[type(P)]
 
 #define is_simple_sequence(P)         (t_sequence_p[type(P)])
@@ -7504,6 +7505,9 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 
 static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 {
+  /* this should be keyword, not make-keyword, but the latter is in use elsewhere, and in s7.h
+   *   (string->)symbol is s7_make_symbol.  string->symbol is redundant.  
+   */
   #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
   #define Q_make_keyword s7_make_signature(sc, 2, sc->is_keyword_symbol, sc->is_string_symbol)
 
@@ -15773,7 +15777,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
   #define H_remainder "(remainder x1 x2) returns the remainder of x1/x2; (remainder 10 3) = 1"
   #define Q_remainder pcl_r
-  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
+  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib, if x2 is an integer (- x1 (truncate x1 x2)), fractional part: (remainder x 1) */
 
   s7_pointer x, y;
   s7_int quo, d1, d2, n1, n2;
@@ -41578,7 +41582,6 @@ static s7_pointer c_procedure_source(s7_scheme *sc, s7_pointer p)
 
   if (!is_procedure(p))
     return(simple_wrong_type_argument_with_type(sc, sc->procedure_source_symbol, p, make_string_wrapper(sc, "a procedure or a macro")));
-
   return(sc->nil);
 }
 
@@ -42301,6 +42304,58 @@ static s7_pointer g_is_dilambda(s7_scheme *sc, s7_pointer args)
   check_boolean_method(sc, s7_is_dilambda, sc->is_dilambda_symbol, args);
 }
 
+static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
+{
+  switch (type(p))
+    {
+    case T_MACRO:   case T_MACRO_STAR:
+    case T_BACRO:   case T_BACRO_STAR:
+    case T_CLOSURE: case T_CLOSURE_STAR:
+      closure_setter(p) = setter;
+      break;
+
+    case T_C_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+      c_function_setter(p) = setter;
+      if (is_any_closure(setter))
+	add_setter(sc, p, setter);
+      break;
+
+    case T_C_FUNCTION_STAR:
+      c_function_setter(p) = setter;
+      if (is_any_closure(setter))
+	add_setter(sc, p, setter);
+      break;
+
+    case T_C_MACRO:
+      if (is_any_closure(setter))
+	add_setter(sc, p, setter);
+      c_macro_setter(p) = setter;
+      break;
+    }
+  return(setter);
+}
+
+static s7_pointer g_dilambda(s7_scheme *sc, s7_pointer args)
+{
+  #define H_dilambda "(dilambda getter setter) sets getter's procedure-setter to be setter."
+  #define Q_dilambda s7_make_signature(sc, 3, sc->is_procedure_symbol, sc->is_procedure_symbol, sc->is_procedure_symbol)
+  s7_pointer getter, setter;
+
+  getter = car(args);
+  if (!is_any_procedure(getter))
+    return(wrong_type_argument_with_type(sc, sc->dilambda_symbol, 1, getter, make_string_wrapper(sc, "a procedure or macro")));
+
+  setter = cadr(args);
+  if (!is_any_procedure(setter))
+    return(wrong_type_argument_with_type(sc, sc->dilambda_symbol, 2, setter, make_string_wrapper(sc, "a procedure or macro")));
+  
+  c_set_setter(sc, getter, setter);
+  return(getter);
+}
+
 
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 {
@@ -42309,7 +42364,6 @@ s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj)
 
   return(closure_setter(obj));
 }
-
 
 static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
 {
@@ -42352,18 +42406,17 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
 
-
 static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, setter;
 
   p = car(args);
-  if (!is_procedure_or_macro(p))
+  if (!is_any_procedure(p))
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter procedure", 1, p, "a procedure"));
 
   setter = cadr(args);
   if ((setter != sc->F) &&
-      (!is_procedure_or_macro(setter)))
+      (!is_any_procedure(setter)))
     return(s7_wrong_type_arg_error(sc, "set! procedure-setter setter", 2, setter, "a procedure or #f"));
 
   /* should we check that p != setter?
@@ -42375,43 +42428,7 @@ static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
    *   #t
    * can this make sense?
    */
-
-  switch (type(p))
-    {
-    case T_MACRO:   case T_MACRO_STAR:
-    case T_BACRO:   case T_BACRO_STAR:
-    case T_CLOSURE: case T_CLOSURE_STAR:
-      closure_setter(p) = setter;
-      break;
-
-    case T_C_FUNCTION:
-    case T_C_ANY_ARGS_FUNCTION:
-    case T_C_OPT_ARGS_FUNCTION:
-    case T_C_RST_ARGS_FUNCTION:
-      c_function_setter(p) = setter;
-      if (is_any_closure(setter))
-	add_setter(sc, p, setter);
-      break;
-
-    case T_C_FUNCTION_STAR:
-      c_function_setter(p) = setter;
-      if (is_any_closure(setter))
-	add_setter(sc, p, setter);
-      break;
-
-    case T_C_MACRO:
-      if (is_any_closure(setter))
-	add_setter(sc, p, setter);
-      c_macro_setter(p) = setter;
-      break;
-
-    case T_GOTO:
-      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure (not a call-with-exit exit procedure)"));
-
-    case T_CONTINUATION:
-      return(s7_wrong_type_arg_error(sc, "set! procedure-setter", 1, p, "a normal procedure"));
-    }
-  return(setter);
+  return(c_set_setter(sc, p, setter));
 }
 
 
@@ -42419,7 +42436,6 @@ void s7_define_function_with_setter(s7_scheme *sc, const char *name, s7_function
 {
   s7_dilambda(sc, name, get_fnc, req_args, opt_args, set_fnc, req_args + 1, opt_args, doc);
 }
-
 
 
 /* -------------------------------- arity -------------------------------- */
@@ -48770,12 +48786,11 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 
   if (!is_pair(form))
     {
-      if (!is_symbol(form))
-	{
-	  /* things that evaluate to themselves don't need to be quoted. */
-	  return(form);
-	}
-      return(list_2(sc, sc->quote_symbol, form));
+      if ((is_symbol(form)) &&
+	  (!is_keyword(form)))
+	return(list_2(sc, sc->quote_symbol, form));
+      /* things that evaluate to themselves don't need to be quoted. */
+      return(form);
     }
 
   if (car(form) == sc->unquote_symbol)
@@ -72598,18 +72613,18 @@ static s7_pointer make_unique_object(const char* name, unsigned int typ)
 }
 
 /* an experiment */
-static int tl(s7_scheme *sc, s7_pointer p, int i)
+static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
 {
   if (is_null(p))
     return(i);
   if (!is_pair(p))
     return(i + 1);
-  return(tl(sc, car(p), tl(sc, cdr(p), i)));
+  return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
 }
 
 static s7_pointer g_tree_length(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_make_integer(sc, tl(sc, car(args), 0)));
+  return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
 
 
@@ -73727,6 +73742,7 @@ s7_scheme *s7_init(void)
   sc->help_symbol =                  defun("help",		help,			1, 0, false);
   sc->procedure_source_symbol =      defun("procedure-source",  procedure_source,	1, 0, false);
   sc->funclet_symbol =               defun("funclet",		funclet,		1, 0, false);
+  sc->dilambda_symbol =              defun("dilambda",          dilambda,               2, 0, false);
   s7_typed_dilambda(sc, "procedure-setter", g_procedure_setter, 1, 0, g_procedure_set_setter, 2, 0, H_procedure_setter, Q_procedure_setter, NULL);
 
   sc->arity_symbol =                 defun("arity",		arity,			1, 0, false);
@@ -73996,15 +74012,6 @@ s7_scheme *s7_init(void)
 
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
-  s7_eval_c_string(sc, "(define dilambda                                                                      \n\
-                          (let ((signature '(procedure? procedure? procedure?))                               \n\
-                                (documentation \"(dilambda getter setter) sets getter's procedure-setter to be setter\")) \n\
-                            (lambda (g s)                                                                     \n\
-                              (if (or (not (arity g)) (not (arity s)))                                        \n\
-                                  (error 'wrong-type-arg \"dilambda takes 2 procedures: ~A ~A\" g s)          \n\
-                                  (set! (procedure-setter g) s))                                              \n\
-                              g)))");
-
 #if (!WITH_PURE_S7)
   s7_eval_c_string(sc, "(define hash-table-size length)"); /* backwards compatibility */
 
@@ -74195,7 +74202,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4177  4173
  * titer         |      |      | 7503 | 5218  5219  5211
  * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |                   365
+ * lg            |      |      |      |                   95.7
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
@@ -74219,7 +74226,6 @@ int main(int argc, char **argv)
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
- * dilambda should be built-in (not eval-string)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

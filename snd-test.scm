@@ -43440,7 +43440,7 @@ EDITS: 1
 			(Depth? cdp)))
 	      (snd-display #__line__ ";depths: ~A" (.depths scr)))
 	  (if (not (= (.depth cdp) 24)) (snd-display #__line__ ";.depths val: ~A" (map .depth dps)))
-	  (if (pair? (.visuals (car dps)))
+	  (if (pair? (.visuals cdp))
 	      (if (not (Visual? (car (.visuals cdp)))) 
 		  (snd-display #__line__ ";visuals: ~A" (map .visuals dps))
 		  (if (not (= (.bits_per_rgb (car (.visuals cdp))) 8))

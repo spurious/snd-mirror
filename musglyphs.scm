@@ -289,23 +289,23 @@
     (if (< dur 3)
 	(if (> line 3)
 	    ;; stem up
-	    (fill-rectangle (+ x0 (* size .25)) (+ y0 (* .02 size) (* size -0.8) (* line-sep 0.5 line)) (* size .05) (* size 0.8))
+	    (fill-rectangle (+ x0 line-sep) (+ y0 (* .02 size) (* size -0.8) (* line-sep 0.5 line)) (* size .05) (* size 0.8))
 	    (fill-rectangle (- x0 (* size .02)) (+ y0 (* line-sep line 0.5)) (* size .05) (* size 0.8))))
 
     ;; flags
     (if (< dur .6)
 	(let ((base (+ y0 (* line-sep 0.5 line))))
 	  (if (> line 2)
-	      (draw-8th-flag-up (+ x0 (* size .25)) (+ base (* size -0.6)) size)
+	      (draw-8th-flag-up (+ x0 line-sep) (+ base (* size -0.6)) size)
 	      (draw-8th-flag-down x0 (+ base (* .7 size)) size))
 	  (if (< dur .3)
 	      (begin
 		(if (> line 2)
-		    (draw-extend-flag-up (+ x0 (* size .25)) (+ base (* size -0.8)) size)
+		    (draw-extend-flag-up (+ x0 line-sep) (+ base (* size -0.8)) size)
 		    (draw-extend-flag-down x0 (+ base (* .9 size)) size))
 		(if (< dur .15)
 		    (if (> line 2)
-			(draw-extend-flag-up (+ x0 (* size .25)) (+ base (* size -1.0)) size)
+			(draw-extend-flag-up (+ x0 line-sep) (+ base (* size -1.0)) size)
 			(draw-extend-flag-down x0 (+ base (* 1.1 size)) size)))))))
     (list notehead-x notehead-y)))
 

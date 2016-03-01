@@ -894,14 +894,14 @@
     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
 
     (hey "  gl_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
-		     (car func) (car func) 
+		     name name
 		     (if (>= cargs max-args) 0 args)
 		     (if (>= cargs max-args) 0 refargs) ; optional ignored
 		     (if (>= cargs max-args) 1 0)
-		     (car func)
+		     name
 		     (sig-name (make-signature func)))
 
-    (if (member (car func) glu-1-2) (hey "#endif~%"))
+    (if (member name glu-1-2) (hey "#endif~%"))
     ))
 
 (hey "#if USE_MOTIF~%")

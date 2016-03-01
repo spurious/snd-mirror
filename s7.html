@@ -3992,9 +3992,9 @@ the procedure-source first (using, for example, copy-tree in stuff.scm).
       (cond ((not (pair? source))
 	     source)
 
-	    ((not (memq (car source) '(let let*))  ; if let or let*, show local variables
+	    ((not (memq (car source) '(let let*))) ; if let or let*, show local variables
 	     (cons (proc-walk (car source))
-		   (proc-walk (cdr source)))))
+		   (proc-walk (cdr source))))
 
 	    ((symbol? (cadr source))               ; named let?
 	     (append               ; (let name vars . body) -&gt; (let name vars print-vars . body)

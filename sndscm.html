@@ -7465,7 +7465,7 @@ now being acos(-(sqrt(2/3))):
 	 (b (acos (- (sqrt 2/3))))
 	 (ap (- (* 2 pi) a))                              ; start loc peak 1
 	 (bp (- (* 2 pi) b))                              ; end loc
-	 (ax (+ ap (* phi (/ (- bp ap) (* 2 pi)))))       ; peak 1 
+	 (ax (+ ap (* phi (/ (- bp ap) 2 pi))))           ; peak 1 
 	 (bx (- ax pi)))                                  ; peak 2 (the two interleave)
     (max (abs (+ (sin ax) (sin (+ (* 3 ax) phi))))        ; plug in our 2 peak locations
 	 (abs (+ (sin bx) (sin (+ (* 3 bx) phi))))))      ;   and return the max

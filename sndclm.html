@@ -1100,7 +1100,7 @@ magnitude spectrum, but with the phases chosen to minimize the peak amplitude.
 	    (phases (make-float-vector n (* pi 0.5))))
 	(do ((i 0 (+ i 1)))
 	    ((= i n))
-	  (let ((off (/ (* pi (- 0.5 (98-phases i))) (* dur 44100)))
+	  (let ((off (/ (* pi (- 0.5 (98-phases i))) dur 44100))
 		(h (hz-&gt;radians (* freq (+ i 1)))))
 	    (set! (freqs i) (+ h off))))
 	(let ((ob (<em class=red>make-oscil-bank</em> freqs phases)))
@@ -1663,7 +1663,7 @@ table-lookup might be defined:
                  (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency)
                  (* fm-input
                     (/ (length wave) 
-                       (* 2 pi)))))
+                       2 pi))))
   result)
 </pre>
 
@@ -2251,7 +2251,7 @@ Here is a somewhat low-level example:
     (do ((i 1 (+ i 1))
 	 (j 1 (+ j 2)))
 	((&gt; i order))
-      (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
+      (set! freqs (cons (/ 1.0 j j) (cons j freqs))))
     (<em class=red>make-polywave</em> frequency :partials (reverse freqs))))
 
 (define* (band-limited-triangle-wave gen (fm 0.0))
@@ -2269,7 +2269,7 @@ Here is a somewhat low-level example:
         (freqs ()))
     (do ((i 1 (+ i 1)))
 	((&gt; i order))
-      (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
+      (set! freqs (cons (/ 1.0 norm i) (cons i freqs))))
     (let* ((gen (<em class=red>make-polywave</em> frequency :partials (reverse freqs) :type <em class=red>mus-chebyshev-second-kind</em>))
 	   (beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start))
 	   (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
@@ -3137,7 +3137,7 @@ The derivative is B * cos(x) / (cosh^2(B * sin(x))):
       (let* ((B (env Benv))
 	     (num (cos (mus-phase osc)))
 	     (den (cosh (* B (oscil osc)))))
-	(outa i (/ num (* den den)))))))
+	(outa i (/ num den den))))))
 </pre>
 
 <img class="indented" src="pix/tanhsinderiv.png" alt="tanh(sin) as pulse train">
@@ -3436,7 +3436,7 @@ large component for the carrier, and all the others are very small.
     (do ((i 1 (+ i 1)))
 	((&gt; i n))
       (set! harms (cons (* i modfreq) harms))
-      (set! amps (cons (/ baseindex (* i n)) amps)))
+      (set! amps (cons (/ baseindex i n) amps)))
     (<a class=quiet href="sndscm.html#fmparallelcomponent">fm-parallel-component</a> freq-we-want wc 
       (reverse harms) (reverse amps) () () #f)))
 </pre>
@@ -4462,7 +4462,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
     (do ((i 1 (+ i 1)))
         ((&gt; i pairs))
       (let ((aff (* i old-freq))
-            (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
+            (bwf (* bw (+ 1.0 (/ i 2 pairs)))))
         (set! (ssbs (- i 1)) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
         (set! (bands (- i 1)) (<a class=quiet href="sndscm.html#makebandpass">make-bandpass</a> (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (- aff bwf)) ; bandpass is in dsp.scm
                                              (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (+ aff bwf)) 
@@ -6063,7 +6063,7 @@ lambda: ( -- )
 7.0 * size / (1.0 - scaler) samples, so to get a decay of feedback-dur seconds,
 </p>
 <pre class="indented">
-    (make-comb :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur *clm-srate*))))
+    (make-comb :size size :scaler (- 1.0 (/ (* 7.0 size) feedback-dur *clm-srate*)))
 </pre>
 
 <p>The peak gain is 1.0 / (1.0 - (abs scaler)).  The peaks (or valleys in notch's case) are evenly spaced
@@ -9117,7 +9117,7 @@ relatively conservative function to find the highest safe "r" given the current 
 
 <pre class="indented">
 (define (safe-r-max freq srate) ; the safe-rxycos generator in generators.scm has this built-in
-  (expt .001 (/ 1.0 (floor (/ srate (* 3 freq))))))
+  (expt .001 (/ 1.0 (floor (/ srate 3 freq)))))
 </pre>
 
 
@@ -9345,7 +9345,7 @@ The (very) safe maximum "r" is:
 
 <pre class="indented">
   (define (safe-rk!-max freq srate)
-    (let ((topk (floor (/ srate (* 3 freq)))))
+    (let ((topk (floor (/ srate 3 freq))))
       (expt (* .001 (factorial topk)) (/ 1.0 topk))))
                   ;; factorial is in numerics.scm
 </pre>
@@ -9479,7 +9479,7 @@ safe maximum r is:
 
 <pre class="indented">
   (define (safe-rkodd-max-r freq srate)
-    (let* ((topk (floor (/ srate (* 3 freq))))
+    (let* ((topk (floor (/ srate 3 freq)))
            (k2-1 (- (* 2 topk) 1)))
       (expt (* .001 k2-1) (/ 1.0 k2-1))))
 </pre>
@@ -9552,7 +9552,7 @@ given assumes that r is less than 1.0, and in that case, the safe maximum r is g
 
 <pre class="indented">
   (define (safe-krk-max-r freq srate)
-    (let ((topk (floor (/ srate (* 3 freq)))))
+    (let ((topk (floor (/ srate 3 freq))))
       (expt (/ .001 topk) (/ 1.0 topk))))
 </pre>
 
