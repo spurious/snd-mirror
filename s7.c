@@ -7507,6 +7507,7 @@ static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 {
   /* this should be keyword, not make-keyword, but the latter is in use elsewhere, and in s7.h
    *   (string->)symbol is s7_make_symbol.  string->symbol is redundant.  
+   *   Either use symbol/keyword/gensym, or string->symbol/string->keyword/string->gensym?
    */
   #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
   #define Q_make_keyword s7_make_signature(sc, 2, sc->is_keyword_symbol, sc->is_string_symbol)
@@ -74211,6 +74212,7 @@ int main(int argc, char **argv)
  * --------------------------------------------------------------------
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
+ *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area

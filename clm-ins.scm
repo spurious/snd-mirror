@@ -256,13 +256,12 @@ vocal sounds using phase quadrature waveshaping"
       (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400)))
                    ;;formant center frequencies for a male speaker
 
-  (define (find-phoneme phoneme form)
-    (if (eq? (caar form) phoneme)
-	(cdar form)
-	(find-phoneme phoneme (cdr form))))
-
   (define (vox-fun phons which newenv)
     ;; make an envelope from which-th entry of phoneme data referred to by phons
+    (define (find-phoneme phoneme form)
+      (if (eq? (caar form) phoneme)
+	  (cdar form)
+	  (find-phoneme phoneme (cdr form))))
     (if (null? phons)
 	newenv
       (vox-fun (cddr phons) which
@@ -1962,7 +1961,7 @@ is a physical model of a flute:
 	    ;; (lowest-magnitude .001)
 	    
 	    (ihifreq (hz->radians ifreq))
-	    (fftscale (/ 1.0 (* fftsize-1 .42323))) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
+	    (fftscale (/ 1.0 fftsize-1 .42323)) ;integrate Blackman-Harris window = .42323*window width and shift by fftsize-1
 	    (fft-mag (/ *clm-srate* fftsize-1))
 	    (furthest-away-accepted .1)
 	    (filptr 0)

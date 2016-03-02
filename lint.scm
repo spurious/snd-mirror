@@ -2,6 +2,7 @@
 ;;;
 ;;; (lint "file.scm") checks file.scm for infelicities
 ;;; to control the kinds of checks, set the variables below.
+;;; for tests and examples, see lint-test in s7test.scm 
 
 (provide 'lint.scm)
 
@@ -156,7 +157,7 @@
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
-			         exit dilambda hash-table-size make-hook hook-functions
+			         exit dilambda hash-table-size make-hook hook-functions stacktrace
 				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
@@ -172,7 +173,6 @@
 			  (procedure-with-setter? . dilambda?)
 			  (make-random-state . random-state)
 			  ;;(make-rectangular . complex)
-			  
 			  (data-format . sample-type)
 			  (mus-sound-data-format . mus-sound-sample-type)
 			  (mus-data-format-name . mus-sample-type-name)
@@ -1231,19 +1231,14 @@
 
     (define (just-constants? form env)
       ;; can we probably evaluate form given just built-in stuff?
-      (or (and (constant? form)
-	       (not (pair? form))
-	       (not (vector? form)))
-	  (and (pair? form)
-	       (or (and (symbol? (car form))
-			(hash-table-ref no-side-effect-functions (car form))
-			(not (var-member (car form) env))) ; e.g. exp declared locally as a list
-		   (and (constant? (car form))
-			(not (pair? (car form)))
-			(not (vector? (car form)))))
-	       (just-constants? (cdr form) env))))
-    
-    
+      ;;   watch out here -- this is used later by 'if, so (defined 'hiho) should not be evalled to #f!
+      (if (not (pair? form))
+	  (constant? form)
+	  (and (symbol? (car form))
+	       (hash-table-ref no-side-effect-functions (car form))
+	       (not (var-member (car form) env)) ; e.g. exp declared locally as a list
+	       (every? (lambda (p) (just-constants? p env)) (cdr form)))))
+
     (define (equal-ignoring-constants? a b)
       (or (morally-equal? a b)
 	  (and (symbol? a)
@@ -1475,7 +1470,6 @@
 				(set! gts  '(string<? string>?))
 				(set! eqop 'string=?)))
 			     
-			     ;(format *stderr* "~A ~A ~A ~A ~A ~A ~A ~A~%" A B op1 op2 c1 c2 gtes eqop )
 			     (if (eq? rel-op 'and)
 				 ;; and
 				 (if (equal? c1 c2)
@@ -1495,19 +1489,19 @@
 
 				     (if (and (typer c1)
 					      (typer c2))
-					 (if (or (eq? op1 op2)
-						 (eq? op2 (cadr (assq op1 relops))))
-					     (if ((symbol->value op1) c1 c2)
-						 (return `(,op1 ,x ,c1))
-						 (return `(,op2 ,x ,c2)))
-					     (if (eq? op1 (caddr (assq op2 relops)))
-						 (if ((symbol->value op1) c2 c1)
-						     (return `(,op1 ,c2 ,x ,c1))
-						     (if (memq op1 gts)
-							 (return #f)))
-						 (if (and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-							  ((symbol->value op1) c1 c2))
-						     (return #f))))))
+					 (cond ((or (eq? op1 op2)
+						    (eq? op2 (cadr (assq op1 relops))))
+						(if ((symbol->value op1) c1 c2)
+						    (return `(,op1 ,x ,c1))
+						    (return `(,op2 ,x ,c2))))
+					       ((eq? op1 (caddr (assq op2 relops)))
+						(if ((symbol->value op1) c2 c1)
+						    (return `(,op1 ,c2 ,x ,c1))
+						    (if (memq op1 gts)
+							(return #f))))
+					       ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+						     ((symbol->value op1) c1 c2))
+						(return #f)))))
 						 
 
 				 ;; or
@@ -1528,17 +1522,17 @@
 
 				     (if (and (typer c1)
 					      (typer c2))
-					 (if (or (eq? op1 op2)
-						 (eq? op2 (cadr (assq op1 relops))))
-					     (if ((symbol->value op1) c1 c2) 
-						 (return `(,op2 ,x ,c2))
-						 (return `(,op1 ,x ,c1)))
-					     (if (eq? op1 (caddr (assq op2 relops)))
-						 (if ((symbol->value op1) c2 c1)
-						     (return #t))
-						 (if (and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-							  ((symbol->value op1) c2 c1))
-						     (return #t)))))))))))))))
+					 (cond ((or (eq? op1 op2)
+						    (eq? op2 (cadr (assq op1 relops))))
+						(if ((symbol->value op1) c1 c2) 
+						    (return `(,op2 ,x ,c2))
+						    (return `(,op1 ,x ,c1))))
+					       ((eq? op1 (caddr (assq op2 relops)))
+						(if ((symbol->value op1) c2 c1)
+						    (return #t)))
+					       ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+						     ((symbol->value op1) c2 c1))
+						(return #t))))))))))))))
 	     'ok)))))
 
     (define (simplify-boolean in-form true false env)
@@ -1776,9 +1770,10 @@
 			(cadr x)
 			x))
 	      (else 
-	       (if (and (= (length x) 2)
-			(pair? (cadr x))
-			(symbol? (caadr x)))
+	       (if (not (and (= (length x) 2)
+			     (pair? (cadr x))
+			     (symbol? (caadr x))))
+		   x
 		   (let ((rt (if (eq? (caadr x) 'quote)
 				 (->simple-type (cadadr x))
 				 (return-type (caadr x) env)))
@@ -1795,8 +1790,7 @@
 					     x))
 				((negative?) (and (not (memq (caadr x) non-negative-ops))
 						  x))
-				(else x)))))
-		   x)))))
+				(else x))))))))))
       
       (define (bcomp x) ; not so quick...
 	;(format *stderr* "~A ~A ~A~%" x true false)
@@ -1882,7 +1876,6 @@
 			  (memq (car form) '(or and not))))
 		(classify form)
 		(let ((len (length form)))
-		  
 		  (let ((op (if (eq? (car form) 'or) 'and 
 				(and (eq? (car form) 'and) 'or))))
 		    (if (and op
@@ -2795,17 +2788,20 @@
 			    `(- ,@(remove -1 val)))         ; (* -1 x) -> (- x)
 			   ((and (pair? (car val))
 				 (pair? (cadr val)))
-			    (if (and (eq? (caar val) '-)    ; (* (- x) (- y)) -> (* x y)
-				     (null? (cddar val))
-				     (eq? (caadr val) '-)
-				     (null? (cddadr val)))
-				`(* ,(cadar val) ,(cadadr val))
-				(if (and (= (length (car val)) 3)
-					 (equal? (cdar val) (cdadr val))
-					 (or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
-					     (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
-				    `(abs (* ,@(cdar val))) ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
-				    `(* ,@val))))
+			    (cond ((and (eq? (caar val) '-)      ; (* (- x) (- y)) -> (* x y)
+					(null? (cddar val))
+					(eq? (caadr val) '-)
+					(null? (cddadr val)))
+				   `(* ,(cadar val) ,(cadadr val)))
+				  ((and (= (length (car val)) 3)
+					(equal? (cdar val) (cdadr val))
+					(or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
+					    (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
+				   `(abs (* ,@(cdar val))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+				  ((and (eq? (caar val) 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
+					(eq? (caadr val) 'exp))
+				   `(exp (+ ,(cadar val) ,(cadadr val))))
+				  (else `(* ,@val))))
 			   ((and (pair? (car val))          ; (* (inexact->exact x) 2.0) -> (* x 2.0)
 				 (memq (caar val) '(exact->inexact inexact))
 				 (number? (cadr val))
@@ -2816,7 +2812,6 @@
 				 (number? (car val))
 				 (not (rational? (car val))))
 			    `(* ,(car val) ,(cadadr val)))
-			   
 			   (else `(* ,@val))))
 		    (else 
 		     (cond ((just-rationals? val)
@@ -2954,9 +2949,12 @@
 					   `(- ,(caddr arg2))
 					   `(* ,val ,(caddr arg2)))))
 				 `(/ (* ,arg1 ,@(cddr arg2)) ,(cadr arg2))))
+#|
+			    ;; can't decide about this -- result usually looks cruddy
 			    ((and (pair? arg2)             ; (/ x (* y z)) -> (/ x y z)
 				  (eq? (car arg2) '*))
 			     `(/ ,arg1 ,@(cdr arg2)))
+|#
 			    ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y)
 				  (pair? arg2)
 				  (= (length arg1) (length arg2) 2)
@@ -3378,27 +3376,29 @@
 								  new-args)))
 				     (if (< (length new-args) (length args))
 					 (set! args new-args)))))
-			     ;; if (max c1 (min c2 . args1) . args2) where (>= c1 c2) -> (max c1 . args2)
-			     ;; if (min c1 (max c2 . args1) . args2) where (<= c1 c2) -> (min c1 . args2)
-			     
-			     ;; there are more such cases: (max x (min x 3)) -> x and (min x (max x c)) -> x
+
+			     ;; if (max c1 (min c2 . args1) . args2) where (> c1 c2) -> (max c1 . args2), if = -> c1
+			     ;; if (min c1 (max c2 . args1) . args2) where (< c1 c2) -> (min c1 . args2), if = -> c1
+			     ;;   and if (max 4 x (min x 4)) -- is it (max x 4)?
 			     ;; (max a b) is (- (min (- a) (- b))), but that doesn't help here -- the "-" gets in our way
+			     ;;   (min (- a) (- b)) -> (- (max a b))?
+			     ;; (+ a (max|min b c)) = (max|min (+ a b) (+ a c)))
+
 			     (if (null? (cdr args)) ; (max (min x 3) (min x 3)) -> (max (min x 3)) -> (min x 3)
 				 (car args)
 				 (if (and (null? (cddr args))   ; (max|min x (min|max x ...) -> x
 					  (or (and (pair? (car args))
 						   (eq? (caar args) other)
-						   (symbol? (cadr args))   ; actually this is probably not needed, but I want to avoid (random ...)
-						   ;; perhaps instead use not min/max 
-						   (member (cadr args) (car args)))
+						   (member (cadr args) (car args))
+						   (not (side-effect? (cadr args) env)))
 					      (and (pair? (cadr args))
 						   (eq? (caadr args) other)
-						   (symbol? (car args))
-						   (member (car args) (cadr args)))))
+						   (member (car args) (cadr args))
+						   (not (side-effect? (car args) env)))))
 				     ((if (pair? (car args)) cadr car) args)
 				     `(,(car form) ,@args)))))))))
-
-	    (else `(,(car form) ,@args))))))
+	    (else 
+	     `(,(car form) ,@args))))))
     
     
     (define (check-char-cmp caller op form)
@@ -3838,6 +3838,7 @@
 	  caar cadr cddr cdar
 	  caaar caadr caddr cdddr cdaar cddar cadar cdadr
 	  cadddr cddddr)
+	 ;; caaaar caaadr caadar caaddr cadaar cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar
 	 
 	 (if (not (= line-number last-simplify-cxr-line-number))
 	     ((lambda* (cxr arg)
@@ -4905,23 +4906,21 @@
 	       
 	       (cond ((or (eq? (car eq1) 'equal?)
 			  (eq? (car eq2) 'equal?))
-		      (if (not (memq head '(equal? morally-equal?)))
+		      (if (memq head '(equal? morally-equal?))
+			  (if specific-op
+			      (lint-format "~A could be ~A in ~S" caller head specific-op form))
 			  (lint-format "~A should be equal?~A in ~S" caller head 
 				       (if specific-op (format #f " or ~A" specific-op) "") 
-				       form)
-			  (if specific-op
-			      (lint-format "~A could be ~A in ~S" caller head specific-op form))))
-		     
+				       form)))
 		     ((or (eq? (car eq1) 'eqv?)
 			  (eq? (car eq2) 'eqv?))
-		      (if (not (memq head '(eqv? morally-equal?)))
+		      (if (memq head '(eqv? morally-equal?))
+			  (if specific-op
+			      (lint-format "~A could be ~A in ~S" caller head specific-op form))
 			  (lint-format "~A ~A be eqv?~A in ~S" caller head 
 				       (if (eq? head 'eq?) "should" "could") 
 				       (if specific-op (format #f " or ~A" specific-op) "")
-				       form)
-			  (if specific-op
-			      (lint-format "~A could be ~A in ~S" caller head specific-op form))))
-		     
+				       form)))
 		     ((or (eq? (car eq1) 'eq?)
 			  (eq? (car eq2) 'eq?))
 		      (cond ((not (and arg1 arg2))
@@ -5363,7 +5362,6 @@
 	((pop!)  ; also not predefined
 	 (if (= (length form) 2)
 	     (set-set (cadr form) form env)))
-
 	)) ; end check-special-cases
     
     
@@ -5447,7 +5445,7 @@
 		      (if (macro? chk)
 			  (catch #t
 			    (lambda ()
-			      (let ((res (chk arg)))
+			      (let ((res (apply chk (list arg)))) ; lint itself is fooled by this -- don't change to (chk arg)!
 				(if (symbol? res)
 				    (set! checker res)
 				    (begin 
@@ -5959,7 +5957,6 @@
 	       (let ((cur (hash-table-ref equable-closures (caaddr (var-initial-value arg)))))
 		 (if (pair? cur)
 		     (hash-table-set! equable-closures (caaddr (var-initial-value arg)) (remove arg cur)))
-		 ;(format *stderr* "report-usage ~A -> ~A~%" vname (hash-table-ref equable-closures (caaddr (var-initial-value arg)))))
 	       )))
 
 	     ;; redundant vars are hard to find -- tons of false positives
@@ -6873,6 +6870,8 @@
 					  (format #f "leaving aside ~A's optional arg~P, " cval (- (cdr ary) (length args)))
 					  "")
 				      function-name function-name cval))))
+
+		  ;; (equal? args (reverse (cdar bval))) rarely happens, and never with a reversible op
 		  
 		  ((and (or (symbol? args)
 			    (and (pair? args)
@@ -7160,7 +7159,8 @@
 	  (memq x '(#t #f () #<unspecified> #<undefined> #<eof>))))
 
     (define (cond-eqv? clause eqv-select or-ok)
-      (if (pair? clause)
+      (if (not (pair? clause))
+	  (memq clause '(else #t))
 	  ;; it's eqv-able either directly or via memq/memv, or via (or ... eqv-able clauses)
 	  ;;   all clauses involve the same (eventual case) selector
 	  (case (car clause)
@@ -7190,8 +7190,7 @@
 	    ((not null? eof-object? zero? boolean?)
 	     (equal? eqv-select (cadr clause)))
 	    
-	    (else #f))
-	  (memq clause '(else #t))))
+	    (else #f))))
     
     (define (unbegin x)
       (if (and (pair? x)
@@ -8061,7 +8060,6 @@
 				       (lint-format "perhaps ~A" caller
 						    (lists->string form `(if ,(cadr expr) ,false ,true))))
 
-
 				   ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
 				   ;;   TODO: this should check that the gathered code does not affect the original test
 				   (if (and (= len 4)
@@ -8105,10 +8103,10 @@
 							     (caddr false)))
 					       (lint-format "perhaps ~A" caller
 							    (lists->string form `(let (,@(reverse sv)) (if ,expr ,ntv ,nfv)))))))))
-				   
-				 (lint-walk caller expr env)
-				 (set! env (lint-walk caller true env))
-				 (if (= len 4) (set! env (lint-walk caller false env)))))))
+
+				   (lint-walk caller expr env)
+				   (set! env (lint-walk caller true env))
+				   (if (= len 4) (set! env (lint-walk caller false env)))))))
 		     env))
 		  
 		  ((when unless)
@@ -8800,8 +8798,7 @@
 		  
 		  ((do)
 		   ;; ---------------- do ----------------
-		   (let ((vars ())
-			 (suggest made-suggestion))
+		   (let ((vars ()))
 		     (if (not (and (>= (length form) 3)
 				   (proper-list? (cadr form))
 				   (proper-list? (caddr form))))
@@ -9217,11 +9214,11 @@
 				    (null? (cdr body))
 				    (pair? varlist)             ; (let ()...)
 				    (pair? (car varlist))       ; (let (x) ...)
-				    (not (pair? (car body))))
-			       (if (and (eq? (car body) (caar varlist))
-					(null? (cdr varlist))
-					(pair? (cdar varlist))) ; (let ((a))...)
-				   (lint-format "perhaps ~A" caller (lists->string form (cadar varlist)))))
+				    (not (pair? (car body)))
+				    (eq? (car body) (caar varlist))
+				    (null? (cdr varlist))
+				    (pair? (cdar varlist))) ; (let ((a))...)
+			       (lint-format "perhaps ~A" caller (lists->string form (cadar varlist))))
 			   ))) ; messed up let
 		   env)
 		  
@@ -9701,13 +9698,8 @@
 			   (for-each
 			    (lambda (f)
 			      (set! vars (lint-walk caller f vars)))
-			    ;; here if (memq head '(call-with-output-string call-with-output-file call-with-input-string call-with-input-file))
-			    ;;   we could pass head, not caller, then in the lambda handler in lint-walk, notice that caller, and
-			    ;;   somehow set the arg's type to input|output-port?  maybe via initial-value (open-out|input port)?
-			    form))
-			 ))
-		   env)
-		  ))
+			    form))))
+		   env)))
 	      
 	      ;; else form is not a symbol and not a pair
 	      (begin
@@ -10120,6 +10112,7 @@
 ;;;   out-vars here, also perhaps a switch *any-!-is-setter*, or maybe a list of outside setters?
 ;;; better signature builder
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
+;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;  see mus_header_t? in sndlib2xen.c and 5399 below

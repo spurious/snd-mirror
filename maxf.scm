@@ -74,7 +74,7 @@
       ;; mindecay: Filter may not oscillate
       (set! fdecay (max mindecay (min fdecay maxdecay)))
       (set! (b 'pp1) (- 1.0 (/ i2s fdecay)))
-      (set! (b 'pp2) (* ffreq pi2s))
+      (set! (b 'pp2) centerfreq)
       (set! (b 'pp3) (* (b 'pp2) famp)))))
 
 (define (make-array initial-value dim1 dim2) ; I'm guessing ...

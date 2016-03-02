@@ -2631,21 +2631,21 @@
 	    (begin
 	      ;; R
 	      (set! (channel-gains r-offset) (cons time (channel-gains r-offset)))
-	      (set! (channel-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 0.5)) att)
+	      (set! (channel-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) att)
 						   (channel-gains r-offset)))
 	      ;; S
 	      (set! (channel-gains s-offset) (cons time (channel-gains s-offset)))
-	      (set! (channel-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 (* dist dist))) att)
+	      (set! (channel-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) att)
 						   (channel-gains s-offset)))
 	      ;; T
 	      (set! (channel-gains t-offset) (cons time (channel-gains t-offset)))
-	      (set! (channel-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 (* dist dist))) att)
+	      (set! (channel-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) att)
 						   (channel-gains t-offset)))))
 	(if (>= ambisonics-h-order 2)
 	    (begin
-	      (set! u (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-						  (* y y (if (zero? dist) 1 (/ 1.0 (* dist dist))))) att))
-	      (set! v (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 (* dist dist))) att))
+	      (set! u (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+						  (* y y (if (zero? dist) 1 (/ 1.0 dist dist)))) att))
+	      (set! v (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) att))
 	      ;; U
 	      (set! (channel-gains u-offset) (cons time (channel-gains u-offset)))
 	      (set! (channel-gains u-offset) (cons u (channel-gains u-offset)))
@@ -2654,11 +2654,11 @@
 	      (set! (channel-gains v-offset) (cons v (channel-gains v-offset)))))
 	(if (>= ambisonics-v-order 3)
 	    (begin
-	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 1) att))
+	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) att))
 	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
 	      ;; K
 	      (set! (channel-gains k-offset) (cons time (channel-gains k-offset)))
-	      (set! (channel-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 1.5) att) (channel-gains k-offset)))
+	      (set! (channel-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) att) (channel-gains k-offset)))
 	      ;; L
 	      (set! (channel-gains l-offset) (cons time (channel-gains l-offset)))
 	      (set! (channel-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-gains l-offset)))
@@ -2676,13 +2676,13 @@
 	      ;; P
 	      (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
 	      (set! (channel-gains p-offset) (cons (* (if (zero? dist) 0 (/ att dist)) x 
-						      (- (* x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-							 (* 3 y y (if (zero? dist) 1 (/ 1.0 (* dist dist)))))) (channel-gains p-offset)))
+						      (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							 (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains p-offset)))
 	      ;; Q
 	      (set! (channel-gains q-offset) (cons time (channel-gains q-offset)))
 	      (set! (channel-gains q-offset) (cons (* (if (zero? dist) 0 (/ att dist)) y
-						      (- (* 3 x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-							 (* y y (if (zero? dist) 1 (/ 1.0 (* dist dist)))))) (channel-gains q-offset)))))
+						      (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							 (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains q-offset)))))
 	;; push reverb gain into envelope
 	(if (= rev-channels 1)
 	    (begin
@@ -2715,35 +2715,35 @@
 		  (begin
 		    ;; R
 		    (set! (channel-rev-gains r-offset) (cons time (channel-rev-gains r-offset)))
-		    (set! (channel-rev-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 0.5)) ho-ratt ratt)
+		    (set! (channel-rev-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) ho-ratt ratt)
 							     (channel-rev-gains r-offset)))
 		    ;; S
 		    (set! (channel-rev-gains s-offset) (cons time (channel-rev-gains s-offset)))
-		    (set! (channel-rev-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 (* dist dist))) ho-ratt ratt)
+		    (set! (channel-rev-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
 							     (channel-rev-gains s-offset)))
 		    ;; T
 		    (set! (channel-rev-gains t-offset) (cons time (channel-rev-gains t-offset)))
-		    (set! (channel-rev-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 (* dist dist))) ho-ratt ratt)
+		    (set! (channel-rev-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
 							     (channel-rev-gains t-offset)))))
 	      (if (>= ambisonics-h-order 2)
 		  (begin
 		    ;; U
 		    (set! (channel-rev-gains u-offset) (cons time (channel-rev-gains u-offset)))
-		    (set! (channel-rev-gains u-offset) (cons (* (if (zero? dist) 0 (- (* x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-										      (* y y (if (zero? dist) 1 (/ 1.0 (* dist dist)))))) ho-ratt ratt)
+		    (set! (channel-rev-gains u-offset) (cons (* (if (zero? dist) 0 (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+										      (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) ho-ratt ratt)
 							     (channel-rev-gains u-offset)))
 		    ;; V
 		    (set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
-		    (set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 (* dist dist))) ho-ratt ratt)
+		    (set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
 							     (channel-rev-gains v-offset)))))
 
 	      (if (>= ambisonics-v-order 3)
 		  (begin
-		    (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 1) ho-ratt ratt))
+		    (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) ho-ratt ratt))
 		    (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
 		    ;; K
 		    (set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
-		    (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 (* dist dist)))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
+		    (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
 		    ;; L
 		    (set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
 		    (set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-rev-gains l-offset)))
@@ -2761,13 +2761,13 @@
 		    ;; P
 		    (set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
 		    (set! (channel-rev-gains p-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt x 
-								(- (* x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-								   (* 3 y y (if (zero? dist) 1 (/ 1.0 (* dist dist)))))) (channel-rev-gains p-offset)))
+								(- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								   (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains p-offset)))
 		    ;; Q
 		    (set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
 		    (set! (channel-rev-gains q-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt y
-								(- (* 3 x x (if (zero? dist) 1 (/ 1.0 (* dist dist))))
-								   (* y y (if (zero? dist) 1 (/ 1.0 (* dist dist)))))) (channel-rev-gains q-offset)))))
+								(- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								   (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains q-offset)))))
 	      ))))
     
     ;; Render a trajectory breakpoint to a room for decoded ambisonics
@@ -2927,8 +2927,8 @@
 	(if hit
 	    ;; ray defined by two points hits sphere
 	    (let* ((root (sqrt disc))
-		   (rin  (- (- bsq) root))
-		   (rout (+ (- bsq) root))
+		   (rin  (- (+ bsq root)))
+		   (rout (- root bsq))
 		   (xi #f) (yi #f) (zi #f) (ti #f) (xo #f) (yo #f) (zo #f) (to #f))
 	      (if (> mag rin 0) ;(and (> rin 0) (< rin mag))
 		  ;; intersects entering sphere

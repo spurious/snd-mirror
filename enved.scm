@@ -77,12 +77,13 @@
 	   (pos (on-dot? x y cur-env 0)))
       (set! mouse-new (not pos))
       (set! mouse-down (get-internal-real-time))
-      (if (not pos)
+      (if pos
+	  (set! mouse-pos pos)
 	  (let ((new-x (max 0.001 (min x .999))))
 	    (set! (channel-envelope snd chn) 
 		  (add-envelope-point new-x y cur-env))
-	    (set! mouse-pos (envelope-position new-x (channel-envelope snd chn))))
-	  (set! mouse-pos pos)))))
+	    (set! mouse-pos (envelope-position new-x (channel-envelope snd chn))))))))
+	  
 
 (define (mouse-drag-envelope hook)
   (let ((snd (hook 'snd))

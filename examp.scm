@@ -167,8 +167,7 @@
 	      (srate file)
 	      (mus-header-type-name (mus-sound-header-type file))
 	      (mus-sample-type-name (mus-sound-sample-type file))
-	      (/ (mus-sound-samples file)
-		 (* 1.0 (channels file) (srate file)))))))
+	      (* 1.0 (/ (mus-sound-samples file) (channels file) (srate file)))))))
 
 
 ;;; -------- Correlation --------
@@ -649,8 +648,8 @@ then inverse ffts."))
 	     (fsize2 (/ fsize 2))
 	     (rdata (channel->float-vector 0 fsize snd chn))
 	     (idata (make-float-vector fsize))
-	     (lo (round (/ bottom (/ sr fsize))))
-	     (hi (round (/ top (/ sr fsize)))))
+	     (lo (round (/ (* bottom fsize) sr)))
+	     (hi (round (/ (* top fsize) sr))))
 	(fft rdata idata 1)
 	(if (> lo 0)
 	    (begin
@@ -847,10 +846,11 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 y))) is like 
 	(float-vector-multiply! rdata vf)
 	(float-vector-multiply! idata vf)
 	(fft rdata idata -1)
-	(if (not (= mx 0.0))
+	(if (= mx 0.0)
+	    (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt))
 	    (let ((pk (float-vector-peak rdata)))
-	      (float-vector->channel (float-vector-scale! rdata (/ mx pk)) 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))
-	    (float-vector->channel rdata 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))))))
+	      (float-vector->channel (float-vector-scale! rdata (/ mx pk)) 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt))))))))
+	    
 
 ;; (let ((op (make-one-zero .5 .5))) (filter-fft op))
 ;; (let ((op (make-one-pole .05 .95))) (filter-fft op))
@@ -1691,7 +1691,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 				     (begin
 				       (set! pk (spectr i))
 				       (set! pkloc i))))))
-			  (if (< (abs (- pitch pit)) (/ (srate) (* 2 *transform-size*))) ; uh... why not do it direct?
+			  (if (< (abs (- pitch pit)) (/ (srate) 2 *transform-size*)) ; uh... why not do it direct?
 			      (set! rtn #t)))))
 		  (fill! data 0.0)))
 	    rtn))))))
@@ -1937,14 +1937,13 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)"))
     (lambda new-order
       
-      (define (find-chan chans chan len)
-	(let ((pos #f))
-	  (do ((i 0 (+ i 1)))
-	      ((or pos (= i len)) pos)
-	    (if (= (chans i) chan)
-		(set! pos i)))))
-      
       (define (scramble-channels-1 cur-chans end-chans chans loc)
+	(define (find-chan chans chan len)
+	  (let ((pos #f))
+	    (do ((i 0 (+ i 1)))
+		((or pos (= i len)) pos)
+	      (if (= (chans i) chan)
+		  (set! pos i)))))
 	(if (> chans loc)
 	    (let* ((end-chan (end-chans loc)) ; we want this channel at loc
 		   (cur-chan (cur-chans loc)) ; this (original) channel is currently at loc
@@ -2037,7 +2036,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (let ((documentation "(reverse-by-blocks block-len snd chn): divide sound into block-len blocks, recombine blocks in reverse order"))
     (lambda* (block-len snd chn)
       (let* ((len (framples snd chn))
-	     (num-blocks (floor (/ len (* (srate snd) block-len)))))
+	     (num-blocks (floor (/ len (srate snd) block-len))))
 	(if (> num-blocks 1)
 	    (let* ((actual-block-len (ceiling (/ len num-blocks)))
 		   (rd (make-sampler (- len actual-block-len) snd chn))
@@ -2064,7 +2063,7 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
   (let ((documentation "(reverse-within-blocks block-len snd chn): divide sound into blocks, recombine in order, but each block internally reversed"))
     (lambda* (block-len snd chn)
       (let* ((len (framples snd chn))
-	     (num-blocks (floor (/ len (* (srate snd) block-len)))))
+	     (num-blocks (floor (/ len (srate snd) block-len))))
 	(if (> num-blocks 1)
 	    (let ((actual-block-len (ceiling (/ len num-blocks)))
 		  (no-clicks-env (list 0.0 0.0  .01 1.0  .99 1.0  1.0 0.0)))

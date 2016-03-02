@@ -9,7 +9,7 @@
   (/ (* hz 2 pi) *clm-srate*))
 
 (define (big-radians->hz rad)
-  (/ (* rad *clm-srate*) (* 2 pi)))
+  (/ (* rad *clm-srate*) 2 pi))
 
 (define (big-db->linear x)
   (expt 10.0 (/ x 20.0)))
@@ -246,7 +246,7 @@
   (let ((x (gen 'angle))
 	(w (gen 'wave))
 	(n (gen 'size)))
-    (set! (gen 'angle) (+ x (gen 'frequency) (/ (* fm n) (* 2 pi))))
+    (set! (gen 'angle) (+ x (gen 'frequency) (/ (* fm n) 2 pi)))
     (big-array-interp w x n)))
       
 #|
