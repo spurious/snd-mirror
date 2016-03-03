@@ -2274,9 +2274,9 @@ is assumed to be outside -1.0 to 1.0."))
 			      (set! clip-data new-clip-data)
 			      (set! clip-size (* 2 clip-size))))))))))
 	
-	(if (> clips 0)
+	(if (<= clips 0)
+	    'no-clips
 	    ;; try to restore clipped portions
-	    
 	    (let ((min-data-len 32)
 		  (max-len 0))
 	      (as-one-edit
@@ -2346,9 +2346,8 @@ is assumed to be outside -1.0 to 1.0."))
 	      
 	      (if (> unclipped-max .95) (set! unclipped-max .999))
 	      (scale-channel (/ unclipped-max (maxamp snd chn)) 0 (framples snd chn) snd chn)
-	      (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len))
-	    
-	    'no-clips)))))
+	      (list 'max unclipped-max 'clips (/ clips 2) 'max-len max-len)))))))
+
 
 (define unclip-sound
   (let ((documentation "(unclip-sound snd) applies unclip-channel to each channel of 'snd'."))
@@ -2563,7 +2562,8 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	      (set! sum (+ sum (fm-parallel-component freq-we-want (+ wc (* k wm)) (cdr wms) (cdr inds) 
 						      (append ns (list k)) (append bs (list index)) 
 						      using-sine)))))
-	  (if (< (abs (- freq-we-want (abs wc))) .1)
+	  (if (>= (abs (- freq-we-want (abs wc))) .1)
+	      0.0
 	      (let ((bmult 1.0))
 		(for-each
 		 (lambda (n index)
@@ -2571,8 +2571,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 		 ns bs)
 		(if (and using-sine (< wc 0.0)) (set! bmult (- bmult)))
 					;(format () ";add ~A from ~A ~A" bmult ns bs)
-		bmult)
-	      0.0)))))
+		bmult))))))
 
 
 ;;; this returns the component in FM with complex index (using-sine ignored for now)
@@ -2614,7 +2613,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	((>= k mxa))
       (do ((j (- mxb) (+ j 1)))
 	  ((>= j mxb))
-	(if (< (abs (- freq-we-want (+ wc (* k wm1) (* j wm2)))) 0.1)
+	(if (< (abs (- freq-we-want wc (* k wm1) (* j wm2))) 0.1)
 	    (let ((curJJ (* (bes-jn k a)
 			    (bes-jn j (* k b)))))
 	      (set! sum (+ sum curJJ))

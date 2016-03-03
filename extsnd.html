@@ -2034,7 +2034,7 @@ we're saving the selection.
 
 <pre class="indented">
 (hook-push <em class=red>before-save-as-hook</em>
-  (lambda (hook)	   
+  (lambda (hook)
     ((lambda (index filename sr dformat htype comment)
       (if (not (= sr (<a class=quiet href="#srate">srate</a> index)))
           (let ((chns (<a class=quiet href="#chans">channels</a> index)))

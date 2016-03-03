@@ -388,7 +388,7 @@
 				  (< lstlen 2))
 			      (display objstr port)
 			      (if (and (pair? (car obj))
-				       (memq (caar obj) '(lambda lambda*)))
+				       (memq (caar obj) '(lambda lambda* let let* letrec letrec*)))
 				  (begin
 				    (write-char #\( port)
 				    (pretty-print-1 (car obj) port column)

@@ -10,13 +10,13 @@
 (define *report-unused-top-level-functions* #f)           ; these are very common in Scheme, only questionable in self-contained code
 (define *report-shadowed-variables* #f)                   ; shadowed parameters, etc
 (define *report-undefined-identifiers* #f)                ; names we can't account for
-(define *report-function-stuff* #t)                       ; checks for missed function uses etc (slow)
+(define *report-function-stuff* #t)                       ; checks for missed function uses etc
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
-
+(define *report-one-armed-if* #f)                         ; if -> when/unless
 
 (if (provided? 'pure-s7)
     (begin
@@ -1794,65 +1794,68 @@
       
       (define (bcomp x) ; not so quick...
 	;(format *stderr* "~A ~A ~A~%" x true false)
-	(if (not (pair? x))
-	    x
-	    (if (eq? (car x) 'and)
-		(call-with-exit
-		 (lambda (return)
-		   (let ((newx (list 'and)))
-		     (do ((p (cdr x) (cdr p))
-			  (sidex newx)
-			  (endx newx))
-			 ((null? p) newx)
-		       (let ((next (car p)))
-			 ;(format *stderr* "and ~A ~A ~A~%" next true false)
-			 (if (or (not next)        ; #f in and -> end of expr
-				 (member next false))
-			     (if (eq? sidex newx)  ; no side-effects
-				 (return #f)       
-				 (begin
-				   (set-cdr! endx (list #f))
-				   (return newx)))
-			     (if (or (code-constant? next)  ; (and ... true-expr ...)
-				     (member next sidex)    ; if a member, and no side-effects since, it must be true
-				     (member next true))
-				 (if (and (null? (cdr p))
-					  (not (equal? next (car endx))))
-				     (set-cdr! endx (list next)))
-				 (begin
-				   (set-cdr! endx (list next))
-				   (set! endx (cdr endx))
-				   (if (side-effect? next env)
-				       (set! sidex endx))))))))))
+	(cond ((not (pair? x))
+	       x)
+
+	      ((eq? (car x) 'and)
+	       (call-with-exit
+		(lambda (return)
+		  (let ((newx (list 'and)))
+		    (do ((p (cdr x) (cdr p))
+			 (sidex newx)
+			 (endx newx))
+			((null? p) newx)
+		      (let ((next (car p)))
+					;(format *stderr* "and ~A ~A ~A~%" next true false)
+			(if (or (not next)        ; #f in and -> end of expr
+				(member next false))
+			    (if (eq? sidex newx)  ; no side-effects
+				(return #f)       
+				(begin
+				  (set-cdr! endx (list #f))
+				  (return newx)))
+			    (if (or (code-constant? next)  ; (and ... true-expr ...)
+				    (member next sidex)    ; if a member, and no side-effects since, it must be true
+				    (member next true))
+				(if (and (null? (cdr p))
+					 (not (equal? next (car endx))))
+				    (set-cdr! endx (list next)))
+				(begin
+				  (set-cdr! endx (list next))
+				  (set! endx (cdr endx))
+				  (if (side-effect? next env)
+				      (set! sidex endx)))))))))))
 		
-		(if (not (eq? (car x) 'or))
-		    x
-		    (call-with-exit
-		     (lambda (return)
-		       (let ((newx (list 'or)))
-			 (do ((p (cdr x) (cdr p))
-			      (sidex newx)
-			      (endx newx))
-			     ((null? p) newx)
-			   (let ((next (car p)))
-			     ;(format *stderr* "or ~A ~A ~A~%" next true false)
-			     (if (or (and next                 ; (or ... #t ...)
-					  (code-constant? next))
-				     (member next true))
-				 (begin
-				   (set-cdr! endx (list next))
-				   (return newx))          ; we're done since this is true
-				 (if (or (not next)
-					 (member next sidex) ; so its false in some way
-					 (member next false))
-				     (if (and (null? (cdr p))
-					      (not (equal? next (car endx))))
-					 (set-cdr! endx (list next)))
-				     (begin
-				       (set-cdr! endx (list next))
-				       (set! endx (cdr endx))
-				       (if (side-effect? next env)
-					   (set! sidex endx))))))))))))))
+	      ((not (eq? (car x) 'or))
+	       x)
+
+	      (else
+	       (call-with-exit
+		(lambda (return)
+		  (let ((newx (list 'or)))
+		    (do ((p (cdr x) (cdr p))
+			 (sidex newx)
+			 (endx newx))
+			((null? p) newx)
+		      (let ((next (car p)))
+					;(format *stderr* "or ~A ~A ~A~%" next true false)
+			(if (or (and next                 ; (or ... #t ...)
+				     (code-constant? next))
+				(member next true))
+			    (begin
+			      (set-cdr! endx (list next))
+			      (return newx))          ; we're done since this is true
+			    (if (or (not next)
+				    (member next sidex) ; so its false in some way
+				    (member next false))
+				(if (and (null? (cdr p))
+					 (not (equal? next (car endx))))
+				    (set-cdr! endx (list next)))
+				(begin
+				  (set-cdr! endx (list next))
+				  (set! endx (cdr endx))
+				  (if (side-effect? next env)
+				      (set! sidex endx)))))))))))))
       
       ;; start of simplify-boolean code
       ;;   this is not really simplify boolean as in boolean algebra because in scheme there are many unequal truths, but only one falsehood
@@ -6814,8 +6817,8 @@
 		 (pair? (cdr body))
 		 (string? (car body)))
 	(if *report-doc-strings*
-	    (lint-format "old-style doc string: ~S, in s7 use 'documentation: ~A" function-name
-			 (car body)
+	    (lint-format "old-style doc string: ~S, in s7 use 'documentation:~%~NC~A" function-name
+			 (car body) (+ lint-left-margin 4) #\space
 			 (lint-pp `(define ,function-name
 				     (let ((documentation ,(car body)))
 				       (,(if (eq? definer 'define) 'lambda
@@ -7523,7 +7526,8 @@
 							  (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
 							  "")
 						      (truncated-list->string (var-initial-value v))))))
-			       (if (pair? settee)
+			       (if (not (pair? settee))
+				   (lint-format "can't set! ~A" caller (truncated-list->string form))
 				   (begin
 				     (if (memq (car settee) '(vector-ref list-ref string-ref hash-table-ref))
 					 (lint-format "~A as target of set!~A" caller (car settee) (truncated-list->string form)))
@@ -7547,10 +7551,8 @@
 								(if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
 								checker arg-type
 								(truncated-list->string form)))))))))
-				     
 				     (set! settee (do ((sym (car settee) (car sym)))
-						      ((not (pair? sym)) sym))))
-				   (lint-format "can't set! ~A" caller (truncated-list->string form))))
+						      ((not (pair? sym)) sym))))))
 			   
 			   (if (symbol? (cadr form)) ; see do above
 			       (set-set (cadr form) form env)
@@ -7999,8 +8001,8 @@
 								      (truncated-lists->string form `(if ,new-expr ,false ,true))))))))))
 				   ;; --------
 
-				   (if (and (= len 4) ; move repeated test to top, if no inner false branches
-					    (pair? true)
+				   (if (and (= len 4)            ; move repeated test to top, if no inner false branches
+					    (pair? true)         ; (if A (if B C) (if B D)) -> (if B (if A C D))
 					    (pair? false)
 					    (eq? (car true) 'if)
 					    (eq? (car false) 'if)
@@ -8013,7 +8015,7 @@
 										 ,(caddr (caddr form))
 										 ,(caddr (cadddr form)))))))
 
-				   (if (and (= len 4) ; move repeated start/end statements out of the if
+				   (if (and (= len 4)            ; move repeated start/end statements out of the if
 					    (pair? true)
 					    (pair? false)
 					    (eq? (car true) 'begin)
@@ -8104,9 +8106,16 @@
 					       (lint-format "perhaps ~A" caller
 							    (lists->string form `(let (,@(reverse sv)) (if ,expr ,ntv ,nfv)))))))))
 
-				   (lint-walk caller expr env)
-				   (set! env (lint-walk caller true env))
-				   (if (= len 4) (set! env (lint-walk caller false env)))))))
+				 (if (and *report-one-armed-if*
+					  (eq? false 'no-false))
+				     (lint-format "perhaps ~A" caller
+						  (lists->string form (if (and (pair? expr)
+									       (eq? (car expr) 'not))
+									  `(unless ,(cadr expr) ,@(unbegin true))
+									  `(when ,expr ,@(unbegin true))))))
+				 (lint-walk caller expr env)
+				 (set! env (lint-walk caller true env))
+				 (if (= len 4) (set! env (lint-walk caller false env)))))))
 		     env))
 		  
 		  ((when unless)
@@ -8838,30 +8847,92 @@
 			   (set! inner-env (append vars env))
 
 			   ;; walk the step exprs
-			   (do ((bindings step-vars (cdr bindings)))
-			       ((not (pair? bindings)))
-			     (let ((stepper (car bindings))) ; the entire binding: '(i 0 (+ i 1))
-			       (when (and (binding-ok? caller head stepper env #t)
-					  (pair? (cddr stepper)))
-				 (let ((data (var-member (car stepper) vars)))
-				   (let ((old-ref (var-ref data)))
-				     (lint-walk caller (caddr stepper) inner-env)
-				     (set! (var-ref data) old-ref))
-				   (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
-				       (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
-				   (set! (var-set data) (+ (var-set data) 1))) ; (pair? cddr) above
-				 (when (and (pair? (caddr stepper))
-					    (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
-					    (eq? (car (caddr stepper)) 'cdr)
-					    (eq? (cadr stepper) (cadr (caddr stepper))))
-				   (lint-format "this looks suspicious: ~A" caller stepper)))))
-			   
+			   (let ((baddies ())) ; these are step vars used within other step vars step expressions			   
+			     (do ((bindings step-vars (cdr bindings)))
+				 ((not (pair? bindings)))
+			       (let ((stepper (car bindings))) ; the entire binding: '(i 0 (+ i 1))
+				 (when (and (binding-ok? caller head stepper env #t)
+					    (pair? (cddr stepper)))
+				   (let ((data (var-member (car stepper) vars)))
+				     (let ((old-ref (var-ref data)))
+				       (lint-walk caller (caddr stepper) inner-env)
+				       (set! (var-ref data) old-ref))
+				     (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
+					 (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
+				     (set! (var-set data) (+ (var-set data) 1))) ; (pair? cddr) above
+				   (when (and (pair? (caddr stepper))
+					      (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
+					      (eq? (car (caddr stepper)) 'cdr)
+					      (eq? (cadr stepper) (cadr (caddr stepper))))
+				     (lint-format "this looks suspicious: ~A" caller stepper))
+				   (for-each (lambda (v)
+					       (if (and (not (eq? (var-name v) (car stepper)))
+							(or (eq? (var-name v) (caddr stepper))
+							    (and (pair? (caddr stepper))
+								 (tree-member (var-name v) (caddr stepper)))))
+						   (set! baddies (cons (car stepper) baddies))))
+					     vars))))
+
+			     (when (pair? baddies)
+			       ;(format *stderr* "~A: ~A~%" baddies form)
+			       ;; (do ((i 0 j) (j ...))...) is unreadable -- which (binding of) j is i set to?
+			       ;; but this is tricky if there is more than one such variable -- if cross links, we'll need named let
+			       ;; (do ((i 0 j) (j 1 i) (k 0 (+ k 1))) ((= k 4)) (format *stderr* "~A ~A~%" i j))
+			       ;; (let __1__ ((i 0) (j 1) (k 0)) (if (= k 4) () (begin (format *stderr* "~A ~A~%" i j) (__1__ j i (+ k 1)))))
+			       (let ((new-steppers (map (lambda (stepper)
+							  (if (memq (car stepper) baddies)
+							      `(,(car stepper) ,(cadr stepper))
+							      stepper))
+							step-vars))
+				     (new-sets (map (lambda (stepper)
+						      (if (memq (car stepper) baddies)
+							  `(set! ,(car stepper) ,(caddr stepper))
+							  (values)))
+						    step-vars)))
+				 (if (or (null? (cdr baddies))
+					 (let ((trails new-sets))
+					   (not (any? (lambda (v)     ; for each baddy, is it used in any following set!?
+							(and (pair? (cdr trails))
+							     (set! trails (cdr trails))
+							     (tree-member v trails)))
+						      (reverse baddies)))))
+				     (lint-format "perhaps ~A" caller
+						  (lists->string form
+								 `(do ,new-steppers
+								      ,(caddr form)
+								    ,@(cdddr form)
+								    ,@new-sets)))
+				     (let* ((loop (find-unique-name form #f))
+					    (test (if (pair? (caddr form))
+						      (caaddr form)
+						      ()))
+					    (result (if (not (and (pair? (caddr form))
+								  (pair? (cdaddr form))))
+							()
+							(if (null? (cdr (cdaddr form)))
+							    (car (cdaddr form))
+							    `(begin ,@(cdaddr form)))))
+					    (let-loop `(,loop ,@(map (lambda (s)
+								       (if (pair? (cddr s))
+									   (caddr s)
+									   (car s)))
+								     step-vars)))
+					    (new-body (if (pair? (cdddr form))
+							  `(begin ,@(cdddr form) ,let-loop)
+							  let-loop)))
+				       (lint-format "this do loop is unreadable; perhaps ~A" caller
+						  (lists->string form
+								 `(let ,loop ,(map (lambda (s)
+										     (list (car s) (cadr s)))
+										   step-vars)
+								    (if ,test ,result ,new-body)))))))))
+
 			   ;; walk the body and end stuff (it's too tricky to find infinite do loops)
 			   (if (pair? (caddr form))
 			       (let ((end+result (caddr form)))
 				 (if (pair? end+result)
 				     (let ((end (car end+result)))
-				       (lint-walk caller end inner-env)
+				       (lint-walk caller end inner-env) ; this will call simplify-boolean
 				       (if (pair? (cdr end+result))
 					   (if (null? (cddr end+result))
 					       (lint-walk caller (cadr end+result) inner-env)
@@ -8900,7 +8971,7 @@
 									       (lists->string step end)))))))))))
 					     ((pair? (cdr end+result))
 					      (lint-format "result is unreachable: ~A" caller end+result)))
-				       
+
 				       (if (and (symbol? end)
 						(not (var-member end env))
 						(procedure? (symbol->value end *e*)))
@@ -9672,16 +9743,26 @@
 						  (if (not (hash-table-ref other-identifiers head))
 						      (list form)
 						      (cons form (hash-table-ref other-identifiers head)))))))
+
 			 (when (and (pair? head)
 				    (pair? (cdr head))
-				    (eq? (car head) 'lambda))
+				    (memq (car head) '(lambda lambda*))
+				    (not (any? (lambda (arg)
+						 (and (pair? arg)
+						      (mv-range (car arg) env))) ; ignore ((lambda...) (multiple-value...))
+					       (cdr form))))
 			   (let ((len (length (cadr head))))
 			     (cond ((and len (>= len 0)
+					 (eq? (car head) 'lambda)
 					 (not (equal? len (length (cdr form)))))
 				    (lint-format "~A has ~A arguments: ~A" 
 						 head (car head) 
 						 (if (> len (length (cdr form))) "too few" "too many")
 						 (truncated-list->string form)))
+
+				   ((identity? head)
+				    (lint-format "perhaps ~A" caller (truncated-lists->string form (cadr form))))
+
 				   ((and (null? (cadr head))
 					 (pair? (cddr head)))
 				    (lint-format "perhaps ~A" caller 
@@ -9691,9 +9772,37 @@
 								      (memq (caaddr head) '(define define* define-constant define-macro define-macro*)))))
 						       (caddr head)
 						       `(let () ,@(cddr head))))))
-				   ((identity? head)
-				    (lint-format "perhaps ~A" caller (truncated-lists->string form (cadr form)))))))
 
+				   ((pair? (cddr head)) ; ((lambda (...) ...) ...) -> (let ...) -- lambda here is ugly and slow
+				    (let ((vars ())
+					  (vals ()))
+				      (do ((v (cadr head) (cdr v))
+					   (a (cdr form) (cdr a)))
+					  ((not (and (pair? a)
+						     (pair? v)))
+					   (if (symbol? v)
+					       (begin
+						 (set! vars (cons v vars))
+						 (set! vals (cons `(list ,@a) vals)))
+					       (do ((v v (cdr v)))
+						   ((not (pair? v)))
+						 (if (pair? (car v)) 
+						     (begin
+						       (set! vars (cons (caar v) vars))
+						       (set! vals (cons (cadar v) vals)))
+						     (begin
+						       (set! vars (cons (car v) vars))
+						       (set! vals (cons #f vals)))))))
+					(set! vars (cons (if (pair? (car v)) (caar v) (car v)) vars))
+					(set! vals (cons (car a) vals)))
+				      (lint-format "perhaps ~A" caller
+						   (lists->string form
+								  `(,(if (or (eq? (car head) 'lambda)
+									     (null? (cadr head))
+									     (null? (cdadr head)))
+									 'let 'let*)
+								    ,(map list (reverse vars) (reverse vals))
+								    ,@(cddr head)))))))))
 			 (let ((vars env))
 			   (for-each
 			    (lambda (f)
@@ -9918,13 +10027,14 @@
 				       (make-keyword data))
 				      
 				      ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
-				       (do ((last #\# c) 
+				       (do ((last #\#)
 					    (c (read-char) (read-char))) 
 					   ((and (char=? last #\<) 
 						 (char=? c #\#)) 
 					    (values))
 					 (if (char=? c #\newline)
-					     (set! (port-line-number ()) (+ (port-line-number) 1)))))					      
+					     (set! (port-line-number ()) (+ (port-line-number) 1)))
+					 (set! last c)))
 				      
 				      ((#\<) ; Chicken also, #<<EOF -> EOF
 				       (if (and (char=? (data 1) #\<)
@@ -10004,7 +10114,7 @@
 		   (positive? (hash-table-entries other-identifiers)))
 	      (begin
 		(format outport "~NCthe following identifiers were not defined~A: ~{~S~^ ~}~%"
-			lint-left-margin #\space 
+			(max lint-left-margin 1) #\space 
 			(if (string? file) (format #f " in ~S" file) "")
 			(map car other-identifiers))
 		(fill! other-identifiers #f))))))))
@@ -10107,12 +10217,21 @@
 ;;; TODO:
 ;;; unquasiquote innards pretty-printed and check quotes, doubled ,@
 ;;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
-;;;
 ;;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
 ;;;   out-vars here, also perhaps a switch *any-!-is-setter*, or maybe a list of outside setters?
 ;;; better signature builder
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
+;;; let vars moved inwards
+;;; can we see call/cc->do?
+;;; s7test other global switches
+;;; undef-ids misses unknown args?
+;;; simple named let -> do [or any such simple recursion]
+;;; are there other if A a if B b a patterns that are worth untangling?
+;;;   look for unreported 2-3 level if with repeated expr[or not expr]/branch
+;;; do stepping via append, or set in body via append?
+;;; easily unrolled do-loops?
+;;; could the html lint above forgo the output file?
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;  see mus_header_t? in sndlib2xen.c and 5399 below

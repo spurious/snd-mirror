@@ -1381,11 +1381,12 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
       (let* ((start (cursor))
 	     (sf (make-sampler start)))
 	(do ((n start (+ 1 n))
-	     (val0 (abs (next-sample sf)) val1)
+	     (val0 (abs (next-sample sf)))
 	     (val1 (abs (next-sample sf)) (abs (next-sample sf))))
 	    ((or (sampler-at-end? sf)
 		 (< (+ val0 val1) limit))
-	     (set! (cursor) n)))))))
+	     (set! (cursor) n))
+	  (set! val0 val1))))))
 
 
 ;;; -------- sound interp
