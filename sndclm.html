@@ -2402,10 +2402,10 @@ changing spectra is to interpolate between two or more sets of coefficients.
 	((= i samps))
       (let ((harm (<a class=quiet href="#env">env</a> harmf)))
 	(set! (coeffs 3) harm)
-	(set! (coeffs 4) (- .25 harm))
-	(<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf)
+	(set! (coeffs 4) (- .25 harm)))
+      (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> ampf)
 		   (<em class=red>mus-chebyshev-t-sum</em> x coeffs)))
-	(set! x (+ x incr))))))
+      (set! x (+ x incr)))))
 </pre>
 
 <p>

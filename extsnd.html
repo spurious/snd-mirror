@@ -2035,19 +2035,22 @@ we're saving the selection.
 <pre class="indented">
 (hook-push <em class=red>before-save-as-hook</em>
   (lambda (hook)
-    ((lambda (index filename sr dformat htype comment)
-      (if (not (= sr (<a class=quiet href="#srate">srate</a> index)))
-          (let ((chns (<a class=quiet href="#chans">channels</a> index)))
-	    (do ((i 0 (+ i 1)))
-	        ((= i chns))
-	      (<a class=quiet href="#srcchannel">src-channel</a> (exact-&gt;inexact (/ (<a class=quiet href="#srate">srate</a> index) sr)) 0 #f index i))
-	    (<a class=quiet href="#savesoundas">save-sound-as</a> filename index :header-type htype :sample-type dformat :srate sr :comment comment) 
-	    (do ((i 0 (+ i 1)))
-	        ((= i chns))
-	      (<a class=quiet href="#undo">undo</a> 1 index i))
-	    (set! (hook 'result) #t)))) ; tell Snd that the sound is already saved
-     (hook 'snd) (hook 'name) (hook 'sampling-rate) (hook 'header-type) (hook 'sample-type) (hook 'comment))))
-
+    (let ((index (hook 'snd))
+          (filename (hook 'name))
+          (sr (hook 'sampling-rate))
+          (dformat (hook 'sample-type))
+          (htype (hook 'header-type))
+          (comment (hook 'comment)))
+      (if (not (= sr (srate index)))
+          (let ((chns (channels index)))
+            (do ((i 0 (+ i 1)))
+                ((= i chns))
+              (src-channel (* 1.0 (/ (srate index) sr)) 0 #f index i))
+            (save-sound-as filename index :header-type htype :sample-type dformat :srate sr :comment comment)
+            (do ((i 0 (+ i 1)))
+                ((= i chns))
+              (undo 1 index i))
+            (set! (hook 'result) #t)))))) ; tell Snd that the sound is already saved
 </pre>
 <div class="spacer"></div>
 
@@ -2250,15 +2253,18 @@ and decay portions in the envelope editor, or use functions such as
 <pre class="indented">
 (hook-push <em class=red>enved-hook</em>
   (lambda (hook)
-    ((lambda (env pt x y reason)
-       (if (and (= reason enved-move-point)
-                (&gt; x 0.0)
-                (&lt; x (<a class=quiet>envelope-last-x</a> env))) ; from env.scm
-         (let* ((old-x (env (* pt 2)))
-                (new-env (<em class=red>stretch-envelope</em> env old-x x)))
-           (set! (new-env (+ (* pt 2) 1)) y)
-           (set! (hook 'result) new-env))))
-     (hook 'envelope) (hook 'point) (hook 'x) (hook 'y) (hook 'reason))))
+    (let ((env (hook 'envelope))
+          (pt (hook 'point))
+          (x (hook 'x))
+          (y (hook 'y))
+          (reason (hook 'reason)))
+      (if (and (= reason enved-move-point)
+               (&gt; x 0.0)
+               (&lt; x (envelope-last-x env)))
+          (let* ((old-x (env (* pt 2)))
+                 (new-env (stretch-envelope env old-x x)))
+            (set! (new-env (+ (* pt 2) 1)) y)
+            (set! (hook 'result) new-env))))))
 </pre>
 
 <p>In Forth/Ruby, if there are several functions on the hook, each gets the envelope
@@ -2518,17 +2524,21 @@ and if the <a href="#marksync">mark-sync</a> is not 0, the hook is called on eac
   ;; when a mark is dragged, its end position is always on a beat
   (hook-push <em class=red>mark-hook</em>
     (lambda (hook)
-      ((lambda (mrk snd chn reason)
-         (let ((mark-release 4))
-           (if (= reason mark-release)
-               (let* ((samp (<a class=quiet href="#marksample">mark-sample</a> mrk))
-	              (bps (/ (<a class=quiet href="#beatsperminute">beats-per-minute</a> snd chn) 60.0))
-		      (sr (<a class=quiet href="#srate">srate</a> snd))
-		      (beat (floor (/ (* samp bps) sr)))
-		      (lower (floor (/ (* beat sr) bps)))
-		      (higher (floor (/ (* (+ 1 beat) sr) bps))))
-	          (set! (<a class=quiet href="#marksample">mark-sample</a> mrk) (if (&lt; (- samp lower) (- higher samp)) lower higher))))))
-       (hook 'id) (hook 'snd) (hook 'chn) (hook 'reason)))))
+      (let ((mrk (hook 'id))
+            (snd (hook 'snd))
+            (chn (hook 'chn))
+            (reason (hook 'reason)))
+        (let ((mark-release 4))
+          (if (= reason mark-release)
+              (let* ((samp (mark-sample mrk))
+                     (bps (/ (beats-per-minute snd chn) 60.0))
+                     (sr (srate snd))
+                     (beat (floor (/ (* samp bps) sr)))
+                     (lower (floor (/ (* beat sr) bps)))
+                     (higher (floor (/ (* (+ 1 beat) sr) bps))))
+                (set! (mark-sample mrk) (if (&lt; (- samp lower) (- higher samp))
+                                            lower
+                                            higher)))))))))
 </pre>
 <div class="spacer"></div>
 

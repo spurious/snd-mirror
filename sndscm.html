@@ -590,10 +590,10 @@ in the duration.
   (let* ((start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> beg))
 	 (dur 0.08)                                      ; filled in from the selection duration
 	 (stop (+ start (<a class=quiet href="sndclm.html#secondstosamples">seconds-&gt;samples</a> dur)))
-	 (ampf (<a class=quiet href="sndclm.html#make-env">make-env</a> '                               ; left blank for the moment
+	 (ampf (<a class=quiet href="sndclm.html#make-env">make-env</a>                                 ; left blank for the moment
 			 :duration dur :scaler amp))
 	 (gen1 (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a>))
-	 (frqf (<a class=quiet href="sndclm.html#make-env">make-env</a> '                               ; ditto
+	 (frqf (<a class=quiet href="sndclm.html#make-env">make-env</a>                                 ; ditto
 			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> 1.0))))
    (do ((i start (+ i 1)))
        ((= i stop))

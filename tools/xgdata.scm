@@ -7302,8 +7302,8 @@
 ;;; 2.91.2 (CFNC-2.20 "GdkWindow* gtk_entry_get_icon_window GtkEntry* entry GtkEntryIconPosition icon_pos")
 (CFNC-2.20 "void gtk_range_set_slider_size_fixed GtkRange* range gboolean size_fixed")
 (CFNC-2.20 "gboolean gtk_range_get_slider_size_fixed GtkRange* range")
-(CFNC-2.20 "void gtk_range_set_min_slider_size GtkRange* range gboolean min_size")
-(CFNC-2.20 "gint gtk_range_get_min_slider_size GtkRange* range")
+;;; 3.20 (CFNC-2.20 "void gtk_range_set_min_slider_size GtkRange* range gboolean min_size")
+;;; 3.20 (CFNC-2.20 "gint gtk_range_get_min_slider_size GtkRange* range")
 (CFNC-2.20 "void gtk_range_get_range_rect GtkRange* range GdkRectangle* range_rect")
 (CFNC-2.20 "void gtk_range_get_slider_range GtkRange* range gint* [slider_start] gint* [slider_end]")
 ;;; 3.14.0 (CFNC-2.20 "void gtk_status_icon_set_name GtkStatusIcon* status_icon gchar* name") ; const gchar
@@ -9333,3 +9333,6 @@
 ;;; (CFNC-3.20 "gboolean gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")
 ;;; (CFNC-3.20 "gboolean gtk_text_view_get_iter_at_location GtkTextView* text_view GtkTextIter* iter gint x gint y")
 
+
+;;; 3.19.10 -- nothing new
+;;; 3.19.11 -- same

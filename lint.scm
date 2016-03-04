@@ -550,6 +550,14 @@
 			(cdr tree))
 		       #f))))))
     
+    (define (tree-memq sym tree)
+      (or (eq? sym tree)
+	  (and (pair? tree)
+	       (not (eq? (car tree) 'quote))
+	       (or (eq? (car tree) sym)
+		   (tree-memq sym (car tree))
+		   (tree-memq sym (cdr tree))))))
+    
     (define (tree-member sym tree)
       (and (pair? tree)
 	   (or (eq? (car tree) sym)
@@ -577,17 +585,25 @@
 	       (and (pair? (cdr tree))
 		    (member sym (cdr tree) tree-car-member)))))
     
-    (define (tree-set-member sym set tree) ; sym as arg, set as car
+    (define (tree-sym-set-member sym set tree) ; sym as arg, set as car
       (and (pair? tree)
 	   (or (memq (car tree) set)
 	       (and (pair? (car tree))
-		    (tree-set-member sym set (car tree)))
+		    (tree-sym-set-member sym set (car tree)))
 	       (and (pair? (cdr tree))
 		    (or (member sym (cdr tree))
-			(member #f (cdr tree) (lambda (a b) (tree-set-member sym set b))))))))
+			(member #f (cdr tree) (lambda (a b) (tree-sym-set-member sym set b))))))))
+    
+    (define (tree-set-member set tree) ; set as car
+      (and (pair? tree)
+	   (or (memq (car tree) set)
+	       (and (pair? (car tree))
+		    (tree-set-member set (car tree)))
+	       (and (pair? (cdr tree))
+		    (member #f (cdr tree) (lambda (a b) (tree-set-member set b)))))))
     
     (define (maker? tree)
-      (tree-set-member #f makers tree))
+      (tree-set-member makers tree))
     
     (define (tree-symbol-walk tree syms)
       (if (pair? tree)
@@ -714,7 +730,27 @@
 	    (counter #f (list-ref body (- (length body) 1))))
 	(and mn (list mn mx))))
     
+
     (define (get-signature v)
+
+      (define (signer endb env)
+	(and (not (side-effect? endb env))
+	     (if (not (pair? endb))
+		 (and (not (symbol? endb))
+		      (list (->type endb)))
+		 (cond ((arg-signature (car endb) env) 
+			=> (lambda (a)
+			     (and (pair? a) 
+				  (list (car a)))))
+		       ((eq? (car endb) 'if)
+			(let ((a1 (signer (caddr endb) env))
+			      (a2 (and (pair? (cdddr endb))
+				       (signer (cadddr endb) env))))
+			  (if (not a2)
+			      a1
+			      (and (equal? a1 a2) a1))))
+		       (else #f)))))
+
       (let ((ftype (var-ftype v))
 	    (initial-value (var-initial-value v))
 	    (arglist (var-arglist v))
@@ -722,14 +758,9 @@
 
 	(let ((body (and (memq ftype '(define define* lambda lambda* let))
 			 (cddr initial-value))))
+
 	  (and (pair? body)
-	       (let ((sig #f))
-		 (if (null? (cdr body))
-		     (if (not (pair? (car body)))
-			 (if (not (symbol? (car body)))
-			     (set! sig (list (->type (car body)))))
-			 (set! sig (cond ((arg-signature (caar body) env) => (lambda (a) (and (pair? a) (list (car a)))))
-					 (else #f)))))
+	       (let ((sig (signer (list-ref body (- (length body) 1)) env)))
 		 (if (not (pair? sig))
 		     (set! sig (list #t)))
 		 
@@ -863,13 +894,15 @@
 			   (var-walk-body (cddr tree) vars)))
 			
 			((define define* define-constant)
-			 (if (symbol? (cadr tree))
-			     (begin
-			       (var-walk (caddr tree) e)
-			       (set! e (cons (cadr tree) e)))
-			     (begin
-			       (set! e (cons (caadr tree) e))
-			       (var-walk-body (cddr tree) (append (args->proper-list (cdadr tree)) e)))))
+			 (if (and (pair? (cdr tree))
+				  (pair? (cddr tree)))
+			     (if (symbol? (cadr tree))
+				 (begin
+				   (var-walk (caddr tree) e)
+				   (set! e (cons (cadr tree) e)))
+				 (begin
+				   (set! e (cons (caadr tree) e))
+				   (var-walk-body (cddr tree) (append (args->proper-list (cdadr tree)) e))))))
 			
 			;; TODO: macros
 			
@@ -1264,17 +1297,16 @@
     (define (set-ref name form env)
       ;; if name is in env, set its "I've been referenced" flag
       (let ((data (var-member name env)))
-	(when (var? data)
-	  ;; (format *stderr* "ref: ~A: ~A~%" data form)
-	  (set! (var-ref data) (+ (var-ref data) 1))
-	  (if (and form (not (memq form (var-history data))))
-	      (set! (var-history data) (cons form (var-history data))))))
+	(if (var? data)
+	    (begin
+	      (set! (var-ref data) (+ (var-ref data) 1))
+	      (if (and form (not (memq form (var-history data))))
+		  (set! (var-history data) (cons form (var-history data)))))))
       env)
     
     (define (set-set name form env)
       (let ((data (var-member name env)))
 	(when (var? data)
-	  ;; (format *stderr* "set: ~A: ~A~%" data form)
 	  (set! (var-set data) (+ (var-set data) 1))
 	  (if (not (memq form (var-history data)))
 	      (set! (var-history data) (cons form (var-history data))))
@@ -3647,6 +3679,13 @@
       ;; here curlet won't change (leaving aside additions via define)
       ;; keyword head here if args to func/macro that we don't know about
       
+#|
+      (if (and (pair? form)
+	       (or (tree-car-member 'call/cc form)
+		   (tree-car-member 'call-with-current-continuation form)))
+	  (format *stderr* "~A~%~%" form))
+|#
+
       (case head
 
 	;; ----------------
@@ -6478,7 +6517,8 @@
 		((or (null? vs)
 		     (find-code-match (car vs)))))))))
     
-    
+    (define lint-current-form #f)
+
     (define (lint-walk-body caller head body env)
       ;; walk a body (a list of forms, the value of the last of which might be returned)
       ;; (format *stderr* "lint-walk-body ~A ~A ~A~%" caller head body)
@@ -6487,6 +6527,7 @@
 	  (lint-format "stray dot? ~A" caller (truncated-list->string body))
 	  
 	  (let ((prev-f #f)
+		(old-current-form lint-current-form)
 		(prev-len 0)
 		(f-len 0)
 		(repeats 0)
@@ -6791,12 +6832,15 @@
 
 		(set! prev-f f)
 		(set! prev-len f-len)
+
+		(set! lint-current-form f)
 		(if (= ctr (- len 1))
 		    (set! env (lint-walk caller f env))
 		    (let ((e (lint-walk caller f env)))
 		      (if (and (pair? e)
 			       (not (eq? (var-name (car e)) lambda-marker)))
 			  (set! env e))))
+		(set! lint-current-form #f)
 
 		;; need to put off this ref tick until we have a var for it (lint-walk above)
 		(when (and (= ctr (- len 1))
@@ -6807,7 +6851,8 @@
 		      (set-ref (caadr f) #f env)
 		      (if (memq (car f) '(defmacro defmacro*))
 			  (set-ref (cadr f) #f env))))
-		))))
+		))
+	    (set! lint-current-form old-current-form)))
       env)
     
     
@@ -7738,7 +7783,6 @@
 						(equal? test `(not ,false)))     ; (if (not x) y x) -> (or x y)
 					    (lint-format "perhaps ~A" caller 
 							 (lists->string form (simplify-boolean `(or ,false ,true) () () env))))))
-				 
 				 (when (= len 4)
 				   (if (and (pair? true)
 					    (eq? (car true) 'if))
@@ -8113,6 +8157,7 @@
 									       (eq? (car expr) 'not))
 									  `(unless ,(cadr expr) ,@(unbegin true))
 									  `(when ,expr ,@(unbegin true))))))
+
 				 (lint-walk caller expr env)
 				 (set! env (lint-walk caller true env))
 				 (if (= len 4) (set! env (lint-walk caller false env)))))))
@@ -9290,6 +9335,59 @@
 				    (null? (cdr varlist))
 				    (pair? (cdar varlist))) ; (let ((a))...)
 			       (lint-format "perhaps ~A" caller (lists->string form (cadar varlist))))
+
+			   
+			   (if (and (eq? form lint-current-form)
+				    (> (length body) 3)
+				    (not (tree-set-member '(lambda lambda* 
+							    define define* define-macro define-macro* 
+							    call/cc call-with-current-continuation) 
+							  body)))
+			       (let ((last-refs (map (lambda (v) (vector (var-name v) #f 0)) vars)))
+				 (do ((p body (cdr p))
+				      (i 0 (+ i 1)))
+				     ((null? p)
+				      
+				      ;; TODO: this can be extended (and optimized) a lot
+				      ;;   if not lint-current-form, add a holder let
+				      ;;   break in two if start point > 0 and no dependencies/side-effects/etc (code-constant value?)
+				      ;;   treat all vars separately
+
+				      (let ((end 0)
+					    (len i))
+					(for-each (lambda (v)
+						    (set! end (max end (v 2))))
+						  last-refs)
+					(if (< end (/ len 2))
+					    (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
+							 (+ lint-left-margin 4) #\space
+							 (truncated-list->string form)
+							 (+ lint-left-margin 4) #\space
+							 (let ((old-pp ((funclet 'lint-pretty-print) '*pretty-print-left-margin*)))
+							   (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) (+ lint-left-margin 4))
+							   (let ((res (lint-pp `(let ,(cadr form) ,@(copy body (make-list (+ end 1)))))))
+							     (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) old-pp)
+							     res))
+							 (+ lint-left-margin 4) #\space
+							 (list-ref body (+ end 1)))))
+				      )
+				   (for-each (lambda (v)
+					       (when (tree-memq (v 0) (car p))
+						 (set! (v 2) i)
+						 (if (not (v 1)) (set! (v 1) i))))
+					     last-refs))))
+#|
+			   ;; TODO: here the initial-value could be the set value unless perhaps the initial-value has a side-effect, but then why a name?
+                           ;;   or the set value refers to other locals -- some are (set! x...) x -- just omit x
+                           ;;   or set x val, (g x) -> (g val)
+			   (if (and (pair? body)
+				    (pair? (car body))
+				    (eq? (caar body) 'set!)
+				    (assq (cadar body) vars)
+				    (not (tree-memq (cadar body) (caddar body)))) ; this actually happens!! (and subsequent vars set as well)
+			       (format *stderr* "~A~%~%" form))
+|#					   
+
 			   ))) ; messed up let
 		   env)
 		  
@@ -9639,7 +9737,7 @@
 
 			   (if (not (or (eq? head 'call-with-exit)
 					(eq? continuation (car body))
-					(tree-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
+					(tree-sym-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
 					;; this checks for continuation as arg (of anything), and any of set as car
 			       (lint-format "perhaps ~A could be call-with-exit: ~A" caller head (truncated-list->string form)))
 
@@ -10112,11 +10210,14 @@
 	  
 	  (if (and *report-undefined-identifiers*
 		   (positive? (hash-table-entries other-identifiers)))
-	      (begin
-		(format outport "~NCthe following identifiers were not defined~A: ~{~S~^ ~}~%"
+	      (let ((lst (sort! (map car other-identifiers) (lambda (a b)
+							      (string<? (symbol->string a) (symbol->string b))))))
+		(format outport "~NCth~A identifier~A not defined~A: ~{~S~^ ~}~%"
 			(max lint-left-margin 1) #\space 
+			(if (= (hash-table-entries other-identifiers) 1) "is" "e following")
+			(if (= (hash-table-entries other-identifiers) 1) " was" "s were")
 			(if (string? file) (format #f " in ~S" file) "")
-			(map car other-identifiers))
+			lst)
 		(fill! other-identifiers #f))))))))
 	      
 
@@ -10197,15 +10298,14 @@
 					(let ((ncode (with-input-from-string 
 							 (fixup-html (remove-markups code))
 						       read)))
-					  (call-with-output-file "t631-temp.scm"
-					    (lambda (fout)
-					      (format fout "~S~%" ncode)))
 					  (let ((outstr (call-with-output-string
-							 (lambda (p)
-							   (let ((old-shadow *report-shadowed-variables*))
-							     (set! *report-shadowed-variables* #t)
-							     (lint "t631-temp.scm" p #f)
-							     (set! *report-shadowed-variables* old-shadow))))))
+							 (lambda (op)
+							   (call-with-input-string (format #f "~S" ncode)
+							     (lambda (ip)
+							       (let ((old-shadow *report-shadowed-variables*))
+								 (set! *report-shadowed-variables* #t)
+								 (lint ip op #f)
+								 (set! *report-shadowed-variables* old-shadow))))))))
 					    (if (> (length outstr) 1) ; possible newline at end
 						(format () ";~A ~D: ~A~%" file line-num outstr)))))
 				      (lambda args
@@ -10219,22 +10319,15 @@
 ;;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
 ;;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
 ;;;   out-vars here, also perhaps a switch *any-!-is-setter*, or maybe a list of outside setters?
-;;; better signature builder
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
-;;; let vars moved inwards
-;;; can we see call/cc->do?
-;;; s7test other global switches
-;;; undef-ids misses unknown args?
-;;; simple named let -> do [or any such simple recursion]
-;;; are there other if A a if B b a patterns that are worth untangling?
-;;;   look for unreported 2-3 level if with repeated expr[or not expr]/branch
-;;; do stepping via append, or set in body via append?
-;;; easily unrolled do-loops?
-;;; could the html lint above forgo the output file?
+;;;
+;;; continue with let vars moved inwards [see 9330]
+;;; what about cases where the let initial values are not used (set! before ref) and have no side-effects? (even intervening)
+;;;   (let ((x 1)) (set! x 2)...) is unambiguous -> (let ((x 2)) ...)
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
-;;;  see mus_header_t? in sndlib2xen.c and 5399 below
+;;;  see mus_header_t? in sndlib2xen.c and 5399 above
 ;;;  for each gtk type, make a type macro like mus_header_t, a symbol in the pl_* table, tie in via signature makers
 ;;;
 ;;; 1309/176

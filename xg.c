@@ -24887,22 +24887,6 @@ static Xen gxg_gtk_range_get_slider_size_fixed(Xen range)
   return(C_to_Xen_gboolean(gtk_range_get_slider_size_fixed(Xen_to_C_GtkRange_(range))));
 }
 
-static Xen gxg_gtk_range_set_min_slider_size(Xen range, Xen min_size)
-{
-  #define H_gtk_range_set_min_slider_size "void gtk_range_set_min_slider_size(GtkRange* range, gboolean min_size)"
-  Xen_check_type(Xen_is_GtkRange_(range), range, 1, "gtk_range_set_min_slider_size", "GtkRange*");
-  Xen_check_type(Xen_is_gboolean(min_size), min_size, 2, "gtk_range_set_min_slider_size", "gboolean");
-  gtk_range_set_min_slider_size(Xen_to_C_GtkRange_(range), Xen_to_C_gboolean(min_size));
-  return(Xen_false);
-}
-
-static Xen gxg_gtk_range_get_min_slider_size(Xen range)
-{
-  #define H_gtk_range_get_min_slider_size "gint gtk_range_get_min_slider_size(GtkRange* range)"
-  Xen_check_type(Xen_is_GtkRange_(range), range, 1, "gtk_range_get_min_slider_size", "GtkRange*");
-  return(C_to_Xen_gint(gtk_range_get_min_slider_size(Xen_to_C_GtkRange_(range))));
-}
-
 static Xen gxg_gtk_range_get_range_rect(Xen range, Xen range_rect)
 {
   #define H_gtk_range_get_range_rect "void gtk_range_get_range_rect(GtkRange* range, GdkRectangle* range_rect)"
@@ -38140,8 +38124,6 @@ Xen_wrap_2_args(gxg_gtk_window_set_mnemonics_visible_w, gxg_gtk_window_set_mnemo
 Xen_wrap_1_arg(gxg_gtk_window_get_mnemonics_visible_w, gxg_gtk_window_get_mnemonics_visible)
 Xen_wrap_2_args(gxg_gtk_range_set_slider_size_fixed_w, gxg_gtk_range_set_slider_size_fixed)
 Xen_wrap_1_arg(gxg_gtk_range_get_slider_size_fixed_w, gxg_gtk_range_get_slider_size_fixed)
-Xen_wrap_2_args(gxg_gtk_range_set_min_slider_size_w, gxg_gtk_range_set_min_slider_size)
-Xen_wrap_1_arg(gxg_gtk_range_get_min_slider_size_w, gxg_gtk_range_get_min_slider_size)
 Xen_wrap_2_args(gxg_gtk_range_get_range_rect_w, gxg_gtk_range_get_range_rect)
 Xen_wrap_3_optional_args(gxg_gtk_range_get_slider_range_w, gxg_gtk_range_get_slider_range)
 Xen_wrap_1_arg(gxg_gtk_paned_get_handle_window_w, gxg_gtk_paned_get_handle_window)
@@ -42496,8 +42478,6 @@ pl_unused = NULL;
   Xg_define_procedure(gtk_window_get_mnemonics_visible, gxg_gtk_window_get_mnemonics_visible_w, 1, 0, 0, H_gtk_window_get_mnemonics_visible, pl_bu);
   Xg_define_procedure(gtk_range_set_slider_size_fixed, gxg_gtk_range_set_slider_size_fixed_w, 2, 0, 0, H_gtk_range_set_slider_size_fixed, pl_tub);
   Xg_define_procedure(gtk_range_get_slider_size_fixed, gxg_gtk_range_get_slider_size_fixed_w, 1, 0, 0, H_gtk_range_get_slider_size_fixed, pl_bu);
-  Xg_define_procedure(gtk_range_set_min_slider_size, gxg_gtk_range_set_min_slider_size_w, 2, 0, 0, H_gtk_range_set_min_slider_size, pl_tub);
-  Xg_define_procedure(gtk_range_get_min_slider_size, gxg_gtk_range_get_min_slider_size_w, 1, 0, 0, H_gtk_range_get_min_slider_size, pl_iu);
   Xg_define_procedure(gtk_range_get_range_rect, gxg_gtk_range_get_range_rect_w, 2, 0, 0, H_gtk_range_get_range_rect, pl_tu);
   Xg_define_procedure(gtk_range_get_slider_range, gxg_gtk_range_get_slider_range_w, 1, 2, 0, H_gtk_range_get_slider_range, pl_tu);
   Xg_define_procedure(gtk_paned_get_handle_window, gxg_gtk_paned_get_handle_window_w, 1, 0, 0, H_gtk_paned_get_handle_window, pl_pu);
@@ -46238,7 +46218,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("27-Feb-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("03-Mar-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
