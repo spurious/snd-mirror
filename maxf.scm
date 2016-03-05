@@ -72,10 +72,10 @@
       ;; Conditions for JOS constraints
       ;; maxdecay: Filter may be unstable
       ;; mindecay: Filter may not oscillate
-      (set! fdecay (max mindecay (min fdecay maxdecay)))
-      (set! (b 'pp1) (- 1.0 (/ i2s fdecay)))
-      (set! (b 'pp2) centerfreq)
-      (set! (b 'pp3) (* (b 'pp2) famp)))))
+      (set! fdecay (max mindecay (min fdecay maxdecay))))
+    (set! (b 'pp1) (- 1.0 (/ i2s fdecay)))
+    (set! (b 'pp2) centerfreq)
+    (set! (b 'pp3) (* (b 'pp2) famp))))
 
 (define (make-array initial-value dim1 dim2) ; I'm guessing ...
   (make-vector (list dim1 dim2) initial-value))

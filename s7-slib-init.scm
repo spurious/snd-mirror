@@ -288,21 +288,21 @@
 (define (defmacro? m) (assq m *defmacros*))
 ;@
 (define (macroexpand-1 e)
-  (if (pair? e)
+  (if (not (pair? e))
+      e
       (let ((a (car e)))
 	(cond ((symbol? a) (set! a (assq a *defmacros*))
 	       (if a (apply (cdr a) (cdr e)) e))
-	      (else e)))
-      e))
+	      (else e)))))
 ;@
 (define (macroexpand e)
-  (if (pair? e)
+  (if (not (pair? e))
+      e
       (let ((a (car e)))
 	(cond ((symbol? a)
 	       (set! a (assq a *defmacros*))
 	       (if a (macroexpand (apply (cdr a) (cdr e))) e))
-	      (else e)))
-      e))
+	      (else e)))))
 ;@
 (define gentemp
   (let ((*gensym-counter* -1))

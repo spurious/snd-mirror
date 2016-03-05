@@ -189,14 +189,14 @@
 	  (gain-target 'sound)
 	  (gain-envelope #f))
       
-      (define (scale-envelope e scl)
-	(if (null? e)
-	    ()
-	    (append (list (car e) (* scl (cadr e)))
-		    (scale-envelope (cddr e) scl))))
-      
       (define (post-gain-dialog)
-	(if (not (Widget? gain-dialog))
+	(define (scale-envelope e scl)
+	  (if (null? e)
+	      ()
+	      (append (list (car e) (* scl (cadr e)))
+		      (scale-envelope (cddr e) scl))))
+	(if (Widget? gain-dialog)
+	    (activate-dialog gain-dialog)
 	    ;; if gain-dialog doesn't exist, create it
 	    (let ((initial-gain-amount 1.0)
 		  (sliders ())
@@ -266,10 +266,7 @@
 						     '(0.0 1.0 0.0 1.0)))
 		(set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
 		(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-					XmNbottomWidget     target-row)))
-	      
-	      )
-	    (activate-dialog gain-dialog)))
+					XmNbottomWidget     target-row))))))
       
       (let ((child (XtCreateManagedWidget "Gain" xmPushButtonWidgetClass amp-menu
 					  (list XmNbackground *basic-color*))))
@@ -1559,8 +1556,9 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		    (scale-envelope (cddr e) scl))))
       
       (define (post-src-timevar-dialog)
-	(if (not (Widget? src-timevar-dialog))
-	    ;; if src-timevar-dialog doesn't exist, create it
+	(if (Widget? src-timevar-dialog)
+	    (activate-dialog src-timevar-dialog)
+      	    ;; if src-timevar-dialog doesn't exist, create it
 	    (let ((initial-src-timevar-scale 1.0)
 		  (sliders ())
 		  (fr #f))
@@ -1623,11 +1621,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 							    '(0.0 1.0 0.0 1.0)))
 		(set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
 		(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-					XmNbottomWidget     target-row)))
-	      
-	      )
-	    (activate-dialog src-timevar-dialog)))
-      
+					XmNbottomWidget     target-row))))))
       
       (let ((child (XtCreateManagedWidget "Time-varying sample rate scaling" xmPushButtonWidgetClass freq-menu
 					  (list XmNbackground *basic-color*))))
@@ -1702,7 +1696,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		  (amplitude-modulate 1.0 inval (oscil os)))))))
       
       (define (post-am-effect-dialog)
-	(if (not (Widget? am-effect-dialog))
+	(if (Widget? am-effect-dialog)
+	    (activate-dialog am-effect-dialog)
 	    ;; if am-effect-dialog doesn't exist, create it
 	    (let ((initial-am-effect-amount 100.0)
 		  (sliders ())
@@ -1761,9 +1756,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 							  '(0.0 1.0 0.0 1.0)))
 		(set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
 		(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-					XmNbottomWidget     target-row)))
-	      )
-	    (activate-dialog am-effect-dialog)))
+					XmNbottomWidget     target-row))))))
       
       (let ((child (XtCreateManagedWidget "Amplitude modulation" xmPushButtonWidgetClass mod-menu
 					  (list XmNbackground *basic-color*))))
@@ -1798,7 +1791,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		  (* inval (oscil os)))))))
       
       (define (post-rm-dialog)
-	(if (not (Widget? rm-dialog))
+	(if (Widget? rm-dialog)
+	    (activate-dialog rm-dialog)
 	    ;; if rm-dialog doesn't exist, create it
 	    (let ((initial-rm-frequency 100)
 		  (initial-rm-radians 100)
@@ -1865,9 +1859,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						   '(0.0 1.0 0.0 1.0)))
 		(set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
 		(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-					XmNbottomWidget     target-row)))
-	      )
-	    (activate-dialog rm-dialog)))
+					XmNbottomWidget     target-row))))))
       
       (let ((child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
 					  (list XmNbackground *basic-color*))))

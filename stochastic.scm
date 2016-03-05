@@ -72,7 +72,7 @@
 		       (cond ((or  (< (round xmax) (+ dx xdev))
 				   (> (round xmin)(+ dx xdev)))
 			      (max (min ;;this mirror is attentuated
-				    (round (+ (* xfb prev-dx) (* (- 1  xfb) (+ dx (- xdev)))))
+				    (round (+ (* xfb prev-dx) (* (- 1  xfb) (- dx xdev))))
 				    (round xmax))
 				   (round xmin)))
 			     (else (round (+ (* xfb prev-dx)
@@ -80,7 +80,7 @@
 	     (set! (xy-array (+ (modulo m xy-array-l) 1))
 		       ;;mirror stuff for y 
 		       (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
-			      (max (min (+ y (- ydev)) b) (- b)))
+			      (max (min (- y ydev) b) (- b)))
 			     (else (+ y ydev))))
 	     (set! m (+ m 2))
 	     (set! dt 0)))

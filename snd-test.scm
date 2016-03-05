@@ -1775,9 +1775,7 @@
 ;;; ---------------- test 3: variables ----------------
 
 (define (snd_test_3)
-  (let ((ind #f))
-    
-    (set! ind (open-sound "oboe.snd"))
+  (let ((ind (open-sound "oboe.snd")))
     (if (and (file-exists? "funcs.scm") 
 	     (not (defined? 'swellf)))
 	(load "funcs.scm"))
@@ -17440,7 +17438,7 @@ EDITS: 2
     
     (let ((gen (make-oscil 440.0)))
       (let ((tag (catch #t (lambda () (outa 0 .1 gen)) (lambda args (car args)))))
-	(if (not (memq tag '(wrong-type-arg 'mus-error)))
+	(if (not (memq tag '(wrong-type-arg mus-error)))
 	    (snd-display #__line__ ";outa -> oscil: ~A" tag))))
     
     (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
@@ -41684,10 +41682,10 @@ EDITS: 1
       (let ((tsize 0)
 	    (arrp 0))
 	(set! file (with-sound (:sample-type mus-lfloat :header-type mus-next)
-			       (set! mx *clm-file-buffer-size*)
-			       (set! tsize *clm-table-size*)
-			       (set! arrp *mus-array-print-length*)
-			       (fm-violin 0 .1 440 .1)))
+		     (set! mx *clm-file-buffer-size*)
+		     (set! tsize *clm-table-size*)
+		     (set! arrp *mus-array-print-length*)
+		     (fm-violin 0 .1 440 .1)))
 	(set! ind (find-sound file))
 	(if (not (= mx 1048576)) (snd-display #__line__ ";*clm-file-buffer-size*: ~A" mx))
 	(if (not (= tsize 256)) (snd-display #__line__ ";*clm-table-size*: ~A" tsize))
@@ -46016,16 +46014,16 @@ EDITS: 1
 				    (XmDropDown? w1)))
 			  (snd-display #__line__ ";XmIsDropDown: ~A ~A ~A" w1 (XmIsDropDown w1) (XmDropDown? w1)))
 		      (XtManageChild w1)
-		      (let ((text (XmDropDownGetText w1))
-			    (label (XmDropDownGetLabel w1))
-			    (arrow (XmDropDownGetArrow w1))
-			    (lst (XmDropDownGetList w1)))
-			(XmDropDownGetValue w1)
-			(if (not (XmTextField? text)) (snd-display #__line__ ";dropdown text: ~A" text))
-			(if (not (XmLabel? label)) (snd-display #__line__ ";dropdown label: ~A" label))
-			(if (not (XmArrowButton? arrow)) (snd-display #__line__ ";dropdown arrow: ~A" arrow))
-			(if (not (XmList? lst)) (snd-display #__line__ ";dropdown lst: ~A" text))
-			w1))))
+		      (XmDropDownGetValue w1)
+		      (let ((text (XmDropDownGetText w1)))
+			(if (not (XmTextField? text)) (snd-display #__line__ ";dropdown text: ~A" text)))
+		      (let ((label (XmDropDownGetLabel w1)))
+			(if (not (XmLabel? label)) (snd-display #__line__ ";dropdown label: ~A" label)))
+		      (let ((arrow (XmDropDownGetArrow w1)))
+			(if (not (XmArrowButton? arrow)) (snd-display #__line__ ";dropdown arrow: ~A" arrow)))
+		      (let ((lst (XmDropDownGetList w1)))
+			(if (not (XmList? lst)) (snd-display #__line__ ";dropdown lst: ~A" text)))
+		      w1)))
 	       (fntda
 		(and (defined? 'XmIsDataField)
 		    (let ((w1 (XmCreateDataField mainform "data" ())))
@@ -46489,9 +46487,9 @@ EDITS: 1
 		   (newwin (XCreateWindow dpy win 10 10 100 100 3 
 					  CopyFromParent InputOutput (list 'Visual CopyFromParent)
 					  (logior CWBackPixel CWBorderPixel)
-					  attr))
-		   (bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
-	      (XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet)
+					  attr)))
+	      (let ((bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
+		(XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet))
 	      (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
 				       (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
 				       ShapeSet ShapeBounding)

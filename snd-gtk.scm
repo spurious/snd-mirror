@@ -477,9 +477,9 @@
   (define snd-clock-icon
     (lambda (snd hour)
       (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
-	     (cr (gdk_cairo_create window))
-	     (bg (color->list *basic-color*)))
-	(cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
+	     (cr (gdk_cairo_create window)))
+	(let ((bg (color->list *basic-color*)))
+	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg)))
 	(cairo_rectangle cr 0 0 16 16) ; icon bg
 	(cairo_fill cr)
 	(cairo_set_source_rgb cr 1.0 1.0 1.0)
@@ -500,11 +500,10 @@
   (define (snd-happy-face snd progress)
     (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
 	   (cr (gdk_cairo_create window))
-	   (bg (color->list *basic-color*))
 	   (fc (list 1.0 progress 0.0)))
-      
-      ;; overall background
-      (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
+      (let ((bg (color->list *basic-color*)))
+        ;; overall background
+        (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg)))
       (cairo_rectangle cr 0 0 16 16)
       (cairo_fill cr)
       
@@ -562,11 +561,12 @@
       
       (define (find-free-dialog ds)
 	(and (pair? ds)
-	     (if (not (cadar ds))
+	     (if (cadar ds)
+		 (find-free-dialog (cdr ds))
 		 (begin
 		   (set! ((car ds) 1) #t)
-		   (caar ds))
-		 (find-free-dialog (cdr ds)))))
+		   (caar ds)))))
+
       (lambda args
 	;; (file-select func title dir filter help)
 	(let* ((func (and (> (length args) 0) (args 0)))
@@ -800,15 +800,14 @@
 	(case type
 	  ((text)
 	   ;; add a horizontal pair: label text
-	   (let ((label (gtk_label_new var-label))
-		 (hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0))
+	   (let ((hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0))
 		 (text (gtk_label_new "")))
-	     (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
-	     (gtk_widget_show hbox)
-	     (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
-	     
-	     (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
-	     (gtk_widget_show label)
+	     (let ((label (gtk_label_new var-label)))
+	       (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
+	       (gtk_widget_show hbox)
+	       (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
+	       (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
+	       (gtk_widget_show label))
 	     (gtk_box_pack_start (GTK_BOX hbox) text #t #t 6)
 	     (gtk_widget_set_halign (GTK_WIDGET text) GTK_ALIGN_START)
 	     (gtk_widget_show text)

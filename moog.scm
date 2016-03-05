@@ -153,9 +153,8 @@
       (let-set! m 'sig sig)
       (with-let m
 	(let ((A (* 0.25 (- sig y)))
-	      (st 0.0))
+	      (st s0))
 	  
-	  (set! st s0)
 	  (set! s0 (+ A (* fc (- A st))))
 	  (set! A (+ s0 st))
 	  
@@ -180,9 +179,8 @@
       (let-set! m 'sig sig)
       (with-let m
 	(let ((A (* 0.25 (- sig y)))
-	      (st 0.0))
+	      (st s0))
 	  
-	  (set! st s0)
 	  (set! s0 (min 0.95 (max -0.95 (+ A (* fc (- A st))))))
 	  (set! A (min 0.95 (max -0.95 (+ s0 st))))
 	  

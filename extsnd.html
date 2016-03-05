@@ -9355,9 +9355,9 @@ at the loop points:
     ((sf2it 
        (lambda (lst)
          (if (pair? lst)
-             (let* ((vals (car lst))
-                    (m1 (<a class=quiet href="#addmark">add-mark</a> (cadr vals))))
-               (set! (<a class=quiet href="#markname">mark-name</a> m1) (car vals))
+             (let ((vals (car lst)))
+               (let ((m1 (<a class=quiet href="#addmark">add-mark</a> (cadr vals))))
+                 (set! (<a class=quiet href="#markname">mark-name</a> m1) (car vals)))
                (<a class=quiet href="#addmark">add-mark</a> (caddr vals))
                (<a class=quiet href="#addmark">add-mark</a> (cadddr vals))
                (sf2it (cdr lst)))))))

@@ -90,9 +90,9 @@
     (if (and in-mark
 	     (<= (mark-sample in-mark) position))
 	(delete-mark in-mark))
-    (if (not out-mark)
-        (add-mark position 0 0 "Out")
-        (set! (mark-sample out-mark) position)))))
+    (if out-mark
+        (set! (mark-sample out-mark) position)
+        (add-mark position 0 0 "Out")))))
 
 (define mark-in
   (lambda (position)
@@ -101,9 +101,9 @@
     (if (and out-mark
 	     (>= (mark-sample out-mark) position))
 	(delete-mark out-mark))
-    (if (not in-mark)
-        (add-mark position 0 0 "In")
-        (set! (mark-sample in-mark) position)))))
+    (if in-mark
+        (set! (mark-sample in-mark) position)
+        (add-mark position 0 0 "In")))))
 
 (define delete-from-out-to-in
   (lambda ()

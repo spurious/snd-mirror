@@ -263,7 +263,7 @@
     (if accidental
 	(begin
 	  ((if (eq? accidental :sharp) draw-sharp draw-flat) x0 (+ y0 (* .02 size) (* line-sep 0.5 line)) size)
-	  (set! x0 (+ x0 (* .25 size)))))
+	  (set! x0 (+ x0 line-sep))))
 
     ;; notehead
     (set! notehead-y (+ y0 (* .02 size) (* line-sep 0.5 line)))
