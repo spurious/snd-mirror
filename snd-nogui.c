@@ -472,8 +472,8 @@ void snd_doit(int argc, char **argv)
   Xen_eval_C_string("def set_mark_color (m) false end");
   Xen_eval_C_string("def mix_color () false end");
   Xen_eval_C_string("def set_mix_color (m) false end");
-  Xen_eval_C_string("def combined_data_color (a b) false end");
-  Xen_eval_C_string("def set_combined_data_color (a b c) false end");
+  Xen_eval_C_string("def combined_data_color (a, b) false end");
+  Xen_eval_C_string("def set_combined_data_color (a, b, c) false end");
   Xen_eval_C_string("def position_color () false end");
   Xen_eval_C_string("def set_position_color (a) false end");
   Xen_eval_C_string("def foreground_color () false end");

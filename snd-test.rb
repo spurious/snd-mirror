@@ -2,13 +2,13 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 05/02/18 10:18:34
-# Changed: 15/03/05 13:28:53
+# Changed: 16/03/06 15:04:53
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
 #
 # Tested with:
-#   Snd 15.x
+#   Snd 16.x
 #   Ruby 2.x.x
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -6516,7 +6516,6 @@ def test_05_08
   if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
-    pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
     RXtUnmanageChild(edp)
     RXtVaSetValues(edp, [RXmNpaneMinimum, 100])
     RXtManageChild(edp)
@@ -11405,7 +11404,7 @@ def analog_filter_tests
   f1 = make_inverse_chebyshev_bandstop(8, 0.1, 0.4, 90)
   vals = sweep2bins(f1, 10)
   snd_test_any_neq(vals[0], 0.5, :f05equal?, "inverse_chebyshev bs 8 90 max")
-	v0 = vals[1]
+  v0 = vals[1]
   v1 = vct(0.505, 0.325, 0, 0, 0, 0, 0, 0, 0.270, 0.506)
   v2 = vct(0.506, 0.328, 0, 0, 0, 0, 0, 0, 0.269, 0.509)
   v3 = vct(0.501, 0.327, 0, 0, 0, 0, 0, 0, 0.268, 0.506)
@@ -22802,7 +22801,6 @@ def test_13_02
   if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
-    pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
     RXtUnmanageChild(edp)
     RXtVaSetValues(edp, [RXmNpaneMinimum, 100])
     RXtManageChild(edp)
@@ -22986,23 +22984,31 @@ def test_13_02
   if $with_test_motif
     edhist = channel_widgets(ind, 0)[7]
     edp = RXtParent(edhist)
-    pmax = RXtVaGetValues(edp, [RXmNpaneMaximum, 0]).cadr
     RXtUnmanageChild(edp)
-    RXtVaSetValues(edp, [RXmNpaneMinimum, 100])
+    RXtVaSetValues(edp, [RXmNpaneMinimum, 1])
     RXtManageChild(edp)
   end
   close_sound(ind)
+  reset_all_hooks
   # 
   # before|after-save-as-hook
   # 
   hook_called = false
-  $before_save_as_hook.add_hook!("snd-test") do |snd, fname, sel, sr, type, fmt, com|
-    if sr != srate(snd)
-      channels(snd).times do |chn|
-        src_channel(srate(snd).to_f / sr, 0, false, snd, chn)
+  $before_save_as_hook.add_hook!("snd-test") do |s1, f, sel, sr, type, fmt, com|
+    if sr != srate(s1)
+      channels(s1).times do |chn|
+        src_channel(srate(s1).to_f / sr, 0, false, s1, chn)
       end
-      save_sound_as(fname, snd, :header_type, type, :sample_type, fmt, :srate, sr, :comment, com)
-      channels(snd).times do |chn| undo_edit(1, snd, chn) end
+      Snd.catch do
+        save_sound_as(f, s1,
+                      :header_type, fmt,
+                      :sample_type, type,
+                      :srate, sr,
+                      :comment, com)
+      end
+      channels(s1).times do |chn|
+        undo_edit(1, s1, chn)
+      end
       hook_called = true
       true
     else
@@ -23026,10 +23032,10 @@ def test_13_02
   $before_save_as_hook.remove_hook!("snd-test")
   # 
   need_save_as_undo = false
-  $before_save_as_hook.add_hook!("snd-test") do |snd, fname, sel, sr, type, fmt, com|
+  $before_save_as_hook.add_hook!("snd-test") do |s1, f, sel, sr, type, fmt, com|
     need_save_as_undo = false
-    if sr != srate(snd)
-      src_sound(srate(snd).to_f / sr, 1.0, snd)
+    if sr != srate(s1)
+      src_sound(srate(s1).to_f / sr, 1.0, s1)
       need_save_as_undo = true
     end
     false
@@ -35546,7 +35552,7 @@ def test_28_03
   $clm_srate = old_clm_srate
   # now try everything! (all we care about here is that Snd keeps running)
   random_args = [1.5, [0, 1], 1234, true]
-  main_args   = [1.5, [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, :feedback, false]
+  main_args   = [1.5, [0, 1], 1234, $vct_3, $color_95, sqrt(-1.0), $delay_32, false]
   few_args    = [1.5, [0, 1], 1234, sqrt(-1.0), $delay_32, true]
   fewer_args  = [1.5, $vct_3, sqrt(-1.0)]
   less_args   = $all_args ? main_args : few_args

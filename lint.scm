@@ -9339,6 +9339,7 @@
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars))))
 			     (report-usage caller 'variable head vars cur-env))
+
 #|
 			   ;; not sure about this -- (set! x ...) (f x) as last use of local var x --
 			   ;;   would this be better as (let ((x ...)) (f x)) or (f ...)? 
@@ -9411,20 +9412,19 @@
 									 varlist)
 								,@(if (null? (cddr body))
 								      (cdr body)
-								      `(,(cadr body) ...)))))))
-			   
-
+								      `(,(cadr body) ...)))))))			   
 			   (when (and (not named-let)
 				      (> (length body) 3)
 				      (every? pair? varlist)
-				      (not (tree-set-member '(;lambda lambda* 
-							       define define* define-macro define-macro* 
-							       define-bacro define-bacro* define-constant define-expansion
-							       call/cc call-with-current-continuation) 
+				      (not (tree-set-member '(define define* define-macro define-macro* 
+							      define-bacro define-bacro* define-constant define-expansion
+							      call/cc call-with-current-continuation) 
 							    body)))
 			     ;; define et al are like a continuation of the let bindings, so we can't restrict them by accident
 			     ;;   (let ((x 1)) (define y x) ...)
-			     (let ((last-refs (map (lambda (v) (vector (var-name v) #f 0 v)) vars)))
+			     (let ((last-refs (map (lambda (v) (vector (var-name v) #f 0 v)) vars))
+				   (got-lambdas (tree-set-member '(lambda lambda*) body)))
+			           ;; (let ((x #f) (y #t)) (set! x (lambda () y)) (set! y 5) (x))
 			       (do ((p body (cdr p))
 				    (i 0 (+ i 1)))
 				   ((null? p)
@@ -9482,6 +9482,14 @@
 									       ,@(copy body (make-list (+ cur-end 1))))
 									     ,(list-ref body (+ cur-end 1))
 									     ...))))))))
+				 (if (and (not got-lambdas)
+					  (pair? (car p))
+					  (pair? (cdr p))
+					  (eq? (caar p) 'set!)
+					  (var-member (cadar p) vars)
+					  (not (tree-memq (cadar p) (cdr p))))
+				   (lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form)))
+
 				 (for-each (lambda (v)
 					     (when (tree-memq (v 0) (car p))
 					       (set! (v 2) i)
@@ -10472,6 +10480,9 @@
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; if case-lambda choices are regular (0..n args), we can set up if/cond and define*
 ;;;   also if it's one set or else -- dumb! [and names change in different branches--dumber!]
+;;; in let body, [not last], only side-effect is set! of local var which is not ref'd thereafter
+;;;   and if last, the set! is unneeded at least -- set! as last if no special case seems always redundant
+;;; also do return cases including local var that mimics stepper
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;  see mus_header_t? in sndlib2xen.c and 5399 above

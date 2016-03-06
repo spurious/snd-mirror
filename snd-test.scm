@@ -5562,8 +5562,6 @@ EDITS: 5
 			   (equal? line "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2")
 			   (equal? line (string-append "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" (string #\newline)))))
 		  (snd-display #__line__ ";peaks 2: ~A?" line))
-	      (set! line (read-line p))
-	      (set! line (read-line p))
 	      (close-input-port p))))
       (delete-file "tmp.peaks")
       (peaks)
