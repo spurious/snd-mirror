@@ -2705,7 +2705,7 @@
      (hey (sig-name sig))
      (hey ", ")))
  signatures)
-(hey "pl_unused;~%")
+(hey "pl_bpt;~%")
 (hey "#endif~%~%")
 
 ;;; --------------------------------------------------------------------------------
@@ -2761,7 +2761,7 @@
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))
  signatures)
-(hey "pl_unused = NULL;~%")
+(hey "  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);~%")
 (hey "#endif~%~%")
 
 (define (defun func)
@@ -2789,7 +2789,7 @@
  all-funcs all-func-withs)
 
 (define (cast-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\", NULL);~%" 
+  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\", pl_bpt);~%" 
        (no-arg (car func)) 
        (no-arg (car func))
        (no-arg (car func))

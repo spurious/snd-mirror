@@ -17,6 +17,7 @@
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-one-armed-if* #f)                         ; if -> when/unless
+(define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 
 (if (provided? 'pure-s7)
     (begin
@@ -105,7 +106,7 @@
 	      string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
-	      tan tanh truncate
+	      tan tanh tree-length truncate
 	      unless
 	      values vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
@@ -157,7 +158,7 @@
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
-			         exit dilambda hash-table-size make-hook hook-functions stacktrace
+			         exit dilambda hash-table-size make-hook hook-functions stacktrace tree-length
 				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
@@ -192,7 +193,7 @@
 			  floor round truncate ceiling ash))
 		       h))
 
-	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm 
+	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm tree-length
 			    char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
 			    char-position string-position pair-line-number port-line-number))
 	
@@ -292,6 +293,7 @@
 	(*e* #f)
 	(other-identifiers #f)
 	(quote-warnings 0)
+	(lint-let-reduction-factor 3) ; maybe make this a global switch -- the higher this number, the fewer let-reduction suggestions
 	(last-simplify-boolean-line-number -1)
 	(last-simplify-numeric-line-number -1)
 	(last-simplify-cxr-line-number -1)
@@ -1507,68 +1509,68 @@
 				(set! gts  '(string<? string>?))
 				(set! eqop 'string=?)))
 			     
-			     (cond ((eq? rel-op 'and)
-				    ;; and
-				    (cond ((equal? c1 c2)
-					   (cond ((eq? op1 op2)
-						  (return `(,op1 ,x ,c1)))
-						 
-						 ((eq? op2 (cadr (assq op1 relops)))
-						  (if (memq op2 gtes)
-						      (return `(,op1 ,x ,c1))
-						      (return `(,op2 ,x ,c1))))
-						 
-						 ((and (memq op1 gtes)
-						       (memq op2 gtes))
-						  (return `(,eqop ,x ,c1)))
-						 
-						 (else (return #f))))
-					  
-					  ((and (typer c1)
-						(typer c2))
-					   (cond ((or (eq? op1 op2)
-						      (eq? op2 (cadr (assq op1 relops))))
-						  (if ((symbol->value op1) c1 c2)
-						      (return `(,op1 ,x ,c1))
-						      (return `(,op2 ,x ,c2))))
-						 ((eq? op1 (caddr (assq op2 relops)))
-						  (if ((symbol->value op1) c2 c1)
-						      (return `(,op1 ,c2 ,x ,c1))
-						      (if (memq op1 gts)
-							  (return #f))))
-						 ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-						       ((symbol->value op1) c1 c2))
-						  (return #f))))))
-				   
-				   ((eq? rel-op 'or) ; redundant...
-				    (cond ((equal? c1 c2)
-					   (cond ((eq? op1 op2)
-						  (return `(,op1 ,x ,c1)))
-						 
-						 ((eq? op2 (cadr (assq op1 relops)))
-						  (if (memq op2 gtes)
-						      (return `(,op2 ,x ,c1))
-						      (return `(,op1 ,x ,c1))))
-						 
-						 ((and (memq op1 gts)
-						       (memq op2 gts))
-						  (return `(not (,eqop ,x ,c1))))
-						 
-						 (else (return #t))))
-					  
-					  ((and (typer c1)
-						(typer c2))
-					   (cond ((or (eq? op1 op2)
-						      (eq? op2 (cadr (assq op1 relops))))
-						  (if ((symbol->value op1) c1 c2) 
-						      (return `(,op2 ,x ,c2))
-						      (return `(,op1 ,x ,c1))))
-						 ((eq? op1 (caddr (assq op2 relops)))
-						  (if ((symbol->value op1) c2 c1)
-						      (return #t)))
-						 ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-						       ((symbol->value op1) c2 c1))
-						  (return #t)))))))))))))))
+			     (case rel-op
+			       ((and)
+				(cond ((equal? c1 c2)
+				       (cond ((eq? op1 op2)
+					      (return `(,op1 ,x ,c1)))
+					     
+					     ((eq? op2 (cadr (assq op1 relops)))
+					      (if (memq op2 gtes)
+						  (return `(,op1 ,x ,c1))
+						  (return `(,op2 ,x ,c1))))
+					     
+					     ((and (memq op1 gtes)
+						   (memq op2 gtes))
+					      (return `(,eqop ,x ,c1)))
+					     
+					     (else (return #f))))
+				      
+				      ((and (typer c1)
+					    (typer c2))
+				       (cond ((or (eq? op1 op2)
+						  (eq? op2 (cadr (assq op1 relops))))
+					      (if ((symbol->value op1) c1 c2)
+						  (return `(,op1 ,x ,c1))
+						  (return `(,op2 ,x ,c2))))
+					     ((eq? op1 (caddr (assq op2 relops)))
+					      (if ((symbol->value op1) c2 c1)
+						  (return `(,op1 ,c2 ,x ,c1))
+						  (if (memq op1 gts)
+						      (return #f))))
+					     ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+						   ((symbol->value op1) c1 c2))
+					      (return #f))))))
+			       
+			       ((or)
+				(cond ((equal? c1 c2)
+				       (cond ((eq? op1 op2)
+					      (return `(,op1 ,x ,c1)))
+					     
+					     ((eq? op2 (cadr (assq op1 relops)))
+					      (if (memq op2 gtes)
+						  (return `(,op2 ,x ,c1))
+						  (return `(,op1 ,x ,c1))))
+					     
+					     ((and (memq op1 gts)
+						   (memq op2 gts))
+					      (return `(not (,eqop ,x ,c1))))
+					     
+					     (else (return #t))))
+				      
+				      ((and (typer c1)
+					    (typer c2))
+				       (cond ((or (eq? op1 op2)
+						  (eq? op2 (cadr (assq op1 relops))))
+					      (if ((symbol->value op1) c1 c2) 
+						  (return `(,op2 ,x ,c2))
+						  (return `(,op1 ,x ,c1))))
+					     ((eq? op1 (caddr (assq op2 relops)))
+					      (if ((symbol->value op1) c2 c1)
+						  (return #t)))
+					     ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+						   ((symbol->value op1) c2 c1))
+					      (return #t)))))))))))))))
 	     'ok)))))
 
     (define (simplify-boolean in-form true false env)
@@ -6796,7 +6798,6 @@
 			     (not dpy-start))
 		    (set! dpy-f fs)
 		    (set! dpy-start ctr))
-					;(format *stderr* "~A ~A ~A ~A~%" f ctr dpy-start len)
 		  (when (and dpy-start
 			     (> (- ctr dpy-start) (if dpy-case 1 2))
 			     (or (= ctr (- len 1))
@@ -7465,7 +7466,6 @@
 				      (pair? val)
 				      (not (pair? (car sym))))
 				 (begin
-					;(format *stderr* "sym: ~A, val: ~A~%" sym val)
 				   (when (pair? (cdr sym))
 				     (if (repeated-member? (proper-list (cdr sym)) env)
 					 (lint-format "~A parameter is repeated: ~A" caller head (truncated-list->string sym)))
@@ -7653,7 +7653,7 @@
 				     (lint-format "quote is not needed here: ~A~A" 
 						  caller (truncated-list->string form)
 						  (if (= quote-warnings 20) "; will ignore this error henceforth." "")))
-				   (if (and (pair? arg) 
+				   (if (and (pair? arg)
 					    (> (length arg) 8))
 				       (hash-table-set! big-constants arg (+ 1 (or (hash-table-ref big-constants arg) 0)))))))))
 		   env)
@@ -9339,7 +9339,34 @@
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars))))
 			     (report-usage caller 'variable head vars cur-env))
-
+#|
+			   ;; not sure about this -- (set! x ...) (f x) as last use of local var x --
+			   ;;   would this be better as (let ((x ...)) (f x)) or (f ...)? 
+			   ;;   tends to look fussy
+			   (when (and (pair? (cddr form))
+				      (not named-let))
+			     (let ((v #f)
+				   (vs ()))
+			       (do ((p (cddr form) (cdr p)))
+				   ((null? p)
+				    ;(if (not (null? vs)) (format *stderr* "vs: ~A~%" vs))
+				    (for-each (lambda (dat)
+						(let ((v (car dat))
+						      (sp (cdr dat)))
+						  (if (and (tree-memq (var-name v) (cadr sp))
+							   (not (tree-memq (var-name v) (cddr sp))))
+						      (lint-format "perhaps ~A" caller
+								   (lists->string 
+								    `(... ,(car sp) ,(cadr sp) ...)
+								    `(... (let ((,(var-name v) ,(caddar sp))) ,(cadr sp)) ...))))))
+					      vs))
+				 (if (and (pair? (car p))
+					  (eq? (caar p) 'set!)
+					  (pair? (cdr p))
+					  (set! v (var-member (cadar p) vars)))
+				     (cond ((assq v vs) => (lambda (dat) (set-cdr! dat p)))
+					   (else (set! vs (cons (cons v p) vs))))))))
+|#
 			   ;; look for exprs replaceable with vars
 			   (unless named-let
 			     (find-let-constant-exprs caller form vars body))
@@ -9390,10 +9417,13 @@
 			   (when (and (not named-let)
 				      (> (length body) 3)
 				      (every? pair? varlist)
-				      (not (tree-set-member '(lambda lambda* 
+				      (not (tree-set-member '(;lambda lambda* 
 							       define define* define-macro define-macro* 
+							       define-bacro define-bacro* define-constant define-expansion
 							       call/cc call-with-current-continuation) 
 							    body)))
+			     ;; define et al are like a continuation of the let bindings, so we can't restrict them by accident
+			     ;;   (let ((x 1)) (define y x) ...)
 			     (let ((last-refs (map (lambda (v) (vector (var-name v) #f 0 v)) vars)))
 			       (do ((p body (cdr p))
 				    (i 0 (+ i 1)))
@@ -9403,7 +9433,7 @@
 				      (for-each (lambda (v)
 						  (set! end (max end (v 2))))
 						last-refs)
-				      (if (and (< end (/ len 2))
+				      (if (and (< end (/ len lint-let-reduction-factor)) ; maybe we need tree-length here
 					       (eq? form lint-current-form))
 
 					  (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
@@ -9435,7 +9465,7 @@
 							  (set! cur-end (v 2))))
 						      last-refs)
 					    (when (and (pair? mnv)
-						       (< cur-end (/ len 2))
+						       (< cur-end (/ len lint-let-reduction-factor))
 						       (> (- len cur-end) 3))
 					      ;; mnv is in the right order because last-refs is reversed
 					      (lint-format "the scope of ~{~A~^, ~} could be reduced: ~A" caller 
@@ -9598,8 +9628,9 @@
 				      (> (length body) 3)
 				      (> (length vars) 1)
 				      (every? pair? varlist)
-				      (not (tree-set-member '(lambda lambda* 
+				      (not (tree-set-member '(;lambda lambda* 
 							       define define* define-macro define-macro* 
+							       define-bacro define-bacro* define-constant define-expansion
 							       call/cc call-with-current-continuation) 
 							    body)))
 			     (let ((last-ref (vector (var-name (car vars)) #f 0 (car vars))))
@@ -9607,7 +9638,7 @@
 				    (i 0 (+ i 1)))
 				   ((null? p)
 				    (let ((len i))
-				      (if (and (< (last-ref 2) (/ len 2))
+				      (if (and (< (last-ref 2) (/ len lint-let-reduction-factor))
 					       (> (- len (last-ref 2)) 3))
 					  (lint-format "the scope of ~A could be reduced: ~A" caller 
 						       (last-ref 0)
@@ -9729,7 +9760,7 @@
 				     (set! walked #t)))))
 			   
 			   (unless walked
-			     (lint-walk-body caller head (cddr form) env)) )))
+			     (lint-walk-body caller head (cddr form) env)))))
 		   env)
 		  
 		  ;; ---------------- defmacro ----------------
@@ -9744,7 +9775,10 @@
 				  (repeated-member? args env))
 			     (lint-format "~A parameter is repeated: ~A" caller head (truncated-list->string args))
 			     (lint-format "~A is deprecated; perhaps ~A" caller head
-					  (truncated-lists->string form `(,(if (eq? head 'defmacro) 'define-macro 'define-macro*) ,(cons sym args) ,@body))))
+					  (truncated-lists->string form 
+								   `(,(if (eq? head 'defmacro) 'define-macro 'define-macro*) 
+								     ,(cons sym args) 
+								     ,@body))))
 			 (lint-walk-function head sym args body form env)))
 		   env)
 		  
@@ -9904,7 +9938,17 @@
 						 (if (and (var? v)
 							  (not (memq form (var-history v))))
 						     (set! (var-history v) (cons form (var-history v)))))))
-					   form))
+					   form)
+
+			       (if (and *report-any-!-as-setter* ; (inc! x) when inc! is unknown, assume it sets x
+					(symbol? (car form))
+					(pair? (cdr form))
+					(symbol? (cadr form))
+					(not (var-member (car form) env))
+					(not (hash-table-ref built-in-functions (car form)))
+					(let ((str (symbol->string (car form))))
+					  (char=? (string-ref str (- (length str) 1)) #\!)))
+				   (set-set (cadr form) form env)))
 
 			     (if (not (var? v))
 				 (check-special-cases caller head form env)
@@ -10301,29 +10345,29 @@
 	  (if (and (string? file)
 		   (pair? vars)
 		   *report-unused-top-level-functions*)
-	      (report-usage file 'top-level-var "" vars vars))
+	      (report-usage file 'top-level-var "" vars vars)))
 
-	  (for-each 
-	   (lambda (p)
-	     (if (or (> (cdr p) 5)
-		     (and (> (cdr p) 3) 
-			  (> (length (car p)) 12)))
-		 (format outport "~A~A occurs ~D times~%"
-			 (if (pair? (car p)) "'" "")
-			 (truncated-list->string (car p)) (cdr p))))
-	   big-constants)
-	  
-	  (if (and *report-undefined-identifiers*
-		   (positive? (hash-table-entries other-identifiers)))
-	      (let ((lst (sort! (map car other-identifiers) (lambda (a b)
-							      (string<? (symbol->string a) (symbol->string b))))))
-		(format outport "~NCth~A identifier~A not defined~A: ~{~S~^ ~}~%"
-			(max lint-left-margin 1) #\space 
-			(if (= (hash-table-entries other-identifiers) 1) "is" "e following")
-			(if (= (hash-table-entries other-identifiers) 1) " was" "s were")
-			(if (string? file) (format #f " in ~S" file) "")
-			lst)
-		(fill! other-identifiers #f))))))))
+	(for-each 
+	 (lambda (p)
+	   (if (or (> (cdr p) 5)
+		   (and (> (cdr p) 3) 
+			(> (length (car p)) 12)))
+	       (format outport "~A~A occurs ~D times~%"
+		       (if (pair? (car p)) "'" "")
+		       (truncated-list->string (car p)) (cdr p))))
+	 big-constants)
+	
+	(if (and *report-undefined-identifiers*
+		 (positive? (hash-table-entries other-identifiers)))
+	    (let ((lst (sort! (map car other-identifiers) (lambda (a b)
+							    (string<? (symbol->string a) (symbol->string b))))))
+	      (format outport "~NCth~A identifier~A not defined~A: ~{~S~^ ~}~%"
+		      (max lint-left-margin 1) #\space 
+		      (if (= (hash-table-entries other-identifiers) 1) "is" "e following")
+		      (if (= (hash-table-entries other-identifiers) 1) " was" "s were")
+		      (if (string? file) (format #f " in ~S" file) "")
+		      lst)
+	      (fill! other-identifiers #f)))))))
 	      
 
 
@@ -10422,18 +10466,26 @@
 ;;; TODO:
 ;;; unquasiquote innards pretty-printed and check quotes, doubled ,@
 ;;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
-;;; for macros (or unknown ids?) ending in !, perhaps scan body for 'set! or just assume cadr is the target?
-;;;   perhaps a switch *any-!-is-setter*, or maybe a list of outside setters?
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
-;;; perhaps for undef ids as args a separate list from other-identifiers?
-;;; with-let sublet/inlet referring to non var?  undef id in with-let -- definitely an error [if let is created from scratch]
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
+;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
+;;; if case-lambda choices are regular (0..n args), we can set up if/cond and define*
+;;;   also if it's one set or else -- dumb! [and names change in different branches--dumber!]
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;  see mus_header_t? in sndlib2xen.c and 5399 above
 ;;;  for each gtk type, make a type macro like mus_header_t, a symbol in the pl_* table, tie in via signature makers
+;;;  these could also be used in the normal procs -- not int
+;;;  need table enum-name -> type + value, type -> enums + values
+;;;  macro: if name -- enum->type, if wrong type complain and match values, if right ok
+;;;         if int, type->enum values and return enum-name, else range check
+;;;         else return typer (integer? string? etc)
+;;;         if logior, can we check each flag?
+;;;  in makexg, need array of names + types + values, and types + names + values, and accessors
+;;;  these need to depend on current gtk version
+;;;  there will be a million signatures...        
 ;;;
 ;;; 1309/176
 ;;;  572/86
-;;;  386/67
+;;;  427/71

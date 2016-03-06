@@ -39704,7 +39704,7 @@ Xen_wrap_1_arg(gxg_GDK_IS_SEAT_w, gxg_GDK_IS_SEAT)
 
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_pair_false;
-static s7_pointer pl_iur, pl_iussitu, pl_iurrsiu, pl_iuut, pl_iuuut, pl_iuuibut, pl_pir, pl_iuisi, pl_pibi, pl_iuuui, pl_iuuuui, pl_ius, pl_iusi, pl_iu, pl_iuiu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_iuis, pl_t, pl_tts, pl_tti, pl_dusr, pl_dust, pl_dut, pl_du, pl_dus, pl_pr, pl_s, pl_tsb, pl_st, pl_tsu, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_ssi, pl_tusiuiuit, pl_turrrru, pl_tubu, pl_tuurru, pl_tuurrrrir, pl_tuurrrri, pl_tuuur, pl_tuuuui, pl_tuusb, pl_turru, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_turis, pl_tubi, pl_tuttiisi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrri, pl_turrrb, pl_tuubbi, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuibu, pl_tuut, pl_tuiui, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tuiu, pl_tuuir, pl_tuir, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tuit, pl_tuis, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tusui, pl_tuuubr, pl_tuiiiu, pl_tuuiu, pl_tuurbr, pl_tuusit, pl_psibiiiit, pl_psrrrb, pl_sui, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psi, pl_psuit, pl_psut, pl_suuub, pl_pur, pl_puuui, pl_puiu, pl_pusiiiu, pl_pusiiuiu, pl_puur, pl_puiiui, pl_pubi, pl_puiiu, pl_puuusuui, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_put, pl_pusiiu, pl_pusi, pl_puui, pl_pub, pl_pust, pl_pusub, pl_puri, pl_bi, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsiib, pl_bsiiuusu, pl_bur, pl_buut, pl_buuti, pl_buttiiiu, pl_butib, pl_buiui, pl_buuusuui, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_busu, pl_bui, pl_bu, pl_buuubu, pl_bus, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buuiiu, pl_buui, pl_buuui, pl_buus, pl_buurbr, pl_busiu, pl_buttu, pl_buuub, pl_buuuub, pl_busib, pl_buusib, pl_iiit, pl_iit, pl_i, pl_itiiub, pl_itsub, pl_itsttti, pl_itiiiut, pl_tiu, pl_it, pl_ti, pl_isiiutttiiu, pl_isi, pl_isit, pl_si, pl_is, pl_trrru, pl_unused;
+static s7_pointer pl_iur, pl_iussitu, pl_iurrsiu, pl_iuut, pl_iuuut, pl_iuuibut, pl_pir, pl_iuisi, pl_pibi, pl_iuuui, pl_iuuuui, pl_ius, pl_iusi, pl_iu, pl_iuiu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_iuis, pl_t, pl_tts, pl_tti, pl_dusr, pl_dust, pl_dut, pl_du, pl_dus, pl_pr, pl_s, pl_tsb, pl_st, pl_tsu, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_ssi, pl_tusiuiuit, pl_turrrru, pl_tubu, pl_tuurru, pl_tuurrrrir, pl_tuurrrri, pl_tuuur, pl_tuuuui, pl_tuusb, pl_turru, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_turis, pl_tubi, pl_tuttiisi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrri, pl_turrrb, pl_tuubbi, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuibu, pl_tuut, pl_tuiui, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tuiu, pl_tuuir, pl_tuir, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tuit, pl_tuis, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tusui, pl_tuuubr, pl_tuiiiu, pl_tuuiu, pl_tuurbr, pl_tuusit, pl_psibiiiit, pl_psrrrb, pl_sui, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psi, pl_psuit, pl_psut, pl_suuub, pl_pur, pl_puuui, pl_puiu, pl_pusiiiu, pl_pusiiuiu, pl_puur, pl_puiiui, pl_pubi, pl_puiiu, pl_puuusuui, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_put, pl_pusiiu, pl_pusi, pl_puui, pl_pub, pl_pust, pl_pusub, pl_puri, pl_bi, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsiib, pl_bsiiuusu, pl_bur, pl_buut, pl_buuti, pl_buttiiiu, pl_butib, pl_buiui, pl_buuusuui, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_busu, pl_bui, pl_bu, pl_buuubu, pl_bus, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buuiiu, pl_buui, pl_buuui, pl_buus, pl_buurbr, pl_busiu, pl_buttu, pl_buuub, pl_buuuub, pl_busib, pl_buusib, pl_iiit, pl_iit, pl_i, pl_itiiub, pl_itsub, pl_itsttti, pl_itiiiut, pl_tiu, pl_it, pl_ti, pl_isiiutttiiu, pl_isi, pl_isit, pl_si, pl_is, pl_trrru, pl_bpt;
 #endif
 
 static void define_functions(void)
@@ -39943,7 +39943,7 @@ static void define_functions(void)
   pl_si = s7_make_circular_signature(s7, 1, 2, s_string, s_integer);
   pl_is = s7_make_circular_signature(s7, 1, 2, s_integer, s_string);
   pl_trrru = s7_make_circular_signature(s7, 4, 5, s_any, s_real, s_real, s_real, s_pair_false);
-pl_unused = NULL;
+  pl_bpt = s7_make_signature(s7, 2, s_pair_false, s_any);
 #endif
 
   Xg_define_procedure(g_unichar_validate, gxg_g_unichar_validate_w, 1, 0, 0, H_g_unichar_validate, pl_bi);
@@ -43605,235 +43605,235 @@ pl_unused = NULL;
 #endif
 
   Xg_define_procedure(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER", NULL);
-  Xg_define_procedure(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT", NULL);
-  Xg_define_procedure(GDK_DEVICE, gxg_GDK_DEVICE_w, 1, 0, 0, "(GDK_DEVICE obj) casts obj to GDK_DEVICE", NULL);
-  Xg_define_procedure(GDK_KEYMAP, gxg_GDK_KEYMAP_w, 1, 0, 0, "(GDK_KEYMAP obj) casts obj to GDK_KEYMAP", NULL);
-  Xg_define_procedure(GDK_VISUAL, gxg_GDK_VISUAL_w, 1, 0, 0, "(GDK_VISUAL obj) casts obj to GDK_VISUAL", NULL);
-  Xg_define_procedure(GDK_WINDOW, gxg_GDK_WINDOW_w, 1, 0, 0, "(GDK_WINDOW obj) casts obj to GDK_WINDOW", NULL);
-  Xg_define_procedure(GDK_PIXBUF, gxg_GDK_PIXBUF_w, 1, 0, 0, "(GDK_PIXBUF obj) casts obj to GDK_PIXBUF", NULL);
-  Xg_define_procedure(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION obj) casts obj to GDK_PIXBUF_ANIMATION", NULL);
-  Xg_define_procedure(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION_ITER obj) casts obj to GDK_PIXBUF_ANIMATION_ITER", NULL);
-  Xg_define_procedure(GTK_ACCEL_GROUP, gxg_GTK_ACCEL_GROUP_w, 1, 0, 0, "(GTK_ACCEL_GROUP obj) casts obj to GTK_ACCEL_GROUP", NULL);
-  Xg_define_procedure(GTK_ACCEL_LABEL, gxg_GTK_ACCEL_LABEL_w, 1, 0, 0, "(GTK_ACCEL_LABEL obj) casts obj to GTK_ACCEL_LABEL", NULL);
-  Xg_define_procedure(GTK_ACCESSIBLE, gxg_GTK_ACCESSIBLE_w, 1, 0, 0, "(GTK_ACCESSIBLE obj) casts obj to GTK_ACCESSIBLE", NULL);
-  Xg_define_procedure(GTK_ADJUSTMENT, gxg_GTK_ADJUSTMENT_w, 1, 0, 0, "(GTK_ADJUSTMENT obj) casts obj to GTK_ADJUSTMENT", NULL);
-  Xg_define_procedure(GTK_ASPECT_FRAME, gxg_GTK_ASPECT_FRAME_w, 1, 0, 0, "(GTK_ASPECT_FRAME obj) casts obj to GTK_ASPECT_FRAME", NULL);
-  Xg_define_procedure(GTK_BUTTON_BOX, gxg_GTK_BUTTON_BOX_w, 1, 0, 0, "(GTK_BUTTON_BOX obj) casts obj to GTK_BUTTON_BOX", NULL);
-  Xg_define_procedure(GTK_BIN, gxg_GTK_BIN_w, 1, 0, 0, "(GTK_BIN obj) casts obj to GTK_BIN", NULL);
-  Xg_define_procedure(GTK_BOX, gxg_GTK_BOX_w, 1, 0, 0, "(GTK_BOX obj) casts obj to GTK_BOX", NULL);
-  Xg_define_procedure(GTK_BUTTON, gxg_GTK_BUTTON_w, 1, 0, 0, "(GTK_BUTTON obj) casts obj to GTK_BUTTON", NULL);
-  Xg_define_procedure(GTK_CALENDAR, gxg_GTK_CALENDAR_w, 1, 0, 0, "(GTK_CALENDAR obj) casts obj to GTK_CALENDAR", NULL);
-  Xg_define_procedure(GTK_CELL_EDITABLE, gxg_GTK_CELL_EDITABLE_w, 1, 0, 0, "(GTK_CELL_EDITABLE obj) casts obj to GTK_CELL_EDITABLE", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER, gxg_GTK_CELL_RENDERER_w, 1, 0, 0, "(GTK_CELL_RENDERER obj) casts obj to GTK_CELL_RENDERER", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_PIXBUF, gxg_GTK_CELL_RENDERER_PIXBUF_w, 1, 0, 0, "(GTK_CELL_RENDERER_PIXBUF obj) casts obj to GTK_CELL_RENDERER_PIXBUF", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_TEXT, gxg_GTK_CELL_RENDERER_TEXT_w, 1, 0, 0, "(GTK_CELL_RENDERER_TEXT obj) casts obj to GTK_CELL_RENDERER_TEXT", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_TOGGLE, gxg_GTK_CELL_RENDERER_TOGGLE_w, 1, 0, 0, "(GTK_CELL_RENDERER_TOGGLE obj) casts obj to GTK_CELL_RENDERER_TOGGLE", NULL);
-  Xg_define_procedure(GTK_CHECK_BUTTON, gxg_GTK_CHECK_BUTTON_w, 1, 0, 0, "(GTK_CHECK_BUTTON obj) casts obj to GTK_CHECK_BUTTON", NULL);
-  Xg_define_procedure(GTK_CHECK_MENU_ITEM, gxg_GTK_CHECK_MENU_ITEM_w, 1, 0, 0, "(GTK_CHECK_MENU_ITEM obj) casts obj to GTK_CHECK_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_CONTAINER, gxg_GTK_CONTAINER_w, 1, 0, 0, "(GTK_CONTAINER obj) casts obj to GTK_CONTAINER", NULL);
-  Xg_define_procedure(GTK_DIALOG, gxg_GTK_DIALOG_w, 1, 0, 0, "(GTK_DIALOG obj) casts obj to GTK_DIALOG", NULL);
-  Xg_define_procedure(GTK_DRAWING_AREA, gxg_GTK_DRAWING_AREA_w, 1, 0, 0, "(GTK_DRAWING_AREA obj) casts obj to GTK_DRAWING_AREA", NULL);
-  Xg_define_procedure(GTK_EDITABLE, gxg_GTK_EDITABLE_w, 1, 0, 0, "(GTK_EDITABLE obj) casts obj to GTK_EDITABLE", NULL);
-  Xg_define_procedure(GTK_ENTRY, gxg_GTK_ENTRY_w, 1, 0, 0, "(GTK_ENTRY obj) casts obj to GTK_ENTRY", NULL);
-  Xg_define_procedure(GTK_EVENT_BOX, gxg_GTK_EVENT_BOX_w, 1, 0, 0, "(GTK_EVENT_BOX obj) casts obj to GTK_EVENT_BOX", NULL);
-  Xg_define_procedure(GTK_FIXED, gxg_GTK_FIXED_w, 1, 0, 0, "(GTK_FIXED obj) casts obj to GTK_FIXED", NULL);
-  Xg_define_procedure(GTK_FRAME, gxg_GTK_FRAME_w, 1, 0, 0, "(GTK_FRAME obj) casts obj to GTK_FRAME", NULL);
-  Xg_define_procedure(GTK_IMAGE, gxg_GTK_IMAGE_w, 1, 0, 0, "(GTK_IMAGE obj) casts obj to GTK_IMAGE", NULL);
-  Xg_define_procedure(GTK_IM_CONTEXT, gxg_GTK_IM_CONTEXT_w, 1, 0, 0, "(GTK_IM_CONTEXT obj) casts obj to GTK_IM_CONTEXT", NULL);
-  Xg_define_procedure(GTK_IM_CONTEXT_SIMPLE, gxg_GTK_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IM_CONTEXT_SIMPLE obj) casts obj to GTK_IM_CONTEXT_SIMPLE", NULL);
-  Xg_define_procedure(GTK_INVISIBLE, gxg_GTK_INVISIBLE_w, 1, 0, 0, "(GTK_INVISIBLE obj) casts obj to GTK_INVISIBLE", NULL);
-  Xg_define_procedure(GTK_LABEL, gxg_GTK_LABEL_w, 1, 0, 0, "(GTK_LABEL obj) casts obj to GTK_LABEL", NULL);
-  Xg_define_procedure(GTK_LAYOUT, gxg_GTK_LAYOUT_w, 1, 0, 0, "(GTK_LAYOUT obj) casts obj to GTK_LAYOUT", NULL);
-  Xg_define_procedure(GTK_LIST_STORE, gxg_GTK_LIST_STORE_w, 1, 0, 0, "(GTK_LIST_STORE obj) casts obj to GTK_LIST_STORE", NULL);
-  Xg_define_procedure(GTK_MENU_BAR, gxg_GTK_MENU_BAR_w, 1, 0, 0, "(GTK_MENU_BAR obj) casts obj to GTK_MENU_BAR", NULL);
-  Xg_define_procedure(GTK_MENU, gxg_GTK_MENU_w, 1, 0, 0, "(GTK_MENU obj) casts obj to GTK_MENU", NULL);
-  Xg_define_procedure(GTK_MENU_ITEM, gxg_GTK_MENU_ITEM_w, 1, 0, 0, "(GTK_MENU_ITEM obj) casts obj to GTK_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_MENU_SHELL, gxg_GTK_MENU_SHELL_w, 1, 0, 0, "(GTK_MENU_SHELL obj) casts obj to GTK_MENU_SHELL", NULL);
-  Xg_define_procedure(GTK_NOTEBOOK, gxg_GTK_NOTEBOOK_w, 1, 0, 0, "(GTK_NOTEBOOK obj) casts obj to GTK_NOTEBOOK", NULL);
-  Xg_define_procedure(GTK_PANED, gxg_GTK_PANED_w, 1, 0, 0, "(GTK_PANED obj) casts obj to GTK_PANED", NULL);
-  Xg_define_procedure(GTK_PROGRESS_BAR, gxg_GTK_PROGRESS_BAR_w, 1, 0, 0, "(GTK_PROGRESS_BAR obj) casts obj to GTK_PROGRESS_BAR", NULL);
-  Xg_define_procedure(GTK_RADIO_BUTTON, gxg_GTK_RADIO_BUTTON_w, 1, 0, 0, "(GTK_RADIO_BUTTON obj) casts obj to GTK_RADIO_BUTTON", NULL);
-  Xg_define_procedure(GTK_RADIO_MENU_ITEM, gxg_GTK_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_RADIO_MENU_ITEM obj) casts obj to GTK_RADIO_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_RANGE, gxg_GTK_RANGE_w, 1, 0, 0, "(GTK_RANGE obj) casts obj to GTK_RANGE", NULL);
-  Xg_define_procedure(GTK_SCALE, gxg_GTK_SCALE_w, 1, 0, 0, "(GTK_SCALE obj) casts obj to GTK_SCALE", NULL);
-  Xg_define_procedure(GTK_SCROLLBAR, gxg_GTK_SCROLLBAR_w, 1, 0, 0, "(GTK_SCROLLBAR obj) casts obj to GTK_SCROLLBAR", NULL);
-  Xg_define_procedure(GTK_SCROLLED_WINDOW, gxg_GTK_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_SCROLLED_WINDOW obj) casts obj to GTK_SCROLLED_WINDOW", NULL);
-  Xg_define_procedure(GTK_SEPARATOR, gxg_GTK_SEPARATOR_w, 1, 0, 0, "(GTK_SEPARATOR obj) casts obj to GTK_SEPARATOR", NULL);
-  Xg_define_procedure(GTK_SEPARATOR_MENU_ITEM, gxg_GTK_SEPARATOR_MENU_ITEM_w, 1, 0, 0, "(GTK_SEPARATOR_MENU_ITEM obj) casts obj to GTK_SEPARATOR_MENU_ITEM", NULL);
-  Xg_define_procedure(GTK_SETTINGS, gxg_GTK_SETTINGS_w, 1, 0, 0, "(GTK_SETTINGS obj) casts obj to GTK_SETTINGS", NULL);
-  Xg_define_procedure(GTK_SIZE_GROUP, gxg_GTK_SIZE_GROUP_w, 1, 0, 0, "(GTK_SIZE_GROUP obj) casts obj to GTK_SIZE_GROUP", NULL);
-  Xg_define_procedure(GTK_SPIN_BUTTON, gxg_GTK_SPIN_BUTTON_w, 1, 0, 0, "(GTK_SPIN_BUTTON obj) casts obj to GTK_SPIN_BUTTON", NULL);
-  Xg_define_procedure(GTK_STATUSBAR, gxg_GTK_STATUSBAR_w, 1, 0, 0, "(GTK_STATUSBAR obj) casts obj to GTK_STATUSBAR", NULL);
-  Xg_define_procedure(GTK_TEXT_BUFFER, gxg_GTK_TEXT_BUFFER_w, 1, 0, 0, "(GTK_TEXT_BUFFER obj) casts obj to GTK_TEXT_BUFFER", NULL);
-  Xg_define_procedure(GTK_TEXT_CHILD_ANCHOR, gxg_GTK_TEXT_CHILD_ANCHOR_w, 1, 0, 0, "(GTK_TEXT_CHILD_ANCHOR obj) casts obj to GTK_TEXT_CHILD_ANCHOR", NULL);
-  Xg_define_procedure(GTK_TEXT_MARK, gxg_GTK_TEXT_MARK_w, 1, 0, 0, "(GTK_TEXT_MARK obj) casts obj to GTK_TEXT_MARK", NULL);
-  Xg_define_procedure(GTK_TEXT_TAG, gxg_GTK_TEXT_TAG_w, 1, 0, 0, "(GTK_TEXT_TAG obj) casts obj to GTK_TEXT_TAG", NULL);
-  Xg_define_procedure(GTK_TEXT_TAG_TABLE, gxg_GTK_TEXT_TAG_TABLE_w, 1, 0, 0, "(GTK_TEXT_TAG_TABLE obj) casts obj to GTK_TEXT_TAG_TABLE", NULL);
-  Xg_define_procedure(GTK_TEXT_VIEW, gxg_GTK_TEXT_VIEW_w, 1, 0, 0, "(GTK_TEXT_VIEW obj) casts obj to GTK_TEXT_VIEW", NULL);
-  Xg_define_procedure(GTK_TOGGLE_BUTTON, gxg_GTK_TOGGLE_BUTTON_w, 1, 0, 0, "(GTK_TOGGLE_BUTTON obj) casts obj to GTK_TOGGLE_BUTTON", NULL);
-  Xg_define_procedure(GTK_TOOLBAR, gxg_GTK_TOOLBAR_w, 1, 0, 0, "(GTK_TOOLBAR obj) casts obj to GTK_TOOLBAR", NULL);
-  Xg_define_procedure(GTK_TREE_DRAG_SOURCE, gxg_GTK_TREE_DRAG_SOURCE_w, 1, 0, 0, "(GTK_TREE_DRAG_SOURCE obj) casts obj to GTK_TREE_DRAG_SOURCE", NULL);
-  Xg_define_procedure(GTK_TREE_DRAG_DEST, gxg_GTK_TREE_DRAG_DEST_w, 1, 0, 0, "(GTK_TREE_DRAG_DEST obj) casts obj to GTK_TREE_DRAG_DEST", NULL);
-  Xg_define_procedure(GTK_TREE_MODEL, gxg_GTK_TREE_MODEL_w, 1, 0, 0, "(GTK_TREE_MODEL obj) casts obj to GTK_TREE_MODEL", NULL);
-  Xg_define_procedure(GTK_TREE_MODEL_SORT, gxg_GTK_TREE_MODEL_SORT_w, 1, 0, 0, "(GTK_TREE_MODEL_SORT obj) casts obj to GTK_TREE_MODEL_SORT", NULL);
-  Xg_define_procedure(GTK_TREE_SELECTION, gxg_GTK_TREE_SELECTION_w, 1, 0, 0, "(GTK_TREE_SELECTION obj) casts obj to GTK_TREE_SELECTION", NULL);
-  Xg_define_procedure(GTK_TREE_SORTABLE, gxg_GTK_TREE_SORTABLE_w, 1, 0, 0, "(GTK_TREE_SORTABLE obj) casts obj to GTK_TREE_SORTABLE", NULL);
-  Xg_define_procedure(GTK_TREE_STORE, gxg_GTK_TREE_STORE_w, 1, 0, 0, "(GTK_TREE_STORE obj) casts obj to GTK_TREE_STORE", NULL);
-  Xg_define_procedure(GTK_TREE_VIEW_COLUMN, gxg_GTK_TREE_VIEW_COLUMN_w, 1, 0, 0, "(GTK_TREE_VIEW_COLUMN obj) casts obj to GTK_TREE_VIEW_COLUMN", NULL);
-  Xg_define_procedure(GTK_TREE_VIEW, gxg_GTK_TREE_VIEW_w, 1, 0, 0, "(GTK_TREE_VIEW obj) casts obj to GTK_TREE_VIEW", NULL);
-  Xg_define_procedure(GTK_VIEWPORT, gxg_GTK_VIEWPORT_w, 1, 0, 0, "(GTK_VIEWPORT obj) casts obj to GTK_VIEWPORT", NULL);
-  Xg_define_procedure(GTK_WIDGET, gxg_GTK_WIDGET_w, 1, 0, 0, "(GTK_WIDGET obj) casts obj to GTK_WIDGET", NULL);
-  Xg_define_procedure(GTK_WINDOW, gxg_GTK_WINDOW_w, 1, 0, 0, "(GTK_WINDOW obj) casts obj to GTK_WINDOW", NULL);
-  Xg_define_procedure(PANGO_CONTEXT, gxg_PANGO_CONTEXT_w, 1, 0, 0, "(PANGO_CONTEXT obj) casts obj to PANGO_CONTEXT", NULL);
-  Xg_define_procedure(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY_w, 1, 0, 0, "(PANGO_FONT_FAMILY obj) casts obj to PANGO_FONT_FAMILY", NULL);
-  Xg_define_procedure(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE_w, 1, 0, 0, "(PANGO_FONT_FACE obj) casts obj to PANGO_FONT_FACE", NULL);
-  Xg_define_procedure(PANGO_FONT, gxg_PANGO_FONT_w, 1, 0, 0, "(PANGO_FONT obj) casts obj to PANGO_FONT", NULL);
-  Xg_define_procedure(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP_w, 1, 0, 0, "(PANGO_FONT_MAP obj) casts obj to PANGO_FONT_MAP", NULL);
-  Xg_define_procedure(PANGO_LAYOUT, gxg_PANGO_LAYOUT_w, 1, 0, 0, "(PANGO_LAYOUT obj) casts obj to PANGO_LAYOUT", NULL);
-  Xg_define_procedure(G_OBJECT, gxg_G_OBJECT_w, 1, 0, 0, "(G_OBJECT obj) casts obj to G_OBJECT", NULL);
-  Xg_define_procedure(GDK_SCREEN, gxg_GDK_SCREEN_w, 1, 0, 0, "(GDK_SCREEN obj) casts obj to GDK_SCREEN", NULL);
-  Xg_define_procedure(GDK_DISPLAY_OBJECT, gxg_GDK_DISPLAY_OBJECT_w, 1, 0, 0, "(GDK_DISPLAY_OBJECT obj) casts obj to GDK_DISPLAY_OBJECT", NULL);
-  Xg_define_procedure(GDK_EVENT, gxg_GDK_EVENT_w, 1, 0, 0, "(GDK_EVENT obj) casts obj to GDK_EVENT", NULL);
-  Xg_define_procedure(GDK_EVENT_ANY, gxg_GDK_EVENT_ANY_w, 1, 0, 0, "(GDK_EVENT_ANY obj) casts obj to GDK_EVENT_ANY", NULL);
-  Xg_define_procedure(GDK_EVENT_EXPOSE, gxg_GDK_EVENT_EXPOSE_w, 1, 0, 0, "(GDK_EVENT_EXPOSE obj) casts obj to GDK_EVENT_EXPOSE", NULL);
-  Xg_define_procedure(GDK_EVENT_NOEXPOSE, gxg_GDK_EVENT_NOEXPOSE_w, 1, 0, 0, "(GDK_EVENT_NOEXPOSE obj) casts obj to GDK_EVENT_NOEXPOSE", NULL);
-  Xg_define_procedure(GDK_EVENT_VISIBILITY, gxg_GDK_EVENT_VISIBILITY_w, 1, 0, 0, "(GDK_EVENT_VISIBILITY obj) casts obj to GDK_EVENT_VISIBILITY", NULL);
-  Xg_define_procedure(GDK_EVENT_MOTION, gxg_GDK_EVENT_MOTION_w, 1, 0, 0, "(GDK_EVENT_MOTION obj) casts obj to GDK_EVENT_MOTION", NULL);
-  Xg_define_procedure(GDK_EVENT_BUTTON, gxg_GDK_EVENT_BUTTON_w, 1, 0, 0, "(GDK_EVENT_BUTTON obj) casts obj to GDK_EVENT_BUTTON", NULL);
-  Xg_define_procedure(GDK_EVENT_SCROLL, gxg_GDK_EVENT_SCROLL_w, 1, 0, 0, "(GDK_EVENT_SCROLL obj) casts obj to GDK_EVENT_SCROLL", NULL);
-  Xg_define_procedure(GDK_EVENT_KEY, gxg_GDK_EVENT_KEY_w, 1, 0, 0, "(GDK_EVENT_KEY obj) casts obj to GDK_EVENT_KEY", NULL);
-  Xg_define_procedure(GDK_EVENT_CROSSING, gxg_GDK_EVENT_CROSSING_w, 1, 0, 0, "(GDK_EVENT_CROSSING obj) casts obj to GDK_EVENT_CROSSING", NULL);
-  Xg_define_procedure(GDK_EVENT_FOCUS, gxg_GDK_EVENT_FOCUS_w, 1, 0, 0, "(GDK_EVENT_FOCUS obj) casts obj to GDK_EVENT_FOCUS", NULL);
-  Xg_define_procedure(GDK_EVENT_CONFIGURE, gxg_GDK_EVENT_CONFIGURE_w, 1, 0, 0, "(GDK_EVENT_CONFIGURE obj) casts obj to GDK_EVENT_CONFIGURE", NULL);
-  Xg_define_procedure(GDK_EVENT_PROPERTY, gxg_GDK_EVENT_PROPERTY_w, 1, 0, 0, "(GDK_EVENT_PROPERTY obj) casts obj to GDK_EVENT_PROPERTY", NULL);
-  Xg_define_procedure(GDK_EVENT_SELECTION, gxg_GDK_EVENT_SELECTION_w, 1, 0, 0, "(GDK_EVENT_SELECTION obj) casts obj to GDK_EVENT_SELECTION", NULL);
-  Xg_define_procedure(GDK_EVENT_PROXIMITY, gxg_GDK_EVENT_PROXIMITY_w, 1, 0, 0, "(GDK_EVENT_PROXIMITY obj) casts obj to GDK_EVENT_PROXIMITY", NULL);
-  Xg_define_procedure(GDK_EVENT_SETTING, gxg_GDK_EVENT_SETTING_w, 1, 0, 0, "(GDK_EVENT_SETTING obj) casts obj to GDK_EVENT_SETTING", NULL);
-  Xg_define_procedure(GDK_EVENT_WINDOWSTATE, gxg_GDK_EVENT_WINDOWSTATE_w, 1, 0, 0, "(GDK_EVENT_WINDOWSTATE obj) casts obj to GDK_EVENT_WINDOWSTATE", NULL);
-  Xg_define_procedure(GDK_EVENT_DND, gxg_GDK_EVENT_DND_w, 1, 0, 0, "(GDK_EVENT_DND obj) casts obj to GDK_EVENT_DND", NULL);
-  Xg_define_procedure(GTK_FILE_CHOOSER_DIALOG, gxg_GTK_FILE_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_FILE_CHOOSER_DIALOG obj) casts obj to GTK_FILE_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_FILE_CHOOSER_WIDGET, gxg_GTK_FILE_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FILE_CHOOSER_WIDGET obj) casts obj to GTK_FILE_CHOOSER_WIDGET", NULL);
-  Xg_define_procedure(GTK_TREE_MODEL_FILTER, gxg_GTK_TREE_MODEL_FILTER_w, 1, 0, 0, "(GTK_TREE_MODEL_FILTER obj) casts obj to GTK_TREE_MODEL_FILTER", NULL);
-  Xg_define_procedure(GTK_COMBO_BOX, gxg_GTK_COMBO_BOX_w, 1, 0, 0, "(GTK_COMBO_BOX obj) casts obj to GTK_COMBO_BOX", NULL);
-  Xg_define_procedure(GTK_EXPANDER, gxg_GTK_EXPANDER_w, 1, 0, 0, "(GTK_EXPANDER obj) casts obj to GTK_EXPANDER", NULL);
-  Xg_define_procedure(GTK_FONT_BUTTON, gxg_GTK_FONT_BUTTON_w, 1, 0, 0, "(GTK_FONT_BUTTON obj) casts obj to GTK_FONT_BUTTON", NULL);
-  Xg_define_procedure(GTK_COLOR_BUTTON, gxg_GTK_COLOR_BUTTON_w, 1, 0, 0, "(GTK_COLOR_BUTTON obj) casts obj to GTK_COLOR_BUTTON", NULL);
-  Xg_define_procedure(GTK_ENTRY_COMPLETION, gxg_GTK_ENTRY_COMPLETION_w, 1, 0, 0, "(GTK_ENTRY_COMPLETION obj) casts obj to GTK_ENTRY_COMPLETION", NULL);
-  Xg_define_procedure(GTK_RADIO_TOOL_BUTTON, gxg_GTK_RADIO_TOOL_BUTTON_w, 1, 0, 0, "(GTK_RADIO_TOOL_BUTTON obj) casts obj to GTK_RADIO_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_SEPARATOR_TOOL_ITEM, gxg_GTK_SEPARATOR_TOOL_ITEM_w, 1, 0, 0, "(GTK_SEPARATOR_TOOL_ITEM obj) casts obj to GTK_SEPARATOR_TOOL_ITEM", NULL);
-  Xg_define_procedure(GTK_TOGGLE_TOOL_BUTTON, gxg_GTK_TOGGLE_TOOL_BUTTON_w, 1, 0, 0, "(GTK_TOGGLE_TOOL_BUTTON obj) casts obj to GTK_TOGGLE_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_FILE_FILTER, gxg_GTK_FILE_FILTER_w, 1, 0, 0, "(GTK_FILE_FILTER obj) casts obj to GTK_FILE_FILTER", NULL);
-  Xg_define_procedure(GTK_CELL_LAYOUT, gxg_GTK_CELL_LAYOUT_w, 1, 0, 0, "(GTK_CELL_LAYOUT obj) casts obj to GTK_CELL_LAYOUT", NULL);
-  Xg_define_procedure(GTK_CLIPBOARD, gxg_GTK_CLIPBOARD_w, 1, 0, 0, "(GTK_CLIPBOARD obj) casts obj to GTK_CLIPBOARD", NULL);
-  Xg_define_procedure(GTK_FILE_CHOOSER, gxg_GTK_FILE_CHOOSER_w, 1, 0, 0, "(GTK_FILE_CHOOSER obj) casts obj to GTK_FILE_CHOOSER", NULL);
-  Xg_define_procedure(GTK_ICON_THEME, gxg_GTK_ICON_THEME_w, 1, 0, 0, "(GTK_ICON_THEME obj) casts obj to GTK_ICON_THEME", NULL);
-  Xg_define_procedure(GTK_TOOL_BUTTON, gxg_GTK_TOOL_BUTTON_w, 1, 0, 0, "(GTK_TOOL_BUTTON obj) casts obj to GTK_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_TOOL_ITEM, gxg_GTK_TOOL_ITEM_w, 1, 0, 0, "(GTK_TOOL_ITEM obj) casts obj to GTK_TOOL_ITEM", NULL);
-  Xg_define_procedure(GTK_ACCEL_MAP, gxg_GTK_ACCEL_MAP_w, 1, 0, 0, "(GTK_ACCEL_MAP obj) casts obj to GTK_ACCEL_MAP", NULL);
-  Xg_define_procedure(GTK_CELL_VIEW, gxg_GTK_CELL_VIEW_w, 1, 0, 0, "(GTK_CELL_VIEW obj) casts obj to GTK_CELL_VIEW", NULL);
-  Xg_define_procedure(GTK_ABOUT_DIALOG, gxg_GTK_ABOUT_DIALOG_w, 1, 0, 0, "(GTK_ABOUT_DIALOG obj) casts obj to GTK_ABOUT_DIALOG", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_COMBO, gxg_GTK_CELL_RENDERER_COMBO_w, 1, 0, 0, "(GTK_CELL_RENDERER_COMBO obj) casts obj to GTK_CELL_RENDERER_COMBO", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_PROGRESS, gxg_GTK_CELL_RENDERER_PROGRESS_w, 1, 0, 0, "(GTK_CELL_RENDERER_PROGRESS obj) casts obj to GTK_CELL_RENDERER_PROGRESS", NULL);
-  Xg_define_procedure(GTK_ICON_VIEW, gxg_GTK_ICON_VIEW_w, 1, 0, 0, "(GTK_ICON_VIEW obj) casts obj to GTK_ICON_VIEW", NULL);
-  Xg_define_procedure(GTK_FILE_CHOOSER_BUTTON, gxg_GTK_FILE_CHOOSER_BUTTON_w, 1, 0, 0, "(GTK_FILE_CHOOSER_BUTTON obj) casts obj to GTK_FILE_CHOOSER_BUTTON", NULL);
-  Xg_define_procedure(GTK_MENU_TOOL_BUTTON, gxg_GTK_MENU_TOOL_BUTTON_w, 1, 0, 0, "(GTK_MENU_TOOL_BUTTON obj) casts obj to GTK_MENU_TOOL_BUTTON", NULL);
-  Xg_define_procedure(GTK_ASSISTANT, gxg_GTK_ASSISTANT_w, 1, 0, 0, "(GTK_ASSISTANT obj) casts obj to GTK_ASSISTANT", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_ACCEL, gxg_GTK_CELL_RENDERER_ACCEL_w, 1, 0, 0, "(GTK_CELL_RENDERER_ACCEL obj) casts obj to GTK_CELL_RENDERER_ACCEL", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_SPIN, gxg_GTK_CELL_RENDERER_SPIN_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPIN obj) casts obj to GTK_CELL_RENDERER_SPIN", NULL);
-  Xg_define_procedure(GTK_LINK_BUTTON, gxg_GTK_LINK_BUTTON_w, 1, 0, 0, "(GTK_LINK_BUTTON obj) casts obj to GTK_LINK_BUTTON", NULL);
-  Xg_define_procedure(GTK_RECENT_CHOOSER_DIALOG, gxg_GTK_RECENT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_DIALOG obj) casts obj to GTK_RECENT_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_RECENT_CHOOSER, gxg_GTK_RECENT_CHOOSER_w, 1, 0, 0, "(GTK_RECENT_CHOOSER obj) casts obj to GTK_RECENT_CHOOSER", NULL);
-  Xg_define_procedure(GTK_RECENT_CHOOSER_MENU, gxg_GTK_RECENT_CHOOSER_MENU_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_MENU obj) casts obj to GTK_RECENT_CHOOSER_MENU", NULL);
-  Xg_define_procedure(GTK_RECENT_CHOOSER_WIDGET, gxg_GTK_RECENT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_WIDGET obj) casts obj to GTK_RECENT_CHOOSER_WIDGET", NULL);
-  Xg_define_procedure(GTK_RECENT_FILTER, gxg_GTK_RECENT_FILTER_w, 1, 0, 0, "(GTK_RECENT_FILTER obj) casts obj to GTK_RECENT_FILTER", NULL);
-  Xg_define_procedure(GTK_RECENT_MANAGER, gxg_GTK_RECENT_MANAGER_w, 1, 0, 0, "(GTK_RECENT_MANAGER obj) casts obj to GTK_RECENT_MANAGER", NULL);
-  Xg_define_procedure(GTK_PRINT_CONTEXT, gxg_GTK_PRINT_CONTEXT_w, 1, 0, 0, "(GTK_PRINT_CONTEXT obj) casts obj to GTK_PRINT_CONTEXT", NULL);
-  Xg_define_procedure(GTK_PRINT_OPERATION, gxg_GTK_PRINT_OPERATION_w, 1, 0, 0, "(GTK_PRINT_OPERATION obj) casts obj to GTK_PRINT_OPERATION", NULL);
-  Xg_define_procedure(GTK_PRINT_OPERATION_PREVIEW, gxg_GTK_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_PRINT_OPERATION_PREVIEW obj) casts obj to GTK_PRINT_OPERATION_PREVIEW", NULL);
-  Xg_define_procedure(GTK_PRINT_SETTINGS, gxg_GTK_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_PRINT_SETTINGS obj) casts obj to GTK_PRINT_SETTINGS", NULL);
-  Xg_define_procedure(GTK_TOOLTIP, gxg_GTK_TOOLTIP_w, 1, 0, 0, "(GTK_TOOLTIP obj) casts obj to GTK_TOOLTIP", NULL);
+  Xg_define_procedure(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT", pl_bpt);
+  Xg_define_procedure(GDK_DEVICE, gxg_GDK_DEVICE_w, 1, 0, 0, "(GDK_DEVICE obj) casts obj to GDK_DEVICE", pl_bpt);
+  Xg_define_procedure(GDK_KEYMAP, gxg_GDK_KEYMAP_w, 1, 0, 0, "(GDK_KEYMAP obj) casts obj to GDK_KEYMAP", pl_bpt);
+  Xg_define_procedure(GDK_VISUAL, gxg_GDK_VISUAL_w, 1, 0, 0, "(GDK_VISUAL obj) casts obj to GDK_VISUAL", pl_bpt);
+  Xg_define_procedure(GDK_WINDOW, gxg_GDK_WINDOW_w, 1, 0, 0, "(GDK_WINDOW obj) casts obj to GDK_WINDOW", pl_bpt);
+  Xg_define_procedure(GDK_PIXBUF, gxg_GDK_PIXBUF_w, 1, 0, 0, "(GDK_PIXBUF obj) casts obj to GDK_PIXBUF", pl_bpt);
+  Xg_define_procedure(GDK_PIXBUF_ANIMATION, gxg_GDK_PIXBUF_ANIMATION_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION obj) casts obj to GDK_PIXBUF_ANIMATION", pl_bpt);
+  Xg_define_procedure(GDK_PIXBUF_ANIMATION_ITER, gxg_GDK_PIXBUF_ANIMATION_ITER_w, 1, 0, 0, "(GDK_PIXBUF_ANIMATION_ITER obj) casts obj to GDK_PIXBUF_ANIMATION_ITER", pl_bpt);
+  Xg_define_procedure(GTK_ACCEL_GROUP, gxg_GTK_ACCEL_GROUP_w, 1, 0, 0, "(GTK_ACCEL_GROUP obj) casts obj to GTK_ACCEL_GROUP", pl_bpt);
+  Xg_define_procedure(GTK_ACCEL_LABEL, gxg_GTK_ACCEL_LABEL_w, 1, 0, 0, "(GTK_ACCEL_LABEL obj) casts obj to GTK_ACCEL_LABEL", pl_bpt);
+  Xg_define_procedure(GTK_ACCESSIBLE, gxg_GTK_ACCESSIBLE_w, 1, 0, 0, "(GTK_ACCESSIBLE obj) casts obj to GTK_ACCESSIBLE", pl_bpt);
+  Xg_define_procedure(GTK_ADJUSTMENT, gxg_GTK_ADJUSTMENT_w, 1, 0, 0, "(GTK_ADJUSTMENT obj) casts obj to GTK_ADJUSTMENT", pl_bpt);
+  Xg_define_procedure(GTK_ASPECT_FRAME, gxg_GTK_ASPECT_FRAME_w, 1, 0, 0, "(GTK_ASPECT_FRAME obj) casts obj to GTK_ASPECT_FRAME", pl_bpt);
+  Xg_define_procedure(GTK_BUTTON_BOX, gxg_GTK_BUTTON_BOX_w, 1, 0, 0, "(GTK_BUTTON_BOX obj) casts obj to GTK_BUTTON_BOX", pl_bpt);
+  Xg_define_procedure(GTK_BIN, gxg_GTK_BIN_w, 1, 0, 0, "(GTK_BIN obj) casts obj to GTK_BIN", pl_bpt);
+  Xg_define_procedure(GTK_BOX, gxg_GTK_BOX_w, 1, 0, 0, "(GTK_BOX obj) casts obj to GTK_BOX", pl_bpt);
+  Xg_define_procedure(GTK_BUTTON, gxg_GTK_BUTTON_w, 1, 0, 0, "(GTK_BUTTON obj) casts obj to GTK_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_CALENDAR, gxg_GTK_CALENDAR_w, 1, 0, 0, "(GTK_CALENDAR obj) casts obj to GTK_CALENDAR", pl_bpt);
+  Xg_define_procedure(GTK_CELL_EDITABLE, gxg_GTK_CELL_EDITABLE_w, 1, 0, 0, "(GTK_CELL_EDITABLE obj) casts obj to GTK_CELL_EDITABLE", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER, gxg_GTK_CELL_RENDERER_w, 1, 0, 0, "(GTK_CELL_RENDERER obj) casts obj to GTK_CELL_RENDERER", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_PIXBUF, gxg_GTK_CELL_RENDERER_PIXBUF_w, 1, 0, 0, "(GTK_CELL_RENDERER_PIXBUF obj) casts obj to GTK_CELL_RENDERER_PIXBUF", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_TEXT, gxg_GTK_CELL_RENDERER_TEXT_w, 1, 0, 0, "(GTK_CELL_RENDERER_TEXT obj) casts obj to GTK_CELL_RENDERER_TEXT", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_TOGGLE, gxg_GTK_CELL_RENDERER_TOGGLE_w, 1, 0, 0, "(GTK_CELL_RENDERER_TOGGLE obj) casts obj to GTK_CELL_RENDERER_TOGGLE", pl_bpt);
+  Xg_define_procedure(GTK_CHECK_BUTTON, gxg_GTK_CHECK_BUTTON_w, 1, 0, 0, "(GTK_CHECK_BUTTON obj) casts obj to GTK_CHECK_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_CHECK_MENU_ITEM, gxg_GTK_CHECK_MENU_ITEM_w, 1, 0, 0, "(GTK_CHECK_MENU_ITEM obj) casts obj to GTK_CHECK_MENU_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_CONTAINER, gxg_GTK_CONTAINER_w, 1, 0, 0, "(GTK_CONTAINER obj) casts obj to GTK_CONTAINER", pl_bpt);
+  Xg_define_procedure(GTK_DIALOG, gxg_GTK_DIALOG_w, 1, 0, 0, "(GTK_DIALOG obj) casts obj to GTK_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_DRAWING_AREA, gxg_GTK_DRAWING_AREA_w, 1, 0, 0, "(GTK_DRAWING_AREA obj) casts obj to GTK_DRAWING_AREA", pl_bpt);
+  Xg_define_procedure(GTK_EDITABLE, gxg_GTK_EDITABLE_w, 1, 0, 0, "(GTK_EDITABLE obj) casts obj to GTK_EDITABLE", pl_bpt);
+  Xg_define_procedure(GTK_ENTRY, gxg_GTK_ENTRY_w, 1, 0, 0, "(GTK_ENTRY obj) casts obj to GTK_ENTRY", pl_bpt);
+  Xg_define_procedure(GTK_EVENT_BOX, gxg_GTK_EVENT_BOX_w, 1, 0, 0, "(GTK_EVENT_BOX obj) casts obj to GTK_EVENT_BOX", pl_bpt);
+  Xg_define_procedure(GTK_FIXED, gxg_GTK_FIXED_w, 1, 0, 0, "(GTK_FIXED obj) casts obj to GTK_FIXED", pl_bpt);
+  Xg_define_procedure(GTK_FRAME, gxg_GTK_FRAME_w, 1, 0, 0, "(GTK_FRAME obj) casts obj to GTK_FRAME", pl_bpt);
+  Xg_define_procedure(GTK_IMAGE, gxg_GTK_IMAGE_w, 1, 0, 0, "(GTK_IMAGE obj) casts obj to GTK_IMAGE", pl_bpt);
+  Xg_define_procedure(GTK_IM_CONTEXT, gxg_GTK_IM_CONTEXT_w, 1, 0, 0, "(GTK_IM_CONTEXT obj) casts obj to GTK_IM_CONTEXT", pl_bpt);
+  Xg_define_procedure(GTK_IM_CONTEXT_SIMPLE, gxg_GTK_IM_CONTEXT_SIMPLE_w, 1, 0, 0, "(GTK_IM_CONTEXT_SIMPLE obj) casts obj to GTK_IM_CONTEXT_SIMPLE", pl_bpt);
+  Xg_define_procedure(GTK_INVISIBLE, gxg_GTK_INVISIBLE_w, 1, 0, 0, "(GTK_INVISIBLE obj) casts obj to GTK_INVISIBLE", pl_bpt);
+  Xg_define_procedure(GTK_LABEL, gxg_GTK_LABEL_w, 1, 0, 0, "(GTK_LABEL obj) casts obj to GTK_LABEL", pl_bpt);
+  Xg_define_procedure(GTK_LAYOUT, gxg_GTK_LAYOUT_w, 1, 0, 0, "(GTK_LAYOUT obj) casts obj to GTK_LAYOUT", pl_bpt);
+  Xg_define_procedure(GTK_LIST_STORE, gxg_GTK_LIST_STORE_w, 1, 0, 0, "(GTK_LIST_STORE obj) casts obj to GTK_LIST_STORE", pl_bpt);
+  Xg_define_procedure(GTK_MENU_BAR, gxg_GTK_MENU_BAR_w, 1, 0, 0, "(GTK_MENU_BAR obj) casts obj to GTK_MENU_BAR", pl_bpt);
+  Xg_define_procedure(GTK_MENU, gxg_GTK_MENU_w, 1, 0, 0, "(GTK_MENU obj) casts obj to GTK_MENU", pl_bpt);
+  Xg_define_procedure(GTK_MENU_ITEM, gxg_GTK_MENU_ITEM_w, 1, 0, 0, "(GTK_MENU_ITEM obj) casts obj to GTK_MENU_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_MENU_SHELL, gxg_GTK_MENU_SHELL_w, 1, 0, 0, "(GTK_MENU_SHELL obj) casts obj to GTK_MENU_SHELL", pl_bpt);
+  Xg_define_procedure(GTK_NOTEBOOK, gxg_GTK_NOTEBOOK_w, 1, 0, 0, "(GTK_NOTEBOOK obj) casts obj to GTK_NOTEBOOK", pl_bpt);
+  Xg_define_procedure(GTK_PANED, gxg_GTK_PANED_w, 1, 0, 0, "(GTK_PANED obj) casts obj to GTK_PANED", pl_bpt);
+  Xg_define_procedure(GTK_PROGRESS_BAR, gxg_GTK_PROGRESS_BAR_w, 1, 0, 0, "(GTK_PROGRESS_BAR obj) casts obj to GTK_PROGRESS_BAR", pl_bpt);
+  Xg_define_procedure(GTK_RADIO_BUTTON, gxg_GTK_RADIO_BUTTON_w, 1, 0, 0, "(GTK_RADIO_BUTTON obj) casts obj to GTK_RADIO_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_RADIO_MENU_ITEM, gxg_GTK_RADIO_MENU_ITEM_w, 1, 0, 0, "(GTK_RADIO_MENU_ITEM obj) casts obj to GTK_RADIO_MENU_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_RANGE, gxg_GTK_RANGE_w, 1, 0, 0, "(GTK_RANGE obj) casts obj to GTK_RANGE", pl_bpt);
+  Xg_define_procedure(GTK_SCALE, gxg_GTK_SCALE_w, 1, 0, 0, "(GTK_SCALE obj) casts obj to GTK_SCALE", pl_bpt);
+  Xg_define_procedure(GTK_SCROLLBAR, gxg_GTK_SCROLLBAR_w, 1, 0, 0, "(GTK_SCROLLBAR obj) casts obj to GTK_SCROLLBAR", pl_bpt);
+  Xg_define_procedure(GTK_SCROLLED_WINDOW, gxg_GTK_SCROLLED_WINDOW_w, 1, 0, 0, "(GTK_SCROLLED_WINDOW obj) casts obj to GTK_SCROLLED_WINDOW", pl_bpt);
+  Xg_define_procedure(GTK_SEPARATOR, gxg_GTK_SEPARATOR_w, 1, 0, 0, "(GTK_SEPARATOR obj) casts obj to GTK_SEPARATOR", pl_bpt);
+  Xg_define_procedure(GTK_SEPARATOR_MENU_ITEM, gxg_GTK_SEPARATOR_MENU_ITEM_w, 1, 0, 0, "(GTK_SEPARATOR_MENU_ITEM obj) casts obj to GTK_SEPARATOR_MENU_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_SETTINGS, gxg_GTK_SETTINGS_w, 1, 0, 0, "(GTK_SETTINGS obj) casts obj to GTK_SETTINGS", pl_bpt);
+  Xg_define_procedure(GTK_SIZE_GROUP, gxg_GTK_SIZE_GROUP_w, 1, 0, 0, "(GTK_SIZE_GROUP obj) casts obj to GTK_SIZE_GROUP", pl_bpt);
+  Xg_define_procedure(GTK_SPIN_BUTTON, gxg_GTK_SPIN_BUTTON_w, 1, 0, 0, "(GTK_SPIN_BUTTON obj) casts obj to GTK_SPIN_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_STATUSBAR, gxg_GTK_STATUSBAR_w, 1, 0, 0, "(GTK_STATUSBAR obj) casts obj to GTK_STATUSBAR", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_BUFFER, gxg_GTK_TEXT_BUFFER_w, 1, 0, 0, "(GTK_TEXT_BUFFER obj) casts obj to GTK_TEXT_BUFFER", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_CHILD_ANCHOR, gxg_GTK_TEXT_CHILD_ANCHOR_w, 1, 0, 0, "(GTK_TEXT_CHILD_ANCHOR obj) casts obj to GTK_TEXT_CHILD_ANCHOR", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_MARK, gxg_GTK_TEXT_MARK_w, 1, 0, 0, "(GTK_TEXT_MARK obj) casts obj to GTK_TEXT_MARK", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_TAG, gxg_GTK_TEXT_TAG_w, 1, 0, 0, "(GTK_TEXT_TAG obj) casts obj to GTK_TEXT_TAG", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_TAG_TABLE, gxg_GTK_TEXT_TAG_TABLE_w, 1, 0, 0, "(GTK_TEXT_TAG_TABLE obj) casts obj to GTK_TEXT_TAG_TABLE", pl_bpt);
+  Xg_define_procedure(GTK_TEXT_VIEW, gxg_GTK_TEXT_VIEW_w, 1, 0, 0, "(GTK_TEXT_VIEW obj) casts obj to GTK_TEXT_VIEW", pl_bpt);
+  Xg_define_procedure(GTK_TOGGLE_BUTTON, gxg_GTK_TOGGLE_BUTTON_w, 1, 0, 0, "(GTK_TOGGLE_BUTTON obj) casts obj to GTK_TOGGLE_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_TOOLBAR, gxg_GTK_TOOLBAR_w, 1, 0, 0, "(GTK_TOOLBAR obj) casts obj to GTK_TOOLBAR", pl_bpt);
+  Xg_define_procedure(GTK_TREE_DRAG_SOURCE, gxg_GTK_TREE_DRAG_SOURCE_w, 1, 0, 0, "(GTK_TREE_DRAG_SOURCE obj) casts obj to GTK_TREE_DRAG_SOURCE", pl_bpt);
+  Xg_define_procedure(GTK_TREE_DRAG_DEST, gxg_GTK_TREE_DRAG_DEST_w, 1, 0, 0, "(GTK_TREE_DRAG_DEST obj) casts obj to GTK_TREE_DRAG_DEST", pl_bpt);
+  Xg_define_procedure(GTK_TREE_MODEL, gxg_GTK_TREE_MODEL_w, 1, 0, 0, "(GTK_TREE_MODEL obj) casts obj to GTK_TREE_MODEL", pl_bpt);
+  Xg_define_procedure(GTK_TREE_MODEL_SORT, gxg_GTK_TREE_MODEL_SORT_w, 1, 0, 0, "(GTK_TREE_MODEL_SORT obj) casts obj to GTK_TREE_MODEL_SORT", pl_bpt);
+  Xg_define_procedure(GTK_TREE_SELECTION, gxg_GTK_TREE_SELECTION_w, 1, 0, 0, "(GTK_TREE_SELECTION obj) casts obj to GTK_TREE_SELECTION", pl_bpt);
+  Xg_define_procedure(GTK_TREE_SORTABLE, gxg_GTK_TREE_SORTABLE_w, 1, 0, 0, "(GTK_TREE_SORTABLE obj) casts obj to GTK_TREE_SORTABLE", pl_bpt);
+  Xg_define_procedure(GTK_TREE_STORE, gxg_GTK_TREE_STORE_w, 1, 0, 0, "(GTK_TREE_STORE obj) casts obj to GTK_TREE_STORE", pl_bpt);
+  Xg_define_procedure(GTK_TREE_VIEW_COLUMN, gxg_GTK_TREE_VIEW_COLUMN_w, 1, 0, 0, "(GTK_TREE_VIEW_COLUMN obj) casts obj to GTK_TREE_VIEW_COLUMN", pl_bpt);
+  Xg_define_procedure(GTK_TREE_VIEW, gxg_GTK_TREE_VIEW_w, 1, 0, 0, "(GTK_TREE_VIEW obj) casts obj to GTK_TREE_VIEW", pl_bpt);
+  Xg_define_procedure(GTK_VIEWPORT, gxg_GTK_VIEWPORT_w, 1, 0, 0, "(GTK_VIEWPORT obj) casts obj to GTK_VIEWPORT", pl_bpt);
+  Xg_define_procedure(GTK_WIDGET, gxg_GTK_WIDGET_w, 1, 0, 0, "(GTK_WIDGET obj) casts obj to GTK_WIDGET", pl_bpt);
+  Xg_define_procedure(GTK_WINDOW, gxg_GTK_WINDOW_w, 1, 0, 0, "(GTK_WINDOW obj) casts obj to GTK_WINDOW", pl_bpt);
+  Xg_define_procedure(PANGO_CONTEXT, gxg_PANGO_CONTEXT_w, 1, 0, 0, "(PANGO_CONTEXT obj) casts obj to PANGO_CONTEXT", pl_bpt);
+  Xg_define_procedure(PANGO_FONT_FAMILY, gxg_PANGO_FONT_FAMILY_w, 1, 0, 0, "(PANGO_FONT_FAMILY obj) casts obj to PANGO_FONT_FAMILY", pl_bpt);
+  Xg_define_procedure(PANGO_FONT_FACE, gxg_PANGO_FONT_FACE_w, 1, 0, 0, "(PANGO_FONT_FACE obj) casts obj to PANGO_FONT_FACE", pl_bpt);
+  Xg_define_procedure(PANGO_FONT, gxg_PANGO_FONT_w, 1, 0, 0, "(PANGO_FONT obj) casts obj to PANGO_FONT", pl_bpt);
+  Xg_define_procedure(PANGO_FONT_MAP, gxg_PANGO_FONT_MAP_w, 1, 0, 0, "(PANGO_FONT_MAP obj) casts obj to PANGO_FONT_MAP", pl_bpt);
+  Xg_define_procedure(PANGO_LAYOUT, gxg_PANGO_LAYOUT_w, 1, 0, 0, "(PANGO_LAYOUT obj) casts obj to PANGO_LAYOUT", pl_bpt);
+  Xg_define_procedure(G_OBJECT, gxg_G_OBJECT_w, 1, 0, 0, "(G_OBJECT obj) casts obj to G_OBJECT", pl_bpt);
+  Xg_define_procedure(GDK_SCREEN, gxg_GDK_SCREEN_w, 1, 0, 0, "(GDK_SCREEN obj) casts obj to GDK_SCREEN", pl_bpt);
+  Xg_define_procedure(GDK_DISPLAY_OBJECT, gxg_GDK_DISPLAY_OBJECT_w, 1, 0, 0, "(GDK_DISPLAY_OBJECT obj) casts obj to GDK_DISPLAY_OBJECT", pl_bpt);
+  Xg_define_procedure(GDK_EVENT, gxg_GDK_EVENT_w, 1, 0, 0, "(GDK_EVENT obj) casts obj to GDK_EVENT", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_ANY, gxg_GDK_EVENT_ANY_w, 1, 0, 0, "(GDK_EVENT_ANY obj) casts obj to GDK_EVENT_ANY", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_EXPOSE, gxg_GDK_EVENT_EXPOSE_w, 1, 0, 0, "(GDK_EVENT_EXPOSE obj) casts obj to GDK_EVENT_EXPOSE", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_NOEXPOSE, gxg_GDK_EVENT_NOEXPOSE_w, 1, 0, 0, "(GDK_EVENT_NOEXPOSE obj) casts obj to GDK_EVENT_NOEXPOSE", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_VISIBILITY, gxg_GDK_EVENT_VISIBILITY_w, 1, 0, 0, "(GDK_EVENT_VISIBILITY obj) casts obj to GDK_EVENT_VISIBILITY", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_MOTION, gxg_GDK_EVENT_MOTION_w, 1, 0, 0, "(GDK_EVENT_MOTION obj) casts obj to GDK_EVENT_MOTION", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_BUTTON, gxg_GDK_EVENT_BUTTON_w, 1, 0, 0, "(GDK_EVENT_BUTTON obj) casts obj to GDK_EVENT_BUTTON", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_SCROLL, gxg_GDK_EVENT_SCROLL_w, 1, 0, 0, "(GDK_EVENT_SCROLL obj) casts obj to GDK_EVENT_SCROLL", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_KEY, gxg_GDK_EVENT_KEY_w, 1, 0, 0, "(GDK_EVENT_KEY obj) casts obj to GDK_EVENT_KEY", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_CROSSING, gxg_GDK_EVENT_CROSSING_w, 1, 0, 0, "(GDK_EVENT_CROSSING obj) casts obj to GDK_EVENT_CROSSING", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_FOCUS, gxg_GDK_EVENT_FOCUS_w, 1, 0, 0, "(GDK_EVENT_FOCUS obj) casts obj to GDK_EVENT_FOCUS", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_CONFIGURE, gxg_GDK_EVENT_CONFIGURE_w, 1, 0, 0, "(GDK_EVENT_CONFIGURE obj) casts obj to GDK_EVENT_CONFIGURE", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_PROPERTY, gxg_GDK_EVENT_PROPERTY_w, 1, 0, 0, "(GDK_EVENT_PROPERTY obj) casts obj to GDK_EVENT_PROPERTY", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_SELECTION, gxg_GDK_EVENT_SELECTION_w, 1, 0, 0, "(GDK_EVENT_SELECTION obj) casts obj to GDK_EVENT_SELECTION", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_PROXIMITY, gxg_GDK_EVENT_PROXIMITY_w, 1, 0, 0, "(GDK_EVENT_PROXIMITY obj) casts obj to GDK_EVENT_PROXIMITY", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_SETTING, gxg_GDK_EVENT_SETTING_w, 1, 0, 0, "(GDK_EVENT_SETTING obj) casts obj to GDK_EVENT_SETTING", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_WINDOWSTATE, gxg_GDK_EVENT_WINDOWSTATE_w, 1, 0, 0, "(GDK_EVENT_WINDOWSTATE obj) casts obj to GDK_EVENT_WINDOWSTATE", pl_bpt);
+  Xg_define_procedure(GDK_EVENT_DND, gxg_GDK_EVENT_DND_w, 1, 0, 0, "(GDK_EVENT_DND obj) casts obj to GDK_EVENT_DND", pl_bpt);
+  Xg_define_procedure(GTK_FILE_CHOOSER_DIALOG, gxg_GTK_FILE_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_FILE_CHOOSER_DIALOG obj) casts obj to GTK_FILE_CHOOSER_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_FILE_CHOOSER_WIDGET, gxg_GTK_FILE_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FILE_CHOOSER_WIDGET obj) casts obj to GTK_FILE_CHOOSER_WIDGET", pl_bpt);
+  Xg_define_procedure(GTK_TREE_MODEL_FILTER, gxg_GTK_TREE_MODEL_FILTER_w, 1, 0, 0, "(GTK_TREE_MODEL_FILTER obj) casts obj to GTK_TREE_MODEL_FILTER", pl_bpt);
+  Xg_define_procedure(GTK_COMBO_BOX, gxg_GTK_COMBO_BOX_w, 1, 0, 0, "(GTK_COMBO_BOX obj) casts obj to GTK_COMBO_BOX", pl_bpt);
+  Xg_define_procedure(GTK_EXPANDER, gxg_GTK_EXPANDER_w, 1, 0, 0, "(GTK_EXPANDER obj) casts obj to GTK_EXPANDER", pl_bpt);
+  Xg_define_procedure(GTK_FONT_BUTTON, gxg_GTK_FONT_BUTTON_w, 1, 0, 0, "(GTK_FONT_BUTTON obj) casts obj to GTK_FONT_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_COLOR_BUTTON, gxg_GTK_COLOR_BUTTON_w, 1, 0, 0, "(GTK_COLOR_BUTTON obj) casts obj to GTK_COLOR_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_ENTRY_COMPLETION, gxg_GTK_ENTRY_COMPLETION_w, 1, 0, 0, "(GTK_ENTRY_COMPLETION obj) casts obj to GTK_ENTRY_COMPLETION", pl_bpt);
+  Xg_define_procedure(GTK_RADIO_TOOL_BUTTON, gxg_GTK_RADIO_TOOL_BUTTON_w, 1, 0, 0, "(GTK_RADIO_TOOL_BUTTON obj) casts obj to GTK_RADIO_TOOL_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_SEPARATOR_TOOL_ITEM, gxg_GTK_SEPARATOR_TOOL_ITEM_w, 1, 0, 0, "(GTK_SEPARATOR_TOOL_ITEM obj) casts obj to GTK_SEPARATOR_TOOL_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_TOGGLE_TOOL_BUTTON, gxg_GTK_TOGGLE_TOOL_BUTTON_w, 1, 0, 0, "(GTK_TOGGLE_TOOL_BUTTON obj) casts obj to GTK_TOGGLE_TOOL_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_FILE_FILTER, gxg_GTK_FILE_FILTER_w, 1, 0, 0, "(GTK_FILE_FILTER obj) casts obj to GTK_FILE_FILTER", pl_bpt);
+  Xg_define_procedure(GTK_CELL_LAYOUT, gxg_GTK_CELL_LAYOUT_w, 1, 0, 0, "(GTK_CELL_LAYOUT obj) casts obj to GTK_CELL_LAYOUT", pl_bpt);
+  Xg_define_procedure(GTK_CLIPBOARD, gxg_GTK_CLIPBOARD_w, 1, 0, 0, "(GTK_CLIPBOARD obj) casts obj to GTK_CLIPBOARD", pl_bpt);
+  Xg_define_procedure(GTK_FILE_CHOOSER, gxg_GTK_FILE_CHOOSER_w, 1, 0, 0, "(GTK_FILE_CHOOSER obj) casts obj to GTK_FILE_CHOOSER", pl_bpt);
+  Xg_define_procedure(GTK_ICON_THEME, gxg_GTK_ICON_THEME_w, 1, 0, 0, "(GTK_ICON_THEME obj) casts obj to GTK_ICON_THEME", pl_bpt);
+  Xg_define_procedure(GTK_TOOL_BUTTON, gxg_GTK_TOOL_BUTTON_w, 1, 0, 0, "(GTK_TOOL_BUTTON obj) casts obj to GTK_TOOL_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_TOOL_ITEM, gxg_GTK_TOOL_ITEM_w, 1, 0, 0, "(GTK_TOOL_ITEM obj) casts obj to GTK_TOOL_ITEM", pl_bpt);
+  Xg_define_procedure(GTK_ACCEL_MAP, gxg_GTK_ACCEL_MAP_w, 1, 0, 0, "(GTK_ACCEL_MAP obj) casts obj to GTK_ACCEL_MAP", pl_bpt);
+  Xg_define_procedure(GTK_CELL_VIEW, gxg_GTK_CELL_VIEW_w, 1, 0, 0, "(GTK_CELL_VIEW obj) casts obj to GTK_CELL_VIEW", pl_bpt);
+  Xg_define_procedure(GTK_ABOUT_DIALOG, gxg_GTK_ABOUT_DIALOG_w, 1, 0, 0, "(GTK_ABOUT_DIALOG obj) casts obj to GTK_ABOUT_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_COMBO, gxg_GTK_CELL_RENDERER_COMBO_w, 1, 0, 0, "(GTK_CELL_RENDERER_COMBO obj) casts obj to GTK_CELL_RENDERER_COMBO", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_PROGRESS, gxg_GTK_CELL_RENDERER_PROGRESS_w, 1, 0, 0, "(GTK_CELL_RENDERER_PROGRESS obj) casts obj to GTK_CELL_RENDERER_PROGRESS", pl_bpt);
+  Xg_define_procedure(GTK_ICON_VIEW, gxg_GTK_ICON_VIEW_w, 1, 0, 0, "(GTK_ICON_VIEW obj) casts obj to GTK_ICON_VIEW", pl_bpt);
+  Xg_define_procedure(GTK_FILE_CHOOSER_BUTTON, gxg_GTK_FILE_CHOOSER_BUTTON_w, 1, 0, 0, "(GTK_FILE_CHOOSER_BUTTON obj) casts obj to GTK_FILE_CHOOSER_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_MENU_TOOL_BUTTON, gxg_GTK_MENU_TOOL_BUTTON_w, 1, 0, 0, "(GTK_MENU_TOOL_BUTTON obj) casts obj to GTK_MENU_TOOL_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_ASSISTANT, gxg_GTK_ASSISTANT_w, 1, 0, 0, "(GTK_ASSISTANT obj) casts obj to GTK_ASSISTANT", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_ACCEL, gxg_GTK_CELL_RENDERER_ACCEL_w, 1, 0, 0, "(GTK_CELL_RENDERER_ACCEL obj) casts obj to GTK_CELL_RENDERER_ACCEL", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_SPIN, gxg_GTK_CELL_RENDERER_SPIN_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPIN obj) casts obj to GTK_CELL_RENDERER_SPIN", pl_bpt);
+  Xg_define_procedure(GTK_LINK_BUTTON, gxg_GTK_LINK_BUTTON_w, 1, 0, 0, "(GTK_LINK_BUTTON obj) casts obj to GTK_LINK_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_CHOOSER_DIALOG, gxg_GTK_RECENT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_DIALOG obj) casts obj to GTK_RECENT_CHOOSER_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_CHOOSER, gxg_GTK_RECENT_CHOOSER_w, 1, 0, 0, "(GTK_RECENT_CHOOSER obj) casts obj to GTK_RECENT_CHOOSER", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_CHOOSER_MENU, gxg_GTK_RECENT_CHOOSER_MENU_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_MENU obj) casts obj to GTK_RECENT_CHOOSER_MENU", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_CHOOSER_WIDGET, gxg_GTK_RECENT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_RECENT_CHOOSER_WIDGET obj) casts obj to GTK_RECENT_CHOOSER_WIDGET", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_FILTER, gxg_GTK_RECENT_FILTER_w, 1, 0, 0, "(GTK_RECENT_FILTER obj) casts obj to GTK_RECENT_FILTER", pl_bpt);
+  Xg_define_procedure(GTK_RECENT_MANAGER, gxg_GTK_RECENT_MANAGER_w, 1, 0, 0, "(GTK_RECENT_MANAGER obj) casts obj to GTK_RECENT_MANAGER", pl_bpt);
+  Xg_define_procedure(GTK_PRINT_CONTEXT, gxg_GTK_PRINT_CONTEXT_w, 1, 0, 0, "(GTK_PRINT_CONTEXT obj) casts obj to GTK_PRINT_CONTEXT", pl_bpt);
+  Xg_define_procedure(GTK_PRINT_OPERATION, gxg_GTK_PRINT_OPERATION_w, 1, 0, 0, "(GTK_PRINT_OPERATION obj) casts obj to GTK_PRINT_OPERATION", pl_bpt);
+  Xg_define_procedure(GTK_PRINT_OPERATION_PREVIEW, gxg_GTK_PRINT_OPERATION_PREVIEW_w, 1, 0, 0, "(GTK_PRINT_OPERATION_PREVIEW obj) casts obj to GTK_PRINT_OPERATION_PREVIEW", pl_bpt);
+  Xg_define_procedure(GTK_PRINT_SETTINGS, gxg_GTK_PRINT_SETTINGS_w, 1, 0, 0, "(GTK_PRINT_SETTINGS obj) casts obj to GTK_PRINT_SETTINGS", pl_bpt);
+  Xg_define_procedure(GTK_TOOLTIP, gxg_GTK_TOOLTIP_w, 1, 0, 0, "(GTK_TOOLTIP obj) casts obj to GTK_TOOLTIP", pl_bpt);
 #if GTK_CHECK_VERSION(2, 18, 0)
-  Xg_define_procedure(GTK_INFO_BAR, gxg_GTK_INFO_BAR_w, 1, 0, 0, "(GTK_INFO_BAR obj) casts obj to GTK_INFO_BAR", NULL);
-  Xg_define_procedure(GTK_ENTRY_BUFFER, gxg_GTK_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_ENTRY_BUFFER obj) casts obj to GTK_ENTRY_BUFFER", NULL);
+  Xg_define_procedure(GTK_INFO_BAR, gxg_GTK_INFO_BAR_w, 1, 0, 0, "(GTK_INFO_BAR obj) casts obj to GTK_INFO_BAR", pl_bpt);
+  Xg_define_procedure(GTK_ENTRY_BUFFER, gxg_GTK_ENTRY_BUFFER_w, 1, 0, 0, "(GTK_ENTRY_BUFFER obj) casts obj to GTK_ENTRY_BUFFER", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(2, 20, 0)
-  Xg_define_procedure(GTK_SPINNER, gxg_GTK_SPINNER_w, 1, 0, 0, "(GTK_SPINNER obj) casts obj to GTK_SPINNER", NULL);
-  Xg_define_procedure(GTK_CELL_RENDERER_SPINNER, gxg_GTK_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPINNER obj) casts obj to GTK_CELL_RENDERER_SPINNER", NULL);
-  Xg_define_procedure(GTK_TOOL_PALETTE, gxg_GTK_TOOL_PALETTE_w, 1, 0, 0, "(GTK_TOOL_PALETTE obj) casts obj to GTK_TOOL_PALETTE", NULL);
-  Xg_define_procedure(GTK_TOOL_ITEM_GROUP, gxg_GTK_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_TOOL_ITEM_GROUP obj) casts obj to GTK_TOOL_ITEM_GROUP", NULL);
+  Xg_define_procedure(GTK_SPINNER, gxg_GTK_SPINNER_w, 1, 0, 0, "(GTK_SPINNER obj) casts obj to GTK_SPINNER", pl_bpt);
+  Xg_define_procedure(GTK_CELL_RENDERER_SPINNER, gxg_GTK_CELL_RENDERER_SPINNER_w, 1, 0, 0, "(GTK_CELL_RENDERER_SPINNER obj) casts obj to GTK_CELL_RENDERER_SPINNER", pl_bpt);
+  Xg_define_procedure(GTK_TOOL_PALETTE, gxg_GTK_TOOL_PALETTE_w, 1, 0, 0, "(GTK_TOOL_PALETTE obj) casts obj to GTK_TOOL_PALETTE", pl_bpt);
+  Xg_define_procedure(GTK_TOOL_ITEM_GROUP, gxg_GTK_TOOL_ITEM_GROUP_w, 1, 0, 0, "(GTK_TOOL_ITEM_GROUP obj) casts obj to GTK_TOOL_ITEM_GROUP", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-  Xg_define_procedure(GTK_COMBO_BOX_TEXT, gxg_GTK_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_COMBO_BOX_TEXT obj) casts obj to GTK_COMBO_BOX_TEXT", NULL);
-  Xg_define_procedure(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID", NULL);
-  Xg_define_procedure(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE", NULL);
-  Xg_define_procedure(GDK_RGBA, gxg_GDK_RGBA_w, 1, 0, 0, "(GDK_RGBA obj) casts obj to GDK_RGBA", NULL);
-  Xg_define_procedure(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH", NULL);
-  Xg_define_procedure(GTK_ORIENTABLE, gxg_GTK_ORIENTABLE_w, 1, 0, 0, "(GTK_ORIENTABLE obj) casts obj to GTK_ORIENTABLE", NULL);
-  Xg_define_procedure(GTK_WINDOW_GROUP, gxg_GTK_WINDOW_GROUP_w, 1, 0, 0, "(GTK_WINDOW_GROUP obj) casts obj to GTK_WINDOW_GROUP", NULL);
-  Xg_define_procedure(GTK_TOOL_SHELL, gxg_GTK_TOOL_SHELL_w, 1, 0, 0, "(GTK_TOOL_SHELL obj) casts obj to GTK_TOOL_SHELL", NULL);
+  Xg_define_procedure(GTK_COMBO_BOX_TEXT, gxg_GTK_COMBO_BOX_TEXT_w, 1, 0, 0, "(GTK_COMBO_BOX_TEXT obj) casts obj to GTK_COMBO_BOX_TEXT", pl_bpt);
+  Xg_define_procedure(GTK_GRID, gxg_GTK_GRID_w, 1, 0, 0, "(GTK_GRID obj) casts obj to GTK_GRID", pl_bpt);
+  Xg_define_procedure(GTK_SCROLLABLE, gxg_GTK_SCROLLABLE_w, 1, 0, 0, "(GTK_SCROLLABLE obj) casts obj to GTK_SCROLLABLE", pl_bpt);
+  Xg_define_procedure(GDK_RGBA, gxg_GDK_RGBA_w, 1, 0, 0, "(GDK_RGBA obj) casts obj to GDK_RGBA", pl_bpt);
+  Xg_define_procedure(GTK_SWITCH, gxg_GTK_SWITCH_w, 1, 0, 0, "(GTK_SWITCH obj) casts obj to GTK_SWITCH", pl_bpt);
+  Xg_define_procedure(GTK_ORIENTABLE, gxg_GTK_ORIENTABLE_w, 1, 0, 0, "(GTK_ORIENTABLE obj) casts obj to GTK_ORIENTABLE", pl_bpt);
+  Xg_define_procedure(GTK_WINDOW_GROUP, gxg_GTK_WINDOW_GROUP_w, 1, 0, 0, "(GTK_WINDOW_GROUP obj) casts obj to GTK_WINDOW_GROUP", pl_bpt);
+  Xg_define_procedure(GTK_TOOL_SHELL, gxg_GTK_TOOL_SHELL_w, 1, 0, 0, "(GTK_TOOL_SHELL obj) casts obj to GTK_TOOL_SHELL", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 2, 0)
-  Xg_define_procedure(GTK_OVERLAY, gxg_GTK_OVERLAY_w, 1, 0, 0, "(GTK_OVERLAY obj) casts obj to GTK_OVERLAY", NULL);
-  Xg_define_procedure(GTK_FONT_CHOOSER, gxg_GTK_FONT_CHOOSER_w, 1, 0, 0, "(GTK_FONT_CHOOSER obj) casts obj to GTK_FONT_CHOOSER", NULL);
-  Xg_define_procedure(GTK_FONT_CHOOSER_DIALOG, gxg_GTK_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_FONT_CHOOSER_DIALOG obj) casts obj to GTK_FONT_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_FONT_CHOOSER_WIDGET, gxg_GTK_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FONT_CHOOSER_WIDGET obj) casts obj to GTK_FONT_CHOOSER_WIDGET", NULL);
+  Xg_define_procedure(GTK_OVERLAY, gxg_GTK_OVERLAY_w, 1, 0, 0, "(GTK_OVERLAY obj) casts obj to GTK_OVERLAY", pl_bpt);
+  Xg_define_procedure(GTK_FONT_CHOOSER, gxg_GTK_FONT_CHOOSER_w, 1, 0, 0, "(GTK_FONT_CHOOSER obj) casts obj to GTK_FONT_CHOOSER", pl_bpt);
+  Xg_define_procedure(GTK_FONT_CHOOSER_DIALOG, gxg_GTK_FONT_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_FONT_CHOOSER_DIALOG obj) casts obj to GTK_FONT_CHOOSER_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_FONT_CHOOSER_WIDGET, gxg_GTK_FONT_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_FONT_CHOOSER_WIDGET obj) casts obj to GTK_FONT_CHOOSER_WIDGET", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 4, 0)
-  Xg_define_procedure(GTK_APPLICATION_WINDOW, gxg_GTK_APPLICATION_WINDOW_w, 1, 0, 0, "(GTK_APPLICATION_WINDOW obj) casts obj to GTK_APPLICATION_WINDOW", NULL);
-  Xg_define_procedure(GTK_COLOR_CHOOSER_DIALOG, gxg_GTK_COLOR_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_COLOR_CHOOSER_DIALOG obj) casts obj to GTK_COLOR_CHOOSER_DIALOG", NULL);
-  Xg_define_procedure(GTK_COLOR_CHOOSER_WIDGET, gxg_GTK_COLOR_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_COLOR_CHOOSER_WIDGET obj) casts obj to GTK_COLOR_CHOOSER_WIDGET", NULL);
+  Xg_define_procedure(GTK_APPLICATION_WINDOW, gxg_GTK_APPLICATION_WINDOW_w, 1, 0, 0, "(GTK_APPLICATION_WINDOW obj) casts obj to GTK_APPLICATION_WINDOW", pl_bpt);
+  Xg_define_procedure(GTK_COLOR_CHOOSER_DIALOG, gxg_GTK_COLOR_CHOOSER_DIALOG_w, 1, 0, 0, "(GTK_COLOR_CHOOSER_DIALOG obj) casts obj to GTK_COLOR_CHOOSER_DIALOG", pl_bpt);
+  Xg_define_procedure(GTK_COLOR_CHOOSER_WIDGET, gxg_GTK_COLOR_CHOOSER_WIDGET_w, 1, 0, 0, "(GTK_COLOR_CHOOSER_WIDGET obj) casts obj to GTK_COLOR_CHOOSER_WIDGET", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 6, 0)
-  Xg_define_procedure(GTK_MENU_BUTTON, gxg_GTK_MENU_BUTTON_w, 1, 0, 0, "(GTK_MENU_BUTTON obj) casts obj to GTK_MENU_BUTTON", NULL);
-  Xg_define_procedure(GTK_SEARCH_ENTRY, gxg_GTK_SEARCH_ENTRY_w, 1, 0, 0, "(GTK_SEARCH_ENTRY obj) casts obj to GTK_SEARCH_ENTRY", NULL);
-  Xg_define_procedure(GTK_LEVEL_BAR, gxg_GTK_LEVEL_BAR_w, 1, 0, 0, "(GTK_LEVEL_BAR obj) casts obj to GTK_LEVEL_BAR", NULL);
+  Xg_define_procedure(GTK_MENU_BUTTON, gxg_GTK_MENU_BUTTON_w, 1, 0, 0, "(GTK_MENU_BUTTON obj) casts obj to GTK_MENU_BUTTON", pl_bpt);
+  Xg_define_procedure(GTK_SEARCH_ENTRY, gxg_GTK_SEARCH_ENTRY_w, 1, 0, 0, "(GTK_SEARCH_ENTRY obj) casts obj to GTK_SEARCH_ENTRY", pl_bpt);
+  Xg_define_procedure(GTK_LEVEL_BAR, gxg_GTK_LEVEL_BAR_w, 1, 0, 0, "(GTK_LEVEL_BAR obj) casts obj to GTK_LEVEL_BAR", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 10, 0)
-  Xg_define_procedure(GTK_PLACES_SIDEBAR, gxg_GTK_PLACES_SIDEBAR_w, 1, 0, 0, "(GTK_PLACES_SIDEBAR obj) casts obj to GTK_PLACES_SIDEBAR", NULL);
-  Xg_define_procedure(GTK_STACK_SWITCHER, gxg_GTK_STACK_SWITCHER_w, 1, 0, 0, "(GTK_STACK_SWITCHER obj) casts obj to GTK_STACK_SWITCHER", NULL);
-  Xg_define_procedure(GTK_STACK, gxg_GTK_STACK_w, 1, 0, 0, "(GTK_STACK obj) casts obj to GTK_STACK", NULL);
-  Xg_define_procedure(GTK_REVEALER, gxg_GTK_REVEALER_w, 1, 0, 0, "(GTK_REVEALER obj) casts obj to GTK_REVEALER", NULL);
-  Xg_define_procedure(GTK_HEADER_BAR, gxg_GTK_HEADER_BAR_w, 1, 0, 0, "(GTK_HEADER_BAR obj) casts obj to GTK_HEADER_BAR", NULL);
-  Xg_define_procedure(GTK_LIST_BOX, gxg_GTK_LIST_BOX_w, 1, 0, 0, "(GTK_LIST_BOX obj) casts obj to GTK_LIST_BOX", NULL);
-  Xg_define_procedure(GTK_LIST_BOX_ROW, gxg_GTK_LIST_BOX_ROW_w, 1, 0, 0, "(GTK_LIST_BOX_ROW obj) casts obj to GTK_LIST_BOX_ROW", NULL);
-  Xg_define_procedure(GTK_SEARCH_BAR, gxg_GTK_SEARCH_BAR_w, 1, 0, 0, "(GTK_SEARCH_BAR obj) casts obj to GTK_SEARCH_BAR", NULL);
+  Xg_define_procedure(GTK_PLACES_SIDEBAR, gxg_GTK_PLACES_SIDEBAR_w, 1, 0, 0, "(GTK_PLACES_SIDEBAR obj) casts obj to GTK_PLACES_SIDEBAR", pl_bpt);
+  Xg_define_procedure(GTK_STACK_SWITCHER, gxg_GTK_STACK_SWITCHER_w, 1, 0, 0, "(GTK_STACK_SWITCHER obj) casts obj to GTK_STACK_SWITCHER", pl_bpt);
+  Xg_define_procedure(GTK_STACK, gxg_GTK_STACK_w, 1, 0, 0, "(GTK_STACK obj) casts obj to GTK_STACK", pl_bpt);
+  Xg_define_procedure(GTK_REVEALER, gxg_GTK_REVEALER_w, 1, 0, 0, "(GTK_REVEALER obj) casts obj to GTK_REVEALER", pl_bpt);
+  Xg_define_procedure(GTK_HEADER_BAR, gxg_GTK_HEADER_BAR_w, 1, 0, 0, "(GTK_HEADER_BAR obj) casts obj to GTK_HEADER_BAR", pl_bpt);
+  Xg_define_procedure(GTK_LIST_BOX, gxg_GTK_LIST_BOX_w, 1, 0, 0, "(GTK_LIST_BOX obj) casts obj to GTK_LIST_BOX", pl_bpt);
+  Xg_define_procedure(GTK_LIST_BOX_ROW, gxg_GTK_LIST_BOX_ROW_w, 1, 0, 0, "(GTK_LIST_BOX_ROW obj) casts obj to GTK_LIST_BOX_ROW", pl_bpt);
+  Xg_define_procedure(GTK_SEARCH_BAR, gxg_GTK_SEARCH_BAR_w, 1, 0, 0, "(GTK_SEARCH_BAR obj) casts obj to GTK_SEARCH_BAR", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 12, 0)
-  Xg_define_procedure(GTK_FLOW_BOX, gxg_GTK_FLOW_BOX_w, 1, 0, 0, "(GTK_FLOW_BOX obj) casts obj to GTK_FLOW_BOX", NULL);
-  Xg_define_procedure(GTK_FLOW_BOX_CHILD, gxg_GTK_FLOW_BOX_CHILD_w, 1, 0, 0, "(GTK_FLOW_BOX_CHILD obj) casts obj to GTK_FLOW_BOX_CHILD", NULL);
-  Xg_define_procedure(GTK_ACTION_BAR, gxg_GTK_ACTION_BAR_w, 1, 0, 0, "(GTK_ACTION_BAR obj) casts obj to GTK_ACTION_BAR", NULL);
-  Xg_define_procedure(GTK_POPOVER, gxg_GTK_POPOVER_w, 1, 0, 0, "(GTK_POPOVER obj) casts obj to GTK_POPOVER", NULL);
+  Xg_define_procedure(GTK_FLOW_BOX, gxg_GTK_FLOW_BOX_w, 1, 0, 0, "(GTK_FLOW_BOX obj) casts obj to GTK_FLOW_BOX", pl_bpt);
+  Xg_define_procedure(GTK_FLOW_BOX_CHILD, gxg_GTK_FLOW_BOX_CHILD_w, 1, 0, 0, "(GTK_FLOW_BOX_CHILD obj) casts obj to GTK_FLOW_BOX_CHILD", pl_bpt);
+  Xg_define_procedure(GTK_ACTION_BAR, gxg_GTK_ACTION_BAR_w, 1, 0, 0, "(GTK_ACTION_BAR obj) casts obj to GTK_ACTION_BAR", pl_bpt);
+  Xg_define_procedure(GTK_POPOVER, gxg_GTK_POPOVER_w, 1, 0, 0, "(GTK_POPOVER obj) casts obj to GTK_POPOVER", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 14, 0)
-  Xg_define_procedure(GTK_GESTURE, gxg_GTK_GESTURE_w, 1, 0, 0, "(GTK_GESTURE obj) casts obj to GTK_GESTURE", NULL);
-  Xg_define_procedure(GTK_GESTURE_DRAG, gxg_GTK_GESTURE_DRAG_w, 1, 0, 0, "(GTK_GESTURE_DRAG obj) casts obj to GTK_GESTURE_DRAG", NULL);
-  Xg_define_procedure(GTK_GESTURE_LONG_PRESS, gxg_GTK_GESTURE_LONG_PRESS_w, 1, 0, 0, "(GTK_GESTURE_LONG_PRESS obj) casts obj to GTK_GESTURE_LONG_PRESS", NULL);
-  Xg_define_procedure(GTK_GESTURE_ZOOM, gxg_GTK_GESTURE_ZOOM_w, 1, 0, 0, "(GTK_GESTURE_ZOOM obj) casts obj to GTK_GESTURE_ZOOM", NULL);
-  Xg_define_procedure(GTK_GESTURE_SWIPE, gxg_GTK_GESTURE_SWIPE_w, 1, 0, 0, "(GTK_GESTURE_SWIPE obj) casts obj to GTK_GESTURE_SWIPE", NULL);
-  Xg_define_procedure(GTK_GESTURE_SINGLE, gxg_GTK_GESTURE_SINGLE_w, 1, 0, 0, "(GTK_GESTURE_SINGLE obj) casts obj to GTK_GESTURE_SINGLE", NULL);
-  Xg_define_procedure(GTK_GESTURE_PAN, gxg_GTK_GESTURE_PAN_w, 1, 0, 0, "(GTK_GESTURE_PAN obj) casts obj to GTK_GESTURE_PAN", NULL);
-  Xg_define_procedure(GTK_GESTURE_MULTI_PRESS, gxg_GTK_GESTURE_MULTI_PRESS_w, 1, 0, 0, "(GTK_GESTURE_MULTI_PRESS obj) casts obj to GTK_GESTURE_MULTI_PRESS", NULL);
-  Xg_define_procedure(GTK_GESTURE_ROTATE, gxg_GTK_GESTURE_ROTATE_w, 1, 0, 0, "(GTK_GESTURE_ROTATE obj) casts obj to GTK_GESTURE_ROTATE", NULL);
-  Xg_define_procedure(GTK_EVENT_CONTROLLER, gxg_GTK_EVENT_CONTROLLER_w, 1, 0, 0, "(GTK_EVENT_CONTROLLER obj) casts obj to GTK_EVENT_CONTROLLER", NULL);
+  Xg_define_procedure(GTK_GESTURE, gxg_GTK_GESTURE_w, 1, 0, 0, "(GTK_GESTURE obj) casts obj to GTK_GESTURE", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_DRAG, gxg_GTK_GESTURE_DRAG_w, 1, 0, 0, "(GTK_GESTURE_DRAG obj) casts obj to GTK_GESTURE_DRAG", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_LONG_PRESS, gxg_GTK_GESTURE_LONG_PRESS_w, 1, 0, 0, "(GTK_GESTURE_LONG_PRESS obj) casts obj to GTK_GESTURE_LONG_PRESS", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_ZOOM, gxg_GTK_GESTURE_ZOOM_w, 1, 0, 0, "(GTK_GESTURE_ZOOM obj) casts obj to GTK_GESTURE_ZOOM", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_SWIPE, gxg_GTK_GESTURE_SWIPE_w, 1, 0, 0, "(GTK_GESTURE_SWIPE obj) casts obj to GTK_GESTURE_SWIPE", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_SINGLE, gxg_GTK_GESTURE_SINGLE_w, 1, 0, 0, "(GTK_GESTURE_SINGLE obj) casts obj to GTK_GESTURE_SINGLE", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_PAN, gxg_GTK_GESTURE_PAN_w, 1, 0, 0, "(GTK_GESTURE_PAN obj) casts obj to GTK_GESTURE_PAN", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_MULTI_PRESS, gxg_GTK_GESTURE_MULTI_PRESS_w, 1, 0, 0, "(GTK_GESTURE_MULTI_PRESS obj) casts obj to GTK_GESTURE_MULTI_PRESS", pl_bpt);
+  Xg_define_procedure(GTK_GESTURE_ROTATE, gxg_GTK_GESTURE_ROTATE_w, 1, 0, 0, "(GTK_GESTURE_ROTATE obj) casts obj to GTK_GESTURE_ROTATE", pl_bpt);
+  Xg_define_procedure(GTK_EVENT_CONTROLLER, gxg_GTK_EVENT_CONTROLLER_w, 1, 0, 0, "(GTK_EVENT_CONTROLLER obj) casts obj to GTK_EVENT_CONTROLLER", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 16, 0)
-  Xg_define_procedure(GTK_GL_AREA, gxg_GTK_GL_AREA_w, 1, 0, 0, "(GTK_GL_AREA obj) casts obj to GTK_GL_AREA", NULL);
-  Xg_define_procedure(GDK_GL_CONTEXT, gxg_GDK_GL_CONTEXT_w, 1, 0, 0, "(GDK_GL_CONTEXT obj) casts obj to GDK_GL_CONTEXT", NULL);
-  Xg_define_procedure(GTK_POPOVER_MENU, gxg_GTK_POPOVER_MENU_w, 1, 0, 0, "(GTK_POPOVER_MENU obj) casts obj to GTK_POPOVER_MENU", NULL);
-  Xg_define_procedure(GTK_STACK_SIDEBAR, gxg_GTK_STACK_SIDEBAR_w, 1, 0, 0, "(GTK_STACK_SIDEBAR obj) casts obj to GTK_STACK_SIDEBAR", NULL);
+  Xg_define_procedure(GTK_GL_AREA, gxg_GTK_GL_AREA_w, 1, 0, 0, "(GTK_GL_AREA obj) casts obj to GTK_GL_AREA", pl_bpt);
+  Xg_define_procedure(GDK_GL_CONTEXT, gxg_GDK_GL_CONTEXT_w, 1, 0, 0, "(GDK_GL_CONTEXT obj) casts obj to GDK_GL_CONTEXT", pl_bpt);
+  Xg_define_procedure(GTK_POPOVER_MENU, gxg_GTK_POPOVER_MENU_w, 1, 0, 0, "(GTK_POPOVER_MENU obj) casts obj to GTK_POPOVER_MENU", pl_bpt);
+  Xg_define_procedure(GTK_STACK_SIDEBAR, gxg_GTK_STACK_SIDEBAR_w, 1, 0, 0, "(GTK_STACK_SIDEBAR obj) casts obj to GTK_STACK_SIDEBAR", pl_bpt);
 #endif
 
 #if GTK_CHECK_VERSION(3, 20, 0)
-  Xg_define_procedure(GDK_SEAT, gxg_GDK_SEAT_w, 1, 0, 0, "(GDK_SEAT obj) casts obj to GDK_SEAT", NULL);
+  Xg_define_procedure(GDK_SEAT, gxg_GDK_SEAT_w, 1, 0, 0, "(GDK_SEAT obj) casts obj to GDK_SEAT", pl_bpt);
 #endif
 
   Xg_define_procedure(c-array->list, c_array_to_xen_list_w, 2, 0, 0, NULL, NULL);
@@ -46218,7 +46218,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("03-Mar-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("05-Mar-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
