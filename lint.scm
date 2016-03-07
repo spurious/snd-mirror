@@ -2348,6 +2348,29 @@
 		       ((1) #t)
 		       ((2) (classify (cadr form)))
 		       (else
+#|
+			;; place this in special-cases and branch
+			(for-each (lambda (p1 p2)
+				    (if (and (pair? p1)
+					     (pair? p2)
+					     (pair? (cdr p1))
+					     (pair? (cdr p2))
+					     (eq? (car p1) 'pair?)
+					     (memq (car p2) '(caar cadr cddr cdar 
+								   caaar caadr caddr cdddr cdaar cddar cadar cdadr
+								   cadddr cddddr caaaar caaadr caadar caaddr cadaar 
+								   cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar))
+
+					     ;(or (equal? (cadr p1) (cadr p2)) ; this does happen (and (pair? name-form) (cadr name-form))
+					     )
+					(format *stderr* "~A~%" form)))
+				  ;; need to see incomplete checks here (and (pair? (cdr entry)) (cdddr entry)) (and (pair? result) (cadar result)) etc
+				  ;;   so to see caxxx we need pair? cxxx
+				  ;;   and to see cdxx we need pair? cdx
+				  ;;   going back to the first pair? check
+				  ;; (and x (pair? (cdr x)) ... !
+				  (cdr form) (cddr form))
+|#
 			(and (not (contradictory? (cdr form)))
 			     (call-with-exit
 			      (lambda (return)
@@ -3480,7 +3503,10 @@
 	((newline) "~%")
 	
 	((display) 
-	 (let ((arg (cadr d)))
+	 (let* ((arg (cadr d))
+		(arg-arg (and (pair? arg)
+			      (pair? (cdr arg))
+			      (cadr arg))))
 	   (cond ((string? arg)
 		  arg)
 
@@ -3491,24 +3517,24 @@
 		       (eq? (car arg) 'number->string)
 		       (= (length arg) 3))
 		  (case (caddr arg)
-		    ((2)  (values "~B" (cadr arg)))
-		    ((8)  (values "~O" (cadr arg)))
-		    ((10) (values "~D" (cadr arg)))
-		    ((16) (values "~X" (cadr arg)))
+		    ((2)  (values "~B" arg-arg))
+		    ((8)  (values "~O" arg-arg))
+		    ((10) (values "~D" arg-arg))
+		    ((16) (values "~X" arg-arg))
 		    (else (values "~A" arg))))
 
 		 ((and (pair? arg)
 		       (eq? (car arg) 'string-append))
 		  (cond ((null? (cddr arg))
-			 (if (string? (cadr arg))
-			     (cadr arg)
-			     (values "~A" (cadr arg))))
+			 (if (string? arg-arg)
+			     arg-arg
+			     (values "~A" arg-arg)))
 			((not (null? (cdddr arg)))
 			 (values "~A" arg))
-			((string? (cadr arg))
-			 (values (string-append (cadr arg) "~A") (caddr arg)))
+			((string? arg-arg)
+			 (values (string-append arg-arg "~A") (caddr arg)))
 			((string? (caddr arg))
-			 (values (string-append "~A" (caddr arg)) (cadr arg)))
+			 (values (string-append "~A" (caddr arg)) arg-arg))
 			(else (values "~A" arg))))
 
 		 (else (values "~A" arg)))))
@@ -5522,7 +5548,15 @@
 			  (if (eq? checker 'unused-set-parameter?)
 			      (lint-format "~A's parameter ~A's value is not used, but a value is passed: ~S" caller head arg-number arg))))
 		  
-		  (if (pair? arg)                  ; arg is expr -- try to guess its type
+		  (if (not (pair? arg))                  ; arg is expr -- try to guess its type
+		      
+		      (if (not (or (symbol? arg)
+				   (any-checker? checker arg)))
+			  (let ((op (->type arg)))
+			    (unless (memq op '(#f #t values))
+			      (report-arg-trouble caller form head arg-number checker arg op))))
+
+		      ;; arg is a pair
 		      (case (car arg) 
 			((quote)   ; '1 -> 1
 			 (let ((op (if (pair? (cadr arg)) 'list? (->type (cadr arg)))))
@@ -5637,14 +5671,7 @@
 						 (not (any-checker? checker (eval arg))))
 					       (lambda ignore-catch-error-args
 						 #f)))))
-			       (report-arg-trouble caller form head arg-number checker arg op)))))
-		      
-		      ;; arg is not a pair
-		      (if (not (or (symbol? arg)
-				   (any-checker? checker arg)))
-			  (let ((op (->type arg)))
-			    (unless (memq op '(#f #t values))
-			      (report-arg-trouble caller form head arg-number checker arg op))))))
+			       (report-arg-trouble caller form head arg-number checker arg op)))))))
 		
 		(if (list? checkers)
 		    (if (null? (cdr checkers))
@@ -5944,7 +5971,7 @@
 			      lst
 			      (cons (car e1) lst)))))
     
-    (define (report-usage caller type head vars env) ; type = caller's view, 'parameter etc
+    (define (report-usage caller head vars env)
       ;; report unused or set-but-unreferenced variables, then look at the overall history
     
       (define (all-types-agree v)
@@ -5981,11 +6008,14 @@
 	      (if (not (eq? vn lambda-marker))
 		  (let ((repeat (var-member vn rst)))
 		    (if repeat
-			(lint-format "~A ~A ~A is declared twice" caller head type (var-name (car cur)))))))))
+			(lint-format "~A ~A ~A is declared twice" caller head
+				     (if (eq? (var-definer (car cur)) 'parameter) 'parameter 'variable)
+				     (var-name (car cur)))))))))
       
       (for-each 
        (lambda (arg)
-	 (let ((vname (var-name arg)))
+	 (let ((vname (var-name arg))
+	       (type (if (eq? (var-definer arg) 'parameter) 'parameter 'variable)))
 	   
 	   (if (hash-table-ref syntaces vname)
 	       (lint-format "~A ~A named ~A is asking for trouble" caller head type vname)
@@ -7014,7 +7044,6 @@
 							     (eq? (last-par (cdadr form)) :allow-other-keys)))
 			 (eval (list definer (cons '_ (cdadr form)) #f)))))
 		    (lambda args
-					;(format *stderr* "~A~%" args)
 		      'error)))))
 	
 	(if (null? args)
@@ -7028,11 +7057,14 @@
 		  (let ((nvars (and (not (eq? e cur-env))
 				    (env-difference function-name e cur-env ()))))
 		    (if (pair? nvars)
-			(report-usage function-name 'parameter definer nvars cur-env))))
+			(report-usage function-name definer nvars cur-env))))
 		cur-env))
 	    
-	    (if (or (symbol? args) 
-		    (pair? args))
+	    (if (not (or (symbol? args) 
+			 (pair? args)))
+		(begin
+		  (lint-format "strange ~A parameter list ~A" function-name definer args)
+		  env)
 		(let ((arg-data (if (symbol? args)                            ; this is getting arg names to add to the environment
 				    (list (make-var :name args :definer 'parameter))
 				    (map
@@ -7057,7 +7089,7 @@
 		    (let ((e (lint-walk-function-body definer function-name args body cur-env)))
 		      (let ((nvars (and (not (eq? e cur-env))
 					(env-difference function-name e cur-env ()))))
-			(report-usage function-name 'parameter definer (append (or nvars ()) arg-data) cur-env))))
+			(report-usage function-name definer (append (or nvars ()) arg-data) cur-env))))
 		  
 		  (when (and (var? data)
 			     (memq definer '(define lambda define-macro))
@@ -7093,11 +7125,7 @@
 			  (set! (var-signature data) sig)))))
 		  (if data 
 		      (cons data env)
-		      env))
-		
-		(begin
-		  (lint-format "strange ~A parameter list ~A" function-name definer args)
-		  env)))))
+		      env))))))
     
     
     (define (check-bool-cond caller form c1 c2 env)
@@ -9060,7 +9088,7 @@
 						     (tree-member (var-name var) (var-step nv))))
 					    (set! (var-ref var) (+ (var-ref var) 1))))
 				      (cdr v))))))
-			   (report-usage caller 'variable head vars inner-env)
+			   (report-usage caller head vars inner-env)
 			   
 			   ;; look for constant expressions in the do body
 			   (let ((constant-exprs (find-constant-exprs 'do (map var-name vars) (cdddr form))))
@@ -9338,7 +9366,7 @@
 				       (set! env (cons (car nvars) env))
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars))))
-			     (report-usage caller 'variable head vars cur-env))
+			     (report-usage caller head vars cur-env))
 
 #|
 			   ;; not sure about this -- (set! x ...) (f x) as last use of local var x --
@@ -9488,7 +9516,9 @@
 					  (eq? (caar p) 'set!)
 					  (var-member (cadar p) vars)
 					  (not (tree-memq (cadar p) (cdr p))))
-				   (lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form)))
+				     (if (not (side-effect? (caddar p) env))
+					 (lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form))
+					 (lint-format "perhaps ~A" caller (lists->string (car p) (caddar p)))))
 
 				 (for-each (lambda (v)
 					     (when (tree-memq (v 0) (car p))
@@ -9554,7 +9584,7 @@
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars))))
 			   
-			     (report-usage caller 'variable head vars cur-env))
+			     (report-usage caller head vars cur-env))
 
 			   
 			   ;; look for exprs replaceable with vars
@@ -9710,7 +9740,7 @@
 				       (set! nvars (cdr nvars)))
 				     (set! vars (append nvars vars))))
 
-			     (report-usage caller 'variable head vars cur-env))))) ; constant exprs never happen here
+			     (report-usage caller head vars cur-env))))) ; constant exprs never happen here
 		   env)
 		  
 		  ;; ---------------- begin ----------------
@@ -9763,7 +9793,7 @@
 				     (set! *e* lib)
 				     (let* ((e (lint-walk-body caller head (cddr form) env))
 					    (vars (if (eq? e env) () (env-difference caller e env ()))))
-				       (report-usage caller 'variable head vars env))
+				       (report-usage caller head vars env))
 				     (set! *e* old-e)
 				     (set! walked #t)))))
 			   
@@ -9858,7 +9888,7 @@
 										  ((call-with-output-file)   'open-output-file)))
 							   :definer head)))
 					 (lint-walk-body caller head body (cons cc env))
-					 (report-usage caller 'variable head (list cc) env)))))))))
+					 (report-usage caller head (list cc) env)))))))))
 		   env)
 		  
 		  ;; ----------------
@@ -9895,7 +9925,7 @@
 					       :initial-value (list (if (eq? head 'call-with-exit) goto-marker call/cc-marker))
 					       :definer head)))
 			     (lint-walk-body caller head body (cons cc env))
-			     (report-usage caller 'variable head (list cc) env)))))
+			     (report-usage caller head (list cc) env)))))
 		   env)
 
 		  ((define-syntax define-module)
@@ -9915,7 +9945,7 @@
 				      (lint-format "repeated parameter list? ~A in ~A" caller (car choice) form))
 				  (set! lens (cons len lens))
 				  (lint-walk 'case-lambda `(lambda ,@choice) env))))
-			  (if (not (pair? (cadr form))) (cddr form) (cdr form)))))
+			  (if (not (pair? (cadr form))) (cddr form) (cdr form))))) ; might have a doc string before the clauses
 		   env)
 
 		  ;; ---------------- everything else ----------------	
@@ -10353,7 +10383,7 @@
 	  (if (and (string? file)
 		   (pair? vars)
 		   *report-unused-top-level-functions*)
-	      (report-usage file 'top-level-var "" vars vars)))
+	      (report-usage file "" vars vars)))
 
 	(for-each 
 	 (lambda (p)
@@ -10473,23 +10503,21 @@
 ;;; --------------------------------------------------------------------------------
 ;;; TODO:
 ;;; unquasiquote innards pretty-printed and check quotes, doubled ,@
-;;; #_{list} to check quasiquote (unquote=extra comma, quote where bad for op = missing comma)
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
-;;; if case-lambda choices are regular (0..n args), we can set up if/cond and define*
-;;;   also if it's one set or else -- dumb! [and names change in different branches--dumber!]
-;;; in let body, [not last], only side-effect is set! of local var which is not ref'd thereafter
-;;;   and if last, the set! is unneeded at least -- set! as last if no special case seems always redundant
 ;;; also do return cases including local var that mimics stepper
-;;; 
+;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
+;;; pair? -> cadr, or (pair? cdr)->caddr etc -- incomplete checks
+;;; length (or any 2-type sig) where following assumes one: (> (length x) 1) -- should we warn it can be #f? [s7-specific]
+;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;  see mus_header_t? in sndlib2xen.c and 5399 above
 ;;;  for each gtk type, make a type macro like mus_header_t, a symbol in the pl_* table, tie in via signature makers
 ;;;  these could also be used in the normal procs -- not int
 ;;;  need table enum-name -> type + value, type -> enums + values
-;;;  macro: if name -- enum->type, if wrong type complain and match values, if right ok
+;;;  macro: if name -- enum->type, if wrong type complain[check spelling?] and match values, if right ok
 ;;;         if int, type->enum values and return enum-name, else range check
 ;;;         else return typer (integer? string? etc)
 ;;;         if logior, can we check each flag?
