@@ -165,16 +165,16 @@
 					(substring str (+ def-pos 10))
 					(values "name=" (substring str (+ def-pos 14))))))))
        
-       (let* ((line (string-append "<a href=\"" 
+       (let ((line (string-append "<a href=\"" 
 				   (or file "") 
 				   "#" 
-				   (substring str 9)))
-	      (ipos (string-position "<em" line)))
-	 (when ipos
-	   (let ((ispos (string-position "</em>" line)))
-	     (set! line (string-append (substring line 0 ipos) 
-				       (substring line (+ ipos 14) ispos) 
-				       (substring line (+ ispos 5))))
+				   (substring str 9))))
+	 (let ((ipos (string-position "<em" line)))
+	   (when ipos
+	     (let ((ispos (string-position "</em>" line)))
+	       (set! line (string-append (substring line 0 ipos) 
+					 (substring line (+ ipos 14) ispos) 
+					 (substring line (+ ispos 5)))))
 	     (if (not line) 
 		 (format () "<em...> but no </em> for ~A~%" str))))
 	 
