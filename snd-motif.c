@@ -13,6 +13,30 @@
 #endif
 
 
+/* In case of X error that simply exits without any stack trace, first
+ *
+ *     XSynchronize(dpy, true);
+ *     XSync(dpy, true);
+ *
+ * around line 30817 (where ss->mainapp gets set)
+ * then if still trouble, make an X error handler:
+ *
+ *    static XErrorHandler old_handler = (XErrorHandler) 0;
+ *    static int ApplicationErrorHandler(Display *display, XErrorEvent *theEvent)
+ *    {
+ *      (void) fprintf(stderr, "Xlib error: error code %d request code %d\n", theEvent->error_code, theEvent->request_code);
+ *      abort();
+ *      return 0;
+ *    }
+ *
+ * and at the same point as before
+ *
+ *      old_handler = XSetErrorHandler(ApplicationErrorHandler);
+ *
+ * code 8 seems to mean a newly created window is unhappy (tooltip for example)
+ */
+
+
 static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const char *tag)
 {
   XmRendition tmp;
@@ -9389,12 +9413,12 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
   {
     /* save current directory list position */
     position_t position = 0;
-    XmString *strs;
+    XmString *strs = NULL;
     XtVaGetValues(w, 
 		  XmNtopItemPosition, &position,
 		  XmNselectedItems, &strs, 
 		  NULL);
-    if (position > 1) /* 1 = .. */
+    if ((strs) && (position > 1)) /* 1 = .. */
       {
 	char *filename = NULL;
 	filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
@@ -9436,13 +9460,13 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
       char *selected_filename = NULL;
 
       {
-	XmString *strs;
+	XmString *strs = NULL;
 	int selections = 0;
 	XtVaGetValues(XmFileSelectionBoxGetChild(fp->dialog, XmDIALOG_LIST), 
 		      XmNselectedItems, &strs, 
 		      XmNselectedItemCount, &selections,
 		      NULL);
-	if ((selections > 0) && (strs[0]))
+	if ((selections > 0) && (strs) && (strs[0]))
 	  selected_filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
       }
 
@@ -9790,24 +9814,25 @@ static bool is_plausible_sound_file(const char *name)
 static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer info)
 {
   file_dialog_info *fd = (file_dialog_info *)context;
-  XmString *strs;
+  XmString *strs = NULL;
   char *filename = NULL;
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
-  filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if (filename)
+  if (strs) /* can be null if click in empty space */
     {
-      if (is_plausible_sound_file(filename)) /* forces header read to avoid later unwanted error possibility */
-	post_file_info(fd, filename);
-      XtFree(filename);      
-    }
-  else unpost_file_info(fd);
+      position_t position = 0;
+      filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      if (filename)
+	{
+	  if (is_plausible_sound_file(filename)) /* forces header read to avoid later unwanted error possibility */
+	    post_file_info(fd, filename);
+	  XtFree(filename);      
+	}
+      else unpost_file_info(fd);
 
-  {
-    /* save current list position */
-    position_t position = 0;
-    XtVaGetValues(w, XmNtopItemPosition, &position, NULL);
-    dirpos_update(fd->fp->dir_list, fd->fp->current_files->dir_name, position);
-  }
+      /* save current list position */
+      XtVaGetValues(w, XmNtopItemPosition, &position, NULL);
+      dirpos_update(fd->fp->dir_list, fd->fp->current_files->dir_name, position);
+    }
 }
 
 
@@ -11833,17 +11858,20 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
 #if WITH_AUDIO
   dialog_play_info *dp = (dialog_play_info *)context;
   char *filename = NULL;
-  XmString *strs;
+  XmString *strs = NULL;
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
-  filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
-  if ((filename) && (is_sound_file(filename)))
-    XtManageChild(dp->play_button);
-  else
+  if (strs)
     {
-      if (XtIsManaged(dp->play_button)) 
-	XtUnmanageChild(dp->play_button);
+      filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
+      if ((filename) && (is_sound_file(filename)))
+	XtManageChild(dp->play_button);
+      else
+	{
+	  if (XtIsManaged(dp->play_button)) 
+	    XtUnmanageChild(dp->play_button);
+	}
+      if (filename) XtFree(filename);
     }
-  if (filename) XtFree(filename);
 #endif
 }
 
@@ -22152,6 +22180,9 @@ static void leave_tooltip(XtPointer tooltip, XtIntervalId *id)
 
 static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
 {
+#if (!HAVE_GL)
+  /* if GL, we get a segfault here -- I don't know why */
+
   char *tip = (char *)tooltip;
   Position rx, ry;
   XmString str;
@@ -22175,6 +22206,7 @@ static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
   XtVaSetValues(tooltip_shell, XmNx, rx, XmNy, ry, NULL);
   XtManageChild(tooltip_shell);
   quit_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)10000, (XtTimerCallbackProc)leave_tooltip, NULL);
+#endif
 }
 
 
@@ -23678,13 +23710,16 @@ static void motif_listener_completion(Widget w, XEvent *event, char **str, Cardi
   if ((completions_pane) &&
       (XtIsManaged(completions_pane)))
     {
-      XmString *strs;
+      XmString *strs = NULL;
       XtVaGetValues(completions_list, 
 		    XmNselectedItems, &strs, 
 		    NULL);
-      perform_completion(strs[0]);
-      XtUnmanageChild(completions_pane);
-      return;
+      if (strs)
+	{
+	  perform_completion(strs[0]);
+	  XtUnmanageChild(completions_pane);
+	  return;
+	}
     }
 
   end = XmTextGetInsertionPosition(w);
@@ -24226,12 +24261,15 @@ static void Listener_Return(Widget w, XEvent *event, char **str, Cardinal *num)
   if ((completions_pane) &&
       (XtIsManaged(completions_pane)))
     {
-      XmString *strs;
+      XmString *strs = NULL;
       XtVaGetValues(completions_list, 
 		    XmNselectedItems, &strs, 
 		    NULL);
-      perform_completion(strs[0]);
-      XtUnmanageChild(completions_pane);
+      if (strs)
+	{
+	  perform_completion(strs[0]);
+	  XtUnmanageChild(completions_pane);
+	}
     }
   else XtCallActionProc(w, "activate", event, str, *num);
 }

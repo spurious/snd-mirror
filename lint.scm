@@ -1117,14 +1117,6 @@
 	    ((char?)            (memq type2 '(char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)))
 	    (else #f))))
     
-    (define (any-checker? types arg)
-      (if (and (symbol? types)
-	       (not (eq? types 'values)))
-	  ((symbol->value types *e*) arg)
-	  (and (pair? types)
-	       (or (any-checker? (car types) arg)
-		   (any-checker? (cdr types) arg)))))
-    
     (define (never-false expr)
       (or (eq? expr #t)
 	  (let ((type (if (pair? expr)
@@ -5549,6 +5541,14 @@
 		(or at-end 'integer?)
 		checker)))
     
+      (define (any-checker? types arg)
+	(if (and (symbol? types)
+		 (not (eq? types 'values)))
+	    ((symbol->value types *e*) arg)
+	    (and (pair? types)
+		 (or (any-checker? (car types) arg)
+		     (any-checker? (cdr types) arg)))))
+    
       (define (every-compatible? type1 type2)
 	(if (symbol? type1)
 	    (if (symbol? type2)
@@ -5642,11 +5642,28 @@
 		  
 		  (if (not (pair? arg))                  ; arg is expr -- try to guess its type
 		      
+#|
+		      (if (symbol? arg)
+			  (if (var-member head env)
+			      (let ((ari (arg-arity arg env)))
+				(if (pair? ari)
+				    (format *stderr* "~A:~%  ~A in ~A~%  ~A~%~%" 
+					    (truncated-list->string form)
+					    arg head (var-initial-value (var-member head env))))))
+					    
+
+
+				   ;; TODO:
+				   ;; if arg is built-in func -- checker should have procedure? 
+				   ;;   similarly below if car arg is lambda
+				   ;;   in both cases if head is var-member, we can scan its initial-value for arg and check fit
+			  (if (not (any-checker? checker arg))
+|#
 		      (if (not (or (symbol? arg)
 				   (any-checker? checker arg)))
-			  (let ((op (->type arg)))
-			    (unless (memq op '(#f #t values))
-			      (report-arg-trouble caller form head arg-number checker arg op))))
+			      (let ((op (->type arg)))
+				(unless (memq op '(#f #t values))
+				  (report-arg-trouble caller form head arg-number checker arg op))))
 
 		      ;; arg is a pair
 		      (case (car arg) 
@@ -6320,6 +6337,25 @@
 				 (if (pair? repeats)
 				     (lint-format "~A is not set, but ~{~A occurs ~A times~^, ~}" caller
 						  vname repeats)))))
+#|
+			 ;; happens a few times
+			 ;; TODO: use of var, then (define var ...) does not add previous use to history [other-ids is only funcs?]
+			 (if (and (> (var-set arg) 0)
+				  (eq? (var-ftype arg) #<undefined>))
+			     (let ((init (var-initial-value arg)))
+			       (if (and (code-constant? init)
+				    (let loop ((p (var-history arg)))
+				     (or (null? p)
+					 (if (pair? (car p))
+					     (and (not (indirect-set? vname (caar p) (and (pair? (cdar p)) (cadar p)) (car p)))
+			 ;; this is no longer correct
+						  (or (not (eq? (caar p) 'set!))
+						      (not (eq? vname (cadar p)))
+						      (equal? init (caddar p)))
+						  (loop (cdr p)))
+					     (loop (cdr p))))))
+				   (format *stderr* "~S: ~A ~A in ~{~%  ~A~^~}~%" *current-file* vname init (var-history arg)))))
+|#
 			 
 			 ;; check for function parameters whose values never change and are not just symbols
 			 (if (and (> (var-ref arg) 3)
@@ -6680,6 +6716,20 @@
 		 (ctr 0 (+ ctr 1)))
 		((not (pair? fs)))
 	      (let ((f (car fs)))
+
+#|
+		;; TODO: this happens a lot
+		(if (and (pair? prev-f)
+			 (pair? f)
+			 (eq? (car f) 'if)
+			 (eq? (car prev-f) 'if)
+			 (pair? (cdr f))
+			 (pair? (cdr prev-f))
+			 (or (equal? (cadr f) (cadr prev-f))
+			     (equal? (cadr f) `(not ,(cadr prev-f)))
+			     (equal? `(not ,(cadr f)) (cadr prev-f))))
+		    (format *stderr* "~A~%~A~%~%" (truncated-list->string prev-f) (truncated-list->string f)))
+|#
 
 		;; --------
 		;; check for repeated calls, but only one arg currently can change (more args = confusing separation in code)
@@ -9032,6 +9082,8 @@
 
 			   (set! inner-env (append vars env))
 
+			   ;; TODO: if equal? init step and step is constant and var is not otherwise set, step is unneeded
+
 			   ;; walk the step exprs
 			   (let ((baddies ())) ; these are step vars used within other step vars step expressions			   
 			     (do ((bindings step-vars (cdr bindings)))
@@ -9045,6 +9097,12 @@
 				       (set! (var-ref data) old-ref))
 				     (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
 					 (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
+#|
+				     ;; usually (read-char) or equivalent, but (c fc fc) (x 1 1) (val (/ num p) (/ num p))
+				     (if (and (equal? (cadr stepper) (caddr stepper))
+					      (not (tree-memq (car stepper) (cadr stepper))))
+					 (format *stderr* "~A~%" stepper))
+|#
 				     (set! (var-set data) (+ (var-set data) 1))) ; (pair? cddr) above
 				   (when (and (pair? (caddr stepper))
 					      (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
@@ -10268,36 +10326,36 @@
     (define (lint-file file env)
       ;; (format *stderr* "lint ~S~%" file)
       
-      (let ((old-current-file *current-file*)
-	    (old-pp-left-margin pp-left-margin)
-	    (old-lint-left-margin lint-left-margin)
-	    (old-load-path *load-path*))
-
-	(dynamic-wind
-	    (lambda ()
-	      (set! pp-left-margin (+ pp-left-margin 4))
-	      (set! lint-left-margin (+ lint-left-margin 4))
-	      (when (and (string? file)
-			 (char=? (file 0) #\/))
-		(let ((last-pos 0))
-		  (do ((pos (char-position #\/ file (+ last-pos 1)) (char-position #\/ file (+ last-pos 1))))
-		      ((not pos)
-		       (if (> last-pos 0)
-			   (set! *load-path* (cons (substring file 0 last-pos) *load-path*))))
-		    (set! last-pos pos)))))
-
-	    (lambda ()
-	      (if (member file linted-files)
-		  env
-		  (lint-file-1 file env)))
+      (if (member file linted-files)
+	  env
+	  (let ((old-current-file *current-file*)
+		(old-pp-left-margin pp-left-margin)
+		(old-lint-left-margin lint-left-margin)
+		(old-load-path *load-path*))
 	    
-	    (lambda ()
-	      (set! pp-left-margin old-pp-left-margin)
-	      (set! lint-left-margin old-lint-left-margin)
-	      (set! *current-file* old-current-file)
-	      (set! *load-path* old-load-path)
-	      (if (positive? (length *current-file*))
-		  (newline outport))))))
+	    (dynamic-wind
+		(lambda ()
+		  (set! pp-left-margin (+ pp-left-margin 4))
+		  (set! lint-left-margin (+ lint-left-margin 4))
+		  (when (and (string? file)
+			     (char=? (file 0) #\/))
+		    (let ((last-pos 0))
+		      (do ((pos (char-position #\/ file (+ last-pos 1)) (char-position #\/ file (+ last-pos 1))))
+			  ((not pos)
+			   (if (> last-pos 0)
+			       (set! *load-path* (cons (substring file 0 last-pos) *load-path*))))
+			(set! last-pos pos)))))
+		
+		(lambda ()
+		  (lint-file-1 file env))
+		
+		(lambda ()
+		  (set! pp-left-margin old-pp-left-margin)
+		  (set! lint-left-margin old-lint-left-margin)
+		  (set! *current-file* old-current-file)
+		  (set! *load-path* old-load-path)
+		  (if (positive? (length *current-file*))
+		      (newline outport)))))))
     
 
     
@@ -10592,12 +10650,10 @@
 ;;; unquasiquote innards pretty-printed and check quotes, doubled ,@
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
+;;;    most of this is doable in check-args, I think
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
-;;; perhaps more elaborate let rewrite for locality? *report-locality-...*
-;;; can we move makers out of loops? if no lambda(*)etc
-;;;   (do... display (make-string...)) -> format ~NC?
 ;;; 
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
