@@ -357,8 +357,8 @@
   
   (define (quadratic-roots a b c) ; ax^2 + bx + c
     (let ((d (sqrt (- (* b b) (* 4 a c)))))
-      (list (/ (+ (- b) d) (* 2 a))
-	    (/ (- (- b) d) (* 2 a)))))
+      (list (/ (- d b) (* 2 a))
+	    (/ (- (+ d b)) (* 2 a)))))
   
   (define (cubic-roots a b c d) ; ax^3 + bx^2 + cx + d
     ;; Abramowitz & Stegun 3.8.2

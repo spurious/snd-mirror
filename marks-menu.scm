@@ -837,27 +837,26 @@ using the granulate generator to fix up the selection duration (this still is no
 				      (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))
 		     (for-each
 		      (lambda (rparent loc)
-			(let ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent ()))
-			      (stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ()))
-			      (lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent ()))
-			      (someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent ()))
-			      (sus-rel-start (* offset 2)))
-			  
+			(let ((farleft (XtCreateManagedWidget "<<" xmPushButtonWidgetClass rparent ())))
 			  (XtAddCallback farleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
 					     (set! (loop-data (+ loc (* offset 2))) ml)
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
+					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			(let ((stopleft (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ())))
 			  (XtAddCallback stopleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
 					     (set! (loop-data (+ loc (* offset 2))) ml)
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
+					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			(let ((lotsleft (XtCreateManagedWidget "<< " xmPushButtonWidgetClass rparent ())))
 			  (XtAddCallback lotsleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))
 					     (set! (loop-data (+ loc (* offset 2))) (max ml (- (loop-data (+ loc (* offset 2))) 10)))
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
+					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			(let ((someleft (XtCreateManagedWidget " < " xmPushButtonWidgetClass rparent ()))
+			      (sus-rel-start (* offset 2)))
 			  (XtAddCallback someleft XmNactivateCallback
 					 (lambda (w c i)
 					   (let ((ml (if (= loc 0) 0 (loop-data sus-rel-start))))

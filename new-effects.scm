@@ -2295,48 +2295,48 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
       
       (define (post-place-sound-dialog)
 	(if (not (Widget? place-sound-dialog))
-	    (let ((initial-mono-snd 0)
-		  (initial-stereo-snd 1)
-		  (initial-pan-pos 45)
-		  (sliders ())
+	    (let ((sliders ())
 		  (fr #f))
-	      (set! place-sound-dialog 
-		    (make-effect-dialog 
-		     place-sound-label
-		     
-		     (lambda (w context info) 
-		       (let ((e (xe-envelope place-sound-envelope)))
-			 (place-sound mono-snd stereo-snd (if (not (equal? e (list 0.0 1.0 1.0 1.0))) e pan-pos))))
-
-		     (lambda (w context info)
-		       (help-dialog "Place sound"
-				    "Mixes mono sound into stereo sound field."))
-		     
-		     (lambda (w c i)
-		       (set! mono-snd initial-mono-snd)
-		       (XtSetValues (sliders 0) (list XmNvalue mono-snd))
-		       (set! stereo-snd initial-stereo-snd)
-		       (XtSetValues (sliders 1) (list XmNvalue stereo-snd))
-		       (set! pan-pos initial-pan-pos)
-		       (XtSetValues (sliders 2) (list XmNvalue pan-pos)))
-		     
-		     (lambda () 
-		       (effect-target-ok place-sound-target))))
-	      
-	      (set! sliders
-		    (add-sliders place-sound-dialog
-				 (list (list "mono sound" 0 initial-mono-snd 50
-					     (lambda (w context info)
-					       (set! mono-snd (.value info)))
-					     1)
-				       (list "stereo sound" 0 initial-stereo-snd 50
-					     (lambda (w context info)
-					       (set! stereo-snd (.value info)))
-					     1)
-				       (list "pan position" 0 initial-pan-pos 90
-					     (lambda (w context info)
-					       (set! pan-pos (.value info)))
-					     1))))
+	      (let ((initial-mono-snd 0)
+		    (initial-stereo-snd 1)
+		    (initial-pan-pos 45))
+		(set! place-sound-dialog 
+		      (make-effect-dialog 
+		       place-sound-label
+		       
+		       (lambda (w context info) 
+			 (let ((e (xe-envelope place-sound-envelope)))
+			   (place-sound mono-snd stereo-snd (if (not (equal? e (list 0.0 1.0 1.0 1.0))) e pan-pos))))
+		       
+		       (lambda (w context info)
+			 (help-dialog "Place sound"
+				      "Mixes mono sound into stereo sound field."))
+		       
+		       (lambda (w c i)
+			 (set! mono-snd initial-mono-snd)
+			 (XtSetValues (sliders 0) (list XmNvalue mono-snd))
+			 (set! stereo-snd initial-stereo-snd)
+			 (XtSetValues (sliders 1) (list XmNvalue stereo-snd))
+			 (set! pan-pos initial-pan-pos)
+			 (XtSetValues (sliders 2) (list XmNvalue pan-pos)))
+		       
+		       (lambda () 
+			 (effect-target-ok place-sound-target))))
+		
+		(set! sliders
+		      (add-sliders place-sound-dialog
+				   (list (list "mono sound" 0 initial-mono-snd 50
+					       (lambda (w context info)
+						 (set! mono-snd (.value info)))
+					       1)
+					 (list "stereo sound" 0 initial-stereo-snd 50
+					       (lambda (w context info)
+						 (set! stereo-snd (.value info)))
+					       1)
+					 (list "pan position" 0 initial-pan-pos 90
+					       (lambda (w context info)
+						 (set! pan-pos (.value info)))
+					       1)))))
 	      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 					      (list XmNheight              200
 						    XmNleftAttachment      XmATTACH_FORM
