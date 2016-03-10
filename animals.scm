@@ -1753,10 +1753,10 @@
 			 (+ .93 (triangle-wave ampmod))
 			 (+ (polywave gp buzz)
 			    (* (env indf)
-			       (polywave gb buzz)))))))
-	  (mus-reset pulsef)
-	  (mus-reset frqf)
-	  (mus-reset indf))))))
+			       (polywave gb buzz))))))))
+	(mus-reset pulsef)
+	(mus-reset frqf)
+	(mus-reset indf)))))
 
 ;; (with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
 
@@ -2244,19 +2244,19 @@
 	      ((= k reset-stop))
 	    (outa k (* pulse-amp
 		       (env pulsef)
-		       (polywave gen1 (one-zero oz (rand-interp rnd))))))
+		       (polywave gen1 (one-zero oz (rand-interp rnd)))))))
 
-	  (mus-reset pulsef)
-	  (set! pulses (- pulses 1))
-	  (if (<= pulses 0)
-	      (begin
-		(set! current-pulse-samps (+ pulse-samps (seconds->samples (+ .2 (random .1)))))
-		(set! pulses (+ 30 (random 70))))
-	      (begin
-		(set! pulse-samps (seconds->samples (if (> (random 1.0) .95)
-							(+ pulse-dur .005 (random .01)) 
-							pulse-dur)))
-		(set! current-pulse-samps pulse-samps))))))))
+	(mus-reset pulsef)
+	(set! pulses (- pulses 1))
+	(if (<= pulses 0)
+	    (begin
+	      (set! current-pulse-samps (+ pulse-samps (seconds->samples (+ .2 (random .1)))))
+	      (set! pulses (+ 30 (random 70))))
+	    (begin
+	      (set! pulse-samps (seconds->samples (if (> (random 1.0) .95)
+						      (+ pulse-dur .005 (random .01)) 
+						      pulse-dur)))
+	      (set! current-pulse-samps pulse-samps)))))))
 
 ;; (with-sound (:play #t) (southeastern-field-cricket 0 5 .3))
 
@@ -3010,9 +3010,9 @@
 	    (do ((k i (+ k 1)))
 		((= k reset-stop))
 	      (outa k (* (env pulsef)
-			 (polywave gen1 (+ (env frqf) (rand-interp rnd))))))
-	    (mus-reset pulsef)
-	    (mus-reset frqf)))))))
+			 (polywave gen1 (+ (env frqf) (rand-interp rnd)))))))
+	  (mus-reset pulsef)
+	  (mus-reset frqf))))))
 
 ;; (with-sound (:play #t) (chipping-sparrow 0 .3))
 
@@ -3170,9 +3170,9 @@
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env pulsef)
-		       (polywave gen1 (env frqf)))))
-	  (mus-reset pulsef)
-	  (mus-reset frqf))))))
+		       (polywave gen1 (env frqf))))))
+	(mus-reset pulsef)
+	(mus-reset frqf)))))
 
 ;; (with-sound (:play #t) (carolina-wren 0 .25))
 
@@ -3223,9 +3223,9 @@
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env ampf2)
-		       (polywave gen1 (env frqf2)))))
-	  (mus-reset ampf2)
-	  (mus-reset frqf2))))))
+		       (polywave gen1 (env frqf2))))))
+	(mus-reset ampf2)
+	(mus-reset frqf2)))))
 
 ;; (with-sound (:play #t) (bachmans-sparrow 0 .25))
 
@@ -3595,11 +3595,11 @@
 	  (do ((k i (+ k 1)))
 	      ((= k reset-stop))
 	    (outa k (* (env ampf)
-		       (polywave gen1 (env frqf)))))
+		       (polywave gen1 (env frqf))))))
 
-	  (set! start (starts peep-ctr))
-	  (mus-reset ampf)
-	  (mus-reset frqf))))))
+	(set! start (starts peep-ctr))
+	(mus-reset ampf)
+	(mus-reset frqf)))))
 
 ;; (with-sound (:play #t) (california-towhee 0 .25))
 
@@ -4075,18 +4075,17 @@
 		     (polywave gen1 (env frqf))))))))
   
   (let ((amps1 (vector .2 .5 .7 .9 1.0 1.0)))
-    
     (do ((call 0 (+ call 1)))
 	((= call 6))
-      (nashville-warbler-1 (+ beg (* .21 call)) (+ .15 (random .02)) (* amp (amps1 call))))
+      (nashville-warbler-1 (+ beg (* .21 call)) (+ .15 (random .02)) (* amp (amps1 call)))))
     
-    (do ((call 0 (+ call 1)))
-	((= call 3))
-      (nashville-warbler-2 (+ beg 1.26 (* .17 call)) (+ .13 (random .02)) amp))
-    
-    (nashville-warbler-3 (+ beg 1.8) amp)
-    
-    (nashville-warbler-4 (+ beg 1.94) (* 0.4 amp))))
+  (do ((call 0 (+ call 1)))
+      ((= call 3))
+    (nashville-warbler-2 (+ beg 1.26 (* .17 call)) (+ .13 (random .02)) amp))
+  
+  (nashville-warbler-3 (+ beg 1.8) amp)
+  
+  (nashville-warbler-4 (+ beg 1.94) (* 0.4 amp)))
 
 ;; (with-sound (:play #t) (nashville-warbler 0 .25))
 
@@ -4461,9 +4460,9 @@
 			    (+ .5 (* .5 (abs (oscil trem (rand-interp rnd1)))))
 			    (oscil gen1 (+ (env frqf)
 					   (env pulse-frqf)
-					   (rand-interp rnd)))))))
-	    (mus-reset pulse-ampf)
-	    (mus-reset pulse-frqf)))))))
+					   (rand-interp rnd))))))))
+	  (mus-reset pulse-ampf)
+	  (mus-reset pulse-frqf))))))
 
 ;; (with-sound (:play #t) (loggerhead-shrike-1 0 .5))
 
@@ -4530,9 +4529,9 @@
 	(fr2 (* 2 15 (sin (hz->radians 1700))))
 	(fr3 (* 2 5 (sin (hz->radians 5600)))))
 
-    (let ((fb (vector frm1 frm2 frm3))
-	  (fs (float-vector fr1 fr2 fr3)))
-      (set! fb (make-formant-bank fb fs))
+    (let ((fb (vector frm1 frm2 frm3)))
+      (let ((fs (float-vector fr1 fr2 fr3)))
+	(set! fb (make-formant-bank fb fs)))
     
       (do ((i 0 (+ i 1)))
 	  ((= i 3))

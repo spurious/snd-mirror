@@ -1996,17 +1996,26 @@
 				    ;; null? is not quite right because (not (null? 3)) -> #t
 				    ;; char-upper-case? and lower are not switchable here
 				    
-				    ((zero?)       ; (not (zero? (logand p (ash 1 i)))) -> (logbit? p i)
+				    ((zero?)       ; (not (zero? (logand p 2^n | (ash 1 i)))) -> (logbit? p i)
 				     (let ((zarg (cadr arg)))  ; (logand...)
 				       (if (and (pair? zarg)
 						(eq? (car zarg) 'logand)
+						(pair? (cdr zarg))
 						(pair? (cddr zarg))
-						(pair? (caddr zarg))
-						(eq? (caaddr zarg) 'ash)
-						(eqv? (cadr (caddr zarg)) 1))
-					   `(logbit? ,(cadr zarg) ,(caddr (caddr zarg)))
+						(null? (cdddr zarg)))
+					   (let ((arg1 (cadr zarg))
+						 (arg2 (caddr zarg))) ; these are never reversed
+					     (or (and (pair? arg2)
+						      (eq? (car arg2) 'ash)
+						      (eqv? (cadr arg2) 1)
+						      `(logbit? ,arg1 ,(caddr arg2)))
+						 (and (integer? arg2)
+						      (positive? arg2)
+						      (zero? (logand arg2 (- arg2 1))) ; it's a power of 2
+						      `(logbit? ,arg1 ,(log arg2 2)))
+						 form))
 					   form)))
-				    
+
 				    (else form)))
 				 
 				 (else form)))))
@@ -4043,6 +4052,10 @@
 	   (when (= len 3)
 	     (let ((arg1 (cadr form))
 		   (arg2 (caddr form)))
+
+	       ;; (= 0 (logand 2 (object-address obj)))
+	       ;; (= (logand stat 4) 4) or 0
+
 	       (let ((var (or (and (memv arg1 '(0 1))
 				   (pair? arg2)
 				   (eq? (car arg2) 'length)
@@ -4182,6 +4195,7 @@
 						     (if (null? (cdddr arg))
 							 `(,(cadr (assq head op)) ,(cadr arg) ,(caddr arg))
 							 `(,(cadr (assq head op)) ,(cadr arg) (+ ,@(cddr arg))))))))))))
+	;; (zero? (logand...)) is nearly always preceded by not and handled elsewhere
 	
 	;; ----------------
 	((/)
@@ -6013,10 +6027,15 @@
 				      (check-args caller head form arg-data env max-arity))
 				  ))))))))))))
     
-    (define (get-generator form env)
+    (define (get-generator caller form env)
       (let ((name (if (pair? (cadr form))
 		      (caadr form)
 		      (cadr form))))
+
+	(if (and (pair? (cadr form))
+		 (pair? (cdadr form)))
+	    (lint-walk caller (cdadr form) env))
+
 	(let ((gen? (string->symbol (string-append (symbol->string name) "?")))
 	      (gen-make (string->symbol (string-append "make-" (symbol->string name)))))
 	  (list (make-fvar :name gen?
@@ -6337,25 +6356,6 @@
 				 (if (pair? repeats)
 				     (lint-format "~A is not set, but ~{~A occurs ~A times~^, ~}" caller
 						  vname repeats)))))
-#|
-			 ;; happens a few times
-			 ;; TODO: use of var, then (define var ...) does not add previous use to history [other-ids is only funcs?]
-			 (if (and (> (var-set arg) 0)
-				  (eq? (var-ftype arg) #<undefined>))
-			     (let ((init (var-initial-value arg)))
-			       (if (and (code-constant? init)
-				    (let loop ((p (var-history arg)))
-				     (or (null? p)
-					 (if (pair? (car p))
-					     (and (not (indirect-set? vname (caar p) (and (pair? (cdar p)) (cadar p)) (car p)))
-			 ;; this is no longer correct
-						  (or (not (eq? (caar p) 'set!))
-						      (not (eq? vname (cadar p)))
-						      (equal? init (caddar p)))
-						  (loop (cdr p)))
-					     (loop (cdr p))))))
-				   (format *stderr* "~S: ~A ~A in ~{~%  ~A~^~}~%" *current-file* vname init (var-history arg)))))
-|#
 			 
 			 ;; check for function parameters whose values never change and are not just symbols
 			 (if (and (> (var-ref arg) 3)
@@ -9321,7 +9321,7 @@
 				     (lint-format "pointless let: ~A" caller (lists->string form (car body)))
 				     (if (null? (cadar body))
 					 (lint-format "pointless let: ~A" caller (lists->string form `(let ,(cadr form) ,@(cddar body)))))))))
-			 
+
 			 (let ((vars (if (and named-let 
 					      (not (keyword? named-let))
 					      (or (null? (caddr form))
@@ -9825,7 +9825,7 @@
 				(lint-format "~A is messed up: ~A" caller head (truncated-list->string form)))
 			       ((and (null? (cdadr form))
 				     (eq? head 'letrec*))
-				(lint-format "letrec* could be letrec? ~A" caller (truncated-list->string form))))
+				(lint-format "letrec* could be letrec: ~A" caller (truncated-list->string form))))
 			 
 			 (do ((bindings (cadr form) (cdr bindings)))
 			     ((not (pair? bindings))
@@ -9844,7 +9844,25 @@
 									   (cadar bindings))
 							:definer head)
 					      vars))))
-			 
+
+			 (if (and (pair? vars)          ; letrec -> named let (only letrec is worse than named let!)
+				  (null? (cdr vars))
+				  (pair? (cddr form))
+				  (pair? (caddr form))
+				  (null? (cdddr form))
+				  (eq? (var-name (car vars)) (caaddr form)))
+			     (let ((lform (cadar (cadr form))))
+			       (if (and (pair? lform)
+					(eq? (car lform) 'lambda)
+					(proper-list? (cadr lform))
+					(< (tree-length (cddr form)) 30))
+				   ;; the limit on tree-length is for cases where the args are long lists of data --
+				   ;;   more like for-each than let, and easier to read if the code is first, I think.
+				   (lint-format "perhaps ~A~%" caller
+						(lists->string form `(let ,(var-name (car vars)) 
+								       ,(if (null? vars) () (map list (cadr lform) (cdaddr form)))
+								       ,@(cddr lform)))))))
+
 			 (let ((new-env (append vars env)))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((not (pair? bindings)))
@@ -9944,7 +9962,7 @@
 		  
 		  ;; ---------------- defgenerator ----------------
 		  ((defgenerator)
-		   (append (get-generator form env) env))
+		   (append (get-generator caller form env) env))
 		  
 
 		  ;; ---------------- load ----------------
@@ -10310,13 +10328,30 @@
 				      (format #f "(line ~D) " (pair-line-number form))
 				      "")
 				  f (truncated-list->string form)))))
-		
+
+		(let ((suggest made-suggestion))
 		(set! vars (lint-walk (if (symbol? form) 
 					  form 
 					  (and (pair? form) 
 					       (car form)))
 				      form 
-				      vars)))
+				      vars))
+#|
+		(when (and (= suggest made-suggestion) (pair? form) 
+		           (not (memq (car form) '(cond-expand define-syntax export quote))))
+		  (format *stderr* "~A~%~%" (lint-pp form)))
+
+		;; extra newline in pp just before stacked-list -- use ~&
+		;; (apply find copy-one-file (list filename)) -> (find cop fil)?
+		;;       (apply write obj port) can only be (write obj (car port))?
+		;;       (apply unpack (list :source cf-files))
+		;; (append (slot-value s 'slots) '())) -> copy?
+		;; in (let ((rel-date-info (hash-ref gnc:relative-date-hash date-symbol))) (gnc:reldate-get-desc rel-date-info)) no timing trouble?
+		;; caddr argument, (if (not (equal-pred actual-result expected-result))), is a pair but should be a list whose cddr is also a list
+		;;    "write.scm", line 304
+
+|#
+		))
 	      
 	      (if (not (input-port? file))
 		  (close-input-port fp))
@@ -10654,7 +10689,8 @@
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
-;;; 
+;;; = logand cases?
+;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
 ;;;   for each gtk type, make a type macro like mus_header_t, a symbol in the pl_* table, tie in via signature makers
