@@ -32836,6 +32836,7 @@ static s7_pointer format_to_port_1(s7_scheme *sc, s7_pointer port, const char *s
 	      break;
 
 	    case '&':                           /* -------- conditional newline -------- */
+	      /* this only works if all output goes through format -- display/write for example do not update format_column */
 	      if (sc->format_column > 0)
 		format_append_newline(sc, fdat, port);
 	      i++;

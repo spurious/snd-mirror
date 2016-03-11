@@ -231,9 +231,9 @@
 (defgenerator (big-table-lookup
   :make-wrapper
     (lambda (g)
-      (if (not (g 'wave))
-	  (set! (g 'wave) (make-vector (g 'size) 0.0))
-	  (set! (g 'size) (length (g 'wave))))
+      (if (g 'wave)
+	  (set! (g 'size) (length (g 'wave)))
+	  (set! (g 'wave) (make-vector (g 'size) 0.0)))
       (set! (g 'frequency) (/ (* (g 'frequency) (g 'size)) *clm-srate*))
       (set! (g 'angle) (/ (* (g 'angle) (g 'size)) (* 2 pi)))
       g))

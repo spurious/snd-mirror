@@ -2266,25 +2266,25 @@ is a physical model of a flute:
 		  ;; now we set the granulate generator internal state to reflect all these envelopes
 		  (set! vol (env ampe))
 		  (set! (mus-length exA) (round sl))
-		  (set! (mus-ramp exA) (floor (* sl (env rampenv)))) ;current ramp length (0 to .5)
-		  (set! (mus-frequency exA) (env hopenv))            ;current hop size
-		  (set! (mus-increment exA) (env expenv))            ;current expansion amount
-		  (set! next-samp (+ next-samp (env srenv)))         ;current resampling increment
-		  (if (> next-samp (+ 1 ex-samp))
-		      (let ((samps (floor (- next-samp ex-samp))))
-			(if (> samps 2)
-			    (do ((k 0 (+ k 1)))
-				((= k (- samps 2)))
-			      (granulate exA)))
-			(set! valA0 (if (>= samps 2)
-					(* vol (granulate exA))
-					(set! valA0 valA1)))
-			(set! valA1 (* vol (granulate exA)))
-			(set! ex-samp (+ ex-samp samps))))
-		  
-		      (outa i (if (= next-samp ex-samp)
-				  valA0
-				  (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0)))))))))))))
+		  (set! (mus-ramp exA) (floor (* sl (env rampenv))))) ;current ramp length (0 to .5)
+		(set! (mus-frequency exA) (env hopenv))               ;current hop size
+		(set! (mus-increment exA) (env expenv))               ;current expansion amount
+		(set! next-samp (+ next-samp (env srenv)))            ;current resampling increment
+		(if (> next-samp (+ 1 ex-samp))
+		    (let ((samps (floor (- next-samp ex-samp))))
+		      (if (> samps 2)
+			  (do ((k 0 (+ k 1)))
+			      ((= k (- samps 2)))
+			    (granulate exA)))
+		      (set! valA0 (if (>= samps 2)
+				      (* vol (granulate exA))
+				      (set! valA0 valA1)))
+		      (set! valA1 (* vol (granulate exA)))
+		      (set! ex-samp (+ ex-samp samps))))
+		
+		(outa i (if (= next-samp ex-samp)
+			    valA0
+			    (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))))))))))))
 
 ;;; (with-sound (:statistics #t) (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
@@ -2507,15 +2507,14 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (beg (seconds->samples start))
 	  (end (seconds->samples (+ start dur)))
 	  (file (make-file->sample infile))
-	  (radius (- 1.0 (/ r fftsize)))
-	  (bin (/ *clm-srate* fftsize))
 	  (fs (make-vector freq-inc))
 	  (samp 0)
 	  (fdrc 0.0))
-
-      (do ((ctr 0 (+ ctr 1)))
-	  ((= ctr freq-inc))
-	(set! (fs ctr) (make-formant (* ctr bin) radius)))
+      (let ((bin (/ *clm-srate* fftsize))
+	    (radius (- 1.0 (/ r fftsize))))
+	(do ((ctr 0 (+ ctr 1)))
+	    ((= ctr freq-inc))
+	  (set! (fs ctr) (make-formant (* ctr bin) radius))))
       (set! fs (make-formant-bank fs scales))
 
       (set! (scales 0) 0.0)

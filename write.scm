@@ -16,41 +16,6 @@
 
       (define newlines 0)
 
-      (define* (unquasiquote x (depth 0)) ; not finished yet...
-	(if (not (pair? x))
-	    (if (symbol? x)
-		(format #f "~NC~A" depth #\, x)
-		(object->string x))
-	    
-	    (case (car x)
-	      ((#_{list})
-	       (do ((form x (cdr form))
-		    (d 0 (+ d 1)))
-		   ((not (and (pair? form)
-			      (eq? (car form) {list})))
-		    (if (eq? (car form) {apply_values})
-			",@"                             ; TODO: this is broken
-			(if (= d depth)
-			    (format #f "(~{~A~^ ~})" (map (lambda (y) (unquasiquote y depth)) form))
-			    (format #f "~NC(~{~A~^ ~})" (max 0 (- d depth)) #\` (map (lambda (y) (unquasiquote y d)) form)))))))
-	      
-	      ((#_{apply_values})
-	       (format #f ",@~A" (unquasiquote (cadr x) (max 0 (- depth 1)))))
-	      
-	      ((#_{append})
-	       (format #f "`(~A . ~A)" 
-		       (let ((qs (unquasiquote (cadr x) depth)))
-			 (substring qs 2 (- (length qs) 1)))
-		       (x (- (length x) 1))))
-	      
-	      ((quote)
-	       (if (= depth 1)
-		   (object->string (cadr x))
-		   (unquasiquote (cadr x) (max 0 (- depth 1)))))
-	      
-	      (else (format #f "~NC(~{~A~^ ~})" depth #\, (map (lambda (y) (unquasiquote y (max 0 (- depth 1)))) x))))))
-
-
       (define (pretty-print-1 obj port column)
 	(define (spaces n) 
 	  (set! newlines (+ newlines 1))
@@ -300,12 +265,12 @@
 			(begin
 			  (format port "(if ")
 			  (pretty-print-1 (cadr obj) port ifcol)
-			  (spaces (+ column 4))
-			  (pretty-print-1 (caddr obj) port ifcol)
-			  (if (pair? (cdddr obj))
-			      (begin
-				(spaces (+ column 4))
-				(pretty-print-1 (cadddr obj) port ifcol)))
+			  (when (pair? (cddr obj)) ; might be a messed-up if
+			    (spaces (+ column 4))
+			    (pretty-print-1 (caddr obj) port ifcol)
+			    (when (pair? (cdddr obj))
+			      (spaces (+ column 4))
+			      (pretty-print-1 (cadddr obj) port ifcol)))
 			  (write-char #\) port)))))
 		 
 		 ((let let* letrec letrec*)
@@ -374,9 +339,6 @@
 		  (spaces (+ column *pretty-print-spacing*))
 		  (stacked-list (cddr obj) (+ column *pretty-print-spacing*))
 		  (write-char #\) port))
-
-		 ((#_{list} #_{append})
-		  (display (unquasiquote obj) port))
 		 
 		 (else
 		  (let* ((objstr (object->string obj))
@@ -404,12 +366,11 @@
 					(begin
 					  (spaces (+ column *pretty-print-spacing*))
 					  (stacked-list (cdr obj) (+ column *pretty-print-spacing*)))
-					(let ((line-start (if (or (> carstrlen 16)
-								  (pair? (cadr obj)))
-							      (let ((new-col (+ column *pretty-print-spacing*)))
-								(spaces (- new-col 1))
-								new-col)
-							      (+ column *pretty-print-spacing* carstrlen))))
+					(let ((line-start (+ column *pretty-print-spacing*
+								    (if (or (> carstrlen 16)
+									    (pair? (cadr obj)))
+									0 
+									carstrlen))))
 					  (if (= lstlen 2)
 					      (begin
 						(write-char #\space port)

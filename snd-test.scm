@@ -20698,11 +20698,11 @@ EDITS: 2
 			   (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 			 (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			       (lambda () #t) (curlet) (make-float-vector (list 2 3) 0.0) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			       () 3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			       () 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			       )))
 		      (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
 			    (lambda () #t) (curlet) (make-float-vector (list 2 3) 0.0) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-			    () 3 4 2 8 16 32 64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+			    () 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			    ))
 		     
 		     ;; generic args
@@ -20720,7 +20720,7 @@ EDITS: 2
 				   (lambda args #f)))
 			       (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 3/4 'mus-error 0+i
 				     (lambda () #t) (make-float-vector (list 2 3) 0.0) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
-				     () 3 4 64 -64 (make-vector 0) '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
+				     () 3 4 64 -64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				     (lambda (a) a)))
 			      (if (not (equal? (func gen) default-value))
 				  (catch #t
@@ -46787,7 +46787,7 @@ EDITS: 1
 		(lambda args (car args))))
 	    xm-procs1))
 	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-	       (lambda () #t) (curlet) (make-float-vector (list 2 3) 0.0) :order 0 1 -1 #f #t () (make-vector 0)))
+	       (lambda () #t) (curlet) (make-float-vector (list 2 3) 0.0) :order 0 1 -1 #f #t () #()))
 	
 	;; ---------------- 2 Args
 	(for-each 
@@ -46801,9 +46801,9 @@ EDITS: 1
 		   (lambda args (car args))))
 	       xm-procs2))
 	    (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
-		  0+i (make-delay 32) :feedback -1 0 #f #t () (make-vector 0))))
+		  0+i (make-delay 32) :feedback -1 0 #f #t () #())))
 	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #(0 1) 3/4 
-	       0+i (make-delay 32) :frequency -1 0 #f #t () (make-vector 0)))
+	       0+i (make-delay 32) :frequency -1 0 #f #t () #()))
 	
 	(if all-args
 	    ;; ---------------- 3 Args
@@ -46820,11 +46820,11 @@ EDITS: 1
 			  (lambda args (car args))))
 		      xm-procs3))
 		   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-			 :start -1 0 #f #t () (make-vector 0))))
+			 :start -1 0 #f #t () #())))
 		(list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-		      :phase -1 0 #f #t () (make-vector 0))))
+		      :phase -1 0 #f #t () #())))
 	     (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-		   :channels -1 0 #f #t () (make-vector 0)))
+		   :channels -1 0 #f #t () #()))
 	    )
 	
 	(let* ((struct-accessors-1 
@@ -46950,7 +46950,7 @@ EDITS: 1
 			    (snd-display #__line__ ";(set ~A ~A) -> ~A" name arg tag))))))
 	      struct-accessors
 	      struct-accessor-names))
-	   (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) (make-vector 0) '(Cursor 1))))
+	   (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) #() '(Cursor 1))))
 	)
       (show-sounds-in-directory)
 					;(show-all-atoms)
@@ -47191,7 +47191,7 @@ EDITS: 1
   (if with-gui
       (let* ((delay-32 (make-delay 32))
 	     (color-95 (make-color-with-catch .95 .95 .95))
-	     (vector-0 (make-vector 0))
+	     (vector-0 #())
 	     (str-3 "/hiho")
 	     (float-vector-3 (make-float-vector 3))
 	     (float-vector-5 (make-float-vector 5))
@@ -48456,7 +48456,6 @@ EDITS: 1
 		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
 		    keyargs))
 		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
-;	  (if all-args (snd-display #__line__ ";args: ~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))))
 	  
 	  ;; ---------------- 0 Args
 	  (for-each 
@@ -48475,7 +48474,7 @@ EDITS: 1
 				  () 3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
 				  (lambda (a) #f) abs
 				  1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-				  (vector 1 #\a '(3)) (make-vector 0)
+				  (vector 1 #\a '(3)) #()
 				  (let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
 				  "" (make-hash-table 256)
 				  #<undefined> #<unspecified> #<eof>

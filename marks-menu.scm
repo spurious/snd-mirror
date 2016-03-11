@@ -864,36 +864,37 @@ using the granulate generator to fix up the selection duration (this still is no
 					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		      (list rowlefttop rowleftbottom)
 		      (list 0 1))
+
 		     (for-each
 		      (lambda (rparent loc)
-			(let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent ()))
-			      (lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent ()))
-			      (stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ()))
-			      (farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent ()))
-			      (sus-rel-start (* offset 2)))
-			  
-			  (XtAddCallback farright XmNactivateCallback
-					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
-					     (set! (loop-data (+ loc (* offset 2))) ml)
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-			  (XtAddCallback stopright XmNactivateCallback
-					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
-					     (set! (loop-data (+ loc (* offset 2))) ml)
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-			  (XtAddCallback lotsright XmNactivateCallback
-					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
-					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))
-			  (XtAddCallback someright XmNactivateCallback
-					 (lambda (w c i)
-					   (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
-					     (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
-					     (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
+			(let ((sus-rel-start (* offset 2)))
+			  (let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent ())))
+			    (XtAddCallback someright XmNactivateCallback
+					   (lambda (w c i)
+					     (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					       (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
+					       (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			  (let ((lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent ())))
+			    (XtAddCallback lotsright XmNactivateCallback
+					   (lambda (w c i)
+					     (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					       (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
+					       (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			  (let ((stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ())))
+			    (XtAddCallback stopright XmNactivateCallback
+					   (lambda (w c i)
+					     (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					       (set! (loop-data (+ loc (* offset 2))) ml)
+					       (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
+			  (let ((farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent ())))
+			    (XtAddCallback farright XmNactivateCallback
+					   (lambda (w c i)
+					     (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					       (set! (loop-data (+ loc (* offset 2))) ml)
+					       (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))))
 		      (list rowrighttop rowrightbottom)
 		      (list 0 1))))
+
 		 (list leftform rightform)
 		 (list "Sustain" "Release")
 		 (list 0 1)))
