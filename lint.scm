@@ -379,6 +379,22 @@
 	(if (> (length outstr) 120)
 	    (newline outport))))
 
+    (define (lint-suggest str caller form1 form2)
+      (let ((line (pair-line-number form1))
+	    (forms (lists->string form1 form2)))
+	(if (not (< 0 line line-number))
+	    (set! line line-number))
+	(format outport (string-append "~NC~A~A: " str "~%")
+		lint-left-margin #\space
+		(truncated-list->string caller) 
+		(if (< line 100000)
+		    (format #f " (line ~D)" line)
+		    "")
+		forms)
+	(set! made-suggestion (+ made-suggestion 1))
+	(if (> (length forms) 120)
+	    (newline outport))))
+
     
     ;; -------- vars -------- 
     (define var-name car)
@@ -3986,21 +4002,21 @@
 	     (let ((val (simplify-boolean form () () env)))
 	       (set! last-simplify-boolean-line-number line-number)
 	       (if (not (equal? form val))
-		   (lint-format "perhaps ~A" caller (lists->string form val))))))
+		   (lint-suggest "perhaps ~A" caller form val)))))
 	
 	((or)
 	 (if (not (= line-number last-simplify-boolean-line-number))
 	     (let ((val (simplify-boolean form () () env)))
 	       (set! last-simplify-boolean-line-number line-number)
 	       (if (not (equal? form val))
-		   (lint-format "perhaps ~A" caller (lists->string form val))))))
+		   (lint-suggest "perhaps ~A" caller form val)))))
 
 	((and)
 	 (if (not (= line-number last-simplify-boolean-line-number))
 	     (let ((val (simplify-boolean form () () env)))
 	       (set! last-simplify-boolean-line-number line-number)
 	       (if (not (equal? form val))
-		   (lint-format "perhaps ~A" caller (lists->string form val)))))
+		   (lint-suggest "perhaps ~A" caller form val))))
 
 	 (let ((checks()))
 	   (let cxr-search ((tree (cdr form)))
@@ -10380,11 +10396,11 @@
 					       (car form)))
 				      form 
 				      vars))
-
+#|
 		(when (and (= suggest made-suggestion) (pair? form) 
 		           (not (memq (car form) '(cond-expand define-syntax export quote))))
 		  (format *stderr* "~A~%~%" (lint-pp form)))
-
+|#
 		;;       (and (number? port) (exact? port) (integer? port)
 		))
 	      
@@ -10723,6 +10739,9 @@
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
+;;; lint-suggest with forms as pars to get better line numbers
+;;; and-redundants: gather all bools1 equal cadrs and try and-redundant by 2s
+;;; need a way to add to lints tables (like deprecated procs)
 ;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
