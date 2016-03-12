@@ -2355,12 +2355,6 @@
 
 (define (snd_test_4)
   
-  (define (frame->byte file fr)
-    (+ (mus-sound-data-location file)
-       (* (mus-sound-chans file)
-	  (mus-sound-datum-size file)
-	  fr)))
-  
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
     (log-mem clmtest)
     (clear-listener)
@@ -4274,31 +4268,6 @@
       (float-vector-add! (mus-xcoeffs f1) (mus-xcoeffs f2))
       f1))
   
-#|
-  (define* (cosine-channel (beg 0) dur snd chn edpos)
-    (let ((samps (or dur (framples snd chn))))
-      (map-channel
-       (let ((incr (/ pi samps))
-	     (angle (* -0.5 pi)))
-	 (lambda (y)
-	   (let ((val (* y (cos angle))))
-	     (set! angle (+ angle incr))
-	     val)))
-       beg dur snd chn edpos)
-      ))
-|#
-  (define* (cosine-channel (beg 0) dur snd chn edpos)
-    (let ((samps (or dur (framples snd chn))))
-      (map-channel
-       (let ((incr (/ pi samps))
-	     (angle (* -0.5 pi))
-	     (p (make-one-pole 1.0 -1.0)))
-	 (one-pole p (- angle incr))
-	 (lambda (y)
-	   (* y (cos (one-pole p incr)))))
-       beg dur snd chn edpos)
-      ))
-
   (define (check-maxamp caller-line ind val name)
     (if (fneq (maxamp ind 0) val) (snd-display #__line__ ";maxamp amp-env ~A: ~A should be ~A" name (maxamp ind) val))
     (let ((pos (scan-channel (lambda (y) (>= (abs y) (- val .0001)))))
@@ -11026,33 +10995,6 @@ EDITS: 2
 			   (vequal1 (cadr vals) (float-vector 0.500 0.499 0.475 0.000 0.000 0.495 0.526 0.505 0.501 0.501))))
 		  (snd-display #__line__ ";elliptic bs 8 .1 .2 spect: ~A" (cadr vals))))
 	    ))))
-  
-  (define (test-polyoid n)
-    (let* ((res (with-sound (:channels 2 :clipped #f)
-		  (let ((freqs (make-float-vector n))
-			(phases (make-float-vector n))           ; for oscil-bank
-			(cur-phases (make-float-vector (* 3 n))) ; for polyoid
-			(amp (/ 1.0 n)))
-		    (do ((i 0 (+ i 1))
-			 (j 0 (+ j 3)))
-			((= i n))
-		      (set! (cur-phases j) (+ i 1))
-		      (set! (cur-phases (+ j 1)) (/ 1.0 n))
-		      (set! (cur-phases (+ j 2)) (random (* 2 pi)))
-
-		      (set! (freqs i) (hz->radians (+ i 1.0)))
-		      (set! (phases i) (cur-phases (+ j 2))))
-
-		    (let ((gen (make-polyoid 1.0 cur-phases))
-			  (obank (make-oscil-bank freqs phases (make-float-vector n 1.0) #t)))
-		      (do ((i 0 (+ i 1)))
-			  ((= i 88200))
-			(outa i (* amp (oscil-bank obank))))
-		      (do ((i 0 (+ i 1)))
-			  ((= i 88200))
-			(outb i (polyoid gen 0.0)))))))
-	   (snd (find-sound res)))
-      (channel-distance snd 0 snd 1)))
   
   ;; ----------------
   (define (poly-roots-tests)
@@ -25024,39 +24966,12 @@ EDITS: 2
 (define (snd_test_13)
   
   (define (test-hooks)
-    (define (arg0 hook) (set! (hook 'result) 32))
-    (define (arg1 hook) (let ((n (hook (car (hook 'args))))) (set! (hook 'result) (if (number? n) (+ n 32) n))))
-    (define (arg2 hook) (let ((n (hook (car (hook 'args)))) (m (hook (cadr (hook 'args))))) (set! (hook 'result) (if (and (number? n) (number? m)) (+ n m 32) n))))
-    (define (arg3 hook)
-      (let ((a (hook (list-ref (hook 'args) 0)))
-	    (b (hook (list-ref (hook 'args) 1)))
-	    (c (hook (list-ref (hook 'args) 2))))
-	(set! (hook 'result) (if (and (number? a) (number? b) (number? c)) (+ a b c 32) a))))
-    (define (arg4 hook)
-      (let ((a (hook (list-ref (hook 'args) 0)))
-	    (b (hook (list-ref (hook 'args) 1)))
-	    (c (hook (list-ref (hook 'args) 2)))
-	    (d (hook (list-ref (hook 'args) 3))))
-	(set! (hook 'result) (if (and (number? a) (number? b) (number? c) (number? d)) (+ a b c 32) a))))
-    (define (arg5 hook)
-      (set! (hook 'result) (list 0 0 1 1)))
-    (define (arg6 hook)
-      (let ((a (hook (list-ref (hook 'args) 0)))
-	    (b (hook (list-ref (hook 'args) 1)))
-	    (c (hook (list-ref (hook 'args) 2)))
-	    (d (hook (list-ref (hook 'args) 3)))
-	    (e (hook (list-ref (hook 'args) 4)))
-	    (f (hook (list-ref (hook 'args) 5))))
-	(set! (hook 'result) (if (and (number? a) (number? b) (number? c) (number? d) (number? e)) (+ a b c d e f 32) a))))
     (reset-all-hooks)
-
     (for-each 
      (lambda (n) 
        (if (pair? (hook-functions n))
 	   (snd-display #__line__ ";~A not empty?" n)))
-     (snd-hooks))
-    
-    )
+     (snd-hooks)))
   
   (define (test-menus)
     (if (provided? 'xm)
@@ -25081,8 +24996,6 @@ EDITS: 2
 			((*motif* 'XtCallCallbacks) menu (*motif* 'XmNactivateCallback) (snd-global-state))))))))))
     (for-each close-sound (sounds))
     (dismiss-all-dialogs))
-  
-  (define (mdt-test id x time drg) #f)
   
   (reset-all-hooks)
 
@@ -29292,21 +29205,6 @@ EDITS: 2
 			    ; (error 'uhoh1)
 			    )))))))))
   
-  (define (zigzag-read snd chn)
-    (let* ((len (framples snd chn))
-	   (data (make-float-vector len))
-	   (sf (make-sampler 3 snd chn 1)))
-      (do ((i 3 (+ i 1)))
-	  ((= i 6))
-	(set! (data i) (next-sample sf)))
-      (do ((i 6 (- i 1)))
-	  ((= i 0))
-	(set! (data i) (previous-sample sf)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(set! (data i) (next-sample sf)))
-      data))
-  
   (define (zigzag-check name snd chn)
     (let ((data (channel->float-vector))
 	  (sf (make-sampler 3 snd chn)))
@@ -29350,9 +29248,6 @@ EDITS: 2
 	    (snd-display #__line__ ";~A back: ~A ~A" name (reversed-read ind 0) v)))
       happy))
   
-  
-  (define (rampx-channel r0 r1)
-    (xramp-channel r0 r1 3.0 0 (framples)))
   
   (define (check-both-chans ind name f0 f1)
     (let ((c0 (scan-channel f0 0 (framples) ind 0))
@@ -40575,81 +40470,6 @@ EDITS: 1
 	     ((= i end))
 	   (flocsig floc i (pulse-train os)))))
   
-  
-  (define (test-ws-errors)
-    ;; since we only catch 'mus-error and 'with-sound-interrupt above, any other error
-    ;;   closes *output* and returns to the top-level
-    
-    (define (bad-ins start)
-      (set! (playing) #f))
-    
-    (let ((prev (find-sound "test.snd")))
-      (if (sound? prev)
-	  (close-sound prev)))
-    
-    (if (mus-output? *output*)
-	(begin
-	  (snd-display #__line__ ";ws-error start: *output*: ~A" *output*)
-	  (mus-close *output*)
-	  (set! *output* #f)))
-    
-    
-    ;; ---------------- catch 'wrong-type-arg (not handled by with-sound) ----------------
-    
-    (let ((tag (catch #t
-		      (lambda ()
-			(with-sound ("test.snd")
-				    (fm-violin 0 1 440 .1)
-				    (fm-violin .1 1 660 .1)
-				    (fm-violin .2 1 880 .1)
-				    (fm-violin .3 1 -220 .1)))
-		      (lambda args args))))
-      
-      (if (not (and (list? tag)
-		    (eq? (car tag) 'wrong-type-arg)))
-	  (snd-display #__line__ ";ws-error -220: ~A" tag))
-      (if (mus-output? *output*)
-	  (begin
-	    (snd-display #__line__ ";ws-error -220: *output*: ~A" *output*)
-	    (mus-close *output*)
-	    (set! *output* #f)))
-      (let ((prev (find-sound "test.snd")))
-	(if (sound? prev)
-	    (begin
-	      (snd-display #__line__ ";ws error -220 opened test.snd?")
-	      (close-sound prev)))))
-    
-    
-    ;; ---------------- catch 'mus-error (handled by with-sound, but no continuation -- appears to exit after cleaning up) ----------------      
-    
-    (snd-display #__line__ ";error printout expected.....")
-    
-    (let ((tag (catch #t
-		      (lambda ()
-			(with-sound ("test.snd")
-				    (fm-violin 0 1 440 .1)
-				    (fm-violin .1 1 660 .1)
-				    (fm-violin .2 1 880 .1)
-				    (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
-		      (lambda args args))))
-      
-      (if (not (equal? tag "test.snd"))
-	  (snd-display #__line__ ";ws-error bad env: ~A" tag))
-      (if (mus-output? *output*)
-	  (begin
-	    (snd-display #__line__ ";ws-error bad env: *output*: ~A" *output*)
-	    (mus-close *output*)
-	    (set! *output* #f)))
-      (let ((prev (find-sound "test.snd")))
-	(if (not (sound? prev))
-	    (snd-display #__line__ ";ws error bad env did not open test.snd?")
-	    (close-sound prev))))
-    
-    (if (sound? (find-sound "test.snd"))
-	(close-sound (find-sound "test.snd")))
-    (delete-file "test.snd")
-    )
-  
   (dismiss-all-dialogs)
   
   (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
@@ -41758,37 +41578,36 @@ EDITS: 1
 	  (mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3))
 	  (close-sound file))
 	
-	(let ()
-	  (with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-	  (with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-	  (with-sound (:channels 8) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
-	  (with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #t)))
-	  (with-sound (:channels 4 :reverb jc-reverb) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error .001 :3d #f)))
-	  (with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path :path '((-10 10 0 1) (0 5 0 0) (10 10 10 1)) :3d #t)))
-	  (with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360)))
-	  (with-sound (:channels 8) (dloc-sinewave 0 3.0 440 .5 :path (make-spiral-path :turns 3)))
-	  (with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #f)))
-	  (with-sound (:channels 3) (dloc-sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #t)))
-	  (with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360 :distance '(0 10 1 30 2 10))))
-
-	  (set-speaker-configuration (arrange-speakers :speakers '(-45 45 90 135 225) 
-						       :delays '(.010 .020 .030 .040 .050)
-						       :channel-map '(0 1 3 2 4)))
-	  (with-sound (:channels 5) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
-	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :reverb-data '(:decay-time .9))
-	    (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
-	  
-	  (set-speaker-configuration (arrange-speakers :speakers '(-45 45 90 135 225) 
-						       :delays '(.010 .020 .030 .040 .050)
-						       :channel-map '(4 3 2 1 0)))
-	  
-	  (with-sound (:channels 5 :reverb freeverb :reverb-channels 5) 
-	    (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
-	  (with-sound (:channels 4) 
-		      (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode b-format-ambisonics))
-	  (with-sound (:channels 4) 
-		      (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode decoded-ambisonics))
-	  )))
+	(with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+	(with-sound (:channels 8) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #t)))
+	(with-sound (:channels 4 :reverb jc-reverb) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error .001 :3d #f)))
+	(with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path :path '((-10 10 0 1) (0 5 0 0) (10 10 10 1)) :3d #t)))
+	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360)))
+	(with-sound (:channels 8) (dloc-sinewave 0 3.0 440 .5 :path (make-spiral-path :turns 3)))
+	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #f)))
+	(with-sound (:channels 3) (dloc-sinewave 0 1.0 440 .5 :path (make-literal-path '((-10 10) (10 10)) :polar #t)))
+	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :total-angle 360 :distance '(0 10 1 30 2 10))))
+	
+	(set-speaker-configuration (arrange-speakers :speakers '(-45 45 90 135 225) 
+						     :delays '(.010 .020 .030 .040 .050)
+						     :channel-map '(0 1 3 2 4)))
+	(with-sound (:channels 5) (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
+	(with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :reverb-data '(:decay-time .9))
+	  (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
+	
+	(set-speaker-configuration (arrange-speakers :speakers '(-45 45 90 135 225) 
+						     :delays '(.010 .020 .030 .040 .050)
+						     :channel-map '(4 3 2 1 0)))
+	
+	(with-sound (:channels 5 :reverb freeverb :reverb-channels 5) 
+	  (dloc-sinewave 0 1.0 440 .5 :path (make-spiral-path :turns 2)))
+	(with-sound (:channels 4) 
+	  (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode b-format-ambisonics))
+	(with-sound (:channels 4) 
+	  (dlocsig-sinewave-1 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f) :decode decoded-ambisonics))
+	))
   (let ()
     (with-sound (:channels 5 :reverb freeverb :reverb-channels 5 :srate 44100 :reverb-data '(:decay-time .1))
       (frample->file *reverb* 0 (float-vector .2 .1 .05 .025 .0125)))
@@ -43398,7 +43217,7 @@ EDITS: 1
       (define (XM_POSITION val)  (and (integer? val) (< (abs val) 65536)))
       (define XM_SHORT XM_POSITION)
       (define (XM_CALLBACK val)  (or (procedure? val) (not val) (integer? val)))
-      (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (list? val) (pair? val) (procedure? (car val)))))
+      (define (XM_TRANSFER_CALLBACK val)  (or (procedure? val) (not val) (integer? val) (and (pair? val) (procedure? (car val)))))
       (define XM_CONVERT_CALLBACK XM_TRANSFER_CALLBACK)
       (define XM_SEARCH_CALLBACK XM_CALLBACK)
       (define XM_ORDER_CALLBACK XM_CALLBACK)
@@ -45795,71 +45614,64 @@ EDITS: 1
 	(let ((val (XmConvertStringToUnits (XDefaultScreenOfDisplay dpy) "3.14 in" XmHORIZONTAL XmCENTIMETERS)))
 	  (if (not (= val 7)) (snd-display #__line__ ";XmConvertStringToUnits in->cm ~A" val)))
 	(let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmMILLIMETERS)))
-	  (if (not (= val 70)) (snd-display #__line__ ";XmConvertUnits cm->mm ~A" val)))
-	(let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
-	  (if (not (memv val '(278 273))) (snd-display #__line__ ";XmConvertUnits cm->pix ~A" val)))
-	(XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
-	(XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
-	(XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
-	(XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
-	(XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" ())
-	(zync)
-	(make-pixmap (cadr (main-widgets)) arrow-strs)
-	;(display-scanned-synthesis) -- needs updating
-	(add-mark-pane)
-	(let ((ind (open-sound "oboe.snd")))
-	  (snd-clock-icon ind 6)
-	  (add-tooltip (cadr (channel-widgets)) "the w button")
-	  (with-minmax-button ind)
-	  (make-channel-drop-site ind 0)
-	  (set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
-	  (let ((drop-site (find-child (XtParent (XtParent ((channel-widgets ind 0) 7))) "drop here")))
-	    (if (not drop-site)
-		(snd-display #__line__ ";no drop site?")
-		(begin
-		  (XtVaGetValues drop-site (list XmNdropRectangles 0))
-		  (let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
-		    (if (not (= (cadr val) 1)) (snd-display #__line__ ";XmDropSiteRetrieve num: ~A" val)))
-		  (XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
-		  (if (not (XmDropSiteRegistered drop-site))
-		      (snd-display #__line__ ";XmDropSiteRegistered?"))
-		  (XmDropSiteUnregister drop-site)))))
-	
-	(add-mark 123)
-	(let ((container
-	       (make-sound-box "sounds"
-			       ((main-widgets) 3)
-			       mix
-			       (lambda (file chn)
-				 (define (without-directories filename)
-				   (call-with-exit
-				    (lambda (return)
-				      (do ((i (- (length filename) 1) (- i 1)))
-					  ((= i 0) filename)
-					(if (char=? (filename i) #\/)
-					    (return (substring filename (+ i 1))))))))
-				 (format #f "~~/peaks/~A-peaks-~D" 
-					 (snd-test-clean-string (mus-expand-filename file))
-					 chn))
-			       (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
-			       ())))
-	  (XmContainerRelayout container)
-	  (let ((vals (XtVaGetValues container 
-				     (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
-					   XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
-	    (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmNlargeCellHeight: ~A" (vals 1)))
-	    (if (not (Pixmap? (vals 3))) (snd-display #__line__ ";XmNcollapsedStatePixmap: ~A" (vals 3))))
-	  (let ((children ()))
-	    (for-each-child container
-			    (lambda (w)
-			      (if (XmIsIconGadget w)
-				  (set! children (cons w children)))))
-	    (XmContainerReorder container children (length children)))
-	  (let ((func (lambda (w) 0)))
-	    (XtSetValues container (list XmNinsertPosition func))
-	    (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
-	      (if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1)))))
-	(close-sound))
+	  (if (not (= val 70)) (snd-display #__line__ ";XmConvertUnits cm->mm ~A" val))))
+      (let ((val (XmConvertUnits (cadr (main-widgets)) XmHORIZONTAL XmCENTIMETERS 7 XmPIXELS)))
+	(if (not (memv val '(278 273))) (snd-display #__line__ ";XmConvertUnits cm->pix ~A" val)))
+      (XmVaCreateSimpleRadioBox (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+      (XmVaCreateSimpleCheckBox (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+      (XmVaCreateSimplePulldownMenu (caddr (main-widgets)) "hiho" 0 (lambda (w c i) #f) ())
+      (XmVaCreateSimplePopupMenu (caddr (main-widgets)) "hiho" (lambda (w c i) #f) ())
+      (XmVaCreateSimpleMenuBar (caddr (main-widgets)) "hiho" ())
+      (zync)
+      (make-pixmap (cadr (main-widgets)) arrow-strs)
+					;(display-scanned-synthesis) -- needs updating
+      (add-mark-pane)
+      (let ((ind (open-sound "oboe.snd")))
+	(snd-clock-icon ind 6)
+	(add-tooltip (cadr (channel-widgets)) "the w button")
+	(with-minmax-button ind)
+	(make-channel-drop-site ind 0)
+	(set-channel-drop (lambda (file s c) (snd-print file)) ind 0)
+	(let ((drop-site (find-child (XtParent (XtParent ((channel-widgets ind 0) 7))) "drop here")))
+	  (if (not drop-site)
+	      (snd-display #__line__ ";no drop site?")
+	      (begin
+		(XtVaGetValues drop-site (list XmNdropRectangles 0))
+		(let ((val (XmDropSiteRetrieve drop-site (list XmNnumImportTargets 0))))
+		  (if (not (= (cadr val) 1)) (snd-display #__line__ ";XmDropSiteRetrieve num: ~A" val)))
+		(XmDropSiteRetrieve drop-site (list XmNimportTargets 0))
+		(if (not (XmDropSiteRegistered drop-site))
+		    (snd-display #__line__ ";XmDropSiteRegistered?"))
+		(XmDropSiteUnregister drop-site)))))
+      
+      (add-mark 123)
+      (let ((container
+	     (make-sound-box "sounds"
+			     ((main-widgets) 3)
+			     mix
+			     (lambda (file chn)
+			       (format #f "~~/peaks/~A-peaks-~D" 
+				       (snd-test-clean-string (mus-expand-filename file))
+				       chn))
+			     (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
+			     ())))
+	(XmContainerRelayout container)
+	(let ((vals (XtVaGetValues container 
+				   (list XmNlargeCellHeight 0 XmNcollapsedStatePixmap 0 XmNdetailOrder 0 XmNdetailTabList 0
+					 XmNselectedObjects 0 XmNconvertCallback 0 XmNdestinationCallback 0 XmNselectionCallback 0))))
+	  (if (not (= (vals 1) 0)) (snd-display #__line__ ";XmNlargeCellHeight: ~A" (vals 1)))
+	  (if (not (Pixmap? (vals 3))) (snd-display #__line__ ";XmNcollapsedStatePixmap: ~A" (vals 3))))
+	(let ((children ()))
+	  (for-each-child container
+			  (lambda (w)
+			    (if (XmIsIconGadget w)
+				(set! children (cons w children)))))
+	  (XmContainerReorder container children (length children)))
+	(let ((func (lambda (w) 0)))
+	  (XtSetValues container (list XmNinsertPosition func))
+	  (let ((func1 (cadr (XtGetValues container (list XmNinsertPosition 0)))))
+	    (if (not (equal? func func1)) (snd-display #__line__ ";XmNinsertPosition: ~A ~A" func func1)))))
+      (close-sound)
       
       ;; qualify proc is causing a segfault somehow
 					;	    (let ((box (XmCreateFileSelectionBox (cadr (main-widgets)) "box" 
@@ -47091,81 +46903,6 @@ EDITS: 1
 
 (define (snd_test_25)
   
-  (define (traced a) (+ 2 a))
-  
-  (define (extract-channel filename snd chn)
-    (save-sound-as filename snd :channel chn))
-  
-  (define* (extract-channels :rest chans)
-    ;; extract a list of channels from the current sound and save as test.snd: (extract-channels 0 2)
-    (let ((snd (or (selected-sound) (car (sounds)))))
-      (if (sound? snd)
-	  (begin
-	    (for-each
-	     (lambda (chan)
-	       (set! (selection-member? snd chan) #t)
-	       (set! (selection-position snd chan) 0)
-	       (set! (selection-framples snd chan) (framples snd chan)))
-	     chans)
-	    (save-selection "test.snd")))))
-  
-  (define notch-out-rumble-and-hiss 
-    (let ((documentation "(notch-out-rumble-and-hiss s c) applies a bandpass filter with cutoffs at 40 Hz and 3500 Hz"))
-      (lambda* (snd chn)
-	(let ((cur-srate (* 1.0 (srate snd))))
-	  (filter-sound
-	   (list 0.0 0.0                    ; get rid of DC
-		 (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
-		 (/ 90.0 cur-srate) 1.0     ; now the passband
-		 (/ 7000.0 cur-srate) 1.0 
-		 (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
-		 1.0 0.0)                   ; get rid of some of the hiss
-	   ;; since the minimum band is 10 Hz here, 
-	   ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
-	   ;;   filter-sound will actually use overlap-add convolution in this case
-	   (expt 2 (ceiling (log (/ cur-srate 10.0) 2.0)))
-	   snd chn)))))
-  
-  (define* (reverse-channels snd)
-    (let* ((ind (or snd (selected-sound) (car (sounds))))
-	   (chns (chans ind)))
-      (let ((swaps (floor (/ chns 2))))
-	(as-one-edit
-	 (lambda ()
-	   (do ((i 0 (+ i 1))
-		(j (- chns 1) (- j 1)))
-	       ((= i swaps))
-	     (swap-channels ind i ind j)))))))
-  
-  (define* (rotate-channel (samps 1) snd chn)
-    (let ((ind (or snd (selected-sound) (car (sounds))))
-	   (chan (or chn (selected-channel) 0)))
-      (let ((reg (make-region 0 (- samps 1) ind chan)))
-	(as-one-edit
-	 (lambda ()
-	   (delete-samples 0 samps ind chan)
-	   (insert-region reg (framples ind chan))))
-	(forget-region reg))))
-  
-  (define (randomize-list lst)
-    (let* ((len (length lst))
-	   (vals (make-vector len #f))
-	   (nlst ()))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(let ((loc (random len)))
-	  (if (vector-ref vals loc)
-	      (do ((j 0 (+ j 1)))
-		  ((or (= j len) 
-		       (not (vector-ref vals j)))
-		   (set! (vals j) (car lst))))
-	      (set! (vals loc) (car lst)))
-	  (set! lst (cdr lst))))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(set! nlst (cons (vector-ref vals i) nlst)))
-      nlst))
-  
   (define (check-error-tag expected-tag thunk)
     (let ((tag
 	   (catch #t 
@@ -47316,7 +47053,8 @@ EDITS: 1
 		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
 		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-float-vector float-vector-add! float-vector-subtract!
-		     float-vector-multiply! float-vector-offset! float-vector-ref float-vector-scale! float-vector-set! float-vector-peak float-vector-max float-vector-min
+		     float-vector-multiply! float-vector-offset! float-vector-ref float-vector-scale! 
+		     float-vector-set! float-vector-peak float-vector-max float-vector-min
 		     float-vector? float-vector-move! float-vector-subseq float-vector little-endian? float-vector->string
 		     clm-channel env-channel env-channel-with-base map-channel scan-channel
 		     reverse-channel seconds->samples samples->seconds

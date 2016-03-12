@@ -2578,7 +2578,6 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 ;;;   this needs the Bessel functions (gsl or snd-test.scm)
 
 (define (fm-complex-component freq-we-want wc wm a b interp using-sine)
-  (define (~,3f x) (format #f "~,3F" x))
   (let ((sum 0.0)
 	(mxa (ceiling (* 7 a)))
 	(mxb (ceiling (* 7 b))))
@@ -2605,7 +2604,6 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 
 (define (fm-cascade-component freq-we-want wc wm1 a wm2 b)
-  (define (~,3f x) (format #f "~,3F" x))
   (let ((sum 0.0)
 	(mxa (ceiling (* 7 a)))
 	(mxb (ceiling (* 7 b))))

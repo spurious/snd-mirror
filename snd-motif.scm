@@ -645,22 +645,15 @@
     (let ((documentation "(make-pixmap w strs) creates a pixmap using the X/Xpm string-based pixmap description"))
       (lambda (widget strs) ; strs is list of strings as in arrow-strs above
 	(and (defined? 'XpmAttributes)
-	     (let* ((attr (XpmAttributes))
-		    (symb (XpmColorSymbol "basiccolor" #f *basic-color*))
-		    (dpy (XtDisplay widget))
-		    (win (XtWindow widget))
-		    (scr (DefaultScreen dpy))
-		    (depth (cadr (XtGetValues widget (list XmNdepth 0))))
-		    (colormap (cadr (XtGetValues widget (list XmNcolormap 0)))))
-	       (set! (.depth attr) depth)
-	       (set! (.colormap attr) colormap)
-	       (set! (.visual attr) (DefaultVisual dpy scr))
-	       (set! (.colorsymbols attr) (list symb))
+	     (let ((attr (XpmAttributes))
+		   (dpy (XtDisplay widget)))
+	       (set! (.depth attr) (cadr (XtGetValues widget (list XmNdepth 0))))
+	       (set! (.colormap attr) (cadr (XtGetValues widget (list XmNcolormap 0))))
+	       (set! (.visual attr) (DefaultVisual dpy (DefaultScreen dpy)))
+	       (set! (.colorsymbols attr) (list (XpmColorSymbol "basiccolor" #f *basic-color*)))
 	       (set! (.numsymbols attr) 1)
 	       (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
-	       (cadr (XpmCreatePixmapFromData dpy win strs attr)))))))
-  
-					; (XtSetValues ((sound-widgets) 8) (list XmNlabelPixmap (make-pixmap (cadr (main-widgets)) arrow-strs))))
+	       (cadr (XpmCreatePixmapFromData dpy (XtWindow widget) strs attr)))))))
   
 ;;; if you have a nice background pixmap, you can map it over all of Snd with:
 #|
@@ -1177,11 +1170,14 @@
       ;; (list (list widget inuse func title help) ...)
       (define (find-free-dialog ds)
 	(and (pair? ds)
-	     (if (not (cadar ds))
+	     (pair? (car ds))
+	     (pair? (cdar ds))
+	     (if (cadar ds)
+		 (find-free-dialog (cdr ds))
 		 (begin
 		   (set! ((car ds) 1) #t)
-		   (caar ds))
-		 (find-free-dialog (cdr ds)))))
+		   (caar ds)))))
+		 
       (define (find-dialog-widget wid ds)
 	(and (pair? ds)
 	     (if (equal? wid (caar ds))

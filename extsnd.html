@@ -9351,17 +9351,14 @@ at the loop points:
 </p>
 <pre class="indented">
 (define (mark-sf2)
-  (letrec 
-    ((sf2it 
-       (lambda (lst)
-         (if (pair? lst)
-             (let ((vals (car lst)))
-               (let ((m1 (<a class=quiet href="#addmark">add-mark</a> (cadr vals))))
-                 (set! (<a class=quiet href="#markname">mark-name</a> m1) (car vals)))
-               (<a class=quiet href="#addmark">add-mark</a> (caddr vals))
-               (<a class=quiet href="#addmark">add-mark</a> (cadddr vals))
-               (sf2it (cdr lst)))))))
-   (sf2it (<em class=red>soundfont-info</em>))))
+  (let sf2it ((lst (soundfont-info)))
+    (if (pair? lst)
+        (let ((vals (car lst)))
+          (let ((m1 (add-mark (cadr vals))))
+            (set! (mark-name m1) (car vals)))
+          (add-mark (caddr vals))
+          (add-mark (cadddr vals))
+          (sf2it (cdr lst))))))
 </pre>
 
 <img class="indented" src="pix/bongo.png" alt="soundfont marks">
