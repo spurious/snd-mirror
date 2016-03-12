@@ -72,13 +72,11 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
 			  (set! (newe i) x))))))
 		 (remove-duplicates
 		  (lambda (lst)
-		    (letrec ((rem-dup
-			      (lambda (lst nlst)
-				(cond ((null? lst) nlst)
-				      ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
-				      (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-		      (rem-dup lst ())))))
-	  
+		    (let rem-dup ((lst lst)
+				  (nlst ()))
+		      (cond ((null? lst) nlst)
+			    ((member (car lst) nlst) (rem-dup (cdr lst) nlst))
+			    (else (rem-dup (cdr lst) (cons (car lst) nlst))))))))
 	  (if (null? e1)
 	      (at0 e2)
 	      (if (null? e2)

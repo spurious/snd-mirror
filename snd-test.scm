@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [554]
-;;;  test 1: defaults                           [1226]
-;;;  test 2: headers                            [1596]
-;;;  test 3: variables                          [1911]
-;;;  test 4: sndlib                             [2475]
-;;;  test 5: simple overall checks              [4490]
-;;;  test 6: float-vectors                      [9242]
-;;;  test 7: colors                             [9513]
-;;;  test 8: clm                                [10032]
-;;;  test 9: mix                                [22115]
-;;;  test 10: marks                             [23894]
-;;;  test 11: dialogs                           [24832]
-;;;  test 12: extensions                        [25005]
-;;;  test 13: menus, edit lists, hooks, etc     [25271]
-;;;  test 14: all together now                  [26604]
-;;;  test 15: chan-local vars                   [27487]
-;;;  test 16: regularized funcs                 [29224]
-;;;  test 17: dialogs and graphics              [32973]
-;;;  test 18: save and restore                  [33085]
-;;;  test 19: transforms                        [34737]
-;;;  test 20: new stuff                         [36837]
-;;;  test 21: optimizer                         [38030]
-;;;  test 22: with-sound                        [40924]
-;;;  test 23: X/Xt/Xm                           [43909]
-;;;  test 24: GL                                [47583]
-;;;  test 25: errors                            [47706]
-;;;  test 26: s7                                [49224]
-;;;  test all done                              [49295]
-;;;  test the end                               [49477]
+;;;  test 0: constants                          [420]
+;;;  test 1: defaults                           [1090]
+;;;  test 2: headers                            [1460]
+;;;  test 3: variables                          [1775]
+;;;  test 4: sndlib                             [2335]
+;;;  test 5: simple overall checks              [4215]
+;;;  test 6: float-vectors                      [8940]
+;;;  test 7: colors                             [9215]
+;;;  test 8: clm                                [9715]
+;;;  test 9: mix                                [21738]
+;;;  test 10: marks                             [23516]
+;;;  test 11: dialogs                           [24451]
+;;;  test 12: extensions                        [24620]
+;;;  test 13: menus, edit lists, hooks, etc     [24884]
+;;;  test 14: all together now                  [26170]
+;;;  test 15: chan-local vars                   [27047]
+;;;  test 16: regularized funcs                 [28775]
+;;;  test 17: dialogs and graphics              [32488]
+;;;  test 18: save and restore                  [32599]
+;;;  test 19: transforms                        [34229]
+;;;  test 20: new stuff                         [36403]
+;;;  test 21: optimizer                         [37590]
+;;;  test 22: with-sound                        [40251]
+;;;  test 23: X/Xt/Xm                           [43153]
+;;;  test 24: GL                                [46773]
+;;;  test 25: errors                            [46896]
+;;;  test 26: s7                                [48321]
+;;;  test all done                              [48391]
+;;;  test the end                               [48574]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -37257,14 +37257,14 @@ EDITS: 1
 		 (let ((v (channel->float-vector)))
 		   (if (not (float-vector? v))
 		       (snd-display #__line__ ";channel->float-vector of oboe copy is null??")
-		       (array->file ltest v fr sr chns))
-		   (update-sound ind)
-		   (let ((mx1 (maxamp ind 0)))
-		     (if (fneq mx mx1)
-			 (snd-display #__line__ ";update-sound looped maxamp: ~A ~A ~A ~A ~A (~A)" i ind (framples ind) mx1 mx (/ mx1 mx))))
-		   (if (not (= (chans ind) chns)) (snd-display #__line__ ";update-sound looped chans: ~A ~A" chns (chans ind)))
-		   (if (not (= (srate ind) sr)) (snd-display #__line__ ";update-sound looped srate: ~A ~A" sr (srate ind)))
-		   (if (not (= (framples ind) fr)) (snd-display #__line__ ";update-sound looped framples: ~A ~A" fr (framples ind 0)))))
+		       (array->file ltest v fr sr chns)))
+		 (update-sound ind)
+		 (let ((mx1 (maxamp ind 0)))
+		   (if (fneq mx mx1)
+		       (snd-display #__line__ ";update-sound looped maxamp: ~A ~A ~A ~A ~A (~A)" i ind (framples ind) mx1 mx (/ mx1 mx))))
+		 (if (not (= (chans ind) chns)) (snd-display #__line__ ";update-sound looped chans: ~A ~A" chns (chans ind)))
+		 (if (not (= (srate ind) sr)) (snd-display #__line__ ";update-sound looped srate: ~A ~A" sr (srate ind)))
+		 (if (not (= (framples ind) fr)) (snd-display #__line__ ";update-sound looped framples: ~A ~A" fr (framples ind 0))))
 	       (let ((old-ind (open-sound "oboe.snd")))
 		 (let ((mxdiff (float-vector-peak (float-vector-subtract! (channel->float-vector 0 #f ind 0 0) (channel->float-vector 0 #f old-ind 0)))))
 		   (if (fneq mxdiff 0.0) 
@@ -37404,28 +37404,28 @@ EDITS: 1
 	))
       (close-sound ind))
     
-    (let ((ind1 (open-sound "1a.snd"))
-	  (data1 (file->floats "1a.snd"))
-	  (ind2 (open-sound "2a.snd"))
+    (let ((data1 (file->floats "1a.snd"))
 	  (data2 (file->floats "2a.snd")))
-      (if (not (equal? data1 (channel->float-vector 0 #f ind1 0)))
-	  (snd-display #__line__ ";file->floats 1a.snd"))
-      (if (not (equal? data2 (channel->float-vector 0 #f ind2 0)))
-	  (snd-display #__line__ ";file->floats 2a.snd"))
+      (let ((ind1 (open-sound "1a.snd")))
+	(if (not (equal? data1 (channel->float-vector 0 #f ind1 0)))
+	    (snd-display #__line__ ";file->floats 1a.snd")))
+      (let ((ind2 (open-sound "2a.snd")))
+	(if (not (equal? data2 (channel->float-vector 0 #f ind2 0)))
+	    (snd-display #__line__ ";file->floats 2a.snd")))
       (floats->file data1 "tmp.snd")
       (let ((ind3 (open-sound "tmp.snd")))
 	(if (not (equal? data1 (channel->float-vector 0 #f ind3 0)))
 	    (snd-display #__line__ ";floats->file 1a"))
 	(close-sound ind3))
       (mus-sound-forget "tmp.snd")
-      (floats->file data2 "tmp.snd" 44100 "this is a comment")
-      (let ((ind3 (open-sound "tmp.snd")))
-	(if (not (= (srate ind3) 44100))
-	    (snd-display #__line__ ";floats->file srate: ~A" (srate ind3)))
-	(close-sound ind3))
-      (mus-sound-forget "tmp.snd")
-      (let ((tag (catch #t (lambda () (floats->file 32 "tmp.snd")) (lambda args (car args)))))
-	(if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";floats->file bad arg: ~A" tag))))
+      (floats->file data2 "tmp.snd" 44100 "this is a comment"))
+    (let ((ind3 (open-sound "tmp.snd")))
+      (if (not (= (srate ind3) 44100))
+	  (snd-display #__line__ ";floats->file srate: ~A" (srate ind3)))
+      (close-sound ind3))
+    (mus-sound-forget "tmp.snd")
+    (let ((tag (catch #t (lambda () (floats->file 32 "tmp.snd")) (lambda args (car args)))))
+      (if (not (eq? tag 'wrong-type-arg)) (snd-display #__line__ ";floats->file bad arg: ~A" tag)))
     
     (for-each close-sound (sounds))
     
@@ -40505,15 +40505,15 @@ EDITS: 1
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (1): ~A" (map file-name (sounds))))
       (let ((mx (maxamp)))
-	(if (fneq mx .05) (snd-display #__line__ ";with-sound max (1): ~A" (maxamp)))
-	(if (not (and (= (srate ind) 22050)
-		      (= (mus-sound-srate "test1.snd") 22050))) 
-	    (snd-display #__line__ ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
-	(if (not (member (framples ind) '(2205 2206) =))
-	    (snd-display #__line__ ";with-sound framples (1): ~A" (framples ind)))
-	(if (not (and (= (chans ind) 2)
-		      (= (mus-sound-chans "test1.snd") 2)))
-	    (snd-display #__line__ ";with-sound chans (1): ~A" (chans ind))))
+	(if (fneq mx .05) (snd-display #__line__ ";with-sound max (1): ~A" (maxamp))))
+      (if (not (and (= (srate ind) 22050)
+		    (= (mus-sound-srate "test1.snd") 22050))) 
+	  (snd-display #__line__ ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
+      (if (not (member (framples ind) '(2205 2206) =))
+	  (snd-display #__line__ ";with-sound framples (1): ~A" (framples ind)))
+      (if (not (and (= (chans ind) 2)
+		    (= (mus-sound-chans "test1.snd") 2)))
+	  (snd-display #__line__ ";with-sound chans (1): ~A" (chans ind)))
       (close-sound ind)
       (delete-file "test1.snd"))
     
@@ -40582,7 +40582,7 @@ EDITS: 1
 		(fm-violin 0 .1 440 .1 :degree 45.0))
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display #__line__ ";with-sound (2): ~A" (map file-name (sounds)))
-	  (if (> (- (framples ind) (+ 22050 2205)) 1) (snd-display #__line__ ";with-sound reverbed framples (2): ~A" (framples ind))))
+	  (if (> (- (framples ind) 22050 2205) 1) (snd-display #__line__ ";with-sound reverbed framples (2): ~A" (framples ind))))
       (close-sound ind))
     
     (with-sound (:srate 22050 :comment "Snd+Run!" :scaled-to .5) (fm-violin 0 .1 440 .1))
@@ -40724,8 +40724,7 @@ EDITS: 1
 	  ((= i 3))
 	(vector-set! (gad 'cvect) i (make-oscil 440.0)))
       (set! (gad 'gen) (make-oscil 440.0))
-      (let ((val 0.0))
-	   (set! val (gad 'flt))
+      (let ((val (gad 'flt)))
 	(if (fneq val 123.0) (snd-display #__line__ ";defgenerator flt: ~A ~A" val (gad 'flt))))
       (if (fneq (gad 'flt1) 1.0) (snd-display #__line__ ";defgenerator flt1: ~A" (gad 'flt1)))
       (if (not (= (gad 'i) 0)) (snd-display #__line__ ";defgenerator i: ~A" (gad 'i)))
@@ -40764,7 +40763,7 @@ EDITS: 1
 	  (snd-display #__line__ ";with-sound (2) returns: ~A" outer))
       (let ((ind (find-sound outer)))
 	(if (or (not (sound? ind))
-		(> (- (framples ind) (+ 100 (floor (* *clm-srate* .1)))) 1))
+		(> (- (framples ind) 100 (floor (* *clm-srate* .1))) 1))
 	    (snd-display #__line__ ";sound-let (2): ~A ~A" (framples ind) (+ 100 (floor (* *clm-srate* .1)))))
 	(if (file-exists? "temp.snd")
 	    (snd-display #__line__ ";sound-let explicit output exists?"))
@@ -41242,21 +41241,20 @@ EDITS: 1
   (if (and (or (provided? 'snd-motif)
 	       (and (provided? 'snd-gtk) (defined? 'gtk_box_new)))
 	   (defined? 'variable-display))
-      (let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
-	    (wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0)))
-	    (wid3 (make-variable-display "do-loop" "i3" 'spectrum))
+      (let ((wid3 (make-variable-display "do-loop" "i3" 'spectrum))
 	    (wid4 (make-variable-display "do-loop" "i4" 'graph)))
-	(do ((i 0 (+ i 1)))
-	    ((= i 1000))
-	  (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4))
+	(let ((wid1 (make-variable-display "do-loop" "i*1" 'text))
+	      (wid2 (make-variable-display "do-loop" "i*2" 'scale '(-1.0 1.0))))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 1000))
+	    (variable-display (variable-display (* (variable-display (sin (* (variable-display i wid1) .1)) wid3) .5) wid2) wid4)))
 	(let ((tag (catch #t (lambda () (set! (sample 0 (car wid3) 0) .5)) (lambda args (car args)))))
 	  (if (> (edit-position (car wid3) 0) 0) (snd-display #__line__ ";edited variable graph? ~A ~A" tag (edit-position (car wid3) 0))))
 	(if (provided? 'snd-motif)
 	    ((*motif* 'XtUnmanageChild) variables-dialog)
 	    ((*gtk* 'gtk_widget_hide) variables-dialog))
 	(close-sound (car wid3))
-	(close-sound (car wid4))
-	))
+	(close-sound (car wid4))))
   
   (if (not (= *clm-srate* *default-output-srate*)) (snd-display #__line__ ";*clm-srate*: ~A ~A" *clm-srate* *default-output-srate*))
   (if (not (= *clm-channels* *default-output-chans*)) (snd-display #__line__ ";*clm-channels*: ~A ~A" *clm-channels* *default-output-chans*))

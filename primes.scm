@@ -4633,7 +4633,7 @@
 	    (set! factors (cons p factors))
 	    (set! num val)
 	    (if (= num 1)
-		(return (reverse factors)))))
+		(return))))
 	primes)))
     (if (> num 1)
 	(call-with-exit
@@ -4645,7 +4645,7 @@
 	       (set! factors (cons p factors))
 	       (set! num val)
 	       (if (= num 1)
-		   (return (reverse factors))))))))
+		   (return)))))))
     (reverse factors)))
 	      
 ;(factorize (* 76507 81299))

@@ -18,6 +18,7 @@
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-one-armed-if* #f)                         ; if -> when/unless
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
+(define *lint* #f)                                        ; the lint let
 
 (if (provided? 'pure-s7)
     (begin
@@ -308,6 +309,8 @@
 	(lint-left-margin 1))
     
     (set! *e* (curlet))
+    (set! *lint* (curlet))
+    ;; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
 
     ;; -------- lint-format --------
@@ -512,24 +515,6 @@
 	  (tree-count2 x (cdr tree)
 		       (+ (tree-count2 x (car tree) (+ count (if (eq? x (car tree)) 1 0)))
 			  (if (eq? x (cdr tree)) 1 0)))))
-    
-#|
-    (define (tree-length tree len)
-      (if (pair? tree)
-	  (tree-length (car tree) (tree-length (cdr tree) len))
-	  (if (null? tree)
-	      len
-	      (+ len 1))))
-
-    (define (tree-length-to tree len)
-      (let loop ((x tree) (i 0))
-	(if (pair? x)
-	    (loop (car x) (loop (cdr x) i))
-	    (if (or (null? x)
-		    (>= i len))
-		i
-		(+ i 1)))))
-|#
     
     (define (proper-tree? tree)
       (or (not (pair? tree))
@@ -6267,11 +6252,14 @@
 	    (let ((vn (var-name (car cur))))
 	      (if (not (eq? vn lambda-marker))
 		  (let ((repeat (var-member vn rst)))
-		    (if repeat
-			(lint-format "~A ~A ~A is declared twice" caller head
-				     (if (eq? (var-definer (car cur)) 'parameter) 'parameter 'variable)
-				     (var-name (car cur)))))))))
-      
+		    (when repeat
+		      (let ((type (if (eq? (var-definer repeat) 'parameter) 'parameter 'variable)))
+			(if (eq? (var-definer (car cur)) 'define)
+			    (lint-format "~A ~A ~A is redefined in the ~A body.  Perhaps use set! instead: ~A" caller
+					 head type vn head
+					 (truncated-list->string `(set! ,vn ,(var-initial-value (car cur)))))
+			    (lint-format "~A ~A ~A is declared twice" caller 
+					 head type vn)))))))))
       (for-each 
        (lambda (arg)
 	 (let ((vname (var-name arg))
@@ -6821,6 +6809,111 @@
 	  (cdr x)
 	  (list x)))
 
+    (define (check-returns caller f env)
+      (if (not (side-effect? f env))
+	  (lint-format "this could be omitted: ~A" caller (truncated-list->string f))
+	  (when (pair? f)
+	    (case (car f)
+	      ((if)
+	       (when (and (pair? (cdr f))
+			  (pair? (cddr f)))
+		 (let ((true (caddr f))
+		       (false (if (pair? (cdddr f)) (cadddr f) 'no-false)))
+		   (let ((true-ok (side-effect? true env))
+			 (false-ok (or (eq? false 'no-false)
+				       (side-effect? false env))))
+		     (if (not true-ok)
+			 (lint-format "this branch is pointless: ~A in ~A" caller
+				      (truncated-list->string true)
+				      (truncated-list->string f))
+			 (if (pair? true)
+			     (check-returns caller true env)))
+
+		     (if (not false-ok)
+			 (lint-format "this branch is pointless: ~A in ~A" caller
+				      (truncated-list->string false)
+				      (truncated-list->string f))
+			 (if (pair? false)
+			     (check-returns caller false env)))))))
+
+	      ((cond case)
+	       ;; here all but last result exprs are already checked
+	       ;;   redundant begin can confuse this, but presumably we'll complain about that elsewhere
+	       (for-each (lambda (c)
+			   (if (and (pair? c)
+				    (pair? (cdr c))
+				    (not (memq '=> (cdr c))))
+			       (let ((last-expr (list-ref (cdr c) (- (length (cdr c)) 1))))
+				 (if (not (side-effect? last-expr env))
+				     (lint-format "this is pointless: ~A in ~A" caller
+						  (truncated-list->string last-expr)
+						  (truncated-list->string c))
+				     (if (pair? last-expr)
+					 (check-returns caller last-expr env))))))
+			 (if (eq? (car f) 'cond) (cdr f) (cddr f))))
+
+	      ((let let*)
+	       (if (and (pair? (cdr f))
+			(not (symbol? (cadr f)))
+			(pair? (cddr f)))
+		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
+		     (if (not (side-effect? last-expr env))
+			 (lint-format "this is pointless: ~A in ~A" caller
+				      (truncated-list->string last-expr)
+				      (truncated-list->string f))
+			 (if (pair? last-expr)
+			     (check-returns caller last-expr env))))))			 
+
+	      ((letrec letrec* with-let unless when begin with-baffle)
+	       (if (and (pair? (cdr f))
+			(pair? (cddr f)))
+		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
+		     (if (not (side-effect? last-expr env))
+			 (lint-format "this is pointless: ~A in ~A" caller
+				      (truncated-list->string last-expr)
+				      (truncated-list->string f))
+			 (if (pair? last-expr)
+			     (check-returns caller last-expr env))))))			 
+
+	      ((do)
+	       (let ((returned (if (and (pair? (cdr f))
+					(pair? (cddr f)))
+				   (let ((end+res (caddr f)))
+				     (if (pair? (cdr end+res))
+					 (list-ref (cdr end+res) (- (length end+res) 2)))))))
+		 (if (not (or (eq? returned #<unspecified>)
+			      (and (pair? returned)
+				   (side-effect? returned env))))
+		     (lint-format "~A: result ~A is not used" caller 
+				  (truncated-list->string f) 
+				  (truncated-list->string returned))
+		     (if (pair? returned)
+			 (check-returns caller returned env)))))
+
+	      ((call-with-exit)
+	       (if (and (pair? (cdr f))
+			(pair? (cadr f))
+			(eq? (caadr f) 'lambda)
+			(pair? (cdadr f))
+			(pair? (cadadr f)))
+		   (let ((return (car (cadadr f))))
+		     (let walk ((tree (cddr (cadr f))))
+		       (if (pair? tree)
+			   (if (eq? (car tree) return)
+			       (if (and (pair? (cdr tree))
+					(or (not (boolean? (cadr tree)))
+					    (pair? (cddr tree))))
+				   (lint-format "th~A call-with-exit return value~A will be ignored: ~A" caller
+						(if (pair? (cddr tree)) "ese" "is")
+						(if (pair? (cddr tree)) "s" "")
+						tree))
+			       (for-each walk tree)))))))
+	      ((format)
+	       (if (and (pair? (cdr f))
+			(eq? (cadr f) #t))
+		   (lint-format "perhaps use () with format since the string value is discarded:~%    ~A" 
+				caller `(format () ,@(cddr f)))))))))
+
     (define lint-current-form #f)
 
     (define (lint-walk-body caller head body env)
@@ -6883,6 +6976,7 @@
 								,@(if (pair? (cdddr prev-f)) (unbegin (cadddr prev-f)) ())
 								,@(if (pair? (cdddr f)) (unbegin (cadddr f)) ())))
 							  ...)))))
+		;; cond occasionally is repeated, but almost never in a way we can combine
 
 		;; --------
 		;; check for repeated calls, but only one arg currently can change (more args = confusing separation in code)
@@ -7043,141 +7137,61 @@
 			;; do + result ignored doesn't happen
 			)
 
-		      (if (not (side-effect? f env))
-			  (lint-format "this could be omitted: ~A" caller (truncated-list->string f))
-			  (when (pair? f)
-			    (case (car f)
-			      ((if)
-			       (when (and (pair? (cdr fs))
-					  (pair? (cddr f)))
-				 (let ((true (caddr f))
-				       (false (if (pair? (cdddr f)) (cadddr f) 'no-false)))
-				   (let ((true-ok (side-effect? true env))
-					 (false-ok (or (eq? false 'no-false)
-						       (side-effect? false env))))
-				     (if (not true-ok)
-					 (lint-format "this branch is pointless: ~A in ~A" caller
-						      (truncated-list->string true)
-						      (truncated-list->string f))
-					 (if (and (pair? true)
-						  (eq? (car true) 'begin))
-					     (let ((last-expr (list-ref (cdr true) (- (length (cdr true)) 1))))
-					       (if (not (side-effect? last-expr env))
-						   (lint-format "this is pointless: ~A in ~A" caller
-								(truncated-list->string last-expr)
-								(truncated-list->string true))))))
-				     (if (not false-ok)
-					 (lint-format "this branch is pointless: ~A in ~A" caller
-						      (truncated-list->string false)
-						      (truncated-list->string f))
-					 (if (and (pair? false)
-						  (eq? (car false) 'begin))
-					     (let ((last-expr (list-ref (cdr false) (- (length (cdr false)) 1))))
-					       (if (not (side-effect? last-expr env))
-						   (lint-format "this is pointless: ~A in ~A" caller
-								(truncated-list->string last-expr)
-								(truncated-list->string false))))))))))
-			      ((cond case)
-			       ;; here all but last result exprs are already checked
-			       ;;   redundant begin can confuse this, but presumably we'll complain about that elsewhere
-			       (for-each (lambda (c)
-					   (if (and (pair? c)
-						    (pair? (cdr c))
-						    (not (memq '=> (cdr c))))
-					       (let ((last-expr (list-ref (cdr c) (- (length (cdr c)) 1))))
-						 (if (not (side-effect? last-expr env))
-						     (lint-format "this is pointless: ~A in ~A" caller
-								  (truncated-list->string last-expr)
-								  (truncated-list->string c))))))
-					 (if (eq? (car f) 'cond) (cdr f) (cddr f))))
-			      ((let let*)
-			       (if (and (pair? (cdr f))
-					(not (symbol? (cadr f)))
-					(pair? (cddr f)))
-				   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
-				     (if (not (side-effect? last-expr env))
-					 (lint-format "this is pointless: ~A in ~A" caller
-						      (truncated-list->string last-expr)
-						      (truncated-list->string f))))))
-			      ((letrec letrec* with-let unless when)
-			       (if (and (pair? (cdr f))
-					(pair? (cddr f)))
-				   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
-				     (if (not (side-effect? last-expr env))
-					 (lint-format "this is pointless: ~A in ~A" caller
-						      (truncated-list->string last-expr)
-						      (truncated-list->string f))))))
-			      ((do)
-			       (let ((returned (if (and (pair? (cdr f))
-							(pair? (cddr f)))
-						   (let ((end+res (caddr f)))
-						     (if (pair? (cdr end+res))
-							 (list-ref (cdr end+res) (- (length end+res) 2)))))))
-				 (if (not (or (eq? returned #<unspecified>)
-					      (and (pair? returned)
-						   (side-effect? returned env))))
-				     (lint-format "~A: result ~A is not used" caller 
-						  (truncated-list->string f) 
-						  (truncated-list->string returned)))))
-			      ((format)
-			       (if (and (pair? (cdr f))
-					(eq? (cadr f) #t))
-				   (lint-format "perhaps use () with format since the string value is discarded:~%    ~A" 
-						caller `(format () ,@(cddr f)))))))))
+		      (check-returns caller f env))
 
-		    ;; here f is the last form in the body
-		    (when (and (pair? prev-f)
-			       (pair? (cdr prev-f)))
-		      
-		      (if (and (memq (car prev-f) '(display write write-char write-byte))
-			       (equal? f (cadr prev-f))
-			       (not (side-effect? f env)))
-			  (lint-format "~A returns its first argument, so this could be omitted: ~A" caller 
-				       (car prev-f) (truncated-list->string f)))
-		      
-		      (if (and (memq (car prev-f) '(vector-set! float-vector-set! int-vector-set! byte-vector-set!
-						    string-set! list-set! hash-table-set! let-set!
-						    set-car! set-cdr!))
-			       (equal? f (list-ref prev-f (- (length prev-f) 1))))
-			  (lint-format "~A returns the new value, so this could be omitted: ~A" caller 
-				       (car prev-f) (truncated-list->string f)))
-
-		      (when (pair? (cddr prev-f))                ; (set! ((L 1) 2)) an error, but lint should keep going
-			(if (and (memq (car prev-f) '(set! define define* define-macro define-constant define-macro*
-						      defmacro defmacro* define-expansion define-bacro define-bacro*))
-				 (or (and (equal? (caddr prev-f) f)    ; (begin ... (set! x (...)) (...))
-					  (not (side-effect? f env)))
-				     (and (symbol? f)                  ; (begin ... (set! x ...) x)
-					  (eq? f (cadr prev-f)))       ; also (begin ... (define x ...) x)
-				     (and (not (eq? (car prev-f) 'set!))
-					  (pair? (cadr prev-f))        ; (begin ... (define (x...)...) x)
-					  (eq? f (caadr prev-f)))))
-			    (lint-format "~A returns the new value, so this could be omitted: ~A" caller
+		    (begin                          ; here f is the last form in the body
+		      (when (and (pair? prev-f)
+				 (pair? (cdr prev-f)))
+			
+			(if (and (memq (car prev-f) '(display write write-char write-byte))
+				 (equal? f (cadr prev-f))
+				 (not (side-effect? f env)))
+			    (lint-format "~A returns its first argument, so this could be omitted: ~A" caller 
 					 (car prev-f) (truncated-list->string f)))
 			
-			(if (and (pair? f)
-				 (pair? (cdr f))
-				 (eq? (cadr prev-f) (cadr f))
-				 (not (code-constant? (cadr f)))
-				 (or (and (memq (car prev-f) '(vector-set! float-vector-set! int-vector-set!))
-					  (memq (car f) '(vector-ref float-vector-ref int-vector-ref)))
-				     (and (eq? (car prev-f) 'list-set!)
-					  (eq? (car f) 'list-ref))
-				     (and (eq? (car prev-f) 'string-set!)
-					  (eq? (car f) 'string-ref))
-				     (and (eq? (car prev-f) 'set-car!)
-					  (eq? (car f) 'car))
-				     (and (eq? (car prev-f) 'set-cdr!)
-					  (eq? (car f) 'cdr)))
-				 (or (memq (car f) '(car cdr)) ; no indices
-				     (and (pair? (cddr f))     ; for the others check that indices match
-					  (equal? (caddr f) (caddr prev-f))
-					  (pair? (cdddr prev-f))
-					  (not (pair? (cddddr prev-f)))
-					  (not (pair? (cdddr f)))
-					  (not (side-effect? (caddr f) env)))))
-			    (lint-format "~A returns the new value, so this could be omitted: ~A" caller
-					 (car prev-f) (truncated-list->string f))))))
+			(if (and (memq (car prev-f) '(vector-set! float-vector-set! int-vector-set! byte-vector-set!
+								  string-set! list-set! hash-table-set! let-set!
+								  set-car! set-cdr!))
+				 (equal? f (list-ref prev-f (- (length prev-f) 1))))
+			    (lint-format "~A returns the new value, so this could be omitted: ~A" caller 
+					 (car prev-f) (truncated-list->string f)))
+			
+			(when (pair? (cddr prev-f))                ; (set! ((L 1) 2)) an error, but lint should keep going
+			  (if (and (memq (car prev-f) '(set! define define* define-macro define-constant define-macro*
+							     defmacro defmacro* define-expansion define-bacro define-bacro*))
+				   (or (and (equal? (caddr prev-f) f)    ; (begin ... (set! x (...)) (...))
+					    (not (side-effect? f env)))
+				       (and (symbol? f)                  ; (begin ... (set! x ...) x)
+					    (eq? f (cadr prev-f)))       ; also (begin ... (define x ...) x)
+				       (and (not (eq? (car prev-f) 'set!))
+					    (pair? (cadr prev-f))        ; (begin ... (define (x...)...) x)
+					    (eq? f (caadr prev-f)))))
+			      (lint-format "~A returns the new value, so this could be omitted: ~A" caller
+					   (car prev-f) (truncated-list->string f)))
+			  
+			  (if (and (pair? f)
+				   (pair? (cdr f))
+				   (eq? (cadr prev-f) (cadr f))
+				   (not (code-constant? (cadr f)))
+				   (or (and (memq (car prev-f) '(vector-set! float-vector-set! int-vector-set!))
+					    (memq (car f) '(vector-ref float-vector-ref int-vector-ref)))
+				       (and (eq? (car prev-f) 'list-set!)
+					    (eq? (car f) 'list-ref))
+				       (and (eq? (car prev-f) 'string-set!)
+					    (eq? (car f) 'string-ref))
+				       (and (eq? (car prev-f) 'set-car!)
+					    (eq? (car f) 'car))
+				       (and (eq? (car prev-f) 'set-cdr!)
+					    (eq? (car f) 'cdr)))
+				   (or (memq (car f) '(car cdr)) ; no indices
+				       (and (pair? (cddr f))     ; for the others check that indices match
+					    (equal? (caddr f) (caddr prev-f))
+					    (pair? (cdddr prev-f))
+					    (not (pair? (cddddr prev-f)))
+					    (not (pair? (cdddr f)))
+					    (not (side-effect? (caddr f) env)))))
+			      (lint-format "~A returns the new value, so this could be omitted: ~A" caller
+					   (car prev-f) (truncated-list->string f)))))))
 	      
 		;; needs f fs prev-f dpy-f dpy-start ctr len
 		;;   trap lint-format
@@ -9290,8 +9304,6 @@
 
 			   (set! inner-env (append vars env))
 
-			   ;; TODO: if equal? init step and step is constant and var is not otherwise set, step is unneeded
-
 			   ;; walk the step exprs
 			   (let ((baddies ())) ; these are step vars used within other step vars step expressions			   
 			     (do ((bindings step-vars (cdr bindings)))
@@ -9305,12 +9317,7 @@
 				       (set! (var-ref data) old-ref))
 				     (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
 					 (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
-#|
-				     ;; usually (read-char) or equivalent, but (c fc fc) (x 1 1) (val (/ num p) (/ num p))
-				     (if (and (equal? (cadr stepper) (caddr stepper))
-					      (not (tree-memq (car stepper) (cadr stepper))))
-					 (format *stderr* "~A~%" stepper))
-|#
+				     ;; pointless caddr here happens very rarely
 				     (set! (var-set data) (+ (var-set data) 1))) ; (pair? cddr) above
 				   (when (and (pair? (caddr stepper))
 					      (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
@@ -10568,7 +10575,6 @@
 		           (not (memq (car form) '(cond-expand define-syntax export quote))))
 		  (format *stderr* "~A~%~%" (lint-pp form)))
 |#
-		;;       (and (number? port) (exact? port) (integer? port)
 		))
 	      
 	      (if (not (input-port? file))
@@ -10906,11 +10912,7 @@
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
-;;; lint-suggest with forms as pars to get better line numbers
-;;; need a way to add to lints tables (like deprecated procs)
-;;; the otiose branch checks could be much more intense -- each branch branches...
-;;; if (let ((var...)) (define var ...var...) -- use set! not define and report caller as define??
-;;; does cond ever follow cond in a combinable way? or if/cond?
+;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders
 ;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above

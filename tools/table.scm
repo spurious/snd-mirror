@@ -23,7 +23,7 @@
 	      (if (and (> len 30)
 		       (string=? ";;; ---------------- test "
 				 (substring line 0 26)))
-		  (format #t "~A ~48,1T[~D]~%" (no-dashes-or-cr line) ctr))
+		  (format () "~A ~48,1T[~D]~%" (no-dashes-or-cr line) ctr))
 	      (loop (read-line file #t))))))))
 
 (exit)
