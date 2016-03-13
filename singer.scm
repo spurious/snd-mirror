@@ -256,7 +256,7 @@
 		      (set! temp (/ one-over-two-pi b-a))
 		      (set! temp1 (- 1.0 ca2))
 		      (set! (sines 1) (* (+ ca2 (* (- sa2 (sin b2)) temp)) temp1 one-over-two-pi))
-		      (set! (cosines 1) (* (+ (- sa2) (* (- ca2 (cos b2)) temp)) temp1 one-over-two-pi))))
+		      (set! (cosines 1) (* (- (* (- ca2 (cos b2)) temp) sa2) temp1 one-over-two-pi))))
 		(set! (sines 1) (+ (sines 1) (* (+ 0.75 (- ca2) (* (cos (* 2 a2)) 0.25)) one-over-two-pi)))
 		(set! (cosines 1) (+ (cosines 1) (- (* (- sa2 (* (sin (* 2 a2)) 0.25)) one-over-two-pi) (* a 0.5))))
 		(do ((k 2 (+ k 1))

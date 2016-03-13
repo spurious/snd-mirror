@@ -11145,16 +11145,6 @@ EDITS: 2
 				      (complex (mus-random 1.0) (mus-random 1.0))
 				      (complex (mus-random 1.0) (mus-random 1.0)))))
       
-					;      (do ((i 0 (+ i 1))) ((= i 10)) 
-					;	(poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
-					;      
-					;      (do ((i 0 (+ i 1))) ((= i 10)) 
-					;	(poly-as-vector-roots (vector (complex (mus-random 1.0) (mus-random 1.0)) 
-					;				      (complex (mus-random 1.0) (mus-random 1.0))
-					;				      (complex (mus-random 1.0) (mus-random 1.0))
-					;				      (complex (mus-random 1.0) (mus-random 1.0))
-					;				      (complex (mus-random 1.0) (mus-random 1.0)))))
-      
       (do ((i 3 (+ i 1))) ((= i 20)) 
 	(let ((v (make-float-vector i 0.0)))
 	  (set! (v 0) (mus-random 1.0))

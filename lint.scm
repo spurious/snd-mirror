@@ -309,7 +309,7 @@
 	(lint-left-margin 1))
     
     (set! *e* (curlet))
-    (set! *lint* (curlet))
+    (set! *lint* *e*)
     ;; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
 
@@ -381,6 +381,13 @@
 	(display outstr outport)
 	(if (> (length outstr) 120)
 	    (newline outport))))
+
+    (define (local-line-number tree)
+      (let ((tree-line (if (pair? tree) (pair-line-number tree) 0)))
+	(if (and (< 0 tree-line 100000)
+		 (not (= tree-line line-number)))
+	    (format #f " (line ~D)" tree-line)
+	    "")))
 
     
     ;; -------- vars -------- 
@@ -1194,12 +1201,11 @@
 		((case)
 		 (or (not (pair? (cdr form)))
 		     (side-effect-with-vars? (cadr form) env vars) ; the selector
-		     (letrec ((case-effect? (lambda (f e)
-					      (and (pair? f)
-						   (or (not (pair? (car f)))
-						       (any? (lambda (ff) (side-effect-with-vars? ff e vars)) (cdar f))
-						       (case-effect? (cdr f) e))))))
-		       (case-effect? (cddr form) env))))
+		     (let case-effect? ((f (cddr form)))
+		       (and (pair? f)
+			    (or (not (pair? (car f)))
+				(any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cdar f))
+				(case-effect? (cdr f)))))))
 		
 		((cond)
 		 (letrec ((cond-effect? (lambda (f e)
@@ -1734,7 +1740,8 @@
 						 (res3 (and-redundant? (car ar) (caddr ar)))) ; if res3 either 1 or 3 is out
 					     ;; (format *stderr* "ar: ~A, res1: ~A, res2: ~A, res3: ~A~%" ar res1 res2 res3)
 					     ;; only in numbers can 3 actually be reducible
-					     (if (or res1 res2 res3)
+					     (if (not (or res1 res2 res3))
+						 (set! keepers (append (cdr a) keepers))
 						 (begin
 						   (set! diffs #t)
 						   (if (and (or (not res1)
@@ -1753,8 +1760,7 @@
 								(eq? res3 (car (caddr ar)))))
 						       (set! keepers (cons (caddr ar) keepers)))
 						   (if (pair? (cdddr ar))
-						       (set! keepers (append (reverse (cdddr ar)) keepers))))
-						 (set! keepers (append (cdr a) keepers))))))))
+						       (set! keepers (append (reverse (cdddr ar)) keepers))))))))))
 				(reverse locals))
 		      (and diffs (reverse keepers)))))
 	    (let* ((bool (car p))
@@ -1763,7 +1769,7 @@
 		  (if (member bool (cdr local))
 		      (set! diffs #t)
 		      (set-cdr! local (cons bool (cdr local))))
-		  (set! locals (cons (cons (cadr bool) (list bool)) locals)))))))
+		  (set! locals (cons (list (cadr bool) bool) locals)))))))
       
       
       (define (and-not-redundant arg1 arg2)
@@ -4081,44 +4087,37 @@
 	       (if (not (equal? form val))
 		   (lint-format "perhaps ~A" caller (lists->string form val)))))
 
-	 (let ((checks()))
-	   (let cxr-search ((tree (cdr form)))
-	     (if (pair? tree)
-		 (case (car tree)
-		   ((pair?)
-		    (if (pair? (cdr tree))
-			(set! checks (cons (cadr tree) checks))))
+	 (if (not (tree-memq 'length form))
+	     (let ((checks()))
+	       (let cxr-search ((tree (cdr form)))
+		 (if (pair? tree)
+		     (case (car tree)
+		       ((pair?)
+			(if (pair? (cdr tree))
+			    (set! checks (cons (cadr tree) checks))))
+		       
+		       ((caar cadr cddr cdar 
+			      caaar caadr caddr cdddr cdaar cddar cadar cdadr
+			      cadddr cddddr caaaar caaadr caadar caaddr cadaar 
+			      cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar)
+			(if (pair? (cdr tree))
+			    (let ((ref (cadr tree)))
+			      (if (and (tree-memq ref checks)
+				       (member ref checks)
+				       (not (member tree checks)))
+				  (let ((new-arg `(,(string->symbol (string-append "c" (substring (symbol->string (car tree)) 2))) ,(cadr tree))))
+				    (if (not (member new-arg checks))
+					(lint-format "in ~A~%~NCwe check ~A, but then access ~A~A.~%~NCPerhaps add ~A" caller
+						     (truncated-list->string form)
+						     (+ lint-left-margin 4) #\space
+						     `(pair? ,ref) tree
+						     (local-line-number tree)
+						     (+ lint-left-margin 4) #\space
+						     `(pair? ,new-arg))))))))
 
-		   ((caar cadr cddr cdar 
-		     caaar caadr caddr cdddr cdaar cddar cadar cdadr
-		     cadddr cddddr caaaar caaadr caadar caaddr cadaar 
-		     cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar)
-		    (if (pair? (cdr tree))
-			(let ((ref (cadr tree)))
-			  (if (and (tree-memq ref checks)
-				   (member ref checks)
-				   (not (member tree checks))
-				   (not (member `(length ,ref) form (lambda (a b) 
-								      (and (pair? b) 
-									   (pair? (cdr b)) 
-									   (pair? (cadr b)) 
-									   (equal? a (cadr b)))))))
-			      (let ((new-arg `(,(string->symbol (string-append "c" (substring (symbol->string (car tree)) 2))) ,(cadr tree))))
-				(if (not (member new-arg checks))
-				    (lint-format "in ~A~%~NCwe check ~A, but then access ~A~A.~%~NCPerhaps add ~A" caller
-						 (truncated-list->string form)
-						 (+ lint-left-margin 4) #\space
-						 `(pair? ,ref) tree
-						 (let ((tree-line (pair-line-number tree)))
-						   (if (and (< 0 tree-line 100000)
-							    (not (= tree-line line-number)))
-						       (format #f " (line ~D)" tree-line)
-						       ""))
-						 (+ lint-left-margin 4) #\space
-						 `(pair? ,new-arg))))))))
-		   ;; this can probably be confused by cxr-isms but they don't seem to happen
-		   (else (cxr-search (car tree))
-			 (cxr-search (cdr tree))))))))
+			;; this can probably be confused by cxr-isms but they don't seem to happen
+			(else (cxr-search (car tree))
+			      (cxr-search (cdr tree)))))))))
 
 	;; ----------------
 	((=)
@@ -6822,20 +6821,20 @@
 		   (let ((true-ok (side-effect? true env))
 			 (false-ok (or (eq? false 'no-false)
 				       (side-effect? false env))))
-		     (if (not true-ok)
-			 (lint-format "this branch is pointless: ~A in ~A" caller
-				      (truncated-list->string true)
-				      (truncated-list->string f))
+		     (if true-ok
 			 (if (pair? true)
-			     (check-returns caller true env)))
-
-		     (if (not false-ok)
-			 (lint-format "this branch is pointless: ~A in ~A" caller
-				      (truncated-list->string false)
-				      (truncated-list->string f))
+			     (check-returns caller true env))
+			 (lint-format "this branch is pointless~A: ~A in ~A" caller
+				      (local-line-number true)
+				      (truncated-list->string true)
+				      (truncated-list->string f)))
+		     (if false-ok
 			 (if (pair? false)
-			     (check-returns caller false env)))))))
-
+			     (check-returns caller false env))
+			 (lint-format "this branch is pointless~A: ~A in ~A" caller
+				      (local-line-number false)
+				      (truncated-list->string false)
+				      (truncated-list->string f)))))))
 	      ((cond case)
 	       ;; here all but last result exprs are already checked
 	       ;;   redundant begin can confuse this, but presumably we'll complain about that elsewhere
@@ -6844,12 +6843,21 @@
 				    (pair? (cdr c))
 				    (not (memq '=> (cdr c))))
 			       (let ((last-expr (list-ref (cdr c) (- (length (cdr c)) 1))))
-				 (if (not (side-effect? last-expr env))
-				     (lint-format "this is pointless: ~A in ~A" caller
-						  (truncated-list->string last-expr)
-						  (truncated-list->string c))
+				 (if (side-effect? last-expr env)
 				     (if (pair? last-expr)
-					 (check-returns caller last-expr env))))))
+					 (check-returns caller last-expr env))
+				     (if (eq? (car f) 'case)  ; here some sort of return is required (sigh)
+					 (if (null? (cddr c)) ; just the return value
+					     (if (not (memq last-expr '(#f #t ())))
+						 (lint-format "this could be simply #f: ~A in ~A" caller
+							      (truncated-list->string last-expr)
+							      (truncated-list->string c)))
+					     (lint-format "this could be omitted: ~A in ~A" caller
+							  (truncated-list->string last-expr)
+							  (truncated-list->string c)))
+					 (lint-format "this is pointless: ~A in ~A" caller
+						      (truncated-list->string last-expr)
+						      (truncated-list->string c)))))))
 			 (if (eq? (car f) 'cond) (cdr f) (cddr f))))
 
 	      ((let let*)
@@ -6857,39 +6865,40 @@
 			(not (symbol? (cadr f)))
 			(pair? (cddr f)))
 		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
-		     (if (not (side-effect? last-expr env))
-			 (lint-format "this is pointless: ~A in ~A" caller
-				      (truncated-list->string last-expr)
-				      (truncated-list->string f))
+		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
-			     (check-returns caller last-expr env))))))			 
+			     (check-returns caller last-expr env))		 
+			 (lint-format "this is pointless~A: ~A in ~A" caller
+				      (local-line-number last-expr)
+				      (truncated-list->string last-expr)
+				      (truncated-list->string f))))))
 
 	      ((letrec letrec* with-let unless when begin with-baffle)
 	       (if (and (pair? (cdr f))
 			(pair? (cddr f)))
 		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
-		     (if (not (side-effect? last-expr env))
-			 (lint-format "this is pointless: ~A in ~A" caller
-				      (truncated-list->string last-expr)
-				      (truncated-list->string f))
+		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
-			     (check-returns caller last-expr env))))))			 
-
+			     (check-returns caller last-expr env))		 
+			 (lint-format "this is pointless~A: ~A in ~A" caller
+				      (local-line-number last-expr)
+				      (truncated-list->string last-expr)
+				      (truncated-list->string f))))))
 	      ((do)
 	       (let ((returned (if (and (pair? (cdr f))
 					(pair? (cddr f)))
 				   (let ((end+res (caddr f)))
 				     (if (pair? (cdr end+res))
 					 (list-ref (cdr end+res) (- (length end+res) 2)))))))
-		 (if (not (or (eq? returned #<unspecified>)
-			      (and (pair? returned)
-				   (side-effect? returned env))))
-		     (lint-format "~A: result ~A is not used" caller 
-				  (truncated-list->string f) 
-				  (truncated-list->string returned))
+		 (if (or (eq? returned #<unspecified>)
+			 (and (pair? returned)
+			      (side-effect? returned env)))
 		     (if (pair? returned)
-			 (check-returns caller returned env)))))
-
+			 (check-returns caller returned env))
+		     (lint-format "~A: result ~A~A is not used" caller 
+				  (truncated-list->string f) 
+				  (truncated-list->string returned)
+				  (local-line-number returned)))))
 	      ((call-with-exit)
 	       (if (and (pair? (cdr f))
 			(pair? (cadr f))
@@ -6897,7 +6906,7 @@
 			(pair? (cdadr f))
 			(pair? (cadadr f)))
 		   (let ((return (car (cadadr f))))
-		     (let walk ((tree (cddr (cadr f))))
+		     (let walk ((tree (cddadr f)))
 		       (if (pair? tree)
 			   (if (eq? (car tree) return)
 			       (if (and (pair? (cdr tree))
@@ -6908,6 +6917,16 @@
 						(if (pair? (cddr tree)) "s" "")
 						tree))
 			       (for-each walk tree)))))))
+
+	      ((map)
+	       (if (pair? (cdr f))
+		   (lint-format "map could be for-each: ~A" caller (truncated-list->string `(for-each ,@(cdr f))))))
+
+	      ((reverse!)
+	       (if (pair? (cdr f))
+		   (lint-format "~A might leave ~A in an undefined state; perhaps ~A" caller (car f) (cadr f)
+				`(set! ,(cadr f) ,f))))
+
 	      ((format)
 	       (if (and (pair? (cdr f))
 			(eq? (cadr f) #t))
@@ -6934,8 +6953,6 @@
 		(dpy-start #f)
 		(len (length body)))
 	    (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
-
-	    ;; 2-step repeats are mainly display+newline and equivalents, which should be handled below as format calls
 
 	    (when (and (pair? body)
 		       *report-function-stuff*
@@ -7109,33 +7126,24 @@
 			      (lint-format "perhaps ~A" caller (lists->string f `(set! ,(cadr f) ,(cadr prev-f))))))))
 
 		(if (< ctr (- len 1)) 
-		    ;; f is not the last form, so its value is ignored
-		    (begin
-		      (when (pair? f)
-			(if (and (eq? (car f) 'error)
-				 (not (var-member 'error env))
-				 (pair? (cdr fs)) ; do special case
-				 (every? (lambda (arg)
-					   (not (and (symbol? arg)
-						     (let ((v (var-member arg env)))
-						       (and (var? v)
-							    (eq? (var-initial-value v) call/cc-marker))))))
-					 (cdr f)))
-			    (if (= ctr (- len 2))
-				(lint-format "~A make this pointless: ~A" caller
-					     (truncated-list->string f)
-					     (truncated-list->string (cadr fs)))
-				(lint-format "~A makes the rest of the body unreachable: ~A" caller
-					     (truncated-list->string f)
-					     (truncated-list->string (list '... (cadr fs) '...)))))
-
-			(if (eq? (car f) 'map)
-			    (lint-format "map could be for-each: ~A" caller (truncated-list->string `(for-each ,@(cdr f))))
-			    (if (eq? (car f) 'reverse!)
-				(lint-format "~A might leave ~A in an undefined state; perhaps ~A" caller (car f) (cadr f)
-					     `(set! ,(cadr f) ,f))))
-			;; do + result ignored doesn't happen
-			)
+		    (begin		             ; f is not the last form, so its value is ignored
+		      (if (and (pair? f)
+			       (eq? (car f) 'error)
+			       (not (var-member 'error env))
+			       (pair? (cdr fs)) ; do special case
+			       (every? (lambda (arg)
+					 (not (and (symbol? arg)
+						   (let ((v (var-member arg env)))
+						     (and (var? v)
+							  (eq? (var-initial-value v) call/cc-marker))))))
+				       (cdr f)))
+			  (if (= ctr (- len 2))
+			      (lint-format "~A make this pointless: ~A" caller
+					   (truncated-list->string f)
+					   (truncated-list->string (cadr fs)))
+			      (lint-format "~A makes the rest of the body unreachable: ~A" caller
+					   (truncated-list->string f)
+					   (truncated-list->string (list '... (cadr fs) '...)))))
 
 		      (check-returns caller f env))
 
@@ -8454,7 +8462,8 @@
 						   (if (and (> true-len *report-short-branch*)
 							    (< (tree-length (cadddr form)) (/ true-len *report-short-branch*)))
 						       (let ((new-expr (simplify-boolean `(not ,(cadr form)) () () env)))
-							 (lint-format "perhaps place the much shorter branch first: ~A" caller
+							 (lint-format "perhaps place the much shorter branch first~A: ~A" caller
+								      (local-line-number (cadr form))
 								      (truncated-lists->string form `(if ,new-expr ,false ,true))))))))))
 				   ;; --------
 
@@ -10284,11 +10293,13 @@
 				      (or (not (pair? (cdr tag)))
 					  (length (cadr tag)))))
 			     (lint-format "catch tag ~S is unreliable (catch uses eq? to match tags)" caller tag))
-			 (let ((catcher (make-var :name catch-marker
-						  :initial-value form
-						  :definer head)))
-			   (lint-walk caller (caddr form) (cons catcher env)))
-			 (lint-walk caller (cadddr form) env)))
+			 (let ((body (caddr form))
+			       (error-handler (cadddr form)))
+			   (let ((catcher (make-var :name catch-marker
+						    :initial-value form
+						    :definer head)))
+			     (lint-walk caller body (cons catcher env)))
+			   (lint-walk caller error-handler env))))
 		   env)
 		  
 		  ;; ----------------
@@ -10563,19 +10574,12 @@
 				      "")
 				  f (truncated-list->string form)))))
 
-		(let ((suggest made-suggestion))
 		(set! vars (lint-walk (if (symbol? form) 
 					  form 
 					  (and (pair? form) 
 					       (car form)))
 				      form 
-				      vars))
-#|
-		(when (and (= suggest made-suggestion) (pair? form) 
-		           (not (memq (car form) '(cond-expand define-syntax export quote))))
-		  (format *stderr* "~A~%~%" (lint-pp form)))
-|#
-		))
+				      vars)))
 	      
 	      (if (not (input-port? file))
 		  (close-input-port fp))
@@ -10912,7 +10916,7 @@
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
-;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders
+;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
