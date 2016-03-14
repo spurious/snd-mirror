@@ -197,7 +197,7 @@
     (lambda args
       (let* ((snd (or (selected-sound) (car (sounds))))
 	     (chn (or (selected-channel) 0))
-	     (m1 (if (> (length args) 0)
+	     (m1 (if (pair? args)
 		     (car args)
 		     (let find-mark ((ms (marks snd chn)))
 		       (if (null? ms)
@@ -208,7 +208,8 @@
 			       (car ms)
 			       (find-mark (cdr ms)))))))
 	     (m2 (and (mark? m1)
-		      (if (> (length args) 1)
+		      (if (and (pair? args)
+			       (pair? (cdr args)))
 			  (cadr args)
 			  (let find-another-mark ((ms (marks snd chn)))
 			    (if (null? ms)

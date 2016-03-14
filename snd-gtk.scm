@@ -561,6 +561,8 @@
       
       (define (find-free-dialog ds)
 	(and (pair? ds)
+	     (pair? (car ds))
+	     (pair? (cdar ds))
 	     (if (cadar ds)
 		 (find-free-dialog (cdr ds))
 		 (begin
@@ -569,8 +571,8 @@
 
       (lambda args
 	;; (file-select func title dir filter help)
-	(let* ((func (and (> (length args) 0) (args 0)))
-	       (title (if (> (length args) 1) (args 1) "select file"))
+	(let* ((func (and (pair? args) (args 0)))
+	       (title (if (and (pair? args) (pair? (cdr args))) (args 1) "select file"))
 	       (dir (if (> (length args) 2) (args 2) "."))
 	       (dialog (or (find-free-dialog file-selector-dialogs)
 			   (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new
@@ -800,15 +802,15 @@
 	(case type
 	  ((text)
 	   ;; add a horizontal pair: label text
-	   (let ((hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0))
-		 (text (gtk_label_new "")))
-	     (let ((label (gtk_label_new var-label)))
-	       (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
-	       (gtk_widget_show hbox)
-	       (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
-	       (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
-	       (gtk_widget_show label))
-	     (gtk_box_pack_start (GTK_BOX hbox) text #t #t 6)
+	   (let ((text (gtk_label_new "")))
+	     (let ((hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0)))
+	       (let ((label (gtk_label_new var-label)))
+		 (gtk_box_pack_start (GTK_BOX pane) hbox #f #f 2)
+		 (gtk_widget_show hbox)
+		 (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6)
+		 (gtk_widget_set_halign (GTK_WIDGET label) GTK_ALIGN_START)
+		 (gtk_widget_show label))
+	       (gtk_box_pack_start (GTK_BOX hbox) text #t #t 6))
 	     (gtk_widget_set_halign (GTK_WIDGET text) GTK_ALIGN_START)
 	     (gtk_widget_show text)
 	     text))

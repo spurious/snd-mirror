@@ -21,7 +21,8 @@
       (let* ((cx (snd-gl-context))
 	     (dpy ((*motif* 'XtDisplay) (cadr (main-widgets))))
 	     (version (glXQueryVersion dpy 0 0)))
-	(if (car version)
+	(if (not (car version))
+	    (snd-print "no GL found!")
 	    (let ((visuals ((*motif* 'XGetVisualInfo) dpy 0 (list 'XVisualInfo 0))))
 	      (glXMakeCurrent dpy ((*motif* 'XtWindow) (cadr (main-widgets))) cx)
 	      (snd-print (format #f "GL version: ~A.~A, (~A ~A ~A)~%"
@@ -62,8 +63,8 @@
 							   acredsize acgreensize acbluesize acalphasize)
 						   (format #f "      auxbuffs: ~D, depth: ~D, acalpha: ~D~%"
 							   auxbuffers depthsize stencilsize))))))
-	       visuals))
-	    (snd-print "no GL found!"))))))
+	       visuals)))))))
+
 
 
 ;;; -------- dump GL state
@@ -312,9 +313,9 @@
     
     (define (redraw-graph)
       (let ((win ((*motif* 'XtWindow) drawer))
-	    (dpy ((*motif* 'XtDisplay) drawer))
-	    (cx (snd-gl-context)))
-	(glXMakeCurrent dpy win cx)
+	    (dpy ((*motif* 'XtDisplay) drawer)))
+	(let ((cx (snd-gl-context)))
+	  (glXMakeCurrent dpy win cx))
 	(if gl-list (glDeleteLists gl-list 1))
 	(set! gl-list (glGenLists 1))
 	(glEnable GL_DEPTH_TEST)
@@ -355,28 +356,27 @@
 	((*motif* 'XtCreateManagedWidget) name type (list-ref (main-widgets) 3) args))
 
       (lambda ()
-	(if (not drawer)
-	    (let ((outer (with-let (sublet *motif*)
-			   (add-main-pane "Waterfall" xmFormWidgetClass
-					  (list XmNbackground *basic-color*
-						XmNpaneMinimum 320)))))
-	      (set! drawer (with-let (sublet *motif* 'outer outer)
-			     (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
-						    (list XmNbackground       *graph-color*
-							  XmNforeground       *data-color*
-							  XmNleftAttachment   XmATTACH_FORM
-							  XmNtopAttachment    XmATTACH_FORM
-							  XmNbottomAttachment XmATTACH_FORM
-							  XmNrightAttachment  XmATTACH_FORM))))
-	      (set! *spectro-x-angle* 210.0)
-	      (set! *spectro-y-angle* 60.0)
-	      (set! *spectro-z-angle* 30.0)
-	      (set! *spectro-x-scale* 3.0)
-	      ((*motif* 'XtAddCallback) drawer (*motif* 'XmNresizeCallback) (lambda (w context info) (redraw-graph)))
-	      ((*motif* 'XtAddCallback) drawer (*motif* 'XmNexposeCallback) (lambda (w context info) (redraw-graph)))
-	      (hook-push after-graph-hook (lambda (hook) (redraw-graph)))
-	      (hook-push orientation-hook (lambda (hook) (redraw-graph)))
-	      (hook-push color-hook (lambda (hook) (redraw-graph))))))))
-)
+	(when (not drawer)
+	  (let ((outer (with-let (sublet *motif*)
+			 (add-main-pane "Waterfall" xmFormWidgetClass
+					(list XmNbackground *basic-color*
+					      XmNpaneMinimum 320)))))
+	    (set! drawer (with-let (sublet *motif* 'outer outer)
+			   (XtCreateManagedWidget "draw" xmDrawingAreaWidgetClass outer
+						  (list XmNbackground       *graph-color*
+							XmNforeground       *data-color*
+							XmNleftAttachment   XmATTACH_FORM
+							XmNtopAttachment    XmATTACH_FORM
+							XmNbottomAttachment XmATTACH_FORM
+							XmNrightAttachment  XmATTACH_FORM)))))
+	  (set! *spectro-x-angle* 210.0)
+	  (set! *spectro-y-angle* 60.0)
+	  (set! *spectro-z-angle* 30.0)
+	  (set! *spectro-x-scale* 3.0)
+	  ((*motif* 'XtAddCallback) drawer (*motif* 'XmNresizeCallback) (lambda (w context info) (redraw-graph)))
+	  ((*motif* 'XtAddCallback) drawer (*motif* 'XmNexposeCallback) (lambda (w context info) (redraw-graph)))
+	  (hook-push after-graph-hook (lambda (hook) (redraw-graph)))
+	  (hook-push orientation-hook (lambda (hook) (redraw-graph)))
+	  (hook-push color-hook (lambda (hook) (redraw-graph))))))))
 
 (define complexify (*gl* 'complexify))

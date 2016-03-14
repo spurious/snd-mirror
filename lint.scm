@@ -4087,7 +4087,7 @@
 	       (if (not (equal? form val))
 		   (lint-format "perhaps ~A" caller (lists->string form val)))))
 
-	 (if (not (tree-memq 'length form))
+	 (if (not (tree-memq 'length form)) ; too many fussy messages! I may remove this check.
 	     (let ((checks()))
 	       (let cxr-search ((tree (cdr form)))
 		 (if (pair? tree)
@@ -4199,18 +4199,48 @@
 		       (memq (caadr form) non-negative-ops))
 		  (lint-format "~A can't be negative: ~A" caller (caadr form) (truncated-list->string form)))
 
-		 ((or (and (eq? head '>)
-			   (eqv? (cadr form) 1)
-			   (pair? (caddr form))
-			   (eq? (caaddr form) 'length))
-		      (and (eq? head '<)
-			   (eqv? (caddr form) 1)
-			   (pair? (cadr form))
-			   (eq? (caadr form) 'length)))
-		  (let ((arg (if (pair? (cadr form)) (cadadr form) (cadr (caddr form)))))
-		    (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
-				 (lists->string form `(null? ,arg)))))))
-
+		 ((and (pair? (cadr form))
+		       (eq? (caadr form) 'length))
+		  (let ((arg (cadadr form)))
+		    (when (symbol? arg)
+		      (if (eqv? (caddr form) 0)
+			  (lint-format "perhaps~A ~A" caller
+				       (if (eq? head '<) "" (format #f " (assuming ~A is a proper list)," arg))
+				       (lists->string form
+						      (case head
+							((<)  `(and (pair? ,arg) (not (proper-list? ,arg))))
+							((<=) `(null? ,arg))
+							((>)  `(pair? ,arg))
+							((>=) `(list? ,arg)))))
+			  (if (eqv? (caddr form) 1)
+			      (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
+					   (lists->string form
+							  (case head
+							    ((<)  `(null? ,arg))
+							    ((<=) `(or (null? ,arg) (null? (cdr ,arg))))
+							    ((>)  `(and (pair? ,arg) (pair? (cdr ,arg))))
+							    ((>=) `(pair? ,arg))))))))))
+		 ((and (pair? (caddr form))
+		       (eq? (caaddr form) 'length))
+		  (let ((arg (cadr (caddr form))))
+		    (when (symbol? arg)
+		      (if (eqv? (cadr form) 0)
+			  (lint-format "perhaps~A ~A" caller
+				       (if (eq? head '>) "" (format #f " (assuming ~A is a proper list)," arg))
+				       (lists->string form
+						      (case head
+							((<)  `(pair? ,arg))
+							((<=) `(list? ,arg))
+							((>)  `(and (pair? ,arg) (not (proper-list? ,arg))))
+							((>=) `(null? ,arg)))))
+			  (if (eqv? (cadr form) 1)
+			      (lint-format "perhaps (assuming ~A is a proper list), ~A" caller arg
+					   (lists->string form
+							  (case head
+							    ((<)  `(and (pair? ,arg) (pair? (cdr ,arg))))
+							    ((<=) `(pair? ,arg))
+							    ((>)  `(null? ,arg))
+							    ((>=) `(or (null? ,arg) (null? (cdr ,arg))))))))))))))
 	 (check-char-cmp caller head form))
 	;; could change (> x 0) to (positive? x) and so on, but the former is clear and ubiquitous
 	
@@ -4248,9 +4278,28 @@
 	;; ----------------
 	((length)
 	 (if (pair? (cdr form))
-	     (if (and (pair? (cadr form))
-		      (memq (caadr form) '(reverse reverse! list->vector vector->list list->string string->list let->list)))
-		 (lint-format "perhaps ~A" caller (lists->string form `(length ,(cadadr form))))
+	     (if (pair? (cadr form))
+		 (let ((arg (cadr form)))
+		   (case (car arg)
+		     ((reverse reverse! list->vector vector->list list->string string->list let->list)
+		      (lint-format "perhaps ~A" caller (lists->string form `(length ,(cadr arg)))))
+		     ((cons)
+		      (lint-format "perhaps ~A" caller (lists->string form `(+ (length ,(caddr arg)) 1))))
+		     ((make-list)
+		      (lint-format "perhaps ~A" caller (lists->string form (cadr arg))))
+		     ((list)
+		      (lint-format "perhaps ~A" caller (lists->string form (length (cdr arg)))))
+		     ((cdr)
+		      (lint-format "perhaps ~A" caller (lists->string form `(- (length ,(cadr arg)) 1))))
+		     ((cddr)
+		      (lint-format "perhaps ~A" caller (lists->string form `(- (length ,(cadr arg)) 2))))
+		     ((append)
+		      (if (= (length (cdr arg)) 2)
+			  (lint-format "perhaps ~A" caller (lists->string form `(+ (length ,(cadr arg)) (length ,(caddr arg)))))))
+		     ((quote)
+		      (if (list? (cadr arg))
+			  (lint-format "perhaps ~A" caller (lists->string form (length (cadr arg))))))))
+		 ;; not pair cadr
 		 (if (code-constant? (cadr form))
 		     (lint-format "perhaps ~A -> ~A" caller 
 				  (truncated-list->string form)
@@ -4258,7 +4307,6 @@
 						   (eq? (caadr form) 'quote))
 					      (cadadr form)
 					      (cadr form))))))))
-	
 	;; ----------------
 	((zero? positive? negative?)
 	 (if (pair? (cdr form))
@@ -5721,6 +5769,7 @@
       
       (let ((arg-number 1)
 	    (flen (length (cdr form))))
+
 	(call-with-exit
 	 (lambda (done)
 	   (for-each 
@@ -5770,30 +5819,11 @@
 			      (lint-format "~A's parameter ~A's value is not used, but a value is passed: ~S" caller head arg-number arg))))
 		  
 		  (if (not (pair? arg))                  ; arg is expr -- try to guess its type
-		      
-#|
-		      (if (symbol? arg)
-			  (if (var-member head env)
-			      (let ((ari (arg-arity arg env)))
-				(if (pair? ari)
-				    (format *stderr* "~A:~%  ~A in ~A~%  ~A~%~%" 
-					    (truncated-list->string form)
-					    arg head (var-initial-value (var-member head env))))))
-					    
-
-
-				   ;; TODO:
-				   ;; if arg is built-in func -- checker should have procedure? 
-				   ;;   similarly below if car arg is lambda
-				   ;;   in both cases if head is var-member, we can scan its initial-value for arg and check fit
-			  (if (not (any-checker? checker arg))
-|#
 		      (if (not (or (symbol? arg)
 				   (any-checker? checker arg)))
 			      (let ((op (->type arg)))
 				(unless (memq op '(#f #t values))
 				  (report-arg-trouble caller form head arg-number checker arg op))))
-
 		      ;; arg is a pair
 		      (case (car arg) 
 			((quote)   ; '1 -> 1
@@ -8981,12 +9011,14 @@
 						       (set! nc (cons (car-with-expr (car clauses)) nc))))))))))))
 			   ;; --------
 
-			   (when (= suggest made-suggestion) 
+			   (when (pair? (cadr form)) 
 			     (if (= len 1)
 				 (let ((clause (cadr form)))       ; (cond (a)) -> a, (cond (a b)) -> (if a b) etc
 				   (if (null? (cdr clause))
 				       (lint-format "perhaps ~A" caller (lists->string form (car clause)))
-				       (if (not (eq? (cadr clause) '=>))
+				       (if (and (not (eq? (cadr clause) '=>))
+						(or (pair? (cddr clause))
+						    (= suggest made-suggestion)))
 					       (lint-format "perhaps ~A" caller 
 							    (lists->string form 
 									   (if (null? (cddr clause))
@@ -10090,7 +10122,7 @@
 							:definer head)
 					      vars))))
 
-			 (if (and (pair? vars)          ; letrec -> named let (only letrec is worse than named let!)
+			 (if (and (pair? vars)
 				  (null? (cdr vars))
 				  (pair? (cddr form))
 				  (pair? (caddr form))
@@ -10100,13 +10132,13 @@
 			       (if (and (pair? lform)
 					(pair? (cdr lform))
 					(eq? (car lform) 'lambda)
-					(proper-list? (cadr lform))
+					(proper-list? (cadr lform)) ; includes ()
 					(< (tree-length (cddr form)) 30))
 				   ;; the limit on tree-length is for cases where the args are long lists of data --
 				   ;;   more like for-each than let, and easier to read if the code is first, I think.
 				   (lint-format "perhaps ~A~%" caller
 						(lists->string form `(let ,(var-name (car vars)) 
-								       ,(if (null? vars) () (map list (cadr lform) (cdaddr form)))
+								       ,(if (null? (cadr lform)) () (map list (cadr lform) (cdaddr form)))
 								       ,@(cddr lform)))))))
 
 			 (let ((new-env (append vars env)))
@@ -10911,12 +10943,38 @@
 ;;; --------------------------------------------------------------------------------
 ;;; TODO:
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
-;;; func passed as arg: check args? save func args info (calls etc -- or sigs?) in var, then in report-usage check against actual calls?
-;;;    most of this is doable in check-args, I think
 ;;; find the rest of the macro cases and (s7)test out-vars somehow
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
+;;;   could we search the form for the lowest positive line num?
+;;;
+;;; there are more letrec->let possibilities, and untangle the (letrec->lambda junk)
+;;;   many are (letrec name (lambda (...) (name...))) -> (lambda (...) (let ))
+#|
+(define integer-length
+  (letrec ((intlen (lambda (n tot)
+    ...)))		     
+    (lambda (n) (intlen n 0))))
+
+(define (integer-length n)
+  (let intlen ((n n) (tot 0))
+    ...)
+
+(define* (integer-length n (tot 0))
+  ...) with intlen -> integer-length internally
+
+;;; both of these start at the define, not the letrec -- are there others?
+;;; but we can't always lose the name (if lambda args not in same order as letrec args)
+
+  (lint-test "(define f43 (letrec ((f0 (lambda (a) (+ a 1)))) (lambda (b) (f0 (+ b 1)))))" "")
+  ;; (define (f43 b) (let ((a (+ b 1))) (+ a 1))) ??
+  (lint-test "(define f43 (letrec ((f0 (lambda (a b) (+ (f0 a b) 1)))) (lambda (b) (f0 b 0))))" "")
+  ;; (define* (f43 b) (let ((a b) (b 0)) (+ (f43 a b) 1))) ??
+
+|#
+;;; code-equal misses or|and distinction?? and mistranslates rest args
+;;;   and misses car diffs ???  only allow pars [of same type]/locals to map across, not funcs
 ;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
