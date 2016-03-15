@@ -74230,6 +74230,7 @@ int main(int argc, char **argv)
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * gtk menus are messed up in OSX virtualbox cases
+ * can Snd have a sun-time --no-gui option?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

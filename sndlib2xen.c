@@ -1139,7 +1139,7 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
 
 #if HAVE_SCHEME
-  /* an experiment for lint */
+  /* an experiment for lint -- this is probably going to change soon */
   s7_eval_c_string(s7, 
     "(define-macro (mus_header_t? h) \
        (or (and (memq h '(mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-voc mus-svx mus-soundfont mus-rf64 mus-caff)) #t) \

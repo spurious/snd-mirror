@@ -197,13 +197,13 @@
 	       (if (not line) 
 		   (format () "<hn> but no </hn> for ~A~%" str)))))
 	 
-	 (letrec ((search-caps ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
-		   (lambda (ln)
-		     (and caps
-			  (do ((cap caps (cdr cap)))
-			      ((or (null? cap)
-				   (string-position (car cap) ln))
-			       (pair? cap)))))))
+	 (let ((search-caps ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
+		(lambda (ln)
+		  (and caps
+		       (do ((cap caps (cdr cap)))
+			   ((or (null? cap)
+				(string-position (car cap) ln))
+			    (pair? cap)))))))
 	   (if (not (search-caps line))
 	       ;; find the first character of the >name< business and downcase it
 	       (let ((bpos (char-position #\> line)))
