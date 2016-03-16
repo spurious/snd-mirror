@@ -281,9 +281,9 @@
 			 (set! (rb-name j) #\_)
 			 (set! i (+ i 1))
 			 (set! j (+ j 1)))))))
-	   (if (not (= j strlen))
-	       (substring rb-name 0 j)
-	       rb-name)))))
+	   (if (= j strlen)
+	       rb-name
+	       (substring rb-name 0 j))))))
 
 (define (clean-up-xref xref file)
   (let* ((len (length xref))
@@ -496,6 +496,7 @@
     (let ((addr (with-let (funclet func) __func__)))
       ;; this misses scheme-side pws because their environment is (probably) the global env
       (and (pair? addr)
+	   (pair? (cdr addr))
 	   (cadr addr))))
   
   (define (apropos-1 e)
@@ -888,14 +889,14 @@
 	      (for-each
 	       (lambda (symbol)
 		 (set! syms (cons (cons (symbol->string symbol) file) syms)))
-	       symbols)))
-	  (set! syms (sort! syms (lambda (a b) (string<? (car a) (car b)))))
-	  (format p "~%static const char *snd_names[~D] = {" (* size 2))
-	  (for-each
-	   (lambda (sf)
-	     (format p "~%    ~S, ~S," (car sf) (cdr sf)))
-	   syms)
-	  (format p "~%};~%"))
+	       symbols))))
+	(set! syms (sort! syms (lambda (a b) (string<? (car a) (car b)))))
+	(format p "~%static const char *snd_names[~D] = {" (* size 2))
+	(for-each
+	 (lambda (sf)
+	   (format p "~%    ~S, ~S," (car sf) (cdr sf)))
+	 syms)
+	(format p "~%};~%")
 	(format p "~%static void autoload_info(s7_scheme *sc)~%{~%  s7_autoload_set_names(sc, snd_names, ~D);~%}~%" size)))
     ))
 
@@ -1221,38 +1222,38 @@
 		 (set! help-urls (reverse help-urls))
 
 		 (let ((len (length help-names)))
-		   (format sfil "#define HELP_NAMES_SIZE ~D~%" len)
-		   (format sfil "#if HAVE_SCHEME || HAVE_FORTH~%")
-		   (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
-		   (format sfil "~S" (car help-names))
-		   (do ((ctr 1 (+ ctr 1))
-			(lname (cdr help-names) (cdr lname)))
-		       ((null? lname))
-		     (let ((name (car lname)))
-		       (format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") name)))
-		   (format sfil "};~%")
-
-		   (format sfil "#endif~%#if HAVE_RUBY~%")
-		   (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
-		   (format sfil "~S" (car help-names))
-		   (do ((ctr 1 (+ ctr 1))
-			(lname (cdr help-names) (cdr lname)))
-		       ((null? lname))
-		     (let ((name (car lname)))
-		       (format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") (without-dollar-sign (scheme->ruby name)))))
-
-		   (format sfil "};~%#endif~%")
-		   (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")
-		   (format sfil "static const char *help_urls[HELP_NAMES_SIZE] = {~%  ")
-		   (format sfil "~S" (car help-names))
-
-		   (do ((ctr 1 (+ ctr 1))
-			(lname (cdr help-urls) (cdr lname)))
-		       ((null? lname))
-		     (let ((url (car lname)))
-		       (format sfil (if (= (modulo ctr 4) 0) ",~% ~S" ", ~S") url)))
-		   (format sfil "};~%"))
-
+		   (format sfil "#define HELP_NAMES_SIZE ~D~%" len))
+		 (format sfil "#if HAVE_SCHEME || HAVE_FORTH~%")
+		 (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
+		 (format sfil "~S" (car help-names))
+		 (do ((ctr 1 (+ ctr 1))
+		      (lname (cdr help-names) (cdr lname)))
+		     ((null? lname))
+		   (let ((name (car lname)))
+		     (format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") name)))
+		 (format sfil "};~%")
+		 
+		 (format sfil "#endif~%#if HAVE_RUBY~%")
+		 (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
+		 (format sfil "~S" (car help-names))
+		 (do ((ctr 1 (+ ctr 1))
+		      (lname (cdr help-names) (cdr lname)))
+		     ((null? lname))
+		   (let ((name (car lname)))
+		     (format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") (without-dollar-sign (scheme->ruby name)))))
+		 
+		 (format sfil "};~%#endif~%")
+		 (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")
+		 (format sfil "static const char *help_urls[HELP_NAMES_SIZE] = {~%  ")
+		 (format sfil "~S" (car help-names))
+		 
+		 (do ((ctr 1 (+ ctr 1))
+		      (lname (cdr help-urls) (cdr lname)))
+		     ((null? lname))
+		   (let ((url (car lname)))
+		     (format sfil (if (= (modulo ctr 4) 0) ",~% ~S" ", ~S") url)))
+		 (format sfil "};~%")
+		 
 		 (do ((i 0 (+ i 1)))
 		     ((= i g))
 		    (if (and (xrefs i)
@@ -1267,17 +1268,12 @@
 				  (let* ((str (generals i))
 					 (mid (char-position #\: str)))
 				    (make-vector-name (substring str (+ mid 1))))
-				  (cadr vals))
-			  ))
-		    )
+				  (cadr vals)))))
 		 
-		 (format sfil "~%~%#if HAVE_SCHEME~%")
-		 )))
+		 (format sfil "~%~%#if HAVE_SCHEME~%"))))
 
 	   (system "cat indexer.data >> test.c") 
-	   (system "echo '#endif\n\n' >> test.c")
-
-	   )))))
+	   (system "echo '#endif\n\n' >> test.c"))))))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1575,12 +1571,13 @@
 				       (string-position "</A>" dline))))
 			 ;;actually should look for close double quote
 			 (if (not epos) 
-			     (begin (format () "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline) (abort))
-			     (let ((min-epos (char-position #\space dline)))
-			       (set! epos (char-position #\> dline))
-			       (if (and (number? min-epos)
-					(< min-epos epos))
-				   (set! epos min-epos))
+			     (format () "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline)
+			     (begin
+			       (let ((min-epos (char-position #\space dline)))
+				 (set! epos (char-position #\> dline))
+				 (if (and (number? min-epos)
+					  (< min-epos epos))
+				     (set! epos min-epos)))
 			       
 			       (let ((new-name (string-append file "#" (substring dline 0 (- epos 1)))))
 				 (if (hash-table-ref names new-name)
@@ -1604,32 +1601,32 @@
 		       (let ((epos (char-position #\> dline)))
 			 (if (not epos) 
 			     (format () "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
-			     (let ((cur-href #f))
+			     (begin
 			       (set! epos (char-position #\" dline 1))
-			       (if (char=? (dline 0) #\#)
-				   (set! cur-href (string-append file (substring dline 0 epos)))
-				   (begin
-				     (set! cur-href (substring dline 0 epos))
-				     (let ((pos (char-position #\# cur-href)))
-				       (if (not (or pos
-						    (<= epos 5)
-						    (file-exists? cur-href)
-						    (string=? (substring cur-href 0 4) "ftp:")
-						    (string=? (substring cur-href 0 5) "http:")))
-					   (format () "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
-			       
-			       ;; cur-href here is the full link: sndclm.html#make-filetosample for example
-			       ;;   it can also be a bare file name
-			       (let* ((start (char-position #\# cur-href))
-				      (name (and (number? start) 
-						 (string->symbol (substring cur-href (+ start 1)))))
-				      (data (and (symbol? name) 
-						 (hash-table-ref ids name))))
-				 (if name 
-				     (if (not data)
-					 (format () ";can't find id ~A~%" name)
-					 (hash-table-set! ids name (+ data 1)))))
-			       
+			       (let ((cur-href #f))
+				 (if (char=? (dline 0) #\#)
+				     (set! cur-href (string-append file (substring dline 0 epos)))
+				     (begin
+				       (set! cur-href (substring dline 0 epos))
+				       (let ((pos (char-position #\# cur-href)))
+					 (if (not (or pos
+						      (<= epos 5)
+						      (file-exists? cur-href)
+						      (string=? (substring cur-href 0 4) "ftp:")
+						      (string=? (substring cur-href 0 5) "http:")))
+					     (format () "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
+				 
+				 ;; cur-href here is the full link: sndclm.html#make-filetosample for example
+				 ;;   it can also be a bare file name
+				 (let* ((start (char-position #\# cur-href))
+					(name (and (number? start) 
+						   (string->symbol (substring cur-href (+ start 1)))))
+					(data (and (symbol? name) 
+						   (hash-table-ref ids name))))
+				   (if name 
+				       (if (not data)
+					   (format () ";can't find id ~A~%" name)
+					   (hash-table-set! ids name (+ data 1))))))
 			       (set! href (+ href 1))
 			       (set! dline (substring dline epos))
 			       (set! pos (string-position " href=" dline))

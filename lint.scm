@@ -10,14 +10,14 @@
 (define *report-unused-top-level-functions* #f)           ; these are very common in Scheme, only questionable in self-contained code
 (define *report-shadowed-variables* #f)                   ; shadowed parameters, etc
 (define *report-undefined-identifiers* #f)                ; names we can't account for
-(define *report-function-stuff* #t)                       ; checks for missed function uses etc
-(define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
-(define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-one-armed-if* #f)                         ; if -> when/unless
+(define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
+(define *report-function-stuff* #t)                       ; checks for missed function uses etc
+(define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (kinda slow, and this error almost never happens)
 (define *lint* #f)                                        ; the lint let
 
@@ -177,6 +177,7 @@
 			  (make-random-state . random-state)
 			  ;;(make-rectangular . complex)
 			  (data-format . sample-type)
+			  (mus-sound-frames . mus-sound-framples)
 			  (mus-sound-data-format . mus-sound-sample-type)
 			  (mus-data-format-name . mus-sample-type-name)
 			  (mus-data-format->string . mus-sample-type->string)))
@@ -4104,6 +4105,15 @@
 			(if (pair? (cdr tree))
 			    (set! lists (cons (cadr tree) lists))))
 
+		       ((not)
+			(if (and (pair? (cdr tree))
+				 (pair? (cadr tree))
+				 (eq? (caadr tree) 'null?)
+				 (pair? (cdadr tree))
+				 (member (cadadr tree) lists))
+			    (set! lists (remove (cadadr tree) lists))))
+
+
 		       ;; TODO: (if (list? x) (car|list-ref...) etc and proper-list? and maybe (not null?)?
 		       ;; list followed by not null? or (or null?...) -- remove? or complain
 			
@@ -4114,7 +4124,7 @@
 				 (not (member (cadr tree) checks)))
 			    (lint-format "in ~A, we check ~A, but access ~A. But ~A might be null." caller
 					 (truncated-list->string form)
-					 `(list? ,(cadr tree))
+					 `(list? ,(cadr tree)) ; TODO use the original
 					 tree
 					 (cadr tree))))
 
@@ -5922,18 +5932,16 @@
 			 (not (memq checker '(unused-parameter? unused-set-parameter?)))
 			 (not (hash-table-ref built-in-functions checker)))
 		    (let ((chk (symbol->value checker)))
-		      (if (macro? chk)
+		      (if (and (procedure? chk)
+			       (equal? (arity chk) '(2 . 2)))
 			  (catch #t
 			    (lambda ()
-			      (let ((res (apply chk (list arg)))) ; lint itself is fooled by this -- don't change to (chk arg)!
+			      (let ((res (chk form arg-number)))
+				(set! checker #t)
 				(if (symbol? res)
 				    (set! checker res)
-				    (begin 
-				      (if (string? res)
-					  (lint-format "~A's argument, ~A, should be ~A" caller head arg res)
-					  (if (not res)
-					      (report-arg-trouble caller form head arg-number checker arg (->type arg))))
-				      (set! checker #t))))) ; turn off the rest
+				    (if (string? res)
+					(lint-format "~A's argument, ~A, should be ~A" caller head arg res)))))
 			    (lambda (type info)
 			      (set! checker #t))))))
 
@@ -8028,21 +8036,68 @@
 					(equal? sym (car val)))
 				   (lint-format "this ~A is either not needed, or is an error: ~A" caller head (truncated-list->string form)))
 			       
-			       ;(format *stderr* "env: ~S~%" env)
 			       (if (pair? val)
 				   (let ((e (lint-walk sym (car val) env)))
-				     ;(format *stderr* "e: ~S, sym: ~S, val: ~S~%" e sym val)
 				     (if (and (pair? e)
 					      (not (eq? e env))
-					      (eq? (var-name (car e)) lambda-marker)) ; (define x (lambda ...)) but it misses closures
+					      (eq? (var-name (car e)) lambda-marker)) ; (define x (lambda ...))
 					 (begin
-					   ;(format *stderr* "set to ~S, ~S\n" sym (var-initial-value (car e)))
 					   (set! (var-name (car e)) sym)
+
+					   ;; (define x (letrec ((y (lambda...))) (lambda (...) (y...)))) -> (define (x...)...)
+					   (let* ((let-form (caddr form))
+						  (var (and (pair? (cadr let-form))
+							    (null? (cdadr let-form)) ; just one var in let/rec
+							    (caadr let-form))))
+					     (when (and (pair? var)
+							(symbol? (car var))
+							(pair? (cddr let-form))
+							(pair? (caddr let-form))
+							(null? (cdddr let-form))     ; just one form in the let/rec
+							(pair? (cdr var))
+							(pair? (cadr var))
+							(eq? (caadr var) 'lambda)    ; var is lambda
+							(proper-list? (cadadr var))) ; it has no rest arg
+					       (let ((body (caddr let-form)))
+						 (when (and (eq? (car body) 'lambda)      ; let/rec body is lambda calling var
+							    (proper-list? (cadr body)))   ; rest args are a headache
+						   (when (pair? (caddr body))   ; (lambda (...) (...) where car is letrec func name
+						     (if (eq? (caaddr body) (car var))
+							 (lint-format "perhaps ~A" caller
+								  (lists->string form
+										 `(define (,sym ,@(cadr body))
+										    (let ,(car var)
+										      ,(map list (cadadr var) (cdaddr body))
+										      ,@(cddadr var)))))
+							 (let ((call (call-with-exit
+								      (lambda (return)
+									(let tree-call ((sym (car var))
+											(tree (caddr body)))
+									  (if (pair? tree)
+									      (begin
+										(if (eq? (car tree) sym)
+										    (return tree))
+										(if (pair? (car tree))
+										    (tree-call sym (car tree)))
+										(if (pair? (cdr tree))
+										    (do ((p (cdr tree) (cdr p)))
+											((null? p) #f)
+										      (tree-call sym (car p))))))))))) 
+							   (when (pair? call)
+							     (if (and (pair? call)  ; inner lambda body is (...some-expr...(sym...) ...)
+								      (= (tree-count1 (car var) (caddr body) 0) 1))
+								 (let ((new-call `(let ,(car var)
+										    ,(map list (cadadr var) (cdr call))
+										    ,@(cddadr var))))
+								   (lint-format "perhaps ~A" caller
+										(lists->string form
+											       `(define (,sym ,@(cadr body))
+												  ,(tree-subst new-call call ; every time I read this I smile
+													       (caddr body)))))))))))))))
 					   (when (and *report-function-stuff*
 						      (pair? (caddr (var-initial-value (car e)))))
 					     (hash-table-set! equable-closures (caaddr (var-initial-value (car e)))
-							      (cons (car e) (or (hash-table-ref equable-closures (caaddr (var-initial-value (car e)))) ())))
-					     )
+							      (cons (car e) (or (hash-table-ref equable-closures (caaddr (var-initial-value (car e)))) ()))))
 					   e)
 					 (cons (make-var :name sym :initial-value (car val) :definer head) env)))
 				   (cons (make-var :name sym :initial-value val :definer head) env)))
@@ -8091,7 +8146,6 @@
 			   (lint-format "~A is messed up in ~A" caller head (truncated-list->string form))
 			   env)
 			 (let ((args (cadr form)))
-			   
 			   (if (list? args)
 			       (let ((arglen (length args)))
 				 (if (null? args)
@@ -10307,52 +10361,8 @@
 						  (lists->string form `(let ,(var-name (car vars)) 
 									 ,(if (null? (cadr lform)) () (map list (cadr lform) (cdr body)))
 									 ,@(cddr lform)))))))
-			     ;; lambda here handled under define?
+			     ;; lambda here is handled under define
 			     ))
-#|
-			 (when (and (pair? vars)
-				    (null? (cdr vars))
-				    (pair? (cddr form))
-				    (pair? (caddr form))
-				    (null? (cdddr form)))
-			   (let ((body (caddr form)))
-
-			     (when (eq? (car body) 'lambda)
-			       (when (and (pair? (caddr body))
-					  (eq? (caaddr body) (var-name (car vars)))
-					  (pair? (cadr body))
-					  (= (length (cadr body)) (length (cadr (cadar (cadr form)))) (length (cdaddr body))))
-				 (lint-format "perhaps ~A" caller
-					      (lists->string form
-							     `(define (,(var-name (car vars))
-								       ,(cadr body))
-			                                        ,@(tree-subst ...))))))))
-|#
-
-#|
-see letdata
-
-(define integer-length
-  (letrec ((intlen (lambda (n tot)
-    ...)))		     
-    (lambda (n) (intlen n 0))))
-
-(define (integer-length n)
-  (let intlen ((n n) (tot 0))
-    ...)
-
-(define* (integer-length n (tot 0))
-  ...) with intlen -> integer-length internally
-
-;;; both of these start at the define, not the letrec -- are there others?
-;;; but we can't always lose the name (if lambda args not in same order as letrec args)
-
-  (lint-test "(define f43 (letrec ((f0 (lambda (a) (+ a 1)))) (lambda (b) (f0 (+ b 1)))))" "")
-  ;; (define (f43 b) (let ((a (+ b 1))) (+ a 1))) ??
-  (lint-test "(define f43 (letrec ((f0 (lambda (a b) (+ (f0 a b) 1)))) (lambda (b) (f0 b 0))))" "")
-  ;; (define* (f43 b) (let ((a b) (b 0)) (+ (f43 a b) 1))) ??
-|#
-
 			 (let ((new-env (append vars env)))
 			   (do ((bindings (cadr form) (cdr bindings)))
 			       ((not (pair? bindings)))
@@ -11160,27 +11170,32 @@ see letdata
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
-;;; (list? x) -> (car x) but might be () [at least if]
-;;; otiose other-let?
-;;; there are more letrec->let possibilities
-;;;   many are (letrec name (lambda (...) (name...))) -> (lambda (...) (let ))
+;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
+;;; (number? x) -> (vector|list-ref...)?
+;;; can't both letrec and letrec* be replaced by (much clearer) let+define?
+;;;   pure s7 should not include letrec or letrec*!
+;;; the (letrec -> lambda) crap happens outside define -- how to trap and translate? [not caught in letdata??]
+;;;   lint-walk caller will not be define? [probably lambda] -- the current translator can be used directly
 ;;; repeated lambda+let -> one+pars
 ;;;
 ;;; in xg, we have the enum names->types mappings and could add special typers
 ;;;   see mus_header_t? in sndlib2xen.c and 5399 above
-;;;   for each gtk type, make a type macro like mus_header_t, a symbol in the pl_* table, tie in via signature makers
-;;;   these could also be used in the normal procs -- not int
-;;;   need table enum-name -> type + value, type -> enums + values
-;;;   macro: if name -- enum->type, if wrong type complain[check spelling?] and match values, if right ok
-;;;          if int, type->enum values and return enum-name, else range check
-;;;          else return typer (integer? string? etc)
-;;;          if logior, can we check each flag?
-;;;   in makexg, need array of names + types + values, and types + names + values, and accessors
-;;;   these need to depend on current gtk version
-;;;   there will be a million signatures...    
-;;;   perhaps change current to: arity of checker == (4 . 4): -> pass caller arg(as ptr so eq is usable) form env
-;;;     if returns a string -- send to outport? 
-;;;        returns a procedure/symbol -- use as checker   
-;;;     gtk_enum_t? which handles everything via compile-time tables
+;;;   for each gtk type, table of type member names, entry in table of type names (each a pointer to the members of that type)
+;;;     for each type member name, we have a value and a type indicator (loc in table above)
+;;;     each such ref in xgdata -> gtk_enum_t? (not integer?)
+;;;     gtk_enum_t gets the form/argn, another table of func->argn->type
+;;;     checks that arg matches one of type, if not, looks for name or int, returns at least 'integer?
+;;;     enum vals: int string double atom=XAtom=int actually but wrapped up as a pointer etc
+;;;       the only doubles are pango sizes, so really only int/strings are interesting
+;;;       strings are printer-related, so that leaves ints
+;;; struct {char *name, *type; long long int val;} enums
+;;; then form->type + arg, find arg [name], check types match, if not, check for same val in type [type]
+;;;    if found, "x is _t but should be _t, use y"
+;;;    else "x is _t for val, but this arg wants _t which should be between ...
+;;;    if int, check range, perhaps suggest name
+;;;    else if unknown -> 'integer?
+;;;    so just one array is needed {"enum", "type", val} + search-for-name|type|val
+;;;    but where is the func->arg type info? in the doc string!
+;;;      look for (, then count , to argn, then parse next as type name
 ;;;
-;;;   495/84
+;;; 495/84

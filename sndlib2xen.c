@@ -1139,15 +1139,14 @@ void mus_sndlib_xen_initialize(void)
   Xen_define_constant(S_mus_lfloat_unscaled,      MUS_LFLOAT_UNSCALED,      "unscaled little-endian float sample type id");
 
 #if HAVE_SCHEME
-  /* an experiment for lint -- this is probably going to change soon */
   s7_eval_c_string(s7, 
-    "(define-macro (mus_header_t? h) \
-       (or (and (memq h '(mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-voc mus-svx mus-soundfont mus-rf64 mus-caff)) #t) \
-           (if (integer? h) \
-               (case h ((1) \"mus-next\") ((2) \"mus-aifc\") ((3) \"mus-riff\") ((12) \"mus-raw\") \
-                       (else (or (< 0 h 71) \"an integer between 1 and 70\"))) \
-               ''integer?)))");
-
+    "(define (mus_header_t? form argn) \
+       (let ((h (list-ref form argn))) \
+         (if (not (memq h '(mus-next mus-aifc mus-riff mus-nist mus-raw mus-ircam mus-aiff mus-bicsf mus-voc mus-svx mus-soundfont mus-rf64 mus-caff))) \
+             (if (not (integer? h)) \
+                 'integer? \
+                 (if (not (< 0 h 71)) \
+                     \"an integer between 1 and 70\")))))");
   {
     s7_pointer s, i, p, b, r, f, t, l, h;
     s = s7_make_symbol(s7, "string?");
