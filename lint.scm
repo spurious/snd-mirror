@@ -7964,6 +7964,24 @@
 			  constant-exprs)))))))
 
 
+    (define (find-call sym body)
+      (call-with-exit
+       (lambda (return)
+	 (let tree-call ((tree body))
+	   (if (and (pair? tree)
+		    (not (eq? (car tree) 'quote)))
+	       (begin
+		 (if (eq? (car tree) sym)
+		     (return tree))
+		 (if (memq (car tree) '(let let* letrec letrec* do lambda lambda* define))
+		     (return #f)) ; possible shadowing -- not worth the infinite effort to corroborate
+		 (if (pair? (car tree))
+		     (tree-call (car tree)))
+		 (if (pair? (cdr tree))
+		     (do ((p (cdr tree) (cdr p)))
+			 ((null? p) #f)
+		       (tree-call (car p))))))))))
+
     (define (lint-walk caller form env)
       ;; walk a form, here curlet can change
       ;(format *stderr* "lint-walk ~A ~A~%" form env)
@@ -8037,7 +8055,10 @@
 				   (lint-format "this ~A is either not needed, or is an error: ~A" caller head (truncated-list->string form)))
 			       
 			       (if (pair? val)
-				   (let ((e (lint-walk sym (car val) env)))
+				   (let ((e (lint-walk (if (and (pair? (car val))
+								(eq? (caar val) 'letrec))
+							   'define sym)
+						       (car val) env)))
 				     (if (and (pair? e)
 					      (not (eq? e env))
 					      (eq? (var-name (car e)) lambda-marker)) ; (define x (lambda ...))
@@ -8069,30 +8090,16 @@
 										    (let ,(car var)
 										      ,(map list (cadadr var) (cdaddr body))
 										      ,@(cddadr var)))))
-							 (let ((call (call-with-exit
-								      (lambda (return)
-									(let tree-call ((sym (car var))
-											(tree (caddr body)))
-									  (if (pair? tree)
-									      (begin
-										(if (eq? (car tree) sym)
-										    (return tree))
-										(if (pair? (car tree))
-										    (tree-call sym (car tree)))
-										(if (pair? (cdr tree))
-										    (do ((p (cdr tree) (cdr p)))
-											((null? p) #f)
-										      (tree-call sym (car p))))))))))) 
-							   (when (pair? call)
-							     (if (and (pair? call)  ; inner lambda body is (...some-expr...(sym...) ...)
-								      (= (tree-count1 (car var) (caddr body) 0) 1))
+							 (let ((call (find-call (car var) (caddr body))))
+							   (when (pair? call)       ; inner lambda body is (...some-expr...(sym...) ...)
+							     (if (= (tree-count1 (car var) (caddr body) 0) 1)
 								 (let ((new-call `(let ,(car var)
 										    ,(map list (cadadr var) (cdr call))
 										    ,@(cddadr var))))
 								   (lint-format "perhaps ~A" caller
 										(lists->string form
 											       `(define (,sym ,@(cadr body))
-												  ,(tree-subst new-call call ; every time I read this I smile
+												  ,(tree-subst new-call call
 													       (caddr body)))))))))))))))
 					   (when (and *report-function-stuff*
 						      (pair? (caddr (var-initial-value (car e)))))
@@ -10347,9 +10354,10 @@
 				    (pair? (cddr form))
 				    (pair? (caddr form))
 				    (null? (cdddr form)))
-			   (let ((body (caddr form)))
-			     (when (eq? (var-name (car vars)) (car body)) ; (letrec ((x (lambda ...))) (x...)) -> (let x (...)...)
-			       (let ((lform (cadar (cadr form)))) ; (lambda...)
+			   (let ((body (caddr form))
+				 (sym (var-name (car vars)))
+				 (lform (cadar (cadr form))))           ; the letrec var's lambda
+			     (if (eq? sym (car body))                   ; (letrec ((x (lambda ...))) (x...)) -> (let x (...)...)
 				 (if (and (pair? lform)
 					  (pair? (cdr lform))
 					  (eq? (car lform) 'lambda)
@@ -10358,9 +10366,21 @@
 				     ;; the limit on tree-length is for cases where the args are long lists of data --
 				     ;;   more like for-each than let, and easier to read if the code is first, I think.
 				     (lint-format "perhaps ~A" caller
-						  (lists->string form `(let ,(var-name (car vars)) 
+						  (lists->string form `(let ,sym
 									 ,(if (null? (cadr lform)) () (map list (cadr lform) (cdr body)))
-									 ,@(cddr lform)))))))
+									 ,@(cddr lform)))))
+				 (if (and (not (eq? caller 'define))
+					  (pair? lform)
+					  (proper-list? (cadr lform)))
+				     (let ((call (find-call sym body)))
+				       (when (pair? call)
+					 (if (= (tree-count1 sym body 0) 1)
+					     (let ((new-call `(let ,sym
+								,(map list (cadr lform) (cdr call))
+								,@(cddr lform))))
+					       (lint-format "perhaps ~A" caller
+							    (lists->string form (tree-subst new-call call body)))))))))
+			     
 			     ;; lambda here is handled under define
 			     ))
 			 (let ((new-env (append vars env)))
@@ -11172,30 +11192,13 @@
 ;;;   could we search the form for the lowest positive line num?
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
-;;; can't both letrec and letrec* be replaced by (much clearer) let+define?
-;;;   pure s7 should not include letrec or letrec*!
-;;; the (letrec -> lambda) crap happens outside define -- how to trap and translate? [not caught in letdata??]
-;;;   lint-walk caller will not be define? [probably lambda] -- the current translator can be used directly
-;;; repeated lambda+let -> one+pars
+;;; redundant pair?
 ;;;
-;;; in xg, we have the enum names->types mappings and could add special typers
-;;;   see mus_header_t? in sndlib2xen.c and 5399 above
-;;;   for each gtk type, table of type member names, entry in table of type names (each a pointer to the members of that type)
-;;;     for each type member name, we have a value and a type indicator (loc in table above)
-;;;     each such ref in xgdata -> gtk_enum_t? (not integer?)
-;;;     gtk_enum_t gets the form/argn, another table of func->argn->type
-;;;     checks that arg matches one of type, if not, looks for name or int, returns at least 'integer?
-;;;     enum vals: int string double atom=XAtom=int actually but wrapped up as a pointer etc
-;;;       the only doubles are pango sizes, so really only int/strings are interesting
-;;;       strings are printer-related, so that leaves ints
-;;; struct {char *name, *type; long long int val;} enums
-;;; then form->type + arg, find arg [name], check types match, if not, check for same val in type [type]
+;;; xg: form->type + arg, find arg [name], check types match, if not, check for same val in type [type]
 ;;;    if found, "x is _t but should be _t, use y"
 ;;;    else "x is _t for val, but this arg wants _t which should be between ...
 ;;;    if int, check range, perhaps suggest name
 ;;;    else if unknown -> 'integer?
-;;;    so just one array is needed {"enum", "type", val} + search-for-name|type|val
-;;;    but where is the func->arg type info? in the doc string!
-;;;      look for (, then count , to argn, then parse next as type name
+;;;    docstring look for (, then count , to argn, then parse next as type name
 ;;;
 ;;; 495/84

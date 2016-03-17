@@ -7980,7 +7980,7 @@
 ;;; (CFNC-3.0 "char* gtk_im_multicontext_get_context_id GtkIMMulticontext* context" 'const-return)
 ;;; (CFNC-3.0 "void gtk_im_multicontext_set_context_id GtkIMMulticontext* context char* context_id" 'const)
 
-(CINT-3.0 "GTK_FILE_CHOOSER_ERROR" "GtkFileChooserError")
+; -- this is a "quark" apparently (CINT-3.0 "GTK_FILE_CHOOSER_ERROR" "GtkFileChooserError")
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR_NONEXISTENT" "GtkFileChooserError")
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR_BAD_FILENAME" "GtkFileChooserError")
 (CINT-3.0 "GTK_FILE_CHOOSER_ERROR_ALREADY_EXISTS" "GtkFileChooserError")

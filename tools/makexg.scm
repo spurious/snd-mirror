@@ -32,9 +32,11 @@
 		     ))
 
 (define no-c-to-xen 
-  (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" "GSignalAccumulator"
+  (list "CellLayoutDataFunc" "GClosureNotify" "GDestroyNotify" "GError**" "GParamSpec*" "GQuark*" 
+	"GSignalAccumulator"
 	"GSignalCMarshaller" "GSignalEmissionHook" "GSignalQuery*" "GSourceFunc" "GString*" "GTimeVal*" "GType*"
-	"GdkBitmap**" "GdkDragProtocol*" "GdkEventButton*" "GdkEventConfigure*" "GdkEventCrossing*" "GdkEventDND*"
+	"GdkBitmap**" ;"GdkDragProtocol*"
+	"GdkEventButton*" "GdkEventConfigure*" "GdkEventCrossing*" "GdkEventDND*"
 	"GdkEventExpose*" "GdkEventFocus*" "GdkEventMotion*" "GdkEventNoExpose*" "GdkEventProperty*" "GdkEventProximity*"
 	"GdkEventScroll*" "GdkEventSelection*" "GdkEventSetting*" "GdkEventVisibility*" "GdkEventWindowState*" "GdkGCValues*"
 	"GdkGeometry*" "GdkInterpType" "GdkModifierType*" "GdkPixbufDestroyNotify" "GdkScreen**" "GdkSegment*" "GdkWChar*"
@@ -52,21 +54,27 @@
 	"GtkScale*" "GtkScrolledWindow*" "GtkSeparatorToolItem*" "GtkSettingsValue*" "GtkSocket*" "GtkSortType*" "GtkSpinButton*"
 	"GtkStatusbar*" "GtkTable*" "GtkTextCharPredicate" "GtkTextTagTableForeach" "GtkTextView*"
 	"GtkToggleActionEntry*" "GtkToggleButton*" "GtkToggleToolButton*" "GtkToolButton*" "GtkToolbar*" "GtkTreeDragDest*"
-	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" "GtkUIManagerItemType"
+	"GtkTreeDragSource*" "GtkTreeModel**" "GtkTreeModelFilter*" "GtkTreeModelSort*" "GtkTreeSortable*" ;"GtkUIManagerItemType"
 	"GtkViewport*" "PangoAnalysis*" "PangoAttrList**" "PangoFontDescription**" "PangoRectangle*"
-	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*" "GtkPathPriorityType"
+	"gchar***" "gfloat*" "gint8*" "gssize" "guint16*" "gunichar*" "GtkFileChooserButton*" ;"GtkPathPriorityType"
 	"GtkCellView*" "GValue*" "GtkAboutDialog*" "PangoAttrFilterFunc" "PangoScript*" "GtkMenuToolButton*"
 	"GtkClipboardImageReceivedFunc" "PangoMatrix*" "GdkTrapezoid*" "GdkPangoRenderer*" "PangoRenderPart"
 	"GLogFunc" "GError*" "guint32*"
 	
 	"GConnectFlags" "GSignalFlags" "GSignalMatchType" 
 					;"GdkAxisUse" 
-	"GdkFillRule" "GdkGCValuesMask"
-	"GdkPropMode" "GdkRgbDither" "GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" ; "GtkArrowType"
-	"GtkAttachOptions" "GtkCellRendererState" "GtkCurveType" "GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
-	"GtkDirectionType" "GtkExpanderStyle" "GtkIconLookupFlags" ;"GtkMenuPositionFunc" 
+	;"GdkFillRule" 
+	;"GdkGCValuesMask"
+	"GdkPropMode" ;"GdkRgbDither" 
+	"GdkWMFunction" "GdkWindowEdge" "GdkWindowHints" "GtkAccelFlags" ; "GtkArrowType"
+	;"GtkAttachOptions"
+	"GtkCellRendererState" ;"GtkCurveType"
+	"GtkDestDefaults" "GtkDestroyNotify" "GtkDialogFlags"
+	"GtkDirectionType" ;"GtkExpanderStyle" 
+	"GtkIconLookupFlags" ;"GtkMenuPositionFunc" 
 	"GtkPathType" "GtkSpinType"
-	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" "GtkUIManagerItemType" "GtkWindowPosition"
+	"GtkTextSearchFlags" "GtkTreeIterCompareFunc" "GtkTreeSelectionFunc" ;"GtkUIManagerItemType"
+	"GtkWindowPosition"
 	"PangoGlyph" "PangoUnderline" "gssize" 
 	
 	"GtkMenuBar*" "GtkTranslateFunc" ;"GtkMenuPositionFunc" 
@@ -84,12 +92,14 @@
 	
 	"GtkPrintOperationAction"
 	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "GtkEntryIconPosition"
-	"GdkDragAction" "GdkImageType"
+	"GdkDragAction" ;"GdkImageType"
 	
-	"gdouble*" "GdkFill" "GdkSubwindowMode" "GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
+	"gdouble*" ;"GdkFill" 
+	;"GdkSubwindowMode" ;"GdkLineStyle" "GdkCapStyle" "GdkJoinStyle"
 	"GtkInfoBar*" "GtkSpinner*" "GtkToolShell*" "GtkToolPalette*" "GtkToolPaletteDragTargets"
-	"GdkFunction" "GtkWrapBoxPacking" "GtkLinkButton*" "GtkActivatable*" "GtkOrientable*" "GtkCellArea*"
-	"GdkNativeWindow"
+	;"GdkFunction" ;"GtkWrapBoxPacking" 
+	"GtkLinkButton*" "GtkActivatable*" "GtkOrientable*" "GtkCellArea*"
+	;"GdkNativeWindow"
 	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
 ;	"cairo_rectangle_int_t" 
@@ -125,7 +135,8 @@
 	
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 					;"GdkOverlapType" 
-	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	"GdkScrollDirection" "GdkSettingAction" ;"GdkVisibilityState"
+	"GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" "gboolean*"
 	
 	"time_t" ;"GtkWindowGroup*" 
@@ -147,7 +158,8 @@
 	
 	"GValue*" "GdkByteOrder" "GdkCrossingMode" "GdkEventType" "GdkGrabStatus" "GdkNotifyType"
 					;"GdkOverlapType" 
-	"GdkScrollDirection" "GdkSettingAction" "GdkVisibilityState" "GdkWindowState" "GdkWindowType"
+	"GdkScrollDirection" "GdkSettingAction" ;"GdkVisibilityState" 
+	"GdkWindowState" "GdkWindowType"
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"  "gboolean*"
 	
 					;"GtkWindowGroup*" 
@@ -357,30 +369,30 @@
 	(cons "GConnectFlags" "INT")
 	(cons "GSignalMatchType" "INT")
 	(cons "GSignalFlags" "INT")
-	(cons "GdkInputCondition" "INT")
+					;(cons "GdkInputCondition" "INT")
 	(cons "GdkCursorType" "INT")
 	(cons "GdkDragAction" "INT")
-	(cons "GdkDragProtocol" "INT")
+					;(cons "GdkDragProtocol" "INT")
 					;(cons "GdkAxisUse" "INT")
-	(cons "GdkGCValuesMask" "INT")
-	(cons "GdkFill" "INT")
-	(cons "GdkFunction" "INT")
-	(cons "GdkLineStyle" "INT")
-	(cons "GdkCapStyle" "INT")
-	(cons "GdkJoinStyle" "INT")
+					;(cons "GdkGCValuesMask" "INT")
+					;(cons "GdkFill" "INT")
+					;(cons "GdkFunction" "INT")
+					;(cons "GdkLineStyle" "INT")
+					;(cons "GdkCapStyle" "INT")
+					;(cons "GdkJoinStyle" "INT")
 	(cons "GdkGrabStatus" "INT")
 	(cons "GdkEventMask" "INT")
-	(cons "GdkImageType" "INT")
+					;(cons "GdkImageType" "INT")
 					;(cons "GdkInputSource" "INT")
 					;(cons "GdkInputMode" "INT")
-	(cons "GdkNativeWindow" "ULONG")
+					;(cons "GdkNativeWindow" "ULONG")
 	(cons "GdkModifierType" "INT")
 					;(cons "GdkExtensionMode" "INT")
 	(cons "PangoDirection" "INT")
-	(cons "GdkRgbDither" "INT")
+					;(cons "GdkRgbDither" "INT")
 	(cons "GdkPixbufAlphaMode" "INT")
 	(cons "GdkPropMode" "INT")
-	(cons "GdkFillRule" "INT")
+					;(cons "GdkFillRule" "INT")
 					;(cons "GdkOverlapType" "INT")
 	(cons "GdkVisualType" "INT")
 	(cons "GdkWindowType" "INT")
@@ -389,39 +401,39 @@
 	(cons "GdkWMFunction" "INT")
 	(cons "GdkWindowEdge" "INT")
 	(cons "GtkAccelFlags" "INT")
-	(cons "GtkArrowType" "INT")
+					;(cons "GtkArrowType" "INT")
 	(cons "GtkShadowType" "INT")
 	(cons "GtkButtonBoxStyle" "INT")
-	(cons "GtkPathType" "INT")
-	(cons "GtkPathPriorityType" "INT")
+					;(cons "GtkPathType" "INT")
+					;(cons "GtkPathPriorityType" "INT")
 	(cons "GtkPackType" "INT")
 	(cons "GtkReliefStyle" "INT")
 	(cons "GtkCalendarDisplayOptions" "INT")
 	(cons "GtkCellRendererState" "INT")
 	(cons "GtkResizeMode" "INT")
-	(cons "GtkCurveType" "INT")
+					;(cons "GtkCurveType" "INT")
 	(cons "GtkDialogFlags" "INT")
 	(cons "GtkDestDefaults" "INT")
 	(cons "GtkPositionType" "INT")
 	(cons "GtkTextDirection" "INT")
 	(cons "GtkStateFlags" "INT")
 	(cons "GtkImageType" "INT")
-;	(cons "GtkIconSize" "INT")
+					;(cons "GtkIconSize" "INT")
 	(cons "GtkJustification" "INT")
 	(cons "GtkMessageType" "INT")
 	(cons "GtkButtonsType" "INT")
 	(cons "GtkTargetFlags" "INT")
 					;(cons "GtkProgressBarOrientation" "INT")
-	(cons "GtkUpdateType" "INT")
-	(cons "GtkMetricType" "INT")
+					;(cons "GtkUpdateType" "INT")
+					;(cons "GtkMetricType" "INT")
 	(cons "GtkPolicyType" "INT")
 	(cons "GtkCornerType" "INT")
 	(cons "GtkSizeGroupMode" "INT")
 	(cons "GtkSpinButtonUpdatePolicy" "INT")
 	(cons "GtkSpinType" "INT")
 	(cons "GtkOrientation" "INT")
-	(cons "GtkExpanderStyle" "INT")
-	(cons "GtkAttachOptions" "INT")
+					;(cons "GtkExpanderStyle" "INT")
+					;(cons "GtkAttachOptions" "INT")
 	(cons "GtkTextSearchFlags" "INT")
 	(cons "GtkTextWindowType" "INT")
 	(cons "GtkWrapMode" "INT")
@@ -457,7 +469,7 @@
 	(cons "PangoScript" "INT")
 	
 	(cons "GdkEventType" "INT")
-	(cons "GdkVisibilityState" "INT")
+					;(cons "GdkVisibilityState" "INT")
 	(cons "GdkScrollDirection" "INT")
 	(cons "GdkCrossingMode" "INT")
 	(cons "GdkNotifyType" "INT")
@@ -465,7 +477,7 @@
 	(cons "GdkByteOrder" "INT")
 					;(cons "GdkWChar" "ULONG")
 	(cons "GtkFileChooserAction" "INT")
-	(cons "GtkUIManagerItemType" "INT")
+					;(cons "GtkUIManagerItemType" "INT")
 	(cons "GtkFileFilterFlags" "INT")
 	(cons "GtkIconLookupFlags" "INT")
 	(cons "GtkIconThemeError" "INT")
@@ -474,13 +486,13 @@
 	(cons "GtkPackDirection" "INT")
 	(cons "GtkIconViewDropPosition" "INT")
 	(cons "GtkFileChooserConfirmation" "INT")
-	(cons "GtkFileChooserProp" "INT")
+					;(cons "GtkFileChooserProp" "INT")
 	(cons "GtkFileChooserError" "INT")
-	(cons "GtkLicense" "INT")
+					;(cons "GtkLicense" "INT")
 
-	(cons "GtkWrapAllocationMode" "INT")
-	(cons "GtkWrapBoxSpreading" "INT")
-	(cons "GtkWrapBoxPacking" "INT")
+					;(cons "GtkWrapAllocationMode" "INT")
+					;(cons "GtkWrapBoxSpreading" "INT")
+					;(cons "GtkWrapBoxPacking" "INT")
 	
 	(cons "GtkSensitivityType" "INT")
 	(cons "GtkTextBufferTargetInfo" "INT")
@@ -488,7 +500,7 @@
 	(cons "GtkCellRendererAccelMode" "INT")
 	(cons "GtkRecentSortType" "INT")
 	(cons "GtkRecentChooserError" "INT")
-	(cons "GtkRecentFilterFlags" "INT")
+					;(cons "GtkRecentFilterFlags" "INT")
 	(cons "GtkRecentManagerError" "INT")
 	(cons "GtkTreeViewGridLines" "INT")
 
@@ -545,9 +557,9 @@
 	
 					;(cons "PangoRenderPart" "INT")
 	(cons "PangoTabAlign" "INT")
-	(cons "GtkWidgetHelpType" "INT")
-	(cons "GtkWidgetFlags" "INT")
-	(cons "GtkRcTokenType" "INT")
+					;(cons "GtkWidgetHelpType" "INT")
+					;(cons "GtkWidgetFlags" "INT")
+					;(cons "GtkRcTokenType" "INT")
 	(cons "GtkTextExtendSelection" "INT")
 					;(cons "GtkNotebookTab" "INT")
 	(cons "GtkScrollType" "INT")
@@ -561,13 +573,13 @@
 	(cons "GdkWindowAttributesType" "INT")
 					;(cons "GdkWindowClass" "INT")
 	(cons "GdkStatus" "INT")
-	(cons "GdkSubwindowMode" "INT")
+					;(cons "GdkSubwindowMode" "INT")
 	(cons "GdkPropertyState" "INT")
 	(cons "GtkScrollablePolicy" "INT")
 
 	(cons "GdkModifierIntent" "INT")
 	(cons "GtkAlign" "INT")
-	(cons "GdkGLFlags" "INT")
+					;(cons "GdkGLFlags" "INT")
 	(cons "GtkShortcutType" "INT")
 	(cons "GtkPopoverConstraint" "INT")
 	(cons "GdkSeatCapabilities" "INT")
@@ -717,7 +729,7 @@
 	       (set! ,names (cons (cons name 'string) ,names)))))
 
        (define* (,intfnc name type)      ; CINT-2.12
-	 (save-declared-type type)
+	 (save-declared-type name type ,vname)
 	 (if (and type (not (assoc type direct-types)))
 	     (format *stderr* "could be direct int: ~S (~S)~%" type name))
 	 (if (hash-table-ref names name)
@@ -1162,14 +1174,17 @@
 	(set! dbls (cons name dbls))
 	(hash-table-set! names name 'dbl))))
 
-(define declared-types ())
-(define (save-declared-type type)
-  (if (and type
-	   (not (member type declared-types)))
-      (set! declared-types (cons type declared-types))))
+(define declared-types ()) ; list of string type names
+(define declared-names ()) ; list of (enum-name type-name version-string)
+
+(define (save-declared-type name type version)
+  (when (string? type)
+    (if (not (member type declared-types))
+	(set! declared-types (cons type declared-types)))
+    (set! declared-names (cons (list name type version) declared-names))))
 
 (define* (CINT name type)
-  (save-declared-type type)
+  (save-declared-type name type "2.0")
   (if (and type (not (assoc type direct-types)))
       (format *stderr* "could be direct int: ~S (~S)~%" type name))
   (if (hash-table-ref names name)
@@ -1180,7 +1195,7 @@
 
 
 (define* (CAIRO-INT name type)
-  (save-declared-type type)
+  (save-declared-type name type "2.0")
   (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT~%" name)
       (begin
@@ -1188,7 +1203,7 @@
 	(hash-table-set! names name 'int))))
 
 (define* (CAIRO-INT-810 name type)
-  (save-declared-type type)
+  ;(save-declared-type name type)
   (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT-810~%" name)
       (begin
@@ -1196,7 +1211,7 @@
 	(hash-table-set! names name 'int))))
 
 (define* (CAIRO-INT-912 name type)
-  (save-declared-type type)
+  ;(save-declared-type name type)
   (if (hash-table-ref names name)
       (no-way "~A CAIRO-INT-912~%" name)
       (begin
@@ -2629,17 +2644,19 @@
 (hey "#if HAVE_SCHEME~%")
 
 (define (gtk-type->s7-type gtk)
-  (let ((dt (assoc gtk direct-types)))
-    (if (and (pair? dt)
-	     (string? (cdr dt)))
-	(let ((direct (cdr dt)))
-	  (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
-		((assoc direct '(("BOOLEAN" . boolean?) 
-				 ("DOUBLE"  . real?) 
-				 ("String"  . string?)) string=?)
-		 => cdr)
-		(#t #t)))
-	(or (not (has-stars gtk)) 'pair?))))
+  (cond ((member gtk declared-names (lambda (a b)
+				      (string=? a (cadr b))))
+	 'gtk_enum_t?)
+	((assoc gtk direct-types) => (lambda (dt)
+				       (or (not (string? (cdr dt)))
+					   (let ((direct (cdr dt)))
+					     (cond ((member direct '("INT" "ULONG") string=?) 'integer?)
+						   ((assoc direct '(("BOOLEAN" . boolean?) 
+								    ("DOUBLE"  . real?) 
+								    ("String"  . string?)) string=?)
+						    => cdr)
+						   (else #t))))))
+	(else (or (not (has-stars gtk)) 'pair?))))
 	       
 (define (make-signature fnc)
   (define (compress sig)
@@ -2672,7 +2689,7 @@
 
 ;(format *stderr* "~D entries, ~D funcs~%" (hash-table-entries signatures) (length funcs))
 
-(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_pair_false;~%")
+(hey "static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_gtk_enum_t, s_pair_false;~%")
 (hey "static s7_pointer ")
 
 (define (sig-name sig)
@@ -2680,22 +2697,24 @@
    (lambda (p)
      (display "pl_" p)
      (display (case (car sig)
-		((integer?) "i")
-		((boolean?) "b")
-		((real?)    "d")
-		((string?)  "s")
-		((pair?)    "p")
-		(else       "t"))
+		((integer?)    "i")
+		((boolean?)    "b")
+		((real?)       "d")
+		((string?)     "s")
+		((pair?)       "p")
+		((gtk_enum_t?) "g")
+		(else          "t"))
 	      p)
      (for-each
       (lambda (typ)
 	(display (case typ
-		   ((integer?) "i")
-		   ((boolean?) "b")
-		   ((real?)    "r")
-		   ((string?)  "s")
-		   ((pair?)    "u") ; because we're stupidly using #f=null
-		   (else       "t"))
+		   ((integer?)    "i")
+		   ((boolean?)    "b")
+		   ((real?)       "r")
+		   ((string?)     "s")
+		   ((pair?)       "u") ; because we're stupidly using #f=null
+		   ((gtk_enum_t?) "g")
+		   (else (format *stderr* "~A " typ)         "t"))
 		 p))
       (cdr sig)))))
      
@@ -2726,6 +2745,7 @@
 (hey "  s_string = s7_make_symbol(s7, \"string?\");~%")
 (hey "  s_pair = s7_make_symbol(s7, \"pair?\");~%")
 (hey "  s_pair_false = s7_make_signature(s7, 2, s_pair, s_boolean);~%")
+(hey "  s_gtk_enum_t = s7_make_symbol(s7, \"gtk_enum_t?\");~%")
 (hey "  s_any = s7_t(s7);~%~%")
 
 (for-each
@@ -2740,23 +2760,25 @@
        (hey (number->string len))
        (hey ", ")
        (hey (case (car sig)
-	      ((integer?) "s_integer")
-	      ((boolean?) "s_boolean")
-	      ((real?)    "s_float")
-	      ((string?)  "s_string")
-	      ((pair?)    "s_pair")
-	      (else       "s_any")))
+	      ((integer?)    "s_integer")
+	      ((boolean?)    "s_boolean")
+	      ((real?)       "s_float")
+	      ((string?)     "s_string")
+	      ((pair?)       "s_pair")
+	      ((gtk_enum_t?) "s_gtk_enum_t")
+	      (else          "s_any")))
        (if (> len 1) (hey ", "))
        (do ((i 1 (+ i 1))
 	    (s (cdr sig) (cdr s)))
 	   ((= i len))
 	 (let ((typ (car s)))
 	   (hey (case typ
-		  ((integer?) "s_integer")
-		  ((boolean?) "s_boolean")
-		  ((real?)    "s_real")
-		  ((string?)  "s_string")
-		  ((pair?)    "s_pair_false")
+		  ((integer?)    "s_integer")
+		  ((boolean?)    "s_boolean")
+		  ((real?)       "s_real")
+		  ((string?)     "s_string")
+		  ((pair?)       "s_pair_false")
+		  ((gtk_enum_t?) "s_gtk_enum_t")
 		  (else       "s_any"))))
 	 (if (< i (- len 1)) (hey ", "))))
      (hey ");~%")))
@@ -2922,6 +2944,41 @@
 
 (hey "}~%~%")
 
+
+(hey "/* -------------------------------- lint -------------------------------- */~%")
+(hey "~%")
+(hey "typedef struct {const char *name, *type; long long int value;} enummer_t;~%")
+(hey "static enummer_t enum_info[] = {~%")
+(set! declared-names (sort! declared-names (lambda (a b)
+					     (string<? (caddr a) (caddr b)))))
+(let ((version ""))
+  (do ((i 1 (+ i 1))
+       (names declared-names (cdr names)))
+      ((null? names)
+       (hey "#endif~%~NC{~S, ~S, ~A}};~%~%" 8 #\space "" "" -1)) ; end marker
+    (when (not (string=? (caddar names) version))
+      (if (> (length version) 0)
+	  (hey "#endif~%"))
+      (set! version (caddar names))
+      (hey (string-append "#if GTK_CHECK_VERSION(" (substring version 0 1) ", " (substring version 2) ", 0)~%")))
+    (hey "~NC{~S, ~S, ~A},~%" 8 #\space (caar names) (cadar names) (caar names))))
+
+(hey "static s7_pointer g_gtk_enum_t(s7_scheme *sc, s7_pointer args)~%")
+(hey "{~%")
+(hey "  s7_pointer form, argn;~%")
+(hey "  form = s7_car(args);~%")
+(hey "  argn = s7_cadr(args);~%")
+(hey "  return(s_integer);~%")
+(hey "}~%")
+(hey "~%")
+(hey "static void define_lint(void)~%")
+(hey "{~%")
+(hey "  s7_define_typed_function(s7, \"gtk_enum_t?\", g_gtk_enum_t, 1, 0, 0, \"lint helper\", pl_bt);~%")
+(hey "}~%")
+
+(hey "~%~%")
+
+
 (hey "/* -------------------------------- initialization -------------------------------- */~%~%")
 (hey "static bool xg_already_inited = false;~%~%")
 (hey "void Init_libxg(void);~%")
@@ -2937,6 +2994,9 @@
 (hey "      define_atoms();~%")
 (hey "      define_strings();~%")
 (hey "      define_structs();~%")
+(hey " #if HAVE_SCHEME~%")
+(hey "      define_lint();~%")
+(hey " #endif~%")
 (hey "      Xen_provide_feature(\"xg\");~%")
 (hey "      #if GTK_CHECK_VERSION(3, 0, 0)~%")
 (hey "        Xen_provide_feature(\"gtk3\");~%")
@@ -2978,17 +3038,19 @@
 
 (close-output-port xg-file)
 
+;(format *stderr* "declared types: ~A ~A~%" (length declared-types) (length declared-names)) 157 1288
 #|
 (for-each
  (lambda (type)
    (if (not (assoc type direct-types))
-       (format () ";not direct: ~A~%" type)))
+       (format *stderr* ";not direct: ~A~%" type)))
  declared-types)
 
+(format *stderr* "~%")
 (for-each
  (lambda (v)
    (if (not (member (car v) declared-types))
-       (format () "~A " (car v))))
+       (format *stderr* "~A~%" (car v))))
  direct-types)
 |#
 
