@@ -25,6 +25,8 @@
  *
  * HISTORY:
  *
+ *     17-Mar-16: gtk_enum_t for better signature checks.
+ *     --------
  *     29-Oct:    removed ->string.
  *     21-Aug-15: procedure-signature changes.
  *     --------
@@ -47346,7 +47348,7 @@ static s7_pointer g_gtk_enum_t(s7_scheme *sc, s7_pointer args)
 	p = strchr((char *)(p + 1), (int)','); 
       if (p) 
 	{ 
-	  char *e; 
+	  const char *e; 
 	  p += 2; /* past comma and space */ 
 	  e = strchr(p, (int)' '); 
 	  if (e) 

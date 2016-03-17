@@ -11194,11 +11194,4 @@
 ;;; (number? x) -> (vector|list-ref...)?
 ;;; redundant pair?
 ;;;
-;;; xg: form->type + arg, find arg [name], check types match, if not, check for same val in type [type]
-;;;    if found, "x is _t but should be _t, use y"
-;;;    else "x is _t for val, but this arg wants _t which should be between ...
-;;;    if int, check range, perhaps suggest name
-;;;    else if unknown -> 'integer?
-;;;    docstring look for (, then count , to argn, then parse next as type name
-;;;
 ;;; 495/84
