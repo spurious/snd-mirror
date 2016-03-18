@@ -701,6 +701,8 @@
 	(snd-display #__line__ ";just-sounds set default: ~A" *just-sounds*))
     (if (not (string? *listener-prompt*)) 
 	(snd-display #__line__ ";listener-prompt set default: ~A" *listener-prompt*))
+    (if (not (string? *stdin-prompt*)) 
+	(snd-display #__line__ ";stdin-prompt set default: ~A" *stdin-prompt*))
     (if (not (eqv? *max-transform-peaks*  100)) 
 	(snd-display #__line__ ";max-transform-peaks set default: ~A" *max-transform-peaks*))
     (if (not (eqv? *max-transform-peaks* 100)) 
@@ -1388,6 +1390,7 @@
 	    (list 'initial-dur initial-dur 0.1 1.0 '*initial-dur*)
 	    (list 'just-sounds just-sounds #f #t '*just-sounds*)
 	    (list 'listener-prompt listener-prompt ">" ":" '*listener-prompt*)
+	    (list 'stdin-prompt stdin-prompt ">" "" '*stdin-prompt*)
 	    (list 'max-transform-peaks max-transform-peaks 100 10 '*max-transform-peaks*)
 	    (list 'max-regions max-regions 16 6 '*max-regions*)
 	    (list 'min-dB min-dB -60.0 -90.0 '*min-dB*)
@@ -1902,6 +1905,7 @@
 	  (list 'initial-dur initial-dur 0.1 1.0)
 	  (list 'just-sounds just-sounds #f #t)
 	  (list 'listener-prompt listener-prompt ">" ":")
+	  (list 'stdin-prompt stdin-prompt "" ">")
 	  (list 'max-transform-peaks max-transform-peaks 100 10)
 	  (list 'max-regions max-regions 16 6)
 	  (list 'min-dB min-dB -60.0 -90.0)
@@ -2291,7 +2295,7 @@
 		       'speed-control-bounds 'speed-control-style 'speed-control-tones 'square-wave 'square-wave?
 		       'squelch-update 'srate 'src 'src-channel 'src-selection
 		       'src-sound 'src? 'ssb-am 'ssb-am?
-		       'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report
+		       'start-playing 'start-playing-hook 'start-playing-selection-hook 'start-progress-report 'stdin-prompt
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'ncos
 		       'ncos? 'nsin 'nsin? 'swap-channels 'sync 'sync-style 'sync-none 'sync-all 'sync-by-sound
 		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap 'tap?
@@ -46965,8 +46969,8 @@ EDITS: 1
 		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
 		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 					;start-playing 
-		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property temp-dir
-		     text-focus-color tiny-font region-sampler? transform-dialog transform-sample
+		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property stdin-prompt
+		     temp-dir text-focus-color tiny-font region-sampler? transform-dialog transform-sample
 		     transform->float-vector transform-framples transform-type with-file-monitor unbind-key undo
 		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
@@ -47072,7 +47076,8 @@ EDITS: 1
 			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
 			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
 			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
-			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property temp-dir text-focus-color tiny-font y-bounds
+			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property stdin-prompt
+			 temp-dir text-focus-color tiny-font y-bounds
 			 transform-type with-file-monitor with-verbose-cursor 
 			 with-inset-graph with-interrupts with-pointer-focus wavelet-type x-bounds with-smpte-label
 			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
@@ -47746,7 +47751,7 @@ EDITS: 1
 			  print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
 			  selected-channel selected-data-color selected-graph-color 
 			  selected-sound selection-creates-region show-controls show-indices show-listener
-			  show-selection-transform sinc-width temp-dir text-focus-color tiny-font
+			  show-selection-transform sinc-width stdin-prompt temp-dir text-focus-color tiny-font
 			  with-file-monitor unbind-key with-verbose-cursor 
 			  with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
 			  with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
@@ -48365,6 +48370,7 @@ EDITS: 1
 
 ;(save-listener "test.output")
 (set! *listener-prompt* original-prompt)
+(set! *stdin-prompt* "")
 (clear-listener)
 (set! (show-listener) #t)
 

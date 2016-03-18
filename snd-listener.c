@@ -186,7 +186,7 @@ static Xen g_listener_prompt(void) {return(C_string_to_Xen_string(listener_promp
 static Xen g_set_listener_prompt(Xen val) 
 {
   char *new_prompt;
-  #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
+  #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt string (\">\") "
   Xen_check_type(Xen_is_string(val), val, 1, S_set S_listener_prompt, "a string"); 
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
@@ -197,6 +197,27 @@ static Xen g_set_listener_prompt(Xen val)
       new_prompt[0] = 0;
     }
   set_listener_prompt(new_prompt);
+ 
+  return(val);
+}
+
+
+static Xen g_stdin_prompt(void) {return(C_string_to_Xen_string(stdin_prompt(ss)));}
+
+static Xen g_set_stdin_prompt(Xen val) 
+{
+  char *new_prompt;
+  #define H_stdin_prompt "(" S_stdin_prompt "): the current stdin prompt string"
+  Xen_check_type(Xen_is_string(val), val, 1, S_set S_stdin_prompt, "a string"); 
+
+  if (stdin_prompt(ss)) free(stdin_prompt(ss));
+  new_prompt = mus_strdup(Xen_string_to_C_string(val));
+  if (new_prompt == NULL)
+    {
+      new_prompt = (char *)malloc(sizeof(char));
+      new_prompt[0] = 0;
+    }
+  set_stdin_prompt((char *)new_prompt);
  
   return(val);
 }
@@ -247,6 +268,8 @@ Xen_wrap_no_args(g_show_listener_w, g_show_listener)
 Xen_wrap_1_arg(g_set_show_listener_w, g_set_show_listener)
 Xen_wrap_no_args(g_listener_prompt_w, g_listener_prompt)
 Xen_wrap_1_arg(g_set_listener_prompt_w, g_set_listener_prompt)
+Xen_wrap_no_args(g_stdin_prompt_w, g_stdin_prompt)
+Xen_wrap_1_arg(g_set_stdin_prompt_w, g_set_stdin_prompt)
 Xen_wrap_1_arg(g_snd_completion_w, g_snd_completion)
 Xen_wrap_no_args(g_listener_colorized_w, g_listener_colorized)
 Xen_wrap_1_arg(g_listener_set_colorized_w, g_listener_set_colorized)
@@ -256,6 +279,7 @@ Xen_wrap_1_arg(g_listener_set_colorized_w, g_listener_set_colorized)
 static s7_pointer acc_listener_colorized(s7_scheme *sc, s7_pointer args) {return(g_listener_set_colorized(s7_cadr(args)));}
 #endif
 static s7_pointer acc_listener_prompt(s7_scheme *sc, s7_pointer args) {return(g_set_listener_prompt(s7_cadr(args)));}
+static s7_pointer acc_stdin_prompt(s7_scheme *sc, s7_pointer args) {return(g_set_stdin_prompt(s7_cadr(args)));}
 #endif
 
 void g_init_listener(void)
@@ -265,6 +289,7 @@ void g_init_listener(void)
 
   Xen_define_dilambda(S_show_listener, g_show_listener_w, H_show_listener, S_set S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
   Xen_define_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_set S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
+  Xen_define_dilambda(S_stdin_prompt, g_stdin_prompt_w, H_stdin_prompt, S_set S_stdin_prompt, g_set_stdin_prompt_w, 0, 0, 1, 0);
   Xen_define_dilambda(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
 				   S_set S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
 
@@ -280,7 +305,9 @@ If it returns true, Snd assumes you've dealt the text yourself, and does not try
   s7_symbol_set_documentation(s7, ss->listener_colorized_symbol, "*listener-colorized*: number of vector elements to print in the listener (default: 12)");
   s7_symbol_set_access(s7, ss->listener_colorized_symbol, s7_make_function(s7, "[acc-" S_listener_colorized "]", acc_listener_colorized, 2, 0, false, "accessor"));
 #endif
-  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt character ('>') ");
+  s7_symbol_set_documentation(s7, ss->listener_prompt_symbol, "*listener-prompt*: the current lisp listener prompt string (\">\") ");
   s7_symbol_set_access(s7, ss->listener_prompt_symbol, s7_make_function(s7, "[acc-" S_listener_prompt "]", acc_listener_prompt, 2, 0, false, "accessor"));
+  s7_symbol_set_documentation(s7, ss->stdin_prompt_symbol, "*stdin-prompt*: the current stdin prompt string");
+  s7_symbol_set_access(s7, ss->stdin_prompt_symbol, s7_make_function(s7, "[acc-" S_stdin_prompt "]", acc_stdin_prompt, 2, 0, false, "accessor"));
 #endif  
 }

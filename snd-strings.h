@@ -596,6 +596,7 @@
 #define S_start_playing_selection_hook  "start-playing-selection-hook"
 #define S_start_progress_report         "start-progress-report"
 #define S_status_report                 "status-report"
+#define S_stdin_prompt                  "stdin-prompt"
 #define S_stop_player                   "stop-player"
 #define S_stop_playing                  "stop-playing"
 #define S_stop_playing_hook             "stop-playing-hook"

@@ -484,7 +484,7 @@ typedef struct snd_state {
   bool With_GL, With_Relative_Panes;
   int Print_Length, Dac_Size, View_Files_Sort;
   bool Dac_Combines_Channels, Show_Selection_Transform, With_Mix_Tags, Selection_Creates_Region;
-  char *Save_State_File, *Listener_Prompt;
+  char *Save_State_File, *Listener_Prompt, *Stdin_Prompt;
   mus_float_t Enved_Base, Enved_Power, Auto_Update_Interval;
   bool Enved_With_Wave, Graphs_Horizontal, With_Background_Processes, With_File_Monitor;
   env_type_t Enved_Style;
@@ -546,7 +546,7 @@ typedef struct snd_state {
     with_gl_symbol, with_relative_panes_symbol,
     print_length_symbol, dac_size_symbol, view_files_sort_symbol,
     dac_combines_channels_symbol, show_selection_transform_symbol, with_mix_tags_symbol, selection_creates_region_symbol,
-    save_state_file_symbol, listener_prompt_symbol,
+    save_state_file_symbol, listener_prompt_symbol, stdin_prompt_symbol,
     enved_base_symbol, enved_power_symbol, auto_update_interval_symbol,
     enved_with_wave_symbol, graphs_horizontal_symbol, with_background_processes_symbol, with_file_monitor_symbol,
     enved_style_symbol,

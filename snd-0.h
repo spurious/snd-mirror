@@ -1807,6 +1807,18 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
 #endif
 #define DEFAULT_LISTENER_PROMPT ">"
 
+#define stdin_prompt(ss) ss->Stdin_Prompt
+#if HAVE_SCHEME
+  #define set_stdin_prompt(a) \
+    do {\
+        ss->Stdin_Prompt = a; \
+        s7_symbol_set_value(s7, ss->stdin_prompt_symbol, s7_make_string(s7, ss->Stdin_Prompt));\
+    } while (0)
+#else
+  #define set_stdin_prompt(a) ss->Stdin_Prompt = a
+#endif
+#define DEFAULT_STDIN_PROMPT ""
+
 #define print_length(ss) ss->Print_Length
 #if HAVE_SCHEME
   #define set_print_length(a) \

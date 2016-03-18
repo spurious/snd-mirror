@@ -11200,6 +11200,8 @@
 ;;; (number? x) -> (vector|list-ref...)?
 ;;; let->let->let as let*?
 ;;; or let(*)->let(*) combined into one
+;;; (cond (a (cond ...))) -> (cond ((not a) + cdr cond))
+;;; (do ((i...) (j i...))) -> complain about confusing shadowing?
 ;;;
 ;;; 495/100
 
