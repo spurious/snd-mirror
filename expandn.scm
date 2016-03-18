@@ -201,16 +201,16 @@
 						  ((= k samps))
 						(set! sample-0 sample-1)
 						(set! sample-1 (* vol (granulate ingen)))))
-					  (set! ex-samp (+ ex-samp samps))))))
-			      (set! (invals 0) (if (= next-samp ex-samp)
-						   sample-0                      ; output actual samples
-						   (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))) ; output interpolated samples
+					  (set! ex-samp (+ ex-samp samps)))))))
+			    (set! (invals 0) (if (= next-samp ex-samp)
+						 sample-0                      ; output actual samples
+						 (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))) ; output interpolated samples
 			      
-			      ;; output mixed result
-			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			      ;; if reverb is turned on, output to the reverb streams
-			      (if rev-mx
-				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))))
+			    ;; output mixed result
+			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+			    ;; if reverb is turned on, output to the reverb streams
+			    (if rev-mx
+				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
 		    
 		    (if (= in-chans 2)
 			(let ((sample-0-0 0.0)
@@ -263,23 +263,23 @@
 					    (set! sample-1-0 (* vol (granulate ingen0)))
 					    (set! sample-0-1 sample-1-1)
 					    (set! sample-1-1 (* vol (granulate ingen1))))
-					  (set! ex-samp (+ ex-samp samps))))))
+					  (set! ex-samp (+ ex-samp samps)))))))
 			      
-			      (if (= next-samp ex-samp)
-				  ;; output actual samples
-				  (begin
-				    (set! (invals 0) sample-0-0)
-				    (set! (invals 1) sample-0-1))
-				  (begin
-				    ;; output interpolated samples
-				    (set! (invals 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
-				    (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
-			      
-			      ;; output mixed result
-			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			      ;; if reverb is turned on, output to the reverb streams
-			      (if rev-mx
-				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
+			    (if (= next-samp ex-samp)
+				;; output actual samples
+				(begin
+				  (set! (invals 0) sample-0-0)
+				  (set! (invals 1) sample-0-1))
+				(begin
+				  ;; output interpolated samples
+				  (set! (invals 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
+				  (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
+			    
+			    ;; output mixed result
+			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+			    ;; if reverb is turned on, output to the reverb streams
+			    (if rev-mx
+				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))
 			
 			(let ((samples-0 (make-float-vector in-chans 0.0))
 			      (samples-1 (make-float-vector in-chans 0.0)))
@@ -328,21 +328,21 @@
 					      (let ((gen (vector-ref ex-array ix)))
 						(float-vector-set! samples-0 ix (float-vector-ref samples-1 ix))
 						(float-vector-set! samples-1 ix (* vol (granulate gen))))))
-					  (set! ex-samp (+ ex-samp samps))))))
+					  (set! ex-samp (+ ex-samp samps)))))))
 			      
-			      (if (= next-samp ex-samp)
-				  ;; output actual samples
-				  (copy samples-0 invals 0 in-chans)
-				  ;; output interpolated samples
-				  (do ((ix 0 (+ ix 1)))
-				      ((= ix in-chans))
-				    (let ((v0 (float-vector-ref samples-0 ix))
-					  (v1 (float-vector-ref samples-1 ix)))
-				      (float-vector-set! invals ix (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
-			      ;; output mixed result
-			      (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			      ;; if reverb is turned on, output to the reverb streams
-			      (if rev-mx
-				  (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))))))))))))
+			    (if (= next-samp ex-samp)
+				;; output actual samples
+				(copy samples-0 invals 0 in-chans)
+				;; output interpolated samples
+				(do ((ix 0 (+ ix 1)))
+				    ((= ix in-chans))
+				  (let ((v0 (float-vector-ref samples-0 ix))
+					(v1 (float-vector-ref samples-1 ix)))
+				    (float-vector-set! invals ix (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
+			    ;; output mixed result
+			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+			    ;; if reverb is turned on, output to the reverb streams
+			    (if rev-mx
+				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

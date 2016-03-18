@@ -105,15 +105,15 @@
 	 (list 'sound 'selection 'marks)
 	 (list #t #f #f)))
       
-      (if truncate-callback
-	  (let ((sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL))
-		(button (gtk_check_button_new_with_label "truncate at end")))
-	    (gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
-	    (gtk_widget_show sep)
-	    (gtk_box_pack_start (GTK_BOX rc) button #t #t 4)
-	    (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
-	    (gtk_widget_show button)
-	    (g_signal_connect button "clicked" (lambda (w d) (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))) #f)))))
+      (when truncate-callback
+	(let ((sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL))
+	      (button (gtk_check_button_new_with_label "truncate at end")))
+	  (gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
+	  (gtk_widget_show sep))
+	(gtk_box_pack_start (GTK_BOX rc) button #t #t 4)
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
+	(gtk_widget_show button)
+	(g_signal_connect button "clicked" (lambda (w d) (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))) #f))))
   
   (define (effect-framples target)
     (if (eq? target 'sound)

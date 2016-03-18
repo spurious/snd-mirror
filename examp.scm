@@ -1499,10 +1499,10 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 				 (set! (mus-location read-env) i)
 				 (let ((position-in-original (env read-env)))
 				   (set! (readers next-reader)
-					 (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn))
-				   (mus-reset (grain-envs next-reader)) ; restart grain env
-				   (set! next-reader (modulo (+ next-reader 1) num-readers))
-				   (set! cur-readers (max cur-readers next-reader)))
+					 (make-sampler (max 0 (round (+ position-in-original (mus-random jitter)))) snd chn)))
+				 (mus-reset (grain-envs next-reader)) ; restart grain env
+				 (set! next-reader (modulo (+ next-reader 1) num-readers))
+				 (set! cur-readers (max cur-readers next-reader))
 				 
 				 (do ((k 0 (+ k 1)))
 				     ((= k cur-readers))

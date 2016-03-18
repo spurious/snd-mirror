@@ -457,15 +457,14 @@
 			(remove-if p (cdr l))))))
     
     (define (lint-remove-duplicates lst env)
-      (letrec ((rem-dup
-		(lambda (lst nlst)
-		  (cond ((null? lst) nlst)
-			((and (member (car lst) nlst)
-			      (not (and (pair? (car lst))
-					(side-effect? (car lst) env))))
-			 (rem-dup (cdr lst) nlst))
-			(else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
-	(reverse (rem-dup lst ()))))
+      (reverse (let rem-dup ((lst lst)
+			     (nlst ()))
+		 (cond ((null? lst) nlst)
+		       ((and (member (car lst) nlst)
+			     (not (and (pair? (car lst))
+				       (side-effect? (car lst) env))))
+			(rem-dup (cdr lst) nlst))
+		       (else (rem-dup (cdr lst) (cons (car lst) nlst)))))))
     
     (define applicable? arity)
     
@@ -1210,13 +1209,13 @@
 				(case-effect? (cdr f)))))))
 		
 		((cond)
-		 (letrec ((cond-effect? (lambda (f e)
-					  (and (pair? f)
-					       (or (and (pair? (car f))
-							(any? (lambda (ff) (side-effect-with-vars? ff e vars)) (car f)))
-						   (cond-effect? (cdr f) e))))))
-		   (or (not (pair? (cadr form)))
-		       (cond-effect? (cdr form) env))))
+		 (or (not (pair? (cadr form)))
+		     (let cond-effect? ((f (cdr form))
+					(e env))
+		       (and (pair? f)
+			    (or (and (pair? (car f)) 
+				     (any? (lambda (ff) (side-effect-with-vars? ff e vars)) (car f)))
+				(cond-effect? (cdr f) e))))))
 		
 		((let let* letrec letrec*)
 		 ;; here if the var value involves a member of vars, we have to add it to vars
@@ -3798,7 +3797,7 @@
       ;; here curlet won't change (leaving aside additions via define)
       ;; keyword head here if args to func/macro that we don't know about
       
-     (case head
+      (case head
 
 	;; ----------------
 	((memq assq memv assv member assoc)
@@ -4092,14 +4091,14 @@
 		   (lint-format "perhaps ~A" caller (lists->string form val)))))
 
 	 (if (not (tree-memq 'length form)) ; too many fussy messages! I may remove this check.
-	     (let ((checks())
+	     (let ((pairs())
 		   (lists ()))
 	       (let cxr-search ((tree (cdr form)))
 		 (if (pair? tree)
 		     (case (car tree)
 		       ((pair?)
 			(if (pair? (cdr tree))
-			    (set! checks (cons (cadr tree) checks))))
+			    (set! pairs (cons (cadr tree) pairs))))
 
 		       ((list?)
 			(if (pair? (cdr tree))
@@ -4121,7 +4120,7 @@
 		       ((car cdr)
 			(if (and (pair? (cdr tree))
 				 (member (cadr tree) lists)
-				 (not (member (cadr tree) checks)))
+				 (not (member (cadr tree) pairs)))
 			    (lint-format "in ~A, we check ~A, but access ~A. But ~A might be null." caller
 					 (truncated-list->string form)
 					 `(list? ,(cadr tree)) ; TODO use the original
@@ -4134,11 +4133,11 @@
 			 cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar)
 			(if (pair? (cdr tree))
 			    (let ((ref (cadr tree)))
-			      (if (and (tree-memq ref checks)
-				       (member ref checks)
-				       (not (member tree checks)))
+			      (if (and (tree-memq ref pairs)
+				       (member ref pairs)
+				       (not (member tree pairs)))
 				  (let ((new-arg `(,(string->symbol (string-append "c" (substring (symbol->string (car tree)) 2))) ,(cadr tree))))
-				    (if (not (member new-arg checks))
+				    (if (not (member new-arg pairs))
 					(lint-format "in ~A~%~NCwe check ~A, but then access ~A~A.~%~NCPerhaps add ~A" caller
 						     (truncated-list->string form)
 						     (+ lint-left-margin 4) #\space
@@ -6551,7 +6550,6 @@
 							 (not (compatible? type (->type (caddr call)))))))
 				       (lint-format "~A is ~A, so ~A is #f" caller vname (prettify-checker-unq type) call))
 				     
-				     
 				     ;; the usual eqx confusion
 				     (when (and (= suggest made-suggestion)
 						(memq type '(char? number? integer? real? float? rational? complex?)))
@@ -7560,6 +7558,7 @@
 		  ((and (memq (caar bval) '(list-ref list-tail))
 			(pair? (cdar bval))
 			(pair? (cddar bval))
+			(pair? args)
 			(eq? (car args) (cadar bval))
 			(null? (cdr args)))
 		   (if (eq? (caar bval) 'list-ref)
@@ -7991,6 +7990,7 @@
 	  
 	  (if (pair? form)
 	      (let ((head (car form)))
+
 		(set! line-number (pair-line-number form))
 
 		(when *report-function-stuff* 
@@ -8264,7 +8264,7 @@
 				     (set! settee (do ((sym (car settee) (car sym)))
 						      ((not (pair? sym)) sym))))))
 			   
-			   (if (symbol? (cadr form)) ; see do above
+			   (if (symbol? (cadr form)) ; see do directly above -- sets settee so we have to go back to (cadr form)
 			       (set-set (cadr form) form env)
 			       (if (and (pair? (cadr form))
 					(symbol? settee))
@@ -9884,6 +9884,7 @@
 					    (pair? (cdadr p))
 					    (null? (cddadr p))
 					    (or (and (pair? (cadadr p))
+						     (pair? (cdr (cadadr p)))
 						     (null? (cddr (cadadr p))) ; one arg to func
 						     (eq? vname (cadr (cadadr p))))
 						(eq? vname (cadadr p)))
@@ -10947,6 +10948,11 @@
 					 (string->number (substring str 1)))
 				    (format outport "~NC#d is pointless, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
 				#f))
+
+		    (cons #\! (lambda (str)
+				(and (string=? str "!optional")
+				     :optional)))
+
 		    (cons #\_ (lambda (str)
 				(and (string=? str "__line__")
 				     (port-line-number))))))
@@ -11192,6 +11198,8 @@
 ;;;   could we search the form for the lowest positive line num?
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
-;;; redundant pair?
+;;; let->let->let as let*?
+;;; or let(*)->let(*) combined into one
 ;;;
-;;; 495/84
+;;; 495/100
+

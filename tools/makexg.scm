@@ -2996,7 +2996,7 @@
 (hey "	    } ~%")
 (hey "	} ~%")
 (hey "    } ~%")
-(hey "  if (range_set)       /* here we found a matching name, it's type is wrong, and it's out of range */ ~%")
+(hey "  if (range_set)       /* here we found a matching name, its type is wrong, and it's out of range */ ~%")
 (hey "    { ~%")
 (hey "      char *range_string; ~%")
 (hey "      s7_pointer str; ~%")

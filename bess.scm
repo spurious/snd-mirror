@@ -224,7 +224,7 @@
 		 ;(data (make-float-vector bufsize 0.0))
 		 (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
 	    (if (< port 0) 
-		(format #t "can't open DAC!"))
+		(format () "can't open DAC!"))
 	    
 	    (XmAddWMProtocolCallback (cadr (main-widgets)) ; shell
 				     (XmInternAtom dpy "WM_DELETE_WINDOW" #f)

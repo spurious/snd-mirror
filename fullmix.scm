@@ -18,7 +18,7 @@
 	(in-chans (channels in-file))
 	(out-chans (channels *output*))
 	(reversed (or (and (number? srate) (negative? srate))
-		      (and (pair? srate) (negative? (cadr srate)))))
+		      (and (pair? srate) (pair? (cdr srate)) (negative? (cadr srate)))))
 	
 	(inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
     

@@ -20,19 +20,12 @@
 			   "")
 		       "#" (short-file-name snd) "#"))
       
-      (define (unsaved-edits snd)
-	(or (sound-property 'auto-save snd)
-	    0))
-      
       (define (clear-unsaved-edits snd)
 	(set! (sound-property 'auto-save snd) 0))
       
-      (define (increment-unsaved-edits snd)
-	(set! (sound-property 'auto-save snd) (+ 1 (sound-property 'auto-save snd))))
-      
       (define (upon-edit snd)
 	(lambda ()
-	  (increment-unsaved-edits snd)))
+	  (set! (sound-property 'auto-save snd) (+ 1 (sound-property 'auto-save snd)))))
       
       (define (auto-save-open-func snd)
 	(let ((temp-file (auto-save-temp-name snd)))
@@ -57,7 +50,7 @@
 	(if auto-saving
 	    (begin
 	      (for-each (lambda (snd)
-			  (if (> (unsaved-edits snd) 0)
+			  (if (positive? (or (sound-property 'auto-save snd) 0))
 			      (let ((save-name (auto-save-temp-name snd)))
 				(status-report (string-append "auto-saving as " save-name "...") snd)
 				(in 3000 (lambda () (status-report "" snd)))
