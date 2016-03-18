@@ -142,6 +142,7 @@ void snd_set_global_defaults(bool need_cleanup)
       if (ss->Save_State_File) {free(ss->Save_State_File); ss->Save_State_File = NULL;}
       if (ss->Eps_File) {free(ss->Eps_File); ss->Eps_File = NULL;}
       if (ss->Listener_Prompt) {free(ss->Listener_Prompt); ss->Listener_Prompt = NULL;}
+      if (ss->Stdin_Prompt) {free(ss->Stdin_Prompt); ss->Stdin_Prompt = NULL;}
       if (ss->Open_File_Dialog_Directory) {free(ss->Open_File_Dialog_Directory); ss->Open_File_Dialog_Directory = NULL;}
       
       /* not sure about the next two... */
@@ -222,6 +223,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->With_Pointer_Focus =          DEFAULT_WITH_POINTER_FOCUS;
   ss->Play_Arrow_Size =             DEFAULT_PLAY_ARROW_SIZE;
   ss->Sync_Style =                  DEFAULT_SYNC_STYLE;
+  ss->Stdin_Prompt =                mus_strdup(DEFAULT_STDIN_PROMPT);
   ss->Listener_Prompt =             mus_strdup(DEFAULT_LISTENER_PROMPT);
   ss->listener_prompt_length =      mus_strlen(ss->Listener_Prompt);
   ss->Clipping =                    DEFAULT_CLIPPING;
@@ -346,6 +348,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->show_selection_transform_symbol = s7_define_variable(s7, "*" S_show_selection_transform "*", s7_make_boolean(s7, DEFAULT_SHOW_SELECTION_TRANSFORM));
   ss->with_mix_tags_symbol =           s7_define_variable(s7, "*" S_with_mix_tags "*",          s7_make_boolean(s7, DEFAULT_WITH_MIX_TAGS));
   ss->listener_prompt_symbol =         s7_define_variable(s7, "*" S_listener_prompt "*",        s7_make_string(s7, DEFAULT_LISTENER_PROMPT));
+  ss->stdin_prompt_symbol =            s7_define_variable(s7, "*" S_stdin_prompt "*",           s7_make_string(s7, DEFAULT_STDIN_PROMPT));
   ss->enved_base_symbol =              s7_define_variable(s7, "*" S_enved_base "*",             s7_make_real(s7, DEFAULT_ENVED_BASE));
   ss->enved_power_symbol =             s7_define_variable(s7, "*" S_enved_power "*",            s7_make_real(s7, DEFAULT_ENVED_POWER));
   ss->enved_with_wave_symbol =         s7_define_variable(s7, "*" S_enved_with_wave "*",        s7_make_boolean(s7, DEFAULT_ENVED_WITH_WAVE));

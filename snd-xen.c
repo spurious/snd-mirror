@@ -1188,6 +1188,12 @@ void snd_eval_stdin_str(const char *buf)
       str = gl_print(result);
       string_to_stdout(str, NULL);
 
+      if (mus_strlen(stdin_prompt(ss)) > 0)
+	{
+	  fprintf(stdout, stdin_prompt(ss));
+	  fflush(stdout);
+	}
+
       if (str) free(str);
       snd_unprotect_at(loc);
     }
