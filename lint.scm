@@ -20,6 +20,8 @@
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (kinda slow, and this error almost never happens)
 (define *lint* #f)                                        ; the lint let
+;; this gives other programs a way to extend or edit lint's tables: for example, the
+;;   table of functions that are simple (no side effects) is (*lint* 'no-side-effect-functions)
 
 (if (provided? 'pure-s7)
     (begin
@@ -69,7 +71,6 @@
 (define lint
 
   (let ((no-side-effect-functions 
-	 ;; ideally we'd be able to add functions to this list, perhaps similar to the signatures
 	 (let ((ht (make-hash-table)))
 	   (for-each
 	    (lambda (op) 
@@ -2989,7 +2990,7 @@
 			   (simplify-numerics `(- (+ ,(car args) ,@(cddadr args)) ,(cadadr args)) env))) ; (- x (- y z)) -> (- (+ x z) y)
 		      ((and (pair? (cadr args))                   ; (- x (+ y z)) -> (- x y z)
 			    (eq? (caadr args) '+))
-		       `(- ,(car args) ,@(cdadr args)))
+		       (simplify-numerics `(- ,(car args) ,@(cdadr args)) env))
 		      ((and (pair? (car args))                    ; (- (- x y) z) -> (- x y z)
 			    (eq? (caar args) '-))
 		       (if (> (length (car args)) 2)
@@ -3027,7 +3028,12 @@
 					(- (car nargs))
 					`(- ,(car nargs)))    ; (- 0 0 0 x)?
 				    `(- (+ ,@nargs)))         ; (- 0 z y) -> (- (+ x y))
-				`(- ,@(cons first-arg nargs))))))))))
+				(if (and (pair? (car args))
+					 (eq? (caar args) '-))
+				    (if (> (length (car args)) 2)
+					(simplify-numerics `(- ,@(cdar args) ,@(cdr args)) env)
+					(simplify-numerics `(- (+ ,(cadar args) ,@(cdr args))) env))
+				    `(- ,@(cons first-arg nargs)))))))))))
 
 	    ((/)
 	     (case len
@@ -9547,6 +9553,13 @@
 				    (lint-format "do variable list is not a proper list? ~S" caller step-vars)))
 			     (if (binding-ok? caller head (car bindings) env #f)
 				 (begin
+#|
+				   (for-each (lambda (v)
+					       (if (tree-memq (var-name v) (cadar bindings))
+						   (format *stderr* "~S: ~A: ~A in ~A~%~%" *current-file* v (var-member (var-name v) env) (lint-pp step-vars))))
+					     vars)
+				   ;; if no var-member warn!
+|#
 				   (lint-walk caller (cadar bindings) env)
 				   (set! vars (cons (let ((v (make-var :name (caar bindings) 
 								       :definer 'do
@@ -9781,7 +9794,47 @@
 		       (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 			 (if (keyword? named-let)
 			     (lint-format "bad let name: ~A" caller named-let))
-			
+#|
+			 (if (and (not named-let)
+				  (pair? (cddr form))
+				  (null? (cdddr form))
+				  (pair? (caddr form))
+				  (memq (caaddr form) '(let* let))
+				  (pair? (cdr (caddr form)))
+				  (not (symbol? (cadr (caddr form))))
+				  ;; try 3 lets
+				  (let ((inner (caddr form)))
+				    (and (pair? (cddr inner))
+					 (null? (cdddr inner))
+					 (pair? (caddr inner))
+					 (memq (caaddr inner) '(let* let))
+					 (pair? (cdr (caddr inner)))
+					 (not (symbol? (cadr (caddr inner))))
+					 ;; 4 !
+				  (let ((inner1 (caddr inner)))
+				    (and (pair? (cddr inner1))
+					 (null? (cdddr inner1))
+					 (pair? (caddr inner1))
+					 (memq (caaddr inner1) '(let* let))
+					 (pair? (cdr (caddr inner1)))
+					 (not (symbol? (cadr (caddr inner1))))
+
+					 ;; 5 !
+				  (let ((inner2 (caddr inner1)))
+				    (and (pair? (cddr inner2))
+					 ;(null? (cdddr inner2))
+					 (pair? (caddr inner2))
+					 (memq (caaddr inner2) '(let* let))
+					 (pair? (cdr (caddr inner2)))
+					 (not (symbol? (cadr (caddr inner2))))
+					 )))))))
+			     (format *stderr* "~A~%~%" (lint-pp form)))
+			 ;; if 1-in-each except innermost, let* ok (does happen)
+			 ;;   but let* is much rarer
+			 ;; if n-in-any and no back ref, make one bigger let
+			 ;; and the inner let can be any size body
+|#
+
 			 (unless named-let
 			   (if (and (null? (cadr form)) ; this can be fooled by macros that define things
 				    (eq? form lint-current-form)
@@ -10151,6 +10204,7 @@
 		   (if (< (length form) 3)
 		       (lint-format "let* is messed up: ~A" caller (truncated-list->string form))
 		       (let ((named-let (and (symbol? (cadr form)) (cadr form))))
+
 			 (let ((vars (if named-let (list (make-var :name named-let 
 								   :definer 'let*)) ())) ; TODO: fvar
 			       (varlist (if named-let (caddr form) (cadr form)))
@@ -10318,7 +10372,7 @@
 			       ((and (null? (cdadr form))
 				     (eq? head 'letrec*))
 				(lint-format "letrec* could be letrec: ~A" caller (truncated-list->string form))))
-			 
+
 			 (do ((bindings (cadr form) (cdr bindings)))
 			     ((not (pair? bindings))
 			      (if (not (null? bindings))
@@ -10372,6 +10426,7 @@
 									 ,@(cddr lform)))))
 				 (if (and (not (eq? caller 'define))
 					  (pair? lform)
+					  (pair? (cdr lform))
 					  (proper-list? (cadr lform)))
 				     (let ((call (find-call sym body)))
 				       (when (pair? call)
@@ -10950,15 +11005,24 @@
 				#f))
 
 		    (cons #\! (lambda (str)
-				(and (string=? str "!optional")
-				     :optional)))
+				(if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true") string-ci=?) ; for MIT-scheme
+				    :optional
+				    (let ((lc (str 0)))
+				      (do ((c (read-char) (read-char)))
+					  ((or (and (eof-object? c)
+						    (or (format outport "unclosed block comment~%")
+							#t))
+					       (and (char=? lc #\!)
+						    (char=? c #\#)))
+					   #f)
+					(set! lc c))))))
 
 		    (cons #\_ (lambda (str)
 				(and (string=? str "__line__")
 				     (port-line-number))))))
 	
 	;; try to get past all the # and \ stuff in other Schemes
-	;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example), and #!optional (Chicken and MIT-scheme)
+	;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example)
 	(set! (hook-functions *read-error-hook*)  
 	      (list (lambda (h)
 		      (let ((data (h 'data))
@@ -11196,12 +11260,25 @@
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
+;;;
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
+;;;
 ;;; let->let->let as let*?
 ;;; or let(*)->let(*) combined into one
+;;; letrec with 2 funcs -> named let for both? [letrec->letrec apparently never happens]
+;;;
 ;;; (cond (a (cond ...))) -> (cond ((not a) + cdr cond))
-;;; (do ((i...) (j i...))) -> complain about confusing shadowing?
+;;;   (lint-test "(cond (A (cond (B c) (else D))) (else E))" "") -> (cond ((not A) E) (B c) (else D))
+;;;   (lint-test "(cond (A (cond (B c) (else D))))" "") [this one is currently changed: (if A (cond (B c) (else D)))]
+;;;      and ugly: (cond ((not A) #<unspecified>) (B c) (else D)) so leave it as is
+;;; (cond ... (d (cond...)) (else e))
+;;;   (cond ... ((not d) e) ...) -- so it's the last that is foldable [and else is not cond]
+;;; (cond ... (a (if b c d)) (else e)) -> (cond ... ((not a) e) (b c) else d)
+;;;
+;;; (do ((i [not i]...) (j i...))) -> complain about confusing shadowing?
+;;; if letrec->named let is good, what about define+define?
+;;; snd-lint: load lint, add to various hash-tables via *lint* 
 ;;;
 ;;; 495/100
 
