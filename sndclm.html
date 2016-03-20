@@ -1089,27 +1089,27 @@ magnitude spectrum, but with the phases chosen to minimize the peak amplitude.
 		   0.504202 0.817304 -0.010580 0.584809 1.234045 0.840674 1.222939 0.685333 1.651765 
 		   0.299738 1.890117 0.740013 0.044764 1.547307 0.169892 1.452239 0.352220 0.122254 
 		   1.524772 1.183705 0.507801 1.419950 0.851259 0.008092 1.483245 0.608598 0.212267	
-		   0.545906 0.255277 1.784889 0.270552 1.164997 -0.083981 0.200818 1.204088)))
-  (let ((freq 10.0)
-	(dur 5.0)
-	(n 98))
-    (with-sound ()
-      (let ((samps (floor (* dur 44100)))
-	    (1/n (/ 1.0 n))
-	    (freqs (make-float-vector n))
-	    (phases (make-float-vector n (* pi 0.5))))
-	(do ((i 0 (+ i 1)))
-	    ((= i n))
-	  (let ((off (/ (* pi (- 0.5 (98-phases i))) dur 44100))
-		(h (hz-&gt;radians (* freq (+ i 1)))))
-	    (set! (freqs i) (+ h off))))
-	(let ((ob (<em class=red>make-oscil-bank</em> freqs phases)))
-	  (do ((i 0 (+ i 1))) ; get rid of the distracting initial click
-	      ((= i 1000))
-	    (<em class=red>oscil-bank</em> ob))
-	  (do ((k 0 (+ k 1)))
-	      ((= k samps))
-	    (outa k (* 1/n (<em class=red>oscil-bank</em> ob)))))))))
+		   0.545906 0.255277 1.784889 0.270552 1.164997 -0.083981 0.200818 1.204088))
+     (freq 10.0)
+     (dur 5.0)
+     (n 98))
+  (with-sound ()
+    (let ((samps (floor (* dur 44100)))
+	  (1/n (/ 1.0 n))
+	  (freqs (make-float-vector n))
+	  (phases (make-float-vector n (* pi 0.5))))
+      (do ((i 0 (+ i 1)))
+	  ((= i n))
+	(let ((off (/ (* pi (- 0.5 (98-phases i))) dur 44100))
+	      (h (hz-&gt;radians (* freq (+ i 1)))))
+	  (set! (freqs i) (+ h off))))
+      (let ((ob (<em class=red>make-oscil-bank</em> freqs phases)))
+        (do ((i 0 (+ i 1))) ; get rid of the distracting initial click
+            ((= i 1000))
+          (<em class=red>oscil-bank</em> ob))
+        (do ((k 0 (+ k 1)))
+	    ((= k samps))
+          (outa k (* 1/n (<em class=red>oscil-bank</em> ob))))))))
 </pre>
 
 

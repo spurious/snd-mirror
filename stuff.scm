@@ -1598,28 +1598,28 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	 (new-len (- (min len (or end len)) start)))
     (if (negative? new-len)
 	(error 'out-of-range "end: ~A should be greater than start: ~A" end start))
-    
+
     (cond ((vector? obj) 
 	   (make-shared-vector obj (list new-len) start))
-	  
-	  ((string? obj) 
-	   (if end
-	       (substring obj start end)
-	       (substring obj start)))
-	  
-	  ((pair? obj)
-	   (if (not end)
-	       (cdr* obj start)
-	       (let ((lst (make-list new-len #f)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i new-len) lst)
-		   (set! (lst i) (obj (+ i start)))))))
-	  
-	  (else             ; (subsequence (inlet 'subsequence (lambda* (obj start end) "subseq")))
-	   (catch* 
-	    (((obj 'subsequence) obj start end)
-	     (subsequence (obj 'value) start end))
-	    #f)))))
+
+          ((string? obj)
+           (if end
+               (substring obj start end)
+               (substring obj start)))
+
+          ((not (pair? obj))
+           (catch* (((obj 'subsequence) obj start end) 
+		    (subsequence (obj 'value) start end))
+		   #f))
+
+          ((not end) 
+	   (cdr* obj start))
+
+          (else
+           (let ((lst (make-list new-len #f)))
+             (do ((i 0 (+ i 1)))
+                 ((= i new-len) lst)
+               (set! (lst i) (obj (+ i start)))))))))
 
 
 (define (sequence->string val)

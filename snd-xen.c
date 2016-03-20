@@ -1190,7 +1190,7 @@ void snd_eval_stdin_str(const char *buf)
 
       if (mus_strlen(stdin_prompt(ss)) > 0)
 	{
-	  fprintf(stdout, stdin_prompt(ss));
+	  fprintf(stdout, "%s", stdin_prompt(ss));
 	  fflush(stdout);
 	}
 

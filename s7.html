@@ -2647,7 +2647,7 @@ such as abs, we need to put it back to its original form:
        (lambda (sym)
 	 (unless (assoc (car sym) e)
 	   (format () "~S clobbered ~A~%" file (car sym))
-	   (apply set! (car sym) (list (cdr (assoc (car sym) new-e))))))
+	   (apply set! (car sym) (list (cdr sym)))))
        new-e))))
 
 ;; say libtest.scm has the line (set! abs odd?)
@@ -3085,15 +3085,15 @@ as "complex?"!):
 			       (add (cons (n 'r) r) (cons (n 'i) i) 
                                     (cons (n 'j) j) (cons (n 'k) k) 
                                     (cdr args)))
-			    ((<em class=red>openlet?</em> n) ; maybe we'll add octonions later!
-			     (if (eq? n (car orig-args))
-				 (error 'missing-method "+ can't handle these arguments: ~A" args)
-				 (apply (n '+) 
-                                        (make-quaternion 
-                                          (apply + r) (apply + i) (apply + j) (apply + k)) 
-                                        (cdr args))))
-			    (else (error 'wrong-type-arg "+ argument ~A is not a number" n))))))))
-	))
+                            ((not (<em class=red>openlet?</em> n))   ; maybe we'll add octonions later!
+                             (error 'wrong-type-arg "+ argument ~A is not a number" n))
+                            ((eq? n (car orig-args))
+                             (error 'missing-method "+ can't handle these arguments: ~A" args))
+                            (else
+			      (apply (n '+) 
+                                     (make-quaternion 
+                                       (apply + r) (apply + i) (apply + j) (apply + k)) 
+                                     (cdr args)))))))))))
 
 &gt; (let ((q1 (make-quaternion 1.0 1.0 0.0 0.0)))
     (+ 1 q1 2.5+i))
