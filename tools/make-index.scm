@@ -1420,56 +1420,54 @@
 						     (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
 						    ((eq? closer 'script)
 						     (set! scripting #f))
-						    ((not scripting)
-						     (if (not (memq closer commands))
-							 (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
-								 file linectr closer line (+ start 2) i commands)
-							 
-							 (if (not (memq closer '(ul tr td table small sub blockquote p details summary
-									       a A i b title pre span h1 h2 h3 code body html
-									       em head h4 sup map smaller bigger th tbody div)))
-							     (set! commands (remove-all closer commands))
-
-							     (begin
-							       (if (not (eq? (car commands) closer))
-								   (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
-							       
-							       (if (memq closer '(p td pre))
-								   (begin
-								     (if (odd? p-quotes)
-									 (format () "~A[~D]: unmatched quote~%" file linectr))
-								     (set! p-quotes 0)
-								     (cond ((= p-curlys 1) 
-									    (format () "~A[~D]: extra '{'~%" file linectr))
-									   ((= p-curlys -1) 
-									    (format () "~A[~D]: extra '}'~%" file linectr))
-									   ((not (= p-curlys 0)) 
-									    (format () "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
-								     (set! p-curlys 0)
-								     (cond ((= p-parens 1) 
-									    (format () "~A[~D]: extra '('~%" file linectr))
-									   ((= p-parens -1) 
-									    (format () "~A[~D]: extra ')'~%" file linectr))
-									   ((not (= p-parens 0)) 
-									    (format () "~A[~D]: parens: ~D~%" file linectr p-parens)))
-								     (set! p-parens 0)))
-							       
-							       (set! commands (remove-one closer commands))
-							       (if (not warned)
-								   (begin
-								     (if (and (eq? closer 'table)
-									      (not (memq 'table commands)))
-									 (begin
-									   (if (memq 'tr commands)
-									       (begin
-										 (set! warned #t)
-										 (set! commands (remove-all 'tr commands))
-										 (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
-									   (if (memq 'td commands)
-									       (begin
-										 (set! warned #t)
-										 (set! commands (remove-all 'td commands))
-										 (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))))))
+						    (scripting)
+						    ((not (memq closer commands))
+						     (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+							     file linectr closer line (+ start 2) i commands))
+						    ((not (memq closer '(ul tr td table small sub blockquote p details summary
+									 a A i b title pre span h1 h2 h3 code body html
+									 em head h4 sup map smaller bigger th tbody div)))
+						     (set! commands (remove-all closer commands)))
+						    (else 
+						     (if (not (eq? (car commands) closer))
+							 (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+						     
+						     (if (memq closer '(p td pre))
+							 (begin
+							   (if (odd? p-quotes)
+							       (format () "~A[~D]: unmatched quote~%" file linectr))
+							   (set! p-quotes 0)
+							   (cond ((= p-curlys 1) 
+								  (format () "~A[~D]: extra '{'~%" file linectr))
+								 ((= p-curlys -1) 
+								  (format () "~A[~D]: extra '}'~%" file linectr))
+								 ((not (= p-curlys 0)) 
+								  (format () "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
+							   (set! p-curlys 0)
+							   (cond ((= p-parens 1) 
+								  (format () "~A[~D]: extra '('~%" file linectr))
+								 ((= p-parens -1) 
+								  (format () "~A[~D]: extra ')'~%" file linectr))
+								 ((not (= p-parens 0)) 
+								  (format () "~A[~D]: parens: ~D~%" file linectr p-parens)))
+							   (set! p-parens 0)))
+						     
+						     (set! commands (remove-one closer commands))
+						     (if (not warned)
+							 (begin
+							   (if (and (eq? closer 'table)
+								    (not (memq 'table commands)))
+							       (begin
+								 (if (memq 'tr commands)
+								     (begin
+								       (set! warned #t)
+								       (set! commands (remove-all 'tr commands))
+								       (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+								 (if (memq 'td commands)
+								     (begin
+								       (set! warned #t)
+								       (set! commands (remove-all 'td commands))
+								       (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands)))))))))
 					      (set! closing #f))
 					    
 					    ;; not closing

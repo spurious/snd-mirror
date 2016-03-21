@@ -27,11 +27,9 @@
       (define (flatten lst)
 	;; there's probably a more elegant way to do this
 	(cond ((null? lst) ())
-	      ((pair? lst)
-	       (if (pair? (car lst))
-		   (append (flatten (car lst)) (flatten (cdr lst)))
-		   (cons (car lst) (flatten (cdr lst)))))
-	      (#t lst)))
+	      ((not (pair? lst)) lst)
+	      ((pair? (car lst)) (append (flatten (car lst)) (flatten (cdr lst))))
+	      (else (cons (car lst) (flatten (cdr lst))))))
       (for-each func (reverse (flatten tree))))))
 
 
