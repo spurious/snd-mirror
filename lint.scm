@@ -2880,6 +2880,14 @@
 				   (eq? (car arg2) '-)
 				   (null? (cddr arg2)))
 			      `(- ,arg1 ,(cadr arg2)))
+			     ((and (real? arg2)           ; (+ x -1) -> (- x 1)
+				   (negative? arg2)
+				   (not (number? arg1)))
+			      `(- ,arg1 ,(abs arg2)))
+			     ((and (real? arg1)           ; (+ -1 x) -> (- x 1)
+				   (negative? arg1)
+				   (not (number? arg2)))
+			      `(- ,arg2 ,(abs arg1)))
 			     (else `(+ ,@val)))))
 		    (else 
 		     (if (any? (lambda (p) 
@@ -2990,29 +2998,35 @@
 				   `(- ,@args)))
 			  (else `(- ,@args))))))
 	       ((2) 
-		(cond ((just-rationals? args) (apply - args))     ; (- 3 2) -> 1
-		      ((eqv? (car args) 0)    `(- ,(cadr args)))  ; (- 0 x) -> (- x)
-		      ((eqv? (cadr args) 0)   (car args))         ; (- x 0) -> x
-		      ((equal? (car args) (cadr args)) 0)         ; (- x x) -> 0
-		      ((and (pair? (cadr args))
-			    (eq? (caadr args) '-)
-			    (pair? (cdadr args)))
-		       (if (null? (cddadr args)) 
-			   `(+ ,(car args) ,(cadadr args))        ; (- x (- y)) -> (+ x y)
-			   (simplify-numerics `(- (+ ,(car args) ,@(cddadr args)) ,(cadadr args)) env))) ; (- x (- y z)) -> (- (+ x z) y)
-		      ((and (pair? (cadr args))                   ; (- x (+ y z)) -> (- x y z)
-			    (eq? (caadr args) '+))
-		       (simplify-numerics `(- ,(car args) ,@(cdadr args)) env))
-		      ((and (pair? (car args))                    ; (- (- x y) z) -> (- x y z)
-			    (eq? (caar args) '-))
-		       (if (> (length (car args)) 2)
-			   `(- ,@(cdar args) ,(cadr args))
-			   (simplify-numerics `(- (+ ,(cadar args) ,(cadr args))) env)))  ; (- (- x) y) -> (- (+ x y))
-		      ((and (pair? (cadr args))                   ; (- x (truncate x)) -> (remainder x 1)
-			    (eq? (caadr args) 'truncate)
-			    (equal? (car args) (cadadr args)))
-		       `(remainder ,(car args) 1))
-		      (else `(- ,@args))))
+		(let ((arg1 (car args))
+		      (arg2 (cadr args)))
+		  (cond ((just-rationals? args) (apply - args)) ; (- 3 2) -> 1
+			((eqv? arg1 0) `(- ,arg2))              ; (- 0 x) -> (- x)
+			((eqv? arg2 0) arg1)                    ; (- x 0) -> x
+			((equal? arg1 arg2) 0)                  ; (- x x) -> 0
+			((and (pair? arg2)
+			      (eq? (car arg2) '-)
+			      (pair? (cdr arg2)))
+			 (if (null? (cddr arg2)) 
+			     `(+ ,arg1 ,(cadr arg2))            ; (- x (- y)) -> (+ x y)
+			     (simplify-numerics `(- (+ ,arg1 ,@(cddr arg2)) ,(cadr arg2)) env))) ; (- x (- y z)) -> (- (+ x z) y)
+			((and (pair? arg2)                      ; (- x (+ y z)) -> (- x y z)
+			      (eq? (car arg2) '+))
+			 (simplify-numerics `(- ,arg1 ,@(cdr arg2)) env))
+			((and (pair? arg1)                      ; (- (- x y) z) -> (- x y z)
+			      (eq? (car arg1) '-))
+			 (if (> (length arg1) 2)
+			     `(- ,@(cdr arg1) ,arg2)
+			     (simplify-numerics `(- (+ ,(cadr arg1) ,arg2)) env)))  ; (- (- x) y) -> (- (+ x y))
+			((and (pair? arg2)                      ; (- x (truncate x)) -> (remainder x 1)
+			      (eq? (car arg2) 'truncate)
+			      (equal? arg1 (cadr arg2)))
+			 `(remainder ,arg1 1))
+			((and (real? arg2)                      ; (- x -1) -> (+ x 1)
+			      (negative? arg2)
+			      (not (number? arg1)))
+			 `(+ ,arg1 ,(abs arg2)))
+			(else `(- ,@args)))))
 	       (else 
 		(if (just-rationals? args)
 		    (apply - args)
@@ -3169,7 +3183,7 @@
 		    `(cos ,(cadar args)))
 		   ((eq? (car args) 'pi)                    ; (sin pi) -> 0.0
 		    (case (car form)
-		      ((sin) 0.0)
+		      ((sin tan) 0.0)
 		      ((cos) 1.0)
 		      (else `(,(car form) ,@args))))
 		   ((eqv? (car args) 0.0)                  ; (sin 0.0) -> 0.0
@@ -8015,7 +8029,7 @@
 		     (tree-call (car tree)))
 		 (if (pair? (cdr tree))
 		     (do ((p (cdr tree) (cdr p)))
-			 ((null? p) #f)
+			 ((not (pair? p)) #f)
 		       (tree-call (car p))))))))))
 
     (define (lint-walk caller form env)
@@ -8147,10 +8161,58 @@
 				   (cons (make-var :name sym :initial-value val :definer head) env)))
 			     
 			     ;; not (symbol? sym)
-			     (if (and (pair? sym)
-				      (pair? val)
-				      (not (pair? (car sym))))
+			     (if (and (pair? sym) ; cadr form
+				      (pair? val) ; cddr form
+				      (not (pair? (car sym)))) ; curried func or something equally stupid
 				 (begin
+				   
+				   ;; perhaps this block should be on a *report-* switch --
+				   ;;   it translates some internal defines into named lets
+				   ;;   (or just normal lets, etc)
+				   (when (and (pair? (car val))
+					      (eq? (caar val) 'define)
+					      (pair? (cdr val))
+					      (pair? (cadar val))) ; inner define (name ...)
+				     (let ((inner-name (caadar val))
+					   (inner-args (cdadar val))
+					   (inner-body (cddar val))
+					   (outer-name (car sym))
+					   (outer-args (cdr sym))
+					   (outer-body (cdddr form)))
+				       (if (and (symbol? inner-name)
+						(proper-list? inner-args)
+						(pair? (car outer-body))
+						;(null? (cdr outer-body))
+						(= (tree-count1 inner-name outer-body 0) 1))
+					   (let ((call (find-call inner-name outer-body)))
+					     (when (pair? call)
+					       (let ((new-call (if (tree-memq inner-name inner-body)
+								   (if (and (null? inner-args)
+									    (null? outer-args))
+								       (if (null? (cdr inner-body))
+									   (car (tree-subst outer-name inner-name inner-body))
+									   `(begin ,@(tree-subst outer-name inner-name inner-body)))
+								       `(let ,inner-name
+									  ,(if (null? inner-args) () (map list inner-args (cdr call)))
+									  ,@inner-body))
+								   (if (or (null? inner-args)
+									   (and (equal? inner-args outer-args)
+										(equal? inner-args (cdr call))))
+								       (if (null? (cdr inner-body))
+									   (car (tree-subst outer-name inner-name inner-body))
+									   `(begin ,@(tree-subst outer-name inner-name inner-body)))
+								       `(let ,(map list inner-args (cdr call))
+									  ,@inner-body)))))
+						 (lint-format "perhaps ~A" caller
+							      (lists->string form 
+									     `(,head ,sym 
+										     ,@(let ((p (tree-subst new-call call outer-body)))
+											 ;(format *stderr* "p: ~A~%" p)
+											 (if (and (pair? p)
+												  (pair? (car p))
+												  (eq? (caar p) 'begin))
+											     (cdar p)
+											     p)))))))))))
 				   (when (pair? (cdr sym))
 				     (if (repeated-member? (proper-list (cdr sym)) env)
 					 (lint-format "~A parameter is repeated: ~A" caller head (truncated-list->string sym)))
@@ -9343,6 +9405,7 @@
 					     (lint-format "perhaps ~A" caller
 							  (lists->string form
 									 `(cond ,@(copy (cdr form) (make-list (- len 2)))
+
 										(else (or ,@(cdar last-clause) ,else-clause))))))))))
 
 			     (let ((last-clause (list-ref form (if has-else (- len 1) len)))) ; not the else branch! -- just before it.
@@ -9370,7 +9433,40 @@
 									   `(cond ,@(copy (cdr form) (make-list (- len (if has-else 2 1))))
 										  (,new-test ,@new-result)
 										  (,(cadr if-form) ,(caddr if-form))
-										  (else ,(cadddr if-form))))))))))))))
+										  (else ,(cadddr if-form)))))))))
+			     (when (> len 2)
+			       (let ((lim (if has-else (- len 2) len))
+				     (tlen (tree-length form)))
+				 (when (< tlen 200)
+				   (set! tlen (/ tlen 4))
+				   (do ((i 0 (+ i 1))
+					(k (+ lim 1) (- k 1))
+					(p (cdr form) (cdr p)))
+				       ((or (not (pair? p))
+					    (= i lim)))
+				     (let ((nc (car p)))
+				       (if (and (pair? nc)        
+						(pair? (cdr nc))
+						(null? (cddr nc))
+						(pair? (cadr nc))
+						(eq? (caadr nc) 'cond)
+						(>= (length (cdadr nc)) (* 2 k))
+						(> (tree-length nc) tlen))
+
+					   (let ((new-test (simplify-boolean `(not ,(car nc)) () () env))
+						 (new-result (if (and has-else
+								      (= i (- lim 1))
+								      (let ((nc1 (cadr p))
+									    (nc-else (caddr p)))
+									(and (null? (cddr nc1))
+									     (null? (cddr nc-else)))))
+								 `(if ,(caadr p) ,(cadadr p) ,(cadr (caddr p)))
+								 `(cond ,@(cdr p)))))
+					     (lint-format "perhaps ~A" caller
+							  (lists->string form
+									 `(cond ,@(copy (cdr form) (make-list i))
+										(,new-test ,new-result)
+										,@(cdadr nc))))))))))))))))
 		     env))
 		  
 		  ;; ---------------- case ----------------		  
@@ -11412,13 +11508,13 @@
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
 ;;; tree-set-member -> tree-hash-member or at least binder? [match-vars]
+;;; snd-lint: load lint, add to various hash-tables via *lint* 
 ;;;
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
 ;;;
-;;; if letrec->named let is good, what about define+define? -> define* rather than named let?
-;;; snd-lint: load lint, add to various hash-tables via *lint* 
-;;; look for other mid-form uses
-;;; cond+cond could be rebalanced to make the outer cond the longer one?
+;;; look for other mid-form uses [or->#f and->#t trailers?]
+;;; let*-values pprint is messed up?
+;;; (and (not (...)) (or (not (...))...)) -> in the or, the repeated thing (if no side-effect) is redundant
 ;;;
 ;;; 495/100

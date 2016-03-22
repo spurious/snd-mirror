@@ -1049,22 +1049,21 @@ and assign it to a variable.  You can even set its procedure-setter!
 </p>
 <pre class="indented">
 (define-macro (fully-macroexpand form)
-  (define (expand form)
-    (cond ((not (pair? form)) 
-           form)
-          ((and (symbol? (car form))
-                (macro? (symbol-&gt;value (car form))))
-           (expand (apply macroexpand (list form))))
-          ((and (eq? (car form) 'set!)   ; look for (set! (mac ...) ...) and use mac's procedure-setter
-                (pair? (cdr form))
-                (pair? (cadr form))
-                (macro? (symbol-&gt;value (caadr form))))
-           (expand (apply (eval (procedure-source (procedure-setter (symbol-&gt;value (caadr form)))))
-                   (append (cdadr form) (cddr form)))))
-          (else 
-            (cons (expand (car form)) 
-                  (expand (cdr form))))))
-  (list 'quote (expand form)))
+  (list 'quote
+    (let expand ((form form))
+      (cond ((not (pair? form)) form)
+            ((and (symbol? (car form))
+                  (macro? (symbol-&gt;value (car form))))
+             (expand (apply macroexpand (list form))))
+            ((and (eq? (car form) 'set!)  ; look for (set! (mac ...) ...) and use mac's procedure-setter
+                  (pair? (cdr form))
+                  (pair? (cadr form))
+                  (macro? (symbol-&gt;value (caadr form))))
+             (expand
+              (apply (eval
+                 (procedure-source (procedure-setter (symbol-&gt;value (caadr form)))))
+                (append (cdadr form) (cddr form)))))
+            (else (cons (expand (car form)) (expand (cdr form))))))))
 </pre>
 <p>This does not always handle bacros correctly because their expansion can depend on the run-time 
 state.
@@ -3300,13 +3299,12 @@ is 15, as anyone would expect.
 <summary class="indented">more examples</summary>
 
 <pre>
-(define (flatten lst)
-  (define (flatten-1 lst)
-    (cond ((null? lst) (values))
-	  ((not (pair? lst)) lst)
-	  (#t (values (flatten-1 (car lst))
-		      (flatten-1 (cdr lst))))))
-  (map values (list (flatten-1 lst))))
+(define (flatten lst) 
+  (map values (list (let flatten-1 ((lst lst))
+                      (cond ((null? lst) (values))
+                            ((not (pair? lst)) lst)
+                            (else (values (flatten-1 (car lst)) 
+                                          (flatten-1 (cdr lst)))))))))
 </pre>
 
 <div class="indented">
@@ -4089,17 +4087,17 @@ what actual arguments you pass.  In these cases, aritable? returns <code>#f</cod
 <pre>
 (define (for-each-subset func args)
   ;; form each subset of args, apply func to the subsets that fit its arity
-  (define (subset source dest len)
+  (let subset ((source args)
+               (dest ())
+               (len 0))
     (if (null? source)
-        (if (<em class=red>aritable?</em> func len)             ; does this subset fit?
-	    (apply func dest))
-	(begin
-	  (subset (cdr source) (cons (car source) dest) (+ len 1))
-	  (subset (cdr source) dest len))))
-  (subset args () 0))
+        (if (<em class=red>aritable?</em> func len)   ; does this subset fit?
+            (apply func dest))
+        (begin
+          (subset (cdr source) (cons (car source) dest) (+ len 1))
+          (subset (cdr source) dest len)))))
 </pre>
 </div>
-
 </blockquote>
 
 

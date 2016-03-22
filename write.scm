@@ -186,9 +186,10 @@
 				  (when (eq? (cadar lst) '=>)
 				    (write-char #\space port)
 				    (write (caddar lst) port)))
-				(begin
-				  (spaces (+ column 7))
-				  (stacked-list (cdar lst) (+ column 7)))))
+				(if (not (null? (cdar lst)))
+				    (begin				      
+				      (spaces (+ column 7))
+				      (stacked-list (cdar lst) (+ column 7))))))
 			  (write-char #\) port))
 			(write (car lst) port)))
 		  (write-char #\) port))
