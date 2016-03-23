@@ -150,7 +150,7 @@
 		       (sr1 (make-sampler (floor s1)))
 		       (ampsum (make-one-pole 1.0 -1.0))
 		       (diffsum (make-one-pole 1.0 -1.0)))
-		  (do ((samp 0.0)
+		  (do ((samp0 0.0)
 		       (i 0 (+ i 1)))
 		      ((= i len))
 		    (set! samp0 (next-sample sr0))

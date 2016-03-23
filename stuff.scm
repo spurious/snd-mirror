@@ -289,13 +289,13 @@
   `(for-each define ',args (iota (length ',args))))
 
 (define-macro (destructuring-bind lst expr . body) ; if only there were some use for this!
-  `(let ,(letrec ((flatten (lambda (lst1 lst2 args)
-			     (cond ((null? lst1) args)
-				   ((not (pair? lst1)) 
-				    (cons (list lst1 lst2) args))
-				   (#t (flatten (car lst1) (car lst2) 
-						(flatten (cdr lst1) (cdr lst2) args)))))))
-	   (flatten lst (eval expr) ()))
+  `(let ,(let flatten ((lst1 lst)
+		       (lst2 (eval expr))
+		       (args ()))
+	   (cond ((null? lst1) args)
+		 ((not (pair? lst1)) (cons (list lst1 lst2) args))
+		 (else (flatten (car lst1) (car lst2) 
+				(flatten (cdr lst1) (cdr lst2) args)))))
      ,@body))
 
 (define-macro (and-let* vars . body)
@@ -478,15 +478,13 @@ If func approves of one, index-if returns the index that gives that element's po
 	  (if (sequence? sequence)
 	      (call-with-exit
 	       (lambda (return)
-		 (letrec ((full-find-if-1 
-			   (lambda (seq)
-			     (for-each (lambda (x)
-					 (if (f x)
-					     (return x)
-					     (if (sequence? x)
-						 (full-find-if-1 x))))
-				       seq))))
-		   (full-find-if-1 sequence))
+		 (let full-find-if-1 ((seq sequence))
+		   (for-each
+		    (lambda (x)
+		      (if (f x)
+			  (return x)
+			  (if (sequence? x) (full-find-if-1 x))))
+		    seq))
 		 #f))
 	      (error "full-find-if second argument, ~A, is not a sequence" sequence))
 	  (error "full-find-if first argument, ~A, is not a procedure of one argument" f)))))
@@ -667,24 +665,24 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (let ((documentation "(asymmetric-difference type . sequences) returns the elements in the rest of the sequences that are not in the first:\n\
     (asymmetric-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #(4 5)"))
     (lambda (type . sequences) ; complement, elements in B's not in A
-      (if (and (pair? sequences)
-	       (pair? (cdr sequences)))
+      (if (not (and (pair? sequences)
+		    (pair? (cdr sequences))))
+	  (type)
 	  (collect-if type (lambda (obj) 
 			     (not (member obj (car sequences))))
-		      (apply union list (cdr sequences)))
-	  (type)))))
+		      (apply union list (cdr sequences)))))))
 
 (define cl-set-difference 
   (let ((documentation "(cl-set-difference type .sequences) returns the elements in the first sequence that are not in the rest of the sequences:\n\
     (cl-set-difference vector '(1 2 3) #(2 3 4) '(1 5)) -> #()"))
     (lambda (type . sequences)     ; CL: elements in A not in B's
-      (if (and (pair? sequences)
-	       (pair? (cdr sequences)))
+      (if (not (and (pair? sequences)
+		    (pair? (cdr sequences))))
+	  (type)
 	  (let ((others (apply union list (cdr sequences))))
 	    (collect-if type (lambda (obj) 
 			       (not (member obj others)))
-			(car sequences)))
-	  (type)))))
+			(car sequences)))))))
 
 (define symmetric-difference 
   (let ((documentation "(symmetric-difference type .sequences) returns the elements that are in an odd number of the sequences:\n\
@@ -700,16 +698,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define power-set 
   (let ((documentation "(power-set type . sequences) returns the power set of the union of the elements in the sequences."))
     (lambda (type . sequences) ; ignoring repeats
-      (letrec ((pset (lambda (set)
-		       (if (null? set)
-			   '(()) 
-			   (let ((rest (pset (cdr set))))
-			     (append rest (map (lambda (subset) 
-						 (cons (car set) subset)) 
-					       rest)))))))
-	(apply type (pset (apply union list sequences)))))))
-
-
+      (apply type
+	     (let pset ((set (apply union list sequences)))
+	       (if (null? set)
+		   '(())
+		   (let ((rest (pset (cdr set))))
+		     (append rest (map (lambda (subset) (cons (car set) subset)) rest)))))))))
 
 ;;; ----------------
 (define ->predicate

@@ -280,11 +280,16 @@
 		       define-constant define-expansion))
 		    h))
 	
-	(binders '(let let* letrec letrec* do
-		   lambda lambda* define define* 
-		   call/cc call-with-current-continuation 
-		   define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-		   load eval eval-string require))
+	(binders (let ((h (make-hash-table)))
+		   (for-each
+		    (lambda (op)
+		      (set! (h op) #t))
+		    '(let let* letrec letrec* do
+		      lambda lambda* define define* 
+		      call/cc call-with-current-continuation 
+		      define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+		      load eval eval-string require))
+		   h))
 
 	(format-control-char (let ((chars (make-vector 256 #f)))
 			       (for-each
@@ -619,6 +624,12 @@
 	   (or (memq (car tree) set)
 	       (tree-set-member set (car tree))
 	       (tree-set-member set (cdr tree)))))
+    
+    (define (tree-table-member table tree)
+      (and (pair? tree)
+	   (or (hash-table-ref table (car tree))
+	       (tree-table-member table (car tree))
+	       (tree-table-member table (cdr tree)))))
     
     (define (tree-set-car-member set tree) ; set as car
       (and (pair? tree)
@@ -2929,48 +2940,50 @@
 		    ((0) 1)
 		    ((1) (car val))                         ; (* x) -> x
 		    ((2)
-		     (cond ((just-rationals? val)
-			    (let ((new-val (apply * val))) ; huge numbers here are less readable
-			      (if (< (abs new-val) 1000000)
-				  new-val
-				  `(* ,@val))))
-			   ((memv 0 val)                    ; (* x 0) -> 0
-			    0) 
-			   ((memv -1 val)
-			    `(- ,@(remove -1 val)))         ; (* -1 x) -> (- x)
-			   ((and (pair? (car val))
-				 (pair? (cadr val)))
-			    (cond ((and (eq? (caar val) '-)      ; (* (- x) (- y)) -> (* x y)
-					(null? (cddar val))
-					(eq? (caadr val) '-)
-					(null? (cddadr val)))
-				   `(* ,(cadar val) ,(cadadr val)))
-				  ((and (= (length (car val)) 3)
-					(equal? (cdar val) (cdadr val))
-					(or (and (eq? (caar val) 'gcd) (eq? (caadr val) 'lcm))
-					    (and (eq? (caar val) 'lcm) (eq? (caadr val) 'gcd))))
-				   `(abs (* ,@(cdar val))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
-				  ((and (eq? (caar val) 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
-					(eq? (caadr val) 'exp))
-				   `(exp (+ ,(cadar val) ,(cadadr val))))
-				  (else `(* ,@val))))
-			   ((and (pair? (car val))          ; (* (inexact->exact x) 2.0) -> (* x 2.0)
-				 (memq (caar val) '(exact->inexact inexact))
-				 (number? (cadr val))
-				 (not (rational? (cadr val))))
-			    `(* ,(cadar val) ,(cadr val)))
-			   ((and (pair? (cadr val))         ; (* 2.0 (inexact x)) -> (* 2.0 x)
-				 (memq (caadr val) '(exact->inexact inexact))
-				 (number? (car val))
-				 (not (rational? (car val))))
-			    `(* ,(car val) ,(cadadr val)))
-			   ((and (number? (car val))        ; (* 2 (random 3.0)) -> (random 6.0)
-				 (pair? (cadr val))
-				 (eq? (caadr val) 'random)
-				 (number? (cadadr val))
-				 (not (rational? (cadadr val))))
-			    `(random ,(* (car val) (cadadr val))))
-			   (else `(* ,@val))))
+		     (let ((arg1 (car val))
+			   (arg2 (cadr val)))
+		       (cond ((just-rationals? val)
+			      (let ((new-val (apply * val))) ; huge numbers here are less readable
+				(if (< (abs new-val) 1000000)
+				    new-val
+				    `(* ,@val))))
+			     ((memv 0 val)                         ; (* x 0) -> 0
+			      0) 
+			     ((memv -1 val)
+			      `(- ,@(remove -1 val)))              ; (* -1 x) -> (- x)
+			     ((and (pair? arg1)
+				   (pair? arg2))
+			      (cond ((and (eq? (car arg1) '-)      ; (* (- x) (- y)) -> (* x y)
+					  (null? (cddr arg1))
+					  (eq? (car arg2) '-)
+					  (null? (cddr arg2)))
+				     `(* ,(cadr arg1) ,(cadr arg2)))
+				    ((and (= (length arg1) 3)
+					  (equal? (cdr arg1) (cdr arg2))
+					  (or (and (eq? (car arg1) 'gcd) (eq? (car arg2) 'lcm))
+					      (and (eq? (car arg1) 'lcm) (eq? (car arg2) 'gcd))))
+				     `(abs (* ,@(cdr arg1))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+				    ((and (eq? (car arg1) 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
+					  (eq? (car arg2) 'exp))
+				     `(exp (+ ,(cadr arg1) ,(cadr arg2))))
+				    (else `(* ,@val))))
+			     ((and (pair? arg1)                    ; (* (inexact->exact x) 2.0) -> (* x 2.0)
+				   (memq (car arg1) '(exact->inexact inexact))
+				   (number? arg2)
+				   (not (rational? arg2)))
+			      `(* ,(cadr arg1) ,arg2))
+			     ((and (pair? arg2)                    ; (* 2.0 (inexact x)) -> (* 2.0 x)
+				   (memq (car arg2) '(exact->inexact inexact))
+				   (number? arg1)
+				   (not (rational? arg1)))
+			      `(* ,arg1 ,(cadr arg2)))
+			     ((and (number? arg1)                  ; (* 2 (random 3.0)) -> (random 6.0)
+				   (pair? arg2)
+				   (eq? (car arg2) 'random)
+				   (number? (cadr arg2))
+				   (not (rational? (cadr arg2))))
+			      `(random ,(* arg1 (cadr arg2))))
+			     (else `(* ,@val)))))
 		    (else 
 		     (cond ((just-rationals? val)
 			    (let ((new-val (apply * val))) ; huge numbers here are less readable
@@ -3798,26 +3811,23 @@
 		       (cadr (or arg3 arg2 arg1)))))))
     
     (define (mv-range producer env)
-      (define (mv-range-1 p)
-	(let ((v (var-member p env)))
-	  (and (var? v)
-	       (pair? ((cdr v) 'values)) ; not #<undefined> if v is a var, but not known to be a function (so possibly no 'values field)
-	       ((cdr v) 'values))))
-      
       (if (symbol? producer)
-	  (mv-range-1 producer)
-	  (and (pair? producer)
-	       (if (memq (car producer) '(lambda lambda*))
-		   (count-values (cddr producer))
-		   (if (eq? (car producer) 'values)
-		       (let ((len (length (cdr producer))))
-			 (for-each (lambda (p)
-				     (if (and (pair? p)
-					      (eq? (car p) 'values))
-					 (set! len (+ len (- (length (cdr p)) 1)))))
-				   (cdr producer))
-			 (list len len))
-		       (mv-range (car producer) env))))))
+	  (let ((v (var-member producer env)))
+	    (and (var? v)
+		 (pair? ((cdr v) 'values))
+		 ((cdr v) 'values)))
+          (and (pair? producer)
+               (if (memq (car producer) '(lambda lambda*))
+                   (count-values (cddr producer))
+                   (if (eq? (car producer) 'values)
+                       (let ((len (length (cdr producer))))
+                         (for-each
+                           (lambda (p)
+                             (if (and (pair? p) (eq? (car p) 'values))
+                                 (set! len (+ len (- (length (cdr p)) 1)))))
+                           (cdr producer))
+                         (list len len))
+                       (mv-range (car producer) env))))))
     
     (define (eval-constant-expression caller form)
       (if (every? code-constant? (cdr form))
@@ -4589,6 +4599,7 @@
 	
 	;; ----------------
 	((make-vector make-int-vector make-float-vector)
+	 ;; type of initial value is checked elsewhere
 	 (if (and (= (length form) 4)
 		  (eq? head 'make-vector)
 		  (code-constant? (caddr form))
@@ -4619,7 +4630,6 @@
 	   (if (pair? (cddr form))
 	       (lint-format "initial value is pointless here: ~A" caller form))
 	   (lint-format "perhaps ~A" caller (lists->string form ()))))
-
 	
 	;; ----------------
 	((reverse reverse! list->vector vector->list list->string string->list symbol->string string->symbol number->string)
@@ -5635,7 +5645,49 @@
 				      (defined? (caar body))
 				      (equal? (arity (symbol->value (caar body))) (cons args args)))
 				 (lint-format "perhaps ~A" caller (lists->string form `(,(caar body) ,producer)))))))))))
-	
+	;; ----------------
+	((let-values)
+	 (if (and (pair? (cdr form))
+		  (pair? (cadr form))
+		  (null? (cdadr form))) ; just one set of vars
+	     (let ((call (caadr form)))
+	       (lint-format "perhaps ~A" caller
+			    (lists->string form
+					   `((lambda ,(car call)
+					     ,@(cddr form))
+					   ,(cadr call)))))))
+#|
+	;; untested -- multiple sets of vars
+	     (lint-format "perhaps ~A" caller
+			  (lists->string 
+			   form
+			   `(with-let 
+				(apply sublet (curlet) 
+				       (list ,@(map (lambda (v)
+						      `((lambda ,(car v)
+							  (values ,@(map (lambda (name)
+									   (values (symbol->keyword name) name))
+									 (args->proper-list (car v)))))
+							,(cadr v)))
+						    (cadr form))))
+			      ,@(cddr form))))
+|#
+	;; ----------------
+	((let*-values)
+	 (if (and (pair? (cdr form))
+		  (pair? (cadr form)))
+	     (lint-format "perhaps ~A" caller
+			  (lists->string form
+					 (let loop ((var-data (cadr form)))
+					   (let ((v (car var-data)))
+					     (if (and (pair? (car v))  ; just one var
+						      (null? (cdar v)))
+						 (if (null? (cdr var-data))
+						     `(let ((,(caar v) ,(cadr v))) ,@(cddr form))
+						     `(let ((,(caar v) ,(cadr v))) ,(loop (cdr var-data))))
+						 (if (null? (cdr var-data))
+						     `((lambda ,(car v) ,@(cddr form)) ,(cadr v))
+						     `((lambda ,(car v) ,(loop (cdr var-data))) ,(cadr v))))))))))
 	;; ----------------
 	((eval)
 	 (when (= (length form) 2)
@@ -8128,6 +8180,7 @@
 							(null? (cdddr let-form))     ; just one form in the let/rec
 							(pair? (cdr var))
 							(pair? (cadr var))
+							(pair? (cdadr var))
 							(eq? (caadr var) 'lambda)    ; var is lambda
 							(proper-list? (cadadr var))) ; it has no rest arg
 					       (let ((body (caddr let-form)))
@@ -8747,6 +8800,10 @@
 				   ;;   it can be nearly impossible to see which dangling one-liner matches
 				   ;;   which if (this even in emacs because it unmarks or doesn't remark the matching
 				   ;;   paren as you're trying to scroll up to it). 
+				   ;;
+				   ;; the cond form is not always an improvement:
+				   ;; (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
+				   ;; (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
 
 				   (define (swap-clauses form)
 				     (if (not (pair? (cdddr form)))
@@ -9704,7 +9761,7 @@
 					       (if (and (not (eq? (var-initial-value v) (var-name v)))
 							(tree-memq (var-name v) (cadar bindings))
 							(not (hash-table-ref built-in-functions (var-name v)))
-							(not (tree-set-member binders (cadar bindings))))
+							(not (tree-table-member binders (cadar bindings))))
 						   (if (not (var-member (var-name v) env))
 						       (lint-format "~A in ~A does not appear to be defined in the calling environment" caller
 								    (var-name v) (car bindings))
@@ -10004,7 +10061,7 @@
 					 (for-each (lambda (v)
 						     (if (and (tree-memq (var-name v) (cadar bindings))
 							      (not (hash-table-ref built-in-functions (var-name v)))
-							      (not (tree-set-member binders (cadar bindings))))
+							      (not (tree-table-member binders (cadar bindings))))
 							 (if (not (var-member (var-name v) env))
 							     (lint-format "~A in ~A does not appear to be defined in the calling environment" caller
 									  (var-name v) (car bindings))
@@ -10796,6 +10853,8 @@
 		  ((catch)
 		   ;; catch tag is tricky -- it is evaluated, then eq? matches at error time, so we need
 		   ;;   to catch constants that can't be eq?
+		   ;; also I'm not sure the catch marker business below buys anything -- these are dynamic, not lexical,
+		   ;;   so lint can't make any pronouncements about them.
 		   (if (not (= (length form) 4))
 		       (begin
 			 (lint-format "catch takes 3 arguments (tag body error-handler): ~A" caller (truncated-list->string form))
@@ -10810,6 +10869,7 @@
 			     (lint-format "catch tag ~S is unreliable (catch uses eq? to match tags)" caller tag))
 			 (let ((body (caddr form))
 			       (error-handler (cadddr form)))
+			   ;; empty catch+catch apparently never happens
 			   (let ((catcher (make-var :name catch-marker
 						    :initial-value form
 						    :definer head)))
@@ -11502,19 +11562,16 @@
 ;;; --------------------------------------------------------------------------------
 ;;; TODO:
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
-;;; find the rest of the macro cases and (s7)test out-vars somehow
+;;; find the rest of the macro cases and (s7)test out-vars somehow ((*lint* 'out-vars)...)
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
-;;; tree-set-member -> tree-hash-member or at least binder? [match-vars]
 ;;; snd-lint: load lint, add to various hash-tables via *lint* 
-;;;
+;;; r7rs.scm probably needs let-values
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
-;;;
-;;; look for other mid-form uses [or->#f and->#t trailers?]
-;;; let*-values pprint is messed up?
-;;; (and (not (...)) (or (not (...))...)) -> in the or, the repeated thing (if no side-effect) is redundant
-;;;
+;;; (let ((s (map...))) (for-each... s))
+;;; 2 defines -> named let?
+
 ;;; 495/100

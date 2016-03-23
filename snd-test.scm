@@ -12412,14 +12412,14 @@ EDITS: 2
 	(if (fneq ((mus-data gen) 0) 0.3)
 	    (snd-display #__line__ ";delay data 0: ~A" ((mus-data gen) 0)))
 	(set! (data 0) .75)
-	(set! (mus-data gen) data)
-	(if (fneq ((mus-data gen) 0) 0.75)
-	    (snd-display #__line__ ";delay set data 0: ~A" ((mus-data gen) 0)))
-	(delay gen 0.0)
-	(delay gen 0.0)
-	(let ((val (delay gen 0.0)))
-	  (if (fneq val 0.75)
-	      (snd-display #__line__ ";set delay data: ~A ~A" val (mus-data gen)))))
+	(set! (mus-data gen) data))
+      (if (fneq ((mus-data gen) 0) 0.75)
+	  (snd-display #__line__ ";delay set data 0: ~A" ((mus-data gen) 0)))
+      (delay gen 0.0)
+      (delay gen 0.0)
+      (let ((val (delay gen 0.0)))
+	(if (fneq val 0.75)
+	    (snd-display #__line__ ";set delay data: ~A ~A" val (mus-data gen))))
       (if (mus-data (make-oscil))
 	  (snd-display #__line__ ";mus-data osc: ~A" (mus-data (make-oscil)))))
     
@@ -12657,7 +12657,6 @@ EDITS: 2
     
     (let ((gen (make-all-pass .4 .6 3))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-all-pass .4 .6 3))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "all-pass"
@@ -12665,7 +12664,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (all-pass gen 1.0)))
-      (fill-float-vector v1 (if (all-pass? gen1) (all-pass gen1 1.0) -1.0))
+      (let ((gen1 (make-all-pass .4 .6 3)))
+	(fill-float-vector v1 (if (all-pass? gen1) (all-pass gen1 1.0) -1.0)))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map all-pass: ~A ~A" v0 v1))
       (if (not (all-pass? gen)) (snd-display #__line__ ";~A not all-pass?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";all-pass length: ~D?" (mus-length gen)))
@@ -12697,7 +12697,6 @@ EDITS: 2
     
     (let ((gen (make-moving-average 4))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-moving-average 4))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-average"
@@ -12705,7 +12704,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (moving-average gen 1.0)))
-      (fill-float-vector v1 (if (moving-average? gen1) (moving-average gen1 1.0) -1.0))
+      (let ((gen1 (make-moving-average 4)))
+	(fill-float-vector v1 (if (moving-average? gen1) (moving-average gen1 1.0) -1.0)))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map average: ~A ~A" v0 v1))
       (if (not (moving-average? gen)) (snd-display #__line__ ";~A not average?" gen))
       (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";average length: ~D?" (mus-length gen)))
@@ -12759,7 +12759,6 @@ EDITS: 2
 
     (let ((gen (make-moving-max 4))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-moving-max 4))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-max"
@@ -12767,7 +12766,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (moving-max gen 1.0)))
-      (fill-float-vector v1 (if (moving-max? gen1) (moving-max gen1 1.0) -1.0))
+      (let ((gen1 (make-moving-max 4)))
+	(fill-float-vector v1 (if (moving-max? gen1) (moving-max gen1 1.0) -1.0)))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map max: ~A ~A" v0 v1))
       (if (not (moving-max? gen)) (snd-display #__line__ ";~A not max?" gen))
       (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";max length: ~D?" (mus-length gen)))
@@ -12821,7 +12821,6 @@ EDITS: 2
 
     (let ((gen (make-moving-norm 4))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-moving-norm 4))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "moving-norm"
@@ -12829,7 +12828,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (moving-norm gen 1.0)))
-      (fill-float-vector v1 (if (moving-norm? gen1) (moving-norm gen1 1.0) -1.0))
+      (let ((gen1 (make-moving-norm 4)))
+	(fill-float-vector v1 (if (moving-norm? gen1) (moving-norm gen1 1.0) -1.0)))
       (if (not (vequal v1 v0)) (snd-display #__line__ ";map norm: ~A ~A" v0 v1))
       (if (not (moving-norm? gen)) (snd-display #__line__ ";~A not norm?" gen))
       (if (not (= (mus-length gen) 4)) (snd-display #__line__ ";norm length: ~D?" (mus-length gen)))
@@ -12876,7 +12876,6 @@ EDITS: 2
 
     (let ((gen (make-comb .4 3))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-comb .4 3))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "comb"
@@ -12884,7 +12883,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (comb gen 1.0)))
-      (fill-float-vector v1 (if (comb? gen1) (comb gen1 1.0) -1.0))
+      (let ((gen1 (make-comb .4 3)))
+	(fill-float-vector v1 (if (comb? gen1) (comb gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map comb: ~A ~A" v0 v1))
       (if (not (comb? gen)) (snd-display #__line__ ";~A not comb?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";comb length: ~D?" (mus-length gen)))
@@ -13001,7 +13001,6 @@ EDITS: 2
     
     (let ((gen (make-notch .4 3))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-notch .4 3))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "notch"
@@ -13009,7 +13008,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (notch gen 1.0)))
-      (fill-float-vector v1 (if (notch? gen1) (notch gen1 1.0) -1.0))
+      (let ((gen1 (make-notch .4 3)))
+	(fill-float-vector v1 (if (notch? gen1) (notch gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map notch: ~A ~A" v0 v1))
       (if (not (notch? gen)) (snd-display #__line__ ";~A not notch?" gen))
       (if (not (= (mus-length gen) 3)) (snd-display #__line__ ";notch length: ~D?" (mus-length gen)))
@@ -13424,7 +13424,6 @@ EDITS: 2
     
     (let ((gen (make-one-pole .4 .7))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-one-pole .4 .7))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "one-pole"
@@ -13432,7 +13431,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (one-pole gen 1.0)))
-      (fill-float-vector v1 (if (one-pole? gen) (one-pole gen1 1.0) -1.0))
+      (let ((gen1 (make-one-pole .4 .7)))
+	(fill-float-vector v1 (if (one-pole? gen) (one-pole gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-pole: ~A ~A" v0 v1))
       (if (not (one-pole? gen)) (snd-display #__line__ ";~A not one-pole?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-pole order: ~D?" (mus-order gen)))
@@ -13450,7 +13450,6 @@ EDITS: 2
     
     (let ((gen (make-one-zero .4 .7))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-one-zero .4 .7))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen
 		       "one-zero"
@@ -13458,7 +13457,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (one-zero gen 1.0)))
-      (fill-float-vector v1 (if (one-zero? gen) (one-zero gen1 1.0) -1.0))
+      (let ((gen1 (make-one-zero .4 .7)))
+	(fill-float-vector v1 (if (one-zero? gen) (one-zero gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map one-zero: ~A ~A" v0 v1))
       (if (not (one-zero? gen)) (snd-display #__line__ ";~A not one-zero?" gen))
       (if (not (= (mus-order gen) 1)) (snd-display #__line__ ";one-zero order: ~D?" (mus-order gen)))
@@ -13471,7 +13471,6 @@ EDITS: 2
     
     (let ((gen (make-two-zero .4 .7 .3))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-two-zero .4 .7 .3))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "two-zero"
@@ -13479,7 +13478,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (two-zero gen 1.0)))
-      (fill-float-vector v1 (if (two-zero? gen1) (two-zero gen1 1.0) -1.0))
+      (let ((gen1 (make-two-zero .4 .7 .3)))
+	(fill-float-vector v1 (if (two-zero? gen1) (two-zero gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-zero: ~A ~A" v0 v1))
       (if (not (two-zero? gen)) (snd-display #__line__ ";~A not two-zero?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-zero order: ~D?" (mus-order gen)))
@@ -13514,7 +13514,6 @@ EDITS: 2
     
     (let ((gen (make-two-pole .4 .7 .3))
 	  (v0 (make-float-vector 10))
-	  (gen1 (make-two-pole .4 .7 .3))
 	  (v1 (make-float-vector 10)))
       (print-and-check gen 
 		       "two-pole"
@@ -13522,7 +13521,8 @@ EDITS: 2
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(set! (v0 i) (two-pole gen 1.0)))
-      (fill-float-vector v1 (if (two-pole? gen1) (two-pole gen1 1.0) -1.0))
+      (let ((gen1 (make-two-pole .4 .7 .3)))
+	(fill-float-vector v1 (if (two-pole? gen1) (two-pole gen1 1.0) -1.0)))
       (if (not (vequal v0 v1)) (snd-display #__line__ ";map two-pole: ~A ~A" v0 v1))
       (if (not (two-pole? gen)) (snd-display #__line__ ";~A not two-pole?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display #__line__ ";two-pole order: ~D?" (mus-order gen)))
@@ -13559,7 +13559,6 @@ EDITS: 2
 	(if (fneq val 0.336) (snd-display #__line__ ";a0->out 2pole (0.336): ~A" val))))
     
     (let ((gen (make-oscil 440.0))
-	  (gen1 (make-oscil 440.0))
 	  (gen2 (make-oscil 440.0))
 	  (v0 (make-float-vector 10))
 	  (v1 (make-float-vector 10))
@@ -13567,10 +13566,11 @@ EDITS: 2
       (print-and-check gen 
 		       "oscil"
 		       "oscil freq: 440.000Hz, phase: 0.000")
-      (do ((i 0 (+ i 1)))
-	  ((= i 10))
-	(set! (v0 i) (oscil gen 0.0))
-	(set! (v1 i) (mus-apply gen1 0.0 0.0)))
+      (let ((gen1 (make-oscil 440.0)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (set! (v0 i) (oscil gen 0.0))
+	  (set! (v1 i) (mus-apply gen1 0.0 0.0))))
       (fill-float-vector v2 (if (oscil? gen2) (oscil gen2 0.0) -1.0))
       (if (not (vequal v0 v2)) (snd-display #__line__ ";map oscil: ~A ~A" v0 v2))
       (if (not (oscil? gen)) (snd-display #__line__ ";~A not oscil?" gen))
@@ -23271,7 +23271,7 @@ EDITS: 2
 		    (nam (mix-name mix-id))
 		    (amp (mix-amp mix-id)))
 		(let ((pos (mix-position mix-id))
-		      (len (len (mix-length mix-id))))
+		      (len (mix-length mix-id)))
 		  (let ((mr (make-mix-sampler mix-id)))
 		    (if (not (mix-sampler? mr)) (snd-display #__line__ ";~A not mix-sampler?" mr))
 		    (if (region-sampler? mr) (snd-display #__line__ ";mix sampler: region ~A" mr))
@@ -23297,7 +23297,8 @@ EDITS: 2
 		(if (not (equal? snd new-index)) (snd-display #__line__ ";s mix-home: ~A?" snd))		
 		(if (not (= chn 0)) (snd-display #__line__ ";c mix-home: ~A?" chn))
 		(if (fneq amp 1.0) (snd-display #__line__ ";mix-amp: ~A?" amp))
-		(if (fneq spd 1.0) (snd-display #__line__ ";mix-speed: ~A?" spd))
+		(let ((spd (mix-speed mix-id)))
+		  (if (fneq spd 1.0) (snd-display #__line__ ";mix-speed: ~A?" spd)))
 		(if (not (equal? nam "")) (snd-display #__line__ ";mix-name: ~A" nam)))
 	      (catch 'mus-error
 		(lambda () (play mix-id))
@@ -23323,7 +23324,7 @@ EDITS: 2
 	      
 	      (set! (mix-amp-env mix-id) '(0.0 0.0 1.0 1.0)) 
 	      (set! (mix-tag-y mix-id) 20) 
-	      (let ((mix-position mix-id))
+	      (let ((pos (mix-position mix-id)))
 		(if (not (= pos 200)) (snd-display #__line__ ";set-mix-position: ~A?" pos)))
 	      (let ((my (mix-tag-y mix-id)))
 		(if (not (= my 20)) (snd-display #__line__ ";set-mix-tag-y: ~A?" my)))

@@ -576,17 +576,18 @@
 	  (flecho-target 'sound)
 	  (flecho-truncate #t))
       
-      (define flecho-1
-	(lambda (scaler secs cutoff)
-	  (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-		(del (make-delay (round (* secs (srate)))))
-		(genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-	    (lambda (inval)
-	      (+ inval 
-		 (delay del 
-			(fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
-      
       (define (post-flecho-dialog)
+
+	(define flecho-1
+	  (lambda (scaler secs cutoff)
+	    (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
+		  (del (make-delay (round (* secs (srate)))))
+		  (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+	      (lambda (inval)
+		(+ inval 
+		   (delay del 
+			  (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
+      
 	(if (not (Widget? flecho-dialog))
 	    ;; if flecho-dialog doesn't exist, create it
 	    (let ((initial-flecho-scaler 0.5)
@@ -664,19 +665,20 @@
 	  (zecho-target 'sound)
 	  (zecho-truncate #t))
       
-      (define zecho-1
-	(lambda (scaler secs frq amp cutoff)
-	  (let* ((os (make-oscil frq))
-		 (len (round (* secs (srate))))
-		 (del (make-delay len :max-size (round (+ len amp 1))))
-		 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-	    (lambda (inval)
-	      (+ inval 
-		 (delay del 
-			(* scaler (+ (tap del) (* (env genv) inval)))
-			(* amp (oscil os))))))))
-      
       (define (post-zecho-dialog)
+
+	(define zecho-1
+	  (lambda (scaler secs frq amp cutoff)
+	    (let* ((os (make-oscil frq))
+		   (len (round (* secs (srate))))
+		   (del (make-delay len :max-size (round (+ len amp 1))))
+		   (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+	      (lambda (inval)
+		(+ inval 
+		   (delay del 
+			  (* scaler (+ (tap del) (* (env genv) inval)))
+			  (* amp (oscil os))))))))
+	
 	(if (not (Widget? zecho-dialog))
 	    ;; if zecho-dialog doesn't exist, create it
 	    (let ((initial-zecho-scaler 0.5)
@@ -1188,16 +1190,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  (new-comb-chord-dialog #f)
 	  (new-comb-chord-target 'sound))
       
-      (define new-comb-chord
-	(lambda (scaler size amp interval-one interval-two)
-	  ;; Comb chord filter: create chords by using filters at harmonically related sizes.
-	  (let ((cs (make-comb-bank (vector (make-comb scaler size)
-					    (make-comb scaler (* size interval-one))
-					    (make-comb scaler (* size interval-two))))))
-	    (lambda (x)
-	      (* amp (comb-bank cs x))))))
-      
       (define (post-new-comb-chord-dialog)
+
+	(define new-comb-chord
+	  (lambda (scaler size amp interval-one interval-two)
+	    ;; Comb chord filter: create chords by using filters at harmonically related sizes.
+	    (let ((cs (make-comb-bank (vector (make-comb scaler size)
+					      (make-comb scaler (* size interval-one))
+					      (make-comb scaler (* size interval-two))))))
+	      (lambda (x)
+		(* amp (comb-bank cs x))))))
+	
 	(if (not (Widget? new-comb-chord-dialog))
 	    ;; if new-comb-chord-dialog doesn't exist, create it
 	    (let ((initial-new-comb-chord-scaler 0.95)
@@ -1293,12 +1296,13 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	  (moog-dialog #f)
 	  (moog-target 'sound))
       
-      (define (moog freq Q)
-	(let ((gen (make-moog-filter freq Q)))
-	  (lambda (inval)
-	    (moog-filter gen inval))))
-      
       (define (post-moog-dialog)
+
+	(define (moog freq Q)
+	  (let ((gen (make-moog-filter freq Q)))
+	    (lambda (inval)
+	      (moog-filter gen inval))))
+	
 	(if (not (Widget? moog-dialog))
 	    ;; if moog-dialog doesn't exist, create it
 	    (let ((initial-moog-cutoff-frequency 10000)
@@ -1549,13 +1553,14 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  (src-timevar-target 'sound)
 	  (src-timevar-envelope #f))
       
-      (define (scale-envelope e scl)
-	(if (null? e)
-	    ()
-	    (append (list (car e) (* scl (cadr e)))
-		    (scale-envelope (cddr e) scl))))
-      
       (define (post-src-timevar-dialog)
+
+	(define (scale-envelope e scl)
+	  (if (null? e)
+	      ()
+	      (append (list (car e) (* scl (cadr e)))
+		      (scale-envelope (cddr e) scl))))
+      
 	(if (Widget? src-timevar-dialog)
 	    (activate-dialog src-timevar-dialog)
       	    ;; if src-timevar-dialog doesn't exist, create it
@@ -1684,18 +1689,19 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  (am-effect-target 'sound)
 	  (am-effect-envelope #f))
       
-      (define am-effect
-	(lambda (freq)
-	  (let* ((os (make-oscil freq))
-		 (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
-		 (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-framples am-effect-target)))))
-	    (if need-env
-		(lambda (inval)
-		  (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
-		(lambda (inval)
-		  (amplitude-modulate 1.0 inval (oscil os)))))))
-      
       (define (post-am-effect-dialog)
+
+	(define am-effect
+	  (lambda (freq)
+	    (let* ((os (make-oscil freq))
+		   (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+		   (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-framples am-effect-target)))))
+	      (if need-env
+		  (lambda (inval)
+		    (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
+		  (lambda (inval)
+		    (amplitude-modulate 1.0 inval (oscil os)))))))
+      
 	(if (Widget? am-effect-dialog)
 	    (activate-dialog am-effect-dialog)
 	    ;; if am-effect-dialog doesn't exist, create it
@@ -1779,18 +1785,19 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  (rm-target 'sound)
 	  (rm-envelope #f))
       
-      (define rm-effect ; avoid collision with examp.scm
-	(lambda (freq gliss-env)
-	  (let* ((os (make-oscil freq))
-		 (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
-		 (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
-	    (if need-env
-		(lambda (inval)
-		  (* inval (env e) (oscil os)))
-		(lambda (inval)
-		  (* inval (oscil os)))))))
-      
       (define (post-rm-dialog)
+
+	(define rm-effect ; avoid collision with examp.scm
+	  (lambda (freq gliss-env)
+	    (let* ((os (make-oscil freq))
+		   (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
+		   (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
+	      (if need-env
+		  (lambda (inval)
+		    (* inval (env e) (oscil os)))
+		  (lambda (inval)
+		    (* inval (oscil os)))))))
+      
 	(if (Widget? rm-dialog)
 	    (activate-dialog rm-dialog)
 	    ;; if rm-dialog doesn't exist, create it
@@ -2295,9 +2302,9 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
       
       (define (post-place-sound-dialog)
 	(if (not (Widget? place-sound-dialog))
-	    (let ((sliders ())
-		  (fr #f))
-	      (let ((initial-mono-snd 0)
+	    (let ((fr #f))
+	      (let ((sliders ())
+		    (initial-mono-snd 0)
 		    (initial-stereo-snd 1)
 		    (initial-pan-pos 45))
 		(set! place-sound-dialog 
@@ -2336,25 +2343,23 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 					 (list "pan position" 0 initial-pan-pos 90
 					       (lambda (w context info)
 						 (set! pan-pos (.value info)))
-					       1)))))
-	      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
-					      (list XmNheight              200
-						    XmNleftAttachment      XmATTACH_FORM
-						    XmNrightAttachment     XmATTACH_FORM
-						    XmNtopAttachment       XmATTACH_WIDGET
-						    XmNbottomAttachment    XmATTACH_FORM
-						    XmNtopWidget           (sliders (- (length sliders) 1))
-						    XmNshadowThickness     4
-						    XmNshadowType          XmSHADOW_ETCHED_OUT)))
-	      
+					       1))))
+		(set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+						(list XmNheight              200
+						      XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNbottomAttachment    XmATTACH_FORM
+						      XmNtopWidget           (sliders (- (length sliders) 1))
+						      XmNshadowThickness     4
+						      XmNshadowType          XmSHADOW_ETCHED_OUT))))
 	      (activate-dialog place-sound-dialog)
 	      (set! place-sound-envelope (xe-create-enved "panning"  fr
 							  (list XmNheight 200
 								XmNbottomAttachment XmATTACH_FORM
 								)
 							  '(0.0 1.0 0.0 1.0)))
-	      (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))
-	      ))
+	      (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))))
 	
 	(activate-dialog place-sound-dialog))
       
