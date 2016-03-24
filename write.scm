@@ -243,14 +243,26 @@
 				(write-char #\) port))))
 			(write-char #\) port))))
 		 
-		 ((begin call-with-exit call/cc call-with-current-continuation with-baffle with-output-to-string call-with-output-string
-			 map for-each)
+		 ((begin call-with-exit call/cc call-with-current-continuation with-baffle with-output-to-string call-with-output-string)
 		  (format port "(~A" (car obj))
 		  (if (pair? (cdr obj))
 		      (begin
 			(spaces (+ column *pretty-print-spacing*))
 			(stacked-list (cdr obj) (+ column *pretty-print-spacing*))))
 		  (write-char #\) port))
+
+		 ((map for-each)
+		  (let* ((objstr (object->string obj))
+			 (strlen (length objstr)))
+		    (if (< (+ column strlen) *pretty-print-length*)
+			(display objstr port)
+			(begin
+			  (format port "(~A" (car obj))
+			  (if (pair? (cdr obj))
+			      (begin
+				(write-char #\space port)
+				(stacked-list (cdr obj) (+ column *pretty-print-spacing*))))
+			  (write-char #\) port)))))
 		 
 		 ((dynamic-wind call-with-values)
 		  (format port "(~A" (car obj))
@@ -297,14 +309,15 @@
 			(if (pair? ((if (symbol? (cadr obj)) cdddr cddr) obj))
 			    (stacked-list ((if (symbol? (cadr obj)) cdddr cddr) obj) (+ column *pretty-print-spacing*)))
 			(write-char #\) port))))
-		 
+
 		 ((inlet)
 		  (format port "(inlet")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
 			  ((not (and (pair? lst)
 				     (pair? (cdr lst)))))
-			(spaces (+ column *pretty-print-spacing*))
+			(if (not (eq? lst (cdr obj)))
+			    (spaces (+ column *pretty-print-spacing*)))
 			(if (pair? (cdr lst))
 			    (begin
 			      (write (car lst) port)

@@ -19,10 +19,13 @@
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (kinda slow, and this error almost never happens)
+
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
 ;;   table of functions that are simple (no side effects) is (*lint* 'no-side-effect-functions)
 
+
+;;; --------------------------------------------------------------------------------
 (if (provided? 'pure-s7)
     (begin
       (define (make-polar mag ang) (complex (* mag (cos ang)) (* mag (sin ang))))
@@ -53,21 +56,16 @@
 (set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
 
-
-;;; --------------------------------------------------------------------------------
-
 (set! *#readers* (list (cons #\_ (lambda (str)
 				   (and (string=? str "__line__")
 					(port-line-number))))))
-
 (define defanimal define*)
 (unless (provided? 'snd)
   (define definstrument define*)
   (define defgenerator define*))
 
+
 ;;; --------------------------------------------------------------------------------
-
-
 (define lint
 
   (let ((no-side-effect-functions 
@@ -95,7 +93,7 @@
 	      int-vector int-vector-ref int-vector? iterator-at-end? iterator-sequence integer->char
 	      integer-decode-float integer-length integer? iterator?
 	      keyword->symbol keyword?
-	      lambda lambda* let->list lcm length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
+	      lambda lambda* lcm let->list length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
 	      list-tail list? log logand logbit? logior lognot logxor
 	      macro? magnitude make-byte-vector make-float-vector make-int-vector make-hash-table make-hook make-iterator make-keyword make-list make-polar
 	      make-rectangular make-shared-vector make-string make-vector map max member memq memv min modulo morally-equal?
@@ -5421,14 +5419,15 @@
 			      (let* ((list-arg (cadr seq))
 				     (sig (and (pair? list-arg)
 					       (arg-signature seq env))))
-				(if (not (and (pair? sig)
-					      (pair? (car sig))
-					      (memq 'values (car sig))))
+				(if (not (or (and (pair? sig)
+						  (pair? (car sig))
+						  (memq 'values (car sig)))
+					     (tree-memq 'values list-arg)))
 				    (lint-format "~Aperhaps ~A" caller
 						 (if (or sig
 							 (code-constant? list-arg))
 						     ""
-						     (format #f "assuming ~A does not return multiple values, " (cadr seq)))
+						     (format #f "assuming ~A does not return multiple values, " list-arg))
 						 (lists->string form `(list (,(cadr form) ,list-arg))))))))
 			 
 			 ((map)
@@ -5519,14 +5518,6 @@
 	 (if (and (= (length form) 2)
 		  (memq (->type (cadr form)) '(integer? rational? real?)))
 	     (lint-format "perhaps use abs here: ~A" caller form)))
-	
-	;; ----------------
-	((null eq eqv equal) ; (null (cdr...)) 
-	 (if (not (var-member head env))
-	     (lint-format "misspelled '~A? in ~A?" caller head form)))
-	
-	((interaction-environment)
-	 (lint-format "interaction-environment is probably curlet in s7" caller))
 	
 	;; ----------------
 	((open-input-file open-output-file)
@@ -5648,30 +5639,31 @@
 	;; ----------------
 	((let-values)
 	 (if (and (pair? (cdr form))
-		  (pair? (cadr form))
-		  (null? (cdadr form))) ; just one set of vars
-	     (let ((call (caadr form)))
-	       (lint-format "perhaps ~A" caller
-			    (lists->string form
-					   `((lambda ,(car call)
-					     ,@(cddr form))
-					   ,(cadr call)))))))
-#|
-	;; untested -- multiple sets of vars
-	     (lint-format "perhaps ~A" caller
-			  (lists->string 
-			   form
-			   `(with-let 
-				(apply sublet (curlet) 
-				       (list ,@(map (lambda (v)
-						      `((lambda ,(car v)
-							  (values ,@(map (lambda (name)
-									   (values (symbol->keyword name) name))
-									 (args->proper-list (car v)))))
-							,(cadr v)))
-						    (cadr form))))
-			      ,@(cddr form))))
-|#
+		  (pair? (cadr form)))
+	     (if (null? (cdadr form)) ; just one set of vars
+		 (let ((call (caadr form)))
+		   (if (and (pair? call)
+			    (pair? (cdr call)))
+		       (lint-format "perhaps ~A" caller
+				    (lists->string form
+						   `((lambda ,(car call)
+						       ,@(cddr form))
+						     ,(cadr call))))))
+		 (if (every? pair? (cadr form))
+		     (lint-format "perhaps ~A" caller
+				  (lists->string 
+				   form
+				   `(with-let 
+					(apply sublet (curlet) 
+					       (list ,@(map (lambda (v)
+							      `((lambda ,(car v)
+								  (values ,@(map (lambda (name)
+										   (values (symbol->keyword name) name))
+										 (args->proper-list (car v)))))
+								,(cadr v)))
+							    (cadr form))))
+				      ,@(cddr form))))))))
+
 	;; ----------------
 	((let*-values)
 	 (if (and (pair? (cdr form))
@@ -5796,9 +5788,18 @@
 		   (lint-format "unknown *s7* field: ~A" caller arg)))))
 
 
+	;; ----------------
+	((null eq eqv equal) ; (null (cdr...)) 
+	 (if (not (var-member head env))
+	     (lint-format "misspelled '~A? in ~A?" caller head form)))
+	
+	((interaction-environment)
+	 (lint-format "interaction-environment is probably curlet in s7" caller))
+	
 	((push!) ; not predefined
 	 (if (= (length form) 3)
 	     (set-set (caddr form) form env)))
+
 	((pop!)  ; also not predefined
 	 (if (= (length form) 2)
 	     (set-set (cadr form) form env)))
@@ -8260,7 +8261,6 @@
 							      (lists->string form 
 									     `(,head ,sym 
 										     ,@(let ((p (tree-subst new-call call outer-body)))
-											 ;(format *stderr* "p: ~A~%" p)
 											 (if (and (pair? p)
 												  (pair? (car p))
 												  (eq? (caar p) 'begin))
@@ -10083,7 +10083,10 @@
 				      (pair? (cadar varlist)))
 			     (let ((p (car body))
 				   (vname (caar varlist))
-				   (vvalue (cadar varlist)))
+				   (vvalue (cadar varlist))
+				   
+				   (suggest made-suggestion)
+				   )
 
 			       (when (and (not named-let)   ; (let ((x (assq a y))) (set! z (if x (cadr x) 0))) -> (set! z (cond ((assq a y) => cadr) (else 0)))
 					  (pair? p)
@@ -11567,11 +11570,28 @@
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
-;;; snd-lint: load lint, add to various hash-tables via *lint* 
-;;; r7rs.scm probably needs let-values
+;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
+;;;
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
-;;; (let ((s (map...))) (for-each... s))
-;;; 2 defines -> named let?
+;;; 2 defines -> named let? [this could be a loop almost]
+;;; in let(*)-values we could also check that the expr fits the number of vars
+;;; pp handling of let(*)-values is pessimal
+
+#|
+(lint-test "(string-append \"USER \" user (string #\\return) (string #\\newline))" "")
+(lint-test "(string-append \".\" (make-string (- k+1) #\\0) digits)" "")
+(lint-test "(write-string (make-string 70 #\\-) port)" "")
+(lint-test "(string-append (make-string pad char) str)" "")
+(lint-test "(string-append (string #\\return) \"Z!@~#$Ll*()def\")" "")
+(lint-test "(string-append (list->string (make-list indent #\\space)) str)" "")
+(lint-test "(string=? span (string replacement-char))" "")
+(lint-test "(string=? (string (string-ref file-line 0)) \"*\")" "")
+for-each/map with (list 1)? (map (cut string-append <> "/share/polkit-1") (list :$@packages))
+for-each display|write-string (list...) also (for-each (lambda (x) (display x out)) ...
+(list->string (list h1 h2))
+(map string->symbol (list "IOPAD" "IPAD" "OPAD" "HIGH" "LOW"))
+(list->vector (list '1st-last (N_ "Last Yr 1st Est Tax Qtr") (N_ "Jan 1 - Mar 31, Last year.")))
+|#
 
 ;;; 495/100

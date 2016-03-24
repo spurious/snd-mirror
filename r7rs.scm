@@ -162,6 +162,45 @@
 (define-macro (define-values vars . body)
   `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
 
+(define-macro (let-values vars . body)
+  (if (and (pair? vars)
+	   (pair? (car vars))
+	   (null? (cdar vars)))
+      `((lambda ,(caar vars)
+	  ,@body)
+	,(cadar vars))
+      `(with-let (apply sublet (curlet)
+			(list ,@(map (lambda (v)
+				       `((lambda ,(car v)
+					   (values ,@(map (lambda (name)
+							    (values (symbol->keyword name) name))
+							  (let args->proper-list ((args (car v)))
+							    (cond ((symbol? args)	(list args))
+								  ((not (pair? args))	args)
+								  ((pair? (car args))	(cons (caar args) (args->proper-list (cdr args))))
+								  (else                 (cons (car args) (args->proper-list (cdr args)))))))))
+					 ,(cadr v)))
+				     vars)))
+	 ,@body)))
+
+(define-macro (let*-values vals . body)
+  (let ((args ())
+	(exprs ()))
+    (for-each
+     (lambda (arg+expr)
+       (set! args (cons (car arg+expr) args))
+       (set! exprs (cons (cadr arg+expr) exprs)))
+     vals)
+    (let ((form `((lambda ,(car args) ,@body) ,(car exprs))))
+      (if (not (null? (cdr args)))
+	  (for-each
+	   (lambda (arg expr)
+	     (set! form `((lambda ,arg ,form) ,expr)))
+	   (cdr args)
+	   (cdr exprs)))
+      form)))
+
+#|
 (define-macro (let*-values vars . body)
   `(let () 
      ,@(map (lambda (nvars . nbody)
@@ -169,6 +208,7 @@
             (map car vars) 
             (map cdr vars))
      ,@body))
+|#
 
 
 ;; case-lambda       

@@ -798,8 +798,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define log-any-of logior)    ; bits on in at least 1 of ints
 
 (define (log-n-of n . ints)   ; return the bits on in exactly n of ints
-  (if (integer? n)
-      (if (every? integer? ints)
+  (if (not (integer? n))
+      (error "log-n-of first argument, ~A, should be an integer" n)
+      (if (not (every? integer? ints))
+	  (error "log-n-of ints arguments, ~A, should all be integers" ints)
 	  (let ((len (length ints)))
 	    (cond ((= len 0) (if (= n 0) -1 0))
 		  ((= n 0)   (lognot (apply logior ints)))
@@ -817,9 +819,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			     (set! (cdr prev) (if (= i (- len 1)) () (cdr mid)))
 			     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
 			     (set! (cdr prev) mid)
-			     (set! prev mid))))))))
-	  (error "log-n-of ints arguments, ~A, should all be integers" ints))
-      (error "log-n-of first argument, ~A, should be an integer" n)))
+			     (set! prev mid)))))))))))
 
 ;; from Rick
 (define (byte siz pos) ;; -> cache size, position and mask.
@@ -1053,8 +1053,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define n-choose-k 
   (let ((documentation "(n-choose-k n k) returns the binomial coefficient C(N,K)"))
     (lambda (n k)
-      (if (integer? n)
-	  (if (integer? k)
+      (if (not (integer? n))
+	  (error "n-choose-k 'n argument, ~A, should be an integer" n)
+	  (if (not (integer? k))
+	      (error "n-choose-k 'k argument, ~A, should be an integer" k)
 	      (let ((mn (min k (- n k))))
 		(if (or (negative? mn)
 			(negative? n))
@@ -1065,12 +1067,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			       (cnk (+ 1 mx)))
 			  (do ((i 2 (+ i 1)))
 			      ((> i mn) cnk)
-			    (set! cnk (/ (* cnk (+ mx i)) i)))))))
-	      (error "n-choose-k 'k argument, ~A, should be an integer" k))
-	  (error "n-choose-k 'n argument, ~A, should be an integer" n)))))
-
-
-
+			    (set! cnk (/ (* cnk (+ mx i)) i))))))))))))
+	      
 ;;; ----------------
 
 (define continuable-error
@@ -1180,24 +1178,23 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 
 (define (gather-symbols expr ce lst ignore)
-  (define (symbol->let sym ce)
-    (if (defined? sym ce #t)
-	ce
-	(and (not (eq? ce (rootlet)))
-	     (symbol->let sym (outlet ce)))))
   (cond ((symbol? expr)
 	 (if (or (memq expr lst)
 		 (memq expr ignore)
 		 (procedure? (symbol->value expr ce))
-		 (eq? (symbol->let expr ce) (rootlet)))
+		 (eq? (let symbol->let ((sym expr)
+					(ce ce))
+			(if (defined? sym ce #t)
+			    ce
+			    (and (not (eq? ce (rootlet)))
+				 (symbol->let sym (outlet ce)))))
+		      (rootlet)))
 	     lst
 	     (cons expr lst)))
 
-	((not (pair? expr)) 
-	 lst)
+	((not (pair? expr)) lst)
 
-	((not (and (pair? (cdr expr))
-		   (pair? (cddr expr))))
+	((not (and (pair? (cdr expr)) (pair? (cddr expr))))
 	 (if (eq? (car expr) '_)
 	     (cons expr lst)
 	     (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))
@@ -1209,9 +1206,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   ((lambda)
 	    (gather-symbols (cddr expr) ce lst (append ignore (cadr expr))))
 	   ((lambda*)
-	    (gather-symbols
-	     (cddr expr) ce lst
-	     (append ignore (map (lambda (a) (if (pair? a) (car a) a)) (cadr expr)))))
+	    (gather-symbols (cddr expr) ce lst (append ignore (map (lambda (a) (if (pair? a) (car a) a)) (cadr expr)))))
 	   (else
 	    (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))))
 
@@ -1219,7 +1214,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	      (symbol? (cadr expr)))
 	 (gather-symbols (cddr expr) ce lst (append ignore (list (cadr expr)))))
 
-	(else (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))))
+	(else 
+	 (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))))
+
 
 (define-bacro (reactive-set! place value)
   (with-let (inlet 'place place                      ; with-let here gives us control over the names
@@ -1420,12 +1417,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 
 (define-macro (reactive-let* vars . body)
-  (define (add-let v)
+  (let add-let ((v vars))
     (if (pair? v)
 	`(reactive-let ((,(caar v) ,(cadar v)))
 	   ,(add-let (cdr v)))
-	`(begin ,@body)))
-  (add-let vars))
+	`(begin ,@body))))
 
 ;; reactive-letrec is not useful: lambdas already react and anything else is an error (use of #<undefined>)
 
@@ -1580,11 +1576,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 ;;; ----------------
 
 (define-macro (catch* clauses . error) 
-  (define (builder lst)
+  (let builder ((lst clauses))
     (if (null? lst)
 	(apply values error)
-	`(catch #t (lambda () ,(car lst)) (lambda args ,(builder (cdr lst))))))
-  (builder clauses))
+	`(catch #t (lambda () ,(car lst)) (lambda args ,(builder (cdr lst)))))))
 
 
 (define* (subsequence obj (start 0) end)
@@ -1764,7 +1759,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   
   (define (proc-walk source)
     
-    (if (pair? source)
+    (if (not (pair? source))
+	source
 	(case (car source)
 	  
 	  ((let let* letrec letrec*)                
@@ -1786,7 +1782,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   ;; report form that short-circuits the evaluation
 	   (cons (car source)
 		 (let ((ctr -1)
-		       (len (- (length (cdr source)) 1))
+		       (len (- (length source) 2))
 		       (eob (if (eq? (car source) 'or) 'when 'unless)))
 		   (map (lambda (expr)
 			  (set! ctr (+ ctr 1))
@@ -1840,7 +1836,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  ((cond)
 	   ;; report form that satisifies cond
 	   (let ((ctr -1)
-		 (len (- (length (cdr source)) 1)))
+		 (len (- (length source) 2)))
 	     `(cond ,@(map (lambda (clause)
 			     (let ((test (car clause))
 				   (body (cdr clause)))
@@ -1866,7 +1862,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  ((case)
 	   ;; as in cond but include selector value in [] and report fall throughs
 	   (let ((ctr -1)
-		 (len (- (length (cddr source)) 1))
+		 (len (- (length source) 3))
 		 (default (member '(else #t) (cddr source) (lambda (a b) 
 							     (memq (car b) a)))))
 	     `(case ,(cadr source)
@@ -1920,8 +1916,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  
 	  (else
 	   (cons (proc-walk (car source)) 
-		 (proc-walk (cdr source)))))
-	source))
+		 (proc-walk (cdr source)))))))
+
   
   (define-macro (Display-1 definition)
     (if (and (pair? definition)
