@@ -28200,6 +28200,9 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 
 	  eval(sc, OP_READ_INTERNAL);
 
+	  if (sc->tok == TOKEN_EOF)
+	    sc->value = sc->eof_object;
+
 	  if ((sc->op == OP_EVAL_DONE) &&
 	      (stack_op(sc->stack, s7_stack_top(sc) - 1) == OP_BARRIER))
 	    pop_stack(sc); 

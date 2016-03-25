@@ -4348,8 +4348,22 @@
 					      (cdr form)))))
 	   (if (and (> (length cleared-form) 2)
 		    (not (checked-eval cleared-form)))
-	       (lint-format "this comparison can't be true: ~A" caller (truncated-list->string form)))))
-	
+	       (lint-format "this comparison can't be true: ~A" caller (truncated-list->string form))))
+
+	 (if (every? (lambda (a)
+		       (or (and (string? a)
+				(= (length a) 1))
+			   (and (pair? a)
+				(eq? (car a) 'string))))
+		     (cdr form))
+	     (lint-format "perhaps ~A" caller
+			  (lists->string form
+					 `(,(string->symbol (string-append "char" (substring (symbol->string head) 6)))
+					   ,@(map (lambda (a)
+						    (if (string? a)
+							(string-ref a 0)
+							(cadr a)))
+						  (cdr form)))))))
 	;; ----------------
 	((length)
 	 (if (pair? (cdr form))
@@ -4658,6 +4672,14 @@
 		     ((and (eq? head 'list->string)          ; (list->string (vector->list x)) -> (copy x (make-string (length x)))
 			   (eq? func-of-arg 'vector->list))
 		      (lint-format "perhaps ~A" caller (lists->string form `(copy ,arg-of-arg (make-string (length ,arg-of-arg))))))
+
+		     ((and (eq? head 'list->string)          ; (list->string (make-list x y)) -> (make-string x y)
+			   (eq? func-of-arg 'make-list))
+		      (lint-format "perhaps ~A" caller (lists->string form `(make-string ,@(cdr arg)))))
+		     
+		     ((and (eq? head 'list->vector)          ; (list->vector (make-list ...)) -> (make-vector ...)
+			   (eq? func-of-arg 'make-list))
+		      (lint-format "perhaps ~A" caller (lists->string form `(make-vector ,@(cdr arg)))))
 		     
 		     ((and (eq? head 'list->vector)          ; (list->vector (string->list x)) -> (copy x (make-vector (length x)))
 			   (eq? func-of-arg 'string->list))
@@ -4666,10 +4688,6 @@
 		     ((and (eq? head 'vector->list)          ; (vector->list (make-vector ...)) -> (make-list ...)
 			   (eq? func-of-arg 'make-vector))
 		      (lint-format "perhaps ~A" caller (lists->string form `(make-list ,@(cdr arg)))))
-		     
-		     ((and (eq? head 'list->vector)          ; (list->vector (make-list ...)) -> (make-vector ...)
-			   (eq? func-of-arg 'make-list))
-		      (lint-format "perhaps ~A" caller (lists->string form `(make-vector ,@(cdr arg)))))
 		     
 		     ((and (memq func-of-arg '(reverse reverse! copy))
 			   (pair? (cadr arg))                ; (list->string (reverse (string->list x))) -> (reverse x)
@@ -5338,7 +5356,20 @@
 		 (if (and (symbol? func)
 			  (defined? func)
 			  (procedure? (symbol->value func *e*)))
-		     (set! ary (arity (symbol->value func *e*)))
+		     (begin
+		       (set! ary (arity (symbol->value func *e*)))
+		       (if (and (eq? head 'map)
+				(hash-table-ref no-side-effect-functions func)
+				(= len 3)
+				(pair? (caddr form))
+				(or (eq? (caaddr form) 'quote)
+				    (and (eq? (caaddr form) 'list)
+					 (every? code-constant? (cdaddr form)))))
+			   (catch #t
+			     (lambda ()
+			       (let ((val (eval form)))
+				 (lint-format "perhaps ~A" caller (lists->string form (list 'quote val)))))
+			     (lambda args #f))))
 		     
 		     (if (and (pair? func)
 			      (memq (car func) '(lambda lambda*))
@@ -5425,7 +5456,7 @@
 					     (tree-memq 'values list-arg)))
 				    (lint-format "~Aperhaps ~A" caller
 						 (if (or sig
-							 (code-constant? list-arg))
+							 (not (pair? list-arg)))
 						     ""
 						     (format #f "assuming ~A does not return multiple values, " list-arg))
 						 (lists->string form `(list (,(cadr form) ,list-arg))))))))
@@ -11503,7 +11534,6 @@
 	  (string-append (substring str 0 pos)
 			 (let* ((epos (char-position #\; str pos))
 				(substr (substring str (+ pos 1) epos)))
-
 			   (string-append (cond ((assoc substr '(("gt"    . ">") 
 								 ("lt"    . "<") 
 								 ("mdash" . "-") 
@@ -11577,21 +11607,26 @@
 ;;; 2 defines -> named let? [this could be a loop almost]
 ;;; in let(*)-values we could also check that the expr fits the number of vars
 ;;; pp handling of let(*)-values is pessimal
+;;;
+;;; list var no cdr(etc), list-ref -> vector
+;;;   vector chars -> string/bytevector, int->int-vector etc
+;;;   string/symbol trade-offs
+;;;   large memq/assoc -> hash-table
+;;;   0/1 -> #f/#t
+;;; cond-expand -> reader-expand (also *features*/provided?)
+;;; map of list(1/2) -> bare repetition if builtin? [also do 0/1/2]
+;;; can we see switch used -> exit?
+;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
+;;; hg-like checker for C scheme: look for s7_eval_c_string and run lint over the string
 
 #|
 (lint-test "(string-append \"USER \" user (string #\\return) (string #\\newline))" "")
-(lint-test "(string-append \".\" (make-string (- k+1) #\\0) digits)" "")
-(lint-test "(write-string (make-string 70 #\\-) port)" "")
-(lint-test "(string-append (make-string pad char) str)" "")
+;;; other str+str cases: string= and friends + others like this
 (lint-test "(string-append (string #\\return) \"Z!@~#$Ll*()def\")" "")
-(lint-test "(string-append (list->string (make-list indent #\\space)) str)" "")
-(lint-test "(string=? span (string replacement-char))" "")
-(lint-test "(string=? (string (string-ref file-line 0)) \"*\")" "")
-for-each/map with (list 1)? (map (cut string-append <> "/share/polkit-1") (list :$@packages))
-for-each display|write-string (list...) also (for-each (lambda (x) (display x out)) ...
-(list->string (list h1 h2))
-(map string->symbol (list "IOPAD" "IPAD" "OPAD" "HIGH" "LOW"))
-(list->vector (list '1st-last (N_ "Last Yr 1st Est Tax Qtr") (N_ "Jan 1 - Mar 31, Last year.")))
+(lint-test "(for-each display (list 1 a #\\newline))" "")
+(lint-test "(for-each write-string (list a \"asdf\" (substring x 1)))" "")
+(lint-test "(map abs (list a b))" "")
+(lint-test "(cond-expand (linux (define (hi a) (+ a 1))) ((osx windows) (define (hi a) (- a 1))))" "")
 |#
 
 ;;; 495/100

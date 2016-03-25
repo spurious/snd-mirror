@@ -1236,6 +1236,21 @@ int main(int argc, char **argv)
     s7_close_input_port(sc, port);
     s7_gc_unprotect_at(sc, gc_loc);
 
+    /* make sure s7_read does not ignore #<eof> */
+    port = s7_open_input_string(sc, "(define a 32)\n(define b 33)\n");
+    if (!s7_is_input_port(sc, port))
+      {fprintf(stderr, "%d: %s is not an input port?\n", __LINE__, s1 = TO_STR(port)); free(s1);}
+    gc_loc = s7_gc_protect(sc, port);
+    while(true)
+      {
+	s7_pointer code, val;
+	code = s7_read(sc, port);
+	if (code == s7_eof_object(sc)) break;
+	val = s7_eval(sc, code, s7_nil(sc));
+      }
+    s7_close_input_port(sc, port);
+    s7_gc_unprotect_at(sc, gc_loc);
+
     port = s7_open_output_string(sc);
     if (!s7_is_output_port(sc, port))
       {fprintf(stderr, "%d: %s is not an output port?\n", __LINE__, s1 = TO_STR(port)); free(s1);}
