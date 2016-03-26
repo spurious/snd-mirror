@@ -74034,7 +74034,7 @@ s7_scheme *s7_init(void)
 		                               (if (pair? tree)                                               \n\
 			                            (cons (traverse (car tree))                               \n\
 				                          (if (null? (cdr tree)) () (traverse (cdr tree))))   \n\
-			                            (if (member tree '(and or not else) eq?) tree             \n\
+			                            (if (memq tree '(and or not else)) tree                   \n\
 			                                (and (symbol? tree) (provided? tree)))))))            \n\
                             `(cond ,@(map (lambda (clause)                                                    \n\
 		                             (cons (traverse (car clause))                                    \n\
@@ -74082,7 +74082,7 @@ s7_scheme *s7_init(void)
                                                                     (aritable? f 1)))                         \n\
                                                              lst))))                                          \n\
                                     (set! ((funclet hook) 'body) lst)                                         \n\
-                                    (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst)))))))");
+                                    (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst))))))");
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");

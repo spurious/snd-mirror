@@ -58,15 +58,16 @@
       (search-point cur-env 0)))
 
   (define (xe-envelope-position x cur-env)
-    (define (search-point e pos)
+    (let search-point ((e cur-env)
+		       (pos 0))
       (if (= (car e) x)
 	  pos
-	  (search-point (cddr e) (+ pos 2))))
-    (search-point cur-env 0))
+	  (search-point (cddr e) (+ pos 2)))))
 
   (define (xe-on-dot? x y cur-env pos)
     (define xe-mouse-radius .03)
     (and (pair? cur-env)
+	 (pair? (cdr cur-env))
 	 (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
 		  (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
 		  pos)
@@ -115,12 +116,12 @@
 	   (pos (xe-on-dot? x y cur-env 0)))
       (set! xe-mouse-new (not pos))
       (set! xe-mouse-down (get-internal-real-time))
-      (if (not pos)
+      (if pos
+	  (set! xe-mouse-pos pos)
 	  (begin
 	    (set! (xe-envelope drawer) 
 		  (xe-add-envelope-point x y cur-env))
-	    (set! xe-mouse-pos (xe-envelope-position x (xe-envelope drawer))))
-	  (set! xe-mouse-pos pos))))
+	    (set! xe-mouse-pos (xe-envelope-position x (xe-envelope drawer)))))))
 
   (define (xe-mouse-drag drawer xx yy)
     ;; point exists, needs to be edited with check for various bounds
@@ -146,9 +147,9 @@
 	       (not (= xe-mouse-pos 0))
 	       (< xe-mouse-pos (- (length cur-env) 2)))
 	  (set! (xe-envelope drawer)
-		(xe-remove-envelope-point xe-mouse-pos cur-env)))
-      (xe-redraw drawer)
-      (set! xe-mouse-new #f)))
+		(xe-remove-envelope-point xe-mouse-pos cur-env))))
+    (xe-redraw drawer)
+    (set! xe-mouse-new #f))
 
   (if (provided? 'snd-motif)
       (with-let (sublet *motif* 
@@ -362,13 +363,13 @@
 		  ;; *gtk* 
 		  (let ((lx #f)
 			(ly #f)
-			(cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn)))
-			(size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
-		    
-		    ((*gtk* 'cairo_push_group) cr)
-		    ((*gtk* 'cairo_set_source_rgb) cr 1.0 1.0 1.0)
-		    ((*gtk* 'cairo_rectangle) cr 0 0 (car size) (cadr size))
-		    ((*gtk* 'cairo_fill) cr)
+			(cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn))))
+
+		    (let ((size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
+		      ((*gtk* 'cairo_push_group) cr)
+		      ((*gtk* 'cairo_set_source_rgb) cr 1.0 1.0 1.0)
+		      ((*gtk* 'cairo_rectangle) cr 0 0 (car size) (cadr size))
+		      ((*gtk* 'cairo_fill) cr))
 		    
 		    (draw-axes widget gc name ix0 ix1 iy0 iy1 x-axis-in-seconds show-all-axes cr)
 		    

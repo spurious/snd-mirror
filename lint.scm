@@ -4529,22 +4529,26 @@
 	 (unless (= line-number last-checker-line-number)
 	   (if (= (length form) 3)
 	       (let ((seq (cadr form)))
-		 (if (pair? seq)
-		     (if (and (eq? (car seq) head) ; perhaps instead: (memq (car seq) '(vector-ref list-ref hash-table-ref let-ref))
-			      (= (length seq) 3))
-			 (let ((seq1 (cadr seq)))
-			   (lint-format "perhaps ~A" caller 
-					(lists->string form 
-						       (if (and (pair? seq1)
-								(eq? (car seq1) head)
-								(= (length seq1) 3))
-							   `(,(cadr seq1) ,(caddr seq1) ,(caddr seq) ,(caddr form))
-							   `(,seq1 ,(caddr seq) ,(caddr form))))))
-			 (if (memq (car seq) '(make-vector make-list vector list
-							   make-float-vector make-int-vector float-vector int-vector
-							   make-hash-table hash-table hash-table*
-							   inlet))
-			     (lint-format "this doesn't make much sense: ~A~%" caller form))))))
+		 (when (pair? seq)
+		   (if (and (eq? (car seq) head) ; perhaps instead: (memq (car seq) '(vector-ref list-ref hash-table-ref let-ref))
+			    (= (length seq) 3))
+		       (let ((seq1 (cadr seq)))
+			 (lint-format "perhaps ~A" caller 
+				      (lists->string form 
+						     (if (and (pair? seq1)
+							      (eq? (car seq1) head)
+							      (= (length seq1) 3))
+							 `(,(cadr seq1) ,(caddr seq1) ,(caddr seq) ,(caddr form))
+							 `(,seq1 ,(caddr seq) ,(caddr form))))))
+		       (if (memq (car seq) '(make-vector make-list vector list
+							 make-float-vector make-int-vector float-vector int-vector
+							 make-hash-table hash-table hash-table*
+							 inlet))
+			   (lint-format "this doesn't make much sense: ~A~%" caller form)))
+		   (if (and (eq? head 'list-ref)
+			    (eq? (car seq) 'quote))
+		       (lint-format "perhaps use a vector: ~A" caller
+				    (lists->string form `(vector-ref ,(list->vector (cadr seq)) ,(caddr form))))))))
 	   (set! last-checker-line-number line-number)))
 	
 	;; ----------------
@@ -4818,12 +4822,36 @@
 	((string-append)
 	 (if (not (= line-number last-checker-line-number))
 	     (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
-	       (cond ((null? args)
+	       (if (member 'string args (lambda (a b) (and (pair? b) (eq? (car b) a))))
+		   (let ((nargs ()))               ; look for (string...) (string...) in the arg list and combine
+		     (do ((p args (cdr p)))
+			 ((null? p)
+			  (set! args (reverse nargs)))
+		       (if (and (pair? (car p))
+				(pair? (cadr p))
+				(eq? (caar p) 'string)
+				(eq? (caadr p) 'string))
+			   (begin
+			     (set! nargs (cons `(string ,@(cdar p) ,@(cdadr p)) nargs))
+			     (set! p (cdr p)))
+			   (set! nargs (cons (car p) nargs))))))
+	       (cond ((null? args)                 ; (string-append) -> ""
 		      (lint-format "perhaps ~A" caller (lists->string form "")))
-		     ((null? (cdr args))
+		     ((null? (cdr args))           ; (string-append a) -> a
 		      (lint-format "perhaps ~A, or use copy" caller (lists->string form (car args))))
-		     ((every? string? args)
+		     ((every? string? args)        ; (string-append "a" "b") -> "ab"
 		      (lint-format "perhaps ~A" caller (lists->string form (apply string-append args))))
+		     ((every? (lambda (a)          ; (string-append "a" (string #\b)) -> "ab"
+				(or (string? a)
+				    (and (pair? a)
+					 (eq? (car a) 'string)
+					 (char? (cadr a)))))
+			      args)
+		      (catch #t
+			(lambda ()
+			  (let ((val (eval `(string-append ,@args))))
+			    (lint-format "perhaps ~A -> ~S" caller (truncated-list->string form) val)))
+			(lambda args #f)))
 		     ((not (equal? args (cdr form)))
 		      (lint-format "perhaps ~A" caller (lists->string form `(string-append ,@args)))))
 	       (set! last-checker-line-number line-number))))
@@ -5496,53 +5524,66 @@
 												     (caadr func) (cddr func)))
 										     ,(caddr seq)))))))))))))
 		     ;; repetitive code...
-		     (when (and (eq? head 'for-each)
-				(pair? (cadr form))
-				(eq? (caadr form) 'lambda))
-		       (let* ((func (cadr form))
-			      (body (cddr func))
-			      (op (write-port (car body)))
-			      (larg (and (pair? (cadr func))
-					 (caadr func))))
-			 (when (and (symbol? larg)
-				    (null? (cdadr func)) ; just one arg (one sequence to for-each) for now
-				    (every? (lambda (x)
-					      (and (pair? x)
-						   (memq (car x) '(display write newline write-char write-string))
-						   (or (eq? (car x) 'newline)
-						       (eq? (cadr x) larg)
-						       (string? (cadr x))
-						       (eqv? (cadr x) #\space)
-						       (and (pair? (cadr x))
-							    (pair? (cdadr x))
-							    (eq? (caadr x) 'number->string)
-							    (eq? (cadadr x) larg)))
-						   (eq? (write-port x) op)))
-					    body))
-			   ;; (for-each (lambda (x) (display x) (write-char #\space)) msg)
-			   ;; (for-each (lambda (elt) (display elt)) lst)
-			   (let ((ctrl-string "")
-				 (args ())
-				 (arg-ctr 0))
-			     
-			     (define* (gather-format str (arg :unset))
-			       (set! ctrl-string (string-append ctrl-string str))
-			       (unless (eq? arg :unset) (set! args (cons arg args))))
-			     
-			     (for-each
-			      (lambda (d)
-				(if (or (memq larg d) 
-					(and (pair? (cdr d))
-					     (pair? (cadr d))
-					     (memq larg (cadr d))))
-				    (set! arg-ctr (+ arg-ctr 1)))
-				(gather-format (display->format d)))
-			      body)
-			     
-			     (when (= arg-ctr 1)
-			       (lint-format "perhaps ~A" caller 
-					    (lists->string form `(format ,op ,(string-append "~{" ctrl-string "~}") ,seq))))))))
-		     ))))))
+		     (when (eq? head 'for-each) ; args = 1 above
+		       (let ((func (cadr form)))
+			 (if (memq func '(display write newline write-char write-string))
+			     (lint-format "perhaps ~A" caller
+					  (if (and (pair? seq)
+						   (memq (car seq) '(list quote)))
+					      (let ((op (if (eq? func 'write) "~S" "~A"))
+						    (len (length (cdr seq))))
+						(lists->string form `(format () ,(do ((i 0 (+ i 1))
+										      (str ""))
+										     ((= i len) str)
+										   (set! str (string-append str op)))
+									     ,@(cdr seq))))
+					      (let ((op (if (eq? func 'write) "~{~S~}" "~{~A~}")))
+						(lists->string form `(format () ,op ,seq)))))
+			     (if (and (pair? func)
+				      (eq? (car func) 'lambda))
+				 (let* ((body (cddr func))
+					(op (write-port (car body)))
+					(larg (and (pair? (cadr func))
+						   (caadr func))))
+				   (when (and (symbol? larg)
+					      (null? (cdadr func)) ; just one arg (one sequence to for-each) for now
+					      (every? (lambda (x)
+							(and (pair? x)
+							     (memq (car x) '(display write newline write-char write-string))
+							     (or (eq? (car x) 'newline)
+								 (eq? (cadr x) larg)
+								 (string? (cadr x))
+								 (eqv? (cadr x) #\space)
+								 (and (pair? (cadr x))
+								      (pair? (cdadr x))
+								      (eq? (caadr x) 'number->string)
+								      (eq? (cadadr x) larg)))
+							     (eq? (write-port x) op)))
+						      body))
+				     ;; (for-each (lambda (x) (display x) (write-char #\space)) msg)
+				     ;; (for-each (lambda (elt) (display elt)) lst)
+				     (let ((ctrl-string "")
+					   (args ())
+					   (arg-ctr 0))
+				       
+				       (define* (gather-format str (arg :unset))
+					 (set! ctrl-string (string-append ctrl-string str))
+					 (unless (eq? arg :unset) (set! args (cons arg args))))
+				       
+				       (for-each
+					(lambda (d)
+					  (if (or (memq larg d) 
+						  (and (pair? (cdr d))
+						       (pair? (cadr d))
+						       (memq larg (cadr d))))
+					      (set! arg-ctr (+ arg-ctr 1)))
+					  (gather-format (display->format d)))
+					body)
+				       
+				       (when (= arg-ctr 1)
+					 (lint-format "perhaps ~A" caller 
+						      (lists->string form `(format ,op ,(string-append "~{" ctrl-string "~}") ,seq))))))))
+		     )))))))))
       
 	;; ----------------
 	((magnitude)
@@ -7013,7 +7054,7 @@
 		    (equal? l1 l2))))))
 
 
-    ;; code-equal? and structures-equal? called on through function-match and only in each other
+    ;; code-equal? and structures-equal? called in function-match and each other
 
     (define (function-match caller form env)
       ;; (format *stderr* "match ~A ~A~%" caller form)
@@ -10698,9 +10739,10 @@
 				     ;; the limit on tree-length is for cases where the args are long lists of data --
 				     ;;   more like for-each than let, and easier to read if the code is first, I think.
 				     (lint-format "perhaps ~A" caller
-						  (lists->string form `(let ,sym
-									 ,(if (null? (cadr lform)) () (map list (cadr lform) (cdr body)))
-									 ,@(cddr lform)))))
+						  (lists->string 
+						   form `(let ,sym 
+							   ,(map list (cadr lform) (cdr body))
+							   ,@(cddr lform)))))
 				 (if (and (not (eq? caller 'define))
 					  (pair? lform)
 					  (pair? (cdr lform))
@@ -11593,6 +11635,63 @@
 
 
 ;;; --------------------------------------------------------------------------------
+;;; and this reads C code looking for s7_eval_c_string. No attempt here to 
+;;;   handle weird cases.
+
+(define (C-lint file)
+  (call-with-input-file file
+    (lambda (f)
+      (do ((line-num 0 (+ line-num 1))
+	   (line (read-line f #t) (read-line f #t)))
+	  ((eof-object? line))
+
+	;; look for s7_eval_c_string, get string arg without backslashes, call lint
+	(let ((pos (string-position "s7_eval_c_string(sc, \"(" line)))
+	  (if pos
+	      (let ((code (substring line (+ pos (length "s7_eval_c_string(sc, \"")))))
+		(if (not (string-position "\");" code))
+		    (do ((cline (read-line f #t) (read-line f #t))
+			 (rline 1 (+ rline 1)))
+			((string-position "\");" cline)
+			 (set! code (string-append code cline)))
+		      (set! code (string-append code cline))
+		      (set! line-num (+ line-num rline))))
+		
+		(let ((len (string-position "\");" code)))
+		  (set! code (substring code 0 len))
+		
+		  ;; clean out backslashes
+		  (do ((i 0 (+ i 1)))
+		      ((>= i (- len 3)))
+		    (if (char=? (code i) #\\)
+			(cond ((char=? (code (+ i 1)) #\n)
+			       (set! (code i) #\space)
+			       (set! (code (+ i 1)) #\space))
+
+			      ((memv (code (+ i 1)) '(#\newline #\"))
+			       (set! (code i) #\space))
+
+			      ((and (char=? (code (+ i 1)) #\\)
+				    (char=? (code (- i 1)) #\#))
+			       (set! (code (- i 1)) #\space)
+			       (set! (code i) #\#))))))
+		(catch #t
+		  (lambda ()
+		    (let ((outstr (call-with-output-string
+				   (lambda (op)
+				     (call-with-input-string code
+				       (lambda (ip)
+					 (let ((old-shadow *report-shadowed-variables*))
+					   (set! *report-shadowed-variables* #t)
+					   (lint ip op #f)
+					   (set! *report-shadowed-variables* old-shadow))))))))
+		      (if (> (length outstr) 1) ; possible newline at end
+			  (format () ";~A ~D: ~A~%" file line-num outstr))))
+		  (lambda args
+		    (format () ";~A ~D, error in read: ~A ~A~%" file line-num args code))))))))))
+
+
+;;; --------------------------------------------------------------------------------
 ;;; TODO:
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; find the rest of the macro cases and (s7)test out-vars somehow ((*lint* 'out-vars)...)
@@ -11605,28 +11704,8 @@
 ;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
 ;;; (number? x) -> (vector|list-ref...)?
 ;;; 2 defines -> named let? [this could be a loop almost]
-;;; in let(*)-values we could also check that the expr fits the number of vars
 ;;; pp handling of let(*)-values is pessimal
-;;;
-;;; list var no cdr(etc), list-ref -> vector
-;;;   vector chars -> string/bytevector, int->int-vector etc
-;;;   string/symbol trade-offs
-;;;   large memq/assoc -> hash-table
-;;;   0/1 -> #f/#t
-;;; cond-expand -> reader-expand (also *features*/provided?)
-;;; map of list(1/2) -> bare repetition if builtin? [also do 0/1/2]
-;;; can we see switch used -> exit?
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
-;;; hg-like checker for C scheme: look for s7_eval_c_string and run lint over the string
-
-#|
-(lint-test "(string-append \"USER \" user (string #\\return) (string #\\newline))" "")
-;;; other str+str cases: string= and friends + others like this
-(lint-test "(string-append (string #\\return) \"Z!@~#$Ll*()def\")" "")
-(lint-test "(for-each display (list 1 a #\\newline))" "")
-(lint-test "(for-each write-string (list a \"asdf\" (substring x 1)))" "")
-(lint-test "(map abs (list a b))" "")
-(lint-test "(cond-expand (linux (define (hi a) (+ a 1))) ((osx windows) (define (hi a) (- a 1))))" "")
-|#
+;;; for the length>0 list junk, if a symbol, look it up! if value not a list, forget the message
 
 ;;; 495/100

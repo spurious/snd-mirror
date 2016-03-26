@@ -1981,8 +1981,38 @@
 	     args)))
       (let ((using-result #f)
 	    (using-loc #f))
-	(if (not (eq? lambda-type 'fnc))
-	    (begin
+	(if (eq? lambda-type 'fnc)
+	    (begin 
+	      (set! using-result (and (> refargs 0)
+				      (not return-type-void)))
+	      (if using-result
+		  (begin
+		    (hey "  {~%")
+		    (hey "    Xen result;~%")))
+	      (hey-start)
+
+	      (if (not (eq? spec 'etc))
+
+		  (cond (return-type-void 
+			 (hey-on "  "))
+
+			((not (= refargs 0))
+			 (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
+
+			((eq? spec 'free)
+			 (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
+
+			((eq? spec 'const-return)
+			 (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
+
+			(else
+			 (if (member name idlers)
+			     (begin
+			       (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
+			       (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
+			 (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))))))
+
+	    (begin  ; lambda-type != 'fnc
 	      (set! using-loc (or (eq? lambda-type 'GCallback)
 				  (and callback-data
 				       (memq (callback-gc callback-data) '(temporary semi-permanent)))))
@@ -2020,36 +2050,7 @@
 	      (hey-start)
 	      (if using-result
 		  (hey-on "    result = C_to_Xen_~A(" (no-stars return-type))
-		  (heyc "    ")))
-	    (begin ; lambda-type = 'fnc
-	      (set! using-result (and (> refargs 0)
-				      (not return-type-void)))
-	      (if using-result
-		  (begin
-		    (hey "  {~%")
-		    (hey "    Xen result;~%")))
-	      (hey-start)
-
-	      (if (not (eq? spec 'etc))
-
-		  (cond (return-type-void 
-			 (hey-on "  "))
-
-			((not (= refargs 0))
-			 (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
-
-			((eq? spec 'free)
-			 (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
-
-			((eq? spec 'const-return)
-			 (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
-
-			(else
-			 (if (member name idlers)
-			     (begin
-			       (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
-			       (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
-			 (hey-on "  return(C_to_Xen_~A(" (no-stars return-type)))))))
+		  (heyc "    "))))
 
 	;; pass args
 	(if (eq? spec 'etc)

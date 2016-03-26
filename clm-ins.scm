@@ -258,16 +258,17 @@ vocal sounds using phase quadrature waveshaping"
 
   (define (vox-fun phons which newenv)
     ;; make an envelope from which-th entry of phoneme data referred to by phons
-    (define (find-phoneme phoneme form)
-      (if (eq? (caar form) phoneme)
-	  (cdar form)
-	  (find-phoneme phoneme (cdr form))))
     (if (null? phons)
 	newenv
-      (vox-fun (cddr phons) which
-	       (append newenv
-		       (list (car phons)
-			     ((find-phoneme (cadr phons) formants) which))))))
+	(vox-fun (cddr phons) which
+		 (append newenv
+			 (list (car phons)
+			       ((let find-phoneme ((phoneme (cadr phons))
+						   (form formants))
+				  (if (eq? (caar form) phoneme)
+				      (cdar form)
+				      (find-phoneme phoneme (cdr form))))
+				which))))))
 
   (let ((start (seconds->samples beg))
 	 (end (seconds->samples (+ beg dur)))
@@ -1020,14 +1021,11 @@ is a physical model of a flute:
   ;; output-scale can be used to boost the reverb output
 
   (define (next-prime val)
-    (define (prime? val)
-      (or (= val 2)
-	  (and (odd? val)
-	       (do ((i 3 (+ i 2))
-		    (lim (sqrt val)))
-		   ((or (= 0 (modulo val i)) (> i lim))
-		    (> i lim))))))
-    (if (prime? val)
+    (if (or (= val 2)
+	    (and (odd? val)
+		 (do ((i 3 (+ i 2))
+		      (lim (sqrt val)))
+		     ((or (= 0 (modulo val i)) (> i lim)) (> i lim)))))
 	val
 	(next-prime (+ val 2))))
   

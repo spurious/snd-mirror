@@ -297,7 +297,8 @@
 			      (if (pair? (cddr obj))
 				  (if (pair? (caddr obj)) ; (let x () ...)
 				      (stacked-split-list (caddr obj) (+ column head-len (length (symbol->string (cadr obj))) 4))
-				      (write (caddr obj) port))
+				      (if (not (null? (caddr obj)))
+					  (write (caddr obj) port))) ; () is already being written
 				  (if (not (null? (cddr obj)))
 				      (format port " . ~S" (cddr obj)))))
 			    (begin

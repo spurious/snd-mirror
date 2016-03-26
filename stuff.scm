@@ -211,20 +211,20 @@
 
 ;;; ----------------
 (define-macro (fully-macroexpand form)
-  (define (expand form)
-    (cond ((not (pair? form)) form)
-          ((and (symbol? (car form))
-                (macro? (symbol->value (car form))))
-           (expand (apply macroexpand (list form))))
-          ((and (eq? (car form) 'set!)    ; look for (set! (mac ...) ...) and use mac's procedure-setter
-                (pair? (cdr form))
-                (pair? (cadr form))
-                (macro? (symbol->value (caadr form))))
-           (expand (apply (eval (procedure-source (procedure-setter (symbol->value (caadr form)))))
-                   (append (cdadr form) (cddr form)))))
-          (else (cons (expand (car form)) 
-		      (expand (cdr form))))))
-  (list 'quote (expand form)))
+  (list 'quote 
+	(let expand ((form form))
+	  (cond ((not (pair? form)) form)
+		((and (symbol? (car form))
+		      (macro? (symbol->value (car form))))
+		 (expand (apply macroexpand (list form))))
+		((and (eq? (car form) 'set!)    ; look for (set! (mac ...) ...) and use mac's procedure-setter
+		      (pair? (cdr form))
+		      (pair? (cadr form))
+		      (macro? (symbol->value (caadr form))))
+		 (expand (apply (eval (procedure-source (procedure-setter (symbol->value (caadr form)))))
+				(append (cdadr form) (cddr form)))))
+		(else (cons (expand (car form)) 
+			    (expand (cdr form))))))))
 
 (define-macro (define-with-macros name&args . body)
   `(apply define ',name&args (list (fully-macroexpand `(begin ,,@body)))))
@@ -530,11 +530,6 @@ If func approves of one, index-if returns the index that gives that element's po
 	 (cycles (cyclic-sequences obj))
 	 (seen-cycles ()))
 
-     (define (iter-memq p q)
-       (and (pair? q)
-	    (or (eq? p (iterator-sequence (car q)))
-		(iter-memq p (cdr q)))))
-
      (define (make-careful-iterator p)
        (if (not (pair? p))
 	   (make-iterator p)
@@ -568,6 +563,10 @@ If func approves of one, index-if returns the index that gives that element's po
      (let ((iter (make-careful-iterator obj)))
        (let ((iterator? #t))       
 	 (define (iterloop) ; define returns the new value
+	   (define (iter-memq p q)
+	     (and (pair? q)
+		  (or (eq? p (iterator-sequence (car q)))
+		      (iter-memq p (cdr q)))))
 	   (let ((result (iter)))
 	     (cond ((length result)
 		    (if (or (memq result seen-cycles)             ; we've dealt with it already, so skip it
@@ -810,14 +809,17 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		  (#t 
 		   (do ((1s 0)
 			(prev ints)
+			(nxt (cdr ints))
+			(ln (- len 1))
+			(nn (- n 1))
 			(i 0 (+ i 1)))
 		       ((= i len) 1s)
 		     (let ((cur (ints i)))
 		       (if (= i 0)
-			   (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) (cdr ints)))))
+			   (set! 1s (logior 1s (logand cur (apply log-n-of nn nxt))))
 			   (let ((mid (cdr prev)))
-			     (set! (cdr prev) (if (= i (- len 1)) () (cdr mid)))
-			     (set! 1s (logior 1s (logand cur (apply log-n-of (- n 1) ints))))
+			     (set! (cdr prev) (if (= i ln) () (cdr mid)))
+			     (set! 1s (logior 1s (logand cur (apply log-n-of nn ints))))
 			     (set! (cdr prev) mid)
 			     (set! prev mid)))))))))))
 
@@ -1368,9 +1370,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		(if (not (memq sym setters))
 		    (set! setters (cons sym setters)))
 		(let ((prev (assq sym accessors)))
-		  (if (not prev)
-		      (set! accessors (cons (cons sym `((set! ,(car bd) (,fname ,v)))) accessors))
-		      (set-cdr! prev (append `((set! ,(car bd) (,fname ,v))) (cdr prev)))))))
+		  (if prev
+		      (set-cdr! prev (append `((set! ,(car bd) (,fname ,v))) (cdr prev)))
+		      (set! accessors (cons (cons sym `((set! ,(car bd) (,fname ,v)))) accessors))))))
 	    syms)
 	   (set! bindings (cons bd bindings))))
        vars)
@@ -1401,13 +1403,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    setters)
 	   (let ,(reverse bindings) 
 	     ,@(map (lambda (sa)
-		      (if (not (assq (car sa) bindings))
+		      (if (assq (car sa) bindings)
+			  (values)
 			  `(set! (symbol-access ',(car sa))
 				 (lambda (,(gensym) ,v)
 				   (,(rlet-symbol (car sa)) ,v)
 				   ,@(cdr sa)
-				   ,v))
-			  (values)))
+				   ,v))))
 		    accessors)
 	     ,@(map (lambda (ns)
 		      `(set! (symbol-access ',(car ns))
@@ -1698,14 +1700,6 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (define (prepend-spaces)
     (format *display* (format #f "~~~DC" spaces) #\space))
   
-  (define (display-format str . args)
-    `(let ((,vlp (*s7* 'print-length)))
-       (with-let (funclet Display)
-	 (set! (*s7* 'print-length) *display-print-length*)
-	 (prepend-spaces))
-       (format (Display-port) ,str ,@args)
-       (set! (*s7* 'print-length) ,vlp)))
-  
   (define (display-let le e)
     (let ((vlp (*s7* 'print-length)))
       (for-each
@@ -1743,21 +1737,29 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	    (reverse lst)
 	    (append (reverse lst) args))))
   
-  (define (walk-let-body source)
-    (let ((previous (butlast source))
-	  (end (last source)))
-      `(begin
-	 ,@previous
-	 (let ((,result ,end))
-	   (with-let (funclet Display)
-	     (prepend-spaces))
-	   (format (Display-port) "  ~A~A) -> ~A~%"
-		   ,(if (pair? previous) " ... " "")
-		   ',end
-		   ,result)
-	   ,result))))
-  
   (define (proc-walk source)
+    
+    (define (display-format str . args)
+      `(let ((,vlp (*s7* 'print-length)))
+	 (with-let (funclet Display)
+	   (set! (*s7* 'print-length) *display-print-length*)
+	   (prepend-spaces))
+	 (format (Display-port) ,str ,@args)
+	 (set! (*s7* 'print-length) ,vlp)))
+  
+    (define (walk-let-body source)
+      (let ((previous (butlast source))
+	    (end (last source)))
+	`(begin
+	   ,@previous
+	   (let ((,result ,end))
+	     (with-let (funclet Display)
+	       (prepend-spaces))
+	     (format (Display-port) "  ~A~A) -> ~A~%"
+		     ,(if (pair? previous) " ... " "")
+		     ',end
+		     ,result)
+	     ,result))))
     
     (if (not (pair? source))
 	source
@@ -1920,10 +1922,13 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
   
   (define-macro (Display-1 definition)
-    (if (and (pair? definition)
-	     (memq (car definition) '(define define*))
-	     (pair? (cdr definition))
-	     (pair? (cadr definition)))
+    (if (not (and (pair? definition)
+		  (memq (car definition) '(define define*))
+		  (pair? (cdr definition))
+		  (pair? (cadr definition))))
+
+	;; (Display <anything-else>)
+	(proc-walk definition)                                                    ; (Display (+ x 1)) etc
 	
 	;; (Display (define (f ...) ...)
 	(let ((func (caadr definition))
@@ -1974,10 +1979,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			       (set! spaces (- spaces *display-spacing*))  ; unindent
 			       (prepend-spaces))
 			     (format (Display-port) "    -> ~S~%" ,',result)))))
-		   (curlet) ,,@call-args)))))                                      ; pass in the original args and the curlet
+		   (curlet) ,,@call-args)))))))                                    ; pass in the original args and the curlet
 	
-	;; (Display <anything-else>)
-	(proc-walk definition)))                                                   ; (Display (+ x 1)) etc
   
   (set! Display Display-1))                                                        ; make Display-1 globally accessible
 

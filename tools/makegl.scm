@@ -252,8 +252,11 @@
 		      ("BOOLEAN" . "C_bool_to_Xen_boolean")
 		      ("ULONG"   . "C_ulong_to_Xen_ulong"))
 		string=?) => cdr)
-	((string-ci=? str "String") (if (string=? (car typ) "guchar*") "C_to_Xen_String" "C_string_to_Xen_string"))
-	(else (format #f "~A unknown" str))))
+	((not (string-ci=? str "String")) 
+	 (format #f "~A unknown" str))
+	((string=? (car typ) "guchar*") 
+	 "C_to_Xen_String")
+	(else "C_string_to_Xen_string")))
 
 (define (xen-to-c-macro-name str)
   (cond ((assoc str '(("INT"     . "Xen_integer_to_C_int")
@@ -697,10 +700,10 @@
 		   (hey "  {~%")
 		   (if (not using-result)
 		       (hey "    Xen result;~%"))
-		   (hey "    int i, vals;~%")
-		   (hey "    vals = how_many_vals(Xen_to_C_GLenum(pname));~%")
-		   (hey "    result = Xen_empty_list;~%")
-		   (hey "    for (i = 0; i < vals; i++)~%")
+		   (hey "    int i, vals;~%    ~
+                             vals = how_many_vals(Xen_to_C_GLenum(pname));~%    ~
+		             result = Xen_empty_list;~%    ~
+                             for (i = 0; i < vals; i++)~%")
 		   (hey "      result = Xen_cons(C_to_Xen_~A(~A[i]), result);~%" 
 			(no-stars (deref-type (args (- argslen 1))))
 			(deref-name (args (- argslen 1))))

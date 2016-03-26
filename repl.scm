@@ -124,16 +124,15 @@
 				     (set! (histbuf i) (histbuf (+ i 1))))
 				   (set! (histbuf (- histsize 1)) (histbuf 0))
 				   (set! pos 0))
-
 				 (do ((i pos (+ i 1)))
 				     ((>= i (- histpos 1)))
 				   (set! (histbuf i) (histbuf (+ i 1))))
-				 (set! histpos (- histpos 1)))
+				 (set! histpos (- histpos 1))))
 
-			       (set! (histbuf histpos) (copy new-line))
-			       (set! histpos (+ histpos 1))
-			       (if (= histpos histsize)
-				   (set! histpos 0))))))
+			     (set! (histbuf histpos) (copy new-line))
+			     (set! histpos (+ histpos 1))
+			     (if (= histpos histsize)
+				 (set! histpos 0)))))
 	  
 	  (define (history-help)
 	    (set! (*repl* 'helpers)
@@ -273,9 +272,11 @@
 	    
 	    (define (check-parens)
 	      (let ((endpos (- cursor-pos 1)))
-		(if (and (> cursor-pos 1)
-			 (char=? (cur-line endpos) #\))              ; ")" on left of cursor
-			 (not (char-constant? endpos)))                  ; it's not "#\)"
+		(if (or (<= cursor-pos 1)
+			(not (char=? (cur-line endpos) #\)))      ; ")" on left of cursor
+			(char-constant? endpos))                  ; it's not "#\)"
+		    (if (number? red-par-pos)
+			(set! red-par-pos #f))
 		    (let ((oparens ())
 			  (new-red-pos #f))
 		      (do ((i 0 (+ i 1)))
@@ -314,13 +315,10 @@
 				    (set! i (+ k 1))
 				    (if (>= i endpos)
 					(set! oparens ()))))))))
-		      
 		      (if (pair? oparens)
 			  (set! new-red-pos (car oparens)))
 		      (unless (equal? new-red-pos red-par-pos)
-			(set! red-par-pos (and (number? new-red-pos) new-red-pos))))
-		    (if (number? red-par-pos)
-			(set! red-par-pos #f)))))
+			(set! red-par-pos (and (number? new-red-pos) new-red-pos)))))))
 	    
 	    
 	    ;; -------- indentation --------
@@ -545,27 +543,26 @@
 				     (keymap-functions (char->integer c)))
 				    ((integer? c) 
 				     (keymap-functions c))
-				    ((string? c)
-				     (if (= (length c) 1)
-					 (keymap-functions (char->integer (c 0)))
-					 (if (and (= (length c) 2)
-						  (char=? (c 0) #\escape))
-					     (meta-keymap-functions (char->integer (c 1)))
-					     (lambda (c) #t))))
-				    (else (error 'wrong-type-arg "keymap takes a character or string argument"))))
-			    
+				    ((not (string? c))
+				     (error 'wrong-type-arg "keymap takes a character or string argument"))
+				    ((= (length c) 1) 
+				     (keymap-functions (char->integer (c 0))))
+				    ((and (= (length c) 2)
+					  (char=? (c 0) #\escape))
+				     (meta-keymap-functions (char->integer (c 1))))
+				    (else (lambda (c) #t))))
 			    (lambda (c f)
 			      (cond ((char? c) 
 				     (set! (keymap-functions (char->integer c)) f))
 				    ((integer? c) 
 				     (set! (keymap-functions c) f))
-				    ((string? c)
-				     (if (= (length c) 1)
-					 (set! (keymap-functions (char->integer (c 0))) f)
-					 (if (and (= (length c) 2)
-						  (char=? (c 0) #\escape))
-					     (set! (meta-keymap-functions (char->integer (c 1))) f))))
-				    (else (error 'wrong-type-arg "set! keymap takes a character or string first argument"))))))
+				    ((not (string? c))
+				     (error 'wrong-type-arg "set! keymap takes a character or string first argument"))
+				    ((= (length c) 1)
+				     (set! (keymap-functions (char->integer (c 0))) f))
+				    ((and (= (length c) 2)
+					  (char=? (c 0) #\escape))
+				     (set! (meta-keymap-functions (char->integer (c 1))) f))))))
 	    
 	    (define C-a 1)     ; #\x01 etc
 	    (define C-b 2)
@@ -1072,108 +1069,107 @@
 				   (format *stderr* "> ")))))))))
 		
 		;; not a pipe or a dumb terminal -- hopefully all others accept vt100 codes
-		(let ((buf (termios.make))
-		      (read-size 128))
-		  
-		  (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
-			(let* ((c (make-string read-size #\null)) 
-			       (cc (string->c-pointer c))
-			       (ctr 0))
-			  (lambda ()
-			    (call-with-exit
-			     (lambda (return)
-			       (when (>= ctr chars)
-				 (set! ctr 0)
-				 (set! chars (read input-fd cc read-size))
-				 (if (= chars 0)
-				     (tty-reset))
-				 
-				 (when (= chars read-size)
-				   ;; concatenate buffers until we get the entire selection
-				   (let ((str (substring c 0 read-size)))
-				     (let reading ((num (read input-fd cc read-size)))
-				       (set! str (string-append str (substring c 0 num)))
-				       (set! chars (+ chars num))
-				       (if (= num read-size)
-					   (reading (read input-fd cc read-size))))
-				     
-				     ;; look for simple cut/paste -- no control chars etc
-				     (when (= input-fd terminal-fd)
-				       (let ((bcksp #\delete)
-					     (ok-chars (list #\newline #\linefeed #\return #\tab)))
-					 (do ((i 0 (+ i 1)))
-					     ((or (= i chars)
-						  (char>=? (str i) bcksp)
-						  (and (char<? (str i) #\space)
-						       (not (memv (str i) ok-chars))))
-					      
-					      (when (= i chars)
-						(let ((search-chars (string #\tab #\return #\newline))
-						      (old-pos 0)
-						      (start 0)
-						      (max-cols 0))
-						  (do ((pos (char-position search-chars str 0) (char-position search-chars str (+ pos 1))))
-						      ((not pos))
-						    (set! cur-line (string-append cur-line 
-										  (substring str old-pos pos)
-										  (if (char=? (str pos) #\tab) 
-										      tab-as-space 
-										      (string #\space #\newline))))
-						    (set! old-pos (+ pos 1))
-						    (unless (char=? (str pos) #\tab)
-						      (set! max-cols (max max-cols (- pos start)))
-						      (set! start pos)))
-						  (if (< (+ old-pos 1) (length str))
-						      (set! cur-line (string-append cur-line (substring str (+ old-pos 1)))))
-						  
-						  ;; if the line is too long, the cursor gets confused, so try to reformat over-long strings
-						  ;; this still messes up sometimes
-
-						  (when (> max-cols (- last-col prompt-length))
-						    (let ((old-len ((funclet pretty-print) '*pretty-print-length*)))
-						      (set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 2))
-						      (set! cur-line (with-output-to-string
-								       (lambda ()
-									 (pretty-print (with-input-from-string cur-line #_read)))))
-						      (set! ((funclet pretty-print) '*pretty-print-length*) old-len)))
-						  
+		(let ((buf (termios.make)))
+		  (let ((read-size 128))
+		    (set! next-char                                     ; this indirection is needed if user pastes the selection into the repl
+			  (let* ((c (make-string read-size #\null)) 
+				 (cc (string->c-pointer c))
+				 (ctr 0))
+			    (lambda ()
+			      (call-with-exit
+			       (lambda (return)
+				 (when (>= ctr chars)
+				   (set! ctr 0)
+				   (set! chars (read input-fd cc read-size))
+				   (if (= chars 0)
+				       (tty-reset))
+				   
+				   (when (= chars read-size)
+				     ;; concatenate buffers until we get the entire selection
+				     (let ((str (substring c 0 read-size)))
+				       (let reading ((num (read input-fd cc read-size)))
+					 (set! str (string-append str (substring c 0 num)))
+					 (set! chars (+ chars num))
+					 (if (= num read-size)
+					     (reading (read input-fd cc read-size))))
+				       
+				       ;; look for simple cut/paste -- no control chars etc
+				       (when (= input-fd terminal-fd)
+					 (let ((bcksp #\delete)
+					       (ok-chars (list #\newline #\linefeed #\return #\tab)))
+					   (do ((i 0 (+ i 1)))
+					       ((or (= i chars)
+						    (char>=? (str i) bcksp)
+						    (and (char<? (str i) #\space)
+							 (not (memv (str i) ok-chars))))
+						
+						(when (= i chars)
+						  (let ((search-chars (string #\tab #\return #\newline))
+							(old-pos 0)
+							(start 0)
+							(max-cols 0))
+						    (do ((pos (char-position search-chars str 0) (char-position search-chars str (+ pos 1))))
+							((not pos))
+						      (set! cur-line (string-append cur-line 
+										    (substring str old-pos pos)
+										    (if (char=? (str pos) #\tab) 
+											tab-as-space 
+											(string #\space #\newline))))
+						      (set! old-pos (+ pos 1))
+						      (unless (char=? (str pos) #\tab)
+							(set! max-cols (max max-cols (- pos start)))
+							(set! start pos)))
+						    (if (< (+ old-pos 1) (length str))
+							(set! cur-line (string-append cur-line (substring str (+ old-pos 1)))))
+						    
+						    ;; if the line is too long, the cursor gets confused, so try to reformat over-long strings
+						    ;; this still messes up sometimes
+						    
+						    (when (> max-cols (- last-col prompt-length))
+						      (let ((old-len ((funclet pretty-print) '*pretty-print-length*)))
+							(set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 2))
+							(set! cur-line (with-output-to-string
+									 (lambda ()
+									   (pretty-print (with-input-from-string cur-line #_read)))))
+							(set! ((funclet pretty-print) '*pretty-print-length*) old-len))))
+						    
 						  (set! cursor-pos (length cur-line))
 						  (set! chars 0)
 						  (set! ctr 1)
 						  (display-lines)
-						  (return #\newline)))))))
-				     
-				     (set! c str)
-				     (set! cc (string->c-pointer c))
-				     ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
-				     ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
-				     ;; actually, the time is not the repl's fault -- xterm seems to be waiting
-				     ;;   for the window manager or someone to poke it -- if I move the mouse,
-				     ;;   I get immediate output.  I also get immediate output in any case in OSX.
-				     ;;   valgrind and ps say we're not computing, we're just sitting there.
-				     (catch #t
-				       (lambda ()
-					 (do ((ch (next-char) (next-char)))
-					     ((= ctr (- chars 1)) 
-					      (set! chars 0)
-					      (display-lines)
-					      (return ch))
-					   ((keymap-functions (char->integer ch)) ch)))
+						  (return #\newline))))))
 				       
-				       (lambda (type info)
-					 (set! chars 0)
-					 (move-cursor prompt-row prompt-col)
-					 (format *stderr* "internal error: ")
-					 (apply format *stderr* info)
-					 (format *stderr* "~%line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
-					 (set! chars 0)
-					 (set! ctr 0)
-					 (new-prompt)
-					 (return #\null))))))
-			       
-			       (let ((result (c ctr)))
-				 (set! ctr (+ ctr 1))
-				 result))))))
+				       (set! c str)
+				       (set! cc (string->c-pointer c))
+				       ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
+				       ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
+				       ;; actually, the time is not the repl's fault -- xterm seems to be waiting
+				       ;;   for the window manager or someone to poke it -- if I move the mouse,
+				       ;;   I get immediate output.  I also get immediate output in any case in OSX.
+				       ;;   valgrind and ps say we're not computing, we're just sitting there.
+				       (catch #t
+					 (lambda ()
+					   (do ((ch (next-char) (next-char)))
+					       ((= ctr (- chars 1)) 
+						(set! chars 0)
+						(display-lines)
+						(return ch))
+					     ((keymap-functions (char->integer ch)) ch)))
+					 
+					 (lambda (type info)
+					   (set! chars 0)
+					   (move-cursor prompt-row prompt-col)
+					   (format *stderr* "internal error: ")
+					   (apply format *stderr* info)
+					   (format *stderr* "~%line ~A: ~A~%" ((owlet) 'error-line) ((owlet) 'error-code))
+					   (set! chars 0)
+					   (set! ctr 0)
+					   (new-prompt)
+					   (return #\null))))))
+				 
+				 (let ((result (c ctr)))
+				   (set! ctr (+ ctr 1))
+				   result)))))))
 		  
 		  (set! input-fd (if (not file) 
 				     terminal-fd
