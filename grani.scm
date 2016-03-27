@@ -67,9 +67,11 @@
 			       (yerr (- (expt base (+ yint error)) yexp)))
 			  ;; is the linear approximation accurate enough?
 			  ;; are we still over the cutoff limit?
-			  (if (and (> (abs (- yexp yinte)) yerr)
-				   (or (not ycutoff)
-				       (> yinte ycutoff)))
+			  (if (not (and (> (abs (- yexp yinte)) yerr)
+					(or (not ycutoff)
+					    (> yinte ycutoff))))
+			      ;; yes --> don't need to add nu'ting to the envelope
+			      (values () ())
 			      ;; no --> add a breakpoint and recurse right and left
 			      (call-with-values
 				  (lambda () (exp-seg xl yle xint yexp yl yint error))
@@ -78,9 +80,8 @@
 				      (lambda () (exp-seg xint yexp xh yhe yint yh error))
 				    (lambda (xj yj)
 				      (values (append xi (list xint) xj)
-					      (append yi (list yexp) yj))))))
-			      ;; yes --> don't need to add nu'ting to the envelope
-			      (values () ()))))))
+					      (append yi (list yexp) yj)))))))))))
+			      
       ;; loop for each segment in the envelope
       (let segs ((en env1))
 	(let* ((x (car en))
@@ -104,7 +105,7 @@
 		      (let ((x (car xx))
 			    (y (car yy)))
 			(set! result (append result (list x y)))
-			(if (> (length xx) 1)
+			(if (pair? (cdr xx))
 			    (vals (cdr xx) (cdr yy)))))))))
 	  (if (<= (length en) 4)
 	      (append result (list nx (if (or (not ycutoff)

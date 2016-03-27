@@ -22165,7 +22165,9 @@ void post_lisp_popup_menu(void *e) {}
 /* ---------------- tooltips ---------------- */
 
 static Widget tooltip_shell = NULL;
-static Widget tooltip_label = NULL;
+#if (!HAVE_GL)
+  static Widget tooltip_label = NULL;
+#endif
 static timeout_result_t tool_proc = 0, quit_proc = 0;
 static Time tool_last_time = 0;
 static Position tool_x, tool_y;

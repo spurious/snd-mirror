@@ -2477,6 +2477,7 @@
 					     (member arg2 (cdr arg1))
 					     (not (side-effect? arg1 env)))
 					(return arg2))
+				    ;; the and equivalent of (or (not A) (and A B)) never happens
 
 				    (when (and (symbol? arg1)                    ; (and x (pair? x)) -> (pair? x)
 					       (pair? arg2)
@@ -11726,5 +11727,7 @@
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; var at level of func used only in func -> closure
 ;;;    this is currently not noticed in report-usage [var-scope is not saved for non-funcs]
-
+;;; maybe report very large 1-branch if?
+;;; lint should report undefined ids like scale/func in effects-utils
+;;;
 ;;; 495/100

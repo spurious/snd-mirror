@@ -34538,36 +34538,36 @@ EDITS: 1
     (if (fneq (bes-i1 5.0) 24.33564) (snd-display #__line__ ";bes-i1 5.0: ~A" (bes-i1 5.0)))
     (if (fneq (bes-i1 10.0) 2670.9883) (snd-display #__line__ ";bes-i1 10.0: ~A" (bes-i1 10.0))))
   
-  (define (test-in)
-    (define (bes-in n x)			;return In(x) for any integer n, real x
-      (cond ((= n 0) (bes-i0 x))
-	    ((= n 1) (bes-i1 x))
-	    ((= x 0.0) 0.0)
-	    (else
-	     (let* ((iacc 40)
-		    (bigno 10000000000.0000)
-		    (bigni 0.0000)
-		    (ans 0.0000)
-		    (tox (/ 2.0 (abs x)))
-		    (bip 0.0000)
-		    (bi 1.0000)
-		    (m (* 2 (+ n (truncate (sqrt (* iacc n))))))
-		    (bim 0.0000))
-	       (do ((j m (- j 1)))
-		   ((= j 0))
-		 (set! bim (+ bip (* j tox bi)))
-		 (set! bip bi)
-		 (set! bi bim)
-		 (if (> (abs bi) bigno)
-		     (begin
-		       (set! ans (* ans bigni))
-		       (set! bi (* bi bigni))
-		       (set! bip (* bip bigni))))
-		 (if (= j n) (set! ans bip)))
-	       (if (and (< x 0.0) (odd? n))
-		   (set! ans (- ans)))
-	       (* ans (/ (bes-i0 x) bi))))))
+  (define (bes-in n x)			;return In(x) for any integer n, real x
+    (cond ((= n 0) (bes-i0 x))
+	  ((= n 1) (bes-i1 x))
+	  ((= x 0.0) 0.0)
+	  (else
+	   (let* ((iacc 40)
+		  (bigno 10000000000.0000)
+		  (bigni 0.0000)
+		  (ans 0.0000)
+		  (tox (/ 2.0 (abs x)))
+		  (bip 0.0000)
+		  (bi 1.0000)
+		  (m (* 2 (+ n (truncate (sqrt (* iacc n))))))
+		  (bim 0.0000))
+	     (do ((j m (- j 1)))
+		 ((= j 0))
+	       (set! bim (+ bip (* j tox bi)))
+	       (set! bip bi)
+	       (set! bi bim)
+	       (if (> (abs bi) bigno)
+		   (begin
+		     (set! ans (* ans bigni))
+		     (set! bi (* bi bigni))
+		     (set! bip (* bip bigni))))
+	       (if (= j n) (set! ans bip)))
+	     (if (and (< x 0.0) (odd? n))
+		 (set! ans (- ans)))
+	     (* ans (/ (bes-i0 x) bi))))))
   
+  (define (test-in)
     (if (fneq (bes-in 1 1.0) 0.565159) (snd-display #__line__ ";bes-in 1 1.0: ~A" (bes-in 1 1.0)))
     (if (fneq (bes-in 2 1.0) 0.13574767) (snd-display #__line__ ";bes-in 2 1.0: ~A" (bes-in 2 1.0)))
     (if (fneq (bes-in 3 1.0) 0.02216842) (snd-display #__line__ ";bes-in 3 1.0: ~A" (bes-in 3 1.0)))
@@ -34586,54 +34586,54 @@ EDITS: 1
     (if (fneq (bes-in 5 5.0) 2.157974) (snd-display #__line__ ";bes-in 5 5.0: ~A" (bes-in 5 5.0)))
     (if (fneq (bes-in 10 5.0) 0.004580044) (snd-display #__line__ ";bes-in 10 5.0: ~A" (bes-in 10 5.0))))
   
+  (define (bes-k0 x)				;K0(x)
+    (if (<= x 2.0)
+	(let ((y (* x (/ x 4.0))))
+	  (+ (* (- (log (/ x 2.0))) (bes-i0 x)) -0.57721566
+	     (* y (+ 0.42278420
+		     (* y (+ 0.23069756
+			     (* y (+ 0.3488590e-1
+				     (* y (+ 0.262698e-2
+					     (* y (+ 0.10750e-3
+						     (* y 0.74e-5)))))))))))))
+	(let ((y (/ 2.0 x)))
+	  (* (/ (exp (- x)) (sqrt x)) 
+	     (+ 1.25331414
+		(* y (+ -0.7832358e-1
+			(* y (+ 0.2189568e-1
+				(* y (+ -0.1062446e-1
+					(* y (+ 0.587872e-2
+						(* y (+ -0.251540e-2
+							(* y -0.53208e-3))))))))))))))))
+  
   (define (test-k0)
-    (define (bes-k0 x)				;K0(x)
-      (if (<= x 2.0)
-	  (let ((y (* x (/ x 4.0))))
-	    (+ (* (- (log (/ x 2.0))) (bes-i0 x)) -0.57721566
-	       (* y (+ 0.42278420
-		       (* y (+ 0.23069756
-			       (* y (+ 0.3488590e-1
-				       (* y (+ 0.262698e-2
-					       (* y (+ 0.10750e-3
-						       (* y 0.74e-5)))))))))))))
-	  (let ((y (/ 2.0 x)))
-	    (* (/ (exp (- x)) (sqrt x)) 
-	       (+ 1.25331414
-		  (* y (+ -0.7832358e-1
-			  (* y (+ 0.2189568e-1
-				  (* y (+ -0.1062446e-1
-					  (* y (+ 0.587872e-2
-						  (* y (+ -0.251540e-2
-							  (* y -0.53208e-3))))))))))))))))
-    
     (if (fneq (bes-k0 1.0) 0.4210244) (snd-display #__line__ ";bes-k0 1.0: ~A" (bes-k0 1.0)))
     (if (fneq (bes-k0 2.0) 0.1138938) (snd-display #__line__ ";bes-k0 2.0: ~A" (bes-k0 2.0)))
     (if (fneq (bes-k0 10.0) 1.7780e-5) (snd-display #__line__ ";bes-k0 10.0: ~A" (bes-k0 10.0))))
   
-  (define (test-k1)
-    (define (bes-k1 x)				;K1(x)
-      (if (<= x 2.0)
-	  (let ((y (* x (/ x 4.0))))
-	    (+ (* (log (/ x 2)) (bes-i1 x)) 
-	       (* (/ 1.0 x)
-		  (+ 1.0
-		     (* y (+ 0.15443144
-			     (* y (+ -0.67278579
-				     (* y (+ -0.18156897
-					     (* y (+ -0.1919402e-1
-						     (* y (+ -0.110404e-2
-							     (* y -0.4686e-4)))))))))))))))
-	  (let ((y (/ 2.0 x)))
-	    (* (/ (exp (- x)) (sqrt x)) 
-	       (+ 1.25331414 
-		  (* y (+ 0.23498619
-			  (* y (+ -0.3655620e-1
-				  (* y (+ 0.1504268e-1
-					  (* y (+ -0.780353e-2
-						  (* y (+ 0.325614e-2
-							  (* y -0.68245e-3))))))))))))))))
+  (define (bes-k1 x)				;K1(x)
+    (if (<= x 2.0)
+	(let ((y (* x (/ x 4.0))))
+	  (+ (* (log (/ x 2)) (bes-i1 x)) 
+	     (* (/ 1.0 x)
+		(+ 1.0
+		   (* y (+ 0.15443144
+			   (* y (+ -0.67278579
+				   (* y (+ -0.18156897
+					   (* y (+ -0.1919402e-1
+						   (* y (+ -0.110404e-2
+							   (* y -0.4686e-4)))))))))))))))
+	(let ((y (/ 2.0 x)))
+	  (* (/ (exp (- x)) (sqrt x)) 
+	     (+ 1.25331414 
+		(* y (+ 0.23498619
+			(* y (+ -0.3655620e-1
+				(* y (+ 0.1504268e-1
+					(* y (+ -0.780353e-2
+						(* y (+ 0.325614e-2
+							(* y -0.68245e-3))))))))))))))))
   
+  (define (test-k1)
     (if (fneq (bes-k1 1.0) 0.60190723) (snd-display #__line__ ";bes-k1 1.0: ~A" (bes-k1 1.0)))
     (if (fneq (bes-k1 2.0) 0.1398658) (snd-display #__line__ ";bes-k1 2.0: ~A" (bes-k1 2.0)))
     (if (fneq (bes-k1 10.0) 1.86487e-5) (snd-display #__line__ ";bes-k1 10.0: ~A" (bes-k1 10.0))))

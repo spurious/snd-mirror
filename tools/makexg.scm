@@ -2968,7 +2968,7 @@
 (hey "static s7_pointer enum_value_to_name(s7_scheme *sc, long long int val, const char *type) ~%")
 (hey "{ ~%")
 (hey "  int k; ~%")
-(hey "  long long int range_min, range_max; ~%")
+(hey "  long long int range_min = 0, range_max = 0; ~%")
 (hey "  bool range_set = false; ~%")
 (hey "  for (k = 0; ; k++) ~%")
 (hey "    { ~%")
