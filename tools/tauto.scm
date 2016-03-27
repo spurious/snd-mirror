@@ -157,9 +157,8 @@
       (begin
 	(if (symbol? (car lst))
 	    (set-car! lst (symbol->value (car lst)))
-	    (if (pair? (car lst))
-		(set-car! lst (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))
-		(set-car! lst #f)))
+	    (set-car! lst (and (pair? (car lst))
+			       (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))))
 	(map-values (cdr lst)))))
 
 (define baddies '(exit emergency-exit abort autotest 

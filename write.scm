@@ -312,7 +312,7 @@
 			(write-char #\) port))))
 
 		 ((inlet)
-		  (format port "(inlet")
+		  (format port "(inlet ")
 		  (if (pair? (cdr obj))
 		      (do ((lst (cdr obj) (cddr lst)))
 			  ((not (and (pair? lst)

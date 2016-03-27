@@ -2129,11 +2129,23 @@
 					(eq? (car arg1) 'and)
 					(equal? arg2 (list-ref arg1 (- (length arg1) 1)))
 					(not (side-effect? arg1 env)))
-				   (return arg2))				   
-			       
+				   (return arg2))
+
+			       (if (and (pair? arg2)      ; (or A (and (not A) B)) -> (or A B)
+					(eq? (car arg2) 'and)
+					(pair? (cadr arg2))
+					(eq? (caadr arg2) 'not)
+					(equal? arg1 (cadadr arg2)))
+				   (return `(or ,arg1 ,@(cddr arg2))))
+
 			       (when (and (pair? arg1)
 					  (pair? arg2))
 				 
+				 (if (and (eq? (car arg1) 'not) ; (or (not A) (and A B)) -> (or (not A) B) -- this stuff actually happens!
+					  (eq? (car arg2) 'and)
+					  (equal? (cadr arg1) (cadr arg2)))
+				     (return `(or ,arg1 ,@(cddr arg2))))
+
 				 (when (and (eq? (car arg1) 'and)
 					    (eq? (car arg2) 'and)
 					    (= 3 (length arg1) (length arg2))
@@ -2455,19 +2467,18 @@
 				(when (= len 3)
 				  (let ((arg1 (cadr form))
 					(arg2 (caddr form)))
-				    
-				    (if (and (pair? arg2)     ; (and A (or A ...)) -> A
+				    (if (and (pair? arg2)                ; (and A (or A ...)) -> A
 					     (eq? (car arg2) 'or)
 					     (equal? arg1 (cadr arg2))
 					     (not (side-effect? arg2 env)))
 					(return arg1))
-				    (if (and (pair? arg1)     ; (and (or ... A ...) A) -> A
+				    (if (and (pair? arg1)                ; (and (or ... A ...) A) -> A
 					     (eq? (car arg1) 'or)
 					     (member arg2 (cdr arg1))
 					     (not (side-effect? arg1 env)))
 					(return arg2))
-				    
-				    (when (and (symbol? arg1)                       ; (and x (pair? x)) -> (pair? x)
+
+				    (when (and (symbol? arg1)                    ; (and x (pair? x)) -> (pair? x)
 					       (pair? arg2)
 					       (pair? (cdr arg2))
 					       (eq? arg1 (cadr arg2)))
@@ -4546,9 +4557,10 @@
 							 inlet))
 			   (lint-format "this doesn't make much sense: ~A~%" caller form)))
 		   (if (and (eq? head 'list-ref)
-			    (eq? (car seq) 'quote))
+			    (eq? (car seq) 'quote)
+			    (proper-list? (cadr seq)))
 		       (lint-format "perhaps use a vector: ~A" caller
-				    (lists->string form `(vector-ref ,(list->vector (cadr seq)) ,(caddr form))))))))
+				    (lists->string form `(vector-ref ,(apply vector (cadr seq)) ,(caddr form))))))))
 	   (set! last-checker-line-number line-number)))
 	
 	;; ----------------
@@ -8530,7 +8542,7 @@
 				   (true (caddr form))
 				   (false (if (= len 4) (cadddr form) 'no-false))
 				   (suggestion made-suggestion))
-			       
+
 			       (define (differ-in-one p q)
 				 (and (pair? p)
 				      (pair? q)
@@ -8707,6 +8719,16 @@
 								       (lists->string form `(if (or ,expr (not ,(cadr false))) ,true ,(caddr false))))
 							  (lint-format "perhaps ~A" caller 
 								       (lists->string form `(and (not (or ,expr (not ,(cadr false)))) ,(caddr false)))))))))
+
+					 ((map)  ; (if (null? x) () (map abs x)) -> (map abs x)
+					  (if (and (pair? test)
+						   (eq? (car test) 'null?)
+						   (or (null? true)
+						       (equal? true (cadr test)))
+						   (equal? (cadr test) (caddr false))
+						   (or (null? (cdddr false))
+						       (not (side-effect? (cdddr false) env))))
+					      (lint-format "perhaps ~A" caller (lists->string form false))))
 
 					 ((case)
 					  (if (and (pair? expr)
@@ -10384,9 +10406,9 @@
 				      (for-each (lambda (v)
 						  (set! end (max end (v 2))))
 						last-refs)
-				      (if (and (< end (/ len lint-let-reduction-factor)) ; maybe we need tree-length here
-					       (eq? form lint-current-form))
-
+				      (if (and (< end (/ len lint-let-reduction-factor))
+					       (eq? form lint-current-form)
+					       (< (tree-length (car body)) 100))
 					  (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
 						       (+ lint-left-margin 4) #\space
 						       (truncated-list->string form)
@@ -11696,16 +11718,13 @@
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; find the rest of the macro cases and (s7)test out-vars somehow ((*lint* 'out-vars)...)
 ;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
-;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc
+;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
 ;;;   could we search the form for the lowest positive line num?
 ;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
-;;;
-;;; (list? x) -> (car x) but might be () [at least if] also needs proper-list? somehow
-;;; (number? x) -> (vector|list-ref...)?
-;;; 2 defines -> named let? [this could be a loop almost]
 ;;; pp handling of let(*)-values is pessimal
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
-;;; for the length>0 list junk, if a symbol, look it up! if value not a list, forget the message
+;;; var at level of func used only in func -> closure
+;;;    this is currently not noticed in report-usage [var-scope is not saved for non-funcs]
 
 ;;; 495/100

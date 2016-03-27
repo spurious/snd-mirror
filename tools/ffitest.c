@@ -1243,10 +1243,10 @@ int main(int argc, char **argv)
     gc_loc = s7_gc_protect(sc, port);
     while(true)
       {
-	s7_pointer code, val;
+	s7_pointer code;
 	code = s7_read(sc, port);
 	if (code == s7_eof_object(sc)) break;
-	val = s7_eval(sc, code, s7_nil(sc));
+	s7_eval(sc, code, s7_nil(sc));
       }
     s7_close_input_port(sc, port);
     s7_gc_unprotect_at(sc, gc_loc);
@@ -1257,10 +1257,10 @@ int main(int argc, char **argv)
     gc_loc = s7_gc_protect(sc, port);
     while(true)
       {
-	s7_pointer code, val;
+	s7_pointer code;
 	code = s7_read(sc, port);
 	if (code == s7_eof_object(sc)) break;
-	val = s7_eval(sc, code, s7_nil(sc));
+	s7_eval(sc, code, s7_nil(sc));
       }
     s7_close_input_port(sc, port);
     s7_gc_unprotect_at(sc, gc_loc);

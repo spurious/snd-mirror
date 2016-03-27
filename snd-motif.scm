@@ -1180,12 +1180,13 @@
 		 
       (define (find-dialog-widget wid ds)
 	(and (pair? ds)
+	     (pair? (car ds))
 	     (if (equal? wid (caar ds))
 		 (car ds)
 		 (find-dialog-widget wid (cdr ds)))))
       (lambda args
 	;; (file-select func title dir filter help)
-	(let* ((func (and (> (length args) 0) (args 0)))
+	(let* ((func (and (pair? args) (args 0)))
 	       (title (if (> (length args) 1) (args 1) "select file"))
 	       (dir (if (> (length args) 2) (args 2) "."))
 	       (filter (if (> (length args) 3) (args 3) "*"))
@@ -1227,14 +1228,14 @@
 	  (if (not help)
 	      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON))
 	      (XtManageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON)))
-	  (let ((dirstr (XmStringCreateLocalized dir))
-		(patstr (XmStringCreateLocalized filter))
+	  (let ((patstr (XmStringCreateLocalized filter))
 		(titlestr (XmStringCreateLocalized title)))
-	    (XtSetValues dialog
-			 (list XmNdirectory dirstr
-			       XmNpattern patstr
-			       XmNdialogTitle titlestr))
-	    (XmStringFree dirstr)
+	    (let ((dirstr (XmStringCreateLocalized dir)))
+	      (XtSetValues dialog
+			   (list XmNdirectory dirstr
+				 XmNpattern patstr
+				 XmNdialogTitle titlestr))
+	      (XmStringFree dirstr))
 	    (XmStringFree patstr)
 	    (XmStringFree titlestr)
 	    (XtManageChild dialog))))))
@@ -1718,7 +1719,7 @@
   (define make-channel-drop-site
     (let ((documentation "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
       (lambda args
-	(let* ((snd (if (> (length args) 0) (car args) (selected-sound)))
+	(let* ((snd (if (pair? args) (car args) (selected-sound)))
 	       (chn (selected-channel snd))
 	       (widget (add-channel-pane snd chn "drop here" xmDrawingAreaWidgetClass
 					 (list XmNbackground (white-pixel)
@@ -1853,12 +1854,6 @@
 	(define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
 	(define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
 	
-	(define (amp->scroll minval val maxval)
-	  (cond ((<= val minval) 0)
-		((>= val maxval) 9000)
-		((>= val 1.0)    (floor (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0))))))
-		(else            (floor (* 4500 (/ (- val minval) (- 1.0 minval)))))))
-	
 	(define (scroll->amp snd val)
 	  (cond ((<= val 0)    (car (amp-control-bounds snd)))
 		((>= val 9000) (cadr (amp-control-bounds snd)))
@@ -1922,8 +1917,8 @@
 						      XmNlabelString      s2
 						      XmNmarginHeight     1
 						      XmNmarginRight      3
-						      XmNrecomputeSize    #f)))
-		 (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
+						      XmNrecomputeSize    #f))))
+	    (let ((scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
 						(list XmNbackground       *position-color*
 						      XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
 						      XmNtopWidget        label
@@ -1937,13 +1932,13 @@
 						      XmNvalue            4500
 						      XmNdragCallback     (list amp-callback (list number snd chan))
 						      XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
-	    (XtOverrideTranslations scroll
-				    (XtParseTranslationTable "c<Btn1Down>: Select()
+	      (XtOverrideTranslations scroll
+				      (XtParseTranslationTable "c<Btn1Down>: Select()
                                                         c<Btn1Motion>: Moved()
 						        c<Btn1Up>:   Release()"))
 	    
-	    (XtAddCallback label XmNactivateCallback (lambda (w c i)
-						       (reset-to-one scroll number)))
+	      (XtAddCallback label XmNactivateCallback (lambda (w c i)
+							 (reset-to-one scroll number))))
 	    (XmStringFree s1)
 	    (XmStringFree s2)
 	    label))
@@ -1996,14 +1991,14 @@
 			((= i chns))
 		      (let ((ampc (find-child snd-amp (label-name i)))
 			    (ampn (find-child snd-amp (number-name i)))
-			    (amp (find-child snd-amp (scroller-name i)))
-			    (next-amp (and (< i (- chns 1))
-					   (find-child snd-amp (label-name (+ i 1))))))
-			(reset-to-one amp ampn)
-			(XtSetValues ampc (if next-amp 
-					      (list XmNtopAttachment XmATTACH_WIDGET
-						    XmNtopWidget     next-amp)
-					      (list XmNtopAttachment XmATTACH_FORM)))
+			    (amp (find-child snd-amp (scroller-name i))))
+			(let ((next-amp (and (< i (- chns 1))
+					     (find-child snd-amp (label-name (+ i 1))))))
+			  (reset-to-one amp ampn)
+			  (XtSetValues ampc (if next-amp 
+						(list XmNtopAttachment XmATTACH_WIDGET
+						      XmNtopWidget     next-amp)
+						(list XmNtopAttachment XmATTACH_FORM))))
 			(XtManageChild ampc)
 			(XtManageChild ampn)
 			(XtManageChild amp))))
@@ -2028,7 +2023,6 @@
 	(hook-push after-open-hook (lambda (hook) (amp-controls-reflect-chans (hook 'snd))))
 	(hook-push after-apply-controls-hook (lambda (hook) (amp-controls-clear (hook 'snd)))))))
   
-					;(add-amp-controls)
   
   
 ;;; -------- remove top level menu
@@ -2246,7 +2240,8 @@
 				 (car (main-widgets))
 				 timeout 
 				 (lambda (data id)
-				   (if (not tooltip-shell)
+				   (if tooltip-shell
+				       (change-label tooltip-label tip)
 				       (begin
 					 (set! tooltip-shell (XtCreatePopupShell 
 							      tip 
@@ -2259,8 +2254,7 @@
 						xmLabelWidgetClass 
 						tooltip-shell
 						(list XmNrecomputeSize #t
-						      XmNbackground *highlight-color*))))
-				       (change-label tooltip-label tip))
+						      XmNbackground *highlight-color*)))))
 				   (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
 				     (XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
 				   (XtManageChild tooltip-shell)

@@ -58,11 +58,11 @@
 	(search-point cur-env)))
     
     (define (envelope-position x cur-env)
-      (define (search-point e pos)
-	(if (= (car e) x)
-	    pos
-	    (search-point (cddr e) (+ pos 2))))
-      (search-point cur-env 0))
+      (let search-point ((e cur-env)
+                         (pos 0))
+        (if (= (car e) x)
+            pos
+            (search-point (cddr e) (+ pos 2)))))
     
     (define (on-dot? x y cur-env pos)
       (and (pair? cur-env)

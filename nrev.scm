@@ -23,14 +23,11 @@
 	(let ((srscale (/ *clm-srate* 25641)))
 
 	  (define (next-prime val)
-	    (define (prime? val)
-	      (or (= val 2)
-		  (and (odd? val)
-		       (do ((i 3 (+ i 2))
-			    (lim (sqrt val)))
-			   ((or (= 0 (modulo val i)) (> i lim))
-			    (> i lim))))))
-	    (if (prime? val)
+	    (if (or (= val 2)
+		    (and (odd? val)
+			 (do ((i 3 (+ i 2))
+			      (lim (sqrt val)))
+			     ((or (= 0 (modulo val i)) (> i lim)) (> i lim)))))
 		val
 		(next-prime (+ val 2))))
 

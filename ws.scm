@@ -270,24 +270,29 @@
 			(save-sound scale-output)
 			(if (not to-snd) 
 			    (close-sound scale-output))))
+
 		     ((float-vector? output-1)
 		      (if scaled-to
 			  (let ((pk (float-vector-peak output-1)))
 			    (if (> pk 0.0)
 				(float-vector-scale! output-1 (/ scaled-to pk))))
 			  (float-vector-scale! output-1 scaled-by)))
-		     ((vector? output-1)
-		      (if scaled-to
-			  (let ((pk (maxamp output-1)))
-			    (if (> pk 0.0)
-				(let ((scl (/ scaled-to pk)))
-				  (do ((i 0 (+ i 1)))
-				      ((= i (length output-1)))
-				    (set! (output-1 i) (* scl (output-1 i)))))))
-			  (do ((i 0 (+ i 1)))
-			      ((= i (length output-1)))
-			    (set! (output-1 i) (* scaled-by (output-1 i))))))))
-	   
+
+		     ((not (vector? output-1)))
+
+		     (scaled-to
+		      (let ((pk (maxamp output-1)))
+			(if (> pk 0.0)
+			    (let ((scl (/ scaled-to pk)))
+			      (do ((i 0 (+ i 1)))
+				  ((= i (length output-1)))
+				(set! (output-1 i) (* scl (output-1 i))))))))
+
+		     (else
+		      (do ((i 0 (+ i 1)))
+			  ((= i (length output-1)))
+			(set! (output-1 i) (* scaled-by (output-1 i)))))))
+	 
 	   (if (and play output-to-file)
 	       (if to-snd
 		   (if *clm-player*

@@ -90,24 +90,24 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 	  (/ (* num num) den))))
   
   (define (find-mid-max n lo hi)
-    (let ((mid (/ (+ lo hi) 2)))
-      (let ((ylo (ns lo n))
-	    (yhi (ns hi n)))
-	(if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
-	    (ns mid n)
-	    (if (> ylo yhi)
-		(find-mid-max n lo mid)
-		(find-mid-max n mid hi))))))
+    (let ((mid (/ (+ lo hi) 2))
+	  (ylo (ns lo n))
+	  (yhi (ns hi n)))
+      (if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
+	  (ns mid n)
+	  (if (> ylo yhi)
+	      (find-mid-max n lo mid)
+	      (find-mid-max n mid hi)))))
   
   (define (find-nodds-mid-max n lo hi)
-    (let ((mid (/ (+ lo hi) 2)))
-      (let ((ylo (nodds lo n))
-	    (yhi (nodds hi n)))
-	(if (< (abs (- ylo yhi)) nearly-zero)
-	    (nodds mid n)
-	    (if (> ylo yhi)
-		(find-nodds-mid-max n lo mid)
-		(find-nodds-mid-max n mid hi))))))
+    (let ((mid (/ (+ lo hi) 2))
+	  (ylo (nodds lo n))
+	  (yhi (nodds hi n)))
+      (if (< (abs (- ylo yhi)) nearly-zero)
+	  (nodds mid n)
+	  (if (> ylo yhi)
+	      (find-nodds-mid-max n lo mid)
+	      (find-nodds-mid-max n mid hi)))))
   
   (if (= ratio 1)
       (find-mid-max n 0.0 (/ pi (+ n .5)))
@@ -337,14 +337,14 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 	  (/ (* num num) den))))
   
   (define (find-mid-max n lo hi)
-    (let ((mid (/ (+ lo hi) 2)))
-      (let ((ylo (nodds lo n))
-	    (yhi (nodds hi n)))
-	(if (< (abs (- ylo yhi)) 1e-9)
-	    (nodds mid n)
-	    (if (> ylo yhi)
-		(find-mid-max n lo mid)
-		(find-mid-max n mid hi))))))
+    (let ((mid (/ (+ lo hi) 2))
+	  (ylo (nodds lo n))
+	  (yhi (nodds hi n)))
+      (if (< (abs (- ylo yhi)) 1e-9)
+	  (nodds mid n)
+	  (if (> ylo yhi)
+	      (find-mid-max n lo mid)
+	      (find-mid-max n mid hi)))))
   
   (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
 
@@ -5468,13 +5468,13 @@ returns the sum of the absolute values in a moving window over the last n inputs
 
 (defgenerator (moving-variance
 	       :make-wrapper (lambda (g)
-			       (let ((g1 (make-moving-average (g 'n)))
-				     (g2 (make-moving-average (g 'n))))
+			       (let ((g1 (make-moving-average (g 'n))))
 				 (set! (g 'gen1) g1)
-				 (set! (mus-increment g1) 1.0)
+				 (set! (mus-increment g1) 1.0))
+			       (let ((g2 (make-moving-average (g 'n))))
 				 (set! (g 'gen2) g2)
-				 (set! (mus-increment g2) 1.0)
-				 g)))
+				 (set! (mus-increment g2) 1.0))
+			       g))
   (n 128) (gen1 #f) (gen2 #f) y)
 
 
@@ -5542,7 +5542,8 @@ the rms of the values in a window over the last n inputs."))
 				 g)))
   (n 128) (gen #f) y)
 
-
+(define moving-length moving-rms)
+#|
 (define moving-length 
 
   (let ((documentation "(make-moving-length (n 128) returns a moving-length generator. (moving-length gen input) 
@@ -5550,7 +5551,6 @@ returns the length of the values in a window over the last few inputs."))
 
     (lambda (gen y)
       (moving-rms gen y))))
-#|
       (let-set! gen 'y y)
       (with-let gen
 	(sqrt (max 0.0 (moving-average gen (* y y))))))))
@@ -5594,9 +5594,9 @@ returns the length of the values in a window over the last few inputs."))
 			       (let ((n (g 'n)))
 				 (let ((dly (make-moving-average n)))
 				   (set! (mus-increment dly) 1.0)
-				   (set! (g 'dly) dly)
-				   (set! (g 'den) (* 0.5 (+ n 1) n))
-				   g))))
+				   (set! (g 'dly) dly))
+				 (set! (g 'den) (* 0.5 (+ n 1) n)))
+			       g))
   (n 128) (dly #f) (num 0.0) (sum 0.0) y den)
 
 
@@ -6295,44 +6295,44 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 
 (define (moving-spectrum gen)
   (with-let gen
-    (let ((n2 (/ n 2)))
-      (if (>= outctr hop)
-	  (begin
-	    (if (> outctr n) ; must be first time through -- fill data array
-		(do ((i 0 (+ i 1)))
+    (if (>= outctr hop)
+	(begin
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (do ((i 0 (+ i 1)))
+		  ((= i n))
+		(float-vector-set! data i (readin input)))
+	      (begin
+		(float-vector-move! data 0 hop)
+		(do ((i (- n hop) (+ i 1)))
 		    ((= i n))
-		  (float-vector-set! data i (readin input)))
-		(begin
-		  (float-vector-move! data 0 hop)
-		  (do ((i (- n hop) (+ i 1)))
-		      ((= i n))
-		    (float-vector-set! data i (readin input)))))
+		  (float-vector-set! data i (readin input)))))
+	  
+	  (set! outctr 0) ; -1??
+	  (set! dataloc (modulo dataloc n))
+	  
+	  (fill! new-freq-incs 0.0)
+	  (do ((i 0 (+ i 1))
+	       (j dataloc (+ j 1)))
+	      ((= j n))
+	    (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i))))
+	  
+	  (if (> dataloc 0)
+	      (do ((i (- n dataloc) (+ i 1))
+		   (j 0 (+ j 1)))
+		  ((= j dataloc))
+		(float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i)))))
+	  
+	  (set! dataloc (+ dataloc hop))
+	  
+	  (mus-fft amp-incs new-freq-incs n 1)
+	  (rectangular->polar amp-incs new-freq-incs)
+	  
+	  (let ((scl (/ 1.0 hop))
+		(kscl (/ two-pi n)))
+	    (float-vector-subtract! amp-incs amps)
+	    (float-vector-scale! amp-incs scl)
 	    
-	    (set! outctr 0) ; -1??
-	    (set! dataloc (modulo dataloc n))
-	    
-	    (fill! new-freq-incs 0.0)
-	    (do ((i 0 (+ i 1))
-		 (j dataloc (+ j 1)))
-		((= j n))
-	      (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i))))
-
-	    (if (> dataloc 0)
-		(do ((i (- n dataloc) (+ i 1))
-		     (j 0 (+ j 1)))
-		    ((= j dataloc))
-		  (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i)))))
-
-	    (set! dataloc (+ dataloc hop))
-	    
-	    (mus-fft amp-incs new-freq-incs n 1)
-	    (rectangular->polar amp-incs new-freq-incs)
-	    
-	    (let ((scl (/ 1.0 hop))
-		  (kscl (/ two-pi n)))
-	      (float-vector-subtract! amp-incs amps)
-	      (float-vector-scale! amp-incs scl)
-	      
+	    (let ((n2 (/ n 2)))
 	      (do ((i 0 (+ i 1))
 		   (ks 0.0 (+ ks kscl)))
 		  ((= i n2))
@@ -6340,16 +6340,16 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 		  (set! (freq-incs i) (new-freq-incs i))
 		  (if (> diff pi) (set! diff (- diff (* 2 pi))))
 		  (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
-		  (set! (new-freq-incs i) (+ (* diff scl) ks))))
-	      
-	      (float-vector-subtract! new-freq-incs freqs)
-	      (float-vector-scale! new-freq-incs scl))))
-      
-      (set! outctr (+ outctr 1))
-      
-      (float-vector-add! amps amp-incs)
-      (float-vector-add! freqs new-freq-incs)
-      (float-vector-add! phases freqs))))
+		  (set! (new-freq-incs i) (+ (* diff scl) ks)))))
+	    
+	    (float-vector-subtract! new-freq-incs freqs)
+	    (float-vector-scale! new-freq-incs scl))))
+    
+    (set! outctr (+ outctr 1))
+    
+    (float-vector-add! amps amp-incs)
+    (float-vector-add! freqs new-freq-incs)
+    (float-vector-add! phases freqs)))
 
 
 (define (test-sv)
