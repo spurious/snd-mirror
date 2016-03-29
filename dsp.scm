@@ -884,10 +884,8 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 	 (beta (* 0.5 (/ (- 1.0 (* (/ d 2) (sin theta)))
 			 (+ 1.0 (* (/ d 2) (sin theta))))))
 	 (gamma (* (+ 0.5 beta) (cos theta)))
-	 (alpha (* 0.5 (+ 0.5 beta (- gamma)))))
-    (make-filter 3 
-		 (float-vector alpha (* 2.0 alpha) alpha)
-		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+	 (alpha (* 0.5 (- (+ 0.5 beta) gamma))))
+    (make-biquad alpha (* 2.0 alpha) alpha (* -2.0 gamma) (* 2.0 beta))))
 
 (define* (make-iir-high-pass-2 fc din)
   (let* ((theta (/ (* 2 pi fc) *clm-srate*))
@@ -896,9 +894,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			 (+ 1.0 (* (/ d 2) (sin theta))))))
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (* 0.5 (+ 0.5 beta gamma))))
-    (make-filter 3
-		 (float-vector alpha (* -2.0 alpha) alpha)
-		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+    (make-biquad alpha (* -2.0 alpha) alpha (* -2.0 gamma) (* 2.0 beta))))
 
 (define (make-iir-band-pass-2 f1 f2)
   (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) *clm-srate*))
@@ -908,9 +904,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			 (+ 1.0 t2))))
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (- 0.5 beta)))
-    (make-filter 3
-		 (float-vector alpha 0.0 (- alpha))
-		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
+    (make-biquad alpha 0.0 (- alpha) (* -2.0 gamma) (* 2.0 beta))))
 
 (define (make-iir-band-stop-2 f1 f2)
   (let* ((theta (/ (* 2 pi (sqrt (* f1 f2))) *clm-srate*))
@@ -920,10 +914,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			 (+ 1.0 t2))))
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (+ 0.5 beta)))
-    (make-filter 3
-		 (float-vector alpha (* -2.0 gamma) alpha)
-		 (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta)))))
-
+    (make-biquad alpha (* -2.0 gamma) alpha (* -2.0 gamma) (* 2.0 beta))))
 
 #|
 (define* (old-make-eliminate-hum (hum-freq 60.0) (hum-harmonics 5) (bandwidth 10))
@@ -972,9 +963,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 			 (+ 1.0 t2))))
 	 (gamma (* (+ 0.5 beta) (cos theta)))
 	 (alpha (- 0.5 beta))
-	 (flt (make-filter 3
-			   (float-vector alpha 0.0 (- alpha))
-			   (float-vector 0.0 (* -2.0 gamma) (* 2.0 beta))))
+	 (flt (make-biquad alpha 0.0 (- alpha) (* -2.0 gamma) (* 2.0 beta)))
 	 (m1 (- m 1.0)))
     (lambda (x) (+ x (* m1 (filter flt x))))))
 

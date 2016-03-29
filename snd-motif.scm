@@ -1904,41 +1904,41 @@
 						     XmNshadowThickness  0
 						     XmNhighlightThickness 0
 						     XmNfillOnArm        #f)))
-		 (s2 (XmStringCreateLocalized "1.000 "))
-		 (number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
-						(list XmNbackground       *basic-color*
-						      XmNalignment        XmALIGNMENT_BEGINNING
-						      XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-						      XmNtopWidget        label
-						      XmNbottomAttachment XmATTACH_NONE
-						      XmNleftAttachment   XmATTACH_WIDGET
-						      XmNleftWidget       label
-						      XmNrightAttachment  XmATTACH_NONE
-						      XmNlabelString      s2
-						      XmNmarginHeight     1
-						      XmNmarginRight      3
-						      XmNrecomputeSize    #f))))
-	    (let ((scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
-						(list XmNbackground       *position-color*
-						      XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-						      XmNtopWidget        label
-						      XmNbottomAttachment XmATTACH_NONE
-						      XmNheight           16
-						      XmNleftAttachment   XmATTACH_WIDGET
-						      XmNleftWidget       number
-						      XmNrightAttachment  XmATTACH_FORM
-						      XmNorientation      XmHORIZONTAL
-						      XmNmaximum          10000
-						      XmNvalue            4500
-						      XmNdragCallback     (list amp-callback (list number snd chan))
-						      XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
-	      (XtOverrideTranslations scroll
-				      (XtParseTranslationTable "c<Btn1Down>: Select()
+		 (s2 (XmStringCreateLocalized "1.000 ")))
+	    (let ((number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
+						 (list XmNbackground       *basic-color*
+						       XmNalignment        XmALIGNMENT_BEGINNING
+						       XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						       XmNtopWidget        label
+						       XmNbottomAttachment XmATTACH_NONE
+						       XmNleftAttachment   XmATTACH_WIDGET
+						       XmNleftWidget       label
+						       XmNrightAttachment  XmATTACH_NONE
+						       XmNlabelString      s2
+						       XmNmarginHeight     1
+						       XmNmarginRight      3
+						       XmNrecomputeSize    #f))))
+	      (let ((scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
+						   (list XmNbackground       *position-color*
+							 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+							 XmNtopWidget        label
+							 XmNbottomAttachment XmATTACH_NONE
+							 XmNheight           16
+							 XmNleftAttachment   XmATTACH_WIDGET
+							 XmNleftWidget       number
+							 XmNrightAttachment  XmATTACH_FORM
+							 XmNorientation      XmHORIZONTAL
+							 XmNmaximum          10000
+							 XmNvalue            4500
+							 XmNdragCallback     (list amp-callback (list number snd chan))
+							 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+		(XtOverrideTranslations scroll
+					(XtParseTranslationTable "c<Btn1Down>: Select()
                                                         c<Btn1Motion>: Moved()
 						        c<Btn1Up>:   Release()"))
-	    
-	      (XtAddCallback label XmNactivateCallback (lambda (w c i)
-							 (reset-to-one scroll number))))
+		
+		(XtAddCallback label XmNactivateCallback (lambda (w c i)
+							   (reset-to-one scroll number)))))
 	    (XmStringFree s1)
 	    (XmStringFree s2)
 	    label))

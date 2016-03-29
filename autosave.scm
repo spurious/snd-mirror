@@ -23,10 +23,6 @@
       (define (clear-unsaved-edits snd)
 	(set! (sound-property 'auto-save snd) 0))
       
-      (define (upon-edit snd)
-	(lambda ()
-	  (set! (sound-property 'auto-save snd) (+ 1 (sound-property 'auto-save snd)))))
-      
       (define (auto-save-open-func snd)
 	(let ((temp-file (auto-save-temp-name snd)))
 	  (if (and (file-exists? temp-file)
@@ -37,7 +33,9 @@
 	  (do ((i 0 (+ 1 i)))
 	      ((= i (channels snd)))
 	    (if (null? (hook-functions (edit-hook snd i)))
-		(hook-push (edit-hook snd i) (lambda (hook) (upon-edit (hook 'snd))))))
+		(hook-push (edit-hook snd i) (lambda (hook) 
+					       (let ((snd (hook 'snd)))
+						 (set! (sound-property 'auto-save snd) (+ 1 (sound-property 'auto-save snd))))))))		       
 	  (clear-unsaved-edits snd)))
       
       (define (auto-save-done snd)

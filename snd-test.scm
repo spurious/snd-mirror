@@ -19399,8 +19399,8 @@ EDITS: 2
 				    :hop .1
 				    :ramp 0.0
 				    :scaler 1.0
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .462) (snd-display #__line__ ";granulate ramped 4: ~A" (maxamp)))
 	(let ((vals (count-matches (lambda (y) (> (abs y) 0.0)))))
 	  (if (> (abs (- vals 1104)) 10) (snd-display #__line__ ";granulate ramped 4 not 0.0: ~A" vals)))
@@ -19421,8 +19421,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.0
 				    :scaler 1.0
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .505) (snd-display #__line__ ";granulate ramped 5: ~A" (maxamp)))
 	(let* ((mxoff 0.0)
 	       (mx (maxamp))
@@ -19444,8 +19444,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.5
 				    :scaler 1.0
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .495) (snd-display #__line__ ";granulate ramped 6: ~A" (maxamp)))
 	(if (not (and (vequal (channel->float-vector 2000 10)
 			      (float-vector 0.018 0.019 0.020 0.021 0.022 0.023 0.024 0.025 0.026 0.027))
@@ -19462,8 +19462,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.25
 				    :scaler 1.0
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .505) (snd-display #__line__ ";granulate ramped 7: ~A" (maxamp)))
 	(if (not (and (vequal (channel->float-vector 2000 10)
 			      (float-vector 0.037 0.039 0.040 0.042 0.044 0.046 0.048 0.050 0.052 0.054))
@@ -19480,8 +19480,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.25
 				    :scaler 0.1
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .201) (snd-display #__line__ ";granulate ramped 7: ~A" (maxamp)))
 	(let* ((mxoff 0.0)
 	       (mx (maxamp))
@@ -19503,8 +19503,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.1
 				    :scaler 0.1
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .501) (snd-display #__line__ ";granulate ramped 8: ~A" (maxamp)))
 	(let* ((mxoff 0.0)
 	       (mx (maxamp))
@@ -19527,8 +19527,8 @@ EDITS: 2
 				    :hop .01
 				    :ramp 0.4
 				    :scaler 0.025
-				    :jitter 0.0)))
-	(clm-channel gen)
+				    :jitter 0.0))
+	  (clm-channel gen))
 	(if (fneq (maxamp) .433) (snd-display #__line__ ";granulate ramped 9: ~A" (maxamp)))
 	(undo)
 	(close-sound ind)))

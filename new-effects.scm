@@ -2512,42 +2512,42 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	  ;; if cross-synth-dialog doesn't exist, create it
 	  (let ((initial-cross-synth-sound 1)
 		(initial-cross-synth-amp .5)
-		(initial-cross-synth-fft-size 128)
 		(initial-cross-synth-radius 6.0)
 		(sliders ()))
-	    (set! cross-synth-dialog
-		  (make-effect-dialog 
-		   cross-synth-label
-		   
-		   (lambda (w context info)
-		     (map-chan-over-target-with-sync
-		      (lambda (ignored) 
-			(effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-		      cross-synth-target 
-		      (lambda (target samps)
-			(format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
-				cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-		      #f))
-		   
-		   (lambda (w context info)
-		     (help-dialog "Cross synthesis"
-				  "The sliders set the number of the soundfile to be cross-synthesized, 
+	    (let ((initial-cross-synth-fft-size 128))
+	      (set! cross-synth-dialog
+		    (make-effect-dialog 
+		     cross-synth-label
+		     
+		     (lambda (w context info)
+		       (map-chan-over-target-with-sync
+			(lambda (ignored) 
+			  (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+			cross-synth-target 
+			(lambda (target samps)
+			  (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+				  cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+			#f))
+		     
+		     (lambda (w context info)
+		       (help-dialog "Cross synthesis"
+				    "The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
-		   
-		   (lambda (w c i)
-		     (set! cross-synth-sound initial-cross-synth-sound)
-		     (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
-		     (set! cross-synth-amp initial-cross-synth-amp)
-		     (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
-		     (set! cross-synth-fft-size initial-cross-synth-fft-size)
-		     (if use-combo-box-for-fft-size ; defined in effects-utils.scm
-			 (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
-			 (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
-		     (set! cross-synth-radius initial-cross-synth-radius)
-		     (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
-		   
-		   (lambda () 
-		     (effect-target-ok cross-synth-target))))
+		     
+		     (lambda (w c i)
+		       (set! cross-synth-sound initial-cross-synth-sound)
+		       (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
+		       (set! cross-synth-amp initial-cross-synth-amp)
+		       (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
+		       (set! cross-synth-fft-size initial-cross-synth-fft-size)
+		       (if use-combo-box-for-fft-size ; defined in effects-utils.scm
+			   (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
+			   (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
+		       (set! cross-synth-radius initial-cross-synth-radius)
+		       (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
+		     
+		     (lambda () 
+		       (effect-target-ok cross-synth-target)))))
 	    
 	    (set! sliders
 		  (add-sliders cross-synth-dialog

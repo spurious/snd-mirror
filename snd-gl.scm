@@ -356,7 +356,7 @@
 	((*motif* 'XtCreateManagedWidget) name type (list-ref (main-widgets) 3) args))
 
       (lambda ()
-	(when (not drawer)
+	(unless drawer
 	  (let ((outer (with-let (sublet *motif*)
 			 (add-main-pane "Waterfall" xmFormWidgetClass
 					(list XmNbackground *basic-color*

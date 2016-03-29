@@ -46963,6 +46963,26 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
       free(syntax_msg);
       return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
+
+  /* try to show the current input */
+  if ((is_input_port(pt)) &&
+      (!port_is_closed(pt)) &&
+      (port_data(pt)) &&
+      (port_position(pt) > 0))
+    {
+      const unsigned char *str;
+      int i, j, start;
+      start = (int)port_position(pt) - 40;
+      if (start < 0) start = 0;
+      msg = (char *)malloc(128 * sizeof(char));
+      len = snprintf(msg, 128, "missing close paren: ");
+      str = (const unsigned char *)port_data(pt);
+      for (i = start, j = len; i < (int)port_position(pt); i++, j++)
+	msg[j] = str[i];
+      msg[j] = '\0';
+      return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, j))));
+    }
+
   return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_wrapper(sc, "missing close paren"))));
 }
 
@@ -74232,9 +74252,9 @@ int main(int argc, char **argv)
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
- * gtk menus are messed up in OSX virtualbox cases
- * can Snd have a run-time --no-gui option?
  * check stdin-prompt and s7webserver
+ * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
+ *  looper does not stop/restart -- just keep going]
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

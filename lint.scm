@@ -1534,7 +1534,7 @@
 				(set! gtes '(string>=? string<=?))
 				(set! gts  '(string<? string>?))
 				(set! eqop 'string=?)))
-			     
+
 			     (case rel-op
 			       ((and)
 				(cond ((equal? c1 c2)
@@ -1593,7 +1593,8 @@
 						  (return `(,op1 ,x ,c1))))
 					     ((eq? op1 (caddr (assq op2 relops)))
 					      (if ((symbol->value op1) c2 c1)
-						  (return #t)))
+						  (return #t))
+					      (return `(not (,(cadr (assq op1 relops)) ,c1 ,x ,c2))))
 					     ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
 						   ((symbol->value op1) c2 c1))
 					      (return #t)))))))))))))))
@@ -3834,7 +3835,7 @@
                          (for-each
                            (lambda (p)
                              (if (and (pair? p) (eq? (car p) 'values))
-                                 (set! len (+ len (- (length (cdr p)) 1)))))
+                                 (set! len (+ len (- (length p) 2)))))
                            (cdr producer))
                          (list len len))
                        (mv-range (car producer) env))))))
@@ -4395,7 +4396,7 @@
 		     ((cddr)
 		      (lint-format "perhaps ~A" caller (lists->string form `(- (length ,(cadr arg)) 2))))
 		     ((append)
-		      (if (= (length (cdr arg)) 2)
+		      (if (= (length arg) 3)
 			  (lint-format "perhaps ~A" caller (lists->string form `(+ (length ,(cadr arg)) (length ,(caddr arg)))))))
 		     ((quote)
 		      (if (list? (cadr arg))
@@ -5004,7 +5005,7 @@
 			     (if (procedure? func)
 				 (let ((ary (arity func)))
 				   (if (and (pair? ary)
-					    (> (- (length (cddr form)) 1) (cdr ary))) ; last apply arg might be var=()
+					    (> (- (length form) 3) (cdr ary))) ; last apply arg might be var=()
 				       (lint-format "too many arguments for ~A: ~A" caller f form))))))
 			 
 			 (let ((last-arg (form (- len 1))))
@@ -7212,7 +7213,7 @@
 			   (if (and (pair? c)
 				    (pair? (cdr c))
 				    (not (memq '=> (cdr c))))
-			       (let ((last-expr (list-ref (cdr c) (- (length (cdr c)) 1))))
+			       (let ((last-expr (list-ref (cdr c) (- (length c) 2))))
 				 (if (side-effect? last-expr env)
 				     (if (pair? last-expr)
 					 (check-returns caller last-expr env))
@@ -7234,7 +7235,7 @@
 	       (if (and (pair? (cdr f))
 			(not (symbol? (cadr f)))
 			(pair? (cddr f)))
-		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
+		   (let ((last-expr (list-ref (cddr f) (- (length f) 3))))
 		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
 			     (check-returns caller last-expr env))		 
@@ -7246,7 +7247,7 @@
 	      ((letrec letrec* with-let unless when begin with-baffle)
 	       (if (and (pair? (cdr f))
 			(pair? (cddr f)))
-		   (let ((last-expr (list-ref (cddr f) (- (length (cddr f)) 1))))
+		   (let ((last-expr (list-ref (cddr f) (- (length f) 3))))
 		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
 			     (check-returns caller last-expr env))		 
@@ -8523,9 +8524,9 @@
 			       (if (pair? arg)
 				   (if (> (length arg) 8)
 				       (hash-table-set! big-constants arg (+ 1 (or (hash-table-ref big-constants arg) 0))))
-				   (when (not (or (>= quote-warnings 20)
-						  (and (symbol? arg) 
-						       (not (keyword? arg)))))
+				   (unless (or (>= quote-warnings 20)
+					       (and (symbol? arg) 
+						    (not (keyword? arg))))
 				     (set! quote-warnings (+ quote-warnings 1))
 				     (lint-format "quote is not needed here: ~A~A" caller
 						  (truncated-list->string form)
@@ -11727,7 +11728,12 @@
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; var at level of func used only in func -> closure
 ;;;    this is currently not noticed in report-usage [var-scope is not saved for non-funcs]
-;;; maybe report very large 1-branch if?
-;;; lint should report undefined ids like scale/func in effects-utils
-;;;
+;;; maybe report very large 1-branch if? or make the *report-* flag a number?
+;;; lint should report undefined ids like scale/func in effects-utils [arg not func, normal-looking name]
+;;; if gen/let data used, gen itself can't be freed, so the let-reduction stuff needs to be smarter
+;;;    look for other vars (mus-data gen) or (gen 'field) etc
+;;;    same for local vars in edit/input funcs
+;;;    and we need errors for overly-restrictive lets
+;;; relop not seen in >2 and? (and ... (< x 3) (> x 4)...)
+
 ;;; 495/100

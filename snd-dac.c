@@ -29,7 +29,7 @@ typedef struct dac_info {
   bool expanding, reverbing, filtering; /* these need lots of preparation, so they're noticed only at the start */
   int audio_chan;      /* where channel's output is going (wrap-around if not enough audio output channels) */
   int slot;
-  mus_float_t *a;            /* filter coeffs */
+  mus_float_t *a;      /* filter coeffs */
   int a_size;          /* user can change filter order while playing (sigh...) */
   snd_fd *chn_fd;      /* sampler, null if DAC_Xen */
   spd_info *spd;
@@ -1499,7 +1499,7 @@ static dac_info *play_selection_1(play_process_t background, Xen stop_proc)
 	    ends[i] = si->begs[i] + selection_len();
 
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
-
+	  /* dp->dac_sample is the reader */
 	  si = free_sync_info(si); /* does not free samplers */
 	  free(ends);
 	}

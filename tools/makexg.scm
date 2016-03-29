@@ -2954,11 +2954,10 @@
 (set! declared-names (sort! declared-names (lambda (a b)
 					     (string<? (caddr a) (caddr b)))))
 (let ((version ""))
-  (do ((i 1 (+ i 1))
-       (names declared-names (cdr names)))
+  (do ((names declared-names (cdr names)))
       ((null? names)
        (hey "#endif~%~NC{NULL, NULL, 0}};~%~%" 8 #\space)) ; end marker
-    (when (not (string=? (caddar names) version))
+    (unless (string=? (caddar names) version)
       (if (> (length version) 0)
 	  (hey "#endif~%"))
       (set! version (caddar names))

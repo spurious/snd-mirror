@@ -18,7 +18,8 @@
       (set! chars (cons (integer->char c) chars)))))
 
 (define (io-write-string str)
-  (for-each write-char str) ; or maybe (lambda (c) (write-byte (char->integer c)))
+  (format () "~{~A~}" str)
+  ;(for-each write-char str)
   (write-byte 0))
 
 
@@ -31,7 +32,8 @@
       (set! (str i) (read-char)))))
 	 
 (define (write-chars str)
-  (for-each write-char str))
+  (format () "~{~A~}" str))
+;  (for-each write-char str))
 
 
 ;;; -------- 16-bit ints

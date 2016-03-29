@@ -720,7 +720,7 @@
 	  (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
 	  (close-appending fd))))))
 
-(if (not (member ws-save-state (hook-functions after-save-state-hook) eq?))
+(if (not (memq ws-save-state (hook-functions after-save-state-hook)))
     (set! (hook-functions after-save-state-hook) (list ws-save-state)))
 
 

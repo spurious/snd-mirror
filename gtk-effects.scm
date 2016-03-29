@@ -1488,20 +1488,20 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						 (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
 							     (lambda (w data)
 							       (set! src-timevar-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
-							     100))))
-			      (gtk_widget_show src-timevar-dialog)
-			      (set! src-timevar-envelope (xe-create-enved "src-timevar" 
-									  (gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog))
-									  #f
-									  '(0.0 1.0 0.0 1.0)))
-			      (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog)) 
-					  (lambda (target) 
-					    (set! src-timevar-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT src-timevar-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
+							     100)))))
+			    (gtk_widget_show src-timevar-dialog)
+			    (set! src-timevar-envelope (xe-create-enved "src-timevar" 
+									(gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog))
+									#f
+									'(0.0 1.0 0.0 1.0)))
+			    (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog)) 
+					(lambda (target) 
+					  (set! src-timevar-target target)
+					  (gtk_widget_set_sensitive 
+					   (GTK_WIDGET (g_object_get_data (G_OBJECT src-timevar-dialog) "ok-button")) 
+					   (effect-target-ok target)))
+					#f))
 			  (activate-dialog src-timevar-dialog))
 			#f)
       (set! freq-menu-list (cons (lambda ()

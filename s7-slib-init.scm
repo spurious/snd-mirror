@@ -61,7 +61,7 @@
     (and home
 	 (case (software-type)
 	   ((unix coherent ms-dos)	;V7 unix has a / on HOME
-	    (if (char=? #\/ (string-ref home (+ -1 (string-length home))))
+	    (if (char=? #\/ (string-ref home (- (string-length home) 1)))
 		home
 		(string-append home "/")))
 	   (else home)))))
@@ -374,7 +374,7 @@
 ;;@ Define these if your implementation's syntax can support it and if
 ;;; they are not already defined.
 (define (1+ n) (+ n 1))
-(define (-1+ n) (+ n -1))
+(define (-1+ n) (- n 1))
 (define 1- -1+)
 
 ;;@ Define SLIB:EXIT to be the implementation procedure to exit or
