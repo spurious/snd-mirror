@@ -52,6 +52,7 @@ VERSION=16.5
 #   --without-fftw        omit FFTW even if it exists
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
+#   --with-webserver      use webserver
 
 
 AC_ARG_WITH(gtk,         [  --with-gtk		  use Gtk+ to build Snd])
@@ -81,6 +82,7 @@ AC_ARG_WITH(audio,       [  --without-audio         don't include any audio func
 AC_ARG_WITH(temp-dir,    [  --with-temp-dir	  directory to use for temp files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_TEMP_DIR, "${withval}"))
 AC_ARG_WITH(save-dir,    [  --with-save-dir	  directory to use for saved-state files], AC_DEFINE_UNQUOTED(MUS_DEFAULT_SAVE_DIR, "${withval}"))
 AC_ARG_WITH(doc-dir,     [  --with-doc-dir	  directory to search for documentation], AC_DEFINE_UNQUOTED(MUS_DEFAULT_DOC_DIR, "${withval}"))
+AC_ARG_WITH(weebserver,  [  --with-webserver 	  use webserver, default=no])
 
 AC_ARG_ENABLE(deprecated,[  --disable-deprecated	  do not include any deprecated stuff from gtk, s7, motif, clm, snd, or sndlib])
 
@@ -753,6 +755,26 @@ esac
 AC_SUBST(LDSO_FLAGS)
 AC_SUBST(SO_FLAGS)
 AC_SUBST(SO_LD)
+
+
+#--------------------------------------------------------------------------------
+# webserver
+#--------------------------------------------------------------------------------
+
+WEBSERVER_LIBS=""
+WEBSERVER_FILES=""
+
+if test "$with_webserver" = yes ; then
+  AC_DEFINE(ENABLE_WEBSERVER)
+
+  WEBSERVER_FILES="s7webserver/s7webserver.o s7webserver/qhttpserver-master/lib/libqhttpserver.a"
+  WEBSERVER_LIBS="`pkg-config --libs QtNetwork` -lstdc++"
+  
+  RANDOM_FEATURES="$RANDOM_FEATURES webserver"
+fi
+
+AC_SUBST(WEBSERVER_LIBS)
+AC_SUBST(WEBSERVER_FILES)
 
 
 

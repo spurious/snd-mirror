@@ -13,7 +13,7 @@
 (define *report-multiply-defined-top-level-functions* #f)
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
-(define *report-one-armed-if* #f)                         ; if -> when/unless
+(define *report-one-armed-if* 100)                        ; if -> when/unless, can be #f/#t, if an integer sets tree length at which to trigger suggestion
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc
@@ -9059,12 +9059,18 @@
 							    (lists->string form `(let (,@(reverse sv)) (if ,expr ,ntv ,nfv)))))))))
 
 				 (if (and *report-one-armed-if*
-					  (eq? false 'no-false))
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form (if (and (pair? expr)
-									       (eq? (car expr) 'not))
-									  `(unless ,(cadr expr) ,@(unbegin true))
-									  `(when ,expr ,@(unbegin true))))))
+					  (eq? false 'no-false)
+					  (or (not (integer? *report-one-armed-if*))
+					      (> (tree-length true) *report-one-armed-if*)))
+				     (lint-format "~Aperhaps ~A" caller
+						  (if (integer? *report-one-armed-if*)
+						      "this one-armed if is too big; "
+						      "")
+						  (truncated-lists->string 
+						   form (if (and (pair? expr)
+								 (eq? (car expr) 'not))
+							    `(unless ,(cadr expr) ,@(unbegin true))
+							    `(when ,expr ,@(unbegin true))))))
 
 				 (lint-walk caller expr env)
 				 (set! env (lint-walk caller true env))
@@ -11728,12 +11734,8 @@
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; var at level of func used only in func -> closure
 ;;;    this is currently not noticed in report-usage [var-scope is not saved for non-funcs]
-;;; maybe report very large 1-branch if? or make the *report-* flag a number?
 ;;; lint should report undefined ids like scale/func in effects-utils [arg not func, normal-looking name]
-;;; if gen/let data used, gen itself can't be freed, so the let-reduction stuff needs to be smarter
-;;;    look for other vars (mus-data gen) or (gen 'field) etc
-;;;    same for local vars in edit/input funcs
-;;;    and we need errors for overly-restrictive lets
-;;; relop not seen in >2 and? (and ... (< x 3) (> x 4)...)
+;;; if gen data used, gen itself can't be freed, so the let-reduction stuff needs to be smarter or the gen data GC is wrong
+;;; relsub not seen in >2 and? (and ... (< x 3) (> x 4)...)
 
 ;;; 495/100

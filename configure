@@ -627,6 +627,8 @@ LIBOBJS
 MAKE_TARGET
 ORIGINAL_LDFLAGS
 INSTALL
+WEBSERVER_FILES
+WEBSERVER_LIBS
 SO_LD
 SO_FLAGS
 LDSO_FLAGS
@@ -755,6 +757,7 @@ with_audio
 with_temp_dir
 with_save_dir
 with_doc_dir
+with_weebserver
 enable_deprecated
 with_x
 '
@@ -1414,6 +1417,7 @@ Optional Packages:
   --with-temp-dir	  directory to use for temp files
   --with-save-dir	  directory to use for saved-state files
   --with-doc-dir	  directory to search for documentation
+  --with-webserver 	  use webserver, default=no
   --with-x                use the X Window System
 
 Some influential environment variables:
@@ -3329,6 +3333,7 @@ VERSION=16.5
 #   --without-fftw        omit FFTW even if it exists
 #   --with-pulseaudio     use PulseAudio
 #   --with-portaudio      use portaudio
+#   --with-webserver      use webserver
 
 
 
@@ -3480,6 +3485,12 @@ if test "${with_doc_dir+set}" = set; then :
 #define MUS_DEFAULT_DOC_DIR "${withval}"
 _ACEOF
 
+fi
+
+
+# Check whether --with-weebserver was given.
+if test "${with_weebserver+set}" = set; then :
+  withval=$with_weebserver;
 fi
 
 
@@ -6162,6 +6173,27 @@ case "$host" in
     ;;
 esac
 
+
+
+
+
+
+#--------------------------------------------------------------------------------
+# webserver
+#--------------------------------------------------------------------------------
+
+WEBSERVER_LIBS=""
+WEBSERVER_FILES=""
+
+if test "$with_webserver" = yes ; then
+  $as_echo "#define ENABLE_WEBSERVER 1" >>confdefs.h
+
+
+  WEBSERVER_FILES="s7webserver/s7webserver.o s7webserver/qhttpserver-master/lib/libqhttpserver.a"
+  WEBSERVER_LIBS="`pkg-config --libs QtNetwork` -lstdc++"
+
+  RANDOM_FEATURES="$RANDOM_FEATURES webserver"
+fi
 
 
 

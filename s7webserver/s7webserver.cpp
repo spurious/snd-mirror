@@ -219,6 +219,14 @@ void S7WebServerResponder::reply()
 
 
 S7WebServer *s7webserver_create(s7_scheme *s7, int portnum, bool find_first_free_portnum){
+  
+  // Start QCoreApplication if it hasn't already been started.
+  if (QCoreApplication::instance()==NULL){
+    static int argc = 1;
+    static const char *argv[1] = {"snd"};
+    new QCoreApplication(argc, (char**)argv);
+  }
+
   s7_define_variable(s7, "s7webserver-current-responder", s7_make_c_pointer(s7, NULL));
   
   s7_set_current_output_port(s7, s7_open_output_function(s7, my_print));
@@ -241,6 +249,9 @@ S7WebServer *s7webserver_create(s7_scheme *s7, int portnum, bool find_first_free
   return s7webserver;
 }
 
+void s7webserver_call_very_often(void){
+  QCoreApplication::processEvents();
+}
 
 void s7webserver_set_verbose(S7WebServer *s7webserver, bool verbose) {
   s7webserver->verbose = verbose;

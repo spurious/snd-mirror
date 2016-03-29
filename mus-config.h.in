@@ -101,6 +101,8 @@
 #undef PATH_WAVPACK
 #undef PATH_WVUNPACK
 
+/* --with-webserver */
+#undef ENABLE_WEBSERVER
 
 
 #undef WORDS_BIGENDIAN

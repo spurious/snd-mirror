@@ -51,13 +51,13 @@ def start(prompt, url):
 if __name__ == "__main__":
 
     prompt = "s7> "
-    url = "http://localhost:5080"
+    url = "http://localhost:6080"
 
     if len(sys.argv)>1:
         if (sys.argv[1].startswith("-")):
             print "Usage: s7repl <prompt> <url>"
             print "       Default value for <prompt> is \"s7> \""
-            print "       Default value for <url> is http://localhost:5080"
+            print "       Default value for <url> is http://localhost:6080"
             sys.exit(0)
         prompt = sys.argv[1]
 

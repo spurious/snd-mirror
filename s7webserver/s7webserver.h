@@ -90,6 +90,7 @@ extern "C" {
 typedef struct S7WebServer s7webserver_t;
 
 s7webserver_t *s7webserver_create(s7_scheme *s7, int portnumber, bool find_first_free_portnum);
+void s7webserver_call_very_often(void); // Should be called approx. 20 times per second in non-qt programs.
 void s7webserver_set_verbose(s7webserver_t *s7server, bool verbose); // default is false
 void s7webserver_set_very_verbose(s7webserver_t *s7webserver, bool very_verbose); // default is false
 int s7webserver_get_portnumber(s7webserver_t *s7webserver);

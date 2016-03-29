@@ -3141,6 +3141,10 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_provide_feature("audio");
 #endif
 
+#if ENABLE_WEBSERVER
+  Xen_provide_feature("webserver");
+#endif
+
 #if HAVE_RUBY
   Xen_provide_feature("snd-ruby");
   /* we need to set up the search path so that load and require will work as in the program irb */

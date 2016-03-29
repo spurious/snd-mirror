@@ -157,6 +157,7 @@ related documentation: &nbsp;
   <li><a href="#sndandruby">Snd with Ruby</a>
   <li><a href="#sndandforth">Snd with Forth</a>
   <li><a href="#sndands7">Snd with s7</a>
+  <li><a href="#sndands7webserver">Snd with s7 webserver</a>
   <li><a href="#sndandladspa">Snd and LADSPA plugins</a>
   <li><a href="#sndandalsa">Snd and ALSA</a>
   <li><a href="#sndandjack">Snd and Jack</a>
@@ -1914,6 +1915,15 @@ The s7 initialization file is ~/.snd_s7.
 </p>
 
 
+<div class="innerheader" id="sndands7webserver">Snd with s7 webserver</div>
+
+<p>If compiling Snd with the option --with-webserver, the s7 interpreter can be accessed through a web socket.
+</p>
+
+<p>
+The file "s7webserver/s7webserver_repl.py" is an independent program that can control s7 remotely.
+Similarly, s7 can also be controlled by opening "s7webserver/s7webserver_repl.html" in a web browser.
+</p>
 
 
 <!-- INDEX sndandladspa:Plugins -->

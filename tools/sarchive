@@ -1,11 +1,14 @@
 #!/bin/csh -f
 
 set s7dir = /user/b/bil/s7
+set s7webdir = /user/b/bil/s7/s7webserver
 set snddir = /usr/ccrma/lisp/src/snd
 set pixdir = /usr/ccrma/lisp/src/snd/pix
 set sndtools = /usr/ccrma/lisp/src/snd/tools
+set sndweb = /usr/ccrma/lisp/src/snd/s7webserver
 set curdir = $cwd
 set curtools = $cwd/tools
+set curweb = $cwd/s7webserver
 
 date > $curdir/hi
 echo ' ' >> $curdir/hi
@@ -50,6 +53,33 @@ foreach file (*)
     diff -bcw $curtools/$file $sndtools/$file >> $curdir/hi
     find $curtools/$file -newer $sndtools/$file -exec echo ' updating ' tools/$file \;
     find $curtools/$file -newer $sndtools/$file -exec cp $curtools/$file $sndtools \;
+  endif
+end
+
+chdir curweb
+foreach file (*)
+  if (-e $curdir/$file) then
+    diff -bcw $curdir/$file $curweb/$file >> $curdir/hi
+    find $curdir/$file -newer $curweb/$file -exec echo ' updating ' s7webserver/$file \;
+    find $curdir/$file -newer $curweb/$file -exec cp $curdir/$file $curweb \;
+  endif
+end
+
+chdir sndweb
+foreach file (*)
+  if (-e $curweb/$file) then
+    diff -bcw $curweb/$file $sndweb/$file >> $curdir/hi
+    find $curweb/$file -newer $sndweb/$file -exec echo ' updating ' snd/s7webserver/$file \;
+    find $curweb/$file -newer $sndweb/$file -exec cp $curweb/$file $sndweb \;
+  endif
+end
+
+chdir s7webdir
+foreach file (*)
+  if (-e $curweb/$file) then
+    diff -bcw $curweb/$file $s7webdir/$file >> $curdir/hi
+    find $curweb/$file -newer $s7webdir/$file -exec echo ' updating ' s7/s7webserver/$file \;
+    find $curweb/$file -newer $s7webdir/$file -exec cp $curweb/$file $s7webdir \;
   endif
 end
 

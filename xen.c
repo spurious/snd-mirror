@@ -1282,6 +1282,10 @@ void xen_initialize(void)
 #if HAVE_SCHEME
 #include "s7.h"
 
+#if ENABLE_WEBSERVER
+  #include "s7webserver/s7webserver.h"
+#endif
+
 s7_scheme *s7;
 Xen xen_false, xen_true, xen_nil, xen_undefined, xen_zero;
 
@@ -1643,6 +1647,17 @@ Xen_wrap_1_arg(g_ftell_w, g_ftell)
 Xen_wrap_no_args(g_gc_off_w, g_gc_off)
 Xen_wrap_no_args(g_gc_on_w, g_gc_on)
 
+#if ENABLE_WEBSERVER
+  #if USE_MOTIF
+  #include "snd.h"
+  static idle_func_t called_periodically(any_pointer_t pet)
+  {
+    s7webserver_call_very_often();
+    return(BACKGROUND_CONTINUE);
+  }
+  #endif
+#endif
+
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
 {
@@ -1655,6 +1670,18 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 	  fprintf(stderr, "Can't initialize s7!\n");
 	  return(NULL);
 	}
+#if ENABLE_WEBSERVER
+      {
+	s7webserver_t *s7webserver;
+	s7webserver = s7webserver_create(s7, 6080, true);
+	if (!s7webserver)
+	  fprintf(stderr, "Unable to start web server. Port 6080 may be in use\n");
+	else fprintf(stdout, "Started s7 webserver at port %d\n", s7webserver_get_portnumber(s7webserver));
+#if USE_MOTIF
+	BACKGROUND_ADD(called_periodically, NULL);
+#endif
+      }
+#endif
     }
   else s7 = sc;
 
