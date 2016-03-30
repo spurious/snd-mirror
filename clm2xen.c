@@ -82,9 +82,10 @@ struct mus_xen {
 };
 
 
-enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS};
+enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SAVED_FUNCTION,
+      MUS_SELF_WRAPPER, MUS_INPUT_DATA, MUS_MAX_VCTS}; /* order matters, stuff before self_wrapper is GC marked */
 
-static mus_xen *mx_free_lists[8] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+static mus_xen *mx_free_lists[9] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 static mus_xen *mx_alloc(int vcts)
 {
@@ -1331,10 +1332,10 @@ static Xen_object_mark_t mark_mus_xen(Xen obj)
       lim = MUS_SELF_WRAPPER;
       if (ms->nvcts < lim) lim = ms->nvcts;
 #if HAVE_SCHEME
-      if (ms->free_data)
+      if (ms->free_data) /* set if rf functions are using these two vct slots */
 	{
 	  for (i = 0; i < lim; i++) 
-	    if ((i != MUS_INPUT_FUNCTION) && 
+	    if ((i != MUS_INPUT_FUNCTION) &&
 		(i != MUS_INPUT_DATA) &&
 		(Xen_is_bound(ms->vcts[i])))
 	      xen_gc_mark(ms->vcts[i]);
@@ -8286,6 +8287,7 @@ static void set_as_needed_input_choices(mus_any *gen, Xen obj, mus_xen *gn)
 			  rf = s7_rf_function(s7, fcar)(s7, res);
 			  if (rf)
 			    {
+			      gn->vcts[MUS_SAVED_FUNCTION] = gn->vcts[MUS_INPUT_FUNCTION]; /* needed for GC protection */
 			      gn->vcts[MUS_INPUT_DATA] = (s7_pointer)s7_xf_detach(s7);
 			      gn->vcts[MUS_INPUT_FUNCTION] = (s7_pointer)rf;
 			      gn->free_data = true;

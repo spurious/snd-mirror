@@ -2425,7 +2425,8 @@
 						     (if retry
 							 (simplify-boolean `(or ,@(reverse new-form)) () () env)
 							 `(or ,@(reverse new-form)))))))
-				 (let ((val (classify (car exprs))))
+				 (let ((val (classify (car exprs)))
+				       (old-form new-form))
 				   (if (and (pair? val)
 					    (memq (car val) '(and or not)))
 				       (set! val (classify (simplify-boolean val true false env))))
@@ -2455,7 +2456,15 @@
 									 (subsumes? (car p) (car val))
 									 (equal? (cadr val) (cadr p))))
 								  new-form))))
-					      (set! new-form (cons val new-form))))))))))))))
+					      (set! new-form (cons val new-form)))))
+
+				   (if (and (not (eq? new-form old-form))
+					    (pair? (cdr new-form)))
+				       (let ((rel (relsub (car new-form) (cadr new-form) 'or env)))
+					 (if (or (boolean? rel)
+						 (pair? rel))
+					     (set! new-form (cons rel (cddr new-form)))))))))))))))
+
 		    ;; --------------------------------
 		    ((and)
 		     (case len
@@ -2753,11 +2762,12 @@
 						    (else `(and ,@newer-form ,(car new-form))))))))
 				    
 				    (let* ((e (car exprs))
-					   (val (classify e)))
+					   (val (classify e))
+					   (old-form new-form))
 				      (if (and (pair? val)
 					       (memq (car val) '(and or not)))
 					  (set! val (classify (set! e (simplify-boolean val () false env)))))
-				      
+
 				      (if (not (or retry
 						   (equal? e (car exprs))))
 					  (set! retry #t))
@@ -2810,7 +2820,16 @@
 										 (subsumes? (car val) (car p))
 										 (equal? (cadr val) (cadr p))))
 									  new-form)))))
-						 (set! new-form (cons val new-form))))))))))))))))))))))
+						 (set! new-form (cons val new-form)))))
+
+				      (if (and (not (eq? new-form old-form))
+					       (pair? (cdr new-form)))
+					  (let ((rel (relsub (car new-form) (cadr new-form) 'and env)))
+					    ;; rel #f should halt everything as above, and it looks ugly in the output,
+					    ;;   but it never happens in real code
+					    (if (or (pair? rel)
+						    (boolean? rel))
+						(set! new-form (cons rel (cddr new-form)))))))))))))))))))))))
     
     (define (splice-if f lst)
       (cond ((null? lst) ())
@@ -6090,6 +6109,16 @@
 			     
 			     (set! arg-number (+ arg-number 1)))
 			   (cdr form)))))))))
+      
+#|
+      ;; there are ten-thousand ways to fool this -- how to narrow this down?
+      (for-each (lambda (arg)
+		  (if (and (symbol? arg)
+			   (not (var-member arg env))
+			   (not (hash-table-ref built-in-functions arg)))
+		      (format *stderr* "~S: ~A undefined?~%" *current-file* arg)))
+		(cdr form))
+|#
       
       (when (pair? checkers)
       (let ((arg-number 1)
@@ -9591,8 +9620,8 @@
 							    (lists->string form
 									   `(cond ,@(copy (cdr form) (make-list (- len (if has-else 2 1))))
 										  (,new-test ,@new-result)
-										  (,(cadr if-form) ,(caddr if-form))
-										  (else ,(cadddr if-form)))))))))
+										  (,(cadr if-form) ,@(unbegin (caddr if-form)))
+										  (else ,@(unbegin (cadddr if-form))))))))))
 			     (when (> len 2)
 			       (let ((lim (if has-else (- len 2) len))
 				     (tlen (tree-length form)))
@@ -11734,8 +11763,5 @@
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; var at level of func used only in func -> closure
 ;;;    this is currently not noticed in report-usage [var-scope is not saved for non-funcs]
-;;; lint should report undefined ids like scale/func in effects-utils [arg not func, normal-looking name]
-;;; if gen data used, gen itself can't be freed, so the let-reduction stuff needs to be smarter or the gen data GC is wrong
-;;; relsub not seen in >2 and? (and ... (< x 3) (> x 4)...)
 
 ;;; 495/100

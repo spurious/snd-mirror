@@ -106,14 +106,14 @@
 	 (list #t #f #f)))
       
       (when truncate-callback
-	(let ((sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL))
-	      (button (gtk_check_button_new_with_label "truncate at end")))
-	  (gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
-	  (gtk_widget_show sep))
-	(gtk_box_pack_start (GTK_BOX rc) button #t #t 4)
-	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
-	(gtk_widget_show button)
-	(g_signal_connect button "clicked" (lambda (w d) (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))) #f))))
+	(let ((button (gtk_check_button_new_with_label "truncate at end")))
+	  (let ((sep (gtk_separator_new GTK_ORIENTATION_HORIZONTAL)))
+	    (gtk_box_pack_start (GTK_BOX rc) sep #t #t 4)
+	    (gtk_widget_show sep))
+	  (gtk_box_pack_start (GTK_BOX rc) button #t #t 4)
+	  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) #t)
+	  (gtk_widget_show button)
+	  (g_signal_connect button "clicked" (lambda (w d) (truncate-callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))) #f)))))
   
   (define (effect-framples target)
     (if (eq? target 'sound)
@@ -763,57 +763,59 @@ the modulation frequency, and the echo amplitude."))
       (gtk_widget_show child)
       (g_signal_connect child "activate"
 			(lambda (w d) 
-			  (if (not band-pass-dialog)
-			      (let ((initial-band-pass-freq 1000)
-				    (initial-band-pass-bw 100)
-				    (sliders ()))
-				(set! band-pass-dialog 
-				      (make-effect-dialog 
-				       "Band-pass filter"
-				       
-				       (lambda (w data) 
-					 (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
-					   (if (eq? band-pass-target 'sound)
-					       (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
-					       (if (eq? band-pass-target 'selection)
-						   (filter-selection flt)
-						   (let* ((ms (plausible-mark-samples))
-							  (bg (car ms))
-							  (nd (+ 1 (- (cadr ms) (car ms)))))
-						     (clm-channel flt bg nd #f #f #f #f 
-								  (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd)))))))
-				       
-				       (lambda (w data)
-					 (help-dialog "Band-pass filter"
-						      "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
-				       
-				       (lambda (w data)
-					 (set! band-pass-freq initial-band-pass-freq)
-					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 band-pass-freq 22050))
-					 (set! band-pass-bw initial-band-pass-bw)
-					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) band-pass-bw)
-					 )
-				       
-				       (lambda () 
-					 (effect-target-ok band-pass-target))))
-				
-				(set! sliders
-				      (add-sliders band-pass-dialog
-						   (list (list "center frequency" 20 initial-band-pass-freq 22050
-							       (lambda (w data)
-								 (set! band-pass-freq (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders))) 22050)))
-							       1 'log)
-							 (list "bandwidth" 0 initial-band-pass-bw 1000
-							       (lambda (w data)
-								 (set! band-pass-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
-							       1))))
-				(add-target (gtk_dialog_get_content_area (GTK_DIALOG band-pass-dialog)) 
-					    (lambda (target) 
-					      (set! band-pass-target target)
-					      (gtk_widget_set_sensitive 
-					       (GTK_WIDGET (g_object_get_data (G_OBJECT band-pass-dialog) "ok-button")) 
-					       (effect-target-ok target)))
-					    #f)))
+			  (unless band-pass-dialog
+			    (let ((initial-band-pass-freq 1000)
+				  (initial-band-pass-bw 100)
+				  (sliders ()))
+			      (set! band-pass-dialog 
+				    (make-effect-dialog 
+				     "Band-pass filter"
+				     
+				     (lambda (w data) 
+				       (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
+					 (if (eq? band-pass-target 'sound)
+					     (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
+					     (if (eq? band-pass-target 'selection)
+						 (filter-selection flt)
+						 (let* ((ms (plausible-mark-samples))
+							(bg (car ms))
+							(nd (+ 1 (- (cadr ms) (car ms)))))
+						   (clm-channel flt bg nd #f #f #f #f 
+								(format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd)))))))
+				     
+				     (lambda (w data)
+				       (help-dialog "Band-pass filter"
+						    "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
+				     
+				     (lambda (w data)
+				       (set! band-pass-freq initial-band-pass-freq)
+				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 band-pass-freq 22050))
+				       (set! band-pass-bw initial-band-pass-bw)
+				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) band-pass-bw)
+				       )
+				     
+				     (lambda () 
+				       (effect-target-ok band-pass-target))))
+			      
+			      (set! sliders
+				    (add-sliders band-pass-dialog
+						 (list (list "center frequency" 20 initial-band-pass-freq 22050
+							     (lambda (w data)
+							       (set! band-pass-freq (scale-linear->log 20 
+										      (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))
+										      22050)))
+							     1 'log)
+						       (list "bandwidth" 0 initial-band-pass-bw 1000
+							     (lambda (w data)
+							       (set! band-pass-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
+							     1))))
+			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG band-pass-dialog)) 
+					  (lambda (target) 
+					    (set! band-pass-target target)
+					    (gtk_widget_set_sensitive 
+					     (GTK_WIDGET (g_object_get_data (G_OBJECT band-pass-dialog) "ok-button")) 
+					     (effect-target-ok target)))
+					  #f)))
 			  (activate-dialog band-pass-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()

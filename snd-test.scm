@@ -32,7 +32,7 @@
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
-					;(set! (*s7* 'gc-stats) #t)
+;(set! (*s7* 'gc-stats) #t)
 
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
@@ -306,10 +306,10 @@
 				(set! *clipping* #f)
 				(set! (mus-clipping) #f) ; this cost me a morning of confusion!
 				(set! test-number n)
-				(set! (timings n) (real-time))
+				(if (> (length timings) n)
+				    (set! (timings n) (real-time)))
 				(snd-display #__line__ ";test ~D" n)
 				)))
-
 
 (define (clear-save-state-files)
   (for-each forget-region (regions))
@@ -44711,90 +44711,90 @@ EDITS: 1
 	  (XmInstallImage before "before_image")
 	  (XmUninstallImage before)
 	  (XDestroyImage before))
-	(if (defined? 'XpmAttributes)
-	    (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
-		  (attr (XpmAttributes))
-		  (vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0))))
-	      (let ((sym (XpmColorSymbol "basiccolor" #f *basic-color*)))
-		(if (not (string=? (.name sym) "basiccolor")) (snd-display #__line__ ";.name colorsymbol: ~A" (.name sym)))
-		(set! (.name sym) "hiho")
-		(if (not (string=? (.name sym) "hiho")) (snd-display #__line__ ";set .name colorsymbol: ~A" (.name sym)))
-		(set! (.visual attr) vis)
-		(if (not (equal? vis (.visual attr))) (snd-display #__line__ ";visual xpm attr: ~A" (.visual attr)))
-		(if (not (list? (.colorsymbols attr))) (snd-display #__line__ ";.colorsymbols attr: ~A" (.colorsymbols attr)))
-		(set! (.colorsymbols attr) (list sym))
-		(set! (.pixel sym) *basic-color*))
-	      (set! (.numsymbols attr) 1)
-	      (if (not (eqv? 1 (.numsymbols attr))) (snd-display #__line__ ";numsymbols xpm attr: ~A" (.numsymbols attr)))
-	      (set! (.depth attr) (vals 3))
-	      (if (not (equal? (vals 3) (.depth attr))) (snd-display #__line__ ";depth xpm attr: ~A" (.depth attr)))
-	      (set! (.colormap attr) (vals 1))
-	      (if (not (equal? (vals 1) (.colormap attr))) (snd-display #__line__ ";colormap xpm attr: ~A" (.colormap attr)))
-	      (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
-	      (if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
-		  (snd-display #__line__ ";valuemask: ~A" (.valuemask attr)))
-	      (if (not (= (.x_hotspot attr) 0)) (snd-display #__line__ ";x_hotspot: ~A" (.x_hotspot attr)))
-	      (if (not (= (.y_hotspot attr) 0)) (snd-display #__line__ ";y_hotspot: ~A" (.y_hotspot attr)))
-	      (if (not (= (.npixels attr) 0)) (snd-display #__line__ ";npixels: ~A" (.npixels attr)))
-	      (let ((err (XpmCreatePixmapFromData dpy win 
-						  (list "16 14 6 1"
-							" 	c None s None"
-							".	c gray50"
-							"X	c black"
-							"o	c white"
-							"O	c yellow"
-							"-      c ivory2 s basiccolor"
-							"------.XXX.-----"
-							"-----X.ooo.X----"
-							"----..oXXXo..---"
-							"----XoX...XoX---"
-							"----XoX.--XoX.--"
-							"----XoX.--XoX.--"
-							"---XXXXXXXXXXX--"
-							"---XOOOOOOOOOX.-"
-							"---XO.......OX.-"
-							"---XOOOOOOOOOX.-"
-							"---XO.......OX.-"
-							"---XOOOOOOOOOX.-"
-							"---XXXXXXXXXXX.-"
-							"----...........-")
-						  attr)))
-		(if (not (and (= (car err) XpmSuccess) 
-			      (Pixmap? (cadr err))))
-		    (snd-display #__line__ ";XpmCreatePixmapFromData: ~A" err)))
-	      
-	      (let* ((shell (cadr (main-widgets)))
-		     (dpy (XtDisplay shell))
-		     (button (XmCreatePushButton shell "button" ()))
-		     (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
-		     (status (car status-and-whatnot))
-		     (pixmap (cadr status-and-whatnot))
-		     (pixmap1 (caddr status-and-whatnot)))
-		(if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
-		    (snd-display #__line__ ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
-		(if (not (= status XpmSuccess))
-		    (snd-display #__line__ "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
-		(XtVaSetValues button (list XmNlabelType XmPIXMAP
-					    XmNlabelPixmap pixmap))
-		(XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
-		(XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
-		(let ((status (XpmReadFileToXpmImage "bullet.xpm"))
-		      (attr (XpmAttributes)))
-		  (let ((symb (XpmColorSymbol "Foreground" "green" *basic-color*)))
-		    (if (not (XpmImage? status))
-			(snd-display #__line__ "; XpmError ReadFileToXpmImage: ~A ~A" symb (XpmGetErrorString status))))
-		  (set! (.valuemask attr) XpmColorSymbols)
-		  (XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
-		  (XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
-		  (for-each
-		   (lambda (func val name)
-		     (set! (func attr) val)
-		     (if (not (equal? (func attr) val)) (snd-display #__line__ ";attr ~A ~A" name (func attr))))
-		   (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
-		   (list 0 0 0 0 0 0 0 0)
-		   (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors))))
-	      (XDestroyImage i11)))
-	  
+	(when (defined? 'XpmAttributes)
+	  (let ((i11 (XGetImage dpy (list 'Window (cadr pix)) 0 0 10 10 AllPlanes XYPixmap))
+		(attr (XpmAttributes))
+		(vals (XtGetValues (cadr (main-widgets)) (list XmNcolormap 0 XmNdepth 0))))
+	    (let ((sym (XpmColorSymbol "basiccolor" #f *basic-color*)))
+	      (if (not (string=? (.name sym) "basiccolor")) (snd-display #__line__ ";.name colorsymbol: ~A" (.name sym)))
+	      (set! (.name sym) "hiho")
+	      (if (not (string=? (.name sym) "hiho")) (snd-display #__line__ ";set .name colorsymbol: ~A" (.name sym)))
+	      (set! (.visual attr) vis)
+	      (if (not (equal? vis (.visual attr))) (snd-display #__line__ ";visual xpm attr: ~A" (.visual attr)))
+	      (if (not (list? (.colorsymbols attr))) (snd-display #__line__ ";.colorsymbols attr: ~A" (.colorsymbols attr)))
+	      (set! (.colorsymbols attr) (list sym))
+	      (set! (.pixel sym) *basic-color*))
+	    (set! (.numsymbols attr) 1)
+	    (if (not (eqv? 1 (.numsymbols attr))) (snd-display #__line__ ";numsymbols xpm attr: ~A" (.numsymbols attr)))
+	    (set! (.depth attr) (vals 3))
+	    (if (not (equal? (vals 3) (.depth attr))) (snd-display #__line__ ";depth xpm attr: ~A" (.depth attr)))
+	    (set! (.colormap attr) (vals 1))
+	    (if (not (equal? (vals 1) (.colormap attr))) (snd-display #__line__ ";colormap xpm attr: ~A" (.colormap attr)))
+	    (set! (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual))
+	    (if (not (= (.valuemask attr) (logior XpmColorSymbols XpmDepth XpmColormap XpmVisual)))
+		(snd-display #__line__ ";valuemask: ~A" (.valuemask attr)))
+	    (if (not (= (.x_hotspot attr) 0)) (snd-display #__line__ ";x_hotspot: ~A" (.x_hotspot attr)))
+	    (if (not (= (.y_hotspot attr) 0)) (snd-display #__line__ ";y_hotspot: ~A" (.y_hotspot attr)))
+	    (if (not (= (.npixels attr) 0)) (snd-display #__line__ ";npixels: ~A" (.npixels attr)))
+	    (let ((err (XpmCreatePixmapFromData dpy win 
+						(list "16 14 6 1"
+						      " 	c None s None"
+						      ".	c gray50"
+						      "X	c black"
+						      "o	c white"
+						      "O	c yellow"
+						      "-      c ivory2 s basiccolor"
+						      "------.XXX.-----"
+						      "-----X.ooo.X----"
+						      "----..oXXXo..---"
+						      "----XoX...XoX---"
+						      "----XoX.--XoX.--"
+						      "----XoX.--XoX.--"
+						      "---XXXXXXXXXXX--"
+						      "---XOOOOOOOOOX.-"
+						      "---XO.......OX.-"
+						      "---XOOOOOOOOOX.-"
+						      "---XO.......OX.-"
+						      "---XOOOOOOOOOX.-"
+						      "---XXXXXXXXXXX.-"
+						      "----...........-")
+						attr)))
+	      (if (not (and (= (car err) XpmSuccess) 
+			    (Pixmap? (cadr err))))
+		  (snd-display #__line__ ";XpmCreatePixmapFromData: ~A" err)))
+	    
+	    (let* ((shell (cadr (main-widgets)))
+		   (dpy (XtDisplay shell))
+		   (button (XmCreatePushButton shell "button" ()))
+		   (status-and-whatnot (XpmReadFileToPixmap dpy (XRootWindowOfScreen (XtScreen shell)) "bullet.xpm" #f))
+		   (status (car status-and-whatnot))
+		   (pixmap (cadr status-and-whatnot))
+		   (pixmap1 (caddr status-and-whatnot)))
+	      (if (not (string=? (XpmGetErrorString XpmSuccess) "XpmSuccess")) 
+		  (snd-display #__line__ ";XpmGetErrorString: ~A" (XpmGetErrorString XpmSuccess)))
+	      (if (not (= status XpmSuccess))
+		  (snd-display #__line__ "; XpmError ReadFileToPixmap: ~A" (XpmGetErrorString status)))
+	      (XtVaSetValues button (list XmNlabelType XmPIXMAP
+					  XmNlabelPixmap pixmap))
+	      (XpmWriteFileFromPixmap dpy "test.xpm" pixmap pixmap1 #f)
+	      (XpmCreateDataFromPixmap dpy pixmap pixmap1 #f)
+	      (let ((status (XpmReadFileToXpmImage "bullet.xpm"))
+		    (attr (XpmAttributes)))
+		(let ((symb (XpmColorSymbol "Foreground" "green" *basic-color*)))
+		  (if (not (XpmImage? status))
+		      (snd-display #__line__ "; XpmError ReadFileToXpmImage: ~A ~A" symb (XpmGetErrorString status))))
+		(set! (.valuemask attr) XpmColorSymbols)
+		(XpmCreatePixmapFromXpmImage dpy (XRootWindowOfScreen (XtScreen shell)) status attr)
+		(XpmCreateXpmImageFromPixmap dpy pixmap pixmap1 attr)
+		(for-each
+		 (lambda (func val name)
+		   (set! (func attr) val)
+		   (if (not (equal? (func attr) val)) (snd-display #__line__ ";attr ~A ~A" name (func attr))))
+		 (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
+		 (list 0 0 0 0 0 0 0 0)
+		 (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors))))
+	    (XDestroyImage i11)))
+	
 	(XFreePixmap dpy pix)
 	(XVisualIDFromVisual vis)
 	(XGrabServer dpy)
@@ -45668,64 +45668,64 @@ EDITS: 1
 				))
 	(XtUnmanageChild hi))
       
-      (if (and (defined? 'XmCreateFontSelector)
-	       (defined? 'XmCreateColorSelector))
-	  (let ((fonts-dialog #f)
-		(colors-dialog #f))
-	    (for-each
-	     (lambda (make-dialog)
-	       (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-		      (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-		      (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-		      (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
-		      (new-dialog (XmCreateTemplateDialog
-				   (cadr (main-widgets)) "Fonts"
-				   (list XmNcancelLabelString   xdismiss
-					 XmNhelpLabelString     xhelp
-					 XmNokLabelString       xok
-					 XmNautoUnmanage        #f
-					 XmNdialogTitle         titlestr
-					 XmNresizePolicy        XmRESIZE_GROW
-					 XmNnoResize            #f
-					 XmNbackground          *basic-color*
-					 XmNtransient           #f))))
-		 (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
-		 (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
-		 (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
-		 (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
-		 (if (not fonts-dialog)
-		     (set! fonts-dialog new-dialog)
-		     (set! colors-dialog new-dialog))
-		 (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
-							 (list XmNleftAttachment   XmATTACH_FORM
-							       XmNrightAttachment  XmATTACH_FORM
-							       XmNtopAttachment    XmATTACH_FORM
-							       XmNbottomAttachment XmATTACH_WIDGET
-							       XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-							       XmNbackground       *basic-color*)))
-			(fnts (make-dialog mainform)))
-		   (XtManageChild fnts)
-		   (XtManageChild (or colors-dialog fonts-dialog)))))
-
-	     (list 
-	      (lambda (mainform)
-		(XmCreateFontSelector mainform "Fonts" 
-				      (list XmNbackground *basic-color*
-					    XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
-					    XmNleftAttachment   XmATTACH_FORM
-					    XmNrightAttachment  XmATTACH_FORM
-					    XmNtopAttachment    XmATTACH_FORM
-					    XmNbottomAttachment XmATTACH_NONE)))
-	      
-	      (lambda (mainform)
-		(XmCreateColorSelector mainform "Colors" 
-				       (list XmNbackground *basic-color*
-					     XmNleftAttachment   XmATTACH_FORM
-					     XmNrightAttachment  XmATTACH_FORM
-					     XmNtopAttachment    XmATTACH_FORM
-					     XmNbottomAttachment XmATTACH_NONE)))))
-	    (XtUnmanageChild fonts-dialog)
-	    (XtUnmanageChild colors-dialog)))
+      (when (and (defined? 'XmCreateFontSelector)
+		 (defined? 'XmCreateColorSelector))
+	(let ((fonts-dialog #f)
+	      (colors-dialog #f))
+	  (for-each
+	   (lambda (make-dialog)
+	     (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+		    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		    (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		    (titlestr (XmStringCreate "Fonts" XmFONTLIST_DEFAULT_TAG))
+		    (new-dialog (XmCreateTemplateDialog
+				 (cadr (main-widgets)) "Fonts"
+				 (list XmNcancelLabelString   xdismiss
+				       XmNhelpLabelString     xhelp
+				       XmNokLabelString       xok
+				       XmNautoUnmanage        #f
+				       XmNdialogTitle         titlestr
+				       XmNresizePolicy        XmRESIZE_GROW
+				       XmNnoResize            #f
+				       XmNbackground          *basic-color*
+				       XmNtransient           #f))))
+	       (XtAddCallback new-dialog XmNcancelCallback (lambda (w c i) (XtUnmanageChild w)))
+	       (XtAddCallback new-dialog XmNhelpCallback (lambda (w c i) (help-dialog "Fonts" "no help yet")))
+	       (XtAddCallback new-dialog XmNokCallback (lambda (w c i) (XtUnmanageChild w)))
+	       (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
+	       (if (not fonts-dialog)
+		   (set! fonts-dialog new-dialog)
+		   (set! colors-dialog new-dialog))
+	       (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+						       (list XmNleftAttachment   XmATTACH_FORM
+							     XmNrightAttachment  XmATTACH_FORM
+							     XmNtopAttachment    XmATTACH_FORM
+							     XmNbottomAttachment XmATTACH_WIDGET
+							     XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+							     XmNbackground       *basic-color*)))
+		      (fnts (make-dialog mainform)))
+		 (XtManageChild fnts)
+		 (XtManageChild (or colors-dialog fonts-dialog)))))
+	   
+	   (list 
+	    (lambda (mainform)
+	      (XmCreateFontSelector mainform "Fonts" 
+				    (list XmNbackground *basic-color*
+					  XmNcurrentFont "-*-times-bold-r-*-*-14-140-*-*-*-*-*-*"
+					  XmNleftAttachment   XmATTACH_FORM
+					  XmNrightAttachment  XmATTACH_FORM
+					  XmNtopAttachment    XmATTACH_FORM
+					  XmNbottomAttachment XmATTACH_NONE)))
+	    
+	    (lambda (mainform)
+	      (XmCreateColorSelector mainform "Colors" 
+				     (list XmNbackground *basic-color*
+					   XmNleftAttachment   XmATTACH_FORM
+					   XmNrightAttachment  XmATTACH_FORM
+					   XmNtopAttachment    XmATTACH_FORM
+					   XmNbottomAttachment XmATTACH_NONE)))))
+	  (XtUnmanageChild fonts-dialog)
+	  (XtUnmanageChild colors-dialog)))
       
       (let* ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
 	     (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
@@ -46233,40 +46233,40 @@ EDITS: 1
       (set! (.pad (XColor)) 1)
       ;;)
       
-      (if (defined? 'XShapeQueryExtents)
-	  (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		 (win (XtWindow (cadr (main-widgets))))
-		 (vals (XShapeQueryExtents dpy win)))
-	    (if (not (= (car vals) 1))
-		(snd-display #__line__ ";XShapeQueryExtents: ~A" vals))
-	    (set! vals (XShapeGetRectangles dpy win 0))
-	    (if (not (list? vals)) (snd-display #__line__ ";XShapeGetRectangles: ~A" vals))
+      (when (defined? 'XShapeQueryExtents)
+	(let* ((dpy (XtDisplay (cadr (main-widgets))))
+	       (win (XtWindow (cadr (main-widgets))))
+	       (vals (XShapeQueryExtents dpy win)))
+	  (if (not (= (car vals) 1))
+	      (snd-display #__line__ ";XShapeQueryExtents: ~A" vals))
+	  (set! vals (XShapeGetRectangles dpy win 0))
+	  (if (not (list? vals)) (snd-display #__line__ ";XShapeGetRectangles: ~A" vals))
 					;(segfault)	  (XtFree (cadr vals)) 
-	    (set! vals (XShapeQueryExtension dpy))
-	    (if (not (equal? vals (list #t 64 0))) (snd-display #__line__ ";XShapeQueryExtension: ~A" vals))
-	    (set! vals (XShapeQueryVersion dpy))
-	    (if (not (or (equal? vals (list #t 1 0)) 
-			 (equal? vals (list #t 1 1))))
-		(snd-display #__line__ ";XShapeQueryVersion: ~A" vals))
-	    (if (XShapeOffsetShape dpy win 0 0 0) (snd-display #__line__ ";XShapeOffsetShape?"))
-	    
-	    (let* ((attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
-		   (newwin (XCreateWindow dpy win 10 10 100 100 3 
-					  CopyFromParent InputOutput (list 'Visual CopyFromParent)
-					  (logior CWBackPixel CWBorderPixel)
-					  attr)))
-	      (let ((bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
-		(XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet))
-	      (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
-				       (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
-				       ShapeSet ShapeBounding)
-	      (let ((newerwin (XCreateWindow dpy win 10 10 100 100 3 
-					     CopyFromParent InputOutput (list 'Visual CopyFromParent)
-					     (logior CWBackPixel CWBorderPixel)
-					     attr)))
-		(XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
-	      (let ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
-		(XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
+	  (set! vals (XShapeQueryExtension dpy))
+	  (if (not (equal? vals (list #t 64 0))) (snd-display #__line__ ";XShapeQueryExtension: ~A" vals))
+	  (set! vals (XShapeQueryVersion dpy))
+	  (if (not (or (equal? vals (list #t 1 0)) 
+		       (equal? vals (list #t 1 1))))
+	      (snd-display #__line__ ";XShapeQueryVersion: ~A" vals))
+	  (if (XShapeOffsetShape dpy win 0 0 0) (snd-display #__line__ ";XShapeOffsetShape?"))
+	  
+	  (let* ((attr (XSetWindowAttributes #f *basic-color* #f *highlight-color*))
+		 (newwin (XCreateWindow dpy win 10 10 100 100 3 
+					CopyFromParent InputOutput (list 'Visual CopyFromParent)
+					(logior CWBackPixel CWBorderPixel)
+					attr)))
+	    (let ((bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
+	      (XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet))
+	    (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
+				     (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
+				     ShapeSet ShapeBounding)
+	    (let ((newerwin (XCreateWindow dpy win 10 10 100 100 3 
+					   CopyFromParent InputOutput (list 'Visual CopyFromParent)
+					   (logior CWBackPixel CWBorderPixel)
+					   attr)))
+	      (XShapeCombineShape dpy newerwin ShapeIntersect 0 0 newwin ShapeSet ShapeClip))
+	    (let ((reg1 (XPolygonRegion (list (XPoint 2 2) (XPoint 10 2) (XPoint 10 10) (XPoint 2 10)) 4 WindingRule)))
+	      (XShapeCombineRegion dpy newwin ShapeUnion 0 0 reg1 ShapeSet)))))
       
       (let ((classes (list xmArrowButtonWidgetClass xmBulletinBoardWidgetClass xmCascadeButtonWidgetClass xmCommandWidgetClass
 			   xmDrawingAreaWidgetClass xmDrawnButtonWidgetClass xmFileSelectionBoxWidgetClass xmFormWidgetClass
@@ -46739,117 +46739,116 @@ EDITS: 1
 ;;; ---------------- test 24: GL --------------------
 
 (define (snd_test_24)
-  (if (and (provided? 'snd-motif) 
-	   (provided? 'gl)
-	   (provided? 'xm))
+  (when (and (provided? 'snd-motif) 
+	     (provided? 'gl)
+	     (provided? 'xm))
       
-      (with-let (sublet *gl*)
-	(require snd-snd-gl.scm)
-	(gl-info)
-	(if all-args (gl-dump-state))
-	(let ((gl-procs 
-	       (list
-		glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
-		glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
-		glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
-		glClear glIndexMask glColorMask glAlphaFunc glBlendFunc glLogicOp glCullFace glFrontFace glPointSize glLineWidth glLineStipple
-		glPolygonMode glPolygonOffset glPolygonStipple glEdgeFlag glScissor glClipPlane glGetClipPlane
-		glDrawBuffer glReadBuffer glEnable glDisable glIsEnabled glEnableClientState glDisableClientState glGetBooleanv
-		glGetDoublev glGetFloatv glGetIntegerv glPushAttrib glPopAttrib glPushClientAttrib glPopClientAttrib glRenderMode
-		glGetError glGetString glFinish glFlush glHint glClearDepth glDepthFunc glDepthMask glDepthRange glClearAccum glAccum
-		glMatrixMode glOrtho glFrustum glViewport glPushMatrix glPopMatrix glLoadIdentity glLoadMatrixd glLoadMatrixf
-		glMultMatrixd glMultMatrixf glRotated glRotatef glScaled glScalef glTranslated glTranslatef glIsList glDeleteLists
-		glGenLists glNewList glEndList glCallList glCallLists glListBase glBegin glEnd glVertex2d glVertex2f glVertex2i glVertex2s
-		glVertex3d glVertex3f glVertex3i glVertex3s glVertex4d glVertex4f glVertex4i glVertex4s glNormal3b glNormal3d glNormal3f
-		glNormal3i glNormal3s glIndexd glIndexf glIndexi glIndexs glIndexub glColor3b glColor3d glColor3f glColor3i glColor3s
-		glColor3ub glColor3ui glColor3us glColor4b glColor4d glColor4f glColor4i glColor4s glColor4ub glColor4ui glColor4us glTexCoord1d
-		glTexCoord1f glTexCoord1i glTexCoord1s glTexCoord2d glTexCoord2f glTexCoord2i glTexCoord2s glTexCoord3d glTexCoord3f glTexCoord3i
-		glTexCoord3s glTexCoord4d glTexCoord4f glTexCoord4i glTexCoord4s glRasterPos2d glRasterPos2f glRasterPos2i glRasterPos2s
-		glRasterPos3d glRasterPos3f glRasterPos3i glRasterPos3s glRasterPos4d glRasterPos4f glRasterPos4i glRasterPos4s glRectd
-		glRectf glRecti glRects glVertexPointer glNormalPointer glColorPointer glIndexPointer glTexCoordPointer glEdgeFlagPointer
-		glGetPointerv glArrayElement glDrawArrays glDrawElements glInterleavedArrays glShadeModel glLightf glLighti glGetLightfv
-		glGetLightiv glLightModelf glLightModeli glMaterialf glMateriali glGetMaterialfv glGetMaterialiv glColorMaterial glPixelZoom
-		glPixelStoref glPixelStorei glPixelTransferf glPixelTransferi glGetPixelMapfv glGetPixelMapuiv glGetPixelMapusv glBitmap
-		glReadPixels glDrawPixels glCopyPixels glStencilFunc glStencilMask glStencilOp glClearStencil glTexGend glTexGenf glTexGeni
-		glGetTexGendv glGetTexGenfv glGetTexGeniv glTexEnvf glTexEnvi glGetTexEnvfv glGetTexEnviv glTexParameterf glTexParameteri
-		glGetTexParameterfv glGetTexParameteriv glGetTexLevelParameterfv glGetTexLevelParameteriv glTexImage1D glTexImage2D
-		glGenTextures glDeleteTextures glBindTexture glAreTexturesResident glIsTexture glTexSubImage1D glTexSubImage2D glCopyTexImage1D
-		glCopyTexImage2D glCopyTexSubImage1D glCopyTexSubImage2D glMap1d glMap1f glMap2d glMap2f glGetMapdv glGetMapfv glGetMapiv
-		glEvalCoord1d glEvalCoord1f glEvalCoord2d glEvalCoord2f glMapGrid1d glMapGrid1f glMapGrid2d glMapGrid2f glEvalPoint1
-		glEvalPoint2 glEvalMesh1 glEvalMesh2 glFogf glFogi glFeedbackBuffer glPassThrough glSelectBuffer glInitNames glLoadName
-		glPushName glPopName glDrawRangeElements glTexImage3D glTexSubImage3D glCopyTexSubImage3D glColorTable glColorSubTable
-		glCopyColorSubTable glCopyColorTable glGetColorTableParameterfv glGetColorTableParameteriv glBlendEquation glBlendColor
-		glHistogram glResetHistogram glGetHistogram glGetHistogramParameterfv glGetHistogramParameteriv glMinmax glResetMinmax
-		glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
-		glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D ))
-	      (glu-procs 
-	       (if (not (defined? 'gluBeginPolygon))
-		   ()
-		   (list
-		    gluBeginPolygon gluBuild1DMipmaps gluLookAt gluNewTess gluNextContour gluTessEndContour
-		    gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty 
-		    gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon 
-		    gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject))))
-	  
-	  ;; ---------------- 1 Arg
-	  (for-each 
-	   (lambda (arg)
-	     (for-each 
-	      (lambda (n)
-		(catch #t
-		       (lambda () (n arg))
-		       (lambda args (car args))))
-	      gl-procs))
-	   (list (list 0 1) 0+i))
-	  
-	  (if (pair? glu-procs)
-	      (begin
-		(for-each 
-		 (lambda (arg)
-		   (for-each 
-		    (lambda (n)
-		      (catch #t
-			     (lambda () (n arg))
-			     (lambda args (car args))))
-		    gl-procs))
-		 (list (list 0 1) 0+i))
-		
-		(let ((ind (open-sound "oboe.snd")))
-		  (glXMakeCurrent ((*motif* 'XtDisplay) (cadr (main-widgets))) 
-				  ((*motif* 'XtWindow) (car (channel-widgets)))
-				  (snd-gl-context))
-		  (glEnable GL_DEPTH_TEST)
-		  (glDepthFunc GL_LEQUAL)
-		  (glClearDepth 1.0)
-		  (glClearColor 0.0 0.0 0.0 0.0)
-		  (glLoadIdentity)
-		  (gluPerspective 40.0 1.0 10.0 200.0)
-		  (glTranslatef 0.0 0.0 -50.0)
-		  (glRotatef -58.0 0.0 1.0 0.0)
-		  (let ((vals ((*motif* 'XtVaGetValues) (car (channel-widgets)) (list (*motif* 'XmNwidth) 0 (*motif* 'XmNheight) 0))))
-		    (glViewport 0 0 (vals 1) (vals 3)))
-		  (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-		  (glBegin GL_POLYGON)
-		  (glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
-		  (glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
-		  (glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
-		  (glEnd)
-		  (glBegin GL_POLYGON)
-		  (glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
-		  (glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
-		  (glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
-		  (glEnd)
-		  (glBegin GL_POLYGON)
-		  (glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
-		  (glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
-		  (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
-		  (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
-		  (glEnd)
-		  (glXSwapBuffers ((*motif* 'XtDisplay) (cadr (main-widgets))) 
-				  ((*motif* 'XtWindow) (car (channel-widgets))))
-		  (glFlush)
-		  (close-sound ind)))))
-	)))
+    (with-let (sublet *gl*)
+      (require snd-snd-gl.scm)
+      (gl-info)
+      (if all-args (gl-dump-state))
+      (let ((gl-procs 
+	     (list
+	      glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
+	      glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
+	      glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
+	      glClear glIndexMask glColorMask glAlphaFunc glBlendFunc glLogicOp glCullFace glFrontFace glPointSize glLineWidth glLineStipple
+	      glPolygonMode glPolygonOffset glPolygonStipple glEdgeFlag glScissor glClipPlane glGetClipPlane
+	      glDrawBuffer glReadBuffer glEnable glDisable glIsEnabled glEnableClientState glDisableClientState glGetBooleanv
+	      glGetDoublev glGetFloatv glGetIntegerv glPushAttrib glPopAttrib glPushClientAttrib glPopClientAttrib glRenderMode
+	      glGetError glGetString glFinish glFlush glHint glClearDepth glDepthFunc glDepthMask glDepthRange glClearAccum glAccum
+	      glMatrixMode glOrtho glFrustum glViewport glPushMatrix glPopMatrix glLoadIdentity glLoadMatrixd glLoadMatrixf
+	      glMultMatrixd glMultMatrixf glRotated glRotatef glScaled glScalef glTranslated glTranslatef glIsList glDeleteLists
+	      glGenLists glNewList glEndList glCallList glCallLists glListBase glBegin glEnd glVertex2d glVertex2f glVertex2i glVertex2s
+	      glVertex3d glVertex3f glVertex3i glVertex3s glVertex4d glVertex4f glVertex4i glVertex4s glNormal3b glNormal3d glNormal3f
+	      glNormal3i glNormal3s glIndexd glIndexf glIndexi glIndexs glIndexub glColor3b glColor3d glColor3f glColor3i glColor3s
+	      glColor3ub glColor3ui glColor3us glColor4b glColor4d glColor4f glColor4i glColor4s glColor4ub glColor4ui glColor4us glTexCoord1d
+	      glTexCoord1f glTexCoord1i glTexCoord1s glTexCoord2d glTexCoord2f glTexCoord2i glTexCoord2s glTexCoord3d glTexCoord3f glTexCoord3i
+	      glTexCoord3s glTexCoord4d glTexCoord4f glTexCoord4i glTexCoord4s glRasterPos2d glRasterPos2f glRasterPos2i glRasterPos2s
+	      glRasterPos3d glRasterPos3f glRasterPos3i glRasterPos3s glRasterPos4d glRasterPos4f glRasterPos4i glRasterPos4s glRectd
+	      glRectf glRecti glRects glVertexPointer glNormalPointer glColorPointer glIndexPointer glTexCoordPointer glEdgeFlagPointer
+	      glGetPointerv glArrayElement glDrawArrays glDrawElements glInterleavedArrays glShadeModel glLightf glLighti glGetLightfv
+	      glGetLightiv glLightModelf glLightModeli glMaterialf glMateriali glGetMaterialfv glGetMaterialiv glColorMaterial glPixelZoom
+	      glPixelStoref glPixelStorei glPixelTransferf glPixelTransferi glGetPixelMapfv glGetPixelMapuiv glGetPixelMapusv glBitmap
+	      glReadPixels glDrawPixels glCopyPixels glStencilFunc glStencilMask glStencilOp glClearStencil glTexGend glTexGenf glTexGeni
+	      glGetTexGendv glGetTexGenfv glGetTexGeniv glTexEnvf glTexEnvi glGetTexEnvfv glGetTexEnviv glTexParameterf glTexParameteri
+	      glGetTexParameterfv glGetTexParameteriv glGetTexLevelParameterfv glGetTexLevelParameteriv glTexImage1D glTexImage2D
+	      glGenTextures glDeleteTextures glBindTexture glAreTexturesResident glIsTexture glTexSubImage1D glTexSubImage2D glCopyTexImage1D
+	      glCopyTexImage2D glCopyTexSubImage1D glCopyTexSubImage2D glMap1d glMap1f glMap2d glMap2f glGetMapdv glGetMapfv glGetMapiv
+	      glEvalCoord1d glEvalCoord1f glEvalCoord2d glEvalCoord2f glMapGrid1d glMapGrid1f glMapGrid2d glMapGrid2f glEvalPoint1
+	      glEvalPoint2 glEvalMesh1 glEvalMesh2 glFogf glFogi glFeedbackBuffer glPassThrough glSelectBuffer glInitNames glLoadName
+	      glPushName glPopName glDrawRangeElements glTexImage3D glTexSubImage3D glCopyTexSubImage3D glColorTable glColorSubTable
+	      glCopyColorSubTable glCopyColorTable glGetColorTableParameterfv glGetColorTableParameteriv glBlendEquation glBlendColor
+	      glHistogram glResetHistogram glGetHistogram glGetHistogramParameterfv glGetHistogramParameteriv glMinmax glResetMinmax
+	      glGetMinmax glGetMinmaxParameterfv glGetMinmaxParameteriv glConvolutionFilter1D glConvolutionFilter2D glConvolutionParameterf
+	      glConvolutionParameteri glCopyConvolutionFilter1D glCopyConvolutionFilter2D glSeparableFilter2D ))
+	    (glu-procs 
+	     (if (not (defined? 'gluBeginPolygon))
+		 ()
+		 (list
+		  gluBeginPolygon gluBuild1DMipmaps gluLookAt gluNewTess gluNextContour gluTessEndContour
+		  gluBuild2DMipmaps gluDeleteTess gluEndPolygon gluErrorString gluGetString gluGetTessProperty 
+		  gluOrtho2D gluPerspective gluPickMatrix gluProject gluScaleImage gluTessBeginContour gluTessBeginPolygon 
+		  gluTessEndPolygon gluTessNormal gluTessProperty gluTessVertex gluUnProject))))
+	
+	;; ---------------- 1 Arg
+	(for-each 
+	 (lambda (arg)
+	   (for-each 
+	    (lambda (n)
+	      (catch #t
+		(lambda () (n arg))
+		(lambda args (car args))))
+	    gl-procs))
+	 (list (list 0 1) 0+i))
+	
+	(if (pair? glu-procs)
+	    (begin
+	      (for-each 
+	       (lambda (arg)
+		 (for-each 
+		  (lambda (n)
+		    (catch #t
+		      (lambda () (n arg))
+		      (lambda args (car args))))
+		  gl-procs))
+	       (list (list 0 1) 0+i))
+	      
+	      (let ((ind (open-sound "oboe.snd")))
+		(glXMakeCurrent ((*motif* 'XtDisplay) (cadr (main-widgets))) 
+				((*motif* 'XtWindow) (car (channel-widgets)))
+				(snd-gl-context))
+		(glEnable GL_DEPTH_TEST)
+		(glDepthFunc GL_LEQUAL)
+		(glClearDepth 1.0)
+		(glClearColor 0.0 0.0 0.0 0.0)
+		(glLoadIdentity)
+		(gluPerspective 40.0 1.0 10.0 200.0)
+		(glTranslatef 0.0 0.0 -50.0)
+		(glRotatef -58.0 0.0 1.0 0.0)
+		(let ((vals ((*motif* 'XtVaGetValues) (car (channel-widgets)) (list (*motif* 'XmNwidth) 0 (*motif* 'XmNheight) 0))))
+		  (glViewport 0 0 (vals 1) (vals 3)))
+		(glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+		(glBegin GL_POLYGON)
+		(glColor3f 0.0 0.0 0.0)   (glVertex3f -10.0 -10.0 0.0)
+		(glColor3f 0.7 0.7 0.7)   (glVertex3f 10.0 -10.0 0.0)
+		(glColor3f 1.0 1.0 1.0)   (glVertex3f -10.0 10.0 0.0)
+		(glEnd)
+		(glBegin GL_POLYGON)
+		(glColor3f 1.0 1.0 0.0)   (glVertex3f 0.0 -10.0 -10.0)
+		(glColor3f 0.0 1.0 0.7)   (glVertex3f 0.0 -10.0 10.0)
+		(glColor3f 0.0 0.0 1.0)   (glVertex3f 0.0 5.0 -10.0)
+		(glEnd)
+		(glBegin GL_POLYGON)
+		(glColor3f 1.0 1.0 0.0)   (glVertex3f -10.0 6.0 4.0)
+		(glColor3f 1.0 0.0 1.0)   (glVertex3f -10.0 3.0 4.0)
+		(glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
+		(glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
+		(glEnd)
+		(glXSwapBuffers ((*motif* 'XtDisplay) (cadr (main-widgets))) 
+				((*motif* 'XtWindow) (car (channel-widgets))))
+		(glFlush)
+		(close-sound ind))))))))
 
 (if (and with-gui
 	 (provided? 'xm)
@@ -46891,1228 +46890,1315 @@ EDITS: 1
 	   (>= args (car arit))
 	   (<= args (cdr arit)))))
 
-  (if with-gui
-      (let* ((delay-32 (make-delay 32))
-	     (color-95 (make-color-with-catch .95 .95 .95))
-	     (vector-0 #())
-	     (str-3 "/hiho")
-	     (float-vector-3 (make-float-vector 3))
-	     (float-vector-5 (make-float-vector 5))
-	     (car-main (and with-gui (car (main-widgets))))
-	     (cadr-main (and with-gui (cadr (main-widgets))))
-	     (a-hook (make-hook 'a 'b))
-	     (exts (sound-file-extensions)) ; save across possible set below
-	     
-	     (procs (list 
-		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
-		     add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
-		     as-one-edit ask-before-overwrite 
-		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
-		     basic-color bind-key apply-controls change-samples-with-origin channel-style
-		     channel-widgets channels chans peaks-font bold-peaks-font close-sound combined-data-color
-		     color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
-		     color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
-		     contrast-control? convolve-selection-with convolve-with channel-properties channel-property controls->channel
-		     amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-		     reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
-		     auto-update-interval current-font cursor cursor-color with-tracking-cursor cursor-size
-		     cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color sample-type data-location data-size
-		     default-output-chans default-output-sample-type default-output-srate default-output-header-type define-envelope
-		     delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-and-smooth
-		     delete-selection delete-selection-and-smooth dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
-		     draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
-		     env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
-		     enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
-		     eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
-		     expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size disk-kspace
-		     transform-graph-type fft-window transform-graph? mix-file-dialog file-name fill-polygon
-		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
-		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control?
-		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
-		     framples free-sampler graph transform? delete-transform
-		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
-		     help-dialog info-dialog highlight-color insert-region insert-sample insert-samples
-		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
-		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
-		     main-widgets make-color make-graph-data make-mix-sampler make-player make-region
-		     make-region-sampler make-sampler mark-color mark-name mark-properties mark-property
-		     mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
-		     maxamp maxamp-position menu-widgets min-dB log-freq-start mix mixes mix-amp mix-amp-env
-		     mix-color mix-length mix? view-mixes-dialog mix-position
-		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
-		     mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
-		     mix-tag-y mix-float-vector mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
+  (when with-gui ; to the end!
+    (let* ((delay-32 (make-delay 32))
+	   (color-95 (make-color-with-catch .95 .95 .95))
+	   (vector-0 #())
+	   (str-3 "/hiho")
+	   (float-vector-3 (make-float-vector 3))
+	   (float-vector-5 (make-float-vector 5))
+	   (car-main (and with-gui (car (main-widgets))))
+	   (cadr-main (and with-gui (cadr (main-widgets))))
+	   (a-hook (make-hook 'a 'b))
+	   (exts (sound-file-extensions)) ; save across possible set below
+	   
+	   (procs (list 
+		   add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
+		   add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
+		   as-one-edit ask-before-overwrite 
+		   auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
+		   basic-color bind-key apply-controls change-samples-with-origin channel-style
+		   channel-widgets channels chans peaks-font bold-peaks-font close-sound combined-data-color
+		   color-cutoff color-orientation-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
+		   color-inverted color-scale color->list colormap color?  comment contrast-control contrast-control-amp
+		   contrast-control? convolve-selection-with convolve-with channel-properties channel-property controls->channel
+		   amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+		   reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
+		   auto-update-interval current-font cursor cursor-color with-tracking-cursor cursor-size
+		   cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color sample-type data-location data-size
+		   default-output-chans default-output-sample-type default-output-srate default-output-header-type define-envelope
+		   delete-mark delete-marks forget-region delete-sample delete-samples delete-samples-and-smooth
+		   delete-selection delete-selection-and-smooth dialog-widgets display-edits dot-size draw-dot draw-dots draw-line
+		   draw-lines draw-string edit-header-dialog edit-fragment edit-list->function edit-position edit-tree edits env-selection
+		   env-sound enved-envelope enved-base enved-clip? enved-in-dB enved-dialog enved-style enved-power
+		   enved-target enved-waveform-color enved-wave? eps-file eps-left-margin 
+		   eps-bottom-margin eps-size expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp
+		   expand-control? fft fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size disk-kspace
+		   transform-graph-type fft-window transform-graph? mix-file-dialog file-name fill-polygon
+		   fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
+		   filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control?
+		   find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
+		   framples free-sampler graph transform? delete-transform
+		   graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
+		   help-dialog info-dialog highlight-color insert-region insert-sample insert-samples
+		   insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
+		   left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
+		   main-widgets make-color make-graph-data make-mix-sampler make-player make-region
+		   make-region-sampler make-sampler mark-color mark-name mark-properties mark-property
+		   mark-sample mark-sync mark-sync-max mark-home marks mark?  max-transform-peaks max-regions
+		   maxamp maxamp-position menu-widgets min-dB log-freq-start mix mixes mix-amp mix-amp-env
+		   mix-color mix-length mix? view-mixes-dialog mix-position
+		   mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties mix-property 
+		   mix-region mix-sampler?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
+		   mix-tag-y mix-float-vector mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
 					;new-sound in
-		     read-mix-sample next-sample read-region-sample show-full-duration show-full-range initial-beg initial-dur
-		     transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
-		     peaks player? players play-arrow-size
-		     position-color position->x position->y 
-		     print-length progress-report read-only read-sample-with-direction
-		     redo region-chans view-regions-dialog region-home 
-		     region-graph-style region-framples region-position region-maxamp region-maxamp-position remember-sound-state
-		     selection-maxamp selection-maxamp-position region-sample region->float-vector 
-		     region-srate regions region?  remove-from-menu status-report reset-controls restore-controls
-		     restore-region reverb-control-decay reverb-control-feedback 
-		     reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
-		     reverse-selection revert-sound right-sample sample sampler-at-end?  sampler? samples sampler-position
-		     sash-color save-controls ladspa-dir peak-env-dir save-dir save-edit-history save-envelopes
-		     save-listener save-marks save-region save-selection save-sound save-sound-as
-		     save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
-		     search-procedure select-all select-channel select-sound
-		     selected-channel selected-data-color selected-graph-color selected-sound
-		     selection-position selection-color selection-creates-region selection-framples selection-member? selection?
-		     short-file-name show-axes show-controls show-transform-peaks show-indices show-listener show-selection unselect-all
-		     show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid show-sonogram-cursor grid-density
-		     smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
-		     sound-loop-info sound-widgets soundfont-info sound? sounds spectrum-end spectro-hop spectrum-start
-		     spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
-		     speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
+		   read-mix-sample next-sample read-region-sample show-full-duration show-full-range initial-beg initial-dur
+		   transform-normalization open-file-dialog-directory open-raw-sound open-sound previous-sample
+		   peaks player? players play-arrow-size
+		   position-color position->x position->y 
+		   print-length progress-report read-only read-sample-with-direction
+		   redo region-chans view-regions-dialog region-home 
+		   region-graph-style region-framples region-position region-maxamp region-maxamp-position remember-sound-state
+		   selection-maxamp selection-maxamp-position region-sample region->float-vector 
+		   region-srate regions region?  remove-from-menu status-report reset-controls restore-controls
+		   restore-region reverb-control-decay reverb-control-feedback 
+		   reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control?  reverse-sound
+		   reverse-selection revert-sound right-sample sample sampler-at-end?  sampler? samples sampler-position
+		   sash-color save-controls ladspa-dir peak-env-dir save-dir save-edit-history save-envelopes
+		   save-listener save-marks save-region save-selection save-sound save-sound-as
+		   save-state save-state-file scale-by scale-selection-by scale-selection-to scale-to
+		   search-procedure select-all select-channel select-sound
+		   selected-channel selected-data-color selected-graph-color selected-sound
+		   selection-position selection-color selection-creates-region selection-framples selection-member? selection?
+		   short-file-name show-axes show-controls show-transform-peaks show-indices show-listener show-selection unselect-all
+		   show-marks show-mix-waveforms show-selection-transform show-y-zero sinc-width show-grid show-sonogram-cursor grid-density
+		   smooth-sound smooth-selection snd-print snd-spectrum snd-tempnam snd-version sound-files-in-directory
+		   sound-loop-info sound-widgets soundfont-info sound? sounds spectrum-end spectro-hop spectrum-start
+		   spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale
+		   speed-control speed-control-style speed-control-tones squelch-update srate src-sound src-selection
 					;start-playing 
-		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property stdin-prompt
-		     temp-dir text-focus-color tiny-font region-sampler? transform-dialog transform-sample
-		     transform->float-vector transform-framples transform-type with-file-monitor unbind-key undo
-		     update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
-		     with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
-		     with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
-		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
-		     with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
-		     beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-sample-type->string
-		     y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style sync-style mus-set-formant-radius-and-frequency
-		     mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
-		     mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type mus-sound-length
-		     mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment mus-sound-write-date
-		     mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info 
+		   start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties sound-property stdin-prompt
+		   temp-dir text-focus-color tiny-font region-sampler? transform-dialog transform-sample
+		   transform->float-vector transform-framples transform-type with-file-monitor unbind-key undo
+		   update-transform-graph update-time-graph update-lisp-graph update-sound clm-table-size clm-default-frequency
+		   with-verbose-cursor view-sound wavelet-type with-inset-graph with-interrupts with-pointer-focus with-smpte-label
+		   with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
+		   time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
+		   with-mix-tags with-relative-panes with-gl x-axis-style beats-per-measure
+		   beats-per-minute x-bounds x-position-slider x->position x-zoom-slider mus-header-type->string mus-sample-type->string
+		   y-bounds y-position-slider y->position y-zoom-slider zero-pad zoom-color zoom-focus-style sync-style mus-set-formant-radius-and-frequency
+		   mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size mus-sound-data-location data-size
+		   mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type mus-sound-length
+		   mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment mus-sound-write-date
+		   mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info 
 					;mus-alsa-buffers mus-alsa-buffer-size mus-apply
-		     mus-alsa-squelch-warning
+		   mus-alsa-squelch-warning
 					;mus-alsa-device mus-alsa-playback-device mus-alsa-capture-device 
-		     mus-sound-maxamp mus-sound-maxamp-exists? 
-		     mus-clipping mus-file-clipping mus-header-raw-defaults 
-		     moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
-		     make-moving-norm moving-norm moving-norm? mus-expand-filename 
-		     all-pass all-pass? amplitude-modulate
-		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
-		     comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
-		     delay delay? dot-product env env-interp env? file->array file->frample file->frample?  file->sample
-		     even-multiple even-weight odd-multiple odd-weight
-		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? firmant firmant?
-		     comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
-		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
-		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
-		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
-		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
-		     make-iir-filter make-locsig move-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
-		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-		     make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
-		     make-nsin make-ssb-am make-table-lookup make-triangle-wave
-		     make-two-pole make-two-zero make-wave-train
-		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
-		     mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
-		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
-		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-file-mix mus-order mus-output?  mus-phase
-		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs 
-		     notch notch? one-pole one-pole? one-pole-all-pass one-pole-all-pass?
-		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
-		     partials->wave phase-partials->wave polynomial pulse-train pulse-train?
-		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin? rectangular->polar rectangular->magnitudes
-		     ring-modulate sample->file sample->file? sawtooth-wave
-		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos? rxyk!cos rxyk!cos? rxyk!sin rxyk!sin?
-		     spectrum square-wave square-wave? src src? ncos nsin ssb-am
-		     ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
-		     two-zero? wave-train wave-train?  make-float-vector float-vector-add! float-vector-subtract!
-		     float-vector-multiply! float-vector-offset! float-vector-ref float-vector-scale! 
-		     float-vector-set! float-vector-peak float-vector-max float-vector-min
-		     float-vector? float-vector-move! float-vector-subseq float-vector little-endian? float-vector->string
-		     clm-channel env-channel env-channel-with-base map-channel scan-channel
-		     reverse-channel seconds->samples samples->seconds
-		     smooth-channel float-vector->channel channel->float-vector src-channel scale-channel ramp-channel pad-channel normalize-channel
-		     cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel
-		     snd->sample snd->sample? make-snd->sample 
-		     
-		     beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
-		     locsig-type make-phase-vocoder 
-		     mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
-		     mus-rand-seed mus-width phase-vocoder?
-		     polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs
-		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
-		     
-		     read-sample reset-listener-cursor goto-listener-end sampler-home selection-chans selection-srate snd-gcs snd-font snd-color
-		     snd-warning x-axis-label variable-graph? y-axis-label
-		     snd-url snd-urls free-player
-		     
-		     delay-tick playing pausing draw-axes copy-sampler html-dir html-program
-		     make-fir-coeffs mus-interp-type mus-run phase-vocoder
-		     player-home redo-edit undo-edit widget-position widget-size 
-		     focus-widget 
-		     ))
-	     
-	     (set-procs (list 
-			 amp-control ask-about-unsaved-edits ask-before-overwrite auto-resize
-			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color
-			 channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration show-full-range initial-beg initial-dur
-			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp combined-data-color
-			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-			 reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
-			 contrast-control? auto-update-interval current-font cursor cursor-color channel-properties channel-property 
-			 with-tracking-cursor cursor-size cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color
-			 default-output-chans default-output-sample-type default-output-srate default-output-header-type dot-size
-			 enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
-			 enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-			 expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
-			 fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
-			 transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter 
-			 filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
-			 graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
-			 just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
-			 mark-name mark-properties mark-property mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
-			 mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property 
-			 mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
-			 mix-waveform-height transform-normalization open-file-dialog-directory
-			 position-color print-length play-arrow-size
-			 region-graph-style reverb-control-decay reverb-control-feedback
-			 reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
-			 reverb-control? sash-color ladspa-dir peak-env-dir save-dir save-state-file selected-data-color selected-graph-color
-			 selection-color selection-creates-region show-axes show-controls
-			 show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
-			 show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
-			 spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
-			 speed-control-style speed-control-tones squelch-update sync sound-properties sound-property stdin-prompt
-			 temp-dir text-focus-color tiny-font y-bounds
-			 transform-type with-file-monitor with-verbose-cursor 
-			 with-inset-graph with-interrupts with-pointer-focus wavelet-type x-bounds with-smpte-label
-			 with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
-			 time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
-			 with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
-			 channels chans colormap comment sample-type data-location data-size edit-position framples header-type maxamp
-			 read-only right-sample sample samples selected-channel colormap-size colormap?
-			 selected-sound selection-position selection-framples selection-member? sound-loop-info
-			 srate time-graph-type x-position-slider x-zoom-slider
-			 y-position-slider y-zoom-slider mus-array-print-length mus-float-equal-fudge-factor
+		   mus-sound-maxamp mus-sound-maxamp-exists? 
+		   mus-clipping mus-file-clipping mus-header-raw-defaults 
+		   moving-average moving-average? make-moving-average moving-max moving-max? make-moving-max
+		   make-moving-norm moving-norm moving-norm? mus-expand-filename 
+		   all-pass all-pass? amplitude-modulate
+		   array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm?
+		   comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
+		   delay delay? dot-product env env-interp env? file->array file->frample file->frample?  file->sample
+		   even-multiple even-weight odd-multiple odd-weight
+		   file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant-bank? formant? firmant firmant?
+		   comb-bank make-comb-bank comb-bank? all-pass-bank make-all-pass-bank all-pass-bank? filtered-comb-bank make-filtered-comb-bank filtered-comb-bank?
+		   granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb 
+		   locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
+		   make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
+		   make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
+		   make-iir-filter make-locsig move-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+		   make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
+		   make-nrxysin make-nrxycos make-square-wave make-src make-ncos make-rxyk!cos make-rxyk!sin 
+		   make-nsin make-ssb-am make-table-lookup make-triangle-wave
+		   make-two-pole make-two-zero make-wave-train
+		   move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
+		   mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
+		   mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
+		   mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-file-mix mus-order mus-output?  mus-phase
+		   mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs 
+		   notch notch? one-pole one-pole? one-pole-all-pass one-pole-all-pass?
+		   one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
+		   partials->wave phase-partials->wave polynomial pulse-train pulse-train?
+		   radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin? rectangular->polar rectangular->magnitudes
+		   ring-modulate sample->file sample->file? sawtooth-wave
+		   sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos? rxyk!cos rxyk!cos? rxyk!sin rxyk!sin?
+		   spectrum square-wave square-wave? src src? ncos nsin ssb-am
+		   ncos? nsin? ssb-am? table-lookup table-lookup? tap tap? triangle-wave triangle-wave? two-pole two-pole? two-zero
+		   two-zero? wave-train wave-train?  make-float-vector float-vector-add! float-vector-subtract!
+		   float-vector-multiply! float-vector-offset! float-vector-ref float-vector-scale! 
+		   float-vector-set! float-vector-peak float-vector-max float-vector-min
+		   float-vector? float-vector-move! float-vector-subseq float-vector little-endian? float-vector->string
+		   clm-channel env-channel env-channel-with-base map-channel scan-channel
+		   reverse-channel seconds->samples samples->seconds
+		   smooth-channel float-vector->channel channel->float-vector src-channel scale-channel ramp-channel pad-channel normalize-channel
+		   cursor-position clear-listener mus-sound-prune mus-sound-forget xramp-channel
+		   snd->sample snd->sample? make-snd->sample 
+		   
+		   beats-per-minute beats-per-measure channel-amp-envs convolve-files filter-control-coeffs 
+		   locsig-type make-phase-vocoder 
+		   mus-describe mus-error-type->string mus-file-buffer-size mus-name mus-offset mus-out-format mus-reset
+		   mus-rand-seed mus-width phase-vocoder?
+		   polar->rectangular phase-vocoder-amp-increments phase-vocoder-amps phase-vocoder-freqs
+		   phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
+		   
+		   read-sample reset-listener-cursor goto-listener-end sampler-home selection-chans selection-srate snd-gcs snd-font snd-color
+		   snd-warning x-axis-label variable-graph? y-axis-label
+		   snd-url snd-urls free-player
+		   
+		   delay-tick playing pausing draw-axes copy-sampler html-dir html-program
+		   make-fir-coeffs mus-interp-type mus-run phase-vocoder
+		   player-home redo-edit undo-edit widget-position widget-size 
+		   focus-widget 
+		   ))
+	   
+	   (set-procs (list 
+		       amp-control ask-about-unsaved-edits ask-before-overwrite auto-resize
+		       auto-update axis-color axis-label-font axis-numbers-font ;basic-color
+		       channel-style peaks-font bold-peaks-font sound-file-extensions show-full-duration show-full-range initial-beg initial-dur
+		       color-cutoff color-inverted color-scale contrast-control contrast-control-amp combined-data-color
+		       amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+		       reverb-control-length-bounds reverb-control-scale-bounds cursor-update-interval cursor-location-offset
+		       contrast-control? auto-update-interval current-font cursor cursor-color channel-properties channel-property 
+		       with-tracking-cursor cursor-size cursor-style tracking-cursor-style dac-combines-channels dac-size clipping data-color
+		       default-output-chans default-output-sample-type default-output-srate default-output-header-type dot-size
+		       enved-envelope enved-base enved-clip? enved-in-dB enved-style enved-power
+		       enved-target enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
+		       expand-control expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
+		       fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
+		       transform-graph? filter-control-in-dB filter-control-envelope enved-filter-order enved-filter 
+		       filter-control-in-hz filter-control-order filter-control-waveform-color filter-control?  foreground-color
+		       graph-color graph-cursor graph-style lisp-graph? graphs-horizontal highlight-color
+		       just-sounds left-sample listener-color listener-font listener-prompt listener-text-color mark-color
+		       mark-name mark-properties mark-property mark-sample mark-sync max-transform-peaks max-regions min-dB log-freq-start mix-amp
+		       mix-amp-env mix-color mix-name mix-position mix-sync mix-properties mix-property 
+		       mix-speed mix-tag-height mix-tag-width mix-tag-y mark-tag-width mark-tag-height 
+		       mix-waveform-height transform-normalization open-file-dialog-directory
+		       position-color print-length play-arrow-size
+		       region-graph-style reverb-control-decay reverb-control-feedback
+		       reverb-control-length reverb-control-lowpass reverb-control-scale time-graph-style lisp-graph-style transform-graph-style
+		       reverb-control? sash-color ladspa-dir peak-env-dir save-dir save-state-file selected-data-color selected-graph-color
+		       selection-color selection-creates-region show-axes show-controls
+		       show-transform-peaks show-indices show-marks show-mix-waveforms show-selection-transform show-listener
+		       show-y-zero show-grid show-sonogram-cursor sinc-width spectrum-end spectro-hop spectrum-start spectro-x-angle  grid-density
+		       spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale speed-control
+		       speed-control-style speed-control-tones squelch-update sync sound-properties sound-property stdin-prompt
+		       temp-dir text-focus-color tiny-font y-bounds
+		       transform-type with-file-monitor with-verbose-cursor 
+		       with-inset-graph with-interrupts with-pointer-focus wavelet-type x-bounds with-smpte-label
+		       with-toolbar with-tooltips with-menu-icons save-as-dialog-src save-as-dialog-auto-comment
+		       time-graph? wavo-hop wavo-trace with-gl with-mix-tags x-axis-style beats-per-minute zero-pad zoom-color zoom-focus-style sync-style
+		       with-relative-panes  window-x window-y window-width window-height mix-dialog-mix beats-per-measure
+		       channels chans colormap comment sample-type data-location data-size edit-position framples header-type maxamp
+		       read-only right-sample sample samples selected-channel colormap-size colormap?
+		       selected-sound selection-position selection-framples selection-member? sound-loop-info
+		       srate time-graph-type x-position-slider x-zoom-slider
+		       y-position-slider y-zoom-slider mus-array-print-length mus-float-equal-fudge-factor
 					;mus-data 
-			 mus-feedback mus-feedforward mus-frequency mus-hop
-			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler x-axis-label
-			 filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
-			 phase-vocoder-amp-increments phase-vocoder-amps 
-			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
-			 html-dir html-program mus-interp-type widget-position widget-size 
-			 mus-clipping mus-file-clipping mus-header-raw-defaults
-			 ))
-	     
-	     (make-procs (list
-			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
-			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
-			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
-			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
-			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
-			  make-src make-ncos make-nsin make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
-			  make-color make-player make-region 
-			  ))
-	     
-	     (keyargs
-	      (list 
-	       :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
-	       :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
-	       :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
-	       :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
-	       :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
-	       :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
-	     
-	     (procs0 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
-	     (set-procs0 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
-	     (procs1 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
-	     (set-procs1 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
-	     (procs2 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
-	     (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs))
-	     )
+		       mus-feedback mus-feedforward mus-frequency mus-hop
+		       mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler x-axis-label
+		       filter-control-coeffs locsig-type mus-file-buffer-size 
+		       mus-rand-seed mus-width clm-table-size clm-default-frequency mus-offset mus-reset
+		       phase-vocoder-amp-increments phase-vocoder-amps 
+		       phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
+		       html-dir html-program mus-interp-type widget-position widget-size 
+		       mus-clipping mus-file-clipping mus-header-raw-defaults
+		       ))
+	   
+	   (make-procs (list
+			make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
+			make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
+			make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
+			make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+			make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
+			make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
+			make-src make-ncos make-nsin make-table-lookup make-triangle-wave
+			make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
+			make-color make-player make-region 
+			))
+	   
+	   (keyargs
+	    (list 
+	     :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
+	     :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
+	     :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
+	     :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
+	     :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
+	     :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
+	   
+	   (procs0 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
+	   (set-procs0 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
+	   (procs1 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
+	   (set-procs1 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
+	   (procs2 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
+	   (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs))
+	   )
+      
+      (reset-all-hooks)
+      
+      (do ((test-errors 0 (+ 1 test-errors)))
+	  ((= test-errors tests))
+	(log-mem test-errors)
 	
-	(reset-all-hooks)
+	(case test-errors
+	  ((1) 
+	   (set! delay-32 (make-oscil 440))
+	   (set! color-95 (vector 1 2 3))
+	   (set! vector-0 (make-comb 0.1 3))
+	   (set! float-vector-3 (make-notch 0.1 101))
+	   (set! car-main (make-all-pass 0.4 0.5 2))
+	   (set! cadr-main (make-table-lookup 101))
+	   (set! a-hook (make-triangle-wave 220)))
+	  ((2) 
+	   (set! delay-32 (make-sawtooth-wave 440))
+	   (set! color-95 123+123i)
+	   (set! vector-0 (make-rand 100))
+	   (set! float-vector-3 (make-rand-interp 100))
+	   (set! car-main (make-asymmetric-fm 100))
+	   (set! a-hook (make-one-pole 0.1 0.1)))
+	  ((3) 
+	   (set! delay-32 (make-two-zero 0.5 0.5 0.1))
+	   (set! color-95 (list 1 2 3))
+	   (set! vector-0 (make-formant 100 0.1))
+	   (set! float-vector-3 (make-polyshape :frequency 300 :partials '(1 1 2 1)))
+	   (set! car-main (make-oscil))
+	   (set! cadr-main (vector 1 2 3))
+	   (set! a-hook (float-vector 0.2 0.1)))
+	  ((4) 
+	   (set! delay-32 (make-filter 3 (float-vector 3 1 2 3) (float-vector 3 1 2 3)))
+	   (set! color-95 (make-float-vector (list 2 1) 0.0))
+	   (set! vector-0 (make-iir-filter 3 (float-vector 1 2 3)))
+	   (set! float-vector-3 (make-ncos))
+	   (set! car-main (make-env '(0 0 1 1) :length 101))
+	   (set! cadr-main (make-nsin 100 4))
+	   (set! a-hook (make-nsin 100 3)))
+	  ((5)
+	   (set! delay-32 1.5)
+	   (set! color-95 (make-color-with-catch 0.9 0.9 0.9))
+	   (set! vector-0 (make-vector 1))
+	   (set! car-main (make-moving-average 3))
+	   (set! cadr-main (make-oscil 440))
+	   (set! a-hook (make-shared-vector (float-vector 0.1 0.2 0.1 0.2) (list 2 2)))))
 	
-	(do ((test-28 0 (+ 1 test-28)))
-	    ((= test-28 tests))
-	  (log-mem test-28)
-	  
-	  (case test-28
-	    ((1) 
-	     (set! delay-32 (make-oscil 440))
-	     (set! color-95 (vector 1 2 3))
-	     (set! vector-0 (make-comb 0.1 3))
-	     (set! float-vector-3 (make-notch 0.1 101))
-	     (set! car-main (make-all-pass 0.4 0.5 2))
-	     (set! cadr-main (make-table-lookup 101))
-	     (set! a-hook (make-triangle-wave 220)))
-	    ((2) 
-	     (set! delay-32 (make-sawtooth-wave 440))
-	     (set! color-95 123+123i)
-	     (set! vector-0 (make-rand 100))
-	     (set! float-vector-3 (make-rand-interp 100))
-	     (set! car-main (make-asymmetric-fm 100))
-	     (set! a-hook (make-one-pole 0.1 0.1)))
-	    ((3) 
-	     (set! delay-32 (make-two-zero 0.5 0.5 0.1))
-	     (set! color-95 (list 1 2 3))
-	     (set! vector-0 (make-formant 100 0.1))
-	     (set! float-vector-3 (make-polyshape :frequency 300 :partials '(1 1 2 1)))
-	     (set! car-main (make-oscil))
-	     (set! cadr-main (vector 1 2 3))
-	     (set! a-hook (float-vector 0.2 0.1)))
-	    ((4) 
-	     (set! delay-32 (make-filter 3 (float-vector 3 1 2 3) (float-vector 3 1 2 3)))
-	     (set! color-95 (make-float-vector (list 2 1) 0.0))
-	     (set! vector-0 (make-iir-filter 3 (float-vector 1 2 3)))
-	     (set! float-vector-3 (make-ncos))
-	     (set! car-main (make-env '(0 0 1 1) :length 101))
-	     (set! cadr-main (make-nsin 100 4))
-	     (set! a-hook (make-nsin 100 3)))
-	    ((5)
-	     (set! delay-32 1.5)
-	     (set! color-95 (make-color-with-catch 0.9 0.9 0.9))
-	     (set! vector-0 (make-vector 1))
-	     (set! car-main (make-moving-average 3))
-	     (set! cadr-main (make-oscil 440))
-	     (set! a-hook (make-shared-vector (float-vector 0.1 0.2 0.1 0.2) (list 2 2)))))
-		
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n (integer->sound 123)))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-sound))
-			    (snd-display #__line__ ";snd no-such-sound ~A: ~A" n tag))))
-		    (list amp-control apply-controls channels chans comment contrast-control 
-			  amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-			  reverb-control-length-bounds reverb-control-scale-bounds
-			  contrast-control-amp contrast-control? sample-type data-location data-size 
-			  expand-control expand-control-hop expand-control-jitter
-			  expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
-			  filter-control-envelope filter-control-order filter-control?  finish-progress-report framples header-type
-			  progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
-			  reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
-			  select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
-			  speed-control-tones srate channel-style start-progress-report sync sound-properties sound-property swap-channels))
-	  
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (integer->sound 123)))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-sound))
+			  (snd-display #__line__ ";snd no-such-sound ~A: ~A" n tag))))
+		  (list amp-control apply-controls channels chans comment contrast-control 
+			amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+			reverb-control-length-bounds reverb-control-scale-bounds
+			contrast-control-amp contrast-control? sample-type data-location data-size 
+			expand-control expand-control-hop expand-control-jitter
+			expand-control-length expand-control-ramp expand-control? file-name filter-control-in-dB filter-control-in-hz
+			filter-control-envelope filter-control-order filter-control?  finish-progress-report framples header-type
+			progress-report read-only reset-controls restore-controls reverb-control-decay reverb-control-feedback
+			reverb-control-length reverb-control-lowpass reverb-control-scale reverb-control? save-controls
+			select-sound short-file-name sound-loop-info soundfont-info speed-control speed-control-style
+			speed-control-tones srate channel-style start-progress-report sync sound-properties sound-property swap-channels))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n arg))
+					 (lambda args (car args)))))
+				  (if (not (memq tag '(wrong-type-arg mus-error)))
+				      (snd-display #__line__ ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
+			      (list amp-control apply-controls close-sound comment contrast-control 
+				    amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+				    reverb-control-length-bounds reverb-control-scale-bounds
+				    contrast-control-amp contrast-control? sample-type data-location data-size expand-control
+				    expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
+				    filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
+				    finish-progress-report header-type read-only reset-controls restore-controls
+				    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
+				    reverb-control-scale reverb-control? save-controls select-sound short-file-name
+				    sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
+				    channel-style start-progress-report sync sound-properties swap-channels)))
+		  (list float-vector-5 0+i 1.5 "hiho" delay-32))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (set! (n arg) 0))
+					 (lambda args (car args)))))
+				  (if (not (memq tag '(wrong-type-arg syntax-error error)))
+				      (snd-display #__line__ ";snd set wrong-type-arg: ~A: ~A ~A" n tag arg))))
+			      (list amp-control channels chans comment contrast-control contrast-control-amp 
+				    amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
+				    reverb-control-length-bounds reverb-control-scale-bounds
+				    contrast-control? sample-type data-location data-size expand-control expand-control-hop expand-control-jitter
+				    expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
+				    filter-control-envelope filter-control-order filter-control? framples header-type read-only
+				    reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
+				    reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
+				    speed-control-style speed-control-tones srate channel-style sync)))
+		  (list float-vector-5 0+i 1.5 "hiho" delay-32))
+	
+	(let ((index (open-sound "obtest.snd")))
 	  (for-each (lambda (arg)
 		      (for-each (lambda (n)
 				  (let ((tag
 					 (catch #t
 					   (lambda ()
-					     (n arg))
+					     (set! (n index) arg))
 					   (lambda args (car args)))))
-				    (if (not (memq tag '(wrong-type-arg mus-error)))
-					(snd-display #__line__ ";snd wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list amp-control apply-controls close-sound comment contrast-control 
+				    (if (not (eq? tag 'wrong-type-arg))
+					(snd-display #__line__ ";snd safe set wrong-type-arg: ~A ~A ~A" n tag arg))))
+				(list amp-control contrast-control contrast-control-amp contrast-control? expand-control 
 				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
 				      reverb-control-length-bounds reverb-control-scale-bounds
-				      contrast-control-amp contrast-control? sample-type data-location data-size expand-control
 				      expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
 				      filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
-				      finish-progress-report header-type read-only reset-controls restore-controls
 				      reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
-				      reverb-control-scale reverb-control? save-controls select-sound short-file-name
-				      sound-loop-info soundfont-info speed-control speed-control-style speed-control-tones srate
-				      channel-style start-progress-report sync sound-properties swap-channels)))
-		    (list float-vector-5 0+i 1.5 "hiho" delay-32))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (set! (n arg) 0))
-					   (lambda args (car args)))))
-				    (if (not (memq tag '(wrong-type-arg syntax-error error)))
-					(snd-display #__line__ ";snd set wrong-type-arg: ~A: ~A ~A" n tag arg))))
-				(list amp-control channels chans comment contrast-control contrast-control-amp 
-				      amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-				      reverb-control-length-bounds reverb-control-scale-bounds
-				      contrast-control? sample-type data-location data-size expand-control expand-control-hop expand-control-jitter
-				      expand-control-length expand-control-ramp expand-control? filter-control-in-dB filter-control-in-hz
-				      filter-control-envelope filter-control-order filter-control? framples header-type read-only
-				      reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
-				      reverb-control-scale reverb-control? sound-loop-info soundfont-info speed-control
-				      speed-control-style speed-control-tones srate channel-style sync)))
-		    (list float-vector-5 0+i 1.5 "hiho" delay-32))
-	  
-	  (let ((index (open-sound "obtest.snd")))
-	    (for-each (lambda (arg)
-			(for-each (lambda (n)
-				    (let ((tag
-					   (catch #t
-					     (lambda ()
-					       (set! (n index) arg))
-					     (lambda args (car args)))))
-				      (if (not (eq? tag 'wrong-type-arg))
-					  (snd-display #__line__ ";snd safe set wrong-type-arg: ~A ~A ~A" n tag arg))))
-				  (list amp-control contrast-control contrast-control-amp contrast-control? expand-control 
-					amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
-					reverb-control-length-bounds reverb-control-scale-bounds
-					expand-control-hop expand-control-jitter expand-control-length expand-control-ramp expand-control?
-					filter-control-in-dB filter-control-in-hz filter-control-envelope filter-control-order filter-control?
-					reverb-control-decay reverb-control-feedback reverb-control-length reverb-control-lowpass
-					reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
-					channel-style sync)))
-		      (list float-vector-5 0+i "hiho" delay-32))
-	    (close-sound index))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (n arg))
-					   (lambda args (car args)))))
-				    (if (not (eq? tag 'wrong-type-arg))
-					(snd-display #__line__ ";float-vector 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
-				(list make-float-vector float-vector-peak float-vector-max float-vector-min)))
-		    (list (make-vector 1) "hiho" 0+i 1.5 #(0 1) delay-32))
-	  
-	  (for-each (lambda (arg1)
-		      (for-each (lambda (arg2)
-				  (for-each (lambda (n)
-					      (let ((tag
-						     (catch #t
-						       (lambda ()
-							 (n arg1 arg2))
-						       (lambda args (car args)))))
-						(if (not (memq tag '(wrong-type-arg wrong-number-of-args mus-error)))
-						    (snd-display #__line__ ";float-vector 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
-					    (list float-vector-add! float-vector-subtract! float-vector-multiply! float-vector-ref float-vector-scale!)))
-				(list float-vector-5 "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32)))
-		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (n float-vector-3 arg))
-					   (lambda args (car args)))))
-				    (if (not (eq? tag 'wrong-type-arg))
-					(snd-display #__line__ ";float-vector arg 2 (scaler) wrong-type-arg ~A: ~A ~A" n arg tag))))
-				(list float-vector-add! float-vector-subtract! float-vector-multiply! float-vector-ref float-vector-scale!)))
-		    (list (make-vector 1) "hiho" 0+i (list 1 0) #(0 1) delay-32))
-	  
-	  (let ((v float-vector-3))
-	    (let ((tag
-		   (catch #t
-		     (lambda ()
-		       (v 12))
-		     (lambda args (car args)))))
-	      (if (not (eq? tag 'out-of-range))
-		  (snd-display #__line__ ";float-vector[12]: ~A" tag))))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (n arg))
-					   (lambda args (car args)))))
-				    (if tag
-					(snd-display #__line__ ";?proc ~A: ~A" n tag))))
-				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
-				      filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
-				      mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-				      sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
-				      square-wave? src? ncos? nsin? tap? table-lookup? 
-				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
-				      sampler? region-sampler? float-vector? )))
-		    (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
-	  
-	  
+				      reverb-control-scale reverb-control? speed-control speed-control-style speed-control-tones
+				      channel-style sync)))
+		    (list float-vector-5 0+i "hiho" delay-32))
+	  (close-sound index))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n arg))
+					 (lambda args (car args)))))
+				  (if (not (eq? tag 'wrong-type-arg))
+				      (snd-display #__line__ ";float-vector 0 wrong-type-arg ~A: ~A ~A" n tag arg))))
+			      (list make-float-vector float-vector-peak float-vector-max float-vector-min)))
+		  (list (make-vector 1) "hiho" 0+i 1.5 #(0 1) delay-32))
+	
+	(for-each (lambda (arg1)
+		    (for-each (lambda (arg2)
+				(for-each (lambda (n)
+					    (let ((tag
+						   (catch #t
+						     (lambda ()
+						       (n arg1 arg2))
+						     (lambda args (car args)))))
+					      (if (not (memq tag '(wrong-type-arg wrong-number-of-args mus-error)))
+						  (snd-display #__line__ ";float-vector 1 wrong-whatever ~A: ~A ~A ~A" n tag arg1 arg2))))
+					  (list float-vector-add! float-vector-subtract! float-vector-multiply! float-vector-ref float-vector-scale!)))
+			      (list float-vector-5 "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32)))
+		  (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1) delay-32))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n float-vector-3 arg))
+					 (lambda args (car args)))))
+				  (if (not (eq? tag 'wrong-type-arg))
+				      (snd-display #__line__ ";float-vector arg 2 (scaler) wrong-type-arg ~A: ~A ~A" n arg tag))))
+			      (list float-vector-add! float-vector-subtract! float-vector-multiply! float-vector-ref float-vector-scale!)))
+		  (list (make-vector 1) "hiho" 0+i (list 1 0) #(0 1) delay-32))
+	
+	(let ((v float-vector-3))
+	  (let ((tag
+		 (catch #t
+		   (lambda ()
+		     (v 12))
+		   (lambda args (car args)))))
+	    (if (not (eq? tag 'out-of-range))
+		(snd-display #__line__ ";float-vector[12]: ~A" tag))))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n arg))
+					 (lambda args (car args)))))
+				  (if tag
+				      (snd-display #__line__ ";?proc ~A: ~A" n tag))))
+			      (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
+				    filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
+				    mus-output? notch? one-pole? one-pole-all-pass? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+				    sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
+				    square-wave? src? ncos? nsin? tap? table-lookup? 
+				    triangle-wave? two-pole? two-zero? wave-train? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
+				    sampler? region-sampler? float-vector? )))
+		  (list (make-vector 1) "hiho" 0+i 1.5 (list 1 0) #(0 1)))
+	
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (make-oscil 440)))
+			     (lambda args (car args)))))
+		      (if tag
+			  (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
+		  (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
+			filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
+			mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
+			sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
+			square-wave? src? ncos? nsin? tap? table-lookup? 
+			triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
+			sampler? region-sampler? float-vector?))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     n
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-active-selection))
+			  (snd-display #__line__ ";selection ~A: ~A" n tag))))
+		  (list reverse-selection selection-position selection-framples smooth-selection
+			scale-selection-to insert-selection delete-selection delete-selection-and-smooth mix-selection))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n 0.0))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-active-selection))
+			  (snd-display #__line__ ";selection ~A: ~A" n tag))))
+		  (list src-selection filter-selection env-selection))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n arg))
+					 (lambda args (car args)))))
+				  (if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
+				      (snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
+			      (list all-pass asymmetric-fm comb filtered-comb convolve db->linear moving-average moving-max moving-norm
+				    degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
+				    make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
+				    make-file->frample make-file->sample make-filter make-fir-filter make-formant make-firmant 
+				    make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
+				    make-oscil make-pulse-train make-rand make-rand-interp make-readin
+				    make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
+				    make-ncos make-nsin
+				    make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
+				    mus-channel mus-channels make-polyshape make-polywave
+				    mus-data mus-feedback mus-feedforward mus-frequency mus-hop
+				    mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
+				    mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-pole-all-pass one-zero 
+				    make-moving-average make-moving-max make-moving-norm
+				    seconds->samples samples->seconds
+				    oscil partials->polynomial partials->wave phase-partials->wave
+				    phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
+				    sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src 
+				    ncos nsin table-lookup tap triangle-wave
+				    two-pole two-zero wave-train ssb-am)))
+		  (list (make-vector 1) color-95 (list 1.0)))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (make-oscil) float-vector-5)
+			       )
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(wrong-type-arg bad-arity error mus-error)))
+			  (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
+		  (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
+			convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
+			formant-bank granulate iir-filter ina
+			inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
+			make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-granulate
+			make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil make-phase-vocoder
+			make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max make-moving-norm
+			make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
+			make-nsin make-table-lookup make-triangle-wave
+			make-two-pole make-two-zero make-wave-train
+			notch one-pole one-pole-all-pass one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
+			phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
+			ring-modulate sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
+			table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (set! (n (make-oscil)) vector-0))
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(wrong-type-arg syntax-error error)))
+			  (snd-display #__line__ ";mus-gen ~A: ~A" n tag))))
+		  (list mus-channel mus-channels mus-data
+			mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
+			mus-location mus-file-mix mus-name mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
+			mus-ycoeffs))
+	
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display #__line__ ";mus-sound ~A: ~A" n tag))))
+		  (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
+			mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
+			mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
+			mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
+			mus-sound-maxamp-exists? mus-header-type->string mus-sample-type->string))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n "/bad/baddy"))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'mus-error))
+			  (snd-display #__line__ ";bad file mus-sound ~A: ~A" n tag))))
+		  (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
+			mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
+			mus-sound-length mus-sound-type-specifier mus-sound-comment mus-sound-write-date mus-sound-maxamp
+			mus-sound-maxamp-exists?))
+	(mus-sound-forget "/bad/baddy") ; for possible second time around
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(wrong-type-arg error no-such-sound)))
+			  (snd-display #__line__ "; chn (no snd) procs ~A: ~A" n tag))))
+		  (list channel-widgets cursor channel-properties channel-property 
+			cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
+			draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
+			fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph?
+			graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
+			time-graph-style lisp-graph-style transform-graph-style
+			left-sample make-graph-data max-transform-peaks maxamp-position min-dB mix-region
+			transform-normalization peaks ;play
+			position->x position->y reverse-sound
+			revert-sound right-sample sample save-sound save-sound-as 
+			select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
+			spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
+			spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
+			transform->float-vector transform-framples transform-type update-transform-graph update-time-graph
+			update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
+			x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n 0 float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display #__line__ "; chn (no chn) procs ~A: ~A" n tag))))
+		  (list channel-widgets cursor channel-properties channel-property combined-data-color
+			cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
+			edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
+			transform-size transform-graph-type fft-window transform-graph?
+			graph graph-style lisp-graph? insert-region insert-sound left-sample
+			time-graph-style lisp-graph-style transform-graph-style
+			make-graph-data max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
+			peaks play position->x position->y reverse-sound right-sample sample
+			save-sound-as show-axes show-transform-peaks show-marks
+			show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
+			spectrum-end spectro-hop spectrum-start spectro-x-angle
+			spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
+			transform-sample transform->float-vector transform-framples transform-type
+			update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
+			wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider
+			y-zoom-slider zero-pad))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (integer->sound 1234)))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-sound))
+			  (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
+		  (list channel-widgets cursor channel-properties
+			cursor-position cursor-size cursor-style tracking-cursor-style 
+			(lambda (snd) (delete-sample 0 snd)) display-edits dot-size 
+			(lambda (snd) (edit-fragment 0 snd))
+			edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
+			transform-size transform-graph-type fft-window transform-graph? filter-sound
+			graph-data graph-style lisp-graph? left-sample
+			time-graph-style lisp-graph-style transform-graph-style
+			make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
+			(lambda (snd) (position->x 0 snd))
+			(lambda (snd) (position->y 0 snd))
+			(lambda (snd) (redo 1 snd)) reverse-sound revert-sound right-sample 
+			(lambda (snd) (sample 0 snd))
+			save-sound scale-by scale-to show-axes show-transform-peaks
+			show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
+			spectrum-end spectro-hop spectrum-start spectro-x-angle
+			spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
+			src-sound 
+			(lambda (snd) (transform-sample 0 0 snd)) transform->float-vector
+			transform-framples transform-type 
+			(lambda (snd) (undo 1 snd)) update-transform-graph update-time-graph update-lisp-graph
+			update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider 
+			(lambda (snd) (normalize-channel 0.5 0 #f snd))
+			(lambda (snd) (x->position 0 snd))
+			x-zoom-slider y-bounds y-position-slider x-axis-label y-axis-label 
+			(lambda (snd) (y->position 0 snd)) y-zoom-slider 
+			zero-pad 
+			(lambda (snd) (scale-channel 2.0 0 #f snd))
+			))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n 0 1234))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-sound))
+			  (snd-display #__line__ "; snd(1) chn procs ~A: ~A" n tag))))
+		  (list delete-sample edit-fragment graph-data graph-style play position->x position->y redo
+			time-graph-style lisp-graph-style transform-graph-style
+			scale-by scale-to undo x->position y->position x-axis-label))
+	
+	(let ((index (open-sound "oboe.snd")))
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
 			       (lambda ()
-				 (n (make-oscil 440)))
+				 (n 0 index 1234))
 			       (lambda args (car args)))))
-			(if tag
-			    (snd-display #__line__ ";oscil?proc ~A: ~A" n tag))))
-		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frample? file->sample? snd->sample?
-			  filter? fir-filter? formant? formant-bank? firmant? frample->file? granulate? iir-filter? locsig? move-sound? mus-input? 
-			  mus-output? notch? one-pole? one-pole-all-pass? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-			  sample->file? sawtooth-wave? nrxysin? nrxycos? rxyk!cos? rxyk!sin?
-			  square-wave? src? ncos? nsin? tap? table-lookup? 
-			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sampler? moving-average? moving-max? moving-norm? ssb-am?
-			  sampler? region-sampler? float-vector?))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       n
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-active-selection))
-			    (snd-display #__line__ ";selection ~A: ~A" n tag))))
-		    (list reverse-selection selection-position selection-framples smooth-selection
-			  scale-selection-to insert-selection delete-selection delete-selection-and-smooth mix-selection))
-	  
+			(if (not (eq? tag 'no-such-channel))
+			    (snd-display #__line__ "; snd(1 1234) chn procs ~A: ~A" n tag))))
+		    (list delete-sample edit-fragment graph-data position->x position->y redo scale-by
+			  scale-to undo x->position y->position))
+	  (close-sound index))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	
+	(let ((index (open-sound "oboe.snd")))
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
 			       (lambda ()
-				 (n 0.0))
+				 (n index 1234))
 			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-active-selection))
-			    (snd-display #__line__ ";selection ~A: ~A" n tag))))
-		    (list src-selection filter-selection env-selection))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (n arg))
-					   (lambda args (car args)))))
-				    (if (not (memq tag '(wrong-type-arg no-data no-such-method bad-type error arg-error)))
-					(snd-display #__line__ ";clm ~A: tag: ~A arg: ~A" n tag arg))))
-				(list all-pass asymmetric-fm comb filtered-comb convolve db->linear moving-average moving-max moving-norm
-				      degrees->radians delay env formant firmant granulate hz->radians linear->db even-weight odd-weight
-				      make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
-				      make-file->frample make-file->sample make-filter make-fir-filter make-formant make-firmant 
-				      make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
-				      make-oscil make-pulse-train make-rand make-rand-interp make-readin
-				      make-sawtooth-wave make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src 
-				      make-ncos make-nsin
-				      make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
-				      mus-channel mus-channels make-polyshape make-polywave
-				      mus-data mus-feedback mus-feedforward mus-frequency mus-hop
-				      mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
-				      mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-pole-all-pass one-zero 
-				      make-moving-average make-moving-max make-moving-norm
-				      seconds->samples samples->seconds
-				      oscil partials->polynomial partials->wave phase-partials->wave
-				      phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
-				      sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src 
-				      ncos nsin table-lookup tap triangle-wave
-				      two-pole two-zero wave-train ssb-am)))
-		    (list (make-vector 1) color-95 (list 1.0)))
-	  
+			(if (not (memq tag '(no-such-channel no-such-sound)))
+			    (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
+		    (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
+			  dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
+			  transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
+			  time-graph-style lisp-graph-style transform-graph-style combined-data-color
+			  make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
+			  reverse-sound right-sample show-axes show-transform-peaks show-marks 
+			  show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
+			  spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle
+			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform->float-vector
+			  transform-framples transform-type update-transform-graph update-time-graph update-lisp-graph
+			  wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
+			  x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties channel-property ))
+	  (close-sound index))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	
+	(let ((index (open-sound "oboe.snd")))
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
 			       (lambda ()
-				 (n (make-oscil) float-vector-5)
-				 )
-			       (lambda args (car args)))))
-			(if (not (memq tag '(wrong-type-arg bad-arity error mus-error)))
-			    (snd-display #__line__ ";clm-1 ~A: ~A" n tag))))
-		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average moving-max moving-norm
-			  convolve-files delay dot-product env-interp file->sample snd->sample filter fir-filter formant firmant
-			  formant-bank granulate iir-filter ina
-			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
-			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-granulate
-			  make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil make-phase-vocoder
-			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average make-moving-max make-moving-norm
-			  make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave make-src make-ncos 
-			  make-nsin make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train
-			  notch one-pole one-pole-all-pass one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
-			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar rectangular->magnitudes
-			  ring-modulate sawtooth-wave nrxysin nrxycos rxyk!cos rxyk!sin square-wave src ncos nsin
-			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (set! (n (make-oscil)) vector-0))
+				 (set! (n index 0) float-vector-5))
 			       (lambda args (car args)))))
 			(if (not (memq tag '(wrong-type-arg syntax-error error)))
-			    (snd-display #__line__ ";mus-gen ~A: ~A" n tag))))
-		    (list mus-channel mus-channels mus-data
-			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
-			  mus-location mus-file-mix mus-name mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
-			  mus-ycoeffs))
-	  
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n float-vector-5))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display #__line__ ";mus-sound ~A: ~A" n tag))))
-		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
-			  mus-sound-length mus-sound-type-specifier mus-header-type-name mus-sample-type-name mus-sound-comment
-			  mus-sound-write-date mus-bytes-per-sample mus-sound-loop-info mus-sound-mark-info mus-sound-maxamp
-			  mus-sound-maxamp-exists? mus-header-type->string mus-sample-type->string))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n "/bad/baddy"))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'mus-error))
-			    (snd-display #__line__ ";bad file mus-sound ~A: ~A" n tag))))
-		    (list mus-sound-samples mus-sound-framples mus-sound-duration mus-sound-datum-size
-			  mus-sound-data-location mus-sound-chans mus-sound-srate mus-sound-header-type mus-sound-sample-type
-			  mus-sound-length mus-sound-type-specifier mus-sound-comment mus-sound-write-date mus-sound-maxamp
-			  mus-sound-maxamp-exists?))
-	  (mus-sound-forget "/bad/baddy") ; for possible second time around
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n float-vector-5))
-			       (lambda args (car args)))))
-			(if (not (memq tag '(wrong-type-arg error no-such-sound)))
-			    (snd-display #__line__ "; chn (no snd) procs ~A: ~A" n tag))))
-		    (list channel-widgets cursor channel-properties channel-property 
-			  cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size
-			  draw-dots draw-lines edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency
-			  fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window transform-graph?
-			  graph graph-style lisp-graph? (lambda (a) (insert-region 0 a)) insert-sound
-			  time-graph-style lisp-graph-style transform-graph-style
-			  left-sample make-graph-data max-transform-peaks maxamp-position min-dB mix-region
-			  transform-normalization peaks ;play
-			  position->x position->y reverse-sound
-			  revert-sound right-sample sample save-sound save-sound-as 
-			  select-channel show-axes show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor
-			  spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle  grid-density
-			  spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform-sample
-			  transform->float-vector transform-framples transform-type update-transform-graph update-time-graph
-			  update-lisp-graph update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds
-			  x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider y-zoom-slider zero-pad))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n 0 float-vector-5))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display #__line__ "; chn (no chn) procs ~A: ~A" n tag))))
-		    (list channel-widgets cursor channel-properties channel-property combined-data-color
-			  cursor-position cursor-size cursor-style tracking-cursor-style delete-sample display-edits dot-size draw-dots draw-lines
-			  edit-fragment edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
-			  transform-size transform-graph-type fft-window transform-graph?
-			  graph graph-style lisp-graph? insert-region insert-sound left-sample
-			  time-graph-style lisp-graph-style transform-graph-style
-			  make-graph-data max-transform-peaks maxamp maxamp-position min-dB mix-region transform-normalization
-			  peaks play position->x position->y reverse-sound right-sample sample
-			  save-sound-as show-axes show-transform-peaks show-marks
-			  show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
-			  spectrum-end spectro-hop spectrum-start spectro-x-angle
-			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			  transform-sample transform->float-vector transform-framples transform-type
+			    (snd-display #__line__ "; set chn procs ~A: ~A" n tag))))
+		    (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
+			  fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
+			  transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
+			  time-graph-style lisp-graph-style transform-graph-style combined-data-color
+			  min-dB transform-normalization reverse-sound right-sample show-axes  grid-density
+			  show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectrum-end spectro-hop
+			  spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
+			  spectro-z-scale squelch-update transform->float-vector transform-framples transform-type
 			  update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
-			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider x-axis-label y-axis-label y-bounds y-position-slider
-			  y-zoom-slider zero-pad))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n (integer->sound 1234)))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-sound))
-			    (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
-		    (list channel-widgets cursor channel-properties
-			  cursor-position cursor-size cursor-style tracking-cursor-style 
-			  (lambda (snd) (delete-sample 0 snd)) display-edits dot-size 
-			  (lambda (snd) (edit-fragment 0 snd))
-			  edit-position edit-tree edits env-sound fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
-			  transform-size transform-graph-type fft-window transform-graph? filter-sound
-			  graph-data graph-style lisp-graph? left-sample
-			  time-graph-style lisp-graph-style transform-graph-style
-			  make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
-			  (lambda (snd) (position->x 0 snd))
-			  (lambda (snd) (position->y 0 snd))
-			  (lambda (snd) (redo 1 snd)) reverse-sound revert-sound right-sample 
-			  (lambda (snd) (sample 0 snd))
-			  save-sound scale-by scale-to show-axes show-transform-peaks
-			  show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor 
-			  spectrum-end spectro-hop spectrum-start spectro-x-angle
-			  spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle spectro-z-scale squelch-update  grid-density
-			  src-sound 
-			  (lambda (snd) (transform-sample 0 0 snd)) transform->float-vector
-			  transform-framples transform-type 
-			  (lambda (snd) (undo 1 snd)) update-transform-graph update-time-graph update-lisp-graph
-			  update-sound wavelet-type time-graph? time-graph-type wavo-hop wavo-trace x-bounds x-position-slider 
-			  (lambda (snd) (normalize-channel 0.5 0 #f snd))
-			  (lambda (snd) (x->position 0 snd))
-			  x-zoom-slider y-bounds y-position-slider x-axis-label y-axis-label 
-			  (lambda (snd) (y->position 0 snd)) y-zoom-slider 
-			  zero-pad 
-			  (lambda (snd) (scale-channel 2.0 0 #f snd))
+			  wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
+			  y-zoom-slider zero-pad x-axis-label
 			  ))
 	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n 0 1234))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-sound))
-			    (snd-display #__line__ "; snd(1) chn procs ~A: ~A" n tag))))
-		    (list delete-sample edit-fragment graph-data graph-style play position->x position->y redo
-			  time-graph-style lisp-graph-style transform-graph-style
-			  scale-by scale-to undo x->position y->position x-axis-label))
-	  
-	  (let ((index (open-sound "oboe.snd")))
-	    (for-each (lambda (n)
-			(let ((tag
-			       (catch #t
-				 (lambda ()
-				   (n 0 index 1234))
-				 (lambda args (car args)))))
-			  (if (not (eq? tag 'no-such-channel))
-			      (snd-display #__line__ "; snd(1 1234) chn procs ~A: ~A" n tag))))
-		      (list delete-sample edit-fragment graph-data position->x position->y redo scale-by
-			    scale-to undo x->position y->position))
-	    (close-sound index))
-	  (if (sound? (find-sound "oboe.snd"))
-	      (snd-display #__line__ ";oboe.snd is still open?"))
-	  
-	  (let ((index (open-sound "oboe.snd")))
-	    (for-each (lambda (n)
-			(let ((tag
-			       (catch #t
-				 (lambda ()
-				   (n index 1234))
-				 (lambda args (car args)))))
-			  (if (not (memq tag '(no-such-channel no-such-sound)))
-			      (snd-display #__line__ "; chn procs ~A: ~A" n tag))))
-		      (list channel-widgets cursor cursor-position cursor-size cursor-style tracking-cursor-style display-edits
-			    dot-size edit-position edit-tree edits fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases
-			    transform-size transform-graph-type fft-window transform-graph? graph-style lisp-graph? left-sample
-			    time-graph-style lisp-graph-style transform-graph-style combined-data-color
-			    make-graph-data max-transform-peaks maxamp maxamp-position min-dB transform-normalization
-			    reverse-sound right-sample show-axes show-transform-peaks show-marks 
-			    show-mix-waveforms show-y-zero show-grid show-sonogram-cursor  grid-density
-			    spectrum-end spectro-hop spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle
-			    spectro-y-scale spectro-z-angle spectro-z-scale squelch-update transform->float-vector
-			    transform-framples transform-type update-transform-graph update-time-graph update-lisp-graph
-			    wavelet-type time-graph?  time-graph-type wavo-hop wavo-trace x-bounds x-position-slider x-axis-label
-			    x-zoom-slider y-bounds y-position-slider y-zoom-slider zero-pad channel-properties channel-property ))
-	    (close-sound index))
-	  (if (sound? (find-sound "oboe.snd"))
-	      (snd-display #__line__ ";oboe.snd is still open?"))
-	  
-	  (let ((index (open-sound "oboe.snd")))
-	    (for-each (lambda (n)
-			(let ((tag
-			       (catch #t
-				 (lambda ()
-				   (set! (n index 0) float-vector-5))
-				 (lambda args (car args)))))
-			  (if (not (memq tag '(wrong-type-arg syntax-error error)))
-			      (snd-display #__line__ "; set chn procs ~A: ~A" n tag))))
-		      (list channel-widgets cursor cursor-position display-edits dot-size edit-tree edits
-			    fft-window-alpha fft-window-beta fft-log-frequency fft-log-magnitude fft-with-phases transform-size transform-graph-type fft-window
-			    transform-graph? graph-style lisp-graph? left-sample make-graph-data max-transform-peaks maxamp maxamp-position
-			    time-graph-style lisp-graph-style transform-graph-style combined-data-color
-			    min-dB transform-normalization reverse-sound right-sample show-axes  grid-density
-			    show-transform-peaks show-marks show-mix-waveforms show-y-zero show-grid show-sonogram-cursor spectrum-end spectro-hop
-			    spectrum-start spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
-			    spectro-z-scale squelch-update transform->float-vector transform-framples transform-type
-			    update-transform-graph update-time-graph update-lisp-graph wavelet-type time-graph? time-graph-type
-			    wavo-hop wavo-trace x-bounds x-position-slider x-zoom-slider y-bounds y-position-slider
-			    y-zoom-slider zero-pad x-axis-label
-			    ))
-	    
-	    (close-sound index))
-	  (if (sound? (find-sound "oboe.snd"))
-	      (snd-display #__line__ ";oboe.snd is still open?"))
-	  
+	  (close-sound index))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	
+	(for-each (lambda (n b)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(error wrong-type-arg syntax-error)))
+			  (snd-display #__line__ ";[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
+		  (list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
+		  (list 'mix-amp 'mix-amp-env 'mix-length 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (integer->mix 1234)))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-mix))
+			  (snd-display #__line__ ";[1]: mix procs ~A: ~A" n tag))))
+		  (list mix-amp mix-length mix-name mix-position mix-home mix-speed mix-tag-y))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (set! (n (integer->mix 1234)) float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
+			  (snd-display #__line__ ";[2]: mix procs ~A: ~A" n tag))))
+		  (list mix-name mix-position mix-home mix-speed mix-tag-y))
+	
+	(let ((index (open-sound "oboe.snd"))
+	      (id (mix-sound "oboe.snd" 10)))
 	  (for-each (lambda (n b)
 		      (let ((tag
 			     (catch #t
 			       (lambda ()
-				 (n float-vector-5))
+				 (set! (n id) float-vector-5))
 			       (lambda args (car args)))))
 			(if (not (memq tag '(error wrong-type-arg syntax-error)))
-			    (snd-display #__line__ ";[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
-		    (list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
-		    (list 'mix-amp 'mix-amp-env 'mix-length 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
-	  
+			    (snd-display #__line__ ";[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
+		    (list  mix-name mix-position mix-home mix-speed mix-tag-y)
+		    (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
+	  (close-sound index))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display #__line__ "; mark procs ~A: ~A" n tag))))
+		  (list add-mark mark-name mark-sample mark-sync mark-home delete-mark delete-marks find-mark))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (integer->mark 1234)))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-mark))
+			  (snd-display #__line__ "; no mark procs ~A: ~A" n tag))))
+		  (list mark-name mark-sample mark-sync mark-home delete-mark))
+	
+	(let* ((index (open-sound "oboe.snd"))
+	       (id (add-mark 0 index 0)))
 	  (for-each (lambda (n)
 		      (let ((tag
 			     (catch #t
 			       (lambda ()
-				 (n (integer->mix 1234)))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-mix))
-			    (snd-display #__line__ ";[1]: mix procs ~A: ~A" n tag))))
-		    (list mix-amp mix-length mix-name mix-position mix-home mix-speed mix-tag-y))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (set! (n (integer->mix 1234)) float-vector-5))
-			       (lambda args (car args)))))
-			(if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
-			    (snd-display #__line__ ";[2]: mix procs ~A: ~A" n tag))))
-		    (list mix-name mix-position mix-home mix-speed mix-tag-y))
-	  
-	  (let ((index (open-sound "oboe.snd"))
-		(id (mix-sound "oboe.snd" 10)))
-	    (for-each (lambda (n b)
-			(let ((tag
-			       (catch #t
-				 (lambda ()
-				   (set! (n id) float-vector-5))
-				 (lambda args (car args)))))
-			  (if (not (memq tag '(error wrong-type-arg syntax-error)))
-			      (snd-display #__line__ ";[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
-		      (list  mix-name mix-position mix-home mix-speed mix-tag-y)
-		      (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
-	    (close-sound index))
-	  (if (sound? (find-sound "oboe.snd"))
-	      (snd-display #__line__ ";oboe.snd is still open?"))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n float-vector-5))
+				 (set! (n id) float-vector-5))
 			       (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display #__line__ "; mark procs ~A: ~A" n tag))))
-		    (list add-mark mark-name mark-sample mark-sync mark-home delete-mark delete-marks find-mark))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n (integer->mark 1234)))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-mark))
-			    (snd-display #__line__ "; no mark procs ~A: ~A" n tag))))
-		    (list mark-name mark-sample mark-sync mark-home delete-mark))
-	  
-	  (let* ((index (open-sound "oboe.snd"))
-		 (id (add-mark 0 index 0)))
-	    (for-each (lambda (n)
-			(let ((tag
-			       (catch #t
-				 (lambda ()
-				   (set! (n id) float-vector-5))
-				 (lambda args (car args)))))
-			  (if (not (eq? tag 'wrong-type-arg))
-			      (snd-display #__line__ "; set mark procs ~A: ~A" n tag))))
-		      (list mark-name mark-sample mark-sync))
-	    (close-sound index))
-	  (if (sound? (find-sound "oboe.snd"))
-	      (snd-display #__line__ ";oboe.snd is still open?"))
-	  
-	  (for-each (lambda (arg)
-		      (for-each (lambda (n)
-				  (let ((tag
-					 (catch #t
-					   (lambda ()
-					     (n arg))
-					   (lambda args (car args)))))
-				    (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
-					(snd-display #__line__ "; region procs ~A: ~A ~A" n tag arg))))
-				(list region-chans region-home region-framples 
-				      region-position region-maxamp region-maxamp-position region-sample 
-				      region->float-vector region-srate forget-region)))
-		    (list float-vector-5 #(0 1) 0+i "hiho" (list 0 1)))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (n (integer->region 1234)))
-			       (lambda args (car args)))))
-			(if (not (eq? tag 'no-such-region))
-			    (snd-display #__line__ "; (no) region procs ~A: ~A" n tag))))
-		    (list region-chans region-home region-framples region-position 
-			  region-maxamp region-maxamp-position region-srate forget-region))
-	  
-	  (for-each (lambda (n)
-		      (let ((tag
-			     (catch #t
-			       (lambda ()
-				 (set! (n) float-vector-5))
-			       (lambda args (car args)))))
-			(if (not (memq tag '(error wrong-type-arg syntax-error)))
-			    (snd-display #__line__ "; misc procs ~A: ~A" n tag))))
-		    (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
-			  auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
-			  channel-style color-cutoff color-orientation-dialog color-inverted color-scale
-			  cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
-			  default-output-sample-type default-output-srate default-output-header-type enved-envelope enved-base
-			  enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
-			  enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
-			  foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
-			  listener-color listener-font listener-prompt listener-text-color max-regions
-			  mix-waveform-height region-graph-style position-color
-			  time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
-			  print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
-			  selected-channel selected-data-color selected-graph-color 
-			  selected-sound selection-creates-region show-controls show-indices show-listener
-			  show-selection-transform sinc-width stdin-prompt temp-dir text-focus-color tiny-font
-			  with-file-monitor unbind-key with-verbose-cursor 
-			  with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
-			  with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
-			  window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
-			  mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
-			  ))
-	  
-	  
-	  (set! *ask-about-unsaved-edits* #f)
-	  (set! *remember-sound-state* #f)
-	  (if (= test-28 0) 
-	      (begin
-		(check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
-		(check-error-tag 'wrong-type-arg (lambda () (envelope-interp 1.0 '(0 0 .5))))
-		(check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
-		(check-error-tag 'cannot-save (lambda () (mus-sound-report-cache "/bad/baddy")))
-		(check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
-		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" 1)))
-		(check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" -1)))
-		(check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
-		(check-error-tag 'bad-arity (lambda () (set! *zoom-focus-style* (lambda (a) 0))))
-		(check-error-tag 'bad-header (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_chans.aifc"))))
-		(check-error-tag 'mus-error (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
-		(check-error-tag 'bad-header (lambda () (mus-file-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
-		(check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
-		(check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" 2 22050 mus-bfloat mus-nist "this is a comment")))
-		(check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
-		(check-error-tag 'no-such-file (lambda () (set! *temp-dir* "/hiho")))
-		(check-error-tag 'no-such-file (lambda () (set! *save-dir* "/hiho")))
-		(check-error-tag 'out-of-range (lambda () (snd-transform (integer->transform 20) (make-float-vector 4))))
-		(check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
-		(check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-float-vector 4))))
-		(check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-float-vector 4) :ycoeffs (make-float-vector 4))))
-		(check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-float-vector 4) :xcoeffs (make-float-vector 4))))
-		(check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
+			    (snd-display #__line__ "; set mark procs ~A: ~A" n tag))))
+		    (list mark-name mark-sample mark-sync))
+	  (close-sound index))
+	(if (sound? (find-sound "oboe.snd"))
+	    (snd-display #__line__ ";oboe.snd is still open?"))
+	
+	(for-each (lambda (arg)
+		    (for-each (lambda (n)
+				(let ((tag
+				       (catch #t
+					 (lambda ()
+					   (n arg))
+					 (lambda args (car args)))))
+				  (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
+				      (snd-display #__line__ "; region procs ~A: ~A ~A" n tag arg))))
+			      (list region-chans region-home region-framples 
+				    region-position region-maxamp region-maxamp-position region-sample 
+				    region->float-vector region-srate forget-region)))
+		  (list float-vector-5 #(0 1) 0+i "hiho" (list 0 1)))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (n (integer->region 1234)))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'no-such-region))
+			  (snd-display #__line__ "; (no) region procs ~A: ~A" n tag))))
+		  (list region-chans region-home region-framples region-position 
+			region-maxamp region-maxamp-position region-srate forget-region))
+	
+	(for-each (lambda (n)
+		    (let ((tag
+			   (catch #t
+			     (lambda ()
+			       (set! (n) float-vector-5))
+			     (lambda args (car args)))))
+		      (if (not (memq tag '(error wrong-type-arg syntax-error)))
+			  (snd-display #__line__ "; misc procs ~A: ~A" n tag))))
+		  (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite ask-about-unsaved-edits
+			auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key show-full-duration show-full-range initial-beg initial-dur
+			channel-style color-cutoff color-orientation-dialog color-inverted color-scale
+			cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 
+			default-output-sample-type default-output-srate default-output-header-type enved-envelope enved-base
+			enved-clip? enved-in-dB enved-dialog enved-style  enved-power enved-target
+			enved-waveform-color enved-wave? eps-file eps-left-margin eps-bottom-margin eps-size
+			foreground-color graph-color graph-cursor highlight-color just-sounds key-binding
+			listener-color listener-font listener-prompt listener-text-color max-regions
+			mix-waveform-height region-graph-style position-color
+			time-graph-style lisp-graph-style transform-graph-style peaks-font bold-peaks-font
+			print-length play-arrow-size sash-color ladspa-dir peak-env-dir save-dir save-state-file
+			selected-channel selected-data-color selected-graph-color 
+			selected-sound selection-creates-region show-controls show-indices show-listener
+			show-selection-transform sinc-width stdin-prompt temp-dir text-focus-color tiny-font
+			with-file-monitor unbind-key with-verbose-cursor 
+			with-inset-graph with-interrupts with-pointer-focus window-height beats-per-measure with-smpte-label
+			with-toolbar with-tooltips with-menu-icons remember-sound-state save-as-dialog-src save-as-dialog-auto-comment
+			window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
+			mix-tag-width with-relative-panes clm-table-size clm-default-frequency mark-tag-width mark-tag-height
+			))
+	
+	
+	(set! *ask-about-unsaved-edits* #f)
+	(set! *remember-sound-state* #f)
+	(when (zero? test-errors) 
+	  (check-error-tag 'no-such-envelope (lambda () (set! (enved-envelope) "not-an-env")))
+	  (check-error-tag 'wrong-type-arg (lambda () (envelope-interp 1.0 '(0 0 .5))))
+	  (check-error-tag 'cannot-save (lambda () (save-envelopes "/bad/baddy")))
+	  (check-error-tag 'cannot-save (lambda () (mus-sound-report-cache "/bad/baddy")))
+	  (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) a))))
+	  (check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" 1)))
+	  (check-error-tag 'no-such-channel (lambda () (make-sampler 0 "oboe.snd" -1)))
+	  (check-error-tag 'bad-arity (lambda () (bind-key (char->integer #\p) 0 (lambda (a b) (play-often (max 1 a))))))
+	  (check-error-tag 'bad-arity (lambda () (set! *zoom-focus-style* (lambda (a) 0))))
+	  (check-error-tag 'bad-header (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_chans.aifc"))))
+	  (check-error-tag 'mus-error (lambda () (mus-file-mix "oboe.snd" (string-append sf-dir "bad_length.aifc"))))
+	  (check-error-tag 'bad-header (lambda () (mus-file-mix (string-append sf-dir "bad_chans.aifc") "oboe.snd")))
+	  (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
+	  (check-error-tag 'bad-header (lambda () (new-sound "fmv.snd" 2 22050 mus-bfloat mus-nist "this is a comment")))
+	  (check-error-tag 'wrong-type-arg (lambda () (player-home 123)))
+	  (check-error-tag 'no-such-file (lambda () (set! *temp-dir* "/hiho")))
+	  (check-error-tag 'no-such-file (lambda () (set! *save-dir* "/hiho")))
+	  (check-error-tag 'out-of-range (lambda () (snd-transform (integer->transform 20) (make-float-vector 4))))
+	  (check-error-tag 'bad-header (lambda () (mus-sound-maxamp (string-append sf-dir "bad_chans.snd"))))
+	  (check-error-tag 'mus-error (lambda () (make-iir-filter :order 32 :ycoeffs (make-float-vector 4))))
+	  (check-error-tag 'mus-error (lambda () (make-iir-filter :coeffs (make-float-vector 4) :ycoeffs (make-float-vector 4))))
+	  (check-error-tag 'mus-error (lambda () (make-fir-filter :coeffs (make-float-vector 4) :xcoeffs (make-float-vector 4))))
+	  (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 123456789)))
 					;		(check-error-tag 'out-of-range (lambda () (make-src :srate -0.5)))
-		(check-error-tag 'out-of-range (lambda () (make-granulate :ramp -0.5)))
-		(check-error-tag 'out-of-range (lambda () (make-granulate :ramp 1.5)))
-		(check-error-tag 'mus-error (lambda () (make-granulate :expansion 32000.0)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :channels 0)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :srate 0)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :size -1)))
-		(check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size 0)))
-		(check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
-		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" 0)))
-		(check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" 0)))
-		(check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *default-output-sample-type* -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *default-output-header-type* mus-soundfont)))
-		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
-		(check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
-		(check-error-tag 'mus-error (lambda () (make-locsig 1/0 :channels 2)))
-		(if (provided? 'snd-motif)
-		    (begin
-		      (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
-		      (check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
-		      (check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
-		      (check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
-		      (check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
-		      (check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho")))
-		      ))
-		(check-error-tag 'no-such-menu (lambda () (main-menu -1)))
-		(check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type 123)))
-		(check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type mus-nist :sample-type 123)))
-		(check-error-tag 'bad-header (lambda () (new-sound "hiho" :header-type mus-nist :sample-type mus-bfloat)))
-		(check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *print-length* -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *play-arrow-size* -1)))
-		(check-error-tag 'out-of-range (lambda () (set! *enved-style* 12)))
-		(check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
-		(check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
-		(check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
-		(check-error-tag 'cannot-print graph->ps)
-		(let ((ind (open-sound "oboe.snd"))) 
-		  (set! *selection-creates-region* #t)
-		  (select-all)
-		  (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
-		  (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
-		  (check-error-tag 'wrong-type-arg (lambda () (framples ind (list 0))))
-		  (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
-		  (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
-		  (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (channels ind) 0)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (channels ind) -1)))
-		  (check-error-tag 'out-of-range (lambda () (set! (channels ind) 12340)))
-		  (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 12340)))
-		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 12340)))
-		  (check-error-tag 'out-of-range (lambda () (set! (srate ind) 0)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (data-location ind) -1)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (data-size ind) -1)))
-		  (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
-		  (check-error-tag 'no-such-sample (lambda () (sample -1)))
-		  (check-error-tag 'out-of-range (lambda () (set! (framples) -10)))
-		  (check-error-tag 'out-of-range (lambda () (set! *min-dB* 0.0)))
-		  (check-error-tag 'out-of-range (lambda () (set! (min-dB ind 0) 0.0)))
-		  (check-error-tag 'out-of-range (lambda () (start-playing 1 -22)))
-		  (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
-		  (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
-		  (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
-		  (check-error-tag 'env-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
-		  (check-error-tag 'out-of-range (lambda () (apply-controls ind 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 0.0 2.0))))
-		  (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 0.0 2.0))))
-		  (check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 2.0 0.0))))
-		  (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 2.0 0.0))))
-		  (check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
-		  (check-error-tag 'IO-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -12)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind :header-type mus-next :sample-type -12)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-nist :sample-type mus-bdouble)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-riff :sample-type mus-bshort)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-voc :sample-type mus-bshort)))
-		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-riff)))
-		  (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-voc)))
-		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 -1) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 -1 1 1) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 0 1 1) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 1 1 0) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 1 1 -1) :length 11))))
-		  (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 -1 1 1) :length 11))))
-		  (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
-		  (check-error-tag 'out-of-range (lambda () (filter-sound float-vector-3 32)))
-		  (check-error-tag 'out-of-range (lambda () (filter-sound '(0 0 1 1) 0)))
-		  (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
-		  (check-error-tag 'no-such-sample (lambda () (mix-float-vector (float-vector 0.1 0.2 0.3) -1 ind 0 #t)))
-		  (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 -123)))
-		  (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 0)))
-		  (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
-		  (check-error-tag 'bad-sample-type (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
+	  (check-error-tag 'out-of-range (lambda () (make-granulate :ramp -0.5)))
+	  (check-error-tag 'out-of-range (lambda () (make-granulate :ramp 1.5)))
+	  (check-error-tag 'mus-error (lambda () (make-granulate :expansion 32000.0)))
+	  (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :channels 0)))
+	  (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :srate 0)))
+	  (check-error-tag 'out-of-range (lambda () (new-sound "test.snd" :size -1)))
+	  (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size 0)))
+	  (check-error-tag 'out-of-range (lambda () (make-readin "oboe.snd" :size -1)))
+	  (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" 0)))
+	  (check-error-tag 'out-of-range (lambda () (make-file->sample "oboe.snd" -1)))
+	  (check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" 0)))
+	  (check-error-tag 'out-of-range (lambda () (make-file->frample "oboe.snd" -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! *default-output-sample-type* -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! *default-output-header-type* mus-soundfont)))
+	  (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_location.nist"))))
+	  (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
+	  (check-error-tag 'mus-error (lambda () (make-locsig 1/0 :channels 2)))
+	  (when (provided? 'snd-motif)
+	    (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
+	    (check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
+	    (check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho"))))
+	  (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
+	  (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
+	  (check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type 123)))
+	  (check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type mus-nist :sample-type 123)))
+	  (check-error-tag 'bad-header (lambda () (new-sound "hiho" :header-type mus-nist :sample-type mus-bfloat)))
+	  (check-error-tag 'out-of-range (lambda () (set! *mus-array-print-length* -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! *print-length* -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! *play-arrow-size* -1)))
+	  (check-error-tag 'out-of-range (lambda () (set! *enved-style* 12)))
+	  (check-error-tag 'out-of-range (lambda () (make-color 1.5 0.0 0.0)))
+	  (check-error-tag 'out-of-range (lambda () (make-color -0.5 0.0 0.0)))
+	  (check-error-tag 'wrong-type-arg (lambda () (make-variable-graph #f)))
+	  (check-error-tag 'cannot-print graph->ps)
+	  (let ((ind (open-sound "oboe.snd"))) 
+	    (set! *selection-creates-region* #t)
+	    (select-all)
+	    (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
+	    (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
+	    (check-error-tag 'wrong-type-arg (lambda () (framples ind (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
+	    (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
+	    (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (channels ind) 0)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (channels ind) -1)))
+	    (check-error-tag 'out-of-range (lambda () (set! (channels ind) 12340)))
+	    (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 12340)))
+	    (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 12340)))
+	    (check-error-tag 'out-of-range (lambda () (set! (srate ind) 0)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (data-location ind) -1)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (data-size ind) -1)))
+	    (check-error-tag 'no-such-sample (lambda () (set! (sample -1) -1)))
+	    (check-error-tag 'no-such-sample (lambda () (sample -1)))
+	    (check-error-tag 'out-of-range (lambda () (set! (framples) -10)))
+	    (check-error-tag 'out-of-range (lambda () (set! *min-dB* 0.0)))
+	    (check-error-tag 'out-of-range (lambda () (set! (min-dB ind 0) 0.0)))
+	    (check-error-tag 'out-of-range (lambda () (start-playing 1 -22)))
+	    (check-error-tag 'out-of-range (lambda () (start-playing 1 0)))
+	    (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 -0.1 1.0 0.0))))
+	    (check-error-tag 'out-of-range (lambda () (set! (filter-control-envelope ind) (list 0.0 1.0 0.1 1.1 1.0 0.0))))
+	    (check-error-tag 'env-error (lambda () (filter-sound '(0 0 .1 .1 .05 .1 1 1) 32)))
+	    (check-error-tag 'out-of-range (lambda () (apply-controls ind 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 0.0 2.0))))
+	    (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 0.0 2.0))))
+	    (check-error-tag 'out-of-range (lambda () (set! (speed-control-bounds) (list 2.0 0.0))))
+	    (check-error-tag 'out-of-range (lambda () (set! (expand-control-bounds) (list 2.0 0.0))))
+	    (check-error-tag 'bad-header (lambda () (insert-sound (string-append sf-dir "bad_chans.snd"))))
+	    (check-error-tag 'IO-error (lambda () (convolve-with (string-append sf-dir "bad_chans.snd"))))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind -12)))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "hiho.snd" ind :header-type mus-next :sample-type -12)))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-nist :sample-type mus-bdouble)))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-aifc :sample-type mus-lfloat)))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-riff :sample-type mus-bshort)))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "test.snd" ind :header-type mus-voc :sample-type mus-bshort)))
+	    (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-riff)))
+	    (check-error-tag 'cannot-save (lambda () (save-selection "test.snd" 22050 mus-bshort mus-voc)))
+	    (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 0 1 1) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 0) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 1 1 -1) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-channel (make-env '(0 -1 1 1) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 0 1 1) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 1 1 0) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 1 1 -1) :length 11))))
+	    (check-error-tag 'out-of-range (lambda () (src-sound (make-env '(0 -1 1 1) :length 11))))
+	    (check-error-tag 'mus-error (lambda () (make-readin 0.0 0.0 0.0 0.0 0.0 0.0 0.0)))
+	    (check-error-tag 'out-of-range (lambda () (filter-sound float-vector-3 32)))
+	    (check-error-tag 'out-of-range (lambda () (filter-sound '(0 0 1 1) 0)))
+	    (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 12345 0)))
+	    (check-error-tag 'no-such-sample (lambda () (mix-float-vector (float-vector 0.1 0.2 0.3) -1 ind 0 #t)))
+	    (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 -123)))
+	    (check-error-tag 'out-of-range (lambda () (snd-spectrum (make-float-vector 8) 0 0)))
+	    (check-error-tag 'no-such-file (lambda () (play "/baddy/hiho")))
+	    (check-error-tag 'bad-sample-type (lambda () (play (string-append sf-dir "nist-shortpack.wav"))))
 					;		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 123)))
-		  (check-error-tag 'no-such-channel (lambda () (make-player ind 123)))
-		  (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
-		  (check-error-tag 'no-such-channel (lambda () (mix "oboe.snd" 0 2)))
-		  (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
-		  (check-error-tag 'no-such-file (lambda () (insert-sound "/baddy/hiho.snd")))
-		  (check-error-tag 'no-such-file (lambda () (insert-samples 0 10 "/baddy/hiho.snd")))
-		  (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
-		  (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
-		  (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
-		  (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) #t))))
-		  (check-error-tag 'bad-arity (lambda () (map-channel (lambda (a b c) 1.0))))
-		  (check-error-tag 'bad-arity (lambda () (scan-channel (lambda (a b c) 1.0))))
-		  (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
-		  (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
-		  (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))
-		  (check-error-tag 'no-such-graphics-context (lambda () (current-font ind 0 1234)))
-		  (check-error-tag 'no-such-graphics-context (lambda () (graph-data (list float-vector-3 float-vector-3) ind 0 1234 0 1 0)))
-		  (check-error-tag 'no-such-axis (lambda () (position->x 100 ind 0 1234)))
-		  (check-error-tag 'no-such-axis (lambda () (position->y 100 ind 0 1234)))
-		  (check-error-tag 'no-such-axis (lambda () (x->position 100 ind 0 1234)))
-		  (check-error-tag 'no-such-axis (lambda () (y->position 100 ind 0 1234)))
-		  (check-error-tag 'no-such-axis (lambda () (axis-info ind 0 1234)))
-		  (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 x-axis-in-seconds 1234)))
-		  (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
-		  (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
-		  (set! *time-graph-type* graph-once)
+	    (check-error-tag 'no-such-channel (lambda () (make-player ind 123)))
+	    (check-error-tag 'no-such-file (lambda () (mix "/baddy/hiho")))
+	    (check-error-tag 'no-such-channel (lambda () (mix "oboe.snd" 0 2)))
+	    (check-error-tag 'no-such-file (lambda () (mix-sound "/baddy/hiho" 0)))
+	    (check-error-tag 'no-such-file (lambda () (insert-sound "/baddy/hiho.snd")))
+	    (check-error-tag 'no-such-file (lambda () (insert-samples 0 10 "/baddy/hiho.snd")))
+	    (check-error-tag 'no-data (lambda () (set! (filter-control-envelope ind) ())))
+	    (check-error-tag 'out-of-range (lambda () (set! (sample-type ind) 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (header-type ind) 123)))
+	    (check-error-tag 'no-such-channel (lambda () (set! (selected-channel ind) 123)))
+	    (check-error-tag 'bad-arity (lambda () (set! (search-procedure) (lambda (a b c) #t))))
+	    (check-error-tag 'bad-arity (lambda () (map-channel (lambda (a b c) 1.0))))
+	    (check-error-tag 'bad-arity (lambda () (scan-channel (lambda (a b c) 1.0))))
+	    (check-error-tag 'bad-arity (lambda () (set! (cursor-style ind 0) (lambda (a) 32))))
+	    (check-error-tag 'no-such-graphics-context (lambda () (draw-line 0 0 1 1 ind 0 1234)))
+	    (check-error-tag 'no-such-graphics-context (lambda () (foreground-color ind 0 1234)))
+	    (check-error-tag 'no-such-graphics-context (lambda () (current-font ind 0 1234)))
+	    (check-error-tag 'no-such-graphics-context (lambda () (graph-data (list float-vector-3 float-vector-3) ind 0 1234 0 1 0)))
+	    (check-error-tag 'no-such-axis (lambda () (position->x 100 ind 0 1234)))
+	    (check-error-tag 'no-such-axis (lambda () (position->y 100 ind 0 1234)))
+	    (check-error-tag 'no-such-axis (lambda () (x->position 100 ind 0 1234)))
+	    (check-error-tag 'no-such-axis (lambda () (y->position 100 ind 0 1234)))
+	    (check-error-tag 'no-such-axis (lambda () (axis-info ind 0 1234)))
+	    (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 x-axis-in-seconds 1234)))
+	    (check-error-tag 'out-of-range (lambda () (draw-axes (car (channel-widgets)) (car (snd-gcs)) "hiho" 0.0 1.0 -1.0 1.0 1234)))
+	    (check-error-tag 'no-such-channel (lambda () (axis-info ind 1234)))
+	    (check-error-tag 'no-such-sound (lambda () (axis-info 1234)))
+	    (set! *time-graph-type* graph-once)
 					;		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list 0 0))))
-		  (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list .1 -.1))))
+	    (check-error-tag 'out-of-range (lambda () (set! (x-bounds) (list .1 -.1))))
 					;		  (check-error-tag 'out-of-range (lambda () (set! (y-bounds) (list .2 .1))))
-		  (check-error-tag 'out-of-range (lambda () (make-region 100 0)))
-		  (check-error-tag 'no-such-sample (lambda () (delete-sample -1)))
-		  (check-error-tag 'no-such-sample (lambda () (delete-sample (* 2 (framples ind)))))
-		  (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
-		  (check-error-tag 'no-such-sound (lambda () (play 1234 0)))
+	    (check-error-tag 'out-of-range (lambda () (make-region 100 0)))
+	    (check-error-tag 'no-such-sample (lambda () (delete-sample -1)))
+	    (check-error-tag 'no-such-sample (lambda () (delete-sample (* 2 (framples ind)))))
+	    (check-error-tag 'no-such-file (lambda () (play "/bad/baddy.snd")))
+	    (check-error-tag 'no-such-sound (lambda () (play 1234 0)))
 					;		  (check-error-tag 'no-such-channel (lambda () (play ind 0 :channel 1234)))
-		  (if (null? (regions)) (make-region 0 100))
-		  (check-error-tag 'no-such-channel (lambda () (region-sample (car (regions)) 0 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (region-framples (car (regions)) 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (region-position (car (regions)) 1234)))
+	    (if (null? (regions)) (make-region 0 100))
+	    (check-error-tag 'no-such-channel (lambda () (region-sample (car (regions)) 0 1234)))
+	    (check-error-tag 'no-such-channel (lambda () (region-framples (car (regions)) 1234)))
+	    (check-error-tag 'no-such-channel (lambda () (region-position (car (regions)) 1234)))
 					;		  (check-error-tag 'no-such-region (lambda () (region->float-vector #f 0 1)))
 					;		  (check-error-tag 'no-such-channel (lambda () (region->float-vector (car regions) 0 1 1234)))
-		  (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
-		  (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
-		  (check-error-tag 'no-such-sound (lambda () (graph (float-vector 0 1) "hi" 0 1 0 1 1234)))
-		  (check-error-tag 'no-such-channel (lambda () (graph (float-vector 0 1) "hi" 0 1 0 1 ind 1234)))
-		  (set! (selection-member? #t) #f)
-		  (check-error-tag 'no-active-selection (lambda () (filter-selection (float-vector 0 0 1 1) 4)))
-		  (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
-		  (check-error-tag 'no-active-selection (lambda () (env-selection '(0 0 1 1))))
-		  (check-error-tag 'no-such-region (lambda () (save-region (integer->region 1234) "/bad/baddy.snd")))
-		  (make-region 0 100 ind 0)
-		  (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
-		  (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
-		  (check-error-tag 'no-such-mix (lambda () (make-mix-sampler (integer->mix 1234))))
-		  (check-error-tag 'no-such-sound (lambda () (make-region 0 12 1234 #t)))
-		  (set! (read-only ind) #t)
-		  (check-error-tag 'cannot-save (lambda () (set! (sound-loop-info ind) '(0 0 1 1))))
-		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 123)))
-		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 0)))
-		  (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 -2)))
-		  (check-error-tag 'no-data (lambda () (scale-by ())))
-		  (check-error-tag 'no-data (lambda () (scale-to ())))
-		  (check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-framples ind 0) -999)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (selection-framples ind 0) 0)))
-		  (check-error-tag 'no-such-edit (lambda () (edit-fragment -1)))
-		  (check-error-tag 'no-such-edit (lambda () (edit-fragment 101 ind 0)))
-		  (check-error-tag 'no-such-edit (lambda () (edit-tree ind 0 -2)))
-		  (check-error-tag 'no-such-edit (lambda () (edit-tree ind 0 101)))
-		  (check-error-tag 'no-such-sample (lambda () (add-mark -1)))
-		  (check-error-tag 'no-such-sample (lambda () (add-mark (* 2 (framples)))))
-		  (check-error-tag 'no-such-file (lambda () (convolve-with "/bad/baddy")))
-		  (check-error-tag 'no-such-file (lambda () (mix "/bad/baddy")))
-		  (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) -123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) -123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) 123)))
-		  (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) -123)))
-		  (check-error-tag 'out-of-range (lambda () (env-sound '(0 0 1 1) 0 #f -1.5)))
-		  (check-error-tag 'out-of-range (lambda () (xramp-channel 0.0 1.0 -1.6)))
-		  (check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
-		  (check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
-		  (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
-		  (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
-		  (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
-		  (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
-		  (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
-		  (check-error-tag 'no-such-channel (lambda () (filter-channel (float-vector 0 0 1 1) 4 #f #f ind 1)))
-		  (check-error-tag 'out-of-range (lambda () (filter-sound (float-vector 0 0 1 1) 0)))
-		  (check-error-tag 'out-of-range (lambda () (filter-sound (float-vector 0 0 1 1) 10)))
-		  (check-error-tag 'bad-arity (lambda () (play (selected-sound) 0 :stop (lambda () #f))))
-		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
-		  (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
-		  (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
-		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
-		  (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
-		  (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
-		  (check-error-tag 'no-such-edit (lambda () (marks ind 0 123)))
-		  (check-error-tag 'no-such-edit (lambda () (save-sound-as "test.snd" :edit-position 123)))
-		  (check-error-tag 'no-such-auto-delete-choice (lambda () (insert-sound "1a.snd" 0 0 ind 0 0 123)))
-		  (close-sound ind))
-		(check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
-		(check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
-		(check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
-		(check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
-		(check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *transform-type* (integer->transform -1))))
-		(check-error-tag 'out-of-range (lambda () (set! *transform-type* (integer->transform 123))))
-		(check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
-		(check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
-		(check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
-		(check-error-tag 'no-such-file (lambda () (open-sound "/bad/baddy.snd")))
-		(check-error-tag 'no-such-file (lambda () (open-raw-sound "/bad/baddy.snd" 1 22050 mus-lshort)))
-		(check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))
-		(check-error-tag 'no-such-file (lambda () (make-sampler 0 "/bad/baddy.snd")))
-		(check-error-tag 'no-such-region (lambda () (make-region-sampler (integer->region 1234567) 0)))
-		(check-error-tag 'no-such-key (lambda () (bind-key 12345678 0 #f)))
-		(check-error-tag 'no-such-key (lambda () (bind-key -1 0 #f)))
-		(check-error-tag 'no-such-key (lambda () (bind-key 12 17 #f)))
-		(check-error-tag 'no-such-key (lambda () (bind-key 12 -1 #f)))
-		(check-error-tag 'no-such-key (lambda () (key-binding 12345678 0)))
-		(check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
-		(check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
-		(check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
-		(check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-float-vector 123))))
-		(check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
-		(check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-float-vector 3))))
-		(check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
-		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* 0.0)))
-		(check-error-tag 'out-of-range (lambda () (set! *clm-srate* -1000)))
-		(check-error-tag 'out-of-range (lambda () (dot-product (make-float-vector 3) (make-float-vector 3) -1)))
-		(check-error-tag 'out-of-range (lambda () (make-delay 3 :initial-element 0.0 :initial-contents (float-vector .1 .2 .3))))
-		(check-error-tag 'out-of-range (lambda () (make-delay 3 :max-size 100 :initial-contents (float-vector .1 .2 .3))))
-		(check-error-tag 'out-of-range (lambda () (make-table-lookup :size 100 :wave (make-float-vector 3))))
-		(check-error-tag 'out-of-range (lambda () (make-wave-train :size 100 :wave (make-float-vector 3))))
+	    (check-error-tag 'cannot-save (lambda () (save-sound-as "/bad/baddy.snd")))
+	    (check-error-tag 'no-such-sound (lambda () (transform-sample 0 1 1234)))
+	    (check-error-tag 'no-such-channel (lambda () (transform-sample 0 1 ind 1234)))
+	    (check-error-tag 'no-such-sound (lambda () (graph (float-vector 0 1) "hi" 0 1 0 1 1234)))
+	    (check-error-tag 'no-such-channel (lambda () (graph (float-vector 0 1) "hi" 0 1 0 1 ind 1234)))
+	    (set! (selection-member? #t) #f)
+	    (check-error-tag 'no-active-selection (lambda () (filter-selection (float-vector 0 0 1 1) 4)))
+	    (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
+	    (check-error-tag 'no-active-selection (lambda () (env-selection '(0 0 1 1))))
+	    (check-error-tag 'no-such-region (lambda () (save-region (integer->region 1234) "/bad/baddy.snd")))
+	    (make-region 0 100 ind 0)
+	    (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
+	    (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
+	    (check-error-tag 'no-such-mix (lambda () (make-mix-sampler (integer->mix 1234))))
+	    (check-error-tag 'no-such-sound (lambda () (make-region 0 12 1234 #t)))
+	    (set! (read-only ind) #t)
+	    (check-error-tag 'cannot-save (lambda () (set! (sound-loop-info ind) '(0 0 1 1))))
+	    (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 123)))
+	    (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 0)))
+	    (check-error-tag 'no-such-direction (lambda () (make-sampler 0 ind 0 -2)))
+	    (check-error-tag 'no-data (lambda () (scale-by ())))
+	    (check-error-tag 'no-data (lambda () (scale-to ())))
+	    (check-error-tag 'no-such-sample (lambda () (set! (selection-position ind 0) -999)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (selection-framples ind 0) -999)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (selection-framples ind 0) 0)))
+	    (check-error-tag 'no-such-edit (lambda () (edit-fragment -1)))
+	    (check-error-tag 'no-such-edit (lambda () (edit-fragment 101 ind 0)))
+	    (check-error-tag 'no-such-edit (lambda () (edit-tree ind 0 -2)))
+	    (check-error-tag 'no-such-edit (lambda () (edit-tree ind 0 101)))
+	    (check-error-tag 'no-such-sample (lambda () (add-mark -1)))
+	    (check-error-tag 'no-such-sample (lambda () (add-mark (* 2 (framples)))))
+	    (check-error-tag 'no-such-file (lambda () (convolve-with "/bad/baddy")))
+	    (check-error-tag 'no-such-file (lambda () (mix "/bad/baddy")))
+	    (check-error-tag 'no-such-sound (lambda () (swap-channels ind 0 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (show-axes ind 0) -123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (x-axis-style ind 0) -123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) 123)))
+	    (check-error-tag 'out-of-range (lambda () (set! (graph-style ind 0) -123)))
+	    (check-error-tag 'out-of-range (lambda () (env-sound '(0 0 1 1) 0 #f -1.5)))
+	    (check-error-tag 'out-of-range (lambda () (xramp-channel 0.0 1.0 -1.6)))
+	    (check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
+	    (check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
+	    (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
+	    (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
+	    (check-error-tag 'no-such-channel (lambda () (filter-channel (float-vector 0 0 1 1) 4 #f #f ind 1)))
+	    (check-error-tag 'out-of-range (lambda () (filter-sound (float-vector 0 0 1 1) 0)))
+	    (check-error-tag 'out-of-range (lambda () (filter-sound (float-vector 0 0 1 1) 10)))
+	    (check-error-tag 'bad-arity (lambda () (play (selected-sound) 0 :stop (lambda () #f))))
+	    (check-error-tag 'out-of-range (lambda () (set! (reverb-control-length-bounds ind) (list .1 .01))))
+	    (check-error-tag 'out-of-range (lambda () (set! (reverb-control-scale-bounds ind) (list .1 .01))))
+	    (check-error-tag 'wrong-type-arg (lambda () (scale-by #f)))
+	    (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 #t)))
+	    (check-error-tag 'wrong-type-arg (lambda () (src-sound 3.0 1.0 ind #t)))
+	    (check-error-tag 'no-such-edit (lambda () (display-edits ind 0 123)))
+	    (check-error-tag 'no-such-edit (lambda () (marks ind 0 123)))
+	    (check-error-tag 'no-such-edit (lambda () (save-sound-as "test.snd" :edit-position 123)))
+	    (check-error-tag 'no-such-auto-delete-choice (lambda () (insert-sound "1a.snd" 0 0 ind 0 0 123)))
+	    (close-sound ind))
+	  (check-error-tag 'bad-arity (lambda () (add-transform "hiho" "time" 0 1 (lambda () 1.0))))
+	  (check-error-tag 'cannot-save (lambda () (save-state "/bad/baddy")))
+	  (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
+	  (check-error-tag 'bad-arity (lambda () (add-to-main-menu "hi" (lambda (a b) #f))))
+	  (check-error-tag 'bad-arity (lambda () (add-to-menu 1 "hi" (lambda (a b) #f))))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *transform-type* (integer->transform -1))))
+	  (check-error-tag 'out-of-range (lambda () (set! *transform-type* (integer->transform 123))))
+	  (check-error-tag 'wrong-type-arg (lambda () (help-dialog (list 0 1) "hiho")))
+	  (check-error-tag 'wrong-type-arg (lambda () (info-dialog (list 0 1) "hiho")))
+	  (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
+	  (check-error-tag 'no-such-file (lambda () (open-sound "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-file (lambda () (open-raw-sound "/bad/baddy.snd" 1 22050 mus-lshort)))
+	  (check-error-tag 'no-such-file (lambda () (view-sound "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-file (lambda () (make-sampler 0 "/bad/baddy.snd")))
+	  (check-error-tag 'no-such-region (lambda () (make-region-sampler (integer->region 1234567) 0)))
+	  (check-error-tag 'no-such-key (lambda () (bind-key 12345678 0 #f)))
+	  (check-error-tag 'no-such-key (lambda () (bind-key -1 0 #f)))
+	  (check-error-tag 'no-such-key (lambda () (bind-key 12 17 #f)))
+	  (check-error-tag 'no-such-key (lambda () (bind-key 12 -1 #f)))
+	  (check-error-tag 'no-such-key (lambda () (key-binding 12345678 0)))
+	  (check-error-tag 'no-such-key (lambda () (key-binding -1 0)))
+	  (check-error-tag 'no-such-key (lambda () (key-binding 12 17)))
+	  (check-error-tag 'no-such-key (lambda () (key-binding 12 -1)))
+	  (check-error-tag 'bad-header (lambda () (file->array (string-append sf-dir "bad_chans.snd") 0 0 123 (make-float-vector 123))))
+	  (check-error-tag 'bad-header (lambda () (make-readin (string-append sf-dir "bad_chans.snd"))))
+	  (check-error-tag 'mus-error (lambda () (make-iir-filter 30 (make-float-vector 3))))
+	  (check-error-tag 'out-of-range (lambda () (make-wave-train :size (expt 2 30))))
+	  (check-error-tag 'out-of-range (lambda () (set! *clm-srate* 0.0)))
+	  (check-error-tag 'out-of-range (lambda () (set! *clm-srate* -1000)))
+	  (check-error-tag 'out-of-range (lambda () (dot-product (make-float-vector 3) (make-float-vector 3) -1)))
+	  (check-error-tag 'out-of-range (lambda () (make-delay 3 :initial-element 0.0 :initial-contents (float-vector .1 .2 .3))))
+	  (check-error-tag 'out-of-range (lambda () (make-delay 3 :max-size 100 :initial-contents (float-vector .1 .2 .3))))
+	  (check-error-tag 'out-of-range (lambda () (make-table-lookup :size 100 :wave (make-float-vector 3))))
+	  (check-error-tag 'out-of-range (lambda () (make-wave-train :size 100 :wave (make-float-vector 3))))
 					;		(check-error-tag 'out-of-range (lambda () (make-granulate :max-size (expt 2 30))))
-		(check-error-tag 'out-of-range (lambda () (make-ssb-am 100 12345678)))
-		(check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-float-vector 10))))
-		(check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1))))
-		(check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size -2)))
-		(check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size 1234567890)))
-		(check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-xcoeff f 4))))
-		(check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-ycoeff f 4))))
-		(check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-xcoeff f 4) 1.0))))
-		(check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-ycoeff f 4) 1.0))))
-		(check-error-tag 'mus-error (lambda () (make-filter :ycoeffs (make-float-vector 4) :order 12)))
-		(check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
-		(check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
-		(check-error-tag 'out-of-range (lambda () (make-src :width 3000)))
-		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
-		(check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
+	  (check-error-tag 'out-of-range (lambda () (make-ssb-am 100 12345678)))
+	  (check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1 1) :distribution (make-float-vector 10))))
+	  (check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1))))
+	  (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size -2)))
+	  (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size 1234567890)))
+	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-xcoeff f 4))))
+	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-ycoeff f 4))))
+	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-xcoeff f 4) 1.0))))
+	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-ycoeff f 4) 1.0))))
+	  (check-error-tag 'mus-error (lambda () (make-filter :ycoeffs (make-float-vector 4) :order 12)))
+	  (check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
+	  (check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
+	  (check-error-tag 'out-of-range (lambda () (make-src :width 3000)))
+	  (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
+	  (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
 					;		(check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))
-		(check-error-tag 'out-of-range (lambda () (let ((sr (make-src :input (lambda (dir) 1.0)))) (src sr 2000000.0))))
-		(check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) -1)))
-		(check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
-		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
-		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
-		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials 32)))
-		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials ())))
-		(check-error-tag 'bad-type (lambda () (normalize-partials '(1 2 3))))
-		(check-error-tag 'bad-type (lambda () (normalize-partials (float-vector 3))))
-		
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (float-vector 1 1 -2 1))))
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 -2 1))))
+	  (check-error-tag 'out-of-range (lambda () (let ((sr (make-src :input (lambda (dir) 1.0)))) (src sr 2000000.0))))
+	  (check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) -1)))
+	  (check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
+	  (check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
+	  (check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
+	  (check-error-tag 'wrong-type-arg (lambda () (normalize-partials 32)))
+	  (check-error-tag 'wrong-type-arg (lambda () (normalize-partials ())))
+	  (check-error-tag 'bad-type (lambda () (normalize-partials '(1 2 3))))
+	  (check-error-tag 'bad-type (lambda () (normalize-partials (float-vector 3))))
+	  
+	  (check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (float-vector 1 1 -2 1))))
+	  (check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 -2 1))))
 					;(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 "hi" 1)))) ; can be 'no-data etc
 					;(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 2 "hi"))))
-		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list))))
-		
-		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
-		
-		(check-error-tag 'wrong-type-arg (lambda () (set! *with-toolbar* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *with-tooltips* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *with-menu-icons* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-src* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-auto-comment* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *with-smpte-label* 123)))
-		(check-error-tag 'wrong-type-arg (lambda () (set! *ask-about-unsaved-edits* 123)))
-		
-		(check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
-		(check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
-		))
+	  (check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list))))
 	  
-	  ;; xen.h over-optimization regression check
-	  (catch #t 
-	    (lambda ()
-	      (set! (x-zoom-slider -1) 123))
-	    (lambda args
-	      (let ((str (apply format #f (cadr args))))
-		(if (not (string=? str "set! x-zoom-slider: no such sound: -1"))
-		    (snd-display #__line__ ";x-zoom-slider error: ~S~%" str)))))
-	  (catch #t 
-	    (lambda ()
-	      (set! (y-zoom-slider -1) 123))
-	    (lambda args
-	      (let ((str (apply format #f (cadr args))))
-		(if (not (string=? str "set! y-zoom-slider: no such sound: -1"))
-		    (snd-display #__line__ ";y-zoom-slider error: ~S~%" str)))))
-	  (catch #t 
-	    (lambda ()
-	      (set! (beats-per-measure -1) 123))
-	    (lambda args
-	      (let ((str (apply format #f (cadr args))))
-		(if (not (string=? str "set! beats-per-measure: no such sound: -1"))
-		    (snd-display #__line__ ";beats-per-measure error: ~S~%" str)))))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) (list 44100 2.123 "hi"))))
 	  
-	  (if (pair? (sounds))
-	      (snd-display #__line__ ";sounds after error checks: ~A~%" (map short-file-name (sounds))))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *with-toolbar* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *with-tooltips* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *with-menu-icons* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-src* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *save-as-dialog-auto-comment* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *with-smpte-label* 123)))
+	  (check-error-tag 'wrong-type-arg (lambda () (set! *ask-about-unsaved-edits* 123)))
 	  
-	  (if (provided? 'snd-motif)
-	      (for-each
-	       (lambda (n name)
-		 (let ((tag (catch #t
-			      (lambda () (n (list 'Widget 0)))
-			      (lambda args (car args)))))
-		   (if (not (eq? tag 'no-such-widget))
-		       (snd-display #__line__ ";~A of null widget -> ~A" name tag))))
-	       (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
-	       (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget)))
-	  
-	  ;; ---------------- key args
+	  (check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
+	  (check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) 1)))
+	  )
+	
+	;; xen.h over-optimization regression check
+	(catch #t 
+	  (lambda ()
+	    (set! (x-zoom-slider -1) 123))
+	  (lambda args
+	    (let ((str (apply format #f (cadr args))))
+	      (if (not (string=? str "set! x-zoom-slider: no such sound: -1"))
+		  (snd-display #__line__ ";x-zoom-slider error: ~S~%" str)))))
+	(catch #t 
+	  (lambda ()
+	    (set! (y-zoom-slider -1) 123))
+	  (lambda args
+	    (let ((str (apply format #f (cadr args))))
+	      (if (not (string=? str "set! y-zoom-slider: no such sound: -1"))
+		  (snd-display #__line__ ";y-zoom-slider error: ~S~%" str)))))
+	(catch #t 
+	  (lambda ()
+	    (set! (beats-per-measure -1) 123))
+	  (lambda args
+	    (let ((str (apply format #f (cadr args))))
+	      (if (not (string=? str "set! beats-per-measure: no such sound: -1"))
+		  (snd-display #__line__ ";beats-per-measure error: ~S~%" str)))))
+	
+	(if (pair? (sounds))
+	    (snd-display #__line__ ";sounds after error checks: ~A~%" (map short-file-name (sounds))))
+	
+	(if (provided? 'snd-motif)
+	    (for-each
+	     (lambda (n name)
+	       (let ((tag (catch #t
+			    (lambda () (n (list 'Widget 0)))
+			    (lambda args (car args)))))
+		 (if (not (eq? tag 'no-such-widget))
+		     (snd-display #__line__ ";~A of null widget -> ~A" name tag))))
+	     (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
+	     (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget)))
+	
+	;; ---------------- key args
+	(for-each
+	 (lambda (arg1)
+	   (for-each 
+	    (lambda (arg2)
+	      (for-each 
+	       (lambda (n)
+		 (catch #t
+		   (lambda () (n arg1 arg2))
+		   (lambda args (car args))))
+	       make-procs))
+	    (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+	 keyargs)
+	
+	(when (and all-args (= test-errors 0))
 	  (for-each
+	   (lambda (arg1)
+	     (for-each 
+	      (lambda (arg2)
+		(for-each 
+		 (lambda (arg3)
+		   (for-each 
+		    (lambda (n)
+		      (catch #t
+			(lambda () (n arg1 arg2 arg3))
+			(lambda args (car args))))
+		    make-procs))
+		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+	      keyargs))
+	   (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))
+	  
+	  (for-each
+	   (lambda (arg1)
+	     (for-each 
+	      (lambda (arg2)
+		(for-each 
+		 (lambda (arg3)
+		   (for-each 
+		    (lambda (arg4)
+		      (for-each 
+		       (lambda (n)
+			 (catch #t
+			   (lambda () (n arg1 arg2 arg3 arg4))
+			   (lambda args (car args))))
+		       make-procs))
+		    keyargs))
+		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+	      keyargs))
+	   (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
+	
+	;; ---------------- 0 Args
+	(for-each 
+	 (lambda (n)
+	   (let ((err (catch #t
+			n
+			(lambda args (car args)))))
+	     (if (eq? err 'wrong-number-of-args)
+		 (snd-display #__line__ ";procs0: ~A ~A" err (procedure-documentation n)))))
+	 procs0)
+	(dismiss-all-dialogs)
+	(for-each close-sound (sounds))
+	
+	(let* ((main-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
+				(lambda () #t) float-vector-5 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
+				() 3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
+				(lambda (a) #f) abs
+				1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
+				(vector 1 #\a '(3)) #()
+				(let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
+				"" (make-hash-table 256)
+				#<undefined> #<unspecified> #<eof>
+				(random-state 12) (float-vector) (vector)))
+	       (few-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) ""
+			       0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
+	       (less-args (if all-args main-args few-args)))
+	  
+	  ;; ---------------- 1 Arg
+	  (for-each 
+	   (lambda (arg)
+	     (for-each 
+	      (lambda (n)
+		(catch #t
+		  (lambda () (n arg))
+		  (lambda args 
+		    (if (eq? (car args) 'wrong-number-of-args)
+			(snd-display #__line__ ";procs1 wna: ~A" (procedure-documentation n))))))
+	      procs1))
+	   main-args)
+	  (for-each close-sound (sounds))
+	  
+	  ;; ---------------- 2 Args
+	  (for-each 
 	   (lambda (arg1)
 	     (for-each 
 	      (lambda (arg2)
@@ -48120,173 +48206,82 @@ EDITS: 1
 		 (lambda (n)
 		   (catch #t
 		     (lambda () (n arg1 arg2))
-		     (lambda args (car args))))
-		 make-procs))
-	      (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-	   keyargs)
-	  
-	  (if (and all-args (= test-28 0))
-	      (begin
-		(for-each
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (n)
-			    (catch #t
-			      (lambda () (n arg1 arg2 arg3))
-			      (lambda args (car args))))
-			  make-procs))
-		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-		    keyargs))
-		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))
-		
-		(for-each
-		 (lambda (arg1)
-		   (for-each 
-		    (lambda (arg2)
-		      (for-each 
-		       (lambda (arg3)
-			 (for-each 
-			  (lambda (arg4)
-			    (for-each 
-			     (lambda (n)
-			       (catch #t
-				 (lambda () (n arg1 arg2 arg3 arg4))
-				 (lambda args (car args))))
-			     make-procs))
-			  keyargs))
-		       (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32)))
-		    keyargs))
-		 (list 1.5 str-3 (list 0 1) 12 float-vector-3 :wave -1 0 1 #f #t () vector-0 delay-32))))
-	  
-	  ;; ---------------- 0 Args
-	  (for-each 
-	   (lambda (n)
-	     (let ((err (catch #t
-			  n
-			  (lambda args (car args)))))
-	       (if (eq? err 'wrong-number-of-args)
-		   (snd-display #__line__ ";procs0: ~A ~A" err (procedure-documentation n)))))
-	   procs0)
-	  (dismiss-all-dialogs)
+		     (lambda args 
+		       (if (eq? (car args) 'wrong-number-of-args)
+			   (snd-display #__line__ ";procs2: ~A" (procedure-documentation n))))))
+		 procs2))
+	      main-args))
+	   main-args)
 	  (for-each close-sound (sounds))
 	  
-	  (let* ((main-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95  #(0 1) 3/4 'mus-error 0+i delay-32
-				  (lambda () #t) float-vector-5 :order 0 1 -1 a-hook #f #t #\c 0.0 -1.0 
-				  () 3 64 -64 vector-0 '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0) car-main cadr-main 
-				  (lambda (a) #f) abs
-				  1.0+1.0i (cons 1 2) '((1 2) (3 4)) '((1 (2)) (((3) 4)))
-				  (vector 1 #\a '(3)) #()
-				  (let ((x 3)) (lambda (y) (+ x y))) (lambda args args)
-				  "" (make-hash-table 256)
-				  #<undefined> #<unspecified> #<eof>
-				  (random-state 12) (float-vector) (vector)))
-		 (few-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) ""
-				 0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
-		 (less-args (if all-args main-args few-args)))
-	    
-	    ;; ---------------- 1 Arg
-	    (for-each 
-	     (lambda (arg)
-	       (for-each 
-		(lambda (n)
-		  (catch #t
-		    (lambda () (n arg))
-		    (lambda args 
-		      (if (eq? (car args) 'wrong-number-of-args)
-			  (snd-display #__line__ ";procs1 wna: ~A" (procedure-documentation n))))))
-		procs1))
-	     main-args)
-	    (for-each close-sound (sounds))
-	    
-	    ;; ---------------- 2 Args
-	    (for-each 
-	     (lambda (arg1)
-	       (for-each 
-		(lambda (arg2)
-		  (for-each 
-		   (lambda (n)
-		     (catch #t
-		       (lambda () (n arg1 arg2))
-		       (lambda args 
-			 (if (eq? (car args) 'wrong-number-of-args)
-			     (snd-display #__line__ ";procs2: ~A" (procedure-documentation n))))))
-		   procs2))
-		main-args))
-	     main-args)
-	    (for-each close-sound (sounds))
-	    
-	    ;; ---------------- set! no Args
-	    (for-each 
-	     (lambda (arg)
-	       (for-each 
-		(lambda (n)
-		  (catch #t
-		    (lambda () (set! (n) arg))
-		    (lambda args 
-		      (if (eq? (car args) 'wrong-number-of-args)
-			  (snd-display #__line__ ";set-procs0: ~A" (procedure-documentation n))))))
-		set-procs0))
-	     main-args)
-	    (for-each close-sound (sounds))
-	    
-	    ;; ---------------- set! 1 Arg
-	    (for-each 
-	     (lambda (arg1)
-	       (for-each 
-		(lambda (arg2)
-		  (for-each 
-		   (lambda (n)
-		     (catch #t
-		       (lambda () (set! (n arg1) arg2))
-		       (lambda args 
-			 (if (eq? (car args) 'wrong-number-of-args)
-			     (snd-display #__line__ ";set-procs1: ~A" (procedure-documentation n))))))
-		   set-procs1))
-		main-args))
-	     main-args)
-	    (for-each close-sound (sounds))
-	    
-	    ;; ---------------- set! 2 Args
-	    (for-each 
-	     (lambda (arg1)
-	       (for-each close-sound (sounds))
-	       (for-each 
-		(lambda (arg2)
-		  (for-each 
-		   (lambda (arg3)
-		     (for-each 
-		      (lambda (n)
-			(catch #t
-			  (lambda () (set! (n arg1 arg2) arg3))
-			  (lambda args 
-			    (if (eq? (car args) 'wrong-number-of-args)
-				(snd-display #__line__ ";set-procs2: ~A" (procedure-documentation n))))))
-		      set-procs2))
-		   less-args))
-		less-args))
-	     less-args)
-	    
-	    (set! delay-32 #f)
-	    (set! color-95 #f)
-	    (set! vector-0 #f)
-	    (set! float-vector-3 #f)
-	    (set! *clm-srate* 22050)
-	    (set! *print-length* 12)
-	    (set! *mus-array-print-length* 12)
-	    (set! (sound-file-extensions) exts)
-	    (set! car-main #f)
-	    (set! cadr-main #f)
-	    (set! a-hook #f)
-	    (set! float-vector-5 #f)
-	    )))))
-      
-      
+	  ;; ---------------- set! no Args
+	  (for-each 
+	   (lambda (arg)
+	     (for-each 
+	      (lambda (n)
+		(catch #t
+		  (lambda () (set! (n) arg))
+		  (lambda args 
+		    (if (eq? (car args) 'wrong-number-of-args)
+			(snd-display #__line__ ";set-procs0: ~A" (procedure-documentation n))))))
+	      set-procs0))
+	   main-args)
+	  (for-each close-sound (sounds))
+	  
+	  ;; ---------------- set! 1 Arg
+	  (for-each 
+	   (lambda (arg1)
+	     (for-each 
+	      (lambda (arg2)
+		(for-each 
+		 (lambda (n)
+		   (catch #t
+		     (lambda () (set! (n arg1) arg2))
+		     (lambda args 
+		       (if (eq? (car args) 'wrong-number-of-args)
+			   (snd-display #__line__ ";set-procs1: ~A" (procedure-documentation n))))))
+		 set-procs1))
+	      main-args))
+	   main-args)
+	  (for-each close-sound (sounds))
+	  
+	  ;; ---------------- set! 2 Args
+	  (for-each 
+	   (lambda (arg1)
+	     (for-each close-sound (sounds))
+	     (for-each 
+	      (lambda (arg2)
+		(for-each 
+		 (lambda (arg3)
+		   (for-each 
+		    (lambda (n)
+		      (catch #t
+			(lambda () (set! (n arg1 arg2) arg3))
+			(lambda args 
+			  (if (eq? (car args) 'wrong-number-of-args)
+			      (snd-display #__line__ ";set-procs2: ~A" (procedure-documentation n))))))
+		    set-procs2))
+		 less-args))
+	      less-args))
+	   less-args)
+	  
+	  (set! delay-32 #f)
+	  (set! color-95 #f)
+	  (set! vector-0 #f)
+	  (set! float-vector-3 #f)
+	  (set! *clm-srate* 22050)
+	  (set! *print-length* 12)
+	  (set! *mus-array-print-length* 12)
+	  (set! (sound-file-extensions) exts)
+	  (set! car-main #f)
+	  (set! cadr-main #f)
+	  (set! a-hook #f)
+	  (set! float-vector-5 #f)
+	  )))))
+
+
 ;;; ---------------- test 26: s7 ----------------
-      
+
 (define (snd_test_26)
   (load "s7test.scm"))
 
@@ -48346,8 +48341,7 @@ EDITS: 1
       (else
        (do ((i 0 (+ i 1)))
 	   ((> i total-tests))
-	 (when (and (or (< i 23) 
-			(> i 24))
+	 (when (and (not (<= 23 i 24))
 		    (or full-test
 			(and keep-going (<= snd-test i))))
 	   (before-test-hook i)
