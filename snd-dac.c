@@ -428,8 +428,8 @@ static void free_dac_info(dac_info *dp, play_stop_t reason)
   if (dp->stop_procedure_gc_loc != NOT_A_GC_LOC)
     {
       Xen_call_with_1_arg(dp->stop_procedure, 
-		 C_int_to_Xen_integer((int)reason),
-		 "play stop procedure");
+			  C_int_to_Xen_integer((int)reason),
+			  "play stop procedure");
       snd_unprotect_at(dp->stop_procedure_gc_loc);
       dp->stop_procedure = Xen_false;
       dp->stop_procedure_gc_loc = NOT_A_GC_LOC;

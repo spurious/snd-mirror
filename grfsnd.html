@@ -1311,48 +1311,48 @@ Here's a dialog window with a slider:
   (define current-scaler 1.0)
 
 (define (create-scale-dialog parent)
-  (if (not (Widget? scale-dialog))
-      (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
-	    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-	    (titlestr (XmStringCreate "Scaling" XmFONTLIST_DEFAULT_TAG)))
-	(set! scale-dialog 
-	      (XmCreateTemplateDialog parent "Scaling"
-                (list XmNcancelLabelString   xdismiss
-		      XmNhelpLabelString     xhelp
-		      XmNautoUnmanage        #f
-		      XmNdialogTitle         titlestr
-		      XmNresizePolicy        XmRESIZE_GROW
-	              XmNnoResize            #f
-		      XmNtransient           #f)))
-	(XtAddCallback scale-dialog 
-		       XmNcancelCallback (lambda (w context info)
-					   (XtUnmanageChild scale-dialog)))
-	(XtAddCallback scale-dialog 
-		       XmNhelpCallback (lambda (w context info)
-					 (<a class=quiet href="extsnd.html#sndprint">snd-print</a> "move the slider to affect the volume")))
-	(XmStringFree xhelp)
-	(XmStringFree xdismiss)
-	(XmStringFree titlestr)
-
-	(let* ((mainform 
-		(XtCreateManagedWidget "formd" xmFormWidgetClass scale-dialog
-                  (list XmNleftAttachment    XmATTACH_FORM
-		        XmNrightAttachment   XmATTACH_FORM
-		        XmNtopAttachment     XmATTACH_FORM
-		        XmNbottomAttachment  XmATTACH_WIDGET
-		        XmNbottomWidget      (XmMessageBoxGetChild scale-dialog XmDIALOG_SEPARATOR))))
-	       (scale
-		(XtCreateManagedWidget "" xmScaleWidgetClass mainform
-		  (list XmNorientation XmHORIZONTAL
-			XmNshowValue   #t
-			XmNvalue       100
-			XmNmaximum     500
-			XmNdecimalPoints 2))))
-
-      (XtAddCallback scale XmNvalueChangedCallback (lambda (w context info)
-					     (set! current-scaler (/ (.value info) 100.0))))
-      (XtAddCallback scale XmNdragCallback (lambda (w context info)
-					     (set! current-scaler (/ (.value info) 100.0)))))))
+  (unless (Widget? scale-dialog)
+    (let ((xdismiss (XmStringCreate "Dismiss" XmFONTLIST_DEFAULT_TAG))
+          (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+	  (titlestr (XmStringCreate "Scaling" XmFONTLIST_DEFAULT_TAG)))
+      (set! scale-dialog 
+	    (XmCreateTemplateDialog parent "Scaling"
+				    (list XmNcancelLabelString   xdismiss
+					  XmNhelpLabelString     xhelp
+					  XmNautoUnmanage        #f
+					  XmNdialogTitle         titlestr
+					  XmNresizePolicy        XmRESIZE_GROW
+					  XmNnoResize            #f
+					  XmNtransient           #f)))
+      (XtAddCallback scale-dialog 
+		     XmNcancelCallback (lambda (w context info)
+					 (XtUnmanageChild scale-dialog)))
+      (XtAddCallback scale-dialog 
+		     XmNhelpCallback (lambda (w context info)
+				       (<a class=quiet href="extsnd.html#sndprint">snd-print</a> "move the slider to affect the volume")))
+      (XmStringFree xhelp)
+      (XmStringFree xdismiss)
+      (XmStringFree titlestr)
+      
+      (let* ((mainform 
+	      (XtCreateManagedWidget "formd" xmFormWidgetClass scale-dialog
+				     (list XmNleftAttachment    XmATTACH_FORM
+					   XmNrightAttachment   XmATTACH_FORM
+					   XmNtopAttachment     XmATTACH_FORM
+					   XmNbottomAttachment  XmATTACH_WIDGET
+					   XmNbottomWidget      (XmMessageBoxGetChild scale-dialog XmDIALOG_SEPARATOR))))
+	     (scale
+	      (XtCreateManagedWidget "" xmScaleWidgetClass mainform
+				     (list XmNorientation XmHORIZONTAL
+					   XmNshowValue   #t
+					   XmNvalue       100
+					   XmNmaximum     500
+					   XmNdecimalPoints 2))))
+	
+	(XtAddCallback scale XmNvalueChangedCallback (lambda (w context info)
+						       (set! current-scaler (/ (.value info) 100.0))))
+	(XtAddCallback scale XmNdragCallback (lambda (w context info)
+					       (set! current-scaler (/ (.value info) 100.0)))))))
   (XtManageChild scale-dialog))
 
 (create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))))

@@ -914,7 +914,7 @@ points, but these would be hard to find once the DC was removed.  A quick check:
 </p>
 
 <pre class="indented">
-(count-matches (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
+(count-matches (lambda (y) (not (&gt;= 0.9999 y -0.9999))))
 </pre>
 
 <p>
@@ -926,8 +926,8 @@ those are just one sample clicks that can easily be smoothed over", so
 (define* (count-clips snd chn)
   (let ((y0 0.0))
     (count-matches
-     (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
-				 (or (&gt; y .9999) (&lt; y -.9999)))))
+     (lambda (y) (let ((val (not (or (&gt;= 0.9999 y0 -0.9999) 
+                                     (&gt;= 0.9999 y -0.9999)))))
 		   (set! y0 y)
 		   val))
      0 snd chn)))
@@ -1009,21 +1009,21 @@ end points.  (This is also "just-good-enough" software).
 	      (clip-end (+ dur 4)))
 	 (let ((samp0 (samps clip-beg))
 	       (samp1 (samps clip-end)))
-	   (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+	   (if (not (&gt;= 0.99 samp0 -0.99))
 	       (begin
 	         ;; weird!  some of the clipped passages have "knees"
 		 ;;   this looks nuts, but no time to scratch my head
 		 (set! clip-beg (- clip-beg 1))
 		 (set! samp0 (samps clip-beg))
-		 (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+		 (if (not (&gt;= 0.99 samp0 -0.99))
 		     (begin
 		       (set! clip-beg (- clip-beg 1))
 		       (set! samp0 (samps clip-beg))))))
-	   (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+	   (if (not (&gt;= 0.99 samp0 -0.99))
 	       (begin
 		 (set! clip-end (+ 1 clip-end))
 		 (set! samp1 (samps clip-end))
-		 (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+		 (if (not (&gt;= 0.99 samp0 -0.99))
 		     (begin
 		       (set! clip-end (+ 1 clip-end))
 		       (set! samp1 (samps clip-end))))))

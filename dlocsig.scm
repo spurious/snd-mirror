@@ -222,16 +222,6 @@
 		   (set! res (cons (a (- (length a) (+ i 1))) res)))
 		 res))))))
 
-(define listp pair?)
-
-(define (make-list-1 n val)
-  (let ((lst ()))
-    (do ((i 0 (+ i 1)))
-	((= i n))
-      (set! lst (cons val lst)))
-    lst))
-
-
 (define* (arrange-speakers (speakers ())
 			   (groups ())
 			   (delays ())
@@ -683,7 +673,7 @@
 (define list?? 
   (let ((documentation "list?? returns a if it is a list"))
     (lambda (a) 
-      (and (listp a) a))))
+      (and (pair? a) a))))
 
 (define (path-x path)
   (or (list?? (path-tx path))
@@ -897,7 +887,7 @@
 		    (set! px (cons (points i) px))
 		    (set! py (cons (points (+ i 1)) py))
 		    (set! pz (cons (points (+ i 2)) pz)))
-		  (list (reverse px) (reverse py) (reverse pz) (make-list-1 (length px) #f)))
+		  (list (reverse px) (reverse py) (reverse pz) (make-list (length px) #f)))
 	      
 		;; it's a two dimensional list
 		;; '(x0 y0 x1 y1 ... xn yn)
@@ -907,7 +897,7 @@
 		      ((>= i len))
 		    (set! px (cons (points i) px))
 		    (set! py (cons (points (+ i 1)) py)))
-		  (list (reverse px) (reverse py) (make-list-1 (length px) 0.0) (make-list-1 (length px) #f)))))))))
+		  (list (reverse px) (reverse py) (make-list (length px) 0.0) (make-list (length px) #f)))))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
@@ -968,7 +958,7 @@
 		    (set! x (cons (* dxy (imag-part avec)) x))
 		    (set! y (cons (* dxy (real-part avec)) y))
 		    (set! z (cons (* d (imag-part evec)) z))))
-		(list (reverse x) (reverse y) (reverse z) (make-list-1 (length x) #f)))
+		(list (reverse x) (reverse y) (reverse z) (make-list (length x) #f)))
 	      
 	      ;; decode a two dimensional list
 	      ;;   '(d0 a0 d1 a1 ... dn an)
@@ -985,7 +975,7 @@
 			 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
 		    (set! x (cons (* d (imag-part avec)) x))
 		    (set! y (cons (* d (real-part avec)) y))))
-		(list (reverse x) (reverse y) (make-list-1 (length x) 0.0) (make-list-1 (length x) #f))))))))
+		(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))))
 
 
 (define (xparse-path xpath)
@@ -1479,7 +1469,7 @@
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
-    (if (not (listp (bezier-v path)))
+    (if (not (pair? (bezier-v path)))
 	(set! (bezier-v path) (list 1 1))
 	(if (not (car (bezier-v path)))
 	    (begin
@@ -1526,7 +1516,7 @@
 		  (set! xrz (append xrz (list zi-bz) zs))
 		  
 		  ;; accumulate intermediate unknown velocities as nils
-		  (set! xrv (append xrv (list vi-bz) (make-list-1 (length xs) #f)))
+		  (set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
 		  (if (= i (- len 1))
 		      (begin
 			;; add the last point

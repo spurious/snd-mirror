@@ -21,7 +21,7 @@
 				cw
 				(* .5 (+ lw rw)))))
 		;; favor is the point we center the search on
-		(define (centered-points points)
+		(let centered-points ((points ms))
 		  (if (= (length points) 2)
 		      points
 		      (let ((p1 (car points))
@@ -29,8 +29,7 @@
 			    (p3 (caddr points)))
 			(if (< (abs (- p1 favor)) (abs (- p3 favor)))
 			    (list p1 p2)
-			    (centered-points (cdr points))))))
-		(centered-points ms))))))
+			    (centered-points (cdr points)))))))))))
   
   (define map-chan-over-target-with-sync
     ;; target: 'marks -> beg=closest marked sample, dur=samples to next mark

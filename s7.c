@@ -74253,8 +74253,12 @@ int main(int argc, char **argv)
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * check stdin-prompt and s7webserver
+ *
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
- *  looper does not stop/restart -- just keep going]
+ *   looper does not stop/restart -- just keep going]
+ *   play_selection_1 could puts ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
+ *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
+ *   If start/end selection changed while playing, are these loop points updated?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
