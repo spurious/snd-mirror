@@ -282,50 +282,48 @@
 	(do ((i 0 (+ i 1)))
 	    ((= i len) (reverse data))
 	  (let ((ch (args i)))
-	    (if (or (char=? ch #\space)
-		    (= i (- len 1)))
-		(begin
-		  (if (not type)
-		      (if (> i (+ 1 sp))
-			  (set! type (substring args (+ 1 sp) i)))
-		      (let ((reftype #f))
-			(let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i))))
-			  (case (given-name 0)
-			    ((#\@) (set! data (cons (list type (substring given-name 1 (length given-name)) 'null) data)))
-			    ((#\#) (set! data (cons (list type (substring given-name 1 (length given-name)) 'opt) data)))
-			    ((#\&) (set! data (cons (list type (substring given-name 1 (length given-name)) 'set) data)))
-			    ((#\[ #\{ #\|)
-			     (set! reftype (deref-type (list type)))
-			     (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
-			    (else (set! data (cons (list type given-name) data)))))
-			(if reftype (set! type reftype))
-			
-			(if (not (member type all-types))
-			    (begin
-			      (set! all-types (cons type all-types))
-			      (case extra
-				((g-2.14)     (set! types-2.14 (cons type types-2.14)))
-				((g-2.16)     (set! types-2.16 (cons type types-2.16)))
-				((g-2.18)     (set! types-2.18 (cons type types-2.18)))
-				((g-2.20)     (set! types-2.20 (cons type types-2.20)))
-				((g-3.0)      (set! types-3.0 (cons type types-3.0)))
-				((g-3.2)      (set! types-3.2 (cons type types-3.2)))
-				((g-3.4)      (set! types-3.4 (cons type types-3.4)))
-				((g-3.6)      (set! types-3.6 (cons type types-3.6)))
-				((g-3.8)      (set! types-3.8 (cons type types-3.8)))
-				((g-3.10)     (set! types-3.10 (cons type types-3.10)))
-				((g-3.12)     (set! types-3.12 (cons type types-3.12)))
-				((g-3.14)     (set! types-3.14 (cons type types-3.14)))
-				((g-3.16)     (set! types-3.16 (cons type types-3.16)))
-				((g-3.18)     (set! types-3.18 (cons type types-3.18)))
-				((g-3.20)     (set! types-3.20 (cons type types-3.20)))
-				((cairo)      (set! cairo-types (cons type cairo-types)))
-				((cairo-810)  (set! cairo-types-810 (cons type cairo-types-810)))
-				((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
-				(else  	      (if (not (member type types))
-						  (set! types (cons type types)))))))
-			(set! type #f)))
-		  (set! sp i))))))))
+	    (when (or (char=? ch #\space)
+		      (= i (- len 1)))
+	      (if (not type)
+		  (if (> i (+ 1 sp))
+		      (set! type (substring args (+ 1 sp) i)))
+		  (let ((reftype #f))
+		    (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i))))
+		      (case (given-name 0)
+			((#\@) (set! data (cons (list type (substring given-name 1 (length given-name)) 'null) data)))
+			((#\#) (set! data (cons (list type (substring given-name 1 (length given-name)) 'opt) data)))
+			((#\&) (set! data (cons (list type (substring given-name 1 (length given-name)) 'set) data)))
+			((#\[ #\{ #\|)
+			 (set! reftype (deref-type (list type)))
+			 (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
+			(else (set! data (cons (list type given-name) data)))))
+		    (if reftype (set! type reftype))
+		    
+		    (when (not (member type all-types))
+		      (set! all-types (cons type all-types))
+		      (case extra
+			((g-2.14)     (set! types-2.14 (cons type types-2.14)))
+			((g-2.16)     (set! types-2.16 (cons type types-2.16)))
+			((g-2.18)     (set! types-2.18 (cons type types-2.18)))
+			((g-2.20)     (set! types-2.20 (cons type types-2.20)))
+			((g-3.0)      (set! types-3.0 (cons type types-3.0)))
+			((g-3.2)      (set! types-3.2 (cons type types-3.2)))
+			((g-3.4)      (set! types-3.4 (cons type types-3.4)))
+			((g-3.6)      (set! types-3.6 (cons type types-3.6)))
+			((g-3.8)      (set! types-3.8 (cons type types-3.8)))
+			((g-3.10)     (set! types-3.10 (cons type types-3.10)))
+			((g-3.12)     (set! types-3.12 (cons type types-3.12)))
+			((g-3.14)     (set! types-3.14 (cons type types-3.14)))
+			((g-3.16)     (set! types-3.16 (cons type types-3.16)))
+			((g-3.18)     (set! types-3.18 (cons type types-3.18)))
+			((g-3.20)     (set! types-3.20 (cons type types-3.20)))
+			((cairo)      (set! cairo-types (cons type cairo-types)))
+			((cairo-810)  (set! cairo-types-810 (cons type cairo-types-810)))
+			((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
+			(else  	      (if (not (member type types))
+					  (set! types (cons type types))))))
+		    (set! type #f)))
+	      (set! sp i)))))))
 
 (define direct-types 
   (list (cons "void" #f)
@@ -1736,88 +1734,87 @@
 		     (gctype (callback-gc func))
 		     (fname (callback-name func))
 		     (void? (string=? type "void")))
-		(if (not (member name funcs-done))
-		    (begin
-		      (set! funcs-done (cons name funcs-done))
-		      (if (callback-version func)
-			  (hey (string-append "#if GTK_CHECK_VERSION(" (substring (callback-version func) 0 1) ", " (substring (callback-version func) 2) ", 0)~%")))
-
-		      (hey "static ~A gxg_~A("
-			   type
-			   name)
-		      (let ((previous-arg #f)
-			    (ctr 0))
-			(for-each
-			 (lambda (arg)
-			   (if previous-arg (hey ", "))
-			   ;; ctr is 0-based here
-			   (if (or (and (memq fname '(GtkClipboardTextReceivedFunc GtkAccelMapForeach GtkEntryCompletionMatchFunc)) 
-					(= ctr 1)) 
-				   (and (memq fname '(GtkTreeViewSearchEqualFunc GLogFunc GtkClipboardRichTextReceivedFunc)) 
-					(= ctr 2)) 
-				   (and (memq fname '(GtkFileFilterFunc GtkRecentFilterFunc GLogFunc)) 
-					(= ctr 0)))
-			       (hey "const "))
-			   (set! ctr (+ ctr 1))
-			   (set! previous-arg #t)
-			   (hey "~A ~A" 
-				(if (string=? (car arg) "lambda_data")
-				    "gpointer"
-				    (car arg))
-				(cadr arg)))
-			 args)
-			(hey ")~%"))
-		      (hey "{~%  ")
-		      ;; I tried to use Xen_error here but it was a no-op for some reason?? 
-		      (hey "if (!Xen_is_list((Xen)func_info)) return~A;~%  "
-			   (if void? 
-			       ""
-			       (format #f "((~A)0)" (no-stars type))))
-		      (if (eq? gctype 'permanent-gcc)
-			  (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
-		      (let ((castlen (+ 12 (if void?
-					       1
-					       (+ 2 (length (format #f "return(Xen_to_C_~A" (no-stars type))))))))
+		(when (not (member name funcs-done))
+		  (set! funcs-done (cons name funcs-done))
+		  (if (callback-version func)
+		      (hey (string-append "#if GTK_CHECK_VERSION(" (substring (callback-version func) 0 1) ", " (substring (callback-version func) 2) ", 0)~%")))
+		  
+		  (hey "static ~A gxg_~A("
+		       type
+		       name)
+		  (let ((previous-arg #f)
+			(ctr 0))
+		    (for-each
+		     (lambda (arg)
+		       (if previous-arg (hey ", "))
+		       ;; ctr is 0-based here
+		       (if (or (and (memq fname '(GtkClipboardTextReceivedFunc GtkAccelMapForeach GtkEntryCompletionMatchFunc)) 
+				    (= ctr 1)) 
+			       (and (memq fname '(GtkTreeViewSearchEqualFunc GLogFunc GtkClipboardRichTextReceivedFunc)) 
+				    (= ctr 2)) 
+			       (and (memq fname '(GtkFileFilterFunc GtkRecentFilterFunc GLogFunc)) 
+				    (= ctr 0)))
+			   (hey "const "))
+		       (set! ctr (+ ctr 1))
+		       (set! previous-arg #t)
+		       (hey "~A ~A" 
+			    (if (string=? (car arg) "lambda_data")
+				"gpointer"
+				(car arg))
+			    (cadr arg)))
+		     args)
+		    (hey ")~%"))
+		  (hey "{~%  ")
+		  ;; I tried to use Xen_error here but it was a no-op for some reason?? 
+		  (hey "if (!Xen_is_list((Xen)func_info)) return~A;~%  "
+		       (if void? 
+			   ""
+			   (format #f "((~A)0)" (no-stars type))))
+		  (if (eq? gctype 'permanent-gcc)
+		      (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
+		  (let ((castlen (+ 12 (if void?
+					   1
+					   (+ 2 (length (format #f "return(Xen_to_C_~A" (no-stars type))))))))
+		    (if (not void?)
+			(hey "return(Xen_to_C_~A("
+			     (no-stars type)))
+		    (hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
+			 (if (null? args) "no" (length args))
+			 (if (= (length args) 1) "" "s")
+			 (if (eq? fname 'GtkClipboardClearFunc)
+			     "Xen_caddr"
+			     (if (eq? fname 'GtkDestroyNotify)
+				 "Xen_cadddr"
+				 "Xen_car")))
+		    (for-each
+		     (lambda (arg)
+		       (hey (substring "                                                                   " 0 castlen))
+		       (if (string=? (car arg) "lambda_data")
+			   (hey "Xen_cadr((Xen)func_info),~%")
+			   (hey "C_to_Xen_~A(~A~A),~%"
+				(no-stars (car arg))
+				(if (string=? (car arg) "GtkFileFilterInfo*")
+				    "(GtkFileFilterInfo *)"
+				    "")
+				(cadr arg))))
+		     args)
+		    (hey (substring "                                                                      " 0 castlen))
+		    (hey "__func__)")
+		    (if void?
+			(hey ";~%")
+			(hey "));~%")))
+		  (if (eq? gctype 'permanent-gcc)
+		      (begin
 			(if (not void?)
-			    (hey "return(Xen_to_C_~A("
-				 (no-stars type)))
-			(hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
-			     (if (null? args) "no" (length args))
-			     (if (= (length args) 1) "" "s")
-			     (if (eq? fname 'GtkClipboardClearFunc)
-				 "Xen_caddr"
-				 (if (eq? fname 'GtkDestroyNotify)
-				     "Xen_cadddr"
-				     "Xen_car")))
-			(for-each
-			 (lambda (arg)
-			   (hey (substring "                                                                   " 0 castlen))
-			   (if (string=? (car arg) "lambda_data")
-			       (hey "Xen_cadr((Xen)func_info),~%")
-			       (hey "C_to_Xen_~A(~A~A),~%"
-				    (no-stars (car arg))
-				    (if (string=? (car arg) "GtkFileFilterInfo*")
-					"(GtkFileFilterInfo *)"
-					"")
-				    (cadr arg))))
-			 args)
-			(hey (substring "                                                                      " 0 castlen))
-			(hey "__func__)")
-			(if void?
-			    (hey ";~%")
-			    (hey "));~%")))
-		      (if (eq? gctype 'permanent-gcc)
-			  (begin
-			    (if (not void?)
-				(begin
-				  (hey "  #else~%")
-				  (hey "  return((~A)0);~%" (no-stars type))))
-			    (hey "  #endif~%")))
-		      (hey "}~%")
-		      (when (callback-version func)
-			(hey "#endif~%"))
-		      (hey "~%")
-		      ))))))
+			    (begin
+			      (hey "  #else~%")
+			      (hey "  return((~A)0);~%" (no-stars type))))
+			(hey "  #endif~%")))
+		  (hey "}~%")
+		  (when (callback-version func)
+		    (hey "#endif~%"))
+		  (hey "~%")
+		  )))))
     (for-each xc callbacks)
     ))
 
@@ -1940,43 +1937,43 @@
 		     (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
 		 (set! ctr (+ ctr 1)))
 	       args))))
-      (if (> (length args) 0)
-	  (let ((ctr 1)
-		(argc #f))
-	    (for-each
-	     (lambda (arg)
-	       (let ((argname (cadr arg))
-		     (argtype (car arg)))
-		 (if (not (ref-arg? arg))
-		     (if (null-arg? arg)
-			 (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
-			      (no-stars argtype) argname argname argname ctr name argtype)
-			 (if (opt-arg? arg)
-			     (begin
-			       (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
-			       (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
-				    (no-stars argtype) argname argname ctr name argtype))
-			     (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
-				  (no-stars argtype) argname argname ctr name argtype)))
-		     (if (>= (length arg) 3)
-			 (if (char=? ((arg 2) 0) #\{)
-			     (begin
-			       (set! argc (deref-name arg))
-			       (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
-			     (if (char=? ((arg 2) 0) #\|)
-				 (begin
-				   (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
-					(deref-name arg)
-					(deref-type arg)
-					argc
-					(deref-element-type arg))
-				   (hey "  {~%   int i;~%   Xen lst;~%   lst = Xen_copy_arg(~A);~%" argname)
-				   (hey "   for (i = 0; i < ~A; i++, lst = Xen_cdr(lst)) ~A[i] = Xen_to_C_~A(Xen_car(lst));~%"
-					argc
-					(deref-name arg)
-					(no-stars (deref-element-type arg)))
-				   (hey "  }~%"))))))
-		 (set! ctr (+ ctr 1))))
+      (when (> (length args) 0)
+	(let ((ctr 1)
+	      (argc #f))
+	  (for-each
+	   (lambda (arg)
+	     (let ((argname (cadr arg))
+		   (argtype (car arg)))
+	       (if (not (ref-arg? arg))
+		   (if (null-arg? arg)
+		       (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
+			    (no-stars argtype) argname argname argname ctr name argtype)
+		       (if (opt-arg? arg)
+			   (begin
+			     (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
+			     (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
+				  (no-stars argtype) argname argname ctr name argtype))
+			   (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
+				(no-stars argtype) argname argname ctr name argtype)))
+		   (if (>= (length arg) 3)
+		       (if (char=? ((arg 2) 0) #\{)
+			   (begin
+			     (set! argc (deref-name arg))
+			     (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
+			   (if (char=? ((arg 2) 0) #\|)
+			       (begin
+				 (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
+				      (deref-name arg)
+				      (deref-type arg)
+				      argc
+				      (deref-element-type arg))
+				 (hey "  {~%   int i;~%   Xen lst;~%   lst = Xen_copy_arg(~A);~%" argname)
+				 (hey "   for (i = 0; i < ~A; i++, lst = Xen_cdr(lst)) ~A[i] = Xen_to_C_~A(Xen_car(lst));~%"
+				      argc
+				      (deref-name arg)
+				      (no-stars (deref-element-type arg)))
+				 (hey "  }~%"))))))
+	       (set! ctr (+ ctr 1))))
 	     args)))
       (let ((using-result #f))
 	(if (eq? lambda-type 'fnc)

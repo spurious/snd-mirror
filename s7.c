@@ -72647,7 +72647,7 @@ static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
   return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
 }
 
-static s7_pointer g_tree_length(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
@@ -73790,7 +73790,7 @@ s7_scheme *s7_init(void)
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->object_set_function = slot_value(global_slot(sym));
 
-  s7_define_safe_function(sc, "tree-length", g_tree_length, 1, 0, false, "an experiment");
+  s7_define_safe_function(sc, "tree-leaves", g_tree_leaves, 1, 0, false, "an experiment");
 
 
   /* -------- *features* -------- */

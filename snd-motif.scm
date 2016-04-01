@@ -1949,63 +1949,63 @@
 		 (snd-amp (find-child ctrls "snd-amp"))
 		 (chns (channels snd)))
 	    
-	    (if (Widget? snd-amp)
-		(let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
-		      (panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
-		      (panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
-		  (XtUnmanageChild ctrls)
-		  
-		  (if (not (sound-property 'amp-controls snd))
-		      (let ((orig-amp (find-child snd-amp "amp")))
-			(XtOverrideTranslations orig-amp
-						(XtParseTranslationTable "c<Btn1Down>: Select()
+	    (when (Widget? snd-amp)
+	      (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
+		    (panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
+		    (panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
+		(XtUnmanageChild ctrls)
+		
+		(if (not (sound-property 'amp-controls snd))
+		    (let ((orig-amp (find-child snd-amp "amp")))
+		      (XtOverrideTranslations orig-amp
+					      (XtParseTranslationTable "c<Btn1Down>: Select()
                                                                     c<Btn1Motion>: Moved()
 						                    c<Btn1Up>:   Release()"))
-			(XtAddCallback orig-amp XmNdragCallback
-				       (lambda (w c info)
-					 (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
-					     (do ((i 1 (+ i 1)))
-						 ((= i chns))
-					       (let* ((ampscr (find-child snd-amp (scroller-name i)))
-						      (ampvals (XmScrollBarGetValues ampscr)))
-						 (XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t))))))))
-		  (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
-		    (if (< existing-controls chns)
-			(begin
-			  (if (> height 20)
-			      (set! height (+ height (* 18 (- chns existing-controls)))))
-			  (do ((i existing-controls (+ i 1)))
-			      ((= i chns))
-			    (make-amp-control snd i snd-amp))
-			  (set! (sound-property 'amp-controls snd) chns)
-			  (set! existing-controls chns)))
-		    (do ((i 0 (+ i 1)))
-			((= i existing-controls))
-		      (let ((ampc (find-child snd-amp (label-name i)))
-			    (ampn (find-child snd-amp (number-name i)))
-			    (amp (find-child snd-amp (scroller-name i))))
-			(XtUnmanageChild ampc)
-			(XtUnmanageChild ampn)
-			(XtUnmanageChild amp)))
-		    (do ((i 0 (+ i 1)))
-			((= i chns))
-		      (let ((ampc (find-child snd-amp (label-name i)))
-			    (ampn (find-child snd-amp (number-name i)))
-			    (amp (find-child snd-amp (scroller-name i))))
-			(let ((next-amp (and (< i (- chns 1))
-					     (find-child snd-amp (label-name (+ i 1))))))
-			  (reset-to-one amp ampn)
-			  (XtSetValues ampc (if next-amp 
-						(list XmNtopAttachment XmATTACH_WIDGET
-						      XmNtopWidget     next-amp)
-						(list XmNtopAttachment XmATTACH_FORM))))
-			(XtManageChild ampc)
-			(XtManageChild ampn)
-			(XtManageChild amp))))
-		  
-		  (XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
-		  (XtManageChild ctrls)
-		  (XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
+		      (XtAddCallback orig-amp XmNdragCallback
+				     (lambda (w c info)
+				       (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
+					   (do ((i 1 (+ i 1)))
+					       ((= i chns))
+					     (let* ((ampscr (find-child snd-amp (scroller-name i)))
+						    (ampvals (XmScrollBarGetValues ampscr)))
+					       (XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t))))))))
+		(let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
+		  (if (< existing-controls chns)
+		      (begin
+			(if (> height 20)
+			    (set! height (+ height (* 18 (- chns existing-controls)))))
+			(do ((i existing-controls (+ i 1)))
+			    ((= i chns))
+			  (make-amp-control snd i snd-amp))
+			(set! (sound-property 'amp-controls snd) chns)
+			(set! existing-controls chns)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i existing-controls))
+		    (let ((ampc (find-child snd-amp (label-name i)))
+			  (ampn (find-child snd-amp (number-name i)))
+			  (amp (find-child snd-amp (scroller-name i))))
+		      (XtUnmanageChild ampc)
+		      (XtUnmanageChild ampn)
+		      (XtUnmanageChild amp)))
+		  (do ((i 0 (+ i 1)))
+		      ((= i chns))
+		    (let ((ampc (find-child snd-amp (label-name i)))
+			  (ampn (find-child snd-amp (number-name i)))
+			  (amp (find-child snd-amp (scroller-name i))))
+		      (let ((next-amp (and (< i (- chns 1))
+					   (find-child snd-amp (label-name (+ i 1))))))
+			(reset-to-one amp ampn)
+			(XtSetValues ampc (if next-amp 
+					      (list XmNtopAttachment XmATTACH_WIDGET
+						    XmNtopWidget     next-amp)
+					      (list XmNtopAttachment XmATTACH_FORM))))
+		      (XtManageChild ampc)
+		      (XtManageChild ampn)
+		      (XtManageChild amp))))
+		
+		(XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
+		(XtManageChild ctrls)
+		(XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
 	
 	(define (amp-controls-clear snd)
 	  (if (> (channels snd) 1)
@@ -2060,84 +2060,84 @@
 	  (add-to-menu 0 "Rename" 
 		       (lambda ()
 			 ;; open dialog to get new name, save-as that name, open
-			 (if (not rename-dialog)
-			     ;; make a standard dialog
-			     (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
-				    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-				    (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-				    (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
-				    (new-dialog (XmCreateTemplateDialog
-						 (cadr (main-widgets)) "Rename"
-						 (list XmNcancelLabelString   xdismiss
-						       XmNhelpLabelString     xhelp
-						       XmNokLabelString       xok
-						       XmNautoUnmanage        #f
-						       XmNdialogTitle         titlestr
-						       XmNresizePolicy        XmRESIZE_GROW
-						       XmNnoResize            #f
-						       XmNbackground          *basic-color*
-						       XmNtransient           #f))))
-			       (for-each
-				(lambda (button color)
-				  (XtVaSetValues
-				   (XmMessageBoxGetChild new-dialog button)
-				   (list XmNarmColor   *selection-color*
-					 XmNbackground color)))
-				(list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-				(list *highlight-color* *highlight-color* *highlight-color*))
-			       
-			       (XtAddCallback new-dialog XmNcancelCallback 
-					      (lambda (w c i) (XtUnmanageChild w)))
-			       
-			       (XtAddCallback new-dialog XmNhelpCallback 
-					      (lambda (w c i)
-						(help-dialog "Rename" "give a new file name to rename the currently selected sound")))
-			       
-			       (XtAddCallback new-dialog XmNokCallback 
-					      (lambda (w c i)
-						(let ((new-name (XmTextFieldGetString rename-text)))
-						  (if (and (string? new-name)
-							   (> (length new-name) 0)
-							   (selected-sound))
-						      (let ();(current-name (file-name)))
-							(save-sound-as new-name)
-							(close-sound)
+			 (unless rename-dialog
+			   ;; make a standard dialog
+			   (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
+				  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+				  (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+				  (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
+				  (new-dialog (XmCreateTemplateDialog
+					       (cadr (main-widgets)) "Rename"
+					       (list XmNcancelLabelString   xdismiss
+						     XmNhelpLabelString     xhelp
+						     XmNokLabelString       xok
+						     XmNautoUnmanage        #f
+						     XmNdialogTitle         titlestr
+						     XmNresizePolicy        XmRESIZE_GROW
+						     XmNnoResize            #f
+						     XmNbackground          *basic-color*
+						     XmNtransient           #f))))
+			     (for-each
+			      (lambda (button color)
+				(XtVaSetValues
+				 (XmMessageBoxGetChild new-dialog button)
+				 (list XmNarmColor   *selection-color*
+				       XmNbackground color)))
+			      (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+			      (list *highlight-color* *highlight-color* *highlight-color*))
+			     
+			     (XtAddCallback new-dialog XmNcancelCallback 
+					    (lambda (w c i) (XtUnmanageChild w)))
+			     
+			     (XtAddCallback new-dialog XmNhelpCallback 
+					    (lambda (w c i)
+					      (help-dialog "Rename" "give a new file name to rename the currently selected sound")))
+			     
+			     (XtAddCallback new-dialog XmNokCallback 
+					    (lambda (w c i)
+					      (let ((new-name (XmTextFieldGetString rename-text)))
+						(if (and (string? new-name)
+							 (> (length new-name) 0)
+							 (selected-sound))
+						    (let ();(current-name (file-name)))
+						      (save-sound-as new-name)
+						      (close-sound)
 					;(rename-file current-name new-name) ; was this from Guile?
 					;(system (format #f "mv ~A ~A" new-name current-name)) ; surely it should be (delete-file current-name)?
-							(open-sound new-name)
-							(XtUnmanageChild w))))))
-			       (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
-			       (set! rename-dialog new-dialog)
-			       
-			       (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
-								       (list XmNleftAttachment   XmATTACH_FORM
-									     XmNrightAttachment  XmATTACH_FORM
-									     XmNtopAttachment    XmATTACH_FORM
-									     XmNbottomAttachment XmATTACH_WIDGET
-									     XmNbottomWidget     (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
-									     XmNorientation      XmVERTICAL
-									     XmNbackground       *basic-color*)))
-				      (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
-								    (list XmNleftAttachment   XmATTACH_FORM
-									  XmNrightAttachment  XmATTACH_NONE
-									  XmNtopAttachment    XmATTACH_FORM
-									  XmNbottomAttachment XmATTACH_FORM
-									  XmNbackground       *basic-color*))))
-				 (set! rename-text 
-				       (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
-							      (list XmNleftAttachment   XmATTACH_WIDGET
-								    XmNleftWidget       label
-								    XmNrightAttachment  XmATTACH_FORM
-								    XmNtopAttachment    XmATTACH_FORM
-								    XmNbottomAttachment XmATTACH_FORM
-								    XmNbackground       *basic-color*)))
-				 (XtAddEventHandler rename-text EnterWindowMask #f
-						    (lambda (w context ev flag)
-						      (XmProcessTraversal w XmTRAVERSE_CURRENT)
-						      (XtSetValues w (list XmNbackground (white-pixel)))))
-				 (XtAddEventHandler rename-text LeaveWindowMask #f
-						    (lambda (w context ev flag)
-						      (XtSetValues w (list XmNbackground *basic-color*)))))))
+						      (open-sound new-name)
+						      (XtUnmanageChild w))))))
+			     (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
+			     (set! rename-dialog new-dialog)
+			     
+			     (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
+								     (list XmNleftAttachment   XmATTACH_FORM
+									   XmNrightAttachment  XmATTACH_FORM
+									   XmNtopAttachment    XmATTACH_FORM
+									   XmNbottomAttachment XmATTACH_WIDGET
+									   XmNbottomWidget     (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
+									   XmNorientation      XmVERTICAL
+									   XmNbackground       *basic-color*)))
+				    (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
+								  (list XmNleftAttachment   XmATTACH_FORM
+									XmNrightAttachment  XmATTACH_NONE
+									XmNtopAttachment    XmATTACH_FORM
+									XmNbottomAttachment XmATTACH_FORM
+									XmNbackground       *basic-color*))))
+			       (set! rename-text 
+				     (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
+							    (list XmNleftAttachment   XmATTACH_WIDGET
+								  XmNleftWidget       label
+								  XmNrightAttachment  XmATTACH_FORM
+								  XmNtopAttachment    XmATTACH_FORM
+								  XmNbottomAttachment XmATTACH_FORM
+								  XmNbackground       *basic-color*)))
+			       (XtAddEventHandler rename-text EnterWindowMask #f
+						  (lambda (w context ev flag)
+						    (XmProcessTraversal w XmTRAVERSE_CURRENT)
+						    (XtSetValues w (list XmNbackground (white-pixel)))))
+			       (XtAddEventHandler rename-text LeaveWindowMask #f
+						  (lambda (w context ev flag)
+						    (XtSetValues w (list XmNbackground *basic-color*)))))))
 			 (if (not (XtIsManaged rename-dialog))
 			     (XtManageChild rename-dialog)
 			     (raise-dialog rename-dialog)))
@@ -2331,65 +2331,65 @@
       (lambda ()
 	
 	(define (start-dialog)
-	  (if (not dialog)
-	      (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
-		    (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-		    (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
-		(set! dialog (XmCreateMessageDialog shell
-						    "Find"
-						    (list XmNcancelLabelString   xdismiss
-							  XmNokLabelString       xfind
-							  XmNhelpLabelString     xhelp
-							  XmNautoUnmanage        #f
-							  XmNresizePolicy        XmRESIZE_GROW
-							  XmNnoResize            #f
-							  XmNtransient           #f
-							  XmNbackground          *basic-color*)))
-		(for-each
-		 (lambda (button color)
-		   (XtVaSetValues (XmMessageBoxGetChild dialog button)
-				  (list XmNarmColor   *selection-color*
-					XmNbackground color)))
-		 (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-		 (list *highlight-color* *highlight-color* *highlight-color*))
-		(XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
-		(XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
-		(XtAddCallback dialog XmNokCallback (lambda (w context info)
-						      (let* ((search-str (XmTextFieldGetString find-text))
-							     (len (length search-str))
-							     (pos (XmTextFindString listener-text
-										    (+ (XmTextGetCursorPosition listener-text)
-										       (if find-new 0 (if find-forward 1 -1)))
-										    search-str
-										    (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-							(if (not pos)
-							    (set! pos (XmTextFindString listener-text
-											(if find-forward 0 (XmTextGetLastPosition listener-text))
-											search-str
-											(if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-							(if (number? pos)
-							    (begin
-							      (XmTextSetInsertionPosition listener-text pos)
-							      (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
-							      (XtAppAddTimeOut snd-app 200 
-									       (lambda (context id) 
-										 (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
-							(set! find-new #f))))
-		(XmStringFree xhelp)
-		(XmStringFree xdismiss)
-		(XmStringFree xfind)
-		(set! find-text (XtCreateManagedWidget "text" xmTextFieldWidgetClass dialog
-						       (list XmNleftAttachment      XmATTACH_FORM
-							     XmNrightAttachment     XmATTACH_FORM
-							     XmNtopAttachment       XmATTACH_FORM
-							     XmNbottomAttachment    XmATTACH_WIDGET
-							     XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-							     XmNbackground          *basic-color*)))
-		(XtAddCallback find-text XmNfocusCallback 
-			       (lambda (w c i)
-				 (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
-		(XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground *basic-color*))))
-		(XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
+	  (unless dialog
+	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
+		  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		  (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
+	      (set! dialog (XmCreateMessageDialog shell
+						  "Find"
+						  (list XmNcancelLabelString   xdismiss
+							XmNokLabelString       xfind
+							XmNhelpLabelString     xhelp
+							XmNautoUnmanage        #f
+							XmNresizePolicy        XmRESIZE_GROW
+							XmNnoResize            #f
+							XmNtransient           #f
+							XmNbackground          *basic-color*)))
+	      (for-each
+	       (lambda (button color)
+		 (XtVaSetValues (XmMessageBoxGetChild dialog button)
+				(list XmNarmColor   *selection-color*
+				      XmNbackground color)))
+	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	       (list *highlight-color* *highlight-color* *highlight-color*))
+	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
+	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
+	      (XtAddCallback dialog XmNokCallback (lambda (w context info)
+						    (let* ((search-str (XmTextFieldGetString find-text))
+							   (len (length search-str))
+							   (pos (XmTextFindString listener-text
+										  (+ (XmTextGetCursorPosition listener-text)
+										     (if find-new 0 (if find-forward 1 -1)))
+										  search-str
+										  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+						      (if (not pos)
+							  (set! pos (XmTextFindString listener-text
+										      (if find-forward 0 (XmTextGetLastPosition listener-text))
+										      search-str
+										      (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+						      (if (number? pos)
+							  (begin
+							    (XmTextSetInsertionPosition listener-text pos)
+							    (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
+							    (XtAppAddTimeOut snd-app 200 
+									     (lambda (context id) 
+									       (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
+						      (set! find-new #f))))
+	      (XmStringFree xhelp)
+	      (XmStringFree xdismiss)
+	      (XmStringFree xfind)
+	      (set! find-text (XtCreateManagedWidget "text" xmTextFieldWidgetClass dialog
+						     (list XmNleftAttachment      XmATTACH_FORM
+							   XmNrightAttachment     XmATTACH_FORM
+							   XmNtopAttachment       XmATTACH_FORM
+							   XmNbottomAttachment    XmATTACH_WIDGET
+							   XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+							   XmNbackground          *basic-color*)))
+	      (XtAddCallback find-text XmNfocusCallback 
+			     (lambda (w c i)
+			       (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
+	      (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground *basic-color*))))
+	      (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
 	  (XtManageChild dialog))
 	
 	(XtAppAddActions snd-app
@@ -2630,53 +2630,53 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
     (let ((maxed-snds ()))
       (lambda (snd)
 	(let ((previous-minmax (find-if (lambda (n) (equal? (car n) snd)) maxed-snds)))
-	  (if (not previous-minmax)
-	      (let* ((widgets (sound-widgets snd))
-		     (status-area (widgets 3))
-		     (play-button (widgets 4))
-		     (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
-		(XtUnmanageChild play-button)
-		(let* ((name-form (XtParent status-area)) ; "snd-name-form"
-		       (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
-							  (list XmNbackground      *basic-color*
-								XmNrightAttachment XmATTACH_FORM
-								XmNtopAttachment   XmATTACH_FORM
-								XmNmarginWidth 2
-								XmNmarginHeight 0
-								XmNshadowThickness 0
-								))))
-		  (XtVaSetValues play-button (list XmNrightAttachment XmATTACH_WIDGET
-						   XmNrightWidget new-minmax))
-		  (XtManageChild play-button)
-		  (XtAddCallback 
-		   new-minmax XmNactivateCallback 
-		   (lambda (w c i)
-		     (let ((mv (find-if (lambda (n) (equal? (car n) c)) maxed-snds)))
-		       (if mv
-			   (let ((maxed (caddr mv)))
-			     (if maxed
-				 (begin
-				   (set! (mv 3) (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
-				   (set! (mv 4) (show-controls c))
-				   (do ((i 0 (+ i 1)))
-				       ((= i (channels c)))
-				     (XtUnmanageChild ((channel-widgets c i) 10)))
-				   (set! (show-controls c) #f)
-				   (XmChangeColor new-minmax (make-color 1 1 0))
-				   (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 25)))
-				 (let ((prev-size (mv 3)))
-				   (do ((i 0 (+ i 1)))
-				       ((= i (channels c)))
-				     (XtManageChild ((channel-widgets c i) 10)))
-				   (if (mv 4) (set! (show-controls c) #t))
-				   (XmChangeColor new-minmax *basic-color*)
-				   (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (- prev-size 1)))
-				   (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
-			     (set! (mv 2) (not maxed))))))
-		   snd)
-		  
-		  (set! previous-minmax (list snd new-minmax #t cur-size (show-controls snd)))
-		  (set! maxed-snds (cons previous-minmax maxed-snds)))))
+	  (unless previous-minmax
+	    (let* ((widgets (sound-widgets snd))
+		   (status-area (widgets 3))
+		   (play-button (widgets 4))
+		   (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
+	      (XtUnmanageChild play-button)
+	      (let* ((name-form (XtParent status-area)) ; "snd-name-form"
+		     (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
+							(list XmNbackground      *basic-color*
+							      XmNrightAttachment XmATTACH_FORM
+							      XmNtopAttachment   XmATTACH_FORM
+							      XmNmarginWidth 2
+							      XmNmarginHeight 0
+							      XmNshadowThickness 0
+							      ))))
+		(XtVaSetValues play-button (list XmNrightAttachment XmATTACH_WIDGET
+						 XmNrightWidget new-minmax))
+		(XtManageChild play-button)
+		(XtAddCallback 
+		 new-minmax XmNactivateCallback 
+		 (lambda (w c i)
+		   (let ((mv (find-if (lambda (n) (equal? (car n) c)) maxed-snds)))
+		     (when mv
+		       (let ((maxed (caddr mv)))
+			 (if maxed
+			     (begin
+			       (set! (mv 3) (cadr (XtVaGetValues (car (sound-widgets c)) (list XmNheight 0))))
+			       (set! (mv 4) (show-controls c))
+			       (do ((i 0 (+ i 1)))
+				   ((= i (channels c)))
+				 (XtUnmanageChild ((channel-widgets c i) 10)))
+			       (set! (show-controls c) #f)
+			       (XmChangeColor new-minmax (make-color 1 1 0))
+			       (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 25)))
+			     (let ((prev-size (mv 3)))
+			       (do ((i 0 (+ i 1)))
+				   ((= i (channels c)))
+				 (XtManageChild ((channel-widgets c i) 10)))
+			       (if (mv 4) (set! (show-controls c) #t))
+			       (XmChangeColor new-minmax *basic-color*)
+			       (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum prev-size XmNpaneMinimum (- prev-size 1)))
+			       (XtVaSetValues (car (sound-widgets c)) (list XmNpaneMaximum 1000 XmNpaneMinimum 1))))
+			 (set! (mv 2) (not maxed))))))
+		 snd)
+		
+		(set! previous-minmax (list snd new-minmax #t cur-size (show-controls snd)))
+		(set! maxed-snds (cons previous-minmax maxed-snds)))))
 	  #f))))
   
   

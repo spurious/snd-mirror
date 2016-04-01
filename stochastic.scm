@@ -52,38 +52,37 @@
 
      (do ((i beg (+ i 1)))
 	 ((= i end))
-       (if (= dx dt);;when current sample is a breakpoint
-	   (begin
-	     (set! dx (floor (xy-array (modulo m xy-array-l))))
-	     (set! y (xy-array (+ (modulo m xy-array-l) 1)))
-	     (set! prev-dx (floor (xy-array (modulo (- m 2) xy-array-l))))
-	     (set! dy (- y oldy))
-	     (set! oldy y)
-	     ;;straight uniform distribution for y
-	     (set! ydev (round (mus-random (* .01 b ywig))))
-	     ;;gaussian distribution for x
-	     (set! xdev 
-		   (* xstep (round 
-			     (* xwig 
-				(sqrt (* -2.0 (log (- 1 (random 1.0))))) ; ??
-				(cos (random 6.283185307179586))))))
-	     (set! (xy-array (modulo m xy-array-l))
-		       ;;mirror stuff for x
-		       (cond ((or  (< (round xmax) (+ dx xdev))
-				   (> (round xmin)(+ dx xdev)))
-			      (max (min ;;this mirror is attentuated
-				    (round (+ (* xfb prev-dx) (* (- 1  xfb) (- dx xdev))))
-				    (round xmax))
-				   (round xmin)))
-			     (else (round (+ (* xfb prev-dx)
-					     (* (- 1  xfb) (+ dx xdev)))))))
-	     (set! (xy-array (+ (modulo m xy-array-l) 1))
-		       ;;mirror stuff for y 
-		       (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
-			      (max (min (- y ydev) b) (- b)))
-			     (else (+ y ydev))))
-	     (set! m (+ m 2))
-	     (set! dt 0)))
+       (when (= dx dt);;when current sample is a breakpoint
+	 (set! dx (floor (xy-array (modulo m xy-array-l))))
+	 (set! y (xy-array (+ (modulo m xy-array-l) 1)))
+	 (set! prev-dx (floor (xy-array (modulo (- m 2) xy-array-l))))
+	 (set! dy (- y oldy))
+	 (set! oldy y)
+	 ;;straight uniform distribution for y
+	 (set! ydev (round (mus-random (* .01 b ywig))))
+	 ;;gaussian distribution for x
+	 (set! xdev 
+	       (* xstep (round 
+			 (* xwig 
+			    (sqrt (* -2.0 (log (- 1 (random 1.0))))) ; ??
+			    (cos (random 6.283185307179586))))))
+	 (set! (xy-array (modulo m xy-array-l))
+	       ;;mirror stuff for x
+	       (cond ((or  (< (round xmax) (+ dx xdev))
+			   (> (round xmin)(+ dx xdev)))
+		      (max (min ;;this mirror is attentuated
+			    (round (+ (* xfb prev-dx) (* (- 1  xfb) (- dx xdev))))
+			    (round xmax))
+			   (round xmin)))
+		     (else (round (+ (* xfb prev-dx)
+				     (* (- 1  xfb) (+ dx xdev)))))))
+	 (set! (xy-array (+ (modulo m xy-array-l) 1))
+	       ;;mirror stuff for y 
+	       (cond ((or (< b (+ y ydev)) (> (- b) (+ y ydev)))
+		      (max (min (- y ydev) b) (- b)))
+		     (else (+ y ydev))))
+	 (set! m (+ m 2))
+	 (set! dt 0))
        (set! dt (+ dt 1))
        (set! j (+ j (/ dy dx)));linear interpolation
        (set! output (/ j b));normalization -1 to 1

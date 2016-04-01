@@ -92,83 +92,83 @@
     (add-to-menu 0 "Rename" 
       (lambda ()
 	;; open dialog to get new name, save-as that name, open
-	(if (not rename-dialog)
-	    ;; make a standard dialog
-	    (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
-		   (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-		   (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
-		   (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
-		   (new-dialog (XmCreateTemplateDialog
-				 (cadr (main-widgets)) "Rename"
-				 (list XmNcancelLabelString   xdismiss
-				       XmNhelpLabelString     xhelp
-				       XmNokLabelString       xok
-				       XmNautoUnmanage        #f
-				       XmNdialogTitle         titlestr
-				       XmNresizePolicy        XmRESIZE_GROW
-				       XmNnoResize            #f
-				       XmNbackground          *basic-color*
-				       XmNtransient           #f))))
-	      (for-each
-	       (lambda (button color)
-		 (XtVaSetValues
-		   (XmMessageBoxGetChild new-dialog button)
-		   (list XmNarmColor   *selection-color*
-			 XmNbackground color)))
-	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	       (list *highlight-color* *highlight-color* *highlight-color*))
-    
-	      (XtAddCallback new-dialog XmNcancelCallback 
-			      (lambda (w c i) (XtUnmanageChild w)))
-	      
-	      (XtAddCallback new-dialog XmNhelpCallback 
-			      (lambda (w c i)
-				(help-dialog "Rename" "Give a new file name to rename the currently selected sound.")))
-
-	      (XtAddCallback new-dialog XmNokCallback 
-			      (lambda (w c i)
-				(let ((new-name (XmTextFieldGetString rename-text)))
-				  (if (and (string? new-name)
-					   (> (length new-name) 0)
-					   (>= (selected-sound) 0))
-				      (let ();(current-name (file-name)))
-					(save-sound-as new-name)
-					(close-sound)
+	(unless rename-dialog
+	  ;; make a standard dialog
+	  (let* ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
+		 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		 (xok (XmStringCreate "DoIt" XmFONTLIST_DEFAULT_TAG))
+		 (titlestr (XmStringCreate "Rename" XmFONTLIST_DEFAULT_TAG))
+		 (new-dialog (XmCreateTemplateDialog
+			      (cadr (main-widgets)) "Rename"
+			      (list XmNcancelLabelString   xdismiss
+				    XmNhelpLabelString     xhelp
+				    XmNokLabelString       xok
+				    XmNautoUnmanage        #f
+				    XmNdialogTitle         titlestr
+				    XmNresizePolicy        XmRESIZE_GROW
+				    XmNnoResize            #f
+				    XmNbackground          *basic-color*
+				    XmNtransient           #f))))
+	    (for-each
+	     (lambda (button color)
+	       (XtVaSetValues
+		(XmMessageBoxGetChild new-dialog button)
+		(list XmNarmColor   *selection-color*
+		      XmNbackground color)))
+	     (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+	     (list *highlight-color* *highlight-color* *highlight-color*))
+	    
+	    (XtAddCallback new-dialog XmNcancelCallback 
+			   (lambda (w c i) (XtUnmanageChild w)))
+	    
+	    (XtAddCallback new-dialog XmNhelpCallback 
+			   (lambda (w c i)
+			     (help-dialog "Rename" "Give a new file name to rename the currently selected sound.")))
+	    
+	    (XtAddCallback new-dialog XmNokCallback 
+			   (lambda (w c i)
+			     (let ((new-name (XmTextFieldGetString rename-text)))
+			       (if (and (string? new-name)
+					(> (length new-name) 0)
+					(>= (selected-sound) 0))
+				   (let ();(current-name (file-name)))
+				     (save-sound-as new-name)
+				     (close-sound)
 					;(rename-file current-name new-name)
-					;; (delete-file current-name) perhaps?
-					(open-sound new-name)
-					(XtUnmanageChild w))))))
-	      (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
-	      (set! rename-dialog new-dialog)
-	      (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
-				     (list XmNleftAttachment      XmATTACH_FORM
-					   XmNrightAttachment     XmATTACH_FORM
-					   XmNtopAttachment       XmATTACH_FORM
-					   XmNbottomAttachment    XmATTACH_WIDGET
-					   XmNbottomWidget        (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
-					   XmNorientation         XmVERTICAL
-					   XmNbackground          *basic-color*)))
-		     (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
-				     (list XmNleftAttachment      XmATTACH_FORM
-					   XmNrightAttachment     XmATTACH_NONE
-					   XmNtopAttachment       XmATTACH_FORM
-					   XmNbottomAttachment    XmATTACH_FORM
-					   XmNbackground          *basic-color*))))
-		(set! rename-text 
-		      (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
-				     (list XmNleftAttachment      XmATTACH_WIDGET
-					   XmNleftWidget          label
-					   XmNrightAttachment     XmATTACH_FORM
-					   XmNtopAttachment       XmATTACH_FORM
-					   XmNbottomAttachment    XmATTACH_FORM
-					   XmNbackground          *basic-color*)))
-		(XtAddEventHandler rename-text EnterWindowMask #f
-				    (lambda (w context ev flag)
-				      (XmProcessTraversal w XmTRAVERSE_CURRENT)
-				      (XtSetValues w (list XmNbackground (white-pixel)))))
-		(XtAddEventHandler rename-text LeaveWindowMask #f
-				    (lambda (w context ev flag)
-				      (XtSetValues w (list XmNbackground *basic-color*)))))))
+				     ;; (delete-file current-name) perhaps?
+				     (open-sound new-name)
+				     (XtUnmanageChild w))))))
+	    (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
+	    (set! rename-dialog new-dialog)
+	    (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog
+						    (list XmNleftAttachment      XmATTACH_FORM
+							  XmNrightAttachment     XmATTACH_FORM
+							  XmNtopAttachment       XmATTACH_FORM
+							  XmNbottomAttachment    XmATTACH_WIDGET
+							  XmNbottomWidget        (XmMessageBoxGetChild rename-dialog XmDIALOG_SEPARATOR)
+							  XmNorientation         XmVERTICAL
+							  XmNbackground          *basic-color*)))
+		   (label (XtCreateManagedWidget "new name:" xmLabelWidgetClass mainform
+						 (list XmNleftAttachment      XmATTACH_FORM
+						       XmNrightAttachment     XmATTACH_NONE
+						       XmNtopAttachment       XmATTACH_FORM
+						       XmNbottomAttachment    XmATTACH_FORM
+						       XmNbackground          *basic-color*))))
+	      (set! rename-text 
+		    (XtCreateManagedWidget "newname" xmTextFieldWidgetClass mainform
+					   (list XmNleftAttachment      XmATTACH_WIDGET
+						 XmNleftWidget          label
+						 XmNrightAttachment     XmATTACH_FORM
+						 XmNtopAttachment       XmATTACH_FORM
+						 XmNbottomAttachment    XmATTACH_FORM
+						 XmNbackground          *basic-color*)))
+	      (XtAddEventHandler rename-text EnterWindowMask #f
+				 (lambda (w context ev flag)
+				   (XmProcessTraversal w XmTRAVERSE_CURRENT)
+				   (XtSetValues w (list XmNbackground (white-pixel)))))
+	      (XtAddEventHandler rename-text LeaveWindowMask #f
+				 (lambda (w context ev flag)
+				   (XtSetValues w (list XmNbackground *basic-color*)))))))
 	(if (not (XtIsManaged rename-dialog))
 	    (XtManageChild rename-dialog)
 	    (raise-dialog rename-dialog)))

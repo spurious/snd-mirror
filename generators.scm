@@ -5877,48 +5877,48 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 			  ((not phases)           (set! (amps (+ j 2)) (random (* 2 pi))))
 			  ((eq? phases 'max-peak) (set! (amps (+ j 2)) (/ pi 2)))))
 		  
-		  (if (eq? phases 'min-peak)
-		      (let ((vector-find-if (lambda (func vect)
-					      (let ((len (length vect))
-						    (result #f))
-						(do ((i 0 (+ i 1)))
-						    ((or (= i len)
-							 result)
-						     result)
-						  (set! result (func (vect i))))))))
-			
-			(if (not (defined? 'noid-min-peak-phases))
-			    (load "peak-phases.scm"))
-			
-			(let ((min-dat (vector-find-if 
-					(lambda (val)
-					  (and val
-					       (vector? val)
-					       (= (val 0) n)
-					       (let* ((a-val (val 1))
-						      (a-len (length val))
-						      (a-data (list a-val (val 2))))
-						 (do ((k 2 (+ k 1)))
-						     ((= k a-len))
-						   (if (and (number? (val k))
-							    (< (val k) a-val))
-						       (begin
-							 (set! a-val (val k))
-							 (set! a-data (list a-val (val (+ k 1)))))))
-						 a-data)))
-					(case choice
-					  ((all) noid-min-peak-phases)
-					  ((odd) nodd-min-peak-phases)
-					  ((prime) primoid-min-peak-phases)
-					  ((even) neven-min-peak-phases)))))
-			  (if min-dat
-			      (let (;(norm (car min-dat))
-				    (rats (cadr min-dat)))
-				(do ((i 1 (+ i 1))
-				     (j 0 (+ j 3)))
-				    ((> i n))
-				  (set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
-				  (set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
+		  (when (eq? phases 'min-peak)
+		    (let ((vector-find-if (lambda (func vect)
+					    (let ((len (length vect))
+						  (result #f))
+					      (do ((i 0 (+ i 1)))
+						  ((or (= i len)
+						       result)
+						   result)
+						(set! result (func (vect i))))))))
+		      
+		      (if (not (defined? 'noid-min-peak-phases))
+			  (load "peak-phases.scm"))
+		      
+		      (let ((min-dat (vector-find-if 
+				      (lambda (val)
+					(and val
+					     (vector? val)
+					     (= (val 0) n)
+					     (let* ((a-val (val 1))
+						    (a-len (length val))
+						    (a-data (list a-val (val 2))))
+					       (do ((k 2 (+ k 1)))
+						   ((= k a-len))
+						 (if (and (number? (val k))
+							  (< (val k) a-val))
+						     (begin
+						       (set! a-val (val k))
+						       (set! a-data (list a-val (val (+ k 1)))))))
+					       a-data)))
+				      (case choice
+					((all) noid-min-peak-phases)
+					((odd) nodd-min-peak-phases)
+					((prime) primoid-min-peak-phases)
+					((even) neven-min-peak-phases)))))
+			(if min-dat
+			    (let (;(norm (car min-dat))
+				  (rats (cadr min-dat)))
+			      (do ((i 1 (+ i 1))
+				   (j 0 (+ j 3)))
+				  ((> i n))
+				(set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
+				(set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
 		  
 		  amps)))
 
@@ -6295,55 +6295,54 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 
 (define (moving-spectrum gen)
   (with-let gen
-    (if (>= outctr hop)
-	(begin
-	  (if (> outctr n) ; must be first time through -- fill data array
-	      (do ((i 0 (+ i 1)))
-		  ((= i n))
-		(float-vector-set! data i (readin input)))
-	      (begin
-		(float-vector-move! data 0 hop)
-		(do ((i (- n hop) (+ i 1)))
-		    ((= i n))
-		  (float-vector-set! data i (readin input)))))
-	  
-	  (set! outctr 0) ; -1??
-	  (set! dataloc (modulo dataloc n))
-	  
-	  (fill! new-freq-incs 0.0)
+    (when (>= outctr hop)
+      (if (> outctr n) ; must be first time through -- fill data array
+	  (do ((i 0 (+ i 1)))
+	      ((= i n))
+	    (float-vector-set! data i (readin input)))
+	  (begin
+	    (float-vector-move! data 0 hop)
+	    (do ((i (- n hop) (+ i 1)))
+		((= i n))
+	      (float-vector-set! data i (readin input)))))
+      
+      (set! outctr 0) ; -1??
+      (set! dataloc (modulo dataloc n))
+      
+      (fill! new-freq-incs 0.0)
+      (do ((i 0 (+ i 1))
+	   (j dataloc (+ j 1)))
+	  ((= j n))
+	(float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i))))
+      
+      (if (> dataloc 0)
+	  (do ((i (- n dataloc) (+ i 1))
+	       (j 0 (+ j 1)))
+	      ((= j dataloc))
+	    (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i)))))
+      
+      (set! dataloc (+ dataloc hop))
+      
+      (mus-fft amp-incs new-freq-incs n 1)
+      (rectangular->polar amp-incs new-freq-incs)
+      
+      (let ((scl (/ 1.0 hop))
+	    (kscl (/ two-pi n)))
+	(float-vector-subtract! amp-incs amps)
+	(float-vector-scale! amp-incs scl)
+	
+	(let ((n2 (/ n 2)))
 	  (do ((i 0 (+ i 1))
-	       (j dataloc (+ j 1)))
-	      ((= j n))
-	    (float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i))))
-	  
-	  (if (> dataloc 0)
-	      (do ((i (- n dataloc) (+ i 1))
-		   (j 0 (+ j 1)))
-		  ((= j dataloc))
-		(float-vector-set! amp-incs j (* (float-vector-ref fft-window i) (float-vector-ref data i)))))
-	  
-	  (set! dataloc (+ dataloc hop))
-	  
-	  (mus-fft amp-incs new-freq-incs n 1)
-	  (rectangular->polar amp-incs new-freq-incs)
-	  
-	  (let ((scl (/ 1.0 hop))
-		(kscl (/ two-pi n)))
-	    (float-vector-subtract! amp-incs amps)
-	    (float-vector-scale! amp-incs scl)
-	    
-	    (let ((n2 (/ n 2)))
-	      (do ((i 0 (+ i 1))
-		   (ks 0.0 (+ ks kscl)))
-		  ((= i n2))
-		(let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) two-pi)))
-		  (set! (freq-incs i) (new-freq-incs i))
-		  (if (> diff pi) (set! diff (- diff (* 2 pi))))
-		  (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
-		  (set! (new-freq-incs i) (+ (* diff scl) ks)))))
-	    
-	    (float-vector-subtract! new-freq-incs freqs)
-	    (float-vector-scale! new-freq-incs scl))))
+	       (ks 0.0 (+ ks kscl)))
+	      ((= i n2))
+	    (let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) two-pi)))
+	      (set! (freq-incs i) (new-freq-incs i))
+	      (if (> diff pi) (set! diff (- diff (* 2 pi))))
+	      (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
+	      (set! (new-freq-incs i) (+ (* diff scl) ks)))))
+	
+	(float-vector-subtract! new-freq-incs freqs)
+	(float-vector-scale! new-freq-incs scl)))
     
     (set! outctr (+ outctr 1))
     

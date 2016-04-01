@@ -85,68 +85,68 @@
       
       (let ((pi2 (* 2.0 pi)))
 	
-	(if (>= (pvoc-output pv) (pvoc-interp pv))
-	    ;; get next block of amp/phase info
-	    (let ((N (pvoc-N pv))
-		  (D (pvoc-D pv))
-		  (amps (pvoc-ampinc pv))
-		  (freqs (pvoc-freqs pv))
-		  (filptr (pvoc-filptr pv)))
-	      
-	      (if (pvoc-analyze pv)
-		  ((pvoc-analyze pv) pv input)
-		  ;; if no analysis func:
-		  (begin
-		    (fill! freqs 0.0)
-		    (set-pvoc-output pv 0)
-		    (if (not (pvoc-in-data pv))
+	(when (>= (pvoc-output pv) (pvoc-interp pv))
+	  ;; get next block of amp/phase info
+	  (let ((N (pvoc-N pv))
+		(D (pvoc-D pv))
+		(amps (pvoc-ampinc pv))
+		(freqs (pvoc-freqs pv))
+		(filptr (pvoc-filptr pv)))
+	    
+	    (if (pvoc-analyze pv)
+		((pvoc-analyze pv) pv input)
+		;; if no analysis func:
+		(begin
+		  (fill! freqs 0.0)
+		  (set-pvoc-output pv 0)
+		  (if (not (pvoc-in-data pv))
+		      (begin
+			(set-pvoc-in-data pv (make-float-vector N))
+			(do ((i 0 (+ i 1)))
+			    ((= i N))
+			  (set! ((pvoc-in-data pv) i) (input))))
+		      (let ((indat (pvoc-in-data pv)))
+			;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
+			(float-vector-move! indat 0 D)
+			(do ((i (- N D) (+ i 1)))
+			    ((= i N))
+			  (set! (indat i) (input)))))
+		  (let ((buf (modulo filptr N)))
+		    (if (= buf 0)
 			(begin
-			  (set-pvoc-in-data pv (make-float-vector N))
-			  (do ((i 0 (+ i 1)))
-			      ((= i N))
-			    (set! ((pvoc-in-data pv) i) (input))))
-			(let ((indat (pvoc-in-data pv)))
-			  ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
-			  (float-vector-move! indat 0 D)
-			  (do ((i (- N D) (+ i 1)))
-			      ((= i N))
-			    (set! (indat i) (input)))))
-		    (let ((buf (modulo filptr N)))
-		      (if (= buf 0)
-			  (begin
-			    (fill! amps 0.0)
-			    (float-vector-add! amps (pvoc-in-data pv))
-			    (float-vector-multiply! amps (pvoc-window pv)))
-			  (do ((k 0 (+ k 1)))
-			      ((= k N))
-			    (set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
-			    (set! buf (+ 1 buf))
-			    (if (= buf N) (set! buf 0)))))
-		    (set-pvoc-filptr pv (+ filptr D))
-		    (mus-fft amps freqs N 1)
-		    (rectangular->polar amps freqs)))
-	      
-	      (if (pvoc-edit pv)
-		  ((pvoc-edit pv) pv)
-		  (let ((lp (pvoc-lastphase pv))
-			(pscl (/ 1.0 D))
-			(kscl (/ pi2 N))
-			(lim (floor (/ N 2))))
-		    ;; if no editing func:
-		    (do ((k 0 (+ k 1)))
-			((= k lim))
-		      (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
-			(float-vector-set! lp k (freqs k))
-			(if (> phasediff pi) (set! phasediff (- phasediff pi2))
-			    (if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
-			(set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
-	      
-	      (let ((scl (/ 1.0 (pvoc-interp pv))))
-		(float-vector-subtract! amps (pvoc-amps pv))
-		(float-vector-subtract! freqs (pvoc-phaseinc pv))
-		(float-vector-scale! amps scl)
-		(float-vector-scale! freqs scl)
-		)))
+			  (fill! amps 0.0)
+			  (float-vector-add! amps (pvoc-in-data pv))
+			  (float-vector-multiply! amps (pvoc-window pv)))
+			(do ((k 0 (+ k 1)))
+			    ((= k N))
+			  (set! (amps buf) (* ((pvoc-window pv) k) ((pvoc-in-data pv) k)))
+			  (set! buf (+ 1 buf))
+			  (if (= buf N) (set! buf 0)))))
+		  (set-pvoc-filptr pv (+ filptr D))
+		  (mus-fft amps freqs N 1)
+		  (rectangular->polar amps freqs)))
+	    
+	    (if (pvoc-edit pv)
+		((pvoc-edit pv) pv)
+		(let ((lp (pvoc-lastphase pv))
+		      (pscl (/ 1.0 D))
+		      (kscl (/ pi2 N))
+		      (lim (floor (/ N 2))))
+		  ;; if no editing func:
+		  (do ((k 0 (+ k 1)))
+		      ((= k lim))
+		    (let ((phasediff (remainder (- (freqs k) (lp k)) pi2)))
+		      (float-vector-set! lp k (freqs k))
+		      (if (> phasediff pi) (set! phasediff (- phasediff pi2))
+			  (if (< phasediff (- pi)) (set! phasediff (+ phasediff pi2))))
+		      (set! (freqs k) (+ (* pscl phasediff) (* k kscl)))))))
+	    
+	    (let ((scl (/ 1.0 (pvoc-interp pv))))
+	      (float-vector-subtract! amps (pvoc-amps pv))
+	      (float-vector-subtract! freqs (pvoc-phaseinc pv))
+	      (float-vector-scale! amps scl)
+	      (float-vector-scale! freqs scl)
+	      )))
 	
 	(set-pvoc-output pv (+ 1 (pvoc-output pv)))
 	
@@ -276,72 +276,70 @@
 	
 	(do ((i 0 (+ i 1)))
 	    ((>= i outlen))
-	  (if (>= output interp) ;; if all the samples have been output then do the next frame
-	      (let ((buffix (modulo filptr N)))
+	  (when (>= output interp) ;; if all the samples have been output then do the next frame
+	    (let ((buffix (modulo filptr N)))
 					; buffix is the index into the input buffer
 					; it wraps around circularly as time increases in the input
-		(set! output 0)       ; reset the output sample counter
-		;; save the old amplitudes and frequencies
-		(fill! lastamp 0.0)
-		(fill! lastfreq 0.0)
-		(float-vector-add! lastamp fdr)
-		(float-vector-add! lastfreq fdi)
-		(do ((k 0 (+ k 1)))
-		    ((= k N))
-		  ;; apply the window and then stuff into the input array
-		  (set! (fdr buffix) (* (window k) (in-data (- filptr in-data-beg))))
-		  (set! filptr (+ 1 filptr))
-		  ;; increment the buffer index with wrap around
-		  (set! buffix (+ 1 buffix))
-		  (if (>= buffix N) (set! buffix 0)))
-		;; rewind the file for the next hop
-		(set! filptr (- filptr (- N D)))
-		(if (> filptr (+ in-data-beg N))
-		    (begin
-		      (set! in-data-beg filptr)
-		      (set! in-data (channel->float-vector in-data-beg (* N 2) snd chn))))
-		;; no imaginary component input so zero out fdi
-		(fill! fdi 0.0)
-		;; compute the fft
-		(mus-fft fdr fdi N 1)
-		;; now convert into magnitude and interpolated frequency
-		(do ((k 0 (+ k 1)))
-		    ((= k N2))
-		  (let* ((a (fdr k))
-			 (b (fdi k))
-			 (mag (sqrt (+ (* a a) (* b b))))
-			 (phase 0)
-			 (phasediff 0))
-		    (set! (fdr k) mag)    ;; current amp stored in fdr
-		    ;; mag is always positive
-		    ;; if it is zero then the phase difference is zero
-		    (if (> mag 0)
-			(begin
-			  (set! phase (- (atan b a)))
-			  (set! phasediff (- phase (lastphase k)))
-			  (set! (lastphase k) phase)
-			  ;; frequency wrapping from Moore p. 254
-			  (if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
-			  (if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
-		    ;; current frequency stored in fdi
-		    ;; scale by the pitch transposition
-		    (set! (fdi k) 
-			  (* pitch (+ (/ (* phasediff sr) (* D sr))
-				      (* k fundamental)
-				      poffset)))
-		    ;; resynthesis gating
-		    (if (< (fdr k) syngate) (set! (fdr k) 0.0))
-		    ;; take (lastamp k) and count up to (fdr k)
-		    ;; interpolating by ampinc
-		    (set! (ampinc k) (/ (- (fdr k) (lastamp k)) interp))
-		    ;; take (lastfreq k) and count up to (fdi k)
-		    ;; interpolating by freqinc
-		    (set! (freqinc k) (/ (- (fdi k) (lastfreq k)) interp))))))
+	      (set! output 0)       ; reset the output sample counter
+	      ;; save the old amplitudes and frequencies
+	      (fill! lastamp 0.0)
+	      (fill! lastfreq 0.0)
+	      (float-vector-add! lastamp fdr)
+	      (float-vector-add! lastfreq fdi)
+	      (do ((k 0 (+ k 1)))
+		  ((= k N))
+		;; apply the window and then stuff into the input array
+		(set! (fdr buffix) (* (window k) (in-data (- filptr in-data-beg))))
+		(set! filptr (+ 1 filptr))
+		;; increment the buffer index with wrap around
+		(set! buffix (+ 1 buffix))
+		(if (>= buffix N) (set! buffix 0)))
+	      ;; rewind the file for the next hop
+	      (set! filptr (- filptr (- N D)))
+	      (if (> filptr (+ in-data-beg N))
+		  (begin
+		    (set! in-data-beg filptr)
+		    (set! in-data (channel->float-vector in-data-beg (* N 2) snd chn))))
+	      ;; no imaginary component input so zero out fdi
+	      (fill! fdi 0.0)
+	      ;; compute the fft
+	      (mus-fft fdr fdi N 1)
+	      ;; now convert into magnitude and interpolated frequency
+	      (do ((k 0 (+ k 1)))
+		  ((= k N2))
+		(let* ((a (fdr k))
+		       (b (fdi k))
+		       (mag (sqrt (+ (* a a) (* b b))))
+		       (phase 0)
+		       (phasediff 0))
+		  (set! (fdr k) mag)    ;; current amp stored in fdr
+		  ;; mag is always positive
+		  ;; if it is zero then the phase difference is zero
+		  (if (> mag 0)
+		      (begin
+			(set! phase (- (atan b a)))
+			(set! phasediff (- phase (lastphase k)))
+			(set! (lastphase k) phase)
+			;; frequency wrapping from Moore p. 254
+			(if (> phasediff pi) (do () ((<= phasediff pi)) (set! phasediff (- phasediff pi2))))
+			(if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
+		  ;; current frequency stored in fdi
+		  ;; scale by the pitch transposition
+		  (set! (fdi k) 
+			(* pitch (+ (/ (* phasediff sr) (* D sr))
+				    (* k fundamental)
+				    poffset)))
+		  ;; resynthesis gating
+		  (if (< (fdr k) syngate) (set! (fdr k) 0.0))
+		  ;; take (lastamp k) and count up to (fdr k)
+		  ;; interpolating by ampinc
+		  (set! (ampinc k) (/ (- (fdr k) (lastamp k)) interp))
+		  ;; take (lastfreq k) and count up to (fdi k)
+		  ;; interpolating by freqinc
+		  (set! (freqinc k) (/ (- (fdi k) (lastfreq k)) interp))))))
 	  ;; loop over the partials interpolate frequency and amplitude
 	  (float-vector-add! lastamp ampinc)
 	  (float-vector-add! lastfreq freqinc)
 	  (float-vector-set! out-data i (oscil-bank obank))
 	  (set! output (+ 1 output)))
 	(float-vector->channel out-data 0 (max len outlen))))))
-
-

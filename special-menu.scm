@@ -92,51 +92,51 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
     (begin
 
       (define (post-play-panned-dialog)
-        (if (not play-panned-dialog)
-            (let ((initial-play-panned-file 1)
-                  (sliders ()))
-
-              (set! play-panned-dialog
-                    (make-effect-dialog 
-		     play-panned-label
-		     
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context) (cp-play-panned))
-			 (lambda (w context info) (cp-play-panned)))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context)
-			   (help-dialog "Play panned"
-					"Move the slider to select the file to play with panning envelope."))
-			 (lambda (w context info)
-			   (help-dialog "Play panned"
-					"Move the slider to select the file to play with panning envelope.")))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w data)
-			   (set! play-panned-file initial-play-panned-file)
-			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) play-panned-file)
-			   )
-			 (lambda (w c i)
-			   (set! play-panned-file initial-play-panned-file)
-			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) play-panned-file))))))
-
-              (set! sliders
-                    (add-sliders 
-		     play-panned-dialog
-		     (list (list "soundfile number" 0 initial-play-panned-file 25
-				 
-				 (if (provided? 'snd-gtk)
-				     (lambda (w context)
-				       (set! play-panned-file ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				     (lambda (w context info)
-				       (set! play-panned-file ((*motif* '.value) info))))
-				 1))))))
-
+        (unless play-panned-dialog
+	  (let ((initial-play-panned-file 1)
+		(sliders ()))
+	    
+	    (set! play-panned-dialog
+		  (make-effect-dialog 
+		   play-panned-label
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context) (cp-play-panned))
+		       (lambda (w context info) (cp-play-panned)))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context)
+			 (help-dialog "Play panned"
+				      "Move the slider to select the file to play with panning envelope."))
+		       (lambda (w context info)
+			 (help-dialog "Play panned"
+				      "Move the slider to select the file to play with panning envelope.")))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w data)
+			 (set! play-panned-file initial-play-panned-file)
+			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) play-panned-file)
+			 )
+		       (lambda (w c i)
+			 (set! play-panned-file initial-play-panned-file)
+			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) play-panned-file))))))
+	    
+	    (set! sliders
+		  (add-sliders 
+		   play-panned-dialog
+		   (list (list "soundfile number" 0 initial-play-panned-file 25
+			       
+			       (if (provided? 'snd-gtk)
+				   (lambda (w context)
+				     (set! play-panned-file ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+				   (lambda (w context info)
+				     (set! play-panned-file ((*motif* '.value) info))))
+			       1))))))
+	
         (activate-dialog play-panned-dialog))
-
+      
       (set! play-panned-menu-label (add-to-menu special-menu "Play panned" post-play-panned-dialog)))
-
+    
     (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned)))
 
 (set! special-list (cons (lambda ()
@@ -166,53 +166,53 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
     (begin
 
       (define (post-save-as-mp3-dialog)
-        (if (not save-as-mp3-dialog)
-
-            (let ((initial-save-as-mp3-wav-file-number 0)
-                  (sliders ()))
-              (set! save-as-mp3-dialog
-                    (make-effect-dialog 
-		     save-as-mp3-label
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context) (cp-save-as-mp3))
-			 (lambda (w context info) (cp-save-as-mp3)))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context)
-			   (help-dialog "Save as MP3"
-					"Move the slider to select the file to save as an MP3. \
+        (unless save-as-mp3-dialog
+	  
+	  (let ((initial-save-as-mp3-wav-file-number 0)
+		(sliders ()))
+	    (set! save-as-mp3-dialog
+		  (make-effect-dialog 
+		   save-as-mp3-label
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context) (cp-save-as-mp3))
+		       (lambda (w context info) (cp-save-as-mp3)))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context)
+			 (help-dialog "Save as MP3"
+				      "Move the slider to select the file to save as an MP3. \
 The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
 Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
-			 (lambda (w context info)
-			   (help-dialog "Save as MP3"
-					"Move the slider to select the file to save as an MP3. \
+		       (lambda (w context info)
+			 (help-dialog "Save as MP3"
+				      "Move the slider to select the file to save as an MP3. \
 The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
 Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w data)
-			   (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-mp3-wav-file-number)
-			   )
-			 (lambda (w c i)
-			   (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-mp3-wav-file-number))))))
-
-              (set! sliders
-                    (add-sliders
-		     save-as-mp3-dialog
-		     (list (list "soundfile number" 0 initial-save-as-mp3-wav-file-number 250
-				 (if (provided? 'snd-gtk)
-				     (lambda (w data)
-				       (set! save-as-mp3-wav-file-number ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				     (lambda (w context info)
-				       (set! save-as-mp3-wav-file-number ((*motif* '.value) info))))
-				 1))))))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w data)
+			 (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
+			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-mp3-wav-file-number)
+			 )
+		       (lambda (w c i)
+			 (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
+			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-mp3-wav-file-number))))))
+	    
+	    (set! sliders
+		  (add-sliders
+		   save-as-mp3-dialog
+		   (list (list "soundfile number" 0 initial-save-as-mp3-wav-file-number 250
+			       (if (provided? 'snd-gtk)
+				   (lambda (w data)
+				     (set! save-as-mp3-wav-file-number ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+				   (lambda (w context info)
+				     (set! save-as-mp3-wav-file-number ((*motif* '.value) info))))
+			       1))))))
         (activate-dialog save-as-mp3-dialog))
-
+      
       (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" post-save-as-mp3-dialog)))
-
+    
     (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3)))
 
 (set! special-list (cons (lambda ()
@@ -240,54 +240,54 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
     (begin
 
       (define (post-save-as-ogg-dialog)
-        (if (not save-as-ogg-dialog)
-
-            (let ((initial-save-as-ogg-wav-file-number 0)
-                  (sliders ()))
-
-              (set! save-as-ogg-dialog
-                    (make-effect-dialog 
-		     save-as-ogg-label
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context) (cp-save-as-ogg))
-			 (lambda (w context info) (cp-save-as-ogg)))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w context)
-			   (help-dialog "Save as Ogg file"
-					"Move the slider to select the file to save as an Ogg file. \
+        (unless save-as-ogg-dialog
+	  
+	  (let ((initial-save-as-ogg-wav-file-number 0)
+		(sliders ()))
+	    
+	    (set! save-as-ogg-dialog
+		  (make-effect-dialog 
+		   save-as-ogg-label
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context) (cp-save-as-ogg))
+		       (lambda (w context info) (cp-save-as-ogg)))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w context)
+			 (help-dialog "Save as Ogg file"
+				      "Move the slider to select the file to save as an Ogg file. \
 The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
 Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
-			 (lambda (w context info)
-			   (help-dialog "Save as Ogg file"
-					"Move the slider to select the file to save as an Ogg file. \
+		       (lambda (w context info)
+			 (help-dialog "Save as Ogg file"
+				      "Move the slider to select the file to save as an Ogg file. \
 The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
 Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project.")))
-
-		     (if (provided? 'snd-gtk)
-			 (lambda (w data)
-			   (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-			   ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-ogg-wav-file-number)
-			   )
-			 (lambda (w c i)
-			   (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-			   ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-ogg-wav-file-number))))))
-
-              (set! sliders
-                    (add-sliders 
-		     save-as-ogg-dialog
-		     (list (list "soundfile number" 0 initial-save-as-ogg-wav-file-number 250
-				 (if (provided? 'snd-gtk)
-				     (lambda (w data)
-				       (set! save-as-ogg-wav-file-number ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				     (lambda (w context info)
-				       (set! save-as-ogg-wav-file-number ((*motif* '.value) info))))
-				 1))))))
+		   
+		   (if (provided? 'snd-gtk)
+		       (lambda (w data)
+			 (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
+			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-ogg-wav-file-number)
+			 )
+		       (lambda (w c i)
+			 (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
+			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-ogg-wav-file-number))))))
+	    
+	    (set! sliders
+		  (add-sliders 
+		   save-as-ogg-dialog
+		   (list (list "soundfile number" 0 initial-save-as-ogg-wav-file-number 250
+			       (if (provided? 'snd-gtk)
+				   (lambda (w data)
+				     (set! save-as-ogg-wav-file-number ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+				   (lambda (w context info)
+				     (set! save-as-ogg-wav-file-number ((*motif* '.value) info))))
+			       1))))))
         (activate-dialog save-as-ogg-dialog))
-
+      
       (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" post-save-as-ogg-dialog)))
-
+    
     (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg)))
 
 (set! special-list (cons (lambda ()

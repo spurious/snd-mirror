@@ -15,7 +15,7 @@
     (when (and directory (not (string-position directory *cload-cflags*)))
       (set! *cload-cflags* (string-append "-I" directory " " *cload-cflags*)))))
 
-(if (not (defined? '*libc*))
+(unless (defined? '*libc*)
     (define *libc*
       (with-let (unlet)
 	(set! *libraries* (cons (cons "libc.scm" (curlet)) *libraries*))

@@ -1967,74 +1967,74 @@ and replaces it with the spectrum given in coeffs"))
 	       (ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
 	       (fftlen (floor (expt 2 (ceiling (log (+ 1 (- rs ls)) 2))))))
-	  (if (> fftlen 0)
-	      (let ((data (channel->float-vector ls fftlen snd chn))
-		    (normalized (not (= (transform-normalization snd chn) dont-normalize)))
-		    (linear #t))                               ; can't currently show lisp graph in dB 
-		;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
-		(if (float-vector? data)
-		    (let ((fftdata (snd-spectrum data              ; returns fftlen / 2 data points
-						 (fft-window snd chn) fftlen linear 
-						 (fft-window-beta snd chn) #f normalized)))
-		      (if (float-vector? fftdata)
-			  (let* ((sr (srate snd))
-				 (mx (float-vector-peak fftdata))
-				 (data-len (length fftdata))
-				 
-				 ;; bark settings
-				 (bark-low (floor (bark 20.0)))
-				 (bark-high (ceiling (bark (* 0.5 sr))))
-				 (bark-frqscl (/ data-len (- bark-high bark-low)))
-				 (bark-data (make-float-vector data-len))
-				 
-				 ;; mel settings
-				 (mel-low (floor (mel 20.0)))
-				 (mel-high (ceiling (mel (* 0.5 sr))))
-				 (mel-frqscl (/ data-len (- mel-high mel-low)))
-				 (mel-data (make-float-vector data-len))
-				 
-				 ;; erb settings
-				 (erb-low (floor (erb 20.0)))
-				 (erb-high (ceiling (erb (* 0.5 sr))))
-				 (erb-frqscl (/ data-len (- erb-high erb-low)))
-				 (erb-data (make-float-vector data-len)))
-			    
-			    (set! bark-fft-size fftlen)
-			    
-			    (do ((i 0 (+ i 1)))
-				((= i data-len))
-			      (let* ((val (fftdata i))
-				     (frq (* sr (/ i fftlen)))
-				     (bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
-				     (mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))
-				     (erb-bin (round (* erb-frqscl (- (erb frq) erb-low)))))
-				(if (and (>= bark-bin 0)
-					 (< bark-bin data-len))
-				    (set! (bark-data bark-bin) (+ val (bark-data bark-bin))))
-				(if (and (>= mel-bin 0)
-					 (< mel-bin data-len))
-				    (set! (mel-data mel-bin) (+ val (mel-data mel-bin))))
-				(if (and (>= erb-bin 0)
-					 (< erb-bin data-len))
-				    (set! (erb-data erb-bin) (+ val (erb-data erb-bin))))))
-			    
-			    (if normalized
-				(let ((bmx (float-vector-peak bark-data))
-				      (mmx (float-vector-peak mel-data))
-				      (emx (float-vector-peak erb-data)))
-				  (if (> (abs (- mx bmx)) .01)
-				      (float-vector-scale! bark-data (/ mx bmx)))
-				  (if (> (abs (- mx mmx)) .01)
-				      (float-vector-scale! mel-data (/ mx mmx)))
-				  (if (> (abs (- mx emx)) .01)
-				      (float-vector-scale! erb-data (/ mx emx)))))
-			    
-			    (graph (list bark-data mel-data erb-data) 
-				   "ignored" 
-				   20.0 (* 0.5 sr) 
-				   0.0 (if normalized 1.0 (* data-len (y-zoom-slider snd chn)))
-				   snd chn 
-				   #f show-bare-x-axis)))))))
+	  (when (> fftlen 0)
+	    (let ((data (channel->float-vector ls fftlen snd chn))
+		  (normalized (not (= (transform-normalization snd chn) dont-normalize)))
+		  (linear #t))                               ; can't currently show lisp graph in dB 
+	      ;; snd-axis make_axes: WITH_LOG_Y_AXIS, but LINEAR currently in snd-chn.c 3250
+	      (when (float-vector? data)
+		(let ((fftdata (snd-spectrum data              ; returns fftlen / 2 data points
+					     (fft-window snd chn) fftlen linear 
+					     (fft-window-beta snd chn) #f normalized)))
+		  (when (float-vector? fftdata)
+		    (let* ((sr (srate snd))
+			   (mx (float-vector-peak fftdata))
+			   (data-len (length fftdata))
+			   
+			   ;; bark settings
+			   (bark-low (floor (bark 20.0)))
+			   (bark-high (ceiling (bark (* 0.5 sr))))
+			   (bark-frqscl (/ data-len (- bark-high bark-low)))
+			   (bark-data (make-float-vector data-len))
+			   
+			   ;; mel settings
+			   (mel-low (floor (mel 20.0)))
+			   (mel-high (ceiling (mel (* 0.5 sr))))
+			   (mel-frqscl (/ data-len (- mel-high mel-low)))
+			   (mel-data (make-float-vector data-len))
+			   
+			   ;; erb settings
+			   (erb-low (floor (erb 20.0)))
+			   (erb-high (ceiling (erb (* 0.5 sr))))
+			   (erb-frqscl (/ data-len (- erb-high erb-low)))
+			   (erb-data (make-float-vector data-len)))
+		      
+		      (set! bark-fft-size fftlen)
+		      
+		      (do ((i 0 (+ i 1)))
+			  ((= i data-len))
+			(let* ((val (fftdata i))
+			       (frq (* sr (/ i fftlen)))
+			       (bark-bin (round (* bark-frqscl (- (bark frq) bark-low))))
+			       (mel-bin (round (* mel-frqscl (- (mel frq) mel-low))))
+			       (erb-bin (round (* erb-frqscl (- (erb frq) erb-low)))))
+			  (if (and (>= bark-bin 0)
+				   (< bark-bin data-len))
+			      (set! (bark-data bark-bin) (+ val (bark-data bark-bin))))
+			  (if (and (>= mel-bin 0)
+				   (< mel-bin data-len))
+			      (set! (mel-data mel-bin) (+ val (mel-data mel-bin))))
+			  (if (and (>= erb-bin 0)
+				   (< erb-bin data-len))
+			      (set! (erb-data erb-bin) (+ val (erb-data erb-bin))))))
+		      
+		      (if normalized
+			  (let ((bmx (float-vector-peak bark-data))
+				(mmx (float-vector-peak mel-data))
+				(emx (float-vector-peak erb-data)))
+			    (if (> (abs (- mx bmx)) .01)
+				(float-vector-scale! bark-data (/ mx bmx)))
+			    (if (> (abs (- mx mmx)) .01)
+				(float-vector-scale! mel-data (/ mx mmx)))
+			    (if (> (abs (- mx emx)) .01)
+				(float-vector-scale! erb-data (/ mx emx)))))
+		      
+		      (graph (list bark-data mel-data erb-data) 
+			     "ignored" 
+			     20.0 (* 0.5 sr) 
+			     0.0 (if normalized 1.0 (* data-len (y-zoom-slider snd chn)))
+			     snd chn 
+			     #f show-bare-x-axis)))))))
 	  
 	  (list color1 color2 color3))) ; tell lisp graph display what colors to use
       
