@@ -110,19 +110,18 @@
   (define display-widget-tree 
     (let ((documentation "(display-widget-tree widget) displays the hierarchy of widgets beneath 'widget'"))
       (lambda (widget)
-	(define (display-widget w spaces)
+	(let display-widget ((w widget)
+			     (spaces ""))
 	  (let ((name (XtName w)))
 	    (if (or (not (string? name))
 		    (string=? name ""))
 		(set! name "<unnamed>"))
 	    (format () "~A~A~%" spaces name)
 	    (if (XtIsComposite w)
-		(for-each 
-		 (lambda (n)
-		   (display-widget n (string-append spaces "  ")))
-		 (cadr (XtGetValues w (list XmNchildren 0) 1))))))
-	(display-widget widget ""))))
-  
+		(for-each (lambda (n)
+			    (display-widget n (string-append spaces "  ")))
+			  (cadr (XtGetValues w (list XmNchildren 0) 1)))))))))
+
   (define set-main-color-of-widget 
     (let ((documentation "(set-main-color-of-widget w) sets the background color of widget 'w'"))
       (lambda (w)

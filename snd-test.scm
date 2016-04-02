@@ -28584,7 +28584,7 @@ EDITS: 2
     
     ;; --------------------------------------------------------------------------------
     ;; length as generic function:
-    ;;     string-length vector-length hash-table-size length 
+    ;;     string-length vector-length length 
     ;;     framples mus-length framples mix-length region-framples 
     
     (let ((snd (open-sound "oboe.snd"))

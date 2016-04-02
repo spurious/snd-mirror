@@ -168,7 +168,7 @@
 		  throw symbol-table load
 		  global-environment current-environment make-procedure-with-setter procedure-with-setter? make-rectangular
 		  
-		  copy fill! hash-table-set! vector-set! let-set! hash-table-size
+		  copy fill! hash-table-set! vector-set! let-set!
 		  
 		  mock-number mock-pair mock-string mock-char mock-vector 
 		  mock-symbol mock-port mock-hash-table m 

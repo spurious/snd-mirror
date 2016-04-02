@@ -43809,7 +43809,7 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
   #define H_length "(length obj) returns the length of obj, which can be a list, vector, string, or hash-table. \
 The length of a dotted list does not include the final cdr, and is returned as a negative number.  A circular \
 list has infinite length.  Length of anything else returns #f."
-  #define Q_length pcl_t
+  #define Q_length s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_real_symbol, sc->is_boolean_symbol), sc->T)
   return(s7_length(sc, car(args)));
 }
 
@@ -74038,8 +74038,6 @@ s7_scheme *s7_init(void)
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
 #if (!WITH_PURE_S7)
-  s7_eval_c_string(sc, "(define hash-table-size length)"); /* backwards compatibility */
-
   s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
   s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
 

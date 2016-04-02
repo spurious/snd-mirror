@@ -265,11 +265,11 @@
 	 (shell (car shell-app))
 	 (dpy (XtDisplay shell))
 	 (screen (DefaultScreenOfDisplay dpy))
-	 (cmap (DefaultColormap dpy (DefaultScreen dpy)))
 	 (black (BlackPixelOfScreen screen)))
 
     (define (get-color color)
-      (let ((col (XColor)))
+      (let ((col (XColor))
+	    (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 	(if (= (XAllocNamedColor dpy cmap color col col) 0)
 	    (error (format #f "can't allocate ~A" color))
 	    (.pixel col))))
@@ -446,7 +446,6 @@
 						     XmNbackground       light-blue)))
 	   (low-tempo 0.05)
 	   (high-tempo 0.5)
-	   (high-amp 1.0)
 	   (low-freq 0.1)
 	   (high-freq 4.0)
 	   (high-index 2.0)
@@ -459,7 +458,8 @@
 	(set-flabel tempo-label ctempo))
 
       (define (amp-callback w c i)
-	(set! camp (* (.value i) (/ high-amp 100.0)))
+	(let ((high-amp 1.0))
+	  (set! camp (* (.value i) (/ high-amp 100.0))))
 	(set-flabel amp-label camp))
 
       (define (freq-callback w c i)

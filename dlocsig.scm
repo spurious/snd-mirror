@@ -109,12 +109,12 @@
 (define x-norm 
   (let ((documentation "(x-norm e xmax) changes 'e' x axis values so that they run to 'xmax'"))
     (lambda (e xmax)
-      (define (x-norm-1 e scl new-e)
-	(if (null? e)
-	    (reverse! new-e)
-	    (x-norm-1 (cddr e) scl (cons (cadr e) (cons (* scl (car e)) new-e)))))
-      (x-norm-1 e (/ xmax (e (- (length e) 2))) ()))))
-
+      (let x-norm-1 ((e e)
+                     (scl (/ xmax (e (- (length e) 2))))
+                     (new-e ()))
+        (if (null? e)
+            (reverse! new-e)
+            (x-norm-1 (cddr e) scl (cons (cadr e) (cons (* scl (car e)) new-e))))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;
@@ -904,79 +904,74 @@
 (define parse-polar-coordinates 
   (let ((documentation "(parse-polar-coordinates points 3d) parses a polar path"))
     (lambda (points 3d)
-      (if (pair? (car points))
-	  ;; decode a list of lists of d:a:e:v into x:y:z:v components
-	  ;; 3d --> t [default]
-	  ;;   '((d0 a0 e0 v0) (d1 a1 e1 v1)...(dn an en vn))
-	  ;;   '((d0 a0 e0) (d1 a1 e1)...(dn an en))
-	  ;;   '((d0 a0) (d1 a1)...(dn an))  
-	  ;; 3d --> nil
-	  ;;   '((d0 a0 v0) (d1 a1 v1)...(dn an vn))
-	  ;;   '((d0 a0) (d1 a1)...(dn an))
-	  ;;      v: velocity
-	  ;;      d: distance
-	  ;;      a: azimut angle
-	  ;;      e: elevarion angle [missing elevations assumed 0.0]
-	  (let ((x ())
-		(y ())
-		(z ())
-		(v ()))
-	    (for-each
-	     (lambda (p)
-	       (let* ((d (car p))
-		      (a (cadr p))
-		      (e (if (and 3d (pair? (cddr p))) (caddr p) 0.0))
-		      (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
-		      (dxy (* d (real-part evec)))
-		      (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-		 (set! x (cons (* dxy (imag-part avec)) x))
-		 (set! y (cons (* dxy (real-part avec)) y))
-		 (set! z (cons (* d (imag-part evec)) z))
-		 (set! v (cons (if 3d (fourth p) (third p)) v))))
-	     points)
-	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
-	  
-	  ;; decode a list of d:a:e components
-	  (if 3d
-	      ;; decode a three dimensional list
-	      ;;   '(d0 a0 e0 d1 a1 e1 ... dn an en)
-	      ;;      d: distance
-	      ;;      a: azimut angle
-	      ;;      e: elevarion angle [missing elevations assumed 0.0]
-	      (let ((x ())
-		    (y ())
-		    (z ())
-		    (len (length points)))
-		(do ((i 0 (+ i 3)))
-		    ((>= i len))
-		  (let* ((d (points i))
-			 (a (points (+ i 1)))
-			 (e (points (+ i 2)))
-			 (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
-			 (dxy (* d (real-part evec)))
-			 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-		    (set! x (cons (* dxy (imag-part avec)) x))
-		    (set! y (cons (* dxy (real-part avec)) y))
-		    (set! z (cons (* d (imag-part evec)) z))))
-		(list (reverse x) (reverse y) (reverse z) (make-list (length x) #f)))
-	      
-	      ;; decode a two dimensional list
-	      ;;   '(d0 a0 d1 a1 ... dn an)
-	      ;;      d: distance
-	      ;;      a: azimut angle
-	      ;;      e: elevarion angle [missing elevations assumed 0.0]
-	      (let ((x ())
-		    (y ())
-		    (len (length points)))
-		(do ((i 0 (+ i 2)))
-		    ((>= i len))
-		  (let* ((d (points i))
-			 (a (points (+ i 1)))
-			 (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
-		    (set! x (cons (* d (imag-part avec)) x))
-		    (set! y (cons (* d (real-part avec)) y))))
-		(list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f))))))))
-
+      (let ((x ())
+	    (y ()))
+	(if (pair? (car points))
+	    ;; decode a list of lists of d:a:e:v into x:y:z:v components
+	    ;; 3d --> t [default]
+	    ;;   '((d0 a0 e0 v0) (d1 a1 e1 v1)...(dn an en vn))
+	    ;;   '((d0 a0 e0) (d1 a1 e1)...(dn an en))
+	    ;;   '((d0 a0) (d1 a1)...(dn an))  
+	    ;; 3d --> nil
+	    ;;   '((d0 a0 v0) (d1 a1 v1)...(dn an vn))
+	    ;;   '((d0 a0) (d1 a1)...(dn an))
+	    ;;      v: velocity
+	    ;;      d: distance
+	    ;;      a: azimut angle
+	    ;;      e: elevarion angle [missing elevations assumed 0.0]
+	    (let ((z ())
+		  (v ()))
+	      (for-each
+	       (lambda (p)
+		 (let* ((d (car p))
+			(a (cadr p))
+			(e (if (and 3d (pair? (cddr p))) (caddr p) 0.0))
+			(evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
+			(dxy (* d (real-part evec)))
+			(avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		   (set! x (cons (* dxy (imag-part avec)) x))
+		   (set! y (cons (* dxy (real-part avec)) y))
+		   (set! z (cons (* d (imag-part evec)) z))
+		   (set! v (cons (if 3d (fourth p) (third p)) v))))
+	       points)
+	      (list (reverse x) (reverse y) (reverse z) (reverse v)))
+	    
+	    ;; decode a list of d:a:e components
+	    (let ((len (length points)))
+	      (if 3d
+		  ;; decode a three dimensional list
+		  ;;   '(d0 a0 e0 d1 a1 e1 ... dn an en)
+		  ;;      d: distance
+		  ;;      a: azimut angle
+		  ;;      e: elevarion angle [missing elevations assumed 0.0]
+		  (do ((z ())
+		       (i 0 (+ i 3)))
+		      ((>= i len)
+		       (list (reverse x) (reverse y) (reverse z) (make-list (length x) #f)))
+		    (let* ((d (points i))
+			   (a (points (+ i 1)))
+			   (e (points (+ i 2)))
+			   (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
+			   (dxy (* d (real-part evec)))
+			   (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		      (set! x (cons (* dxy (imag-part avec)) x))
+		      (set! y (cons (* dxy (real-part avec)) y))
+		      (set! z (cons (* d (imag-part evec)) z))))
+		  
+		  ;; decode a two dimensional list
+		  ;;   '(d0 a0 d1 a1 ... dn an)
+		  ;;      d: distance
+		  ;;      a: azimut angle
+		  ;;      e: elevarion angle [missing elevations assumed 0.0]
+		  (do ((i 0 (+ i 2)))
+		      ((>= i len)
+		       (list (reverse x) (reverse y) (make-list (length x) 0.0) (make-list (length x) #f)))     
+		    (let* ((d (points i))
+			   (a (points (+ i 1)))
+			   (avec (cis (* (/ a dlocsig-one-turn) 2 pi))))
+		      (set! x (cons (* d (imag-part avec)) x))
+		      (set! y (cons (* d (real-part avec)) y)))))))))))
+		
 
 (define (xparse-path xpath)
   (let ((polar (bezier-polar xpath))
@@ -1253,9 +1248,9 @@
 			       (for-each
 				(lambda (ci)
 				  (set! (cs i) (if (pair? ci) 
-						   (if (not (= (length ci) 2))
-						       (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci)
-						       ci)
+						   (if (= (length ci) 2)
+						       ci
+						       (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci))
 						   (list ci ci)))
 				  (set! i (+ i 1)))
 				c)))
@@ -1346,20 +1341,20 @@
 	     ;; not enough points to fit a closed path
 	     (let ((xc ())
 		   (yc ())
-		   (zc ())
-		   (len (min (length (bezier-x path)) (length (bezier-y path)) (length (bezier-z path)))))
-	       (do ((i 0 (+ i 1)))
-		   ((>= i len))
-		 (let ((x1 ((bezier-x path) i))
-		       (x2 ((bezier-x path) (+ i 1)))
-		       (y1 ((bezier-y path) i))
-		       (y2 ((bezier-y path) (+ i 1)))
-		       (z1 ((bezier-z path) i))
-		       (z2 ((bezier-z path) (+ i 1))))
-		   (set! xc (cons (list x1 x1 x2 x2) xc))
-		   (set! yc (cons (list y1 y1 y2 y2) yc))
-		   (set! zc (cons (list z1 z1 z2 z2) zc))))
-	       (format *stderr* "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len)
+		   (zc ()))
+	       (let ((len (min (length (bezier-x path)) (length (bezier-y path)) (length (bezier-z path)))))
+		 (do ((i 0 (+ i 1)))
+		     ((>= i len))
+		   (let ((x1 ((bezier-x path) i))
+			 (x2 ((bezier-x path) (+ i 1)))
+			 (y1 ((bezier-y path) i))
+			 (y2 ((bezier-y path) (+ i 1)))
+			 (z1 ((bezier-z path) i))
+			 (z2 ((bezier-z path) (+ i 1))))
+		     (set! xc (cons (list x1 x1 x2 x2) xc))
+		     (set! yc (cons (list y1 y1 y2 y2) yc))
+		     (set! zc (cons (list z1 z1 z2 z2) zc))))
+		 (format *stderr* "[fit-path:closed-path] not enough points to do bezier fit (~A points)" len))
 	       (set! (bezier-bx path) (reverse xc))
 	       (set! (bezier-by path) (reverse yc))
 	       (set! (bezier-bz path) (reverse zc))))
@@ -1453,7 +1448,8 @@
 	       (xn (car val1))
 	       (yn (cadr val1))
 	       (zn (caddr val1)))
-	  (if (> (distance (- xn x) (- yn y) (- zn z)) err)
+	  (if (<= (distance (- xn x) (- yn y) (- zn z)) err)
+	      (list () () ())
 	      (let* ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
 		     (xi (car val2))
 		     (yi (cadr val2))
@@ -1464,8 +1460,7 @@
 		       (zj (caddr val3)))
 		  (list (append xi (list x) xj)
 			(append yi (list y) yj)
-			(append zi (list z) zj))))
-	      (list () () ())))))
+			(append zi (list z) zj))))))))
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
@@ -1527,64 +1522,63 @@
 			))))))
 	  
 	  ;; calculate times for each velocity segment
-	  (let ((len (- (length xrx) 1))
-		(ti 0)
-		(times (list 0))
-		(xseg (list (xrx 0)))
-		(yseg (list (xry 0)))
-		(zseg (list (xrz 0)))
-		(vseg (list (xrv 0)))
-		(vi (xrv 0)))
-	    (do ((i 0 (+ i 1)))
-		((= i len))
-	      (let ((x (xrx (+ i 1)))
-		    (y (xry (+ i 1)))
-		    (z (xrz (+ i 1)))
-		    (v (xrv (+ i 1))))
-		(set! xseg (append xseg (list x)))
-		(set! yseg (append yseg (list y)))
-		(set! zseg (append zseg (list z)))
-		(set! vseg (append vseg (list v)))
-		
-		(when v
-		  (let ((dseg (list))
-			(sum 0.0)
-			(len (- (length xseg) 1)))
-		    (do ((i 0 (+ i 1)))
-			((= i len))
-		      (let ((xsi (xseg i))
-			    (ysi (yseg i))
-			    (zsi (zseg i))
-			    (xsf (xseg (+ i 1)))
-			    (ysf (yseg (+ i 1)))
-			    (zsf (zseg (+ i 1))))
-			
-			(set! sum (+ sum (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
-			(set! dseg (cons sum dseg))))
-		    
-		    (let ((df (car dseg)))
-		      (set! dseg (reverse dseg))
-		      (let* ((tseg ())
-			     (vf v)
-			     (a (/ (* (- vf vi) (+ vf vi)) df 4)))
-			(if (= vi 0.0) (set! vi 1))
-			(for-each
-			 (lambda (d)
-			   (set! tseg (cons (+ ti (if (= vf vi)
-						      (/ d vi)
-						      (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
-					    tseg)))
-			 dseg)
-			(set! ti (car tseg))
-			(set! tseg (reverse tseg))
-			
-			(set! times (append times tseg))
-			(set! xseg (list x))
-			(set! yseg (list y))
-			(set! zseg (list z))
-			(set! vseg (list v))
-			(set! vi v)))))
-		))
+	  (let ((ti 0)
+		(times (list 0)))
+	    (let ((len (- (length xrx) 1))
+		  (xseg (list (xrx 0)))
+		  (yseg (list (xry 0)))
+		  (zseg (list (xrz 0)))
+		  (vseg (list (xrv 0)))
+		  (vi (xrv 0)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i len))
+		(let ((x (xrx (+ i 1)))
+		      (y (xry (+ i 1)))
+		      (z (xrz (+ i 1)))
+		      (v (xrv (+ i 1))))
+		  (set! xseg (append xseg (list x)))
+		  (set! yseg (append yseg (list y)))
+		  (set! zseg (append zseg (list z)))
+		  (set! vseg (append vseg (list v)))
+		  
+		  (when v
+		    (let ((dseg (list))
+			  (sum 0.0)
+			  (len (- (length xseg) 1)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i len))
+			(let ((xsi (xseg i))
+			      (ysi (yseg i))
+			      (zsi (zseg i))
+			      (xsf (xseg (+ i 1)))
+			      (ysf (yseg (+ i 1)))
+			      (zsf (zseg (+ i 1))))
+			  
+			  (set! sum (+ sum (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
+			  (set! dseg (cons sum dseg))))
+		      
+		      (let ((df (car dseg)))
+			(set! dseg (reverse dseg))
+			(let* ((tseg ())
+			       (vf v)
+			       (a (/ (* (- vf vi) (+ vf vi)) df 4)))
+			  (if (= vi 0.0) (set! vi 1))
+			  (for-each
+			   (lambda (d)
+			     (set! tseg (cons (+ ti (if (= vf vi)
+							(/ d vi)
+							(/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
+					      tseg)))
+			   dseg)
+			  (set! ti (car tseg))
+			  (set! tseg (reverse tseg))
+			  
+			  (set! times (append times tseg))
+			  (set! xseg (list x))
+			  (set! yseg (list y))
+			  (set! zseg (list z))
+			  (set! vseg (list v))
+			  (set! vi v))))))))
 	    
 	    (set! (path-rx path) xrx)
 	    (set! (path-ry path) xry)
@@ -1855,11 +1849,11 @@
 	    (error 'mus-error "ERROR: rotation center has to have all three coordinates~%"))
 	(if (and rotation-axis (not (= (length rotation-axis) 3)))
 	    (error 'mus-error "ERROR: rotation axis has to have all three coordinates~%"))
-	(let ((len (length xc))
-	      (xtr ())
+	(let ((xtr ())
 	      (ytr ())
 	      (ztr ()))
-	  (do ((i 0 (+ i 1)))
+	  (do ((len (length xc))
+	       (i 0 (+ i 1)))
 	      ((= i len))
 	    (let* ((x (xc i))
 		   (y (yc i))

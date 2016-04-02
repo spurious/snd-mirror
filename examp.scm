@@ -1599,13 +1599,12 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   (let ((documentation "(remove-clicks) tries to find and smooth-over clicks"))
     (lambda ()
       ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
-      (define (remove-click loc)
-	(let ((click (find-click loc)))
-	  (if click
-	      (begin
-		(smooth-sound (- click 2) 4)
-		(remove-click (+ click 2))))))
-      (remove-click 0))))
+      (let remove-click ((loc 0))
+        (let ((click (find-click loc)))
+          (if click
+              (begin
+                (smooth-sound (- click 2) 4)
+                (remove-click (+ click 2)))))))))
 
 
 ;;; -------- searching examples (zero+, next-peak)

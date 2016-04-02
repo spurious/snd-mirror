@@ -26,36 +26,35 @@
 
   (define (xe-add-envelope-point x y cur-env)
     (let ((new-env ()))
-      (define (search-point e)
-	(cond ((null? e)     (append new-env (list x y)))
-	      ((= (car e) x) (append new-env (list x y) (cddr e)))
-	      ((> (car e) x) (append new-env (list x y) e))
-	      (else
-	       (set! new-env (append new-env (list (car e) (cadr e))))
-	       (search-point (cddr e)))))
-      (search-point cur-env)))
+      (let search-point ((e cur-env))
+        (cond ((null? e) (append new-env (list x y)))
+              ((= (car e) x) (append new-env (list x y) (cddr e)))
+              ((> (car e) x) (append new-env (list x y) e))
+              (else
+               (set! new-env (append new-env (list (car e) (cadr e))))
+               (search-point (cddr e)))))))
 
   (define (xe-edit-envelope-point pos x y cur-env)
     (let ((new-env ()))
-      (define (search-point e npos)
-	(if (= npos pos)
-	    (append new-env (list x y) (cddr e))
-	    (begin
-	      (set! new-env (append new-env (list (car e) (cadr e))))
-	      (search-point (cddr e) (+ npos 2)))))
-      (search-point cur-env 0)))
+      (let search-point ((e cur-env)
+                         (npos 0))
+        (if (= npos pos)
+            (append new-env (list x y) (cddr e))
+            (begin
+              (set! new-env (append new-env (list (car e) (cadr e))))
+              (search-point (cddr e) (+ npos 2)))))))
 
   (define (xe-remove-envelope-point pos cur-env)
     (let ((new-env ()))
-      (define (search-point e npos)
-	(if (null? e)
-	    new-env
-	    (if (= pos npos)
-		(append new-env (cddr e))
-		(begin
-		  (set! new-env (append new-env (list (car e) (cadr e))))
-		  (search-point (cddr e) (+ npos 2))))))
-      (search-point cur-env 0)))
+      (let search-point ((e cur-env)
+                         (npos 0))
+        (if (null? e)
+            new-env
+            (if (= pos npos)
+                (append new-env (cddr e))
+                (begin
+                  (set! new-env (append new-env (list (car e) (cadr e))))
+                  (search-point (cddr e) (+ npos 2))))))))
 
   (define (xe-envelope-position x cur-env)
     (let search-point ((e cur-env)

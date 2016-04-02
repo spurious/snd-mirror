@@ -112,36 +112,33 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 (define max-envelope 
   (let ((documentation "(max-envelope env) -> max y value in env"))
     (lambda (env1)
-      (define (max-envelope-1 e mx)
-	(if (null? e)
-	    mx
-	    (max-envelope-1 (cddr e) (max mx (cadr e)))))
-      (max-envelope-1 (cddr env1) (cadr env1)))))
-
+      (let max-envelope-1 ((e (cddr env1))
+                           (mx (cadr env1)))
+        (if (null? e)
+            mx
+            (max-envelope-1 (cddr e) (max mx (cadr e))))))))
 
 ;;; -------- min-envelope
 
 (define min-envelope 
   (let ((documentation "(min-envelope env) -> min y value in env"))
     (lambda (env1)
-      (define (min-envelope-1 e mx)
-	(if (null? e)
-	    mx
-	    (min-envelope-1 (cddr e) (min mx (cadr e)))))
-      (min-envelope-1 (cddr env1) (cadr env1)))))
-
+      (let min-envelope-1 ((e (cddr env1))
+                           (mx (cadr env1)))
+        (if (null? e)
+            mx
+            (min-envelope-1 (cddr e) (min mx (cadr e))))))))
 
 ;;; -------- integrate-envelope
 
 (define integrate-envelope 
   (let ((documentation "(integrate-envelope env) -> area under env"))
     (lambda (env1)
-      (define (integrate-envelope-1 e sum)
-	(if (or (null? e) (null? (cddr e)))
-	    sum
-	    (integrate-envelope-1 (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) .5 (- (caddr e) (car e)))))))
-      (integrate-envelope-1 env1 0.0))))
-
+      (let integrate-envelope-1 ((e env1)
+                                 (sum 0.0000))
+        (if (or (null? e) (null? (cddr e)))
+            sum
+            (integrate-envelope-1 (cddr e) (+ sum (* (+ (cadr e) (cadddr e)) 0.5 (- (caddr e) (car e))))))))))
 
 ;;; -------- envelope-last-x
 
