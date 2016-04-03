@@ -18,7 +18,8 @@
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
-(define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (kinda slow, and this error almost never happens)
+(define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (slow, and this error almost never happens)
+(define *report-constant-expressions-in-do* #f)           ; kinda dumb
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -52,7 +53,7 @@
 
 (format *stderr* "loading lint.scm~%")
 (set! reader-cond #f)
-(define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid dumb unbound-variable errors
+(define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid (incorrect) unbound-variable errors
 
 (set! *#readers* (list (cons #\_ (lambda (str)
 				   (and (string=? str "__line__")
@@ -8174,19 +8175,20 @@
 	    ;;   that are not set or shadowed or changed (vector-set! etc)
 		 (constant-exprs ()))
 	      
-	    (define (all-ok? tree)
-	      (if (symbol? tree)
-		  (memq tree refs)
-		  (or (not (pair? tree))
-		      (eq? (car tree) 'quote)
-		      (and (hash-table-ref no-side-effect-functions (car tree)) ; super-careful...
-			   (or (not (hash-table-ref syntaces (car tree))) ; someday??
-			       (memq (car tree) '(if begin cond or and unless when)))
-			   (not (memq (car tree) makers))
-			   (list? (cdr tree))
-			   (every? all-ok? (cdr tree))))))
-	    
 	    (define (expr-walk tree)
+
+	      (define (all-ok? tree)
+		(if (symbol? tree)
+		    (memq tree refs)
+		    (or (not (pair? tree))
+			(eq? (car tree) 'quote)
+			(and (hash-table-ref no-side-effect-functions (car tree)) ; super-careful...
+			     (or (not (hash-table-ref syntaces (car tree))) ; someday??
+				 (memq (car tree) '(if begin cond or and unless when)))
+			     (not (memq (car tree) makers))
+			     (list? (cdr tree))
+			     (every? all-ok? (cdr tree))))))
+	      
 	      (when (pair? tree)
 		(if (all-ok? tree)
 		    (if (not (or (eq? (car tree) 'quote)
@@ -10218,17 +10220,18 @@
 			   (report-usage caller head vars inner-env)
 			   
 			   ;; look for constant expressions in the do body
-			   (let ((constant-exprs (find-constant-exprs 'do (map var-name vars) (cdddr form))))
-			     (if (pair? constant-exprs)
-				 (if (null? (cdr constant-exprs))
-				     (lint-format "in ~A, ~A appears to be constant" caller
-						  (truncated-list->string form)
-						  (car constant-exprs))
-				     (lint-format "in ~A, the following expressions appear to be constant:~%~NC~A" caller
-						  (truncated-list->string form)
-						  (+ lint-left-margin 4) #\space
-						  (format #f "~{~A~^, ~}" constant-exprs)))))
-
+			   (when *report-constant-expressions-in-do*
+			     (let ((constant-exprs (find-constant-exprs 'do (map var-name vars) (cdddr form))))
+			       (if (pair? constant-exprs)
+				   (if (null? (cdr constant-exprs))
+				       (lint-format "in ~A, ~A appears to be constant" caller
+						    (truncated-list->string form)
+						    (car constant-exprs))
+				       (lint-format "in ~A, the following expressions appear to be constant:~%~NC~A" caller
+						    (truncated-list->string form)
+						    (+ lint-left-margin 4) #\space
+						    (format #f "~{~A~^, ~}" constant-exprs))))))
+			   
 			   ;; check for do-loop as copy/fill! stand-in and other similar cases
 			   (when (and (pair? vars)
 				      (null? (cdr vars)))
@@ -10958,13 +10961,13 @@
 					  (pair? (cdr lform))
 					  (proper-list? (cadr lform)))
 				     (let ((call (find-call sym body)))
-				       (when (pair? call)
-					 (if (= (tree-count1 sym body 0) 1)
-					     (let ((new-call `(let ,sym
-								,(map list (cadr lform) (cdr call))
-								,@(cddr lform))))
-					       (lint-format "perhaps ~A" caller
-							    (lists->string form (tree-subst new-call call body)))))))))))
+				       (when (and (pair? call)
+						  (= (tree-count1 sym body 0) 1))
+					 (let ((new-call `(let ,sym
+							    ,(map list (cadr lform) (cdr call))
+							    ,@(cddr lform))))
+					   (lint-format "perhaps ~A" caller
+							(lists->string form (tree-subst new-call call body))))))))))
 			 ;; lambda here is handled under define
 
 			 (let ((new-env (append vars env)))
@@ -11210,7 +11213,8 @@
 		   env)
 		  
 		  ((let-syntax letrec-syntax)
-		   (lint-walk-body caller head (cddr form) env))
+		   (lint-walk-body caller head (cddr form) env)
+		   env)
 
 		  ((case-lambda)
 		   (when (pair? (cdr form))
@@ -11869,9 +11873,9 @@
 		  (do ((cline (read-line f #t) (read-line f #t))
 		       (rline 1 (+ rline 1)))
 		      ((string-position "\");" cline)
-		       (set! code (string-append code cline)))
-		    (set! code (string-append code cline))
-		    (set! line-num (+ line-num rline))))
+		       (set! code (string-append code cline))
+		       (set! line-num (+ line-num rline)))
+		    (set! code (string-append code cline))))
 	      
 	      (let ((len (string-position "\");" code)))
 		(set! code (substring code 0 len))
@@ -11911,14 +11915,25 @@
 ;;; TODO:
 ;;; perhaps report an overall order to definitions in a block that maximizes locality
 ;;; find the rest of the macro cases and (s7)test out-vars somehow ((*lint* 'out-vars)...)
-;;; second pass after report-usage: check multi-type var, collect blocks, check seq bounds as passed to func?
+;;; report-usage: check multi-type var (for what?)
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
-;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns]
+;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns, redundant begin]
 ;;;   could we search the form for the lowest positive line num?
 ;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
-;;; pp handling of let(*)-values is pessimal
+;;; pp handling of let(*)-values is pessimal, and new not is messing up stacked lists?
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; trunc lists not enough output in some cases; if first 80 chars=, add until a diff?
 ;;; the check pair business needs to take (or (not (pair...))...) into account
+;;; (let ((a b)) ...no possible set/shadow of b (or a)...) -- surely this rename/let is useless?
+;;;    (s1 s2) in vars, no s2 in body, no side-effects/macros in body, s1 itself never set
+;;; in current let-reduction, take advantage of do or other existing let(*)
+;;; repeated rewrites are annoying -- define->named let is one, cons+list another
+;;; var init (), never set to #f, (if var...) -> (if (pair? var)...)
+;;;   or any var never #f used as conditional
+;;; var num, always used as divisor -> invert and multiply
+;;; eqf case includes functions/syntaces/keywords -- (eq? x abs) -- these would work in case
+;;;   (procedure? begin) -> #f -- how to recognize short of memq syntaces (and there it's symbols)
+;;; vector+vector -> suggest 2d vectors? and rewrite the code -- make sure (A x y) is ((A x) y)
+;;; do we warn that (eq? #()...) (eq? ""...) can't work? (also eqv?)
 
 ;;; 106

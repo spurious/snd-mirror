@@ -64,13 +64,13 @@
 	  (search-point (cddr e) (+ pos 2)))))
 
   (define (xe-on-dot? x y cur-env pos)
-    (define xe-mouse-radius .03)
-    (and (pair? cur-env)
-	 (pair? (cdr cur-env))
-	 (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
-		  (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
-		  pos)
-	     (xe-on-dot? x y (cddr cur-env) (+ pos 2)))))
+    (let ((xe-mouse-radius .03))
+      (and (pair? cur-env)
+	   (pair? (cdr cur-env))
+	   (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
+		    (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
+		    pos)
+	       (xe-on-dot? x y (cddr cur-env) (+ pos 2))))))
 
   (define (xe-ungrfy drawer y)
     (let* ((bounds (drawer 3))
@@ -118,8 +118,7 @@
       (if pos
 	  (set! xe-mouse-pos pos)
 	  (begin
-	    (set! (xe-envelope drawer) 
-		  (xe-add-envelope-point x y cur-env))
+	    (set! (xe-envelope drawer) (xe-add-envelope-point x y cur-env))
 	    (set! xe-mouse-pos (xe-envelope-position x (xe-envelope drawer)))))))
 
   (define (xe-mouse-drag drawer xx yy)
@@ -132,8 +131,7 @@
 		   (if (>= xe-mouse-pos (- (length cur-env) 2))
 		       (cur-env (- (length cur-env) 2))
 		       (max (cur-env (- xe-mouse-pos 2))
-			    (min x
-				 (cur-env (+ xe-mouse-pos 2))))))))
+			    (min x (cur-env (+ xe-mouse-pos 2))))))))
       (set! (xe-envelope drawer) 
 	    (xe-edit-envelope-point xe-mouse-pos lx y cur-env))
       (xe-redraw drawer)))

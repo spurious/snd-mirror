@@ -556,8 +556,7 @@
 	  (argstr (cadddr data))
 	  ;(lambda-type (cdr (assoc name names)))
 	  (arg-start 0)
-	  (line-len 0)
-	  (line-max 120))
+	  (line-len 0))
 
      (define (hey-start)
        ;; start of checked line
@@ -577,7 +576,7 @@
        ;; cr ok after arg
        (set! line-len (+ line-len (length arg)))
        (heyc arg)
-       (if (> line-len line-max)
+       (if (> line-len 120)
 	   (begin
 	     (hey "~%")
 	     (do ((i 0 (+ i 1)))

@@ -73359,6 +73359,7 @@ s7_scheme *s7_init(void)
   sc->is_proper_list_symbol =        defun("proper-list?",      is_proper_list,         1, 0, false);
   sc->is_sequence_symbol =           defun("sequence?",	        is_sequence,		1, 0, false);
   sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false);
+  /* do we need 'syntax? */
 
   sc->is_integer_or_real_at_end_symbol = s7_define_function(sc, "integer:real?", g_is_integer_or_real_at_end, 1, 0, false, "internal signature helper");
   sc->is_integer_or_any_at_end_symbol =  s7_define_function(sc, "integer:any?",  g_is_integer_or_any_at_end,  1, 0, false, "internal signature helper");

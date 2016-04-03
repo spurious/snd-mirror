@@ -492,13 +492,6 @@
 
 (let ((names (make-hash-table)))
   
-  (define (where-is func)
-    (let ((addr (with-let (funclet func) __func__)))
-      ;; this misses scheme-side pws because their environment is (probably) the global env
-      (and (pair? addr)
-	   (pair? (cdr addr))
-	   (cadr addr))))
-  
   (define (apropos-1 e)
     (for-each
      (lambda (binding)
@@ -506,7 +499,11 @@
 	   (let ((symbol (car binding))
 		 (value (cdr binding)))
 	     (if (procedure? value)
-		 (let ((file (where-is value)))
+		 (let ((file (let ((addr (with-let (funclet value) __func__)))
+			       ;; this misses scheme-side pws because their environment is (probably) the global env
+			       (and (pair? addr)
+				    (pair? (cdr addr))
+				    (cadr addr)))))
 		   (if (and file
 			    (not (member file '("~/.snd_s7" "/home/bil/.snd_s7" "t.scm" "/home/bil/cl/t.scm" "make-index.scm" "/home/bil/cl/make-index.scm"))))
 		       (let ((pos (char-position #\/ file)))
@@ -1452,20 +1449,19 @@
 					     
 					     (set! commands (remove-one closer commands))
 					     (if (not warned)
-						 (begin
-						   (if (and (eq? closer 'table)
-							    (not (memq 'table commands)))
-						       (begin
-							 (if (memq 'tr commands)
-							     (begin
-							       (set! warned #t)
-							       (set! commands (remove-all 'tr commands))
-							       (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
-							 (if (memq 'td commands)
-							     (begin
-							       (set! warned #t)
-							       (set! commands (remove-all 'td commands))
-							       (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands)))))))))
+						 (if (and (eq? closer 'table)
+							  (not (memq 'table commands)))
+						     (begin
+						       (if (memq 'tr commands)
+							   (begin
+							     (set! warned #t)
+							     (set! commands (remove-all 'tr commands))
+							     (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+						       (if (memq 'td commands)
+							   (begin
+							     (set! warned #t)
+							     (set! commands (remove-all 'td commands))
+							     (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
 				      (set! closing #f))
 				    
 				    ;; not closing

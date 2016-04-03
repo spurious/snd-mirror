@@ -299,7 +299,7 @@
 			(else (set! data (cons (list type given-name) data)))))
 		    (if reftype (set! type reftype))
 		    
-		    (when (not (member type all-types))
+		    (unless (member type all-types)
 		      (set! all-types (cons type all-types))
 		      (case extra
 			((g-2.14)     (set! types-2.14 (cons type types-2.14)))
@@ -1734,7 +1734,7 @@
 		     (gctype (callback-gc func))
 		     (fname (callback-name func))
 		     (void? (string=? type "void")))
-		(when (not (member name funcs-done))
+		(unless (member name funcs-done)
 		  (set! funcs-done (cons name funcs-done))
 		  (if (callback-version func)
 		      (hey (string-append "#if GTK_CHECK_VERSION(" (substring (callback-version func) 0 1) ", " (substring (callback-version func) 2) ", 0)~%")))
@@ -1860,8 +1860,7 @@
 	   (spec (and (> (length data) 4) (data 4)))
 	   (spec-data (and (> (length data) 5) (data 5))) ; also callback-version
 	   (arg-start 0)
-	   (line-len 0)
-	   (line-max 120))
+	   (line-len 0))
       
       (define (hey-start)
 	;; start of checked line
@@ -1881,7 +1880,7 @@
 	;; cr ok after arg
 	(set! line-len (+ line-len (length arg)))
 	(heyc arg)
-	(if (> line-len line-max)
+	(if (> line-len 120) ; line-max originally
 	    (begin
 	      (hey "~%")
 	      (do ((i 0 (+ i 1)))
@@ -2124,6 +2123,7 @@
 		    (hey "    return(C_to_Xen_~A(result));~%" (no-stars return-type)))
 		(hey "  }~%")
 		))
+
 	    (begin
 
 	      (if (eq? lambda-type 'lambda)

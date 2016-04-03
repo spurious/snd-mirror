@@ -271,14 +271,12 @@
 			 (let ((apan (sqrt loc-val))
 			       (bpan (sqrt (- 1 loc-val))))
 			   (set! outa-val (* amp-val apan sampa))
-			   (if stereo-i	 
-			       (set! outb-val (* amp-val bpan sampb))    ;; stereo in and out
-			       (set! outb-val (* amp-val bpan sampa))))	 ;; mono in, stereo out
+			   (set! outb-val (* amp-val bpan (if stereo-i sampb sampa))))
 			 ;; stereo in, mono out
-			 (if stereo-i
-			     (set! outa-val (* amp-val (+ sampa sampb) .75))
-			     ;; mono in, mono out
-			     (set! outa-val (* amp-val sampa))))
+			 (set! outa-val (if stereo-i
+					    (* amp-val (+ sampa sampb) .75)
+					    ;; mono in, mono out
+					    (* amp-val sampa))))
 		     ;; output
 		     (outa i outa-val)
 		     (if stereo-o

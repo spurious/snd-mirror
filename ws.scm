@@ -48,9 +48,9 @@
 		   (for-each
 		    (lambda (a)
 		      (if (not (keyword? a))
-			  (if (symbol? a)
-			      (set! arg-names (cons a arg-names))
-			      (set! arg-names (cons (car a) arg-names)))))
+			  (set! arg-names (if (symbol? a)
+					      (cons a arg-names)
+					      (cons (car a) arg-names)))))
 		    targs)
 		   (reverse arg-names))))
     (if (string? (car body))
@@ -122,12 +122,13 @@
        (set! (locsig-type) *clm-locsig-type*)
        (set! *mus-array-print-length* *clm-array-print-length*)
        (set! *auto-update-interval* 0.0) 
-       (if (eq? clipped 'unset)
-	   (if (and (or scaled-by scaled-to)
-		    (member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
-	       (set! (mus-clipping) #f)
-	       (set! (mus-clipping) *clm-clipped*))
-	   (set! (mus-clipping) clipped))
+       (set! (mus-clipping) 
+	     (if (eq? clipped 'unset)
+		 (if (and (or scaled-by scaled-to)
+			  (member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
+		     #f
+		     *clm-clipped*)
+		 clipped))
        (set! *clm-srate* srate))
 
      (lambda ()
@@ -169,46 +170,46 @@
 		 (set! *reverb* reverb-1))))
 
        (let ((start (if statistics (get-internal-real-time)))
-	     (flush-reverb #f)
 	     (cycles 0)
 	     (revmax #f))
-	 (catch 'mus-error
-
-		(lambda ()
-		  (catch 'with-sound-interrupt
-			 thunk
-			 (lambda args 
-			   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
-			   (set! flush-reverb #t)
-			   args)))
-
-		(lambda args
-		  ;; hit mus-error, for example:
-		  ;;   (with-sound () (fm-violin 0 1 440 .1 :amp-env '(0 0 1 1 1 2 3 0)))
-
-		  ;; user might have listener closed, or no listener so...
-		  (format () ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
-
-		  ;; now try to get something to listener, since there may be no stdout
-		  (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
-		  (set! flush-reverb #t)))
-		  
-	 (if (and reverb 
-		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
-	     (begin
-	       (if reverb-to-file
-		   (mus-close *reverb*))
-	       (if (and statistics 
-			(or reverb-to-file
-			    (vector? reverb-1)))
-		   (set! revmax (maxamp reverb-1)))
-	       (if reverb-to-file
-		   (set! *reverb* (make-file->sample reverb-1)))
-	       (apply reverb reverb-data)                                   ; here is the reverb call(!)
-	       (if reverb-to-file
-		   (mus-close *reverb*))
-	       (if (and reverb-to-file *clm-delete-reverb*)
-		   (delete-file reverb-1))))
+	 (let ((flush-reverb #f))
+	   (catch 'mus-error
+	     
+	     (lambda ()
+	       (catch 'with-sound-interrupt
+		 thunk
+		 (lambda args 
+		   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
+		   (set! flush-reverb #t)
+		   args)))
+	     
+	     (lambda args
+	       ;; hit mus-error, for example:
+	       ;;   (with-sound () (fm-violin 0 1 440 .1 :amp-env '(0 0 1 1 1 2 3 0)))
+	       
+	       ;; user might have listener closed, or no listener so...
+	       (format () ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args))
+	       
+	       ;; now try to get something to listener, since there may be no stdout
+	       (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+	       (set! flush-reverb #t)))
+	   
+	   (if (and reverb 
+		    (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
+	       (begin
+		 (if reverb-to-file
+		     (mus-close *reverb*))
+		 (if (and statistics 
+			  (or reverb-to-file
+			      (vector? reverb-1)))
+		     (set! revmax (maxamp reverb-1)))
+		 (if reverb-to-file
+		     (set! *reverb* (make-file->sample reverb-1)))
+		 (apply reverb reverb-data)                                   ; here is the reverb call(!)
+		 (if reverb-to-file
+		     (mus-close *reverb*))
+		 (if (and reverb-to-file *clm-delete-reverb*)
+		     (delete-file reverb-1)))))
 
 	 (if output-to-file
 	     (mus-close *output*))
@@ -221,12 +222,12 @@
 	   (if (and to-snd output-to-file)
 	       (let ((cur (find-sound output-1)))
 		 (set! cur-sync (and cur (sync cur)))
-		 (if cur 
-		     (set! snd-output (update-sound cur))
-		     (if (= header-type mus-raw)
-			 (set! snd-output (open-raw-sound output-1 channels (floor srate) sample-type))
-			 ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
-			 (set! snd-output (open-sound output-1))))
+		 (set! snd-output (if cur 
+				      (update-sound cur)
+				      (if (= header-type mus-raw)
+					  (open-raw-sound output-1 channels (floor srate) sample-type)
+					  ;; open-sound here would either ask for raw settings or use possibly irrelevant defaults
+					  (open-sound output-1))))
 		 (set! (sync snd-output) #t)))
 
 	   (if statistics
@@ -487,12 +488,12 @@
 	     (let ((info (with-mixed-sound-mix-info id snd)))
 	       (if info
 		   (let ((call (cadddr info)))
-		     (if (not (= (cadr info) (mix-position id)))
+		     (if (= (cadr info) (mix-position id))
+			 (format oput "  ~A~%" call)
 			 (format oput "  (~A ~,3F~{ ~A~})~%"
 				 (car call) 
 				 (/ (mix-position id) (* 1.0 (srate snd)))
-				 (cddr call))
-			 (format oput "  ~A~%" call)))
+				 (cddr call))))
 		   (status-report "can't find note associated with mix ~A" id))))
 	   cur-mixes)
 	  (format oput ")~%")
@@ -635,31 +636,33 @@
 	  start)))
 
 (define (finish-with-sound wsd)
-  (if (eq? (car wsd) 'with-sound-data)
+  (if (not (eq? (car wsd) 'with-sound-data))
+      (error 'wrong-type-arg (list "finish-with-sound" wsd))
       (let ((cycles 0)
 	    (output (wsd 1))
-	    (reverb (wsd 2))
-	    (revfile (wsd 3))
 	    (old-srate (wsd 4))
 	    (statistics (wsd 5))
 	    (to-snd (wsd 6))
 	    (scaled-to (wsd 7))
 	    (scaled-by (wsd 8))
 	    (play (wsd 9))
-	    (reverb-data (wsd 10))
 	    (start (wsd 11)))
 
-	(if reverb
-	    (begin
-	      (mus-close *reverb*)
-	      (if (string? revfile)
-		  (set! *reverb* (make-file->sample revfile))
-		  (set! *reverb* revfile))
-	      (apply reverb reverb-data)
-	      (mus-close *reverb*)))
+	(let ((reverb (wsd 2))
+	      (revfile (wsd 3))
+	      (reverb-data (wsd 10)))
+	  (if reverb
+	      (begin
+		(mus-close *reverb*)
+		(set! *reverb* (if (string? revfile)
+				   (make-file->sample revfile)
+				   revfile))
+		(apply reverb reverb-data)
+		(mus-close *reverb*))))
+
 	(if (mus-output? *output*)
 	    (mus-close *output*))
-
+	
 	(if statistics
 	    (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	(if (and to-snd (string? output))
@@ -681,9 +684,7 @@
 	      (if play (*default-player* snd-output))
 	      (update-time-graph snd-output)))
 	(set! *clm-srate* old-srate)
-	output)
-      (error 'wrong-type-arg
-	     (list "finish-with-sound" wsd))))
+	output)))
 
 
 (define wsdat-play ; for cm
@@ -733,7 +734,8 @@
 	(documentation "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."))
     (lambda* (pitch pythagorean)          ; pitch can be pitch name or actual frequency
-      (if (symbol? pitch)
+      (if (not (symbol? pitch))
+	  pitch
 	  (let* ((name (string-downcase (symbol->string pitch)))
 		 (base-char (name 0))
 		 (sign-char (and (> (length name) 1)
@@ -754,8 +756,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	    (set! last-octave octave)
 	    (if pythagorean
 		(* main-pitch (expt 2 octave) (ratios base-pitch))
-		(* main-pitch (expt 2.0 (/ et-pitch 12)))))
-	  pitch))))
+		(* main-pitch (expt 2.0 (/ et-pitch 12)))))))))
 
 
 ;;; -------- ->sample --------
@@ -910,9 +911,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
   (let ((old-output *output*))
     (dynamic-wind
 	(lambda ()
-	  (if (string? output)
-	      (set! *output* (make-sample->file output channels sample-type header-type "with-simple-sound output"))
-	      (set! *output* output)))
+	  (set! *output* (if (string? output)
+			     (make-sample->file output channels sample-type header-type "with-simple-sound output")
+			     output)))
 	(lambda ()
 	  (thunk)
 	  output)

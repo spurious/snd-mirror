@@ -6074,7 +6074,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 			  (set! top-n n))) 
 
 		    (if (char=? last-char #\=)      ; #n=
-			(and (char=? (peek-char) #\()
+			(and (eqv? (peek-char) #\() ; eqv? since peek-char can return #&lt;eof&gt;
 			    (let ((cur-val (assoc n known-vals)))
 			      ;; associate the number and the list it points to
 			      ;;    if cur-val, perhaps complain? (#n# redefined)

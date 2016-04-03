@@ -173,7 +173,7 @@
 	      (set! bb1 (- (+ (* 0.2 zslope) (* 0.3 fb)) (* zslope vb) (* zslope vh)))
 	      (set! cc1 (- (+ (* 0.06 fb) (* zslope vh vb)) (* 0.2 zslope vh) (* 0.3 vb fb)))
 	      (set! delta1 (- (* bb1 bb1) (* 4 aa cc1)))
-	      (set! bb2 (- (- (* -0.2 zslope) (* 0.3 fb)) (* zslope vb) (* zslope vh)))
+	      (set! bb2 (- (* -0.2 zslope) (* 0.3 fb) (* zslope vb) (* zslope vh)))
 	      (set! cc2 (+ (* 0.06 fb) 
 			   (* zslope vh vb)
 			   (* 0.2 zslope vh) 

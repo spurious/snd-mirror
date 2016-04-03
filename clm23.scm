@@ -954,7 +954,7 @@
 	(dir 1))
     (do ((i 0 (+ i 1)))
 	((= i 100))
-      (set! (arr i) (* amp (+ -.5 (* i .01)))))
+      (set! (arr i) (* amp (- (* i .01) 0.5))))
     (array->file "testx.data" arr 100 22050 1)
     (fill! arr 0.0)
     (file->array "testx.data" 0 0 100 arr)

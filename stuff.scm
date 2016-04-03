@@ -152,14 +152,12 @@
   (let ((documentation " (linearize lst) turns a circular list into normal list:\n\
     (linearize (circular-list 1 2)) -> '(1 2)"))
     (lambda (lst) 
-      (define (lin-1 lst result sofar)
-	(if (or (not (pair? lst))
-		(memq lst sofar))
-	    (reverse! result)
-	    (lin-1 (cdr lst) 
-		   (cons (car lst) result) 
-		   (cons lst sofar))))
-      (lin-1 lst () ()))))
+      (let lin-1 ((lst lst)
+                  (result ())
+                  (sofar ()))
+        (if (or (not (pair? lst)) (memq lst sofar))
+            (reverse! result)
+            (lin-1 (cdr lst) (cons (car lst) result) (cons lst sofar)))))))
 
 (define cyclic? 
   (let ((documentation "(cyclic obj) returns #t if the sequence obj contains any cycles"))
@@ -1014,14 +1012,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 (define for-each-subset 
   (let ((documentation "(for-each-subset func args) forms each subset of args, then applies func to the subsets that fit its arity"))
     (lambda (func args)
-      (define (subset source dest len)
-	(if (null? source)
-	    (if (aritable? func len)             ; does this subset fit?
-		(apply func dest))
-	    (begin
-	      (subset (cdr source) (cons (car source) dest) (+ len 1))
-	      (subset (cdr source) dest len))))
-      (subset args () 0))))
+      (let subset ((source args)
+                   (dest ())
+                   (len 0))
+        (if (null? source)
+            (if (aritable? func len)
+                (apply func dest))
+            (begin
+              (subset (cdr source) (cons (car source) dest) (+ len 1))
+              (subset (cdr source) dest len)))))))
 
 (define for-each-permutation 
   (let ((documentation "(for-each-permutation func vals) applies func to every permutation of vals:\n\

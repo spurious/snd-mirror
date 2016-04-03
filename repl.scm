@@ -265,12 +265,13 @@
 	    
 	    
 	    ;; -------- match parens --------
-	    (define (char-constant? pos)
-	      (and (> pos 2)
-		   (char=? (cur-line (- pos 1)) #\\)
-		   (char=? (cur-line (- pos 2)) #\#)))
-	    
 	    (define (check-parens)
+
+	      (define (char-constant? pos)
+		(and (> pos 2)
+		     (char=? (cur-line (- pos 1)) #\\)
+		     (char=? (cur-line (- pos 2)) #\#)))
+	    
 	      (let ((endpos (- cursor-pos 1)))
 		(if (or (<= cursor-pos 1)
 			(not (char=? (cur-line endpos) #\)))      ; ")" on left of cursor

@@ -48,15 +48,14 @@
     
     (define (add-envelope-point x y cur-env)
       (let ((new-env ()))
-	(define (search-point e)
-	  (cond ((null? e)     (append new-env (list x y)))
+	(let search-point ((e cur-env))
+	  (cond ((null? e) (append new-env (list x y)))
 		((= (car e) x) (append new-env (list x y) (cddr e)))
 		((> (car e) x) (append new-env (list x y) e))
 		(else
 		 (set! new-env (append new-env (list (car e) (cadr e))))
-		 (search-point (cddr e)))))
-	(search-point cur-env)))
-    
+		 (search-point (cddr e)))))))
+      
     (define (envelope-position x cur-env)
       (let search-point ((e cur-env)
                          (pos 0))
@@ -95,14 +94,14 @@
     
     (define (edit-envelope-point pos x y cur-env)
       (let ((new-env ()))
-	(define (search-point e npos)
+	(let search-point ((e cur-env)
+			   (npos 0))
 	  (if (= npos pos)
 	      (append new-env (list x y) (cddr e))
 	      (begin
 		(set! new-env (append new-env (list (car e) (cadr e))))
-		(search-point (cddr e) (+ npos 2)))))
-	(search-point cur-env 0)))
-    
+		(search-point (cddr e) (+ npos 2)))))))
+
     (let* ((cur-env (channel-envelope snd chn))
 	   (lx (if (= mouse-pos 0)
 		   0.0
@@ -123,15 +122,15 @@
     
     (define (remove-envelope-point pos cur-env)
       (let ((new-env ()))
-	(define (search-point e npos)
+	(let search-point ((e cur-env)
+			   (npos 0))
 	  (if (null? e)
 	      new-env
 	      (if (= pos npos)
 		  (append new-env (cddr e))
 		  (begin
 		    (set! new-env (append new-env (list (car e) (cadr e))))
-		    (search-point (cddr e) (+ npos 2))))))
-	(search-point cur-env 0)))
+		    (search-point (cddr e) (+ npos 2))))))))
     
     (when (= axis lisp-graph)
       (let ((cur-env (channel-envelope snd chn)))

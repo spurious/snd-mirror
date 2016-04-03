@@ -65,7 +65,7 @@
       (define (pvoc-output pv) (pv 0))
       (define (set-pvoc-output pv val) (set! (pv 0) val))
       (define (pvoc-interp pv) (pv 1))
-      (define (set-pvoc-interp pv val) (set! (pv 1) val))
+      ;(define (set-pvoc-interp pv val) (set! (pv 1) val))
       (define (pvoc-filptr pv) (pv 2))
       (define (set-pvoc-filptr pv val) (set! (pv 2) val))
       (define (pvoc-N pv) (pv 3))
@@ -295,7 +295,7 @@
 		(set! buffix (+ 1 buffix))
 		(if (>= buffix N) (set! buffix 0)))
 	      ;; rewind the file for the next hop
-	      (set! filptr (- filptr (- N D)))
+	      (set! filptr (- (+ filptr D) N))
 	      (if (> filptr (+ in-data-beg N))
 		  (begin
 		    (set! in-data-beg filptr)

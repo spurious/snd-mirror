@@ -87,8 +87,9 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 (define (cp-play-panned)
   (play-panned play-panned-file))
 
-(if (or (provided? 'xm)
-	(provided? 'xg))
+(if (not (or (provided? 'xm)
+	     (provided? 'xg)))
+    (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned))
     (begin
 
       (define (post-play-panned-dialog)
@@ -135,9 +136,9 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 	
         (activate-dialog play-panned-dialog))
       
-      (set! play-panned-menu-label (add-to-menu special-menu "Play panned" post-play-panned-dialog)))
+      (set! play-panned-menu-label (add-to-menu special-menu "Play panned" post-play-panned-dialog))))
     
-    (set! play-panned-menu-label (add-to-menu special-menu play-panned-label cp-play-panned)))
+
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Play panned (~D)"  play-panned-file)))
@@ -161,8 +162,9 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
   (save-sound-as "tmp.wav" save-as-mp3-wav-file-number :header-type mus-riff)
   (system (format #f "bladeenc tmp.wav tmp-~D.mp3" save-as-mp3-wav-file-number)))
 
-(if (or (provided? 'xm)
-	(provided? 'xg))
+(if (not (or (provided? 'xm)
+	     (provided? 'xg)))
+    (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3))
     (begin
 
       (define (post-save-as-mp3-dialog)
@@ -211,9 +213,8 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 			       1))))))
         (activate-dialog save-as-mp3-dialog))
       
-      (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" post-save-as-mp3-dialog)))
+      (set! save-as-mp3-menu-label (add-to-menu special-menu "Save as MP3" post-save-as-mp3-dialog))))
     
-    (set! save-as-mp3-menu-label (add-to-menu special-menu save-as-mp3-label cp-save-as-mp3)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Save as MP3 (~D)"  save-as-mp3-wav-file-number)))
@@ -235,8 +236,9 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
   (save-sound-as "tmp.wav" save-as-ogg-wav-file-number :header-type mus-riff)
   (system (format #f "oggenc tmp.wav -o tmp-~D.ogg" save-as-ogg-wav-file-number)))
 
-(if (or (provided? 'xm)
-	(provided? 'xg))
+(if (not (or (provided? 'xm)
+	     (provided? 'xg)))
+    (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg))
     (begin
 
       (define (post-save-as-ogg-dialog)
@@ -286,9 +288,8 @@ Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vor
 			       1))))))
         (activate-dialog save-as-ogg-dialog))
       
-      (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" post-save-as-ogg-dialog)))
+      (set! save-as-ogg-menu-label (add-to-menu special-menu "Save as Ogg file" post-save-as-ogg-dialog))))
     
-    (set! save-as-ogg-menu-label (add-to-menu special-menu save-as-ogg-label cp-save-as-ogg)))
 
 (set! special-list (cons (lambda ()
                            (let ((new-label (format #f "Save as Ogg file (~D)"  save-as-ogg-wav-file-number)))

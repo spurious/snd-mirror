@@ -951,7 +951,7 @@ time for perfection...):
 	 (samp 0))
     (<a class=quiet href="extsnd.html#scanchannel">scan-channel</a>
      (lambda (y)
-       (if (or (&gt; y .9999) (&lt; y -.9999))
+       (if (not (&lt;= -0.9999 y 0.9999))
 	   (if in-clip
 	       (set! clip-end samp)
 	       (begin

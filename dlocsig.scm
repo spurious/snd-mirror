@@ -197,9 +197,6 @@
     (lambda (a)
       (exp (* 0.0+1.0i a)))))
 
-;; built-in 1-Feb-14
-;; (define-macro (when test . forms) `(if ,test (begin ,@forms)))
-
 (define third 
   (let ((documentation "(third lst) returns the 3rd element of 'lst'"))
     (lambda (a) 
@@ -210,17 +207,9 @@
     (lambda (a) 
       (and (>= (length a) 4) (a 3)))))
 
-(define last 
-  (let ((documentation "(last lst n) returns the last 'n' elements of 'lst' as a list"))
-    (lambda* (a n) 
-      (and (not (null? a))
-	   (if (not n)
-	       (list (a (- (length a) 1)))
-	       (let ((res ()))
-		 (do ((i 0 (+ i 1)))
-		     ((= i n))
-		   (set! res (cons (a (- (length a) (+ i 1))) res)))
-		 res))))))
+(define* (last lst (n 1))
+  (and (pair? lst) 
+       (list-tail lst (- (length lst) n))))
 
 (define* (arrange-speakers (speakers ())
 			   (groups ())
@@ -576,7 +565,7 @@
 (define dlocsig-ambisonics-scaler point707)
 (define dlocsig-ambisonics-ho-rev-scaler 0.05)
 ;; for 3rd order FuMa
-(define ambisonics-k1 (sqrt (/ (* 21 45) 224 8)))
+(define ambisonics-k1 (sqrt 135/256)) ;(/ (* 21 45) 224 8)))
 (define ambisonics-k2 (* (sqrt 3) 3 0.5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -586,7 +575,8 @@
 	  (h-order dlocsig-ambisonics-h-order)
 	  (v-order dlocsig-ambisonics-v-order))
   (let ((count 0))
-    (if (>= h-order 0)
+    (if (< h-order 0)
+	0              ;; error: we need at least horizontal order 1!
 	(begin
 	  (if (>= h-order 1)
 	      ;; W X Y
@@ -606,9 +596,8 @@
 	  (if (>= h-order 3)
 	      ;; P Q
 	      (set! count (+ count 2)))
-	  count)
-	;; error: we need at least horizontal order 1!
-	0)))
+	  count))))
+	
 
 ;;;;;;;;;
 ;;; Paths
@@ -1235,7 +1224,7 @@
 		    (let ((c (bezier-curvature path))
 			  (cs (make-vector n)))
 		      ;; setup the curvatures array
-		      (cond ((or (not c) (null? c))                          ; no curvature specified, default is 1.0
+		      (cond ((memq c '(#f ()))                          ; no curvature specified, default is 1.0
 			     (do ((i 0 (+ i 1)))
 				 ((= i n))
 			       (set! (cs i) (list 1.0 1.0))))
@@ -1416,30 +1405,31 @@
       (fit-path path))
   (let ((xrx ()) (xry ()) (xrz ()) (xrv ()))
     
-    (define (bezier-point u c)
-      ;; Evaluate a point at parameter u in bezier segment
-      (let ((u1 (- 1 u))
-	    (cr (vector (make-vector 3 0.0) (make-vector 3 0.0) (make-vector 3 0.0))))
-	(do ((j 0 (+ j 1)))
-	    ((= j 3))
-	  (set! ((cr 0) j) (+ (* u1 ((c 0) j)) (* u ((c 0) (+ j 1)))))
-	  (set! ((cr 1) j) (+ (* u1 ((c 1) j)) (* u ((c 1) (+ j 1)))))
-	  (set! ((cr 2) j) (+ (* u1 ((c 2) j)) (* u ((c 2) (+ j 1))))))
-	(do ((i 1 (- i 1)))
-	    ((< i 0))
-	  (do ((j 0 (+ j 1)))
-	      ((> j i))
-	    
-	    (set! ((cr 0) j) (+ (* u1 ((cr 0) j)) (* u ((cr 0) (+ j 1)))))
-	    (set! ((cr 1) j) (+ (* u1 ((cr 1) j)) (* u ((cr 1) (+ j 1)))))
-	    (set! ((cr 2) j) (+ (* u1 ((cr 2) j)) (* u ((cr 2) (+ j 1)))))
-	    ))
-	(list ((cr 0) 0)
-	      ((cr 1) 0)
-	      ((cr 2) 0))))
-    
     (define (berny xl yl zl xh yh zh ul u uh c err)
       ;; Create a linear segment rendering of a bezier segment
+
+      (define (bezier-point u c)
+	;; Evaluate a point at parameter u in bezier segment
+	(let ((u1 (- 1 u))
+	      (cr (vector (make-vector 3 0.0) (make-vector 3 0.0) (make-vector 3 0.0))))
+	  (do ((j 0 (+ j 1)))
+	      ((= j 3))
+	    (set! ((cr 0) j) (+ (* u1 ((c 0) j)) (* u ((c 0) (+ j 1)))))
+	    (set! ((cr 1) j) (+ (* u1 ((c 1) j)) (* u ((c 1) (+ j 1)))))
+	    (set! ((cr 2) j) (+ (* u1 ((c 2) j)) (* u ((c 2) (+ j 1))))))
+	  (do ((i 1 (- i 1)))
+	      ((< i 0))
+	    (do ((j 0 (+ j 1)))
+		((> j i))
+	      
+	      (set! ((cr 0) j) (+ (* u1 ((cr 0) j)) (* u ((cr 0) (+ j 1)))))
+	      (set! ((cr 1) j) (+ (* u1 ((cr 1) j)) (* u ((cr 1) (+ j 1)))))
+	      (set! ((cr 2) j) (+ (* u1 ((cr 2) j)) (* u ((cr 2) (+ j 1)))))
+	      ))
+	  (list ((cr 0) 0)
+		((cr 1) 0)
+		((cr 2) 0))))
+      
       (let* ((vals (bezier-point u c))
 	     (x (car vals))
 	     (y (cadr vals))
@@ -1559,17 +1549,17 @@
 		      
 		      (let ((df (car dseg)))
 			(set! dseg (reverse dseg))
-			(let* ((tseg ())
-			       (vf v)
-			       (a (/ (* (- vf vi) (+ vf vi)) df 4)))
-			  (if (= vi 0.0) (set! vi 1))
-			  (for-each
-			   (lambda (d)
-			     (set! tseg (cons (+ ti (if (= vf vi)
-							(/ d vi)
-							(/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
-					      tseg)))
-			   dseg)
+			(let ((tseg ())
+			      (vf v))
+			  (let ((a (/ (* (- vf vi) (+ vf vi)) df 4)))
+			    (if (= vi 0.0) (set! vi 1))
+			    (for-each
+			     (lambda (d)
+			       (set! tseg (cons (+ ti (if (= vf vi)
+							  (/ d vi)
+							  (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
+						tseg)))
+			     dseg))
 			  (set! ti (car tseg))
 			  (set! tseg (reverse tseg))
 			  
@@ -1662,16 +1652,15 @@
 		      (set! dseg (cons sofar dseg))))
 		  (let ((df (car dseg)))
 		    (set! dseg (reverse dseg))
-		    (let* ((tseg ())
-			   (vf v)
-			   (a (/ (* (- vf vi) (+ vf vi)) df 4)))
-		      (for-each
-		       (lambda (d)
-			 (set! tseg (cons (+ ti (if (= vf vi)
-						    (/ d vi)
-						    (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
-					  tseg)))
-		       dseg)
+		    (let ((tseg ()))
+		      (let ((a (/ (* (- v vi) (+ v vi)) df 4)))
+			(for-each
+			 (lambda (d)
+			   (set! tseg (cons (+ ti (if (= v vi)
+						      (/ d vi)
+						      (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
+					    tseg)))
+			 dseg))
 		      (set! ti (car tseg))
 		      (set! tseg (reverse tseg))
 		      (set! times (append times tseg))
@@ -1944,19 +1933,20 @@
 (define* (mirror-path path (axis 'y) (around 0))
   (if (not-transformed path)
       (transform-path path))
-  (if (eq? axis 'y)
-      (let ((val ()))
-	(for-each
-	 (lambda (x)
-	   (set! val (cons (- around x) val)))
-	 (path-tx path))
-	(set! (path-tx path) (reverse val)))
-      (let ((val ()))
-	(for-each
-	 (lambda (y)
-	   (set! val (cons (- around y) val)))
-	 (path-ty path))
-	(set! (path-ty path) (reverse val))))
+  (let ((val ()))
+    (if (eq? axis 'y)
+	(begin
+	  (for-each
+	   (lambda (x)
+	     (set! val (cons (- around x) val)))
+	   (path-tx path))
+	  (set! (path-tx path) (reverse val)))
+	(begin
+	  (for-each
+	   (lambda (y)
+	     (set! val (cons (- around y) val)))
+	   (path-ty path))
+	  (set! (path-ty path) (reverse val)))))
   path)
 
 ;;; Change the times of the rendered envelope so that the velocity is constant
@@ -1988,10 +1978,10 @@
 	     (end-time (tcoords (- (length tcoords) 1)))
 	     (total-time (- end-time start-time))
 	     (velocity (/ total-distance total-time)))
-	(let ((len (length xcoords))
-	      (now ())
-	      (dist 0.0))
-	  (do ((i 0 (+ i 1)))
+	(let ((now ()))
+	  (do ((dist 0.0)
+	       (len (length xcoords))
+	       (i 0 (+ i 1)))
 	      ((= i len))
 	    (let ((xp (xcoords i))
 		  (x (xcoords (+ i 1)))
@@ -2305,55 +2295,56 @@
 	  (set! (channel-rev-gains i) (cons 0.0 (channel-rev-gains i))))))
     
     (define (position val lst)
-      (define (position-1 val lst pos)
-	(call-with-exit
-	 (lambda (return)
-	   (and (not (null? lst))
-		(if (= val (car lst))
-		    (return pos)
-		    (position-1 val (cdr lst) (+ 1 pos)))))))
-      (position-1 val lst 0))
+      (let position-1 ((val val)
+                       (lst lst)
+                       (pos 0))
+        (call-with-exit
+         (lambda (return)
+           (and (not (null? lst))
+                (if (= val (car lst))
+                    (return pos)
+                    (position-1 val (cdr lst) (+ 1 pos))))))))
     
     ;; push gain and time into envelopes
     (define (push-gains group gains dist time num)
       (let ((outputs (make-vector out-channels 0.0))
 	    (rev-outputs (make-vector rev-channels 0.0))
-	     ;; attenuation with distance of direct signal
-	    (att (if (>= dist inside-radius)
-		      (/ (expt dist direct-power))
-		      (- 1.0 (expt (/ dist inside-radius) (/ inside-direct-power)))))
 	     ;; attenuation with distance of reverberated signal
 	    (ratt (if (>= dist inside-radius)
 		       (/ (expt dist reverb-power))
 		       (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))))
-	(if (>= dist inside-radius)
-	    ;; outside the inner sphere, signal is sent to group
-	    (let ((len (length gains)))
-	      (do ((i 0 (+ i 1)))
-		  ((= i len))
-		(let ((speaker ((group-speakers group) i))
-		      (gain (gains i)))
-		  (set! (outputs speaker) (* gain att))
-		  (if (and (> rev-channels 1)
-			   (< speaker (length rev-outputs)))
-		      (set! (rev-outputs speaker) (* gain ratt))))))
-	    
-	    (let ((gain 0.0)
-		  (len (speaker-config-number speakers)))
-	      (do ((speaker 0 (+ 1 speaker)))
-		  ((= speaker len))
-		;; inside the inner sphere, signal is sent to all speakers
-		(let ((found (position speaker (group-speakers group))))
-		  (if found
-		      ;; speaker belongs to group, add to existing gain
-		      (begin
-			(set! gain (gains found))
-			(set! (outputs speaker) (+ gain (* (- 1.0 gain) att)))
-			(if (> rev-channels 1) (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
-		      ;; speaker outside of group
-		      (begin
-			(set! (outputs speaker) att)
-			(if (> rev-channels 1) (set! (rev-outputs speaker) ratt))))))))
+	(let (;; attenuation with distance of direct signal
+	      (att (if (>= dist inside-radius)
+		       (/ (expt dist direct-power))
+		       (- 1.0 (expt (/ dist inside-radius) (/ inside-direct-power))))))
+	  (if (>= dist inside-radius)
+	      ;; outside the inner sphere, signal is sent to group
+	      (let ((len (length gains)))
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (let ((speaker ((group-speakers group) i))
+			(gain (gains i)))
+		    (set! (outputs speaker) (* gain att))
+		    (if (and (> rev-channels 1)
+			     (< speaker (length rev-outputs)))
+			(set! (rev-outputs speaker) (* gain ratt))))))
+	      
+	      (let ((gain 0.0)
+		    (len (speaker-config-number speakers)))
+		(do ((speaker 0 (+ 1 speaker)))
+		    ((= speaker len))
+		  ;; inside the inner sphere, signal is sent to all speakers
+		  (let ((found (position speaker (group-speakers group))))
+		    (if found
+			;; speaker belongs to group, add to existing gain
+			(begin
+			  (set! gain (gains found))
+			  (set! (outputs speaker) (+ gain (* (- 1.0 gain) att)))
+			  (if (> rev-channels 1) (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
+			;; speaker outside of group
+			(begin
+			  (set! (outputs speaker) att)
+			  (if (> rev-channels 1) (set! (rev-outputs speaker) ratt)))))))))
 	
 	;; push all channel gains into envelopes
 	(let ((len (speaker-config-number speakers)))
@@ -2409,100 +2400,101 @@
 		      ;; we have to interpolate a new point that lies on the shared
 		      ;; edge of the adjacent groups so that the speakers opposite
 		      ;; the edge have zero gain when the trajectory switches groups
-		      (let ((edge (equalp-intersection (group-vertices group)
-							(group-vertices prev-group))))
-			(cond ((= (length edge) 2)
-			       ;; the groups have two shared points (ie: share an edge)
-			       ;; this must be a three speaker groups transition
-			       (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
-				 (if pint
-				     (let* ((xi (car pint))
-					    (yi (cadr pint))
-					    (zi (third pint))
-					    (di (distance xi yi zi))
-					    (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											 (- yi prev-y)
-											 (- zi prev-z))
-									       (distance (- x prev-x)
-											 (- y prev-y)
-											 (- z prev-z)))
-									    (- time prev-time))))))
-				       ;; see if we are inside the previous group
-				       ;; we can be on either side due to roundoff errors
-				       (let* ((vals (calculate-gains xi yi zi prev-group))
-					      (inside (car vals))
-					      (gains (cadr vals)))
-					 (if inside
-					     (push-gains prev-group gains di ti 2)
-					     (let* ((val1 (calculate-gains xi yi zi group))
-						    (inside (car val1))
-						    (gains (cadr val1)))
-					       (if inside
-						   (push-gains group gains di ti 3)
-						   ;; how did we get here?
-						   (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
-			      
-			      ((and (= (length edge) 1) 
-				    (= (group-size group) 2))
-			       ;; two two-speaker groups share one point
-			       ;; z coordinates are silently ignored
-			       (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
-				 (if pint
-				     (let* ((xi (car pint))
-					    (yi (cadr pint))
-					    (di (distance xi yi 0.0))
-					    (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											 (- yi prev-y)
-											 0.0)
-									       (distance (- x prev-x)
-											 (- y prev-y)
-											 0.0))
-									    (- time prev-time))))))
-				       ;; see if we are inside the previous group
-				       ;; we can be on either side due to roundoff errors
-				       (let* ((vals (calculate-gains xi yi 0.0 prev-group))
-					      (inside (car vals))
-					      (gains (cadr vals)))
-					 (if inside 
-					     (push-gains prev-group gains di ti 4)
-					     (let* ((val1 (calculate-gains xi yi 0.0 group))
-						    (inside (car val1))
-						    (gains (cadr val1)))
-					       (if inside
-						   (push-gains group gains di ti 5)
-						   ;; how did we get here?
-						   (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
-			      
-			      ((= (length edge) 1)
-			       ;; groups share only one point... for now a warning
-			       ;; we should calculate two additional interpolated
-			       ;; points as the trajectory must be crossing a third
-			       ;; group
-			       (for-each
-				(lambda (int-group)
-				  (if (and (member (car edge) (group-vertices int-group))
-					   (not (equal? int-group group))
-					   (not (equal? int-group prev-group)))
-				      (let ((edge1 (equalp-intersection (group-vertices int-group)
-									(group-vertices prev-group)))
-					    (edge2 (equalp-intersection (group-vertices int-group)
-									(group-vertices group))))
-					(format () "e1=~A; e2=~A~%~%" edge1 edge2))))
-				(speaker-config-groups speakers))
-			       (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
-			      
-			      ;; groups don't share points... how did we get here?
-			      ((= (length edge) 0)
-			       (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
-				       (group-id prev-group) (group-speakers prev-group)
-				       (group-id group) (group-speakers group))))
-			
-			;; finally push gains for current group
-			(push-gains group gains dist time 6)
-			(set! prev-group group)
-			(set! prev-x x)
-			(set! prev-y y)
-			(set! prev-z z))
+		      (begin
+			(let ((edge (equalp-intersection (group-vertices group)
+							 (group-vertices prev-group))))
+			  (cond ((= (length edge) 2)
+				 ;; the groups have two shared points (ie: share an edge)
+				 ;; this must be a three speaker groups transition
+				 (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
+				   (if pint
+				       (let* ((xi (car pint))
+					      (yi (cadr pint))
+					      (zi (third pint))
+					      (di (distance xi yi zi))
+					      (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											   (- yi prev-y)
+											   (- zi prev-z))
+										 (distance (- x prev-x)
+											   (- y prev-y)
+											   (- z prev-z)))
+									      (- time prev-time))))))
+					 ;; see if we are inside the previous group
+					 ;; we can be on either side due to roundoff errors
+					 (let* ((vals (calculate-gains xi yi zi prev-group))
+						(inside (car vals))
+						(gains (cadr vals)))
+					   (if inside
+					       (push-gains prev-group gains di ti 2)
+					       (let* ((val1 (calculate-gains xi yi zi group))
+						      (inside (car val1))
+						      (gains (cadr val1)))
+						 (if inside
+						     (push-gains group gains di ti 3)
+						     ;; how did we get here?
+						     (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+				
+				((and (= (length edge) 1) 
+				      (= (group-size group) 2))
+				 ;; two two-speaker groups share one point
+				 ;; z coordinates are silently ignored
+				 (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
+				   (if pint
+				       (let* ((xi (car pint))
+					      (yi (cadr pint))
+					      (di (distance xi yi 0.0))
+					      (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											   (- yi prev-y)
+											   0.0)
+										 (distance (- x prev-x)
+											   (- y prev-y)
+											   0.0))
+									      (- time prev-time))))))
+					 ;; see if we are inside the previous group
+					 ;; we can be on either side due to roundoff errors
+					 (let* ((vals (calculate-gains xi yi 0.0 prev-group))
+						(inside (car vals))
+						(gains (cadr vals)))
+					   (if inside 
+					       (push-gains prev-group gains di ti 4)
+					       (let* ((val1 (calculate-gains xi yi 0.0 group))
+						      (inside (car val1))
+						      (gains (cadr val1)))
+						 (if inside
+						     (push-gains group gains di ti 5)
+						     ;; how did we get here?
+						     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
+				
+				((= (length edge) 1)
+				 ;; groups share only one point... for now a warning
+				 ;; we should calculate two additional interpolated
+				 ;; points as the trajectory must be crossing a third
+				 ;; group
+				 (for-each
+				  (lambda (int-group)
+				    (if (and (member (car edge) (group-vertices int-group))
+					     (not (equal? int-group group))
+					     (not (equal? int-group prev-group)))
+					(let ((edge1 (equalp-intersection (group-vertices int-group)
+									  (group-vertices prev-group)))
+					      (edge2 (equalp-intersection (group-vertices int-group)
+									  (group-vertices group))))
+					  (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
+				  (speaker-config-groups speakers))
+				 (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+				
+				;; groups don't share points... how did we get here?
+				((= (length edge) 0)
+				 (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
+					 (group-id prev-group) (group-speakers prev-group)
+					 (group-id group) (group-speakers group)))))
+			  
+			  ;; finally push gains for current group
+			  (push-gains group gains dist time 6)
+			  (set! prev-group group)
+			  (set! prev-x x)
+			  (set! prev-y y)
+			  (set! prev-z z))
 		      ;; current point is outside all defined groups
 		      ;; we should send a warning at this point...
 		      (begin
@@ -2897,7 +2889,8 @@
 		   (* inside-radius inside-radius)))
 	     (disc (- (* bsq bsq) u))
 	     (hit (>= disc 0.0)))
-	(if hit
+	(if (not hit)
+	    (change-direction xa ya za ta xb yb zb tb 8)
 	    ;; ray defined by two points hits sphere
 	    (let* ((root (sqrt disc))
 		   (rin  (- (+ bsq root)))
@@ -2933,8 +2926,7 @@
 		      (begin
 			(change-direction xa ya za ta xo yo zo to 5)
 			(change-direction xo yo zo to xb yb zb tb 6))
-		      (change-direction xa ya za ta xb yb zb tb 7))))
-	    (change-direction xa ya za ta xb yb zb tb 8))))
+		      (change-direction xa ya za ta xb yb zb tb 7)))))))
     
     ;; Recursively split segment if longer than minimum rendering distance:
     ;;   otherwise long line segments that have changes in distance render 
@@ -3033,28 +3025,28 @@
     (set! unity-gain (* scaler
 			(if (number? unity-gain-dist)
 			    (expt unity-gain-dist direct-power)
-			    (if (not unity-gain-dist)
-				(expt min-dist-unity direct-power)
-				1.0))))
+			    (if unity-gain-dist
+				1.0
+				(expt min-dist-unity direct-power)))))
     (set! unity-rev-gain (* scaler
 			    (if (number? unity-gain-dist)
 				(expt unity-gain-dist reverb-power)
-				(if (not unity-gain-dist) ; defaults to #f above
-				    (expt min-dist-unity reverb-power)
-				    1.0))))
+				(if unity-gain-dist ; defaults to #f above
+				    1.0
+				    (expt min-dist-unity reverb-power)))))
     ;; unity-gain ambisonics gain scalers
     (set! amb-unity-gain (* scaler 
 			    (if (number? unity-gain-dist)
 				(expt unity-gain-dist direct-power)
-				(if (not unity-gain-dist)
-				    (expt min-dist-unity direct-power)
-				    1.0))))
+				(if unity-gain-dist
+				    1.0
+				    (expt min-dist-unity direct-power)))))
     (set! amb-unity-rev-gain (* scaler
 				(if (number? unity-gain-dist)
 				    (expt unity-gain-dist reverb-power)
-				    (if (not unity-gain-dist) ; defaults to #f above
-					(expt min-dist-unity reverb-power)
-					1.0))))
+				    (if unity-gain-dist ; defaults to #f above
+					1.0
+					(expt min-dist-unity reverb-power)))))
 
     ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
     (if (<= real-dur 0.0)
