@@ -82,7 +82,7 @@
 	(apply min (map mark->integer (marks (selected-sound) (selected-channel)))))
       
       (define (post-play-between-marks-dialog)
-        (when (not play-between-marks-dialog)
+        (unless play-between-marks-dialog
 	  (let ((inits (find-two-marks))
 		(max-mark-id (max-mark))
 		(sliders ()))
@@ -216,7 +216,7 @@
 	maxid))
     
     (define (post-loop-between-marks-dialog)
-      (when (not loop-between-marks-dialog)
+      (unless loop-between-marks-dialog
 	;; if loop-between-marks-dialog doesn't exist, create it
 	(let ((initial-loop-between-marks-m1 0)
 	      (initial-loop-between-marks-m2 1)
@@ -434,7 +434,7 @@
     (begin
       
       (define (post-fit-to-mark-dialog)
-        (when (not fit-to-mark-dialog)
+        (unless fit-to-mark-dialog
 	  (let ((initial-fit-to-mark-one 0)
 		(initial-fit-to-mark-two 1)
 		(sliders ()))
@@ -527,7 +527,7 @@ using the granulate generator to fix up the selection duration (this still is no
     (begin
       
       (define (post-define-by-mark-dialog)
-        (when (not define-by-mark-dialog)
+        (unless define-by-mark-dialog
 	  (let ((initial-define-by-mark-one 0)
 		(initial-define-by-mark-two 1)
 		(sliders ()))
@@ -671,7 +671,7 @@ using the granulate generator to fix up the selection duration (this still is no
 	    (change-label end (format #f "~D" (loop-data (+ 1 (* sus-rel 2))))))))
     
     (define (create-loop-dialog)
-      (when (not (Widget? loop-dialog))
+      (unless (Widget? loop-dialog)
 	(let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
 	      (xsave (XmStringCreate "Save" XmFONTLIST_DEFAULT_TAG))
 	      (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))

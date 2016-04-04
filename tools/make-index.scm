@@ -1448,20 +1448,19 @@
 						   (set! p-parens 0)))
 					     
 					     (set! commands (remove-one closer commands))
-					     (if (not warned)
-						 (if (and (eq? closer 'table)
-							  (not (memq 'table commands)))
-						     (begin
-						       (if (memq 'tr commands)
-							   (begin
-							     (set! warned #t)
-							     (set! commands (remove-all 'tr commands))
-							     (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
-						       (if (memq 'td commands)
-							   (begin
-							     (set! warned #t)
-							     (set! commands (remove-all 'td commands))
-							     (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))))
+					     (when (and (not warned)
+							(eq? closer 'table)
+							(not (memq 'table commands)))
+					       (if (memq 'tr commands)
+						   (begin
+						     (set! warned #t)
+						     (set! commands (remove-all 'tr commands))
+						     (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+					       (if (memq 'td commands)
+						   (begin
+						     (set! warned #t)
+						     (set! commands (remove-all 'td commands))
+						     (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))
 				      (set! closing #f))
 				    
 				    ;; not closing

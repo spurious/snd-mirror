@@ -5250,29 +5250,26 @@ Here we scan the symbol table looking for any function that doesn't have documen
 </p>
 
 <pre class="indented">
-(let ((constants (list #f #t pi () 1 1.5 3/2 1.5+i)))
-
-  (define (autotest func args args-left)
-    (catch #t (lambda () (apply func args)) (lambda any #f))
-    (if (&gt; args-left 0)
-	(for-each
-	 (lambda (c)
-	   (autotest func (cons c args) (- args-left 1)))
-	 constants)))
-
-    (for-each 
-      (lambda (sym)
-	(if (<em class=red>defined?</em> sym)
-	    (let ((val (<em class=red>symbol-&gt;value</em> sym)))
-              (if (procedure? val)
-	          (let ((max-args (cdr (arity val))))
-	            (if (or (&gt; max-args 4)
-	       	            (memq sym '(exit abort)))
-		        (format () ";skip ~S for now~%" sym)
-		        (begin
-		          (format () ";whack on ~S...~%" sym)
-		          (autotest val () max-args))))))))
-    (<em class=red>symbol-table</em>)))
+(for-each 
+  (lambda (sym)
+    (if (<em class=red>defined?</em> sym)
+	(let ((val (<em class=red>symbol-&gt;value</em> sym)))
+          (if (procedure? val)
+	      (let ((max-args (cdr (arity val))))
+	        (if (or (&gt; max-args 4)
+	   	        (memq sym '(exit abort)))
+		    (format () ";skip ~S for now~%" sym)
+		    (begin
+		      (format () ";whack on ~S...~%" sym)
+                      (let ((constants (list #f #t pi () 1 1.5 3/2 1.5+i)))
+                        (let autotest ((args ()) (args-left max-args))
+                          (catch #t (lambda () (apply func args)) (lambda any #f))
+                          (if (&gt; args-left 0)
+ 	                      (for-each
+	                        (lambda (c)
+	                          (autotest (cons c args) (- args-left 1)))
+	                        constants)))))))))))
+  (<em class=red>symbol-table</em>))
 </pre>
 </div>
 

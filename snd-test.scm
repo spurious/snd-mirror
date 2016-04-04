@@ -2905,14 +2905,17 @@
 	(set! (sample-type ab) mus-lshort)
 	(if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd"))) ; these set!'s can change the index via update-sound
 	(if (not (= (sample-type ab) mus-lshort)) (snd-display #__line__ ";set sample-type: ~A?" (mus-sample-type-name (sample-type ab))))
-	(when with-gui
-	  (if (not (equal? (y-bounds ab 0) (list -3.0 3.0))) (snd-display #__line__ ";set sample type y-bounds: ~A?" (y-bounds ab 0))))
+	(when (and with-gui
+		   (not (equal? (y-bounds ab 0) (list -3.0 3.0))))
+	  (snd-display #__line__ ";set sample type y-bounds: ~A?" (y-bounds ab 0)))
 	(set! (y-bounds ab 0) (list 2.0))
-	(when with-gui
-	  (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set sample type y-bounds 1: ~A?" (y-bounds ab 0))))
+	(when (and with-gui
+		   (not (equal? (y-bounds ab 0) (list -2.0 2.0))))
+	  (snd-display #__line__ ";set sample type y-bounds 1: ~A?" (y-bounds ab 0)))
 	(set! (y-bounds ab 0) (list -2.0))
-	(when with-gui
-	  (if (not (equal? (y-bounds ab 0) (list -2.0 2.0))) (snd-display #__line__ ";set sample type y-bounds -2: ~A?" (y-bounds ab 0))))
+	(when (and with-gui
+		   (not (equal? (y-bounds ab 0) (list -2.0 2.0))))
+	  (snd-display #__line__ ";set sample type y-bounds -2: ~A?" (y-bounds ab 0)))
 	(set! (header-type ab) mus-aifc)
 	(if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	(if (not (= (header-type ab) mus-aifc)) (snd-display #__line__ ";set header-type: ~A?" (mus-header-type-name (header-type ab))))
@@ -7705,9 +7708,9 @@ EDITS: 5
 	  (let ((ls (left-sample ns 0))
 		(rs (right-sample ns 0))
 		(fr (framples ns 0)))
-	    (when with-gui
-	      (if (not (equal? (list fr ls rs) '(220501 0 220501)))
-		  (snd-display #__line__ ";show-full-duration 1: ~A" (list fr ls rs))))
+	    (when (and with-gui
+		       (not (equal? (list fr ls rs) '(220501 0 220501))))
+	      (snd-display #__line__ ";show-full-duration 1: ~A" (list fr ls rs)))
 	    (close-sound ns)))
 	(set! *show-full-duration* #t)
 	(set! *initial-beg* 0.0)
@@ -7716,9 +7719,9 @@ EDITS: 5
 	  (let ((ls (left-sample ns 0))
 		(rs (right-sample ns 0))
 		(fr (framples ns 0)))
-	    (when with-gui
-	      (if (not (equal? (list fr ls rs) '(220501 0 220501)))
-		  (snd-display #__line__ ";show-full-duration 2: ~A" (list fr ls rs))))
+	    (when (and with-gui
+		       (not (equal? (list fr ls rs) '(220501 0 220501))))
+	      (snd-display #__line__ ";show-full-duration 2: ~A" (list fr ls rs)))
 	    (close-sound ns)))
 	(set! *show-full-duration* #f)
 	(set! *initial-beg* 0.0)
@@ -7753,17 +7756,17 @@ EDITS: 5
       (with-sound ("test.snd" :clipped #f :to-snd #f)
 	(fm-violin 0 1 440 3.5))
       (let ((ns (open-sound "test.snd")))
-	(when with-gui
-	  (if (or (fneq (car (y-bounds ns 0)) -3.5)
-		  (fneq (cadr (y-bounds ns 0)) 3.5))
-	      (snd-display #__line__ ";show-full-range 3.5 test: ~A" (y-bounds ns 0))))
+	(when (and with-gui
+		   (or (fneq (car (y-bounds ns 0)) -3.5)
+		       (fneq (cadr (y-bounds ns 0)) 3.5)))
+	  (snd-display #__line__ ";show-full-range 3.5 test: ~A" (y-bounds ns 0)))
 	(with-sound ("test.snd" :clipped #f :to-snd #f)
 	  (fm-violin 0 1 440 1.5))
 	(update-sound ns)
-	(when with-gui
-	  (if (or (fneq (car (y-bounds ns 0)) -1.5)
-		  (fneq (cadr (y-bounds ns 0)) 1.5))
-	      (snd-display #__line__ ";show-full-range 1.5 test: ~A" (y-bounds ns 0))))
+	(when (and with-gui
+		   (or (fneq (car (y-bounds ns 0)) -1.5)
+		       (fneq (cadr (y-bounds ns 0)) 1.5)))
+	  (snd-display #__line__ ";show-full-range 1.5 test: ~A" (y-bounds ns 0)))
 	(close-sound ns))
       (set! *show-full-range* #f)
       

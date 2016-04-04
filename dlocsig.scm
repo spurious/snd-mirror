@@ -1549,13 +1549,12 @@
 		      
 		      (let ((df (car dseg)))
 			(set! dseg (reverse dseg))
-			(let ((tseg ())
-			      (vf v))
-			  (let ((a (/ (* (- vf vi) (+ vf vi)) df 4)))
+			(let ((tseg ()))
+			  (let ((a (/ (* (- v vi) (+ v vi)) df 4)))
 			    (if (= vi 0.0) (set! vi 1))
 			    (for-each
 			     (lambda (d)
-			       (set! tseg (cons (+ ti (if (= vf vi)
+			       (set! tseg (cons (+ ti (if (= v vi)
 							  (/ d vi)
 							  (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
 						tseg)))
@@ -2396,11 +2395,16 @@
 		(let* ((vals (find-group x y z))
 		       (group (car vals))
 		       (gains (cadr vals)))
-		  (if group
-		      ;; we have to interpolate a new point that lies on the shared
-		      ;; edge of the adjacent groups so that the speakers opposite
-		      ;; the edge have zero gain when the trajectory switches groups
+		  (if (not group)
 		      (begin
+			;; current point is outside all defined groups
+			;; we should send a warning at this point...
+			(push-zero-gains time)
+			(set! prev-group #f))
+		      (begin
+			;; we have to interpolate a new point that lies on the shared
+			;; edge of the adjacent groups so that the speakers opposite
+			;; the edge have zero gain when the trajectory switches groups
 			(let ((edge (equalp-intersection (group-vertices group)
 							 (group-vertices prev-group))))
 			  (cond ((= (length edge) 2)
@@ -2494,12 +2498,7 @@
 			  (set! prev-group group)
 			  (set! prev-x x)
 			  (set! prev-y y)
-			  (set! prev-z z))
-		      ;; current point is outside all defined groups
-		      ;; we should send a warning at this point...
-		      (begin
-			(push-zero-gains time)
-			(set! prev-group #f))))))
+			  (set! prev-z z))))))
 	  ;; first time around
 	  (let* ((vals (find-group x y z))
 		 (group (car vals))

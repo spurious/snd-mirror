@@ -268,7 +268,7 @@
 		      (begin
 			(set! temp (/ one-over-two-pi (* b-a k)))
 			(set! (sines k) (* (+ (cos ka2) (* (- (sin ka2) (sin (* k b2))) temp)) (/ temp1 k)))
-			(set! (cosines k) (* (+ (- (sin ka2)) (* (- (cos ka2) (cos (* k b2))) temp)) (/ temp1 k)))))
+			(set! (cosines k) (* (- (* (- (cos ka2) (cos (* k b2))) temp) (sin ka2)) (/ temp1 k)))))
 		  (set! (sines k) (+ (sines k) 
 				     (/ (- 1.0 (cos ka2)) k)
 				     (/ (* (- (cos ka1) 1.0) 0.5) (- k 1))
