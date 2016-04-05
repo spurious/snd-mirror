@@ -74243,15 +74243,16 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
+ * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
+ * display of let can still get into infinite recursion!
+ * when trying to display a big 128-channel file, Snd cores up until it crashes?
+ * check stdin-prompt and s7webserver
+ *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
  *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
  *   need some semi-automated approach here
  *   also need rest of Snd signatures
- * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
- * display of let can still get into infinite recursion!
- * when trying to display a big 128-channel file, Snd cores up until it crashes?
- * check stdin-prompt and s7webserver
  *
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]

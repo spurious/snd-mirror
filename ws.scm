@@ -123,12 +123,11 @@
        (set! *mus-array-print-length* *clm-array-print-length*)
        (set! *auto-update-interval* 0.0) 
        (set! (mus-clipping) 
-	     (if (eq? clipped 'unset)
-		 (if (and (or scaled-by scaled-to)
-			  (member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
-		     #f
-		     *clm-clipped*)
-		 clipped))
+	     (if (not (eq? clipped 'unset))
+		 clipped
+		 (and (not (and (or scaled-by scaled-to)
+				(member sample-type (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble))))
+		      *clm-clipped*)))
        (set! *clm-srate* srate))
 
      (lambda ()
@@ -728,8 +727,8 @@
 ;;; -------- ->frequency --------
 
 (define ->frequency
-  (let ((main-pitch (/ 440.0 (expt 2.0 (/ 57 12)))) ; a4 = 440Hz is pitch 57 in our numbering
-	(last-octave 0)                             ; octave number can be omitted
+  (let ((main-pitch (/ 440.0 (expt 2.0 19/4))) ;(/ 57 12) ; a4 = 440Hz is pitch 57 in our numbering
+	(last-octave 0)                                   ; octave number can be omitted
 	(ratios (vector 1.0 256/243 9/8 32/27 81/64 4/3 1024/729 3/2 128/81 27/16 16/9 243/128 2.0))
 	(documentation "(->frequency pitch pythagorean) returns the frequency (Hz) of the 'pitch', a CLM/CM style note name as a \
 symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small-integer ratios, rather than equal-tempered tuning."))

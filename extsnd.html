@@ -2912,7 +2912,7 @@ If it returns a string (a filename), that file is opened instead of the original
                ;; check for "OggS" first word, if found, translate to something Snd can read
 	       (call-with-input-file filename 
 	        (lambda (fd)
-		  (string=? (read-string 4 fd) "OggS"))))
+		  (equal? (read-string 4 fd) "OggS"))))
 	(let ((aufile (string-append filename ".au")))
 	  (if (file-exists? aufile) (delete-file aufile))
 	  (system (<a class=quiet>format</a> #f "ogg123 -d au -f ~A ~A" aufile filename))
@@ -6612,24 +6612,23 @@ then restore that state upon "Page Up":
 		         (<a class=quiet href="#sounds">sounds</a>))))
 	      (<a class=quiet href="#bindkey">bind-key</a> "Page_Up" 0
 			(lambda ()
-			  (if last-page-state
-			      (for-each
-			       (lambda (lst)
-				 (let ((snd (lst 0))
-				       (name (lst 1)))
-				   (if (and (<a class=quiet href="#soundp">sound?</a> snd) 
-					    (string=? (<a class=quiet href="#filename">file-name</a> snd) name))
-				       (for-each
-					(lambda (chan-data)
-					  (let ((chn (chan-data 0))
-						(x0 (chan-data 3))
-						(x1 (chan-data 5))
-						(y0 (chan-data 4))
-						(y1 (chan-data 6)))
-					    (set! (<a class=quiet href="#xbounds">x-bounds</a> snd chn) (list x0 x1))
-					    (set! (<a class=quiet href="#ybounds">y-bounds</a> snd chn) (list y0 y1))))
-					(cddr lst)))))
-			       last-page-state)))))))
+			  (for-each
+			    (lambda (lst)
+			      (let ((snd (lst 0))
+				    (name (lst 1)))
+				(if (and (<a class=quiet href="#soundp">sound?</a> snd) 
+				         (string=? (<a class=quiet href="#filename">file-name</a> snd) name))
+				    (for-each
+				      (lambda (chan-data)
+				        (let ((chn (chan-data 0))
+					      (x0 (chan-data 3))
+					      (x1 (chan-data 5))
+					      (y0 (chan-data 4))
+					      (y1 (chan-data 6)))
+					  (set! (<a class=quiet href="#xbounds">x-bounds</a> snd chn) (list x0 x1))
+					  (set! (<a class=quiet href="#ybounds">y-bounds</a> snd chn) (list y0 y1))))
+				      (cddr lst)))))
+			       last-page-state))))))
 </pre>
 <div class="separator"></div>
 

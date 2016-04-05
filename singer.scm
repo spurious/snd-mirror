@@ -346,9 +346,9 @@
 		     (j 1 (+ j 1)))
 		    ((= j tractlength))
 		  (set! tk tj)
-		  (if (zero? (float-vector-ref radii j))
-		      (set! tj 1e-10)
-		      (set! tj (* (float-vector-ref radii k) (float-vector-ref radii k))))
+		  (set! tj (if (zero? (float-vector-ref radii j))
+			       1e-10
+			       (* (float-vector-ref radii k) (float-vector-ref radii k))))
 		  (float-vector-set! coeffs j (/ (- tk tj) (+ tk tj)))))
 	      
 	      (set! glot-refl-gain (radii tractlength-1))
@@ -446,9 +446,10 @@
 		      (set! nose-last-minus-refl (- nose-reftemp plussamp))
 		      (set! nose-last-plus-refl (- nose-reftemp minussamp)))
 		    (begin
-		      (if (not (= velum-pos 0.0))
-			  (set! time-nose-closed 0)
-			  (set! time-nose-closed (+ time-nose-closed 1))) ; added 1 bil 17-Apr-11 but didn't test it
+		      (set! time-nose-closed 
+			    (if (= velum-pos 0.0)
+				(+ time-nose-closed 1) ; added 1 bil 17-Apr-11 but didn't test it
+				0))
 		      ;; nasal tick
 		      (let ((nose-reftemp (+ (* alpha1 plussamp) (* alpha2 minussamp) (* alpha3 (nose2 1)))))
 			(let (;(nose-t1 0.0)

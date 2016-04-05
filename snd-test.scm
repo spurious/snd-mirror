@@ -2383,7 +2383,7 @@
       (if (not p)
 	  (snd-display #__line__ ";mus-sound-report-cache->hiho.tmp failed?")
 	  (let ((line (read-line p)))
-	    (if (not (member line (list "sound table:" (string-append "sound table:" (string #\newline)))))
+	    (if (not (member line '("sound table:" "sound table:\n")))
 		(snd-display #__line__ ";print-cache 1: ~A?" line))
 	    (close-input-port p)
 	    (delete-file "hiho.tmp"))))
@@ -2525,12 +2525,7 @@
 	(if (file-exists? fsnd)
 	    (begin
 	      (set! com (mus-sound-comment fsnd))
-	      (if (not (equal? com (string-append "ICRD: 1997-02-22" 
-						  (string #\newline)
-						  "IENG: Paul R. Roger"
-						  (string #\newline)
-						  "ISFT: Sound Forge 4.0"
-						  (string #\newline))))
+	      (if (not (equal? com "ICRD: 1997-02-22\nIENG: Paul R. Roger\nISFT: Sound Forge 4.0\n"))
 		  (snd-display #__line__ ";mus-sound-comment \"nasahal8.wav\") -> ~A?" com)))))
       (let ((fsnd (string-append sf-dir "8svx-8.snd")))
 	(if (file-exists? fsnd)
@@ -2572,7 +2567,7 @@
 	(if (file-exists? fsnd)
 	    (begin
 	      (set! com (mus-sound-comment fsnd))
-	      (if (not (equal? com (string-append "MARY HAD A LITTLE LAMB" (string #\newline))))
+	      (if (not (equal? com "MARY HAD A LITTLE LAMB\n"))
 		  (snd-display #__line__ ";mus-sound-comment \"mary-sun4.sig\") -> ~A?" com)))))
       (let ((fsnd (string-append sf-dir "nasahal.pat")))
 	(if (file-exists? fsnd)
@@ -2608,24 +2603,13 @@
 	(if (file-exists? fsnd)
 	    (begin
 	      (set! com (mus-sound-comment fsnd))
-	      (if (not (equal? com (string-append "1994 Jesus Villena" (string #\newline))))
+	      (if (not (equal? com "1994 Jesus Villena\n"))
 		  (snd-display #__line__ ";mus-sound-comment \"anno.aif\") -> ~A?" com)))))
       (let ((fsnd (string-append sf-dir "telephone.wav")))
 	(if (file-exists? fsnd)
 	    (begin
 	      (set! com (mus-sound-comment fsnd))
-	      (if (not (equal? com (string-append "sample_byte_format -s2 01"
-						  (string #\newline)
-						  "channel_count -i 1"
-						  (string #\newline)
-						  "sample_count -i 36461"
-						  (string #\newline)
-						  "sample_rate -i 16000"
-						  (string #\newline)
-						  "sample_n_bytes -i 2"
-						  (string #\newline)
-						  "sample_sig_bits -i 16"
-						  (string #\newline))))
+	      (if (not (equal? com "sample_byte_format -s2 01\nchannel_count -i 1\nsample_count -i 36461\nsample_rate -i 16000\nsample_n_bytes -i 2\nsample_sig_bits -i 16\n"))
 		  (snd-display #__line__ ";mus-sound-comment \"telephone.wav\") -> ~A?" com))))))
     
     (if (not (string? (mus-sound-comment (string-append sf-dir "traffic.aiff"))))
@@ -2744,8 +2728,7 @@
 	   (do ((i 7 (+ i 1)))
 	       ((= i len))
 	     (let ((val (random 1.9999)))
-	       (if (or (> val 2.0)
-		       (< val 0.0))
+	       (if (not (>= 2.0 val 0.0))
 		   (snd-display #__line__ ";random 2.0 -> ~A?" val))
 	       (set! (v i) (- 1.0 val))))
 	   (float-vector->channel v 0 len ind 0)
@@ -5527,9 +5510,8 @@ EDITS: 5
 		  (snd-display #__line__ ";peaks 1: ~A?" line))
 	      (set! line (read-line p))
 	      (set! line (read-line p))
-	      (if (not (or (eof-object? line)
-			   (equal? line "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2")
-			   (equal? line (string-append "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2" (string #\newline)))))
+	      (if (not (member line '(#<eof> "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2"
+					     "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2\n")))
 		  (snd-display #__line__ ";peaks 2: ~A?" line))
 	      (close-input-port p))))
       (delete-file "tmp.peaks")
@@ -8583,7 +8565,7 @@ EDITS: 2
     (scale-by 0.0)
     (dither-channel)
     (let ((mx (maxamp)))
-      (if (or (< mx .00003) (> mx .0001))
+      (if (not (<= 3e-05 mx 0.0001))
 	  (snd-display #__line__ ";dithering: ~A" mx)))
     (revert-sound ind)
     (map-channel (ring-mod 10 (list 0 0 1 (hz->radians 100))))
@@ -9707,8 +9689,6 @@ EDITS: 2
 
 (require snd-moog.scm snd-poly.scm snd-bird.scm snd-v.scm snd-numerics.scm snd-generators.scm)
 (if (defined? 'gsl-roots) (require snd-analog-filter.scm))
-
-(defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
 
 ;;; -------- scissor-tailed flycatcher
 ;;;
@@ -11234,13 +11214,17 @@ EDITS: 2
 
   
   ;; ----------------
-  (define* (make-ssb-am-1 freq (order 40))
-    (if (even? order) (set! order (+ 1 order)))
-    (make-sa1 :freq (abs freq)
-	      :coscar (make-oscil freq (* .5 pi))
-	      :sincar (make-oscil freq)
-	      :dly (make-delay order)
-	      :hlb (make-hilbert-transform order)))
+
+  (define make-ssb-am-1 
+    (let ()
+      (defgenerator sa1 freq (coscar #f) (sincar #f) (dly #f) (hlb #f))
+      (lambda* (freq (order 40))
+	(if (even? order) (set! order (+ 1 order)))
+	(make-sa1 :freq (abs freq)
+		  :coscar (make-oscil freq (* .5 pi))
+		  :sincar (make-oscil freq)
+		  :dly (make-delay order)
+		  :hlb (make-hilbert-transform order)))))
   
   ;; ----------------
   (define* (ssb-am-1 gen y (fm-1 0.0))
@@ -11760,7 +11744,7 @@ EDITS: 2
 	  (lag3 (lambda (x a) (* (/ -1.0 6.0) (+ (* x x x)
 						 (* -3 x x (+ a 3))
 						 (* 3 x (+ a 2) (+ a 3))
-						 (* -1 (+ a 1) (+ a 2) (+ a 3)))))))
+						 (- (* (+ a 1) (+ a 2) (+ a 3))))))))
       (let ((x (random 10.0))
 	    (a (random 1.0)))
 	(let ((v1 (laguerre 1 x))
@@ -17778,11 +17762,9 @@ EDITS: 2
 	  ((= i 1000))
 	(let ((val1 (gen 0.0))
 	      (val2 (gen1 0.0)))
-	  (if (or (> val1 1.0)
-		  (< val1 -1.0))
+	  (if (not (>= 1.0 val1 -1.0))
 	      (snd-display #__line__ ";rand: ~A ~A" val1 gen))
-	  (if (or (> val2 1.0)
-		  (< val2 -1.0))
+	  (if (not (>= 1.0 val2 -1.0))
 	      (snd-display #__line__ ";rand-interp: ~A ~A" val2 gen1)))))
     
     (let ((gen (make-rand 10000.0 :distribution (inverse-integrate '(0 0 1 1))))
@@ -17869,8 +17851,7 @@ EDITS: 2
 	(let ((val1 (mus-random 1.0)))
 	  (set! minp (min minp val1))
 	  (set! maxp (max maxp val1))
-	  (if (or (> val1 1.0)
-		  (< val1 -1.0))
+	  (if (not (>= 1.0 val1 -1.0))
 	      (snd-display #__line__ ";mus-random: ~A" val1))))
       (if (or (< maxp .9)
 	      (> minp -.9))
@@ -17882,8 +17863,7 @@ EDITS: 2
 	(let ((val1 (mus-random 12.0)))
 	  (set! minp (min minp val1))
 	  (set! maxp (max maxp val1))
-	  (if (or (> val1 12.0)
-		  (< val1 -12.0))
+	  (if (not (>= 12.0 val1 -12.0))
 	      (snd-display #__line__ ";mus-random (12): ~A" val1))))
       (if (or (< maxp 11.0)
 	      (> minp -11.0))
@@ -24058,7 +24038,7 @@ EDITS: 2
 	(snap-marks)
 	(set! m1 (find-mark 2000 ind 0))
 	(if (not (mark? m1)) (snd-display #__line__ ";snap-marks start: ~A" (map mark-sample (marks ind 0))))
-	(set! m2 (find-mark (+ 2000 1234)))
+	(set! m2 (find-mark 3234))
 	(if (not (mark? m2)) (snd-display #__line__ ";snap-marks end: ~A" (map mark-sample (marks ind 0))))
 	(set! (selection-position ind 0) (+ (framples ind 0) 1123))
 	(if (not (= (selection-position ind 0) (- (framples ind) 1)))
@@ -24536,8 +24516,8 @@ EDITS: 2
       (close-sound ind))
     (set! *show-indices* #f)
     
-    (define-envelope test-ramp '(0 0 1 1))
-    (if (not (equal? test-ramp '(0 0 1 1))) (snd-display #__line__ ";define-envelope test-ramp: ~A" test-ramp))
+    (define-envelope test-ramp1 '(0 0 1 1))
+    (if (not (equal? test-ramp1 '(0 0 1 1))) (snd-display #__line__ ";define-envelope test-ramp1: ~A" test-ramp1))
     (define-envelope test-ramp '(0 1 1 0))
     (if (not (equal? test-ramp '(0 1 1 0))) (snd-display #__line__ ";re-define-envelope test-ramp: ~A" test-ramp))
     
@@ -24711,7 +24691,7 @@ EDITS: 2
 			     (fd (open-files choice)))
 			(close-sound fd)
 			(set! open-files (remove-if (lambda (a) (equal? a fd)) open-files)))))))
-	  (if open-files (for-each close-sound open-files))
+	  (if (pair? open-files) (for-each close-sound open-files))
 	  (set! open-files ())
 	  
 	  (if (pair? (sounds)) (snd-display #__line__ ";active-sounds: ~A ~A?" (sounds) (map short-file-name (sounds))))
@@ -24769,10 +24749,10 @@ EDITS: 2
 	  (let ((ind (open-sound "2.snd")))
 	    (set! (sync ind) 1)
 	    (let ((reg (make-region 90 220 ind #t)))
-	      (if (not (= (region-framples reg) (+ 1 (- 220 90)))) (snd-display #__line__ ";make-region framples: ~A" (region-framples reg)))
+	      (if (not (= (region-framples reg) 131)) (snd-display #__line__ ";make-region framples: ~A" (region-framples reg)))
 	      (if (not (= (region-chans reg) 2)) (snd-display #__line__ ";make-region chans: ~A" (region-chans reg)))
-	      (if (not (= (region-framples reg 0) (+ 1 (- 220 90)))) (snd-display #__line__ ";make-region framples[0]: ~A" (region-framples reg 0)))
-	      (if (not (= (region-framples reg 1) (+ 1 (- 220 90)))) (snd-display #__line__ ";make-region framples[1]: ~A" (region-framples reg 1)))
+	      (if (not (= (region-framples reg 0) 131)) (snd-display #__line__ ";make-region framples[0]: ~A" (region-framples reg 0)))
+	      (if (not (= (region-framples reg 1) 131)) (snd-display #__line__ ";make-region framples[1]: ~A" (region-framples reg 1)))
 	      (if (not (= (region-position reg 0) 90)) (snd-display #__line__ ";make-region position[0]: ~A" (region-position reg 0)))
 	      (if (not (= (region-position reg 1) 90)) (snd-display #__line__ ";make-region position[1]: ~A" (region-position reg 1)))
 	      (if (not (= (region-position reg) 90)) (snd-display #__line__ ";make-region position[]: ~A" (region-position reg)))
@@ -25404,7 +25384,7 @@ EDITS: 2
 		      (= (sample-type ind) mus-lint)
 		      (= (chans ind) 1)
 		      (= (srate ind) 22050)
-		      (= (framples ind) (/ 50828 2))))
+		      (= (framples ind) 25414))) ;(/ 50828 2)
 	    (snd-display #__line__ ";open-raw-sound-hook 3: ~A ~A ~A ~A ~A" 
 			 (header-type ind) (sample-type ind) (chans ind) (srate ind) (framples ind)))
 	(close-sound ind)
@@ -26153,9 +26133,11 @@ EDITS: 2
 
 (define safe-make-selection 
   (let ((documentation "make-region with error checks"))
-    (lambda (beg end snd) ; used in test_15 also
+    (lambda (snd) ; used in test_15 also
       (let ((len (framples snd))
-	    (old-choice *selection-creates-region*))
+	    (old-choice *selection-creates-region*)
+	    (beg 1000)
+	    (end 2000))
 	(set! *selection-creates-region* #t)
 	(if (> len 1)
 	    (if (< end len)
@@ -26403,23 +26385,23 @@ EDITS: 2
 	  (without-errors
 	   (begin
 	     (let ((cfd (choose-fd)))
-	       (safe-make-selection 1000 2000 cfd)
+	       (safe-make-selection cfd)
 	       (src-selection .5)
 	       (undo 1 cfd))
 	     (let ((cfd (choose-fd)))
-	       (safe-make-selection 1000 2000 cfd)
+	       (safe-make-selection cfd)
 	       (src-selection -1.5)
 	       (undo 1 cfd))
 	     (let ((cfd (choose-fd)))
-	       (safe-make-selection 1000 2000 cfd)
+	       (safe-make-selection cfd)
 	       (scale-selection-by .5)
 	       (undo 1 cfd))
 	     (let ((cfd (choose-fd)))
-	       (safe-make-selection 1000 2000 cfd)
+	       (safe-make-selection cfd)
 	       (env-selection '(0 0 1 1 2 0))
 	       (undo 1 cfd))
 	     (let ((cfd (choose-fd)))
-	       (safe-make-selection 1000 2000 cfd)
+	       (safe-make-selection cfd)
 	       (scale-selection-to .5)
 	       (reverse-selection)
 	       (undo 2 cfd))
@@ -26430,28 +26412,28 @@ EDITS: 2
 	   (let ((cfd (car open-files)))
 	     (set! (sync cfd) 1)
 	     (if (pair? (cdr open-files)) (set! (sync (cadr open-files)) 1))
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (src-selection .5)
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (src-selection -1.5)
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (env-selection '(0 0 1 1 2 0))
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (reverse-selection)
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (filter-selection '(0 0 .1 1 1 0) 40)
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (convolve-selection-with "oboe.snd")
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (smooth-selection)
 	     (undo 1 cfd)
-	     (safe-make-selection 1000 2000 cfd)
+	     (safe-make-selection cfd)
 	     (scale-selection-by .5)
 	     (undo 1 cfd)
 	     (scale-selection-to .5)
@@ -26990,7 +26972,7 @@ EDITS: 2
 		(set! *transform-size* (min *transform-size* 128))))
 	  )))
     (set! *sinc-width* 10)
-    (if open-files (for-each close-sound open-files))
+    (if (pair? open-files) (for-each close-sound open-files))
     (set! *sync-style* sync-none)
     (set! open-files ())
     (set! (mus-rand-seed) 1234)
@@ -27254,7 +27236,7 @@ EDITS: 2
 	    (if (> (abs (- (left-sample obi 0) 100)) 1) (snd-display #__line__ ";mark-in-window: ~A ~A?" (left-sample obi 0) (mark-sample m1)))
 	    (delete-mark m1))
 	  (close-sound s2i)
-	  (safe-make-selection 1000 2000 obi)
+	  (safe-make-selection obi)
 	  (delete-selection-and-smooth)
 	  (if (not (equal? (edit-fragment 0 obi 0) '("" "init" 0 50828))) 
 	      (snd-display #__line__ ";edit-fragment(0): ~S?" (edit-fragment 0 obi 0)))
@@ -28275,13 +28257,13 @@ EDITS: 2
 	  (test-selection ind 1200 100 2.0)
 	  (test-selection ind 600 1200 2.0)
 	  (test-selection ind 0 100 2.0)
-	  (test-selection ind 22500 (- 50827 22500) 0.5)
+	  (test-selection ind 22500 28327 0.5)
 	  (test-selection ind 0 50828 0.5)
 	  
 	  (test-selection-to ind 1200 100 1.0)
 	  (test-selection-to ind 600 1200 0.1)
 	  (test-selection-to ind 0 100 0.5)
-	  (test-selection-to ind 22500 (- 50827 22500) 2.0)
+	  (test-selection-to ind 22500 28327 2.0)
 	  (test-selection-to ind 0 50828 0.5)
 	  
 	  (revert-sound ind)
@@ -29308,7 +29290,7 @@ EDITS: 2
       (reverse-channel 12345678 123 oboe)
       (if (not (= (edit-position oboe) 0))
 	  (snd-display #__line__ ";beg:12345678 reverse-channel? ~A ~A" (edit-position oboe) (edit-fragment)))
-      (play oboe :start 12345678 :end (+ 12345678 123))
+      (play oboe :start 12345678 :end 12345801) ;(+ 12345678 123)
       
       (scale-channel 2.0 0 123 oboe 0)
       (if (not (= (edit-position oboe) 1))
@@ -29603,7 +29585,7 @@ EDITS: 2
 	(save-sound ind1)
 	(close-sound ind1)
 	(insert-sound "test.snd" 12345)
-	(let ((vals (channel->float-vector (- 12345 50) 200 ind 0)))
+	(let ((vals (channel->float-vector 12295 200 ind 0)))
 	  (if (file-exists? "hiho.scm") (delete-file "hiho.scm"))
 	  (save-state "hiho.scm")
 	  (close-sound ind)
@@ -29612,7 +29594,7 @@ EDITS: 2
 	  (set! ind (find-sound "oboe.snd"))
 	  (if (not (sound? ind))
 	      (snd-display #__line__ ";save hiho failed?")
-	      (let ((new-vals (channel->float-vector (- 12345 50) 200 ind 0)))
+	      (let ((new-vals (channel->float-vector 12295 200 ind 0)))
 		(if (not (vequal vals new-vals))
 		    (snd-display #__line__ ";save state hiho vals: ~A ~A" vals new-vals))))
 	  (close-sound ind))
@@ -32108,7 +32090,7 @@ EDITS: 1
 	(undo)
 	(let ((ctr 0))
 	  (map-channel (lambda (y) (if (= (set! ctr (+ ctr 1)) 3) (make-float-vector 5 .1) (* y .5)))))
-	(if (not (= (framples ind 0) (+ 50828 4)))
+	(if (not (= (framples ind 0) 50832))
 	    (snd-display #__line__ ";map-channel oboe -> float-vector at 3: ~A" (framples ind 0))
 	    (if (not (vequal (channel->float-vector 0 10) (float-vector 0.000 -0.000 0.100 0.100 0.100 0.100 0.100 -0.000 -0.000 -0.000)))
 		(snd-display #__line__ ";map-channel float-vector result: ~A" (channel->float-vector 0 10))))
@@ -32116,7 +32098,7 @@ EDITS: 1
 	(undo)
 	(let ((data (make-float-vector 2 0.0)))
 	  (map-channel (lambda (y) (set! (data 0) y) data)))
-	(if (not (= (framples ind 0) (* 2 50828)))
+	(if (not (= (framples ind 0) 101656))
 	    (snd-display #__line__ ";map-channel oboe -> float-vector: ~A" (framples ind 0))
 	    (if (not (vequal (channel->float-vector 0 10) (float-vector 0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.0)))
 		(snd-display #__line__ ";map-channel float-vector result: ~A" (channel->float-vector 0 10))))
@@ -35427,10 +35409,10 @@ EDITS: 1
 	
 	(for-each
 	 (lambda (len)
-	   (let* ((rl (make-float-vector len))
-		  (xim (make-float-vector len))
-		  (xrl (make-float-vector len))
-		  (len2 (/ len 2)))
+	   (let ((rl (make-float-vector len))
+		 (xim (make-float-vector len))
+		 (xrl (make-float-vector len))
+		 (len2 (/ len 2)))
 	     (let ((ones (max 2 (random len2))))
 	       (do ((i 0 (+ i 1)))
 		   ((= i ones))
@@ -36017,13 +35999,13 @@ EDITS: 1
 	  (spectral-polynomial (float-vector 0.0 0.5 0.5) ind 0)
 	  (if (fneq (maxamp) .493)
 	      (snd-display #__line__ ";spectral-polynomial 1: ~A" (maxamp)))
-	  (if (not (= (framples ind 0) (* 2 41623)))
+	  (if (not (= (framples ind 0) 83246)) ;(* 2 41623)
 	      (snd-display #__line__ ";spectral-polynomial 1 len: ~A" (framples)))
 	  (undo)
 	  (spectral-polynomial (float-vector 0.0 0.0 0.0 1.0) ind 0)
 	  (if (fneq (maxamp) .493)
 	      (snd-display #__line__ ";spectral-polynomial 2: ~A" (maxamp)))
-	  (if (not (= (framples ind 0) (* 3 41623)))
+	  (if (not (= (framples ind 0) 124869)) ;(* 3 41623)
 	      (snd-display #__line__ ";spectral-polynomial 1 len: ~A" (framples)))
 	  (close-sound ind))
 	
@@ -36072,7 +36054,7 @@ EDITS: 1
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
 	    (set! (data i) (volterra-filter flt x))
-	    (if (= i 0) (set! x 0.5) (set! x 0.0)))
+	    (set! x (if (= i 0) 0.5 0.0)))
 	  (if (not (vequal data (float-vector 0.000 0.575 0.250 0.025 0.000 0.000 0.000 0.000 0.000 0.000)))
 	      (snd-display #__line__ ";volterra-filter: ~A" data)))
 	
@@ -37635,7 +37617,7 @@ EDITS: 1
 	 (apply format #f (cadr args))))   ; float-vector-set! argument 3, 3+1i, is a complex number but should be a real
      "float-vector-set! argument 3, 3+1i, is a complex number but should be a real")
     
-    (define (fv2 s1 s2 s3)
+    (define (fv2 s2 s3)
       (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1))
 	     (x 1.0 (+ x 0+i)))
@@ -37644,7 +37626,7 @@ EDITS: 1
     (test
      (catch #t
        (lambda ()
-	 (fv2 1 2 3)) ; 'error again #(2.0 2-1i 2-2i 2-3i)
+	 (fv2 2 3)) ; 'error again #(2.0 2-1i 2-2i 2-3i)
        (lambda args (car args))) 'wrong-type-arg)
     
     (set! (*s7* 'print-length) 123)
@@ -42874,8 +42856,7 @@ EDITS: 1
     (set! *clm-srate* cur-srate)
     (let* ((scn (make-moving-pitch rd))
 	   (pitch (moving-pitch scn)))
-      (if (or (> pitch 443.0)
-	      (< pitch 439.0))
+      (if (not (>= 443.0 pitch 439.0))
 	  (snd-display #__line__ ";moving-pitch 1a: ~A" pitch)))
     (set! *clm-srate* old-srate))
   
@@ -42953,34 +42934,35 @@ EDITS: 1
     (if (fneq (maxamp snd) 1.0) (snd-display #__line__ ";vect let nrcos max: ~A" (maxamp snd))))
   
   (with-sound (:play #t)
-	      (let* ((exp-amt 8.0)
-		     (dur 2.0)
-		     (samps (seconds->samples dur))
-		     (ampf (make-env '(0.000 0.000 0.011 0.147 0.023 0.131 0.028 0.034 0.059 0.000 0.063 0.153 0.067 0.113 
-					     0.072 0.391 0.081 0.095 0.088 0.052 0.102 0.025 0.124 0.000 0.131 0.452 0.139 0.327 
-					     0.144 0.099 0.156 0.097 0.160 0.048 0.186 0.000 0.194 0.438 0.200 0.366 0.201 0.156 
-					     0.211 0.063 0.247 0.000 0.256 0.628 0.268 0.154 0.274 0.190 0.285 0.027 0.296 0.059 
-					     0.309 0.031 0.312 0.481 0.322 0.939 0.331 0.314 0.351 0.061 0.363 0.099 0.374 0.056 
-					     0.377 0.438 0.389 0.858 0.394 0.467 0.403 0.241 0.414 0.197 0.415 0.127 0.425 0.075 
-					     0.436 0.090 0.441 0.526 0.454 0.869 0.471 0.239 0.490 0.029 0.503 0.117 0.505 0.485
-					     0.514 0.811 0.528 0.415 0.538 0.088 0.552 0.056 0.561 0.106 0.580 0.075 0.597 0.000 
-					     0.776 0.000 0.777 0.573 0.786 0.145 0.801 0.054 0.826 0.000 0.827 0.632 0.844 1.000 
-					     0.856 0.524 0.866 0.031 0.883 0.074 0.891 0.136 0.896 0.745 0.907 0.424 0.915 0.765 
-					     0.934 0.059 0.951 0.048 0.962 0.079 0.970 0.436 0.986 0.266 1.000 0.000)
-				     :duration 0.25 :scaler 0.5))
-		     (frqf (make-env '(0.000 0.220 0.074 0.249 0.133 0.249 0.194 0.240 0.258 0.252 0.324 0.264 0.389 0.267 
-					     0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.000 0.279)
-				     :duration 0.25 :scaler (hz->radians (* 0.5 0.205 22050.0))))
-		     (gen1 (make-polywave :partials (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
-		     (rnd (make-rand-interp 600 (hz->radians 50))))
-		(define (ifunc dir)
-		  (* (env ampf)
-		     (polywave gen1 (+ (env frqf)
-				       (rand-interp rnd)))))
-		(let ((gran (make-granulate :expansion exp-amt :input ifunc)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i samps))
-		    (outa i (granulate gran))))))
+    (define ifunc 
+      (let ((ampf (make-env '(0.000 0.000 0.011 0.147 0.023 0.131 0.028 0.034 0.059 0.000 0.063 0.153 0.067 0.113 
+			      0.072 0.391 0.081 0.095 0.088 0.052 0.102 0.025 0.124 0.000 0.131 0.452 0.139 0.327 
+			      0.144 0.099 0.156 0.097 0.160 0.048 0.186 0.000 0.194 0.438 0.200 0.366 0.201 0.156 
+			      0.211 0.063 0.247 0.000 0.256 0.628 0.268 0.154 0.274 0.190 0.285 0.027 0.296 0.059 
+			      0.309 0.031 0.312 0.481 0.322 0.939 0.331 0.314 0.351 0.061 0.363 0.099 0.374 0.056 
+			      0.377 0.438 0.389 0.858 0.394 0.467 0.403 0.241 0.414 0.197 0.415 0.127 0.425 0.075 
+			      0.436 0.090 0.441 0.526 0.454 0.869 0.471 0.239 0.490 0.029 0.503 0.117 0.505 0.485
+			      0.514 0.811 0.528 0.415 0.538 0.088 0.552 0.056 0.561 0.106 0.580 0.075 0.597 0.000 
+			      0.776 0.000 0.777 0.573 0.786 0.145 0.801 0.054 0.826 0.000 0.827 0.632 0.844 1.000 
+			      0.856 0.524 0.866 0.031 0.883 0.074 0.891 0.136 0.896 0.745 0.907 0.424 0.915 0.765 
+			      0.934 0.059 0.951 0.048 0.962 0.079 0.970 0.436 0.986 0.266 1.000 0.000)
+			    :duration 0.25 :scaler 0.5))
+	    (frqf (make-env '(0.000 0.220 0.074 0.249 0.133 0.249 0.194 0.240 0.258 0.252 0.324 0.264 0.389 0.267 
+			      0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.000 0.279)
+			    :duration 0.25 :scaler (hz->radians (* 0.5 0.205 22050.0))))
+	    (gen1 (make-polywave :partials (list 2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
+	    (rnd (make-rand-interp 600 (hz->radians 50))))
+	(lambda (dir)
+	  (* (env ampf)
+	     (polywave gen1 (+ (env frqf)
+			       (rand-interp rnd)))))))
+    (let* ((exp-amt 8.0)
+	   (dur 2.0)
+	   (samps (seconds->samples dur))
+	   (gran (make-granulate :expansion exp-amt :input ifunc)))
+      (do ((i 0 (+ i 1)))
+	  ((= i samps))
+	(outa i (granulate gran)))))
 
   (calling-all-animals)
   (calling-all-generators)
@@ -45011,7 +44993,8 @@ EDITS: 1
 	    (set! vals (XtVaGetValues lst (list XmNselectedItemCount 0 XmNselectedItems 0)))
 	    (if (not (= (vals 1) 1)) (snd-display #__line__ ";selected count: ~A" (vals 1)))
 	    (set! vals (XmListGetSelectedPos lst))
-	    (if (not (= (length vals) 1)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
+	    (if (or (not (pair? vals)) (not (null? (cdr vals))))
+		(snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
 	    (if (not (= (car vals) 3)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
 	    (set! browsed 0)
 	    (XmListSelectPos lst 1 #f)

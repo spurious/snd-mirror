@@ -25,7 +25,6 @@
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
 ;;   table of functions that are simple (no side effects) is (*lint* 'no-side-effect-functions)
 
-
 ;;; --------------------------------------------------------------------------------
 (when (provided? 'pure-s7)
   (define (make-polar mag ang) (complex (* mag (cos ang)) (* mag (sin ang))))
@@ -312,11 +311,13 @@
 	(last-if-line-number -1)
 	(last-checker-line-number -1)
 	(last-cons-line-number -1)
+	(last-rewritten-internal-define #f)
 	(line-number -1)
 	(lambda-marker '[lambda])
 	(goto-marker '[call/exit])
 	(call/cc-marker '[call/cc])
 	(catch-marker '[catch])
+	(top-level-marker '--)
 	(pp-left-margin 4)
 	(lint-left-margin 1))
     
@@ -3076,6 +3077,8 @@
 				  `(* ,@val))))
 			   ((memv 0 val)                   ; (* x 0 2) -> 0
 			    0) 
+			   ((memv -1 val)
+			    `(- (* ,@(remove -1 val))))    ; (* -1 x y) -> (- (* x y))
 			   (else `(* ,@val)))))))))
 	    
 	    ((-)
@@ -3324,7 +3327,7 @@
 		 (if (and (rational? (car args))
 			  (rational? (sqrt (car args)))
 			  (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
-		     (sqrt (car args)) ; don't collapse (sqrt (* a a)), a=-1 for example
+		     (sqrt (car args)) ; don't collapse (sqrt (* a a)), a=-1 for example, or -1-i -> 1+i whereas 1-i -> 1-i etc
 		     `(sqrt ,@args))))
 	    
 	    ((floor round ceiling truncate)
@@ -3926,7 +3929,7 @@
     (define (check-special-cases caller head form env)
       ;; here curlet won't change (leaving aside additions via define)
       ;; keyword head here if args to func/macro that we don't know about
-      
+
       (case head
 
 	;; ----------------
@@ -5979,8 +5982,7 @@
 				     default-random-state morally-equal-float-epsilon hash-table-float-epsilon undefined-identifier-warnings 
 				     gc-stats symbol-table-locked? c-objects history-size profile-info))))
 		   (lint-format "unknown *s7* field: ~A" caller arg)))))
-
-
+	
 	;; ----------------
 	((null eq eqv equal) ; (null (cdr...)) 
 	 (if (not (var-member head env))
@@ -6833,6 +6835,27 @@
 				   (lint-format "~A's value, ~A, is a literal constant, so this set! is trouble: ~A" caller 
 						vname (var-initial-value arg) (truncated-list->string call)))
 
+			       ;; look for (if x ...) where x is never #f
+			       ;;   this happens a dozen or so times
+			       (when (and (symbol? vtype)
+					  (not (eq? caller top-level-marker))
+					  (memq func '(if when unless))
+					  (not (memq vtype '(boolean? #t values)))
+					  (or (eq? (cadr call) vname)
+					      (and (pair? (cadr call))
+						   (eq? (caadr call) 'not)
+						   (eq? (cadadr call) vname))))
+				 (lint-format "~A is never #f, so ~A is ~A" caller vname call
+					      (if (eq? vname (cadr call))
+						  (case func
+						    ((if) (caddr call))
+						    ((when) (if (pair? (cdddr call)) `(begin ,@(cddr call)) (caddr call)))
+						    ((unless) #<unspecified>))
+						  (case func
+						    ((if) (if (pair? (cdddr call)) (cadddr call) #<unspecified>))
+						    ((when) #<unspecified>)
+						    ((unless) (if (pair? (cdddr call)) `(begin ,@(cddr call)) (caddr call)))))))
+
 			       ;; check for incorrect types in function calls
 			       (when (and (symbol? vtype)
 					  (not (memq vtype '(boolean? null?)))) ; null? here avoids problems with macros that call set!
@@ -7450,6 +7473,7 @@
 
       (if (and (pair? body)           ; define->named let, but this is only ok in a "closed" situation, not (begin (define...)) for example
 	       (pair? (car body))
+	       (not (eq? last-rewritten-internal-define (car body))) ; we already rewrote this
 	       (pair? (cdr body))
 	       (pair? (cadr body))
 	       (null? (cddr body)) ; reduce hits for now
@@ -8377,7 +8401,7 @@
 		  ;; ---------------- define ----------------		  
 		  ((define define* define-constant define-envelope define-expansion 
 		    define-macro define-macro* define-bacro define-bacro* definstrument defanimal
-		    define-public) ; this gives more informative names in Guile
+		    define-public define-inlinable) ; this gives more informative names in Guile
 
 		   (if (< (length form) 2)
 		       (begin
@@ -8508,10 +8532,10 @@
 				       (when (and (symbol? inner-name)
 						  (proper-list? inner-args)
 						  (pair? (car outer-body))
-					;(null? (cdr outer-body))
 						  (= (tree-count1 inner-name outer-body 0) 1))
 					 (let ((call (find-call inner-name outer-body)))
 					   (when (pair? call)
+					     (set! last-rewritten-internal-define (car val))
 					     (let ((new-call (if (tree-memq inner-name inner-body)
 								 (if (and (null? inner-args)
 									  (null? outer-args))
@@ -8567,8 +8591,33 @@
 				 
 				 (begin
 				   (lint-format "strange form: ~A" head (truncated-list->string form))
+				   (when (and (pair? sym)
+					      (pair? (car sym)))
+				     (if (symbol? (caar sym))
+					 ;; perhaps a curried definition -- as a public service, we'll rewrite the dumb thing
+					 (lint-format "perhaps ~A" caller
+						      (lists->string form `(define ,(car sym) 
+									     (lambda ,(cdr sym) 
+									       ,@(cddr form)))))
+					 (when (pair? (caar sym))
+					   (if (symbol? (caaar sym))
+					       (lint-format "perhaps ~A" caller
+							    (lists->string form `(define ,(caar sym) 
+										   (lambda ,(cdar sym)
+										     (lambda ,(cdr sym)
+										       ,@(cddr form))))))
+					       (when (and (pair? (caaar sym))
+							  (symbol? (caaaar sym)))
+						 (lint-format "perhaps ~A" caller
+							      (lists->string form `(define ,(caaar sym) 
+										     (lambda ,(cdaar sym)
+										       (lambda ,(cdar sym)
+											 (lambda ,(cdr sym)
+											   ,@(cddr form)))))))))))
+				     (lint-walk-function head (car sym) (cdr sym) val form env))
+				   ;; lint-walk-function definer function-name args body form env)
 				   env))))))
-		  
+
 		  ;; ---------------- lambda ----------------		  
 		  ((lambda lambda*)
 		   (let ((len (length form)))
@@ -8985,7 +9034,7 @@
 							       (if (eq? target (caddr test)) 'max 'min))))
 						   (lint-format "perhaps ~A" caller
 								(lists->string form `(set! ,target (,f ,@(cdr true)))))))))
-				       
+
 				       (if (and (eq? (car true) 'if) ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr)
 						(null? (cdddr true)))
 					   (let ((test1 (simplify-boolean `(and ,expr ,(cadr true)) () () env)))
@@ -9096,6 +9145,17 @@
 							(lists->string form `(if (eq? ,a ,b) ,(caddr false) ,(caddr true))))
 					   (lint-format "perhaps ~A" caller
 							(lists->string form `(if (eq? ,a ,b) ,(caddr true) ,(caddr false)))))))
+
+				 (if (and (symbol? test)     ; (if x (map f x)) -- very common 
+					  (pair? true)
+					  (memq (car true) '(map for-each))
+					  (pair? (cdr true))
+					  (pair? (cddr true))
+					  (eq? test (caddr true)))
+				     ;; also very common (if x (cxr x) or (set-cxr! x...))
+				     (lint-format "perhaps ~A" caller
+						  (truncated-lists->string form `(if (sequence? ,expr) ,@(cddr form)))))
+				 ;; the parallel if-not case does not happen
 				 
 				 ;; --------
 				 (when (and (= suggestion made-suggestion)
@@ -11424,6 +11484,20 @@
 						  (if (not (hash-table-ref other-identifiers head))
 						      (list form)
 						      (cons form (hash-table-ref other-identifiers head)))))))
+#|
+			 ;; `(,(car x) ,@(cdr x)) -> ,x ({list} (car x) ({apply_values} (cdr x))) -- almost never happens
+			 (when (eq? head #_{list})
+			   (if (and (= (length form) 3)
+				    (pair? (cadr form))
+				    (eq? (caadr form) 'car)
+				    (pair? (caddr form))
+				    (eq? #_{apply_values} (caaddr form))
+				    (pair? (cdaddr form))
+				    (pair? (cadr (caddr form)))
+				    (eq? (caadr (caddr form)) 'cdr)
+				    (equal? (cadadr form) (cadadr (caddr form))))
+			       (format *stderr* "~A~%~%" form)))
+|#
 
 			 (when (and (pair? head)
 				    (pair? (cdr head))
@@ -11540,6 +11614,8 @@
 			  (truncated-list->string last-form)))
 	      (set! last-form form)
 	      (set! last-line-number line)
+
+	      ;(format *stderr* "form: ~A~%" form)
 	      
 	      (if (and (pair? form)
 		       (memq (car form) '(define define-macro))
@@ -11568,7 +11644,7 @@
 	    vars))))
     
     (define (lint-file file env)
-      ;; (format *stderr* "lint ~S~%" file)
+      ;; (if (string? file) (format *stderr* "lint ~S~%" file))
       
       (if (member file linted-files)
 	  env
@@ -11618,6 +11694,7 @@
 	(set! last-checker-line-number -1)
 	(set! last-cons-line-number -1)
 	(set! last-if-line-number -1)
+	(set! last-rewritten-internal-define #f)
 	(set! line-number -1)
 	(set! quote-warnings 0)
 	(set! pp-left-margin 0)
@@ -11655,6 +11732,11 @@
 					 (string->number (substring str 1)))
 				    (format outport "~NC#d is pointless, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
 				#f))
+
+		    (cons #\' (lambda (str)                      ; for Guile (and syntax-rules, I think)
+				(if (string=? str "'")
+				    (list 'syntax (read))
+				    (list 'syntax (string->symbol str)))))
 
 		    (cons #\! (lambda (str)
 				(if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true") string-ci=?) ; for MIT-scheme
@@ -11787,7 +11869,7 @@
 	  
 	  (if (and (string? file)
 		   (pair? vars))
-	      (report-usage '-- "" vars vars)))
+	      (report-usage top-level-marker "" vars vars)))
 
 	(for-each 
 	 (lambda (p)
@@ -11968,19 +12050,14 @@
 ;;; lint-suggest with forms as pars to get better line numbers -- at least collect the offenders [check-returns, redundant begin]
 ;;;   could we search the form for the lowest positive line num?
 ;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
-;;; pp handling of let(*)-values is pessimal, and new not is messing up stacked lists?
+;;; pp handling of (list ((lambda...)..)) is bad
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
-;;; trunc lists not enough output in some cases; if first 80 chars=, add until a diff?
 ;;; the check pair business needs to take (or (not (pair...))...) into account
 ;;; (let ((a b)) ...no possible set/shadow of b (or a)...) -- surely this rename/let is useless?
 ;;;    (s1 s2) in vars, no s2 in body, no side-effects/macros in body, s1 itself never set
 ;;; in current let-reduction, take advantage of do or other existing let(*)
-;;; repeated rewrites are annoying -- define->named let is one [need an example]
-;;; var num, always used as divisor -> invert and multiply
-;;; vector+vector -> suggest 2d vectors? and rewrite the code -- make sure (A x y) is ((A x) y)
 ;;; do->len by +1 list-ref->cdr, warn about <0len? [also recursion/do with null? as end -> improper-list=infinite loop]
 ;;; var histories are incomplete (as are ref/set stats): need cond/case at least set-ref+form as in when
 ;;; named-let arg unchanging and repeats outer name -- can be omitted? [especially if define->named-let rewrite]
-;;; set/redef of constant? expansion?
-
-;;; 106
+;;;
+;;; 112
