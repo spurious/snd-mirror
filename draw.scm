@@ -153,7 +153,7 @@ whenever they're in the current view."))
     ;; intended as after-graph-hook member 
     ;; run through 'colored-samples lists passing each to display-colored-samples
     (let ((colors (channel-property 'colored-samples snd chn)))
-      (if colors
+      (if (pair? colors)
 	  (for-each
 	   (lambda (vals)
 	     (apply display-colored-samples (append vals (list snd chn))))
@@ -181,7 +181,6 @@ whenever they're in the current view."))
 	     (chn (or uchn (selected-channel snd) 0)))
 	(set! (channel-property 'colored-samples snd chn) ())
 	(update-time-graph snd chn)))))
-
 
 
 (define display-previous-edits 

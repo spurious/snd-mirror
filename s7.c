@@ -40549,7 +40549,7 @@ static s7_pointer g_is_morally_equal(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table (size 511) eq-func) returns a new hash table"
-  #define Q_make_hash_table s7_make_signature(sc, 3, sc->is_hash_table_symbol, sc->is_integer_symbol, sc->is_pair_symbol)
+  #define Q_make_hash_table s7_make_signature(sc, 3, sc->is_hash_table_symbol, sc->is_integer_symbol, s7_make_signature(sc, 2, sc->is_procedure_symbol, sc->is_pair_symbol))
 
   s7_int size;
   size = sc->default_hash_table_length;

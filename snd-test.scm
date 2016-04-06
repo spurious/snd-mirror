@@ -4202,7 +4202,6 @@
 
 (define (snd_test_5)
   (define a-ctr 0)
-  (define g-init-val 0)
   
   (define (append-sound filename)
     (insert-sound filename (framples)))
@@ -7218,8 +7217,8 @@ EDITS: 5
 	(define (test-channel-func func val-func init-val)
 	  (let ((len (framples index))
 		(chns (chans index))
-		(val #f))
-	    (set! g-init-val init-val)
+		(val #f)
+		(g-init-val init-val))
 	    (do ((k 0 (+ k 1)))
 		((= k 2))
 	      (set! val (val-func len))
@@ -10362,8 +10361,6 @@ EDITS: 2
   ;; ----------------
   (define (analog-filter-tests)
     
-    (define v (make-float-vector 1000))
-
     (define* (sweep->bins flt (bins 10))
       (let ((ind (open-sound "sweep.snd")))
 	(if (mus-generator? flt)
@@ -10380,11 +10377,12 @@ EDITS: 2
 	  (list mx resp))))
     
     (define (filter-response-max f1)
-      (set! (v 0) (f1 1.0))
-      (do ((i 1 (+ i 1)))
-	  ((= i 1000))
-	(set! (v i) (filter f1 0.0)))
-      (float-vector-peak v))
+      (let ((v (make-float-vector 1000)))
+	(set! (v 0) (f1 1.0))
+	(do ((i 1 (+ i 1)))
+	    ((= i 1000))
+	  (set! (v i) (filter f1 0.0)))
+	(float-vector-peak v)))
     
     (define (filter-equal? f1 f2) ; equalp in clm2xen is too restrictive
       (and (= (mus-order f1) (mus-order f2))
@@ -11741,10 +11739,10 @@ EDITS: 2
 	  (lag2 (lambda (x a) (* 0.5 (+ (* x x) 
 					(* -2 x (+ a 2))
 					(* (+ a 1) (+ a 2))))))
-	  (lag3 (lambda (x a) (* (/ -1.0 6.0) (+ (* x x x)
-						 (* -3 x x (+ a 3))
-						 (* 3 x (+ a 2) (+ a 3))
-						 (- (* (+ a 1) (+ a 2) (+ a 3))))))))
+	  (lag3 (lambda (x a) (* (/ -1.0 6.0) (- (+ (* x x x) 
+						    (* -3 x x (+ a 3)) 
+						    (* 3 x (+ a 2) (+ a 3)))
+						 (* (+ a 1) (+ a 2) (+ a 3)))))))
       (let ((x (random 10.0))
 	    (a (random 1.0)))
 	(let ((v1 (laguerre 1 x))
@@ -16355,11 +16353,10 @@ EDITS: 2
       (list mus-interp-hermite (float-vector 0.000 0.168 0.424 0.696 0.912 1.000 0.912 0.696 0.424 0.168))))
     ;; this is different if doubles -- not sure whether it's a bug or not
     
-    (let ((size 1000)
-	  (tbl-size 1024))
-      
+    (let ((size 1000))
       (define (test-tbl beg end freq amp mc-ratio index)
-	(let* ((sine (let ((v (make-float-vector tbl-size))
+	(let* ((tbl-size 1024)
+	       (sine (let ((v (make-float-vector tbl-size))
 			   (xp (/ (* 2 pi) tbl-size)))
 		       (do ((i 0 (+ i 1))
 			    (x 0.0 (+ x xp)))
@@ -20072,32 +20069,31 @@ EDITS: 2
 	  (snd-display #__line__ ";set phase-vocoder-freqs: ~A?" ((phase-vocoder-freqs pv) 0)))
       (undo 1)
       (free-sampler reader)
-      (let ((lastphases (make-float-vector 512))
-	    (diffs (make-float-vector 512)))
-	(define (efunc v)
-	  ;; new editing func changes pitch
-	  (let ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
-		(D (mus-hop v))
-		(freqs (phase-vocoder-freqs v)))
-	    (copy freqs diffs)
-	    (float-vector-subtract! diffs lastphases)
-	    (copy freqs lastphases)
-	    (let ((N2 (floor (/ N 2)))
-		  (pscl (/ 1.0 D))
-		  (kscl (/ pi2 N)))
-	      (do ((k 0 (+ k 1))
-		   (kx 0.0 (+ kx kscl)))
-		  ((= k N2))
-		(float-vector-set! freqs k (* 0.5 (+ (* pscl (remainder (float-vector-ref diffs k) pi2)) kx)))))
-	    #f))
-	(set! reader (make-sampler 0))
-	(set! pv (make-phase-vocoder (lambda (dir) (next-sample reader))
-				     512 4 128 1.0
-				     #f ;no change to analysis
-				     efunc
-				     #f ; no change to synthesis
-				     ))
-	(map-channel (lambda (val) (phase-vocoder pv))))
+      (set! reader (make-sampler 0))
+      (set! pv (make-phase-vocoder (lambda (dir) (next-sample reader))
+				   512 4 128 1.0
+				   #f ;no change to analysis
+				   (let ((lastphases (make-float-vector 512))
+					 (diffs (make-float-vector 512)))
+				     (lambda (v)
+				       ;; new editing func changes pitch
+				       (let ((N (mus-length v)) ;mus-increment => interp, mus-data => in-data
+					     (D (mus-hop v))
+					     (freqs (phase-vocoder-freqs v)))
+					 (copy freqs diffs)
+					 (float-vector-subtract! diffs lastphases)
+					 (copy freqs lastphases)
+					 (let ((N2 (floor (/ N 2)))
+					       (pscl (/ 1.0 D))
+					       (kscl (/ pi2 N)))
+					   (do ((k 0 (+ k 1))
+						(kx 0.0 (+ kx kscl)))
+					       ((= k N2))
+					     (float-vector-set! freqs k (* 0.5 (+ (* pscl (remainder (float-vector-ref diffs k) pi2)) kx)))))
+					 #f)))
+				   #f ; no change to synthesis
+				   ))
+      (map-channel (lambda (val) (phase-vocoder pv)))
       (undo 1)
       (free-sampler reader)
       (set! reader (make-sampler 0))
@@ -20249,28 +20245,30 @@ EDITS: 2
 	(let ((N2 (floor (/ size 2))))
 	  (let ((start (seconds->samples beg))
 		(end (seconds->samples (+ beg dur)))
-		(lastphases (make-float-vector N2))
 		(two-pi (* 2 pi))
-		(osc (make-oscil 1000.0))
 		(amps #f) (paincrs #f) (ppincrs #f) (phases #f) (freqs #f))
 
-	    (define (ifunc dir)
-	      (oscil osc))
-	      
-	    (define (efunc c)
-	      (let* ((D (floor (/ size 4))) ; overlap = 4
-		     (pscl (/ 1.0 D))
-		     (kscl (/ two-pi size)))
-		(do ((k 0 (+ k 1))
-		     (ks 0.0 (+ ks kscl)))
-		    ((= k N2))
-		  (let* ((freq (freqs k))
-			 (diff (- freq (lastphases k))))
-		    (set! (lastphases k) freq)
-		    (if (> diff pi) (set! diff (- diff two-pi)))
-		    (if (< diff (- pi)) (set! diff (+ diff two-pi)))
-		    (set! (freqs k) (+ (* diff  pscl) ks))))
-		#f))
+	    (define ifunc 
+	      (let ((osc (make-oscil 1000.0)))
+		(lambda (dir)
+		  (oscil osc))))
+	    
+	    (define efunc 
+	      (let ((lastphases (make-float-vector N2)))
+		(lambda (c)
+		  (let* ((D (floor (/ size 4))) ; overlap = 4
+			 (pscl (/ 1.0 D))
+			 (kscl (/ two-pi size)))
+		    (do ((k 0 (+ k 1))
+			 (ks 0.0 (+ ks kscl)))
+			((= k N2))
+		      (let* ((freq (freqs k))
+			     (diff (- freq (lastphases k))))
+			(set! (lastphases k) freq)
+			(if (> diff pi) (set! diff (- diff two-pi)))
+			(if (< diff (- pi)) (set! diff (+ diff two-pi)))
+			(set! (freqs k) (+ (* diff  pscl) ks))))
+		    #f))))
 	    
 	    (define (sfunc c)
 	      (float-vector-add! amps paincrs)
@@ -20676,33 +20674,31 @@ EDITS: 2
 	(let ((random-args (list 
 			    (expt 2.0 21.5) (expt 2.0 -18.0)
 			    1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
-			    (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2)
-			    ))
-	      (gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
-				    make-table-lookup make-triangle-wave
-				    make-comb ;make-convolve
-				    make-delay make-env make-fft-window
-				    make-filter make-filtered-comb make-fir-filter make-formant
-				    make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
-				    make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
-				    make-square-wave ;make-src
-				    make-two-pole make-two-zero make-wave-train
-				    make-ssb-am)))
-	  
+			    (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2))))
 	  (define (random-gen args)
-	    (for-each
-	     (lambda (n)
-	       (let ((gen (catch #t
-			    (lambda () (apply n args))
-			    (lambda args (car args)))))
-		 (if (mus-generator? gen)
-		     (for-each
-		      (lambda (arg)
-			(catch #t
-			  (lambda () (gen arg))
-			  (lambda args (car args))))
-		      random-args))))
-	     gen-make-procs))
+	    (let ((gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
+					make-table-lookup make-triangle-wave
+					make-comb ;make-convolve
+					make-delay make-env make-fft-window
+					make-filter make-filtered-comb make-fir-filter make-formant
+					make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
+					make-square-wave ;make-src
+					make-two-pole make-two-zero make-wave-train
+					make-ssb-am)))
+	      (for-each
+	       (lambda (n)
+		 (let ((gen (catch #t
+			      (lambda () (apply n args))
+			      (lambda args (car args)))))
+		   (if (mus-generator? gen)
+		       (for-each
+			(lambda (arg)
+			  (catch #t
+			    (lambda () (gen arg))
+			    (lambda args (car args))))
+			random-args))))
+	       gen-make-procs)))
 	  
 	  (random-gen ())
 	  (for-each
@@ -21719,33 +21715,35 @@ EDITS: 2
       (if (sound? oldie)
 	  (close-sound oldie)))
     
-    (let ((violin-sync 1)
-	  (violin-color (make-color 0 0 1)) ; blue
-	  (cello-sync 2)
-	  (cello-color (make-color 0 1 0)) ; green
-	  (index (new-sound "test.snd" :channels 1 :size 485100))) ;(* 22050 22)
+    (let ((index (new-sound "test.snd" :channels 1 :size 485100))) ;(* 22050 22)
       
-      (define (violin beg dur freq)
-	(let ((id (car (mix (with-temp-sound ()                            ; write instrument output to temp sound
-					     (fm-violin 0 dur (->frequency freq #t) 0.2)) ; our favorite FM instrument
-			    (->sample beg) 0 index 0   ; mix start, file in-chan, sound, channel
-			    #t #t))))                  ; mix with tag and auto-delete
-	  (if (symbol? freq)
-	      (set! (mix-name id) (symbol->string freq)))
-	  (set! (mix-sync id) violin-sync)
-	  (set! (mix-color id) violin-color)
-	  (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))
+      (define violin 
+	(let ((violin-sync 1)
+	      (violin-color (make-color 0 0 1))) ; blue
+	  (lambda (beg dur freq)
+	    (let ((id (car (mix (with-temp-sound ()                            ; write instrument output to temp sound
+						 (fm-violin 0 dur (->frequency freq #t) 0.2)) ; our favorite FM instrument
+				(->sample beg) 0 index 0   ; mix start, file in-chan, sound, channel
+				#t #t))))                  ; mix with tag and auto-delete
+	      (if (symbol? freq)
+		  (set! (mix-name id) (symbol->string freq)))
+	      (set! (mix-sync id) violin-sync)
+	      (set! (mix-color id) violin-color)
+	      (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))))
       
-      (define (cello beg dur freq)
-	(let ((id (car (mix (with-temp-sound ()
-					     (fm-violin 0 dur (->frequency freq #t) 0.2 :fm-index 1.5))
-			    (->sample beg) 0 index 0
-			    #t #t))))
-	  (if (symbol? freq)
-	      (set! (mix-name id) (symbol->string freq)))
-	  (set! (mix-sync id) cello-sync)
-	  (set! (mix-color id) cello-color)
-	  (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))
+      (define cello 
+	(let ((cello-sync 2)
+	      (cello-color (make-color 0 1 0))) ; green
+	  (lambda (beg dur freq)
+	    (let ((id (car (mix (with-temp-sound ()
+						 (fm-violin 0 dur (->frequency freq #t) 0.2 :fm-index 1.5))
+				(->sample beg) 0 index 0
+				#t #t))))
+	      (if (symbol? freq)
+		  (set! (mix-name id) (symbol->string freq)))
+	      (set! (mix-sync id) cello-sync)
+	      (set! (mix-color id) cello-color)
+	      (set! (mix-tag-y id) (frequency->tag-y (->frequency freq #t) (->frequency 'c2) 3))))))
       
       (as-one-edit
        (lambda ()
@@ -21792,51 +21790,36 @@ EDITS: 2
       (if (sound? oldie)
 	  (close-sound oldie)))
     
-    (let ((soprano ())
-	   (alto ())
-	   (tenor ())
-	   (bass ())
-	   
-	   (ind (new-sound "test.snd" :channels 1))
-	   
-	   (f1 (seg '(0 0 1 25 1 75 0 100)))
-	   ;; (f5 (seg '(-1 0 .25 10 0 20 0 100)))
-	   ;; (grc1 (seg '(1 0 .5 10 0 20 0 50 0 100)))
-	   ;; (grc2 (seg '(0 0 1 10 0 20 0 50 0 100)))
-	   ;; (grc3 (seg '(.5 0 1 10 0 20 0 50 0 100)))
-	   ;; (grc4 (seg '(1 0 0 10 1 20 0 30 1 40 0 50 1 60 0 70 1 80 0 90 1 100)))
-	   ;; (grc5 (seg '(1 0 .5 10  1 20  0 30  1 40  .5 50  1 60  0 70  1 80  .5 90  1 100)))
-	   ;; (grc6 (seg '(1 0  .5 10  0 20  -.5 30  -1 40  -.5 50  0 60  .5 70  1 80  .5 90  0 100)))
-	   (f6 (seg '(1 1  .5 10  .75 50  .4 75  .6 90  0 100)))
-	   (f7 (seg '(0 1  .5 10  .25 25  .75 50  .5 75  1 90  0 100)))
-	   ;; (f2 (seg '(0 1  .5 10  .4 90  0 100)))
-	   ;; (f3 (seg '(1 0  .5 10  .75 90 0 100)))
-	   ;; (ramp (seg '(0 0 1 2.5  1 7.5  0 10  1 12.5  1 17.5  0 20  1 22.5  1 27.5  0 30  1 32.5  1 37.5
-	   ;;		0 40  1 42.5  1 47.5  0 50  1 52.5  1 57.5  0 60  1 62.5  1 67.5  0 70  1 72.5  1 77.5
-	   ;;		0 80  1 82.5  1 87.5  0 90  1 92.5  1 97.5  0 100)))
-	   ;; (str (seg '(1 1  1 100)))
-	   )
+    (let ((ind (new-sound "test.snd" :channels 1))
+	  (f1 (seg '(0 0 1 25 1 75 0 100))))
       
-      (define (mix-fmsimp beg dur freq amp ampfunc rat1 indx1 rat2 indx2)
-	(let ((freq1 (if (> freq (/ *clm-srate* 8)) (/ freq 8) freq))
-	       (amp1 (* amp .175)))
-	  (let ((id (car (mix (with-temp-sound () 
-					       (fm-violin 0 dur freq1 amp1
-							  :fm1-rat (* 1.002 rat1)
-							  :fm1-index (* .5 rat1 indx1 (hz->radians freq))
-							  :fm1-env f6
-							  :fm2-rat (* 1.003 rat2)
-							  :fm2-index (* .5 indx2 rat2 (hz->radians freq))
-							  :fm2-env f7
-							  :fm3-index 0.0
-							  :reverb-amount 1.0
-							  :amp-env ampfunc))
-			      (->sample beg) 0 ind 0 #t #t))))  ; with tag and auto-delete
-	    (set! (mix-name id) (number->string (floor freq)))
-	    (cond ((> freq 700) (set! soprano (cons id soprano)))
-		  ((> freq 500) (set! alto (cons id alto)))
-		  ((> freq 300) (set! tenor (cons id tenor)))
-		  (else         (set! bass (cons id bass)))))))
+      (define mix-fmsimp 
+	(let ((soprano ())
+	      (alto ())
+	      (tenor ())
+	      (bass ())
+	      (f6 (seg '(1 1  .5 10  .75 50  .4 75  .6 90  0 100)))
+	      (f7 (seg '(0 1  .5 10  .25 25  .75 50  .5 75  1 90  0 100))))
+	  (lambda (beg dur freq amp ampfunc rat1 indx1 rat2 indx2)
+	    (let ((freq1 (if (> freq (/ *clm-srate* 8)) (/ freq 8) freq))
+		  (amp1 (* amp .175)))
+	      (let ((id (car (mix (with-temp-sound () 
+						   (fm-violin 0 dur freq1 amp1
+							      :fm1-rat (* 1.002 rat1)
+							      :fm1-index (* .5 rat1 indx1 (hz->radians freq))
+							      :fm1-env f6
+							      :fm2-rat (* 1.003 rat2)
+							      :fm2-index (* .5 indx2 rat2 (hz->radians freq))
+							      :fm2-env f7
+							      :fm3-index 0.0
+							      :reverb-amount 1.0
+							      :amp-env ampfunc))
+				  (->sample beg) 0 ind 0 #t #t))))  ; with tag and auto-delete
+		(set! (mix-name id) (number->string (floor freq)))
+		(cond ((> freq 700) (set! soprano (cons id soprano)))
+		      ((> freq 500) (set! alto (cons id alto)))
+		      ((> freq 300) (set! tenor (cons id tenor)))
+		      (else         (set! bass (cons id bass)))))))))
       
       (as-one-edit
        (lambda ()
@@ -43098,8 +43081,8 @@ EDITS: 1
 	    (let ((c (str i)))
 	      (string-set! new-str i (if (memv c '(#\\ #\/)) #\_ c))))))
       
-      (define (tagged-p val sym)  (or (not val) (and (list? val) (pair? val) (eq? (car val) sym))))
-      (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
+      (define (tagged-p val sym) (or (not val) (and (list? val) (pair? val) (eq? (car val) sym))))
+      (define (array-p val type) (or (null? val) (and (pair? val) (type (car val)))))
       (define XM_INT  integer?)
       (define (XM_ULONG val)  (and (integer? val) (>= val 0)))
       (define (XM_UCHAR val)  (or (char? val) (and (integer? val) (>= val 0) (< val 65536))))
@@ -44993,7 +44976,7 @@ EDITS: 1
 	    (set! vals (XtVaGetValues lst (list XmNselectedItemCount 0 XmNselectedItems 0)))
 	    (if (not (= (vals 1) 1)) (snd-display #__line__ ";selected count: ~A" (vals 1)))
 	    (set! vals (XmListGetSelectedPos lst))
-	    (if (or (not (pair? vals)) (not (null? (cdr vals))))
+	    (if (not (and (pair? vals)) (null? (cdr vals)))
 		(snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
 	    (if (not (= (car vals) 3)) (snd-display #__line__ ";XmListGetSelectedPos: ~A" vals))
 	    (set! browsed 0)
