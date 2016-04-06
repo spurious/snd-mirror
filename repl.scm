@@ -332,6 +332,7 @@
 		(check-parens)
 		(set! cur-line old-line)
 		(set! cursor-pos old-cursor)
+		(when red-par-pos
 		(let ((new-red red-par-pos))
 		  (set! red-par-pos old-red)
 		  (let ((col 0))
@@ -354,7 +355,7 @@
 						     (substring cur-line 0 cursor-pos)
 						     spaces #\space
 						     (substring cur-line (+ cursor-pos 1))))
-			      (set! cursor-pos (+ cursor-pos spaces))))))))))
+			      (set! cursor-pos (+ cursor-pos spaces)))))))))))
 	    
 	    
 	    ;; -------- prompt --------

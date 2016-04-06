@@ -2017,9 +2017,10 @@ homogeneous vector functions are currently built-in:
 	  ((= y height))
 	(do ((x 0 (+ x 1)))
 	    ((= x width))
-	  (if (zero? (state0 x y))
-	      (format *stderr* "  ")              ; ESC 07m below = inverse
-	      (format *stderr* "~C[07m  ~C[m" #\escape #\escape)))
+	  (format *stderr*
+                  (if (zero? (state0 x y))
+	              "  "                        ; ESC 07m below = inverse
+	              (values "~C[07m  ~C[m" #\escape #\escape))))
 	(format *stderr* "~C[E" #\escape))        ; ESC E = next line
 
       ;; get the next state
@@ -2693,9 +2694,9 @@ A slightly more complex example:
 	   (inlet 
 	    'x 3
 	    '* (lambda args
-		 (if (number? (car args))
-		     (apply * (car args) ((cadr args) 'x) (cddr args))
-		     (apply * ((car args) 'x) (cdr args))))))))
+		 (apply * (if (number? (car args))
+		     	      (values (car args) ((cadr args) 'x) (cddr args))
+		              (values ((car args) 'x) (cdr args)))))))))
   (let ((e2 (copy e1)))
     (set! (e2 'x) 4)
     (* 2 e1 e2))) ; (* 2 3 4) =&gt; 24
@@ -3180,9 +3181,15 @@ In s7, multiple values are spliced directly into the caller's argument list.
 
 <div class="indented">
 
-<p>There aren't that many real uses for multiple-values in Scheme.  Nearly all can be replaced by
-a normal list.  There are a few cases where multiple-values are handy.
-First, you can use "values" to return any number of values, including 0,
+<p>multiple-values are useful in a several situations.  For example,
+<code>(if test (+ a b c) (+ a b d e))</code> can be written
+<code>(+ a b (if test c (values d e)))</code>.  This fits naturally
+with define* so that multiple return values are automatically handled
+by the caller.
+</p>
+
+<p>There are a few special uses of multiple-values.
+First, you can use the values function to return any number of values, including 0,
 from map's function application:
 </p>
 
@@ -3208,49 +3215,12 @@ from map's function application:
   (apply append (map (lambda (arg) (map values arg)) args)))
 </pre>
 
-<p>
-Second, you can use multiple-values to turn off the short-circuit evaluation
-of 'or' and 'and'.  
-</p>
-
-<pre class="indented">
-&gt; (let ((x 1)) (and (<em class=red>values</em> #f (let () (set! x 3) #f))) x)
-<em class="gray">3</em>
-</pre>
-
-<p>But 'apply' has the same effect and is easier to read:
-</p>
-
-<pre class="indented">
-(define (and? . args) (apply and args))
-(define (every? f . seqs) (apply and (apply map f seqs)))
-</pre>
-
-<p>More often you want to keep the short-circuiting, but add some action as
-'and' or 'or' marches through its arguments:
-</p>
-
-<pre class="indented">
-(define-macro (every? function . args)
-  `(and ,@(map (lambda (arg) `(,function ,arg)) args)))
-
-(define (map-and proc lst) 
-  (or (null? lst) 
-      (and (proc (car lst)) 
-           (map-and proc (cdr lst)))))
-
-(define-macro (and-let* vars . body)
-  `(let () ;; bind vars, if any is #f stop, else evaluate body with those bindings
-     (and ,@(map (lambda (var) `(begin (apply define ',var) ,(car var))) vars) 
-          (begin ,@body))))
-</pre>
-
-<p>Third, a macro can return multiple values; these are evaluated and spliced,
+<p>Second, a macro can return multiple values; these are evaluated and spliced,
 exactly like a normal macro,
 so you can use <code>(values '(define a 1) '(define b 2))</code> to
 splice multiple definitions at the macro invocation point.  
 If an expansion returns (values), nothing is spliced in.  This is
-mostly useful in <a href="#readercond">reader-cond</a>.
+mostly useful in <a href="#readercond">reader-cond</a> and the #; reader.
 </p>
 
 <pre class="indented">
