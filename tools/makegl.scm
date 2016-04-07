@@ -44,9 +44,7 @@
 (define (cadr-str data)
   (let ((sp1 (char-position #\space data)))
     (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (if sp2
-	  (substring data (+ sp1 1) sp2)
-	  (substring data sp1)))))
+      (substring data (if sp2 (values (+ sp1 1) sp2) sp1)))))
 
 (define (caddr-str data)
   (let ((sp1 (char-position #\space data)))
@@ -337,9 +335,7 @@
 	  (if (not (member type types))
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args)))
-	    (set! funcs (if spec 
-			    (cons (list name type strs args spec spec-name) funcs)
-			    (cons (list name type strs args) funcs)))
+	    (set! funcs (cons (list name type strs (if spec (values args spec spec-name) args)) funcs))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
 (define* (CINT name type)
@@ -358,9 +354,7 @@
 	  (if (not (member type x-types))
 	      (set! x-types (cons type x-types)))
 	  (let ((strs (parse-args args 'x)))
-	    (set! x-funcs (if spec
-			      (cons (list name type strs args spec spec-name) x-funcs)
-			      (cons (list name type strs args) x-funcs)))
+	    (set! x-funcs (cons (list name type strs (if spec (values args spec spec-name) args)) x-funcs))
 	    (set! names (cons (cons name 'fnc) names)))))))
 
 (define* (CINT-X name type)
@@ -756,9 +750,9 @@
     (hey "Xen_wrap_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs max-args) 
 	     "any_args"
-	     (if (> refargs 0)
-		 (format #f "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
-		 (format #f "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s"))))
+	     (format #f (if (> refargs 0)
+			    (values "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
+			    (values "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s")))))
 	 (car func) (car func))
     (if if-fnc
 	(hey "#endif~%"))

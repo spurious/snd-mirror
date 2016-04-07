@@ -48,9 +48,7 @@
 		   (for-each
 		    (lambda (a)
 		      (if (not (keyword? a))
-			  (set! arg-names (if (symbol? a)
-					      (cons a arg-names)
-					      (cons (car a) arg-names)))))
+			  (set! arg-names (cons (if (symbol? a) a (car a)) arg-names))))
 		    targs)
 		   (reverse arg-names))))
     (if (string? (car body))
@@ -487,12 +485,12 @@
 	     (let ((info (with-mixed-sound-mix-info id snd)))
 	       (if info
 		   (let ((call (cadddr info)))
-		     (if (= (cadr info) (mix-position id))
-			 (format oput "  ~A~%" call)
-			 (format oput "  (~A ~,3F~{ ~A~})~%"
-				 (car call) 
-				 (/ (mix-position id) (* 1.0 (srate snd)))
-				 (cddr call))))
+		     (format oput (if (= (cadr info) (mix-position id))
+				      (values "  ~A~%" call)
+				      (values "  (~A ~,3F~{ ~A~})~%"
+					      (car call) 
+					      (/ (mix-position id) (* 1.0 (srate snd)))
+					      (cddr call)))))
 		   (status-report "can't find note associated with mix ~A" id))))
 	   cur-mixes)
 	  (format oput ")~%")
@@ -753,9 +751,9 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		 (base-pitch (+ sign (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11))))
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)
-	    (if pythagorean
-		(* main-pitch (expt 2 octave) (ratios base-pitch))
-		(* main-pitch (expt 2.0 (/ et-pitch 12)))))))))
+	    (* main-pitch (if pythagorean
+			      (* (expt 2 octave) (ratios base-pitch))
+			      (expt 2.0 (/ et-pitch 12)))))))))
 
 
 ;;; -------- ->sample --------

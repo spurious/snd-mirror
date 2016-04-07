@@ -273,10 +273,10 @@
 			   (set! outa-val (* amp-val apan sampa))
 			   (set! outb-val (* amp-val bpan (if stereo-i sampb sampa))))
 			 ;; stereo in, mono out
-			 (set! outa-val (if stereo-i
-					    (* amp-val (+ sampa sampb) .75)
-					    ;; mono in, mono out
-					    (* amp-val sampa))))
+			 (set! outa-val (* amp-val (if stereo-i
+						       (* (+ sampa sampb) .75)
+						       ;; mono in, mono out
+						       sampa))))
 		     ;; output
 		     (outa i outa-val)
 		     (if stereo-o

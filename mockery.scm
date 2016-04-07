@@ -7,9 +7,10 @@
 
 (define (make-method f accessor)
   (lambda args
-    (if (let? (car args)) 
-	(apply f (accessor (car args)) (cdr args))
-	(apply f (car args) (accessor (cadr args)) (cddr args)))))
+    (apply f
+           (if (let? (car args))
+               (values (accessor (car args)) (cdr args))
+               (values (car args) (accessor (cadr args)) (cddr args))))))
 
 (define (make-object . args)
   (openlet
@@ -23,13 +24,8 @@
       (lambda () (openlet obj))))
 
 
-
 (define (make-local-method f)
-  (let ((accessor (lambda (obj) (obj 'value))))
-    (lambda args
-      (if (let? (car args)) 
-	  (apply f (accessor (car args)) (cdr args))
-	  (apply f (car args) (accessor (cadr args)) (cddr args))))))
+  (make-method f (lambda (obj) (obj 'value))))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -494,18 +490,18 @@
   (let ((mock-number? #f))
 
     (define* (range-method-1 func arg start end)
-      (if (not end)
-	  (func arg (start 'value))
-	  (if (not (let? start))
-	      (func arg start (end 'value))
-	      (func arg (start 'value) end))))
+      (func arg (if (not end)
+		    (start 'value)
+		    (if (not (let? start)) 
+			(values start (end 'value)) 
+			(values (start 'value) end)))))
 
     (define* (range-method-2 func arg1 arg2 start end)
-      (if (not end)
-	  (func arg1 arg2 (start 'value))
-	  (if (not (let? start))
-	      (func arg1 arg2 start (end 'value))
-	      (func arg1 arg2 (start 'value) end))))
+      (func arg1 arg2 (if (not end)
+			  (start 'value)
+			  (if (not (let? start)) 
+			      (values start (end 'value)) 
+			      (values (start 'value) end)))))
 
     (let ((mock-number-class
 	   (openlet

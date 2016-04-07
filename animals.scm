@@ -1214,9 +1214,9 @@
 	(let ((pulse-samps (seconds->samples (if cur-is-long 
 						 (+ 0.04 (random .04)) 
 						 (+ .01 (random .02))))))
-	  (let ((pulse-ampf (make-env (if cur-is-long 
-					  (vector 0 0 .1 .5 2 1 3 0) 
-					  (vector 0 0 1 1 1.5 .3 2 0)) 
+	  (let ((pulse-ampf (make-env (vector 0 0 (if cur-is-long 
+						      (values .1 .5 2 1 3 0)
+						      (values 1 1 1.5 .3 2 0)))
 				      :scaler (* amp (if cur-is-long (+ .6 (random .4)) (+ .1 (random .7))))
 				      :length pulse-samps
 				      :base (if cur-is-long 6.0 3.0)))
@@ -3627,9 +3627,9 @@
 	  (initial-gen (make-oscil initial-pitch))
 	  
 	  (buzz-frq-table (let ((v (make-float-vector buzz-size 0.0))
-				(bfrqf (make-env (if gliss-up 
-						     (list 0 buzz-low .5 buzz-mid 1 buzz-high)
-						     (list 0 buzz-high .5 buzz-mid 1 buzz-low))
+				(bfrqf (make-env (vector 0 (if gliss-up 
+							       (values buzz-low .5 buzz-mid 1 buzz-high)
+							       (values buzz-high .5 buzz-mid 1 buzz-low)))
 						 :length buzz-size 
 						 :scaler (hz->radians 1.0))))
 			    (do ((i 0 (+ i 1)))

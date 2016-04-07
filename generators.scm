@@ -95,9 +95,9 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 	  (yhi (ns hi n)))
       (if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
 	  (ns mid n)
-	  (if (> ylo yhi)
-	      (find-mid-max n lo mid)
-	      (find-mid-max n mid hi)))))
+	  (find-mid-max n (if (> ylo yhi)
+			      (values lo mid)
+			      (values mid hi))))))
   
   (define (find-nodds-mid-max n lo hi)
     (let ((mid (/ (+ lo hi) 2))
@@ -105,9 +105,9 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 	  (yhi (nodds hi n)))
       (if (< (abs (- ylo yhi)) nearly-zero)
 	  (nodds mid n)
-	  (if (> ylo yhi)
-	      (find-nodds-mid-max n lo mid)
-	      (find-nodds-mid-max n mid hi)))))
+	  (find-nodds-mid-max n (if (> ylo yhi)
+				    (values lo mid)
+				    (values mid hi))))))
   
   (if (= ratio 1)
       (find-mid-max n 0.0 (/ pi (+ n .5)))
@@ -342,9 +342,9 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 	  (yhi (nodds hi n)))
       (if (< (abs (- ylo yhi)) 1e-9)
 	  (nodds mid n)
-	  (if (> ylo yhi)
-	      (find-mid-max n lo mid)
-	      (find-mid-max n mid hi)))))
+	  (find-mid-max n (if (> ylo yhi)
+			      (values lo mid)
+			      (values mid hi))))))
   
   (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
 
@@ -6157,12 +6157,11 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 			 (partials '(1 1)) 
 			 wave 
 			 (size *clm-table-size*)) ; size arg is for backwards compatibility
-  (if (not wave)
-      (make-polyshape frequency :partials partials)
-      (make-polyshape frequency :coeffs wave)))
+  (make-polyshape frequency (if wave 
+				(values :coeffs wave) 
+				(values :partials partials))))
 
-(define* (partials->waveshape partials 
-			      (size *clm-table-size*))
+(define* (partials->waveshape partials (size *clm-table-size*))
   (partials->polynomial partials))
 
 

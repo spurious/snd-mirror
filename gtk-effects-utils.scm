@@ -146,12 +146,13 @@
 	      (hbox (and use-hbox (gtk_box_new GTK_ORIENTATION_HORIZONTAL 0)))
 	      (label (gtk_label_new 
 		      (if use-hbox
-			  (if use-log 
-			      (format #f "~A: ~,2F" title initial)
-			      (format #f "~A:" title))
-			  (if use-log
-			      (format #f "~A (~,2F)" title initial)
-			      (format #f "~A" title)))))
+			  (format #f (if use-hbox
+					 (if use-log 
+					     (values "~A: ~,2F" title initial)
+					     (values "~A:" title))
+					 (if use-log
+					     (values "~A (~,2F)" title initial)
+					     (values "~A" title)))))))
 	      (adj (if use-log 
 		       (gtk_adjustment_new (scale-log->linear low initial high) 0 log-scale-ticks 1 10 1)
 		       (gtk_adjustment_new initial low high 0.0 0.0 0.0)))

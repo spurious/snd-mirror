@@ -148,9 +148,9 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
     (lambda (n)
       (help-dialog "Mix Help"
 		   (format #f "Mix ~A (sync: ~A):~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
-			   (if (mix-name n)
-			       (format #f "~S (~A)" (mix-name n) n)
-			       (format #f "~A" n))
+			   (format #f (if (mix-name n)
+					  (values "~S (~A)" (mix-name n) n)
+					  (values "~A" n)))
 			   (mix-sync n)
 			   (mix-position n)
 			   (* 1.0 (/ (mix-position n) (srate (car (mix-home n)))))
