@@ -89,10 +89,7 @@
     new-dialog))
 
 (define (change-label w new-label)
-  (if w
-      (if (GTK_IS_LABEL w)
-	  (gtk_label_set_text (GTK_LABEL w) new-label)
-	  (gtk_label_set_text (GTK_LABEL (gtk_bin_get_child (GTK_BIN w))) new-label))))
+  (if w (gtk_label_set_text (GTK_LABEL (if (GTK_IS_LABEL w) w (gtk_bin_get_child (GTK_BIN w)))) new-label)))
 
 
 ;;; -------- log scaler widget
