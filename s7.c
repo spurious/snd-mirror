@@ -46191,7 +46191,23 @@ static bool catch_1_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
 	    }
 	  if (y)
 	    {
-	      pop_stack(sc);
+	      if (loc > 4)
+		pop_stack(sc);
+	      /* we're at OP_CATCH, normally we want to pop that away, but (handwaving...) if we're coming
+	       *   from s7_eval (indirectly perhaps through s7_eval_c_string), we might push the OP_EVAL_DONE
+	       *   to end that call, but it's pushed at the precatch stack end (far beyond the catch loc).
+	       *   If we catch an error, catch unwinds to its starting point, and the pop_stack above
+	       *   puts us at the bottom of the stack (i.e. stack_end == stack_start), OP_EVAL_DONE.
+	       *   Now we return true, ending up back in eval, because the error handler jumped out of eval,
+	       *   back to wherever we were in eval when we hit the error.  eval jumps back to the start
+	       *   of its loop, and pops the stack to see what to do next!  So the (loc > 4) at least
+	       *   protects against stack underflow, but ideally we'd know we came from OP_CATCH+s7_eval.
+	       *   We can't do anything fancy here because we have to unwind the C stack as well as s7's stack.
+	       *   s7_eval doesn't know anything about the catches on the stack.  We can't look back for
+	       *   OP_EVAL_DONE -- segfault in OP_BEGIN.  Hmmmm.  Perhaps catch should not unwind until the
+	       *   end?  But we want the error handler to run as a part of the calling expression, and
+	       *   in any case the OP_EVAL_DONE is not useful (it marks the end of the no-error case).
+	       */
 	      sc->value = y;
 	      sc->temp4 = sc->nil;
 	      return(true);
@@ -47221,10 +47237,10 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   declare_jump_info();
 
   if (is_c_function(func))
-    return(c_function_call(func)(sc, args));  /* no check for wrong-number-of-args -- is that reasonable? */
+    return(c_function_call(func)(sc, _NFre(args)));  /* no check for wrong-number-of-args -- is that reasonable? */
 
-  sc->temp1 = func; /* this is feeble GC protection */
-  sc->temp2 = args;
+  sc->temp1 = _NFre(func); /* this is feeble GC protection */
+  sc->temp2 = _NFre(args);
 
   store_jump_info(sc);
   set_jump_info(sc, S7_CALL_SET_JUMP);
@@ -47240,7 +47256,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 	s7_pointer p;
 	int argnum;
 	/* incoming args may be non-s7 cells -- check now before they reach the GC */
-	_NFre(func);
 	for (argnum = 0, p = _NFre(args); is_pair(p); argnum++, p = _NFre(cdr(p)))
 	  _NFre(car(p));
       }
@@ -60306,12 +60321,8 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
    */
   if (is_pair(p))
     {
-#if 1
       if ((is_optimized(p)) &&
 	  ((optimize_op(p) & 1) == 0)) /* protect possibly shared code?  Elsewhere we assume these aren't changed */
-#else
-	if (is_optimized(p))
-#endif
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);

@@ -96,9 +96,9 @@
 					  (let loop ((oldpos histpos)
 						     (newpos new-end))
 					    (set! (new-hist newpos) (histbuf oldpos))
-					    (set! newpos (if (zero? newpos) (- new-size 1) (- newpos 1)))
+					    (set! newpos (- (if (zero? newpos) new-size newpos) 1))
 					    (unless (= newpos new-end)
-					      (set! oldpos (if (zero? oldpos) (- histsize 1) (- oldpos 1)))
+					      (set! oldpos (- (if (zero? oldpos) histsize oldpos) 1))
 					      (unless (= oldpos histpos)
 						(loop oldpos newpos))))
 					  (set! histsize new-size)
@@ -369,9 +369,10 @@
 	    (define (red text) (format #f "~C[31m~A~C[0m" #\escape text #\escape))  ; black=30, green=32, yellow=33, blue=34
 	    
 	    (define* (rgb text (r 0) (g 0) (b 0) all-colors)
-	      (if all-colors
-		  (format #f "~C[38;5;~Dm~A~C[0m" #\escape (+ 16 (* 36 (round (* r 5))) (* 6 (round (* g 5))) (round (* b 5))) text #\escape)
-		  (format #f "~C[~Dm~A~C[0m" #\escape (+ 30 (ash (round b) 2) (ash (round g) 1) (round r)) text #\escape)))
+	      (format #f (if all-colors
+			     (values "~C[38;5;~Dm~A~C[0m" #\escape (+ 16 (* 36 (round (* r 5))) (* 6 (round (* g 5))) (round (* b 5))))
+			     (values "~C[~Dm~A~C[0m" #\escape (+ 30 (ash (round b) 2) (ash (round g) 1) (round r))))
+		      text #\escape))
 	    
 	    (define (move-cursor y x)
 	      (format *stderr* "~C[~D;~DH" #\escape y x))
@@ -432,26 +433,26 @@
 	      ;; if a line wraps, it will confuse the redisplay/cursor positioning code. so truncate the display
 	      (let ((line-len (+ (- end start) 1 prompt-length)))
 		(if (>= line-len last-col)
-		    (set! end (- end (- line-len last-col)))))
+		    (set! end (- (+ end line-len) last-col))))
 	      
 	      (if (and red-par-pos
 		       (<= start red-par-pos)
 		       (< red-par-pos end))
 		  (string-append
-		   (if (zero? start)
-		       (format #f "~A" prompt-string)
-		       (format #f "~NC" prompt-length #\space))
-		   (if (= start red-par-pos)
-		       (format #f "~A~A"
-			       (bold (red "(")) 
-			       (substring cur-line (+ start 1) end))
-		       (format #f "~A~A~A"
-			       (substring cur-line start red-par-pos) 
-			       (bold (red "(")) 
-			       (substring cur-line (+ red-par-pos 1) end))))
-		  (if (zero? start)
-		      (format #f "~A~A" prompt-string (substring cur-line 0 end))
-		      (format #f "~NC~A" prompt-length #\space (substring cur-line start end)))))
+		   (format #f (if (zero? start)
+				  (values "~A" prompt-string)
+				  (values "~NC" prompt-length #\space)))
+		   (format #f (if (= start red-par-pos)
+				  (values "~A~A"
+					  (bold (red "(")) 
+					  (substring cur-line (+ start 1) end))
+				  (values "~A~A~A"
+					  (substring cur-line start red-par-pos) 
+					  (bold (red "(")) 
+					  (substring cur-line (+ red-par-pos 1) end)))))
+		  (format #f (if (zero? start)
+				 (values "~A~A" prompt-string (substring cur-line 0 end))
+				 (values "~NC~A" prompt-length #\space (substring cur-line start end))))))
 	    
 	    (define (display-cursor)
 	      (let ((row 0)

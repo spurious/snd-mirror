@@ -161,15 +161,15 @@
   (define* (effects-squelch-channel amp gate-size snd chn no-silence)
     (let ((f0 (make-moving-average gate-size))
 	  (f1 (make-moving-average gate-size :initial-element 1.0)))
-      (if no-silence
-	  (map-channel (lambda (y)
-			 (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-			   (and (not (zero? val)) val)))
-		       0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))
-	  (map-channel (lambda (y) 
-			 (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))
-		       0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size)))))
-  
+      (map-channel
+       (if no-silence
+	   (lambda (y)
+	     (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+	       (and (not (zero? val)) val)))
+	   (lambda (y)
+	     (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+       0 #f snd chn #f
+       (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
   
   (let* ((amp-menu-list ())
 	 (amp-menu (XmCreatePulldownMenu (main-menu effects-menu) "Amplitude Effects"

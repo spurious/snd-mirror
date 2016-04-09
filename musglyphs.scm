@@ -287,10 +287,11 @@
     
     ;; stem
     (if (< dur 3)
-	(if (> line 3)
-	    ;; stem up
-	    (fill-rectangle (+ x0 line-sep) (+ y0 (* .02 size) (* size -0.8) (* line-sep 0.5 line)) (* size .05) (* size 0.8))
-	    (fill-rectangle (- x0 (* size .02)) (+ y0 (* line-sep line 0.5)) (* size .05) (* size 0.8))))
+	(fill-rectangle
+	 (if (> line 3) ; stem up
+	     (values (+ x0 line-sep) (+ y0 (* 0.02 size) (* size -0.8) (* line-sep 0.5 line)))
+	     (values (- x0 (* size 0.02)) (+ y0 (* line-sep line 0.5))))
+	 (* size 0.05) (* size 0.8)))
 
     ;; flags
     (if (< dur .6)

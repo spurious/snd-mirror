@@ -155,9 +155,9 @@
 	  (procedure? (car lst)))
       lst
       (begin
-	(if (symbol? (car lst))
-	    (set-car! lst (symbol->value (car lst)))
-	    (set-car! lst (and (pair? (car lst))
+	(set-car! lst (if (symbol? (car lst))
+			  (symbol->value (car lst))
+			  (and (pair? (car lst))
 			       (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))))
 	(map-values (cdr lst)))))
 

@@ -133,9 +133,9 @@
        (or (= (length a) 0)
 	   (string=? a b)
 	   (if (char=? (string-ref a 0) #\*)
-	       (if (char=? (string-ref b 0) #\*)
-		   (string<? a b)                ; both start with *
-		   (string<? (substring a 1) b))
+	       (string<? (if (char=? (string-ref b 0) #\*) ; both start with *
+			     a (substring a 1))
+			 b)
 	       (string<? a (if (char=? (string-ref b 0) #\*) (substring b 1) b))))))
 
 
@@ -308,13 +308,13 @@
 			      (< href-start leof)
 			      (char-position #\> xref (+ href-start 1))))
 	       (href (and href-start href-end (substring xref (+ href-start href-len) href-end))))
-	  (if href
-	      (set! url-str (if (char=? (href 1) #\#)
-				(string-append url-str "\"" file (substring href 1) (format #f ",~%  "))
-				(string-append url-str href (format #f ",~%  "))))
-	      (set! url-str (string-append url-str (format #f "NULL,~%  "))))
-	  (set! loc (+ leof 1))
-	  ))
+	  (set! url-str (string-append url-str
+				       (if href
+					   (if (char=? (href 1) #\#)
+					       (values "\"" file (substring href 1) (format #f ",~%  "))
+					       (values href (format #f ",~%  ")))
+					   (format #f "NULL,~%  "))))
+	  (set! loc (+ leof 1))))
 
       (set! (outstr j) #\")
       (set! j (+ j 1))
