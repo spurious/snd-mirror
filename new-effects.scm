@@ -2205,15 +2205,15 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			   0 len snd chn #f
 			   (format #f "effects-position-sound ~A ~A" mono-snd pos))
 	      (let ((e1 (make-env pos :length len)))
-		(if (eqv? chn 1)
-		    (map-channel (lambda (y)
-				   (+ y (* (env e1) (read-sample reader1))))
-				 0 len snd chn #f
-				 (format #f "effects-position-sound ~A '~A" mono-snd pos))
-		    (map-channel (lambda (y)
-				   (+ y (* (- 1.0 (env e1)) (read-sample reader1))))
-				 0 len snd chn #f
-				 (format #f "effects-position-sound ~A '~A" mono-snd pos)))))))))
+		(map-channel
+		 (if (eqv? chn 1)
+		     (lambda (y)
+		       (+ y (* (env e1) (read-sample reader1))))
+		     (lambda (y)
+		       (+ y (* (- 1.0 (env e1)) (read-sample reader1)))))
+		 0 len snd chn #f
+		 (format #f "effects-position-sound ~A '~A" mono-snd pos))))))))
+
   
   (define effects-flange 
     (let ((documentation "(effects-flange amount speed time beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))

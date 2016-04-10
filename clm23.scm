@@ -911,11 +911,7 @@
       (set! j (if (> j -1234) (begin (set! k 0) 12) 13))
       (if (not (= j 12)) (format () "if begin expr: ~A~%" j))
       (set! j 123)
-      (case j
-	((0) (set! k -1))
-	((12) (set! k -2))
-	((123) (set! k -3))
-	(else (set! k -4)))
+      (set! k (case j ((0) -1) ((12) -2) ((123) -3) (else -4)))
       (if (not (= k -3)) (format () "cond: ~A ~A~%" j k))
       (set! k (case j
 		((0) -4)

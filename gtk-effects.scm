@@ -138,14 +138,15 @@
   (define* (effects-squelch-channel amp gate-size snd chn no-silence)
     (let ((f0 (make-moving-average gate-size))
 	  (f1 (make-moving-average gate-size :initial-element 1.0)))
-      (if no-silence
-	  (map-channel (lambda (y)
-			 (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-			   (and (not (zero? val)) val)))
-		       0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))
-	  (map-channel (lambda (y) 
-			 (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))
-		       0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size)))))
+      (map-channel
+       (if no-silence
+	   (lambda (y)
+	     (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+	       (and (not (zero? val)) val)))
+	   (lambda (y)
+	     (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+       0 #f snd chn #f
+       (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
   
   (let ((amp-menu-list ())
 	(amp-menu (gtk_menu_item_new_with_label "Amplitude Effects"))
@@ -2013,15 +2014,15 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 		       0 len snd chn #f
 		       (format #f "effects-position-sound ~A ~A" mono-snd pos))
 	  (let ((e1 (make-env pos :length len)))
-	    (if (eqv? chn 1)
-		(map-channel (lambda (y)
-			       (+ y (* (env e1) (read-sample reader1))))
-			     0 len snd chn #f
-			     (format #f "effects-position-sound ~A '~A" mono-snd pos))
-		(map-channel (lambda (y)
-			       (+ y (* (- 1.0 (env e1)) (read-sample reader1))))
-			     0 len snd chn #f
-			     (format #f "effects-position-sound ~A '~A" mono-snd pos)))))))
+	    (map-channel
+	     (if (eqv? chn 1)
+		 (lambda (y)
+		   (+ y (* (env e1) (read-sample reader1))))
+		 (lambda (y)
+		   (+ y (* (- 1.0 (env e1)) (read-sample reader1)))))
+	     0 len snd chn #f
+	     (format #f "effects-position-sound ~A '~A" mono-snd pos))))))
+
   
   (define* (effects-flange amount speed time beg dur snd chn)
     (let* ((ri (make-rand-interp :frequency speed :amplitude amount))

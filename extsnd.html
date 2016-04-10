@@ -2301,13 +2301,11 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
       (let* ((snd (hook 'snd))
              (chn (hook 'chn))
              (dots (- (<a class=quiet href="#rightsample">right-sample</a> snd chn) (<a class=quiet href="#leftsample">left-sample</a> snd chn))))
-        (cond ((&gt; dots 100)
-	       (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 1))
-	      ((&gt; dots 50)
-	       (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 3))
-	      ((&gt; dots 25)
-	       (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 5))
-	      (else (set! (<a class=quiet href="#dotsize">dot-size</a> snd chn) 8)))))))
+        (set! (dot-size snd chn)
+              (cond ((&gt; dots 100) 1)
+	            ((&gt; dots 50) 3)
+	            ((&gt; dots 25) 5)
+ 	            (else 8)))))))
 </pre>
 <div class="spacer"></div>
 

@@ -1201,15 +1201,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	     (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))
 
 	((pair? (cadr expr))
-	 (case (car expr)
-	   ((let let* letrec letrec* do)
-	    (gather-symbols (cddr expr) ce lst (append ignore (map car (cadr expr)))))
-	   ((lambda)
-	    (gather-symbols (cddr expr) ce lst (append ignore (cadr expr))))
-	   ((lambda*)
-	    (gather-symbols (cddr expr) ce lst (append ignore (map (lambda (a) (if (pair? a) (car a) a)) (cadr expr)))))
-	   (else
-	    (gather-symbols (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore))))
+	 (gather-symbols (case (car expr)
+			   ((let let* letrec letrec* do)
+			    (values (cddr expr) ce lst (append ignore (map car (cadr expr)))))
+			   ((lambda) 
+			    (values (cddr expr) ce lst (append ignore (cadr expr))))
+			   ((lambda*)
+			    (values (cddr expr) ce lst (append ignore (map (lambda (a) (if (pair? a) (car a) a)) (cadr expr)))))
+			   (else
+			    (values (cdr expr) ce (gather-symbols (car expr) ce lst ignore) ignore)))))
 
 	((and (eq? (car expr) 'lambda)
 	      (symbol? (cadr expr)))
@@ -1613,18 +1613,17 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 
 (define (sequence->string val)
-  (cond ((or (not (sequence? val)) (empty? val))
-	 (format #f "~S" val))
-	((vector? val)       
-	 (format #f "#(~{~A~| ~})" val))
-	((let? val)  
-	 (format #f "(inlet ~{'~A~| ~})" val))
-	((hash-table? val)   
-	 (format #f "(hash-table ~{'~A~| ~})" val))
-	((string? val)       
-	 (format #f (if (byte-vector? val) "#u8(~{~D~| ~})" "\"~{~A~|~}\"") val))
-	(else                
-	 (format #f "(~{~A~| ~})" val))))
+  (format #f
+	  (cond ((or (not (sequence? val)) (empty? val)) "~S")
+		((vector? val) "#(~{~A~| ~})")
+		((let? val) "(inlet ~{'~A~| ~})")
+		((hash-table? val) "(hash-table ~{'~A~| ~})")
+		((string? val)
+		 (if (byte-vector? val)
+		     "#u8(~{~D~| ~})"
+		     "\"~{~A~|~}\""))
+		(else "(~{~A~| ~})"))
+            val))
 
 
 ;;; ----------------

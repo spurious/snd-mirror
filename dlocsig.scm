@@ -620,15 +620,19 @@
 					;(define (make-path) (list 'path () () () () () () () () ()))
 
 (define (describe path)
-  (cond ((memq (car path) '(bezier-path open-bezier-path))
-	 (format #f "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
+  (format #f
+	  (if (memq (car path) '(bezier-path open-bezier-path))
+	      (values
+	       "<bezier-path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%  ~
                          x: ~A~%  y: ~A~%  z: ~A~%  v: ~A~%  bx: ~A~%  by: ~A~%  bz: ~A~%  error: ~A~%  curvature: ~A~%"
-		 (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path) (path-ty path) (path-tz path) (path-tt path)
-		 (bezier-x path) (bezier-y path) (bezier-z path) (bezier-v path) (bezier-bx path) (bezier-by path) (bezier-bz path) (bezier-error path) (bezier-curvature path)))
-	(else
-	 (format #f "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
-		 (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path) (path-ty path) (path-tz path) (path-tt path)))))
-
+	       (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path)
+	       (path-ty path) (path-tz path) (path-tt path) (bezier-x path) (bezier-y path)
+	       (bezier-z path) (bezier-v path) (bezier-bx path) (bezier-by path) (bezier-bz path)
+	       (bezier-error path) (bezier-curvature path))
+	      (values
+	       "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
+	       (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path)
+	       (path-ty path) (path-tz path) (path-tt path)))))
 
 ;;; Inquiries into the state of the path
 
@@ -2305,7 +2309,7 @@
                     (position-1 val (cdr lst) (+ 1 pos))))))))
     
     ;; push gain and time into envelopes
-    (define (push-gains group gains dist time num)
+    (define (push-gains group gains dist time)
       (let ((outputs (make-vector out-channels 0.0))
 	    (rev-outputs (make-vector rev-channels 0.0))
 	     ;; attenuation with distance of reverberated signal
@@ -2387,7 +2391,7 @@
 	    (if inside
 		;; still in the same group
 		(begin
-		  (push-gains prev-group gains dist time 1)
+		  (push-gains prev-group gains dist time)
 		  (set! prev-x x)
 		  (set! prev-y y)
 		  (set! prev-z z))
@@ -2429,12 +2433,12 @@
 						(inside (car vals))
 						(gains (cadr vals)))
 					   (if inside
-					       (push-gains prev-group gains di ti 2)
+					       (push-gains prev-group gains di ti)
 					       (let* ((val1 (calculate-gains xi yi zi group))
 						      (inside (car val1))
 						      (gains (cadr val1)))
 						 (if inside
-						     (push-gains group gains di ti 3)
+						     (push-gains group gains di ti)
 						     ;; how did we get here?
 						     (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
 				
@@ -2460,12 +2464,12 @@
 						(inside (car vals))
 						(gains (cadr vals)))
 					   (if inside 
-					       (push-gains prev-group gains di ti 4)
+					       (push-gains prev-group gains di ti)
 					       (let* ((val1 (calculate-gains xi yi 0.0 group))
 						      (inside (car val1))
 						      (gains (cadr val1)))
 						 (if inside
-						     (push-gains group gains di ti 5)
+						     (push-gains group gains di ti)
 						     ;; how did we get here?
 						     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
 				
@@ -2494,7 +2498,7 @@
 					 (group-id group) (group-speakers group)))))
 			  
 			  ;; finally push gains for current group
-			  (push-gains group gains dist time 6)
+			  (push-gains group gains dist time)
 			  (set! prev-group group)
 			  (set! prev-x x)
 			  (set! prev-y y)
@@ -2505,7 +2509,7 @@
 		 (gains (cadr vals)))
 	    (if group
 		(begin
-		  (push-gains group gains dist time 7)
+		  (push-gains group gains dist time)
 		  (set! prev-group group)
 		  (set! prev-x x)
 		  (set! prev-y y)
@@ -2803,7 +2807,7 @@
 		(set! (channel-rev-gains i) (cons signal (channel-rev-gains i))))))))
     
     ;; Loop through all virtual rooms for one breakpoint in the trajectory
-    (define (walk-all-rooms x y z time num) ; 'num is for debugging?
+    (define (walk-all-rooms x y z time)
       (let ((room 0)
 	    (dist (distance x y z)))
 	;; remember first and last distances
@@ -2855,8 +2859,8 @@
     ;;   a change in radial direction implies a change in 
     ;;   doppler shift that has to be reflected as a new
     ;;   point in the rendered envelopes
-    (define (change-direction xa ya za ta xb yb zb tb num)
-      (walk-all-rooms xa ya za ta 1)
+    (define (change-direction xa ya za ta xb yb zb tb)
+      (walk-all-rooms xa ya za ta)
       (if (not (and (= xa xb)
 		    (= ya yb)
 		    (= za zb)
@@ -2871,9 +2875,7 @@
 		(walk-all-rooms xi yi zi
 				(+ tb (* (- ta tb)
 					 (/ (distance (- xb xi) (- yb yi) (- zb zi))
-					    (distance (- xb xa) (- yb ya) (- zb za)))))
-				2
-				)))))
+					    (distance (- xb xa) (- yb ya) (- zb za))))))))))
     
     ;; Check to see if a segment intersects the inner sphere:
     ;;   points inside are rendered differently so we need to
@@ -2889,7 +2891,7 @@
 	     (disc (- (* bsq bsq) u))
 	     (hit (>= disc 0.0)))
 	(if (not hit)
-	    (change-direction xa ya za ta xb yb zb tb 8)
+	    (change-direction xa ya za ta xb yb zb tb)
 	    ;; ray defined by two points hits sphere
 	    (let* ((root (sqrt disc))
 		   (rin  (- (+ bsq root)))
@@ -2915,17 +2917,17 @@
 					 (distance (- xb xa) (- yb ya) (- zb za))))))))
 	      (if xi
 		  (begin
-		    (change-direction xa ya za ta xi yi zi ti 1)
+		    (change-direction xa ya za ta xi yi zi ti)
 		    (if xo
 			(begin
-			  (change-direction xi yi zi ti xo yo zo to 2)
-			  (change-direction xo yo zo to xb yb zb tb 3))
-			(change-direction xi yi zi ti xb yb zb tb 4)))
+			  (change-direction xi yi zi ti xo yo zo to)
+			  (change-direction xo yo zo to xb yb zb tb))
+			(change-direction xi yi zi ti xb yb zb tb)))
 		  (if xo
 		      (begin
-			(change-direction xa ya za ta xo yo zo to 5)
-			(change-direction xo yo zo to xb yb zb tb 6))
-		      (change-direction xa ya za ta xb yb zb tb 7)))))))
+			(change-direction xa ya za ta xo yo zo to)
+			(change-direction xo yo zo to xb yb zb tb))
+		      (change-direction xa ya za ta xb yb zb tb)))))))
     
     ;; Recursively split segment if longer than minimum rendering distance:
     ;;   otherwise long line segments that have changes in distance render 
@@ -2969,7 +2971,7 @@
     ;; Loop for each pair of points in the position envelope and render them
     (if (= (length xpoints) 1)
 	;; static source (we should check if this is inside the inner radius?)
-	(walk-all-rooms (car xpoints) (car ypoints) (car zpoints) (car tpoints) 3)
+	(walk-all-rooms (car xpoints) (car ypoints) (car zpoints) (car tpoints))
 	
 	;; moving source
 	(let ((len (- (min (length xpoints) (length ypoints) (length zpoints) (length tpoints)) 1)))
@@ -2985,7 +2987,7 @@
 		  (tb (tpoints (+ i 1))))
 	      (fminimum-segment-length xa ya za ta xb yb zb tb)
 	      (if (= i len)
-		  (walk-all-rooms xb yb zb tb 4))))))
+		  (walk-all-rooms xb yb zb tb))))))
     
     ;; create delay lines for output channels that need them
     (if speakers

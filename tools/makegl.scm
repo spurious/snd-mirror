@@ -750,9 +750,10 @@
     (hey "Xen_wrap_~A(gxg_~A_w, gxg_~A)~%" 
 	 (if (>= cargs max-args) 
 	     "any_args"
-	     (format #f (if (> refargs 0)
-			    (values "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
-			    (values "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s")))))
+	     (format #f (values (if (> refargs 0)
+				    (values "~D_optional_arg~A" cargs)
+				    (values "~A_arg~A" (if (zero? cargs) "no" (number->string cargs))))
+				(if (= cargs 1) "" "s"))))
 	 (car func) (car func))
     (if if-fnc
 	(hey "#endif~%"))

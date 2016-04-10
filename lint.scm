@@ -425,11 +425,11 @@
 		 x))
 	   sequence))
     
-    (define (remove-if p l)
-      (cond ((null? l) ())
-	    ((p (car l)) (remove-if p (cdr l)))
-	    (else (cons (car l) 
-			(remove-if p (cdr l))))))
+    (define (remove-if p lst)
+      (cond ((null? lst) ())
+	    ((p (car lst)) (remove-if p (cdr lst)))
+	    (else (cons (car lst) 
+			(remove-if p (cdr lst))))))
     
     (define (lint-remove-duplicates lst env)
       (reverse (let rem-dup ((lst lst)
@@ -3694,8 +3694,8 @@
 		       (eq? (car arg) 'number->string)
 		       (= (length arg) 3))
 		  (case (caddr arg)
-		    ((2)  (values "~B" arg-arg))
-		    ((8)  (values "~O" arg-arg))
+		    ((2) (values "~B" arg-arg))
+		    ((8) (values "~O" arg-arg))
 		    ((10) (values "~D" arg-arg))
 		    ((16) (values "~X" arg-arg))
 		    (else (values "~A" arg))))
@@ -3899,6 +3899,7 @@
 	    (lambda args
 	      #t))))
 
+
     (define (check-special-cases caller head form env)
       ;; here curlet won't change (leaving aside additions via define)
       ;; keyword head here if args to func/macro that we don't know about
@@ -4083,14 +4084,14 @@
 					      (memq x '(#f #t () #<unspecified> #<undefined> #<eof>)))))
 				   (cadr items))))
 		 (if bad
-		     (cond ((not (pair? bad))
-			    (lint-format "pointless list member: ~S in ~A" caller bad form))
-			   ((eq? (car bad) 'quote)
-			    (lint-format "stray quote? ~A" caller form))
-			   ((eq? (car bad) 'unquote)
-			    (lint-format "stray comma? ~A" caller form))
-			   (else (lint-format "pointless list member: ~S in ~A" caller bad form)))))))))
-			 
+		     (lint-format (cond ((not (pair? bad))
+					 (values "pointless list member: ~S in ~A" caller bad))
+					((eq? (car bad) 'quote) 
+					 (values "stray quote? ~A" caller))
+					((eq? (car bad) 'unquote) 
+					 (values "stray comma? ~A" caller))
+					(else (values "pointless list member: ~S in ~A" caller bad)))
+				  form)))))))
 	
 	;; ----------------
 	((car cdr 
@@ -6360,7 +6361,7 @@
 				     h)))
 	(lambda (caller head form env)
 	  (let ((data (var-member head env)))
-	    ;; (format *stderr* "~A call: ~A~%" form fdata)
+	    ;; (format *stderr* "~A call: ~A~%" form data)
 	    (if (var? data)
 		(let ((fdata (cdr data)))
 		  ;; a local var
@@ -6396,6 +6397,7 @@
 						   (truncated-list->string form))))
 				(if (> (- call-args (keywords (cdr form))) opt) ; multiple-values can make this worse, (values)=nothing doesn't apply here
 				    (lint-format "~A has too many arguments: ~A" caller head (truncated-list->string form)))))
+
 			  (unless (fdata 'allow-other-keys)
 			    (let ((last-was-key #f)
 				  (have-keys 0)
@@ -6510,6 +6512,7 @@
 			    (if (and (not (procedure-setter head-value))
 				     (> (- args (keywords (cdr form))) max-arity))
 				(lint-format "~A has too many arguments: ~A" caller head (truncated-list->string form))))
+
 			(when (and (procedure? head-value)
 				   (pair? (cdr form))) ; there are args (the not-enough-args case is checked above)
 			  (if (zero? max-arity)
@@ -6712,10 +6715,12 @@
 
 	   ;(format *stderr* "~A (ref/set/type: ~A ~A ~A): init: ~A history: ~A~%"  (var-name local-var) (var-ref local-var) (var-set local-var) otype (var-initial-value local-var) (var-history local-var))
 	   
-	   (if (hash-table-ref syntaces vname)
-	       (lint-format "~A ~A named ~A is asking for trouble" caller head otype vname)
-	       (if (not (symbol? vname))
-		   (lint-format "bad ~A ~A name: ~S in ~S" caller head otype vname local-var)))
+	   (cond ((hash-table-ref syntaces vname)
+		  (lint-format "~A ~A named ~A is asking for trouble" caller head otype vname))
+		 ((not (symbol? vname))
+		  (lint-format "bad ~A ~A name: ~S in ~S" caller head otype vname local-var))
+		 ((eq? vname 'l)
+		  (lint-format "\"l\" is a really bad variable name" caller)))
 	   
 	   (unless (eq? vname lambda-marker)
 	     (if (eq? otype 'variable)
@@ -8335,6 +8340,46 @@
 			 ((not (pair? p)) #f)
 		       (tree-call (car p))))))))))
 
+    (define (partition-form start len)
+      (let ((ps (make-vector len))
+	    (qs (make-vector len)))
+	(do ((i 0 (+ i 1))
+	     (p start (cdr p)))
+	    ((= i len))
+	  (set! (ps i) (cadar p))
+	  (set! (qs i) (reverse (cadar p))))
+
+	(let* ((header-len (length (ps 0)))
+	       (trailer-len header-len)
+	       (result-min-len header-len))
+	  (do ((i 1 (+ i 1)))
+	      ((= i len))
+	    (set! result-min-len (min result-min-len (length (ps i))))
+	    (do ((k 1 (+ k 1))
+		 (p (cdr (ps i)) (cdr p))
+		 (f (cdr (ps 0)) (cdr f)))
+		((or (= k header-len)
+		     (not (pair? p))
+		     (not (equal? (car p) (car f))))
+		 (set! header-len k)))
+	    (do ((k 0 (+ k 1))
+		 (q (qs i) (cdr q))
+		 (f (qs 0) (cdr f)))
+		((or (= k trailer-len)
+		     (not (pair? q))
+		     (not (equal? (car q) (car f))))
+		 (set! trailer-len k))))
+	  
+	  (if (= result-min-len header-len)
+	      (begin
+		(set! header-len (- header-len 1))
+		(set! trailer-len 0)))
+	  (if (<= result-min-len (+ header-len trailer-len))
+	      (set! trailer-len (- result-min-len header-len 1)))
+
+	  (values header-len trailer-len result-min-len))))
+
+
     (define (lint-walk caller form env)
       ;; walk a form, here curlet can change
       ;; (format *stderr* "lint-walk ~A ~A~%" form env)
@@ -9452,7 +9497,6 @@
 
 			   ;; (cond (A (and B C)) (else (and B D))) et al never happens
 			   
-
 			   ;; ----------------
 			   ;; if regular cond + else
 			   ;;   scan all return blocks
@@ -9460,7 +9504,8 @@
 			   ;;   rewrite as header + cond|if + trailer
 			   ;; given values and the presence of else, every possibility is covered
 			   ;; at least (car result) has to match across all
-			   (when (and (pair? (cdr form))
+			   (when (and (> len 1) ; (cond (else ...)) is handled elsewhere
+				      (pair? (cdr form))
 				      (pair? (cadr form))
 				      (not (tree-set-member '(unquote #_{list}) form)))
 			     (let ((first-clause (cadr form))
@@ -9475,7 +9520,8 @@
 					  (equal? (caadr first-clause) (caadr else-clause))) ; there's some hope we'll match
 				 (let ((first-result (cadr first-clause))
 				       (first-func (caadr first-clause)))
-				   (when (and (> (length first-result) 1)
+				   (when (and (pair? (cdr first-result))
+					      (not (eq? first-func 'values))
 					      (or (not (hash-table-ref syntaces first-func))
 						  (eq? first-func 'set!))
 					      (every? (lambda (c)
@@ -9483,71 +9529,39 @@
 							     (pair? (cdr c))
 							     (pair? (cadr c))
 							     (null? (cddr c))
+							     (pair? (cdadr c))
 							     (equal? first-func (caadr c))))
 						      (cddr form)))
-				     (let ((ps (make-vector len))
-					   (qs (make-vector len)))
-				       (do ((i 0 (+ i 1))
-					    (p (cdr form) (cdr p)))
-					   ((= i len))
-					 (set! (ps i) (cadar p))
-					 (set! (qs i) (reverse (cadar p))))
-				       (let* ((header-len (length first-result))
-					      (trailer-len header-len))
-					 (do ((i 1 (+ i 1)))
-					     ((= i len))
-					   (do ((k 1 (+ k 1))
-						(p (cdr (ps i)) (cdr p))
-						(f (cdr (ps 0)) (cdr f)))
-					       ((or (= k header-len)
-						    (not (pair? p))
-						    (not (equal? (car p) (car f))))
-						(set! header-len k)))
-					   (do ((k 0 (+ k 1))
-						(q (qs i) (cdr q))
-						(f (qs 0) (cdr f)))
-					       ((or (= k trailer-len)
-						    (not (pair? q))
-						    (not (equal? (car q) (car f))))
-						(set! trailer-len k))))
-					 ;; all results match header-len entries at start and trailer-len entries at end
-					 ;; we know header-len is at least 1
-					 
-					 ;; this is getting ugly...
-					 ;;   the real problem here is that (values) in an arglist is #<unspecified> not simply ignored
-					 (let ((rlen (length first-result)))
-					   (if (= rlen header-len)
-					       (begin
-						 (set! header-len (- header-len 1))
-						 (set! trailer-len 0)))
-					   (if (<= rlen (+ header-len trailer-len))
-					       (set! trailer-len (- rlen header-len 1)))
-					   
-					   (when (or (not (eq? first-func 'set!))
-						     (> header-len 1))
-					     (if (and (= len 2)
-						      (not (equal? first-result (cadr else-clause))))
-						 (lint-format "perhaps ~A" caller
-							      (let ((flen (- rlen header-len trailer-len))
-								    (elen (- (length (cadr else-clause)) header-len trailer-len)))
-								(when (zero? elen)
-								  (if (positive? trailer-len)
-								      (set! trailer-len (- trailer-len 1))
-								      (set! header-len (- header-len 1)))
-								  (set! elen 1)
-								  (set! flen (+ flen 1)))
-								(let ((fmid (if (= flen 1)
-										(list-ref first-result header-len)
-										`(values ,@(copy first-result (make-list flen) header-len))))
-								      (emid (if (= elen 1)
-										(list-ref (cadr else-clause) header-len)
-										`(values ,@(copy (cadr else-clause) (make-list elen) header-len)))))
-								  (lists->string form `(,@(copy first-result (make-list header-len))
-											(if ,(car first-clause) ,fmid ,emid)
-											,@(copy first-result (make-list trailer-len) (+ header-len flen))))))))
-					     ;; TODO:
-					     ;; else basically the same but all lengths checked and cond not if
-					     )))))))))
+				     ((lambda (header-len trailer-len result-min-len)
+					(when (or (not (eq? first-func 'set!))
+						  (> header-len 1))
+					  (let ((header (copy first-result (make-list header-len)))
+						(trailer (copy first-result (make-list trailer-len) (- (length first-result) trailer-len))))
+					    (if (= len 2)
+						(when (not (equal? first-result (cadr else-clause))) ; handled elsewhere (all results equal -> result)
+						  (lint-format "perhaps ~A" caller
+							       (let ((else-result (cadr else-clause)))
+								 (let ((first-mid-len (- (length first-result) header-len trailer-len))
+								       (else-mid-len (- (length else-result) header-len trailer-len)))
+								   (let ((fmid (if (= first-mid-len 1)
+										   (list-ref first-result header-len)
+										   `(values ,@(copy first-result (make-list first-mid-len) header-len))))
+									 (emid (if (= else-mid-len 1)
+										   (list-ref else-result header-len)
+										   `(values ,@(copy else-result (make-list else-mid-len) header-len)))))
+								     (lists->string form `(,@header (if ,(car first-clause) ,fmid ,emid) ,@trailer)))))))
+						;; len > 2 so use cond in the revision
+						(let ((middle (map (lambda (c)
+								     (let ((test (car c))
+									   (result (cadr c)))
+								       (let ((mid-len (- (length result) header-len trailer-len)))
+									 `(,test ,(if (= mid-len 1)
+										      (list-ref result header-len)
+										      `(values ,@(copy result (make-list mid-len) header-len)))))))
+								   (cdr form))))
+						  (lint-format "perhaps ~A" caller
+							       (lists->string form `(,@header (cond ,@middle) ,@trailer))))))))
+				      (partition-form (cdr form) len)))))))
 			   ;; ----------------
 			 
 			   (let ((falses ())
@@ -9830,7 +9844,7 @@
 			       
 			       (define (start-search clauses test)
 				 (if (code-constant? (cadr test))
-				     (if (memq (car test) '(= string=? string-ci=? eq? eqv? equal? char=? char-ci=?))
+				     (if (memq (car test) '(= string=? string-ci=? eq? eqv? equal? char=? char-ci=?)) 
 					 (set! c caddr))
 				     (if (code-constant? (caddr test))
 					 (set! c cadr)))
@@ -10070,26 +10084,75 @@
 		       (let ((sel-type #t)
 			     (selector (cadr form)))
 			 
-#|
-;; bazillions of these, some completely collapsible!
-			   (if (pair? (cddr form))
-			       (let ((clauses (cddr form)))
-				 (if (and (pair? (car clauses))
-					  (pair? (cdar clauses))
-					  (null? (cddar clauses))
-					  (pair? (cadar clauses))
-					  (pair? (list-ref form (- (length form) 1)))
-					  (eq? (car (list-ref form (- (length form) 1))) 'else))
-				     (let ((res (caadar clauses)))
-				       (if (every? (lambda (c)
-						     (and (pair? c)
-							  (pair? (cdr c))
-							  (pair? (cadr c))
-							  (null? (cddr c))
-							  (eq? res (caadr c))))
-						   (cdr clauses))
-					   (format *stderr* "~A~%~%" (lint-pp form)))))))
-|#
+
+			 ;; ----------------
+			 ;; if regular case + else -- just like cond above
+			 (let ((len (- (length form) 2))) ; number of clauses
+			   (when (and (> len 1) ; (case x (else ...)) is handled elsewhere
+				      (pair? (cdr form))
+				      (pair? (cddr form))
+				      (pair? (caddr form))
+				      (not (tree-set-member '(unquote #_{list}) form)))
+			     (let ((first-clause (caddr form))
+				   (else-clause (list-ref form (+ len 1))))
+			       (when (and (pair? (cdr first-clause))
+					  (null? (cddr first-clause))
+					  (pair? (cadr first-clause))
+					  (pair? else-clause)
+					  (eq? (car else-clause) 'else)
+					  (pair? (cdr else-clause))
+					  (pair? (cadr else-clause))
+					  (equal? (caadr first-clause) (caadr else-clause))) ; there's some hope we'll match
+				 (let ((first-result (cadr first-clause))
+				       (first-func (caadr first-clause)))
+				   (when (and (pair? (cdr first-result))
+					      (not (eq? first-func 'values))
+					      (or (not (hash-table-ref syntaces first-func))
+						  (eq? first-func 'set!))
+					      (every? (lambda (c)
+							(and (pair? c)
+							     (pair? (cdr c))
+							     (pair? (cadr c))
+							     (null? (cddr c))
+							     (pair? (cdadr c))
+							     (equal? first-func (caadr c))))
+						      (cdddr form)))
+
+				     ((lambda (header-len trailer-len result-mid-len)
+					(when (or (not (eq? first-func 'set!))
+						  (> header-len 1))
+					  (let ((header (copy first-result (make-list header-len)))
+						(trailer (copy first-result (make-list trailer-len) (- (length first-result) trailer-len))))
+					    (if (= len 2)
+						(when (not (equal? first-result (cadr else-clause))) ; handled elsewhere (all results equal -> result)
+						  (lint-format "perhaps ~A" caller
+							       (let ((else-result (cadr else-clause)))
+								 (let ((first-mid-len (- (length first-result) header-len trailer-len))
+								       (else-mid-len (- (length else-result) header-len trailer-len)))
+								   (let* ((fmid (if (= first-mid-len 1)
+										    (list-ref first-result header-len)
+										    `(values ,@(copy first-result (make-list first-mid-len) header-len))))
+									  (emid (if (= else-mid-len 1)
+										    (list-ref else-result header-len)
+										    `(values ,@(copy else-result (make-list else-mid-len) header-len))))
+									  (middle (if (= (length (car first-clause)) 1)
+										      `(eqv? ,(cadr form) ,(caar first-clause))
+										      `(memv ,(cadr form) ',(car first-clause)))))
+								     (lists->string form `(,@header (if ,middle ,fmid ,emid) ,@trailer)))))))
+						;; len > 2 so use case in the revision
+						(let ((middle (map (lambda (c)
+								     (let ((test (car c))
+									   (result (cadr c)))
+								       (let ((mid-len (- (length result) header-len trailer-len)))
+									 `(,test ,(if (= mid-len 1)
+										      (list-ref result header-len)
+										      `(values ,@(copy result (make-list mid-len) header-len)))))))
+								   (cddr form))))
+						  (lint-format "perhaps ~A" caller
+							       (lists->string form `(,@header (case ,(cadr form) ,@middle) ,@trailer))))))))
+				      (partition-form (cddr form) len))))))))
+			   ;; ----------------
+
 
 			 (let ((clauses (cddr form)))            ; (case x ((a) #t) (else #f)) -> (eq? x 'a) -- this stuff actually happens!
 			   (if (and (= (length clauses) 2)
@@ -11611,10 +11674,11 @@
 					  (not (memq caller (var-scope v))))
 				     (let ((cv (var-member caller env)))
 				       (set! (var-scope v) 
-					     (if (and (var? cv)
-						      (memq (var-ftype cv) '(define lambda define* lambda*))) ; named-let does not define ftype
-						 (cons caller (var-scope v))
-						 (cons (cons caller env) (var-scope v)))))))
+					     (cons (if (and (var? cv)
+							    (memq (var-ftype cv) '(define lambda define* lambda*))) ; named-let does not define ftype
+						       caller
+						       (cons caller env))
+						   (var-scope v))))))
 
 			     (if (assq head deprecated-ops)
 				 (lint-format "~A is deprecated; use ~A" caller head (cdr (assq head deprecated-ops))))
@@ -12015,7 +12079,7 @@
 				   lint-left-margin #\space 
 				   (car var) var-file *current-file*)))))
 	       vars))
-	  
+
 	  (if (and (string? file)
 		   (pair? vars))
 	      (report-usage top-level-marker "" vars vars)))
@@ -12202,11 +12266,10 @@
 ;;; pp handling of (list ((lambda...)..)) is bad
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; indentation is confused in pp by if expr+values?
-;;; differ-in-* for case/cond (lots of hits)
-;;;   two branch case->if since all had else
-;;; perhaps look for repeats anywhere?
 ;;; save all bound names -- report those used a lot, also is-|get- -> ?|<>, also levenshtein neighbors
-;;;   if get+set -> dilambda -- what other noise words are used (-ref|-set!) -- look at all? (ie define-* etc) -- names.data
-;;; could case|cond=> use values for multiarg?
-;;;
+;;;   if get+set -> dilambda -- what other noise words are used (-ref|-set!)
+;;; simple function used only once -> use? or named-let if recursive?
+;;; do+int step->list-ref, car+memx/assx->orig -- is this already in place? proper-list?+car->pair?
+;;; cond of string=?s -> case of string->symbol? (rather than assoc+string=)
+;;; maybe try (lint-walk of guard expansion)
 ;;; 114

@@ -1847,9 +1847,10 @@ is a physical model of a flute:
 	  (frqf (and (not with-noise)
 		     (make-env freqcosfun  :duration dur
 			       :scaler (hz->radians (- cosfreq1 cosfreq0)))))
-	  (ampf (if with-noise
-		    (make-env noifun :scaler noiamp :duration dur)
-		    (make-env ampcosfun :scaler cosamp :duration dur)))
+	  (ampf (make-env (if with-noise
+			      (values noifun :scaler noiamp)
+			      (values ampcosfun :scaler cosamp))
+			  :duration dur))
 	  (rn (and with-noise
 		   (make-rand :frequency ranfreq)))
 	  (cn (and (not with-noise)

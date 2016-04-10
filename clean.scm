@@ -385,14 +385,14 @@
   (let ((clicks (as-one-edit (lambda () (remove-single-sample-clicks 8 snd chn)))))
     (format () (if (> clicks 0)
 		   (values "~%; fixed ~D single sample clicks" clicks)
-		   (values "~%; no single-sample clicks found"))))
+		   "~%; no single-sample clicks found")))
 
   ;; look for obvious clipping and try to reconstruct
   (let ((mx (maxamp snd chn)))
     (if (>= mx 1.0)
 	(let ((clips (unclip-channel snd chn)))
 	  (format () (if (eq? clips 'no-clips)
-			 (values "~%; no clipped portions found")
+			 "~%; no clipped portions found"
 			 (values "~%; reconstructed ~D clipped portions" (list-ref clips 3)))))
 	(format () "~%; no obvious clipping (max amp: ~A)" mx)))
 

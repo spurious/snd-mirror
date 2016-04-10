@@ -74258,6 +74258,7 @@ int main(int argc, char **argv)
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * check stdin-prompt and s7webserver
+ * add the s7_eval bug to ffitest
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
