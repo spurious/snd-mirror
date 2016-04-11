@@ -97,30 +97,24 @@
 		  (mark-sync-color "yellow")
 		  
 		  (set! play-between-marks-dialog 
-			(make-effect-dialog 
-			 play-between-marks-label
-			 
-			 (if (provided? 'snd-gtk)
-			     (lambda (w context) (cp-play-between-marks))
-			     (lambda (w context info) (cp-play-between-marks)))
-			 
-			 (if (provided? 'snd-gtk)
-			     (lambda (w context)
-			       (help-dialog "Define selection by marks Help"
-					    "Plays area between specified marks. Use the sliders to select the boundary marks."))
-			     (lambda (w context info)
-			       (help-dialog "Define selection by marks Help"
-					    "Plays area between specified marks. Use the sliders to select the boundary marks.")))
-			 
-			 (if (provided? 'snd-gtk)
-			     (lambda (w data)
-			       ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))  play-between-marks-m1)
-			       ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders))  play-between-marks-m2)
-			       )
-			     (lambda (w c i)
-			       ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) play-between-marks-m1))
-			       ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) play-between-marks-m2))))))
-		  
+			(make-effect-dialog play-between-marks-label
+					    (if (provided? 'snd-gtk)
+						(values (lambda (w context)
+							  (cp-play-between-marks))
+							(lambda (w context)
+							  (help-dialog "Define selection by marks Help"
+								       "Plays area between specified marks. Use the sliders to select the boundary marks."))
+							(lambda (w data)
+							  ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) play-between-marks-m1)
+							  ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) play-between-marks-m2)))
+						(values (lambda (w context info)
+							  (cp-play-between-marks))
+							(lambda (w context info)
+							  (help-dialog "Define selection by marks Help"
+								       "Plays area between specified marks. Use the sliders to select the boundary marks."))
+							(lambda (w c i)
+							  ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) play-between-marks-m1))
+							  ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) play-between-marks-m2)))))))
 		  (set! sliders
 			(add-sliders 
 			 play-between-marks-dialog
@@ -440,36 +434,30 @@
 		(sliders ()))
 	    
 	    (set! fit-to-mark-dialog 
-		  (make-effect-dialog 
-		   fit-to-mark-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-fit-to-marks))
-		       (lambda (w context info) (cp-fit-to-marks)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "Fit selection to marks Help"
-				      "Fit-selection-between-marks tries to squeeze the current selection between two marks,\
-using the granulate generator to fix up the selection duration (this still is not perfect). Move the sliders to set the mark numbers."))
-		       (lambda (w context info)
-			 (help-dialog "Fit selection to marks Help"
-				      "Fit-selection-between-marks tries to squeeze the current selection between two marks,\
-using the granulate generator to fix up the selection duration (this still is not perfect). Move the sliders to set the mark numbers.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! fit-to-mark-one initial-fit-to-mark-one)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) fit-to-mark-one)
-			 (set! fit-to-mark-two initial-fit-to-mark-two)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) fit-to-mark-two)
-			 )
-		       (lambda (w c i)
-			 (set! fit-to-mark-one initial-fit-to-mark-one)
-			 ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) fit-to-mark-one))
-			 (set! fit-to-mark-two initial-fit-to-mark-two)
-			 ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) fit-to-mark-two))))))
-	    
+		  (make-effect-dialog fit-to-mark-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context) 
+						    (cp-fit-to-marks))
+						  (lambda (w context)
+						    (help-dialog "Fit selection to marks Help"
+								 "Fit-selection-between-marks tries to squeeze the current selection \
+between two marks,using the granulate generator to fix up the selection duration (this still is not perfect). Move the sliders to set the mark numbers."))
+						  (lambda (w data)
+						    (set! fit-to-mark-one initial-fit-to-mark-one)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) fit-to-mark-one)
+						    (set! fit-to-mark-two initial-fit-to-mark-two)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) fit-to-mark-two)))
+					  (values (lambda (w context info)
+						    (cp-fit-to-marks))
+						  (lambda (w context info)
+						    (help-dialog "Fit selection to marks Help"
+								 "Fit-selection-between-marks tries to squeeze the current selection \
+between two marks,using the granulate generator to fix up the selection duration (this still is not perfect). Move the sliders to set the mark numbers."))
+						  (lambda (w c i)
+						    (set! fit-to-mark-one initial-fit-to-mark-one)
+						    ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) fit-to-mark-one))
+						    (set! fit-to-mark-two initial-fit-to-mark-two)
+						    ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) fit-to-mark-two)))))))
 	    (set! sliders
 		  (add-sliders 
 		   fit-to-mark-dialog
@@ -533,34 +521,28 @@ using the granulate generator to fix up the selection duration (this still is no
 		(sliders ()))
 	    
 	    (set! define-by-mark-dialog 
-		  (make-effect-dialog 
-		   define-by-mark-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-define-by-marks))
-		       (lambda (w context info) (cp-define-by-marks)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "Define selection by marks Help"
-				      "Selects and highlights area between marks. Use the sliders to choose the boundary marks."))
-		       (lambda (w context info)
-			 (help-dialog "Define selection by marks Help"
-				      "Selects and highlights area between marks. Use the sliders to choose the boundary marks.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! define-by-mark-one initial-define-by-mark-one)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) define-by-mark-one)
-			 (set! define-by-mark-two initial-define-by-mark-two)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) define-by-mark-two)
-			 )
-		       (lambda (w c i)
-			 (set! define-by-mark-one initial-define-by-mark-one)
-			 ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) define-by-mark-one))
-			 (set! define-by-mark-two initial-define-by-mark-two)
-			 ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) define-by-mark-two))))))
-	    
+		  (make-effect-dialog define-by-mark-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context)
+						    (cp-define-by-marks))
+						  (lambda (w context)
+						    (help-dialog "Define selection by marks Help"
+								 "Selects and highlights area between marks. Use the sliders to choose the boundary marks."))
+						  (lambda (w data)
+						    (set! define-by-mark-one initial-define-by-mark-one)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) define-by-mark-one)
+						    (set! define-by-mark-two initial-define-by-mark-two)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders)) define-by-mark-two)))
+					  (values (lambda (w context info)
+						    (cp-define-by-marks))
+						  (lambda (w context info)
+						    (help-dialog "Define selection by marks Help"
+								 "Selects and highlights area between marks. Use the sliders to choose the boundary marks."))
+						  (lambda (w c i)
+						    (set! define-by-mark-one initial-define-by-mark-one)
+						    ((*motif* 'XtSetValues) (sliders 0) (list (*motif* 'XmNvalue) define-by-mark-one))
+						    (set! define-by-mark-two initial-define-by-mark-two)
+						    ((*motif* 'XtSetValues) (sliders 1) (list (*motif* 'XmNvalue) define-by-mark-two)))))))
 	    (set! sliders
 		  (add-sliders 
 		   define-by-mark-dialog

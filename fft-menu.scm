@@ -22,12 +22,10 @@
 (define fft-list ()) ; menu labels are updated to show current default settings
 
 (define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
-						 (define (update-label fft)
-						   (if (pair? fft)
-						       (begin
-							 ((car fft))
-							 (update-label (cdr fft)))))
-						 (update-label fft-list))))
+						 (let update-label ((fft fft-list))
+						   (when (pair? fft)
+						     ((car fft))
+						     (update-label (cdr fft)))))))
 
 ;;; ------ FFT edit
 ;;;
@@ -53,36 +51,34 @@
 		(sliders ()))
 	    
 	    (set! fft-edit-dialog
-		  (make-effect-dialog 
-		   fft-edit-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-fft-edit))
-		       (lambda (w context info) (cp-fft-edit)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "FFT notch filter"
-				      "A simple example of FFT-based editing. It takes an FFT of the entire sound, \
+		  (make-effect-dialog fft-edit-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context) 
+						    (cp-fft-edit))
+						  (lambda (w context)
+						    (help-dialog "FFT notch filter"
+								 "A simple example of FFT-based editing. It takes an FFT of the entire sound, \
 removes all energy below the low frequency and above the high frequency, then computes the inverse FFT."))
-		       (lambda (w context info)
-			 (help-dialog "FFT notch filter"
-				      "A simple example of FFT-based editing. It takes an FFT of the entire sound, \
-removes all energy below the low frequency and above the high frequency, then computes the inverse FFT.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
-			 (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))  (floor fft-edit-low-frequency))
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders))  (floor fft-edit-high-frequency))
-			 )
-		       (lambda (w c i)
-			 (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
-			 (set! fft-edit-high-frequency initial-fft-edit-high-frequency)
-			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) (floor fft-edit-low-frequency)))
-			 ((*motif* 'XtSetValues) (cadr sliders) (list (*motif* 'XmNvalue) (floor fft-edit-high-frequency)))))))
-	    
+						  (lambda (w data)
+						    (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
+						    (set! fft-edit-high-frequency
+							  initial-fft-edit-high-frequency)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))
+						     (floor fft-edit-low-frequency))
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (cadr sliders))
+						     (floor fft-edit-high-frequency))))
+					  (values (lambda (w context info) 
+						    (cp-fft-edit))
+						  (lambda (w context info)
+						    (help-dialog "FFT notch filter"
+								 "A simple example of FFT-based editing. It takes an FFT of the entire sound,\
+ removes all energy below the low frequency and above the high frequency, then computes the inverse FFT."))
+						  (lambda (w c i)
+						    (set! fft-edit-low-frequency initial-fft-edit-low-frequency)
+						    (set! fft-edit-high-frequency
+							  initial-fft-edit-high-frequency)
+						    ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) (floor fft-edit-low-frequency)))
+						    ((*motif* 'XtSetValues) (cadr sliders) (list (*motif* 'XmNvalue) (floor fft-edit-high-frequency))))))))
 	    (set! sliders
 		  (add-sliders 
 		   fft-edit-dialog
@@ -132,30 +128,26 @@ removes all energy below the low frequency and above the high frequency, then co
 		(sliders ()))
 	    
 	    (set! fft-squelch-dialog
-		  (make-effect-dialog 
-		   fft-squelch-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data )(cp-fft-squelch))
-		       (lambda (w context info) (cp-fft-squelch)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (help-dialog "FFT squelch"
-				      "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction."))
-		       (lambda (w context info)
-			 (help-dialog "FFT squelch"
-				      "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! fft-squelch-amount initial-fft-squelch-amount)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) (round (* fft-squelch-amount 100)))
-			 )
-		       (lambda (w c i)
-			 (set! fft-squelch-amount initial-fft-squelch-amount)
-			 ((*motif* 'XtSetValues) (list-ref sliders 0) (list (*motif* 'XmNvalue) (round (* fft-squelch-amount 100))))))))
-	    
+		  (make-effect-dialog fft-squelch-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w data) 
+						    (cp-fft-squelch))
+						  (lambda (w data)
+						    (help-dialog "FFT squelch"
+								 "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction."))
+						  (lambda (w data)
+						    (set! fft-squelch-amount initial-fft-squelch-amount)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))
+						     (round (* fft-squelch-amount 100)))))
+					  (values (lambda (w context info)
+						    (cp-fft-squelch))
+						  (lambda (w context info)
+						    (help-dialog "FFT squelch"
+								 "Removes all energy below the squelch amount. This is sometimes useful for noise-reduction."))
+						  (lambda (w c i)
+						    (set! fft-squelch-amount initial-fft-squelch-amount)
+						    ((*motif* 'XtSetValues) (list-ref sliders 0)
+						     (list (*motif* 'XmNvalue) (round (* fft-squelch-amount 100)))))))))
 	    (set! sliders
 		  (add-sliders 
 		   fft-squelch-dialog

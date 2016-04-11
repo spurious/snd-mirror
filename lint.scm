@@ -551,7 +551,7 @@
 	       (or (eq? (car tree) sym)
 		   (tree-memq sym (car tree))
 		   (tree-memq sym (cdr tree))))))
-    
+
     (define (tree-member sym tree)
       (and (pair? tree)
 	   (or (eq? (car tree) sym)
@@ -4435,7 +4435,7 @@
 			 (boolean? (cadr form))
 			 (char? (cadr form))
 			 (and (pair? (cadr form))
-			      (memq (caadr form) '(copy string-copy)))
+			      (memq (caadr form) '(copy string-copy))) ; or any maker?
 			 (and (pair? (cddr form))
 			      (equal? (cadr form) (caddr form)))))
 		(lint-format "~A could be ~A" caller (truncated-list->string form) (cadr form)))
@@ -4451,7 +4451,8 @@
 	((string-copy)
 	 (if (and (pair? (cdr form))
 		  (pair? (cadr form))
-		  (memq (caadr form) '(copy string-copy)))
+		  (memq (caadr form) '(copy string-copy string make-string string-upcase string-downcase
+				       string-append list->string symbol->string number->string)))
 	     (lint-format "~A could be ~A" caller (truncated-list->string form) (cadr form))))
 	
 	;; ----------------
@@ -4656,6 +4657,7 @@
 	;; ----------------
 	((reverse reverse! list->vector vector->list list->string string->list symbol->string string->symbol number->string)
 	 ;; not string->number -- no point in copying a number and it's caught below
+
 	 (let ((inverses '((reverse . reverse) 
 			   (reverse! . reverse!) 
 			   (list->vector . vector->list)
@@ -4753,6 +4755,10 @@
 			   (= (length form) 4))
 		      (check-start-and-end caller head (cddr form) form env))
 
+		     ((and (eq? head 'symbol->string) ; (string->symbol "constant-string") never happens, but the reverse does?
+			   (quoted-symbol? (cadr form)))
+		      (lint-format "perhaps ~A" caller (lists->string form (apply symbol->string (cdadr form)))))
+
 		     ((and (pair? arg-of-arg)                ; (op (reverse (inv-op x))) -> (reverse x)
 			   (eq? func-of-arg 'reverse)
 			   (eq? inv-op (car arg-of-arg)))
@@ -4844,7 +4850,8 @@
 	     (cond ((null? args)                 ; (string-append) -> ""
 		    (lint-format "perhaps ~A" caller (lists->string form "")))
 		   ((null? (cdr args))           ; (string-append a) -> a
-		    (lint-format "perhaps ~A, or use copy" caller (lists->string form (car args))))
+		    (if (not (tree-memq 'values (cdr form)))
+			(lint-format "perhaps ~A, or use copy" caller (lists->string form (car args)))))
 		   ((every? string? args)        ; (string-append "a" "b") -> "ab"
 		    (lint-format "perhaps ~A" caller (lists->string form (apply string-append args))))
 		   ((every? (lambda (a)          ; (string-append "a" (string #\b)) -> "ab"
@@ -8904,7 +8911,10 @@
 						   ;; differ-in-headers looks for equal trailers
 						   ;;   (if A (+ B B E C) (+ D D E C)) -> (+ (if A (+ B B) (+ D D)) E C)
 						   ;;   these are not always (read: almost never) an improvement
-						   (when (eq? (car true) (car false))
+						   (when (and (eq? (car true) (car false))
+							      (not (eq? (car true) 'values))
+							      (or (not (eq? (car true) 'set!))
+								  (equal? (cadr true) (cadr false))))
 						     (let ((headdiff (let differ-in-headers ((p (cdr true))
 											     (q (cdr false))
 											     (c 0)
@@ -9239,7 +9249,7 @@
 				 ;;   and in a stack of these clauses, it's hard to see anything at all.
 				 ;;   Maybe a different color for the test than the result?
 				 ;;
-				 ;; Also, the check for tree-leavess being hugely different is taken
+				 ;; Also, the check for tree-leaves being hugely different is taken
 				 ;;   from C -- I think it is easier to read a large if statement if
 				 ;;   the shortest clause is at the start -- especially in a nested if where
 				 ;;   it can be nearly impossible to see which dangling one-liner matches
@@ -9247,8 +9257,8 @@
 				 ;;   paren as you're trying to scroll up to it). 
 				 ;;
 				 ;; the cond form is not always an improvement:
-				 ;; (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
-				 ;; (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
+				 ;;   (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
+				 ;;   (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
 				 
 				 (define (swap-clauses form)
 				   (if (not (pair? (cdddr form)))
@@ -9393,7 +9403,7 @@
 							 (set! ntv (cons v ntv))))
 						   (cadr true))
 					 (set! ntv (if (or (pair? ntv)
-							   (pair? (cdddr true))) ; even define is safe here because outer let blocks just as inner let used to
+							   (pair? (cdddr true))) ; even define is safe here because outer let blocks it just as inner let used to
 						       `(let (,@(reverse ntv)) ,@(cddr true))
 						       (caddr true)))
 					 (for-each (lambda (v)
@@ -9533,8 +9543,11 @@
 							     (equal? first-func (caadr c))))
 						      (cddr form)))
 				     ((lambda (header-len trailer-len result-min-len)
-					(when (or (not (eq? first-func 'set!))
-						  (> header-len 1))
+					(when (and (or (not (eq? first-func 'set!))
+						       (> header-len 1))
+						   (or (not (eq? first-func '/))
+						       (> header-len 1)
+						       (> trailer-len 0)))
 					  (let ((header (copy first-result (make-list header-len)))
 						(trailer (copy first-result (make-list trailer-len) (- (length first-result) trailer-len))))
 					    (if (= len 2)
@@ -9905,10 +9918,25 @@
 							(null? sc)
 							(eq? sc clauses))
 						    (case op
-						      ((eq?)         (set! nc (cons `((assq ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
-						      ((eqv? char=?) (set! nc (cons `((assv ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
-						      ((equal?)      (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
-						      (else          (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist) ,op) => cdr) nc)))))
+						      ((eq?)         
+						       (set! nc (cons `((assq ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+
+						      ((eqv? char=?) 
+						       (set! nc (cons `((assv ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+
+						      ((equal?)      
+						       (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist)) => cdr) nc)))
+
+						      ((string=?)
+						       ;; this is probably faster than assoc + string=?, but it creates symbols
+						       (let ((nlst (map (lambda (c)
+									  (cons (string->symbol (car c)) (cdr c)))
+									alist)))
+							 (set! nc (cons `((assq (string->symbol ,(c (caar start))) ',(reverse nlst)) => cdr) nc))))
+
+						      (else          
+						       (set! nc (cons `((assoc ,(c (caar start)) ',(reverse alist) ,op) => cdr) nc)))))
+
 						 (set! alist (cons (cons (unquoted (cc (caar sc))) (unquoted (cadar sc))) alist)))
 					       
 					       (if (and looks-ok
@@ -10119,8 +10147,11 @@
 						      (cdddr form)))
 
 				     ((lambda (header-len trailer-len result-mid-len)
-					(when (or (not (eq? first-func 'set!))
-						  (> header-len 1))
+					(when (and (or (not (eq? first-func 'set!))
+						       (> header-len 1))
+						   (or (not (eq? first-func '/))
+						       (> header-len 1)
+						       (> trailer-len 0)))
 					  (let ((header (copy first-result (make-list header-len)))
 						(trailer (copy first-result (make-list trailer-len) (- (length first-result) trailer-len))))
 					    (if (= len 2)
@@ -11692,7 +11723,52 @@
 				       (begin
 					 (set! last-simplify-numeric-line-number line-number)
 					 (lint-format "perhaps ~A" caller (lists->string form val))))))
-			   
+
+			     ;; ----------------
+			     ;; (f ... (if A B C) (if A D E) ...) -> (f ... (if A (values B D) (values C E)) ...)
+			     ;;    these happen up to almost any number of clauses 
+			     ;;    need true+false in every case, and need to be contiguous
+			     ;;    case/cond happen here, but very rarely in a way we can combine via values
+
+			     (when (not (any-macro? (car form) env)) ; actually most macros are safe here...
+			       (let ((p (member 'if (cdr form) (lambda (x q)
+								 (and (pair? q)
+								      (eq? (car q) 'if)      ; it's an if expression
+								      (pair? (cdr q))
+								      (pair? (cddr q))       ; there's a true branch
+								      (pair? (cdddr q))))))) ;   and a false branch (similarly below)
+				 (when (pair? p)
+				   (let ((test (cadar p)))
+				     (do ((q (cdr p) (cdr q)))
+					 ((not (and (pair? q)
+						    (let ((x (car q)))
+						      (and (pair? x)
+							   (eq? (car x) 'if)
+							   (pair? (cdr x))
+							   (equal? (cadr x) test)
+							   (pair? (cddr x))
+							   (pair? (cdddr x))))))
+					  (unless (eq? q (cdr p))
+					    (let ((header (do ((i 1 (+ i 1))
+							       (r (cdr form) (cdr r)))
+							      ((eq? r p)
+							       (copy form (make-list i)))))
+						  (middle (do ((r p (cdr r))
+							       (trues ())
+							       (falses ()))
+							      ((eq? r q)
+							       `(if ,test 
+								    (values ,@(reverse trues)) 
+								    (values ,@(reverse falses))))
+							    (set! trues (cons (caddar r) trues))
+							    (set! falses (cons (car (cdddar r)) falses)))))
+					      (lint-format "perhaps~A ~A" caller
+							   (if (side-effect? test env)
+							       (format #f " (ignoring ~S's possible side-effects)" test)
+							       "")
+							   (lists->string form `(,@header ,middle ,@q)))))))))))
+			     ;; ----------------
+
 			     ;; if a var is used before it is defined, the var history and ref/set
 			     ;;   info needs to be saved until the definition, so other-identifiers collects it
 			     (if (not (or (var? v)
@@ -12268,8 +12344,6 @@
 ;;; indentation is confused in pp by if expr+values?
 ;;; save all bound names -- report those used a lot, also is-|get- -> ?|<>, also levenshtein neighbors
 ;;;   if get+set -> dilambda -- what other noise words are used (-ref|-set!)
-;;; simple function used only once -> use? or named-let if recursive?
-;;; do+int step->list-ref, car+memx/assx->orig -- is this already in place? proper-list?+car->pair?
-;;; cond of string=?s -> case of string->symbol? (rather than assoc+string=)
-;;; maybe try (lint-walk of guard expansion)
-;;; 114
+;;; there are now lots of cases where we need to check for values
+;;;
+;;; 121

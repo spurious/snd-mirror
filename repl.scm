@@ -784,19 +784,25 @@
 	    ;; -------- add newline
 	    (set! (keymap-functions C-o)
 		  (lambda (c)
-		    (set! cur-line (cond ((= cursor-pos 0)
-					  (string-append (string #\space #\newline) cur-line))
-					 ((>= cursor-pos (length cur-line))
-					  (string-append cur-line (string #\space #\newline)))
-					 ((char=? (cur-line (- cursor-pos 1)) #\newline)
-					  (string-append (substring cur-line 0 cursor-pos) (string #\space #\newline)
-							 (substring cur-line cursor-pos)))
-					 (else
-					  (string-append (substring cur-line 0 cursor-pos)
-							 (if (char=? (cur-line (+ cursor-pos 1)) #\newline)
-							     (string #\space #\newline #\space)
-							     (string #\space #\newline))
-							 (substring cur-line (+ cursor-pos 1))))))
+		    (set! cur-line (string-append (cond ((= cursor-pos 0) 
+							 (values (string #\space #\newline) 
+								 cur-line))
+
+							((>= cursor-pos (length cur-line)) 
+							 (values cur-line 
+								 (string #\space #\newline)))
+
+							((char=? (cur-line (- cursor-pos 1)) #\newline)
+							 (values (substring cur-line 0 cursor-pos)
+								 (string #\space #\newline)
+								 (substring cur-line cursor-pos)))
+
+							(else
+							 (values (substring cur-line 0 cursor-pos)
+								 (if (char=? (cur-line (+ cursor-pos 1)) #\newline)
+								     (string #\space #\newline #\space)
+								     (string #\space #\newline))
+								 (substring cur-line (+ cursor-pos 1)))))))
 		    (when (= last-row (+ prompt-row cur-row))
 		      (set! prompt-row (- prompt-row 1))
 		      (display-lines))))

@@ -98,30 +98,22 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 		(sliders ()))
 	    
 	    (set! play-panned-dialog
-		  (make-effect-dialog 
-		   play-panned-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-play-panned))
-		       (lambda (w context info) (cp-play-panned)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "Play panned"
-				      "Move the slider to select the file to play with panning envelope."))
-		       (lambda (w context info)
-			 (help-dialog "Play panned"
-				      "Move the slider to select the file to play with panning envelope.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! play-panned-file initial-play-panned-file)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) play-panned-file)
-			 )
-		       (lambda (w c i)
-			 (set! play-panned-file initial-play-panned-file)
-			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) play-panned-file))))))
-	    
+		  (make-effect-dialog play-panned-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context) 
+						    (cp-play-panned))
+						  (lambda (w context)
+						    (help-dialog "Play panned" "Move the slider to select the file to play with panning envelope."))
+						  (lambda (w data)
+						    (set! play-panned-file initial-play-panned-file)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) play-panned-file)))
+					  (values (lambda (w context info)
+						    (cp-play-panned))
+						  (lambda (w context info)
+						    (help-dialog "Play panned" "Move the slider to select the file to play with panning envelope."))
+						  (lambda (w c i)
+						    (set! play-panned-file initial-play-panned-file)
+						    ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) play-panned-file)))))))
 	    (set! sliders
 		  (add-sliders 
 		   play-panned-dialog
@@ -173,34 +165,31 @@ See the TiMidity home page at http://www.onicos.com/staff/iz/timidity/ for more 
 	  (let ((initial-save-as-mp3-wav-file-number 0)
 		(sliders ()))
 	    (set! save-as-mp3-dialog
-		  (make-effect-dialog 
-		   save-as-mp3-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-save-as-mp3))
-		       (lambda (w context info) (cp-save-as-mp3)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "Save as MP3"
-				      "Move the slider to select the file to save as an MP3. \
+		  (make-effect-dialog save-as-mp3-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context) 
+						    (cp-save-as-mp3))
+						  (lambda (w context)
+						    (help-dialog "Save as MP3"
+								 "Move the slider to select the file to save as an MP3. \
 The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
 Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
-		       (lambda (w context info)
-			 (help-dialog "Save as MP3"
-				      "Move the slider to select the file to save as an MP3. \
+						  (lambda (w data)
+						    (set! save-as-mp3-wav-file-number
+							  initial-save-as-mp3-wav-file-number)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))
+						     save-as-mp3-wav-file-number)))
+					  (values (lambda (w context info)
+						    (cp-save-as-mp3))
+						  (lambda (w context info)
+						    (help-dialog "Save as MP3"
+								 "Move the slider to select the file to save as an MP3. \
 The new MP3 will be named tmp-N.mp3 by default.  Bladeenc is currently the only supported encoder. \
-Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-mp3-wav-file-number)
-			 )
-		       (lambda (w c i)
-			 (set! save-as-mp3-wav-file-number initial-save-as-mp3-wav-file-number)
-			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-mp3-wav-file-number))))))
-	    
+Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc."))
+						  (lambda (w c i)
+						    (set! save-as-mp3-wav-file-number
+							  initial-save-as-mp3-wav-file-number)
+						    ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-mp3-wav-file-number)))))))
 	    (set! sliders
 		  (add-sliders
 		   save-as-mp3-dialog
@@ -248,34 +237,31 @@ Please see the Web page at bladeenc.mp3.no for details regarding Bladeenc.")))
 		(sliders ()))
 	    
 	    (set! save-as-ogg-dialog
-		  (make-effect-dialog 
-		   save-as-ogg-label
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context) (cp-save-as-ogg))
-		       (lambda (w context info) (cp-save-as-ogg)))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w context)
-			 (help-dialog "Save as Ogg file"
-				      "Move the slider to select the file to save as an Ogg file. \
+		  (make-effect-dialog save-as-ogg-label
+				      (if (provided? 'snd-gtk)
+					  (values (lambda (w context) 
+						    (cp-save-as-ogg))
+						  (lambda (w context)
+						    (help-dialog "Save as Ogg file"
+								 "Move the slider to select the file to save as an Ogg file. \
 The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
 Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
-		       (lambda (w context info)
-			 (help-dialog "Save as Ogg file"
-				      "Move the slider to select the file to save as an Ogg file. \
+						  (lambda (w data)
+						    (set! save-as-ogg-wav-file-number
+							  initial-save-as-ogg-wav-file-number)
+						    ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders))
+						     save-as-ogg-wav-file-number)))
+					  (values (lambda (w context info)
+						    (cp-save-as-ogg))
+						  (lambda (w context info)
+						    (help-dialog "Save as Ogg file"
+								 "Move the slider to select the file to save as an Ogg file. \
 The new file will be named tmp-N.ogg by default. Oggenc is currently the only supported Ogg encoder. \
-Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project.")))
-		   
-		   (if (provided? 'snd-gtk)
-		       (lambda (w data)
-			 (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-			 ((*gtk* 'gtk_adjustment_set_value) ((*gtk* 'GTK_ADJUSTMENT) (car sliders)) save-as-ogg-wav-file-number)
-			 )
-		       (lambda (w c i)
-			 (set! save-as-ogg-wav-file-number initial-save-as-ogg-wav-file-number)
-			 ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-ogg-wav-file-number))))))
-	    
+Please see the Web page at www.xiphophorus.org for details regarding the Ogg/Vorbis project."))
+						  (lambda (w c i)
+						    (set! save-as-ogg-wav-file-number
+							  initial-save-as-ogg-wav-file-number)
+						    ((*motif* 'XtSetValues) (car sliders) (list (*motif* 'XmNvalue) save-as-ogg-wav-file-number)))))))
 	    (set! sliders
 		  (add-sliders 
 		   save-as-ogg-dialog

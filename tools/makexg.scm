@@ -177,9 +177,7 @@
 (define (cadr-str data)
   (let ((sp1 (char-position #\space data)))
     (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (if sp2
-	  (substring data (+ sp1 1) sp2)
-	  (substring data sp1)))))
+      (substring data (if sp2 (values (+ sp1 1) sp2) sp1)))))
 
 (define (caddr-str data)
   (let ((sp1 (char-position #\space data)))
@@ -199,11 +197,11 @@
 	(substring data (+ sp 1))
 	data)))
 
-(define (remove-if p l)
-  (cond ((null? l) ())
-	((p (car l)) (remove-if p (cdr l)))
-	(else (cons (car l) 
-		    (remove-if p (cdr l))))))
+(define (remove-if p lst)
+  (cond ((null? lst) ())
+	((p (car lst)) (remove-if p (cdr lst)))
+	(else (cons (car lst) 
+		    (remove-if p (cdr lst))))))
 
 (define (ref-arg? arg)
   (and (= (length arg) 3)
@@ -1041,9 +1039,10 @@
 	      (set! types (cons type types)))
 	  (let ((strs (parse-args args 'ok)))
 	    (set! funcs 
-		  (if spec
-		      (cons (list name type strs args spec spec-data) funcs)
-		      (cons (list name type strs args) funcs)))
+		  (cons (if spec 
+			    (list name type strs args spec spec-data)
+			    (list name type strs args)) 
+			funcs))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define (CFNC-PA data min-len max-len types)
@@ -1061,9 +1060,10 @@
 		(set! cairo-types (cons type cairo-types))))
 	  (let ((strs (parse-args args 'cairo)))
 	    (set! cairo-funcs 
-		  (if spec
-		      (cons (list name type strs args spec) cairo-funcs)
-		      (cons (list name type strs args) cairo-funcs)))
+		  (cons (if spec
+			    (list name type strs args spec)
+			    (list name type strs args))
+			cairo-funcs))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-PNG-FUNC data spec)
@@ -1078,9 +1078,10 @@
 		(set! cairo-types (cons type cairo-types))))
 	  (let ((strs (parse-args args 'cairo)))
 	    (set! cairo-png-funcs 
-		  (if spec
-		      (cons (list name type strs args spec) cairo-png-funcs)
-		      (cons (list name type strs args) cairo-png-funcs)))
+		  (cons (if spec 
+			    (list name type strs args spec)
+			    (list name type strs args))
+			cairo-png-funcs))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-810 data spec)
@@ -1095,9 +1096,10 @@
 		(set! cairo-types-810 (cons type cairo-types-810))))
 	  (let ((strs (parse-args args 'cairo-810)))
 	    (set! cairo-funcs-810 
-		  (if spec
-		      (cons (list name type strs args spec) cairo-funcs-810)
-		      (cons (list name type strs args) cairo-funcs-810)))
+		  (cons (if spec 
+			    (list name type strs args spec)
+			    (list name type strs args))
+			cairo-funcs-810))
 	    (hash-table-set! names name (func-type strs)))))))
 
 (define* (CAIRO-FUNC-912 data spec)
@@ -1112,9 +1114,10 @@
 		(set! cairo-types-912 (cons type cairo-types-912))))
 	  (let ((strs (parse-args args 'cairo-912)))
 	    (set! cairo-funcs-912 
-		  (if spec
-		      (cons (list name type strs args spec) cairo-funcs-912)
-		      (cons (list name type strs args) cairo-funcs-912)))
+		  (cons (if spec
+			    (list name type strs args spec)
+			    (list name type strs args))
+			cairo-funcs-912))
 	    (hash-table-set! names name (func-type strs)))))))
 
 
@@ -2100,11 +2103,12 @@
 			(let ((type (types modctr)))
 			  (set! modctr (+ 1 modctr))
 			  (if (>= modctr modlen) (set! modctr 0))
-			  (hey (cond ((string=? type "int")         "XLI(")
-				     ((string=? type "gchar*")      "XLS(")
-				     ((string=? type "GtkTextTag*") "XLT(")
-				     ((string=? type "GType")       "XLG(")
-				     (else                          "XLA("))))
+			  (hey (cond ((assoc type '(("int" . "XLI(") 
+						    ("gchar*" . "XLS(") 
+						    ("GtkTextTag*" . "XLT(") 
+						    ("GType" . "XLG("))
+					     string=?) => cdr)
+				     (else "XLA("))))
 			(hey "~A, ~D)" list-name j)
 			(if (or with-null with-minus-one (< j (- i 1)))
 			    (hey ", "))))

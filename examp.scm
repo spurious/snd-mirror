@@ -445,12 +445,13 @@ read an ASCII sound file"))
 	     (chn (hook 'chn))
 	     (dots (- (right-sample snd chn)
 		      (left-sample snd chn))))
-	(cond ((> dots 100) (set! (dot-size snd chn) 1))
-	      ((> dots 50)  (set! (dot-size snd chn) 2))
-	      ((> dots 25)  (set! (dot-size snd chn) 3))
-	      (else         (set! (dot-size snd chn) 5)))))))
+	(set! (dot-size snd chn) 
+	      (cond ((> dots 100) 1)
+		    ((> dots 50)  2)
+		    ((> dots 25)  3)
+		    (else         5)))))))
 
-					;(hook-push graph-hook auto-dot)
+;;; (hook-push graph-hook auto-dot)
 
 
 

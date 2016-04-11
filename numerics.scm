@@ -777,7 +777,7 @@
 	 (s2 (series 4 id))
 	 (s3 (series 5 id))
 	 (s4 (series 6 id))
-	 (pid (+ (* 4.0 s1) (* -2.0 s2) (- s3) (- s4))))
+	 (pid (- (+ (* 4.0 s1) (* -2.0 s2)) s3 s4)))
     (set! pid (+ 1.0 (- pid (floor pid))))
     (ihex pid 10 chx)
     (format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))

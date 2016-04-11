@@ -20,9 +20,7 @@
 
 (define* (attack-point duration attack decay (total-x 100.0))
   (* total-x (/ (if (= 0.0 attack)
-		    (if (= 0.0 decay)
-			(/ duration 4)
-			(/ (- duration decay) 4))
+		    (/ (if (= 0.0 decay) duration (- duration decay)) 4)
 		    attack)
 		duration)))
 

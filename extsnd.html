@@ -2302,10 +2302,8 @@ See examp.scm for many examples.  If you want to add your own graphics to the di
              (chn (hook 'chn))
              (dots (- (<a class=quiet href="#rightsample">right-sample</a> snd chn) (<a class=quiet href="#leftsample">left-sample</a> snd chn))))
         (set! (dot-size snd chn)
-              (cond ((&gt; dots 100) 1)
-	            ((&gt; dots 50) 3)
-	            ((&gt; dots 25) 5)
- 	            (else 8)))))))
+              (cond ((assoc dots '((100 . 1) (50 . 3) (25 . 5)) >) => cdr) 
+                    (else 8)))))))	
 </pre>
 <div class="spacer"></div>
 
