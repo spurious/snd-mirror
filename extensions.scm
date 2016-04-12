@@ -17,8 +17,8 @@
 
 (define remove-if 
   (let ((documentation "(remove-if func lst) removes any element from 'lst' that 'func' likes"))
-    (lambda (pred l)
-      (map (lambda (x) (if (pred x) (values) x)) l))))
+    (lambda (pred lst)
+      (map (lambda (x) (if (pred x) (values) x)) lst))))
 
 
 (if (not (defined? 'all-chans))

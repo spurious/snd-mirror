@@ -57,13 +57,13 @@
 		    (= i (*s7* 'history-size)))
 		(format p "~%error-history:~%    ~S" (car start))
 		(do ((x history (cdr x))
-		     (l lines (cdr l))
+		     (line lines (cdr line))
 		     (f files (cdr f)))
 		    ((null? x))
-		  (format p (if (and (integer? (car l))
+		  (format p (if (and (integer? (car line))
 				     (string? (car f))
 				     (not (string=? (car f) "*stdout*")))
-				(values "~%    ~S~40T;~A[~A]" (car x) (car f) (car l))
+				(values "~%    ~S~40T;~A[~A]" (car x) (car f) (car line))
 				(values "~%    ~S" (car x)))))
 		(format p "~%"))
 	     (set! history (cons (car x) history))
@@ -131,8 +131,8 @@
   (let ((documentation "(make-circular-list n init) returns a circular list with n entries initialized to init:\n\
     (make-circular-list 3 #f) -> #1=(#f #f #f . #1#)"))
     (lambda* (n init)
-      (let ((l (make-list n init)))
-	(set-cdr! (list-tail l (- n 1)) l)))))
+      (let ((lst (make-list n init)))
+	(set-cdr! (list-tail lst (- n 1)) lst)))))
 
 (define circular-list 
   (let ((documentation "(circular-list . objs) returns a circular list with objs:\n\
@@ -296,14 +296,8 @@
 				(flatten (cdr lst1) (cdr lst2) args)))))
      ,@body))
 
-(define-macro (and-let* vars . body)
-  `(let ()                                ; bind vars, if any is #f stop, else evaluate body with those bindings
-     (and ,@(map (lambda (var) 
-		   `(begin 
-		      (apply define ',var) 
-		      ,(car var))) 
-		 vars)
-          (begin ,@body))))
+(define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
+  `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
 (define-macro (while test . body)         ; while loop with predefined break and continue
   `(call-with-exit

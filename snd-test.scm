@@ -24604,10 +24604,10 @@ EDITS: 2
 	(if (> diff maxok)
 	    (snd-display #__line__ ";translate spectral difference ~A ~A: ~A > ~A?" snd1 snd2 diff maxok)))))
   
-  (define (remove-if p l)
-    (cond ((null? l) ())
-	  ((p (car l)) (remove-if p (cdr l)))
-	  (else (cons (car l) (remove-if p (cdr l))))))
+  (define (remove-if p lst)
+    (cond ((null? lst) ())
+	  ((p (car lst)) (remove-if p (cdr lst)))
+	  (else (cons (car lst) (remove-if p (cdr lst))))))
   
   
   (if (null? (sound-file-extensions))

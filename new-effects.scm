@@ -2838,16 +2838,13 @@ the synthesis amplitude, the FFT size, and the radius value."))
 				    (plausible-mark-samples))))
 		       (effects-fp samp-rate osc-amp osc-freq
 				   (if (eq? robotize-target 'sound)
-				       0
+				       (values 0 
+					       (framples))
 				       (if (eq? robotize-target 'selection)
-					   (selection-position)
-					   (car ms)))
-				   (if (eq? robotize-target 'sound)
-				       (framples)
-				       (if (eq? robotize-target 'selection)
-					   (selection-framples)
-					   (- (cadr ms) (car ms)))))))
-		   
+					   (values (selection-position)
+						   (selection-framples))
+					   (values (car ms)
+						   (- (cadr ms) (car ms))))))))
 		   (lambda (w context info)
 		     (help-dialog "Robotize"
 				  "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
@@ -2978,15 +2975,13 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (effects-hello-dentist
 			wobble-frequency wobble-amplitude
 			(if (eq? wobble-target 'sound)
-			    0
+			    (values 0 
+				    (framples))
 			    (if (eq? wobble-target 'selection)
-				(selection-position)
-				(car ms)))
-			(if (eq? wobble-target 'sound)
-			    (framples)
-			    (if (eq? wobble-target 'selection)
-				(selection-framples)
-				(- (cadr ms) (car ms)))))))
+				(values (selection-position)
+					(selection-framples))
+				(values (car ms)
+					(- (cadr ms) (car ms))))))))
 		   
 		   (lambda (w context info)
 		     (help-dialog "Wobble"

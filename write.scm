@@ -160,8 +160,9 @@
 				      (spaces (+ column 5))
 				      (stacked-list (cdr end) (+ column 5))
 				      (write-char #\) port))))
-			      (spaces (+ column *pretty-print-spacing*))
-			      (stacked-list (cdddr obj) (+ column *pretty-print-spacing*))
+			      (when (pair? (cdddr obj))
+				(spaces (+ column *pretty-print-spacing*))
+				(stacked-list (cdddr obj) (+ column *pretty-print-spacing*)))
 			      (write-char #\) port))))))
 		 
 		 ((cond)
@@ -240,15 +241,16 @@
 						(set! p (cdr p))
 						(if (pair? p) (write-char #\space port))))
 					    (write-char #\) port)))))
-				(if (and (pair? (cdar lst))
-					 (null? (cddar lst))
-					 (< (length (object->string (cadar lst))) 60))
-				    (begin
-				      (write-char #\space port)
-				      (write (cadar lst) port))
-				    (begin
-				      (spaces (+ column 3))
-				      (stacked-list (cdar lst) (+ column 3))))
+				(if (not (null? (cdar lst))) ; null here is a bug in the input case statement
+				    (if (and (pair? (cdar lst))
+					     (null? (cddar lst))
+					     (< (length (object->string (cadar lst))) 60))
+					(begin
+					  (write-char #\space port)
+					  (write (cadar lst) port))
+					(begin
+					  (spaces (+ column 3))
+					  (stacked-list (cdar lst) (+ column 3)))))
 				(write-char #\) port))))
 			(write-char #\) port))))
 		 

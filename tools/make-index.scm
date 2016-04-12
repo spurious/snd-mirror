@@ -68,10 +68,10 @@
 
 (define (alphanumeric? c) (or (char-alphabetic? c) (char-numeric? c)))
 
-(define (find-if pred l)
-  (cond ((null? l) #f)
-	((pred (car l)) (car l))
-	(else (find-if pred (cdr l)))))
+(define (find-if pred lst)
+  (cond ((null? lst) #f)
+	((pred (car lst)) (car lst))
+	(else (find-if pred (cdr lst)))))
 
 (define* (make-ind name sortby topic file general indexed char)
   (vector name sortby topic file general indexed char))

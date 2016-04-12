@@ -37,10 +37,10 @@
 
 (with-let *motif*
   
-  (define (find-if pred l)
-    (cond ((null? l) #f)
-	  ((pred (car l)) (car l))
-	  (else (find-if pred (cdr l)))))
+  (define (find-if pred lst)
+    (cond ((null? lst) #f)
+	  ((pred (car lst)) (car lst))
+	  (else (find-if pred (cdr lst)))))
   
   (define load-font 
     (let ((documentation "(load-font name) loads the font 'name', returning the font id"))

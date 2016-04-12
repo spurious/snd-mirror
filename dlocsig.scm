@@ -1007,11 +1007,9 @@
 
 (define (nearest-point x0 y0 z0 x1 y1 z1 px py pz)
   
-  (define vmag distance)
-  
   (define (vcos a0 b0 c0 a1 b1 c1)
     (/ (+ (* a0 a1) (* b0 b1) (* c0 c1))
-       (* (vmag a0 b0 c0) (vmag a1 b1 c1))))
+       (* (distance a0 b0 c0) (distance a1 b1 c1))))
   
   (define (same a0 b0 c0 a1 b1 c1)
     (and (= a0 a1) (= b0 b1) (= c0 c1)))
@@ -1025,9 +1023,9 @@
 		     (xm1 (- px x0))
 		     (ym1 (- py y0))
 		     (zm1 (- pz z0))
-		     (p (* (vmag xm1 ym1 zm1) (vcos xm0 ym0 zm0 xm1 ym1 zm1)))
-		     (l (vmag xm0 ym0 zm0))
-		     (ratio (/ p l)))
+		     (p (* (distance xm1 ym1 zm1) (vcos xm0 ym0 zm0 xm1 ym1 zm1)))
+		     (k (distance xm0 ym0 zm0))
+		     (ratio (/ p k)))
 		(list (+ x0 (* xm0 ratio))
 		      (+ y0 (* ym0 ratio))
 		      (+ z0 (* zm0 ratio)))))))

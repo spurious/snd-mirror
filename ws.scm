@@ -378,10 +378,10 @@
 
 (define (with-mixed-sound-mix-info id snd)
 
-  (define (find-if pred l)
-    (cond ((null? l) #f)
-	  ((pred (car l)) (car l))
-	  (else (find-if pred (cdr l)))))
+  (define (find-if pred lst)
+    (cond ((null? lst) #f)
+	  ((pred (car lst)) (car lst))
+	  (else (find-if pred (cdr lst)))))
 
   (let ((all-info (sound-property 'with-mixed-sound-info snd)))
     ;; each entry is '(mx-id beg chans note)

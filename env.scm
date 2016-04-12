@@ -487,9 +487,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 	    (set! e (cons (* 1.0 (/ i fsr)) e))
 	    (set! rms-val (sqrt (* (mus-scaler rms) (mus-increment rms))))
 	    (set! e (if db 
-			(if (< rms-val .00001)
-			    (cons -100.0 e)
-			    (cons (* 20.0 (log rms-val 10.0)) e))
+			(cons (if (< rms-val 1e-05) -100.0 (* 20.0 (log rms-val 10.0))) e)
 			(cons rms-val e)))))))))
 
 

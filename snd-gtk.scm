@@ -425,10 +425,10 @@
 	      (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
 	      0)))
       
-      (define (find-if pred l)
-	(cond ((null? l) #f)
-	      ((pred (car l)) (car l))
-	      (else (find-if pred (cdr l)))))
+      (define (find-if pred lst)
+	(cond ((null? lst) #f)
+	      ((pred (car lst)) (car lst))
+	      (else (find-if pred (cdr lst)))))
       
       (lambda (hook)
 	;; (show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)

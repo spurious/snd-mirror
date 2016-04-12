@@ -74,10 +74,10 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; from Numerical Recipes
-(define (plgndr l m x)			;Legendre polynomial P m/l (x), m and l integer
-					;0 <= m <= l and -1<= x <= 1 (x real)
+(define (plgndr L m x)			;Legendre polynomial P m/L (x), m and L integer
+					;0 <= m <= L and -1<= x <= 1 (x real)
   (if (or (< m 0) 
-	  (> m l) 
+	  (> m L) 
 	  (> (abs x) 1.0))
       (snd-error "invalid arguments to plgndr")
       (let ((pmm 1.0)
@@ -91,14 +91,14 @@
 		  ((> i m))
 		(set! pmm (* (- pmm) fact somx2))
 		(set! fact (+ fact 2.0)))))
-	(if (= l m) 
+	(if (= L m) 
 	    pmm
 	    (let ((pmmp1 (* x pmm (+ (* 2 m) 1))))
-	      (if (= l (+ m 1)) 
+	      (if (= L (+ m 1)) 
 		  pmmp1
 		  (let ((pk 0.0)) ; NR used "ll" which is unreadable
 		    (do ((k (+ m 2) (+ k 1)))
-			((> k l))
+			((> k L))
 		      (set! pk (/ (- (* x (- (* 2 k) 1) pmmp1) 
 				      (* (+ k m -1) pmm)) 
 				   (- k m)))

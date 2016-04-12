@@ -106,11 +106,11 @@
 (define sub-vicinity
   (case (software-type)
     ((vms) (lambda (vic name)
-	     (let ((l (string-length vic)))
+	     (let ((L (string-length vic)))
 	       (string-append (if (or (zero? (string-length vic))
-				      (not (char=? #\] (string-ref vic (- l 1)))))
+				      (not (char=? #\] (string-ref vic (- L 1)))))
 				  (values vic "[")
-				  (values (substring vic 0 (- l 1)) "."))
+				  (values (substring vic 0 (- L 1)) "."))
 			      name "]"))))
     (else (let ((*vicinity-suffix*
 		 (case (software-type)
@@ -367,7 +367,7 @@
 (define slib:form-feed (integer->char 12))
 
 ;;@ Support for older versions of Scheme.  Not enough code for its own file.
-(define (last-pair l) (if (pair? (cdr l)) (last-pair (cdr l)) l))
+(define (last-pair lst) (if (pair? (cdr lst)) (last-pair (cdr lst)) lst))
 (define t #t)
 (define nil #f)
 

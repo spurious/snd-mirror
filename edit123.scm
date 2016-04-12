@@ -398,12 +398,7 @@
 					     (else (set! status 0))
 					     )))
 
-(bind-key (char->integer #\1) 8 (lambda () (case status
-					     ((0) (set! status 2))
-					     ((1) (set! status 3))
-					     ((3) (set! status 1))
-					     (else (set! status 0))
-					     )))
+(bind-key (char->integer #\1) 8 (lambda () (set! status (case status ((0) 2) ((1) 3) ((3) 1) (else 0)))))
 
 (bind-key (char->integer #\2) 4 (lambda () (case status
 					     ((0) (mark-start 30000))
