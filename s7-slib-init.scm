@@ -59,21 +59,16 @@
 (define (home-vicinity)
   (let ((home (getenv "HOME")))
     (and home
-	 (case (software-type)
-	   ((unix coherent ms-dos)	;V7 unix has a / on HOME
-	    (if (char=? #\/ (string-ref home (- (string-length home) 1)))
-		home
-		(string-append home "/")))
-	   (else home)))))
-
+	 (if (and (memq (software-type) '(unix coherent ms-dos))
+		  (not (char=? #\/ (string-ref home (- (string-length home) 1)))))
+	     (string-append home "/")
+	     home))))
 ;@
 (define in-vicinity string-append)
 
 ;@
 (define (user-vicinity)
-  (case (software-type)
-    ((vms)	"[.]")
-    (else	"")))
+  (if (eq? (software-type) 'vms) "[.]" ""))
 
 (define *load-pathname* #f)	 ; *load-path* is a list of dirs in s7
 
@@ -104,22 +99,23 @@
       (slib:error 'program-vicinity " called; use slib:load to load")))
 ;@
 (define sub-vicinity
-  (case (software-type)
-    ((vms) (lambda (vic name)
-	     (let ((L (string-length vic)))
-	       (string-append (if (or (zero? (string-length vic))
-				      (not (char=? #\] (string-ref vic (- L 1)))))
-				  (values vic "[")
-				  (values (substring vic 0 (- L 1)) "."))
-			      name "]"))))
-    (else (let ((*vicinity-suffix*
-		 (case (software-type)
-		   ((nosve) ".")
-		   ((macos thinkc) ":")
-		   ((ms-dos windows atarist os/2) "\\")
-		   ((unix coherent plan9 amiga) "/"))))
-	    (lambda (vic name)
-	      (string-append vic name *vicinity-suffix*))))))
+  (if (eq? (software-type) 'vms)
+      (lambda (vic name)
+	(let ((L (string-length vic)))
+	  (string-append
+	   (if (or (zero? (string-length vic))
+		   (not (char=? #\] (string-ref vic (- L 1)))))
+	       (values vic "[")
+	       (values (substring vic 0 (- L 1)) "."))
+	   name "]")))
+      (let ((*vicinity-suffix* (case (software-type)
+				 ((nosve) ".")
+				 ((macos thinkc) ":")
+				 ((ms-dos windows atarist os/2) "\\")
+				 ((unix coherent plan9 amiga) "/"))))
+	(lambda (vic name)
+	  (string-append vic name *vicinity-suffix*)))))
+
 ;@
 (define (make-vicinity <pathname>) <pathname>)
 ;@
@@ -383,9 +379,7 @@
 
 ;;@ Here for backward compatability
 (define scheme-file-suffix
-  (let ((suffix (case (software-type)
-		  ((nosve) "_scm")
-		  (else ".scm"))))
+  (let ((suffix (if (eq? (software-type) 'nosve) "_scm" ".scm")))
     (lambda () suffix)))
 
 ;;@ (SLIB:LOAD-SOURCE "foo") should load "foo.scm" or with whatever

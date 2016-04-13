@@ -847,6 +847,9 @@ implement the standard old-time macros.
 </p>
 
 <pre class="indented">
+&gt; (define-macro (and-let* vars . body)
+    `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
+
 &gt; (define-macro (<em class=def id="trace">trace</em> f)
     `(define ,f 
        (apply lambda 'args 
@@ -5655,6 +5658,7 @@ of the object's type in the (*s7* 'c-types) list.
 <li>for-each and map accept any applicable object as the first argument, and any sequence or iterator as a trailing argument.
 <li>letrec*, but without conviction.
 <li>set! and *-set! return the new value (modulo symbol-access), not #&lt;unspecified&gt;.
+<li>define and its friends return the new value.
 <li>port-closed? 
 <li>list? means "pair or null", proper-list? is r5rs list?, float? means "real and not rational", sequence? = length.
 <!-- a vector can be a member of itself, and yet vector? returns #t, why is list? different; we even call it a circular list! -->

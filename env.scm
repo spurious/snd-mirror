@@ -176,46 +176,43 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 		    (y0 (cadr fn))
 		    (new-fn (list y0 x0))
 		    (scl (/ (- new-att x0) (max .0001 (- old-att x0)))))
-	       (define (stretch-envelope-1 new-fn old-fn)
-		 (if (null? old-fn)
-		     new-fn
-		     (let ((x1 (car old-fn))
-			   (y1 (cadr old-fn)))
-		       (if (and (< x0 old-att)
-				(>= x1 old-att))
-			   (begin
-			     (set! y0 (if (= x1 old-att)
-					  y1
-					  (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
-			     (set! x0 old-att)
-			     (set! new-x new-att)
-			     (set! new-fn (cons y0 (cons new-x new-fn)))
-			     (set! scl (if old-dec 
-					   (/ (- new-dec new-att) (- old-dec old-att))
-					   (/ (- last-x new-att) (- last-x old-att))))))
-		       (if (and old-dec
-				(< x0 old-dec)
-				(>= x1 old-dec))
-			   (begin
-			     (set! y0 (if (= x1 old-dec) 
-					  y1
-					  (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
-			     (set! x0 old-dec)
-			     (set! new-x new-dec)
-			     (set! new-fn (cons y0 (cons new-x new-fn)))
-			     (set! scl (/ (- last-x new-dec) (- last-x old-dec)))))
-		       (if (not (= x0 x1))
-			   (begin
-			     (set! new-x (+ new-x (* scl (- x1 x0))))
-			     (set! new-fn (cons y1 (cons new-x new-fn)))
-			     (set! x0 x1)
-			     (set! y0 y1)))
-		       (stretch-envelope-1 new-fn (cddr old-fn)))))
 	       
 	       (if (and (number? old-dec)
-			(= old-dec old-att)) 
-		   (set! old-dec (* .000001 last-x)))
-	       (reverse (stretch-envelope-1 new-fn (cddr fn)))))))))
+			(= old-dec old-att))
+		   (set! old-dec (* 1e-06 last-x)))
+	       (reverse
+		(let stretch-envelope-1 ((new-fn new-fn)
+					 (old-fn (cddr fn)))
+		  (if (null? old-fn)
+		      new-fn
+		      (let ((x1 (car old-fn))
+			    (y1 (cadr old-fn)))
+			(when (and (< x0 old-att) (>= x1 old-att))
+			  (set! y0 (if (= x1 old-att)
+				       y1
+				       (+ y0 (* (- y1 y0) (/ (- old-att x0) (- x1 x0))))))
+			  (set! x0 old-att)
+			  (set! new-x new-att)
+			  (set! new-fn (cons y0 (cons new-x new-fn)))
+			  (set! scl (if old-dec
+					(/ (- new-dec new-att) (- old-dec old-att))
+					(/ (- last-x new-att) (- last-x old-att)))))
+			(when (and old-dec
+				   (< x0 old-dec)
+				   (>= x1 old-dec))
+			  (set! y0 (if (= x1 old-dec)
+				       y1
+				       (+ y0 (* (- y1 y0) (/ (- old-dec x0) (- x1 x0))))))
+			  (set! x0 old-dec)
+			  (set! new-x new-dec)
+			  (set! new-fn (cons y0 (cons new-x new-fn)))
+			  (set! scl (/ (- last-x new-dec) (- last-x old-dec))))
+			(when (not (= x0 x1))
+			  (set! new-x (+ new-x (* scl (- x1 x0))))
+			  (set! new-fn (cons y1 (cons new-x new-fn)))
+			  (set! x0 x1)
+			  (set! y0 y1))
+			(stretch-envelope-1 new-fn (cddr old-fn))))))))))))
 
 
 ;;; -------- scale-envelope
@@ -486,9 +483,10 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 	      (moving-average rms (float-vector-ref data j)))
 	    (set! e (cons (* 1.0 (/ i fsr)) e))
 	    (set! rms-val (sqrt (* (mus-scaler rms) (mus-increment rms))))
-	    (set! e (if db 
-			(cons (if (< rms-val 1e-05) -100.0 (* 20.0 (log rms-val 10.0))) e)
-			(cons rms-val e)))))))))
+	    (set! e (cons (if db 
+			      (if (< rms-val 1e-05) -100.0 (* 20.0 (log rms-val 10.0)))
+			      rms-val)
+			  e))))))))
 
 
 (define* (normalize-envelope env1 (new-max 1.0))
