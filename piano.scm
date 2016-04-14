@@ -159,12 +159,10 @@
     (let ((ta (tan (- (* samp-frac wT))))
 	  (c (cos wT))
 	  (s (sin wT)))
-      (/ (+ (- ta) 
-	    (* (signum ta)
-	       (sqrt (* (+ 1 (* ta ta)) 
-			(* s s))))) ; is this correct? it's in the original
+      (/ (- (* (signum ta) 
+	       (sqrt (* (+ 1 (* ta ta)) s s))) ta)  ; is the (* s s) correct? it's in the original
 	 (- (* c ta) s))))
-  
+
   (define (apfloor len wT)
     (let* ((len-int (floor len))
 	   (len-frac (- len len-int)))

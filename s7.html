@@ -1572,7 +1572,7 @@ value passed to set!:
 	(gotos ())
 	(come-froms ()))
 
-    (define (collect-jumps tree)
+    (let collect-jumps ((tree body))
       (when (pair? tree)
 	(when (pair? (car tree))
 	  (case (caar tree)
@@ -1581,8 +1581,6 @@ value passed to set!:
 	    ((come-from) (set! come-froms (cons tree come-froms)))
 	    (else (collect-jumps (car tree)))))
 	(collect-jumps (cdr tree))))
-
-    (collect-jumps body)
 
     (for-each
      (lambda (goto)

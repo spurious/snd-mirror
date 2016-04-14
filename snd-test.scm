@@ -34543,15 +34543,10 @@ EDITS: 1
 					     (* y (+ 0.10750e-3
 						     (* y 0.74e-5)))))))))))))
 	(let ((y (/ 2.0 x)))
-	  (* (/ (exp (- x)) (sqrt x)) 
-	     (+ 1.25331414
-		(* y (+ -0.7832358e-1
-			(* y (+ 0.2189568e-1
-				(* y (+ -0.1062446e-1
-					(* y (+ 0.587872e-2
-						(* y (+ -0.251540e-2
-							(* y -0.53208e-3))))))))))))))))
-  
+	  (* (/ (exp (- x)) (sqrt x))
+	     (+ 1.2533 
+		(* y (- (* y (+ 0.02189568 (* y (- (* y (+ 0.00587872 (* y (- (* y -0.00053208) 0.0025154)))) 0.01062446)))) 0.0783)))))))
+
   (define (test-k0)
     (if (fneq (bes-k0 1.0) 0.4210244) (snd-display #__line__ ";bes-k0 1.0: ~A" (bes-k0 1.0)))
     (if (fneq (bes-k0 2.0) 0.1138938) (snd-display #__line__ ";bes-k0 2.0: ~A" (bes-k0 2.0)))
@@ -34560,24 +34555,16 @@ EDITS: 1
   (define (bes-k1 x)				;K1(x)
     (if (<= x 2.0)
 	(let ((y (* x (/ x 4.0))))
-	  (+ (* (log (/ x 2)) (bes-i1 x)) 
+	  (+ (* (log (/ x 2)) (bes-i1 x))
 	     (* (/ 1.0 x)
-		(+ 1.0
+		(+ 1.0000
 		   (* y (+ 0.15443144
-			   (* y (+ -0.67278579
-				   (* y (+ -0.18156897
-					   (* y (+ -0.1919402e-1
-						   (* y (+ -0.110404e-2
-							   (* y -0.4686e-4)))))))))))))))
+			 (* y (- (* y (- (* y (- (* y (- (* y -4.686e-05) 0.00110404)) 0.01919402)) 0.18156897)) 0.6728))))))))
 	(let ((y (/ 2.0 x)))
-	  (* (/ (exp (- x)) (sqrt x)) 
-	     (+ 1.25331414 
-		(* y (+ 0.23498619
-			(* y (+ -0.3655620e-1
-				(* y (+ 0.1504268e-1
-					(* y (+ -0.780353e-2
-						(* y (+ 0.325614e-2
-							(* y -0.68245e-3))))))))))))))))
+	  (* (/ (exp (- x)) (sqrt x))
+	     (+ 1.2533 
+		(* y (+ 0.2350
+			(* y (- (* y (+ 0.01504268 (* y (- (* y (+ 0.00325614 (* y -0.00068245))) 0.00780353)))) 0.0365562)))))))))
   
   (define (test-k1)
     (if (fneq (bes-k1 1.0) 0.60190723) (snd-display #__line__ ";bes-k1 1.0: ~A" (bes-k1 1.0)))
@@ -37950,7 +37937,7 @@ EDITS: 1
 	    (g1 (make-oscil 1000))
 	    (x 1.0))
 	(do ((i 0 (+ i 1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (let ((x (oscil g0))
 		(y x))
 	    (float-vector-set! fv i (+ y (oscil g1)))))))
@@ -38087,7 +38074,7 @@ EDITS: 1
 	    (fv (make-float-vector 4))
 	    (x 1.0))
 	(do ((i 0 (+ i 1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (float-vector-set! fv i (remainder (* 10 (oscil g0)) 1.0)))))
     (test (fv48) (float-vector 0.0 0.4199431795762676 0.8111111333165493 0.1453117669029531))
 
@@ -38148,7 +38135,7 @@ EDITS: 1
 	    (g (make-oscil 1000)))
 	(do ((i 0 (+ i 1))
 	     (x 0.0 (+ x 0.1)))
-	    ((> i 4) fv)
+	    ((> i 4) (and x fv))
 	  (float-vector-set! fv i (oscil g)))))
     (test (catch #t fv54 (lambda args (car args))) 'out-of-range)
     
@@ -38157,7 +38144,7 @@ EDITS: 1
 	    (g (make-oscil 1000)))
 	(do ((i 0 (+ i 1.1))
 	     (x 0.0 (+ x 0.1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (float-vector-set! fv i (oscil g)))))
     (test (catch #t fv55 (lambda args (car args))) 'wrong-type-arg)
     
@@ -38166,7 +38153,7 @@ EDITS: 1
 	    (g (make-oscil 1000)))
 	(do ((i 0 (+ i 2))
 	     (x 0.0 (+ x 0.1)))
-	    ((= i 3) fv)
+	    ((= i 3) (and x fv))
 	  (float-vector-set! fv i (oscil g)))))
     (test (catch #t fv56 (lambda args (car args))) 'out-of-range)
     
@@ -38485,7 +38472,7 @@ EDITS: 1
 	    (f2-len 3))
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 2))) ; currently needed to trigger optimizer
-	    ((= i 1) f2)
+	    ((= i 1) (and x f2))
 	  (frample->frample m1 f1 f1-len f2 f2-len))))
     (test (fv91) (float-vector 30.0 36.0 42.0))
 
@@ -38497,7 +38484,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 2)))
 	    ((= i 4))
-	  (frample->file sf i fv))
+	  (and x (frample->file sf i fv)))
 	(mus-close sf)
 	(list (file->array "fmv.snd" 0 0 4 fv1)
 	      (file->array "fmv.snd" 1 0 4 fv2))))
@@ -38514,7 +38501,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 2)))
 	    ((= i 4))
-	  (frample->file sf i (float-vector-add! fv fv)))
+	  (and x (frample->file sf i (float-vector-add! fv fv))))
 	(mus-close sf)
 	(list (file->array "fmv.snd" 0 0 4 fv1)
 	      (file->array "fmv.snd" 1 0 4 fv2))))
@@ -38612,7 +38599,7 @@ EDITS: 1
       (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (if (zero? i)
 	      (float-vector-set! fv i (+ i 10.0))
 	      (float-vector-set! fv i (- i 10.0))))))
@@ -38622,7 +38609,7 @@ EDITS: 1
       (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (if (zero? (modulo i 2))
 	      (float-vector-set! fv i (+ i 10.0))
 	      (float-vector-set! fv i (- i 10.0))))))
@@ -38633,7 +38620,7 @@ EDITS: 1
 	    (ctr 0))
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 1)))
-	    ((= i 4) ctr)
+	    ((= i 4) (and x ctr))
 	  (if (zero? (modulo i 2))
 	      (set! ctr (+ ctr 1))))))
     (test (fv101) 2)
@@ -38645,7 +38632,7 @@ EDITS: 1
 	    ((= i n))
 	  (do ((j 0 (+ j 1))
 	       (k i (+ k 1)))
-	      ((= j n))
+	      ((= j n) k)
 	    (float-vector-set! fv i (+ (float-vector-ref fv i) 1.0))))))
     (fv103) ; just run without overflow
 
@@ -38790,7 +38777,7 @@ EDITS: 1
 	    (g (make-oscil 100)))
 	(do ((i 0 (+ i 1))
 	     (x 0 (+ x 1)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (if (oscil? g)
 	      (float-vector-set! fv i (+ i 10.0))
 	      (float-vector-set! fv i (- i 10.0))))))
@@ -39144,7 +39131,7 @@ EDITS: 1
       (let ((fv (make-float-vector 4)))
 	(do ((i 0 (+ i 1))
 	     (x 0.0 (+ x 1.0)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  ((lambda ()
 	     (set! (fv i) i))))))
     (test (fv135) (float-vector 0.0 1.0 2.0 3.0))
@@ -39170,7 +39157,7 @@ EDITS: 1
 	    (fv1 (vector 0.0 0.6 1.2 1.8)))
 	(do ((i 0 (+ i 1))
 	     (x 0.0 (+ x 0.6)))
-	    ((= i 4) fv)
+	    ((= i 4) (and x fv))
 	  (vector-set! fv i (asin (vector-ref fv1 i))))))
     (test (fv138) (vector (asin 0.0) (asin 0.6) (asin 1.2) (asin 1.8)))
     
@@ -39579,8 +39566,8 @@ EDITS: 1
     (define (fvi178) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x))))))
     (test (fvi178) (int-vector 6 6 6 6))
     
-    (define (fvi178) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
-    (test (fvi178) (int-vector 6 6 6 6))
+    (define (fvk178) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
+    (test (fvk178) (int-vector 6 6 6 6))
     
     
     (define (fvi179) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1 2 3)))))
@@ -39613,8 +39600,8 @@ EDITS: 1
     (define (fvi188) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x))))))
     (test (fvi188) (int-vector 8 8 8 8))
     
-    (define (fvi188) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
-    (test (fvi188) (int-vector 8 8 8 8))
+    (define (fvk188) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
+    (test (fvk188) (int-vector 8 8 8 8))
     
     (define (fvi191) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 6)))))
     (test (fvi191) (int-vector 6 6 6 6))

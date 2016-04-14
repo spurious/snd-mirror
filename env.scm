@@ -28,7 +28,7 @@
 end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"))
     (lambda (beg end e)
       (let ((nenv ())
-	    (lasty (if e (cadr e) 0.0))
+	    (lasty (if (pair? e) (cadr e) 0.0))
 	    (len (length e)))
 	(call-with-exit
 	 (lambda (return-early)               
@@ -207,7 +207,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 			  (set! new-x new-dec)
 			  (set! new-fn (cons y0 (cons new-x new-fn)))
 			  (set! scl (/ (- last-x new-dec) (- last-x old-dec))))
-			(when (not (= x0 x1))
+			(unless (= x0 x1)
 			  (set! new-x (+ new-x (* scl (- x1 x0))))
 			  (set! new-fn (cons y1 (cons new-x new-fn)))
 			  (set! x0 x1)

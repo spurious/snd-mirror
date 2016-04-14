@@ -154,18 +154,22 @@
 	    (do ((i beg (+ i 1)))
 		((= i end))
 
-	      (set! vib (+ (/ (* (vinbridge indexl_2) (- alphal 1) (- alphal 2)) 2)
-			   (* (vinbridge indexl_1) alphal -1 (- alphal 2))
-			   (/ (* (vinbridge indexl) alphal (- alphal 1)) 2)))
-	      (set! vin (+ (/ (* (vinut indexr_2) (- alphar 1) (- alphar 2)) 2)
-			   (* (vinut indexr_1) alphar -1 (- alphar 2))
-			   (/ (* (vinut indexr) (- alphar 1) alphar) 2)))
-	      (set! vibt (+ (/ (* (vinbridget indexlt_2) (- alphalt 1)(- alphalt 2)) 2)
-			    (* (vinbridget indexlt_1) alphalt -1 (- alphalt 2))
-			    (/ (* (vinbridget indexlt) alphalt (- alphalt 1)) 2)))
-	      (set! vint (+ (/ (* (vinutt indexrt_2) (- alphart 1) (- alphart 2)) 2)
-			    (* (vinutt indexrt_1) alphart -1 (- alphart 2))
-			    (/ (* (vinutt indexrt) (- alphart 1) alphart) 2)))
+	      (set! vib (- (+ (/ (* (vinbridge indexl_2) (- alphal 1) (- alphal 2)) 2)
+			      (/ (* (vinbridge indexl) alphal (- alphal 1)) 2))
+			   (* (vinbridge indexl_1) alphal (- alphal 2))))
+
+	      (set! vin (- (+ (/ (* (vinut indexr_2) (- alphar 1) (- alphar 2)) 2)
+			      (/ (* (vinut indexr) (- alphar 1) alphar) 2))
+			   (* (vinut indexr_1) alphar (- alphar 2))))
+
+	      (set! vibt (- (+ (/ (* (vinbridget indexlt_2) (- alphalt 1) (- alphalt 2)) 2)
+			       (/ (* (vinbridget indexlt) alphalt (- alphalt 1)) 2))
+			    (* (vinbridget indexlt_1) alphalt (- alphalt 2))))
+
+	      (set! vint (- (+ (/ (* (vinutt indexrt_2) (- alphart 1) (- alphart 2)) 2)
+			       (/ (* (vinutt indexrt) (- alphart 1) alphart) 2))
+			    (* (vinutt indexrt_1) alphart (- alphart 2))))
+
 	      (bowfilt inharm)
 	      (set! vh (+ ynn y1nb ynnt ynbt))
 	      
@@ -196,28 +200,26 @@
 				(set! rhs #f)
 				(set! lhs #t)))
 			  (if rhs
-			      (begin
-				(if (< delta1 0)
-				    (begin
-				      (set! v vb)
-				      (set! stick 1))
-				    (begin
-				      (if (= stick 1)
-					  (begin
-					    (set! vtemp vb)
-					    (set! f (* 2 zslope (- vtemp vh)))
-					    (if (>= f (* -1 mus fb))
-						(set! v vtemp)
-						(begin
-						  (set! v1 (/ (- (sqrt delta1) bb1) (* 2 aa)))
-						  (set! v2 (/ (- (+ bb1 (sqrt delta1))) (* 2 aa)))
-						  (set! v (min v1 v2))
-						  (set! stick 0))))
-					  (begin
-					    (set! v1 (/ (- (sqrt delta1) bb1) (* 2 aa)))
-					    (set! v2 (/ (- (+ bb1 (sqrt delta1))) (* 2 aa)))
-					    (set! v (min v1 v2))
-					    (set! stick 0))))))
+			      (if (< delta1 0)
+				  (begin
+				    (set! v vb)
+				    (set! stick 1))
+				  (if (= stick 1)
+				      (begin
+					(set! vtemp vb)
+					(set! f (* 2 zslope (- vtemp vh)))
+					(if (>= f (- (* mus fb)))
+					    (set! v vtemp)
+					    (begin
+					      (set! v1 (/ (- (sqrt delta1) bb1) (* 2 aa)))
+					      (set! v2 (/ (- (+ bb1 (sqrt delta1))) (* 2 aa)))
+					      (set! v (min v1 v2))
+					      (set! stick 0))))
+				      (begin
+					(set! v1 (/ (- (sqrt delta1) bb1) (* 2 aa)))
+					(set! v2 (/ (- (+ bb1 (sqrt delta1))) (* 2 aa)))
+					(set! v (min v1 v2))
+					(set! stick 0))))
 			      (when lhs
 				(if (< delta2 0)
 				    (begin

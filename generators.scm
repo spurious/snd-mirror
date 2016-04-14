@@ -1449,9 +1449,7 @@ returns n cosines spaced by frequency."))
 	    (set! (g 'rr-1) (- 1.0 (g 'rr)))
 	    (set! (g 'r2) (* 2.0 (g 'r)))
 	    (let ((absr (abs (g 'r))))
-	      (if (< absr nearly-zero)
-		  (set! (g 'norm) 0.0)
-		  (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
+	      (set! (g 'norm) (if (< absr nearly-zero) 0.0 (/ (- 1.0 absr) (* 2.0 absr)))))
 	    val)))
    
    (cons 'mus-phase
@@ -1468,9 +1466,7 @@ returns n cosines spaced by frequency."))
 			       (set! (g 'rr-1) (- 1.0 (g 'rr)))
 			       (set! (g 'r2) (* 2.0 (g 'r)))
 			       (let ((absr (abs (g 'r))))
-				 (if (< absr nearly-zero)
-				     (set! (g 'norm) 0.0)
-				     (set! (g 'norm) (/ (- 1.0 absr) (* 2.0 absr)))))
+				 (set! (g 'norm) (if (< absr nearly-zero) 0.0 (/ (- 1.0 absr) (* 2.0 absr)))))
 			       g)
 	       :methods rcos-methods)
   (frequency *clm-default-frequency*) (r 0.5) fm
@@ -1908,9 +1904,7 @@ returns many cosines from frequency spaced by frequency * ratio with amplitude r
 	  
 	  (if (not (= fm 0.0))  ;(set! r (clamp-rxycos-r (curlet) fm))
 	      (let ((maxr (expt cutoff (/ (floor (- (/ two-pi (* 3 ratio (+ fm frequency))) (/ ratio)))))))
-		(if (>= r 0.0)
-		    (set! r (min r maxr))
-		    (set! r (max r (- maxr))))))
+		(set! r (if (>= r 0.0) (min r maxr) (max r (- maxr))))))
 	  
 	  (* (/ (- (cos x)
 		   (* r (cos (- x y))))
@@ -3503,10 +3497,10 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 (defgenerator (bess
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       (if (>= (g 'n) (length bessel-peaks)) 
-				   (set! (g 'norm) (/ 0.67 (expt (g 'n) 1/3)))
-				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
-				   (set! (g 'norm) (bessel-peaks (g 'n))))
+			       (set! (g 'norm) (if (>= (g 'n) (length bessel-peaks))
+						   (/ 0.67 (expt (g 'n) 1/3))
+						   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
+						   (bessel-peaks (g 'n))))
 			       g))
   (frequency *clm-default-frequency*) (n 0) (angle 0.0) (norm 1.0) fm)
 
@@ -3594,7 +3588,7 @@ returns a sum of cosines scaled by a product of Bessel functions."))
 	  (set! angle (+ angle fm frequency))
 	  (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
 				      (* a a)
-				      (* a (* -2.0 r (cos x)))))))
+				      (* a -2.0 r (cos x))))))
 		dc)             ; get rid of DC component
 	     norm))))))
 
@@ -3889,7 +3883,7 @@ returns a sum of cosines scaled in a very complicated way."))
 	       ;;   and in this context, we get -1..1 peak amps from the sin anyway.
 	       (arg (+ (* r r) 
 		       (* a a)
-		       (* a (* -2.0 r (cos x))))))
+		       (* a -2.0 r (cos x)))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
 	      1.0
@@ -3960,7 +3954,7 @@ returns a sum of cosines scaled in a very complicated way."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let ((arg (sqrt (+ ra (* a (* -2.0 r (cos angle)))))))
+	(let ((arg (sqrt (+ ra (* a -2.0 r (cos angle))))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< arg nearly-zero)
 	      1.0
@@ -5006,10 +5000,9 @@ generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass f
 	       (* y y))))
 
 (define (blackman4-env e)
-  (env-any e
-	   (lambda (y)
-	     (let ((cx (cos (* pi y))))
-	       (+ 0.084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))
+  (env-any e (lambda (y)
+	       (let ((cx (cos (* pi y))))
+		 (+ 0.084037 (* cx (- (* cx (+ 0.375696 (* cx (- (* cx 0.041194) 0.20762)))) 0.29145)))))))
 
 (define (multi-expt-env e expts)
   (env-any e (lambda (y)
