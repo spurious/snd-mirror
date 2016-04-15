@@ -1271,9 +1271,20 @@ control over the environment at any point:
 
 &gt; (let ((a 1) (e 2)) (mac1 (display a) (+ a e)))
 <em class="gray">18</em>  ; (and it displays "11")
+
+(define-macro (mac2 x)           ; this will use mac2's definition environment for its body
+  `(with-let (sublet (funclet mac2) :x ,x)
+     (let ((a 12))
+       (+ a b x))))              ; a is always 12, b is whatever b happens to be in mac2's env
+
+&gt; (define b 10)                  ; this is mac2's b
+<em class="gray">10</em>
+&gt; (let ((+ *) (a 1) (b 15)) (mac2 (+ a b)))
+<em class="gray">37</em>                               ; mac2 uses its own a (12), b (10), and + (+)
+                                 ;   but (+ a b) is 15 because at that point + is *: (* 1 15)
 </pre>
 
-<p>So s7 does not have syntax-rules because it is not needed.
+<p>Hygenic macros are trivial!  So s7 does not have syntax-rules because it is not needed.
 s7's lint.scm will warn you about any such problematic macro expansion, so I'd
 say just write macros as simply as possible, then let lint tell you
 that it's time to do the with-let shuffle. When that happens, wrap the macro body in

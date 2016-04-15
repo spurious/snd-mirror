@@ -380,23 +380,27 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 ;;; -------- chorus (doesn't always work and needs speedup)
 (define chorus-size 5)
-(define chorus-time .05)
-(define chorus-amount 20.0)
-(define chorus-speed 10.0)
 
 (define chorus
   (let ((documentation "(chorus) tries to produce the chorus sound effect"))
     (lambda ()
-      (define (make-flanger)
-	(let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-	       (len (floor (random (* 3.0 chorus-time (srate)))))
-	       (gen (make-delay len :max-size (+ len chorus-amount 1))))
-	  (list gen ri)))
+
+      (define make-flanger
+	(let ((chorus-time .05)
+	      (chorus-amount 20.0)
+	      (chorus-speed 10.0))
+	  (lambda ()
+	    (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
+		   (len (floor (random (* 3.0 chorus-time (srate)))))
+		   (gen (make-delay len :max-size (+ len chorus-amount 1))))
+	      (list gen ri)))))
+      
       (define (flanger dly inval)
 	(+ inval 
 	   (delay (car dly)
 		  inval
 		  (rand-interp (cadr dly)))))
+      
       (let ((dlys (make-vector chorus-size)))
 	(do ((i 0 (+ i 1)))
 	    ((= i chorus-size))

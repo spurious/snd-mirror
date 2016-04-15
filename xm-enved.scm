@@ -24,54 +24,6 @@
 
 (define (xe-create-enved name parent args axis-bounds)
 
-  (define (xe-add-envelope-point x y cur-env)
-    (let ((new-env ()))
-      (let search-point ((e cur-env))
-        (cond ((null? e) (append new-env (list x y)))
-              ((= (car e) x) (append new-env (list x y) (cddr e)))
-              ((> (car e) x) (append new-env (list x y) e))
-              (else
-               (set! new-env (append new-env (list (car e) (cadr e))))
-               (search-point (cddr e)))))))
-
-  (define (xe-edit-envelope-point pos x y cur-env)
-    (let ((new-env ()))
-      (let search-point ((e cur-env)
-                         (npos 0))
-        (if (= npos pos)
-            (append new-env (list x y) (cddr e))
-            (begin
-              (set! new-env (append new-env (list (car e) (cadr e))))
-              (search-point (cddr e) (+ npos 2)))))))
-
-  (define (xe-remove-envelope-point pos cur-env)
-    (let ((new-env ()))
-      (let search-point ((e cur-env)
-                         (npos 0))
-        (if (null? e)
-            new-env
-            (if (= pos npos)
-                (append new-env (cddr e))
-                (begin
-                  (set! new-env (append new-env (list (car e) (cadr e))))
-                  (search-point (cddr e) (+ npos 2))))))))
-
-  (define (xe-envelope-position x cur-env)
-    (let search-point ((e cur-env)
-		       (pos 0))
-      (if (= (car e) x)
-	  pos
-	  (search-point (cddr e) (+ pos 2)))))
-
-  (define (xe-on-dot? x y cur-env pos)
-    (let ((xe-mouse-radius .03))
-      (and (pair? cur-env)
-	   (pair? (cdr cur-env))
-	   (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
-		    (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
-		    pos)
-	       (xe-on-dot? x y (cddr cur-env) (+ pos 2))))))
-
   (define (xe-ungrfy drawer y)
     (let* ((bounds (drawer 3))
 	   (locs (drawer 2))
@@ -103,12 +55,37 @@
 				 (- px1 px0)))))))))
 
   (define xe-mouse-down 0)
-  (define xe-mouse-up 0)
-  (define xe-click-time .1)
   (define xe-mouse-pos 0)
   (define xe-mouse-new #f)
 
   (define (xe-mouse-press drawer xx yy)
+
+    (define (xe-envelope-position x cur-env)
+      (let search-point ((e cur-env)
+			 (pos 0))
+	(if (= (car e) x)
+	    pos
+	    (search-point (cddr e) (+ pos 2)))))
+
+    (define (xe-on-dot? x y cur-env pos)
+      (let ((xe-mouse-radius .03))
+	(and (pair? cur-env)
+	     (pair? (cdr cur-env))
+	     (or (and (< (abs (- (car cur-env) x)) xe-mouse-radius)
+		      (< (abs (- (cadr cur-env) y)) xe-mouse-radius)
+		      pos)
+		 (xe-on-dot? x y (cddr cur-env) (+ pos 2))))))
+    
+    (define (xe-add-envelope-point x y cur-env)
+      (let ((new-env ()))
+	(let search-point ((e cur-env))
+	  (cond ((null? e) (append new-env (list x y)))
+		((= (car e) x) (append new-env (list x y) (cddr e)))
+		((> (car e) x) (append new-env (list x y) e))
+		(else
+		 (set! new-env (append new-env (list (car e) (cadr e))))
+		 (search-point (cddr e)))))))
+    
     (let* ((cur-env (xe-envelope drawer))
 	   (x (xe-ungrfx drawer xx))
 	   (y (xe-ungrfy drawer yy))
@@ -121,7 +98,19 @@
 	    (set! (xe-envelope drawer) (xe-add-envelope-point x y cur-env))
 	    (set! xe-mouse-pos (xe-envelope-position x (xe-envelope drawer)))))))
 
+
   (define (xe-mouse-drag drawer xx yy)
+
+    (define (xe-edit-envelope-point pos x y cur-env)
+      (let ((new-env ()))
+	(let search-point ((e cur-env)
+			   (npos 0))
+	  (if (= npos pos)
+	      (append new-env (list x y) (cddr e))
+	      (begin
+		(set! new-env (append new-env (list (car e) (cadr e))))
+		(search-point (cddr e) (+ npos 2)))))))
+    
     ;; point exists, needs to be edited with check for various bounds
     (let* ((cur-env (xe-envelope drawer))
 	   (x (xe-ungrfx drawer xx))
@@ -136,17 +125,34 @@
 	    (xe-edit-envelope-point xe-mouse-pos lx y cur-env))
       (xe-redraw drawer)))
 
-  (define (xe-mouse-release drawer)
-    (let ((cur-env (xe-envelope drawer)))
-      (set! xe-mouse-up (get-internal-real-time))
-      (if (and (not xe-mouse-new)
-	       (<= (- xe-mouse-up xe-mouse-down) xe-click-time)
-	       (not (= xe-mouse-pos 0))
-	       (< xe-mouse-pos (- (length cur-env) 2)))
-	  (set! (xe-envelope drawer)
-		(xe-remove-envelope-point xe-mouse-pos cur-env))))
-    (xe-redraw drawer)
-    (set! xe-mouse-new #f))
+
+  (define xe-mouse-release 
+    (let ((xe-click-time .1)
+	  (xe-mouse-up 0))
+
+      (define (xe-remove-envelope-point pos cur-env)
+	(let ((new-env ()))
+	  (let search-point ((e cur-env)
+			     (npos 0))
+	    (if (null? e)
+		new-env
+		(if (= pos npos)
+		    (append new-env (cddr e))
+		    (begin
+		      (set! new-env (append new-env (list (car e) (cadr e))))
+		      (search-point (cddr e) (+ npos 2))))))))
+      
+      (lambda (drawer)
+	  (let ((cur-env (xe-envelope drawer)))
+	    (set! xe-mouse-up (get-internal-real-time))
+	    (if (and (not xe-mouse-new)
+		     (<= (- xe-mouse-up xe-mouse-down) xe-click-time)
+		     (not (= xe-mouse-pos 0))
+		     (< xe-mouse-pos (- (length cur-env) 2)))
+		(set! (xe-envelope drawer)
+		      (xe-remove-envelope-point xe-mouse-pos cur-env))))
+	  (xe-redraw drawer)
+	  (set! xe-mouse-new #f))))
 
   (if (provided? 'snd-motif)
       (with-let (sublet *motif* 

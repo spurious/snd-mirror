@@ -182,90 +182,93 @@
     
 ;;; -------- Gain (gain set by gain-amount)
     
-    (let ((gain-amount 1.0)
-	  (gain-label "Gain")
-	  (gain-dialog #f)
-	  (gain-target 'sound)
-	  (gain-envelope #f))
+    (let ((gain-amount 1.0))
       
-      (define (post-gain-dialog)
-	(define (scale-envelope e scl)
-	  (if (null? e)
-	      ()
-	      (append (list (car e) (* scl (cadr e)))
-		      (scale-envelope (cddr e) scl))))
-	(if (Widget? gain-dialog)
-	    (activate-dialog gain-dialog)
-	    ;; if gain-dialog doesn't exist, create it
-	    (let ((initial-gain-amount 1.0)
-		  (sliders ())
-		  (fr #f))
-	      (set! gain-dialog
-		    (make-effect-dialog 
-		     gain-label
-		     
-		     (lambda (w context info)
-		       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
-					    (scale-envelope (xe-envelope gain-envelope) gain-amount))))
-			 (if (eq? gain-target 'sound)
-			     (if with-env
-				 (env-sound with-env)
-				 (scale-by gain-amount))
-			     (if (eq? gain-target 'selection)
-				 (if (selection?)
-				     (if with-env
-					 (env-selection with-env)
-					 (scale-selection-by gain-amount))
-				     (snd-print ";no selection"))
-				 (let ((pts (catch 'no-such-mark 
-					      plausible-mark-samples
-					      (lambda args #f))))
-				   (if pts
-				       (if with-env
-					   (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-					   (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
-				       (snd-print ";no marks")))))))
-		     
-		     (lambda (w context info)
-		       (help-dialog "Gain"
-				    "Move the slider to change the gain scaling amount."))
-		     
-		     (lambda (w c i)
-		       (set! gain-amount initial-gain-amount)
-		       (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-		       (XtSetValues (car sliders) (list XmNvalue (floor (* gain-amount 100)))))
-		     
-		     (lambda () 
-		       (effect-target-ok gain-target))))
-	      
-	      (set! sliders
-		    (add-sliders gain-dialog
-				 (list (list "gain" 0.0 initial-gain-amount 5.0
-					     (lambda (w context info)
-					       (set! gain-amount (/ (.value info) 100.0)))
-					     100))))
-	      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
-					      (list XmNheight              200
-						    XmNleftAttachment      XmATTACH_FORM
-						    XmNrightAttachment     XmATTACH_FORM
-						    XmNtopAttachment       XmATTACH_WIDGET
-						    XmNtopWidget           (sliders (- (length sliders) 1))
-						    XmNshadowThickness     4
-						    XmNshadowType          XmSHADOW_ETCHED_OUT)))
-	      
-	      (let ((target-row (add-target (XtParent (XtParent (car sliders)))
-					    (lambda (target) 
-					      (set! gain-target target)
-					      (XtSetSensitive (XmMessageBoxGetChild gain-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-					    #f)))
+      (define post-gain-dialog
+	(let ((gain-label "Gain")
+	      (gain-dialog #f)
+	      (gain-target 'sound)
+	      (gain-envelope #f))
+	  
+	  (define (scale-envelope e scl)
+	    (if (null? e)
+		()
+		(append (list (car e) (* scl (cadr e)))
+			(scale-envelope (cddr e) scl))))
+	  
+	  (lambda ()
+	    (if (Widget? gain-dialog)
 		(activate-dialog gain-dialog)
-		
-		(set! gain-envelope (xe-create-enved "gain"  fr
-						     (list XmNheight 200)
-						     '(0.0 1.0 0.0 1.0)))
-		(set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-		(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-					XmNbottomWidget     target-row))))))
+		;; if gain-dialog doesn't exist, create it
+		(let ((initial-gain-amount 1.0)
+		      (sliders ())
+		      (fr #f))
+		  (set! gain-dialog
+			(make-effect-dialog 
+			 gain-label
+			 
+			 (lambda (w context info)
+			   (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
+						(scale-envelope (xe-envelope gain-envelope) gain-amount))))
+			     (if (eq? gain-target 'sound)
+				 (if with-env
+				     (env-sound with-env)
+				     (scale-by gain-amount))
+				 (if (eq? gain-target 'selection)
+				     (if (selection?)
+					 (if with-env
+					     (env-selection with-env)
+					     (scale-selection-by gain-amount))
+					 (snd-print ";no selection"))
+				     (let ((pts (catch 'no-such-mark 
+						  plausible-mark-samples
+						  (lambda args #f))))
+				       (if pts
+					   (if with-env
+					       (env-sound with-env (car pts) (- (cadr pts) (car pts)))
+					       (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
+					   (snd-print ";no marks")))))))
+			 
+			 (lambda (w context info)
+			   (help-dialog "Gain"
+					"Move the slider to change the gain scaling amount."))
+			 
+			 (lambda (w c i)
+			   (set! gain-amount initial-gain-amount)
+			   (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+			   (XtSetValues (car sliders) (list XmNvalue (floor (* gain-amount 100)))))
+			 
+			 (lambda () 
+			   (effect-target-ok gain-target))))
+		  
+		  (set! sliders
+			(add-sliders gain-dialog
+				     (list (list "gain" 0.0 initial-gain-amount 5.0
+						 (lambda (w context info)
+						   (set! gain-amount (/ (.value info) 100.0)))
+						 100))))
+		  (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+						  (list XmNheight              200
+							XmNleftAttachment      XmATTACH_FORM
+							XmNrightAttachment     XmATTACH_FORM
+							XmNtopAttachment       XmATTACH_WIDGET
+							XmNtopWidget           (sliders (- (length sliders) 1))
+							XmNshadowThickness     4
+							XmNshadowType          XmSHADOW_ETCHED_OUT)))
+		  
+		  (let ((target-row (add-target (XtParent (XtParent (car sliders)))
+						(lambda (target) 
+						  (set! gain-target target)
+						  (XtSetSensitive (XmMessageBoxGetChild gain-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						#f)))
+		    (activate-dialog gain-dialog)
+		    
+		    (set! gain-envelope (xe-create-enved "gain"  fr
+							 (list XmNheight 200)
+							 '(0.0 1.0 0.0 1.0)))
+		    (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+		    (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+					    XmNbottomWidget     target-row))))))))
       
       (let ((child (XtCreateManagedWidget "Gain" xmPushButtonWidgetClass amp-menu
 					  (list XmNbackground *basic-color*))))
