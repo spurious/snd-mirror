@@ -338,6 +338,54 @@ also need to install gtk-devel.
 
 ---- Mac OSX: ---- 
 
+Daniel Hensel sends these instructions to get Snd running with Motif:
+
+Download and install XQuartz:
+http://www.xquartz.org
+
+Download and install XCode
+open terminal:
+install Command Line Tools by typing
+xcode-select --install
+
+Install Macports
+Install Homebrew
+
+In Terminal type  if not already installed:
+
+brew install gcc 
+brew install ruby
+brew install gtk+
+brew install openmotif
+brew install poppler
+
+brew install timidity
+brew install wavpack
+brew install wavunpack
+brew install mpg123
+brew install mpg321
+
+sudo port -v install vorbis-tools +flac
+
+untar snd-16.4
+cd into the snd-16.4 folder
+type:
+./configure CFLAGS="-arch x86_64  -I/sw/include" LDFLAGS="-L/sw/lib -lmx -bind_at_load" --with-motif
+make
+sudo make install
+
+now it works
+
+you may start snd by typing snd from the command line, but you also may add it to XQuartz: open  
+/Applications/Utilities/Xquartz/
+
+tab on /Applications, adapt the Path by adding Object and typing /usr/local/bin/snd 
+
+Create your shortcut in XQuartz so it will start immediately by typing Command-s
+
+
+---- old, possibly out-of-date instructions
+
 You can use either Motif or Gtk running under X11; to start Snd from an
 ordinary shell, use the open-x11 command:
 

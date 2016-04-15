@@ -174,32 +174,6 @@
 		    definstrument defanimal define-envelope        ; for clm
 		    define-public define-inlinable define-integrable define^))
 
-	(deprecated-ops '((global-environment . rootlet)
-			  (current-environment . curlet)
-			  (make-procedure-with-setter . dilambda)
-			  (procedure-with-setter? . dilambda?)
-			  (make-random-state . random-state)
-			  ;;(make-rectangular . complex)
-			  (data-format . sample-type)
-			  (mus-sound-frames . mus-sound-framples)
-			  (mus-sound-data-format . mus-sound-sample-type)
-			  (mus-data-format-name . mus-sample-type-name)
-			  (mus-data-format->string . mus-sample-type->string)))
-	
-	(numeric-ops (let ((h (make-hash-table)))
-		       (for-each
-			(lambda (op)
-			  (set! (h op) #t))
-			'(+ * - / 
-			  sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
-			  log exp expt sqrt make-polar complex
-			  imag-part real-part abs magnitude angle max min exact->inexact
-			  modulo remainder quotient lcm gcd
-			  rationalize inexact->exact random
-			  logior lognot logxor logand numerator denominator 
-			  floor round truncate ceiling ash))
-		       h))
-
 	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm tree-leaves
 			    char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
 			    char-position string-position pair-line-number port-line-number))
@@ -251,18 +225,6 @@
 		       define-constant define-expansion))
 		    h))
 	
-	(binders (let ((h (make-hash-table)))
-		   (for-each
-		    (lambda (op)
-		      (set! (h op) #t))
-		    '(let let* letrec letrec* do
-		      lambda lambda* define define* 
-		      call/cc call-with-current-continuation 
-		      define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-		      load eval eval-string require))
-		   h))
-
-	(selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?))
 	(outport #t)
 	(linted-files ())
 	(big-constants ())
@@ -270,7 +232,6 @@
 	(*e* #f)
 	(other-identifiers #f)
 	(quote-warnings 0)
-	(lint-let-reduction-factor 3) ; maybe make this a global switch -- the higher this number, the fewer let-reduction suggestions
 	(last-simplify-boolean-line-number -1)
 	(last-simplify-numeric-line-number -1)
 	(last-simplify-cxr-line-number -1)
@@ -286,7 +247,6 @@
 	(catch-marker '[catch])
 	(with-let-marker '[with-let])
 	(top-level-marker '--)
-	(MAX_ARITY (cdr (arity +))) ; 536870912
 	(pp-left-margin 4)
 	(lint-left-margin 1))
     
@@ -295,16 +255,18 @@
 
 
     ;; -------- lint-format --------
+    (define target-line-length 80)
+
     (define (truncated-list->string form)
       ;; return form -> string with limits on its length
       (let* ((str (object->string form))
 	     (len (length str)))
-	(if (< len 80)
+	(if (< len target-line-length)
 	    str
-	    (do ((i 67 (- i 1)))
+	    (do ((i (- target-line-length 6) (- i 1)))
 		((or (= i 40)
 		     (char-whitespace? (str i)))
-		 (string-append (substring str 0 (if (<= i 40) 67 i)) "..."))))))
+		 (string-append (substring str 0 (if (<= i 40) (- target-line-length 6) i)) "..."))))))
     
     (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-var also collides)
     (define lint-pretty-print #f)
@@ -319,15 +281,15 @@
 	     (len1 (length str1))
 	     (str2 (object->string f2))
 	     (len2 (length str2)))
-	(when (> len1 80)
+	(when (> len1 target-line-length)
 	  (set! str1 (truncated-list->string f1))
 	  (set! len1 (length str1)))
-	(when (> len2 80)
+	(when (> len2 target-line-length)
 	  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) pp-left-margin)
 	  (set! ((funclet lint-pretty-print) '*pretty-print-length*) (- 114 pp-left-margin))
 	  (set! str2 (lint-pp f2))
 	  (set! len2 (length str2)))
-	(format #f (if (< (+ len1 len2) 80)
+	(format #f (if (< (+ len1 len2) target-line-length)
 		       (values "~A -> ~A" str1 str2)
 		       (values "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))))
     
@@ -337,13 +299,13 @@
 	     (len1 (length str1))
 	     (str2 (object->string f2))
 	     (len2 (length str2)))
-	(when (> len1 80)
+	(when (> len1 target-line-length)
 	  (set! str1 (truncated-list->string f1))
 	  (set! len1 (length str1)))
-	(when (> len2 80)
+	(when (> len2 target-line-length)
 	  (set! str2 (truncated-list->string f2))
 	  (set! len2 (length str2)))
-	(format #f (if (< (+ len1 len2) 80)
+	(format #f (if (< (+ len1 len2) target-line-length)
 		       (values "~A -> ~A" str1 str2)
 		       (values "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))))
     
@@ -362,7 +324,7 @@
 			       args))))
 	(set! made-suggestion (+ made-suggestion 1))
 	(display outstr outport)
-	(if (> (length outstr) 120)
+	(if (> (length outstr) (+ target-line-length 40))
 	    (newline outport))))
 
     (define (local-line-number tree)
@@ -5614,12 +5576,10 @@
 				   ;; (for-each (lambda (x) (display x) (write-char #\space)) msg)
 				   ;; (for-each (lambda (elt) (display elt)) lst)
 				   (let ((ctrl-string "")
-					 (args ())
 					 (arg-ctr 0))
 				     
 				     (define* (gather-format str (arg :unset))
-				       (set! ctrl-string (string-append ctrl-string str))
-				       (unless (eq? arg :unset) (set! args (cons arg args))))
+				       (set! ctrl-string (string-append ctrl-string str)))
 				     
 				     (for-each
 				      (lambda (d)
@@ -5673,10 +5633,8 @@
 						   (pair? (cadr consumer))
 						   (let ((len (length (cadr consumer))))
 						     (if (negative? len)
-							 (cons (abs len) MAX_ARITY)
+							 (cons (abs len) (cdr (arity +))) ; 536870912 = MAX_ARITY in s7.c
 							 (cons len len))))))))
-	       
-					;(format *stderr* "~A ~A ~A~%~%" form produced-values consumed-values)
 	       (if (and consumed-values
 			(or (> (car consumed-values) (car produced-values))
 			    (< (cdr consumed-values) (cadr produced-values))))
@@ -5802,6 +5760,21 @@
 						 (if (null? (cdr var-data))
 						     `((lambda ,(car v) ,@(cddr form)) ,(cadr v))
 						     `((lambda ,(car v) ,(loop (cdr var-data))) ,(cadr v))))))))))
+	((define-values)
+	 (if (pair? (cdr form))
+	     (if (null? (cadr form))
+		 (lint-format "~A is pointless" caller (truncated-list->string form))
+		 (if (pair? (cddr form))
+		     (lint-format "perhaps ~A" caller
+				  (let ((old-target target-line-length))
+				    (set! target-line-length 120)
+				    (let ((result (truncated-lists->string form
+									   `(varlet (curlet) 
+									      ((lambda ,(cadr form) 
+										 (curlet)) 
+									       ,(caddr form))))))
+				      (set! target-line-length old-target)
+				      result)))))))
 	;; ----------------
 	((eval)
 	 (when (= (length form) 2)
@@ -5919,14 +5892,16 @@
 	       (if (and (symbol? func)
 			(not (memq func '(eq? eqv? equal? morally-equal? char=? char-ci=? string=? string-ci=? =))))
 		   (lint-format "make-hash-table function, ~A, is not a hash function" caller func)))))
-	
-	;; ----------------
+
 	((null eq eqv equal) ; (null (cdr...)) 
 	 (if (not (var-member head env))
 	     (lint-format "misspelled '~A? in ~A?" caller head form)))
 	
-	((interaction-environment)
-	 (lint-format "interaction-environment is probably curlet in s7" caller))
+	((interaction-environment the-environment)
+	 (lint-format "~A is probably curlet in s7" caller head))
+
+	((system-global-environment user-initial-environment)
+	 (lint-format "~A is probably rootlet in s7" caller head))
 
 	((push!) ; not predefined
 	 (if (= (length form) 3)
@@ -6816,7 +6791,7 @@
 					     (lint-pp `(define ,newv (dilambda 
 								      (lambda ,getargs ,@(cddr getter)) 
 								      (lambda ,setargs ,@(cddr setter))))))))))))))))))
-
+	   ;; bad variable names
 	   (cond ((hash-table-ref syntaces vname)
 		  (lint-format "~A ~A named ~A is asking for trouble" caller head otype vname))
 
@@ -6826,7 +6801,7 @@
 		 ((and (symbol? vname)
 		       (pair? *report-bad-variable-names*)
 		       (or (memq vname *report-bad-variable-names*)
-			   (or (bad-variable-name-numbered vname *report-bad-variable-names*))))
+			   (bad-variable-name-numbered vname *report-bad-variable-names*)))
 		  (lint-format "surely there's a better name for this variable than ~A" caller vname)))
 	   
 	   (unless (eq? vname lambda-marker)
@@ -6961,13 +6936,32 @@
 				     (unless (compatible? vtype func)
 				       (lint-format "~A is ~A, so ~A is #f" caller vname (prettify-checker-unq vtype) call)))
 				   
-				   ;; (and (pair? x) (eq? x #\a)) etc
-				   (when (and (memq func '(eq? eqv? equal?))
-					      (or (and (code-constant? call-arg1)
-						       (not (compatible? vtype (->lint-type call-arg1))))
-						  (and (code-constant? (caddr call))
-						       (not (compatible? vtype (->lint-type (caddr call)))))))
-				     (lint-format "~A is ~A, so ~A is #f" caller vname (prettify-checker-unq vtype) call))
+				   (case func
+				     ;; need a way to mark exported variables so they won't be checked in this process
+				     ;; case can happen here, but it never seems to trigger a type error
+				     ((eq? eqv? equal?)
+				      ;; (and (pair? x) (eq? x #\a)) etc
+				      (when (or (and (code-constant? call-arg1)
+						     (not (compatible? vtype (->lint-type call-arg1))))
+						(and (code-constant? (caddr call))
+						     (not (compatible? vtype (->lint-type (caddr call))))))
+					(lint-format "~A is ~A, so ~A is #f" caller vname (prettify-checker-unq vtype) call)))
+
+				     ((and or)
+				      (when (let amidst? ((lst call))
+					      (and (pair? lst)
+						   (pair? (cdr lst))
+						   (or (eq? (car lst) vname)
+						       (amidst? (cdr lst)))))   ; don't clobber possible trailing vname (returned by expression)
+					(lint-format "~A is ~A, so ~A~%" caller       ; (let ((x 1)) (and x (< x 1))) -> (< x 1)
+						     vname (prettify-checker-unq vtype)
+						     (lists->string call 
+								    (simplify-boolean (remove vname call) () () vars)))))
+				     ((not)
+				      (if (eq? vname (cadr call))
+					  (lint-format "~A is ~A, so ~A" caller
+						       vname (prettify-checker-unq vtype)
+						       (lists->string call #f)))))
 
 				   ;; the usual eqx confusion
 				   (when (and (= suggest made-suggestion)
@@ -8502,7 +8496,50 @@
 
 	  (values header-len trailer-len result-min-len))))
 
-    (define (lint-walk caller form env)
+
+    (define lint-walk
+      (let ((deprecated-ops '((global-environment . rootlet)
+			      (current-environment . curlet)
+			      (make-procedure-with-setter . dilambda)
+			      (procedure-with-setter? . dilambda?)
+			      (make-random-state . random-state)
+			      ;;(make-rectangular . complex)
+			      (data-format . sample-type)
+			      (mus-sound-frames . mus-sound-framples)
+			      (mus-sound-data-format . mus-sound-sample-type)
+			      (mus-data-format-name . mus-sample-type-name)
+			      (mus-data-format->string . mus-sample-type->string)))
+
+	    (numeric-ops (let ((h (make-hash-table)))
+			   (for-each
+			    (lambda (op)
+			      (set! (h op) #t))
+			    '(+ * - / 
+				sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
+				log exp expt sqrt make-polar complex
+				imag-part real-part abs magnitude angle max min exact->inexact
+				modulo remainder quotient lcm gcd
+				rationalize inexact->exact random
+				logior lognot logxor logand numerator denominator 
+				floor round truncate ceiling ash))
+			   h))
+
+	    (binders (let ((h (make-hash-table)))
+		       (for-each
+			(lambda (op)
+			  (set! (h op) #t))
+			'(let let* letrec letrec* do
+			      lambda lambda* define define* 
+			      call/cc call-with-current-continuation 
+			      define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+			      load eval eval-string require))
+		       h))
+
+	    (lint-let-reduction-factor 3) ; maybe make this a global switch -- the higher this number, the fewer let-reduction suggestions
+	    (selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?)))
+	
+	(lambda (caller form env)
+
       ;; walk a form, here curlet can change
       ;; (format *stderr* "lint-walk ~A ~A~%" form env)
 
@@ -8522,7 +8559,7 @@
 			   (lint-walk caller (cadr x) env) ; register refs
 			   (set! happy #f)))
 		       form)
-		      (if (not happy)   ; these are used exactly 4 times (in a test suite!) in 2 million lines of randomly gathered open source scheme code
+		      (if (not happy)   ; these are used exactly 4 times (in a test suite!) in 2 million lines of open source scheme code
 			  (lint-format "quasiquoted vectors are not supported: ~A" caller form))))
 		env)
 	      (let ((head (car form)))
@@ -9422,6 +9459,8 @@
 				 ;; the cond form is not always an improvement:
 				 ;;   (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
 				 ;;   (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
+				 ;;   perhaps: (case (+ (if A 4 0) (if B 2 0) (if C 1 0)) ((#b000)...))!
+				 ;;   how often (and how deeply nested) does this happen? -- not very, but nesting can be ridiculous.
 				 
 				 (define (swap-clauses form)
 				   (if (not (pair? (cdddr form)))
@@ -10431,7 +10470,9 @@
 			 (if (and (not (pair? selector))
 				  (constant? selector))
 			     (lint-format "case selector is a constant: ~A" caller (truncated-list->string form)))
-			 (lint-walk caller selector env)
+			 (if (symbol? selector)
+			     (set-ref selector caller form env)
+			     (lint-walk caller selector env))
 			 (if (and (pair? selector)
 				  (symbol? (car selector)))
 			     (begin
@@ -12085,7 +12126,7 @@
 			    (lambda (f)
 			      (set! vars (lint-walk caller f vars)))
 			    form))))
-		   env))))))
+		   env))))))))
 
 
     ;; -------- lint-file --------
@@ -12582,18 +12623,15 @@
 ;;; pp handling of (list ((lambda...)..)) is bad
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; indentation is confused in pp by if expr+values?
-;;; can we see structs?
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; (let ((x (vector 0 1))) (vector-set! x 0 1)) -- no ref of vector -- where to check that it's not a returned value?
 ;;; find differ-by-n across body and rewrite using a function?
 ;;; (if (and A)...<no change to A>) (if (and A C)...)?
 ;;; in report usage
-;;;   (and|or|not|if|when|unless|cond x...) -- sig is #t but if x can't be #f report that [arity *let length]
-;;;     as case selector -- useless branches?
+;;;   vector->float|int-vector
 ;;;   built-in/syntax as func par used as func/syntax -- see 8726 -- needs walker to distinguish bindings/parameters from function calls
 ;;;       and tree-car-member returns the outermost tree (unwinds recursive calls) which is not what is wanted [tree-arg-member]
 ;;; recursive func with no exit, or call with same pars
-;;; if list is all constants and not set -- use list constant (count uses if possible, or track reports and report at end)
-;;;   if refs are via cxr/list-ref -- suggest change to vector
+;;; (if A (cond) B) -> (cond ((not A) B)...)
 ;;;
-;;; 123
+;;; 122

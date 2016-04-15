@@ -159,8 +159,14 @@
 ;;   or (format #f "~^ this is a comment ")
 
 
-(define-macro (define-values vars . body)
+(define-macro (define-values vars expression)
+  `(if (not (null? ',vars))
+       (varlet (curlet) ((lambda ,vars (curlet)) ,expression))))
+
+#|
+(define-macro (define-values vars . body) ; but the spec says "<expression>" here
   `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
+|#
 
 (define-macro (let-values vars . body)
   (if (and (pair? vars)
@@ -199,16 +205,6 @@
 	   (cdr args)
 	   (cdr exprs)))
       form)))
-
-#|
-(define-macro (let*-values vars . body)
-  `(let () 
-     ,@(map (lambda (nvars . nbody)
-              `(apply define-values ',nvars ',@nbody))
-            (map car vars) 
-            (map cdr vars))
-     ,@body))
-|#
 
 
 ;; case-lambda       

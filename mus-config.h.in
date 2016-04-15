@@ -94,9 +94,6 @@
 #undef HAVE_MPG321
 #undef PATH_MPG321
 
-#undef HAVE_TTA
-#undef PATH_TTA
-
 #undef HAVE_WAVPACK
 #undef PATH_WAVPACK
 #undef PATH_WVUNPACK

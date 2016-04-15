@@ -489,14 +489,6 @@ if test "$PATH_TIMIDITY" != "no" ; then
 fi
 
 
-AC_PATH_PROG(PATH_TTA, ttaenc, no)
-
-if test "$PATH_TTA" != "no" ; then
-  AC_DEFINE(HAVE_TTA)
-  AC_DEFINE_UNQUOTED(PATH_TTA, "${PATH_TTA}")
-fi
-
-
 AC_PATH_PROG(PATH_WAVPACK, wavpack, no)
 AC_PATH_PROG(PATH_WVUNPACK, wvunpack, no)
 

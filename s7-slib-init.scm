@@ -58,11 +58,10 @@
 ;;; customize a computer environment for a user.
 (define (home-vicinity)
   (let ((home (getenv "HOME")))
-    (and home
-	 (if (and (memq (software-type) '(unix coherent ms-dos))
-		  (not (char=? #\/ (string-ref home (- (string-length home) 1)))))
-	     (string-append home "/")
-	     home))))
+    (if (and (memq (software-type) '(unix coherent ms-dos))
+	     (not (char=? #\/ (string-ref home (- (string-length home) 1)))))
+	(string-append home "/")
+	home)))
 ;@
 (define in-vicinity string-append)
 

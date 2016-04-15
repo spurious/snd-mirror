@@ -265,18 +265,14 @@
 					      (- stiffnessFactor 1)))
 					(* stiffnessCoefficient stiffnessFactor))))
 	  
-	  (let ((ctemp (+ 1 (- b) g (- (* a g))
-			  (* nstrings (+ 1 (- b) (- g) (* a g)))))
+	  (let ((ctemp (- (+ 1 g (* nstrings (- (+ 1 (* a g)) b g))) b (* a g)))
 		(stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
 					   longitudinal-mode-stiffness-coefficient
 					   stiffnessCoefficient)))
 		
-	    (let ((cfb0 (/ (* 2 (+ -1 b g (- (* a g)))) ctemp))
-		  (cfb1 (/ (* 2 (+ a (- (* a b)) (- (* b g)) (* a b g))) ctemp))
-		  (cfa1 (/ (+ (- a) (* a b) (- (* b g)) (* a b g)
-			      (* nstrings (+ (- a) (* a b) (* b g) (- (* a b g)))))
-			   ctemp))
-		  
+	    (let ((cfb0 (/ (* 2 (- (+ -1 b g) (* a g))) ctemp))
+		  (cfb1 (/ (* 2 (- (+ a (* a b g)) (* a b) (* b g))) ctemp))
+		  (cfa1 (/ (- (+ (* a b) (* a b g) (* nstrings (- (+ (* a b) (* b g)) a (* a b g)))) a (* b g)) ctemp))
 		  (agraffe-delay1 (make-delay dlen1))
 		  (agraffe-tuning-ap1 (make-one-pole-all-pass 1 apcoef1)))
 	      
