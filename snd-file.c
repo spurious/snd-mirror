@@ -1980,7 +1980,7 @@ enum {H_NEXT, H_AIFC, H_RIFF, H_RF64, H_RAW, H_AIFF, H_IRCAM, H_NIST, H_CAFF, /*
 static int h_num_sample_types[H_SIZE] = {12 /* next */, 13 /* aifc */,  8 /* riff */, 8 /* rf64 */, 18 /* raw */, 4 /* aiff */, 5  /* ircam */, 7 /* nist */, 13 /* caff */,
 				    1 /* ogg */,  1  /* flac */,  1 /* speex */, 1 /*wavpack */,
 				    1 /* mpeg */, 1  /* midi */};
-#define H_DFS_MAX 17
+#define H_DFS_MAX 18
 
 static mus_sample_t h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS_LSHORT, MUS_LFLOAT, 
 						     MUS_MULAW, MUS_BYTE, MUS_BINT, MUS_ALAW, MUS_B24INT, MUS_BDOUBLE, MUS_LINT, MUS_LDOUBLE},
