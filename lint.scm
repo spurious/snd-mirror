@@ -5767,7 +5767,7 @@
 		 (if (pair? (cddr form))
 		     (lint-format "perhaps ~A" caller
 				  (let ((old-target target-line-length))
-				    (set! target-line-length 120)
+				    (set! target-line-length 120) 
 				    (let ((result (truncated-lists->string form
 									   `(varlet (curlet) 
 									      ((lambda ,(cadr form) 
@@ -12632,6 +12632,6 @@
 ;;;   built-in/syntax as func par used as func/syntax -- see 8726 -- needs walker to distinguish bindings/parameters from function calls
 ;;;       and tree-car-member returns the outermost tree (unwinds recursive calls) which is not what is wanted [tree-arg-member]
 ;;; recursive func with no exit, or call with same pars
-;;; (if A (cond) B) -> (cond ((not A) B)...)
+;;; break run-on lines either in lint-format or format+outport [6025 is one bad spot]
 ;;;
 ;;; 122

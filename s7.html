@@ -3178,6 +3178,10 @@ In s7, multiple values are spliced directly into the caller's argument list.
 (define-macro (multiple-value-bind vars expr . body)
   `((lambda ,vars ,@body) ,expr))
 
+(define-macro (define-values vars expression)
+  `(if (not (null? ',vars))
+       (varlet (curlet) ((lambda ,vars (curlet)) ,expression))))
+
 (define (curry function . args)
   (if (null? args)
       function
