@@ -361,7 +361,6 @@ brew install poppler
 
 brew install timidity
 brew install wavpack
-brew install wavunpack
 brew install mpg123
 brew install mpg321
 

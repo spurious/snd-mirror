@@ -1355,16 +1355,14 @@
 	  (dilambda
 	   (lambda (data) (data 3))
 	   (lambda (data val) (set! (data 3) val))))
-	#|
+#|
 	(define (sound-button-data button)
-	(define (sb-data lst)
-	(if (null? lst)
-	#f
-	(if (equal? button (sound-button (car lst)))
-	(car lst)
-	(sb-data (cdr lst)))))
+	(define (sb-data lst) 
+	  (if (null? lst) #f 
+	      (if (equal? button (sound-button (car lst))) (car lst)
+		  (sb-data (cdr lst)))))
 	(sb-data sound-buttons))
-	|#
+|#
 	(define (make-sound-button-pixmap dpy wn data width height)
 	  (if (pair? (sound-button-peaks data))
 	      (let ((mins (car (sound-button-peaks data)))
@@ -2216,8 +2214,7 @@
       (lambda (widget tip)
 	(let ((tool-proc #f)
 	      (quit-proc #f)
-	      (timeout 500)   ; millisecs after mouse enters widget to tip display 
-	      (quittime 3000) ; millisecs to show tip (if pointer not already moved out of widget)
+	      
 	      (last-time 0))  ; try to squelch "fluttering"
 	  
 	  (define (stop-tooltip)
@@ -2232,37 +2229,40 @@
 	    (if (and tooltip-shell (XtIsManaged tooltip-shell))
 		(XtUnmanageChild tooltip-shell)))
 	  
-	  (define (start-tooltip ev)
-	    (if (and *with-tooltips*
-		     (not tool-proc))
-		(set! tool-proc (XtAppAddTimeOut 
-				 (car (main-widgets))
-				 timeout 
-				 (lambda (data id)
-				   (if tooltip-shell
-				       (change-label tooltip-label tip)
-				       (begin
-					 (set! tooltip-shell (XtCreatePopupShell 
-							      tip 
-							      overrideShellWidgetClass 
-							      (cadr (main-widgets)) 
-							      (list XmNallowShellResize #t)))
-					 (set! tooltip-label
-					       (XtCreateManagedWidget 
-						tip
-						xmLabelWidgetClass 
-						tooltip-shell
-						(list XmNrecomputeSize #t
-						      XmNbackground *highlight-color*)))))
-				   (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
-				     (XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
-				   (XtManageChild tooltip-shell)
-				   (set! quit-proc (XtAppAddTimeOut
-						    (car (main-widgets))
-						    quittime
-						    (lambda (data id)
-						      (XtUnmanageChild tooltip-shell)
-						      (set! quit-proc #f)))))))))
+	  (define start-tooltip 
+	    (let ((quittime 3000) ; millisecs to show tip (if pointer not already moved out of widget)
+		  (timeout 500))   ; millisecs after mouse enters widget to tip display 
+	      (lambda (ev)
+		(if (and *with-tooltips*
+			 (not tool-proc))
+		    (set! tool-proc (XtAppAddTimeOut 
+				     (car (main-widgets))
+				     timeout 
+				     (lambda (data id)
+				       (if tooltip-shell
+					   (change-label tooltip-label tip)
+					   (begin
+					     (set! tooltip-shell (XtCreatePopupShell 
+								  tip 
+								  overrideShellWidgetClass 
+								  (cadr (main-widgets)) 
+								  (list XmNallowShellResize #t)))
+					     (set! tooltip-label
+						   (XtCreateManagedWidget 
+						    tip
+						    xmLabelWidgetClass 
+						    tooltip-shell
+						    (list XmNrecomputeSize #t
+							  XmNbackground *highlight-color*)))))
+				       (let ((loc (XtTranslateCoords widget (.x ev) (.y ev))))
+					 (XtVaSetValues tooltip-shell (list XmNx (car loc) XmNy (cadr loc))))
+				       (XtManageChild tooltip-shell)
+				       (set! quit-proc (XtAppAddTimeOut
+							(car (main-widgets))
+							quittime
+							(lambda (data id)
+							  (XtUnmanageChild tooltip-shell)
+							  (set! quit-proc #f)))))))))))
 	  
 	  (XtAddEventHandler widget EnterWindowMask #f 
 			     (lambda (w c ev flag)
@@ -2320,76 +2320,77 @@
 ;;; -------- enable C-s and C-r in listener
   
   (define add-find-to-listener
-    (let ((dialog #f)
-	  (find-text #f)
-	  (find-forward #t)
-	  (find-new #t)
+    (let ((find-forward #t)
 	  (listener-text ((main-widgets) 4))
-	  (shell (cadr (main-widgets)))
 	  (snd-app (car (main-widgets))))
       (lambda ()
-	
-	(define (start-dialog)
-	  (unless dialog
-	    (let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
-		  (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
-		  (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
-	      (set! dialog (XmCreateMessageDialog shell
-						  "Find"
-						  (list XmNcancelLabelString   xdismiss
-							XmNokLabelString       xfind
-							XmNhelpLabelString     xhelp
-							XmNautoUnmanage        #f
-							XmNresizePolicy        XmRESIZE_GROW
-							XmNnoResize            #f
-							XmNtransient           #f
-							XmNbackground          *basic-color*)))
-	      (for-each
-	       (lambda (button color)
-		 (XtVaSetValues (XmMessageBoxGetChild dialog button)
-				(list XmNarmColor   *selection-color*
-				      XmNbackground color)))
-	       (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
-	       (list *highlight-color* *highlight-color* *highlight-color*))
-	      (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
-	      (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
-	      (XtAddCallback dialog XmNokCallback (lambda (w context info)
-						    (let* ((search-str (XmTextFieldGetString find-text))
-							   (len (length search-str))
-							   (pos (XmTextFindString listener-text
-										  (+ (XmTextGetCursorPosition listener-text)
-										     (if find-new 0 (if find-forward 1 -1)))
-										  search-str
-										  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-						      (if (not pos)
-							  (set! pos (XmTextFindString listener-text
-										      (if find-forward 0 (XmTextGetLastPosition listener-text))
+
+	(define start-dialog
+	  (let ((shell (cadr (main-widgets)))
+		(dialog #f)	
+		(find-new #t)
+		(find-text #f))
+	    (lambda ()
+	      (unless dialog
+		(let ((xdismiss (XmStringCreate "Go Away" XmFONTLIST_DEFAULT_TAG))
+		      (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+		      (xfind (XmStringCreate "Find" XmFONTLIST_DEFAULT_TAG)))
+		  (set! dialog (XmCreateMessageDialog shell
+						      "Find"
+						      (list XmNcancelLabelString   xdismiss
+							    XmNokLabelString       xfind
+							    XmNhelpLabelString     xhelp
+							    XmNautoUnmanage        #f
+							    XmNresizePolicy        XmRESIZE_GROW
+							    XmNnoResize            #f
+							    XmNtransient           #f
+							    XmNbackground          *basic-color*)))
+		  (for-each
+		   (lambda (button color)
+		     (XtVaSetValues (XmMessageBoxGetChild dialog button)
+				    (list XmNarmColor   *selection-color*
+					  XmNbackground color)))
+		   (list XmDIALOG_HELP_BUTTON XmDIALOG_CANCEL_BUTTON XmDIALOG_OK_BUTTON)
+		   (list *highlight-color* *highlight-color* *highlight-color*))
+		  (XtAddCallback dialog XmNcancelCallback (lambda (w context info) (XtUnmanageChild dialog)))
+		  (XtAddCallback dialog XmNhelpCallback (lambda (w context info) (help-dialog "Find" "no help yet")))
+		  (XtAddCallback dialog XmNokCallback (lambda (w context info)
+							(let* ((search-str (XmTextFieldGetString find-text))
+							       (len (length search-str))
+							       (pos (XmTextFindString listener-text
+										      (+ (XmTextGetCursorPosition listener-text)
+											 (if find-new 0 (if find-forward 1 -1)))
 										      search-str
 										      (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
-						      (if (number? pos)
-							  (begin
-							    (XmTextSetInsertionPosition listener-text pos)
-							    (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
-							    (XtAppAddTimeOut snd-app 200 
-									     (lambda (context id) 
-									       (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
-						      (set! find-new #f))))
-	      (XmStringFree xhelp)
-	      (XmStringFree xdismiss)
-	      (XmStringFree xfind)
-	      (set! find-text (XtCreateManagedWidget "text" xmTextFieldWidgetClass dialog
-						     (list XmNleftAttachment      XmATTACH_FORM
-							   XmNrightAttachment     XmATTACH_FORM
-							   XmNtopAttachment       XmATTACH_FORM
-							   XmNbottomAttachment    XmATTACH_WIDGET
-							   XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-							   XmNbackground          *basic-color*)))
-	      (XtAddCallback find-text XmNfocusCallback 
-			     (lambda (w c i)
-			       (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
-	      (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground *basic-color*))))
-	      (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
-	  (XtManageChild dialog))
+							  (if (not pos)
+							      (set! pos (XmTextFindString listener-text
+											  (if find-forward 0 (XmTextGetLastPosition listener-text))
+											  search-str
+											  (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
+							  (if (number? pos)
+							      (begin
+								(XmTextSetInsertionPosition listener-text pos)
+								(XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_SELECTED) ; flash the string briefly
+								(XtAppAddTimeOut snd-app 200 
+										 (lambda (context id) 
+										   (XmTextSetHighlight listener-text pos (+ pos len) XmHIGHLIGHT_NORMAL)))))
+							  (set! find-new #f))))
+		  (XmStringFree xhelp)
+		  (XmStringFree xdismiss)
+		  (XmStringFree xfind)
+		  (set! find-text (XtCreateManagedWidget "text" xmTextFieldWidgetClass dialog
+							 (list XmNleftAttachment      XmATTACH_FORM
+							       XmNrightAttachment     XmATTACH_FORM
+							       XmNtopAttachment       XmATTACH_FORM
+							       XmNbottomAttachment    XmATTACH_WIDGET
+							       XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+							       XmNbackground          *basic-color*)))
+		  (XtAddCallback find-text XmNfocusCallback 
+				 (lambda (w c i)
+				   (XtVaSetValues w (list XmNbackground (WhitePixelOfScreen (DefaultScreenOfDisplay (XtDisplay shell)))))))
+		  (XtAddCallback find-text XmNlosingFocusCallback (lambda (w c i) (XtSetValues w (list XmNbackground *basic-color*))))
+		  (XtAddCallback find-text XmNvalueChangedCallback (lambda (w c i) (set! find-new #t)))))
+	      (XtManageChild dialog))))
 	
 	(XtAppAddActions snd-app
 			 (list (list "search-forward" 

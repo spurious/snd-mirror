@@ -2804,7 +2804,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_UNKNOWN_G, HOP_UNKNOWN_G, OP_UNKNOWN_GG, HOP_UNKNOWN_GG, OP_UNKNOWN_A, HOP_UNKNOWN_A, OP_UNKNOWN_AA, HOP_UNKNOWN_AA,
 
       OP_SAFE_C_PP, HOP_SAFE_C_PP,
-      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P,
+      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q,
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP,
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
@@ -2977,7 +2977,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "unknown_g", "h_unknown_g", "unknown_gg", "h_unknown_gg", "unknown_a", "h_unknown_a", "unknown_aa", "h_unknown_aa",
 
       "safe_c_pp", "h_safe_c_pp",
-      "safe_c_opsq_p", "h_safe_c_opsq_p",
+      "safe_c_opsq_p", "h_safe_c_opsq_p", "safe_c_opsq_q", "h_safe_c_opsq_q",
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap",
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
       "safe_c_ssp", "h_safe_c_ssp",
@@ -53107,7 +53107,9 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	      /* unsafe func here won't work unless we check that later and make the new arg list (for {list} etc)
 	       *   (and it has to be the last pair else the unknown_g stuff can mess up)
 	       */
-	      set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_P);
+	      if (car(arg2) == sc->quote_symbol)
+		set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q);
+	      else set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_P);
 	      choose_c_function(sc, expr, func, 2);
 	      return(false);
 	    }
@@ -54739,13 +54741,17 @@ static void check_lambda(s7_scheme *sc)
   clear_syms_in_list(sc);
   
   /* look for (define f (let (...) (lambda ...))) and treat as equivalent to (define (f ...)...)
-   *   It's actually safe to ignore main_stack_op, but s7test has some dubious tests that this 
-   *   check gets around -- need to decide about these cases!
+   *   one problem the hop=0 fixes is that safe closures assume the old frame exists, so we need to check for define below
+   *   I wonder about apply define...
    */
-  if ((sc->safety != 0) ||
-      (main_stack_op(sc) != OP_DEFINE1))
-    optimize(sc, body, 0, sc->nil);
-  else optimize_lambda(sc, true, sc->gc_nil, car(code), body); /* why was lambda the func? */
+  if ((sc->safety == 0) &&
+      ((main_stack_op(sc) == OP_DEFINE1) ||
+       (((sc->stack_end - sc->stack_start) > 4) &&
+	(((opcode_t)(sc->stack_end[-5])) == OP_DEFINE1) &&  /* surely if define is ok, so is define dilambda? 16-Apr-16 */
+	(sc->op_stack_now > sc->op_stack) &&
+	((*(sc->op_stack_now - 1)) == (s7_pointer)slot_value(global_slot(sc->dilambda_symbol)))))) 
+    optimize_lambda(sc, true, sc->gc_nil, car(code), body); /* why was lambda the func? */
+  else optimize(sc, body, 0, sc->nil);
   
   if ((is_overlaid(code)) &&
       (has_opt_back(code)))
@@ -63080,6 +63086,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    push_stack(sc, OP_SAFE_C_opSq_P_1, c_call(args)(sc, sc->t1_1), sc->code);
 		    sc->code = caddr(code);
 		    goto EVAL;
+		  }
+		  
+		  
+		case OP_SAFE_C_opSq_Q:
+		  if (!c_function_is_ok_cadr(sc, code)) break;
+		  
+		case HOP_SAFE_C_opSq_Q:
+		  {
+		    s7_pointer arg1;  /* (let-ref (cdr v) 'x) */
+		    arg1 = cadr(code);
+		    car(sc->t1_1) = find_symbol_checked(sc, cadr(arg1));
+		    car(sc->t2_1) = c_call(arg1)(sc, sc->t1_1);
+		    car(sc->t2_2) = cadr(caddr(code));
+		    sc->value = c_call(code)(sc, sc->t2_1);
+		    goto START;
 		  }
 		  
 		  
@@ -74254,11 +74275,15 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
- * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?
+ * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?  
+ *    Even better, a discretionary newline, if current column beyond arg, newline: ~N%?
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * check stdin-prompt and s7webserver
  * add the s7_eval bug to ffitest
+ * (> (length x) 1) and friends could be optimized by quitting as soon as possible
+ * ex of n-funcs-with-same-closure from varlet?
+ * P->Q elsewhere? or A->Q (AAA -> opSq_Q_S for example or AQA minimally
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

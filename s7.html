@@ -3199,12 +3199,8 @@ In s7, multiple values are spliced directly into the caller's argument list.
 
 <p>multiple-values are useful in a several situations.  For example,
 <code>(if test (+ a b c) (+ a b d e))</code> can be written
-<code>(+ a b (if test c (values d e)))</code>.  This fits naturally
-with define* so that multiple return values are automatically handled
-by the caller.
-</p>
-
-<p>There are a few special uses of multiple-values.
+<code>(+ a b (if test c (values d e)))</code>. 
+There are a few special uses of multiple-values.
 First, you can use the values function to return any number of values, including 0,
 from map's function application:
 </p>

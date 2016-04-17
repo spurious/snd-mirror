@@ -77,8 +77,8 @@
     (set! (b 'pp2) centerfreq)
     (set! (b 'pp3) (* (b 'pp2) famp))))
 
-(define (make-array initial-value dim1 dim2) ; I'm guessing ...
-  (make-vector (list dim1 dim2) initial-value))
+(define (make-array dim1) ; I'm guessing ...
+  (make-vector (list dim1 3) 0.0))
 
 (define (array-set! arr val i1 i2)
   (set! (arr i1 i2) val))
@@ -125,12 +125,12 @@ the desired phase.
 	      (end (+ beg dur))
 	      (rdA (make-readin :file file :channel 0))
 	      (ampf (make-env :envelope amp-env :scaler amplitude :length dur))
-	      (state-0 (make-array 0.0  1 3))
-	      (state-1 (make-array 0.0 12 3))
-	      (state-2 (make-array 0.0  9 3))
-	      (state-3 (make-array 0.0 13 3))
-	      (state-4 (make-array 0.0  4 3))
-	      (state-5 (make-array 0.0  2 3))
+	      (state-0 (make-array 1))
+	      (state-1 (make-array 12))
+	      (state-2 (make-array 9))
+	      (state-3 (make-array 13))
+	      (state-4 (make-array 4))
+	      (state-5 (make-array 2))
 	      (loc (make-locsig :degree degree 
 				:distance distance
 				:reverb reverb-amount
