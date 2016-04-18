@@ -2026,49 +2026,50 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	 (let ((dir (opendir name)))
 	   (if (equal? dir NULL)
 	       (error "can't open ~S: ~S" name (strerror (errno)))
-	       (let ((iterator? #t)
-		     (dirs ())
-		     (dir-names ())
-		     (dir-name name))
-		 (define* (reader quit)            ; returned from with-let
-		   (if (eq? quit #<eof>)           ; caller requests cleanup and early exit
-		       (begin                      ;   via ((iterator-sequence iter) #<eof>)
-			 (closedir dir)
-			 (for-each closedir dirs)
-			 (set! dirs ())
-			 quit)
-		       (let ((file (read_dir dir)))
-			 (if (zero? (length file)) ; null filename => all done
-			     (begin
-			       (closedir dir)
-			       (if (null? dirs)
-				   #<eof>
-				   (begin          ; else pop back to outer dir
-				     (set! dir (car dirs))
-				     (set! dirs (cdr dirs))
-				     (set! dir-name (car dir-names))
-				     (set! dir-names (cdr dir-names))
-				     (reader))))
-			     (if (member file '("." "..") string=?)
-				 (reader)
-				 (let ((full-dir-name (string-append dir-name "/" file)))
-				   (if (and recursive 
-					    (reader-cond 
-					     ((defined? 'directory?)
-					      (directory? full-dir-name))
-					     (#t (let ((buf (stat.make)))
-						   (let ((result (and (stat full-dir-name buf) 
-								      (S_ISDIR (stat.st_mode buf)))))
-						     (free buf)
-						     result)))))
-				       (let ((new-dir (opendir full-dir-name)))
-					 (if (equal? new-dir NULL)  ; inner directory is unreadable?
-					     (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
-					     (begin
-					       (set! dirs (cons dir dirs))
-					       (set! dir new-dir)
-					       (set! dir-names (cons dir-name dir-names))
-					       (set! dir-name full-dir-name)))
-					 (reader))
-				       (string-append dir-name "/" file)))))))))))))))
+	       (let ((iterator? #t))
+		 (define reader
+		   (let ((dirs ())
+			 (dir-names ())
+			 (dir-name name))
+		     (lambda* (quit)            ; returned from with-let
+		       (if (eq? quit #<eof>)           ; caller requests cleanup and early exit
+			   (begin                      ;   via ((iterator-sequence iter) #<eof>)
+			     (closedir dir)
+			     (for-each closedir dirs)
+			     (set! dirs ())
+			     quit)
+			   (let ((file (read_dir dir)))
+			     (if (zero? (length file)) ; null filename => all done
+				 (begin
+				   (closedir dir)
+				   (if (null? dirs)
+				       #<eof>
+				       (begin          ; else pop back to outer dir
+					 (set! dir (car dirs))
+					 (set! dirs (cdr dirs))
+					 (set! dir-name (car dir-names))
+					 (set! dir-names (cdr dir-names))
+					 (reader))))
+				 (if (member file '("." "..") string=?)
+				     (reader)
+				     (let ((full-dir-name (string-append dir-name "/" file)))
+				       (if (and recursive 
+						(reader-cond 
+						 ((defined? 'directory?)
+						  (directory? full-dir-name))
+						 (#t (let ((buf (stat.make)))
+						       (let ((result (and (stat full-dir-name buf) 
+									  (S_ISDIR (stat.st_mode buf)))))
+							 (free buf)
+							 result)))))
+					   (let ((new-dir (opendir full-dir-name)))
+					     (if (equal? new-dir NULL)  ; inner directory is unreadable?
+						 (format *stderr* "can't read ~S: ~S" file (strerror (errno)))
+						 (begin
+						   (set! dirs (cons dir dirs))
+						   (set! dir new-dir)
+						   (set! dir-names (cons dir-name dir-names))
+						   (set! dir-name full-dir-name)))
+					     (reader))
+					   (string-append dir-name "/" file)))))))))))))))))
 

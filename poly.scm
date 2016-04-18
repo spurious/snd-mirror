@@ -56,11 +56,7 @@
 			  (+ i 1)))))
 	(if (= new-len (length p1))
 	    p1
-	    (let ((np (make-vector new-len)))
-	      (do ((i 0 (+ i 1)))
-		  ((= i new-len))
-		(set! (np i) (p1 i)))
-	      np))))))
+	    (copy p1 (make-vector new-len)))))))
 
 (define poly-reduce 
   (let ((documentation "(poly-reduce p1) removes trailing (high-degree) zeros from the float-vector p1"))

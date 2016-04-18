@@ -75,21 +75,13 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 
 (define (find-nxysin-max n ratio)
   
-  (define (ns x n) 
-    (let* ((a2 (/ x 2))
-	   (den (sin a2)))
-      (if (= den 0.0)
-	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
-  
-  (define (nodds x n) 
-    (let ((den (sin x))
-	  (num (sin (* n x))))
-      (if (= den 0.0)
-	  0.0
-	  (/ (* num num) den))))
-  
   (define (find-mid-max n lo hi)
+    (define (ns x n) 
+      (let* ((a2 (/ x 2))
+	     (den (sin a2)))
+	(if (= den 0.0)
+	    0.0
+	    (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
     (let ((mid (/ (+ lo hi) 2))
 	  (ylo (ns lo n))
 	  (yhi (ns hi n)))
@@ -100,6 +92,12 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 			      (values mid hi))))))
   
   (define (find-nodds-mid-max n lo hi)
+    (define (nodds x n) 
+      (let ((den (sin x))
+	    (num (sin (* n x))))
+	(if (= den 0.0)
+	    0.0
+	    (/ (* num num) den))))
     (let ((mid (/ (+ lo hi) 2))
 	  (ylo (nodds lo n))
 	  (yhi (nodds hi n)))
@@ -634,14 +632,13 @@ returns n cosines spaced by frequency. All are equal amplitude except the first 
 
 (define (find-nsin5-max n)
   
-  (define (ns x n)
-    (let* ((den (tan (* 0.5 x))))
-      (if (< (abs den) nearly-zero)
-	  0.0
-	  (/ (- 1.0 (cos (* n x)))
-	     den))))
-  
   (define (find-mid-max n lo hi)
+    (define (ns x n)
+      (let* ((den (tan (* 0.5 x))))
+	(if (< (abs den) nearly-zero)
+	    0.0
+	    (/ (- 1.0 (cos (* n x)))
+	       den))))
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
 	    (yhi (ns hi n)))
@@ -684,14 +681,13 @@ returns n sines spaced by frequency. All are equal amplitude except last at half
 
 (define (find-nsin-max n)
   
-  (define (ns x n) 
-    (let* ((a2 (/ x 2))
-	   (den (sin a2)))
-      (if (= den 0.0)
-	  0.0
-	  (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
-  
   (define (find-mid-max n lo hi)
+    (define (ns x n) 
+      (let* ((a2 (/ x 2))
+	     (den (sin a2)))
+	(if (= den 0.0)
+	    0.0
+	    (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
     (let ((mid (/ (+ lo hi) 2)))
       (let ((ylo (ns lo n))
 	    (yhi (ns hi n)))

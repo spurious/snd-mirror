@@ -71,14 +71,15 @@
 (define play-often 
   (let ((documentation "(play-often n) plays the selected sound 'n' times (interruptible via C-g)"))
     (lambda (n) 
-      (let ((plays (- n 1)))
-	(define (play-once reason)
-	  (if (and (> plays 0)
-		   (= reason 0))
-	      (begin
-		(set! plays (- plays 1))
-		(play (selected-sound) :start 0 :stop play-once))))
-	(play (selected-sound) :start 0 :stop play-once)))))
+      (define play-once
+	(let ((plays (- n 1)))
+	  (lambda (reason)
+	    (if (and (> plays 0)
+		     (= reason 0))
+		(begin
+		  (set! plays (- plays 1))
+		  (play (selected-sound) :start 0 :stop play-once))))))
+      (play (selected-sound) :start 0 :stop play-once))))
 
 ;;(bind-key #\p 0 (lambda (n) "play often" (play-often (max 1 n))))
 

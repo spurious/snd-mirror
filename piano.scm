@@ -11,7 +11,6 @@
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)
 (define longitudinal-mode-stiffness-coefficient -.5)
-(define golden-mean .618)
 (define loop-gain-env-t60 .05)
 (define loop-gain-default .9999)
 (define nstrings 3)
@@ -133,51 +132,50 @@
     (list (make-one-zero a0 a1)
 	  (make-one-pole 1.0 b1)))
   
-  (define (apPhase a1 wT)
-    (atan (* (- (* a1 a1) 1.0) 
-	     (sin wT))
-	  (+ (* 2.0 a1) 
-	     (* (+ (* a1 a1) 1.0) 
-		(cos wT)))))
-  
-  (define (opozPhase b0 b1 a1 wT)
-    (let ((s (sin wT))
-	  (c (cos wT)))
-      (atan (- (* a1 s (+ b0 (* b1 c))) 
-	       (* b1 s (+ 1 (* a1 c))))
-	    (+ (* (+ b0 (* b1 c)) 
-		  (+ 1 (* a1 c))) 
-	       (* b1 s a1 s)))))
-  
   (define (signum n)
     ;; in CL this returns 1.0 if n is float
     (if (positive? n) 1
 	(if (zero? n) 0
 	    -1)))
 
-  (define (get-allpass-coef samp-frac wT)
-    (let ((ta (tan (- (* samp-frac wT))))
-	  (c (cos wT))
-	  (s (sin wT)))
-      (/ (- (* (signum ta) 
-	       (sqrt (* (+ 1 (* ta ta)) s s))) ta)  ; is the (* s s) correct? it's in the original
-	 (- (* c ta) s))))
-
-  (define (apfloor len wT)
-    (let* ((len-int (floor len))
-	   (len-frac (- len len-int)))
-      (if (< len-frac golden-mean)
-	  (begin
-	    (set! len-int (- len-int 1))
-	    (set! len-frac (+ len-frac 1.0))))
-      (if (and (< len-frac golden-mean)
-	       (> len-int 0))
-	  (begin
-	    (set! len-int (- len-int 1))
-	    (set! len-frac (+ len-frac 1.0))))
-      (list len-int (get-allpass-coef len-frac wT))))
+  (define apfloor 
+    (let ((golden-mean .618))
+      (define (get-allpass-coef samp-frac wT)
+	(let ((ta (tan (- (* samp-frac wT))))
+	      (c (cos wT))
+	      (s (sin wT)))
+	  (/ (- (* (signum ta) 
+		   (sqrt (* (+ 1 (* ta ta)) s s))) ta)  ; is the (* s s) correct? it's in the original
+	     (- (* c ta) s))))
+      (lambda (len wT)
+	(let* ((len-int (floor len))
+	       (len-frac (- len len-int)))
+	  (if (< len-frac golden-mean)
+	      (begin
+		(set! len-int (- len-int 1))
+		(set! len-frac (+ len-frac 1.0))))
+	  (if (and (< len-frac golden-mean)
+		   (> len-int 0))
+	      (begin
+		(set! len-int (- len-int 1))
+		(set! len-frac (+ len-frac 1.0))))
+	  (list len-int (get-allpass-coef len-frac wT))))))
   
   (define (tune-piano frequency stiffnessCoefficient numAllpasses b0 b1 a1)
+    (define (apPhase a1 wT)
+      (atan (* (- (* a1 a1) 1.0) 
+	       (sin wT))
+	    (+ (* 2.0 a1) 
+	       (* (+ (* a1 a1) 1.0) 
+		  (cos wT)))))
+    (define (opozPhase b0 b1 a1 wT)
+      (let ((s (sin wT))
+	    (c (cos wT)))
+	(atan (- (* a1 s (+ b0 (* b1 c))) 
+		 (* b1 s (+ 1 (* a1 c))))
+	      (+ (* (+ b0 (* b1 c)) 
+		    (+ 1 (* a1 c))) 
+		 (* b1 s a1 s)))))
     (let* ((wT (/ (* frequency two-pi) *clm-srate*))
 	   (len (/ (+ two-pi
 		      (* numAllpasses
@@ -281,7 +279,7 @@
 		    (vals1 (tune-piano freq1 stiffnessCoefficientL number-of-stiffness-allpasses cfb0 cfb1 cfa1))
 		    (vals2 (tune-piano freq2 stiffnessCoefficient number-of-stiffness-allpasses cfb0 cfb1 cfa1))
 		    (vals3 (tune-piano freq3 stiffnessCoefficient number-of-stiffness-allpasses cfb0 cfb1 cfa1)))
-
+		
 		(let ((delayLength1 (car vals1))
 		      (tuningCoefficient1 (cadr vals1))
 		      
@@ -289,128 +287,131 @@
 		      (tuningCoefficient2 (cadr vals2))
 		      
 		      (delayLength3 (car vals3))
-		      (tuningCoefficient3 (cadr vals3)))
-
-		  (let ((dryTap0 (car dryTap-one-pole-one-zero-pair))
-			(dryTap1 (cadr dryTap-one-pole-one-zero-pair))
-			
-			(wetTap0 (car wetTap-one-pole-one-zero-pair))
-			(wetTap1 (cadr wetTap-one-pole-one-zero-pair))
-			
-			(op1 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
-			(op2 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
-			(op3 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
-			(op4 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
-			
-			(cou0 (car couplingFilter-pair))
-			(cou1 (cadr couplingFilter-pair))
-			
-			(string1-delay (make-delay (- delayLength1 1)))
-			(string1-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient1))
-			(string1-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficientL))
-			
-			(string2-delay (make-delay (- delayLength2 1)))
-			(string2-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient2))
-			(string2-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
-			
-			(string3-delay (make-delay (- delayLength3 1)))
-			(string3-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient3))
-			(string3-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
-			
-			;;initialize loop-gain envelope
-			(loop-gain loop-gain-default) 
-			(loop-gain-ry (* releaseLoopGain (In-t60 loop-gain-env-t60)))
-			(loop-gain-rx (- 1.0 (In-t60 loop-gain-env-t60)))
-
-			(dry-coef (* 1.0 DryTapFiltCoefCurrent))
-			(dry-coef-ry (* DryTapFiltCoefTarget (In-t60 DryTapFiltCoeft60)))
-			(dry-coef-rx (- 1.0 (In-t60 DryTapFiltCoeft60)))
-
-			(wet-coef 0.0)
-			(wet-coef-ry (* -0.5 (In-t60 pedalEnvelopet60)))
-			(wet-coef-rx (- 1.0 (In-t60 pedalEnvelopet60)))
-
-			(dryTap 0.0)
-			(dryTap-x 1.0)
-			(dryTap-rx (- 1.0 (In-t60 DryTapAmpt60)))
-
-			(openStrings 0.0)
-			(wetTap-x (* sustainPedalLevel pedalPresenceFactor (if pedal-down 1.0 DryPedalResonanceFactor)))
-			(wetTap-rx (- 1.0 (In-t60 pedalEnvelopet60)))
-
-			(combedExcitationSignal 0.0)
-			(adelOut 0.0)
-			(adelIn 0.0)
-			(totalTap 0.0)
-			(string1-junction-input 0.0)
-			(string2-junction-input 0.0)
-			(string3-junction-input 0.0)
-			(couplingFilter-input 0.0)
-			(couplingFilter-output 0.0)
-			(temp1 0.0)
-			;; (pn-gen 16383)
-			(pnoise (int-vector 16383))
-			(interp 0.0)
-			)
-
-		    (define (piano-loop beg end)
-		      (do ((i beg (+ i 1)))
-			  ((= i end))
-			
-			(set! loop-gain (+ (* interp (+ loop-gain-ry (* loop-gain-rx loop-gain)))
-					   (* (- 1.0 interp) loop-gain-default)))
-			
-			(set! temp1 (one-zero dryTap0 (one-pole dryTap1 (piano-noise pnoise amp))))
-			(set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
-			(set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
-			(set! dryTap-x (* dryTap-x dryTap-rx))
-			(set! dryTap (* dryTap-x dryTap-one-pole-swept))
-			
-			(set! temp1 (one-zero wetTap0 (one-pole wetTap1 (piano-noise pnoise amp))))
-			(set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))
-			(set! wetTap-one-pole-swept (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept)))
-			(set! wetTap-x (* wetTap-x wetTap-rx))
-			(set! openStrings (* wetTap-x wetTap-one-pole-swept))
-			
-			(set! totalTap (+ dryTap openStrings))
-			
-			(set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
-			(set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
-			(set! adelOut (one-pole-all-pass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)))
-			
-			(set! string1-junction-input 
-			      (+ (* unaCordaGain combedExcitationSignal)
-				 (* loop-gain
-				    (delay string1-delay
-					   (one-pole-all-pass string1-tuning-ap 
-							      (one-pole-all-pass string1-stiffness-ap 
-										 (+ string1-junction-input couplingFilter-output)))))))
-			(set! string2-junction-input 
-			      (+ combedExcitationSignal
-				 (* loop-gain 
-				    (delay string2-delay
-					   (one-pole-all-pass string2-tuning-ap 
-							      (one-pole-all-pass string2-stiffness-ap 
-										 (+ string2-junction-input couplingFilter-output)))))))
-			(set! string3-junction-input 
-			      (+ combedExcitationSignal
-				 (* loop-gain
-				    (delay string3-delay
-					   (one-pole-all-pass string3-tuning-ap 
-							      (one-pole-all-pass string3-stiffness-ap
-										 (+ string3-junction-input couplingFilter-output)))))))
-
-			(set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
-			(set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
-			
-			(outa i couplingFilter-input)))
-
-		    (piano-loop beg release-time)
-		    (set! dryTap-rx (- 1.0 sb-cutoff-rate))
-		    (set! wetTap-rx dryTap-rx)
-		    (set! interp 1.0)
-		    (piano-loop release-time end)
-		    ))))))))))
+		      (tuningCoefficient3 (cadr vals3))
+		      
+		      (interp 0.0)
+		      (dryTap-rx 0.0)
+		      (wetTap-rx 0.0))
+		  
+		  (define piano-loop 
+		    (let ((dryTap0 (car dryTap-one-pole-one-zero-pair))
+			  (dryTap1 (cadr dryTap-one-pole-one-zero-pair))
+			  
+			  (wetTap0 (car wetTap-one-pole-one-zero-pair))
+			  (wetTap1 (cadr wetTap-one-pole-one-zero-pair))
+			  
+			  (op1 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			  (op2 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			  (op3 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			  (op4 (make-one-pole (- 1.0 hammerPole) (- hammerPole)))
+			  
+			  (cou0 (car couplingFilter-pair))
+			  (cou1 (cadr couplingFilter-pair))
+			  
+			  (string1-delay (make-delay (- delayLength1 1)))
+			  (string1-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient1))
+			  (string1-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficientL))
+			  
+			  (string2-delay (make-delay (- delayLength2 1)))
+			  (string2-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient2))
+			  (string2-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
+			  
+			  (string3-delay (make-delay (- delayLength3 1)))
+			  (string3-tuning-ap (make-one-pole-all-pass 1 tuningCoefficient3))
+			  (string3-stiffness-ap (make-one-pole-all-pass 8 stiffnessCoefficient))
+			  
+			  ;;initialize loop-gain envelope
+			  (loop-gain loop-gain-default) 
+			  (loop-gain-ry (* releaseLoopGain (In-t60 loop-gain-env-t60)))
+			  (loop-gain-rx (- 1.0 (In-t60 loop-gain-env-t60)))
+			  
+			  (dry-coef (* 1.0 DryTapFiltCoefCurrent))
+			  (dry-coef-ry (* DryTapFiltCoefTarget (In-t60 DryTapFiltCoeft60)))
+			  (dry-coef-rx (- 1.0 (In-t60 DryTapFiltCoeft60)))
+			  
+			  (wet-coef 0.0)
+			  (wet-coef-ry (* -0.5 (In-t60 pedalEnvelopet60)))
+			  (wet-coef-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+			  
+			  (dryTap 0.0)
+			  (dryTap-x 1.0)
+			  
+			  (openStrings 0.0)
+			  (wetTap-x (* sustainPedalLevel pedalPresenceFactor (if pedal-down 1.0 DryPedalResonanceFactor)))
+			  
+			  (combedExcitationSignal 0.0)
+			  (adelOut 0.0)
+			  (adelIn 0.0)
+			  (totalTap 0.0)
+			  (string1-junction-input 0.0)
+			  (string2-junction-input 0.0)
+			  (string3-junction-input 0.0)
+			  (couplingFilter-input 0.0)
+			  (couplingFilter-output 0.0)
+			  (temp1 0.0)
+			  ;; (pn-gen 16383)
+			  (pnoise (int-vector 16383)))
+		      
+		      (lambda (beg end)
+			(do ((i beg (+ i 1)))
+			    ((= i end))
+			  
+			  (set! loop-gain (+ (* interp (+ loop-gain-ry (* loop-gain-rx loop-gain)))
+					     (* (- 1.0 interp) loop-gain-default)))
+			  
+			  (set! temp1 (one-zero dryTap0 (one-pole dryTap1 (piano-noise pnoise amp))))
+			  (set! dry-coef (+ dry-coef-ry (* dry-coef-rx dry-coef)))
+			  (set! dryTap-one-pole-swept (- (* (+ 1.0 dry-coef) temp1) (* dry-coef dryTap-one-pole-swept)))
+			  (set! dryTap-x (* dryTap-x dryTap-rx))
+			  (set! dryTap (* dryTap-x dryTap-one-pole-swept))
+			  
+			  (set! temp1 (one-zero wetTap0 (one-pole wetTap1 (piano-noise pnoise amp))))
+			  (set! wet-coef (+ wet-coef-ry (* wet-coef-rx wet-coef)))
+			  (set! wetTap-one-pole-swept (- (* (+ 1.0 wet-coef) temp1) (* wet-coef wetTap-one-pole-swept)))
+			  (set! wetTap-x (* wetTap-x wetTap-rx))
+			  (set! openStrings (* wetTap-x wetTap-one-pole-swept))
+			  
+			  (set! totalTap (+ dryTap openStrings))
+			  
+			  (set! adelIn (one-pole op1 (one-pole op2 (one-pole op3 (one-pole op4 totalTap)))))
+			  (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
+			  (set! adelOut (one-pole-all-pass agraffe-tuning-ap1 (delay agraffe-delay1 adelIn)))
+			  
+			  (set! string1-junction-input 
+				(+ (* unaCordaGain combedExcitationSignal)
+				   (* loop-gain
+				      (delay string1-delay
+					     (one-pole-all-pass string1-tuning-ap 
+								(one-pole-all-pass string1-stiffness-ap 
+										   (+ string1-junction-input couplingFilter-output)))))))
+			  (set! string2-junction-input 
+				(+ combedExcitationSignal
+				   (* loop-gain 
+				      (delay string2-delay
+					     (one-pole-all-pass string2-tuning-ap 
+								(one-pole-all-pass string2-stiffness-ap 
+										   (+ string2-junction-input couplingFilter-output)))))))
+			  (set! string3-junction-input 
+				(+ combedExcitationSignal
+				   (* loop-gain
+				      (delay string3-delay
+					     (one-pole-all-pass string3-tuning-ap 
+								(one-pole-all-pass string3-stiffness-ap
+										   (+ string3-junction-input couplingFilter-output)))))))
+			  
+			  (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
+			  (set! couplingFilter-output (one-zero cou0 (one-pole cou1 couplingFilter-input)))
+			  
+			  (outa i couplingFilter-input)))))
+		  
+		  (set! dryTap-rx (- 1.0 (In-t60 DryTapAmpt60)))
+		  (set! wetTap-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+		  
+		  (piano-loop beg release-time)
+		  (set! dryTap-rx (- 1.0 sb-cutoff-rate))
+		  (set! wetTap-rx dryTap-rx)
+		  (set! interp 1.0)
+		  (piano-loop release-time end))))))))))
 
 #|
 (with-sound ()

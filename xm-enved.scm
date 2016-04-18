@@ -313,9 +313,7 @@
 	       (if (provided? 'snd-motif)
 		   ((*motif* 'XtIsManaged) widget)
 		   (get_realized widget)))
-      (let ((px0 (ax-pix 0))
-	    (px1 (ax-pix 2))
-	    (py0 (ax-pix 1))
+      (let ((py0 (ax-pix 1))
 	    (py1 (ax-pix 3))
 	    (ix0 (ax-inf 0))
 	    (ix1 (ax-inf 2))
@@ -324,14 +322,17 @@
 	    (mouse-d 10)
 	    (mouse-r 5))
 	
-	(define (xe-grfx x)
-	  (if (= px0 px1)
-	      px0
-	      (min px1
-		   (max px0
-			(floor (+ px0 (* (- px1 px0)
-					 (/ (- x ix0)
-					    (- ix1 ix0)))))))))
+	(define xe-grfx
+	  (let ((px0 (ax-pix 0))
+		(px1 (ax-pix 2)))
+	    (lambda (x)
+	      (if (= px0 px1)
+		  px0
+		  (min px1
+		       (max px0
+			    (floor (+ px0 (* (- px1 px0)
+					     (/ (- x ix0)
+						(- ix1 ix0)))))))))))
 	
 	(define (xe-grfy y)
 	  (if (= py0 py1)
