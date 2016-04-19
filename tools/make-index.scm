@@ -265,8 +265,7 @@
 	       ((>= i len))
 	     (let ((c (scheme-name i)))
 	       (if (or (alphanumeric? c)
-		       (char=? c #\?)
-		       (char=? c #\!))
+		       (memv c '(#\? #\!)))
 		   (begin
 		     (set! (rb-name j) c)
 		     (set! i (+ i 1))

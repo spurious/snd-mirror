@@ -325,26 +325,24 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 
 ;;; sndclm.html (G&R) first col 5th row (sum of odd sines)
 
-(define (find-noddsin-max n)
-  
-  (define (nodds x n) 
-    (let ((den (sin x))
-	  (num (sin (* n x))))
-      (if (= den 0.0)
-	  0.0
-	  (/ (* num num) den))))
-  
-  (define (find-mid-max n lo hi)
+(define (find-noddsin-max n) 
+  (let find-mid-max ((n n)
+		     (lo 0.0000)
+		     (hi (/ pi (+ (* 2 n) 0.5))))
+    (define (nodds x n) 
+      (let ((den (sin x))
+	    (num (sin (* n x))))
+	(if (= den 0.0)
+	    0.0000
+	    (/ (* num num) den))))
     (let ((mid (/ (+ lo hi) 2))
 	  (ylo (nodds lo n))
 	  (yhi (nodds hi n)))
-      (if (< (abs (- ylo yhi)) 1e-9)
+      (if (< (abs (- ylo yhi)) 1e-09)
 	  (nodds mid n)
-	  (find-mid-max n (if (> ylo yhi)
-			      (values lo mid)
-			      (values mid hi))))))
-  
-  (find-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
+	  (find-mid-max n (if (> ylo yhi) 
+			      (values lo mid) 
+			      (values mid hi)))))))
 
 (define noddsin-maxes (make-float-vector 100))
 

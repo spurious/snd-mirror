@@ -2052,56 +2052,59 @@ and replaces it with the spectrum given in coeffs"))
 	  (let* ((axinfo (axis-info snd chn lisp-graph))
 		 (axis-x0 (axinfo 10))
 		 (axis-x1 (axinfo 12))
-		 (axis-y0 (axinfo 13))
 		 (axis-y1 (axinfo 11))
 		 (label-height 15)
 		 (char-width 8)
-		 (sr2 (* 0.5 (srate snd)))
 		 (minor-tick-len 6)
 		 (major-tick-len 12)
-		 (tick-y0 axis-y1)
-		 (minor-y0 (+ axis-y1 minor-tick-len))
-		 (major-y0 (+ axis-y1 major-tick-len))
 		 (bark-label-font (snd-font 3))
-		 (bark-numbers-font (snd-font 2))
 		 (label-pos (+ axis-x0 (* .45 (- axis-x1 axis-x0))))
 		 (cr (make-cairo (car (channel-widgets snd chn)))))
 	    
-	    (define (scale-position scale f)
-	      (let ((b20 (scale 20.0)))
-		(round (+ axis-x0 
-			  (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
-			     (- (scale sr2) b20))))))
+	    (define scale-position 
+	      (let ((sr2 (* 0.5 (srate snd))))
+		(lambda (scale f)
+		  (let ((b20 (scale 20.0)))
+		    (round (+ axis-x0 
+			      (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
+				 (- (scale sr2) b20))))))))
 	    
 	    (define (bark-position f) (scale-position bark f))
 	    (define (mel-position f) (scale-position mel f))
 	    (define (erb-position f) (scale-position erb f))
 	    
-	    (define (draw-bark-ticks bark-function)
-	      (if bark-numbers-font (set! (current-font snd chn copy-context) bark-numbers-font))
-	      
-	      (draw-line axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context cr)
-	      (let ((i1000 (scale-position bark-function 1000.0))
-		    (i10000 (scale-position bark-function 10000.0)))
+	    (define draw-bark-ticks
+	      (let ((tick-y0 axis-y1)
+		    (minor-y0 (+ axis-y1 minor-tick-len))
+		    (major-y0 (+ axis-y1 major-tick-len))
+		    (axis-y0 (axinfo 13))
+		    (bark-numbers-font (snd-font 2)))
 		
-		(draw-line i1000 tick-y0 i1000 major-y0 snd chn copy-context cr)
-		(draw-line i10000 tick-y0 i10000 major-y0 snd chn copy-context cr)
-		
-		(draw-string "20" axis-x0 major-y0 snd chn copy-context cr)
-		(draw-string "1000" (- i1000 12) major-y0 snd chn copy-context cr)
-		(draw-string "10000" (- i10000 24) major-y0 snd chn copy-context cr)
-		
-		(draw-string (format #f "fft size: ~D" bark-fft-size) (+ axis-x0 10) axis-y0 snd chn copy-context cr)
-		
-		(do ((i 100 (+ i 100)))
-		    ((= i 1000))
-		  (let ((i100 (scale-position bark-function i)))
-		    (draw-line i100 tick-y0 i100 minor-y0 snd chn copy-context cr)))
-		
-		(do ((i 2000 (+ i 1000)))
-		    ((= i 10000))
-		  (let ((i1000 (scale-position bark-function i)))
-		    (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context cr)))))
+		(lambda (bark-function)
+		  (if bark-numbers-font (set! (current-font snd chn copy-context) bark-numbers-font))
+		  
+		  (draw-line axis-x0 tick-y0 axis-x0 major-y0 snd chn copy-context cr)
+		  (let ((i1000 (scale-position bark-function 1000.0))
+			(i10000 (scale-position bark-function 10000.0)))
+		    
+		    (draw-line i1000 tick-y0 i1000 major-y0 snd chn copy-context cr)
+		    (draw-line i10000 tick-y0 i10000 major-y0 snd chn copy-context cr)
+		    
+		    (draw-string "20" axis-x0 major-y0 snd chn copy-context cr)
+		    (draw-string "1000" (- i1000 12) major-y0 snd chn copy-context cr)
+		    (draw-string "10000" (- i10000 24) major-y0 snd chn copy-context cr)
+		    
+		    (draw-string (format #f "fft size: ~D" bark-fft-size) (+ axis-x0 10) axis-y0 snd chn copy-context cr)
+		    
+		    (do ((i 100 (+ i 100)))
+			((= i 1000))
+		      (let ((i100 (scale-position bark-function i)))
+			(draw-line i100 tick-y0 i100 minor-y0 snd chn copy-context cr)))
+		    
+		    (do ((i 2000 (+ i 1000)))
+			((= i 10000))
+		      (let ((i1000 (scale-position bark-function i)))
+			(draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context cr)))))))
 	    
 	    ;; bark label/ticks
 	    (set! (foreground-color snd chn copy-context) color1)

@@ -1384,7 +1384,6 @@
 	    ((not (pair? selector))  (->eqf (->lint-type selector)))
 	    ((eq? (car selector) 'quote)
 	     (cond ((or (symbol? (cadr selector))
-			(null? (cadr selector))
 			(memq (cadr selector) '(#f #t #<unspecified> #<undefined> #<eof> ())))
 		    '(eq? eq?))
 		   ((char? (cadr selector))   '(eqv? char=?))
@@ -1655,73 +1654,136 @@
 	       (if (eq? type1 type2)
 		   type1
 		   (case type1
-		     ((number? complex?) (or (and (memq type2 '(float? real? rational? integer?)) type2)
-					     (and (memq type2 '(number? complex?)) type1)
-					     (and (eq? type2 '=)
-						  (let ((x (if (number? (caddr arg2)) (caddr arg2) (cadr arg2))))
-						    (and (number? x)
-							 (if (= x (floor x))
-							     'memv
-							     'eqv?))))))
-		     ((real?)            (or (and (memq type2 '(float? rational? integer?)) type2)
-					     (and (memq type2 '(number? complex?)) type1)
-					     (and (eq? type2 '=)
-						  (let ((x (if (real? (caddr arg2)) (caddr arg2) (cadr arg2))))
-						    (and (real? x)
-							 (if (= x (floor x))
-							     'memv
-							     'eqv?))))))
-		     ((float?)           (and (memq type2 '(real? complex? number? inexact?)) type1))
-		     ((rational?)        (or (and (eq? type2 'integer?) type2)
-					     (and (memq type2 '(real? complex? number? exact?)) type1)
-					     (and (eq? type2 '=)
-						  (or (rational? (caddr arg2))
-						      (rational? (cadr arg2)))
-						  'eqv?)))
-		     ((integer?)         (or (and (memq type2 '(real? rational? complex? number? exact?)) type1)
-					     (and (eq? type2 '=)
-						  (or (integer? (caddr arg2))
-						      (integer? (cadr arg2)))
-						  'eqv?)))
-		     ((exact?)           (and (memq type2 '(rational? integer?)) type2))
-		     ((even? odd?)       (and (memq type2 '(integer? rational? real? complex? number?)) type1)) ; not zero? -> 0.0
-		     ((zero?)            (and (memq type2 '(complex? number? real?)) type1))
-		     ((negative? positive?) (and (eq? type2 'real?) type1))
-		     ((inexact?)         (and (eq? type2 'float?) type2))
-		     ((infinite? nan?)   (and (memq type2 '(number? complex? inexact?)) type1))
-		     ((vector?)          (and (memq type2 '(float-vector? int-vector?)) type2))
-		     ((float-vector? int-vector?) (and (eq? type2 'vector?) type1))
-		     ((symbol?)          (or (and (memq type2 '(keyword? gensym? constant?)) type2)
-					     (and (eq? type2 'eq?)
-						  (or (quoted-symbol? (cadr arg2))
-						      (quoted-symbol? (caddr arg2)))
-						  'eq?)))
-		     ((keyword?)         (or (and (memq type2 '(symbol? constant?)) type1)
-					     (and (eq? type2 'eq?)
-						  (or (keyword? (cadr arg2))
-						      (keyword? (caddr arg2)))
-						  'eq?)))
-		     ((gensym? defined? provided? constant?) (and (eq? type2 'symbol?) type1))
-		     ((boolean?)         (and (or (eq? type2 'not) 
-						  (and (eq? type2 'eq?)
-						       (or (boolean? (cadr arg2))
-							   (boolean? (caddr arg2)))))
-					      type2))
-		     ((list?)            (and (memq type2 '(null? pair? proper-list?)) type2))
-		     ((null?)            (and (memq type2 '(list? proper-list?)) type1))
-		     ((pair?)            (and (eq? type2 'list?) type1))
-		     ((proper-list?)     (and (eq? type2 'null?) type2))
-		     ((string?)          (or (and (eq? type2 'byte-vector?) type2)
-					     (and (eq? type2 'string=?)
-						  (or (eq? (->lint-type (cadr arg2)) 'string?)
-						      (eq? (->lint-type (caddr arg2)) 'string?))
-						  'equal?)))
-		     ((char?)            (and (eq? type2 'char=?)
-					      (or (eq? (->lint-type (cadr arg2)) 'char?)
-						  (eq? (->lint-type (caddr arg2)) 'char?))
-					      'eqv?))
-		     ((char-numeric? char-whitespace? char-alphabetic? char-upper-case? char-lower-case?) (and (eq? type2 'char?) type1))
-		     ((byte-vector? directory? file-exists?) (and (eq? type2 'string?) type1))
+		     ((number? complex?) 
+		      (case type2
+			((float? real? rational? integer?) type2)
+			((number? complex?) type1)
+			((=) (let ((x (if (number? (caddr arg2))
+					  (caddr arg2)
+					  (cadr arg2))))
+			       (and (number? x)
+				    (if (= x (floor x)) 'memv 'eqv?))))
+			(else #f)))
+
+		     ((real?)
+		      (case type2
+			((float? rational? integer?) type2)
+			((number? complex?) type1)
+			((=) (let ((x (if (real? (caddr arg2))
+					  (caddr arg2)
+					  (cadr arg2))))
+			       (and (real? x)
+				    (if (= x (floor x)) 'memv 'eqv?))))
+			(else #f)))
+
+		     ((float?)           
+		      (and (memq type2 '(real? complex? number? inexact?)) type1))
+
+		     ((rational?)
+		      (case type2
+			((integer?) type2)
+			((real? complex? number? exact?) type1)
+			((=)
+			 (and (or (rational? (caddr arg2))
+				  (rational? (cadr arg2)))
+			      'eqv?))
+			(else #f)))
+
+		     ((integer?)
+		      (case type2
+			((real? rational? complex? number? exact?) type1)
+			((=)
+			 (and (or (integer? (caddr arg2))
+				  (integer? (cadr arg2)))
+			      'eqv?))
+			(else #f)))
+
+		     ((exact?)           
+		      (and (memq type2 '(rational? integer?)) type2))
+
+		     ((even? odd?)       
+		      (and (memq type2 '(integer? rational? real? complex? number?)) type1)) ; not zero? -> 0.0
+
+		     ((zero?)            
+		      (and (memq type2 '(complex? number? real?)) type1))
+
+		     ((negative? positive?) 
+		      (and (eq? type2 'real?) type1))
+
+		     ((inexact?)         
+		      (and (eq? type2 'float?) type2))
+
+		     ((infinite? nan?)   
+		      (and (memq type2 '(number? complex? inexact?)) type1))
+
+		     ((vector?)          
+		      (and (memq type2 '(float-vector? int-vector?)) type2))
+
+		     ((float-vector? int-vector?) 
+		      (and (eq? type2 'vector?) type1))
+
+		     ((symbol?) 
+		      (case type2
+			((keyword? gensym? constant?) type2)
+			((eq?)
+			 (and (or (quoted-symbol? (cadr arg2))
+				  (quoted-symbol? (caddr arg2)))
+			      'eq?))
+			(else #f)))
+
+		     ((keyword?)
+		      (case type2
+			((symbol? constant?) type1)
+			((eq?)
+			 (and (or (keyword? (cadr arg2))
+				  (keyword? (caddr arg2)))
+			      'eq?))
+			(else #f)))
+
+		     ((gensym? defined? provided? constant?) 
+		      (and (eq? type2 'symbol?) type1))
+
+		     ((boolean?)         
+		      (and (or (eq? type2 'not) 
+			       (and (eq? type2 'eq?)
+				    (or (boolean? (cadr arg2))
+					(boolean? (caddr arg2)))))
+					      
+			   type2))
+
+		     ((list?)            
+		      (and (memq type2 '(null? pair? proper-list?)) type2))
+
+		     ((null?)            
+		      (and (memq type2 '(list? proper-list?)) type1))
+
+		     ((pair?)            
+		      (and (eq? type2 'list?) type1))
+
+		     ((proper-list?)     
+		      (and (eq? type2 'null?) type2))
+
+		     ((string?)
+		      (case type2
+			((byte-vector?) type2)
+			((string=?)
+			 (and (or (eq? (->lint-type (cadr arg2)) 'string?)
+				  (eq? (->lint-type (caddr arg2)) 'string?))
+			      'equal?))
+			(else #f)))
+
+		     ((char?)            
+		      (and (eq? type2 'char=?)
+			   (or (eq? (->lint-type (cadr arg2)) 'char?)
+			       (eq? (->lint-type (caddr arg2)) 'char?))
+			   'eqv?))
+
+		     ((char-numeric? char-whitespace? char-alphabetic? char-upper-case? char-lower-case?) 
+		      (and (eq? type2 'char?) type1))
+
+		     ((byte-vector? directory? file-exists?) 
+		      (and (eq? type2 'string?) type1))
+
 		     (else #f))))))
 
       (define (and-redundants env . args)
@@ -1799,68 +1861,105 @@
 	       (if (eq? type1 type2)     ; (and (?) (not (?))) -> #f
 		   'contradictory
 		   (case type1
-		     ((pair?) (if (eq? type2 'list?)
-				  'contradictory
-				  (and (not (eq? type2 'proper-list)) arg1)))   ; (and (pair?) (not (?)))
-		     ((null?) (if (eq? type2 'list?)
-				  'contradictory
-				  arg1))
-		     ((list?) (if (eq? type2 'pair?)
-				  'null?
-				  (if (eq? type2 'null?)
-				      'pair?
-				      (and (not (eq? type2 'proper-list?)) arg1))))
-		     ((proper-list?) (if (memq type2 '(list? pair?))
-					 'contradictory
-					 (and (not (eq? type2 'null?)) arg1)))
-		     ((symbol?) (and (not (memq type2 '(keyword? gensym? constant?))) arg1))
-		     ((constant?) (and (eq? type2 'symbol?)
-				       'contradictory))
-		     ((char=?)  (if (eq? type2 'char?)
-				    'contradictory
-				    (and (or (char? (cadr arg1))
-					     (char? (caddr arg1)))
-					 `(eqv? ,@(cdr arg1))))) ; arg2 might be (not (eof-object?...))
-		     ((real?) (case type2
-				((rational? exact?)  `(float? ,@(cdr arg1)))
-				((inexact?)          `(rational? ,@(cdr arg1)))
-				((complex? number?)  'contradictory)
-				(else (and (not (memq type2 '(negative? positive? even? odd? zero? integer?))) 
-					   arg1))))
-		     ((integer?) (if (memq type2 '(real? complex? number? rational? exact?))
-				     'contradictory
-				     (and (memq type2 '(float? inexact? infinite? nan?))
-					  arg1)))
-		     ((rational?) (if (memq type2 '(real? complex? number? exact?))
-				      'contradictory
-				      (and (memq type2 '(float? inexact? infinite? nan?))
-					   arg1)))
-		     ((complex? number?) (and (memq type2 '(complex? number?))
-					      'contradictory))
-		     ((float?) (if (memq type2 '(real? complex? number? inexact?))
-				   'contradictory
-				   (and (memq type2 '(rational? integer? exact?))
-					arg1)))
-		     ((exact?) (if (eq? type2 'rational?)
-				   'contradictory
-				   (and (memq type2 '(inexact? infinite? nan?))
-					arg1)))
-		     ((even? odd?) (if (memq type2 '(integer? exact? rational? real? number? complex?))
-				       'contradictory
-				       (and (memq type2 '(infinite? nan?))
-					    arg1)))
-		     ((zero? negative? positive?) (and (memq type2 '(complex? number? real?))
-						       'contradictory))
-		     ((infinite? nan?) (if (memq type2 '(number? complex? inexact?))
-					   'contradictory
-					   (and (memq type2 '(integer? rational? exact? even? odd?))
-						arg1)))
+		     ((pair?) 
+		      (case type2
+			((list?) 'contradictory)
+			((proper-list?) #f)
+			(else arg1)))
+
+		     ((null?) 
+		      (if (eq? type2 'list?)
+			  'contradictory
+			  arg1))
+
+		     ((list?) 
+		      (case type2
+			((pair?) 'null?)
+			((null?) 'pair?)
+			((proper-list?) #f)
+			(else arg1)))
+
+		     ((proper-list?) 
+		      (case type2
+			((list? pair?) 'contradictory)
+			((null?) #f)
+			(else arg1)))
+
+		     ((symbol?) 
+		      (and (not (memq type2 '(keyword? gensym? constant?))) 
+			   arg1))
+
+		     ((constant?) 
+		      (and (eq? type2 'symbol?)
+			   'contradictory))
+
+		     ((char=?)  
+		      (if (eq? type2 'char?)
+			  'contradictory
+			  (and (or (char? (cadr arg1))
+				   (char? (caddr arg1)))
+			       `(eqv? ,@(cdr arg1))))) ; arg2 might be (not (eof-object?...))
+
+		     ((real?) 
+		      (case type2
+			((rational? exact?)  `(float? ,@(cdr arg1)))
+			((inexact?)          `(rational? ,@(cdr arg1)))
+			((complex? number?)  'contradictory)
+			((negative? positive? even? odd? zero? integer?) #f)
+			(else arg1)))
+
+		     ((integer?) 
+		      (case type2
+			((real? complex? number? rational? exact?) 'contradictory)
+			((float? inexact? infinite? nan?) arg1)
+			(else #f)))
+
+		     ((rational?) 
+		      (case type2
+			((real? complex? number? exact?) 'contradictory)
+			((float? inexact? infinite? nan?) arg1)
+			(else #f)))
+
+		     ((complex? number?) 
+		      (and (memq type2 '(complex? number?))
+			   'contradictory))
+
+		     ((float?) 
+		      (case type2
+			((real? complex? number? inexact?) 'contradictory)
+			((rational? integer? exact?) arg1)
+			(else #f)))
+
+		     ((exact?) 
+		      (case type2
+			((rational?) 'contradictory)
+			((inexact? infinite? nan?) arg1)
+			(else #f)))
+
+		     ((even? odd?) 
+		      (case type2
+			((integer? exact? rational? real? number? complex?) 'contradictory)
+			((infinite? nan?) arg1)
+			(else #f)))
+
+		     ((zero? negative? positive?) 
+		      (and (memq type2 '(complex? number? real?))
+			   'contradictory))
+
+		     ((infinite? nan?) 
+		      (case type2
+			((number? complex? inexact?) 'contradictory)
+			((integer? rational? exact? even? odd?)	arg1)
+			(else #f)))
+
 		     ((char-whitespace? char-numeric? char-alphabetic? char-upper-case? char-lower-case?)
 		      (and (eq? type2 'char?)
 			   'contradictory))
+
 		     ((directory? file-exists?)
 		      (and (memq type2 '(string? sequence?))
 			   'contradictory))
+
 		     (else 
 		      ;; none of the rest happen
 		      #f))))))
@@ -1876,12 +1975,16 @@
 	       (if (eq? type1 type2)     ; (or (?) (not (?))) -> #t
 		   'fatuous
 		   (case type1
-		     ((null?) (if (eq? type2 'list?) ; not proper-list? here
-				  `(not (pair? ,(cadr arg1)))
-				  (and (not (eq? type2 'proper-list?))
-				       arg2)))
-		     ((eof-object?) arg2) ; not keyword? here because (or (not (symbol? x)) (keyword? x)) is not reducible to (not (symbol? x))
-		     ((string?) (and (not (eq? type2 'byte-vector?)) arg2))
+		     ((null?) 
+		      (case type2
+			((list?) ; not proper-list? here
+			 `(not (pair? ,(cadr arg1))))
+			((proper-list?) #f)
+			(else arg2)))
+		     ((eof-object?) 
+		      arg2) ; not keyword? here because (or (not (symbol? x)) (keyword? x)) is not reducible to (not (symbol? x))
+		     ((string?) 
+		      (and (not (eq? type2 'byte-vector?)) arg2))
 		     (else #f))))))
       
       (define (bsimp x) ; quick check for common easy cases
@@ -1933,7 +2036,6 @@
 			 (endx newx))
 			((null? p) newx)
 		      (let ((next (car p)))
-					;(format *stderr* "and ~A ~A ~A~%" next true false)
 			(if (or (not next)        ; #f in and -> end of expr
 				(member next false))
 			    (if (eq? sidex newx)  ; no side-effects
@@ -1965,7 +2067,6 @@
 			 (endx newx))
 			((null? p) newx)
 		      (let ((next (car p)))
-					;(format *stderr* "or ~A ~A ~A~%" next true false)
 			(if (or (and next                 ; (or ... #t ...)
 				     (code-constant? next))
 				(member next true))
@@ -1984,6 +2085,41 @@
 				  (if (side-effect? next env)
 				      (set! sidex endx)))))))))))))
       
+      (define (gather-or-eqf-elements eqfnc sym vals)
+	(let* ((func (case eqfnc 
+		       ((eq?) 'memq) 
+		       ((eqv? char=?) 'memv) 
+		       (else 'member)))
+	       (equals (if (and (eq? func 'member)
+				(not (eq? eqfnc 'equal?)))
+			   (list eqfnc)
+			   ()))
+	       (elements (lint-remove-duplicates (map (lambda (v) 
+							(if (pair? v) ; quoted case
+							    (cadr v)  ;   so unquote for quoted list below
+							    v)) 
+						      vals) 
+						 env)))
+	  (cond ((null? (cdr elements))
+		 `(,eqfnc ,sym ,@elements))
+		
+		((and (eq? eqfnc 'char=?)
+		      (= (length elements) 2)
+		      (char-ci=? (car elements) (cadr elements)))
+		 `(char-ci=? ,sym ,(car elements)))
+		
+		((and (eq? eqfnc 'string=?)
+		      (= (length elements) 2)
+		      (string-ci=? (car elements) (cadr elements)))
+		 `(string-ci=? ,sym ,(car elements)))
+		
+		((member elements '((#t #f) (#f #t)))
+		 `(boolean? ,sym))		; zero? doesn't happen
+		
+		(else 
+		 `(,func ,sym ',(reverse elements) ,@equals)))))
+
+
       ;; start of simplify-boolean code
       ;;   this is not really simplify boolean as in boolean algebra because in scheme there are many unequal truths, but only one falsehood
       ;;   'and and 'or are not boolean operators in a sense
@@ -1999,6 +2135,7 @@
 		    (pair? (cdr in-form))
 		    (member (cadr in-form) false) 
 		    #t)
+
       (if (not (pair? in-form))
 	  in-form
 	  (let ((form (bcomp (bsimp in-form))))
@@ -2006,20 +2143,34 @@
 			  (memq (car form) '(or and not))))
 		(classify form)
 		(let ((len (length form)))
-		  (let ((op (if (eq? (car form) 'or) 'and 
-				(and (eq? (car form) 'and) 'or))))
+		  (let ((op (case (car form)
+			      ((or) 'and)
+			      ((and) 'or)
+			      (else #f))))
 		    (if (and op
 			     (>= len 3)
-			     (every? (lambda (p) (and (pair? p) 
-						      (eq? (car p) op) 
-						      (= (length p) 3)))
+			     (every? (lambda (p) 
+				       (and (pair? p)
+					    (pair? (cdr p))
+					    (pair? (cddr p))
+					    (eq? (car p) op)))
 				     (cdr form)))
-			(let ((first (cadadr form))
-			      (last (caddr (cadr form))))
-			  (if (every? (lambda (p) (equal? (cadr p) first)) (cddr form))
-			      (set! form `(,op ,first (,(car form) ,last ,(caddr (caddr form)))))
-			      (if (every? (lambda (p) (equal? (caddr p) last)) (cddr form))
-				  (set! form `(,op (,(car form) ,first ,(cadr (caddr form))) ,last)))))))
+			(let ((first (cadadr form)))
+			  (if (every? (lambda (p) 
+					(equal? (cadr p) first)) 
+				      (cddr form))
+			      (set! form `(,op ,first (,(car form) ,@(map (lambda (p)
+									    (if (null? (cdddr p))
+										(caddr p)
+										`(,op ,@(cddr p))))
+									  (cdr form)))))
+			      (if (null? (cdddr (cadr form)))
+				  (let ((last (caddr (cadr form))))
+				    (if (every? (lambda (p) 
+						  (and (null? (cdddr p))
+						       (equal? (caddr p) last)))
+						(cddr form))
+					(set! form `(,op (,(car form) ,@(map cadr (cdr form))) ,last)))))))))
 		  ;; (or (and A B) (and A C)) -> (and A (or B C))
 		  ;; (or (and A B) (and C B)) -> (and (or A C) B)
 		  ;; (and (or A B) (or A C)) -> (or A (and B C))
@@ -2267,10 +2418,11 @@
 										  (cdr form)))
 								     true false env)))
 					   (return (simplify-boolean `(not ,nf) () () env)))))))
-			   
+
 			   (let ((sym #f)
 				 (eqfnc #f)
-				 (vals ()))
+				 (vals ())
+				 (start #f))
 			     
 			     (define (constant-arg p)
 			       (if (code-constant? (cadr p))
@@ -2283,139 +2435,146 @@
 					     'equal?
 					     (if (memq eqfnc '(#f eq?)) 'eq? 'eqv?))))
 			     
-			     (when (every? (lambda (p)
-					     (and (pair? p)
-						  (if (not sym)
-						      (set! sym (eqv-selector p))
-						      (equal? sym (eqv-selector p)))
-						  (or (not (memq eqfnc '(char-ci=? string-ci=? =)))
-						      (memq (car p) '(char-ci=? string-ci=? =)))
-						  
-						  ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
-						  ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
-						  ;;   We could add both: 1 1.0 as in cond?
-						  ;;
-						  ;; another problem: using memx below means the returned value of the expression
-						  ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
-						  ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
-						  ;;
-						  ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
-						  ;;   is more sensible, but that also changes the behavior of the expression:
-						  ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
-						  ;;
-						  ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
-						  
-						  (case (car p) 
-						    ((string=? equal?)
-						     (set! eqfnc (if (or (not eqfnc)
-								       (eq? eqfnc (car p)))
-								   (car p)
-								   'equal?))
-						     (and (= (length p) 3)
-							  (constant-arg p)))
-						    
-						    ((char=?)
-						     (if (memq eqfnc '(#f char=?))
-							 (set! eqfnc 'char=?)
-							 (if (not (eq? eqfnc 'equal?))
-							     (set! eqfnc 'eqv?)))
-						     (and (= (length p) 3)
-							  (constant-arg p)))
-						    
-						    ((eq? eqv?)
-						     (let ((leqf (car (->eqf (->lint-type (if (code-constant? (cadr p)) (cadr p) (caddr p)))))))
-						       (cond ((not eqfnc) 
-							      (set! eqfnc leqf))
-							     
-							     ((or (memq leqf '(#t equal?))
-								  (not (eq? eqfnc leqf)))
-							      (set! eqfnc 'equal?))
-							     
-							     ((memq eqfnc '(#f eq?))
-							      (set! eqfnc leqf))))
-						     (and (= (length p) 3)
-							  (constant-arg p)))
-						    
-						    ((char-ci=? string-ci=? =)
-						     (and (or (not eqfnc)
-							      (eq? eqfnc (car p)))
-							  (set! eqfnc (car p))
-							  (= (length p) 3)
-							  (constant-arg p)))
-						    
-						    ((eof-object?)
-						     (upgrade-eqf)
-						     (set! vals (cons #<eof> vals)))
-						    
-						    ((not)
-						     (upgrade-eqf)
-						     (set! vals (cons #f vals)))
-						    
-						    ((boolean?) 
-						     (upgrade-eqf)
-						     (set! vals (cons #f (cons #t vals))))
-						    
-						    ((zero?)
-						     (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
-						     (set! vals (cons 0 (cons 0.0 vals))))
-						    
-						    ((null?)
-						     (upgrade-eqf)
-						     (set! vals (cons () vals)))
-						    
-						    ((memq memv member)
-						     (cond ((eq? (car p) 'member)
-							    (set! eqfnc 'equal?))
-							   
-							   ((eq? (car p) 'memv)
-							    (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
-							   
-							   ((not eqfnc)
-							    (set! eqfnc 'eq?)))
-						     (and (= (length p) 3)
-							  (pair? (caddr p))
-							  (eq? 'quote (caaddr p))
-							  (pair? (cadr (caddr p)))
-							  (set! vals (append (cadr (caddr p)) vals))))
-						    
-						    (else #f))))
-					   (cdr form))
-			       
-			       (let* ((func (case eqfnc 
-					      ((eq?) 'memq) 
-					      ((eqv? char=?) 'memv) 
-					      (else 'member)))
-				      (equals (if (and (eq? func 'member)
-						       (not (eq? eqfnc 'equal?)))
-						  (list eqfnc)
-						  ()))
-				      (elements (lint-remove-duplicates (map (lambda (v) 
-									       (if (pair? v) ; quoted case
-										   (cadr v)  ;   so unquote for quoted list below
-										   v)) 
-									     vals) 
-									env)))
-				 (return (cond ((null? (cdr elements))
-						`(,eqfnc ,sym ,@elements))
-					       
-					       ((and (eq? eqfnc 'char=?)
-						     (= (length elements) 2)
-						     (char-ci=? (car elements) (cadr elements)))
-						`(char-ci=? ,sym ,(car elements)))
-					       
-					       ((and (eq? eqfnc 'string=?)
-						     (= (length elements) 2)
-						     (string-ci=? (car elements) (cadr elements)))
-						`(string-ci=? ,sym ,(car elements)))
-					       
-					       ((member elements '((#t #f) (#f #t)))
-						`(boolean? ,sym))		; zero? doesn't happen
-					       
-					       (else 
-						`(,func ,sym ',(reverse elements) ,@equals))))))
+			     (do ((fp (cdr form) (cdr fp)))
+				 ((null? fp))
+			       (let ((p (and (pair? fp)
+					     (car fp))))
+				 (if (and (pair? p)
+					  (if (not sym)
+					      (set! sym (eqv-selector p))
+					      (equal? sym (eqv-selector p)))
+					  (or (not (memq eqfnc '(char-ci=? string-ci=? =)))
+					      (memq (car p) '(char-ci=? string-ci=? =)))
+					  
+					  ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
+					  ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
+					  ;;   We could add both: 1 1.0 as in cond?
+					  ;;
+					  ;; another problem: using memx below means the returned value of the expression
+					  ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
+					  ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
+					  ;;
+					  ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
+					  ;;   is more sensible, but that also changes the behavior of the expression:
+					  ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
+					  ;;
+					  ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
+					  
+					  (case (car p) 
+					    ((string=? equal?)
+					     (set! eqfnc (if (or (not eqfnc)
+								 (eq? eqfnc (car p)))
+							     (car p)
+							     'equal?))
+					     (and (= (length p) 3)
+						  (constant-arg p)))
+					    
+					    ((char=?)
+					     (if (memq eqfnc '(#f char=?))
+						 (set! eqfnc 'char=?)
+						 (if (not (eq? eqfnc 'equal?))
+						     (set! eqfnc 'eqv?)))
+					     (and (= (length p) 3)
+						  (constant-arg p)))
+					    
+					    ((eq? eqv?)
+					     (let ((leqf (car (->eqf (->lint-type (if (code-constant? (cadr p)) (cadr p) (caddr p)))))))
+					       (cond ((not eqfnc) 
+						      (set! eqfnc leqf))
+						     
+						     ((or (memq leqf '(#t equal?))
+							  (not (eq? eqfnc leqf)))
+						      (set! eqfnc 'equal?))
+						     
+						     ((memq eqfnc '(#f eq?))
+						      (set! eqfnc leqf))))
+					     (and (= (length p) 3)
+						  (constant-arg p)))
+					    
+					    ((char-ci=? string-ci=? =)
+					     (and (or (not eqfnc)
+						      (eq? eqfnc (car p)))
+						  (set! eqfnc (car p))
+						  (= (length p) 3)
+						  (constant-arg p)))
+					    
+					    ((eof-object?)
+					     (upgrade-eqf)
+					     (set! vals (cons #<eof> vals)))
+					    
+					    ((not)
+					     (upgrade-eqf)
+					     (set! vals (cons #f vals)))
+					    
+					    ((boolean?) 
+					     (upgrade-eqf)
+					     (set! vals (cons #f (cons #t vals))))
+					    
+					    ((zero?)
+					     (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
+					     (set! vals (cons 0 (cons 0.0 vals))))
+					    
+					    ((null?)
+					     (upgrade-eqf)
+					     (set! vals (cons () vals)))
+					    
+					    ((memq memv member)
+					     (cond ((eq? (car p) 'member)
+						    (set! eqfnc 'equal?))
+						   
+						   ((eq? (car p) 'memv)
+						    (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
+						   
+						   ((not eqfnc)
+						    (set! eqfnc 'eq?)))
+					     (and (= (length p) 3)
+						  (pair? (caddr p))
+						  (eq? 'quote (caaddr p))
+						  (pair? (cadr (caddr p)))
+						  (set! vals (append (cadr (caddr p)) vals))))
+					    
+					    (else #f)))
+				     (begin
+				       (if (not start)
+					   (set! start fp)
+					   (if (null? (cdr fp))
+					       (if (eq? start (cdr form))
+						   (return (gather-or-eqf-elements eqfnc sym vals))
+						   (return `(or ,@(copy (cdr form) (make-list (let loop ((g (cdr form)) (len 0))
+												(if (eq? g start)
+												    len
+												    (loop (cdr g) (+ len 1))))))
+								,(gather-or-eqf-elements eqfnc sym vals)))))))
 
-			     (let ((selector #f))             ; (or (and (eq?...)...)....) -> (case ....)
-			       (when (every? (lambda (p)
+				     (when start
+				       (if (eq? fp (cdr start))
+					   (begin
+					     (set! sym #f)
+					     (set! eqfnc #f)
+					     (set! vals ())
+					     (set! start #f))
+					   ;; here we have possible header stuff + more than one match + trailing stuff
+					   (let ((trailer (if (and (pair? fp)
+								   (pair? (cdr fp)))
+							      (let ((nfp (simplify-boolean `(or ,@fp) () () env)))
+								(if (and (pair? nfp)
+									 (eq? (car nfp) 'or))
+								    (cdr nfp)
+								    (list nfp)))
+							      fp)))
+					     (if (eq? start (cdr form))
+						 (return `(or ,(gather-or-eqf-elements eqfnc sym vals)
+							      ,@trailer))
+						 (return `(or ,@(copy (cdr form) (make-list (let loop ((g (cdr form)) (len 0))
+											      (if (eq? g start)
+												  len
+												  (loop (cdr g) (+ len 1))))))
+							      ,(gather-or-eqf-elements eqfnc sym vals)
+							      ,@trailer)))))))))
+			     
+			     (let ((selector #f)              ; (or (and (eq?...)...)....) -> (case ....)
+				   (keys ()))
+			       (when (every? (lambda (p)      ;   else has to be just #f here
 					       (and (pair? p)
 						    (eq? (car p) 'and)
 						    (pair? (cdr p))
@@ -2425,23 +2584,53 @@
 							(set! selector (cadadr p)))
 						    (let ((expr (cadr p)))
 						      (case (car expr)
-							((null? boolean? eof-object? zero?) 
-							 (equal? selector (cadr expr)))
+							((null?)
+							 (and (equal? selector (cadr expr))
+							      (not (memq () keys))
+							      (set! keys (cons () keys))))
+							;; we have to make sure no keys are repeated:
+							;;   (or (and (eq? x 'a) (< y 1)) (and (eq? x 'a) (< y 2)))
+							;;   this rewrite has become much trickier than expected...
+
+							((boolean?)
+							 (and (equal? selector (cadr expr))
+							      (not (memq #f keys))
+							      (not (memq #t keys))
+							      (set! keys (cons #f (cons #t keys)))))
+
+							((eof-object?)
+							 (and (equal? selector (cadr expr))
+							      (not (memq #<eof> keys))
+							      (set! keys (cons #<eof> keys))))
+
+							((zero?)
+							 (and (equal? selector (cadr expr))
+							      (not (memv 0 keys))
+							      (not (memv 0.0 keys))
+							      (set! keys (cons 0.0 (cons 0 keys)))))
 
 							((memq memv)
 							 (and (equal? selector (cadr expr))
 							      (pair? (cddr expr))
 							      (pair? (caddr expr))
 							      (eq? (caaddr expr) 'quote)
-							      (pair? (cadr (caddr expr)))))
+							      (pair? (cadr (caddr expr)))
+							      (not (any? (lambda (g)
+									   (memv g keys))
+									 (cadr (caddr expr))))
+							      (set! keys (append (cadr (caddr expr)) keys))))
 
 							((eq? eqv? char=?)
 							 (and (pair? (cddr expr))
 							      (null? (cdddr expr))
 							      (or (and (equal? selector (cadr expr))
-								       (code-constant? (caddr expr)))
+								       (code-constant? (caddr expr))
+								       (not (memv (unquoted (caddr expr)) keys))
+								       (set! keys (cons (unquoted (caddr expr)) keys)))
 								  (and (equal? selector (caddr expr))
-								       (code-constant? (cadr expr))))))
+								       (code-constant? (cadr expr))
+								       (not (memv (unquoted (cadr expr)) keys))
+								       (set! keys (cons (unquoted (cadr expr)) keys))))))
 							(else #f)))))
 					     (cdr form))
 				 (return `(case ,selector
@@ -2496,7 +2685,7 @@
 					     ((and (pair? val)                       ; (or ...) -> splice into current
 						   (eq? (car val) 'or))
 					      (set! exprs (append val (cdr exprs)))) ; we'll skip the 'or in do step
-					     
+
 					     ((not (or (memq val new-form)
 						       (and (pair? val)         ;   and redundant tests
 							    (hash-table-ref bools1 (car val))
@@ -3037,8 +3226,10 @@
 				     `(* ,(cadr arg1) ,(cadr arg2)))
 				    ((and (= (length arg1) 3)
 					  (equal? (cdr arg1) (cdr arg2))
-					  (or (and (eq? (car arg1) 'gcd) (eq? (car arg2) 'lcm))
-					      (and (eq? (car arg1) 'lcm) (eq? (car arg2) 'gcd))))
+					  (case (car arg1)
+					    ((gcd) (eq? (car arg2) 'lcm))
+					    ((lcm) (eq? (car arg2) 'gcd))
+					    (else #f)))
 				     `(abs (* ,@(cdr arg1))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
 				    ((and (eq? (car arg1) 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
 					  (eq? (car arg2) 'exp))
@@ -3459,15 +3650,16 @@
 			 (eqv? (cadr args) 0))
 		    (car args))
 		   
-		   ((or (and (eq? (car form) 'quotient) ; (quotient (remainder x y) y) -> 0
-			     (= len 2)
-			     (pair? (car args))
-			     (eq? (caar args) 'remainder)
-			     (= (length (car args)) 3)
-			     (eqv? (caddar args) (cadr args)))
-			(and (memq (car form) '(ash modulo))
-			     (= len 2)                  ; (modulo 0 x) -> 0
-			     (eqv? (car args) 0)))
+		   ((case (car form)
+		      ((quotient)                       ; (quotient (remainder x y) y) -> 0
+		       (and (= len 2)
+			    (pair? (car args))
+			    (eq? (caar args) 'remainder)
+			    (= (length (car args)) 3)
+			    (eqv? (caddar args) (cadr args))))
+		      ((ash modulo)                     ; (modulo 0 x) -> 0
+		       (and (= len 2) (eqv? (car args) 0)))
+		      (else #f))
 		    0)
 		   
 		   ((and (eq? (car form) 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
@@ -3938,19 +4130,21 @@
 
 	;; ----------------
 	((memq assq memv assv member assoc)
-	 
+
 	 (define (list-one? p)
 	   (and (pair? p)
 		(pair? (cdr p))
 		(null? (cddr p))
-		(or (and (eq? (car p) 'list)
-			 cadr)
-		    (and (eq? (car p) 'quote)
-			 (pair? (cadr p))
-			 (null? (cdadr p))
-			 (if (symbol? (caadr p))
-			     (lambda (x) (list 'quote (caadr x)))
-			     caadr)))))
+		(case (car p)
+		  ((list) cadr)
+		  ((quote)
+		   (and (pair? (cadr p))
+			(null? (cdadr p))
+			(if (symbol? (caadr p))
+			    (lambda (x)
+			      (list 'quote (caadr x)))
+			    caadr)))
+		  (else #f))))
 	 
 	 (when (= (length form) 4)
 	   (let ((func (list-ref form 3)))
@@ -4740,10 +4934,10 @@
 		     
 		     ((and (pair? (cadr arg))
 			   (memq func-of-arg '(cdr cddr cdddr cddddr list-tail))
-			   (or (and (eq? head 'list->string)
-				    (eq? (caadr arg) 'string->list))
-			       (and (eq? head 'list->vector)
-				    (eq? (caadr arg) 'vector->list))))
+			   (case head
+			     ((list->string) (eq? (caadr arg) 'string->list))
+			     ((list->vector) (eq? (caadr arg) 'vector->list))
+			     (else #f)))
 		      (let ((len-diff (if (eq? func-of-arg 'list-tail)
 					  (caddr arg)
 					  (cdr-count func-of-arg))))
@@ -6761,11 +6955,13 @@
 	       base-type)))
 
       (define (indirect-set? vname func arg1)
-	(or (and (memq func '(set-car! set-cdr! vector-set! list-set! string-set!))
-		 (eq? arg1 vname))
-	    (and (eq? func 'set!) ; implicit index presumably
-		 (pair? arg1)
-		 (eq? (car arg1) vname))))
+	(case func
+	  ((set-car! set-cdr! vector-set! list-set! string-set!) 
+	   (eq? arg1 vname))
+	  ((set!) 
+	   (and (pair? arg1) 
+		(eq? (car arg1) vname)))
+	  (else #f)))
 
       (define (bad-variable-name-numbered vname bad-names)
 	(let ((str (symbol->string vname)))
@@ -9818,7 +10014,23 @@
 			       (eqv-select #f))
 
 			   ;; (cond (A (and B C)) (else (and B D))) et al never happens
-			   
+#|
+			   ;; this happens a lot
+			   (call-with-exit
+			    (lambda (ok)
+			      (do ((fp (cdr form) (cdr fp)))
+				  ((null? (cdr fp)))
+				(let ((p (car fp))
+				      (np (cadr fp)))
+				  (if (and (pair? p)
+					   (pair? (car p))
+					   (pair? np)
+					   (pair? (car np))
+					   (memq (caar p) '(or and))
+					   (eq? (caar p) (caar np))
+					   (equal? (cadar p) (cadar np)))
+				      (ok (format *stderr* "~A~%~%" (lint-pp form))))))))
+|#			   
 			   ;; ----------------
 			   ;; if regular cond + else
 			   ;;   scan all return blocks
@@ -10657,21 +10869,23 @@
 							       (truncated-list->string (cddr form)))
 						  (and (pair? exprs)
 						       (pair? (car exprs))
-						       (null? (cdr exprs))         
-						       (or (and (eq? (caar exprs) 'case) ; just the case statement in the else clause
-								(equal? selector (cadar exprs))
-								(not (side-effect? selector env))
-								(set! else-foldable (cddar exprs)))
-							   (and (eq? (caar exprs) 'if)   ; just if -- if foldable, make it look like it came from case
-								(equal? selector (eqv-selector (cadar exprs)))
-								(cond-eqv? (cadar exprs) selector #t)
-								(not (side-effect? selector env))
+						       (null? (cdr exprs))  
+						       (case (caar exprs)
+							 ((case)                     ; just the case statement in the else clause
+							  (and (equal? selector (cadar exprs))
+							       (not (side-effect? selector env))
+							       (set! else-foldable (cddar exprs))))
+							 ((if)                       ; just if -- if foldable, make it look like it came from case
+							  (and (equal? selector (eqv-selector (cadar exprs)))
+							       (cond-eqv? (cadar exprs) selector #t)
+							       (not (side-effect? selector env))
 								;; else-foldable as (((keys-from-test) true-branch) (else false-branch))
 								(set! else-foldable 
 								      (if (pair? (cdddar exprs))
 									  `(,(case-branch (cadar exprs) selector (list (caddar exprs)))
 									    (else ,(car (cdddar exprs))))
-									  (list (case-branch (cadar exprs) selector (cddar exprs))))))))))))
+									  (list (case-branch (cadar exprs) selector (cddar exprs)))))))
+							 (else #f)))))))
 				    (lint-walk-open-body caller head exprs env))))
 			    (cddr form))
 			   
@@ -10913,12 +11127,12 @@
 								      (or (and (real? (cadr step)) (cadr step))
 									  (and (real? (caddr step)) (caddr step))))))
 							(when (and (real? inc)
-								   (or (and (eq? (car step) '+)
-									    (positive? inc)
-									    (memq (car end) '(< <=)))
-								       (and (eq? (car step) '-)
-									    (positive? inc)
-									    (memq (car end) '(> >=)))))
+								   (case (car step)
+								     ((+) (and (positive? inc) 
+									       (memq (car end) '(< <=))))
+								     ((-) (and (positive? inc) 
+									       (memq (car end) '(> >=))))
+								     (else #f)))
 							  (lint-format "do step looks like it doesn't match end test: ~A" caller 
 								       (lists->string step end))))))))))
 					 ((pair? (cdr end+result))
@@ -11208,6 +11422,7 @@
 									       caller p vname (car vvalue) (truncated-list->string (car varlist)))
 								  #f))
 							 (eq? (cadadr p) vname)))
+
 						(or (and (pair? (caddr p))
 							 (pair? (cdaddr p))
 							 (null? (cddr (caddr p))) ; one func arg
@@ -11535,10 +11750,10 @@
 				 (let ((p (car body)))
 				   (when (and (pair? p)
 					      (pair? (cdr p))
-					      (or (and (memq (car p) '(if and)) 
-						       (eq? (cadr p) (car var)))
-						  (and (eq? (car p) 'or)
-						       (equal? (cadr p) `(not ,(car var)))))
+					      (case (car p)
+						((if and) (eq? (cadr p) (car var)))
+						((or)     (equal? (cadr p) `(not ,(car var))))
+						(else #f))
 					      (pair? (cddr p))
 					      (pair? (caddr p))
 					      (or (eq? (car p) 'if)
@@ -12770,9 +12985,8 @@
 ;;;       and tree-car-member returns the outermost tree (unwinds recursive calls) which is not what is wanted [tree-arg-member]
 ;;; also need a better indication in cond/case where the tests/keys are combined
 ;;; to get symbol->value hotspot, run profile: (or (s->v> sym) (s->v sym *e*))? [any-checker]
-;;; x  used as number then (if x...)
-;;; also (or (and x y z) (and y z) (and x z)) -> if or something
-;;; do we have (or (and x y) (and (not x) (not y))) -> (eq? (not x) (not y))?
-;;;   this can be extended
+;;; x used as number then (if x...)
+;;; check 1st repeated in ifs (if (and A B) a (if (and A C) b)) -> (if A (if B a (if C b))), but no others?
+;;; define-values could add its args to the current env
 ;;;
 ;;; 109 21295

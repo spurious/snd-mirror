@@ -30,12 +30,7 @@
      (lambda (w)
        (if (and (Widget? w)
 		(or (not (XmIsPushButton w))
-		    (string=? (XtName w) "revlen-label")
-		    (string=? (XtName w) "revscl-label")
-		    (string=? (XtName w) "contrast-label")
-		    (string=? (XtName w) "expand-label")
-		    (string=? (XtName w) "srate-label")
-		    (string=? (XtName w) "amp-label")))
+		    (member (XtName w) '("revscl-label" "contrast-label" "expand-label" "srate-label" "amp-label") string=?)))
 	   (XtSetValues w (list XmNbackgroundPixmap wd))))))
 
 (paint-all (cadr (main-widgets)))

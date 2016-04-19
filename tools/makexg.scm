@@ -639,8 +639,7 @@
 		      (string=? type "GCallback")))
 	     (hey "Xm_type~A(~A, ~A)~%" 
 		  (cond ((or (has-stars type) 
-			     (string=? type "gpointer")
-			     (string=? type "GClosureNotify"))
+			     (member type '("gpointer" "GClosureNotify") string=?))
 			 (cond ((member type no-c-to-xen)
 				"_Ptr_1")
 			       ((member type no-xen-p)
