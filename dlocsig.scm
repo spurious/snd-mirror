@@ -565,8 +565,6 @@
 (define dlocsig-ambisonics-scaler point707)
 (define dlocsig-ambisonics-ho-rev-scaler 0.05)
 ;; for 3rd order FuMa
-(define ambisonics-k1 (sqrt 135/256)) ;(/ (* 21 45) 224 8)))
-(define ambisonics-k2 (* (sqrt 3) 3 0.5))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Get number of channels needed by ambisonics
@@ -1035,21 +1033,22 @@
 (define path-ak-even #f)
 (define path-ak-odd #f)
 (define path-maxcoeff 8)
-(define path-gtab #f)
 
 (define (make-a-even)
   
-  (define (g m)
-    (if (not path-gtab)
-	(begin
-	  (set! path-gtab (make-vector path-maxcoeff))
-	  (set! (path-gtab 0) 1)
-	  (set! (path-gtab 1) -4)
-	  (do ((i 2 (+ i 1)))
-	      ((= i path-maxcoeff))
-	    (set! (path-gtab i) (- (* -4 (path-gtab (- i 1)))
-				   (path-gtab (- i 2)))))))
-    (path-gtab m))
+  (define g
+    (let ((path-gtab #f))
+      (lambda (m)
+	(if (not path-gtab)
+	    (begin
+	      (set! path-gtab (make-vector path-maxcoeff))
+	      (set! (path-gtab 0) 1)
+	      (set! (path-gtab 1) -4)
+	      (do ((i 2 (+ i 1)))
+		  ((= i path-maxcoeff))
+		(set! (path-gtab i) (- (* -4 (path-gtab (- i 1)))
+				       (path-gtab (- i 2)))))))
+	(path-gtab m))))
   
   (set! path-ak-even (make-vector (- path-maxcoeff 1)))
   (do ((m 1 (+ 1 m)))
@@ -1059,21 +1058,21 @@
 	((> k m))
       (set! ((path-ak-even (- m 1)) (- k 1)) (* 1.0 (/ (- (g (- m k))) (g m)))))))
 
-(define path-ftab #f)
-
 (define (make-a-odd)
   
-  (define (f m)
-    (if (not path-ftab)
-	(begin
-	  (set! path-ftab (make-vector path-maxcoeff))
-	  (set! (path-ftab 0) 1)
-	  (set! (path-ftab 1) -3)
-	  (do ((i 2 (+ i 1)))
-	      ((= i path-maxcoeff))
-	    (set! (path-ftab i) (- (* -4 (path-ftab (- i 1)))
-				   (path-ftab (- i 2)))))))
-    (path-ftab m))
+  (define f
+    (let ((path-ftab #f))
+      (lambda (m)
+	(if (not path-ftab)
+	    (begin
+	      (set! path-ftab (make-vector path-maxcoeff))
+	      (set! (path-ftab 0) 1)
+	      (set! (path-ftab 1) -3)
+	      (do ((i 2 (+ i 1)))
+		  ((= i path-maxcoeff))
+		(set! (path-ftab i) (- (* -4 (path-ftab (- i 1)))
+				       (path-ftab (- i 2)))))))
+	(path-ftab m))))
   
   (set! path-ak-odd (make-vector (- path-maxcoeff 1)))
   (do ((m 1 (+ 1 m)))
@@ -2066,9 +2065,6 @@
 	 (tpoints (path-time path))
 	 
 	 ;; speed of sound expressed in terms of path time coordinates
-	 (speed-limit (/ (* dlocsig-speed-of-sound 
-			    (- (car (last tpoints)) (car tpoints)))
-			 duration))
 	 (start 0)
 					;(end 0)
 	 (dly ())
@@ -2076,10 +2072,6 @@
 	 (real-dur 0)
 	 (prev-time #f)
 	 (prev-dist #f)
-	 (prev-group #f)
-	 (prev-x #f)
-	 (prev-y #f)
-	 (prev-z #f)
 	 (first-dist #f)
 	 (last-dist #f)
 	 (min-dist #f)
@@ -2097,9 +2089,6 @@
 	 (run-end #f)
 	 ;; channel offsets in output stream for ambisonics
 	 ;; (depends on horizontal and vertical order, default is h=1,v=1)
-	 (w-offset 0)
-	 (x-offset 1)
-	 (y-offset 2)
 	 (z-offset #f)
 	 (r-offset #f)
 	 (s-offset #f)
@@ -2152,71 +2141,9 @@
 	      (set! q-offset (+ offset 1)))
 	    (set! offset (+ offset 2)))))
     
-    (define (equalp-intersection l1 l2)
-      (if (null? l2) 
-	  l2
-	  (let loop1 ((l1 l1) 
-		      (result ()))
-	    (cond ((null? l1) 
-		   (reverse! result))
-		  ((member (car l1) l2) 
-		   (loop1 (cdr l1) 
-			  (cons (car l1) 
-				result)))
-		  (else (loop1 (cdr l1) 
-			       result))))))
-    
     (define (dist->samples d) (round (* d (/ *clm-srate* dlocsig-speed-of-sound))))
     ;; (define (dist->seconds d) (/ d dlocsig-speed-of-sound))
     (define (time->samples time) (round (* time *clm-srate*)))
-    
-    (define (transition-point-3 vert-a vert-b xa ya za xb yb zb) 
-      (define (cross v1 v2)
-	(list (- (* (cadr v1) (third v2))
-		 (* (third v1) (cadr v2)))
-	      (- (* (third v1) (car v2))
-		 (* (car v1) (third v2)))
-	      (- (* (car v1) (cadr v2))
-		 (* (cadr v1) (car v2)))))
-      (define (dot v1 v2)
-	(+ (* (car v1) (car v2))
-	   (* (cadr v1) (cadr v2))
-	   (* (third v1) (third v2))))
-      (define (sub v1 v2)
-	(list (- (car v1) (car v2))
-	      (- (cadr v1) (cadr v2))
-	      (- (third v1) (third v2))))
-      (define (add v1 v2)
-	(list (+ (car v1) (car v2))
-	      (+ (cadr v1) (cadr v2))
-	      (+ (third v1) (third v2))))
-      (define (scale v1 c)
-	(list (* (car v1) c)
-	      (* (cadr v1) c)
-	      (* (third v1) c)))
-      
-      (let* ((tolerance 1.0e-6)
-	     (line-b (list xa ya za))
-	     (line-m (sub (list xb yb zb) line-b))
-	     (normal (cross vert-a vert-b))
-	     (denominator (dot normal line-m)))
-	(and (> (abs denominator) tolerance)
-	     (add line-b (scale line-m (/ (- (dot normal line-b)) denominator))))))
-    
-    ;; calculate transition point between two adjacent two-speaker groups
-    ;; original line intersection code from Graphic Gems III
-    (define (transition-point-2 vert xa ya xb yb)
-      (let* ((Ax (car vert))
-	     (Bx (- xa xb))
-	     (Ay (cadr vert))
-	     (By (- ya yb))
-	     (Cx (- xa))
-	     (Cy (- ya))
-	     (d (- (* By Cx) (* Bx Cy)))
-	     (f (- (* Ay Bx) (* Ax By))))
-	(and (not (= f 0))
-	     (list (/ (* d Ax) f)
-		   (/ (* d Ay) f)))))
     
     ;; calculate speaker gains for group
     (define (calculate-gains x y z group)
@@ -2268,253 +2195,325 @@
 	      ((= size 1)
 	       (list #t (list 1.0))))))
     
-    ;; find the speaker group that contains a point
-    (define (find-group x y z)
-      (call-with-exit
-       (lambda (return)
-	 (for-each
-	  (lambda (group)
-	    (let* ((vals (calculate-gains x y z group))
-		   (inside (car vals))
-		   (gains (cadr vals)))
-	      (if inside
-		  (return (list group gains)))))
-	  (speaker-config-groups speakers))
-	 (list #f #f))))
-    
-    ;; push zero gains on all channels
-    (define (push-zero-gains time)
-      (let ((len (speaker-config-number speakers)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (set! (channel-gains i) (cons time (channel-gains i)))
-	  (set! (channel-gains i) (cons 0.0 (channel-gains i)))))
-      (let ((len rev-channels))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
-	  (set! (channel-rev-gains i) (cons 0.0 (channel-rev-gains i))))))
-    
-    (define (position val lst)
-      (let position-1 ((val val)
-                       (lst lst)
-                       (pos 0))
-        (call-with-exit
-         (lambda (return)
-           (and (not (null? lst))
-                (if (= val (car lst))
-                    (return pos)
-                    (position-1 val (cdr lst) (+ 1 pos))))))))
-    
-    ;; push gain and time into envelopes
-    (define (push-gains group gains dist time)
-      (let ((outputs (make-vector out-channels 0.0))
-	    (rev-outputs (make-vector rev-channels 0.0))
-	     ;; attenuation with distance of reverberated signal
-	    (ratt (if (>= dist inside-radius)
-		       (/ (expt dist reverb-power))
-		       (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))))
-	(let (;; attenuation with distance of direct signal
-	      (att (if (>= dist inside-radius)
-		       (/ (expt dist direct-power))
-		       (- 1.0 (expt (/ dist inside-radius) (/ inside-direct-power))))))
-	  (if (>= dist inside-radius)
-	      ;; outside the inner sphere, signal is sent to group
-	      (let ((len (length gains)))
-		(do ((i 0 (+ i 1)))
-		    ((= i len))
-		  (let ((speaker ((group-speakers group) i))
-			(gain (gains i)))
-		    (set! (outputs speaker) (* gain att))
-		    (if (and (> rev-channels 1)
-			     (< speaker (length rev-outputs)))
-			(set! (rev-outputs speaker) (* gain ratt))))))
-	      
-	      (let ((gain 0.0)
-		    (len (speaker-config-number speakers)))
-		(do ((speaker 0 (+ 1 speaker)))
-		    ((= speaker len))
-		  ;; inside the inner sphere, signal is sent to all speakers
-		  (let ((found (position speaker (group-speakers group))))
-		    (if found
-			;; speaker belongs to group, add to existing gain
-			(begin
-			  (set! gain (gains found))
-			  (set! (outputs speaker) (+ gain (* (- 1.0 gain) att)))
-			  (if (> rev-channels 1) (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
-			;; speaker outside of group
-			(begin
-			  (set! (outputs speaker) att)
-			  (if (> rev-channels 1) (set! (rev-outputs speaker) ratt)))))))))
-	
-	;; push all channel gains into envelopes
-	(let ((len (speaker-config-number speakers)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (if (or (null? (channel-gains i))
-		    (> time (cadr (channel-gains i))))
-		(begin
-		  (set! (channel-gains i) (cons time (channel-gains i)))
-		  (set! (channel-gains i) (cons (outputs i) (channel-gains i)))))))
-	
-	(if (> rev-channels 1)
-	    (do ((i 0 (+ i 1)))
-		((= i rev-channels))
-	      (if (or (null? (channel-rev-gains i))
-		      (> time (cadr (channel-rev-gains i))))
-		  (begin
-		    (set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
-		    (set! (channel-rev-gains i) (cons (rev-outputs i) (channel-rev-gains i)))))))
-	
-	;; push reverb gain into envelope for mono reverb
-	(if (and (= rev-channels 1)
-		 (or (null? (channel-rev-gains 0))
-		     (> time (cadr (channel-rev-gains 0)))))
-	    (begin
-	      (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
-	      (set! (channel-rev-gains 0) (cons ratt (channel-rev-gains 0)))))))
-    
+
     ;; Render a trajectory breakpoint through amplitude panning
-    (define (famplitude-panning x y z dist time q)
-      ;; output gains for current point
-      (if prev-group
-	  (let* ((vals (calculate-gains x y z prev-group))
-		 (inside (car vals))
-		 (gains (cadr vals)))
-	    ;; check that the source is not moving faster than sound
-	    (if (not (= time prev-time))
-		(let ((speed (/ (- dist prev-dist) (- time prev-time))))
-		  (if (> speed speed-limit)
-		      (format () "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
-	    (if inside
-		;; still in the same group
-		(begin
-		  (push-gains prev-group gains dist time)
-		  (set! prev-x x)
-		  (set! prev-y y)
-		  (set! prev-z z))
-		;; left the group
-		(let* ((vals (find-group x y z))
-		       (group (car vals))
+    (define famplitude-panning 
+      (let ((speed-limit (/ (* dlocsig-speed-of-sound (- (car (last tpoints)) (car tpoints))) duration))
+	    (prev-group #f)
+	    (prev-x #f)
+	    (prev-y #f)
+	    (prev-z #f))
+	
+	(define (equalp-intersection L1 L2)
+	  (if (null? L2) 
+	      L2
+	      (let loop1 ((L1 L1) 
+			  (result ()))
+		(cond ((null? L1) 
+		       (reverse! result))
+		      ((member (car L1) L2) 
+		       (loop1 (cdr L1) 
+			      (cons (car L1) 
+				    result)))
+		      (else (loop1 (cdr L1) 
+				   result))))))
+	
+	(define (transition-point-3 vert-a vert-b xa ya za xb yb zb) 
+	  (define (cross v1 v2)
+	    (list (- (* (cadr v1) (third v2))
+		     (* (third v1) (cadr v2)))
+		  (- (* (third v1) (car v2))
+		     (* (car v1) (third v2)))
+		  (- (* (car v1) (cadr v2))
+		     (* (cadr v1) (car v2)))))
+	  (define (dot v1 v2)
+	    (+ (* (car v1) (car v2))
+	       (* (cadr v1) (cadr v2))
+	       (* (third v1) (third v2))))
+	  (define (sub v1 v2)
+	    (list (- (car v1) (car v2))
+		  (- (cadr v1) (cadr v2))
+		  (- (third v1) (third v2))))
+	  (define (add v1 v2)
+	    (list (+ (car v1) (car v2))
+		  (+ (cadr v1) (cadr v2))
+		  (+ (third v1) (third v2))))
+	  (define (scale v1 c)
+	    (list (* (car v1) c)
+		  (* (cadr v1) c)
+		  (* (third v1) c)))
+	  
+	  (let* ((tolerance 1.0e-6)
+		 (line-b (list xa ya za))
+		 (line-m (sub (list xb yb zb) line-b))
+		 (normal (cross vert-a vert-b))
+		 (denominator (dot normal line-m)))
+	    (and (> (abs denominator) tolerance)
+		 (add line-b (scale line-m (/ (- (dot normal line-b)) denominator))))))
+	
+	;; calculate transition point between two adjacent two-speaker groups
+	;; original line intersection code from Graphic Gems III
+	(define (transition-point-2 vert xa ya xb yb)
+	  (let* ((Ax (car vert))
+		 (Bx (- xa xb))
+		 (Ay (cadr vert))
+		 (By (- ya yb))
+		 (Cx (- xa))
+		 (Cy (- ya))
+		 (d (- (* By Cx) (* Bx Cy)))
+		 (f (- (* Ay Bx) (* Ax By))))
+	    (and (not (= f 0))
+		 (list (/ (* d Ax) f)
+		       (/ (* d Ay) f)))))
+	
+	;; find the speaker group that contains a point
+	(define (find-group x y z)
+	  (call-with-exit
+	   (lambda (return)
+	     (for-each
+	      (lambda (group)
+		(let* ((vals (calculate-gains x y z group))
+		       (inside (car vals))
 		       (gains (cadr vals)))
-		  (if (not group)
+		  (if inside
+		      (return (list group gains)))))
+	      (speaker-config-groups speakers))
+	     (list #f #f))))
+	
+	;; push zero gains on all channels
+	(define (push-zero-gains time)
+	  (let ((len (speaker-config-number speakers)))
+	    (do ((i 0 (+ i 1)))
+		((= i len))
+	      (set! (channel-gains i) (cons time (channel-gains i)))
+	      (set! (channel-gains i) (cons 0.0 (channel-gains i)))))
+	  (let ((len rev-channels))
+	    (do ((i 0 (+ i 1)))
+		((= i len))
+	      (set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
+	      (set! (channel-rev-gains i) (cons 0.0 (channel-rev-gains i))))))
+	
+	;; push gain and time into envelopes
+	(define (push-gains group gains dist time)
+	  
+	  (define (position val lst)
+	    (let position-1 ((val val)
+			     (lst lst)
+			     (pos 0))
+	      (call-with-exit
+	       (lambda (return)
+		 (and (not (null? lst))
+		      (if (= val (car lst))
+			  (return pos)
+			  (position-1 val (cdr lst) (+ 1 pos))))))))
+	  
+	  (let ((outputs (make-vector out-channels 0.0))
+		(rev-outputs (make-vector rev-channels 0.0))
+		;; attenuation with distance of reverberated signal
+		(ratt (if (>= dist inside-radius)
+			  (/ (expt dist reverb-power))
+			  (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))))
+	    (let (;; attenuation with distance of direct signal
+		  (att (if (>= dist inside-radius)
+			   (/ (expt dist direct-power))
+			   (- 1.0 (expt (/ dist inside-radius) (/ inside-direct-power))))))
+	      (if (>= dist inside-radius)
+		  ;; outside the inner sphere, signal is sent to group
+		  (let ((len (length gains)))
+		    (do ((i 0 (+ i 1)))
+			((= i len))
+		      (let ((speaker ((group-speakers group) i))
+			    (gain (gains i)))
+			(set! (outputs speaker) (* gain att))
+			(if (and (> rev-channels 1)
+				 (< speaker (length rev-outputs)))
+			    (set! (rev-outputs speaker) (* gain ratt))))))
+		  
+		  (let ((gain 0.0)
+			(len (speaker-config-number speakers)))
+		    (do ((speaker 0 (+ 1 speaker)))
+			((= speaker len))
+		      ;; inside the inner sphere, signal is sent to all speakers
+		      (let ((found (position speaker (group-speakers group))))
+			(if found
+			    ;; speaker belongs to group, add to existing gain
+			    (begin
+			      (set! gain (gains found))
+			      (set! (outputs speaker) (+ gain (* (- 1.0 gain) att)))
+			      (if (> rev-channels 1) (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
+			    ;; speaker outside of group
+			    (begin
+			      (set! (outputs speaker) att)
+			      (if (> rev-channels 1) (set! (rev-outputs speaker) ratt)))))))))
+	    
+	    ;; push all channel gains into envelopes
+	    (let ((len (speaker-config-number speakers)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i len))
+		(if (or (null? (channel-gains i))
+			(> time (cadr (channel-gains i))))
+		    (begin
+		      (set! (channel-gains i) (cons time (channel-gains i)))
+		      (set! (channel-gains i) (cons (outputs i) (channel-gains i)))))))
+	    
+	    (if (> rev-channels 1)
+		(do ((i 0 (+ i 1)))
+		    ((= i rev-channels))
+		  (if (or (null? (channel-rev-gains i))
+			  (> time (cadr (channel-rev-gains i))))
 		      (begin
-			;; current point is outside all defined groups
-			;; we should send a warning at this point...
-			(push-zero-gains time)
-			(set! prev-group #f))
-		      (begin
-			;; we have to interpolate a new point that lies on the shared
-			;; edge of the adjacent groups so that the speakers opposite
-			;; the edge have zero gain when the trajectory switches groups
-			(let ((edge (equalp-intersection (group-vertices group)
-							 (group-vertices prev-group))))
-			  (cond ((= (length edge) 2)
-				 ;; the groups have two shared points (ie: share an edge)
-				 ;; this must be a three speaker groups transition
-				 (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
-				   (if pint
-				       (let* ((xi (car pint))
-					      (yi (cadr pint))
-					      (zi (third pint))
-					      (di (distance xi yi zi))
-					      (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											   (- yi prev-y)
-											   (- zi prev-z))
-										 (distance (- x prev-x)
-											   (- y prev-y)
-											   (- z prev-z)))
-									      (- time prev-time))))))
-					 ;; see if we are inside the previous group
-					 ;; we can be on either side due to roundoff errors
-					 (let* ((vals (calculate-gains xi yi zi prev-group))
-						(inside (car vals))
-						(gains (cadr vals)))
-					   (if inside
-					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (calculate-gains xi yi zi group))
-						      (inside (car val1))
-						      (gains (cadr val1)))
-						 (if inside
-						     (push-gains group gains di ti)
-						     ;; how did we get here?
-						     (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
-				
-				((and (= (length edge) 1) 
-				      (= (group-size group) 2))
-				 ;; two two-speaker groups share one point
-				 ;; z coordinates are silently ignored
-				 (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
-				   (if pint
-				       (let* ((xi (car pint))
-					      (yi (cadr pint))
-					      (di (distance xi yi 0.0))
-					      (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											   (- yi prev-y)
-											   0.0)
-										 (distance (- x prev-x)
-											   (- y prev-y)
-											   0.0))
-									      (- time prev-time))))))
-					 ;; see if we are inside the previous group
-					 ;; we can be on either side due to roundoff errors
-					 (let* ((vals (calculate-gains xi yi 0.0 prev-group))
-						(inside (car vals))
-						(gains (cadr vals)))
-					   (if inside 
-					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (calculate-gains xi yi 0.0 group))
-						      (inside (car val1))
-						      (gains (cadr val1)))
-						 (if inside
-						     (push-gains group gains di ti)
-						     ;; how did we get here?
-						     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
-				
-				((= (length edge) 1)
-				 ;; groups share only one point... for now a warning
-				 ;; we should calculate two additional interpolated
-				 ;; points as the trajectory must be crossing a third
-				 ;; group
-				 (for-each
-				  (lambda (int-group)
-				    (if (and (member (car edge) (group-vertices int-group))
-					     (not (equal? int-group group))
-					     (not (equal? int-group prev-group)))
-					(let ((edge1 (equalp-intersection (group-vertices int-group)
-									  (group-vertices prev-group)))
-					      (edge2 (equalp-intersection (group-vertices int-group)
-									  (group-vertices group))))
-					  (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
-				  (speaker-config-groups speakers))
-				 (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
-				
-				;; groups don't share points... how did we get here?
-				((= (length edge) 0)
-				 (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
-					 (group-id prev-group) (group-speakers prev-group)
-					 (group-id group) (group-speakers group)))))
-			  
-			  ;; finally push gains for current group
-			  (push-gains group gains dist time)
-			  (set! prev-group group)
-			  (set! prev-x x)
-			  (set! prev-y y)
-			  (set! prev-z z))))))
-	  ;; first time around
-	  (let* ((vals (find-group x y z))
-		 (group (car vals))
-		 (gains (cadr vals)))
-	    (if group
+			(set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
+			(set! (channel-rev-gains i) (cons (rev-outputs i) (channel-rev-gains i)))))))
+	    
+	    ;; push reverb gain into envelope for mono reverb
+	    (if (and (= rev-channels 1)
+		     (or (null? (channel-rev-gains 0))
+			 (> time (cadr (channel-rev-gains 0)))))
 		(begin
-		  (push-gains group gains dist time)
-		  (set! prev-group group)
-		  (set! prev-x x)
-		  (set! prev-y y)
-		  (set! prev-z z))
-		(begin
-		  (push-zero-gains time)
-		  (set! prev-group #f))))))
+		  (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
+		  (set! (channel-rev-gains 0) (cons ratt (channel-rev-gains 0)))))))
+	
+	(lambda (x y z dist time)
+	  
+	  ;; output gains for current point
+	  (if prev-group
+	      (let* ((vals (calculate-gains x y z prev-group))
+		     (inside (car vals))
+		     (gains (cadr vals)))
+		;; check that the source is not moving faster than sound
+		(if (not (= time prev-time))
+		    (let ((speed (/ (- dist prev-dist) (- time prev-time))))
+		      (if (> speed speed-limit)
+			  (format () "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
+		(if inside
+		    ;; still in the same group
+		    (begin
+		      (push-gains prev-group gains dist time)
+		      (set! prev-x x)
+		      (set! prev-y y)
+		      (set! prev-z z))
+		    ;; left the group
+		    (let* ((vals (find-group x y z))
+			   (group (car vals))
+			   (gains (cadr vals)))
+		      (if (not group)
+			  (begin
+			    ;; current point is outside all defined groups
+			    ;; we should send a warning at this point...
+			    (push-zero-gains time)
+			    (set! prev-group #f))
+			  (begin
+			    ;; we have to interpolate a new point that lies on the shared
+			    ;; edge of the adjacent groups so that the speakers opposite
+			    ;; the edge have zero gain when the trajectory switches groups
+			    (let ((edge (equalp-intersection (group-vertices group)
+							     (group-vertices prev-group))))
+			      (cond ((= (length edge) 2)
+				     ;; the groups have two shared points (ie: share an edge)
+				     ;; this must be a three speaker groups transition
+				     (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
+				       (if pint
+					   (let* ((xi (car pint))
+						  (yi (cadr pint))
+						  (zi (third pint))
+						  (di (distance xi yi zi))
+						  (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											       (- yi prev-y)
+											       (- zi prev-z))
+										     (distance (- x prev-x)
+											       (- y prev-y)
+											       (- z prev-z)))
+										  (- time prev-time))))))
+					     ;; see if we are inside the previous group
+					     ;; we can be on either side due to roundoff errors
+					     (let* ((vals (calculate-gains xi yi zi prev-group))
+						    (inside (car vals))
+						    (gains (cadr vals)))
+					       (if inside
+						   (push-gains prev-group gains di ti)
+						   (let* ((val1 (calculate-gains xi yi zi group))
+							  (inside (car val1))
+							  (gains (cadr val1)))
+						     (if inside
+							 (push-gains group gains di ti)
+							 ;; how did we get here?
+							 (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+				    
+				    ((and (= (length edge) 1) 
+					  (= (group-size group) 2))
+				     ;; two two-speaker groups share one point
+				     ;; z coordinates are silently ignored
+				     (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
+				       (if pint
+					   (let* ((xi (car pint))
+						  (yi (cadr pint))
+						  (di (distance xi yi 0.0))
+						  (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											       (- yi prev-y)
+											       0.0)
+										     (distance (- x prev-x)
+											       (- y prev-y)
+											       0.0))
+										  (- time prev-time))))))
+					     ;; see if we are inside the previous group
+					     ;; we can be on either side due to roundoff errors
+					     (let* ((vals (calculate-gains xi yi 0.0 prev-group))
+						    (inside (car vals))
+						    (gains (cadr vals)))
+					       (if inside 
+						   (push-gains prev-group gains di ti)
+						   (let* ((val1 (calculate-gains xi yi 0.0 group))
+							  (inside (car val1))
+							  (gains (cadr val1)))
+						     (if inside
+							 (push-gains group gains di ti)
+							 ;; how did we get here?
+							 (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
+				    
+				    ((= (length edge) 1)
+				     ;; groups share only one point... for now a warning
+				     ;; we should calculate two additional interpolated
+				     ;; points as the trajectory must be crossing a third
+				     ;; group
+				     (for-each
+				      (lambda (int-group)
+					(if (and (member (car edge) (group-vertices int-group))
+						 (not (equal? int-group group))
+						 (not (equal? int-group prev-group)))
+					    (let ((edge1 (equalp-intersection (group-vertices int-group)
+									      (group-vertices prev-group)))
+						  (edge2 (equalp-intersection (group-vertices int-group)
+									      (group-vertices group))))
+					      (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
+				      (speaker-config-groups speakers))
+				     (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+				    
+				    ;; groups don't share points... how did we get here?
+				    ((= (length edge) 0)
+				     (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
+					     (group-id prev-group) (group-speakers prev-group)
+					     (group-id group) (group-speakers group)))))
+			    
+			    ;; finally push gains for current group
+			    (push-gains group gains dist time)
+			    (set! prev-group group)
+			    (set! prev-x x)
+			    (set! prev-y y)
+			    (set! prev-z z))))))
+	      ;; first time around
+	      (let* ((vals (find-group x y z))
+		     (group (car vals))
+		     (gains (cadr vals)))
+		(if group
+		    (begin
+		      (push-gains group gains dist time)
+		      (set! prev-group group)
+		      (set! prev-x x)
+		      (set! prev-y y)
+		      (set! prev-z z))
+		    (begin
+		      (push-zero-gains time)
+		      (set! prev-group #f))))))))
     
     ;; Render a trajectory breakpoint for ambisonics b-format coding
     ;; http://www.york.ac.uk/inst/mustech/3d_audio/ambis2.htm
@@ -2571,170 +2570,176 @@
     ;; see also: http://wiki.xiph.org/index.php/Ambisonics
     ;; for mixed order systems
     ;;
-    (define (render-ambisonics x y z dist time)
-      (let* ((att (if (> dist inside-radius)
-		      (expt (/ inside-radius dist) direct-power)
-		      (expt (/ dist inside-radius) (/ inside-direct-power))))
-	     (attW (if (> dist inside-radius)
-		       (* point707 att)
-		       (- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power)))))
-	     (ratt (if (> dist inside-radius)
-		       (expt (/ inside-radius dist) reverb-power)
-		       (expt (/ dist inside-radius) (/ inside-reverb-power))))
-	     (rattW (if (> dist inside-radius)
-			(* point707 ratt)
-			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power)))))
-	     ;; storage for some intermediate calculations
-	     (u 0)
-	     (v 0)
-	     (lm 0)
-	     (no 0))
-	;; output encoding gains for point
-	;; W: 0.707
-	(set! (channel-gains w-offset) (cons time (channel-gains w-offset)))
-	(set! (channel-gains w-offset) (cons attW (channel-gains w-offset)))
-	;; X: (* (cos A) (cos E))
-	(set! (channel-gains x-offset) (cons time (channel-gains x-offset)))
-	(set! (channel-gains x-offset) (cons (* (if (zero? dist) 0 (/ y dist)) att) (channel-gains x-offset)))
-	;; Y: (* (sin A) (cos E))
-	(set! (channel-gains y-offset) (cons time (channel-gains y-offset)))
-	(set! (channel-gains y-offset) (cons (* (if (zero? dist) 0 (/ (- x) dist)) att) (channel-gains y-offset)))
-	(when (>= ambisonics-v-order 1)
-	  ;; Z: (sin E)
-	  (set! (channel-gains z-offset) (cons time (channel-gains z-offset)))
-	  (set! (channel-gains z-offset) (cons (* (if (zero? dist) 0 (/ z dist)) att) (channel-gains z-offset))))
-	(when (>= ambisonics-v-order 2)
-	  ;; R
-	  (set! (channel-gains r-offset) (cons time (channel-gains r-offset)))
-	  (set! (channel-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) att)
-					       (channel-gains r-offset)))
-	  ;; S
-	  (set! (channel-gains s-offset) (cons time (channel-gains s-offset)))
-	  (set! (channel-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) att)
-					       (channel-gains s-offset)))
-	  ;; T
-	  (set! (channel-gains t-offset) (cons time (channel-gains t-offset)))
-	  (set! (channel-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) att)
-					       (channel-gains t-offset))))
-	(when (>= ambisonics-h-order 2)
-	  (set! u (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-					      (* y y (if (zero? dist) 1 (/ 1.0 dist dist)))) att))
-	  (set! v (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) att))
-	  ;; U
-	  (set! (channel-gains u-offset) (cons time (channel-gains u-offset)))
-	  (set! (channel-gains u-offset) (cons u (channel-gains u-offset)))
-	  ;; V
-	  (set! (channel-gains v-offset) (cons time (channel-gains v-offset)))
-	  (set! (channel-gains v-offset) (cons v (channel-gains v-offset))))
-	(when (>= ambisonics-v-order 3)
-	  (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) att))
-	  (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
-	  ;; K
-	  (set! (channel-gains k-offset) (cons time (channel-gains k-offset)))
-	  (set! (channel-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) att) (channel-gains k-offset)))
-	  ;; L
-	  (set! (channel-gains l-offset) (cons time (channel-gains l-offset)))
-	  (set! (channel-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-gains l-offset)))
-	  ;; M
-	  (set! (channel-gains m-offset) (cons time (channel-gains m-offset)))
-	  (set! (channel-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-gains m-offset)))
-	  ;; N
-	  (set! (channel-gains n-offset) (cons time (channel-gains n-offset)))
-	  (set! (channel-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-gains n-offset)))
-	  ;; O
-	  (set! (channel-gains o-offset) (cons time (channel-gains o-offset)))
-	  (set! (channel-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-gains o-offset))))
-	(when (>= ambisonics-h-order 3)
-	  ;; P
-	  (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
-	  (set! (channel-gains p-offset) (cons (* (if (zero? dist) 0 (/ att dist)) x 
-						  (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-						     (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains p-offset)))
-	  ;; Q
-	  (set! (channel-gains q-offset) (cons time (channel-gains q-offset)))
-	  (set! (channel-gains q-offset) (cons (* (if (zero? dist) 0 (/ att dist)) y
-						  (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-						     (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains q-offset))))
-	;; push reverb gain into envelope
-	(when (= rev-channels 1)
-	  ;; mono reverb output
-	  (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
-	  (set! (channel-rev-gains 0) (cons (if (>= dist inside-radius)
-						(/ (expt dist reverb-power))
-						(- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
-					    (channel-rev-gains 0))))
-	(when (> rev-channels 1)
-	  (let ((ho-ratt dlocsig-ambisonics-ho-rev-scaler))
-	    ;; multichannel reverb, send ambisonics components
+    (define render-ambisonics
+      (let ((w-offset 0)
+	    (x-offset 1)
+	    (y-offset 2)
+	    (ambisonics-k1 (sqrt 135/256)) ;(/ (* 21 45) 224 8)
+	    (ambisonics-k2 (* (sqrt 3) 3 0.5)))
+	(lambda (x y z dist time)
+	  (let* ((att (if (> dist inside-radius)
+			  (expt (/ inside-radius dist) direct-power)
+			  (expt (/ dist inside-radius) (/ inside-direct-power))))
+		 (attW (if (> dist inside-radius)
+			   (* point707 att)
+			   (- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power)))))
+		 (ratt (if (> dist inside-radius)
+			   (expt (/ inside-radius dist) reverb-power)
+			   (expt (/ dist inside-radius) (/ inside-reverb-power))))
+		 (rattW (if (> dist inside-radius)
+			    (* point707 ratt)
+			    (- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power)))))
+		 ;; storage for some intermediate calculations
+		 (u 0)
+		 (v 0)
+		 (lm 0)
+		 (no 0))
+	    ;; output encoding gains for point
 	    ;; W: 0.707
-	    (set! (channel-rev-gains w-offset) (cons time (channel-rev-gains w-offset)))
-	    (set! (channel-rev-gains w-offset) (cons rattW (channel-rev-gains w-offset)))
-	    ;; X: (* (cos A)(cos E))
-	    (set! (channel-rev-gains x-offset) (cons time (channel-rev-gains x-offset)))
-	    (set! (channel-rev-gains x-offset) (cons (* (if (zero? dist) 0 1) y (if (zero? dist) 1 (/ dist)) ratt)(channel-rev-gains x-offset)))
-	    ;; Y: (* (sin A)(cos E))
-	    (set! (channel-rev-gains y-offset) (cons time (channel-rev-gains y-offset)))
-	    (set! (channel-rev-gains y-offset) (cons (* (if (zero? dist) 0 1) (- x) (if (zero? dist) 1 (/ dist)) ratt)
-						     (channel-rev-gains y-offset)))
+	    (set! (channel-gains w-offset) (cons time (channel-gains w-offset)))
+	    (set! (channel-gains w-offset) (cons attW (channel-gains w-offset)))
+	    ;; X: (* (cos A) (cos E))
+	    (set! (channel-gains x-offset) (cons time (channel-gains x-offset)))
+	    (set! (channel-gains x-offset) (cons (* (if (zero? dist) 0 (/ y dist)) att) (channel-gains x-offset)))
+	    ;; Y: (* (sin A) (cos E))
+	    (set! (channel-gains y-offset) (cons time (channel-gains y-offset)))
+	    (set! (channel-gains y-offset) (cons (* (if (zero? dist) 0 (/ (- x) dist)) att) (channel-gains y-offset)))
 	    (when (>= ambisonics-v-order 1)
 	      ;; Z: (sin E)
-	      (set! (channel-rev-gains z-offset) (cons time (channel-rev-gains z-offset)))
-	      (set! (channel-rev-gains z-offset) (cons (* (if (zero? dist) 0 1) z (if (zero? dist) 1 (/ dist)) ratt)
-						       (channel-rev-gains z-offset))))
+	      (set! (channel-gains z-offset) (cons time (channel-gains z-offset)))
+	      (set! (channel-gains z-offset) (cons (* (if (zero? dist) 0 (/ z dist)) att) (channel-gains z-offset))))
 	    (when (>= ambisonics-v-order 2)
 	      ;; R
-	      (set! (channel-rev-gains r-offset) (cons time (channel-rev-gains r-offset)))
-	      (set! (channel-rev-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) ho-ratt ratt)
-						       (channel-rev-gains r-offset)))
+	      (set! (channel-gains r-offset) (cons time (channel-gains r-offset)))
+	      (set! (channel-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) att)
+						   (channel-gains r-offset)))
 	      ;; S
-	      (set! (channel-rev-gains s-offset) (cons time (channel-rev-gains s-offset)))
-	      (set! (channel-rev-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
-						       (channel-rev-gains s-offset)))
+	      (set! (channel-gains s-offset) (cons time (channel-gains s-offset)))
+	      (set! (channel-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) att)
+						   (channel-gains s-offset)))
 	      ;; T
-	      (set! (channel-rev-gains t-offset) (cons time (channel-rev-gains t-offset)))
-	      (set! (channel-rev-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
-						       (channel-rev-gains t-offset))))
+	      (set! (channel-gains t-offset) (cons time (channel-gains t-offset)))
+	      (set! (channel-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) att)
+						   (channel-gains t-offset))))
 	    (when (>= ambisonics-h-order 2)
+	      (set! u (* (if (zero? dist) 0 1) (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+						  (* y y (if (zero? dist) 1 (/ 1.0 dist dist)))) att))
+	      (set! v (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) att))
 	      ;; U
-	      (set! (channel-rev-gains u-offset) (cons time (channel-rev-gains u-offset)))
-	      (set! (channel-rev-gains u-offset) (cons (* (if (zero? dist) 0 (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-										(* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) ho-ratt ratt)
-						       (channel-rev-gains u-offset)))
+	      (set! (channel-gains u-offset) (cons time (channel-gains u-offset)))
+	      (set! (channel-gains u-offset) (cons u (channel-gains u-offset)))
 	      ;; V
-	      (set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
-	      (set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
-						       (channel-rev-gains v-offset))))
-	    
+	      (set! (channel-gains v-offset) (cons time (channel-gains v-offset)))
+	      (set! (channel-gains v-offset) (cons v (channel-gains v-offset))))
 	    (when (>= ambisonics-v-order 3)
-	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) ho-ratt ratt))
-	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
+	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) att))
+	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
 	      ;; K
-	      (set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
-	      (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
+	      (set! (channel-gains k-offset) (cons time (channel-gains k-offset)))
+	      (set! (channel-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) att) (channel-gains k-offset)))
 	      ;; L
-	      (set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
-	      (set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-rev-gains l-offset)))
+	      (set! (channel-gains l-offset) (cons time (channel-gains l-offset)))
+	      (set! (channel-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-gains l-offset)))
 	      ;; M
-	      (set! (channel-rev-gains m-offset) (cons time (channel-rev-gains m-offset)))
-	      (set! (channel-rev-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-rev-gains m-offset)))
+	      (set! (channel-gains m-offset) (cons time (channel-gains m-offset)))
+	      (set! (channel-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-gains m-offset)))
 	      ;; N
-	      (set! (channel-rev-gains n-offset) (cons time (channel-rev-gains n-offset)))
-	      (set! (channel-rev-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-rev-gains n-offset)))
+	      (set! (channel-gains n-offset) (cons time (channel-gains n-offset)))
+	      (set! (channel-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-gains n-offset)))
 	      ;; O
-	      (set! (channel-rev-gains o-offset) (cons time (channel-rev-gains o-offset)))
-	      (set! (channel-rev-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-rev-gains o-offset))))
+	      (set! (channel-gains o-offset) (cons time (channel-gains o-offset)))
+	      (set! (channel-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-gains o-offset))))
 	    (when (>= ambisonics-h-order 3)
 	      ;; P
-	      (set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
-	      (set! (channel-rev-gains p-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt x 
-							  (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							     (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains p-offset)))
+	      (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
+	      (set! (channel-gains p-offset) (cons (* (if (zero? dist) 0 (/ att dist)) x 
+						      (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							 (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains p-offset)))
 	      ;; Q
-	      (set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
-	      (set! (channel-rev-gains q-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt y
-							  (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							     (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains q-offset))))
-	    ))))
+	      (set! (channel-gains q-offset) (cons time (channel-gains q-offset)))
+	      (set! (channel-gains q-offset) (cons (* (if (zero? dist) 0 (/ att dist)) y
+						      (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							 (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains q-offset))))
+	    ;; push reverb gain into envelope
+	    (when (= rev-channels 1)
+	      ;; mono reverb output
+	      (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
+	      (set! (channel-rev-gains 0) (cons (if (>= dist inside-radius)
+						    (/ (expt dist reverb-power))
+						    (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
+						(channel-rev-gains 0))))
+	    (when (> rev-channels 1)
+	      (let ((ho-ratt dlocsig-ambisonics-ho-rev-scaler))
+		;; multichannel reverb, send ambisonics components
+		;; W: 0.707
+		(set! (channel-rev-gains w-offset) (cons time (channel-rev-gains w-offset)))
+		(set! (channel-rev-gains w-offset) (cons rattW (channel-rev-gains w-offset)))
+		;; X: (* (cos A)(cos E))
+		(set! (channel-rev-gains x-offset) (cons time (channel-rev-gains x-offset)))
+		(set! (channel-rev-gains x-offset) (cons (* (if (zero? dist) 0 1) y (if (zero? dist) 1 (/ dist)) ratt)(channel-rev-gains x-offset)))
+		;; Y: (* (sin A)(cos E))
+		(set! (channel-rev-gains y-offset) (cons time (channel-rev-gains y-offset)))
+		(set! (channel-rev-gains y-offset) (cons (* (if (zero? dist) 0 1) (- x) (if (zero? dist) 1 (/ dist)) ratt)
+							 (channel-rev-gains y-offset)))
+		(when (>= ambisonics-v-order 1)
+		  ;; Z: (sin E)
+		  (set! (channel-rev-gains z-offset) (cons time (channel-rev-gains z-offset)))
+		  (set! (channel-rev-gains z-offset) (cons (* (if (zero? dist) 0 1) z (if (zero? dist) 1 (/ dist)) ratt)
+							   (channel-rev-gains z-offset))))
+		(when (>= ambisonics-v-order 2)
+		  ;; R
+		  (set! (channel-rev-gains r-offset) (cons time (channel-rev-gains r-offset)))
+		  (set! (channel-rev-gains r-offset) (cons (* (if (zero? dist) 0 (- (* 1.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 0.5)) ho-ratt ratt)
+							   (channel-rev-gains r-offset)))
+		  ;; S
+		  (set! (channel-rev-gains s-offset) (cons time (channel-rev-gains s-offset)))
+		  (set! (channel-rev-gains s-offset) (cons (* (if (zero? dist) 0 2) z (- x) (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
+							   (channel-rev-gains s-offset)))
+		  ;; T
+		  (set! (channel-rev-gains t-offset) (cons time (channel-rev-gains t-offset)))
+		  (set! (channel-rev-gains t-offset) (cons (* (if (zero? dist) 0 2) z y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
+							   (channel-rev-gains t-offset))))
+		(when (>= ambisonics-h-order 2)
+		  ;; U
+		  (set! (channel-rev-gains u-offset) (cons time (channel-rev-gains u-offset)))
+		  (set! (channel-rev-gains u-offset) (cons (* (if (zero? dist) 0 (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+										    (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) ho-ratt ratt)
+							   (channel-rev-gains u-offset)))
+		  ;; V
+		  (set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
+		  (set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) ho-ratt ratt)
+							   (channel-rev-gains v-offset))))
+		
+		(when (>= ambisonics-v-order 3)
+		  (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) ho-ratt ratt))
+		  (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
+		  ;; K
+		  (set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
+		  (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
+		  ;; L
+		  (set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
+		  (set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-rev-gains l-offset)))
+		  ;; M
+		  (set! (channel-rev-gains m-offset) (cons time (channel-rev-gains m-offset)))
+		  (set! (channel-rev-gains m-offset) (cons (* (if (zero? dist) 0 (/ y dist)) lm) (channel-rev-gains m-offset)))
+		  ;; N
+		  (set! (channel-rev-gains n-offset) (cons time (channel-rev-gains n-offset)))
+		  (set! (channel-rev-gains n-offset) (cons (* (if (zero? dist) 0 no) u) (channel-rev-gains n-offset)))
+		  ;; O
+		  (set! (channel-rev-gains o-offset) (cons time (channel-rev-gains o-offset)))
+		  (set! (channel-rev-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-rev-gains o-offset))))
+		(when (>= ambisonics-h-order 3)
+		  ;; P
+		  (set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
+		  (set! (channel-rev-gains p-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt x 
+							      (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								 (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains p-offset)))
+		  ;; Q
+		  (set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
+		  (set! (channel-rev-gains q-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) ho-ratt y
+							      (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								 (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-rev-gains q-offset))))
+		))))))
     
     ;; Render a trajectory breakpoint to a room for decoded ambisonics
     ;;
@@ -2838,7 +2843,7 @@
 	;; do the rendering of the point
 	(cond ((= render-using amplitude-panning)
 	       ;; amplitude panning
-	       (famplitude-panning x y z dist time 1))
+	       (famplitude-panning x y z dist time))
 	      ((= render-using ambisonics)
 	       ;; ambisonics b format
 	       (render-ambisonics x y z dist time))

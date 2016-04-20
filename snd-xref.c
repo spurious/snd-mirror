@@ -1762,7 +1762,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11578] = {
+static const char *snd_names[11588] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3719,6 +3719,7 @@ static const char *snd_names[11578] = {
     "bytevector-length", "r7rs.scm",
     "bytevector-u8-ref", "r7rs.scm",
     "bytevector-u8-set!", "r7rs.scm",
+    "c-define", "cload.scm",
     "c-define-1", "cload.scm",
     "c-null?", "libc.scm",
     "c-pointer->string", "libc.scm",
@@ -3948,6 +3949,7 @@ static const char *snd_names[11578] = {
     "define-library", "r7rs.scm",
     "define-record-type", "r7rs.scm",
     "define-selection-via-marks", "marks.scm",
+    "define-values", "r7rs.scm",
     "definstrument", "ws.scm",
     "delay-channel-mixes", "mix.scm",
     "delayl", "prc95.scm",
@@ -6347,6 +6349,7 @@ static const char *snd_names[11578] = {
     "legendre", "numerics.scm",
     "legendre-polynomial", "numerics.scm",
     "lesser-nighthawk", "animals.scm",
+    "let-temporarily", "stuff.scm",
     "libc.scm", "libc.scm",
     "libdl.scm", "libdl.scm",
     "libgdbm.scm", "libgdbm.scm",
@@ -6878,6 +6881,7 @@ static const char *snd_names[11578] = {
     "pread", "libc.scm",
     "pretty-print", "write.scm",
     "previous-phrase", "spokenword.scm",
+    "progv", "stuff.scm",
     "protoent.p_aliases", "libc.scm",
     "protoent.p_name", "libc.scm",
     "protoent.p_proto", "libc.scm",
@@ -7446,6 +7450,7 @@ static const char *snd_names[11578] = {
     "update-graphs", "examp.scm",
     "utf8->string", "r7rs.scm",
     "utime", "libc.scm",
+    "value->symbol", "stuff.scm",
     "varied-thrush", "animals.scm",
     "various-gull-cries-from-end-of-colony-5", "bird.scm",
     "vector->float-vector", "poly.scm",
@@ -7556,7 +7561,7 @@ static const char *snd_names[11578] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5789);
+  s7_autoload_set_names(sc, snd_names, 5794);
 }
 #endif
 

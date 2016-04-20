@@ -164,6 +164,10 @@
        (varlet (curlet) ((lambda ,vars (curlet)) ,expression))))
 
 #|
+(define-macro (define*-values vars expression) ; same but allows defaults for the vars
+  `(if (not (null? ',vars))
+       (varlet (curlet) ((lambda* ,vars (curlet)) ,expression))))
+
 (define-macro (define-values vars . body) ; but the spec says "<expression>" here
   `(apply begin (map (lambda (var val) `(define ,var ,val)) ',vars (list (begin ,@body)))))
 |#

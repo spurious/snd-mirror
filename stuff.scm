@@ -299,6 +299,27 @@
 (define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
+(define-macro (let-temporarily vars . body)
+  `(with-let (inlet :orig (curlet) 
+		    :saved-let (inlet ,@(map (lambda (v)
+					       `(cons ',(car v) ,(car v)))
+					     vars)))
+     (dynamic-wind
+	 (lambda ()
+	   #f)
+
+	 (lambda ()
+	   (with-let orig
+	     ,@(map (lambda (v)
+		      `(set! ,(car v) ,(cadr v)))
+		    vars)
+	     ,@body))
+       
+       (lambda ()
+	 ,@(map (lambda (v)
+		  `(set! (orig ',(car v)) (saved-let ',(car v))))
+		vars)))))
+
 (define-macro (while test . body)         ; while loop with predefined break and continue
   `(call-with-exit
     (lambda (break) 
@@ -432,12 +453,18 @@ If func approves of one, index-if returns the index that gives that element's po
 (define every? 
   (let ((documentation "(every? func sequence) returns #t if func approves of every member of sequence"))
     (lambda (f sequence)
-      (not (member #f sequence (lambda (a b) (not (f b))))))))
+      (call-with-exit
+       (lambda (return) 
+	 (for-each (lambda (arg) (if (not (f arg)) (return #f))) sequence)
+	 #t)))))
 
 (define any? 
   (let ((documentation "(any? func sequence) returns #t if func approves of any member of sequence"))
     (lambda (f sequence)
-      (member #f sequence (lambda (a b) (f b))))))
+      (call-with-exit
+       (lambda (return) 
+	 (for-each (lambda (arg) (if (f arg) (return #t))) sequence)
+	 #f)))))
 
 (define collect-if 
   (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
@@ -1891,9 +1918,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  
 	  ((dynamic-wind)
 	   ;; here we want to ignore the first and last clauses, and report the last of the second
-	   (let ((l2 (caddr source)))
-	     (let* ((body (and (eq? (car l2) 'lambda)
-			       (cddr l2)))
+	   (let ((p (caddr source)))
+	     (let* ((body (and (eq? (car p) 'lambda)
+			       (cddr p)))
 		    (previous (and body (butlast body)))
 		    (end (and body (last body))))
 	       (if (not body)

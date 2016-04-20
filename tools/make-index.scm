@@ -781,14 +781,18 @@
     (list 'make-box-type "r7rs.scm")
     (list 'define-library "r7rs.scm")
     (list 'define-record-type "r7rs.scm")
+    (list 'define-values "r7rs.scm")
     
     (list 'c?r "stuff.scm")
     (list 'do* "stuff.scm")
     (list 'typecase "stuff.scm")
     (list 'enum "stuff.scm")
     (list 'while "stuff.scm")
+    (list 'let-temporarily "stuff.scm")
     (list 'define-class "stuff.scm")
     (list 'elambda "stuff.scm")
+    (list 'value->symbol "stuff.scm")
+    (list 'progv "stuff.scm")
     (list 'reflective-let "stuff.scm")
     (list 'reflective-probe "stuff.scm")
     (list 'reactive-let "stuff.scm")
@@ -807,6 +811,8 @@
 
     (list 'lint "lint.scm")
     (list 'html-lint "lint.scm")
+
+    (list 'c-define "cload.scm")
 
     (list 'moog? "moog.scm")
     (list 'make-moog "moog.scm")

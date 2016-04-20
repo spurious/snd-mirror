@@ -72669,7 +72669,7 @@ static s7_pointer make_unique_object(const char* name, unsigned int typ)
   return(p);
 }
 
-/* an experiment */
+/* ---------------- an experiment ---------------- */
 static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
 {
   if (is_null(p))
@@ -72683,6 +72683,7 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
+/* -------------------------------- */
 
 
 s7_scheme *s7_init(void)
