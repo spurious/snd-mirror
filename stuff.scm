@@ -300,21 +300,20 @@
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
 (define-macro (let-temporarily vars . body)
-  `(with-let (inlet :orig (curlet) 
-		    :saved-let (inlet ,@(map (lambda (v)
-					       `(cons ',(car v) ,(car v)))
-					     vars)))
+  `(with-let (#_inlet :orig (#_curlet) 
+		      :saved-let (#_inlet ,@(map (lambda (v)
+						   `(#_cons ',(car v) ,(car v)))
+						 vars)))
+     ;; inlet, curlet and cons need an explicit env because they are being called in the runtime env
      (dynamic-wind
 	 (lambda ()
 	   #f)
-
 	 (lambda ()
 	   (with-let orig
 	     ,@(map (lambda (v)
 		      `(set! ,(car v) ,(cadr v)))
 		    vars)
 	     ,@body))
-       
        (lambda ()
 	 ,@(map (lambda (v)
 		  `(set! (orig ',(car v)) (saved-let ',(car v))))

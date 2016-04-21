@@ -50,8 +50,10 @@
 		 (y1 (e (+ i 3)))
 		 (area (if (< (abs (- y0 y1)) .0001)
 			   (/ (- x1 x0) (* y0 all-x))
-			   (* (/ (- (log y1) (log y0)) (- y1 y0)) ; or (/ (log (/ y1 y0)) (- y1 y0))
-			      (/ (- x1 x0) all-x)))))
+			   (/ (* (- (log y1) (log y0)) (- x1 x0)) 
+			      (* (- y1 y0) all-x)))))
+	    ;; or (* (/ (- (log y1) (log y0)) (- y1 y0)) ; or (/ (log (/ y1 y0)) (- y1 y0))
+	    ;;       (/ (- x1 x0) all-x)))
 	    (set! dur (+ dur (abs area)))))))))
 
 ;;; :(src-duration '(0 1 1 2))

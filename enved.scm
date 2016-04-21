@@ -43,8 +43,7 @@
   (let ((snd (hook 'snd))
 	(chn (hook 'chn))
 	(ux (hook 'x))
-	(uy (hook 'y))
-	(mouse-radius .03))
+	(uy (hook 'y)))
     
     (define (add-envelope-point x y cur-env)
       (let ((new-env ()))
@@ -63,13 +62,15 @@
             pos
             (search-point (cddr e) (+ pos 2)))))
     
-    (define (on-dot? x y cur-env pos)
-      (and (pair? cur-env)
-	   (pair? (cdr cur-env))
-	   (or (and (< (abs (- (car cur-env) x)) mouse-radius)
-		    (< (abs (- (cadr cur-env) y)) mouse-radius)
-		    pos)
-	       (on-dot? x y (cddr cur-env) (+ pos 2)))))
+    (define on-dot? 
+      (let ((mouse-radius .03))
+	(lambda (x y cur-env pos)
+	  (and (pair? cur-env)
+	       (pair? (cdr cur-env))
+	       (or (and (< (abs (- (car cur-env) x)) mouse-radius)
+			(< (abs (- (cadr cur-env) y)) mouse-radius)
+			pos)
+		   (on-dot? x y (cddr cur-env) (+ pos 2)))))))
     
     (let* ((x (max 0.0 (min ux 1.0)))
 	   (y (max 0.0 (min uy 1.0)))

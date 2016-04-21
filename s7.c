@@ -2750,6 +2750,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq,
       OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, 
+      OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q, OP_SAFE_C_opSq_Q_S, HOP_SAFE_C_opSq_Q_S,
 
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS,
       OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC,
@@ -2804,7 +2805,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_UNKNOWN_G, HOP_UNKNOWN_G, OP_UNKNOWN_GG, HOP_UNKNOWN_GG, OP_UNKNOWN_A, HOP_UNKNOWN_A, OP_UNKNOWN_AA, HOP_UNKNOWN_AA,
 
       OP_SAFE_C_PP, HOP_SAFE_C_PP,
-      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q,
+      OP_SAFE_C_opSq_P, HOP_SAFE_C_opSq_P, 
       OP_SAFE_C_SP, HOP_SAFE_C_SP, OP_SAFE_C_CP, HOP_SAFE_C_CP, OP_SAFE_C_QP, HOP_SAFE_C_QP, OP_SAFE_C_AP, HOP_SAFE_C_AP,
       OP_SAFE_C_PS, HOP_SAFE_C_PS, OP_SAFE_C_PC, HOP_SAFE_C_PC, OP_SAFE_C_PQ, HOP_SAFE_C_PQ,
       OP_SAFE_C_SSP, HOP_SAFE_C_SSP,
@@ -2925,6 +2926,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq",
       "safe_c_op_opsq_q", "h_safe_c_op_opsq_q", "safe_c_c_op_s_opcqq", "h_safe_c_c_op_s_opcqq",
       "safe_c_op_s_opsq_q", "h_safe_c_op_s_opsq_q",
+      "safe_c_opsq_q", "h_safe_c_opsq_q", "safe_c_opsq_q_s", "h_safe_c_opsq_q_s",
 
       "safe_c_z", "h_safe_c_z", "safe_c_zz", "h_safe_c_zz", "safe_c_sz", "h_safe_c_sz", "safe_c_zs", "h_safe_c_zs",
       "safe_c_cz", "h_safe_c_cz", "safe_c_zc", "h_safe_c_zc",
@@ -2977,7 +2979,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "unknown_g", "h_unknown_g", "unknown_gg", "h_unknown_gg", "unknown_a", "h_unknown_a", "unknown_aa", "h_unknown_aa",
 
       "safe_c_pp", "h_safe_c_pp",
-      "safe_c_opsq_p", "h_safe_c_opsq_p", "safe_c_opsq_q", "h_safe_c_opsq_q",
+      "safe_c_opsq_p", "h_safe_c_opsq_p", 
       "safe_c_sp", "h_safe_c_sp", "safe_c_cp", "h_safe_c_cp", "safe_c_qp", "h_safe_c_qp", "safe_c_ap", "h_safe_c_ap",
       "safe_c_ps", "h_safe_c_ps", "safe_c_pc", "h_safe_c_pc", "safe_c_pq", "h_safe_c_pq",
       "safe_c_ssp", "h_safe_c_ssp",
@@ -53108,8 +53110,12 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	       *   (and it has to be the last pair else the unknown_g stuff can mess up)
 	       */
 	      if (car(arg2) == sc->quote_symbol)
-		set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q);
-	      else set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_P);
+		{
+		  set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q);
+		  choose_c_function(sc, expr, func, 2);
+		  return(true);
+		}
+	      set_unsafe_optimize_op(expr, hop + OP_SAFE_C_opSq_P);
 	      choose_c_function(sc, expr, func, 2);
 	      return(false);
 	    }
@@ -53375,15 +53381,25 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
 	  if (pairs == quotes + all_x_count(expr))
 	    {
 	      set_optimized(expr);
-	      if ((symbols == 2) &&
-		  (quotes == 1))
+	      if (quotes == 1)
 		{
-		  if ((is_symbol(arg1)) &&
+		  if ((symbols == 2) &&
+		      (is_symbol(arg1)) &&
 		      (is_symbol(arg3)))
 		    {
 		      set_opt_con1(cdr(expr), cadr(arg2));
 		      set_opt_sym2(cdr(expr), arg3);
 		      set_optimize_op(expr, hop + OP_SAFE_C_SQS);
+		      choose_c_function(sc, expr, func, 3);
+		      return(true);
+		    }
+		  if ((symbols == 1) &&
+		      (is_symbol(arg3)) &&
+		      (is_pair(arg2)) &&
+		      (car(arg2) == sc->quote_symbol) &&
+		      (is_safe_c_s(arg1)))
+		    {
+		      set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q_S);
 		      choose_c_function(sc, expr, func, 3);
 		      return(true);
 		    }
@@ -63100,6 +63116,23 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    car(sc->t2_1) = c_call(arg1)(sc, sc->t1_1);
 		    car(sc->t2_2) = cadr(caddr(code));
 		    sc->value = c_call(code)(sc, sc->t2_1);
+		    goto START;
+		  }
+		  
+		  
+		case OP_SAFE_C_opSq_Q_S:
+		  if (!c_function_is_ok_cadr(sc, code)) break;
+		  
+		case HOP_SAFE_C_opSq_Q_S:
+		  {
+		    s7_pointer arg1, arg3;  /* (let-set! (cdr v) 'x y) */
+		    arg1 = cadr(code);
+		    arg3 = find_symbol_checked(sc, cadddr(code));
+		    car(sc->t1_1) = find_symbol_checked(sc, cadr(arg1));
+		    car(sc->t3_1) = c_call(arg1)(sc, sc->t1_1);
+		    car(sc->t3_2) = cadr(caddr(code));
+		    car(sc->t3_3) = arg3;
+		    sc->value = c_call(code)(sc, sc->t3_1);
 		    goto START;
 		  }
 		  
@@ -74284,7 +74317,6 @@ int main(int argc, char **argv)
  * add the s7_eval bug to ffitest
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * ex of n-funcs-with-same-closure from varlet?
- * AAA -> opSq_Q_S?
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

@@ -2439,7 +2439,8 @@
 							 ;; how did we get here?
 							 (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
 				    
-				    ((and (= (length edge) 1) 
+				    ((and (pair? edge) 
+					  (null? (cdr edge))
 					  (= (group-size group) 2))
 				     ;; two two-speaker groups share one point
 				     ;; z coordinates are silently ignored
@@ -2470,7 +2471,8 @@
 							 ;; how did we get here?
 							 (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
 				    
-				    ((= (length edge) 1)
+				    ((and (pair? edge) 
+					  (null? (cdr edge)))
 				     ;; groups share only one point... for now a warning
 				     ;; we should calculate two additional interpolated
 				     ;; points as the trajectory must be crossing a third
@@ -2489,7 +2491,7 @@
 				     (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
 				    
 				    ;; groups don't share points... how did we get here?
-				    ((= (length edge) 0)
+				    ((null? edge)
 				     (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
 					     (group-id prev-group) (group-speakers prev-group)
 					     (group-id group) (group-speakers group)))))
@@ -2826,8 +2828,8 @@
 	(if (or (null? dly)
 		(> time (cadr dly)))
 	    (begin
-	      (set! dly (cons time dly))
-	      (set! dly (cons (dist->samples dist) dly))
+	      (set! dly (cons (dist->samples dist) 
+			      (cons time dly)))
 	      ;; doppler should be easy, yeah right. We use "relativistic" correction
 	      ;; as the sound object can be travelling close to the speed of sound. 
 	      ;; http://www.mathpages.com/rr/s2-04/2-04.htm, 
@@ -2837,8 +2839,8 @@
 	      (if prev-time
 		  (let ((ratio (/ (- dist prev-dist)
 				   (* duration (- time prev-time) dlocsig-speed-of-sound))))
-		    (set! doppler (cons (/ (+ prev-time time) 2) doppler))
-		    (set! doppler (cons (* (/ 1.0 (+ 1 ratio)) (sqrt (- 1 (* ratio ratio)))) doppler))))))
+		    (set! doppler (cons (* (/ 1.0 (+ 1 ratio)) (sqrt (- 1 (* ratio ratio)))) 
+					(cons (/ (+ prev-time time) 2) doppler)))))))
 
 	;; do the rendering of the point
 	(cond ((= render-using amplitude-panning)
@@ -2966,13 +2968,14 @@
 		 (y1 (e (+ i 3)))
 		 (area (if (< (abs (real-part (- y0 y1))) .0001)
 			   (/ (- x1 x0) (* y0 all-x))
-			   (* (/ (- (log y1) (log y0)) 
-				 (- y1 y0)) 
-			      (/ (- x1 x0) all-x)))))
+			   (/ (* (- (log y1) (log y0)) 
+				 (- x1 x0)) 
+			      (* (- y1 y0) all-x)))))
 	    (set! dur (+ dur (abs (real-part area))))))))
     
     ;; Loop for each pair of points in the position envelope and render them
-    (if (= (length xpoints) 1)
+    (if (and (pair? xpoints) 
+	     (null? (cdr xpoints)))
 	;; static source (we should check if this is inside the inner radius?)
 	(walk-all-rooms (car xpoints) (car ypoints) (car zpoints) (car tpoints))
 	
