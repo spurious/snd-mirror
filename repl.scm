@@ -66,17 +66,18 @@
 	      (histsize 100)
 	      (histpos 0)
 	      (m-p-pos 0)
-	      (histtop ())
-	      (histtail ()))
+	      (histtop ()))
 
-	  (define (push-line line)
-	    (if (null? histtop)
-		(begin
-		  (set! histtop (list (copy line)))
-		  (set! histtail histtop))
-		(begin
-		  (set-cdr! histtail (list line))
-		  (set! histtail (cdr histtail)))))
+	  (define push-line 
+	    (let ((histtail ()))
+	      (lambda (line)
+		(if (null? histtop)
+		    (begin
+		      (set! histtop (list (copy line)))
+		      (set! histtail histtop))
+		    (begin
+		      (set-cdr! histtail (list line))
+		      (set! histtail (cdr histtail)))))))
 
 	  (define (history-member line)
 	    (do ((i 0 (+ i 1)))

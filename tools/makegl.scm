@@ -281,17 +281,15 @@
 			     (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars type))
 			     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars type) (c-to-xen-macro-name typ (cdr typ)))))
 		     
-		     (if (not (string=? type "constchar*"))
-			 (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name (cdr typ))))
-		     
-		     (if (not (string=? type "constchar*"))
-			 (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			      (no-stars type)
-			      (cond ((assoc (cdr typ) '(("INT"    . "integer") 
-							("ULONG"  . "ulong") 
-							("DOUBLE" . "number")) string=?)
-				     => cdr)
-				    (else (apply string (map char-downcase (cdr typ))))))))
+		     (unless (string=? type "constchar*")
+		       (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name (cdr typ)))
+		       (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+			    (no-stars type)
+			    (cond ((assoc (cdr typ) '(("INT"    . "integer") 
+						      ("ULONG"  . "ulong") 
+						      ("DOUBLE" . "number")) string=?)
+				   => cdr)
+				  (else (apply string (map char-downcase (cdr typ))))))))
 		   (begin
 		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type))
 		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))

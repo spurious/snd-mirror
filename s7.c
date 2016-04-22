@@ -74310,7 +74310,6 @@ int main(int argc, char **argv)
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
  * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?  
- *    Even better, a discretionary newline, if current column beyond arg, newline: ~N%? ambiguous. ~NL? lowercase ~nl which is ambiguous, also ~l.
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * check stdin-prompt and s7webserver

@@ -9699,10 +9699,9 @@ how long the resultant note will be given an src envelope:
 	     (y0 (e (+ i 1))) ; 1/x x points
 	     (y1 (e (+ i 3)))
 	     (area (if (&lt; (abs (- y0 y1)) .0001)
-		       (/ (- x1 x0) y0 all-x)
-		       (* (/ (- (log y1) (log y0)) 
-			     (- y1 y0)) 
-			  (/ (- x1 x0) all-x)))))
+		       (/ (- x1 x0) (* y0 all-x))
+		       (/ (* (- (log y1) (log y0)) (- x1 x0))
+			  (* (- y1 y0) all-x)))))
 	(set! dur (+ dur (abs area)))))))
 
 ;;; (src-duration '(0 1 1 2)) -&gt; 0.693147180559945

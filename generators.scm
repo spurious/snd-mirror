@@ -3306,11 +3306,9 @@ returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
 
 (define (r2k2cos-norm a)
   ;; J 124
-  (- (* (/ pi (* 2 a))
-	(/ (cosh (* pi a))
-	   (sinh (* pi a))))
-     (/ 1.0
-	(* 2 a a))))
+  (- (/ (* pi (cosh (* pi a))) 
+	(* 2 a (sinh (* pi a)))) 
+     (/ 1.0 (* 2 a a))))
 
 (define r2k2cos 
 

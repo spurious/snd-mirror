@@ -203,10 +203,10 @@
 		 (if reverb-to-file
 		     (set! *reverb* (make-file->sample reverb-1)))
 		 (apply reverb reverb-data)                                   ; here is the reverb call(!)
-		 (if reverb-to-file
-		     (mus-close *reverb*))
-		 (if (and reverb-to-file *clm-delete-reverb*)
-		     (delete-file reverb-1)))))
+		 (when reverb-to-file
+		   (mus-close *reverb*)
+		   (if *clm-delete-reverb*
+		       (delete-file reverb-1))))))
 
 	 (if output-to-file
 	     (mus-close *output*))

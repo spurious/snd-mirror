@@ -1782,7 +1782,7 @@
 			     (no-stars type)))
 		    (hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
 			 (if (null? args) "no" (length args))
-			 (if (= (length args) 1) "" "s")
+			 (if (and (pair? args) (null? (cdr args))) "" "s")
 			 (if (eq? fname 'GtkClipboardClearFunc)
 			     "Xen_caddr"
 			     (if (eq? fname 'GtkDestroyNotify)
@@ -1938,7 +1938,7 @@
 		     (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
 		 (set! ctr (+ ctr 1)))
 	       args))))
-      (when (> (length args) 0)
+      (when (pair? args)
 	(let ((ctr 1)
 	      (argc #f))
 	  (for-each
@@ -2060,7 +2060,8 @@
 		     (types (caddr spec-data))
 		     (with-minus-one (member name '("gtk_list_store_set" "gtk_tree_store_set") string=?))
 		     (with-null (not (or with-minus-one
-					 (and (= (length types) 1) 
+					 (and (pair? types)
+					      (null? (cdr types))
 					      (string=? (car types) "GType")))))
 		     (modlen (length types)))
 		(hey "  {~%")
