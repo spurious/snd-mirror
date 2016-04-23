@@ -752,8 +752,8 @@
 		   (and (= (car path) (car end))
 			(= (cadr path) (cadr end))
 			(or (not path-3d)
-			    (= (third path) (third end))))))))
-    (error 'mus-error "ERROR: Closed path ~A is not closed~%" path)))
+			    (= (third path) (third end)))))))
+	(error 'mus-error "ERROR: Closed path ~A is not closed~%" path))))
 
 (define* (make-path path
 		    (3d path-3d)

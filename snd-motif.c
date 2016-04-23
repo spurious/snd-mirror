@@ -9815,10 +9815,10 @@ static void file_dialog_select_callback(Widget w, XtPointer context, XtPointer i
 {
   file_dialog_info *fd = (file_dialog_info *)context;
   XmString *strs = NULL;
-  char *filename = NULL;
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   if (strs) /* can be null if click in empty space */
     {
+      char *filename;
       position_t position = 0;
       filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
       if (filename)
@@ -11857,11 +11857,11 @@ static void save_as_dialog_select_callback(Widget w, XtPointer context, XtPointe
 {
 #if WITH_AUDIO
   dialog_play_info *dp = (dialog_play_info *)context;
-  char *filename = NULL;
   XmString *strs = NULL;
   XtVaGetValues(w, XmNselectedItems, &strs, NULL);
   if (strs)
     {
+      char *filename;
       filename = (char *)XmStringUnparse(strs[0], NULL, XmCHARSET_TEXT, XmCHARSET_TEXT, NULL, 0, XmOUTPUT_ALL);
       if ((filename) && (is_sound_file(filename)))
 	XtManageChild(dp->play_button);

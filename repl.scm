@@ -366,7 +366,6 @@
 	    
 	    
 	    ;; -------- vt100 --------
-	    (define (bold text) (format #f "~C[1m~A~C[0m" #\escape text #\escape)) 
 	    (define (red text) (format #f "~C[31m~A~C[0m" #\escape text #\escape))  ; black=30, green=32, yellow=33, blue=34
 	    
 	    (define* (rgb text (r 0) (g 0) (b 0) all-colors)
@@ -430,7 +429,10 @@
 	      (cursor-bounds))
 	    
 	    (define (display-line start end)
-	      
+
+	      (define (bold text) 
+		(format #f "~C[1m~A~C[0m" #\escape text #\escape)) 
+
 	      ;; if a line wraps, it will confuse the redisplay/cursor positioning code. so truncate the display
 	      (let ((line-len (+ (- end start) 1 prompt-length)))
 		(if (>= line-len last-col)

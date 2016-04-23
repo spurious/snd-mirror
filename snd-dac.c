@@ -1572,13 +1572,7 @@ static int fill_dac_buffers(int write_ok)
   int i;
   bool cursor_change = false;
   int framples;
-  mus_float_t *revin;
-  dac_info *dp;
   snd_info *sp;
-  mus_float_t *buf;
-#if (HAVE_OSS || HAVE_ALSA)
-  mus_float_t **dev_bufs;
-#endif
 
   framples = snd_dacp->framples;
   /* clear buffers */
@@ -1592,6 +1586,10 @@ static int fill_dac_buffers(int write_ok)
     cursor_change = false;
   else
     {
+      dac_info *dp;
+      mus_float_t *buf;
+      mus_float_t *revin;
+
       if (Xen_hook_has_list(play_hook))
 	run_hook(play_hook, 
 		 Xen_list_1(C_int_to_Xen_integer(framples)),
@@ -1887,6 +1885,7 @@ static int fill_dac_buffers(int write_ok)
 #if (HAVE_OSS || HAVE_ALSA)
       if (write_ok == WRITE_TO_DAC) 
 	{
+	  mus_float_t **dev_bufs;
 	  dev_bufs = dac_buffers;
 	  for (i = 0; i < snd_dacp->devices; i++)
 	    if (dev_fd[i] != -1)

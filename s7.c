@@ -2711,6 +2711,8 @@ enum {OP_NO_OP,
       OP_SAFE_C_ZZZ_1, OP_SAFE_C_ZZZ_2, OP_SAFE_C_ZZZ_3,
       OP_SAFE_C_opSq_P_1, OP_SAFE_C_opSq_P_MV, OP_C_P_1, OP_C_P_2, OP_C_SP_1, OP_C_SP_2,
       OP_CLOSURE_P_1, OP_CLOSURE_P_2, OP_SAFE_CLOSURE_P_1,
+
+      OP_SET_WITH_LET_1, OP_SET_WITH_LET_2,
       OP_MAX_DEFINED_1};
 
 #define OP_MAX_DEFINED (OP_MAX_DEFINED_1 + 1)
@@ -2890,6 +2892,8 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 
       "safe_c_opsq_p_1", "safe_c_opsq_p_mv", "c_p_1", "c_p_2", "c_sp_1", "c_sp_2",
       "closure_p_1", "closure_p_2", "safe_closure_p_1",
+
+      "set-with-let-1", "set-with-let-2",
 };
 
 static const char* opt_names[OPT_MAX_DEFINED] =
@@ -3099,7 +3103,7 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 #define eval_error_no_return(Sc, ErrType, ErrMsg, Obj)	\
   do {static s7_pointer _Err_ = NULL; \
       if (!_Err_) _Err_ = s7_make_permanent_string(ErrMsg); \
-         s7_error(Sc, ErrType, set_elist_2(Sc, _Err_, Obj));} while (0)
+      s7_error(Sc, ErrType, set_elist_2(Sc, _Err_, Obj));} while (0)
 
 #define eval_error_with_caller(Sc, ErrMsg, Caller, Obj)	\
   do {static s7_pointer _Err_ = NULL; \
@@ -3190,9 +3194,6 @@ static s7_pointer set_plist_3(s7_scheme *sc, s7_pointer x1, s7_pointer x2, s7_po
 {
   return(set_wlist_3(sc, sc->plist_3, x1, x2, x3));
 } 
-
-/* an experiment */
-s7_pointer s7_set_plist_1(s7_scheme *sc, s7_pointer x1) {return(set_plist_1(sc, x1));}
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -5312,7 +5313,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   tmpbuf_malloc(name, len);
   /* there's no point in heroic efforts here to avoid name collisions -- the user can screw up no matter what we do */
-  len = snprintf(name, len, "{%s}-%d", prefix, sc->gensym_counter++);
+  len = snprintf(name, len, "{%s}-%u", prefix, sc->gensym_counter++);
   hash = raw_string_hash((const unsigned char *)name, len);
   location = hash % SYMBOL_TABLE_SIZE;
   x = new_symbol(sc, name, len, hash, location);  /* not T_GENSYM -- might be called from outside */
@@ -30318,7 +30319,7 @@ static void input_port_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, u
 				{
 				  len = snprintf(do_str, DO_STR_LEN, "(let ((port (open-input-file \"%s\")))", filename);
 				  port_write_string(port)(sc, do_str, len, port);
-				  len = snprintf(do_str, DO_STR_LEN, " (do ((i 0 (+ i 1)) (c (read-char port) (read-char port))) ((= i %d) port)))", 
+				  len = snprintf(do_str, DO_STR_LEN, " (do ((i 0 (+ i 1)) (c (read-char port) (read-char port))) ((= i %u) port)))", 
 						 port_position(obj) - 1);
 				}
 			      else len = snprintf(do_str, DO_STR_LEN, "(open-input-file \"%s\")", filename);
@@ -56650,6 +56651,7 @@ static s7_pointer check_set(s7_scheme *sc)
 
 static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_pointer value)
 {
+  /* fprintf(stderr, "%s: %s %s\n", __func__, DISPLAY(arg), DISPLAY(value)); */
   if (is_slot(obj))
     obj = slot_value(obj);
   else eval_error(sc, "no generalized set for ~A", caar(sc->code));
@@ -57101,7 +57103,7 @@ static int set_pair_ex(s7_scheme *sc)
       break;
       
     case T_PAIR:
-      /* code: ((lst 1) 32) from (let ((lst '(1 2 3))) (set! (lst 1) 32)) */
+      /* code: ((lst 1) 32) from (let ((lst (list 1 2 3))) (set! (lst 1) 32)) */
       {
 	s7_pointer settee, index, val;
 	
@@ -57384,11 +57386,49 @@ static int set_pair_ex(s7_scheme *sc)
 	  }
       }
       break;
+
+    case T_SYNTAX:
+      if (cx == slot_value(global_slot(sc->with_let_symbol)))
+	{
+	  /* (set! (with-let a b) x), cx = with-let, sc->code = ((with-let a b) x)
+	   *   a and x are in the current env, b is in a, we need to evaluate a and x, then
+	   *   call (with-let a-value (set! b x-value))
+	   */
+	  sc->args = cdar(sc->code);
+	  sc->code = cadr(sc->code);
+	  push_stack(sc, OP_SET_WITH_LET_1, sc->args, sc->code);
+	  return(goto_EVAL);
+	}
+      /* else fall through */
       
     default:                                         /* (set! (1 2) 3) */
       eval_error_no_return(sc, sc->syntax_error_symbol, "no generalized set for ~A", caar_code);
     }
   return(goto_EVAL);
+}
+
+static void activate_let(s7_scheme *sc)
+{
+  s7_pointer e;
+  e = sc->value;
+  if (!is_let(e))                    /* (with-let . "hi") */
+    eval_error_no_return(sc, sc->wrong_type_arg_symbol, "with-let takes an environment argument: ~A", e);
+  if (e == sc->rootlet)
+    sc->envir = sc->nil;                             /* (with-let (rootlet) ...) */
+  else
+    {
+      s7_pointer p;
+      set_with_let_let(e);
+      let_id(e) = ++sc->let_number;
+      sc->envir = e;
+      for (p = let_slots(e); is_slot(p); p = next_slot(p))
+	{
+	  s7_pointer sym;
+	  sym = slot_symbol(p);
+	  if (symbol_id(sym) != sc->let_number)
+	    symbol_set_local(sym, sc->let_number, p);
+	}
+    }
 }
 
 
@@ -65359,6 +65399,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a)) str)) (hi) (hi)) is "a23"
 	   * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a #\b)) str)) (hi) (hi)) is an error from the first call (caught elsewhere)
 	   * (let () (define (hi) (let ((str "123")) (set! (str 0) (values #\a #\b)) str)) (catch #t hi (lambda a a)) (hi)) is an error from the second call
+	   * (let ((v (make-vector '(2 3) 0))) (set! (v (values 0 1)) 23) v) -> #2D((0 23 0) (0 0 0))
 	   */
 	  push_stack_no_args(sc, OP_SET_PAIR_P_1, sc->code);
 	  sc->code = cadr(sc->code);
@@ -65750,6 +65791,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't set ~S"), sc->args)));
 	  slot_set_value(sc->code, sc->value);
 	  break;
+
+	case OP_SET_WITH_LET_1:
+	  /* here sc->value is the new value for the settee, args has the (as yet unevaluated) let and settee-expression.
+	   */
+	  /* fprintf(stderr, "with_let_1: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
+	  sc->code = car(sc->args);
+	  sc->args = list_2(sc, cadr(sc->args), sc->value);
+	  push_stack(sc, OP_SET_WITH_LET_2, sc->args, sc->code);
+	  goto EVAL;
+
+	case OP_SET_WITH_LET_2:
+	  /* fprintf(stderr, "with_let_2: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
+	  sc->code = cons(sc, sc->set_symbol, sc->args);
+	  activate_let(sc);
+	  goto EVAL;
+
 	  
 	  
 	  /* -------------------------------- IF -------------------------------- */
@@ -67421,29 +67478,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 	case OP_WITH_LET1:
-	  {
-	    s7_pointer e;
-	    e = sc->value;
-	    if (!is_let(e))                    /* (with-let . "hi") */
-	      eval_type_error(sc, "with-let takes an environment argument: ~A", e);
-	    if (e == sc->rootlet)
-	      sc->envir = sc->nil;                             /* (with-let (rootlet) ...) */
-	    else
-	      {
-		s7_pointer p;
-		set_with_let_let(e);
-		let_id(e) = ++sc->let_number;
-		sc->envir = e;
-		for (p = let_slots(e); is_slot(p); p = next_slot(p))
-		  {
-		    s7_pointer sym;
-		    sym = slot_symbol(p);
-		    if (symbol_id(sym) != sc->let_number)
-		      symbol_set_local(sym, sc->let_number, p);
-		  }
-	      }
-	    goto BEGIN1;
-	  }
+	  activate_let(sc);
+	  goto BEGIN1;
 	  
 	  
 	case OP_WITH_BAFFLE:
@@ -74309,13 +74345,11 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
- * ~N| or ~NA|S in format? also ~N* I guess, ambiguous?  
  * display of let can still get into infinite recursion!
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * check stdin-prompt and s7webserver
- * add the s7_eval bug to ffitest
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
- * ex of n-funcs-with-same-closure from varlet?
+ * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

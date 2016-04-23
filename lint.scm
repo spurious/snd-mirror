@@ -169,11 +169,6 @@
 		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
 		  byte-vector hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
 
-	(definers '(define define* ;define-constant 
-		    define-macro define-macro* define-bacro define-bacro* ;define-expansion 
-		    definstrument defanimal define-envelope        ; for clm
-		    define-public define-inlinable define-integrable define^))
-
 	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm tree-leaves
 			    char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
 			    char-position string-position pair-line-number port-line-number))
@@ -404,43 +399,12 @@
 			  'set 0 
 			  'ref (if old (length old) 0)))))
     
-#|
-;; this version accepts anything as a "var" that set! can handle as a target
-(define-macro (let-temporarily vars . body)
 
-  (let ((sym (let find-name ((i 0))
-	       (let ((sym (string->symbol (format #f "_~D_" i))))
-		 (if (not (tree-memq sym vars))
-		     sym
-		     (find-name (+ i 1)))))))
-    
-    `(with-let (#_inlet 'orig (#_curlet)
-			',sym (#_list ,@(map (lambda (v)
-					       `(#_cons ',(car v) ,(car v)))
-					     vars)))
-       (dynamic-wind
-	   (lambda ()
-	     #f)
-	   (lambda ()
-	     (with-let orig
-	       ,@(map (lambda (v)
-			`(set! ,(car v) ,(cadr v)))
-		      vars)
-	       ,@body))
-	   (lambda ()
-	     (with-let (sublet orig ',sym ,sym) ; clumsy -- what's the right way to do this?
-	       ,@(map (lambda (v)
-			`(set! ,(car v) (cdr (assoc ',(car v) ,sym))))
-		      vars)))))))
-|#
+    ;; this version accepts anything that set! can handle as a target
     (define-macro (let-temporarily vars . body)
-      `(with-let (inlet :orig (curlet) 
-			:saved-let (inlet ,@(map (lambda (v)
-						   `(cons ',(car v) ,(car v)))
-						 vars)))
+      `(with-let (#_inlet :orig (#_curlet) :saved-let (#_list ,@(map car vars)))
 	 (dynamic-wind
-	     (lambda ()
-	       #f)
+	     (lambda () #f)
 	     (lambda ()
 	       (with-let orig
 		 ,@(map (lambda (v)
@@ -448,10 +412,13 @@
 			vars)
 		 ,@body))
 	     (lambda ()
-	       ,@(map (lambda (v)
-			`(set! (orig ',(car v)) (saved-let ',(car v))))
+	       ,@(map (let ((ctr -1))
+			(lambda (v)
+			  (if (symbol? (car v))
+			      `(set! (orig ',(car v)) (list-ref saved-let ,(set! ctr (+ ctr 1))))
+			      `(set! (with-let orig ,(car v)) (list-ref saved-let ,(set! ctr (+ ctr 1)))))))
 		      vars)))))
-
+    
     
     ;; -------- the usual list functions --------
     (define (remove item sequence)
@@ -1020,7 +987,7 @@
 		 (car sig)))))           ; this might be undefined in the current context (eg oscil? outside clm)
     
     (define (any-macro? f env)
-      (or (memq f '(call-with-values let-values define-values let*-values cond-expand require quasiquote multiple-value-bind let-temporarily reader-cond))
+      (or (memq f '(call-with-values let-values define-values let*-values cond-expand require quasiquote multiple-value-bind reader-cond))
 	  (let ((fd (var-member f env)))
 	    (and (var? fd)
 		 (memq (var-ftype fd) '(define-macro define-macro* define-expansion define-bacro define-bacro* defmacro defmacro* define-syntax))))))
@@ -2610,14 +2577,14 @@
 					     (set! vals ())
 					     (set! start #f))
 					   ;; here we have possible header stuff + more than one match + trailing stuff
-					   (let ((trailer (if (and (pair? fp)
-								   (pair? (cdr fp)))
+					   (let ((trailer (if (not (and (pair? fp)
+									(pair? (cdr fp))))
+							      fp
 							      (let ((nfp (simplify-boolean `(or ,@fp) () () env)))
 								(if (and (pair? nfp)
 									 (eq? (car nfp) 'or))
 								    (cdr nfp)
-								    (list nfp)))
-							      fp)))
+								    (list nfp))))))
 					     (if (eq? start (cdr form))
 						 (return `(or ,(gather-or-eqf-elements eqfnc sym vals)
 							      ,@trailer))
@@ -6262,11 +6229,12 @@
 	 (if (not (var-member head env))
 	     (lint-format "misspelled '~A? in ~A?" caller head form)))
 	
-	((interaction-environment the-environment)
-	 (lint-format "~A is probably curlet in s7" caller head))
-
-	((system-global-environment user-initial-environment)
-	 (lint-format "~A is probably rootlet in s7" caller head))
+	((interaction-environment the-environment) (lint-format "~A is probably curlet in s7" caller head))
+	((system-global-environment user-initial-environment) (lint-format "~A is probably rootlet in s7" caller head))
+;	((environment?)     (lint-format "environment? is let? in s7" caller))
+;	((environment-set!) (lint-format "environment-set! is let-set! in s7" caller))
+;	((environment-ref)  (lint-format "environment-ref is let-ref in s7" caller))
+	((unquote-splicing) (lint-format "unquote-splicing is probably (apply values ...) in s7" caller))
 
 	((push!) ; not predefined
 	 (if (= (length form) 3)
@@ -8964,7 +8932,7 @@
 	(lambda (caller form env)
 
       ;; walk a form, here curlet can change
-      ;; (format *stderr* "lint-walk ~A ~A~%" form env)
+      ;; (format *stderr* "lint-walk ~A~%" form)
 
       (if (symbol? form)
 	  (begin
@@ -9183,44 +9151,44 @@
 				     ;;   this requires a tree walker to ignore (for example) (let loop ((string string))...)
 				     (for-each (lambda (p)
 						 (let ((par (if (pair? p) (car p) p)))
-						   (if (or (hash-table-ref built-in-functions par)
-							   (hash-table-ref syntaces par))
-						       (let ((call (call-with-exit 
-								    (lambda (return)
-								      (let loop ((tree (cddr form)))
-									(if (pair? tree)
-									    (if (eq? (car tree) par)
-										(return tree)
-										(case (car tree)
-										  ((quote) #f)
-										  ((let let*)
-										   (if (pair? (cdr tree))
-										       (if (symbol? (cadr tree))
-											   (if (not (tree-memq par (caddr tree)))
-											       (loop (cdddr tree)))
-											   (if (not (tree-memq par (cadr tree)))
-											       (loop (cddr tree))))))
-										  ((letrec letrec*)
-										   (if (and (pair? (cdr tree))
-											    (not (tree-memq par (cadr tree))))
-										       (loop (cddr tree))))
-										  ((do)
-										   (if (and (pair? (cdr tree))
-											    (pair? (cddr tree))
-											    (not (tree-memq par (cadr tree))))
-										       (loop (cdddr tree))))
-										  (else 
-										   (if (pair? (cdr tree))
-										       (for-each loop (cdr tree)))
-										   (if (pair? (car tree))
-										       (loop (car tree))))))))))))
-							 (if (and (pair? call)
-								  (pair? (cdr call))
-								  (not (eq? par (cadr call))))
-							     (lint-format* caller
-									   (string-append (object->string outer-name) "'s parameter " (symbol->string par))
-									   (string-append " is called " (truncated-list->string call))
-									   ": find a less confusing parameter name!"))))))
+						   (when (or (hash-table-ref built-in-functions par)
+							     (hash-table-ref syntaces par))
+						     (let ((call (call-with-exit 
+								  (lambda (return)
+								    (let loop ((tree (cddr form)))
+								      (if (pair? tree)
+									  (if (eq? (car tree) par)
+									      (return tree)
+									      (case (car tree)
+										((quote) #f)
+										((let let*)
+										 (if (pair? (cdr tree))
+										     (if (symbol? (cadr tree))
+											 (if (not (tree-memq par (caddr tree)))
+											     (loop (cdddr tree)))
+											 (if (not (tree-memq par (cadr tree)))
+											     (loop (cddr tree))))))
+										((letrec letrec*)
+										 (if (and (pair? (cdr tree))
+											  (not (tree-memq par (cadr tree))))
+										     (loop (cddr tree))))
+										((do)
+										 (if (and (pair? (cdr tree))
+											  (pair? (cddr tree))
+											  (not (tree-memq par (cadr tree))))
+										     (loop (cdddr tree))))
+										(else 
+										 (if (pair? (cdr tree))
+										     (for-each loop (cdr tree)))
+										 (if (pair? (car tree))
+										     (loop (car tree))))))))))))
+						       (if (and (pair? call)
+								(pair? (cdr call))
+								(not (eq? par (cadr call))))
+							   (lint-format* caller
+									 (string-append (object->string outer-name) "'s parameter " (symbol->string par))
+									 (string-append " is called " (truncated-list->string call))
+									 ": find a less confusing parameter name!"))))))
 					       outer-args))
 				   
 				   (when (and (eq? head 'define-macro)
@@ -10036,7 +10004,7 @@
 								 (cons 'begin new-false)))
 					     (lint-format "perhaps ~A" caller
 							  (lists->string form `(begin ,@start
-										      (if ,expr ,new-true	,new-false)
+										      (if ,expr ,new-true ,new-false)
 										      ,@end)))))))))
 				 
 				 (if (and (= suggestion made-suggestion) ; (if (not a) A B) -> (if a B A)
@@ -10682,7 +10650,6 @@
 				       (if (and (pair? arg1)
 						(pair? arg2)
 						(pair? (car arg1))
-					;(pair? (car arg2))
 						(eq? (caar arg1) 'and)
 						(pair? (cdr arg1))
 						(null? (cddr arg1))
@@ -12475,7 +12442,7 @@
 						   (var-scope v))))))
 
 			     (if (assq head deprecated-ops)
-				 (lint-format "~A is deprecated; use ~A" caller head (cdr (assq head deprecated-ops))))
+				 (lint-format "~A is deprecated; use ~A" caller head (cond ((assq head deprecated-ops) => cdr))))
 
 			     (if (and (not (= line-number last-simplify-numeric-line-number))
 				      (not (var? v))
@@ -13118,10 +13085,10 @@
 ;;;
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
 ;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
-;;; pp handling of (list ((lambda...)..)) is bad
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
-;;; indentation is confused in pp by if expr+values?
+;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
+;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; find differ-by-n across body and rewrite using a function?
 ;;;    vector[3d] of code value: hits where first dim is tree-leaves
 ;;;    for each pair > ca. 6 in len, make matchlist of vars . :unset (copy original)
@@ -13129,7 +13096,9 @@
 ;;;      if so incr count and stop
 ;;;      if none, add current to table
 ;;;      see t395 for example
-;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
-;;; need let-temporarily that can handle *s7* fields and other such variables
+;;; walk-body: (if x..) (if (not x)) or vice versa, and the (and (not x)) case -- t347
+;;; (if x (set! y #f) (set! y #t))? -- could be slightly improved see t347 -- missing simplify-boolean
+;;; are there ever case no-side seq with same selector? cond test/not test?
+;;; what else is repeated?
 ;;;
 ;;; 107 21295

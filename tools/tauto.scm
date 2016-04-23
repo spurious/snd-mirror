@@ -197,7 +197,7 @@
 			  (let ((sig (if (eq? sym 'append)
 					 (let ((lst (list 'list?)))
 					   (set-cdr! lst lst))
-					 (copy (procedure-signature f)))))
+					 (cond ((procedure-signature f) => copy)))))
 			    (map-values sig)
 			    (autotest f () 0 top (if (pair? sig) (cdr sig) ()))))))))))))
 

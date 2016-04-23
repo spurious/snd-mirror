@@ -10711,14 +10711,13 @@ mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, mus_lo
   gen = (rdin *)mus_make_file_to_sample(filename);
   if (gen)
     {
-      mus_float_t **saved_data = NULL;
       gen->core = &READIN_CLASS;
       gen->loc = start;
       gen->dir = direction;
       gen->chan = chan;
       /* the saved data option does not save us anything in file_to_sample above */
       gen->saved_data = mus_sound_saved_data(filename);
-      if (!saved_data)
+      if (!gen->saved_data)
 	{
 	  char *str;
 	  str = mus_expand_filename(filename);

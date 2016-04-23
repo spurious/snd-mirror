@@ -300,6 +300,26 @@
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
 (define-macro (let-temporarily vars . body)
+  `(with-let (#_inlet :orig (#_curlet) :saved-let (#_list ,@(map car vars)))
+     (dynamic-wind
+	 (lambda ()
+	   #f)
+	 (lambda ()
+	   (with-let orig
+	     ,@(map (lambda (v)
+		      `(set! ,(car v) ,(cadr v)))
+		    vars)
+	     ,@body))
+	 (lambda ()
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			    `(set! (orig ',(car v)) (list-ref saved-let ,(set! ctr (+ ctr 1))))
+			    `(set! (with-let orig ,(car v)) (list-ref saved-let ,(set! ctr (+ ctr 1)))))))
+		  vars)))))
+#|
+;; old form -- handles only symbols
+(define-macro (let-temporarily vars . body)
   `(with-let (#_inlet :orig (#_curlet) 
 		      :saved-let (#_inlet ,@(map (lambda (v)
 						   `(#_cons ',(car v) ,(car v)))
@@ -318,6 +338,7 @@
 	 ,@(map (lambda (v)
 		  `(set! (orig ',(car v)) (saved-let ',(car v))))
 		vars)))))
+|#
 
 (define-macro (while test . body)         ; while loop with predefined break and continue
   `(call-with-exit
@@ -2057,7 +2078,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		   (let ((dirs ())
 			 (dir-names ())
 			 (dir-name name))
-		     (lambda* (quit)            ; returned from with-let
+		     (lambda* (quit)                   ; returned from with-let
 		       (if (eq? quit #<eof>)           ; caller requests cleanup and early exit
 			   (begin                      ;   via ((iterator-sequence iter) #<eof>)
 			     (closedir dir)

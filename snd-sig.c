@@ -3396,7 +3396,7 @@ static Xen map_channel_to_temp_file(chan_info *cp, snd_fd *sf, Xen proc, mus_lon
       free_file_info(hdr);
       free(data[0]);
       free(data);
-      sf = free_snd_fd(sf);
+      free_snd_fd(sf);
       
       if (reporting) finish_progress_report(cp);
       if (ss->stopped_explicitly) 
@@ -3707,7 +3707,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	    }
 	}
     }
-  sf = free_snd_fd(sf);
+
+  free_snd_fd(sf);
 #if HAVE_SCHEME
   free(in_data);
   s7_gc_unprotect_at(s7, gc_loc);
