@@ -268,14 +268,14 @@
 	     m))))
   
   (if (null? speakers)
-      (error 'mus-error "ERROR: a speaker configuration must have at least one speaker!~%"))
+      (error 'mus-error "a speaker configuration must have at least one speaker!~%"))
   
   (if (pair? groups)
       (let ((first-len (length (car groups))))
 	(for-each
 	 (lambda (group)
 	   (if (not (= (length group) first-len))
-	       (error 'mus-error "ERROR: all groups must be of the same length! (~A)~%" first-len)))
+	       (error 'mus-error "all groups must be of the same length! (~A)~%" first-len)))
 	 groups))
       
       ;; if the speakers are defined with only azimuth angles (no elevation)
@@ -295,39 +295,39 @@
 		  (set! groups (reverse groups)))))))
   
   (if (null? groups)
-      (error 'mus-error "ERROR: no groups specified, speakers must be arranged in groups~%"))
+      (error 'mus-error "no groups specified, speakers must be arranged in groups~%"))
   
   (if (and (pair? delays)
 	   (pair? distances))
-      (error 'mus-error "ERROR: please specify delays or distances but not both~%"))
+      (error 'mus-error "please specify delays or distances but not both~%"))
   
   (if (pair? delays)
       (if (> (length speakers) (length delays))
-	  (error 'mus-error "ERROR: all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
+	  (error 'mus-error "all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
 	  (if (< (length speakers) (length delays))
-	      (error 'mus-error "ERROR: more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
+	      (error 'mus-error "more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
   
   (for-each
    (lambda (dly)
-     (if (< dly 0.0) (error 'mus-error "ERROR: delays must be all positive, ~A is negative~%" dly)))
+     (if (< dly 0.0) (error 'mus-error "delays must be all positive, ~A is negative~%" dly)))
    delays)
   
   (if (pair? distances)
       (if (> (length speakers) (length distances))
-	  (error 'mus-error "ERROR: all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
+	  (error 'mus-error "all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
 	  (if (< (length speakers) (length distances))
-	      (error 'mus-error "ERROR: more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
+	      (error 'mus-error "more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
   
   (for-each
    (lambda (dly)
-     (if (< dly 0.0) (error 'mus-error "ERROR: distances must be all positive, ~A is negative~%" dly)))
+     (if (< dly 0.0) (error 'mus-error "distances must be all positive, ~A is negative~%" dly)))
    distances)
   
   (if (pair? channel-map)
       (if (> (length speakers) (length channel-map))
-	  (error 'mus-error "ERROR: must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
+	  (error 'mus-error "must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
 	  (if (< (length speakers) (length channel-map))
-	      (error 'mus-error "ERROR: trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]~%" 
+	      (error 'mus-error "trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]~%" 
 		     (length channel-map) (length speakers) channel-map))))
   
   ;; collect unit vectors describing the speaker positions
@@ -404,10 +404,10 @@
 	  (for-each
 	   (lambda (entry)
 	     (if (>= entry entries)
-		 (error 'mus-error "ERROR: channel ~A in map ~A is out of range (max=~A)~%" entry channel-map entries)))
+		 (error 'mus-error "channel ~A in map ~A is out of range (max=~A)~%" entry channel-map entries)))
 	   channel-map)
 	  (if (has-duplicates? channel-map)
-	      (error 'mus-error "ERROR: there are duplicate channels in channel-map ~A~%" channel-map))))
+	      (error 'mus-error "there are duplicate channels in channel-map ~A~%" channel-map))))
     
     ;; create the speaker configuration structure
     
@@ -515,7 +515,7 @@
     (lambda* (channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
       (let ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
 	(if (null? config)
-	    (error 'mus-error "ERROR: no speaker configuration exists for ~A ~A output channel~A~%~%" 
+	    (error 'mus-error "no speaker configuration exists for ~A ~A output channel~A~%~%" 
 		   (if 3d "tridimensional" "bidimensional")
 		   channels (if (= channels 1) "s" "")))
 	config))))
@@ -735,12 +735,12 @@
 (define (make-path-error-checks path closed initial-direction final-direction)
   ;; some sanity checks
   (if (null? path)
-      (error 'mus-error "ERROR: Can't define a path with no points in it~%"))
+      (error 'mus-error "Can't define a path with no points in it~%"))
   (when closed 
     (if initial-direction
-	(error 'mus-error "ERROR: Can't specify initial direction ~A for a closed path ~A~%" initial-direction path))
+	(error 'mus-error "Can't specify initial direction ~A for a closed path ~A~%" initial-direction path))
     (if final-direction
-	(error 'mus-error "ERROR: Can't specify final direction ~A for a closed path ~A~%" final-direction path))
+	(error 'mus-error "Can't specify final direction ~A for a closed path ~A~%" final-direction path))
     (if (not (if (pair? (car path))
 		 (let ((start (car path))
 		       (end (car (last path))))
@@ -753,7 +753,7 @@
 			(= (cadr path) (cadr end))
 			(or (not path-3d)
 			    (= (third path) (third end)))))))
-	(error 'mus-error "ERROR: Closed path ~A is not closed~%" path))))
+	(error 'mus-error "Closed path ~A is not closed~%" path))))
 
 (define* (make-path path
 		    (3d path-3d)
@@ -988,7 +988,7 @@
    (lambda (v)
      (if (and (number? v) 
 	      (< v 0))
-	 (error 'mus-error "ERROR: velocities for path ~A must be all positive~%" (bezier-path xpath))))
+	 (error 'mus-error "velocities for path ~A must be all positive~%" (bezier-path xpath))))
    (bezier-v xpath))
   (reset-fit xpath))
 
@@ -1243,11 +1243,11 @@
 				  (set! (cs i) (if (pair? ci) 
 						   (if (= (length ci) 2)
 						       ci
-						       (error 'mus-error "ERROR: curvature sublist must have two elements ~A~%" ci))
+						       (error 'mus-error "curvature sublist must have two elements ~A~%" ci))
 						   (list ci ci)))
 				  (set! i (+ i 1)))
 				c)))
-			    (else (error 'mus-error "ERROR: bad curvature argument ~A to path, need ~A elements~%" c n)))
+			    (else (error 'mus-error "bad curvature argument ~A to path, need ~A elements~%" c n)))
 		      
 		      ;; calculate control points
 		      (let ((xc ())
@@ -1393,7 +1393,7 @@
 			   (height '(0 0 1 0))
 			   (velocity '(0 1 1 1)))
   (if (and total-angle (pair? turns))
-      (error 'mus-error "ERROR: can't specify total-angle [~A] and turns [~A] at the same time for the spiral path~%" total-angle turns))
+      (error 'mus-error "can't specify total-angle [~A] and turns [~A] at the same time for the spiral path~%" total-angle turns))
   
   (list 'spiral-path () () () () () () () () () () path-3d #f 
 	start-angle total-angle 
@@ -1690,7 +1690,7 @@
 		    (* (/ (spiral-total-angle path) dlocsig-one-turn) 2 pi)
 		    (if (spiral-turns path)
 			(* (spiral-turns path) 2 pi)
-			(error 'mus-error "ERROR: a spiral-path needs either a total-angle or turns, none specified~%"))))
+			(error 'mus-error "a spiral-path needs either a total-angle or turns, none specified~%"))))
 	 (steps (abs (/ total (* (/ (spiral-step-angle path) dlocsig-one-turn) 2 pi))))
 	 (step (/ total (ceiling steps)
 		  (if (< (spiral-step-angle path) 0) -1 1)))
@@ -1838,9 +1838,9 @@
 	     (yc (path-y path))
 	     (zc (path-z path)))
 	(if (and rotation-center (not (= (length rotation-center) 3)))
-	    (error 'mus-error "ERROR: rotation center has to have all three coordinates~%"))
+	    (error 'mus-error "rotation center has to have all three coordinates~%"))
 	(if (and rotation-axis (not (= (length rotation-axis) 3)))
-	    (error 'mus-error "ERROR: rotation axis has to have all three coordinates~%"))
+	    (error 'mus-error "rotation axis has to have all three coordinates~%"))
 	(let ((xtr ())
 	      (ytr ())
 	      (ztr ()))
@@ -2024,26 +2024,26 @@
 		       rev-channels)
   
   (if (null? start-time)
-      (error 'mus-error "ERROR: a start time is required in make-dlocsig~%"))
+      (error 'mus-error "a start time is required in make-dlocsig~%"))
   (if (null? duration)
-      (error 'mus-error "ERROR: a duration has to be specified in make-dlocsig~%"))
+      (error 'mus-error "a duration has to be specified in make-dlocsig~%"))
   
   ;; check to see if we have the right number of channels for b-format ambisonics
   (if (= render-using ambisonics)
       (begin
 	(if (or (> ambisonics-h-order 3)
 		(> ambisonics-v-order 3))
-	    (error 'mus-error "ERROR: ambisonics encoding is currently limited to third order components~%"))
+	    (error 'mus-error "ambisonics encoding is currently limited to third order components~%"))
 	(let ((channels (ambisonics-channels ambisonics-h-order ambisonics-v-order)))
 	  (if (< (or out-channels (mus-channels *output*)) channels)
-	      (error 'mus-error "ERROR: ambisonics number of channels is wrong, dlocsig needs ~A output channels for h:~A, v:~A order (current number is ~A)~%"
+	      (error 'mus-error "ambisonics number of channels is wrong, dlocsig needs ~A output channels for h:~A, v:~A order (current number is ~A)~%"
 		     channels ambisonics-h-order ambisonics-v-order (or out-channels (mus-channels *output*)))))))
   
   (if (not out-channels)
       (if *output*
 	  (set! out-channels (channels *output*))
 	  (begin
-	    (format () "WARNING: no *output*?  Will set out-channels to 2~%")
+	    (format () "warning: no *output*?  Will set out-channels to 2~%")
 	    (set! out-channels 2))))
   (if (not rev-channels)
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
@@ -2386,7 +2386,7 @@
 		(if (not (= time prev-time))
 		    (let ((speed (/ (- dist prev-dist) (- time prev-time))))
 		      (if (> speed speed-limit)
-			  (format () "WARNING: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
+			  (format () "warning: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
 		(if inside
 		    ;; still in the same group
 		    (begin
@@ -2439,7 +2439,7 @@
 						     (if inside
 							 (push-gains group gains di ti)
 							 ;; how did we get here?
-							 (error 'mus-error "ERROR: Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+							 (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
 				    
 				    ((and (pair? edge) 
 					  (null? (cdr edge))
@@ -2490,11 +2490,11 @@
 									      (group-vertices group))))
 					      (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
 				      (speaker-config-groups speakers))
-				     (format () "WARNING: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+				     (format () "warning: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
 				    
 				    ;; groups don't share points... how did we get here?
 				    ((null? edge)
-				     (format () "WARNING: crossing between groups with no common points, ~A~A to ~A~A~%"
+				     (format () "warning: crossing between groups with no common points, ~A~A to ~A~A~%"
 					     (group-id prev-group) (group-speakers prev-group)
 					     (group-id group) (group-speakers group)))))
 			    
@@ -3060,7 +3060,7 @@
     ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
     (if (<= real-dur 0.0)
 	(begin
-	  (format () ";;; ERROR: resetting real duration to 0.1 (was ~A)~%" real-dur)
+	  (format () ";;; error: resetting real duration to 0.1 (was ~A)~%" real-dur)
 	(set! real-dur 0.1)))
 
     (list 
