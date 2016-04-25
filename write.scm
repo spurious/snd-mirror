@@ -98,10 +98,10 @@
 	      ((pair? obj)
 	       (case (car obj)
 		 
-		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-let when unless
+		 ((lambda lambda* define* define-macro define-macro* define-bacro define-bacro* with-let
 			  call-with-input-string call-with-input-file call-with-output-file
 			  with-input-from-file with-input-from-string with-output-to-file)
-		  (if (not (and (pair? (cdr obj)) ; (when) or (when . #t)
+		  (if (not (and (pair? (cdr obj))
 				(pair? (cddr obj))))
 		      (write obj port)
 		      (begin
@@ -295,6 +295,18 @@
 			    (when (pair? (cdddr obj))
 			      (spaces ifcol)
 			      (pretty-print-1 (cadddr obj) port ifcol)))
+			  (write-char #\) port)))))
+
+		 ((when unless)
+		  (let ((objstr (object->string obj)))
+		    (if (< (length objstr) 40)
+			(display objstr port)
+			(begin
+			  (format port "(~A " (car obj))
+			  (pretty-print-1 (cadr obj) port (+ column (if (eq? (car obj) 'when) 6 8)))
+			  (spaces (+ column *pretty-print-spacing*))
+			  (when (pair? (cddr obj))
+			    (stacked-list (cddr obj) (+ column *pretty-print-spacing*)))
 			  (write-char #\) port)))))
 		 
 		 ((let let* letrec letrec*)

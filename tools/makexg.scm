@@ -246,8 +246,7 @@
     (substring type 0 (- (length type) 2))))
 
 (define (deref-name arg)
-  (let ((name (cadr arg)))
-    (string-append "ref_" name)))
+  (string-append "ref_" (cadr arg)))
 
 (define (derefable type)
   (let ((st (char-position #\* type)))

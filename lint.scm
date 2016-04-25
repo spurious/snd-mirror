@@ -167,7 +167,20 @@
 		  make-string string string-copy copy list->string string->list string-append substring object->string
 		  format cons list make-list reverse append vector-append list->vector vector->list make-vector
 		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
-		  byte-vector hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
+		  hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
+
+	(changers (let ((h (make-hash-table)))
+		    (for-each (lambda (s) 
+				(hash-table-set! h s #t))
+			      '(set! define define-constant define-macro define-bacro define-expansion define* define-macro* define-bacro*
+				     ->byte-vector autoload call-with-current-continuation call-with-output-file call-with-output-string
+				     call/cc close-input-port close-output-port copy coverlet cutlet dilambda display emergency-exit
+				     eval eval-string exit fill! float-vector-set! flush-output-port format get-output-string
+				     hash-table-set! int-vector-set! iterate let-set! list-set! load newline open-input-file
+				     open-input-string open-output-file open-output-string openlet provide read read-byte read-char
+				     read-line read-string reverse! set-car! set-cdr! sort! string-copy string-fill! string-set!
+				     throw unlet varlet vector-fill! vector-set! with-output-to-file write write-byte write-char write-string))
+		    h))
 
 	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm tree-leaves
 			    char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
@@ -5190,6 +5203,26 @@
 		      (quoted-null? (caddr form)))
 		  (lint-format "perhaps ~A" caller (lists->string form `(list ,(cadr form)))))
 
+		 ((and (pair? (cadr form))                   ; (cons (car x) (cdr x)) -> (copy x)
+		       (pair? (caddr form))
+		       (let ((x (assq (caadr form)
+				      '((car cdr #t) 
+					(caar cdar car) (cadr cddr cdr)
+					(caaar cdaar caar) (caadr cdadr cadr) (caddr cdddr cddr) (cadar cddar cdar)
+					(cadddr cddddr cdddr) (caaaar cdaaar caaar) (caaadr cdaadr caadr) (caadar cdadar cadar)
+					(caaddr cdaddr caddr) (cadaar cddaar cdaar) (cadadr cddadr cdadr) (caddar cdddar cddar)))))
+			 (and x 
+			      (eq? (cadr x) (caaddr form))
+			      (caddr x))))
+		  => (lambda (cfunc)
+		       (if (and cfunc
+				(equal? (cadadr form) (cadr (caddr form)))
+				(not (side-effect? (cadadr form) env)))
+			   (lint-format "perhaps ~A" caller (lists->string form 
+									   (if (symbol? cfunc)
+									       `(copy (,cfunc ,(cadadr form)))
+									       `(copy ,(cadadr form))))))))
+
 		 ((and (pair? (caddr form))                  ; (cons a (cons b (cons ...))) -> (list a b ...), input ending in nil of course
 		       (eq? (caaddr form) 'cons))
 		  (let loop ((args (list (cadr form))) (chain (caddr form)))
@@ -5425,7 +5458,7 @@
 
 	     (let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
 		   (args (if (string? (cadr form)) (cddr form) (cdddr form))))
-	       
+
 	       (define count-directives 
 		 (let ((format-control-char (let ((chars (make-vector 256 #f)))
 					      (for-each
@@ -6269,6 +6302,11 @@
 ;	((environment-set!) (lint-format "environment-set! is let-set! in s7" caller))
 ;	((environment-ref)  (lint-format "environment-ref is let-ref in s7" caller))
 	((unquote-splicing) (lint-format "unquote-splicing is probably (apply values ...) in s7" caller))
+
+	((bitwise-and bitwise-ior bitwise-not bitwise-xor)
+	 (if (not (var-member head env))
+	     (lint-format "~A is ~A in s7" caller head 
+			  (cdr (assq head '((bitwise-and . logand) (bitwise-ior . logior) (bitwise-xor . logxor) (bitwise-not . lognot)))))))
 
 	((push!) ; not predefined
 	 (if (= (length form) 3)
@@ -7335,7 +7373,15 @@
 				      (if (eq? vname (cadr call))
 					  (lint-format "~A is ~A, so ~A" caller
 						       vname (prettify-checker-unq vtype)
-						       (lists->string call #f)))))
+						       (lists->string call #f))))
+
+				     ((/) (if (and (number? (var-initial-value local-var))
+						   (zero? (var-initial-value local-var))
+						   (zero? (var-set local-var))
+						   (memq vname (cddr call)))
+					      (lint-format "~A is ~A, so ~A is an error" caller
+							   vname (var-initial-value local-var)
+							   call))))
 
 				   ;; the usual eqx confusion
 				   (when (and (= suggest made-suggestion)
@@ -11501,7 +11547,6 @@
 							   (lists->string form `(,@(copy p (make-list (+ i 1)))
 										 (cond (,vvalue => ,(caaddr (car bp))) ,@else-clause)
 										 ,@(cdr bp)))))))))
-				 
 				 (when (and (pair? p)
 					    (pair? (cdr p)))
 				   (when (and (eq? (car p) 'cond) ; (let ((x (f y))) (cond (x (g x)) ...)) -> (cond ((f y) => g) ...)
@@ -11537,7 +11582,8 @@
 						    (memq (var-definer v) '(define define* lambda lambda*)))
 					       (hash-table-ref built-in-functions (car p)))
 					   (lint-format "perhaps ~A" caller (lists->string form `(,(car p) ,vvalue)))
-					   (if (not (any-macro? vname env))
+					   (if (not (or (any-macro? vname env)
+							(tree-unquoted-member vname (car p))))
 					       (lint-format "perhaps, assuming ~A is not a macro, ~A" caller (car p)
 							    (lists->string form `(,(car p) ,vvalue)))))))
 				   
@@ -11626,7 +11672,7 @@
 							  (lists->string form `(cond (,vvalue => ,(or crf (caaddr p))) ,@else-clause))))))))
 				   ))) ; one var in varlist
 			     
-			   ;;; --------
+			     ;; --------
 			     ;; (let ((x 1) (y 2)) (+ x y)) -> (+ 1 2)
 			     ;; this happens a lot, but it often looks like a form of documentation
 			     (when (and (= suggest made-suggestion)
@@ -11634,26 +11680,34 @@
 					(pair? varlist)
 					(pair? body)
 					(pair? (car body))
-					(not (memq (caar body) '(lambda lambda* define define* define-macro)))
 					(pair? (cdar body))
 					(null? (cdr body))
-					(< (length varlist) 8)                      ; 8 here and below are just guesses 
+					(< (length varlist) 8)
+					(not (memq (caar body) '(lambda lambda* define define* define-macro)))
+					(not (and (eq? (caar body) 'set!)
+						  (any? (lambda (v) (eq? (car v) (cadar body))) varlist)))
 					(not (any-macro? (caar body) env))
-					(not (any? pair? (cdar body)))
-					(every? (lambda (v) 
-						  (and (pair? v) 
+					(not (any? (lambda (p)
+						     (and (pair? p)
+							  (not (eq? (car p) 'quote))
+							  (or (not (hash-table-ref no-side-effect-functions (car p)))
+							      (any? pair? (cdr p)))))
+						   (cdar body)))
+					(every? (lambda (v)
+						  (and (pair? v)
 						       (pair? (cdr v))
-						       (< (tree-leaves (cadr v)) 8) ; length of longest value expr we'll substitute
+						       (< (tree-leaves (cadr v)) 8)
 						       (= (tree-count1 (car v) body 0) 1)))
 						varlist))
 			       (let ((new-body (copy (car body))))
 				 (for-each (lambda (v)
 					     (set! new-body (tree-subst (cadr v) (car v) new-body)))
 					   varlist)
-				 (if (and (memq (caar body) '(or and))
-					  (pair? (cdr varlist)))
-				     (lint-format "perhaps, ignoring short-circuit issues, ~A" caller (lists->string form new-body))
-				     (lint-format "perhaps ~A" caller (lists->string form new-body)))))
+				 (lint-format (if (and (memq (caar body) '(or and))
+						       (pair? (cdr varlist)))
+						  "perhaps, ignoring short-circuit issues, ~A"
+						  "perhaps ~A")
+					      caller (lists->string form new-body))))
 			     ;; --------
 			     ) ; suggest let
 			   
@@ -12939,7 +12993,7 @@
 							    ("\\np"        . #\xc))
 						     string-ci=?)
 					      => (lambda (c)
-						   (format outport "~NCperhaps use ~W instead~%" lint-left-margin #\space (cdr c))
+						   (format outport "~NCperhaps use ~W instead~%" (+ lint-left-margin 4) #\space (cdr c))
 						   (cdr c)))
 					     (else 
 					      (string->symbol (substring data 1)))))
@@ -13167,8 +13221,13 @@
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
-;;; if value of var is known check for errors like (let ((x 0)) (/ 21 x))
-;;; check letrec for let-similar simple substitutions, also ((lambda...)...) revisions might collapse simple cases further?
+;;;
+;;; (format ... "...~S|A..." (format #f "~A" x)) -- case was ~A then ~S, also display|write+format, or vice-versa?
+;;;    (format () "~%Illegal point: ~S" (list x y))
+;;;    (format () "~%~A(" (make-string initial-tab-position #\space)) -- this from write-string
+;;;    (format () "  ~s found in ~s~%" end-transmission-string (list->string (reverse (cons c read-bits))))
+;;;    (format nil "send_xwaves make name %s file %s height 200" tmpname (string-append tmpname ".wav"))
+;;;    (format port "~a>" (number->string (object-address interface) 16))
 ;;;
 ;;; find differ-by-n across body and rewrite using a function?
 ;;;    vector[3d] of code value: hits where first dim is tree-leaves
@@ -13187,66 +13246,6 @@
 ;;;       or any read/write of same port, change to same env, also anything in *! if *report-any-!-as-setter*
 ;;;    (- (read-byte) (read-byte)) (let|letrec ((x (read-byte)) (y (read-byte)))...)
 ;;;    ideally we'd ignore arg-locals (f (let ((x 1)) (set! x 2)))
-;;;    baddies:
-#|
-set! and definers 
-->byte-vector
-autoload
-call-with-current-continuation
-call-with-output-file
-call-with-output-string
-call/cc
-close-input-port
-close-output-port
-copy
-coverlet
-cutlet
-dilambda
-display
-emergency-exit
-eval
-eval-string
-exit
-fill!
-float-vector-set!
-flush-output-port
-format if cadr not #f
-get-output-string
-hash-table-set!
-int-vector-set!
-iterate
-let-set!
-list-set!
-load
-newline
-open-input-file
-open-input-string
-open-output-file
-open-output-string
-openlet
-provide
-read
-read-byte
-read-char
-read-line
-read-string
-reverse!
-set-car!
-set-cdr!
-sort!
-string-copy
-string-fill!
-string-set!
-throw
-unlet
-varlet
-vector-fill!
-vector-set!
-with-output-to-file
-write
-write-byte
-write-char
-write-string
-|#
+;;;    for func[not *] call: pass (cdr form), for do/let(rec): map cadr vars, for do also map caddr over vars
 ;;;
-;;; 107 21295
+;;; 109 21295

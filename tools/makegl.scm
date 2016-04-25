@@ -99,8 +99,7 @@
     (substring type 0 (- (length type) 1))))
 
 (define (deref-name arg)
-  (let ((name (cadr arg)))
-    (string-append "ref_" name)))
+  (string-append "ref_" (cadr arg)))
 
 (define (derefable type)
   (let ((len (length type)))

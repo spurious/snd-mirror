@@ -14151,8 +14151,7 @@ EDITS: 2
 	      (set! s1-loc i)))
 	(if (not (= s2-loc s1-loc)) (snd-display #__line__ "asymmetric-fm set r in place peaks: ~A ~A" s1-loc s2-loc))))
     
-    (let ((gen (make-asyfm :frequency 2000 :ratio .1))) 
-      (asyfm-I gen 0.0))
+    (asyfm-I (make-asyfm :frequency 2000 :ratio .1) 0.0)
     
     (do ((i 2 (+ i 1)))
 	((= i 40))
@@ -18044,19 +18043,19 @@ EDITS: 2
       (if (and (pair? var)
 	       (not (eq? (car var) 'wrong-type-arg)))
 	  (snd-display #__line__ ";make-locsig bad revout: ~A" var)))
-    (let ((var (catch #t (lambda () (let ((locs (make-locsig 200 :channels 2))) (locsig-ref locs -1))) (lambda args args))))
+    (let ((var (catch #t (lambda () (locsig-ref (make-locsig 200 :channels 2) -1)) (lambda args args))))
       (if (and (pair? var)
 	       (not (eq? (car var) 'mus-error)))
 	  (snd-display #__line__ ";locsig-ref bad chan: ~A" var)))
-    (let ((var (catch #t (lambda () (let ((locs (make-locsig))) (locsig-set! locs 2 .1))) (lambda args args))))
+    (let ((var (catch #t (lambda () (locsig-set! (make-locsig) 2 .1)) (lambda args args))))
       (if (and (pair? var)
 	       (not (eq? (car var) 'mus-error)))
 	  (snd-display #__line__ ";locsig-set! bad chan (2): ~A" var)))
-    (let ((var (catch #t (lambda () (let ((locs (make-locsig :reverb .1))) (locsig-reverb-ref locs 2))) (lambda args args))))
+    (let ((var (catch #t (lambda () (locsig-reverb-ref (make-locsig :reverb .1) 2)) (lambda args args))))
       (if (and (pair? var)
 	       (not (eq? (car var) 'mus-error)))
 	  (snd-display #__line__ ";locsig-reverb-ref bad reverb chan (2): ~A" var)))
-    (let ((var (catch #t (lambda () (let ((locs (make-locsig :reverb .1))) (locsig-reverb-set! locs 2 .1))) (lambda args args))))
+    (let ((var (catch #t (lambda () (locsig-reverb-set! (make-locsig :reverb .1) 2 .1)) (lambda args args))))
       (if (and (pair? var)
 	       (not (eq? (car var) 'mus-error)))
 	  (snd-display #__line__ ";locsig-reverb-set! bad reverb chan (2): ~A" var)))
@@ -19885,8 +19884,7 @@ EDITS: 2
 	    (close-sound ind-mix))
 	  (delete-file "fmv.snd")
 	  (let ((len (mus-sound-framples "2.snd")))
-	    (let ((v0 (make-float-vector 12)))
-	      (array->file "fmv.snd" v0 12 22050 2))
+	    (array->file "fmv.snd" (make-float-vector 12) 12 22050 2)
 	    (if (not (= (mus-sound-chans "fmv.snd") 2))
 		(snd-display #__line__ ";~D array->file chans? ~A" k (mus-sound-chans "fmv.snd")))
 	    (mus-file-mix-1 k (make-mix-input "2.snd" k))
@@ -23101,9 +23099,6 @@ EDITS: 2
 	(for-each
 	 (lambda (mtest)
 	   (let ((func (car mtest))
-		 ;;(beg (cadr mtest))
-		 ;;(lock (caddr mtest))
-		 ;;(name (cadddr mtest))
 		 (edpos (edit-position ind 0)))
 	     (func)
 	     (set! (edit-position ind 0) edpos)))
@@ -23451,13 +23446,8 @@ EDITS: 2
     
     (if all-args
 	(begin
-	  (let ((ind (make-waltz)))
-	    ;; mix.scm stuff...
-	    (close-sound ind))
-	  
-	  (let ((ind (make-bagatelle)))
-	    (close-sound ind))))
-    
+	  (close-sound (make-waltz))
+	  (close-sound (make-bagatelle))))
     ))
 
 
@@ -23547,8 +23537,7 @@ EDITS: 2
       (close-sound ind0)
       (close-sound ind1)
       (set! ind0 (new-sound "fmv.snd" 1 22050 mus-bshort mus-aifc "this is a comment"))
-      (let ((v0 (make-vector 10 1.0)))
-	(insert-samples 0 10 v0 ind0))
+      (insert-samples 0 10 (make-vector 10 1.0) ind0)
       (time (env-sound '(0 0 1 1) 0 10 1.0 ind0))
       (do ((i 0 (+ i 1))) ((= i 10)) (if (fneq (sample i) (* i .1111)) (snd-display #__line__ ";1 env-sound[~D]: ~A?" i (sample i))))
       (undo) 
@@ -28469,8 +28458,7 @@ EDITS: 2
 	      (snd-display #__line__ ";envelope exp 2: ~A" val)))
 	
 	(let ((ind (new-sound "fmv.snd")))
-	  (let ((v (make-float-vector 20 1.0)))
-	    (float-vector->channel v))
+	  (float-vector->channel (make-float-vector 20 1.0))
 	  (if (selection?) (set! (selection-member? #t) #f))
 	  (make-selection 5 9 ind 0)
 	  (scale-selection-to 0.5)
@@ -28813,8 +28801,7 @@ EDITS: 2
 	
 	((5) (let ((pos (edit-position cursnd curchn)))
 	       (if (> pos 0)
-		   (let ((r (random pos)))
-		     (undo r cursnd curchn)))))
+		   (undo (random pos) cursnd curchn))))
 	
 	((6) (let ((len (framples cursnd curchn)))
 	       (if (> len 10000)
@@ -29100,8 +29087,7 @@ EDITS: 2
       (if (and expected-vals (not (= len (length expected-vals))))
 	  (snd-display #__line__ ";~A (from ~A): lengths differ: ~A ~A" name line len (length expected-vals))
 	  (if (and expected-vals (not (vequal current-vals expected-vals)))
-	      (let ((bad-data (vequal-at current-vals expected-vals)))
-		(snd-display #__line__ ";checking ~A (from ~A), vals disagree (loc cur expect): ~A" name line bad-data))
+	      (snd-display #__line__ ";checking ~A (from ~A), vals disagree (loc cur expect): ~A" name line (vequal-at current-vals expected-vals))
 	      (let* ((tree (edit-tree))
 		     (bad-data (edits-not-equal? tree expected-tree 0)))
 		(if bad-data
@@ -29118,10 +29104,8 @@ EDITS: 2
 			  ((< i 0))
 			(float-vector-set! split-vals i (read-sample bread)))
 		      (if (and expected-vals (not (vequal split-vals expected-vals)))
-			  (let ((bad-data (vequal-at split-vals expected-vals)))
-			    (snd-display #__line__ ";checking ~A (from ~A), split vals disagree (loc cur expect): ~A" name line bad-data)
-			    ; (error 'uhoh1)
-			    )))))))))
+			  (snd-display #__line__ ";checking ~A (from ~A), split vals disagree (loc cur expect): ~A"
+				       name line (vequal-at split-vals expected-vals))))))))))
   
   (define (zigzag-check name snd chn)
     (let ((data (channel->float-vector))
@@ -29415,8 +29399,7 @@ EDITS: 2
       
       (if (not (= *default-output-chans* 1)) (set! *default-output-chans* 1))
       (let ((ind (new-sound "fmv.snd")))
-	(let ((v0 (make-float-vector 20 1.0)))
-	  (float-vector->channel v0))
+	(float-vector->channel (make-float-vector 20 1.0))
 	(if (not (= (framples) 20)) (snd-display #__line__ ";float-vector->channel new 20: ~A" (framples)))
 	(if (fneq (maxamp) 1.0) (snd-display #__line__ ";float-vector 1->new: ~A" (maxamp)))
 	
@@ -43972,16 +43955,13 @@ EDITS: 1
       (XtSetMultiClickTime (XtDisplay (cadr (main-widgets))) 250)
       (if (not (= (XtGetMultiClickTime (XtDisplay (cadr (main-widgets)))) 250))
 	  (snd-display #__line__ ";XtSetMultiClickTime: ~A" (XtGetMultiClickTime (XtDisplay (cadr (main-widgets))))))
-      (XtGetResourceList xmListWidgetClass)
-      (let ((wid1 (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) ())))
-	(XtDestroyWidget wid1))
-      
-      (let ((hook-id (XtAppAddActionHook 
-		      (car (main-widgets))
-		      (lambda (w data name e p)
-			(format () "~A ~A ~A ~A ~A~%" w data name e p))
-		      #f)))
-	(XtRemoveActionHook hook-id))
+      (XtGetResourceList xmListWidgetClass) 
+      (XtDestroyWidget (XtCreateWidget "wid1" xmPushButtonWidgetClass (cadr (main-widgets)) ()))
+      (XtRemoveActionHook (XtAppAddActionHook 
+			   (car (main-widgets))
+			   (lambda (w data name e p)
+			     (format () "~A ~A ~A ~A ~A~%" w data name e p))
+			   #f))
       
       (let* ((shell (cadr (main-widgets)))
 	     (wid (XtCreateWidget "wid" xmFormWidgetClass shell ()))
@@ -44088,11 +44068,9 @@ EDITS: 1
 	(if (not (equal? (list 0 1 2) (XtSetArg 0 1 2))) (snd-display #__line__ ";XtSetArg: ~A" (XtSetArg 0 1 2)))
 	(if (not (Widget? (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
 	    (snd-display #__line__ ";XtGetKeyboardFocusWidget: ~A" (XtGetKeyboardFocusWidget (cadr (main-widgets)))))
-	(let ((id (XtAppAddInput (car (main-widgets)) 1 XtInputReadMask (lambda (a b c) #f) #f)))
-	  (XtRemoveInput id))
+	(XtRemoveInput (XtAppAddInput (car (main-widgets)) 1 XtInputReadMask (lambda (a b c) #f) #f))
 	
-	(let ((id (XtAppAddWorkProc (car (main-widgets)) (lambda (me) #f) #f)))
-	  (XtRemoveWorkProc id))
+	(XtRemoveWorkProc (XtAppAddWorkProc (car (main-widgets)) (lambda (me) #f) #f))
 	(if (not (equal? (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 	    (snd-display #__line__ ";XtNameToWidget: ~A ~A" (caddr (main-widgets)) (XtNameToWidget (cadr (main-widgets)) "mainpane")))
 	(XtVaCreatePopupShell "hiho" vendorShellWidgetClass (cadr (main-widgets)) ())
@@ -44432,10 +44410,9 @@ EDITS: 1
 					    (snd-display #__line__ ";try1: ~A~%" strs)))
 			     (list "try2" (lambda (w e strs)
 					    (snd-display #__line__ ";try2: ~A~%" strs)))))
-      (let ((tab (XtParseTranslationTable 
-		  (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
-	    (pane (add-main-pane "hiho" xmTextWidgetClass ())))
-	(XtOverrideTranslations pane tab))
+      (XtOverrideTranslations (add-main-pane "hiho" xmTextWidgetClass ())
+			      (XtParseTranslationTable 
+			       (format #f "Ctrl <Key>osfLeft:  try1()~%Ctrl <Key>osfRight: try2()~%Ctrl <Key>osfUp:  try1(hiho)~%Ctrl <Key>osfDown: try2(down, up)~%")))
       
       (let ((XmNhiho (add-resource "hiho" 0)))
 	(if (not (string=? XmNhiho "hiho")) (snd-display #__line__ ";add-resource XmNhiho: ~A" XmNhiho)))
@@ -45228,8 +45205,7 @@ EDITS: 1
 	(let ((val (XmClipboardLock dpy win)))
 	  (if (not (= val ClipboardLocked))
 	      (XmClipboardUnlock dpy win #t)))
-	(let ((selbox (XmCreateSelectionBox shell "selbox" () 0)))
-	  (XmSelectionBoxGetChild selbox XmDIALOG_APPLY_BUTTON)))
+	(XmSelectionBoxGetChild (XmCreateSelectionBox shell "selbox" () 0) XmDIALOG_APPLY_BUTTON))
       
       (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 	     (current-time (list 'Time CurrentTime))
@@ -45314,9 +45290,7 @@ EDITS: 1
 	(if (not (Widget? (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
 	    (snd-display #__line__ ";XmCommandGetChild: ~A" (XmCommandGetChild cmd XmDIALOG_COMMAND_TEXT)))
 	(XmCommandSetValue cmd (XmStringCreateLocalized "hiho"))
-	
-	(let ((one1 (XmStringCreateLocalized "one")))
-	  (XmComboBoxAddItem cmb one1 0 #f))
+	(XmComboBoxAddItem cmb (XmStringCreateLocalized "one") 0 #f)
 	(let ((two1 (XmStringCreateLocalized "two"))
 	      (three1 (XmStringCreateLocalized "three")))
 	  (XmComboBoxAddItem cmb two1 0 #f)
@@ -46077,8 +46051,9 @@ EDITS: 1
 					CopyFromParent InputOutput (list 'Visual CopyFromParent)
 					(logior CWBackPixel CWBorderPixel)
 					attr)))
-	    (let ((bitmap (XCreateBitmapFromData dpy win right-arrow 16 12))) ; right-arrow is in snd-motif.scm
-	      (XShapeCombineMask dpy newwin ShapeClip 0 0 bitmap ShapeSet))
+	    (XShapeCombineMask dpy newwin ShapeClip 0 0
+			       (XCreateBitmapFromData dpy win right-arrow 16 12) ; right-arrow is in snd-motif.scm
+			       ShapeSet)
 	    (XShapeCombineRectangles dpy newwin  ShapeUnion 0 0 
 				     (list (XRectangle 0 0 10 10) (XRectangle 0 0 10 30)) 2
 				     ShapeSet ShapeBounding)
@@ -47849,10 +47824,10 @@ EDITS: 1
 	  (check-error-tag 'mus-error (lambda () (make-rand :envelope '(0 0 1))))
 	  (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size -2)))
 	  (check-error-tag 'out-of-range (lambda () (make-rand :envelope '(0 0 1 1) :size 1234567890)))
-	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-xcoeff f 4))))
-	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (mus-ycoeff f 4))))
-	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-xcoeff f 4) 1.0))))
-	  (check-error-tag 'mus-error (lambda () (let ((f (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3))) (set! (mus-ycoeff f 4) 1.0))))
+	  (check-error-tag 'mus-error (lambda () (mus-xcoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4)))
+	  (check-error-tag 'mus-error (lambda () (mus-ycoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4)))
+	  (check-error-tag 'mus-error (lambda () (set! (mus-xcoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4) 1.0)))
+	  (check-error-tag 'mus-error (lambda () (set! (mus-ycoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4) 1.0)))
 	  (check-error-tag 'mus-error (lambda () (make-filter :ycoeffs (make-float-vector 4) :order 12)))
 	  (check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
 	  (check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
@@ -47860,7 +47835,7 @@ EDITS: 1
 	  (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
 	  (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda (a b c) #f))))
 					;		(check-error-tag 'out-of-range (lambda () (make-phase-vocoder :fft-size (expt 2 30))))
-	  (check-error-tag 'out-of-range (lambda () (let ((sr (make-src :input (lambda (dir) 1.0)))) (src sr 2000000.0))))
+	  (check-error-tag 'out-of-range (lambda () (src (make-src :input (lambda (dir) 1.0)) 2000000.0)))
 	  (check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) -1)))
 	  (check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
 	  (check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))

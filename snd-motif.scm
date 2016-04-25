@@ -1299,26 +1299,27 @@
 	       (right-margin 2)
 	       (range (/ (- height top-margin bottom-margin) 2)))
 
-	  (define y->grfy 
+	  (define y->grfy
 	    (let ((ay1 top-margin)
 		  (ay0 (- height bottom-margin)))
 	      (lambda (y height)
 		(min ay0
 		     (max ay1
 			  (round (+ ay1
-				    (* height (- 1.0 y)))))))
-	      (let* ((ly (y->grfy (pts 0) range))
-		     (lx left-margin)
-		     (len (length pts))
-		     (xinc (/ (- width left-margin right-margin) len))
-		     (y 0))
-		(do ((i 1 (+ i 1))
-		     (x lx (+ x xinc)))
-		    ((= i len))
-		  (set! y (y->grfy (pts i) range))
-		  (XDrawLine dpy wn gc lx ly (round x) y)
-		  (set! lx (round x))
-		  (set! ly y)))))))))
+				    (* height (- 1.0 y)))))))))
+	  
+	  (let* ((ly (y->grfy (pts 0) range))
+		 (lx left-margin)
+		 (len (length pts))
+		 (xinc (/ (- width left-margin right-margin) len))
+		 (y 0))
+	    (do ((i 1 (+ i 1))
+		 (x lx (+ x xinc)))
+		((= i len))
+	      (set! y (y->grfy (pts i) range))
+	      (XDrawLine dpy wn gc lx ly (round x) y)
+	      (set! lx (round x))
+	      (set! ly y)))))))
   
   (define make-sound-box 
     ;; graphics stuff (fonts etc)

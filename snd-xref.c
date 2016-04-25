@@ -1762,7 +1762,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11588] = {
+static const char *snd_names[11590] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -6536,6 +6536,7 @@ static const char *snd_names[11588] = {
     "make-open-bezier-path", "dlocsig.scm",
     "make-parameter", "r7rs.scm",
     "make-path", "dlocsig.scm",
+    "make-path-error-checks", "dlocsig.scm",
     "make-peaking-2", "dsp.scm",
     "make-pink-noise", "generators.scm",
     "make-polar-path", "dlocsig.scm",
@@ -7561,7 +7562,7 @@ static const char *snd_names[11588] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5794);
+  s7_autoload_set_names(sc, snd_names, 5795);
 }
 #endif
 

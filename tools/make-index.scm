@@ -1222,16 +1222,14 @@
 	      (set! help-names (reverse help-names))
 	      (set! help-urls (reverse help-urls))
 	      
-	      (let ((len (length help-names)))
-		(format sfil "#define HELP_NAMES_SIZE ~D~%" len))
+	      (format sfil "#define HELP_NAMES_SIZE ~D~%" (length help-names))
 	      (format sfil "#if HAVE_SCHEME || HAVE_FORTH~%")
 	      (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
 	      (format sfil "~S" (car help-names))
 	      (do ((ctr 1 (+ ctr 1))
 		   (lname (cdr help-names) (cdr lname)))
 		  ((null? lname))
-		(let ((name (car lname)))
-		  (format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") name)))
+		(format sfil (if (= (modulo ctr 6) 0) ",~% ~S" ", ~S") (car lname)))
 	      (format sfil "};~%")
 	      
 	      (format sfil "#endif~%#if HAVE_RUBY~%")

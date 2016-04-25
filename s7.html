@@ -2194,15 +2194,9 @@ This also affects format and sort!:
 
 <div class="indented">
 
-<p>Another question: should we accept the multi-index syntax in a case such as:
-</p>
-
-<pre class="indented">
-(let ((v #("abc" "def"))) 
-  (v 0 2))
-</pre>
-
-<p>My first thought was that the indices should all refer to the same
+<p>Another question: should we accept the multi-index syntax in a case such as <code>
+(#("abc" "def") 0 2)</code>?
+My first thought was that the indices should all refer to the same
 type of object, so s7 would complain in a mixed case like that.
 If we can nest any applicable objects and apply the whole thing to
 an arbitrary list of indices, ambiguities arise:
