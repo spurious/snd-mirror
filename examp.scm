@@ -770,12 +770,11 @@ then inverse ffts."))
 				 ((= i fft-size))
 			       (float-vector-set! rl i (read-sample read-ahead)))
 			     (fill! im 0.0)))
-		       (let ((rval (- 1.0 (ramp ramper in-vowel))))
+		       (* y (- 1.0 (ramp ramper in-vowel))))
 					; squelch consonants if just ramp value (not 1.0-val)
 					;(and (> rval 0.0) ; if this is included, the vowel-portions are omitted
-			 (* y rval) ; squelch vowels 
+					; squelch vowels 
 					;(* y (+ (* 2 rval) .1)) ;accentuate consonants
-			 ))
 		     0 #f snd chn #f "squelch-vowels")))))
 
 
@@ -1282,8 +1281,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	  (if (odd? ctr) (set! ctr (- ctr 1)))
 	  
 	  (set! fdr (channel->float-vector inctr fftsize snd chn))
-	  (let ((pk (float-vector-peak fdr)))
-	    (set! old-peak-amp (max pk old-peak-amp)))
+	  (set! old-peak-amp (max (float-vector-peak fdr) old-peak-amp))
 	  (spectrum fdr fdi #f 2)
 	  (float-vector-subtract! fdr spectr)
 	  (float-vector-scale! fdr (/ 2.0 freq-inc))
@@ -1329,8 +1327,7 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	  (set! ctr (min (- len i) freq-inc))
 	  
 	  (set! fdr (channel->float-vector inctr fftsize snd chn))
-	  (let ((pk (float-vector-peak fdr)))
-	    (set! old-peak-amp (max pk old-peak-amp)))
+	  (set! old-peak-amp (max (float-vector-peak fdr) old-peak-amp))
 	  (spectrum fdr fdi #f 2)
 	  (float-vector-subtract! fdr spectr)
 	  (float-vector-scale! fdr (/ 1.0 freq-inc))

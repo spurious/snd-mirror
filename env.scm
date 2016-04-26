@@ -242,8 +242,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
       (let ((len (length e)))
 	(if (memv len '(0 2))
 	    e
-	    (let ((xmax (e (- len 2))))
-	      (reverse-env-1 e () xmax)))))))
+	    (reverse-env-1 e () (e (- len 2))))))))
 
 
 ;;; -------- concatenate-envelopes
@@ -494,8 +493,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
     (if (null? e)
 	mx
 	(abs-max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
-  (let ((peak (abs-max-envelope-1 (cddr env1) (abs (cadr env1)))))
-    (scale-envelope env1 (/ new-max peak))))
+  (scale-envelope env1 (/ new-max (abs-max-envelope-1 (cddr env1) (abs (cadr env1))))))
 
 
 ;;; simplify-envelope

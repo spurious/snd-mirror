@@ -2706,10 +2706,10 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   (define notebook-with-top-tabs
     (let ((documentation "(notebook-with-top-tabs) posts the list of open sounds across the top of the Snd window (like the Emacs buffer list)"))
       (lambda ()
-	(let ((nb ((main-widgets) 3)))
-	  (XtVaSetValues nb (list XmNorientation XmVERTICAL
-				  XmNbindingType XmNONE
-				  XmNbackPagePlacement XmTOP_RIGHT))))))
+	(XtVaSetValues ((main-widgets) 3)
+		       (list XmNorientation XmVERTICAL
+			     XmNbindingType XmNONE
+			     XmNbackPagePlacement XmTOP_RIGHT)))))
   
   
 #|

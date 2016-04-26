@@ -242,12 +242,12 @@
       (let ((magic (read-chars 4)))
 	(if (not (string=? magic ".snd"))
 	    (error 'bad-header "~A is not an au file: ~A" file)
-	    (let ((data-location (read-bint32))
-		  (data-size (read-bint32))
-		  (sample-type (read-bint32))
-		  (srate (read-bint32))
-		  (chns (read-bint32))
-		  (comment (io-read-string)))
+	    (let* ((data-location (read-bint32))
+		   (data-size (read-bint32))
+		   (sample-type (read-bint32))
+		   (srate (read-bint32))
+		   (chns (read-bint32))
+		   (comment (io-read-string)))
 	      (list magic data-location data-size sample-type srate chns comment)))))))
 
 (define (write-au-header file chns srate data-size sample-type comment) ; data-size in bytes

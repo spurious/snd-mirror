@@ -370,13 +370,7 @@
 	 xhatminus))
      0 size snd chn)
 
-    (let ((mx1 (maxamp snd chn)))
-      (scale-channel (/ mx mx1) snd chn))
-
-;    (format () ";K ~A to ~A, avg ~A to ~A" minK maxK ming maxg)
-;    avg-data
-    ))
-
+    (scale-channel (/ mx (maxamp snd chn)) snd chn)))
 
 
 (define* (clean-channel snd chn)

@@ -169,19 +169,6 @@
 		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
 		  hash-table hash-table* make-hash-table make-hook #_{list} #_{append}))
 
-	(changers (let ((h (make-hash-table)))
-		    (for-each (lambda (s) 
-				(hash-table-set! h s #t))
-			      '(set! define define-constant define-macro define-bacro define-expansion define* define-macro* define-bacro*
-				     ->byte-vector autoload call-with-current-continuation call-with-output-file call-with-output-string
-				     call/cc close-input-port close-output-port copy coverlet cutlet dilambda display emergency-exit
-				     eval eval-string exit fill! float-vector-set! flush-output-port format get-output-string
-				     hash-table-set! int-vector-set! iterate let-set! list-set! load newline open-input-file
-				     open-input-string open-output-file open-output-string openlet provide read read-byte read-char
-				     read-line read-string reverse! set-car! set-cdr! sort! string-copy string-fill! string-set!
-				     throw unlet varlet vector-fill! vector-set! with-output-to-file write write-byte write-char write-string))
-		    h))
-
 	(non-negative-ops '(string-length vector-length abs magnitude denominator gcd lcm tree-leaves
 			    char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
 			    char-position string-position pair-line-number port-line-number))
@@ -921,8 +908,7 @@
 			   (var-walk-body (cdddr tree) (append vars e)))))
 
 		      ((lambda lambda*)
-		       (let ((vars (append (args->proper-list (cadr tree)) e)))
-			 (var-walk-body (cddr tree) vars)))
+		       (var-walk-body (cddr tree) (append (args->proper-list (cadr tree)) e)))
 
 		      ((define* define-macro define-macro* define-bacro define-bacro*)
 		       (if (and (pair? (cdr tree))
@@ -2386,7 +2372,12 @@
 					  (not (eq? (car arg1) (car arg2)))
 					  (equal? (cadr arg1) (cadr arg2)))
 				     (return `(list? ,(cadr arg1))))
-				 
+
+				 (if (and (eq? (car arg1) 'zero?)  ; (or (zero? x) (positive? x)) -> (not (negative? x)) -- other cases don't happen
+					  (memq (car arg2) '(positive? negative?))
+					  (equal? (cadr arg1) (cadr arg2)))
+				     (return `(not (,(if (eq? (car arg2) 'positive?) 'negative? 'positive?) ,(cadr arg1)))))
+
 				 ;; (or (and A B) (and (not A) (not B))) -> (eq? (not A) (not B))
 				 ;; more accurately (if A B (not B)), but every case I've seen is just boolean
 				 ;; perhaps also (or (not (or A B)) (not (or (not A) (not B)))), but it never happens
@@ -5548,24 +5539,7 @@
 					(if (> curlys 1) "s" "") 
 					(truncated-list->string form)))
 		       dirs))))
-	       
-	       (when (pair? args)
-		 (for-each
-		  (lambda (a)
-		    (if (and (pair? a)
-			     (memq (car a) '(number->string symbol->string)))
-			(if (null? (cddr a))
-			    (lint-format "format arg ~A could be ~A" caller a (cadr a))
-			    (if (and (pair? (cddr a))
-				     (integer? (caddr a))
-				     (memv (caddr a) '(2 8 10 16)))
-				(if (= (caddr a) 10)
-				    (lint-format "format arg ~A could be ~A" caller a (cadr a))
-				    (lint-format "format arg ~A could use the format directive ~~~A and change the argument to ~A" caller a
-						 (case (caddr a) ((2) "B") ((8) "O") (else "X"))
-						 (cadr a)))))))
-		  args))
-	       
+
 	       (when (and (eq? head 'format)
 			  (string? (cadr form)))
 		 (lint-format "please include the port argument to format, perhaps ~A" caller `(format () ,@(cdr form))))
@@ -5594,8 +5568,36 @@
 			 (if (and (not (cadr form))
 				  (zero? ndirs)
 				  (not (char-position #\~ control-string)))
-			     (lint-format "~A could be ~S, (format is a no-op here)" caller (truncated-list->string form) (caddr form)))))))))
-	
+			     (lint-format "~A could be ~S, (format is a no-op here)" caller (truncated-list->string form) (caddr form))))))
+
+	       (when (pair? args)
+		 (for-each
+		  (lambda (a)
+		    (if (pair? a)
+			(case (car a)
+			  ((number->string)
+			   (if (null? (cddr a))
+			       (lint-format "format arg ~A could be ~A" caller a (cadr a))
+			       (if (and (pair? (cddr a))
+					(integer? (caddr a))
+					(memv (caddr a) '(2 8 10 16)))
+				   (if (= (caddr a) 10)
+				       (lint-format "format arg ~A could be ~A" caller a (cadr a))
+				       (lint-format "format arg ~A could use the format directive ~~~A and change the argument to ~A" caller a
+						    (case (caddr a) ((2) "B") ((8) "O") (else "X"))
+						    (cadr a))))))
+
+			  ((symbol->string)
+			   (lint-format "format arg ~A could be ~A" caller a (cadr a)))
+
+			  ((make-string)
+			   (lint-format "format arg ~A could use the format directive ~~NC and change the argument to ... ~A ~A ..." caller a
+					(cadr a) (if (char? (caddr a)) (format #f "~W" (caddr a)) (caddr a))))
+
+			  ((string-append)
+			   (lint-format "format appends strings, so ~A seems wasteful" caller a)))))
+		  args)))))
+
 	;; ----------------
 	((error)
 	 (if (any? (lambda (arg)
@@ -6747,6 +6749,124 @@
 	    (cdr form)))))))
 
     
+    (define check-unordered-exprs
+      (let ((changers (let ((h (make-hash-table)))
+			(for-each (lambda (s) 
+				    (hash-table-set! h s #t))
+				  '(set!
+				    read read-byte read-char read-line read-string 
+				    write write-byte write-char write-string format display newline
+				    reverse! set-car! set-cdr! sort! 
+				    string-fill! string-set! vector-fill! vector-set! 
+				    fill! float-vector-set! list-set! let-set! hash-table-set! int-vector-set! 
+				    coverlet cutlet openlet varlet
+				    call-with-current-continuation call/cc emergency-exit exit error throw
+
+				    ;define define-constant define-macro define-bacro define-expansion define* define-macro* define-bacro*
+				    ;->byte-vector autoload 
+				    ;call-with-output-file call-with-output-string
+				    ;close-input-port close-output-port copy 
+				    ;dilambda 
+				    ;eval eval-string 
+				    ;flush-output-port get-output-string
+				    ;iterate
+				    ;load open-input-file
+				    ;open-input-string open-output-file open-output-string provide 
+					;string-copy 
+				    ;unlet 
+				    ;with-output-to-file 
+				    ))
+			h)))
+	(lambda (caller form vals env)
+
+	  (define (report-trouble)
+	    (lint-format "order of evaluation of ~A's ~A is unspecified, so ~A is trouble"
+			 caller 
+			 (car form) 
+			 (if (memq (car form) '(let letrec do)) 'bindings 'arguments)
+			 (truncated-list->string form)))
+	    
+	  (let ((reads ())
+		(writes ()))
+	    (call-with-exit
+	     (lambda (return)
+	       (for-each (lambda (p)
+			   (when (and (pair? p)
+				      (not (var-member (car p) env))
+				      (hash-table-ref changers (car p)))
+			     (case (car p)
+			       
+			       ((read read-char read-line read-byte)
+				(if (null? (cdr p))
+				    (if (memq () reads)
+					(return (report-trouble))
+					(set! reads (cons () reads)))
+				    (if (memq (cadr p) reads)
+					(return (report-trouble))
+					(set! reads (cons (cadr p) reads)))))
+			       
+			       ((read-string)
+				(if (or (null? (cdr p))
+					(null? (cddr p)))
+				    (if (memq () reads)
+					(return (report-trouble))
+					(set! reads (cons () reads)))
+				    (if (memq (caddr p) reads)
+					(return (report-trouble))
+					(set! reads (cons (caddr p) reads)))))
+			       
+			       ((display write write-char write-string write-byte)
+				(if (null? (cddr p))
+				    (if (memq () writes)
+					(return (report-trouble))
+					(set! writes (cons () writes)))
+				    (if (memq (caddr p) writes)
+					(return (report-trouble))
+					(set! writes (cons (caddr p) writes)))))
+			       
+			       ((newline)
+				(if (null? (cdr p))
+				    (if (memq () writes)
+					(return (report-trouble))
+					(set! writes (cons () writes)))
+				    (if (memq (cadr p) writes)
+					(return (report-trouble))
+					(set! writes (cons (cadr p) writes)))))
+			       
+			       ((format)
+				(if (and (pair? (cdr p))
+					 (not (string? (cadr p)))
+					 (cadr p)) ; i.e. not #f
+				    (if (memq (cadr p) writes)
+					(return (report-trouble))
+					(set! writes (cons (cadr p) writes)))))
+			       
+			       ((set! coverlet cutlet openlet varlet set-car! set-cdr! reverse! sort!
+				      vector-set! vector-fill! string-set! string-fill! list-set! fill!
+				      float-vector-set! int-vector-set! byte-vector-set! hash-table-set! let-set!)
+				(if (any? (lambda (np)
+					    (and (not (eq? np p))
+						 (tree-memq (cadr p) np)))
+					  vals)
+				    (return (report-trouble))))
+			       
+			       ((throw call/cc error exit emergency-exit call-with-current-continuation)
+				(if (any? (lambda (np)
+					    (and (pair? np)
+						 (not (eq? np p))
+						 (not (var-member (car np) env))
+						 (hash-table-ref changers (car np))))
+					  vals)
+				    (return (report-trouble))))
+			       )))
+			 vals)))))))
+
+    ;; any *! if *report-any-!-as-setter*, and read*/write* as fvars defined? then check var-changer above?
+    ;;    ideally we'd ignore arg-locals (f (let ((x 1)) (set! x 2)))
+    ;; TODO: also not just (car p) above, but (car <any pair> within the tree if port is not a local (sigh...)
+    ;; TODO: *-set! are not incompatible with bare cadr: v ... (vector-set! v...) is ok
+
+
     (define check-call 
       (let ((repeated-args-table (let ((h (make-hash-table)))
 				   (for-each
@@ -6769,6 +6889,10 @@
 	(lambda (caller head form env)
 	  (let ((data (var-member head env)))
 	    ;; (format *stderr* "~A call: ~A~%" form data)
+	    
+	    (if (hash-table-ref built-in-functions head)
+		(check-unordered-exprs caller form (cdr form) env))
+
 	    (if (var? data)
 		(let ((fdata (cdr data)))
 		  ;; a local var
@@ -7222,7 +7346,16 @@
 		   (when (and (pair? scope)
 			      (null? (cdr scope))
 			      (symbol? (car scope))
-			      (not (var-member (car scope) env)))
+			      (not (var-member (car scope) env))) ; we're not already nested in (car scope)
+
+		     ;; at the top level, how to report unnecessary top-level definitions?
+		     ;;   we can't tell what is intended for export -- really need top let here
+		     ;;   there are export/module etc -- maybe keep their list?
+		     ;; r7rs is (define-library (junk) ... (export...)...)
+#|
+			      (or (eq? vars env)                       ; we're at the top level
+				  (not (var-member (car scope) env)))) ; we're not already nested in (car scope)
+|#
 		     (format outport "~NC~A is ~A only in ~A~%" 
 			     lint-left-margin #\space vname 
 			     (if (memq (var-ftype local-var) '(define lambda define* lambda*)) "called" "used")
@@ -11246,6 +11379,8 @@
 						   (set! baddies (cons (car stepper) baddies))))
 					     vars))))
 
+			     (check-unordered-exprs caller form (map var-initial-value vars) env)
+
 			     (when (pair? baddies)
 			       ;; (do ((i 0 j) (j ...))...) is unreadable -- which (binding of) j is i set to?
 			       ;;    but this is tricky if there is more than one such variable -- if cross links, we'll need named let
@@ -11512,6 +11647,16 @@
 							      :definer (if named-let 'named-let 'let))
 						    vars)))))
 
+			   (check-unordered-exprs caller form 
+						  (if (not named-let)
+						      (map var-initial-value vars)
+						      (map (lambda (v)
+							     (if (eq? (var-name v) named-let)
+								 (values)
+								 (var-initial-value v)))
+							   vars))
+						  env)
+
 			   (let ((suggest made-suggestion))
 			     (when (and (pair? varlist)        ; (let ((x (A))) (if x (f x) B)) -> (cond ((A) => f) (else B)
 					(pair? (car varlist))  ;   ^ this happens a lot, so it's worth this tedious search
@@ -11699,12 +11844,21 @@
 						       (< (tree-leaves (cadr v)) 8)
 						       (= (tree-count1 (car v) body 0) 1)))
 						varlist))
-			       (let ((new-body (copy (car body))))
+			       (let ((new-body (copy (car body)))
+				     (bool-arg? #f))
 				 (for-each (lambda (v)
+					     (if (not bool-arg?)
+						 (let tree-walk ((tree body))
+						   (if (pair? tree)
+						       (if (and (memq (car tree) '(or and))
+								(memq (car v) (cdr tree)))
+							   (set! bool-arg? #t)
+							   (begin
+							     (tree-walk (car tree))
+							     (tree-walk (cdr tree)))))))
 					     (set! new-body (tree-subst (cadr v) (car v) new-body)))
 					   varlist)
-				 (lint-format (if (and (memq (caar body) '(or and))
-						       (pair? (cdr varlist)))
+				 (lint-format (if bool-arg? 
 						  "perhaps, ignoring short-circuit issues, ~A"
 						  "perhaps ~A")
 					      caller (lists->string form new-body))))
@@ -12114,6 +12268,9 @@
 									   (cadar bindings))
 							:definer head)
 					      vars))))
+			 
+			 (if (eq? head 'letrec)
+			     (check-unordered-exprs caller form (map var-initial-value vars) env))
 
 			 (if (pair? vars)  ; if none of the local vars occurs in any of the values, no need for the "rec"
 			     (do ((bindings (cadr form) (cdr bindings))
@@ -12360,10 +12517,10 @@
 			 (let ((body (caddr form))
 			       (error-handler (cadddr form)))
 			   ;; empty catch+catch apparently never happens
-			   (let ((catcher (make-var :name catch-marker
-						    :initial-value form
-						    :definer head)))
-			     (lint-walk caller body (cons catcher env)))
+			   (lint-walk caller body (cons (make-var :name catch-marker
+								  :initial-value form
+								  :definer head)
+							env))
 			   (lint-walk caller error-handler env))))
 		   env)
 		  
@@ -13221,13 +13378,7 @@
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
-;;;
-;;; (format ... "...~S|A..." (format #f "~A" x)) -- case was ~A then ~S, also display|write+format, or vice-versa?
-;;;    (format () "~%Illegal point: ~S" (list x y))
-;;;    (format () "~%~A(" (make-string initial-tab-position #\space)) -- this from write-string
-;;;    (format () "  ~s found in ~s~%" end-transmission-string (list->string (reverse (cons c read-bits))))
-;;;    (format nil "send_xwaves make name %s file %s height 200" tmpname (string-append tmpname ".wav"))
-;;;    (format port "~a>" (number->string (object-address interface) 16))
+;;; in report-usage, if var val always cont/goto -- check for unreachable code? (would need form)
 ;;;
 ;;; find differ-by-n across body and rewrite using a function?
 ;;;    vector[3d] of code value: hits where first dim is tree-leaves
@@ -13239,13 +13390,4 @@
 ;;;   assign prime to car using names.data to set most common ones to lowest primes [same if reversible]
 ;;;     each sequence in body (4 3 2 3(top) 2 2(top) multiply cars/ hash by length+car-composite
 ;;;
-;;; if vars or args to func obviously depend on order -- warn
-;;;    if let/letrec/do or any (non-lambda*) function call has 2 of these, there's a possible order problem
-;;;       (anywhere in par expr) -- set! x&x or set! x and x used elsewhere for example [fill! reverse! sort! etc]
-;;;       iterate of same iter -- all have some quibble so these need to be handled separately
-;;;       or any read/write of same port, change to same env, also anything in *! if *report-any-!-as-setter*
-;;;    (- (read-byte) (read-byte)) (let|letrec ((x (read-byte)) (y (read-byte)))...)
-;;;    ideally we'd ignore arg-locals (f (let ((x 1)) (set! x 2)))
-;;;    for func[not *] call: pass (cdr form), for do/let(rec): map cadr vars, for do also map caddr over vars
-;;;
-;;; 109 21295
+;;; 110 21295

@@ -85,8 +85,7 @@
 	    (set! (rl i) (real-part val))
 	    (set! (im i) (imag-part val)))) ;this is always essentially 0.0
 	(fft rl im -1)            ;direction could also be 1
-	(let ((pk (float-vector-peak rl)))
-	  (float-vector-scale! rl (/ 1.0 pk)))
+	(float-vector-scale! rl (/ 1.0 (float-vector-peak rl)))
 	(do ((i 0 (+ i 1))
 	     (j (/ N 2)))
 	    ((= i N))
@@ -1693,11 +1692,12 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		    ((= i num-coeffs))
 		  (copy sound rl2)
 		  (convolution rl1 rl2 fft-len)
-		  (let ((pk (float-vector-peak rl1)))
-		    (float-vector-add! newv (float-vector-scale! (copy rl1) (/ (* (coeffs i) peak) pk)))))
-		(let ((pk (float-vector-peak newv)))
-		  (float-vector-scale! newv (/ peak pk)))))))
-    (float-vector->channel newv 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (float-vector->string coeffs)))))
+		  (float-vector-add! newv (float-vector-scale! (copy rl1) 
+							       (/ (* (coeffs i) peak) (float-vector-peak rl1)))))
+		(float-vector-scale! newv (/ peak (float-vector-peak newv)))))))
+    (float-vector->channel newv 0 (max len (* len (- num-coeffs 1))) 
+			   snd chn #f 
+			   (format #f "spectral-polynomial ~A" (float-vector->string coeffs)))))
 
 
 ;;; ----------------

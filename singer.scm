@@ -309,8 +309,7 @@
 			(set! last-sfd new-sfd)))
 		  (if (= last-gfd -1)
 		      (set! last-gfd 0)
-		      (let ((new-gfd (+ last-gfd 2)))
-			(set! last-gfd new-gfd)))
+		      (set! last-gfd (+ last-gfd 2)))
 		  (set! next-offset (floor (change-times (+ offset 1))))
 		  (set! delta (/ 1.0 (- next-offset i)))))
 	    

@@ -732,57 +732,60 @@
 ;;; Generic defining function (for open, closed, polar and cartesian paths)
 ;;;
 
-(define (make-path-error-checks path closed initial-direction final-direction)
-  ;; some sanity checks
-  (if (null? path)
-      (error 'mus-error "Can't define a path with no points in it~%"))
-  (when closed 
-    (if initial-direction
-	(error 'mus-error "Can't specify initial direction ~A for a closed path ~A~%" initial-direction path))
-    (if final-direction
-	(error 'mus-error "Can't specify final direction ~A for a closed path ~A~%" final-direction path))
-    (if (not (if (pair? (car path))
-		 (let ((start (car path))
-		       (end (car (last path))))
-		   (and (= (car start) (car end))
-			(= (cadr start) (cadr end))
-			(or (not path-3d)
-			    (= (third start) (third end)))))
-		 (let ((end (last path (if path-3d 3 2))))
-		   (and (= (car path) (car end))
-			(= (cadr path) (cadr end))
-			(or (not path-3d)
-			    (= (third path) (third end)))))))
-	(error 'mus-error "Closed path ~A is not closed~%" path))))
+(define make-path
+  (let ()
 
-(define* (make-path path
-		    (3d path-3d)
-		    polar
-		    closed
-		    curvature
-		    (error 0.01) ; this name ("error") is a bad idea -- it means we can't call the real error function (this is Scheme, not CL)
-		    ;; only for open paths
-		    initial-direction
-		    final-direction)
+    (define (make-path-error-checks path closed initial-direction final-direction)
+      ;; some sanity checks
+      (if (null? path)
+	  (error 'mus-error "Can't define a path with no points in it~%"))
+      (when closed 
+	(if initial-direction
+	    (error 'mus-error "Can't specify initial direction ~A for a closed path ~A~%" initial-direction path))
+	(if final-direction
+	    (error 'mus-error "Can't specify final direction ~A for a closed path ~A~%" final-direction path))
+	(if (not (if (pair? (car path))
+		     (let ((start (car path))
+			   (end (car (last path))))
+		       (and (= (car start) (car end))
+			    (= (cadr start) (cadr end))
+			    (or (not path-3d)
+				(= (third start) (third end)))))
+		     (let ((end (last path (if path-3d 3 2))))
+		       (and (= (car path) (car end))
+			    (= (cadr path) (cadr end))
+			    (or (not path-3d)
+				(= (third path) (third end)))))))
+	    (error 'mus-error "Closed path ~A is not closed~%" path))))
+
+    (lambda* (path
+	      (3d path-3d)
+	      polar
+	      closed
+	      curvature
+	      (error 0.01) ; this name ("error") is a bad idea -- it means we can't call the real error function (this is Scheme, not CL)
+	      ;; only for open paths
+	      initial-direction
+	      final-direction)
   
-  (make-path-error-checks path closed initial-direction final-direction) ; the error check uses path-3d -- was 3d intended?
-  
-  ;; create the path structure
-  (if closed
-      (make-bezier-path
-       :path path
-       :3d 3d
-       :polar polar
-       :curvature curvature
-       :error error)
-      (make-open-bezier-path
-       :path path
-       :3d 3d
-       :polar polar
-       :curvature curvature
-       :error error
-       :initial-direction initial-direction
-       :final-direction final-direction)))
+      (make-path-error-checks path closed initial-direction final-direction) ; the error check uses path-3d -- was 3d intended?
+      
+      ;; create the path structure
+      (if closed
+	  (make-bezier-path
+	   :path path
+	   :3d 3d
+	   :polar polar
+	   :curvature curvature
+	   :error error)
+	  (make-open-bezier-path
+	   :path path
+	   :3d 3d
+	   :polar polar
+	   :curvature curvature
+	   :error error
+	   :initial-direction initial-direction
+	   :final-direction final-direction)))))
 
 
 ;;; Some convenient abbreviations
