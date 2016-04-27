@@ -9480,7 +9480,8 @@ less and less need for these elaborate color names, and less
 reason (except perhaps psychophysical) to limit these numbers to bytes.
 There is one gotcha in this file &mdash; X11 defines a color named "tan"
 which is already used by Scheme, so (at the suggestion of Dave Phillips)
-this color is named "tawny" in rgb.scm.
+this color is named "tawny" in rgb.scm.  rgb.scm exports only *rgb* which
+is an environment holding all the color names and values.
 </p>
 
 
@@ -10473,6 +10474,7 @@ each given a name:
 which (I think) refers to a trumpet playing the note gs5.  The first number is the harmonic,
 the second its amplitude, the third the next harmonic, then its amplitude, and so on.
 These spectra can be used directly in the instrument <a href="#spectra">spectra</a> in clm-ins.scm.
+spectr.scm exports only *spectr* which is an environment that holds the spectral names and values.
 </p>
 
 <div class="seealso">

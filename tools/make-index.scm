@@ -431,7 +431,7 @@
 					; (load "effects-utils.scm")	   
 (load "pvoc.scm")
 (load "enved.scm")		   
-(load "rgb.scm")
+;(load "rgb.scm")
 (load "env.scm")		   
 (load "examp.scm")		   
 (load "rubber.scm")
@@ -464,7 +464,7 @@
 
 					; (load "special-menu.scm")
 (load "maraca.scm")		   
-(load "spectr.scm")
+;(load "spectr.scm")
 					; (load "marks-menu.scm")	   
 (load "spokenword.scm")
 (load "marks.scm")		   

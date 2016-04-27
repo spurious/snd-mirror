@@ -2722,7 +2722,10 @@
 		  (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
 		  ;; K
 		  (set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
-		  (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5) ho-ratt ratt) (channel-rev-gains k-offset)))
+		  (set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) 
+							      (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5)
+							      ho-ratt ratt)
+							   (channel-rev-gains k-offset)))
 		  ;; L
 		  (set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
 		  (set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) (channel-rev-gains l-offset)))

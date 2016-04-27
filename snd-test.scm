@@ -75,7 +75,6 @@
 (define full-test (< snd-test 0))
 (define total-tests 26)
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
-(define s7test-exits #f)
 (define test-number -1)
 
 (define-constant (snd-display line . args)
@@ -242,9 +241,6 @@
 (define (vvequal v0 v1)
   (mus-arrays-equal? v0 v1 .00002))
 
-(define (vmaxdiff v0 v1)
-  (float-vector-peak (float-vector-subtract! (copy v0) v1)))
-
 (define (within-.01? b) (< (abs (- 1.0 b)) .01))
 (define (very-close? a b) (< (abs (- a b)) .01))
 
@@ -287,11 +283,6 @@
       (catch #t
 	(lambda () (display-edits snd chn edpos))
 	(lambda args (snd-display #__line__ ";display-edits error: ~A" args))))))
-
-(define (safe-divide a b)
-  (if (zero? b)
-      a
-      (/ a b)))
 
 (define timings (make-vector (+ total-tests 1) 0))
 (define default-srate *clm-srate*)
@@ -2336,18 +2327,6 @@
     (load "examp.scm"))
 
 (require snd-mix.scm snd-env.scm)
-
-(definstrument (out-samps beg chan data)
-  (let ((len (length data)))
-     (do ((i 0 (+ i 1)))
-	 ((= i len))
-       (out-any (+ beg i) (data i) chan))))
-
-(definstrument (out-samps-invert beg chan data)
-  (let ((len (length data)))
-     (do ((i 0 (+ i 1)))
-	 ((= i len))
-       (out-any (+ beg i) (- (data i)) chan))))
 
 (define (snd_test_4)
   
@@ -9184,6 +9163,7 @@ EDITS: 2
   (define colormap-error-max 0.0)
   (define cfneq (lambda (a b) (> (abs (- a b)) colormap-error-max)))
   (define old-colormap-size *colormap-size*)
+  (define beige (*rgb* 'beige))
   
   (when (or (provided? 'snd-gtk)
 	    (provided? 'snd-motif))
@@ -24372,12 +24352,9 @@ EDITS: 2
 
 ;;; ---------------- test 11: dialogs ----------------
 
-(define-envelope env1 '(0 0 1 0))
-(define-envelope env2 '(0 0 1 1))
-(define-envelope ramp-up-env '(0 0 1 1))
-(define-envelope env4 '(0 1 1 0))
-
 (define (snd_test_11)
+
+  (define-envelope env4 '(0 1 1 0))
 
   (define (string-equal-ignoring-white-space s1 s2)
     (or (string=? s1 s2)
@@ -24874,11 +24851,12 @@ EDITS: 2
 	    (ladspa-deactivate descriptor handle)
 	    (ladspa-cleanup descriptor handle))))))
 
-(define ladspa_inited #f)
-(define clm_buffer_added #f)
 
 (define (snd_test_13)
   
+  (define ladspa_inited #f)
+  (define clm_buffer_added #f)
+
   (define (test-hooks)
     (reset-all-hooks)
     (for-each 
@@ -32474,9 +32452,6 @@ EDITS: 1
 
 (define* (clm-channel-test snd chn) ; edit-list->function wants this to be global??
   (clm-channel (make-two-zero 1 -1) 0 #f snd chn #f #f "clm-channel-test"))
-
-(define* (make-v-mix snd chn)
-  (mix-float-vector (float-vector .1 .2 .3) 100 snd chn #t "mix-float-vector (float-vector .1 .2 .3)"))
 
 (define* (insert-float-vector v (beg 0) dur snd chn edpos)
   (if (not (float-vector? v))
@@ -46633,12 +46608,6 @@ EDITS: 1
 
 
 ;;; ---------------- test 25: errors ----------------
-
-(define-macro (simple-time a) 
-  `(let ((start (get-internal-real-time))) 
-     ,a 
-     (- (get-internal-real-time) start)))
-
 
 (define (snd_test_25)
   

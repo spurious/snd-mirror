@@ -2,6 +2,9 @@
 
 (provide 'snd-rgb.scm)
 
+(define *rgb*
+  (let ()
+
 ;; tan -> tawny 24-Aug-01
 
 (define snow (make-color 1.00 0.98 0.98))
@@ -661,3 +664,5 @@
 (define dark-magenta (make-color 0.54 0.00 0.54))
 (define dark-red (make-color 0.54 0.00 0.00))
 (define light-green (make-color 0.56 0.93 0.56))
+
+(curlet)))
