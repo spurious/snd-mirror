@@ -57,12 +57,13 @@
     (if sp
 	(substring data 0 sp)
 	data)))
-
+#|
 (define (cdr-str data)
   (let ((sp (char-position #\space data)))
     (if sp
 	(substring data (+ sp 1))
 	data)))
+|#
 
 (define (ref-arg? arg)
   (and (= (length arg) 3)
@@ -100,7 +101,7 @@
 
 (define (deref-name arg)
   (string-append "ref_" (cadr arg)))
-
+#|
 (define (derefable type)
   (let ((len (length type)))
     (call-with-exit
@@ -110,6 +111,7 @@
 	   ((= i 0) #f)
 	 (if (not (char=? (type i) #\*))
 	     (return (> ctr 1))))))))
+|#
 
 (define (has-stars type)
   (let ((len (length type)))
@@ -132,7 +134,7 @@
 		((= i len) val)
 	      (if (char=? (val i) #\*)
 		  (set! (val i) #\_)))))))
-
+#|
 (define (no-arg-or-stars name)
   (let ((len (length name)))
     (call-with-exit
@@ -141,6 +143,7 @@
 	   ((= i len) name)
 	 (if (memv (name i) '(#\( #\*))
 	     (return (substring name 0 i))))))))
+|#
 
 (define* (parse-args args x)
   (let ((data ())
@@ -266,33 +269,33 @@
 (define (type-it type)
   (cond ((assoc type direct-types) => 
 	 (lambda (typ)
-	   (if (cdr typ)
-	       (if (string? (cdr typ))
-		   (begin
-		     (if (not (member type
-				      '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
-					"GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
-					"GLboolean*" "void*" "GLint*" "GLshort*"
-					"GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
-					"unsigned_long"
-					"void**")))
-			 (if (string=? type "constchar*")
-			     (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars type))
-			     (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars type) (c-to-xen-macro-name typ (cdr typ)))))
-		     
-		     (unless (string=? type "constchar*")
-		       (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name (cdr typ)))
-		       (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
-			    (no-stars type)
-			    (cond ((assoc (cdr typ) '(("INT"    . "integer") 
-						      ("ULONG"  . "ulong") 
-						      ("DOUBLE" . "number")) string=?)
-				   => cdr)
-				  (else (apply string (map char-downcase (cdr typ))))))))
-		   (begin
-		     (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type))
-		     (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))
-	 
+	   (when (cdr typ)
+	     (if (string? (cdr typ))
+		 (begin
+		   (if (not (member type
+				    '("Display*" "XVisualInfo*" "int*" "Pixmap" "Font" "GLubyte*"
+				      "GLdouble*" "GLfloat*" "GLvoid*" "GLuint*"
+				      "GLboolean*" "void*" "GLint*" "GLshort*"
+				      "GLsizei" "GLclampd" "GLclampf" "GLbitfield" "GLshort" "GLbyte"
+				      "unsigned_long"
+				      "void**")))
+		       (if (string=? type "constchar*")
+			   (hey "#define C_to_Xen_~A(Arg) C_string_to_Xen_string((char *)(Arg))~%" (no-stars type))
+			   (hey "#define C_to_Xen_~A(Arg) ~A(Arg)~%" (no-stars type) (c-to-xen-macro-name typ (cdr typ)))))
+		   
+		   (unless (string=? type "constchar*")
+		     (hey "#define Xen_to_C_~A(Arg) (~A)(~A(Arg))~%" (no-stars type) type (xen-to-c-macro-name (cdr typ)))
+		     (hey "#define Xen_is_~A(Arg) Xen_is_~A(Arg)~%" 
+			  (no-stars type)
+			  (cond ((assoc (cdr typ) '(("INT"    . "integer") 
+						    ("ULONG"  . "ulong") 
+						    ("DOUBLE" . "number")) string=?)
+				 => cdr)
+				(else (apply string (map char-downcase (cdr typ))))))))
+		 (begin
+		   (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type))
+		   (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))
+	
 	((not (member type '("Display*" "XVisualInfo*" "GLXContext") string=?))
 	 ;; Snd g_snd_gl_context (snd-motif.c) calls GLXContext a pointer
 	 (if (member type glu-1-2) 
@@ -360,7 +363,7 @@
       (begin
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))
-
+#|
 (define (no-arg name)
   (let ((len (length name)))
     (call-with-exit
@@ -369,6 +372,7 @@
 	   ((= i len) name)
 	 (if (char=? (name i) #\()
 	     (return (substring name 0 i))))))))
+|#
 
 ;;; ---------------------------------------- read data ---------------------------------------- 
 

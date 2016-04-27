@@ -369,7 +369,7 @@
 	    (save-sound-as file snd :header-type mus-riff)
 	    (system (format #f "speexenc ~A ~A" file spxfile))
 	    (delete-file file))
-	  (system (format #f "speexenc ~A ~A" (file-name snd) (string-append (file-name snd) ".spx")))))))
+	  (system (format #f "speexenc ~A ~A.spx" (file-name snd) (file-name snd)))))))
 
 
 ;;; -------- read and write FLAC files

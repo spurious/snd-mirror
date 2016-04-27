@@ -151,10 +151,9 @@
     (let ((documentation "(scale-linear->log lo val hi) given user-relative lo..hi and scale-relative val, returns the user-relative val"))
       (lambda (lo val hi)
 	;; since log-scale widget assumes 0..log-scale-ticks, val can be used as ratio (log-wise) between lo and hi
-	(let* ((log-lo (log (max lo 1.0) 2))
-	       (log-hi (log hi 2))
-	       (log-val (+ log-lo (* (/ val log-scale-ticks) (- log-hi log-lo)))))
-	  (expt 2.0 log-val)))))
+	(let ((log-lo (log (max lo 1.0) 2))
+	      (log-hi (log hi 2)))
+	  (expt 2.0 (+ log-lo (* (/ val log-scale-ticks) (- log-hi log-lo)))))
   
   (define scale-log-label 
     (let ((documentation "(scale-log-label lo val hi) makes a log scale label"))

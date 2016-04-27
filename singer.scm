@@ -38,9 +38,7 @@
 			    durs))))
 	 (beg-samps (map seconds->samples begs)))
 
-    (let ((change-times (let* ((len (length beg-samps))
-			       (nbegs (append beg-samps (list (beg-samps (- len 1))))))
-			  (apply vector nbegs)))
+    (let ((change-times (apply vector (append beg-samps (list (beg-samps (- (length beg-samps) 1))))))
 	  
 	  (shps (map cadr data))
 	  (glts (map caddr data))
@@ -307,9 +305,7 @@
 			  (if (> (abs (- (shape-data j) (shape-data k))) .001)
 			      (set! new-tract #t)))
 			(set! last-sfd new-sfd)))
-		  (if (= last-gfd -1)
-		      (set! last-gfd 0)
-		      (set! last-gfd (+ last-gfd 2)))
+		  (set! last-gfd (if (= last-gfd -1) 0 (+ last-gfd 2)))
 		  (set! next-offset (floor (change-times (+ offset 1))))
 		  (set! delta (/ 1.0 (- next-offset i)))))
 	    

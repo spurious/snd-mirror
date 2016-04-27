@@ -7928,8 +7928,7 @@ something:
   (let ((buffer (<a class=quiet href="sndclm.html#make-moving-average">make-moving-average</a> 128))
         (silence (/ in-silence 128)))
     (lambda (y)
-      (let ((sum-of-squares (<a class=quiet href="sndclm.html#moving-average">moving-average</a> buffer (* y y))))
-        (if (&gt; sum-of-squares silence) y replacement)))))
+      (if (> (moving-average buffer (* y y)) silence) y replacement))))
 
 (<em class=red>map-channel</em> (map-silence .01 0.0))  ; squelch background noise
 (<em class=red>map-channel</em> (map-silence .001 #f))  ; remove silences altogether
@@ -9148,9 +9147,8 @@ file; 'auto-delete' set to #t asks Snd to handle cleanup).
 			 ((<a class=quiet href="#sampleratendQ">sampler-at-end?</a> rd))
 		       (<a class=quiet href="sndclm.html#out-any">out-any</a> samp (<a class=quiet href="sndclm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0)
 		       (if (= (modulo samp 2205) 0)
-			   (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))))))
-	 (len (<a class=quiet href="#mussoundframples">mus-sound-framples</a> tempfile)))
-    (<em class=red>set-samples</em> 0 (- len 1) tempfile #f #f #t "step-src" 0 #f #t)))
+			   (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o))))))))
+    (<em class=red>set-samples</em> 0 (- (<a class=quiet href="#mussoundframples">mus-sound-framples</a> tempfile) 1) tempfile #f #f #t "step-src" 0 #f #t)))
 </pre>
 <div class="separator"></div>
 

@@ -1071,30 +1071,30 @@
 	      (set! (mark-list snd chn) (list snd chn mlist))))
 	
 	(let ((new-marks (marks snd chn)))
-	  (if (> (length new-marks) current-mark-list-length)
-	      (let ((lst (mark-list snd chn)))
-		(do ((i current-mark-list-length (+ i 1)))
-		    ((= i (length new-marks)))
-		  (let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
-					    (list XmNbackground *basic-color*))))
-		    (XtAddCallback tf XmNfocusCallback
-				   (lambda (w c i)
-				     (XtSetValues w (list XmNbackground (white-pixel)))))
-		    (XtAddCallback tf XmNlosingFocusCallback
-				   (lambda (w c i)
-				     (XtSetValues w (list XmNbackground *basic-color*))))
-		    (XtAddCallback tf XmNactivateCallback
-				   (lambda (w c i)
-				     (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
-					    (txt (cadr (XtGetValues w (list XmNvalue 0))))
-					    (samp (and (string? txt) 
-						       (> (length txt) 0)
-						       (string->number txt))))
-				       (if samp
-					   (if (mark? id)
-					       (set! (mark-sample id) samp))
-					   (delete-mark id))
-				       (XtSetValues w (list XmNbackground *basic-color*)))))))))
+	  (when (> (length new-marks) current-mark-list-length)
+	    (let ((lst (mark-list snd chn)))
+	      (do ((i current-mark-list-length (+ i 1)))
+		  ((= i (length new-marks)))
+		(let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
+					  (list XmNbackground *basic-color*))))
+		  (XtAddCallback tf XmNfocusCallback
+				 (lambda (w c i)
+				   (XtSetValues w (list XmNbackground (white-pixel)))))
+		  (XtAddCallback tf XmNlosingFocusCallback
+				 (lambda (w c i)
+				   (XtSetValues w (list XmNbackground *basic-color*))))
+		  (XtAddCallback tf XmNactivateCallback
+				 (lambda (w c i)
+				   (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
+					  (txt (cadr (XtGetValues w (list XmNvalue 0))))
+					  (samp (and (string? txt) 
+						     (> (length txt) 0)
+						     (string->number txt))))
+				     (if samp
+					 (if (mark? id)
+					     (set! (mark-sample id) samp))
+					 (delete-mark id))
+				     (XtSetValues w (list XmNbackground *basic-color*)))))))))
 	  
 	  (set! (mark-list-length snd chn) (length new-marks))
 	  (let ((lst (mark-list snd chn)))
@@ -1808,35 +1808,35 @@
 	(lambda (hook)
 	  (let* ((snd (hook 'snd))
 		 (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
-	    (if (not previous-label)
-		(if (not snd)
-		    (snd-error "no sound found for disk space label")
-		    (let* ((app (car (main-widgets)))
-			   (widgets (sound-widgets snd))
-			   (status-area (widgets 3))
-			   (unite-button (widgets 6))
-			   (sync-button (widgets 9))
-			   (name-form (XtParent status-area)) ; "snd-name-form"
-			   (space (kmg (disk-kspace (file-name snd))))
-			   (str (XmStringCreateLocalized space)))
-		      (set! showing-disk-space #t)
-		      (XtUnmanageChild status-area)
-		      (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
-		      (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
-							      (list XmNbackground      *basic-color*
-								    XmNleftAttachment  XmATTACH_NONE
-								    XmNlabelString     str
-								    XmNrightAttachment XmATTACH_WIDGET
-								    XmNrightWidget     (if (XtIsManaged unite-button)
-											   unite-button
-											   sync-button)
-								    XmNtopAttachment   XmATTACH_FORM))))
-			(XtVaSetValues status-area (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
-			(XtManageChild status-area)
-			(XmStringFree str)
-			(set! previous-label (list snd new-label app))
-			(set! labelled-snds (cons previous-label labelled-snds))
-			(XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label))))))))))
+	    (when (not previous-label)
+	      (if (not snd)
+		  (snd-error "no sound found for disk space label")
+		  (let* ((app (car (main-widgets)))
+			 (widgets (sound-widgets snd))
+			 (status-area (widgets 3))
+			 (unite-button (widgets 6))
+			 (sync-button (widgets 9))
+			 (name-form (XtParent status-area)) ; "snd-name-form"
+			 (space (kmg (disk-kspace (file-name snd))))
+			 (str (XmStringCreateLocalized space)))
+		    (set! showing-disk-space #t)
+		    (XtUnmanageChild status-area)
+		    (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
+		    (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
+							    (list XmNbackground      *basic-color*
+								  XmNleftAttachment  XmATTACH_NONE
+								  XmNlabelString     str
+								  XmNrightAttachment XmATTACH_WIDGET
+								  XmNrightWidget     (if (XtIsManaged unite-button)
+											 unite-button
+											 sync-button)
+								  XmNtopAttachment   XmATTACH_FORM))))
+		      (XtVaSetValues status-area (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
+		      (XtManageChild status-area)
+		      (XmStringFree str)
+		      (set! previous-label (list snd new-label app))
+		      (set! labelled-snds (cons previous-label labelled-snds))
+		      (XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label))))))))))
   
   
   

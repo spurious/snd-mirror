@@ -190,12 +190,13 @@
     (if sp
 	(substring data 0 sp)
 	data)))
-
+#|
 (define (cdr-str data)
   (let ((sp (char-position #\space data)))
     (if sp
 	(substring data (+ sp 1))
 	data)))
+|#
 
 (define (remove-if p lst)
   (cond ((null? lst) ())
@@ -214,10 +215,11 @@
 (define (opt-arg? arg)
   (and (= (length arg) 3)
        (eq? (caddr arg) 'opt)))
-
+#|
 (define (settable-field? arg)
   (and (= (length arg) 3)
        (eq? (caddr arg) 'set)))
+|#
 
 (define (ref-args args)
   (let ((ctr 0))
@@ -262,12 +264,13 @@
 	((= i len) val)
       (if (char=? (val i) #\*)
 	  (set! (val i) #\_)))))
-
+#|
 (define (no-arg-or-stars name)
   (let ((pos (char-position "(*" name)))
     (if pos
 	(substring name 0 pos)
 	name)))
+|#
 
 (define (parse-args args extra)
   (let ((data ())
@@ -783,7 +786,6 @@
 (define cairo-ints-912 ())
 (define cairo-types-912 ())
 (define cairo-strings-912 ())
-(define cairo-names-912 ())
 
 (define callbacks
   (list            
@@ -2596,10 +2598,11 @@
 			    (values "~D_optional_arg~A" cargs (if (= cargs 1) "" "s"))
 			    (values "~A_arg~A" (if (zero? cargs) "no" (number->string cargs)) (if (= cargs 1) "" "s")))))
 	 (car func) (car func))))
-
+#|
 (define (unargify-func func)
   (hey "#define gxg_~A_w gxg_~A~%" 
        (car func) (car func)))
+|#
 
 (for-each argify-func (reverse funcs))
 (for-each

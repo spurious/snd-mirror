@@ -3046,8 +3046,7 @@ we can truncate its spectrum at the desired number of harmonics:
 		   (x 0.0 (+ x incr)))
 		  ((= i size))
 	        (set! (rl i) (<em class=red>tanh</em> (* index (<em class=red>sin</em> x)))))) ; make our desired square wave
-	    (let ((im (make-float-vector size 0.0)))
- 	      (<a class=quiet href="#spectrum">spectrum</a> rl im #f 2))                     ; get its spectrum
+ 	    (<a class=quiet href="#spectrum">spectrum</a> rl (make-float-vector size 0.0) #f 2)  ; get its spectrum
 	    (do ((i 0 (+ i 1))
 		 (j 0 (+ j 2)))
 		((= i n))

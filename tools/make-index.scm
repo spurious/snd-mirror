@@ -73,22 +73,13 @@
 	((pred (car lst)) (car lst))
 	(else (find-if pred (cdr lst)))))
 
-(define* (make-ind name sortby topic file general indexed char)
-  (vector name sortby topic file general indexed char))
+(define* (make-ind name sortby indexed char)
+  (vector name sortby indexed char))
 
 (define-expansion (ind-name obj)    `(vector-ref ,obj 0))
 (define-expansion (ind-sortby obj)  `(vector-ref ,obj 1))
-(define-expansion (ind-topic obj)   `(vector-ref ,obj 2))
-(define-expansion (ind-file obj)    `(vector-ref ,obj 3))
-(define-expansion (ind-general obj) `(vector-ref ,obj 4))
-(define-expansion (ind-char obj)    `(vector-ref ,obj 6))
-(define ind-indexed (dilambda (lambda (obj) (vector-ref obj 5)) (lambda (obj val) (vector-set! obj 5 val))))
-
-
-(define (html-length str)
-  (if (char-position #\& str)
-      (- (length str) 3)
-      (length str)))
+(define-expansion (ind-char obj)    `(vector-ref ,obj 3))
+(define ind-indexed (dilambda (lambda (obj) (vector-ref obj 2)) (lambda (obj val) (vector-set! obj 2 val))))
 
 
 (define (remove-all item sequence)
@@ -152,8 +143,6 @@
 				  (substring str (+ colonpos 1)) 
 				  "</a>")))
 	(make-ind :name line 
-		  :topic topic 
-		  :file file 
 		  :sortby (string-downcase (substring str (+ colonpos 1)))))
 
       (begin 
@@ -214,8 +203,6 @@
 			 (string-position "</em>" line) 
 			 (string-position "</A>" line))))
 	   (make-ind :name line 
-		     :topic topic 
-		     :file file 
 		     :sortby (string-downcase (substring line (+ bpos 1) epos))))))))
 
 
@@ -228,9 +215,6 @@
 				   "\"><b>" 
 				   (substring str (+ mid 1)) 
 				   "</b></a>")
-	      :topic #f
-	      :file file
-	      :general #t
 	      :sortby (string-downcase (substring str (+ mid 1))))))
 
 
@@ -494,28 +478,28 @@
   (define (apropos-1 e)
     (for-each
      (lambda (binding)
-       (if (pair? binding)
-	   (let ((symbol (car binding))
-		 (value (cdr binding)))
-	     (if (procedure? value)
-		 (let ((file (let ((addr (with-let (funclet value) __func__)))
-			       ;; this misses scheme-side pws because their environment is (probably) the global env
-			       (and (pair? addr)
-				    (pair? (cdr addr))
-				    (cadr addr)))))
-		   (if (and file
-			    (not (member file '("~/.snd_s7" "/home/bil/.snd_s7" "t.scm" "/home/bil/cl/t.scm" "make-index.scm" "/home/bil/cl/make-index.scm"))))
-		       (let ((pos (char-position #\/ file)))
-			 (if pos
-			     (do ((k (char-position #\/ file (+ pos 1)) (char-position #\/ file (+ pos 1))))
-				 ((not k)
-				  (set! file (substring file (+ pos 1))))
-			       (set! pos k)))
-			 (let ((cur-names (hash-table-ref names file)))
-			   (if cur-names
-			       (if (not (memq symbol cur-names))
-				   (hash-table-set! names file (cons symbol cur-names)))
-			       (hash-table-set! names file (list symbol)))))))))))
+       (when (pair? binding)
+	 (let ((symbol (car binding))
+	       (value (cdr binding)))
+	   (when (procedure? value)
+	     (let ((file (let ((addr (with-let (funclet value) __func__)))
+			   ;; this misses scheme-side pws because their environment is (probably) the global env
+			   (and (pair? addr)
+				(pair? (cdr addr))
+				(cadr addr)))))
+	       (when (and file
+			  (not (member file '("~/.snd_s7" "/home/bil/.snd_s7" "t.scm" "/home/bil/cl/t.scm" "make-index.scm" "/home/bil/cl/make-index.scm"))))
+		 (let ((pos (char-position #\/ file)))
+		   (if pos
+		       (do ((k (char-position #\/ file (+ pos 1)) (char-position #\/ file (+ pos 1))))
+			   ((not k)
+			    (set! file (substring file (+ pos 1))))
+			 (set! pos k)))
+		   (let ((cur-names (hash-table-ref names file)))
+		     (if cur-names
+			 (if (not (memq symbol cur-names))
+			     (hash-table-set! names file (cons symbol cur-names)))
+			 (hash-table-set! names file (list symbol)))))))))))
      e))
   
   ;; handle the main macros by hand
@@ -1074,13 +1058,13 @@
 		    (if (and last-char
 			     (not (char-ci=? last-char this-char)))
 			(begin
-			 (set! (new-names j) (make-ind :name #f :topic #f :file #f :sortby #f))
+			 (set! (new-names j) (make-ind :name #f :sortby #f))
 			 (set! j (+ j 1))
 			 (set! (new-names j) (make-ind :name "    " 
 						       :char (char-upcase this-char)
-						       :topic #f :file #f :sortby #f))
+						       :sortby #f))
 			 (set! j (+ j 1))
-			 (set! (new-names j) (make-ind :name #f :topic #f :file #f :sortby #f))
+			 (set! (new-names j) (make-ind :name #f :sortby #f))
 			 (set! j (+ j 1))))
 		    (set! (new-names j) name)
 		    (set! j (+ j 1))
@@ -1277,8 +1261,6 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; html-check
-
-(define array-size 32768) ; (* 4 8192))
 
 ;;; (html-check '("sndlib.html" "snd.html" "sndclm.html" "extsnd.html" "grfsnd.html" "sndscm.html" "fm.html" "balance.html" "snd-contents.html" "s7.html"))
 

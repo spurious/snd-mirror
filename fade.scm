@@ -219,33 +219,33 @@
 	  (float-vector-spatter inputs in2s in2-ctr inval2)
 	  ;; (do ((k 0 (+ k 1))) ((= k in2-ctr)) (float-vector-set! inputs (int-vector-ref in2s k) inval2))
 
-	  (if (> ramp-ctr 0)
-	      (let ((rk 0)
-		    (sp 0.0)
-		    (fixup-ramps #f))
-		(do ((k 0 (+ k 1)))
-		    ((= k ramp-ctr))
-		  (set! rk (ramps k))
-		  (set! sp (vector-ref spectr rk))
-		  (float-vector-set! inputs k (+ (* sp inval1) (* (- 1.0 sp) inval2)))
-		  (set! sp (- sp ramp-inc))
-		  (if (> sp 0.0)
-		      (vector-set! spectr rk sp)
-		      (begin
-			(set! (in2s in2-ctr) rk)
-			(set! in2-ctr (+ in2-ctr 1))
-			(set! fixup-ramps #t)
-			(set! (ramps k) -1))))
-		(if fixup-ramps
-		    (let ((j 0))
-		      (do ((k 0 (+ k 1)))
-			  ((= k ramp-ctr))
-			(if (>= (ramps k) 0)
-			    (begin
-			      (set! (ramps j) (ramps k))
-			      (set! j (+ j 1)))))
-		      (set! ramp-ctr j)))))
-
+	  (when (> ramp-ctr 0)
+	    (let ((rk 0)
+		  (sp 0.0)
+		  (fixup-ramps #f))
+	      (do ((k 0 (+ k 1)))
+		  ((= k ramp-ctr))
+		(set! rk (ramps k))
+		(set! sp (vector-ref spectr rk))
+		(float-vector-set! inputs k (+ (* sp inval1) (* (- 1.0 sp) inval2)))
+		(set! sp (- sp ramp-inc))
+		(if (> sp 0.0)
+		    (vector-set! spectr rk sp)
+		    (begin
+		      (set! (in2s in2-ctr) rk)
+		      (set! in2-ctr (+ in2-ctr 1))
+		      (set! fixup-ramps #t)
+		      (set! (ramps k) -1))))
+	      (if fixup-ramps
+		  (let ((j 0))
+		    (do ((k 0 (+ k 1)))
+			((= k ramp-ctr))
+		      (if (>= (ramps k) 0)
+			  (begin
+			    (set! (ramps j) (ramps k))
+			    (set! j (+ j 1)))))
+		    (set! ramp-ctr j)))))
+	  
 	  (outa i (formant-bank fs inputs)))))))
 
 

@@ -23,8 +23,7 @@
 		 (scale-envelope env2 sc2 off2)))
 
 (define (checkpt att dur)
-  (if (or (zero? att)
-	  (negative? att))
+  (if (not (positive? att))
       (* 100 (/ .01 dur))
       (if (< att dur)
 	  (* 100 (/ att dur))

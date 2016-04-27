@@ -273,10 +273,8 @@
 					  0 (g_cclosure_new (lambda (w e d) 
 							      (if dragging
 								  (let* ((ev (GDK_EVENT e))
-									 (coords (gdk_event_get_coords ev))
-									 (x (cadr coords))
-									 (y (caddr coords)))
-								    (xe-mouse-drag editor x y)))
+									 (coords (gdk_event_get_coords ev)))
+								    (xe-mouse-drag editor (cadr coords) (caddr coords))))
 							      #f)
 							    #f #f)
 					  #f)

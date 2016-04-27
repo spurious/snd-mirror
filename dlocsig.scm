@@ -616,7 +616,7 @@
 (define path-tt (dilambda (lambda (p) (p 9)) (lambda (p val) (set! (p 9) val))))
 
 					;(define (make-path) (list 'path () () () () () () () () ()))
-
+#|
 (define (describe path)
   (format #f
 	  (if (memq (car path) '(bezier-path open-bezier-path))
@@ -631,6 +631,7 @@
 	       "<path>:~%  rx: ~A~%  ry: ~A~%  rz: ~A~%  rv: ~A~%  rt: ~A~%  tx: ~A~%  ty: ~A~%  tz: ~A~%  tt: ~A~%"
 	       (path-rx path) (path-ry path) (path-rz path) (path-rv path) (path-rt path) (path-tx path)
 	       (path-ty path) (path-tz path) (path-tt path)))))
+|#
 
 ;;; Inquiries into the state of the path
 
@@ -2417,32 +2418,32 @@
 				     ;; the groups have two shared points (ie: share an edge)
 				     ;; this must be a three speaker groups transition
 				     (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
-				       (if pint
-					   (let* ((xi (car pint))
-						  (yi (cadr pint))
-						  (zi (third pint))
-						  (di (distance xi yi zi))
-						  (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											       (- yi prev-y)
-											       (- zi prev-z))
-										     (distance (- x prev-x)
-											       (- y prev-y)
-											       (- z prev-z)))
-										  (- time prev-time))))))
-					     ;; see if we are inside the previous group
-					     ;; we can be on either side due to roundoff errors
-					     (let* ((vals (calculate-gains xi yi zi prev-group))
-						    (inside (car vals))
-						    (gains (cadr vals)))
-					       (if inside
-						   (push-gains prev-group gains di ti)
-						   (let* ((val1 (calculate-gains xi yi zi group))
-							  (inside (car val1))
-							  (gains (cadr val1)))
-						     (if inside
-							 (push-gains group gains di ti)
-							 ;; how did we get here?
-							 (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+				       (when pint
+					 (let* ((xi (car pint))
+						(yi (cadr pint))
+						(zi (third pint))
+						(di (distance xi yi zi))
+						(ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											     (- yi prev-y)
+											     (- zi prev-z))
+										   (distance (- x prev-x)
+											     (- y prev-y)
+											     (- z prev-z)))
+										(- time prev-time))))))
+					   ;; see if we are inside the previous group
+					   ;; we can be on either side due to roundoff errors
+					   (let* ((vals (calculate-gains xi yi zi prev-group))
+						  (inside (car vals))
+						  (gains (cadr vals)))
+					     (if inside
+						 (push-gains prev-group gains di ti)
+						 (let* ((val1 (calculate-gains xi yi zi group))
+							(inside (car val1))
+							(gains (cadr val1)))
+						   (if inside
+						       (push-gains group gains di ti)
+						       ;; how did we get here?
+						       (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
 				    
 				    ((and (pair? edge) 
 					  (null? (cdr edge))
@@ -2450,31 +2451,31 @@
 				     ;; two two-speaker groups share one point
 				     ;; z coordinates are silently ignored
 				     (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
-				       (if pint
-					   (let* ((xi (car pint))
-						  (yi (cadr pint))
-						  (di (distance xi yi 0.0))
-						  (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											       (- yi prev-y)
-											       0.0)
-										     (distance (- x prev-x)
-											       (- y prev-y)
-											       0.0))
-										  (- time prev-time))))))
-					     ;; see if we are inside the previous group
-					     ;; we can be on either side due to roundoff errors
-					     (let* ((vals (calculate-gains xi yi 0.0 prev-group))
-						    (inside (car vals))
-						    (gains (cadr vals)))
-					       (if inside 
-						   (push-gains prev-group gains di ti)
-						   (let* ((val1 (calculate-gains xi yi 0.0 group))
-							  (inside (car val1))
-							  (gains (cadr val1)))
-						     (if inside
-							 (push-gains group gains di ti)
-							 ;; how did we get here?
-							 (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
+				       (when pint
+					 (let* ((xi (car pint))
+						(yi (cadr pint))
+						(di (distance xi yi 0.0))
+						(ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+											     (- yi prev-y)
+											     0.0)
+										   (distance (- x prev-x)
+											     (- y prev-y)
+											     0.0))
+										(- time prev-time))))))
+					   ;; see if we are inside the previous group
+					   ;; we can be on either side due to roundoff errors
+					   (let* ((vals (calculate-gains xi yi 0.0 prev-group))
+						  (inside (car vals))
+						  (gains (cadr vals)))
+					     (if inside 
+						 (push-gains prev-group gains di ti)
+						 (let* ((val1 (calculate-gains xi yi 0.0 group))
+							(inside (car val1))
+							(gains (cadr val1)))
+						   (if inside
+						       (push-gains group gains di ti)
+						       ;; how did we get here?
+						       (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
 				    
 				    ((and (pair? edge) 
 					  (null? (cdr edge)))

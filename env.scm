@@ -466,34 +466,36 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 		      (mus-sound-framples file)))
 	     (rms (make-moving-average incrsamps)) ; this could use make-moving-rms from dsp.scm
 	     (rms-val 0.0)
-	     (jend 0))
-	(let* ((len (+ 1 (- end start)))
-	       (data (make-float-vector len)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (float-vector-set! data i (next-sample reader)))
-	  (float-vector-multiply! data data)
-	  (do ((i 0 (+ i incrsamps)))
-	      ((>= i end) 
-	       (reverse e))
-	    (set! jend (min end (+ i incrsamps)))
-	    (do ((j i (+ j 1)))
-		((= j jend))
-	      (moving-average rms (float-vector-ref data j)))
-	    (set! e (cons (* 1.0 (/ i fsr)) e))
-	    (set! rms-val (sqrt (* (mus-scaler rms) (mus-increment rms))))
-	    (set! e (cons (if db 
-			      (if (< rms-val 1e-05) -100.0 (* 20.0 (log rms-val 10.0)))
-			      rms-val)
-			  e))))))))
+	     (jend 0)
+	     (len (+ 1 (- end start)))
+	     (data (make-float-vector len)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (float-vector-set! data i (next-sample reader)))
+	(float-vector-multiply! data data)
+	(do ((i 0 (+ i incrsamps)))
+	    ((>= i end) 
+	     (reverse e))
+	  (set! jend (min end (+ i incrsamps)))
+	  (do ((j i (+ j 1)))
+	      ((= j jend))
+	    (moving-average rms (float-vector-ref data j)))
+	  (set! e (cons (* 1.0 (/ i fsr)) e))
+	  (set! rms-val (sqrt (* (mus-scaler rms) (mus-increment rms))))
+	  (set! e (cons (if db 
+			    (if (< rms-val 1e-05) -100.0 (* 20.0 (log rms-val 10.0)))
+			    rms-val)
+			e)))))))
 
 
 (define* (normalize-envelope env1 (new-max 1.0))
-  (define (abs-max-envelope-1 e mx)
-    (if (null? e)
-	mx
-	(abs-max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
-  (scale-envelope env1 (/ new-max (abs-max-envelope-1 (cddr env1) (abs (cadr env1))))))
+  (scale-envelope env1
+		  (/ new-max
+		     (let abs-max-envelope-1 ((e (cddr env1))
+					      (mx (abs (cadr env1))))
+		       (if (null? e)
+			   mx
+			   (abs-max-envelope-1 (cddr e) (max mx (abs (cadr e)))))))))
 
 
 ;;; simplify-envelope
