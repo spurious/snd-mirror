@@ -12130,7 +12130,11 @@
 			     ;; (let*->let*) combined into one
 			     (if (and (pair? body)
 				      (pair? (car body))
-				      (eq? (caar body) 'let*)
+				      (or (eq? (caar body) 'let*)
+					  (and (eq? (caar body) 'let)
+					       (or (null? (cadar body))
+						   (and (pair? (cadar body))
+							(null? (cdadar body))))))
 				      (null? (cdddr form))
 				      (not (symbol? (cadar body))))
 				 (lint-format "perhaps ~A" caller
@@ -13427,5 +13431,12 @@
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; in report-usage, if var val always cont/goto -- check for unreachable code? (would need form)
 ;;; letrec substitution can be extended, but it's tricky
+;;; let*+let(1) -> let*, let+let(if dependent)->let*, let(1)+let*->let*, let+do->do perhaps (if no dependencies)
+;;; let+named-let might be able to convolve args, check let+let
+;;; (if a (if b d e) (if c d e)) -> (if (if a b c) d e)?
+;;; (or (if a c d) (if b c d)) -> (if (or a b) c d)
+;;; (if a (if b c d) d) -> (if (and a b) c d) -- this works now?
+;;; add s7test for let combination if outer body etc
+;;; if let substitute body is named-let/do/define, don't change
 ;;;
 ;;; 111 21295 402883

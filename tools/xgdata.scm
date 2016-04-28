@@ -9339,4 +9339,48 @@
 ;;; 3.19.12 -- same
 ;;; 3.20.0|1|2|3  -- same
 
+;;; 3.21.1:
+
+(CINT-3.22 "GDK_AXIS_IGNORE" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_X" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_Y" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_PRESSURE" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_XTILT" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_YTILT" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_WHEEL" "GdkAxisUse")
+(CINT-3.22 "GDK_AXIS_LAST" "GdkAxisUse")
+
+(CINT-3.22 "GDK_AXIS_FLAG_X" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_Y" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_PRESSURE" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_XTILT" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_YTILT" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_WHEEL" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_DISTANCE" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_ROTATION" "GdkAxisFlags")
+(CINT-3.22 "GDK_AXIS_FLAG_SLIDER" "GdkAxisFlags")
+
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_UNKNOWN" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_PEN" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_ERASER" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_BRUSH" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_PENCIL" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_AIRBRUSH" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_MOUSE" "GdkDeviceToolType")
+(CINT-3.22 "GDK_DEVICE_TOOL_TYPE_LENS" "GdkDeviceToolType")
+
+(CCAST-3.22 "GDK_DEVICE_TOOL(object)" "GdkDeviceTool*")
+(CCHK-3.22 "GDK_IS_DEVICE_TOOL(object)" "GdkDeviceTool*")
+
+(CFNC-3.22 "GdkAxisFlags gdk_device_get_axes GdkDevice* device")
+(CFNC-3.22 "GdkDeviceTool* gdk_event_get_device_tool GdkEvent* event")
+(CFNC-3.22 "void gdk_event_set_device_tool GdkEvent* event GdkDeviceTool* tool")
+(CFNC-3.22 "int gdk_event_get_scancode GdkEvent* event")
+(CFNC-3.22 "void gdk_gl_context_set_use_es GdkGLContext* context gboolean use_es")
+(CFNC-3.22 "gboolean gdk_gl_context_get_use_es GdkGLContext* context")
+(CFNC-3.22 "PangoContext* gdk_pango_context_get_for_display GdkDisplay* display")
+(CFNC-3.22 "GdkAtom gtk_clipboard_get_selection GtkClipboard* clipboard")
+(CFNC-3.22 "void gtk_gl_area_set_use_es GtkGLArea* area gboolean use_es")
+(CFNC-3.22 "gboolean gtk_gl_area_get_use_es GtkGLArea* area")
+(CFNC-3.22 "guint gdk_device_tool_get_serial GdkDeviceTool* tool")
 
