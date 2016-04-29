@@ -125,17 +125,17 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 (define (mix-click-sets-amp)
   (hook-push mix-click-hook 
 	     (lambda (hook)
-	       (let ((n (hook 'id)))
-		 (let ((zeroed (mix-property :zero n)))
-		   (if zeroed
-		       (begin
-			 (set! (mix-amp n) (mix-property :amp n))
-			 (set! (mix-property :zero n) #f))
-		       (begin
-			 (set! (mix-property :amp n) (mix-amp n))
-			 (set! (mix-amp n) 0.0)
-			 (set! (mix-property :zero n) #t)))
-		   (set! (hook 'result) #t))))))
+	       (let* ((n (hook 'id))
+		      (zeroed (mix-property :zero n)))
+		 (if zeroed
+		     (begin
+		       (set! (mix-amp n) (mix-property :amp n))
+		       (set! (mix-property :zero n) #f))
+		     (begin
+		       (set! (mix-property :amp n) (mix-amp n))
+		       (set! (mix-amp n) 0.0)
+		       (set! (mix-property :zero n) #t)))
+		 (set! (hook 'result) #t)))))
 
 					;(mix-click-sets-amp)
 

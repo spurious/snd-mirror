@@ -42,28 +42,21 @@
 	(set! in-glu #f))))
 
 (define (cadr-str data)
-  (let ((sp1 (char-position #\space data)))
-    (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (substring data (if sp2 (values (+ sp1 1) sp2) sp1)))))
+  (let* ((sp1 (char-position #\space data))
+	 (sp2 (char-position #\space data (+ sp1 1))))
+    (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let ((sp1 (char-position #\space data)))
-    (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (let ((sp3 (char-position #\space data (+ sp2 1))))
-	(substring data (if sp3 (+ sp2 1) sp2))))))
+  (let* ((sp1 (char-position #\space data))
+	 (sp2 (char-position #\space data (+ sp1 1))))
+    (let ((sp3 (char-position #\space data (+ sp2 1))))
+      (substring data (if sp3 (+ sp2 1) sp2)))))
 
 (define (car-str data)
   (let ((sp (char-position #\space data)))
     (if sp
 	(substring data 0 sp)
 	data)))
-#|
-(define (cdr-str data)
-  (let ((sp (char-position #\space data)))
-    (if sp
-	(substring data (+ sp 1))
-	data)))
-|#
 
 (define (ref-arg? arg)
   (and (= (length arg) 3)
@@ -101,17 +94,6 @@
 
 (define (deref-name arg)
   (string-append "ref_" (cadr arg)))
-#|
-(define (derefable type)
-  (let ((len (length type)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i (- len 1) (- i 1))
-	    (ctr 0 (+ 1 ctr)))
-	   ((= i 0) #f)
-	 (if (not (char=? (type i) #\*))
-	     (return (> ctr 1))))))))
-|#
 
 (define (has-stars type)
   (let ((len (length type)))
@@ -134,16 +116,6 @@
 		((= i len) val)
 	      (if (char=? (val i) #\*)
 		  (set! (val i) #\_)))))))
-#|
-(define (no-arg-or-stars name)
-  (let ((len (length name)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) name)
-	 (if (memv (name i) '(#\( #\*))
-	     (return (substring name 0 i))))))))
-|#
 
 (define* (parse-args args x)
   (let ((data ())
@@ -363,16 +335,6 @@
       (begin
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))
-#|
-(define (no-arg name)
-  (let ((len (length name)))
-    (call-with-exit
-     (lambda (return)
-       (do ((i 0 (+ i 1)))
-	   ((= i len) name)
-	 (if (char=? (name i) #\()
-	     (return (substring name 0 i))))))))
-|#
 
 ;;; ---------------------------------------- read data ---------------------------------------- 
 

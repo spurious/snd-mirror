@@ -299,12 +299,11 @@
 (define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
-(define-macro (let-temporarily vars . body)
+(define-macro (let*-temporarily vars . body)
   `(with-let (#_inlet :orig (#_curlet) 
 		      :saved (#_list ,@(map car vars)))
      (dynamic-wind
-	 (lambda ()
-	   #f)
+	 (lambda () #f)
 	 (lambda ()
 	   (with-let orig
 	     ,@(map (lambda (v)
@@ -315,8 +314,30 @@
 	   ,@(map (let ((ctr -1))
 		    (lambda (v)
 		      (if (symbol? (car v))
-			    `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
-			    `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
+			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
+		  vars)))))
+
+(define-macro (let-temporarily vars . body)
+  `(with-let (#_inlet :orig (#_curlet) 
+		      :saved (#_list ,@(map car vars))
+		      :new (#_list ,@(map cadr vars)))
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda () ; this could be (with-let orig (let ,vars ,@body)) but I want to handle stuff like individual vector locations
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1)))))))
+		    vars)
+	   (with-let orig ,@body)) 
+	 (lambda ()
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
 		  vars)))))
 
 (define-macro (while test . body)         ; while loop with predefined break and continue

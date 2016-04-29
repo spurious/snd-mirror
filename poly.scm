@@ -39,11 +39,11 @@
 (define poly-as-vector-eval 
   (let ((documentation "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"))
     (lambda (v x)
-      (let ((top (- (length v) 1)))
-	(let ((sum (v top)))
-	  (do ((i (- top 1) (- i 1)))
-	      ((< i 0) sum)
-	    (set! sum (+ (* sum x) (v i)))))))))
+      (let* ((top (- (length v) 1))
+	     (sum (v top)))
+	(do ((i (- top 1) (- i 1)))
+	    ((< i 0) sum)
+	  (set! sum (+ (* sum x) (v i))))))))
 
 
 (define poly-as-vector-reduce 

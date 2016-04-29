@@ -6,35 +6,35 @@
   (let ((documentation "(html arg) where arg can be a string, symbol, or procedure looks for a corresponding url 
 and if one is found, and the Snd documentation can be found, calls *html-program* with that url"))
     (lambda (obj)
-      (let ((goto-html
-	     (lambda (n)
-	       ;; look for doc on current dir, then html dir, then global dir
-	       ;; snd.html is what we'll search for
-	       (let ((dir (cond ((file-exists? "snd.html") (getcwd))
-				((and (string? *html-dir*)
-				      (file-exists? (string-append *html-dir* "/snd.html")))
-				 *html-dir*)
-				((file-exists? "/usr/share/doc/snd-16/snd.html")       "/usr/share/doc/snd-16")
-				((file-exists? "/usr/local/share/doc/snd-16/snd.html") "/usr/local/share/doc/snd-16")
-				((file-exists? "/usr/doc/snd-16/snd.html")             "/usr/doc/snd-16")
-				((file-exists? "/usr/share/doc/snd-15/snd.html")       "/usr/share/doc/snd-15")
-				((file-exists? "/usr/local/share/doc/snd-15/snd.html") "/usr/local/share/doc/snd-15")
-				(else (and (file-exists? "/usr/doc/snd-15/snd.html")   "/usr/doc/snd-15")))))
-		 (if dir
-		     (system (string-append *html-program* " file:" dir "/" n)))))))
-	
-	(let ((name (if (string? obj) 
-			obj
-			(if (symbol? obj) 
-			    (symbol->string obj)
-			    (let ((doc (and (procedure? obj)
-					    (procedure-documentation obj))))
-			      (if (and (string? doc)
-				       (char=? (doc 0) #\())
-				  (let ((pos (char-position ") " doc)))
-				    (and pos
-					 (substring doc 1 pos)))))))))
-	  (if (string? name)
-	      (cond ((snd-url name) => goto-html)
-		    (else (snd-print (format #f "no url for ~A?" name))))
-	      (snd-print (format #f "no doc for ~A?" name))))))))
+      (let* ((goto-html
+	      (lambda (n)
+		;; look for doc on current dir, then html dir, then global dir
+		;; snd.html is what we'll search for
+		(let ((dir (cond ((file-exists? "snd.html") (getcwd))
+				 ((and (string? *html-dir*)
+				       (file-exists? (string-append *html-dir* "/snd.html")))
+				  *html-dir*)
+				 ((file-exists? "/usr/share/doc/snd-16/snd.html")       "/usr/share/doc/snd-16")
+				 ((file-exists? "/usr/local/share/doc/snd-16/snd.html") "/usr/local/share/doc/snd-16")
+				 ((file-exists? "/usr/doc/snd-16/snd.html")             "/usr/doc/snd-16")
+				 ((file-exists? "/usr/share/doc/snd-15/snd.html")       "/usr/share/doc/snd-15")
+				 ((file-exists? "/usr/local/share/doc/snd-15/snd.html") "/usr/local/share/doc/snd-15")
+				 (else (and (file-exists? "/usr/doc/snd-15/snd.html")   "/usr/doc/snd-15")))))
+		  (if dir
+		      (system (string-append *html-program* " file:" dir "/" n))))))
+	     
+	     (name (if (string? obj) 
+		       obj
+		       (if (symbol? obj) 
+			   (symbol->string obj)
+			   (let ((doc (and (procedure? obj)
+					   (procedure-documentation obj))))
+			     (if (and (string? doc)
+				      (char=? (doc 0) #\())
+				 (let ((pos (char-position ") " doc)))
+				   (and pos
+					(substring doc 1 pos)))))))))
+	(if (string? name)
+	    (cond ((snd-url name) => goto-html)
+		  (else (snd-print (format #f "no url for ~A?" name))))
+	    (snd-print (format #f "no doc for ~A?" name)))))))

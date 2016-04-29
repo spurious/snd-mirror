@@ -7302,12 +7302,7 @@ lambda: ( -- )
 </pre>
 
 <p>These are arrays (float-vectors) containing the spectral data the phase-vocoder uses to
-reconstruct the sound.  See clm23.scm for examples,
-in particular pvoc-e that
-specifies all of the functions with their default values (that is, it explicitly passes
-in functions that do what the phase-vocoder would have done without any function arguments).
-pvoc.scm implements the phase-vocoder directly in Scheme (rather than going through the CLM
-generator).
+reconstruct the sound.
 In the next example we use all these special functions to resynthesize down an octave:
 </p>
 
@@ -7585,7 +7580,7 @@ continue-frample-&gt;file and continue-sample-&gt;file reopen an existing file t
 mus-output? returns #t is its argument is some sort of file writing generator, and mus-input? returns #t if its 
 argument is a file reader.  
 In make-file-&gt;sample and make-file-&gt;frample, the buffer-size defaults to *clm-file-buffer-size*.
-There are many examples of these functions in snd-test.scm, clm-ins.scm, and clm23.scm.
+There are many examples of these functions in snd-test.scm, and clm-ins.scm.
 Here is one that uses file-&gt;sample to mix in a sound file (there are a zillion other ways to do this):
 </p>
 
@@ -10851,14 +10846,6 @@ test 23 in snd-test.
     <td class="br">ugex.ins</td>        
 	<td class="br"><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td class="br"><a href="clm-ins.rb">clm-ins.rb</a></td>
-    <td></td>
-    </tr>
-
-<tr><td class="br">test ins</td>          
-    <td class="br">CLM regression tests &mdash; see clm-test.lisp</td>      
-    <td class="br">ug(1,2,3,4).ins</td>   
-	<td class="br"><a href="clm23.scm">clm23.scm</a></td>
-    <td></td>
     <td></td>
     </tr>
 

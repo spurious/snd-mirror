@@ -222,10 +222,10 @@
 	  ;; (xe-create-enved "hi" ((sound-widgets 0) 9) () '(0.0 1.0 0.0 1.0))
 	  
 	  (define (local-draw-axes wid gc label x0 x1 y0 y1)
-	    (let ((cr (make-cairo wid)))
-	      (let ((val (draw-axes wid gc label x0 x1 y0 y1 x-axis-in-seconds show-all-axes cr)))
-		(free-cairo cr)
-		val)))
+	    (let* ((cr (make-cairo wid))
+		   (val (draw-axes wid gc label x0 x1 y0 y1 x-axis-in-seconds show-all-axes cr)))
+	      (free-cairo cr)
+	      val))
 	  
 	  (gtk_widget_set_events drawer GDK_ALL_EVENTS_MASK)
 	  (gtk_box_pack_start (GTK_BOX parent) drawer #t #t 10)

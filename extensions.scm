@@ -441,14 +441,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define dither-channel 
   (let ((documentation "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"))
     (lambda* ((amount .00006) (beg 0) dur snd chn edpos)
-      (let ((dither (* .5 amount)))
-	(let* ((len (if (number? dur) dur (- (framples snd chn) beg)))
-	       (data (samples beg len snd chn edpos)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))
-	  (float-vector->channel data beg len snd chn current-edit-position
-				 (format #f "dither-channel ~,8F ~A ~A" amount beg dur)))))))
+      (let* ((dither (* .5 amount))
+	     (len (if (number? dur) dur (- (framples snd chn) beg)))
+	     (data (samples beg len snd chn edpos)))
+	(do ((i 0 (+ i 1)))
+	    ((= i len))
+	  (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))
+	(float-vector->channel data beg len snd chn current-edit-position
+			       (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))))
 
 
 (define dither-sound 

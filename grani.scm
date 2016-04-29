@@ -2,9 +2,6 @@
 ;;;    ENVELOPES (env.scm)
 ;;; *************************
 
-(when (provided? 'pure-s7)
-  (define-macro (call-with-values producer consumer) `(,consumer (,producer))))
-
 
 ;;;=============================================================================
 ;;; Exponential envelopes
@@ -73,14 +70,12 @@
 			      ;; yes --> don't need to add nu'ting to the envelope
 			      (values () ())
 			      ;; no --> add a breakpoint and recurse right and left
-			      (call-with-values
-				  (lambda () (exp-seg xl yle xint yexp yl yint error))
-				(lambda (xi yi)
-				  (call-with-values
-				      (lambda () (exp-seg xint yexp xh yhe yint yh error))
-				    (lambda (xj yj)
-				      (values (append xi (list xint) xj)
-					      (append yi (list yexp) yj)))))))))))
+			      ((lambda (xi yi)
+				 ((lambda (xj yj)
+				    (values (append xi (list xint) xj) 
+					    (append yi (list yexp) yj)))
+				  (exp-seg xint yexp xh yhe yint yh error)))
+			       (exp-seg xl yle xint yexp yl yint error)))))))
 			      
       ;; loop for each segment in the envelope
       (let segs ((en env1))
@@ -95,18 +90,16 @@
 			       (* out-scaler (expt base yscl))
 			       0.0))))
 	  (set! result (append result xy))
-	  (call-with-values
-	      (lambda () (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
-	    (lambda (xs ys)
-	      (if (pair? ys)
-		  (let ((ys-scaled (map (lambda (y) (* y out-scaler)) ys)))
-		    (let vals ((xx xs) 
-			       (yy ys-scaled))
-		      (let ((x (car xx))
-			    (y (car yy)))
-			(set! result (append result (list x y)))
-			(if (pair? (cdr xx))
-			    (vals (cdr xx) (cdr yy)))))))))
+	  ((lambda (xs ys)
+	     (if (pair? ys)
+		 (let vals ((xx xs)
+			    (yy (map (lambda (y) (* y out-scaler)) ys)))
+		   (let ((x (car xx))
+			 (y (car yy)))
+		     (set! result (append result (list x y)))
+		     (if (pair? (cdr xx))
+			 (vals (cdr xx) (cdr yy)))))))
+	   (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
 	  (if (<= (length en) 4)
 	      (append result (list nx (if (or (not ycutoff)
 					      (>= (expt base nyscl) ycutoff))

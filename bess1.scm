@@ -153,10 +153,8 @@
 (define amps (make-vector (+ 1 lim) 0))
 
 (define (tune x)
-  (let* ((pit (modulo x 12))
-	 (oct (floor (/ x 12)))
-	 (base (rats pit)))
-    (* base (expt 2 oct))))
+  (* (rats (modulo x 12))
+     (expt 2 (floor (/ x 12)))))
 
 (define (rbell x)
   (envelope-interp (* x 100) bell))

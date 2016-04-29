@@ -405,9 +405,9 @@
 		  (set! table-location (+ table-location table-increment))
 		  (if (>= table-location table-size)
 		      (set! table-location (- table-location table-size)))
-		  (let ((int-loc (floor table-location)))
-		    (let ((table1 (glot-table int-loc)))
-		      (set! glotsamp (+ glotsamp (* (env glot-env) (+ table1 (* s-glot-mix (- (glot-table2 int-loc) table1))))))))))
+		  (let* ((int-loc (floor table-location))
+			 (table1 (glot-table int-loc)))
+		    (set! glotsamp (+ glotsamp (* (env glot-env) (+ table1 (* s-glot-mix (- (glot-table2 int-loc) table1)))))))))
 	    
 	    ;; next tract tick
 	    (let ((j 0)

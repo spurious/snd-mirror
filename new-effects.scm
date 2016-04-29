@@ -2599,10 +2599,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		      (XtSetValues combo (list XmNselectedPosition 1))
 		      (XtAddCallback combo XmNselectionCallback
 				     (lambda (w c i)
-				       (let* ((selected (.item_or_text i))
-					      (size-as-string (XmStringUnparse selected #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
-					 (set! cross-synth-fft-size (string->number size-as-string))))))
-		    
+				       (set! cross-synth-fft-size 
+					     (string->number (XmStringUnparse (.item_or_text i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))))))
 		    ;; this block creates a "radio button box"
 		    (let* ((s1 (XmStringCreateLocalized "FFT size"))
 			   (frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))

@@ -74352,6 +74352,7 @@ int main(int argc, char **argv)
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
  * (define-macro (import e) `(#_varlet (#_curlet) ,e)) or something like that?
+ * need tests for let-temporarily
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 
