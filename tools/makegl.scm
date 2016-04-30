@@ -48,9 +48,9 @@
 
 (define (caddr-str data)
   (let* ((sp1 (char-position #\space data))
-	 (sp2 (char-position #\space data (+ sp1 1))))
-    (let ((sp3 (char-position #\space data (+ sp2 1))))
-      (substring data (if sp3 (+ sp2 1) sp2)))))
+	 (sp2 (char-position #\space data (+ sp1 1)))
+	 (sp3 (char-position #\space data (+ sp2 1))))
+    (substring data (if sp3 (+ sp2 1) sp2))))
 
 (define (car-str data)
   (let ((sp (char-position #\space data)))

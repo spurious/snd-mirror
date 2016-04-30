@@ -335,14 +335,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (lambda* (snd chn)
       (let* ((len (framples snd chn))
 	     (data (channel->float-vector 0 (+ len 2) snd chn))
-	     (amp (maxamp snd chn))) ; keep resultant peak at maxamp
-	;; multiply x[0]*x[1]*x[2]
-	(let ((data1 (make-float-vector (+ len 1))))
-	  (copy data data1 1)
-	  (float-vector-abs! (float-vector-multiply! data1 data))
-	  (float-vector-multiply! data (make-shared-vector data1 (list len) 1))
-	  (let ((amp1 (/ amp (float-vector-peak data))))
-	    (float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike")))))))
+	     (amp (maxamp snd chn)) ; keep resultant peak at maxamp
+	     ;; multiply x[0]*x[1]*x[2]
+	     (data1 (make-float-vector (+ len 1))))
+	(copy data data1 1)
+	(float-vector-abs! (float-vector-multiply! data1 data))
+	(float-vector-multiply! data (make-shared-vector data1 (list len) 1))
+	(let ((amp1 (/ amp (float-vector-peak data))))
+	  (float-vector->channel (float-vector-scale! data amp1) 0 len snd chn current-edit-position "spike"))))))
 
 ;;; the more successive samples we include in the product, the more we
 ;;;   limit the output to pulses placed at (just after) wave peaks
@@ -391,10 +391,9 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	      (chorus-amount 20.0)
 	      (chorus-speed 10.0))
 	  (lambda ()
-	    (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-		   (len (floor (random (* 3.0 chorus-time (srate)))))
-		   (gen (make-delay len :max-size (+ len chorus-amount 1))))
-	      (list gen ri)))))
+	    (let ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
+		  (len (floor (random (* 3.0 chorus-time (srate))))))
+	      (list (make-delay len :max-size (+ len chorus-amount 1)) ri)))))
       
       (define (flanger dly inval)
 	(+ inval 
@@ -818,14 +817,14 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       ;; this is the same as iir-low-pass-2 below with 'din' set to (sqrt 2.0) -- similarly with the others
       (let* ((r (tan (/ (* pi fq) (srate))))
 	     (r2 (* r r))
-	     (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
-	     (c2  (* -2.0 c1))
-	     (c3 c1)
-	     (c4 (* 2.0 (- r2 1.0) c1))
-	     (c5 (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
+	     (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2))))
 	(make-filter 3
-		     (float-vector c1 c2 c3)
-		     (float-vector 0.0 c4 c5))))))
+		     (float-vector c1 
+				   (* -2.0 c1)
+				   c1)
+		     (float-vector 0.0 
+				   (* 2.0 (- r2 1.0) c1)
+				   (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))))))
 
 (define make-butter-low-pass
   (let ((documentation "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result \
@@ -1418,9 +1417,9 @@ the era when computers were human beings"))
   (let ((documentation "(channel-variance snd chn) returns the sample variance in the given channel: <f,f>-((<f,1>/ n)^2"))
     (lambda* (snd chn) 
       (let* ((N (framples snd chn))
-	     (mu (* (/ N (- N 1)) (channel-mean snd chn))) ; avoid bias sez JOS
-	     (P (channel-total-energy snd chn)))
-	(- P (* mu mu))))))
+	     (mu (* (/ N (- N 1)) (channel-mean snd chn)))) ; avoid bias sez JOS
+	(- (channel-total-energy snd chn) 
+	   (* mu mu))))))
 
 (define channel-norm                      ; sqrt(<f, f>)
   (let ((documentation "(channel-norm snd chn) returns the norm of the samples in the given channel: sqrt(<f,f>)"))
@@ -1936,10 +1935,8 @@ and replaces it with the spectrum given in coeffs"))
 				  (set! next (read-sample rd)))
 				(set! pos (- pos num))))
 			  (set! intrp (+ pos sr))
-			  (+ last (* pos (- next last))))
-			))))
-	     (len (framples tempfile)))
-	(set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
+			  (+ last (* pos (- next last)))))))))
+	(set-samples 0 (- (framples tempfile) 1) tempfile snd chn #t "linear-src" 0 #f #t)
 	;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
 	))))
 

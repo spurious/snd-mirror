@@ -70,12 +70,11 @@
 			      ;; yes --> don't need to add nu'ting to the envelope
 			      (values () ())
 			      ;; no --> add a breakpoint and recurse right and left
-			      ((lambda (xi yi)
-				 ((lambda (xj yj)
-				    (values (append xi (list xint) xj) 
-					    (append yi (list yexp) yj)))
-				  (exp-seg xint yexp xh yhe yint yh error)))
-			       (exp-seg xl yle xint yexp yl yint error)))))))
+			      ((lambda (xi yi xj yj)
+				 (values (append xi (list xint) xj) 
+					 (append yi (list yexp) yj)))
+			       (exp-seg xl yle xint yexp yl yint error)
+			       (exp-seg xint yexp xh yhe yint yh error)))))))
 			      
       ;; loop for each segment in the envelope
       (let segs ((en env1))

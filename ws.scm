@@ -773,18 +773,18 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define-macro (defgenerator struct-name . fields)
 
   (define (list->bindings lst)
-    (let ((len (length lst)))
-      (let ((nlst (make-list (* len 2))))
-	(do ((old lst (cdr old))
-	     (nsym nlst (cddr nsym)))
-	    ((null? old) nlst)
-	  (if (pair? (car old))
-	      (begin
-		(list-set! nsym 1 (caar old))
-		(list-set! nsym 0 (list 'quote (caar old))))
-	      (begin
-		(list-set! nsym 1 (car old))
-		(list-set! nsym 0 (list 'quote (car old)))))))))
+    (let* ((len (length lst))
+	   (nlst (make-list (* len 2))))
+      (do ((old lst (cdr old))
+	   (nsym nlst (cddr nsym)))
+	  ((null? old) nlst)
+	(if (pair? (car old))
+	    (begin
+	      (list-set! nsym 1 (caar old))
+	      (list-set! nsym 0 (list 'quote (caar old))))
+	    (begin
+	      (list-set! nsym 1 (car old))
+	      (list-set! nsym 0 (list 'quote (car old))))))))
 
   (let* ((name (if (pair? struct-name) 
 		   (car struct-name) 

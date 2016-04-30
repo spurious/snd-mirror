@@ -1441,24 +1441,24 @@
       (let* ((vals (bezier-point u c))
 	     (x (car vals))
 	     (y (cadr vals))
-	     (z (caddr vals)))
-	(let* ((val1 (nearest-point xl yl zl xh yh zh x y z))
-	       (xn (car val1))
-	       (yn (cadr val1))
-	       (zn (caddr val1)))
-	  (if (<= (distance (- xn x) (- yn y) (- zn z)) err)
-	      (list () () ())
-	      (let* ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
-		     (xi (car val2))
-		     (yi (cadr val2))
-		     (zi (caddr val2)))
-		(let* ((val3 (berny x y z xh yh zh u (/ (+ u uh) 2) uh c err))
-		       (xj (car val3))
-		       (yj (cadr val3))
-		       (zj (caddr val3)))
-		  (list (append xi (list x) xj)
-			(append yi (list y) yj)
-			(append zi (list z) zj))))))))
+	     (z (caddr vals))
+	     (val1 (nearest-point xl yl zl xh yh zh x y z))
+	     (xn (car val1))
+	     (yn (cadr val1))
+	     (zn (caddr val1)))
+	(if (<= (distance (- xn x) (- yn y) (- zn z)) err)
+	    (list () () ())
+	    (let* ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
+		   (xi (car val2))
+		   (yi (cadr val2))
+		   (zi (caddr val2))
+		   (val3 (berny x y z xh yh zh u (/ (+ u uh) 2) uh c err))
+		   (xj (car val3))
+		   (yj (cadr val3))
+		   (zj (caddr val3)))
+	      (list (append xi (list x) xj)
+		    (append yi (list y) yj)
+		    (append zi (list z) zj))))))
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
@@ -1493,31 +1493,30 @@
 		     (yi-bz (car y-bz))
 		     (yf-bz (y-bz (- (length y-bz) 1)))
 		     (zi-bz (car z-bz))
-		     (zf-bz (z-bz (- (length z-bz) 1))))
-		(let* ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
-				    (vector (apply vector x-bz)
-					    (apply vector y-bz)
-					    (apply vector z-bz))
-				    (bezier-error path)))
-		       (xs (car vals))
-		       (ys (cadr vals))
-		       (zs (caddr vals)))
-		  
-		  ;; approximate the bezier curve with linear segments
-		  (set! xrx (append xrx (list xi-bz) xs))
-		  (set! xry (append xry (list yi-bz) ys))
-		  (set! xrz (append xrz (list zi-bz) zs))
-		  
-		  ;; accumulate intermediate unknown velocities as nils
-		  (set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
-		  (if (= i (- len 1))
-		      (begin
-			;; add the last point
-			(set! xrx (append xrx (list xf-bz)))
-			(set! xry (append xry (list yf-bz)))
-			(set! xrz (append xrz (list zf-bz)))
-			(set! xrv (append xrv (list vf-bz)))
-			))))))
+		     (zf-bz (z-bz (- (length z-bz) 1)))
+		     (vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
+				  (vector (apply vector x-bz)
+					  (apply vector y-bz)
+					  (apply vector z-bz))
+				  (bezier-error path)))
+		     (xs (car vals))
+		     (ys (cadr vals))
+		     (zs (caddr vals)))
+		
+		;; approximate the bezier curve with linear segments
+		(set! xrx (append xrx (list xi-bz) xs))
+		(set! xry (append xry (list yi-bz) ys))
+		(set! xrz (append xrz (list zi-bz) zs))
+		
+		;; accumulate intermediate unknown velocities as nils
+		(set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
+		(if (= i (- len 1))
+		    (begin
+		      ;; add the last point
+		      (set! xrx (append xrx (list xf-bz)))
+		      (set! xry (append xry (list yf-bz)))
+		      (set! xrz (append xrz (list zf-bz)))
+		      (set! xrv (append xrv (list vf-bz))))))))
 	  
 	  ;; calculate times for each velocity segment
 	  (let ((ti 0)
@@ -1983,25 +1982,25 @@
 	     (start-time (car tcoords))
 	     (end-time (tcoords (- (length tcoords) 1)))
 	     (total-time (- end-time start-time))
-	     (velocity (/ total-distance total-time)))
-	(let ((now ()))
-	  (do ((dist 0.0)
-	       (len (length xcoords))
-	       (i 0 (+ i 1)))
-	      ((= i len))
-	    (let ((xp (xcoords i))
-		  (x (xcoords (+ i 1)))
-		  (yp (ycoords i))
-		  (y (ycoords (+ i 1)))
-		  (zp (zcoords i))
-		  (z (zcoords (+ i 1))))
-	      (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
-	      (set! now (cons (/ dist velocity) now))))
-	  (set! now (reverse now))
-	  (set! (path-rt path) (cons start-time now))
-	  (set! (path-tx path) (copy (path-rx path)))
-	  (set! (path-ty path) (copy (path-ry path)))
-	  (set! (path-tz path) (copy (path-rz path)))))
+	     (velocity (/ total-distance total-time))
+	     (now ()))
+	(do ((dist 0.0)
+	     (len (length xcoords))
+	     (i 0 (+ i 1)))
+	    ((= i len))
+	  (let ((xp (xcoords i))
+		(x (xcoords (+ i 1)))
+		(yp (ycoords i))
+		(y (ycoords (+ i 1)))
+		(zp (zcoords i))
+		(z (zcoords (+ i 1))))
+	    (set! dist (+ dist (distance (- x xp) (- y yp) (- z zp))))
+	    (set! now (cons (/ dist velocity) now))))
+	(set! now (reverse now))
+	(set! (path-rt path) (cons start-time now))
+	(set! (path-tx path) (copy (path-rx path)))
+	(set! (path-ty path) (copy (path-ry path)))
+	(set! (path-tz path) (copy (path-rz path))))
       path)))
 
 
@@ -2429,21 +2428,21 @@
 										   (distance (- x prev-x)
 											     (- y prev-y)
 											     (- z prev-z)))
-										(- time prev-time))))))
-					   ;; see if we are inside the previous group
-					   ;; we can be on either side due to roundoff errors
-					   (let* ((vals (calculate-gains xi yi zi prev-group))
-						  (inside (car vals))
-						  (gains (cadr vals)))
-					     (if inside
-						 (push-gains prev-group gains di ti)
-						 (let* ((val1 (calculate-gains xi yi zi group))
-							(inside (car val1))
-							(gains (cadr val1)))
-						   (if inside
-						       (push-gains group gains di ti)
-						       ;; how did we get here?
-						       (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti)))))))))
+										(- time prev-time)))))
+						;; see if we are inside the previous group
+						;; we can be on either side due to roundoff errors
+						(vals (calculate-gains xi yi zi prev-group))
+						(inside (car vals))
+						(gains (cadr vals)))
+					   (if inside
+					       (push-gains prev-group gains di ti)
+					       (let* ((val1 (calculate-gains xi yi zi group))
+						      (inside (car val1))
+						      (gains (cadr val1)))
+						 (if inside
+						     (push-gains group gains di ti)
+						     ;; how did we get here?
+						     (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti))))))))
 				    
 				    ((and (pair? edge) 
 					  (null? (cdr edge))
@@ -2461,21 +2460,21 @@
 										   (distance (- x prev-x)
 											     (- y prev-y)
 											     0.0))
-										(- time prev-time))))))
-					   ;; see if we are inside the previous group
-					   ;; we can be on either side due to roundoff errors
-					   (let* ((vals (calculate-gains xi yi 0.0 prev-group))
-						  (inside (car vals))
-						  (gains (cadr vals)))
-					     (if inside 
-						 (push-gains prev-group gains di ti)
-						 (let* ((val1 (calculate-gains xi yi 0.0 group))
-							(inside (car val1))
-							(gains (cadr val1)))
-						   (if inside
-						       (push-gains group gains di ti)
-						       ;; how did we get here?
-						       (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti)))))))))
+										(- time prev-time)))))
+						;; see if we are inside the previous group
+						;; we can be on either side due to roundoff errors
+						(vals (calculate-gains xi yi 0.0 prev-group))
+						(inside (car vals))
+						(gains (cadr vals)))
+					   (if inside 
+					       (push-gains prev-group gains di ti)
+					       (let* ((val1 (calculate-gains xi yi 0.0 group))
+						      (inside (car val1))
+						      (gains (cadr val1)))
+						 (if inside
+						     (push-gains group gains di ti)
+						     ;; how did we get here?
+						     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
 				    
 				    ((and (pair? edge) 
 					  (null? (cdr edge)))
@@ -2488,11 +2487,12 @@
 					(if (and (member (car edge) (group-vertices int-group))
 						 (not (equal? int-group group))
 						 (not (equal? int-group prev-group)))
-					    (let ((edge1 (equalp-intersection (group-vertices int-group)
-									      (group-vertices prev-group)))
-						  (edge2 (equalp-intersection (group-vertices int-group)
-									      (group-vertices group))))
-					      (format () "e1=~A; e2=~A~%~%" edge1 edge2))))
+					    (format () "e1=~A; e2=~A~%~%"
+						    (equalp-intersection (group-vertices int-group)
+									 (group-vertices prev-group))
+						    (equalp-intersection (group-vertices int-group)
+									 (group-vertices group)))))
+					      
 				      (speaker-config-groups speakers))
 				     (format () "warning: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
 				    

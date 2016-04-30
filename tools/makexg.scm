@@ -175,28 +175,21 @@
 	))
 
 (define (cadr-str data)
-  (let ((sp1 (char-position #\space data)))
-    (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (substring data (if sp2 (values (+ sp1 1) sp2) sp1)))))
+  (let* ((sp1 (char-position #\space data))
+	 (sp2 (char-position #\space data (+ sp1 1))))
+    (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let ((sp1 (char-position #\space data)))
-    (let ((sp2 (char-position #\space data (+ sp1 1))))
-      (let ((sp3 (char-position #\space data (+ sp2 1))))
-	(substring data (if sp3 (+ sp2 1) sp2))))))
+  (let* ((sp1 (char-position #\space data))
+	 (sp2 (char-position #\space data (+ sp1 1)))
+	 (sp3 (char-position #\space data (+ sp2 1))))
+    (substring data (if sp3 (+ sp2 1) sp2))))
 
 (define (car-str data)
   (let ((sp (char-position #\space data)))
     (if sp
 	(substring data 0 sp)
 	data)))
-#|
-(define (cdr-str data)
-  (let ((sp (char-position #\space data)))
-    (if sp
-	(substring data (+ sp 1))
-	data)))
-|#
 
 (define (remove-if p lst)
   (cond ((null? lst) ())
@@ -215,11 +208,6 @@
 (define (opt-arg? arg)
   (and (= (length arg) 3)
        (eq? (caddr arg) 'opt)))
-#|
-(define (settable-field? arg)
-  (and (= (length arg) 3)
-       (eq? (caddr arg) 'set)))
-|#
 
 (define (ref-args args)
   (let ((ctr 0))
@@ -264,13 +252,6 @@
 	((= i len) val)
       (if (char=? (val i) #\*)
 	  (set! (val i) #\_)))))
-#|
-(define (no-arg-or-stars name)
-  (let ((pos (char-position "(*" name)))
-    (if pos
-	(substring name 0 pos)
-	name)))
-|#
 
 (define (parse-args args extra)
   (let ((data ())
@@ -1735,97 +1716,97 @@
 
 (hey "~%~%/* ---------------------------------------- callback handlers ---------------------------------------- */~%~%")
 
-(let ((funcs-done ()))
-  (let ((xc (lambda (func)
-	      (let* ((name (callback-func func))
-		     (type (callback-type func))
-		     (args (callback-args func))
-		     (gctype (callback-gc func))
-		     (fname (callback-name func))
-		     (void? (string=? type "void")))
-		(unless (member name funcs-done)
-		  (set! funcs-done (cons name funcs-done))
-		  (if (callback-version func)
-		      (hey (string-append "#if GTK_CHECK_VERSION(" (substring (callback-version func) 0 1) ", " (substring (callback-version func) 2) ", 0)~%")))
-		  
-		  (hey "static ~A gxg_~A("
-		       type
-		       name)
-		  (let ((previous-arg #f)
-			(ctr 0))
-		    (for-each
-		     (lambda (arg)
-		       (if previous-arg (hey ", "))
-		       ;; ctr is 0-based here
-		       (if (or (and (memq fname '(GtkClipboardTextReceivedFunc GtkAccelMapForeach GtkEntryCompletionMatchFunc)) 
-				    (= ctr 1)) 
-			       (and (memq fname '(GtkTreeViewSearchEqualFunc GLogFunc GtkClipboardRichTextReceivedFunc)) 
-				    (= ctr 2)) 
-			       (and (memq fname '(GtkFileFilterFunc GtkRecentFilterFunc GLogFunc)) 
-				    (= ctr 0)))
-			   (hey "const "))
-		       (set! ctr (+ ctr 1))
-		       (set! previous-arg #t)
-		       (hey "~A ~A" 
-			    (if (string=? (car arg) "lambda_data")
-				"gpointer"
-				(car arg))
-			    (cadr arg)))
-		     args)
-		    (hey ")~%"))
-		  (hey "{~%  ")
-		  ;; I tried to use Xen_error here but it was a no-op for some reason?? 
-		  (hey "if (!Xen_is_list((Xen)func_info)) return~A;~%  "
-		       (if void? 
-			   ""
-			   (format #f "((~A)0)" (no-stars type))))
-		  (if (eq? gctype 'permanent-gcc)
-		      (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
-		  (let ((castlen (+ 12 (if void?
-					   1
-					   (+ 2 (length (format #f "return(Xen_to_C_~A" (no-stars type))))))))
-		    (if (not void?)
-			(hey "return(Xen_to_C_~A("
-			     (no-stars type)))
-		    (hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
-			 (if (null? args) "no" (length args))
-			 (if (and (pair? args) (null? (cdr args))) "" "s")
-			 (if (eq? fname 'GtkClipboardClearFunc)
-			     "Xen_caddr"
-			     (if (eq? fname 'GtkDestroyNotify)
-				 "Xen_cadddr"
-				 "Xen_car")))
-		    (for-each
-		     (lambda (arg)
-		       (hey (substring "                                                                   " 0 castlen))
-		       (if (string=? (car arg) "lambda_data")
-			   (hey "Xen_cadr((Xen)func_info),~%")
-			   (hey "C_to_Xen_~A(~A~A),~%"
-				(no-stars (car arg))
-				(if (string=? (car arg) "GtkFileFilterInfo*")
-				    "(GtkFileFilterInfo *)"
-				    "")
-				(cadr arg))))
-		     args)
-		    (hey (substring "                                                                      " 0 castlen))
-		    (hey "__func__)")
-		    (if void?
-			(hey ";~%")
-			(hey "));~%")))
-		  (if (eq? gctype 'permanent-gcc)
-		      (begin
-			(if (not void?)
-			    (begin
-			      (hey "  #else~%")
-			      (hey "  return((~A)0);~%" (no-stars type))))
-			(hey "  #endif~%")))
-		  (hey "}~%")
-		  (when (callback-version func)
-		    (hey "#endif~%"))
-		  (hey "~%")
-		  )))))
+(let* ((funcs-done ())
+       (xc (lambda (func)
+	     (let* ((name (callback-func func))
+		    (type (callback-type func))
+		    (args (callback-args func))
+		    (gctype (callback-gc func))
+		    (fname (callback-name func))
+		    (void? (string=? type "void")))
+	       (unless (member name funcs-done)
+		 (set! funcs-done (cons name funcs-done))
+		 (if (callback-version func)
+		     (hey (string-append "#if GTK_CHECK_VERSION(" (substring (callback-version func) 0 1) ", " (substring (callback-version func) 2) ", 0)~%")))
+		 
+		 (hey "static ~A gxg_~A("
+		      type
+		      name)
+		 (let ((previous-arg #f)
+		       (ctr 0))
+		   (for-each
+		    (lambda (arg)
+		      (if previous-arg (hey ", "))
+		      ;; ctr is 0-based here
+		      (if (or (and (memq fname '(GtkClipboardTextReceivedFunc GtkAccelMapForeach GtkEntryCompletionMatchFunc)) 
+				   (= ctr 1)) 
+			      (and (memq fname '(GtkTreeViewSearchEqualFunc GLogFunc GtkClipboardRichTextReceivedFunc)) 
+				   (= ctr 2)) 
+			      (and (memq fname '(GtkFileFilterFunc GtkRecentFilterFunc GLogFunc)) 
+				   (= ctr 0)))
+			  (hey "const "))
+		      (set! ctr (+ ctr 1))
+		      (set! previous-arg #t)
+		      (hey "~A ~A" 
+			   (if (string=? (car arg) "lambda_data")
+			       "gpointer"
+			       (car arg))
+			   (cadr arg)))
+		    args)
+		   (hey ")~%"))
+		 (hey "{~%  ")
+		 ;; I tried to use Xen_error here but it was a no-op for some reason?? 
+		 (hey "if (!Xen_is_list((Xen)func_info)) return~A;~%  "
+		      (if void? 
+			  ""
+			  (format #f "((~A)0)" (no-stars type))))
+		 (if (eq? gctype 'permanent-gcc)
+		     (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
+		 (let ((castlen (+ 12 (if void?
+					  1
+					  (+ 2 (length (format #f "return(Xen_to_C_~A" (no-stars type))))))))
+		   (if (not void?)
+		       (hey "return(Xen_to_C_~A("
+			    (no-stars type)))
+		   (hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
+			(if (null? args) "no" (length args))
+			(if (and (pair? args) (null? (cdr args))) "" "s")
+			(if (eq? fname 'GtkClipboardClearFunc)
+			    "Xen_caddr"
+			    (if (eq? fname 'GtkDestroyNotify)
+				"Xen_cadddr"
+				"Xen_car")))
+		   (for-each
+		    (lambda (arg)
+		      (hey (substring "                                                                   " 0 castlen))
+		      (if (string=? (car arg) "lambda_data")
+			  (hey "Xen_cadr((Xen)func_info),~%")
+			  (hey "C_to_Xen_~A(~A~A),~%"
+			       (no-stars (car arg))
+			       (if (string=? (car arg) "GtkFileFilterInfo*")
+				   "(GtkFileFilterInfo *)"
+				   "")
+			       (cadr arg))))
+		    args)
+		   (hey (substring "                                                                      " 0 castlen))
+		   (hey "__func__)")
+		   (if void?
+		       (hey ";~%")
+		       (hey "));~%")))
+		 (if (eq? gctype 'permanent-gcc)
+		     (begin
+		       (if (not void?)
+			   (begin
+			     (hey "  #else~%")
+			     (hey "  return((~A)0);~%" (no-stars type))))
+		       (hey "  #endif~%")))
+		 (hey "}~%")
+		 (when (callback-version func)
+		   (hey "#endif~%"))
+		 (hey "~%")
+		 )))))
     (for-each xc callbacks)
-    ))
+    )
 
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")

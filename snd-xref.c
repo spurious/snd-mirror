@@ -1762,7 +1762,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11590] = {
+static const char *snd_names[11586] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -1801,7 +1801,9 @@ static const char *snd_names[11590] = {
     "*mock-symbol*", "mockery.scm",
     "*mock-vector*", "mockery.scm",
     "*repl*", "repl.scm",
+    "*rgb*", "rgb.scm",
     "*s7*->list", "stuff.scm",
+    "*spectr*", "spectr.scm",
     "*to-snd*", "ws.scm",
     "->frequency", "ws.scm",
     "->predicate", "stuff.scm",
@@ -3955,7 +3957,6 @@ static const char *snd_names[11590] = {
     "delayl", "prc95.scm",
     "delete-from-out-to-in", "spokenword.scm",
     "delete-mix", "mix.scm",
-    "describe", "dlocsig.scm",
     "describe-hook", "hooks.scm",
     "describe-mark", "marks.scm",
     "determinant", "poly.scm",
@@ -6536,7 +6537,6 @@ static const char *snd_names[11590] = {
     "make-open-bezier-path", "dlocsig.scm",
     "make-parameter", "r7rs.scm",
     "make-path", "dlocsig.scm",
-    "make-path-error-checks", "dlocsig.scm",
     "make-peaking-2", "dsp.scm",
     "make-pink-noise", "generators.scm",
     "make-polar-path", "dlocsig.scm",
@@ -7226,7 +7226,6 @@ static const char *snd_names[11590] = {
     "snd-poly.scm", "poly.scm",
     "snd-prc95.scm", "prc95.scm",
     "snd-pvoc.scm", "pvoc.scm",
-    "snd-rgb.scm", "rgb.scm",
     "snd-rubber.scm", "rubber.scm",
     "snd-selection.scm", "selection.scm",
     "snd-singer.scm", "singer.scm",
@@ -7236,7 +7235,6 @@ static const char *snd_names[11590] = {
     "snd-snddiff.scm", "snddiff.scm",
     "snd-sndwarp.scm", "sndwarp.scm",
     "snd-special-menu.scm", "special-menu.scm",
-    "snd-spectr.scm", "spectr.scm",
     "snd-strad.scm", "strad.scm",
     "snd-v.scm", "v.scm",
     "snd-ws.scm", "ws.scm",
@@ -7562,7 +7560,7 @@ static const char *snd_names[11590] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5795);
+  s7_autoload_set_names(sc, snd_names, 5793);
 }
 #endif
 

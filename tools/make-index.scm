@@ -519,6 +519,8 @@
     (list '*libc* "libc.scm")
     (list '*libgsl* "libgsl.scm")
     (list '*repl* "repl.scm")
+    (list '*rgb* "rgb.scm")
+    (list '*spectr* "spectr.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")

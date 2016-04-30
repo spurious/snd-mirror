@@ -599,35 +599,35 @@ If func approves of one, index-if returns the index that gives that element's po
 				(set! cur #<eof>)
 				result))))))))))
 
-     (let ((iter (make-careful-iterator obj)))
-       (let ((iterator? #t))       
-	 (define (iterloop) ; define returns the new value
-	   (define (iter-memq p q)
-	     (and (pair? q)
-		  (or (eq? p (iterator-sequence (car q)))
-		      (iter-memq p (cdr q)))))
-	   (let ((result (iter)))
-	     (cond ((length result)
-		    (if (or (memq result seen-cycles)             ; we've dealt with it already, so skip it
-			    (eq? result (iterator-sequence iter))
-			    (iter-memq result iters))             ; we're dealing with it the right now
-			(iterloop)                                ; this means the outermost sequence is ignored if encountered during the traversal
-			(begin
-			  (set! iters (cons iter iters))
-			  (set! iter (make-careful-iterator result))
-			  result)))
-
-		   ((not (eq? result #<eof>)) 
-		    result)
-
-		   ((null? iters) 
-		    #<eof>)
-
-		   (else
-		    (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
-		    (set! iter (car iters))
-		    (set! iters (cdr iters))
-		    (iterloop))))))))))
+     (let* ((iter (make-careful-iterator obj))
+	    (iterator? #t))       
+       (define (iterloop) ; define returns the new value
+	 (define (iter-memq p q)
+	   (and (pair? q)
+		(or (eq? p (iterator-sequence (car q)))
+		    (iter-memq p (cdr q)))))
+	 (let ((result (iter)))
+	   (cond ((length result)
+		  (if (or (memq result seen-cycles)             ; we've dealt with it already, so skip it
+			  (eq? result (iterator-sequence iter))
+			  (iter-memq result iters))             ; we're dealing with it the right now
+		      (iterloop)                                ; this means the outermost sequence is ignored if encountered during the traversal
+		      (begin
+			(set! iters (cons iter iters))
+			(set! iter (make-careful-iterator result))
+			result)))
+		 
+		 ((not (eq? result #<eof>)) 
+		  result)
+		 
+		 ((null? iters) 
+		  #<eof>)
+		 
+		 (else
+		  (set! seen-cycles (cons (iterator-sequence iter) seen-cycles))
+		  (set! iter (car iters))
+		  (set! iters (cdr iters))
+		  (iterloop)))))))))
 
 
 (define safe-find-if 
