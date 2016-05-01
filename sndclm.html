@@ -2190,7 +2190,7 @@ in phase and amplitude at run-time by setting a float-vector value.
   (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-float-vector (* 5 2) 0.0))) ; 5 harmonics, 2 numbers for each
 				   (do ((k 1 (+ k 3))
 					(i 0 (+ i 2)))
-				       ((= i (* 5 2)))
+				       ((= i 10))
 				     (set! (harms i) k) ; harmonic number (k*freq)
 				     (set! (harms (+ i 1)) (/ 1.0 (sqrt k)))) ; harmonic amplitude
 				   harms)))

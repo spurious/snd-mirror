@@ -9798,14 +9798,14 @@ For example, the following function reverses the channel order:
 <pre class="indented">
 (define* (reverse-channels snd)
   (let* ((ind (or snd (<a class=quiet href="#selectedsound">selected-sound</a>) (car (<a class=quiet href="#sounds">sounds</a>))))
-	 (chns (<a class=quiet href="#channels">channels</a> ind)))
-    (let ((swaps (floor (/ chns 2))))
-      (<a class=quiet href="#asoneedit">as-one-edit</a>
-       (lambda ()
-	 (do ((i 0 (+ i 1))
-	      (j (- chns 1) (- j 1)))
-	     ((= i swaps))
-	   (<em class=red>swap-channels</em> ind i ind j)))))))
+	 (chns (<a class=quiet href="#channels">channels</a> ind))
+         (swaps (floor (/ chns 2))))
+    (<a class=quiet href="#asoneedit">as-one-edit</a>
+     (lambda ()
+       (do ((i 0 (+ i 1))
+	    (j (- chns 1) (- j 1)))
+	   ((= i swaps))
+	 (<em class=red>swap-channels</em> ind i ind j))))))
 </pre>
 
 <p>Channel rotation is similar, though slightly more work; see scramble-channels in examp.scm.
@@ -13043,7 +13043,7 @@ is named "call_in".
 	 (cur-hour (cur-time 2))
 	 (now (+ (* cur-hour 60) cur-minute))
 	 (then (+ (* hour 60) minute)))
-    (<em class=red>in</em> (* 1000 60 (- then now)) func)))
+    (<em class=red>in</em> (* 60000 (- then now)) func)))
 
 (at 15 11 (lambda () (<a class=quiet href="#sndprint">snd-print</a> "it's 3:11 pm!")))
 </pre>
@@ -13782,17 +13782,17 @@ of FractInt's royal colormap):
 ;;; another amusing colormap from FractInt:
 (add-colormap "cos" 
   (lambda (size) 
-    (let ((r (make-float-vector size 0.0))
-	  (g (make-float-vector size 0.0))
-	  (b (make-float-vector size 0.0))
-	  (incr (/ 3.14159 size)))
-      (do ((i 0 (+ i 1))
-	   (x 0.0 (+ x incr)))
-	  ((= i size))
-	(set! (r i) (abs (sin (* 1.5 x))))
-	(set! (g i) (abs (sin (* 3.5 x))))
-	(set! (b i) (abs (sin (* 2.5 x)))))
-      (list r g b))))
+    (do ((r (make-float-vector size 0.0))
+	 (g (make-float-vector size 0.0))
+	 (b (make-float-vector size 0.0))
+	 (incr (/ 3.14159 size))
+         (i 0 (+ i 1))
+	 (x 0.0 (+ x incr)))
+	((= i size)
+         (list r g b))
+      (set! (r i) (abs (sin (* 1.5 x))))
+      (set! (g i) (abs (sin (* 3.5 x))))
+      (set! (b i) (abs (sin (* 2.5 x)))))))
 </pre>
 
 <table><tr>

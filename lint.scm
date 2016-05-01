@@ -20,7 +20,8 @@
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (slow, and this error almost never happens)
 (define *report-constant-expressions-in-do* #f)           ; kinda dumb
-(define *report-bad-variable-names* '(l O))               ; a list of bad variable names: '(l data datum new item info temp tmp val vals value foo bar aux dummy O var)
+(define *report-bad-variable-names* '(l O))               ; bad variable names: '(l data datum new item info temp tmp val vals value foo bar baz aux dummy O var)
+(define *report-built-in-functions-used-as-variables* #f) ; string is the most common case
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -359,7 +360,7 @@
 	    (newline outport))))
 
     (define (lint-format* caller . strs)
-      (let ((outstr (format #f 
+      (let* ((outstr (format #f 
 			   (if (< 0 line-number 100000)
 			       "~NC~A (line ~D): " 
 			       "~NC~A:~A")
@@ -367,20 +368,20 @@
 			   (truncated-list->string caller)
 			   (if (< 0 line-number 100000)
 			       line-number
-			       " "))))
-	(let ((current-end (length outstr)))
-	  (display outstr outport)
-	  (for-each (lambda (s)
-		      (let ((len (length s)))
-			(if (> (+ len current-end) target-line-length)
-			    (begin
-			      (format outport "~%~NC~A" (+ lint-left-margin 4) #\space s)
-			      (set! current-end len))
-			    (begin
-			      (display s outport)
-			      (set! current-end (+ current-end len))))))
-		    strs)
-	  (newline outport))))
+			       " ")))
+	     (current-end (length outstr)))
+	(display outstr outport)
+	(for-each (lambda (s)
+		    (let ((len (length s)))
+		      (if (> (+ len current-end) target-line-length)
+			  (begin
+			    (format outport "~%~NC~A" (+ lint-left-margin 4) #\space s)
+			    (set! current-end len))
+			  (begin
+			    (display s outport)
+			    (set! current-end (+ current-end len))))))
+		  strs)
+	(newline outport)))
 
     (define (local-line-number tree)
       (let ((tree-line (if (pair? tree) (pair-line-number tree) 0)))
@@ -824,11 +825,11 @@
 				(if (pair? m)
 				    (let ((fsig (arg-signature f env)))
 				      (if (pair? fsig)
-					  (let ((loc (- (length p) (length m))))
-					    (let ((chk (catch #t (lambda () (fsig loc)) (lambda args #f))))
-					      (if (and (symbol? chk) ; it defaults to #t
-						       (not (memq chk '(integer:any? integer:real?))))
-						  (set-car! sig chk))))))))))))
+					  (let* ((loc (- (length p) (length m)))
+						 (chk (catch #t (lambda () (fsig loc)) (lambda args #f))))
+					    (if (and (symbol? chk) ; it defaults to #t
+						     (not (memq chk '(integer:any? integer:real?))))
+						(set-car! sig chk)))))))))))
 		    arglist))
 		 (and (any? (lambda (a) (not (eq? a #t))) sig)
 		      (reverse sig)))))))
@@ -962,38 +963,37 @@
 		      body))))))
 
     (define* (make-fvar name ftype arglist decl initial-value env)
-      (let ((old (hash-table-ref other-identifiers name)))
-	(let ((new (cons name 
-			 (inlet 'signature ()
-				'side-effect ()
-				'allow-other-keys (and (pair? arglist)
-						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
-						       (eq? (last-par arglist) :allow-other-keys))
-				'scope ()
-				'env env
-				'initial-value initial-value
-				'values (and (pair? initial-value) (count-values (cddr initial-value)))
-				'leaves #f
-				'match-list #f
-				'decl decl
-				'arglist arglist
-				'ftype ftype
-				'history (if old 
-					     (begin
-					       (hash-table-set! other-identifiers name #f)
-					       (if initial-value (cons initial-value old) old))
-					     (if initial-value (list initial-value) ()))
-				'set 0 
-				'ref (if old (length old) 0)))))
-
-	  (when (and *report-function-stuff*
-		     (not (eq? name :lambda))
-		     (memq ftype '(define lambda define* lambda*))
-		     (pair? (caddr initial-value)))
-	    (hash-table-set! equable-closures (caaddr initial-value)
-			     (cons new (or (hash-table-ref equable-closures (caaddr initial-value)) ()))))
-
-	  new)))
+      (let* ((old (hash-table-ref other-identifiers name))
+	     (new (cons name 
+			(inlet 'signature ()
+			       'side-effect ()
+			       'allow-other-keys (and (pair? arglist)
+						      (memq ftype '(define* define-macro* define-bacro* defmacro*))
+						      (eq? (last-par arglist) :allow-other-keys))
+			       'scope ()
+			       'env env
+			       'initial-value initial-value
+			       'values (and (pair? initial-value) (count-values (cddr initial-value)))
+			       'leaves #f
+			       'match-list #f
+			       'decl decl
+			       'arglist arglist
+			       'ftype ftype
+			       'history (if old 
+					    (begin
+					      (hash-table-set! other-identifiers name #f)
+					      (if initial-value (cons initial-value old) old))
+					    (if initial-value (list initial-value) ()))
+			       'set 0 
+			       'ref (if old (length old) 0)))))
+	
+	(when (and *report-function-stuff*
+		   (not (eq? name :lambda))
+		   (memq ftype '(define lambda define* lambda*))
+		   (pair? (caddr initial-value)))
+	  (hash-table-set! equable-closures (caaddr initial-value)
+			   (cons new (or (hash-table-ref equable-closures (caaddr initial-value)) ()))))
+	new))
     
     (define (return-type sym e)
       (let ((sig (arg-signature sym e)))
@@ -2808,16 +2808,16 @@
 								    (and (pair? b)
 									 (memq (car b) '(char-position string-position format string->number
 											 assoc assq assv memq memv member)))))))
-						(let ((sig (arg-signature (car arg2) env)))
-						  (let ((arg-type (and (pair? sig)
-								       (pair? (cdr sig))
-								       (symbol? (cadr sig)))))
-						    (if arg-type
-							(format outport "~NCin ~A, perhaps change ~S to ~S~%"
-								lint-left-margin #\space 
-								(truncated-list->string form) 
-								`(and ,arg1 ...)
-								`(and (,(cadr sig) ,arg1) ...))))))))
+						(let* ((sig (arg-signature (car arg2) env))
+						       (arg-type (and (pair? sig)
+								      (pair? (cdr sig))
+								      (symbol? (cadr sig)))))
+						  (if arg-type
+						      (format outport "~NCin ~A, perhaps change ~S to ~S~%"
+							      lint-left-margin #\space 
+							      (truncated-list->string form) 
+							      `(and ,arg1 ...)
+							      `(and (,(cadr sig) ,arg1) ...)))))))
 				      
 				      (if (hash-table-ref bools1 (car arg2))
 					  (return arg2)))
@@ -3251,11 +3251,6 @@
 				   (negative? arg1)
 				   (not (number? arg2)))
 			      `(- ,arg2 ,(abs arg1)))
-			     ((and (pair? arg1) (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
-				   (pair? arg2) (eq? (car arg2) '/)
-				   (pair? (cddr arg1)) (pair? (cddr arg2))
-				   (equal? (cddr arg1) (cddr arg2)))
-			      `(/ (+ ,(cadr arg1) ,(cadr arg2)) ,@(cddr arg1)))
 			     ((and (pair? arg1) (eq? (car arg1) '*) ; (+ (* a b) (* a c)) -> (* a (+ b c))
 				   (pair? arg2) (eq? (car arg2) '*)
 				   (= (length arg1) (length arg2) 3)
@@ -3264,6 +3259,11 @@
 			      (if (member (cadr arg1) (cdr arg2))
 				  `(* ,(cadr arg1) (+ ,(caddr arg1) ,@(remove (cadr arg1) (cdr arg2))))
 				  `(* ,(caddr arg1) (+ ,(cadr arg1) ,@(remove (caddr arg1) (cdr arg2))))))
+			     ((and (pair? arg1) (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
+				   (pair? arg2) (eq? (car arg2) '/)
+				   (pair? (cddr arg1)) (pair? (cddr arg2))
+				   (equal? (cddr arg1) (cddr arg2)))
+			      `(/ (+ ,(cadr arg1) ,(cadr arg2)) ,@(cddr arg1)))
 			     (else `(+ ,@val)))))
 		    (else 
 		     (if (any? (lambda (p) 
@@ -5375,6 +5375,11 @@
 				  (pair? (cdr arg1))
 				  (null? (cddr arg1)))
 			     (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadr arg1) ,arg2))))
+
+			    ((and (eq? (car arg1) 'vector->list)
+				  (pair? arg2)
+				  (eq? (car arg2) 'vector->list))
+			     (lint-format "perhaps ~A" caller (lists->string form `(vector->list (append ,(cadr arg1) ,(cadr arg2))))))
 				   
 			    ((not (equal? (cdr form) new-args))
 			     (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))
@@ -5472,6 +5477,11 @@
 										    "~}")))
 							    (lint-format "perhaps ~A" caller
 									 (lists->string form `(format #f ,str ,(caddr args))))))))))
+
+					   ((and (eq? f 'append)               ; (apply append (map vector->list args)) -> (vector->list (apply append args))
+						 (eq? (car args) 'map)
+						 (eq? (cadr args) 'vector->list))
+					    (lint-format "perhaps ~A" caller (lists->string form `(vector->list (apply append ,@(cddr args))))))
 					   
 					   ((and (eq? (car args) 'append)      ; (apply f (append (list ...)...)) -> (apply f ... ...)
 						 (pair? (cadr args))
@@ -6350,10 +6360,10 @@
 
 	((throw)
 	 (if (pair? (cdr form))
-	     (let ((tag (cadr form)))
-	       (let ((eq (eqf tag env)))
-		 (if (not (member eq '((eq? eq?) (#t #t))))
-		     (lint-format "~A tag ~S is unreliable (catch uses eq? to match tags)" caller head tag))))))
+	     (let* ((tag (cadr form))
+		    (eq (eqf tag env)))
+	       (if (not (member eq '((eq? eq?) (#t #t))))
+		   (lint-format "~A tag ~S is unreliable (catch uses eq? to match tags)" caller head tag)))))
 
 	((make-hash-table)
 	 (if (= (length form) 3)
@@ -7151,37 +7161,38 @@
 				      (lint-format "this looks odd: ~A" caller (truncated-list->string form))))
 				
 				;; now try to check arg types 
-				(let ((func (symbol->value head *e*)))
-				  (let ((arg-data (let ((sig (procedure-signature func)))
-						    (and (pair? sig)
-							 (cdr sig)))))
-				    (if (pair? arg-data)
-					(check-args caller head form arg-data env max-arity))
-				    ))))))))))))))
+				(let* ((func (symbol->value head *e*))
+				       (arg-data (let ((sig (procedure-signature func)))
+						   (and (pair? sig)
+							(cdr sig)))))
+				  (if (pair? arg-data)
+				      (check-args caller head form arg-data env max-arity))
+				  )))))))))))))
     
     (define (get-generator caller form env)
-      (let ((name (if (pair? (cadr form))
-		      (caadr form)
-		      (cadr form))))
-
-	(if (and (pair? (cadr form))
-		 (pair? (cdadr form)))
-	    (lint-walk caller (cdadr form) env))
-
-	(let ((gen? (string->symbol (string-append (symbol->string name) "?")))
-	      (gen-make (string->symbol (string-append "make-" (symbol->string name)))))
-	  (list (make-fvar :name gen?
-			   :ftype 'define
-			   :decl (dummy-func 'define `(define (,gen? x) (let? x)) '(define (_ x) #f))
-			   :initial-value `(define (,gen? x) (let? x))
-			   :arglist (list 'x)
-			   :env env)
-		(make-fvar :name gen-make
-			   :ftype 'define*
-			   :decl (dummy-func 'define* `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x)) '(define (_ . x) #f))
-			   :initial-value `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x))
-			   :arglist (list :rest 'x :allow-other-keys)
-			   :env env)))))
+      (when (pair? (cdr form))
+	(let ((name (if (pair? (cadr form))
+			(caadr form)
+			(cadr form))))
+	  
+	  (if (and (pair? (cadr form))
+		   (pair? (cdadr form)))
+	      (lint-walk caller (cdadr form) env))
+	  
+	  (let ((gen? (string->symbol (string-append (symbol->string name) "?")))
+		(gen-make (string->symbol (string-append "make-" (symbol->string name)))))
+	    (list (make-fvar :name gen?
+			     :ftype 'define
+			     :decl (dummy-func 'define `(define (,gen? x) (let? x)) '(define (_ x) #f))
+			     :initial-value `(define (,gen? x) (let? x))
+			     :arglist (list 'x)
+			     :env env)
+		  (make-fvar :name gen-make
+			     :ftype 'define*
+			     :decl (dummy-func 'define* `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x)) '(define (_ . x) #f))
+			     :initial-value `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x))
+			     :arglist (list :rest 'x :allow-other-keys)
+			     :env env))))))
     
     (define (last-par x)
       (let ((len (length x)))
@@ -7329,7 +7340,6 @@
 						  (var-member sv env)))
 				   (set! newv (string->symbol (string-append (substring vstr 0 pos) 
 									     (substring vstr (+ pos 4)))))))))) ; +4 to include #\-
-		     ;(if (var? setv) (format *stderr* "~A ~A ~A" vname (var-name setv) newv))
 		     (when (and setv 
 				(not (var-member newv vars))
 				(not (var-member newv env)))
@@ -7358,9 +7368,10 @@
 				     (setvalue (and (proper-list? setargs)
 						    (list-ref setargs (- (length setargs) 1)))))
 				 (if setvalue
-				     (format outport "~A: perhaps use dilambda and generalized set! for ~A and ~A:~%~
+				     (format outport "~NC~A: perhaps use dilambda and generalized set! for ~A and ~A:~%~
                                                   ~NCreplace (~A~A) with (~A~A) and (~A~A ~A) with (set! (~A~A) ~A)~%~
-                                                  ~NC~A"
+                                                  ~NC~A~%"
+					     lint-left-margin #\space
 					     caller
 					     vname (var-name setv)
 					     lint-left-margin #\space
@@ -7377,6 +7388,10 @@
 
 		 ((eq? vname 'l)
 		  (lint-format "\"l\" is a really bad variable name" caller))
+
+		 ((and *report-built-in-functions-used-as-variables*
+		       (hash-table-ref built-in-functions vname))
+		  (lint-format "~A ~A named ~A is asking for trouble" caller head otype vname))
 
 		 ((and (symbol? vname)
 		       (pair? *report-bad-variable-names*)
@@ -8192,13 +8207,12 @@
 					       (args ()))
 				      (if (null? pars)
 					  (reverse args)
-					  (if (pair? vals)
-					      (loop (cdr pars) 
-						    (cdr vals) 
-						    (cons (list (if (pair? (car pars)) (caar pars) (car pars)) (car vals)) args))
-					      (loop (cdr pars) 
-						    () 
-						    (cons (if (pair? (car pars)) (car pars) (list (car pars) #f)) args)))))))
+					  (loop (cdr pars)
+						(if (pair? vals)
+						    (values (cdr vals) 
+							    (cons (list (if (pair? (car pars)) (caar pars) (car pars)) (car vals)) args))
+						    (values () 
+							    (cons (if (pair? (car pars)) (car pars) (list (car pars) #f)) args))))))))
 		      (new-let (if (eq? (caar body) 'define) 'let 'let*)))
 		  (if (and (pair? fbody)
 			   (pair? (cdr fbody))
@@ -8680,7 +8694,8 @@
 		   ((lambda* (cr arg)
 		      (and cr
 			   (< (length cr) 5)
-			   (= (length args) 1)
+			   (pair? args) 
+			   (null? (cdr args))
 			   (eq? (car args) arg)
 			   (let ((f (string->symbol (string-append "c" cr "r"))))
 			     (if (eq? f function-name)
@@ -8760,11 +8775,11 @@
 			       function-name definer
 			       (symbol (substring (symbol->string definer) 0 (- (length (symbol->string definer)) 1)))))
 	      (let ((cur-env (if fvar (cons fvar env) env)))
-		(let ((e (lint-walk-function-body definer function-name args body cur-env)))
-		  (let ((nvars (and (not (eq? e cur-env))
-				    (env-difference function-name e cur-env ()))))
-		    (if (pair? nvars)
-			(report-usage function-name definer nvars cur-env))))
+		(let* ((e (lint-walk-function-body definer function-name args body cur-env))
+		       (nvars (and (not (eq? e cur-env))
+				   (env-difference function-name e cur-env ()))))
+		  (if (pair? nvars)
+		      (report-usage function-name definer nvars cur-env)))
 		cur-env))
 	    
 	    (if (not (or (symbol? args) 
@@ -8792,11 +8807,11 @@
 						 (make-var :name (car arg) :definer 'parameter)))))
 				     (proper-list args)))))
 		  
-		  (let ((cur-env (append args-as-vars (if fvar (cons fvar env) env))))
-		    (let ((e (lint-walk-function-body definer function-name args body cur-env)))
-		      (let ((nvars (and (not (eq? e cur-env))
-					(env-difference function-name e cur-env ()))))
-			(report-usage function-name definer (append (or nvars ()) args-as-vars) cur-env))))
+		  (let* ((cur-env (append args-as-vars (if fvar (cons fvar env) env)))
+			 (e (lint-walk-function-body definer function-name args body cur-env))
+			 (nvars (and (not (eq? e cur-env))
+				     (env-difference function-name e cur-env ()))))
+		    (report-usage function-name definer (append (or nvars ()) args-as-vars) cur-env))
 		  
 		  (when (and (var? fvar)
 			     (memq definer '(define lambda define-macro)))
@@ -9204,7 +9219,7 @@
       (if (symbol? form)
 	  (begin
 	    (if (memq form '(+i -i))
-		(format outport "~A is not a number in s7~%" form))
+		(format outport "~NC~A is not a number in s7~%" lint-left-margin #\space form))
 	    (set-ref form caller #f env)) ; returns env
 	  (if (not (pair? form))
 	      (begin
@@ -10009,9 +10024,10 @@
 						    (memq (cadr true) test)
 						    (member (caddr true) test))
 					       (let* ((target (cadr true))
-						      (f (if (memq test-op '(< <=))
-							     (if (eq? target (cadr test)) 'max 'min)
-							     (if (eq? target (caddr test)) 'max 'min))))
+						      (f (if (if (memq test-op '(< <=))
+								 (eq? target (cadr test))
+								 (eq? target (caddr test)))
+							     'max 'min)))
 						 (lint-format "perhaps ~A" caller
 							      (lists->string form `(set! ,target (,f ,@(cdr true)))))))))
 				     
@@ -10046,9 +10062,10 @@
 					(member true test))
 				   (if (eq? (car test) '=)                     ; (if (= x y) y x) -> y [this never happens]
 				       (lint-format "perhaps ~A" caller (lists->string form false))
-				       (let ((f (if (memq (car test) '(< <=))
-						    (if (equal? (cadr test) true) 'min 'max)
-						    (if (equal? (cadr test) false) 'min 'max))))
+				       (let ((f (if (if (memq (car test) '(< <=))
+							(equal? (cadr test) true)
+							(equal? (cadr test) false))
+						    'min 'max)))
 					 (lint-format "perhaps ~A" caller (lists->string form `(,f ,true ,false))))))
 
 			       (cond ((eq? expr #t)
@@ -10606,7 +10623,7 @@
 					    (if (never-true expr)
 						(lint-format "cond test ~A is never true: ~A" caller (car clause) (truncated-list->string form))))
 					
-					(when (not (side-effect? test env))
+					(unless (side-effect? test env)
 					  (if (and (not (memq test '(else #t)))
 						   (pair? sequel)
 						   (null? (cdr sequel)))
@@ -12040,8 +12057,8 @@
 											   (eq? (car v) (cadar body)))
 											 varlist)
 									  ,(caddar body)))))))))
-#|
-			   ;; this happens about 6 times
+
+			   ;; all let vars are ref'd only in init-vals, no cdr, so substitute
 			   (when (and (not named-let)
 				      (pair? body)
 				      (null? (cdr body))
@@ -12050,30 +12067,68 @@
 				      (pair? (cadar body)))
 			     (let ((inits (map cadr (cadar body))))
 			       (when (every? (lambda (v)
-					       (and (= (tree-count1 (car v) body 0) 1)
-						    (memq (car v) inits)))
+					       (and (= (tree-count1 (car v) (car body) 0) 1)
+						    (tree-memq (car v) inits)))
 					     varlist)
-				 (format *stderr* "~A~%~%" (lint-pp form)))))
+				 (let ((new-cadr (copy (cadar body))))
+				   (for-each (lambda (v)
+					       (set! new-cadr (tree-subst (cadr v) (car v) new-cadr)))
+					     varlist)
+				   (lint-format "perhaps ~A" caller
+						(lists->string form `(do ,new-cadr ...)))))))
 
-			   ;; this happens a lot
+			   ;; this is slower in s7 if one step var(?) -- collapse if more than one?
+			   ;;   TODO: what about shadowing?  
 			   (when (and (not named-let)
 				      (pair? body)
-				      (null? (cdr body))
 				      (pair? (car body))
-				      (eq? (caar body) 'do))
+				      (eq? (caar body) 'do)
+				      (or (null? (cadar body))
+					  (pair? (cdadar body)))
+				      (< (tree-leaves (cdr body)) 24)
+				      (or (null? (caddar body))
+					  (< (tree-leaves (cdr (caddar body))) 24)))
 			     (let ((inits (and (pair? (cadar body))
 					       (map cadr (cadar body)))))
-			       (when (not (and (pair? inits)
-					       (any? (lambda (v)
-						       (or (memq (car v) inits)
-							   (side-effect? (cadr v) env))) ; let var opens *stdin*, do stepper reads it at init
-						     varlist)))
+			       (unless (and (pair? inits)
+					    (any? (lambda (v)
+						    (or (tree-memq (car v) inits)
+							(side-effect? (cadr v) env))) ; let var opens *stdin*, do stepper reads it at init
+						  varlist))
 				 (lint-format "perhaps ~A" caller
 					      (lists->string form
-							     `(do (,@varlist
-								   ,@(cadar body))
-								  ...))))))
+							     (let ((do-form (car body)))
+							       (if (null? (cdr body))
+								   `(do (,@varlist
+									 ,@(cadr do-form))
+									...)
+								   `(do (,@varlist
+									 ,@(cadr do-form))
+									(,(and (pair? (caddr do-form)) (caaddr do-form))
+									 ,@(if (side-effect? (cdr (caddr do-form)) env) (cdr (caddr do-form)) ())
+									 ,@(cdr body))
+								      ...))))))))
+#|
+			   ;; happens 3 times
+			   (when (and (not named-let)
+				      (pair? body)
+				      (pair? (cdr body))
+				      (null? (cddr body))
+				      (symbol? (cadr body))
+				      (assq (cadr body) (cadr form))
+				      (eq? (caar body) 'if))
+			     (let ((true (caddar body))
+				   (false (and (pair? (cdddar body)) (car (cdddar body)))))
+			       (if (and (pair? true)
+					(eq? (car true) 'set!)
+					(eq? (cadr true) (cadr body))
+					(or (not false)
+					    (and (pair? false)
+						 (eq? (car false) 'set!)
+						 (eq? (cadr false) (cadr body)))))
+				   (format *stderr* "~A~%~%" (lint-pp form)))))
 |#
+
 			   (when (and (not named-let)
 				      (pair? varlist)
 				      (> (length body) 3)
@@ -12205,63 +12260,64 @@
 					    (loop (append (map car (car forms)) vars) 
 						  (cdr forms))))))
 			       
-			       (if (and (null? (cdadr form))   ; let(1) + let* -> let*
-					(eq? (car inner) 'let*)
-					(not (symbol? (cadr inner)))) ; not named let*
-				   (lint-format "perhaps ~A" caller
-						(lists->string form
-							       `(let* (,@(cadr form)
-								       ,@(cadr inner))
-								  ,@(one-call-and-dots (cddr inner)))))
-				   (if (and (pair? (cddr inner))
-					    (pair? (caddr inner))
-					    (null? (cdddr inner))
-					    (eq? (caaddr inner) 'let)
-					    (pair? (cdr (caddr inner)))
-					    (pair? (cadr (caddr inner))))
-				       (let ((inner1 (caddr inner)))
-					 (if (and (pair? (cddr inner1))
-						  (null? (cdddr inner1))
-						  (pair? (caddr inner1))
-						  (eq? (caaddr inner1) 'let)
-						  (pair? (cdr (caddr inner1)))
-						  (pair? (cadr (caddr inner1))))
-					     (let ((inner2 (caddr inner1)))
-					       (if (not (letstar (cadr form)
-								 (cadr inner)
-								 (cadr inner1)
-								 (cadr inner2)))
-						   (lint-format "perhaps ~A" caller
-								(lists->string form
-									       `(let (,@(cadr form)
-										      ,@(cadr inner)
-										      ,@(cadr inner1)
-										      ,@(cadr inner2))
-										  ,@(one-call-and-dots (cddr inner2)))))))
-					     (if (not (letstar (cadr form)
-							       (cadr inner)
-							       (cadr inner1)))
-						 (lint-format "perhaps ~A" caller
-							      (lists->string form
-									     `(let (,@(cadr form)
-										    ,@(cadr inner)
-										    ,@(cadr inner1))
-										,@(one-call-and-dots (cddr inner1))))))))
-				       (if (not (letstar (cadr form)
-							 (cadr inner)))
-					   (lint-format "perhaps ~A" caller
-							(lists->string form
-								       `(let (,@(cadr form)
-									      ,@(cadr inner))
-									  ,@(one-call-and-dots (cddr inner)))))
-					   (if (and (null? (cdadr form))   ; 1 outer var
-						    (pair? (cadr inner))  
-						    (null? (cdadr inner))) ; 1 inner var, dependent on outer
-					       (lint-format "perhaps ~A" caller
-							    (lists->string form
-									   `(let* (,@(cadr form)
-										   ,@(cadr inner))
-									      ,@(one-call-and-dots (cddr inner)))))))))))
+			       (cond ((and (null? (cdadr form))   ; let(1) + let* -> let*
+					   (eq? (car inner) 'let*)
+					   (not (symbol? (cadr inner)))) ; not named let*
+				      (lint-format "perhaps ~A" caller
+						   (lists->string form
+								  `(let* (,@(cadr form)
+									  ,@(cadr inner))
+								     ,@(one-call-and-dots (cddr inner))))))
+				     ((and (pair? (cddr inner))
+					   (pair? (caddr inner))
+					   (null? (cdddr inner))
+					   (eq? (caaddr inner) 'let)
+					   (pair? (cdr (caddr inner)))
+					   (pair? (cadr (caddr inner))))
+				      (let ((inner1 (caddr inner)))
+					(if (and (pair? (cddr inner1))
+						 (null? (cdddr inner1))
+						 (pair? (caddr inner1))
+						 (eq? (caaddr inner1) 'let)
+						 (pair? (cdr (caddr inner1)))
+						 (pair? (cadr (caddr inner1))))
+					    (let ((inner2 (caddr inner1)))
+					      (if (not (letstar (cadr form)
+								(cadr inner)
+								(cadr inner1)
+								(cadr inner2)))
+						  (lint-format "perhaps ~A" caller
+							       (lists->string form
+									      `(let (,@(cadr form)
+										     ,@(cadr inner)
+										     ,@(cadr inner1)
+										     ,@(cadr inner2))
+										 ,@(one-call-and-dots (cddr inner2)))))))
+					    (if (not (letstar (cadr form)
+							      (cadr inner)
+							      (cadr inner1)))
+						(lint-format "perhaps ~A" caller
+							     (lists->string form
+									    `(let (,@(cadr form)
+										   ,@(cadr inner)
+										   ,@(cadr inner1))
+									       ,@(one-call-and-dots (cddr inner1)))))))))
+				     ((not (letstar (cadr form)
+						    (cadr inner)))
+				      (lint-format "perhaps ~A" caller
+						   (lists->string form
+								  `(let (,@(cadr form)
+									 ,@(cadr inner))
+								     ,@(one-call-and-dots (cddr inner))))))
+				     
+				     ((and (null? (cdadr form))   ; 1 outer var
+					   (pair? (cadr inner))  
+					   (null? (cdadr inner))) ; 1 inner var, dependent on outer
+				      (lint-format "perhaps ~A" caller
+						   (lists->string form
+								  `(let* (,@(cadr form)
+									  ,@(cadr inner))
+								     ,@(one-call-and-dots (cddr inner)))))))))
 			   
 			   ))) ; messed up let
 		   env)
@@ -12348,33 +12404,33 @@
 			     ;;   in both cases, we're assuming that the possible last-var value's side-effect won't
 			     ;;      affect other vars (in let* the local, in let something outside that might be used locally)
 			     ;;      perhaps add (not (side-effect (cadr last-var) env))?
-			     (if (pair? varlist)
-				 (let* ((len (length varlist))
-					(last-var (and (positive? len)
-						       (list-ref varlist (- len 1)))))
-				   (if (and (> len 1) 
-					    (pair? last-var)
-					    (pair? (cdr last-var))
-					    (< (tree-leaves (cadr last-var)) 12)
-					    (= (tree-count1 (car last-var) body 0) 1)
-					    (pair? body)
-					    (pair? (car body))
-					    (null? (cdr body))
-					    (not (memq (caar body) '(lambda lambda* define define* define-macro)))
-					    (not (and (eq? (caar body) 'set!)
-						      (eq? (car last-var) (cadar body))))
-					    (not (any-macro? (caar body) env))
-					    (not (any? (lambda (p)
-							 (and (pair? p)
-							      (not (eq? (car p) 'quote))
-							      (or (not (hash-table-ref no-side-effect-functions (car p)))
-								  (any? pair? (cdr p)))))
-						   (cdar body))))
-				       (lint-format "perhaps ~A" caller 
-						    (lists->string form `(,(if (= len 2) 'let 'let*)
-									  ,(copy varlist (make-list (- len 1)))
-									  ,@(tree-subst (cadr last-var) (car last-var) body))))))))
-
+			     (when (pair? varlist)
+			       (let* ((len (length varlist))
+				      (last-var (and (positive? len)
+						     (list-ref varlist (- len 1)))))
+				 (if (and (> len 1) 
+					  (pair? last-var)
+					  (pair? (cdr last-var))
+					  (< (tree-leaves (cadr last-var)) 12)
+					  (= (tree-count1 (car last-var) body 0) 1)
+					  (pair? body)
+					  (pair? (car body))
+					  (null? (cdr body))
+					  (not (memq (caar body) '(lambda lambda* define define* define-macro)))
+					  (not (and (eq? (caar body) 'set!)
+						    (eq? (car last-var) (cadar body))))
+					  (not (any-macro? (caar body) env))
+					  (not (any? (lambda (p)
+						       (and (pair? p)
+							    (not (eq? (car p) 'quote))
+							    (or (not (hash-table-ref no-side-effect-functions (car p)))
+								(any? pair? (cdr p)))))
+						     (cdar body))))
+				     (lint-format "perhaps ~A" caller 
+						  (lists->string form `(,(if (= len 2) 'let 'let*)
+									,(copy varlist (make-list (- len 1)))
+									,@(tree-subst (cadr last-var) (car last-var) body))))))))
+			   
 			   (when (and (pair? varlist)        ; (let* (...(x A)) (if x (f A) B)) -> (let(*) (...) (cond (A => f) (else B)))
 				      (pair? body)
 				      (null? (cdr body)))
@@ -12635,9 +12691,12 @@
 				 (when (let? lib)
 				   (let ((old-e *e*))
 				     (set! *e* lib)
-				     (let* ((e (lint-walk-open-body caller head (cddr form) new-env))
-					    (vars (if (eq? e env) () (env-difference caller e env ()))))
-				       (report-usage caller head vars new-env))
+				     (let ((e (lint-walk-open-body caller head (cddr form) new-env)))
+				       (report-usage caller head 
+						     (if (eq? e env) 
+							 () 
+							 (env-difference caller e env ())) 
+						     new-env))
 				     (set! *e* old-e)
 				     (set! walked #t)))))
 			   
@@ -12893,7 +12952,7 @@
 				   (arg-name (list-ref arglist (- (length arglist) 1)))
 				   (diffs (arg->defaults arg-name body1 body2 ())))
 			      (when (and (pair? diffs)
-					 (= (length diffs) 1)
+					 (null? (cdr diffs))
 					 (code-constant? (car diffs)))
 				(let ((new-body (if (> (car lens) (cadr lens)) body2 body1))
 				      (new-arglist (if (not (car diffs))
@@ -13280,7 +13339,7 @@
 				    (let ((lc (str 0))) ; s7 should handle this, but...
 				      (do ((c (read-char) (read-char)))
 					  ((or (and (eof-object? c)
-						    (or (format outport "unclosed block comment~%")
+						    (or (format outport "~NCunclosed block comment~%" lint-left-margin #\space)
 							#t))
 					       (and (char=? lc #\!)
 						    (char=? c #\#)))
@@ -13512,17 +13571,17 @@
 			      (if (char=? c #\()
 				  (catch #t
 				    (lambda ()
-				      (let ((ncode (with-input-from-string 
-						       (fixup-html (remove-markups code))
-						     read)))
-					(let ((outstr (call-with-output-string
-						       (lambda (op)
-							 (call-with-input-string (format #f "~S" ncode)
-							   (lambda (ip)
-							     (let-temporarily ((*report-shadowed-variables* #t))
-							       (lint ip op #f))))))))
-					  (if (> (length outstr) 1) ; possible newline at end
-					      (format () ";~A ~D: ~A~%" file line-num outstr)))))
+				      (let* ((ncode (with-input-from-string 
+							(fixup-html (remove-markups code))
+						      read))
+					     (outstr (call-with-output-string
+						      (lambda (op)
+							(call-with-input-string (format #f "~S" ncode)
+							  (lambda (ip)
+							    (let-temporarily ((*report-shadowed-variables* #t))
+									     (lint ip op #f))))))))
+					(if (> (length outstr) 1) ; possible newline at end
+					    (format () ";~A ~D: ~A~%" file line-num outstr))))
 				    (lambda args
 				      (format () ";~A ~D, error in read: ~A ~A~%" file line-num args
 					      (fixup-html (remove-markups code)))))))))))))))))))
@@ -13633,5 +13692,9 @@
 ;;; in report-usage, if var val always cont/goto -- check for unreachable code? (would need form)
 ;;; if let substitute body is named-let/do/define, don't change [do already isn't touched?]
 ;;; 1|2-line lambda in do body expanded (return not used)
+;;; there's still a problem with mv-range and values
+;;; shadowed var at top -- so original can't be used at all, remove from let/do or par and complain
+;;;   and don't include in combinations: (let ((result 0)) (let ((result 2)) (display result))) -> (let* ((result 0) (result 2)) (display result))
+;;;   if all are immediately shadowed -> car body
 ;;;
-;;; 111 21295 402883
+;;; 114 22052 425775

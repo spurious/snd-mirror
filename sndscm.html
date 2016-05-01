@@ -8868,13 +8868,13 @@ of the genetic algorithm):
 
 
 <pre class="indented">
-(let ((all (cadr (get-best :all (- n 1)))))   ; get the best all-harmonic phases for n - 1
-  (let ((new-phases (make-vector n 0.0)))     ; place in new phase vector shifted up
-    (do ((k 0 (+ k 1)))
-        ((= k (- n 1)))
-      (set! (new-phases (+ k 1)) (all k)))
-    (set! (new-phases 0) 0.0)
-    (fpsap 2 n new-phases)))                  ; search that vicinity for a good set (2 = even harmonics)
+(let* ((all (cadr (get-best :all (- n 1)))) ; get the best all-harmonic phases for n - 1
+       (new-phases (make-vector n 0.0)))    ; place in new phase vector shifted up
+  (do ((k 0 (+ k 1)))
+      ((= k (- n 1)))
+    (set! (new-phases (+ k 1)) (all k)))
+  (set! (new-phases 0) 0.0)
+  (fpsap 2 n new-phases))                   ; search that vicinity for a good set (2 = even harmonics)
 </pre>
 
 
@@ -11763,9 +11763,8 @@ Here's another example:
 </p>
 
 <pre class="indented">
-  (<a class=quiet href="#wsdoc">with-sound</a> ()
-    (let ((temp-sound (<em class=red>with-temp-sound</em> () (fm-violin 0 1 440 .1))))
-      (clm-expsrc 0 2 temp-sound 2.0 1.0 1.0)))
+(<a class=quiet href="#wsdoc">with-sound</a> ()
+  (clm-expsrc 0 2 (<em class=red>with-temp-sound</em> () (fm-violin 0 1 440 .1)) 2.0 1.0 1.0))
 </pre>
 
 

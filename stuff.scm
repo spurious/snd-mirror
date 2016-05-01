@@ -340,16 +340,15 @@
 			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
 		  vars)))))
 
-(define-macro (while test . body)         ; while loop with predefined break and continue
+(define-macro (while test . body)      ; while loop with predefined break and continue
   `(call-with-exit
     (lambda (break) 
-      (letrec ((continue (lambda () 
-			   (if (let () ,test)
-			       (begin 
-				 (let () ,@body)
-				 (continue))
-			       (break)))))
-	(continue)))))
+      (let continue ()
+	(if (let () ,test)
+	    (begin 
+	      (let () ,@body)
+	      (continue))
+	    (break))))))
 
 (define-macro (do* spec end . body)
   `(let* (,@(map (lambda (var) 

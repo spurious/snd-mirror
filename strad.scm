@@ -154,20 +154,24 @@
 	    (do ((i beg (+ i 1)))
 		((= i end))
 
-	      (set! vib (- (+ (/ (* (vinbridge indexl_2) (- alphal 1) (- alphal 2)) 2)
-			      (/ (* (vinbridge indexl) alphal (- alphal 1)) 2))
+	      (set! vib (- (/ (+ (* (vinbridge indexl_2) (- alphal 1) (- alphal 2))
+				 (* (vinbridge indexl) alphal (- alphal 1)))
+			      2)
 			   (* (vinbridge indexl_1) alphal (- alphal 2))))
 
-	      (set! vin (- (+ (/ (* (vinut indexr_2) (- alphar 1) (- alphar 2)) 2)
-			      (/ (* (vinut indexr) (- alphar 1) alphar) 2))
+	      (set! vin (- (/ (+ (* (vinut indexr_2) (- alphar 1) (- alphar 2))
+				 (* (vinut indexr) (- alphar 1) alphar))
+			      2)
 			   (* (vinut indexr_1) alphar (- alphar 2))))
 
-	      (set! vibt (- (+ (/ (* (vinbridget indexlt_2) (- alphalt 1) (- alphalt 2)) 2)
-			       (/ (* (vinbridget indexlt) alphalt (- alphalt 1)) 2))
+	      (set! vibt (- (/ (+ (* (vinbridget indexlt_2) (- alphalt 1) (- alphalt 2))
+				  (* (vinbridget indexlt) alphalt (- alphalt 1)))
+			       2)
 			    (* (vinbridget indexlt_1) alphalt (- alphalt 2))))
 
-	      (set! vint (- (+ (/ (* (vinutt indexrt_2) (- alphart 1) (- alphart 2)) 2)
-			       (/ (* (vinutt indexrt) (- alphart 1) alphart) 2))
+	      (set! vint (- (/ (+ (* (vinutt indexrt_2) (- alphart 1) (- alphart 2))
+				  (* (vinutt indexrt) (- alphart 1) alphart))
+			       2)
 			    (* (vinutt indexrt_1) alphart (- alphart 2))))
 
 	      (bowfilt inharm)
