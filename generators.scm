@@ -4984,8 +4984,7 @@ generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass f
 
 (define (sine-env e)
   (env-any e (lambda (y)
-	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
-				     (* pi y))))))))
+	       (* 0.5 (+ 1.0 (sin (* pi (- y 0.5))))))))
 
 (define (square-env e)
   (env-any e (lambda (y)
@@ -5897,14 +5896,12 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 					((prime) primoid-min-peak-phases)
 					((even) neven-min-peak-phases)))))
 			(if min-dat
-			    (let (;(norm (car min-dat))
-				  (rats (cadr min-dat)))
-			      (do ((i 1 (+ i 1))
-				   (j 0 (+ j 3)))
-				  ((> i n))
-				(set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
-				(set! (amps (+ j 2)) (* pi (rats (- i 1))))))))))
-		  
+			    (do ((rats (cadr min-dat))
+				 (i 1 (+ i 1))
+				 (j 0 (+ j 3)))
+				((> i n))
+			      (set! (amps (+ j 1)) (/ 1.0 n)) ;(/ 0.999 norm)) -- can't decide about this -- I guess it should be consistent with the #f case
+			      (set! (amps (+ j 2)) (* pi (rats (- i 1)))))))))
 		  amps)))
 
 (define noid polyoid)
@@ -6315,15 +6312,15 @@ The magnitudes are available as mus-xcoeffs, the phases as mus-ycoeffs, and the 
 	(float-vector-subtract! amp-incs amps)
 	(float-vector-scale! amp-incs scl)
 	
-	(let ((n2 (/ n 2)))
-	  (do ((i 0 (+ i 1))
-	       (ks 0.0 (+ ks kscl)))
-	      ((= i n2))
-	    (let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) two-pi)))
-	      (set! (freq-incs i) (new-freq-incs i))
-	      (if (> diff pi) (set! diff (- diff (* 2 pi))))
-	      (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
-	      (set! (new-freq-incs i) (+ (* diff scl) ks)))))
+	(do ((n2 (/ n 2))
+	     (i 0 (+ i 1))
+	     (ks 0.0 (+ ks kscl)))
+	    ((= i n2))
+	  (let ((diff (modulo (- (new-freq-incs i) (freq-incs i)) two-pi)))
+	    (set! (freq-incs i) (new-freq-incs i))
+	    (if (> diff pi) (set! diff (- diff (* 2 pi))))
+	    (if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
+	    (set! (new-freq-incs i) (+ (* diff scl) ks))))
 	
 	(float-vector-subtract! new-freq-incs freqs)
 	(float-vector-scale! new-freq-incs scl)))

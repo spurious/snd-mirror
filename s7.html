@@ -1684,32 +1684,32 @@ Here's a generic FFT:
 	(let ((temp (data j)))
 	  (set! (data j) (data i))
 	  (set! (data i) temp)))
-    (let ((m (/ n 2)))
-      (do () 
-	  ((or (&lt; m 2) (&lt; j m)))
-	(set! j (- j m))
-	(set! m (/ m 2)))
-      (set! j (+ j m))))
-  (let ((ipow (floor (log n 2)))
-	(prev 1))
-    (do ((lg 0 (+ lg 1))
-	 (mmax 2 (* mmax 2))
-	 (pow (/ n 2) (/ pow 2))
-	 (theta (complex 0.0 (* pi dir)) (* theta 0.5)))
-	((= lg ipow))
-      (let ((wpc (exp theta))
-	    (wc 1.0))
-	(do ((ii 0 (+ ii 1)))
-	    ((= ii prev))
-	  (do ((jj 0 (+ jj 1))
-	       (i ii (+ i mmax))
-	       (j (+ ii prev) (+ j mmax)))
-	      ((&gt;= jj pow))
-	    (let ((tc (* wc (data j))))
-	      (set! (data j) (- (data i) tc))
-	      (set! (data i) (+ (data i) tc))))
-	  (set! wc (* wc wpc)))
-	(set! prev mmax))))
+    (do ((m (/ n 2)))
+        ((or (&lt; m 2) 
+             (&lt; j m))
+         (set! j (+ j m)))
+     (set! j (- j m))
+     (set! m (/ m 2))))
+  (do ((ipow (floor (log n 2)))
+       (prev 1)
+       (lg 0 (+ lg 1))
+       (mmax 2 (* mmax 2))
+       (pow (/ n 2) (/ pow 2))
+       (theta (complex 0.0 (* pi dir)) (* theta 0.5)))
+      ((= lg ipow))
+    (let ((wpc (exp theta))
+          (wc 1.0))
+      (do ((ii 0 (+ ii 1)))
+	  ((= ii prev))
+	(do ((jj 0 (+ jj 1))
+	     (i ii (+ i mmax))
+	     (j (+ ii prev) (+ j mmax)))
+	    ((&gt;= jj pow))
+	  (let ((tc (* wc (data j))))
+	    (set! (data j) (- (data i) tc))
+	    (set! (data i) (+ (data i) tc))))
+	(set! wc (* wc wpc)))
+      (set! prev mmax)))
   data)
 
 &gt; (cfft! (list 0.0 1+i 0.0 0.0))
@@ -2696,16 +2696,16 @@ A slightly more complex example:
 </p>
 
 <pre class="indented">
-(let ((e1 (openlet 
+(let* ((e1 (openlet 
 	   (inlet 
 	    'x 3
 	    '* (lambda args
 		 (apply * (if (number? (car args))
 		     	      (values (car args) ((cadr args) 'x) (cddr args))
-		              (values ((car args) 'x) (cdr args)))))))))
-  (let ((e2 (copy e1)))
-    (set! (e2 'x) 4)
-    (* 2 e1 e2))) ; (* 2 3 4) =&gt; 24
+		              (values ((car args) 'x) (cdr args))))))))
+       (e2 (copy e1)))
+  (set! (e2 'x) 4)
+  (* 2 e1 e2)) ; (* 2 3 4) =&gt; 24
 </pre>
 
 <p>Perhaps these names would be better: openlet -&gt; with-methods, coverlet -&gt; without-methods,
@@ -3415,16 +3415,15 @@ is cleaner than call/cc, and much faster.
   ;; borrowed loosely from CL &mdash; predefine "return" as an escape
   `(<em class=red>call-with-exit</em> (lambda (return) ,@body)))
 
-(define-macro (while test . body)         ; while loop with predefined break and continue
+(define-macro (while test . body)      ; while loop with predefined break and continue
   `(<em class=red>call-with-exit</em>
     (lambda (break) 
-      (letrec ((continue (lambda () 
-			   (if (let () ,test)
-			       (begin 
-				 (let () ,@body)
-				 (continue))
-			       (break)))))
-	(continue)))))
+      (let continue ()
+	(if (let () ,test)
+	    (begin 
+	      (let () ,@body)
+	      (continue))
+	    (break))))))
 
 (define-macro (switch selector . clauses) ; C-style case (branches fall through unless break called)
   `(<em class=red>call-with-exit</em>
@@ -5955,11 +5954,11 @@ it is GC'd.  Here is an example:
 
 <pre class="indented">
 (define (bad-idea)
-  (let ((lst '(1 2 3)))
-    (let ((result (list-ref lst 1)))
-     (list-set! lst 1 (* 2.0 16.6))
-     (gc)
-     result)))
+  (let* ((lst '(1 2 3))
+         (result (list-ref lst 1)))
+   (list-set! lst 1 (* 2.0 16.6))
+   (gc)
+   result))
 </pre>
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a

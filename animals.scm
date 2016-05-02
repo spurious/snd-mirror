@@ -1205,42 +1205,40 @@
 ;;; Western toad
 
 (defanimal (western-toad beg dur amp)
-  (let ((start (seconds->samples beg)))
-    (let ((stop (seconds->samples (+ beg dur)))
-	  (gen (make-polywave 0.0 '(1 .95  2 .02  3 .03  4 .005)))
-	  (cur-start start)
-	  (cur-is-long #t))
-      (do ()
-	  ((>= cur-start stop))
-	(let ((pulse-samps (seconds->samples (if cur-is-long 
-						 (+ 0.04 (random .04)) 
-						 (+ .01 (random .02))))))
-	  (let ((pulse-ampf (make-env (vector 0 0 (if cur-is-long 
-						      (values .1 .5 2 1 3 0)
-						      (values 1 1 1.5 .3 2 0)))
-				      :scaler (* amp (if cur-is-long (+ .6 (random .4)) (+ .1 (random .7))))
-				      :length pulse-samps
-				      :base (if cur-is-long 6.0 3.0)))
-		(pulse-frqf (make-env (if cur-is-long
-					  '(0 -.5 .5 0 1 -.3)
-					  '(0 -1 .1 0 1 0))
-				      :length pulse-samps
-				      :base .1
-				      :offset (hz->radians (if cur-is-long (if (> (random 1.0) .6) 1340 1260) 1200))
-				      :scaler (hz->radians (random 500.0))))
-		(cur-end (+ cur-start pulse-samps)))
-	    (do ((i cur-start (+ i 1)))
-		((= i cur-end))
-	      (outa i (* (env pulse-ampf)
-			 (polywave gen (env pulse-frqf)))))
-	    
-	    (set! cur-start (+ cur-end 
-			       (seconds->samples
-				(if cur-is-long
-				    (+ .015 (random (if (> (random 1.0) .8) .15 .04)))
-				    (+ .01 (random .01))))))
-
-	    (set! cur-is-long (or (not cur-is-long) (> (random 1.0) .3)))))))))
+  (do ((stop (seconds->samples (+ beg dur)))
+       (gen (make-polywave 0.0 '(1 .95  2 .02  3 .03  4 .005)))
+       (cur-start (seconds->samples beg))
+       (cur-is-long #t))
+      ((>= cur-start stop))
+    (let ((pulse-samps (seconds->samples (if cur-is-long 
+					     (+ 0.04 (random .04)) 
+					     (+ .01 (random .02))))))
+      (let ((pulse-ampf (make-env (vector 0 0 (if cur-is-long 
+						  (values .1 .5 2 1 3 0)
+						  (values 1 1 1.5 .3 2 0)))
+				  :scaler (* amp (if cur-is-long (+ .6 (random .4)) (+ .1 (random .7))))
+				  :length pulse-samps
+				  :base (if cur-is-long 6.0 3.0)))
+	    (pulse-frqf (make-env (if cur-is-long
+				      '(0 -.5 .5 0 1 -.3)
+				      '(0 -1 .1 0 1 0))
+				  :length pulse-samps
+				  :base .1
+				  :offset (hz->radians (if cur-is-long (if (> (random 1.0) .6) 1340 1260) 1200))
+				  :scaler (hz->radians (random 500.0))))
+	    (cur-end (+ cur-start pulse-samps)))
+	(do ((i cur-start (+ i 1)))
+	    ((= i cur-end))
+	  (outa i (* (env pulse-ampf)
+		     (polywave gen (env pulse-frqf)))))
+	
+	(set! cur-start (+ cur-end 
+			   (seconds->samples
+			    (if cur-is-long
+				(+ .015 (random (if (> (random 1.0) .8) .15 .04)))
+				(+ .01 (random .01))))))
+	
+	(set! cur-is-long (or (not cur-is-long) (> (random 1.0) .3)))))))
 
 ;; (with-sound (:play #t) (western-toad  0 2 .5))
 
@@ -2965,14 +2963,14 @@
       (set! af (if (< i 20) (+ af .004) (- af .004)))))
   
   (savannah-7 (+ beg 2.27) (* .4 amp))
-  
-  (let ((dist 0.01))
-    (do ((i 0 (+ i 1))
-	 (beg2 (+ beg 2.36) (+ beg2 dist))
-	 (af .1 (* af .85)))
-	((= i 20))
-      (savannah-8 beg2 (* amp af))
-      (set! dist (+ dist .001)))))
+
+  (do ((dist 0.01)
+       (i 0 (+ i 1))
+       (beg2 (+ beg 2.36) (+ beg2 dist))
+       (af .1 (* af .85)))
+      ((= i 20))
+    (savannah-8 beg2 (* amp af))
+    (set! dist (+ dist .001))))
 
 ;; (with-sound (:play #t) (savannah-sparrow 0 .5))
 
@@ -6259,12 +6257,12 @@
 			  (* (env ampf2)
 			     (polywave gen2 frq))))))))))
   
-  (let ((amps (vector .5 1.0 1.0 .9)))
-    (do ((i 0 (+ i 1))
-	 (bg beg1 (+ bg .35)))
-	((= i 4))
-      (oak-titmouse-1 bg (* amp1 (amps i)))
-      (oak-titmouse-2 (+ bg .156) (* amp1 (amps i))))))
+  (do ((amps (vector .5 1.0 1.0 .9))
+       (i 0 (+ i 1))
+       (bg beg1 (+ bg .35)))
+      ((= i 4))
+    (oak-titmouse-1 bg (* amp1 (amps i)))
+    (oak-titmouse-2 (+ bg .156) (* amp1 (amps i)))))
 
 ;; (with-sound (:play #t) (oak-titmouse 0 .5))
 
@@ -6349,17 +6347,17 @@
 			   (polywave gen2 (+ (env frqf2)
 					     (rand-interp rnd1)))))))))))
   
-  (let ((amps (vector .4 .6 .8 .9 1.0)))
-    (do ((note 0 (+ 1 note))
-	 (bg beg1 (+ bg 0.18)))
-	((= note 5))
-      (macgillivrays-warbler-1 bg (* amp1 (amps note)))))
+  (do ((amps (vector .4 .6 .8 .9 1.0))
+       (note 0 (+ 1 note))
+       (bg beg1 (+ bg 0.18)))
+      ((= note 5))
+    (macgillivrays-warbler-1 bg (* amp1 (amps note))))
   
-  (let ((amps (vector 1.0 .9 .7)))
-    (do ((note 0 (+ 1 note))
-	 (bg (+ beg1 0.93) (+ bg 0.17)))
-	((= note 3))
-      (macgillivrays-warbler-2 bg (* amp1 (amps note))))))
+  (do ((amps (vector 1.0 .9 .7))
+       (note 0 (+ 1 note))
+       (bg (+ beg1 0.93) (+ bg 0.17)))
+      ((= note 3))
+    (macgillivrays-warbler-2 bg (* amp1 (amps note)))))
 
 ;; (with-sound (:play #t) (macgillivrays-warbler 0 .5))
 
@@ -7118,12 +7116,12 @@
   (song-sparrow-little-buzz (+ beg1 .37) (* .4 amp1))
   (song-sparrow-clear-tone (+ beg1 0.57) 1.0 amp1)
   
-  (let ((amps (vector .14 .33 .37 .37 .30 .30 .30)))
-    (do ((i 0 (+ i 1))
-	 (x 0.68 (+ x .1)))
-	((= i 7)) 
-      (song-sparrow-sweep-tone (+ beg1 x) (* (amps i) amp1))
-      (song-sparrow-sweep-caw (+ beg1 x .05) (* 0.5 amp1))))
+  (do ((amps (vector .14 .33 .37 .37 .30 .30 .30))
+       (i 0 (+ i 1))
+       (x 0.68 (+ x .1)))
+      ((= i 7)) 
+    (song-sparrow-sweep-tone (+ beg1 x) (* (amps i) amp1))
+    (song-sparrow-sweep-caw (+ beg1 x .05) (* 0.5 amp1)))
   
   (song-sparrow-sweep-tone (+ beg1 1.37) (* .27 amp1))
   (song-sparrow-big-buzz (+ beg1 1.44) (* 0.75 amp1))

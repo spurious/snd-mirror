@@ -1429,11 +1429,9 @@
 	      ((< i 0))
 	    (do ((j 0 (+ j 1)))
 		((> j i))
-	      
 	      (set! ((cr 0) j) (+ (* u1 ((cr 0) j)) (* u ((cr 0) (+ j 1)))))
 	      (set! ((cr 1) j) (+ (* u1 ((cr 1) j)) (* u ((cr 1) (+ j 1)))))
-	      (set! ((cr 2) j) (+ (* u1 ((cr 2) j)) (* u ((cr 2) (+ j 1)))))
-	      ))
+	      (set! ((cr 2) j) (+ (* u1 ((cr 2) j)) (* u ((cr 2) (+ j 1)))))))
 	  (list ((cr 0) 0)
 		((cr 1) 0)
 		((cr 2) 0))))
@@ -1844,67 +1842,68 @@
 	    (error 'mus-error "rotation center has to have all three coordinates~%"))
 	(if (and rotation-axis (not (= (length rotation-axis) 3)))
 	    (error 'mus-error "rotation axis has to have all three coordinates~%"))
-	(let ((xtr ())
+	(do ((xtr ())
 	      (ytr ())
-	      (ztr ()))
-	  (do ((len (length xc))
-	       (i 0 (+ i 1)))
-	      ((= i len))
-	    (let* ((x (xc i))
-		   (y (yc i))
-		   (z (zc i))
-		   (xw x)
-		   (yw y)
-		   (zw z))
-	      (when rotation
-		;; rotating around non-triple zero? translate first
-		(when rotation-center
-		  (set! xw (- xw (car rotation-center)))
-		  (set! yw (- yw (cadr rotation-center)))
-		  (set! zw (- zw (third rotation-center))))
-		;; rotation
-		(let ((xr (+ (* ((matrix 0) 0) xw)
-			     (* ((matrix 1) 0) yw)
-			     (* ((matrix 2) 0) zw)))
-		      (yr (+ (* ((matrix 0) 1) xw)
-			     (* ((matrix 1) 1) yw)
-			     (* ((matrix 2) 1) zw)))
-		      (zr (+ (* ((matrix 0) 2) xw)
-			     (* ((matrix 1) 2) yw)
-			     (* ((matrix 2) 2) zw))))
-		  (set! xw xr)
-		  (set! yw yr)
-		  (set! zw zr))
-		;; rotating around non-triple zero? untranslate
-		(when rotation-center
-		  (set! xw (+ xw (car rotation-center)))
-		  (set! yw (+ yw (cadr rotation-center)))
-		  (set! zw (+ zw (third rotation-center)))))
+	      (ztr ())
+	      (len (length xc))
+	      (i 0 (+ i 1)))
+	    ((= i len)
+	     (set! (path-tx path) (reverse xtr))
+	     (set! (path-ty path) (reverse ytr))
+	     (set! (path-tz path) (reverse ztr)))
 
-	      ;; scaling
-	      (when scaling
-		(set! xw (* xw (car scaling)))
-		(if (cadr scaling)
-		    (set! yw (* yw (cadr scaling))))
-		(if (third scaling)
-		    (set! zw (* zw (third scaling)))))
-
-	      ;; translating
-	      (when translation
-		(set! xw (+ xw (car translation)))
-		(if (cadr translation)
-		    (set! yw (+ yw (cadr translation))))
-		(if (third translation)
-		    (set! zw (+ zw (third translation)))))
-
-	      ;; collect the points
-	      (set! xtr (cons xw xtr))
-	      (set! ytr (cons yw ytr))
-	      (set! ztr (cons zw ztr))))
+	  (let* ((x (xc i))
+		 (y (yc i))
+		 (z (zc i))
+		 (xw x)
+		 (yw y)
+		 (zw z))
+	    (when rotation
+	      ;; rotating around non-triple zero? translate first
+	      (when rotation-center
+		(set! xw (- xw (car rotation-center)))
+		(set! yw (- yw (cadr rotation-center)))
+		(set! zw (- zw (third rotation-center))))
+	      ;; rotation
+	      (let ((xr (+ (* ((matrix 0) 0) xw)
+			   (* ((matrix 1) 0) yw)
+			   (* ((matrix 2) 0) zw)))
+		    (yr (+ (* ((matrix 0) 1) xw)
+			   (* ((matrix 1) 1) yw)
+			   (* ((matrix 2) 1) zw)))
+		    (zr (+ (* ((matrix 0) 2) xw)
+			   (* ((matrix 1) 2) yw)
+			   (* ((matrix 2) 2) zw))))
+		(set! xw xr)
+		(set! yw yr)
+		(set! zw zr))
+	      ;; rotating around non-triple zero? untranslate
+	      (when rotation-center
+		(set! xw (+ xw (car rotation-center)))
+		(set! yw (+ yw (cadr rotation-center)))
+		(set! zw (+ zw (third rotation-center)))))
+	    
+	    ;; scaling
+	    (when scaling
+	      (set! xw (* xw (car scaling)))
+	      (if (cadr scaling)
+		  (set! yw (* yw (cadr scaling))))
+	      (if (third scaling)
+		  (set! zw (* zw (third scaling)))))
+	    
+	    ;; translating
+	    (when translation
+	      (set! xw (+ xw (car translation)))
+	      (if (cadr translation)
+		  (set! yw (+ yw (cadr translation))))
+	      (if (third translation)
+		  (set! zw (+ zw (third translation)))))
+	    
+	    ;; collect the points
+	    (set! xtr (cons xw xtr))
+	    (set! ytr (cons yw ytr))
+	    (set! ztr (cons zw ztr)))))
 	  
-	  (set! (path-tx path) (reverse xtr))
-	  (set! (path-ty path) (reverse ytr))
-	  (set! (path-tz path) (reverse ztr))))
       (begin
 	;; if there's no transformation just copy the rendered path
 	(set! (path-tt path) (copy (path-rt path)))

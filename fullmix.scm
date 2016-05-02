@@ -78,16 +78,15 @@
       
       (if (memv srate '(#f 1 1.0))
 	  (let ((mxe (and envs
-			  (let ((v (make-vector in-chans)))
-			    (do ((i 0 (+ i 1))
-				 (off 0 (+ off out-chans)))
-				((= i in-chans))
-			      (let ((vo (make-vector out-chans #f)))
-				(vector-set! v i vo)
-				(do ((j 0 (+ j 1)))
-				    ((= j out-chans))
-				  (vector-set! vo j (vector-ref envs (+ off j))))))
-			    v))))
+			  (do ((v (make-vector in-chans))
+			       (i 0 (+ i 1))
+			       (off 0 (+ off out-chans)))
+			      ((= i in-chans) v)
+			    (let ((vo (make-vector out-chans #f)))
+			      (vector-set! v i vo)
+			      (do ((j 0 (+ j 1)))
+				  ((= j out-chans))
+				(vector-set! vo j (vector-ref envs (+ off j)))))))))
 	    ;; -------- no src
 	    (mus-file-mix *output* file st samps inloc mx mxe)
 	    (if rev-mx

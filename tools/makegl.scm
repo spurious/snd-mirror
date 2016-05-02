@@ -535,10 +535,7 @@
        (heyc arg)
        (if (> line-len 120)
 	   (begin
-	     (hey "~%")
-	     (do ((i 0 (+ i 1)))
-		 ((= i arg-start))
-	       (heyc " "))
+	     (format gl-file "~%~NC" arg-start #\space)
 	     (set! line-len arg-start))))
 
      (check-glu name)

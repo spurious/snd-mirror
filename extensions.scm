@@ -270,12 +270,12 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 	(let ((data (samples beg len snd chn edpos))
 	      (incr (/ pi len))
 	      (scl (* 0.5 (- rmp1 rmp0))))
-	  (let ((off (+ rmp0 scl)))
-	    (do ((i 0 (+ i 1))
-		 (angle (- pi) (+ angle incr)))
-		((= i len))
-	      (float-vector-set! data i (* (float-vector-ref data i)
-					   (+ off (* scl (cos angle)))))))
+	  (do ((off (+ rmp0 scl))
+	       (i 0 (+ i 1))
+	       (angle (- pi) (+ angle incr)))
+	      ((= i len))
+	    (float-vector-set! data i (* (float-vector-ref data i)
+					 (+ off (* scl (cos angle))))))
 	  (float-vector->channel data 
 				 beg len snd chn current-edit-position
 				 (format #f "sine-ramp ~A ~A ~A ~A" rmp0 rmp1 beg dur)))))))

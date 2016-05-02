@@ -1872,10 +1872,7 @@
 	(heyc arg)
 	(if (> line-len 120) ; line-max originally
 	    (begin
-	      (hey "~%")
-	      (do ((i 0 (+ i 1)))
-		  ((= i arg-start))
-		(heyc " "))
+	      (format xg-file "~%~NC" arg-start #\space)
 	      (set! line-len arg-start))))
       
       (hey "static Xen gxg_~A(" name)

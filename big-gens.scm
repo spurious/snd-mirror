@@ -91,11 +91,11 @@
 ;;; -------- dot-product --------
 
 (define (big-dot-product v1 v2)
-  (let ((len (min (length v1) (length v2))))
-    (do ((sum 0.0)
-	 (i 0 (+ i 1)))
-	((= i len) sum)
-      (set! sum (+ sum (* (v1 i) (v2 i)))))))
+  (do ((len (min (length v1) (length v2)))
+       (sum 0.0)
+       (i 0 (+ i 1)))
+      ((= i len) sum)
+    (set! sum (+ sum (* (v1 i) (v2 i))))))
 
 
 ;;; -------- ring-modulate --------

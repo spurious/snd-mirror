@@ -4936,14 +4936,14 @@ using the "envelope" argument:
 
 <pre class="indented">
 (define (gaussian-envelope s)
-  (let ((e ())
-	(den (* 2.0 s s)))
-    (do ((i 0 (+ i 1))
-	 (x -1.0 (+ x .1))
-	 (y -4.0 (+ y .4)))
-	((= i 21)
-         (reverse e))
-      (set! e (cons (exp (- (/ (* y y) den))) (cons x e))))))
+  (do ((e ())
+       (den (* 2.0 s s))
+       (i 0 (+ i 1))
+       (x -1.0 (+ x .1))
+       (y -4.0 (+ y .4)))
+      ((= i 21)
+       (reverse e))
+    (set! e (cons (exp (- (/ (* y y) den))) (cons x e)))))
 
 (<em class=red>make-rand</em> :envelope (gaussian-envelope 1.0))
 </pre>
@@ -6359,8 +6359,7 @@ Code of the form:
 </p>
 
 <pre class="indented">
-(let ((ab (make-all-pass-bank (vector a1 a2))))
-  (all-pass-bank ab input))
+(all-pass-bank ab (make-all-pass-bank (vector a1 a2)) input)
 </pre>
 
 
@@ -7974,8 +7973,7 @@ To have full output to both channels,</p>
         ((= i end))
       (let ((rdval (* (<a class=quiet href="#readin">readin</a> rdA) (<a class=quiet href="#env">env</a> amp-env)))
             (degval (<a class=quiet href="#env">env</a> deg-env)))
-        (let ((distval (<a class=quiet href="#env">env</a> dist-env)))
-          (set! dist-scaler (/ 1.0 distval)))
+        (set! dist-scaler (/ (<a class=quiet href="#env">env</a> dist-env)))
         (locsig-set! loc 0 (* (- 1.0 degval) dist-scaler))
         (if (&gt; (channels <a class=quiet>*output*</a>) 1)
             (locsig-set! loc 1 (* degval dist-scaler)))

@@ -21,12 +21,12 @@
 
 
 (define* (check-freq freq snd chn)
-  (let ((hum 0.0))
-    (do ((i 0 (+ i 1))
-	 (loc 0.0 (+ loc (round (/ (framples snd chn) 5)))))
-	((= i 4))
-      (set! hum (+ hum (goertzel-channel freq loc 2048 snd chn))))
-    (/ hum 4.0)))
+  (do ((hum 0.0)
+       (i 0 (+ i 1))
+       (loc 0.0 (+ loc (round (/ (framples snd chn) 5)))))
+      ((= i 4)
+       (/ hum 4.0))
+    (set! hum (+ hum (goertzel-channel freq loc 2048 snd chn)))))
 
 
 ;;; -------- single sample clicks
