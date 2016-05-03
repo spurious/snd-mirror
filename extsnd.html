@@ -13764,20 +13764,20 @@ of FractInt's royal colormap):
 <pre class="indented">
 (add-colormap "purple" 
   (lambda (size) 
-    (let ((r (make-float-vector size 0.0))
-	  (g (make-float-vector size 0.0))
-	  (b (make-float-vector size 0.0))
-	  (incr (/ 256.0 size))
-	  (er (list 0 60 60 116 128 252 192 252 256 60))
-	  (eg (list 0 0  64 0   128 252 192 252 256 0))
-	  (eb (list 0 80        128 252 192 0   256 80)))
-      (do ((i 0 (+ i 1))
-	   (x 0.0 (+ x incr)))
-	  ((= i size))
-        (set! (r i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0)) ; from env.scm
-        (set! (g i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eg) 256.0))
-        (set! (b i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eb) 256.0)))
-      (list r g b))))
+    (do ((r (make-float-vector size 0.0))
+	 (g (make-float-vector size 0.0))
+	 (b (make-float-vector size 0.0))
+	 (incr (/ 256.0 size))
+	 (er (list 0 60 60 116 128 252 192 252 256 60))
+	 (eg (list 0 0  64 0   128 252 192 252 256 0))
+	 (eb (list 0 80        128 252 192 0   256 80))
+         (i 0 (+ i 1))
+	 (x 0.0 (+ x incr)))
+        ((= i size)
+	 (list r g b))
+      (set! (r i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0)) ; from env.scm
+      (set! (g i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eg) 256.0))
+      (set! (b i) (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eb) 256.0)))))
 
 ;;; another amusing colormap from FractInt:
 (add-colormap "cos" 

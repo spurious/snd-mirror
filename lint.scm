@@ -57,9 +57,6 @@
 (set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid (incorrect) unbound-variable errors
 
-(set! *#readers* (list (cons #\_ (lambda (str)
-				   (and (string=? str "__line__")
-					(port-line-number))))))
 (unless (provided? 'snd)
   (define definstrument define*)
   (define defgenerator define*))
@@ -104,6 +101,14 @@
 			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
 			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
 		  vars)))))
+#|
+;; debugging version
+(define-expansion (lint-format str caller . args)
+  `(begin
+     (format outport "lint.scm line ~A~%" ,(port-line-number))
+     (lint-format-1 ,str ,caller ,@args)))
+|#
+
 
 ;;; --------------------------------------------------------------------------------
 (define lint
@@ -7428,6 +7433,12 @@
 			     vname 
 			     (if (memq (var-ftype local-var) '(define lambda define* lambda*)) "called" "used")
 			     (car scope)))))
+
+	     (if (and (eq? (var-ftype local-var) 'define-expansion)
+		      (not (eq? caller top-level:)))
+		 (format outport "~NCdefine-expansion for ~A is not at the top-level, so it is ignored~%" 
+			 lint-left-margin #\space
+			 vname))
 	     
 	     (when (and *report-function-stuff*
 			(memq (var-ftype local-var) '(define lambda define* lambda*))
@@ -9324,6 +9335,7 @@
 						  (var (and (pair? (cadr let-form))
 							    (null? (cdadr let-form)) ; just one var in let/rec
 							    (caadr let-form))))
+					     ;; let-form here can be (lambda...) or (let|letrec ... lambda)
 					     (when (and (pair? var)
 							(symbol? (car var))
 							(pair? (cddr let-form))
@@ -9368,6 +9380,15 @@
 				      (not (pair? (car sym)))) ; curried func or something equally stupid
 				 (let ((outer-args (cdr sym))
 				       (outer-name (car sym)))
+#|
+				   ;; define + redundant named-let 
+				   ;; this happens a lot, even insisting on pars= and only par->par
+				   (if (and (pair? (car val))
+					    (eq? (caar val) 'let)
+					    (symbol? (cadar val))
+					    (null? (cdr val)))
+				       (format *stderr* "~A~%~%" (lint-pp form)))
+|#
 				   
 				   ;; perhaps this block should be on a *report-* switch --
 				   ;;   it translates some internal defines into named lets
@@ -9375,6 +9396,7 @@
 				   ;; this is not redundant given the walk-body translations because here
 				   ;;   we have the outer parameters and can check those against the inner ones
 				   ;;   leading (sometimes) to much nicer rewrites.
+
 				   (when (and (pair? (car val))
 					      (eq? (caar val) 'define)
 					      (pair? (cdr val))
@@ -9907,6 +9929,7 @@
 
 					 ;; (if a (if b d e) (if c d e)) -> (if (if a b c) d e)? reversed does not happen.
 					 ;; (if a (if b d) (if c d)) -> (if (if a b c) d)
+					 ;; (if a (if b d e) (if (not b) d e)) -> (if (eq? (not a) (not b)) d e)
 					 (if (and (pair? false)
 						  (eq? (car false) 'if)
 						  (= (length false) 4)
@@ -9914,7 +9937,17 @@
 						  (equal? (cddr true) (cddr false)))
 					     (lint-format "perhaps ~A" caller
 							  (lists->string form
-									 `(if (if ,expr ,(cadr true) ,(cadr false)) ,@(cddr true))))))
+									 (if (and (pair? (cadr true))
+										  (eq? (caadr true) 'not)
+										  (equal? (cadadr true) (cadr false)))
+									     `(if (not (eq? (not ,expr) ,(cadr true)))
+										  ,@(cddr true))
+									     (if (and (pair? (cadr false))
+										      (eq? (caadr false) 'not)
+										      (equal? (cadr true) (cadadr false)))
+										 `(if (eq? (not ,expr) ,(cadr false))
+										      ,@(cddr true))
+										 `(if (if ,expr ,(cadr true) ,(cadr false)) ,@(cddr true))))))))
 
 				       (begin
 					 (if (equal? expr (simplify-boolean `(not ,(cadr true)) () () env))
@@ -10180,7 +10213,6 @@
 							    (truncated-lists->string form `(if (,(cadr sig) ,expr) ,@(cddr form)))))))))
 			       ;; the parallel if-not case does not happen
 
-			       
 			       ;; --------
 			       (when (and (= suggestion made-suggestion)
 					  (not (= line-number last-if-line-number)))
@@ -12011,6 +12043,50 @@
 			   (unless named-let
 			     (find-let-constant-exprs caller form vars body))
 
+#|
+			   ;; this happens a lot: define is a function, body has one more form, func used once in that form
+			   ;;   if func not car, subst as named-let and remove let if lambda
+			   ;;   else use func body as replacement for entire let
+			   ;;   if passed as func, pass as lambda and remove let
+			   (if (and (null? (cadr form))
+				    (pair? (car body))
+				    (eq? (caar body) 'define))
+			       (format *stderr* "~A~%~%" (lint-pp form)))
+|#			   
+#|
+			   ;; copied from letrec below -- happens about a dozen times
+			   (when (and (pair? vars)
+				      (null? (cdr vars))
+				      (pair? (cddr form))
+				      (pair? (caddr form))
+				      (null? (cdddr form)))
+			     (let ((body (caddr form))
+				   (sym (var-name (car vars)))
+				   (lform (and (pair? (caadr form))
+					       (pair? (cdar (cadr form)))
+					       (cadar (cadr form)))))
+			       (if (and (pair? lform)
+					(pair? (cdr lform))
+					(eq? (car lform) 'lambda)
+					(proper-list? (cadr lform)))
+				   ;; unlike in letrec, here there can't be recursion, I think
+				   (if (eq? sym (car body))
+				       (if (and (not (tree-memq sym (cdr body)))
+						(< (tree-leaves body) 100))
+					   (lint-format "perhaps ~A" caller
+							(lists->string 
+							 form `(let ,(map list (cadr lform) (cdr body))
+								 ,@(cddr lform)))))
+				       
+				       (if (= (tree-count1 sym body 0) 1)
+					   (let ((call (find-call sym body)))
+					     (when (pair? call) 
+					       (let ((new-call `(let ,(map list (cadr lform) (cdr call))
+								  ,@(cddr lform))))
+						 (lint-format "perhaps ~A" caller
+							      (lists->string form (tree-subst new-call call body)))))))))))
+|#				   
+				   
 			   (if (and (pair? body)                ; (let ((x y)) x) -> y
 				    (null? (cdr body))
 				    (pair? varlist)             ; (let ()...)
@@ -12578,35 +12654,34 @@
 			   (let ((body (caddr form))
 				 (sym (var-name (car vars)))
 				 (lform (cadar (cadr form))))           ; the letrec var's lambda
-			     (if (eq? sym (car body))                   ; (letrec ((x (lambda ...))) (x...)) -> (let x (...)...)
-				 (if (and (pair? lform)
-					  (pair? (cdr lform))
-					  (eq? (car lform) 'lambda)
-					  (proper-list? (cadr lform)) ; includes ()
-					  (< (tree-leaves body) 100))
-				     ;; the limit on tree-leaves is for cases where the args are long lists of data --
-				     ;;   more like for-each than let, and easier to read if the code is first, I think.
-				     (lint-format "perhaps ~A" caller
-						  (lists->string 
-						   form `(let ,sym 
-							   ,(map list (cadr lform) (cdr body))
-							   ,@(cddr lform)))))
-				 (if (and (not (eq? caller 'define))
-					  (pair? lform)
-					  (pair? (cdr lform))
-					  (proper-list? (cadr lform))
-					  (= (tree-count1 sym body 0) 1))
-				     (let ((call (find-call sym body)))
-				       (when (pair? call)
-					 (let ((new-call `(let ,sym
-							    ,(map list (cadr lform) (cdr call))
-							    ,@(cddr lform))))
-					   (lint-format "perhaps ~A" caller
-							(lists->string form (tree-subst new-call call body))))))))))
+			     (if (and (pair? lform)
+				      (pair? (cdr lform))
+				      (eq? (car lform) 'lambda)
+				      (proper-list? (cadr lform))) ; includes ()
+				 (if (eq? sym (car body))                   ; (letrec ((x (lambda ...))) (x...)) -> (let x (...)...)
+				     (if (and (not (tree-memq sym (cdr body)))
+					      (< (tree-leaves body) 100))
+					 ;; the limit on tree-leaves is for cases where the args are long lists of data --
+					 ;;   more like for-each than let, and easier to read if the code is first, I think.
+					 (lint-format "perhaps ~A" caller
+						      (lists->string 
+						       form `(let ,sym 
+							       ,(map list (cadr lform) (cdr body))
+							       ,@(cddr lform)))))
+				     (if (and (not (eq? caller 'define))
+					      (= (tree-count1 sym body 0) 1))
+					 (let ((call (find-call sym body)))
+					   (when (pair? call)
+					     (let ((new-call `(let ,sym
+								,(map list (cadr lform) (cdr call))
+								,@(cddr lform))))
+					       (lint-format "perhaps ~A" caller
+							    (lists->string form (tree-subst new-call call body)))))))))))
+
 			 ;; maybe (let () ...) here because (letrec ((x (lambda (y) (+ y 1)))) (x (define z 32))) needs to block z?
 			 ;;   currently we get (let x ((y (define z 32))) (+ y 1))
 			 ;;   and even that should be (let () (define z 32) (+ z 1)) or something similar
-			 ;; lambda here is handled under define
+			 ;; lambda here is handled under define??
 
 			 (let ((new-env (append vars env)))
 			   (do ((bindings (cadr form) (cdr bindings)))
@@ -13327,11 +13402,7 @@
 					       (and (char=? lc #\!)
 						    (char=? c #\#)))
 					   #f)
-					(set! lc c))))))
-
-		    (cons #\_ (lambda (str)
-				(and (string=? str "__line__")
-				     (port-line-number))))))
+					(set! lc c))))))))
 	
 	;; try to get past all the # and \ stuff in other Schemes
 	;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example)
@@ -13347,10 +13418,6 @@
 			      (format outport "~NCreader[~A]: unknown # object: #~A~%" lint-left-margin #\space line data)
 			      (set! (h 'result)
 				    (case (data 0)
-				      ((#\_) (if (string=? data "__line__")
-						 (port-line-number)
-						 (string->symbol data)))
-				      
 				      ((#\;) (read) (values))
 				      
 				      ((#\T) (string=? data "T"))
@@ -13678,11 +13745,9 @@
 ;;;   and don't include in combinations: (let ((result 0)) (let ((result 2)) (display result))) -> (let* ((result 0) (result 2)) (display result))
 ;;;   if all are immediately shadowed -> car body
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
-;;; (lint-test "(let () (define f60 (lambda (x) (* 2 x))) (+ 1 (f60 y)))" "") -- the define/letrec/define* cases are handled already:
-;;;    (... (define (f60 x) (* 2 x)) (+ 1 (f60 y))) -> (... (+ 1 (let ((x y)) (* 2 x))))
-;;;    are there more of these?
-;;;    (define f60 (let ((a 1)) (lambda (x) (+ x a)))) (+ 1 (f60 y)) -> (let ((a 1) (x y)) (+ x a))
-;;; look for extreme nesting (10208 -> case)
 ;;; if all exits have the same name, that name is superfluous
-;;; (not (eq? (not A) (not B))) -- could s7test 87031 be -> if/cond -> xor etc?
+;;; define/lambda+named-let+no par except init? [8234 12027]
+;;; do we check arg type of =>?
+;;; car-member => assoc?
+;;;
 ;;; 114 22052 425775

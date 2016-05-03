@@ -5001,6 +5001,7 @@ CLOS.  We can mimic this behavior:
 <code>(+ #| add |# 1 2)</code>.
 </p>
 
+<div class="indented">
 <p>Leaving aside this case and the booleans, #f and #t, you can specify your own handlers for 
 tokens that start with "#".  <b><em class=def id="sharpreaders">*#readers*</em></b> is a list of pairs: <code>(char . func)</code>.
 "char" refers to the first character after the sharp sign (#). "func" is a function of
@@ -5029,24 +5030,6 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 
 &gt; #c(1 2)
 <em class="gray">1+2i</em>
-</pre>
-
-<div class="indented">
-<p>I use *#readers* primarily to implement a way to get the current line number and file name, along
-the lines of C's __LINE__ and __FILE__.  port-line-number works if we're reading a file (during load
-for example), and (owlet) has the same information if an error happens.  But during Snd's auto-test
-sequence, there are many cases that aren't errors, and the file is no longer being loaded, but
-I need to know where something unexpected happened.  So:
-</p>
-
-<pre class="indented">
-(set! *#readers* 
-      (cons (cons #\_ (lambda (str)
-			(if (string=? str "__line__")
-			    (<a href="#portlinenumber">port-line-number</a>)
-			    (and (string=? str "__file__")
-			         (<a href="#portfilename">port-filename</a>)))))
-            *#readers*))
 </pre>
 
 <p>Here's a reader macro for read-time evaluation:
@@ -5115,7 +5098,6 @@ I need to know where something unexpected happened.  So:
 </pre>
 <p>See also the <a href="#circularlistreader">#n=</a> reader below.</p>
 </div>
-
 
 <div class="separator"></div>
 
@@ -5436,7 +5418,7 @@ define-macro, and (in normal use) the same result, but it is much faster because
 (See define-with-macros in s7test.scm for a way to expand macros in a function body at definition time).
 Since the reader knows almost nothing
 about the code it is reading, 
-you need to make sure the expansion name is unique!
+you need to make sure the expansion is defined at the top level and that its name is unique!
 The reader does know about global variables, so:
 </p>
 

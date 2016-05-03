@@ -340,23 +340,22 @@
 		    (do ((i 0 (+ i 1)))
 			((= i new-red))
 		      (set! col (if (char=? (cur-line i) #\newline) 0 (+ col 1))))
-		    (let ((sym (do ((i (+ new-red 1) (+ i 1)))
-				   ((not (char-alphabetic? (cur-line i)))
-				    (substring cur-line (+ new-red 1) i)))))
-		      
-		      (let ((spaces (+ col (if (member sym '("or" "and" "cond" "if"))
-					       (+ (length sym) 2)
-					       2))))
-			(if (= cursor-pos (length cur-line))
-			    (begin
-			      (set! cur-line (format #f "~A~NC" cur-line spaces #\space))
-			      (set! cursor-pos (length cur-line)))
-			    (begin
-			      (set! cur-line (format #f "~A~NC~A" 
-						     (substring cur-line 0 cursor-pos)
-						     spaces #\space
-						     (substring cur-line (+ cursor-pos 1))))
-			      (set! cursor-pos (+ cursor-pos spaces)))))))))))
+		    (let* ((sym (do ((i (+ new-red 1) (+ i 1)))
+				    ((not (char-alphabetic? (cur-line i)))
+				     (substring cur-line (+ new-red 1) i))))
+			   (spaces (+ col (if (member sym '("or" "and" "cond" "if"))
+					      (+ (length sym) 2)
+					      2))))
+		      (if (= cursor-pos (length cur-line))
+			  (begin
+			    (set! cur-line (format #f "~A~NC" cur-line spaces #\space))
+			    (set! cursor-pos (length cur-line)))
+			  (begin
+			    (set! cur-line (format #f "~A~NC~A" 
+						   (substring cur-line 0 cursor-pos)
+						   spaces #\space
+						   (substring cur-line (+ cursor-pos 1))))
+			    (set! cursor-pos (+ cursor-pos spaces))))))))))
 	    
 	    
 	    ;; -------- prompt --------
@@ -957,11 +956,11 @@
 		  (set! cur-row newlines)))
 
 		(define (get-previous-line c)         ; get earlier line indexed by numeric arg
-		  (let ((len (length histtop)))
-		    (let ((pos (or (string->number cur-line) len)))
-		      (set! pos (min len (max pos 1)))
-		      (set! cur-line (copy (histtop (- pos 1))))
-		      (fixup-new-line))))
+		  (let* ((len (length histtop))
+			 (pos (or (string->number cur-line) len)))
+		    (set! pos (min len (max pos 1)))
+		    (set! cur-line (copy (histtop (- pos 1))))
+		    (fixup-new-line)))
 
 		(define (move-forward-in-history c)
 		  (set! m-p-pos (min 0 (+ m-p-pos 1)))

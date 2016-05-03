@@ -1762,7 +1762,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11586] = {
+static const char *snd_names[11618] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -5149,6 +5149,7 @@ static const char *snd_names[11586] = {
     "gsl_multifit_linear_lcorner2", "libgsl.scm",
     "gsl_multifit_linear_lcurve", "libgsl.scm",
     "gsl_multifit_linear_lreg", "libgsl.scm",
+    "gsl_multifit_linear_rcond", "libgsl.scm",
     "gsl_multifit_linear_residuals", "libgsl.scm",
     "gsl_multifit_linear_solve", "libgsl.scm",
     "gsl_multifit_linear_stdform1", "libgsl.scm",
@@ -5179,6 +5180,21 @@ static const char *snd_names[11586] = {
     "gsl_multifit_wlinear", "libgsl.scm",
     "gsl_multifit_wlinear_svd", "libgsl.scm",
     "gsl_multifit_wlinear_usvd", "libgsl.scm",
+    "gsl_multilarge_linear_L_decomp", "libgsl.scm",
+    "gsl_multilarge_linear_accumulate", "libgsl.scm",
+    "gsl_multilarge_linear_alloc", "libgsl.scm",
+    "gsl_multilarge_linear_free", "libgsl.scm",
+    "gsl_multilarge_linear_genform1", "libgsl.scm",
+    "gsl_multilarge_linear_genform2", "libgsl.scm",
+    "gsl_multilarge_linear_lcurve", "libgsl.scm",
+    "gsl_multilarge_linear_name", "libgsl.scm",
+    "gsl_multilarge_linear_rcond", "libgsl.scm",
+    "gsl_multilarge_linear_reset", "libgsl.scm",
+    "gsl_multilarge_linear_solve", "libgsl.scm",
+    "gsl_multilarge_linear_stdform1", "libgsl.scm",
+    "gsl_multilarge_linear_stdform2", "libgsl.scm",
+    "gsl_multilarge_linear_wstdform1", "libgsl.scm",
+    "gsl_multilarge_linear_wstdform2", "libgsl.scm",
     "gsl_multimin_diff", "libgsl.scm",
     "gsl_multimin_fminimizer_alloc", "libgsl.scm",
     "gsl_multimin_fminimizer_free", "libgsl.scm",
@@ -7560,7 +7576,7 @@ static const char *snd_names[11586] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5793);
+  s7_autoload_set_names(sc, snd_names, 5809);
 }
 #endif
 

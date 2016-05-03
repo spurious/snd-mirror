@@ -831,28 +831,24 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (lambda (fq)
       (let* ((r (/ 1.0 (tan (/ (* pi fq) (srate)))))
 	     (r2 (* r r))
-	     (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2)))
-	     (c2 (* 2.0 c1))
-	     (c3 c1)
-	     (c4 (* 2.0 (- 1.0 r2) c1))
-	     (c5  (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))
+	     (c1 (/ 1.0 (+ 1.0 (* r (sqrt 2.0)) r2))))
 	(make-filter 3
-		     (float-vector c1 c2 c3)
-		     (float-vector 0.0 c4 c5))))))
+		     (float-vector c1 (* 2.0 c1) c1)
+		     (float-vector 0.0 
+				   (* 2.0 (- 1.0 r2) c1)
+				   (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))))))
 
 (define make-butter-band-pass
   (let ((documentation "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"))
     (lambda (fq bw)
       (let* ((d (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
 	     (c (/ 1.0 (tan (/ (* pi bw) (srate)))))
-	     (c1 (/ 1.0 (+ 1.0 c)))
-	     (c2 0.0)
-	     (c3 (- c1))
-	     (c4 (* (- c) d c1))
-	     (c5 (* (- c 1.0) c1)))
+	     (c1 (/ 1.0 (+ 1.0 c))))
 	(make-filter 3
-		     (float-vector c1 c2 c3)
-		     (float-vector 0.0 c4 c5))))))
+		     (float-vector c1 0.0 (- c1))
+		     (float-vector 0.0 
+				   (* (- c) d c1)
+				   (* (- c 1.0) c1)))))))
 
 (define make-butter-band-reject
   (let ((documentation "(make-butter-band-reject freq band) makes a band-reject Butterworth filter with low edge at 'freq' and width 'band'"))
@@ -860,13 +856,10 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
       (let* ((d  (* 2.0 (cos (/ (* 2.0 pi fq) (srate)))))
 	     (c (tan (/ (* pi bw) (srate))))
 	     (c1 (/ 1.0 (+ 1.0 c)))
-	     (c2 (* (- d) c1))
-	     (c3 c1)
-	     (c4 c2)
-	     (c5 (* (- 1.0 c) c1)))
+	     (c2 (* (- d) c1)))
 	(make-filter 3
-		     (float-vector c1 c2 c3)
-		     (float-vector 0.0 c4 c5))))))
+		     (float-vector c1 c2 c1)
+		     (float-vector 0.0 c2 (* (- 1.0 c) c1)))))))
 
 ;;; simplest use is (filter-sound (make-butter-low-pass 500.0))
 ;;; see also effects.scm
@@ -1357,14 +1350,14 @@ the era when computers were human beings"))
       data)))
 
 (define (gaussian-envelope s)
-  (let ((e ())
-	(den (* 2.0 s s)))
-    (do ((i 0 (+ i 1))
-	 (x -1.0 (+ x .1))
-	 (y -4.0 (+ y .4)))
-	((= i 21))
-      (set! e (cons (exp (- (/ (* y y) den))) (cons x e))))
-    (reverse e)))
+  (do ((e ())
+       (den (* 2.0 s s))
+       (i 0 (+ i 1))
+       (x -1.0 (+ x .1))
+       (y -4.0 (+ y .4)))
+      ((= i 21)
+       (reverse e))       
+    (set! e (cons (exp (- (/ (* y y) den))) (cons x e)))))
 
 ;;; (make-rand :envelope (gaussian-envelope 1.0))
 

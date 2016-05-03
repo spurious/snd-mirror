@@ -2187,13 +2187,13 @@ in phase and amplitude at run-time by setting a float-vector value.
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-float-vector (* 5 2) 0.0))) ; 5 harmonics, 2 numbers for each
-				   (do ((k 1 (+ k 3))
-					(i 0 (+ i 2)))
-				       ((= i 10))
-				     (set! (harms i) k) ; harmonic number (k*freq)
-				     (set! (harms (+ i 1)) (/ 1.0 (sqrt k)))) ; harmonic amplitude
-				   harms)))
+  (let ((gen (<em class=red>make-polywave</em> 200 
+               (do ((harms (make-float-vector (* 5 2) 0.0)) ; 5 harmonics, 2 numbers for each
+                    (k 1 (+ k 3))
+		    (i 0 (+ i 2)))
+	           ((= i 10) harms)
+	         (set! (harms i) k) ; harmonic number (k*freq)
+	         (set! (harms (+ i 1)) (/ 1.0 (sqrt k)))))) ; harmonic amplitude
 	(ampf (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 10 1 11 0) :duration 1.0 :scaler .5)))
     (do ((i 0 (+ i 1)))
 	((= i 44100))
@@ -2247,12 +2247,12 @@ Here is a somewhat low-level example:
 
 <pre class="indented">
 (define* (make-band-limited-triangle-wave (frequency *clm-default-frequency*) (order 1))
-  (let ((freqs ()))
-    (do ((i 1 (+ i 1))
-	 (j 1 (+ j 2)))
-	((&gt; i order))
-      (set! freqs (cons (/ 1.0 j j) (cons j freqs))))
-    (<em class=red>make-polywave</em> frequency :partials (reverse freqs))))
+  (do ((freqs ())
+       (i 1 (+ i 1))
+       (j 1 (+ j 2)))
+      ((&gt; i order)
+       (<em class=red>make-polywave</em> frequency :partials (reverse freqs)))
+    (set! freqs (cons (/ 1.0 j j) (cons j freqs)))))
 
 (define* (band-limited-triangle-wave gen (fm 0.0))
   (<em class=red>polywave</em> gen fm))
@@ -2531,8 +2531,8 @@ we get sum and difference tones, much as in complex FM:
     (do ((i 0 (+ i 1)))
 	((= i 44100))
       (<a class=quiet href="#outa">outa</a> i (<em class=red>polynomial</em> pcoeffs 
-                (+ (* 0.5 (<a class=quiet href="#oscil">oscil</a> gen1))
-		   (* 0.5 (<a class=quiet href="#oscil">oscil</a> gen2))))))))
+                (* 0.5 (+ (<a class=quiet href="#oscil">oscil</a> gen1))
+		          (<a class=quiet href="#oscil">oscil</a> gen2)))))))
 </pre>
 <hr>
 <div class="center"><img src="pix/t5sum.png" alt="t5"></div>
@@ -3040,12 +3040,12 @@ we can truncate its spectrum at the desired number of harmonics:
 	  (let* ((coeffs (make-float-vector (* 2 n) 0.0))
 		 (size (expt 2 12))
 		 (rl (make-float-vector size 0.0)))
-	    (let ((incr (/ (* 2 pi) size))
-                  (index (or B (max 1 (floor (/ n 2))))))
-	      (do ((i 0 (+ i 1))
-		   (x 0.0 (+ x incr)))
-		  ((= i size))
-	        (set! (rl i) (<em class=red>tanh</em> (* index (<em class=red>sin</em> x)))))) ; make our desired square wave
+            (do ((incr (/ (* 2 pi) size))
+                 (index (or B (max 1 (floor (/ n 2)))))
+                 (i 0 (+ i 1))
+		 (x 0.0 (+ x incr)))
+	        ((= i size))
+	      (set! (rl i) (<em class=red>tanh</em> (* index (<em class=red>sin</em> x))))) ; make our desired square wave
  	    (<a class=quiet href="#spectrum">spectrum</a> rl (make-float-vector size 0.0) #f 2)  ; get its spectrum
 	    (do ((i 0 (+ i 1))
 		 (j 0 (+ j 2)))
@@ -6359,7 +6359,7 @@ Code of the form:
 </p>
 
 <pre class="indented">
-(all-pass-bank ab (make-all-pass-bank (vector a1 a2)) input)
+(all-pass-bank (make-all-pass-bank (vector a1 a2)) input)
 </pre>
 
 
