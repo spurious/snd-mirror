@@ -5433,7 +5433,10 @@ The reader does know about global variables, so:
 </pre>
 
 <p>Now the assertion code is only present in the function body (or wherever)
-if *debugging* is #t; otherwise assert expands into nothing.  Leaving aside
+if *debugging* is #t; otherwise assert expands into nothing.  Another very handy
+use is to embed a source file line number into a message; see for example lint-format
+in lint.scm.
+Leaving aside
 read-time expansion and splicing, the real difference between define-macro and define-expansion
 is that the expansion's result is not evaluated.
 I'm no historian, but I believe that means that define-expansion creates

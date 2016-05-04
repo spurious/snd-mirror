@@ -22173,12 +22173,13 @@ static Time tool_last_time = 0;
 static Position tool_x, tool_y;
 static Widget tool_w;
 
+#if (!HAVE_GL)
 static void leave_tooltip(XtPointer tooltip, XtIntervalId *id)
 {
   XtUnmanageChild(tooltip_shell);
   quit_proc = 0;
 }
-
+#endif
 
 static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
 {
