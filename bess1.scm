@@ -63,7 +63,7 @@
       (let* ((frq-scl (hz->radians freq))
 	     (maxdev (* frq-scl fm-index))
 	     (index1 (* maxdev (/ 5.0 (log freq))))
-	     (index2 (* maxdev 3.0 (/ (- 8.5 (log freq)) (+ 3.0 (/ freq 1000)))))
+	     (index2 (/ (* maxdev 3.0 (- 8.5 (log freq))) (+ 3.0 (/ freq 1000))))
 	     (index3 (* maxdev (/ 4.0 (sqrt freq))))
 	     (carrier (make-oscil :frequency freq))
 	     (fmosc1 (make-oscil :frequency freq))

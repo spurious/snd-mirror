@@ -73,7 +73,7 @@
 		 (begin
 		   (float-vector->channel block block-beg block-size snd chn)
 		   (set! block-changed #f)))
-	     (set! block-beg (+ block-beg (- block-size 1)))
+	     (set! block-beg (- (+ block-beg block-size) 1))
 	     (set! block-ctr 1)
 	     (set! (block 0) samp2))))
      (if block-changed
@@ -209,7 +209,7 @@
 		     (begin
 		       (float-vector->channel block block-beg (- block-ctr pad) snd chn)
 		       (set! block-changed #f)))
-		 (set! block-beg (+ block-beg (- block-ctr pad)))
+		 (set! block-beg (- (+ block-beg block-ctr) pad))
 		 (do ((i 0 (+ i 1))
 		      (j (- block-ctr pad) (+ j 1)))
 		     ((= i pad))

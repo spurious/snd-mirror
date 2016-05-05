@@ -40,7 +40,7 @@
 	      (begin
 		;; shake over 50msec and add shake energy
 		(set! temp (+ temp h20))
-		(set! shake-energy (+ shake-energy (- 1.0 (cos temp))))))
+		(set! shake-energy (- (+ shake-energy 1.0) (cos temp)))))
 	  (set! shake-energy (* shake-energy system-decay))
 	  ;; if collision, add energy
 	  (if (< (random 1.0) probability)
@@ -103,7 +103,7 @@
 	      (begin
 		;; shake over 50msec and add shake energy
 		(set! temp (+ temp h20))
-		(set! shake-energy (+ shake-energy (- 1.0 (cos temp))))))
+		(set! shake-energy (- (+ shake-energy 1.0) (cos temp)))))
 
 	  (set! shake-energy (* shake-energy system-decay))
 	  ;; if collision, add energy

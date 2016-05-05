@@ -503,7 +503,7 @@ between two marks,using the granulate generator to fix up the selection duration
 		  (chn (cadr m1sc)))
 	      (set! (selection-member? snd chn) #t)
 	      (set! (selection-position snd chn) beg)
-	      (set! (selection-framples snd chn) (+ 1 (- end beg)))))))))
+	      (set! (selection-framples snd chn) (- (+ end 1) beg))))))))
 
 (define (cp-define-by-marks)
   (define-selection-via-marks (integer->mark define-by-mark-one) (integer->mark define-by-mark-two)))

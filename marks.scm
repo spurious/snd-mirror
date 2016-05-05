@@ -294,7 +294,7 @@
 		  (set! (selection-member? #t) #f)) ; clear entire current selection, if any
 	      (set! (selection-member? snd chn) #t)
 	      (set! (selection-position snd chn) beg)
-	      (set! (selection-framples snd chn) (+ 1 (- end beg)))))))))
+	      (set! (selection-framples snd chn) (- (+ end 1) beg))))))))
 
 
 ;;; -------- snap-mark-to-beat
