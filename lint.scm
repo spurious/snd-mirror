@@ -13948,9 +13948,17 @@
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
+;;;
 ;;; lambda (define? named-let?) constant seqs -> closure?  what about others similar (sqrt2 (sqrt 2))...? [9792]
 ;;; (let ((A (f x)) (let ((B (g A))) <no use of A>...))) or let* -> (let ((B (g (f x))))?
 ;;; see member/string= case in t347 -- smarter cond -> assoc code needed
 ;;;   also reversed order (eq? 'a x) (eq? 'b x) etc (reorder either way)
+;;;   also need code-equal for cond test repetition check (or at least reversible check -- this works in or/and I think)
+;;;   and the rewrite looks nutty -- (#f 4)!  
+;;;   */- are reversible after first
+;;; infinite? -> +/-inf.0 in cond->case?  or does this require real? nan.0 isn't eqv? so can't work in case?
+;;;   pi also should be ok and most-positive|negative-fixnum but each requires the actual number -- won't work for pi: #_pi?
+;;;   case with #_abs etc?
+;;; case with all results (f ...) does happen (else being an error)
 ;;; 
 ;;; 114 22113 433088

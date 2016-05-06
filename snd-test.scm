@@ -15597,20 +15597,20 @@ EDITS: 2
 	    (set! (v i) (env e)))
 	  (if (not (vequal v (float-vector 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
 	      (snd-display ";simple ramp: ~A" v)))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env '(0 0 1 1) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
-		(snd-display ";simple ramp, base 0: ~A" v))))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env '(0 0 1 1 2 .5) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
-		(snd-display ";two-step, base 0: ~A" v))))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env '(0 0 1 1) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
+	      (snd-display ";simple ramp, base 0: ~A" v)))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env '(0 0 1 1 2 .5) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
+	      (snd-display ";two-step, base 0: ~A" v)))
 	(let ((e (make-env '((0 0) (1 1)) :length 10)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
@@ -15661,20 +15661,20 @@ EDITS: 2
 	    (set! (v i) (env e)))
 	  (if (not (vequal v (float-vector 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
 	      (snd-display ";simple ramp: ~A" v)))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env (float-vector 0 0 1 1) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
-		(snd-display ";simple ramp, base 0: ~A" v))))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env (float-vector 0 0 1 1 2 .5) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
-		(snd-display ";two-step, base 0: ~A" v))))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env (float-vector 0 0 1 1) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
+	      (snd-display ";simple ramp, base 0: ~A" v)))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env (float-vector 0 0 1 1 2 .5) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
+	      (snd-display ";two-step, base 0: ~A" v)))
 	(let ((e (make-env (float-vector 0 1 1 0) :length 10)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
@@ -15707,20 +15707,20 @@ EDITS: 2
 	    (set! (v i) (env e)))
 	  (if (not (vequal v (float-vector 0.000 0.111 0.222 0.333 0.444 0.556 0.667 0.778 0.889 1.000)))
 	      (snd-display ";simple ramp: ~A" v)))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env (vector 0 0 1 1) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
-		(snd-display ";simple ramp, base 0: ~A" v))))
-	(let ((v (make-float-vector 10)))
-	  (let ((e (make-env (vector 0 0 1 1 2 .5) :base 0 :length 8)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v i) (env e)))
-	    (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
-		(snd-display ";two-step, base 0: ~A" v))))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env (vector 0 0 1 1) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000)))
+	      (snd-display ";simple ramp, base 0: ~A" v)))
+	(let* ((v (make-float-vector 10))
+	       (e (make-env (vector 0 0 1 1 2 .5) :base 0 :length 8)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v i) (env e)))
+	  (if (not (vequal v (float-vector 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000 0.500 0.500)))
+	      (snd-display ";two-step, base 0: ~A" v)))
 	(let ((e (make-env (vector 0 1 1 0) :length 10)))
 	  (do ((i 0 (+ i 1)))
 	      ((= i 10))
@@ -16321,12 +16321,12 @@ EDITS: 2
     (let ((size 1000))
       (define (test-tbl beg end freq amp mc-ratio index)
 	(let* ((tbl-size 1024)
-	       (sine (let ((v (make-float-vector tbl-size))
-			   (xp (/ (* 2 pi) tbl-size)))
-		       (do ((i 0 (+ i 1))
-			    (x 0.0 (+ x xp)))
-			   ((= i tbl-size) v)
-			 (set! (v i) (sin x)))))
+	       (sine (do ((v (make-float-vector tbl-size))
+			  (xp (/ (* 2 pi) tbl-size))
+			  (i 0 (+ i 1))
+			  (x 0.0 (+ x xp)))
+			 ((= i tbl-size) v)
+		       (set! (v i) (sin x))))
 	       (fm (make-table-lookup (* mc-ratio freq) :wave sine))
 	       (carrier (make-table-lookup freq :wave sine)))
 	  (do ((i beg (+ i 1)))
@@ -16831,10 +16831,10 @@ EDITS: 2
 	(do ((k 0 (+ k 2)))
 	    ((>= k (length cfs)))
 	  (set! (cfs k) (/ k 2)))
-	(let ((p (make-polywave 100.0 cfs mus-chebyshev-second-kind)))
-	  (let ((val (polywave p)))
-	    (if (fneq val 0.1)
-		(snd-display ";polywave ~D order second 0-coeff: ~A" i val))))))
+	(let* ((p (make-polywave 100.0 cfs mus-chebyshev-second-kind))
+	       (val (polywave p)))
+	  (if (fneq val 0.1)
+	      (snd-display ";polywave ~D order second 0-coeff: ~A" i val)))))
     
     (do ((i 2 (+ i 1)))
 	((= i 7))
@@ -16842,10 +16842,10 @@ EDITS: 2
 	(do ((k 0 (+ k 2)))
 	    ((>= k (length cfs)))
 	  (set! (cfs k) (/ k 2)))
-	(let ((p (make-polywave 100.0 cfs mus-chebyshev-first-kind)))
-	  (let ((val (polywave p)))
-	    (if (fneq val (* 0.1 i))
-		(snd-display ";polywave ~D order first 0-coeff: ~A" i val))))))
+	(let* ((p (make-polywave 100.0 cfs mus-chebyshev-first-kind))
+	       (val (polywave p)))
+	  (if (fneq val (* 0.1 i))
+	      (snd-display ";polywave ~D order first 0-coeff: ~A" i val)))))
 
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -16942,10 +16942,10 @@ EDITS: 2
 	(close-sound ind)
 	(if (file-exists? new-file-name) (delete-file new-file-name))))
     
-    (let ((ind (new-sound :size 1000)))
-      (let ((table (float-vector 0.0 .1 .2 .3 .4 .5 .6)))
-	(let ((gen (make-wave-train 1000.0 :wave table)))
-	  (map-channel (lambda (y) (wave-train gen)))))
+    (let* ((ind (new-sound :size 1000))
+	   (table (float-vector 0.0 .1 .2 .3 .4 .5 .6))
+	   (gen (make-wave-train 1000.0 :wave table)))
+      (map-channel (lambda (y) (wave-train gen)))
       (let ((mx (maxamp)))
 	(if (fneq mx 0.6) (snd-display ";wt 0 max: ~A" mx)))
       (if (not (vequal (channel->float-vector 0 30) 
@@ -16958,9 +16958,9 @@ EDITS: 2
 	  (snd-display ";wt 0 data 85: ~A" (channel->float-vector 85 30)))
       (undo)
       
-      (let ((table (make-float-vector 10 .1)))
-	(let ((gen (make-wave-train 1000.0 :initial-phase pi :wave table))) ; initial-phase is confusing in this context!
-	  (map-channel (lambda (y) (wave-train gen)))))
+      (let* ((table (make-float-vector 10 .1))
+	     (gen (make-wave-train 1000.0 :initial-phase pi :wave table))) ; initial-phase is confusing in this context!
+	(map-channel (lambda (y) (wave-train gen))))
       (let ((mx (maxamp)))
 	(if (fneq mx 0.1) (snd-display ";wt 1 max: ~A" mx)))
       (if (not (vequal (channel->float-vector 0 30) 
@@ -16972,9 +16972,9 @@ EDITS: 2
 	    (set! *print-length* op)))
       (undo)
       
-      (let ((table (make-float-vector 10 .1)))
-	(let ((gen (make-wave-train 2000.0 :wave table)))
-	  (map-channel (lambda (y) (wave-train gen)))))
+      (let* ((table (make-float-vector 10 .1))
+	     (gen (make-wave-train 2000.0 :wave table)))
+	(map-channel (lambda (y) (wave-train gen))))
       (let ((mx (maxamp)))
 	(if (fneq mx 0.1) (snd-display ";wt 2 max: ~A" mx)))
       (if (not (vequal (channel->float-vector 0 30) 
@@ -16991,9 +16991,9 @@ EDITS: 2
 	  (snd-display ";wt 2 data 440: ~A" (channel->float-vector 440 30)))
       (undo)
       
-      (let ((table (make-float-vector 10 .1)))
-	(let ((gen (make-wave-train 3000.0 :wave table)))
-	  (map-channel (lambda (y) (wave-train gen)))))
+      (let* ((table (make-float-vector 10 .1))
+	     (gen (make-wave-train 3000.0 :wave table)))
+	(map-channel (lambda (y) (wave-train gen))))
       (let ((mx (maxamp)))
 	(if (fneq mx 0.2) (snd-display ";wt 3 max: ~A" mx)))
       (if (not (vequal (channel->float-vector 0 30) 
@@ -17006,9 +17006,9 @@ EDITS: 2
 	  (snd-display ";wt 3 data 440: ~A" (channel->float-vector 440 30)))
       (undo)
       
-      (let ((table (make-float-vector 10 .1)))
-	(let ((gen (make-wave-train 5000.0 :wave table)))
-	  (map-channel (lambda (y) (wave-train gen)))))
+      (let* ((table (make-float-vector 10 .1))
+	     (gen (make-wave-train 5000.0 :wave table)))
+	(map-channel (lambda (y) (wave-train gen))))
       (let ((mx (maxamp)))
 	(if (fneq mx 0.3) (snd-display ";wt 4 max: ~A" mx)))
       (if (not (vequal (channel->float-vector 0 30) 
@@ -17421,11 +17421,11 @@ EDITS: 2
       (if (fneq (float-vector-peak vals) .1)
 	  (snd-display ";locsig to float-vector fm-violin peak: ~A" (float-vector-peak vals))))
     
-    (let ((vals (with-sound ((make-float-vector (list 2 4410) 0.0))
-			    (fm-violin 0 .1 440 .1 :degree 30))))
-      (let ((mxs (maxamp vals)))
-	(if (fneq mxs 0.0666)
-	    (snd-display ";locsig to sound-data fm-violin peak: ~A" mxs))))
+    (let* ((vals (with-sound ((make-float-vector (list 2 4410) 0.0))
+		   (fm-violin 0 .1 440 .1 :degree 30)))
+	   (mxs (maxamp vals)))
+      (if (fneq mxs 0.0666)
+	  (snd-display ";locsig to sound-data fm-violin peak: ~A" mxs)))
         
     (let ((gen (make-sample->file "fmv2.snd" 4 mus-bshort mus-aifc)))
       (print-and-check gen 
@@ -18163,47 +18163,47 @@ EDITS: 2
     (print-and-check (make-locsig 0 :channels 1 :output (make-float-vector 10))
 		     "locsig"
 		     "locsig chans 1, outn: [1.000], interp: linear")
-    (let ((locsig-data
-	   (lambda (gen)
-	     (let* ((chans (mus-channels gen))
-		    (dat (make-float-vector chans)))
-	       (do ((i 0 (+ i 1)))
-		   ((= i chans))
-		 (set! (dat i) (locsig-ref gen i)))
-	       dat))))
-      (let ((gen (make-locsig -.1 :channels 8)))
-	(if (not (vequal (locsig-data gen) (float-vector 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
-	    (snd-display ";locsig -.1(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -359.9 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.998 0.002 0.000 0.000 0.000 0.000 0.000 0.000)))
-	    (snd-display ";locsig -359.9(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -359.9 :channels 4))
-	(if (not (vequal (locsig-data gen) (float-vector 0.999 0.001 0.000 0.000)))
-	    (snd-display ";locsig -359.9(4): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -360.1 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
-	    (snd-display ";locsig -360.1(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -700 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.556 0.444 0.000 0.000 0.000 0.000 0.000 0.000)))
-	    (snd-display ";locsig -700(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -700 :channels 2))
-	(if (not (vequal (locsig-data gen) (float-vector 1.000 0.000)))
-	    (snd-display ";locsig -700(2): ~A" (locsig-data gen)))
-	(set! gen (make-locsig 20 :channels 2))
-	(if (not (vequal (locsig-data gen) (float-vector 0.778 0.222)))
-	    (snd-display ";locsig 20(2): ~A" (locsig-data gen)))
-	(set! gen (make-locsig 123456.0 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
-	    (snd-display ";locsig 123456(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig 336.0 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
-	    (snd-display ";locsig 336(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig -123456.0 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
-	    (snd-display ";locsig -123456(8): ~A" (locsig-data gen)))
-	(set! gen (make-locsig 24.0 :channels 8))
-	(if (not (vequal (locsig-data gen) (float-vector 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
-	    (snd-display ";locsig 24(8): ~A" (locsig-data gen)))))
+    (let* ((locsig-data
+	    (lambda (gen)
+	      (let* ((chans (mus-channels gen))
+		     (dat (make-float-vector chans)))
+		(do ((i 0 (+ i 1)))
+		    ((= i chans))
+		  (set! (dat i) (locsig-ref gen i)))
+		dat)))
+	   (gen (make-locsig -.1 :channels 8)))
+      (if (not (vequal (locsig-data gen) (float-vector 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
+	  (snd-display ";locsig -.1(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -359.9 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.998 0.002 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";locsig -359.9(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -359.9 :channels 4))
+      (if (not (vequal (locsig-data gen) (float-vector 0.999 0.001 0.000 0.000)))
+	  (snd-display ";locsig -359.9(4): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -360.1 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.998 0.000 0.000 0.000 0.000 0.000 0.000 0.002)))
+	  (snd-display ";locsig -360.1(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -700 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.556 0.444 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";locsig -700(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -700 :channels 2))
+      (if (not (vequal (locsig-data gen) (float-vector 1.000 0.000)))
+	  (snd-display ";locsig -700(2): ~A" (locsig-data gen)))
+      (set! gen (make-locsig 20 :channels 2))
+      (if (not (vequal (locsig-data gen) (float-vector 0.778 0.222)))
+	  (snd-display ";locsig 20(2): ~A" (locsig-data gen)))
+      (set! gen (make-locsig 123456.0 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
+	  (snd-display ";locsig 123456(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig 336.0 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.467 0.000 0.000 0.000 0.000 0.000 0.000 0.533)))
+	  (snd-display ";locsig 336(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig -123456.0 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";locsig -123456(8): ~A" (locsig-data gen)))
+      (set! gen (make-locsig 24.0 :channels 8))
+      (if (not (vequal (locsig-data gen) (float-vector 0.467 0.533 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (snd-display ";locsig 24(8): ~A" (locsig-data gen))))
     
     (for-each 
      (lambda (rev-chans)
@@ -18735,35 +18735,35 @@ EDITS: 2
     (let ((ind (new-sound :size 10)))
       (set! (sample 2) .1)
       (set! (sample 6) -.5)
-      (let ((rd (make-sampler)))
-	(let ((vals (map values rd)))
-	  (if (not (morally-equal? vals '(0.0 0.0 0.1 0.0 0.0 0.0 -0.5 0.0 0.0 0.0)))
-	      (snd-display ";rd new: ~A" vals))))
+      (let* ((rd (make-sampler))
+	     (vals (map values rd)))
+	(if (not (morally-equal? vals '(0.0 0.0 0.1 0.0 0.0 0.0 -0.5 0.0 0.0 0.0)))
+	    (snd-display ";rd new: ~A" vals)))
       (close-sound ind))
-    (let ((ind (open-sound "oboe.snd"))
-	  (mx (maxamp)))
-      (let ((rd (make-sampler 0)))
-	(if (not (= (length rd) 50828))
-	    (snd-display ";sampler (oboe) length: ~A" (length rd)))
-	(let ((grn (make-granulate :expansion 2.0
-				   :input (lambda (dir) (read-sample rd))
-				   :edit (lambda (g)
-					   (float-vector-scale! (mus-data g) 2.0)
-					   0))))
-	  (map-channel (lambda (y) (granulate grn)))
-	  (if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
-	      (snd-display ";gran edit 2* (0): ~A ~A" mx (maxamp)))
-	  (undo)))
-      (let ((rd (make-sampler 0)))
-	(let ((grn (make-granulate :expansion 2.0
-				   :input (lambda (dir) (read-sample rd))
-				   :edit (lambda (g)
-					   (float-vector-scale! (mus-data g) 4.0)
-					   0))))
-	  (map-channel (lambda (y) (granulate grn)))
-	  (if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
-	      (snd-display ";gran edit 4* (0): ~A ~A" mx (maxamp)))
-	  (revert-sound ind)))
+    (let* ((ind (open-sound "oboe.snd"))
+	   (mx (maxamp))
+	   (rd (make-sampler 0)))
+      (if (not (= (length rd) 50828))
+	  (snd-display ";sampler (oboe) length: ~A" (length rd)))
+      (let ((grn (make-granulate :expansion 2.0
+				 :input (lambda (dir) (read-sample rd))
+				 :edit (lambda (g)
+					 (float-vector-scale! (mus-data g) 2.0)
+					 0))))
+	(map-channel (lambda (y) (granulate grn)))
+	(if (or (< (/ (maxamp) mx) 1.4) (> (/ mx (maxamp)) 2.5))
+	    (snd-display ";gran edit 2* (0): ~A ~A" mx (maxamp)))
+	(undo))
+      (let* ((rd (make-sampler 0))
+	     (grn (make-granulate :expansion 2.0
+				  :input (lambda (dir) (read-sample rd))
+				  :edit (lambda (g)
+					  (float-vector-scale! (mus-data g) 4.0)
+					  0))))
+	(map-channel (lambda (y) (granulate grn)))
+	(if (or (< (/ (maxamp) mx) 3.0) (> (/ mx (maxamp)) 6.0))
+	    (snd-display ";gran edit 4* (0): ~A ~A" mx (maxamp)))
+	(revert-sound ind))
       (let* ((rd (make-sampler 0))
 	     (grn (make-granulate :expansion 2.0
 				  :input (lambda (dir) (read-sample rd))
@@ -18996,10 +18996,10 @@ EDITS: 2
 	      (f2 (lambda (g)
 		    (if forward ; no change to data
 			(set! forward #f)
-			(let ((len (mus-length g)))
-			  (let ((grain (make-shared-vector (mus-data g) (list len))))
-			    (set! forward #t)
-			    (set! grain (reverse! grain))))) ; should get ramps going up then down across overall rising ramp
+			(let* ((len (mus-length g))
+			       (grain (make-shared-vector (mus-data g) (list len))))
+			  (set! forward #t)
+			  (set! grain (reverse! grain)))) ; should get ramps going up then down across overall rising ramp
 		    (mus-length g))))
 	  (let ((gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0 :input f1 :edit f2)))
 	    (map-channel (lambda (y) (granulate gen))))))
@@ -19058,10 +19058,10 @@ EDITS: 2
 				   :edit (lambda (g)
 					   (if forward
 					       (set! forward #f)
-					       (let ((len (mus-length g)))
-						 (let ((grain (make-shared-vector (mus-data g) (list len))))
-						   (set! forward #t)
-						   (reverse! grain))))
+					       (let* ((len (mus-length g))
+						      (grain (make-shared-vector (mus-data g) (list len))))
+						 (set! forward #t)
+						 (reverse! grain)))
 					   (mus-length g)))))
 	  (map-channel (lambda (y) (granulate gen)))))
       (let ((mx (maxamp)))
@@ -19289,185 +19289,185 @@ EDITS: 2
 	      (snd-display ";set vf files list null: ~A" (view-files-files (view-files-dialog #f)))))))
     
     ;; granulate with jitter=0, small hop (comb filter effect)
-    (let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 10000)))
-      (let ((gen (make-granulate :expansion 20.0
-				 :input (lambda (dir) .01)
-				 :length .00995
-				 :hop .01
-				 :ramp 0.0
-				 :scaler 1.0
-				 :jitter 0.0)))
-	(clm-channel gen) ; -> .01 max (stable)
-	(if (fneq (maxamp) .01) (snd-display ";granulate stable 1: ~A" (maxamp)))
-	(let ((minval (scan-channel (lambda (y) (< y .0099)))))
-	  (if minval (snd-display ";granulate stable 1 min: ~A" minval)))
-	(undo)
-	(set! gen (make-granulate :expansion 20.0
-				  :input (lambda (dir) .1)
-				  :length .00995
-				  :hop .01
-				  :ramp 0.0
-				  :scaler 0.5
-				  :jitter 0.0))
-	(clm-channel gen) ; -> .05 max (stable)
-	(if (fneq (maxamp) .05) (snd-display ";granulate stable 2: ~A" (maxamp)))
-	(let ((minval (scan-channel (lambda (y) (< y .0499)))))
-	  (if minval (snd-display ";granulate stable 2 min: ~A" minval)))
-	(undo)
-	
-	(set! gen (make-granulate :expansion 10.0
-				  :input (lambda (dir) .05)
-				  :length .099975
+    (let* ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 10000))
+	   (gen (make-granulate :expansion 20.0
+				:input (lambda (dir) .01)
+				:length .00995
+				:hop .01
+				:ramp 0.0
+				:scaler 1.0
+				:jitter 0.0)))
+      (clm-channel gen) ; -> .01 max (stable)
+      (if (fneq (maxamp) .01) (snd-display ";granulate stable 1: ~A" (maxamp)))
+      (let ((minval (scan-channel (lambda (y) (< y .0099)))))
+	(if minval (snd-display ";granulate stable 1 min: ~A" minval)))
+      (undo)
+      (set! gen (make-granulate :expansion 20.0
+				:input (lambda (dir) .1)
+				:length .00995
+				:hop .01
+				:ramp 0.0
+				:scaler 0.5
+				:jitter 0.0))
+      (clm-channel gen) ; -> .05 max (stable)
+      (if (fneq (maxamp) .05) (snd-display ";granulate stable 2: ~A" (maxamp)))
+      (let ((minval (scan-channel (lambda (y) (< y .0499)))))
+	(if minval (snd-display ";granulate stable 2 min: ~A" minval)))
+      (undo)
+      
+      (set! gen (make-granulate :expansion 10.0
+				:input (lambda (dir) .05)
+				:length .099975
+				:hop .1
+				:ramp 0.0
+				:scaler 1.0
+				:jitter 0.0))
+      (clm-channel gen) ; -> .05 max (stable)
+      (if (fneq (maxamp) .05) (snd-display ";granulate stable 3: ~A" (maxamp)))
+      (let ((minval (scan-channel (lambda (y) (< y .0499)))))
+	(if minval (snd-display ";granulate stable 3 min: ~A ~A" minval (sample (cadr minval)))))
+      (undo)
+      
+      (let ((ctr -0.0001))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (set! ctr (+ ctr .0001)))
+				  :length .01
 				  :hop .1
 				  :ramp 0.0
 				  :scaler 1.0
 				  :jitter 0.0))
-	(clm-channel gen) ; -> .05 max (stable)
-	(if (fneq (maxamp) .05) (snd-display ";granulate stable 3: ~A" (maxamp)))
-	(let ((minval (scan-channel (lambda (y) (< y .0499)))))
-	  (if minval (snd-display ";granulate stable 3 min: ~A ~A" minval (sample (cadr minval)))))
-	(undo)
-	
-	(let ((ctr -0.0001))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (set! ctr (+ ctr .0001)))
-				    :length .01
-				    :hop .1
-				    :ramp 0.0
-				    :scaler 1.0
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .462) (snd-display ";granulate ramped 4: ~A" (maxamp)))
-	(let ((vals (count-matches (lambda (y) (> (abs y) 0.0)))))
-	  (if (> (abs (- vals 1104)) 10) (snd-display ";granulate ramped 4 not 0.0: ~A" vals)))
-	(if (not (and (vequal (channel->float-vector 2203 10)
-			      (float-vector 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111))
-		      (vequal (channel->float-vector 4523 10)
-			      (float-vector 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.233 0.233))
-		      (vequal (channel->float-vector 8928 10)
-			      (float-vector 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452))))
-	    (snd-display ";granulate ramped 4 data off: ~A ~A ~A" 
-			 (channel->float-vector 2203 10) (channel->float-vector 4523 10) (channel->float-vector 8928 10)))
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .00995
-				    :hop .01
-				    :ramp 0.0
-				    :scaler 1.0
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .505) (snd-display ";granulate ramped 5: ~A" (maxamp)))
-	(let* ((mxoff 0.0)
-	       (mx (maxamp))
-	       (len (framples))
-	       (cur 0.0)
-	       (incr (/ mx len)))
-	  (scan-channel (lambda (y) 
-			  (let ((diff (abs (- cur y)))) 
-			    (set! mxoff (max mxoff diff))
-			    (set! cur (+ cur incr))
-			    #f)))
-	  (if (> mxoff .02) (snd-display ";granulate ramped 5 mxoff: ~A" mxoff))) ; .0108 actually
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .00995
-				    :hop .01
-				    :ramp 0.5
-				    :scaler 1.0
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .495) (snd-display ";granulate ramped 6: ~A" (maxamp)))
-	(if (not (and (vequal (channel->float-vector 2000 10)
-			      (float-vector 0.018 0.019 0.020 0.021 0.022 0.023 0.024 0.025 0.026 0.027))
-		      (vequal (channel->float-vector 8000 10)
-			      (float-vector 0.294 0.298 0.301 0.305 0.309 0.313 0.316 0.320 0.324 0.328))))
-	    (snd-display ";granulate ramped 6 data: ~A ~A"
-			 (channel->float-vector 2000 10) (channel->float-vector 8000 10)))
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .00995
-				    :hop .01
-				    :ramp 0.25
-				    :scaler 1.0
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .505) (snd-display ";granulate ramped 7: ~A" (maxamp)))
-	(if (not (and (vequal (channel->float-vector 2000 10)
-			      (float-vector 0.037 0.039 0.040 0.042 0.044 0.046 0.048 0.050 0.052 0.054))
-		      (vequal (channel->float-vector 8000 10)
-			      (float-vector 0.404 0.404 0.404 0.404 0.404 0.405 0.405 0.405 0.405 0.405))))
-	    (snd-display ";granulate ramped 7 data: ~A ~A"
-			 (channel->float-vector 2000 10) (channel->float-vector 8000 10)))
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .05
-				    :hop .01
-				    :ramp 0.25
-				    :scaler 0.1
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .201) (snd-display ";granulate ramped 7: ~A" (maxamp)))
-	(let* ((mxoff 0.0)
-	       (mx (maxamp))
-	       (len (framples))
-	       (cur 0.0)
-	       (incr (/ mx len)))
-	  (scan-channel (lambda (y) 
-			  (let ((diff (abs (- cur y)))) 
-			    (set! mxoff (max mxoff diff))
-			    (set! cur (+ cur incr))
-			    #f)))
-	  (if (> mxoff .01) (snd-display ";granulate ramped 7 mxoff: ~A" mxoff))) ; .0097 actually
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .1
-				    :hop .01
-				    :ramp 0.1
-				    :scaler 0.1
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .501) (snd-display ";granulate ramped 8: ~A" (maxamp)))
-	(let* ((mxoff 0.0)
-	       (mx (maxamp))
-	       (len (- (framples) 2000))
-	       (cur (sample 2000))
-	       (incr (/ (- mx cur) len)))
-	  (scan-channel (lambda (y) 
-			  (let ((diff (abs (- cur y)))) 
-			    (set! mxoff (max mxoff diff))
-			    (set! cur (+ cur incr))
-			    #f))
-			2000)
-	  (if (> mxoff .001) (snd-display ";granulate ramped 8 mxoff: ~A" mxoff)))
-	(undo)
-	
-	(let ((e (make-env '(0 0 1 1) :length 10000)))
-	  (set! gen (make-granulate :expansion 2.0
-				    :input (lambda (dir) (env e))
-				    :length .4
-				    :hop .01
-				    :ramp 0.4
-				    :scaler 0.025
-				    :jitter 0.0))
-	  (clm-channel gen))
-	(if (fneq (maxamp) .433) (snd-display ";granulate ramped 9: ~A" (maxamp)))
-	(undo)
-	(close-sound ind)))
+	(clm-channel gen))
+      (if (fneq (maxamp) .462) (snd-display ";granulate ramped 4: ~A" (maxamp)))
+      (let ((vals (count-matches (lambda (y) (> (abs y) 0.0)))))
+	(if (> (abs (- vals 1104)) 10) (snd-display ";granulate ramped 4 not 0.0: ~A" vals)))
+      (if (not (and (vequal (channel->float-vector 2203 10)
+			    (float-vector 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111))
+		    (vequal (channel->float-vector 4523 10)
+			    (float-vector 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.233 0.233))
+		    (vequal (channel->float-vector 8928 10)
+			    (float-vector 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452))))
+	  (snd-display ";granulate ramped 4 data off: ~A ~A ~A" 
+		       (channel->float-vector 2203 10) (channel->float-vector 4523 10) (channel->float-vector 8928 10)))
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .00995
+				  :hop .01
+				  :ramp 0.0
+				  :scaler 1.0
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .505) (snd-display ";granulate ramped 5: ~A" (maxamp)))
+      (let* ((mxoff 0.0)
+	     (mx (maxamp))
+	     (len (framples))
+	     (cur 0.0)
+	     (incr (/ mx len)))
+	(scan-channel (lambda (y) 
+			(let ((diff (abs (- cur y)))) 
+			  (set! mxoff (max mxoff diff))
+			  (set! cur (+ cur incr))
+			  #f)))
+	(if (> mxoff .02) (snd-display ";granulate ramped 5 mxoff: ~A" mxoff))) ; .0108 actually
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .00995
+				  :hop .01
+				  :ramp 0.5
+				  :scaler 1.0
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .495) (snd-display ";granulate ramped 6: ~A" (maxamp)))
+      (if (not (and (vequal (channel->float-vector 2000 10)
+			    (float-vector 0.018 0.019 0.020 0.021 0.022 0.023 0.024 0.025 0.026 0.027))
+		    (vequal (channel->float-vector 8000 10)
+			    (float-vector 0.294 0.298 0.301 0.305 0.309 0.313 0.316 0.320 0.324 0.328))))
+	  (snd-display ";granulate ramped 6 data: ~A ~A"
+		       (channel->float-vector 2000 10) (channel->float-vector 8000 10)))
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .00995
+				  :hop .01
+				  :ramp 0.25
+				  :scaler 1.0
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .505) (snd-display ";granulate ramped 7: ~A" (maxamp)))
+      (if (not (and (vequal (channel->float-vector 2000 10)
+			    (float-vector 0.037 0.039 0.040 0.042 0.044 0.046 0.048 0.050 0.052 0.054))
+		    (vequal (channel->float-vector 8000 10)
+			    (float-vector 0.404 0.404 0.404 0.404 0.404 0.405 0.405 0.405 0.405 0.405))))
+	  (snd-display ";granulate ramped 7 data: ~A ~A"
+		       (channel->float-vector 2000 10) (channel->float-vector 8000 10)))
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .05
+				  :hop .01
+				  :ramp 0.25
+				  :scaler 0.1
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .201) (snd-display ";granulate ramped 7: ~A" (maxamp)))
+      (let* ((mxoff 0.0)
+	     (mx (maxamp))
+	     (len (framples))
+	     (cur 0.0)
+	     (incr (/ mx len)))
+	(scan-channel (lambda (y) 
+			(let ((diff (abs (- cur y)))) 
+			  (set! mxoff (max mxoff diff))
+			  (set! cur (+ cur incr))
+			  #f)))
+	(if (> mxoff .01) (snd-display ";granulate ramped 7 mxoff: ~A" mxoff))) ; .0097 actually
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .1
+				  :hop .01
+				  :ramp 0.1
+				  :scaler 0.1
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .501) (snd-display ";granulate ramped 8: ~A" (maxamp)))
+      (let* ((mxoff 0.0)
+	     (mx (maxamp))
+	     (len (- (framples) 2000))
+	     (cur (sample 2000))
+	     (incr (/ (- mx cur) len)))
+	(scan-channel (lambda (y) 
+			(let ((diff (abs (- cur y)))) 
+			  (set! mxoff (max mxoff diff))
+			  (set! cur (+ cur incr))
+			  #f))
+		      2000)
+	(if (> mxoff .001) (snd-display ";granulate ramped 8 mxoff: ~A" mxoff)))
+      (undo)
+      
+      (let ((e (make-env '(0 0 1 1) :length 10000)))
+	(set! gen (make-granulate :expansion 2.0
+				  :input (lambda (dir) (env e))
+				  :length .4
+				  :hop .01
+				  :ramp 0.4
+				  :scaler 0.025
+				  :jitter 0.0))
+	(clm-channel gen))
+      (if (fneq (maxamp) .433) (snd-display ";granulate ramped 9: ~A" (maxamp)))
+      (undo)
+      (close-sound ind))
     
     (let ((v0 (make-float-vector 32))
 	  (v1 (make-float-vector 256))
@@ -21643,14 +21643,14 @@ EDITS: 2
       (if (not (equal? o p))
 	  (snd-display ";wave-train copy ~A != ~A~%" o p)))
     
-    (let ((v1 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9)))
-      (let* ((o (make-table-lookup 440.0 :wave v1))
-	     (p (copy o)))
-	(if (not (equal? o p))
-	    (snd-display ";table-lookup copy ~A != ~A~%" o p))
-	(table-lookup o 1.0)
-	(if (equal? o p)
-	    (snd-display ";table-lookup run ~A == ~A~%" o p))))
+    (let* ((v1 (float-vector 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9))
+	   (o (make-table-lookup 440.0 :wave v1))
+	   (p (copy o)))
+      (if (not (equal? o p))
+	  (snd-display ";table-lookup copy ~A != ~A~%" o p))
+      (table-lookup o 1.0)
+      (if (equal? o p)
+	  (snd-display ";table-lookup run ~A == ~A~%" o p)))
     ))
 
 
@@ -24313,27 +24313,27 @@ EDITS: 2
     (add-mark 20)
     (add-mark 30)
     (mark-explode)
-    (if (file-exists? "mark-0.snd")
+    (if (not (file-exists? "mark-0.snd"))
+	(snd-display ";mark-explode did not write mark-0.snd?")
 	(let ((ind1 (open-sound "mark-0.snd")))
 	  (if (not (= (framples ind1 0) 10)) (snd-display ";mark-0 framples: ~A" (framples ind1 0)))
 	  (if (not (vequal (channel->float-vector) (make-float-vector 10 .1))) (snd-display ";mark-0 vals: ~A" (channel->float-vector)))
 	  (close-sound ind1)
-	  (delete-file "mark-0.snd"))
-	(snd-display ";mark-explode did not write mark-0.snd?"))
-    (if (file-exists? "mark-1.snd")
+	  (delete-file "mark-0.snd")))
+    (if (not (file-exists? "mark-1.snd"))
+	(snd-display ";mark-explode did not write mark-1.snd?")
 	(let ((ind1 (open-sound "mark-1.snd")))
 	  (if (not (= (framples ind1 0) 10)) (snd-display ";mark-1 framples: ~A" (framples ind1 0)))
 	  (if (not (vequal (channel->float-vector) (make-float-vector 10 .4))) (snd-display ";mark-1 vals: ~A" (channel->float-vector)))
 	  (close-sound ind1)
-	  (delete-file "mark-1.snd"))
-	(snd-display ";mark-explode did not write mark-1.snd?"))
-    (if (file-exists? "mark-2.snd")
+	  (delete-file "mark-1.snd")))
+    (if (not (file-exists? "mark-2.snd"))
+	(snd-display ";mark-explode did not write mark-2.snd?")
 	(let ((ind1 (open-sound "mark-2.snd")))
 	  (if (not (= (framples ind1 0) 10)) (snd-display ";mark-2 framples: ~A" (framples ind1 0)))
 	  (if (not (vequal (channel->float-vector) (make-float-vector 10 .8))) (snd-display ";mark-2 vals: ~A" (channel->float-vector)))
 	  (close-sound ind1)
-	  (delete-file "mark-2.snd"))
-	(snd-display ";mark-explode did not write mark-2.snd?"))
+	  (delete-file "mark-2.snd")))
     (if (file-exists? "mark-3.snd") (snd-display ";mark-explode wrote too many files?"))
     (let ((name (file-name ind)))
       (close-sound ind)
