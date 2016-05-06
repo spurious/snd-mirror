@@ -51,8 +51,7 @@
 			  (pretty-print-1 (cadar p) port (+ col 1))
 			  (if (not (eq? (caar p) 'quote))
 			      (write-char #\) port)))
-			(pretty-print-1 (car p) port (+ col added)))))
-	      (set! added 0))))
+			(pretty-print-1 (car p) port (+ col added))))))))
 	
 	(define (stacked-split-list lst col)
 	  (if (not (pair? lst))

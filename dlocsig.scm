@@ -2300,16 +2300,13 @@
 	;; push gain and time into envelopes
 	(define (push-gains group gains dist time)
 	  
-	  (define (position val lst)
-	    (let position-1 ((val val)
-			     (lst lst)
-			     (pos 0))
-	      (call-with-exit
-	       (lambda (return)
-		 (and (not (null? lst))
-		      (if (= val (car lst))
-			  (return pos)
-			  (position-1 val (cdr lst) (+ 1 pos))))))))
+	  (define* (position val lst (pos 0))
+	    (call-with-exit
+	     (lambda (return)
+	       (and (not (null? lst))
+		    (if (= val (car lst))
+			(return pos)
+			(position val (cdr lst) (+ 1 pos)))))))
 	  
 	  (let ((outputs (make-vector out-channels 0.0))
 		(rev-outputs (make-vector rev-channels 0.0))

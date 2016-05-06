@@ -47251,6 +47251,10 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     {
       if (jump_loc != ERROR_JUMP)
 	eval(sc, sc->op);
+
+       if ((jump_loc == CATCH_JUMP) &&        /* we're returning (back to eval) from an error in catch */
+	   (sc->stack_end == sc->stack_start))
+	 push_stack(sc, OP_ERROR_QUIT, sc->nil, sc->nil);
     }
   else
     {

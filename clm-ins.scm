@@ -1124,7 +1124,7 @@ is a physical model of a flute:
 	(set! (indfs i) (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
 				       :scaler (- dev1 dev0) :offset dev0))
 	(set! (ampfs i) (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
-				       :scaler (* rsamp amp (/ rfamp totalamp))))
+				       :scaler (/ (* rsamp amp rfamp) totalamp)))
 	(set! (c-rats i) harm)
 	(set! (carriers i) (make-oscil cfq))))
     (if (= numformants 2)

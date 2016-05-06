@@ -8007,7 +8007,7 @@
 	  ((= i stop))
 	(let ((rf (env rndf)))
 	  (outa i (* (env ampf)
-		     (+ (- 1.0 rf) (* rf (rand-interp rnd)))
+		     (- (+ 1.0 (* rf (rand-interp rnd))) rf)
 		     (polywave gen1 (env frqf))))))))
   
   (summer-tanager-1 beg1 .29 (* .4 amp1)
@@ -9041,8 +9041,7 @@
 	      (frq (+ (env frqf)
 		      (rand-interp rnd))))
 	  (outa i (* (env ampf)
-		     (+ (- 1.0 rf) 
-			(* rf (abs (rand-interp rnd1))))
+		     (- (+ 1.0 (* rf (abs (rand-interp rnd1)))) rf)
 		     (+ (* (env ampf1) (oscil gen1 frq))
 			(* (env ampf2) (oscil gen2 (* 2.0 frq)))
 			(* (env ampf3) (oscil gen3 (* 3.0 frq)))))))))))

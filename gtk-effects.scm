@@ -72,7 +72,7 @@
 					   (format #f "~A ~A ~A" 
 						   (origin target (- end beg))
 						   (if (eq? target 'sound) 0 beg)
-						   (and (not (eq? target 'sound)) (+ 1 (- end beg))))))))
+						   (and (not (eq? target 'sound)) (- (+ end 1) beg)))))))
 		      
 		      (if (> snc 0) 
 			  (all-chans) 
@@ -238,8 +238,7 @@
 			#f)
       
       (set! amp-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Gain (~1,2F)"  gain-amount)))
-				    (change-label child new-label)))
+				  (change-label child (format #f "Gain (~1,2F)"  gain-amount)))
 				amp-menu-list)))
     
     ;; -------- Normalize
@@ -299,8 +298,7 @@
 			  (activate-dialog normalize-dialog))
 			#f)
       (set! amp-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Normalize (~1,2F)"  normalize-amount)))
-				    (change-label child new-label)))
+				  (change-label child (format #f "Normalize (~1,2F)"  normalize-amount)))
 				amp-menu-list)))
     
     ;; -------- Gate (gate set by gate-amount)
@@ -357,8 +355,7 @@
 			    (activate-dialog gate-dialog))
 			  #f)
 	(set! amp-menu-list (cons (lambda ()
-				    (let ((new-label (format #f "Gate (~1,3F)"  gate-amount)))
-				      (change-label child new-label)))
+				    (change-label child (format #f "Gate (~1,3F)"  gate-amount)))
 				  amp-menu-list)))))
   
 ;;; DELAY EFFECTS
@@ -500,9 +497,7 @@
 			  (activate-dialog echo-dialog))
 			#f)
       (set! delay-menu-list (cons (lambda ()
-				    (let ((new-label (format #f "Echo (~1,2F ~1,2F)" 
-							     delay-time echo-amount)))
-				      (change-label child new-label)))
+				    (change-label child (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
 				  delay-menu-list)))
     
     ;; -------- Filtered echo
@@ -583,9 +578,7 @@
 			  (activate-dialog flecho-dialog))
 			#f)
       (set! delay-menu-list (cons (lambda ()
-				    (let ((new-label (format #f "Filtered echo (~1,2F ~1,2F)"
-							     flecho-scaler flecho-delay)))
-				      (change-label child new-label)))
+				    (change-label child (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
 				  delay-menu-list)))
     
     ;; -------- Modulated echo
@@ -686,9 +679,8 @@ the modulation frequency, and the echo amplitude."))
 			#f)
       
       (set! delay-menu-list (cons (lambda ()
-				    (let ((new-label (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" 
-							     zecho-scaler zecho-delay zecho-freq zecho-amp)))
-				      (change-label child new-label)))
+				    (change-label child (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" 
+								zecho-scaler zecho-delay zecho-freq zecho-amp)))
 				  delay-menu-list)))
     )
   
@@ -779,7 +771,7 @@ the modulation frequency, and the echo amplitude."))
 						 (filter-selection flt)
 						 (let* ((ms (plausible-mark-samples))
 							(bg (car ms))
-							(nd (+ 1 (- (cadr ms) (car ms)))))
+							(nd (- (+ (cadr ms) 1) (car ms))))
 						   (clm-channel flt bg nd #f #f #f #f 
 								(format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd)))))))
 				     
@@ -819,9 +811,7 @@ the modulation frequency, and the echo amplitude."))
 			  (activate-dialog band-pass-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Band-pass filter (~,2F ~D)" 
-							      band-pass-freq band-pass-bw)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Band-pass filter (~,2F ~D)" band-pass-freq band-pass-bw)))
 				   filter-menu-list)))
     
     ;; -------- Butterworth band-reject (notch) filter
@@ -851,7 +841,7 @@ the modulation frequency, and the echo amplitude."))
 						 (filter-selection flt)
 						 (let* ((ms (plausible-mark-samples))
 							(bg (car ms))
-							(nd (+ 1 (- (cadr ms) (car ms)))))
+							(nd (- (+ (cadr ms) 1) (car ms))))
 						   (clm-channel flt bg nd #f #f #f #f 
 								(format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd)))))))
 				     
@@ -889,8 +879,7 @@ the modulation frequency, and the echo amplitude."))
 			  (activate-dialog notch-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
 				   filter-menu-list)))
     
     ;; -------- Butterworth high-pass filter
@@ -918,7 +907,7 @@ the modulation frequency, and the echo amplitude."))
 						 (filter-selection flt)
 						 (let* ((ms (plausible-mark-samples))
 							(bg (car ms))
-							(nd (+ 1 (- (cadr ms) (car ms)))))
+							(nd (- (+ (cadr ms) 1) (car ms))))
 						   (clm-channel flt bg nd #f #f #f #f 
 								(format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd)))))))
 				     
@@ -950,8 +939,7 @@ the modulation frequency, and the echo amplitude."))
 			  (activate-dialog high-pass-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "High-pass filter (~,2F)" high-pass-freq)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "High-pass filter (~,2F)" high-pass-freq)))
 				   filter-menu-list)))
     
     ;; -------- Butterworth low-pass filter
@@ -979,7 +967,7 @@ the modulation frequency, and the echo amplitude."))
 						  (filter-selection flt)
 						  (let* ((ms (plausible-mark-samples))
 							 (bg (car ms))
-							 (nd (+ 1 (- (cadr ms) (car ms)))))
+							 (nd (- (+ (cadr ms) 1) (car ms))))
 						    (clm-channel flt bg nd #f #f #f #f 
 								 (format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd)))))))
 				      
@@ -1011,8 +999,7 @@ the modulation frequency, and the echo amplitude."))
 			  (activate-dialog low-pass-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Low-pass filter (~,2F)" low-pass-freq)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Low-pass filter (~,2F)" low-pass-freq)))
 				   filter-menu-list)))
     
     ;; -------- Comb filter
@@ -1077,8 +1064,7 @@ the modulation frequency, and the echo amplitude."))
 			  (activate-dialog comb-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
 				   filter-menu-list)))
     
     ;; -------- Comb-chord filter
@@ -1181,10 +1167,9 @@ Move the sliders to set the comb chord parameters."))
 			  (activate-dialog new-comb-chord-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Comb chord filter (~1,2F ~D ~1,2F ~1,2F ~1,2F)"  
-							      new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
-							      new-comb-chord-interval-one new-comb-chord-interval-two)))           
-				       (change-label child new-label)))
+				     (change-label child (format #f "Comb chord filter (~1,2F ~D ~1,2F ~1,2F ~1,2F)"  
+								 new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
+								 new-comb-chord-interval-one new-comb-chord-interval-two)))
 				   filter-menu-list)))
     
     ;; -------- Moog filter
@@ -1255,8 +1240,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			  (activate-dialog moog-dialog))
 			#f)
       (set! filter-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
 				   filter-menu-list)))
     )
   
@@ -1325,8 +1309,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (activate-dialog src-dialog))
 			#f)
       (set! freq-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Sample rate scaling (~1,2F)" src-amount)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Sample rate scaling (~1,2F)" src-amount)))
 				 freq-menu-list)))
     
     ;; -------- Time and pitch scaling by granular synthesis and sampling rate conversion
@@ -1369,7 +1352,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						 (set! (expand-control-ramp snd) ramp-scale))))
 					 (if (eq? expsrc-target 'marks)
 					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
+					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
 					     (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
 					 (restore-controls snd)))
 				     
@@ -1425,8 +1408,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (activate-dialog expsrc-dialog))
 			#f)
       (set! freq-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
 				 freq-menu-list)))
     
 ;;; -------- Time-varying sample rate conversion (resample)
@@ -1507,8 +1489,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (activate-dialog src-timevar-dialog))
 			#f)
       (set! freq-menu-list (cons (lambda ()
-				   (let ((new-label "Src-Timevar"))
-				     (change-label child new-label)))
+				   (change-label child "Src-Timevar"))
 				 freq-menu-list)))
     )
   
@@ -1621,8 +1602,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (activate-dialog am-effect-dialog))
 			#f)
       (set! mod-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Amplitude modulation (~1,2F)"  am-effect-amount)))
-				    (change-label child new-label)))
+				  (change-label child (format #f "Amplitude modulation (~1,2F)"  am-effect-amount)))
 				mod-menu-list)))
     
     ;; -------- Ring modulation
@@ -1712,9 +1692,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			  (activate-dialog rm-dialog))
 			#f)
       (set! mod-menu-list (cons (lambda ()
-				  (let ((new-label (format #f "Ring modulation (~D ~D)"
-							   rm-frequency rm-radians)))
-				    (change-label child new-label)))
+				  (change-label child (format #f "Ring modulation (~D ~D)" rm-frequency rm-radians)))
 				mod-menu-list)))
     )
   
@@ -1798,7 +1776,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					 (set! (reverb-control-feedback snd) reverb-feedback)
 					 (if (eq? reverb-target 'marks)
 					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
+					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
 					     (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
 					 (restore-controls snd)))
 				     
@@ -1843,8 +1821,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			  (activate-dialog reverb-dialog))
 			#f)
       (set! reverb-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
 				   reverb-menu-list)))
     
     ;; -------- Chowning reverb
@@ -1911,8 +1888,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			  (activate-dialog jc-reverb-dialog))
 			#f)
       (set! reverb-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
 				   reverb-menu-list)))
     
     ;; -------- Convolution
@@ -1972,8 +1948,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			  (activate-dialog convolve-dialog))
 			#f)
       (set! reverb-menu-list (cons (lambda ()
-				     (let ((new-label (format #f "Convolution (~D ~D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
-				       (change-label child new-label)))
+				     (change-label child (format #f "Convolution (~D ~D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
 				   reverb-menu-list)))
     )
   
@@ -2154,8 +2129,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			  (activate-dialog place-sound-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Place sound (~D ~D ~D)" mono-snd stereo-snd pan-pos)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Place sound (~D ~D ~D)" mono-snd stereo-snd pan-pos)))
 				 misc-menu-list)))
     
     ;; -------- Insert silence (at cursor, silence-amount in secs)
@@ -2195,8 +2169,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			  (activate-dialog silence-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Add silence (~1,2F)" silence-amount)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Add silence (~1,2F)" silence-amount)))
 				 misc-menu-list)))
     
 ;;; -------- Contrast (brightness control)
@@ -2228,7 +2201,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 					 (set! (amp-control snd) peak)
 					 (if (eq? contrast-target 'marks)
 					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
+					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
 					     (apply-controls snd (if (eq? contrast-target 'sound) 0 2)))
 					 (restore-controls snd)))
 				     
@@ -2260,8 +2233,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			  (activate-dialog contrast-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
 				 misc-menu-list)))
     
     ;; -------- Cross synthesis
@@ -2340,9 +2312,8 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog cross-synth-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
-							    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
+							       cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
 				 misc-menu-list)))
     
     ;; -------- Flange and phasing
@@ -2423,8 +2394,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog flange-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
 				 misc-menu-list)))
     
     ;; -------- Randomize phase
@@ -2464,8 +2434,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog random-phase-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
 				 misc-menu-list)))
     
     ;; -------- Robotize
@@ -2541,8 +2510,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog robotize-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
 				 misc-menu-list)))
     
     ;; -------- Rubber sound
@@ -2593,8 +2561,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog rubber-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Rubber sound (~1,2F)"  rubber-factor)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Rubber sound (~1,2F)"  rubber-factor)))
 				 misc-menu-list)))
     
     ;; -------- Wobble
@@ -2663,8 +2630,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (activate-dialog wobble-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()
-				   (let ((new-label (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
-				     (change-label child new-label)))
+				   (change-label child (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
 				 misc-menu-list)))
     )
   

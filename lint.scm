@@ -13,7 +13,7 @@
 (define *report-multiply-defined-top-level-functions* #f) ; top-level funcs defined in more than one file
 (define *report-nested-if* 4)                             ; 3 is lowest, this sets the nesting level that triggers an if->cond suggestion
 (define *report-short-branch* 12)                         ; controls when a lop-sided if triggers a reordering suggestion
-(define *report-one-armed-if* 90)                         ; if -> when/unless, can be #f/#t; if an integer, it sets tree length at which to trigger suggestion (80 is too small)
+(define *report-one-armed-if* 90)                         ; if -> when/unless, can be #f/#t; if an integer, sets tree length which triggers revision (80 is too small)
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 (define *report-function-stuff* #t)                       ; checks for missed function uses etc
@@ -29,6 +29,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
+
 (when (provided? 'pure-s7)
   (define (make-polar mag ang) (complex (* mag (cos ang)) (* mag (sin ang))))
   
@@ -48,6 +49,7 @@
     (if (let? e)
 	(reverse! (map values e))
 	(error 'wrong-type-arg "let->list argument should be an environment: ~A" str))))
+
 
 (define *current-file* "")
 (define *lint-output-port* *stderr*)
@@ -6510,7 +6512,6 @@
 						    `(cond (,(cadar (cadr form)) => (lambda (,(caaadr form)) ,@(cddr form))))))))))))
 	)) ; end check-special-cases
   
-    
     (define (prettify-checker-unq op)
       (if (pair? op)
 	  (string-append (prettify-checker-unq (car op)) " or " (prettify-checker-unq (cadr op)))
@@ -6543,6 +6544,17 @@
       ;; check for obvious argument type problems
       ;; caller = overall caller, head = current caller, checkers = proc or list of procs for checking args
 
+      (define (every-compatible? type1 type2)
+	(if (symbol? type1)
+	    (if (symbol? type2)
+		(compatible? type1 type2)
+		(and (pair? type2)                   ; here everything has to match
+		     (compatible? type1 (car type2))
+		     (every-compatible? type1 (cdr type2))))
+	    (and (pair? type1)                       ; here any match is good
+		 (or (compatible? (car type1) type2)
+		     (any-compatible? (cdr type1) type2)))))
+      
       (define (check-checker checker at-end)
 	(if (eq? checker 'integer:real?)
 	    (if at-end 'real? 'integer?)
@@ -6557,17 +6569,6 @@
 	    (and (pair? types)
 		 (or (any-checker? (car types) arg)
 		     (any-checker? (cdr types) arg)))))
-    
-      (define (every-compatible? type1 type2)
-	(if (symbol? type1)
-	    (if (symbol? type2)
-		(compatible? type1 type2)
-		(and (pair? type2)                   ; here everything has to match
-		     (compatible? type1 (car type2))
-		     (every-compatible? type1 (cdr type2))))
-	    (and (pair? type1)                       ; here any match is good
-		 (or (compatible? (car type1) type2)
-		     (any-compatible? (cdr type1) type2)))))
     
       (define (report-arg-trouble caller form head arg-number checker arg uop)
 	(define (prettify-arg-number argn)
@@ -6706,146 +6707,146 @@
 		     (cdr form)))))))))
       
       (when (pair? checkers)
-      (let ((arg-number 1)
-	    (flen (- (length form) 1)))
-	(call-with-exit
-	 (lambda (done)
-	   (for-each 
-	    (lambda (arg)
-	      (let ((checker (check-checker (if (pair? checkers) (car checkers) checkers) (= arg-number flen))))
-		;; check-checker only fixes up :at-end cases
-		(define (check-arg expr)
-		  (unless (symbol? expr)
-		    (let ((op (->lint-type expr)))
-		      (if (not (or (memq op '(#f #t values))
-				   (every-compatible? checker op)))
-			  (report-arg-trouble caller form head arg-number checker expr op)))))
-
-		;; special case checker?
-		(if (and (symbol? checker)
-			 (not (memq checker '(unused-parameter? unused-set-parameter?)))
-			 (not (hash-table-ref built-in-functions checker)))
-		    (let ((chk (symbol->value checker)))
-		      (if (and (procedure? chk)
-			       (equal? (arity chk) '(2 . 2)))
-			  (catch #t
-			    (lambda ()
-			      (let ((res (chk form arg-number)))
-				(set! checker #t)
-				(if (symbol? res)
-				    (set! checker res)
-				    (if (string? res)
-					(lint-format "~A's argument, ~A, should be ~A" caller head arg res)))))
-			    (lambda (type info)
-			      (set! checker #t))))))
-
-		(if (and (pair? arg)
-			 (pair? (car arg)))
-		    (let ((rtn (return-type (caar arg) env)))
-		      (if (memq rtn '(boolean? real? integer? rational? number? complex? float? pair? keyword? symbol? null? char?))
-			  (lint-format* caller 
-					(string-append (symbol->string head) "'s argument ")
-					(string-append (truncated-list->string arg) " looks odd: ")
-					(string-append (object->string (caar arg)) " returns " (symbol->string rtn))
-					" which is not applicable"))))
-
-		(when (or (pair? checker)
-			  (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
-		  (if arg
-		      (if (eq? checker 'unused-parameter?)
-			  (lint-format* caller
-					(string-append (symbol->string head) "'s parameter " (number->string arg-number))
-					" is not used, but a value is passed: "
-					(truncated-list->string arg))
-			  (if (eq? checker 'unused-set-parameter?)
-			      (lint-format* caller
-					    (string-append (symbol->string head) "'s parameter " (number->string arg-number))
-					    "'s value is not used, but a value is passed: "
-					    (truncated-list->string arg)))))
-		  (if (not (pair? arg))
-		      (let ((val (cond ((not (symbol? arg))
-					arg)
-				       ((constant? arg)
-					(symbol->value arg))
-				       ((and (hash-table-ref built-in-functions arg)
-					     (not (var-member :with-let env))
-					     (not (var-member arg env)))
-					(symbol->value arg *e*))
-				       (else arg))))
-			(if (not (or (symbol? val)
-				     (any-checker? checker val)))
-			    (let ((op (->lint-type val)))
-			      (unless (memq op '(#f #t values))
-				(report-arg-trouble caller form head arg-number checker arg op)))))
-
-		      (case (car arg) 
-			((quote)   ; '1 -> 1
-			 (let ((op (if (pair? (cadr arg)) 'list? (->lint-type (cadr arg)))))
-			   ;; arg is quoted expression
-			   (if (not (or (memq op '(#f #t values))
-					(every-compatible? checker op)))
-			       (report-arg-trouble caller form head arg-number checker arg op))))
+	(let ((arg-number 1)
+	      (flen (- (length form) 1)))
+	  (call-with-exit
+	   (lambda (done)
+	     (for-each 
+	      (lambda (arg)
+		(let ((checker (check-checker (if (pair? checkers) (car checkers) checkers) (= arg-number flen))))
+		  ;; check-checker only fixes up :at-end cases
+		  (define (check-arg expr)
+		    (unless (symbol? expr)
+		      (let ((op (->lint-type expr)))
+			(if (not (or (memq op '(#f #t values))
+				     (every-compatible? checker op)))
+			    (report-arg-trouble caller form head arg-number checker expr op)))))
+		  
+		  ;; special case checker?
+		  (if (and (symbol? checker)
+			   (not (memq checker '(unused-parameter? unused-set-parameter?)))
+			   (not (hash-table-ref built-in-functions checker)))
+		      (let ((chk (symbol->value checker)))
+			(if (and (procedure? chk)
+				 (equal? (arity chk) '(2 . 2)))
+			    (catch #t
+			      (lambda ()
+				(let ((res (chk form arg-number)))
+				  (set! checker #t)
+				  (if (symbol? res)
+				      (set! checker res)
+				      (if (string? res)
+					  (lint-format "~A's argument, ~A, should be ~A" caller head arg res)))))
+			      (lambda (type info)
+				(set! checker #t))))))
+		  
+		  (if (and (pair? arg)
+			   (pair? (car arg)))
+		      (let ((rtn (return-type (caar arg) env)))
+			(if (memq rtn '(boolean? real? integer? rational? number? complex? float? pair? keyword? symbol? null? char?))
+			    (lint-format* caller 
+					  (string-append (symbol->string head) "'s argument ")
+					  (string-append (truncated-list->string arg) " looks odd: ")
+					  (string-append (object->string (caar arg)) " returns " (symbol->string rtn))
+					  " which is not applicable"))))
+		  
+		  (when (or (pair? checker)
+			    (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
+		    (if arg
+			(if (eq? checker 'unused-parameter?)
+			    (lint-format* caller
+					  (string-append (symbol->string head) "'s parameter " (number->string arg-number))
+					  " is not used, but a value is passed: "
+					  (truncated-list->string arg))
+			    (if (eq? checker 'unused-set-parameter?)
+				(lint-format* caller
+					      (string-append (symbol->string head) "'s parameter " (number->string arg-number))
+					      "'s value is not used, but a value is passed: "
+					      (truncated-list->string arg)))))
+		    (if (not (pair? arg))
+			(let ((val (cond ((not (symbol? arg))
+					  arg)
+					 ((constant? arg)
+					  (symbol->value arg))
+					 ((and (hash-table-ref built-in-functions arg)
+					       (not (var-member :with-let env))
+					       (not (var-member arg env)))
+					  (symbol->value arg *e*))
+					 (else arg))))
+			  (if (not (or (symbol? val)
+				       (any-checker? checker val)))
+			      (let ((op (->lint-type val)))
+				(unless (memq op '(#f #t values))
+				  (report-arg-trouble caller form head arg-number checker arg op)))))
+			
+			(case (car arg) 
+			  ((quote)   ; '1 -> 1
+			   (let ((op (if (pair? (cadr arg)) 'list? (->lint-type (cadr arg)))))
+			     ;; arg is quoted expression
+			     (if (not (or (memq op '(#f #t values))
+					  (every-compatible? checker op)))
+				 (report-arg-trouble caller form head arg-number checker arg op))))
 			  
-			;; arg is an expression
-			((begin let let* letrec letrec* with-let)
-			 (check-arg (and (pair? (cdr arg))
-					 (list-ref arg (- (length arg) 1)))))
-			
-			((if)
-			 (if (and (pair? (cdr arg))
-				  (pair? (cddr arg)))
-			     (let ((t (caddr arg))
-				   (f (if (pair? (cdddr arg)) (cadddr arg))))
-			       (check-arg t)
-			       (when (and f (not (symbol? f)))
-				 (check-arg f)))))
-			
-			((dynamic-wind catch)
-			 (if (= (length arg) 4)
-			     (let ((f (caddr arg)))
-			       (if (and (pair? f)
-					(eq? (car f) 'lambda))
-				   (let ((len (length f)))
-				     (if (> len 2)
-					 (check-arg (list-ref f (- len 1)))))))))
-			
-			((do)
-			 (if (and (pair? (cdr arg))
-				  (pair? (cddr arg)))
-			     (let ((end+res (caddr arg)))
-			       (check-arg (if (pair? (cdr end+res))
-					      (list-ref (cdr end+res) (- (length end+res) 2))
-					      ())))))
-			
-			((case)
-			 (for-each
-			  (lambda (clause)
-			    (if (and (pair? clause)
-				     (pair? (cdr clause))
-				     (not (eq? (cadr clause) '=>)))
-				(check-arg (list-ref clause (- (length clause) 1)))))
-			  (cddr arg)))
-			
-			((cond)
-			 (for-each
-			  (lambda (clause)
-			    (if (pair? clause)
-				(if (pair? (cdr clause))
-				    (if (not (eq? (cadr clause) '=>))
-					(check-arg (list-ref clause (- (length clause) 1))))
-				    (check-arg (car clause)))))
-			  (cdr arg)))
-			
-			((call/cc call-with-exit call-with-current-continuation)
-			 ;; find func in body (as car of list), check its arg as return value
-			 (when (and (pair? (cdr arg))
-				    (pair? (cadr arg))
-				    (eq? (caadr arg) 'lambda))
-			   (let ((f (cadr arg)))
-			     (when (and (pair? (cdr f))
-					(pair? (cadr f))
-					(symbol? (caadr f))
-					(null? (cdadr f)))
+			  ;; arg is an expression
+			  ((begin let let* letrec letrec* with-let)
+			   (check-arg (and (pair? (cdr arg))
+					   (list-ref arg (- (length arg) 1)))))
+			  
+			  ((if)
+			   (if (and (pair? (cdr arg))
+				    (pair? (cddr arg)))
+			       (let ((t (caddr arg))
+				     (f (if (pair? (cdddr arg)) (cadddr arg))))
+				 (check-arg t)
+				 (when (and f (not (symbol? f)))
+				   (check-arg f)))))
+			  
+			  ((dynamic-wind catch)
+			   (if (= (length arg) 4)
+			       (let ((f (caddr arg)))
+				 (if (and (pair? f)
+					  (eq? (car f) 'lambda))
+				     (let ((len (length f)))
+				       (if (> len 2)
+					   (check-arg (list-ref f (- len 1)))))))))
+			  
+			  ((do)
+			   (if (and (pair? (cdr arg))
+				    (pair? (cddr arg)))
+			       (let ((end+res (caddr arg)))
+				 (check-arg (if (pair? (cdr end+res))
+						(list-ref (cdr end+res) (- (length end+res) 2))
+						())))))
+			  
+			  ((case)
+			   (for-each
+			    (lambda (clause)
+			      (if (and (pair? clause)
+				       (pair? (cdr clause))
+				       (not (eq? (cadr clause) '=>)))
+				  (check-arg (list-ref clause (- (length clause) 1)))))
+			    (cddr arg)))
+			  
+			  ((cond)
+			   (for-each
+			    (lambda (clause)
+			      (if (pair? clause)
+				  (if (pair? (cdr clause))
+				      (if (not (eq? (cadr clause) '=>))
+					  (check-arg (list-ref clause (- (length clause) 1))))
+				      (check-arg (car clause)))))
+			    (cdr arg)))
+			  
+			  ((call/cc call-with-exit call-with-current-continuation)
+			   ;; find func in body (as car of list), check its arg as return value
+			   (when (and (pair? (cdr arg))
+				      (pair? (cadr arg))
+				      (eq? (caadr arg) 'lambda))
+			     (let ((f (cadr arg)))
+			       (when (and (pair? (cdr f))
+					  (pair? (cadr f))
+					  (symbol? (caadr f))
+					  (null? (cdadr f)))
 				 (define c-walk 
 				   (let ((rtn (caadr f)))
 				     (lambda (tree)
@@ -6856,56 +6857,56 @@
 						 (c-walk (car tree))
 						 (for-each (lambda (x) (if (pair? x) (c-walk x))) (cdr tree))))))))
 				 (for-each c-walk (cddr f))))))
-			
-			((values) 
-			 (when (positive? (length arg))
-			   (cond ((null? (cdr arg)) ; #<unspecified>
-				  (if (not (any-checker? checker #<unspecified>))
-				      (report-arg-trouble caller form head arg-number checker arg 'unspecified?)))
-				 ((null? (cddr arg))
-				  (check-arg (cadr arg)))
-				 (else
-				  (for-each
-				   (lambda (expr rest)
-				     (check-arg expr)
-				     (set! arg-number (+ arg-number 1))
- 				     (if (> arg-number max-arity) (done))
-				     (if (list? checkers)
-					 (if (null? (cdr checkers))
-					     (done)
-					     (set! checkers (cdr checkers)))))
-				   (cdr arg) (cddr arg))
-				  (check-arg (list-ref arg (- (length arg) 1)))))))
-			
-			(else 
-			 (let ((op (return-type (car arg) env)))
-			   (let ((v (var-member (car arg) env)))
-			     (if (and (var? v)
-				      (not (memq form (var-history v))))
-				 (set! (var-history v) (cons form (var-history v)))))
-
-			   ;; checker is arg-type, op is expression type (can also be a pair)
-			   (if (and (not (memq op '(#f #t values)))
-				    (not (memq checker '(unused-parameter? unused-set-parameter?)))
-				    (or (not (every-compatible? checker op))
-					(and (just-constants? arg env) ; try to eval the arg
-					     (catch #t 
-					       (lambda ()
-						 (not (any-checker? checker (eval arg))))
-					       (lambda ignore-catch-error-args
-						 #f)))))
-			       (report-arg-trouble caller form head arg-number checker arg op)))))))
-		
-		(if (list? checkers)
-		    (if (null? (cdr checkers))
-			(done)
-			(set! checkers (cdr checkers)))
-		    (if (memq checker '(unused-parameter? unused-set-parameter?))
-			(set! checker #t)))
-		(set! arg-number (+ arg-number 1))
-		(if (> arg-number max-arity) (done))))
-	    (cdr form)))))))
-
+			  
+			  ((values) 
+			   (when (positive? (length arg))
+			     (cond ((null? (cdr arg)) ; #<unspecified>
+				    (if (not (any-checker? checker #<unspecified>))
+					(report-arg-trouble caller form head arg-number checker arg 'unspecified?)))
+				   ((null? (cddr arg))
+				    (check-arg (cadr arg)))
+				   (else
+				    (for-each
+				     (lambda (expr rest)
+				       (check-arg expr)
+				       (set! arg-number (+ arg-number 1))
+				       (if (> arg-number max-arity) (done))
+				       (if (list? checkers)
+					   (if (null? (cdr checkers))
+					       (done)
+					       (set! checkers (cdr checkers)))))
+				     (cdr arg) (cddr arg))
+				    (check-arg (list-ref arg (- (length arg) 1)))))))
+			  
+			  (else 
+			   (let ((op (return-type (car arg) env)))
+			     (let ((v (var-member (car arg) env)))
+			       (if (and (var? v)
+					(not (memq form (var-history v))))
+				   (set! (var-history v) (cons form (var-history v)))))
+			     
+			     ;; checker is arg-type, op is expression type (can also be a pair)
+			     (if (and (not (memq op '(#f #t values)))
+				      (not (memq checker '(unused-parameter? unused-set-parameter?)))
+				      (or (not (every-compatible? checker op))
+					  (and (just-constants? arg env) ; try to eval the arg
+					       (catch #t 
+						 (lambda ()
+						   (not (any-checker? checker (eval arg))))
+						 (lambda ignore-catch-error-args
+						   #f)))))
+				 (report-arg-trouble caller form head arg-number checker arg op)))))))
+		  
+		  (if (list? checkers)
+		      (if (null? (cdr checkers))
+			  (done)
+			  (set! checkers (cdr checkers)))
+		      (if (memq checker '(unused-parameter? unused-set-parameter?))
+			  (set! checker #t)))
+		  (set! arg-number (+ arg-number 1))
+		  (if (> arg-number max-arity) (done))))
+	      (cdr form)))))))
+    
     
     (define check-unordered-exprs
       (let ((changers (let ((h (make-hash-table)))
@@ -8900,7 +8901,7 @@
 			 (nvars (and (not (eq? e cur-env))
 				     (env-difference function-name e cur-env ()))))
 		    (report-usage function-name definer (append (or nvars ()) args-as-vars) cur-env))
-		  
+
 		  (when (and (var? fvar)
 			     (memq definer '(define lambda define-macro)))
 		    ;; look for unused parameters that are passed a value other than #f
@@ -9769,7 +9770,33 @@
 					      (and (pair? args)
 						   (equal? (cddr body) (proper-list args)))))
 				     (lint-format "perhaps ~A" caller (lists->string form (cadr body))))))
-			   
+
+#|
+			   (let ((args1 (args->proper-list args)))
+			     (when (and (pair? (cddr form))
+					(pair? (caddr form))
+					(null? (cdddr form))
+					(eq? (caaddr form) 'let)
+					(pair? (cadr (caddr form))))
+			       (for-each (lambda (v)
+					   (if (and (pair? v)
+						    (pair? (cdr v))
+						    (pair? (cadr v))
+						    (not (tree-set-member args1 (cadr v)))
+						    (memq (caadr v) '(make-vector vector make-string string make-list list)))
+					       (varlet -- yow)))
+			   ;; perhaps: cons onto a list passed as another arg to lint-walk-function which walks the body
+			   ;;   and calls report-usage, so at that point we can look at the watched vars.  If any are
+			   ;;   not set in any way (and come from list string vector), they can simply be moved to
+			   ;;   the closure.  If set, (and from make-*) they can be reinitialized via fill.  But,
+			   ;;   we need the fill value -- maybe restrict to large cases?  Any unset vals could be
+			   ;;   moved, perhaps removing the need for the let. And for let* et al, they can represent
+			   ;;   the closure too. So (lambda (x) (let ((y (sqrt 2))) (* x y))) -> (let ((y (sqrt 2))) (lambda (x) (* x y)))
+			   ;;   Maybe larger savings from define, but worth a look anyway.  Especially wasteful in recursive func.
+			   ;; even local lets could be moved out -- how to maintain locality?
+					   (cadr (caddr form))))
+|#			       
+
 			   (lint-walk-function head caller args (cddr form) form env)
 			   ;env -- not this -- return the lambda+old env via lint-walk-function
 			   ))))
@@ -10870,9 +10897,21 @@
 					      (else (let ((f (cadr sequel)))
 						      (if (symbol? f)
 							  (let ((val (symbol->value f *e*)))
-							    (if (and (procedure? val)
-								     (not (aritable? val 1))) ; here values might be in test expr
-								(lint-format "=> target (~A) may be unhappy: ~A" caller f clause)))
+							    (when (procedure? val)
+							      (if (not (aritable? val 1)) ; here values might be in test expr
+								  (lint-format "=> target (~A) may be unhappy: ~A" caller f clause))
+							      (let ((sig (procedure-signature val)))
+								(if (and (pair? sig)
+									 (pair? (cdr sig)))
+								    (let ((from-type (->lint-type expr))
+									  (to-type (cadr sig)))
+								      (if (not (or (memq from-type '(#f #t values))
+										   (memq to-type '(#f #t values))
+										   (any-compatible? to-type from-type)))
+									  (lint-format "in ~A, ~A returns a ~A, but ~A expects ~A" caller
+										       (truncated-list->string clause)
+										       expr (prettify-checker-unq from-type)
+										       f to-type)))))))
 							  (if (and (pair? f)
 								   (eq? (car f) 'lambda)
 								   (pair? (cdr f))
@@ -12280,11 +12319,11 @@
 									  `(,(cadr body) ...))))))
 				 ;; repetition for the moment
 				 (when (and (pair? varlist)
-					    (assq (cadar body) vars)
+					    (assq (cadar body) vars)           ; settee is a local var
 					    (not (eq? (cadar body) named-let)) ; (let loop () (set! loop 3))!
 					    (or (null? (cdr body))
 						(and (null? (cddr body))
-						     (eq? (cadar body) (cadr body)))))
+						     (eq? (cadar body) (cadr body))))) ; (let... (set! local val) local)
 				   (lint-format "perhaps ~A" caller
 						(lists->string form
 							       (if (or (tree-memq (cadar body) (caddar body))
@@ -13909,8 +13948,9 @@
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
-;;; if all exits have the same name, that name is superfluous
-;;;   if var, it can be removed, if func, it can wrap entire body [as currently with if]
-;;; do we check arg type of => val/recipient? [no t347] -- this is also tricky due to use in cond as non-#f
-;;;
-;;; 114 22052 433088
+;;; lambda (define? named-let?) constant seqs -> closure?  what about others similar (sqrt2 (sqrt 2))...? [9792]
+;;; (let ((A (f x)) (let ((B (g A))) <no use of A>...))) or let* -> (let ((B (g (f x))))?
+;;; see member/string= case in t347 -- smarter cond -> assoc code needed
+;;;   also reversed order (eq? 'a x) (eq? 'b x) etc (reorder either way)
+;;; 
+;;; 114 22113 433088
