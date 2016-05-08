@@ -7739,7 +7739,7 @@ To get the data currently displayed in the time domain window:
 (define (<a class=quiet href="sndscm.html#windowsamples">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#rightsample">right-sample</a>)))
-   (<a href="#samples">samples</a> wl (+ 1 (- wr wl)))))
+   (<a href="#samples">samples</a> wl (- (+ wr 1) wl))))
 </pre>
 
 <p id="movingwindows">See also <a href="#moveonepixel">move-one-pixel</a>.

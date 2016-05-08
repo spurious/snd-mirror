@@ -55,9 +55,9 @@
 
 #define SND_DATE "9-May-16"
 #ifndef SND_VERSION
-#define SND_VERSION "16.5"
+#define SND_VERSION "16.6"
 #endif
 #define SND_MAJOR_VERSION "16"
-#define SND_MINOR_VERSION "5"
+#define SND_MINOR_VERSION "6"
 
 #endif

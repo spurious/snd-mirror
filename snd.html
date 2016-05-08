@@ -884,7 +884,7 @@ window size:</p>
     ;; if so, set the FFT size to reflect the graph boundaries
     (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
              (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
-        (let ((size (expt 2 (ceiling (log (+ 1.0 (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 2.0)))))
+        (let ((size (expt 2 (ceiling (log (- (+ 1.0 (right-sample)) (left-sample)) 2.0)))))
           (if (not (= size (<a class=quiet href="extsnd.html#transformsize">transform-size)</a>))
               (set! (<a class=quiet href="extsnd.html#transformsize">transform-size)</a> size))))))
 </pre>

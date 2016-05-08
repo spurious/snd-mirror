@@ -25,7 +25,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
   (define (tuneIt f s1)
 
     (define (getOptimumC S o p)
-      (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (+ (- 1.0 S) (* S (cos o))))))
+      (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (- (+ 1.0 (* S (cos o))) S))))
 	     (tmpInt (floor (- p pa)))
 	     (pc (- p pa tmpInt)))
 	(if (< pc .1)
@@ -584,8 +584,8 @@ is a physical model of a flute:
 	  (set! tap-sig (tap bore offset))
 	  ;; NB the DC blocker is not in the cicuit. It is applied to the out-sig 
 	  ;; but the result is not fed back into the system.
-	  (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
-	  (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
+	  (set! dc-blocked-a (- (+ out-sig (* 0.995 previous-dc-blocked-a)) previous-out-sig))
+	  (set! dc-blocked-b (- (+ tap-sig (* 0.995 previous-dc-blocked-b)) previous-tap-sig))
 	  (outa i (* out-scl dc-blocked-a))
 	  (outb i (* out-scl dc-blocked-b))
 	  (set! previous-out-sig out-sig)

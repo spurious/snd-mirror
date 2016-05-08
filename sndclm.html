@@ -814,7 +814,7 @@ This means that the frequency envelope y values should be passed through <a href
 <pre class="indented">
 (define (simp start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
-        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :length (+ 1 (- end start)) :scaler (<em class=red>hz-&gt;radians</em> freq))))
+        (frqe (<a class=quiet href="#make-env">make-env</a> frq-env :length (- (+ end 1) start) :scaler (<em class=red>hz-&gt;radians</em> freq))))
     (do ((i start (+ i 1))) 
         ((= i end))
       (<a class=quiet href="#outa">outa</a> i (* amp (oscil os (<a class=quiet href="#env">env</a> <em class=red>frqe</em>)))))))
@@ -1752,7 +1752,7 @@ based on some previously chosen loop positions:
         (error 'no-loop-positions)
         (let* ((loop-start (car loop-data))
                (loop-end (cadr loop-data))
-               (loop-length (+ 1 (- loop-end loop-start)))
+               (loop-length (- (+ loop-end 1) loop-start))
                (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-float-vector loop-length 0.0)))
                (original-loop-duration (/ loop-length (srate sound)))
                (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
@@ -2531,8 +2531,8 @@ we get sum and difference tones, much as in complex FM:
     (do ((i 0 (+ i 1)))
 	((= i 44100))
       (<a class=quiet href="#outa">outa</a> i (<em class=red>polynomial</em> pcoeffs 
-                (* 0.5 (+ (<a class=quiet href="#oscil">oscil</a> gen1))
-		          (<a class=quiet href="#oscil">oscil</a> gen2)))))))
+                (* 0.5 (+ (<a class=quiet href="#oscil">oscil</a> gen1)
+		          (<a class=quiet href="#oscil">oscil</a> gen2))))))))
 </pre>
 <hr>
 <div class="center"><img src="pix/t5sum.png" alt="t5"></div>

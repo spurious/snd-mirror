@@ -180,8 +180,7 @@
     (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let* ((sp1 (char-position #\space data))
-	 (sp2 (char-position #\space data (+ sp1 1)))
+  (let* ((sp2 (char-position #\space data (+ (char-position #\space data) 1)))
 	 (sp3 (char-position #\space data (+ sp2 1))))
     (substring data (if sp3 (+ sp2 1) sp2))))
 
@@ -662,8 +661,7 @@
 
 
 (define-macro (make-fnc vname)
-  (let* ((cfnc-name (string-append "CFNC-" vname))
-	 (cfnc (string->symbol cfnc-name))
+  (let* ((cfnc (string->symbol (string-append "CFNC-" vname)))
 	 (g-fnc (string->symbol (string-append "g-" vname)))
 	 (types (string->symbol (string-append "types-" vname)))
 	 (funcs (string->symbol (string-append "funcs-" vname)))
@@ -676,8 +674,7 @@
 	 (casts (string->symbol (string-append "casts-" vname)))
 	 (chkfnc (string->symbol (string-append "CCHK-" vname)))
 	 (checks (string->symbol (string-append "checks-" vname)))
-	 (withfnc (string->symbol (string-append "with-" vname)))
-	 )
+	 (withfnc (string->symbol (string-append "with-" vname))))
     `(begin
        (define ,funcs ())
        (define ,strings ())

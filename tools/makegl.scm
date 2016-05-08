@@ -47,8 +47,7 @@
     (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let* ((sp1 (char-position #\space data))
-	 (sp2 (char-position #\space data (+ sp1 1)))
+  (let* ((sp2 (char-position #\space data (+ (char-position #\space data) 1)))
 	 (sp3 (char-position #\space data (+ sp2 1))))
     (substring data (if sp3 (+ sp2 1) sp2))))
 
@@ -507,7 +506,7 @@
 	  (return-type (cadr data))
 	  (args (caddr data))
 	  (argslen (length args))
-	  (cargs (length args))
+	  (cargs argslen)
 	  (refargs (ref-args args))
 	  (xgargs (- cargs refargs))
 	  (argstr (cadddr data))
