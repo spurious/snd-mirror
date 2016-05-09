@@ -130,7 +130,7 @@
 	       (string<? a (if (char=? (string-ref b 0) #\*) (substring b 1) b))))))
 
 
-(define (clean-and-downcase-first-char str caps topic file)
+(define (clean-and-downcase-first-char str caps file)
   (if (char=? (str 0) #\|)
       ;; this is a main-index entry
       (let* ((colonpos (or (char-position #\: str) 
@@ -1021,7 +1021,7 @@
       (do ((i 0 (+ i 1)))
 	  ((= i n))
         (set! (tnames ctr)
-	      (clean-and-downcase-first-char (names i) capitalized (topics i) (files i)))
+	      (clean-and-downcase-first-char (names i) capitalized (files i)))
 	(if (positive? (length (ind-sortby (tnames ctr))))
 	    (set! ctr (+ ctr 1))))
 

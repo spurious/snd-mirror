@@ -745,7 +745,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				  (and (> (length name) 2) 
 				       (char-numeric? (name 2))
 				       (name 2))))
-		 (base (modulo (+ 5 (- (char->integer base-char) (char->integer #\a))) 7)) ; c-based (diatonic) octaves
+		 (base (modulo (- (+ (char->integer base-char) 5) (char->integer #\a)) 7)) ; c-based (diatonic) octaves
 		 (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1)))
 		 (octave (if octave-char (- (char->integer octave-char) (char->integer #\0)) last-octave))
 		 (base-pitch (+ sign (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11))))
@@ -773,8 +773,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 (define-macro (defgenerator struct-name . fields)
 
   (define (list->bindings lst)
-    (let* ((len (length lst))
-	   (nlst (make-list (* len 2))))
+    (let ((nlst (make-list (* (length lst) 2))))
       (do ((old lst (cdr old))
 	   (nsym nlst (cddr nsym)))
 	  ((null? old) nlst)

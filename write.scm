@@ -26,8 +26,7 @@
 	      ((not (pair? p)))
 	    (let ((added 0))
 	      (if (not (eq? p lst)) (spaces col))
-	      (let* ((str (object->string (car p)))
-		     (len (length str)))
+	      (let ((len (length (object->string (car p)))))
 		(if (and (keyword? (car p))
 			 (pair? (cdr p)))
 		    (begin

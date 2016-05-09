@@ -389,13 +389,13 @@
 			   (x 0))
 		       (do ((b (read terminal-fd cc 1) (read terminal-fd cc 1)))
 			   ((not (char-numeric? (c 0))))
-			 (set! y (+ (* 10 y) (- (char->integer (c 0)) (char->integer #\0)))))
+			 (set! y (- (+ (* 10 y) (char->integer (c 0))) (char->integer #\0))))
 		       (and (char=? (c 0) #\;)
 			    (do ((b (read terminal-fd cc 1) (read terminal-fd cc 1)))
 				((not (char-numeric? (c 0)))
 				 (and (char=? (c 0) #\R)
 				      (cons x y)))
-			      (set! x (+ (* 10 x) (- (char->integer (c 0)) (char->integer #\0))))))))))
+			      (set! x (- (+ (* 10 x) (char->integer (c 0))) (char->integer #\0)))))))))
 	    
 	    (define (cursor-bounds)
 	      (let ((coords (cursor-coords)))
@@ -433,7 +433,7 @@
 		(format #f "~C[1m~A~C[0m" #\escape text #\escape)) 
 
 	      ;; if a line wraps, it will confuse the redisplay/cursor positioning code. so truncate the display
-	      (let ((line-len (+ (- end start) 1 prompt-length)))
+	      (let ((line-len (- (+ end prompt-length 1) start)))
 		(if (>= line-len last-col)
 		    (set! end (- (+ end line-len) last-col))))
 	      
@@ -463,7 +463,7 @@
 		(do ((i 0 (+ i 1)))
 		    ((or (= i len)
 			 (= i cursor-pos))
-		     (move-cursor (+ prompt-row row) (+ prompt-col (- cursor-pos start))))
+		     (move-cursor (+ prompt-row row) (- (+ prompt-col cursor-pos) start)))
 		  (when (char=? (cur-line i) #\newline)
 		    (set! row (+ row 1))
 		    (set! start (+ i 1))))))

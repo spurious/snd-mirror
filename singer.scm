@@ -256,7 +256,7 @@
 		      (set! (sines 1) (* (+ ca2 (* (- sa2 (sin b2)) temp)) temp1 one-over-two-pi))
 		      (set! (cosines 1) (* (- (* (- ca2 (cos b2)) temp) sa2) temp1 one-over-two-pi))))
 		(set! (sines 1) (+ (sines 1) (* (- (+ 0.75 (* (cos (* 2 a2)) 0.25)) ca2) one-over-two-pi)))
-		(set! (cosines 1) (+ (cosines 1) (- (* (- sa2 (* (sin (* 2 a2)) 0.25)) one-over-two-pi) (* a 0.5))))
+		(set! (cosines 1) (- (+ (cosines 1) (* (- sa2 (* (sin (* 2 a2)) 0.25)) one-over-two-pi)) (* a 0.5)))
 		(do ((k 2 (+ k 1))
 		     (ka2 (* 2 a2) (+ ka2 a2))
 		     (ka1 a2 (+ ka1 a2))
@@ -272,7 +272,7 @@
 				     (/ (* (- (cos ka1) 1.0) 0.5) (- k 1))
 				     (/ (* (- (cos ka3) 1.0) 0.5) (+ k 1))))
 		  (set! (sines k) (* (sines k) one-over-two-pi))
-		  (set! (cosines k) (+ (cosines k) (- (/ (sin ka2) k) (/ (* (sin ka1) 0.5) (- k 1)) (/ (* (sin ka3) 0.5) (+ k 1)))))
+		  (set! (cosines k) (- (+ (cosines k) (/ (sin ka2) k)) (/ (* (sin ka1) 0.5) (- k 1)) (/ (* (sin ka3) 0.5) (+ k 1))))
 		  (set! (cosines k) (* (cosines k) one-over-two-pi)))
 		(fill! glot-table 0.0)
 		(do ((j 0 (+ j 1))
@@ -416,7 +416,7 @@
 	      (set! lt1 (one-pole lp (+ (dline1 2) temp)))
 
 	      (set! (dline2 1) (+ temp (* (coeffs 1) (- glotsamp temp))))
-	      (set! temp (+ glotsamp (- (dline2 1) temp)))
+	      (set! temp (- (+ glotsamp (dline2 1)) temp))
 	      (set! temp (singer-filter 1 noseposition temp dline1 dline2 coeffs))
 #|
 	      (let ((x 0.0))
@@ -492,7 +492,7 @@
 |#
 
 	      (set! (dline2 tractlength-1) (+ last-lip-refl (* (coeffs tractlength-1) (- (dline1 tractlength-2) last-lip-refl))))
-	      (set! (dline1 tractlength-1) (+ (dline1 tractlength-2) (- (dline2 tractlength-1) last-lip-refl)))
+	      (set! (dline1 tractlength-1) (- (+ (dline1 tractlength-2) (dline2 tractlength-1)) last-lip-refl))
 	      (set! (dline1 tractlength-2) temp)
 	      (if (not (= noise-gain 0.0))
 		  (begin

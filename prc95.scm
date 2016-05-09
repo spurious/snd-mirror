@@ -49,7 +49,7 @@
   (float-vector 0.0 0.0))
 
 (define (dc-block b samp)
-  (set! (b 1) (+ samp (- (* 0.99 (b 1)) (b 0))))
+  (set! (b 1) (- (+ samp (* 0.99 (b 1))) (b 0)))
   (set! (b 0) samp)
   (b 1))
 ;; we could also use a filter generator here: (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))
@@ -269,10 +269,7 @@
 		(if (> breathpressure 0.0) 
 		    (set! breathpressure (- breathpressure attackrate))))
 	    (set! temp (dc-block dcblocker (one-pole filt boreout)))
-	    (set! pressurediff (+ (jettable 
-				   (delayl jetdelay 
-					   (+ breathpressure 
-					      (- randpressure (* jetrefl temp))))) 
+	    (set! pressurediff (+ (jettable (delayl jetdelay (- (+ breathpressure randpressure) (* jetrefl temp))))
 				  (* endrefl temp)))
 	    (set! boreout (delayl boredelay pressurediff))
 	    (outa i (* 0.3 amplitude boreout))

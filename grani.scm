@@ -247,15 +247,13 @@
   (let* ((v (make-float-vector len))
 	 (active (* len duty-cycle 0.01))
 	 (incr (/ pi (- active 1)))
-	 (start (/ (- len active) 2))
-	 (end (/ (+ len active) 2))
-	 (s 0))
-    (do ((i 0 (+ 1 i)))
-	((= i len) v)
-      (if (and (>= i start) (< i end))
-	  (let ((sine (sin (* s incr))))
-	    (set! s (+ 1 s))
-	    (set! (v i) (* sine sine)))))))
+	 (start (max 0 (/ (- len active) 2)))
+	 (end (min len (/ (+ len active) 2))))
+    (do ((i start (+ i 1))
+	 (s 0.0 (+ s incr)))
+	((= i end) v)
+      (let ((sine (sin s)))
+	(set! (v i) (* sine sine))))))
 
 ;;;=============================================================================
 ;;; Granular synthesis instrument

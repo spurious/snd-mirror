@@ -74355,7 +74355,6 @@ int main(int argc, char **argv)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
- * (define-macro (import e) `(#_varlet (#_curlet) ,e)) or something like that?
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

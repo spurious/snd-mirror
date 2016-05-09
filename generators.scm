@@ -3047,8 +3047,7 @@ returns many sinusoids from frequency spaced by frequency * 2 * ratio with ampli
 |#
 
 (definstrument (glassy beg dur freq amp)
-  (let* ((n (floor (/ *clm-srate* (* 3 freq))))
-	 (r (expt .001 (/ n))))
+  (let ((r (expt .001 (/ (floor (/ *clm-srate* (* 3 freq)))))))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (clang (make-rkoddssb (* freq 2) (/ 1.618 2) r))
