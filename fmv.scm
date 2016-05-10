@@ -69,7 +69,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	     (maxdev (* frq-scl fm-index))
 	     (logfreq (log frequency))
 	     (index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
-	     (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
+	     (index2 (or fm2-index (min pi (/ (* maxdev 3.0 (- 8.5 logfreq)) (+ 3.0 (* frequency 0.001))))))
 	     (index3 (or fm3-index (min pi (* maxdev (/ 4.0 (sqrt frequency))))))
 	     (easy-case (and (zero? noise-amount)
 			     (or (not fm2-env) (equal? fm1-env fm2-env))

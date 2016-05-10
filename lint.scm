@@ -5382,24 +5382,24 @@
 									       `(copy ,(cadadr form))))))))
 
 		 ((and (pair? (caddr form))                  ; (cons a (cons b (cons ...))) -> (list a b ...), input ending in nil of course
-		       (eq? (caaddr form) 'cons))
+		       (eq? (caaddr form) 'cons))            ; list handled above
 		  (let loop ((args (list (cadr form))) (chain (caddr form)))
-		    (if (and (pair? chain)
-			     (eq? (car chain) 'cons)
-			     (pair? (cdr chain))
-			     (pair? (cddr chain)))
-			(if (or (null? (caddr chain))
-				(quoted-null? (caddr chain)))
+		    (if (pair? chain)
+			(if (eq? (car chain) 'list)
 			    (begin
-			      (lint-format "perhaps ~A" caller (lists->string form `(list ,@(reverse args) ,(cadr chain))))
+			      (lint-format "perhaps ~A" caller (lists->string form `(list ,@(reverse args) ,@(cdr chain))))
 			      (set! last-cons-line-number line-number))
-			    (if (pair? (caddr chain))
-				(if (eq? (caaddr chain) 'cons)
-				    (loop (cons (cadr chain) args) (caddr chain))
-				    (if (eq? (caaddr chain) 'list)
-					(begin
-					  (lint-format "perhaps ~A" caller (lists->string form `(list ,@(reverse args) ,(cadr chain) ,@(cdaddr chain))))
-					  (set! last-cons-line-number line-number))))))))))))
+			    (if (and (eq? (car chain) 'cons)
+				     (pair? (cdr chain))
+				     (pair? (cddr chain)))
+				(if (or (null? (caddr chain))
+					(quoted-null? (caddr chain)))
+				    (begin
+				      (lint-format "perhaps ~A" caller (lists->string form `(list ,@(reverse args) ,(cadr chain))))
+				      (set! last-cons-line-number line-number))
+				    (if (and (pair? (caddr chain))
+					     (memq (caaddr chain) '(cons list)))
+					(loop (cons (cadr chain) args) (caddr chain))))))))))))
 
 	;; ----------------
 	((append)
@@ -8711,6 +8711,55 @@
       env)
     
     
+    (define (check-sequence-constant function-name last)
+      (let ((seq (if (not (pair? last))
+		     last
+		     (and (eq? (car last) 'quote)
+			  (cadr last)))))
+	(if (and (sequence? seq)
+		 (> (length seq) 0))
+	    (lint-format "returns ~A constant: ~A~S" function-name 
+			 (if (pair? seq)
+			     (values "a list" "'" seq)
+			     (values (prettify-checker-unq (->lint-type last)) "" seq)))
+	    (when (pair? last)
+	      (case (car last)
+
+		((begin let let* letrec letrec* when unless with-baffle with-let)
+		 (when (pair? (cdr last))
+		   (check-sequence-constant function-name (list-ref last (- (length last) 1)))))
+		
+		((if)
+		 (when (and (pair? (cdr last))
+			    (pair? (cddr last)))
+		   (check-sequence-constant function-name (caddr last))
+		   (if (pair? (cdddr last))
+		       (check-sequence-constant function-name (cadddr last)))))
+		
+		((cond)
+		 (for-each (lambda (c)
+			     (if (and (pair? c)
+				      (pair? (cdr c)))
+				 (check-sequence-constant function-name (list-ref (cdr c) (- (length (cdr c)) 1)))))
+			   (cdr last)))
+		
+		((case)
+		 (when (and (pair? (cdr last))
+			    (pair? (cddr last)))
+		   (for-each (lambda (c)
+			       (if (and (pair? c)
+					(pair? (cdr c)))
+				   (check-sequence-constant function-name (list-ref (cdr c) (- (length (cdr c)) 1)))))
+			     (cddr last))))
+		
+		((do)
+		 (if (and (pair? (cdr last))
+			  (pair? (cddr last))
+			  (pair? (caddr last))
+			  (pair? (cdaddr last)))
+		     (check-sequence-constant function-name (list-ref (cdaddr last) (- (length (cdaddr last)) 1))))))))))
+		   
+	
     (define (lint-walk-function-body definer function-name args body env)
       ;; walk function body, with possible doc string at the start
       (when (and (pair? body)
@@ -8728,6 +8777,8 @@
 					,@(cdr body)))))))
 	(set! body (cdr body))) ; ignore old-style doc-string
       ;; (set! arg ...) never happens as last in body
+      
+      (check-sequence-constant function-name (list-ref body (- (length body) 1)))
 
       (lint-walk-body function-name definer body env))
 
@@ -9757,7 +9808,7 @@
 					   
 					   ((and (= arglen 1)
 						 (memq (car body) '(car cdr caar cadr cddr cdar caaar caadr caddr 
-									cdddr cdaar cddar cadar cdadr cadddr cddddr)))
+								    cdddr cdaar cddar cadar cdadr cadddr cddddr)))
 					    ((lambda* (cr arg) ; lambda* not lambda because combine-cxrs might return just #f
 					       (and cr
 						    (< (length cr) 5) 
@@ -10529,6 +10580,8 @@
 				 
 				 ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
 				 ;;   TODO: this should check that the gathered code does not affect the original test
+				 ;;     which could happen if the test depends on an outer version of a local var or
+				 ;;     the value of the local affects the test -- no side-effect in values or collision in names
 				 (when (and (= len 4)
 					    (pair? true)
 					    (pair? false)
@@ -11926,18 +11979,17 @@
 							    load eval eval-string require)
 							  (cddr form))))
 			       (lint-format "pointless let: ~A" caller (truncated-list->string form))
-
 			       (let ((body (cddr form)))
-				 (if (and (null? (cdr body))
-					  (pair? (car body)))
-				     (if (memq (caar body) '(let let*))
-					 (if (null? (cadr form))
-					     (lint-format "pointless let: ~A" caller (lists->string form (car body)))
-					     (if (null? (cadar body))
-						 (lint-format "pointless let: ~A" caller (lists->string form `(let ,(cadr form) ,@(cddar body))))))
-					 (if (and (memq (caar body) '(lambda lambda*)) ; or any definer?
-						  (null? (cadr form)))
-					     (lint-format "pointless let: ~A" caller (lists->string form (car body)))))))))
+				 (when (and (null? (cdr body))
+					    (pair? (car body)))
+				   (if (memq (caar body) '(let let*))
+				       (if (null? (cadr form))
+					   (lint-format "pointless let: ~A" caller (lists->string form (car body)))
+					   (if (null? (cadar body))
+					       (lint-format "pointless let: ~A" caller (lists->string form `(let ,(cadr form) ,@(cddar body))))))
+				       (if (and (memq (caar body) '(lambda lambda*)) ; or any definer?
+						(null? (cadr form)))
+					   (lint-format "pointless let: ~A" caller (lists->string form (car body)))))))))
 
 			 (let ((vars (if (and named-let 
 					      (not (keyword? named-let))
@@ -12481,7 +12533,7 @@
 					  (symbol? (cadr inner)))
 				 (let ((named-body (cdddr inner))
 				       (named-args (caddr inner)))
-				   (unless (any? (lambda (v) ; TODO: here and elsewhere -- no definers in the cadrs, and only one side-effect?
+				   (unless (any? (lambda (v)
 						   (or (not (= (tree-count1 (car v) named-args 0) 1))
 						       (tree-memq (car v) named-body)))
 						 varlist)
@@ -13968,11 +14020,6 @@
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
-;;; return of constant sequence is trouble: (let () (define (f) '(1 2 3)) (let ((lst (f))) (list-set! lst 0 32) (f)))
-;;;    (let () (define (f) #(1 2 3)) (let ((lst (f))) (vector-set! lst 0 32) (f)))
-;;;    need to see var-with-constant-value as return followed by *-set! of element
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;; rest args -> define*? do->map+values? let+do/map/for-each->do? 
-;;; 
-;;; 114 22113 434951
- 
+;;;
+;;; 115 22113 437482

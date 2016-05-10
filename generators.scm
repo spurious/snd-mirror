@@ -844,8 +844,8 @@ returns n cosines spaced by frequency with amplitudes scaled by r^k."))
 	  (set! angle (+ angle fm frequency))
 	  (if trouble
 	      0.0
-	      (/ (+ (- rcos (* e1 (cos (* n x))) rr)
-		    (* e2 (cos (* (- n 1) x))))
+	      (/ (- (+ rcos (* e2 (cos (* (- n 1) x))))
+		    (* e1 (cos (* n x))) rr)
 		 (* norm (+ r1 (* -2.0 rcos))))))))))
 
 ;; it's faster to use polywave here and nrcos->polywave for the partials list (animals.scm) if n is not enormous
@@ -1038,8 +1038,8 @@ scaled by r^k. The 'interp' argument determines whether the sidebands are above 
 	       (result (* vol
 			  (+ (* (- relamp vola) 
 				(nrssb-interp gen (* res1 vib) -1.0))
-			     (* (+ (- 1.0 relamp) vola) 
-				(oscil gen2 (+ (* vib res2)
+			     (* (- (+ 1.0 vola) relamp) 
+				(oscil gen2 (+ (* vib res2) 
 					       (* hfreq (oscil gen3 vib)))))))))
 	  (outa i result)
 	  (if *reverb* (outa i (* .01 result) *reverb*)))))))
@@ -4623,9 +4623,9 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
       (do ((i 0 (+ i 1)))
 	  ((= i 3))
 	(let* ((frq (* freq (expt 2 i)))
-	       (index1 (hz->radians (* fm-index frq (/ 5.0 (log frq)))))
-	       (index2 (hz->radians (* fm-index frq 3.0 (/ (- 8.5 (log frq)) (+ 3.0 (* frq .001))))))
-	       (index3 (hz->radians (* fm-index frq (/ 4.0 (sqrt frq))))))
+	       (index1 (hz->radians (/ (* fm-index frq 5.0) (log frq))))
+	       (index2 (hz->radians (/ (* fm-index frq 3.0 (- 8.5 (log frq))) (+ 3.0 (* frq 0.001)))))
+	       (index3 (hz->radians (/ (* fm-index frq 4.0) (sqrt frq)))))
 	  (set! (carriers i) (make-oscil frq))
 	  (set! (fmoscs i) (make-polywave frq
 					  :partials (list 1 index1

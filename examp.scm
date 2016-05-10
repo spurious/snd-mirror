@@ -82,7 +82,7 @@
     (lambda* (snd chn)
       (let ((wl (left-sample snd chn))
 	    (wr (right-sample snd chn)))
-	(channel->float-vector wl (+ 1 (- wr wl)) snd chn)))))
+	(channel->float-vector wl (- (+ wr 1) wl) snd chn)))))
 
 
 (define display-energy 
@@ -136,7 +136,7 @@
     (lambda ()
       (let* ((ls (left-sample))
 	     (rs (right-sample))
-	     (data (channel->float-vector ls (+ 1 (- rs ls))))
+	     (data (channel->float-vector ls (- (+ rs 1) ls)))
 	     (len (length data)))
 	(sqrt (/ (dot-product data data) len))))))
 
@@ -184,7 +184,7 @@
 	    (status-report "display-correlation wants stereo input")
 	    (let* ((ls (left-sample snd 0))
 		   (rs (right-sample snd 0))
-		   (ilen (+ 1 (- rs ls)))
+		   (ilen (- (+ rs 1) ls))
 		   (pow2 (ceiling (log ilen 2)))
 		   (fftlen (floor (expt 2 pow2)))
 		   (fftscale (/ 1.0 fftlen))

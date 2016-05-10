@@ -316,10 +316,11 @@ may change)"))
   (let ((documentation "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
 last end of the mixes in 'mix-list'"))
     (lambda (mix-list)
-      (+ 1 (- (apply max (map (lambda (m) 
-				(+ (mix-position m) (framples m))) 
-			      mix-list))
-	      (apply min (map mix-position mix-list)))))))
+      (- (+ (apply max (map (lambda (m) 
+			      (+ (mix-position m) (framples m)))
+			    mix-list))
+	    1)
+	 (apply min (map mix-position mix-list))))))
 
 
 (define env-mixes 
@@ -331,7 +332,7 @@ last end of the mixes in 'mix-list'"))
 	     (end (apply max mix-ends))
 	     (first-x (car overall-amp-env))
 	     (last-x (envelope-last-x overall-amp-env))
-	     (x-scale (/ (- last-x first-x) (+ 1 (- end beg)))))
+	     (x-scale (/ (- last-x first-x) (- (+ end 1) beg))))
 	(as-one-edit
 	 (lambda ()
 	   (for-each 

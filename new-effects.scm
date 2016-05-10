@@ -75,7 +75,7 @@
 			      (map-channel (func (- end beg)) beg (+ end overlap 1) snd chn
 					   #f
 					   (format #f "~A ~A ~A" (origin target (- end beg)) (if (eq? target 'sound) 0 beg)
-						   (and (not (eq? target 'sound)) (+ 1 (- end beg))))))))
+						   (and (not (eq? target 'sound)) (- (+ end 1) beg)))))))
 		      (if (> snc 0)
 			  (all-chans)
 			  (list (list (selected-sound)) (list (selected-channel))))))))))
@@ -3057,7 +3057,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	  (let ((inval (next-sample reader)))
-	    (set! lasty (+ inval (- (* 0.999 lasty) lastx)))
+	    (set! lasty (- (+ inval (* 0.999 lasty)) lastx))
 	    (set! lastx inval)
 	    (float-vector-set! data i lasty))))
       (float-vector->channel data 0 len snd chn current-edit-position "effects-remove-dc")))

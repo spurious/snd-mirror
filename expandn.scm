@@ -130,9 +130,8 @@
 			       (not rev-mx))
 
 			  (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
-								      (* (mus-sound-duration fnam) 
-									 (/ (mus-sound-srate fnam) *clm-srate*)
-									 (/ expand srate)))))))
+								      (/ (* (mus-sound-duration fnam) (mus-sound-srate fnam) expand) 
+									 *clm-srate* srate))))))
 			    (set! end (min end file-end))
 			  
 			    (do ((i beg (+ i 1)))

@@ -317,9 +317,11 @@
     #include <complex>
   #else
     #include <complex.h>
-    #if defined(__sun) && defined(__SVR4)
-      #undef _Complex_I
-      #define _Complex_I 1.0fi
+    #ifndef __SUNPRO_C
+      #if defined(__sun) && defined(__SVR4)
+        #undef _Complex_I
+        #define _Complex_I 1.0fi
+      #endif
     #endif
   #endif
 #ifndef CMPLX
@@ -74021,6 +74023,9 @@ s7_scheme *s7_init(void)
 #endif
 #if defined(__sun) && defined(__SVR4)
   s7_provide(sc, "solaris");
+#endif
+#ifdef __SUNPRO_C
+  s7_provide(sc, "sunpro_c");
 #endif
 
 
