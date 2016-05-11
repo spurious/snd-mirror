@@ -242,7 +242,7 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_lo
   inds = (mus_long_t *)calloc(num_peaks, sizeof(mus_long_t));
 
   pks = 0;
-  la = 0.0;
+  /* la = 0.0; */
   ca = 0.0;
   ra = 0.0;
   minval = 0.00001;
@@ -313,7 +313,7 @@ int find_and_sort_transform_peaks(mus_float_t *buf, fft_peak *found, int num_pea
   if (hop < 1) hop = 1;
 
   pks = 0;
-  la = 0.0;
+  /* la = 0.0; */
   ca = 0.0;
   ra = 0.0;
   minval = 0.0; 

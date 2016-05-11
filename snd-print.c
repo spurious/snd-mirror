@@ -549,7 +549,7 @@ static char *snd_print_or_error(const char *output)
 	  end_ps_graph();
 	}
       else errstr = mus_format("print %s failed: %s", output, snd_io_strerror());
-      si = free_sync_info(si);
+      free_sync_info(si);
       if (offsets) free(offsets);
       return(errstr);
     }

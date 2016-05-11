@@ -677,7 +677,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
 	  io_err = copy_file(r->filename, tempfile);
 	  if (io_err != IO_NO_ERROR)
 	    {
-	      if (si) si = free_sync_info(si);
+	      if (si) free_sync_info(si);
 	      (*err) = io_err;
 	      return(INVALID_REGION);
 	    }
@@ -708,7 +708,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
       free(origin);
       if ((r->use_temp_file == REGION_FILE) && (tempfile)) free(tempfile);
     }
-  if (si) si = free_sync_info(si);
+  if (si) free_sync_info(si);
   return(id);
 }
 
@@ -1006,7 +1006,7 @@ static void deferred_region_to_temp_file(region *r)
 	  free(data);
 	  data = NULL;
 	}
-      hdr = free_file_info(hdr);
+      free_file_info(hdr);
     }
   r->dr = free_deferred_region(r->dr);
 }
@@ -1328,7 +1328,6 @@ io_error_t save_region(int rg, const char *name, mus_sample_t samp_type, mus_hea
 	      if (((framples * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
 		snd_warning("not enough space to save region? -- need %lld bytes",
 			    framples * chans * mus_sound_datum_size(r->filename));
-	      err = 0;
 
 	      for (ioff = 0; ioff < framples; ioff += FILE_BUFFER_SIZE)
 		{
@@ -1904,7 +1903,7 @@ selection is used."
 	  id = define_region(si, ends);
 	  if (selection_creates_region(ss))
 	    reactivate_selection(si->cps[0], si->begs[0], ends[0]);
-	  si = free_sync_info(si);
+	  free_sync_info(si);
 	  free(ends);
 	}
     }

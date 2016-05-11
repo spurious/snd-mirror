@@ -6513,7 +6513,7 @@ static s7_pointer call_accessor(s7_scheme *sc, s7_pointer slot, s7_pointer old_v
 {
   s7_pointer func, new_value;
 
-  new_value = sc->error_symbol;
+  /* new_value = sc->error_symbol; */
   func = slot_accessor(slot);
 
   if (is_procedure_or_macro(func))
@@ -33692,7 +33692,7 @@ s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, .
 #endif    
     }
   va_end(ap);
-  cdr(end) = back;
+  if (end) cdr(end) = back;
   return((s7_pointer)res);
 }
 
@@ -40499,9 +40499,6 @@ static s7_pointer remove_from_hash_table(s7_scheme *sc, s7_pointer table, s7_poi
 	    y->next = x->next;
 	    break;
 	  }
-#if DEBUGGING
-      if (!x) fprintf(stderr, "lost %s!\n", DISPLAY(key));
-#endif
     }
   hash_table_entries(table)--;
   if ((hash_table_entries(table) == 0) &&
@@ -47076,7 +47073,24 @@ static bool call_begin_hook(s7_scheme *sc)
   return(false);
 }
 
-
+#if 1
+static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d) 
+{
+  s7_pointer p, q;
+  /* we check this ahead of time: if (is_null(cdr(d))) return(car(d)); */
+  p = cons(sc, car(d), cdr(d));
+  q = p;
+  while (is_not_null(cdr(cdr(p))))
+    {
+      d = cdr(d);
+      cdr(p) = cons(sc, car(d), cdr(d));
+      if (is_not_null(cdr(d)))
+	p = cdr(p);
+    }
+  cdr(p) = car(cdr(p));
+  return(q);
+}
+#else
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
 {
   s7_pointer p, q;
@@ -47085,13 +47099,16 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   q = p;
   while (is_not_null(cdr(cdr(p))))
     {
-      d = cons(sc, car(p), cdr(p));
-      p = cdr(p);
+      /* d = cons(sc, car(p), cdr(p)); */ /* does it matter that we're not copying? */
+      /* none of the current tests finds any problems with this -- just copy the first?? */
+      /* almost none of the current tests even gets into this loop, so I'm probably about to hit the banana peel... */
+      /* this is used by apply values and to copy args for apply of an unsafe function */
+      p = cdr(p); 
     }
   cdr(p) = car(cdr(p));
   return(q);
 }
-
+#endif
 
 static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 {

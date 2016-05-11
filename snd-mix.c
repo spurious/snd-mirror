@@ -14,7 +14,7 @@ static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *
   sf = init_sample_read(beg, cp, READ_FORWARD);
   samples_to_vct_with_reader(len, data, sf);
   for (i = 0; i < len; i++) data[i] += vdata[i];
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
 
   result = change_samples(beg, len, data, cp, origin, cp->edit_ctr, -1.0); /* cp->edit_ctr since mix-vct has no edpos arg, similarly mix */
   if (result) update_graph(cp);
@@ -113,7 +113,7 @@ static bool mix_file_untagged(const char *filename, int in_chan, chan_info *cp, 
   
   close_temp_file(ofile, ofd, ohdr->type, num * mus_bytes_per_sample(ohdr->sample_type));
   mus_file_close(ifd);
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
   free(data[in_chan]);
   free(data);
   free_file_info(ihdr);
@@ -223,7 +223,7 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 
   id = mix_file(beg, len, chans, cps, fullname, auto_delete, NULL, with_tag, 0);
   if (si) 
-    si = free_sync_info(si); 
+    free_sync_info(si); 
   else 
     {
       if (cps) 
@@ -3594,6 +3594,7 @@ Xen g_make_mix_sampler(Xen mix_id, Xen ubeg)
 	  mf->sf->region = md->id;
 	  return(Xen_make_object(mf_tag, mf, 0, free_mf));
 	}
+      free(mf);
     }
   return(Xen_false);
 }

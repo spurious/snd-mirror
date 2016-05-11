@@ -1376,45 +1376,6 @@ to be evaluated in its definition environment:
 -->
 
 
-<details>
-<summary class="indented">loopy macros</summary>
-<div class="indented">
-
-<p>There is another problem with macros: accidental loops.  Take the following
-example; we're trying to write a macro that defines a function
-that returns its argument in a list statement.
-</p>
-
-<pre class="indented">
-&gt; (define-macro (hang arg) `(define ,arg `(list (cdr ,,arg))))
-<em class="gray">hang</em>
-&gt; (macroexpand (hang (f a)))
-<em class="gray">(define #1=(f a) ({list} 'list ({list} 'cdr #1#)))</em>
-&gt; (hang (f a))
-<em class="gray">f</em>
-&gt; (procedure-source f)
-<em class="gray">(lambda #1=(a) ({list} 'list ({list} 'cdr #1#)))</em>
-&gt;(f 1)
-</pre>
-
-<p>And now we are hung &mdash; we've created a procedure with an
-infinite loop!  This is surprisingly easy to do by accident.
-Here's one way out:
-</p>
-
-<pre class="indented">
-&gt; (define-macro (hang arg) `(define ,arg `(list ,,@(cdr arg))))
-<em class="gray">hang</em>
-&gt; (macroexpand (hang (f a)))
-<em class="gray">(define (f a) ({list} 'list a))</em>
-&gt; (hang (f a))
-<em class="gray">f</em>
-&gt; (f 1)
-<em class="gray">(list 1)</em>
-</pre>
-</div>
-</details>
-
 
 <div class="indented">
 

@@ -1658,7 +1658,7 @@ static bool apply_controls(apply_state *ap)
 
       sp->sync = old_sync;
       free(scalers);
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else
     {
@@ -1777,7 +1777,7 @@ static bool apply_controls(apply_state *ap)
 			ap->ofile, 
 			snd_open_strerror());
 	      sp->applying = false;
-	      ap = free_apply_state(ap);
+	      free_apply_state(ap);
 	      return(false);
 	    }
 
@@ -1886,7 +1886,7 @@ static bool apply_controls(apply_state *ap)
 			    }
 			}
 		    }
-		  si = free_sync_info(si); 
+		  free_sync_info(si); 
 		  break;
 		}
 	      clear_status_area(sp);
@@ -5472,7 +5472,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  if (es)
 	    {
 	      while (!(tick_peak_env(cp, es))) {};
-	      es = free_env_state(es);
+	      free_env_state(es);
 	      ep = cp->edits[pos]->peak_env;
 	      if (ep)
 		return(g_peak_env_info_to_vcts(ep, ep->peak_env_size));
@@ -5556,7 +5556,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 		{
 		  Xen vcts;
 		  vcts = g_peak_env_info_to_vcts(ep, len);
-		  ep = free_peak_env_info(ep);
+		  free_peak_env_info(ep);
 		  if (peakname) free(peakname);
 		  if (fullname) free(fullname);
 		  return(vcts);
@@ -5603,7 +5603,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 		}
 #endif
 	      while (!(tick_peak_env(cp, es))) {};
-	      es = free_env_state(es);
+	      free_env_state(es);
 	      peak = g_peak_env_info_to_vcts(cp->edits[0]->peak_env, len);
 	    }
 	  cp->active = CHANNEL_INACTIVE;

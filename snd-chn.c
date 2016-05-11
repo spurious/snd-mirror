@@ -1071,7 +1071,7 @@ void apply_x_axis_change(chan_info *cp)
       for (i = 0; i < si->chans; i++) 
 	if (cp != si->cps[i]) 
 	  update_xs(si->cps[i], ap);
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else 
     {
@@ -1690,7 +1690,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 	    (*two_sided) = true;
 	}
     }
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
 
   if (graph_choice == NORMAL_GRAPH)
     {
@@ -1848,7 +1848,7 @@ void make_partial_graph(chan_info *cp, mus_long_t beg, mus_long_t end)
       draw_both_grf_points(cp->dot_size, ax, j, cp->time_graph_style);
     }
 
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
 
 #if (!USE_GTK)
   display_selection(cp);
@@ -2000,7 +2000,7 @@ Xen make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
 	}
     }
 
-  sf = free_snd_fd(sf); 
+  free_snd_fd(sf); 
   if (data1)
     return(Xen_list_2(xen_make_vct(data_size, data),
 		      xen_make_vct(data_size, data1)));
@@ -4677,7 +4677,7 @@ void handle_cursor_with_sync(chan_info *cp, kbd_cursor_t redisplay)
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++)
 	handle_cursor(si->cps[i], redisplay);
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else handle_cursor(cp, redisplay);
 }
@@ -4699,7 +4699,7 @@ void cursor_moveto(chan_info *cp, mus_long_t samp)
 	  cursor_sample(ncp) = samp;
 	  handle_cursor(ncp, cursor_decision(ncp)); /* checks len */
 	}
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else 
     {
@@ -4782,7 +4782,7 @@ void sync_cursors(chan_info *cp, mus_long_t samp)
       si = snd_sync(sp->sync);
       for (i = 0; i < si->chans; i++)
 	cursor_sample(si->cps[i]) = samp;
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else cursor_sample(cp) = samp;
 }
@@ -5935,7 +5935,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 		  sono_update(si->cps[i]);
 		else update_graph(si->cps[i]);
 	      }
-	    si = free_sync_info(si);
+	    free_sync_info(si);
 	  }
 	else
 	  {
@@ -9072,7 +9072,7 @@ void write_transform_peaks(FILE *fd, chan_info *ucp)
 	    }
 	}
     }
-  if (si) si = free_sync_info(si);
+  if (si) free_sync_info(si);
 }
 
 

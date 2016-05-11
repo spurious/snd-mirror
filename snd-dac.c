@@ -1475,7 +1475,7 @@ void play_channel_with_sync(chan_info *cp, mus_long_t start, mus_long_t end)
 
   play_channels_1(si->cps, si->chans, si->begs, ends, IN_BACKGROUND, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), false, Xen_false, NULL, 0);
 
-  si = free_sync_info(si);
+  free_sync_info(si);
   if (ends) free(ends);
 }
 
@@ -1500,7 +1500,7 @@ static dac_info *play_selection_1(play_process_t background, Xen stop_proc)
 
 	  dp = play_channels_1(si->cps, si->chans, si->begs, ends, background, C_int_to_Xen_integer(AT_CURRENT_EDIT_POSITION), true, stop_proc, NULL, 0);
 	  /* dp->dac_sample is the reader */
-	  si = free_sync_info(si); /* does not free samplers */
+	  free_sync_info(si); /* does not free samplers */
 	  free(ends);
 	}
     }
@@ -3008,7 +3008,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
       for (i = 0; i < si->chans; i++) si->begs[i] = start;
       play_channels_1(si->cps, si->chans, si->begs, ends, background, edit_position, false, stop_func, S_play, edpos_argpos);
 
-      si = free_sync_info(si);
+      free_sync_info(si);
       if (ends) free(ends);
       return(Xen_false);
     }

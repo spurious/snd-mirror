@@ -638,7 +638,7 @@ static int find_indentation(char *str, int loc)
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text)
 {
   int len, i, k, spaces, text_pos = 0, cr_pos = 0;
-  char *new_text = NULL, *file_text = NULL, *new_file = NULL;
+  char *new_text = NULL, *file_text = NULL;
 
   len = strlen(old_text);
   for (i = len - 1; i > 0; i--)
@@ -696,6 +696,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 
       if (old_text[i] == '\"')
 	{
+	  char *new_file;
 	  file_text = mus_strdup((char *)(old_text + i + 1));
 	  new_file = filename_completer(NULL_WIDGET, file_text, NULL);
 	  len = mus_strlen(new_file);

@@ -9471,8 +9471,7 @@ safe maximum r is:
 
 <pre class="indented">
   (define (safe-rkodd-max-r freq srate)
-    (let* ((topk (floor (/ srate 3 freq)))
-           (k2-1 (- (* 2 topk) 1)))
+    (let ((k2-1 (- (* 2 (floor (/ srate 3 freq))) 1)))
       (expt (* .001 k2-1) (/ 1.0 k2-1))))
 </pre>
 

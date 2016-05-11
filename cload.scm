@@ -170,11 +170,9 @@
 		     (string-position "pointer" type-name))
 		 'c_pointer)
 
-		((string-position "char" type-name)
-		 'character)
-
-		((string-position "bool" type-name) 
-		 'boolean)
+		((assoc type-name '(("char" . character) 
+				    ("bool" . boolean)) string-position)
+		 => cdr)
 		
 		;; ((string-position "complex" type-name)
 		;;  'complex)                              ; double complex or complex double (mus_edot_product in clm.c uses the latter)

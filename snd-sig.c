@@ -862,7 +862,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, mus_long_t beg, mus_long
 	  if (err != MUS_NO_ERROR) break;
 	}
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
-      hdr = free_file_info(hdr);
+      free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, edpos);
       if (ofile) 
 	{
@@ -1302,12 +1302,12 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, mus_long_t beg, m
     }
 
   if (reporting) finish_progress_report(cp);
-  sr = free_src(sr);
+  free_src(sr);
   if ((!(ss->stopped_explicitly)) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, 1, data);
 
   close_temp_file(ofile, ofd, hdr->type, k * datumb);
-  hdr = free_file_info(hdr);
+  free_file_info(hdr);
 
   if (!(ss->stopped_explicitly))
     {
@@ -1763,13 +1763,13 @@ static char *clm_channel(chan_info *cp, mus_any *gen, mus_long_t beg, mus_long_t
       dur += overlap;
     }
 
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
 
   if (temp_file)
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
-      hdr = free_file_info(hdr);
+      free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, origin, edpos);
       if (ofile) 
 	{
@@ -1957,7 +1957,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, mu
 	}
     }
   if (ofile) {free(ofile); ofile = NULL;}
-  hdr = free_file_info(hdr);
+  free_file_info(hdr);
   if ((fltdat) && (!precalculated_coeffs))  free(fltdat);
   update_graph(cp);
   return(NULL);
@@ -2156,7 +2156,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, mus_lon
     {
       if (j > 0) mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
-      hdr = free_file_info(hdr);
+      free_file_info(hdr);
       file_change_samples(beg, dur, ofile, cp, 0, DELETE_ME, new_origin, sf->edit_ctr);
       if (ofile) {free(ofile); ofile = NULL;}
     }
@@ -2889,7 +2889,7 @@ void cursor_delete(chan_info *cp, mus_long_t count)
 	      update_graph(si->cps[i]);
 	    }
 	}
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else
     {
@@ -2929,7 +2929,7 @@ void cursor_insert(chan_info *cp, mus_long_t beg, mus_long_t count)
 				 "cursor insert")))
 	    update_graph(cps[i]);
 	}
-      si = free_sync_info(si);
+      free_sync_info(si);
     }
   else 
     {
@@ -3005,7 +3005,7 @@ void cursor_zeros(chan_info *cp, mus_long_t count, bool over_selection)
 	    scale_channel(ncp, 0.0, beg, num, ncp->edit_ctr, NOT_IN_AS_ONE_EDIT);
 	}
     }
-  si = free_sync_info(si);
+  free_sync_info(si);
 }
 
 
@@ -3465,7 +3465,6 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
   s7_pointer arg_list, body, e, slot;
 
   arg_list = xen_nil;
-  body = xen_nil;
   e = xen_nil;
   slot = xen_nil;
 
@@ -3484,7 +3483,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      (res == arg))
 	    {
 	      /* #f = delete all samples in the range, #t = no-op, (lambda (y) y) a no-op */
-	      sf = free_snd_fd(sf);
+	      free_snd_fd(sf);
 	      if (res == s7_f(s7))
 		delete_samples(beg, num, cp, pos);
 	      return(res);
@@ -3508,7 +3507,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	      /* since we're not calling eval or the event checker, the channel can't be closed during the loop (??) */
 	      change_samples(beg, num, data, cp, caller, pos, fabs(x));
 	      free(data);
-	      sf = free_snd_fd(sf);
+	      free_snd_fd(sf);
 	      return(res);
 	    }
 
@@ -3541,7 +3540,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		  change_samples(beg, num, data, cp, caller, pos, -1.0);
 		  free(data);
 		}
-	      sf = free_snd_fd(sf);
+	      free_snd_fd(sf);
 	      return(res);
 	    }
 
@@ -3587,7 +3586,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 			    }
 			}
 		      s7_xf_free(s7);
-		      sf = free_snd_fd(sf);
+		      free_snd_fd(sf);
 		      change_samples(beg, num, data, cp, caller, pos, -1.0);
 		      free(data);
 		      s7_set_curlet(s7, old_e);
@@ -3887,7 +3886,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   s7_pointer body, e, slot;
 
   arg_list = xen_nil;
-  body = xen_nil;
   e = xen_nil;
   slot = xen_nil;
 
@@ -3952,7 +3950,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			      else
 				{
 				  if (reporting) finish_progress_report(cp);
-				  sf = free_snd_fd(sf);
+				  free_snd_fd(sf);
 				  s7_xf_free(s7);
 				  s7_set_curlet(s7, old_e);
 				  return(C_llong_to_Xen_llong(kp + beg));
@@ -3960,7 +3958,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 			    }
 			}
 		      s7_xf_free(s7);
-		      sf = free_snd_fd(sf);
+		      free_snd_fd(sf);
 		      s7_set_curlet(s7, old_e);
 		      if (counting)
 			return(C_int_to_Xen_integer(counts));
@@ -4034,7 +4032,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	    counts++;
 	  else
 	    {
-	      sf = free_snd_fd(sf);
+	      free_snd_fd(sf);
 	      if (reporting) 
 		finish_progress_report(cp);
 #if HAVE_SCHEME
@@ -4069,7 +4067,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
   }
 #endif
   if (reporting) finish_progress_report(cp);
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
   if (counting)
     return(C_int_to_Xen_integer(counts));
 
@@ -5435,7 +5433,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
   errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, &clm_err);
-  sf = free_snd_fd(sf);
+  free_snd_fd(sf);
   if (need_free) mus_free(egen);
   if (e) free_env(e);
   if (errmsg)

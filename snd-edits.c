@@ -2922,7 +2922,7 @@ static void backup_edit_list_1(chan_info *cp, bool freeing)
 
   if (freeing)
     top = fragment_free_list;
-  old_ed = free_ed_list(old_ed, cp);
+  free_ed_list(old_ed, cp);
   if (freeing)
     {
       while ((fragment_free_list) && (fragment_free_list != top))
@@ -3899,7 +3899,7 @@ static ed_list *change_samples_in_list(mus_long_t beg, mus_long_t num, int pos, 
       ed_list *del_state;
       del_state = delete_section_from_list(beg, del_num, cp->edits[pos]);
       new_state = insert_section_into_list(beg, num, del_state, &changed_f, origin, 1.0);
-      del_state = free_ed_list(del_state, cp);
+      free_ed_list(del_state, cp);
     }
   else new_state = insert_section_into_list(beg, num, cp->edits[pos], &changed_f, origin, 1.0);
 
@@ -4928,8 +4928,6 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 {
   if ((sf) && (!(sf->freed)))
     {
-      snd_data *sd;
-
       if (sf->ramps)
 	{
 	  if (READER_INCRS(sf)) free(READER_INCRS(sf));
@@ -4945,14 +4943,17 @@ snd_fd *free_snd_fd_almost(snd_fd *sf)
 	sf->mixes = (void *)free_reader_mixes((reader_mixes *)(sf->mixes));
 
       reader_out_of_data(sf);
-      sd = sf->current_sound;
-      if ((sd) && 
-	  ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))
-	{
-	  sd->inuse = false;
-	  if ((sd->copy) || (sd->free_me))
-	    sd = free_snd_data(sd); 
-	}
+      {
+	snd_data *sd;
+	sd = sf->current_sound;
+	if ((sd) && 
+	    ((sd->type == SND_DATA_BUFFER) || (sd->type == SND_DATA_FILE)))
+	  {
+	    sd->inuse = false;
+	    if ((sd->copy) || (sd->free_me))
+	      free_snd_data(sd); 
+	  }
+      }
       sf->current_sound = NULL;
       if (sf->current_state) 
 	{
@@ -5232,7 +5233,7 @@ static void previous_sound_1(snd_fd *sf)
 	  prev_snd = sf->current_sound; 
 	  prev_snd->inuse = false; 
 	  sf->current_sound = NULL;
-	  if (prev_snd->copy) prev_snd = free_snd_data(prev_snd);
+	  if (prev_snd->copy) free_snd_data(prev_snd);
 	}
       if (sf->cbi == 0) 
 	{
@@ -5326,7 +5327,7 @@ static void next_sound_1(snd_fd *sf)
 	  nxt_snd = sf->current_sound; 
 	  nxt_snd->inuse = false; 
 	  sf->current_sound = NULL;
-	  if (nxt_snd->copy) nxt_snd = free_snd_data(nxt_snd);
+	  if (nxt_snd->copy) free_snd_data(nxt_snd);
 	}
       sf->cbi++;
       if (sf->cbi >= (sf->current_state)->size) 
@@ -5483,8 +5484,8 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
     }
   else
     {
-      if (e0) e0 = free_peak_env_info(e0);
-      if (e1) e1 = free_peak_env_info(e1);
+      if (e0) free_peak_env_info(e0);
+      if (e1) free_peak_env_info(e1);
     }
 
   ripple_all(cp0, 0, 0);
@@ -5603,7 +5604,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
 #ifndef _MSC_VER
   if (access(sp->filename, W_OK))
     {
-      sa = free_axes_data(sa);
+      free_axes_data(sa);
       if (ofile) free(ofile);
       if (old_cursors) free(old_cursors);
       if (vals)
@@ -5641,7 +5642,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   add_sound_data(sp->filename, sp, WITHOUT_INITIAL_GRAPH_HOOK);
   restore_axes_data(sp, sa, mus_sound_duration(sp->filename), true);
   sound_restore_marks(sp, ms);
-  sa = free_axes_data(sa);
+  free_axes_data(sa);
   for (i = 0; i < sp->nchans; i++)
     cursor_sample(sp->chans[i]) = old_cursors[i];
   free(old_cursors);
@@ -5727,7 +5728,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
 	    sf[k] = free_snd_fd(sf[k]);
 	  free(sf);
 	  sf = NULL;
-	  hdr = free_file_info(hdr);
+	  free_file_info(hdr);
 	  if (vals)
 	    {
 	      free(vals);
@@ -5948,7 +5949,7 @@ bool undo_edit_with_sync(chan_info *cp, int count)
 	      for (i = 0; i < si->chans; i++) 
 		if (undo_edit(si->cps[i], count))
 		  something_changed = true;
-	      si = free_sync_info(si);
+	      free_sync_info(si);
 	      return(something_changed);
 	    }
 	  else return(undo_edit(cp, count));
@@ -6016,7 +6017,7 @@ bool redo_edit_with_sync(chan_info *cp, int count)
 	      for (i = 0; i < si->chans; i++) 
 		if (redo_edit(si->cps[i], count))
 		  something_changed = true;
-	      si = free_sync_info(si);
+	      free_sync_info(si);
 	      return(something_changed);
 	    }
 	  else return(redo_edit(cp, count));
@@ -8453,7 +8454,7 @@ history position to read (defaults to current position). snd can be a filename, 
 	return(snd_no_such_channel_error(S_samples, snd, chn_n));	
 
       loc_sp = make_sound_readable(filename, false);
-      cp = loc_sp->chans[chan];
+      /* cp = loc_sp->chans[chan]; */
       v = mus_vct_make(len);
       fvals = mus_vct_data(v);
       mus_file_to_array(filename, chan, beg, len, fvals);

@@ -708,7 +708,7 @@ int make_region_from_selection(void)
     }
 
   if (happy) id = define_region(si, ends);
-  si = free_sync_info(si);
+  free_sync_info(si);
   if (ends) free(ends);
   return(id);
 }
@@ -730,7 +730,7 @@ int select_all(chan_info *cp)
 	      update_graph(si->cps[i]);
 	    }
 	}
-      si = free_sync_info(si);
+      free_sync_info(si);
       if ((selection_is_active()) && (selection_creates_region(ss)))
 	return(make_region_from_selection());
     }
@@ -1106,7 +1106,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
   io_err = snd_write_header(ofile, head_type, srate, chans, chans * dur, samp_type, comment, NULL);
   if (io_err != IO_NO_ERROR)
     {
-      si = free_sync_info(si);
+      free_sync_info(si);
       return(io_err);
     }
 
@@ -1127,7 +1127,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
       if (no_space != DISK_SPACE_OK)
 	{
 	  snd_close(ofd, ofile);
-	  si = free_sync_info(si);
+	  free_sync_info(si);
 	  return(IO_DISK_FULL);
 	}
 
@@ -1156,7 +1156,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
 	  if (fdi == -1)
 	    {
 	      snd_close(ofd, ofile);
-	      si = free_sync_info(si);
+	      free_sync_info(si);
 	      return(IO_CANT_READ_SELECTION_FILE);
 	    }
 	  /* snd_error("can't read selection's original sound? %s: %s", sp->filename, snd_io_strerror()); */
@@ -1184,7 +1184,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
 	      snd_close(fdi, sp->filename);
 	    }
 	  snd_close(ofd, ofile);
-	  si = free_sync_info(si);
+	  free_sync_info(si);
 #if USE_MOTIF
 	  if (!(ss->file_monitor_ok))
 	    alert_new_file();
@@ -1276,7 +1276,7 @@ io_error_t save_selection(const char *ofile, int srate, mus_sample_t samp_type, 
     }
   free(sfs);
   free(data);
-  si = free_sync_info(si);
+  free_sync_info(si);
   free(ends);
 
   if (mus_file_close(ofd) != 0)
@@ -1500,7 +1500,7 @@ static Xen g_set_selection_position(Xen pos, Xen snd, Xen chn)
 	  int i;
 	  for (i = 0; i < si->chans; i++) 
 	    cp_set_selection_beg(si->cps[i], beg);
-	  si = free_sync_info(si);
+	  free_sync_info(si);
 	}
     }
   else 
@@ -1560,7 +1560,7 @@ static Xen g_set_selection_framples(Xen samps, Xen snd, Xen chn)
 	  int i;
 	  for (i = 0; i < si->chans; i++)
 	    cp_set_selection_len(si->cps[i], len);
-	  si = free_sync_info(si);
+	  free_sync_info(si);
 	}
     }
   else 

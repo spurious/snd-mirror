@@ -1003,7 +1003,7 @@ end points.  (This is also "just-good-enough" software).
 <pre class="indented">
 (define (fix-clip clip-beg-1 clip-end-1)
   (and (&gt; clip-end-1 clip-beg-1)
-       (let* ((dur (+ 1 (- clip-end-1 clip-beg-1)))
+       (let* ((dur (- (+ clip-end-1 1) clip-beg-1))
 	      (samps (channel-&gt;float-vector (- clip-beg-1 4) (+ dur 9)))
 	      (clip-beg 3)
 	      (clip-end (+ dur 4)))

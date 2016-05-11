@@ -4930,7 +4930,7 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
   #define H_singer_filter "this is an optimization for the singer instrument"
   int j, k, beg, lim;
   s7_double *d1, *d2, *cf;
-  s7_double temp, x;
+  s7_double temp;
 
   if (!s7_is_integer(start)) s7_wrong_type_arg_error(s7, S_singer_filter, 1, start, "an integer");
   if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_singer_filter, 2, end, "an integer");
@@ -4939,7 +4939,6 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
   if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_filter, 5, dline2, "a float-vector");
   if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_filter, 6, coeffs, "a float-vector");
   
-  x = 0.0;
   beg = s7_integer(start);
   lim = s7_integer(end);
   d1 = s7_float_vector_elements(dline1);
@@ -4949,7 +4948,7 @@ static Xen g_singer_filter(Xen start, Xen end, Xen tmp, Xen dline1, Xen dline2, 
 
   for (k = beg, j = beg + 1; j < lim; k++, j++)
     {
-      s7_double temp1;
+      s7_double temp1, x;
       x = d2[j + 1];
       d2[j] = x + (cf[j] * (d1[k] - x));
       temp1 = temp;
@@ -4966,7 +4965,7 @@ static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen co
   #define H_singer_nose_filter "this is an optimization for the singer instrument"
   int j, k, lim;
   s7_double *d1, *d2, *cf;
-  s7_double reftemp, temp;
+  s7_double temp;
 
   if (!s7_is_integer(end)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 1, end, "an integer");
   if (!s7_is_real(tmp)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 2, tmp, "a real");
@@ -4974,7 +4973,6 @@ static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen co
   if (!s7_is_float_vector(dline2)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 4, dline2, "a float-vector");
   if (!s7_is_float_vector(coeffs)) s7_wrong_type_arg_error(s7, S_singer_nose_filter, 5, coeffs, "a float-vector");
   
-  reftemp = 0.0;
   lim = s7_integer(end);
   d1 = s7_float_vector_elements(dline1);
   d2 = s7_float_vector_elements(dline2);
@@ -4983,7 +4981,7 @@ static Xen g_singer_nose_filter(Xen end, Xen tmp, Xen dline1, Xen dline2, Xen co
 
   for (k = 1, j = 2; j < lim; k++, j++)
     {
-      s7_double t1;
+      s7_double t1, reftemp;
       reftemp = cf[j] * (d1[k] - d2[j + 1]);
       d2[j] = d2[j + 1] + reftemp;
       t1 = temp;

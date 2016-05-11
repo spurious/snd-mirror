@@ -991,7 +991,7 @@ bool mark_define_region(chan_info *cp, int count)
 		      reactivate_selection(si->cps[i], beg, ends[0]);
 		      update_graph(si->cps[i]);
 		    }
-		  si = free_sync_info(si);
+		  free_sync_info(si);
 		  return(true);
 		}
 	    }

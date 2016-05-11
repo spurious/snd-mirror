@@ -18,7 +18,7 @@
 ;;; (Uniform Resource Identifier) for this scheme implementation's home
 ;;; page; or false if there isn't one.
 (define (scheme-implementation-home-page)
-  "http://ccrma.stanford.edu/software/snd/")
+  (copy "http://ccrma.stanford.edu/software/snd/"))
 
 ;;@ (scheme-implementation-version) should return a string describing
 ;;; the version the scheme implementation loading this file.
@@ -35,7 +35,7 @@
 	       ((vms) "scheme$src:")
 	       ((ms-dos) "C:\\Program Files\\snd\\")
 	       (else "")))))
-    (lambda () impl-path)))
+    (lambda () (copy impl-path))))
 
 ;;@ (library-vicinity) should be defined to be the pathname of the
 ;;; directory where files of Scheme library functions reside.
@@ -51,7 +51,7 @@
 	    ((vms) "lib$scheme:")
 	    ((ms-dos) "C:\\Program Files\\slib\\")
 	    (else "")))))
-    (lambda () library-path)))
+    (lambda () (copy library-path))))
 
 ;;@ (home-vicinity) should return the vicinity of the user's HOME
 ;;; directory, the directory which typically contains files which
@@ -67,7 +67,7 @@
 
 ;@
 (define (user-vicinity)
-  (if (eq? (software-type) 'vms) "[.]" ""))
+  (copy (if (eq? (software-type) 'vms) "[.]" "")))
 
 (define *load-pathname* #f)	 ; *load-path* is a list of dirs in s7
 
