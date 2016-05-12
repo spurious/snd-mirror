@@ -40342,7 +40342,7 @@ EDITS: 1
 			(and (< i 100)
 			     (fneq y (sin (/ (* 2 pi i 1000.0) 44100.0)))
 			     (begin
-			       (format () "~%;with-sound sine: ~D ~A ~A" i y (sin (* 2 pi i (/ 1000.0 44100.0))))
+			       (format () "~%;with-sound sine: ~D ~A ~A" i y (sin (/ (* 2 pi i 1000.0) 44100.0)))
 			       #t)))))
       (close-sound ind))
     
@@ -44313,9 +44313,8 @@ EDITS: 1
 		     (set! row #f))))
 	     (list "this" "is" "a" "test" "of" "the" "renditions" "and" "rendertables" 
 		   "perhaps" "all" "will" "go" "well" "and" "then" "again" "perhaps" "not"))
-	    (let* ((n (car table))
-		   (c (XmStringInitContext n))
-		   (happy #t))
+	    (let ((c (XmStringInitContext (car table)))
+		  (happy #t))
 	      (do ((i 0 (+ i 1)))
 		  ((not happy))
 		(let ((type (XmStringGetNextTriple (cadr c))))

@@ -1147,8 +1147,7 @@
 				     ;; this is the procedure to be called when the update is done
 				     (do ((i 0 (+ i 1)))
 					 ((= i (channels updated-snd)))
-				       (make-mark-list updated-snd i))))))
-    )
+				       (make-mark-list updated-snd i)))))))
   
   
 ;;; -------- select-file --------
@@ -1791,7 +1790,7 @@
   (define show-disk-space
     (let ((labelled-snds ()))
       (define (kmg num)
-	(cond ((<= num 0)      "disk full!")
+	(cond ((<= num 0)      (copy "disk full!"))
 	      ((<= num 1024)   (format #f "space: ~10DK" num))
 	      ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
 	      (else            (format #f "space: ~6,3FM" (/ num 1024.0)))))

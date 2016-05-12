@@ -48,16 +48,17 @@
 	 (ycutoff (and cutoff (expt base (+ offset (* cutoff scaler)))))
 	 (result ()))
 
-    ;; linear interpolation
-    (define (interpolate xl yl xh yh xi)
-      (+ yl (* (- xi xl) (/ (- yh yl) (- xh xl)))))
-    
     ;; recursively render one segment
     ;;   xl,xh   = x coordinates of segment ends
     ;;   yl,yh   = y coordinates of segment ends
     ;;   yle,yhe = exponential values of y coords of segment ends
     ;;   error   = linear domain error bound for rendering
     (define (exp-seg xl yle xh yhe yl yh error)
+
+      ;; linear interpolation
+      (define (interpolate xl yl xh yh xi)
+	(+ yl (* (- xi xl) (/ (- yh yl) (- xh xl)))))
+    
       (let* ((xint (/ (+ xl xh) 2.0))
 	     (yint (interpolate xl yl xh yh xint))
 	     (yinte (interpolate xl yle xh yhe xint))

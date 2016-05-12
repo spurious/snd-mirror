@@ -243,9 +243,10 @@
 		      (if accidental 0.1 0.0) 
 		      (if (< dur .8) 0.5 0.0)) 
 		   size))
-	 (line (if treble 
-		   (- (+ (* (- 5 octave) 7) 3) cclass)
-		   (- (+ (* (- 3 octave) 7) 5) cclass)))
+	 (line  (- (if treble 
+		       (+ (* (- 5 octave) 7) 3)
+		       (+ (* (- 3 octave) 7) 5))
+		   cclass))
 	 (notehead-x x0)
 	 (notehead-y y0))
 

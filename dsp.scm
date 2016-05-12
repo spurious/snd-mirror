@@ -176,7 +176,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	  ;; DFT + split
 	  (if (< i n2)
 	      (set! (fr i) (edot-product (* freq 0.0-1.0i i) in-data))
-	      (set! (fr (+ i (- out-n n 1))) (edot-product (* freq 0.0-1.0i i) in-data))))
+	      (set! (fr (- (+ i out-n) n 1)) (edot-product (* freq 0.0-1.0i i) in-data))))
 	(set! freq (/ (* 2 pi) out-n))
 	(do ((i 0 (+ i 1)))
 	    ((= i out-n))
@@ -228,7 +228,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (s1 (- size 1)))
     (float-vector-scale! x2 (/ -1.0 denom))
     (copy x1 x0)
-    (float-vector-scale! x0 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+    (float-vector-scale! x0 (/ (- (+ 2.0 dm) (* 2.0 km)) denom))
     (float-vector-add! x0 x2)
     (set! (x0 0) (+ (x0 0) (* p2 (+ (x1 s1) (x1 1)))))
     (do ((i 1 (+ i 1)))
@@ -247,7 +247,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	    (km (/ (xsprings i) mass))
 	    (cm (/ (esprings i) mass)))
 	(let ((denom (+ 1.0 dm cm)))
-	  (let ((p1 (/ (+ 2.0 (- dm (* 2.0 km))) denom))
+	  (let ((p1 (/ (- (+ 2.0 dm) (* 2.0 km)) denom))
 		(p2 (/ km denom))
 		(p3 (/ -1.0 denom))
 		(p4 (/ (haptics i) (* mass denom)))
@@ -823,7 +823,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 				   c1)
 		     (float-vector 0.0 
 				   (* 2.0 (- r2 1.0) c1)
-				   (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))))))
+				   (* (- (+ 1.0 r2) (* r (sqrt 2.0))) c1)))))))
 
 (define make-butter-low-pass
   (let ((documentation "(make-butter-low-pass freq) makes a Butterworth filter with low pass cutoff at 'freq'.  The result \
@@ -836,7 +836,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		     (float-vector c1 (* 2.0 c1) c1)
 		     (float-vector 0.0 
 				   (* 2.0 (- 1.0 r2) c1)
-				   (* (+ (- 1.0 (* r (sqrt 2.0))) r2) c1)))))))
+				   (* (- (+ 1.0 r2) (* r (sqrt 2.0))) c1)))))))
 
 (define make-butter-band-pass
   (let ((documentation "(make-butter-band-pass freq band) makes a bandpass Butterworth filter with low edge at 'freq' and width 'band'"))
@@ -1102,7 +1102,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 		 (betajk (* 0.5 (/ (- 1.0 (* 0.5 dk1 (sin thetajk)))
 				   (+ 1.0 (* 0.5 dk1 (sin thetajk))))))
 		 (gammajk (* (+ 0.5 betajk) (cos thetajk)))
-		 (alphajk (* 0.5 (+ 0.5 betajk) (/ (- 1.0 (cos thetajk)) (- 1.0 ct)))))
+		 (alphajk (/ (* 0.5 (+ 0.5 betajk) (- 1.0 (cos thetajk))) (- 1.0 ct))))
 	    (set! xcoeffs (cons (float-vector (* 2 alphajk) (* -4 ct alphajk) (* 2 alphajk)) xcoeffs))
 	    (set! ycoeffs (cons (float-vector 1.0 (* -2.0 gammajk) (* 2.0 betajk)) ycoeffs))
 	    (if (= j 1)
@@ -1961,7 +1961,7 @@ and replaces it with the spectrum given in coeffs"))
 	       (chn (hook 'chn))
 	       (ls (left-sample snd chn))
 	       (rs (right-sample snd chn))
-	       (fftlen (floor (expt 2 (ceiling (log (+ 1 (- rs ls)) 2))))))
+	       (fftlen (floor (expt 2 (ceiling (log (- (+ rs 1) ls) 2))))))
 	  (when (> fftlen 0)
 	    (let ((data (channel->float-vector ls fftlen snd chn))
 		  (normalized (not (= (transform-normalization snd chn) dont-normalize)))
@@ -2269,7 +2269,7 @@ is assumed to be outside -1.0 to 1.0."))
 		     ((>= clip clips))
 		   (let* ((clip-beg (clip-data clip))  ; clip-beg to clip-end inclusive are clipped
 			  (clip-end (clip-data (+ 1 clip)))
-			  (clip-len (+ 1 (- clip-end clip-beg)))
+			  (clip-len (- (+ clip-end 1) clip-beg))
 			  (min-data-len 32)  
 			  (data-len (max min-data-len (* clip-len 4))))
 		     

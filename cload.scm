@@ -362,9 +362,9 @@
 	  (format p ")")
 	  (if (symbol? return-translator)
 	      (format p ")"))
-	  (if (not (eq? return-translator #t))
-	      (format p ");~%")
-	      (format p ";~%  return(s7_unspecified(sc));~%"))
+	  (format p (if (not (eq? return-translator #t))
+			");~%"
+			";~%  return(s7_unspecified(sc));~%"))
 	  (format p "}~%"))
 	
 	;; add optimizer connection
@@ -374,13 +374,12 @@
 		       (and (= num-args 2)       ; double (f double double)
 			    (eq? (cadr arg-types) 'double))))
 	  (set! rf-funcs (cons (cons func-name scheme-name) rf-funcs))
-	  (if (= num-args 1)	    
-	      (format p "static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~
+	  (format p (if (= num-args 1)	    
+	                "static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~
                           {s7_rf_t f; s7_double x; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); return(~A(x));}~%" 
-		      func-name func-name)
-	      (format p "static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~%  ~
-                          {s7_rf_t f; s7_double x, y; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); f = (s7_rf_t)(**p); (*p)++; y = f(sc, p); return(~A(x, y));}~%" 
-		      func-name func-name))
+			"static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~%  ~
+                          {s7_rf_t f; s7_double x, y; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); f = (s7_rf_t)(**p); (*p)++; y = f(sc, p); return(~A(x, y));}~%")
+		  func-name func-name)
 	  (format p "static s7_rf_t ~A_rf(s7_scheme *sc, s7_pointer expr) ~
                       {if (s7_arg_to_rf(sc, s7_cadr(expr))) return(~A_rf_r); return(NULL);}~%" 
 		  func-name func-name))

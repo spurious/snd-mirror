@@ -9686,9 +9686,7 @@ how long the resultant note will be given an src envelope:
 
 (define (<em class="noem">src-duration</em> e)
   (let* ((len (length e))
-	 (ex0 (e 0))
-	 (ex1 (e (- len 2)))
-	 (all-x (- ex1 ex0))
+	 (all-x (- (e (- len 2)) (e 0))) ; last x - first x
 	 (dur 0.0))
     (do ((i 0 (+ i 2)))
 	((&gt;= i (- len 2)) dur)

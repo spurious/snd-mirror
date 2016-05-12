@@ -76,7 +76,7 @@
 		      (infinite? z))
 		  (object->string z)
 		  (if (= z pi)
-		      "pi"
+		      (copy "pi")
 		      (format #f *pretty-print-float-format* z)))
 	      (format #f "~A~A~Ai" 
 		      (messy-number (real-part z))

@@ -32,7 +32,7 @@
 	     (k start (+ k 1)))
 	    ((= k len) dest)
 	  (set! (dest i) (src k)))
-	(do ((i (+ at (- len start 1)) (- i 1))
+	(do ((i (- (+ at len) start 1) (- i 1))
 	     (k (- len 1) (- k 1)))
 	    ((< k start) dest)
 	  (set! (dest i) (src k))))))
@@ -103,6 +103,7 @@
 
 (define (bytevector-u8-ref b k) (b k))
 (define (bytevector-u8-set! b k c) (set! (b k) c))
+(define bytevector-u8 (dilambda (lambda (b k) (b k)) (lambda (b k c) (set! (b k) c))))
 (define bytevector-length length)
 (define (bytevector-copy . args) (->byte-vector (apply string-copy args)))
 (define (bytevector-append . args) (->byte-vector (apply string-append args)))

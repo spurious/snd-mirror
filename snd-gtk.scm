@@ -413,7 +413,7 @@
     (let ((labelled-snds ()))
       
       (define (kmg num)
-	(cond ((<= num 0)      "disk full!")
+	(cond ((<= num 0)      (copy "disk full!"))
 	      ((<= num 1024)   (format #f "space: ~10DK" num))
 	      ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
 	      (else            (format #f "space: ~6,3FM" (/ num 1024.0)))))

@@ -1,8 +1,6 @@
 ;;; polynomial-related stuff
 ;;;
 ;;; poly+ poly* poly/ poly-gcd poly-reduce poly-roots poly-derivative poly-resultant poly-discriminant
-;;;
-;;; this file really needs doubles (--with-doubles in configure, double as s7_double in s7.h)
 
 (provide 'snd-poly.scm)
 

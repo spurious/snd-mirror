@@ -1751,8 +1751,7 @@ based on some previously chosen loop positions:
             (&lt;= (cadr loop-data) (car loop-data)))
         (error 'no-loop-positions)
         (let* ((loop-start (car loop-data))
-               (loop-end (cadr loop-data))
-               (loop-length (- (+ loop-end 1) loop-start))
+               (loop-length (- (+ (cadr loop-data) 1) loop-start))
                (sound-section (<a class=quiet href="#filetoarray">file-&gt;array</a> sound 0 loop-start loop-length (make-float-vector loop-length 0.0)))
                (original-loop-duration (/ loop-length (srate sound)))
                (tbl (<em class=red>make-table-lookup</em> :frequency (/ freq original-loop-duration) :wave sound-section)))
@@ -3086,10 +3085,8 @@ Even more amusing is this algorithm (related to tanh(sin)):
 <pre class="indented">
 (define (cossq c theta)   ; as c -&gt; 1.0+, more of a square wave (try 1.00001)
   (let* ((cs (cos theta)) ; (+ theta pi) if matching sin case (or (- ...))
-	 (cp1 (+ c 1.0))
-	 (cm1 (- c 1.0))
-	 (cm1c (expt cm1 cs))
-	 (cp1c (expt cp1 cs)))
+	 (cm1c (expt (- c 1.0) cs))
+	 (cp1c (expt (+ c 1.0) cs)))
     (/ (- cp1c cm1c)
        (+ cp1c cm1c))))  ; from "From Squares to Circles..." Lasters and Sharpe, Math Spectrum 38:2
 
@@ -5598,8 +5595,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:channels 2)
-  (let* ((dur 3)
-	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))
+  (let* ((samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> 3))
 	 (flta (<em class=red>make-formant</em> 100 .999))
 	 (fltc (<em class=red>make-firmant</em> 100 .999))
 	 (vibosc (<a class=quiet href="#make-oscil">make-oscil</a> 10))
@@ -6141,8 +6137,7 @@ delay line as the coefficients for an FIR filter:
 <pre class="indented">
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (flux start-time file frequency combs0 combs1 (scaler 0.99) (comb-len 32))
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> start-time))
-         (len (<a class=quiet href="extsnd.html#mussoundframples">mus-sound-framples</a> file))
-         (end (+ beg len))
+         (end (+ beg (<a class=quiet href="extsnd.html#mussoundframples">mus-sound-framples</a> file)))
          (num-combs0 (length combs0))
          (num-combs1 (length combs1))
          (cmbs0 (make-vector num-combs0))
@@ -6318,8 +6313,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
          (comb3 (make-comb 0.715 5399))
          (comb4 (make-comb 0.697 5801))
          (file-dur (mus-sound-framples file))
-         (decay-dur *clm-srate*)
-         (len (floor (+ decay-dur file-dur)))
+         (len (floor (+ *clm-srate* file-dur))) ; *clm-srate* = 1.0 decay dur
          (rd (make-readin file)) ; the direct signal (via sound-let below)
          (d (make-delay dly))    ; this delays the direct signal
          (backup (min 4799 dly)))
@@ -7068,8 +7062,7 @@ one argument that return a new input sample whenever they are called by granulat
 <pre class="indented">
 (<a class=quiet href="sndscm.html#definstrument">definstrument</a> (granulate-sound file beg dur (orig-beg 0.0) (exp-amt 1.0))
   (let* ((f-srate (srate file))
-	 (f-start (round (* f-srate orig-beg)))
-         (f (<a class=quiet href="#make-readin">make-readin</a> file :start f-start))
+         (f (<a class=quiet href="#make-readin">make-readin</a> file :start (round (* f-srate orig-beg))))
 	 (st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (new-dur (or dur (- (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file) orig-beg)))
 	 (exA (<em class=red>make-granulate</em> :input f :expansion exp-amt))
@@ -9613,8 +9606,7 @@ We could mimic the fft display window in the "lisp graph" via:
 </p>
 
 <pre class="indented">
-(let* ((rd (make-readin "oboe.snd"))
-       (ft (<em class=red>make-moving-fft</em> rd))
+(let* ((ft (<em class=red>make-moving-fft</em> (make-readin "oboe.snd")))
        (data (make-float-vector 256 0.0)))
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
@@ -9726,8 +9718,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 	 (outdel12 (make-delay (seconds-&gt;samples .01)))
 						       
 	 (file-dur (framples *reverb*))
-	 (decay-dur *clm-srate*)
-	 (len (floor (+ decay-dur file-dur))))
+	 (len (floor (+ *clm-srate* file-dur))))
     
     (do ((i 0 (+ i 1)))
 	((= i len))
