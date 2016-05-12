@@ -2215,8 +2215,7 @@ returns many cosines from spaced by frequency with amplitude e^(-r)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((a r)
-	       (sinha (sinh a)))
+	(let ((sinha (sinh r)))
 	  (if (zero? sinha)
 	      0.0 ; just a guess
 	      (/ (atan (oscil osc fm) sinha)
@@ -3822,8 +3821,7 @@ returns a sum of cosines scaled in a very complicated way."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (rsinx2 (* 2.0 r (sin (* 0.5 x)))))
+	(let ((rsinx2 (* 2.0 r (sin (* 0.5 angle)))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs rsinx2) nearly-zero)
 	      1.0
@@ -3866,15 +3864,14 @@ returns a sum of cosines scaled in a very complicated way."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
-	       ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
-	       ;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
-	       ;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
-	       ;;   and in this context, we get -1..1 peak amps from the sin anyway.
-	       (arg (+ (* r r) 
+	;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
+	;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
+	;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
+	;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
+	;;   and in this context, we get -1..1 peak amps from the sin anyway.
+	(let ((arg (+ (* r r) 
 		       (* a a)
-		       (* a -2.0 r (cos x)))))
+		       (* a -2.0 r (cos angle)))))
 	  (set! angle (+ angle fm frequency))
 	  (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
 	      1.0
@@ -4522,7 +4519,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 			       (set! (g 'coeffs) (float-vector 0.0
 						      (/ (* pi pi) 6.0)
 						      (/ pi -4.0)
-						      (/ 12.0)))
+						      0.08333)) ; (/ 12.0)
 			       g)
 	       :methods k3sin-methods)
   (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f) fm)

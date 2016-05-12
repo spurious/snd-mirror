@@ -1449,8 +1449,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						 (let ((pts (plausible-mark-samples)))
 						   (if pts
 						       (let* ((beg (car pts))
-							      (end (cadr pts))
-							      (len (- end beg)))
+							      (len (- (cadr pts) beg)))
 							 (src-channel (make-env env :length len) beg len (selected-sound)))))))))
 				     
 				     (lambda (w data)

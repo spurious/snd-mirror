@@ -282,8 +282,7 @@
 	       (href-normal-start (or (string-position "<a href=" xref loc)
 				      (string-position "<A HREF=" xref loc)))
 	       (href-quiet-start (string-position "<a class=quiet href=" xref loc))
-	       (href-def-start (string-position "<a class=def href=" xref loc))
-	       (href-start (or href-normal-start href-quiet-start href-def-start))
+	       (href-start (or href-normal-start href-quiet-start (string-position "<a class=def href=" xref loc)))
 	       (href-len (if href-normal-start 8 20))
 	       (href-end (and href-start
 			      (< href-start leof)
@@ -951,8 +950,9 @@
 		(if id-pos
 		    (let* ((start (- (char-position #\" dline id-pos) id-pos))           ; (substring dline id-pos)))
 			   (end-start (+ id-pos start 2))
-			   (end (- (char-position #\" dline end-start) end-start))       ; (substring dline (+ id-pos start 2))))
-			   (name (substring dline (+ id-pos start 1) (+ id-pos start 2 end)))
+			   (name (substring dline 
+					    (+ id-pos start 1)
+					    (+ id-pos start 2 (- (char-position #\" dline end-start) end-start)))) ; (substring dline (+ id-pos start 2))))
 			   (sym-name (string->symbol name)))
 		      (if (not (hash-table-ref ids sym-name))
 			  (hash-table-set! ids sym-name 0)
@@ -1192,8 +1192,7 @@
 		    (let* ((line (substring (ind-name (tnames i)) 8))
 			   (dpos (char-position #\> line))
 			   (url (substring line 1 (- dpos 1)))
-			   (epos (char-position #\< line))
-			   (ind (substring line (+ dpos 1) epos))
+			   (ind (substring line (+ dpos 1) (char-position #\< line)))
 			   (gpos (string-position "&gt;" ind)))
 		      (if gpos 
 			  (set! ind (string-append (substring ind 0 gpos) 

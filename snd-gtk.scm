@@ -439,8 +439,7 @@
 	      (if (not snd)
 		  (snd-error "no sound found for disk space label")
 		  (let* ((name-form ((sound-widgets) 10))
-			 (space (kmg (disk-kspace (file-name snd))))
-			 (new-label (gtk_label_new space)))
+			 (new-label (gtk_label_new (kmg (disk-kspace (file-name snd))))))
 		    (gtk_box_pack_start (GTK_BOX name-form) new-label #f #f 6)
 		    (gtk_widget_show new-label)
 		    (set! previous-label (list snd new-label))
@@ -476,8 +475,7 @@
   
   (define snd-clock-icon
     (lambda (snd hour)
-      (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
-	     (cr (gdk_cairo_create window)))
+      (let ((cr (gdk_cairo_create (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))))
 	(let ((bg (color->list *basic-color*)))
 	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg)))
 	(cairo_rectangle cr 0 0 16 16) ; icon bg

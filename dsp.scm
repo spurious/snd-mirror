@@ -38,9 +38,7 @@
   (let ((documentation "(src-duration envelope) returns the new duration of a sound after using 'envelope' for time-varying sampling-rate conversion"))
     (lambda (e)
       (let* ((len (length e))
-	     (ex0 (e 0))
-	     (ex1 (e (- len 2)))
-	     (all-x (- ex1 ex0))
+	     (all-x (- (e (- len 2)) (e 0))) ; last x - first x
 	     (dur 0.0))
 	(do ((i 0 (+ i 2)))
 	    ((>= i (- len 2)) dur)
@@ -137,8 +135,7 @@
       ;;  the power-of-2 limitation is based on the underlying fft function's insistence on power-of-2 data sizes
       ;;  see stretch-sound-via-dft below for a general version
       (let* ((len (framples snd chn))
-	     (pow2 (ceiling (log len 2)))
-	     (fftlen (floor (expt 2 pow2)))
+	     (fftlen (floor (expt 2 (ceiling (log len 2)))))
 	     (fftlen2 (/ fftlen 2))
 	     (fft-1 (- (* n fftlen) 1))
 	     (fftscale (/ 1.0 fftlen))
@@ -352,8 +349,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define spot-freq
   (let ((documentation "(spot-freq samp snd chn) tries to determine the current pitch: (spot-freq (left-sample))"))
     (lambda* (s0 snd chn)
-      (let* ((pow2 (ceiling (log (/ (srate snd) 20.0) 2)))
-	     (fftlen (floor (expt 2 pow2)))
+      (let* ((fftlen (floor (expt 2 (ceiling (log (/ (srate snd) 20.0) 2)))))
 	     (data (autocorrelate (channel->float-vector s0 fftlen snd chn)))
 	     (cor-peak (float-vector-peak data)))
 	(if (= cor-peak 0.0)
@@ -436,8 +432,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   (let ((documentation "(zero-phase snd chn) calls fft, sets all phases to 0, and un-ffts"))
     (lambda* (snd chn)
       (let* ((len (framples snd chn))
-	     (pow2 (ceiling (log len 2)))
-	     (fftlen (floor (expt 2 pow2)))
+	     (fftlen (floor (expt 2 (ceiling (log len 2)))))
 	     (fftscale (/ 1.0 fftlen))
 	     (rl (channel->float-vector 0 fftlen snd chn))
 	     (old-pk (float-vector-peak rl))
@@ -456,8 +451,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
   (let ((documentation "(rotate-phase func snd chn) calls fft, applies func to each phase, then un-ffts"))
     (lambda* (func snd chn)
       (let* ((len (framples snd chn))
-	     (pow2 (ceiling (log len 2)))
-	     (fftlen (floor (expt 2 pow2)))
+	     (fftlen (floor (expt 2 (ceiling (log len 2)))))
 	     (fftlen2 (floor (/ fftlen 2)))
 	     (fftscale (/ 1.0 fftlen))
 	     (rl (channel->float-vector 0 fftlen snd chn))
@@ -1978,20 +1972,17 @@ and replaces it with the spectrum given in coeffs"))
 			   
 			   ;; bark settings
 			   (bark-low (floor (bark 20.0)))
-			   (bark-high (ceiling (bark (* 0.5 sr))))
-			   (bark-frqscl (/ data-len (- bark-high bark-low)))
+			   (bark-frqscl (/ data-len (- (ceiling (bark (* 0.5 sr))) bark-low)))
 			   (bark-data (make-float-vector data-len))
 			   
 			   ;; mel settings
 			   (mel-low (floor (mel 20.0)))
-			   (mel-high (ceiling (mel (* 0.5 sr))))
-			   (mel-frqscl (/ data-len (- mel-high mel-low)))
+			   (mel-frqscl (/ data-len (- (ceiling (mel (* 0.5 sr))) mel-low)))
 			   (mel-data (make-float-vector data-len))
 			   
 			   ;; erb settings
 			   (erb-low (floor (erb 20.0)))
-			   (erb-high (ceiling (erb (* 0.5 sr))))
-			   (erb-frqscl (/ data-len (- erb-high erb-low)))
+			   (erb-frqscl (/ data-len (- (ceiling (erb (* 0.5 sr))) erb-low)))
 			   (erb-data (make-float-vector data-len)))
 		      
 		      (set! bark-fft-size fftlen)
@@ -2270,8 +2261,7 @@ is assumed to be outside -1.0 to 1.0."))
 		   (let* ((clip-beg (clip-data clip))  ; clip-beg to clip-end inclusive are clipped
 			  (clip-end (clip-data (+ 1 clip)))
 			  (clip-len (- (+ clip-end 1) clip-beg))
-			  (min-data-len 32)  
-			  (data-len (max min-data-len (* clip-len 4))))
+			  (data-len (max 32 (* clip-len 4))))
 		     
 		     (set! max-len (max max-len clip-len))
 		     

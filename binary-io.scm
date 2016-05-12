@@ -246,9 +246,8 @@
 		   (data-size (read-bint32))
 		   (sample-type (read-bint32))
 		   (srate (read-bint32))
-		   (chns (read-bint32))
-		   (comment (io-read-string)))
-	      (list magic data-location data-size sample-type srate chns comment)))))))
+		   (chns (read-bint32)))
+	      (list magic data-location data-size sample-type srate chns (io-read-string)))))))) ; io-read-string = comment
 
 (define (write-au-header file chns srate data-size sample-type comment) ; data-size in bytes
   ;; common sample-types: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw

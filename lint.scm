@@ -12748,17 +12748,17 @@
 									(set! waiter v)
 									(set! gone-vars (cdr gone-vars))
 									(values))
-								      (if waiter
+								      (if (not waiter)
+									  v
 									  (let ((new-v (tree-subst (cadr waiter) (car waiter) v)))
 									    (set! save-vars (cons (list (car waiter) (car v)) save-vars))
 									    (set! waiter #f)
-									    new-v)
-									  v)))
+									    new-v))))
 								varlist))
 					    (lint-format "perhaps substitute ~{~{~A into ~A~}~^, ~}: ~A" caller 
 							 (reverse save-vars)
 							 (lists->string form
-									`(,(if (= (length new-vars) 1) 'let 'let*)
+									`(,(if (null? (cdr new-vars)) 'let 'let*)
 									  ,new-vars
 									  ...))))))
 				     (let ((cur-var (car v))
@@ -14045,7 +14045,5 @@
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;; do we catch (=|eqx nan...)? or other ops involving nan? [4666 for some -- what to look for here?]
-;;; let-temporarily possibilities?
 ;;; 
 ;;; 116 22188 450060

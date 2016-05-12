@@ -262,8 +262,7 @@
 	 (app (cadr shell-app))
 	 (shell (car shell-app))
 	 (dpy (XtDisplay shell))
-	 (screen (DefaultScreenOfDisplay dpy))
-	 (black (BlackPixelOfScreen screen)))
+	 (black (BlackPixelOfScreen (DefaultScreenOfDisplay dpy))))
 
     (define (get-color color)
       (let ((col (XColor))

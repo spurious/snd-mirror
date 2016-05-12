@@ -756,8 +756,7 @@
       (do ((k 0 (+ k 1)))
 	  ((= k id))
 	(let* ((ak (+ (* 8 k) m))
-	       (p (- id k))
-	       (t (expm p ak)))
+	       (t (expm (- id k) ak)))
 	  (set! s (+ s (/ t ak)))
 	  (set! s (- s (floor s)))))
       

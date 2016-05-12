@@ -74,8 +74,7 @@
 (definstrument (plucky beg dur freq amplitude maxa)
   ;; (with-sound () (plucky 0 .3 440 .2 1.0))
 
-  (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+  (let ((len (+ 1 (floor (/ *clm-srate* 100.0))))) ; 100 = lowest freq
     (let ((delayline (make-delayl len (- (/ *clm-srate* freq) 0.5)))
 	  (filt (make-onezero))
 	  (start (seconds->samples beg))
@@ -94,8 +93,7 @@
 (definstrument (bowstr beg dur frq amplitude maxa)
   ;; (with-sound () (bowstr 0 .3 220 .2 1.0))
 
-  (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+  (let ((len (+ 1 (floor (/ *clm-srate* 100.0))))) ; 100 = lowest freq
     (let ((ratio 0.8317)
 	  (rate .001)
 	  (bowing #t)
@@ -150,8 +148,7 @@
 
 (definstrument (brass beg dur freq amplitude maxa)
   ;; does this work at all?
-  (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+  (let ((len (+ 1 (floor (/ *clm-srate* 100.0)))))
     (let ((blowing #t)
 	  (rate .001)
 	  (breathpressure 0.0))  ; 0.1 ?
@@ -189,8 +186,7 @@
 (definstrument (clarinet beg dur freq amplitude maxa)
   ;; (with-sound () (clarinet 0 .3 440 .2 1.0))
 
-  (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+  (let ((len (+ 1 (floor (/ *clm-srate* 100.0)))))
     (let ((blowing #t)
 	  (breathpressure 0.0) ; 0.1 ?
 	  (rate .001))
@@ -230,8 +226,7 @@
 (definstrument (flute beg dur freq amplitude maxa)
   ;; (with-sound () (flute 0 .3 440 .2 1.0))
   
-  (let* ((lowestfreq 100.0)
-	 (len (+ 1 (floor (/ *clm-srate* lowestfreq)))))
+  (let ((len (+ 1 (floor (/ *clm-srate* 100.0)))))
     (let ((jetrefl 0.6)
 	  (endrefl 0.6)
 	  (sinphase 0.0)

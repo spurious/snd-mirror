@@ -164,17 +164,15 @@
 	   ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
 	   (shell (cadr (main-widgets)))
 	   (tags (list "one" "two" "three" "four"))
-	   (colors (list "black" "red" "blue" "orange"))
 	   (pixels (let* ((dpy (XtDisplay shell))
-			  (scr (DefaultScreen dpy))
-			  (cmap (DefaultColormap dpy scr)))
+			  (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 		     (map
 		      (lambda (color)
 			(let ((col (XColor)))
 			  (if (= (XAllocNamedColor dpy cmap color col col) 0)
 			      (snd-error (format #f "can't allocate ~A" color))
 			      (.pixel col))))
-		      colors)))
+		   (list "black" "red" "blue" "orange")))) 
 	   (rendertable (XmRenderTableAddRenditions 
 			 #f 
 			 (map (lambda (tag pix)
@@ -345,10 +343,7 @@
   (define add-listener-pane 
     (let ((documentation "(add-listener-pane name type args) adds a widget at the top of the listener"))
       (lambda (name type args)
-	(let* ((listener (find-child (cadr (main-widgets)) "lisp-listener"))
-	       ;; this is the listener text widget, hopefully
-	       ;;   its parent is the scrolled window, its parent is the form widget filling the listener pane
-	       (listener-scroll (XtParent listener))
+	(let* ((listener-scroll (XtParent (find-child (cadr (main-widgets)) "lisp-listener")))
 	       (listener-form (XtParent listener-scroll)))
 	  ;; to insert the new widget at the top of the listener pane we need to detach the
 	  ;;   listener scrolled window etc -- assume here that the "args" list does not
@@ -1529,10 +1524,8 @@
 	  (documentation "(red-pixel) returns a red pixel"))
       (lambda ()
 	(if (not pix)
-	    (let* ((shell (cadr (main-widgets)))
-		   (dpy (XtDisplay shell))
-		   (scr (DefaultScreen dpy))
-		   (cmap (DefaultColormap dpy scr))
+	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		   (cmap (DefaultColormap dpy (DefaultScreen dpy)))
 		   (col (XColor)))
 	      (if (= (XAllocNamedColor dpy cmap "red" col col) 0)
 		  (snd-error "can't allocate red!")
@@ -1797,8 +1790,7 @@
 		
       (define (show-label data id)
 	(if (sound? (car data))
-	    (let* ((space (kmg (disk-kspace (file-name (car data)))))
-		   (str (XmStringCreateLocalized space)))
+	    (let ((str (XmStringCreateLocalized (kmg (disk-kspace (file-name (car data)))))))
 	      (XtSetValues (cadr data) (list XmNlabelString str))
 	      (XmStringFree str)
 	      (XtAppAddTimeOut (caddr data) 10000 show-label data))))
@@ -1816,8 +1808,7 @@
 			 (unite-button (widgets 6))
 			 (sync-button (widgets 9))
 			 (name-form (XtParent status-area)) ; "snd-name-form"
-			 (space (kmg (disk-kspace (file-name snd))))
-			 (str (XmStringCreateLocalized space)))
+			 (str (XmStringCreateLocalized (kmg (disk-kspace (file-name snd))))))
 		    (set! showing-disk-space #t)
 		    (XtUnmanageChild status-area)
 		    (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
@@ -1870,8 +1861,7 @@
 	    (XtSetValues (car c) (list XmNlabelString ampstr))
 	    (XmStringFree ampstr)
 	    (if ctrl
-		(let* ((wids (sound-widgets snd))
-		       (ctrls (wids 2))
+		(let* ((ctrls ((sound-widgets snd) 2))
 		       (snd-amp (find-child ctrls "snd-amp"))
 		       (chns (channels snd)))
 		  (do ((i 0 (+ i 1)))
@@ -2009,8 +1999,7 @@
 	
 	(define (amp-controls-clear snd)
 	  (if (> (channels snd) 1)
-	      (let* ((wids (sound-widgets snd))
-		     (ctrls (wids 2))
+	      (let* ((ctrls ((sound-widgets snd) 2))
 		     (snd-amp (find-child ctrls "snd-amp"))
 		     (top (- (channels snd) 1)))
 		(do ((i 1 (+ i 1)))
@@ -2173,8 +2162,7 @@
 	  (lambda (color-name)
 	    (let* ((col (XColor))
 		   (dpy (XtDisplay (cadr (main-widgets))))
-		   (scr (DefaultScreen dpy))
-		   (cmap (DefaultColormap dpy scr)))
+		   (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 	      (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
 		  (snd-error (format #f "can't allocate ~A" color-name))
 		  (.pixel col)))))

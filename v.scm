@@ -65,7 +65,7 @@
       (if (>= (* 2 fm3-rat frequency) *clm-srate*) (set! fm3-rat 1.0))
 
       (let ((index1 (or fm1-index (min pi (* maxdev (/ 5.0 logfreq)))))
-	    (index2 (or fm2-index (min pi (* maxdev 3.0 (/ (- 8.5 logfreq) (+ 3.0 (* frequency .001)))))))
+	    (index2 (or fm2-index (min pi (/ (* maxdev 3.0 (- 8.5 logfreq)) (+ 3.0 (* frequency 0.001))))))
 	    (index3 (or fm3-index (min pi (* maxdev (/ 4.0 sqrtfreq)))))
 	    (easy-case (and (zero? noise-amount)
 			    (equal? fm1-env fm2-env)

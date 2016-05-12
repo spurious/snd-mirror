@@ -365,8 +365,7 @@
       
       (hook-push after-save-state-hook 
 		 (lambda (hook)
-		   (let* ((filename (hook 'name))
-			  (fd (open-appending filename)))
+		   (let ((fd (open-appending (hook 'name))))
 		     (format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
 		     (format fd "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%")
 		     (for-each 

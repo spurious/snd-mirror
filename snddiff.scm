@@ -2,11 +2,8 @@
 
 
 (define (cross-correlate snd0 chn0 snd1 chn1)
-  (let* ((len0 (framples snd0 chn0))
-	 (len1 (framples snd1 chn1))
-	 (ilen (max len0 len1))
-	 (pow2 (ceiling (log ilen 2)))
-	 (fftlen (floor (expt 2 pow2))))
+  (let* ((ilen (max (framples snd0 chn0) (framples snd1 chn1)))
+ 	 (fftlen (floor (expt 2 (ceiling (log ilen 2))))))
     (correlate (channel->float-vector 0 fftlen snd1 chn1) 
 	       (channel->float-vector 0 fftlen snd0 chn0))))
 
@@ -14,8 +11,7 @@
   ;; returns the probable lagtime between the two sounds (negative means second sound is delayed)
   (let* ((corr (cross-correlate snd0 chn0 snd1 chn1))
 	 (len (length corr))
-	 (data (float-vector-peak-and-location corr))
-	 (lag (cadr data)))
+	 (lag (cadr (float-vector-peak-and-location corr))))
     (if (= lag -1)
 	0
 	(if (< lag (/ len 2))
@@ -96,11 +92,8 @@
 		   (s1 (channel->float-vector 0 #f snd1 chn1)))
 	       (or (snddiff-1 s0 s1 0.0)
 		   (let* ((pos (maxamp-position snd0 chn0))
-			  (mx0 (sample pos snd0 chn0))
-			  (mx1 (sample pos snd1 chn1)) ; use actual values to keep possible sign difference
-			  (scl (/ mx1 mx0))
+			  (scl (/ (sample pos snd1 chn1) (sample pos snd0 chn0)))  ; use actual values to keep possible sign difference
 			  (diff (snddiff-1 (float-vector-scale! s0 scl) s1)))
-
 		     (if (eq? diff 'no-difference)
 			 (list 'scale scl)
 			 (and (list? diff)
@@ -145,11 +138,8 @@
 			   (list 'lag lag res pre0 pre1 post0 post1)
 			   (list res pre0 pre1 post0 post1))))
 		(let* ((pos (maxamp-position snd0 chn0))
-		       (mx0 (sample pos snd0 chn0))
-		       (mx1 (sample pos snd1 chn1)) ; use actual values to keep possible sign difference
-		       (scl (/ mx1 mx0))
+		       (scl (/ (sample pos snd1 chn1) (sample pos snd0 chn0))) ; use actual values to keep possible sign difference
 		       (diff (snddiff-1 (float-vector-scale! s0 scl) s1 0.0001)))
-		  
 		  (if (eq? diff 'no-difference)
 		      (list 'scale scl 'lag lag pre0 pre1 post0 post1)
 		      (and (list? diff)

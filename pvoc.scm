@@ -8,8 +8,7 @@
     (lambda* (fftsize overlap interp analyze edit synthesize)
       (let* ((N (or fftsize 512))
 	     (N2 (floor (/ N 2)))
-	     (hop (or overlap 4))
-	     (D (floor (/ N hop))))
+	     (D (floor (/ N (or overlap 4)))))
 	
 	;; basic: fftsize overlap
 	;;  everything else via closures (interp in particular)

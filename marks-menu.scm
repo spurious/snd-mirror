@@ -34,9 +34,7 @@
 (define find-two-marks
   (let ((documentation "(find-two-marks) looks for the marks for the marks-menu functions to use"))
     (lambda ()
-      (let* ((snd (selected-sound))
-	     (chn (selected-channel))
-	     (ms (marks snd chn)))
+      (let ((ms (marks (selected-sound) (selected-channel))))
 	(if (> (length ms) 1)
 	    (map mark->integer (list (car ms) (cadr ms)))
 	    (list))))))
@@ -891,8 +889,7 @@ between two marks,using the granulate generator to fix up the selection duration
 		       (XtVaSetValues n (list XmNselectColor
 					      (let* ((col (XColor))
 						     (dpy (XtDisplay (cadr (main-widgets))))
-						     (scr (DefaultScreen dpy))
-						     (cmap (DefaultColormap dpy scr)))
+						     (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 						(XAllocNamedColor dpy cmap "yellow" col col)
 						(.pixel col)))))))))
 	  ))
