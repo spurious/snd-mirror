@@ -1025,17 +1025,17 @@
 		((rational? c)     'rational?)
 		((real? c)	   'real?)
 		((number? c)       'number?)
-		((keyword? c)
-		 (cond ((assq c markers) => cdr)
-		       (else 'keyword?)))
-		((byte-vector? c)  'byte-vector?)
 		((string? c)       'string?)
 		((null? c)	   'null?)
 		((char? c)	   'char?)
 		((boolean? c)      'boolean?)
+		((keyword? c)
+		 (cond ((assq c markers) => cdr)
+		       (else 'keyword?)))
+		((vector? c)       'vector?)
 		((float-vector? c) 'float-vector?)
 		((int-vector? c)   'int-vector?)
-		((vector? c)       'vector?)
+		((byte-vector? c)  'byte-vector?)
 		((let? c)	   'let?)
 		((hash-table? c)   'hash-table?)
 		((input-port? c)   'input-port?)
@@ -4369,8 +4369,10 @@
 				   (case func ((eq?) 'assq) ((eqv?) 'assv) (else 'assoc)))))
 		       (lint-format "perhaps ~A" caller (lists->string form `(,op ,(cadr form) ,(caddr form)))))
 		     (let ((sig (procedure-signature (symbol->value func)))) ; arg-signature here is too cranky
-		       (if (and sig
-				(not (memq 'boolean? sig)))
+		       (if (and (pair? sig)
+				(not (eq? 'boolean? (car sig)))
+				(not (and (pair? (car sig))
+					  (memq 'boolean? (car sig)))))
 			   (lint-format "~A is a questionable ~A function" caller func head))))
 		 ;; func not a symbol
 		 (if (and (pair? func)
@@ -5466,7 +5468,7 @@
 			    
 			    ((not (pair? arg1)))
 
-			    ((and (pair? arg2)                        ; (append (list x y) '(z)) -> (list x y 'z)
+			    ((and (pair? arg2)                        ; (append (list x y) '(z)) -> (list x y z) or extensions thereof
 				  (or (eq? (car arg1) 'list)
 				      (quoted-undotted-pair? arg1))
 				  (or (eq? (car arg2) 'list)
@@ -5478,6 +5480,12 @@
 				  (null? (cddr arg1)))
 			     (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadr arg1) ,arg2))))
 
+			    ((and (eq? (car arg1) 'list)              ; (append (list x y) z) -> (cons x (cons y z))
+				  (pair? (cdr arg1)) 
+				  (pair? (cddr arg1))
+				  (null? (cdddr arg1)))
+			     (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadr arg1) (cons ,(caddr arg1) ,arg2)))))
+
 			    ((and (eq? (car arg1) 'vector->list)
 				  (pair? arg2)
 				  (eq? (car arg2) 'vector->list))
@@ -5486,13 +5494,21 @@
 			    ((not (equal? (cdr form) new-args))
 			     (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))
 		   (else
-		    (if (every? (lambda (item)
-				  (and (pair? item)
-				       (or (eq? (car item) 'list)
-					   (quoted-undotted-pair? item))))
-				new-args)
-			(lint-format "perhaps ~A" caller (lists->string form (apply append->list new-args))))))
-		 
+		    (cond ((every? (lambda (item)
+				     (and (pair? item)
+					  (or (eq? (car item) 'list)
+					      (quoted-undotted-pair? item))))
+				   new-args)
+			   (lint-format "perhaps ~A" caller (lists->string form (apply append->list new-args))))
+
+			  ((and (pair? (car new-args))               ; (append (list x) y (list z)) -> (cons x (append y (list z)))?
+				(eq? (caar new-args) 'list)
+				(null? (cddar new-args)))
+			   (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadar new-args) (append ,@(cdr new-args))))))
+
+			  ((not (equal? (cdr form) new-args))
+			   (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))
+			    
 		 (if (and (= made-suggestion suggestion)
 			  (not (equal? (cdr form) new-args)))
 		     (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))))
@@ -5553,7 +5569,12 @@
 					    (lint-format "perhaps ~A" caller (lists->string form `(,f ,@(distribute-quote (cadr args))))))
 					   
 					   ((eq? (car args) 'cons)             ; (apply f (cons a b)) -> (apply f a b)
-					    (lint-format "perhaps ~A" caller (lists->string form `(apply ,f ,@(cdr args)))))
+					    (lint-format "perhaps ~A" caller 
+							 (lists->string form 
+									(if (and (pair? (caddr args))
+										 (eq? (caaddr args) 'cons))
+									    `(apply ,f ,(cadr args) ,@(cdaddr args))
+									    `(apply ,f ,@(cdr args))))))
 					   
 					   ((and (memq f '(string vector int-vector float-vector))
 						 (memq (car args) '(reverse reverse!))) ; (apply vector (reverse x)) -> (reverse (apply vector x))
@@ -5796,7 +5817,9 @@
 		   (if (symbol? func)
 		       (let ((sig (procedure-signature (symbol->value func))))
 			 (if (and (pair? sig)
-				  (not (memq 'boolean? sig)))
+				  (not (eq? 'boolean? (car sig)))
+				  (not (and (pair? (car sig))
+					    (memq 'boolean? (car sig)))))
 			     (lint-format "~A is a questionable sort! function" caller func))))))))
 	
 	;; ----------------
@@ -5868,27 +5891,33 @@
 		 (cond ((or (not arg1)                  ; (eq? #f x) -> (not x)
 			    (quoted-not? arg1))
 			(set! expr (simplify-boolean `(not ,arg2) () () env)))
+
 		       ((or (not arg2)                  ; (eq? x #f) -> (not x)
 			    (quoted-not? arg2))
 			(set! expr (simplify-boolean `(not ,arg1) () () env)))
+
 		       ((and (or (null? arg1)           ; (eq? () x) -> (null? x)
 				 (quoted-null? arg1))
 			     (not (code-constant? arg2)))
 			(set! expr (or (equal? arg2 '(list)) ; (eq? () (list)) -> #t
 				       `(null? ,arg2))))
+
 		       ((and (or (null? arg2)           ; (eq? x ()) -> (null? x)
 				 (quoted-null? arg2))
 			     (not (code-constant? arg1)))
 			(set! expr (or (equal? arg1 '(list))
 				       `(null? ,arg1))))
+
 		       ((and (eq? arg1 #t)              ; (eq? #t <boolean-expr>) -> boolean-expr
 			     (pair? arg2)
 			     (eq? (return-type (car arg2) env) 'boolean?))
 			(set! expr arg2))
-		       ((and (eq? arg2 #t)              ; ; (eq? <boolean-expr> #t) -> boolean-expr
+
+		       ((and (eq? arg2 #t)              ; (eq? <boolean-expr> #t) -> boolean-expr
 			     (pair? arg1)
 			     (eq? (return-type (car arg1) env) 'boolean?))
 			(set! expr arg1)))
+
 		 (if (not (eq? expr 'unset))
 		     (lint-format "perhaps ~A" caller (lists->string form expr)))))))
 	
@@ -14045,5 +14074,9 @@
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;; 
+;;; define in let no back dependencies -> let, else if simple+1 use, substitute?, if function+1 use -> named let?
+;;;   if +begin + define same var both branches diff vals -- complain? suggest set!? [when/unless cond/case+define?]
+;;;   begin+define where var is only in begin -> let? [or any body like a function+define]
+;;; #f trailing|last? arg to define* where #f is the default? (or any arg=default?)
+;;;
 ;;; 116 22188 450060

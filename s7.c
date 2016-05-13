@@ -6104,6 +6104,7 @@ static s7_pointer g_varlet(s7_scheme *sc, s7_pointer args)
   #define H_varlet "(varlet env ...) adds its arguments (an environment, a cons: symbol . value, or a pair of arguments, the symbol and its value) \
 to the environment env, and returns the environment."
   #define Q_varlet s7_make_circular_signature(sc, 2, 3, sc->is_let_symbol, sc->is_let_symbol, sc->T)
+  /* varlet = with-let + define */
 
   s7_pointer x, e, sym, val, p;
 

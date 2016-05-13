@@ -222,8 +222,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
     (lambda* (e scl (offset 0))
       (if (null? e)
 	  ()
-	  (append (list (car e) (+ offset (* scl (cadr e))))
-		  (scale-envelope (cddr e) scl offset))))))
+	  (cons (car e) (cons (+ offset (* scl (cadr e))) (scale-envelope (cddr e) scl offset)))))))
 
 
 ;;; -------- reverse-envelope
