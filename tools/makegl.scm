@@ -222,11 +222,9 @@
 		      ("BOOLEAN" . "C_bool_to_Xen_boolean")
 		      ("ULONG"   . "C_ulong_to_Xen_ulong"))
 		string=?) => cdr)
-	((not (string-ci=? str "String")) 
-	 (format #f "~A unknown" str))
-	((string=? (car typ) "guchar*") 
-	 "C_to_Xen_String")
-	(else "C_string_to_Xen_string")))
+	((not (string-ci=? str "String")) (format #f "~A unknown" str))
+	((string=? (car typ) "guchar*")   (copy "C_to_Xen_String"))
+	(else                             (copy "C_string_to_Xen_string"))))
 
 (define (xen-to-c-macro-name str)
   (cond ((assoc str '(("INT"     . "Xen_integer_to_C_int")
@@ -234,7 +232,7 @@
 		      ("BOOLEAN" . "Xen_boolean_to_C_bool")
 		      ("ULONG"   . "Xen_ulong_to_C_ulong"))
 		string=?) => cdr)
-	((string-ci=? str "String") "Xen_string_to_C_string")
+	((string-ci=? str "String") (copy "Xen_string_to_C_string"))
 	(else (format #f "~A unknown" str))))
 
 (define (type-it type)

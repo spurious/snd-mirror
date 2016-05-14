@@ -281,8 +281,9 @@
 			 len))
 	       (href-normal-start (or (string-position "<a href=" xref loc)
 				      (string-position "<A HREF=" xref loc)))
-	       (href-quiet-start (string-position "<a class=quiet href=" xref loc))
-	       (href-start (or href-normal-start href-quiet-start (string-position "<a class=def href=" xref loc)))
+	       (href-start (or href-normal-start 
+			       (string-position "<a class=quiet href=" xref loc)
+			       (string-position "<a class=def href=" xref loc)))
 	       (href-len (if href-normal-start 8 20))
 	       (href-end (and href-start
 			      (< href-start leof)
@@ -948,7 +949,9 @@
 		    (set! xrefing #f))
 		
 		(if id-pos
-		    (let* ((start (- (char-position #\" dline id-pos) id-pos))           ; (substring dline id-pos)))
+		    (let* ((start (- (cond ((char-position #\" dline id-pos)) 
+					   (else (error 'search-error "char-position for double-quote failed?"))) ; an experiment (lint-related)
+				     id-pos))           ; (substring dline id-pos)))
 			   (end-start (+ id-pos start 2))
 			   (name (substring dline 
 					    (+ id-pos start 1)

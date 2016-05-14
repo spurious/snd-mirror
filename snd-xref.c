@@ -1762,7 +1762,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11622] = {
+static const char *snd_names[11624] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3719,6 +3719,7 @@ static const char *snd_names[11622] = {
     "bytevector-copy", "r7rs.scm",
     "bytevector-copy!", "r7rs.scm",
     "bytevector-length", "r7rs.scm",
+    "bytevector-u8", "r7rs.scm",
     "bytevector-u8-ref", "r7rs.scm",
     "bytevector-u8-set!", "r7rs.scm",
     "c-define", "cload.scm",
@@ -7578,7 +7579,7 @@ static const char *snd_names[11622] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5811);
+  s7_autoload_set_names(sc, snd_names, 5812);
 }
 #endif
 

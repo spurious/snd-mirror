@@ -605,14 +605,6 @@
 			   (char=? (cur-line i) #\newline))
 		       (if (zero? i) 0 (+ i 1))))))
 	    
-	    (define (count-newlines line)
-	      (let ((len (length line))
-		    (newlines 0))
-		(do ((i 0 (+ i 1)))
-		    ((= i len) newlines)
-		  (if (char=? (cur-line i) #\newline)
-		      (set! newlines (+ newlines 1))))))
-	    
 	    (define (append-newline)
 	      (set! cur-line (string-append cur-line (string #\space #\newline)))
 	      (set! cursor-pos (length cur-line))
@@ -948,6 +940,13 @@
 	      ;; Meta key is a problem on the Mac, so I'll package these for easier disposal
 
 	      (define (fixup-new-line)
+		(define (count-newlines line)
+		  (let ((len (length line))
+			(newlines 0))
+		    (do ((i 0 (+ i 1)))
+			((= i len) newlines)
+		      (if (char=? (cur-line i) #\newline)
+			  (set! newlines (+ newlines 1))))))
 		(set! cursor-pos (length cur-line))
 		(let ((newlines (count-newlines cur-line)))
 		  (when (< last-row (+ prompt-row newlines))

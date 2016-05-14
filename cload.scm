@@ -155,7 +155,7 @@
   (define (C-type->s7-type type)
 
     (if (pair? type)                             ; in case the type name does not make its C type obvious: (graph_style_t int)
-	(symbol->string (cadr type))
+	(C-type->s7-type (cadr type))
 	(let ((type-name (symbol->string type)))
 	  (cond ((string-position "**" type-name)     ; any complicated C pointer is uninterpreted
 		 'c_pointer)

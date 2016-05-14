@@ -575,8 +575,8 @@
 		      ("ULONG"   . "C_ulong_to_Xen_ulong"))
 		string=?) => cdr)
           ((not (string=? str "String")) (format #f "~A unknown" str))
-          ((string=? type "guchar*")     "C_to_Xen_String")
-          (else                          "C_string_to_Xen_string")))
+          ((string=? type "guchar*")     (copy "C_to_Xen_String"))
+          (else                          (copy "C_string_to_Xen_string"))))
 
 (define (xen-to-c-macro-name str)
   (cond ((assoc str '(("INT"     . "Xen_integer_to_C_int")

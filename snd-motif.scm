@@ -1840,9 +1840,9 @@
     (let ((documentation "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds"))
       (lambda ()
 	
-	(define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
-	(define (number-name chan) (if (= chan 0) "amp-number" (format #f "amp-number-~D" chan)))
-	(define (scroller-name chan) (if (= chan 0) "amp" (format #f "amp-~D" chan)))
+	(define (label-name chan) (if (= chan 0) (copy "amp-label") (format #f "amp-label-~D" chan)))
+	(define (number-name chan) (if (= chan 0) (copy "amp-number") (format #f "amp-number-~D" chan)))
+	(define (scroller-name chan) (if (= chan 0) (copy "amp") (format #f "amp-~D" chan)))
 	
 	(define (amp-callback w c info)
 	  ;; c is (list number-widget snd chan)
@@ -1861,9 +1861,8 @@
 	    (XtSetValues (car c) (list XmNlabelString ampstr))
 	    (XmStringFree ampstr)
 	    (if ctrl
-		(let* ((ctrls ((sound-widgets snd) 2))
-		       (snd-amp (find-child ctrls "snd-amp"))
-		       (chns (channels snd)))
+		(let ((snd-amp (find-child ((sound-widgets snd) 2) "snd-amp"))
+		      (chns (channels snd)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i chns))
 		    (let* ((ampscr (find-child snd-amp (scroller-name i)))
@@ -1934,8 +1933,7 @@
 	      (XmStringFree s2)
 	      label))
       
-	  (let* ((wids (sound-widgets snd))
-		 (ctrls (wids 2))
+	  (let* ((ctrls ((sound-widgets snd) 2))
 		 (snd-amp (find-child ctrls "snd-amp"))
 		 (chns (channels snd)))
 	    
@@ -1999,9 +1997,8 @@
 	
 	(define (amp-controls-clear snd)
 	  (if (> (channels snd) 1)
-	      (let* ((ctrls ((sound-widgets snd) 2))
-		     (snd-amp (find-child ctrls "snd-amp"))
-		     (top (- (channels snd) 1)))
+	      (let ((snd-amp (find-child ((sound-widgets snd) 2) "snd-amp"))
+		    (top (- (channels snd) 1)))
 		(do ((i 1 (+ i 1)))
 		    ((= i (channels snd)))
 		  (let ((ampn (find-child snd-amp (number-name i)))

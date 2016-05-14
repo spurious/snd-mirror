@@ -6943,6 +6943,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_value "(symbol->value sym (env (curlet))) returns the binding of (the value associated with) the \
 symbol sym in the given environment: (let ((x 32)) (symbol->value 'x)) -> 32"
   #define Q_symbol_to_value s7_make_signature(sc, 3, sc->T, sc->is_symbol_symbol, sc->is_let_symbol)
+  /* (symbol->value 'x e) => (e 'x)? */
 
   s7_pointer sym;
   sym = car(args);
@@ -66623,6 +66624,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * which means that (letrec ((x x)) x) is not an error!
 	   * but this assumes the environment is not changed by evaluating the exprs?
 	   * (letrec ((a (define b 1))) b) -- if let, the define takes place in the calling env, not the current env
+	   * (letrec ((f1 (lambda (x) (f2 (* 2 x))))) (define (f2 y) (- y 1)) (f1 3)) -> 5 (Guile says unbound f2)
+	   *
 	   * I think I need to check here that slot_pending_value is set (using the is_checked bit below).
 	   */
 	  sc->envir = new_frame_in_env(sc, sc->envir);
