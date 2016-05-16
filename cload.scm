@@ -148,10 +148,6 @@
 			 '(s7_pointer #f #f #f s7_pointer)
 			 ))
 
-  (define (find-handler handle choice)
-    (cond ((assq handle handlers) => choice) (else #t)))
-
-
   (define (C-type->s7-type type)
 
     (if (pair? type)                             ; in case the type name does not make its C type obvious: (graph_style_t int)
@@ -190,17 +186,20 @@
 
 		(#t #t)))))
 
+  (define (find-handler type choice)
+    (cond ((assq (C-type->s7-type type) handlers) => choice) (else #t)))
+
   (define (C->s7-cast type)
-    (find-handler (C-type->s7-type type) (lambda (p) (list-ref p 4))))
+    (find-handler type (lambda (p) (list-ref p 4))))
     
   (define (C->s7 type)
-    (find-handler (C-type->s7-type type) cadddr))
+    (find-handler type cadddr))
     
   (define (s7->C type)
-    (find-handler (C-type->s7-type type) caddr))
+    (find-handler type caddr))
 
   (define (checker type)
-    (find-handler (C-type->s7-type type) cadr))
+    (find-handler type cadr))
 
   (define* (cload->signature type rtn)
     (case (C-type->s7-type type)

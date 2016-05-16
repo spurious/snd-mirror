@@ -73,8 +73,8 @@
 	    (values () ())
 	    ;; no --> add a breakpoint and recurse right and left
 	    ((lambda (xi yi xj yj)
-	       (values (append xi (list xint) xj)
-		       (append yi (list yexp) yj)))
+	       (values (append xi (cons xint xj))
+		       (append yi (cons yexp yj))))
 	     (exp-seg xl yle xint yexp yl yint error)
 	     (exp-seg xint yexp xh yhe yint yh error)))))
     

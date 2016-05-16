@@ -14,7 +14,9 @@
 	    ((vector? (car vects)) (total-length (cdr vects) (+ len (length (car vects)))))
 	    ((car vects)           (total-length (cdr vects) (+ len 1)))
 	    (else                  (total-length (cdr vects) len))))
-    (define (set-vals vects start vals)
+    (let set-vals ((vects args) 
+		   (start 0) 
+		   (vals (make-vector (total-length args 0))))
       (cond ((null? vects) vals)
 	    ((vector? (car vects))
 	     (let* ((vect (car vects))
@@ -26,8 +28,7 @@
 	    ((car vects)
 	     (set! (vals start) (car vects))
 	     (set-vals (cdr vects) (+ start 1) vals))
-	    (else (set-vals (cdr vects) start vals))))
-    (set-vals args 0 (make-vector (total-length args 0)))))
+	    (else (set-vals (cdr vects) start vals))))))
 
 (define (make-bezier-1 x0 y0 x1 y1 x2 y2 x3 y3 n)
   ;; creates a line-segment approximation of a bezier curve: n = number of segments
@@ -189,7 +190,7 @@
   (define (frequency->pitch freq)
     (floor (* 12 (+ (log (/ freq 16.351) 2) (/ 1.0 24)))))
 
-  (define (pitch->note-octave-and-accidental pitch)
+  (let ((pitch (frequency->pitch freq)))
     (let* ((pclass (modulo pitch 12))
 	   (octave (floor (/ pitch 12)))
 	   (cclass (case pclass
@@ -206,9 +207,7 @@
 		(and (memv pclass '(3 8 10)) 
 		     :flat))
 	    cclass
-	    pitch)))
-  
-  (pitch->note-octave-and-accidental (frequency->pitch freq)))
+	    pitch))))
 
 (define note-data->pclass car)
 (define note-data->octave cadr)

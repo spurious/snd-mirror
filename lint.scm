@@ -5344,11 +5344,14 @@
 			 (set! nargs (cons (car p) nargs))))))
 	     (cond ((null? args)                 ; (string-append) -> ""
 		    (lint-format "perhaps ~A" caller (lists->string form "")))
+
 		   ((null? (cdr args))           ; (string-append a) -> a
 		    (if (not (tree-memq 'values (cdr form)))
 			(lint-format "perhaps ~A, or use copy" caller (lists->string form (car args)))))
+
 		   ((every? string? args)        ; (string-append "a" "b") -> "ab"
 		    (lint-format "perhaps ~A" caller (lists->string form (apply string-append args))))
+
 		   ((every? (lambda (a)          ; (string-append "a" (string #\b)) -> "ab"
 			      (or (string? a)
 				  (and (pair? a)
@@ -5360,6 +5363,7 @@
 			(let ((val (eval `(string-append ,@args))))
 			  (lint-format "perhaps ~A -> ~S" caller (truncated-list->string form) val)))
 		      (lambda args #f)))
+
 		   ((not (equal? args (cdr form)))
 		    (lint-format "perhaps ~A" caller (lists->string form `(string-append ,@args)))))
 	     (set! last-checker-line-number line-number))))
@@ -5370,10 +5374,13 @@
 	   (let ((args (remove-all #() (splice-if (lambda (x) (eq? x 'vector-append)) (cdr form)))))
 	     (cond ((null? args)
 		    (lint-format "perhaps ~A" caller (lists->string form #())))
+
 		   ((null? (cdr args))
 		    (lint-format "perhaps ~A" caller (lists->string form `(copy ,(car args)))))
+
 		   ((every? vector? args)
 		    (lint-format "perhaps ~A" caller (lists->string form (apply vector-append args))))
+
 		   ((not (equal? args (cdr form)))
 		    (lint-format "perhaps ~A" caller (lists->string form `(vector-append ,@args)))))
 	     (set! last-checker-line-number line-number))))
@@ -5514,6 +5521,17 @@
 				  (pair? arg2)
 				  (eq? (car arg2) 'vector->list))
 			     (lint-format "perhaps ~A" caller (lists->string form `(vector->list (append ,(cadr arg1) ,(cadr arg2))))))
+
+			    ((and (pair? arg1)                        ; (append '(x) y) -> (cons 'x y)
+				  (eq? (car arg1) 'quote)
+				  (pair? (cadr arg1))
+				  (null? (cdadr arg1)))
+			     (lint-format "perhaps ~A" caller 
+					  (lists->string form
+							 (if (or (symbol? (caadr arg1))
+								 (pair? (caadr arg1)))
+							     `(cons ',(caadr arg1) ,arg2)
+							     `(cons ,(caadr arg1) ,arg2)))))
 				   
 			    ((not (equal? (cdr form) new-args))
 			     (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))
@@ -5530,13 +5548,23 @@
 				(null? (cddar new-args)))
 			   (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadar new-args) (append ,@(cdr new-args))))))
 
+			  ((let ((n-1 (list-ref new-args (- len1 2))))
+			     (and (pair? n-1)
+				  (eq? (car n-1) 'list)
+				  (pair? (cdr n-1))
+				  (null? (cddr n-1))))
+			   (lint-format "perhaps ~A" caller 
+					(lists->string form 
+						       `(append ,@(copy new-args (make-list (- len1 2)))
+								(cons ,(cadr (list-ref new-args (- len1 2))) 
+								      ,(list-ref new-args (- len1 1)))))))
 			  ((not (equal? (cdr form) new-args))
 			   (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))
 			    
 		 (if (and (= made-suggestion suggestion)
 			  (not (equal? (cdr form) new-args)))
 		     (lint-format "perhaps ~A" caller (lists->string form `(append ,@new-args)))))))))
-	
+
 	;; ----------------
 	((apply)
 	 (when (pair? (cdr form))
@@ -8205,6 +8233,25 @@
 		     (find-code-match (car vs)))))))))
     
 
+    (define (find-call sym body)
+      (call-with-exit
+       (lambda (return)
+	 (let tree-call ((tree body))
+	   (if (and (pair? tree)
+		    (not (eq? (car tree) 'quote)))
+	       (begin
+		 (if (eq? (car tree) sym)
+		     (return tree))
+		 (if (memq (car tree) '(let let* letrec letrec* do lambda lambda* define))
+		     (return #f)) ; possible shadowing -- not worth the infinite effort to corroborate
+		 (if (pair? (car tree))
+		     (tree-call (car tree)))
+		 (if (pair? (cdr tree))
+		     (do ((p (cdr tree) (cdr p)))
+			 ((not (pair? p)) #f)
+		       (tree-call (car p))))))))))
+
+
     (define (check-returns caller f env)
       (if (not (or (side-effect? f env)
 		   (eq? f '=>)))
@@ -8388,30 +8435,43 @@
 							  `(... ,@(tree-subst `(let () ,@fbody) call (cdr body))))
 						      `(... ,@(tree-subst `(let ,new-args ,@fbody) call (cdr body))))
 						  `(... ,@(tree-subst `(,new-let ,fname ,new-args ,@fbody) call (cdr body))))))))))))
-      
-#|
-      (if (and (pair? body)
-	       (< (tree-leaves body) 50)
-	       (or (not (pair? (car body)))
-		   (not (eq? (caar body) 'define)))
-	       (tree-memq 'define body))
-	  (format *stderr* "~A~%~%" (lint-pp (cons 'begin body))))
-
-      ;; (let ((f1 (lambda (x) (f2 (* 2 x))))) (define (f2 y) (- y 1)) (f1 3)) -> error: f2: unbound variable
-      ;; (letrec ((f1 (lambda (x) (f2 (* 2 x))))) (define (f2 y) (- y 1)) (f1 3)) -> 5 (Guile says unbound f2)
-      ;; and do case in s7test -- so whether 1 use is complicated!
-
-      ;; let+define+multiexprs, but 1 use -> lambda if symbol (passed as arg)
-      ;; (lambda ... (define asp (assoc args recent))        (if asp        (cdr asp)...)
-      ;;   same logic as last var in let -- perhaps look for define as first expr?
-      ;; let last var case is restricted to 1-var, 1-statement in body -- why?
-      ;;   side-effects.  If other vars, but no side-effect in the one that goes to cond -- substitute anywhere?
-      ;;   even if other statements.  If others have side-effects that could affect us, the let is messed up?
-      ;;   (let ((a (A)) (b (B))) (C b) (if a (cdr a) b)) -> (let ((b (B))) (C b) (cond ((A) => cdr) (else b))) -- is that better?
-      ;;      (C b) -- (A) known to have no side-effects, what about C? So if multi-statement let, those that precede cond can't have side-effects
-      ;;
-      ;;  in for-each! (define path (path<-entry entry)) (and path (dopath path))
-|#
+      (when (pair? body)
+	(let ((len (length body)))
+	  (when (> len 2)                           ; ... (define (x...)...) (x ...) -> (let (...) ...) or named let -- this happens a lot!
+	    (let ((n-1 (list-ref body (- len 2)))   ; or (define (x ...)...) (some expr calling x once) -> named let etc
+		  (n (list-ref body (- len 1))))
+	      (when (and (pair? n-1)
+			 (eq? (car n-1) 'define)
+			 (pair? (cadr n-1))
+			 (symbol? (caadr n-1))
+			 (proper-list? (cdadr n-1))
+			 (pair? n)
+			 (or (and (eq? (car n) (caadr n-1))
+				  (eqv? (length (cdadr n-1)) (length (cdr n)))) ; not values -> let!
+			     (and (< (tree-leaves n-1) 12)
+				  (tree-car-member (caadr n-1) (cdr n))         ; skip car -- see preceding
+				  (= (tree-count1 (caadr n-1) n 0) 1))))
+		(let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f)))
+		      (new-var (caadr n-1)))
+		  (when (and (pair? outer-form)
+			     (not (let walker ((tree outer-form)) ; check even the enclosing env -- define in do body back ref'd in stepper for example
+				    (or (eq? new-var tree)
+					(and (pair? tree)
+					     (not (eq? n tree))
+					     (not (eq? n-1 tree))
+					     (not (eq? (car tree) 'quote))
+					     (or (walker (car tree))
+						 (walker (cdr tree))))))))
+		    (let ((named (if (tree-memq new-var (cddr n-1)) (list new-var) ())))
+		      (when (eq? (car n) (caadr n-1))
+			(lint-format "perhaps change ~A to a ~Alet: ~A" caller new-var (if (pair? named) "named " "")
+				     (lists->string outer-form `(... (let ,@named ,(map list (cdadr n-1) (cdr n)) ...))))
+			(let ((call (find-call new-var n)))
+			  (when (and (pair? call)
+				     (eqv? (length (cdadr n-1)) (length (cdr call))))
+			    (let ((new-call `(let ,@named ,(map list (cdadr n-1) (cdr call)) ,@(cddr n-1))))
+			      (lint-format "perhaps embed ~A: ~A" caller new-var
+					   (lists->string outer-form `(... ,(tree-subst new-call call n))))))))))))))))
 
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
       (lint-walk-open-body caller head body env))
@@ -8435,6 +8495,12 @@
 		(dpy-start #f)
 		(len (length body)))
 	    (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
+
+#|
+      (if (and (< (tree-leaves body) 100)
+	       (tree-memq 'define body))
+	  (format *stderr* "~A~%~%" (lint-pp (cons 'begin body))))
+|#
 
 	    (when (and (pair? body)
 		       *report-function-stuff*
@@ -8824,10 +8890,12 @@
 			  (cadr last)))))
 	(if (and (sequence? seq)
 		 (> (length seq) 0))
-	    (lint-format "returns ~A constant: ~A~S" function-name 
-			 (if (pair? seq)
-			     (values "a list" "'" seq)
-			     (values (prettify-checker-unq (->lint-type last)) "" seq)))
+	    (begin
+	      (lint-format "returns ~A constant: ~A~S" function-name 
+			   (if (pair? seq)
+			       (values "a list" "'" seq)
+			       (values (prettify-checker-unq (->lint-type last)) "" seq)))
+	      (throw 'sequence-constant-done)) ; just report one constant -- the full list is annoying
 	    (when (pair? last)
 	      (case (car last)
 
@@ -8886,7 +8954,10 @@
 	(set! body (cdr body))) ; ignore old-style doc-string
       ;; (set! arg ...) never happens as last in body
       
-      (check-sequence-constant function-name (list-ref body (- (length body) 1)))
+      (catch 'sequence-constant-done
+	(lambda ()
+	  (check-sequence-constant function-name (list-ref body (- (length body) 1))))
+	(lambda args #f))
 
       (lint-walk-body function-name definer body env))
 
@@ -9068,7 +9139,10 @@
 						 (make-var :name (car arg) :definer 'parameter)))))
 				     (proper-list args)))))
 		  
-		  (let* ((cur-env (append args-as-vars (if fvar (cons fvar env) env)))
+		  (let* ((cur-env (cons (make-var :name :let
+						  :initial-value form
+						  :definer definer)
+					(append args-as-vars (if fvar (cons fvar env) env))))
 			 (e (lint-walk-function-body definer function-name args body cur-env))
 			 (nvars (and (not (eq? e cur-env))
 				     (env-difference function-name e cur-env ()))))
@@ -9368,24 +9442,6 @@
 						      (truncated-list->string form))))))
 			  constant-exprs)))))))
     
-    (define (find-call sym body)
-      (call-with-exit
-       (lambda (return)
-	 (let tree-call ((tree body))
-	   (if (and (pair? tree)
-		    (not (eq? (car tree) 'quote)))
-	       (begin
-		 (if (eq? (car tree) sym)
-		     (return tree))
-		 (if (memq (car tree) '(let let* letrec letrec* do lambda lambda* define))
-		     (return #f)) ; possible shadowing -- not worth the infinite effort to corroborate
-		 (if (pair? (car tree))
-		     (tree-call (car tree)))
-		 (if (pair? (cdr tree))
-		     (do ((p (cdr tree) (cdr p)))
-			 ((not (pair? p)) #f)
-		       (tree-call (car p))))))))))
-
     (define (partition-form start len)
       (let ((ps (make-vector len))
 	    (qs (make-vector len)))
@@ -9876,7 +9932,7 @@
 				 (let ((arglen (length args)))
 				   (if (null? args)
 				       (if (eq? head 'lambda*)             ; (lambda* ()...) -> (lambda () ...)
-					   (lint-format "lambda* could be :lambda ~A" caller form))
+					   (lint-format "lambda* could be lambda ~A" caller form))
 				       (begin ; args is a pair             ; (lambda (a a) ...)
 					 
 					 (let ((val (cddr form)))
@@ -11961,7 +12017,10 @@
 						(procedure? (symbol->value end *e*)))
 					   (lint-format "strange do end-test: ~A in ~A is a procedure" caller end end+result))))))
 			       
-			       (lint-walk-body caller head (cdddr form) inner-env)
+			       (lint-walk-body caller head (cdddr form) (cons (make-var :name :let
+											:initial-value form
+											:definer 'do)
+									      inner-env))
 			       
 			       ;; before report-usage, check for unused variables, and don't complain about them if
 			       ;;   they are referenced in an earlier step expr.
@@ -12177,6 +12236,7 @@
 					      (null? (cdr varlist))  ;   also (let ((x (A))) (cond (x (f x))...)
 					      (pair? (cdar varlist))
 					      (pair? (cadar varlist)))
+
 				     (let ((p (car body))
 					   (vname (caar varlist))
 					   (vvalue (cadar varlist)))
@@ -12367,9 +12427,31 @@
 							"perhaps, ignoring short-circuit issues, ~A"
 							"perhaps ~A")
 						    caller (lists->string form new-body))))
+
+				   (when (and (pair? (cadr form))       ; (let ((x x)) (+ x 1)) -> (+ x 1)
+					      (= suggest made-suggestion)
+					      (every? (lambda (c)       
+							(and (pair? c)  ; the usual... (let binding might be messed up)
+							     (pair? (cdr c)) 
+							     (eq? (car c) (cadr c))))
+						      (cadr form))
+					      (or (not (pair? (caddr form)))
+						  (not (memq (caaddr form) '(lambda lambda*))))
+					      (not (any? (lambda (p) 
+							   (side-effect? p env))
+							 (cddr form))))
+				     (lint-format "perhaps ~A" caller
+						  (lists->string form
+								 (if (null? (cdddr form))
+								     (caddr form)
+								     `(begin ,@(cddr form))))))
+				   
 				   )) ; suggest let
 			       
-			       (let* ((cur-env (append vars env))
+			       (let* ((cur-env (cons (make-var :name :let
+							       :initial-value form
+							       :definer 'let)
+						     (append vars env)))
 				      (e (lint-walk-body (or named-let caller) head body cur-env))
 				      (nvars (if (null? cur-env)
 						 e
@@ -12389,7 +12471,7 @@
 					       e))
 				 
 				 (report-usage caller head vars cur-env))
-			       
+
 			       (if (and (pair? body)                ; (let ((x y)) x) -> y, named let is possible here 
 					(null? (cdr body))
 					(pair? varlist)             ; (let ()...)
@@ -12794,7 +12876,10 @@
 			       ;; if each function could tell us what globals it depends on or affects,
 			       ;;   we could make this work in all cases.
 			       
-			       (let* ((cur-env (append vars env))
+			       (let* ((cur-env (cons (make-var :name :let
+							       :initial-value form
+							       :definer 'let*)
+						     (append vars env)))
 				      (e (lint-walk-body caller head body cur-env))
 				      (nvars (and (not (eq? e cur-env))
 						  (env-difference caller e cur-env ()))))
@@ -13086,7 +13171,10 @@
 				 (if (binding-ok? caller head (car bindings) env #t)
 				     (lint-walk caller (cadar bindings) new-env)))
 			       
-			       (let* ((cur-env (append vars env))
+			       (let* ((cur-env (cons (make-var :name :let
+							       :initial-value form
+							       :definer head)
+						     (append vars env)))
 				      (e (lint-walk-body caller head (cddr form) cur-env))
 				      (nvars (and (not (eq? e cur-env))
 						  (env-difference caller e cur-env ()))))
@@ -13115,7 +13203,10 @@
 		      ;; ---------------- with-baffle ----------------
 		      ;; with-baffle introduces a new frame, so we need to handle it here
 		      ((with-baffle)
-		       (lint-walk-body caller head (cdr form) env)
+		       (lint-walk-body caller head (cdr form) (cons (make-var :name :let
+									      :initial-value form
+									      :definer 'with-baffle)
+								    env))
 		       env)
 		      
 		      ;; -------- with-let --------
@@ -13138,7 +13229,10 @@
 				       (if (and (null? (cdr e))
 						(eq? (car e) 'curlet))
 					   (lint-format "~A is not needed here: ~A" head caller (truncated-list->string form)))
-				       (lint-walk caller e env))))
+				       (lint-walk caller e (cons (make-var :name :let
+									   :initial-value form
+									   :definer 'with-let)
+								 env)))))
 			     (let ((walked #f)
 				   (new-env (cons (make-var :name :with-let :initial-value form :definer head) env)))
 			       (if (or (and (symbol? e)
@@ -13255,7 +13349,11 @@
 										      ((call-with-input-file)    'open-input-file)
 										      ((call-with-output-file)   'open-output-file)))
 							       :definer head)))
-					     (lint-walk-body caller head body (cons cc env))
+					     (lint-walk-body caller head body (cons cc 
+										    (cons (make-var :name :let
+												    :initial-value form
+												    :definer head)
+											  env)))
 					     (report-usage caller head (list cc) env)))))))))
 		       env)
 		      
@@ -13278,10 +13376,13 @@
 			     (let ((body (caddr form))
 				   (error-handler (cadddr form)))
 			       ;; empty catch+catch apparently never happens
-			       (lint-walk caller body (cons (make-var :name :catch
+			       (lint-walk caller body (cons (make-var :name :let
 								      :initial-value form
 								      :definer head)
-							    env))
+							    (cons (make-var :name :catch
+									    :initial-value form
+									    :definer head)
+								  env)))
 			       (lint-walk caller error-handler env))))
 		       env)
 		      
@@ -14153,12 +14254,15 @@
 ;;;   if +begin + define same var both branches diff vals -- complain? suggest set!? [when/unless cond/case+define?]
 ;;;   begin+define where var is only in begin -> let? [or any body like a function+define]
 ;;;     to see use, we need the caller (or more: if + begin...) -- needs to start at letx/func-body/do-body
-;;;     (do ((i 0 (+ i 1))) ((= i 2) (+ i j)) (define j i) (display j)): 3
-;;;     (do ((i 1 (+ i j))) ((>= i 2) (+ i j)) (define j i) j): 3
 ;;;   given closed context, look for uncovered definex, point out shadow if any (=set), else look for collision, then scope->let
 ;;;     (let ((x 1)) (+ (if (> x 0) (begin (define x 3) x) (begin (define x 4) (+ x 1))) x)) -- last is inner
-;;;
+;;;   define in do body or any such context might be trouble -- does env shadow or replace? -- it replaces, varlet shadows
+;;; (define x y) only one use of x, none of y -> y
+;;; (define (x a) (y a b)) used once -> (y <a> <b>) 
+;;;   
 ;;; (apply * -1 ...)
-;;; just report the sequence constant return case once per function (or add ... if more)
+;;; (apply f ...) could use (f (apply values ...)) to get rid of append -- when is this an improvement?
 ;;;
-;;; 116 22188 450060
+;;; warn about (append x y) where y is a list constant? or (append x '(1))?
+;;;
+;;; 118 22188 450469

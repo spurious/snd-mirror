@@ -1453,9 +1453,9 @@
 		   (xj (car val3))
 		   (yj (cadr val3))
 		   (zj (caddr val3)))
-	      (list (append xi (list x) xj)
-		    (append yi (list y) yj)
-		    (append zi (list z) zj))))))
+	      (list (append xi (cons x xj))
+		    (append yi (cons y yj))
+		    (append zi (cons z zj)))))))
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
@@ -1501,12 +1501,12 @@
 		     (zs (caddr vals)))
 		
 		;; approximate the bezier curve with linear segments
-		(set! xrx (append xrx (list xi-bz) xs))
-		(set! xry (append xry (list yi-bz) ys))
-		(set! xrz (append xrz (list zi-bz) zs))
+		(set! xrx (append xrx (cons xi-bz xs)))
+		(set! xry (append xry (cons yi-bz ys)))
+		(set! xrz (append xrz (cons zi-bz zs)))
 		
 		;; accumulate intermediate unknown velocities as nils
-		(set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
+		(set! xrv (append xrv (cons vi-bz (make-list (length xs) #f))))
 		(if (= i (- len 1))
 		    (begin
 		      ;; add the last point

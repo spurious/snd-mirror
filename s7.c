@@ -56206,7 +56206,7 @@ static int expansion_ex(s7_scheme *sc)
    *    (define (ex1 b) (* b 2)) (display (ex1 3))
    * since this happens at the top level, the first line is evaluated, ex1 becomes an expansion.
    * but the reader has no idea about lets and whatnot, so in the second line, ex1 is still an expansion
-   * to the reader, so ir sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
+   * to the reader, so it sees (define (+ b 1) ...) -- error!  To support tail-calls, there's no
    * way in eval to see the let close, so we can't clear the expansion flag when the let is done.
    * But we don't want define-expansion to mimic define-constant (via T_IMMUTABLE) because programs
    * like lint need to cancel reader-cond (for example).  So, we allow an expansion to be redefined,
@@ -56217,6 +56217,11 @@ static int expansion_ex(s7_scheme *sc)
    *   then (define (ex1 b) b).
    *
    * This is a mess!  Maybe we should insist that expansions are always global.
+   *
+   * run-time expansion and splicing into the code as in CL won't work in s7 because macros
+   *   are first-class objects.  For example (define (f m) (m 1)), call it with a macro, say `(+ ,arg 1),
+   *   and in CL-style, you'd now have the body (+ ,arg 1) or maybe even 2, now call f with a function,
+   *   or some other macro -- oops!
    */
   
   loc = s7_stack_top(sc) - 1;
@@ -64634,7 +64639,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   we get here over and over.  (let ((x (list (car y))))...) where list is redefined away.
 	       */
 #if DEBUGGING
-	      if (is_h_optimized(sc->code))
+	      /* we hit this in zauto (cdr-constants ...) h_vector_s|c (there is no difference here between hop_ and op_)
+	       */
+	      if ((is_h_optimized(sc->code)) &&
+		  (optimize_op(sc->code) != HOP_VECTOR_C) &&
+		  (optimize_op(sc->code) != HOP_VECTOR_S))
 		fprintf(stderr, "%s[%d]: clearing %s in %s\n", __func__, __LINE__, opt_names[optimize_op(sc->code)], DISPLAY(sc->code));
 #endif
 	      clear_all_optimizations(sc, code);
