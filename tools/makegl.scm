@@ -47,7 +47,7 @@
     (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let* ((sp2 (char-position #\space data (+ (char-position #\space data) 1)))
+  (let* ((sp2 (char-position #\space data (+ (or (char-position #\space data) 0) 1)))
 	 (sp3 (char-position #\space data (+ sp2 1))))
     (substring data (if sp3 (+ sp2 1) sp2))))
 
@@ -106,7 +106,7 @@
 
 (define (no-stars type)
   (if (string=? type "Display*")
-      "Display"
+      (copy "Display")
       (if (string=? type "XVisualInfo*")
 	  "XVisualInfo"
 	  (let ((len (length type))

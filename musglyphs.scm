@@ -137,8 +137,11 @@
     (free-cairo cr)))
 
 (define-macro (defvar name value) `(define ,name ,value))
+;(define defvar define)
 
 (define-macro (setf a b) `(set! ,a ,b))
+;(define-macro setf set!)
+;(define setf set!)
 
 (define-macro (defun name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
@@ -220,9 +223,9 @@
   (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
     (do ((line 0 (+ 1 line))
 	 (x x0) 
-	 (y y0 (+ y line-sep)))
+	 (y y0 (+ y (floor line-sep))))
 	((= line 5))
-      (draw-line x y (+ x width) y ps-snd ps-chn time-graph cr))
+      (draw-line x y (floor (+ x width)) y ps-snd ps-chn time-graph cr))
     (free-cairo cr)))
 
 

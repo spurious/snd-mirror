@@ -3816,7 +3816,11 @@ static Xen gxm_XmSetColorCalculation(Xen arg1)
   #define H_XmSetColorCalculation "XmColorProc XmSetColorCalculation(XmColorProc color_proc) set the procedure used for default color calculation"
   /* DIFF: XmSetColorCalculation NULL -> #f
    */
-  if (Xen_is_procedure(xm_XmColorProc)) xm_unprotect(xm_XmColorProc);
+  if (Xen_is_procedure(xm_XmColorProc)) 
+    {
+      xm_unprotect(xm_XmColorProc);
+      xm_XmColorProc = Xen_false; /* in case error below, 17-May-16 */
+    }
   if (Xen_is_false(arg1))
     {
       xm_XmColorProc = Xen_false;

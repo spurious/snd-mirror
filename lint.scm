@@ -9929,10 +9929,6 @@
 							      (values "too many" "s")))))
 				       (lint-format "~A is messed up" caller (truncated-list->string form)))
 				   
-				   ;; can we see simple macros that should be functions? (any macro without ,@)
-				   ;;   yes, but it almost never happens -- (lambda (x) ({list} 'car x))
-				   ;;   from (define-macro (cr x) `(car ,x)) -> (define cr car)
-				   
 				   (if (and (pair? val)
 					    (null? (cdr val))
 					    (equal? sym (car val)))
@@ -10011,6 +10007,9 @@
 					  (not (pair? (car sym)))) ; pair would indicate a curried func or something equally stupid
 				     (let ((outer-args (cdr sym))
 					   (outer-name (car sym)))
+
+				       (if (eq? (car sym) 'quote)
+					   (lint-format "either a stray quote, or a real bad idea: ~A" caller (truncated-list->string form)))
 				       
 				       (when (and (pair? (car val))
 						  (eq? (caar val) 'let)
@@ -10135,11 +10134,43 @@
 									     ": find a less confusing parameter name!"))))))
 						   outer-args))
 				       
-				       (when (and (eq? head 'define-macro)
-						  (null? outer-args)
-						  (null? (cdr val))
-						  (code-constant? (car val)))
-					 (lint-format "perhaps ~A" caller (lists->string form `(define ,outer-name ,(car val)))))
+				       (when (eq? head 'define-macro)
+					 (if (and (pair? val)
+						  (null? (cdr val)))
+					     (let ((body (car val)))
+					       (if (and (null? outer-args)  ; look for C macros translated as define-macro! -- this happens a lot sad to say
+							(and (or (not (symbol? body))
+								 (keyword? body))
+							     (or (not (pair? body))
+								 (and (eq? (car body) 'quote)
+								      (not (symbol? (cadr body)))
+								      (or (not (pair? (cadr body)))
+									  (eq? (caadr body) 'quote)))
+								 (and (not (memq (car body) '(quote quasiquote list cons append)))
+								      (not (tree-set-member '(#_{list} #_{apply_values} #_{append}) body))))))
+						   (lint-format "perhaps ~A or ~A" caller 
+								(lists->string form `(define ,outer-name ,(unquoted (car val))))
+								(truncated-list->string `(define (,outer-name) ,(unquoted (car val))))))
+					       (if (and (pair? body)
+							(eq? (car body) #_{list})
+							(quoted-symbol? (cadr body))
+							(proper-list? outer-args))
+						   (if (and (equal? (cddr body) outer-args)
+							    (or (not (hash-table-ref syntaces (cadadr body))) ; (define-macro (x y) `(lambda () ,y))
+								(memq (cadadr body) '(set! define))))
+						       (lint-format "perhaps ~A" caller
+								    (lists->string form `(define ,outer-name ,(cadadr body))))
+						       (if (and (not (hash-table-ref syntaces (cadadr body)))
+								(not (any-macro? (cadadr body) env))
+								(every? (lambda (a)
+									  (or (code-constant? a)
+									      (and (memq a outer-args)
+										   (= (tree-count1 a (cddr body) 0) 1))))
+									(cddr body)))  
+							   ;; marginal -- there are many debatable cases here
+							   (lint-format "perhaps ~A" caller
+									(lists->string form `(define (,outer-name ,@outer-args)
+											       (,(cadadr body) ,@(map unquoted (cddr body))))))))))))
 				       
 				       (if (and (eq? head 'definstrument)
 						(string? (car val)))
@@ -10151,7 +10182,7 @@
 					     env)
 					   (lint-walk-function head outer-name outer-args val form env)))
 				     
-				     (begin
+				     (begin ; not (and (pair? sym)...)
 				       (lint-format "strange form: ~A" head (truncated-list->string form))
 				       (when (and (pair? sym)
 						  (pair? (car sym)))
@@ -11630,10 +11661,11 @@
 										   `(when ,(car clause) ,@(cdr clause)))))))))
 				     (when has-else ; len > 1 here
 				       (let ((last-clause (list-ref form (- len 1)))) ; not the else branch! -- just before it.
+
 					 (when (and (= len 3)
-						    (equal? (cdadr form) (cdr (list-ref form len)))
-						    (pair? (cdaddr form))
-						    (not (eq? (cadr (caddr form)) '=>)))
+						    (equal? (cdadr form) (cdr (list-ref form len))) ; a = else result
+						    (pair? (cdaddr form))                           ; b does exist
+						    (not (eq? (cadr (caddr form)) '=>)))            ; no => in b
 					   (lint-format "perhaps ~A" caller
 							(lists->string form
 								       (let ((A (caadr form))
@@ -11650,13 +11682,27 @@
 										      nexpr
 										      (simplify-boolean `(or ,nexpr ,(car b)) () () env)))
 										 
-										 ((car a)
+										 ((car a) ; i.e a is not #f
 										  `(if ,nexpr ,(car a) ,(car b)))
 										 
 										 ((eq? (car b) #t)
 										  (simplify-boolean `(not ,nexpr) () () env))
 										 
 										 (else (simplify-boolean `(and (not ,nexpr) ,(car b)) () () env))))))))
+#|
+					 (when (> len 3)
+					   (let ((e (list-ref form len))
+						 (b (list-ref form (- len 1)))
+						 (a (list-ref form (- len 2))))
+					     (if (and (pair? a)
+						      (pair? (cdr a)) ; is (else) a legal cond clause? -- yes, it returns else...
+						      (pair? e)
+						      (equal? (cdr a) (cdr e))
+						      (pair? b)
+						      (pair? (cdr b))
+						      (not (eq? (cadr b) '=>)))
+						 (lint-format "3-way cond case ~A" caller (lint-pp form)))))
+|#
 					 (let ((arg1 (cadr form))
 					       (arg2 (caddr form)))
 					   (if (and (pair? arg1)
@@ -13391,7 +13437,14 @@
 					(tree-set-member vs (cadar bindings)))
 				    (if (null? bindings)
 					(lint-format "~A could be ~A: ~A" caller
-						     head (if (eq? head 'letrec) 'let 'let*)
+						     head (if (or (eq? head 'letrec)
+								  (do ((p (map cadr (cadr form)) (cdr p))
+								       (q (map car (cadr form)) (cdr q)))
+								      ((or (null? p)
+									   (side-effect? (car p) env)
+									   (memq (car q) (cdr q)))
+								       (null? p))))
+							      'let 'let*)
 						     (truncated-list->string form)))))
 			       
 			       (when (and (null? (cdr vars))
@@ -14523,14 +14576,23 @@
 ;;; locals should not follow their use -- if define var and var is already in use as a free-var, complain and reorder, if possible
 ;;;   will it be in other-identifiers?
 ;;;
-;;; (define-macro (f x) `(f1 ,x)) -> (define f f1) -- happens a lot!
-;;;     actual code is (define-macro (f x) ({list} 'f1 x)) -- f1 not set!? lambda also (define-macro (time exp) ({list} time-proc ({list} 'lambda () exp)))
-;;;     (define-macro (setf a b) ({list} 'set! a b)) -- (define setf set!)?
-;;;     (define-macro (defvar name value) ({list} 'define name value)) -- (define defvar define)?
-;;;     (define-macro (to-samples time srate) ({list} 'floor ({list} '* time srate))) -> (define (to-samples t s) (floor (* t s)))
+;;; (define-macro (to-samples time srate) ({list} 'floor ({list} '* time srate))) -> (define (to-samples t s) (floor (* t s)))
 ;;; do we complain about (define-macro (push! list el) ({list} 'set! list ({list} 'cons el list)))
-;;; (define-macro (f x) `(f1 'y ,x)) -> (define (f x) (f1 y x))?
-;;; if no quasiquote, {list} etc -- why?? (define-macro a b) (string->symbol ...) -- they make symbol to get its value??
-;;; if (define-macro (a) ''b) -> (define a 'b)? -- I think this currently suggests ''b
+;;; if arg occurs quoted -- warn? if unquote occurs there's an extra comma:
+;;;    (define-macro (m a) `(+ ,,a 1)) -> (lambda (a) ({list} '+ (unquote a) 1))
+;;;    (define-macro (m a) `(+ 1 a)) -> (lambda (a) '(+ 1 a))
+;;;    (define-macro (m a) `(+ 1 ,a (* a 2))) -> (lambda (a) ({list} '+ 1 a '(* a 2)))
+;;; if unquote-splicing warn -> apply values
+;;; any symbol unquoted not an arg -- undefined var so add to other-identifiers?
+;;; what about s7/CL differences in qq handling?
+;;; if a bacro, call bacro-shaker at each occurrence?
 ;;;
-;;; 115 22188 451023
+;;; we're missing an equal? else branch in cond -- are there special cases?
+;;;   (cond (A B) (C D) (else B)) -> (if (or A (not C)) B D) currently
+;;;   (cond (W X) (A B) (C D) (else B)) -> (cond (W X) ((or A (not C)) B) (else D)) ?? (cond (W X) ((and (not A) C) D) (else B)) ?? if B > 12?
+;;;   this happens a lot with some dumb cases (eq=#f)
+;;;   maybe if not has-combinations here?
+;;;
+;;; musglyphs is broken because fill-rectangle et al are way out of date
+;;;
+;;; 117 22188 451483

@@ -41,7 +41,8 @@
 	"GdkEventScroll*" "GdkEventSelection*" "GdkEventSetting*" "GdkEventVisibility*" "GdkEventWindowState*" "GdkGCValues*"
 	"GdkGeometry*" "GdkInterpType" "GdkModifierType*" "GdkPixbufDestroyNotify" "GdkScreen**" "GdkSegment*" "GdkWChar*"
 	"GdkWMDecoration*"  "GdkWindowAttr*" "GtkAccelLabel*" "GtkAccelMapForeach" "GtkAccessible*" "GtkActionEntry*"
-	"GtkAlignment*" "GtkAllocation*" "GtkArrow*" "GtkAspectFrame*" "GtkBin*" "GtkBox*" "GtkButton*" "GtkButtonBox*"
+	"GtkAlignment*" "GtkAllocation*" 
+	"GtkArrow*" "GtkAspectFrame*" "GtkBin*" "GtkBox*" "GtkButton*" "GtkButtonBox*"
 	"GtkCalendar*" "GtkCellLayout*" "GtkCellLayoutDataFunc" "GtkCellRendererPixbuf*" "GtkCellRendererText*" "GtkCellRendererToggle*"
 	"GtkCheckMenuItem*" "GtkClipboardTargetsReceivedFunc" 
 	"GtkCombo*" "GtkComboBox*" "GtkComboBoxEntry*" "GtkContainer*" "GtkCurve*" "GtkDialog*" "GtkDrawingArea*" "GtkEditable*"
@@ -100,7 +101,8 @@
 	;"GdkFunction" ;"GtkWrapBoxPacking" 
 	"GtkLinkButton*" "GtkActivatable*" "GtkOrientable*" "GtkCellArea*"
 	;"GdkNativeWindow"
-	"GdkRectangle*" "PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
+	"GdkRectangle*" 
+	"PangoRenderer*" "cairo_glyph_t**" "cairo_text_cluster_t**"
 ;	"cairo_text_cluster_flags_t" 
 ;	"cairo_rectangle_int_t" 
 	"cairo_rectangle_t*"
@@ -140,7 +142,7 @@
 	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" "gboolean*"
 	
 	"time_t" ;"GtkWindowGroup*" 
-	"GtkSettings*" ;"GdkDevice*" 
+	;"GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus" "GtkSizeRequestMode"
 	"GdkEventAny*" "GdkDeviceManager*"
@@ -163,7 +165,7 @@
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"  "gboolean*"
 	
 					;"GtkWindowGroup*" 
-	"time_t" "GtkSettings*" ;"GdkDevice*" 
+	"time_t" ;"GtkSettings*" ;"GdkDevice*" 
 	"GtkScaleButton*"
 	"GtkPrintOperationResult" "GtkPrintStatus"
 	"GdkDeviceManager*" "GdkEventAny*" "GtkSizeRequestMode"
@@ -988,12 +990,14 @@
 	 (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_info" 'callback)
 	 'permanent)
    
+#|
    (list 'GdkSeatGrabPrepareFunc
 	 "void"
 	 "prepare_func"
 	 (parse-args "GdkSeat* seat GdkWindow* window lambda_data func_info" 'g-3.20)
 	 'permanent
 	 "3.20")
+|#
    ))
 
 

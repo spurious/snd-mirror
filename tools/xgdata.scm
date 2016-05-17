@@ -5133,7 +5133,7 @@
 ;;; 2.13.6. (CFNC "GtkWidget* gtk_file_chooser_widget_new_with_backend GtkFileChooserAction action gchar* backend")
 ;;; ;(CFNC-gtk2 "void gtk_rc_reset_styles GtkSettings* settings")
 ;;;(CFNC "void gtk_text_layout_set_keyboard_direction GtkTextLayout* layout GtkTextDirection keyboard_dir")
-;;;GtkTextLayout is buggy
+;;;GtkTextLayout is buggy (and now gone)
 (CFNC "GList* gtk_widget_list_mnemonic_labels GtkWidget* widget") ; FREE (g_list_free)
 (CFNC "void gtk_widget_add_mnemonic_label GtkWidget* widget GtkWidget* label")
 (CFNC "void gtk_widget_remove_mnemonic_label GtkWidget* widget GtkWidget* label")
@@ -9240,7 +9240,7 @@
 (CFNC-3.20 "void gtk_widget_queue_allocate GtkWidget* widget")
 (CFNC-3.20 "void gtk_widget_set_focus_on_click GtkWidget* widget gboolean focus_on_click")
 (CFNC-3.20 "gboolean gtk_widget_get_focus_on_click GtkWidget* widget")
-(CFNC-3.20 "void gtk_widget_get_allocated_size GtkWidget* widget GtkAllocation* [allocation] int* [baseline]")
+;(CFNC-3.20 "void gtk_widget_get_allocated_size GtkWidget* widget GtkAllocation* [allocation] int* [baseline]")
   
 
 ;;; 3.19.3:
@@ -9278,6 +9278,7 @@
 
 (CFNC-3.20 "gboolean gtk_text_iter_starts_tag GtkTextIter* iter GtkTextTag* @tag")
 
+#|
 (CCAST-3.20 "GDK_SEAT(object)" "GdkSeat*")
 (CCHK-3.20 "GDK_IS_SEAT(object)" "GdkSeat*")
 
@@ -9302,7 +9303,7 @@
 (CFNC-3.20 "GList* gdk_seat_get_slaves GdkSeat* seat GdkSeatCapabilities capabilities")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_pointer GdkSeat* seat")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_keyboard GdkSeat* seat")
-
+|#
 
 ;;; 3.19.6:
 
@@ -9316,7 +9317,7 @@
 
 ;;; 3.19.8:
 
-(CFNC-3.20 "void gtk_render_background_get_clip GtkStyleContext* context gdouble x gdouble y gdouble width gdouble height GdkRectangle* [out_clip]")
+;(CFNC-3.20 "void gtk_render_background_get_clip GtkStyleContext* context gdouble x gdouble y gdouble width gdouble height GdkRectangle* [out_clip]")
 
 
 ;;; 3.19.9:
@@ -9326,8 +9327,9 @@
 (CINT-3.20 "GDK_DRAG_CANCEL_USER_CANCELLED" "GdkDragCancelReason")
 (CINT-3.20 "GDK_DRAG_CANCEL_ERROR" "GdkDragCancelReason")
 
-(CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_pixel GtkTextLayout* layout GtkTextIter* iter gint x gint y")
-(CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* [trailing] gint x gint y")
+;;; (CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_pixel GtkTextLayout* layout GtkTextIter* iter gint x gint y")
+;;; (CFNC-3.20 "gboolean gtk_text_layout_get_iter_at_position GtkTextLayout* layout GtkTextIter* iter gint* [trailing] gint x gint y")
+;;; GtkTextLayout is private for GtkTextView
 
 ;;; these two used to return void so we do them by hand in makexg.scm
 ;;; (CFNC-3.20 "gboolean gtk_text_view_get_iter_at_position GtkTextView* text_view GtkTextIter* iter gint* [trailing] gint x gint y")

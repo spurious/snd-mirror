@@ -1457,7 +1457,11 @@ void init_gtk(void)
     "  border-width: 0px;\n"
     "  background-color: #ffffff;\n"
     "}\n"
+#if (!GTK_CHECK_VERSION(3, 18, 8))
     "GtkButton#white_button:prelight { \n"
+#else
+    "GtkButton#white_button:hover { \n"
+#endif
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(#ffffff), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
@@ -1470,7 +1474,11 @@ void init_gtk(void)
     "  border-width: 0px;\n"
     "  background-color: #fffff0;\n"
     "}\n"
+#if (!GTK_CHECK_VERSION(3, 18, 8))
     "GtkButton#highlight_button:prelight { \n"
+#else
+    "GtkButton#highlight_button:hover { \n"
+#endif
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(#fffff0), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
@@ -1486,7 +1494,11 @@ void init_gtk(void)
     "  border-color: gray;\n"
     "  background-color: #fffff0;\n"
     "}\n"
+#if (!GTK_CHECK_VERSION(3, 18, 8))
     "GtkButton:prelight { \n"
+#else
+    "GtkButton:hover { \n"
+#endif
     "  background-image: -gtk-gradient (linear, left top, right bottom, from(#fffff0), to(rgb(200, 225, 255)));\n"
     "}\n",
     -1, NULL);
