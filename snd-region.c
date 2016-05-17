@@ -1735,10 +1735,10 @@ static Xen region_get(region_field_t field, Xen n, const char *caller)
 
   switch (field)
     {
-    case REGION_SRATE:  return(C_int_to_Xen_integer(region_srate(rg)));                                      break;
-    case REGION_CHANS:  return(C_int_to_Xen_integer(region_chans(rg)));                                      break;
-    case REGION_MAXAMP: return(C_double_to_Xen_real(region_maxamp(rg)));                                  break;
-    case REGION_MAXAMP_POSITION: return(C_llong_to_Xen_llong(region_maxamp_position(rg)));               break;
+    case REGION_SRATE:  return(C_int_to_Xen_integer(region_srate(rg)));                              break;
+    case REGION_CHANS:  return(C_int_to_Xen_integer(region_chans(rg)));                              break;
+    case REGION_MAXAMP: return(C_double_to_Xen_real(region_maxamp(rg)));                             break;
+    case REGION_MAXAMP_POSITION: return(C_llong_to_Xen_llong(region_maxamp_position(rg)));           break;
     case REGION_FORGET: delete_region_and_update_browser(region_id_to_list_position(rg)); return(n); break;
     case REGION_HOME:
       {

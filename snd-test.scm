@@ -27344,7 +27344,7 @@ EDITS: 2
 	    (if (not (= (length (sound-properties id)) (+ len 2)))
 		(snd-display ";sound-properties: ~A?" (sound-properties id))))
 	  
-	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) "hiho"))) (lambda args args))))
+	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) (copy "hiho")))) (lambda args args))))
 	    (if (not (eq? (car tag) 'wrong-type-arg)) (snd-display ";map-channel bad val: ~A" tag)))
 	  
 	  (close-sound id))
@@ -38267,7 +38267,7 @@ EDITS: 1
       (do ((fv (make-float-vector 4))
 	   (i 0 (+ i 1))
 	   (x 0 (+ x 1)))
-	  ((= i 4) fv)
+	  ((= i 4) (and (positive? x) fv))
 	(float-vector-set! fv i (if (not (odd? i))
 				    (+ i 10.0)
 				    (- i 10.0)))))
@@ -38333,7 +38333,7 @@ EDITS: 1
       (do ((ctr 0)
 	   (i 0 (+ i 1))
 	   (x 0 (+ x 1)))
-	  ((= i 4) (and x ctr))
+	  ((= i 4) (and (positive? x) ctr))
 	(if (zero? (modulo i 2))
 	    (set! ctr (+ ctr 1)))))
     (test (fv101) 2)

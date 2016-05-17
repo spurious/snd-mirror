@@ -190,24 +190,24 @@
   (define (frequency->pitch freq)
     (floor (* 12 (+ (log (/ freq 16.351) 2) (/ 1.0 24)))))
 
-  (let ((pitch (frequency->pitch freq)))
-    (let* ((pclass (modulo pitch 12))
-	   (octave (floor (/ pitch 12)))
-	   (cclass (case pclass
-		     ((0 1) 0) ; c-sharp
-		     ((2) 1) 
-		     ((3 4) 2) ; e-flat
-		     ((5 6) 3) ; f-sharp
-		     ((7) 4) 
-		     ((8 9) 5) ; a-flat
-		     (else 6)))) ; b-flat
-      (list pclass octave 
-	    (if (memv pclass '(1 6))
-		:sharp
-		(and (memv pclass '(3 8 10)) 
-		     :flat))
-	    cclass
-	    pitch))))
+  (let* ((pitch (frequency->pitch freq))
+	 (pclass (modulo pitch 12))
+	 (octave (floor (/ pitch 12)))
+	 (cclass (case pclass
+		   ((0 1) 0) ; c-sharp
+		   ((2) 1) 
+		   ((3 4) 2) ; e-flat
+		   ((5 6) 3) ; f-sharp
+		   ((7) 4) 
+		   ((8 9) 5) ; a-flat
+		   (else 6)))) ; b-flat
+    (list pclass octave 
+	  (if (memv pclass '(1 6))
+	      :sharp
+	      (and (memv pclass '(3 8 10)) 
+		   :flat))
+	  cclass
+	  pitch)))
 
 (define note-data->pclass car)
 (define note-data->octave cadr)

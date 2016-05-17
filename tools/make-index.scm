@@ -949,13 +949,11 @@
 		    (set! xrefing #f))
 		
 		(if id-pos
-		    (let* ((start (- (cond ((char-position #\" dline id-pos)) 
-					   (else (error 'search-error "char-position for double-quote failed?"))) ; an experiment (lint-related)
-				     id-pos))           ; (substring dline id-pos)))
+		    (let* ((start (- (or (char-position #\" dline id-pos) 0) id-pos)) ; (substring dline id-pos)))
 			   (end-start (+ id-pos start 2))
 			   (name (substring dline 
 					    (+ id-pos start 1)
-					    (+ id-pos start 2 (- (char-position #\" dline end-start) end-start)))) ; (substring dline (+ id-pos start 2))))
+					    (- (+ id-pos start (or (char-position #\" dline end-start) 0) 2) end-start)))
 			   (sym-name (string->symbol name)))
 		      (if (not (hash-table-ref ids sym-name))
 			  (hash-table-set! ids sym-name 0)
@@ -1195,7 +1193,7 @@
 		    (let* ((line (substring (ind-name (tnames i)) 8))
 			   (dpos (char-position #\> line))
 			   (url (substring line 1 (- dpos 1)))
-			   (ind (substring line (+ dpos 1) (char-position #\< line)))
+			   (ind (substring line (+ dpos 1) (or (char-position #\< line) 0)))
 			   (gpos (string-position "&gt;" ind)))
 		      (if gpos 
 			  (set! ind (string-append (substring ind 0 gpos) 
