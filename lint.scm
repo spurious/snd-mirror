@@ -4699,6 +4699,7 @@
 				     (pair? arg1)
 				     (eq? (car arg1) 'length)
 				     (cadr arg1)))))
+		   ;; we never seem to have var-member/initial-value/history here to distinguish types
 		   (if var
 		       (if (or (eqv? arg1 0) 
 			       (eqv? arg2 0))
@@ -8748,12 +8749,12 @@
 								    ...)))))
 			      (when (tree-memq name (car p))
 				(set! last-ref i))))))))))
-	  ))
 |#
+	  ))
 
 
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
-      (lint-walk-open-body caller head body env))))
+      (lint-walk-open-body caller head body env))
 
 
     (define (lint-walk-open-body caller head body env)
@@ -9842,6 +9843,13 @@
 	   (not (hash-table-ref built-in-functions (car form)))
 	   (let ((str (symbol->string (car form))))
 	     (char=? (string-ref str (- (length str) 1)) #\!))))
+#|
+    (define (lint-walk caller form env)
+      (let ((res (lint-walk-1 caller form env)))
+	(if (not (list? res))
+	    (format *stderr* "lint-walk returns ~A from ~A~%" res form))
+	res))
+|#
 
     (define lint-walk
       (let ((deprecated-ops '((global-environment . rootlet)
@@ -14662,5 +14670,6 @@
 ;;; if (provided) define define -- complains about extra define which is incorrect
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
+;;; <nn> in repl?
 ;;;
 ;;; 117 22377 454628
