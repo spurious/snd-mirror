@@ -8098,7 +8098,7 @@
 				     (var-history local-var))
 			   (let ((repeats ()))
 			     (for-each (lambda (call)
-					 (if (and (> (cdr call) 5)
+					 (if (and (> (cdr call) (max 3 (/ 20 (tree-leaves (car call))))) ; was 5
 						  (not (memq (caar call) '(make-vector make-float-vector)))
 						  (or (null? (cddar call))
 						      (every? (lambda (p)
@@ -8753,7 +8753,7 @@
 
 
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
-      (lint-walk-open-body caller head body env))
+      (lint-walk-open-body caller head body env))))
 
 
     (define (lint-walk-open-body caller head body env)
@@ -14659,6 +14659,7 @@
 ;;;     (let ((x 1)) (+ (if (> x 0) (begin (define x 3) x) (begin (define x 4) (+ x 1))) x)) -- last is inner
 ;;;   define in do body or any such context might be trouble -- does env shadow or replace? -- it replaces, varlet shadows -- use set!
 ;;; internal define -- find context, restrict via let [8720 -- millions of these]
+;;; if (provided) define define -- complains about extra define which is incorrect
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
