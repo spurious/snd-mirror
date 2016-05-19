@@ -21,9 +21,9 @@
 (define all-types ())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*" "GdkWindow*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
-(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*"
+(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*"
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
@@ -253,6 +253,20 @@
 	((= i len) val)
       (if (char=? (val i) #\*)
 	  (set! (val i) #\_)))))
+
+(define cairo-funcs ())
+(define cairo-png-funcs ())
+(define cairo-ints ())
+(define cairo-types ())
+
+(define cairo-funcs-810 ())
+(define cairo-ints-810 ())
+(define cairo-types-810 ())
+
+(define cairo-funcs-912 ())
+(define cairo-ints-912 ())
+(define cairo-types-912 ())
+(define cairo-strings-912 ())
 
 (define (parse-args args extra)
   (let ((data ())
@@ -758,20 +772,6 @@
 (make-fnc "3.20")
 (make-fnc "3.22")
 
-(define cairo-funcs ())
-(define cairo-png-funcs ())
-(define cairo-ints ())
-(define cairo-types ())
-
-(define cairo-funcs-810 ())
-(define cairo-ints-810 ())
-(define cairo-types-810 ())
-
-(define cairo-funcs-912 ())
-(define cairo-ints-912 ())
-(define cairo-types-912 ())
-(define cairo-strings-912 ())
-
 (define callbacks
   (list            
 					;                       (list 'lambda2 ; unnamed gdk_window_invalidate_maybe_recurse argument (2.90.6 now)
@@ -990,14 +990,14 @@
 	 (parse-args "GtkRecentInfo* a GtkRecentInfo* b lambda_data func_info" 'callback)
 	 'permanent)
    
-#|
+
    (list 'GdkSeatGrabPrepareFunc
 	 "void"
 	 "prepare_func"
 	 (parse-args "GdkSeat* seat GdkWindow* window lambda_data func_info" 'g-3.20)
 	 'permanent
 	 "3.20")
-|#
+
    ))
 
 

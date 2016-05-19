@@ -5,6 +5,8 @@
 ;;;
 ;;; although Snd based here, all this file needs externally are draw-lines, draw-dot, and fill-polygon
 
+;;; currently this works only in Motif
+
 (provide 'snd-musglyphs.scm)
 
 (define make-polygon
@@ -107,41 +109,80 @@
     (set! pathlist (cons v pathlist))
     #f))
 
-(define* (fill-in score :rest args)
-  (if (pair? pathlist)
-      (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
-	(fill-polygon
-	 (make-polygon
-	  (reverse pathlist))
-	 ps-snd ps-chn ps-ax cr)
-	(free-cairo cr)))
-  (set! pathlist ())
-  #f)
+(if (provided? 'snd-gtk)
+    (begin
+      (define* (fill-in score :rest args)
+	(if (pair? pathlist)
+	    (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	      (fill-polygon
+	       (make-polygon
+		(reverse pathlist))
+	       ps-snd ps-chn ps-ax cr)
+	      (free-cairo cr)))
+	(set! pathlist ())
+	#f)
+      
+      (define (draw score arg)
+	(if (pair? pathlist)
+	    (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	      (draw-lines
+	       (make-polygon
+		(reverse pathlist))
+	       ps-snd ps-chn ps-ax cr)
+	      (free-cairo cr)))
+	(set! pathlist ())
+	#f)
+      
+      (define (circle score x0 y0 rad . rest)
+	(let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	  (draw-dot (->x x0) (->y y0) 
+		    (floor (* ps-size rad 2))
+		    ps-snd ps-chn ps-ax cr)
+	  (free-cairo cr)))
 
-(define (draw score arg)
-  (if (pair? pathlist)
-      (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
-	(draw-lines
-	 (make-polygon
-	  (reverse pathlist))
-	 ps-snd ps-chn ps-ax cr)
-	(free-cairo cr)))
-  (set! pathlist ())
-  #f)
+      (define (fill-rectangle-1 . args)
+	(let ((len (length args))
+	      (cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	  (let ((new-args (copy args (make-list 9 #f))))
+	    (if (not (new-args 6))
+		(set! (new-args 6) time-graph))
+	    (set! (new-args 8) cr)
+	    (apply fill-rectangle new-args)
+	    (free-cairo cr)))))
+    (begin
+      (define* (fill-in score :rest args)
+	(if (not (null? pathlist))
+	    (fill-polygon
+	     (make-polygon
+	      (reverse pathlist))
+	     ps-snd ps-chn ps-ax))
+	(set! pathlist ())
+	#f)
+      
+      (define (draw score arg)
+	(if (not (null? pathlist))
+	    (draw-lines
+	     (make-polygon
+	      (reverse pathlist))
+	     ps-snd ps-chn ps-ax))
+	(set! pathlist ())
+	#f)
+      
+      (define (circle score x0 y0 rad . rest)
+	(draw-dot (->x x0) (->y y0) 
+		  (floor (* ps-size rad 2))
+		  ps-snd ps-chn ps-ax))
 
-(define (circle score x0 y0 rad . rest)
-  (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
-    (draw-dot (->x x0) (->y y0) 
-	      (floor (* ps-size rad 2))
-	      ps-snd ps-chn ps-ax cr)
-    (free-cairo cr)))
+      (define fill-rectangle-1 fill-rectangle)
+      ))
 
-(define-macro (defvar name value) `(define ,name ,value))
-;(define defvar define)
 
-(define-macro (setf a b) `(set! ,a ,b))
+;(define-macro (defvar name value) `(define ,name ,value))
+(define defvar define)
+
+;(define-macro (setf a b) `(set! ,a ,b))
 ;(define-macro setf set!)
-;(define setf set!)
+(define setf set!)
 
 (define-macro (defun name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
@@ -218,15 +259,21 @@
 (define note-data->cclass cadddr)
 (define (note-data->pitch val) (list-ref val 4))
 
-
-(define (draw-staff x0 y0 width line-sep)
-  (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
-    (do ((line 0 (+ 1 line))
-	 (x x0) 
-	 (y y0 (+ y (floor line-sep))))
-	((= line 5))
-      (draw-line x y (floor (+ x width)) y ps-snd ps-chn time-graph cr))
-    (free-cairo cr)))
+(if (provided? 'snd-gtk)
+    (define (draw-staff x0 y0 width line-sep)
+      (let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	(do ((line 0 (+ 1 line))
+	     (x x0) 
+	     (y y0 (+ y (floor line-sep))))
+	    ((= line 5))
+	  (draw-line x y (floor (+ x width)) y ps-snd ps-chn time-graph cr))
+	(free-cairo cr)))
+    (define (draw-staff x0 y0 width line-sep)
+      (do ((line 0 (+ 1 line))
+	   (x x0) 
+	   (y y0 (+ y (floor line-sep))))
+	  ((= line 5))
+	(draw-line x y (floor (+ x width)) y))))
 
 
 (define treble-tag-y 30)
@@ -282,19 +329,28 @@
     (if (> line 9)
 	(do ((i 10 (+ i 2)))
 	    ((>= i line))
-	  (fill-rectangle (- x0 (* .1 size)) (+ y0 (* -.02 size) (* line-sep 0.5 i)) (* .5 size) (* .05 size))))
+	  (fill-rectangle-1 (floor (- x0 (* .1 size)))
+			  (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
+			  (floor (* .5 size))
+			  (floor (* .05 size)))))
     (if (< line 0)
 	(do ((i -2 (- i 2)))
 	    ((< i line))
-	  (fill-rectangle (- x0 (* .1 size)) (+ y0 (* -.02 size) (* line-sep 0.5 i)) (* .5 size) (* .05 size))))
+	  (fill-rectangle-1 (floor (- x0 (* .1 size)))
+			  (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
+			  (floor (* .5 size))
+			  (floor (* .05 size)))))
     
     ;; stem
     (if (< dur 3)
-	(fill-rectangle
+	(fill-rectangle-1
 	 (if (> line 3) ; stem up
-	     (values (+ x0 line-sep) (+ y0 (* 0.02 size) (* size -0.8) (* line-sep 0.5 line)))
-	     (values (- x0 (* size 0.02)) (+ y0 (* line-sep line 0.5))))
-	 (* size 0.05) (* size 0.8)))
+	     (values (floor (+ x0 line-sep))
+		     (floor (+ y0 (* 0.02 size) (* size -0.8) (* line-sep 0.5 line))))
+	     (values (floor (- x0 (* size 0.02)))
+		     (floor (+ y0 (* line-sep line 0.5)))))
+	 (floor (* size 0.05))
+	 (floor (* size 0.8))))
 
     ;; flags
     (if (< dur .6)
@@ -322,8 +378,8 @@
 	(height *mix-tag-height*)
 	(home (mix-home id)))
     (if (not (= oy -1)) ; already erased?
-	(fill-rectangle	(- ox 1 (/ width 2)) (- oy 1 height) (+ width 2) (+ height 2) (car home) (cadr home) time-graph #t))
-    (fill-rectangle (- x (/ width 2)) (- y height) width height (car home) (cadr home))))
+	(fill-rectangle-1 (- ox 1 (/ width 2)) (- oy 1 height) (+ width 2) (+ height 2) (car home) (cadr home) time-graph #t))
+    (fill-rectangle-1 (- x (/ width 2)) (- y height) width height (car home) (cadr home))))
 
 (hook-push draw-mix-hook
 	   (lambda (hook)

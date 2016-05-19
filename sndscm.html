@@ -7173,35 +7173,6 @@ the clef instead.
 </p>
 <img class="indented" src="pix/sndcmn.png" alt="Snd with music symbols">
 
-<p>This was created with:
-</p>
-
-<pre class="indented">
-(<a class=quiet href="#wsdoc">with-sound</a> () (fm-violin 0 1 440 .1))
-
-(define (draw-staff x0 y0 width line-sep)
-  (let ((cr (make-cairo (car (channel-widgets 0 0)))))
-    (do ((line 0 (+ 1 line))
-         (x x0) 
-         (y y0 (+ y line-sep)))
-        ((= line 5))
-      (<a class=quiet href="extsnd.html#drawline">draw-line</a> x y (+ x width) y 0 0 time-graph cr))
-    (free-cairo cr)))
-
-(define (draw-a-440 x0 y0 size)
-  (let ((width (* size 100))
-        (line-sep (* size 20))
-        (qsize (* size 80)))
-    (draw-staff (+ x0 (* size 5)) y0 width line-sep)	
-    (draw-treble-clef x0 (+ y0 (* size 61)) qsize)
-    (draw-quarter-note (+ x0 (* 70 size)) (+ y0 (* size 52)) qsize)
-    (let ((cr (make-cairo (car (channel-widgets 0 0)))))
-      (<a class=quiet href="extsnd.html#fillrectangle">fill-rectangle</a> (+ x0 (* 90 size)) (- y0 (* size 10)) (* size 3) (* size 60) 0 0 time-graph #f cr)
-      (free-cairo cr))))
-
-(draw-a-440 50 80 1.0)
-</pre>
-
 <p>
 A fancier <a href="extsnd.html#waltzexample">example</a> is included in musglyphs.scm.  It takes a list of notes, each mixed as a virtual mix,
 and displays the note pitches as music notation on two staves at the top of the graph. The two main

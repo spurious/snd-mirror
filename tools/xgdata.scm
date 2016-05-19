@@ -9278,7 +9278,7 @@
 
 (CFNC-3.20 "gboolean gtk_text_iter_starts_tag GtkTextIter* iter GtkTextTag* @tag")
 
-#|
+
 (CCAST-3.20 "GDK_SEAT(object)" "GdkSeat*")
 (CCHK-3.20 "GDK_IS_SEAT(object)" "GdkSeat*")
 
@@ -9296,14 +9296,14 @@
 (CFNC-3.20 "GdkDragContext* gdk_drag_begin_from_point GdkWindow* window GdkDevice* device GList* targets gint x_root gint y_root")
 (CFNC-3.20 "void gdk_drag_drop_done GdkDragContext* context gboolean success")
 (CFNC-3.20 "void gdk_drag_context_set_hotspot GdkDragContext* context gint hot_x gint hot_y")
-(CFNC-3.20 "GdkGrabStatus gdk_seat_grab GdkSeat* seat GdkWindow* window GdkSeatCapabilities capabilities gboolean owner_events GdkCursor* cursor const GdkEvent* event GdkSeatGrabPrepareFunc prepare_func lambda_data #prepare_func_data")
+(CFNC-3.20 "GdkGrabStatus gdk_seat_grab GdkSeat* seat GdkWindow* window GdkSeatCapabilities capabilities gboolean owner_events GdkCursor* cursor GdkEvent* event GdkSeatGrabPrepareFunc prepare_func lambda_data #func_info") ; the name func_info is built-in
 (CFNC-3.20 "void gdk_seat_ungrab GdkSeat* seat")
 (CFNC-3.20 "GdkDisplay* gdk_seat_get_display GdkSeat* seat")
 (CFNC-3.20 "GdkSeatCapabilities gdk_seat_get_capabilities GdkSeat* seat")
 (CFNC-3.20 "GList* gdk_seat_get_slaves GdkSeat* seat GdkSeatCapabilities capabilities")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_pointer GdkSeat* seat")
 (CFNC-3.20 "GdkDevice* gdk_seat_get_keyboard GdkSeat* seat")
-|#
+
 
 ;;; 3.19.6:
 

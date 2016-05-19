@@ -126,14 +126,6 @@
   ;;    function info is either a list: (return-type c-name arg-type) or a list thereof
   ;;    the new functions are placed in cur-env
 
-  (define collides?
-    (let ((all-names ()))
-      (lambda (name)
-	(if (memq name all-names) 
-	    (format *stderr* "~A twice?~%" name)
-	    (set! all-names (cons name all-names)))
-	name)))
-
   (define handlers (list '(integer s7_is_integer s7_integer s7_make_integer s7_int)
 			 '(boolean s7_is_boolean s7_boolean s7_make_boolean bool)
 			 '(real s7_is_real s7_number_to_real s7_make_real s7_double)
@@ -293,6 +285,13 @@
 	   headers))
       (format p "#include \"s7.h\"~%~%"))
   
+    (define collides?
+      (let ((all-names ()))
+	(lambda (name)
+	  (if (memq name all-names) 
+	      (format *stderr* "~A twice?~%" name)
+	      (set! all-names (cons name all-names)))
+	  name)))
 
     (define* (add-one-function return-type name arg-types doc)
       ;; (format *stderr* "~A ~A ~A~%" return-type name arg-types): double j0 (double) for example
