@@ -1521,147 +1521,147 @@
       (or (eq? type ret)
 	  (and (pair? ret)
 	       (memq type ret))))
+
     
-    
-    (define relsub
-      (let ((relops '((< <= > number?) (<= < >= number?) (> >= < number?) (>= > <= number?)
-		      (char<? char<=? char>? char?) (char<=? char<? char>=? char?)  ; these never happen
-		      (char>? char>=? char<? char?) (char>=? char>? char<=? char?)
-		      (string<? string<=? string>? string?) (string<=? string<? string>=? string?)
-		      (string>? string>=? string<? string?) (string>=? string>? string<=? string?))))
-	(lambda (A B rel-op env)
-	  (call-with-exit
-	   (lambda (return)
-	     (when (and (pair? A)
-			(pair? B)
-			(= (length A) (length B) 3))
-	       (let ((Adata (assq (car A) relops))
-		     (Bdata (assq (car B) relops)))
-		 (when (and Adata Bdata)
-		   (let ((op1 (car A))
-			 (op2 (car B))
-			 (A1 (cadr A))
-			 (A2 (caddr A))
-			 (B1 (cadr B))
-			 (B2 (caddr B)))
-		     (let ((x (if (and (not (number? A1))
-				       (member A1 B))
-				  A1 
-				  (and (not (number? A2))
-				       (member A2 B) 
-				       A2))))
-		       (when x
-			 (let ((c1 (if (eq? x A1) A2 A1))
-			       (c2 (if (eq? x B1) B2 B1))
-			       (type (cadddr Adata)))
-			   (if (or (side-effect? c1 env)
-				   (side-effect? c2 env)
-				   (side-effect? x env))
-			       (return 'ok))
-			   (if (eq? x A2) (set! op1 (caddr Adata)))
-			   (if (eq? x B2) (set! op2 (caddr Bdata)))
-			   
-			   (let ((typer #f)
-				 (gtes #f)
-				 (gts #f)
-				 (eqop #f))
-			     (case type
-			       ((number?)
-				(set! typer number?)
-				(set! gtes '(>= <=))
-				(set! gts  '(< >))
-				(set! eqop '=))
-			       ((char?)
-				(set! typer char?)
-				(set! gtes '(char>=? char<=?))
-				(set! gts  '(char<? char>?))
-				(set! eqop 'char=?))
-			       ((string?)
-				(set! typer string?)
-				(set! gtes '(string>=? string<=?))
-				(set! gts  '(string<? string>?))
-				(set! eqop 'string=?)))
-
-			     (case rel-op
-			       ((and)
-				(cond ((equal? c1 c2)
-				       (cond ((eq? op1 op2)
-					      (return `(,op1 ,x ,c1)))
-					     
-					     ((eq? op2 (cadr (assq op1 relops)))
-					      (if (memq op2 gtes)
-						  (return `(,op1 ,x ,c1))
-						  (return `(,op2 ,x ,c1))))
-					     
-					     ((and (memq op1 gtes)
-						   (memq op2 gtes))
-					      (return `(,eqop ,x ,c1)))
-					     
-					     (else (return #f))))
-				      
-				      ((and (typer c1)
-					    (typer c2))
-				       (cond ((or (eq? op1 op2)
-						  (eq? op2 (cadr (assq op1 relops))))
-					      (if ((symbol->value op1) c1 c2)
-						  (return `(,op1 ,x ,c1))
-						  (return `(,op2 ,x ,c2))))
-					     ((eq? op1 (caddr (assq op2 relops)))
-					      (if ((symbol->value op1) c2 c1)
-						  (return `(,op1 ,c2 ,x ,c1))
-						  (if (memq op1 gts)
-						      (return #f))))
-					     ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-						   ((symbol->value op1) c1 c2))
-					      (return #f))))))
-			       
-			       ((or)
-				(cond ((equal? c1 c2)
-				       (cond ((eq? op1 op2)
-					      (return `(,op1 ,x ,c1)))
-					     
-					     ((eq? op2 (cadr (assq op1 relops)))
-					      (if (memq op2 gtes)
-						  (return `(,op2 ,x ,c1))
-						  (return `(,op1 ,x ,c1))))
-					     
-					     ((and (memq op1 gts)
-						   (memq op2 gts))
-					      (return `(not (,eqop ,x ,c1))))
-					     
-					     (else (return #t))))
-				      
-				      ((and (typer c1)
-					    (typer c2))
-				       (cond ((or (eq? op1 op2)
-						  (eq? op2 (cadr (assq op1 relops))))
-					      (if ((symbol->value op1) c1 c2) 
-						  (return `(,op2 ,x ,c2))
-						  (return `(,op1 ,x ,c1))))
-					     ((eq? op1 (caddr (assq op2 relops)))
-					      (if ((symbol->value op1) c2 c1)
-						  (return #t))
-					      (return `(not (,(cadr (assq op1 relops)) ,c1 ,x ,c2))))
-					     ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-						   ((symbol->value op1) c2 c1))
-					      (return #t)))))))))))))))
-	     'ok)))))
-
-
     (define simplify-boolean
+
       (let ((notables (let ((h (make-hash-table)))
-			(for-each
-			 (lambda (op)
-			   (set! (h (car op)) (cadr op)))
-			 '((< >=) (> <=) (<= >) (>= <)
-			   (char<? char>=?) (char>? char<=?) (char<=? char>?) (char>=? char<?)
-			   (string<? string>=?) (string>? string<=?) (string<=? string>?) (string>=? string<?)
-			   (char-ci<? char-ci>=?) (char-ci>? char-ci<=?) (char-ci<=? char-ci>?) (char-ci>=? char-ci<?)
-			   (string-ci<? string-ci>=?) (string-ci>? string-ci<=?) (string-ci<=? string-ci>?) (string-ci>=? string-ci<?)
-			   (odd? even?) (even? odd?) (exact? inexact?) (inexact? exact?)))
-			h)))
+		    (for-each
+		     (lambda (op)
+		       (set! (h (car op)) (cadr op)))
+		     '((< >=) (> <=) (<= >) (>= <)
+		       (char<? char>=?) (char>? char<=?) (char<=? char>?) (char>=? char<?)
+		       (string<? string>=?) (string>? string<=?) (string<=? string>?) (string>=? string<?)
+		       (char-ci<? char-ci>=?) (char-ci>? char-ci<=?) (char-ci<=? char-ci>?) (char-ci>=? char-ci<?)
+		       (string-ci<? string-ci>=?) (string-ci>? string-ci<=?) (string-ci<=? string-ci>?) (string-ci>=? string-ci<?)
+		       (odd? even?) (even? odd?) (exact? inexact?) (inexact? exact?)))
+		    h))
+	    (relsub
+	     (let ((relops '((< <= > number?) (<= < >= number?) (> >= < number?) (>= > <= number?)
+			     (char<? char<=? char>? char?) (char<=? char<? char>=? char?)  ; these never happen
+			     (char>? char>=? char<? char?) (char>=? char>? char<=? char?)
+			     (string<? string<=? string>? string?) (string<=? string<? string>=? string?)
+			     (string>? string>=? string<? string?) (string>=? string>? string<=? string?))))
+	       (lambda (A B rel-op env)
+		 (call-with-exit
+		  (lambda (return)
+		    (when (and (pair? A)
+			       (pair? B)
+			       (= (length A) (length B) 3))
+		      (let ((Adata (assq (car A) relops))
+			    (Bdata (assq (car B) relops)))
+			(when (and Adata Bdata)
+			  (let ((op1 (car A))
+				(op2 (car B))
+				(A1 (cadr A))
+				(A2 (caddr A))
+				(B1 (cadr B))
+				(B2 (caddr B)))
+			    (let ((x (if (and (not (number? A1))
+					      (member A1 B))
+					 A1 
+					 (and (not (number? A2))
+					      (member A2 B) 
+					      A2))))
+			      (when x
+				(let ((c1 (if (eq? x A1) A2 A1))
+				      (c2 (if (eq? x B1) B2 B1))
+				      (type (cadddr Adata)))
+				  (if (or (side-effect? c1 env)
+					  (side-effect? c2 env)
+					  (side-effect? x env))
+				      (return 'ok))
+				  (if (eq? x A2) (set! op1 (caddr Adata)))
+				  (if (eq? x B2) (set! op2 (caddr Bdata)))
+				  
+				  (let ((typer #f)
+					(gtes #f)
+					(gts #f)
+					(eqop #f))
+				    (case type
+				      ((number?)
+				       (set! typer number?)
+				       (set! gtes '(>= <=))
+				       (set! gts  '(< >))
+				       (set! eqop '=))
+				      ((char?)
+				       (set! typer char?)
+				       (set! gtes '(char>=? char<=?))
+				       (set! gts  '(char<? char>?))
+				       (set! eqop 'char=?))
+				      ((string?)
+				       (set! typer string?)
+				       (set! gtes '(string>=? string<=?))
+				       (set! gts  '(string<? string>?))
+				       (set! eqop 'string=?)))
+				    
+				    (case rel-op
+				      ((and)
+				       (cond ((equal? c1 c2)
+					      (cond ((eq? op1 op2)
+						     (return `(,op1 ,x ,c1)))
+						    
+						    ((eq? op2 (cadr (assq op1 relops)))
+						     (if (memq op2 gtes)
+							 (return `(,op1 ,x ,c1))
+							 (return `(,op2 ,x ,c1))))
+						    
+						    ((and (memq op1 gtes)
+							  (memq op2 gtes))
+						     (return `(,eqop ,x ,c1)))
+						    
+						    (else (return #f))))
+					     
+					     ((and (typer c1)
+						   (typer c2))
+					      (cond ((or (eq? op1 op2)
+							 (eq? op2 (cadr (assq op1 relops))))
+						     (if ((symbol->value op1) c1 c2)
+							 (return `(,op1 ,x ,c1))
+							 (return `(,op2 ,x ,c2))))
+						    ((eq? op1 (caddr (assq op2 relops)))
+						     (if ((symbol->value op1) c2 c1)
+							 (return `(,op1 ,c2 ,x ,c1))
+							 (if (memq op1 gts)
+							     (return #f))))
+						    ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+							  ((symbol->value op1) c1 c2))
+						     (return #f))))))
+				      
+				      ((or)
+				       (cond ((equal? c1 c2)
+					      (cond ((eq? op1 op2)
+						     (return `(,op1 ,x ,c1)))
+						    
+						    ((eq? op2 (cadr (assq op1 relops)))
+						     (if (memq op2 gtes)
+							 (return `(,op2 ,x ,c1))
+							 (return `(,op1 ,x ,c1))))
+						    
+						    ((and (memq op1 gts)
+							  (memq op2 gts))
+						     (return `(not (,eqop ,x ,c1))))
+						    
+						    (else (return #t))))
+					     
+					     ((and (typer c1)
+						   (typer c2))
+					      (cond ((or (eq? op1 op2)
+							 (eq? op2 (cadr (assq op1 relops))))
+						     (if ((symbol->value op1) c1 c2) 
+							 (return `(,op2 ,x ,c2))
+							 (return `(,op1 ,x ,c1))))
+						    ((eq? op1 (caddr (assq op2 relops)))
+						     (if ((symbol->value op1) c2 c1)
+							 (return #t))
+						     (return `(not (,(cadr (assq op1 relops)) ,c1 ,x ,c2))))
+						    ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
+							  ((symbol->value op1) c2 c1))
+						     (return #t)))))))))))))))
+		    'ok))))))
+
 	(lambda (in-form true false env)
-      
+    
       (define (classify e)
 	(if (not (just-constants? e env))
 	    e
@@ -6621,8 +6621,13 @@
 			    (eq? (caadr arg) 'open-input-string))
 		       (lint-format "perhaps ~A" caller (lists->string form `(eval-string ,(cadadr arg)))))
 
-		      ;; (eval ({list} 'f ({apply_values} x))) -> (apply f x)?
-		      )))
+		      ((and (eq? (car arg) #_{list})  ; (eval `(f ,@y)) -> (apply f y)
+			    (= (length arg) 3)
+			    (quoted-symbol? (cadr arg))
+			    (pair? (caddr arg))
+			    (eq? (caaddr arg) #_{apply_values})
+			    (null? (cddr (caddr arg))))
+		       (lint-format "perhaps ~A" caller (lists->string form `(apply ,(cadadr arg) ,(cadr (caddr arg)))))))))
 	     ((3)
 	      (let ((arg (cadr form))
 		    (e (caddr form)))
@@ -8714,15 +8719,14 @@
 					     (lists->string outer-form `(... ,(tree-subst new-call call n))))))))))))))
       
 	  
-#|
-	  ;; needs to check outer let also -- and maybe complain?
-	  ;; bounds might be dependent on body length
-	  ;; rewrite needs to take k=0 case into account
-	  ;; needs to ignore outer level of library?
+
+	  ;; needs to check outer let also -- and maybe complain? [outer = form: we're already closed?]
+	  ;; bounds of closable context might be dependent on body length
+	  ;; needs to ignore outer level of library? -- body is curlet?
 	  ;; needs lambda/function as well (latter if k>0)
-	  ;; needs truncated caddr!
 	  ;; (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f)))
 	  ;; in function cases, just move the definition?
+	  ;;  if used just once, move to that point in the expr+1? -- need to point it out somehow?
 
 	  (when (> len 4)
 	    (do ((q body (cdr q))
@@ -8731,27 +8735,65 @@
 	      (let ((expr (car q)))
 		(if (and (pair? expr)
 			 (eq? (car expr) 'define)
-			 (pair? (cdr expr)))
+			 (pair? (cdr expr))
+			 (pair? (cddr expr))
+			 (null? (cdddr expr)))
 		    (let ((name (and (symbol? (cadr expr)) (cadr expr))))
-		      ;(format *stderr* "name: ~A, ~A~%" name k)
 		      (if name
 			  (let ((last-ref k))
-			    (do ((p (cdr expr) (cdr p))
+			    (do ((p (cdr q) (cdr p))
 				 (i (+ k 1) (+ i 1)))
 				((null? p)
-				 ;(format *stderr* "last: ~A, k: ~A, i: ~A~%" last-ref k i)
-				 (if (and (< k last-ref (+ k 3))
-					  (> i (+ last-ref 1)))
-				     (lint-format "the scope of ~A could be reduced: ~A" caller 
-						  name
-						  (lists->string body
-								 `(let ((,name ,(caddr expr)))
-								    ...)))))
+				 (if (and (< k last-ref (+ k 2)) ; currently limit extent to next statement
+					  (pair? (list-ref body (+ k 1))))
+				     (let ((end-dots (if (< last-ref (- len 1)) '(...) ())))
+				       (let ((use-expr (list-ref body (+ k 1))))
+					 (if (eq? (car use-expr) 'define)
+					     (if (eq? (cadr use-expr) name)
+						 (lint-format "use set! to redefine ~A: ~A" caller name
+							      (lists->string `(... ,use-expr ,@end-dots)
+									     `(... (set! ,name ,(caddr use-expr)) ,@end-dots)))
+						 (if (pair? (cadr use-expr))
+						     (if (symbol? (caadr use-expr))
+							 (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (caadr use-expr)
+								      (lists->string `(... ,expr ,use-expr ,@end-dots)
+										     `(... (define ,(caadr use-expr)
+											     (let ((,name ,(caddr expr)))
+											       (lambda ,(cdadr use-expr)
+												 ,@(if (< (tree-leaves (cddr use-expr)) 30)
+												       (cddr use-expr)
+												       '(...)))))
+											   ,@end-dots))))
+						     (if (and (symbol? (cadr use-expr))
+							      (pair? (cddr use-expr)))
+							 (if (and (pair? (caddr use-expr))
+								  (eq? (caaddr use-expr) 'lambda))
+
+							     (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (cadr use-expr)
+								      (lists->string `(... ,expr ,use-expr ,@end-dots)
+										     `(... (define ,(cadr use-expr)
+											     (let ((,name ,(caddr expr)))
+											       ,(if (< (tree-leaves (caddr use-expr)) 30)
+												     (caddr use-expr)
+												     '...)))
+											   ,@end-dots)))
+
+							     (lint-format "the scope of ~A could be reduced: ~A" caller name
+									  (lists->string `(... ,expr ,use-expr ,@end-dots)
+											 `(... (define ,(cadr use-expr)
+												 (let ((,name ,(caddr expr)))
+												   ,(caddr use-expr)))
+											       ,@end-dots)))))))
+
+					     (lint-format "the scope of ~A could be reduced: ~A" caller name
+							  (lists->string `(... ,expr ,use-expr ,@end-dots)
+									 `(... (let ((,name ,(caddr expr))) 
+										 ,use-expr)
+									       ,@end-dots))))))))
 			      (when (tree-memq name (car p))
 				(set! last-ref i))))))))))
-|#
-	  ))
 
+	  ))
 
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
       (lint-walk-open-body caller head body env))
@@ -14672,4 +14714,4 @@
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;; <nn> in repl?
 ;;;
-;;; 117 22377 454628
+;;; 119 22377 459073

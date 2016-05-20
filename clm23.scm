@@ -40,9 +40,6 @@
 			  (sin (phases i))))))
     sum))
 
-
-(define open-input make-file->sample)
-
 (define two-pi (* 2 pi))
 
 (define (simple-out beg dur freq amp)
@@ -534,7 +531,7 @@
 (define (simple-ina beg dur amp file)
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
-	(fil (open-input file)))
+	(fil (make-file->sample file)))
     (do ((i start (+ i 1))
 	 (ctr 0 (+ ctr 1)))
 	((= i end))

@@ -228,41 +228,47 @@
 		;; so, locally redefine these three to use the repl top-level while we're in the repl.
 		;; in addition, for each of these, we need to report missing close parens and so on
 		
-		(define (repl-hooks)
-		  (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
-		  (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook)))
+		(let ((repl-hooks
+		       (lambda ()
+			 (set! (hook-functions *missing-close-paren-hook*) (cons badexpr old-badexpr-hook))
+			 (set! (hook-functions *unbound-variable-hook*) (cons shell? old-unbound-var-hook))))
 		
-		(define (original-hooks)
-		  (set! unbound-case #f)
-		  (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
-		  (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))
+		      (original-hooks
+		       (lambda ()
+			 (set! unbound-case #f)
+			 (set! (hook-functions *missing-close-paren-hook*) old-badexpr-hook)
+			 (set! (hook-functions *unbound-variable-hook*) old-unbound-var-hook))))
 		
-		(define new-load (let ((documentation "this is the repl's load replacement; its default is to use the repl's top-level-let.")
-				       (signature '(values string? let?)))
-				   (lambda* (file (e (*repl* 'top-level-let)))
-				     (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))))
-		
-		(define new-eval (let ((documentation "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
-				       (signature '(values list? let?)))
-				   (lambda* (form (e (*repl* 'top-level-let)))
-				     (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))))
-		
-		(define new-eval-string (let ((documentation "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
-					      (signature '(values string? let?)))
-					  (lambda* (str (e (*repl* 'top-level-let)))
-					    (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks))))
-		(dynamic-wind
-		    (lambda ()
-		      (repl-hooks)
-		      (set! eval new-eval)
-		      (set! eval-string new-eval-string)
-		      (set! load new-load))
-		    body
-		    (lambda ()
-		      (set! eval old-eval)
-		      (set! eval-string old-eval-string)
-		      (set! load old-load)
-		      (original-hooks)))))
+		  (let ((new-load 
+			 (let ((documentation "this is the repl's load replacement; its default is to use the repl's top-level-let.")
+			       (signature '(values string? let?)))
+			   (lambda* (file (e (*repl* 'top-level-let)))
+			     (dynamic-wind original-hooks (lambda () (load file e)) repl-hooks))))
+			
+			(new-eval 
+			 (let ((documentation "this is the repl's eval replacement; its default is to use the repl's top-level-let.")
+			       (signature '(values list? let?)))
+			   (lambda* (form (e (*repl* 'top-level-let)))
+			     (dynamic-wind original-hooks (lambda () (eval form e)) repl-hooks))))
+			
+			(new-eval-string 
+			 (let ((documentation "this is the repl's eval-string replacement; its default is to use the repl's top-level-let.")
+			       (signature '(values string? let?)))
+			   (lambda* (str (e (*repl* 'top-level-let)))
+			     (dynamic-wind original-hooks (lambda () (eval-string str e)) repl-hooks)))))
+		    
+		    (dynamic-wind
+			(lambda ()
+			  (repl-hooks)
+			  (set! eval new-eval)
+			  (set! eval-string new-eval-string)
+			  (set! load new-load))
+			body
+			(lambda ()
+			  (set! eval old-eval)
+			  (set! eval-string old-eval-string)
+			  (set! load old-load)
+			  (original-hooks)))))))
 	    
 	    
 	    ;; -------- match parens --------
