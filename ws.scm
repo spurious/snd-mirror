@@ -698,25 +698,17 @@
 (define ws-save-state 
   (let ((documentation "(ws-save-state filename) is an after-save-state-hook function that saves the current with-sound global settings"))
     (lambda (hook)
-      (let ((filename (hook 'name)))
-
-	(define (open-appending filename)
-	  (open-output-file filename "a"))
-    
-	(define close-appending close-output-port)
-    
-	(let ((fd (open-appending filename)))
-	  ;; fd is a Scheme port at this point (not an integer), so we can use format etc
-	  ;; should the save-state file load this file if it hasn't been loaded? (what path?)
-	  (format fd "~%~%;;; from ws.scm~%")
-	  (format fd "(if (defined? '*clm-srate*)~%")
-	  (format fd "    (begin~%")
-	  (format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
-	  (format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
-	  (format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
-	  (format fd "      (set! *clm-sample-type* ~A)~%" (mus-sample-type->string *clm-sample-type*))
-	  (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
-	  (close-appending fd))))))
+      (let ((fd (open-output-file (hook 'name) "a")))
+	;; should the save-state file load this file if it hasn't been loaded? (what path?)
+	(format fd "~%~%;;; from ws.scm~%")
+	(format fd "(if (defined? '*clm-srate*)~%")
+	(format fd "    (begin~%")
+	(format fd "      (set! *clm-srate* ~A)~%" *clm-srate*)
+	(format fd "      (set! *clm-file-name* ~S)~%" *clm-file-name*)
+	(format fd "      (set! *clm-channels* ~A)~%" *clm-channels*)
+	(format fd "      (set! *clm-sample-type* ~A)~%" (mus-sample-type->string *clm-sample-type*))
+	(format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
+	(close-output-port fd)))))
 
 (if (not (memq ws-save-state (hook-functions after-save-state-hook)))
     (set! (hook-functions after-save-state-hook) (list ws-save-state)))

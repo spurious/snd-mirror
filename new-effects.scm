@@ -576,21 +576,19 @@
 	      (flecho-target 'sound)
 	      (flecho-truncate #t))
 	  (lambda ()
-	    (define flecho-1
-	      (lambda (scaler secs cutoff)
-		(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-		      (del (make-delay (round (* secs (srate)))))
-		      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-		  (lambda (inval)
-		    (+ inval 
-		       (delay del 
-			      (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
-	    
 	    (unless (Widget? flecho-dialog)
 	      ;; if flecho-dialog doesn't exist, create it
 	      (let ((initial-flecho-scaler 0.5)
 		    (initial-flecho-delay 0.9)
-		    (sliders ()))
+		    (sliders ())
+		    (flecho-1 (lambda (scaler secs cutoff)
+				(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
+				      (del (make-delay (round (* secs (srate)))))
+				      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+				  (lambda (inval)
+				    (+ inval 
+				       (delay del 
+					      (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval)))))))))))
 		(set! flecho-dialog 
 		      (make-effect-dialog 
 		       flecho-label
@@ -664,25 +662,23 @@
 	      (zecho-target 'sound)
 	      (zecho-truncate #t))
 	  (lambda ()
-	    (define zecho-1
-	      (lambda (scaler secs frq amp cutoff)
-		(let* ((os (make-oscil frq))
-		       (len (round (* secs (srate))))
-		       (del (make-delay len :max-size (round (+ len amp 1))))
-		       (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-		  (lambda (inval)
-		    (+ inval 
-		       (delay del 
-			      (* scaler (+ (tap del) (* (env genv) inval)))
-			      (* amp (oscil os))))))))
-	    
 	    (unless (Widget? zecho-dialog)
 	      ;; if zecho-dialog doesn't exist, create it
 	      (let ((initial-zecho-scaler 0.5)
 		    (initial-zecho-delay 0.75)
 		    (initial-zecho-freq 6)
 		    (initial-zecho-amp 10.0)
-		    (sliders ()))
+		    (sliders ())
+		    (zecho-1 (lambda (scaler secs frq amp cutoff)
+			       (let* ((os (make-oscil frq))
+				      (len (round (* secs (srate))))
+				      (del (make-delay len :max-size (round (+ len amp 1))))
+				      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+				 (lambda (inval)
+				   (+ inval 
+				      (delay del 
+					     (* scaler (+ (tap del) (* (env genv) inval)))
+					     (* amp (oscil os)))))))))
 		(set! zecho-dialog 
 		      (make-effect-dialog 
 		       zecho-label
@@ -1188,15 +1184,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	      (new-comb-chord-dialog #f)
 	      (new-comb-chord-target 'sound))
 	  (lambda ()
-	    (define new-comb-chord
-	      (lambda (scaler size amp interval-one interval-two)
-		;; Comb chord filter: create chords by using filters at harmonically related sizes.
-		(let ((cs (make-comb-bank (vector (make-comb scaler size)
-						  (make-comb scaler (* size interval-one))
-						  (make-comb scaler (* size interval-two))))))
-		  (lambda (x)
-		    (* amp (comb-bank cs x))))))
-	    
 	    (unless (Widget? new-comb-chord-dialog)
 	      ;; if new-comb-chord-dialog doesn't exist, create it
 	      (let ((initial-new-comb-chord-scaler 0.95)
@@ -1204,7 +1191,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 		    (initial-new-comb-chord-amp 0.3)
 		    (initial-new-comb-chord-interval-one 0.75)
 		    (initial-new-comb-chord-interval-two 1.20)
-		    (sliders ()))
+		    (sliders ())
+		    (new-comb-chord (lambda (scaler size amp interval-one interval-two)
+				      ;; Comb chord filter: create chords by using filters at harmonically related sizes.
+				      (let ((cs (make-comb-bank (vector (make-comb scaler size)
+									(make-comb scaler (floor (* size interval-one)))
+									(make-comb scaler (floor (* size interval-two)))))))
+					(lambda (x)
+					  (* amp (comb-bank cs x)))))))
 		(set! new-comb-chord-dialog
 		      (make-effect-dialog 
 		       new-comb-chord-label

@@ -8420,62 +8420,62 @@
 						 (values)))
 					   (proper-list* (var-arglist v))))))))
 	    
-	    (define find-code-match 
-	      (let ((e1 ())
-		    (cutoff (max func-min-cutoff (- leaves 12))))
-		(lambda (v)
-		  (and (not (eq? (var-name v) :lambda))
-		       (memq (var-ftype v) '(define lambda define* lambda*))
-		       (not (eq? caller (var-name v)))
-		       (let ((body (cddr (var-initial-value v)))
-			     (args (var-arglist v)))
-			 (set! e1 (var-env v))
-			 
-			 (let ((args-len (length args)))
-			   (when (or (eq? name-args-len :unset)
-				     (equal? args-len name-args-len)
-				     (and (integer? args-len)
-					  (integer? name-args-len)
-					  (not (negative? (* args-len name-args-len)))))
-			     
-			     (unless (var-leaves v)
-			       (set! (var-leaves v) (tree-leaves body))
-			       (set! (var-match-list v) (if (symbol? args)
-							    (list (cons args :unset))
-							    (map (lambda (arg)
-								   (if (symbol? arg)
-								       (cons arg :unset)
-								       (values)))
-								 (proper-list* args)))))
-			     
-			     ;; var-leaves is size of func (v) body
-			     ;; leaves is size of form which we want to match with func
-			     ;; func-min-cutoff avoids millions of uninteresting matches
-			     
-			     (and (<= cutoff (var-leaves v) leaves)
-				  (let ((match-list (do ((p (var-match-list v) (cdr p))) 
-							((null? p) 
-							 (var-match-list v))
-						      (set-cdr! (car p) :unset))))
-				    (and (structures-equal? body new-form
-							    (cons (cons (var-name v) caller) match-list) e1 e2)
-					 ;; if the functions are recursive, we also need those names matched, hence the extra entry
-					 ;;   but we treat match-list below as just the args, so add the func names at the call,
-					 ;;   but this can be fooled if we're playing games with eq? basically -- the function
-					 ;;   names should only match if used as functions.
-					 
-					 (not (member :unset match-list (lambda (a b) (eq? (cdr b) :unset))))
-					 (let ((new-args (map cdr match-list)))
-					   (if (and (equal? new-args name-args)
-						    (equal? args-len name-args-len))
-					       (lint-format "~A could be ~A" caller caller `(define ,caller ,(var-name v)))
-					       (lint-format "perhaps ~A" caller (lists->string form `(,(var-name v) ,@new-args))))
-					   #t)))))))))))
+	    (let ((find-code-match 
+		   (let ((e1 ())
+			 (cutoff (max func-min-cutoff (- leaves 12))))
+		     (lambda (v)
+		       (and (not (eq? (var-name v) :lambda))
+			    (memq (var-ftype v) '(define lambda define* lambda*))
+			    (not (eq? caller (var-name v)))
+			    (let ((body (cddr (var-initial-value v)))
+				  (args (var-arglist v)))
+			      (set! e1 (var-env v))
+			      
+			      (let ((args-len (length args)))
+				(when (or (eq? name-args-len :unset)
+					  (equal? args-len name-args-len)
+					  (and (integer? args-len)
+					       (integer? name-args-len)
+					       (not (negative? (* args-len name-args-len)))))
+				  
+				  (unless (var-leaves v)
+				    (set! (var-leaves v) (tree-leaves body))
+				    (set! (var-match-list v) (if (symbol? args)
+								 (list (cons args :unset))
+								 (map (lambda (arg)
+									(if (symbol? arg)
+									    (cons arg :unset)
+									    (values)))
+								      (proper-list* args)))))
+				  
+				  ;; var-leaves is size of func (v) body
+				  ;; leaves is size of form which we want to match with func
+				  ;; func-min-cutoff avoids millions of uninteresting matches
+				  
+				  (and (<= cutoff (var-leaves v) leaves)
+				       (let ((match-list (do ((p (var-match-list v) (cdr p))) 
+							     ((null? p) 
+							      (var-match-list v))
+							   (set-cdr! (car p) :unset))))
+					 (and (structures-equal? body new-form
+								 (cons (cons (var-name v) caller) match-list) e1 e2)
+					      ;; if the functions are recursive, we also need those names matched, hence the extra entry
+					      ;;   but we treat match-list below as just the args, so add the func names at the call,
+					      ;;   but this can be fooled if we're playing games with eq? basically -- the function
+					      ;;   names should only match if used as functions.
+					      
+					      (not (member :unset match-list (lambda (a b) (eq? (cdr b) :unset))))
+					      (let ((new-args (map cdr match-list)))
+						(if (and (equal? new-args name-args)
+							 (equal? args-len name-args-len))
+						    (lint-format "~A could be ~A" caller caller `(define ,caller ,(var-name v)))
+						    (lint-format "perhaps ~A" caller (lists->string form `(,(var-name v) ,@new-args))))
+						#t))))))))))))
 		
-	    (do ((vs (or (hash-table-ref equable-closures (caar new-form)) ()) (cdr vs)))
-		;; instead of hashing on car as above, hash on composite of cars+base statements
-		((or (null? vs)
-		     (find-code-match (car vs)))))))))
+	      (do ((vs (or (hash-table-ref equable-closures (caar new-form)) ()) (cdr vs)))
+		  ;; instead of hashing on car as above, hash on composite of cars+base statements
+		  ((or (null? vs)
+		       (find-code-match (car vs))))))))))
     
 
     (define (find-call sym body)
@@ -8718,82 +8718,105 @@
 				(lint-format "perhaps embed ~A: ~A" caller new-var
 					     (lists->string outer-form `(... ,(tree-subst new-call call n))))))))))))))
       
-	  
-
 	  ;; needs to check outer let also -- and maybe complain? [outer = form: we're already closed?]
 	  ;; bounds of closable context might be dependent on body length
-	  ;; needs to ignore outer level of library? -- body is curlet?
-	  ;; needs lambda/function as well (latter if k>0)
 	  ;; (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f)))
-	  ;; in function cases, just move the definition?
 	  ;;  if used just once, move to that point in the expr+1? -- need to point it out somehow?
 
-	  (when (> len 4)
+	  (when (and (> len 2)
+		     (not (tree-memq 'curlet (list-ref body (- len 1)))))
 	    (do ((q body (cdr q))
 		 (k 0 (+ k 1)))
 		((null? q))
 	      (let ((expr (car q)))
-		(if (and (pair? expr)
-			 (eq? (car expr) 'define)
-			 (pair? (cdr expr))
-			 (pair? (cddr expr))
-			 (null? (cdddr expr)))
-		    (let ((name (and (symbol? (cadr expr)) (cadr expr))))
-		      (if name
-			  (let ((last-ref k))
-			    (do ((p (cdr q) (cdr p))
-				 (i (+ k 1) (+ i 1)))
-				((null? p)
-				 (if (and (< k last-ref (+ k 2)) ; currently limit extent to next statement
-					  (pair? (list-ref body (+ k 1))))
-				     (let ((end-dots (if (< last-ref (- len 1)) '(...) ())))
-				       (let ((use-expr (list-ref body (+ k 1))))
-					 (if (eq? (car use-expr) 'define)
-					     (if (eq? (cadr use-expr) name)
-						 (lint-format "use set! to redefine ~A: ~A" caller name
-							      (lists->string `(... ,use-expr ,@end-dots)
-									     `(... (set! ,name ,(caddr use-expr)) ,@end-dots)))
-						 (if (pair? (cadr use-expr))
-						     (if (symbol? (caadr use-expr))
-							 (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (caadr use-expr)
-								      (lists->string `(... ,expr ,use-expr ,@end-dots)
-										     `(... (define ,(caadr use-expr)
-											     (let ((,name ,(caddr expr)))
-											       (lambda ,(cdadr use-expr)
-												 ,@(if (< (tree-leaves (cddr use-expr)) 30)
-												       (cddr use-expr)
-												       '(...)))))
-											   ,@end-dots))))
-						     (if (and (symbol? (cadr use-expr))
-							      (pair? (cddr use-expr)))
-							 (if (and (pair? (caddr use-expr))
-								  (eq? (caaddr use-expr) 'lambda))
-
-							     (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (cadr use-expr)
-								      (lists->string `(... ,expr ,use-expr ,@end-dots)
-										     `(... (define ,(cadr use-expr)
-											     (let ((,name ,(caddr expr)))
-											       ,(if (< (tree-leaves (caddr use-expr)) 30)
-												     (caddr use-expr)
-												     '...)))
-											   ,@end-dots)))
-
-							     (lint-format "the scope of ~A could be reduced: ~A" caller name
-									  (lists->string `(... ,expr ,use-expr ,@end-dots)
-											 `(... (define ,(cadr use-expr)
-												 (let ((,name ,(caddr expr)))
-												   ,(caddr use-expr)))
-											       ,@end-dots)))))))
-
-					     (lint-format "the scope of ~A could be reduced: ~A" caller name
-							  (lists->string `(... ,expr ,use-expr ,@end-dots)
-									 `(... (let ((,name ,(caddr expr))) 
-										 ,use-expr)
-									       ,@end-dots))))))))
-			      (when (tree-memq name (car p))
-				(set! last-ref i))))))))))
-
-	  ))
+		(when (and (pair? expr)
+			   (eq? (car expr) 'define)
+			   (pair? (cdr expr))
+			   (pair? (cddr expr))
+			   (null? (cdddr expr)))
+		  (let ((name (and (symbol? (cadr expr)) (cadr expr))))
+		    (when name
+		      (let ((last-ref k))
+			(do ((p (cdr q) (cdr p))
+			     (i (+ k 1) (+ i 1)))
+			    ((null? p)
+			     (if (and (< k last-ref (+ k 2)) 
+					(pair? (list-ref body (+ k 1))))
+			       (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
+				     (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+				     (use-expr (list-ref body (+ k 1)))
+				     (seen-earlier (or (var-member name env)
+						       (do ((s body (cdr s)))
+							   ((or (eq? s q)
+								(and (pair? (car s))
+								     (tree-memq name (car s))))
+							    (not (eq? s q)))))))
+				 (unless seen-earlier
+				   (if (eq? (car use-expr) 'define)
+				       (cond ((eq? (cadr use-expr) name)
+					      (lint-format "use set! to redefine ~A: ~A" caller name
+							   (lists->string `(... ,use-expr ,@end-dots)
+									  `(... (set! ,name ,(caddr use-expr)) ,@end-dots))))
+					     ((pair? (cadr use-expr))
+					      (if (symbol? (caadr use-expr))
+						  (let-temporarily ((target-line-length 120))
+						    (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (caadr use-expr)
+								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+											  `(... (define ,(caadr use-expr)
+												  (,letx ((,name ,(caddr expr)))
+													 (lambda ,(cdadr use-expr)
+													   ,@(cddr use-expr))))
+												,@end-dots))))))
+					     ((and (symbol? (cadr use-expr))
+						   (pair? (cddr use-expr)))
+					      (let-temporarily ((target-line-length 120))
+						(if (and (pair? (caddr use-expr))
+							 (eq? (caaddr use-expr) 'lambda))
+						    (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (cadr use-expr)
+								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+											  `(... (define ,(cadr use-expr)
+												  (,letx ((,name ,(caddr expr)))
+													 ,(caddr use-expr)))
+												,@end-dots)))
+						    
+						    (lint-format "the scope of ~A could be reduced: ~A" caller name
+								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+											  `(... (define ,(cadr use-expr)
+												  (,letx ((,name ,(caddr expr)))
+													 ,(caddr use-expr)))
+												,@end-dots)))))))
+				       (let-temporarily ((target-line-length 120))
+					 (lint-format "the scope of ~A could be reduced: ~A" caller name
+						      (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+									       `(... (,letx ((,name ,(caddr expr))) 
+											    ,use-expr)
+										     ,@end-dots)))))))
+			       (when (and (> len 3)
+					  (< k last-ref (+ k 3))
+					  (pair? (list-ref body (+ k 1)))
+					  (pair? (list-ref body (+ k 2))))
+				 (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
+				       (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+				       (seen-earlier (or (var-member name env)
+							 (do ((s body (cdr s)))
+							     ((or (eq? s q)
+								  (and (pair? (car s))
+								       (tree-memq name (car s))))
+							      (not (eq? s q)))))))
+				   (unless seen-earlier
+				     (let ((use-expr1 (list-ref body (+ k 1)))
+					   (use-expr2 (list-ref body (+ k 2))))
+				       (if (not (or (tree-set-member '(define lambda) use-expr1)
+						    (tree-set-member '(define lambda) use-expr2)))
+					   (lint-format "the scope of ~A could be reduced: ~A" caller name
+							(let-temporarily ((target-line-length 120))
+							  (truncated-lists->string `(... ,expr ,use-expr1 ,use-expr2 ,@end-dots)
+										   `(... (,letx ((,name ,(caddr expr))) 
+												,use-expr1
+												,use-expr2)
+											 ,@end-dots)))))))))))
+			  (when (tree-memq name (car p))
+			    (set! last-ref i))))))))))))
 
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
       (lint-walk-open-body caller head body env))
@@ -9938,7 +9961,6 @@
 
 	  ;; walk a form, here curlet can change
 	  ;; (format *stderr* "lint-walk ~A~%" form)
-	  
 	  (cond ((symbol? form)
 		 (if (memq form '(+i -i))
 		     (format outport "~NC~A is not a number in s7~%" lint-left-margin #\space form))
@@ -10245,8 +10267,8 @@
 							     (not (symbol? (cadr body)))
 							     (or (not (pair? (cadr body)))
 								 (eq? (caadr body) 'quote)))
-							(and (not (memq (car body) '(quote quasiquote list cons append)))
-							     (not (tree-set-member '(#_{list} #_{apply_values} #_{append}) body)))))
+							(not (or (memq (car body) '(quote quasiquote list cons append))
+								 (tree-set-member '(#_{list} #_{apply_values} #_{append}) body)))))
 					       (lint-format "perhaps ~A or ~A" caller 
 							    (lists->string form `(define ,outer-name ,(unquoted (car val))))
 							    (truncated-list->string `(define (,outer-name) ,(unquoted (car val))))))
@@ -12198,34 +12220,34 @@
 							   ()))
 							(or has-else ()))))
 				   
-				   (define merge-case-keys 
-				     (let ((else-exprs (and (pair? else-clause) (cdr else-clause))))
-				       (define (a-few lst)
-					 (if (> (length lst) 3)
-					     (copy lst (make-list 4 '...) 0 3)
-					     lst))
-				       (lambda (clause)
-					 (let ((keys (car clause))
-					       (exprs (cdr clause)))
-					   (when (and (pair? exprs)             ; ignore clauses that are messed up
-						      (not (eq? keys 'else))
-						      (not (equal? exprs else-exprs)))
-					     (let ((prev (member exprs new-keys-and-exprs (lambda (a b) (equal? a (cdr b))))))
-					       (if prev
-						   (let* ((cur-clause (car prev))
-							  (cur-keys (car cur-clause)))
-						     (when (pair? cur-keys)
-						       (set! mergers (cons (list (a-few keys) (a-few cur-keys)) mergers))
-						       (set-car! cur-clause
-								 (append cur-keys
-									 (map (lambda (key)
-										(if (memv key cur-keys) (values) key))
-									      keys)))))
-						   (set! new-keys-and-exprs (cons (cons (copy (car clause)) (cdr clause)) new-keys-and-exprs)))))))))
-				   
-				   (for-each merge-case-keys (cddr form))
-				   (if (pair? else-foldable)
-				       (for-each merge-case-keys else-foldable))
+				   (let ((merge-case-keys 
+					  (let ((else-exprs (and (pair? else-clause) (cdr else-clause))))
+					    (define (a-few lst)
+					      (if (> (length lst) 3)
+						  (copy lst (make-list 4 '...) 0 3)
+						  lst))
+					    (lambda (clause)
+					      (let ((keys (car clause))
+						    (exprs (cdr clause)))
+						(when (and (pair? exprs)             ; ignore clauses that are messed up
+							   (not (eq? keys 'else))
+							   (not (equal? exprs else-exprs)))
+						  (let ((prev (member exprs new-keys-and-exprs (lambda (a b) (equal? a (cdr b))))))
+						    (if prev
+							(let* ((cur-clause (car prev))
+							       (cur-keys (car cur-clause)))
+							  (when (pair? cur-keys)
+							    (set! mergers (cons (list (a-few keys) (a-few cur-keys)) mergers))
+							    (set-car! cur-clause
+								      (append cur-keys
+									      (map (lambda (key)
+										     (if (memv key cur-keys) (values) key))
+										   keys)))))
+							(set! new-keys-and-exprs (cons (cons (copy (car clause)) (cdr clause)) new-keys-and-exprs))))))))))
+				     
+				     (for-each merge-case-keys (cddr form))
+				     (if (pair? else-foldable)
+					 (for-each merge-case-keys else-foldable)))
 				   
 				   (if (null? new-keys-and-exprs)
 				       (lint-format "perhaps ~A" caller 
@@ -14700,6 +14722,7 @@
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
+;;; if integer? checker for arg, and might be non-int?
 ;;;
 ;;; define in let no back dependencies -> let, else if simple+1 use, substitute?, if function+1 use -> named let?
 ;;;   if +begin + define same var both branches diff vals -- complain? suggest set!? [when/unless cond/case+define?]
@@ -14708,10 +14731,8 @@
 ;;;   given closed context, look for uncovered definex, point out shadow if any (=set), else look for collision, then scope->let
 ;;;     (let ((x 1)) (+ (if (> x 0) (begin (define x 3) x) (begin (define x 4) (+ x 1))) x)) -- last is inner
 ;;;   define in do body or any such context might be trouble -- does env shadow or replace? -- it replaces, varlet shadows -- use set!
-;;; internal define -- find context, restrict via let [8720 -- millions of these]
 ;;; if (provided) define define -- complains about extra define which is incorrect
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
-;;; <nn> in repl?
 ;;;
-;;; 119 22377 459073
+;;; 119 22377 457215

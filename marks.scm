@@ -357,15 +357,9 @@
 (define save-mark-properties
   (let ((documentation "(save-mark-properties) sets up an after-save-state-hook function to save any mark-properties"))
     (lambda ()
-      
-      (define (open-appending filename)
-	(open-output-file filename "a"))
-      
-      (define close-appending close-output-port)
-      
       (hook-push after-save-state-hook 
 		 (lambda (hook)
-		   (let ((fd (open-appending (hook 'name))))
+		   (let ((fd (open-output-file (hook 'name) "a")))
 		     (format fd "~%~%;;; from remember-mark-properties in marks.scm~%")
 		     (format fd "(if (not (defined? 'mark-property)) (load \"marks.scm\"))~%")
 		     (for-each 
@@ -386,7 +380,7 @@
 			    chn-m))
 			 snd-m))
 		      (marks))
-		     (close-appending fd)))))))
+		     (close-output-port fd)))))))
 
 
 (define mark-click-info 

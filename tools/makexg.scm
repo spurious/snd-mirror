@@ -126,6 +126,7 @@
 	"GtkGestureSwipe*" "GtkGestureZoom*" "GtkGestureController*" "GtkEventController*"
 
 	"GtkGLArea*" "GtkStyleContext*" "GtkPopoverMenu*" "GtkSearchEntry*" "GtkStackSidebar*" 
+	"GtkShortcutsWindow*"
 	))
 
 (define no-xen-p 

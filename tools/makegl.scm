@@ -108,7 +108,7 @@
   (if (string=? type "Display*")
       (copy "Display")
       (if (string=? type "XVisualInfo*")
-	  "XVisualInfo"
+	  (copy "XVisualInfo")
 	  (let ((len (length type))
 		(val (string-copy type)))
 	    (do ((i 0 (+ i 1)))
