@@ -164,9 +164,7 @@
 	      (XtAddEventHandler rename-text LeaveWindowMask #f
 				 (lambda (w context ev flag)
 				   (XtSetValues w (list XmNbackground *basic-color*)))))))
-	(if (not (XtIsManaged rename-dialog))
-	    (XtManageChild rename-dialog)
-	    (raise-dialog rename-dialog)))
+	((if (not (XtIsManaged rename-dialog)) XtManageChild raise-dialog) rename-dialog))
       8)))
 
 (install-searcher-with-colors (lambda (file) #t))

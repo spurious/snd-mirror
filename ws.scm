@@ -293,9 +293,7 @@
 	   
 	   (if (and play output-to-file)
 	       (if to-snd
-		   (if *clm-player*
-		       (*clm-player* snd-output)
-		       (*default-player* snd-output))
+		   ((or *clm-player* *default-player*) snd-output)
 		   (*default-player* output-1)))
 
 	   (if (and to-snd output-to-file)

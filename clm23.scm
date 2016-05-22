@@ -413,7 +413,7 @@
 	(outa i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr)))))))))
 
 (define (simple-amb beg dur freq amp)
-  (let ((os (if (> freq 1) (make-oscil freq) (make-rand freq)))
+  (let ((os ((if (> freq 1) make-oscil make-rand) freq))
 	(start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur))))
     (do ((i start (+ i 1))) ((= i end))

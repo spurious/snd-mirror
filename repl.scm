@@ -845,9 +845,8 @@
 						i))))
 				  (set! completion (if (< loc 0)
 						       (symbol-completion cur-line)
-						       (if (char=? (cur-line loc) #\")
-							   (filename-completion (substring cur-line (+ loc 1)))
-							   (symbol-completion (substring cur-line (+ loc 1))))))
+						       ((if (char=? (cur-line loc) #\") filename-completion symbol-completion)
+							(substring cur-line (+ loc 1)))))
 				  (when (and completion
 					     (> (length completion) (- end loc 1)))
 				    (save-line)

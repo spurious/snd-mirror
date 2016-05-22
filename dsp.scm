@@ -1185,7 +1185,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (lambda (f n z)
       ;; using vector to allow complex sums (z=e^2*pi*i/n -> fourier transform)
       ;;   (z-transform data n (exp (complex 0.0 (* (/ 2.0 n) pi))))
-      (let ((res (if (float-vector? f) (make-float-vector n) (make-vector n))))
+      (let ((res ((if (float-vector? f) make-float-vector make-vector) n)))
 	(do ((w 0 (+ 1 w)))
 	    ((= w n))
 	  (let ((sum 0.0)
@@ -2312,9 +2312,7 @@ is assumed to be outside -1.0 to 1.0."))
 			       ;; todo perhaps if multichannel and channels are correlated and one is not clipped -- use
 			       ;;   its data to help reconstruct clipped case?
 			       
-			       (set! (new-data 0) (if (> (future 0) 0.0)
-						      (max (future 0) (past 0))
-						      (min (future 0) (past 0)))))
+			       (set! (new-data 0) ((if (> (future 0) 0.0) max min) (future 0) (past 0))))
 			   
 			   ;; write reconstruction
 			   (float-vector->channel new-data clip-beg clip-len snd chn))))))))

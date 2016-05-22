@@ -16,9 +16,7 @@
   (define activate-dialog 
     (let ((documentation "(activate-dialog dialog) makes 'dialog' active and brings it to the top of the currently displayed widgets"))
       (lambda (dialog)
-	(if (not (XtIsManaged dialog))
-	    (XtManageChild dialog)
-	    (raise-dialog dialog)))))
+	((if (not (XtIsManaged dialog)) XtManageChild raise-dialog) dialog))))
   
   (define for-each-child 
     (let ((documentation "(for-each-child w func) applies 'func' to 'w' and to its descendents"))

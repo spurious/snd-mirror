@@ -658,6 +658,14 @@
 		  (no-stars type) 
 		  type)))))
 
+
+(define callback-name car)
+(define callback-type cadr)
+(define callback-func caddr)
+(define callback-args cadddr)
+(define (callback-gc func) (func 4))
+(define (callback-version func) (and (> (length func) 5) (func 5)))
+
 (define (func-type strs)
   (call-with-exit
    (lambda (return)
@@ -1001,13 +1009,6 @@
 
    ))
 
-
-(define callback-name car)
-(define callback-type cadr)
-(define callback-func caddr)
-(define callback-args cadddr)
-(define (callback-gc func) (func 4))
-(define (callback-version func) (and (> (length func) 5) (func 5)))
 
 (define (find-callback test)
   (let find-callback-1 ((test test)

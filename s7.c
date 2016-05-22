@@ -74391,6 +74391,9 @@ int main(int argc, char **argv)
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
  * if always sc->a, cdr can be precalculated
+ * float_format_g -> (*s7* 'default-float-format) ? -- best would be translation from format -> fprint, but ".*g" currently
+ * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
+ *   this could be a macro, but better built-in (generators)
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

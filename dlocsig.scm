@@ -501,9 +501,7 @@
 (define set-speaker-configuration 
   (let ((documentation "(set-speaker-configuration config (configs dlocsig-speaker-configs)) sets a dlocsig speaker configuration"))
     (lambda* (config (configs dlocsig-speaker-configs))
-      (let ((lst (if (< (speaker-config-dimension config) 3)
-		     (car configs)
-		     (cadr configs)))
+      (let ((lst ((if (< (speaker-config-dimension config) 3) car cadr) configs))
 	    (num (speaker-config-number config)))
 	(set! (lst num) config)))))
 
@@ -864,10 +862,7 @@
 	       (set! x (cons (car p) x))
 	       (set! y (cons (cadr p) y))
 	       (set! z (cons (if 3d (or (third p) 0.0) 0.0) z))
-	       (set! v (cons (if 3d 
-				 (fourth p)
-				 (third p))
-			     v)))
+	       (set! v (cons ((if 3d fourth third) p) v)))
 	     points)
 	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
 	  
@@ -930,7 +925,7 @@
 		   (set! x (cons (* dxy (imag-part avec)) x))
 		   (set! y (cons (* dxy (real-part avec)) y))
 		   (set! z (cons (* d (imag-part evec)) z))
-		   (set! v (cons (if 3d (fourth p) (third p)) v))))
+		   (set! v (cons ((if 3d fourth third) p) v))))
 	       points)
 	      (list (reverse x) (reverse y) (reverse z) (reverse v)))
 	    
@@ -1599,7 +1594,7 @@
   (let ((points (literal-points path))
 	(3d (literal-3d path))
 	(polar (literal-polar path)))
-    (let ((vals (if polar (parse-polar-coordinates points 3d) (parse-cartesian-coordinates points 3d))))
+    (let ((vals ((if polar parse-polar-coordinates parse-cartesian-coordinates) points 3d)))
       (set! (path-rx path) (car vals))
       (set! (path-ry path) (cadr vals))
       (set! (path-rz path) (caddr vals))

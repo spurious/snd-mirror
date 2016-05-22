@@ -1218,9 +1218,7 @@
 			     (XtSetValues (XtNameToWidget new-dialog "OK")
 					  (list XmNarmColor *selection-color*))
 			     new-dialog))))
-	  (if (not help)
-	      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON))
-	      (XtManageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON)))
+	  ((if (not help) XtUnmanageChild XtManageChild) (XmFileSelectionBoxGetChild dialog XmDIALOG_HELP_BUTTON))
 	  (let ((patstr (XmStringCreateLocalized filter))
 		(titlestr (XmStringCreateLocalized title)))
 	    (let ((dirstr (XmStringCreateLocalized dir)))
@@ -2124,9 +2122,7 @@
 			       (XtAddEventHandler rename-text LeaveWindowMask #f
 						  (lambda (w context ev flag)
 						    (XtSetValues w (list XmNbackground *basic-color*)))))))
-			 (if (not (XtIsManaged rename-dialog))
-			     (XtManageChild rename-dialog)
-			     (raise-dialog rename-dialog)))
+			 ((if (not (XtIsManaged rename-dialog)) XtManageChild raise-dialog) rename-dialog))
 		       8)))))
   
   

@@ -314,14 +314,14 @@
 	  (do ((i 0 (+ i 1))
 	       (type arg-types (cdr type)))
 	      ((= i num-args))
-	    (format p "  ~A ~A_~D;~%" (if (pair? (car type)) (caar type) (car type)) base-name i))
+	    (format p "  ~A ~A_~D;~%" ((if (pair? (car type)) caar car) type) base-name i))
 	  (format p "  arg = args;~%")
 	  (do ((i 0 (+ i 1))
 	       (type arg-types (cdr type)))
 	      ((= i num-args))
 	    
-	    (let* ((nominal-type (if (pair? (car type)) (caar type) (car type)))  ; double in the example
-		   (true-type    (if (pair? (car type)) (cadar type) (car type)))
+	    (let* ((nominal-type ((if (pair? (car type)) caar car) type))  ; double in the example
+		   (true-type    ((if (pair? (car type)) cadar car) type))
 		   (s7-type      (C-type->s7-type true-type)))                    ; real
 	      (if (eq? true-type 's7_pointer)
 		  (format p "    ~A_~D = s7_car(arg);~%" base-name i)

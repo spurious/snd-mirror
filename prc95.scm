@@ -124,9 +124,7 @@
 		(bowtemp 0.0))
 	    (if bowing
 		(if (not (= maxvelocity bowvelocity))
-		    (set! bowvelocity (if (< bowvelocity maxvelocity) 
-					  (+ bowvelocity attackrate) 
-					  (- bowvelocity attackrate))))
+		    (set! bowvelocity ((if (< bowvelocity maxvelocity) + -) bowvelocity attackrate)))
 		(if (> bowvelocity 0.0) 
 		    (set! bowvelocity (- bowvelocity attackrate))))
 	    (set! bowtemp (* 0.3 bowvelocity))
@@ -166,9 +164,7 @@
 	    ((= i end))
 	  (if blowing
 	      (if (not (= maxpressure breathpressure))
-		  (set! breathpressure (if (< breathpressure maxpressure)
-					   (+ breathpressure attackrate)
-					   (- breathpressure attackrate))))
+		  (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
 	      (if (> breathpressure 0.0)
 		  (set! breathpressure (- breathpressure attackrate))))
 	  (set! dout (delayl delayline (dc-block dcblocker
@@ -205,9 +201,7 @@
 	  (let ((pressurediff 0.0))
 	    (if blowing
 		(if (not (= maxpressure breathpressure))
-		    (set! breathpressure (if (< breathpressure maxpressure) 
-					     (+ breathpressure attackrate)
-					     (- breathpressure attackrate))))
+		    (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
 		(if (> breathpressure 0.0)
 		    (set! breathpressure (- breathpressure attackrate))))
 	    (set! pressurediff (- (one-zero filt (* -0.95 dlyout)) breathpressure))
@@ -258,9 +252,7 @@
 	    (set! randpressure (+ randpressure (* 0.05 breathpressure (sin sinphase))))
 	    (if blowing
 		(if (not (= maxpressure breathpressure))
-		    (set! breathpressure (if (< breathpressure maxpressure)
-					     (+ breathpressure attackrate) 
-					     (- breathpressure attackrate))))
+		    (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
 		(if (> breathpressure 0.0) 
 		    (set! breathpressure (- breathpressure attackrate))))
 	    (set! temp (dc-block dcblocker (one-pole filt boreout)))

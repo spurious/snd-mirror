@@ -415,9 +415,9 @@
 (define cp-fit-to-marks
   (let ((documentation "(cp-fit-to-marks) fits the selection between two marks (marks-menu)"))
     (lambda ()
-      (if (selection?)
-	  (fit-selection-between-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))
-	  (define-selection-via-marks (integer->mark fit-to-mark-one) (integer->mark fit-to-mark-two))))))
+      ((if (selection?) fit-selection-between-marks define-selection-via-marks)
+       (integer->mark fit-to-mark-one) 
+       (integer->mark fit-to-mark-two)))))
 
 (if (not (or (provided? 'xm) 
 	     (provided? 'xg)))

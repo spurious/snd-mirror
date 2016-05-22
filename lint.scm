@@ -892,8 +892,8 @@
 						    (pair? (cdr v)))
 					   (var-walk (cadr v) e)
 					   (set! vars (cons (shadowed (car v)) vars))))
-				       (if named (caddr tree) (cadr tree)))
-			     (var-walk-body (if named (cdddr tree) (cddr tree)) (append vars e)))))
+				       ((if named caddr cadr) tree))
+			     (var-walk-body ((if named cdddr cddr) tree) (append vars e)))))
 
 		      ((case)
 		       (when (and (pair? (cdr tree)) 
@@ -912,8 +912,8 @@
 						(pair? (cdr v)))
 				       (var-walk (cadr v) (append vars e))
 				       (set! vars (cons (shadowed (car v)) vars))))
-				   (if named (caddr tree) (cadr tree)))
-			 (var-walk-body (if named (cdddr tree) (cddr tree)) (append vars e))))
+				   ((if named caddr cadr) tree))
+			 (var-walk-body ((if named cdddr cddr) tree) (append vars e))))
 
 		      ((do)
 		       (let ((vars ()))
@@ -1395,9 +1395,7 @@
 		  (cadr clause)))
 	    ((eq? eqv? = equal? char=? char-ci=? string=? string-ci=?)
 	     (and (= (length clause) 3)
-		  (if (code-constant? (cadr clause))
-		      (caddr clause)
-		      (cadr clause))))
+		  ((if (code-constant? (cadr clause)) caddr cadr) clause)))
 	    ((or) 
 	     (and (pair? (cdr clause))
 		  (eqv-selector (cadr clause))))
@@ -1427,15 +1425,15 @@
     
     (define (eqf selector env)
       (cond ((symbol? selector) 
-
 	     (if (and (not (var-member selector env))
 		      (or (hash-table-ref built-in-functions selector)
 			  (hash-table-ref syntaces selector)))
 		 '(eq? eq?)
-		  '(#t #t))
-		  )
+		 '(#t #t)))
 
-	    ((not (pair? selector))  (->eqf (->lint-type selector)))
+	    ((not (pair? selector)) 
+	     (->eqf (->lint-type selector)))
+
 	    ((eq? (car selector) 'quote)
 	     (cond ((or (symbol? (cadr selector))
 			(memq (cadr selector) '(#f #t #<unspecified> #<undefined> #<eof> ())))
@@ -1444,14 +1442,17 @@
 		   ((string? (cadr selector)) '(equal? string=?))
 		   ((number? (cadr selector)) '(eqv? =))
 		   (else                      '(equal? equal?))))
+
 	    ((and (eq? (car selector) 'list)
 		  (null? (cdr selector)))
 	     '(eq? eq?))
+
 	    ((symbol? (car selector)) 
 	     (let ((sig (arg-signature (car selector) env)))
 	       (if (pair? sig)
 		   (->eqf (car sig))
 		   '(#t #t))))
+
 	    (else '(#t #t))))
     
     (define (unquoted x)
@@ -5810,19 +5811,22 @@
 		(begin
 		  (cond ((< (length form) 2)
 			 (lint-format "~A has too few arguments: ~A" caller head (truncated-list->string form)))
+
 			((and (pair? (cadr form))
 			      (eq? (caadr form) 'format))
 			 (lint-format "redundant format: ~A" caller (truncated-list->string form)))
+
 			((and (code-constant? (cadr form))
 			      (not (string? (cadr form))))
 			 (lint-format "format with one argument takes a string: ~A" caller (truncated-list->string form)))
+
 			((and (not (cadr form))
 			      (string? (caddr form)))
 			 (lint-format "perhaps ~A" caller (lists->string form (caddr form)))))
 		  env)
 		
-		(let ((control-string (if (string? (cadr form)) (cadr form) (caddr form)))
-		      (args (if (string? (cadr form)) (cddr form) (cdddr form))))
+		(let ((control-string ((if (string? (cadr form)) cadr caddr) form))
+		      (args ((if (string? (cadr form)) cddr cdddr) form)))
 		  
 		  (define count-directives 
 		    (let ((format-control-char (let ((chars (make-vector 256 #f)))
@@ -6507,7 +6511,7 @@
 			     (lint-format "multiple-value-bind wants ~D values, but ~A returns ~A" 
 					  caller args 
 					  (truncated-list->string producer)
-					  (if (< args (car vals)) (car vals) (cadr vals))))
+					  ((if (< args (car vals)) car cadr) vals)))
 			 
 			 (if (and (pair? producer)
 				  (symbol? (car producer))
@@ -6787,15 +6791,20 @@
 					;	((environment-ref)  (lint-format "environment-ref is let-ref in s7" caller))
 	
 	;; ---------------- unquote-splicing ----------------	
-	(hash-table-set! h 'unquote-splicing (lambda (caller head form env)
-					       (lint-format "unquote-splicing is probably (apply values ...) in s7" caller)))
+	(hash-table-set! 
+	 h 'unquote-splicing 
+	 (lambda (caller head form env)
+	   (lint-format "unquote-splicing is probably (apply values ...) in s7" caller)))
 
 	;; ---------------- bitwise-ior etc ----------------	
 	(let ()
 	  (define (sp-bitwise-ior caller head form env)
 	    (if (not (var-member head env))
 		(lint-format "~A is ~A in s7" caller head 
-			     (cdr (assq head '((bitwise-and . logand) (bitwise-ior . logior) (bitwise-xor . logxor) (bitwise-not . lognot)))))))
+			     (cdr (assq head '((bitwise-and . logand) 
+					       (bitwise-ior . logior) 
+					       (bitwise-xor . logxor) 
+					       (bitwise-not . lognot)))))))
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-bitwise-ior))
 		    '(bitwise-and bitwise-ior bitwise-not bitwise-xor)))
@@ -8792,7 +8801,7 @@
 											    ,use-expr)
 										     ,@end-dots)))))))
 			       (when (and (> len 3)
-					  (< k last-ref (+ k 3))
+					  (< k last-ref (+ k 3))  ; larger cases happen very rarely -- 3 or 4 altogether
 					  (pair? (list-ref body (+ k 1)))
 					  (pair? (list-ref body (+ k 2))))
 				 (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
@@ -9845,9 +9854,13 @@
 	  (values header-len trailer-len result-min-len))))
 
     (define (one-call-and-dots body) ; body is unchanged here, so it's not interesting
-      (if (null? (cdr body))
-	  body
-	  (list (car body) '...)))
+      (if (< (tree-leaves body) 30)
+	  (if (null? (cdr body))
+	      body
+	      (list (car body) '...))
+	  (if (pair? (car body))
+	      (list (list (caar body) '...))
+	      (list (car body) '...))))
 
     (define (replace-redundant-named-let caller form outer-name outer-args inner)
       (when (proper-list? outer-args)  ; can be null
@@ -10567,33 +10580,45 @@
 								 (equal? (cdr p) (cdr q))
 								 (list p (list (car p) (car q)))))))))
 				       (if (pair? diff)
-					   (if (not (or (equal? (car true) (caadr diff))  ; (if z (+ x y) (- x y))? 
-							(and (eq? (car true) 'set!)       ; (if x (set! y w) (set! z w))
-							     (equal? (caar diff) (cadr true)))))
-					       (lint-format "perhaps ~A" caller 
-							    (lists->string form
-									   (cond ((and (eq? (caadr diff) #t)
-										       (not (cadadr diff)))
-										  ;; (if x (set! y #t) (set! y #f)) -> (set! y x)
-										  (tree-subst-eq test (car diff) true))
-										 
-										 ((and (not (caadr diff))
-										       (eq? (cadadr diff) #t))
-										  ;; (if x (set! y #f) (set! y #t)) -> (set! y (not x))
-										  (tree-subst-eq (simplify-boolean `(not ,expr) () () env)
-												 (car diff) true))
-										 
-										 ((equal? (caadr diff) test)
-										  ;; (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
-										  (tree-subst-eq (simplify-boolean `(or ,@(cadr diff)) () () env)
-												 (car diff) true))
-										 
-										 (else 
-										  ;; (if x (set! y z) (set! y w)) -> (set! y (if x z w))
-										  ;; true op moved out, if expr moved in
-										  ;;  (if A (and B C) (and B D)) -> (and B (if A C D))
-										  ;;  here differ-in-one means that preceding/trailing stuff must match exactly
-										  (tree-subst-eq `(if ,expr ,@(cadr diff)) (car diff) true))))))
+					   (when (not (or (and (equal? (car true) (caadr diff)) ; (if z (or x (g y)) (and (f x) y))? 
+							       (or (memq (car true) '(or and))
+								   (memq (car false) '(or and)))
+							       (any? pair? (cdr true)))
+							  (and (eq? (car true) 'set!)       ; (if x (set! y w) (set! z w))
+							       (equal? (caar diff) (cadr true)))))
+					     ;; also not any-macro? (car true|false) probably
+					     (lint-format "perhaps ~A" caller 
+							  (lists->string form
+									 (cond ((eq? (car true) (caadr diff))  ; very common!
+										;; (if x (f y) (g y)) -> ((if x f g) y)
+										;; but f and g can't be or/and unless there are no expressions
+										;;   I now like all of these -- originally found them odd: CL influence!
+										(if (equal? (car true) test)
+										    `((or ,test ,(car false)) ,@(cdr true))
+										    `((if ,test ,(car true) ,(car false)) ,@(cdr true))))
+									       
+									       ((and (eq? (caadr diff) #t)
+										     (not (cadadr diff)))
+										;; (if x (set! y #t) (set! y #f)) -> (set! y x)
+										(tree-subst-eq test (car diff) true))
+									       
+									       ((and (not (caadr diff))
+										     (eq? (cadadr diff) #t))
+										;; (if x (set! y #f) (set! y #t)) -> (set! y (not x))
+										(tree-subst-eq (simplify-boolean `(not ,expr) () () env)
+											       (car diff) true))
+									       
+									       ((equal? (caadr diff) test)
+										;; (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
+										(tree-subst-eq (simplify-boolean `(or ,@(cadr diff)) () () env)
+											       (car diff) true))
+									       
+									       (else 
+										;; (if x (set! y z) (set! y w)) -> (set! y (if x z w))
+										;; true op moved out, if expr moved in
+										;;  (if A (and B C) (and B D)) -> (and B (if A C D))
+										;;  here differ-in-one means that preceding/trailing stuff must match exactly
+										(tree-subst-eq `(if ,expr ,@(cadr diff)) (car diff) true))))))
 					   
 					   ;; next look for one-seq difference
 					   ;; not sure about this -- in simple cases it looks good
@@ -13363,6 +13388,12 @@
 								 `(let* (,@varlist
 									 ,@(cadar body))
 								    ,@(one-call-and-dots (cddar body))))))
+
+
+				   ;; if var val is symbol, val not a preceding var, val not used in rest of form,
+				   ;;   and var is not set! or possibly set!, remove it and replace with val throughout
+				   ;;   (and (eq? (cadr p) var) (or (eq? (car p) 'set!) (set!? p env)))
+
 				   
 				   (let* ((varlist-len (length varlist))
 					  (last-var (and (positive? varlist-len)
@@ -13490,21 +13521,21 @@
 											 `(let* (,@(copy varlist (make-list (- varlist-len 1))))
 											    (cond (,(cadr last-var) => ,(caaddr p)) ,@else-clause)))))))))))
 					 
-					 (if (and (pair? (car varlist))      ; same as let: (let* ((x y)) x) -> y -- (let* (x) ...)
-						  (not (pair? (car body))))
-					     (if (and (eq? (car body) (caar varlist))
-						      (null? (cdr varlist))
-						      (pair? (cdar varlist))) ; (let* ((a...)) a)
-						 (lint-format "perhaps ~A" caller (lists->string form (cadar varlist)))
-						 (if (and (> varlist-len 1)         ; (let* (... (x y)) x) -> (let(*)(...) y)
-							  (pair? last-var)
-							  (pair? (cdr last-var))
-							  (null? (cddr last-var))
-							  (eq? (car body) (car last-var)))
-						     (lint-format "perhaps ~A" caller 
-								  (lists->string form `(,(if (= varlist-len 2) 'let 'let*)
-											,(copy varlist (make-list (- varlist-len 1)))
-											,(cadr last-var)))))))))
+					 (when (and (pair? (car varlist))      ; same as let: (let* ((x y)) x) -> y -- (let* (x) ...)
+						    (not (pair? (car body))))
+					   (if (and (eq? (car body) (caar varlist))
+						    (null? (cdr varlist))
+						    (pair? (cdar varlist))) ; (let* ((a...)) a)
+					       (lint-format "perhaps ~A" caller (lists->string form (cadar varlist)))
+					       (if (and (> varlist-len 1)         ; (let* (... (x y)) x) -> (let(*)(...) y)
+							(pair? last-var)
+							(pair? (cdr last-var))
+							(null? (cddr last-var))
+							(eq? (car body) (car last-var)))
+						   (lint-format "perhaps ~A" caller 
+								(lists->string form `(,(if (= varlist-len 2) 'let 'let*)
+										      ,(copy varlist (make-list (- varlist-len 1)))
+										      ,(cadr last-var)))))))))
 				     (when (and (> (length body) 3)
 						(> (length vars) 1)
 						(every? pair? varlist)
@@ -14421,6 +14452,7 @@
 					   (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
 				       ;; #<unspecified> seems to hit the no-values check?
 				       (string->symbol data))
+				      ;; Bigloo also seems to use #" for here-doc concatenation??
 
 				      ((#\v) ; r6rs byte-vectors?
 				       (if (string=? data "vu8")
@@ -14722,7 +14754,13 @@
 ;;; x used as number then (if x...) or (and (vector-ref 0) (string-length (vector-ref 0)))
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;; if integer? checker for arg, and might be non-int?
+;;; rest arg never used as that?  define* arg never passed (move to let)
+;;;
+;;; (let(*) ((x y) ...) <no use of y (esp no set!)> -> use y and omit x [13383]
+;;;   if y is func arg and this is only use -- suggest func arg x
+;;; (cond (X (f y z)) (else (g y z))) -> ((if X f g) y z) or ((cond (X f) else g) y z) -- this extends to more branches but both need else
+;;;   does case ever happen here (the trailer case is handled currently)
+;;;   (case x ((a) (f y z)) (else (g y z)))
 ;;;
 ;;; define in let no back dependencies -> let, else if simple+1 use, substitute?, if function+1 use -> named let?
 ;;;   if +begin + define same var both branches diff vals -- complain? suggest set!? [when/unless cond/case+define?]
@@ -14730,9 +14768,9 @@
 ;;;     to see use, we need the caller (or more: if + begin...) -- needs to start at letx/func-body/do-body
 ;;;   given closed context, look for uncovered definex, point out shadow if any (=set), else look for collision, then scope->let
 ;;;     (let ((x 1)) (+ (if (> x 0) (begin (define x 3) x) (begin (define x 4) (+ x 1))) x)) -- last is inner
-;;;   define in do body or any such context might be trouble -- does env shadow or replace? -- it replaces, varlet shadows -- use set!
-;;; if (provided) define define -- complains about extra define which is incorrect
+;;;   define in do body or any such context -- use set!
+;;; if (provided) define define -- complains about extra define which is incorrect -- perhaps check line numbers?
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
-;;; 119 22377 457215
+;;; 126 22495 474769
