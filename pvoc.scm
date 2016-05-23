@@ -245,8 +245,7 @@
 	     (filptr 0)           ; index into the file
 	     (pi2 (* 2 pi))       ; handy constant
 	     (sr (srate))
-	     (N fftsize)          ; fft size
-	     (N2 (floor (/ N 2)))
+	     (N2 (floor (/ fftsize 2)))
 	     ;; (Nw fftsize) ;; window size -- currently restricted to the fftsize
 	     (D (floor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)
 	     (interp (* (floor (/ fftsize overlap)) time)) ; interpolation factor how often do we synthesize
@@ -254,20 +253,20 @@
 	     (syngate (if (= 0.0 gate) 0.0 (expt 10 (/ (- (abs gate)) 20))))
 	     (poffset (hz->radians hoffset))
 	     (window (make-fft-window hamming-window fftsize))
-	     (fdr (make-float-vector N))     ; buffer for real fft data
-	     (fdi (make-float-vector N))     ; buffer for imaginary fft data
+	     (fdr (make-float-vector fftsize))     ; buffer for real fft data
+	     (fdi (make-float-vector fftsize))     ; buffer for imaginary fft data
 	     (lastphase (make-float-vector N2)) ;; last phase change
 	     (lastamp (make-float-vector N2)) ;; last sampled amplitude
 	     (lastfreq (make-float-vector N2)) ;; last sampled frequency
 	     (ampinc (make-float-vector N2)) ;; amplitude interpolation increment
 	     (freqinc (make-float-vector N2)) ;; frequency interpolation increments
 	     ;; expresses the fundamental in terms of radians per output sample
-	     (fundamental (/ pi2 N))
+	     (fundamental (/ pi2 fftsize))
 	     (output interp)      ; count of samples that have been output
 	     ;; (nextpct 10.0)       ; how often to print out the percentage complete message
 	     (outlen (floor (* time len)))
 	     (out-data (make-float-vector (max len outlen)))
-	     (in-data (channel->float-vector 0 (* N 2) snd chn))
+	     (in-data (channel->float-vector 0 (* fftsize 2) snd chn))
 	     (in-data-beg 0)
 	     (obank (make-oscil-bank lastfreq (make-float-vector N2 0.0) lastamp)))
 	
@@ -276,7 +275,7 @@
 	(do ((i 0 (+ i 1)))
 	    ((>= i outlen))
 	  (when (>= output interp) ;; if all the samples have been output then do the next frame
-	    (let ((buffix (modulo filptr N)))
+	    (let ((buffix (modulo filptr fftsize)))
 					; buffix is the index into the input buffer
 					; it wraps around circularly as time increases in the input
 	      (set! output 0)       ; reset the output sample counter
@@ -286,23 +285,23 @@
 	      (float-vector-add! lastamp fdr)
 	      (float-vector-add! lastfreq fdi)
 	      (do ((k 0 (+ k 1)))
-		  ((= k N))
+		  ((= k fftsize))
 		;; apply the window and then stuff into the input array
 		(set! (fdr buffix) (* (window k) (in-data (- filptr in-data-beg))))
 		(set! filptr (+ 1 filptr))
 		;; increment the buffer index with wrap around
 		(set! buffix (+ 1 buffix))
-		(if (>= buffix N) (set! buffix 0)))
+		(if (>= buffix fftsize) (set! buffix 0)))
 	      ;; rewind the file for the next hop
-	      (set! filptr (- (+ filptr D) N))
-	      (if (> filptr (+ in-data-beg N))
+	      (set! filptr (- (+ filptr D) fftsize))
+	      (if (> filptr (+ in-data-beg fftsize))
 		  (begin
 		    (set! in-data-beg filptr)
-		    (set! in-data (channel->float-vector in-data-beg (* N 2) snd chn))))
+		    (set! in-data (channel->float-vector in-data-beg (* fftsize 2) snd chn))))
 	      ;; no imaginary component input so zero out fdi
 	      (fill! fdi 0.0)
 	      ;; compute the fft
-	      (mus-fft fdr fdi N 1)
+	      (mus-fft fdr fdi fftsize 1)
 	      ;; now convert into magnitude and interpolated frequency
 	      (do ((k 0 (+ k 1)))
 		  ((= k N2))

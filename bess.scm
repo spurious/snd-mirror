@@ -40,8 +40,7 @@
 	  (XtVaSetValues label (list XmNlabelString s1))
 	  (XmStringFree s1)))
       
-      (let* ((light-blue *position-color*)
-	     (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
+      (let* ((form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
 					  (list XmNbackground white
 						XmNforeground black
 						XmNresizePolicy XmRESIZE_GROW)))
@@ -78,7 +77,7 @@
 						      XmNrightAttachment  XmATTACH_FORM
 						      XmNshowValue        #f
 						      XmNorientation      XmHORIZONTAL
-						      XmNbackground       light-blue)))
+						      XmNbackground       *position-color*)))
 	     ;; amp
 	     (amp (XtCreateManagedWidget "amp:" xmLabelWidgetClass form
 					 (list XmNleftAttachment   XmATTACH_FORM
@@ -105,7 +104,7 @@
 						     XmNrightAttachment  XmATTACH_FORM
 						     XmNshowValue        #f
 						     XmNorientation      XmHORIZONTAL
-						     XmNbackground       light-blue)))
+						     XmNbackground       *position-color*)))
 	     ;; fm index
 	     (fm-index (XtCreateManagedWidget "fm index:" xmLabelWidgetClass form
 					      (list XmNleftAttachment   XmATTACH_FORM
@@ -132,7 +131,7 @@
 						    XmNrightAttachment  XmATTACH_FORM
 						    XmNshowValue        #f
 						    XmNorientation      XmHORIZONTAL
-						    XmNbackground       light-blue)))
+						    XmNbackground       *position-color*)))
 	     ;; c/m ratio
 	     (cm-ratio (XtCreateManagedWidget "c/m ratio:" xmLabelWidgetClass form
 					      (list XmNleftAttachment   XmATTACH_FORM
@@ -159,7 +158,7 @@
 						    XmNrightAttachment  XmATTACH_FORM
 						    XmNshowValue        #f
 						    XmNorientation      XmHORIZONTAL
-						    XmNbackground       light-blue)))
+						    XmNbackground       *position-color*)))
 	     (frequency 220.0)
 	     (low-frequency 40.0)
 	     (high-frequency 2000.0)

@@ -9606,8 +9606,8 @@ We could mimic the fft display window in the "lisp graph" via:
 </p>
 
 <pre class="indented">
-(let* ((ft (<em class=red>make-moving-fft</em> (make-readin "oboe.snd")))
-       (data (make-float-vector 256 0.0)))
+(let ((ft (<em class=red>make-moving-fft</em> (make-readin "oboe.snd")))
+      (data (make-float-vector 256 0.0)))
   (set! (lisp-graph?) #t)
   (do ((i 0 (+ i 1)))
       ((= i 10000))

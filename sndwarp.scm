@@ -155,7 +155,6 @@
 	 (fsr (mus-sound-srate file))
 	 ;; (fsize (framples file))
 	 (fdur (mus-sound-duration file))
-	 (rev-val rev)
 	 (loc-env (clmsw-envelope-or-number loc))
 	 (srate-env (clmsw-envelope-or-number srate))
 	 (time-env (clmsw-envelope-or-number stretch))
@@ -281,7 +280,7 @@
 		  (if stereo-o
 		      (begin
 			(outb i outb-val)	     
-			(if *reverb* (outa i (* rev-val outa-val) *reverb*)))))))
+			(if *reverb* (outa i (* rev outa-val) *reverb*)))))))
 	  (if (and (not eow-flag)   ;; For first section, have to backup readstart
 		   (= section 0) 
 		   (> overlap 0) 

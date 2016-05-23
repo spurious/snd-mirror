@@ -5973,14 +5973,12 @@ then it is part of the language, and it doesn't look like the rest of the langua
 			  (set! (getter tree) (cdr lst))
 			  (format *stderr* "#~D# is not defined~%" n)))))))
 
-	(define (walk-tree tree)
+	(let walk-tree ((tree (cdr lst)))
 	  (if (pair? tree)
 	      (begin
 		(if (pair? (car tree)) (walk-tree (car tree)) (replace-sym tree car))
 		(if (pair? (cdr tree)) (walk-tree (cdr tree)) (replace-sym tree cdr))))
-	  tree)
-
-	(walk-tree (cdr lst)))
+	  tree))
 
       ;; str is whatever followed the #, first char is a digit
       (let* ((len (length str))

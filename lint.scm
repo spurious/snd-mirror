@@ -415,6 +415,7 @@
     (define var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
     (define var-leaves  (dilambda (lambda (v) (let-ref (cdr v) 'leaves))  (lambda (v x) (let-set! (cdr v) 'leaves x))))
     (define var-scope   (dilambda (lambda (v) (let-ref (cdr v) 'scope))   (lambda (v x) (let-set! (cdr v) 'scope x))))
+    (define var-setters (dilambda (lambda (v) (let-ref (cdr v) 'setters)) (lambda (v x) (let-set! (cdr v) 'setters x))))
     (define var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
     (define var-decl    (dilambda (lambda (v) (let-ref (cdr v) 'decl))    (lambda (v x) (let-set! (cdr v) 'decl x))))
     (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
@@ -444,6 +445,7 @@
 					 (if initial-value (cons initial-value old) old))
 				       (if initial-value (list initial-value) ()))
 			  'scope ()
+			  'setters ()
 			  'set 0 
 			  'ref (if old (length old) 0)))))
     
@@ -980,6 +982,7 @@
 						      (memq ftype '(define* define-macro* define-bacro* defmacro*))
 						      (eq? (last-par arglist) :allow-other-keys))
 			       'scope ()
+			       'setters ()
 			       'env env
 			       'initial-value initial-value
 			       'values (and (pair? initial-value) (count-values (cddr initial-value)))
@@ -1362,6 +1365,8 @@
 	(when (var? data)
 	  (set! (var-set data) (+ (var-set data) 1))
 	  (update-scope data caller env)
+	  (if (not (memq caller (var-setters data)))
+	      (set! (var-setters data) (cons caller (var-setters data))))
 	  (if (not (memq form (var-history data)))
 	      (set! (var-history data) (cons form (var-history data))))
 	  (set! (var-signature data) #f)
@@ -8773,8 +8778,8 @@
 								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
 											  `(... (define ,(caadr use-expr)
 												  (,letx ((,name ,(caddr expr)))
-													 (lambda ,(cdadr use-expr)
-													   ,@(cddr use-expr))))
+												     (lambda ,(cdadr use-expr)
+												       ,@(cddr use-expr))))
 												,@end-dots))))))
 					     ((and (symbol? (cadr use-expr))
 						   (pair? (cddr use-expr)))
@@ -8785,20 +8790,20 @@
 								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
 											  `(... (define ,(cadr use-expr)
 												  (,letx ((,name ,(caddr expr)))
-													 ,(caddr use-expr)))
+												     ,(caddr use-expr)))
 												,@end-dots)))
 						    
 						    (lint-format "the scope of ~A could be reduced: ~A" caller name
 								 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
 											  `(... (define ,(cadr use-expr)
 												  (,letx ((,name ,(caddr expr)))
-													 ,(caddr use-expr)))
+												     ,(caddr use-expr)))
 												,@end-dots)))))))
 				       (let-temporarily ((target-line-length 120))
 					 (lint-format "the scope of ~A could be reduced: ~A" caller name
 						      (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
 									       `(... (,letx ((,name ,(caddr expr))) 
-											    ,use-expr)
+											,use-expr)
 										     ,@end-dots)))))))
 			       (when (and (> len 3)
 					  (< k last-ref (+ k 3))  ; larger cases happen very rarely -- 3 or 4 altogether
@@ -8821,8 +8826,8 @@
 							(let-temporarily ((target-line-length 120))
 							  (truncated-lists->string `(... ,expr ,use-expr1 ,use-expr2 ,@end-dots)
 										   `(... (,letx ((,name ,(caddr expr))) 
-												,use-expr1
-												,use-expr2)
+											    ,use-expr1
+											    ,use-expr2)
 											 ,@end-dots)))))))))))
 			  (when (tree-memq name (car p))
 			    (set! last-ref i))))))))))))
@@ -9916,11 +9921,24 @@
       (and *report-any-!-as-setter* ; (inc! x) when inc! is unknown, assume it sets x
 	   (symbol? (car form))
 	   (pair? (cdr form))
-	   (symbol? (cadr form))
+	   (or (symbol? (cadr form))
+	       (and (pair? (cddr form))
+		    (symbol? (caddr form))))
 	   (not (var-member (car form) env))
 	   (not (hash-table-ref built-in-functions (car form)))
 	   (let ((str (symbol->string (car form))))
 	     (char=? (string-ref str (- (length str) 1)) #\!))))
+
+    (define (set-target name form env)
+      (and (pair? form)
+	   (or (and (pair? (cdr form))
+		    (or (eq? (cadr form) name)    ; (pop! x)
+			(and (pair? (cddr form))  ; (push! y x)
+			     (eq? (caddr form) name)))
+		    (or (eq? (car form) 'set!)    ; (set! x y)
+			(set!? form env)))
+	       (set-target name (car form) env)
+	       (set-target name (cdr form) env))))
 #|
     (define (lint-walk caller form env)
       (let ((res (lint-walk-1 caller form env)))
@@ -12649,8 +12667,8 @@
 							      :initial-value form
 							      :env env))
 					     ()))
-				   (varlist (if named-let (caddr form) (cadr form)))
-				   (body (if named-let (cdddr form) (cddr form))))
+				   (varlist ((if named-let caddr cadr) form))
+				   (body ((if named-let cdddr cddr) form)))
 			       
 			       (if (not (list? varlist))
 				   (lint-format "let is messed up: ~A" caller (truncated-list->string form))
@@ -13042,7 +13060,43 @@
 									      ,(caddar body)))))))))
 			       (when (and (not named-let)
 					  (pair? body))
+	
+				 ;; if var val is symbol, val not used (not set!) in body (even hidden via function call)
+				 ;;   and var not set!, and not a function parameter (we already reported those), and
+				 ;;   we're not saving some global locally for a function about-to-be exported,
+				 ;;   remove it (the var) and replace with val throughout
+				 (when (and (proper-list? (cadr form))
+					    (not (tree-set-member '(lambda lambda*) body)))
+				   (let ((changes ()))
+				     (do ((vs (cadr form) (cdr vs)))
+					 ((null? vs)
+					  (if (pair? changes)
+					      (let ((new-form (copy form)))
+						(for-each 
+						 (lambda (v)
+						   (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
+						   (set! new-form (tree-subst (cadr v) (car v) new-form)))
+						 changes)
+						(lint-format "assuming we see all set!s, ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+							     changes 
+							     (if (pair? (cdr changes)) "are" "is")
+							     (lists->string form new-form)))))
+				       (let ((v (car vs)))
+					 (if (and (pair? v)
+						  (pair? (cdr v))
+						  (null? (cddr v))                  ; good grief
+						  (symbol? (cadr v))
+						  (not (eq? (car v) (cadr v)))      ; this is handled elsewhere
+						  (not (set-target (cadr v) body env))
+						  (not (set-target (car v) body env))
+						  (let ((data (var-member (cadr v) env)))
+						    (or (not (var? data))
+							(and (not (eq? (var-definer data) 'parameter))
+							     (or (null? (var-setters data))
+								 (not (tree-set-member (var-setters data) body)))))))
+					     (set! changes (cons v changes)))))))
 				 
+
 				 ;; if last is (set! local-var...) and no complications, complain
 				 (let ((last (list-ref body (- (length body) 1))))
 				   (if (and (pair? last)
@@ -13296,8 +13350,8 @@
 			     
 			     (let ((vars (if named-let (list (make-var :name named-let 
 								       :definer 'let*)) ())) ; TODO: fvar
-				   (varlist (if named-let (caddr form) (cadr form)))
-				   (body (if named-let (cdddr form) (cddr form))))
+				   (varlist ((if named-let caddr cadr) form))
+				   (body ((if named-let cdddr cddr) form)))
 			       (if (not (list? varlist))
 				   (lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
 			       
@@ -13306,7 +13360,7 @@
 				     ((not (pair? bindings))
 				      (if (not (null? bindings))
 					  (lint-format "let* variable list is not a proper list? ~S" 
-						       caller (if named-let (caddr form) (cadr form)))))
+						       caller ((if named-let caddr cadr) form))))
 				   (when (binding-ok? caller head (car bindings) env #f)
 				     (let ((expr (cadar bindings))
 					   (side (side-effect? (cadar bindings) env)))
@@ -13389,11 +13443,51 @@
 									 ,@(cadar body))
 								    ,@(one-call-and-dots (cddar body))))))
 
-
-				   ;; if var val is symbol, val not a preceding var, val not used in rest of form,
-				   ;;   and var is not set! or possibly set!, remove it and replace with val throughout
-				   ;;   (and (eq? (cadr p) var) (or (eq? (car p) 'set!) (set!? p env)))
-
+				   (when (and (proper-list? (cadr form))
+					      (not (tree-set-member '(lambda lambda*) body)))
+				     ;; see let above
+				     (let ((changes ()))
+				       (do ((vs (cadr form) (cdr vs)))
+					   ((null? vs)
+					    (if (pair? changes)
+						(let ((new-form (copy form)))
+						  (for-each 
+						   (lambda (v)
+						     (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
+						     (set! new-form (tree-subst (cadr v) (car v) new-form)))
+						   changes)
+						  (lint-format "assuming we see all set!s, ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+							       changes 
+							       (if (pair? (cdr changes)) "are" "is")
+							       (lists->string form
+									      `(,(if (and (pair? (cadr new-form))
+											  (pair? (cdadr new-form)))
+										     'let* 'let)
+										,@(cdr new-form)))))))
+					 (let ((v (car vs)))
+					   (if (and (pair? v)
+						    (pair? (cdr v))
+						    (null? (cddr v))                  ; good grief
+						    (symbol? (cadr v))
+						    (not (eq? (car v) (cadr v)))      ; this is handled elsewhere
+						    (not (assq (cadr v) (cadr form))) ; value is not a local var
+						    (not (set-target (car v) body env))
+						    (not (set-target (cadr v) body env)))
+					       (let ((data (var-member (cadr v) env)))
+						 (if (and (or (not (var? data))
+							      (and (not (eq? (var-definer data) 'parameter))
+								   (or (null? (var-setters data))
+								       (not (tree-set-member (var-setters data) body)))))
+							  (not (any? (lambda (p)
+								       (and (pair? p)
+									    (pair? (cdr p))
+									    (or (set-target (cadr v) (cdr p) env)
+										(set-target (car v) (cdr p) env)
+										(and (var? data)
+										     (pair? (var-setters data))
+										     (tree-set-member (var-setters data) body)))))
+								     (cdr vs))))
+						     (set! changes (cons v changes)))))))))
 				   
 				   (let* ((varlist-len (length varlist))
 					  (last-var (and (positive? varlist-len)
@@ -13965,7 +14059,7 @@
 		      ((case-lambda)
 		       (when (pair? (cdr form))
 			 (let ((lens ())
-			       (body (if (string? (cadr form)) (cddr form) (cdr form))) ; might have a doc string before the clauses
+			       (body ((if (string? (cadr form)) cddr cdr) form)) ; might have a doc string before the clauses
 			       (doc-string (and (string? (cadr form)) (cadr form))))
 			   
 			   (define (arg->defaults arg b1 b2 defaults)
@@ -13985,7 +14079,7 @@
 				    (if (member len lens)
 					(lint-format "repeated parameter list? ~A in ~A" caller (car choice) form))
 				    (set! lens (cons len lens))
-				    (lint-walk 'case-lambda `(lambda ,@choice) env))))
+				    (lint-walk 'case-lambda (cons 'lambda choice) env))))
 			    body)
 			   
 			   (case (length lens)
@@ -14581,7 +14675,7 @@
 		(epos (string-position "<em " str)))
 	    (if (not (or apos epos))
 		str
-		(let* ((pos (if (and apos epos) (min apos epos) (or apos epos)))
+		(let* ((pos ((if (and apos epos) min or) apos epos))
 		       (bpos (char-position #\> str (+ pos 1)))
 		       (epos (string-position (if (and apos (= pos apos)) "</a>" "</em>") str (+ bpos 1))))
 		  (string-append (substring str 0 pos)
@@ -14756,8 +14850,6 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;; rest arg never used as that?  define* arg never passed (move to let)
 ;;;
-;;; (let(*) ((x y) ...) <no use of y (esp no set!)> -> use y and omit x [13383]
-;;;   if y is func arg and this is only use -- suggest func arg x
 ;;; (cond (X (f y z)) (else (g y z))) -> ((if X f g) y z) or ((cond (X f) else g) y z) -- this extends to more branches but both need else
 ;;;   does case ever happen here (the trailer case is handled currently)
 ;;;   (case x ((a) (f y z)) (else (g y z)))
@@ -14773,4 +14865,4 @@
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
-;;; 126 22495 474769
+;;; 127 22495 494936

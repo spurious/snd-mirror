@@ -4079,11 +4079,9 @@
   (unless (provided? 'gmp)
     (let* ((LONG_MAX 2147483647)
 	   (LONG_MIN -2147483648)
-	   (LLONG_MAX most-positive-fixnum)
-	   (LLONG_MIN most-negative-fixnum)
 	   (ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
 	   (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
-	   (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN LLONG_MAX LLONG_MIN 1000 -1000))
+	   (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN most-positive-fixnum most-negative-fixnum 1000 -1000))
 	   (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
 	   (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
       (load "binary-io.scm")
@@ -27562,8 +27560,7 @@ EDITS: 2
 	  (let* ((ind (open-sound "1a.snd"))
 		 (player (make-player ind 0))
 		 (len (framples ind 0))
-		 (incr *dac-size*)
-		 (e (make-env '(0 0 1 1) :length (+ 1 (floor (* 1.0 (/ len incr))))))
+		 (e (make-env '(0 0 1 1) :length (+ 1 (floor (* 1.0 (/ len *dac-size*))))))
 		 (samp 0))
 	    (add-player player 0 -1 -1 
 			(lambda (reason) 
@@ -27575,7 +27572,7 @@ EDITS: 2
 			 (if (fneq (amp-control ind) 1.0) (snd-display ";amp-control snd: ~A" (amp-control ind)))
 			 (if (> (abs (- (amp-control player) (* 1.0 (/ samp len)))) 1.0)
 			     (snd-display ";amp-control player: ~A ~A" (amp-control player) (* 1.0 (/ samp len))))
-			 (set! samp (+ samp incr))))
+			 (set! samp (+ samp *dac-size*))))
 	    (start-playing 1 (srate ind)))
 	  (if (find-sound "1a.snd") (snd-display ";stop proc didn't close?"))
 	  (set! *with-background-processes* old-bp))
@@ -34320,9 +34317,8 @@ EDITS: 1
   
   
   (define (test-lgamma)
-    (define (gammln xx)			;Ln(gamma(xx)), xx>0 
+    (define (gammln x)			;Ln(gamma(x)), x>0 
       (let* ((stp 2.5066282746310005e0)
-	     (x xx)
 	     (tmp (+ x 5.5))
 	     (tmp1 (- tmp (* (+ x 0.5) (log tmp))))
 	     (ser (+ 1.000000000190015

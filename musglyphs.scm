@@ -141,8 +141,7 @@
 	  (free-cairo cr)))
 
       (define (fill-rectangle-1 . args)
-	(let ((len (length args))
-	      (cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
+	(let ((cr (make-cairo (car (channel-widgets ps-snd ps-chn)))))
 	  (let ((new-args (copy args (make-list 9 #f))))
 	    (if (not (new-args 6))
 		(set! (new-args 6) time-graph))

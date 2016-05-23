@@ -94,11 +94,10 @@
 (define (port? p) (or (input-port? p) (output-port? p)))
 (define binary-port? port?)
 (define textual-port? port?)
-(define (close-port p) (if (input-port? p) (close-input-port p) (close-output-port p)))
+(define (close-port p) ((if (input-port? p) close-input-port close-output-port) p))
 (define open-binary-input-file open-input-file)
 (define open-binary-output-file open-output-file)
-(define (call-with-port port proc) 
-  ((if (input-port? port) call-with-input-file call-with-output-file) port proc))
+(define (call-with-port port proc) ((if (input-port? port) call-with-input-file call-with-output-file) port proc))
 
 
 (define (bytevector-u8-ref b k) (b k))

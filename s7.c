@@ -46911,6 +46911,29 @@ static s7_pointer tree_descend(s7_scheme *sc, s7_pointer p, unsigned int line)
   return(tree_descend(sc, cdr(p), line));
 }
 
+static char *current_input_string(s7_scheme *sc, s7_pointer pt)
+{
+  /* try to show the current input */
+  if ((is_input_port(pt)) &&
+      (!port_is_closed(pt)) &&
+      (port_data(pt)) &&
+      (port_position(pt) > 0))
+    {
+      const unsigned char *str;
+      char *msg;
+      int i, j, start;
+      start = (int)port_position(pt) - 40;
+      if (start < 0) start = 0;
+      msg = (char *)malloc(64 * sizeof(char));
+      str = (const unsigned char *)port_data(pt);
+      for (i = start, j = 0; i < (int)port_position(pt); i++, j++)
+	msg[j] = str[i];
+      msg[j] = '\0';
+      return(msg);
+    }
+  return(NULL);
+}
+
 
 static s7_pointer missing_close_paren_error(s7_scheme *sc)
 {
@@ -46984,24 +47007,14 @@ static s7_pointer missing_close_paren_error(s7_scheme *sc)
       return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, len))));
     }
 
-  /* try to show the current input */
-  if ((is_input_port(pt)) &&
-      (!port_is_closed(pt)) &&
-      (port_data(pt)) &&
-      (port_position(pt) > 0))
-    {
-      const unsigned char *str;
-      int i, j, start;
-      start = (int)port_position(pt) - 40;
-      if (start < 0) start = 0;
-      msg = (char *)malloc(128 * sizeof(char));
-      len = snprintf(msg, 128, "missing close paren: ");
-      str = (const unsigned char *)port_data(pt);
-      for (i = start, j = len; i < (int)port_position(pt); i++, j++)
-	msg[j] = str[i];
-      msg[j] = '\0';
-      return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, j))));
-    }
+  {
+    char *str;
+    msg = (char *)malloc(128 * sizeof(char));
+    str = current_input_string(sc, pt);
+    len = snprintf(msg, 128, "missing close paren: %s", str);
+    free(str);
+    return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, len))));
+  }
 
   return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_wrapper(sc, "missing close paren"))));
 }
@@ -49196,6 +49209,7 @@ static token_t read_comma(s7_scheme *sc, s7_pointer pt)
       sc->strbuf[0] = ',';  /* was '@' which doesn't make any sense */
       return(TOKEN_COMMA);  /* was TOKEN_ATOM, which also doesn't seem sensible */
     }
+
   backchar(c, pt);
   return(TOKEN_COMMA);
 }
@@ -49505,6 +49519,32 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_COMMA:
 	  push_stack_no_code(sc, OP_READ_UNQUOTE, sc->nil);
 	  sc->tok = token(sc);
+	  switch (sc->tok)
+	    {
+	    case TOKEN_EOF: 
+	      pop_stack(sc);
+	      return(read_error(sc, "stray comma at the end of the input?")); 
+
+	    case TOKEN_RIGHT_PAREN:
+	      pop_stack(sc);
+	      {
+		char *str;
+		str = current_input_string(sc, sc->input_port);
+		if (str)
+		  {
+		    char *msg;
+		    int len;
+		    msg = (char *)malloc(128 * sizeof(char));
+		    len = snprintf(msg, 128, "at \"...%s...\", stray comma before ')'?", str);
+		    free (str);
+		    return(s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_uncopied_with_length(sc, msg, len))));
+		  }
+		return(read_error(sc, "stray comma before ')'?"));         /* '("a" "b",) */
+	      }
+
+	    default:
+	      break;
+	    }
 	  break;
 
 	case TOKEN_AT_MARK:

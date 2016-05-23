@@ -14378,11 +14378,9 @@ in to make sure the font color reflects whether we're in the selected channel:
 </p>
 
 <pre class="indented">
-  (XSetFont dpy
-    (if (= chn (<a class=quiet href="#selectedsound">selected-channel</a> snd))
-        (cadr (snd-gcs))
-        (car (snd-gcs)))
-    (.fid fs))
+(XSetFont dpy
+  ((if (= chn (<a class=quiet href="#selectedsound">selected-channel</a> snd)) cadr car) (snd-gcs))
+  (.fid fs))
 </pre>
 <div class="spacer"></div>
 
