@@ -14,11 +14,10 @@
 	(comb2 (make-comb 0.733 4999))
 	(comb3 (make-comb 0.715 5399))
 	(comb4 (make-comb 0.697 5801))
-	(decay-dur *clm-srate*)
 	(chns (channels *output*))
 	(file-dur (framples *reverb*)))
 
-    (let ((len (floor (+ decay-dur file-dur)))
+    (let ((len (floor (+ *clm-srate* file-dur)))
 	  (filts (if (= chns 1) 
 		     (vector (make-delay (seconds->samples .013)))
 		     (vector (make-delay (seconds->samples .013))

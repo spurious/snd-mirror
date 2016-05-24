@@ -186,13 +186,12 @@
 					     (substring line (+ hpos 4) hspos) 
 					     (substring line (+ hspos 5))))))))
 	 
-	 (if (not (let ((ln line))
-		    (and caps     ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
-			 (do ((cap caps (cdr cap)))
-			     ((or (null? cap) 
-				  (string-position (car cap) ln))
-			      (pair? cap))))))
-	       ;; find the first character of the >name< business and downcase it
+	 (if (not (and caps     ; caps is the list of names with upper case chars from the make-index-1 invocation ("AIFF" for example) 
+		       (do ((cap caps (cdr cap)))
+			   ((or (null? cap) 
+				(string-position (car cap) line))
+			    (pair? cap)))))
+	     ;; find the first character of the >name< business and downcase it
 	     (let ((bpos (char-position #\> line)))
 	       (set! (line (+ bpos 1)) (char-downcase (line (+ bpos 1))))))
 	 

@@ -1751,10 +1751,11 @@
 
 
 (define (render-path path)
-  (case (car path) 
-    ((bezier-path open-bezier-path) (bezier-render path))
-    ((literal-path)   	            (literal-render path))
-    (else                           (spiral-render path))))
+  ((case (car path) 
+    ((bezier-path open-bezier-path) bezier-render)
+    ((literal-path)   	            literal-render)
+    (else                           spiral-render))
+   path))
 
 
 
