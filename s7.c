@@ -6469,6 +6469,18 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   if (has_ref_fallback(env))
     check_method(sc, env, sc->let_ref_fallback_symbol, sc->w = list_2(sc, env, symbol));
 
+  /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
+   *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
+   *   open let did not have a particular method (locally).  This seems inconsistent now,
+   *   but it was far worse before.  At least (let ((a 1)) ((curlet) 'pi)) is pi!
+   */
+  if (!has_methods(env))
+    {
+      y = global_slot(symbol);
+      if (is_slot(y))
+	return(slot_value(y));
+    }
+
   return(sc->undefined);
 }
 
@@ -6575,6 +6587,18 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
 
   if (has_set_fallback(env))
     check_method(sc, env, sc->let_set_fallback_symbol, sc->w = list_3(sc, env, symbol, value));
+
+  if (!has_methods(env))
+    {
+      y = global_slot(symbol);
+      if (is_slot(y))
+	{
+	  if (slot_has_accessor(y))
+	    slot_set_value(y, call_accessor(sc, y, value));
+	  else slot_set_value(y, value);
+	  return(slot_value(y));
+	}
+    }
   return(sc->undefined);
 }
 
@@ -74430,10 +74454,10 @@ int main(int argc, char **argv)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
- * if always sc->a, cdr can be precalculated
  * float_format_g -> (*s7* 'default-float-format) ? -- best would be translation from format -> fprint, but ".*g" currently
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
+ * fix local-let in s7test
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

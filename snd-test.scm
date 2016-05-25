@@ -5,34 +5,56 @@
 ;;;  test 2: headers                            [1436]
 ;;;  test 3: variables                          [1751]
 ;;;  test 4: sndlib                             [2314]
-;;;  test 5: simple overall checks              [4165]
-;;;  test 6: float-vectors                      [8886]
-;;;  test 7: colors                             [9152]
-;;;  test 8: clm                                [9656]
-;;;  test 9: mix                                [21567]
-;;;  test 10: marks                             [23322]
-;;;  test 11: dialogs                           [24253]
-;;;  test 12: extensions                        [24416]
-;;;  test 13: menus, edit lists, hooks, etc     [24678]
-;;;  test 14: all together now                  [25959]
-;;;  test 15: chan-local vars                   [26832]
-;;;  test 16: regularized funcs                 [28542]
-;;;  test 17: dialogs and graphics              [32245]
-;;;  test 18: save and restore                  [32351]
-;;;  test 19: transforms                        [33976]
-;;;  test 20: new stuff                         [36063]
-;;;  test 21: optimizer                         [37248]
-;;;  test 22: with-sound                        [39872]
-;;;  test 23: X/Xt/Xm                           [42769]
-;;;  test 24: GL                                [46377]
-;;;  test 25: errors                            [46498]
-;;;  test 26: s7                                [47914]
-;;;  test all done                              [47983]
-;;;  test the end                               [48155]
+;;;  test 5: simple overall checks              [4163]
+;;;  test 6: float-vectors                      [8880]
+;;;  test 7: colors                             [9146]
+;;;  test 8: clm                                [9650]
+;;;  test 9: mix                                [21512]
+;;;  test 10: marks                             [23266]
+;;;  test 11: dialogs                           [24197]
+;;;  test 12: extensions                        [24358]
+;;;  test 13: menus, edit lists, hooks, etc     [24616]
+;;;  test 14: all together now                  [25895]
+;;;  test 15: chan-local vars                   [26762]
+;;;  test 16: regularized funcs                 [28472]
+;;;  test 17: dialogs and graphics              [32169]
+;;;  test 18: save and restore                  [32276]
+;;;  test 19: transforms                        [33901]
+;;;  test 20: new stuff                         [35983]
+;;;  test 21: optimizer                         [37166]
+;;;  test 22: with-sound                        [39734]
+;;;  test 23: X/Xt/Xm                           [42618]
+;;;  test 24: GL                                [46218]
+;;;  test 25: errors                            [46339]
+;;;  test 26: s7                                [47753]
+;;;  test all done                              [47822]
+;;;  test the end                               [47994]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
 ;(set! (*s7* 'gc-stats) #t)
+
+(define-macro (let-temporarily vars . body)
+  `(with-let (#_inlet :orig (#_curlet) 
+		      :saved (#_list ,@(map car vars))
+		      :new (#_list ,@(map cadr vars)))
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda () ; this could be (with-let orig (let ,vars ,@body)) but I want to handle stuff like individual vector locations
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1)))))))
+		    vars)
+	   (with-let orig ,@body)) 
+	 (lambda ()
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
+		  vars)))))
 
 (when (provided? 'pure-s7)
   (define (make-polar mag ang)
@@ -203,18 +225,12 @@
   (> (magnitude (- a b)) .001))
 
 (define-constant (feql a b)
-  (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
-    (set! (*s7* 'morally-equal-float-epsilon) .001)
-    (let ((res (morally-equal? a b)))
-      (set! (*s7* 'morally-equal-float-epsilon) old-eps)
-      res)))
+  (let-temporarily (((*s7* 'morally-equal-float-epsilon) .001))
+    (morally-equal? a b)))
 
 (define-constant (ffeql a b)
-  (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
-    (set! (*s7* 'morally-equal-float-epsilon) .1)
-    (let ((res (morally-equal? a b)))
-      (set! (*s7* 'morally-equal-float-epsilon) old-eps)
-      res)))
+  (let-temporarily (((*s7* 'morally-equal-float-epsilon) .1))
+    (morally-equal? a b)))
 
 (define-constant (fveql a b i)
   (or (null? b)
@@ -222,11 +238,8 @@
 	   (fveql a (cdr b) (+ i 1)))))
 
 (define* (mus-arrays-equal? x y (err .001))
-  (let ((old-eps (*s7* 'morally-equal-float-epsilon)))
-    (set! (*s7* 'morally-equal-float-epsilon) err)
-    (let ((res (morally-equal? x y)))
-      (set! (*s7* 'morally-equal-float-epsilon) old-eps)
-      res)))
+  (let-temporarily (((*s7* 'morally-equal-float-epsilon) err))
+    (morally-equal? x y)))
 
 (define (mus-arrays-equal?1 v0 v1)
   (mus-arrays-equal? v0 v1 .01))
@@ -1031,17 +1044,13 @@
 	     (not (= (view-files-sort) 0)))
 	(snd-display ";view-files-sort def: ~A" (view-files-sort)))
     
-    (let ((old-max-malloc *mus-max-malloc*))
-      (set! *mus-max-malloc* (expt 2 36))
+    (let-temporarily ((*mus-max-malloc* (expt 2 36)))
       (if (not (= *mus-max-malloc* (expt 2 36)))
-	  (snd-display ";mus-max-malloc as bignum: ~A" *mus-max-malloc*))
-      (set! *mus-max-malloc* old-max-malloc))
+	  (snd-display ";mus-max-malloc as bignum: ~A" *mus-max-malloc*)))
     
-    (let ((old-max-table-size *mus-max-table-size*))
-      (set! *mus-max-table-size* (expt 2 36))
+    (let-temporarily ((*mus-max-table-size* (expt 2 36)))
       (if (not (= *mus-max-table-size* (expt 2 36)))
-	  (snd-display ";mus-max-table-size as bignum: ~A" *mus-max-table-size*))
-      (set! *mus-max-table-size* old-max-table-size))
+	  (snd-display ";mus-max-table-size as bignum: ~A" *mus-max-table-size*)))
     
     (if (not (provided? 'snd-gtk))
 	(for-each
@@ -2875,11 +2884,9 @@
 	(set! (data-location ab) 1234)
 	(if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	(if (not (= (data-location ab) 1234)) (snd-display ";set data-location: ~A?" (data-location ab)))
-	(let ((old-size (data-size ab)))
-	  (set! (data-size ab) 1234)
+	(let-temporarily (((data-size ab) 1234))
 	  (if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
-	  (if (not (= (data-size ab) 1234)) (snd-display ";set data-size: ~A?" (data-size ab)))
-	  (set! (data-size ab) old-size))
+	  (if (not (= (data-size ab) 1234)) (snd-display ";set data-size: ~A?" (data-size ab))))
 	(set! (srate ab) 12345)
 	(if (not (equal? ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd")))
 	(if (not (= (srate ab) 12345)) (snd-display ";set srate: ~A?" (srate ab)))
@@ -3453,16 +3460,14 @@
 	    (if (or (not res)
 		    (> (cadr res) 100))
 		(snd-display ";bigger find not 0.0: ~A" res)))
-	  (let ((old-select *selection-creates-region*))
-	    (set! *selection-creates-region* #f)
+	  (let-temporarily ((*selection-creates-region* #f))
 	    (select-all ind)
 	    (if (not (= (selection-framples) (framples ind))) (snd-display ";bigger select all: ~A ~A" (selection-framples) (framples)))
 	    (set! (selection-position) (* (floor *clm-srate*) 50000))
 	    (if (not (= (selection-position) (* (floor *clm-srate*) 50000))) (snd-display ";bigger select pos: ~A" (selection-position)))
 	    (set! (selection-position) 0)
 	    (set! (selection-framples) (* (floor *clm-srate*) 65000))
-	    (if (not (= (selection-framples) (* (floor *clm-srate*) 65000))) (snd-display ";bigger select len: ~A" (selection-framples)))
-	    (set! *selection-creates-region* old-select))
+	    (if (not (= (selection-framples) (* (floor *clm-srate*) 65000))) (snd-display ";bigger select len: ~A" (selection-framples))))
 	  (let ((size 2260597782)   ;(* 44123 51234))
 		(msize 2701827782)) ;(* 44123 61234)
 	    (set! (cursor ind) (* (floor *clm-srate*) 50000))
@@ -5352,19 +5357,13 @@ EDITS: 5
       (play "oboe.snd" :start 12000 :wait #t)
       (play "oboe.snd" :start 12000 :end 15000 :wait #t)
       (play :edit-position (- (edit-position) 1) :wait #t)
-      (let ((old-speed (speed-control index))
-	    (old-style *speed-control-style*)
-	    (old-open (show-controls index)))
-	(set! (show-controls index) #t)
-	(set! (speed-control index) -2.0)
+      (let-temporarily (((speed-control index) -2.0)
+			(*speed-control-style* speed-control-as-semitone)
+			((show-controls index) #t))
 	(play index :start 12345 :wait #t)
-	(set! *speed-control-style* speed-control-as-semitone)
 	(set! (speed-control index) 0.5)
 	(set! *speed-control-style* speed-control-as-ratio)
-	(set! (speed-control index) 0.25)
-	(set! (speed-control index) old-speed)
-	(set! *speed-control-style* old-style)
-	(set! (show-controls index) old-open))
+	(set! (speed-control index) 0.25))
       (let ((k (disk-kspace "oboe.snd")))
 	(if (or (not (number? k))
 		(<= k 0))
@@ -5985,10 +5984,8 @@ EDITS: 5
 	
 	(float-vector->channel v0)
 	(select-all) 
-	(let ((old-wid *sinc-width*))
-	  (set! *sinc-width* 40)
-	  (src-selection 0.5) 
-	  (set! *sinc-width* old-wid))
+	(let-temporarily ((*sinc-width* 40))
+	  (src-selection 0.5))
 	(set! v0 (channel->float-vector 0 128 index 0))
 	(if (or (fneq (sample 20) .5) (fneq (sample 30) 0.0) (fneq (sample 17) -.1057) )
 	    (snd-display ";src-selection: ~A?" v0))
@@ -7713,8 +7710,7 @@ EDITS: 5
 	(close-sound ns))
       (set! *show-full-range* #f)
       
-      (let ((old-sync *sync-style*))
-	(set! *sync-style* sync-none)
+      (let-temporarily ((*sync-style* sync-none))
 	(let ((ns (open-sound "2.snd")))
 	  (if (not (= (sync ns) 0))
 	      (snd-display ";sync-none open: ~A" (sync ns)))
@@ -7726,8 +7722,7 @@ EDITS: 5
 		 (not (= (sync ns) 1)))
 		(snd-display ";sync-by-sound open: ~A" (list (sync ns) (sync ns1))))
 	    (close-sound ns1))
-	  (close-sound ns))
-	(set! *sync-style* old-sync))
+	  (close-sound ns)))
       
       (let ((ind (view-sound "obtest.snd")))
 	(delete-samples 0 1000 ind 0)
@@ -7743,10 +7738,8 @@ EDITS: 5
 	(map-channel (lambda (y) 0.5))
 	(env-sound '(0 0 1 1 2 0))
 	(fp 1.0 0.3 20)
-	(let ((old-curse *with-tracking-cursor*))
-	  (set! *with-tracking-cursor* #t)
-	  (play :wait #t)
-	  (set! *with-tracking-cursor* old-curse))
+	(let-temporarily ((*with-tracking-cursor* #t))
+	  (play :wait #t))
 	(close-sound ind))
       (let ((ind (new-sound "test.snd" 1 22050 mus-ldouble mus-next)))
 	(for-each
@@ -14795,16 +14788,14 @@ EDITS: 2
     (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 1.0 1.0))
     (test-gen-equal (make-square-wave 440.0) (make-square-wave 440.0) (make-square-wave 440.0 0.5))
     
-    (let ((old-srate *clm-srate*))
-      (set! *clm-srate* 500.0)
+    (let-temporarily ((*clm-srate* 500.0))
       (let ((gen (make-square-wave 100.0 -0.5 (* pi 0.5)))
 	    (v0 (make-float-vector 20)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 20))
 	  (set! (v0 i) (gen)))
 	(if (not (mus-arrays-equal? v0 (float-vector -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5 -0.5 -0.5 0.0 0.0 -0.5)))
-	    (snd-display ";square-wave -.5: ~A " v0)))
-      (set! *clm-srate* old-srate))
+	    (snd-display ";square-wave -.5: ~A " v0))))
     
     (let ((gen (make-triangle-wave 440.0))
 	  (v0 (make-float-vector 10)))
@@ -14865,17 +14856,14 @@ EDITS: 2
     (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 1.0 1.0))
     (test-gen-equal (make-pulse-train 440.0) (make-pulse-train 440.0) (make-pulse-train 440.0 0.5))
     
-    (let ((old-srate *clm-srate*))
-      (set! *clm-srate* 500.0)
+    (let-temporarily ((*clm-srate* 500.0))
       (let ((gen (make-pulse-train 100.0 -0.5 (* pi 0.5)))
 	    (v0 (make-float-vector 20)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 20))
 	  (set! (v0 i) (gen)))
 	(if (not (mus-arrays-equal? v0 (float-vector  0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5 0.0 0.0 0.0 0.0 -0.5)))
-	    (snd-display ";pulse-train -.5: ~A " v0)))
-      (set! *clm-srate* old-srate))
-    
+	    (snd-display ";pulse-train -.5: ~A " v0))))
     
     (let ((gen (make-two-pole 1200.0 .1)))
       (if (not (two-pole? gen)) (snd-display ";~A not 2-polar?" gen))
@@ -16006,16 +15994,14 @@ EDITS: 2
       (let ((vals (channel->float-vector)))
 	(if (not (mus-arrays-equal? vals (float-vector 0.000 0.001 0.105 0.467 0.846 1.000 0.846 0.467 0.105 0.001)))
 	    (snd-display ";linear-src-channel: ~A" vals)))
-      (let ((old-clip *clipping*))
-	(set! *clipping* #t)
+      (let-temporarily ((*clipping* #t))
 	(save-sound-as "tst.snd")
 	(let ((fvals (file->floats "tst.snd")) 
 	      (vals (channel->float-vector)))
 	  (if (not (mus-arrays-equal? vals fvals))
 	      (snd-display ";file->floats: ~A ~A" vals fvals)))
 	(mus-sound-forget "tst.snd")
-	(delete-file "tst.snd")
-	(set! *clipping* old-clip))
+	(delete-file "tst.snd"))
       (let ((hp (make-differentiator)))
 	(map-channel (lambda (y)
 		       (differentiator hp y))))
@@ -19510,12 +19496,10 @@ EDITS: 2
       (if (or (fneq (sample 50) .5) (fneq (sample 30) 0.20608) (fneq (sample 90) 0.9755))
 	  (snd-display ";smooth: ~A ~A ~A?" (sample 50) (sample 30) (sample 90)))
       (undo) 
-      (let ((old-wid *sinc-width*))
-	(set! *sinc-width* 40) 
+      (let-temporarily ((*sinc-width* 40))
 	(set! (sample 100) 0.5) 
 	(if (fneq (sample 100) 0.5) (snd-display ";set-sample 100: ~A?" (sample 100)))
-	(src-sound .1) 
-	(set! *sinc-width* old-wid))
+	(src-sound .1) )
       (if (or (fneq (sample 1000) 0.5) (fneq (sample 1024) 0.0625) (fneq (sample 1010) 0.0))
 	  (snd-display ";src-sound: ~A ~A ~A?" (sample 1000) (sample 1024) (sample 1010)))
       (revert-sound)
@@ -21406,8 +21390,7 @@ EDITS: 2
 		(format () ";one-pole-all-pass (1) ~A: ~A ~A -> ~A~%" i v1 v2 (abs (- v1 v2)))))))
       )
 
-    (let ((old-srate *clm-srate*))
-      (set! *clm-srate* 44100)
+    (let-temporarily ((*clm-srate* 44100))
       (let ((pe (make-pulsed-env '(0 0 1 1 2 0) .0004 2205))
 	    (v (make-float-vector 100)))
 	(do ((i 0 (+ i 1)))
@@ -21418,8 +21401,7 @@ EDITS: 2
 				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
 				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000 
 				0.000 0.125 0.250 0.375 0.500 0.625 0.750 0.875 1.000 0.875 0.750 0.625 0.500 0.375 0.250 0.125 0.000 0.000 0.000 0.000)))
-	    (snd-display ";pulsed-env: ~A" v)))
-      (set! *clm-srate* old-srate))
+	    (snd-display ";pulsed-env: ~A" v))))
     
     (copy-test (make-oscil 330.0))
     (copy-test (make-ncos 440.0 10))
@@ -26120,8 +26102,7 @@ EDITS: 2
 	    ))
 	
 	(revert-sound)
-	(let ((old-setting *selection-creates-region*))
-	  (set! *selection-creates-region* #t)
+	(let-temporarily ((*selection-creates-region* #t))
 	  (let ((reg (select-all)))
 	    (without-errors
 	     (if (and (region? reg) 
@@ -26129,8 +26110,7 @@ EDITS: 2
 		 (let ((r1 (region-rms (car (regions))))
 		       (r2 (selection-rms)))
 		   (if (fneq r1 r2)
-		       (snd-display ";region rms: ~A?" r1))))))
-	  (set! *selection-creates-region* old-setting))
+		       (snd-display ";region rms: ~A?" r1)))))))
 	
 	(without-errors (if (region? (cadr (regions))) (play (cadr (regions)) :wait #t)))
 	(without-errors (mix-region (car (regions))))
@@ -41046,7 +41026,26 @@ EDITS: 1
 	(let ((file (new-sound "tmp.snd" 4 22050 mus-ldouble mus-next)))
 	  (mix-move-sound 0 "oboe.snd" (make-spiral-path :turns 3))
 	  (close-sound file))
-	
+
+	(let ((path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
+	  (if (not (equal? path '(open-bezier-path () () () () () () () () () ((-10 10) (0.5 0.5) (10 10)) #f #f () () () () () () () 0.01 #f #f #f)))
+	      (snd-display "dlocsig path 1: ~A~%" path)))
+	(let ((path (make-path :path '((-10 10 0 1) (0 5 0 0) (10 10 10 1)) :3d #t)))
+	  (if (not (equal? path '(open-bezier-path () () () () () () () () () ((-10 10 0 1) (0 5 0 0) (10 10 10 1)) #t #f () () () () () () () 0.01 #f #f #f)))
+	      (snd-display "dlocsig path 2: ~A~%" path)))
+	(let ((path (make-spiral-path :total-angle 360)))
+	  (if (not (equal? path '(spiral-path () () () () () () () () () () #f #f 0.0 360 18/5 () (0 10 1 10) (0 0 1 0) (0 1 1 1))))
+	      (snd-display "dlocsig path 3: ~A~%" path)))
+	(let ((path (make-spiral-path :turns 3)))
+	  (if (not (equal? path '(spiral-path () () () () () () () () () () #f #f 0.0 #f 18/5 3 (0 10 1 10) (0 0 1 0) (0 1 1 1))))
+	      (snd-display "dlocsig path 4: ~A~%" path)))
+	(let ((path (make-literal-path '((-10 10) (10 10)) :polar #t)))
+	  (if (not (equal? path '(literal-path () () () () () () () () () ((-10 10) (10 10)) #f #t)))
+	      (snd-display "dlocsig path 5: ~A~%" path)))
+	(let ((path (make-spiral-path :total-angle 360 :distance '(0 10 1 30 2 10))))
+	  (if (not (equal? path '(spiral-path () () () () () () () () () () #f #f 0.0 360 18/5 () (0 10 1 30 2 10) (0 0 1 0) (0 1 1 1))))
+	      (snd-display "dlocsig path 6: ~A~%" path)))
+
 	(with-sound (:channels 2) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 	(with-sound (:channels 4) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 	(with-sound (:channels 8) (dloc-sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
