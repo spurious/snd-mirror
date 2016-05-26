@@ -6472,7 +6472,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
    *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
    *   open let did not have a particular method (locally).  This seems inconsistent now,
-   *   but it was far worse before.  At least (let ((a 1)) ((curlet) 'pi)) is pi!
+   *   but it was far worse before.  At least (let () ((curlet) 'pi)) is pi!
    */
   if (!has_methods(env))
     {

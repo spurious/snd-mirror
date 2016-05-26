@@ -2222,6 +2222,7 @@
 			(and rev-op
 			     (member (list rev-op (caddr expr) (cadr expr)) lst)))))))
 
+      ;; --------------------------------
       ;; start of simplify-boolean code
       ;;   this is not really simplify boolean as in boolean algebra because in scheme there are many unequal truths, but only one falsehood
       ;;   'and and 'or are not boolean operators in a sense
@@ -3003,6 +3004,11 @@
 						     (eq? (cadr arg1) (cadr arg2)))
 					    (return `(< 0 ,(cadr arg1) ,(caddr arg2))))))
 
+				      (when (and (equal? (cadr arg1) (cadr arg2))
+						 (eq? (car arg1) 'inexact?)
+						 (eq? (car arg2) 'real?))
+					(return `(and ,arg2 ,arg1)))
+
 				      ;; this makes some of the code above redundant
 				      (let ((rel (relsub arg1 arg2 'and env)))
 					(if (or (boolean? rel)
@@ -3106,7 +3112,7 @@
 				  (when diff 
 				    (if (null? (cdr diff))
 					(return (car diff)))
-				    (return `(and ,@diff))))
+				    (return (simplify-boolean `(and ,@diff) () () env))))
 				;; now there are redundancies below (see subsumes?) but they assumed the tests were side-by-side
 
 				(let ((new-form ())
@@ -4868,6 +4874,12 @@
 	;; ---------------- string< string> etc ----------------
 	(let ()
 	  (define (sp-string< caller head form env)
+#|
+	    (if (eq? head 'string=?)
+		(format *stderr* "~A~%" form))
+	    ;; (string=? (string-append "#" (car (car x))) name)
+	    ;; (string=? (symbol->string a) (symbol->string b))
+|#
 	    (let ((cleared-form (cons head ; keep operator
 				      (remove-if (lambda (x) 
 						   (not (string? x))) 
@@ -5738,7 +5750,15 @@
 				   (let ((ary (arity func)))
 				     (if (and (pair? ary)
 					      (> (- (length form) 3) (cdr ary))) ; last apply arg might be var=()
-					 (lint-format "too many arguments for ~A: ~A" caller f form))))))
+					 (lint-format "too many arguments for ~A: ~A" caller f form))
+#|
+				     (if (equal? ary '(1 . 1))
+					 (format *stderr* "~A~%" form))
+				     ;; (apply sin (cdr v))
+				     ;; (apply list->string args)
+|#				     ;; (apply symbol->string (cdadr form))
+
+				     ))))
 			   
 			   (let ((last-arg (form (- len 1))))
 			     (if (and (not (list? last-arg))
@@ -6149,6 +6169,31 @@
 					 (cadr eq1))))
 		  
 		  (eval-constant-expression caller form)
+#|
+		  (if (and (eq? head 'equal?)
+			   (or (and (pair? arg1)
+				    (or (memq 'list arg1)
+					(memq {list} arg1)
+					(memq 'cons arg1)
+					(memq 'append arg1)))
+			       (and (pair? arg2)
+				    (or (memq 'list arg2)
+					(memq {list} arg2)
+					(memq 'cons arg2)
+					(memq 'append arg2)))))
+		      (format *stderr* "~A~%" form))
+		  ;; happens a lot
+		  ;; (equal? deleted (list path)) or reversed
+		  ;; (equal? (references %store y) (list x d))
+		  ;; (equal? imported (list file1 file2))
+		  ;; (equal? ({list} 'display intd) (gexp->sexp* exp))
+		  ;; (equal? procs ({list} hash assoc))
+		  ;; (equal? due-date (cons 0 0))
+		  ;; (equal? (cadr res) (list 'Atom None))
+		  ;; (equal? (y-bounds ab 0) (list -3.0 3.0))
+		  ;; (equal? val (list #t 4423))
+		  ;; (equal? arg `(not ,x))
+|#
 		  
 		  (cond ((or (eq? (car eq1) 'equal?)
 			     (eq? (car eq2) 'equal?))
@@ -6182,7 +6227,7 @@
 						     (if (any-null? arg1)
 							 `(null? ,arg2)
 							 `(null? ,arg1)))))
-			((not (eq? head 'eq?))
+			(else
 			 (lint-format "~A could be eq?~A in ~S" caller head 
 				      (if specific-op (format #f " or ~A" specific-op) "") 
 				      form))))))
@@ -6838,10 +6883,11 @@
 			     (cdr (assq head '((bitwise-and . logand) 
 					       (bitwise-ior . logior) 
 					       (bitwise-xor . logxor) 
-					       (bitwise-not . lognot)))))))
+					       (bitwise-not . lognot)
+					       (arithmetic-shift . ash)))))))
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-bitwise-ior))
-		    '(bitwise-and bitwise-ior bitwise-not bitwise-xor)))
+		    '(bitwise-and bitwise-ior bitwise-not bitwise-xor arithmetic-shift)))
 
 	;; ---------------- push! pop! ----------------	
 	(hash-table-set! 
@@ -7746,8 +7792,7 @@
 						       (truncated-list->string `(set! ,vn ,(var-initial-value (car cur))))))
 					   (format #f "in the ~A body.  Perhaps use set! instead: ~A"
 						   head (truncated-list->string `(set! ,vn ,(var-initial-value (car cur)))))))
-			  (lint-format "~A ~A ~A is declared twice" caller 
-				       head type vn)))))))))
+			  (lint-format "~A ~A ~A is declared twice" caller head type vn)))))))))
       
       (let ((old-line-number line-number))
 
@@ -11353,6 +11398,7 @@
 				   (eqv-select #f))
 			       
 			       ;; (cond (A (and B C)) (else (and B D))) et al never happens
+			       ;;    also (cond (A C) (B C)) -> (if (or A B) C) [non-pair C]
 			       ;; ----------------
 			       ;; if regular cond + else
 			       ;;   scan all return blocks
@@ -13716,6 +13762,7 @@
 		       (if (< (length form) 3)
 			   (lint-format "~A is messed up: ~A" caller head (truncated-list->string form))
 			   (let ((vars ()))
+
 			     (cond ((null? (cadr form))
 				    (lint-format "~A could be let: ~A" caller head (truncated-list->string form)))
 				   ((not (pair? (cadr form)))
@@ -14225,8 +14272,6 @@
 					    (cond ((hash-table-ref special-case-functions head)
 						   => (lambda (f)
 							(f caller head form env))))
-					; here curlet won't change (leaving aside additions via define)
-					; keyword head here if args to func/macro that we don't know about
 					    
 					    (if (and (not (= line-number last-simplify-numeric-line-number))
 						     (hash-table-ref numeric-ops head)
@@ -14896,13 +14941,13 @@
 
 ;;; get rid of []'s! (using Snd)
 (define (edit file)
-  (let ((str (file->string file)))
-    (let ((len (length str)))
-      (do ((i 0 (+ i 1)))
-	  ((= i len))
-	(case (str i)
-	  ((#\]) (set! (str i) #\)))
-	  ((#\[) (set! (str i) #\()))))
+  (let* ((str (file->string file))
+	 (len (length str)))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (case (str i)
+	((#\]) (set! (str i) #\)))
+	((#\[) (set! (str i) #\())))
     (call-with-output-file file
       (lambda (p)
 	(display str p)))
@@ -14923,12 +14968,12 @@
 ;;; rest arg never used as that?  define* arg never passed (move to let)
 ;;;   rest arg not treated as list: (list? arg):#t etc
 ;;;   can unlist rest -> define*?
-;;; (and (number? x) (inexact? x) (real? x)) -> (and (inexact? x) (real? x)) -- should be (real? x)
-;;; if (provided) define define -- complains about extra define which is incorrect -- perhaps check line numbers?
-;;; ((b i) j) is (b i j) if b is a sequence
 ;;; perhaps flag returning a closure sequence variable?
 ;;; if we know a macro's value, expand via macroexpand each time encountered and run lint on that?
-;;; finish snd-test let-temporarily changes
+;;; (equal? x `(a ,b)) -> (and (eq? (car x) 'a) etc), also (equal? x (list a b)) etc [possibly also string=?]
+;;; (apply f1arg x) -> (f1arg (car x))?? -- see apply above -- does not happen much
+;;; better to fill #f hash than remake it
+;;; (memv ((symbol->string head) 0) '(+ -)) -- i.e mismatch in types, also eqx
 ;;;
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
