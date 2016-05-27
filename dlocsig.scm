@@ -1109,11 +1109,10 @@
 		   ((path-ak-even (/ (- n 4) 2)) (- k 1)))))
 	   
 	   (define (xvector-ref z j i)
-	     (if (> i (- n 1))
-		 (z j (- i n))
-		 (if (< i 0) 
-		     (z j (+ i n))
-		     (z j i))))
+	     (z j (if (> i (- n 1))
+		      (- i n)
+		      (if (< i 0) 
+			  (+ i n) i))))
 	   
 	   (do ((i 0 (+ i 1)))
 	       ((= i n))

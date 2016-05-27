@@ -47112,7 +47112,6 @@ static bool call_begin_hook(s7_scheme *sc)
   return(false);
 }
 
-#if 1
 static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d) 
 {
   s7_pointer p, q;
@@ -47129,25 +47128,6 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   cdr(p) = car(cdr(p));
   return(q);
 }
-#else
-static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
-{
-  s7_pointer p, q;
-  /* we check this ahead of time: if (is_null(cdr(d))) return(car(d)); */
-  p = cons(sc, car(d), cdr(d));
-  q = p;
-  while (is_not_null(cdr(cdr(p))))
-    {
-      /* d = cons(sc, car(p), cdr(p)); */ /* does it matter that we're not copying? */
-      /* none of the current tests finds any problems with this -- just copy the first?? */
-      /* almost none of the current tests even gets into this loop, so I'm probably about to hit the banana peel... */
-      /* this is used by apply values and to copy args for apply of an unsafe function */
-      p = cdr(p); 
-    }
-  cdr(p) = car(cdr(p));
-  return(q);
-}
-#endif
 
 static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 {
@@ -53676,7 +53656,7 @@ static bool optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
     }
 
   /* not c func */
-  if(is_closure(func))
+  if (is_closure(func))
     {
       if (closure_arity_to_int(sc, func) != 3)
 	return(false);
@@ -74457,7 +74437,6 @@ int main(int argc, char **argv)
  * float_format_g -> (*s7* 'default-float-format) ? -- best would be translation from format -> fprint, but ".*g" currently
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
- * fix local-let in s7test
  *
  * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
  *   make-oscil -> '(oscil? real? real) 

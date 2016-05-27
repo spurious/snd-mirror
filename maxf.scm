@@ -44,7 +44,7 @@
 
 (define (snd-msg frm . args)
   (let ((str (apply format #f frm args)))
-    ((if (getenv "EMACS") display snd-print) str)))
+    ((if (not (string=? "" (getenv "EMACS"))) display snd-print) str)))
 
 (defgenerator mvm sample pp1 pp2 pp3 yy1 yy2 zz1 zz2 out)
 

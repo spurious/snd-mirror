@@ -4494,7 +4494,7 @@
 (CFNC "GdkDisplay* gdk_display_open gchar* display_name")
 (CFNC "gchar* gdk_display_get_name GdkDisplay* display")
 ;;; 3.9.0 (CFNC "int gdk_display_get_n_screens GdkDisplay* display")
-(CFNC "GdkScreen* gdk_display_get_screen GdkDisplay* display int screen_num")
+;;; 3.20 (CFNC "GdkScreen* gdk_display_get_screen GdkDisplay* display int screen_num")
 (CFNC "GdkScreen* gdk_display_get_default_screen GdkDisplay* display")
 ;;; 2.99.0 (CFNC "void gdk_display_pointer_ungrab GdkDisplay* display guint32 time")
 ;;; 2.99.0 (CFNC "void gdk_display_keyboard_ungrab GdkDisplay* display guint32 time")
@@ -9386,3 +9386,34 @@
 (CFNC-3.22 "gboolean gtk_gl_area_get_use_es GtkGLArea* area")
 (CFNC-3.22 "guint gdk_device_tool_get_serial GdkDeviceTool* tool")
 
+
+;;; 3.21.2:
+
+(CCAST-3.22 "GDK_MONITOR(object)" "GdkMonitor*")
+(CCHK-3.22 "GDK_IS_MONITOR(object)" "GdkMonitor*")
+
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_UNKNOWN" "GdkSubpixelLayout")
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_NONE" "GdkSubpixelLayout")
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_HORIZONTAL_RGB" "GdkSubpixelLayout")
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_HORIZONTAL_BGR" "GdkSubpixelLayout")
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_VERTICAL_RGB" "GdkSubpixelLayout")
+(CINT-3.22 "GDK_SUBPIXEL_LAYOUT_VERTICAL_BGR" "GdkSubpixelLayout")
+
+(CFNC-3.22 "int gdk_display_get_n_monitors GdkDisplay* display")
+(CFNC-3.22 "GdkMonitor* gdk_display_get_monitor GdkDisplay* display int monitor_num")
+(CFNC-3.22 "GdkMonitor* gdk_display_get_primary_monitor GdkDisplay* display")
+(CFNC-3.22 "GdkMonitor* gdk_display_get_monitor_at_point GdkDisplay* display int x int y")
+(CFNC-3.22 "GdkMonitor* gdk_display_get_monitor_at_window GdkDisplay* display GdkWindow* window")
+(CFNC-3.22 "gboolean gdk_event_get_pointer_emulated GdkEvent* event")
+(CFNC-3.22 "gtk_menu_place_on_monitor GtkMenu* menu GdkMonitor* monitor")
+(CFNC-3.22 "GdkDisplay* gdk_monitor_get_display GdkMonitor* monitor")
+(CFNC-3.22 "void gdk_monitor_get_geometry GdkMonitor* monitor GdkRectangle* geometry")
+(CFNC-3.22 "void gdk_monitor_get_workarea GdkMonitor* monitor GdkRectangle* workarea")
+(CFNC-3.22 "int gdk_monitor_get_width_mm GdkMonitor* monitor")
+(CFNC-3.22 "int gdk_monitor_get_height_mm GdkMonitor* monitor")
+(CFNC-3.22 "char* gdk_monitor_get_manufacturer GdkMonitor* monitor" 'const)
+(CFNC-3.22 "char* gdk_monitor_get_model GdkMonitor* monitor" 'const)
+(CFNC-3.22 "int gdk_monitor_get_scale_factor GdkMonitor* monitor")
+(CFNC-3.22 "int gdk_monitor_get_refresh_rate GdkMonitor* monitor")
+(CFNC-3.22 "GdkSubpixelLayout gdk_monitor_get_subpixel_layout GdkMonitor* monitor")
+(CFNC-3.22 "gboolean gdk_monitor_is_primary GdkMonitor* monitor")
