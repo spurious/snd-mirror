@@ -39208,15 +39208,9 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
    *   I guess ideally eval would ignore optimization info -- copy :readable or something.
    */
   return((p == opt_any1(x)) ||
-	 ((is_any_c_function(p)) && (opt_cfunc(x)) &&
+	 ((is_any_c_function(p)) && /* (opt_cfunc(x)) && */
 	  (c_function_class(p) == c_function_class(opt_cfunc(x)))));
 }
-
-#if 0
-#define c_function_is_ok(Sc, X) \
-  ({ s7_pointer _X_, _p_;  _X_ = X; _p_ = find_global_symbol_checked(Sc, car(_X_)); \
-   ((_p_ == opt_cfunc(_X_)) || ((is_any_c_function(_p_)) && (c_function_class(_p_) == c_function_class(opt_cfunc(_X_))))); })
-#endif
 
 static bool arglist_has_rest(s7_scheme *sc, s7_pointer args)
 {

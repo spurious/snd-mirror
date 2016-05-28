@@ -2937,7 +2937,7 @@ void g_init_marks(void)
   Xen_define_safe_procedure(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks);
   Xen_define_safe_procedure(S_find_mark,       g_find_mark_w,       1, 3, 0, H_find_mark);
   Xen_define_safe_procedure(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks);
-  Xen_define_safe_procedure(S_is_mark,         g_is_mark_w,          1, 0, 0, H_is_mark);
+  Xen_define_safe_procedure(S_is_mark,         g_is_mark_w,         1, 0, 0, H_is_mark);
   Xen_define_safe_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark);
   Xen_define_safe_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer);
 
