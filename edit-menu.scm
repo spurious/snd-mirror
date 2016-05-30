@@ -55,7 +55,7 @@
 	  (display "Could not make new sound.")(newline))
 	(begin
 	  (insert-sound ofile-name 0 0 nsnd 0)
-	  (insert-sound ofile-name 0 (if (> (channels old-sound) 0) 1 0) nsnd 1)))))
+	  (insert-sound ofile-name 0 (if (> (channels old-sound) 1) 1 0) nsnd 1)))))
 
 (add-to-menu edit-menu "Make Stereofile" make-stereofile)
 

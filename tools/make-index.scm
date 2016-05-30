@@ -518,6 +518,7 @@
     (list '*repl* "repl.scm")
     (list '*rgb* "rgb.scm")
     (list '*spectr* "spectr.scm")
+    (list '*lint* "lint.scm")
 
     (list 'with-sound "ws.scm")
     (list 'with-mixed-sound "ws.scm")

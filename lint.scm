@@ -5107,14 +5107,6 @@
 	(hash-table-set!
 	 h 'string 
 	 (lambda (caller head form env)
-
-	   ;; TODO:
-	   ;; (string (string-ref file-line 0))
-	   ;; (string (string-ref s i))
-	   ;; (string (char-downcase (string-ref enc 1)) (char-downcase (string-ref enc 2)))
-	   ;; (string (make-string (+fx 1 (/fx *registers-number* 8)) a000)) ??
-	   ;; (string "Not a ladspa object\\n") ???
-
 	   (if (every? (lambda (x) 
 			 (and (char? x)
 			      (char<=? #\space x #\~))) ; #\0xx chars here look dumb
@@ -5417,6 +5409,12 @@
 			      (pair? (cadr arg))                ; (list->string (reverse (string->list x))) -> (reverse x)
 			      (eq? (caadr arg) inv-op))
 			 (lint-format "perhaps ~A" caller (lists->string form `(,(if (eq? func-of-arg 'reverse!) 'reverse func-of-arg) ,(cadadr arg)))))
+
+			((and (memq head '(reverse reverse!))   ; (reverse (string->list x)) -> (string->list (reverse x)) -- often redundant
+			      (memq func-of-arg '(string->list vector->list))
+			      (null? (cddr arg)))
+			 (lint-format "perhaps less consing: ~A" caller
+				      (lists->string form `(,func-of-arg (reverse ,arg-of-arg)))))
 			
 			((and (pair? (cadr arg))
 			      (memq func-of-arg '(cdr cddr cdddr cddddr list-tail))
@@ -5934,7 +5932,7 @@
 					 (lint-format "perhaps ~A" caller (lists->string form `(,f ,@(copy (cddr form) (make-list (- len 3))))))))))))))))))
 	 (hash-table-set! h 'apply sp-apply))
 	
-	;; ---------------- format snd-display ----------------
+	;; ---------------- format ----------------
 	(let ()
 	  (define (sp-format caller head form env)
 	    (if (< (length form) 3)
@@ -6105,9 +6103,7 @@
 			     ((string-append)
 			      (lint-format "format appends strings, so ~A seems wasteful" caller a)))))
 		     args)))))
-	  (for-each (lambda (f)
-		      (hash-table-set! h f sp-format))
-		    '(format snd-display)))
+	  (hash-table-set! h 'format sp-format))
 	
 	;; ---------------- error ----------------
 	(hash-table-set! 
@@ -6284,7 +6280,7 @@
 		  
 		  (cond ((or (eq? (car eq1) 'equal?)
 			     (eq? (car eq2) 'equal?))
-			 (if (memq head '(equal? morally-equal?))
+			 (if (eq? head 'equal?)
 			     (if specific-op
 				 (lint-format "~A could be ~A in ~S" caller head specific-op form))
 			     (lint-format "~A should be equal?~A in ~S" caller head 
@@ -6293,17 +6289,17 @@
 			
 			((or (eq? (car eq1) 'eqv?)
 			     (eq? (car eq2) 'eqv?))
-			 (if (memq head '(eqv? morally-equal?))
+			 (if (eq? head 'eqv?)
 			     (if specific-op
 				 (lint-format "~A could be ~A in ~S" caller head specific-op form))
-			     (lint-format "~A ~A be eqv?~A in ~S" caller head 
-					  (if (eq? head 'eq?) "should" "could") 
-					  (if specific-op (format #f " or ~A" specific-op) "")
-					  form)))
+				 (lint-format "~A ~A be eqv?~A in ~S" caller head 
+					      (if (eq? head 'eq?) "should" "could") 
+					      (if specific-op (format #f " or ~A" specific-op) "")
+					      form)))
 			
 			((not (or (eq? (car eq1) 'eq?)
 				  (eq? (car eq2) 'eq?))))
-			
+
 			((not (and arg1 arg2))
 			 (lint-format "~A could be not: ~A" caller head (lists->string form `(not ,(or arg1 arg2)))))
 			
@@ -6318,9 +6314,8 @@
 			 (lint-format "~A could be eq?~A in ~S" caller head 
 				      (if specific-op (format #f " or ~A" specific-op) "") 
 				      form))))))
-	  (for-each (lambda (f)
-		      (hash-table-set! h f sp-eqv?))
-		    '(eqv? equal? morally-equal?) ))
+	  (hash-table-set! h 'eqv? sp-eqv?)
+	  (hash-table-set! h 'equal? sp-eqv?))
 	
 	;; ---------------- map for-each ----------------
 	(let ()
@@ -6681,45 +6676,6 @@
 							       `((lambda ,vars ,@body) ,producer)))))))))))
 	 (hash-table-set! h 'multiple-value-bind sp-mvb))
 	
-	;; TODO: 
-	;;                                                  [`((lambda ,vars ,@body) ,expression))]
-	;;                                                  [(reverse! (reverse l))]
-	;;                                                  [(substring s 2 (string-length s)) -> leave out len]
-	;;                                                  [(> (- fltdur 50868) 256)]
-	;;
-	;; (apply vector (append beg-samps (list (beg-samps (- (length beg-samps) 1)))))
-	;; (apply string (map char-downcase (cdr typ)))
-	;; (apply + (map (lambda (x) (* x x)) (map cdr combined-spectrum))) 
-	;; (apply append (map resolve-target2 (cdddr ins))) [map l(v) (values (resolv v)) ...)?]
-	;; (string-append base (if (pair? su) (car su) "")) -> if pair? append else base
-	;; (member x '(1 0))
-	;; (memq (strname 0) '(#\{ #\[ #\()) -- memv independent of cadr
-	;; (member (car (string->list S)) (string->list "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
-	;;          ^ -> (string-ref S 0) ^ char-position, then string->list for that if needed
-	;; (member (car tail) '(:opt :key :optkey :rest))  (member (car op) '(thereis never always)) also list
-	;; (assq c '((#\b . 2) (#\o . 8) (#\d . 10) (#\x . 16)))
-	;; (/ (expt dist reverb-power))
-	;; (/ (* 12 (log harmonic-number)) (log 2))
-	;; (/ (* phasediff sr) (* D sr))
-	;; (/ 1.0 (exact->inexact q/p))
-	;; (fsafe x (list 1 2 3)) -> use '(...)? -- f-no-side list arg, list of code-constants -> use quoted list
-	;; (and (<= b a) (<= a c) (debug-assert (<= b c) 'comparison 'transitive))
-	;; ?? (for-each (lambda (f) (if (not (member f a)) (set! diffs (cons f diffs)))) b) -> map??
-	;; (for-each (lambda (b dat) (set! init (append init (list (- b beg)))) (set! init (append init (list (* 1.0 (dat 5)))))) (cdr begs) data)
-	;; (assoc order '((1 . 1.0) (2 . 1.3)) =)
-	;; (= (ash typ1 -8) (ash typ2 -8))
-	;; (list->vector (apply append (map vector->list rest)))
-	;; (and (= (length args) 1) (quot (symbol? (car args)))) -> (and pair? ...)
-	;; (and (number? a) (positive? a)) or (and (number? x) (< x 1)) -> (and (real? x)...)
-	;;                  ^: positive? negative? < > <= >= -> real?    even?|odd? -> integer?
-	;; (char=? #\# (string-ref (number->string 8 8) 0))
-	;; substring to len -- can we see that len=length?
-	;; (multiple-value-bind (reg nsize regs) (select-register! regs size) (simplify-reg! reg) (loop regs (cons reg stack) nsize))
-	;; (make-vector (length (append pregs cregs)) #f)
-	;; (and (integer? n) (exact? n))
-	;; (and (>= cp 8192) (<= cp 12287))
-	
-	
 	;; ---------------- let-values ----------------
 	(let ()
 	 (define (sp-let-values caller head form env)
@@ -6959,13 +6915,7 @@
 				(current-environment . curlet)
 				(make-procedure-with-setter . dilambda)
 				(procedure-with-setter? . dilambda?)
-				(make-random-state . random-state)
-				;;(make-rectangular . complex)
-				(data-format . sample-type)
-				(mus-sound-frames . mus-sound-framples)
-				(mus-sound-data-format . mus-sound-sample-type)
-				(mus-data-format-name . mus-sample-type-name)
-				(mus-data-format->string . mus-sample-type->string))))
+				(make-random-state . random-state))))
 
 	  (define (sp-deprecate caller head form env)
 	    (lint-format "~A is deprecated; use ~A" caller head (cond ((assq head deprecated-ops) => cdr))))
@@ -15194,7 +15144,6 @@
 ;;; TODO:
 ;;;
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
-;;; snd-lint: load lint, add to various hash-tables via *lint* [if provided? 'snd load snd-lint.scm or something]
 ;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
@@ -15203,7 +15152,70 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;; perhaps flag returning a closure sequence variable?
 ;;; if we know a macro's value, expand via macroexpand each time encountered and run lint on that?
+;;; extension via (sublet *lint*) + special-case|walker-functions -- need examples, docs etc -- see snd-lint.scm
+;;;   definstrument, defgenerator?, with-sound etc
+;;;   run this over the snd files!
 ;;; 
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
 ;;; 132 22618 495652
+;;;
+;;;                                                  [`((lambda ,vars ,@body) ,expression))]
+;;;                                                  [(reverse! (reverse l))]
+;;;                                                  [(substring s 2 (string-length s)) -> leave out len]
+;;;                                                  [(> (- fltdur 50868) 256)]
+;;;                                                  [(multiple-value-bind ...)]
+;;;                                                  [named-let using built-in-func name if *report-...*]
+;;;                                                  [(reverse (string->list classname))]
+;;;
+;;; (string (string-ref s i))
+;;; (string (char-downcase (string-ref enc 1)) (char-downcase (string-ref enc 2)))
+;;; (string (make-string (+fx 1 (/fx *registers-number* 8)) a000)) ??
+;;; (string (string-ref file-line 0)) -- (substring file-line 0 1)
+;;; (apply vector (append beg-samps (list (beg-samps (- (length beg-samps) 1)))))
+;;; (apply string (map char-downcase (cdr typ)))
+;;; (apply + (map (lambda (x) (* x x)) (map cdr combined-spectrum))) 
+;;; (apply append (map resolve-target2 (cdddr ins))) [map l(v) (values (resolv v)) ...)?]
+;;; (string-append base (if (pair? su) (car su) "")) -> if pair? append else base
+;;; (member x '(1 0))
+;;; (memq (strname 0) '(#\{ #\[ #\()) -- memv independent of cadr
+;;; (member (car (string->list S)) (string->list "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+;;;          ^ -> (string-ref S 0) ^ char-position, then string->list for that if needed
+;;; (member (car tail) '(:opt :key :optkey :rest))  (member (car op) '(thereis never always)) also list
+;;; (assq c '((#\b . 2) (#\o . 8) (#\d . 10) (#\x . 16))) 
+;;; (/ (expt dist reverb-power))  (/ 1 (expt 10 6)) -> 1e-6
+;;; (/ (* 12 (log harmonic-number)) (log 2))
+;;; (/ (* phasediff sr) (* D sr))
+;;; (/ 1.0 (exact->inexact q/p))
+;;; (fsafe x (list 1 2 3)) -> use '(...)? -- f-no-side list arg, list of code-constants -> use quoted list [{list} also]
+;;; (and (<= b a) (<= a c) (debug-assert (<= b c) 'comparison 'transitive))
+;;; ?? (for-each (lambda (f) (if (not (member f a)) (set! diffs (cons f diffs)))) b) -> map??
+;;; (for-each (lambda (b dat) (set! init (append init (list (- b beg)))) (set! init (append init (list (* 1.0 (dat 5)))))) (cdr begs) data)
+;;; (assoc order '((1 . 1.0) (2 . 1.3)) =)
+;;; (= (ash typ1 -8) (ash typ2 -8))
+;;; (list->vector (apply append (map vector->list rest)))
+;;;     make vector from vectors -> (apply append rest)
+;;; (and (number? a) (positive? a)) or (and (number? x) (< x 1)) -> (and (real? x)...)  (or (not (number? n3)) (< n3 1930))
+;;;                  ^: positive? negative? < > <= >= -> real?    even?|odd? -> integer?
+;;; (char=? #\# (string-ref (number->string 8 8) 0))
+;;; substring to len -- can we see that len=length? (find len decl, backup to :let, read forward for len uses)
+;;; (make-vector (length (append pregs cregs)) #f)
+;;;    (make-vector|etc (+ (length pregs) (length cregs)) #f)
+;;; (apply append (map...)) is very common -- can this be (map ...+values...)?
+;;;     (map (lambda (x) (apply values (f x))) ...) from (apply append (map f ...))
+;;; (and t v (string? t) (string? v))
+;;; (and v (boolean? v) (not (equal? v w))) ! -- v must be #t
+;;; (map (lambda (v) #f) (record-type-fields class)) -- make list + #f
+;;; (substring (string-append str (make-string len #\space)) 0 len) -- (copy str (make-string len #\space))
+;;; (string->symbol (if (string-null? pns) "keine" pns)) -> (if test 'keine (string->symbol pns))
+;;; (number->string (if (integer? n) (inexact->exact n) n)) -- if is useless: (n->s n)
+;;; (substring note (- x 1) 1) -- x must be 1 or 2=""
+;;; (eval (list 'Utterance 'Text text)) -- (Utterance Text text)? -- text here is a string (a parameter, so hard to prove that)
+;;; (> (numerator x) 0) -- all such -> x
+;;; (append (if x (list x) '()) (cdr y)) -> (if x (append (list x) (cdr y)) (cdr y))
+;;; (and (string=? span (string replacement-char)) is-first-stencil)
+;;; (or (not (= arglen siglen)) (< siglen 0) (< arglen 0)) | (and (= x y) (< x 0) (< y 0)) etc
+;;; (vector-set! x i (vector-ref x (incr i)))
+;;; (char=? #\- (car (string->list (symbol->string (keyword->symbol (car term))))))
+;;; (< (string->number (minor-version)) 8)
+;;; (or ('/ . rst) ("." . rst) (".." . rst))

@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-May:    snd-lint.scm
  6-May:     Snd 16.5.
  29-Mar:    --with-webserver configuration  (Kjetil Matheussen)
  28-Mar:    Snd 16.4.
