@@ -5502,11 +5502,14 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_string_append_to_temp(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol "(symbol str) returns the string str converted to a symbol"
-  #define Q_symbol s7_make_signature(sc, 2, sc->is_symbol_symbol, sc->is_string_symbol)
-  return(g_string_to_symbol_1(sc, car(args), sc->symbol_symbol));
+  #define H_symbol "(symbol str ...) returns its string arguments concatenated and converted to a symbol"
+  #define Q_symbol s7_make_circular_signature(sc, 1, 2, sc->is_symbol_symbol, sc->is_string_symbol)
+  if (is_null(cdr(args)))
+    return(g_string_to_symbol_1(sc, car(args), sc->symbol_symbol));
+  return(g_string_to_symbol_1(sc, g_string_append_to_temp(sc, args), sc->symbol_symbol));
 }
 
 
@@ -73564,7 +73567,7 @@ s7_scheme *s7_init(void)
                                      defun("symbol-table",	symbol_table,		0, 0, false);
   sc->symbol_to_string_symbol =      defun("symbol->string",	symbol_to_string,	1, 0, false);
   sc->string_to_symbol_symbol =      defun("string->symbol",	string_to_symbol,	1, 0, false);
-  sc->symbol_symbol =                defun("symbol",		symbol,			1, 0, false);
+  sc->symbol_symbol =                defun("symbol",		symbol,			1, 0, true);
   sc->symbol_to_value_symbol =       defun("symbol->value",	symbol_to_value,	1, 1, false);
   sc->symbol_to_dynamic_value_symbol = defun("symbol->dynamic-value", symbol_to_dynamic_value, 1, 0, false);
   s7_typed_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access, Q_symbol_access, NULL);

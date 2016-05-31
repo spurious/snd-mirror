@@ -61,10 +61,6 @@
 (set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid (incorrect) unbound-variable errors
 
-(unless (provided? 'snd)
-  (define definstrument define*)
-  (define defgenerator define*))
-
 (define-macro (let*-temporarily vars . body)
   `(with-let (#_inlet :orig (#_curlet) 
 		      :saved (#_list ,@(map car vars)))
@@ -4655,7 +4651,7 @@
 		     (set! last-simplify-cxr-line-number line-number)
 		     (cond ((< (length cxr) 5)
 			    (lint-format "perhaps ~A" caller 
-					 (lists->string form `(,(string->symbol (string-append "c" cxr "r")) ,arg))))
+					 (lists->string form `(,(symbol "c" cxr "r") ,arg))))
 			   
 			   ;; if it's car|cdr followed by cdr's, use list-ref|tail
 			   ((not (char-position #\a cxr))
@@ -4969,7 +4965,7 @@
 			(cdr form))
 		(lint-format "perhaps ~A" caller
 			     (lists->string form
-					    `(,(string->symbol (string-append "char" (substring (symbol->string head) 6)))
+					    `(,(symbol "char" (substring (symbol->string head) 6))
 					      ,@(map (lambda (a)
 						       (if (string? a)
 							   (string-ref a 0)
@@ -5463,6 +5459,16 @@
 			((and (memq head '(string->list vector->list))
 			      (= (length form) 4))
 			 (check-start-and-end caller head (cddr form) form env))
+
+			((and (eq? head 'string->symbol)        ; (string->symbol (string-append...)) -> (symbol ...)
+			      (or (memq func-of-arg '(string-append append))
+				  (and (eq? func-of-arg 'apply)
+				       (memq arg-of-arg '(string-append append)))))
+			 (lint-format "perhaps ~A" caller
+				      (lists->string form 
+						     (if (eq? func-of-arg 'apply)
+							 `(apply symbol ,@(cddr arg))
+							 `(symbol ,@(cdr arg))))))
 			
 			((and (eq? head 'symbol->string) ; (string->symbol "constant-string") never happens, but the reverse does?
 			      (quoted-symbol? arg))
@@ -5906,6 +5912,10 @@
 						   (eq? (car args) 'map)
 						   (eq? (cadr args) 'vector->list))
 					      (lint-format "perhaps ~A" caller (lists->string form `(vector->list (apply append ,@(cddr args))))))
+					     ;; (apply append (map...)) is very common but changing it to
+					     ;;     (map (lambda (x) (apply values (f x))) ...) from (apply append (map f ...))
+					     ;;     is not an obvious win.  The code is more complicated, and currently apply values 
+					     ;;     copies its args (as do apply and append -- how many copies are there here?!
 					     
 					     ((and (eq? (car args) 'append)      ; (apply f (append (list ...)...)) -> (apply f ... ...)
 						   (pair? (cadr args))
@@ -6932,6 +6942,24 @@
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-null))
 		    '(null eq eqv equal))) ; (null (cdr...)) 
+
+	;; ---------------- cons* ----------------
+	(let ()
+	  (define (sp-cons* caller head form env)
+	    (when (not (var-member 'cons env))
+	      (case (length form)
+		((2) (lint-format "perhaps ~A" caller (lists->string form (cadr form))))
+		((3) (lint-format "perhaps ~A" caller 
+				  (lists->string form 
+						 (if (any-null? (caddr form))
+						     `(list ,(cadr form))
+						     `(cons ,@(cdr form))))))
+		((4) (lint-format "perhaps ~A" caller 
+				  (lists->string form 
+						 (if (any-null? (cadddr form))
+						     `(list ,(cadr form) ,(caddr form))
+						     `(cons ,(cadr form) (cons ,@(cddr form))))))))))
+	  (hash-table-set! h 'cons* sp-cons*))
 	
 	;; ---------------- the-environment etc ----------------
 	(let ()
@@ -7749,29 +7777,6 @@
 				      (check-args caller head form arg-data env max-arity))
 				  )))))))))))))
     
-    (define (get-generator caller form env)
-      (when (pair? (cdr form))
-	(let ((name ((if (pair? (cadr form)) caadr cadr) form)))
-	  
-	  (if (and (pair? (cadr form))
-		   (pair? (cdadr form)))
-	      (lint-walk caller (cdadr form) env))
-	  
-	  (let ((gen? (string->symbol (string-append (symbol->string name) "?")))
-		(gen-make (string->symbol (string-append "make-" (symbol->string name)))))
-	    (list (make-fvar :name gen?
-			     :ftype 'define
-			     :decl (dummy-func 'define `(define (,gen? x) (let? x)) '(define (_ x) #f))
-			     :initial-value `(define (,gen? x) (let? x))
-			     :arglist (list 'x)
-			     :env env)
-		  (make-fvar :name gen-make
-			     :ftype 'define*
-			     :decl (dummy-func 'define* `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x)) '(define (_ . x) #f))
-			     :initial-value `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x))
-			     :arglist (list :rest 'x :allow-other-keys)
-			     :env env))))))
-    
     (define (indirect-set? vname func arg1)
       (case func
 	((set-car! set-cdr! vector-set! list-set! string-set!) 
@@ -7896,12 +7901,12 @@
 		   (let ((setv #f)
 			 (newv #f))
 		     (if (string=? (substring vstr 0 4) "get-")
-			 (let ((sv (string->symbol (string-append "set-" (substring vstr 4)))))
+			 (let ((sv (symbol "set-" (substring vstr 4))))
 			   (set! setv (or (var-member sv vars)
 					  (var-member sv env)))
 			   (set! newv (string->symbol (substring vstr 4))))
 			 (if (string=? (substring vstr (- len 4)) "-ref")
-			     (let ((sv (string->symbol (string-append (substring vstr 0 (- len 4)) "-set!"))))
+			     (let ((sv (symbol (substring vstr 0 (- len 4)) "-set!")))
 			       (set! setv (or (var-member sv vars)
 					      (var-member sv env)))
 			       (set! newv (string->symbol (substring vstr 0 (- len 4)))))
@@ -7910,8 +7915,8 @@
 				 (let ((sv (string->symbol (let ((s (copy vstr))) (set! (s (+ pos 1)) #\s) s))))
 				   (set! setv (or (var-member sv vars)
 						  (var-member sv env)))
-				   (set! newv (string->symbol (string-append (substring vstr 0 pos) 
-									     (substring vstr (+ pos 4)))))))))) ; +4 to include #\-
+				   (set! newv (symbol (substring vstr 0 pos) 
+						      (substring vstr (+ pos 4))))))))) ; +4 to include #\-
 		     (when (and setv 
 				(not (var-member newv vars))
 				(not (var-member newv env)))
@@ -9532,7 +9537,7 @@
 			   (pair? args) 
 			   (null? (cdr args))
 			   (eq? (car args) arg)
-			   (let ((f (string->symbol (string-append "c" cr "r"))))
+			   (let ((f (symbol "c" cr "r")))
 			     (if (eq? f function-name)
 				 (lint-format "this redefinition of ~A is pointless (use (with-let (unlet)...) or #_~A)" definer function-name function-name)
 				 (lint-format "~A could be (define ~A ~A)" function-name function-name function-name f)))))
@@ -10523,7 +10528,7 @@
 					     (< (length cr) 5) 
 					     (eq? (car args) arg)
 					     (lint-format "perhaps ~A" caller 
-							  (lists->string form (string->symbol (string-append "c" cr "r"))))))
+							  (lists->string form (symbol "c" cr "r")))))
 				      (combine-cxrs body)))))))))
 		    
 		    (if (and (or (symbol? args)                 ; (lambda args (apply f args)) -> f
@@ -13012,7 +13017,7 @@
 							       (and cr
 								    (< (length cr) 5) 
 								    (eq? vname arg)
-								    (set! crf (string->symbol (string-append "c" cr "r")))))
+								    (set! crf (symbol "c" cr "r"))))
 							     (combine-cxrs (caddr p))))))
 					      (and (eq? (car p) 'if)
 						   (eq? (caddr p) vname)
@@ -14081,13 +14086,6 @@
 	  (hash-table-set! h 'defmacro* defmacro-walker))
 	
 	
-	;; ---------------- defgenerator ----------------
-	(hash-table-set! 
-	 h 'defgenerator
-	 (lambda (caller form env)
-	   (append (get-generator caller form env) env)))
-	
-	
 	;; ---------------- load ----------------
 	(hash-table-set! 
 	 h 'load
@@ -15152,25 +15150,20 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;; perhaps flag returning a closure sequence variable?
 ;;; if we know a macro's value, expand via macroexpand each time encountered and run lint on that?
-;;; extension via (sublet *lint*) + special-case|walker-functions -- need examples, docs etc -- see snd-lint.scm
-;;;   definstrument, defgenerator?, with-sound etc
-;;;   run this over the snd files!
+;;; document lint extension (snd-lint.scm)
 ;;; 
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
 ;;;
-;;; 132 22618 495652
+;;; 131 21885 499148
 ;;;
-;;;                                                  [`((lambda ,vars ,@body) ,expression))]
-;;;                                                  [(reverse! (reverse l))]
-;;;                                                  [(substring s 2 (string-length s)) -> leave out len]
-;;;                                                  [(> (- fltdur 50868) 256)]
-;;;                                                  [(multiple-value-bind ...)]
-;;;                                                  [named-let using built-in-func name if *report-...*]
-;;;                                                  [(reverse (string->list classname))]
+;;;                                  [mvb: `((lambda ,vars ,@body) ,expression))]
+;;;                                  [(reverse! (reverse l))]
+;;;                                  [(substring s 2 (string-length s)) -> leave out len]
+;;;                                  [(> (- fltdur 50868) 256)]
+;;;                                  [(reverse (string->list classname))]
+;;;                                  [string->symbol (string-append...)]
 ;;;
-;;; (string (string-ref s i))
 ;;; (string (char-downcase (string-ref enc 1)) (char-downcase (string-ref enc 2)))
-;;; (string (make-string (+fx 1 (/fx *registers-number* 8)) a000)) ??
 ;;; (string (string-ref file-line 0)) -- (substring file-line 0 1)
 ;;; (apply vector (append beg-samps (list (beg-samps (- (length beg-samps) 1)))))
 ;;; (apply string (map char-downcase (cdr typ)))
@@ -15182,7 +15175,11 @@
 ;;; (member (car (string->list S)) (string->list "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 ;;;          ^ -> (string-ref S 0) ^ char-position, then string->list for that if needed
 ;;; (member (car tail) '(:opt :key :optkey :rest))  (member (car op) '(thereis never always)) also list
+;;; (not (pair? (member (basename argv0) *no-main-loop-apps*)))
+;;; (and (symbol? id) (not (member id bnds)))
+;;; (member (denominator k/n) '(1 2 3 4 6)
 ;;; (assq c '((#\b . 2) (#\o . 8) (#\d . 10) (#\x . 16))) 
+;;; (assoc order '((1 . 1.0) (2 . 1.3)) =)
 ;;; (/ (expt dist reverb-power))  (/ 1 (expt 10 6)) -> 1e-6
 ;;; (/ (* 12 (log harmonic-number)) (log 2))
 ;;; (/ (* phasediff sr) (* D sr))
@@ -15191,31 +15188,32 @@
 ;;; (and (<= b a) (<= a c) (debug-assert (<= b c) 'comparison 'transitive))
 ;;; ?? (for-each (lambda (f) (if (not (member f a)) (set! diffs (cons f diffs)))) b) -> map??
 ;;; (for-each (lambda (b dat) (set! init (append init (list (- b beg)))) (set! init (append init (list (* 1.0 (dat 5)))))) (cdr begs) data)
-;;; (assoc order '((1 . 1.0) (2 . 1.3)) =)
-;;; (= (ash typ1 -8) (ash typ2 -8))
 ;;; (list->vector (apply append (map vector->list rest)))
 ;;;     make vector from vectors -> (apply append rest)
 ;;; (and (number? a) (positive? a)) or (and (number? x) (< x 1)) -> (and (real? x)...)  (or (not (number? n3)) (< n3 1930))
 ;;;                  ^: positive? negative? < > <= >= -> real?    even?|odd? -> integer?
 ;;; (char=? #\# (string-ref (number->string 8 8) 0))
 ;;; substring to len -- can we see that len=length? (find len decl, backup to :let, read forward for len uses)
+;;; (substring (string-append str (make-string len #\space)) 0 len) -- (copy str (make-string len #\space))
+;;; (substring note (- x 1) 1) -- x must be 1 or 2=""
 ;;; (make-vector (length (append pregs cregs)) #f)
 ;;;    (make-vector|etc (+ (length pregs) (length cregs)) #f)
-;;; (apply append (map...)) is very common -- can this be (map ...+values...)?
-;;;     (map (lambda (x) (apply values (f x))) ...) from (apply append (map f ...))
 ;;; (and t v (string? t) (string? v))
 ;;; (and v (boolean? v) (not (equal? v w))) ! -- v must be #t
 ;;; (map (lambda (v) #f) (record-type-fields class)) -- make list + #f
-;;; (substring (string-append str (make-string len #\space)) 0 len) -- (copy str (make-string len #\space))
 ;;; (string->symbol (if (string-null? pns) "keine" pns)) -> (if test 'keine (string->symbol pns))
 ;;; (number->string (if (integer? n) (inexact->exact n) n)) -- if is useless: (n->s n)
-;;; (substring note (- x 1) 1) -- x must be 1 or 2=""
 ;;; (eval (list 'Utterance 'Text text)) -- (Utterance Text text)? -- text here is a string (a parameter, so hard to prove that)
-;;; (> (numerator x) 0) -- all such -> x
+;;; (> (numerator x) 0) -- all such -> (> x 0)
 ;;; (append (if x (list x) '()) (cdr y)) -> (if x (append (list x) (cdr y)) (cdr y))
-;;; (and (string=? span (string replacement-char)) is-first-stencil)
 ;;; (or (not (= arglen siglen)) (< siglen 0) (< arglen 0)) | (and (= x y) (< x 0) (< y 0)) etc
-;;; (vector-set! x i (vector-ref x (incr i)))
-;;; (char=? #\- (car (string->list (symbol->string (keyword->symbol (car term))))))
-;;; (< (string->number (minor-version)) 8)
-;;; (or ('/ . rst) ("." . rst) (".." . rst))
+;;; (vector-set! x i (vector-ref x (incr i))) -- what is incr? inc! here won't work in s7 -- need source file
+;;; (char=? #\- (car (string->list (symbol->string (keyword->symbol (car term)))))) -> (char=? #\- ((symbol->string...) 0))
+;;; (and (hash-table-exists? sys (or (lookup-def name scope-subst) name)) (hash-table-ref sys (or (lookup-def name scope-subst) name)))
+;;; default char for make-string is #\space, make-list #f, make-vector #<unspecified>, make-byte-vector 0
+;;; (not (positive? (- n 2)))
+;;; (zero? (bitwise-and (u8vector-ref low-non-spacing-chars byte) (arithmetic-shift 1 off)))
+;;; non-negative-ops|makers|reversibles? in snd-lint, walkers for definstrument etc
+;;; list->vector etc with sort!?
+;;; (integer->char (+ (char->integer #\space) 215))
+;;; perhaps simple and|or[-]map -> expanded

@@ -382,7 +382,11 @@
     (cons 'current-second g_time)))
 
 
-(define get-environment-variable (*libc* 'getenv))
+(define (get-environment-variable x)
+  (let ((val ((*libc* 'getenv) x)))
+    (and (string? val)
+	 (> (length val) 0)
+	 val)))
 (define get-environment-variables (*libc* 'getenvs))
 (define (r7rs-file-exists? arg) (= ((*libc* 'access) arg (*libc* 'F_OK)) 0))
 (define r7rs-delete-file (*libc* 'unlink))

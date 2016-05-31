@@ -6013,7 +6013,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
 			;;   have its associated value yet.  We use a symbol name that 
                         ;;   string-&gt;number accepts.
 			(symbol-&gt;keyword 
-                          (symbol (string-append (number-&gt;string n) (string #\null) " ")))))))
+                          (symbol (number-&gt;string n) (string #\null) " "))))))
 		                                 ; #n&lt;not an integer&gt;?
 	    )))))                                ; #n&lt;something else&gt;?
 
@@ -6136,7 +6136,9 @@ This output is readable, and does not eat up perfectly good
 characters like vertical bar, but it means we can't easily use
 variable names like "| e t c |".  We could allow a name to
 contain any characters if it starts and ends with "|",
-but then one vertical bar is trouble.  
+but then one vertical bar is trouble.  (The symbol function
+actually accepts any number of string arguments which it concatenates
+to form the new symbol name).
 </p>
 
 <p>

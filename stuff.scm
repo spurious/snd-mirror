@@ -296,6 +296,12 @@
 				(flatten (cdr lst1) (cdr lst2) args)))))
      ,@body))
 
+(define-macro (and-map f . args)
+  `(and ,@(map (lambda (c) `(,f ,c)) args)))
+
+(define-macro (or-map f . args)
+  `(or ,@(map (lambda (c) `(,f ,c)) args)))
+
 (define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
 
@@ -1397,7 +1403,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (v (unique-reactive-let-name)))
 
       (define (rlet-symbol sym)
-	(string->symbol (string-append "{" (symbol->string sym) "}-rlet")))
+	(symbol "{" (symbol->string sym) "}-rlet"))
 
       (for-each 
        (lambda (bd)

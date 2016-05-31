@@ -303,8 +303,7 @@
   (let ((*gensym-counter* -1))
     (lambda ()
       (set! *gensym-counter* (+ *gensym-counter* 1))
-      (string->symbol
-       (string-append "slib:G" (number->string *gensym-counter*))))))
+      (symbol "slib:G" (number->string *gensym-counter*)))))
 
 (define base:eval slib:eval)
 ;@
