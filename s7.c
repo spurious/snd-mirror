@@ -38183,12 +38183,11 @@ PIPF_TO_PF(vector_set, c_vector_set_s, c_vector_set_3, c_vector_tester)
 
 static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_vector "(make-vector len (value #f) (homogeneous #f)) returns a vector of len elements initialized to value. \
+  #define H_make_vector "(make-vector len (value #<unspecified>)) returns a vector of len elements initialized to value. \
 To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
 (make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
-returns a 2 dimensional vector of 6 total elements, all initialized to 1.0.  If homogeneous is #t, and value is either an integer \
-or a real, the vector can only hold numbers of that type (s7_int or s7_double)."
-  #define Q_make_vector s7_make_signature(sc, 4, sc->is_vector_symbol, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_pair_symbol), sc->T, sc->is_boolean_symbol)
+returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
+  #define Q_make_vector s7_make_signature(sc, 3, sc->is_vector_symbol, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_pair_symbol), sc->T)
 
   s7_int len;
   s7_pointer x, fill, vec;
@@ -73875,7 +73874,7 @@ s7_scheme *s7_init(void)
   sc->vector_ref_symbol =            defun("vector-ref",	vector_ref,		2, 0, true);
   sc->vector_set_symbol =            defun("vector-set!",	vector_set,		3, 0, true);
   sc->vector_dimensions_symbol =     defun("vector-dimensions", vector_dimensions,	1, 0, false);
-  sc->make_vector_symbol =           defun("make-vector",	make_vector,		1, 2, false);
+  sc->make_vector_symbol =           defun("make-vector",	make_vector,		1, 1, false);
   sc->make_shared_vector_symbol =    defun("make-shared-vector", make_shared_vector,	2, 1, false);
   sc->vector_symbol =                defun("vector",		vector,			0, 0, true);
   set_setter(sc->vector_symbol); /* like cons, I guess */

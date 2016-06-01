@@ -775,7 +775,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 30-May:    symbol takes any number of args.
+ * 30-May:    symbol takes any number of args.  make-vector no longer takes an optional fourth argument.
  * 24-May:    let-ref/set! check rootlet now if let is not an open let; setter for with-let.
  * 20-Feb:    removed last vestiges of quasiquoted vector support.
  * 3-Feb:     *cload-directory*.

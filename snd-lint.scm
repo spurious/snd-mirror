@@ -128,7 +128,7 @@
      text-focus-color time-graph-style time-graph-type time-graph? tiny-font tmpnam tracking-cursor-style
      transform->integer transform-graph-style transform-graph-type transform-graph?
      transform-normalization transform-sample transform-size transform-type transform? triangle-wave? two-pole?
-     two-zero? variable-graph? vequal wave-train? wavelet-type
+     two-zero? variable-graph? wave-train? wavelet-type
      wavo-hop wavo-trace widget-position widget-size widget-text window-height window-width
      window-x window-y with-background-processes with-file-monitor with-gl with-inset-graph with-interrupts
      with-menu-icons with-mix-tags with-pointer-focus with-relative-panes with-smpte-label with-toolbar with-tooltips

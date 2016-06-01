@@ -4378,6 +4378,17 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
     {
       width = widget_width(channel_graph(cp));
       height = widget_height(channel_graph(cp));
+
+#if USE_GTK
+      /* thanks to Tito Latini -- try to get reasonable size graphs even in a script (using --batch 1)
+       */
+      if (ss->batch_mode)
+        {
+          width = 600;
+          height = 400;
+        }
+#endif
+
       if ((height > 5) && (width > 5))
 	display_channel_data_with_size(cp, width, height, 0, just_fft, just_lisp, just_time, use_incoming_cr);
     }

@@ -5125,7 +5125,15 @@
 			 (and (char? x)
 			      (char<=? #\space x #\~))) ; #\0xx chars here look dumb
 		       (cdr form))
-	       (lint-format "~A could be ~S" caller (truncated-list->string form) (apply string (cdr form))))))
+	       (lint-format "~A could be ~S" caller (truncated-list->string form) (apply string (cdr form))))
+	   (if (and (pair? (cdr form))  ; (string (string-ref x 0)) -> (substring x 0 1)
+		    (pair? (cadr form))
+		    (eq? (caadr form) 'string-ref))
+	       (let ((arg (cadr form)))
+		 (if (integer? (caddr arg))
+		     (lint-format "perhaps ~A" caller 
+				  (lists->string form 
+						 `(substring ,(cadr arg) ,(caddr arg) ,(+ 1 (caddr arg))))))))))
 	
 	;; ---------------- string? ----------------
 	(let ()
@@ -5330,19 +5338,30 @@
 	;; ---------------- make-vector etc ----------------
 	(let ()
 	  (define (sp-make-vector caller head form env)
-	    ;; type of initial value is checked elsewhere
+	    ;; type of initial value (for make-float|int-vector) is checked elsewhere
 	    (if (and (= (length form) 4)
-		     (eq? head 'make-vector)
-		     (code-constant? (caddr form))
-		     (not (real? (caddr form)))
-		     (eq? (cadddr form) #t))
-		(lint-format "~A won't create an homogeneous vector" caller form))
+		     (eq? head 'make-vector))
+		(lint-format "make-vector no longer has a fourth argument: ~A~%" caller form))
+
+	    (if (>= (length form) 3)
+		(case (caddr form)
+		  ((#<unspecified>) 
+		   (if (eq? head 'make-vector)
+		       (lint-format "#<unspecified> is the default initial value in ~A" caller form)))
+		  ((0)
+		   (if (not (eq? head 'make-vector))
+		       (lint-format "0 is the default initial value in ~A" caller form)))
+		  ((0.0)
+		   (if (eq? head 'make-float-vector)
+		       (lint-format "0.0 is the default initial value in ~A" caller form)))))
+		    
 	    (when (and (pair? (cdr form))
 		       (integer? (cadr form))
 		       (zero? (cadr form)))
 	      (if (pair? (cddr form))
 		  (lint-format "initial value is pointless here: ~A" caller form))
 	      (lint-format "perhaps ~A" caller (lists->string form #()))))
+
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-make-vector))
 		    '(make-vector make-int-vector make-float-vector)))
@@ -14523,12 +14542,12 @@
 						       ((not (pair? p)))
 						     (if (and (pair? (car p))
 							      (memq (caar p) '(list vector))
-							      (> (length (cdar p)) 1)
+							      (pair? (cdar p))                  ; if cdar null, all (list)->() etc ??
 							      (every? code-constant? (cdar p)))
 							 (lint-format "perhaps ~A -> ~A~A" caller 
 								      (truncated-list->string (car p))
 								      (if (eq? (caar p) 'list) "'" "#")
-									  (truncated-list->string (map unquoted (cdar p)))))))
+								      (truncated-list->string (map unquoted (cdar p)))))))
 
 					       (if (and (not (= line-number last-simplify-numeric-line-number))
 							(hash-table-ref numeric-ops head)
@@ -15201,6 +15220,7 @@
 ;;; document lint extension (snd-lint.scm)
 ;;; 
 ;;; musglyphs gtk version is broken (probably cairo_t confusion)
+;;; snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case here? t415.scm.
 ;;;
 ;;; 131 21885 500088
 ;;;
@@ -15215,9 +15235,9 @@
 ;;;                                  [(memq expr '(#t #f))]
 ;;;                                  [(read-line in-port 'concat)]
 ;;;                                  [(fsafe x (list 1 2 3)) -> use '(...)]
+;;;                                  [(string (string-ref file-line 0))]
 ;;;
 ;;; (string (char-downcase (string-ref enc 1)) (char-downcase (string-ref enc 2))) -> (string-downcase (substring env 1 3))
-;;| (string (string-ref file-line 0)) -- (substring file-line 0 1)
 ;;; (apply vector (append beg-samps (list (beg-samps (- (length beg-samps) 1)))))
 ;;; (apply string (map char-downcase (cdr typ))) -> (string-downcase (apply string (cdr typ)))
 ;;; (apply + (map (lambda (x) (* x x)) (map cdr combined-spectrum))) 
@@ -15255,6 +15275,5 @@
 ;;| (append (if x (list x) '()) (cdr y)) -> (if x (append (list x) (cdr y)) (cdr y))
 ;;; (string-append base (if (pair? su) (car su) "")) -> if pair? append else base
 ;;| (or (not (= arglen siglen)) (< siglen 0) (< arglen 0)) | (and (= x y) (< x 0) (< y 0)) etc
-;;; default char for make-string is #\space, make-list #f, make-vector #<unspecified>, make-byte-vector 0
-;;; non-negative-ops|makers|reversibles? in snd-lint, walkers for definstrument etc
+;;; non-negative-ops in snd-lint, walkers for definstrument etc
 ;;; see t347 for cond/if
