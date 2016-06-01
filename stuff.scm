@@ -296,11 +296,14 @@
 				(flatten (cdr lst1) (cdr lst2) args)))))
      ,@body))
 
-(define-macro (and-map f . args)
-  `(and ,@(map (lambda (c) `(,f ,c)) args)))
-
-(define-macro (or-map f . args)
-  `(or ,@(map (lambda (c) `(,f ,c)) args)))
+#|
+;; kinda ugly!
+(define-macro (and-map func args)
+  `(let and-map-loop ((args ,args))
+     (or (null? args)
+	 (and (eval (list ,func (car args)))
+	      (and-map-loop (cdr args))))))
+|#
 
 (define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
   `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))

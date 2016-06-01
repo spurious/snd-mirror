@@ -72,7 +72,7 @@
      cursor-update-interval dac-combines-channels dac-size data-color data-location data-size db->linear
      default-output-chans default-output-header-type default-output-sample-type default-output-srate degrees->radians delay?
      dialog-widgets disk-kspace dot-product dot-size
-     edit-fragment edit-fragment-type-name edit-list->function edit-position edit-properties edit-property
+     edit-fragment edit-fragment-type-name edit-list->function edit-properties edit-property
      edit-tree edits edot-product env? enved-base enved-clip?
      enved-envelope enved-filter enved-filter-order enved-in-dB enved-power enved-style enved-target
      enved-wave? enved-waveform-color envelope-interp eps-bottom-margin eps-file eps-left-margin

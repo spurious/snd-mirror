@@ -5502,14 +5502,14 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_string_append_to_temp(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol "(symbol str ...) returns its string arguments concatenated and converted to a symbol"
   #define Q_symbol s7_make_circular_signature(sc, 1, 2, sc->is_symbol_symbol, sc->is_string_symbol)
   if (is_null(cdr(args)))
     return(g_string_to_symbol_1(sc, car(args), sc->symbol_symbol));
-  return(g_string_to_symbol_1(sc, g_string_append_to_temp(sc, args), sc->symbol_symbol));
+  return(g_string_to_symbol_1(sc, g_string_append(sc, args), sc->symbol_symbol));
 }
 
 
