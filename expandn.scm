@@ -49,13 +49,13 @@
 		  (max-in-hop (/ max-out-hop min-exp-amt))
 		  (rev-mx (and *reverb* reverb (> reverb 0.0)
 			       (let* ((rchans (max out-chans rev-chans))
-				      (rmx (make-float-vector (list rchans rchans) 0.0)))
+				      (rmx (make-float-vector (list rchans rchans))))
 				 (do ((i 0 (+ i 1)))
 				     ((= i rchans))
 				   (set! (rmx i i) reverb))
 				 rmx))))
 	      
-	      (let ((mx (let ((v (make-float-vector (list ochans ochans) 0.0)))
+	      (let ((mx (let ((v (make-float-vector (list ochans ochans))))
 			  (if (pair? matrix)
 			      (let ((mat-in (min ochans (length matrix)))
 				    (mat-out (min ochans (length (car matrix)))))
@@ -69,7 +69,7 @@
 				(set! (v i i) 1.0)))
 			  v))
 		    
-		    (revvals (and rev-mx (make-float-vector (max out-chans rev-chans) 0.0)))
+		    (revvals (and rev-mx (make-float-vector (max out-chans rev-chans))))
 		    (update-envs (or (pair? expand)
 				     (pair? seglen)
 				     (pair? ramp)
@@ -96,8 +96,8 @@
 		    (max-len (ceiling (* *clm-srate*
 					 (+ (max max-out-hop max-in-hop)
 					    max-seg-len))))
-		    (invals (make-float-vector ochans 0.0))
-		    (outvals (make-float-vector ochans 0.0)))
+		    (invals (make-float-vector ochans))
+		    (outvals (make-float-vector ochans)))
 		
 		(if (or minramp-bug maxramp-bug)
 		    (error 'out-of-range (list expand 
@@ -278,8 +278,8 @@
 			    (if rev-mx
 				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))
 			
-			(let ((samples-0 (make-float-vector in-chans 0.0))
-			      (samples-1 (make-float-vector in-chans 0.0)))
+			(let ((samples-0 (make-float-vector in-chans))
+			      (samples-1 (make-float-vector in-chans)))
 			  ;; more than 2 chans in input file
 			  (do ((i beg (+ i 1)))
 			      ((= i end))

@@ -72,7 +72,7 @@
 			    data)
 		  init))
 	  (noiseamps (let* ((len (length data))
-			    (v (make-float-vector len 0.0)))
+			    (v (make-float-vector len)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i len))
 			 (set! (v i) (* 1.0 ((data i) 5))))
@@ -86,8 +86,8 @@
 	    (noise-env (make-env nfun :duration dur))
 	    (ran-vib (make-rand-interp :frequency 10 :amplitude .02))
 	    
-	    (glot-datai (make-float-vector (* 2 (length glts)) 0.0))
-	    (glot-datar (make-float-vector (* 2 (length glts)) 0.0))
+	    (glot-datai (make-float-vector (* 2 (length glts))))
+	    (glot-datar (make-float-vector (* 2 (length glts))))
 	    
 	    (tractlength+8 (+ tractlength 8))
 	    (tractlength+1 (+ tractlength 1))
@@ -101,7 +101,7 @@
 	    (tong-hump-pole 0.998)
 	    (tong-tip-pole 0.998))
 
-	(let ((shape-data (make-float-vector (* (length shps) tractlength+8) 0.0))
+	(let ((shape-data (make-float-vector (* (length shps) tractlength+8)))
 	      
 	      (noselength-1 (- noselength 1))
 	      (noselength-2 (- noselength 2))
@@ -114,10 +114,10 @@
 	      (last-sfd -1)
 	      (last-gfd -1)
 
-	      (glot-table (make-float-vector (+ 1 table-size) 0.0))
-	      (glot-table2 (make-float-vector (+ 1 table-size) 0.0))
-	      ;; (gn-table (make-float-vector (+ 1 table-size) 0.0)) ;(gn-gain 0.0) ;(gn-out 0.0) ;(gn-del (make-float-vector 4 0.0))
-	      ;; (gn-coeffs (make-float-vector 4 0.0)) ; in Perry's C code, these were set in setGlotNoiseFilter but it was never called!
+	      (glot-table (make-float-vector (+ 1 table-size)))
+	      (glot-table2 (make-float-vector (+ 1 table-size)))
+	      ;; (gn-table (make-float-vector (+ 1 table-size))) ;(gn-gain 0.0) ;(gn-out 0.0) ;(gn-del (make-float-vector 4))
+	      ;; (gn-coeffs (make-float-vector 4)) ; in Perry's C code, these were set in setGlotNoiseFilter but it was never called!
 	      (table-increment 0.0)
 	      (glot-refl-gain 0.7)
 	      (pitch 400.0)
@@ -135,9 +135,9 @@
 	      (inz1 0.0)
 	      (inz2 0.0)
 	      ;; nasal tract acoustic tube structure
-	      (nose-coeffs (make-float-vector noselength 0.0))
-	      (nose1 (make-float-vector noselength 0.0))
-	      (nose2 (make-float-vector noselength 0.0))
+	      (nose-coeffs (make-float-vector noselength))
+	      (nose1 (make-float-vector noselength))
+	      (nose2 (make-float-vector noselength))
 	      (velum-pos 0.0)
 	      (nose-last-minus-refl 0.0)
 	      (nose-last-plus-refl 0.0)
@@ -172,19 +172,19 @@
 	      (alpha3 0.0)
 	      (noseposition 3)
 
-	      (target-radii (make-float-vector tractlength+8 0.0))
-	      (target-temp (make-float-vector tractlength+8 0.0))
-	      (radii-poles (make-float-vector tractlength+8 0.0))
-	      (radii-pole-gains (make-float-vector tractlength+8 0.0))
-	      (radii (make-float-vector tractlength+8 0.0))
+	      (target-radii (make-float-vector tractlength+8))
+	      (target-temp (make-float-vector tractlength+8))
+	      (radii-poles (make-float-vector tractlength+8))
+	      (radii-pole-gains (make-float-vector tractlength+8))
+	      (radii (make-float-vector tractlength+8))
 					; the radii array contains the vocal tract section radii
 					; (tractlength-1 of them), then glottal reflection gain
 					; then lip reflection gain, then noise position, then noise gain,
 					; then noise pole angle, then noise pole radius, 
 					; then noise pole angle2, then noise pole radius2, then velum opening radius
-	      (coeffs (make-float-vector tractlength 0.0))
-	      (dline1 (make-float-vector tractlength 0.0))
-	      (dline2 (make-float-vector tractlength 0.0)))
+	      (coeffs (make-float-vector tractlength))
+	      (dline1 (make-float-vector tractlength))
+	      (dline2 (make-float-vector tractlength)))
 
 	  (set! noisev (mus-xcoeffs noisef))
 
@@ -236,8 +236,8 @@
 	  (let ((harms (floor (glot-datai 1)))
 		(temp1 0.0)
 		(temp 0.0)
-		(sines (make-float-vector 200 0.0))
-		(cosines (make-float-vector 200 0.0))
+		(sines (make-float-vector 200))
+		(cosines (make-float-vector 200))
 		(one-over-two-pi  0.159154943)
 		(two-pi-over-table-size (/ two-pi table-size))
 		(a (glot-datar 0))

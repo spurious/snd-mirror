@@ -25,14 +25,14 @@
     (let ((samps (seconds->samples dur))
 	  (mx (let ((ochans (max in-chans out-chans)))
 		(if matrix
-		    (make-float-vector (list ochans ochans) 0.0)
-		    (let ((v (make-float-vector (list ochans ochans) 0.0)))
+		    (make-float-vector (list ochans ochans))
+		    (let ((v (make-float-vector (list ochans ochans))))
 		      (do ((i 0 (+ i 1)))
 			  ((= i ochans))
 			(set! (v i i) 1.0))
 		      v))))
 	  (rev-mx (and *reverb* reverb-amount (> reverb-amount 0.0)
-		       (let ((rmx (make-float-vector (list in-chans in-chans) 0.0)))
+		       (let ((rmx (make-float-vector (list in-chans in-chans))))
 			 (do ((i 0 (+ i 1)))
 			     ((= i in-chans))
 			   (set! (rmx i 0) reverb-amount)) ; 0->assume 1 chan reverb stream, I think

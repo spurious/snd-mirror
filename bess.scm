@@ -220,7 +220,7 @@
 	(let* ((bufsize 256)
 	       (srate 22050)
 	       (work-proc #f)
-					;(data (make-float-vector bufsize 0.0))
+					;(data (make-float-vector bufsize))
 	       (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
 	  (if (< port 0) 
 	      (format () "can't open DAC!"))
@@ -238,7 +238,7 @@
 					     (XtUnmanageChild shell)))
 	  (set! work-proc (XtAppAddWorkProc app 
 					    (lambda (ignored-arg)
-					      (let ((data (make-float-vector bufsize 0.0)))
+					      (let ((data (make-float-vector bufsize)))
 						(do ((i 0 (+ 1 i)))
 						    ((= i bufsize))
 						  (float-vector-set! data i (* amplitude playing

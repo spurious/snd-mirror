@@ -66,9 +66,9 @@
 	(numallpasses (length allpasstuning)))
     (let ((beg (seconds->samples startime))
 	  (end (seconds->samples (+ startime dur)))
-	  (out-buf (make-float-vector out-chans 0.0))
-	  (f-out (make-float-vector out-chans 0.0))
-	  (f-in (make-float-vector in-chans 0.0))
+	  (out-buf (make-float-vector out-chans))
+	  (f-out (make-float-vector out-chans))
+	  (f-in (make-float-vector in-chans))
 	  (predelays (make-vector in-chans))
 	  (fcombs (make-vector (* out-chans numcombs)))
 	  (allpasses (make-vector (* out-chans numallpasses)))
@@ -89,7 +89,7 @@
 	  (error "input must be mono or input channels must equal output channels"))
 
       (let ((out-mix (or output-mixer
-		       (let ((v (make-float-vector (list out-chans out-chans) 0.0)))
+		       (let ((v (make-float-vector (list out-chans out-chans))))
 			 (do ((i 0 (+ i 1)))
 			     ((= i out-chans))
 			   (do ((j 0 (+ j 1)))
