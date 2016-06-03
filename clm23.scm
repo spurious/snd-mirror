@@ -1472,8 +1472,8 @@
 	(let* ((loop-start (car loop-data))
 	       (loop-length (- (+ (cadr loop-data) 1) loop-start))
 	       (sound-section (float-vector-scale! (file->array sound 0 loop-start loop-length (make-float-vector loop-length)) amp))
-	       (original-loop-duration (/ loop-length (srate sound)))
-	       (tbl (make-table-lookup :frequency (/ freq original-loop-duration) :wave sound-section)))
+	       (tbl (make-table-lookup :frequency (/ (* freq (srate sound)) loop-length)
+				       :wave sound-section)))
 	  ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
 	  (do ((i beg (+ i 1)))
 	      ((= i end))
@@ -1737,8 +1737,7 @@
       (outa i (convolve ff)))))
 
 (definstrument (sndclmdoc-granulate-sound file beg dur (orig-beg 0.0) (exp-amt 1.0))
-  (let* ((f-srate (srate file))
-         (f (make-readin file :start (round (* f-srate orig-beg))))
+  (let* ((f (make-readin file :start (round (* (srate file) orig-beg))))
 	 (st (seconds->samples beg))
 	 (new-dur (or dur (- (mus-sound-duration file) orig-beg))))
     (let ((exA (make-granulate :input f :expansion exp-amt))
