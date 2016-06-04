@@ -1737,9 +1737,9 @@
       (outa i (convolve ff)))))
 
 (definstrument (sndclmdoc-granulate-sound file beg dur (orig-beg 0.0) (exp-amt 1.0))
-  (let* ((f (make-readin file :start (round (* (srate file) orig-beg))))
-	 (st (seconds->samples beg))
-	 (new-dur (or dur (- (mus-sound-duration file) orig-beg))))
+  (let ((f (make-readin file :start (round (* (srate file) orig-beg))))
+	(st (seconds->samples beg))
+	(new-dur (or dur (- (mus-sound-duration file) orig-beg))))
     (let ((exA (make-granulate :input f :expansion exp-amt))
 	  (nd (+ st (seconds->samples new-dur))))
       (do ((i st (+ i 1)))

@@ -3695,9 +3695,9 @@ then
 
 <pre class="indented">
 (let* ((size 128)
-       (x0 (make-float-vector size 0.0))	   
-       (x1 (make-float-vector size 0.0))	   
-       (x2 (make-float-vector size 0.0)))
+       (x0 (make-float-vector size))	   
+       (x1 (make-float-vector size))	   
+       (x2 (make-float-vector size)))
   (do ((i 0 (+ i 1)))
       ((= i 12))
     (let ((val (sin (/ (* 2 pi i) 12.0))))

@@ -1,8 +1,26 @@
 ;;; Snd extensions for lint
 
 (require lint.scm)
+;;; *lint* is the lint environment, so everything in lint.scm is accessible here
 
-;;; ---------------- deprecated funcs ---------------- 
+;;; --------------------------------
+;;; this sends lint's output to the Snd repl's widget
+(define (snd-lint file)
+  (lint file (openlet 
+	      (inlet :name "lint-output-port"
+		     :format            (lambda (p str . args) (snd-print (apply format #f str args)))
+		     :write             (lambda (obj p)	       (snd-print (object->string obj #t)))
+		     :display           (lambda (obj p)	       (snd-print (object->string obj #f)))
+		     :write-string      (lambda (str p)        (snd-print str))
+		     :write-char        (lambda (ch p)	       (snd-print (string ch)))
+		     :newline           (lambda (p)	       (snd-print (string #\newline)))
+		     :close-output-port (lambda (p) #f)
+		     :flush-output-port (lambda (p) #f)))))
+
+
+;;; ---------------- deprecated funcs ----------------
+;;; Snd deprecated funcs, to be reported by lint
+
 (let ((deprecated-ops '((data-format . sample-type)
 			(mus-sound-frames . mus-sound-framples)
 			(mus-sound-data-format . mus-sound-sample-type)
@@ -18,11 +36,15 @@
 
 
 ;;; ---------------- snd-display ----------------
+;;; check snd-display using format's lint code
+
 (hash-table-set! (*lint* 'special-case-functions) 'snd-display
 		 (hash-table-ref (*lint* 'special-case-functions) 'format))
 
 
-;; ---------------- defgenerator ----------------
+;;; ---------------- defgenerator ----------------
+;;; a lint walker for defgenerator (it defines various functions in the current environment)
+
 (let ()
   (define (get-generator caller form env)
     (with-let (sublet *lint* :caller caller :form form :env env)
@@ -54,6 +76,7 @@
 
 	
 ;;; ---------------- no side effect Snd functions ----------------
+;;; Snd functions that don't affect anything outside or mess with their arguments
 
 (let ((h (*lint* 'no-side-effect-functions)))
   (for-each

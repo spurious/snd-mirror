@@ -259,7 +259,7 @@
 						       XmNbottomAttachment    XmATTACH_FORM
 						       XmNlabelString         s1
 						       XmNbackground          *basic-color*)))
-		     (buffer-labels (map XmStringCreateLocalized (list "64" "128" "256" "512" "1024" "2048" "4096")))
+		     (buffer-labels (map XmStringCreateLocalized '("64" "128" "256" "512" "1024" "2048" "4096")))
 		     (combo (XtCreateManagedWidget "buffersize" xmComboBoxWidgetClass frm
 						   (list XmNleftAttachment      XmATTACH_WIDGET
 							 XmNleftWidget          lab
@@ -320,7 +320,7 @@
 							      XmNset                  (= size loop-between-marks-buffer-size)))))
 		     (if (= size loop-between-marks-buffer-size)
 			 (set! loop-between-marks-default-buffer-widget button))))
-		 (list 64 128 256 512 1024 2048 4096))
+		 '(64 128 256 512 1024 2048 4096))
 		(XmStringFree s1)))))
       (activate-dialog loop-between-marks-dialog))
     
@@ -842,7 +842,7 @@ between two marks,using the granulate generator to fix up the selection duration
 					 (set! (loop-data (+ loc (* offset 2))) (max ml (- (loop-data (+ loc (* offset 2))) 1)))
 					 (update-labels midlab1 midlab2 midlab3 offset range-in-secs))))))
 		  (list rowlefttop rowleftbottom)
-		  (list 0 1))
+		  '(0 1))
 		 
 		 (for-each
 		  (lambda (rparent loc)
@@ -872,11 +872,11 @@ between two marks,using the granulate generator to fix up the selection duration
 					   (set! (loop-data (+ loc (* offset 2))) ml)
 					   (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))))
 		  (list rowrighttop rowrightbottom)
-		  (list 0 1))))
+		  '(0 1))))
 	     
 	     (list leftform rightform)
-	     (list "Sustain" "Release")
-	     (list 0 1)))
+	     '("Sustain" "Release")
+	     '(0 1)))
 	  (for-each-child
 	   loop-dialog
 	   (lambda (n)

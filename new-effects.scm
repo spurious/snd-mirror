@@ -122,9 +122,9 @@
 				      XmNarmCallback      (list (lambda (w c i) 
 								  (target-callback type)) 
 								#f))))
-       (list "entire sound" "selection" "between marks")
-       (list 'sound 'selection 'marks)
-       (list #t #f #f))
+       '("entire sound" "selection" "between marks")
+       '(sound selection marks)
+       '(#t #f #f))
       (if truncate-callback
 	  (XtCreateManagedWidget "trsep" xmSeparatorWidgetClass mainform
 				 (list XmNorientation      XmHORIZONTAL))
@@ -205,7 +205,7 @@
 			 gain-label
 			 
 			 (lambda (w context info)
-			   (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
+			   (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
 						(scale-envelope (xe-envelope gain-envelope) gain-amount))))
 			     (if (eq? gain-target 'sound)
 				 (if with-env
@@ -757,7 +757,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
   (define effects-comb-filter 
     (let ((documentation "(effects-comb-filter scaler-1 size beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (scaler size beg dur snd chn)
-	(let ((delay-line (make-float-vector size 0.0))
+	(let ((delay-line (make-float-vector size))
 	      (delay-loc 0))
 	  (lambda (x)
 	    (let ((result (delay-line delay-loc)))
@@ -1681,7 +1681,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	    (define am-effect
 	      (lambda (freq)
 		(let* ((os (make-oscil freq))
-		       (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+		       (need-env (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
 		       (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-framples am-effect-target)))))
 		  (if need-env
 		      (lambda (inval)
@@ -1706,7 +1706,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			    am-effect-target 
 			    (lambda (target samps)
 			      (format #f "effects-am ~A ~A" am-effect-amount
-				      (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+				      (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
 					     (e (and need-env (xe-envelope am-effect-envelope))))
 					(and e (format #f "'~A" e)))))
 			    #f))
@@ -1776,7 +1776,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	    (define rm-effect ; avoid collision with examp.scm
 	      (lambda (freq gliss-env)
 		(let* ((os (make-oscil freq))
-		       (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
+		       (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))))
 		       (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
 		  (if need-env
 		      (lambda (inval)
@@ -1802,7 +1802,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			    rm-target 
 			    (lambda (target samps)
 			      (format #f "effects-rm ~A ~A" rm-frequency
-				      (let* ((need-env (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))))
+				      (let* ((need-env (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0))))
 					     (e (and need-env (xe-envelope rm-envelope))))
 					(and e (format #f "'~A" e)))))
 			    #f))
@@ -2298,7 +2298,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 			 
 			 (lambda (w context info) 
 			   (let ((e (xe-envelope place-sound-envelope)))
-			     (place-sound mono-snd stereo-snd (if (not (equal? e (list 0.0 1.0 1.0 1.0))) e pan-pos))))
+			     (place-sound mono-snd stereo-snd (if (not (equal? e '(0.0 1.0 1.0 1.0))) e pan-pos))))
 			 
 			 (lambda (w context info)
 			   (help-dialog "Place sound"
@@ -2571,7 +2571,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 							     XmNbottomAttachment    XmATTACH_FORM
 							     XmNlabelString         s1
 							     XmNbackground          *basic-color*)))
-			   (fft-labels (map XmStringCreateLocalized (list "64" "128" "256" "512" "1024" "4096")))
+			   (fft-labels (map XmStringCreateLocalized '("64" "128" "256" "512" "1024" "4096")))
 			   (combo (XtCreateManagedWidget "fftsize" xmComboBoxWidgetClass frm
 							 (list XmNleftAttachment      XmATTACH_WIDGET
 							       XmNleftWidget          lab
@@ -2633,7 +2633,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 								    XmNset                  (= size cross-synth-fft-size)))))
 			   (if (= size cross-synth-fft-size)
 			       (set! cross-synth-default-fft-widget button))))
-		       (list 64 128 256 512 1024 4096))
+		       '(64 128 256 512 1024 4096))
 		      (XmStringFree s1)))
 		
 		(add-target (XtParent (car sliders)) 

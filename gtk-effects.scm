@@ -100,9 +100,9 @@
 	     (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) on)
 	     (gtk_widget_show button)
 	     (g_signal_connect button "clicked" (lambda (w d) (target-callback type)) #f)))
-	 (list "entire sound" "selection" "between marks")
-	 (list 'sound 'selection 'marks)
-	 (list #t #f #f)))
+	 '("entire sound" "selection" "between marks")
+	 '(sound selection marks)
+	 '(#t #f #f)))
       
       (when truncate-callback
 	(let ((button (gtk_check_button_new_with_label "truncate at end")))
@@ -182,7 +182,7 @@
 				     
 				     (lambda (w data) 
 				       ;; Gain scales amplitude by gain amount.
-				       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0)))
+				       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
 							    (scale-envelope (xe-envelope gain-envelope) gain-amount))))
 					 (if (eq? gain-target 'sound)
 					     (if with-env
@@ -688,7 +688,7 @@ the modulation frequency, and the echo amplitude."))
 ;;;
   
   (define* (effects-comb-filter scaler size beg dur snd chn)
-    (let ((delay-line (make-float-vector size 0.0))
+    (let ((delay-line (make-float-vector size))
 	  (delay-loc 0))
       (lambda (x)
 	(let ((result (delay-line delay-loc)))
@@ -1533,7 +1533,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (define am-effect
 	(lambda (freq)
 	  (let* ((os (make-oscil freq))
-		 (need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+		 (need-env (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
 		 (e (and need-env (make-env (xe-envelope am-effect-envelope) :length (effect-framples am-effect-target)))))
 	    (if need-env
 		(lambda (inval)
@@ -1559,7 +1559,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					am-effect-target 
 					(lambda (target samps)
 					  (format #f "effects-am ~A ~A" am-effect-amount
-						  (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))))
+						  (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
 							 (e (and need-env (xe-envelope am-effect-envelope))))
 						    (and e (format #f "'~A" e)))))
 					#f))
@@ -1614,10 +1614,9 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       (define rm-effect ; avoid collision with examp.scm
 	(lambda (freq gliss-env)
 	  (let* ((os (make-oscil freq))
-		 (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0)))))
+		 (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))))
 		 (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target))))
-		 (len (framples))
-		 (genv (make-env :envelope gliss-env :length len)))
+		 (genv (make-env :envelope gliss-env :length (framples))))
 	    (if need-env
 		(lambda (inval)
 		  (* inval (env e) (oscil os (env genv))))
@@ -1643,7 +1642,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					rm-target 
 					(lambda (target samps)
 					  (format #f "effects-rm ~A ~A" rm-frequency
-						  (let* ((need-env (not (equal? (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))))
+						  (let* ((need-env (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0))))
 							 (e (and need-env (xe-envelope rm-envelope))))
 						    (and e (format #f "'~A" e)))))
 					#f))

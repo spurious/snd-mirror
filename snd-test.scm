@@ -89,20 +89,8 @@
 (if (not (defined? 'with-exit)) (define with-exit (< snd-test 0)))
 (define test-number -1)
 
-(define-constant (snd-display-1 line . args)
-  (let ((str (if (null? (cdr args))
-		 (car args)
-		 (if (or (string? (car args))
-			 (and (not (car args))
-			      (string? (cadr args))))
-		     (apply format #f args)
-		     (object->string args)))))
-    (format *stderr* "~%~A: ~8T~A" line str)
-    (if (not (provided? 'snd-nogui))
-	(snd-print (format #f "~%~A: ~A" line str)))))
-
 (define-expansion (snd-display . args)
-  `(snd-display-1 ,(port-line-number) ,@args))
+  `(format *stderr* "~%~A: ~8T~A" ,(port-line-number) (format #f ,@args)))
 
 (define-expansion (check-edit-tree tree vals name)
   `(check-edit-tree-1 ,tree ,vals ,name ,(port-line-number)))
@@ -675,7 +663,7 @@
 	(snd-display ";fft-log-magnitude set default: ~A" *fft-log-magnitude*))
     (if *fft-with-phases*
 	(snd-display ";fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (member *transform-size* '(1024 4096)))
+    (if (not (memv *transform-size* '(1024 4096)))
 	(snd-display ";transform-size set default: ~A" *transform-size*))
     (if (not (equal? *transform-graph-type* graph-once))
 	(snd-display ";transform-graph-type set default: ~A" *transform-graph-type*))
@@ -714,7 +702,7 @@
 	     (not (eqv? (view-files-sort)  0 ))) 
 	(snd-display ";view-files-sort set default: ~A" (view-files-sort)))
 
-    (if (not (member *print-length*  '(12 32) ))
+    (if (not (memv *print-length*  '(12 32) ))
 	(snd-display ";print-length set default: ~A" *print-length*))
     (if (not (eqv? *play-arrow-size*  10 )) 
 	(snd-display ";play-arrow-size set default: ~A" *play-arrow-size*))
@@ -776,8 +764,6 @@
 	(snd-display ";clm-table-size set default: ~A" *clm-table-size*))
     (if (fneq *clm-default-frequency* 0.0)
 	(snd-display ";clm-default-frequency set default: ~A" *clm-default-frequency*))
-    (if (fneq *clm-default-frequency* 0.0)
-	(snd-display ";*clm-default-frequency*: ~A" *clm-default-frequency*))
     (if (not (boolean? *with-verbose-cursor*)) 
 	(snd-display ";with-verbose-cursor set default: ~A" *with-verbose-cursor*))
     (if (not (boolean? *with-inset-graph*))
@@ -916,7 +902,7 @@
 	(snd-display ";* fft-log-magnitude set default: ~A" *fft-log-magnitude*))
     (if *fft-with-phases*
 	(snd-display ";* fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (member *transform-size* '(1024 4096)))
+    (if (not (memv *transform-size* '(1024 4096)))
 	(snd-display ";* transform-size set default: ~A" *transform-size*))
     (if (not (equal? *transform-graph-type* graph-once))
 	(snd-display ";* transform-graph-type set default: ~A" *transform-graph-type*))
@@ -2797,11 +2783,10 @@
 	(if (not (= (mus-sound-sample-type "test.snd") mus-lfloat)) 
 	    (snd-display ";saved-as float -> ~A?" (mus-sample-type-name (mus-sound-sample-type "test.snd"))))
 	(if (fneq (sample 1000 ab) samp) (snd-display ";riff[1000] = ~A?" (sample 1000 ab)))
-	(if (not (and (string? (comment ab))
-		      (string=? (comment ab) 
-				(string-append "written " 
-					       (strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
-					       " [written by me]"))))
+	(if (not (equal? (comment ab) 
+			 (string-append "written " 
+					(strftime "%a %d-%b-%Y %H:%M %Z" (localtime (current-time)))
+					" [written by me]")))
 	    (snd-display ";output-comment-hook: ~A~%(~A)" (comment ab) (mus-sound-comment "test.snd")))
 	(close-sound ab))
       (save-sound-as "test.snd" ob :header-type mus-aiff :sample-type mus-b24int)
@@ -3038,17 +3023,17 @@
 		    (string-append sf-dir "bad_chans.nist")
 		    (string-append sf-dir "bad_srate.nist")
 		    (string-append sf-dir "bad_length.nist"))
-	      (list (list 0 22050 0)
-		    (list 1 0 0)
-		    (list 1 22050 4411)
-		    (list 0 22050 0)
-		    (list 1 0 0)
-		    (list 1 22050 -10)
-		    (list 0 22050 0)
-		    (list 1 0 0)
-		    (list 0 22050 0)
-		    (list 1 0 0)
-		    (list 1 22050 -10)))
+	      '((0 22050 0) 
+		(1 0 0) 
+		(1 22050 4411) 
+		(0 22050 0) 
+		(1 0 0) 
+		(1 22050 -10) 
+		(0 22050 0) 
+		(1 0 0) 
+		(0 22050 0) 
+		(1 0 0) 
+		(1 22050 -10)))
     
     (let ((ind (open-sound (string-append "/usr/include/sys/" home-dir "/cl/oboe.snd"))))
       (if (not (and (sound? ind)
@@ -3945,8 +3930,7 @@
 	(if (fneq (sample 1) 0.50195) (snd-display ";file chunked 1: ~A" (sample 1)))
 	(if (fneq (sample 2) 0.0) (snd-display ";file chunked eof: ~A" (sample 2)))
 	(if (fneq (sample 3) 0.0) (snd-display ";file chunked eof+1: ~A" (sample 3)))
-	(if (not (and (string? (comment))
-		      (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
+	(if (not (equal? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"))
 	    (snd-display ";chunked appl comment: ~A" (comment)))
 	(close-sound file)))
     (lambda args (snd-display ";~S" args)))
@@ -3985,8 +3969,7 @@
 	(if (fneq (sample 0 file 1) 0.50195) (snd-display ";file chunked 0 1: ~A" (sample 0 file 1)))
 	(if (fneq (sample 1 file 0) 0.0) (snd-display ";file chunked eof (stereo): ~A" (sample 1 file 0)))
 	(if (fneq (sample 1 file 1) 0.0) (snd-display ";file chunked eof+1 (stereo): ~A" (sample 1 file 1)))
-	(if (not (and (string? (comment))
-		      (string=? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98")))
+	(if (not (equal? (comment) ";Written Mon 02-Nov-98 01:44 CST by root at ockeghem (Linux/X86) using Allegro CL, clm of 20-Oct-98"))
 	    (snd-display ";chunked appl comment (stereo): ~A" (comment)))
 	(close-sound file)))
     (lambda args (snd-display ";~S" args)))
@@ -5674,8 +5657,7 @@ EDITS: 5
 	  (if (not (string=? (substring str (- (length str) 16)) "at eof or freed>"))
 	      (snd-display ";freed sampler: ~A [~A]?" str (substring str (- (length str) 16))))))
       (let* ((reg (car (regions)))
-	     (chns (region-chans reg))
-	     (var (catch #t (lambda () (make-region-sampler reg 0 (+ chns 1))) (lambda args args))))
+	     (var (catch #t (lambda () (make-region-sampler reg 0 (+ (region-chans reg) 1))) (lambda args args))))
 	(if (not (eq? (car var) 'no-such-channel))
 	    (snd-display ";make-region-sampler bad chan (2): ~A ~A" var (regions)))
 	(let ((tag (catch #t (lambda () (make-region-sampler reg 0 0 -2)) (lambda args args))))
@@ -5927,8 +5909,7 @@ EDITS: 5
 		    (= (framples index 1) 1001)))
 	  (snd-display ";silence 1: ~A ~A" (framples index 0) (framples index 1)))
       (save-sound index)
-      (if (not (and (= (framples index 0) 1001)
-		    (= (framples index 1) 1001)))
+      (if (not (= (framples index 0) 1001 (framples index 1)))
 	  (snd-display ";saved silence 1: ~A ~A" (framples index 0) (framples index 1)))
       (if (not (= (mus-sound-framples "fmv.snd") 1001))
 	  (snd-display ";saved framers silence 1: ~A" (mus-sound-framples "fmv.snd")))
@@ -6160,7 +6141,7 @@ EDITS: 5
 	  (let ((fltamp (maxamp obind))
 		(fltdur (framples obind)))
 	    (if (> (abs (- fltamp .02)) .005) (snd-display ";apply filter scale: ~A?" fltamp))
-	    (if (> (- fltdur 50868) 256) (snd-display ";apply filter length: ~A?" fltdur))
+	    (if (> fltdur 51124) (snd-display ";apply filter length: ~A?" fltdur))
 	    (undo 1 obind)))
 	
 	(revert-sound obind)
@@ -6940,8 +6921,7 @@ EDITS: 5
 	(set! (cursor) 2000) 
 	(let ((here (cursor))) 
 	  (play :start (cursor)) 
-	  (if (not (and (= here 2000)
-			(= (cursor) 2000)))
+	  (if (not (= here 2000 (cursor)))
 	      (snd-display ";with-tracking-cursor set to :track-and-return: start: ~A, end: ~A" here (cursor))))
 	
 	(set! (zoom-focus-style) zoom-focus-middle) 
@@ -8680,7 +8660,7 @@ EDITS: 2
       (if clip (snd-display ";channel-clipped? oboe.snd -> ~A" clip)))
     (scale-to 1.5 ind0 0)
     (let ((clip (channel-clipped? ind0 0)))
-      (if (not (member clip '(4502 4503))) (snd-display ";channel-clipped after scale: ~A" clip)))
+      (if (not (memv clip '(4502 4503))) (snd-display ";channel-clipped after scale: ~A" clip)))
     (revert-sound ind0)
     
     (do ((i 0 (+ i 1))) ((= i 4)) (ramp-channel 0.0 1.0 0 #f ind1 0))
@@ -9177,8 +9157,7 @@ EDITS: 2
 	  (if (not (eq? c1 c2)) (snd-display ";color not eq? ~A ~A?" c1 c2))
 					;(if (not (equal? c1 c3)) (snd-display ";diff color not equal? ~A ~A?" c1 c3))
 	  (if (eq? c1 c3) (snd-display ";diff color eq? ~A ~A?" c1 c3))
-	  (if (not (or (equal? (color->list c1) '(0.0 0.0 1.0))
-		       (equal? (color->list c1) '(0.0 0.0 1.0 1.0))))
+	  (if (not (member (color->list c1) '((0.0 0.0 1.0) (0.0 0.0 1.0 1.0))))
 	      (snd-display ";color->list: ~A ~A?" c1 (color->list c1))))
 	
 	(if (not (provided? 'snd-motif))
@@ -9516,8 +9495,8 @@ EDITS: 2
 			      (feql rgb '(0 0 0))))
 		     (snd-display ";flag: ~A" rgb))))
 	     ))
-	 (list 512 64)
-	 (list 0.005 0.04))
+	 '(512 64)
+	 '(0.005 0.04))
 	
 	(let ((ind (add-colormap "white" (lambda (size) (list (make-float-vector size 1.0) (make-float-vector size 1.0) (make-float-vector size 1.0))))))
 	  (if (not (colormap? ind))
@@ -11633,7 +11612,7 @@ EDITS: 2
     
     (if (mus-generator? 321) (snd-display ";123 is a gen?"))
     (if (mus-generator? '(321)) (snd-display ";(123) is a gen?"))
-    (if (mus-generator? (list 'hi 321)) (snd-display ";(hi 123) is a gen?"))
+    (if (mus-generator? '(hi 321)) (snd-display ";(hi 123) is a gen?"))
     (set! *clm-srate* 22050)
     (let ((samps (seconds->samples 1.0))
 	  (secs (samples->seconds 22050)))
@@ -11736,22 +11715,22 @@ EDITS: 2
 	  (snd-display ";ccosh cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))))
       (if (fneq (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))) 
 	  (snd-display ";cos cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))))  
-      (let ((lv8 (partials->polynomial '(7 1) mus-chebyshev-second-kind)))
-	(do ((sa (sin (acos 0.5)))
-	     (ca (acos 0.5))
-	     (i 0 (+ i 1)))
-	    ((= i 10))
-	  (let* ((val (mus-random 1.0))
-		 (aval (acos val)))
-	    (if (fneq (polynomial lv7 val) (cosh (* 7 (acosh val)))) 
-		(snd-display ";ccosh cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cosh (* 7 (acosh val)))))
-	    (if (fneq (polynomial lv7 val) (cos (* 7 aval)))
-		(snd-display ";cos cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cos (* 7 aval))))
-	    (if (fneq (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))
-		(snd-display ";acos cheb 7 ~A: ~A ~A" val (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))))
-	  (if (not (mus-arrays-equal? lv8 (float-vector -1.000 0.000 24.000 0.000 -80.000 0.000 64.000 0.000))) (snd-display ";partials->polynomial(9): ~A?" lv8))
-	  (if (fneq (polynomial lv8 0.5) (/ (sin (* 7 ca)) sa))
-	      (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 0.5) (/ (sin (* 7 ca)) sa))))))
+      (do ((lv8 (partials->polynomial '(7 1) mus-chebyshev-second-kind))
+	   (sa (sin (acos 0.5)))
+	   (ca (acos 0.5))
+	   (i 0 (+ i 1)))
+	  ((= i 10))
+	(let* ((val (mus-random 1.0))
+	       (aval (acos val)))
+	  (if (fneq (polynomial lv7 val) (cosh (* 7 (acosh val)))) 
+	      (snd-display ";ccosh cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cosh (* 7 (acosh val)))))
+	  (if (fneq (polynomial lv7 val) (cos (* 7 aval)))
+	      (snd-display ";cos cheb 7 ~A: ~A ~A" val (polynomial lv7 val) (cos (* 7 aval))))
+	  (if (fneq (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))
+	      (snd-display ";acos cheb 7 ~A: ~A ~A" val (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))))
+	(if (not (mus-arrays-equal? lv8 (float-vector -1.000 0.000 24.000 0.000 -80.000 0.000 64.000 0.000))) (snd-display ";partials->polynomial(9): ~A?" lv8))
+	(if (fneq (polynomial lv8 0.5) (/ (sin (* 7 ca)) sa))
+	    (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 0.5) (/ (sin (* 7 ca)) sa)))))
     ;; G&R 8.943 p 984 uses n+1 where we use n in Un? (our numbering keeps harmonics aligned between Tn and Un)
     
     (if (not (mus-arrays-equal? (normalize-partials (list 1 1 2 1)) (float-vector 1.000 0.500 2.000 0.500)))
@@ -11766,23 +11745,23 @@ EDITS: 2
 	(snd-display ";normalize-partials 4: ~A" (normalize-partials (float-vector 0 2 1 1 4 1))))
     
     ;; check phase-quadrature cancellations
-    (let ((cos-coeffs (partials->polynomial '(1 1 2 1) mus-chebyshev-first-kind))
-	  (sin-coeffs (partials->polynomial (float-vector 1 1 2 1) mus-chebyshev-second-kind))
-	  (incr (/ (* 2 pi 440.0) 22050.0)))
-      (do ((i 0 (+ i 1))
-	   (a 0.0 (+ a incr)))
-	  ((= i 1100))
-	(let* ((x (cos a))
-	       (y (sin a))
-	       (cax (polynomial cos-coeffs x))
-	       (sax (polynomial sin-coeffs x))
-	       (upper (- (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
-	       (lower (+ (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
-	       (upper2 (+ (cos (* a 3)) (cos (* a 4))))
-	       (lower2 (+ 1.0 (cos a))))
-	  (if (or (fneq upper upper2)
-		  (fneq lower lower2))
-	      (snd-display ";~A ~A, ~A ~A" upper upper2 lower lower2)))))
+    (do ((cos-coeffs (partials->polynomial '(1 1 2 1) mus-chebyshev-first-kind))
+	 (sin-coeffs (partials->polynomial (float-vector 1 1 2 1) mus-chebyshev-second-kind))
+	 (incr (/ (* 2 pi 440.0) 22050.0))
+	 (i 0 (+ i 1))
+	 (a 0.0 (+ a incr)))
+	((= i 1100))
+      (let* ((x (cos a))
+	     (y (sin a))
+	     (cax (polynomial cos-coeffs x))
+	     (sax (polynomial sin-coeffs x))
+	     (upper (- (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
+	     (lower (+ (* (cos (* 2 a)) cax) (* (sin (* 2 a)) y sax)))
+	     (upper2 (+ (cos (* a 3)) (cos (* a 4))))
+	     (lower2 (+ 1.0 (cos a))))
+	(if (or (fneq upper upper2)
+		(fneq lower lower2))
+	    (snd-display ";~A ~A, ~A ~A" upper upper2 lower lower2))))
     
     (let ((tag (catch #t (lambda () (harmonicizer 550.0 '(.5 .3 .2) 10)) (lambda args (car args)))))
       (if (not (eq? tag 'no-data)) (snd-display ";odd length arg to partials->polynomial: ~A" tag)))
@@ -12334,8 +12313,7 @@ EDITS: 2
 	(if (not (eq? tag 'out-of-range)) (snd-display ";len to 100 -> ~A" tag)))
       (let ((tag (catch #t (lambda () (set! ((mus-data dly) 100) .1)) (lambda args (car args)))))
 	(if (not (eq? tag 'out-of-range)) (snd-display ";data 100 to .1 -> ~A" tag)))
-      (let ((data (make-float-vector 32 1.0)))
-	(set! (mus-data dly) data))
+      (set! (mus-data dly) (make-float-vector 32 1.0))
       (if (not (float-vector? (mus-data dly))) (snd-display ";set delay data not float-vector?"))
       (if (fneq ((mus-data dly) 1) 1.0) (snd-display ";set delay [1] 1: ~A" ((mus-data dly) 1)))
       (if (not (= (length (mus-data dly)) 32)) (snd-display ";set delay data len(32): ~A" (length (mus-data dly))))
@@ -13717,8 +13695,8 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";ncos phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";ncos frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1) (snd-display ";ncos scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";ncos n: ~D?" (mus-length gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";ncos length: ~D?" (mus-length gen)))
+      (unless (= (mus-length gen) 10)
+	(snd-display ";ncos n: ~D?" (mus-length gen)))
       (if (or (fneq (v0 1) 0.722) (fneq (v0 8) -0.143)) (snd-display ";ncos output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";ncos set-scaler: ~F?" (mus-scaler gen)))
       (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set ncos n: ~D?" (mus-length gen)))
@@ -13772,8 +13750,8 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";nsin phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";nsin frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1315) (snd-display ";nsin scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";nsin n: ~D?" (mus-length gen)))
-      (if (not (= (mus-length gen) 10)) (snd-display ";nsin length: ~D?" (mus-length gen)))
+      (unless (= (mus-length gen) 10)
+	(snd-display ";nsin n: ~D?" (mus-length gen)))
       (if (or (fneq (v0 1) 0.784) (fneq (v0 8) 0.181)) (snd-display ";nsin output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";nsin set-scaler: ~F?" (mus-scaler gen)))
       (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set nsin n: ~D?" (mus-length gen)))
@@ -16358,10 +16336,10 @@ EDITS: 2
 	   (float-vector 0.0 0.5 0.25 0.25)
 	   (make-float-vector 100 0.01)
 	   (make-float-vector 1000 0.001))
-     (list 'one-cos
-	   'three-cos
-	   'hundred-cos
-	   'thousand-cos))
+     '(one-cos
+       three-cos
+       hundred-cos
+       thousand-cos))
 
     (for-each 
      (lambda (amps name)
@@ -16395,10 +16373,10 @@ EDITS: 2
 	   (float-vector 0.0 0.5 0.25 0.25)
 	   (make-float-vector 100 0.01)
 	   (make-float-vector 1000 0.001))
-     (list 'one-sin
-	   'three-sin
-	   'hundred-sin
-	   'thousand-sin))
+     '(one-sin
+       three-sin
+       hundred-sin
+       thousand-sin))
 
     (for-each 
      (lambda (camps samps name)
@@ -16442,10 +16420,10 @@ EDITS: 2
 	   (float-vector 0.0 0.25 0.25 0.0)
 	   (make-float-vector 100 .006)
 	   (make-float-vector 1000 0.0005))
-     (list 'one-tu
-	   'three-tu
-	   'hundred-tu
-	   'thousand-tu))
+     '(one-tu
+       three-tu
+       hundred-tu
+       thousand-tu))
     
     ;; polywave
     (let ((gen (make-polywave 440.0 :partials '(1 1) :type mus-chebyshev-first-kind))
@@ -17833,8 +17811,7 @@ EDITS: 2
     (for-each 
      (lambda (chans)
        (let ((m1 (make-locsig :channels chans)))
-	 (if (not (and (= (mus-channels m1) chans)
-		       (= (mus-length m1) chans)))
+	 (if (not (= (mus-channels m1) chans (mus-length m1)))
 	     (snd-display ";locsig ~A chans but: ~A ~A" chans (mus-channels m1) (mus-length m1)))
 	 (do ((i 0 (+ i 1)))
 	     ((= i chans))
@@ -18842,10 +18819,9 @@ EDITS: 2
 	      (f2 (lambda (g)
 		    (if forward ; no change to data
 			(set! forward #f)
-			(let* ((len (mus-length g))
-			       (grain (make-shared-vector (mus-data g) (list len))))
+			(let ((grain (make-shared-vector (mus-data g) (list (mus-length g)))))
 			  (set! forward #t)
-			  (set! grain (reverse! grain)))) ; should get ramps going up then down across overall rising ramp
+			  (reverse! grain))) ; should get ramps going up then down across overall rising ramp
 		    (mus-length g))))
 	  (let ((gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0 :input f1 :edit f2)))
 	    (map-channel (lambda (y) (granulate gen))))))
@@ -18904,8 +18880,7 @@ EDITS: 2
 				   :edit (lambda (g)
 					   (if forward
 					       (set! forward #f)
-					       (let* ((len (mus-length g))
-						      (grain (make-shared-vector (mus-data g) (list len))))
+					       (let ((grain (make-shared-vector (mus-data g) (list (mus-length g)))))
 						 (set! forward #t)
 						 (reverse! grain)))
 					   (mus-length g)))))
@@ -20042,56 +20017,56 @@ EDITS: 2
     
     (let ()
       (define (pvoc-d beg dur amp size)
-	(let ((N2 (floor (/ size 2))))
-	  (let ((start (seconds->samples beg))
-		(end (seconds->samples (+ beg dur)))
-		(two-pi (* 2 pi))
-		(amps #f) (paincrs #f) (ppincrs #f) (phases #f) (freqs #f))
-
-	    (define ifunc 
-	      (let ((osc (make-oscil 1000.0)))
-		(lambda (dir)
-		  (oscil osc))))
+	(let ((N2 (floor (/ size 2)))
+	      (start (seconds->samples beg))
+	      (end (seconds->samples (+ beg dur)))
+	      (two-pi (* 2 pi))
+	      (amps #f) (paincrs #f) (ppincrs #f) (phases #f) (freqs #f))
+	  
+	  (define ifunc 
+	    (let ((osc (make-oscil 1000.0)))
+	      (lambda (dir)
+		(oscil osc))))
+	  
+	  (define efunc 
+	    (let ((lastphases (make-float-vector N2)))
+	      (lambda (c)
+		(do ((pscl (/ 1.0 (floor (/ size 4)))) ; overlap = 4
+		     (kscl (/ two-pi size))
+		     (k 0 (+ k 1))
+		     (ks 0.0 (+ ks kscl)))
+		    ((= k N2) #f)
+		  (let* ((freq (freqs k))
+			 (diff (- freq (lastphases k))))
+		    (set! (lastphases k) freq)
+		    (if (> diff pi) (set! diff (- diff two-pi)))
+		    (if (< diff (- pi)) (set! diff (+ diff two-pi)))
+		    (set! (freqs k) (+ (* diff  pscl) ks)))))))
+	  
+	  (define (sfunc c)
+	    (float-vector-add! amps paincrs)
+	    (float-vector-add! ppincrs freqs)
+	    (float-vector-add! phases ppincrs)
+	    (let ((sum 0.0))
+	      (do ((i 0 (+ i 1)))
+		  ((= i N2))
+		(if (> (amps i) .75)
+		    (set! sum (+ sum (* (amps i) (if (> (modulo (phases i) two-pi) pi) 1.0 -1.0))))))
+	      sum))
+	  
+	  (let ((sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4
+					:edit efunc
+					:synthesize sfunc
+					:input ifunc)))
+	    (set! amps (phase-vocoder-amps sr))
+	    (set! paincrs (phase-vocoder-amp-increments sr))
+	    (set! ppincrs (phase-vocoder-phase-increments sr))
+	    (set! phases (phase-vocoder-phases sr))
+	    (set! freqs (phase-vocoder-freqs sr))
 	    
-	    (define efunc 
-	      (let ((lastphases (make-float-vector N2)))
-		(lambda (c)
-		  (do ((pscl (/ 1.0 (floor (/ size 4)))) ; overlap = 4
-		       (kscl (/ two-pi size))
-		       (k 0 (+ k 1))
-		       (ks 0.0 (+ ks kscl)))
-		      ((= k N2) #f)
-		    (let* ((freq (freqs k))
-			   (diff (- freq (lastphases k))))
-		      (set! (lastphases k) freq)
-		      (if (> diff pi) (set! diff (- diff two-pi)))
-		      (if (< diff (- pi)) (set! diff (+ diff two-pi)))
-		      (set! (freqs k) (+ (* diff  pscl) ks)))))))
-
-	    (define (sfunc c)
-	      (float-vector-add! amps paincrs)
-	      (float-vector-add! ppincrs freqs)
-	      (float-vector-add! phases ppincrs)
-	      (let ((sum 0.0))
-		(do ((i 0 (+ i 1)))
-		    ((= i N2))
-		  (if (> (amps i) .75)
-		      (set! sum (+ sum (* (amps i) (if (> (modulo (phases i) two-pi) pi) 1.0 -1.0))))))
-		sum))
-
-	    (let ((sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4
-					  :edit efunc
-					  :synthesize sfunc
-					  :input ifunc)))
-	      (set! amps (phase-vocoder-amps sr))
-	      (set! paincrs (phase-vocoder-amp-increments sr))
-	      (set! ppincrs (phase-vocoder-phase-increments sr))
-	      (set! phases (phase-vocoder-phases sr))
-	      (set! freqs (phase-vocoder-freqs sr))
-	      
-	      (do ((i start (+ i 1))) 
-		  ((= i end))
-		(outa i (* amp (phase-vocoder sr))))))))
+	    (do ((i start (+ i 1))) 
+		((= i end))
+	      (outa i (* amp (phase-vocoder sr)))))))
       
       (let ((v (make-float-vector 200)))
 	(with-sound (v :srate 44100) (pvoc-d 0 .0025 .2 128))
@@ -20407,11 +20382,11 @@ EDITS: 2
 		     (lambda (arg2)
 		       (catch #t (lambda () (runp gen arg1 arg2)) (lambda args (car args))))
 		     (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			   (lambda () #t) (curlet) (make-float-vector (list 2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			   (lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			   () 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			   )))
 		  (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-			(lambda () #t) (curlet) (make-float-vector (list 2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+			(lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 			() 3 4 2 8 16 32 64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 			))
 		 
@@ -20429,7 +20404,7 @@ EDITS: 2
 				 (set! (func gen) arg1))
 			       (lambda args #f)))
 			   (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 3/4 'mus-error 0+i
-				 (lambda () #t) (make-float-vector (list 2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
+				 (lambda () #t) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				 () 3 4 64 -64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				 (lambda (a) a)))
 			  (if (not (equal? (func gen) default-value))
@@ -20462,10 +20437,10 @@ EDITS: 2
 	      (list make-oscil make-asymmetric-fm 
 		    make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
 		    make-rand make-rand-interp)
-	      (list 'oscil 'asymmetric-fm 
-		    'triangle-wave 'square-wave 'pusle-train 'sawtooth-wave
-		    'rand 'rand-interp)))
-	   (list 100 1))
+	      '(oscil asymmetric-fm 
+		triangle-wave square-wave pusle-train sawtooth-wave
+		rand rand-interp)))
+	   '(100 1))
 	  (set! *clm-srate* old-clm-srate))
 	
 	(let ((random-args (list 
@@ -20528,8 +20503,8 @@ EDITS: 2
     (let ((g1 (make-moving-max 10)))
       (do ((i 0 (+ i 1)))
 	  ((= i 1000))
-	(let* ((val (moving-max g1 (random 1.0)))
-	       (pk (float-vector-peak (mus-data g1))))
+	(let ((val (moving-max g1 (random 1.0)))
+	      (pk (float-vector-peak (mus-data g1))))
 	  (if (not (= pk val)) 
 	      (snd-display ";moving-max ~A ~A" pk val)))))
     
@@ -20639,9 +20614,9 @@ EDITS: 2
        (list make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-moving-norm make-comb make-filtered-comb make-notch
 	     make-rand make-rand-interp make-table-lookup make-env
 	     make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
-       (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-moving-max 'make-moving-norm 'make-comb 'make-filtered-comb 'make-notch
-	     'make-rand 'make-rand-interp 'make-table-lookup 'make-env
-	     'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
+       '(make-wave-train make-polyshape make-delay make-moving-average make-moving-max make-moving-norm make-comb make-filtered-comb make-notch
+	 make-rand make-rand-interp make-table-lookup make-env
+	 make-readin make-locsig make-granulate make-convolve make-phase-vocoder)))
     
     (let ((v1 (make-float-vector 10 .1)))
       
@@ -22271,12 +22246,10 @@ EDITS: 2
 	    (old-color *mix-color*))
 	(set! *mix-color* (make-color-with-catch 1 1 0))
 	(let ((mix1 (mix-float-vector (make-float-vector 10 .5) 10)))
-	  (if (not (and (or (equal? (color->list *mix-color*) '(1.0 1.0 0.0))
-			    (equal? (color->list *mix-color*) '(1.0 1.0 0.0 1.0)))
-			(or (equal? (color->list (mix-color mix1)) '(1.0 1.0 0.0))
-			    (equal? (color->list (mix-color mix1)) '(1.0 1.0 0.0 1.0)))))
+	  (if (not (and (member (color->list *mix-color*)      '((1.0 1.0 0.0) (1.0 1.0 0.0 1.0)))
+			(member (color->list (mix-color mix1)) '((1.0 1.0 0.0) (1.0 1.0 0.0 1.0)))))
 	      (snd-display ";set mix-color: ~A ~A ~A ~A" 
-			   (color->list *mix-color*) (color->list (mix-color mix1)) (list 1.0 1.0 0.0) (color->list old-color)))
+			   (color->list *mix-color*) (color->list (mix-color mix1)) '(1.0 1.0 0.0) (color->list old-color)))
 	  (set! *mix-color* old-color)
 	  (save-mix mix1 "test1.snd")
 	  (let ((ind1 (open-sound "test1.snd")))
@@ -23052,14 +23025,12 @@ EDITS: 2
 	    (lambda () (play mix-id 1000))
 	    (lambda args (snd-display ";can't play mix from 1000: ~A" args)))
 	  (set! (mix-name mix-id) "test-mix")
-	  (if (not (and (string? (mix-name mix-id))
-			(string=? (mix-name mix-id) "test-mix")))
+	  (if (not (equal? (mix-name mix-id) "test-mix"))
 	      (snd-display ";mix-name set: ~A" (mix-name mix-id)))
 	  (let ((id (mix-name->id "test-mix")))
 	    (if (not (equal? id mix-id)) (snd-display ";mix-name->id: ~A ~A" id mix-id)))
 	  (set! (mix-name mix-id) "test-mix-again") ; make sure previous name is freed
-	  (if (not (and (string? (mix-name mix-id))
-			(string=? (mix-name mix-id) "test-mix-again")))
+	  (if (not (equal? (mix-name mix-id) "test-mix-again"))
 	      (snd-display ";mix-name set again: ~A" (mix-name mix-id)))
 	  (set! (mix-name mix-id) "")
 	  (if (not (equal? (mix-name mix-id) "")) (snd-display ";set mix-name #f: ~A" (mix-name mix-id)))
@@ -24065,7 +24036,7 @@ EDITS: 2
 	  (m2 (find-mark 2 ind 1)))
       (if (not (and (mark? m1) (mark? m2)))
 	  (snd-display ";save-marks 2a 1,2: ~A ~A" m1 m2)
-	  (if (not (and (= (mark-sync m1) 0) (= (mark-sync m2) 0)))
+	  (if (not (= (mark-sync m1) 0 (mark-sync m2)))
 	      (snd-display ";save-marks 2a 1,2 syncs: ~A ~A" (mark-sync m1) (mark-sync m2)))))
     (let ((m1 (find-mark 5 ind 0))
 	  (m2 (find-mark 10 ind 1)))
@@ -24089,7 +24060,7 @@ EDITS: 2
       (if (not (and (mark? m1) (mark? m2))) 
 	  (snd-display ";save-marks 2a 3,6: ~A ~A" m1 m2)
 	  (begin
-	    (if (not (and (= (mark-sync m1) 0) (= (mark-sync m2) 0)))
+	    (if (not (= (mark-sync m1) 0 (mark-sync m2)))
 		(snd-display ";save-marks 2a 3,6 syncs: ~A ~A" (mark-sync m1) (mark-sync m2)))
 	    (if (not (string=? (mark-name m1) "hi3")) (snd-display ";save-marks 2a 3 name: ~A" (mark-name m1)))
 	    (if (not (string=? (mark-name m2) "hi6")) (snd-display ";save-marks 2a 6 name: ~A" (mark-name m2))))))
@@ -24327,7 +24298,7 @@ EDITS: 2
 		       (equal? selected-file (string-append home-dir "/cl/1a.snd"))
 		       (equal? selected-file (string-append home-dir "/snd-16/1a.snd"))))
 	      (snd-display ";vf set selected select hook arg: ~A" selected-file))
-	  (if (not (or (equal? (view-files-selected-files dialog) (list "1a.snd"))
+	  (if (not (or (equal? (view-files-selected-files dialog) '("1a.snd"))
 		       (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd")))
 		       (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-16/1a.snd")))))
 	      (snd-display ";vf selected files set: ~A" (view-files-selected-files dialog))))
@@ -24584,8 +24555,8 @@ EDITS: 2
 	       (if (> (mus-sound-chans file) 16)
 		   (set! sfiles (cons file sfiles)))))
 	    (if (and (file-exists? "s24.snd")
-		     (not (and (equal? ffiles (list "s24.snd"))
-			       (equal? sfiles (list "s24.snd")))))
+		     (not (and (equal? ffiles '("s24.snd"))
+			       (equal? sfiles '("s24.snd")))))
 		(snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
 	  )
 					;	      (if sf-dir-files
@@ -24795,8 +24766,7 @@ EDITS: 2
 		       (chn (hook 'chn))
 		       (dur (hook 'duration)))
 		   (if (mus-sound-maxamp-exists? (file-name snd))
-		       (let* ((amp-vals (mus-sound-maxamp (file-name snd)))
-			      (max-val (amp-vals (+ (* chn 2) 1))))
+		       (let ((max-val ((mus-sound-maxamp (file-name snd)) (+ (* chn 2) 1)))) ; implicit index
 			 (set! (hook 'result) (list 0.0 dur (- max-val) max-val)))
 		       (set! (hook 'result) (list 0.0 dur -1.0 1.0))))))
     (set! (hook-functions after-open-hook) ())
@@ -24883,17 +24853,20 @@ EDITS: 2
 	  (if (not (= id 1043)) (snd-display ";ladspa .UniqueID: ~A" id))
 	  (if (not (= count 4)) (snd-display ";ladspa .PortCount: ~A" count))
 	  (if (not (= props 4)) (snd-display ";ladspa .Properties: ~A" prop))
-	  (if (not (equal? names (list "Delay (Seconds)" "Dry/Wet Balance" "Input" "Output")))
+	  (if (not (equal? names '("Delay (Seconds)" "Dry/Wet Balance" "Input" "Output")))
 	      (snd-display ";ladspa .PortNames: ~A" names))
-	  (if (not (equal? hints (list (list 579 0.0 5.0) (list 195 0.0 1.0) (list 0 0.0 0.0) (list 0 0.0 0.0))))
+	  (if (not (equal? hints '((579 0.0 5.0) (195 0.0 1.0) (0 0.0 0.0) (0 0.0 0.0))))
 	      (snd-display ";ladspa .PortRangeHints: ~A" hints))
-	  (if (not (equal? descs (list 5 5 9 10)))
+	  (if (not (equal? descs '(5 5 9 10)))
 	      (snd-display ";ladspa .PortDescriptors: ~A" descs))
 	  (if (not (= (logand (cadr (.PortDescriptors ptr)) LADSPA_PORT_INPUT) 1))
 	      (snd-display ";ladspa port hint: ~A" (logand (cadr (.PortDescriptors ptr)) LADSPA_PORT_INPUT))))
 	(apply-ladspa (make-sampler 0) (list "delay" "delay_5s" .3 .5) 1000 "delayed")
 	(if (not (equal? (analyze-ladspa "delay" "delay_5s")
-			 (list "Simple Delay Line" "Richard Furse (LADSPA example plugins)" "None" (list "Dry/Wet Balance" "minimum" 0.0 "maximum" 1.0) (list "Delay (Seconds)" "minimum" 0.0 "maximum" 5.0))))
+			 '("Simple Delay Line" "Richard Furse (LADSPA example plugins)" 
+			   "None" 
+			   ("Dry/Wet Balance" "minimum" 0.0 "maximum" 1.0) 
+			   ("Delay (Seconds)" "minimum" 0.0 "maximum" 5.0))))
 	    (snd-display ";analyze-ladspa: ~A" (analyze-ladspa "delay" "delay_5s")))
 	(ladspa-it "delay" "delay_5s" .3 .5)
 	(if (provided? 'xm)
@@ -24941,7 +24914,7 @@ EDITS: 2
 	
 	(set! *ladspa-dir* "/home/bil/test/ladspa/vocoder-0.3")
 	(init-ladspa)
-	(if (not (equal? (list-ladspa) (list (list "vocoder" "vocoder"))))
+	(if (not (equal? (list-ladspa) '(("vocoder" "vocoder"))))
 	    (snd-display ";list-ladspa vocoder: ~A" (list-ladspa)))
 	(if (not (list? (analyze-ladspa "vocoder" "vocoder")))
 	    (snd-display ";analyze-ladspa vocoder: ~A" (analyze-ladspa "vocoder" "vocoder")))
@@ -25001,7 +24974,7 @@ EDITS: 2
 	(key (char->integer #\0) 0 ind)
 	(key (char->integer #\x) 4 ind)
 	(key (char->integer #\z) 4 ind)
-	(if (not (equal? (edit-fragment) (list "smooth-channel 2000 100" "set" 2000 100)))
+	(if (not (equal? (edit-fragment) '("smooth-channel 2000 100" "set" 2000 100)))
 	    (snd-display ";C-x C-z fragment: ~A" (edit-fragment)))
 	(if (not (mus-arrays-equal? (channel->float-vector 2010 10) (float-vector 0.064 0.063 0.063 0.062 0.062 0.061 0.060 0.059 0.059 0.058)))
 	    (snd-display ";C-x C-z samps: ~A" (channel->float-vector 2010 10)))
@@ -25457,7 +25430,6 @@ EDITS: 2
 	
 	(snd-error "uhoh")
 	(snd-warning "hiho")
-	(mus-sound-samples "/bad/baddy")
 	
 	(if (not se) (snd-display ";snd-error-hook not called?"))
 	(if (not sw) (snd-display ";snd-warning-hook not called?"))
@@ -26022,9 +25994,10 @@ EDITS: 2
 	    (set! open-files (sounds))))
       
       (let* ((name (cur-dir-files (random cur-dir-len)))
-	     (ht (mus-sound-header-type name))
-	     (df (mus-sound-sample-type name))
-	     (fd (if (or (= ht mus-raw) (= df -1)) -1 (view-sound name))))
+	     (fd (if (or (= (mus-sound-header-type name) mus-raw) 
+			 (= (mus-sound-sample-type name) -1))
+		     -1 
+		     (view-sound name))))
 	(if (and (number? fd)
 		 (not (= fd -1)))
 	    (set! open-files (cons fd open-files))))
@@ -26185,15 +26158,11 @@ EDITS: 2
 	   (revert-sound cfd)
 	   (if (pair? (cdr open-files)) (revert-sound (cadr open-files)))))
 	
-	(if (and (> (framples) 1)
-		 (< (framples) 10000))
-	    (begin
-	      (make-region 0 (framples))
-	      (convolve-selection-with "fyow.snd" .5)
-	      (play :wait #t)))
-	(if (and (> (framples) 1)
-		 (< (framples) 10000))
-	    (convolve-with "fyow.snd" .25))
+	(when (> 10000 (framples) 1)
+	  (make-region 0 (framples))
+	  (convolve-selection-with "fyow.snd" .5)
+	  (play :wait #t)
+	  (convolve-with "fyow.snd" .25))
 	(insert-sound "oboe.snd")
 	(set! (hook-functions graph-hook) ())
 	(set! (hook-functions after-transform-hook) ())
@@ -26321,8 +26290,7 @@ EDITS: 2
 	  (if (= (channels s8) 8)
 	      (begin
 		(select-channel 5)
-		(if (not (and (number? (selected-channel))
-			      (= (selected-channel) 5)))
+		(if (not (eqv? (selected-channel) 5))
 		    (snd-display ";select-channel: ~A?" (selected-channel)))))
 	  (let ((editctr (edit-position)))
 	    (as-one-edit 
@@ -26402,7 +26370,6 @@ EDITS: 2
 	    (set! *filter-control-order* 40) 
 	    (test-panel filter-control-order 'filter-control-order)
 	    (set! (filter-control-envelope) '(0 0 .1 1 .2 0 1 0)) 
-	    (filter-control-envelope) 
 	    (apply-controls) 
 					;	      (if (< (framples) 100000) (play :wait #t))
 	    (set! (amp-control) 1.5) 
@@ -27009,7 +26976,7 @@ EDITS: 2
 	  (let ((m1 (maxamp obi 0))
 		(m2 (maxamp s2i 0))
 		(m3 (maxamp s2i 1))
-		(mc (map maxamp (list obi s2i s2i) (list 0 0 1))))
+		(mc (map maxamp (list obi s2i s2i) '(0 0 1))))
 	    (if (or (fneq m1 (car mc))
 		    (fneq m2 (cadr mc))
 		    (fneq m3 (caddr mc)))
@@ -27017,7 +26984,7 @@ EDITS: 2
 	    (set! (sync obi) 1)
 	    (set! (sync s2i) 1)
 	    (do-chans (lambda (val) (* val 2.0)) "*2")
-	    (let ((mc1 (map maxamp (list obi s2i s2i) (list 0 0 1))))
+	    (let ((mc1 (map maxamp (list obi s2i s2i) '(0 0 1))))
 	      (if (or (fneq (* 2.0 m1) (car mc1))
 		      (fneq (* 2.0 m2) (cadr mc1))
 		      (fneq (* 2.0 m3) (caddr mc1)))
@@ -27026,7 +26993,7 @@ EDITS: 2
 	      (set! (sync s2i) 0)
 	      (select-sound s2i)
 	      (do-sound-chans (lambda (val) (* val 0.5)) "/2")
-	      (let ((mc2 (map maxamp (list obi s2i s2i) (list 0 0 1))))
+	      (let ((mc2 (map maxamp (list obi s2i s2i) '(0 0 1))))
 		(if (or (fneq (* 2.0 m1) (car mc2))
 			(fneq m2 (cadr mc2))
 			(fneq m3 (caddr mc2)))
@@ -28764,9 +28731,9 @@ EDITS: 2
   
   (define (amp-envs-equal? snd chn pos0 pos1 df)
     (let* ((env0 (channel-amp-envs snd chn pos0))
-	   (len0 (and env0 (pair? env0) (= (length env0) 2) (length (cadr env0))))
+	   (len0 (and (pair? env0) (= (length env0) 2) (length (cadr env0))))
 	   (env1 (channel-amp-envs snd chn pos1))
-	   (len1 (and env1 (pair? env1) (= (length env1) 2) (length (cadr env1))))
+	   (len1 (and (pair? env1) (= (length env1) 2) (length (cadr env1))))
 	   (happy #t))
       (and len0 len1
 	  (let* ((minlen (min len0 len1))
@@ -33667,70 +33634,68 @@ EDITS: 1
 	    (lambda () (effects-jc-reverb-1 0.1 0 #f))
 	    
 	    )
-	   (list 
-	    '(lambda (snd chn) (insert-float-vector (float-vector 1.0 0.5) 0 2 snd chn))
-	    '(lambda (snd chn) (clm-channel-test snd chn))
-	    
-	    '(lambda (snd chn) (fft-edit 1000 3000 snd chn))
-	    '(lambda (snd chn) (fft-squelch 0.01 snd chn))
-	    '(lambda (snd chn) (fft-cancel 1000 3000 snd chn))
-	    '(lambda (snd chn) (squelch-vowels snd chn))
-	    '(lambda (snd chn) (fft-env-edit '(0 0 1 1 2 0) snd chn))
-	    '(lambda (snd chn) (fft-env-interp '(0 0 1 1 2 0) '(0 1 1 0 2 0) '(0 0 1 1) snd chn))
-	    '(lambda (snd chn) (hello-dentist 10.0 0.1 snd chn))
-	    '(lambda (snd chn) (fp 1.0 0.3 20.0 snd chn))
-	    '(lambda (snd chn) (expsnd '(0 1 1 2) snd chn))
-	    '(lambda (snd chn) (env-sound-interp '(0 0 1 1 2 0) 2.0 snd chn))
-	    '(lambda (snd chn) (add-notes '(("1a.snd") ("pistol.snd" 1.0 2.0)) snd chn))
-	    '(lambda (snd chn) (filtered-env '(0 0 1 1 2 0) snd chn))
-	    '(lambda (snd chn) (reverse-by-blocks 0.1 snd chn))
-	    '(lambda (snd chn) (reverse-within-blocks 0.1 snd chn))
-	    
-	    '(lambda (snd chn) (mix-channel "1a.snd" 1200 #f snd chn))
-	    '(lambda (snd chn) (insert-channel "1a.snd" 1200 #f snd chn))
-	    '(lambda (snd chn) (sine-ramp 0.5 0.9 0 #f snd chn))
-	    '(lambda (snd chn) (sine-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))
-	    '(lambda (snd chn) (blackman4-ramp 0.0 1.0 0 #f snd chn))
-	    '(lambda (snd chn) (blackman4-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))
-	    '(lambda (snd chn) (ramp-squared 0.2 0.8 #t 0 #f snd chn))
-	    '(lambda (snd chn) (env-squared-channel '(0.0 0.0 1.0 1.0) #t 0 #f snd chn))
-	    '(lambda (snd chn) (ramp-expt 0.2 0.8 32.0 #t 0 #f snd chn))
-	    '(lambda (snd chn) (env-expt-channel '(0.0 0.0 1.0 1.0) 32.0 #t 0 #f snd chn))
-	    '(lambda (snd chn) (offset-channel 0.1 0 #f snd chn))
-	    '(lambda (snd chn) (dither-channel 0.1 0 #f snd chn))
-	    '(lambda (snd chn) (contrast-channel 0.1 0 #f snd chn))
-	    
-	    '(lambda (snd chn) (ssb-bank 550 600 10 40 50.0 0 #f snd chn))
-	    '(lambda (snd chn) (ssb-bank-env 550 600 '(0 1 1 2) 10 40 50.0 0 #f snd chn))
-	    '(lambda (snd chn) (down-oct 1 snd chn))
-	    '(lambda (snd chn) (spike snd chn))
-	    '(lambda (snd chn) (zero-phase snd chn))
-	    '(lambda (snd chn) (rotate-phase (lambda (x) (random pi)) snd chn))
-	    '(lambda (snd chn) (brighten-slightly 0.5 snd chn))
-	    '(lambda (snd chn) (shift-channel-pitch 100 40 0 #f snd chn))
-	    '(lambda (snd chn) (channel-polynomial (float-vector 0.0 0.5) snd chn))
-	    '(lambda (snd chn) (spectral-polynomial (float-vector 0.0 1.0) snd chn))
-	    '(lambda (snd chn) (notch-channel '(60.0 120.0 240.0) #f #f #f snd chn))
-	    
-	    '(lambda (snd chn) (effects-squelch-channel 0.1 128 snd chn))
-	    '(lambda (snd chn) (effects-echo #f 0.5 0.1 0 #f snd chn))
-	    '(lambda (snd chn) (effects-flecho-1 0.5 0.1 #f 0 #f snd chn))
-	    '(lambda (snd chn) (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f snd chn))
-	    ;;		      '(lambda (snd chn) (effects-comb-filter 0.1 50 0 #f snd chn))
-	    '(lambda (snd chn) (effects-moog 10000 0.5 0 #f snd chn))
-	    '(lambda (snd chn) (effects-remove-dc snd chn))
-	    '(lambda (snd chn) (effects-compand snd chn))
-	    '(lambda (snd chn) (effects-am 100.0 #f #f #f snd chn))
-	    '(lambda (snd chn) (effects-rm 100.0 #f #f #f snd chn))
-	    '(lambda (snd chn) (effects-bbp 1000.0 100.0 0 #f snd chn))
-	    '(lambda (snd chn) (effects-bbr 1000.0 100.0 0 #f snd chn))
-	    '(lambda (snd chn) (effects-bhp 1000.0 0 #f snd chn))
-	    '(lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))
-	    '(lambda (snd chn) (effects-hello-dentist 50.0 0.5 0 #f snd chn))
-	    '(lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))
-	    '(lambda (snd chn) (effects-flange 5.0 2.0 0.001 0 #f snd chn))
-	    '(lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))
-	    ))))
+	   '((lambda (snd chn) (insert-float-vector (float-vector 1.0 0.5) 0 2 snd chn))
+	     (lambda (snd chn) (clm-channel-test snd chn))
+	     
+	     (lambda (snd chn) (fft-edit 1000 3000 snd chn))
+	     (lambda (snd chn) (fft-squelch 0.01 snd chn))
+	     (lambda (snd chn) (fft-cancel 1000 3000 snd chn))
+	     (lambda (snd chn) (squelch-vowels snd chn))
+	     (lambda (snd chn) (fft-env-edit '(0 0 1 1 2 0) snd chn))
+	     (lambda (snd chn) (fft-env-interp '(0 0 1 1 2 0) '(0 1 1 0 2 0) '(0 0 1 1) snd chn))
+	     (lambda (snd chn) (hello-dentist 10.0 0.1 snd chn))
+	     (lambda (snd chn) (fp 1.0 0.3 20.0 snd chn))
+	     (lambda (snd chn) (expsnd '(0 1 1 2) snd chn))
+	     (lambda (snd chn) (env-sound-interp '(0 0 1 1 2 0) 2.0 snd chn))
+	     (lambda (snd chn) (add-notes '(("1a.snd") ("pistol.snd" 1.0 2.0)) snd chn))
+	     (lambda (snd chn) (filtered-env '(0 0 1 1 2 0) snd chn))
+	     (lambda (snd chn) (reverse-by-blocks 0.1 snd chn))
+	     (lambda (snd chn) (reverse-within-blocks 0.1 snd chn))
+	     
+	     (lambda (snd chn) (mix-channel "1a.snd" 1200 #f snd chn))
+	     (lambda (snd chn) (insert-channel "1a.snd" 1200 #f snd chn))
+	     (lambda (snd chn) (sine-ramp 0.5 0.9 0 #f snd chn))
+	     (lambda (snd chn) (sine-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))
+	     (lambda (snd chn) (blackman4-ramp 0.0 1.0 0 #f snd chn))
+	     (lambda (snd chn) (blackman4-env-channel '(0 0 1 1 2 -0.5 3 1) 0 #f snd chn))
+	     (lambda (snd chn) (ramp-squared 0.2 0.8 #t 0 #f snd chn))
+	     (lambda (snd chn) (env-squared-channel '(0.0 0.0 1.0 1.0) #t 0 #f snd chn))
+	     (lambda (snd chn) (ramp-expt 0.2 0.8 32.0 #t 0 #f snd chn))
+	     (lambda (snd chn) (env-expt-channel '(0.0 0.0 1.0 1.0) 32.0 #t 0 #f snd chn))
+	     (lambda (snd chn) (offset-channel 0.1 0 #f snd chn))
+	     (lambda (snd chn) (dither-channel 0.1 0 #f snd chn))
+	     (lambda (snd chn) (contrast-channel 0.1 0 #f snd chn))
+	     
+	     (lambda (snd chn) (ssb-bank 550 600 10 40 50.0 0 #f snd chn))
+	     (lambda (snd chn) (ssb-bank-env 550 600 '(0 1 1 2) 10 40 50.0 0 #f snd chn))
+	     (lambda (snd chn) (down-oct 1 snd chn))
+	     (lambda (snd chn) (spike snd chn))
+	     (lambda (snd chn) (zero-phase snd chn))
+	     (lambda (snd chn) (rotate-phase (lambda (x) (random pi)) snd chn))
+	     (lambda (snd chn) (brighten-slightly 0.5 snd chn))
+	     (lambda (snd chn) (shift-channel-pitch 100 40 0 #f snd chn))
+	     (lambda (snd chn) (channel-polynomial (float-vector 0.0 0.5) snd chn))
+	     (lambda (snd chn) (spectral-polynomial (float-vector 0.0 1.0) snd chn))
+	     (lambda (snd chn) (notch-channel '(60.0 120.0 240.0) #f #f #f snd chn))
+	     
+	     (lambda (snd chn) (effects-squelch-channel 0.1 128 snd chn))
+	     (lambda (snd chn) (effects-echo #f 0.5 0.1 0 #f snd chn))
+	     (lambda (snd chn) (effects-flecho-1 0.5 0.1 #f 0 #f snd chn))
+	     (lambda (snd chn) (effects-zecho-1 0.75 0.75 6.0 10.0 #f 0 #f snd chn))
+	     ;;		      (lambda (snd chn) (effects-comb-filter 0.1 50 0 #f snd chn))
+	     (lambda (snd chn) (effects-moog 10000 0.5 0 #f snd chn))
+	     (lambda (snd chn) (effects-remove-dc snd chn))
+	     (lambda (snd chn) (effects-compand snd chn))
+	     (lambda (snd chn) (effects-am 100.0 #f #f #f snd chn))
+	     (lambda (snd chn) (effects-rm 100.0 #f #f #f snd chn))
+	     (lambda (snd chn) (effects-bbp 1000.0 100.0 0 #f snd chn))
+	     (lambda (snd chn) (effects-bbr 1000.0 100.0 0 #f snd chn))
+	     (lambda (snd chn) (effects-bhp 1000.0 0 #f snd chn))
+	     (lambda (snd chn) (effects-blp 1000.0 0 #f snd chn))
+	     (lambda (snd chn) (effects-hello-dentist 50.0 0.5 0 #f snd chn))
+	     (lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))
+	     (lambda (snd chn) (effects-flange 5.0 2.0 0.001 0 #f snd chn))
+	     (lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))))))
       (close-sound ind)
       )
 
@@ -42496,17 +42461,17 @@ EDITS: 1
 	 (run gen)
 	 (run gen)))
      
-     (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
-	   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
-	   'rxyk!sin 'rxyk!cos 'ercos 'erssb 'eoddcos 'rkcos 'rksin 'rkssb
-	   'rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin
-	   'abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
-	   'j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos 'nchoosekcos 'n1cos
-	   'adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
-	   'round-interp 'sinc-train 'pink-noise 'green-noise 'brown-noise 'green-noise-interp
-	   'moving-max 'moving-norm 'moving-sum 'moving-rms 'moving-length 'weighted-moving-average 'exponentially-weighted-moving-average
-	   'tanhsin 'moving-fft 'moving-scentroid 'moving-autocorrelation 'moving-pitch
-	   )
+     '(nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
+	   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
+	   rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
+	   rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin
+	   abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos
+	   j0j1cos jycos blackman fmssb k3sin izcos nchoosekcos n1cos
+	   adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil
+	   round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
+	   moving-max moving-norm moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average
+	   tanhsin moving-fft moving-scentroid moving-autocorrelation moving-pitch)
+
      gen-list
      
      (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos? 
@@ -47229,12 +47194,12 @@ EDITS: 1
 	  (check-error-tag 'mus-error (lambda () (mus-sound-chans (string-append sf-dir "bad_field.nist"))))
 	  (check-error-tag 'mus-error (lambda () (make-locsig 1/0 :channels 2)))
 	  (when (provided? 'snd-motif)
-	    (check-error-tag 'no-such-widget (lambda () (widget-position (list 'Widget 0)))) ; dubious -- not sure these should be supported
-	    (check-error-tag 'no-such-widget (lambda () (widget-size (list 'Widget 0))))
-	    (check-error-tag 'no-such-widget (lambda () (widget-text (list 'Widget 0))))
-	    (check-error-tag 'no-such-widget (lambda () (set! (widget-position (list 'Widget 0)) (list 0 0))))
-	    (check-error-tag 'no-such-widget (lambda () (set! (widget-size (list 'Widget 0)) (list 10 10))))
-	    (check-error-tag 'no-such-widget (lambda () (set! (widget-text (list 'Widget 0)) "hiho"))))
+	    (check-error-tag 'no-such-widget (lambda () (widget-position '(Widget 0)))) ; dubious -- not sure these should be supported
+	    (check-error-tag 'no-such-widget (lambda () (widget-size '(Widget 0))))
+	    (check-error-tag 'no-such-widget (lambda () (widget-text '(Widget 0))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-position '(Widget 0)) (list 0 0))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-size '(Widget 0)) (list 10 10))))
+	    (check-error-tag 'no-such-widget (lambda () (set! (widget-text '(Widget 0)) "hiho"))))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
 	  (check-error-tag 'out-of-range (lambda () (new-sound "hiho" :header-type 123)))
@@ -47394,10 +47359,10 @@ EDITS: 1
 	    (check-error-tag 'out-of-range (lambda () (env-sound '(0 0 1 1) 0 #f -1.5)))
 	    (check-error-tag 'out-of-range (lambda () (xramp-channel 0.0 1.0 -1.6)))
 	    (check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
-	    (check-error-tag 'wrong-type-arg (lambda () (left-sample (list 0))))
-	    (check-error-tag 'wrong-type-arg (lambda () (amp-control (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (left-sample '(0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (amp-control '(0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
-	    (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 '(0))))
 	    (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
 	    (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
 	    (check-error-tag 'no-such-channel (lambda () (filter-channel (float-vector 0 0 1 1) 4 #f #f ind 1)))

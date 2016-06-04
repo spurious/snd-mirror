@@ -324,7 +324,7 @@
 	    (glClearColor 1.0 1.0 1.0 1.0)
 	    (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 	    (let ((rl (channel->float-vector (left-sample) 512))
-		  (im (make-float-vector 512 0.0)))
+		  (im (make-float-vector 512)))
 	      (mus-fft rl im)
 	      (let ((peak (* 2 (max (float-vector-peak rl) (float-vector-peak im)))))
 		(float-vector-scale! rl (/ 1.0 peak))

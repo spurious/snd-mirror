@@ -215,32 +215,32 @@
   (if (not (selection?)) (make-selection (cursor)  (+ (cursor) 20000)))
   (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
 					; is cursor inside of selection ?
-  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
-       (begin
-	 (make-selection (cursor)  (+ (cursor) (selection-framples)))
-	 (stop-playing)
-	 (eos)))
-  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-framples))))  
-       (begin  
-	 (stop-playing)
-	 (eos)
-	 (make-selection (cursor)  (+ (cursor) (selection-framples)))))
+  (if (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
+      (begin
+	(make-selection (cursor)  (+ (cursor) (selection-framples)))
+	(stop-playing)
+	(eos)))
+  (if (>= (+ (selection-position) (selection-framples)) (cursor) (selection-position))
+      (begin  
+	(stop-playing)
+	(eos)
+	(make-selection (cursor)  (+ (cursor) (selection-framples)))))
   (play (selection)))
 
 
 (define (backward-selection)
   (if (not (selection?)) (make-selection  (- (cursor) 20000) (cursor)))
   (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
-  (if  (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
-       (begin
-	 (make-selection (cursor)  (- (cursor) (selection-framples)))
-	 (stop-playing)
-	 (set! (cursor) (selection-position))))
+  (if (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
+      (begin
+	(make-selection (cursor)  (- (cursor) (selection-framples)))
+	(stop-playing)
+	(set! (cursor) (selection-position))))
   
-  (if  (and (>= (cursor) (selection-position)) (<= (cursor) (+ (selection-position) (selection-framples))))  
-       (begin  
-	 (stop-playing)
-	 (set! (cursor) (selection-position))))
+  (if (>= (+ (selection-position) (selection-framples)) (cursor) (selection-position))
+      (begin  
+	(stop-playing)
+	(set! (cursor) (selection-position))))
   (make-selection  (- (cursor) (selection-framples)) (cursor) )
   (play (selection)))
 
@@ -248,8 +248,7 @@
 (define (mark-start  length)
   (select-channel 0)
   (if (find-mark "start")
-      (delete-named-mark "start")
-      )
+      (delete-named-mark "start"))
   (mark-named "start")
   (stop-playing)
   (goto-named-mark "start")

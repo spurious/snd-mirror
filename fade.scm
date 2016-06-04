@@ -51,7 +51,7 @@
 	(let ((bank2-end (+ bank2-start bank-samps))
 	      (ramp 0.0)
 	      (outval 0.0)
-	      (inputs (make-float-vector fs 0.0))
+	      (inputs (make-float-vector fs))
 	      (ifs (/ 1.0 fs))
 	      (mid 0))
 	  
@@ -168,9 +168,9 @@
 	  (fs (make-vector freq-inc #f))
 	  (amps (make-float-vector freq-inc amp))
 	  (ctr 0)
-	  (inputs (make-float-vector freq-inc 0.0))
+	  (inputs (make-float-vector freq-inc))
 	  (ramps (make-vector freq-inc -1))
-	  (in2s (make-int-vector freq-inc 0))
+	  (in2s (make-int-vector freq-inc))
 	  (in2-ctr 0)
 	  (ramp-ctr 0))
     

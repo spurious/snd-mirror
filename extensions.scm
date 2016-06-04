@@ -547,10 +547,8 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define channels-equal? 
   (let ((documentation "(channels-equal? s1 c1 s2 c2 (diff 0.0)) -> #t if the two channels are the same (within diff)"))
     (lambda* (snd1 chn1 snd2 chn2 (allowable-difference 0.0))
-      (let ((len1 (framples snd1 chn1))
-	    (len2 (framples snd2 chn2)))
-	(and (= len1 len2)
-	     (channels=? snd1 chn1 snd2 chn2 allowable-difference))))))
+      (and (= (framples snd1 chn1) (framples snd2 chn2))
+	   (channels=? snd1 chn1 snd2 chn2 allowable-difference)))))
 
 
 ;;; -------- mono->stereo, mono-files->stereo

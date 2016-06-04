@@ -26,8 +26,7 @@
 
   (define* (derumble-sound snd chn)
     (let* ((old-length (framples snd chn))
-	   (pow2 (ceiling (log (min old-length (srate snd)) 2)))
-	   (fftlen (floor (expt 2 pow2)))
+	   (fftlen (floor (expt 2 (ceiling (log (min old-length (srate snd)) 2)))))
 	   (flt-env (list 0.0 0.0 (/ (* 2 16.0) (srate snd)) 0.0 (/ (* 2 20.0) (srate snd)) 1.0 1.0 1.0)))
       (filter-sound flt-env fftlen snd chn)
       (set! (framples snd chn) old-length)))

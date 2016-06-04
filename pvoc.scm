@@ -268,7 +268,7 @@
 	     (out-data (make-float-vector (max len outlen)))
 	     (in-data (channel->float-vector 0 (* fftsize 2) snd chn))
 	     (in-data-beg 0)
-	     (obank (make-oscil-bank lastfreq (make-float-vector N2 0.0) lastamp)))
+	     (obank (make-oscil-bank lastfreq (make-float-vector N2) lastamp)))
 	
 	(set! window (float-vector-scale! window (/ 2.0 (* 0.54 fftsize)))) ;den = hamming window integrated
 	
@@ -323,10 +323,7 @@
 			(if (< phasediff (- pi)) (do () ((>= phasediff (- pi))) (set! phasediff (+ phasediff pi2))))))
 		  ;; current frequency stored in fdi
 		  ;; scale by the pitch transposition
-		  (set! (fdi k) 
-			(* pitch (+ (/ (* phasediff sr) (* D sr))
-				    (* k fundamental)
-				    poffset)))
+		  (set! (fdi k) (* pitch (+ (/ phasediff D) (* k fundamental) poffset)))
 		  ;; resynthesis gating
 		  (if (< (fdr k) syngate) (set! (fdr k) 0.0))
 		  ;; take (lastamp k) and count up to (fdr k)

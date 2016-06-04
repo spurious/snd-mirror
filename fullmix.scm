@@ -14,7 +14,7 @@
   (let ((st (seconds->samples (or beg 0.0)))
 	(dur (or outdur
 		 (/ (- (mus-sound-duration in-file) (or inbeg 0.0))
-		    (or (and srate (number? srate) (abs srate)) 1.0))))
+		    (or (and (number? srate) (abs srate)) 1.0))))
 	(in-chans (channels in-file))
 	(out-chans (channels *output*))
 	(reversed (or (and (number? srate) (negative? srate))
@@ -31,7 +31,7 @@
 			  ((= i ochans))
 			(set! (v i i) 1.0))
 		      v))))
-	  (rev-mx (and *reverb* reverb-amount (> reverb-amount 0.0)
+	  (rev-mx (and *reverb* (real? reverb-amount) (> reverb-amount 0.0)
 		       (let ((rmx (make-float-vector (list in-chans in-chans))))
 			 (do ((i 0 (+ i 1)))
 			     ((= i in-chans))

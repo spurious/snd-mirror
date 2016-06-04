@@ -5978,7 +5978,7 @@ then it is part of the language, and it doesn't look like the rest of the langua
       ;; str is whatever followed the #, first char is a digit
       (let* ((len (length str))
 	     (last-char (str (- len 1))))
-	(and (memq last-char '(#\= #\#))             ; is it #n= or #n#?
+	(and (memv last-char '(#\= #\#))             ; is it #n= or #n#?
 	    (let ((n (string-&gt;number (substring str 0 (- len 1)))))
 	      (and (integer? n)
 		  (begin
@@ -9251,12 +9251,29 @@ variables at the start of lint.scm to control additional output:
 
 
 <pre class="indented">
-*report-unused-top-level-functions*  ; if #t, report unused functions
-*report-undefined-variables*         ; if #t, report undefined identifiers
-*report-shadowed-variables*          ; if #t, report function parameters that are shadowed
+*report-unused-parameters*
+*report-unused-top-level-functions*
+*report-shadowed-variables*
+*report-undefined-identifiers*
+*report-multiply-defined-top-level-functions*
+*report-nested-if*
+*report-short-branch*
+*report-one-armed-if*
+*report-loaded-files*
+*report-any-!-as-setter*
+*report-function-stuff*
+*report-doc-strings*
+*report-func-as-arg-arity-mismatch*
+*report-constant-expressions-in-do*
+*report-bad-variable-names*
+*report-built-in-functions-used-as-variables*
+*report-forward-functions*
 </pre>
 
-<p>lint is not smart about functions defined outside the current file, so *report-undefined-variables*
+<p>See lint.scm for more about these switches.  You can also extend lint by adding your own code,
+or adding your functions to lint's tables, or most simply by defining signatures for your functions.
+snd-lint.scm performs these tasks for Snd.  (lint exports its innards via *lint*).
+lint is not smart about functions defined outside the current file, so *report-undefined-variables*
 sometimes gets confused. You'll sometimes get a recommendation from lint that is less than helpful; nobody's perfect.
 If it's actually wrong, and not just wrong-headed, please let me know.
 Also in lint.scm are html-lint and C-lint.  html-lint reads an HTML file looking for

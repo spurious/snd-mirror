@@ -192,7 +192,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	    ((= i num-oscs))
 	  (set! (frqs i) (hz->radians (car (freqs-and-amps i))))
 	  (set! (amps i) (cadr (freqs-and-amps i))))
-	(let ((ob (make-oscil-bank frqs (make-float-vector num-oscs 0.0) amps #t)))
+	(let ((ob (make-oscil-bank frqs (make-float-vector num-oscs) amps #t)))
 	  (play (lambda ()
 		  (and (positive? (set! len (- len 1)))
 		       (oscil-bank ob)))))))))

@@ -78,7 +78,7 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i len) new-str)
 	    (let ((c (str i)))
-	      (set! (new-str i) (if (memq c '(#\\ #\/)) #\_ c))))))))
+	      (set! (new-str i) (if (memv c '(#\\ #\/)) #\_ c))))))))
   
   
 ;;; -------- apply func to every widget belonging to w (and w) --------
@@ -172,7 +172,7 @@
 			  (if (= (XAllocNamedColor dpy cmap color col col) 0)
 			      (snd-error (format #f "can't allocate ~A" color))
 			      (.pixel col))))
-		   (list "black" "red" "blue" "orange")))) 
+		   '("black" "red" "blue" "orange")))) 
 	   (rendertable (XmRenderTableAddRenditions 
 			 #f 
 			 (map (lambda (tag pix)
@@ -1710,8 +1710,8 @@
     (let ((documentation "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
       (lambda args
 	(let* ((snd (if (pair? args) (car args) (selected-sound)))
-	       (chn (selected-channel snd))
-	       (widget (add-channel-pane snd chn "drop here" xmDrawingAreaWidgetClass
+	       (widget (add-channel-pane snd (selected-channel snd))
+					 "drop here" xmDrawingAreaWidgetClass
 					 (list XmNbackground (white-pixel)
 					       XmNleftAttachment      XmATTACH_FORM
 					       XmNrightAttachment     XmATTACH_FORM
@@ -1853,8 +1853,7 @@
 	  (let* ((snd (cadr c))
 		 (amp (scroll->amp snd (.value info)))
 		 (ampstr (XmStringCreateLocalized (format #f "~,3F " amp)))
-		 (top-chn (- (channels snd) 1))
-		 (chn (- top-chn (caddr c)))
+		 (chn (- (channels snd) 1 (caddr c)))
 		 (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
 	    (XtSetValues (car c) (list XmNlabelString ampstr))
 	    (XmStringFree ampstr)

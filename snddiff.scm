@@ -2,8 +2,7 @@
 
 
 (define (cross-correlate snd0 chn0 snd1 chn1)
-  (let* ((ilen (max (framples snd0 chn0) (framples snd1 chn1)))
- 	 (fftlen (floor (expt 2 (ceiling (log ilen 2))))))
+  (let ((fftlen (floor (expt 2 (ceiling (log (max (framples snd0 chn0) (framples snd1 chn1)) 2))))))
     (correlate (channel->float-vector 0 fftlen snd1 chn1) 
 	       (channel->float-vector 0 fftlen snd0 chn0))))
 

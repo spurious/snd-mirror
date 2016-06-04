@@ -47,7 +47,7 @@
 		  (rampdata (if (pair? ramp) ramp (list 0 ramp 1 ramp)))
 		  (start (floor (* input-start (mus-sound-srate fnam))))
 		  (max-in-hop (/ max-out-hop min-exp-amt))
-		  (rev-mx (and *reverb* reverb (> reverb 0.0)
+		  (rev-mx (and *reverb* (real? reverb) (> reverb 0.0)
 			       (let* ((rchans (max out-chans rev-chans))
 				      (rmx (make-float-vector (list rchans rchans))))
 				 (do ((i 0 (+ i 1)))
