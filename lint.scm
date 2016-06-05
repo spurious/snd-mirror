@@ -1590,6 +1590,78 @@
 	       (memq type ret))))
 
     
+    (define last-and-incomplete-arg2 #f)
+
+    (define (and-incomplete head arg1 arg2 rest env) ; head: 'and | 'or (not ...) | 'if | 'if2 -- symbol arg in any case
+      (unless (memq (car arg2) '(and or not list cons vector))
+	(let ((v (var-member arg1 env)))
+	  (unless (or (eq? arg2 last-and-incomplete-arg2)
+		      (and (var? v)
+			   (pair? (var-history v))
+			   (member #f (var-history v)
+				   (lambda (a b)
+				     (and (pair? b)
+					  (memq (car b) '(char-position string-position format string->number assoc assq assv memq memv member)))))))
+	    (let* ((pos (do ((i 0 (+ i 1))
+			     (p arg2 (cdr p))) ; 0th=car -> (and x (x))
+			    ((or (null? p)
+				 (eq? (car p) arg1))
+			     i)))
+		   (sig (and (positive? pos)
+			     (arg-signature (car arg2) env)))
+		   (arg-type (if (zero? pos)
+				 'procedure? ; or sequence? -- how to distinguish? use 'applicable?
+				 (and (pair? sig)
+				      (< pos (length sig))
+				      (list-ref sig pos))))
+		   (ln (and (< 0 line-number 100000) line-number))
+		   (comment (if (and (eq? arg-type 'procedure?)
+				     (= pos 0)
+				     (pair? (cdr arg2)))
+				" ; or maybe sequence? " "")))
+
+	      (set! last-and-incomplete-arg2 arg2)
+	      (if (symbol? arg-type)
+		  (case head
+		    ((and)
+		     (format outport "~NCin ~A~A,~%~NCperhaps change ~S to ~S~A~%"
+			     lint-left-margin #\space 
+			     (truncated-list->string (if (pair? rest) `(and ,arg1 ,arg2 ...) `(and ,arg1 ,arg2)))
+			     (if ln (format #f " (line ~D)" ln) "")
+			     (+ lint-left-margin 4) #\space 
+			     `(and ,arg1 ...)
+			     `(and (,arg-type ,arg1) ...)
+			     comment))
+		    ((or)
+		     (format outport "~NCin ~A~A,~%~NCperhaps change ~S to ~S~A~%"
+			     lint-left-margin #\space 
+			     (truncated-list->string (if (pair? rest) `(or (not ,arg1) ,arg2 ...) `(or (not ,arg1) ,arg2)))
+			     (if ln (format #f " (line ~D)" ln) "")
+			     (+ lint-left-margin 4) #\space 
+			     `(or (not ,arg1) ...)
+			     `(or (not (,arg-type ,arg1)) ...)
+			     comment))
+		    ((if)
+		     (format outport "~NCin ~A~A,~%~NCperhaps change ~S to ~S~A~%"
+			     lint-left-margin #\space 
+			     (truncated-list->string `(if ,arg1 ,arg2 ...))
+			     (if ln (format #f " (line ~D)" ln) "")
+			     (+ lint-left-margin 4) #\space 
+			     `(if ,arg1 ...)
+			     `(if (,arg-type ,arg1) ...)
+			     comment))
+		    ((if2)
+		     (format outport "~NCin ~A~A,~%~NCperhaps change ~S to ~S~A~%"
+			     lint-left-margin #\space 
+			     (truncated-list->string `(if (not ,arg1) ... ,arg2 ...))
+			     (if ln (format #f " (line ~D)" ln) "")
+			     (+ lint-left-margin 4) #\space 
+			     `(if (not ,arg1) ...)
+			     `(if (not (,arg-type ,arg1)) ...)
+			     comment))
+		    )))))))
+
+
     (define simplify-boolean
 
       (let ((notables (let ((h (make-hash-table)))
@@ -2110,35 +2182,6 @@
 		      (and (not (eq? type2 'byte-vector?)) arg2))
 		     (else #f))))))
 
-      (define (and-incomplete arg1 arg2 rest env)
-	(when (not (or (memq (car arg2) '(and or not list cons vector))
-		       (side-effect? arg2 env)))
-	  (let ((v (var-member arg1 env)))
-	    (if (not (and (var? v)
-			  (pair? (var-history v))
-			  (member #f (var-history v)
-				  (lambda (a b)
-				    (and (pair? b)
-					 (memq (car b) '(char-position string-position format string->number
-								       assoc assq assv memq memv member)))))))
-		(let* ((pos (if (eq? arg1 (cadr arg2)) ; vast majority of the cases
-				1
-				(do ((i 2 (+ i 1))
-				     (p (cddr arg2) (cdr p)))
-				    ((or (null? p)
-					 (eq? (car p) arg1))
-				     i))))
-		       (sig (arg-signature (car arg2) env))
-		       (arg-type (and (pair? sig)
-				      (< pos (length sig))
-				      (symbol? (list-ref sig pos)))))
-		  (if arg-type
-		      (format outport "~NCin ~A, perhaps change ~S to ~S~%"
-			      lint-left-margin #\space 
-			      (truncated-list->string (if (pair? rest) `(and ,arg1 ,arg2 ...) `(and ,arg1 ,arg2)))
-			      `(and ,arg1 ...)
-			      `(and (,(list-ref sig pos) ,arg1) ...))))))))
-
       (define (bsimp x) ; quick check for common easy cases
 	(set! last-simplify-boolean-line-number line-number)
 	(if (not (and (pair? x)
@@ -2461,6 +2504,14 @@
 
 			       (when (and (pair? arg1)
 					  (pair? arg2))
+
+				 (when (and (eq? (car arg1) 'not)
+					    (symbol? (cadr arg1))
+					    (memq (cadr arg1) arg2)) ;(cdr arg2)))
+				   (if (eq? (car arg2) 'boolean?)
+				       (return arg2))
+				   (and-incomplete 'or (cadr arg1) arg2 () env))
+
 				 
 				 (if (and (eq? (car arg1) 'not) ; (or (not A) (and A B)) -> (or (not A) B) -- this stuff actually happens!
 					  (eq? (car arg2) 'and)
@@ -2852,10 +2903,20 @@
 							 `(or ,@(reverse new-form)))))))
 				 (let ((val (classify (car exprs)))
 				       (old-form new-form))
-				   (if (and (pair? val)
-					    (memq (car val) '(and or not)))
-				       (set! val (classify (simplify-boolean val true false env))))
-				   
+				   (when (and (pair? val)
+					      (memq (car val) '(and or not)))
+				     (set! val (classify (simplify-boolean val true false env)))
+				     
+				     (if (and (> len 3)
+					      (pair? val)
+					      (eq? (car val) 'not)
+					      (symbol? (cadr val))
+					      (pair? (cdr exprs))
+					      (pair? (cadr exprs))
+					      ;(pair? (cdadr exprs)) ; ...
+					      (memq (cadr val) (cadr exprs))) ;(cdadr exprs)))
+					 (and-incomplete 'or (cadr val) (cadr exprs) (cddr exprs) env)))
+
 				   (if (not (or retry
 						(equal? val (car exprs))))
 				       (set! retry #t))
@@ -2916,13 +2977,13 @@
 
 				    (when (and (symbol? arg1)                    ; (and x (pair? x)) -> (pair? x)
 					       (pair? arg2)
-					       (pair? (cdr arg2))
-					       (eq? arg1 (cadr arg2)))
+					       ;(pair? (cdr arg2))
+					       (memq arg1 arg2)) ;(cadr arg2)))
 				      (if (eq? (car arg2) 'not)
 					  (return #f))
 				      (if (eq? (car arg2) 'boolean?)
 					  (return `(eq? ,arg1 #t)))
-				      (and-incomplete arg1 arg2 () env)
+				      (and-incomplete 'and arg1 arg2 () env)
 				      (if (hash-table-ref bools1 (car arg2))
 					  (return arg2)))
 				    
@@ -3088,9 +3149,7 @@
 						  (let ((arg-type (and (> (length sig) pos)
 								       (list-ref sig pos))))
 						    (unless (compatible? (car arg1) arg-type)
-						      (let ((ln (and (positive? line-number)
-								     (< line-number 100000)
-								     line-number)))
+						      (let ((ln (and (< 0 line-number 100000) line-number)))
 							(format outport "~NCin ~A~A, ~A is ~A, but ~A wants ~A"
 								lint-left-margin #\space 
 								(truncated-list->string form) 
@@ -3198,12 +3257,12 @@
 						   (symbol? val)
 						   (pair? (cdr exprs))
 						   (pair? (cadr exprs))
-						   (pair? (cdadr exprs)) ; ...
-						   (memq val (cdadr exprs)))
+						   ;(pair? (cdadr exprs)) ; ...
+						   (memq val (cadr exprs))) ;(cdadr exprs)))
 					      (let ((nval (simplify-boolean `(and ,val ,(cadr exprs)) () false env)))
 						(if (and (pair? nval)
 							 (eq? (car nval) 'and))
-						    (and-incomplete val (cadr exprs) (cddr exprs) env)
+						    (and-incomplete 'and val (cadr exprs) (cddr exprs) env)
 						    (begin
 						      (set! val nval)
 						      (set! exprs (cdr exprs)))))))
@@ -8502,7 +8561,8 @@
 									  (memq (car init) '(make-vector make-float-vector make-int-vector 
 											     make-string make-list make-byte-vector))
 									  (cadr init))))))
-						     (if (and lim (>= call-arg1 lim))
+						     (if (and (real? lim)
+							      (>= call-arg1 lim))
 							 (lint-format "~A has length ~A, but index is ~A" caller vname lim call-arg1))))))))
 				   
 				   (when (eq? func 'implicit-set)
@@ -10933,6 +10993,19 @@
 		       
 		       (if (eq? false #<unspecified>)
 			   (lint-format "this #<unspecified> is redundant: ~A" caller form))
+
+
+		       (if (and (symbol? test)
+				(pair? true)
+				(memq test true))
+			   (and-incomplete 'if test true () env)
+			   (if (and (pair? test)
+				    (eq? (car test) 'not)
+				    (symbol? (cadr test))
+				    (pair? false)
+				    (memq (cadr test) false))
+			       (and-incomplete 'if2 (cadr test) false () env)))
+
 		       
 		       (when (and (pair? true)
 				  (pair? false)
@@ -15440,3 +15513,16 @@
 ;;| (string-append base (if (pair? su) (car su) "")) -> if pair? append else base
 ;;| see t347 for cond/if
 ;;| perhaps if 3-or-more in relop use < or <=, not > >=
+;;;
+;;; larger and-incomplete window, and-redundant here?, if x|when? <... y?> -- check for redundancy etc
+;;;   also tree-memq for test var? 
+;;;   in cond, it's (cond ((x (cdr x))...) -> (and x (cdr x)) essentially, and else branch is (and (not x)...)
+;;;      (cond ((not x)...) (else -> (and x ...))) -- the reverse of above
+;;;   there are checks for (pair?) of cadr -- need to prune out the repetitions
+;;;   for (number?+positive?) -- get sig, see if it eqs(subsumes) arg1, if not tighten arg1?
+;;;   (b? x)+(use x) which assumes a type, then (use x)+(b? x) where use x gives type [use=relop if anything]
+;;;   pass rest of args? or do the search ahead?
+;;;   t347->s7test
+;;;
+;;; (define (f x) (define y 0) (define z 0) (set! y (+ x 1)) (set! z (- x 1))) -> use let etc
+

@@ -2937,7 +2937,7 @@ lambda: &lt;{ x }&gt; pi random ; #f #f rotate-phase \ randomizes phases
 </p>
 
 <pre class="indented">
-&gt; (define d0 (make-float-vector 8 0.0))
+&gt; (define d0 (make-float-vector 8))
 d0
 ;; and similarly for d1 and d2 ...
 &gt; (set! (d0 2) 1.0)
@@ -8186,7 +8186,7 @@ to a good candidate, but that seems like asking for trouble.
 	(close-sound old)))
   
 (let ((ns (new-sound "test.snd" :channels 5))
-      (data (make-float-vector dur 0.0)))
+      (data (make-float-vector dur)))
 
   (let ((phases (make-vector 8 0.0))
 	(correct 6.1442))
@@ -8198,8 +8198,8 @@ to a good candidate, but that seems like asking for trouble.
 	((> n 512))
 
       (let* ((size (expt 2 (ceiling (/ (log (* 8 n)) (log 2)))))
-	     (fft-rl (make-float-vector size 0.0))
-	     (fft-im (make-float-vector size 0.0))
+	     (fft-rl (make-float-vector size))
+	     (fft-im (make-float-vector size))
 	     (pi2 (/ pi 2)))
 	
 	(do ((m 0 (+ m 1)))
@@ -8292,8 +8292,8 @@ minimum, maximum, and average peaks.  The graph is logarithmic (that is we show
 (define (get-peak choice n cur-phases)
   (let* ((fft-mult 128)
 	 (size (get-fft-size choice n fft-mult))
-	 (fft-rl (make-float-vector size 0.0))
-	 (fft-im (make-float-vector size 0.0))
+	 (fft-rl (make-float-vector size))
+	 (fft-im (make-float-vector size))
 	 (nc (if (eq? choice :all) 0
 		 (if (eq? choice :odd) 1
 		     (if (eq? choice :even) 2 3)))))
@@ -8839,8 +8839,8 @@ of the genetic algorithm):
 
 
 <pre class="indented">
-(let* ((all (cadr (get-best :all (- n 1)))) ; get the best all-harmonic phases for n - 1
-       (new-phases (make-vector n 0.0)))    ; place in new phase vector shifted up
+(let ((all (cadr (get-best :all (- n 1)))) ; get the best all-harmonic phases for n - 1
+      (new-phases (make-vector n 0.0)))    ; place in new phase vector shifted up
   (do ((k 0 (+ k 1)))
       ((= k (- n 1)))
     (set! (new-phases (+ k 1)) (all k)))
@@ -11926,7 +11926,7 @@ an upward ramp and a downward ramp, then zips them together:
 
 <pre class="indented">
 (define (ramp-test)
-  (let ((data (make-float-vector 10000 0.0)))
+  (let ((data (make-float-vector 10000)))
     (<a class=quiet href="extsnd.html#newsound">new-sound</a> "new-0.snd")
     (do ((i 0 (+ i 1))) ((= i 10000)) 
       (set! (data i) (* i .0001)))

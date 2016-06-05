@@ -2413,8 +2413,8 @@ is assumed to be outside -1.0 to 1.0."))
 	       (set! (pivots col) (+ (pivots col) 1))
 					;(format () "i: ~D, row: ~D, col: ~A~%" i row col)
 	       (if (not (= row col))
-		   (let ((temp (if b (b row) 0.0)))
-		     (if b
+		   (let ((temp (if (sequence? b) (b row) 0.0)))
+		     (if (sequence? b)
 			 (begin
 			   (set! (b row) (b col))
 			   (set! (b col) temp)))

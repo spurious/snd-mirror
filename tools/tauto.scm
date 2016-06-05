@@ -51,7 +51,7 @@
 			(make-shared-vector (make-shared-vector (make-float-vector '(2 3) 1.0) '(6)) '(2 2))
 			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0) (define-macro (m a) `(+ ,a 1))
 			(c-pointer 0) (c-pointer -1) :readable :else (define-bacro* (m (a 1)) `(+ ,a 1))
-			(byte-vector 0 1 2) (byte-vector) (byte-vector 255 0 127) (make-iterator (vector '(a . 2)))
+			(byte-vector 0 1 2) (byte-vector) (byte-vector 255 0 127) (make-iterator #((a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
 			'((a . 1)) #(1) '((((A . B) C . D) (E . F) G . H) ((I . J) K . L) (M . N) O . P)
 

@@ -21760,8 +21760,8 @@ EDITS: 2
 		  (snd-display ";mix v at 0 read mix samples: ~A" data))
 	      (if (not (sampler-at-end? sf)) (snd-display ";mix v at 0 reader not at end?"))
 	      (free-sampler sf))
-	    (if (not (equal? (mixes ind 0) '(id))) (snd-display ";mix v at 0 mixes: ~A" (mixes ind 0)))
-	    (if (not (equal? (mix-home id) '(ind 0 #f 0))) (snd-display ";mix v at 0 home: ~A" (mix-home id)))
+	    (if (not (equal? (mixes ind 0) (list id))) (snd-display ";mix v at 0 mixes: ~A" (mixes ind 0)))
+	    (if (not (equal? (mix-home id) (list ind 0 #f 0))) (snd-display ";mix v at 0 home: ~A" (mix-home id)))
 	    (undo))
 	  (mix-float-vector v 8)
 	  (if (not (= (framples ind 0) 11)) (snd-display ";mix v at 8 new len: ~A" (framples ind 0)))
@@ -21796,8 +21796,8 @@ EDITS: 2
 	  (if (not (= (mix-tag-y id) 0)) (snd-display ";mix oboe at 0 tag-y: ~A" (mix-tag-y id)))
 	  
 	  (if (fneq (maxamp ind 0) .14724) (snd-display ";mix oboe maxamp: ~A" (maxamp ind 0)))
-	  (if (not (equal? (mixes ind 0) '(id))) (snd-display ";mix oboe at 0 mixes: ~A" (mixes ind 0)))
-	  (if (not (equal? (mix-home id) '(ind 0 "/home/bil/cl/oboe.snd" 0))) (snd-display ";mix oboe at 0 home: ~A" (mix-home id))))
+	  (if (not (equal? (mixes ind 0) (list id))) (snd-display ";mix oboe at 0 mixes: ~A" (mixes ind 0)))
+	  (if (not (equal? (mix-home id) (list ind 0 "/home/bil/cl/oboe.snd" 0))) (snd-display ";mix oboe at 0 home: ~A" (mix-home id))))
 	(undo)
 	(mix "oboe.snd" 70000)
 	(if (not (= (framples ind 0) 120828)) ;(+ 70000 50828)
@@ -27644,7 +27644,7 @@ EDITS: 2
 	       (if (f5neq (car vals) f1)
 		   (snd-display ";src (env) 1 ~A freq: ~A" f1 vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2))
 	   '(500.0 1000.0 500.0 250.0 250.0)
 	   '(1000.0 500.0 500.0 500.0 1000.0))
 	  (for-each
@@ -27660,7 +27660,7 @@ EDITS: 2
 	       (if (f5neq (car vals) f1)
 		   (snd-display ";src (env) 1 ~A freq: ~A" f1 vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2))
 	   '(500.0 1000.0 500.0 250.0 250.0)
 	   '(1000.0 500.0 500.0 500.0 1000.0))
 	  
@@ -27688,7 +27688,7 @@ EDITS: 2
 	       (if (f5neq (car vals) f1)
 		   (snd-display ";src-channel (env f1) ~A: ~A" f1 vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2))
 	   '(500.0 1000.0 500.0 250.0 250.0)
 	   '(1000.0 500.0 500.0 500.0 1000.0))
 	  
@@ -27723,7 +27723,7 @@ EDITS: 2
 	       (if (f5neq (car vals) 500.0)
 		   (snd-display ";src-channel section (make-env e) ~A: ~A" e vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2)))
 	  
 	  (make-selection 1000 3500 ind 0)
 	  (for-each
@@ -27757,7 +27757,7 @@ EDITS: 2
 	       (if (f5neq (car vals) 500.0)
 		   (snd-display ";src-selection section (make-env e) ~A: ~A" e vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2)))
 	  
 	  (for-each
 	   (lambda (e)
@@ -27772,10 +27772,9 @@ EDITS: 2
 	       (if (f5neq (car vals) 500.0)
 		   (snd-display ";src-selection section (env f1) ~A: ~A" e vals)))
 	     (undo))
-	   (list (list 0 1 1 2) (list 0 2 1 1) (list 0 1 1 2 2 1) (list 0 .5 1 1) (list 0 .5 1 2)))
+	   '((0 1 1 2) (0 2 1 1) (0 1 1 2 2 1) (0 0.5 1 1) (0 0.5 1 2)))
 	  
-	  (close-sound ind)
-	  )
+	  (close-sound ind))
 	
 	(set! *print-length* (max *print-length* 12))
 	(let ((ind (new-sound "hi.snd")))
@@ -28822,8 +28821,7 @@ EDITS: 2
 	  (snd-display ";~A (from ~A): lengths differ: ~A ~A" name line len (length expected-vals))
 	  (if (and expected-vals (not (mus-arrays-equal? current-vals expected-vals)))
 	      (snd-display ";checking ~A (from ~A), vals disagree (loc cur expect): ~A" name line (mus-arrays-equal?-at current-vals expected-vals))
-	      (let* ((tree (edit-tree))
-		     (bad-data (edits-not-equal? tree expected-tree 0)))
+	      (let ((bad-data (edits-not-equal? (edit-tree) expected-tree 0)))
 		(if bad-data
 		    (snd-display ";checking ~A (from ~A), trees disagree (loc cur expect): ~A~%  in~%~A" name line bad-data (edit-tree)))
 		(if (> len 5)
@@ -28933,11 +28931,8 @@ EDITS: 2
 	(lambda () (set-samples 0 0 (make-float-vector 3) oboe))
 	(lambda () (smooth-sound 0 0 oboe))
 	(lambda () (insert-silence 0 0 oboe)))
-       (list 
-	"scale-channel" "env-channel" "clm-channel" "float-vector->channel" "smooth-channel" "pad-channel" "src-channel"
-	"mix-channel" "insert-channel" "reverse-channel" "play" 
-	"scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
-      
+       '("scale-channel" "env-channel" "clm-channel" "float-vector->channel" "smooth-channel" "pad-channel" "src-channel" 
+	 "mix-channel" "insert-channel" "reverse-channel" "play" "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
       (for-each
        (lambda (func name)
 	 (let ((tag (catch #t
@@ -28963,10 +28958,8 @@ EDITS: 2
 	(lambda () (set-samples -1 123 (make-float-vector 3) oboe))
 	(lambda () (smooth-sound -1 123 oboe))
 	(lambda () (insert-silence -1 123 oboe)))
-       (list 
-	"scale-channel" "env-channel" "clm-channel" "float-vector->channel" "smooth-channel" "pad-channel" "src-channel"
-	"mix-channel" "insert-channel" "reverse-channel"
-	"scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
+       '("scale-channel" "env-channel" "clm-channel" "float-vector->channel" "smooth-channel" "pad-channel" "src-channel" "mix-channel" 
+	 "insert-channel" "reverse-channel" "scale-sound-by" "env-sound" "set-samples" "smooth-sound" "insert-silence"))
       
       (scale-channel 2.0 12345678 123 oboe)
       (if (not (= (edit-position oboe) 0))
@@ -29398,8 +29391,7 @@ EDITS: 2
 	(let ((val (scan-channel (lambda (y) #f) 1234))) (if val (snd-display ";scan-channel func #f with beg: ~A" val)))
 	(let ((val (scan-channel (lambda (y) #f) 1234 4321))) (if val (snd-display ";scan-channel func #f with beg+dur: ~A" val)))
 	(revert-sound ind)
-	(let ((del (make-delay 1000)))
-	  (clm-channel del 0 (framples) ind 0 0 2000)) ; chn=0, edpos=0, overlap=2000?
+	(clm-channel (make-delay 1000) 0 (framples) ind 0 0 2000) ; chn=0, edpos=0, overlap=2000?
 	(let ((len (framples)))
 	  (if (not (= len 52828))
 	      (snd-display ";clm-channel overlap length: ~A ~A" len (framples)))
@@ -30464,7 +30456,7 @@ EDITS: 2
 		    (snd-display ";bigger (orig) readin vals: ~A (~A)" v lvals))))
 	    (revert-sound)
 	    (let ((found (scan-channel (lambda (y) (> y .5)) (* (floor *clm-srate*) 50000))))
-	      (if (not (equal? found (list #t 2205000925)))
+	      (if (not (equal? found '(#t 2205000925)))
 		  (snd-display ";bigger scan: ~A" found)))
 	    (set! (squelch-update) #f)
 	    (close-sound ind))))
@@ -31336,12 +31328,8 @@ EDITS: 1
 						      (max 1 (+ (hundred (- mid-time-2 start-time-2)) (hundred (- end-time-2 mid-time-2))))))
 					    (* 1.0 (/ (+ (hundred (- mid-time-1 start-time-1)) (hundred (- end-time-1 mid-time-1)))
 						      (max 1 (+ (hundred (- mid-time start-time)) (hundred (- end-time mid-time)))))))))))))))))
-	   
-	   (list "scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "pad"
-		 "mix-no-tag" "mix-tag" "mix-amp" "mix-scale" "src-2" "src" 
-		 "filter" "filter-sym" "f10" "f10sym" "clm" 
-		 "reverse" 
-		 )
+	   '("scale" "set!" "env" "env-exp" "env-step" "delete" "insert" "pad" "mix-no-tag" "mix-tag" "mix-amp"
+	     "mix-scale" "src-2" "src" "filter" "filter-sym" "f10" "f10sym" "clm" "reverse")
 	   (list 
 	    (lambda (snd i)
 	      (scale-channel (* i .01)))
@@ -32326,8 +32314,7 @@ EDITS: 1
     (ssb-bank old-freq new-freq 10))
   
   (define (retime-sound new-time)
-    (let* ((old-time (/ (framples) (srate)))
-	   (factor (/ new-time old-time)))
+    (let ((factor (/ (* new-time (srate)) (framples))))
       (ssb-bank 557 (* 557 factor) 10)
       (src-sound (/ 1.0 factor))))
   
@@ -32372,14 +32359,11 @@ EDITS: 1
 			(snd-display ";save edit-position: ~A" (edit-position ind 0)))))
 	      (if (not (equal? (edit-fragment 1 ind 0) '("delete-samples 12 1" "delete" 12 1)))
 		  (snd-display ";save edits: ~A" (edit-fragment 1 ind 0)))
-	      (if (not (equal? (edit-tree ind 0) 
-			       (list (list 0 0 0 11 1.0 0.0 0.0 0) (list 12 0 13 50827 1.0 0.0 0.0 0) (list 50827 -2 0 0 0.0 0.0 0.0 0))))
+	      (if (not (equal? (edit-tree ind 0) '((0 0 0 11 1.0 0.0 0.0 0) (12 0 13 50827 1.0 0.0 0.0 0) (50827 -2 0 0 0.0 0.0 0.0 0))))
 		  (snd-display ";save edit tree: ~A" (edit-tree ind 0)))
-	      (if (not (and (number? (sound-property 'ho ind))
-			    (= (sound-property 'ho ind) 1234)))
+	      (if (not (eqv? (sound-property 'ho ind) 1234))
 		  (snd-display ";sound-property saved: 1234 -> ~A" (sound-property 'ho ind)))
-	      (if (not (and (string? (sound-property :hi ind))
-			    (string=? (sound-property :hi ind) "hi")))
+	      (if (not (equal? (sound-property :hi ind) "hi"))
 		  (snd-display ";sound-property saved: hi -> ~A" (sound-property :hi ind)))
 	      (if (or (not (number? (channel-property :ha ind 0)))
 		      (fneq (channel-property :ha ind 0) 3.14))
@@ -32515,8 +32499,7 @@ EDITS: 1
 	  (old-save-dir *save-dir*)
 	  (old-eps-file *eps-file*))
       (set! *save-dir* #f)
-      (let ((v (make-float-vector 32 1.0)))
-	(set! (samples 100 32) v))
+      (set! (samples 100 32) (make-float-vector 32 1.0))
       (map-channel (lambda (y) (+ y .1)) 1000 10000)
       (set! (show-axes ind 0) show-no-axes)
       (set! *zoom-focus-style* zoom-focus-middle)
@@ -32821,7 +32804,7 @@ EDITS: 1
     ;; ---------------- edit-list->function ----------------
     
     (let* ((ind (open-sound "oboe.snd"))
-	   (frs (framples)))
+	   (frs (framples ind)))
 	
       ;; ---- simple scale
       (let ((mx0 (maxamp)))
@@ -34360,8 +34343,7 @@ EDITS: 1
 	    (set! (data0 (- dlen 1)) orig))))))
   
   (define (cross-correlate-2 snd0 chn0 snd1 chn1)
-    (let* ((ilen (max (framples snd0 chn0) (framples snd1 chn1)))
-	   (fftlen (expt 2 (ceiling (log ilen 2))))
+    (let* ((fftlen (expt 2 (ceiling (log (max (framples snd0 chn0) (framples snd1 chn1)) 2))))
 	   (fftscale (/ 1.0 fftlen))
 	   (rl1 (channel->float-vector 0 fftlen snd1 chn1))
 	   (rl2 (channel->float-vector 0 fftlen snd0 chn0))
@@ -36084,14 +36066,14 @@ EDITS: 1
 	(set! (selection-framples ns1 1) 30000)
 	(show-selection)
 	(if (not (and (eqv? (left-sample ns 0) 10000)
-		      (member (right-sample ns 0) '(39999 39998))
+		      (memv (right-sample ns 0) '(39999 39998))
 		      (eqv? (left-sample ns1 0) 10000)
-		      (member (right-sample ns1 0) '(39999 39998))
+		      (memv (right-sample ns1 0) '(39999 39998))
 		      (eqv? (left-sample ns1 1) 10000)
-		      (member (right-sample ns1 1) '(39999 39998))))
+		      (memv (right-sample ns1 1) '(39999 39998))))
 	    (snd-display ";show-selection 1234.snd: ~A" (list (left-sample ns 0) (right-sample ns 0) 
-									(left-sample ns1 0) (right-sample ns1 0) 
-									(left-sample ns1 1) (right-sample ns1 1))))
+							      (left-sample ns1 0) (right-sample ns1 0) 
+							      (left-sample ns1 1) (right-sample ns1 1))))
 	(close-sound ns1)
 	(close-sound ns)))
     
@@ -36192,8 +36174,9 @@ EDITS: 1
     (undo)
     (make-selection 5 15)
     (filter-selection '(0 1 1 1) 100)
-    (if (not (or (equal? (edit-fragment 2) '("filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 11))
-		 (equal? (edit-fragment 2) '("filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 111))))
+    (if (not (member (edit-fragment 2) 
+		     '(("filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 11)
+		       ("filter-selection '(0.000 1.000 1.000 1.000) 100" "set" 5 111))))
 	(snd-display ";filter-selection truncated: ~S" (edit-fragment 2)))
     (undo)
     (filter-selection '(0 1 1 1) 100 #f)  
@@ -37038,7 +37021,7 @@ EDITS: 1
       (revert-sound ind1)
       (set! (sample 100 ind0 0) 1.0)
       (let* ((diff (snddiff ind0 0 ind1 0))
-	     (info (and diff (list? diff) (= (length diff) 2) (= (length (caadr diff)) 3) (caadr diff))))
+	     (info (and (list? diff) (= (length diff) 2) (= (length (caadr diff)) 3) (caadr diff))))
 	(if (or (not (eq? (car diff) 'differences))
 		(not info)
 		(not (= (car info) 100))
@@ -39902,8 +39885,7 @@ EDITS: 1
       (if (not ind) (snd-display ";with-sound (1): ~A" (map file-name (sounds))))
       (let ((mx (maxamp)))
 	(if (fneq mx .05) (snd-display ";with-sound max (1): ~A" (maxamp))))
-      (if (not (and (= (srate ind) 22050)
-		    (= (mus-sound-srate "test1.snd") 22050))) 
+      (if (not (= (srate ind) 22050 (mus-sound-srate "test1.snd")))
 	  (snd-display ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (member (framples ind) '(2205 2206) =))
 	  (snd-display ";with-sound framples (1): ~A" (framples ind)))
@@ -39915,8 +39897,7 @@ EDITS: 1
     
     (with-sound (:srate 48000 :channels 2 :header-type mus-riff :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
-      (if (not (and (= (srate ind) 48000)
-		    (= (mus-sound-srate "test1.snd") 48000)))
+      (if (not (= (srate ind) 48000 (mus-sound-srate "test1.snd")))
 	  (snd-display ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-riff)) (snd-display ";with-sound type (~A, r): ~A" mus-riff (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (2, r): ~A" (chans ind)))
@@ -39925,8 +39906,7 @@ EDITS: 1
     
     (with-sound (:srate 48000 :channels 2 :header-type mus-rf64 :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
-      (if (not (and (= (srate ind) 48000)
-		    (= (mus-sound-srate "test1.snd") 48000)))
+      (if (not (= (srate ind) 48000 (mus-sound-srate "test1.snd")))
 	  (snd-display ";with-sound srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-rf64)) (snd-display ";with-sound type (~A, r): ~A" mus-rf64 (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display ";with-sound chans (2, r): ~A" (chans ind)))
@@ -39935,8 +39915,7 @@ EDITS: 1
     
     (with-sound (:srate 48000 :channels 2 :header-type mus-caff :sample-type mus-lshort :output "test1.snd") (fm-violin 0 .1 440 .1))
     (let ((ind (find-sound "test1.snd")))
-      (if (not (and (= (srate ind) 48000)
-		    (= (mus-sound-srate "test1.snd") 48000)))
+      (if (not (= (srate ind) 48000 (mus-sound-srate "test1.snd")))
 	  (snd-display ";with-sound mus-caff srate (48000, r): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (= (header-type ind) mus-caff)) (snd-display ";with-sound type (~A, r): ~A" mus-caff (header-type ind)))
       (if (not (= (chans ind) 2)) (snd-display ";with-sound mus-caff chans (2, r): ~A" (chans ind)))

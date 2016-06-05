@@ -3531,7 +3531,7 @@ in the Scheme, Ruby, and Forth files.
         ((&lt; chn (channels reg))
          (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
                 (len (region-framples reg))
-                (data (make-float-vector len 0.0)))
+                (data (make-float-vector len)))
            (do ((i 0 (+ i 1)))
                ((= i len) data)
              (set! (data i) (<em class=red>reader</em>)))))
@@ -8644,7 +8644,7 @@ reversed reverb.  As a hack, you can reverse a sound (modulo a one sample rotati
   (let* ((len (<a class=quiet href="#framples">framples</a> snd 0))
 	 (fsize (expt 2 (ceiling (log len 2))))
 	 (rl (channel-&gt;float-vector 0 fsize snd 0))
-	 (im (make-float-vector fsize 0.0)))
+	 (im (make-float-vector fsize)))
     (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
     (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
     (float-vector-scale! rl (/ 1.0 fsize))
@@ -8950,7 +8950,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (begin (<a class=quiet href="#selectall">select-all</a>) (<a class=quiet href="#scaleselectionby">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
 
-(let ((flt (make-float-vector 8 0.0)))
+(let ((flt (make-float-vector 8)))
   (set! (flt 0) 2.0)
   (let ((cnv (<a class=quiet href="sndclm.html#make-convolve">make-convolve</a> :filter flt))
 	(sf (<a class=quiet href="#makesampler">make-sampler</a> 0)))
@@ -8964,7 +8964,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (let* ((len (<a class=quiet href="#framples">framples</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
        (rl (channel-&gt;float-vector 0 fsize))
-       (im (make-float-vector fsize 0.0)))
+       (im (make-float-vector fsize)))
   (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
   (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
   (<a class=quiet href="sndclm.html#fft">mus-fft</a> rl im fsize)
@@ -9299,7 +9299,7 @@ the end points:
 
 <pre class="indented">
 (define (smoother y0 y1 num)
-   (let ((v (make-float-vector (+ 1 num) 0.0)) 
+   (let ((v (make-float-vector (+ 1 num))) 
 	 (angle (if (&gt; y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0)))))
@@ -11293,7 +11293,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 <pre class="indented">
 (<em class=red>add-transform</em> "histogram" "bins" 0.0 1.0 
   (lambda (len fd)
-    (let ((v (make-float-vector len 0.0))
+    (let ((v (make-float-vector len))
           (steps (/ len 16))
           (step (/ 1.0 len)))
       (do ((i 0 (+ i 1))) 
@@ -11311,7 +11311,7 @@ Here's an example that displays a histogram of the current values in 16 bins:
 <pre class="indented">
 (<em class=red>add-transform</em> "Hankel" "Hankel" 0.0 1.0
    (lambda (n rd)
-      (let ((v (make-float-vector n 0.0)))
+      (let ((v (make-float-vector n)))
          (do ((i 0 (+ i 1))) ((= i n)) (set! (v i) (rd)))
          (gsl-dht n v 1.0 1.0)
          v)))
@@ -13762,9 +13762,9 @@ of FractInt's royal colormap):
 <pre class="indented">
 (add-colormap "purple" 
   (lambda (size) 
-    (do ((r (make-float-vector size 0.0))
-	 (g (make-float-vector size 0.0))
-	 (b (make-float-vector size 0.0))
+    (do ((r (make-float-vector size))
+	 (g (make-float-vector size))
+	 (b (make-float-vector size))
 	 (incr (/ 256.0 size))
 	 (er (list 0 60 60 116 128 252 192 252 256 60))
 	 (eg (list 0 0  64 0   128 252 192 252 256 0))
@@ -13780,9 +13780,9 @@ of FractInt's royal colormap):
 ;;; another amusing colormap from FractInt:
 (add-colormap "cos" 
   (lambda (size) 
-    (do ((r (make-float-vector size 0.0))
-	 (g (make-float-vector size 0.0))
-	 (b (make-float-vector size 0.0))
+    (do ((r (make-float-vector size))
+	 (g (make-float-vector size))
+	 (b (make-float-vector size))
 	 (incr (/ 3.14159 size))
          (i 0 (+ i 1))
 	 (x 0.0 (+ x incr)))

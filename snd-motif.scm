@@ -172,7 +172,7 @@
 			  (if (= (XAllocNamedColor dpy cmap color col col) 0)
 			      (snd-error (format #f "can't allocate ~A" color))
 			      (.pixel col))))
-		   '("black" "red" "blue" "orange")))) 
+		   '("black" "red" "blue" "orange"))))
 	   (rendertable (XmRenderTableAddRenditions 
 			 #f 
 			 (map (lambda (tag pix)
@@ -1710,7 +1710,7 @@
     (let ((documentation "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
       (lambda args
 	(let* ((snd (if (pair? args) (car args) (selected-sound)))
-	       (widget (add-channel-pane snd (selected-channel snd))
+	       (widget (add-channel-pane snd (selected-channel snd)
 					 "drop here" xmDrawingAreaWidgetClass
 					 (list XmNbackground (white-pixel)
 					       XmNleftAttachment      XmATTACH_FORM

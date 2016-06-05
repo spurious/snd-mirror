@@ -67,7 +67,7 @@
 	;; is the linear approximation accurate enough?
 	;; are we still over the cutoff limit?
 	(if (not (and (> (abs (- yexp yinte)) yerr)
-		      (or (not ycutoff)
+		      (or (not (real? ycutoff))
 			  (> yinte ycutoff))))
 	    ;; yes --> don't need to add nu'ting to the envelope
 	    (values () ())
@@ -86,7 +86,7 @@
 	     (ny (* 1.0 (cadddr en)))
 	     (yscl (+ offset (* y scaler)))
 	     (nyscl (+ offset (* ny scaler)))
-	     (xy (list x (if (or (not ycutoff)
+	     (xy (list x (if (or (not (real? ycutoff))
 				 (>= (expt base yscl) ycutoff))
 			     (* out-scaler (expt base yscl))
 			     0.0))))
@@ -102,7 +102,7 @@
 		       (vals (cdr xx) (cdr yy)))))))
 	 (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
 	(if (<= (length en) 4)
-	    (append result (list nx (if (or (not ycutoff)
+	    (append result (list nx (if (or (not (real? ycutoff))
 					    (>= (expt base nyscl) ycutoff))
 					(* out-scaler (expt base nyscl))
 					0.0)))

@@ -244,7 +244,6 @@
       (let* ((len (framples))
 	     (filptr 0)           ; index into the file
 	     (pi2 (* 2 pi))       ; handy constant
-	     (sr (srate))
 	     (N2 (floor (/ fftsize 2)))
 	     ;; (Nw fftsize) ;; window size -- currently restricted to the fftsize
 	     (D (floor (/ fftsize overlap))) ; decimation factor (how often do we take an fft)

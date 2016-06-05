@@ -443,7 +443,7 @@
 		(if (>= line-len last-col)
 		    (set! end (- (+ end line-len) last-col))))
 	      
-	      (if (and red-par-pos
+	      (if (and (integer? red-par-pos)
 		       (<= start red-par-pos)
 		       (< red-par-pos end))
 		  (string-append

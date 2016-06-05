@@ -2828,9 +2828,9 @@
 	    (set! first-dist dist))
 	(set! last-dist dist)
 	;; remember maximum and minimum distances
-	(if (or (not min-dist) (< dist min-dist))
+	(if (or (not (real? min-dist)) (< dist min-dist))
 	    (set! min-dist dist))
-	(if (or (not max-dist) (> dist max-dist))
+	(if (or (not (real? max-dist)) (> dist max-dist))
 	    (set! max-dist dist))
 	;; push delay for current point (for doppler)
 	(if (or (null? dly)

@@ -197,7 +197,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 			  (set! scl (if old-dec
 					(/ (- new-dec new-att) (- old-dec old-att))
 					(/ (- last-x new-att) (- last-x old-att)))))
-			(when (and old-dec
+			(when (and (real? old-dec)
 				   (< x0 old-dec)
 				   (>= x1 old-dec))
 			  (set! y0 (if (= x1 old-dec)

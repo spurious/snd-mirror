@@ -47,7 +47,7 @@
     (substring data (if sp2 (values (+ sp1 1) sp2) sp1))))
 
 (define (caddr-str data)
-  (let* ((sp2 (char-position #\space data (+ (or (char-position #\space data) 0) 1)))
+  (let* ((sp2 (char-position #\space data (+ (char-position #\space data) 1)))
 	 (sp3 (char-position #\space data (+ sp2 1))))
     (substring data (if sp3 (+ sp2 1) sp2))))
 
@@ -132,8 +132,8 @@
 		  (let ((reftype #f))
 		    (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i))))
 		      (case (given-name 0)
-			((#\@) (set! data (cons (list type (substring given-name 1 (length given-name)) 'null) data)))
-			((#\#) (set! data (cons (list type (substring given-name 1 (length given-name)) 'opt) data)))
+			((#\@) (set! data (cons (list type (substring given-name 1) 'null) data)))
+			((#\#) (set! data (cons (list type (substring given-name 1) 'opt) data)))
 			((#\[)
 			 (set! reftype (deref-type (list type)))
 			 (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
@@ -763,7 +763,7 @@
      (let ((sig (make-signature f)))
        (if (pair? sig)
 	   (let ((count (signatures sig)))
-	     (set! (signatures sig) (if (not count) 0 (+ count 1)))))))
+	     (set! (signatures sig) (if (not (real? count)) 0 (+ count 1)))))))
    lst))
 
 (make-signatures funcs)
