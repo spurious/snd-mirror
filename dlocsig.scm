@@ -360,7 +360,7 @@
 		    (set! (v i) (let ((distance (and (pair? distances) (distances i)))
 				      (dly (and (pair? delays) (delays i))))
 				  (or dly
-				      (and distance 
+				      (and (number? distance)
 					   (/ (- distance min-dist) dlocsig-speed-of-sound))
 				      0.0))))
 		  v))
@@ -1823,7 +1823,8 @@
       (render-path path))
   (if (or scaling translation rotation)
       ;; there's at least one transformation to execute
-      (let* ((rotation (and rotation (/ (* 2 pi rotation) dlocsig-one-turn)))
+      (let* ((rotation (and (number? rotation)
+			    (/ (* 2 pi rotation) dlocsig-one-turn)))
 	     (matrix (and rotation (rotation-matrix (car rotation-axis)
 						   (cadr rotation-axis)
 						   (third rotation-axis)

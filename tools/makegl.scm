@@ -260,7 +260,7 @@
 						    ("ULONG"  . "ulong") 
 						    ("DOUBLE" . "number")) string=?)
 				 => cdr)
-				(else (apply string (map char-downcase (cdr typ))))))))
+				(else (string-downcase (cdr typ)))))))
 		 (begin
 		   (hey "#define Xen_is_~A(Arg) 1~%" (no-stars type))
 		   (hey "#define Xen_to_C_~A(Arg) ((gpointer)Arg)~%" (no-stars type)))))))

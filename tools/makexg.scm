@@ -622,7 +622,7 @@
 						    ("DOUBLE" . "number") 
 						    ("ULONG"  . "ulong")) 
 					   string=?) => cdr)
-				   (else (apply string (map char-downcase c-name)))))))
+				   (else (string-downcase c-name))))))
 		   ((not c-name) ; void special case
 		    (if (not (member type no-xen-p))
 			(hey "#define Xen_is_~A(Arg) 1~%" (no-stars type)))

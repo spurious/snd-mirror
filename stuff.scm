@@ -1642,7 +1642,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   (make-shared-vector obj (list new-len) start))
 
           ((string? obj)
-           (if end
+           (if (integer? end)
                (substring obj start end)
                (substring obj start)))
 
