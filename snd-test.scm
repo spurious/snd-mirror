@@ -23834,9 +23834,7 @@ EDITS: 2
 		     (delete-samples beg dur)
 		     (for-each
 		      (lambda (id old-loc)
-			(cond ((and (> old-loc beg)
-				    (< old-loc end)
-				    (mark? id))
+			(cond ((and (< beg old-loc end) (mark? id))
 			       (snd-display ";delete did not clobber mark: ~A ~A [~A ~A]" id old-loc beg end))
 			      ((and (> old-loc end)
 				    (not (= (mark-sample id) (- old-loc dur))))
@@ -24354,8 +24352,7 @@ EDITS: 2
 		 (lambda (file)
 		   (catch 'mus-error
 			  (lambda () 
-			    (if (and (< (mus-sound-chans (string-append sf-dir file)) 256)
-				     (> (mus-sound-chans (string-append sf-dir file)) 0)
+			    (if (and (< 0 (mus-sound-chans (string-append sf-dir file)) 256)
 				     (>= (mus-sound-sample-type (string-append sf-dir file)) 0)
 				     (> (mus-sound-srate (string-append sf-dir file)) 0)
 				     (>= (mus-sound-framples (string-append sf-dir file)) 0))
@@ -28424,7 +28421,7 @@ EDITS: 2
 		   ((or unhappy (> i len))
 		    unhappy)
 		 (let ((ed (edit-fragment i s c)))
-		   (if (and ed
+		   (if (and (pair? ed)
 			    (string=? (cadr ed) "env"))
 		       (begin
 			 (set! (edit-position s c) (- i 1))
@@ -35746,7 +35743,7 @@ EDITS: 1
 		(set! (data j) (data i))
 		(set! (data i) temp)))
 	  (do ((m (/ n 2)))
-	      ((or (< m 2) (< j m))
+	      ((not (<= 2 m j))
 	       (set! j (+ j m)))   
 	    (set! j (- j m))
 	    (set! m (/ m 2))))
@@ -35788,8 +35785,7 @@ EDITS: 1
 	      (set! (rl i) tempr)
 	      (set! (im i) tempi)))
 	(do ((m (/ n 2)))
-	    ((or (< m 2) 
-		 (< j m))
+	    ((not (<= 2 m j))
 	     (set! j (+ j m)))
 	  (set! j (- j m))
 	  (set! m (/ m 2))))
@@ -37600,7 +37596,7 @@ EDITS: 1
 	  (if (pair? s-args)
 	      (for-each-permutation (lambda args (apply permute op args)) s-args)))
 	(list 'x '(oscil g0) 2.0 '(oscil g1) 'y)))
-     (list '+ '* '-))
+     '(+ * -))
     
     (for-each-subset
      (lambda s-args
@@ -38902,7 +38898,7 @@ EDITS: 1
 
     (define (fv162)
       (let ((fv (make-int-vector 4))
-	    (iter (make-iterator (list 1 2 3 4))))
+	    (iter (make-iterator '(1 2 3 4))))
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (int-vector-set! fv i (iterate iter)))))
@@ -39889,8 +39885,7 @@ EDITS: 1
 	  (snd-display ";with-sound srate (1): ~A (~A, ~A)" (srate ind) *clm-srate* (mus-sound-srate "test1.snd")))
       (if (not (member (framples ind) '(2205 2206) =))
 	  (snd-display ";with-sound framples (1): ~A" (framples ind)))
-      (if (not (and (= (chans ind) 2)
-		    (= (mus-sound-chans "test1.snd") 2)))
+      (if (not (= (chans ind) 2 (mus-sound-chans "test1.snd")))
 	  (snd-display ";with-sound chans (1): ~A" (chans ind)))
       (close-sound ind)
       (delete-file "test1.snd"))
@@ -39957,7 +39952,7 @@ EDITS: 1
 		(fm-violin 0 .1 440 .1 :degree 45.0))
     (let ((ind (find-sound "test1.snd")))
       (if (not ind) (snd-display ";with-sound (2): ~A" (map file-name (sounds)))
-	  (if (> (- (framples ind) 24255) 1) (snd-display ";with-sound reverbed framples (2): ~A" (framples ind))))
+	  (if (> (framples ind) 24256) (snd-display ";with-sound reverbed framples (2): ~A" (framples ind))))
       (close-sound ind))
     
     (with-sound (:srate 22050 :comment "Snd+Run!" :scaled-to .5) (fm-violin 0 .1 440 .1))

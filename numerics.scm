@@ -76,8 +76,7 @@
 ;;; from Numerical Recipes
 (define (plgndr L m x)			;Legendre polynomial P m/L (x), m and L integer
 					;0 <= m <= L and -1<= x <= 1 (x real)
-  (if (or (< m 0) 
-	  (> m L) 
+  (if (or (not (<= 0 m L)) 
 	  (> (abs x) 1.0))
       (snd-error "invalid arguments to plgndr")
       (let ((pmm 1.0)

@@ -104,7 +104,7 @@
 (define (bytevector-u8-set! b k c) (set! (b k) c))
 (define bytevector-u8 (dilambda (lambda (b k) (b k)) (lambda (b k c) (set! (b k) c))))
 (define bytevector-length length)
-(define (bytevector-copy . args) (->byte-vector (apply string-copy args)))
+(define (bytevector-copy . args) (->byte-vector (apply r7rs-string-copy args)))
 (define (bytevector-append . args) (->byte-vector (apply string-append args)))
 (define write-bytevector write-string)
 (define* (read-bytevector! bv port (start 0) end)

@@ -3033,7 +3033,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 						  (> (abs (- samp1 samp2)) local-max)
 						  (< (abs (- samp0 samp2)) (/ local-max 2)))
 					     (return (- ctr 1))))))))))
-		     (when click
+		     (when (integer? click)
 		       (smooth-sound (- click 2) 4)
 		       (remove-click (+ click 2)))))))
   

@@ -2646,7 +2646,7 @@ enum {OP_NO_OP,
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
       OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
-      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
+      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
@@ -2826,7 +2826,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "define", "define1", "begin", "begin_unchecked", "begin1",
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
       "let", "let1", "let_star", "let_star1", "let_star2",
-      "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond_simple", "cond1_simple",
+      "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
@@ -66805,10 +66805,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if ((car(sc->code) == sc->feed_to_symbol) &&
 		      (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
 		    {
+		      /* old form (pre 6-June-16): this causes a double evaluation:
+		       *   (let ((x 'y) (y 32)) (cond ((values x y) => list))) -> '(32 32)
+		       *   but it should be '(y 32)
+		       * it's also extremely slow: make/eval a list?!
+		       *
+		       *   if (is_multiple_value(sc->value)) 
+		       *     sc->code = cons(sc, cadr(sc->code), multiple_value(sc->value));
+		       *   else sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value));
+		       *   goto EVAL;
+		       */
 		      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
-			sc->code = cons(sc, cadr(sc->code), multiple_value(sc->value));
-		      else sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value));
-		      goto EVAL;
+			{
+			  sc->args = multiple_value(sc->value);
+			  clear_multiple_value(sc->args);
+			}
+		      else sc->args = list_1(sc, sc->value);
+		      if (is_symbol(cadr(sc->code)))
+			{
+			  sc->code = find_symbol_checked(sc, cadr(sc->code));      /* car is => */
+			  if (needs_copied_args(sc->code))
+			    sc->args = copy_list(sc, sc->args);
+			  goto APPLY;
+			}
+		      else 
+			{
+			  /* need to evaluate the target function */
+			  push_stack(sc, OP_COND1_1, sc->args, sc->code);
+			  sc->code = cadr(sc->code);
+			  sc->args = sc->nil;
+			  goto EVAL;
+			}
 		    }
 		  goto BEGIN1;
 		}
@@ -66827,7 +66854,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  push_stack_no_args(sc, OP_COND1, sc->code);
 	  sc->code = caar(sc->code);
 	  goto EVAL;
-	  
+
+	case OP_COND1_1:
+	  sc->code = sc->value;
+	  if (needs_copied_args(sc->code))
+	    sc->args = copy_list(sc, sc->args);
+	  goto APPLY;
 	  
 	case OP_COND_SIMPLE:
 	  push_stack_no_args(sc, OP_COND1_SIMPLE, sc->code);

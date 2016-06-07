@@ -215,7 +215,7 @@
   (if (not (selection?)) (make-selection (cursor)  (+ (cursor) 20000)))
   (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
 					; is cursor inside of selection ?
-  (if (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
+  (if (not (<= (selection-position) (cursor) (+ (selection-position) (selection-framples))))
       (begin
 	(make-selection (cursor)  (+ (cursor) (selection-framples)))
 	(stop-playing)
@@ -231,7 +231,7 @@
 (define (backward-selection)
   (if (not (selection?)) (make-selection  (- (cursor) 20000) (cursor)))
   (if (< (selection-framples) 2000) (make-selection  (- (cursor) 2000) (cursor)))
-  (if (or (< (cursor) (selection-position)) (> (cursor) (+ (selection-position) (selection-framples))))
+  (if (not (<= (selection-position) (cursor) (+ (selection-position) (selection-framples))))
       (begin
 	(make-selection (cursor)  (- (cursor) (selection-framples)))
 	(stop-playing)
