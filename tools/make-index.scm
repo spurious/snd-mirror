@@ -1547,7 +1547,7 @@
 			     (begin
 			       (let ((min-epos (char-position #\space dline)))
 				 (set! epos (char-position #\> dline))
-				 (if (and (number? min-epos)
+				 (if (and (real? min-epos)
 					  (< min-epos epos))
 				     (set! epos min-epos)))
 			       

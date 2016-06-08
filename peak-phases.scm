@@ -4543,7 +4543,7 @@
 			   (a-data (val 2)))
 		       (do ((k 3 (+ 1 k)))
 			   ((= k a-len))
-			 (if (and (number? (val k))
+			 (if (and (real? (val k))
 				  (< (val k) a-val))
 			     (begin
 			       (set! a-val (val k))

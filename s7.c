@@ -48451,7 +48451,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       iter_list = sc->z;
       old_args = sc->args;
       func = c_function_call(f);
-      push_stack(sc, OP_NO_OP, iter_list, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection */
+      push_stack(sc, OP_NO_OP, val1, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection: need to protect val1, iter_list, val */
       sc->z = sc->nil;
 
       while (true)
@@ -74451,32 +74451,15 @@ int main(int argc, char **argv)
  *
  * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
- * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
- * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
  * display of let can still get into infinite recursion!
- * when trying to display a big 128-channel file, Snd cores up until it crashes?
- * check stdin-prompt and s7webserver
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
  * float_format_g -> (*s7* 'default-float-format) ? -- best would be translation from format -> fprint, but ".*g" currently
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
- *
- * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
- *   make-oscil -> '(oscil? real? real) 
- *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
- *   need some semi-automated approach here
- *   also need rest of Snd signatures
- *
- * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
- *   looper does not stop/restart -- just keep going]
- *   play_selection_1 could puts ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
- *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
- *   If start/end selection changed while playing, are these loop points updated?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74489,4 +74472,25 @@ int main(int argc, char **argv)
  *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
  *   also arg num is incorrect -- always off by 1?
  *   append in string case uses string_append, not g_string_append!
+ *
+ * Snd:
+ * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
+ *   make-oscil -> '(oscil? real? real) 
+ *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
+ *   need some semi-automated approach here
+ *   also need rest of Snd signatures
+ *
+ * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
+ *   looper does not stop/restart -- just keep going]
+ *   play_selection_1 could puts ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
+ *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
+ *   If start/end selection changed while playing, are these loop points updated?
+ *
+ * check stdin-prompt and s7webserver
+ * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
+ * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
+ * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
+ * when trying to display a big 128-channel file, Snd cores up until it crashes?
+ * musglyphs gtk version is broken (probably cairo_t confusion)
+ * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case here? t415.scm.
  */

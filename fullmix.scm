@@ -14,10 +14,10 @@
   (let ((st (seconds->samples (or beg 0.0)))
 	(dur (or outdur
 		 (/ (- (mus-sound-duration in-file) (or inbeg 0.0))
-		    (or (and (number? srate) (abs srate)) 1.0))))
+		    (or (and (real? srate) (abs srate)) 1.0))))
 	(in-chans (channels in-file))
 	(out-chans (channels *output*))
-	(reversed (or (and (number? srate) (negative? srate))
+	(reversed (or (and (real? srate) (negative? srate))
 		      (and (pair? srate) (pair? (cdr srate)) (negative? (cadr srate)))))
 	
 	(inloc (floor (* (or inbeg 0.0) (mus-sound-srate in-file)))))
@@ -95,7 +95,7 @@
 	  (let ((srcs (make-vector in-chans #f)))
 	    (do ((inp 0 (+ inp 1)))
 		((= inp in-chans))
-	      (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (number? srate) (abs srate) 0.0))))
+	      (vector-set! srcs inp (make-src :input (vector-ref file inp) :srate (if (real? srate) (abs srate) 0.0))))
 	    (mus-file-mix-with-envs file st samps mx rev-mx envs srcs srcenv *output* *reverb*)
 	    )))))
 

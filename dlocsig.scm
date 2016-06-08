@@ -985,7 +985,7 @@
 	  (set! (bezier-v xpath) (cadddr vals)))))
   (for-each
    (lambda (v)
-     (if (and (number? v) 
+     (if (and (real? v) 
 	      (< v 0))
 	 (error 'mus-error "velocities for path ~A must be all positive~%" (bezier-path xpath))))
    (bezier-v xpath))
@@ -1186,18 +1186,15 @@
 	       (let ((d0 (d 0 i))
 		     (d1 (d 1 i))
 		     (d2 (d 2 i)))
-		 (set! (d 0 i) (+ d0 
-				    (* (ac k n)
-				       (- (ref p 0 (+ i k))
-					  (ref p 0 (- i k))))))
-		 (set! (d 1 i) (+ d1
-				    (* (ac k n)
-				       (- (ref p 1 (+ i k))
-					  (ref p 1 (- i k))))))
-		 (set! (d 2 i) (+ d2
-				    (* (ac k n)
-				       (- (ref p 2 (+ i k))
-					  (ref p 2 (- i k)))))))))
+		 (set! (d 0 i) (+ d0 (* (ac k n)
+					(- (ref p 0 (+ i k))
+					   (ref p 0 (- i k))))))
+		 (set! (d 1 i) (+ d1 (* (ac k n)
+					(- (ref p 1 (+ i k))
+					   (ref p 1 (- i k))))))
+		 (set! (d 2 i) (+ d2 (* (ac k n)
+					(- (ref p 2 (+ i k))
+					   (ref p 2 (- i k)))))))))
 	   (list n p d)))))
 
 ;;; Calculate bezier control points for the given open path

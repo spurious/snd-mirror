@@ -3442,7 +3442,7 @@
 		  (if (not (= (mix-position mx) (* (floor *clm-srate*) 61000))) (snd-display ";bigger mix to: ~A" (mix-position mx)))))
 	    (undo 2))
 	  (let ((res (scan-channel (lambda (y) (> (abs y) 0.0)))))
-	    (if (or (not res)
+	    (if (or (not (pair? res))
 		    (> (cadr res) 100))
 		(snd-display ";bigger find not 0.0: ~A" res)))
 	  (let-temporarily ((*selection-creates-region* #f))
@@ -5348,7 +5348,7 @@ EDITS: 5
 	(set! *speed-control-style* speed-control-as-ratio)
 	(set! (speed-control index) 0.25))
       (let ((k (disk-kspace "oboe.snd")))
-	(if (or (not (number? k))
+	(if (or (not (real? k))
 		(<= k 0))
 	    (snd-display ";disk-kspace = ~A" (disk-kspace "oboe.snd")))
 	(set! k (disk-kspace "/baddy/hiho"))
@@ -9883,8 +9883,7 @@ EDITS: 2
 	   (end 1)
 	   (scl (exp (/ 4.0 (- end start))))) ; normalize it
       (map-channel (lambda (y) 
-		     (let ((val (if (or (<= x start) ; don't divide by zero
-					(>= x end))
+		     (let ((val (if (not (< start x end))
 				    0.0
 				    (exp (+ (/ -1.0 (- x start))
 					    (/ -1.0 (- end x)))))))
@@ -26232,7 +26231,7 @@ EDITS: 2
 	    (lambda args args))
 	  (if (not (= (edit-position ind 0) 0)) (snd-display ";convolve z: ~A" (edit-position ind 0)))
 	  (let ((matches (count-matches (lambda (y) (> y .1)))))
-	    (if (and (number? matches) (> matches 0))
+	    (if (and (integer? matches) (> matches 0))
 		(snd-display ";count z: ~A" matches)))
 	  (let* ((reader (make-sampler 0))
 		 (val (next-sample reader))
@@ -40456,7 +40455,7 @@ EDITS: 1
 			   (mus-file-mix *output* temp-2 22050)))
     (let ((ind (find-sound "test.snd")))
       (if (not (sound? ind)) (snd-display ";with-sound+sound-lets init: no test.snd?"))
-      (if (or (> (maxamp ind) .2) (< (maxamp ind) .15))  (snd-display ";with-mix+sound-lets maxamp: ~A" (maxamp ind)))
+      (if (not (>= 0.2 (maxamp ind) 0.15)) (snd-display ";with-mix+sound-lets maxamp: ~A" (maxamp ind)))
       (if (fneq 3.0 (/ (framples ind) (srate ind))) (snd-display ";with-sound+sound-lets dur: ~A" (/ (framples ind) (srate ind))))
       (close-sound ind))
     
@@ -42241,7 +42240,7 @@ EDITS: 1
 			       (outa i (green-noise gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display ";green-noise ~A" snd))
-    (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 1.0)) (snd-display ";green-noise max: ~A" (maxamp snd))))
+    (if (not (<= 0.01 (maxamp snd) 1.0)) (snd-display ";green-noise max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-green-noise 100.0 0.1 -0.1 0.5)))
@@ -42250,7 +42249,7 @@ EDITS: 1
 			       (outa i (green-noise gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display ";green-noise .5 ~A" snd))
-    (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise .5 max: ~A" (maxamp snd))))
+    (if (not (<= 0.01 (maxamp snd) 0.5)) (snd-display ";green-noise .5 max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-green-noise-interp 100.0)))
@@ -42259,7 +42258,7 @@ EDITS: 1
 			       (outa i (green-noise-interp gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display ";green-noise-interp ~A" snd))
-    (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 1.0)) (snd-display ";green-noise-interp max: ~A" (maxamp snd))))
+    (if (not (<= 0.01 (maxamp snd) 1.0))  (snd-display ";green-noise-interp max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-green-noise-interp 100.0 0.1 -0.1 0.5)))
@@ -42268,7 +42267,7 @@ EDITS: 1
 			       (outa i (green-noise-interp gen))))))
 	 (snd (find-sound res)))
     (if (not (sound? snd)) (snd-display ";green-noise-interp .5 ~A" snd))
-    (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise-interp .5 max: ~A" (maxamp snd))))
+    (if (not (<= 0.01 (maxamp snd) 0.5))  (snd-display ";green-noise-interp .5 max: ~A" (maxamp snd))))
   
   (let* ((res (with-sound (:clipped #f)
 			  (let ((gen (make-tanhsin 440.0 2.0)))
@@ -43718,7 +43717,7 @@ EDITS: 1
 			      (XmRenderTableGetRenditions label-render-table (XmRenderTableGetTags label-render-table))))
 	     (default-font-name (and renditions
 				     (cadr (XmRenditionRetrieve (car renditions) (list XmNfontName 0)))))
-	     (default-font-info (and renditions
+	     (default-font-info (and (pair? renditions)
 				     (XmRenditionRetrieve (car renditions) (list XmNfont 0 XmNfontType 0)))))
 	(if (not (string=? default-font-name "fixed")) (snd-display ";XmRenderTableGetRenditions name: ~A" default-font-name))
 	(if (not (XFontStruct? (default-font-info 1))) (snd-display ";XmRenderTableGetRenditions font struct: ~A" default-font-info))
@@ -43942,7 +43941,7 @@ EDITS: 1
 		(snd-display ";r and rend: ~A ~A~%" r rend)))
 	  (XmRenditionFree (XmRenditionCreate (cadr (main-widgets)) "r1" (list XmNfontName "fixed")))
 	  
-	  (if (not (equal? (XmDropSiteQueryStackingOrder ((main-widgets) 4)) (list #f)))
+	  (if (not (equal? (XmDropSiteQueryStackingOrder ((main-widgets) 4)) '(#f)))
 	      (snd-display ";XmDropSiteQueryStackingOrder: ~A" (XmDropSiteQueryStackingOrder ((main-widgets) 4))))
 	  (let ((tab (XmStringComponentCreate XmSTRING_COMPONENT_TAB 0 #f))
 		(row #f)
@@ -44168,8 +44167,8 @@ EDITS: 1
 		   (set! (func attr) val)
 		   (if (not (equal? (func attr) val)) (snd-display ";attr ~A ~A" name (func attr))))
 		 (list .valuemask .depth .width .x_hotspot .y_hotspot .cpp .npixels .ncolors)
-		 (list 0 0 0 0 0 0 0 0)
-		 (list 'valuemask 'depth 'width 'x_hotspot 'y_hotspot 'cpp 'npixels 'ncolors))))
+		 '(0 0 0 0 0 0 0 0)
+		 '(valuemask depth width x_hotspot y_hotspot cpp npixels ncolors))))
 	    (XDestroyImage i11)))
 	
 	(XFreePixmap dpy pix)
@@ -44206,7 +44205,7 @@ EDITS: 1
 					;		   (snd-display ";XGetTransientForHint: ~A" (XGetTransientForHint dpy win)))
 	(if (not (equal? (XGetErrorText dpy BadColor #f 9) '(0 "BadColor")))
 	    (snd-display ";XGetErrorText: ~A" (XGetErrorText dpy BadColor #f 9)))
-	(if (not (equal? (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) (list 12 10 10 500 400)))
+	(if (not (equal? (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2) '(12 10 10 500 400)))
 	    (snd-display ";XGeometry: ~A" (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
 	(if (< (XEventsQueued dpy QueuedAlready) 0)
 	    (snd-display ";XEventsQueued: ~A" (XEventsQueued dpy QueuedAlready)))
@@ -44576,8 +44575,7 @@ EDITS: 1
 		(snd-display ";text type check: ~A" tag)))
 	  (let ((dpy (XtDisplay (cadr (main-widgets))))
 		(win (XtWindow (cadr (main-widgets)))))
-	    (let* ((app (car (main-widgets)))
-		   (tag (catch #t (lambda () (XtDisplayInitialize app dpy "hi" "ho" 1 1)) (lambda args (car args)))))
+	    (let ((tag (catch #t (lambda () (XtDisplayInitialize (car (main-widgets)) dpy "hi" "ho" 1 1)) (lambda args (car args)))))
 	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XtDisplayInitialize type check: ~A" tag)))
 	    (let ((tag (catch #t (lambda () (XmTransferSetParameters 123 123 123 123 "hiho")) (lambda args (car args)))))
 	      (if (not (eq? tag 'wrong-type-arg)) (snd-display ";XmTransferSetParameters type check: ~A" tag)))
@@ -45616,10 +45614,9 @@ EDITS: 1
 	  (if (not (list? vals)) (snd-display ";XShapeGetRectangles: ~A" vals))
 					;(segfault)	  (XtFree (cadr vals)) 
 	  (set! vals (XShapeQueryExtension dpy))
-	  (if (not (equal? vals (list #t 64 0))) (snd-display ";XShapeQueryExtension: ~A" vals))
+	  (if (not (equal? vals '(#t 64 0))) (snd-display ";XShapeQueryExtension: ~A" vals))
 	  (set! vals (XShapeQueryVersion dpy))
-	  (if (not (or (equal? vals (list #t 1 0)) 
-		       (equal? vals (list #t 1 1))))
+	  (if (not (member vals '((#t 1 0) (#t 1 1))))
 	      (snd-display ";XShapeQueryVersion: ~A" vals))
 	  (if (XShapeOffsetShape dpy win 0 0 0) (snd-display ";XShapeOffsetShape?"))
 	  
@@ -45652,8 +45649,7 @@ EDITS: 1
 	    (wids ()))
 	(for-each
 	 (lambda (class)
-	   (let* ((shell (cadr (main-widgets)))
-		  (wid (XtCreateWidget "hiho" class shell ())))
+	   (let ((wid (XtCreateWidget "hiho" class (cadr (main-widgets)) ())))
 	     (set! wids (cons wid wids))
 	     (XtAddCallback wid XmNhelpCallback (lambda (w c i) (copy "help!")))))
 	 classes)
@@ -45939,7 +45935,7 @@ EDITS: 1
 		(lambda args (car args))))
 	    xm-procs1))
 	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95)  #(0 1) 3/4 'mus-error 0+i (make-delay 32)
-	       (lambda () #t) (curlet) (make-float-vector (list 2 3)) :order 0 1 -1 #f #t () #()))
+	       (lambda () #t) (curlet) (make-float-vector '(2 3)) :order 0 1 -1 #f #t () #()))
 	
 	;; ---------------- 2 Args
 	(for-each 
@@ -46174,7 +46170,7 @@ EDITS: 1
 		(lambda () (n arg))
 		(lambda args (car args))))
 	    gl-procs))
-	 (list (list 0 1) 0+i))
+	 '((0 1) 0+i))
 	
 	(when (pair? glu-procs)
 	  (for-each 
@@ -46185,7 +46181,7 @@ EDITS: 1
 		  (lambda () (n arg))
 		  (lambda args (car args))))
 	      gl-procs))
-	   (list (list 0 1) 0+i))
+	   '((0 1) 0+i))
 	  
 	  (let ((ind (open-sound "oboe.snd")))
 	    (glXMakeCurrent ((*motif* 'XtDisplay) (cadr (main-widgets))) 
@@ -46254,8 +46250,7 @@ EDITS: 1
 		    (and (procedure? (procedure-setter func))
 			 (arity (procedure-setter func))))))
       (and (pair? arit)
-	   (>= args (car arit))
-	   (<= args (cdr arit)))))
+	   (<= (car arit) args (cdr arit)))))
 
   (when with-gui ; to the end!
     (let* ((delay-32 (make-delay 32))
@@ -46525,7 +46520,7 @@ EDITS: 1
 	   (set! a-hook (float-vector 0.2 0.1)))
 	  ((4) 
 	   (set! delay-32 (make-filter 3 (float-vector 3 1 2 3) (float-vector 3 1 2 3)))
-	   (set! color-95 (make-float-vector (list 2 1)))
+	   (set! color-95 (make-float-vector '(2 1)))
 	   (set! vector-0 (make-iir-filter 3 (float-vector 1 2 3)))
 	   (set! float-vector-3 (make-ncos))
 	   (set! car-main (make-env '(0 0 1 1) :length 101))
@@ -46994,7 +46989,7 @@ EDITS: 1
 		      (if (not (memq tag '(error wrong-type-arg syntax-error)))
 			  (snd-display ";[0]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		  (list mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y)
-		  (list 'mix-amp 'mix-amp-env 'mix-length 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
+		  '(mix-amp mix-amp-env mix-length mix-name mix-position mix-home mix-speed mix-tag-y))
 	
 	(for-each (lambda (n)
 		    (let ((tag
@@ -47027,7 +47022,7 @@ EDITS: 1
 			(if (not (memq tag '(error wrong-type-arg syntax-error)))
 			    (snd-display ";[3]: mix procs ~A: ~A (~A)" b tag float-vector-5))))
 		    (list  mix-name mix-position mix-home mix-speed mix-tag-y)
-		    (list 'mix-name 'mix-position 'mix-home 'mix-speed 'mix-tag-y))
+		    '(mix-name mix-position mix-home mix-speed mix-tag-y))
 	  (close-sound index))
 	(if (sound? (find-sound "oboe.snd"))
 	    (snd-display ";oboe.snd is still open?"))
@@ -47192,7 +47187,7 @@ EDITS: 1
 	    (select-all)
 	    (check-error-tag 'mus-error (lambda () (save-selection "sel0.snd" :not-a-key 3)))
 	    (check-error-tag 'wrong-type-arg (lambda () (read-only (list ind))))
-	    (check-error-tag 'wrong-type-arg (lambda () (framples ind (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (framples ind '(0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (smooth-sound 0 -10)))
 	    (check-error-tag 'no-such-channel (lambda () (mix-selection 0 ind 123)))
 	    (check-error-tag 'no-such-channel (lambda () (insert-selection 0 ind 123)))
@@ -47335,7 +47330,7 @@ EDITS: 1
 	    (check-error-tag 'wrong-type-arg (lambda () (set! (samples 0 2) -1)))
 	    (check-error-tag 'wrong-type-arg (lambda () (left-sample '(0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (amp-control '(0))))
-	    (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info (list 0))))
+	    (check-error-tag 'wrong-type-arg (lambda () (sound-loop-info '(0))))
 	    (check-error-tag 'wrong-type-arg (lambda () (add-mark 123 '(0))))
 	    (check-error-tag 'no-such-sound (lambda () (filter-channel '(0 0 1 1) 100 #f #f 1234 0)))
 	    (check-error-tag 'no-such-channel (lambda () (filter-channel '(0 0 1 1) 100 #f #f ind 1)))
@@ -47398,7 +47393,7 @@ EDITS: 1
 	  (check-error-tag 'mus-error (lambda () (set! (mus-xcoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4) 1.0)))
 	  (check-error-tag 'mus-error (lambda () (set! (mus-ycoeff (make-filter 3 :xcoeffs float-vector-3 :ycoeffs float-vector-3) 4) 1.0)))
 	  (check-error-tag 'mus-error (lambda () (make-filter :ycoeffs (make-float-vector 4) :order 12)))
-	  (check-error-tag 'mus-error (lambda () (let ((hi (make-oscil))) (set! (mus-offset hi) 1))))
+	  (check-error-tag 'mus-error (lambda () (set! (mus-offset (make-oscil)) 1)))
 	  (check-error-tag 'out-of-range (lambda () (make-locsig :channels (expt 2 30))))
 	  (check-error-tag 'out-of-range (lambda () (make-src :width 3000)))
 	  (check-error-tag 'bad-arity (lambda () (add-colormap "baddy" (lambda () #f))))
@@ -47470,7 +47465,7 @@ EDITS: 1
 		 (if (not (eq? tag 'no-such-widget))
 		     (snd-display ";~A of null widget -> ~A" name tag))))
 	     (list widget-position widget-size widget-text hide-widget show-widget focus-widget)
-	     (list 'widget-position 'widget-size 'widget-text 'hide-widget 'show-widget 'focus-widget)))
+	     '(widget-position widget-size widget-text hide-widget show-widget focus-widget)))
 	
 	;; ---------------- key args
 	(for-each
