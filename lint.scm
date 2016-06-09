@@ -24,7 +24,7 @@
 ;;;                             '(l ll data datum new item info temp tmp val vals value foo bar baz aux dummy O var res retval result count str)
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
-(define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and others like this
+(define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -293,6 +293,7 @@
 	(linted-files ())
 	(big-constants ())
 	(equable-closures ())
+	(other-names-counts (make-hash-table))
 	(*e* #f)
 	(other-identifiers #f)
 	(quote-warnings 0)
@@ -1776,7 +1777,6 @@
 		     (else #f))))))
 
     (define (and-forgetful form head arg1 arg2 env)
-      ;(format *stderr* "~A ~A ~A~%" form arg1 arg2)
       (unless (or (memq (car arg2) '(and or not list cons vector)) ; these don't tell us anything about arg1's type
 		  (eq? arg2 last-and-incomplete-arg2))
 	(let* ((pos (do ((i 0 (+ i 1))                         ; get arg number of arg1 in arg2
@@ -2581,7 +2581,14 @@
 						    (and-incomplete form 'or (cadr arg1) (car p) env)))))
 					  (if (and (pair? (cadr arg1))   ; (or (not (number? x)) (> x 2)) -> (or (not (real? x)) (> x 2))
 						   (hash-table-ref bools (caadr arg1)))
-					      (and-forgetful form 'or (cadr arg1) arg2 env))))
+					      (if (member (cadadr arg1) arg2)
+						  (and-forgetful form 'or (cadr arg1) arg2 env)
+						  (do ((p arg2 (cdr p)))
+						      ((or (not (pair? p))
+							   (and (pair? (car p))
+								(member (cadadr arg1) (car p))))
+						       (if (pair? p)
+							   (and-forgetful form 'or (cadr arg1) (car p) env))))))))
 				 
 				 (if (and (eq? (car arg1) 'not) ; (or (not A) (and A B)) -> (or (not A) B) -- this stuff actually happens!
 					  (eq? (car arg2) 'and)
@@ -2977,29 +2984,35 @@
 				   (when (and (pair? val)
 					      (memq (car val) '(and or not)))
 				     (set! val (classify (simplify-boolean val true false env)))
-				     (if (and (> len 3)
-					      (pair? val)
-					      (eq? (car val) 'not)
-					      (pair? (cdr exprs)))
-					 (if (symbol? (cadr val))
-					     (if (and (pair? (cadr exprs))
-						      (memq (cadr val) (cadr exprs)))
-						 (and-incomplete form 'or (cadr val) (cadr exprs) env)
-						 (do ((ip (cdr exprs) (cdr ip))
-						      (found-it #f))
-						     ((or found-it
-							  (not (pair? ip))))
-						   (do ((p (car ip) (cdr p)))
-						       ((or (not (pair? p))
-							    (and (memq (cadr val) p)
-								 (set! found-it p)))
-							(if (pair? found-it)
-							    (and-incomplete form 'or (cadr val) found-it env))))))
-					     (if (and (pair? (cadr val))
+				     (when (and (> len 3)
+						(pair? val)
+						(eq? (car val) 'not)
+						(pair? (cdr exprs)))
+				       (if (symbol? (cadr val))
+					   (if (and (pair? (cadr exprs))
+						    (memq (cadr val) (cadr exprs)))
+					       (and-incomplete form 'or (cadr val) (cadr exprs) env)
+					       (do ((ip (cdr exprs) (cdr ip))
+						    (found-it #f))
+						   ((or found-it
+							(not (pair? ip))))
+						 (do ((p (car ip) (cdr p)))
+						     ((or (not (pair? p))
+							  (and (memq (cadr val) p)
+							       (set! found-it p)))
+						      (if (pair? found-it)
+							  (and-incomplete form 'or (cadr val) found-it env))))))
+					   (when (and (pair? (cadr val))
 						      (pair? (cadr exprs))
 						      (hash-table-ref bools (caadr val)))
-						 (and-forgetful form 'or (cadr val) (cadr exprs) env)))))
-
+					     (if (member (cadadr val) (cadr exprs))
+						 (and-forgetful form 'or (cadr val) (cadr exprs) env)
+						 (do ((p (cadr exprs) (cdr p)))
+						     ((or (not (pair? p))
+							  (and (pair? (car p))
+							       (member (cadadr val) (car p))))
+						      (if (pair? p)
+							  (and-forgetful form 'or (cadr val) (car p) env)))))))))
 				   (if (not (or retry
 						(equal? val (car exprs))))
 				       (set! retry #t))
@@ -3077,7 +3090,14 @@
 						       (and-incomplete form 'and arg1 (car p) env)))))
 					  (if (and (pair? arg1)               ; (and (number? x) (> x 2)) -> (and (real? x) (> x 2))
 						   (hash-table-ref bools (car arg1)))
-					      (and-forgetful form 'and arg1 arg2 env))))
+					      (if (member (cadr arg1) arg2)
+						  (and-forgetful form 'and arg1 arg2 env)
+						  (do ((p arg2 (cdr p)))   
+						      ((or (not (pair? p))
+							   (and (pair? (car p))
+								(member (cadr arg1) (car p))))
+						       (if (pair? p)
+							   (and-forgetful form 'and arg1 (car p) env))))))))
 				    
 				    (if (and (not (side-effect? arg1 env))
 					     (equal? arg1 arg2))                  ; (and x x) -> x
@@ -3387,7 +3407,14 @@
 						(if (and (pair? val) 
 							 (pair? (cadr exprs))
 							 (hash-table-ref bools (car val)))
-						    (and-forgetful form 'and val (cadr exprs) env)))))
+						    (if (member (cadr val) (cadr exprs))
+							(and-forgetful form 'and val (cadr exprs) env)
+							(do ((p (cadr exprs) (cdr p)))
+							    ((or (not (pair? p))
+								 (and (pair? (car p))
+								      (member (cadr val) (car p))))
+							     (if (pair? p)
+								 (and-forgetful form 'and val (car p) env)))))))))
 
 				      (if (not (or retry
 						   (equal? e (car exprs))))
@@ -3672,42 +3699,46 @@
 
 			     ((and (pair? arg1)
 				   (pair? arg2))
-			      (cond ((and (eq? (car arg1) '-)      ; (* (- x) (- y)) -> (* x y)
-					  (null? (cddr arg1))
-					  (eq? (car arg2) '-)
-					  (null? (cddr arg2)))
-				     `(* ,(cadr arg1) ,(cadr arg2)))
-
-				    ((and (pair? arg1)             ; (* (/ x) (/ y)) -> (/ (* x y)) etc
-					  (pair? arg2)
-					  (eq? (car arg1) '/)
-					  (eq? (car arg2) '/))
-				     (if (null? (cddr arg1))
-					 (if (null? (cddr arg2))
-					     `(/ (* ,(cadr arg1) ,(cadr arg2)))
-					     (if (equal? (cadr arg1) (cadr arg2))
-						 `(/ ,(caddr arg2))
-						 (simplify-numerics `(/ ,(cadr arg2) (* ,(cadr arg1) ,(caddr arg2))) env)))
-					 (if (null? (cddr arg2))
-					     (if (equal? (cadr arg1) (cadr arg2))
-						 `(/ ,(caddr arg1))
-						 (simplify-numerics `(/ ,(cadr arg1) (* ,(caddr arg1) ,(cadr arg2))) env))
-					     (simplify-numerics `(/ (* ,(cadr arg1) ,(cadr arg2)) (* ,@(cddr arg1) ,@(cddr arg2))) env))))
-
-				    ((and (= (length arg1) 3)
-					  (equal? (cdr arg1) (cdr arg2))
-					  (case (car arg1)
-					    ((gcd) (eq? (car arg2) 'lcm))
-					    ((lcm) (eq? (car arg2) 'gcd))
-					    (else #f)))
-				     `(abs (* ,@(cdr arg1))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
-
-				    ((and (eq? (car arg1) 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
-					  (eq? (car arg2) 'exp))
-				     `(exp (+ ,(cadr arg1) ,(cadr arg2))))
-
-				    (else `(* ,@val))))
-
+			      (let ((op1 (car arg1))
+				    (op2 (car arg2)))
+				(cond ((and (eq? op1 '-)      ; (* (- x) (- y)) -> (* x y)
+					    (null? (cddr arg1))
+					    (eq? op2 '-)
+					    (null? (cddr arg2)))
+				       `(* ,(cadr arg1) ,(cadr arg2)))
+				      
+				      ((and (pair? arg1)             ; (* (/ x) (/ y)) -> (/ (* x y)) etc
+					    (pair? arg2)
+					    (eq? op1 '/)
+					    (eq? op2 '/))
+				       (let ((op1-arg1 (cadr arg1))
+					     (op2-arg1 (cadr arg2)))
+					 (if (null? (cddr arg1))
+					     (if (null? (cddr arg2))
+						 `(/ (* ,op1-arg1 ,op2-arg1))
+						 (if (equal? op1-arg1 op2-arg1)
+						     `(/ ,(caddr arg2))
+						     (simplify-numerics `(/ ,op2-arg1 (* ,op1-arg1 ,(caddr arg2))) env)))
+					     (if (null? (cddr arg2))
+						 (if (equal? op1-arg1 op2-arg1)
+						     `(/ ,(caddr arg1))
+						     (simplify-numerics `(/ ,op1-arg1 (* ,(caddr arg1) ,op2-arg1)) env))
+						 (simplify-numerics `(/ (* ,op1-arg1 ,op2-arg1) (* ,@(cddr arg1) ,@(cddr arg2))) env)))))
+				      
+				      ((and (= (length arg1) 3)
+					    (equal? (cdr arg1) (cdr arg2))
+					    (case op1
+					      ((gcd) (eq? op2 'lcm))
+					      ((lcm) (eq? op2 'gcd))
+					      (else #f)))
+				       `(abs (* ,@(cdr arg1))))      ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+				      
+				      ((and (eq? op1 'exp)    ; (* (exp a) (exp b)) -> (exp (+ a b))
+					    (eq? op2 'exp))
+				       `(exp (+ ,(cadr arg1) ,(cadr arg2))))
+				      
+				      (else `(* ,@val)))))
+			      
 			     ((and (number? arg1)                  ; (* 2 (random 3.0)) -> (random 6.0)
 				   (pair? arg2)
 				   (eq? (car arg2) 'random)
@@ -3886,8 +3917,10 @@
 		(if (and (just-rationals? args)
 			 (not (zero? (cadr args))))
 		    (apply / args)                         ; including (/ 0 12) -> 0
-		    (let ((arg1 (car args))
-			  (arg2 (cadr args)))
+		    (let* ((arg1 (car args))
+			   (arg2 (cadr args))
+			   (op1 (and (pair? arg1) (car arg1)))
+			   (op2 (and (pair? arg2) (car arg2))))
 		      (cond ((eqv? arg1 1)                 ; (/ 1 x) -> (/ x)
 			     (simplify-numerics `(/ ,arg2) env))
 
@@ -3895,22 +3928,22 @@
 			     arg1)
 
 			    ((and (pair? arg1)             ; (/ (/ a b) c) -> (/ a b c)
-				  (eq? (car arg1) '/)
+				  (eq? op1 '/)
 				  (pair? (cddr arg1))
 				  (not (and (pair? arg2)
-					    (eq? (car arg2) '/))))
+					    (eq? op2 '/))))
 			     `(/ ,(cadr arg1) ,@(cddr arg1) ,arg2))
 
 			    ((and (pair? arg1)             ; (/ (/ a) (/ b)) -> (/ b a)??
-				  (eq? (car arg1) '/)
+				  (eq? op1 '/)
 				  (pair? arg2)
-				  (eq? '/ (car arg2)))
+				  (eq? '/ op2))
 			     (let ((a1 (if (null? (cddr arg1)) `(/ 1 ,(cadr arg1)) arg1))
 				   (a2 (if (null? (cddr arg2)) `(/ 1 ,(cadr arg2)) arg2)))
 			       (simplify-numerics `(/ (* ,(cadr a1) ,@(cddr a2)) (* ,@(cddr a1) ,(cadr a2))) env)))
 
 			    ((and (pair? arg2)
-				  (eq? (car arg2) '*)
+				  (eq? op2 '*)
 				  (not (side-effect? arg1 env))
 				  (member arg1 (cdr arg2)))
 			     (let ((n (remove arg1 (cdr arg2))))
@@ -3919,7 +3952,7 @@
 				   `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
 
 			    ((and (pair? arg2)            ; (/ c (/ a b)) -> (/ (* c b) a)
-				  (eq? (car arg2) '/))
+				  (eq? op2 '/))
 			     (cond ((null? (cddr arg2))
 				    `(* ,arg1 ,(cadr arg2)))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
 				   ((eqv? (cadr arg2) 1)
@@ -3939,33 +3972,33 @@
 #|
 			    ;; can't decide about this -- result usually looks cruddy
 			    ((and (pair? arg2)             ; (/ x (* y z)) -> (/ x y z)
-				  (eq? (car arg2) '*))
+				  (eq? op2 '*))
 			     `(/ ,arg1 ,@(cdr arg2)))
 |#
 			    ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y)
 				  (pair? arg2)
 				  (= (length arg1) (length arg2) 2)
-				  (case (car arg1)
-				    ((log) (eq? (car arg2) 'log))
+				  (case op1
+				    ((log) (eq? op2 'log))
 				    ((sin)
-				     (and (eq? (car arg2) 'cos)
+				     (and (eq? op2 'cos)
 					  (equal? (cadr arg1) (cadr arg2))))
 				    (else #f)))
-			     (if (eq? (car arg1) 'log)
+			     (if (eq? op1 'log)
 				 `(log ,(cadr arg1) ,(cadr arg2))
 				 `(tan ,(cadr arg1))))
 
 			    ((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
 				  (pair? arg2)
-				  (eq? (car arg1) '-)
-				  (eq? (car arg2) '-)
+				  (eq? op1 '-)
+				  (eq? op2 '-)
 				  (= (length arg1) (length arg2) 2))
 			     `(/ ,(cadr arg1) ,(cadr arg2)))
 
 			    ((and (pair? arg1)             ; (/ (* x y) (* z y)) -> (/ x z)
 				  (pair? arg2)
-				  (eq? (car arg1) '*)
-				  (case (car arg2)
+				  (eq? op1 '*)
+				  (case op2
 				    ((*)
 				     (and (= (length arg1) (length arg2) 3)
 					  (equal? (caddr arg1) (caddr arg2))))
@@ -3975,7 +4008,7 @@
 						 (= (length p) 2)))
 					   (else #f)))
 				    (else #f))           ; (/ (* 12 (log x)) (log 2)) -> (* 12 (log x 2))
-				  (if (eq? (car arg2) '*)
+				  (if (eq? op2 '*)
 				      `(/ ,(cadr arg1) ,(cadr arg2))
 				      (let ((used-log (cadr arg2)))
 				      `(* ,@(map (lambda (p)
@@ -4126,7 +4159,7 @@
 		   ((and (pair? (car args))        ; (abs (modulo x 2)) -> (modulo x 2)
 			 (memq (caar args) '(modulo random))
 			 (= (length (car args)) 3)
-			 (number? (caddar args))
+			 (real? (caddar args))
 			 (positive? (caddar args)))
 		    (car args))
 		   ((and (pair? (car args))        ; (abs (- x)) -> (abs x)
@@ -5158,7 +5191,7 @@
 			       (lint-format "perhaps (assuming ~A is a list), ~A" caller var 
 					    (lists->string form `(and (pair? ,var) (null? (cdr ,var))))))))))
 	       (unrelop caller '= form))
-	     (check-char-cmp caller head form)))
+	     (check-char-cmp caller '= form)))
 	 (hash-table-set! h '= sp-=))
 	
 	;; ---------------- < > <= >= ----------------
@@ -5471,7 +5504,7 @@
 		   (lint-format "~A could be (owlet): owlet is copied internally" caller form))
 		  
 		  ((= (length form) 5)
-		   (check-start-and-end caller head (cdddr form) form env))))
+		   (check-start-and-end caller 'copy (cdddr form) form env))))
 	  (hash-table-set! h 'copy sp-copy))
 	
 	;; ---------------- string-copy ----------------
@@ -7298,7 +7331,7 @@
 	 h 'write-string 
 	 (lambda (caller head form env)
 	   (if (= (length form) 4)
-	       (check-start-and-end caller head (cddr form) form env))))
+	       (check-start-and-end caller 'write-string (cddr form) form env))))
 
 	;; ---------------- read-line ----------------
 	(hash-table-set!
@@ -7403,7 +7436,7 @@
 	       (let* ((tag (cadr form))
 		      (eq (eqf tag env)))
 		 (if (not (member eq '((eq? eq?) (#t #t))))
-		     (lint-format "~A tag ~S is unreliable (catch uses eq? to match tags)" caller head tag))))))
+		     (lint-format "~A tag ~S is unreliable (catch uses eq? to match tags)" caller 'throw tag))))))
 	
 	;; ---------------- make-hash-table ----------------
 	(hash-table-set! 
@@ -7443,7 +7476,7 @@
 	  (define (sp-string-index caller head form env)
 	    (if (and (pair? (cdr form))
                      (pair? (cddr form))
-                     (not (var-member head env))
+                     (not (var-member 'string-index env))
 		     (or (char? (caddr form))
 			 (let ((sig (arg-signature (caddr form) env)))
 			   (and (pair? sig)
@@ -7471,55 +7504,66 @@
 	  (hash-table-set! h 'cons* sp-cons*))
 
 	;; ---------------- the-environment etc ----------------
-	(let ()
-	  (define (sp-the-environment caller head form env)
-	    (lint-format "~A is probably curlet in s7" caller head))
-	  (for-each (lambda (f)
-		      (hash-table-set! h f sp-the-environment))
-		    '(interaction-environment the-environment)))
+	(let ((other-names '((the-environment . curlet)
+			     (interaction-environment . curlet)
+			     (system-global-environment . rootlet)
+			     (user-global-environment . rootlet)
+			     (user-initial-environment . rootlet)
+			     (procedure-environment . funclet)
+			     (environment? . let?)
+			     (environment-set! . let-set!)
+			     (environment-ref . let-ref)
+			     (unquote-splicing apply values ...)
+			     (bitwise-and . logand) 
+			     (bitwise-ior . logior) 
+			     (bitwise-xor . logxor) 
+			     (bitwise-not . lognot)
+			     (arithmetic-shift . ash)
+			     (vector-for-each . for-each)
+			     (string-for-each . for-each)
+			     (list-copy . copy)
+			     (bytevector? . byte-vector?)
+			     (bytevector . byte-vector)
+			     (make-bytevector . make-byte-vector)
+			     (bytevector-u8-ref . byte-vector-ref)
+			     (bytevector-u8-set! . byte-vector-set!)
+			     (bytevector-length . length)
+			     (write-bytevector . write-string)
+			     (exact-integer? . integer?)
+			     (truncate-quotient . quotient)
+			     (truncate-remainder . remainder)
+			     (floor-remainder . modulo)
+			     (read-u8 . read-byte)
+			     (write-u8 . write-byte)
+			     (write-simple . write)
+			     (peek-u8 . peek-char)
+			     (u8-ready? . char-ready?) 
+			     (open-input-bytevector . open-input-string)
+			     (open-output-bytevector . open-output-string)
+			     (raise . error)
+			     (raise-continuable . error))))
 
-	;; ---------------- system-environment etc ----------------	
-	(let ()
-	  (define (sp-system-environment caller head form env)
-	    (lint-format "~A is probably rootlet in s7" caller head))
-	  (for-each (lambda (f)
-		      (hash-table-set! h f sp-system-environment))
-		    '(system-global-environment user-initial-environment)))
-	
-					;	((environment?)     (lint-format "environment? is let? in s7" caller))
-					;	((environment-set!) (lint-format "environment-set! is let-set! in s7" caller))
-					;	((environment-ref)  (lint-format "environment-ref is let-ref in s7" caller))
-	
-	;; ---------------- unquote-splicing ----------------	
-	(hash-table-set! 
-	 h 'unquote-splicing 
-	 (lambda (caller head form env)
-	   (lint-format "unquote-splicing is probably (apply values ...) in s7" caller)))
-
-	;; ---------------- bitwise-ior etc ----------------	
-	(let ()
-	  (define (sp-bitwise-ior caller head form env)
+	  (define (sp-other-names caller head form env)
 	    (if (not (var-member head env))
-		(lint-format "~A is ~A in s7" caller head 
-			     (cdr (assq head '((bitwise-and . logand) 
-					       (bitwise-ior . logior) 
-					       (bitwise-xor . logxor) 
-					       (bitwise-not . lognot)
-					       (arithmetic-shift . ash)))))))
+		(let ((counts (hash-table-ref other-names-counts head)))
+		  (when (< (or counts 0) 3)
+		    (hash-table-set! other-names-counts head (+ (or counts 0) 1))
+		    (lint-format "~A is probably ~A in s7" caller head (cdr (assq head other-names)))))))
+
 	  (for-each (lambda (f)
-		      (hash-table-set! h f sp-bitwise-ior))
-		    '(bitwise-and bitwise-ior bitwise-not bitwise-xor arithmetic-shift)))
+		      (hash-table-set! h (car f) sp-other-names))
+		    other-names))
 
 	(hash-table-set! 
 	 h '1+ 
 	 (lambda (caller head form env)
-	   (if (not (var-member head env))
+	   (if (not (var-member '1+ env))
 	       (lint-format "perhaps ~A" caller (lists->string form `(+ ,(cadr form) 1))))))
 
 	(hash-table-set! 
 	 h '-1+ 
 	 (lambda (caller head form env)
-	   (if (not (var-member head env))
+	   (if (not (var-member '-1+ env))
 	       (lint-format "perhaps ~A" caller (lists->string form `(- ,(cadr form) 1))))))
 
 	;; ---------------- push! pop! ----------------	
@@ -7553,13 +7597,13 @@
 	 h 'and-let* 
 	 (lambda (caller head form env)
 	   (when (and (> (length form) 2)
-		      (not (var-member head env)))
+		      (not (var-member 'and-let* env)))
 	     (let loop ((bindings (cadr form)))
 	       (cond ((pair? bindings)
-		      (if (binding-ok? caller head (car bindings) env #f)
+		      (if (binding-ok? caller 'and-let* (car bindings) env #f)
 			  (loop (cdr bindings))))
 		     ((not (null? bindings))
-		      (lint-format "~A variable list is not a proper list? ~S" caller head bindings))
+		      (lint-format "~A variable list is not a proper list? ~S" caller 'and-let* bindings))
 		     ((and (pair? (cadr form))   ; (and-let* ((x (f y))) (abs x)) -> (cond ((f y) => abs))
 			   (null? (cdadr form))
 			   (pair? (cddr form)))
@@ -8782,9 +8826,7 @@
 							      (cdar call))))
 					     (set! repeats (cons (string-append (truncated-list->string (car call)) " occurs ")
 								 (cons (string-append (object->string (cdr call)) " times"
-										      (if (pair? repeats)
-											  ", "
-											  ""))
+										      (if (pair? repeats) ", " ""))
 								       repeats)))))
 				       h)
 			     (if (pair? repeats)
@@ -9508,7 +9550,6 @@
 		(dpy-start #f)
 		(len (length body)))
 	    (if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
-
 
 	    (when (and (pair? body)
 		       *report-function-stuff*
@@ -11184,12 +11225,26 @@
 				 (and-incomplete form 'if2 (cadr test) false env))
 			     (if (and (hash-table-ref bools (car test))
 				      (pair? true))
-				 (and-forgetful form 'if test true env)
+				 (if (member (cadr test) true)
+				     (and-forgetful form 'if test true env)
+				     (do ((p true (cdr p)))
+					 ((or (not (pair? p))
+					      (and (pair? (car p))
+						   (member (cadr test) (car p))))
+					  (if (pair? p)
+					      (and-forgetful form 'if test (car p) env)))))
 				 (if (and (eq? (car test) 'not)
 					  (pair? (cadr test))
 					  (pair? false)
 					  (hash-table-ref bools (caadr test)))
-				     (and-forgetful form 'if2 (cadr test) false env)))))
+				     (if (member (cadadr test) false)
+					 (and-forgetful form 'if2 (cadr test) false env)
+					 (do ((p false (cdr p)))
+					     ((or (not (pair? p))
+						  (and (pair? (car p))
+						       (member (cadadr test) (car p))))
+					      (if (pair? p)
+						  (and-forgetful form 'if2 (cadr test) (car p) env)))))))))
 
 		       (when (and (pair? true)
 				  (pair? false)
@@ -12171,8 +12226,15 @@
 					     (hash-table-ref bools (car test))
 					     (pair? sequel)
 					     (pair? (car sequel)))
-					(and-forgetful form 'cond test (car sequel) env)))
-				
+					(if (member (cadr test) (car sequel))
+					    (and-forgetful form 'cond test (car sequel) env)
+					    (do ((p (car sequel) (cdr p)))   
+						((or (not (pair? p))
+						     (and (pair? (car p))
+							  (member (cadr test) (car p))))
+						 (if (pair? p)
+						     (and-forgetful form 'cond test (car p) env)))))))
+
 				(cond ((memq test '(else #t))
 				       (set! has-else #t)
 				       
@@ -15020,7 +15082,7 @@
 				       
 				       (if (set!? form env)
 					   (set-set (cadr form) caller form env)))
-				     
+
 				     (if (var? v)
 					 (if (and (memq (var-ftype v) '(define lambda define* lambda*))
 						  (not (memq caller (var-scope v))))
@@ -15313,6 +15375,7 @@
 	(set! outport outp)
 	(set! other-identifiers (make-hash-table))
 	(set! linted-files ())
+	(fill! other-names-counts 0)
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! last-simplify-cxr-line-number -1)
@@ -15712,5 +15775,7 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;; perhaps flag returning a closure sequence variable?
 ;;; if we know a macro's value, expand via macroexpand each time encountered and run lint on that?
-;;;
-;;; 129 22792 516421
+;;; argument consistency? (vector (number? x) (< x 0))
+;;;   one arg assumes type, other either assumes a different type or tests for something not subsumed in the first
+;;; 
+;;; 129 22792 517049

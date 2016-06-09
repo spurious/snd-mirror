@@ -28270,7 +28270,7 @@ EDITS: 2
 	  (vc (vector .1 .2 .3 .4))
 	  (lst (list 1 2 3 4 5))
 	  (hsh (make-hash-table 100))
-	  (sd (make-float-vector (list 1 10)))
+	  (sd (make-float-vector '(1 10)))
 	  (str "123456"))
       (let ((mxv (mix-float-vector v 1000))
 	    (reg (make-region 0 100))
@@ -31441,7 +31441,7 @@ EDITS: 1
 	  
 	  (src-channel 1.0 0 #f ind 0 edpos)
 	  (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
-	    (if (and diff (> (car diff) .0001)) (snd-display ";edpos src 1 diff: ~A" diff)))
+	    (if (and (pair? diff) (> (car diff) .0001)) (snd-display ";edpos src 1 diff: ~A" diff)))
 	  (if (= (edit-position ind 0) (+ edpos 2)) 
 	      (snd-display ";edpos src copy opted out?")
 	      (undo))
@@ -31481,7 +31481,7 @@ EDITS: 1
 	    
 	    (src-channel 1.0 0 #f ind 0 edpos)
 	    (let ((diff (edit-difference ind 0 edpos (edit-position ind 0))))
-	      (if (and diff (> (car diff) .0001)) (snd-display ";1 edpos src 1 diff: ~A" diff)))
+	      (if (and (pair? diff) (> (car diff) .0001)) (snd-display ";1 edpos src 1 diff: ~A" diff)))
 	    (if (> (abs (- (framples ind 0) len)) 2)
 		(snd-display ";src len edpos: ~A ~A" len (framples ind 0)))
 	    (undo)
@@ -33784,12 +33784,10 @@ EDITS: 1
     
     (let ((ind (open-sound "oboe.snd")))
       (let ((tag (catch #t (lambda () (save-sound-as "test.snd" :edit-position 1)) (lambda args args))))
-	(if (not (and tag
-		      (eq? (car tag) 'no-such-edit)))
+	(if (not (and (pair? tag) (eq? (car tag) 'no-such-edit)))
 	    (snd-display ";save-sound-as bad edpos: ~A" tag)))
       (let ((tag (catch #t (lambda () (save-sound-as "test.snd" :channel 1 :edit-position 1)) (lambda args args))))
-	(if (not (and tag
-		      (eq? (car tag) 'no-such-channel)))
+	(if (not (and (pair? tag) (eq? (car tag) 'no-such-channel)))
 	    (snd-display ";save-sound-as bad chan: ~A" tag)))
       (save-sound-as "test.snd" :comment "this is a comment")
       (close-sound ind)
