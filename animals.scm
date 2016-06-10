@@ -4288,14 +4288,14 @@
 ;;; American crow
 
 (define (nrcos->polywave n r scl)
-  (if (< 0 n 8192)
+  (if (not (< 0 n 8192))
+      (error 'out-of-range "nrcos->polywave: too many partials")
       (let ((lst ())
 	    (total (polynomial (make-float-vector n 1.0) r)))
 	(set! scl (/ scl total))
 	(do ((i 0 (+ i 1)))
 	    ((= i n) (reverse lst))
-	  (set! lst (cons (* scl (expt r i)) (cons (+ i 1) lst)))))
-      (error 'out-of-range "nrcos->polywave: too many partials")))
+	  (set! lst (cons (* scl (expt r i)) (cons (+ i 1) lst)))))))
 
 (defanimal (american-crow beg amp)
   (let ((dur 0.27))

@@ -118,24 +118,21 @@
 		  (if (> (random 1.0) 0.5) (set! cellsiz (+ 1 cellsiz)))
 		  (set! cellctr cellbeg)))
 
-	    (format () "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
-		    dur
-		    (let ((freq (* cfreq 16.351 16
-				   (expt 2 (/ (vmode (vpits cellctr))
-					      12.0)))))
+	    (let ((freq (* cfreq 16.351 16
+			   (expt 2 (/ (vmode (vpits cellctr)) 12.0)))))
+	      (format () "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
+		      dur
 		      (if (< (* 8 freq) *clm-srate*)
 			  freq
-			  (/ freq 4)))
-		    (* camp 0.3) cindex)
+			  (/ freq 4))
+		      (* camp 0.3) 
+		      cindex)
 
-	    (set! func (make-rt-violin dur
-				       (let ((freq (* cfreq 16.351 16
-						      (expt 2 (/ (vmode (vpits cellctr))
-								 12.0)))))
+	      (set! func (make-rt-violin dur
 					 (if (< (* 8 freq) *clm-srate*)
 					     freq
-					     (/ freq 4)))
-				       (* camp 0.3) :fm-index cindex))
+					     (/ freq 4))
+					 (* camp 0.3) :fm-index cindex)))
 	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
       func)))
 

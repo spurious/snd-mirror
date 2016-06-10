@@ -952,12 +952,11 @@ time for perfection...):
     (<a class=quiet href="extsnd.html#scanchannel">scan-channel</a>
      (lambda (y)
        (if (not (&lt;= -0.9999 y 0.9999))
-	   (if in-clip
-	       (set! clip-end samp)
-	       (begin
-		 (set! in-clip #t)
-		 (set! clip-beg samp)
-		 (set! clip-end samp)))
+           (begin
+	     (unless in-clip
+	       (set! in-clip #t)
+	       (set! clip-beg samp))
+	     (set! clip-end samp))
 	   (if in-clip
 	       (begin
 		 (set! in-clip #f)

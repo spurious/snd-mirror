@@ -72851,7 +72851,8 @@ static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
 {
   if (is_null(p))
     return(i);
-  if (!is_pair(p))
+  if ((!is_pair(p)) ||
+      (car(p) == sc->quote_symbol))
     return(i + 1);
   return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
 }
