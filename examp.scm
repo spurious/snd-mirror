@@ -461,23 +461,22 @@ read an ASCII sound file"))
       (let* ((keysnd (or (selected-sound) (car (sounds))))
 	     (keychn (or (selected-channel keysnd) 0))
 	     (chan-marks (marks keysnd keychn)))
-	(define find-leftmost-mark 
-	  (let ((current-left-sample (left-sample keysnd keychn)))
-	    (lambda (samps)
-	      (and (pair? samps)
-		   (if (> (car samps) current-left-sample)
-		       (car samps)
-		       (find-leftmost-mark (cdr samps)))))))
-	(if (null? chan-marks)
-	    (status-report "no marks!")
-	    (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
-	      (if (number? leftmost)
-		  (begin
-		    (set! (left-sample keysnd keychn) leftmost)
-		    keyboard-no-action)
-		  (status-report "no mark in window"))))))))
+	(letrec ((find-leftmost-mark (let ((current-left-sample (left-sample keysnd keychn)))
+				       (lambda (samps)
+					 (and (pair? samps)
+					      (if (> (car samps) current-left-sample)
+						  (car samps)
+						  (find-leftmost-mark (cdr samps))))))))
+	  (if (null? chan-marks)
+	      (status-report "no marks!")
+	      (let ((leftmost (find-leftmost-mark (map mark-sample chan-marks))))
+		(if (number? leftmost)
+		    (begin
+		      (set! (left-sample keysnd keychn) leftmost)
+		      keyboard-no-action)
+		    (status-report "no mark in window")))))))))
     
-					;(bind-key #\m 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
+;; (bind-key #\m 0 (lambda () "align window left edge with mark" (first-mark-in-window-at-left)))
 
 
 ;;; -------- flash selected data red and green

@@ -5901,7 +5901,7 @@ static s7_pointer acc_show_controls(s7_scheme *sc, s7_pointer args) {return(g_se
 void g_init_snd(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi, pl_ioz;
+  s7_pointer pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi, pl_ioz, pl_roo, pl_roor;
   {
     s7_pointer i, t, s, b, o, q, p, r, z;
     i = s7_make_symbol(s7, "integer?");
@@ -5930,6 +5930,8 @@ void g_init_snd(void)
     pl_pop = s7_make_signature(s7, 3, p, o, p);
     pl_ro = s7_make_signature(s7, 2, r, o);
     pl_ror = s7_make_signature(s7, 3, r, o, r);
+    pl_roo = s7_make_signature(s7, 3, r, o, o);
+    pl_roor = s7_make_signature(s7, 4, r, o, o, r);
   }
 #endif
 
@@ -6060,7 +6062,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_typed_dilambda(S_reverb_control_lowpass, g_reverb_control_lowpass_w, H_reverb_control_lowpass, 
 			    S_set S_reverb_control_lowpass, g_set_reverb_control_lowpass_w, 0, 1, 1, 1, pl_ro, pl_ror);
   Xen_define_typed_dilambda(S_amp_control, g_amp_control_w, H_amp_control, 
-			    S_set S_amp_control, g_set_amp_control_w, 0, 2, 1, 2, pl_ro, pl_ror);
+			    S_set S_amp_control, g_set_amp_control_w, 0, 2, 1, 2, pl_roo,pl_roor);
   Xen_define_typed_dilambda(S_amp_control_bounds, g_amp_control_bounds_w, H_amp_control_bounds, 
 			    S_set S_amp_control_bounds, g_set_amp_control_bounds_w, 0, 1, 1, 1, pl_po, pl_pop);
   Xen_define_typed_dilambda(S_reverb_control_decay, g_reverb_control_decay_w, H_reverb_control_decay, 

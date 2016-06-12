@@ -2960,7 +2960,7 @@
     (do ((i 0 (+ i 1)))
 	((= i 40))
       (savannah-2 (+ beg 1.29 .36 (* i .0145)) (* amp af) 5600)
-      (set! af (if (< i 20) (+ af .004) (- af .004)))))
+      (set! af ((if (< i 20) + -) af 0.004))))
   
   (savannah-7 (+ beg 2.27) (* .4 amp))
 

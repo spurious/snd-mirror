@@ -28,32 +28,31 @@
 (define swap-selection-channels
   (let ((documentation "(swap-selection-channels) swaps the currently selected data's channels"))
     (lambda ()
-      (define find-selection-sound 
-	(lambda (not-this)
-	  (let ((scs (all-chans)))
-	    (call-with-exit
-	     (lambda (return)
-	       (map 
-		(lambda (snd chn)
-		  (if (and (selection-member? snd chn)
-			   (or (null? not-this)
-			       (not (equal? snd (car not-this)))
-			       (not (= chn (cadr not-this)))))
-		      (return (list snd chn))))
-		(car scs)
-		(cadr scs)))))))
-      
-      (if (selection?)
-	  (if (= (selection-chans) 2)
-	      (let* ((beg (selection-position))
-		     (len (selection-framples))
-		     (snd-chn0 (find-selection-sound ()))
-		     (snd-chn1 (find-selection-sound snd-chn0)))
-		(if snd-chn1
-		    (swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
-		    (error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap")))
-	      (error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection"))
-	  (error 'no-active-selection "swap-selection-channels needs a selection")))))
+      (let ((find-selection-sound 
+	     (lambda (not-this)
+	       (let ((scs (all-chans)))
+		 (call-with-exit
+		  (lambda (return)
+		    (map 
+		     (lambda (snd chn)
+		       (if (and (selection-member? snd chn)
+				(or (null? not-this)
+				    (not (equal? snd (car not-this)))
+				    (not (= chn (cadr not-this)))))
+			   (return (list snd chn))))
+		     (car scs)
+		     (cadr scs))))))))
+	(if (selection?)
+	    (if (= (selection-chans) 2)
+		(let* ((beg (selection-position))
+		       (len (selection-framples))
+		       (snd-chn0 (find-selection-sound ()))
+		       (snd-chn1 (find-selection-sound snd-chn0)))
+		  (if snd-chn1
+		      (swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
+		      (error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap")))
+		(error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection"))
+	    (error 'no-active-selection "swap-selection-channels needs a selection"))))))
 
 
 

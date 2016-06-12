@@ -1526,9 +1526,10 @@ at random), and car3 and mod3 putting a sort of formant at the minor third
 
 <pre class="indented">
 (<a class=quiet href="#wsdoc">with-sound</a> ()
-  (let ((fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .5000))
-        (abell '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0)))
-    (fm-bell 0.0 2.0 220.0 .5 abell fbell 0.5)))
+  (fm-bell 0.0 2.0 220.0 .5
+    '(0 0 .1000 1 10 .6000 25 .3000 50 .1500 90 .1000 100 0)
+    '(0 1 2 1.1000 25 .7500 75 .5000 100 .5000)
+    0.5))
 </pre>
 
 <div class="separator"></div>

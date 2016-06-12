@@ -2333,7 +2333,6 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
   return(Xen_false);
 }
 
-
 static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool check_sample, const char *caller) 
 {
   #define H_add_mark "(" S_add_mark " samp :optional snd chn name (sync 0)): add a mark at sample samp returning the mark."
@@ -2661,7 +2660,7 @@ static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
 #endif
 
 #if HAVE_SCHEME
-  fprintf(sv->fd, "(let ((%s%d (1+ (mark-sync-max))))\n", SYNC_BASE, cur_sync);
+  fprintf(sv->fd, "(let ((%s%d (+ (mark-sync-max) 1)))\n", SYNC_BASE, cur_sync);
 #endif
 
 #if HAVE_RUBY
@@ -2918,33 +2917,52 @@ void g_init_marks(void)
   #define H_mark_hook S_mark_hook " (id snd chn reason): called when a mark added, deleted, or moved. \
 'Reason' can be 0: add, 1: delete, 2: move, 3: delete all marks"
 
+#if HAVE_SCHEME
+  s7_pointer i, m, b, s, p, t, pl_im, pl_add, pl_i;
+  i = s7_make_symbol(s7, "integer?");
+  m = s7_make_symbol(s7, "mark?");
+  b = s7_make_symbol(s7, "boolean?");
+  s = s7_make_symbol(s7, "string?");
+  p = s7_make_symbol(s7, "list?");
+  t = s7_t(s7);
+  pl_im = s7_make_signature(s7, 2, i, m);
+  pl_add = s7_make_signature(s7, 6, s7_make_signature(s7, 2, m, b), i, t, t, s7_make_signature(s7, 2, s, b), i);
+  pl_i = s7_make_circular_signature(s7, 0, 1, i);
+#endif
+
   init_xen_mark();
 
   mark_drag_hook = Xen_define_hook(S_mark_drag_hook, "(make-hook 'id)", 1, H_mark_drag_hook);
   mark_hook = Xen_define_hook(S_mark_hook, "(make-hook 'id 'snd 'chn 'reason)", 4, H_mark_hook); 
 
-  Xen_define_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample, S_set S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0);
-  Xen_define_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync, S_set S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_set S_mark_name, g_set_mark_name_w, 1, 0, 2, 0);
+  Xen_define_typed_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample, S_set S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0, 
+			    s7_make_signature(s7, 3, i, m, i), s7_make_signature(s7, 2, 3, i, m, i)); 
+  Xen_define_typed_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync, S_set S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0, pl_im, 
+			    s7_make_signature(s7, 3, i, m, s7_make_signature(s7, 2, i, b)));	    
+  Xen_define_typed_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_set S_mark_name, g_set_mark_name_w, 1, 0, 2, 0, 
+			    s7_make_signature(s7, 2, s, m), s7_make_signature(s7, 3, s, m, s));
 
-  Xen_define_safe_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max);
-  Xen_define_safe_procedure(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home); 
-  Xen_define_safe_procedure(S_marks,           g_marks_w,           0, 3, 0, H_marks);
-  Xen_define_safe_procedure(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark);
-  Xen_define_safe_procedure(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark_unchecked);
-  Xen_define_safe_procedure(S_delete_mark,     g_delete_mark_w,     1, 0, 0, H_delete_mark);
-  Xen_define_safe_procedure(S_delete_marks,    g_delete_marks_w,    0, 2, 0, H_delete_marks);
-  Xen_define_safe_procedure(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks);
-  Xen_define_safe_procedure(S_find_mark,       g_find_mark_w,       1, 3, 0, H_find_mark);
-  Xen_define_safe_procedure(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks);
-  Xen_define_safe_procedure(S_is_mark,         g_is_mark_w,         1, 0, 0, H_is_mark);
-  Xen_define_safe_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark);
-  Xen_define_safe_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer);
+  Xen_define_typed_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max, s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home, s7_make_signature(s7, 2, p, m));
+  Xen_define_typed_procedure(S_marks,           g_marks_w,           0, 3, 0, H_marks, s7_make_circular_signature(s7, 1, 2, p, t));
+  Xen_define_typed_procedure(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark, pl_add);
+  Xen_define_typed_procedure(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark_unchecked, pl_add);
+  Xen_define_typed_procedure(S_delete_mark,     g_delete_mark_w,     1, 0, 0, H_delete_mark, s7_make_signature(s7, 2, t, m));
+  Xen_define_typed_procedure(S_delete_marks,    g_delete_marks_w,    0, 2, 0, H_delete_marks, s7_make_signature(s7, 3, b, t, t));
+  Xen_define_typed_procedure(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks, s7_make_signature(s7, 2, p, i));
+  Xen_define_typed_procedure(S_find_mark,       g_find_mark_w,       1, 3, 0, H_find_mark,
+			     s7_make_circular_signature(s7, 2, 3, s7_make_signature(s7, 2, m, b), s7_make_signature(s7, 2, i, s), t));
+  Xen_define_typed_procedure(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks, s7_make_signature(s7, 3, s, t, s));
+  Xen_define_typed_procedure(S_is_mark,         g_is_mark_w,         1, 0, 0, H_is_mark, s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark, s7_make_signature(s7, 2, m, i));
+  Xen_define_typed_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer, s7_make_signature(s7, 2, i, m));
 
-  Xen_define_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width, S_set S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height, S_set S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_properties, g_mark_properties_w, H_mark_properties, S_set S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0);
-  Xen_define_dilambda(S_mark_property, g_mark_property_w, H_mark_property, S_set S_mark_property, g_set_mark_property_w, 2, 0, 3, 0);
+  Xen_define_typed_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width, S_set S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0, pl_i, pl_i);
+  Xen_define_typed_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height, S_set S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0, pl_i, pl_i);
+  Xen_define_typed_dilambda(S_mark_properties, g_mark_properties_w, H_mark_properties, S_set S_mark_properties, g_set_mark_properties_w, 1, 0, 2, 0,
+			    s7_make_signature(s7, 2, p, m), s7_make_signature(s7, 3, p, m, p));
+  Xen_define_typed_dilambda(S_mark_property, g_mark_property_w, H_mark_property, S_set S_mark_property, g_set_mark_property_w, 2, 0, 3, 0, 
+			    s7_make_signature(s7, 3, t, t, m), s7_make_circular_signature(s7, 3, 4, t, t, m, t));
 
   #define H_draw_mark_hook S_draw_mark_hook " (id): called before a mark is drawn. \
 If the hook returns " PROC_TRUE ", the mark is not drawn."

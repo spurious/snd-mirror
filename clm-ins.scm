@@ -249,35 +249,34 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
   "(pqw-vox beg dur freq spacing-freq amp ampfun freqfun freqscl phonemes formant-amps formant-shapes) produces 
 vocal sounds using phase quadrature waveshaping"
 
-  (define (vox-fun phons which newenv)
+  (define vox-fun
+    (let ((formants '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
+		      (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
+		      (U 440 1020 2240)  (OO 300 870 2240)  (ER 490 1350 1690)
+		      (W 300 610 2200)   (LL 380 880 2575)  (R 420 1300 1600)
+		      (Y 300 2200 3065)  (EE 260 3500 3800) (LH 280 1450 1600)
+		      (L 300 1300 3000)  (I2 350 2300 3340) (B 200 800 1750)
+		      (D 300 1700 2600)  (G 250 1350 2000)  (M 280 900 2200)
+		      (N 280 1700 2600)  (NG 280 2300 2750) (P 300 800 1750)
+		      (T 200 1700 2600)  (K 350 1350 2000)  (F 175 900 4400)
+		      (TH 200 1400 2200) (S 200 1300 2500)  (SH 200 1800 2000)
+		      (V 175 1100 2400)  (THE 200 1600 2200)(Z 200 1300 2500)
+		      (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400))))
+      ;; formant center frequencies for a male speaker
 
-    (define formants
-      '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
-	(UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
-	(U 440 1020 2240)  (OO 300 870 2240)  (ER 490 1350 1690)
-	(W 300 610 2200)   (LL 380 880 2575)  (R 420 1300 1600)
-	(Y 300 2200 3065)  (EE 260 3500 3800) (LH 280 1450 1600)
-	(L 300 1300 3000)  (I2 350 2300 3340) (B 200 800 1750)
-	(D 300 1700 2600)  (G 250 1350 2000)  (M 280 900 2200)
-	(N 280 1700 2600)  (NG 280 2300 2750) (P 300 800 1750)
-	(T 200 1700 2600)  (K 350 1350 2000)  (F 175 900 4400)
-	(TH 200 1400 2200) (S 200 1300 2500)  (SH 200 1800 2000)
-	(V 175 1100 2400)  (THE 200 1600 2200)(Z 200 1300 2500)
-	(ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400)))
-    ;;formant center frequencies for a male speaker
-    
-    ;; make an envelope from which-th entry of phoneme data referred to by phons
-    (if (null? phons)
-	newenv
-	(vox-fun (cddr phons) which
-		 (append newenv
-			 (list (car phons)
-			       ((let find-phoneme ((phoneme (cadr phons))
-						   (form formants))
-				  (if (eq? (caar form) phoneme)
-				      (cdar form)
-				      (find-phoneme phoneme (cdr form))))
-				which))))))
+      (lambda (phons which newenv)
+	;; make an envelope from which-th entry of phoneme data referred to by phons
+	(if (null? phons)
+	    newenv
+	    (vox-fun (cddr phons) which
+		     (append newenv
+			     (list (car phons)
+				   ((let find-phoneme ((phoneme (cadr phons))
+						       (form formants))
+				      (if (eq? (caar form) phoneme)
+					  (cdar form)
+					  (find-phoneme phoneme (cdr form))))
+				    which))))))))
 
   (let ((start (seconds->samples beg))
 	 (end (seconds->samples (+ beg dur)))
@@ -472,16 +471,16 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (let ((beg (seconds->samples startime))
 	  (end (seconds->samples (+ startime dur)))
 	  (loc (make-locsig degree distance reverb-amount))
-	  (per-vib-f (make-env (stretch-envelope '(0 1  25 .1  75 0  100 0)
-						 25 (min (* 100 (/ vibatt dur)) 45)
-						 75 (max (* 100 (- 1.0 (/ vibdec dur))) 55))
-			       :scaler vibamp :duration dur))
+	  (per-vib-f (let ((vibe (stretch-envelope '(0 1  25 .1  75 0  100 0)
+						   25 (min (* 100 (/ vibatt dur)) 45)
+						   75 (max (* 100 (- 1.0 (/ vibdec dur))) 55))))
+		       (make-env vibe :scaler vibamp :duration dur)))
 	  (ran-vib (make-rand-interp :frequency rvibfrq :amplitude rvibamp))
 	  (per-vib (make-oscil vibfrq))
-	  (frq-f (make-env (stretch-envelope '(0 0  25 1  75 1  100 0)
-					     25 (min 25 (* 100 (/ frqatt dur)))
-					     75 dec-01)
-			   :scaler frqskw :offset 1.0 :duration dur))
+	  (frq-f (let ((frqe (stretch-envelope '(0 0  25 1  75 1  100 0)
+					       25 (min 25 (* 100 (/ frqatt dur)))
+					       75 dec-01)))
+		   (make-env frqe :scaler frqskw :offset 1.0 :duration dur)))
 	  (ampattpt1 (min 25 (* 100 (/ ampatt1 dur))))
 	  (ampdecpt1 (max 75 (* 100 (- 1.0 (/ ampdec1 dur)))))
 	  (ampattpt2 (min 25 (* 100 (/ ampatt2 dur))))
@@ -699,18 +698,18 @@ is a physical model of a flute:
       (let ((beg (seconds->samples start-time))
 	    (end (seconds->samples (+ start-time duration)))
 	    (glsf (make-env glsfun :scaler (if high (hz->radians 66) 0.0) :duration duration))
-	    (ampf (make-env (stretch-envelope ampfun 
-					      10 atdrpt 
-					      15 (max (+ atdrpt 1) 
-						      (- 100 (* 100 (/ (- duration .2) duration)))))
-			    :scaler amplitude :duration duration))
+	    (ampf (let ((ampe (stretch-envelope ampfun 
+						10 atdrpt 
+						15 (max (+ atdrpt 1) 
+							(- 100 (* 100 (/ (- duration .2) duration)))))))
+		    (make-env ampe :scaler amplitude :duration duration)))
 	    (indxf (make-env divindxf :scaler (min (hz->radians (* index fmrat frequency)) pi) :duration duration))
 	    (mindxf (make-env divindxf :scaler (min (hz->radians (* index casrat frequency)) pi) :duration duration))
-	    (devf (make-env (stretch-envelope ampfun 
-					      10 atdrpt 
-					      90 (max (+ atdrpt 1) 
-						      (- 100 (* 100 (/ (- duration .05) duration)))))
-			    :scaler (min pi (hz->radians 7000)) :duration duration))
+	    (devf (let ((deve (stretch-envelope ampfun 
+						10 atdrpt 
+						90 (max (+ atdrpt 1) 
+							(- 100 (* 100 (/ (- duration .05) duration)))))))
+		    (make-env deve :scaler (min pi (hz->radians 7000)) :duration duration)))
 	    (loc (make-locsig degree distance reverb-amount))
 	    (rn (make-rand :frequency 7000 :amplitude 1.0))
 	    (carrier (make-oscil frequency))
@@ -945,15 +944,14 @@ is a physical model of a flute:
 
 (definstrument (drone startime dur frequency amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
   (let ((beg (seconds->samples startime))
-	 (end (seconds->samples (+ startime dur)))
-	 (waveform (partials->wave synth))
-	 (amplitude (* amp .25))
-	 (freq (hz->radians frequency)))
+	(end (seconds->samples (+ startime dur)))
+	(waveform (partials->wave synth))
+	(amplitude (* amp .25))
+	(freq (hz->radians frequency)))
     (let ((s (make-table-lookup :frequency frequency :wave waveform))
-	  (amp-env (make-env (stretch-envelope ampfun 25 (* 100 (/ ampat dur)) 75 (- 100 (* 100 (/ ampdc dur))))
-			     :scaler amplitude :duration dur))
-	  (ran-vib (make-rand :frequency rvibfreq 
-			      :amplitude (* rvibamt freq)))
+	  (amp-env (let ((ampe (stretch-envelope ampfun 25 (* 100 (/ ampat dur)) 75 (- 100 (* 100 (/ ampdc dur))))))
+		     (make-env ampe :scaler amplitude :duration dur)))
+	  (ran-vib (make-rand :frequency rvibfreq :amplitude (* rvibamt freq)))
 	  (loc (make-locsig deg dis amtrev)))
       (do ((i beg (+ i 1)))
 	  ((= i end))
@@ -1084,20 +1082,22 @@ is a physical model of a flute:
 		      vibfreq vibpc ranvibfreq ranvibpc degree distance reverb-amount data)
   ;; data is a list of lists of form '(ampf resonfrq resonamp ampat ampdc dev0 dev1 indxat indxdc)
   (let ((beg (seconds->samples startime))
-	 (end (seconds->samples (+ startime dur)))
-	 (carriers (make-vector numformants))
-	 (modulator (make-oscil pitch))
-	 (ampfs (make-vector numformants))
-	 (indfs (make-vector numformants))
-	 (c-rats (make-vector numformants))
-	 (frqf (make-env (stretch-envelope skewfun 25 (* 100 (/ skewat dur)) 75 (- 100 (* 100 (/ skewdc dur))))
-			 :scaler (hz->radians (* pcskew pitch)) :duration dur))
-	 (totalamp 0.0)
-	 (loc (make-locsig degree distance reverb-amount))
-	 (pervib (make-triangle-wave :frequency vibfreq
-				     :amplitude (hz->radians (* vibpc pitch))))
-	 (ranvib (make-rand-interp :frequency ranvibfreq
-				   :amplitude (hz->radians (* ranvibpc pitch)))))
+	(end (seconds->samples (+ startime dur)))
+	(carriers (make-vector numformants))
+	(modulator (make-oscil pitch))
+	(ampfs (make-vector numformants))
+	(indfs (make-vector numformants))
+	(c-rats (make-vector numformants))
+	(totalamp 0.0)
+	(loc (make-locsig degree distance reverb-amount))
+	(pervib (make-triangle-wave :frequency vibfreq
+				    :amplitude (hz->radians (* vibpc pitch))))
+	(ranvib (make-rand-interp :frequency ranvibfreq
+				  :amplitude (hz->radians (* ranvibpc pitch))))
+	(frqf (let ((frqe (stretch-envelope skewfun 
+						      25 (* 100 (/ skewat dur)) 
+						      75 (- 100 (* 100 (/ skewdc dur))))))
+		(make-env frqe :scaler (hz->radians (* pcskew pitch)) :duration dur))))
     ;; initialize the "formant" generators
     (do ((i 0 (+ i 1)))
 	((= i numformants))
@@ -1122,9 +1122,9 @@ is a physical model of a flute:
 	(if (zero? indxat) (set! indxat 25))
 	(if (zero? indxdc) (set! indxdc 75))
 	(set! (indfs i) (make-env (stretch-envelope indxfun 25 indxat 75 indxdc) :duration dur
-				       :scaler (- dev1 dev0) :offset dev0))
+				  :scaler (- dev1 dev0) :offset dev0))
 	(set! (ampfs i) (make-env (stretch-envelope ampf 25 ampat 75 ampdc) :duration dur
-				       :scaler (/ (* rsamp amp rfamp) totalamp)))
+				  :scaler (/ (* rsamp amp rfamp) totalamp)))
 	(set! (c-rats i) harm)
 	(set! (carriers i) (make-oscil cfq))))
     (if (= numformants 2)

@@ -40875,7 +40875,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, s7_pointer key)
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key in the hash table"
-  #define Q_hash_table_ref s7_make_signature(sc, 3, sc->T, sc->is_hash_table_symbol, sc->T)
+  #define Q_hash_table_ref s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_hash_table_symbol, sc->T)
 
   s7_pointer table;
   table = car(args);
@@ -43959,7 +43959,11 @@ static s7_pointer hash_table_setter(s7_scheme *sc, s7_pointer e, s7_int loc, s7_
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_copy "(copy obj) returns a copy of obj, (copy src dest) copies src into dest, (copy src dest start end) copies src from start to end."
-  #define Q_copy s7_make_circular_signature(sc, 3, 4, sc->T, sc->is_sequence_symbol, sc->is_sequence_symbol, sc->is_integer_symbol)
+  /* #define Q_copy s7_make_circular_signature(sc, 3, 4, sc->T, sc->is_sequence_symbol, sc->is_sequence_symbol, sc->is_integer_symbol) */
+  /* this is not right when c-object types are handled in lint -- a generator or Snd object need not consider itself a sequence,
+   *   but it can provide a copy method.  So, I think I'll just use #t
+   */
+  #define Q_copy s7_make_circular_signature(sc, 3, 4, sc->T, sc->T, sc->T, sc->is_integer_symbol)
 
   s7_pointer source, dest;
   s7_int i, j, dest_len, start, end, source_len;
@@ -74290,7 +74294,7 @@ s7_scheme *s7_init(void)
                               (values))))");
 
   s7_eval_c_string(sc, "(define make-hook                                                                     \n\
-                          (let ((signature '(procedure? #t))                                                  \n\
+                          (let ((signature (let ((L (list 'procedure? #t))) (set-cdr! (cdr L) (cdr L)) L))    \n\
                                 (documentation \"(make-hook . pars) returns a new hook (a function) that passes the parameters to its function list.\")) \n\
                             (lambda args                                                                      \n\
                               (let ((body ()))                                                                \n\
@@ -74475,12 +74479,6 @@ int main(int argc, char **argv)
  *   append in string case uses string_append, not g_string_append!
  *
  * Snd:
- * clm make-* sig should include the actual gen: oscil->(float? oscil? real?), also make->actual not #t in a circle 
- *   make-oscil -> '(oscil? real? real) 
- *   make-env -> '(env? sequence? real? real? real? real? integer? integer?) [seq here is actually pair? or float-vector?]
- *   need some semi-automated approach here
- *   also need rest of Snd signatures
- *
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could puts ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can

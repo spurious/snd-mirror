@@ -4054,7 +4054,7 @@ static char *make_show_all(char *key, bool ctrl, bool meta, bool cx)
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
                                        (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (sync-max))) \
+                                         (set! (sync) (+ (sync-max) 1)) \
                                          (set! (x-bounds) (list 0.0 (/ (framples) (srate)))) \
                                          (set! (sync) old-sync))) %s \"show entire sound\" \"show-all\")\n",
 		    possibly_quote(key), 
@@ -4125,7 +4125,7 @@ static char *make_select_all(char *key, bool ctrl, bool meta, bool cx)
 #if HAVE_SCHEME
   return(mus_format("(bind-key %s %d (lambda () \
                                        (let ((old-sync (sync))) \
-                                         (set! (sync) (1+ (sync-max))) \
+                                         (set! (sync) (+ (sync-max) 1)) \
                                          (select-all) \
                                          (set! (sync) old-sync))) %s \"select entire sound\" \"select-all\")\n",
 		    possibly_quote(key), 

@@ -25,7 +25,7 @@
 
 ;;; -------- strings (unterminated)
 
-(define (read-chars len)
+(define* (read-chars (len 4))
   (let ((str (make-string len)))
     (do ((i 0 (+ i 1)))
 	((= i len) str)
@@ -239,7 +239,7 @@
 (define (read-au-header file)
   (with-input-from-file file
     (lambda ()
-      (let ((magic (read-chars 4)))
+      (let ((magic (read-chars)))
 	(if (not (string=? magic ".snd"))
 	    (error 'bad-header "~A is not an au file: ~A" file)
 	    (let* ((data-location (read-bint32))
@@ -276,11 +276,11 @@
 	(current-location 0))
     (with-input-from-file file
       (lambda ()
-	(let ((magic (read-chars 4)))
+	(let ((magic (read-chars)))
 	  (if (not (string=? magic "FORM"))
 	      (error 'bad-header "~A is not an aif file: ~A" file magic)
 	      (let (;(size (read-bint32))
-		    (magic (read-chars 4)))
+		    (magic (read-chars)))
 		(set! current-location 12)
 		(if (not (member magic '("AIFF" "AIFC") string=?))
 		    (error 'bad-header "~A is not an aif file: ~A" file magic)
@@ -288,7 +288,7 @@
 		    (call-with-exit
 		     (lambda (return)
 		       (let loop ()
-			 (let ((chunk (read-chars 4))
+			 (let ((chunk (read-chars))
 			       (chunk-size (read-bint32)))
 			   (if (odd? chunk-size) (set! chunk-size (+ chunk-size 1)))
 			   (if (string=? chunk "SSND")

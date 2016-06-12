@@ -1725,8 +1725,10 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
   Xen_eval_C_string("(define load-from-path load)");
+#if (!DISABLE_DEPRECATED)
   Xen_eval_C_string("(define (1+ x) \"add 1 to arg\" (+ x 1))");
   Xen_eval_C_string("(define (1- x) \"subtract 1 from arg\" (- x 1))");
+#endif
   Xen_eval_C_string("(define-macro (while whether . body) `(do () ((not ,whether)) ,@body))");
   Xen_eval_C_string("(define (identity x) \"return arg\" x)");
 

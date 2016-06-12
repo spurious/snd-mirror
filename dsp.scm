@@ -380,23 +380,22 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define chorus
   (let ((documentation "(chorus) tries to produce the chorus sound effect"))
     (lambda ()
+      (let ((make-flanger
+	     (let ((chorus-time .05)
+		   (chorus-amount 20.0)
+		   (chorus-speed 10.0))
+	       (lambda ()
+		 (let ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
+		       (len (floor (random (* 3.0 chorus-time (srate))))))
+		   (list (make-delay len :max-size (+ len chorus-amount 1)) ri)))))
 
-      (define make-flanger
-	(let ((chorus-time .05)
-	      (chorus-amount 20.0)
-	      (chorus-speed 10.0))
-	  (lambda ()
-	    (let ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
-		  (len (floor (random (* 3.0 chorus-time (srate))))))
-	      (list (make-delay len :max-size (+ len chorus-amount 1)) ri)))))
-      
-      (define (flanger dly inval)
-	(+ inval 
-	   (delay (car dly)
-		  inval
-		  (rand-interp (cadr dly)))))
-      
-      (let ((dlys (make-vector chorus-size)))
+	    (flanger (lambda (dly inval)
+		       (+ inval 
+			  (delay (car dly)
+				 inval
+				 (rand-interp (cadr dly))))))
+	    (dlys (make-vector chorus-size)))
+
 	(do ((i 0 (+ i 1)))
 	    ((= i chorus-size))
 	  (set! (dlys i) (make-flanger)))
@@ -2039,20 +2038,17 @@ and replaces it with the spectrum given in coeffs"))
 		 (minor-tick-len 6)
 		 (major-tick-len 12)
 		 (bark-label-font (snd-font 3))
-		 (label-pos (+ axis-x0 (* .45 (- axis-x1 axis-x0))))
-		 (cr (make-cairo (car (channel-widgets snd chn)))))
-	    
-	    (define scale-position 
-	      (let ((sr2 (* 0.5 (srate snd))))
-		(lambda (scale f)
-		  (let ((b20 (scale 20.0)))
-		    (round (+ axis-x0 
-			      (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
-				 (- (scale sr2) b20))))))))
-	    
-	    (define (bark-position f) (scale-position bark f))
-	    (define (mel-position f) (scale-position mel f))
-	    (define (erb-position f) (scale-position erb f))
+		 (label-pos (round (+ axis-x0 (* .45 (- axis-x1 axis-x0)))))
+		 (cr (make-cairo (car (channel-widgets snd chn))))
+		 (scale-position (let ((sr2 (* 0.5 (srate snd))))
+				   (lambda (scale f)
+				     (let ((b20 (scale 20.0)))
+				       (round (+ axis-x0 
+						 (/ (* (- axis-x1 axis-x0) (- (scale f) b20)) 
+						    (- (scale sr2) b20))))))))
+		 (bark-position (lambda (f) (scale-position bark f)))
+		 (mel-position (lambda (f) (scale-position mel f)))
+		 (erb-position (lambda (f) (scale-position erb f))))
 	    
 	    (define draw-bark-ticks
 	      (let ((tick-y0 axis-y1)

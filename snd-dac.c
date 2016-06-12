@@ -1249,7 +1249,7 @@ bool add_mix_to_play_list(mix_state *ms, chan_info *cp, mus_long_t beg_within_mi
              (if (> samp 20000)
 		 #f
 		 (begin
-             (set! samp (1+ samp)) 
+             (set! samp (+ samp 1))
              (* .5 (oscil osc))))))) ; you can use explicit control panel accessors
  */
 

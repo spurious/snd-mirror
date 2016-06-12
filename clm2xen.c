@@ -2487,7 +2487,7 @@ static Xen g_make_oscil(Xen arg1, Xen arg2, Xen arg3, Xen arg4)
 static Xen g_oscil(Xen osc, Xen fm, Xen pm)
 {
   #define H_oscil "(" S_oscil " gen (fm 0.0) (pm 0.0)): next sample from " S_oscil " gen: val = sin(phase + pm); phase += (freq + fm)"
-  #define Q_oscil s7_make_circular_signature(s7, 2, 3, s7_make_symbol(s7, "float?"), s7_make_symbol(s7, "oscil?"), s7_make_symbol(s7, "real?"))
+  #define Q_oscil s7_make_circular_signature(s7, 2, 3, s7_make_symbol(s7, "float?"), s7_make_symbol(s7, S_is_oscil), s7_make_symbol(s7, "real?"))
 
   mus_float_t fm1;
   mus_any *g = NULL;
@@ -9902,7 +9902,7 @@ static s7_double oscil_rf_ssx(s7_scheme *sc, s7_pointer **p)
   s1 = (**p); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
   v1 = rf1(sc, p);
-  return(mus_oscil(g, s7_slot_real_value(sc, s1, "oscil"), v1));
+  return(mus_oscil(g, s7_slot_real_value(sc, s1, S_oscil), v1));
 }
 
 static s7_double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
@@ -9911,7 +9911,7 @@ static s7_double oscil_rf_sss(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
-  return(mus_oscil(g, s7_slot_real_value(sc, s1, "oscil"), s7_slot_real_value(sc, s2, "oscil")));
+  return(mus_oscil(g, s7_slot_real_value(sc, s1, S_oscil), s7_slot_real_value(sc, s2, S_oscil)));
 }
 
 static s7_double oscil_rf_srs(s7_scheme *sc, s7_pointer **p)
@@ -9920,7 +9920,7 @@ static s7_double oscil_rf_srs(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
-  return(mus_oscil(g, s7_number_to_real(sc, s1), s7_slot_real_value(sc, s2, "oscil")));
+  return(mus_oscil(g, s7_number_to_real(sc, s1), s7_slot_real_value(sc, s2, S_oscil)));
 }
 
 static s7_double oscil_rf_srx(s7_scheme *sc, s7_pointer **p)
@@ -9970,7 +9970,7 @@ static s7_double comb_rf_ssx(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
-  return(mus_comb(g, s7_slot_real_value(sc, s1, "comb"), rf1(sc, p)));
+  return(mus_comb(g, s7_slot_real_value(sc, s1, S_comb), rf1(sc, p)));
 }
 
 static s7_double comb_rf_sss(s7_scheme *sc, s7_pointer **p)
@@ -9979,7 +9979,7 @@ static s7_double comb_rf_sss(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
-  return(mus_comb(g, s7_slot_real_value(sc, s1, "comb"), s7_slot_real_value(sc, s2, "comb")));
+  return(mus_comb(g, s7_slot_real_value(sc, s1, S_comb), s7_slot_real_value(sc, s2, S_comb)));
 }
 
 static s7_rf_t comb_rf_3(s7_scheme *sc, s7_pointer expr)
@@ -10073,7 +10073,7 @@ static s7_double ssb_am_rf_sss(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
-  return(mus_ssb_am(g, s7_slot_real_value(sc, s1, "ssb-am"), s7_slot_real_value(sc, s2, "ssb-am")));
+  return(mus_ssb_am(g, s7_slot_real_value(sc, s1, S_ssb_am), s7_slot_real_value(sc, s2, S_ssb_am)));
 }
 
 static s7_rf_t ssb_am_rf_3(s7_scheme *sc, s7_pointer expr)
@@ -10096,7 +10096,7 @@ static s7_double formant_rf_ssx(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   rf1 = (s7_rf_t)(**p); (*p)++;
-  return(mus_formant_with_frequency(g, s7_slot_real_value(sc, s1, "formant"), rf1(sc, p)));
+  return(mus_formant_with_frequency(g, s7_slot_real_value(sc, s1, S_formant), rf1(sc, p)));
 }
 
 static s7_double formant_rf_sss(s7_scheme *sc, s7_pointer **p)
@@ -10105,7 +10105,7 @@ static s7_double formant_rf_sss(s7_scheme *sc, s7_pointer **p)
   mus_any *g; g = (mus_any *)(*(*p)); (*p)++;
   s1 = (**p); (*p)++;
   s2 = (**p); (*p)++;
-  return(mus_formant_with_frequency(g, s7_slot_real_value(sc, s1, "formant"), s7_slot_real_value(sc, s2, "formant")));
+  return(mus_formant_with_frequency(g, s7_slot_real_value(sc, s1, S_formant), s7_slot_real_value(sc, s2, S_formant)));
 }
 
 static s7_rf_t formant_rf_3(s7_scheme *sc, s7_pointer expr)
@@ -10129,7 +10129,7 @@ static s7_double formant_bank_rf_s(s7_scheme *sc, s7_pointer **p)
   s7_pointer slot;
   bank = (mus_any *)(**p); (*p)++;
   slot = (**p); (*p)++;
-  return(mus_formant_bank(bank, s7_slot_real_value(sc, slot, "formant-bank")));
+  return(mus_formant_bank(bank, s7_slot_real_value(sc, slot, S_formant_bank)));
 }	
 							
 static s7_double formant_bank_rf_r(s7_scheme *sc, s7_pointer **p)
@@ -10282,7 +10282,7 @@ static s7_double outa_s_rf(s7_scheme *sc, s7_pointer **p)
   s7_int ind;
 
   ind = s7_slot_integer_value(**p); (*p)++;
-  val = s7_slot_real_value(sc, **p, "outa"); (*p)++;
+  val = s7_slot_real_value(sc, **p, S_outa); (*p)++;
   out_any_2(ind, val, 0, S_outa); 
   return(val);
 }
@@ -10294,7 +10294,7 @@ static s7_double outa_s_rf_checked(s7_scheme *sc, s7_pointer **p)
 
   ind = s7_slot_value(**p); (*p)++;
   if (!s7_is_integer(ind)) s7_wrong_type_arg_error(s7, S_outa, 1, ind, "an integer");
-  val = s7_slot_real_value(sc, **p, "outa"); (*p)++;
+  val = s7_slot_real_value(sc, **p, S_outa); (*p)++;
   out_any_2(s7_integer(ind), val, 0, S_outa); 
   return(val);
 }
@@ -10320,7 +10320,7 @@ static s7_double outa_s_rf_to_mus_xen(s7_scheme *sc, s7_pointer **p)
   s7_int pos;
 
   pos = s7_slot_integer_value(**p); (*p)++;
-  val = s7_slot_real_value(sc, **p, "outa"); (*p)++;
+  val = s7_slot_real_value(sc, **p, S_outa); (*p)++;
   if (!mus_simple_out_any_to_file(pos, val, 0, clm_output_gen))
     mus_safe_out_any_to_file(pos, val, 0, clm_output_gen);
   return(val);
@@ -10345,7 +10345,7 @@ static s7_double outb_s_rf(s7_scheme *sc, s7_pointer **p)
   s7_double val;
 
   ind = s7_slot_integer_value(**p); (*p)++;
-  val = s7_slot_real_value(sc, **p, "outb"); (*p)++;
+  val = s7_slot_real_value(sc, **p, S_outb); (*p)++;
   out_any_2(ind, val, 1, S_outb); 
   return(val);
 }
@@ -10585,7 +10585,7 @@ static s7_double locsig_fm_violin_rf(s7_scheme *sc, s7_pointer **p)
   /* fm_violin_rf */
   e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p) += 2;
-  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 3;
+  vib = s7_slot_real_value(sc, **p, S_oscil); (*p) += 3;
   a = (mus_any *)(**p); (*p) += 2;
   fp = (mus_any *)(**p); (*p)++;
   val = mus_env(e) * mus_oscil_fm(o, vib + (mus_env(a) * mus_polywave(fp, vib)));
@@ -11465,7 +11465,7 @@ static s7_double fm_violin_rf(s7_scheme *sc, s7_pointer **p)
   (*p)++;
   e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p) += 2;
-  vib = s7_slot_real_value(sc, **p, "oscil"); (*p) += 3;
+  vib = s7_slot_real_value(sc, **p, S_oscil); (*p) += 3;
   a = (mus_any *)(**p); (*p) += 2;
   fp = (mus_any *)(**p); (*p)++;
   return(mus_env(e) * mus_oscil_fm(o, vib + (mus_env(a) * mus_polywave(fp, vib))));
@@ -11489,7 +11489,7 @@ static s7_double mul_env_polywave_s_rf(s7_scheme *sc, s7_pointer **p)
   (*p)++;
   e = (mus_any *)(**p); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
-  s1 = s7_slot_real_value(sc, **p, "polywave"); (*p)++;
+  s1 = s7_slot_real_value(sc, **p, S_polywave); (*p)++;
   return(mus_env(e) * mus_polywave(o, s1));
 }
 
@@ -11498,7 +11498,7 @@ static s7_double mul_s_comb_bank_x_rf(s7_scheme *sc, s7_pointer **p)
   s7_rf_t r1;
   s7_double s1;
   mus_any *o; 
-  s1 = s7_slot_real_value(sc, **p, "comb-bank"); (*p) += 2;
+  s1 = s7_slot_real_value(sc, **p, S_comb_bank); (*p) += 2;
   o = (mus_any *)(**p); (*p)++;
   r1 = (s7_rf_t)(**p); (*p)++;
   return(s1 * mus_comb_bank(o, r1(sc, p)));
@@ -11931,13 +11931,13 @@ static void init_choosers(s7_scheme *sc)
   s7_pointer f;
 #endif
 
-  env_symbol = s7_make_symbol(sc, "env");
-  comb_bank_symbol = s7_make_symbol(sc, "comb-bank");
+  env_symbol = s7_make_symbol(sc, S_env);
+  comb_bank_symbol = s7_make_symbol(sc, S_comb_bank);
   vector_ref_symbol = s7_make_symbol(sc, "vector-ref");
-  polywave_symbol = s7_make_symbol(sc, "polywave");
-  triangle_wave_symbol = s7_make_symbol(sc, "triangle-wave");
-  rand_interp_symbol = s7_make_symbol(sc, "rand-interp");
-  oscil_symbol = s7_make_symbol(sc, "oscil");
+  polywave_symbol = s7_make_symbol(sc, S_polywave);
+  triangle_wave_symbol = s7_make_symbol(sc, S_triangle_wave);
+  rand_interp_symbol = s7_make_symbol(sc, S_rand_interp);
+  oscil_symbol = s7_make_symbol(sc, S_oscil);
   multiply_symbol = s7_make_symbol(sc, "*");
   add_symbol = s7_make_symbol(sc, "+");
   quote_symbol = s7_make_symbol(sc, "quote");
@@ -12492,10 +12492,10 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   s7_pointer s, i, p, t, r, c, f, v, b, d, j;
 
-  s7_pointer pcl_ct, pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
-    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, pcl_zt, 
-    pl_sc, pl_sssrs, pl_tc, pl_ct, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
-    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_dcf, pl_dcrt, pl_djr, pl_it, pl_iti;
+  s7_pointer pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
+    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, 
+    pl_sc, pl_sssrs, pl_tc, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
+    pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_djr, pl_it, pl_iti;
 #endif
 
   mus_initialize();
@@ -12513,23 +12513,19 @@ static void mus_xen_init(void)
   p = s7_make_symbol(s7, "pair?");
   t = s7_t(s7);
   r = s7_make_symbol(s7, "real?");
-  c = s7_make_symbol(s7, "c-object?");
+  c = s7_t(s7); /* s7_make_symbol(s7, "c-object?"): this should be mus-generator which should match against oscil? etc -- maybe someday... */
   f = s7_make_symbol(s7, "float-vector?");
   j = s7_make_symbol(s7, "int-vector?");
   v = s7_make_symbol(s7, "vector?");
   b = s7_make_symbol(s7, "boolean?");
   d = s7_make_symbol(s7, "float?");
   
-  pcl_ct = s7_make_circular_signature(s7, 1, 2, c, t);
-  pcl_zt = s7_make_circular_signature(s7, 1, 2, s7_make_signature(s7, 2, b, c), t);
   pl_bt = s7_make_signature(s7, 2, b, t);
   pl_rcr = s7_make_signature(s7, 3, r, c, r);
   
   pl_d = s7_make_signature(s7, 1, d);
   pl_dcr = s7_make_circular_signature(s7, 2, 3, d, c, r);
   pl_djr = s7_make_circular_signature(s7, 2, 3, d, j, r);
-  pl_dcf = s7_make_signature(s7, 3, d, c, s7_make_signature(s7, 2, r, f));
-  pl_dcrt = s7_make_signature(s7, 4, d, c, r, t);
   pl_dct = s7_make_signature(s7, 3, d, c, t);
   pl_dci = s7_make_circular_signature(s7, 2, 3, d, c, i);
   pl_dcir = s7_make_signature(s7, 4, d, c, i, r);
@@ -12547,11 +12543,10 @@ static void mus_xen_init(void)
   
   pl_ir = s7_make_signature(s7, 2, i, r);
   pl_i = s7_make_circular_signature(s7, 0, 1, i);
-  pl_ct = s7_make_signature(s7, 2, c, t);
   pl_cc = s7_make_circular_signature(s7, 1, 2, c, c);
   pl_ici = s7_make_signature(s7, 3, i, c, i);
   pl_iti = s7_make_signature(s7, 3, i, t, i);
-  pl_ccic = s7_make_signature(s7, 3, c, c, i, c);
+  pl_ccic = s7_make_signature(s7, 4, c, c, i, c);
   pl_ccrr = s7_make_signature(s7, 4, c, c, r, r);
   pl_fc = s7_make_signature(s7, 2, s7_make_signature(s7, 2, f, b), c);
   pl_cs = s7_make_signature(s7, 2, c, s);
@@ -12563,7 +12558,7 @@ static void mus_xen_init(void)
   pl_fffi = s7_make_circular_signature(s7, 3, 4, f, f, f, i);
   pl_fti = s7_make_signature(s7, 3, f, t, i);
   pl_fif = s7_make_signature(s7, 3, f, i, f);
-  pl_fiir = s7_make_signature(s7, 4, f, i, i, r);
+  pl_fiir = s7_make_circular_signature(s7, 3, 4, f, i, i, r);
   pl_fttb = s7_make_signature(s7, 4, f, t, t, b);
   pl_ic = s7_make_signature(s7, 2, i, c);
   pl_it = s7_make_signature(s7, 2, i, t);
@@ -12793,24 +12788,42 @@ static void mus_xen_init(void)
 
   Xen_define_procedure(S_mus_apply,			g_mus_apply_w,			0, 0, 1, H_mus_apply);
 
-  Xen_define_typed_procedure(S_make_delay,		g_make_delay_w,			0, 0, 1, H_make_delay,		pcl_ct);
-  Xen_define_typed_procedure(S_make_comb,		g_make_comb_w,			0, 0, 1, H_make_comb,		pcl_ct);
-  Xen_define_typed_procedure(S_make_filtered_comb,	g_make_filtered_comb_w,		0, 0, 1, H_make_filtered_comb,	pcl_ct);
-  Xen_define_typed_procedure(S_make_notch,		g_make_notch_w,			0, 0, 1, H_make_notch,		pcl_ct); 
-  Xen_define_typed_procedure(S_make_all_pass,		g_make_all_pass_w,		0, 0, 1, H_make_all_pass,	pcl_ct);
-  Xen_define_typed_procedure(S_make_moving_average,	g_make_moving_average_w,	0, 0, 1, H_make_moving_average, pcl_ct);
-  Xen_define_typed_procedure(S_make_moving_max,		g_make_moving_max_w,       0, 0, 1, H_make_moving_max,		pcl_ct);
-  Xen_define_typed_procedure(S_make_moving_norm,	g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm,		pcl_ct);
-  Xen_define_typed_procedure(S_delay,			g_delay_w,                 1, 2, 0, H_delay,			pl_dcr); 
-  Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		pl_dcr); 
-  Xen_define_typed_procedure(S_tap,			g_tap_w,                   1, 1, 0, H_tap,			pl_dcr);
-  Xen_define_typed_procedure(S_notch,			g_notch_w,                 1, 2, 0, H_notch,			pl_dcr);
-  Xen_define_typed_procedure(S_comb,			g_comb_w,                  1, 2, 0, H_comb,			pl_dcr);
-  Xen_define_typed_procedure(S_filtered_comb,		g_filtered_comb_w,         1, 2, 0, H_filtered_comb,		pl_dcr);
-  Xen_define_typed_procedure(S_all_pass,		g_all_pass_w,              1, 2, 0, H_all_pass,			pl_dcr);
-  Xen_define_typed_procedure(S_moving_average,		g_moving_average_w,        1, 1, 0, H_moving_average,		pl_dcr);
-  Xen_define_typed_procedure(S_moving_max,		g_moving_max_w,            1, 1, 0, H_moving_max,		pl_dcr);
-  Xen_define_typed_procedure(S_moving_norm,		g_moving_norm_w,           1, 1, 0, H_moving_norm,		pl_dcr);
+  Xen_define_typed_procedure(S_make_delay,		g_make_delay_w,			0, 0, 1, H_make_delay,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_delay), t));
+  Xen_define_typed_procedure(S_make_comb,		g_make_comb_w,			0, 0, 1, H_make_comb,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_comb), t));
+  Xen_define_typed_procedure(S_make_filtered_comb,	g_make_filtered_comb_w,		0, 0, 1, H_make_filtered_comb,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filtered_comb), t));
+  Xen_define_typed_procedure(S_make_notch,		g_make_notch_w,			0, 0, 1, H_make_notch,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_notch), t)); 
+  Xen_define_typed_procedure(S_make_all_pass,		g_make_all_pass_w,		0, 0, 1, H_make_all_pass,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_all_pass), t));
+  Xen_define_typed_procedure(S_make_moving_average,	g_make_moving_average_w,	0, 0, 1, H_make_moving_average, 
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_average), t));
+  Xen_define_typed_procedure(S_make_moving_max,		g_make_moving_max_w,       0, 0, 1, H_make_moving_max,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_max), t));
+  Xen_define_typed_procedure(S_make_moving_norm,	g_make_moving_norm_w,      0, 0, 1, H_make_moving_norm,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_moving_norm), t));
+  Xen_define_typed_procedure(S_delay,			g_delay_w,                 1, 2, 0, H_delay,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r));
+  Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r)); 
+  Xen_define_typed_procedure(S_tap,			g_tap_w,                   1, 1, 0, H_tap,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r));
+  Xen_define_typed_procedure(S_notch,			g_notch_w,                 1, 2, 0, H_notch,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_notch), r));
+  Xen_define_typed_procedure(S_comb,			g_comb_w,                  1, 2, 0, H_comb,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_comb), r));
+  Xen_define_typed_procedure(S_filtered_comb,		g_filtered_comb_w,         1, 2, 0, H_filtered_comb,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_filtered_comb), r));
+  Xen_define_typed_procedure(S_all_pass,		g_all_pass_w,              1, 2, 0, H_all_pass,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_all_pass), r));
+  Xen_define_typed_procedure(S_moving_average,		g_moving_average_w,        1, 1, 0, H_moving_average,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_moving_average), r));
+  Xen_define_typed_procedure(S_moving_max,		g_moving_max_w,            1, 1, 0, H_moving_max,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_moving_max), r));
+  Xen_define_typed_procedure(S_moving_norm,		g_moving_norm_w,           1, 1, 0, H_moving_norm,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_moving_norm), r));
   Xen_define_typed_procedure(S_is_tap,			g_is_tap_w,                1, 0, 0, H_is_tap,			pl_bt);
   Xen_define_typed_procedure(S_is_delay,		g_is_delay_w,              1, 0, 0, H_is_delay,			pl_bt);
   Xen_define_typed_procedure(S_is_notch,		g_is_notch_w,              1, 0, 0, H_is_notch,			pl_bt);
@@ -12821,17 +12834,23 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_moving_max,		g_is_moving_max_w,         1, 0, 0, H_is_moving_max,		pl_bt);
   Xen_define_typed_procedure(S_is_moving_norm,		g_is_moving_norm_w,        1, 0, 0, H_is_moving_norm,		pl_bt);
 
-  Xen_define_typed_procedure(S_comb_bank,		g_comb_bank_w,             1, 1, 0, H_comb_bank,		pl_dcr);
+  Xen_define_typed_procedure(S_comb_bank,		g_comb_bank_w,             1, 1, 0, H_comb_bank,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_comb_bank), r));
   Xen_define_typed_procedure(S_is_comb_bank,		g_is_comb_bank_w,          1, 0, 0, H_is_comb_bank,		pl_bt);
-  Xen_define_typed_procedure(S_make_comb_bank,		g_make_comb_bank_w,        1, 0, 0, H_make_comb_bank,		pcl_ct);
+  Xen_define_typed_procedure(S_make_comb_bank,		g_make_comb_bank_w,        1, 0, 0, H_make_comb_bank,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_comb_bank), t));
 
-  Xen_define_typed_procedure(S_filtered_comb_bank,	g_filtered_comb_bank_w,    1, 1, 0, H_filtered_comb_bank,	pl_dcr);
+  Xen_define_typed_procedure(S_filtered_comb_bank,	g_filtered_comb_bank_w,    1, 1, 0, H_filtered_comb_bank,	
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_filtered_comb_bank), r));
   Xen_define_typed_procedure(S_is_filtered_comb_bank,	g_is_filtered_comb_bank_w,  1, 0, 0, H_is_filtered_comb_bank,	pl_bt);
-  Xen_define_typed_procedure(S_make_filtered_comb_bank, g_make_filtered_comb_bank_w, 1, 0, 0, H_make_filtered_comb_bank, pcl_ct);
+  Xen_define_typed_procedure(S_make_filtered_comb_bank, g_make_filtered_comb_bank_w, 1, 0, 0, H_make_filtered_comb_bank, 
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filtered_comb_bank), t));
 
-  Xen_define_typed_procedure(S_all_pass_bank,		g_all_pass_bank_w,         1, 1, 0, H_all_pass_bank,		pl_dcr);
+  Xen_define_typed_procedure(S_all_pass_bank,		g_all_pass_bank_w,         1, 1, 0, H_all_pass_bank,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_all_pass_bank), r));
   Xen_define_typed_procedure(S_is_all_pass_bank,	g_is_all_pass_bank_w,      1, 0, 0, H_is_all_pass_bank,		pl_bt);
-  Xen_define_typed_procedure(S_make_all_pass_bank,	g_make_all_pass_bank_w,    1, 0, 0, H_make_all_pass_bank,	pcl_ct);
+  Xen_define_typed_procedure(S_make_all_pass_bank,	g_make_all_pass_bank_w,    1, 0, 0, H_make_all_pass_bank,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_all_pass_bank), t));
 
   Xen_define_typed_procedure(S_pink_noise,		g_pink_noise_w,            1, 0, 0, H_pink_noise,		pl_dv);
 
@@ -12842,13 +12861,17 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_feedforward, g_mus_feedforward_w, H_mus_feedforward, 
 			    S_set S_mus_feedforward, g_mus_set_feedforward_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
-  Xen_define_typed_procedure(S_make_rand,		g_make_rand_w,             0, 0, 1, H_make_rand,		pcl_ct);
-  Xen_define_typed_procedure(S_make_rand_interp,	g_make_rand_interp_w,      0, 0, 1, H_make_rand_interp,		pcl_ct);
+  Xen_define_typed_procedure(S_make_rand,		g_make_rand_w,             0, 0, 1, H_make_rand,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rand), t));
+  Xen_define_typed_procedure(S_make_rand_interp,	g_make_rand_interp_w,      0, 0, 1, H_make_rand_interp,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rand_interp), t));
 #if HAVE_RUBY
   rb_define_alias(rb_mKernel, "kernel_rand", "rand");
 #endif
-  Xen_define_typed_procedure(S_rand,			g_rand_w,                  1, 1, 0, H_rand,			pl_dcr);
-  Xen_define_typed_procedure(S_rand_interp,		g_rand_interp_w,           1, 1, 0, H_rand_interp,		pl_dcr);
+  Xen_define_typed_procedure(S_rand,			g_rand_w,                  1, 1, 0, H_rand,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rand), r));
+  Xen_define_typed_procedure(S_rand_interp,		g_rand_interp_w,           1, 1, 0, H_rand_interp,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rand_interp), r));
   Xen_define_typed_procedure(S_is_rand,			g_is_rand_w,               1, 0, 0, H_is_rand,			pl_bt);
   Xen_define_typed_procedure(S_is_rand_interp,		g_is_rand_interp_w,        1, 0, 0, H_is_rand_interp,		pl_bt);
   Xen_define_typed_procedure(S_mus_random,		g_mus_random_w,            1, 0, 0, H_mus_random,		pl_dr);
@@ -12856,129 +12879,184 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed, 
 			    S_set S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0, pl_i, pl_i);
 
-  Xen_define_typed_procedure(S_ncos,			g_ncos_w,                  1, 1, 0, H_ncos,			pl_dcr);
+  Xen_define_typed_procedure(S_ncos,			g_ncos_w,                  1, 1, 0, H_ncos,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_ncos), r));
   Xen_define_typed_procedure(S_is_ncos,			g_is_ncos_w,               1, 0, 0, H_is_ncos,			pl_bt);
-  Xen_define_typed_procedure(S_nsin,			g_nsin_w,                  1, 1, 0, H_nsin,			pl_dcr);
+  Xen_define_typed_procedure(S_nsin,			g_nsin_w,                  1, 1, 0, H_nsin,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nsin), r));
   Xen_define_typed_procedure(S_is_nsin,			g_is_nsin_w,               1, 0, 0, H_is_nsin,			pl_bt);
 
   Xen_define_typed_procedure(S_is_table_lookup,		g_is_table_lookup_w,       1, 0, 0, H_is_table_lookup,		pl_bt);
-  Xen_define_typed_procedure(S_make_table_lookup,	g_make_table_lookup_w,     0, 0, 1, H_make_table_lookup,	pcl_ct);
-  Xen_define_typed_procedure(S_table_lookup,		g_table_lookup_w,          1, 1, 0, H_table_lookup,		pl_dcr);
+  Xen_define_typed_procedure(S_make_table_lookup,	g_make_table_lookup_w,     0, 0, 1, H_make_table_lookup,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_table_lookup), t));
+  Xen_define_typed_procedure(S_table_lookup,		g_table_lookup_w,          1, 1, 0, H_table_lookup,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_table_lookup), r));
   Xen_define_typed_procedure(S_partials_to_wave,	g_partials_to_wave_w,      1, 2, 0, H_partials_to_wave,		pl_fttb);
   Xen_define_typed_procedure(S_phase_partials_to_wave,	g_phase_partials_to_wave_w, 1, 2, 0, H_phase_partials_to_wave,	pl_fttb);
 
 
-  Xen_define_typed_procedure(S_make_sawtooth_wave,	g_make_sawtooth_wave_w,    0, 6, 0, H_make_sawtooth_wave,	pcl_ct);
-  Xen_define_typed_procedure(S_sawtooth_wave,		g_sawtooth_wave_w,         1, 1, 0, H_sawtooth_wave,		pl_dcr);
+  Xen_define_typed_procedure(S_make_sawtooth_wave,	g_make_sawtooth_wave_w,    0, 6, 0, H_make_sawtooth_wave,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_sawtooth_wave), t));
+  Xen_define_typed_procedure(S_sawtooth_wave,		g_sawtooth_wave_w,         1, 1, 0, H_sawtooth_wave,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_sawtooth_wave), r));
   Xen_define_typed_procedure(S_is_sawtooth_wave,	g_is_sawtooth_wave_w,      1, 0, 0, H_is_sawtooth_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_triangle_wave,	g_make_triangle_wave_w,    0, 6, 0, H_make_triangle_wave,	pcl_ct);
-  Xen_define_typed_procedure(S_triangle_wave,		g_triangle_wave_w,         1, 1, 0, H_triangle_wave,		pl_dcr);
+  Xen_define_typed_procedure(S_make_triangle_wave,	g_make_triangle_wave_w,    0, 6, 0, H_make_triangle_wave,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_triangle_wave), t));
+  Xen_define_typed_procedure(S_triangle_wave,		g_triangle_wave_w,         1, 1, 0, H_triangle_wave,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_triangle_wave), r));
   Xen_define_typed_procedure(S_is_triangle_wave,	g_is_triangle_wave_w,      1, 0, 0, H_is_triangle_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_square_wave,	g_make_square_wave_w,      0, 6, 0, H_make_square_wave,		pcl_ct);
-  Xen_define_typed_procedure(S_square_wave,		g_square_wave_w,           1, 1, 0, H_square_wave,		pl_dcr);
+  Xen_define_typed_procedure(S_make_square_wave,	g_make_square_wave_w,      0, 6, 0, H_make_square_wave,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_square_wave), t));
+  Xen_define_typed_procedure(S_square_wave,		g_square_wave_w,           1, 1, 0, H_square_wave,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_square_wave), r));
   Xen_define_typed_procedure(S_is_square_wave,		g_is_square_wave_w,        1, 0, 0, H_is_square_wave,		pl_bt);
-  Xen_define_typed_procedure(S_make_pulse_train,	g_make_pulse_train_w,      0, 6, 0, H_make_pulse_train,		pcl_ct);
-  Xen_define_typed_procedure(S_pulse_train,		g_pulse_train_w,           1, 1, 0, H_pulse_train,		pl_dcr);
+  Xen_define_typed_procedure(S_make_pulse_train,	g_make_pulse_train_w,      0, 6, 0, H_make_pulse_train,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_pulse_train), t));
+  Xen_define_typed_procedure(S_pulse_train,		g_pulse_train_w,           1, 1, 0, H_pulse_train,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_pulse_train), r));
   Xen_define_typed_procedure(S_is_pulse_train,		g_is_pulse_train_w,        1, 0, 0, H_is_pulse_train,		pl_bt);
 
 
-  Xen_define_typed_procedure(S_make_pulsed_env,		g_make_pulsed_env_w,       3, 0, 0, H_make_pulsed_env,		pcl_ct);
-  Xen_define_typed_procedure(S_pulsed_env,		g_pulsed_env_w,            1, 1, 0, H_pulsed_env,		pl_dcr);
+  Xen_define_typed_procedure(S_make_pulsed_env,		g_make_pulsed_env_w,       3, 0, 0, H_make_pulsed_env,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_pulsed_env), t));
+  Xen_define_typed_procedure(S_pulsed_env,		g_pulsed_env_w,            1, 1, 0, H_pulsed_env,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_pulsed_env), r));
   Xen_define_typed_procedure(S_is_pulsed_env,		g_is_pulsed_env_w,         1, 0, 0, H_is_pulsed_env,		pl_bt);
 
 
-  Xen_define_typed_procedure(S_asymmetric_fm,		g_asymmetric_fm_w,         1, 2, 0, H_asymmetric_fm,		pl_dcr);
+  Xen_define_typed_procedure(S_asymmetric_fm,		g_asymmetric_fm_w,         1, 2, 0, H_asymmetric_fm,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_asymmetric_fm), r));
   Xen_define_typed_procedure(S_is_asymmetric_fm,	g_is_asymmetric_fm_w,      1, 0, 0, H_is_asymmetric_fm,		pl_bt);
 
 
-  Xen_define_typed_procedure(S_make_one_zero,		g_make_one_zero_w,         0, 4, 0, H_make_one_zero,		pcl_ct);
-  Xen_define_typed_procedure(S_one_zero,		g_one_zero_w,              1, 1, 0, H_one_zero,			pl_dcr);
+  Xen_define_typed_procedure(S_make_one_zero,		g_make_one_zero_w,         0, 4, 0, H_make_one_zero,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_zero), t));
+  Xen_define_typed_procedure(S_one_zero,		g_one_zero_w,              1, 1, 0, H_one_zero,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_zero), r));
   Xen_define_typed_procedure(S_is_one_zero,		g_is_one_zero_w,           1, 0, 0, H_is_one_zero,		pl_bt);
-  Xen_define_typed_procedure(S_make_one_pole,		g_make_one_pole_w,         0, 4, 0, H_make_one_pole,		pcl_ct);
-  Xen_define_typed_procedure(S_one_pole,		g_one_pole_w,              1, 1, 0, H_one_pole,			pl_dcr);
+  Xen_define_typed_procedure(S_make_one_pole,		g_make_one_pole_w,         0, 4, 0, H_make_one_pole,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole), t));
+  Xen_define_typed_procedure(S_one_pole,		g_one_pole_w,              1, 1, 0, H_one_pole,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_pole), r));
   Xen_define_typed_procedure(S_is_one_pole,		g_is_one_pole_w,           1, 0, 0, H_is_one_pole,		pl_bt);
-  Xen_define_typed_procedure(S_make_two_zero,		g_make_two_zero_w,         0, 6, 0, H_make_two_zero,		pcl_ct);
-  Xen_define_typed_procedure(S_two_zero,		g_two_zero_w,              1, 1, 0, H_two_zero,			pl_dcr);
+  Xen_define_typed_procedure(S_make_two_zero,		g_make_two_zero_w,         0, 6, 0, H_make_two_zero,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_zero), t));
+  Xen_define_typed_procedure(S_two_zero,		g_two_zero_w,              1, 1, 0, H_two_zero,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_two_zero), r));
   Xen_define_typed_procedure(S_is_two_zero,		g_is_two_zero_w,           1, 0, 0, H_is_two_zero,		pl_bt);
-  Xen_define_typed_procedure(S_make_two_pole,		g_make_two_pole_w,         0, 6, 0, H_make_two_pole,		pcl_ct);
-  Xen_define_typed_procedure(S_two_pole,		g_two_pole_w,              1, 1, 0, H_two_pole,			pl_dcr);
+  Xen_define_typed_procedure(S_make_two_pole,		g_make_two_pole_w,         0, 6, 0, H_make_two_pole,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_two_pole), t));
+  Xen_define_typed_procedure(S_two_pole,		g_two_pole_w,              1, 1, 0, H_two_pole,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_two_pole), r));
   Xen_define_typed_procedure(S_is_two_pole,		g_is_two_pole_w,           1, 0, 0, H_is_two_pole,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_wave_train,		g_make_wave_train_w,       0, 0, 1, H_make_wave_train,		pcl_ct);
-  Xen_define_typed_procedure(S_wave_train,		g_wave_train_w,            1, 1, 0, H_wave_train,		pl_dcr);
+  Xen_define_typed_procedure(S_make_wave_train,		g_make_wave_train_w,       0, 0, 1, H_make_wave_train,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_wave_train), t));
+  Xen_define_typed_procedure(S_wave_train,		g_wave_train_w,            1, 1, 0, H_wave_train,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_wave_train), r));
   Xen_define_typed_procedure(S_is_wave_train,		g_is_wave_train_w,         1, 0, 0, H_is_wave_train,		pl_bt);
 
   Xen_define_typed_procedure(S_is_formant,		g_is_formant_w,            1, 0, 0, H_is_formant,		pl_bt);
-  Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		pcl_ct);
-  Xen_define_typed_procedure(S_formant,			g_formant_w,               1, 2, 0, H_formant,			pl_dcr);
+  Xen_define_typed_procedure(S_make_formant,		g_make_formant_w,          0, 4, 0, H_make_formant,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant), t));
+  Xen_define_typed_procedure(S_formant,			g_formant_w,               1, 2, 0, H_formant,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_formant), r));
 
-  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          1, 1, 0, H_formant_bank,		pl_dcf);
+  Xen_define_typed_procedure(S_formant_bank,		g_formant_bank_w,          1, 1, 0, H_formant_bank,		
+			     s7_make_signature(s7, 3, d, s7_make_symbol(s7, S_is_formant_bank), s7_make_signature(s7, 2, r, f)));
   Xen_define_typed_procedure(S_is_formant_bank,		g_is_formant_bank_w,       1, 0, 0, H_is_formant_bank,		pl_bt);
-  Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	pcl_zt);
+  Xen_define_typed_procedure(S_make_formant_bank,	g_make_formant_bank_w,     1, 1, 0, H_make_formant_bank,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_formant_bank), t));
 
   Xen_define_typed_procedure(S_is_firmant,		g_is_firmant_w,            1, 0, 0, H_is_firmant,		pl_bt);
-  Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		pcl_ct);
-  Xen_define_typed_procedure(S_firmant,			g_firmant_w,               1, 2, 0, H_firmant,			pl_dcr);
+  Xen_define_typed_procedure(S_make_firmant,		g_make_firmant_w,          0, 4, 0, H_make_firmant,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_firmant), t));
+  Xen_define_typed_procedure(S_firmant,			g_firmant_w,               1, 2, 0, H_firmant,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_firmant), r));
 
   Xen_define_typed_procedure(S_is_one_pole_all_pass,	g_is_one_pole_all_pass_w,  1, 0, 0, H_is_one_pole_all_pass,	pl_bt);
-  Xen_define_typed_procedure(S_make_one_pole_all_pass,	g_make_one_pole_all_pass_w, 2, 0, 0, H_make_one_pole_all_pass,	pcl_ct);
-  Xen_define_typed_procedure(S_one_pole_all_pass,	g_one_pole_all_pass_w,     1, 1, 0, H_one_pole_all_pass,	pl_dcr);
+  Xen_define_typed_procedure(S_make_one_pole_all_pass,	g_make_one_pole_all_pass_w, 2, 0, 0, H_make_one_pole_all_pass,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_one_pole_all_pass), t));
+  Xen_define_typed_procedure(S_one_pole_all_pass,	g_one_pole_all_pass_w,     1, 1, 0, H_one_pole_all_pass,	
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_pole_all_pass), r));
 
   Xen_define_typed_procedure(S_mus_set_formant_frequency, g_set_formant_frequency_w, 2, 0, 0, H_mus_set_formant_frequency, pl_rcr);
   Xen_define_typed_procedure(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency, pl_rcrr);
 
 
-  Xen_define_typed_procedure(S_make_polyshape,		g_make_polyshape_w,        0, 0, 1, H_make_polyshape,		pcl_ct);
-  Xen_define_typed_procedure(S_polyshape,		g_polyshape_w,             1, 2, 0, H_polyshape,		pl_dcr);
+  Xen_define_typed_procedure(S_make_polyshape,		g_make_polyshape_w,        0, 0, 1, H_make_polyshape,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_polyshape), t));
+  Xen_define_typed_procedure(S_polyshape,		g_polyshape_w,             1, 2, 0, H_polyshape,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_polyshape), r));
   Xen_define_typed_procedure(S_is_polyshape,		g_is_polyshape_w,          1, 0, 0, H_is_polyshape,		pl_bt);
   Xen_define_typed_procedure(S_partials_to_polynomial,	g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial,	pl_fti);
   Xen_define_typed_procedure(S_normalize_partials,	g_normalize_partials_w,    1, 0, 0, H_normalize_partials,	pl_tt);
   Xen_define_typed_procedure(S_mus_chebyshev_t_sum,	g_chebyshev_t_sum_w,       2, 0, 0, H_chebyshev_t_sum,		pl_drf);
   Xen_define_typed_procedure(S_mus_chebyshev_u_sum,	g_chebyshev_u_sum_w,       2, 0, 0, H_chebyshev_u_sum,		pl_drf);
   Xen_define_typed_procedure(S_mus_chebyshev_tu_sum,	g_chebyshev_tu_sum_w,      3, 0, 0, H_chebyshev_tu_sum,		pl_drf);
-  Xen_define_typed_procedure(S_make_polywave,		g_make_polywave_w,         0, 0, 1, H_make_polywave,		pcl_ct);
-  Xen_define_typed_procedure(S_polywave,		g_polywave_w,              1, 1, 0, H_polywave,			pl_dcr);
+  Xen_define_typed_procedure(S_make_polywave,		g_make_polywave_w,         0, 0, 1, H_make_polywave,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_polywave), t));
+  Xen_define_typed_procedure(S_polywave,		g_polywave_w,              1, 1, 0, H_polywave,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_polywave), r));
   Xen_define_typed_procedure(S_is_polywave,		g_is_polywave_w,           1, 0, 0, H_is_polywave,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_nrxysin,		g_make_nrxysin_w,          0, 0, 1, H_make_nrxysin,		pcl_ct);
-  Xen_define_typed_procedure(S_nrxysin,			g_nrxysin_w,               1, 1, 0, H_nrxysin,			pl_dcr);
+  Xen_define_typed_procedure(S_make_nrxysin,		g_make_nrxysin_w,          0, 0, 1, H_make_nrxysin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxysin), t));
+  Xen_define_typed_procedure(S_nrxysin,			g_nrxysin_w,               1, 1, 0, H_nrxysin,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nrxysin), r));
   Xen_define_typed_procedure(S_is_nrxysin,		g_is_nrxysin_w,            1, 0, 0, H_is_nrxysin,		pl_bt);
-  Xen_define_typed_procedure(S_make_nrxycos,		g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos,		pcl_ct);
-  Xen_define_typed_procedure(S_nrxycos,			g_nrxycos_w,               1, 1, 0, H_nrxycos,			pl_dcr);
+  Xen_define_typed_procedure(S_make_nrxycos,		g_make_nrxycos_w,          0, 0, 1, H_make_nrxycos,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nrxycos), t));
+  Xen_define_typed_procedure(S_nrxycos,			g_nrxycos_w,               1, 1, 0, H_nrxycos,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_nrxycos), r));
   Xen_define_typed_procedure(S_is_nrxycos,		g_is_nrxycos_w,            1, 0, 0, H_is_nrxycos,		pl_bt);
 
-  Xen_define_typed_procedure(S_make_rxyksin,		g_make_rxyksin_w,          0, 0, 1, H_make_rxyksin,		pl_ct);
-  Xen_define_typed_procedure(S_rxyksin,			g_rxyksin_w,               1, 1, 0, H_rxyksin,			pl_dcr);
+  Xen_define_typed_procedure(S_make_rxyksin,		g_make_rxyksin_w,          0, 0, 1, H_make_rxyksin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxyksin), t));
+  Xen_define_typed_procedure(S_rxyksin,			g_rxyksin_w,               1, 1, 0, H_rxyksin,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rxyksin), r));
   Xen_define_typed_procedure(S_is_rxyksin,		g_is_rxyksin_w,            1, 0, 0, H_is_rxyksin,		pl_bt);
-  Xen_define_typed_procedure(S_make_rxykcos,		g_make_rxykcos_w,          0, 0, 1, H_make_rxykcos,		pcl_ct);
-  Xen_define_typed_procedure(S_rxykcos,			g_rxykcos_w,               1, 1, 0, H_rxykcos,			pl_dcr);
+  Xen_define_typed_procedure(S_make_rxykcos,		g_make_rxykcos_w,          0, 0, 1, H_make_rxykcos,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_rxykcos), t));
+  Xen_define_typed_procedure(S_rxykcos,			g_rxykcos_w,               1, 1, 0, H_rxykcos,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_rxykcos), r));
   Xen_define_typed_procedure(S_is_rxykcos,		g_is_rxykcos_w,            1, 0, 0, H_is_rxykcos,		pl_bt);
 
 
-  Xen_define_typed_procedure(S_make_filter,		g_make_filter_w,           0, 6, 0, H_make_filter,		pcl_ct);
-  Xen_define_typed_procedure(S_filter,			g_filter_w,                1, 1, 0, H_filter,			pl_dcr);
+  Xen_define_typed_procedure(S_make_filter,		g_make_filter_w,           0, 6, 0, H_make_filter,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_filter), t));
+  Xen_define_typed_procedure(S_filter,			g_filter_w,                1, 1, 0, H_filter,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_filter), r));
   Xen_define_typed_procedure(S_is_filter,		g_is_filter_w,             1, 0, 0, H_is_filter,		pl_bt);
   Xen_define_typed_procedure(S_make_fir_coeffs,		g_make_fir_coeffs_w,       2, 0, 0, H_make_fir_coeffs,		pl_fif);
-  Xen_define_typed_procedure(S_make_fir_filter,		g_make_fir_filter_w,       0, 4, 0, H_make_fir_filter,		pcl_ct);
-  Xen_define_typed_procedure(S_fir_filter,		g_fir_filter_w,            1, 1, 0, H_fir_filter,		pl_dcr);
+  Xen_define_typed_procedure(S_make_fir_filter,		g_make_fir_filter_w,       0, 4, 0, H_make_fir_filter,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_fir_filter), t));
+  Xen_define_typed_procedure(S_fir_filter,		g_fir_filter_w,            1, 1, 0, H_fir_filter,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_fir_filter), r));
   Xen_define_typed_procedure(S_is_fir_filter,		g_is_fir_filter_w,         1, 0, 0, H_is_fir_filter,		pl_bt);
-  Xen_define_typed_procedure(S_make_iir_filter,		g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter,		pcl_ct);
-  Xen_define_typed_procedure(S_iir_filter,		g_iir_filter_w,            1, 1, 0, H_iir_filter,		pl_dcr);
+  Xen_define_typed_procedure(S_make_iir_filter,		g_make_iir_filter_w,       0, 4, 0, H_make_iir_filter,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_iir_filter), t));
+  Xen_define_typed_procedure(S_iir_filter,		g_iir_filter_w,            1, 1, 0, H_iir_filter,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_iir_filter), r));
   Xen_define_typed_procedure(S_is_iir_filter,		g_is_iir_filter_w,         1, 0, 0, H_is_iir_filter,		pl_bt);
   Xen_define_typed_procedure(S_mus_order,		g_mus_order_w,             1, 0, 0, H_mus_order,		pl_ic);
   Xen_define_typed_procedure(S_mus_type,		g_mus_type_w,              1, 0, 0, H_mus_type,			pl_ic);
 
 
   Xen_define_typed_procedure(S_is_env,			g_is_env_w,                1, 0, 0, H_is_env,			pl_bt);
-  Xen_define_typed_procedure(S_env,			g_env_w,                   1, 0, 0, H_env,			pl_dc);
-  Xen_define_typed_procedure(S_make_env,		g_make_env_w,              0, 0, 1, H_make_env,			pcl_ct);
+  Xen_define_typed_procedure(S_env,			g_env_w,                   1, 0, 0, H_env,			
+			     s7_make_signature(s7, 2, d, s7_make_symbol(s7, S_is_env)));
+  Xen_define_typed_procedure(S_make_env,		g_make_env_w,              0, 0, 1, H_make_env,			
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_env), t));
   Xen_define_typed_procedure(S_env_interp,		g_env_interp_w,            2, 0, 0, H_env_interp,		pl_drc);
   Xen_define_typed_procedure(S_envelope_interp,		g_envelope_interp_w,       2, 1, 0, H_envelope_interp,		pl_rrpr);
   Xen_define_typed_procedure(S_env_any,			g_env_any_w,               2, 0, 0, H_env_any,                  pl_dct);
 
   Xen_define_typed_procedure(S_is_locsig,		g_is_locsig_w,             1, 0, 0, H_is_locsig,		pl_bt);
-  Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			pl_rcr);
-  Xen_define_typed_procedure(S_make_locsig,		g_make_locsig_w,           0, 0, 1, H_make_locsig,		pcl_ct);
+  Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			
+			     s7_make_circular_signature(s7, 2, 3, r, s7_make_symbol(s7, S_is_locsig), r));
+  Xen_define_typed_procedure(S_make_locsig,		g_make_locsig_w,           0, 0, 1, H_make_locsig,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_locsig), t));
   Xen_define_typed_procedure(S_move_locsig,		g_move_locsig_w,           3, 0, 0, H_move_locsig,		pl_ccrr);
   Xen_define_typed_procedure(S_mus_channels,		g_mus_channels_w,          1, 0, 0, H_mus_channels,		pl_it);
 
@@ -13001,25 +13079,32 @@ static void mus_xen_init(void)
 			    S_set S_locsig_type, g_set_locsig_type_w,  0, 0, 1, 0, pl_i, pl_i);
 
   Xen_define_typed_procedure(S_is_move_sound,		g_is_move_sound_w,         1, 0, 0, H_is_move_sound,		pl_bt);
-  Xen_define_typed_procedure(S_move_sound,		g_move_sound_w,            3, 0, 0, H_move_sound,		pl_rcr);
-  Xen_define_typed_procedure(S_make_move_sound,		g_make_move_sound_w,       1, 2, 0, H_make_move_sound,		pcl_ct);
+  Xen_define_typed_procedure(S_move_sound,		g_move_sound_w,            3, 0, 0, H_move_sound,		
+			     s7_make_circular_signature(s7, 2, 3, r, s7_make_symbol(s7, S_is_move_sound), r));
+  Xen_define_typed_procedure(S_make_move_sound,		g_make_move_sound_w,       1, 2, 0, H_make_move_sound,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_move_sound), t));
 
   Xen_define_typed_procedure(S_is_file_to_sample,	g_is_file_to_sample_w,     1, 0, 0, H_is_file_to_sample,	pl_bt);
-  Xen_define_typed_procedure(S_make_file_to_sample,	g_make_file_to_sample_w,   1, 1, 0, H_make_file_to_sample,	pcl_ct);
-  Xen_define_typed_procedure(S_file_to_sample,		g_file_to_sample_w,        2, 1, 0, H_file_to_sample,		pl_dci);
+  Xen_define_typed_procedure(S_make_file_to_sample,	g_make_file_to_sample_w,   1, 1, 0, H_make_file_to_sample,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_file_to_sample), t));
+  Xen_define_typed_procedure(S_file_to_sample,		g_file_to_sample_w,        2, 1, 0, H_file_to_sample,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_file_to_sample), i));
   Xen_define_typed_procedure(S_is_sample_to_file,	g_is_sample_to_file_w,     1, 0, 0, H_is_sample_to_file,	pl_bt);
-  Xen_define_typed_procedure(S_make_sample_to_file,	g_make_sample_to_file_w,   1, 4, 0, H_make_sample_to_file,	pcl_ct);
+  Xen_define_typed_procedure(S_make_sample_to_file,	g_make_sample_to_file_w,   1, 4, 0, H_make_sample_to_file,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_sample_to_file), t));
   Xen_define_typed_procedure(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file, pl_cs);
   Xen_define_typed_procedure(S_sample_to_file,		g_sample_to_file_w,        4, 0, 0, H_sample_to_file,		pl_rciir);
   Xen_define_typed_procedure(S_sample_to_file_add,	g_sample_to_file_add_w,    2, 0, 0, H_sample_to_file_add,	pl_cc);
 
   Xen_define_typed_procedure(S_is_file_to_frample,	g_is_file_to_frample_w,    1, 0, 0, H_is_file_to_frample,	pl_bt);
-  Xen_define_typed_procedure(S_make_file_to_frample,	g_make_file_to_frample_w,  1, 1, 0, H_make_file_to_frample,	pcl_ct);
+  Xen_define_typed_procedure(S_make_file_to_frample,	g_make_file_to_frample_w,  1, 1, 0, H_make_file_to_frample,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_file_to_frample), t));
   Xen_define_typed_procedure(S_file_to_frample,		g_file_to_frample_w,       2, 1, 0, H_file_to_frample,		pl_ccic);
   Xen_define_typed_procedure(S_continue_frample_to_file, g_continue_frample_to_file_w, 1, 0, 0, H_continue_frample_to_file, pl_cs);
   Xen_define_typed_procedure(S_is_frample_to_file,	g_is_frample_to_file_w,    1, 0, 0, H_is_frample_to_file,	pl_bt);
   Xen_define_typed_procedure(S_frample_to_file,		g_frample_to_file_w,       3, 0, 0, H_frample_to_file,		pl_fcif);
-  Xen_define_typed_procedure(S_make_frample_to_file,	g_make_frample_to_file_w,  1, 4, 0, H_make_frample_to_file,	pcl_zt);
+  Xen_define_typed_procedure(S_make_frample_to_file,	g_make_frample_to_file_w,  1, 4, 0, H_make_frample_to_file,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_frample_to_file), t));
 
   Xen_define_typed_procedure(S_is_mus_input,		g_is_mus_input_w,          1, 0, 0, H_is_mus_input,		pl_bt);
   Xen_define_typed_procedure(S_is_mus_output,		g_is_mus_output_w,         1, 0, 0, H_is_mus_output,		pl_bt);
@@ -13038,8 +13123,10 @@ static void mus_xen_init(void)
 
 
   Xen_define_typed_procedure(S_is_readin,		g_is_readin_w,             1, 0, 0, H_is_readin,		pl_bt);
-  Xen_define_typed_procedure(S_readin,			g_readin_w,                1, 0, 0, H_readin,			pl_dc);
-  Xen_define_typed_procedure(S_make_readin,		g_make_readin_w,           0, 0, 1, H_make_readin,		pcl_ct);
+  Xen_define_typed_procedure(S_readin,			g_readin_w,                1, 0, 0, H_readin,			
+			     s7_make_signature(s7, 2, d, s7_make_symbol(s7, S_is_readin)));
+  Xen_define_typed_procedure(S_make_readin,		g_make_readin_w,           0, 0, 1, H_make_readin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_readin), t));
   Xen_define_typed_procedure(S_mus_channel,		g_mus_channel_w,           1, 0, 0, H_mus_channel,		pl_ic);
   Xen_define_typed_procedure(S_mus_interp_type,		g_mus_interp_type_w,       1, 0, 0, H_mus_interp_type,		pl_ic);
 
@@ -13049,8 +13136,10 @@ static void mus_xen_init(void)
 			    S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
-  Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		pl_dc);
-  Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           pcl_ct);
+  Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		
+			     s7_make_circular_signature(s7, 3, 4, d, s7_make_symbol(s7, S_is_granulate), t));
+  Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_granulate), t));
 
   Xen_define_typed_dilambda(S_mus_ramp, g_mus_ramp_w, H_mus_ramp, 
 			    S_set S_mus_ramp, g_mus_set_ramp_w,  1, 0, 2, 0, pl_dc, pl_dcr);
@@ -13058,18 +13147,24 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_clear_sincs,		g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables", NULL);
   Xen_define_typed_procedure(S_is_src,			g_is_src_w,                1, 0, 0, H_is_src,			pl_bt);
-  Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			pl_dcrt);
-  Xen_define_typed_procedure(S_make_src,		g_make_src_w,              0, 6, 0, H_make_src,                 pcl_ct);
+  Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			
+			     s7_make_signature(s7, 4, d, s7_make_symbol(s7, S_is_src), r, t));
+  Xen_define_typed_procedure(S_make_src,		g_make_src_w,              0, 6, 0, H_make_src,                 
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_src), t));
 
 
   Xen_define_typed_procedure(S_is_convolve,		g_is_convolve_w,           1, 0, 0, H_is_convolve,		pl_bt);
-  Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		pl_dc);
-  Xen_define_typed_procedure(S_make_convolve,		g_make_convolve_w,         0, 0, 1, H_make_convolve,            pcl_ct);
+  Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		
+			     s7_make_signature(s7, 3, d, s7_make_symbol(s7, S_is_convolve), t));
+  Xen_define_typed_procedure(S_make_convolve,		g_make_convolve_w,         0, 0, 1, H_make_convolve,            
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_convolve), t));
   Xen_define_typed_procedure(S_convolve_files,		g_convolve_files_w,        2, 2, 0, H_convolve_files,		pl_sssrs);
 
   Xen_define_typed_procedure(S_is_phase_vocoder,	g_is_phase_vocoder_w,      1, 0, 0, H_is_phase_vocoder,		pl_bt);
-  Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		pl_dc);
-  Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       pcl_ct);
+  Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_phase_vocoder), t));
+  Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_phase_vocoder), t));
   Xen_define_typed_procedure(S_phase_vocoder_amp_increments, g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments, pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_amps,	g_phase_vocoder_amps_w,    1, 0, 0, H_phase_vocoder_amps,	pl_fc);
   Xen_define_typed_procedure(S_phase_vocoder_freqs,	g_phase_vocoder_freqs_w,   1, 0, 0, H_phase_vocoder_freqs,	pl_fc);
@@ -13079,8 +13174,10 @@ static void mus_xen_init(void)
   Xen_define_typed_dilambda(S_mus_hop, g_mus_hop_w, H_mus_hop, 
 			    S_set S_mus_hop, g_mus_set_hop_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
-  Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		pcl_ct); 
-  Xen_define_typed_procedure(S_ssb_am,			g_ssb_am_w,                1, 2, 0, H_ssb_am,			pl_dcr);
+  Xen_define_typed_procedure(S_make_ssb_am,		g_make_ssb_am_w,           0, 4, 0, H_make_ssb_am,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ssb_am), t)); 
+  Xen_define_typed_procedure(S_ssb_am,			g_ssb_am_w,                1, 2, 0, H_ssb_am,			
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_ssb_am), r));
   Xen_define_typed_procedure(S_is_ssb_am,		g_is_ssb_am_w,             1, 0, 0, H_is_ssb_am,		pl_bt);
 
   Xen_define_typed_procedure(S_is_mus_generator,	g_is_mus_generator_w,      1, 0, 0, H_is_mus_generator,		pl_bt);
@@ -13115,11 +13212,16 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_singer_nose_filter,	g_singer_nose_filter_w,     5, 0, 0, H_singer_nose_filter,	pl_rirfff);
 #endif
 
-  Xen_define_typed_procedure(S_make_oscil,		g_make_oscil_w,             0, 4, 0, H_make_oscil,		pcl_ct);
-  Xen_define_typed_procedure(S_make_ncos,		g_make_ncos_w,              0, 4, 0, H_make_ncos,		pcl_ct); 
-  Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		pcl_ct);
-  Xen_define_typed_procedure(S_make_nsin,		g_make_nsin_w,              0, 4, 0, H_make_nsin,		pcl_ct); 
-  Xen_define_typed_procedure(S_make_asymmetric_fm,	g_make_asymmetric_fm_w,     0, 8, 0, H_make_asymmetric_fm,	pcl_ct);
+  Xen_define_typed_procedure(S_make_oscil,		g_make_oscil_w,             0, 4, 0, H_make_oscil,              
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil), t));
+  Xen_define_typed_procedure(S_make_ncos,		g_make_ncos_w,              0, 4, 0, H_make_ncos,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_ncos), t)); 
+  Xen_define_typed_procedure(S_make_oscil_bank,		g_make_oscil_bank_w,        2, 2, 0, H_make_oscil_bank,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_oscil_bank), t));
+  Xen_define_typed_procedure(S_make_nsin,		g_make_nsin_w,              0, 4, 0, H_make_nsin,		
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_nsin), t)); 
+  Xen_define_typed_procedure(S_make_asymmetric_fm,	g_make_asymmetric_fm_w,     0, 8, 0, H_make_asymmetric_fm,	
+			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_asymmetric_fm), t));
 
   Xen_define_typed_procedure(S_mus_file_mix,		g_mus_file_mix_w,           0, 0, 1, H_mus_file_mix,		NULL);
   Xen_define_typed_procedure(S_mus_file_mix_with_envs,	g_mus_file_mix_with_envs_w, 0, 0, 1, H_mus_file_mix_with_envs,	NULL); /* actually 8 2 0 I think */

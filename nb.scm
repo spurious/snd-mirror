@@ -64,39 +64,37 @@
   (let ((documentation "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
 It causes a description of the file to popup when the mouse crosses the filename"))
     (lambda (type position name)
-      (define file-info
-	(lambda (file)
-	  ;; (file-info file) -> description (as a string) of file
-	  (format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
-		  file
-		  (channels file)
-		  (srate file)
-		  (let ((den (* (channels file) (srate file))))
-		    (if (> den 0)
-			(format #f "~1,3F" (* 1.0 (/ (mus-sound-samples file) den)))
-			"unknown"))
-		  (mus-header-type-name (mus-sound-header-type file))
-		  (mus-sample-type-name (mus-sound-sample-type file))
-		  (if (mus-sound-maxamp-exists? file)
-		      (format #f "~%  maxamp: ~A" (mus-sound-maxamp file))
-		      "")
-		  (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
-		  (let ((comment (mus-sound-comment file)))
-		    (if (and (string? comment)
-			     (> (length comment) 0))
-			(format #f "~%  comment: ~A" comment)
-			""))
-		  (if (not (and use-gdbm
-				(file-exists? nb-database)))
-		      ""
-		      (let* ((ptr (gdbm-open nb-database 'read))
-			     (note (gdbm-fetch ptr file)))
-			(gdbm-close! ptr)
-			(if (string? note)
-			    (format #f "~%~A" note)
-			    ""))))))
-
-      (let ((region-viewer 2))
+      (let ((file-info (lambda (file)
+			 ;; (file-info file) -> description (as a string) of file
+			 (format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
+				 file
+				 (channels file)
+				 (srate file)
+				 (let ((den (* (channels file) (srate file))))
+				   (if (> den 0)
+				       (format #f "~1,3F" (* 1.0 (/ (mus-sound-samples file) den)))
+				       "unknown"))
+				 (mus-header-type-name (mus-sound-header-type file))
+				 (mus-sample-type-name (mus-sound-sample-type file))
+				 (if (mus-sound-maxamp-exists? file)
+				     (format #f "~%  maxamp: ~A" (mus-sound-maxamp file))
+				     "")
+				 (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
+				 (let ((comment (mus-sound-comment file)))
+				   (if (and (string? comment)
+					    (> (length comment) 0))
+				       (format #f "~%  comment: ~A" comment)
+				       ""))
+				 (if (not (and use-gdbm
+					       (file-exists? nb-database)))
+				     ""
+				     (let* ((ptr (gdbm-open nb-database 'read))
+					    (note (gdbm-fetch ptr file)))
+				       (gdbm-close! ptr)
+				       (if (string? note)
+					   (format #f "~%~A" note)
+					   ""))))))
+	    (region-viewer 2))
 	(set! nb-mouse-response-time (get-internal-real-time))
 	(if (not (= type region-viewer))
 	    (let ((info-exists (list-ref (dialog-widgets) 15)))

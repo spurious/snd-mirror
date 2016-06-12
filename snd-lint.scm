@@ -159,3 +159,18 @@
      x-zoom-slider y->position y-axis-label y-bounds y-position-slider y-zoom-slider zoom-color
      zoom-focus-style zoom-one-pixel)))
 
+
+;;; ---------------- Snd booleans ----------------
+;;; add Snd/clm type checkers to lint's table
+
+(for-each (lambda (tchk)
+	    (hash-table-set! (*lint* 'booleans) tchk #t))
+	  '(all-pass? all-pass-bank? asymmetric-fm? comb? comb-bank? convolve? delay? env? file->sample? filter? filtered-comb?
+	    filtered-comb-bank? fir-filter? firmant? formant-bank? formant? granulate? iir-filter? locsig? move-sound? moving-average?
+	    moving-max? moving-norm? mus-generator? mus-input? mus-output? ncos? notch? nrxycos? nrxysin? nsin? one-pole? one-pole-all-pass? 
+	    one-zero? oscil? oscil-bank? phase-vocoder? polyshape? polywave? pulse-train? pulsed-env? rand-interp? rand? readin?
+	    rxyk!cos? rxyk!sin? sample->file? sawtooth-wave? square-wave? src? ssb-am? table-lookup? tap? triangle-wave? two-pole?
+	    two-zero? wave-train? file->frample? frample->file?
+
+	    mark?))
+

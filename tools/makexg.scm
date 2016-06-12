@@ -1782,7 +1782,7 @@
 				"Xen_car")))
 		   (for-each
 		    (lambda (arg)
-		      (hey (substring "                                                                   " 0 castlen))
+		      (hey (make-string castlen #\space))
 		      (if (string=? (car arg) "lambda_data")
 			  (hey "Xen_cadr((Xen)func_info),~%")
 			  (hey "C_to_Xen_~A(~A~A),~%"
@@ -1792,7 +1792,7 @@
 				   "")
 			       (cadr arg))))
 		    args)
-		   (hey (substring "                                                                      " 0 castlen))
+		   (hey (make-string castlen #\space))
 		   (hey "__func__)")
 		   (if void?
 		       (hey ";~%")

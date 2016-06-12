@@ -203,14 +203,15 @@
 
 
 (define (create-general str file)
-  (let ((mid (char-position #\: str)))
-    (make-ind :name (string-append "<a href=\"" 
-				   (or file "") 
-				   "#" 
-				   (substring str 0 mid) 
-				   "\"><b>" 
-				   (substring str (+ mid 1)) 
-				   "</b></a>")
+  (let* ((mid (char-position #\: str))
+	 (name (string-append "<a href=\"" 
+			      (or file "") 
+			      "#" 
+			      (substring str 0 mid) 
+			      "\"><b>" 
+			      (substring str (+ mid 1)) 
+			      "</b></a>")))
+    (make-ind :name name
 	      :sortby (string-downcase (substring str (+ mid 1))))))
 
 

@@ -79,17 +79,17 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 
 #if HAVE_SCHEME
 #define S_make_vct       "make-float-vector"
-#define S_vct_add       "float-vector-add!"
-#define S_vct_subtract  "float-vector-subtract!"
+#define S_vct_add        "float-vector-add!"
+#define S_vct_subtract   "float-vector-subtract!"
 #define S_vct_copy       "float-vector-copy"
 #define S_vct_length     "float-vector-length"
-#define S_vct_multiply  "float-vector-multiply!"
-#define S_vct_offset    "float-vector-offset!"
+#define S_vct_multiply   "float-vector-multiply!"
+#define S_vct_offset     "float-vector-offset!"
 #define S_vct_ref        "float-vector-ref"
-#define S_vct_scale     "float-vector-scale!"
-#define S_vct_abs       "float-vector-abs!"
-#define S_vct_fill      "float-vector-fill!"
-#define S_vct_set       "float-vector-set!"
+#define S_vct_scale      "float-vector-scale!"
+#define S_vct_abs        "float-vector-abs!"
+#define S_vct_fill       "float-vector-fill!"
+#define S_vct_set        "float-vector-set!"
 #define S_vct_peak       "float-vector-peak"
 #define S_vct_equal      "float-vector-equal?"
 #define S_is_vct         "float-vector?"
@@ -97,7 +97,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_to_list    "float-vector->list"
 #define S_vector_to_vct  "vector->float-vector"
 #define S_vct_to_vector  "float-vector->vector"
-#define S_vct_move      "float-vector-move!"
+#define S_vct_move       "float-vector-move!"
 #define S_vct_subseq     "float-vector-subseq"
 #define S_vct_reverse    "float-vector-reverse!"
 #define S_vct_to_string  "float-vector->string"
@@ -106,17 +106,17 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define A_VCT            "a float-vector"
 #else
 #define S_make_vct       "make-vct"
-#define S_vct_add       "vct-add!"
-#define S_vct_subtract  "vct-subtract!"
+#define S_vct_add        "vct-add!"
+#define S_vct_subtract   "vct-subtract!"
 #define S_vct_copy       "vct-copy"
 #define S_vct_length     "vct-length"
-#define S_vct_multiply  "vct-multiply!"
-#define S_vct_offset    "vct-offset!"
+#define S_vct_multiply   "vct-multiply!"
+#define S_vct_offset     "vct-offset!"
 #define S_vct_ref        "vct-ref"
-#define S_vct_scale     "vct-scale!"
-#define S_vct_abs       "vct-abs!"
-#define S_vct_fill      "vct-fill!"
-#define S_vct_set       "vct-set!"
+#define S_vct_scale      "vct-scale!"
+#define S_vct_abs        "vct-abs!"
+#define S_vct_fill       "vct-fill!"
+#define S_vct_set        "vct-set!"
 #define S_vct_peak       "vct-peak"
 #define S_vct_equal      "vct-equal?"
 #define S_is_vct         "vct?"
@@ -124,7 +124,7 @@ mus_float_t *mus_vct_data(vct *v) {return(v->data);}
 #define S_vct_to_list    "vct->list"
 #define S_vector_to_vct  "vector->vct"
 #define S_vct_to_vector  "vct->vector"
-#define S_vct_move      "vct-move!"
+#define S_vct_move       "vct-move!"
 #define S_vct_subseq     "vct-subseq"
 #define S_vct_reverse    "vct-reverse!"
 #define S_vct_to_string  "vct->string"
@@ -1774,7 +1774,7 @@ Xen_wrap_7_args(g_vct_interpolate_w, g_vct_interpolate)
 void mus_vct_init(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffii, pl_ffiif, pl_sf;
+  s7_pointer pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffiib, pl_ffiif, pl_sf;
 #else
   vct_tag = Xen_make_object_type("Vct", sizeof(vct));
 
@@ -1863,7 +1863,7 @@ void mus_vct_init(void)
     pl_ffr = s7_make_signature(s7, 3, f, f, r);
     pl_bffr = s7_make_signature(s7, 4, b, f, f, r);
     pl_fffi = s7_make_signature(s7, 4, f, f, f, i);
-    pl_ffii = s7_make_signature(s7, 4, f, f, i, i);
+    pl_ffiib = s7_make_signature(s7, 5, f, f, i, i, b);
     pl_ffiif = s7_make_signature(s7, 5, f, f, i, i, f);
   }
 #endif
@@ -1874,7 +1874,7 @@ void mus_vct_init(void)
   Xen_define_typed_procedure(S_vct_offset,        g_vct_offset_w,    2, 0, 0, H_vct_offsetB,		pl_ffr);
   Xen_define_typed_procedure(S_vct_peak,          g_vct_peak_w,      1, 0, 0, H_vct_peak,		pl_rf);
   Xen_define_typed_procedure(S_vct_peak_and_location, g_vct_peak_and_location_w, 1, 0, 0, H_vct_peak_and_location, pl_pf);
-  Xen_define_typed_procedure(S_vct_move,          g_vct_move_w,      3, 1, 0, H_vct_moveB,		pl_ffii);
+  Xen_define_typed_procedure(S_vct_move,          g_vct_move_w,      3, 1, 0, H_vct_moveB,		pl_ffiib);
   Xen_define_typed_procedure(S_vct_subseq,        g_vct_subseq_w,    2, 2, 0, H_vct_subseq,		pl_ffiif);
   Xen_define_typed_procedure(S_vct_copy,          g_vct_copy_w,      1, 0, 0, H_vct_copy,		pl_ff);
 

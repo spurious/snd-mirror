@@ -172,16 +172,15 @@
 	       (gtk_grid_attach (GTK_GRID table) scale 1 slider 1 1)
 	       (set! slider (+ 1 slider))))
 	 (gtk_widget_show scale)
-	 (g_signal_connect adj "value_changed"
-			   (if (not use-log)
+	 (let ((label-func (if (not use-log)
 			       func
 			       (lambda (w d) 
 				 (func w d)
 				 (change-label label 
 					       (format #f "~A: ~,2F" 
 						       title 
-						       (scale-linear->log low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high)))))
-			   #f)
+						       (scale-linear->log low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high)))))))
+	   (g_signal_connect adj "value_changed" label-func #f))
 	 adj))
      sliders)))
 

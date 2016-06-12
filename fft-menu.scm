@@ -83,17 +83,14 @@ removes all energy below the low frequency and above the high frequency, then co
 		  (add-sliders 
 		   fft-edit-dialog
 		   
-		   (list (list "low frequency" 20 initial-fft-edit-low-frequency 22050
-			       (if (provided? 'snd-gtk)
-				   (lambda (w data) (set! fft-edit-low-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! fft-edit-low-frequency ((*motif* '.value) info))))
-			       1)
-			 
-			 (list "high frequency" 20 initial-fft-edit-high-frequency 22050
-			       (if (provided? 'snd-gtk) 
-				   (lambda (w data) (set! fft-edit-high-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! fft-edit-high-frequency ((*motif* '.value) info))))
-			       1))))))
+		   (list (let ((low-func (if (provided? 'snd-gtk)
+					     (lambda (w data) (set! fft-edit-low-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					     (lambda (w context info) (set! fft-edit-low-frequency ((*motif* '.value) info))))))
+			   (list "low frequency" 20 initial-fft-edit-low-frequency 22050 low-func 1))
+			 (let ((high-func (if (provided? 'snd-gtk) 
+					      (lambda (w data) (set! fft-edit-high-frequency ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					      (lambda (w context info) (set! fft-edit-high-frequency ((*motif* '.value) info))))))
+			   (list "high frequency" 20 initial-fft-edit-high-frequency 22050 high-func 1)))))))
         (activate-dialog fft-edit-dialog))
       (set! fft-edit-menu-label (add-to-menu fft-menu "FFT notch filter" post-fft-edit-dialog))))
 
@@ -151,13 +148,12 @@ removes all energy below the low frequency and above the high frequency, then co
 	    (set! sliders
 		  (add-sliders 
 		   fft-squelch-dialog
-		   (list (list "squelch amount" 0.0 initial-fft-squelch-amount 1.0
-			       (if (provided? 'snd-gtk)
-				   (lambda (w data)
-				     (set! fft-squelch-amount (/ ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)) 100)))
-				   (lambda (w context info)
-				     (set! fft-squelch-amount (/ ((*motif* '.value) info) 100))))
-			       100))))))
+		   (let ((squelch-func (if (provided? 'snd-gtk)
+					   (lambda (w data)
+					     (set! fft-squelch-amount (/ ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)) 100)))
+					   (lambda (w context info)
+					     (set! fft-squelch-amount (/ ((*motif* '.value) info) 100))))))
+		   (list (list "squelch amount" 0.0 initial-fft-squelch-amount 1.0 squelch-func 100)))))))
 	
         (activate-dialog fft-squelch-dialog))
       (set! fft-squelch-menu-label (add-to-menu fft-menu "FFT squelch" post-fft-squelch-dialog))))

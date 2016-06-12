@@ -2559,8 +2559,7 @@ its top-level bindings are imported into the current environment:
     (let ()
       (load "any-library.scm" (curlet))
       (map (lambda (binding)
-	     (cons (string-&gt;symbol 
-		    (string-append "library:" (symbol-&gt;string (car binding))))
+	     (cons (symbol "library:" (symbol-&gt;string (car binding)))
 		   (cdr binding)))
 	    (curlet)))))
 </pre>
