@@ -1372,6 +1372,7 @@
 	  (constant? form)
 	  (and (symbol? (car form))
 	       (hash-table-ref no-side-effect-functions (car form))
+	       (hash-table-ref built-in-functions (car form))
 	       (not (var-member (car form) env)) ; e.g. exp declared locally as a list
 	       (every? (lambda (p) (just-constants? p env)) (cdr form)))))
 
@@ -2414,6 +2415,7 @@
       (if (not (pair? in-form))
 	  in-form
 	  (let ((form (bcomp (bsimp in-form))))
+
 	    (if (not (and (pair? form)
 			  (memq (car form) '(or and not))))
 		(classify form)
@@ -2450,7 +2452,7 @@
 		  ;; (or (and A B) (and C B)) -> (and (or A C) B)
 		  ;; (and (or A B) (or A C)) -> (or A (and B C))
 		  ;; (and (or A B) (or C B)) -> (or (and A C) B)
-		  
+
 		  (case (car form)
 		    ;; --------------------------------
 		    ((not)
@@ -11306,7 +11308,7 @@
 			   (false (if (= len 4) (cadddr form) 'no-false))
 			   (expr (simplify-boolean (cadr form) () () env))
 			   (suggestion made-suggestion))
-		       
+
 		       (if (eq? false #<unspecified>)
 			   (lint-format "this #<unspecified> is redundant: ~A" caller form))
 		       
@@ -15896,7 +15898,7 @@
 ;;; eq?/=/any-sig extension of and-forgetful
 ;;; if big arg is already let, perhaps use body as replacement
 ;;; why was the large repeated let ignored? 
-;;; there are 550 Snd functions without signatures
+;;; there are 498 Snd functions without signatures
 ;;; see the if/if cases in t347 [there's a side-effect problem here] [9629]
 ;;;   perhaps (and x y) in midst -> (if x y) since value is ignored
 ;;; internal (mid body) define? [9620], also in open bodies -- begin primarily?
@@ -15907,8 +15909,6 @@
 ;;;   this is hard to detect in report-usage (and globals here would be a pain), so can it be done in let-walker?
 ;;; if combinations: check entire and exprs for intersection
 ;;; c-side type checkers need ways to merge into lint's type compatibilty checks (mus-generator etc)
-;;;    (or (selected-sound) (car (sounds))) -> (car (sounds))?? find-sound was similar until removed from no-side table
-;;;    and (pair? (sounds)) -> #t ??
 ;;; (substring <string constant all one char> start end) -> make-string
 ;;;
 ;;; 133 23216 549376

@@ -33668,6 +33668,23 @@ static s7_pointer permanent_list(s7_scheme *sc, int len)
 static int sigs = 0, sig_pairs = 0;
 #endif
 
+static void check_sig_entry(s7_scheme *sc, s7_pointer p, s7_pointer res, bool circle)
+{
+  if ((!is_symbol(car(p))) && 
+      (!s7_is_boolean(car(p))) &&
+      (!is_pair(car(p))))
+    {
+      s7_pointer np;
+      int i;
+      for (np = res, i = 0; np != p; np = cdr(np), i++);
+      fprintf(stderr, "s7_make_%ssignature got an invalid entry at position %d: (", (circle) ? "circular_" : "", i);
+      for (np = res; np != p; np = cdr(np))
+	fprintf(stderr, "%s ", DISPLAY(car(np)));
+      fprintf(stderr, "...");
+      car(p) = sc->nil;
+    }
+}
+
 s7_pointer s7_make_signature(s7_scheme *sc, int len, ...)
 {
   va_list ap;
@@ -33682,13 +33699,7 @@ s7_pointer s7_make_signature(s7_scheme *sc, int len, ...)
   for (p = res; is_pair(p); p = cdr(p))
     {
       car(p) = va_arg(ap, s7_pointer);
-#if DEBUGGING
-      if (!car(p))
-	{
-	  fprintf(stderr, "missed type check in procedure-signature\n");
-	  abort();
-	}
-#endif    
+      check_sig_entry(sc, p, res, false);
     }
   va_end(ap);
 
@@ -33710,18 +33721,14 @@ s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, .
   for (p = res, i = 0; is_pair(p); p = cdr(p), i++)
     {
       car(p) = va_arg(ap, s7_pointer);
+      check_sig_entry(sc, p, res, true);
       if (i == cycle_point) back = p;
       if (i == (len - 1)) end = p;
-#if DEBUGGING
-      if (!car(p))
-	{
-	  fprintf(stderr, "missed type check in (circular) procedure-signature\n");
-	  abort();
-	}
-#endif    
     }
   va_end(ap);
   if (end) cdr(end) = back;
+  if (i < len) 
+    fprintf(stderr, "s7_make_circular_signature got too few entries: %s\n", DISPLAY(res));
   return((s7_pointer)res);
 }
 

@@ -3092,10 +3092,10 @@ reported it via the hook).
 <pre class="indented">
 (define without-warnings
   (lambda (thunk)
-    (define no-warning (lambda (hook) (set! (hook 'result) #t)))
-    (hook-push <em class=red>snd-warning-hook</em> no-warning)
-    (thunk)
-    (hook-remove <em class=red>snd-warning-hook</em> no-warning)))
+    (let ((no-warning (lambda (hook) (set! (hook 'result) #t))))
+      (hook-push <em class=red>snd-warning-hook</em> no-warning)
+      (thunk)
+      (hook-remove <em class=red>snd-warning-hook</em> no-warning))))
 </pre>
 <div class="spacer"></div>
 

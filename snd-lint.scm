@@ -172,5 +172,5 @@
 	    rxyk!cos? rxyk!sin? sample->file? sawtooth-wave? square-wave? src? ssb-am? table-lookup? tap? triangle-wave? two-pole?
 	    two-zero? wave-train? file->frample? frample->file?
 
-	    mark?))
+	    mark? mix? mix-sampler?))
 

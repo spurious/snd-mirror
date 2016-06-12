@@ -13137,7 +13137,7 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
   Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		
-			     s7_make_circular_signature(s7, 3, 4, d, s7_make_symbol(s7, S_is_granulate), t));
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_granulate), t));
   Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_granulate), t));
 

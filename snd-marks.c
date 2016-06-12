@@ -2936,7 +2936,8 @@ void g_init_marks(void)
   mark_hook = Xen_define_hook(S_mark_hook, "(make-hook 'id 'snd 'chn 'reason)", 4, H_mark_hook); 
 
   Xen_define_typed_dilambda(S_mark_sample, g_mark_sample_w, H_mark_sample, S_set S_mark_sample, g_set_mark_sample_w, 1, 1, 2, 0, 
-			    s7_make_signature(s7, 3, i, m, i), s7_make_signature(s7, 2, 3, i, m, i)); 
+			    s7_make_signature(s7, 3, i, m, i), s7_make_signature(s7, 3, i, m, i)); 
+  /* this is bad: the second arg to mark-sample is edit-position, but to set_mark_sample is the new sample! */
   Xen_define_typed_dilambda(S_mark_sync, g_mark_sync_w, H_mark_sync, S_set S_mark_sync, g_set_mark_sync_w, 1, 0, 2, 0, pl_im, 
 			    s7_make_signature(s7, 3, i, m, s7_make_signature(s7, 2, i, b)));	    
   Xen_define_typed_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_set S_mark_name, g_set_mark_name_w, 1, 0, 2, 0, 
