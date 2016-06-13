@@ -145,7 +145,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
     (lambda (n)
       (help-dialog "Mix Help"
 		   (format #f "Mix ~A (sync: ~A):~%  position: ~D = ~,3F secs~%  length: ~D (~,3F secs)~%  in: ~A[~D]~%  scaler: ~A~%  speed: ~A~%  env: ~A~A"
-			   (format #f (if (mix-name n)
+			   (format #f (if (not (string=? (mix-name n) ""))
 					  (values "~S (~A)" (mix-name n) n)
 					  (values "~A" n)))
 			   (mix-sync n)
@@ -180,8 +180,7 @@ All mixes sync'd to it are also moved the same number of samples. (hook-remove m
 		((= chn (channels snd)))
 	      (for-each
 	       (lambda (m)
-		 (if (and (string? (mix-name m))
-			  (string=? (mix-name m) name))
+		 (if (equal? (mix-name m) name)
 		     (return m)))
 	       (mixes snd chn))))
 	  (sounds))

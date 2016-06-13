@@ -3755,7 +3755,7 @@ void g_init_file(void)
     r = s7_make_symbol(s7, "real?");
     s = s7_make_symbol(s7, "string?");
     p = s7_make_symbol(s7, "pair?");
-    l = s7_make_symbol(s7, "list");
+    l = s7_make_symbol(s7, "list?");
     t = s7_t(s7);
     
     z = s7_make_signature(s7, 2, b, p);

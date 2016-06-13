@@ -104,7 +104,7 @@ fm-violin takes the value returned by make-fm-violin and returns a new sample ea
 	
 	(lambda ()
 	  (let ((vib (+ (frqf) (triangle-wave pervib) (rand-interp ranvib)))
-		(fuzz (if fm-noi (rand fm-noi) 0.0)))
+		(fuzz (if (rand? fm-noi) (rand fm-noi) 0.0)))
 	    (* (ampf)
 	       (if amp-noi (+ 1.0 (rand-interp amp-noi)) 1.0)
 	       (oscil carrier 

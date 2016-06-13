@@ -136,8 +136,8 @@
 
 (define (goto-named-mark name)
   (select-channel 0)
-  (if (find-mark name)
-      (set! (cursor) (mark-sample (find-mark name))))
+  (set! (cursor) (cond ((find-mark name) => mark-sample)
+		       (else (error 'no-such-mark "can't find mark named ~S" name))))
   )
 
 (define (delete-named-mark name)

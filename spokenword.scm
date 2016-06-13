@@ -86,10 +86,10 @@
   (lambda (position)
     (let ((in-mark (find-mark "In"))
 	  (out-mark (find-mark "Out")))
-    (if (and in-mark
+    (if (and (mark? in-mark)
 	     (<= (mark-sample in-mark) position))
 	(delete-mark in-mark))
-    (if out-mark
+    (if (mark? out-mark)
         (set! (mark-sample out-mark) position)
         (add-mark position 0 0 "Out")))))
 
@@ -97,10 +97,10 @@
   (lambda (position)
     (let ((in-mark (find-mark "In"))
 	  (out-mark (find-mark "Out")))
-    (if (and out-mark
+    (if (and (mark? out-mark)
 	     (>= (mark-sample out-mark) position))
 	(delete-mark out-mark))
-    (if in-mark
+    (if (mark? in-mark)
         (set! (mark-sample in-mark) position)
         (add-mark position 0 0 "In")))))
 
@@ -108,8 +108,8 @@
   (lambda ()
     (let ((in-mark (find-mark "In"))
 	  (out-mark (find-mark "Out")))
-    (if (and in-mark
-	     out-mark
+    (if (and (mark? in-mark)
+	     (mark? out-mark)
 	     (< (mark-sample out-mark) (mark-sample in-mark)))
 	(begin
 	  (set! (cursor) (mark-sample out-mark))
@@ -127,8 +127,8 @@
     (if (= reason 0)
 	(play (selected-sound) in-position (+ in-position preview-length))))
   (if (and
-        in-mark
-        out-mark)
+        (mark? in-mark)
+        (mark? out-mark))
       (if (< out-position in-position)
           (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
       (play (selected-sound) (cursor) (+ (cursor) preview-length)))))
