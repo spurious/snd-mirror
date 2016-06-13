@@ -2177,35 +2177,48 @@ static s7_pointer acc_max_regions(s7_scheme *sc, s7_pointer args) {return(g_set_
 
 void g_init_regions(void)
 {
-  init_xen_region();
+#if HAVE_SCHEME
+  s7_pointer i, b, p, t, f, fv, rg;
+  i = s7_make_symbol(s7, "integer?");
+  rg = s7_make_symbol(s7, "region?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "list?");
+  f = s7_make_symbol(s7, "float?");
+  fv = s7_make_symbol(s7, "float-vector?");
+  t = s7_t(s7);
+#endif
 
+  init_xen_region();
   init_region_keywords();
 
   Xen_define_procedure(S_restore_region,              g_restore_region_w,         0, 0, 1, "internal func used in save-state, restores a region");
   Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
-  Xen_define_safe_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions);
-  Xen_define_safe_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples);
-  Xen_define_safe_procedure(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position);
-  Xen_define_safe_procedure(S_region_srate,           g_region_srate_w,           1, 0, 0, H_region_srate);
-  Xen_define_safe_procedure(S_region_chans,           g_region_chans_w,           1, 0, 0, H_region_chans);
-  Xen_define_safe_procedure(S_region_home,            g_region_home_w,            1, 0, 0, H_region_home);
-  Xen_define_safe_procedure(S_region_maxamp,          g_region_maxamp_w,          1, 0, 0, H_region_maxamp);
-  Xen_define_safe_procedure(S_region_maxamp_position, g_region_maxamp_position_w, 1, 0, 0, H_region_maxamp_position);
   Xen_define_procedure(S_save_region,                 g_save_region_w,            2, 7, 0, H_save_region);
   Xen_define_procedure(S_forget_region,               g_forget_region_w,          1, 0, 0, H_forget_region);
   Xen_define_procedure(S_make_region,                 g_make_region_w,            0, 4, 0, H_make_region);
   Xen_define_procedure(S_mix_region,                  g_mix_region_w,             1, 4, 0, H_mix_region);
-  Xen_define_safe_procedure(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample);
-  Xen_define_safe_procedure(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct);
-  Xen_define_safe_procedure(S_is_region,              g_is_region_w,              1, 0, 0, H_is_region);
 
-  Xen_define_safe_procedure(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region);
-  Xen_define_safe_procedure(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer);
+  Xen_define_typed_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions,         s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples, s7_make_signature(s7, 3, i, rg, i));
+  Xen_define_typed_procedure(S_region_position,        g_region_position_w,        1, 1, 0, H_region_position, s7_make_signature(s7, 3, i, rg, i));
+  Xen_define_typed_procedure(S_region_srate,           g_region_srate_w,           1, 0, 0, H_region_srate,    s7_make_signature(s7, 2, i, rg));
+  Xen_define_typed_procedure(S_region_chans,           g_region_chans_w,           1, 0, 0, H_region_chans,    s7_make_signature(s7, 2, i, rg));
+  Xen_define_typed_procedure(S_region_home,            g_region_home_w,            1, 0, 0, H_region_home,     s7_make_signature(s7, 2, p, rg));
+  Xen_define_typed_procedure(S_region_maxamp,          g_region_maxamp_w,          1, 0, 0, H_region_maxamp,   s7_make_signature(s7, 2, f, rg));
+  Xen_define_typed_procedure(S_region_maxamp_position, g_region_maxamp_position_w, 1, 0, 0, H_region_maxamp_position, s7_make_signature(s7, 2, i, rg));
+  Xen_define_typed_procedure(S_region_sample,          g_region_sample_w,          2, 1, 0, H_region_sample,   s7_make_signature(s7, 4, f, rg, i, i));
+  Xen_define_typed_procedure(S_region_to_vct,          g_region_to_vct_w,          1, 4, 0, H_region_to_vct,   s7_make_signature(s7, 6, fv, rg, i, i, i, fv));
+  Xen_define_typed_procedure(S_is_region,              g_is_region_w,              1, 0, 0, H_is_region,       s7_make_signature(s7, 2, b, t));
 
-  Xen_define_dilambda(S_max_regions, g_max_regions_w, H_max_regions, S_set S_max_regions, g_set_max_regions_w, 0, 0, 1, 0);
+  Xen_define_typed_procedure(S_integer_to_region,      g_integer_to_region_w,      1, 0, 0, H_integer_to_region, s7_make_signature(s7, 2, rg, i));
+  Xen_define_typed_procedure(S_region_to_integer,      g_region_to_integer_w,      1, 0, 0, H_region_to_integer, s7_make_signature(s7, 2, i, rg));
 
-  Xen_define_dilambda(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
-				   S_set S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_max_regions, g_max_regions_w, H_max_regions, S_set S_max_regions, g_set_max_regions_w, 0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+
+  Xen_define_typed_dilambda(S_region_graph_style, g_region_graph_style_w, H_region_graph_style,
+			    S_set S_region_graph_style, g_set_region_graph_style_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
 
 #if HAVE_SCHEME
   s7_symbol_set_access(s7, ss->max_regions_symbol, s7_make_function(s7, "[acc-" S_max_regions "]", acc_max_regions, 2, 0, false, "accessor"));

@@ -3694,6 +3694,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 		      if (data) {free(data); data = NULL;}
 		      sf = free_snd_fd(sf);
 #if HAVE_SCHEME
+		      free(in_data);
 		      s7_gc_unprotect_at(s7, gc_loc);
 		      s7_gc_unprotect_at(s7, proc_loc);
 #endif

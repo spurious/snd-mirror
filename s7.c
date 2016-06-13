@@ -74301,7 +74301,7 @@ s7_scheme *s7_init(void)
                               (values))))");
 
   s7_eval_c_string(sc, "(define make-hook                                                                     \n\
-                          (let ((signature (let ((L (list 'procedure? #t))) (set-cdr! (cdr L) (cdr L)) L))    \n\
+                          (let ((signature '(procedure?))                                                     \n\
                                 (documentation \"(make-hook . pars) returns a new hook (a function) that passes the parameters to its function list.\")) \n\
                             (lambda args                                                                      \n\
                               (let ((body ()))                                                                \n\

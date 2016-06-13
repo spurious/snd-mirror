@@ -236,28 +236,26 @@
     (lambda ()
       (hook-push start-playing-hook 
 		 (lambda (snd)
-		   (let ((marklist (marks snd 0)))
-
-		     (define report-mark-names-play-hook
-		       (let ((samplist (map mark-sample marklist))
-			     (samp 0))
-			 (lambda (hook)
-			   (set! samp (+ samp (hook 'size)))
-			   (if (and (pair? samplist)
-				    (>= samp (car samplist)))
-			       (begin
-				 (status-report (mark-name (car marklist)) snd)
-				 (set! marklist (cdr marklist))
-				 (set! samplist (cdr samplist)))))))
-		     
-		     (define (report-mark-names-stop-playing-hook hook)
-		       (status-report "" (hook 'snd))
-		       (hook-remove play-hook report-mark-names-play-hook)
-		       (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))
-		     
-		     (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
-		     (hook-push play-hook report-mark-names-play-hook)
-		     #f))))))
+		   (let* ((marklist (marks snd 0))
+			  (report-mark-names-play-hook
+			   (let ((samplist (map mark-sample marklist))
+				 (samp 0))
+			     (lambda (hook)
+			       (set! samp (+ samp (hook 'size)))
+			       (if (and (pair? samplist)
+					(>= samp (car samplist)))
+				   (begin
+				     (status-report (mark-name (car marklist)) snd)
+				     (set! marklist (cdr marklist))
+				     (set! samplist (cdr samplist))))))))
+		     (letrec ((report-mark-names-stop-playing-hook 
+			       (lambda (hook)
+				 (status-report "" (hook 'snd))
+				 (hook-remove play-hook report-mark-names-play-hook)
+				 (hook-remove stop-playing-hook report-mark-names-stop-playing-hook))))
+		       (hook-push stop-playing-hook report-mark-names-stop-playing-hook)
+		       (hook-push play-hook report-mark-names-play-hook)
+		       #f)))))))
 
 
 ;;; -------- snap-marks

@@ -1873,25 +1873,38 @@ Xen_wrap_3_optional_args(g_set_selection_member_w, g_set_selection_member)
 
 void g_init_selection(void)
 {
+#if HAVE_SCHEME
+  s7_pointer i, b, t, f, sel;
+  i = s7_make_symbol(s7, "integer?");
+  sel = s7_make_symbol(s7, "selection?");
+  b = s7_make_symbol(s7, "boolean?");
+  f = s7_make_symbol(s7, "float?");
+  t = s7_t(s7);
+#endif
+
   init_selection_keywords();
   init_xen_selection();
 
-  Xen_define_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_set S_selection_position, g_set_selection_position_w, 0, 2, 1, 2);
-  Xen_define_dilambda(S_selection_framples, g_selection_framples_w, H_selection_framples, S_set S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2);
-  Xen_define_dilambda(S_selection_member, g_selection_member_w, H_selection_member, S_set S_selection_member, g_set_selection_member_w, 0, 2, 1, 2);
+  Xen_define_typed_dilambda(S_selection_position, g_selection_position_w, H_selection_position, S_set S_selection_position, g_set_selection_position_w, 0, 2, 1, 2,
+			    s7_make_signature(s7, 3, i, t, t), s7_make_signature(s7, 4, i, t, t, i));
+  Xen_define_typed_dilambda(S_selection_framples, g_selection_framples_w, H_selection_framples, S_set S_selection_framples, g_set_selection_framples_w, 0, 2, 1, 2,
+			    s7_make_signature(s7, 3, i, t, t), s7_make_signature(s7, 4, i, t, t, i));
+  Xen_define_typed_dilambda(S_selection_member, g_selection_member_w, H_selection_member, S_set S_selection_member, g_set_selection_member_w, 0, 2, 1, 2,
+			    s7_make_signature(s7, 3, b, t, t), s7_make_signature(s7, 4, b, t, t, b));
 
-  Xen_define_safe_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection);
-  Xen_define_safe_procedure(S_is_selection,      g_is_selection_w,      0, 1, 0, H_is_selection);
-  Xen_define_safe_procedure(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans);
-  Xen_define_safe_procedure(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate);
-  Xen_define_safe_procedure(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp);
-  Xen_define_safe_procedure(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position);
+  Xen_define_typed_procedure(S_selection,        g_selection_w,        0, 0, 0, H_selection,         s7_make_signature(s7, 1, s7_make_signature(s7, 2, sel, b)));
+  Xen_define_typed_procedure(S_is_selection,     g_is_selection_w,     0, 1, 0, H_is_selection,      s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_selection_chans,  g_selection_chans_w,  0, 0, 0, H_selection_chans,   s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_selection_srate,  g_selection_srate_w,  0, 0, 0, H_selection_srate,   s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_selection_maxamp, g_selection_maxamp_w, 0, 2, 0, H_selection_maxamp,  s7_make_signature(s7, 3, f, t, t));
+  Xen_define_typed_procedure(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position, s7_make_signature(s7, 3, i, t, t));
+  Xen_define_typed_procedure(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all,        s7_make_signature(s7, 3, b, t, t));
+  Xen_define_typed_procedure(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all,      s7_make_signature(s7, 1, b));
+
   Xen_define_procedure(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
   Xen_define_procedure(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
   Xen_define_procedure(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
   Xen_define_procedure(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
-  Xen_define_procedure(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all);
   Xen_define_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
   Xen_define_procedure(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
-  Xen_define_procedure(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all);
 }

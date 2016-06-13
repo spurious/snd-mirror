@@ -1036,20 +1036,18 @@
 (define path-maxcoeff 8)
 
 (define (make-a-even)
-  
-  (define g
-    (let ((path-gtab #f))
-      (lambda (m)
-	(if (not path-gtab)
-	    (begin
-	      (set! path-gtab (make-vector path-maxcoeff))
-	      (set! (path-gtab 0) 1)
-	      (set! (path-gtab 1) -4)
-	      (do ((i 2 (+ i 1)))
-		  ((= i path-maxcoeff))
-		(set! (path-gtab i) (- (* -4 (path-gtab (- i 1)))
-				       (path-gtab (- i 2)))))))
-	(path-gtab m))))
+  (let ((g (let ((path-gtab #f))
+	     (lambda (m)
+	       (if (not path-gtab)
+		   (begin
+		     (set! path-gtab (make-vector path-maxcoeff))
+		     (set! (path-gtab 0) 1)
+		     (set! (path-gtab 1) -4)
+		     (do ((i 2 (+ i 1)))
+			 ((= i path-maxcoeff))
+		       (set! (path-gtab i) (- (* -4 (path-gtab (- i 1)))
+					      (path-gtab (- i 2)))))))
+	       (path-gtab m)))))
   
   (set! path-ak-even (make-vector (- path-maxcoeff 1)))
   (do ((m 1 (+ 1 m)))
@@ -1057,23 +1055,21 @@
     (set! (path-ak-even (- m 1)) (make-vector m))
     (do ((k 1 (+ k 1)))
 	((> k m))
-      (set! ((path-ak-even (- m 1)) (- k 1)) (* 1.0 (/ (- (g (- m k))) (g m)))))))
+      (set! ((path-ak-even (- m 1)) (- k 1)) (* 1.0 (/ (- (g (- m k))) (g m))))))))
 
 (define (make-a-odd)
-  
-  (define f
-    (let ((path-ftab #f))
-      (lambda (m)
-	(if (not path-ftab)
-	    (begin
-	      (set! path-ftab (make-vector path-maxcoeff))
-	      (set! (path-ftab 0) 1)
-	      (set! (path-ftab 1) -3)
-	      (do ((i 2 (+ i 1)))
-		  ((= i path-maxcoeff))
-		(set! (path-ftab i) (- (* -4 (path-ftab (- i 1)))
-				       (path-ftab (- i 2)))))))
-	(path-ftab m))))
+  (let ((f (let ((path-ftab #f))
+	     (lambda (m)
+	       (if (not path-ftab)
+		   (begin
+		     (set! path-ftab (make-vector path-maxcoeff))
+		     (set! (path-ftab 0) 1)
+		     (set! (path-ftab 1) -3)
+		     (do ((i 2 (+ i 1)))
+			 ((= i path-maxcoeff))
+		       (set! (path-ftab i) (- (* -4 (path-ftab (- i 1)))
+					      (path-ftab (- i 2)))))))
+	       (path-ftab m)))))
   
   (set! path-ak-odd (make-vector (- path-maxcoeff 1)))
   (do ((m 1 (+ 1 m)))
@@ -1081,7 +1077,7 @@
     (set! (path-ak-odd (- m 1)) (make-vector m))
     (do ((k 1 (+ k 1)))
 	((> k m))
-      (set! ((path-ak-odd (- m 1)) (- k 1)) (* 1.0 (/ (- (f (- m k))) (f m)))))))
+      (set! ((path-ak-odd (- m 1)) (- k 1)) (* 1.0 (/ (- (f (- m k))) (f m))))))))
 
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
@@ -1549,10 +1545,10 @@
 			    (if (= vi 0.0) (set! vi 1))
 			    (for-each
 			     (lambda (d)
-			       (set! tseg (cons (+ ti (if (= v vi)
-							  (/ d vi)
-							  (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
-						tseg)))
+			       (let ((seg (+ ti (if (= v vi)
+						    (/ d vi)
+						    (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))))
+				 (set! tseg (cons seg tseg))))
 			     dseg))
 			  (set! ti (car tseg))
 			  (set! tseg (reverse tseg))
@@ -1650,10 +1646,10 @@
 		      (let ((a (/ (* (- v vi) (+ v vi)) df 4)))
 			(for-each
 			 (lambda (d)
-			   (set! tseg (cons (+ ti (if (= v vi)
-						      (/ d vi)
-						      (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))
-					    tseg)))
+			   (let ((seg (+ ti (if (= v vi)
+						(/ d vi)
+						(/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))))
+			   (set! tseg (cons seg tseg))))
 			 dseg))
 		      (set! ti (car tseg))
 		      (set! tseg (reverse tseg))
@@ -2622,6 +2618,7 @@
 	      ;; V
 	      (set! (channel-gains v-offset) (cons time (channel-gains v-offset)))
 	      (set! (channel-gains v-offset) (cons v (channel-gains v-offset))))
+
 	    (when (>= ambisonics-v-order 3)
 	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) att))
 	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
@@ -2640,17 +2637,20 @@
 	      ;; O
 	      (set! (channel-gains o-offset) (cons time (channel-gains o-offset)))
 	      (set! (channel-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-gains o-offset))))
+
 	    (when (>= ambisonics-h-order 3)
 	      ;; P
 	      (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
-	      (set! (channel-gains p-offset) (cons (* (if (zero? dist) 0 (/ att dist)) x 
-						      (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							 (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains p-offset)))
+	      (set! (channel-gains p-offset) (let ((dist-p (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							      (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))))
+					       (cons (* (if (zero? dist) 0 (/ att dist)) x dist-p) 
+						     (channel-gains p-offset))))
 	      ;; Q
 	      (set! (channel-gains q-offset) (cons time (channel-gains q-offset)))
-	      (set! (channel-gains q-offset) (cons (* (if (zero? dist) 0 (/ att dist)) y
-						      (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							 (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) (channel-gains q-offset))))
+	      (set! (channel-gains q-offset) (let ((dist-q (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+							      (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))))
+					       (cons (* (if (zero? dist) 0 (/ att dist)) y dist-q)
+						     (channel-gains q-offset)))))
 	    ;; push reverb gain into envelope
 	    (when (= rev-channels 1)
 	      ;; mono reverb output
@@ -2696,15 +2696,18 @@
 	      (when (>= ambisonics-h-order 2)
 		;; U
 		(set! (channel-rev-gains u-offset) (cons time (channel-rev-gains u-offset)))
-		(set! (channel-rev-gains u-offset) (cons (* (if (zero? dist) 0 (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-										  (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) 
-							    dlocsig-ambisonics-ho-rev-scaler ratt)
-							 (channel-rev-gains u-offset)))
+		(set! (channel-rev-gains u-offset) (let ((dist-u (* (if (zero? dist) 0 
+									(- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+									   (* y y (if (zero? dist) 1 (/ 1.0 dist dist)))))
+								    dlocsig-ambisonics-ho-rev-scaler ratt)))
+						     (cons dist-u (channel-rev-gains u-offset))))
 		;; V
 		(set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
-		(set! (channel-rev-gains v-offset) (cons (* (if (zero? dist) 0 2) (- x) y (if (zero? dist) 1 (/ 1.0 dist dist)) 
-							    dlocsig-ambisonics-ho-rev-scaler ratt)
-							 (channel-rev-gains v-offset))))
+		(set! (channel-rev-gains v-offset) (let ((dist-v (* (if (zero? dist) 0 2)
+								    (- x) y
+								    (if (zero? dist) 1 (/ 1.0 dist dist))
+								    dlocsig-ambisonics-ho-rev-scaler ratt)))
+						     (cons dist-v (channel-rev-gains v-offset)))))
 	      
 	      (when (>= ambisonics-v-order 3)
 		(set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) 

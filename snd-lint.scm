@@ -161,7 +161,7 @@
 
 
 ;;; ---------------- Snd booleans ----------------
-;;; add Snd/clm type checkers to lint's table
+;;; add Snd/clm type checkers to lint's table (lint assumes that these take one argument)
 
 (for-each (lambda (tchk)
 	    (hash-table-set! (*lint* 'booleans) tchk #t))
@@ -172,5 +172,5 @@
 	    rxyk!cos? rxyk!sin? sample->file? sawtooth-wave? square-wave? src? ssb-am? table-lookup? tap? triangle-wave? two-pole?
 	    two-zero? wave-train? file->frample? frample->file?
 
-	    mark? mix? mix-sampler?))
+	    mark? mix? mix-sampler? region?))
 

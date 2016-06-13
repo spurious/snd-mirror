@@ -2943,20 +2943,20 @@ void g_init_marks(void)
   Xen_define_typed_dilambda(S_mark_name, g_mark_name_w, H_mark_name, S_set S_mark_name, g_set_mark_name_w, 1, 0, 2, 0, 
 			    s7_make_signature(s7, 2, s, m), s7_make_signature(s7, 3, s, m, s));
 
-  Xen_define_typed_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max, s7_make_signature(s7, 1, i));
-  Xen_define_typed_procedure(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home, s7_make_signature(s7, 2, p, m));
-  Xen_define_typed_procedure(S_marks,           g_marks_w,           0, 3, 0, H_marks, s7_make_circular_signature(s7, 1, 2, p, t));
-  Xen_define_typed_procedure(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark, pl_add);
+  Xen_define_typed_procedure(S_mark_sync_max,   g_mark_sync_max_w,   0, 0, 0, H_mark_sync_max,    s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_mark_home,       g_mark_home_w,       1, 0, 0, H_mark_home,        s7_make_signature(s7, 2, p, m));
+  Xen_define_typed_procedure(S_marks,           g_marks_w,           0, 3, 0, H_marks,            s7_make_circular_signature(s7, 1, 2, p, t));
+  Xen_define_typed_procedure(S_add_mark,        g_add_mark_w,        0, 5, 0, H_add_mark,         pl_add);
   Xen_define_typed_procedure(S_add_mark "!",    g_add_mark_unchecked_w, 0, 5, 0, H_add_mark_unchecked, pl_add);
-  Xen_define_typed_procedure(S_delete_mark,     g_delete_mark_w,     1, 0, 0, H_delete_mark, s7_make_signature(s7, 2, t, m));
-  Xen_define_typed_procedure(S_delete_marks,    g_delete_marks_w,    0, 2, 0, H_delete_marks, s7_make_signature(s7, 3, b, t, t));
-  Xen_define_typed_procedure(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks, s7_make_signature(s7, 2, p, i));
+  Xen_define_typed_procedure(S_delete_mark,     g_delete_mark_w,     1, 0, 0, H_delete_mark,      s7_make_signature(s7, 2, t, m));
+  Xen_define_typed_procedure(S_delete_marks,    g_delete_marks_w,    0, 2, 0, H_delete_marks,     s7_make_signature(s7, 3, b, t, t));
+  Xen_define_typed_procedure(S_syncd_marks,     g_syncd_marks_w,     1, 0, 0, H_syncd_marks,      s7_make_signature(s7, 2, p, i));
   Xen_define_typed_procedure(S_find_mark,       g_find_mark_w,       1, 3, 0, H_find_mark,
 			     s7_make_circular_signature(s7, 2, 3, s7_make_signature(s7, 2, m, b), s7_make_signature(s7, 2, i, s), t));
-  Xen_define_typed_procedure(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks, s7_make_signature(s7, 3, s, t, s));
-  Xen_define_typed_procedure(S_is_mark,         g_is_mark_w,         1, 0, 0, H_is_mark, s7_make_signature(s7, 2, b, t));
-  Xen_define_typed_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark, s7_make_signature(s7, 2, m, i));
-  Xen_define_typed_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer, s7_make_signature(s7, 2, i, m));
+  Xen_define_typed_procedure(S_save_marks,      g_save_marks_w,      0, 2, 0, H_save_marks,       s7_make_signature(s7, 3, s, t, s));
+  Xen_define_typed_procedure(S_is_mark,         g_is_mark_w,         1, 0, 0, H_is_mark,          s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_integer_to_mark, g_integer_to_mark_w, 1, 0, 0, H_integer_to_mark,  s7_make_signature(s7, 2, m, i));
+  Xen_define_typed_procedure(S_mark_to_integer, g_mark_to_integer_w, 1, 0, 0, H_mark_to_integer,  s7_make_signature(s7, 2, i, m));
 
   Xen_define_typed_dilambda(S_mark_tag_width, g_mark_tag_width_w, H_mark_tag_width, S_set S_mark_tag_width, g_set_mark_tag_width_w, 0, 0, 1, 0, pl_i, pl_i);
   Xen_define_typed_dilambda(S_mark_tag_height, g_mark_tag_height_w, H_mark_tag_height, S_set S_mark_tag_height, g_set_mark_tag_height_w, 0, 0, 1, 0, pl_i, pl_i);

@@ -704,7 +704,8 @@ void snd_doit(int argc, char **argv)
   if ((ss->sounds) && (ss->sounds[0]) && ((ss->sounds[0])->inuse == SOUND_NORMAL))
     select_channel(ss->sounds[0], 0);
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && (!defined(__sun))
+
   if (!nostdin)
     {
       s7_load(s7, "repl.scm");

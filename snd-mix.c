@@ -4025,21 +4025,21 @@ void g_init_mix(void)
 #endif
 
   Xen_define_typed_procedure(S_make_mix_sampler,  g_make_mix_sampler_w,       1, 1, 0, H_make_mix_sampler, s7_make_signature(s7, 3, ms, m, i));
-  Xen_define_typed_procedure(S_read_mix_sample,   g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample, s7_make_signature(s7, 2, f, ms));
-  Xen_define_typed_procedure(S_is_mix_sampler,    g_is_mix_sampler_w,         1, 0, 0, H_is_mix_sampler, s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_read_mix_sample,   g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample,  s7_make_signature(s7, 2, f, ms));
+  Xen_define_typed_procedure(S_is_mix_sampler,    g_is_mix_sampler_w,         1, 0, 0, H_is_mix_sampler,   s7_make_signature(s7, 2, b, t));
 
   Xen_define_procedure(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
   Xen_define_procedure(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
   Xen_define_procedure(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
 
-  Xen_define_typed_procedure(S_mixes,             g_mixes_w,                  0, 2, 0, H_mixes, s7_make_signature(s7, 3, p, t, t));
-  Xen_define_typed_procedure(S_mix_home,          g_mix_home_w,               1, 0, 0, H_mix_home, s7_make_signature(s7, 2, p, m));
-  Xen_define_typed_procedure(S_is_mix,            g_is_mix_w,                 1, 0, 0, H_is_mix, s7_make_signature(s7, 2, b, t));
-  Xen_define_typed_procedure(S_mix_length,        g_mix_length_w,             1, 0, 0, H_mix_length, s7_make_signature(s7, 2, i, m));
-  Xen_define_typed_procedure(S_integer_to_mix,    g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix, s7_make_signature(s7, 2, m, i));
-  Xen_define_typed_procedure(S_mix_to_integer,    g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer, s7_make_signature(s7, 2, i, m));
+  Xen_define_typed_procedure(S_mixes,             g_mixes_w,                  0, 2, 0, H_mixes,            s7_make_signature(s7, 3, p, t, t));
+  Xen_define_typed_procedure(S_mix_home,          g_mix_home_w,               1, 0, 0, H_mix_home,         s7_make_signature(s7, 2, p, m));
+  Xen_define_typed_procedure(S_is_mix,            g_is_mix_w,                 1, 0, 0, H_is_mix,           s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_mix_length,        g_mix_length_w,             1, 0, 0, H_mix_length,       s7_make_signature(s7, 2, i, m));
+  Xen_define_typed_procedure(S_integer_to_mix,    g_integer_to_mix_w,         1, 0, 0, H_integer_to_mix,   s7_make_signature(s7, 2, m, i));
+  Xen_define_typed_procedure(S_mix_to_integer,    g_mix_to_integer_w,         1, 0, 0, H_mix_to_integer,   s7_make_signature(s7, 2, i, m));
   Xen_define_typed_procedure(S_view_mixes_dialog, g_view_mixes_dialog_w,      0, 0, 0, H_view_mixes_dialog, s7_make_signature(s7, 1, p));
-  Xen_define_typed_procedure(S_mix_sync_max,      g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max, s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_mix_sync_max,      g_mix_sync_max_w,           0, 0, 0, H_mix_sync_max,     s7_make_signature(s7, 1, i));
 
   Xen_define_typed_dilambda(S_mix_position,   g_mix_position_w,   H_mix_position,   S_set S_mix_position,   g_set_mix_position_w,   1, 0, 2, 0,
 			    s7_make_signature(s7, 2, i, m), s7_make_signature(s7, 3, i, m, i));
