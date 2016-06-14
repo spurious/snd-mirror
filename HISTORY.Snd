@@ -1,5 +1,6 @@
 Snd change log
 
+ 14-Jun:    Snd 16.6.
  30-May:    snd-lint.scm, symbol takes any number of args.
  6-May:     Snd 16.5.
  29-Mar:    --with-webserver configuration  (Kjetil Matheussen)
