@@ -65878,8 +65878,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_SET_WITH_LET_1:
-	  /* here sc->value is the new value for the settee, args has the (as yet unevaluated) let and settee-expression.
-	   */
+	  /* here sc->value is the new value for the settee, args has the (as yet unevaluated) let and settee-expression. */
 	  /* fprintf(stderr, "with_let_1: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
 	  sc->code = car(sc->args);
 	  sc->args = list_2(sc, cadr(sc->args), sc->value);
@@ -65888,7 +65887,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case OP_SET_WITH_LET_2:
 	  /* fprintf(stderr, "with_let_2: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
-	  sc->code = cons(sc, sc->set_symbol, sc->args);
+	  /* avoid double evaluation */
+	  if ((is_symbol(cadr(sc->args))) ||
+	      (is_pair(cadr(sc->args))))
+	    sc->code = cons(sc, sc->set_symbol, list_2(sc, car(sc->args), list_2(sc, sc->quote_symbol, cadr(sc->args))));
+	  else sc->code = cons(sc, sc->set_symbol, sc->args);
 	  activate_let(sc);
 	  goto EVAL;
 

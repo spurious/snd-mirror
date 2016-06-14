@@ -1524,7 +1524,7 @@ static Xen g_x_to_position(Xen val, Xen snd, Xen chn, Xen ap)
   Snd_assert_channel(S_x_to_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_x_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_int_to_Xen_integer(grf_x(Xen_real_to_C_double(val),
-			    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
+				    TO_C_AXIS_INFO(snd, chn, ap, S_x_to_position))));
 }
 
 
@@ -1535,7 +1535,7 @@ static Xen g_y_to_position(Xen val, Xen snd, Xen chn, Xen ap)
   Snd_assert_channel(S_y_to_position, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_y_to_position, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_int_to_Xen_integer(grf_y(Xen_real_to_C_double(val),
-			    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
+				    TO_C_AXIS_INFO(snd, chn, ap, S_y_to_position))));
 }
 
 
@@ -1546,7 +1546,7 @@ static Xen g_position_to_x(Xen val, Xen snd, Xen chn, Xen ap)
   Snd_assert_channel(S_position_to_x, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_x, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_double_to_Xen_real(ungrf_x(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_x),
-				 Xen_integer_to_C_int(val))));
+				      Xen_integer_to_C_int(val))));
 }
 
 
@@ -1557,7 +1557,7 @@ static Xen g_position_to_y(Xen val, Xen snd, Xen chn, Xen ap)
   Snd_assert_channel(S_position_to_y, snd, chn, 2);
   Xen_check_type(Xen_is_integer_or_unbound(ap), ap, 4, S_position_to_y, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   return(C_double_to_Xen_real(ungrf_y(TO_C_AXIS_INFO(snd, chn, ap, S_position_to_y),
-				 Xen_integer_to_C_int(val))));
+				      Xen_integer_to_C_int(val))));
 }
 
 
@@ -2038,17 +2038,32 @@ Xen_wrap_4_optional_args(g_set_y_bounds_w, g_set_y_bounds)
   
 void g_init_axis(void)
 {
-  Xen_define_safe_procedure(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position);
-  Xen_define_safe_procedure(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position);
-  Xen_define_safe_procedure(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x);
-  Xen_define_safe_procedure(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y);
-  Xen_define_safe_procedure(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info);
-  Xen_define_safe_procedure(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes);
+#if HAVE_SCHEME
+  s7_pointer i, b, p, t, f, r, s;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  f = s7_make_symbol(s7, "float?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  t = s7_t(s7);
+#endif
+
+  Xen_define_typed_procedure(S_x_to_position, g_x_to_position_w,   1, 3, 0, H_x_to_position, s7_make_signature(s7, 5, i, r, t, t, i));
+  Xen_define_typed_procedure(S_y_to_position, g_y_to_position_w,   1, 3, 0, H_y_to_position, s7_make_signature(s7, 5, i, r, t, t, i));
+  Xen_define_typed_procedure(S_position_to_x, g_position_to_x_w,   1, 3, 0, H_position_to_x, s7_make_signature(s7, 5, f, i, t, t, i));
+  Xen_define_typed_procedure(S_position_to_y, g_position_to_y_w,   1, 3, 0, H_position_to_y, s7_make_signature(s7, 5, f, i, t, t, i));
+  Xen_define_typed_procedure(S_axis_info,     g_axis_info_w,       0, 3, 0, H_axis_info,     s7_make_signature(s7, 4, p, t, t, i));
+  Xen_define_typed_procedure(S_draw_axes,     g_draw_axes_w,       0, 0, 1, H_draw_axes,     s7_make_signature(s7, 11, p, t, t, t, r, r, r, r, i, i, p));
   
-  Xen_define_dilambda(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_set S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_set S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_set S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_set S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3);
+  Xen_define_typed_dilambda(S_x_axis_label, g_x_axis_label_w, H_x_axis_label, S_set S_x_axis_label, g_set_x_axis_label_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, s, t, t, i), s7_make_signature(s7, 5, s, t, t, i, s));
+  Xen_define_typed_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_set S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, s, t, t, i), s7_make_signature(s7, 5, s, t, t, i, s));
+  Xen_define_typed_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_set S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, p));
+  Xen_define_typed_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_set S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, p));
 
   Xen_define_constant(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   Xen_define_constant(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");

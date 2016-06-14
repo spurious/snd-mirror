@@ -2453,6 +2453,7 @@
 		  (case (car form)
 		    ;; --------------------------------
 		    ((not)
+
 		     (if (not (= len 2))
 			 form
 			 (let* ((arg (cadr form))
@@ -2462,7 +2463,7 @@
 					 (classify arg)))
 				(arg-op (and (pair? arg) 
 					     (car arg))))
-			   
+
 			   (cond ((boolean? val) 
 				  (not val))
 				 
@@ -2476,18 +2477,21 @@
 					   (not (var-member arg-op env))))
 				  #f)
 				 
-				 ((and (pair? arg)               ; (not (not ...)) -> ...
-				       (pair? (cdr arg))         ; this is usually internally generated, 
-				       (eq? arg-op 'not))        ;   so the message about (and x #t) is in special-case-functions below
-				  (cadr arg))
+				 ((and (pair? val)               ; (not (not ...)) -> ...
+				       (pair? (cdr val))         ; this is usually internally generated, 
+				       (eq? (car val) 'not))     ;   so the message about (and x #t) is in special-case-functions below
+				  (cadr val))
 
-				 ((and (pair? arg)               ; (not (or|and x (not y)...)) -> (and|or (not x) y ...)
+				 ((not (equal? val arg))
+				  `(not ,val))
+
+				 ((and (pair? arg)               ; (not (or|and x (not y))) -> (and|or (not x) y)
 				       (memq arg-op '(and or))
-				       (pair? (cdr arg))
-				       (any? (lambda (p) 
-					       (and (pair? p) 
-						    (eq? (car p) 'not)))
-					     (cdr arg)))
+				       (= (length arg) 3)
+				       (or (and (pair? (cadr arg))
+						(eq? (caadr arg) 'not))
+					   (and (pair? (caddr arg))
+						(eq? (caaddr arg) 'not))))
 				  (let ((rel (if (eq? arg-op 'or) 'and 'or)))
 				    `(,rel ,@(map (lambda (p)
 						    (if (and (pair? p)
@@ -2495,9 +2499,6 @@
 							(cadr p)
 							(simplify-boolean `(not ,p) () () env)))
 						  (cdr arg)))))
-				 
-				 ((not (equal? val arg))
-				  `(not ,val))
 				 
 				 ((and (pair? arg)
 				       (<= (length arg) 3)) ; avoid (<= 0 i 12) and such
@@ -2533,6 +2534,7 @@
 				    (else form)))
 				 
 				 (else form)))))
+
 		    ;; --------------------------------
 		    ((or)
 		     (case len
@@ -2703,27 +2705,42 @@
 				 ;; (or (if a c d) (if b c d)) -> (if (or a b) c d) never happens, sad to say
 				 ;;   or + if + if does happen but not in this easily optimized form
 				 ))) ; len = 3
-			   
-			   (let ((nots 0)
-				 (revers 0))
-			     (if (every? (lambda (a)                ; (and (not (pair? x)) (not (null? x))) -> (not (list? x))
-					   (and (pair? a)
-						(if (eq? (car a) 'not)
-						    (set! nots (+ nots 1))
-						    (and (hash-table-ref notables (car a))
-							 (set! revers (+ revers 1))))))
-					 (cdr form))
-				 (if (zero? revers)
-				     (let ((sf (simplify-boolean `(and ,@(map cadr (cdr form))) true false env)))
-				       (return (simplify-boolean `(not ,sf) () () env)))
-				     (if (> nots revers)
-					 (let ((nf (simplify-boolean `(and ,@(map (lambda (p)
-										    (if (eq? (car p) 'not)
-											(cadr p)
-											`(,(hash-table-ref notables (car p)) ,@(cdr p))))
+
+				;; len > 3 or nothing was caught above
+				(let ((nots 0)
+				      (revers 0)
+				      (arglen (- len 1)))
+				  (do ((p (cdr form) (cdr p)))
+				      ((not (pair? p)))
+				    (let ((a (car p)))
+				      (if (pair? a)
+					  (if (eq? (car a) 'not)
+					      (set! nots (+ nots 1))
+					      (if (hash-table-ref notables (car a))
+						  (set! revers (+ revers 1)))))))
+				  (if (= nots arglen)                               ; every arg is `(not ...)
+				      (let ((nf (simplify-boolean `(and ,@(map cadr (cdr form))) () () env)))
+					(return (simplify-boolean `(not ,nf) () () env)))
+				      (if (and (> arglen 2)
+					       (or (> nots (/ (* 2 arglen) 3))
+						   (and (> arglen 2)
+							(> nots (/ arglen 2))
+							(> revers 0))))
+					  (let ((nf (simplify-boolean `(and ,@(map (lambda (p)
+										    (if (pair? p)
+											(if (eq? (car p) 'not)
+											    (cadr p)
+											    (cond ((hash-table-ref notables (car p)) => 
+												   (lambda (op)
+												     `(,op ,@(cdr p))))
+												  (else `(not ,p))))
+											`(not ,p)))
 										  (cdr form)))
-								     true false env)))
-					   (return (simplify-boolean `(not ,nf) () () env)))))))
+								      () () env)))
+					    ;(format *stderr* "nf: ~A~%" nf)
+					    (return (simplify-boolean `(not ,nf) () () env))))))
+
+
 
 			   (let ((sym #f)
 				 (eqfnc #f)
@@ -3293,28 +3310,41 @@
 								    `(equal? (,(caddr x) ,(cadadr arg1)) (,(caddr x) ,(cadr (caddr arg1))))
 								    `(equal? ,(cadadr arg1) ,(cadr (caddr arg1))))))))))
 				      )))
-				
+
+
 				;; len > 3 or nothing was caught above
 				(let ((nots 0)
-				      (revers 0))
-				  (if (every? (lambda (a)                ; (and (not (pair? x)) (not (null? x))) -> (not (list? x))
-						(and (pair? a)
-						     (if (eq? (car a) 'not)
-							 (set! nots (+ nots 1))
-							 (and (hash-table-ref notables (car a))
-							      (set! revers (+ revers 1))))))
-					      (cdr form))
-				      (if (zero? revers)
-					  (let ((nf (simplify-boolean `(or ,@(map cadr (cdr form))) () () env)))
-					    (return (simplify-boolean `(not ,nf) () () env)))
-					  (if (> nots revers)
-					      (let ((nf (simplify-boolean `(or ,@(map (lambda (p)
+				      (revers 0)
+				      (arglen (- len 1)))
+				  (do ((p (cdr form) (cdr p)))
+				      ((not (pair? p)))
+				    (let ((a (car p)))
+				      (if (pair? a)
+					  (if (eq? (car a) 'not)
+					      (set! nots (+ nots 1))
+					      (if (hash-table-ref notables (car a))
+						  (set! revers (+ revers 1)))))))
+				  (if (= nots arglen)                               ; every arg is `(not ...)
+				      (let ((nf (simplify-boolean `(or ,@(map cadr (cdr form))) () () env)))
+					(return (simplify-boolean `(not ,nf) () () env)))
+				      (if (and (> arglen 2)
+					       (or (> nots (/ (* 2 arglen) 3))
+						   (and (> nots (/ arglen 2))
+							(> revers 0))))
+					  (let ((nf (simplify-boolean `(or ,@(map (lambda (p)
+										    (if (pair? p)
 											(if (eq? (car p) 'not)
 											    (cadr p)
-											    `(,(hash-table-ref notables (car p)) ,@(cdr p))))
-										      (cdr form)))
-									  () () env)))
-						(return (simplify-boolean `(not ,nf) () () env)))))))
+											    (cond ((hash-table-ref notables (car p)) => 
+												   (lambda (op)
+												     `(,op ,@(cdr p))))
+												  (else `(not ,p))))
+											`(not ,p)))
+										  (cdr form)))
+								      () () env)))
+					    ;(format *stderr* "nf: ~A~%" nf)
+					    (return (simplify-boolean `(not ,nf) () () env))))))
+
 				
 				(if (every? (lambda (a)
 					      (and (pair? a)
@@ -9291,6 +9321,19 @@
 						      (truncated-list->string c)))))))
 			 ((if (eq? (car f) 'cond) cdr cddr) f)))
 
+	      ((let let*)
+	       (if (and (pair? (cdr f))
+			(not (symbol? (cadr f)))
+			(pair? (cddr f)))
+		   (let ((last-expr (list-ref (cddr f) (- (length f) 3))))
+		     (if (side-effect? last-expr env)
+			 (if (pair? last-expr)
+			     (check-returns caller last-expr env))		 
+			 (lint-format "this is pointless~A: ~A in ~A" caller
+				      (local-line-number last-expr)
+				      (truncated-list->string last-expr)
+				      (truncated-list->string f))))))
+
 	      ;; perhaps use truncated-lists->string here??
 	      ((and)
 	       (let ((len (length f)))
@@ -9308,18 +9351,8 @@
 		   ((3) (lint-format "perhaps ~A" caller (lists->string f `(if (not ,(cadr f)) ,(caddr f)))))
 		   (else (lint-format "perhaps ~A" caller (lists->string f `(if (not ,(cadr f)) (or ,@(cddr f)))))))))
 
-	      ((let let*)
-	       (if (and (pair? (cdr f))
-			(not (symbol? (cadr f)))
-			(pair? (cddr f)))
-		   (let ((last-expr (list-ref (cddr f) (- (length f) 3))))
-		     (if (side-effect? last-expr env)
-			 (if (pair? last-expr)
-			     (check-returns caller last-expr env))		 
-			 (lint-format "this is pointless~A: ~A in ~A" caller
-				      (local-line-number last-expr)
-				      (truncated-list->string last-expr)
-				      (truncated-list->string f))))))
+	      ((not)
+	       (lint-format "this ~A is pointless" caller f))
 
 	      ((letrec letrec* with-let unless when begin with-baffle)
 	       (if (and (pair? (cdr f))
@@ -11245,13 +11278,14 @@
 			   (let ((v (var-member settee env)))
 			     (if (and (var? v)
 				      (eq? (var-definer v) 'define-constant))
-				 (lint-format "can't set! ~A in ~A (it is a constant: ~A~A)" caller settee
-					      (truncated-list->string form)
-					      (if (and (pair? (var-initial-value v))
-						       (positive? (pair-line-number (var-initial-value v))))
-						  (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-						  "")
-					      (truncated-list->string (var-initial-value v))))))
+				 (let ((line (if (and (pair? (var-initial-value v))
+						      (positive? (pair-line-number (var-initial-value v))))
+						 (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
+						 "")))
+				   (lint-format "can't set! ~A in ~A (it is a constant: ~A~A)" caller settee
+						(truncated-list->string form)
+						line
+						(truncated-list->string (var-initial-value v)))))))
 		       (if (not (pair? settee))
 			   (lint-format "can't set! ~A" caller (truncated-list->string form))
 			   (begin
@@ -12299,7 +12333,6 @@
 										    (cdr form)))
 								       ,@(cdr first-result))))))))))))
 		   ;; ----------------
-		   
 		   (let ((falses ())
 			 (trues ()))
 		     (for-each
@@ -12331,10 +12364,11 @@
 						      (truncated-list->string prev-clause)))
 				      (set! has-combinations #t)))          ; handle these later
 			      (set! prev-clause clause)
-			      
+
 			      (let ((expr (simplify-boolean (car clause) trues falses env))
 				    (test (car clause))
 				    (sequel (cdr clause)))
+
 				(if (not (equal? expr test))
 				    (set! simplifications (cons (cons clause expr) simplifications)))
 
@@ -13294,14 +13328,14 @@
 				 vars)
 		       
 		       (lint-walk caller (cadar bindings) env)
-		       (set! vars (cons (let ((v (make-var :name (caar bindings) 
-							   :definer 'do
-							   :initial-value (cadar bindings))))
-					  (let ((stepper (and (pair? (cddar bindings)) (caddar bindings))))
-					    (varlet (cdr v) :step stepper)
-					    (if stepper (set! (var-history v) (cons (list 'set! (caar bindings) stepper) (var-history v)))))
-					  v)
-					vars))))
+		       (let ((new-var (let ((v (make-var :name (caar bindings) 
+							 :definer 'do
+							 :initial-value (cadar bindings))))
+					(let ((stepper (and (pair? (cddar bindings)) (caddar bindings))))
+					  (varlet (cdr v) :step stepper)
+					  (if stepper (set! (var-history v) (cons (list 'set! (caar bindings) stepper) (var-history v)))))
+					v)))
+			 (set! vars (cons new-var vars)))))
 		   
 		   (set! inner-env (append vars env))
 		   
@@ -14691,18 +14725,18 @@
 				   (cadr baddy)))
 		    
 		    (when (binding-ok? caller head (car bindings) env #f)
-		      (set! vars (cons (make-var :name (caar bindings) 
-						 :initial-value (if (and (eq? (caar bindings) (cadar bindings))
-									 (or (eq? head 'letrec)
-									     (not (var-member (caar bindings) vars))))
-								    (begin
-								      (lint-format "~A is the same as (~A #<undefined>) in ~A" caller
-										   (car bindings) (caar bindings) head)
-								      ;; in letrec* ((x 12) (x x)) is an error
-								      #<undefined>)
-								    (cadar bindings))
-						 :definer head)
-				       vars))))
+		      (let ((new-var (make-var :name (caar bindings) 
+					       :initial-value (if (and (eq? (caar bindings) (cadar bindings))
+								       (or (eq? head 'letrec)
+									   (not (var-member (caar bindings) vars))))
+								  (begin
+								    (lint-format "~A is the same as (~A #<undefined>) in ~A" caller
+										 (car bindings) (caar bindings) head)
+								    ;; in letrec* ((x 12) (x x)) is an error
+								    #<undefined>)
+								  (cadar bindings))
+					       :definer head)))
+			(set! vars (cons new-var vars)))))
 		  
 		  (when (eq? head 'letrec)
 		    (check-unordered-exprs caller form (map var-initial-value vars) env))
@@ -16004,7 +16038,7 @@
 ;;; eq?/=/any-sig extension of and-forgetful
 ;;; if big arg is already let, perhaps use body as replacement
 ;;; why was the large repeated let ignored? 
-;;; there are 473 Snd functions without signatures; how to handle unsafe functions/dilambdas?
+;;; there are 464 Snd functions without signatures; how to handle unsafe functions/dilambdas?
 ;;; internal (mid body) define? [9630], also in open bodies -- begin primarily?
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
 ;;;    var-hist: init[refs...] set![refs all in set! context...] set![refs]
@@ -16012,4 +16046,4 @@
 ;;; if combinations: check entire and exprs for intersection
 ;;; the let-temp rewrite needs to be at the set points [13900]
 ;;;
-;;; 134 23101 551064
+;;; 134 23101 551163
