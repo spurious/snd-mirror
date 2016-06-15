@@ -686,14 +686,7 @@
     
     
     ;; -------- types --------
-    (define (any-real? lst) ; ignore 0.0 and 1.0 in this since they normally work
-      (and (pair? lst)
-	   (or (and (number? (car lst))
-		    (not (rational? (car lst)))
-		    (not (= (car lst) 0.0))
-		    (not (= (car lst) 1.0)))
-	       (any-real? (cdr lst)))))
-    
+
     (define (quoted-undotted-pair? x)
       (and (pair? x)
 	   (eq? (car x) 'quote)
@@ -2463,7 +2456,7 @@
 					 (classify arg)))
 				(arg-op (and (pair? arg) 
 					     (car arg))))
-
+			   
 			   (cond ((boolean? val) 
 				  (not val))
 				 
@@ -2728,19 +2721,17 @@
 							(> revers 0))))
 					  (let ((nf (simplify-boolean `(and ,@(map (lambda (p)
 										    (if (pair? p)
-											(if (eq? (car p) 'not)
-											    (cadr p)
-											    (cond ((hash-table-ref notables (car p)) => 
-												   (lambda (op)
-												     `(,op ,@(cdr p))))
-												  (else `(not ,p))))
+											(cond ((eq? (car p) 'not)
+											       (cadr p))
+											      ((hash-table-ref notables (car p)) => 
+											       (lambda (op)
+												 `(,op ,@(cdr p))))
+											      (else `(not ,p)))
 											`(not ,p)))
 										  (cdr form)))
 								      () () env)))
 					    ;(format *stderr* "nf: ~A~%" nf)
 					    (return (simplify-boolean `(not ,nf) () () env))))))
-
-
 
 			   (let ((sym #f)
 				 (eqfnc #f)
@@ -3311,7 +3302,6 @@
 								    `(equal? ,(cadadr arg1) ,(cadr (caddr arg1))))))))))
 				      )))
 
-
 				;; len > 3 or nothing was caught above
 				(let ((nots 0)
 				      (revers 0)
@@ -3333,18 +3323,17 @@
 							(> revers 0))))
 					  (let ((nf (simplify-boolean `(or ,@(map (lambda (p)
 										    (if (pair? p)
-											(if (eq? (car p) 'not)
-											    (cadr p)
-											    (cond ((hash-table-ref notables (car p)) => 
-												   (lambda (op)
-												     `(,op ,@(cdr p))))
-												  (else `(not ,p))))
+											(cond ((eq? (car p) 'not)
+											       (cadr p))
+											      ((hash-table-ref notables (car p)) => 
+											       (lambda (op)
+												 `(,op ,@(cdr p))))
+											      (else `(not ,p)))
 											`(not ,p)))
 										  (cdr form)))
 								      () () env)))
 					    ;(format *stderr* "nf: ~A~%" nf)
 					    (return (simplify-boolean `(not ,nf) () () env))))))
-
 				
 				(if (every? (lambda (a)
 					      (and (pair? a)
@@ -5191,7 +5180,12 @@
 	 (define (sp-= caller head form env)
 	   (let ((len (length form)))
 	     (if (and (> len 2)
-		      (any-real? (cdr form)))
+		      (let any-real? ((lst (cdr form))) ; ignore 0.0 and 1.0 in this since they normally work
+			(and (pair? lst)
+			     (or (and (number? (car lst))
+				      (not (rational? (car lst)))
+				      (not (member (car lst) '(0.0 1.0) =)))
+				 (any-real? (cdr lst))))))
 		 (lint-format "= can be troublesome with floats: ~A" caller (truncated-list->string form)))
 	     
 	     (let ((cleared-form (cons = (remove-if (lambda (x) (not (number? x))) (cdr form)))))
@@ -9698,6 +9692,7 @@
 |#
 		    ))
 
+		;; someday -- check A below for intersection not equality if no side-effects
 
 		;; generalized cases happen about a dozen times and there are only 2 cases where car f != car prev-f
 		(when (and (pair? prev-f) ; (if A ...) (if A ...) -> (when A ...) or equivalents
@@ -16043,7 +16038,23 @@
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
 ;;;    var-hist: init[refs...] set![refs all in set! context...] set![refs]
 ;;; var 2 values, vals themselves arbitrary (0/1) -> booleans
-;;; if combinations: check entire and exprs for intersection
+;;; if combinations: check entire and exprs for intersection [9696]
 ;;; the let-temp rewrite needs to be at the set points [13900]
 ;;;
-;;; 134 23101 551163
+;;; (< (if ... -1 0) 0) -> ... or similar -- can these be recognized? (bool? [...] (if test c0 c1) [...]) either choose from bool or rest of expr
+;;;    (if ... (op [] true []) (op [] false []))
+;;;    now simplify the branches: (if ... #f #t) or the like -> (not ...)
+;;;    any op could be rewritten this way, not just booleans [and/or are special however]
+;;;    (not (if ... a b)) seems strange -- a|b must already be #f? -- this actually happens! -- 
+;;;      (not (if (default-object? required?) #t required?))
+;;;      (not (if (and last-year (> (string->number tax-year) last-year)) #f #t)) -> (not (not (and ...))) -> (and ...)!
+;;;      (not (if tmp (apply (lambda (let* x v e1 e2) (and-map identifier? x)) tmp) #f))
+;;;      (not (if (not (eqv? (car dims) (length row))) (error ...)))! -- (not #<unspecified>)? -- (not (or (eqv?....) (error...))) ?
+;;;   (not (cond...)) happens about a dozen times
+;;;   (not (case...)) happens say 20 times: (not (case x ((version source) #t) (else #f))) which currently becomes (not (memq x '(version source)))
+;;;   (not (let...)) happens a ton, not+begin a few times
+;;;   also call/values cond-expand (not (fneq...))
+;;;   what about (assoc...)=>not? 
+;;;   what about other funcs in these cases? (+ (cond...)...) etc, any one-arg (f (let...)) -> (let (f...))
+;;;
+;;; 134 23101 550652

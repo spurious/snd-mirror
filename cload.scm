@@ -445,17 +445,17 @@
 	  (format p "  {~%    s7_pointer ~{~C~^, ~};~%" names)
 	  (for-each
 	   (lambda (name sym)
-	     (if (eq? sym 't)
-		 (format p "    t = s7_t(sc);~%")
-		 (format p "    ~C = s7_make_symbol(sc, ~S);~%" name (symbol->string sym))))
+	     (format p (if (eq? sym 't)
+			   "    t = s7_t(sc);~%"
+			   (values "    ~C = s7_make_symbol(sc, ~S);~%" name (symbol->string sym)))))
 	   names syms)))
       (format p "~%")
       (for-each
        (lambda (sig)
 	 (let ((cyclic (char=? ((cdr sig) 1) #\c)))
-	   (if cyclic
-	       (format p "    ~A = s7_make_circular_signature(sc, ~D, ~D" (cdr sig) (- (length (car sig)) 1) (length (car sig)))
-	       (format p "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig))))
+	   (format p (if cyclic 
+			 (values "    ~A = s7_make_circular_signature(sc, ~D, ~D" (cdr sig) (- (length (car sig)) 1) (length (car sig)))
+			 (values "    ~A = s7_make_signature(sc, ~D" (cdr sig) (length (car sig)))))
 	   (format p "~{~^, ~C~}" (substring (cdr sig) (if cyclic 4 3)))
 	   (format p ");~%")))
        signatures)
@@ -615,26 +615,25 @@
 
 
     ;; this is the body of c-define
-    (if (or (not output-name)
-	    (not (file-exists? c-file-name))
-	    (not (file-exists? so-file-name))
-	    (not (provided? 'system-extras))
-	    (< (file-mtime so-file-name) (file-mtime c-file-name))   ; they are equal on my linux system
-	    (and (file-exists? (port-filename (current-input-port))) ; we're actually loading a file
-		 (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port))))))
-	(begin
-	  (format *stderr* "writing ~A~%" c-file-name)
-	  ;; write a new C file and compile it
-	  (initialize-c-file)
-
-	  (if (and (pair? (cdr function-info))
-		   (symbol? (cadr function-info)))
-	      (handle-declaration function-info)
-	      (for-each handle-declaration function-info))
-	  
-	  (end-c-file)
-	  (delete-file o-file-name)))
-
+    (when (not (and output-name
+		    (file-exists? c-file-name)
+		    (file-exists? so-file-name)
+		    (provided? 'system-extras)
+		    (>= (file-mtime so-file-name) (file-mtime c-file-name))
+		    (not (and (file-exists? (port-filename (current-input-port)))
+			      (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port))))))))
+      (format *stderr* "writing ~A~%" c-file-name)
+      ;; write a new C file and compile it
+      (initialize-c-file)
+      
+      (if (and (pair? (cdr function-info))
+	       (symbol? (cadr function-info)))
+	  (handle-declaration function-info)
+	  (for-each handle-declaration function-info))
+      
+      (end-c-file)
+      (delete-file o-file-name))
+  
     ;; load the object file, clean up
     (let ((new-env (sublet cur-env 'init_func (string->symbol init-name))))
       (format *stderr* "loading ~A~%" so-file-name)
