@@ -123,11 +123,11 @@
 			  (sample-1 0.0))
 			  ;; these vars used for resampling
 
-		      (if (and (not (pair? srate))
-			       (not update-envs)
-			       (= out-chans 1)
-			       (not matrix)
-			       (not rev-mx))
+		      (if (not (or (pair? srate) 
+				   update-envs 
+				   (not (= out-chans 1)) 
+				   matrix 
+				   rev-mx))
 
 			  (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
 								      (/ (* (mus-sound-duration fnam) (mus-sound-srate fnam) expand) 

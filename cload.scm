@@ -615,13 +615,13 @@
 
 
     ;; this is the body of c-define
-    (when (not (and output-name
-		    (file-exists? c-file-name)
-		    (file-exists? so-file-name)
-		    (provided? 'system-extras)
-		    (>= (file-mtime so-file-name) (file-mtime c-file-name))
-		    (not (and (file-exists? (port-filename (current-input-port)))
-			      (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port))))))))
+    (unless (and output-name
+		 (file-exists? c-file-name)
+		 (file-exists? so-file-name)
+		 (provided? 'system-extras)
+		 (>= (file-mtime so-file-name) (file-mtime c-file-name))
+		 (not (and (file-exists? (port-filename (current-input-port)))
+			   (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port)))))))
       (format *stderr* "writing ~A~%" c-file-name)
       ;; write a new C file and compile it
       (initialize-c-file)

@@ -1726,8 +1726,8 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 (define region-play-sequence 
   (let ((documentation "(region-play-sequence data): 'data' is list of regions which will be played one after the other: (region-play-sequence (list reg0 reg2 reg1))"))
     (lambda (data)
-      (region-play-list
-       (let ((time 0.0))
+      (let ((time 0.0))
+	(region-play-list
 	 (map 
 	  (lambda (id)
 	    (let ((cur time))

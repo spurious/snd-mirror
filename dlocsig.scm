@@ -2715,10 +2715,10 @@
 		(set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
 		;; K
 		(set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
-		(set! (channel-rev-gains k-offset) (cons (* (if (zero? dist) 0 1) 
-							    (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5)
-							    dlocsig-ambisonics-ho-rev-scaler ratt)
-							 (channel-rev-gains k-offset)))
+		(set! (channel-rev-gains k-offset) (let ((dist-k (* (if (zero? dist) 0 1) 
+								    (- (* 2.5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1.5)
+								    dlocsig-ambisonics-ho-rev-scaler ratt)))
+						     (cons dist-k (channel-rev-gains k-offset))))
 		;; L
 		(set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
 		(set! (channel-rev-gains l-offset) (cons (* (if (zero? dist) 0 (/ x dist)) lm) 
@@ -2738,18 +2738,18 @@
 	      (when (>= ambisonics-h-order 3)
 		;; P
 		(set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
-		(set! (channel-rev-gains p-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) 
-							    dlocsig-ambisonics-ho-rev-scaler x 
-							    (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							       (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist))))) 
-							 (channel-rev-gains p-offset)))
+		(set! (channel-rev-gains p-offset) (let ((dist-p (* (if (zero? dist) 0 (/ ratt dist)) 
+								    dlocsig-ambisonics-ho-rev-scaler x 
+								    (- (* x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								       (* 3 y y (if (zero? dist) 1 (/ 1.0 dist dist)))))))
+						     (cons dist-p (channel-rev-gains p-offset))))
 		;; Q
 		(set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
-		(set! (channel-rev-gains q-offset) (cons (* (if (zero? dist) 0 (/ ratt dist)) 
-							    dlocsig-ambisonics-ho-rev-scaler y
-							    (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
-							       (* y y (if (zero? dist) 1 (/ 1.0 dist dist))))) 
-							 (channel-rev-gains q-offset))))
+		(set! (channel-rev-gains q-offset) (let ((dist-q (* (if (zero? dist) 0 (/ ratt dist)) 
+								    dlocsig-ambisonics-ho-rev-scaler y
+								    (- (* 3 x x (if (zero? dist) 1 (/ 1.0 dist dist)))
+								       (* y y (if (zero? dist) 1 (/ 1.0 dist dist)))))))
+						     (cons dist-q (channel-rev-gains q-offset)))))
 	      )))))
     
     ;; Render a trajectory breakpoint to a room for decoded ambisonics
@@ -3068,67 +3068,67 @@
 	  (format () ";;; error: resetting real duration to 0.1 (was ~A)~%" real-dur)
 	(set! real-dur 0.1)))
 
-    (list 
-     (make-move-sound
-      (list
-       ;; :start 
-       start
-       ;; :end 
-       (time->samples (+ start-time (max duration real-dur)))
-       ;; :out-channels 
-       (if speakers (speaker-config-number speakers) out-channels)
-       ;; :rev-channels 
-       rev-channels
-       ;; :path 
-       (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
-       ;; :delay 
-       (make-env (reverse dly)
-		 :offset (if initial-delay 0.0 (- min-delay))
-		 :duration real-dur)
-       ;; :rev 
-       (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
-		     (list 0 reverb-amount 1 reverb-amount)
-		     reverb-amount)
-		 :duration real-dur)
-       ;; :out-delays 
-       out-delays
-       ;; :gains 
-       (let ((v (make-vector out-channels)))
-	 (do ((i 0 (+ i 1)))
-	     ((= i out-channels))
-	   (set! (v i) (make-env (reverse (channel-gains i))
-				 :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
-				 :duration real-dur)))
-	 v)
-       ;; :rev-gains 
-       (and (> rev-channels 0)
-	    (let ((v (make-vector rev-channels)))
-	      (do ((i 0 (+ i 1)))
-		  ((= i rev-channels))
-		(set! (v i) (make-env (reverse (channel-rev-gains i))
-				      :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
-				      :duration real-dur)))
-	      v))
-       ;; :out-map 
-       (if speakers 
-	   (speaker-config-map speakers) 
-	   (let ((v (make-vector out-channels)))
-	     (do ((i 0 (+ i 1)))
-		 ((= i out-channels))
-	       (set! (v i) i))
-	     v)))
-      *output*
-      *reverb*)
-     ;; return start and end samples for the run loop
-     run-beg
-     run-end)))
+    (let ((gen (make-move-sound
+		(list
+		 ;; :start 
+		 start
+		 ;; :end 
+		 (time->samples (+ start-time (max duration real-dur)))
+		 ;; :out-channels 
+		 (if speakers (speaker-config-number speakers) out-channels)
+		 ;; :rev-channels 
+		 rev-channels
+		 ;; :path 
+		 (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
+		 ;; :delay 
+		 (make-env (reverse dly)
+			   :offset (if initial-delay 0.0 (- min-delay))
+			   :duration real-dur)
+		 ;; :rev 
+		 (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
+			       (list 0 reverb-amount 1 reverb-amount)
+			       reverb-amount)
+			   :duration real-dur)
+		 ;; :out-delays 
+		 out-delays
+		 ;; :gains 
+		 (let ((v (make-vector out-channels)))
+		   (do ((i 0 (+ i 1)))
+		       ((= i out-channels))
+		     (set! (v i) (make-env (reverse (channel-gains i))
+					   :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
+					   :duration real-dur)))
+		   v)
+		 ;; :rev-gains 
+		 (and (> rev-channels 0)
+		      (let ((v (make-vector rev-channels)))
+			(do ((i 0 (+ i 1)))
+			    ((= i rev-channels))
+			  (set! (v i) (make-env (reverse (channel-rev-gains i))
+						:scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
+						:duration real-dur)))
+			v))
+		 ;; :out-map 
+		 (if speakers 
+		     (speaker-config-map speakers) 
+		     (let ((v (make-vector out-channels)))
+		       (do ((i 0 (+ i 1)))
+			   ((= i out-channels))
+			 (set! (v i) i))
+		       v)))
+		*output*
+		*reverb*)))
+      (list gen
+	    ;; return start and end samples for the run loop
+	    run-beg
+	    run-end))))
 
-					;(with-sound(:channels 6 :play #f :statistics #t) (sinewave 0 10 440 0.5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error 0.001)))
-					;
-					;(with-sound(:statistics #t :channels 4 :reverb-channels 4 :reverb freeverb :decay-time 3)
-					;  (move 0 "/usr/ccrma/snd/nando/sounds/kitchen/bowl/small-medium-large-1.snd"
-					;	:paths (list (make-spiral-path :start-angle 0 :turns 2.5)
-					;		     (make-spiral-path :start-angle 180 :turns 3.5))))
+;; (with-sound(:channels 6 :play #f :statistics #t) (sinewave 0 10 440 0.5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error 0.001)))
+;;
+;; (with-sound(:statistics #t :channels 4 :reverb-channels 4 :reverb freeverb :decay-time 3)
+;;  (move 0 "/usr/ccrma/snd/nando/sounds/kitchen/bowl/small-medium-large-1.snd"
+;;	:paths (list (make-spiral-path :start-angle 0 :turns 2.5)
+;;		     (make-spiral-path :start-angle 180 :turns 3.5))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Run macro to localize samples
@@ -3139,8 +3139,9 @@
 
 #|
 
-					;(define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
-					;(make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
+;; (define hi (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f :error 0.001))
+;; (make-dlocsig 0 1.0 :out-channels 2 :rev-channels 0 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f))
+
 (if (provided? 'snd)
     (require snd-ws.scm)
     (require sndlib-ws.scm))

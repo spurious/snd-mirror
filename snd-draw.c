@@ -2032,6 +2032,21 @@ Xen_wrap_3_args(g_set_combined_data_color_w, g_set_combined_data_color)
 
 void g_init_draw(void)
 {
+#if HAVE_SCHEME
+  s7_pointer i, b, p, t, f, r, mx, s, v, pcl_p, pl_t;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  f = s7_make_symbol(s7, "float?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  v = s7_make_symbol(s7, "vector?");
+  mx = s7_make_symbol(s7, "mix?");
+  t = s7_t(s7);
+  pcl_p = s7_make_circular_signature(s7, 0, 1, p);
+  pl_t = s7_make_signature(s7, 1, t);
+#endif
+
   dialog_widgets = Xen_undefined;
 
   Xen_define_constant(S_copy_context,      CHAN_GC,    "graphics context to draw a line");
@@ -2039,59 +2054,92 @@ void g_init_draw(void)
   Xen_define_constant(S_selection_context, CHAN_SELGC, "graphics context to draw in the selection color");
   Xen_define_constant(S_mark_context,      CHAN_MGC,   "graphics context for a mark");
 
-  Xen_define_safe_procedure(S_draw_line,        g_draw_line_w,      4, 4, 0, H_draw_line);
-  Xen_define_safe_procedure(S_draw_dot,         g_draw_dot_w,       2, 5, 0, H_draw_dot);
-  Xen_define_safe_procedure(S_draw_lines,       g_draw_lines_w,     1, 4, 0, H_draw_lines); 
-  Xen_define_safe_procedure(S_draw_dots,        g_draw_dots_w,      1, 5, 0, H_draw_dots);
-  Xen_define_safe_procedure(S_draw_string,      g_draw_string_w,    3, 4, 0, H_draw_string);
-  Xen_define_safe_procedure(S_fill_rectangle,   g_fill_rectangle_w, 4, 5, 0, H_fill_rectangle);
-  Xen_define_safe_procedure(S_fill_polygon,     g_fill_polygon_w,   1, 4, 0, H_fill_polygon);
-  Xen_define_safe_procedure(S_main_widgets,     g_main_widgets_w,   0, 0, 0, H_main_widgets);
-  Xen_define_safe_procedure(S_dialog_widgets,   g_dialog_widgets_w, 0, 0, 0, H_dialog_widgets);
-  Xen_define_safe_procedure(S_hide_widget,      g_hide_widget_w,    1, 0, 0, H_hide_widget);
-  Xen_define_safe_procedure(S_show_widget,      g_show_widget_w,    1, 0, 0, H_show_widget);
-  Xen_define_safe_procedure(S_focus_widget,     g_focus_widget_w,   1, 0, 0, H_focus_widget);
+  Xen_define_typed_procedure(S_draw_line,        g_draw_line_w,       4, 4, 0, H_draw_line,       s7_make_signature(s7, 9, b, i, i, i, i, t, t, i, p));
+  Xen_define_typed_procedure(S_draw_dot,         g_draw_dot_w,        2, 5, 0, H_draw_dot,        s7_make_signature(s7, 8, b, i, i, i, t, t, i, p));
+  Xen_define_typed_procedure(S_draw_lines,       g_draw_lines_w,      1, 4, 0, H_draw_lines,      s7_make_signature(s7, 6, v, v, t, t, i, p));
+  Xen_define_typed_procedure(S_draw_dots,        g_draw_dots_w,       1, 5, 0, H_draw_dots,       s7_make_signature(s7, 7, v, v, i, t, t, i, p));
+  Xen_define_typed_procedure(S_draw_string,      g_draw_string_w,     3, 4, 0, H_draw_string,     s7_make_signature(s7, 8, s, s, i, i, t, t, i, p));
+  Xen_define_typed_procedure(S_fill_rectangle,   g_fill_rectangle_w,  4, 5, 0, H_fill_rectangle,  s7_make_signature(s7, 10, b, i, i, i, i, t, t, i, b, p));
+  Xen_define_typed_procedure(S_fill_polygon,     g_fill_polygon_w,    1, 4, 0, H_fill_polygon,    s7_make_signature(s7, 6, v, v, t, t, i, p));
+  Xen_define_typed_procedure(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data, s7_make_signature(s7, 6, t, t, t, t, i, i));
+  Xen_define_typed_procedure(S_graph_data,       g_graph_data_w,      1, 7, 0, H_graph_data,      s7_make_signature(s7, 9, t, t, t, t, t, i, i, i, p));
 
-  Xen_define_safe_procedure(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data);
-  Xen_define_safe_procedure(S_graph_data,       g_graph_data_w,     1, 7, 0,  H_graph_data);
+  Xen_define_typed_procedure(S_main_widgets,     g_main_widgets_w,    0, 0, 0, H_main_widgets,   pcl_p);
+  Xen_define_typed_procedure(S_dialog_widgets,   g_dialog_widgets_w,  0, 0, 0, H_dialog_widgets, pcl_p);
+  Xen_define_typed_procedure(S_hide_widget,      g_hide_widget_w,     1, 0, 0, H_hide_widget,    pl_t);
+  Xen_define_typed_procedure(S_show_widget,      g_show_widget_w,     1, 0, 0, H_show_widget,    pl_t);
+  Xen_define_typed_procedure(S_focus_widget,     g_focus_widget_w,    1, 0, 0, H_focus_widget,   pl_t);
 
-  Xen_define_dilambda(S_foreground_color, g_foreground_color_w, H_foreground_color, S_set S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_current_font, g_current_font_w, H_current_font, S_set S_current_font, g_set_current_font_w, 0, 3, 1, 3);
-  Xen_define_dilambda(S_widget_size, g_widget_size_w, H_widget_size, S_set S_widget_size, g_set_widget_size_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_widget_position, g_widget_position_w, H_widget_position, S_set S_widget_position, g_set_widget_position_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_widget_text, g_widget_text_w, H_widget_text, S_set S_widget_text, g_set_widget_text_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_selection_color, g_selection_color_w, H_selection_color, S_set S_selection_color, g_set_selection_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_zoom_color, g_zoom_color_w, H_zoom_color, S_set S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_position_color, g_position_color_w, H_position_color, S_set S_position_color, g_set_position_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mark_color, g_mark_color_w, H_mark_color, S_set S_mark_color, g_set_mark_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_color, g_listener_color_w, H_listener_color, S_set S_listener_color, g_set_listener_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_text_color, g_listener_text_color_w, H_listener_text_color, S_set S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color, S_set S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color, S_set S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_highlight_color, g_highlight_color_w, H_highlight_color, S_set S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_cursor_color, g_cursor_color_w, H_cursor_color, S_set S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_text_focus_color, g_text_focus_color_w, H_text_focus_color, S_set S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_sash_color, g_sash_color_w, H_sash_color, S_set S_sash_color, g_set_sash_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_data_color, g_data_color_w, H_data_color, S_set S_data_color, g_set_data_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_graph_color, g_graph_color_w, H_graph_color, S_set S_graph_color, g_set_graph_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color, S_set S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_data_color, g_selected_data_color_w, H_selected_data_color, S_set S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_axis_color, g_axis_color_w, H_axis_color, S_set S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_basic_color, g_basic_color_w, H_basic_color, S_set S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_mix_color, g_mix_color_w, H_mix_color, S_set S_mix_color, g_set_mix_color_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, S_set S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0);
+  Xen_define_typed_dilambda(S_foreground_color, g_foreground_color_w, H_foreground_color, 
+			    S_set S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, p));
+  Xen_define_typed_dilambda(S_current_font, g_current_font_w, H_current_font, 
+			    S_set S_current_font, g_set_current_font_w, 0, 3, 1, 3,
+			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, p));
+  Xen_define_typed_dilambda(S_widget_size, g_widget_size_w, H_widget_size, 
+			    S_set S_widget_size, g_set_widget_size_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, p, t), s7_make_signature(s7, 3, p, t, p));
+  Xen_define_typed_dilambda(S_widget_position, g_widget_position_w, H_widget_position, 
+			    S_set S_widget_position, g_set_widget_position_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, p, t), s7_make_signature(s7, 3, p, t, p));
+  Xen_define_typed_dilambda(S_widget_text, g_widget_text_w, H_widget_text, 
+			    S_set S_widget_text, g_set_widget_text_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, s, t), s7_make_signature(s7, 3, s, t, s));
+  Xen_define_typed_dilambda(S_mix_color, g_mix_color_w, H_mix_color, 
+			    S_set S_mix_color, g_set_mix_color_w, 0, 1, 1, 1,
+			    s7_make_signature(s7, 2, p, mx), s7_make_signature(s7, 3, p, mx, p));
+  Xen_define_typed_dilambda(S_combined_data_color, g_combined_data_color_w, H_combined_data_color, 
+			    S_set S_combined_data_color, g_set_combined_data_color_w, 2, 0, 3, 0,
+			    s7_make_signature(s7, 3, p, t, t), s7_make_signature(s7, 4, p, t, t, p));
 
-  Xen_define_safe_procedure(S_is_color,      g_is_color_w,        1, 0, 0, H_is_color);
-  Xen_define_safe_procedure(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color);
-  Xen_define_safe_procedure(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list);
+  Xen_define_typed_dilambda(S_selection_color, g_selection_color_w, H_selection_color, 
+			    S_set S_selection_color, g_set_selection_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_zoom_color, g_zoom_color_w, H_zoom_color, 
+			    S_set S_zoom_color, g_set_zoom_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_position_color, g_position_color_w, H_position_color, 
+			    S_set S_position_color, g_set_position_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_mark_color, g_mark_color_w, H_mark_color, 
+			    S_set S_mark_color, g_set_mark_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_listener_color, g_listener_color_w, H_listener_color, 
+			    S_set S_listener_color, g_set_listener_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_listener_text_color, g_listener_text_color_w, H_listener_text_color, 
+			    S_set S_listener_text_color, g_set_listener_text_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_enved_waveform_color, g_enved_waveform_color_w, H_enved_waveform_color, 
+			    S_set S_enved_waveform_color, g_set_enved_waveform_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_filter_control_waveform_color, g_filter_control_waveform_color_w, H_filter_control_waveform_color, 
+			    S_set S_filter_control_waveform_color, g_set_filter_control_waveform_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_highlight_color, g_highlight_color_w, H_highlight_color, 
+			    S_set S_highlight_color, g_set_highlight_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_cursor_color, g_cursor_color_w, H_cursor_color, 
+			    S_set S_cursor_color, g_set_cursor_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_text_focus_color, g_text_focus_color_w, H_text_focus_color, 
+			    S_set S_text_focus_color, g_set_text_focus_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_sash_color, g_sash_color_w, H_sash_color, 
+			    S_set S_sash_color, g_set_sash_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_data_color, g_data_color_w, H_data_color, 
+			    S_set S_data_color, g_set_data_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_graph_color, g_graph_color_w, H_graph_color, 
+			    S_set S_graph_color, g_set_graph_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_selected_graph_color, g_selected_graph_color_w, H_selected_graph_color, 
+			    S_set S_selected_graph_color, g_set_selected_graph_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_selected_data_color, g_selected_data_color_w, H_selected_data_color, 
+			    S_set S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_axis_color, g_axis_color_w, H_axis_color, 
+			    S_set S_axis_color, g_set_axis_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
+  Xen_define_typed_dilambda(S_basic_color, g_basic_color_w, H_basic_color, 
+			    S_set S_basic_color, g_set_basic_color_w,  0, 0, 1, 0, pcl_p, pcl_p);
 
-  Xen_define_safe_procedure(S_make_bezier,   g_make_bezier_w, 0, 0, 1,     H_make_bezier);
-  Xen_define_safe_procedure(S_snd_gcs,       g_snd_gcs_w,     0, 0, 0,     H_snd_gcs);
-  Xen_define_safe_procedure(S_snd_color,     g_snd_color_w,   1, 0, 0,     H_snd_color);
-  Xen_define_safe_procedure(S_snd_font,      g_snd_font_w,    1, 0, 0,     H_snd_font);
+  Xen_define_typed_procedure(S_is_color,      g_is_color_w,       1, 0, 0, H_is_color,      s7_make_signature(s7, 2, b, p));
+  Xen_define_typed_procedure(S_make_color,    g_make_color_w,     3, 1, 0, H_make_color,    s7_make_circular_signature(s7, 1, 2, p, r));
+  Xen_define_typed_procedure(S_color_to_list, g_color_to_list_w,  1, 0, 0, H_color_to_list, s7_make_signature(s7, 2, p, p));
 
-  Xen_define_safe_procedure(S_make_cairo,    g_make_cairo_w,  1, 0, 0,     H_make_cairo);
-  Xen_define_safe_procedure(S_free_cairo,    g_free_cairo_w,  1, 0, 0,     H_free_cairo);
+  Xen_define_typed_procedure(S_make_bezier,   g_make_bezier_w,    0, 0, 1,  H_make_bezier,  s7_make_circular_signature(s7, 1, 2, v, r));
+  Xen_define_typed_procedure(S_snd_gcs,       g_snd_gcs_w,        0, 0, 0,  H_snd_gcs,      s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_snd_color,     g_snd_color_w,      1, 0, 0,  H_snd_color,    s7_make_signature(s7, 2, p, i));
+  Xen_define_typed_procedure(S_snd_font,      g_snd_font_w,       1, 0, 0,  H_snd_font,     s7_make_signature(s7, 2, p, i));
+
+  Xen_define_typed_procedure(S_make_cairo,    g_make_cairo_w,     1, 0, 0,  H_make_cairo,   s7_make_signature(s7, 2, p, t));
+  Xen_define_typed_procedure(S_free_cairo,    g_free_cairo_w,     1, 0, 0,  H_free_cairo,   s7_make_signature(s7, 2, b, p));
 
   #define H_new_widget_hook S_new_widget_hook " (widget): called each time a dialog or \
 a new set of channel or sound widgets is created."

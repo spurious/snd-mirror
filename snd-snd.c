@@ -2361,8 +2361,8 @@ static Xen g_is_sound(Xen snd)
       snd_info *sp;
       sp = get_sp(snd);
       return(C_bool_to_Xen_boolean((sp) && 
-			      (snd_ok(sp)) &&
-			      (sp->inuse == SOUND_NORMAL)));
+				   (snd_ok(sp)) &&
+				   (sp->inuse == SOUND_NORMAL)));
     }
   return(Xen_false);
 }
@@ -5902,37 +5902,37 @@ void g_init_snd(void)
 {
 #if HAVE_SCHEME
   s7_pointer pl_iq, pl_iqi, pl_sq, pl_sts, pl_i, pl_osi, pl_bt, pl_bo, pl_bob, pl_io, pl_ioi, pl_po, pl_pop, pl_ro, pl_ror, pl_oi, pl_ioz, pl_roo, pl_roor;
-  {
-    s7_pointer i, t, s, b, o, q, p, r, z;
-    i = s7_make_symbol(s7, "integer?");
-    s = s7_make_symbol(s7, "string?");
-    b = s7_make_symbol(s7, "boolean?");
-    p = s7_make_symbol(s7, "pair?");
-    r = s7_make_symbol(s7, "real?");
-    t = s7_t(s7);
-    q = t; /* sigh -- #t is legal here which is idiotic */
-    o = t;
-    z = s7_make_signature(s7, 2, i, b);
-    pl_i = s7_make_signature(s7, 1, i);
-    pl_iq = s7_make_signature(s7, 2, i, q);
-    pl_iqi = s7_make_signature(s7, 3, i, q, i);
-    pl_sts = s7_make_signature(s7, 3, s, t, s);
-    pl_sq = s7_make_signature(s7, 2, s, q);
-    pl_osi = s7_make_signature(s7, 3, o, s, i);
-    pl_bt = s7_make_signature(s7, 2, b, t);
-    pl_bo = s7_make_signature(s7, 2, b, o);
-    pl_bob = s7_make_signature(s7, 3, b, o, b);
-    pl_io = s7_make_signature(s7, 2, i, o);
-    pl_oi = s7_make_signature(s7, 2, o, i);
-    pl_ioi = s7_make_signature(s7, 3, i, o, i);
-    pl_ioz = s7_make_signature(s7, 3, i, o, z);
-    pl_po = s7_make_signature(s7, 2, p, o);
-    pl_pop = s7_make_signature(s7, 3, p, o, p);
-    pl_ro = s7_make_signature(s7, 2, r, o);
-    pl_ror = s7_make_signature(s7, 3, r, o, r);
-    pl_roo = s7_make_signature(s7, 3, r, o, o);
-    pl_roor = s7_make_signature(s7, 4, r, o, o, r);
-  }
+  s7_pointer i, t, s, b, o, q, p, r, z, sd, fv;
+  i = s7_make_symbol(s7, "integer?");
+  s = s7_make_symbol(s7, "string?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  r = s7_make_symbol(s7, "real?");
+  sd = s7_make_symbol(s7, "sound?");
+  fv = s7_make_symbol(s7, "float-vector?");
+  t = s7_t(s7);
+  q = t; /* sigh -- #t is legal here which is idiotic */
+  o = t;
+  z = s7_make_signature(s7, 2, i, b);
+  pl_i = s7_make_signature(s7, 1, i);
+  pl_iq = s7_make_signature(s7, 2, i, q);
+  pl_iqi = s7_make_signature(s7, 3, i, q, i);
+  pl_sts = s7_make_signature(s7, 3, s, t, s);
+  pl_sq = s7_make_signature(s7, 2, s, q);
+  pl_osi = s7_make_signature(s7, 3, o, s, i);
+  pl_bt = s7_make_signature(s7, 2, b, t);
+  pl_bo = s7_make_signature(s7, 2, b, o);
+  pl_bob = s7_make_signature(s7, 3, b, o, b);
+  pl_io = s7_make_signature(s7, 2, i, o);
+  pl_oi = s7_make_signature(s7, 2, o, i);
+  pl_ioi = s7_make_signature(s7, 3, i, o, i);
+  pl_ioz = s7_make_signature(s7, 3, i, o, z);
+  pl_po = s7_make_signature(s7, 2, p, o);
+  pl_pop = s7_make_signature(s7, 3, p, o, p);
+  pl_ro = s7_make_signature(s7, 2, r, o);
+  pl_ror = s7_make_signature(s7, 3, r, o, r);
+  pl_roo = s7_make_signature(s7, 3, r, o, o);
+  pl_roor = s7_make_signature(s7, 4, r, o, o, r);
 #endif
 
   init_xen_sound();
@@ -5972,22 +5972,26 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_typed_procedure(S_save_controls,        g_save_controls_w,    0, 1, 0, H_save_controls,	pl_bt);
   Xen_define_typed_procedure(S_restore_controls,     g_restore_controls_w, 0, 1, 0, H_restore_controls, pl_bt);
   Xen_define_typed_procedure(S_reset_controls,       g_reset_controls_w,   0, 1, 0, H_reset_controls,	pl_bt);
-  Xen_define_safe_procedure(S_select_sound,          g_select_sound_w,     1, 0, 0, H_select_sound);
-  Xen_define_safe_procedure(S_select_channel,        g_select_channel_w,   0, 1, 0, H_select_channel);
+  Xen_define_typed_procedure(S_select_sound,         g_select_sound_w,     1, 0, 0, H_select_sound,     s7_make_signature(s7, 2, sd, i));
+  Xen_define_typed_procedure(S_select_channel,       g_select_channel_w,   0, 1, 0, H_select_channel,   s7_make_signature(s7, 2, i, i));
+  Xen_define_typed_procedure(S_sync_max,             g_sync_max_w,         0, 0, 0, H_sync_max,	        pl_i);
+  Xen_define_typed_procedure(S_filter_control_coeffs, g_filter_control_coeffs_w, 0, 1, 0, H_filter_control_coeffs, s7_make_signature(s7, 2, fv, sd));
 
-  Xen_define_dilambda(S_selected_sound, g_selected_sound_w, H_selected_sound, 
-		      S_set S_selected_sound, g_select_sound_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_selected_channel, g_selected_channel_w, H_selected_channel, 
-		      S_set S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
+  Xen_define_typed_dilambda(S_selected_sound, g_selected_sound_w, H_selected_sound, 
+			    S_set S_selected_sound, g_select_sound_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, sd), s7_make_signature(s7, 2, sd, t));
+  Xen_define_typed_dilambda(S_selected_channel, g_selected_channel_w, H_selected_channel, 
+			    S_set S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2,
+			    s7_make_signature(s7, 2, i, sd), s7_make_signature(s7, 3, i, sd, i));
 
-  Xen_define_safe_procedure(S_start_progress_report,  g_start_progress_report_w,   0, 2, 0, H_start_progress_report);
-  Xen_define_safe_procedure(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report);
-  Xen_define_safe_procedure(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report);
+  Xen_define_typed_procedure(S_start_progress_report,  g_start_progress_report_w,   0, 2, 0, H_start_progress_report,  s7_make_signature(s7, 3, b, sd, i));
+  Xen_define_typed_procedure(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report, s7_make_signature(s7, 3, b, sd, i));
+  Xen_define_typed_procedure(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report,        s7_make_signature(s7, 4, r, r, sd, i));
 
   Xen_define_procedure(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
   Xen_define_procedure(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
   Xen_define_procedure(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
-  Xen_define_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! */
+  Xen_define_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! -- why not? */
   Xen_define_procedure(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
   Xen_define_procedure(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
   Xen_define_procedure(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound);
@@ -5995,8 +5999,6 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_procedure(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
   Xen_define_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
   Xen_define_procedure(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);
-  Xen_define_typed_procedure(S_sync_max,         g_sync_max_w,                0, 0, 0, H_sync_max,	pl_i);
-  Xen_define_safe_procedure(S_filter_control_coeffs,  g_filter_control_coeffs_w,   0, 1, 0, H_filter_control_coeffs);
 
   Xen_define_dilambda(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope, 
 		      S_set S_filter_control_envelope, g_set_filter_control_envelope_w, 0, 1, 1, 1);
@@ -6082,7 +6084,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 			    S_set S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1, pl_io, pl_ioi);
 
   Xen_define_procedure(S_channel_amp_envs,              g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
-  Xen_define_safe_procedure(S_sounds,                   g_sounds_w,                   0, 0, 0, H_sounds);
+  Xen_define_typed_procedure(S_sounds,                  g_sounds_w,                   0, 0, 0, H_sounds, s7_make_signature(s7, 1, p));
   Xen_define_typed_procedure(S_integer_to_sound,        g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound, pl_oi);
   Xen_define_typed_procedure(S_sound_to_integer,        g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer, pl_io);
 
