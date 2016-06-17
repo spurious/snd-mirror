@@ -73690,7 +73690,11 @@ s7_scheme *s7_init(void)
   sc->read_line_symbol =             defun("read-line",	        read_line,		0, 2, false);
   sc->read_string_symbol =           defun("read-string",	read_string,		1, 1, false);
   sc->read_symbol =                  unsafe_defun("read",	read,			0, 1, false);
-  /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence (not embedded in OP_SAFE_C_opSq for example) */
+  /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence 
+   *   (not embedded in OP_SAFE_C_opSq for example) -- that is, it pushes OP_READ_INTERNAL, then returns
+   *   expecting goto START, which would be nonsense if arg=c_call(read) -> c_call(arg).
+   *   a safe procedure leaves its argument list alone and does not push anything on the stack
+   */
 
   sc->call_with_input_string_symbol = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
   sc->call_with_input_file_symbol =   unsafe_defun("call-with-input-file",   call_with_input_file,   2, 0, false);

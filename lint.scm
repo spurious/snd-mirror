@@ -2462,7 +2462,7 @@
 					 (classify arg)))
 				(arg-op (and (pair? arg) 
 					     (car arg))))
-			   
+
 			   (cond ((boolean? val) 
 				  (not val))
 				 
@@ -12490,8 +12490,10 @@
 						  (pair? (cdar sequel))
 						  (null? (cddar sequel))
 						  (equal? test (cadar sequel)))
-					     (lint-format "perhaps use => here: ~A" caller 
-							  (lists->string clause (list test '=> (caar sequel)))))
+					     (if (eq? (caar sequel) 'not)
+						 (lint-format "perhaps replace ~A with #f" caller (car sequel))
+						 (lint-format "perhaps use => here: ~A" caller 
+							      (lists->string clause (list test '=> (caar sequel))))))
 					    
 					    ((and (eq? (car sequel) #t)
 						  (pair? test)
@@ -13180,8 +13182,12 @@
 				      (pair? (cdar exprs))
 				      (null? (cddar exprs))
 				      (equal? selector (cadar exprs)))
-				 (lint-format "perhaps use => here: ~A" caller 
-					      (lists->string clause (list keys '=> (caar exprs)))))
+				 (if (and (eq? (caar exprs) 'not)
+					  (not (memq #f keys)))
+				     (lint-format "in ~A, perhaps replace ~A with #f" caller clause (car exprs))
+				     (lint-format "perhaps use => here: ~A" caller 
+						  (lists->string clause (list keys '=> (caar exprs))))))
+
 			     (if (pair? keys)
 				 (if (not (proper-list? keys))
 				     (lint-format (if (null? keys) 
@@ -16106,24 +16112,31 @@
 ;;; define-macro cases in t347?? [10983]
 ;;; eq?/=/any-sig extension of and-forgetful
 ;;; why was the large repeated let ignored? 
-;;; there are 416 Snd functions without signatures; how to handle unsafe functions/dilambdas?
+;;; there are 302 Snd functions without signatures; how to handle unsafe functions/dilambdas?
+;;;   can select-all et al be considered safe? what is the actual distinction here?
+;;;   read is not safe because it sets up the stack so that the assumed eval-loop iteration will call op_read_internal --
+;;;   the c_call returns but it is not a complete call.  But surely, no function outside s7 can do that! 
+;;;   And how many functions embed their arguments in new code.  So the hooks are irrelevant?  Then why is open-sound unsafe?
+;;;   To restate it, a safe procedure leaves its argument list alone and does not push anything on the stack
 ;;; internal (mid body) define? [9630], also in open bodies -- begin primarily?
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
-;;;    var-hist: init[refs...] set![refs all in set! context...] set![refs]
+;;;    but report-usage can't do this (see tmp) because it sees only the local expressions
+;;;    let-walker might but it will be slow! maybe restrict to vars set (at least) twice without ref to self in caddr and large let body
 ;;; var 2 values, vals themselves arbitrary (0/1) -> booleans
 ;;; if combinations: check entire and exprs for intersection [9696]
-;;; the let-temp rewrite needs to be at the set points [13900]
+;;; implicit indexing is viewed as a possible side-effect -- is there anyway around this? maybe even look-ahead?
 ;;;
 ;;; (< (if ... -1 0) 0) -> ... or similar -- can these be recognized? (bool? [...] (if test c0 c1) [...]) either choose from bool or rest of expr
 ;;;    (if ... (op [] true []) (op [] false []))
 ;;;    now simplify the branches: (if ... #f #t) or the like -> (not ...)
 ;;;    any op could be rewritten this way, not just booleans [and/or are special however]
-;;;   also call/values cond-expand (not (fneq...))
 ;;;   what about other funcs in these cases? (+ (cond...)...) etc
 ;;;     same for multiargs after checking for shadows (let + display lt port) etc
 ;;;   or biggest args > (/ (* leaves len) (+ len 1))
 ;;;   if/cond/case need to be large and show collapse -- we split out (f (if ...)) elsewhere to simplify
 ;;; [(f (let(*) ...)) is now reported and (let ((_1_...)) is omitted if possible][15281]
 ;;; [not if/let are ok -- cond/case/begin also]
+;;; (f (begin)) should always be rewritten? what about (f ...(begin...)...)?  [15305]
+;;;   [it chooses one arg eval order] or (f (begin ...) (begin...)) -- I bet it never happens
 ;;;
 ;;; 134 23101 550800

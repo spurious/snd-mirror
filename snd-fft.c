@@ -2433,6 +2433,20 @@ static Xen transform_temp[6]; /* static for Ruby's sake */
 void g_init_fft(void)
 {
 #if HAVE_SCHEME
+  s7_pointer i, b, p, t, f, fv, r, s, tr, pr;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  f = s7_make_symbol(s7, "float?");
+  fv = s7_make_symbol(s7, "float-vector?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  tr = s7_make_symbol(s7, "transform?");
+  pr = s7_make_symbol(s7, "procedure?");
+  t = s7_t(s7);
+#endif
+
+#if HAVE_SCHEME
   #define H_before_transform_hook S_before_transform_hook " (snd chn): called just before a transform is calculated.  If it returns \
 an integer, it is used as the starting point of the transform.  The following \
 somewhat brute-force code shows a way to have the transform reflect the position \
@@ -2505,22 +2519,25 @@ of a moving mark:\n\
   Xen_define_constant(S_normalize_by_sound,    NORMALIZE_BY_SOUND,   H_normalize_by_sound);
   Xen_define_constant(S_normalize_globally,    NORMALIZE_GLOBALLY,   H_normalize_globally);
 
-  Xen_define_safe_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples);
-  Xen_define_safe_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample);
-  Xen_define_safe_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct);
-  Xen_define_safe_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform);
-  Xen_define_safe_procedure(S_is_transform,         g_is_transform_w,     1, 0, 0, H_is_transform);
-  Xen_define_safe_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform);
-  Xen_define_safe_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform);
+  Xen_define_typed_procedure(S_transform_framples,   g_transform_framples_w, 0, 2, 0, H_transform_framples,
+			     s7_make_signature(s7, 3, s7_make_signature(s7, 2, i, p), t, t));
+  Xen_define_typed_procedure(S_transform_sample,     g_transform_sample_w, 0, 4, 0, H_transform_sample, s7_make_signature(s7, 5, r, i, i, t, t));
+  Xen_define_typed_procedure(S_transform_to_vct,     g_transform_to_vct_w, 0, 3, 0, H_transform_to_vct, s7_make_signature(s7, 4, fv, t, t, fv));
+  Xen_define_typed_procedure(S_add_transform,        g_add_transform_w,    5, 0, 0, H_add_transform,    s7_make_signature(s7, 6, tr, s, s, r, r, pr));
+  Xen_define_typed_procedure(S_is_transform,         g_is_transform_w,     1, 0, 0, H_is_transform,     s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_delete_transform,     g_delete_transform_w, 1, 0, 0, H_delete_transform, s7_make_signature(s7, 2, b, tr));
+  Xen_define_typed_procedure("snd-transform",        g_snd_transform_w,    2, 1, 0, H_snd_transform,    s7_make_signature(s7, 4, fv, tr, fv, i));
 
-  Xen_define_dilambda(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
-				   S_set S_log_freq_start, g_set_log_freq_start_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_log_freq_start, g_log_freq_start_w, H_log_freq_start,
+			    S_set S_log_freq_start, g_set_log_freq_start_w, 0, 0, 1, 0, 
+			    s7_make_signature(s7, 1, r), s7_make_signature(s7, 2, r, r));
 
-  Xen_define_dilambda(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
-				   S_set S_show_selection_transform, g_set_show_selection_transform_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_show_selection_transform, g_show_selection_transform_w, H_show_selection_transform,
+			    S_set S_show_selection_transform, g_set_show_selection_transform_w, 0, 0, 1, 0, 
+			    s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
 
-  Xen_define_safe_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform);
-  Xen_define_safe_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer);
+  Xen_define_typed_procedure(S_integer_to_transform, g_integer_to_transform_w, 1, 0, 0, H_integer_to_transform, s7_make_signature(s7, 2, tr, i));
+  Xen_define_typed_procedure(S_transform_to_integer, g_transform_to_integer_w, 1, 0, 0, H_transform_to_integer, s7_make_signature(s7, 2, i, tr));
 
 #if HAVE_SCHEME
   s7_symbol_set_access(s7, ss->log_freq_start_symbol, s7_make_function(s7, "[acc-" S_log_freq_start "]", acc_log_freq_start, 2, 0, false, "accessor"));

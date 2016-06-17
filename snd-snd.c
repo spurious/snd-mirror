@@ -5979,10 +5979,10 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 
   Xen_define_typed_dilambda(S_selected_sound, g_selected_sound_w, H_selected_sound, 
 			    S_set S_selected_sound, g_select_sound_w,  0, 0, 1, 0,
-			    s7_make_signature(s7, 1, sd), s7_make_signature(s7, 2, sd, t));
+			    s7_make_signature(s7, 1, s7_make_signature(s7, 2, sd, b)), s7_make_signature(s7, 2, sd, z));
   Xen_define_typed_dilambda(S_selected_channel, g_selected_channel_w, H_selected_channel, 
 			    S_set S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2,
-			    s7_make_signature(s7, 2, i, sd), s7_make_signature(s7, 3, i, sd, i));
+			    s7_make_signature(s7, 2, z, sd), s7_make_signature(s7, 3, i, t, z));
 
   Xen_define_typed_procedure(S_start_progress_report,  g_start_progress_report_w,   0, 2, 0, H_start_progress_report,  s7_make_signature(s7, 3, b, sd, i));
   Xen_define_typed_procedure(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report, s7_make_signature(s7, 3, b, sd, i));
@@ -5991,7 +5991,11 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_procedure(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
   Xen_define_procedure(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
   Xen_define_procedure(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
-  Xen_define_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! -- why not? */
+#if DEBUGGING
+  Xen_define_safe_procedure(S_open_sound,        g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! -- why not? (from snd-13.0!) */
+#else
+  Xen_define_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! */
+#endif
   Xen_define_procedure(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
   Xen_define_procedure(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
   Xen_define_procedure(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound);
@@ -6084,7 +6088,7 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
 			    S_set S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1, pl_io, pl_ioi);
 
   Xen_define_procedure(S_channel_amp_envs,              g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
-  Xen_define_typed_procedure(S_sounds,                  g_sounds_w,                   0, 0, 0, H_sounds, s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_sounds,                  g_sounds_w,                   0, 0, 0, H_sounds, s7_make_signature(s7, 1, s7_make_symbol(s7, "list?")));
   Xen_define_typed_procedure(S_integer_to_sound,        g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound, pl_oi);
   Xen_define_typed_procedure(S_sound_to_integer,        g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer, pl_io);
 
