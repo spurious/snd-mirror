@@ -323,7 +323,10 @@
 	    (do ((i (- target-line-length 6) (- i 1)))
 		((or (= i 40)
 		     (char-whitespace? (str i)))
-		 (string-append (substring str 0 (if (<= i 40) (- target-line-length 6) i)) "..."))))))
+		 (string-append (substring str 0 (if (<= i 40) 
+						     (- target-line-length 6)
+						     i))
+				"..."))))))
     
     (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-var also collides)
     (define lint-pretty-print #f)
@@ -2485,9 +2488,8 @@
 
 				    ((if)
 				     (let ((if-true (simplify-boolean `(not ,(caddr val)) () () env))
-					   (if-false (if (pair? (cdddr val))
-							 (simplify-boolean `(not ,(cadddr val)) () () env)
-							 #t)))    ; (not #<unspecified>) -> #t
+					   (if-false (or (not (pair? (cdddr val)))  ; (not #<unspecified>) -> #t
+							 (simplify-boolean `(not ,(cadddr val)) () () env))))
 				       ;; ideally we'd call if-walker on this to simplify further
 				       `(if ,(cadr val) ,if-true ,if-false)))
 
@@ -2495,16 +2497,16 @@
 				     `(,(car val) 
 				       ,@(if (eq? (car val) 'cond) () (list (cadr val)))
 				       ,@(map (lambda (c)
-						(if (and (pair? c)
-							 (pair? (cdr c)))
+						(if (not (and (pair? c)
+							      (pair? (cdr c))))
+						    c
 						    (let* ((len (length (cdr c)))
 							   (last (list-ref (cdr c) (- len 1)))
 							   (new-last (if (and (pair? last)
 									      (eq? (car last) 'error))
 									 last
 									 (simplify-boolean `(not ,last) () () env))))
-						      `(,(car c) ,@(copy (cdr c) (make-list (- len 1))) ,new-last))
-						    c))
+						      `(,(car c) ,@(copy (cdr c) (make-list (- len 1))) ,new-last))))
 					      ((if (eq? (car val) 'cond) cdr cddr) val))))
 
 				    ((begin)
@@ -2767,7 +2769,6 @@
 											   (else `(not ,p))))
 										  (cdr form)))
 								      () () env)))
-					    ;(format *stderr* "nf: ~A~%" nf)
 					    (return (simplify-boolean `(not ,nf) () () env))))))
 
 			   (let ((sym #f)
@@ -3355,8 +3356,8 @@
 				      (let ((nf (simplify-boolean `(or ,@(map cadr (cdr form))) () () env)))
 					(return (simplify-boolean `(not ,nf) () () env)))
 				      (if (and (> arglen 2)
-					       (or (> nots (/ (* 2 arglen) 3))
-						   (and (> nots (/ arglen 2))
+					       (or (>= nots (/ (* 3 arglen) 4))      ; > 2/3 seems to get some ugly rewrites
+						   (and (>= nots (/ (* 2 arglen) 3)) ; was > 1/2 here
 							(> revers 0))))
 					  (let ((nf (simplify-boolean `(or ,@(map (lambda (p)
 										    (cond ((not (pair? p))
@@ -3369,7 +3370,6 @@
 											  (else `(not ,p))))
 										  (cdr form)))
 								      () () env)))
-					    ;(format *stderr* "nf: ~A~%" nf)
 					    (return (simplify-boolean `(not ,nf) () () env))))))
 				
 				(if (every? (lambda (a)
@@ -3531,7 +3531,6 @@
 					  (let ((rel (relsub (car new-form) (cadr new-form) 'and env)))
 					    ;; rel #f should halt everything as above, and it looks ugly in the output,
 					    ;;   but it never happens in real code
-					    ;(format *stderr* "~A -> rel: ~A~%" new-form rel)
 					    (if (or (pair? rel)
 						    (boolean? rel))
 						(set! new-form (cons rel (cddr new-form)))))))))))))))))))))))))
@@ -3695,7 +3694,6 @@
 					(rset (cdr arg2)))
 				    (do ((p (cdr arg1) (cdr p)))
 					((null? p)
-					 ;(format *stderr* "~%pluses: ~A, times: ~A, rset: ~A~%" pluses times rset)
 					 ;; times won't be () because we checked above for a match
 					 ;;  if pluses is (), arg1 is completely included in arg2
 					 ;;  if rset is (), arg2 is included in arg1
@@ -4706,29 +4704,41 @@
 		 (= (length arg1) 3))
 	    (if (eq? (car arg1) '-)
 		(if (memv arg2 '(0 0.0))               ; (< (- x y) 0) -> (< x y), need both 0 and 0.0 because (eqv? 0 0.0) is #f
-		    (lint-format "perhaps ~A" caller (lists->string form `(,head ,(cadr arg1) ,(caddr arg1))))
+		    (lint-format "perhaps ~A" caller 
+				 (lists->string form 
+						`(,head ,(cadr arg1) ,(caddr arg1))))
 		    (if (and (integer? arg2)           ; (> (- x 50868) 256) -> (> x 51124)
 			     (integer? (caddr arg1)))
-			(lint-format "perhaps ~A" caller (lists->string form `(,head ,(cadr arg1) ,(+ (caddr arg1) arg2))))))
+			(lint-format "perhaps ~A" caller 
+				     (lists->string form 
+						    `(,head ,(cadr arg1) ,(+ (caddr arg1) arg2))))))
 		(if (and (eq? (car arg1) '+)           ; (< (+ x 1) 3) -> (< x 2)
 			 (integer? arg2)  
 			 (integer? (caddr arg1)))
-		    (lint-format "perhaps ~A" caller (lists->string form `(,head ,(cadr arg1) ,(- arg2 (caddr arg1)))))))
+		    (lint-format "perhaps ~A" caller 
+				 (lists->string form 
+						`(,head ,(cadr arg1) ,(- arg2 (caddr arg1)))))))
 	    (if (and (pair? arg2)
 		     (= (length arg2) 3))
 		(if (eq? (car arg2) '-)
 		    (if (memv arg1 '(0 0.0))           ; (< 0 (- x y)) -> (> x y)
-			(lint-format "perhaps ~A" caller (lists->string form `(,(hash-table-ref reversibles head) 
-									       ,(cadr arg2) ,(caddr arg2))))
+			(lint-format "perhaps ~A" caller 
+				     (lists->string form 
+						    `(,(hash-table-ref reversibles head) 
+						      ,(cadr arg2) ,(caddr arg2))))
 			(if (and (integer? arg1)
 				 (integer? (caddr arg2)))
-			    (lint-format "perhaps ~A" caller (lists->string form `(,(hash-table-ref reversibles head) 
-										   ,(cadr arg2) ,(+ arg1 (caddr arg2)))))))
+			    (lint-format "perhaps ~A" caller 
+					 (lists->string form 
+							`(,(hash-table-ref reversibles head) 
+							  ,(cadr arg2) ,(+ arg1 (caddr arg2)))))))
 		    (if (and (eq? (car arg2) '+)
 			     (integer? arg1)
 			     (integer? (caddr arg2)))
-			(lint-format "perhaps ~A" caller (lists->string form `(,(hash-table-ref reversibles head) 
-									       ,(cadr arg2) ,(- arg1 (caddr arg2)))))))))))
+			(lint-format "perhaps ~A" caller 
+				     (lists->string form 
+						    `(,(hash-table-ref reversibles head) 
+						      ,(cadr arg2) ,(- arg1 (caddr arg2)))))))))))
 			
     
     (define (check-start-and-end caller head form ff env)
@@ -6090,7 +6100,6 @@
 	 (define (sp-string-append caller head form env)
 	   (unless (= line-number last-checker-line-number)
 	     (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form)))))
-					;(format *stderr* "args: ~A~%" args)
 	       (if (member 'string args (lambda (a b) (and (pair? b) (eq? (car b) a))))
 		   (let ((nargs ()))               ; look for (string...) (string...) in the arg list and combine
 		     (do ((p args (cdr p)))
@@ -8419,14 +8428,15 @@
 				(when (memq head '(eq? eqv?))
 				  (define (repeated-member-with-not? lst env)
 				    (and (pair? lst)
-					 (or (and (not (and (pair? (car lst))
-							    (side-effect? (car lst) env)))
-						  (or (member (list 'not (car lst)) (cdr lst))
-						      (and (pair? (car lst))
-							   (eq? (caar lst) 'not)
-							   (= (length (car lst)) 2)
-							   (member (cadar lst) (cdr lst)))))
-					     (repeated-member-with-not? (cdr lst) env))))
+					 (let ((this-repeats (and (not (and (pair? (car lst))
+									    (side-effect? (car lst) env)))
+								  (or (member (list 'not (car lst)) (cdr lst))
+								      (and (pair? (car lst))
+									   (eq? (caar lst) 'not)
+									   (= (length (car lst)) 2)
+									   (member (cadar lst) (cdr lst)))))))
+					   (or this-repeats
+					       (repeated-member-with-not? (cdr lst) env)))))
 				  (if (repeated-member-with-not? (cdr form) env)
 				      (lint-format "this looks odd: ~A" caller (truncated-list->string form))))
 				
@@ -9713,23 +9723,10 @@
 		    ;; if already in env, check shadowing request
 		    (if (and *report-shadowed-variables*
 			     (var-member vname env))
-			(lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head vname f))
-#|
-		    ;; define after executable statement in sequence -- make sure last form (which needs to exist) was not a define
-		    (if (and (pair? prev-f)
-			     (symbol? (car prev-f))
-			     (not (string-position "def" (symbol->string (car prev-f)))))
-			(format *stderr* "~A:~%    ~A in ~A~%~%" *current-file* vname (truncated-list->string body)))
-		    ;; perhaps also check that (car prev-f) was a known procedure or non-defining syntax
-		    ;;   then warn (?) about back propogation, or maybe rewrite as in lint-walk-body??
-		    ;;   need to check backwards??
-		    ;; could also check for other define-* forms here
-		    ;; and could check for shadowing -- if already defined in this env suggest set!? -- it is setting not binding, I think, so maybe warn
-|#
-		    ))
+			(lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head vname f))))
+		;; mid-body defines happen by the million, so resistance is futile
 
 		;; someday -- check A below for intersection not equality if no side-effects
-
 		;; generalized cases happen about a dozen times and there are only 2 cases where car f != car prev-f
 		(when (and (pair? prev-f) ; (if A ...) (if A ...) -> (when A ...) or equivalents
 			   (pair? f)
@@ -15304,6 +15301,7 @@
 					  (any-procedure? head env)
 					  (not (eq? head 'unquote)))
 				 (let ((arg (cadr form)))
+				   ;; begin=(car arg) happens very rarely
 				   (when (and (pair? arg)
 					      (memq (car arg) '(let let*))
 					      (not (or (symbol? (cadr arg))
@@ -15348,6 +15346,7 @@
 									     (hash-table-ref no-side-effect-functions head))
 									 ""
 									 (format #f ", assuming ~A is not a macro," head))))
+						     ;; begin=(caar p) here is almost entirely as macro arg
 						     (lint-format "perhaps~A~%~NC~A ->~%~NC~A" caller disclaimer
 								  (+ lint-left-margin 4) #\space
 								  (lint-pp `(,@header ,(one-call-and-dots (car p)) ,@trailer))
@@ -15356,8 +15355,7 @@
 									   (list? (cadar p))
 									   (not (assq head (cadar p)))) ; actually not intersection header+trailer (map car cadr)
 								      (let* ((body (cddr (car p)))
-									     (len (length body))
-									     (last (list-ref body (- len 1))))
+									     (last (list-ref body (- (length body) 1))))
 									(if (< (tree-leaves last) 12)
 									    (format #f "(~A ... ~A)"
 										    (caar p)
@@ -16111,32 +16109,14 @@
 ;;;   one arg assumes type, other either assumes a different type or tests for something not subsumed in the first
 ;;; define-macro cases in t347?? [10983]
 ;;; eq?/=/any-sig extension of and-forgetful
-;;; why was the large repeated let ignored? 
-;;; there are 302 Snd functions without signatures; how to handle unsafe functions/dilambdas?
-;;;   can select-all et al be considered safe? what is the actual distinction here?
-;;;   read is not safe because it sets up the stack so that the assumed eval-loop iteration will call op_read_internal --
-;;;   the c_call returns but it is not a complete call.  But surely, no function outside s7 can do that! 
-;;;   And how many functions embed their arguments in new code.  So the hooks are irrelevant?  Then why is open-sound unsafe?
-;;;   To restate it, a safe procedure leaves its argument list alone and does not push anything on the stack
-;;; internal (mid body) define? [9630], also in open bodies -- begin primarily?
+;;;    currently and-forgetful is restricted to bools for arg1: would need extension for eq/memq etc
+;;; there are 242 Snd functions without signatures
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
 ;;;    but report-usage can't do this (see tmp) because it sees only the local expressions
 ;;;    let-walker might but it will be slow! maybe restrict to vars set (at least) twice without ref to self in caddr and large let body
-;;; var 2 values, vals themselves arbitrary (0/1) -> booleans
-;;; if combinations: check entire and exprs for intersection [9696]
-;;; implicit indexing is viewed as a possible side-effect -- is there anyway around this? maybe even look-ahead?
+;;; implicit indexing is viewed as a possible side-effect -- is there any way around this? maybe even look-ahead?
+;;;    or "assuming x is a vector..." -- this is a lot of work, see all-types-agree in report-usage and following [8723]
+;;; if combinations: check entire and exprs for intersection [9714]
+;;; (if (if...)) -> (let + if) if the inner if is large?
 ;;;
-;;; (< (if ... -1 0) 0) -> ... or similar -- can these be recognized? (bool? [...] (if test c0 c1) [...]) either choose from bool or rest of expr
-;;;    (if ... (op [] true []) (op [] false []))
-;;;    now simplify the branches: (if ... #f #t) or the like -> (not ...)
-;;;    any op could be rewritten this way, not just booleans [and/or are special however]
-;;;   what about other funcs in these cases? (+ (cond...)...) etc
-;;;     same for multiargs after checking for shadows (let + display lt port) etc
-;;;   or biggest args > (/ (* leaves len) (+ len 1))
-;;;   if/cond/case need to be large and show collapse -- we split out (f (if ...)) elsewhere to simplify
-;;; [(f (let(*) ...)) is now reported and (let ((_1_...)) is omitted if possible][15281]
-;;; [not if/let are ok -- cond/case/begin also]
-;;; (f (begin)) should always be rewritten? what about (f ...(begin...)...)?  [15305]
-;;;   [it chooses one arg eval order] or (f (begin ...) (begin...)) -- I bet it never happens
-;;;
-;;; 134 23101 550800
+;;; 134 23101 551078

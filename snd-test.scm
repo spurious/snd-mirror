@@ -2312,7 +2312,8 @@
 
 (define (snd_test_4)
   
-  (do ((clmtest 0 (+ 1 clmtest))) ((= clmtest tests)) 
+  (do ((clmtest 0 (+ 1 clmtest))) 
+      ((= clmtest tests)) 
     (log-mem clmtest)
     (clear-listener)
     (let ((mz (mus-sound-maxamp "z.snd")))
@@ -5021,8 +5022,7 @@ EDITS: 5
 	  (snd-display ";xramp 6 vals: ~A ~A" (maxamp) (sample 0)))
       (undo)
       (xramp-channel 0.0 1.0 32.0)
-      (let ((vals (channel->float-vector))
-	    (ctr 0))
+      (let ((vals (channel->float-vector)))
 	(scale-channel 0.5)
 	(if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 10) ; scale-channel 0.500 0 #f [3:2]:
@@ -5030,7 +5030,6 @@ EDITS: 5
    (at 10, end_mark)
 "))
 	    (snd-display ";xramp 7: ~A" (safe-display-edits ind 0 3)))
-	(set! ctr 0)
 	(let* ((p (make-one-pole 1.0 -1.0))
 	       (baddy (scan-channel (lambda (y) (fneq y (* 0.5 (float-vector-ref vals (floor (- (one-pole p 1.0) 1.0)))))))))
 	  (if baddy (snd-display ";trouble in xramp 7: ~A" baddy)))
@@ -5042,7 +5041,6 @@ EDITS: 5
    (at 9, end_mark)
 "))
 	    (snd-display ";xramp 8: ~A" (safe-display-edits ind 0 3)))
-	(set! ctr 1)
 	(let* ((p (make-one-pole 1.0 -1.0))
 	       (baddy (scan-channel (lambda (y) (fneq y (float-vector-ref vals (floor (one-pole p 1.0))))))))
 	  (if baddy (snd-display ";trouble in xramp 8: ~A" baddy)))
@@ -5054,101 +5052,99 @@ EDITS: 5
    (at 8, end_mark)
 "))
 	    (snd-display ";xramp 9: ~A" (safe-display-edits ind 0 3)))
-	(set! ctr 2)
 	(let ((p (make-one-pole 1.0 -1.0)))
 	  (one-pole p 1.0)
 	  (let ((baddy (scan-channel (lambda (y) (fneq y (float-vector-ref vals (floor (one-pole p 1.0))))))))
-	    (if baddy (snd-display ";trouble in xramp 9: ~A" baddy))))
-	(undo)
-	(delete-sample 0)
-	(delete-sample 0)
-	(if (not (string-=? (safe-display-edits ind 0 4) "
+	    (if baddy (snd-display ";trouble in xramp 9: ~A" baddy)))))
+      (undo)
+      (delete-sample 0)
+      (delete-sample 0)
+      (if (not (string-=? (safe-display-edits ind 0 4) "
  (delete 0 1) ; delete-samples 0 1 [4:2]:
    (at 0, cp->sounds[1][2:9, 1.000, [1]0.037 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
-	    (snd-display ";xramp 10: ~A" (safe-display-edits ind 0 4)))
-	(undo 2)
-	(delete-sample 4)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 10: ~A" (safe-display-edits ind 0 4)))
+      (undo 2)
+      (delete-sample 4)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 1) ; delete-samples 4 1 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][5:9, 1.000, [1]0.189 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 9, end_mark)
 "))
-	    (snd-display ";xramp 11: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(delete-samples 4 2)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 11: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (delete-samples 4 2)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (delete 4 2) ; delete-samples 4 2 [3:3]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 8, end_mark)
 "))
-	    (snd-display ";xramp 12: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(scale-channel 0.5 4 2)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 12: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (scale-channel 0.5 4 2)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 4 2) ; scale-channel 0.500 4 2 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[1][4:5, 0.500, [1]0.118 -> 0.189, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 6, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 13: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(scale-channel 0.5 0 2)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 13: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (scale-channel 0.5 0 2)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (scale 0 2) ; scale-channel 0.500 0 2 [3:3]:
    (at 0, cp->sounds[1][0:1, 0.500, [1]0.000 -> 0.015, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 2, cp->sounds[1][2:9, 1.000, [1]0.037 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 14: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(pad-channel 4 2)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 14: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (pad-channel 4 2)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (silence 4 2) ; pad-channel [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[-1][0:1, 0.000])
    (at 6, cp->sounds[1][4:9, 1.000, [1]0.118 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 12, end_mark)
 "))
-	    (snd-display ";xramp 15: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(set! (sample 4) 1.0)
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 15: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (set! (sample 4) 1.0)
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (set 4 1) ; set-sample 4 1.0000 [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:0, 1.000]) [buf: 1] 
    (at 5, cp->sounds[1][5:9, 1.000, [1]0.189 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 16: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(set! (samples 4 2) (make-float-vector 2))
-	(if (not (string-=? (safe-display-edits ind 0 3) "
+	  (snd-display ";xramp 16: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (set! (samples 4 2) (make-float-vector 2))
+      (if (not (string-=? (safe-display-edits ind 0 3) "
  (set 4 2) ; set-samples [3:4]:
    (at 0, cp->sounds[1][0:3, 1.000, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
    (at 6, cp->sounds[1][6:9, 1.000, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 17: ~A" (safe-display-edits ind 0 3)))
-	(undo)
-	(scale-channel 0.5)
-	(set! (samples 4 2) (make-float-vector 2))
-	(if (not (string-=? (safe-display-edits ind 0 4) "
+	  (snd-display ";xramp 17: ~A" (safe-display-edits ind 0 3)))
+      (undo)
+      (scale-channel 0.5)
+      (set! (samples 4 2) (make-float-vector 2))
+      (if (not (string-=? (safe-display-edits ind 0 4) "
  (set 4 2) ; set-samples [4:4]:
    (at 0, cp->sounds[1][0:3, 0.500, [1]0.000 -> 0.070, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 4, cp->sounds[2][0:1, 1.000]) [buf: 2] 
    (at 6, cp->sounds[1][6:9, 0.500, [1]0.293 -> 1.000, off: -0.032, scl: 0.032]) [buf: 10] 
    (at 10, end_mark)
 "))
-	    (snd-display ";xramp 18: ~A" (safe-display-edits ind 0 4)))
-	)
+	  (snd-display ";xramp 18: ~A" (safe-display-edits ind 0 4)))
       (close-sound ind))
-    
+
     (let ((ind (new-sound "test.snd"))) ; third
       (map-channel (lambda (y) 1.0) 0 100)
       (do ((i 0 (+ i 1)))
@@ -6578,18 +6574,16 @@ EDITS: 5
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 1234)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 1234)) 'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)) 12005 10)) (lambda (snd) (map-channel (lambda (n) (* n 0.5)) 12005 10)) 'map-channel ind1)
 	(test-orig (lambda (snd) 
-		     (define m1
-		       (let ((vect (make-float-vector 2))) 
-			 (lambda (y) 
-			   (float-vector-set! vect 0 (float-vector-set! vect 1 (* y 2)))
-			   vect)))
-		     (map-channel m1))
+		     (map-channel 
+		      (let ((vect (make-float-vector 2))) 
+			(lambda (y) 
+			  (float-vector-set! vect 0 (float-vector-set! vect 1 (* y 2)))
+			  vect))))
 		   (lambda (snd) 
-		     (define m2
-		       (let ((outp #f))
-			 (lambda (y) 
-			   (and (set! outp (not outp)) (* y 0.5)))))
-		     (map-channel m2))
+		     (map-channel
+		      (let ((outp #f))
+			(lambda (y) 
+			  (and (set! outp (not outp)) (* y 0.5))))))
 		   'map-channel ind1)
 	(test-orig (lambda (snd) (map-channel (lambda (n) (* n 2.0)))) (lambda (snd) (map-channel (lambda (n) (* n 0.5)))) 'map-channel ind1)
 	(test-orig (lambda (snd) (pad-channel 1000 2000 ind1)) (lambda (snd) (delete-samples 1000 2000 ind1)) 'pad-channel ind1)
@@ -24593,43 +24587,43 @@ EDITS: 2
 	    (ladspa-cleanup descriptor handle))))))
 
 
-(define (snd_test_13)
+(define snd_test_13
+  (let ((ladspa_inited #f)
+	(clm_buffer_added #f)
+    
+	(test-hooks (lambda ()
+		      (reset-all-hooks)
+		      (for-each 
+		       (lambda (n) 
+			 (if (pair? (hook-functions n))
+			     (snd-display ";~A not empty?" n)))
+		       (snd-hooks))))
   
-  (define ladspa_inited #f)
-  (define clm_buffer_added #f)
+	(test-menus (lambda ()
+		      (if (provided? 'xm)
+			  (for-each-child
+			   (car (menu-widgets))
+			   (lambda (w)
+			     (if (not ((*motif* 'XmIsRowColumn) w))
+				 (let ((option-holder (cadr ((*motif* 'XtGetValues) w (list (*motif* 'XmNsubMenuId) 0)))))
+				   (for-each-child
+				    option-holder
+				    (lambda (menu)
+				      (if (and ((*motif* 'XmIsPushButton) menu)
+					       ((*motif* 'XtIsManaged) menu)
+					       ((*motif* 'XtIsSensitive) menu)
+					       (not (member ((*motif* 'XtName) menu)
+							    '("Exit" "New" 
+							      "Save   C-x C-s" 
+							      "Close  C-x k"
+							      "Close all"
+							      "Save current settings"
+							      "Mixes" "clm" "fm-violin"))))
+					  ((*motif* 'XtCallCallbacks) menu (*motif* 'XmNactivateCallback) (snd-global-state))))))))))
+		      (for-each close-sound (sounds))
+		      (dismiss-all-dialogs))))
+  (lambda () ; snd_test_13
 
-  (define (test-hooks)
-    (reset-all-hooks)
-    (for-each 
-     (lambda (n) 
-       (if (pair? (hook-functions n))
-	   (snd-display ";~A not empty?" n)))
-     (snd-hooks)))
-  
-  (define (test-menus)
-    (if (provided? 'xm)
-	(for-each-child
-	 (car (menu-widgets))
-	 (lambda (w)
-	   (if (not ((*motif* 'XmIsRowColumn) w))
-	       (let ((option-holder (cadr ((*motif* 'XtGetValues) w (list (*motif* 'XmNsubMenuId) 0)))))
-		 (for-each-child
-		  option-holder
-		  (lambda (menu)
-		    (if (and ((*motif* 'XmIsPushButton) menu)
-			     ((*motif* 'XtIsManaged) menu)
-			     ((*motif* 'XtIsSensitive) menu)
-			     (not (member ((*motif* 'XtName) menu)
-					  '("Exit" "New" 
-					    "Save   C-x C-s" 
-					    "Close  C-x k"
-					    "Close all"
-					    "Save current settings"
-					    "Mixes" "clm" "fm-violin"))))
-			((*motif* 'XtCallCallbacks) menu (*motif* 'XmNactivateCallback) (snd-global-state))))))))))
-    (for-each close-sound (sounds))
-    (dismiss-all-dialogs))
-  
   (reset-all-hooks)
 
   (let ((fd (view-sound "oboe.snd")))
@@ -25784,7 +25778,7 @@ EDITS: 2
 	    (if (not (mus-arrays-equal? fixed-vals new-vals))
 		(snd-display ";clip-hook results:~%    ~A~%    ~A~%    ~A" new-vals fixed-vals vals)))
 	  (close-sound index))))
-    ))
+    ))))
 
 
 
@@ -47546,7 +47540,8 @@ EDITS: 1
 (set! (test-funcs 12) snd_test_12)
 (if (not (or (provided? 'openbsd)
 	     (provided? 'freebsd)
-	     (provided? 'snd-gtk)))
+	     ;(provided? 'snd-gtk)
+	     ))
     (begin
       (set! (test-funcs 13) snd_test_13)
       (set! (test-funcs 14) snd_test_14)

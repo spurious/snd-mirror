@@ -49,7 +49,6 @@ bool color_orientation_dialog_is_active(void);
 Widget make_color_orientation_dialog(bool managed);
 void reflect_spectro(void);
 void set_with_gl(bool val, bool with_dialogs);
-void g_init_gxdraw(void);
 
 
 
@@ -78,7 +77,6 @@ Widget make_text_widget(const char *name, Widget parent, Arg *args, int n);
 Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer);
 void clear_listener(void);
 void set_listener_text_font(void);
-void g_init_gxlistener(void);
 
 
 /* -------- snd-xmenu.c -------- */
@@ -88,7 +86,6 @@ void add_menu_drop(void);
 Widget menu_widget(int which_menu);
 void check_menu_labels(int key, int state, bool extended);
 void reflect_play_selection_stop(void);
-void g_init_gxmenu(void);
 void set_button_label(Widget label, const char *str);
 void add_tooltip(Widget w, const char *tip);
 void post_basic_popup_menu(void *ev);
@@ -147,7 +144,6 @@ void allocate_region_rows(int n);
 void reflect_regions_in_region_browser(void);
 void reflect_no_regions_in_region_browser(void);
 void reflect_region_graph_style(void);
-void g_init_gxregion(void);
 
 
 /* -------- snd-gxbitmaps.c -------- */
@@ -195,7 +191,6 @@ void errors_to_find_text(const char *msg, void *data);
 void find_dialog_stop_label(bool show_stop);
 bool find_dialog_is_active(void);
 void save_find_dialog_state(FILE *fd);
-void g_init_gxfind(void);
 
 
 /* -------- snd-xutils.c -------- */
@@ -279,8 +274,6 @@ void change_channel_style(snd_info *sp, channel_style_t new_style);
 void color_chan_components(color_t color, slider_choice_t which_component);
 void color_unselected_graphs(color_t color);
 
-void g_init_gxchn(void);
-
 
 /* -------- snd-xsnd.c -------- */
 
@@ -328,7 +321,6 @@ void start_progress_report(chan_info *cp);
 void finish_progress_report(chan_info *cp);
 void progress_report(chan_info *cp, mus_float_t pct);
 XmString initial_speed_label(speed_style_t style);
-void g_init_gxsnd(void);
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color);
 void reflect_sound_selection(snd_info *sp);
 void make_controls_dialog(void);
@@ -366,7 +358,6 @@ void save_edit_header_dialog_state(FILE *fd);
 void set_open_file_play_button(bool val);
 widget_t make_mix_file_dialog(bool managed);
 widget_t make_insert_file_dialog(bool managed);
-void g_init_gxfile(void);
 void clear_deleted_snd_info(void *dp);
 void reflect_just_sounds(void);
 void save_file_dialog_state(FILE *fd);
@@ -416,7 +407,6 @@ void set_enved_in_dB(bool val);
 bool enved_dialog_is_active(void);
 void set_enved_filter_order(int order);
 void color_enved_waveform(Pixel pix);
-void g_init_gxenv(void);
 
 
 
@@ -433,6 +423,8 @@ void mix_dialog_set_mix(int id);
 /* -------- snd-xprefs.c -------- */
 
 widget_t make_preferences_dialog(void);
+
+void g_init_motif(void);
 
 #endif
 

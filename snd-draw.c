@@ -2033,11 +2033,10 @@ Xen_wrap_3_args(g_set_combined_data_color_w, g_set_combined_data_color)
 void g_init_draw(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, f, r, mx, s, v, pcl_p, pl_t;
+  s7_pointer i, b, p, t, r, mx, s, v, pcl_p, pl_t;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "pair?");
-  f = s7_make_symbol(s7, "float?");
   r = s7_make_symbol(s7, "real?");
   s = s7_make_symbol(s7, "string?");
   v = s7_make_symbol(s7, "vector?");

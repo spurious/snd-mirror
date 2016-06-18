@@ -2579,7 +2579,8 @@ void g_init_gxsnd(void)
 {
   Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
 
-  Xen_define_procedure(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets);
+  Xen_define_typed_procedure(S_sound_widgets, g_sound_widgets_w, 0, 1, 0, H_sound_widgets, 
+			     s7_make_signature(s7, 2, s7_make_symbol(s7, "list?"), s7_t(s7)));
 
 #if HAVE_SCHEME
   #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\

@@ -2247,18 +2247,6 @@ bool color_orientation_dialog_is_active(void)
 
 
 
-void g_init_gxdraw(void)
-{
-  #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
-orientation dialog changes"
-  #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the \
-color dialog changes"
-
-  orientation_hook = Xen_define_hook(S_orientation_hook, "(make-hook)", 0, H_orientation_hook);
-  color_hook =       Xen_define_hook(S_color_hook,       "(make-hook)", 0, H_color_hook);
-}
-
-
 #define HELP_ROWS 10
 #define HELP_XREFS 8
 #define HELP_COLUMNS 72
@@ -3142,16 +3130,6 @@ static Xen g_find_dialog_widgets(void)
 		   Xen_cons(Xen_wrap_widget(XmMessageBoxGetChild(edit_find_dialog, XmDIALOG_CANCEL_BUTTON)),   /* go away */
 		     Xen_empty_list))))));
   return(Xen_empty_list);
-}
-
-
-Xen_wrap_2_optional_args(g_find_dialog_w, g_find_dialog)
-Xen_wrap_no_args(g_find_dialog_widgets_w, g_find_dialog_widgets)
-
-void g_init_gxfind(void)
-{
-  Xen_define_safe_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
-  Xen_define_safe_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
 }
 
 
@@ -5168,9 +5146,7 @@ static Xen reflect_file_in_enved(Xen hook_or_reason)
   return(Xen_false);
 }
 
-
-Xen_wrap_1_arg(reflect_file_in_enved_w, reflect_file_in_enved)
-
+static void add_reflect_enved_hook(void);
 
 Widget create_envelope_editor(void)
 {
@@ -5703,7 +5679,7 @@ Widget create_envelope_editor(void)
 
       set_dialog_widget(ENVED_DIALOG, enved_dialog);
 
-      Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
+      add_reflect_enved_hook();
     }
   else raise_dialog(enved_dialog);
   if (!XtIsManaged(enved_dialog)) 
@@ -5862,18 +5838,6 @@ static Xen g_set_enved_filter(Xen type)
 }
 
 
-Xen_wrap_no_args(g_enved_filter_w, g_enved_filter)
-Xen_wrap_1_arg(g_set_enved_filter_w, g_set_enved_filter)
-Xen_wrap_no_args(g_enved_envelope_w, g_enved_envelope)
-Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
-
-void g_init_gxenv(void)
-{
-  Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   S_set S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
-				   S_set S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
-}
 /* Transform settings dialog */
 
 
@@ -8084,8 +8048,6 @@ static Xen reflect_file_in_region_browser(Xen hook_or_reason)
   return(Xen_false);
 }
 
-Xen_wrap_1_arg(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
-
 
 static char *regrow_get_label(void *ur)
 {
@@ -8183,6 +8145,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   return(r);
 }
 
+static void add_reflect_region_hook(void);
 
 static void make_region_dialog(void)
 {
@@ -8432,7 +8395,7 @@ static void make_region_dialog(void)
   highlight_region();
   region_update_graph(cp);
 
-  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
+  add_reflect_region_hook();
 
   set_dialog_widget(REGION_DIALOG, region_dialog);
 }
@@ -8503,14 +8466,6 @@ static Xen g_view_regions_dialog(void)
   if (snd_regions() > 0) 
     view_region_callback(MAIN_PANE(ss), NULL, NULL);
   return(Xen_wrap_widget(region_dialog));
-}
-
-
-Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
-
-void g_init_gxregion(void)
-{
-  Xen_define_safe_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
 }
 
 
@@ -10356,9 +10311,7 @@ static Xen mix_open_file_watcher(Xen hook_or_reason)
   return(Xen_false);
 }
 
-Xen_wrap_1_arg(mix_open_file_watcher_w, mix_open_file_watcher)
-
-
+static void add_reflect_mix_hook(void);
 
 widget_t make_mix_file_dialog(bool managed)
 {
@@ -10367,7 +10320,7 @@ widget_t make_mix_file_dialog(bool managed)
     {
       mdat = make_file_dialog(FILE_READ_ONLY, (char *)"Mix Sound", (char *)"mix in:", file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
-      Xen_add_to_hook_list(ss->snd_open_file_hook, mix_open_file_watcher_w, "mix-dialog-open-file-watcher", "mix dialog's open-file-hook handler");
+      add_reflect_mix_hook();
     }
   else
     {
@@ -10454,7 +10407,7 @@ static Xen insert_open_file_watcher(Xen hook_or_reason)
   return(Xen_false);
 }
 
-Xen_wrap_1_optional_arg(insert_open_file_watcher_w, insert_open_file_watcher)
+static void add_reflect_insert_hook(void);
 
 widget_t make_insert_file_dialog(bool managed)
 {
@@ -10462,7 +10415,7 @@ widget_t make_insert_file_dialog(bool managed)
     {
       idat = make_file_dialog(FILE_READ_ONLY, (char *)"Insert Sound", (char *)"insert:", file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
-      Xen_add_to_hook_list(ss->snd_open_file_hook, insert_open_file_watcher_w, "insert-dialog-open-file-watcher", "insert dialog's open-file-hook handler");
+      add_reflect_insert_hook();
     }
   else
     {
@@ -13906,8 +13859,6 @@ static Xen vf_open_file_watcher(Xen hook_or_reason)
       }
   return(Xen_false);
 }
-
-Xen_wrap_1_arg(vf_open_file_watcher_w, vf_open_file_watcher)
 
 
 int view_files_dialog_list_length(void)
@@ -17606,123 +17557,6 @@ void add_drag_and_drop(Widget w,
 
 
 /* -------------------------------------------------------------------------------- */
-
-Xen_wrap_1_optional_arg(g_view_files_sort_w, g_view_files_sort)
-Xen_wrap_2_optional_args(g_set_view_files_sort_w, g_set_view_files_sort)
-Xen_wrap_2_optional_args(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
-Xen_wrap_2_optional_args(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
-Xen_wrap_2_optional_args(g_view_files_dialog_w, g_view_files_dialog)
-Xen_wrap_1_arg(g_view_files_amp_w, g_view_files_amp)
-Xen_wrap_2_args(g_view_files_set_amp_w, g_view_files_set_amp)
-Xen_wrap_1_arg(g_view_files_speed_w, g_view_files_speed)
-Xen_wrap_2_args(g_view_files_set_speed_w, g_view_files_set_speed)
-Xen_wrap_1_arg(g_view_files_amp_env_w, g_view_files_amp_env)
-Xen_wrap_2_args(g_view_files_set_amp_env_w, g_view_files_set_amp_env)
-Xen_wrap_1_arg(g_view_files_speed_style_w, g_view_files_speed_style)
-Xen_wrap_2_args(g_view_files_set_speed_style_w, g_view_files_set_speed_style)
-Xen_wrap_1_arg(g_view_files_selected_files_w, g_view_files_selected_files)
-Xen_wrap_1_arg(g_view_files_files_w, g_view_files_files)
-Xen_wrap_2_args(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
-Xen_wrap_2_args(g_view_files_set_files_w, g_view_files_set_files)
-Xen_wrap_1_arg(g_delete_file_sorter_w, g_delete_file_sorter)
-Xen_wrap_2_args(g_add_file_sorter_w, g_add_file_sorter)
-
-#if HAVE_SCHEME
-static s7_pointer acc_view_files_sort(s7_scheme *sc, s7_pointer args) {return(g_set_view_files_sort(s7_cadr(args), s7_undefined(sc)));}
-#endif
-
-void g_init_gxfile(void)
-{
-#if HAVE_SCHEME
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
-to popup file info as follows: \n\
-(hook-push " S_mouse_enter_label_hook "\n\
-  (lambda (type position name)\n\
-    (if (not (= type 2))\n\
-        (" S_info_dialog " name (finfo name)))))\n\
-See also nb.scm."
-#endif
-#if HAVE_RUBY
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.rb \
-to popup file info as follows: \n\
-$mouse_enter_label_hook.add_hook!(\"finfo\") do |type, position, name|\n\
-  if type != 2\n\
-    " S_info_dialog "(name, finfo(name))\n\
-  end\n\
-end\n\
-See also nb.rb."
-#endif
-#if HAVE_FORTH
-  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
-The 'type' is 1 for view-files, and 2 for regions. The 'position' \
-is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.fs \
-to popup file info as follows: \n\
-" S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
-  type 2 <> if\n\
-    name name finfo info-dialog\n\
-  else\n\
-    #f\n\
-  then\n\
-; add-hook!"
-#endif
-
-  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
-
-  mouse_enter_label_hook = Xen_define_hook(S_mouse_enter_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
-  mouse_leave_label_hook = Xen_define_hook(S_mouse_leave_label_hook, "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
-
-  Xen_define_dilambda(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
-				   S_set S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
-				   S_set S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
-				   S_set S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
-				   S_set S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_view_files_files, g_view_files_files_w, H_view_files_files,
-				   S_set S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0);
-  Xen_define_dilambda(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
-				   S_set S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0);
-
-  Xen_define_safe_procedure(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list);
-  Xen_define_safe_procedure(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list);
-  Xen_define_safe_procedure(S_view_files_dialog,                g_view_files_dialog_w,                0, 2, 0, H_view_files_dialog);
-
-  Xen_define_dilambda(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
-				   S_set S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1);
-
-  Xen_add_to_hook_list(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
-
-  #define H_view_files_select_hook S_view_files_select_hook "(dialog name): called when a file is selected in the \
-files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
-
-  view_files_select_hook = Xen_define_hook(S_view_files_select_hook, "(make-hook 'dialog 'name)", 2, H_view_files_select_hook);
-
-  /* file-filters and file-sorters are lists from user's point of view, but I want to
-   *   make sure they're gc-protected through add/delete/set, and want such code compatible
-   *   with current Ruby xen macros, so I'll use an array internally.
-   */
-  ss->file_sorters_size = INITIAL_FILE_SORTERS_SIZE;
-  ss->file_sorters = Xen_make_vector(ss->file_sorters_size, Xen_false);
-  Xen_GC_protect(ss->file_sorters);
-
-  Xen_define_safe_procedure(S_add_file_sorter,    g_add_file_sorter_w,    2, 0, 0, H_add_file_sorter);
-  Xen_define_safe_procedure(S_delete_file_sorter, g_delete_file_sorter_w, 1, 0, 0, H_delete_file_sorter);
-
-
-  #define H_drop_hook S_drop_hook " (name): called whenever Snd receives a drag-and-drop \
-event. If it returns " PROC_TRUE ", the file is not opened or mixed by Snd."
-
-  drop_hook = Xen_define_hook(S_drop_hook, "(make-hook 'name)", 1, H_drop_hook);
-
-#if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort "]", acc_view_files_sort, 2, 0, false, "accessor"));
-#endif
-}
 
 
 #include "sndlib-strings.h"
@@ -22705,14 +22539,6 @@ static Xen g_menu_widgets(void)
 	       Xen_empty_list)))))));
 }
 
-
-Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
-
-void g_init_gxmenu(void)
-{
-  Xen_define_safe_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
-}
-
 /* Motif bug: the button backgrounds remain in the original highlight color? but the widget (if it is one) is not the child of any obvious widget
  */
 
@@ -25107,78 +24933,6 @@ static Xen g_goto_listener_end(void)
 }
 
 
-Xen_wrap_no_args(g_listener_selection_w, g_listener_selection)
-Xen_wrap_no_args(g_reset_listener_cursor_w, g_reset_listener_cursor)
-Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
-
-void g_init_gxlistener(void)
-{
-#if HAVE_SCHEME
-  top_level_let = s7_nil(s7);
-  s7_define_variable(s7, "top-level-let", 
-                     s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
-
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
-enters the lisp listener pane:\n\
-  (hook-push " S_mouse_enter_listener_hook "\n\
-    (lambda (hook)\n\
-      (" S_focus_widget " (hook 'widget))))"
-#endif
-
-#if HAVE_RUBY
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
-enters the lisp listener pane:\n\
-  $mouse_enter_listener_hook.add-hook!(\"enter\") do |widget|\n\
-    focus_widget(widget)\n\
-  end"
-#endif
-
-#if HAVE_FORTH
-  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
-enters the lisp listener pane:\n\
-" S_mouse_enter_listener_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
-#endif
-
-  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse \
-leaves the lisp listener pane"
-
-  mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
-  mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
-
-#if HAVE_SCHEME
-  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-(hook-push " S_mouse_enter_text_hook "\n\
-  (lambda (w)\n\
-    (" S_focus_widget " w)))"
-#endif
-
-#if HAVE_RUBY
-  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-$mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
-    focus_widget(w)\n\
-  end"
-#endif
-
-#if HAVE_FORTH
-  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
-" S_mouse_enter_text_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
-#endif
-
-  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
-  
-  mouse_enter_text_hook = Xen_define_hook(S_mouse_enter_text_hook, "(make-hook 'widget)", 1, H_mouse_enter_text_hook);
-  mouse_leave_text_hook = Xen_define_hook(S_mouse_leave_text_hook, "(make-hook 'widget)", 1, H_mouse_leave_text_hook);
-
-  Xen_define_safe_procedure(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection);
-  Xen_define_safe_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor);
-  Xen_define_safe_procedure(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end);
-
-  #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
-  listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook);
-
-  preload_best_completions();
-}
-
 
 #include <X11/XKBlib.h>
 
@@ -26849,64 +26603,6 @@ static Xen g_set_graph_cursor(Xen curs)
   return(curs);
 }
 
-
-Xen_wrap_2_args(g_in_w, g_in)
-Xen_wrap_no_args(g_graph_cursor_w, g_graph_cursor)
-Xen_wrap_1_arg(g_set_graph_cursor_w, g_set_graph_cursor)
-Xen_wrap_2_optional_args(g_channel_widgets_w, g_channel_widgets)
-
-#if HAVE_SCHEME
-static s7_pointer acc_graph_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_graph_cursor(s7_cadr(args)));}
-#endif
-
-
-void g_init_gxchn(void)
-{
-  Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
-
-  Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-				   S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
-
-  Xen_define_safe_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
-
-#if HAVE_SCHEME
-  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
-enters the drawing area (graph pane) of the given channel.\n\
-  (hook-push " S_mouse_enter_graph_hook "\n\
-    (lambda (hook)\n\
-      (" S_focus_widget " (car (" S_channel_widgets " (hook 'snd) (hook 'chn))))))"
-
-  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
-leaves the drawing area (graph pane) of the given channel."
-#endif
-#if HAVE_RUBY
-  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
-enters the drawing area (graph pane) of the given channel.\n\
-  $mouse_enter_graph_hook.add-hook!(\"focus\") do |snd chn|\n\
-    focus_widget(channel_widgets(snd, chn)[0])\n\
-    end"
-
-  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
-leaves the drawing area (graph pane) of the given channel."
-#endif
-#if HAVE_FORTH
-  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
-enters the drawing area (graph pane) of the given channel.\n\
-" S_mouse_enter_graph_hook " lambda: <{ snd chn }>\n\
-  snd chn " S_channel_widgets " car " S_focus_widget "\n\
-; add-hook!"
-  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
-leaves the drawing area (graph pane) of the given channel."
-#endif
-
-  mouse_enter_graph_hook = Xen_define_hook(S_mouse_enter_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_enter_graph_hook);
-  mouse_leave_graph_hook = Xen_define_hook(S_mouse_leave_graph_hook, "(make-hook 'snd 'chn)", 2, H_mouse_leave_graph_hook);
-
-#if HAVE_SCHEME
-  s7_symbol_set_access(s7, ss->graph_cursor_symbol, s7_make_function(s7, "[acc-" S_graph_cursor "]", acc_graph_cursor, 2, 0, false, "accessor"));
-  s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
-#endif
-}
 
 
 #include <X11/xpm.h>
@@ -29681,9 +29377,6 @@ static Xen reflect_file_close_in_sync(Xen hook_or_reason)
   return(Xen_false);
 }
 
-Xen_wrap_1_arg(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
-
-
 void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
   if (!(mus_strcmp(sp->name_string, str)))
@@ -30183,15 +29876,6 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
 	         Xen_cons(Xen_wrap_widget(LOCK_OR_BOMB(sp)),
 	          Xen_cons(Xen_wrap_widget(SYNC_BUTTON(sp)),
 	           Xen_empty_list)))))))))));
-}
-
-
-Xen_wrap_1_optional_arg(g_sound_widgets_w, g_sound_widgets)
-
-void g_init_gxsnd(void)
-{
-  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
-  Xen_define_safe_procedure(S_sound_widgets,  g_sound_widgets_w,  0, 1, 0, H_sound_widgets);
 }
 
 
@@ -31080,4 +30764,301 @@ void snd_doit(int argc, char **argv)
     }
 
   XtAppMainLoop(app);
+}
+
+
+/* -------------------------------------------------------------------------------- */
+
+Xen_wrap_2_optional_args(g_find_dialog_w, g_find_dialog)
+Xen_wrap_no_args(g_find_dialog_widgets_w, g_find_dialog_widgets)
+Xen_wrap_1_arg(reflect_file_in_enved_w, reflect_file_in_enved)
+Xen_wrap_no_args(g_enved_filter_w, g_enved_filter)
+Xen_wrap_1_arg(g_set_enved_filter_w, g_set_enved_filter)
+Xen_wrap_no_args(g_enved_envelope_w, g_enved_envelope)
+Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
+Xen_wrap_1_arg(reflect_file_in_region_browser_w, reflect_file_in_region_browser)
+Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
+Xen_wrap_1_arg(mix_open_file_watcher_w, mix_open_file_watcher)
+Xen_wrap_1_optional_arg(insert_open_file_watcher_w, insert_open_file_watcher)
+Xen_wrap_1_arg(vf_open_file_watcher_w, vf_open_file_watcher)
+Xen_wrap_1_optional_arg(g_view_files_sort_w, g_view_files_sort)
+Xen_wrap_2_optional_args(g_set_view_files_sort_w, g_set_view_files_sort)
+Xen_wrap_2_optional_args(g_add_directory_to_view_files_list_w, g_add_directory_to_view_files_list)
+Xen_wrap_2_optional_args(g_add_file_to_view_files_list_w, g_add_file_to_view_files_list)
+Xen_wrap_2_optional_args(g_view_files_dialog_w, g_view_files_dialog)
+Xen_wrap_1_arg(g_view_files_amp_w, g_view_files_amp)
+Xen_wrap_2_args(g_view_files_set_amp_w, g_view_files_set_amp)
+Xen_wrap_1_arg(g_view_files_speed_w, g_view_files_speed)
+Xen_wrap_2_args(g_view_files_set_speed_w, g_view_files_set_speed)
+Xen_wrap_1_arg(g_view_files_amp_env_w, g_view_files_amp_env)
+Xen_wrap_2_args(g_view_files_set_amp_env_w, g_view_files_set_amp_env)
+Xen_wrap_1_arg(g_view_files_speed_style_w, g_view_files_speed_style)
+Xen_wrap_2_args(g_view_files_set_speed_style_w, g_view_files_set_speed_style)
+Xen_wrap_1_arg(g_view_files_selected_files_w, g_view_files_selected_files)
+Xen_wrap_1_arg(g_view_files_files_w, g_view_files_files)
+Xen_wrap_2_args(g_view_files_set_selected_files_w, g_view_files_set_selected_files)
+Xen_wrap_2_args(g_view_files_set_files_w, g_view_files_set_files)
+Xen_wrap_1_arg(g_delete_file_sorter_w, g_delete_file_sorter)
+Xen_wrap_2_args(g_add_file_sorter_w, g_add_file_sorter)
+Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
+Xen_wrap_no_args(g_listener_selection_w, g_listener_selection)
+Xen_wrap_no_args(g_reset_listener_cursor_w, g_reset_listener_cursor)
+Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
+Xen_wrap_2_args(g_in_w, g_in)
+Xen_wrap_no_args(g_graph_cursor_w, g_graph_cursor)
+Xen_wrap_1_arg(g_set_graph_cursor_w, g_set_graph_cursor)
+Xen_wrap_2_optional_args(g_channel_widgets_w, g_channel_widgets)
+Xen_wrap_1_arg(reflect_file_close_in_sync_w, reflect_file_close_in_sync)
+Xen_wrap_1_optional_arg(g_sound_widgets_w, g_sound_widgets)
+
+static void add_reflect_enved_hook(void)
+{
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_enved_w, "enved-file-open-handler", "enved dialog's file-open-hook handler");
+}
+
+static void add_reflect_region_hook(void)
+{
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_in_region_browser_w, "region-dialog-open-file-watcher", "region dialog open-file-hook handler");
+}
+
+static void add_reflect_mix_hook(void)
+{
+  Xen_add_to_hook_list(ss->snd_open_file_hook, mix_open_file_watcher_w, "mix-dialog-open-file-watcher", "mix dialog's open-file-hook handler");
+}
+
+static void add_reflect_insert_hook(void)
+{
+  Xen_add_to_hook_list(ss->snd_open_file_hook, insert_open_file_watcher_w, "insert-dialog-open-file-watcher", "insert dialog's open-file-hook handler");
+}
+
+
+#if HAVE_SCHEME
+static s7_pointer acc_view_files_sort(s7_scheme *sc, s7_pointer args) {return(g_set_view_files_sort(s7_cadr(args), s7_undefined(sc)));}
+static s7_pointer acc_graph_cursor(s7_scheme *sc, s7_pointer args) {return(g_set_graph_cursor(s7_cadr(args)));}
+#endif
+
+
+  #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the orientation dialog changes"
+  #define H_color_hook S_color_hook " (): called whenever one of the variables associated with the color dialog changes"
+  #define H_drop_hook S_drop_hook " (name): called whenever Snd receives a drag-and-drop \
+event. If it returns " PROC_TRUE ", the file is not opened or mixed by Snd."
+  #define H_view_files_select_hook S_view_files_select_hook "(dialog name): called when a file is selected in the \
+files list of the View Files dialog.  If it returns " PROC_TRUE ", the default action, opening the file, is omitted."
+
+  #define H_mouse_leave_label_hook S_mouse_leave_label_hook " (type position label): called when the mouse leaves a file viewer or region label"
+  #define H_mouse_leave_text_hook S_mouse_leave_text_hook " (widget): called when the mouse leaves a text widget"
+  #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
+  #define H_mouse_leave_listener_hook S_mouse_leave_listener_hook " (widget): called when the mouse leaves the lisp listener pane"
+  
+#if HAVE_SCHEME
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.scm \
+to popup file info as follows: \n\
+(hook-push " S_mouse_enter_label_hook "\n\
+  (lambda (type position name)\n\
+    (if (not (= type 2))\n\
+        (" S_info_dialog " name (finfo name)))))\n\
+See also nb.scm."
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.rb \
+to popup file info as follows: \n\
+$mouse_enter_label_hook.add_hook!(\"finfo\") do |type, position, name|\n\
+  if type != 2\n\
+    " S_info_dialog "(name, finfo(name))\n\
+  end\n\
+end\n\
+See also nb.rb."
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
+The 'type' is 1 for view-files, and 2 for regions. The 'position' \
+is the scrolled list position of the label. The label itself is 'label'. We could use the 'finfo' procedure in examp.fs \
+to popup file info as follows: \n\
+" S_mouse_enter_label_hook " lambda: <{ type position name }>\n\
+  type 2 <> if\n\
+    name name finfo info-dialog\n\
+  else\n\
+    #f\n\
+  then\n\
+; add-hook!"
+#endif
+
+#if HAVE_SCHEME
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
+enters the drawing area (graph pane) of the given channel.\n\
+  (hook-push " S_mouse_enter_graph_hook "\n\
+    (lambda (hook)\n\
+      (" S_focus_widget " (car (" S_channel_widgets " (hook 'snd) (hook 'chn))))))"
+
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
+enters the drawing area (graph pane) of the given channel.\n\
+  $mouse_enter_graph_hook.add-hook!(\"focus\") do |snd chn|\n\
+    focus_widget(channel_widgets(snd, chn)[0])\n\
+    end"
+
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \
+enters the drawing area (graph pane) of the given channel.\n\
+" S_mouse_enter_graph_hook " lambda: <{ snd chn }>\n\
+  snd chn " S_channel_widgets " car " S_focus_widget "\n\
+; add-hook!"
+  #define H_mouse_leave_graph_hook S_mouse_leave_graph_hook " (snd chn): is called when the mouse \
+leaves the drawing area (graph pane) of the given channel."
+#endif
+
+#if HAVE_SCHEME
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
+enters the lisp listener pane:\n\
+  (hook-push " S_mouse_enter_listener_hook "\n\
+    (lambda (hook)\n\
+      (" S_focus_widget " (hook 'widget))))"
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
+enters the lisp listener pane:\n\
+  $mouse_enter_listener_hook.add-hook!(\"enter\") do |widget|\n\
+    focus_widget(widget)\n\
+  end"
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (listener): called when the mouse \
+enters the lisp listener pane:\n\
+" S_mouse_enter_listener_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
+#endif
+
+#if HAVE_SCHEME
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+(hook-push " S_mouse_enter_text_hook "\n\
+  (lambda (w)\n\
+    (" S_focus_widget " w)))"
+#endif
+#if HAVE_RUBY
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+$mouse_enter_text_hook.add_hook!(\"enter\") do |w|\n\
+    focus_widget(w)\n\
+  end"
+#endif
+#if HAVE_FORTH
+  #define H_mouse_enter_text_hook S_mouse_enter_text_hook " (widget): called when the mouse enters a text widget:\n\
+" S_mouse_enter_text_hook " lambda: <{ wid }> wid " S_focus_widget " ; add-hook!"
+#endif
+
+
+void g_init_motif(void)
+{
+#if HAVE_SCHEME
+  s7_pointer i, b, p, t, r, s, l, fnc;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  l = s7_make_symbol(s7, "list?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  fnc = s7_make_symbol(s7, "procedure?");
+  t = s7_t(s7);
+#endif
+
+  orientation_hook =          Xen_define_hook(S_orientation_hook,          "(make-hook)", 0,                        H_orientation_hook);
+  color_hook =                Xen_define_hook(S_color_hook,                "(make-hook)", 0,                        H_color_hook);
+  mouse_enter_label_hook =    Xen_define_hook(S_mouse_enter_label_hook,    "(make-hook 'type 'position 'label)", 3, H_mouse_enter_label_hook);
+  mouse_leave_label_hook =    Xen_define_hook(S_mouse_leave_label_hook,    "(make-hook 'type 'position 'label)", 3, H_mouse_leave_label_hook);
+  view_files_select_hook =    Xen_define_hook(S_view_files_select_hook,    "(make-hook 'dialog 'name)", 2,          H_view_files_select_hook);
+  drop_hook =                 Xen_define_hook(S_drop_hook,                 "(make-hook 'name)", 1,                  H_drop_hook);
+  mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1,                H_mouse_enter_listener_hook);
+  mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1,                H_mouse_leave_listener_hook);
+  mouse_enter_text_hook =     Xen_define_hook(S_mouse_enter_text_hook,     "(make-hook 'widget)", 1,                H_mouse_enter_text_hook);
+  mouse_leave_text_hook =     Xen_define_hook(S_mouse_leave_text_hook,     "(make-hook 'widget)", 1,                H_mouse_leave_text_hook);
+  listener_click_hook =       Xen_define_hook(S_listener_click_hook,       "(make-hook 'position)", 1,              H_listener_click_hook);
+  mouse_enter_graph_hook =    Xen_define_hook(S_mouse_enter_graph_hook,    "(make-hook 'snd 'chn)", 2,              H_mouse_enter_graph_hook);
+  mouse_leave_graph_hook =    Xen_define_hook(S_mouse_leave_graph_hook,    "(make-hook 'snd 'chn)", 2,              H_mouse_leave_graph_hook);
+
+
+  Xen_define_typed_procedure(S_find_dialog,           g_find_dialog_w,            0, 2, 0, H_find_dialog,           s7_make_signature(s7, 3, p, b, s));
+  Xen_define_typed_procedure("find-dialog-widgets",   g_find_dialog_widgets_w,    0, 0, 0, "test function",         s7_make_signature(s7, 1, l));
+  Xen_define_typed_procedure(S_view_regions_dialog,   g_view_regions_dialog_w,    0, 0, 0, H_view_regions_dialog,   s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_view_files_dialog,     g_view_files_dialog_w,      0, 2, 0, H_view_files_dialog,     s7_make_signature(s7, 3, p, b, b));
+  Xen_define_typed_procedure(S_add_file_sorter,       g_add_file_sorter_w,        2, 0, 0, H_add_file_sorter,       s7_make_signature(s7, 3, i, s, fnc));
+  Xen_define_typed_procedure(S_delete_file_sorter,    g_delete_file_sorter_w,     1, 0, 0, H_delete_file_sorter,    s7_make_signature(s7, 2, i, i));
+  Xen_define_typed_procedure(S_menu_widgets,          g_menu_widgets_w,           0, 0, 0, H_menu_widgets,          s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_listener_selection,    g_listener_selection_w,     0, 0, 0, H_listener_selection,    
+			     s7_make_signature(s7, 1, s7_make_signature(s7, 2, b, s)));
+  Xen_define_typed_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w,  0, 0, 0, H_reset_listener_cursor, s7_make_signature(s7, 1, b));
+  Xen_define_typed_procedure(S_goto_listener_end,     g_goto_listener_end_w,      0, 0, 0, H_goto_listener_end,     s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure(S_channel_widgets,       g_channel_widgets_w,        0, 2, 0, H_channel_widgets,       s7_make_signature(s7, 3, p, t, t));
+  Xen_define_typed_procedure(S_sound_widgets,         g_sound_widgets_w,          0, 1, 0, H_sound_widgets,         s7_make_signature(s7, 2, p, t));
+
+  Xen_define_typed_procedure(S_add_directory_to_view_files_list, g_add_directory_to_view_files_list_w, 1, 1, 0, H_add_directory_to_view_files_list,
+			     s7_make_signature(s7, 3, s, s, p));
+  Xen_define_typed_procedure(S_add_file_to_view_files_list,      g_add_file_to_view_files_list_w,      1, 1, 0, H_add_file_to_view_files_list,
+			     s7_make_signature(s7, 3, s, s, p));
+
+
+  Xen_define_typed_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
+			    S_set S_enved_filter, g_set_enved_filter_w, 0, 0, 1, 0, 
+			    s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
+  Xen_define_typed_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+			    S_set S_enved_envelope, g_set_enved_envelope_w, 0, 0, 1, 0, 
+			    s7_make_signature(s7, 1, p), s7_make_signature(s7, 2, t, t));
+
+  Xen_define_typed_dilambda(S_view_files_amp, g_view_files_amp_w, H_view_files_amp,
+			    S_set S_view_files_amp, g_view_files_set_amp_w,  1, 0, 2, 0, 
+			    s7_make_signature(s7, 2, r, t), s7_make_signature(s7, 3, r, t, r));
+  Xen_define_typed_dilambda(S_view_files_amp_env, g_view_files_amp_env_w, H_view_files_amp_env,
+			    S_set S_view_files_amp_env, g_view_files_set_amp_env_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, p, t), s7_make_signature(s7, 3, p, t, p));
+  Xen_define_typed_dilambda(S_view_files_speed_style, g_view_files_speed_style_w, H_view_files_speed_style,
+			    S_set S_view_files_speed_style, g_view_files_set_speed_style_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, i, t), s7_make_signature(s7, 3, i, t, i));
+  Xen_define_typed_dilambda(S_view_files_speed, g_view_files_speed_w, H_view_files_speed,
+			    S_set S_view_files_speed, g_view_files_set_speed_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, r, t), s7_make_signature(s7, 3, r, t, r));
+  Xen_define_typed_dilambda(S_view_files_files, g_view_files_files_w, H_view_files_files,
+			    S_set S_view_files_files, g_view_files_set_files_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, l, t), s7_make_signature(s7, 3, l, t, l));
+  Xen_define_typed_dilambda(S_view_files_selected_files, g_view_files_selected_files_w, H_view_files_selected_files,
+			    S_set S_view_files_selected_files, g_view_files_set_selected_files_w,  1, 0, 2, 0,
+			    s7_make_signature(s7, 2, l, t), s7_make_signature(s7, 3, l, t, l));
+  Xen_define_typed_dilambda(S_view_files_sort, g_view_files_sort_w, H_view_files_sort,
+			    S_set S_view_files_sort, g_set_view_files_sort_w,  0, 1, 1, 1,
+			    s7_make_signature(s7, 2, i, t), s7_make_signature(s7, 3, i, t, i));
+
+  Xen_define_typed_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+			    S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+
+
+  Xen_add_to_hook_list(ss->snd_open_file_hook, vf_open_file_watcher_w, "view-files-dialog-open-file-handler", "view-files dialog open-file handler");
+  Xen_add_to_hook_list(ss->snd_open_file_hook, reflect_file_close_in_sync_w, "sync-open-file-watcher", "sound sync open-file-hook handler");
+
+  /* file-filters and file-sorters are lists from user's point of view, but I want to
+   *   make sure they're gc-protected through add/delete/set, and want such code compatible
+   *   with current Ruby xen macros, so I'll use an array internally.
+   */
+  ss->file_sorters_size = INITIAL_FILE_SORTERS_SIZE;
+  ss->file_sorters = Xen_make_vector(ss->file_sorters_size, Xen_false);
+  Xen_GC_protect(ss->file_sorters);
+
+
+#if HAVE_SCHEME
+  s7_symbol_set_access(s7, ss->view_files_sort_symbol, s7_make_function(s7, "[acc-" S_view_files_sort "]", acc_view_files_sort, 2, 0, false, "accessor"));
+  top_level_let = s7_nil(s7);
+  s7_define_variable(s7, "top-level-let", 
+                     s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
+  s7_symbol_set_access(s7, ss->graph_cursor_symbol, s7_make_function(s7, "[acc-" S_graph_cursor "]", acc_graph_cursor, 2, 0, false, "accessor"));
+  s7_symbol_set_documentation(s7, ss->graph_cursor_symbol, "*graph-cursor*: current graph cursor shape");
+#endif
+
+  preload_best_completions();
+  Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
 }

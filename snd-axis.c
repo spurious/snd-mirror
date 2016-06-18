@@ -2037,9 +2037,8 @@ Xen_wrap_4_optional_args(g_set_y_bounds_w, g_set_y_bounds)
 void g_init_axis(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, f, r, s;
+  s7_pointer i, p, t, f, r, s;
   i = s7_make_symbol(s7, "integer?");
-  b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "pair?");
   f = s7_make_symbol(s7, "float?");
   r = s7_make_symbol(s7, "real?");

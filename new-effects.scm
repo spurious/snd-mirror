@@ -580,15 +580,7 @@
 	      ;; if flecho-dialog doesn't exist, create it
 	      (let ((initial-flecho-scaler 0.5)
 		    (initial-flecho-delay 0.9)
-		    (sliders ())
-		    (flecho-1 (lambda (scaler secs cutoff)
-				(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-				      (del (make-delay (round (* secs (srate)))))
-				      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-				  (lambda (inval)
-				    (+ inval 
-				       (delay del 
-					      (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval)))))))))))
+		    (sliders ()))
 		(set! flecho-dialog 
 		      (make-effect-dialog 
 		       flecho-label
@@ -596,7 +588,17 @@
 		       (lambda (w context info)
 			 (map-chan-over-target-with-sync
 			  (lambda (input-samps) 
-			    (flecho-1 flecho-scaler flecho-delay input-samps))
+			    (let ((flt (make-fir-filter :order 4 
+							:xcoeffs (float-vector .125 .25 .25 .125)))
+				  (del (make-delay (round (* flecho-delay (srate)))))
+				  (genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
+						  :length (+ input-samps 100))))
+			      (lambda (inval)
+				(+ inval 
+				   (delay del 
+					  (fir-filter flt (* flecho-scaler 
+							     (+ (tap del) 
+								(* (env genv) inval)))))))))
 			  flecho-target 
 			  (lambda (target input-samps) 
 			    (format #f "effects-flecho-1 ~A ~A ~A"

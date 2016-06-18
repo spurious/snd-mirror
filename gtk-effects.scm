@@ -136,17 +136,17 @@
   (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
   
   (define* (effects-squelch-channel amp gate-size snd chn no-silence)
-    (let ((f0 (make-moving-average gate-size))
-	  (f1 (make-moving-average gate-size :initial-element 1.0)))
-      (map-channel
-       (if no-silence
-	   (lambda (y)
-	     (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-	       (and (not (zero? val)) val)))
-	   (lambda (y)
-	     (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-       0 #f snd chn #f
-       (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
+    (let* ((f0 (make-moving-average gate-size))
+	   (f1 (make-moving-average gate-size :initial-element 1.0))
+	   (squelcher (if no-silence
+			  (lambda (y)
+			    (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+			      (and (not (zero? val)) val)))
+			  (lambda (y)
+			    (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))))
+      (map-channel squelcher
+		   0 #f snd chn #f
+		   (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
   
   (let ((amp-menu-list ())
 	(amp-menu (gtk_menu_item_new_with_label "Amplitude Effects"))
@@ -508,16 +508,6 @@
 	  (flecho-target 'sound)
 	  (flecho-truncate #t))
       
-      (define flecho-1
-	(lambda (scaler secs cutoff)
-	  (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-		(del (make-delay (round (* secs (srate)))))
-		(genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-	    (lambda (inval)
-	      (+ inval 
-		 (delay del 
-			(fir-filter flt (* scaler (+ (tap del) (* (env genv) inval))))))))))
-      
       (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
       (gtk_widget_show child)
       (g_signal_connect child "activate"
@@ -533,7 +523,17 @@
 				     (lambda (w data)
 				       (map-chan-over-target-with-sync
 					(lambda (input-samps) 
-					  (flecho-1 flecho-scaler flecho-delay input-samps))
+					  (let ((flt (make-fir-filter :order 4 
+								      :xcoeffs (float-vector .125 .25 .25 .125)))
+						(del (make-delay (round (* flecho-delay (srate)))))
+						(genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
+								:length (+ input-samps 100))))
+					    (lambda (inval)
+					      (+ inval 
+						 (delay del 
+							(fir-filter flt (* flecho-scaler 
+									   (+ (tap del) 
+									      (* (env genv) inval)))))))))
 					flecho-target 
 					(lambda (target input-samps) 
 					  (format #f "effects-flecho-1 ~A ~A ~A"

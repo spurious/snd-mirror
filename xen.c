@@ -1661,6 +1661,8 @@ Xen_wrap_no_args(g_gc_on_w, g_gc_on)
 
 s7_scheme *s7_xen_initialize(s7_scheme *sc)
 {
+  s7_pointer i, b, p, s;
+
   xen_s7_repl_prompt = xen_strdup("> ");
   if (!sc)
     {
@@ -1685,6 +1687,11 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
     }
   else s7 = sc;
 
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  s = s7_make_symbol(s7, "string?");
+
   xen_false = s7_f(s7);
   xen_true = s7_t(s7);
   xen_nil = s7_nil(s7);
@@ -1692,22 +1699,22 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   xen_zero = s7_make_integer(s7, 0);
   s7_gc_protect(s7, xen_zero);
 
-  Xen_define_safe_procedure("getpid",              g_getpid_w,             0, 0, 0, H_getpid);
+  Xen_define_typed_procedure("getpid",       g_getpid_w,        0, 0, 0, H_getpid,        s7_make_signature(s7, 1, i));
 #if (!WITH_SYSTEM_EXTRAS)
-  Xen_define_safe_procedure("file-exists?",        g_file_exists_p_w,      1, 0, 0, H_file_exists_p);
-  Xen_define_safe_procedure("directory?",          g_is_directory_w,       1, 0, 0, H_is_directory);
-  Xen_define_safe_procedure("delete-file",         g_delete_file_w,        1, 0, 0, H_delete_file);
-  Xen_define_safe_procedure("getenv",              g_s7_getenv_w,          1, 0, 0, H_getenv);
-  Xen_define_safe_procedure("system",              g_system_w,             1, 0, 0, H_system);
+  Xen_define_typed_procedure("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p, s7_make_signature(s7, 2, b, s));
+  Xen_define_typed_procedure("directory?",   g_is_directory_w,  1, 0, 0, H_is_directory,  s7_make_signature(s7, 2, b, s));
+  Xen_define_typed_procedure("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file,   s7_make_signature(s7, 2, b, s));
+  Xen_define_typed_procedure("getenv",       g_s7_getenv_w,     1, 0, 0, H_getenv,        s7_make_signature(s7, 2, s, s));
+  Xen_define_typed_procedure("system",       g_system_w,        1, 0, 0, H_system,        s7_make_signature(s7, 2, i, s));
 #endif
-  Xen_define_safe_procedure("getcwd",              g_getcwd_w,             0, 0, 0, H_getcwd);
-  Xen_define_safe_procedure("strftime",            g_strftime_w,           2, 0, 0, H_strftime);
-  Xen_define_safe_procedure("tmpnam",              g_tmpnam_w,             0, 0, 0, H_tmpnam);
-  Xen_define_safe_procedure("localtime",           g_localtime_w,          1, 0, 0, H_localtime);
-  Xen_define_safe_procedure("current-time",        g_current_time_w,       0, 0, 0, H_current_time);
-  Xen_define_safe_procedure("ftell",               g_ftell_w,              1, 0, 0, "(ftell fd): lseek");
-  Xen_define_safe_procedure(S_gc_off,              g_gc_off_w,             0, 0, 0, H_gc_off);
-  Xen_define_safe_procedure(S_gc_on,               g_gc_on_w,              0, 0, 0, H_gc_on);
+  Xen_define_typed_procedure("getcwd",       g_getcwd_w,        0, 0, 0, H_getcwd,        s7_make_signature(s7, 1, s));
+  Xen_define_typed_procedure("strftime",     g_strftime_w,      2, 0, 0, H_strftime,      s7_make_signature(s7, 3, s, s, p));
+  Xen_define_typed_procedure("tmpnam",       g_tmpnam_w,        0, 0, 0, H_tmpnam,        s7_make_signature(s7, 1, s));
+  Xen_define_typed_procedure("localtime",    g_localtime_w,     1, 0, 0, H_localtime,     s7_make_signature(s7, 2, i, p));
+  Xen_define_typed_procedure("current-time", g_current_time_w,  0, 0, 0, H_current_time,  s7_make_signature(s7, 1, i));
+  Xen_define_typed_procedure("ftell",        g_ftell_w,         1, 0, 0, "(ftell fd): lseek", s7_make_signature(s7, 2, i, i));
+  Xen_define_typed_procedure(S_gc_off,       g_gc_off_w,        0, 0, 0, H_gc_off,        s7_make_signature(s7, 1, b));
+  Xen_define_typed_procedure(S_gc_on,        g_gc_on_w,         0, 0, 0, H_gc_on,         s7_make_signature(s7, 1, b));
 
   Xen_eval_C_string("(define (hook-push hook func) \n\
                        \"(hook-push hook func) adds func to hook's function list\" \n\
@@ -1724,8 +1731,8 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
 		                     ((eq? func (car l)) (loop (cdr l) result))\n\
 		                     (else (loop (cdr l) (cons (car l) result)))))))");
 
-  Xen_eval_C_string("(define load-from-path load)");
 #if (!DISABLE_DEPRECATED)
+  Xen_eval_C_string("(define load-from-path load)");
   Xen_eval_C_string("(define (1+ x) \"add 1 to arg\" (+ x 1))");
   Xen_eval_C_string("(define (1- x) \"subtract 1 from arg\" (- x 1))");
 #endif

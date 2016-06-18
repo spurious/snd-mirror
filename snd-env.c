@@ -1849,6 +1849,16 @@ void g_init_env(void)
   #define H_enved_spectrum "The value for " S_enved_target " that sets the envelope editor 'flt' button."
   #define H_enved_srate "The value for " S_enved_target " that sets the envelope editor 'src' button."
 
+#if HAVE_SCHEME
+  s7_pointer i, b, l, t, r, s;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  l = s7_make_symbol(s7, "list?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  t = s7_t(s7);
+#endif
+
   Xen_define_constant(S_enved_amplitude, ENVED_AMPLITUDE, H_enved_amplitude);
   Xen_define_constant(S_enved_spectrum,  ENVED_SPECTRUM,  H_enved_spectrum);
   Xen_define_constant(S_enved_srate,     ENVED_SRATE,     H_enved_srate);
@@ -1856,23 +1866,28 @@ void g_init_env(void)
   Xen_define_constant(S_envelope_linear,      ENVELOPE_LINEAR,      S_enved_style " choice: linear connections between breakpoints");
   Xen_define_constant(S_envelope_exponential, ENVELOPE_EXPONENTIAL, S_enved_style " choice: exponential connections between breakpoints");
 
-  Xen_define_dilambda(S_enved_base,   g_enved_base_w,   H_enved_base,   S_set S_enved_base,   g_set_enved_base_w,    0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_power,  g_enved_power_w,  H_enved_power,  S_set S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, S_set S_enved_clipping, g_set_enved_clipping_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_style,  g_enved_style_w,  H_enved_style,  S_set S_enved_style,  g_set_enved_style_w,   0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_target, g_enved_target_w, H_enved_target, S_set S_enved_target, g_set_enved_target_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, S_set S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  S_set S_enved_in_dB,  g_set_enved_in_dB_w,   0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_enved_base,   g_enved_base_w,   H_enved_base,   
+			    S_set S_enved_base, g_set_enved_base_w, 0, 0, 1, 0, s7_make_signature(s7, 1, r), s7_make_signature(s7, 2, r, r));
+  Xen_define_typed_dilambda(S_enved_power,  g_enved_power_w,  H_enved_power,  
+			    S_set S_enved_power,  g_set_enved_power_w,   0, 0, 1, 0, s7_make_signature(s7, 1, r), s7_make_signature(s7, 2, r, r));
+  Xen_define_typed_dilambda(S_enved_clipping, g_enved_clipping_w, H_enved_clipping, 
+			    S_set S_enved_clipping, g_set_enved_clipping_w, 0, 0, 1, 0, s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
+  Xen_define_typed_dilambda(S_enved_style,  g_enved_style_w,  H_enved_style, 
+			    S_set S_enved_style, g_set_enved_style_w, 0, 0, 1, 0, s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+  Xen_define_typed_dilambda(S_enved_target, g_enved_target_w, H_enved_target, 
+			    S_set S_enved_target, g_set_enved_target_w,  0, 0, 1, 0, s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+  Xen_define_typed_dilambda(S_enved_with_wave, g_enved_with_wave_w, H_enved_with_wave, 
+			    S_set S_enved_with_wave, g_set_enved_with_wave_w,  0, 0, 1, 0, s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
+  Xen_define_typed_dilambda(S_enved_in_dB,  g_enved_in_dB_w,  H_enved_in_dB,  
+			    S_set S_enved_in_dB, g_set_enved_in_dB_w, 0, 0, 1, 0, s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
+  Xen_define_typed_dilambda(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
+			    S_set S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0, s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
 
-  Xen_define_dilambda(S_enved_filter_order, g_enved_filter_order_w, H_enved_filter_order,
-				   S_set S_enved_filter_order, g_set_enved_filter_order_w,  0, 0, 1, 0);
-
-  Xen_define_safe_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog);
-  Xen_define_safe_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes);
-
+  Xen_define_typed_procedure(S_enved_dialog,    g_enved_dialog_w,    0, 0, 0, H_enved_dialog,   s7_make_signature(s7, 1, t));
+  Xen_define_typed_procedure(S_save_envelopes,  g_save_envelopes_w,  0, 1, 0, H_save_envelopes, s7_make_signature(s7, 2, s, s));
 
 #if HAVE_SCHEME
-  Xen_define_safe_procedure(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
+  Xen_define_typed_procedure(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope, s7_make_signature(s7, 4, t, s, l, r));
   Xen_eval_C_string("(define-macro (define-envelope a . b) `(define-envelope-1 ',a ,@b))");
 #else
   Xen_define_procedure(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);

@@ -1427,7 +1427,7 @@ typedef enum {NO_REQUESTOR, FROM_UPDATE, FROM_VIEW_FILES, FROM_DRAG_AND_DROP, FR
   #define in_set_transform_type(a) \
     do {\
         ss->Transform_Type = a; \
-        s7_symbol_set_value(s7, ss->transform_type_symbol, s7_make_integer(s7, ss->Transform_Type));\
+        s7_symbol_set_value(s7, ss->transform_type_symbol, C_int_to_Xen_transform(ss->Transform_Type));	\
     } while (0)
 #else
   #define in_set_transform_type(a) ss->Transform_Type = a

@@ -2433,11 +2433,10 @@ static Xen transform_temp[6]; /* static for Ruby's sake */
 void g_init_fft(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, f, fv, r, s, tr, pr;
+  s7_pointer i, b, p, t, fv, r, s, tr, pr;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "pair?");
-  f = s7_make_symbol(s7, "float?");
   fv = s7_make_symbol(s7, "float-vector?");
   r = s7_make_symbol(s7, "real?");
   s = s7_make_symbol(s7, "string?");

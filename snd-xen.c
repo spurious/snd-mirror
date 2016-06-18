@@ -2906,17 +2906,21 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   g_init_find();
 #if (!USE_NO_GUI)
   g_init_gxcolormaps();
+  g_init_draw();
+  g_init_axis();
+#if USE_MOTIF
+  g_init_motif();
+#else
   g_init_gxfile();
   g_init_gxdraw();
   g_init_gxenv();
   g_init_gxmenu();
-  g_init_axis();
   g_init_gxlistener();
   g_init_gxchn();
-  g_init_draw();
   g_init_gxregion();
   g_init_gxsnd();
   g_init_gxfind();
+#endif
 #endif
 
 #if HAVE_SCHEME && (!_MSC_VER)
