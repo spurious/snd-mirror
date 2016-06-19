@@ -1270,7 +1270,7 @@ void mus_sndlib_xen_initialize(void)
 #endif
 
 #if __APPLE__
-  Xen_define_procedure(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
+  Xen_define_typed_procedure(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable, pl_b);
 #endif
 
   #define H_new_sound_hook S_new_sound_hook "(name): called when a new sound file is being created"

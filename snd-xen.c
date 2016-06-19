@@ -2708,9 +2708,25 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 void g_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, pl_prr;
+  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, pl_prr, s, i, b, r, d, p, v, t;
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   s7_pointer pl_pf;
+#endif
+  s = s7_make_symbol(s7, "string?");
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  r = s7_make_symbol(s7, "real?");
+  d = s7_make_symbol(s7, "float?");
+  p = s7_make_symbol(s7, "pair?");
+  v = s7_make_symbol(s7, "vector?");
+  t = s7_t(s7);
+  pl_ss = s7_make_signature(s7, 2, s, s);
+  pl_dr = s7_make_circular_signature(s7, 1, 2, d, r);
+  pl_prr = s7_make_signature(s7, 3, p, r, r);
+  pl_dir = s7_make_signature(s7, 3, d, i, r);
+  pl_b = s7_make_signature(s7, 1, b);
+#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
+  pl_pf = s7_make_signature(s7, 2, s7_make_symbol(s7, "pair?"), s7_make_symbol(s7, "float-vector?"));
 #endif
 #endif
 
@@ -2718,8 +2734,8 @@ void g_xen_initialize(void)
   rb_gc_disable();
 #endif
 
-  Xen_define_procedure(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error);
-  Xen_define_procedure(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning);
+  Xen_define_typed_procedure(S_snd_error,   g_snd_error_w,   1, 0, 0, H_snd_error,   pl_ss);
+  Xen_define_typed_procedure(S_snd_warning, g_snd_warning_w, 1, 0, 0, H_snd_warning, pl_ss);
 
 #if HAVE_SCHEME
   #define H_snd_error_hook S_snd_error_hook " (message): called upon snd_error. \
@@ -2777,7 +2793,6 @@ If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported
   ss->snd_error_hook =   Xen_define_hook(S_snd_error_hook,   "(make-hook 'message)", 1, H_snd_error_hook);
   ss->snd_warning_hook = Xen_define_hook(S_snd_warning_hook, "(make-hook 'message)", 1, H_snd_warning_hook);
 
-
   #define H_clip_hook S_clip_hook " (val) is called each time a sample is about to \
 be clipped upon being written to a sound file.  The hook function can return the new value to \
 be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val')."
@@ -2799,8 +2814,9 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   add_source_file_extension("marks"); /* from save-marks */
   default_source_file_extensions = source_file_extensions_end;
 
-  Xen_define_procedure("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function");
-  Xen_define_procedure(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension);
+  Xen_define_typed_procedure("snd-global-state", g_snd_global_state_w, 0, 0, 0, "internal testing function", s7_make_signature(s7, 1, t));
+  Xen_define_typed_procedure(S_add_source_file_extension, g_add_source_file_extension_w, 1, 0, 0, H_add_source_file_extension,
+			     s7_make_signature(s7, 2, s, s));
 
   ss->snd_open_file_hook = Xen_define_simple_hook("(make-hook 'reason)", 1);
   Xen_GC_protect(ss->snd_open_file_hook);
@@ -2817,25 +2833,6 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   gc_protection = Xen_false;
 #endif
 
-#if HAVE_SCHEME
-  {
-    s7_pointer s, i, b, r, d, p;
-    s = s7_make_symbol(s7, "string?");
-    i = s7_make_symbol(s7, "integer?");
-    b = s7_make_symbol(s7, "boolean?");
-    r = s7_make_symbol(s7, "real?");
-    d = s7_make_symbol(s7, "float?");
-    p = s7_make_symbol(s7, "pair?");
-    pl_ss = s7_make_signature(s7, 2, s, s);
-    pl_dr = s7_make_circular_signature(s7, 1, 2, d, r);
-    pl_prr = s7_make_signature(s7, 3, p, r, r);
-    pl_dir = s7_make_signature(s7, 3, d, i, r);
-    pl_b = s7_make_signature(s7, 1, b);
-#if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
-    pl_pf = s7_make_signature(s7, 2, s7_make_symbol(s7, "pair?"), s7_make_symbol(s7, "float-vector?"));
-#endif
-  }
-#endif
   Xen_define_typed_procedure(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print, pl_ss);
   Xen_define_typed_procedure("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian", pl_b);
 
@@ -2857,7 +2854,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   Xen_define_typed_procedure("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma,	pl_dr);
 #endif
 
-  Xen_define_safe_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
+  Xen_define_typed_procedure(S_bes_i0, g_i0_w,     1, 0, 0, H_i0,       pl_dr);
 
 #if HAVE_GSL
   Xen_define_typed_procedure(S_bes_i1, g_i1_w,     1, 0, 0, H_i1,	pl_dr);
@@ -2879,7 +2876,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_SCHEME && WITH_GMP
-  s7_define_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft);
+  s7_define_typed_function(s7, "bignum-fft", bignum_fft, 3, 1, false, H_bignum_fft, s7_make_signature(s7, 5, b, v, v, i, i));
 #endif
 
   g_init_base();
@@ -2924,11 +2921,11 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_SCHEME && (!_MSC_VER)
-  Xen_define_procedure("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen);
-  Xen_define_procedure("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose);
-  Xen_define_procedure("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror);
-  Xen_define_procedure("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit);
-  Xen_define_procedure("dlsym",   g_dlsym_w,   2, 0 ,0, H_dlsym);
+  Xen_define_typed_procedure("dlopen",  g_dlopen_w,  1, 1 ,0, H_dlopen,   s7_make_signature(s7, 3, t, s, i));
+  Xen_define_typed_procedure("dlclose", g_dlclose_w, 1, 0 ,0, H_dlclose,  s7_make_signature(s7, 2, i, t));
+  Xen_define_typed_procedure("dlerror", g_dlerror_w, 0, 0 ,0, H_dlerror,  s7_make_signature(s7, 1, s));
+  Xen_define_typed_procedure("dlinit",  g_dlinit_w,  2, 0 ,0, H_dlinit,   s7_make_signature(s7, 3, b, t, s));
+  Xen_define_typed_procedure("dlsym",   g_dlsym_w,   2, 0 ,0, H_dlsym,    s7_make_signature(s7, 3, t, t, s));
 
   Xen_define_constant("RTLD_LAZY", RTLD_LAZY, "dlopen flag");
   Xen_define_constant("RTLD_NOW", RTLD_NOW, "dlopen flag");
@@ -2952,7 +2949,8 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   } 
 
 #if HAVE_SCHEME
-  Xen_define_procedure("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7");
+  Xen_define_typed_procedure("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7",
+			     s7_make_signature(s7, 2, b, s));
 
   Xen_eval_C_string("(define redo-edit redo)");        /* consistency with Ruby */
   Xen_eval_C_string("(define undo-edit undo)");
@@ -3029,7 +3027,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
 #endif
 
 #if HAVE_GL
-  Xen_define_procedure("snd-gl-context", g_snd_gl_context_w, 0, 0, 0, "GL Context");
+  Xen_define_typed_procedure("snd-gl-context", g_snd_gl_context_w, 0, 0, 0, "GL Context", s7_make_signature(s7, 1, p));
 #endif
 
 #if USE_MOTIF

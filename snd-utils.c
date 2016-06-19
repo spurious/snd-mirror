@@ -354,6 +354,7 @@ static Xen g_file_to_string(Xen name)
 void g_init_utils(void)
 {
 #if HAVE_SCHEME
-  Xen_define_safe_procedure(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string");
+  Xen_define_typed_procedure(S_file_to_string, g_file_to_string_w, 1, 0, 0, "file contents as string", 
+			     s7_make_circular_signature(s7, 0, 1, s7_make_symbol(s7, "string?")));
 #endif
 }

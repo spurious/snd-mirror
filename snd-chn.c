@@ -10316,7 +10316,8 @@ void g_init_chn(void)
 			    S_set S_sync_style, g_set_sync_style_w,  0, 0, 1, 0, s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
 
 #if HAVE_GL
-  Xen_define_safe_procedure(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram);
+  Xen_define_typed_procedure(S_glSpectrogram, g_gl_spectrogram_w, 9, 0, 0, H_glSpectrogram,
+			     s7_make_signature(s7, 10, b, s7_make_symbol(s7, "vector?"), i, r, b, r, r, r, r, r));
 #endif
 
   #define H_after_transform_hook S_after_transform_hook " (snd chn scaler): called just after a spectrum is calculated."

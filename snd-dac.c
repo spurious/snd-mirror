@@ -3466,38 +3466,60 @@ static s7_pointer acc_with_tracking_cursor(s7_scheme *sc, s7_pointer args) {retu
 
 void g_init_dac(void)
 {
+#if HAVE_SCHEME
+  s7_pointer i, b, p, t, r, pl, l, pcl_t;
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  p = s7_make_symbol(s7, "pair?");
+  l = s7_make_symbol(s7, "list?");
+  r = s7_make_symbol(s7, "real?");
+  pl = s7_make_symbol(s7, "player?");
+  t = s7_t(s7);
+  pcl_t = s7_make_signature(s7, 0, 1, t);
+#endif
+
   init_xen_player();
   init_play_keywords();
 
-  Xen_define_procedure(S_play,           g_play_w,           0, 0, 1, H_play);
-  Xen_define_procedure(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing);
+  Xen_define_typed_procedure(S_play,           g_play_w,           0, 0, 1, H_play,          pcl_t);
+  Xen_define_typed_procedure(S_stop_playing,   g_stop_playing_w,   0, 1, 0, H_stop_playing,  s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player,   s7_make_signature(s7, 3, pl, t, t));
+  Xen_define_typed_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player,    s7_make_signature(s7, 7, pl, pl, i, i, t, t, i));
+  Xen_define_typed_procedure(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home,   s7_make_signature(s7, 2, p, pl));
+  Xen_define_typed_procedure(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing, s7_make_signature(s7, 4, b, i, i, b));
+  Xen_define_typed_procedure(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player,   s7_make_signature(s7, 2, pl, pl));
+  Xen_define_typed_procedure(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player,   s7_make_signature(s7, 2, b, pl));
+  Xen_define_typed_procedure(S_players,        g_players_w,        0, 0, 0, H_players,       s7_make_signature(s7, 1, l));
+  Xen_define_typed_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player,     s7_make_signature(s7, 1, b));
 
-  Xen_define_dilambda(S_pausing, g_pausing_w, H_pausing, S_set S_pausing, g_set_pausing_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_playing, g_playing_w, H_playing, S_set S_playing, g_set_playing_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_pausing, g_pausing_w, H_pausing,
+			    S_set S_pausing, g_set_pausing_w, 0, 0, 1, 0,
+			    s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
 
-  Xen_define_procedure(S_make_player,    g_make_player_w,    0, 2, 0, H_make_player);
-  Xen_define_procedure(S_add_player,     g_add_player_w,     1, 5, 0, H_add_player);
-  Xen_define_safe_procedure(S_player_home,    g_player_home_w,    1, 0, 0, H_player_home);
-  Xen_define_procedure(S_start_playing,  g_start_playing_w,  0, 3, 0, H_start_playing);
-  Xen_define_procedure(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player);
-  Xen_define_procedure(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player);
-  Xen_define_safe_procedure(S_players,        g_players_w,        0, 0, 0, H_players);
-  Xen_define_safe_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player);
+  Xen_define_typed_dilambda(S_playing, g_playing_w, H_playing, 
+			    S_set S_playing, g_set_playing_w, 0, 0, 1, 0,
+			    s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
 
-  Xen_define_dilambda(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
-				   S_set S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_with_tracking_cursor, g_with_tracking_cursor_w, H_with_tracking_cursor,
+			    S_set S_with_tracking_cursor, g_set_with_tracking_cursor_w, 0, 0, 1, 0, 
+			    pcl_t, pcl_t);
 
-  Xen_define_dilambda(S_dac_size, g_dac_size_w, H_dac_size,
-				   S_set S_dac_size, g_set_dac_size_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_dac_size, g_dac_size_w, H_dac_size,
+			    S_set S_dac_size, g_set_dac_size_w,  0, 0, 1, 0, 
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
 
-  Xen_define_dilambda(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
-				   S_set S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_dac_combines_channels, g_dac_combines_channels_w, H_dac_combines_channels,
+			    S_set S_dac_combines_channels, g_set_dac_combines_channels_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, b), s7_make_signature(s7, 2, b, b));
 
-  Xen_define_dilambda(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
-				   S_set S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_cursor_update_interval, g_cursor_update_interval_w, H_cursor_update_interval,
+			    S_set S_cursor_update_interval, g_set_cursor_update_interval_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, r), s7_make_signature(s7, 2, r, r));
 
-  Xen_define_dilambda(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
-				   S_set S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_cursor_location_offset, g_cursor_location_offset_w, H_cursor_location_offset,
+			    S_set S_cursor_location_offset, g_set_cursor_location_offset_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+
 
   #define H_stop_playing_hook S_stop_playing_hook " (snd): called when a sound finishes playing."
   #define H_play_hook S_play_hook " (size): called each time a buffer is sent to the DAC."

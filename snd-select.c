@@ -1874,11 +1874,12 @@ Xen_wrap_3_optional_args(g_set_selection_member_w, g_set_selection_member)
 void g_init_selection(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, t, f, sel;
+  s7_pointer i, b, t, f, sel, p;
   i = s7_make_symbol(s7, "integer?");
   sel = s7_make_symbol(s7, "selection?");
   b = s7_make_symbol(s7, "boolean?");
   f = s7_make_symbol(s7, "float?");
+  p = s7_make_symbol(s7, "pair?");
   t = s7_t(s7);
 #endif
 
@@ -1900,11 +1901,10 @@ void g_init_selection(void)
   Xen_define_typed_procedure(S_selection_maxamp_position, g_selection_maxamp_position_w, 0, 2, 0, H_selection_maxamp_position, s7_make_signature(s7, 3, i, t, t));
   Xen_define_typed_procedure(S_select_all,       g_select_all_w,       0, 2, 0, H_select_all,        s7_make_signature(s7, 3, b, t, t));
   Xen_define_typed_procedure(S_unselect_all,     g_unselect_all_w,     0, 0, 0, H_unselect_all,      s7_make_signature(s7, 1, b));
-
-  Xen_define_procedure(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection);
-  Xen_define_procedure(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection);
-  Xen_define_procedure(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection);
-  Xen_define_procedure(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix);
-  Xen_define_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection);
-  Xen_define_procedure(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection);
+  Xen_define_typed_procedure(S_delete_selection, g_delete_selection_w, 0, 0, 0, H_delete_selection,  s7_make_signature(s7, 1, b));
+  Xen_define_typed_procedure(S_insert_selection, g_insert_selection_w, 0, 3, 0, H_insert_selection,  s7_make_signature(s7, 4, b, i, t, t));
+  Xen_define_typed_procedure(S_mix_selection,    g_mix_selection_w,    0, 4, 0, H_mix_selection,     s7_make_signature(s7, 5, t, i, t, t, i));
+  Xen_define_typed_procedure(S_selection_to_mix, g_selection_to_mix_w, 0, 0, 0, H_selection_to_mix,  s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_save_selection,   g_save_selection_w,   0, 0, 1, H_save_selection,    s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_show_selection,   g_show_selection_w,   0, 0, 0, H_show_selection,    s7_make_signature(s7, 1, b));
 }

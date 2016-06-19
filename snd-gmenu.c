@@ -2148,7 +2148,7 @@ Xen_wrap_no_args(g_menu_widgets_w, g_menu_widgets)
 
 void g_init_gxmenu(void)
 {
-  Xen_define_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets);
+  Xen_define_typed_procedure(S_menu_widgets, g_menu_widgets_w, 0, 0, 0, H_menu_widgets, s7_make_signature(s7, 1, s7_make_symbol(s7, "pair?")));
 }
 
 

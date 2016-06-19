@@ -12766,7 +12766,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_mus_file_name,		g_mus_file_name_w,		1, 0, 0,  H_mus_file_name,	pl_sc);
   Xen_define_typed_procedure(S_mus_reset,		g_mus_reset_w,			1, 0, 0,  H_mus_reset,		pl_tc);
   Xen_define_typed_procedure(S_mus_copy,		g_mus_copy_w,			1, 0, 0,  H_mus_copy,		pl_cc);
-  Xen_define_procedure(S_mus_run,			g_mus_run_w,			1, 2, 0,  H_mus_run);
+  Xen_define_typed_procedure(S_mus_run,			g_mus_run_w,			1, 2, 0,  H_mus_run,            pl_dcr);
 
   Xen_define_typed_procedure(S_mus_name,     g_mus_name_w, 1, 0, 0,  H_mus_name, pl_sc);
   Xen_define_typed_dilambda(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_set S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0, pl_dc, pl_dcr);
@@ -12786,7 +12786,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_is_oscil_bank,		g_is_oscil_bank_w,		1, 0, 0, H_is_oscil_bank,	pl_bt);
   Xen_define_typed_procedure(S_oscil_bank,		g_oscil_bank_w,			1, 0, 0, H_oscil_bank,		pl_dc);
 
-  Xen_define_procedure(S_mus_apply,			g_mus_apply_w,			0, 0, 1, H_mus_apply);
+  Xen_define_typed_procedure(S_mus_apply,		g_mus_apply_w,			0, 0, 1, H_mus_apply,           pl_dcr);
 
   Xen_define_typed_procedure(S_make_delay,		g_make_delay_w,			0, 0, 1, H_make_delay,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_delay), t));

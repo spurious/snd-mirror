@@ -855,7 +855,9 @@ Xen_wrap_no_args(g_view_regions_dialog_w, g_view_regions_dialog)
 
 void g_init_gxregion(void)
 {
-  Xen_define_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0,  H_view_regions_dialog);
+  Xen_define_typed_procedure(S_view_regions_dialog, g_view_regions_dialog_w, 0, 0, 0, H_view_regions_dialog, 
+			     s7_make_signature(s7, 1, s7_make_symbol(s7, "pair?")));
+
 #if HAVE_SCHEME
   #define H_mouse_enter_label_hook S_mouse_enter_label_hook " (type position label): called when the mouse enters a file viewer or region label. \
 The 'type' is 1 for view-files, and 2 for regions. The 'position' \

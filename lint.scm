@@ -1230,6 +1230,7 @@
 	      (else (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
     
     (define (side-effect-with-vars? form env vars)
+      ;(format *stderr* "~A~%" form)
       ;; could evaluation of form have any side effects (like IO etc)
       
       (if (or (not (proper-list? form))                   ; we don't want dotted lists or () here
@@ -1249,6 +1250,7 @@
 		   ;; if it's not in the no-side-effect table and ...
 		   
 		   (let ((e (var-member (car form) env)))
+		     ;(if (var? e) (format *stderr* "e: ~A ~A ~A~%" (var-name e) (var-ftype e) (var-side-effect e)))
 		     (or (not (var? e))
 			 (not (symbol? (var-ftype e)))
 			 (var-side-effect e)))
@@ -1345,7 +1347,10 @@
 		;; ((lambda lambda*) (any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cddr form))) ; this is trickier than it looks
 		
 		(else
-		 (or (any? (lambda (f) (side-effect-with-vars? f env vars)) (cdr form)) ; any subform has a side-effect
+		 (or (any? (lambda (f)                                   ; any subform has a side-effect
+			     (and (not (null? f))
+				  (side-effect-with-vars? f env vars)))
+			   (cdr form))
 		     (let ((sig (procedure-signature (car form))))       ; sig has func arg and it is not known safe
 		       (and sig
 			    (memq 'procedure? (cdr sig))
@@ -9726,14 +9731,15 @@
 			(lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head vname f))))
 		;; mid-body defines happen by the million, so resistance is futile
 
-		;; someday -- check A below for intersection not equality if no side-effects
-		;; generalized cases happen about a dozen times and there are only 2 cases where car f != car prev-f
+		;; -------- repeated if/when etc --------
 		(when (and (pair? prev-f) ; (if A ...) (if A ...) -> (when A ...) or equivalents
 			   (pair? f)
-			   (eq? (car f) (car prev-f))
+			   (memq (car prev-f) '(if when unless))
 			   (memq (car f) '(if when unless))
 			   (pair? (cdr f))
-			   (pair? (cdr prev-f)))
+			   (pair? (cdr prev-f))
+			   (pair? (cddr f))  ; possible broken if statement
+			   (pair? (cddr prev-f)))
 
 		  (define (tree-change-member set tree)
 		    (and (pair? tree)
@@ -9745,53 +9751,175 @@
 
 		  (let ((test1 (cadr prev-f))
 			(test2 (cadr f)))
-		    (if (and (equal? test1 test2)
-			     (not (side-effect? test1 env))
-			     (not (tree-change-member (gather-symbols test1) (cdr prev-f))))
-			(lint-format "perhaps ~A" caller
-				     (lists->string
-				      `(... ,prev-f ,f ...)
-				      (if (eq? (car f) 'if)
-					  (if (and (null? (cdddr prev-f))
-						   (null? (cdddr f)))
-					      (if (and (pair? (cadr f))
-						       (eq? (caadr f) 'not))
-						  `(... (unless ,(cadadr f)
-							  ,@(unbegin (caddr prev-f))
-							  ,@(unbegin (caddr f))) ...)
-						  `(... (when ,(cadr f)
-							  ,@(unbegin (caddr prev-f))
-							  ,@(unbegin (caddr f))) ...))
-					      `(... (if ,(cadr f)
-							(begin
-							  ,@(unbegin (caddr prev-f))
-							  ,@(unbegin (caddr f)))
-							(begin
-							  ,@(if (pair? (cdddr prev-f)) (unbegin (cadddr prev-f)) ())
-							  ,@(if (pair? (cdddr f)) (unbegin (cadddr f)) ())))
-						    ...))
-					  `(,(car f) ,(cadr f)
-					    ,@(cddr prev-f)
-					    ,@(cddr f)))))			      
+		    (let ((equal-tests  ; test1 = test2
+			   (lambda ()
+			     (lint-format "perhaps ~A" caller
+					  (lists->string
+					   `(... ,prev-f ,f ...)
+					   (if (eq? (car f) 'if)
+					       (if (and (null? (cdddr prev-f))
+							(null? (cdddr f)))
+						   ;; if (null (cdr fs)) we have to make sure the returned value is not changed by our rewrite
+						   ;;   but when/unless return their last value in s7 (or #<unspecified>), so I think this is ok
+						   (if (and (pair? test1)
+							    (eq? (car test1) 'not))
+						       `(... (unless ,(cadr test1)
+							       ,@(unbegin (caddr prev-f))
+							       ,@(unbegin (caddr f))) ...)
+						       `(... (when ,test1
+							       ,@(unbegin (caddr prev-f))
+							       ,@(unbegin (caddr f))) ...))
+						   `(... (if ,test1
+							     (begin
+							       ,@(unbegin (caddr prev-f))
+							       ,@(unbegin (caddr f)))
+							     (begin
+							       ,@(if (pair? (cdddr prev-f)) (unbegin (cadddr prev-f)) ())
+							       ,@(if (pair? (cdddr f)) (unbegin (cadddr f)) ())))
+							 ...))
+					       `(,(car f) ,test1 ; (car f) = when|unless
+						 ,@(cddr prev-f)
+						 ,@(cddr f)))))))
+			  (test1-in-test2 
+			   (lambda ()
+			     (if (null? (cddr test2))
+				 (set! test2 (cadr test2)))
+			     (lint-format "perhaps ~A" caller
+					  (lists->string `(... ,prev-f ,f ...)
+							 (if (or (null? (cdddr prev-f))
+								 (eq? (car prev-f) 'when)) ; so prev-f is when or 1-arm if (as is f)
+							     `(... (when ,test1
+								     ,@(cddr prev-f)
+								     (when ,test2
+								       ,@(cddr f))) 
+								   ,@(if (null? (cdr fs)) () '(...)))
+							     ;; prev-f is 2-arm if and f is when or 1-arm if (the other case is too ugly)
+							     `(... (if ,test1
+								       (begin
+									 ,(caddr prev-f)
+									 (when ,test2
+									   ,@(cddr f)))
+								       ,@(cdddr prev-f)) ...))))))
+			  
+			  (test2-in-test1 
+			   (lambda ()
+			     (if (null? (cddr test1))
+				 (set! test1 (cadr test1)))
+			     (lint-format "perhaps ~A" caller
+					    (lists->string `(... ,prev-f ,f ...)
+							   (if (or (null? (cdddr f))
+								   (eq? (car f) 'when)) ; so f is when or 1-arm if (as is prev-f)
+							       `(... (when ,test2
+								       (when ,test1
+									 ,@(cddr prev-f))
+								       ,@(cddr f))
+								     ,@(if (null? (cdr fs)) () '(...)))
+							       ;; f is 2-arm if and prev-f is when or 1-arm if
+							       `(... (if ,test2
+									 (begin
+									   (when ,test1
+									     ,@(cddr prev-f))
+									   ,(caddr f))
+									 ,(cadddr f))
+								     ,@(if (null? (cdr fs)) () '(...)))))))))
+		      (if (equal? test1 test2)
+			  (if (and (eq? (car f) (car prev-f))
+				   (not (side-effect? test1 env))
+				   (not (tree-change-member (gather-symbols test1) (cdr prev-f))))
+			      (equal-tests))
+			  
+			  (when (and (not (eq? (car f) 'unless))
+				     (not (eq? (car prev-f) 'unless))) ; too hard!
+			    
+			    ;; look for test1 as member of test2 (so we can use test1 as the outer test)
+			    (if (and (pair? test2)        
+				     (eq? (car test2) 'and)
+				     (member test1 (cdr test2))
+				     (or (eq? (car f) 'when)     ; f has to be when or 1-arm if
+					 (null? (cdddr f)))
+				     (or (pair? (cdr fs))        ; if prev-f has false branch, we have to ignore the return value of f
+					 (eq? (car prev-f) 'when)
+					 (null? (cdddr prev-f)))
+				     (not (side-effect? test2 env))
+				     (not (tree-change-member (gather-symbols test1) (cddr prev-f))))
+				(begin
+				  (set! test2 (remove test1 test2))
+				  (test1-in-test2))
+				
+				;; look for test2 as member of test1
+				(if (and (pair? test1)        
+					 (eq? (car test1) 'and)
+					 (member test2 (cdr test1))
+					 (or (eq? (car prev-f) 'when)     ; prev-f has to be when or 1-arm if
+					     (null? (cdddr prev-f)))
+					 (not (side-effect? test1 env))
+					 (not (tree-change-member (gather-symbols test2) (cddr prev-f))))
+				    (begin
+				      (set! test1 (remove test2 test1))
+				      (test2-in-test1))
+				    
+				    ;; look for some intersection of test1 and test2
+				    (if (and (pair? test1)
+					     (pair? test2)
+					     (eq? (car test1) 'and)
+					     (eq? (car test2) 'and)
+					     (not (side-effect? test1 env))
+					     (not (side-effect? test2 env))
+					     (not (tree-change-member (gather-symbols test2) (cddr prev-f))))
+					(let ((intersection ())
+					      (new-test1 ())
+					      (new-test2 ()))
+					  (for-each (lambda (tst)
+						      (if (member tst test2)
+							  (set! intersection (cons tst intersection))
+							  (set! new-test1 (cons tst new-test1))))
+						    (cdr test1))
+					  (for-each (lambda (tst)
+						      (if (not (member tst test1))
+							  (set! new-test2 (cons tst new-test2))))
+						    (cdr test2))
+					  (when (pair? intersection)
+					    (if (null? new-test1)
+						(if (null? new-test2)
+						    (begin
+						      (set! test1 `(and ,@(reverse intersection)))
+						      (equal-tests))
+						    (when (and (or (eq? (car f) 'when)
+								   (null? (cdddr f)))
+							       (or (pair? (cdr fs))
+								   (eq? (car prev-f) 'when)
+								   (null? (cdddr prev-f))))
+						      (set! test1 `(and ,@(reverse intersection)))
+						      (set! test2 `(and ,@(reverse new-test2)))
+						      (test1-in-test2)))
+						(if (null? new-test2)
+						    (when (or (eq? (car prev-f) 'when)
+							      (null? (cdddr prev-f)))
+						      (set! test2 `(and ,@(reverse intersection)))
+						      (set! test1 `(and ,@(reverse new-test1)))
+						      (test2-in-test1))
 
-			(if (and (eq? (car f) 'if)
-				 (pair? (cadr f)) ; (if A B C) (if (and D A) F) -> (if A (begin B (if D F)) C)
-				 (eq? (caadr f) 'and)
-				 (member (cadr prev-f) (cdadr f))
-				 (not (side-effect? (cadr f) env))
-				 (not (tree-change-member (gather-symbols (cadr prev-f)) (cddr prev-f))))
-			    (lint-format "perhaps ~A" caller
-					 (let ((new-test (remove (cadr prev-f) (cadr f))))
-					   (lists->string `(... ,prev-f ,f ...)
-							  `(... (if ,(cadr prev-f)
-								    (begin
-								      ,(caddr prev-f)
-								      (if ,(if (pair? (cddr new-test))
-									       new-test
-									       (cadr new-test))
-									  ,@(cddr f)))
-								    ,@(cdddr prev-f)) ...))))))))
-
+						    (when (and (or (eq? (car f) 'when)
+								   (null? (cdddr f)))
+							       (or (eq? (car prev-f) 'when)
+								   (null? (cdddr prev-f))))
+						      (lint-format "perhaps ~A" caller
+								   (let ((outer-test (if (null? (cdr intersection))
+											 (car intersection)
+											 `(and ,@(reverse intersection)))))
+								     (if (null? (cdr new-test1))
+									 (set! new-test1 (car new-test1))
+									 (set! new-test1 `(and ,@(reverse new-test1))))
+								     (if (null? (cdr new-test2))
+									 (set! new-test2 (car new-test2))
+									 (set! new-test2 `(and ,@(reverse new-test2))))
+								     (lists->string `(... ,prev-f ,f ...)
+										    `(... (when ,outer-test
+											    (when ,new-test1
+											      ,@(cddr prev-f))
+											    (when ,new-test2
+											      ,@(cddr f)))
+											  ,@(if (null? (cdr fs)) () '(...)))))))))))))))))))
 		;; --------
 		;; check for repeated calls, but only one arg currently can change (more args = confusing separation in code)
 		(let ((feq (and (pair? prev-f)
@@ -11689,27 +11817,36 @@
 				   ;; (if a (if b d e) (if c d e)) -> (if (if a b c) d e)? reversed does not happen.
 				   ;; (if a (if b d) (if c d)) -> (if (if a b c) d)
 				   ;; (if a (if b d e) (if (not b) d e)) -> (if (eq? (not a) (not b)) d e)
-				   (if (and (pair? false)
-					    (eq? (car false) 'if)
-					    (= (length false) 4)
-					    (not (equal? true-test (cadr false)))
-					    (equal? (cddr true) (cddr false)))
-				       (let ((false-test (cadr false)))
-					 (lint-format "perhaps ~A" caller
-						      (lists->string form
-								     (if (and (pair? true-test)
-									      (eq? (car true-test) 'not)
-									      (equal? (cadr true-test) false-test))
-									 `(if (not (eq? (not ,expr) ,true-test))
-									      ,@(cddr true))
-									 (if (and (pair? false-test)
-										  (eq? (car false-test) 'not)
-										  (equal? true-test (cadr false-test)))
-									     `(if (eq? (not ,expr) ,false-test)
-										  ,@(cddr true))
-									     `(if (if ,expr ,true-test ,false-test) ,@(cddr true)))))))))
-				 
-				 (begin
+				   (when (and (pair? false)
+					      (eq? (car false) 'if)
+					      (= (length false) 4)
+					      (not (equal? true-test (cadr false)))
+					      (equal? (cddr true) (cddr false)))
+				     (let ((false-test (cadr false)))
+				       (lint-format "perhaps ~A" caller
+						    (lists->string form
+								   (cond ((and (pair? true-test)
+									       (eq? (car true-test) 'not)
+									       (equal? (cadr true-test) false-test))
+									  `(if (not (eq? (not ,expr) ,true-test))
+									       ,@(cddr true)))
+
+									 ((and (pair? false-test)
+									       (eq? (car false-test) 'not)
+									       (equal? true-test (cadr false-test)))
+									  `(if (eq? (not ,expr) ,false-test)
+									       ,@(cddr true)))
+
+									 ((> (+ (tree-leaves expr)
+										(tree-leaves true-test)
+										(tree-leaves false-test))
+									     12)
+									  `(let ((_1_ (if ,expr ,true-test ,false-test)))
+									     (if _1_ ,@(cddr true))))
+
+									 (else
+									  `(if (if ,expr ,true-test ,false-test) ,@(cddr true)))))))))
+				 (begin ; (length true) != 4
 				   (if (equal? expr (simplify-boolean `(not ,true-test) () () env))
 				       (lint-format "perhaps ~A" caller 
 						    (lists->string form `(if (not ,expr) ,false))))
@@ -11764,7 +11901,13 @@
 				       (equal? (cddr true) (cddr false)))
 				  (lint-format "perhaps ~A" caller
 					       (lists->string form
-							      `(if (if ,expr ,(cadr true) ,(cadr false)) ,@(cddr true))))))
+							      (if (> (+ (tree-leaves expr)
+									(tree-leaves (cadr true))
+									(tree-leaves (cadr false)))
+								     12)
+								  `(let ((_1_ (if ,expr ,(cadr true) ,(cadr false))))
+								     (if _1_ ,@(cddr true)))
+								  `(if (if ,expr ,(cadr true) ,(cadr false)) ,@(cddr true)))))))
 
 			     ((map)  ; (if (null? x) () (map abs x)) -> (map abs x)
 			      (if (and (pair? test)
@@ -16110,13 +16253,13 @@
 ;;; define-macro cases in t347?? [10983]
 ;;; eq?/=/any-sig extension of and-forgetful
 ;;;    currently and-forgetful is restricted to bools for arg1: would need extension for eq/memq etc
-;;; there are 242 Snd functions without signatures
+;;; there are 186 Snd functions without signatures
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
 ;;;    but report-usage can't do this (see tmp) because it sees only the local expressions
 ;;;    let-walker might but it will be slow! maybe restrict to vars set (at least) twice without ref to self in caddr and large let body
 ;;; implicit indexing is viewed as a possible side-effect -- is there any way around this? maybe even look-ahead?
 ;;;    or "assuming x is a vector..." -- this is a lot of work, see all-types-agree in report-usage and following [8723]
-;;; if combinations: check entire and exprs for intersection [9714]
-;;; (if (if...)) -> (let + if) if the inner if is large?
+;;; side-effect? is not handling dilambda right and probably anything involving lambda (for-each/any? etc)
+;;;    see t347 tests
 ;;;
 ;;; 134 23101 551078

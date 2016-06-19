@@ -524,20 +524,30 @@ static s7_pointer g_set_prompt_tag(s7_scheme *sc, s7_pointer args)
 
 static void glistener_init(glistener *g1)
 {
-  s7_define_function(s7, "listener-append-text",     g_append_text,     2, 0, false, "(listener-append-text g txt)");
-  s7_define_function(s7, "listener-insert-text",     g_insert_text,     2, 0, false, "(listener-insert-text g txt)");
-  s7_define_function(s7, "listener-cursor-position", g_cursor_position, 1, 0, false, "(listener-cursor-position g)");
-  s7_define_function(s7, "listener-set-cursor-position", g_set_cursor_position, 2, 0, false, "(listener-set-cursor-position g pos)");
-  s7_define_function(s7, "listener-text",            g_text,            3, 0, false, "(listener-text g start end)");
-  s7_define_function(s7, "listener-append-prompt",   g_append_prompt,   1, 0, false, "(listener-append-prompt g)");
-  s7_define_function(s7, "listener-prompt-position", g_prompt_position, 1, 0, false, "(listener-prompt-position g)");
-  s7_define_function(s7, "listener-set-prompt",      g_set_prompt,      2, 0, false, "(listener-set-prompt g str)");
-  s7_define_function(s7, "listener-set-prompt-tag",  g_set_prompt_tag,  2, 0, false, "(listener-set-prompt-tag g tag)");
-  s7_define_function(s7, "listener-evaluate",        g_evaluate,        1, 0, false, "(listener-evaluate g)");
-  s7_define_function(s7, "listener-complete",        g_complete,        1, 0, false, "(listener-complete g)");
-  s7_define_function(s7, "listener-scroll",          g_scroll_to_end,   1, 0, false, "(listener-scroll g)");
-  s7_define_function(s7, "listener-clear",           g_clear,           1, 0, false, "(listener-clear g)");
-  s7_define_function(s7, "listener-text-widget",     g_text_widget,     1, 0, false, "(listener-text-widget g)");
+  s7_pointer cp, t, s, p, i, b;
+  cp = s7_make_symbol(s7, "c-pointer?");
+  s = s7_make_symbol(s7, "string?");
+  p = s7_make_symbol(s7, "pair?");
+  i = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  t = s7_t(s7);
+
+  s7_define_typed_function(s7, "listener-append-text",     g_append_text,     2, 0, false, "(listener-append-text g txt)",    s7_make_signature(s7, 3, s, cp, s));
+  s7_define_typed_function(s7, "listener-insert-text",     g_insert_text,     2, 0, false, "(listener-insert-text g txt)",    s7_make_signature(s7, 3, s, cp, s));
+  s7_define_typed_function(s7, "listener-cursor-position", g_cursor_position, 1, 0, false, "(listener-cursor-position g)",    s7_make_signature(s7, 2, i, cp));
+  s7_define_typed_function(s7, "listener-set-cursor-position", g_set_cursor_position, 2, 0, false, "(listener-set-cursor-position g pos)",
+			   s7_make_signature(s7, 3, i, cp, i));
+  s7_define_typed_function(s7, "listener-text",            g_text,            3, 0, false, "(listener-text g start end)",
+			   s7_make_signature(s7, 4, s7_make_signature(s7, 2, b, s), cp, i, i));
+  s7_define_typed_function(s7, "listener-append-prompt",   g_append_prompt,   1, 0, false, "(listener-append-prompt g)",      s7_make_signature(s7, 2, cp, cp));
+  s7_define_typed_function(s7, "listener-prompt-position", g_prompt_position, 1, 0, false, "(listener-prompt-position g)",    s7_make_signature(s7, 2, i, cp));
+  s7_define_typed_function(s7, "listener-set-prompt",      g_set_prompt,      2, 0, false, "(listener-set-prompt g str)",     s7_make_signature(s7, 3, s, cp, s));
+  s7_define_typed_function(s7, "listener-set-prompt-tag",  g_set_prompt_tag,  2, 0, false, "(listener-set-prompt-tag g tag)", s7_make_signature(s7, 3, t, cp, t));
+  s7_define_typed_function(s7, "listener-evaluate",        g_evaluate,        1, 0, false, "(listener-evaluate g)",           s7_make_signature(s7, 2, s, cp));
+  s7_define_typed_function(s7, "listener-complete",        g_complete,        1, 0, false, "(listener-complete g)",           s7_make_signature(s7, 2, s, cp));
+  s7_define_typed_function(s7, "listener-scroll",          g_scroll_to_end,   1, 0, false, "(listener-scroll g)",             s7_make_signature(s7, 2, cp, cp));
+  s7_define_typed_function(s7, "listener-clear",           g_clear,           1, 0, false, "(listener-clear g)",              s7_make_signature(s7, 2, cp, cp));
+  s7_define_typed_function(s7, "listener-text-widget",     g_text_widget,     1, 0, false, "(listener-text-widget g)",        s7_make_signature(s7, 2, p, cp));
   s7_define_variable(s7, "*listener*", wrap_glistener(g1));
 }
 #endif
@@ -789,6 +799,11 @@ Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
 void g_init_gxlistener(void)
 {
 #if HAVE_SCHEME
+  s7_pointer i, s, b;
+  i = s7_make_symbol(s7, "integer?");
+  s = s7_make_symbol(s7, "string?");
+  b = s7_make_symbol(s7, "boolean?");
+
   #define H_mouse_enter_listener_hook S_mouse_enter_listener_hook " (widget): called when the mouse \
 enters the lisp listener pane:\n\
   (hook-push " S_mouse_enter_listener_hook "\n\
@@ -814,19 +829,19 @@ leaves the lisp listener pane"
   mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
   mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
 
-  Xen_define_procedure(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection);
-  Xen_define_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor);
-  Xen_define_procedure(S_goto_listener_end, g_goto_listener_end_w,         0, 0, 0, H_goto_listener_end);
+  Xen_define_typed_procedure(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection,    s7_make_signature(s7, 1, s));
+  Xen_define_typed_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor, s7_make_signature(s7, 1, b));
+  Xen_define_typed_procedure(S_goto_listener_end, g_goto_listener_end_w,         0, 0, 0, H_goto_listener_end,     s7_make_signature(s7, 1, b));
 
   #define H_listener_click_hook S_listener_click_hook " (position): called when listener clicked; position is text pos of click in listener"
   listener_click_hook = Xen_define_hook(S_listener_click_hook, "(make-hook 'position)", 1,   H_listener_click_hook); 
 
 #if HAVE_SCHEME
   top_level_let = s7_nil(s7);
-  s7_define_variable(s7, "top-level-let", 
-                     s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
+  s7_define_variable(s7, "top-level-let", s7_dilambda(s7, "top-level-let", g_top_level_let, 0, 0, g_set_top_level_let, 1, 0, "listener environment"));
 
-  s7_define_function(s7, "colorizer-colors", g_colorizer_colors, 0, 0, true, H_colorizer_colors);
+  s7_define_typed_function(s7, "colorizer-colors", g_colorizer_colors, 0, 0, true, H_colorizer_colors, s7_make_circular_signature(s7, 1, 2, b, s));
+
   s7_hook_set_functions(s7, s7_name_to_value(s7, "*load-hook*"),
     s7_cons(s7, 
       s7_make_function(s7, "listener-load-hook", g_listener_load_hook, 1, 0, false, "listener *load-hook* function"), 
