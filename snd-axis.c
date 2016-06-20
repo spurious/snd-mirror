@@ -2058,9 +2058,9 @@ void g_init_axis(void)
   Xen_define_typed_dilambda(S_y_axis_label, g_y_axis_label_w, H_y_axis_label, S_set S_y_axis_label, g_set_y_axis_label_w, 0, 3, 1, 3,
 			    s7_make_signature(s7, 4, s, t, t, i), s7_make_signature(s7, 5, s, t, t, i, s));
   Xen_define_typed_dilambda(S_x_bounds, g_x_bounds_w, H_x_bounds, S_set S_x_bounds, g_set_x_bounds_w, 0, 3, 1, 3,
-			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, t));
+			    s7_make_signature(s7, 4, p, t, t, t), s7_make_signature(s7, 5, p, t, t, t, t));
   Xen_define_typed_dilambda(S_y_bounds, g_y_bounds_w, H_y_bounds, S_set S_y_bounds, g_set_y_bounds_w, 0, 3, 1, 3,
-			    s7_make_signature(s7, 4, p, t, t, i), s7_make_signature(s7, 5, p, t, t, i, t));
+			    s7_make_signature(s7, 4, p, t, t, t), s7_make_signature(s7, 5, p, t, t, t, t));
 
   Xen_define_constant(S_time_graph,      TIME_AXIS_INFO,      "time domain graph axis info");
   Xen_define_constant(S_transform_graph, TRANSFORM_AXIS_INFO, "frequency domain graph axis info");

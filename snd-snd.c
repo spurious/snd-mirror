@@ -5988,28 +5988,28 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_typed_procedure(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report, s7_make_signature(s7, 3, b, sd, i));
   Xen_define_typed_procedure(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report,        s7_make_signature(s7, 4, r, r, sd, i));
 
-  Xen_define_procedure(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
-  Xen_define_procedure(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
-  Xen_define_procedure(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);
-#if DEBUGGING
-  Xen_define_safe_procedure(S_open_sound,        g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! -- why not? (from snd-13.0!) */
-#else
-  Xen_define_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound); /* not "safe" procedure! */
-#endif
-  Xen_define_procedure(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound);
-  Xen_define_procedure(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound);
-  Xen_define_procedure(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound);
-  Xen_define_procedure(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound);
-  Xen_define_procedure(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as);
-  Xen_define_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls);
-  Xen_define_procedure(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel);
+  Xen_define_typed_procedure(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound,            s7_make_signature(s7, 2, t, t));
+  Xen_define_typed_procedure(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound,           s7_make_signature(s7, 2, t, t));
+  Xen_define_typed_procedure(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound,             s7_make_signature(s7, 2, sd, t));
 
-  Xen_define_dilambda(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope, 
-		      S_set S_filter_control_envelope, g_set_filter_control_envelope_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_sound_properties, g_sound_properties_w, H_sound_properties, 
-		      S_set S_sound_properties, g_set_sound_properties_w, 0, 1, 1, 1);
-  Xen_define_dilambda(S_sound_property, g_sound_property_w, H_sound_property, 
-		      S_set S_sound_property, g_set_sound_property_w, 1, 1, 2, 1);
+  Xen_define_typed_procedure(S_open_sound,             g_open_sound_w,              1, 0, 0, H_open_sound,             s7_make_signature(s7, 2, sd, s));
+  Xen_define_typed_procedure(S_open_raw_sound,         g_open_raw_sound_w,          0, 0, 1, H_open_raw_sound,         s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_view_sound,             g_view_sound_w,              1, 0, 0, H_view_sound,             s7_make_signature(s7, 2, sd, s));
+  Xen_define_typed_procedure(S_new_sound,              g_new_sound_w,               0, 0, 1, H_new_sound,              s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_revert_sound,           g_revert_sound_w,            0, 1, 0, H_revert_sound,           s7_make_signature(s7, 2, sd, sd));
+  Xen_define_typed_procedure(S_save_sound_as,          g_save_sound_as_w,           0, 0, 1, H_save_sound_as,          s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_apply_controls,         g_apply_controls_w,          0, 4, 0, H_apply_controls,         s7_make_signature(s7, 5, t, t, i, i, i));
+  Xen_define_typed_procedure(S_controls_to_channel,    g_controls_to_channel_w,     0, 6, 0, H_controls_to_channel,    s7_make_signature(s7, 7, p, p, i, i, t, t, s));
+
+  Xen_define_typed_dilambda(S_filter_control_envelope, g_filter_control_envelope_w, H_filter_control_envelope, 
+			    S_set S_filter_control_envelope, g_set_filter_control_envelope_w, 0, 1, 1, 1,
+			    s7_make_signature(s7, 2, p, t), s7_make_signature(s7, 3, p, t, p));
+  Xen_define_typed_dilambda(S_sound_properties, g_sound_properties_w, H_sound_properties, 
+			    S_set S_sound_properties, g_set_sound_properties_w, 0, 1, 1, 1,
+			    s7_make_circular_signature(s7, 0, 1, t), s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_dilambda(S_sound_property, g_sound_property_w, H_sound_property, 
+			    S_set S_sound_property, g_set_sound_property_w, 1, 1, 2, 1,
+			    s7_make_circular_signature(s7, 0, 1, t), s7_make_circular_signature(s7, 0, 1, t));
 
   Xen_define_typed_dilambda(S_show_controls, g_show_controls_w, H_show_controls, 
 			    S_set S_show_controls, g_set_show_controls_w, 0, 1, 1, 1, pl_bo, pl_bob);
@@ -6087,7 +6087,8 @@ If it returns " PROC_TRUE ", the usual informative status babbling is squelched.
   Xen_define_typed_dilambda(S_speed_control_tones, g_speed_control_tones_w, H_speed_control_tones, 
 			    S_set S_speed_control_tones, g_set_speed_control_tones_w, 0, 1, 1, 1, pl_io, pl_ioi);
 
-  Xen_define_procedure(S_channel_amp_envs,              g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs);
+  Xen_define_typed_procedure(S_channel_amp_envs,        g_channel_amp_envs_w,         0, 5, 0, H_channel_amp_envs, s7_make_signature(s7, 6, t, t, i, i, t, t));
+
   Xen_define_typed_procedure(S_sounds,                  g_sounds_w,                   0, 0, 0, H_sounds, s7_make_signature(s7, 1, s7_make_symbol(s7, "list?")));
   Xen_define_typed_procedure(S_integer_to_sound,        g_integer_to_sound_w,         1, 0, 0, H_integer_to_sound, pl_oi);
   Xen_define_typed_procedure(S_sound_to_integer,        g_sound_to_integer_w,         1, 0, 0, H_sound_to_integer, pl_io);

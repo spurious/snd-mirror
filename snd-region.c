@@ -1560,7 +1560,7 @@ static Xen g_restore_region(Xen args)
 
   arg = Xen_cdr(arg);
   len = Xen_car(arg);
-  Xen_check_type(Xen_is_number(len), len, 3, S_restore_region, "an integer");
+  Xen_check_type(Xen_is_integer(len), len, 3, S_restore_region, "an integer");
 
   arg = Xen_cdr(arg);
   srate = Xen_car(arg);
@@ -2178,12 +2178,14 @@ static s7_pointer acc_max_regions(s7_scheme *sc, s7_pointer args) {return(g_set_
 void g_init_regions(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, f, fv, rg;
+  s7_pointer i, b, p, t, r, f, s, fv, rg;
   i = s7_make_symbol(s7, "integer?");
   rg = s7_make_symbol(s7, "region?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "list?");
   f = s7_make_symbol(s7, "float?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
   fv = s7_make_symbol(s7, "float-vector?");
   t = s7_t(s7);
 #endif
@@ -2191,12 +2193,13 @@ void g_init_regions(void)
   init_xen_region();
   init_region_keywords();
 
-  Xen_define_procedure(S_restore_region,              g_restore_region_w,         0, 0, 1, "internal func used in save-state, restores a region");
-  Xen_define_procedure(S_insert_region,               g_insert_region_w,          2, 2, 0, H_insert_region);
-  Xen_define_procedure(S_save_region,                 g_save_region_w,            2, 7, 0, H_save_region);
-  Xen_define_procedure(S_forget_region,               g_forget_region_w,          1, 0, 0, H_forget_region);
-  Xen_define_procedure(S_make_region,                 g_make_region_w,            0, 4, 0, H_make_region);
-  Xen_define_procedure(S_mix_region,                  g_mix_region_w,             1, 4, 0, H_mix_region);
+  Xen_define_typed_procedure(S_restore_region,         g_restore_region_w,         0, 0, 1, "internal func used in save-state, restores a region",
+			     s7_make_signature(s7, 11, i, i, i, i, i, r, s, s, s, s, p));
+  Xen_define_typed_procedure(S_insert_region,          g_insert_region_w,          2, 2, 0, H_insert_region,   s7_make_signature(s7, 5, rg, rg, i, t, t));
+  Xen_define_typed_procedure(S_save_region,            g_save_region_w,            2, 7, 0, H_save_region,     s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_forget_region,          g_forget_region_w,          1, 0, 0, H_forget_region,   s7_make_signature(s7, 2, rg, rg));
+  Xen_define_typed_procedure(S_make_region,            g_make_region_w,            0, 4, 0, H_make_region,     s7_make_signature(s7, 5, rg, i, i, t, t));
+  Xen_define_typed_procedure(S_mix_region,             g_mix_region_w,             1, 4, 0, H_mix_region,      s7_make_signature(s7, 6, t, rg, i, t, t, t));
 
   Xen_define_typed_procedure(S_regions,                g_regions_w,                0, 0, 0, H_regions,         s7_make_signature(s7, 1, p));
   Xen_define_typed_procedure(S_region_framples,        g_region_framples_w,        1, 1, 0, H_region_framples, s7_make_signature(s7, 3, i, rg, i));

@@ -74480,6 +74480,7 @@ int main(int argc, char **argv)
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
+ * in makegl, split out the motif-only decls
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

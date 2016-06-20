@@ -68,6 +68,47 @@
      (lint-format-1 ,str ,caller ,@args)))
 |#
 
+(define-macro (let*-temporarily vars . body)
+  `(with-let (#_inlet :orig (#_curlet) 
+		      :saved (#_list ,@(map car vars)))
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda ()
+	   (with-let orig
+	     ,@(map (lambda (v)
+		      `(set! ,(car v) ,(cadr v)))
+		    vars)
+	     ,@body))
+	 (lambda ()
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
+		  vars)))))
+
+(define-macro (let-temporarily vars . body)
+  `(with-let (#_inlet :orig (#_curlet) 
+		      :saved (#_list ,@(map car vars))
+		      :new (#_list ,@(map cadr vars)))
+     (dynamic-wind
+	 (lambda () #f)
+	 (lambda () ; this could be (with-let orig (let ,vars ,@body)) but I want to handle stuff like individual vector locations
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1)))))))
+		  vars)
+	   (with-let orig ,@body)) 
+	 (lambda ()
+	   ,@(map (let ((ctr -1))
+		    (lambda (v)
+		      (if (symbol? (car v))
+			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
+			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
+		  vars)))))
+
 
 ;;; --------------------------------------------------------------------------------
 (define lint
@@ -269,48 +310,6 @@
     (set! *lint* *e*)                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
 
-    (define-macro (let*-temporarily vars . body)
-      `(with-let (#_inlet :orig (#_curlet) 
-			  :saved (#_list ,@(map car vars)))
-	 (dynamic-wind
-	     (lambda () #f)
-	     (lambda ()
-	       (with-let orig
-		 ,@(map (lambda (v)
-			  `(set! ,(car v) ,(cadr v)))
-			vars)
-		 ,@body))
-	     (lambda ()
-	       ,@(map (let ((ctr -1))
-			(lambda (v)
-			  (if (symbol? (car v))
-			      `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
-			      `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
-		      vars)))))
-    
-    (define-macro (let-temporarily vars . body)
-      `(with-let (#_inlet :orig (#_curlet) 
-			  :saved (#_list ,@(map car vars))
-			  :new (#_list ,@(map cadr vars)))
-	 (dynamic-wind
-	     (lambda () #f)
-	     (lambda () ; this could be (with-let orig (let ,vars ,@body)) but I want to handle stuff like individual vector locations
-	       ,@(map (let ((ctr -1))
-			(lambda (v)
-			  (if (symbol? (car v))
-			      `(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1))))
-			      `(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1)))))))
-		      vars)
-	       (with-let orig ,@body)) 
-	     (lambda ()
-	       ,@(map (let ((ctr -1))
-			(lambda (v)
-			  (if (symbol? (car v))
-			      `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
-			      `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
-		      vars)))))
-    
-    
     ;; -------- lint-format --------
     (define target-line-length 80)
 
@@ -1250,7 +1249,7 @@
 		   ;; if it's not in the no-side-effect table and ...
 		   
 		   (let ((e (var-member (car form) env)))
-		     ;(if (var? e) (format *stderr* "e: ~A ~A ~A~%" (var-name e) (var-ftype e) (var-side-effect e)))
+		     ;(if (var? e) (format *stderr* "~A e: ~A ~A ~A~%" (car form) (var-name e) (var-ftype e) (var-side-effect e)))
 		     (or (not (var? e))
 			 (not (symbol? (var-ftype e)))
 			 (var-side-effect e)))
@@ -1347,6 +1346,7 @@
 		;; ((lambda lambda*) (any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cddr form))) ; this is trickier than it looks
 		
 		(else
+		 ;(format *stderr* "check args: ~A~%" form)
 		 (or (any? (lambda (f)                                   ; any subform has a side-effect
 			     (and (not (null? f))
 				  (side-effect-with-vars? f env vars)))
@@ -1368,6 +1368,11 @@
     
     (define (side-effect? form env)
       (side-effect-with-vars? form env ()))
+#|
+      (let ((res (side-effect-with-vars? form env ())))
+	(format *stderr* "~A -> ~A~%" form res)
+	res))
+|#
 
     (define (just-constants? form env)
       ;; can we probably evaluate form given just built-in stuff?
@@ -7554,7 +7559,32 @@
 				(current-environment . curlet)
 				(make-procedure-with-setter . dilambda)
 				(procedure-with-setter? . dilambda?)
-				(make-random-state . random-state))))
+				(make-random-state . random-state)
+				(make-vct . make-float-vector)
+				(vct-add! . float-vector-add!)
+				(vct-subtract! . float-vector-subtract!)
+				(vct-copy . copy)
+				(vct-length . length)
+				(vct-multiply! . float-vector-multiply!)
+				(vct-offset! . float-vector-offset!)
+				(vct-ref . float-vector-ref)
+				(vct-scale! . float-vector-scale!)
+				(vct-abs! . float-vector-abs!)
+				(vct-fill! . fill!)
+				(vct-set! . float-vector-set!)
+				(vct-peak . float-vector-peak)
+				(vct-equal? . equal?)
+				(vct? . float-vector?)
+				(list->vct . list->float-vector)
+				(vct->list . float-vector->list)
+				(vector->vct . vector->float-vector)
+				(vct->vector . float-vector->vector)
+				(vct-move! . float-vector-move!)
+				(vct-subseq . float-vector-subseq)
+				(vct-reverse! . reverse!)
+				(vct->string . float-vector->string)
+				(vct* . float-vector*)
+				(vct+ . float-vector+))))
 
 	  (define (sp-deprecate caller head form env)
 	    (lint-format "~A is deprecated; use ~A" caller head (cond ((assq head deprecated-ops) => cdr))))
@@ -7949,7 +7979,7 @@
 		  (if (and (pair? arg)
 			   (pair? (car arg)))
 		      (let ((rtn (return-type (caar arg) env)))
-			(if (memq rtn '(boolean? real? integer? rational? number? complex? float? pair? keyword? symbol? null? char?))
+			(if (memq rtn '(boolean? real? integer? rational? number? complex? float? keyword? symbol? null? char?))
 			    (lint-format* caller 
 					  (string-append (symbol->string head) "'s argument ")
 					  (string-append (truncated-list->string arg) " looks odd: ")
@@ -16027,23 +16057,22 @@
 	(let ((vars (lint-file file ())))
 	  (set! lint-left-margin (max lint-left-margin 1))
 
-	  (if (and (pair? vars)
-		   *report-multiply-defined-top-level-functions*)
-	      (for-each
-	       (lambda (var)
-		 (let ((var-file (hash-table-ref *top-level-objects* (car var))))
-		   (if (not var-file)
-		       (hash-table-set! *top-level-objects* (car var) *current-file*)
-		       (if (and (string? *current-file*)
-				(not (string=? var-file *current-file*)))
-			   (format outport "~NC~S is defined at the top level in ~S and ~S~%" 
-				   lint-left-margin #\space 
-				   (car var) var-file *current-file*)))))
-	       vars))
-
-	  (if (and (string? file)
-		   (pair? vars))
-	      (report-usage top-level: "" vars vars)))
+	  (when (pair? vars)
+	    (if *report-multiply-defined-top-level-functions*
+		(for-each
+		 (lambda (var)
+		   (let ((var-file (hash-table-ref *top-level-objects* (car var))))
+		     (if (not var-file)
+			 (hash-table-set! *top-level-objects* (car var) *current-file*)
+			 (if (and (string? *current-file*)
+				  (not (string=? var-file *current-file*)))
+			     (format outport "~NC~S is defined at the top level in ~S and ~S~%" 
+				     lint-left-margin #\space 
+				     (car var) var-file *current-file*)))))
+		 vars))
+	    
+	    (if (string? file)
+		(report-usage top-level: "" vars vars))))
 
 	(for-each 
 	 (lambda (p)
@@ -16253,13 +16282,15 @@
 ;;; define-macro cases in t347?? [10983]
 ;;; eq?/=/any-sig extension of and-forgetful
 ;;;    currently and-forgetful is restricted to bools for arg1: would need extension for eq/memq etc
-;;; there are 186 Snd functions without signatures
 ;;; localized var (to extent possible?) if set! always precedes use: set!->let
 ;;;    but report-usage can't do this (see tmp) because it sees only the local expressions
 ;;;    let-walker might but it will be slow! maybe restrict to vars set (at least) twice without ref to self in caddr and large let body
 ;;; implicit indexing is viewed as a possible side-effect -- is there any way around this? maybe even look-ahead?
 ;;;    or "assuming x is a vector..." -- this is a lot of work, see all-types-agree in report-usage and following [8723]
-;;; side-effect? is not handling dilambda right and probably anything involving lambda (for-each/any? etc)
-;;;    see t347 tests
+;;; side-effect? is not handling dilambda right and probably anything involving lambda (for-each/any?/call/exit etc)
+;;;    see t347 tests: dilambda is not supported yet!
+;;; the intersection has to include necessary precedents
+;;; in snd-lint, include defgen in macro list
+;;; sig checker is confused by the reversed setters in snd (y-bounds for example)
 ;;;
 ;;; 134 23101 551078

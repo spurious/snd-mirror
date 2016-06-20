@@ -9109,8 +9109,8 @@ sample 'samp' for 'samps' samples to the values in 'data'.
 </p>
 
 <pre class="indented">
-(set! (samples 0 100) (make-vct 100 .1))
-(set-samples 0 100 (make-vct 100 .1))
+(set! (samples 0 100) (make-float-vector 100 .1))
+(set-samples 0 100 (make-float-vector 100 .1))
 </pre>
 
 <p>both change all samples between 0 and 100 to be 0.1. 
@@ -11347,8 +11347,8 @@ and initial-phase:
 (define (fft-&gt;sines amps phases)
   (let* ((len (length phases))
 	 (fft-size (expt 2 (+ 10 (ceiling (log len 2)))))
-	 (rl (make-vct fft-size))
-	 (im (make-vct fft-size)))
+	 (rl (make-float-vector fft-size))
+	 (im (make-float-vector fft-size)))
     (do ((i 0 (+ i 1)))
 	((= i len))
       (let ((amp (amps i))
@@ -12087,7 +12087,7 @@ starts the help dialog with help related to the selection if "h" is typed in the
   (let ((documentation "start help dialog based on listener selected text"))
     (lambda ()
       (let ((subject (<em class=red>listener-selection</em>)))
-        (if subject
+        (if (string? subject)
             (<a class=quiet href="#helpdialog">help-dialog</a> subject (<a class=quiet href="#sndhelp">snd-help</a> subject)))))))
 </pre>
 <div class="spacer"></div>

@@ -2604,7 +2604,7 @@ static char *find_source_file(const char *orig)
   Xen_wrap_2_args(g_dlsym_w, g_dlsym)
 #endif
 #if HAVE_SCHEME
-  Xen_wrap_any_args(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
+  Xen_wrap_1_arg(g_snd_s7_error_handler_w, g_snd_s7_error_handler);
 #endif
 
 Xen_wrap_1_arg(g_snd_print_w, g_snd_print)
@@ -2949,7 +2949,7 @@ be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'val').
   } 
 
 #if HAVE_SCHEME
-  Xen_define_typed_procedure("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 0, 1, "internal error redirection for snd/s7",
+  Xen_define_typed_procedure("_snd_s7_error_handler_", g_snd_s7_error_handler_w,  0, 1, 0, "internal error redirection for snd/s7",
 			     s7_make_signature(s7, 2, b, s));
 
   Xen_eval_C_string("(define redo-edit redo)");        /* consistency with Ruby */

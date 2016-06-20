@@ -3836,14 +3836,23 @@ static s7_pointer acc_html_program(s7_scheme *sc, s7_pointer args) {return(g_set
 
 void g_init_help(void)
 {
-  Xen_define_procedure(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help);
 #if HAVE_SCHEME
-  Xen_eval_C_string("(define s7-help help)");
-  Xen_define_procedure("help",        g_listener_help_w,  0, 2, 0, H_snd_help); /* override s7's help */
+  s7_pointer p, r, s, pcl_s, pcl_t;
+  p = s7_make_symbol(s7, "list?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  pcl_s = s7_make_circular_signature(s7, 0, 1, s);
+  pcl_t = s7_make_circular_signature(s7, 0, 1, s7_t(s7));
 #endif
-  Xen_define_safe_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url);
-  Xen_define_safe_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls);
-  Xen_define_safe_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
+
+  Xen_define_typed_procedure(S_snd_help,    g_listener_help_w,  0, 2, 0, H_snd_help,    pcl_t);
+#if HAVE_SCHEME
+  Xen_eval_C_string("(define s7-help help)");      /* override s7's help */
+  Xen_define_typed_procedure("help",        g_listener_help_w,  0, 2, 0, H_snd_help,    pcl_t); 
+#endif
+  Xen_define_typed_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url,     pcl_s);
+  Xen_define_typed_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls,    s7_make_signature(s7, 1, p));
+  Xen_define_typed_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog, s7_make_signature(s7, 5, p, s, s, p, p));
 
   #define H_help_hook S_help_hook "(subject message): called from " S_snd_help ".  If \
 it returns a string, it replaces 'message' (the default help)"
@@ -3877,8 +3886,10 @@ If more than one hook function, each function gets the previous function's outpu
 
   output_comment_hook = Xen_define_hook(S_output_comment_hook, "(make-hook 'comment)", 1, H_output_comment_hook);
 
-  Xen_define_dilambda(S_html_dir,     g_html_dir_w,     H_html_dir,     S_set S_html_dir,     g_set_html_dir_w,      0, 0, 1, 0);
-  Xen_define_dilambda(S_html_program, g_html_program_w, H_html_program, S_set S_html_program, g_set_html_program_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_html_dir, g_html_dir_w, H_html_dir,     
+			    S_set S_html_dir, g_set_html_dir_w, 0, 0, 1, 0, pcl_s, pcl_s);
+  Xen_define_typed_dilambda(S_html_program, g_html_program_w, H_html_program, 
+			    S_set S_html_program, g_set_html_program_w, 0, 0, 1, 0, pcl_s, pcl_s);
 
 #if HAVE_SCHEME
   autoload_info(s7); /* snd-xref.c included above */

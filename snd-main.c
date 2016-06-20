@@ -2298,7 +2298,7 @@ static s7_pointer acc_open_file_dialog_directory(s7_scheme *sc, s7_pointer args)
 void g_init_main(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_z, pl_zb, pl_zbb;
+  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_bi, pl_s, pl_ss, pl_d, pl_dr, pl_p, pl_z, pl_zb, pl_zbb;
   {
     s7_pointer i, b, d, r, s, p, z;
     i = s7_make_symbol(s7, "integer?");
@@ -2313,6 +2313,7 @@ void g_init_main(void)
     pl_bb = s7_make_signature(s7, 2, b, b);
     pl_i = s7_make_signature(s7, 1, i);
     pl_ii = s7_make_signature(s7, 2, i, i);
+    pl_bi = s7_make_signature(s7, 2, b, i);
     pl_s = s7_make_signature(s7, 1, s);
     pl_ss = s7_make_signature(s7, 2, s, s);
     pl_d = s7_make_signature(s7, 1, d);
@@ -2325,9 +2326,9 @@ void g_init_main(void)
 #endif
   Xen_define_typed_procedure(S_save_state,   g_save_state_w,   0, 1, 0, H_save_state, pl_ss);
 #if HAVE_FORTH			/* exit is an existing word */
-  Xen_define_procedure("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit);
+  Xen_define_typed_procedure("snd-" S_exit,  g_exit_w,         0, 1, 0, H_exit, pl_bi);
 #else
-  Xen_define_procedure(S_exit,         g_exit_w,         0, 1, 0, H_exit);
+  Xen_define_typed_procedure(S_exit,         g_exit_w,         0, 1, 0, H_exit, pl_bi);
 #endif
   
   Xen_define_typed_dilambda(S_save_state_file, g_save_state_file_w, H_save_state_file, 
@@ -2428,9 +2429,9 @@ the hook functions return " PROC_TRUE ", the save state process opens the file '
   Xen_define_typed_procedure(S_transform_dialog,        g_transform_dialog_w,         0, 1, 0, H_transform_dialog,	   pl_zb);
   Xen_define_typed_procedure(S_print_dialog,            g_print_dialog_w,             0, 2, 0, H_print_dialog,		   pl_zbb);
   Xen_define_typed_procedure(S_preferences_dialog,      g_preferences_dialog_w,       0, 0, 0, H_preferences_dialog,	   pl_z);
-  Xen_define_procedure(S_abort,				g_abort_w,                    0, 0, 0, H_abort);
+  Xen_define_typed_procedure(S_abort,			g_abort_w,                    0, 0, 0, H_abort,                    pl_b);
 #if (!HAVE_SCHEME)
-  Xen_define_procedure(S_c_g,				g_abortq_w,                   0, 0, 0, H_abortQ);
+  Xen_define_typed_procedure(S_c_g,			g_abortq_w,                   0, 0, 0, H_abortQ,                   pl_b);
 #endif
   
 #if HAVE_SCHEME

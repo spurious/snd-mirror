@@ -1379,12 +1379,22 @@ static s7_pointer acc_graph_cursor(s7_scheme *sc, s7_pointer args) {return(g_set
 
 void g_init_gxchn(void)
 {
-  Xen_define_procedure(S_in,            g_in_w,             2, 0, 0, H_in);
+#if HAVE_SCHEME
+  s7_pointer i, t, r, p, fnc;
+  r = s7_make_symbol(s7, "real?");
+  fnc = s7_make_symbol(s7, "procedure?");
+  i = s7_make_symbol(s7, "integer?");
+  p = s7_make_symbol(s7, "pair?");
+  t = s7_t(s7);
+#endif
 
-  Xen_define_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
-				   S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0);
+  Xen_define_typed_procedure(S_in, g_in_w, 2, 0, 0, H_in, s7_make_signature(s7, 3, r, r, fnc));
 
-  Xen_define_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets);
+  Xen_define_typed_dilambda(S_graph_cursor, g_graph_cursor_w, H_graph_cursor,
+			    S_set S_graph_cursor, g_set_graph_cursor_w,  0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i), s7_make_signature(s7, 2, i, i));
+
+  Xen_define_typed_procedure(S_channel_widgets, g_channel_widgets_w, 0, 2, 0, H_channel_widgets, s7_make_signature(s7, 3, p, t, t));
 
 #if HAVE_SCHEME
   #define H_mouse_enter_graph_hook S_mouse_enter_graph_hook " (snd chn): called when the mouse \

@@ -1774,7 +1774,7 @@ Xen_wrap_7_args(g_vct_interpolate_w, g_vct_interpolate)
 void mus_vct_init(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffiib, pl_ffiif, pl_sf;
+  s7_pointer pl_ff, pl_rf, pl_fff, pl_fffi, pl_ffr, pl_pf, pl_bffr, pl_ftt, pl_ffiib, pl_ffiif, pl_sf, pl_rfvir, pl_rfiir;
 #else
   vct_tag = Xen_make_object_type("Vct", sizeof(vct));
 
@@ -1865,6 +1865,8 @@ void mus_vct_init(void)
     pl_fffi = s7_make_signature(s7, 4, f, f, f, i);
     pl_ffiib = s7_make_signature(s7, 5, f, f, i, i, b);
     pl_ffiif = s7_make_signature(s7, 5, f, f, i, i, f);
+    pl_rfvir = s7_make_signature(s7, 5, r, f, s7_make_symbol(s7, "int-vector?"), i, r);
+    pl_rfiir = s7_make_circular_signature(s7, 4, 5, r, f, i, i, r);
   }
 #endif
 
@@ -1908,8 +1910,8 @@ void mus_vct_init(void)
   Xen_define_procedure(S_vct_to_vector,     g_vct_to_vector_w, 1, 0, 0, H_vct_to_vector);
   Xen_define_procedure(S_make_vct,          g_make_vct_w,      1, 1, 0, H_make_vct);
 #else
-  Xen_define_procedure(S_vct_spatter,       g_vct_spatter_w,   4, 0, 0, H_vct_spatter);
-  Xen_define_procedure(S_vct_interpolate,   g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate);
+  Xen_define_typed_procedure(S_vct_spatter,     g_vct_spatter_w,     4, 0, 0, H_vct_spatter,           pl_rfvir);
+  Xen_define_typed_procedure(S_vct_interpolate, g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate,       pl_rfiir);
 
   s7_pf_set_function(s7_name_to_value(s7, S_vct_add), float_vector_add_pf);
   s7_pf_set_function(s7_name_to_value(s7, S_vct_subtract), float_vector_subtract_pf);

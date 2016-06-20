@@ -438,8 +438,18 @@ Xen_wrap_1_arg(g_main_menu_w, g_main_menu)
 
 void g_init_menu(void)
 {
-  Xen_define_procedure(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu);
-  Xen_define_procedure(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu);
-  Xen_define_procedure(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu);
-  Xen_define_procedure(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu);
+#if HAVE_SCHEME
+  s7_pointer i, p, b, fnc, s;
+  i = s7_make_symbol(s7, "integer?");
+  p = s7_make_symbol(s7, "pair?");
+  b = s7_make_symbol(s7, "boolean?");
+  fnc = s7_make_symbol(s7, "procedure?");
+  s = s7_make_symbol(s7, "string?");
+#endif
+
+  Xen_define_typed_procedure(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu,  s7_make_signature(s7, 3, i, s, fnc));
+  Xen_define_typed_procedure(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu,       
+			     s7_make_signature(s7, 5, p, i, s, s7_make_signature(s7, 2, fnc, b), i));
+  Xen_define_typed_procedure(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu,  s7_make_signature(s7, 3, i, s, i));
+  Xen_define_typed_procedure(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu,         s7_make_signature(s7, 2, p, i));
 }

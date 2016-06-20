@@ -273,7 +273,10 @@ Xen_wrap_no_args(g_find_dialog_widgets_w, g_find_dialog_widgets)
 
 void g_init_gxfind(void)
 {
-  Xen_define_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog);
-  Xen_define_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function");
+  Xen_define_typed_procedure(S_find_dialog, g_find_dialog_w, 0, 2, 0, H_find_dialog,
+			     s7_make_signature(s7, 3, s7_make_symbol(s7, "pair?"), s7_make_symbol(s7, "boolean?"), s7_make_symbol(s7, "string?")));
+
+  Xen_define_typed_procedure("find-dialog-widgets", g_find_dialog_widgets_w, 0, 0, 0, "internal auto-test function", 
+			     s7_make_signature(s7, 1, s7_make_symbol(s7, "list?")));
 }
 

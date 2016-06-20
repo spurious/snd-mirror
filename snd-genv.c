@@ -1371,9 +1371,16 @@ Xen_wrap_1_arg(g_set_enved_envelope_w, g_set_enved_envelope)
 
 void g_init_gxenv(void)
 {
-  Xen_define_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
-				   S_set S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
-				   S_set S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0);
+#if HAVE_SCHEME
+  s7_pointer pcl_b, pcl_t;
+  pcl_b = s7_make_circular_signature(s7, 0, 1, s7_make_symbol(s7, "boolean?"));
+  pcl_t = s7_make_circular_signature(s7, 0, 1, s7_t(s7));
+#endif
+
+  Xen_define_typed_dilambda(S_enved_filter, g_enved_filter_w, H_enved_filter,
+			    S_set S_enved_filter, g_set_enved_filter_w,  0, 0, 1, 0, pcl_b, pcl_b);
+
+  Xen_define_typed_dilambda(S_enved_envelope, g_enved_envelope_w, H_enved_envelope,
+			    S_set S_enved_envelope, g_set_enved_envelope_w,  0, 0, 1, 0, pcl_t, pcl_t);
 }
 

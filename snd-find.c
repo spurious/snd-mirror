@@ -275,6 +275,7 @@ Xen_wrap_1_arg(g_set_search_procedure_w, g_set_search_procedure)
 
 void g_init_find(void)
 {
-  Xen_define_dilambda(S_search_procedure, g_search_procedure_w, H_search_procedure,
-				   S_set S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_search_procedure, g_search_procedure_w, H_search_procedure,
+			    S_set S_search_procedure, g_set_search_procedure_w,  0, 0, 1, 0,
+			    s7_make_circular_signature(s7, 0, 1, s7_t(s7)), s7_make_circular_signature(s7, 0, 1, s7_t(s7)));
 }

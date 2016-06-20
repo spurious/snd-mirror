@@ -297,31 +297,30 @@
   (if (null? groups)
       (error 'mus-error "no groups specified, speakers must be arranged in groups~%"))
   
-  (if (and (pair? delays)
-	   (pair? distances))
-      (error 'mus-error "please specify delays or distances but not both~%"))
+  (when (pair? delays)
+    (if (pair? distances)
+	(error 'mus-error "please specify delays or distances but not both~%"))
   
-  (if (pair? delays)
-      (if (> (length speakers) (length delays))
-	  (error 'mus-error "all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
-	  (if (< (length speakers) (length delays))
-	      (error 'mus-error "more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays))))
+    (if (> (length speakers) (length delays))
+	(error 'mus-error "all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
+	(if (< (length speakers) (length delays))
+	    (error 'mus-error "more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays)))
   
-  (for-each
-   (lambda (dly)
-     (if (< dly 0.0) (error 'mus-error "delays must be all positive, ~A is negative~%" dly)))
-   delays)
+    (for-each
+     (lambda (dly)
+       (if (< dly 0.0) (error 'mus-error "delays must be all positive, ~A is negative~%" dly)))
+     delays))
   
-  (if (pair? distances)
-      (if (> (length speakers) (length distances))
-	  (error 'mus-error "all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
-	  (if (< (length speakers) (length distances))
-	      (error 'mus-error "more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances))))
+  (when (pair? distances)
+    (if (> (length speakers) (length distances))
+	(error 'mus-error "all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
+	(if (< (length speakers) (length distances))
+	    (error 'mus-error "more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances)))
   
-  (for-each
-   (lambda (dly)
-     (if (< dly 0.0) (error 'mus-error "distances must be all positive, ~A is negative~%" dly)))
-   distances)
+    (for-each
+     (lambda (dly)
+       (if (< dly 0.0) (error 'mus-error "distances must be all positive, ~A is negative~%" dly)))
+     distances))
   
   (if (pair? channel-map)
       (if (> (length speakers) (length channel-map))

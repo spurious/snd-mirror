@@ -284,21 +284,33 @@ static s7_pointer acc_stdin_prompt(s7_scheme *sc, s7_pointer args) {return(g_set
 
 void g_init_listener(void)
 {
-  Xen_define_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener);
-  Xen_define_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener);
+#if HAVE_SCHEME
+  s7_pointer plc_s, plc_b;
+  plc_b = s7_make_circular_signature(s7, 0, 1, s7_make_symbol(s7, "boolean?"));
+  plc_s = s7_make_circular_signature(s7, 0, 1, s7_make_symbol(s7, "string?"));
+#endif
 
-  Xen_define_dilambda(S_show_listener, g_show_listener_w, H_show_listener, S_set S_show_listener, g_set_show_listener_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, S_set S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0);
-  Xen_define_dilambda(S_stdin_prompt, g_stdin_prompt_w, H_stdin_prompt, S_set S_stdin_prompt, g_set_stdin_prompt_w, 0, 0, 1, 0);
-  Xen_define_dilambda(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
-				   S_set S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0);
+  Xen_define_typed_procedure(S_save_listener,  g_save_listener_w,  1, 0, 0, H_save_listener,  plc_s);
+  Xen_define_typed_procedure(S_clear_listener, g_clear_listener_w, 0, 0, 0, H_clear_listener, plc_b);
+
+  Xen_define_typed_dilambda(S_show_listener, g_show_listener_w, H_show_listener, 
+			    S_set S_show_listener, g_set_show_listener_w,  0, 0, 1, 0, plc_b, plc_b);
+
+  Xen_define_typed_dilambda(S_listener_prompt, g_listener_prompt_w, H_listener_prompt, 
+			    S_set S_listener_prompt, g_set_listener_prompt_w,  0, 0, 1, 0, plc_s, plc_s);
+
+  Xen_define_typed_dilambda(S_stdin_prompt, g_stdin_prompt_w, H_stdin_prompt, 
+			    S_set S_stdin_prompt, g_set_stdin_prompt_w, 0, 0, 1, 0, plc_s, plc_s);
+
+  Xen_define_typed_dilambda(S_listener_colorized, g_listener_colorized_w, H_listener_colorized,
+			    S_set S_listener_colorized, g_listener_set_colorized_w,  0, 0, 1, 0, plc_b, plc_b);
 
   #define H_read_hook S_read_hook " (text): called each time a line is typed into the listener (triggered by the carriage return). \
 If it returns true, Snd assumes you've dealt the text yourself, and does not try to evaluate it."
   
   read_hook = Xen_define_hook(S_read_hook, "(make-hook 'text)", 1, H_read_hook);
 
-  Xen_define_procedure("snd-completion",        g_snd_completion_w,        1, 0, 0, "return completion of arg");
+  Xen_define_typed_procedure("snd-completion", g_snd_completion_w, 1, 0, 0, "return completion of arg", plc_s);
 
 #if HAVE_SCHEME
 #if USE_GTK

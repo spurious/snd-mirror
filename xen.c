@@ -1710,7 +1710,7 @@ s7_scheme *s7_xen_initialize(s7_scheme *sc)
   Xen_define_typed_procedure("getcwd",       g_getcwd_w,        0, 0, 0, H_getcwd,        s7_make_signature(s7, 1, s));
   Xen_define_typed_procedure("strftime",     g_strftime_w,      2, 0, 0, H_strftime,      s7_make_signature(s7, 3, s, s, p));
   Xen_define_typed_procedure("tmpnam",       g_tmpnam_w,        0, 0, 0, H_tmpnam,        s7_make_signature(s7, 1, s));
-  Xen_define_typed_procedure("localtime",    g_localtime_w,     1, 0, 0, H_localtime,     s7_make_signature(s7, 2, i, p));
+  Xen_define_typed_procedure("localtime",    g_localtime_w,     1, 0, 0, H_localtime,     s7_make_signature(s7, 2, i, i));
   Xen_define_typed_procedure("current-time", g_current_time_w,  0, 0, 0, H_current_time,  s7_make_signature(s7, 1, i));
   Xen_define_typed_procedure("ftell",        g_ftell_w,         1, 0, 0, "(ftell fd): lseek", s7_make_signature(s7, 2, i, i));
   Xen_define_typed_procedure(S_gc_off,       g_gc_off_w,        0, 0, 0, H_gc_off,        s7_make_signature(s7, 1, b));

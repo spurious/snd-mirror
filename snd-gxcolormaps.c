@@ -1142,7 +1142,7 @@ static Xen g_is_colormap(Xen obj)
 {
   #define H_is_colormap "(" S_is_colormap " obj) -> " PROC_TRUE " if 'obj' is a colormap."
   return(C_bool_to_Xen_boolean(xen_is_colormap(obj) && 
-			  is_colormap(Xen_colormap_to_C_int(obj))));
+			       is_colormap(Xen_colormap_to_C_int(obj))));
 }
 
 
@@ -1213,6 +1213,18 @@ static Xen colormap_temp[16]; /* static for Ruby's sake */
 
 void g_init_gxcolormaps(void)
 {
+#if HAVE_SCHEME
+  s7_pointer i, p, t, b, r, s, col, fnc;
+  b = s7_make_symbol(s7, "boolean?");
+  i = s7_make_symbol(s7, "integer?");
+  p = s7_make_symbol(s7, "pair?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  col = s7_make_symbol(s7, "colormap?");
+  fnc = s7_make_symbol(s7, "procedure?");
+  t = s7_t(s7);
+#endif
+
   cmaps_size = NUM_BUILTIN_COLORMAPS;
   cmaps = (cmap **)calloc(cmaps_size, sizeof(cmap *));
   
@@ -1271,17 +1283,21 @@ void g_init_gxcolormaps(void)
   Xen_define_variable("phases-colormap",          colormap_temp[15], C_int_to_Xen_colormap(15));
 #endif
 
-  Xen_define_safe_procedure(S_is_colormap, g_is_colormap_w,         1, 0, 0, H_is_colormap);
-  Xen_define_safe_procedure(S_colormap_ref, g_colormap_ref_w,       2, 0, 0, H_colormap_ref);
-  Xen_define_safe_procedure(S_add_colormap, g_add_colormap_w,       2, 0, 0, H_add_colormap);
-  Xen_define_safe_procedure(S_colormap_name, g_colormap_name_w,     1, 0, 0, H_colormap_name);
-  Xen_define_safe_procedure(S_delete_colormap, g_delete_colormap_w, 1, 0, 0, H_delete_colormap);
+  Xen_define_typed_procedure(S_is_colormap,         g_is_colormap_w,         1, 0, 0, H_is_colormap,         s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_colormap_ref,        g_colormap_ref_w,        2, 0, 0, H_colormap_ref,        s7_make_signature(s7, 3, p, col, r));
+  Xen_define_typed_procedure(S_add_colormap,        g_add_colormap_w,        2, 0, 0, H_add_colormap,        s7_make_signature(s7, 3, col, s, fnc));
+  Xen_define_typed_procedure(S_colormap_name,       g_colormap_name_w,       1, 0, 0, H_colormap_name,       s7_make_signature(s7, 2, s, col));
+  Xen_define_typed_procedure(S_delete_colormap,     g_delete_colormap_w,     1, 0, 0, H_delete_colormap,     s7_make_signature(s7, 2, col, col));
+  Xen_define_typed_procedure(S_integer_to_colormap, g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap, s7_make_signature(s7, 2, col, i));
+  Xen_define_typed_procedure(S_colormap_to_integer, g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer, s7_make_signature(s7, 2, i, col));
 
-  Xen_define_dilambda(S_colormap,      g_colormap_w,      H_colormap,      S_set S_colormap,      g_set_colormap_w,      0, 0, 1, 0);
-  Xen_define_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, S_set S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_colormap, g_colormap_w, H_colormap,
+			    S_set S_colormap, g_set_colormap_w, 0, 0, 1, 0,
+			    s7_make_signature(s7, 1, col),  s7_make_signature(s7, 2, col, col));
 
-  Xen_define_safe_procedure(S_integer_to_colormap,       g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap);
-  Xen_define_safe_procedure(S_colormap_to_integer,       g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer);
+  Xen_define_typed_dilambda(S_colormap_size, g_colormap_size_w, H_colormap_size, 
+			    S_set S_colormap_size, g_set_colormap_size_w, 0, 0, 1, 0,
+			    s7_make_signature(s7, 1, i),  s7_make_signature(s7, 2, i, i));
 
 #if HAVE_SCHEME
   s7_symbol_set_access(s7, ss->color_map_size_symbol, s7_make_function(s7, "[acc-" S_colormap_size "]", acc_colormap_size, 2, 0, false, "accessor"));

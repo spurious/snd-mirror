@@ -1333,8 +1333,13 @@ Xen_wrap_1_arg(g_set_background_gradient_w, g_set_background_gradient)
 
 void g_init_gxdraw(void)
 {
-  Xen_define_dilambda(S_background_gradient, g_background_gradient_w, H_background_gradient,
-				   S_set S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0);
+#if HAVE_SCHEME
+  s7_pointer pcl_r;
+  pcl_r = s7_make_circular_signature(s7, 0, 1, s7_make_symbol(s7, "real?"));
+#endif
+
+  Xen_define_typed_dilambda(S_background_gradient, g_background_gradient_w, H_background_gradient,
+			    S_set S_background_gradient, g_set_background_gradient_w,  0, 0, 1, 0, pcl_r, pcl_r);
 
   #define H_orientation_hook S_orientation_hook " (): called whenever one of the variables associated with the \
 orientation dialog changes"

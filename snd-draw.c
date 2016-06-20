@@ -2033,7 +2033,7 @@ Xen_wrap_3_args(g_set_combined_data_color_w, g_set_combined_data_color)
 void g_init_draw(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, r, mx, s, v, pcl_p, pl_t;
+  s7_pointer i, b, p, t, r, mx, s, v, pcl_p, pcl_t;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "pair?");
@@ -2043,7 +2043,7 @@ void g_init_draw(void)
   mx = s7_make_symbol(s7, "mix?");
   t = s7_t(s7);
   pcl_p = s7_make_circular_signature(s7, 0, 1, p);
-  pl_t = s7_make_signature(s7, 1, t);
+  pcl_t = s7_make_circular_signature(s7, 0, 1, t);
 #endif
 
   dialog_widgets = Xen_undefined;
@@ -2065,9 +2065,9 @@ void g_init_draw(void)
 
   Xen_define_typed_procedure(S_main_widgets,     g_main_widgets_w,    0, 0, 0, H_main_widgets,   pcl_p);
   Xen_define_typed_procedure(S_dialog_widgets,   g_dialog_widgets_w,  0, 0, 0, H_dialog_widgets, pcl_p);
-  Xen_define_typed_procedure(S_hide_widget,      g_hide_widget_w,     1, 0, 0, H_hide_widget,    pl_t);
-  Xen_define_typed_procedure(S_show_widget,      g_show_widget_w,     1, 0, 0, H_show_widget,    pl_t);
-  Xen_define_typed_procedure(S_focus_widget,     g_focus_widget_w,    1, 0, 0, H_focus_widget,   pl_t);
+  Xen_define_typed_procedure(S_hide_widget,      g_hide_widget_w,     1, 0, 0, H_hide_widget,    pcl_t);
+  Xen_define_typed_procedure(S_show_widget,      g_show_widget_w,     1, 0, 0, H_show_widget,    pcl_t);
+  Xen_define_typed_procedure(S_focus_widget,     g_focus_widget_w,    1, 0, 0, H_focus_widget,   pcl_t);
 
   Xen_define_typed_dilambda(S_foreground_color, g_foreground_color_w, H_foreground_color, 
 			    S_set S_foreground_color, g_set_foreground_color_w, 0, 3, 1, 3,

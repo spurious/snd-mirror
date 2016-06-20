@@ -10050,7 +10050,7 @@ static s7_pointer acc_with_gl(s7_scheme *sc, s7_pointer args) {return(g_set_with
 void g_init_chn(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, h, r, s, fv, pl_itt, pl_itti, pl_rtt, pl_rttr, pl_btt, pl_bttb, pl_ptt, pl_pttp, plc_t;
+  s7_pointer i, b, p, t, h, r, s, fv, pl_itt, pl_itti, pl_rtt, pl_rttr, pl_btt, pl_bttb, pl_ptt, pl_pttp, plc_t, pl_pttt, pl_ptttp;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "list?");
@@ -10067,6 +10067,8 @@ void g_init_chn(void)
   pl_bttb = s7_make_signature(s7, 4, b, t, t, b);
   pl_ptt = s7_make_signature(s7, 3, p, t, t);
   pl_pttp = s7_make_signature(s7, 4, p, t, t, p);
+  pl_pttt = s7_make_signature(s7, 4, p, t, t, t);
+  pl_ptttp = s7_make_signature(s7, 5, p, t, t, t, p);
   plc_t = s7_make_circular_signature(s7, 0, 1, t);
 #endif
 
@@ -10153,7 +10155,7 @@ void g_init_chn(void)
   Xen_define_typed_dilambda(S_channel_property, g_channel_property_w, H_channel_property, 
 			    S_set S_channel_property, g_set_channel_property_w, 1, 2, 2, 2, plc_t, plc_t);
   Xen_define_typed_dilambda(S_edit_properties, g_edit_properties_w, H_edit_properties, 
-			    S_set S_edit_properties, g_set_edit_properties_w, 0, 3, 1, 3, pl_ptt, pl_pttp);
+			    S_set S_edit_properties, g_set_edit_properties_w, 0, 3, 1, 3, pl_pttt, pl_ptttp);
   Xen_define_typed_dilambda(S_edit_property, g_edit_property_w, H_edit_property, 
 			    S_set S_edit_property, g_set_edit_property_w, 1, 3, 2, 3, plc_t, plc_t);
   Xen_define_typed_dilambda(S_max_transform_peaks, g_max_transform_peaks_w, H_max_transform_peaks, 

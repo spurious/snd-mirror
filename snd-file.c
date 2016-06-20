@@ -3746,7 +3746,7 @@ static s7_pointer acc_clipping(s7_scheme *sc, s7_pointer args) {return(g_set_cli
 void g_init_file(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_zb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_zt, pl_zss, pl_ltl, pl_ls;
+  s7_pointer pl_b, pl_bb, pl_i, pl_ii, pl_s, pl_ss, pl_d, pl_dr, pl_zb, pl_l, pl_ll, pl_bs, pl_is, pl_lt, pl_zt, pl_zss, pl_ltl, pl_ls, pl_isf;
   {
     s7_pointer i, b, d, r, s, p, l, t, z;
     i = s7_make_symbol(s7, "integer?");
@@ -3777,6 +3777,7 @@ void g_init_file(void)
     pl_lt = s7_make_signature(s7, 2, l, t);
     pl_ls = s7_make_signature(s7, 2, l, s);
     pl_ltl = s7_make_signature(s7, 3, l, t, l);
+    pl_isf = s7_make_signature(s7, 3, i, s, s7_make_symbol(s7, "procedure?"));
   }
 #endif
 
@@ -3939,8 +3940,8 @@ the newly updated sound may have a different index."
   Xen_define_typed_dilambda(S_clipping, g_clipping_w, H_clipping,
 			    S_set S_clipping, g_set_clipping_w,  0, 0, 1, 0, pl_b, pl_bb);
   
-  Xen_define_safe_procedure(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter);
-  Xen_define_safe_procedure(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter);
+  Xen_define_typed_procedure(S_add_file_filter,    g_add_file_filter_w,    2, 0, 0, H_add_file_filter, pl_isf);
+  Xen_define_typed_procedure(S_delete_file_filter, g_delete_file_filter_w, 1, 0, 0, H_delete_file_filter, pl_ii);
 
   ss->file_filters_size = INITIAL_FILE_FILTERS_SIZE;
   ss->file_filters = Xen_make_vector(ss->file_filters_size, Xen_false);

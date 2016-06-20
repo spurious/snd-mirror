@@ -783,20 +783,30 @@ static s7_pointer acc_eps_size(s7_scheme *sc, s7_pointer args) {return(g_set_eps
 
 void g_init_print(void)
 {
-  Xen_define_procedure(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps);
-  Xen_define_procedure(S_gl_graph_to_ps, g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps);
+#if HAVE_SCHEME
+  s7_pointer i, t, r, s, pcl_s, pcl_r;
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  i = s7_make_symbol(s7, "integer?");
+  t = s7_t(s7);
+  pcl_s = s7_make_circular_signature(s7, 0, 1, s);
+  pcl_r = s7_make_circular_signature(s7, 0, 1, r);
+#endif
 
-  Xen_define_dilambda(S_eps_file, g_eps_file_w, H_eps_file,
-				   S_set S_eps_file, g_set_eps_file_w,  0, 0, 1, 0);
+  Xen_define_typed_procedure(S_graph_to_ps, g_graph_to_ps_w, 0, 1, 0, H_graph_to_ps, pcl_s);
+  Xen_define_typed_procedure(S_gl_graph_to_ps, g_gl_graph_to_ps_w, 0, 4, 0, H_gl_graph_to_ps, s7_make_signature(s7, 5, s, s, i, t, t));
 
-  Xen_define_dilambda(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
-				   S_set S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_eps_file, g_eps_file_w, H_eps_file, 
+			    S_set S_eps_file, g_set_eps_file_w,  0, 0, 1, 0, pcl_s, pcl_s);
+
+  Xen_define_typed_dilambda(S_eps_left_margin, g_eps_left_margin_w, H_eps_left_margin,
+			    S_set S_eps_left_margin, g_set_eps_left_margin_w,  0, 0, 1, 0, pcl_r, pcl_r);
   
-  Xen_define_dilambda(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
-				   S_set S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_eps_bottom_margin, g_eps_bottom_margin_w, H_eps_bottom_margin,
+			    S_set S_eps_bottom_margin, g_set_eps_bottom_margin_w,  0, 0, 1, 0, pcl_r, pcl_r);
 
-  Xen_define_dilambda(S_eps_size, g_eps_size_w, H_eps_size,
-				   S_set S_eps_size, g_set_eps_size_w,  0, 0, 1, 0);
+  Xen_define_typed_dilambda(S_eps_size, g_eps_size_w, H_eps_size,
+			    S_set S_eps_size, g_set_eps_size_w,  0, 0, 1, 0, pcl_r, pcl_r);
 
 #if HAVE_GL && WITH_GL2PS
   Xen_provide_feature("gl2ps");

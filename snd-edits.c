@@ -9235,6 +9235,21 @@ Xen_wrap_1_arg(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_SCHEME
+  s7_pointer b, i, p, t, f, fnc, fv, r, s, smp, x, rg, pl_fx;
+  b = s7_make_symbol(s7, "boolean?");
+  i = s7_make_symbol(s7, "integer?");
+  p = s7_make_symbol(s7, "pair?");
+  f = s7_make_symbol(s7, "float?");
+  fv = s7_make_symbol(s7, "float-vector?");
+  r = s7_make_symbol(s7, "real?");
+  s = s7_make_symbol(s7, "string?");
+  rg = s7_make_symbol(s7, "region?");
+  fnc = s7_make_symbol(s7, "procedure?");
+  smp = s7_make_symbol(s7, "sampler?");
+  x = s7_make_signature(s7, 2, smp, s7_make_symbol(s7, "mix-sampler?"));
+  t = s7_t(s7);
+  pl_fx = s7_make_signature(s7, 2, f, x);
+
   sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, length_sf, NULL, NULL, NULL);
 #else
   sf_tag = Xen_make_object_type("Sampler", sizeof(snd_fd));
@@ -9253,60 +9268,65 @@ void g_init_edits(void)
 
   Xen_define_constant(S_current_edit_position,   AT_CURRENT_EDIT_POSITION,  "represents the current edit history list position (-1)");
 
-  Xen_define_safe_procedure(S_make_sampler,           g_make_sampler_w,           0, 5, 0, H_make_sampler);
-  Xen_define_safe_procedure(S_make_region_sampler,    g_make_region_sampler_w,    1, 3, 0, H_make_region_sampler);
-  Xen_define_safe_procedure(S_read_sample,            g_read_sample_w,            1, 0, 0, H_read_sample);
-  Xen_define_safe_procedure(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction);
-  Xen_define_safe_procedure(S_read_region_sample,     g_read_sample_w,            1, 0, 0, H_read_sample);
-  Xen_define_safe_procedure(S_next_sample,            g_next_sample_w,            1, 0, 0, H_next_sample);
-  Xen_define_safe_procedure(S_previous_sample,        g_previous_sample_w,        1, 0, 0, H_previous_sample);
-  Xen_define_safe_procedure(S_free_sampler,           g_free_sampler_w,           1, 0, 0, H_free_sampler);
-  Xen_define_safe_procedure(S_sampler_home,           g_sampler_home_w,           1, 0, 0, H_sampler_home);
-  Xen_define_safe_procedure(S_is_sampler,             g_is_sampler_w,             1, 0, 0, H_is_sampler);
-  Xen_define_safe_procedure(S_is_region_sampler,      g_region_is_sampler_w,      1, 0, 0, H_region_is_sampler);
-  Xen_define_safe_procedure(S_is_sampler_at_end,      g_sampler_at_end_w,         1, 0, 0, H_sampler_at_end);
-  Xen_define_safe_procedure(S_sampler_position,       g_sampler_position_w,       1, 0, 0, H_sampler_position);
-  Xen_define_safe_procedure(S_copy_sampler,           g_copy_sampler_w,           1, 0, 0, H_copy_sampler);
+  Xen_define_typed_procedure(S_make_sampler,        g_make_sampler_w,        0, 5, 0, H_make_sampler,     s7_make_signature(s7, 6, smp, i, t, t, t, t));
+  Xen_define_typed_procedure(S_make_region_sampler, g_make_region_sampler_w, 1, 3, 0, H_make_region_sampler, s7_make_signature(s7, 5, smp, rg, i, i, i));
+  Xen_define_typed_procedure(S_read_sample,         g_read_sample_w,         1, 0, 0, H_read_sample,      pl_fx);
+  Xen_define_typed_procedure(S_read_sample_with_direction, g_read_sample_with_direction_w, 2, 0, 0, H_read_sample_with_direction, s7_make_signature(s7, 3, f, x, i));
+  Xen_define_typed_procedure(S_read_region_sample,  g_read_sample_w,         1, 0, 0, H_read_sample,      pl_fx);
+  Xen_define_typed_procedure(S_next_sample,         g_next_sample_w,         1, 0, 0, H_next_sample,      pl_fx);
+  Xen_define_typed_procedure(S_previous_sample,     g_previous_sample_w,     1, 0, 0, H_previous_sample,  pl_fx);
+  Xen_define_typed_procedure(S_free_sampler,        g_free_sampler_w,        1, 0, 0, H_free_sampler,     s7_make_signature(s7, 2, b, x));
+  Xen_define_typed_procedure(S_sampler_home,        g_sampler_home_w,        1, 0, 0, H_sampler_home,     s7_make_signature(s7, 2, t, x));
+  Xen_define_typed_procedure(S_is_sampler,          g_is_sampler_w,          1, 0, 0, H_is_sampler,       s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_is_region_sampler,   g_region_is_sampler_w,   1, 0, 0, H_region_is_sampler, s7_make_signature(s7, 2, b, x));
+  Xen_define_typed_procedure(S_is_sampler_at_end,   g_sampler_at_end_w,      1, 0, 0, H_sampler_at_end,   s7_make_signature(s7, 2, b, x));
+  Xen_define_typed_procedure(S_sampler_position,    g_sampler_position_w,    1, 0, 0, H_sampler_position, s7_make_signature(s7, 2, i, x));
+  Xen_define_typed_procedure(S_copy_sampler,        g_copy_sampler_w,        1, 0, 0, H_copy_sampler,     s7_make_signature(s7, 2, x, x));
 
-  Xen_define_safe_procedure(S_save_edit_history,      g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
-  Xen_define_safe_procedure(S_edit_fragment,          g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
-  Xen_define_safe_procedure(S_edit_fragment_type_name,g_edit_fragment_type_name_w,      1, 0, 0, "internal testing function");
+  Xen_define_typed_procedure(S_save_edit_history,   g_save_edit_history_w,   1, 2, 0, H_save_edit_history, s7_make_signature(s7, 4, s, s, t, t));
+  Xen_define_typed_procedure(S_edit_fragment,       g_edit_fragment_w,       0, 3, 0, H_edit_fragment,    s7_make_signature(s7, 4, p, i, t, t));
+  Xen_define_typed_procedure(S_edit_fragment_type_name,g_edit_fragment_type_name_w, 1, 0, 0, "internal testing function", s7_make_signature(s7, 2, s, i));
 
-  Xen_define_safe_procedure(S_undo,                   g_undo_w,                         0, 3, 0, H_undo);
+  Xen_define_typed_procedure(S_undo,                g_undo_w,                0, 3, 0, H_undo,             s7_make_signature(s7, 4, i, i, t, t));
 #if HAVE_RUBY
-  Xen_define_procedure("undo_edit",                   g_undo_w,                         0, 3, 0, H_undo);
-#endif
-  Xen_define_safe_procedure(S_redo,                   g_redo_w,                         0, 3, 0, H_redo);
-  Xen_define_procedure(S_as_one_edit,                 g_as_one_edit_w,                  1, 1, 0, H_as_one_edit);
-  Xen_define_safe_procedure(S_display_edits,          g_display_edits_w,                0, 3, 0, H_display_edits);
-  Xen_define_safe_procedure(S_edit_tree,              g_edit_tree_w,                    0, 3, 0, H_edit_tree);
+  Xen_define_procedure("undo_edit",                 g_undo_w,                0, 3, 0, H_undo);
+#endif 
+  Xen_define_typed_procedure(S_redo,                g_redo_w,                0, 3, 0, H_redo,             s7_make_signature(s7, 4, i, i, t, t));
+  Xen_define_typed_procedure(S_as_one_edit,         g_as_one_edit_w,         1, 1, 0, H_as_one_edit,      s7_make_signature(s7, 3, t, fnc, s));
+  Xen_define_typed_procedure(S_display_edits,       g_display_edits_w,       0, 3, 0, H_display_edits,    s7_make_circular_signature(s7, 1, 2, s, t));
+  Xen_define_typed_procedure(S_edit_tree,           g_edit_tree_w,           0, 3, 0, H_edit_tree,        s7_make_circular_signature(s7, 1, 2, p, t));
 
-  Xen_define_safe_procedure(S_delete_sample,          g_delete_sample_w,                1, 3, 0, H_delete_sample);
-  Xen_define_safe_procedure(S_delete_samples,         g_delete_samples_w,               2, 3, 0, H_delete_samples);
-  Xen_define_safe_procedure(S_insert_sample,          g_insert_sample_w,                2, 3, 0, H_insert_sample);
-  Xen_define_safe_procedure(S_insert_samples,         g_insert_samples_w,               3, 5, 0, H_insert_samples);
-  Xen_define_safe_procedure(S_vct_to_channel,         g_vct_to_channel_w,               1, 6, 0, H_vct_to_channel);
-  Xen_define_safe_procedure(S_channel_to_vct,         g_channel_to_vct_w,               0, 5, 0, H_channel_to_vct);
-  Xen_define_safe_procedure(S_insert_sound,           g_insert_sound_w,                 1, 6, 0, H_insert_sound);
-  Xen_define_safe_procedure(S_scale_channel,          g_scale_channel_w,                1, 5, 0, H_scale_channel);
-  Xen_define_safe_procedure(S_normalize_channel,      g_normalize_channel_w,            1, 5, 0, H_normalize_channel);
+  Xen_define_typed_procedure(S_delete_sample,       g_delete_sample_w,       1, 3, 0, H_delete_sample,    s7_make_circular_signature(s7, 2, 3, i, i, t));
+  Xen_define_typed_procedure(S_delete_samples,      g_delete_samples_w,      2, 3, 0, H_delete_samples,   s7_make_circular_signature(s7, 3, 4, i, i, i, t));
+  Xen_define_typed_procedure(S_insert_sample,       g_insert_sample_w,       2, 3, 0, H_insert_sample,    s7_make_circular_signature(s7, 2, 3, i, r, t));
+  Xen_define_typed_procedure(S_insert_samples,      g_insert_samples_w,      3, 5, 0, H_insert_samples,   s7_make_signature(s7, 9, i, i, i, t, t, t, t, b, s));
+  Xen_define_typed_procedure(S_vct_to_channel,      g_vct_to_channel_w,      1, 6, 0, H_vct_to_channel,   s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_channel_to_vct,      g_channel_to_vct_w,      0, 5, 0, H_channel_to_vct,   s7_make_circular_signature(s7, 3, 4, fv, i, i, t));
+  Xen_define_typed_procedure(S_insert_sound,        g_insert_sound_w,        1, 6, 0, H_insert_sound,     s7_make_circular_signature(s7, 4, 5, i, s, i, i, t));
+  Xen_define_typed_procedure(S_scale_channel,       g_scale_channel_w,       1, 5, 0, H_scale_channel,    s7_make_circular_signature(s7, 2, 3, r, r, t));
+  Xen_define_typed_procedure(S_normalize_channel,   g_normalize_channel_w,   1, 5, 0, H_normalize_channel,s7_make_circular_signature(s7, 2, 3, r, r, t));
 
-  Xen_define_procedure(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
-  Xen_define_procedure(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state");
-  Xen_define_procedure(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state");
+  Xen_define_typed_procedure(S_change_samples_with_origin,   g_change_samples_with_origin_w,   7, 1, 0, "internal function used in save-state",
+			     s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_insert_samples_with_origin,   g_insert_samples_with_origin_w,   7, 1, 0, "internal function used in save-state",
+			     s7_make_circular_signature(s7, 0, 1, t));
+  Xen_define_typed_procedure(S_override_samples_with_origin, g_override_samples_with_origin_w, 5, 1, 0, "internal function used in save-state",
+			     s7_make_circular_signature(s7, 0, 1, t));
 
-  Xen_define_dilambda(S_sample,  g_sample_w,  H_sample,  S_set S_sample,  g_set_sample_w,  0, 4, 1, 4);
-  Xen_define_dilambda(S_samples, g_samples_w, H_samples, S_set S_samples, g_set_samples_w, 0, 5, 3, 7);
+  Xen_define_typed_dilambda(S_sample,  g_sample_w,  H_sample,  S_set S_sample,  g_set_sample_w,  0, 4, 1, 4,
+			    s7_make_signature(s7, 5, r, i, t, t, t), s7_make_signature(s7, 6, r, i, t, t, t, r));
+  Xen_define_typed_dilambda(S_samples, g_samples_w, H_samples, S_set S_samples, g_set_samples_w, 0, 5, 3, 7,
+			    s7_make_circular_signature(s7, 2, 3, t, i, t), s7_make_circular_signature(s7, 0, 1, t));
 
 #if HAVE_SCHEME
-  Xen_define_procedure("set-sample",                   orig_g_set_sample_w,              2, 3, 0, H_sample);   /* for edit-list->function */
+  Xen_define_typed_procedure("set-sample",          orig_g_set_sample_w,     2, 3, 0, H_sample,      s7_make_circular_signature(s7, 3, 4, r, i, r, t));
 #endif
-  Xen_define_procedure("set-samples",                  orig_g_set_samples_w,             0, 0, 1, H_set_samples);
+  Xen_define_typed_procedure("set-samples",         orig_g_set_samples_w,    0, 0, 1, H_set_samples, s7_make_circular_signature(s7, 3, 4, r, i, r, t));
 
-  Xen_define_safe_procedure(S_is_snd_to_sample,             g_is_snd_to_sample_w,             1, 0, 0, H_is_snd_to_sample);
-  Xen_define_procedure(S_make_snd_to_sample,           g_make_snd_to_sample_w,           0, 1, 0, H_make_snd_to_sample);
-  Xen_define_procedure(S_snd_to_sample,                g_snd_to_sample_w,                2, 1, 0, H_snd_to_sample);
-  Xen_define_procedure(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
+  Xen_define_typed_procedure(S_is_snd_to_sample,    g_is_snd_to_sample_w,    1, 0, 0, H_is_snd_to_sample,   s7_make_signature(s7, 2, b, t));
+  Xen_define_typed_procedure(S_make_snd_to_sample,  g_make_snd_to_sample_w,  0, 1, 0, H_make_snd_to_sample, s7_make_signature(s7, 2, t, t));
+  Xen_define_typed_procedure(S_snd_to_sample,       g_snd_to_sample_w,       2, 1, 0, H_snd_to_sample,      s7_make_signature(s7, 4, f, t, i, i));
+  Xen_define_typed_procedure(S_edit_list_to_function, g_edit_list_to_function_w, 0, 4, 0, H_edit_list_to_function, s7_make_signature(s7, 5, t, t, t, i, i));
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
 If it returns " PROC_TRUE ", the file is not saved.  'name' is " PROC_FALSE " unless the file is being saved under a new name (as in sound-save-as)."
@@ -9330,7 +9350,6 @@ keep track of which files are in a given saved state batch, and a way to rename 
   mus_generator_set_file_name(snd_to_sample_class, snd_to_sample_file_name);
   mus_generator_set_location(snd_to_sample_class, snd_to_sample_location);
   mus_generator_set_extended_type(snd_to_sample_class, MUS_INPUT);
-
 
 #if HAVE_SCHEME
   {

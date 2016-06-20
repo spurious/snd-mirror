@@ -9651,19 +9651,17 @@ via mus-data.
 
 <pre class="indented">
 (let ((rd (make-readin "oboe.snd"))
-      (cur-srate (srate "oboe.snd"))
-      (old-srate *clm-srate*))
-  (set! *clm-srate* cur-srate)
-  (let ((scn (<em class=red>make-moving-pitch</em> rd))
-	(last-pitch 0.0)
-	(pitch 0.0))
-    (do ((i 0 (+ i 1)))
-	((= i 22050))
-      (set! last-pitch pitch)
-      (set! pitch (<em class=red>moving-pitch</em> scn))
-      (if (not (= last-pitch pitch))
-	  (format () "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))
-  (set! *clm-srate* old-srate))
+      (cur-srate (srate "oboe.snd")))
+  (let-temporarily ((*clm-srate* cur-srate))
+    (let ((scn (<em class=red>make-moving-pitch</em> rd))
+	  (last-pitch 0.0)
+	  (pitch 0.0))
+      (do ((i 0 (+ i 1)))
+	  ((= i 22050))
+        (set! last-pitch pitch)
+        (set! pitch (<em class=red>moving-pitch</em> scn))
+        (if (not (= last-pitch pitch))
+	    (format () "~A: ~A~%" (* 1.0 (/ i cur-srate)) pitch))))))
 </pre>
 <div class="separator"></div>
 

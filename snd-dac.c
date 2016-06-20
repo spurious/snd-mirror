@@ -3475,7 +3475,7 @@ void g_init_dac(void)
   r = s7_make_symbol(s7, "real?");
   pl = s7_make_symbol(s7, "player?");
   t = s7_t(s7);
-  pcl_t = s7_make_signature(s7, 0, 1, t);
+  pcl_t = s7_make_circular_signature(s7, 0, 1, t);
 #endif
 
   init_xen_player();
@@ -3490,7 +3490,7 @@ void g_init_dac(void)
   Xen_define_typed_procedure(S_stop_player,    g_stop_player_w,    1, 0, 0, H_stop_player,   s7_make_signature(s7, 2, pl, pl));
   Xen_define_typed_procedure(S_free_player,    g_free_player_w,    1, 0, 0, H_free_player,   s7_make_signature(s7, 2, b, pl));
   Xen_define_typed_procedure(S_players,        g_players_w,        0, 0, 0, H_players,       s7_make_signature(s7, 1, l));
-  Xen_define_typed_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player,     s7_make_signature(s7, 1, b));
+  Xen_define_typed_procedure(S_is_player,      g_is_player_w,      1, 0, 0, H_is_player,     s7_make_signature(s7, 2, b, t));
 
   Xen_define_typed_dilambda(S_pausing, g_pausing_w, H_pausing,
 			    S_set S_pausing, g_set_pausing_w, 0, 0, 1, 0,

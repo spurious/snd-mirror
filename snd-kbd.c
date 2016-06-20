@@ -1681,6 +1681,13 @@ Xen_wrap_4_optional_args(g_key_w, g_key)
 void g_init_kbd(void)
 {
   int i;
+#if HAVE_SCHEME
+  s7_pointer n, t, b, s;
+  t = s7_t(s7);
+  n = s7_make_symbol(s7, "integer?");
+  b = s7_make_symbol(s7, "boolean?");
+  s = s7_make_symbol(s7, "string?");
+#endif
 
   #define H_cursor_in_view     "The value for a " S_bind_key " function that moves the window so that the cursor is in the view"
   #define H_cursor_on_left     "The value for a " S_bind_key " function that moves the window so that the cursor is at the left edge"
@@ -1688,16 +1695,16 @@ void g_init_kbd(void)
   #define H_cursor_in_middle   "The value for a " S_bind_key " function that moves the window so that the cursor is in the middle"
   #define H_keyboard_no_action "The value for a " S_bind_key " function that does nothing upon return"
 
-  Xen_define_constant(S_cursor_in_view,          CURSOR_IN_VIEW,                      H_cursor_in_view);
-  Xen_define_constant(S_cursor_on_left,          CURSOR_ON_LEFT,                      H_cursor_on_left);
-  Xen_define_constant(S_cursor_on_right,         CURSOR_ON_RIGHT,                     H_cursor_on_right);
-  Xen_define_constant(S_cursor_in_middle,        CURSOR_IN_MIDDLE,                    H_cursor_in_middle);
-  Xen_define_constant(S_keyboard_no_action,      KEYBOARD_NO_ACTION,                  H_keyboard_no_action);
+  Xen_define_constant(S_cursor_in_view,     CURSOR_IN_VIEW,     H_cursor_in_view);
+  Xen_define_constant(S_cursor_on_left,     CURSOR_ON_LEFT,     H_cursor_on_left);
+  Xen_define_constant(S_cursor_on_right,    CURSOR_ON_RIGHT,    H_cursor_on_right);
+  Xen_define_constant(S_cursor_in_middle,   CURSOR_IN_MIDDLE,   H_cursor_in_middle);
+  Xen_define_constant(S_keyboard_no_action, KEYBOARD_NO_ACTION, H_keyboard_no_action);
 
-  Xen_define_safe_procedure(S_key_binding,            g_key_binding_w,            1, 2, 0, H_key_binding);
-  Xen_define_safe_procedure(S_bind_key,               g_bind_key_w,               3, 3, 0, H_bind_key);
-  Xen_define_safe_procedure(S_unbind_key,             g_unbind_key_w,             2, 1, 0, H_unbind_key);
-  Xen_define_safe_procedure(S_key,                    g_key_w,                    2, 2, 0, H_key);
+  Xen_define_typed_procedure(S_key_binding, g_key_binding_w, 1, 2, 0, H_key_binding, s7_make_signature(s7, 4, t, t, n, b));
+  Xen_define_typed_procedure(S_bind_key,    g_bind_key_w,    3, 3, 0, H_bind_key,    s7_make_signature(s7, 7, t, t, n, t, b, s, s)); 
+  Xen_define_typed_procedure(S_unbind_key,  g_unbind_key_w,  2, 1, 0, H_unbind_key,  s7_make_signature(s7, 4, t, t, n, b));
+  Xen_define_typed_procedure(S_key,         g_key_w,         2, 2, 0, H_key,         s7_make_signature(s7, 5, t, n, n, t, t));
 
   for (i = 0; i < NUM_BUILT_IN_KEYS; i++)
     built_in_keys[i].func = Xen_false;

@@ -3994,7 +3994,7 @@ static s7_pointer acc_with_mix_tags(s7_scheme *sc, s7_pointer args) {return(g_se
 void g_init_mix(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, m, b, s, p, t, f, ms;
+  s7_pointer i, m, b, s, p, t, f, ms, fv;
   i = s7_make_symbol(s7, "integer?");
   m = s7_make_symbol(s7, "mix?");
   ms = s7_make_symbol(s7, "mix-sampler?");
@@ -4002,6 +4002,7 @@ void g_init_mix(void)
   s = s7_make_symbol(s7, "string?");
   p = s7_make_symbol(s7, "list?");
   f = s7_make_symbol(s7, "float?");
+  fv = s7_make_symbol(s7, "float-vector?");
   t = s7_t(s7);
 #endif
 
@@ -4028,9 +4029,9 @@ void g_init_mix(void)
   Xen_define_typed_procedure(S_read_mix_sample,   g_read_mix_sample_w,        1, 0, 0, H_read_mix_sample,  s7_make_signature(s7, 2, f, ms));
   Xen_define_typed_procedure(S_is_mix_sampler,    g_is_mix_sampler_w,         1, 0, 0, H_is_mix_sampler,   s7_make_signature(s7, 2, b, t));
 
-  Xen_define_procedure(S_save_mix,               g_save_mix_w,               2, 0, 0, H_save_mix);
-  Xen_define_procedure(S_mix,                    g_mix_w,                    1, 6, 0, H_mix);
-  Xen_define_procedure(S_mix_vct,                g_mix_vct_w,                1, 5, 0, H_mix_vct);
+  Xen_define_typed_procedure(S_save_mix,          g_save_mix_w,               2, 0, 0, H_save_mix,         s7_make_signature(s7, 3, m, m, s));
+  Xen_define_typed_procedure(S_mix,               g_mix_w,                    1, 6, 0, H_mix,              s7_make_signature(s7, 8, t, s, i, t, t, t, b, t));
+  Xen_define_typed_procedure(S_mix_vct,           g_mix_vct_w,                1, 5, 0, H_mix_vct,          s7_make_signature(s7, 7, m, fv, i, t, t, b, s));
 
   Xen_define_typed_procedure(S_mixes,             g_mixes_w,                  0, 2, 0, H_mixes,            s7_make_signature(s7, 3, p, t, t));
   Xen_define_typed_procedure(S_mix_home,          g_mix_home_w,               1, 0, 0, H_mix_home,         s7_make_signature(s7, 2, p, m));
@@ -4051,13 +4052,13 @@ void g_init_mix(void)
 			    s7_make_signature(s7, 2, p, m), s7_make_signature(s7, 3, p, m, s7_make_signature(s7, 2, p, b)));
 
   Xen_define_typed_dilambda(S_mix_name,       g_mix_name_w,       H_mix_name,       S_set S_mix_name,       g_set_mix_name_w,       1, 0, 2, 0,
-		      s7_make_signature(s7, 2, s, m), s7_make_signature(s7, 3, s, m, s));
+			    s7_make_signature(s7, 2, s, m), s7_make_signature(s7, 3, s, m, s));
   Xen_define_typed_dilambda(S_mix_sync,       g_mix_sync_w,       H_mix_sync,       S_set S_mix_sync,       g_set_mix_sync_w,       1, 0, 2, 0,
 			    s7_make_signature(s7, 2, i, m), s7_make_signature(s7, 3, i, m, s7_make_signature(s7, 2, i, b)));
   Xen_define_typed_dilambda(S_mix_properties, g_mix_properties_w, H_mix_properties, S_set S_mix_properties, g_set_mix_properties_w, 1, 0, 2, 0,
 			    s7_make_signature(s7, 2, p, m), s7_make_signature(s7, 3, p, m, p));
   Xen_define_typed_dilambda(S_mix_property,   g_mix_property_w,   H_mix_property,   S_set S_mix_property,   g_set_mix_property_w,   2, 0, 3, 0,
-		      s7_make_signature(s7, 3, t, t, m), s7_make_circular_signature(s7, 3, 4, t, t, m, t));
+			    s7_make_signature(s7, 3, t, t, m), s7_make_circular_signature(s7, 3, 4, t, t, m, t));
   Xen_define_typed_dilambda(S_mix_tag_y,      g_mix_tag_y_w,      H_mix_tag_y,      S_set S_mix_tag_y,      g_set_mix_tag_y_w,      1, 0, 2, 0,
 			    s7_make_signature(s7, 2, i, m), s7_make_signature(s7, 3, i, m, i));
 
