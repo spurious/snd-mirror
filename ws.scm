@@ -876,7 +876,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 
 (define (mix-notelists . notelists)
-  ;; assume the second parameter is the begin time in seconds (the 1st is the instrument name)
+  ;; assume the second parameter is the begin time in seconds (the first is the instrument name)
   (sort! 
    (apply append notelists)
    (lambda (note1 note2)

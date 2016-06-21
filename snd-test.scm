@@ -9765,16 +9765,14 @@ EDITS: 2
   (define (test-simple-nsin n)
     (let ((p (make-nsin 400.0 n))
 	  (vp (make-float-vector 200))
-	  (vo (make-float-vector 200)))
-      (let ((ob (make-oscil-bank 
-		 (apply float-vector (let ((frqs ()))
-				       (do ((i 1 (+ i 1)))
-					   ((> i n))
-					 (set! frqs (cons (hz->radians (* i 400.0)) frqs)))
-				       (reverse frqs)))
-		 (make-float-vector n)
-		 (make-float-vector n (mus-scaler p))
-		 #t)))
+	  (vo (make-float-vector 200))
+	  (parts (apply float-vector
+			(let ((frqs ()))
+			  (do ((i 1 (+ i 1)))
+			      ((> i n))
+			    (set! frqs (cons (hz->radians (* i 400.0)) frqs)))
+			  (reverse frqs)))))
+      (let ((ob (make-oscil-bank parts (make-float-vector n) (make-float-vector n (mus-scaler p)) #t)))
 	(do ((i 0 (+ i 1)))
 	    ((= i 200))
 	  (float-vector-set! vp i (nsin p)))
@@ -19672,9 +19670,10 @@ EDITS: 2
 	    (snd-display ";mus-file-mix-with envs 1: no output? ~A" (map short-file-name (sounds)))))
       
       (with-sound ("mix.snd")
-	(let ((rd (vector (make-readin "flat.snd")))
-	      (es (vector (make-env '(0 0 1 1) :length 1000))))
-	  (mus-file-mix-with-envs rd 0 1000 (float-vector 0.0) #f es #f #f)))
+	(mus-file-mix-with-envs (vector (make-readin "flat.snd")) 0 1000 
+				(float-vector 0.0) #f
+				(vector (make-env '(0 0 1 1) :length 1000))
+				#f #f))
       
       (let ((ind (find-sound "mix.snd")))
 	(if (sound? ind)

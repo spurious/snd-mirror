@@ -1424,9 +1424,9 @@
 (CFNC "void gdk_window_set_modal_hint GdkWindow* window gboolean modal")
 (CFNC "void gdk_window_set_geometry_hints GdkWindow* window GdkGeometry* geometry GdkWindowHints geom_mask")
 ;;; (CFNC-gtk2 "void gdk_set_sm_client_id gchar* sm_client_id")
-(CFNC "void gdk_window_begin_paint_rect GdkWindow* window GdkRectangle* rectangle")
-;;; (CFNC "void gdk_window_begin_paint_region GdkWindow* window GdkRegion* region")
-(CFNC "void gdk_window_end_paint GdkWindow* window")
+;;; 3.21.3 (CFNC "void gdk_window_begin_paint_rect GdkWindow* window GdkRectangle* rectangle")
+;;; 3.21.3 (CFNC "void gdk_window_begin_paint_region GdkWindow* window GdkRegion* region")
+;;; 3.21.3 (CFNC "void gdk_window_end_paint GdkWindow* window")
 (CFNC "void gdk_window_set_title GdkWindow* window gchar* title")
 (CFNC "void gdk_window_set_role GdkWindow* window gchar* role")
 (CFNC "void gdk_window_set_transient_for GdkWindow* window GdkWindow* parent")
@@ -3792,7 +3792,7 @@
 (CFNC "GList* gtk_widget_list_accel_closures GtkWidget* widget") ; FREE (g_list_free)
 (CFNC "gboolean gtk_widget_mnemonic_activate GtkWidget* widget gboolean group_cycling")
 (CFNC "gboolean gtk_widget_event GtkWidget* widget GdkEvent* event")
-(CFNC "gint gtk_widget_send_expose GtkWidget* widget GdkEvent* event")
+;;; 3.21.3 (CFNC "gint gtk_widget_send_expose GtkWidget* widget GdkEvent* event")
 (CFNC "gboolean gtk_widget_activate GtkWidget* widget")
 ;;; 2.91.2 (CFNC "gboolean gtk_widget_set_scroll_adjustments GtkWidget* widget GtkAdjustment* @hadjustment GtkAdjustment* @vadjustment")
 ;;; 3.13.2 (CFNC "void gtk_widget_reparent GtkWidget* widget GtkWidget* new_parent")
@@ -5641,8 +5641,8 @@
 (CFNC "void gtk_menu_shell_set_take_focus GtkMenuShell* menu_shell gboolean take_focus")
 ;;; 3.1.6 (CFNC "GtkWidget* gtk_scrolled_window_get_hscrollbar GtkScrolledWindow* scrolled_window")
 ;;; 3.1.6 (CFNC "GtkWidget* gtk_scrolled_window_get_vscrollbar GtkScrolledWindow* scrolled_window")
-(CFNC "void gtk_size_group_set_ignore_hidden GtkSizeGroup* size_group gboolean ignore_hidden")
-(CFNC "gboolean gtk_size_group_get_ignore_hidden GtkSizeGroup* size_group")
+;;; 3.21.3 (CFNC "void gtk_size_group_set_ignore_hidden GtkSizeGroup* size_group gboolean ignore_hidden")
+;;; 3.21.3 (CFNC "gboolean gtk_size_group_get_ignore_hidden GtkSizeGroup* size_group")
 ;(CFNC "void gtk_stock_set_translate_func gchar* domain GtkTranslateFunc func lambda_data func_info GtkDestroyNotify notify" 'const)
 (CFNC "gboolean gtk_text_iter_forward_visible_line GtkTextIter* iter")
 (CFNC "gboolean gtk_text_iter_backward_visible_line GtkTextIter* iter")
@@ -9417,3 +9417,21 @@
 (CFNC-3.22 "int gdk_monitor_get_refresh_rate GdkMonitor* monitor")
 (CFNC-3.22 "GdkSubpixelLayout gdk_monitor_get_subpixel_layout GdkMonitor* monitor")
 (CFNC-3.22 "gboolean gdk_monitor_is_primary GdkMonitor* monitor")
+
+
+;;; 3.21.3:
+
+;;; GDK_SOURCE_TRACKPOINT "GdkInputSource"
+
+(CCAST-3.22 "GDK_DRAWING_CONTEXT(object)" "GdkDrawingContext*")
+(CCHK-3.22 "GDK_IS_DRAWING_CONTEXT(object)" "GdkDrawingContext*")
+
+(CFNC-3.22 "GdkWindow* gdk_drawing_context_get_window GdkDrawingContext* context")
+(CFNC-3.22 "cairo_region_t* gdk_drawing_context_get_clip GdkDrawingContext* context")
+(CFNC-3.22 "gboolean gdk_drawing_context_is_valid GdkDrawingContext* context")
+(CFNC-3.22 "cairo_t* gdk_drawing_context_get_cairo_context GdkDrawingContext* context")
+(CFNC-3.22 "GdkDrawingContext* gdk_cairo_get_drawing_context cairo_t* cr")
+(CFNC-3.22 "void gtk_scrolled_window_set_max_content_width GtkScrolledWindow* scrolled_window gint width")
+(CFNC-3.22 "gint gtk_scrolled_window_get_max_content_width GtkScrolledWindow* scrolled_window")
+(CFNC-3.22 "void gtk_scrolled_window_set_max_content_height GtkScrolledWindow* scrolled_window gint height")
+(CFNC-3.22 "gint gtk_scrolled_window_get_max_content_height GtkScrolledWindow* scrolled_window")

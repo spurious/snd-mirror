@@ -25,7 +25,32 @@
 			(mus-sound-frames . mus-sound-framples)
 			(mus-sound-data-format . mus-sound-sample-type)
 			(mus-data-format-name . mus-sample-type-name)
-			(mus-data-format->string . mus-sample-type->string))))
+			(mus-data-format->string . mus-sample-type->string)
+			(make-vct . make-float-vector)
+			(vct-add! . float-vector-add!)
+			(vct-subtract! . float-vector-subtract!)
+			(vct-copy . copy)
+			(vct-length . length)
+			(vct-multiply! . float-vector-multiply!)
+			(vct-offset! . float-vector-offset!)
+			(vct-ref . float-vector-ref)
+			(vct-scale! . float-vector-scale!)
+			(vct-abs! . float-vector-abs!)
+			(vct-fill! . fill!)
+			(vct-set! . float-vector-set!)
+			(vct-peak . float-vector-peak)
+			(vct-equal? . equal?)
+			(vct? . float-vector?)
+			(list->vct . list->float-vector)
+			(vct->list . float-vector->list)
+			(vector->vct . vector->float-vector)
+			(vct->vector . float-vector->vector)
+			(vct-move! . float-vector-move!)
+			(vct-subseq . float-vector-subseq)
+			(vct-reverse! . reverse!)
+			(vct->string . float-vector->string)
+			(vct* . float-vector*)
+			(vct+ . float-vector+))))
 
   (define (snd-lint-deprecate caller head form env)
     ((*lint* 'lint-format) "~A is deprecated; use ~A" caller head (cond ((assq head deprecated-ops) => cdr))))
@@ -72,7 +97,9 @@
   
   (hash-table-set! (*lint* 'walker-functions) 'defgenerator
 		   (lambda (caller form env)
-		     (append (get-generator caller form env) env))))
+		     (append (get-generator caller form env) env)))
+
+  (hash-table-set! (*lint* 'macros) 'defgenerator #t))
 
 	
 ;;; ---------------- no side effect Snd functions ----------------

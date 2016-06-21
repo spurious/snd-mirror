@@ -9301,7 +9301,7 @@ void g_init_edits(void)
   Xen_define_typed_procedure(S_insert_sample,       g_insert_sample_w,       2, 3, 0, H_insert_sample,    s7_make_circular_signature(s7, 2, 3, i, r, t));
   Xen_define_typed_procedure(S_insert_samples,      g_insert_samples_w,      3, 5, 0, H_insert_samples,   s7_make_signature(s7, 9, i, i, i, t, t, t, t, b, s));
   Xen_define_typed_procedure(S_vct_to_channel,      g_vct_to_channel_w,      1, 6, 0, H_vct_to_channel,   s7_make_circular_signature(s7, 0, 1, t));
-  Xen_define_typed_procedure(S_channel_to_vct,      g_channel_to_vct_w,      0, 5, 0, H_channel_to_vct,   s7_make_circular_signature(s7, 3, 4, fv, i, i, t));
+  Xen_define_typed_procedure(S_channel_to_vct,      g_channel_to_vct_w,      0, 5, 0, H_channel_to_vct,   s7_make_circular_signature(s7, 3, 4, fv, i, t, t));
   Xen_define_typed_procedure(S_insert_sound,        g_insert_sound_w,        1, 6, 0, H_insert_sound,     s7_make_circular_signature(s7, 4, 5, i, s, i, i, t));
   Xen_define_typed_procedure(S_scale_channel,       g_scale_channel_w,       1, 5, 0, H_scale_channel,    s7_make_circular_signature(s7, 2, 3, r, r, t));
   Xen_define_typed_procedure(S_normalize_channel,   g_normalize_channel_w,   1, 5, 0, H_normalize_channel,s7_make_circular_signature(s7, 2, 3, r, r, t));
