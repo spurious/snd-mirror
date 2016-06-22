@@ -856,7 +856,9 @@ struct s7_scheme {
   gc_obj *permanent_objects;
 
   s7_pointer protected_objects, protected_accessors;       /* a vector of gc-protected objects */
-  unsigned int protected_objects_size, protected_objects_loc, protected_accessors_size, protected_accessors_loc;
+  unsigned int *gpofl;
+  unsigned int protected_objects_size, protected_accessors_size, protected_accessors_loc;
+  int gpofl_loc;
 
   s7_pointer nil;                     /* empty list */
   s7_pointer T;                       /* #t */
@@ -3302,47 +3304,37 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- GC -------------------------------- */
 
-/* instead of saving the last released location, why not have a free list?
- *   (an int array growable, with a current top and size or whatever)
- */
-
 #define is_gc_nil(p) ((p) == sc->gc_nil)
 
 unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
-  unsigned int i, loc, size, new_size;
+  unsigned int loc;
 
-  loc = sc->protected_objects_loc++;
-  size = sc->protected_objects_size;
-
-  if (sc->protected_objects_loc >= size)
-    sc->protected_objects_loc = 0;
-
-  if (is_gc_nil(vector_element(sc->protected_objects, loc)))
+  if (sc->gpofl_loc < 0)
     {
-      vector_element(sc->protected_objects, loc) = x;
-      return(loc);
-    }
-
-  for (i = 0; i < size; i++)
-    {
-      if (is_gc_nil(vector_element(sc->protected_objects, i)))
+      unsigned int i, size, new_size;
+      size = sc->protected_objects_size;
+      new_size = 2 * size;
+      vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
+      vector_length(sc->protected_objects) = new_size;
+      sc->protected_objects_size = new_size;
+      sc->gpofl = (unsigned int *)realloc(sc->gpofl, new_size * sizeof(unsigned int));
+      for (i = size; i < new_size; i++)
 	{
-	  vector_element(sc->protected_objects, i) = x;
-	  return(i);
+	  vector_element(sc->protected_objects, i) = sc->gc_nil;
+	  sc->gpofl[++sc->gpofl_loc] = i;
 	}
     }
 
-  new_size = 2 * size;
-  vector_elements(sc->protected_objects) = (s7_pointer *)realloc(vector_elements(sc->protected_objects), new_size * sizeof(s7_pointer));
-  vector_length(sc->protected_objects) = new_size;
-  for (i = size; i < new_size; i++)
-    vector_element(sc->protected_objects, i) = sc->gc_nil;
-  sc->protected_objects_size = new_size;
-  sc->protected_objects_loc = size;
-
-  vector_element(sc->protected_objects, size) = x;
-  return(size);
+  loc = sc->gpofl[sc->gpofl_loc--];
+#if DEBUGGING
+  if ((loc < 0) || (loc >= sc->protected_objects_size))
+    fprintf(stderr, "sc->gpofl loc: %u (%d)\n", loc, sc->protected_objects_size);
+  if (vector_element(sc->protected_objects, loc) != sc->gc_nil)
+    fprintf(stderr, "protected object at %u about to be clobbered? %s\n", loc, DISPLAY(vector_element(sc->protected_objects, loc)));
+#endif
+  vector_element(sc->protected_objects, loc) = x;
+  return(loc);
 }
 
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
@@ -3353,7 +3345,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
     if (vector_element(sc->protected_objects, i) == x)
       {
 	vector_element(sc->protected_objects, i) = sc->gc_nil;
-	sc->protected_objects_loc = i;
+	sc->gpofl[++sc->gpofl_loc] = i;
 	return;
       }
 }
@@ -3363,8 +3355,9 @@ void s7_gc_unprotect_at(s7_scheme *sc, unsigned int loc)
 {
   if (loc < sc->protected_objects_size)
     {
+      if (vector_element(sc->protected_objects, loc) != sc->gc_nil)
+	sc->gpofl[++sc->gpofl_loc] = loc;
       vector_element(sc->protected_objects, loc) = sc->gc_nil;
-      sc->protected_objects_loc = loc;
     }
 }
 
@@ -3384,7 +3377,6 @@ s7_pointer s7_gc_protected_at(s7_scheme *sc, unsigned int loc)
 }
 
 #define gc_protected_at(Sc, Loc) vector_element(Sc->protected_objects, Loc)
-/* #define gc_reprotect(Sc, Loc, Val) vector_element(Sc->protected_objects, Loc) = Val */
 
 
 static void (*mark_function[NUM_TYPES])(s7_pointer p);
@@ -5065,7 +5057,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   unsigned char *base, *val;
 
   if (sc->symbol_table_is_locked)
-    return(s7_error(sc, sc->error_symbol, sc->nil));
+    return(s7_error(sc, sc->error_symbol, set_elist_1(sc, make_string_wrapper(sc, "can't make symbol: symbol table is locked!"))));
 
   base = (unsigned char *)malloc(sizeof(s7_cell) * 3 + len + 1);
   x = (s7_pointer)base;
@@ -47282,6 +47274,7 @@ pass (rootlet):\n\
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 {
+  /* fprintf(stderr, "%s %s\n", DISPLAY(func), DISPLAY(args)); */
   declare_jump_info();
 
   if (is_c_function(func))
@@ -47297,9 +47290,9 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
       if (jump_loc != ERROR_JUMP)
 	eval(sc, sc->op);
 
-       if ((jump_loc == CATCH_JUMP) &&        /* we're returning (back to eval) from an error in catch */
-	   (sc->stack_end == sc->stack_start))
-	 push_stack(sc, OP_ERROR_QUIT, sc->nil, sc->nil);
+      if ((jump_loc == CATCH_JUMP) &&        /* we're returning (back to eval) from an error in catch */
+	  (sc->stack_end == sc->stack_start))
+	push_stack(sc, OP_ERROR_QUIT, sc->nil, sc->nil);
     }
   else
     {
@@ -73073,7 +73066,8 @@ s7_scheme *s7_init(void)
 
   /* this has to precede s7_make_* allocations */
   sc->protected_objects_size = INITIAL_PROTECTED_OBJECTS_SIZE;
-  sc->protected_objects_loc = 0;
+  sc->gpofl = (unsigned int *)malloc(INITIAL_PROTECTED_OBJECTS_SIZE * sizeof(unsigned int));
+  sc->gpofl_loc = INITIAL_PROTECTED_OBJECTS_SIZE - 1;
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE);
 
   sc->protected_accessors_size = INITIAL_PROTECTED_OBJECTS_SIZE;
@@ -73084,6 +73078,7 @@ s7_scheme *s7_init(void)
     {
       vector_element(sc->protected_objects, i) = sc->gc_nil;
       vector_element(sc->protected_accessors, i) = sc->gc_nil;
+      sc->gpofl[i] = i;
     }
 
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
@@ -74480,7 +74475,8 @@ int main(int argc, char **argv)
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
- * in makegl, split out the motif-only decls
+ * if error during read_error_hook, stack grows...
+ * valgrind t425/check s7test against old [v-eq is large, and v-cop]
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74508,4 +74504,5 @@ int main(int argc, char **argv)
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case here? t415.scm.
+ * in makegl, split out the motif-only decls
  */

@@ -425,12 +425,14 @@
 ;; records
 (define-macro (define-record-type type make ? . fields)
   (let ((new-type (if (pair? type) (car type) type))
-	(inherited (if (pair? type) (cdr type) ())))
+	(inherited (if (pair? type) (cdr type) ()))
+	(obj (gensym))
+	(new-obj (gensym)))
     `(begin
        (define-class ,new-type ,inherited   ; from stuff.scm
          (map (lambda (f) (if (pair? f) (car f) f)) ',fields))
        
-       (define (,? obj)    ; perhaps the define-class type predicate should use this 
+       (define (,? ,obj)    ; perhaps the define-class type predicate should use this 
          (define (search-inherited obj type)
 	   (define (search-inheritors objs type)
 	     (and (pair? objs)
@@ -438,15 +440,15 @@
 		      (search-inheritors (cdr objs) type))))
 	   (or (eq? (obj 'class-name) type)
 	       (search-inheritors (obj 'inherited) type)))
-         (and (let? obj)
-	      (search-inherited obj ',new-type)))
+         (and (let? ,obj)
+	      (search-inherited ,obj ',new-type)))
        
        (define ,make 
-         (let ((new-obj (copy ,new-type)))
+         (let ((,new-obj (copy ,new-type)))
 	   ,@(map (lambda (slot)
-		    `(set! (new-obj ',slot) ,slot))
+		    `(set! (,new-obj ',slot) ,slot))
 		  (cdr make))
-	   new-obj))
+	   ,new-obj))
        
        ,@(map
 	  (lambda (field)
@@ -454,19 +456,19 @@
 	      (if (null? (cdr field))
 		  (values)
 		  (if (null? (cddr field))
-		      `(define (,(cadr field) obj)
-			 (if (not (,? obj)) 
-			     (error 'wrong-type-arg "~S should be a ~A" obj ',type))
-			 (obj ',(car field)))
+		      `(define (,(cadr field) ,obj)
+			 (if (not (,? ,obj)) 
+			     (error 'wrong-type-arg "~S should be a ~A" ,obj ',type))
+			 (,obj ',(car field)))
 		      `(begin
-			 (define (,(cadr field) obj)
-			   (if (not (,? obj)) 
-			       (error 'wrong-type-arg "~S should be a ~A" obj ',type))
-			   (obj ',(car field)))
-			 (define (,(caddr field) obj val)
-			   (if (not (,? obj)) 
-			       (error 'wrong-type-arg "~S should be a ~A" obj ',type))
-			   (set! (obj ',(car field)) val)))))))
+			 (define (,(cadr field) ,obj)
+			   (if (not (,? ,obj)) 
+			       (error 'wrong-type-arg "~S should be a ~A" ,obj ',type))
+			   (,obj ',(car field)))
+			 (define (,(caddr field) ,obj val)
+			   (if (not (,? ,obj)) 
+			       (error 'wrong-type-arg "~S should be a ~A" ,obj ',type))
+			   (set! (,obj ',(car field)) val)))))))
 	  fields)
        ',new-type)))
 
