@@ -5919,6 +5919,10 @@
 			((and (eq? head 'list->string)          ; (list->string (make-list x y)) -> (make-string x y)
 			      (eq? func-of-arg 'make-list))
 			 (lint-format "perhaps ~A" caller (lists->string form `(make-string ,@(cdr arg)))))
+
+			((and (eq? head 'string->list)          ; (string->list (string x y)) -> (list x y)
+			      (eq? func-of-arg 'string))
+			 (lint-format "perhaps ~A" caller (lists->string form `(list ,@(cdr arg)))))
 			
 			((and (eq? head 'list->vector)          ; (list->vector (make-list ...)) -> (make-vector ...)
 			      (eq? func-of-arg 'make-list))
@@ -5931,6 +5935,10 @@
 			((and (eq? head 'vector->list)          ; (vector->list (make-vector ...)) -> (make-list ...)
 			      (eq? func-of-arg 'make-vector))
 			 (lint-format "perhaps ~A" caller (lists->string form `(make-list ,@(cdr arg)))))
+			
+			((and (eq? head 'vector->list)          ; (vector->list (vector ...)) -> (list ...)
+			      (eq? func-of-arg 'vector))
+			 (lint-format "perhaps ~A" caller (lists->string form `(list ,@(cdr arg)))))
 			
 			((and (memq func-of-arg '(reverse reverse! copy))
 			      (pair? (cadr arg))                ; (list->string (reverse (string->list x))) -> (reverse x)
@@ -10948,14 +10956,15 @@
 		 (and (var? v)
 		      (eq? (var-definer v) 'define-constant)
 		      (not (equal? (caddr form) (var-initial-value v)))))
-	       (let ((v (var-member sym env)))
-		 (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
-			      (truncated-list->string form)
-			      (if (and (pair? (var-initial-value v))
-				       (positive? (pair-line-number (var-initial-value v))))
-				  (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-				  "")
-			      (truncated-list->string (var-initial-value v))))))))
+	       => (lambda (v)
+		    (let ((line (if (and (pair? (var-initial-value v))
+					 (positive? (pair-line-number (var-initial-value v))))
+				    (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
+				    "")))
+		      (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
+				   (truncated-list->string form)
+				   line
+				   (truncated-list->string (var-initial-value v)))))))))
 				   
     (define binders (let ((h (make-hash-table)))
 		      (for-each
@@ -14137,75 +14146,101 @@
 		     
 		     (report-usage caller 'let vars cur-env)
 
-		     ;; look for let-temporarily possibilities
+		     ;; look for splittable lets and let-temporarily possibilities
 		     (when (and (pair? vars)
 				(pair? (cadr form))
 				(pair? (caadr form)))
 		       (for-each 
 			(lambda (local-var)
 			  (let ((vname (var-name local-var)))
-#|
-			  (when (> (length body) (* 5 (var-set local-var)) 0)
-			    (do ((i 0 (+ i 1))
-				 (preref #f)
-				 (p body (cdr p)))
-				((or (not (pair? (cdr p)))
-				     (and (pair? (car p))
-					  (eq? (caar p) 'set!)
-					  (eq? (cadar p) vname)
-					  (> i 1)
-					  (begin
-					    (format *stderr* "~A: ~A (~D of ~D, ~A sets, preref ~A)~%" 
-						    vname (car p) i (length body) (var-set local-var) preref)
-					    #t))))
-			      (if (not preref)
-				 (set! preref (tree-member vname (car p))))))
-			  ;; if preref #f and first > 10 -- scope reduction?
-|#
-			  (when (and (zero? (var-set local-var))
-				     (= (var-ref local-var) 1)
-				     (symbol? (var-initial-value local-var)))
-			    (let (;(vname (var-name local-var))
-				  (saved-name (var-initial-value local-var)))
-			      (do ((p body (cdr p))
-				   (last-pos #f)
-				   (first-pos #f))
-				  ((not (pair? p))
-				   (when (and (pair? last-pos)
-					      (not (eq? first-pos last-pos))
-					      (not (tree-member saved-name (cdr last-pos))))
-				     (lint-format "perhaps use let-temporarily here (see stuff.scm): ~A" caller
-						  (lists->string form
-								 (let ((new-let `(let-temporarily 
-										     ((,saved-name ,(if (pair? first-pos) 
-													(caddar first-pos) 
-													saved-name)))
-										   ,@(map (lambda (expr)
-											    (if (or (and (pair? first-pos)
-													 (eq? expr (car first-pos)))
-												    (eq? expr (car last-pos)))
-												(values)
-												expr))
-											  body))))
-								   (if (= (length vars) 1)
-								       new-let
-								       `(let (,@(map (lambda (v)
-										       (if (eq? (car v) vname)
-											   (values)
-											   v))
-										     (cadr form)))
-									  ,new-let)))))))
-				;; someday maybe look for additional saved vars, but this happens only in snd-test
-				;;   also the let-temp could be reduced to the set locations (so the tree-member
-				;;   check above would be unneeded).
-				(let ((expr (car p)))
-				  (when (and (pair? expr)
-					     (eq? (car expr) 'set!)
-					     (eq? (cadr expr) saved-name))
-				    (if (not first-pos)
-					(set! first-pos p))
-				    (if (eq? (caddr expr) vname)
-					(set! last-pos p)))))))))
+			    
+			    ;; ideally we'd collect vars that fir into one let etc
+			    (when (> (length body) (* 5 (var-set local-var)) 0)
+			      (do ((i 0 (+ i 1))
+				   (preref #f)
+				   (p body (cdr p)))
+				  ((or (not (pair? (cdr p)))
+				       (and (pair? (car p))
+					    (eq? (caar p) 'set!)
+					    (eq? (cadar p) vname)
+					    (> i 5)
+					    (begin
+					      (if (and (not preref)
+						       (not (side-effect? (var-initial-value local-var) env)))
+						  (lint-format "perhaps move the ~A binding to replace ~A: ~A" caller
+							       vname 
+							       (truncated-list->string (car p))
+							       (let ((new-value (if (tree-member vname (caddar p))
+										    (tree-subst (var-initial-value local-var) vname (copy (caddar p)))
+										    (caddar p))))
+								 (lists->string form 
+										`(let (,@(let rewrite ((lst (cadr form)))
+											   (cond ((null? lst) ())
+												 ((and (pair? (car lst))
+												       (eq? (caar lst) vname))
+												  (rewrite (cdr lst)))
+												 (else (cons (if (< (tree-leaves (cadar lst)) 30)
+														 (car lst)
+														 (list (caar lst) '...))
+													     (rewrite (cdr lst)))))))
+										   ...
+										   (let ((,vname ,new-value))
+										     ...)))))
+						  (lint-format "perhaps add a new binding for ~A to replace ~A: ~A" caller
+							       vname
+							       (truncated-list->string (car p))
+							       (lists->string form
+									      `(let ...
+										 (let ((,vname ,(caddar p)))
+										   ...)))))
+					      #t))))
+				(if (tree-member vname (car p))
+				    (set! preref i))))
+			    
+			    (when (and (zero? (var-set local-var))
+				       (= (var-ref local-var) 1)
+				       (symbol? (var-initial-value local-var)))
+			      (let (;(vname (var-name local-var))
+				    (saved-name (var-initial-value local-var)))
+				(do ((p body (cdr p))
+				     (last-pos #f)
+				     (first-pos #f))
+				    ((not (pair? p))
+				     (when (and (pair? last-pos)
+						(not (eq? first-pos last-pos))
+						(not (tree-member saved-name (cdr last-pos))))
+				       (lint-format "perhaps use let-temporarily here (see stuff.scm): ~A" caller
+						    (lists->string form
+								   (let ((new-let `(let-temporarily 
+										       ((,saved-name ,(if (pair? first-pos) 
+													  (caddar first-pos) 
+													  saved-name)))
+										     ,@(map (lambda (expr)
+											      (if (or (and (pair? first-pos)
+													   (eq? expr (car first-pos)))
+												      (eq? expr (car last-pos)))
+												  (values)
+												  expr))
+											    body))))
+								     (if (= (length vars) 1)
+									 new-let
+									 `(let (,@(map (lambda (v)
+											 (if (eq? (car v) vname)
+											     (values)
+											     v))
+										       (cadr form)))
+									    ,new-let)))))))
+				  ;; someday maybe look for additional saved vars, but this happens only in snd-test
+				  ;;   also the let-temp could be reduced to the set locations (so the tree-member
+				  ;;   check above would be unneeded).
+				  (let ((expr (car p)))
+				    (when (and (pair? expr)
+					       (eq? (car expr) 'set!)
+					       (eq? (cadr expr) saved-name))
+				      (if (not first-pos)
+					  (set! first-pos p))
+				      (if (eq? (caddr expr) vname)
+					  (set! last-pos p)))))))))
 			vars)))
 		   
 		   (when (and (pair? varlist)
@@ -15985,103 +16020,99 @@
 			    (begin
 			      (format outport "~NCreader[~A]: unknown # object: #~A~%" lint-left-margin #\space line data)
 			      (set! (h 'result)
-				    (case (data 0)
-				      ((#\;) (read) (values))
-				      
-				      ((#\T) (string=? data "T"))
-				      ((#\F) (and (string=? data "F") ''#f))
-				      ((#\X) 
-				       (let ((num (string->number (substring data 1)))) ; mit-scheme, maybe others
-					 (if (number? num)
-					     (begin
-					       (format outport "~NCuse #x~A not #~A~%" lint-left-margin #\space (substring data 1) data)
-					       num)
-					     (and (not (*s7* 'symbol-table-locked?))
-						  (string->symbol data)))))
-
-				      ((#\l #\z)
-				       (let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
-					 (if (number? num)
-					     (begin
-					       (format outport "~NCjust omit this silly #~C!~%" lint-left-margin #\space (data 0))
-					       num)
-					     (and (not (*s7* 'symbol-table-locked?))
-						  (string->symbol data)))))
-				      
-				      ((#\u) ; for Bigloo
-				       (if (string=? data "unspecified")
-					   (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
-				       ;; #<unspecified> seems to hit the no-values check?
-				       (and (not (*s7* 'symbol-table-locked?))
-					    (string->symbol data)))
-				      ;; Bigloo also seems to use #" for here-doc concatenation??
-
-				      ((#\v) ; r6rs byte-vectors?
-				       (if (string=? data "vu8")
-					   (format outport "~NCuse #u8 in s7, not #vu8~%" lint-left-margin #\space))
-				       (and (not (*s7* 'symbol-table-locked?))
-					    (string->symbol data)))
-				      
-				      ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
-				       (do ((last #\#)
-					    (c (read-char) (read-char))) 
-					   ((and (char=? last #\<) 
-						 (char=? c #\#)) 
-					    (values))
-					 (if (char=? c #\newline)
-					     (set! (port-line-number ()) (+ (port-line-number) 1)))
-					 (set! last c)))
-				      
-				      ((#\<) ; Chicken also, #<<EOF -> EOF
-				       (if (and (char=? (data 1) #\<)
-						(> (length data) 2))
-					   (let ((end (substring data 2)))
-					     (do ((c (read-line) (read-line)))
-						 ((string-position end c)
-						  (values))))
-					   (and (not (*s7* 'symbol-table-locked?))
-						(string->symbol data))))
-				      
-				      ((#\\) 
-				       (cond ((assoc data '(("\\newline"   . #\newline)
-							    ("\\return"    . #\return)
-							    ("\\space"     . #\space)
-							    ("\\tab"       . #\tab)
-							    ("\\null"      . #\null)
-							    ("\\nul"       . #\null)
-							    ("\\linefeed"  . #\linefeed)
-							    ("\\alarm"     . #\alarm)
-							    ("\\esc"       . #\escape)
-							    ("\\escape"    . #\escape)
-							    ("\\rubout"    . #\delete)
-							    ("\\delete"    . #\delete)
-							    ("\\backspace" . #\backspace)
-							    ("\\page"      . #\xc)
-							    ("\\altmode"   . #\escape)
-							    ("\\bel"       . #\alarm) ; #\x07
-							    ("\\sub"       . #\x1a)
-							    ("\\soh"       . #\x01)
-							    
-							    ;; rest are for Guile
-							    ("\\vt"        . #\xb)
-							    ("\\bs"        . #\backspace)
-							    ("\\cr"        . #\newline)
-							    ("\\sp"        . #\space)
-							    ("\\lf"        . #\linefeed)
-							    ("\\nl"        . #\null)
-							    ("\\ht"        . #\tab)
-							    ("\\ff"        . #\xc)
-							    ("\\np"        . #\xc))
-						     string-ci=?)
-					      => (lambda (c)
-						   (format outport "~NCperhaps use ~W instead~%" (+ lint-left-margin 4) #\space (cdr c))
-						   (cdr c)))
-					     (else 
-					      (and (not (*s7* 'symbol-table-locked?))
-						   (string->symbol (substring data 1))))))
-				      (else 
-				       (and (not (*s7* 'symbol-table-locked?))
-					    (string->symbol data)))))))))))
+				    (catch #t
+				      (lambda ()
+					(case (data 0)
+					  ((#\;) (read) (values))
+					  
+					  ((#\T) (string=? data "T"))
+					  ((#\F) (and (string=? data "F") ''#f))
+					  ((#\X) 
+					   (let ((num (string->number (substring data 1)))) ; mit-scheme, maybe others
+					     (if (number? num)
+						 (begin
+						   (format outport "~NCuse #x~A not #~A~%" lint-left-margin #\space (substring data 1) data)
+						   num)
+						 (string->symbol data))))
+					  
+					  ((#\l #\z)
+					   (let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
+					     (if (number? num)
+						 (begin
+						   (format outport "~NCjust omit this silly #~C!~%" lint-left-margin #\space (data 0))
+						   num)
+						 (string->symbol data))))
+					  
+					  ((#\u) ; for Bigloo
+					   (if (string=? data "unspecified")
+					       (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
+					   ;; #<unspecified> seems to hit the no-values check?
+					   (string->symbol data))
+					  ;; Bigloo also seems to use #" for here-doc concatenation??
+					  
+					  ((#\v) ; r6rs byte-vectors?
+					   (if (string=? data "vu8")
+					       (format outport "~NCuse #u8 in s7, not #vu8~%" lint-left-margin #\space))
+					   (string->symbol data))
+					  
+					  ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
+					   (do ((last #\#)
+						(c (read-char) (read-char))) 
+					       ((and (char=? last #\<) 
+						     (char=? c #\#)) 
+						(values))
+					     (if (char=? c #\newline)
+						 (set! (port-line-number ()) (+ (port-line-number) 1)))
+					     (set! last c)))
+					  
+					  ((#\<) ; Chicken also, #<<EOF -> EOF
+					   (if (and (char=? (data 1) #\<)
+						    (> (length data) 2))
+					       (let ((end (substring data 2)))
+						 (do ((c (read-line) (read-line)))
+						     ((string-position end c)
+						      (values))))
+					       (string->symbol data)))
+					  
+					  ((#\\) 
+					   (cond ((assoc data '(("\\newline"   . #\newline)
+								("\\return"    . #\return)
+								("\\space"     . #\space)
+								("\\tab"       . #\tab)
+								("\\null"      . #\null)
+								("\\nul"       . #\null)
+								("\\linefeed"  . #\linefeed)
+								("\\alarm"     . #\alarm)
+								("\\esc"       . #\escape)
+								("\\escape"    . #\escape)
+								("\\rubout"    . #\delete)
+								("\\delete"    . #\delete)
+								("\\backspace" . #\backspace)
+								("\\page"      . #\xc)
+								("\\altmode"   . #\escape)
+								("\\bel"       . #\alarm) ; #\x07
+								("\\sub"       . #\x1a)
+								("\\soh"       . #\x01)
+								
+								;; rest are for Guile
+								("\\vt"        . #\xb)
+								("\\bs"        . #\backspace)
+								("\\cr"        . #\newline)
+								("\\sp"        . #\space)
+								("\\lf"        . #\linefeed)
+								("\\nl"        . #\null)
+								("\\ht"        . #\tab)
+								("\\ff"        . #\xc)
+								("\\np"        . #\xc))
+							 string-ci=?)
+						  => (lambda (c)
+						       (format outport "~NCperhaps use ~W instead~%" (+ lint-left-margin 4) #\space (cdr c))
+						       (cdr c)))
+						 (else 
+						  (string->symbol (substring data 1)))))
+					  (else 
+					   (string->symbol data))))
+				      (lambda args #f)))))))))
 	
 	(let ((vars (lint-file file ())))
 	  (set! lint-left-margin (max lint-left-margin 1))
@@ -16307,6 +16338,10 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see 10983 for expansion]
 ;;; define-macro cases in t347?? [10983]
 ;;; in define->let, maybe if body starts with defines, just ignore?
-;;; var->let 14149 [I think scope reduction currently only reports vars used at start, not end 14450]
+;;; (let* ((x ...) (y ...) (z <x and y>)) <no ref to x y>) -> (let ((z (letx ((x ...) (y ...)) z-value))) ...)
+;;;   also (let ((x ...)) (let ((y <x>)) <just y>)) -> (let ((y (let ((x ...)) y-value))) ...)
+;;;   these could be interspersed in letx's
+;;;   ((lambda (x y)+let+z as above -> ((lambda (z) ...) (x+y->z))
+;;;   or nested defines as now
 ;;;
-;;; 134 23101 553327
+;;; 136 23165 555551

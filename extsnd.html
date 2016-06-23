@@ -7907,15 +7907,14 @@ then check to see how close our reconstruction is to the original:
 
 <pre class="indented">
 (define* (<em class="noem" id="cosinechannel">cosine-channel</em> (beg 0) dur snd chn edpos)
-  (<em class=red>map-channel</em>
-   (let* ((samps (or dur (<a class=quiet href="#framples">framples</a> snd chn)))
-	  (incr (/ pi samps))
-	  (angle (* -0.5 pi)))
-     (lambda (y)
-       (let ((val (* y (cos angle))))
-	 (set! angle (+ angle incr))
-	 val)))
-   beg dur snd chn edpos))
+  (let ((fnc (let* ((samps (or dur (<a class=quiet href="#framples">framples</a> snd chn)))
+	            (incr (/ pi samps))
+	            (angle (* -0.5 pi)))
+               (lambda (y)
+                 (let ((val (* y (cos angle))))
+	           (set! angle (+ angle incr))
+	           val)))))
+  (<em class=red>map-channel</em> func beg dur snd chn edpos)))
 </pre>
 
 <p id="mapsilence">Here's a slightly more involved example;

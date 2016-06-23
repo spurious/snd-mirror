@@ -74443,21 +74443,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  | 16.0  16.1  16.2  16.7
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295
- * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159
- * teq           |      |      | 6612 | 2380  2376  2382
- * tauto     265 |   89 |  9   |  8.4 | 2638  2643  2644
- * tcopy         |      |      | 13.6 | 3204  3203  3204
- * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229  3218
- * tform         |      |      | 6816 | 3627  3589  3621
- * tmap          |      |      |  9.3 | 4176  4177  4173
- * titer         |      |      | 7503 | 5218  5219  5211
- * thash         |      |      | 50.7 | 8491  8484  8477
- * lg            |      |      |      |                  
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295  1928
+ * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159  1166
+ * teq           |      |      | 6612 | 2380  2376  2382  2382
+ * tauto     265 |   89 |  9   |  8.4 | 2638  2643  2644  2688
+ * tcopy         |      |      | 13.6 | 3204  3203  3204  3133
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229  3218  3220
+ * tform         |      |      | 6816 | 3627  3589  3621  3709
+ * tmap          |      |      |  9.3 | 4176  4177  4173  4172
+ * titer         |      |      | 7503 | 5218  5219  5211  5235
+ * thash         |      |      | 50.7 | 8491  8484  8477  8496
+ * lg            |      |      |      |                   180.
  *               |      |      |      |       
- * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8
- * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0
- * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2
+ * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8  11.8
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0  14.9
+ * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2  39.1
  * 
  * --------------------------------------------------------------------
  *
@@ -74475,8 +74475,6 @@ int main(int argc, char **argv)
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
- * if error during read_error_hook, stack grows...
- * valgrind t425/check s7test against old [v-eq is large, and v-cop]
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
@@ -74503,6 +74501,6 @@ int main(int argc, char **argv)
  * snd namespaces from <mark> etc mark: (inlet :type 'mark :name "" :home <channel> :sample 0 :sync #f) with name/sync/sample settable
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
  * musglyphs gtk version is broken (probably cairo_t confusion)
- * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case here? t415.scm.
- * in makegl, split out the motif-only decls
+ * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
+ * remove as many edpos args as possible, and num+bool->num
  */

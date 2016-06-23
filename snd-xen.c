@@ -376,7 +376,9 @@ static char *last_file_loaded = NULL;
 static Xen g_snd_s7_error_handler(Xen args)
 {
   s7_pointer msg;
-  msg = s7_car(args);
+  if (s7_is_pair(args))
+    msg = s7_car(args);
+  else msg = args;
   Xen_check_type(Xen_is_string(msg), msg, 1, "_snd_s7_error_handler_", "a string");
 
   if (ss->xen_error_handler)

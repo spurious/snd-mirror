@@ -177,13 +177,13 @@
 
 (if (not with-gui)
     (define y-bounds (dilambda
-		      (lambda args (list -1.0 1.0))
-		      (lambda args (list -1.0 1.0)))))
+		      (lambda args (if (string? args) args (list -1.0 1.0))) ; make lint happy...
+		      (lambda args (if (string? args) args (list -1.0 1.0))))))
 
 (if (not with-gui)
     (define x-bounds (dilambda
-		      (lambda args (list 0.0 0.1))
-		      (lambda args (list 0.0 0.1)))))
+		      (lambda args (if (string? args) args (list 0.0 0.1)))
+		      (lambda args (if (string? args) args (list 0.0 0.1))))))
 
 (define real-time get-internal-real-time)
 (define (hundred n) (round (* 100 n)))
