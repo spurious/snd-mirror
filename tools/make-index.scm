@@ -1264,7 +1264,14 @@
 (define (html-check files)
   (let ((name 0)
 	(href 0)
-	(names (make-hash-table 2048)))
+	(names (make-hash-table 2048))
+	(closables (let ((h (make-hash-table)))
+		     (for-each (lambda (c)
+				 (set! (h c) #t))
+			       '(ul tr td table small sub blockquote p details summary
+				 a A i b title pre span h1 h2 h3 code body html
+				 em head h4 sup map smaller bigger th tbody div))
+		     h)))
     (for-each
      (lambda (file)
        (call-with-input-file file
@@ -1395,16 +1402,19 @@
 				      (if (eq? closer 'TABLE) (set! closer 'table))
 				      (cond ((memq closer '(center big font))
 					     (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
+
 					    ((eq? closer 'script)
 					     (set! scripting #f))
+
 					    (scripting)
+
 					    ((not (memq closer commands))
 					     (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
 						     file linectr closer line (+ start 2) i commands))
-					    ((not (memq closer '(ul tr td table small sub blockquote p details summary
-								 a A i b title pre span h1 h2 h3 code body html
-								 em head h4 sup map smaller bigger th tbody div)))
+
+					    ((not (hash-table-ref closables closer))
 					     (set! commands (remove-all closer commands)))
+
 					    (else 
 					     (if (not (eq? (car commands) closer))
 						 (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
@@ -1468,8 +1478,7 @@
 							     (if (not (file-exists? file))
 								 (format () "~A[~D]: src not found: ~S~%" file linectr file))))))))
 					      
-					      ((and (not (memq opener '(br spacer li hr area 
-									   ul tr td table small sub blockquote)))
+					      ((and (not (memq opener '(br spacer li hr area ul tr td table small sub blockquote)))
 						    (memq opener commands)
 						    (= p-quotes 0))
 					       (format () "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands))

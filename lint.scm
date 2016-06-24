@@ -4040,7 +4040,7 @@
 				  (eq? op2 '*))
 			     `(/ ,arg1 ,@(cdr arg2)))
 |#
-			    ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y)
+			    ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y) -- (log number) for (log y) never happens
 				  (pair? arg2)
 				  (= (length arg1) (length arg2) 2)
 				  (case op1
@@ -4052,7 +4052,7 @@
 			     (if (eq? op1 'log)
 				 `(log ,op1-arg1 ,op2-arg1)
 				 `(tan ,op1-arg1)))
-
+			    
 			    ((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
 				  (pair? arg2)
 				  (eq? op1 '-)
@@ -4552,6 +4552,39 @@
 	     `(,(car form) ,@args))))))
     
     
+    (define (binding-ok? caller head binding env second-pass)
+      ;; check let-style variable binding for various syntactic problems
+      (cond (second-pass
+	     (and (pair? binding)
+		  (symbol? (car binding))
+		  (not (constant? (car binding)))
+		  (pair? (cdr binding))
+		  (or (null? (cddr binding))
+		      (and (eq? head 'do)
+			   (pair? (cddr binding)) ; (do ((i 0 . 1))...)
+			   (null? (cdddr binding))))))
+	  
+	    ((not (pair? binding)) 	   (lint-format "~A binding is not a list? ~S" caller head binding) #f)
+	    ((not (symbol? (car binding))) (lint-format "~A variable is not a symbol? ~S" caller head binding) #f)
+	    ((keyword? (car binding))	   (lint-format "~A variable is a keyword? ~S" caller head binding) #f)
+	    ((constant? (car binding))	   (lint-format "can't bind a constant: ~S" caller binding) #f)
+	    ((not (pair? (cdr binding)))
+	     (lint-format (if (null? (cdr binding))
+			      "~A variable value is missing? ~S" 
+			      "~A binding is an improper list? ~S")
+			  caller head binding)
+	     #f)
+	    ((and (pair? (cddr binding))
+		  (or (not (eq? head 'do))
+		      (pair? (cdddr binding))))
+	     (lint-format "~A binding is messed up: ~A" caller head binding)
+	     #f)
+	    (else 
+	     (if (and *report-shadowed-variables*
+		      (var-member (car binding) env))
+		 (lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head (car binding) binding))
+	     #t)))
+
     (define (check-char-cmp caller op form)
       (if (and (any? (lambda (x) 
 		       (and (pair? x) 
@@ -8474,40 +8507,6 @@
 	      (eq? (car arg1) vname)))
 	(else #f)))
 
-    (define (binding-ok? caller head binding env second-pass)
-      ;; check let-style variable binding for various syntactic problems
-      (cond (second-pass
-	     (and (pair? binding)
-		  (symbol? (car binding))
-					;(not (keyword? (car binding)))
-		  (not (constant? (car binding)))
-		  (pair? (cdr binding))
-		  (or (null? (cddr binding))
-		      (and (eq? head 'do)
-			   (pair? (cddr binding)) ; (do ((i 0 . 1))...)
-			   (null? (cdddr binding))))))
-	  
-	    ((not (pair? binding)) 	   (lint-format "~A binding is not a list? ~S" caller head binding) #f)
-	    ((not (symbol? (car binding))) (lint-format "~A variable is not a symbol? ~S" caller head binding) #f)
-	    ((keyword? (car binding))	   (lint-format "~A variable is a keyword? ~S" caller head binding) #f)
-	    ((constant? (car binding))	   (lint-format "can't bind a constant: ~S" caller binding) #f)
-	    ((not (pair? (cdr binding)))
-	     (lint-format (if (null? (cdr binding))
-			      "~A variable value is missing? ~S" 
-			      "~A binding is an improper list? ~S")
-			  caller head binding)
-	     #f)
-	    ((and (pair? (cddr binding))
-		  (or (not (eq? head 'do))
-		      (pair? (cdddr binding))))
-	     (lint-format "~A binding is messed up: ~A" caller head binding)
-	     #f)
-	    (else 
-	     (if (and *report-shadowed-variables*
-		      (var-member (car binding) env))
-		 (lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head (car binding) binding))
-	     #t)))
-
     (define (env-difference name e1 e2 lst)
       (if (or (null? e1)
 	      (null? e2)
@@ -10363,7 +10362,9 @@
 		     (null? (cdr bval))
 		     (symbol? (caar bval))) ; not (define (hi) ((if #f + abs) 0))
 	    
-	    (cond ((equal? args (cdar bval))
+	    (cond ((or (equal? args (cdar bval))
+		       (and (hash-table-ref reversibles (caar bval))
+			    (equal? args (reverse (cdar bval)))))
 		   (let* ((cval (caar bval))
 			  (p (symbol->value cval *e*))
 			  (ary (arity p)))
@@ -10390,9 +10391,11 @@
 					       (not (= (length args) (cdr ary))))
 					  (format #f "leaving aside ~A's optional arg~P, " cval (- (cdr ary) (length args)))
 					  "")
-				      function-name function-name cval))))
-
-		  ;; (equal? args (reverse (cdar bval))) rarely happens, and never with a reversible op
+				      function-name 
+				      function-name 
+				      (if (equal? args (cdar bval))
+					  cval
+					  (hash-table-ref reversibles (caar bval)))))))
 		  
 		  ((and (or (symbol? args)
 			    (and (pair? args)
@@ -14634,7 +14637,7 @@
 		       (body ((if named-let cdddr cddr) form)))
 		   (if (not (list? varlist))
 		       (lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
-		   
+
 		   (let ((side-effects #f))
 		     (do ((bindings varlist (cdr bindings)))
 			 ((not (pair? bindings))
@@ -14655,7 +14658,7 @@
 						      :initial-value expr
 						      :definer (if named-let 'named-let* 'let*))
 					    vars))
-			   
+
 			   ;; look for duplicate values
 			   ;; TODO: protect against any shadows if included in any expr
 			   (if (and (pair? expr)
@@ -14673,7 +14676,82 @@
 					   (lint-format "~A's value ~A could be ~A" caller
 							name expr (caar vs))
 					   (dup-check (cdr vs))))))))))
-		     
+
+		     ;; if var is not used except in other var bindings, it can be moved out of this let*
+		     ;;
+		     ;; collect vars not in body, used in only one binding, gather these cases, and rewrite the let*
+		     ;;   (and use let if possible)
+		     ;;   repeated names are possible here
+		     ;;   also cascading depencies: (let* ((z 1) (y (+ z 2)) (x (< y 3))) (if x (f x)))
+		     ;;                             (let ((x (let ((y (let ((z 1))) (+ z 2))) (< y 3)))) ...) ??
+		     ;;                   new-vars: ((z y) (y x))
+
+		     ;; maybe only do this rewrite if no other substitution is suggested?
+		     ;; if (let* ((a ...) (b (f a))) and a is not used, why not (let ((b (f ...)))...)?
+		     ;;   this is not currently suggested anywhere else, I think
+
+		     ;; also, truncate huge values here
+
+		     (when (and (pair? vars)
+				(pair? (cdr vars)))
+		       (let ((new-vars ())
+			     (vs-pos vars))
+			 (for-each (lambda (v)
+				     (let ((vname (var-name v))
+					   (vvalue #f))
+				       (if (not (tree-memq vname body))
+					   (let walker ((vs vars))
+					     (if (not (pair? vs))
+						 (if (and vvalue
+							  (or (not (side-effect? (var-initial-value v) env))
+							      (eq? vvalue (var-name (car vs-pos)))))
+						     (set! new-vars (cons (list vvalue vname (var-initial-value v)) new-vars)))
+						 (let ((b (car vs)))
+						   (if (or (eq? (var-name b) vname)
+							   (not (tree-memq vname (var-initial-value b)))) ; tree-memq matches the bare symbol (tree-member doesn't)
+						       (walker (cdr vs))
+						       (if (not vvalue)
+							   (begin
+							     (set! vvalue (var-name b))
+							     (walker (cdr vs)))))))))
+				       (set! vs-pos (cdr vs-pos))))
+				   (cdr vars)) ; vars is reversed from code order (assume last var is probably used!), new-vars is in code order
+			 
+			 (when (pair? new-vars)
+			   
+			   ;; (see above) if null? cdr new-vars and null? cddr vars and last is simple (f x) x being the first,
+			   ;;   and x val not too large, just substitute? get stats on these -- it's not happening every time
+
+			   (define (gather-dependencies var val)
+			     (let ((deps ()))
+			       (for-each (lambda (nv)
+					   (if (eq? (car nv) var)
+					       (set! deps (cons (list (cadr nv) (gather-dependencies (cadr nv) (caddr nv))) deps))))
+					 new-vars)
+			       (if (pair? deps)
+				   `(,(if (null? (cdr deps)) 'let 'let*) ,deps ,val)
+				   val)))
+			   
+			   ;; let(*) choices should actually depend on side-effects (can't be (any?) cross-uses)
+			   ;;   that is inner lets are * only if multiple side-effects locally
+			   ;;   outer * if any side-effects globally
+			   
+			   ;; also if init value starts with letx and we wrap it in letx, check for combinations
+			   
+			   (let ((new-let-binds (map (lambda (v)
+						       (if (member (var-name v) new-vars (lambda (name lst) (eq? name (cadr lst))))
+							   (values)
+							   `(,(var-name v) ,(gather-dependencies (var-name v) (var-initial-value v)))))
+						     (reverse vars))))
+			     (lint-format "perhaps restrict ~{~A~^, ~} which ~A not used in the let* body ~A" caller
+					  (map cadr new-vars)
+					  (if (null? (cdr new-vars)) "is" "are")
+					  (lists->string form
+							 `(,(if (null? (cdr new-let-binds)) 'let 'let*)
+							   ,new-let-binds
+							   '...)))))))
+
+		   
 		     (if (not (or side-effects
 				  (any? (lambda (v) (positive? (var-ref v))) vars)))
 			 (lint-format "let* could be let: ~A" caller (truncated-list->string form))))
@@ -16338,10 +16416,17 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see 10983 for expansion]
 ;;; define-macro cases in t347?? [10983]
 ;;; in define->let, maybe if body starts with defines, just ignore?
+;;;
+;;; 14700:
 ;;; (let* ((x ...) (y ...) (z <x and y>)) <no ref to x y>) -> (let ((z (letx ((x ...) (y ...)) z-value))) ...)
 ;;;   also (let ((x ...)) (let ((y <x>)) <just y>)) -> (let ((y (let ((x ...)) y-value))) ...)
-;;;   these could be interspersed in letx's
-;;;   ((lambda (x y)+let+z as above -> ((lambda (z) ...) (x+y->z))
+;;;   these could be interspersed in letx's (i.e. (let* ((x...) ...) (let ((y x)...)) etc))
 ;;;   or nested defines as now
+;;;   also it's ok to have a ref'd by both b and c if c also refs b -- the inner let is let* (a+b)
+;;;     [in this case, side-effects, if only up to here, will also be ok]
+;;; 
+;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible
+;;;   reorder so that there is no shadowing
+;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 136 23165 555551
+;;; 140 23165 613193

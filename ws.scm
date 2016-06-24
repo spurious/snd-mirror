@@ -291,16 +291,17 @@
 			((= i (length output-1)))
 		      (set! (output-1 i) (* scaled-by (output-1 i)))))))
 	   
-	   (if (and play output-to-file)
+	   (when output-to-file
+	     (when play
 	       (if to-snd
 		   ((or *clm-player* *default-player*) snd-output)
 		   (*default-player* output-1)))
 
-	   (if (and to-snd output-to-file)
-	       (begin
-		 (update-time-graph snd-output)
-		 (goto-listener-end)
-		 (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
+	     (when to-snd
+	       (update-time-graph snd-output)
+	       (goto-listener-end)
+	       (if (number? cur-sync) (set! (sync snd-output) cur-sync)))))
+
 	 output-1))
 
      (lambda () 

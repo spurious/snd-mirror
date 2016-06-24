@@ -74471,7 +74471,6 @@ int main(int argc, char **argv)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
- * float_format_g -> (*s7* 'default-float-format) ? -- best would be translation from format -> fprint, but ".*g" currently
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?

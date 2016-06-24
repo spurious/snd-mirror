@@ -225,9 +225,7 @@
 	  (else (has-duplicates? (cdr lst)))))
   
   (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
-    (let ((m (make-float-vector '(3 3)))
-	  (det 0.0)
-	  (invdet 0.0))
+    (let ((m (make-float-vector '(3 3))))
       (do ((i 0 (+ i 1)))
 	  ((= i 3))
 	(do ((j 0 (+ j 1)))
@@ -242,18 +240,18 @@
       (set! (mat 2 0) (- (* (m 1 0) (m 2 1)) (* (m 1 1) (m 2 0))))
       (set! (mat 2 1) (- (* (m 0 1) (m 2 0)) (* (m 0 0) (m 2 1))))
       (set! (mat 2 2) (- (* (m 0 0) (m 1 1)) (* (m 0 1) (m 1 0))))
-      (set! det (+ (* (m 0 0) (mat 0 0))
-		   (* (m 0 1) (mat 1 0))
-		   (* (m 0 2) (mat 2 0))))
-      (and (> (abs det) 1e-06)
-	   (begin
-	     (set! invdet (/ 1.0 det))
-	     (do ((row 0 (+ 1 row)))
-		 ((= row 3))
-	       (do ((col 0 (+ 1 col)))
-		   ((= col 3))
-		 (set! (mat row col) (* (mat row col) invdet))))
-	     mat))))
+
+      (let ((det (+ (* (m 0 0) (mat 0 0))
+		    (* (m 0 1) (mat 1 0))
+		    (* (m 0 2) (mat 2 0)))))
+	(and (> (abs det) 1e-06)
+	     (let ((invdet (/ 1.0 det)))
+	       (do ((row 0 (+ 1 row)))
+		   ((= row 3))
+		 (do ((col 0 (+ 1 col)))
+		     ((= col 3))
+		   (set! (mat row col) (* (mat row col) invdet))))
+	       mat)))))
   
   (define (invert2x2 mat) ; invert a 2x2 matrix
     (let ((m (make-float-vector '(2 2)))
@@ -2822,8 +2820,7 @@
     
     ;; Loop through all virtual rooms for one breakpoint in the trajectory
     (define (walk-all-rooms x y z time)
-      (let ((room 0)
-	    (dist (distance x y z)))
+      (let ((dist (distance x y z)))
 	;; remember first and last distances
 	(if (not first-dist) ; set to #f (far) above
 	    (set! first-dist dist))
@@ -2862,12 +2859,12 @@
 	       ;; ambisonics decoded
 	       (fdecoded-ambisonics x y z dist time)))
 	
-	(set! room (+ 1 room))
-	;; remember current time and distance for next point
-	(set! prev-time time)
-	(set! prev-dist dist)
-	;; return number of rooms processed
-	room))
+	(let ((room 1))
+	  ;; remember current time and distance for next point
+	  (set! prev-time time)
+	  (set! prev-dist dist)
+	  ;; return number of rooms processed (?)
+	  room)))
     
     ;; Check to see if a segment changes radial direction:
     ;;   a change in radial direction implies a change in 
