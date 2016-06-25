@@ -941,14 +941,14 @@ time for perfection...):
 
 <pre class="indented">
 (define* (list-clips snd chn)
-  (let* ((max-clips (count-clips snd chn))
-	 (clip-data (make-vector (* 2 max-clips) 0))
-	 (clip-ctr 0)
-	 (clip-beg 0)
-	 (clip-end 0)
-	 (clip-max-len 0)
-	 (in-clip #f)
-	 (samp 0))
+  (let ((clip-data (let ((max-clips (count-clips snd chn)))
+                     (make-vector (* 2 max-clips) 0))
+	(clip-ctr 0)
+	(clip-beg 0)
+	(clip-end 0)
+	(clip-max-len 0)
+	(in-clip #f)
+	(samp 0))
     (<a class=quiet href="extsnd.html#scanchannel">scan-channel</a>
      (lambda (y)
        (if (not (&lt;= -0.9999 y 0.9999))
@@ -1665,7 +1665,7 @@ In the Scheme version, there is also an optional trailing vibrato envelope argum
   (fofins 0 4 270 .1 0.005 730 .6 1090 .3 2440 .1 
           '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0)
 	  '(0 0 40 0 75 .2 100 1) )
-  (fofins 0 4 (* 6/5 540) .1 0.005 730 .6 1090 .3 2440 .1 
+  (fofins 0 4 648 .1 0.005 730 .6 1090 .3 2440 .1 ;648 (* 6/5 540)
           '(0 0 .5 .5 3 .25 6 .1 10 .1 50 .1 60 .2 85 1 100 0)
 	  '(0 0 40 0 75 .2 100 1) )
   (fofins 0 4 135 .1 0.005 730 .6 1090 .3 2440 .1 
@@ -4245,8 +4245,8 @@ current spectrum value.
 (define brfft
   (let ((documentation "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"))
     (lambda (lofrq hifrq)
-      (let* ((len (<a class=quiet href="extsnd.html#framples">framples</a>))
-	     (fsize (expt 2 (ceiling (log len 2))))
+      (let* ((fsize (let ((len (<a class=quiet href="extsnd.html#framples">framples</a>)))
+                      (expt 2 (ceiling (log len 2)))))
 	     (ctr -1)
 	     (lo (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate">srate</a>))))
 	     (hi (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate">srate</a>)))))

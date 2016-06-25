@@ -9544,33 +9544,46 @@
 							  `(... ,@(tree-subst `(let ,new-args ,@fbody) call (cdr body))))
 						      `(... ,@(tree-subst `(,new-let ,fname ,new-args ,@fbody) call (cdr body))))))))))))
 	  
-	  ;; look for defines at the start of the body and use let(*) or letrec(*) instead
+	  ;; look for non-function defines at the start of the body and use let(*) instead
 	  ;;   we're in a closed body here, so the define can't propagate backwards
-	  (when (and (eq? (caar body) 'define)
-		     (symbol? (cadar body)))
-	    (let ((names ())
-		  (letx 'let)
-		  (vars&vals ()))
-	      (do ((p body (cdr p)))
-		  ((not (and (pair? p)
-			     (pair? (car p))
-			     (eq? (caar p) 'define)
-			     (symbol? (cadar p))))
-		   (lint-format "perhaps ~A" caller
-				(lists->string `(... ,@body)
-					       `(... (,letx (,@(reverse vars&vals))
-							    ...)))))
-		;; define acts like letrec(*), not let -- reference to name in lambda body is current name
-		(let ((expr (car p)))
-		  (set! vars&vals (cons (if (< (tree-leaves (cddr expr)) 12)
-					    (cdr expr) 
-					    (list (cadr expr) '...))
-					vars&vals))
-		  (if (tree-member (cadr expr) (cddr expr))
-		      (set! letx (case letx ((let) 'letrec) ((let*) 'letrec*) (else letx))))
-		  (if (tree-set-member names (cddr expr))
-		      (set! letx (case letx ((let) 'let*) ((letrec) 'letrec*) (else letx))))
-		  (set! names (cons (cadr expr) names)))))))
+
+	  (let ((first-expr (car body)))
+	    ;; another case: f(args) (let(...)set! arg < no let>)
+	    (when (and (eq? (car first-expr) 'define)
+		       (symbol? (cadr first-expr))
+		       (pair? (cddr first-expr))
+		       ;;(not (tree-car-member (cadr first-expr) (caddr first-expr)))
+		       ;;(not (tree-set-car-member '(lambda lambda*) (caddr first-expr)))
+		       (or (not (pair? (caddr first-expr)))
+			   ;;(pair? (cdr body))
+			   (not (memq (caaddr first-expr) '(lambda lambda*)))))
+	      ;; this still is not ideal -- we need to omit let+lambda as well
+	      (let ((names ())
+		    (letx 'let)
+		    (vars&vals ()))
+		(do ((p body (cdr p)))
+		    ((not (and (pair? p)
+			       (let ((expr (car p)))
+				 (and (pair? expr)
+				      (eq? (car expr) 'define)
+				      (symbol? (cadr expr))
+				      (pair? (cddr expr))
+				      ;;(not (tree-set-car-member '(lambda lambda*) (caddr expr)))))
+				      (or (not (pair? (caddr expr)))
+					  (not (memq (caaddr expr) '(lambda lambda*))))))))
+		     (lint-format "perhaps ~A" caller
+				  (lists->string `(... ,@body)
+						 `(... (,letx (,@(reverse vars&vals))
+							      ...)))))
+		  ;; define acts like letrec(*), not let -- reference to name in lambda body is current name
+		  (let ((expr (car p)))
+		    (set! vars&vals (cons (if (< (tree-leaves (cddr expr)) 12)
+					      (cdr expr) 
+					      (list (cadr expr) '...))
+					  vars&vals))
+		    (if (tree-set-member names (cddr expr))
+			(set! letx 'let*))
+		    (set! names (cons (cadr expr) names))))))))
 	
 	(let ((len (length body)))
 	  (when (> len 2)                           ; ... (define (x...)...) (x ...) -> (let (...) ...) or named let -- this happens a lot!
@@ -10339,6 +10352,17 @@
 					,@(cdr body)))))))
 	(set! body (cdr body))) ; ignore old-style doc-string
       ;; (set! arg ...) never happens as last in body
+
+      ;; but as first in body, it happens ca 100 times
+      (if (and (pair? body)
+	       (pair? (car body))
+	       (eq? (caar body) 'set!)
+	       (or (eq? (cadar body) args)
+		   (and (pair? args)
+			(memq (cadar body) args))))
+	  (lint-format "perhaps ~A" function-name
+		       (lists->string (car body) `(let ((,(cadar body) ,(caddar body))) ...))))
+      ;; as first in let of body, maybe a half-dozen
       
       (catch 'sequence-constant-done
 	(lambda ()
@@ -14690,8 +14714,6 @@
 		     ;; if (let* ((a ...) (b (f a))) and a is not used, why not (let ((b (f ...)))...)?
 		     ;;   this is not currently suggested anywhere else, I think
 
-		     ;; also, truncate huge values here
-
 		     (when (and (pair? vars)
 				(pair? (cdr vars)))
 		       (let ((new-vars ())
@@ -14726,15 +14748,19 @@
 			     (let ((deps ()))
 			       (for-each (lambda (nv)
 					   (if (eq? (car nv) var)
-					       (set! deps (cons (list (cadr nv) (gather-dependencies (cadr nv) (caddr nv))) deps))))
+					       (set! deps (cons (list (cadr nv) 
+								      (gather-dependencies (cadr nv) (caddr nv)))
+								deps))))
 					 new-vars)
+			       (if (> (tree-leaves val) 30)
+				   (set! val '...))
 			       (if (pair? deps)
 				   `(,(if (null? (cdr deps)) 'let 'let*) ,deps ,val)
 				   val)))
 			   
 			   ;; let(*) choices should actually depend on side-effects (can't be (any?) cross-uses)
 			   ;;   that is inner lets are * only if multiple side-effects locally
-			   ;;   outer * if any side-effects globally
+			   ;;   outer * see below
 			   
 			   ;; also if init value starts with letx and we wrap it in letx, check for combinations
 			   
@@ -14750,7 +14776,6 @@
 							 `(,(if (null? (cdr new-let-binds)) 'let 'let*)
 							   ,new-let-binds
 							   '...)))))))
-
 		   
 		     (if (not (or side-effects
 				  (any? (lambda (v) (positive? (var-ref v))) vars)))
@@ -16415,7 +16440,7 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see 10983 for expansion]
 ;;; define-macro cases in t347?? [10983]
-;;; in define->let, maybe if body starts with defines, just ignore?
+;;; hg.scm also has a lot of changes
 ;;;
 ;;; 14700:
 ;;; (let* ((x ...) (y ...) (z <x and y>)) <no ref to x y>) -> (let ((z (letx ((x ...) (y ...)) z-value))) ...)
@@ -16429,4 +16454,4 @@
 ;;;   reorder so that there is no shadowing
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 140 23165 613193
+;;; 140 23165 603621

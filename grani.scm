@@ -81,11 +81,9 @@
     ;; loop for each segment in the envelope
     (let segs ((en env1))
       (let* ((x (car en))
-	     (y (* 1.0 (cadr en)))
 	     (nx (caddr en))
-	     (ny (* 1.0 (cadddr en)))
-	     (yscl (+ offset (* y scaler)))
-	     (nyscl (+ offset (* ny scaler)))
+	     (yscl (+ offset (* (cadr en) scaler)))
+	     (nyscl (+ offset (* (cadddr en) scaler)))
 	     (xy (list x (if (or (not (real? ycutoff))
 				 (>= (expt base yscl) ycutoff))
 			     (* out-scaler (expt base yscl))

@@ -74467,7 +74467,7 @@ int main(int argc, char **argv)
  * cyclic-seq in stuff.scm, but current code is really clumsy 
  * doc c_object_rf stuff? or how cload ties things into rf/sig 
  * libutf8proc.scm doc/examples? cload gtk/sndlib
- * display of let can still get into infinite recursion!
+ * display of let can still get into infinite recursion! (as can a circular list in some weird way)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
@@ -74490,7 +74490,7 @@ int main(int argc, char **argv)
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
- *   play_selection_1 could puts ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
+ *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *

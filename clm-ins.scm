@@ -2653,8 +2653,8 @@ mjkoskin@sci.fi
 (define make-rmsgain 
   (let ((documentation "(make-rmsgain (hp 10.0)) makes an RMS gain generator"))
     (lambda* ((hp 10.0))
-      (let* ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) *clm-srate*)))))
-	     (c2 (- b (sqrt (- (* b b) 1.0)))))
+      (let ((c2 (let ((b (- 2.0 (cos (* hp (/ (* 2.0 pi) *clm-srate*))))))
+		  (- b (sqrt (- (* b b) 1.0))))))
 	(make-rmsg :c1 (- 1.0 c2) :c2 c2)))))
 
 (define rms 

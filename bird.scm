@@ -368,10 +368,9 @@
   (let ((documentation "(american-widgeon beg) produces an american widgeon call at time 'beg'"))
     (lambda (beg)
       (let ((widgeon '(0.0 0.0 .50 1.0 1.0 .0)))
-	(set! beg (- beg .3))
-	(bigbird (+ beg .3) .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))
-	(bigbird (+ beg .4) .11 1700 1400 .25 widgeon widgeon '(1 .7 2 1 3 .02))
-	(bigbird (+ beg .55) .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))))))
+	(bigbird beg .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))
+	(bigbird (+ beg .1) .11 1700 1400 .25 widgeon widgeon '(1 .7 2 1 3 .02))
+	(bigbird (+ beg .25) .07 1900 300 .15 widgeon widgeon '(1 1 2 .02))))))
 
 
 (define b-louisiana-waterthrush
@@ -396,13 +395,12 @@
 (define b-robin
   (let ((documentation "(robin beg) produces a robin call at time 'beg'"))
     (lambda (beg)
-      (set! beg (- beg .45))
-      (bigbird (+ beg .45) .06 2000 800 .15 '(0.0 0.0 .12 .70 .30 0.0 .70 1.0 1.0 .50 ) main-amp '(1 1 2 .1))
-      (bigbird (+ beg .56) .10 2000 900 .15 '(0.0 .10 .08 .70 .30 0.0 .35 1.0 .40 .30 1.0 .30 ) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 1.04) .24 2000 2000 .25 '(0.0 0.0 .10 1.0 .20 .70 .35 .70 .65 .30 .70 .50 .80 0.0 .90 .20 1.0 .0) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 1.63) .13 1900 1600 .20 '(0.0 .20 .25 1.0 .60 .70 .90 0.0 1.0 .10 ) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 1.80) .11 2200 1200 .25 '(0.0 1.0 1.0 .0) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 2.31) .21 1950 2000 .15 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 .50 1.0 .20 ) main-amp '(1 1 2 .1)))))
+      (bigbird beg .06 2000 800 .15 '(0.0 0.0 .12 .70 .30 0.0 .70 1.0 1.0 .50 ) main-amp '(1 1 2 .1))
+      (bigbird (+ beg .11) .10 2000 900 .15 '(0.0 .10 .08 .70 .30 0.0 .35 1.0 .40 .30 1.0 .30 ) main-amp '(1 1 2 .1))
+      (bigbird (+ beg .59) .24 2000 2000 .25 '(0.0 0.0 .10 1.0 .20 .70 .35 .70 .65 .30 .70 .50 .80 0.0 .90 .20 1.0 .0) main-amp '(1 1 2 .1))
+      (bigbird (+ beg 1.18) .13 1900 1600 .20 '(0.0 .20 .25 1.0 .60 .70 .90 0.0 1.0 .10 ) main-amp '(1 1 2 .1))
+      (bigbird (+ beg 1.35) .11 2200 1200 .25 '(0.0 1.0 1.0 .0) main-amp '(1 1 2 .1))
+      (bigbird (+ beg 1.86) .21 1950 2000 .15 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 .50 1.0 .20 ) main-amp '(1 1 2 .1)))))
 
 
 (define b-solitary-vireo

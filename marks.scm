@@ -236,10 +236,10 @@
     (lambda ()
       (hook-push start-playing-hook 
 		 (lambda (snd)
-		   (let* ((marklist (marks snd 0))
-			  (report-mark-names-play-hook
-			   (let ((samplist (map mark-sample marklist))
-				 (samp 0))
+		   (let ((report-mark-names-play-hook
+			   (let* ((marklist (marks snd 0))
+				  (samplist (map mark-sample marklist))
+				  (samp 0))
 			     (lambda (hook)
 			       (set! samp (+ samp (hook 'size)))
 			       (if (and (pair? samplist)

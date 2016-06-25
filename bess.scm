@@ -79,22 +79,22 @@
 						      XmNorientation      XmHORIZONTAL
 						      XmNbackground       *position-color*)))
 	     ;; amp
-	     (amp (XtCreateManagedWidget "amp:" xmLabelWidgetClass form
-					 (list XmNleftAttachment   XmATTACH_FORM
-					       XmNbottomAttachment XmATTACH_NONE
-					       XmNtopAttachment    XmATTACH_WIDGET
-					       XmNtopWidget        carrier
-					       XmNrightAttachment  XmATTACH_NONE
-					       XmNrecomputeSize    #f
-					       XmNbackground       white)))
 	     (amp-label (XtCreateManagedWidget "label" xmLabelWidgetClass form
-					       (list XmNleftAttachment   XmATTACH_WIDGET
-						     XmNleftWidget       amp
-						     XmNbottomAttachment XmATTACH_NONE
-						     XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-						     XmNtopWidget        amp
-						     XmNrightAttachment  XmATTACH_NONE
-						     XmNbackground       white)))
+					       (let ((amp (XtCreateManagedWidget "amp:" xmLabelWidgetClass form
+										 (list XmNleftAttachment   XmATTACH_FORM
+										       XmNbottomAttachment XmATTACH_NONE
+										       XmNtopAttachment    XmATTACH_WIDGET
+										       XmNtopWidget        carrier
+										       XmNrightAttachment  XmATTACH_NONE
+										       XmNrecomputeSize    #f
+										       XmNbackground       white))))
+						 (list XmNleftAttachment   XmATTACH_WIDGET
+						       XmNleftWidget       amp
+						       XmNbottomAttachment XmATTACH_NONE
+						       XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						       XmNtopWidget        amp
+						       XmNrightAttachment  XmATTACH_NONE
+						       XmNbackground       white))))
 	     (amp-scale (XtCreateManagedWidget "amp" xmScaleWidgetClass form
 					       (list XmNleftAttachment   XmATTACH_WIDGET
 						     XmNleftWidget       amp-label
@@ -106,22 +106,22 @@
 						     XmNorientation      XmHORIZONTAL
 						     XmNbackground       *position-color*)))
 	     ;; fm index
-	     (fm-index (XtCreateManagedWidget "fm index:" xmLabelWidgetClass form
-					      (list XmNleftAttachment   XmATTACH_FORM
-						    XmNbottomAttachment XmATTACH_NONE
-						    XmNtopAttachment    XmATTACH_WIDGET
-						    XmNtopWidget        amp-scale
-						    XmNrightAttachment  XmATTACH_NONE
-						    XmNrecomputeSize    #f
-						    XmNbackground       white)))
 	     (fm-label (XtCreateManagedWidget "label" xmLabelWidgetClass form
-					      (list XmNleftAttachment   XmATTACH_WIDGET
-						    XmNleftWidget       fm-index
-						    XmNbottomAttachment XmATTACH_NONE
-						    XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-						    XmNtopWidget        fm-index
-						    XmNrightAttachment  XmATTACH_NONE
-						    XmNbackground       white)))
+					      (let ((fm-index (XtCreateManagedWidget "fm index:" xmLabelWidgetClass form
+										     (list XmNleftAttachment   XmATTACH_FORM
+											   XmNbottomAttachment XmATTACH_NONE
+											   XmNtopAttachment    XmATTACH_WIDGET
+											   XmNtopWidget        amp-scale
+											   XmNrightAttachment  XmATTACH_NONE
+											   XmNrecomputeSize    #f
+											   XmNbackground       white))))
+						(list XmNleftAttachment   XmATTACH_WIDGET
+						      XmNleftWidget       fm-index
+						      XmNbottomAttachment XmATTACH_NONE
+						      XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						      XmNtopWidget        fm-index
+						      XmNrightAttachment  XmATTACH_NONE
+						      XmNbackground       white))))
 	     (fm-scale (XtCreateManagedWidget "fm index" xmScaleWidgetClass form
 					      (list XmNleftAttachment   XmATTACH_WIDGET
 						    XmNleftWidget       fm-label
@@ -133,22 +133,22 @@
 						    XmNorientation      XmHORIZONTAL
 						    XmNbackground       *position-color*)))
 	     ;; c/m ratio
-	     (cm-ratio (XtCreateManagedWidget "c/m ratio:" xmLabelWidgetClass form
-					      (list XmNleftAttachment   XmATTACH_FORM
-						    XmNbottomAttachment XmATTACH_NONE
-						    XmNtopAttachment    XmATTACH_WIDGET
-						    XmNtopWidget        fm-scale
-						    XmNrightAttachment  XmATTACH_NONE
-						    XmNrecomputeSize    #f
-						    XmNbackground       white)))
 	     (cm-label (XtCreateManagedWidget "label" xmLabelWidgetClass form
-					      (list XmNleftAttachment   XmATTACH_WIDGET
-						    XmNleftWidget       cm-ratio
-						    XmNbottomAttachment XmATTACH_NONE
-						    XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-						    XmNtopWidget        cm-ratio
-						    XmNrightAttachment  XmATTACH_NONE
-						    XmNbackground       white)))
+					      (let ((cm-ratio (XtCreateManagedWidget "c/m ratio:" xmLabelWidgetClass form
+										     (list XmNleftAttachment   XmATTACH_FORM
+											   XmNbottomAttachment XmATTACH_NONE
+											   XmNtopAttachment    XmATTACH_WIDGET
+											   XmNtopWidget        fm-scale
+											   XmNrightAttachment  XmATTACH_NONE
+											   XmNrecomputeSize    #f
+											   XmNbackground       white))))
+						(list XmNleftAttachment   XmATTACH_WIDGET
+						      XmNleftWidget       cm-ratio
+						      XmNbottomAttachment XmATTACH_NONE
+						      XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+						      XmNtopWidget        cm-ratio
+						      XmNrightAttachment  XmATTACH_NONE
+						      XmNbackground       white))))
 	     (cm-scale (XtCreateManagedWidget "cm ratio" xmScaleWidgetClass form
 					      (list XmNleftAttachment   XmATTACH_WIDGET
 						    XmNleftWidget       cm-label
@@ -218,10 +218,9 @@
 	
 	;; send fm data to dac
 	(let* ((bufsize 256)
-	       (srate 22050)
 	       (work-proc #f)
-					;(data (make-float-vector bufsize))
-	       (port (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2))))
+	       (port (let ((srate 22050))
+		       (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2)))))
 	  (if (< port 0) 
 	      (format () "can't open DAC!"))
 	  
