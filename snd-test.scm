@@ -44944,14 +44944,14 @@ EDITS: 1
 	       (if (not fonts-dialog)
 		   (set! fonts-dialog new-dialog)
 		   (set! colors-dialog new-dialog))
-	       (let* ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+	       (let ((fnts (let ((mainform (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
 						       (list XmNleftAttachment   XmATTACH_FORM
 							     XmNrightAttachment  XmATTACH_FORM
 							     XmNtopAttachment    XmATTACH_FORM
 							     XmNbottomAttachment XmATTACH_WIDGET
 							     XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-							     XmNbackground       *basic-color*)))
-		      (fnts (make-dialog mainform)))
+							     XmNbackground       *basic-color*))))
+			     (make-dialog mainform))))
 		 (XtManageChild fnts)
 		 (XtManageChild (or colors-dialog fonts-dialog)))))
 	   
@@ -45070,13 +45070,13 @@ EDITS: 1
 	  
 	  (if (and (defined? 'XmToolTipGetLabel)
 		   (defined? 'XmNtoolTipString))
-	      (let* ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
-						 (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
-						       XmNtoolTipPostDelay 100
-						       XmNtoolTipPostDuration 500
-						       XmNtoolTipEnable #t
-						       XmNanimate #f)))
-		     (tip (XmToolTipGetLabel wid1)))
+	      (let ((tip (let ((wid1 (XtCreateManagedWidget "wid1" xmPushButtonWidgetClass mainform
+							    (list XmNtoolTipString (XmStringCreateLocalized "tooltip")
+								  XmNtoolTipPostDelay 100
+								  XmNtoolTipPostDuration 500
+								  XmNtoolTipEnable #t
+								  XmNanimate #f))))
+			   (XmToolTipGetLabel wid1))))
 		(if (not (Widget? tip)) (snd-display ";tooltip label: ~A ~A ~A ~A ~A ~A" tip fnttab fntda fntd fntt fnts))))
 	  
 	  (XtManageChild new-dialog)
@@ -45540,253 +45540,252 @@ EDITS: 1
 	    (snd-display ";XStringToKeysym ~A ~A" key XK_Cancel)))
       
       (let* ((win (XtWindow (cadr (main-widgets))))
-	     (xm-procs-1
-	      (list
-	       XPutBackEvent XNextEvent
-	       XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
-	       
-	       XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
-	       XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
-	       XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
-	       XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
-	       XtInstallAccelerators XtInstallAllAccelerators XtUninstallTranslations XtAppAddActionHook
-	       XtRemoveActionHook XtGetActionList XtCallActionProc XtRegisterGrabAction XtSetMultiClickTime
-	       XtGetMultiClickTime XtGetActionKeysym XtTranslateKeycode XtTranslateKey XtSetKeyTranslator
-	       XtRegisterCaseConverter XtConvertCase XtAddEventHandler XtRemoveEventHandler XtAddRawEventHandler
-	       XtRemoveRawEventHandler XtInsertEventHandler XtInsertRawEventHandler XtDispatchEventToWidget
-	       XtBuildEventMask XtAddGrab XtRemoveGrab XtAddExposureToRegion XtSetKeyboardFocus
-	       XtGetKeyboardFocusWidget XtLastEventProcessed XtLastTimestampProcessed 
-	       XtAppAddTimeOut XtRemoveTimeOut XtAppAddInput XtRemoveInput XtAppPending
-	       XtRealizeWidget XtUnrealizeWidget XtSetSensitive XtNameToWidget XtWindowToWidget
-	       XtMergeArgLists XtVaCreateArgsList XtDisplay XtDisplayOfObject XtScreen XtScreenOfObject
-	       XtWindow XtWindowOfObject XtName XtSuperclass XtClass XtParent XtAddCallback XtRemoveCallback
-	       XtAddCallbacks XtRemoveCallbacks XtRemoveAllCallbacks XtCallCallbacks
-	       XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
-	       XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
-	       XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
-	       XtAppCreateShell XtVaAppCreateShell 
-	       XtDisplayToApplicationContext 
-	       XtSetValues XtVaSetValues XtGetValues XtVaGetValues
-	       XtAppSetErrorMsgHandler XtAppSetWarningMsgHandler
-	       XtAppErrorMsg XtAppWarningMsg XtAppSetErrorHandler
-	       XtAppSetWarningHandler XtAppError
-	       XtAppAddWorkProc XtGetGC XtAllocateGC XtDestroyGC XtReleaseGC
-	       XtFindFile XtResolvePathname XtDisownSelection XtGetSelectionValue
-	       XtGetSelectionValues XtAppSetSelectionTimeout XtAppGetSelectionTimeout
-	       XtGetSelectionRequest XtGetSelectionValueIncremental
-	       XtGetSelectionValuesIncremental XtCreateSelectionRequest XtSendSelectionRequest
-	       XtCancelSelectionRequest XtGrabKey XtUngrabKey
-	       XtGrabKeyboard XtUngrabKeyboard XtGrabButton XtUngrabButton XtGrabPointer XtUngrabPointer
-	       XtGetApplicationNameAndClass XtGetDisplays XtToolkitThreadInitialize XtAppLock XtAppUnlock XtIsRectObj XtIsWidget
-	       XtIsComposite XtIsConstraint XtIsShell XtIsOverrideShell XtIsWMShell XtIsVendorShell
-	       XtIsTransientShell XtIsTopLevelShell XtIsApplicationShell XtIsSessionShell XtMapWidget
-	       XtUnmapWidget XLoadQueryFont XQueryFont XGetMotionEvents XDeleteModifiermapEntry
-	       XGetModifierMapping XInsertModifiermapEntry XNewModifiermap XCreateImage XGetImage
-	       XGetSubImage XOpenDisplay XFetchBytes XFetchBuffer XGetAtomName XDisplayName XUniqueContext
-	       XKeysymToString XSynchronize XSetAfterFunction XInternAtom XCopyColormapAndFree XCreateColormap
-	       XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
-	       XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
-	       XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
-	       XListExtensions XListProperties ;XKeycodeToKeysym 
-	       XLookupKeysym
-	       XGetKeyboardMapping ;XStringToKeysym
-	       XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
-	       XRootWindow XDefaultRootWindow XRootWindowOfScreen
-	       XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
-	       XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
-	       XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
-	       XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
-	       XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
-	       XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
-	       XSetTransientForHint XActivateScreenSaver
-	       XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
-	       XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
-	       XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping
-	       XChangePointerControl XChangeProperty XChangeWindowAttributes ; XCheckIfEvent
-	       XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent XCheckWindowEvent XCirculateSubwindows
-	       XCirculateSubwindowsDown XCirculateSubwindowsUp XClearArea XClearWindow XCloseDisplay
-	       XConfigureWindow XConnectionNumber XConvertSelection XCopyArea XCopyGC XCopyPlane XDefaultDepth
-	       XDefaultDepthOfScreen XDefaultScreen XDefineCursor XDeleteProperty XDestroyWindow
-	       XDestroySubwindows XDoesBackingStore XDoesSaveUnders XDisableAccessControl XDisplayCells
-	       XDisplayHeight XDisplayHeightMM XDisplayKeycodes XDisplayPlanes XDisplayWidth XDisplayWidthMM
-	       XDrawArc XDrawArcs XDrawImageString XDrawLine XDrawLines XDrawLinesDirect XDrawPoint
-	       XDrawPoints XDrawRectangle XDrawRectangles XDrawSegments XDrawString XDrawText
-	       XEnableAccessControl XEventsQueued XFetchName XFillArc XFillArcs XFillPolygon XFillRectangle
-	       XFillRectangles XFlush XForceScreenSaver XFreeColormap XFreeColors XFreeCursor
-	       XFreeExtensionList XFreeFont XFreeFontInfo XFreeFontNames XFreeFontPath XFreeGC
-	       XFreeModifiermap XFreePixmap XGeometry XGetErrorText XGetFontProperty
-	       XGetGCValues XGCValues XEvent XGetGeometry XGetIconName XGetInputFocus XGetKeyboardControl
-	       XGetPointerControl XGetPointerMapping XGetScreenSaver XGetTransientForHint XGetWindowProperty
-	       XGetWindowAttributes XGrabButton XGrabKey XGrabKeyboard XGrabPointer XGrabServer
-	       XHeightMMOfScreen XHeightOfScreen XIfEvent XImageByteOrder XInstallColormap XKeysymToKeycode
-	       XKillClient XLookupColor XLowerWindow XMapRaised XMapSubwindows XMapWindow XMaskEvent
-	       XMaxCmapsOfScreen XMinCmapsOfScreen XMoveResizeWindow XMoveWindow XNoOp XParseColor
-	       XParseGeometry XPeekEvent XPeekIfEvent XPending XPlanesOfScreen XProtocolRevision
-	       XProtocolVersion XPutImage XQLength XQueryBestCursor XQueryBestSize XQueryBestStipple
-	       XQueryBestTile XQueryColor XQueryColors XQueryExtension XQueryKeymap XQueryPointer
-	       XQueryTextExtents XQueryTree XRaiseWindow XRebindKeysym XRecolorCursor XRefreshKeyboardMapping
-	       XReparentWindow XResetScreenSaver XResizeWindow
-	       XRestackWindows XRotateBuffers XRotateWindowProperties XScreenCount XSelectInput XSendEvent
-	       XSetAccessControl XSetArcMode XSetBackground XSetClipMask XSetClipOrigin XSetClipRectangles
-	       XSetCloseDownMode XSetCommand XSetDashes XSetFillRule XSetFillStyle XSetFont XSetFontPath
-	       XSetForeground XSetFunction XSetGraphicsExposures XSetIconName XSetInputFocus XSetLineAttributes
-	       XSetModifierMapping XSetPlaneMask XSetPointerMapping XSetScreenSaver XSetSelectionOwner
-	       XSetState XSetStipple XSetSubwindowMode XSetTSOrigin XSetTile XSetWindowBackground
-	       XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
-	       XSetWindowColormap XStoreBuffer XStoreBytes XStoreColor XStoreColors XStoreName
-	       XStoreNamedColor XSync XTextExtents XTextWidth XTranslateCoordinates XUndefineCursor
-	       XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XUngrabServer XUninstallColormap
-	       XUnloadFont XUnmapSubwindows XUnmapWindow XVendorRelease XWarpPointer XWidthMMOfScreen
-	       XWidthOfScreen XWindowEvent XWriteBitmapFile XSupportsLocale XSetLocaleModifiers XCreateFontSet
-	       XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
-	       XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
-	       XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
-	       XDestroyRegion XEmptyRegion XEqualRegion ;XFindContext 
-	       XGetIconSizes XGetRGBColormaps
-	       XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
-	       XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
-	       XSetRGBColormaps XSetWMHints XSetRegion XShrinkRegion XSubtractRegion
-	       XUnionRectWithRegion XUnionRegion XXorRegion DefaultScreen DefaultRootWindow QLength
-	       ScreenCount ServerVendor ProtocolVersion ProtocolRevision VendorRelease DisplayString
-	       BitmapUnit BitmapBitOrder BitmapPad ImageByteOrder NextRequest LastKnownRequestProcessed
-	       DefaultScreenOfDisplay DisplayOfScreen RootWindowOfScreen BlackPixelOfScreen WhitePixelOfScreen
-	       DefaultColormapOfScreen DefaultDepthOfScreen DefaultGCOfScreen DefaultVisualOfScreen
-	       WidthOfScreen HeightOfScreen WidthMMOfScreen HeightMMOfScreen PlanesOfScreen CellsOfScreen
-	       MinCmapsOfScreen MaxCmapsOfScreen DoesSaveUnders DoesBackingStore EventMaskOfScreen RootWindow
-	       DefaultVisual DefaultGC BlackPixel WhitePixel DisplayWidth DisplayHeight DisplayWidthMM
-	       DisplayHeightMM DisplayPlanes DisplayCells DefaultColormap ScreenOfDisplay DefaultDepth
-	       IsKeypadKey IsPrivateKeypadKey IsCursorKey IsPFKey IsFunctionKey IsMiscFunctionKey
-	       IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
-	       XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
-	       XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
-	       XmCreateNotebook XmNotebookGetPageInfo 
-	       XmTransferSetParameters XmTransferValue XmCreateComboBox
-	       XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
-	       XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
-	       XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
-	       XmContainerPaste XmContainerCopyLink XmContainerPasteLink XmCreateSpinBox
-	       XmSpinBoxValidatePosition XmCreateSimpleSpinBox XmSimpleSpinBoxAddItem XmSimpleSpinBoxDeletePos
-	       XmSimpleSpinBoxSetItem XmDropSiteRegistered XmTextFieldCopyLink XmTextFieldPasteLink
-	       XmTextGetCenterline XmToggleButtonGadgetSetValue XmCreateIconGadget
-	       XmCreateIconHeader XmObjectAtPoint XmConvertStringToUnits XmCreateGrabShell
-	       XmToggleButtonSetValue XmTextPasteLink XmTextCopyLink XmScaleSetTicks XmInternAtom XmGetAtomName
-	       XmCreatePanedWindow XmCreateBulletinBoard XmCreateBulletinBoardDialog XmCreateCascadeButtonGadget
-	       XmCascadeButtonGadgetHighlight XmAddProtocols XmRemoveProtocols XmAddProtocolCallback
-	       XmRemoveProtocolCallback XmActivateProtocol XmDeactivateProtocol XmSetProtocolHooks
-	       XmCreateCascadeButton XmCascadeButtonHighlight XmCreatePushButtonGadget XmCreatePushButton
-	       XmCreateCommand XmCommandGetChild XmCommandSetValue XmCommandAppendValue XmCommandError
-	       XmCreateCommandDialog XmMenuPosition XmCreateRowColumn XmCreateWorkArea XmCreateRadioBox
-	       XmCreateOptionMenu XmOptionLabelGadget XmOptionButtonGadget XmCreateMenuBar XmCreatePopupMenu
-	       XmCreatePulldownMenu XmGetPostedFromWidget XmGetTearOffControl 
-	       XmScaleSetValue XmScaleGetValue XmCreateScale
-	       XmClipboardStartCopy XmClipboardCopy XmClipboardEndCopy XmClipboardCancelCopy
-	       XmClipboardWithdrawFormat XmClipboardCopyByName XmClipboardUndoCopy XmClipboardLock
-	       XmClipboardUnlock XmClipboardStartRetrieve XmClipboardEndRetrieve XmClipboardRetrieve
-	       XmClipboardInquireCount XmClipboardInquireFormat XmClipboardInquireLength
-	       XmClipboardInquirePendingItems XmClipboardRegisterFormat XmGetXmScreen XmCreateScrollBar
-	       XmScrollBarGetValues XmScrollBarSetValues XmCreateDialogShell 
-	       XmCreateScrolledWindow XmScrollVisible XmGetDragContext XmGetXmDisplay XmSelectionBoxGetChild
-	       XmCreateSelectionBox XmCreateSelectionDialog XmCreatePromptDialog XmDragStart XmDragCancel
-	       XmTargetsAreCompatible XmCreateSeparatorGadget XmCreateDragIcon XmCreateSeparator
-	       XmCreateDrawingArea XmCreateDrawnButton XmDropSiteRegister XmDropSiteUnregister
-	       XmDropSiteStartUpdate XmDropSiteUpdate XmDropSiteEndUpdate XmDropSiteRetrieve
-	       XmDropSiteQueryStackingOrder XmDropSiteConfigureStackingOrder XmDropTransferStart
-	       XmDropTransferAdd XmTextFieldGetString XmTextFieldGetSubstring XmTextFieldGetLastPosition
-	       XmTextFieldSetString XmTextFieldReplace XmTextFieldInsert XmTextFieldSetAddMode
-	       XmTextFieldGetAddMode XmTextFieldGetEditable XmTextFieldSetEditable XmTextFieldGetMaxLength
-	       XmTextFieldSetMaxLength XmTextFieldGetCursorPosition XmTextFieldGetInsertionPosition
-	       XmTextFieldSetCursorPosition XmTextFieldSetInsertionPosition XmTextFieldGetSelectionPosition
-	       XmTextFieldGetSelection XmTextFieldRemove XmTextFieldCopy XmTextFieldCut XmTextFieldPaste
-	       XmTextFieldClearSelection XmTextFieldSetSelection XmTextFieldXYToPos XmTextFieldPosToXY
-	       XmTextFieldShowPosition XmTextFieldSetHighlight XmTextFieldGetBaseline XmCreateTextField
-	       XmFileSelectionBoxGetChild XmFileSelectionDoSearch XmCreateFileSelectionBox
-	       XmCreateFileSelectionDialog XmTextSetHighlight XmCreateScrolledText XmCreateText
-	       XmTextGetSubstring XmTextGetString XmTextGetLastPosition XmTextSetString XmTextReplace
-	       XmTextInsert XmTextSetAddMode XmTextGetAddMode XmTextGetEditable XmTextSetEditable
-	       XmTextGetMaxLength XmTextSetMaxLength XmTextGetTopCharacter XmTextSetTopCharacter
-	       XmTextGetCursorPosition XmTextGetInsertionPosition XmTextSetInsertionPosition
-	       XmTextSetCursorPosition XmTextRemove XmTextCopy XmTextCut XmTextPaste XmTextGetSelection
-	       XmTextSetSelection XmTextClearSelection XmTextGetSelectionPosition XmTextXYToPos XmTextPosToXY
-	       XmTextGetSource XmTextSetSource XmTextShowPosition XmTextScroll XmTextGetBaseline
-	       XmTextDisableRedisplay XmTextEnableRedisplay XmTextFindString XmCreateForm XmCreateFormDialog
-	       XmCreateFrame XmToggleButtonGadgetGetState XmToggleButtonGadgetSetState XmCreateToggleButtonGadget
-	       XmToggleButtonGetState XmToggleButtonSetState XmCreateToggleButton XmCreateLabelGadget
-	       XmCreateLabel XmIsMotifWMRunning XmListAddItem XmListAddItems XmListAddItemsUnselected
-	       XmListAddItemUnselected XmListDeleteItem XmListDeleteItems XmListDeletePositions XmListDeletePos
-	       XmListDeleteItemsPos XmListDeleteAllItems XmListReplaceItems XmListReplaceItemsPos
-	       XmListReplaceItemsUnselected XmListReplaceItemsPosUnselected XmListReplacePositions
-	       XmListSelectItem XmListSelectPos XmListDeselectItem XmListDeselectPos XmListDeselectAllItems
-	       XmListSetPos XmListSetBottomPos XmListSetItem XmListSetBottomItem XmListSetAddMode
-	       XmListItemExists XmListItemPos XmListGetKbdItemPos XmListSetKbdItemPos XmListYToPos
-	       XmListPosToBounds XmListGetMatchPos XmListGetSelectedPos XmListSetHorizPos
-	       XmListUpdateSelectedList XmListPosSelected XmCreateList XmCreateScrolledList XmTranslateKey
-	       XmInstallImage XmUninstallImage XmGetPixmap XmGetPixmapByDepth XmDestroyPixmap XmUpdateDisplay
-	       XmWidgetGetBaselines XmRegisterSegmentEncoding XmMapSegmentEncoding
-	       XmCvtCTToXmString XmCvtXmStringToCT XmConvertUnits
-	       XmCreateSimpleMenuBar XmCreateSimplePopupMenu XmCreateSimplePulldownMenu
-	       XmCreateSimpleOptionMenu XmCreateSimpleRadioBox XmCreateSimpleCheckBox XmVaCreateSimpleMenuBar
-	       XmVaCreateSimplePopupMenu XmVaCreateSimplePulldownMenu XmVaCreateSimpleOptionMenu
-	       XmVaCreateSimpleRadioBox XmVaCreateSimpleCheckBox XmTrackingEvent
-	       XmSetColorCalculation XmGetColorCalculation XmGetColors XmChangeColor XmStringCreate
-	       XmStringCreateLocalized XmStringDirectionCreate XmStringSeparatorCreate
-	       XmStringInitContext
-	       XmStringFreeContext 
-	       XmStringConcatAndFree XmStringIsVoid XmStringPeekNextTriple XmStringGetNextTriple
-	       XmStringComponentCreate XmStringUnparse XmStringParseText XmStringToXmStringTable
-	       XmStringTableToXmString XmStringTableUnparse XmStringTableParseStringArray
-	       XmDirectionToStringDirection XmStringDirectionToDirection XmStringGenerate XmStringPutRendition
-	       XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
-	       XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
-	       XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
+	     (xm-procs 
+	      (let ((xm-procs-1
+		     (list
+		      XPutBackEvent XNextEvent
+		      XtAppProcessEvent XtAppMainLoop XtAppAddActions XtAppNextEvent XtAppPeekEvent
+		      
+		      XtSetArg XtManageChildren XtManageChild XtUnmanageChildren XtUnmanageChild
+		      XtDispatchEvent XtCallAcceptFocus XtIsSubclass XtIsObject XtIsManaged XtIsRealized
+		      XtIsSensitive XtOwnSelection XtOwnSelectionIncremental XtMakeResizeRequest XtTranslateCoords
+		      XtKeysymToKeycodeList XtParseTranslationTable XtParseAcceleratorTable XtOverrideTranslations XtAugmentTranslations
+		      XtInstallAccelerators XtInstallAllAccelerators XtUninstallTranslations XtAppAddActionHook
+		      XtRemoveActionHook XtGetActionList XtCallActionProc XtRegisterGrabAction XtSetMultiClickTime
+		      XtGetMultiClickTime XtGetActionKeysym XtTranslateKeycode XtTranslateKey XtSetKeyTranslator
+		      XtRegisterCaseConverter XtConvertCase XtAddEventHandler XtRemoveEventHandler XtAddRawEventHandler
+		      XtRemoveRawEventHandler XtInsertEventHandler XtInsertRawEventHandler XtDispatchEventToWidget
+		      XtBuildEventMask XtAddGrab XtRemoveGrab XtAddExposureToRegion XtSetKeyboardFocus
+		      XtGetKeyboardFocusWidget XtLastEventProcessed XtLastTimestampProcessed 
+		      XtAppAddTimeOut XtRemoveTimeOut XtAppAddInput XtRemoveInput XtAppPending
+		      XtRealizeWidget XtUnrealizeWidget XtSetSensitive XtNameToWidget XtWindowToWidget
+		      XtMergeArgLists XtVaCreateArgsList XtDisplay XtDisplayOfObject XtScreen XtScreenOfObject
+		      XtWindow XtWindowOfObject XtName XtSuperclass XtClass XtParent XtAddCallback XtRemoveCallback
+		      XtAddCallbacks XtRemoveCallbacks XtRemoveAllCallbacks XtCallCallbacks
+		      XtHasCallbacks XtCreatePopupShell XtVaCreatePopupShell XtPopup XtPopupSpringLoaded
+		      XtCallbackNone XtCallbackNonexclusive XtCallbackExclusive XtPopdown XtCallbackPopdown
+		      XtCreateWidget XtCreateManagedWidget XtVaCreateWidget XtVaCreateManagedWidget
+		      XtAppCreateShell XtVaAppCreateShell 
+		      XtDisplayToApplicationContext 
+		      XtSetValues XtVaSetValues XtGetValues XtVaGetValues
+		      XtAppSetErrorMsgHandler XtAppSetWarningMsgHandler
+		      XtAppErrorMsg XtAppWarningMsg XtAppSetErrorHandler
+		      XtAppSetWarningHandler XtAppError
+		      XtAppAddWorkProc XtGetGC XtAllocateGC XtDestroyGC XtReleaseGC
+		      XtFindFile XtResolvePathname XtDisownSelection XtGetSelectionValue
+		      XtGetSelectionValues XtAppSetSelectionTimeout XtAppGetSelectionTimeout
+		      XtGetSelectionRequest XtGetSelectionValueIncremental
+		      XtGetSelectionValuesIncremental XtCreateSelectionRequest XtSendSelectionRequest
+		      XtCancelSelectionRequest XtGrabKey XtUngrabKey
+		      XtGrabKeyboard XtUngrabKeyboard XtGrabButton XtUngrabButton XtGrabPointer XtUngrabPointer
+		      XtGetApplicationNameAndClass XtGetDisplays XtToolkitThreadInitialize XtAppLock XtAppUnlock XtIsRectObj XtIsWidget
+		      XtIsComposite XtIsConstraint XtIsShell XtIsOverrideShell XtIsWMShell XtIsVendorShell
+		      XtIsTransientShell XtIsTopLevelShell XtIsApplicationShell XtIsSessionShell XtMapWidget
+		      XtUnmapWidget XLoadQueryFont XQueryFont XGetMotionEvents XDeleteModifiermapEntry
+		      XGetModifierMapping XInsertModifiermapEntry XNewModifiermap XCreateImage XGetImage
+		      XGetSubImage XOpenDisplay XFetchBytes XFetchBuffer XGetAtomName XDisplayName XUniqueContext
+		      XKeysymToString XSynchronize XSetAfterFunction XInternAtom XCopyColormapAndFree XCreateColormap
+		      XCreatePixmapCursor XCreateGlyphCursor XCreateFontCursor XLoadFont XCreateGC XFlushGC
+		      XCreatePixmap XCreateBitmapFromData XCreatePixmapFromBitmapData XCreateSimpleWindow
+		      XGetSelectionOwner XCreateWindow XListInstalledColormaps XListFonts XListFontsWithInfo
+		      XListExtensions XListProperties ;XKeycodeToKeysym 
+		      XLookupKeysym
+		      XGetKeyboardMapping ;XStringToKeysym
+		      XDisplayMotionBufferSize XVisualIDFromVisual XMaxRequestSize XExtendedMaxRequestSize
+		      XRootWindow XDefaultRootWindow XRootWindowOfScreen
+		      XDefaultVisual XDefaultVisualOfScreen XDefaultGC XDefaultGCOfScreen XBlackPixel XWhitePixel
+		      XAllPlanes XBlackPixelOfScreen XWhitePixelOfScreen XNextRequest XLastKnownRequestProcessed
+		      XServerVendor XDisplayString XDefaultColormap XDefaultColormapOfScreen XDisplayOfScreen
+		      XScreenOfDisplay XDefaultScreenOfDisplay XEventMaskOfScreen XScreenNumberOfScreen
+		      XSetErrorHandler XSetIOErrorHandler XListPixmapFormats XListDepths XReconfigureWMWindow
+		      XGetWMProtocols XSetWMProtocols XIconifyWindow XWithdrawWindow XGetCommand XGetWMColormapWindows
+		      XSetTransientForHint XActivateScreenSaver
+		      XAllocColor XAllocColorCells XAllocColorPlanes XAllocNamedColor
+		      XAllowEvents XAutoRepeatOff XAutoRepeatOn XBell XBitmapBitOrder XBitmapPad XBitmapUnit
+		      XCellsOfScreen XChangeActivePointerGrab XChangeGC XChangeKeyboardControl XChangeKeyboardMapping
+		      XChangePointerControl XChangeProperty XChangeWindowAttributes ; XCheckIfEvent
+		      XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent XCheckWindowEvent XCirculateSubwindows
+		      XCirculateSubwindowsDown XCirculateSubwindowsUp XClearArea XClearWindow XCloseDisplay
+		      XConfigureWindow XConnectionNumber XConvertSelection XCopyArea XCopyGC XCopyPlane XDefaultDepth
+		      XDefaultDepthOfScreen XDefaultScreen XDefineCursor XDeleteProperty XDestroyWindow
+		      XDestroySubwindows XDoesBackingStore XDoesSaveUnders XDisableAccessControl XDisplayCells
+		      XDisplayHeight XDisplayHeightMM XDisplayKeycodes XDisplayPlanes XDisplayWidth XDisplayWidthMM
+		      XDrawArc XDrawArcs XDrawImageString XDrawLine XDrawLines XDrawLinesDirect XDrawPoint
+		      XDrawPoints XDrawRectangle XDrawRectangles XDrawSegments XDrawString XDrawText
+		      XEnableAccessControl XEventsQueued XFetchName XFillArc XFillArcs XFillPolygon XFillRectangle
+		      XFillRectangles XFlush XForceScreenSaver XFreeColormap XFreeColors XFreeCursor
+		      XFreeExtensionList XFreeFont XFreeFontInfo XFreeFontNames XFreeFontPath XFreeGC
+		      XFreeModifiermap XFreePixmap XGeometry XGetErrorText XGetFontProperty
+		      XGetGCValues XGCValues XEvent XGetGeometry XGetIconName XGetInputFocus XGetKeyboardControl
+		      XGetPointerControl XGetPointerMapping XGetScreenSaver XGetTransientForHint XGetWindowProperty
+		      XGetWindowAttributes XGrabButton XGrabKey XGrabKeyboard XGrabPointer XGrabServer
+		      XHeightMMOfScreen XHeightOfScreen XIfEvent XImageByteOrder XInstallColormap XKeysymToKeycode
+		      XKillClient XLookupColor XLowerWindow XMapRaised XMapSubwindows XMapWindow XMaskEvent
+		      XMaxCmapsOfScreen XMinCmapsOfScreen XMoveResizeWindow XMoveWindow XNoOp XParseColor
+		      XParseGeometry XPeekEvent XPeekIfEvent XPending XPlanesOfScreen XProtocolRevision
+		      XProtocolVersion XPutImage XQLength XQueryBestCursor XQueryBestSize XQueryBestStipple
+		      XQueryBestTile XQueryColor XQueryColors XQueryExtension XQueryKeymap XQueryPointer
+		      XQueryTextExtents XQueryTree XRaiseWindow XRebindKeysym XRecolorCursor XRefreshKeyboardMapping
+		      XReparentWindow XResetScreenSaver XResizeWindow
+		      XRestackWindows XRotateBuffers XRotateWindowProperties XScreenCount XSelectInput XSendEvent
+		      XSetAccessControl XSetArcMode XSetBackground XSetClipMask XSetClipOrigin XSetClipRectangles
+		      XSetCloseDownMode XSetCommand XSetDashes XSetFillRule XSetFillStyle XSetFont XSetFontPath
+		      XSetForeground XSetFunction XSetGraphicsExposures XSetIconName XSetInputFocus XSetLineAttributes
+		      XSetModifierMapping XSetPlaneMask XSetPointerMapping XSetScreenSaver XSetSelectionOwner
+		      XSetState XSetStipple XSetSubwindowMode XSetTSOrigin XSetTile XSetWindowBackground
+		      XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
+		      XSetWindowColormap XStoreBuffer XStoreBytes XStoreColor XStoreColors XStoreName
+		      XStoreNamedColor XSync XTextExtents XTextWidth XTranslateCoordinates XUndefineCursor
+		      XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XUngrabServer XUninstallColormap
+		      XUnloadFont XUnmapSubwindows XUnmapWindow XVendorRelease XWarpPointer XWidthMMOfScreen
+		      XWidthOfScreen XWindowEvent XWriteBitmapFile XSupportsLocale XSetLocaleModifiers XCreateFontSet
+		      XFreeFontSet XFontsOfFontSet XBaseFontNameListOfFontSet XLocaleOfFontSet XContextDependentDrawing
+		      XDirectionalDependentDrawing XContextualDrawing XFilterEvent XAllocIconSize
+		      XAllocStandardColormap XAllocWMHints XClipBox XCreateRegion XDefaultString XDeleteContext
+		      XDestroyRegion XEmptyRegion XEqualRegion ;XFindContext 
+		      XGetIconSizes XGetRGBColormaps
+		      XGetVisualInfo XGetWMHints XIntersectRegion XConvertCase XLookupString
+		      XMatchVisualInfo XOffsetRegion XPointInRegion XPolygonRegion XRectInRegion XSaveContext
+		      XSetRGBColormaps XSetWMHints XSetRegion XShrinkRegion XSubtractRegion
+		      XUnionRectWithRegion XUnionRegion XXorRegion DefaultScreen DefaultRootWindow QLength
+		      ScreenCount ServerVendor ProtocolVersion ProtocolRevision VendorRelease DisplayString
+		      BitmapUnit BitmapBitOrder BitmapPad ImageByteOrder NextRequest LastKnownRequestProcessed
+		      DefaultScreenOfDisplay DisplayOfScreen RootWindowOfScreen BlackPixelOfScreen WhitePixelOfScreen
+		      DefaultColormapOfScreen DefaultDepthOfScreen DefaultGCOfScreen DefaultVisualOfScreen
+		      WidthOfScreen HeightOfScreen WidthMMOfScreen HeightMMOfScreen PlanesOfScreen CellsOfScreen
+		      MinCmapsOfScreen MaxCmapsOfScreen DoesSaveUnders DoesBackingStore EventMaskOfScreen RootWindow
+		      DefaultVisual DefaultGC BlackPixel WhitePixel DisplayWidth DisplayHeight DisplayWidthMM
+		      DisplayHeightMM DisplayPlanes DisplayCells DefaultColormap ScreenOfDisplay DefaultDepth
+		      IsKeypadKey IsPrivateKeypadKey IsCursorKey IsPFKey IsFunctionKey IsMiscFunctionKey
+		      IsModifierKey XmCreateMessageBox XmCreateMessageDialog XmCreateErrorDialog
+		      XmCreateInformationDialog XmCreateQuestionDialog XmCreateWarningDialog XmCreateWorkingDialog
+		      XmCreateTemplateDialog XmMessageBoxGetChild XmCreateArrowButtonGadget XmCreateArrowButton
+		      XmCreateNotebook XmNotebookGetPageInfo 
+		      XmTransferSetParameters XmTransferValue XmCreateComboBox
+		      XmCreateDropDownComboBox XmCreateDropDownList XmComboBoxAddItem XmComboBoxDeletePos
+		      XmComboBoxSelectItem XmComboBoxSetItem XmComboBoxUpdate XmCreateContainer
+		      XmContainerGetItemChildren XmContainerRelayout XmContainerReorder XmContainerCut XmContainerCopy
+		      XmContainerPaste XmContainerCopyLink XmContainerPasteLink XmCreateSpinBox
+		      XmSpinBoxValidatePosition XmCreateSimpleSpinBox XmSimpleSpinBoxAddItem XmSimpleSpinBoxDeletePos
+		      XmSimpleSpinBoxSetItem XmDropSiteRegistered XmTextFieldCopyLink XmTextFieldPasteLink
+		      XmTextGetCenterline XmToggleButtonGadgetSetValue XmCreateIconGadget
+		      XmCreateIconHeader XmObjectAtPoint XmConvertStringToUnits XmCreateGrabShell
+		      XmToggleButtonSetValue XmTextPasteLink XmTextCopyLink XmScaleSetTicks XmInternAtom XmGetAtomName
+		      XmCreatePanedWindow XmCreateBulletinBoard XmCreateBulletinBoardDialog XmCreateCascadeButtonGadget
+		      XmCascadeButtonGadgetHighlight XmAddProtocols XmRemoveProtocols XmAddProtocolCallback
+		      XmRemoveProtocolCallback XmActivateProtocol XmDeactivateProtocol XmSetProtocolHooks
+		      XmCreateCascadeButton XmCascadeButtonHighlight XmCreatePushButtonGadget XmCreatePushButton
+		      XmCreateCommand XmCommandGetChild XmCommandSetValue XmCommandAppendValue XmCommandError
+		      XmCreateCommandDialog XmMenuPosition XmCreateRowColumn XmCreateWorkArea XmCreateRadioBox
+		      XmCreateOptionMenu XmOptionLabelGadget XmOptionButtonGadget XmCreateMenuBar XmCreatePopupMenu
+		      XmCreatePulldownMenu XmGetPostedFromWidget XmGetTearOffControl 
+		      XmScaleSetValue XmScaleGetValue XmCreateScale
+		      XmClipboardStartCopy XmClipboardCopy XmClipboardEndCopy XmClipboardCancelCopy
+		      XmClipboardWithdrawFormat XmClipboardCopyByName XmClipboardUndoCopy XmClipboardLock
+		      XmClipboardUnlock XmClipboardStartRetrieve XmClipboardEndRetrieve XmClipboardRetrieve
+		      XmClipboardInquireCount XmClipboardInquireFormat XmClipboardInquireLength
+		      XmClipboardInquirePendingItems XmClipboardRegisterFormat XmGetXmScreen XmCreateScrollBar
+		      XmScrollBarGetValues XmScrollBarSetValues XmCreateDialogShell 
+		      XmCreateScrolledWindow XmScrollVisible XmGetDragContext XmGetXmDisplay XmSelectionBoxGetChild
+		      XmCreateSelectionBox XmCreateSelectionDialog XmCreatePromptDialog XmDragStart XmDragCancel
+		      XmTargetsAreCompatible XmCreateSeparatorGadget XmCreateDragIcon XmCreateSeparator
+		      XmCreateDrawingArea XmCreateDrawnButton XmDropSiteRegister XmDropSiteUnregister
+		      XmDropSiteStartUpdate XmDropSiteUpdate XmDropSiteEndUpdate XmDropSiteRetrieve
+		      XmDropSiteQueryStackingOrder XmDropSiteConfigureStackingOrder XmDropTransferStart
+		      XmDropTransferAdd XmTextFieldGetString XmTextFieldGetSubstring XmTextFieldGetLastPosition
+		      XmTextFieldSetString XmTextFieldReplace XmTextFieldInsert XmTextFieldSetAddMode
+		      XmTextFieldGetAddMode XmTextFieldGetEditable XmTextFieldSetEditable XmTextFieldGetMaxLength
+		      XmTextFieldSetMaxLength XmTextFieldGetCursorPosition XmTextFieldGetInsertionPosition
+		      XmTextFieldSetCursorPosition XmTextFieldSetInsertionPosition XmTextFieldGetSelectionPosition
+		      XmTextFieldGetSelection XmTextFieldRemove XmTextFieldCopy XmTextFieldCut XmTextFieldPaste
+		      XmTextFieldClearSelection XmTextFieldSetSelection XmTextFieldXYToPos XmTextFieldPosToXY
+		      XmTextFieldShowPosition XmTextFieldSetHighlight XmTextFieldGetBaseline XmCreateTextField
+		      XmFileSelectionBoxGetChild XmFileSelectionDoSearch XmCreateFileSelectionBox
+		      XmCreateFileSelectionDialog XmTextSetHighlight XmCreateScrolledText XmCreateText
+		      XmTextGetSubstring XmTextGetString XmTextGetLastPosition XmTextSetString XmTextReplace
+		      XmTextInsert XmTextSetAddMode XmTextGetAddMode XmTextGetEditable XmTextSetEditable
+		      XmTextGetMaxLength XmTextSetMaxLength XmTextGetTopCharacter XmTextSetTopCharacter
+		      XmTextGetCursorPosition XmTextGetInsertionPosition XmTextSetInsertionPosition
+		      XmTextSetCursorPosition XmTextRemove XmTextCopy XmTextCut XmTextPaste XmTextGetSelection
+		      XmTextSetSelection XmTextClearSelection XmTextGetSelectionPosition XmTextXYToPos XmTextPosToXY
+		      XmTextGetSource XmTextSetSource XmTextShowPosition XmTextScroll XmTextGetBaseline
+		      XmTextDisableRedisplay XmTextEnableRedisplay XmTextFindString XmCreateForm XmCreateFormDialog
+		      XmCreateFrame XmToggleButtonGadgetGetState XmToggleButtonGadgetSetState XmCreateToggleButtonGadget
+		      XmToggleButtonGetState XmToggleButtonSetState XmCreateToggleButton XmCreateLabelGadget
+		      XmCreateLabel XmIsMotifWMRunning XmListAddItem XmListAddItems XmListAddItemsUnselected
+		      XmListAddItemUnselected XmListDeleteItem XmListDeleteItems XmListDeletePositions XmListDeletePos
+		      XmListDeleteItemsPos XmListDeleteAllItems XmListReplaceItems XmListReplaceItemsPos
+		      XmListReplaceItemsUnselected XmListReplaceItemsPosUnselected XmListReplacePositions
+		      XmListSelectItem XmListSelectPos XmListDeselectItem XmListDeselectPos XmListDeselectAllItems
+		      XmListSetPos XmListSetBottomPos XmListSetItem XmListSetBottomItem XmListSetAddMode
+		      XmListItemExists XmListItemPos XmListGetKbdItemPos XmListSetKbdItemPos XmListYToPos
+		      XmListPosToBounds XmListGetMatchPos XmListGetSelectedPos XmListSetHorizPos
+		      XmListUpdateSelectedList XmListPosSelected XmCreateList XmCreateScrolledList XmTranslateKey
+		      XmInstallImage XmUninstallImage XmGetPixmap XmGetPixmapByDepth XmDestroyPixmap XmUpdateDisplay
+		      XmWidgetGetBaselines XmRegisterSegmentEncoding XmMapSegmentEncoding
+		      XmCvtCTToXmString XmCvtXmStringToCT XmConvertUnits
+		      XmCreateSimpleMenuBar XmCreateSimplePopupMenu XmCreateSimplePulldownMenu
+		      XmCreateSimpleOptionMenu XmCreateSimpleRadioBox XmCreateSimpleCheckBox XmVaCreateSimpleMenuBar
+		      XmVaCreateSimplePopupMenu XmVaCreateSimplePulldownMenu XmVaCreateSimpleOptionMenu
+		      XmVaCreateSimpleRadioBox XmVaCreateSimpleCheckBox XmTrackingEvent
+		      XmSetColorCalculation XmGetColorCalculation XmGetColors XmChangeColor XmStringCreate
+		      XmStringCreateLocalized XmStringDirectionCreate XmStringSeparatorCreate
+		      XmStringInitContext
+		      XmStringFreeContext 
+		      XmStringConcatAndFree XmStringIsVoid XmStringPeekNextTriple XmStringGetNextTriple
+		      XmStringComponentCreate XmStringUnparse XmStringParseText XmStringToXmStringTable
+		      XmStringTableToXmString XmStringTableUnparse XmStringTableParseStringArray
+		      XmDirectionToStringDirection XmStringDirectionToDirection XmStringGenerate XmStringPutRendition
+		      XmParseMappingGetValues XmParseMappingFree XmParseTableFree XmStringTableProposeTablist
+		      XmTabSetValue XmTabGetValues XmTabFree XmTabCreate XmTabListTabCount XmTabListRemoveTabs
+		      XmTabListReplacePositions XmTabListGetTab XmTabListCopy XmTabListInsertTabs
 					; XmRenderTableCvtFromProp XmRenderTableCvtToProp XmRenditionUpdate XmRenditionRetrieve
-	       XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
-	       XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
-	       XmRenderTableAddRenditions 
-	       XmStringEmpty XmStringHasSubstring XmStringFree XmStringBaseline XmStringWidth XmStringHeight
-	       XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
-	       XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
-	       XmProcessTraversal XmCreateMenuShell XmIsMessageBox
-	       XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsComboBox XmIsContainer
-	       XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
-	       XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
-	       XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
-	       XmIsSelectionBox XmIsDragContext XmIsSeparatorGadget XmIsDragIconObjectClass
-	       XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
-	       XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
-	       XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsManager
-	       XmIsMenuShell XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
-	       XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
-	       XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
-	       XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
-	       Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
-	       XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
-	       Widget? XmStringContext? WidgetClass? XmString?
-	       XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
-	       XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
-	       XmTab? XmNotebook? XmComboBox? XmContainer? XmIconHeader?
-	       XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
-	       XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
-	       XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
-	       XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMessageBox? XmManager?
-	       XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
-	       XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive?
-	       XmTextSource? 
-	       
-	       XButtonEvent? XCirculateEvent? XCirculateRequestEvent? XClientMessageEvent? XColormapEvent?
-	       XConfigureEvent? XConfigureRequestEvent? XCreateWindowEvent? XCrossingEvent? XDeleteProperty
-	       XDestroyWindowEvent? XErrorEvent? XExposeEvent? XFocusChangeEvent? XGraphicsExposeEvent? XGravityEvent?
-	       XIconSize? XKeyEvent? XKeymapEvent? XMapEvent? XMapRequestEvent? XMappingEvent? XMotionEvent?
-	       XNoExposeEvent? XPropertyEvent? XReparentEvent? XResizeRequestEvent? XSelectionClearEvent?
-	       XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?
-	       
-	       ))
-	     (xm-procs (if (not (defined? 'XpmImage?))
-			   xm-procs-1
-			   (append xm-procs-1
-				   (list 
-				    XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
-				    XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
-				    XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?))))
+		      XmRenditionFree XmRenditionCreate XmRenderTableGetRenditions XmRenderTableGetRendition
+		      XmRenderTableGetTags XmRenderTableFree XmRenderTableCopy XmRenderTableRemoveRenditions
+		      XmRenderTableAddRenditions 
+		      XmStringEmpty XmStringHasSubstring XmStringFree XmStringBaseline XmStringWidth XmStringHeight
+		      XmStringExtent XmStringLineCount XmStringDraw XmStringDrawImage XmStringDrawUnderline
+		      XmGetDestination XmIsTraversable XmGetVisibility XmGetTabGroup XmGetFocusWidget
+		      XmProcessTraversal XmCreateMenuShell XmIsMessageBox
+		      XmIsArrowButtonGadget XmIsArrowButton XmIsNotebook XmIsComboBox XmIsContainer
+		      XmIsGrabShell XmIsIconGadget XmIsIconHeader XmIsPanedWindow XmIsBulletinBoard XmIsPrimitive
+		      XmIsCascadeButtonGadget XmIsCascadeButton XmIsPushButtonGadget XmIsPushButton XmIsCommand
+		      XmIsRowColumn XmIsScale XmIsScreen XmIsScrollBar XmIsDialogShell XmIsScrolledWindow XmIsDisplay
+		      XmIsSelectionBox XmIsDragContext XmIsSeparatorGadget XmIsDragIconObjectClass
+		      XmIsSeparator XmIsDrawingArea XmIsDrawnButton XmIsDropSiteManager XmIsDropTransfer XmIsTextField
+		      XmIsFileSelectionBox XmIsText XmIsForm XmIsFrame XmIsGadget XmIsToggleButtonGadget
+		      XmIsToggleButton XmIsLabelGadget XmIsLabel XmIsVendorShell XmIsList XmIsManager
+		      XmIsMenuShell XGetPixel XDestroyImage XPutPixel XSubImage XAddPixel
+		      XtAppContext? XtRequestId? XtWorkProcId? XtInputId? XtIntervalId? Screen? XEvent?
+		      XRectangle? XArc? XPoint? XSegment? XColor? Atom? Colormap?
+		      XModifierKeymap? Depth? Display? Drawable? Font? GC? KeySym? Pixel? Pixmap? Region?
+		      Time? Visual? Window? XFontProp? XFontSet? XFontStruct? XGCValues? XImage? XVisualInfo?
+		      XWMHints? XWindowAttributes? XWindowChanges? KeyCode? XContext? XCharStruct? XTextItem?
+		      Widget? XmStringContext? WidgetClass? XmString?
+		      XmToggleButton? XmDrawingArea? XmPushButton? XmTextField? XmFileSelectionBox? XmText?
+		      XmFrame? XmLabel? XmList? XmArrowButton? XmScrollBar? XmCommand? XmScale? XmRowColumn?
+		      XmTab? XmNotebook? XmComboBox? XmContainer? XmIconHeader?
+		      XmGrabShell? XmRendition? XmRenderTable? XmIconGadget? XmTabList? XmParseMapping?
+		      XmPanedWindow? XmScrolledWindow? XmCascadeButton? XmForm? XmBulletinBoard? XmScreen?
+		      XmDialogShell? XmDisplay? XmSelectionBox? XmDragContext? XmDragIconObjectClass? XmSeparator?
+		      XmDropSiteManager? XmDropTransfer? XmVendorShell? XmMessageBox? XmManager?
+		      XmMenuShell? XmLabelGadget? XmPushButtonGadget? XmSeparatorGadget? XmArrowButtonGadget?
+		      XmCascadeButtonGadget? XmToggleButtonGadget? XmDrawnButton? XmPrimitive?
+		      XmTextSource? 
+		      
+		      XButtonEvent? XCirculateEvent? XCirculateRequestEvent? XClientMessageEvent? XColormapEvent?
+		      XConfigureEvent? XConfigureRequestEvent? XCreateWindowEvent? XCrossingEvent? XDeleteProperty
+		      XDestroyWindowEvent? XErrorEvent? XExposeEvent? XFocusChangeEvent? XGraphicsExposeEvent? XGravityEvent?
+		      XIconSize? XKeyEvent? XKeymapEvent? XMapEvent? XMapRequestEvent? XMappingEvent? XMotionEvent?
+		      XNoExposeEvent? XPropertyEvent? XReparentEvent? XResizeRequestEvent? XSelectionClearEvent?
+		      XSelectionEvent? XSelectionRequestEvent? XSetWindowAttributes? XStandardColormap? XUnmapEvent? XVisibilityEvent?)))
+		(if (not (defined? 'XpmImage?))
+		    xm-procs-1
+		    (append xm-procs-1
+			    (list 
+			     XpmCreatePixmapFromData XpmCreateDataFromPixmap XpmReadFileToPixmap
+			     XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
+			     XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?)))))
 			   
 	     (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
 	     (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
@@ -45852,78 +45851,78 @@ EDITS: 1
 		   :channels -1 0 #f #t () #()))
 	    )
 	
-	(let* ((struct-accessors-1 
-		(list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
-		       .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
-		       .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
-		       .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
-		       .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
-		       .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
-		       .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
-		       .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
-		       .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
-		       .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
-		       .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
-		       .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
-		       .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
-		       .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
-		       .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
-		       .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
-		       .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
+	(let ((struct-accessors
+	       (let ((struct-accessors-1 
+		      (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
+			     .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
+			     .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
+			     .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
+			     .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
+			     .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
+			     .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
+			     .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
+			     .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
+			     .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
+			     .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
+			     .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
+			     .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
+			     .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
+			     .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
+			     .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
+			     .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
 					;			    .last_page 
-		       .crossed_boundary
-		       .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
-		       .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
-		       .animate .length .click_count .widget .item_position .callbackstruct
-		       .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
-		       .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
-		       .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
-		       .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
-		       .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
-		       .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
-		       .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
-	       (struct-accessors (if (not (defined? 'XpmImage?))
-				     struct-accessors-1
-				     (append struct-accessors-1
-					     (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
-						   .y_hotspot .x_hotspot .colormap_size))))
-				     
-	       
-	       (struct-accessor-names-1
-		(list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
-		       '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
-		       '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
-		       '.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
-		       '.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
-		       '.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
-		       '.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
-		       '.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
-		       '.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
-		       '.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
-		       '.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
-		       '.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
-		       '.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
-		       '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
-		       '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
-		       '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
-		       '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
+			     .crossed_boundary
+			     .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
+			     .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
+			     .animate .length .click_count .widget .item_position .callbackstruct
+			     .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
+			     .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
+			     .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
+			     .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
+			     .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
+			     .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
+			     .send_event .serial .type .value .doit .colormap .menuToPost .postIt)))
+		 (if (not (defined? 'XpmImage?))
+		     struct-accessors-1
+		     (append struct-accessors-1
+			     (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
+				   .y_hotspot .x_hotspot .colormap_size)))))
+	       (struct-accessor-names 
+		(let ((struct-accessor-names-1
+		       (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
+			      '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
+			      '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
+			      '.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
+			      '.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
+			      '.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
+			      '.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
+			      '.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
+			      '.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
+			      '.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
+			      '.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
+			      '.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
+			      '.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
+			      '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
+			      '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
+			      '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
+			      '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
 					;			    '.last_page 
-		       '.crossed_boundary
-		       '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
-		       '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
-		       '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
-		       '.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
-		       '.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
-		       '.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
-		       '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
-		       '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
-		       '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
-		       '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt))
-	       (struct-accessor-names (if (not (defined? 'XpmImage?))
-					  struct-accessor-names-1
-					  (append struct-accessor-names-1
-						  (list '.valuemask '.ncolors '.cpp
-							'.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size))))
+			      '.crossed_boundary
+			      '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
+			      '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
+			      '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
+			      '.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
+			      '.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
+			      '.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
+			      '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
+			      '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
+			      '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
+			      '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt)))
+		  (if (not (defined? 'XpmImage?))
+		      struct-accessor-names-1
+		      (append struct-accessor-names-1
+			      (list '.valuemask '.ncolors '.cpp
+				    '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size)))))
 
 	       (dpy (XtDisplay (cadr (main-widgets))))
 	       (win (XtWindow (cadr (main-widgets)))))
@@ -47416,10 +47415,11 @@ EDITS: 1
 				"" (make-hash-table 256)
 				#<undefined> #<unspecified> #<eof>
 				(random-state 12) (float-vector) (vector)))
-	       (few-args (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) ""
-			       0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))
-	       (less-args (if all-args main-args few-args)))
-	  
+	       (less-args (if all-args 
+			      main-args 
+			      (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) ""
+				    0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))))
+
 	  ;; ---------------- 1 Arg
 	  (for-each 
 	   (lambda (arg)

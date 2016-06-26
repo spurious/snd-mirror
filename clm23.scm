@@ -703,8 +703,8 @@
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
 	(os (make-oscil freq)))
-    (let* ((sr2 (make-src :srate speed :input (lambda (dir) (oscil os))))
-	   (sr1 (make-src :srate speed :input (lambda (dir) (src sr2)))))
+    (let ((sr1 (let ((sr2 (make-src :srate speed :input (lambda (dir) (oscil os)))))
+		 (make-src :srate speed :input (lambda (dir) (src sr2))))))
       (do ((i start (+ i 1))) ((= i end))
 	(outa i (* amp (src sr1)))))))
 
@@ -1469,9 +1469,9 @@
 	(error 'no-loop-positions)
 	(let* ((loop-start (car loop-data))
 	       (loop-length (- (+ (cadr loop-data) 1) loop-start))
-	       (sound-section (float-vector-scale! (file->array sound 0 loop-start loop-length (make-float-vector loop-length)) amp))
-	       (tbl (make-table-lookup :frequency (/ (* freq (srate sound)) loop-length)
-				       :wave sound-section)))
+	       (tbl (let ((sound-section (float-vector-scale! (file->array sound 0 loop-start loop-length (make-float-vector loop-length)) amp)))
+		      (make-table-lookup :frequency (/ (* freq (srate sound)) loop-length)
+					 :wave sound-section))))
 	  ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
 	  (do ((i beg (+ i 1)))
 	      ((= i end))
@@ -1580,12 +1580,12 @@
 (define (sndclmdoc-sum-of-odd-sines gen fm)
   (let* ((a2 (* (gen 0) 0.5))
 	 (n (gen 2))
-	 (den (* n (sin a2)))
-	 (result (if (< (abs den) 1.0e-9)
-		     0.0
-		     (/ (* (sin (* n a2)) 
-			   (sin (* (+ 1 n) a2)))
-			den))))
+	 (result (let ((den (* n (sin a2))))
+		   (if (< (abs den) 1.0e-9)
+		       0.0
+		       (/ (* (sin (* n a2)) 
+			     (sin (* (+ 1 n) a2)))
+			  den)))))
     (set! (gen 0) (+ (gen 0) (gen 1) fm))
     result))
 
@@ -2018,9 +2018,9 @@
     (lambda (gen input)
       (let-set! gen 'input input)
       (with-let gen
-	(let* ((modphase (* ratio phase))
-	       (result (* (exp (* r2 (cos modphase)))
-			  (sin (+ phase (* r1 (sin modphase)))))))
+	(let ((result (let ((modphase (* ratio phase)))
+			(* (exp (* r2 (cos modphase)))
+			   (sin (+ phase (* r1 (sin modphase))))))))
 	  (set! phase (+ phase input freq))
 	  result)))))
 
@@ -2029,9 +2029,9 @@
     (lambda (gen input)
       (let-set! gen 'input input)
       (with-let gen
-	(let* ((modphase (* ratio phase))
-	       (result (* (exp (- (* r1 (cos modphase)) r3))
-			  (sin (+ phase (* r2 (sin modphase)))))))
+	(let ((result (let ((modphase (* ratio phase)))
+			(* (exp (- (* r1 (cos modphase)) r3))
+			   (sin (+ phase (* r2 (sin modphase))))))))
 	  (set! phase (+ phase input freq))
 	  result)))))
 
