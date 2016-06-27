@@ -219,8 +219,7 @@
 	;; send fm data to dac
 	(let* ((bufsize 256)
 	       (work-proc #f)
-	       (port (let ((srate 22050))
-		       (mus-audio-open-output mus-audio-default srate 1 mus-lshort (* bufsize 2)))))
+	       (port (mus-audio-open-output mus-audio-default 22050 1 mus-lshort (* bufsize 2))))
 	  (if (< port 0) 
 	      (format () "can't open DAC!"))
 	  

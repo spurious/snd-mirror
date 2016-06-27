@@ -229,18 +229,18 @@
     (let ((documentation "(add-sliders dialog sliders) takes 'sliders', a list of lists, each inner list being (title low initial high callback scale ['log]) \
 and returns a list of widgets (for reset callbacks)"))
       (lambda* (dialog sliders)
-	(let* ((mainfrm (XtCreateManagedWidget "formd" xmFormWidgetClass dialog
-					       (list XmNleftAttachment      XmATTACH_FORM
-						     XmNrightAttachment     XmATTACH_FORM
-						     XmNtopAttachment       XmATTACH_FORM
-						     XmNbottomAttachment    XmATTACH_WIDGET
-						     XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
-						     XmNbackground          *highlight-color*)))
-	       (mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass mainfrm
-						(list XmNleftAttachment      XmATTACH_FORM
-						      XmNrightAttachment     XmATTACH_FORM
-						      XmNbackground          *highlight-color*
-						      XmNorientation         XmVERTICAL))))
+	(let ((mainform (let ((mainfrm (XtCreateManagedWidget "formd" xmFormWidgetClass dialog
+							      (list XmNleftAttachment      XmATTACH_FORM
+								    XmNrightAttachment     XmATTACH_FORM
+								    XmNtopAttachment       XmATTACH_FORM
+								    XmNbottomAttachment    XmATTACH_WIDGET
+								    XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
+								    XmNbackground          *highlight-color*))))
+			  (XtCreateManagedWidget "formd" xmRowColumnWidgetClass mainfrm
+						 (list XmNleftAttachment      XmATTACH_FORM
+						       XmNrightAttachment     XmATTACH_FORM
+						       XmNbackground          *highlight-color*
+						       XmNorientation         XmVERTICAL)))))
 	  (map
 	   (lambda (slider-data)
 	     (let* ((title (XmStringCreate (slider-data 0) XmFONTLIST_DEFAULT_TAG))
@@ -248,22 +248,22 @@ and returns a list of widgets (for reset callbacks)"))
 		    (initial (slider-data 2))
 		    (high (slider-data 3))
 		    (func (slider-data 4))
-		    (scale (slider-data 5))
 		    (new-slider (if (= (length slider-data) 7)
 				    (if (eq? (slider-data 6) 'log)
 					(create-log-scale-widget mainform title low initial high)
 					(create-semi-scale-widget mainform title initial))
-				    (XtCreateManagedWidget (car slider-data) xmScaleWidgetClass mainform
-							   (list XmNorientation   XmHORIZONTAL
-								 XmNshowValue     #t
-								 XmNminimum       (floor (* low scale))
-								 XmNmaximum       (floor (* high scale))
-								 XmNvalue         (floor (* initial scale))
-								 XmNdecimalPoints (case scale ((10000) 4) ((1000) 3) ((100) 2) ((10) 1) (else 0))
-								 XmNtitleString   title
-								 XmNleftAttachment XmATTACH_FORM
-								 XmNrightAttachment XmATTACH_FORM
-								 XmNbackground    *basic-color*)))))
+				    (let ((scale (slider-data 5)))
+				      (XtCreateManagedWidget (car slider-data) xmScaleWidgetClass mainform
+							     (list XmNorientation   XmHORIZONTAL
+								   XmNshowValue     #t
+								   XmNminimum       (floor (* low scale))
+								   XmNmaximum       (floor (* high scale))
+								   XmNvalue         (floor (* initial scale))
+								   XmNdecimalPoints (case scale ((10000) 4) ((1000) 3) ((100) 2) ((10) 1) (else 0))
+								   XmNtitleString   title
+								   XmNleftAttachment XmATTACH_FORM
+								   XmNrightAttachment XmATTACH_FORM
+								   XmNbackground    *basic-color*))))))
 	       (XmStringFree title)
 	       (XtAddCallback new-slider XmNvalueChangedCallback func)
 	       new-slider))

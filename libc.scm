@@ -5,9 +5,9 @@
 (provide 'libc.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let* ((current-file (port-filename (current-input-port)))
-       (directory (and (memv (current-file 0) '(#\/ #\~))
-		       (substring current-file 0 (- (length current-file) 9)))))
+(let ((directory (let ((current-file (port-filename (current-input-port))))
+		   (and (memv (current-file 0) '(#\/ #\~))
+			(substring current-file 0 (- (length current-file) 9))))))
   (when (and directory (not (member directory *load-path*)))
     (set! *load-path* (cons directory *load-path*)))
   (with-let (rootlet)
