@@ -1010,31 +1010,30 @@
 	     (x (- len 1)))))
     
     (define* (make-fvar name ftype arglist decl initial-value env)
-      (let* ((old (hash-table-ref other-identifiers name))
-	     (new (cons name 
-			(inlet 'signature ()
-			       'side-effect ()
-			       'allow-other-keys (and (pair? arglist)
-						      (memq ftype '(define* define-macro* define-bacro* defmacro*))
-						      (eq? (last-par arglist) :allow-other-keys))
-			       'scope ()
-			       'setters ()
-			       'env env
-			       'initial-value initial-value
-			       'values (and (pair? initial-value) (count-values (cddr initial-value)))
-			       'leaves #f
-			       'match-list #f
-			       'decl decl
-			       'arglist arglist
-			       'ftype ftype
-			       'history (if old 
-					    (begin
-					      (hash-table-set! other-identifiers name #f)
-					      (if initial-value (cons initial-value old) old))
-					    (if initial-value (list initial-value) ()))
-			       'set 0 
-			       'ref (if old (length old) 0)))))
-	
+      (let ((new (let ((old (hash-table-ref other-identifiers name)))
+		   (cons name 
+			 (inlet 'signature ()
+				'side-effect ()
+				'allow-other-keys (and (pair? arglist)
+						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
+						       (eq? (last-par arglist) :allow-other-keys))
+				'scope ()
+				'setters ()
+				'env env
+				'initial-value initial-value
+				'values (and (pair? initial-value) (count-values (cddr initial-value)))
+				'leaves #f
+				'match-list #f
+				'decl decl
+				'arglist arglist
+				'ftype ftype
+				'history (if old 
+					     (begin
+					       (hash-table-set! other-identifiers name #f)
+					       (if initial-value (cons initial-value old) old))
+					     (if initial-value (list initial-value) ()))
+				'set 0 
+				'ref (if old (length old) 0))))))
 	(when (and *report-function-stuff*
 		   (not (memq name '(:lambda :dilambda)))
 		   (memq ftype '(define lambda define* lambda*))
@@ -5865,10 +5864,10 @@
 		 (lint-format "~A could be ~A" caller (truncated-list->string form) (cadr form))
 		 (if (pair? (cddr form))
 		     (let ((arg2 (caddr form)))
-		       (if (or (and (keyword? arg2)
-				    (not (eq? arg2 :readable)))
-			       (and (code-constant? arg2)
-				    (not (boolean? arg2))))
+		       (if (and (code-constant? arg2)
+				(not (or (boolean? arg2)      ; #f and #t are deiplay|write choice
+					 (and (keyword? arg2) ; :readable = ~W
+					      (eq? arg2 :readable)))))
 			   (lint-format "bad second argument: ~A" caller arg2))))))))
 	
 	;; ---------------- display ----------------
@@ -6220,23 +6219,25 @@
 		   (do ((p args (cdr p)))
 		       ((null? p)
 			(set! args (reverse nargs)))
-		     (if (not (pair? (cdr p)))
-			 (set! nargs (cons (car p) nargs))
-			 (if (and (pair? (car p))
-				  (eq? (caar p) 'string)
-				  (pair? (cadr p))
-				  (eq? (caadr p) 'string))
-			     (begin
-			       (set! nargs (cons `(string ,@(cdar p) ,@(cdadr p)) nargs))
-			       (set! combined #t)
-			       (set! p (cdr p)))
-			     (if (and (string? (car p))
-				      (string? (cadr p)))
-				 (begin
-				   (set! nargs (cons (string-append (car p) (cadr p)) nargs))
-				   (set! combined #t)
-				   (set! p (cdr p)))
-				 (set! nargs (cons (car p) nargs))))))))
+		     (cond ((not (pair? (cdr p)))
+			    (set! nargs (cons (car p) nargs)))
+
+			   ((and (pair? (car p))
+				 (eq? (caar p) 'string)
+				 (pair? (cadr p))
+				 (eq? (caadr p) 'string))
+			    (set! nargs (cons `(string ,@(cdar p) ,@(cdadr p)) nargs))
+			    (set! combined #t)
+			    (set! p (cdr p)))
+
+			   ((and (string? (car p))
+				 (string? (cadr p)))
+			    (set! nargs (cons (string-append (car p) (cadr p)) nargs))
+			    (set! combined #t)
+			    (set! p (cdr p)))
+
+			   (else (set! nargs (cons (car p) nargs)))))))
+
 	       (cond ((null? args)                 ; (string-append) -> ""
 		      (lint-format "perhaps ~A" caller (lists->string form "")))
 		     
@@ -9640,8 +9641,8 @@
 				      (symbol? (cadr expr))
 				      (pair? (cddr expr))
 				      ;;(not (tree-set-car-member '(lambda lambda*) (caddr expr)))))
-				      (or (not (pair? (caddr expr)))
-					  (not (memq (caaddr expr) '(lambda lambda*))))))))
+				      (not (and (pair? (caddr expr))
+						(memq (caaddr expr) '(lambda lambda*))))))))
 		     (lint-format "perhaps ~A" caller
 				  (lists->string `(... ,@body)
 						 `(... (,letx (,@(reverse vars&vals))
@@ -11091,6 +11092,7 @@
 		(let ((sym (cadr form))
 		      (val (cddr form))
 		      (head (car form)))
+
 		  (if (symbol? sym)
 		      (begin
 			(check-definee caller sym form env)
@@ -11337,37 +11339,13 @@
 				    (lint-format "perhaps ~A or ~A" caller 
 						 (lists->string form `(define ,outer-name ,(unquoted (car val))))
 						 (truncated-list->string `(define (,outer-name) ,(unquoted (car val))))))
+
 				(when (pair? body)
 				  (case (car body)
 				    ((#_{list})
 
 				     (when (and (quoted-symbol? (cadr body))
 						(proper-list? outer-args))
-#|
-				       (catch #t
-					 (lambda ()
-				       (if (catch #t
-					     (lambda ()
-					       (let walk ((p body))
-					   (if (pair? p)
-					       (or (and (eq? (car p) 'quote)
-							(not (hash-table-ref syntaces (cadr p))))
-						   (and (walk (car p))
-							(walk (cdr p))))
-					       (or (and (procedure? p)
-							(not (memq p '(#_{apply_values} #_{append}))))
-						   (and (symbol? p)
-							(or (memq p outer-args)
-							    (hash-table-ref no-side-effect-functions p))
-							(not (hash-table-ref syntaces p)))
-						   (code-constant? p)))))
-					   (lambda args #f))
-					 (let* ((m (eval form))
-						(mx (apply macroexpand `((,outer-name ,@outer-args)))))
-					   (format *stderr* "~A -> ~A~%" form `(define (,outer-name ,@outer-args) ,mx)))))
-					 (lambda args #f))
-|#
-
 				       (if (and (equal? (cddr body) outer-args)
 						(or (not (hash-table-ref syntaces (cadadr body))) ; (define-macro (x y) `(lambda () ,y))
 						    (memq (cadadr body) '(set! define))))
@@ -14267,8 +14245,15 @@
 					    (eq? (cadar p) vname)
 					    (> i 5)
 					    (begin
-					      (if (and (not preref)
-						       (not (side-effect? (var-initial-value local-var) env)))
+					      (if (or preref
+						      (side-effect? (var-initial-value local-var) env))
+						  (lint-format "perhaps add a new binding for ~A to replace ~A: ~A" caller
+							       vname
+							       (truncated-list->string (car p))
+							       (lists->string form
+									      `(let ...
+										 (let ((,vname ,(caddar p)))
+										   ...))))
 						  (lint-format "perhaps move the ~A binding to replace ~A: ~A" caller
 							       vname 
 							       (truncated-list->string (car p))
@@ -14287,14 +14272,7 @@
 													     (rewrite (cdr lst)))))))
 										   ...
 										   (let ((,vname ,new-value))
-										     ...)))))
-						  (lint-format "perhaps add a new binding for ~A to replace ~A: ~A" caller
-							       vname
-							       (truncated-list->string (car p))
-							       (lists->string form
-									      `(let ...
-										 (let ((,vname ,(caddar p)))
-										   ...)))))
+										     ...))))))
 					      #t))))
 				(if (tree-member vname (car p))
 				    (set! preref i))))
@@ -16412,16 +16390,17 @@
 			      (if (char=? c #\()
 				  (catch #t
 				    (lambda ()
-				      (let* ((ncode (with-input-from-string 
-							(fixup-html (remove-markups code))
-						      read))
-					     (outstr (call-with-output-string
-						      (lambda (op)
-							(call-with-input-string (format #f "~S" ncode)
-							  (lambda (ip)
-							    (let-temporarily ((*report-shadowed-variables* #t))
-							      (lint ip op #f))))))))
-					(if (> (length outstr) 1) ; possible newline at end
+				      (let ((outstr (call-with-output-string
+						     (lambda (op)
+						       (call-with-input-string 
+							   (object->string (with-input-from-string 
+									       (fixup-html (remove-markups code))
+									     read)
+									   #t) ; write, not display
+							 (lambda (ip)
+							   (let-temporarily ((*report-shadowed-variables* #t))
+							     (lint ip op #f))))))))
+					(if (> (length outstr) 1)               ; possible newline at end
 					    (format () ";~A ~D: ~A~%" file line-num outstr))))
 				    (lambda args
 				      (format () ";~A ~D, error in read: ~A ~A~%" file line-num args
@@ -16510,24 +16489,22 @@
 ;;; TODO:
 ;;;
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
-;;; auto unit tests, *report-tests* -> list of funcs to test as in zauto, possibly fix errors
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; c-side type checkers need ways to merge into lint's type compatibilty checks (mus-generator etc)
 ;;;   current case statements could be ((hash-table-ref...)...) -- too messy?
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see 10983 for expansion]
-;;; define-macro cases in t347?? [10983]
+;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg.scm also has a lot of changes
-;;; constant? does not mean symbol?! check lg -- s7test ok?
+;;; (if window (destroy-window window) (destroy-window)) -- if default #f this is (destroy-window window)
+;;; complex (syntactically) expr split open via letrec
 ;;;
 ;;; more could be done in let* rearrangements [b->c a->b+c -> internal let*]
 ;;;   but these happen anyway upon iteration
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
+;;;   i.e. preceding let was just cur var, or others aren't in use in new
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; recheck lambda/named let, maybe special-cases
-;;;
-;;; 140 23165 602375
+;;; 140 23165 605139

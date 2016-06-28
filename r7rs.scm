@@ -433,13 +433,13 @@
          (map (lambda (f) (if (pair? f) (car f) f)) ',fields))
        
        (define (,? ,obj)    ; perhaps the define-class type predicate should use this 
-         (define (search-inherited obj type)
+         (define (search-inherited ,obj type)
 	   (define (search-inheritors objs type)
 	     (and (pair? objs)
 		  (or (search-inherited (car objs) type)
 		      (search-inheritors (cdr objs) type))))
-	   (or (eq? (obj 'class-name) type)
-	       (search-inheritors (obj 'inherited) type)))
+	   (or (eq? (,obj 'class-name) type)
+	       (search-inheritors (,obj 'inherited) type)))
          (and (let? ,obj)
 	      (search-inherited ,obj ',new-type)))
        

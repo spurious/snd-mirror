@@ -949,7 +949,7 @@ time for perfection...):
 	(clip-max-len 0)
 	(in-clip #f)
 	(samp 0))
-    (<a class=quiet href="extsnd.html#scanchannel">scan-channel</a>
+    (scan-channel
      (lambda (y)
        (if (not (&lt;= -0.9999 y 0.9999))
            (begin
@@ -966,7 +966,7 @@ time for perfection...):
 		 (set! clip-ctr (+ clip-ctr 2)))))
        (set! samp (+ 1 samp))
        #f)) ; make sure scan doesn't quit prematurely
-    (list clip-ctr clip-max-len clip-data)))
+    (list clip-ctr clip-max-len clip-data))))
 </pre>
 
 <p>

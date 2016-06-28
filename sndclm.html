@@ -6308,8 +6308,7 @@ old analog tapes &mdash; the reverb slightly precedes the direct signal:
          (comb2 (make-comb 0.733 4999))
          (comb3 (make-comb 0.715 5399))
          (comb4 (make-comb 0.697 5801))
-         (file-dur (mus-sound-framples file))
-         (len (floor (+ *clm-srate* file-dur))) ; *clm-srate* = 1.0 decay dur
+         (len (floor (+ *clm-srate* (mus-sound-framples file))))
          (rd (make-readin file)) ; the direct signal (via sound-let below)
          (d (make-delay dly))    ; this delays the direct signal
          (backup (min 4799 dly)))
@@ -9711,8 +9710,7 @@ hopefully unobtrusively.  Here is an example, including a stereo reverb:
 	 (comb42 (make-comb 0.697 5801))
 	 (outdel12 (make-delay (seconds-&gt;samples .01)))
 						       
-	 (file-dur (framples *reverb*))
-	 (len (floor (+ *clm-srate* file-dur))))
+	 (len (floor (+ *clm-srate* (framples *reverb*)))))
     
     (do ((i 0 (+ i 1)))
 	((= i len))
