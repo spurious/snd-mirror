@@ -30,6 +30,7 @@
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
 ;;   table of functions that are simple (no side effects) is (*lint* 'no-side-effect-functions)
+;;   see snd-lint.scm.
 
 
 ;;; --------------------------------------------------------------------------------
@@ -11714,7 +11715,7 @@
 			 (define (tree-subst-eq new old tree) 
 			   ;; tree-subst above substitutes every occurence of 'old with 'new, so we check
 			   ;;   in advance that 'old only occurs once in the tree (via tree-count1).  Here
-			   ;;   'old may occur any number of times, but we only want to change it once,
+			   ;;   'old may occur any number of times, but we want to change it only once,
 			   ;;   so we keep the actual pointer to it and use eq?.
 			   (cond ((eq? old tree)
 				  (cons new (cdr tree)))
@@ -12360,7 +12361,7 @@
 				      (> (tree-leaves true) (tree-leaves false)))
 			     (lint-format "perhaps ~A" caller
 					  (lists->string form `(if ,(cadr expr) ,false ,true))))
-			   
+
 			   ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
 			   (when (and (pair? true)
 				      (pair? false)
@@ -15636,7 +15637,7 @@
 							  `(lambda* ,new-arglist ,@new-body))))))))))))
 	   env))
 	h))
-    
+
 
     (define lint-walk-pair 
       (let ((unsafe-makers '(sublet inlet copy cons list append make-shared-vector vector hash-table hash-table* 
@@ -15981,7 +15982,7 @@
 			    (if *report-input*
 				(format outport 
 					(if (and (output-port? outport)
-						 (not (member outport (list *stderr* *stdout*))))
+						 (not (memq outport (list *stderr* *stdout*))))
 					    (values "~%~NC~%;~A~%" (+ lint-left-margin 16) #\-)
 					    ";~A~%")
 					file))
@@ -16497,14 +16498,13 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg.scm also has a lot of changes
-;;; (if window (destroy-window window) (destroy-window)) -- if default #f this is (destroy-window window)
-;;; complex (syntactically) expr split open via letrec
+;;; memq works with *std**
 ;;;
 ;;; more could be done in let* rearrangements [b->c a->b+c -> internal let*]
 ;;;   but these happen anyway upon iteration
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
-;;;   i.e. preceding let was just cur var, or others aren't in use in new
+;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
 ;;; 140 23165 605139
