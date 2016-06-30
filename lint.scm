@@ -7782,11 +7782,14 @@
 	   (if (not (var-member '1+ env))
 	       (lint-format "perhaps ~A" caller (lists->string form `(+ ,(cadr form) 1))))))
 
-	(hash-table-set! 
-	 h '-1+ 
-	 (lambda (caller head form env)
-	   (if (not (var-member '-1+ env))
-	       (lint-format "perhaps ~A" caller (lists->string form `(- ,(cadr form) 1))))))
+	(let ()
+	  (define (sp-1- caller head form env)
+	    (if (not (var-member '-1+ env))
+		(lint-format "perhaps ~A" caller (lists->string form `(- ,(cadr form) 1)))))
+
+	  (hash-table-set! h '-1+ sp-1-)
+	  (hash-table-set! h '1- sp-1-))
+
 
 	;; ---------------- push! pop! ----------------	
 	(hash-table-set! 
@@ -15932,6 +15935,23 @@
 		       form))))
 	      env))))))
 	
+#|
+    (define previous-form #f)
+    (define (lint-walk caller form env)
+      (if (and previous-form 
+	       (or (not (pair? form))
+		   (not (member previous-form form))))
+	  (begin
+	    (format *stderr* "   ~A~%~%" (lint-pp previous-form))
+	    (set! previous-form #f)))
+      (let ((sug made-suggestion))
+	(let ((res (lint-walk-1 caller form env)))
+	  (if (and (= sug made-suggestion)
+                   (not (eq? (car form) 'define-syntax))
+		   (> (tree-leaves form) 12))
+	      (set! previous-form form))
+	  res)))
+|#
 
     (define (lint-walk caller form env)
       (cond ((symbol? form)
@@ -16498,13 +16518,17 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg.scm also has a lot of changes
-;;; memq works with *std**
-;;;
-;;; more could be done in let* rearrangements [b->c a->b+c -> internal let*]
-;;;   but these happen anyway upon iteration
+;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant?
+;;; perhaps compare accumulating cond cases via simplify-boolean?
+;;;   (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
+;;; other-id with bad name is not report as such (see t347), also _ => etc as bad names
+;;;           (if (< distance 0) (abs (- source-length (abs distance))) distance)))
+;;;     (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...))
+;;;              (list-set! (cdr chem-comp) 0 new-residue-name)
+;;; (values x) -> x
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 140 23165 605139
+;;; 140 23165 604432

@@ -799,8 +799,7 @@ Xen_wrap_no_args(g_goto_listener_end_w, g_goto_listener_end)
 void g_init_gxlistener(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, s, b;
-  i = s7_make_symbol(s7, "integer?");
+  s7_pointer s, b;
   s = s7_make_symbol(s7, "string?");
   b = s7_make_symbol(s7, "boolean?");
 

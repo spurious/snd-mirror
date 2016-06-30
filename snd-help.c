@@ -3837,9 +3837,8 @@ static s7_pointer acc_html_program(s7_scheme *sc, s7_pointer args) {return(g_set
 void g_init_help(void)
 {
 #if HAVE_SCHEME
-  s7_pointer p, r, s, pcl_s, pcl_t;
+  s7_pointer p, s, pcl_s, pcl_t;
   p = s7_make_symbol(s7, "list?");
-  r = s7_make_symbol(s7, "real?");
   s = s7_make_symbol(s7, "string?");
   pcl_s = s7_make_circular_signature(s7, 0, 1, s);
   pcl_t = s7_make_circular_signature(s7, 0, 1, s7_t(s7));

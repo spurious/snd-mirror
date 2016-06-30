@@ -2710,7 +2710,10 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 void g_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, pl_prr, s, i, b, r, d, p, v, t;
+  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, pl_prr, s, i, b, r, d, p, t;
+#if HAVE_GMP
+  s7_pointer v;
+#endif
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   s7_pointer pl_pf;
 #endif
@@ -2720,7 +2723,9 @@ void g_xen_initialize(void)
   r = s7_make_symbol(s7, "real?");
   d = s7_make_symbol(s7, "float?");
   p = s7_make_symbol(s7, "pair?");
+#if HAVE_GMP
   v = s7_make_symbol(s7, "vector?");
+#endif
   t = s7_t(s7);
   pl_ss = s7_make_signature(s7, 2, s, s);
   pl_dr = s7_make_circular_signature(s7, 1, 2, d, r);

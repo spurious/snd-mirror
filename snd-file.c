@@ -2315,7 +2315,6 @@ static char *quoted_filename(const char *filename, bool *new_name)
       return(name);
     }
   (*new_name) = false;
-  fprintf(stderr, "not quoted: %s\n", filename);
   return((char *)filename);
 }
 

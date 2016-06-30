@@ -242,16 +242,16 @@
 	  (if use-combo-box-for-buffer-size
 	      ;; this block creates a "combo box" to handle the buffer size
 	      (let* ((s1 (XmStringCreateLocalized "Buffer size"))
-		     (frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-						   (list XmNborderWidth 1
-							 XmNshadowType XmSHADOW_ETCHED_IN
-							 XmNpositionIndex 2)))
-		     (frm (XtCreateManagedWidget "frm" xmFormWidgetClass frame
-						 (list XmNleftAttachment      XmATTACH_FORM
-						       XmNrightAttachment     XmATTACH_FORM
-						       XmNtopAttachment       XmATTACH_FORM
-						       XmNbottomAttachment    XmATTACH_FORM
-						       XmNbackground          *basic-color*)))
+		     (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
+							      (list XmNborderWidth 1
+								    XmNshadowType XmSHADOW_ETCHED_IN
+								    XmNpositionIndex 2))))
+			    (XtCreateManagedWidget "frm" xmFormWidgetClass frame
+						   (list XmNleftAttachment      XmATTACH_FORM
+							 XmNrightAttachment     XmATTACH_FORM
+							 XmNtopAttachment       XmATTACH_FORM
+							 XmNbottomAttachment    XmATTACH_FORM
+							 XmNbackground          *basic-color*))))
 		     (lab (XtCreateManagedWidget "Buffer size" xmLabelWidgetClass frm
 						 (list XmNleftAttachment      XmATTACH_FORM
 						       XmNrightAttachment     XmATTACH_NONE
@@ -281,16 +281,16 @@
 
 	      ;; this block creates a "radio button box"
 	      (let* ((s1 (XmStringCreateLocalized "Buffer size"))
-		     (frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-						   (list XmNborderWidth 1
-							 XmNshadowType XmSHADOW_ETCHED_IN
-							 XmNpositionIndex 2)))
-		     (frm (XtCreateManagedWidget "frm" xmFormWidgetClass frame
-						 (list XmNleftAttachment      XmATTACH_FORM
-						       XmNrightAttachment     XmATTACH_FORM
-						       XmNtopAttachment       XmATTACH_FORM
-						       XmNbottomAttachment    XmATTACH_FORM
-						       XmNbackground          *basic-color*)))
+		     (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
+							      (list XmNborderWidth 1
+								    XmNshadowType XmSHADOW_ETCHED_IN
+								    XmNpositionIndex 2))))
+			    (XtCreateManagedWidget "frm" xmFormWidgetClass frame
+						   (list XmNleftAttachment      XmATTACH_FORM
+							 XmNrightAttachment     XmATTACH_FORM
+							 XmNtopAttachment       XmATTACH_FORM
+							 XmNbottomAttachment    XmATTACH_FORM
+							 XmNbackground          *basic-color*))))
 		     (rc (XtCreateManagedWidget "rc" xmRowColumnWidgetClass frm
 						(list XmNorientation XmHORIZONTAL
 						      XmNradioBehavior #t
