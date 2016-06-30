@@ -725,21 +725,20 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
       (if (not (symbol? pitch))
 	  pitch
 	  (let* ((name (string-downcase (symbol->string pitch)))
-		 (base-char (name 0))
-		 (sign-char (and (> (length name) 1)
-				 (not (char-numeric? (name 1)))
-				 (not (char=? (name 1) #\n))
-				 (name 1)))
 		 (octave-char (if (and (> (length name) 1)
 				       (char-numeric? (name 1))) 
 				  (name 1)
 				  (and (> (length name) 2) 
 				       (char-numeric? (name 2))
 				       (name 2))))
-		 (base (modulo (- (+ (char->integer base-char) 5) (char->integer #\a)) 7)) ; c-based (diatonic) octaves
-		 (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1)))
+		 (sign-char (and (> (length name) 1)
+				 (not (char-numeric? (name 1)))
+				 (not (char=? (name 1) #\n))
+				 (name 1)))
 		 (octave (if octave-char (- (char->integer octave-char) (char->integer #\0)) last-octave))
-		 (base-pitch (+ sign (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11))))
+		 (base-pitch (let ((base (modulo (- (+ (char->integer (name 0)) 5) (char->integer #\a)) 7)) ; c-based (diatonic) octaves	   
+				   (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1))))
+			       (+ sign (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11)))))
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)
 	    (* main-pitch (if pythagorean
@@ -776,12 +775,12 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	      (list-set! nsym 1 (car old))
 	      (list-set! nsym 0 (list 'quote (car old))))))))
 
-  (let* ((name (if (pair? struct-name) 
-		   (car struct-name) 
-		   struct-name))
-	 (sname (if (string? name) 
-		    name 
-		    (symbol->string name)))
+  (let* ((sname (let ((name (if (pair? struct-name) 
+				(car struct-name) 
+				struct-name)))
+		  (if (string? name) 
+		      name 
+		      (symbol->string name))))
 	 (wrapper (let ((wrap (and (pair? struct-name)
 				   (or (and (> (length struct-name) 2)
 					    (eq? (struct-name 1) :make-wrapper)

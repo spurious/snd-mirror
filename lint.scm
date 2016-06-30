@@ -16521,11 +16521,15 @@
 ;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant?
 ;;; perhaps compare accumulating cond cases via simplify-boolean?
 ;;;   (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
-;;; other-id with bad name is not report as such (see t347), also _ => etc as bad names
+;;; other-id with bad name is not reported as such (see t347), also _ => etc as bad names
 ;;;           (if (< distance 0) (abs (- source-length (abs distance))) distance)))
 ;;;     (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...))
 ;;;              (list-set! (cdr chem-comp) 0 new-residue-name)
-;;; (values x) -> x
+;;; why was call/cc->exit missed [114230]
+;;; useless binding in generators: (x angle) [in some gens it protects current from next]
+;;;   (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
+;;;   (if (> (vector-ref INDEX i) (vector-ref INDEX j)) (vector-set! INDEX i (vector-ref INDEX j)))
+;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)

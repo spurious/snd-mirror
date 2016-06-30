@@ -561,20 +561,18 @@ returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent sh
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((den (sin (* 0.5 angle)))
-	       (result (if (< (abs den) nearly-zero)
-			   1.0
-			   (let* ((n1 (+ n 1))
-				  (result1 
-				   (let ((val (/ (sin (* 0.5 n1 angle)) 
-						 (* n1 den))))
-				     (* val val)))
-				  (p2n2 (+ (* 2 n) 2))
-				  (result2 
-				   (let ((val (/ (sin (* 0.5 p2n2 angle)) 
-						 (* p2n2 den))))
-				     (* val val))))
-			     (- (* 2 result2) result1)))))
+	(let ((result (let ((den (sin (* 0.5 angle))))
+			(if (< (abs den) nearly-zero)
+			    1.0
+			    (let ((result1 (let ((val (let ((n1 (+ n 1)))
+							(/ (sin (* 0.5 n1 angle))
+							   (* n1 den)))))
+					     (* val val)))
+				  (result2 (let ((val (let ((p2n2 (+ (* 2 n) 2)))
+							(/ (sin (* 0.5 p2n2 angle)) 
+							   (* p2n2 den)))))
+					     (* val val))))
+			      (- (* 2 result2) result1))))))
 	  (set! angle (+ angle fm frequency))
 	  result)))))
 
@@ -1032,13 +1030,13 @@ scaled by r^k. The 'interp' argument determines whether the sidebands are above 
 		       (env amplitude)))
 	       (vib (+ (* h3freq (oscil mod1))
 		       (env skenv)))
-	       (vola (* scl vol))
-	       (result (* vol
-			  (+ (* (- relamp vola) 
-				(nrssb-interp gen (* res1 vib) -1.0))
-			     (* (- (+ 1.0 vola) relamp) 
-				(oscil gen2 (+ (* vib res2) 
-					       (* hfreq (oscil gen3 vib)))))))))
+	       (result (let ((vola (* scl vol)))
+			 (* vol
+			    (+ (* (- relamp vola) 
+				  (nrssb-interp gen (* res1 vib) -1.0))
+			       (* (- (+ 1.0 vola) relamp) 
+				  (oscil gen2 (+ (* vib res2) 
+						 (* hfreq (oscil gen3 vib))))))))))
 	  (outa i result)
 	  (if *reverb* (outa i (* .01 result) *reverb*)))))))
 
@@ -3102,9 +3100,8 @@ returns many sines spaced by frequency with amplitude kr^k."))
       (with-let gen
 	(let* ((x angle)
 	       (r1 (- 1.0 r))
-	       (r2 (* r r))
 	       (r3 (if (> r .9) r1 1.0)) ; not right yet...
-	       (den (+ 1.0 (* -2.0 r (cos x)) r2)))
+	       (den (+ 1.0 (* -2.0 r (cos x)) (* r r))))
 	  (set! angle (+ angle fm frequency))
 	  (/ (* r1 r1 r3 (sin x))
 	     (* den den)))))))
@@ -3403,13 +3400,13 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((r1 (/ r))
-	       (one (if (or (> r 1.0) 
-			    (< -1.0 r 0.0))
-			-1.0 1.0))
-	       (modphase (* ratio phase))
-	       (result (* (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
-			  (cos (+ phase (* 0.5 index (+ r r1) (sin modphase))))))) ; use cos, not sin, to get predictable amp
+	(let ((result (let ((r1 (/ r))
+			    (one (if (or (> r 1.0) 
+					 (< -1.0 r 0.0))
+				     -1.0 1.0))
+			    (modphase (* ratio phase)))
+			(* (exp (* 0.5 index (- r r1) (+ one (cos modphase))))
+			   (cos (+ phase (* 0.5 index (+ r r1) (sin modphase)))))))) ; use cos, not sin, to get predictable amp
 	  (set! phase (+ phase fm frequency))
 	  result)))))
 
@@ -3456,10 +3453,10 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((r1 (/ r))
-	       (modphase (* ratio phase))
-	       (result (* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
-			  (cos (+ phase (* 0.5 index (- r r1) (sin modphase)))))))
+	(let ((result (let ((r1 (/ r))
+			    (modphase (* ratio phase)))
+			(* (exp (* 0.5 index (+ r r1) (- (cos modphase) 1.0)))
+			   (cos (+ phase (* 0.5 index (- r r1) (sin modphase))))))))
 	  (set! phase (+ phase fm frequency))
 	  result)))))
 
@@ -3691,9 +3688,9 @@ returns a sum of cosines scaled Jk^2(index/2)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (j0 (bes-j0 (* 0.5 index)))
-	       (dc (* j0 j0)))
+	(let ((x angle)
+	      (dc (let ((j0 (bes-j0 (* 0.5 index))))
+		    (* j0 j0))))
 	  (set! angle (+ angle fm frequency))
 	  (if (= dc 1.0)
 	      1.0
@@ -3974,15 +3971,14 @@ returns a sum of cosines scaled in a very complicated way."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (j0 (bes-j0 (* 0.5 index)))
-	       (dc (* j0 j0))
-	       (arg (* index (cos x))))
+	(let ((dc (let ((j0 (bes-j0 (* 0.5 index))))
+		    (* j0 j0)))
+	      (arg (* index (cos angle))))
 	  (set! angle (+ angle fm frequency))
 	  (/ (- (+ (bes-j0 arg)
 		   (bes-j1 arg))
 		dc)        ; get rid of DC component
-	     1.215))))))      ; not the best...
+	     1.215))))))   ; not the best...
     
 					; need to normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
 					;       (max (- 1.2154 dc)
@@ -6684,8 +6680,9 @@ input from the readin generator 'reader'.  The output data is available via mus-
   (let-set! gen 'samp samp)
   (let-set! gen 'input input)
   (with-let gen
-    (let* ((rpos (rand-interp ri))
-	   (pos (min (max (+ rpos offset) (- amplitude)) amplitude))
+    (let* ((pos (min (max (+ (rand-interp ri) offset) 
+			  (- amplitude)) 
+		     amplitude))
 	   (amp1 (if (<= pos -1.0) 1.0
 		     (if (>= pos 1.0) 0.0
 			 (* (sqrt (- 1.0 pos)) 1/sqrt2))))

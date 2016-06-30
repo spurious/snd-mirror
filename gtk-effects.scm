@@ -14,12 +14,12 @@
 	  (error 'no-such-mark (list "mark-related action requires two marks"))
 	  (if (= (length ms) 2)
 	      ms
-	      (let* ((lw (left-sample snd chn))
-		     (rw (right-sample snd chn))
-		     (cw (cursor snd chn))
-		     (favor (if (>= rw cw lw)
+	      (let ((favor (let* ((lw (left-sample snd chn))
+				  (rw (right-sample snd chn))
+				  (cw (cursor snd chn)))
+			    (if (>= rw cw lw)
 				cw
-				(* .5 (+ lw rw)))))
+				(* .5 (+ lw rw))))))
 		;; favor is the point we center the search on
 		(let centered-points ((points ms))
 		  (if (= (length points) 2)
@@ -136,14 +136,14 @@
   (define effects-menu (add-to-main-menu "Effects" (lambda () (update-label effects-list))))
   
   (define* (effects-squelch-channel amp gate-size snd chn no-silence)
-    (let* ((f0 (make-moving-average gate-size))
-	   (f1 (make-moving-average gate-size :initial-element 1.0))
-	   (squelcher (if no-silence
-			  (lambda (y)
-			    (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
-			      (and (not (zero? val)) val)))
-			  (lambda (y)
-			    (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))))
+    (let ((squelcher (let ((f0 (make-moving-average gate-size))
+			   (f1 (make-moving-average gate-size :initial-element 1.0)))
+		       (if no-silence
+			   (lambda (y)
+			     (let ((val (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp))))))
+			       (and (not (zero? val)) val)))
+			   (lambda (y)
+			     (* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))))))
       (map-channel squelcher
 		   0 #f snd chn #f
 		   (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
@@ -391,8 +391,8 @@
 				   (fir-filter flt (* scaler (+ (tap del) inval))))))
 		       beg #f snd chn #f
 		       (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
-	  (let* ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1))
-		 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+	  (let ((genv (let ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1)))
+			(make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100)))))
 	    (map-channel (lambda (inval)
 			   (+ inval 
 			      (delay del 
@@ -401,11 +401,11 @@
 			 (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))))
   
   (define* (effects-zecho-1 scaler secs frq amp input-samps-1 beg dur snd chn)
-    (let* ((os (make-oscil frq))
-	   (len (round (* secs (srate snd))))
-	   (del (make-delay len :max-size (round (+ len amp 1))))
-	   (cutoff (- (or input-samps-1 dur (framples snd chn)) 1))
-	   (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+    (let ((os (make-oscil frq))
+	  (del (let ((len (round (* secs (srate snd)))))
+		 (make-delay len :max-size (round (+ len amp 1)))))
+	  (genv (let ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1)))
+		  (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100)))))
       (map-channel (lambda (inval)
 		     (+ inval 
 			(delay del 
@@ -593,9 +593,9 @@
       
       (define zecho-1
 	(lambda (scaler secs frq amp cutoff)
-	  (let* ((os (make-oscil frq))
-		 (len (round (* secs (srate))))
-		 (del (make-delay len :max-size (round (+ len amp 1))))
+	  (let ((os (make-oscil frq))
+		(del (let ((len (round (* secs (srate)))))
+		       (make-delay len :max-size (round (+ len amp 1)))))
 		 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
 	    (lambda (inval)
 	      (+ inval 
@@ -1559,8 +1559,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					am-effect-target 
 					(lambda (target samps)
 					  (format #f "effects-am ~A ~A" am-effect-amount
-						  (let* ((need-env (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
-							 (e (and need-env (xe-envelope am-effect-envelope))))
+						  (let ((e (and (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
+							   (xe-envelope am-effect-envelope)))
 						    (and e (format #f "'~A" e)))))
 					#f))
 				     
@@ -1642,8 +1642,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					rm-target 
 					(lambda (target samps)
 					  (format #f "effects-rm ~A ~A" rm-frequency
-						  (let* ((need-env (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0))))
-							 (e (and need-env (xe-envelope rm-envelope))))
+						  (let ((e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
+								(xe-envelope rm-envelope))))
 						    (and e (format #f "'~A" e)))))
 					#f))
 				     
@@ -1954,11 +1954,12 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
   (define effects-hello-dentist 
     (let ((documentation "(hello-dentist frq amp snd chn) varies the sampling rate randomly, making a voice sound quavery: (hello-dentist 40.0 .1)"))
       (lambda* (frq amp beg dur snd chn)
-	(let* ((rn (make-rand-interp :frequency frq :amplitude amp))
-	       (len (or dur (- (framples snd chn) beg)))
-	       (sf (make-sampler beg snd chn))
-	       (rd (make-src :srate 1.0 
-			     :input (lambda (dir) (read-sample-with-direction sf dir)))))
+	(let ((rn (make-rand-interp :frequency frq :amplitude amp))
+	      (len (or dur (- (framples snd chn) beg)))
+	      (rd (make-src :srate 1.0 
+			    :input (let ((sf (make-sampler beg snd chn)))
+				     (lambda (dir) 
+				       (read-sample-with-direction sf dir))))))
 	  (map-channel
 	   (lambda (y)
 	     (src rd (rand-interp rn)))
@@ -1966,10 +1967,12 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
   
   
   (define* (effects-fp sr osamp osfrq beg dur snd chn)
-    (let* ((os (make-oscil osfrq))
-	   (len (framples snd chn))
-	   (sf (make-sampler beg snd chn))
-	   (s (make-src :srate sr :input (lambda (dir) (read-sample-with-direction sf dir)))))
+    (let ((os (make-oscil osfrq))
+	  (len (framples snd chn))
+	  (s (make-src :srate sr 
+		       :input (let ((sf (make-sampler beg snd chn)))
+				(lambda (dir) 
+				  (read-sample-with-direction sf dir))))))
       (map-channel
        (lambda (y)
 	 (src s (* osamp (oscil os))))
@@ -1984,21 +1987,19 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			 (+ y (* pos (read-sample reader1))))
 		       0 len snd chn #f
 		       (format #f "effects-position-sound ~A ~A" mono-snd pos))
-	  (let ((e1 (make-env pos :length len)))
-	    (map-channel
-	     (if (eqv? chn 1)
-		 (lambda (y)
-		   (+ y (* (env e1) (read-sample reader1))))
-		 (lambda (y)
-		   (+ y (* (- 1.0 (env e1)) (read-sample reader1)))))
-	     0 len snd chn #f
-	     (format #f "effects-position-sound ~A '~A" mono-snd pos))))))
+	  (let* ((e1 (make-env pos :length len))
+		 (e1f (if (eqv? chn 1)
+			  (lambda (y)
+			    (+ y (* (env e1) (read-sample reader1))))
+			  (lambda (y)
+			    (+ y (* (- 1.0 (env e1)) (read-sample reader1)))))))
+	    (map-channel e1f 0 len snd chn #f (format #f "effects-position-sound ~A '~A" mono-snd pos))))))
 
   
   (define* (effects-flange amount speed time beg dur snd chn)
-    (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
-	   (len (round (* time (srate snd))))
-	   (del (make-delay len :max-size (round (+ len amount 1)))))
+    (let ((ri (make-rand-interp :frequency speed :amplitude amount))
+	  (del (let ((len (round (* time (srate snd)))))
+		 (make-delay len :max-size (round (+ len amount 1))))))
       (map-channel (lambda (inval)
 		     (* .75 (+ inval
 			       (delay del
@@ -2036,9 +2037,8 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	(* amp (formant-bank formants inval)))))
   
   (define* (effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn)
-    (map-channel (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)
-		 beg dur snd chn #f
-		 (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur)))
+    (let ((csf (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)))
+      (map-channel csf beg dur snd chn #f (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur))))
   
   (let ((misc-menu-list ())
 	(misc-menu (gtk_menu_item_new_with_label "Various"))
@@ -2336,9 +2336,9 @@ the synthesis amplitude, the FFT size, and the radius value."))
 				     (lambda (w data)
 				       (map-chan-over-target-with-sync 
 					(lambda (ignored)
-					  (let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-						 (len (round (* flange-time (srate))))
-						 (del (make-delay len :max-size (round (+ len flange-amount 1)))))
+					  (let ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
+						(del (let ((len (round (* flange-time (srate)))))
+						       (make-delay len :max-size (round (+ len flange-amount 1))))))
 					    (lambda (inval)
 					      (* .75 (+ inval
 							(delay del

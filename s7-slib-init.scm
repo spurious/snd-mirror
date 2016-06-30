@@ -102,7 +102,7 @@
       (lambda (vic name)
 	(let ((L (string-length vic)))
 	  (string-append
-	   (if (or (zero? (string-length vic))
+	   (if (or (string=? vic "")
 		   (not (char=? #\] (string-ref vic (- L 1)))))
 	       (values vic "[")
 	       (values (substring vic 0 (- L 1)) "."))
@@ -358,7 +358,7 @@
 
 ;;@ define these as appropriate for your system.
 (define slib:tab #\tab)
-(define slib:form-feed (integer->char 12))
+(define slib:form-feed #\xc) ;(integer->char 12))
 
 ;;@ Support for older versions of Scheme.  Not enough code for its own file.
 (define (last-pair lst) (if (pair? (cdr lst)) (last-pair (cdr lst)) lst))
