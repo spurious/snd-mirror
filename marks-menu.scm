@@ -116,24 +116,22 @@
 		  (set! sliders
 			(add-sliders 
 			 play-between-marks-dialog
-			 (list (list "mark one" 0 play-between-marks-m1 max-mark-id
-				     (if (provided? 'snd-gtk)
-					 (lambda (w context)
-					   (set! play-between-marks-m1 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
-					   (set-syncs))
-					 (lambda (w context info)
-					   (set! play-between-marks-m1 ((*motif* '.value) info))
-					   (set-syncs)))
-				     1)
-			       (list "mark two" 0 play-between-marks-m2 max-mark-id
-				     (if (provided? 'snd-gtk)
-					 (lambda (w context)
-					   (set! play-between-marks-m2 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
-					   (set-syncs))
-					 (lambda (w context info)
-					   (set! play-between-marks-m2 ((*motif* '.value) info))
-					   (set-syncs)))
-				     1))))
+			 (list (let ((plyf1 (if (provided? 'snd-gtk)
+						(lambda (w context)
+						  (set! play-between-marks-m1 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
+						  (set-syncs))
+						(lambda (w context info)
+						  (set! play-between-marks-m1 ((*motif* '.value) info))
+						  (set-syncs)))))
+				 (list "mark one" 0 play-between-marks-m1 max-mark-id plyf1 1))
+			       (let ((plyf2 (if (provided? 'snd-gtk)
+						(lambda (w context)
+						  (set! play-between-marks-m2 ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w)))
+						  (set-syncs))
+						(lambda (w context info)
+						  (set! play-between-marks-m2 ((*motif* '.value) info))
+						  (set-syncs)))))
+				 (list "mark two" 0 play-between-marks-m2 max-mark-id plyf2 1)))))
 		  
 		  (if (provided? 'snd-motif)
 		      (with-let (sublet *motif*)
@@ -458,16 +456,15 @@ between two marks,using the granulate generator to fix up the selection duration
 	    (set! sliders
 		  (add-sliders 
 		   fit-to-mark-dialog
-		   (list (list "mark one" 0 initial-fit-to-mark-one 20
-			       (if (provided? 'snd-gtk)
-				   (lambda (w context) (set! fit-to-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! fit-to-mark-one ((*motif* '.value) info))))
-			       1)
-			 (list "mark two" 0 initial-fit-to-mark-two 20
-			       (if (provided? 'snd-gtk)
-				   (lambda (w context) (set! fit-to-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! fit-to-mark-two (.value info))))
-			       1))))))
+		   (list (let ((fitf1 (if (provided? 'snd-gtk)
+					 (lambda (w context) (set! fit-to-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					 (lambda (w context info) (set! fit-to-mark-one ((*motif* '.value) info))))))
+			   (list "mark one" 0 initial-fit-to-mark-one 20 fitf1 1))
+			 (let ((fitf2 (if (provided? 'snd-gtk)
+					  (lambda (w context) (set! fit-to-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					  (lambda (w context info) (set! fit-to-mark-two (.value info))))))
+			   (list "mark two" 0 initial-fit-to-mark-two 20 fitf2 1)))))))
+
 	(activate-dialog fit-to-mark-dialog))
       
       (set! fit-to-mark-menu-label (add-to-menu marks-menu "Fit selection to marks" post-fit-to-mark-dialog))))
@@ -543,16 +540,15 @@ between two marks,using the granulate generator to fix up the selection duration
 	    (set! sliders
 		  (add-sliders 
 		   define-by-mark-dialog
-		   (list (list "mark one" 0 initial-define-by-mark-one 25
-			       (if (provided? 'snd-gtk)
-				   (lambda (w context) (set! define-by-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! define-by-mark-one ((*motif* '.value) info))))
-			       1)
-			 (list "mark two" 0 initial-define-by-mark-two 25
-			       (if (provided? 'snd-gtk)
-				   (lambda (w context) (set! define-by-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
-				   (lambda (w context info) (set! define-by-mark-two ((*motif* '.value) info))))
-			       1))))))
+		   (list (let ((def1 (if (provided? 'snd-gtk)
+					 (lambda (w context) (set! define-by-mark-one ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					 (lambda (w context info) (set! define-by-mark-one ((*motif* '.value) info))))))
+			   (list "mark one" 0 initial-define-by-mark-one 25 def1 1))
+			 (let ((def2 (if (provided? 'snd-gtk)
+					 (lambda (w context) (set! define-by-mark-two ((*gtk* 'gtk_adjustment_get_value) ((*gtk* 'GTK_ADJUSTMENT) w))))
+					 (lambda (w context info) (set! define-by-mark-two ((*motif* '.value) info))))))
+			   (list "mark two" 0 initial-define-by-mark-two 25 def2 1)))))))
+
 	(activate-dialog define-by-mark-dialog))
       
       (set! define-by-mark-menu-label (add-to-menu marks-menu "Define selection by marks" post-define-by-mark-dialog))))
@@ -702,20 +698,22 @@ between two marks,using the granulate generator to fix up the selection duration
 					       XmNbackground          *basic-color*))))
 	    (for-each
 	     (lambda (parent top-label offset)
-	       (let* ((main-label (XtCreateManagedWidget top-label xmLabelWidgetClass parent
-							 (list XmNleftAttachment      XmATTACH_FORM
-							       XmNrightAttachment     XmATTACH_FORM
-							       XmNtopAttachment       XmATTACH_FORM
-							       XmNbottomAttachment    XmATTACH_NONE)))
-		      (main-frame (XtCreateManagedWidget "fr"  xmFrameWidgetClass parent
-							 (list XmNleftAttachment      XmATTACH_FORM
-							       XmNrightAttachment     XmATTACH_FORM
-							       XmNtopAttachment       XmATTACH_WIDGET
-							       XmNtopWidget           main-label
-							       XmNbottomAttachment    XmATTACH_FORM
-							       XmNshadowThickness     6
-							       XmNshadowType          XmSHADOW_ETCHED_OUT)))
-		      (frame-form (XtCreateManagedWidget "fform" xmFormWidgetClass main-frame ()))
+	       (let* ((frame-form 
+		       (let ((main-frame 
+			      (let ((main-label (XtCreateManagedWidget top-label xmLabelWidgetClass parent
+								       (list XmNleftAttachment      XmATTACH_FORM
+									     XmNrightAttachment     XmATTACH_FORM
+									     XmNtopAttachment       XmATTACH_FORM
+									     XmNbottomAttachment    XmATTACH_NONE))))
+				(XtCreateManagedWidget "fr"  xmFrameWidgetClass parent
+						       (list XmNleftAttachment      XmATTACH_FORM
+							     XmNrightAttachment     XmATTACH_FORM
+							     XmNtopAttachment       XmATTACH_WIDGET
+							     XmNtopWidget           main-label
+							     XmNbottomAttachment    XmATTACH_FORM
+							     XmNshadowThickness     6
+							     XmNshadowType          XmSHADOW_ETCHED_OUT)))))
+			 (XtCreateManagedWidget "fform" xmFormWidgetClass main-frame ())))
 		      (top-frame (XtCreateManagedWidget "topf" xmFrameWidgetClass frame-form
 							(list XmNleftAttachment      XmATTACH_FORM
 							      XmNrightAttachment     XmATTACH_FORM
@@ -780,28 +778,31 @@ between two marks,using the granulate generator to fix up the selection duration
 							       XmNtopAttachment       XmATTACH_NONE
 							       XmNbottomAttachment    XmATTACH_POSITION
 							       XmNbottomPosition      90)))
-		      (bottom-form (XtCreateManagedWidget "bform" xmFormWidgetClass frame-form
-							  (list XmNleftAttachment      XmATTACH_FORM
-								XmNrightAttachment     XmATTACH_FORM
-								XmNtopAttachment       XmATTACH_WIDGET
-								XmNtopWidget           top-frame
-								XmNbottomAttachment    XmATTACH_FORM)))
-		      (bottom-left (XtCreateManagedWidget "bleft" xmFormWidgetClass bottom-form
-							  (list XmNleftAttachment      XmATTACH_FORM
-								XmNrightAttachment     XmATTACH_NONE
-								XmNtopAttachment       XmATTACH_FORM
-								XmNbottomAttachment    XmATTACH_FORM)))
-		      (bottom-left-label (XtCreateManagedWidget "Loop Mode" xmLabelWidgetClass bottom-left
-								(list XmNleftAttachment      XmATTACH_FORM
-								      XmNrightAttachment     XmATTACH_FORM
-								      XmNtopAttachment       XmATTACH_FORM
-								      XmNbottomAttachment    XmATTACH_NONE)))
-		      (bottom-left-button (XtCreateManagedWidget "forwards" xmPushButtonWidgetClass bottom-left
-								 (list XmNleftAttachment      XmATTACH_FORM
-								       XmNrightAttachment     XmATTACH_FORM
-								       XmNtopAttachment       XmATTACH_WIDGET
-								       XmNtopWidget           bottom-left-label
-								       XmNbottomAttachment    XmATTACH_FORM)))
+		      (bottom-left-button 
+		       (let ((bottom-left-label 
+			      (let ((bottom-left 
+				     (let ((bottom-form (XtCreateManagedWidget "bform" xmFormWidgetClass frame-form
+									       (list XmNleftAttachment      XmATTACH_FORM
+										     XmNrightAttachment     XmATTACH_FORM
+										     XmNtopAttachment       XmATTACH_WIDGET
+										     XmNtopWidget           top-frame
+										     XmNbottomAttachment    XmATTACH_FORM))))
+				       (XtCreateManagedWidget "bleft" xmFormWidgetClass bottom-form
+							      (list XmNleftAttachment      XmATTACH_FORM
+								    XmNrightAttachment     XmATTACH_NONE
+								    XmNtopAttachment       XmATTACH_FORM
+								    XmNbottomAttachment    XmATTACH_FORM)))))
+				(XtCreateManagedWidget "Loop Mode" xmLabelWidgetClass bottom-left
+						       (list XmNleftAttachment      XmATTACH_FORM
+							     XmNrightAttachment     XmATTACH_FORM
+							     XmNtopAttachment       XmATTACH_FORM
+							     XmNbottomAttachment    XmATTACH_NONE)))))
+			 (XtCreateManagedWidget "forwards" xmPushButtonWidgetClass bottom-left
+						(list XmNleftAttachment      XmATTACH_FORM
+						      XmNrightAttachment     XmATTACH_FORM
+						      XmNtopAttachment       XmATTACH_WIDGET
+						      XmNtopWidget           bottom-left-label
+						      XmNbottomAttachment    XmATTACH_FORM))))
 		      (range-in-secs #t))
 		 (let ((mode 1))
 		   (XtAddCallback bottom-left-button

@@ -8742,6 +8742,9 @@
 		 ((and (symbol? vname)
 		       (pair? *report-bad-variable-names*)
 		       (or (memq vname *report-bad-variable-names*)
+			   (let ((sname (symbol->string vname)))
+			     (and (> (length sname) 8)
+				  (string=? "compute-" (substring sname 0 8)))) ; compute-* is as bad as get-*
 			   (bad-variable-name-numbered vname *report-bad-variable-names*)))
 		  (lint-format "surely there's a better name for this variable than ~A" caller vname)))
 	   
@@ -16530,6 +16533,13 @@
 ;;;   (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
 ;;;   (if (> (vector-ref INDEX i) (vector-ref INDEX j)) (vector-set! INDEX i (vector-ref INDEX j)))
 ;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
+;;;    (and (pair? obj) (not (null? obj))...)
+;;;   (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
+;;; gensym arg type check? -- it looks like 'sym is mistaken for sym (see t347)
+;;;                         (cond ((procedure? x) x) ((not x) #f)
+;;; let* -> (let+let) if only first in let* is used below
+;;;   let*->let if only one is side-effect and others are known safe
+;;;       (cond ((list? formals) args) ((symbol? formals)...) ((null? args)...)
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)

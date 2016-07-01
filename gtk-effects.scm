@@ -14,9 +14,9 @@
 	  (error 'no-such-mark (list "mark-related action requires two marks"))
 	  (if (= (length ms) 2)
 	      ms
-	      (let ((favor (let* ((lw (left-sample snd chn))
-				  (rw (right-sample snd chn))
-				  (cw (cursor snd chn)))
+	      (let ((favor (let ((lw (left-sample snd chn))
+				 (rw (right-sample snd chn))
+				 (cw (cursor snd chn)))
 			    (if (>= rw cw lw)
 				cw
 				(* .5 (+ lw rw))))))
@@ -1559,8 +1559,8 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 					am-effect-target 
 					(lambda (target samps)
 					  (format #f "effects-am ~A ~A" am-effect-amount
-						  (let ((e (and (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0))))
-							   (xe-envelope am-effect-envelope)))
+						  (let ((e (and (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0)))
+								(xe-envelope am-effect-envelope))))
 						    (and e (format #f "'~A" e)))))
 					#f))
 				     
@@ -1987,12 +1987,12 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 			 (+ y (* pos (read-sample reader1))))
 		       0 len snd chn #f
 		       (format #f "effects-position-sound ~A ~A" mono-snd pos))
-	  (let* ((e1 (make-env pos :length len))
-		 (e1f (if (eqv? chn 1)
-			  (lambda (y)
-			    (+ y (* (env e1) (read-sample reader1))))
-			  (lambda (y)
-			    (+ y (* (- 1.0 (env e1)) (read-sample reader1)))))))
+	  (let ((e1f (let ((e1 (make-env pos :length len)))
+		       (if (eqv? chn 1)
+			   (lambda (y)
+			     (+ y (* (env e1) (read-sample reader1))))
+			   (lambda (y)
+			     (+ y (* (- 1.0 (env e1)) (read-sample reader1))))))))
 	    (map-channel e1f 0 len snd chn #f (format #f "effects-position-sound ~A '~A" mono-snd pos))))))
 
   
