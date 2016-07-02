@@ -283,12 +283,12 @@
 	       (href-start (or href-normal-start 
 			       (string-position "<a class=quiet href=" xref loc)
 			       (string-position "<a class=def href=" xref loc)))
-	       (href-len (if href-normal-start 8 20))
-	       (href-end (and (integer? href-start)
-			      (< href-start leof)
-			      (char-position #\> xref (+ href-start 1))))
-	       (href (and (integer? href-end)
-			  (substring xref (+ href-start href-len) href-end))))
+	       (href (let ((href-len (if href-normal-start 8 20))
+			   (href-end (and (integer? href-start)
+					  (< href-start leof)
+					  (char-position #\> xref (+ href-start 1)))))
+		       (and (integer? href-end)
+			    (substring xref (+ href-start href-len) href-end)))))
 	  (set! url-str (string-append url-str
 				       (if href
 					   (if (char=? (href 1) #\#)
@@ -840,9 +840,9 @@
   ;; alternate: (autoload sym (lambda (e) (let ((m (load file))) (varlet (rootlet) (cons sym (m sym))))))
   (for-each
    (lambda (sym&file)
-     (let* ((e (car sym&file))
-	    (file (cadr sym&file))
-	    (ce (if (not (defined? e)) (load file) (symbol->value e)))
+     (let* ((file (cadr sym&file))
+	    (ce (let ((e (car sym&file)))
+		  (if (not (defined? e)) (load file) (symbol->value e))))
 	    (flst (or (hash-table-ref names file) ())))
        (for-each
 	(lambda (slot)
@@ -947,11 +947,11 @@
 		
 		(if id-pos
 		    (let* ((start (- (char-position #\" dline id-pos) id-pos)) ; (substring dline id-pos)))
-			   (end-start (+ id-pos start 2))
-			   (name (substring dline 
-					    (+ id-pos start 1)
-					    (- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))
-			   (sym-name (string->symbol name)))
+			   (sym-name (let ((name (let ((end-start (+ id-pos start 2)))
+						   (substring dline 
+							      (+ id-pos start 1)
+							      (- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))))
+				       (string->symbol name))))
 		      (if (not (hash-table-ref ids sym-name))
 			  (hash-table-set! ids sym-name 0)
 			  (if (memq sym-name local-ids)
@@ -1600,9 +1600,9 @@
 				 
 				 ;; cur-href here is the full link: sndclm.html#make-filetosample for example
 				 ;;   it can also be a bare file name
-				 (let* ((start (char-position #\# cur-href))
-					(name (and (number? start) 
-						   (string->symbol (substring cur-href (+ start 1)))))
+				 (let* ((name (let ((start (char-position #\# cur-href)))
+						(and (number? start) 
+						     (string->symbol (substring cur-href (+ start 1))))))
 					(data (and (symbol? name) 
 						   (hash-table-ref ids name))))
 				   (if name 

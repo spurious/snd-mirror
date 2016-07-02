@@ -21,7 +21,7 @@
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (slow, and this error almost never happens)
 (define *report-constant-expressions-in-do* #f)           ; kinda dumb
 (define *report-bad-variable-names* '(l ll O))            ; bad names -- a list to check such as:
-;;;                             '(l ll data datum new item info temp tmp val vals value foo bar baz aux dummy O var res retval result count str)
+;;;             '(l ll .. data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
 (define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
@@ -1420,6 +1420,26 @@
 		      (var-scope v))))))
 
     
+    (define (check-for-bad-variable-name caller vname)
+      (define (bad-variable-name-numbered vname bad-names)
+	(let ((str (symbol->string vname)))
+	  (let loop ((bads bad-names))
+	    (and (pair? bads)
+		 (let* ((badstr (symbol->string (car bads)))
+			(pos (string-position badstr str)))
+		   (or (and (eqv? pos 0)
+			    (string->number (substring str (length badstr))))
+		       (loop (cdr bads))))))))
+      (if (and (symbol? vname)
+	       (pair? *report-bad-variable-names*)
+	       (or (memq vname *report-bad-variable-names*)
+		   (let ((sname (symbol->string vname)))
+		     (and (> (length sname) 8)
+			  (or (string=? "compute" (substring sname 0 7))      ; compute-* is as bad as get-*
+			      (string=? "calculate" (substring sname 0 9))))) ;   perhaps one exception: computed-goto*
+		   (bad-variable-name-numbered vname *report-bad-variable-names*)))
+	  (lint-format "surely there's a better name for this variable than ~A" caller vname)))
+
     (define (set-ref name caller form env)
       ;; if name is in env, set its "I've been referenced" flag
       (let ((data (var-member name env)))
@@ -1431,6 +1451,7 @@
 		  (set! (var-history data) (cons form (var-history data)))))
 	    (if (not (defined? name (rootlet)))
 		(let ((old (hash-table-ref other-identifiers name)))
+		  (check-for-bad-variable-name caller name)
 		  (hash-table-set! other-identifiers name (if old (cons form old) (list form)))))))
       env)
 
@@ -5837,20 +5858,27 @@
 			    (equal? index (caddr val))
 			    (memq (car val) '(vector-ref list-ref hash-table-ref string-ref let-ref float-vector-ref int-vector-ref)))
 		       (lint-format "redundant ~A: ~A" caller head (truncated-list->string form)))
+
+		      ((code-constant? target)     ; (vector-set! #(0 1 2) 1 3)??
+		       (lint-format "~A is a constant that is discarded; perhaps ~A" caller target (lists->string form val)))
+
+		      ((not (pair? target)))
 		      
-		      ((and (pair? target)              ; (vector-set! (vector-ref x 0) 1 2) -- vector within vector
-			    (not (eq? head 'string-set!))
+		      ((and (not (eq? head 'string-set!)) ; (vector-set! (vector-ref x 0) 1 2) -- vector within vector
 			    (memq (car target) '(vector-ref list-ref hash-table-ref let-ref float-vector-ref int-vector-ref)))
 		       (lint-format "perhaps ~A" caller (lists->string form `(set! (,@(cdr target) ,index) ,val))))
 		      
-		      ((and (pair? target)              ; (vector-set! (make-vector 3) 1 1) -- does this ever happen?
-			    (memq (car target) '(make-vector vector make-string string make-list list append cons vector-append copy inlet sublet)))
+		      ((memq (car target) '(make-vector vector make-string string make-list list append cons vector-append copy inlet sublet))
 		       (lint-format "~A is simply discarded; perhaps ~A" caller
-				    (truncated-list->string target)
+				    (truncated-list->string target)   ; (vector-set! (make-vector 3) 1 1) -- does this ever happen?
 				    (lists->string form val)))
 		      
-		      ((code-constant? target)     ; (vector-set! #(0 1 2) 1 3)??
-		       (lint-format "~A is a constant that is discarded; perhaps ~A" caller target (lists->string form val)))))))
+		      ((and (eq? head 'list-set!)
+			    (memq (car target) '(cdr cddr cdddr cddddr))
+			    (integer? (caddr form)))                  ; (list-set! (cdr x) 0 y) -> (list-set! x 1 y)
+		       (lint-format "perhaps ~A" caller 
+				    (lists->string form 
+						   `(list-set! ,(cadr target) ,(+ (caddr form) (cdr-count (car target))) ,(cadddr form)))))))))
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-vector-set!))
 		    '(vector-set! list-set! hash-table-set! float-vector-set! int-vector-set! string-set! let-set!)))
@@ -5875,8 +5903,7 @@
 	(hash-table-set! 
 	 h 'display 
 	 (lambda (caller head form env)
-	   (if (and (pair? (cdr form))
-		    (pair? (cadr form)))
+	   (if (pair? (cdr form))
 	       (let ((arg (cadr form))
 		     (port (if (pair? (cddr form))
 			       (caddr form)
@@ -5886,13 +5913,14 @@
 				 (string-position "WARNING" arg)))
 			(lint-format  "There's no need to shout: ~A" caller (truncated-list->string form)))
 		       
+		       ((not (and (pair? arg)
+				  (pair? (cdr arg)))))
+
 		       ((and (eq? (car arg) 'format)
-			     (pair? (cdr arg))
 			     (not (cadr arg)))
 			(lint-format "perhaps ~A" caller (lists->string form `(format ,port ,@(cddr arg)))))
 		       
 		       ((and (eq? (car arg) 'apply)
-			     (pair? (cdr arg))
 			     (eq? (cadr arg) 'format)
 			     (pair? (cddr arg))
 			     (not (caddr arg)))
@@ -8110,7 +8138,10 @@
 			
 			(case (car arg) 
 			  ((quote)   ; '1 -> 1
-			   (let ((op (if (pair? (cadr arg)) 'list? (->lint-type (cadr arg)))))
+			   (let ((op (if (pair? (cadr arg)) 'list? 
+					 (if (symbol? (cadr arg))
+					     'symbol?
+					     (->lint-type (cadr arg))))))
 			     ;; arg is quoted expression
 			     (if (not (or (memq op '(#f #t values))
 					  (every-compatible? checker op)))
@@ -8613,17 +8644,6 @@
 		       (var-history v))
 	       base-type)))
 
-      (define (bad-variable-name-numbered vname bad-names)
-	(let ((str (symbol->string vname)))
-	  (let loop ((bads bad-names))
-	    (and (pair? bads)
-		 (let* ((badstr (symbol->string (car bads)))
-			(pos (string-position badstr str)))
-		   (or (and (eqv? pos 0)
-			    (string->number (substring str (length badstr))))
-		       (loop (cdr bads))))))))
-			    
-
       (when (and (not (eq? head 'begin)) ; begin can redefine = set a variable
 		 (pair? vars)
 		 (proper-list? vars))
@@ -8739,14 +8759,7 @@
 				   head)
 			       otype vname))
 
-		 ((and (symbol? vname)
-		       (pair? *report-bad-variable-names*)
-		       (or (memq vname *report-bad-variable-names*)
-			   (let ((sname (symbol->string vname)))
-			     (and (> (length sname) 8)
-				  (string=? "compute-" (substring sname 0 8)))) ; compute-* is as bad as get-*
-			   (bad-variable-name-numbered vname *report-bad-variable-names*)))
-		  (lint-format "surely there's a better name for this variable than ~A" caller vname)))
+		 (else (check-for-bad-variable-name caller vname)))
 	   
 	   (unless (memq vname '(:lambda :dilambda))
 	     (if (and (eq? otype 'variable)
@@ -12079,20 +12092,43 @@
 			   
 			   (when (and (eq? false 'no-false)                         ; no false branch
 				      (pair? true))
-			     (if (pair? test)  
-				 (let ((test-op (car test))
-				       (true-op (car true)))
-				   ;; the min+max case is seldom hit, and takes about 50 lines
-				   (if (and (memq test-op '(< > <= >=))  ; (if (< x y) (set! x y) -> (set! x (max x y))
-					    (eq? true-op 'set!)
-					    (null? (cdddr test))
-					    (memq (cadr true) test)
-					    (member (caddr true) test))
-				       (let* ((target (cadr true))
-					      (f (if (eq? target ((if (memq test-op '(< <=)) cadr caddr) test))
-						     'max 'min)))
-					 (lint-format "perhaps ~A" caller
-						      (lists->string form `(set! ,target (,f ,@(cdr true)))))))))
+			     (when (pair? test)
+			       (let ((test-op (car test))
+				     (true-op (car true)))
+				 ;; the min+max case is seldom hit, and takes about 50 lines
+				 (when (and (memq test-op '(< > <= >=))
+					    (null? (cdddr test)))
+				   (let ((rel-arg1 (cadr test))
+					 (rel-arg2 (caddr test)))
+
+				     ;; (if (< x y) (set! x y) -> (set! x (max x y))
+				     (if (eq? true-op 'set!)    
+					 (let ((settee (cadr true))
+					       (setval (caddr true)))
+					   (if (and (member settee test)
+						    (member setval test)) ; that's all there's room for
+					       (let ((f (if (equal? settee (if (memq test-op '(< <=)) rel-arg1 rel-arg2)) 'max 'min)))
+						 (lint-format "perhaps ~A" caller
+							      (lists->string form `(set! ,settee (,f ,@(cdr true))))))))
+					 
+					 ;; (if (<= (list-ref ind i) 32) (list-set! ind i 32)) -> (list-set! ind i (max (list-ref ind i) 32))
+					 (if (memq true-op '(list-set! vector-set!))
+					     (let ((settee (cadr true))   
+						   (index (caddr true))
+						   (setval (cadddr true)))
+					       (let ((mx-op (if (and (equal? setval rel-arg1)
+								     (eqv? (length rel-arg2) 3)
+								     (equal? settee (cadr rel-arg2))
+								     (equal? index (caddr rel-arg2)))
+								(if (memq test-op '(< <=)) 'min 'max)
+								(and (equal? setval rel-arg2)
+								     (eqv? (length rel-arg1) 3)
+								     (equal? settee (cadr rel-arg1))
+								     (equal? index (caddr rel-arg1))
+								     (if (memq test-op '(< <=)) 'max 'min)))))
+						 (if mx-op
+						     (lint-format "perhaps ~A" caller
+								  (lists->string form `(,true-op ,settee ,index (,mx-op ,@(cdr test))))))))))))))
 			     
 			     (if (eq? (car true) 'if) ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr)
 				 (cond ((null? (cdddr true))
@@ -16523,26 +16559,25 @@
 ;;; hg.scm also has a lot of changes
 ;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant?
 ;;; perhaps compare accumulating cond cases via simplify-boolean?
-;;;   (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
-;;; other-id with bad name is not reported as such (see t347), also _ => etc as bad names
-;;;           (if (< distance 0) (abs (- source-length (abs distance))) distance)))
-;;;     (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...))
-;;;              (list-set! (cdr chem-comp) 0 new-residue-name)
+;;;    (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
+;;;    (cond ((procedure? x) x) ((not x) #f)
+;;;    (cond ((list? formals) args) ((symbol? formals)...) ((null? args)...)
+;;; (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...))
 ;;; why was call/cc->exit missed [114230]
 ;;; useless binding in generators: (x angle) [in some gens it protects current from next]
-;;;   (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
-;;;   (if (> (vector-ref INDEX i) (vector-ref INDEX j)) (vector-set! INDEX i (vector-ref INDEX j)))
-;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
-;;;    (and (pair? obj) (not (null? obj))...)
-;;;   (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
-;;; gensym arg type check? -- it looks like 'sym is mistaken for sym (see t347)
-;;;                         (cond ((procedure? x) x) ((not x) #f)
+;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
+;;; (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
+;;; (and (pair? obj) <...> (not (null? obj))...)
+;;; (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
 ;;; let* -> (let+let) if only first in let* is used below
-;;;   let*->let if only one is side-effect and others are known safe
-;;;       (cond ((list? formals) args) ((symbol? formals)...) ((null? args)...)
+;;;    let*->let if only one is side-effect and others are known safe
+;;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15)
+;;; (set-car! frame (cons var (car frame))) (set-cdr! frame (cons val (cdr frame))))
+;;; map/for-each over 1/2 list simple f?
+;;; cond not to shorten following (no else)
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 140 23165 604432
+;;; 140 23267 606335

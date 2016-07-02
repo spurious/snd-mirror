@@ -61,7 +61,7 @@
   
   (define (display-scanned-synthesis)
     
-    (define compute-uniform-circular-string
+    (define vibrating-uniform-circular-string
       ;; copied from dsp.scm to simplify life
       (lambda (size x0 x1 x2 mass xspring damp)
 	(define circle-float-vector-ref 
@@ -193,7 +193,7 @@
       
       (define (tick-synthesis n)
 	;; background process
-	(compute-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
+	(vibrating-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
 	(let* ((wn (GDK_WINDOW (gtk_widget_get_window scan-pane)))
 	       (cr (gdk_cairo_create wn)))
 	  (draw-graph cr)

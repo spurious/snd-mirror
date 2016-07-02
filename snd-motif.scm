@@ -134,10 +134,10 @@
   (define host-name
     (let ((documentation "(host-name) -> name of current machine"))
       (lambda ()
-	(let* ((dpy (XtDisplay (cadr (main-widgets))))
-	       (win (XtWindow (cadr (main-widgets))))
-	       (host (XGetWindowProperty dpy win (XInternAtom (XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f XA_STRING)))
-	  (and host (host 5))))))
+	(let ((host (let ((dpy (XtDisplay (cadr (main-widgets))))
+			  (win (XtWindow (cadr (main-widgets)))))
+		      (XGetWindowProperty dpy win (XInternAtom (XtDisplay (cadr (main-widgets))) "WM_CLIENT_MACHINE" #f) 0 32 #f XA_STRING))))
+	  (and (pair? host) (host 5))))))
   
   
 ;;; -------- install-searcher --------
@@ -189,12 +189,12 @@
       (XtSetValues dialog
 		   (list XmNfileSearchProc
 			 (lambda (widget info)
-			   (let* ((dir (XmString->string (.dir info)))  ; may need filter text here?
-				  (files (sort! (map 
-						 (lambda (n) 
-						   (string-append dir n)) 
-						 (match-sound-files proc dir))
-						string<?))               ; alphabetical order
+			   (let* ((files (let ((dir (XmString->string (.dir info))))  ; may need filter text here?
+					   (sort! (map 
+						   (lambda (n) 
+						     (string-append dir n)) 
+						   (match-sound-files proc dir))
+						  string<?)))               ; alphabetical order
 				  (fileTable (map
 					      (lambda (n)
 						(XmStringGenerate 
@@ -276,20 +276,19 @@
 		      ((= chn (channels snd)))
 		    (let* ((zy ((channel-widgets snd chn) 6))
 			   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
-			   (max-size (cadr (XtGetValues zy (list XmNmaximum 0))))
-			   (zy-div (max 10 (- max-size slider-size))))
-		      (set! calls
-			    (cons (XtAddCallback zy
-						 XmNdragCallback 
-						 (lambda (w data info)
-						   (let ((v (/ (.value info) zy-div)))
-						     (do ((i 0 (+ i 1)))
-							 ((= i (channels snd)))
-						       (if (not (= i chn))
-							   (begin
-							     (set! (y-zoom-slider snd i) (* v v))
-							     (set! (y-position-slider snd i) (y-position-slider snd chn))))))))
-				  calls))))
+			   (zy-div (let ((max-size (cadr (XtGetValues zy (list XmNmaximum 0)))))
+				     (max 10 (- max-size slider-size))))
+			   (new-callback (XtAddCallback zy
+							XmNdragCallback 
+							(lambda (w data info)
+							  (let ((v (/ (.value info) zy-div)))
+							    (do ((i 0 (+ i 1)))
+								((= i (channels snd)))
+							      (if (not (= i chn))
+								  (begin
+								    (set! (y-zoom-slider snd i) (* v v))
+								    (set! (y-position-slider snd i) (y-position-slider snd chn))))))))))
+		      (set! calls (cons new-callback calls))))
 		  (set! (hook 'result) (reverse calls))))))))
   
   (define zync
@@ -699,7 +698,7 @@
     (define (add-main-pane name type args)
       (XtCreateManagedWidget name type ((main-widgets) 3) args))
     
-    (define compute-uniform-circular-string
+    (define vibrating-uniform-circular-string
       ;; copied from dsp.scm to simplify life
       (lambda (size x0 x1 x2 mass xspring damp)
 	(define circle-float-vector-ref 
@@ -823,7 +822,7 @@
       
       (define (tick-synthesis n)
 	;; background process
-	(compute-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
+	(vibrating-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
 	(draw-graph)
 	#f)
       
@@ -1041,21 +1040,21 @@
 						     XmNorientation      XmVERTICAL
 						     XmNpaneMinimum      100
 						     XmNbottomAttachment XmATTACH_FORM)))
-		   (mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
-						      (list XmNbackground       *highlight-color*
-							    XmNleftAttachment   XmATTACH_FORM
-							    XmNrightAttachment  XmATTACH_FORM
-							    XmNalignment        XmALIGNMENT_CENTER
-							    XmNtopAttachment    XmATTACH_FORM)))
-		   (mark-scroller (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
-							 (list XmNbackground       *basic-color*
-							       XmNscrollingPolicy  XmAUTOMATIC
-							       XmNscrollBarDisplayPolicy XmSTATIC
-							       XmNleftAttachment   XmATTACH_FORM
-							       XmNrightAttachment  XmATTACH_FORM
-							       XmNtopAttachment    XmATTACH_WIDGET
-							       XmNtopWidget        mark-label
-							       XmNbottomAttachment XmATTACH_FORM)))
+		   (mark-scroller (let ((mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
+									   (list XmNbackground       *highlight-color*
+										 XmNleftAttachment   XmATTACH_FORM
+										 XmNrightAttachment  XmATTACH_FORM
+										 XmNalignment        XmALIGNMENT_CENTER
+										 XmNtopAttachment    XmATTACH_FORM))))
+				    (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
+							   (list XmNbackground       *basic-color*
+								 XmNscrollingPolicy  XmAUTOMATIC
+								 XmNscrollBarDisplayPolicy XmSTATIC
+								 XmNleftAttachment   XmATTACH_FORM
+								 XmNrightAttachment  XmATTACH_FORM
+								 XmNtopAttachment    XmATTACH_WIDGET
+								 XmNtopWidget        mark-label
+								 XmNbottomAttachment XmATTACH_FORM))))
 		   (mlist (XtCreateManagedWidget "mark-list"  xmRowColumnWidgetClass mark-scroller
 						 (list XmNorientation      XmVERTICAL
 						       XmNtopAttachment    XmATTACH_FORM
@@ -1080,11 +1079,11 @@
 				   (XtSetValues w (list XmNbackground *basic-color*))))
 		  (XtAddCallback tf XmNactivateCallback
 				 (lambda (w c i)
-				   (let* ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
-					  (txt (cadr (XtGetValues w (list XmNvalue 0))))
-					  (samp (and (string? txt) 
-						     (> (length txt) 0)
-						     (string->number txt))))
+				   (let ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
+					 (samp (let ((txt (cadr (XtGetValues w (list XmNvalue 0)))))
+						 (and (string? txt) 
+						      (> (length txt) 0)
+						      (string->number txt)))))
 				     (if samp
 					 (if (mark? id)
 					     (set! (mark-sample id) samp))
@@ -1375,8 +1374,7 @@
 	(define (make-sound-icon filename parent peak-func gc width height args)
 	  (define (cast-to-window n) (list 'Window (cadr n)))
 	  (let* ((dpy (XtDisplay parent))
-		 (win (XtWindow parent))
-		 (pix (XCreatePixmap dpy win width height (screen-depth)))
+		 (pix (XCreatePixmap dpy (XtWindow parent) width height (screen-depth)))
 		 (str (XmStringCreateLocalized filename))
 		 (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
 	    (XSetForeground dpy gc *basic-color*)
@@ -1709,14 +1707,14 @@
   (define make-channel-drop-site
     (let ((documentation "(make-channel-drop-site snd) adds a drop site pane to the current channel"))
       (lambda args
-	(let* ((snd (if (pair? args) (car args) (selected-sound)))
-	       (widget (add-channel-pane snd (selected-channel snd)
-					 "drop here" xmDrawingAreaWidgetClass
-					 (list XmNbackground (white-pixel)
-					       XmNleftAttachment      XmATTACH_FORM
-					       XmNrightAttachment     XmATTACH_FORM
-					       XmNtopAttachment       XmATTACH_FORM
-					       XmNbottomAttachment    XmATTACH_FORM))))
+	(let ((widget (let ((snd (if (pair? args) (car args) (selected-sound))))
+			(add-channel-pane snd (selected-channel snd)
+					  "drop here" xmDrawingAreaWidgetClass
+					  (list XmNbackground (white-pixel)
+						XmNleftAttachment      XmATTACH_FORM
+						XmNrightAttachment     XmATTACH_FORM
+						XmNtopAttachment       XmATTACH_FORM
+						XmNbottomAttachment    XmATTACH_FORM)))))
 	  (XmDropSiteRegister
 	   widget 
 	   (list XmNdropSiteOperations XmDROP_COPY

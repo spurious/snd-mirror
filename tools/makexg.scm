@@ -1252,13 +1252,13 @@
 (define listable-types ())
 (for-each
  (lambda (type)
-   (let* ((len (length type))
-	  (dereftype (and (char=? (type (- len 1)) #\*)
-			  (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
-			  (not (string=? type "GError*"))
-			  (not (string=? type "GError**"))
-			  (not (string=? type "gchar*"))
-			  (substring type 0 (- len 1)))))
+   (let ((dereftype (let ((len (length type)))
+		      (and (char=? (type (- len 1)) #\*)
+			   (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
+			   (not (string=? type "GError*"))
+			   (not (string=? type "GError**"))
+			   (not (string=? type "gchar*"))
+			   (substring type 0 (- len 1))))))
      (if (and dereftype
 	      (assoc dereftype direct-types))
 	 (set! listable-types (cons type listable-types)))))
@@ -1720,8 +1720,8 @@
 
 (hey "~%~%/* ---------------------------------------- callback handlers ---------------------------------------- */~%~%")
 
-(let* ((funcs-done ())
-       (xc (lambda (func)
+(let ((xc (let ((funcs-done ()))
+	    (lambda (func)
 	     (let* ((name (callback-func func))
 		    (type (callback-type func))
 		    (args (callback-args func))
@@ -1808,10 +1808,10 @@
 		 (when (callback-version func)
 		   (hey "#endif~%"))
 		 (hey "~%")
-		 )))))
-    (for-each xc callbacks)
-    )
+		 ))))))
+  (for-each xc callbacks))
 
+  
 (hey "~%static gboolean gxg_func3(GtkWidget *w, GdkEventAny *ev, gpointer data)~%")
 (hey "{~%")
 (hey "  return(Xen_boolean_to_C_bool(Xen_call_with_3_args(Xen_car((Xen)data),~%")

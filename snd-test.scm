@@ -9878,7 +9878,7 @@ EDITS: 2
 	      (if (>= k 1.0)
 		  (begin
 		    (set! k 0.0)
-		    (compute-uniform-circular-string size x0 x1 x2 mass xspring damp))
+		    (vibrating-uniform-circular-string size x0 x1 x2 mass xspring damp))
 		  (set! k (+ k kincr)))
 	      (let ((g1 (table-lookup gen1))
 		    (g2 (table-lookup gen2)))

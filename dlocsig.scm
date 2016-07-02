@@ -1079,7 +1079,7 @@
 ;;; Calculate bezier difference vectors for the given path
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
 
-(define (calculate-fit path)
+(define (fit path)
   (cond ((not (eq? (car path) 'open-bezier-path))
 	 (let* ((n (- (length (bezier-x path )) 1))
 		(m (/ (- n (if (odd? n) 3 4)) 2))
@@ -1208,7 +1208,7 @@
 	 
 	 (let ((points (length (bezier-x path))))
 	   (cond ((> points 2)
-		  (let* ((vals (calculate-fit path))
+		  (let* ((vals (fit path))
 			 (n (car vals))
 			 (p (cadr vals))
 			 (d (caddr vals)))
@@ -1283,7 +1283,7 @@
 	     (xparse-path path))
 	 
 	 (if (> (length (bezier-x path)) 4)
-	     (let* ((vals (calculate-fit path))
+	     (let* ((vals (fit path))
 		    (n (car vals))
 		    (p (cadr vals))
 		    (d (caddr vals)))
@@ -2132,7 +2132,7 @@
     (define (time->samples time) (round (* time *clm-srate*)))
     
     ;; calculate speaker gains for group
-    (define (calculate-gains x y z group)
+    (define (find-gains x y z group)
       (let ((zero-coord 1.0e-10)
 	    (zero-gain 1.0e-10)
 	    (size (group-size group))
@@ -2256,7 +2256,7 @@
 	   (lambda (return)
 	     (for-each
 	      (lambda (group)
-		(let* ((vals (calculate-gains x y z group))
+		(let* ((vals (find-gains x y z group))
 		       (inside (car vals))
 		       (gains (cadr vals)))
 		  (if inside
@@ -2358,7 +2358,7 @@
 	  
 	  ;; output gains for current point
 	  (if prev-group
-	      (let* ((vals (calculate-gains x y z prev-group))
+	      (let* ((vals (find-gains x y z prev-group))
 		     (inside (car vals))
 		     (gains (cadr vals)))
 		;; check that the source is not moving faster than sound
@@ -2407,12 +2407,12 @@
 										(- time prev-time)))))
 						;; see if we are inside the previous group
 						;; we can be on either side due to roundoff errors
-						(vals (calculate-gains xi yi zi prev-group))
+						(vals (find-gains xi yi zi prev-group))
 						(inside (car vals))
 						(gains (cadr vals)))
 					   (if inside
 					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (calculate-gains xi yi zi group))
+					       (let* ((val1 (find-gains xi yi zi group))
 						      (inside (car val1))
 						      (gains (cadr val1)))
 						 (if inside
@@ -2439,12 +2439,12 @@
 										(- time prev-time)))))
 						;; see if we are inside the previous group
 						;; we can be on either side due to roundoff errors
-						(vals (calculate-gains xi yi 0.0 prev-group))
+						(vals (find-gains xi yi 0.0 prev-group))
 						(inside (car vals))
 						(gains (cadr vals)))
 					   (if inside 
 					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (calculate-gains xi yi 0.0 group))
+					       (let* ((val1 (find-gains xi yi 0.0 group))
 						      (inside (car val1))
 						      (gains (cadr val1)))
 						 (if inside

@@ -185,7 +185,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 
 
 
-;;; -------- compute-uniform-circular-string
+;;; -------- vibrating-uniform-circular-string
 ;;;
 ;;; this is a simplification of the underlying table-filling routine for "scanned synthesis".
 ;;; To watch the wave, open some sound (so Snd has some place to put the graph), turn off
@@ -193,7 +193,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 ;;; elegant manner, see snd-motif.scm under scanned-synthesis).
 
 #|
-(define old-compute-uniform-circular-string
+(define old-vibrating-uniform-circular-string
   (lambda (size x0 x1 x2 mass xspring damp)
     (define circle-ref 
       (lambda (v i)
@@ -216,10 +216,10 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
       (copy x1 x2)
       (copy x0 x1))))
 
-;;; (compute-uniform-circular-string 100 (make-float-vector 100) (make-float-vector 100) (make-float-vector 100) .5 .5 .5)
+;;; (vibrating-uniform-circular-string 100 (make-float-vector 100) (make-float-vector 100) (make-float-vector 100) .5 .5 .5)
 |#
 
-(define (compute-uniform-circular-string size x0 x1 x2 mass xspring damp)
+(define (vibrating-uniform-circular-string size x0 x1 x2 mass xspring damp)
   (let* ((dm (/ damp mass))
 	 (km (/ xspring mass))
 	 (denom (+ 1.0 dm))
@@ -237,7 +237,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
     (copy x1 x2)
     (copy x0 x1)))
 
-(define (compute-string size x0 x1 x2 masses xsprings esprings damps haptics)
+(define (vibrating-string size x0 x1 x2 masses xsprings esprings damps haptics)
   ;; this is the more general form
   (do ((i 0 (+ i 1)))
       ((= i size))

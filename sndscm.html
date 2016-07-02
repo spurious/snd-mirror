@@ -3682,8 +3682,8 @@ so aliasing is a possibility, and even powers create energy at 0Hz.
 <!-- main-index |dspdocscanned:scanned synthesis -->
 <!-- scanned synthesis -->
 <pre class="indented">
-<em class=def id="computeuniformcircularstring">compute-uniform-circular-string</em> size x0 x1 x2 mass xspring damp
-<em class=emdef>compute-string</em> size x0 x1 x2 masses xsprings esprings damps haptics
+<em class=def id="vibratinguniformcircularstring">vibrating-uniform-circular-string</em> size x0 x1 x2 mass xspring damp
+<em class=emdef>vibrating-string</em> size x0 x1 x2 masses xsprings esprings damps haptics
 </pre>
 
 <p>These functions implement
@@ -3704,7 +3704,7 @@ then
       (set! (x1 (- (+ i (/ size 4)) 6)) val)))
   (do ((i 0 (+ i 1)))
       ((= i 1024))
-    (<em class=red>compute-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
+    (<em class=red>vibrating-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
     (<a class=quiet href="extsnd.html#graph">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
 </pre>
 
@@ -9338,7 +9338,7 @@ piano: <a href="#pianodoc">piano.scm, piano.rb</a> &nbsp;
 singer: <a href="#singerdoc">singer.scm, singer.rb</a> &nbsp;
 bowed string: <a href="#straddoc">strad.scm, strad.rb</a> &nbsp;
 flute: <a href="#clminsdoc">clm-ins.scm</a> &nbsp;
-string: <a href="#computeuniformcircularstring">compute-string</a> &nbsp;
+string: <a href="#vibratinguniformcircularstring">vibrating-string</a> &nbsp;
 plucked string: pluck in clm-ins.scm
 </div>
 
