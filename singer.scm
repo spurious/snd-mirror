@@ -148,7 +148,7 @@
 	      (lp (make-one-pole 0.05 (* -0.05 .9995)))
 
 	      (lip-radius   0.0)
-	      (s-glot-mix 0.0)
+	      (s-glot-mix 1.0)
 	      (s-noise 0.0)
 	      (initial-noise-position 0.0)
 	      (formant-shift 1.0)
@@ -280,7 +280,6 @@
 		    (float-vector-set! glot-table j (+ (float-vector-ref glot-table j) 
 					    (* (float-vector-ref cosines k) (cos kx))
 					    (* (float-vector-ref sines k) (sin kx)))))))))
-	  (set! s-glot-mix 1.0)
 	  (copy glot-table glot-table2)
 	  ;; ---------------- end make glot ----------------
 

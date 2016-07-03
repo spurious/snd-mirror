@@ -164,17 +164,17 @@
 	    (set! args (append args (list XmNforeground *data-color*))))
 	(let* ((drawer (XtCreateManagedWidget name xmDrawingAreaWidgetClass parent args))
 	       (gc (car (snd-gcs)))
-	       (x0 (car axis-bounds))
-	       (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
-	       (y0 (caddr axis-bounds))
-	       (y1 (cadddr axis-bounds))
 	       (arrow-cursor (XCreateFontCursor (XtDisplay (cadr (main-widgets))) XC_crosshair))
-	       (editor (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
-			     drawer 
-			     #f  ; axis pixel locs filled in when drawn
-			     (list x0 y0 x1 y1)
-			     (list gc #f)
-			     name)))
+	       (editor (let ((x0 (car axis-bounds))
+			     (x1 (cadr axis-bounds)) ; too confusing! -- change internally below
+			     (y0 (caddr axis-bounds))
+			     (y1 (cadddr axis-bounds)))
+			 (list (list x0 y0 x1 y0) ; needs to be in user-coordinates (graph size can change)
+			       drawer 
+			       #f  ; axis pixel locs filled in when drawn
+			       (list x0 y0 x1 y1)
+			       (list gc #f)
+			       name))))
 	  (XtAddCallback drawer XmNresizeCallback 
 			 (lambda (w context info) 
 			   (set! (editor 2) (apply draw-axes drawer gc name axis-bounds))
@@ -219,7 +219,7 @@
 			     name))
 	       (dragging #f))
 	  
-	  ;; (xe-create-enved "hi" ((sound-widgets 0) 9) () '(0.0 1.0 0.0 1.0))
+	  ;; (xe-create-enved "hi" ((sound-widgets 0) 9) () '(0.0 1.0 0.0 1.0)) -- this doesn't work?
 	  
 	  (define (local-draw-axes wid gc label x0 x1 y0 y1)
 	    (let* ((cr (make-cairo wid))

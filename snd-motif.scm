@@ -160,32 +160,30 @@
     (define (XmString->string str)
       (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
     
-    (let* ((dialog (open-file-dialog #f))
+    (let ((dialog (open-file-dialog #f))
 	   ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
-	   (shell (cadr (main-widgets)))
-	   (tags (list "one" "two" "three" "four"))
-	   (pixels (let* ((dpy (XtDisplay shell))
-			  (cmap (DefaultColormap dpy (DefaultScreen dpy))))
-		     (map
-		      (lambda (color)
-			(let ((col (XColor)))
-			  (if (= (XAllocNamedColor dpy cmap color col col) 0)
-			      (snd-error (format #f "can't allocate ~A" color))
-			      (.pixel col))))
-		   '("black" "red" "blue" "orange"))))
-	   (rendertable (XmRenderTableAddRenditions 
-			 #f 
-			 (map (lambda (tag pix)
-				(XmRenditionCreate 
-				 (cadr (main-widgets))
-				 tag
-				 (list XmNrenditionForeground pix
-				       XmNfontName "9x15"
-				       XmNfontType XmFONT_IS_FONT)))
-			      tags pixels)
-			 (length tags)
-			 XmMERGE_NEW)))
-      
+	   (rendertable (let* ((tags (list "one" "two" "three" "four"))
+			       (pixels (let* ((dpy (XtDisplay (cadr (main-widgets))))
+					      (cmap (DefaultColormap dpy (DefaultScreen dpy))))
+					 (map
+					  (lambda (color)
+					    (let ((col (XColor)))
+					      (if (= (XAllocNamedColor dpy cmap color col col) 0)
+						  (snd-error (format #f "can't allocate ~A" color))
+						  (.pixel col))))
+					  '("black" "red" "blue" "orange")))))
+			  (XmRenderTableAddRenditions 
+			   #f 
+			   (map (lambda (tag pix)
+				  (XmRenditionCreate 
+				   (cadr (main-widgets))
+				   tag
+				   (list XmNrenditionForeground pix
+					 XmNfontName "9x15"
+					 XmNfontType XmFONT_IS_FONT)))
+				tags pixels)
+			   (length tags)
+			   XmMERGE_NEW))))
       (XtSetValues dialog
 		   (list XmNfileSearchProc
 			 (lambda (widget info)
@@ -274,20 +272,20 @@
 		(let ((calls ()))
 		  (do ((chn 0 (+ 1 chn)))
 		      ((= chn (channels snd)))
-		    (let* ((zy ((channel-widgets snd chn) 6))
-			   (slider-size (cadr (XtGetValues zy (list XmNsliderSize 0)))) ; this is relative to max size
-			   (zy-div (let ((max-size (cadr (XtGetValues zy (list XmNmaximum 0)))))
-				     (max 10 (- max-size slider-size))))
-			   (new-callback (XtAddCallback zy
-							XmNdragCallback 
-							(lambda (w data info)
-							  (let ((v (/ (.value info) zy-div)))
-							    (do ((i 0 (+ i 1)))
-								((= i (channels snd)))
-							      (if (not (= i chn))
-								  (begin
-								    (set! (y-zoom-slider snd i) (* v v))
-								    (set! (y-position-slider snd i) (y-position-slider snd chn))))))))))
+		    (let ((new-callback 
+			   (let* ((zy ((channel-widgets snd chn) 6))
+				  (zy-div (max 10 (- (cadr (XtGetValues zy (list XmNmaximum 0))) 
+						     (cadr (XtGetValues zy (list XmNsliderSize 0))))))) ; this is relative to max size
+			     (XtAddCallback zy
+					    XmNdragCallback 
+					    (lambda (w data info)
+					      (let ((v (/ (.value info) zy-div)))
+						(do ((i 0 (+ i 1)))
+						    ((= i (channels snd)))
+						  (if (not (= i chn))
+						      (begin
+							(set! (y-zoom-slider snd i) (* v v))
+							(set! (y-position-slider snd i) (y-position-slider snd chn)))))))))))
 		      (set! calls (cons new-callback calls))))
 		  (set! (hook 'result) (reverse calls))))))))
   
@@ -1286,31 +1284,27 @@
       (lambda (dpy wn gc pts width height)
 	(let* ((top-margin 2)
 	       (bottom-margin 6)
+	       (range (/ (- height top-margin bottom-margin) 2))
+	       (y->grfy (let ((ay1 top-margin)
+			      (ay0 (- height bottom-margin)))
+			  (lambda (y height)
+			    (min ay0
+				 (max ay1
+				      (round (+ ay1
+						(* height (- 1.0 y)))))))))
+	       (ly (y->grfy (pts 0) range))
 	       (left-margin 2)
-	       (right-margin 2)
-	       (range (/ (- height top-margin bottom-margin) 2)))
-
-	  (define y->grfy
-	    (let ((ay1 top-margin)
-		  (ay0 (- height bottom-margin)))
-	      (lambda (y height)
-		(min ay0
-		     (max ay1
-			  (round (+ ay1
-				    (* height (- 1.0 y)))))))))
-	  
-	  (let* ((ly (y->grfy (pts 0) range))
-		 (lx left-margin)
-		 (len (length pts))
-		 (xinc (/ (- width left-margin right-margin) len))
-		 (y 0))
-	    (do ((i 1 (+ i 1))
-		 (x lx (+ x xinc)))
-		((= i len))
-	      (set! y (y->grfy (pts i) range))
-	      (XDrawLine dpy wn gc lx ly (round x) y)
-	      (set! lx (round x))
-	      (set! ly y)))))))
+	       (lx left-margin)
+	       (len (length pts))
+	       (xinc (/ (- width left-margin 2) len)) ; 2=right-margin
+	       (y 0))
+	  (do ((i 1 (+ i 1))
+	       (x lx (+ x xinc)))
+	      ((= i len))
+	    (set! y (y->grfy (pts i) range))
+	    (XDrawLine dpy wn gc lx ly (round x) y)
+	    (set! lx (round x))
+	    (set! ly y))))))
   
   (define make-sound-box 
     ;; graphics stuff (fonts etc)
@@ -1327,36 +1321,21 @@
       (let ((gc (XCreateGC (XtDisplay shell) 
 			   (XtWindow shell) 
 			   (logior GCForeground GCBackground GCFont) gv))
-	    (sound-buttons ()))
-	
-	;; button data list handlers
-	(define sound-button-gc
-	  (dilambda
-	   (lambda (data) (data 0))
-	   (lambda (data val) (set! (data 0) val))))
-	
-	(define sound-button-filename
-	  (dilambda
-	   (lambda (data) (data 1))
-	   (lambda (data val) (set! (data 1) val))))
-	
-	(define sound-button
-	  (dilambda
-	   (lambda (data) (data 2))
-	   (lambda (data val) (set! (data 2) val))))
-	
-	(define sound-button-peaks
-	  (dilambda
-	   (lambda (data) (data 3))
-	   (lambda (data val) (set! (data 3) val))))
-#|
-	(define (sound-button-data button)
-	(define (sb-data lst) 
-	  (if (null? lst) #f 
-	      (if (equal? button (sound-button (car lst))) (car lst)
-		  (sb-data (cdr lst)))))
-	(sb-data sound-buttons))
-|#
+	    (sound-buttons ())
+	    ;; button data list handlers
+	    (sound-button-gc (dilambda
+			      (lambda (data) (data 0))
+			      (lambda (data val) (set! (data 0) val))))
+	    (sound-button-filename (dilambda
+				    (lambda (data) (data 1))
+				    (lambda (data val) (set! (data 1) val))))
+	    (sound-button (dilambda
+			   (lambda (data) (data 2))
+			   (lambda (data val) (set! (data 2) val))))
+	    (sound-button-peaks (dilambda
+				 (lambda (data) (data 3))
+				 (lambda (data val) (set! (data 3) val)))))
+
 	(define (make-sound-button-pixmap dpy wn data width height)
 	  (if (pair? (sound-button-peaks data))
 	      (let ((mins (car (sound-button-peaks data)))
@@ -1978,10 +1957,8 @@
 		      (let ((next-amp (and (< i (- chns 1))
 					   (find-child snd-amp (label-name (+ i 1))))))
 			(reset-to-one amp ampn)
-			(XtSetValues ampc (if next-amp 
-					      (list XmNtopAttachment XmATTACH_WIDGET
-						    XmNtopWidget     next-amp)
-					      (list XmNtopAttachment XmATTACH_FORM))))
+			(XtSetValues ampc (list XmNtopAttachment 
+						(if next-amp (values XmATTACH_WIDGET XmNtopWidget next-amp) XmATTACH_FORM))))
 		      (XtManageChild ampc)
 		      (XtManageChild ampn)
 		      (XtManageChild amp))))
@@ -2524,28 +2501,22 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 		 (XtVaSetValues (find-child scl "Scrollbar") (list XmNtroughColor (red-pixel)))
 		 (XmStringFree title)
 		 scl))
-	      #|
-	      ((meter)
-	      ;; using the level meters in snd-motif.scm
-	      (let ((height 70)
-	      (width 210))
-	      (XtCreateManagedWidget var-label xmLabelWidgetClass row-pane
-	      (list XmNbackground  *basic-color*))
-	      (make-level-meter row-pane width height () #f)))
-	      |#
+
 	      ((graph)
-	       (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane 
-						   (list XmNpaneMinimum 100)))
-		      (snd (make-variable-graph form (string-append variable-name ": time") 2048 (floor *clm-srate*))))
+	       (let ((snd (make-variable-graph  
+			   (XtCreateManagedWidget var-label xmFormWidgetClass pane (list XmNpaneMinimum 100))
+			   (string-append variable-name ": time") 2048 (floor *clm-srate*))))
 		 (list (sound->integer snd) (channel-data snd 0))))
+
 	      ((spectrum)
-	       (let* ((form (XtCreateManagedWidget var-label xmFormWidgetClass pane
-						   (list XmNpaneMinimum 100)))
-		      (snd (make-variable-graph form variable-name 2048 (floor *clm-srate*))))
+	       (let ((snd (make-variable-graph 
+			   (XtCreateManagedWidget var-label xmFormWidgetClass pane (list XmNpaneMinimum 100))
+			   variable-name 2048 (floor *clm-srate*))))
 		 (set! (time-graph? snd 0) #f)
 		 (set! (transform-graph? snd 0) #t)
 		 (set! (x-axis-label snd 0 transform-graph) (string-append variable-name ": frequency"))
 		 (list (sound->integer snd) (channel-data snd 0))))
+
 	      (else #f)))))))
   
   (define variable-display 
@@ -2617,15 +2588,14 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 		   (play-button (widgets 4))
 		   (cur-size (cadr (XtVaGetValues (car widgets) (list XmNheight 0)))))
 	      (XtUnmanageChild play-button)
-	      (let* ((name-form (XtParent status-area)) ; "snd-name-form"
-		     (new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass name-form 
-							(list XmNbackground      *basic-color*
-							      XmNrightAttachment XmATTACH_FORM
-							      XmNtopAttachment   XmATTACH_FORM
-							      XmNmarginWidth 2
-							      XmNmarginHeight 0
-							      XmNshadowThickness 0
-							      ))))
+	      (let ((new-minmax (XtCreateManagedWidget "." xmPushButtonWidgetClass 
+						       (XtParent status-area)
+						       (list XmNbackground      *basic-color*
+							     XmNrightAttachment XmATTACH_FORM
+							     XmNtopAttachment   XmATTACH_FORM
+							     XmNmarginWidth 2
+							     XmNmarginHeight 0
+							     XmNshadowThickness 0))))
 		(XtVaSetValues play-button (list XmNrightAttachment XmATTACH_WIDGET
 						 XmNrightWidget new-minmax))
 		(XtManageChild play-button)

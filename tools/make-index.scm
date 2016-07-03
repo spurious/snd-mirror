@@ -276,19 +276,18 @@
 	  (in-name #f))
       (do ((loc 0))
 	  ((>= loc len))
-	(let* ((leof (or (char-position #\newline xref loc)
-			 len))
-	       (href-normal-start (or (string-position "<a href=" xref loc)
-				      (string-position "<A HREF=" xref loc)))
-	       (href-start (or href-normal-start 
-			       (string-position "<a class=quiet href=" xref loc)
-			       (string-position "<a class=def href=" xref loc)))
-	       (href (let ((href-len (if href-normal-start 8 20))
-			   (href-end (and (integer? href-start)
-					  (< href-start leof)
-					  (char-position #\> xref (+ href-start 1)))))
-		       (and (integer? href-end)
-			    (substring xref (+ href-start href-len) href-end)))))
+	(let* ((leof (or (char-position #\newline xref loc) len))	    
+	       (href (let* ((href-normal-start (or (string-position "<a href=" xref loc)
+						   (string-position "<A HREF=" xref loc)))
+			    (href-start (or href-normal-start 
+					    (string-position "<a class=quiet href=" xref loc)
+					    (string-position "<a class=def href=" xref loc)))
+			    (href-len (if href-normal-start 8 20))
+			    (href-end (and (integer? href-start)
+					   (< href-start leof)
+					   (char-position #\> xref (+ href-start 1)))))
+		      (and (integer? href-end)
+			   (substring xref (+ href-start href-len) href-end)))))
 	  (set! url-str (string-append url-str
 				       (if href
 					   (if (char=? (href 1) #\#)
@@ -946,12 +945,11 @@
 		    (set! xrefing #f))
 		
 		(if id-pos
-		    (let* ((start (- (char-position #\" dline id-pos) id-pos)) ; (substring dline id-pos)))
-			   (sym-name (let ((name (let ((end-start (+ id-pos start 2)))
-						   (substring dline 
-							      (+ id-pos start 1)
-							      (- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))))
-				       (string->symbol name))))
+		    (let ((sym-name (string->symbol (let ((start (- (char-position #\" dline id-pos) id-pos)))
+						      (substring dline 
+								 (+ id-pos start 1)
+								 (let ((end-start (+ id-pos start 2)))	   
+								   (- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))))))
 		      (if (not (hash-table-ref ids sym-name))
 			  (hash-table-set! ids sym-name 0)
 			  (if (memq sym-name local-ids)

@@ -3759,6 +3759,10 @@
 				 
 				 (else `(+ ,@val)))))
 			(else 
+			 ;; not many cases here, oddly enough
+			 ;; (+ (* index 65536) (* index 256) index) [only happens once]
+			 ;; (+ (* 4 alpha alpha alpha alpha) (* 40 alpha alpha alpha) (* 140 alpha alpha) (* 200 alpha) 96) [use Horner's rule]
+			 ;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
 			 `(+ ,@val))))))))
 	    
 	    ((*)
@@ -6000,6 +6004,9 @@
 
 	    (let ((inverses '((reverse . reverse) 
 			      (reverse! . reverse!) 
+			      ;; reverse and reverse! are not completely interchangable:
+			      ;;   (reverse (cons 1 2)): (2 . 1)
+			      ;;   (reverse! (cons 1 2)): error: reverse! argument, (1 . 2), is a pair but should be a proper list
 			      (list->vector . vector->list)
 			      (vector->list . list->vector)
 			      (symbol->string . string->symbol)
@@ -7086,6 +7093,38 @@
 			       (truncated-list->string form))
 		  (let ((func (cadr form))
 			(ary #f))
+
+		    ;; if zero or one args, the map/for-each is either a no-op or a function call
+		    (if (any? any-null? (cddr form))
+			(lint-format "this ~A has no effect (null arg)" caller (truncated-list->string form))
+			(if (any? (lambda (p)
+				    (and (pair? p)
+					 (case (car p)
+					   ((quote)
+					    (and (pair? (cadr p))
+						 (null? (cdadr p))))
+					   ((list)
+					    (null? (cddr p)))
+					   ((cons)
+					    (any-null? (caddr p)))
+					   (else #f))))
+				  (cddr form))
+			    (lint-format "perhaps ~A" caller
+					 (lists->string form
+							(let ((args (map (lambda (a)
+									   (case (car a)
+									     ((list cons)
+									      (cadr a))       ; slightly inaccurate
+									     ((quote)
+									      (caadr a))
+									     (else `(,a 0)))) ; not car -- might not be a list
+									 (cddr form))))
+							  (if (eq? head 'for-each)
+							      `(,(cadr form) ,@args)
+							      `(list (,(cadr form) ,@args))))))))
+		    ;; 2 happens a lot, but introduces evaluation order quibbles
+		    ;;   we used to check for values if list arg -- got 4 hits!
+
 		    (if (and (symbol? func)
 			     (procedure? (symbol->value func *e*)))
 			(begin
@@ -7179,34 +7218,10 @@
 			  (case (car seq)
 			    ((cons)
 			     (if (and (pair? (cdr seq))
-				      (pair? (cddr seq)))
-				 (if (any-null? (caddr seq))
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form 
-								 (if (eq? head 'map)
-								     `(list (,(cadr form) ,(cadr seq)))
-								     `(,(cadr form) ,(cadr seq)))))
-				     (if (code-constant? (caddr seq))
-					 (lint-format "~A will ignore ~S in ~A" caller head (caddr seq) seq)))))
-			    ((list)
-			     (if (and (pair? (cdr seq))
-				      (null? (cddr seq)))
-				 (let* ((list-arg (cadr seq))
-					(sig (and (pair? list-arg)
-						  (arg-signature seq env))))
-				   (if (not (or (and (pair? sig)
-						     (pair? (car sig))
-						     (memq 'values (car sig)))
-						(tree-memq 'values list-arg)))
-				       (lint-format "~Aperhaps ~A" caller
-						    (if (or sig
-							    (not (pair? list-arg)))
-							""
-							(format #f "assuming ~A does not return multiple values, " list-arg))
-						    (lists->string form 
-								   (if (eq? head 'map)
-								       `(list (,(cadr form) ,list-arg))
-								       `(,(cadr form) ,list-arg))))))))
+				      (pair? (cddr seq))
+				      (code-constant? (caddr seq)))
+				 (lint-format "~A will ignore ~S in ~A" caller head (caddr seq) seq)))
+
 			    ((map)
 			     (when (= (length seq) 3)
 			       ;; a toss-up -- probably faster to combine funcs here, and easier to read?
@@ -10140,57 +10155,77 @@
 			  (set-ref f caller f env))
 		      (set! f-len 0)))
 		
-		(when (and (= f-len prev-len 3)
-			   (eq? f-func 'set!)
-			   (eq? (car prev-f) 'set!))
-		  (let ((arg1 (caddr prev-f))
-			(arg2 (caddr f))
-			(settee (cadr f)))
-		    (if (eq? settee (cadr prev-f))
-			(cond ((not (and (pair? arg2)          ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
-					 (tree-unquoted-member settee arg2)))
-			       (if (not (or (side-effect? arg1 env)
-					    (side-effect? arg2 env)))
-				   (lint-format "this could be omitted: ~A" caller prev-f)))
-			      
-			      ((and (pair? arg1)               ; (set! x (cons 1 z)) (set! x (cons 2 x)) -> (set! x (cons 2 (cons 1 z)))
-				    (pair? arg2)
-				    (eq? (car arg1) 'cons)
-				    (eq? (car arg2) 'cons)
-				    (eq? settee (caddr arg2))
-				    (not (eq? settee (cadr arg2))))
-			       (lint-format "perhaps ~A ~A -> ~A" caller
-					    prev-f f
-					    `(set! ,settee (cons ,(cadr arg2) (cons ,@(cdr arg1))))))
-			      
-			      ((and (pair? arg1)               ; (set! x (append x y)) (set! x (append x z)) -> (set! x (append x y z))
-				    (pair? arg2)
-				    (eq? (car arg1) 'append)
-				    (eq? (car arg2) 'append)
-				    (eq? settee (cadr arg1))
-				    (eq? settee (cadr arg2))
-				    (not (tree-memq settee (cddr arg1)))
-				    (not (tree-memq settee (cddr arg2))))
-			       (lint-format "perhaps ~A ~A -> ~A" caller
-					    prev-f f
-					    `(set! ,settee (append ,settee ,@(cddr arg1) ,@(cddr arg2)))))
-			      
-			      ((and (= (tree-count1 settee arg2 0) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
-				    (or (not (pair? arg1))
-					(< (tree-leaves arg1) 5)))
-			       (lint-format "perhaps ~A ~A ->~%~NC~A" caller 
-					    prev-f f pp-left-margin #\space
-					    (object->string `(set! ,settee ,(tree-subst arg1 settee arg2))))))
-			
-			(if (and (symbol? (cadr prev-f)) ; (set! x (A)) (set! y (A)) -> (set! x (A)) (set! y x)
-				 (pair? arg1)            ;   maybe more trouble than it's worth
-				 (equal? arg1 arg2)
-				 (not (eq? (car arg1) 'quote))
-				 (hash-table-ref no-side-effect-functions (car arg1))
-				 (not (tree-unquoted-member (cadr prev-f) arg1))
-				 (not (side-effect? arg1 env))
-				 (not (maker? arg1)))
-			    (lint-format "perhaps ~A" caller (lists->string f `(set! ,settee ,(cadr prev-f))))))))
+		;; set-car! + set-cdr! here is usually "clever" code assuming eq?ness, so we can't rewrite it using cons
+		;;   but copy does not create a new cons... [if at end of body, the return values will differ]
+		(when (= f-len prev-len 3)
+		  (when (and (memq f-func '(set-car! set-cdr!))  ; ...(set-car! x (car y)) (set-cdr! x (cdr y))... -> (copy y x)
+			     (memq (car prev-f) '(set-car! set-cdr!))
+			     (not (eq? (car prev-f) f-func))
+			     (equal? (cadr f) (cadr prev-f)))
+		    (let ((ncar (if (eq? f-func 'set-car!) (caddr f) (caddr prev-f)))
+			  (ncdr (if (eq? f-func 'set-car!) (caddr prev-f) (caddr f))))
+		      (if (and (pair? ncar)
+			       (eq? (car ncar) 'car)
+			       (pair? ncdr)
+			       (eq? (car ncdr) 'cdr)
+			       (equal? (cadr ncar) (cadr ncdr)))
+			  (lint-format "perhaps ~A~A ~A~A -> ~A" caller 
+				       (if (= ctr 0) "" "...") 
+				       (truncated-list->string prev-f)
+				       (truncated-list->string f)
+				       (if (= ctr (- len 1)) "" "...")
+				       `(copy ,(cadr ncar) ,(cadr f))))))
+
+		  (when (and (eq? f-func 'set!)
+			     (eq? (car prev-f) 'set!))
+		    (let ((arg1 (caddr prev-f))
+			  (arg2 (caddr f))
+			  (settee (cadr f)))
+		      (if (eq? settee (cadr prev-f))
+			  (cond ((not (and (pair? arg2)          ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
+					   (tree-unquoted-member settee arg2)))
+				 (if (not (or (side-effect? arg1 env)
+					      (side-effect? arg2 env)))
+				     (lint-format "this could be omitted: ~A" caller prev-f)))
+				
+				((and (pair? arg1)               ; (set! x (cons 1 z)) (set! x (cons 2 x)) -> (set! x (cons 2 (cons 1 z)))
+				      (pair? arg2)
+				      (eq? (car arg1) 'cons)
+				      (eq? (car arg2) 'cons)
+				      (eq? settee (caddr arg2))
+				      (not (eq? settee (cadr arg2))))
+				 (lint-format "perhaps ~A ~A -> ~A" caller
+					      prev-f f
+					      `(set! ,settee (cons ,(cadr arg2) (cons ,@(cdr arg1))))))
+				
+				((and (pair? arg1)               ; (set! x (append x y)) (set! x (append x z)) -> (set! x (append x y z))
+				      (pair? arg2)
+				      (eq? (car arg1) 'append)
+				      (eq? (car arg2) 'append)
+				      (eq? settee (cadr arg1))
+				      (eq? settee (cadr arg2))
+				      (not (tree-memq settee (cddr arg1)))
+				      (not (tree-memq settee (cddr arg2))))
+				 (lint-format "perhaps ~A ~A -> ~A" caller
+					      prev-f f
+					      `(set! ,settee (append ,settee ,@(cddr arg1) ,@(cddr arg2)))))
+				
+				((and (= (tree-count1 settee arg2 0) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
+				      (or (not (pair? arg1))
+					  (< (tree-leaves arg1) 5)))
+				 (lint-format "perhaps ~A ~A ->~%~NC~A" caller 
+					      prev-f f pp-left-margin #\space
+					      (object->string `(set! ,settee ,(tree-subst arg1 settee arg2))))))
+			  
+			  (if (and (symbol? (cadr prev-f)) ; (set! x (A)) (set! y (A)) -> (set! x (A)) (set! y x)
+				   (pair? arg1)            ;   maybe more trouble than it's worth
+				   (equal? arg1 arg2)
+				   (not (eq? (car arg1) 'quote))
+				   (hash-table-ref no-side-effect-functions (car arg1))
+				   (not (tree-unquoted-member (cadr prev-f) arg1))
+				   (not (side-effect? arg1 env))
+				   (not (maker? arg1)))
+			      (lint-format "perhaps ~A" caller (lists->string f `(set! ,settee ,(cadr prev-f)))))))))
 		
 		(if (< ctr (- len 1)) 
 		    (begin		             ; f is not the last form, so its value is ignored
@@ -13939,6 +13974,7 @@
 	       (let ((named-let (and (symbol? (cadr form)) (cadr form))))
 		 (if (keyword? named-let)
 		     (lint-format "bad let name: ~A" caller named-let))
+
 		 (unless named-let
 		   
 		   (if (and (null? (cadr form)) ; this can be fooled by macros that define things
@@ -14573,7 +14609,7 @@
 				  (if (and (< end (/ i lint-let-reduction-factor))
 					   (eq? form lint-current-form)
 					   (< (tree-leaves (car body)) 100))
-				      (let ((old-start (let ((old-pp ((funclet 'lint-pretty-print) '*pretty-print-left-margin*)))
+				      (let ((old-start (let ((old-pp ((funclet lint-pretty-print) '*pretty-print-left-margin*)))
 							 (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) (+ lint-left-margin 4))
 							 (let ((res (lint-pp `(let ,(cadr form) 
 										,@(copy body (make-list (+ end 1)))))))
@@ -16557,12 +16593,13 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg.scm also has a lot of changes
-;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant?
+;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant? but these can't work as case keys
 ;;; perhaps compare accumulating cond cases via simplify-boolean?
 ;;;    (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
 ;;;    (cond ((procedure? x) x) ((not x) #f)
 ;;;    (cond ((list? formals) args) ((symbol? formals)...) ((null? args)...)
-;;; (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...))
+;;; (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...)) [if no result is #f, case can be "test" + else #f]
+;;;     cond-eqv? for some section of cond
 ;;; why was call/cc->exit missed [114230]
 ;;; useless binding in generators: (x angle) [in some gens it protects current from next]
 ;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
@@ -16571,10 +16608,10 @@
 ;;; (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
 ;;; let* -> (let+let) if only first in let* is used below
 ;;;    let*->let if only one is side-effect and others are known safe
-;;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15)
-;;; (set-car! frame (cons var (car frame))) (set-cdr! frame (cons val (cdr frame))))
-;;; map/for-each over 1/2 list simple f?
-;;; cond not to shorten following (no else)
+;;; cond not to shorten following: no else, all following share (and ... <expr> ...), expr no side effects
+;;; see t347 for another missed scope restriction
+;;; (if (pair? x) (cond saying (string? x) or whatever))
+;;; maybe horner's rule for +/-? (((c[n] * x) + c[n-1]) * x) + c[n-2] etc
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
