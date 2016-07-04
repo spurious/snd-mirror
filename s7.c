@@ -14050,6 +14050,16 @@ DIRECT_RF_TO_RF(fabs)
 
 /* -------------------------------- magnitude -------------------------------- */
 
+static double my_hypot(double x, double y)
+{
+  /* according to callgrind, this is much faster than libc's hypot */
+  if (x == 0.0) return(fabs(y));
+  if (y == 0.0) return(fabs(x));
+  if (x == y) return(1.414213562373095 * fabs(x));
+  if ((is_NaN(x)) || (is_NaN(y))) return(NAN);
+  return(sqrt(x * x + y * y));
+}
+
 static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
@@ -14082,7 +14092,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
       return(x);
 
     case T_COMPLEX:
-      return(make_real(sc, hypot(imag_part(x), real_part(x))));
+      return(make_real(sc, my_hypot(imag_part(x), real_part(x))));
 
     default:
       method_or_bust_with_type(sc, x, sc->magnitude_symbol, args, a_number_string, 0);
@@ -69643,7 +69653,7 @@ static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
     }
 
   if (is_t_complex(p))
-    return(make_real(sc, hypot(imag_part(p), real_part(p))));
+    return(make_real(sc, my_hypot(imag_part(p), real_part(p))));
 
   return(big_abs(sc, args));
 }
@@ -74474,6 +74484,7 @@ int main(int argc, char **argv)
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
+ * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

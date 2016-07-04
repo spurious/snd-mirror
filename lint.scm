@@ -1238,19 +1238,20 @@
 	      (else (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
     
     (define (side-effect-with-vars? form env vars)
-      ;(format *stderr* "~A~%" form)
+      ;; (format *stderr* "~A~%" form)
       ;; could evaluation of form have any side effects (like IO etc)
       
       (if (or (not (proper-list? form))                   ; we don't want dotted lists or () here
 	      (null? form))
 
 	  (and (symbol? form)
-	       (let ((e (var-member form env)))
-		 (if (var? e)
-		     (and (symbol? (var-ftype e))
-			  (var-side-effect e))
-		     (and (not (hash-table-ref no-side-effect-functions form))
-			  (procedure? (symbol->value form *e*)))))) ; i.e. function passed as argument
+	       (or (eq? form '=>)                         ; (cond ((x => y))...) -- someday check y...
+		   (let ((e (var-member form env)))
+		     (if (var? e)
+			 (and (symbol? (var-ftype e))
+			      (var-side-effect e))
+			 (and (not (hash-table-ref no-side-effect-functions form))
+			      (procedure? (symbol->value form *e*))))))) ; i.e. function passed as argument
 
 	  ;; can't optimize ((...)...) because the car might eval to a function
 	  (or (and (not (hash-table-ref no-side-effect-functions (car form)))
@@ -3588,6 +3589,64 @@
 		     (splice-if f (cdr lst))))
 	    (else (cons (car lst) 
 			(splice-if f (cdr lst))))))
+
+    (define (horners-rule form)
+      (and (pair? form)
+	   (call-with-exit 
+	    (lambda (return)
+	      (do ((p form (cdr p))
+		   (coeffs #f)
+		   (top 0)
+		   (sym #f))
+		  ((not (pair? p))
+		   (do ((x (- top 1) (- x 1))
+			(result (coeffs top)))
+		       ((< x 0)
+			result)
+		     (set! result 
+			   (if (zero? (coeffs x))
+			       `(* ,sym ,result)
+			       `(+ ,(coeffs x) (* ,sym ,result))))))
+		(let ((cx (car p)))
+		  (cond ((number? cx)
+			 (if (not coeffs) (set! coeffs (make-vector 4 0)))
+			 (set! (coeffs 0) (+ (coeffs 0) cx)))
+
+			((symbol? cx)
+			 (if (not sym)
+			     (set! sym cx)
+			     (if (not (eq? sym cx))
+				 (return #f)))
+			 (if (not coeffs) (set! coeffs (make-vector 4 0)))
+			 (set! top (max top 1))
+			 (set! (coeffs 1) (+ (coeffs 1) 1)))
+
+			((not (and (pair? cx)
+				   (eq? (car cx) '*)))
+			 (return #f))
+
+			(else
+			 (let ((ctr 0)
+			       (ax 1))
+			   (do ((q (cdr cx) (cdr q)))
+			       ((not (pair? q)))
+			     (let ((qx (car q)))
+			       (if (symbol? qx)
+				   (if (not sym)
+				       (begin
+					 (set! sym qx)
+					 (set! ctr 1))
+				       (if (not (eq? sym qx))
+					   (return #f)
+					   (set! ctr (+ ctr 1))))
+				   (if (number? qx)
+				       (set! ax (* ax qx))
+				       (return #f)))))
+			   (if (not coeffs) (set! coeffs (make-vector 4 0)))
+			   (if (>= ctr (length coeffs))
+			       (set! coeffs (copy coeffs (make-vector (* ctr 2) 0))))
+			   (set! top (max top ctr))
+			   (set! (coeffs ctr) (+ (coeffs ctr) ax)))))))))))
     
     (define (simplify-numerics form env)
       ;; this returns a form, possibly the original simplified
@@ -3759,11 +3818,10 @@
 				 
 				 (else `(+ ,@val)))))
 			(else 
-			 ;; not many cases here, oddly enough
-			 ;; (+ (* index 65536) (* index 256) index) [only happens once]
-			 ;; (+ (* 4 alpha alpha alpha alpha) (* 40 alpha alpha alpha) (* 140 alpha alpha) (* 200 alpha) 96) [use Horner's rule]
+			 (or (horners-rule val)
+			 ;; not many cases here, oddly enough, Horner's rule gets most
 			 ;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
-			 `(+ ,@val))))))))
+			     `(+ ,@val)))))))))
 	    
 	    ((*)
 	     (case len
@@ -3982,7 +4040,7 @@
 					 (eq? (caar args) '-)))
 			       `(- ,@(cons first-arg nargs)))
 
-			      ((> (length (car args)) 2)
+			      ((> (length (car args)) 2)      ; (- (- x y) z w) -> (- x y z w)
 			       (simplify-numerics `(- ,@(cdar args) ,@(cdr args)) env))
 
 			      (else (simplify-numerics `(- (+ ,(cadar args) ,@(cdr args))) env)))))))))
@@ -5898,9 +5956,7 @@
 		 (if (pair? (cddr form))
 		     (let ((arg2 (caddr form)))
 		       (if (and (code-constant? arg2)
-				(not (or (boolean? arg2)      ; #f and #t are deiplay|write choice
-					 (and (keyword? arg2) ; :readable = ~W
-					      (eq? arg2 :readable)))))
+				(not (memq arg2 '(#f #t :readable))))           ; #f and #t are display|write choice, :readable = ~W
 			   (lint-format "bad second argument: ~A" caller arg2))))))))
 	
 	;; ---------------- display ----------------
@@ -7112,12 +7168,14 @@
 			    (lint-format "perhaps ~A" caller
 					 (lists->string form
 							(let ((args (map (lambda (a)
-									   (case (car a)
-									     ((list cons)
-									      (cadr a))       ; slightly inaccurate
-									     ((quote)
-									      (caadr a))
-									     (else `(,a 0)))) ; not car -- might not be a list
+									   (if (pair? a)
+									       (case (car a)
+										 ((list cons)
+										  (cadr a))       ; slightly inaccurate
+										 ((quote)
+										  (caadr a))
+										 (else `(,a 0))) ; not car -- might not be a list
+									       `(,a 0)))         ;   but still not right -- arg might be a hash-table
 									 (cddr form))))
 							  (if (eq? head 'for-each)
 							      `(,(cadr form) ,@args)
@@ -9437,7 +9495,7 @@
 
     (define (check-returns caller f env) ; f is not the last form in the body
       (if (not (or (side-effect? f env)
-		   (eq? f '=>)))
+		   (eq? '=> f)))
 	  (lint-format "this could be omitted: ~A" caller (truncated-list->string f))
 	  (when (pair? f)
 	    (case (car f)
@@ -10162,8 +10220,8 @@
 			     (memq (car prev-f) '(set-car! set-cdr!))
 			     (not (eq? (car prev-f) f-func))
 			     (equal? (cadr f) (cadr prev-f)))
-		    (let ((ncar (if (eq? f-func 'set-car!) (caddr f) (caddr prev-f)))
-			  (ncdr (if (eq? f-func 'set-car!) (caddr prev-f) (caddr f))))
+		    (let ((ncar (caddr (if (eq? f-func 'set-car!) f prev-f)))
+			  (ncdr (caddr (if (eq? f-func 'set-car!) prev-f f))))
 		      (if (and (pair? ncar)
 			       (eq? (car ncar) 'car)
 			       (pair? ncdr)
@@ -16585,6 +16643,7 @@
 ;;; TODO:
 ;;;
 ;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
+;;;   include named-lets in this search
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;; the ((lambda ...)) -> let rewriter is still tricked by values
@@ -16600,9 +16659,8 @@
 ;;;    (cond ((list? formals) args) ((symbol? formals)...) ((null? args)...)
 ;;; (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...)) [if no result is #f, case can be "test" + else #f]
 ;;;     cond-eqv? for some section of cond
-;;; why was call/cc->exit missed [114230]
 ;;; useless binding in generators: (x angle) [in some gens it protects current from next]
-;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case
+;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case [or assq+quoted list if all constants]
 ;;; (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
 ;;; (and (pair? obj) <...> (not (null? obj))...)
 ;;; (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
@@ -16611,10 +16669,10 @@
 ;;; cond not to shorten following: no else, all following share (and ... <expr> ...), expr no side effects
 ;;; see t347 for another missed scope restriction
 ;;; (if (pair? x) (cond saying (string? x) or whatever))
-;;; maybe horner's rule for +/-? (((c[n] * x) + c[n-1]) * x) + c[n-2] etc
+;;; max/min with inf?
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 140 23267 606335
+;;; 145 23855 606251

@@ -348,7 +348,7 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
 
 (defgenerator (noddsin 
 	       :make-wrapper (lambda (g)
-			       (if (< (g 'n) 1) (set! (g 'n) 1))
+			       (set! (g 'n) (max (g 'n) 1))
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (if (not (and (< (g 'n) 100)
 					     (> (noddsin-maxes (g 'n)) 0.0)))
@@ -928,8 +928,7 @@ returns n cosines spaced by frequency with amplitudes scaled by r^k."))
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
 			       (set! (g 'r) (generator-clamp-r (g 'r)))
-			       (if (< (g 'r) 0.0)
-				   (set! (g 'r) 0.0))
+			       (set! (g 'r) (max (g 'r) 0.0))
 			       (set! (g 'rn) (- (expt (g 'r) (g 'n))))
 			       (set! (g 'rn1) (expt (g 'r) (+ (g 'n) 1)))
 			       (set! (g 'norm) (/ (- (g 'rn) 1) (- (g 'r) 1)))
@@ -3801,7 +3800,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (j2cos
 	       :make-wrapper (lambda (g)
 			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       (if (< (g 'n) 1) (set! (g 'n) 1))
+			       (set! (g 'n) (max (g 'n) 1))
 			       g))
   (frequency *clm-default-frequency*) (r 0.5) (n 1) (angle 0.0) fm)
 

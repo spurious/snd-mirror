@@ -1043,8 +1043,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   ;; for arbitrary method combinations: this returns a list of all the methods of a given name
   ;;   in obj's class and the classes it inherits from (see example below)
   (if (symbol? method)
-      (let* ((base-method (obj method))
-	     (methods (if (procedure? base-method) (list base-method) ())))
+      (let ((methods (let ((base-method (obj method)))
+		       (if (procedure? base-method) (list base-method) ()))))
 	(for-each 
 	 (lambda (ancestor)
 	   (let ((next-method (ancestor method)))
