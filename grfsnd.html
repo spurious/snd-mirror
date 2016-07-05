@@ -1334,20 +1334,18 @@ Here's a dialog window with a slider:
       (XmStringFree xdismiss)
       (XmStringFree titlestr)
       
-      (let* ((mainform 
-	      (XtCreateManagedWidget "formd" xmFormWidgetClass scale-dialog
+      (let ((scale (let ((mainform (XtCreateManagedWidget "formd" xmFormWidgetClass scale-dialog
 				     (list XmNleftAttachment    XmATTACH_FORM
 					   XmNrightAttachment   XmATTACH_FORM
 					   XmNtopAttachment     XmATTACH_FORM
 					   XmNbottomAttachment  XmATTACH_WIDGET
-					   XmNbottomWidget      (XmMessageBoxGetChild scale-dialog XmDIALOG_SEPARATOR))))
-	     (scale
-	      (XtCreateManagedWidget "" xmScaleWidgetClass mainform
+					   XmNbottomWidget      (XmMessageBoxGetChild scale-dialog XmDIALOG_SEPARATOR)))))
+	              (XtCreateManagedWidget "" xmScaleWidgetClass mainform
 				     (list XmNorientation XmHORIZONTAL
 					   XmNshowValue   #t
 					   XmNvalue       100
 					   XmNmaximum     500
-					   XmNdecimalPoints 2))))
+					   XmNdecimalPoints 2)))))
 	
 	(XtAddCallback scale XmNvalueChangedCallback (lambda (w context info)
 						       (set! current-scaler (/ (.value info) 100.0))))

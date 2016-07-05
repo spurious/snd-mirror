@@ -13,7 +13,7 @@ typedef struct {
 static cmap **cmaps = NULL;
 static int cmaps_size = 0;
 
-#define NO_SUCH_COLORMAP Xen_make_error_type("no-such-colormap")
+#define no_such_colormap Xen_make_error_type("no-such-colormap")
 
 
 bool is_colormap(int n)
@@ -1059,7 +1059,7 @@ static Xen g_colormap_ref(Xen map, Xen pos)
 
   index = Xen_colormap_to_C_int(map);
   if (!(is_colormap(index)))
-    Xen_error(NO_SUCH_COLORMAP,
+    Xen_error(no_such_colormap,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap_ref ": no such colormap: ~A"),
 			 map));
 
@@ -1090,7 +1090,7 @@ static Xen g_set_colormap(Xen val)
 
   index = Xen_colormap_to_C_int(val);
   if (!(is_colormap(index)))
-    Xen_error(NO_SUCH_COLORMAP,
+    Xen_error(no_such_colormap,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap ": no such colormap: ~A"),
 			 val));
 
@@ -1130,7 +1130,7 @@ static Xen g_colormap_name(Xen col)
 
   map = Xen_colormap_to_C_int(col);
   if (!(is_colormap(map)))
-    Xen_error(NO_SUCH_COLORMAP,
+    Xen_error(no_such_colormap,
 	      Xen_list_2(C_string_to_Xen_string(S_colormap_name ": no such colormap: ~A"),
 			 col));
 
@@ -1155,7 +1155,7 @@ static Xen g_delete_colormap(Xen col)
 
   map = Xen_colormap_to_C_int(col);
   if (!(is_colormap(map)))
-    Xen_error(NO_SUCH_COLORMAP,
+    Xen_error(no_such_colormap,
 	      Xen_list_2(C_string_to_Xen_string(S_delete_colormap ": no such colormap: ~A"),
 			 col));
 
@@ -1288,7 +1288,8 @@ void g_init_gxcolormaps(void)
   Xen_define_typed_procedure(S_add_colormap,        g_add_colormap_w,        2, 0, 0, H_add_colormap,        s7_make_signature(s7, 3, col, s, fnc));
   Xen_define_typed_procedure(S_colormap_name,       g_colormap_name_w,       1, 0, 0, H_colormap_name,       s7_make_signature(s7, 2, s, col));
   Xen_define_typed_procedure(S_delete_colormap,     g_delete_colormap_w,     1, 0, 0, H_delete_colormap,     s7_make_signature(s7, 2, col, col));
-  Xen_define_typed_procedure(S_integer_to_colormap, g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap, s7_make_signature(s7, 2, col, i));
+  Xen_define_typed_procedure(S_integer_to_colormap, g_integer_to_colormap_w, 1, 0, 0, H_integer_to_colormap, 
+			     s7_make_signature(s7, 2, s7_make_signature(s7, 2, col, b), i));
   Xen_define_typed_procedure(S_colormap_to_integer, g_colormap_to_integer_w, 1, 0, 0, H_colormap_to_integer, s7_make_signature(s7, 2, i, col));
 
   Xen_define_typed_dilambda(S_colormap, g_colormap_w, H_colormap,

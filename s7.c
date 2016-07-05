@@ -74484,7 +74484,8 @@ int main(int argc, char **argv)
  * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
- * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part
+ * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part,
+ *   but then why not numerator/denominator?  
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

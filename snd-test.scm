@@ -25802,8 +25802,8 @@ EDITS: 2
 			 (lambda (file)
 			   (catch #t
 			     (lambda ()
-			       (or (> (mus-sound-framples file) 80000)
-				   (> (mus-sound-chans file) 2)))
+			       (not (and (<= 0 (mus-sound-framples file) 80000)
+					 (<= 1 (mus-sound-chans file) 2))))
 			     (lambda args #t)))
 			 (sound-files-in-directory ".")))
 	 (cur-dir-len (length cur-dir-files))
@@ -38215,7 +38215,7 @@ EDITS: 1
     (define (fv125)
       (let ((gen (make-delay 5)))
 	(fill! (mus-data gen) 0.3)
-	(copy (mus-data gen) (make-float-vector 5) 0 5)))
+	(copy (mus-data gen) (make-float-vector 5) 0 3)))
     (test (fv125) (float-vector 0.3 0.3 0.3 0.0 0.0))
 
     (define (fv126)

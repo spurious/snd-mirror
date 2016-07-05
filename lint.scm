@@ -614,7 +614,7 @@
 			(cdr tree))
 		       #f))))))
     
-    (define (tree-memq sym tree)
+    (define (tree-memq sym tree)     ; ignore quoted lists, accept symbol outside a pair
       (or (eq? sym tree)
 	  (and (pair? tree)
 	       (not (eq? (car tree) 'quote))
@@ -5554,8 +5554,26 @@
 			      (char=? (cadr form) (other-case (cadr form))))
 			 (and (char? (caddr form))
 			      (char=? (caddr form) (other-case (caddr form))))))
-		(lint-format "char-ci=? could be char=? here: ~A" caller form)))
-
+		(lint-format "char-ci=? could be char=? here: ~A" caller form)
+		
+		(when (and (eq? head 'char=?)        ; (char=? #\a (char-downcase x)) -> (char-ci=? #\a x)
+			   (every? (let ((op #f))
+				     (lambda (a)
+				       (or (char? a)
+					   (and (pair? a)
+						(memq (car a) '(char-downcase char-upcase))
+						(if op
+						    (eq? op (car a))
+						    (set! op (car a)))))))
+				   (cdr form)))
+		  (lint-format "perhaps ~A" caller
+			       (lists->string form
+					      `(char-ci=? ,@(map (lambda (a)
+								   (if (and (pair? a)
+									    (memq (car a) '(char-upcase char-downcase)))
+								       (cadr a)
+								       a))
+								   (cdr form))))))))
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-char<))
 		    '(char<? char>? char<=? char>=? char=? char-ci<? char-ci>? char-ci<=? char-ci>=? char-ci=?)))
@@ -5572,8 +5590,33 @@
 		       (not (checked-eval cleared-form)))
 		  (lint-format "this comparison can't be true: ~A" caller (truncated-list->string form))))
 
-	    (when (and (eq? head 'string=?) ; (string=? (symbol->string a) (symbol->string b)) -> (eq? a b)
-		       (= (length form) 3))
+	    (if (and (> (length form) 2)
+		     (every? (let ((op #f))      ; (string=? x (string-downcase y)) -> (string-ci=? x y)
+			       (lambda (a)
+				 (and (pair? a)
+				      (memq (car a) '(string-downcase string-upcase))
+				      (if op
+					  (eq? op (car a))
+					  (set! op (car a))))))
+			     (cdr form)))
+		(lint-format "perhaps ~A" caller
+			     (lists->string form
+					    (let ((op (case head
+							((string=?) 'string-ci=?)
+							((string<=?) 'string-ci<=?)
+							((string>=?) 'string-ci>=?)
+							((string<?) 'string-ci<?)
+							((string>?) 'string-ci>?)
+							(else head))))
+					      `(,op ,@(map (lambda (a)
+							     (if (and (pair? a)
+								      (memq (car a) '(string-upcase string-downcase)))
+								 (cadr a)
+								 a))
+							   (cdr form)))))))
+
+	    (when (and (eq? head 'string=?)
+		       (= (length form) 3))                ; (string=? (symbol->string a) (symbol->string b)) -> (eq? a b)
 	      (if (and (pair? (cadr form))
 		       (eq? (caadr form) 'symbol->string)
 		       (pair? (caddr form))
@@ -6629,8 +6672,13 @@
 					     
 					     ((any-null? args)                   ; (apply f ()) -> (f)
 					      (lint-format "perhaps ~A" caller (lists->string form (list f))))
-					     
+
 					     ((not (pair? args)))
+
+					     ;;((eq? (car args) #_{list}) (format *stderr* "~A~%" form))
+					     ;; this happens a lot
+					     ;; #_{apply_values} in the arglist if at end is just the arg thereof
+					     ;; (apply f ({list} 1 2 ({apply_values} (list 3 4))) -> (apply f 1 2 (list 3 4))
 					     
 					     ((eq? (car args) 'list)             ; (apply f (list a b)) -> (f a b)
 					      (lint-format "perhaps ~A" caller (lists->string form `(,f ,@(cdr args)))))
@@ -7153,7 +7201,8 @@
 		    ;; if zero or one args, the map/for-each is either a no-op or a function call
 		    (if (any? any-null? (cddr form))
 			(lint-format "this ~A has no effect (null arg)" caller (truncated-list->string form))
-			(if (any? (lambda (p)
+			(if (and (not (tree-memq 'values form)) ; e.g. flatten in s7.html
+				 (any? (lambda (p)
 				    (and (pair? p)
 					 (case (car p)
 					   ((quote)
@@ -7164,7 +7213,7 @@
 					   ((cons)
 					    (any-null? (caddr p)))
 					   (else #f))))
-				  (cddr form))
+				  (cddr form)))
 			    (lint-format "perhaps ~A" caller
 					 (lists->string form
 							(let ((args (map (lambda (a)
@@ -7384,7 +7433,12 @@
 	   (if (and (= (length form) 2)
 		    (memq (->lint-type (cadr form)) '(integer? rational? real?)))
 	       (lint-format "perhaps use abs here: ~A" caller form))))
-	
+
+	;; (hash-table-set! h 'modulo (lambda (caller head form env) (format *stderr* "~A~%" form)))
+	;; (modulo (- 512 (modulo offset 512)) 512)
+	;; (modulo (char->integer (string-ref seed j)) 255)
+
+
 	;; ---------------- open-input-file open-output-file ----------------
 	(let ()
 	  (define (sp-open-input-file caller head form env)
@@ -13171,7 +13225,8 @@
 					   (start-search clauses test)
 					   (begin
 					     (set! start #f)
-					     (set! nc (cons (car-with-expr (car clauses)) nc))))))))))))
+					     (if (not ok-but-at-end)
+						 (set! nc (cons (car-with-expr (car clauses)) nc)))))))))))))
 		   ;; --------
 		   
 		   (when (pair? (cadr form)) 
@@ -14967,7 +15022,39 @@
 						       `(,(if (null? (cdr new-let-binds))
 							      'let 'let*)
 							 ,new-let-binds
-							 '...)))))))
+							 '...)))))
+
+		       ;; this could be folded into the for-each above
+		       (when (not repeats)
+			 (let ((outer-vars ())
+			       (inner-vars ()))
+			   (do ((vs (reverse vars) (cdr vs)))
+			       ((null? vs))
+			     (let* ((v (car vs))
+				    (vname (var-name v)))
+			       
+			       (if (not (or (side-effect? (var-initial-value v) env)
+					    (any? (lambda (trailing-var)
+						    ;; vname is possible inner let var if it is not mentioned in any trailing initial value
+						    ;;   (repeated name can't happen here)
+						    (tree-memq vname (var-initial-value trailing-var)))
+						  (cdr vs))))
+				   (set! inner-vars (cons v inner-vars))
+				   (set! outer-vars (cons v outer-vars)))))
+			   (if (and (pair? outer-vars)
+				    (pair? inner-vars)
+				    (pair? (cdr inner-vars)))
+			       (lint-format "perhaps split this let*: ~A" caller
+					    (lists->string form
+							   `(,(if (pair? (cdr outer-vars)) 'let* 'let)
+							     ,(map (lambda (v)
+								     `(,(var-name v) ,(var-initial-value v)))
+								   (reverse outer-vars))
+							     (let ,(map (lambda (v)
+									  `(,(var-name v) ,(var-initial-value v)))
+									(reverse inner-vars))
+							       ...)))))))
+			 )) ; pair? vars
 		   
 		   (let* ((cur-env (cons (make-var :name :let
 						   :initial-value form
@@ -16651,7 +16738,7 @@
 ;;;   current case statements could be ((hash-table-ref...)...) -- too messy?
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
-;;; hg.scm also has a lot of changes
+;;; hg.scm also has a lot of changes, also snd|hg-results
 ;;; memq/eq? works with *std**, probably also built-in hooks, most-*-fixnum, nan/inf -- any constant? but these can't work as case keys
 ;;; perhaps compare accumulating cond cases via simplify-boolean?
 ;;;    (cond (A...) (B...)) is A then (or A B) etc -- if (or A B) is A then B is always #f
@@ -16660,19 +16747,22 @@
 ;;; (cond ((string? residue-part) #f) followed by many ((eq? (car residue-part) 'ser_no) ...)) [if no result is #f, case can be "test" + else #f]
 ;;;     cond-eqv? for some section of cond
 ;;; useless binding in generators: (x angle) [in some gens it protects current from next]
+;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
 ;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case [or assq+quoted list if all constants]
-;;; (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
+;;;    everywhere we treat 'list as special, #_{list} can be checked as well, 
+;;;    probably similarly for append|#_{append} [6681]
+;;;    if just #_{list} and #_{apply_values} original can be reconstructed as `(...,@...)
+;;;    ({list} (apply_values x)) `(,@x) which seems degenerate => (copy x)?
+;;;    ({list} x ({apply_values} y)) `(x ,@y) -> (cons x y)
+;;;    ({append} ({list} x) y) -> cons x y I think
 ;;; (and (pair? obj) <...> (not (null? obj))...)
+;;;    (if (pair? x) (cond saying (string? x) or whatever))
 ;;; (lambda (x) (let ((n (first x)) (v (second x))) (list (nest-name n) v)))
-;;; let* -> (let+let) if only first in let* is used below
-;;;    let*->let if only one is side-effect and others are known safe
 ;;; cond not to shorten following: no else, all following share (and ... <expr> ...), expr no side effects
-;;; see t347 for another missed scope restriction
-;;; (if (pair? x) (cond saying (string? x) or whatever))
-;;; max/min with inf?
+;;; see t347 for another missed scope restriction [let -> begin]
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 145 23855 606251
+;;; 145 23855 635068

@@ -352,8 +352,8 @@ func (a function of no args) when the new menu is activated. Returns the new men
   widget_t result;
   char *errmsg = NULL;
 
-  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 2, S_add_to_menu, "a string");
   Xen_check_type(Xen_is_integer(menu), menu, 1, S_add_to_menu, "an integer");
+  Xen_check_type(Xen_is_string(label) || Xen_is_false(label), label, 2, S_add_to_menu, "a string");
   Xen_check_type(Xen_is_procedure(callback) || Xen_is_false(callback), callback, 3, S_add_to_menu, "a procedure");
   Xen_check_type(Xen_is_integer_or_unbound(gpos), gpos, 4, S_add_to_menu, "an integer");
 
@@ -406,8 +406,8 @@ static Xen gl_remove_from_menu(Xen menu, Xen label)
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int m;
 
-  Xen_check_type(Xen_is_string(label), label, 2, S_remove_from_menu, "a string");
   Xen_check_type(Xen_is_integer(menu), menu, 1, S_remove_from_menu, "an integer");
+  Xen_check_type(Xen_is_string(label), label, 2, S_remove_from_menu, "a string");
 
   m = Xen_integer_to_C_int(menu);
   if (m < 0) 
@@ -449,7 +449,7 @@ void g_init_menu(void)
 
   Xen_define_typed_procedure(S_add_to_main_menu,  gl_add_to_main_menu_w,  1, 1, 0, H_add_to_main_menu,  s7_make_signature(s7, 3, i, s, fnc));
   Xen_define_typed_procedure(S_add_to_menu,       gl_add_to_menu_w,       3, 1, 0, H_add_to_menu,       
-			     s7_make_signature(s7, 5, p, i, s, s7_make_signature(s7, 2, fnc, b), i));
-  Xen_define_typed_procedure(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu,  s7_make_signature(s7, 3, i, s, i));
+			     s7_make_signature(s7, 5, p, i, s7_make_signature(s7, 2, s, b), s7_make_signature(s7, 2, fnc, b), i));
+  Xen_define_typed_procedure(S_remove_from_menu,  gl_remove_from_menu_w,  2, 0, 0, H_remove_from_menu,  s7_make_signature(s7, 3, i, i, s));
   Xen_define_typed_procedure(S_main_menu,         g_main_menu_w,          1, 0, 0, H_main_menu,         s7_make_signature(s7, 2, p, i));
 }

@@ -3849,7 +3849,8 @@ void g_init_help(void)
   Xen_eval_C_string("(define s7-help help)");      /* override s7's help */
   Xen_define_typed_procedure("help",        g_listener_help_w,  0, 2, 0, H_snd_help,    pcl_t); 
 #endif
-  Xen_define_typed_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url,     pcl_s);
+  Xen_define_typed_procedure(S_snd_url,     g_snd_url_w,        1, 0, 0, H_snd_url,     
+			     s7_make_signature(s7, 2, s, s7_make_signature(s7, 2, s, s7_make_symbol(s7, "symbol?"))));
   Xen_define_typed_procedure(S_snd_urls,    g_snd_urls_w,       0, 0, 0, H_snd_urls,    s7_make_signature(s7, 1, p));
   Xen_define_typed_procedure(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog, s7_make_signature(s7, 5, p, s, s, p, p));
 

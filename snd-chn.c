@@ -10050,7 +10050,7 @@ static s7_pointer acc_with_gl(s7_scheme *sc, s7_pointer args) {return(g_set_with
 void g_init_chn(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, h, r, s, fv, pl_itt, pl_itti, pl_rtt, pl_rttr, pl_btt, pl_bttb, pl_ptt, pl_pttp, plc_t, pl_pttt, pl_ptttp;
+  s7_pointer i, b, p, t, h, r, s, fv, pl_itt, pl_itti, pl_rtt, pl_rttr, pl_btt, pl_bttb, pl_ptt, pl_pttp, plc_t, pl_pttt, pl_ptttp, pl_bitt, pl_bitti;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "list?");
@@ -10061,6 +10061,8 @@ void g_init_chn(void)
   t = s7_t(s7);
   pl_itt = s7_make_signature(s7, 3, i, t, t);
   pl_itti = s7_make_signature(s7, 4, i, t, t, i);
+  pl_bitt = s7_make_signature(s7, 3, s7_make_signature(s7, 2, i, b), t, t);
+  pl_bitti = s7_make_signature(s7, 4, s7_make_signature(s7, 2, i, b), t, t, i);
   pl_rtt = s7_make_signature(s7, 3, r, t, t);
   pl_rttr = s7_make_signature(s7, 4, r, t, t, r);
   pl_btt = s7_make_signature(s7, 3, b, t, t);
@@ -10147,9 +10149,9 @@ void g_init_chn(void)
   Xen_define_typed_dilambda(S_cursor_size, g_cursor_size_w, H_cursor_size, 
 			    S_set S_cursor_size, g_set_cursor_size_w, 0, 2, 1, 2, pl_itt, pl_itti);
   Xen_define_typed_dilambda(S_left_sample, g_left_sample_w, H_left_sample, 
-			    S_set S_left_sample, g_set_left_sample_w, 0, 2, 1, 2, pl_itt, pl_itti);
+			    S_set S_left_sample, g_set_left_sample_w, 0, 2, 1, 2, pl_bitt, pl_bitti);
   Xen_define_typed_dilambda(S_right_sample, g_right_sample_w, H_right_sample, 
-			    S_set S_right_sample, g_set_right_sample_w, 0, 2, 1, 2, pl_itt, pl_itti);
+			    S_set S_right_sample, g_set_right_sample_w, 0, 2, 1, 2, pl_bitt, pl_bitti);
   Xen_define_typed_dilambda(S_channel_properties, g_channel_properties_w, H_channel_properties, 
 			    S_set S_channel_properties, g_set_channel_properties_w, 0, 2, 1, 2, pl_ptt, pl_pttp);
   Xen_define_typed_dilambda(S_channel_property, g_channel_property_w, H_channel_property, 
