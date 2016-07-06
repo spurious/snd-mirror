@@ -8,15 +8,15 @@
 
 (define (lag? snd0 chn0 snd1 chn1)
   ;; returns the probable lagtime between the two sounds (negative means second sound is delayed)
-  (let* ((corr (cross-correlate snd0 chn0 snd1 chn1))
-	 (len (length corr))
-	 (lag (cadr (float-vector-peak-and-location corr))))
-    (if (= lag -1)
-	0
-	(if (< lag (/ len 2))
-	    lag
-	    (- lag len)))))
-
+  (let ((corr (cross-correlate snd0 chn0 snd1 chn1)))
+    (let ((len (length corr))
+	  (lag (cadr (float-vector-peak-and-location corr))))
+      (if (= lag -1)
+	  0
+	  (if (< lag (/ len 2))
+	      lag
+	      (- lag len))))))
+  
 
 (define* (snddiff-1 v0 v1 (maxdiff 0.0))
   (let ((diff (float-vector-subtract! (copy v0) v1)))

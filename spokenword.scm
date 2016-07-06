@@ -119,19 +119,19 @@
 	     (local-smooth (cursor)))))))))
 
 (define (play-preview)
-  (let* ((in-mark (find-mark "In"))
-         (out-mark (find-mark "Out"))
-         (in-position (if (mark? in-mark) (mark-sample in-mark) 0))
-         (out-position (if (mark? out-mark) (mark-sample out-mark) 0)))
-  (define (play-next reason)
-    (if (= reason 0)
-	(play (selected-sound) in-position (+ in-position preview-length))))
-  (if (and
-        (mark? in-mark)
-        (mark? out-mark))
-      (if (< out-position in-position)
-          (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
-      (play (selected-sound) (cursor) (+ (cursor) preview-length)))))
+  (let ((in-mark (find-mark "In"))
+	(out-mark (find-mark "Out")))
+    (let ((in-position (if (mark? in-mark) (mark-sample in-mark) 0))
+	  (out-position (if (mark? out-mark) (mark-sample out-mark) 0))
+	  (play-next (lambda (reason)
+		       (if (= reason 0)
+			   (play (selected-sound) in-position (+ in-position preview-length))))))
+      (if (and
+	   (mark? in-mark)
+	   (mark? out-mark))
+	  (if (< out-position in-position)
+	      (play (max 0 (- out-position preview-length)) #f #f #f out-position #f play-next))
+	  (play (selected-sound) (cursor) (+ (cursor) preview-length))))))
 
 
 (set! *with-tracking-cursor* :track-and-stay)

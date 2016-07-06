@@ -2931,10 +2931,10 @@
   ;; -------- 
   (savannah-1 beg (* amp .21))
   (savannah-1 (+ beg .35) (* amp .45))
-  (savannah-1 (+ beg .35 .28) (* amp .51))
-  (savannah-1 (+ beg .35 .28 .24) (* amp .64))
-  (savannah-1 (+ beg .35 .28 .24 .26) amp)
-  (savannah-1 (+ beg .35 .28 .24 .26 .17) amp)
+  (savannah-1 (+ beg .63) (* amp .51))
+  (savannah-1 (+ beg .87) (* amp .64))
+  (savannah-1 (+ beg 1.13) amp)
+  (savannah-1 (+ beg 1.3) amp)
   
   (savannah-4 (+ .97 beg) (* amp .21))
   
@@ -10689,7 +10689,7 @@
 ;;; ================ calling-all-animals ================
 
 (define* (calling-all-frogs (beg 0.0) (spacing 0.0))
-  (plains-spadefoot        (+ beg 0) 0.25)             (set! beg (+ beg spacing))
+  (plains-spadefoot           beg    0.25)             (set! beg (+ beg spacing))
   (barking-tree-frog       (+ beg 1) 0.25)             (set! beg (+ beg spacing))
   (western-toad            (+ beg 1.5) 2 0.25)         (set! beg (+ beg spacing))
   (southwestern-toad       (+ beg 4) 2 0.25)           (set! beg (+ beg spacing))
@@ -10724,7 +10724,7 @@
 
 
 (define* (calling-all-insects (beg 0.0) (spacing 0.0))
-  (mosquito                    (+ beg 0) 5 560 0.2)    (set! beg (+ beg spacing))
+  (mosquito                       beg    5 560 0.2)    (set! beg (+ beg spacing))
   (mosquito                    (+ beg 1) 3 880 0.05)   (set! beg (+ beg spacing))
   (broad-winged-tree-cricket   (+ beg 5.5) 2.0 0.2)    (set! beg (+ beg spacing))
   (long-spurred-meadow-katydid (+ beg 8) 0.5)          (set! beg (+ beg spacing))
@@ -10752,7 +10752,7 @@
 
 
 (define* (calling-all-birds (beg 0.0) (spacing .25)) 
-  (ruffed-grouse                 (+ beg 0.0) 0.5)        (set! beg (+ beg spacing))
+  (ruffed-grouse                    beg       0.5)       (set! beg (+ beg spacing))
   (eastern-wood-pewee-1          (+ beg 11.0) 0.25)      (set! beg (+ beg spacing))
   (eastern-wood-pewee-2          (+ beg 12.5) 0.25)      (set! beg (+ beg spacing))
   (field-sparrow                 (+ beg 14.0) 0.25)      (set! beg (+ beg spacing))

@@ -9,18 +9,18 @@
 	  (do ((i 0 (+ i 1)))
 	      ((= i n) (newline *stderr*))
 	    (let* ((data (vect i))
-		   (key (car data))
-		   (count (cadr data))
-		   (expr (cddr data))
-		   (file (pair-filename expr))
-		   (line (pair-line-number expr)))
-	      (if (> (ash key -20) 0)
-		  (format *stderr* "~A[~A]: ~A~40T~A~%" 
-			  file line count
-			  (let ((val (object->string expr)))
-			    (if (> (length val) 40)
-				(string-append (substring val 0 36) " ...")
-				val))))))))))
+		   (expr (cddr data)))
+	      (let ((key (car data))
+		    (count (cadr data))
+		    (file (pair-filename expr))
+		    (line (pair-line-number expr)))
+		(if (> (ash key -20) 0)
+		    (format *stderr* "~A[~A]: ~A~40T~A~%" 
+			    file line count
+			    (let ((val (object->string expr)))
+			      (if (> (length val) 40)
+				  (string-append (substring val 0 36) " ...")
+				  val)))))))))))
 
 #|
 (define old-version s7-version)

@@ -1112,34 +1112,34 @@
 
 
 (define (helpify name type args)
-  (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
-	 (line-len (length initial))
-	 (len (length args))
-	 (typed #f)
-	 (help-max 100))
-    (hey initial)
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (let ((ch (args i)))
-	(if (char=? ch #\space)
-	    (if typed
-		(begin
-		  (heyc ", ")
-		  (set! line-len (+ line-len 2))
-		  (if (> line-len help-max)
-		      (begin
-			(hey "\\~%")
-			(set! line-len 0)))
-		  (set! typed #f))
-		(begin
-		  (set! line-len (+ 1 line-len))
-		  (heyc " ")
-		  (set! typed #t)))
-	    (if (not (memv ch '(#\@ #\#)))
-		(begin
-		  (set! line-len (+ 1 line-len))
-		  (heyc ch))))))
-    (hey ")\"~%")))
+  (let ((initial (format #f "  #define H_~A \"~A ~A(" name type name)))
+    (let ((line-len (length initial))
+	  (len (length args))
+	  (typed #f)
+	  (help-max 100))
+      (hey initial)
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((ch (args i)))
+	  (if (char=? ch #\space)
+	      (if typed
+		  (begin
+		    (heyc ", ")
+		    (set! line-len (+ line-len 2))
+		    (if (> line-len help-max)
+			(begin
+			  (hey "\\~%")
+			  (set! line-len 0)))
+		    (set! typed #f))
+		  (begin
+		    (set! line-len (+ 1 line-len))
+		    (heyc " ")
+		    (set! typed #t)))
+	      (if (not (memv ch '(#\@ #\#)))
+		  (begin
+		    (set! line-len (+ 1 line-len))
+		    (heyc ch))))))
+      (hey ")\"~%"))))
 
 (define (CATOM name)
   (if (hash-table-ref names name)
