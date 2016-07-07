@@ -101,18 +101,18 @@
 		(set! new-env (append new-env (list (car e) (cadr e))))
 		(search-point (cddr e) (+ npos 2)))))))
 
-    (let* ((cur-env (channel-envelope snd chn))
-	   (lx (if (= mouse-pos 0)
-		   0.0
-		   (if (>= mouse-pos (- (length cur-env) 2))
-		       1.0
-		       (max (+ (list-ref cur-env (- mouse-pos 2)) .001)
-			    (min x
-				 (- (list-ref cur-env (+ mouse-pos 2)) .001))))))
-	   (ly (max 0.0 (min y 1.0))))
-      (set! (channel-envelope snd chn) 
-	    (edit-envelope-point mouse-pos lx ly cur-env))
-      (update-lisp-graph snd chn))))
+    (let ((cur-env (channel-envelope snd chn)))
+      (let ((lx (if (= mouse-pos 0)
+		    0.0
+		    (if (>= mouse-pos (- (length cur-env) 2))
+			1.0
+			(max (+ (list-ref cur-env (- mouse-pos 2)) .001)
+			     (min x
+				  (- (list-ref cur-env (+ mouse-pos 2)) .001))))))
+	    (ly (max 0.0 (min y 1.0))))
+	(set! (channel-envelope snd chn) 
+	      (edit-envelope-point mouse-pos lx ly cur-env))
+	(update-lisp-graph snd chn)))))
 
 (define (mouse-release-envelope hook)
   (let ((snd (hook 'snd))

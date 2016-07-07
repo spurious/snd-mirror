@@ -439,95 +439,95 @@
 						     XmNshowValue        #f
 						     XmNorientation      XmHORIZONTAL
 						     XmNheight           20
-						     XmNbackground       light-blue)))
-	   (low-tempo 0.05)
-	   (high-tempo 0.5)
-	   (low-freq 0.1)
-	   (high-freq 4.0)
-	   (high-index 2.0)
-	   (which-play 0)
-	   (proc #f)
-	   (func #f))
-
-      (define (tempo-callback w c i)
-	(set! ctempo (+ low-tempo (* (.value i) (/ (- high-tempo low-tempo) 100.0))))
-	(set-flabel tempo-label ctempo))
-
-      (define (amp-callback w c i)
-	(let ((high-amp 1.0))
-	  (set! camp (* (.value i) (/ high-amp 100.0))))
-	(set-flabel amp-label camp))
-
-      (define (freq-callback w c i)
-	(set! cfreq (+ low-freq (* (.value i) (/ (- high-freq low-freq) 100.0))))
-	(set-flabel freq-label cfreq))
-
-      (define (index-callback w c i)
-	(set! cindex (* (.value i) (/ high-index 100.0)))
-	(set-flabel index-label cindex))
-
-      (define (set-defaults)
-	(set! ctempo 0.25)
-	(set! camp 1.0)
-	(set! cfreq 1.0)
-	(set! cindex 1.0)
-	(set-flabel tempo-label ctempo)
-	(set-flabel amp-label camp)
-	(set-flabel freq-label cfreq)
-	(set-flabel index-label cindex)
-	(XmScaleSetValue tempo-scale (floor (* 100 (/ (- ctempo low-tempo) (- high-tempo low-tempo)))))
-	(XmScaleSetValue freq-scale (floor (* 100 (/ (- cfreq low-freq) (- high-freq low-freq)))))
-	(XmScaleSetValue amp-scale (floor (* 100 camp)))
-	(XmScaleSetValue index-scale (floor (* 100 (/ cindex high-index)))))
-
-      (XtManageChild radio)
-      ;; add scale-change (drag and value-changed) callbacks
-      (XtAddCallback tempo-scale XmNdragCallback tempo-callback)
-      (XtAddCallback tempo-scale XmNvalueChangedCallback tempo-callback)
-
-      (XtAddCallback amp-scale XmNdragCallback amp-callback)
-      (XtAddCallback amp-scale XmNvalueChangedCallback amp-callback)
-
-      (XtAddCallback freq-scale XmNdragCallback freq-callback)
-      (XtAddCallback freq-scale XmNvalueChangedCallback freq-callback)
-
-      (XtAddCallback index-scale XmNdragCallback index-callback)
-      (XtAddCallback index-scale XmNvalueChangedCallback index-callback)
-
-      (XtAddCallback agn-button XmNvalueChangedCallback
-		     (lambda (w c i)
-		       (if (.set i)
-			   (set! which-play 0))
-		       (set! cplay #f)
-		       (XmToggleButtonSetState play-button cplay #f)))
-
-      (XmToggleButtonSetState agn-button #t #f)
-      (XtAddCallback test-button XmNvalueChangedCallback
-		     (lambda (w c i)
-		       (if (.set i)
-			   (set! which-play 1))
-		       (set! cplay #f)
-		       (XmToggleButtonSetState play-button cplay #f)))
-		     
-      (XtAddCallback quit-button XmNactivateCallback
-		     (lambda (w c i)
-		       (set! cplay #f)
-		       (if proc (XtRemoveWorkProc proc))
-		       (exit 0)))
-      
-      (XtAddCallback play-button XmNvalueChangedCallback
-		     (lambda (w c i)
-		       (set! cplay (.set i))
-		       (if cplay
-			   (begin
-			     (set-defaults)
-			     (set! func (apply (if (= which-play 0) make-agn make-float-vector-test) (or args ())))
-			     (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
-			   (if proc (XtRemoveWorkProc proc)))))
-      (XmToggleButtonSetState play-button cplay #f)
-      (set-defaults)
-      (XtRealizeWidget shell))
-    (XtAppMainLoop app)))
+						     XmNbackground       light-blue))))
+      (let ((low-tempo 0.05)
+	    (high-tempo 0.5)
+	    (low-freq 0.1)
+	    (high-freq 4.0)
+	    (high-index 2.0)
+	    (which-play 0)
+	    (proc #f)
+	    (func #f))
+	
+	(define (tempo-callback w c i)
+	  (set! ctempo (+ low-tempo (* (.value i) (/ (- high-tempo low-tempo) 100.0))))
+	  (set-flabel tempo-label ctempo))
+	
+	(define (amp-callback w c i)
+	  (let ((high-amp 1.0))
+	    (set! camp (* (.value i) (/ high-amp 100.0))))
+	  (set-flabel amp-label camp))
+	
+	(define (freq-callback w c i)
+	  (set! cfreq (+ low-freq (* (.value i) (/ (- high-freq low-freq) 100.0))))
+	  (set-flabel freq-label cfreq))
+	
+	(define (index-callback w c i)
+	  (set! cindex (* (.value i) (/ high-index 100.0)))
+	  (set-flabel index-label cindex))
+	
+	(define (set-defaults)
+	  (set! ctempo 0.25)
+	  (set! camp 1.0)
+	  (set! cfreq 1.0)
+	  (set! cindex 1.0)
+	  (set-flabel tempo-label ctempo)
+	  (set-flabel amp-label camp)
+	  (set-flabel freq-label cfreq)
+	  (set-flabel index-label cindex)
+	  (XmScaleSetValue tempo-scale (floor (* 100 (/ (- ctempo low-tempo) (- high-tempo low-tempo)))))
+	  (XmScaleSetValue freq-scale (floor (* 100 (/ (- cfreq low-freq) (- high-freq low-freq)))))
+	  (XmScaleSetValue amp-scale (floor (* 100 camp)))
+	  (XmScaleSetValue index-scale (floor (* 100 (/ cindex high-index)))))
+	
+	(XtManageChild radio)
+	;; add scale-change (drag and value-changed) callbacks
+	(XtAddCallback tempo-scale XmNdragCallback tempo-callback)
+	(XtAddCallback tempo-scale XmNvalueChangedCallback tempo-callback)
+	
+	(XtAddCallback amp-scale XmNdragCallback amp-callback)
+	(XtAddCallback amp-scale XmNvalueChangedCallback amp-callback)
+	
+	(XtAddCallback freq-scale XmNdragCallback freq-callback)
+	(XtAddCallback freq-scale XmNvalueChangedCallback freq-callback)
+	
+	(XtAddCallback index-scale XmNdragCallback index-callback)
+	(XtAddCallback index-scale XmNvalueChangedCallback index-callback)
+	
+	(XtAddCallback agn-button XmNvalueChangedCallback
+		       (lambda (w c i)
+			 (if (.set i)
+			     (set! which-play 0))
+			 (set! cplay #f)
+			 (XmToggleButtonSetState play-button cplay #f)))
+	
+	(XmToggleButtonSetState agn-button #t #f)
+	(XtAddCallback test-button XmNvalueChangedCallback
+		       (lambda (w c i)
+			 (if (.set i)
+			     (set! which-play 1))
+			 (set! cplay #f)
+			 (XmToggleButtonSetState play-button cplay #f)))
+	
+	(XtAddCallback quit-button XmNactivateCallback
+		       (lambda (w c i)
+			 (set! cplay #f)
+			 (if proc (XtRemoveWorkProc proc))
+			 (exit 0)))
+	
+	(XtAddCallback play-button XmNvalueChangedCallback
+		       (lambda (w c i)
+			 (set! cplay (.set i))
+			 (if cplay
+			     (begin
+			       (set-defaults)
+			       (set! func (apply (if (= which-play 0) make-agn make-float-vector-test) (or args ())))
+			       (set! proc (XtAppAddWorkProc app (lambda (c) (rt-send->dac func)))))
+			     (if proc (XtRemoveWorkProc proc)))))
+	(XmToggleButtonSetState play-button cplay #f)
+	(set-defaults)
+	(XtRealizeWidget shell))
+      (XtAppMainLoop app))))
 
 (rt-motif)
 )

@@ -158,92 +158,92 @@
 						    XmNrightAttachment  XmATTACH_FORM
 						    XmNshowValue        #f
 						    XmNorientation      XmHORIZONTAL
-						    XmNbackground       *position-color*)))
-	     (frequency 220.0)
-	     (low-frequency 40.0)
-	     (high-frequency 2000.0)
-	     (amplitude 0.5)
-	     (index 1.0)
-	     (high-index 3.0)
-	     (ratio 1)
-	     (high-ratio 10)
-	     (playing 0.0)
-	     (carosc (make-oscil 0.0))
-	     (modosc (make-oscil 0.0)))
-	
-	(define (freq-callback w c i)
-	  (set! frequency (+ low-frequency (* (.value i) (/ (- high-frequency low-frequency) 100.0))))
-	  (set-flabel freq-label frequency))
-	
-	(define (amp-callback w c i)
-	  (set! amplitude (/ (.value i) 100.0))
-	  (set-flabel amp-label amplitude))
-	
-	(define (fm-callback w c i)
-	  (set! index (* (.value i) (/ high-index 100.0)))
-	  (set-flabel fm-label index))
-	
-	(define (ratio-callback w c i)
-	  (set! ratio (floor (* (.value i) (/ high-ratio 100.0))))
-	  (set-ilabel cm-label ratio))
-	
-	;; add scale-change (drag and value-changed) callbacks
-	(XtAddCallback freq-scale XmNdragCallback freq-callback)
-	(XtAddCallback freq-scale XmNvalueChangedCallback freq-callback)
-	
-	(XtAddCallback amp-scale XmNdragCallback amp-callback)
-	(XtAddCallback amp-scale XmNvalueChangedCallback amp-callback)
-	
-	(XtAddCallback fm-scale XmNdragCallback fm-callback)
-	(XtAddCallback fm-scale XmNvalueChangedCallback fm-callback)
-	
-	(XtAddCallback cm-scale XmNdragCallback ratio-callback)
-	(XtAddCallback cm-scale XmNvalueChangedCallback ratio-callback)
-	
-	(XtAddCallback play-button XmNvalueChangedCallback (lambda (w c i) (set! playing (if (.set i) 1.0 0.0))))
-	
-	;; set initial values
-	(set-flabel freq-label frequency)
-	(set-flabel amp-label amplitude)
-	(set-flabel fm-label index)
-	(set-ilabel cm-label ratio)
-	
-	(XmScaleSetValue freq-scale (floor (* 100 (/ (- frequency low-frequency) (- high-frequency low-frequency)))))
-	(XmScaleSetValue amp-scale (floor (* 100 amplitude)))
-	(XmScaleSetValue fm-scale (floor (* 100 (/ index high-index))))
-	(XmScaleSetValue cm-scale (floor (* ratio (/ 100 high-ratio))))
-	
-	(XtManageChild shell)
-	(XtRealizeWidget shell)
-	
-	;; send fm data to dac
-	(let* ((bufsize 256)
-	       (work-proc #f)
-	       (port (mus-audio-open-output mus-audio-default 22050 1 mus-lshort (* bufsize 2))))
-	  (if (< port 0) 
-	      (format () "can't open DAC!"))
+						    XmNbackground       *position-color*))))
+	(let ((frequency 220.0)
+	      (low-frequency 40.0)
+	      (high-frequency 2000.0)
+	      (amplitude 0.5)
+	      (index 1.0)
+	      (high-index 3.0)
+	      (ratio 1)
+	      (high-ratio 10)
+	      (playing 0.0)
+	      (carosc (make-oscil 0.0))
+	      (modosc (make-oscil 0.0)))
 	  
-	  (XmAddWMProtocolCallback (cadr (main-widgets)) ; shell
-				   (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
-				   (lambda (w c i)
-				     (XtRemoveWorkProc work-proc) ; odd that there's no XtAppRemoveWorkProc
-				     (mus-audio-close port))
-				   #f)
-	  (XtAddCallback shell
-			 XmNcancelCallback (lambda (w context info)
-					     (XtRemoveWorkProc work-proc)
-					     (mus-audio-close port)
-					     (XtUnmanageChild shell)))
-	  (set! work-proc (XtAppAddWorkProc app 
-					    (lambda (ignored-arg)
-					      (let ((data (make-float-vector bufsize)))
-						(do ((i 0 (+ 1 i)))
-						    ((= i bufsize))
-						  (float-vector-set! data i (* amplitude playing
-									       (oscil carosc 
-										      (+ (hz->radians frequency)
-											 (* index 
-											    (oscil modosc 
-												   (hz->radians (* ratio frequency)))))))))
-						(mus-audio-write port data bufsize)
-						#f)))))))))
+	  (define (freq-callback w c i)
+	    (set! frequency (+ low-frequency (* (.value i) (/ (- high-frequency low-frequency) 100.0))))
+	    (set-flabel freq-label frequency))
+	  
+	  (define (amp-callback w c i)
+	    (set! amplitude (/ (.value i) 100.0))
+	    (set-flabel amp-label amplitude))
+	  
+	  (define (fm-callback w c i)
+	    (set! index (* (.value i) (/ high-index 100.0)))
+	    (set-flabel fm-label index))
+	  
+	  (define (ratio-callback w c i)
+	    (set! ratio (floor (* (.value i) (/ high-ratio 100.0))))
+	    (set-ilabel cm-label ratio))
+	  
+	  ;; add scale-change (drag and value-changed) callbacks
+	  (XtAddCallback freq-scale XmNdragCallback freq-callback)
+	  (XtAddCallback freq-scale XmNvalueChangedCallback freq-callback)
+	  
+	  (XtAddCallback amp-scale XmNdragCallback amp-callback)
+	  (XtAddCallback amp-scale XmNvalueChangedCallback amp-callback)
+	  
+	  (XtAddCallback fm-scale XmNdragCallback fm-callback)
+	  (XtAddCallback fm-scale XmNvalueChangedCallback fm-callback)
+	  
+	  (XtAddCallback cm-scale XmNdragCallback ratio-callback)
+	  (XtAddCallback cm-scale XmNvalueChangedCallback ratio-callback)
+	  
+	  (XtAddCallback play-button XmNvalueChangedCallback (lambda (w c i) (set! playing (if (.set i) 1.0 0.0))))
+	  
+	  ;; set initial values
+	  (set-flabel freq-label frequency)
+	  (set-flabel amp-label amplitude)
+	  (set-flabel fm-label index)
+	  (set-ilabel cm-label ratio)
+	  
+	  (XmScaleSetValue freq-scale (floor (* 100 (/ (- frequency low-frequency) (- high-frequency low-frequency)))))
+	  (XmScaleSetValue amp-scale (floor (* 100 amplitude)))
+	  (XmScaleSetValue fm-scale (floor (* 100 (/ index high-index))))
+	  (XmScaleSetValue cm-scale (floor (* ratio (/ 100 high-ratio))))
+	  
+	  (XtManageChild shell)
+	  (XtRealizeWidget shell)
+	  
+	  ;; send fm data to dac
+	  (let* ((bufsize 256)
+		 (work-proc #f)
+		 (port (mus-audio-open-output mus-audio-default 22050 1 mus-lshort (* bufsize 2))))
+	    (if (< port 0) 
+		(format () "can't open DAC!"))
+	    
+	    (XmAddWMProtocolCallback (cadr (main-widgets)) ; shell
+				     (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
+				     (lambda (w c i)
+				       (XtRemoveWorkProc work-proc) ; odd that there's no XtAppRemoveWorkProc
+				       (mus-audio-close port))
+				     #f)
+	    (XtAddCallback shell
+			   XmNcancelCallback (lambda (w context info)
+					       (XtRemoveWorkProc work-proc)
+					       (mus-audio-close port)
+					       (XtUnmanageChild shell)))
+	    (set! work-proc (XtAppAddWorkProc app 
+					      (lambda (ignored-arg)
+						(let ((data (make-float-vector bufsize)))
+						  (do ((i 0 (+ 1 i)))
+						      ((= i bufsize))
+						    (float-vector-set! data i (* amplitude playing
+										 (oscil carosc 
+											(+ (hz->radians frequency)
+											   (* index 
+											      (oscil modosc 
+												     (hz->radians (* ratio frequency)))))))))
+						  (mus-audio-write port data bufsize)
+						  #f))))))))))

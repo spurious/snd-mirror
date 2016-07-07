@@ -3513,7 +3513,7 @@
   (hook-push bad-header-hook (lambda (hook) (set! (hook 'result) #t)))
   (if (null? (hook-functions open-raw-sound-hook)) (snd-display ";add hook open-raw-sound-hook failed??"))
   (if (null? (hook-functions bad-header-hook)) (snd-display ";add hook bad-header-hook failed??"))
-  (let* ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
+  (let ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
 			    "FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
 			    "FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
 			    "data" "fact" "clm " "NIST" "8SVX" "16SV" "Crea" "tive" "SOUN" "D SA" "MPLE"
@@ -3523,72 +3523,72 @@
 			    "SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
 			    "AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
 			    "SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
-			    "IMPS" "SMP1" "Maui" "SDIF"))
-	 (len (length magic-words))
-	 (ctr 0))
-    (for-each
-     (lambda (magic)
-       (if (null? (hook-functions open-raw-sound-hook)) (snd-display ";open-raw-sound-hook cleared??"))
-       (if (null? (hook-functions bad-header-hook)) (snd-display ";bad-header-hook cleared??"))
-       (if (file-exists? "test.snd")
-	   (delete-file "test.snd"))
-       (mus-sound-forget "test.snd")
-       ;; try random garbage
-       (with-output-to-file "test.snd"
-	 (lambda ()
-	   (display magic)
-	   (do ((i 0 (+ i 1)))
-	       ((= i 128))
-	     (write (random 1.0)))))
-       (let ((tag (catch #t
-		    (lambda ()
-		      (open-sound "test.snd"))
-		    (lambda args (car args)))))
-	 (if (and (number? tag)
-		  (sound? tag))
-	     (begin
-	       (snd-display ";open-sound garbage ~A: ~A -> ~A?" magic tag (file->string "test.snd"))
-	       (if (sound? tag) (close-sound tag)))))
-       (delete-file "test.snd")
-       (mus-sound-forget "test.snd")
-       ;; try plausible garbage
-       (with-output-to-file "test.snd"
-	 (lambda ()
-	   (display magic)
-	   (do ((i 0 (+ i 1)))
-	       ((= i 128))
-	     (write (random 128)))))
-       (let ((tag (catch #t
-		    (lambda ()
-		      (open-sound "test.snd"))
-		    (lambda args (car args)))))
-	 (if (and (number? tag)
-		  (sound? tag))
-	     (begin
-	       (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)
-	       (if (sound? tag) (close-sound tag)))))
-       (delete-file "test.snd")
-       (mus-sound-forget "test.snd")
-       ;; write very plausible garbage
-       (with-output-to-file "test.snd"
-	 (lambda ()
-	   (display magic)
-	   (do ((i 1 (+ i 1)))
-	       ((= i 12))
-	     (if (< (+ ctr i) len)
-		 (display (magic-words (+ ctr i)))
-		 (display (magic-words i))))))
-       (let ((tag (catch #t
-		    (lambda ()
-		      (open-sound "test.snd"))
-		    (lambda args (car args)))))
-	 (if (and (number? tag)
-		  (sound? tag))
-	     (begin
-	       (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)
-	       (if (sound? tag) (close-sound tag)))))
-       (set! ctr (+ ctr 1)))
-     magic-words))
+			    "IMPS" "SMP1" "Maui" "SDIF")))
+    (let ((len (length magic-words))
+	  (ctr 0))
+      (for-each
+       (lambda (magic)
+	 (if (null? (hook-functions open-raw-sound-hook)) (snd-display ";open-raw-sound-hook cleared??"))
+	 (if (null? (hook-functions bad-header-hook)) (snd-display ";bad-header-hook cleared??"))
+	 (if (file-exists? "test.snd")
+	     (delete-file "test.snd"))
+	 (mus-sound-forget "test.snd")
+	 ;; try random garbage
+	 (with-output-to-file "test.snd"
+	   (lambda ()
+	     (display magic)
+	     (do ((i 0 (+ i 1)))
+		 ((= i 128))
+	       (write (random 1.0)))))
+	 (let ((tag (catch #t
+		      (lambda ()
+			(open-sound "test.snd"))
+		      (lambda args (car args)))))
+	   (if (and (number? tag)
+		    (sound? tag))
+	       (begin
+		 (snd-display ";open-sound garbage ~A: ~A -> ~A?" magic tag (file->string "test.snd"))
+		 (if (sound? tag) (close-sound tag)))))
+	 (delete-file "test.snd")
+	 (mus-sound-forget "test.snd")
+	 ;; try plausible garbage
+	 (with-output-to-file "test.snd"
+	   (lambda ()
+	     (display magic)
+	     (do ((i 0 (+ i 1)))
+		 ((= i 128))
+	       (write (random 128)))))
+	 (let ((tag (catch #t
+		      (lambda ()
+			(open-sound "test.snd"))
+		      (lambda args (car args)))))
+	   (if (and (number? tag)
+		    (sound? tag))
+	       (begin
+		 (snd-display ";open-sound plausible garbage ~A: ~A?" magic tag)
+		 (if (sound? tag) (close-sound tag)))))
+	 (delete-file "test.snd")
+	 (mus-sound-forget "test.snd")
+	 ;; write very plausible garbage
+	 (with-output-to-file "test.snd"
+	   (lambda ()
+	     (display magic)
+	     (do ((i 1 (+ i 1)))
+		 ((= i 12))
+	       (if (< (+ ctr i) len)
+		   (display (magic-words (+ ctr i)))
+		   (display (magic-words i))))))
+	 (let ((tag (catch #t
+		      (lambda ()
+			(open-sound "test.snd"))
+		      (lambda args (car args)))))
+	   (if (and (number? tag)
+		    (sound? tag))
+	       (begin
+		 (snd-display ";open-sound very plausible garbage ~A: ~A?" magic tag)
+		 (if (sound? tag) (close-sound tag)))))
+	 (set! ctr (+ ctr 1)))
+       magic-words)))
   (if (file-exists? "test.snd") (delete-file "test.snd"))
   (mus-sound-forget "test.snd")
   
@@ -4057,86 +4057,83 @@
   (if (not (number? (getpid))) (snd-display ";getpid: ~A" (getpid)))
   
   (unless (provided? 'gmp)
-    (let* ((LONG_MAX 2147483647)
-	   (LONG_MIN -2147483648)
-	   (ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
-	   (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
-	   (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN most-positive-fixnum most-negative-fixnum 1000 -1000))
-	   (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
-	   (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
-      (load "binary-io.scm")
-      
-      (with-output-to-file "idf1.data"
-	(lambda ()
-	  
-	  (write-lint32 123)
-	  (write-bint32 321)
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (write-lint32 (ints i))
-	    (write-bint32 (ints i)))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (write-lint16 (shorts i))
-	    (write-bint16 (shorts i)))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (write-lint64 (longs i))
-	    (write-bint64 (longs i)))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (write-lfloat32 (floats i))
-	    (write-bfloat32 (floats i)))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (write-lfloat64 (doubles i))
-	    (write-bfloat64 (doubles i)))
-	  ))
-      
-      (with-input-from-file "idf1.data" 
-	(lambda ()
-	  
-	  (define (testf val1 val2 name)
-	    (if (not (= val1 val2))
-		(if (not (memq name '(lfloat32 bfloat32)))
-		    (snd-display ";testf ~A: ~A != ~A~%" name val1 val2)
-		    (if (> (abs (- val1 val2)) 1.0e-6)
-			(snd-display ";testf ~A: ~A != ~A (~A)~%" name val1 val2 (abs (- val1 val2)))))))
-	  
-	  (testf (read-lint32) 123 'lint32)
-	  (testf (read-bint32) 321 'bint32)
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (testf (read-lint32) (ints i) 'lint32)
-	    (testf (read-bint32) (ints i) 'bint32))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (testf (read-lint16) (shorts i) 'lint16)
-	    (testf (read-bint16) (shorts i) 'bint16))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (testf (read-lint64) (longs i) 'lint64)
-	    (testf (read-bint64) (longs i) 'bint64))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (testf (read-lfloat32) (floats i) 'lfloat32)
-	    (testf (read-bfloat32) (floats i) 'bfloat32))
-	  
-	  (do ((i 0 (+ i 1)))
-	      ((= i 11))
-	    (testf (read-lfloat64) (doubles i) 'lfloat64)
-	    (testf (read-bfloat64) (doubles i) 'bfloat64))
-	  ))
-      )))
+    (let ((LONG_MAX 2147483647)
+	  (LONG_MIN -2147483648))
+      (let ((ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
+	    (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
+	    (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN most-positive-fixnum most-negative-fixnum 1000 -1000))
+	    (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
+	    (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
+	(load "binary-io.scm")
+	
+	(with-output-to-file "idf1.data"
+	  (lambda ()
+	    
+	    (write-lint32 123)
+	    (write-bint32 321)
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (write-lint32 (ints i))
+	      (write-bint32 (ints i)))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (write-lint16 (shorts i))
+	      (write-bint16 (shorts i)))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (write-lint64 (longs i))
+	      (write-bint64 (longs i)))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (write-lfloat32 (floats i))
+	      (write-bfloat32 (floats i)))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (write-lfloat64 (doubles i))
+	      (write-bfloat64 (doubles i)))))
+	
+	(with-input-from-file "idf1.data" 
+	  (lambda ()
+	    
+	    (define (testf val1 val2 name)
+	      (if (not (= val1 val2))
+		  (if (not (memq name '(lfloat32 bfloat32)))
+		      (snd-display ";testf ~A: ~A != ~A~%" name val1 val2)
+		      (if (> (abs (- val1 val2)) 1.0e-6)
+			  (snd-display ";testf ~A: ~A != ~A (~A)~%" name val1 val2 (abs (- val1 val2)))))))
+	    
+	    (testf (read-lint32) 123 'lint32)
+	    (testf (read-bint32) 321 'bint32)
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (testf (read-lint32) (ints i) 'lint32)
+	      (testf (read-bint32) (ints i) 'bint32))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (testf (read-lint16) (shorts i) 'lint16)
+	      (testf (read-bint16) (shorts i) 'bint16))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (testf (read-lint64) (longs i) 'lint64)
+	      (testf (read-bint64) (longs i) 'bint64))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (testf (read-lfloat32) (floats i) 'lfloat32)
+	      (testf (read-bfloat32) (floats i) 'bfloat32))
+	    
+	    (do ((i 0 (+ i 1)))
+		((= i 11))
+	      (testf (read-lfloat64) (doubles i) 'lfloat64)
+	      (testf (read-bfloat64) (doubles i) 'bfloat64))))))))
 
 
 
@@ -5304,12 +5301,7 @@ EDITS: 5
 	  (snd-display ";insert samples size mismatch: ~A" (channel->float-vector 0 20 ind 0)))
       (close-sound ind))
     
-    (let* ((index (open-sound "oboe.snd"))
-	   (bnds (x-bounds index))
-	   (xp (x-position-slider))
-	   (yp (y-position-slider))
-	   (xz (x-zoom-slider))
-	   (yz (y-zoom-slider)))
+    (let ((index (open-sound "oboe.snd")))
       (if (not (string=? (snd-completion " open-so") " open-sound"))
 	  (snd-display ";completion: ~A" (snd-completion " open-so")))
 					;	(if (not (string=? (snd-completion " open-sound") " open-sound"))
@@ -5505,23 +5497,30 @@ EDITS: 5
 	  (if (not (= (channel-style n2) channels-separate)) (snd-display ";channel-style->~D: ~A?" channels-separate (channel-style n2)))
 	  (graph->ps "aaa.eps")
 	  (close-sound n2)))
-      (if (= (channels index) 1)
-	  (begin
-	    (set! (channel-style index) channels-superimposed)
-	    (if (not (= (channel-style index) channels-separate)) (snd-display ";channel-style[0]->~D: ~A?" channels-separate (channel-style index)))))
-      (set! (sync index) 32)
-      (if (not (= (sync index) 32)) (snd-display ";sync->32: ~A?" (sync index)))
-      (if (< (sync-max) 32) (snd-display ";sync-max 32: ~A" (sync-max)))
-      (set! (sync index) 0)
-      (set! (channel-sync index 0) 12)
-      (if (not (= (channel-sync index 0) 12)) (snd-display ";sync-chn->12: ~A?" (channel-sync index 0)))
-      (set! (channel-sync index 0) 0)
-      (if (fneq xp 0.0) (snd-display ";x-position-slider: ~A?" xp))
-      (if (fneq yp 0.0) (snd-display ";y-position-slider: ~A?" yp))
-      (if (and (fneq xz 0.04338) (fneq xz 1.0)) (snd-display ";x-zoom-slider: ~A?" xz))
-      (if (fneq yz 1.0) (snd-display ";y-zoom-slider: ~A?" yz))
-      (if (or (fneq (car bnds) 0.0) (and (fneq (cadr bnds) 0.1) (fneq (cadr bnds) 2.305)))
-	  (snd-display ";x-bounds: ~A?" bnds))
+
+      (let ((xp (x-position-slider))
+	    (yp (y-position-slider))
+	    (xz (x-zoom-slider))
+	    (yz (y-zoom-slider))
+	    (bnds (x-bounds index)))
+	(if (= (channels index) 1)
+	    (begin
+	      (set! (channel-style index) channels-superimposed)
+	      (if (not (= (channel-style index) channels-separate)) (snd-display ";channel-style[0]->~D: ~A?" channels-separate (channel-style index)))))
+	(set! (sync index) 32)
+	(if (not (= (sync index) 32)) (snd-display ";sync->32: ~A?" (sync index)))
+	(if (< (sync-max) 32) (snd-display ";sync-max 32: ~A" (sync-max)))
+	(set! (sync index) 0)
+	(set! (channel-sync index 0) 12)
+	(if (not (= (channel-sync index 0) 12)) (snd-display ";sync-chn->12: ~A?" (channel-sync index 0)))
+	(set! (channel-sync index 0) 0)
+	(if (fneq xp 0.0) (snd-display ";x-position-slider: ~A?" xp))
+	(if (fneq yp 0.0) (snd-display ";y-position-slider: ~A?" yp))
+	(if (and (fneq xz 0.04338) (fneq xz 1.0)) (snd-display ";x-zoom-slider: ~A?" xz))
+	(if (fneq yz 1.0) (snd-display ";y-zoom-slider: ~A?" yz))
+	(if (or (fneq (car bnds) 0.0) (and (fneq (cadr bnds) 0.1) (fneq (cadr bnds) 2.305)))
+	    (snd-display ";x-bounds: ~A?" bnds)))
+
       (if (not (equal? (find-sound "oboe.snd") index)) (snd-display ";oboe: index ~D is not ~D?" (find-sound "oboe.snd") index))
       (if (not (sound? index)) (snd-display ";oboe: ~D not ok?" index))
       (if (not (= (chans index) 1)) (snd-display ";oboe: chans ~D?" (chans index)))
@@ -5796,14 +5795,14 @@ EDITS: 5
 	    (begin
 	      (set! (cursor-style index 0)
 		    (lambda (snd chn ax)
-		      (let* ((point (cursor-position))
-			     (x (car point))
-			     (y (cadr point))
-			     (size (floor (/ *cursor-size* 2)))
-			     (cr (make-cairo (car (channel-widgets snd chn)))))
-			(draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context cr)    
-			(draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context cr)
-			(free-cairo cr))))
+		      (let ((point (cursor-position)))
+			(let ((x (car point))
+			      (y (cadr point))
+			      (size (floor (/ *cursor-size* 2)))
+			      (cr (make-cairo (car (channel-widgets snd chn)))))
+			  (draw-line (- x size) (- y size) (+ x size) (+ y size) snd chn cursor-context cr)    
+			  (draw-line (- x size) (+ y size) (+ x size) (- y size) snd chn cursor-context cr)
+			  (free-cairo cr)))))
 	      (if (not (procedure? (cursor-style index 0))) (snd-display ";set cursor-style to proc: ~A" (cursor-style index 0)))))
 	(set! (cursor index) 50)
 	(insert-sound "fyow.snd" (cursor) 0 index 0) 
@@ -5877,12 +5876,12 @@ EDITS: 5
 	      (snd-display ";save-region opt2 bshort format: ~A?" (mus-sample-type-name (mus-sound-sample-type "fmv.snd"))))
 	  (delete-file "fmv.snd")
 	  ))
-      (close-sound index)
-      (let ((var (catch #t (lambda () (new-sound "hi.snd" :channels 0)) (lambda args args))))
-	(if (not (and (pair? var)
-		      (eq? (car var) 'out-of-range)))
-	    (snd-display ";new-sound bad chan: ~A" var)))
-      (set! index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens"))
+      (close-sound index))
+    (let ((var (catch #t (lambda () (new-sound "hi.snd" :channels 0)) (lambda args args))))
+      (if (not (and (pair? var)
+		    (eq? (car var) 'out-of-range)))
+	  (snd-display ";new-sound bad chan: ~A" var)))
+    (let ((index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens")))
       (set! (sync index) 0) ; might be set by choice of graphs
       (insert-silence 0 1000 index 1)
       (if (not (and (= (framples index 0) 1)
@@ -5899,10 +5898,10 @@ EDITS: 5
 	    (snd-display ";auto-pad 0: ~A" (float-vector-peak v0)))
 	(if (fneq (float-vector-peak v1) 0.0)
 	    (snd-display ";silence 0: ~A" (float-vector-peak v1))))
-      (close-sound index)
-      (delete-file "fmv.snd")
-      
-      (set! index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens"))
+      (close-sound index))
+    (delete-file "fmv.snd")
+    
+    (let ((index (new-sound "fmv.snd" 2 22050 mus-ldouble mus-next "unequal lens")))
       (pad-channel 0 1000 index 1)
       (if (not (and (= (framples index 0) 1)
 		    (= (framples index 1) 1001)))
@@ -5927,16 +5926,16 @@ EDITS: 5
 	(filter-selection-and-smooth .01 (float-vector .25 .5 .5 .5 .25))
 					;	  (if (fneq (sample 1500 ind 0) -0.0045776) (snd-display ";filter-selection-and-smooth: ~A" (sample 1500 ind 0)))
 	(revert-sound ind)
-	(close-sound ind))
-      
-      (set! index (new-sound "fmv.snd" 1 22050 mus-bshort mus-ircam "this is a comment"))
+	(close-sound ind)))
+    
+    (let ((index (new-sound "fmv.snd" 1 22050 mus-bshort mus-ircam "this is a comment")))
       (let ((v0 (make-float-vector 128)))
 	(set! (v0 64) .5)
 	(set! (v0 127) .5)
 	(float-vector->channel v0 0 128 index 0)
 	(make-selection 0 126) 
 	(smooth-selection)) 
-
+      
       (let ((v0 (channel->float-vector 0 128 index 0)))
 	(if (or (fneq (sample 127) .5) (fneq (sample 120) .4962) (fneq (sample 32) 0.07431) (fneq (sample 64) 0.25308))
 	    (snd-display ";smooth-selection: ~A?" v0))
@@ -5947,7 +5946,7 @@ EDITS: 5
 	(select-all) 
 	(let-temporarily ((*sinc-width* 40))
 	  (src-selection 0.5)))
-
+      
       (let ((v0 (channel->float-vector 0 128 index 0)))
 	(if (or (fneq (sample 20) .5) (fneq (sample 30) 0.0) (fneq (sample 17) -.1057) )
 	    (snd-display ";src-selection: ~A?" v0))
@@ -5960,7 +5959,7 @@ EDITS: 5
 	(float-vector->channel v0 0)
 	(select-all) 
 	(filter-selection '(0 0 .1 1 1 0) 40))
-
+      
       (let ((v0 (channel->float-vector 0 128 index 0)))
 	(if (or (fneq (sample 29) .1945) (fneq (sample 39) -.0137) (fneq (sample 24) -0.01986))
 	    (snd-display ";filter-selection: ~A?" v0))
@@ -5969,7 +5968,7 @@ EDITS: 5
 	(float-vector->channel v0 0 128 index 0) 
 	(select-all) 
 	(filter-selection (make-one-zero :a0 .5 :a1 0.0)))
-
+      
       (let ((v0 (channel->float-vector 0 128 index 0)))
 	(if (or (fneq (sample 29) .5) (fneq (sample 39) .5) (fneq (sample 24) 0.5))
 	    (snd-display ";filter-selection one-zero: ~A?" v0))
@@ -5979,7 +5978,7 @@ EDITS: 5
 	(if (file-exists? "fmv5.snd") (delete-file "fmv5.snd"))
 	(select-all) 
 	(env-selection '(0 0 1 1 2 0) 1.0))
-
+      
       (let ((v0 (channel->float-vector 0 128 index 0)))
 	(if (or (fneq (sample 64) 1.0) (fneq (sample 20) .3125) (fneq (sample 119) 0.127))
 	    (snd-display ";env-selection [len: ~A]: ~A ~A ~A ~A?" (selection-framples) (sample 64) (sample 20) (sample 119) v0))
@@ -6282,119 +6281,119 @@ EDITS: 5
 		(snd-display ";mix-selection len: ~A?" (framples obind)))))
 	(close-sound obind))
       
-      (let* ((ind (open-sound "2.snd"))
-	     (apply-to-sound 0)
-	     (apply-to-channel 1)
-	     (apply-to-selection 2)
-	     (len (framples ind)))
-	(set! (sync ind) 1)
-	(set! (speed-control ind) .5)
-	(apply-controls ind apply-to-sound) ; temp 1
-	(if (> (abs (- (framples) (* 2 len))) 256)
-	    (snd-display ";apply srate .5: ~A ~A" (framples) (* 2 len)))
-	(make-selection 0 (framples))
-	(set! (speed-control ind) .5)
-	(apply-controls ind apply-to-selection) ; temp 2
-	(if (> (abs (- (framples) (* 4 len))) 256)
-	    (snd-display ";apply srate .5 to selection: ~A ~A" (framples) (* 4 len)))
-	(env-sound '(0 0 1 1) 0 (framples) 32.0) ; temp 3
-	(let ((reg (select-all))) ; make multi-channel region
-	  (insert-region reg 0) ; temp 4
-	  (insert-selection 0))  ; temp 5
-	(revert-sound ind)
-	(set! (speed-control) .5)
-	(set! (sync ind) 0)
-	(set! (selected-channel ind) 1)
-	(apply-controls ind apply-to-channel)
-	(if (> (abs (- (framples ind 1) (* 2 len))) 256)
-	    (snd-display ";apply srate .5 to chan 1: ~A ~A" (framples ind 1) (* 2 len)))
-	(if (not (= (framples ind 0) len))
-	    (snd-display ";apply srate .5 but chan 0: ~A ~A" (framples ind 0) len))
-	(set! (speed-control ind) .5)
-	(apply-controls ind apply-to-sound 1000)
-	(make-selection 2000 4000)
-	(set! (speed-control ind) .5)
-	(apply-controls ind apply-to-selection)
-	(set! (selected-channel ind) #f)
-	(if (selected-channel ind) (snd-display ";selected-channel #f: ~A" (selected-channel ind)))
-	(close-sound ind))
-      
-      (let* ((ind1 (open-sound "oboe.snd"))
-	     (mx1 (maxamp ind1 0))
-	     (ind2 (open-sound "2.snd"))
-	     (mx20 (maxamp ind2 0))
-	     (mx21 (maxamp ind2 1)))
-	(select-sound ind1)
-	(scale-sound-by 2.0)
-	(let ((nmx (maxamp ind1 0)))
-	  (if (fneq (* 2 mx1) nmx) (snd-display ";scale-sound-by 2.0: ~A ~A?" mx1 nmx))
-	  (if (not (equal? (edit-fragment 1 ind1 0) '("scale-channel 2.000 0 #f" "scale" 0 50828)))
-	      (snd-display ";scale-sound-by: ~A?" (edit-fragment 1 ind1 0))))
-	(scale-sound-to 0.5)
-	(let ((nmx (maxamp ind1 0)))
-	  (if (fneq nmx 0.5) (snd-display ";scale-sound-to 0.5: ~A?" nmx))
-	  (if (not (equal? (edit-fragment 2 ind1 0) '("scale-channel 1.698 0 #f" "scale" 0 50828)))
-	      (snd-display ";scale-sound-to: ~A?" (edit-fragment 2 ind1 0))))
-	(scale-sound-by 0.0 0 1000 ind1 0)
-	(let ((nmx (maxamp ind1 0)))
-	  (if (fneq 0.5 nmx) (snd-display ";scale-sound-by 0.0: ~A ~A?" mx1 nmx))
-	  (if (not (equal? (edit-fragment 3 ind1 0) '("scale-channel 0.000 0 1000" "scale" 0 1000)))
-	      (snd-display ";scale-sound-by 0.0: ~A?" (edit-fragment 3 ind1 0))))
-	(let ((pk (float-vector-peak (channel->float-vector 0 1000 ind1 0))))
-	  (if (fneq pk 0.0) (snd-display ";scale-sound-by 0.0 [0:1000]: ~A?" pk)))
-	(revert-sound ind1)
-	(let ((oldv (channel->float-vector 12000 10 ind1 0)))
-	  (scale-sound-by 2.0 12000 10 ind1 0)
-	  (let ((newv (channel->float-vector 12000 10 ind1 0)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (if (fneq (* 2.0 (oldv i)) (newv i))
-		  (snd-display ";scale ~D: ~A ~A?" i (oldv i) (newv i)))))
-	  (if (not (equal? (edit-fragment 1 ind1 0) '("scale-channel 2.000 12000 10" "scale" 12000 10)))
-	      (snd-display ";scale-sound-by 2.0 [12000:10]: ~A?" (edit-fragment 1 ind1 0))))
-	(revert-sound ind1)
-	(select-sound ind2)
-	(scale-sound-by 2.0)
-	(let ((nmx (maxamp ind2 0)))
-	  (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 scale-sound-by 2.0: ~A ~A?" mx20 nmx)))
-	(let ((nmx (maxamp ind2 1)))
-	  (if (fneq (* 2 mx21) nmx) (snd-display ";2:1 scale-sound-by 2.0: ~A ~A?" mx21 nmx)))
-	(scale-sound-to 0.5)
-	(let ((nmx (max (maxamp ind2 0) (maxamp ind2 1))))
-	  (if (fneq nmx 0.5) (snd-display ";2 scale-sound-to 0.5: ~A (~A)?" nmx (maxamp ind2))))
-	(scale-sound-by 0.0 0 1000 ind2 1)
-	(if (not (equal? (edit-fragment 3 ind2 1) '("scale-channel 0.000 0 1000" "scale" 0 1000)))
-	    (snd-display ";2:1 scale-sound-by 0.0: ~A?" (edit-fragment 3 ind2 1)))
-	(let ((pk (float-vector-peak (channel->float-vector 0 1000 ind2 1))))
-	  (if (fneq pk 0.0) (snd-display ";2:1 scale-sound-by 0.0 [0:1000]: ~A?" pk)))
-	(revert-sound ind2)
-	(let ((oldv (channel->float-vector 12000 10 ind2 0)))
-	  (scale-sound-by 2.0 12000 10 ind2 0)
-	  (let ((newv (channel->float-vector 12000 10 ind2 0)))
-	    (do ((i 0 (+ i 1)))
-		((= i 10))
-	      (if (fneq (* 2.0 (oldv i)) (newv i))
-		  (snd-display ";2 scale ~D: ~A ~A?" i (oldv i) (newv i))))))
-	(revert-sound ind2)
-	(set! (sync ind2) 3)
-	(set! (sync ind1) 3)
-	(scale-sound-by 2.0)
-	(let ((nmx (maxamp ind1 0)))
-	  (if (fneq mx1 nmx) (snd-display ";sync scale-sound-by 2.0: ~A ~A?" mx1 nmx)))
-	(let ((nmx (maxamp ind2 0)))
-	  (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 sync scale-sound-by 2.0: ~A ~A?" mx20 nmx)))
-	(let ((nmx (maxamp ind2 1)))
-	  (if (fneq (* 2 mx21) nmx) (snd-display ";2:1 sync scale-sound-by 2.0: ~A ~A?" mx21 nmx)))
-	(scale-sound-to 1.0 20000 40000 ind2 1)
-	(let ((nmx (maxamp ind1 0)))
-	  (if (fneq mx1 nmx) (snd-display ";sync scale-sound-to 1.0: ~A ~A?" mx1 nmx)))
-	(let ((nmx (maxamp ind2 0)))
-	  (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 sync scale-sound-to 1.0: ~A ~A?" mx20 nmx)))
-	(let ((nmx (maxamp ind2 1)))
-	  (if (fneq nmx 1.0) (snd-display ";2:1 sync scale-sound-to 1.0: ~A?" nmx)))
+      (let ((ind (open-sound "2.snd")))
+	(let ((apply-to-sound 0)
+	      (apply-to-channel 1)
+	      (apply-to-selection 2)
+	      (len (framples ind)))
+	  (set! (sync ind) 1)
+	  (set! (speed-control ind) .5)
+	  (apply-controls ind apply-to-sound) ; temp 1
+	  (if (> (abs (- (framples) (* 2 len))) 256)
+	      (snd-display ";apply srate .5: ~A ~A" (framples) (* 2 len)))
+	  (make-selection 0 (framples))
+	  (set! (speed-control ind) .5)
+	  (apply-controls ind apply-to-selection) ; temp 2
+	  (if (> (abs (- (framples) (* 4 len))) 256)
+	      (snd-display ";apply srate .5 to selection: ~A ~A" (framples) (* 4 len)))
+	  (env-sound '(0 0 1 1) 0 (framples) 32.0) ; temp 3
+	  (let ((reg (select-all))) ; make multi-channel region
+	    (insert-region reg 0) ; temp 4
+	    (insert-selection 0))  ; temp 5
+	  (revert-sound ind)
+	  (set! (speed-control) .5)
+	  (set! (sync ind) 0)
+	  (set! (selected-channel ind) 1)
+	  (apply-controls ind apply-to-channel)
+	  (if (> (abs (- (framples ind 1) (* 2 len))) 256)
+	      (snd-display ";apply srate .5 to chan 1: ~A ~A" (framples ind 1) (* 2 len)))
+	  (if (not (= (framples ind 0) len))
+	      (snd-display ";apply srate .5 but chan 0: ~A ~A" (framples ind 0) len))
+	  (set! (speed-control ind) .5)
+	  (apply-controls ind apply-to-sound 1000)
+	  (make-selection 2000 4000)
+	  (set! (speed-control ind) .5)
+	  (apply-controls ind apply-to-selection)
+	  (set! (selected-channel ind) #f)
+	  (if (selected-channel ind) (snd-display ";selected-channel #f: ~A" (selected-channel ind)))
+	  (close-sound ind))
 	
-	(close-sound ind1)
-	(close-sound ind2))
+	(let* ((ind1 (open-sound "oboe.snd"))
+	       (mx1 (maxamp ind1 0))
+	       (ind2 (open-sound "2.snd"))
+	       (mx20 (maxamp ind2 0))
+	       (mx21 (maxamp ind2 1)))
+	  (select-sound ind1)
+	  (scale-sound-by 2.0)
+	  (let ((nmx (maxamp ind1 0)))
+	    (if (fneq (* 2 mx1) nmx) (snd-display ";scale-sound-by 2.0: ~A ~A?" mx1 nmx))
+	    (if (not (equal? (edit-fragment 1 ind1 0) '("scale-channel 2.000 0 #f" "scale" 0 50828)))
+		(snd-display ";scale-sound-by: ~A?" (edit-fragment 1 ind1 0))))
+	  (scale-sound-to 0.5)
+	  (let ((nmx (maxamp ind1 0)))
+	    (if (fneq nmx 0.5) (snd-display ";scale-sound-to 0.5: ~A?" nmx))
+	    (if (not (equal? (edit-fragment 2 ind1 0) '("scale-channel 1.698 0 #f" "scale" 0 50828)))
+		(snd-display ";scale-sound-to: ~A?" (edit-fragment 2 ind1 0))))
+	  (scale-sound-by 0.0 0 1000 ind1 0)
+	  (let ((nmx (maxamp ind1 0)))
+	    (if (fneq 0.5 nmx) (snd-display ";scale-sound-by 0.0: ~A ~A?" mx1 nmx))
+	    (if (not (equal? (edit-fragment 3 ind1 0) '("scale-channel 0.000 0 1000" "scale" 0 1000)))
+		(snd-display ";scale-sound-by 0.0: ~A?" (edit-fragment 3 ind1 0))))
+	  (let ((pk (float-vector-peak (channel->float-vector 0 1000 ind1 0))))
+	    (if (fneq pk 0.0) (snd-display ";scale-sound-by 0.0 [0:1000]: ~A?" pk)))
+	  (revert-sound ind1)
+	  (let ((oldv (channel->float-vector 12000 10 ind1 0)))
+	    (scale-sound-by 2.0 12000 10 ind1 0)
+	    (let ((newv (channel->float-vector 12000 10 ind1 0)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 10))
+		(if (fneq (* 2.0 (oldv i)) (newv i))
+		    (snd-display ";scale ~D: ~A ~A?" i (oldv i) (newv i)))))
+	    (if (not (equal? (edit-fragment 1 ind1 0) '("scale-channel 2.000 12000 10" "scale" 12000 10)))
+		(snd-display ";scale-sound-by 2.0 [12000:10]: ~A?" (edit-fragment 1 ind1 0))))
+	  (revert-sound ind1)
+	  (select-sound ind2)
+	  (scale-sound-by 2.0)
+	  (let ((nmx (maxamp ind2 0)))
+	    (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 scale-sound-by 2.0: ~A ~A?" mx20 nmx)))
+	  (let ((nmx (maxamp ind2 1)))
+	    (if (fneq (* 2 mx21) nmx) (snd-display ";2:1 scale-sound-by 2.0: ~A ~A?" mx21 nmx)))
+	  (scale-sound-to 0.5)
+	  (let ((nmx (max (maxamp ind2 0) (maxamp ind2 1))))
+	    (if (fneq nmx 0.5) (snd-display ";2 scale-sound-to 0.5: ~A (~A)?" nmx (maxamp ind2))))
+	  (scale-sound-by 0.0 0 1000 ind2 1)
+	  (if (not (equal? (edit-fragment 3 ind2 1) '("scale-channel 0.000 0 1000" "scale" 0 1000)))
+	      (snd-display ";2:1 scale-sound-by 0.0: ~A?" (edit-fragment 3 ind2 1)))
+	  (let ((pk (float-vector-peak (channel->float-vector 0 1000 ind2 1))))
+	    (if (fneq pk 0.0) (snd-display ";2:1 scale-sound-by 0.0 [0:1000]: ~A?" pk)))
+	  (revert-sound ind2)
+	  (let ((oldv (channel->float-vector 12000 10 ind2 0)))
+	    (scale-sound-by 2.0 12000 10 ind2 0)
+	    (let ((newv (channel->float-vector 12000 10 ind2 0)))
+	      (do ((i 0 (+ i 1)))
+		  ((= i 10))
+		(if (fneq (* 2.0 (oldv i)) (newv i))
+		    (snd-display ";2 scale ~D: ~A ~A?" i (oldv i) (newv i))))))
+	  (revert-sound ind2)
+	  (set! (sync ind2) 3)
+	  (set! (sync ind1) 3)
+	  (scale-sound-by 2.0)
+	  (let ((nmx (maxamp ind1 0)))
+	    (if (fneq mx1 nmx) (snd-display ";sync scale-sound-by 2.0: ~A ~A?" mx1 nmx)))
+	  (let ((nmx (maxamp ind2 0)))
+	    (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 sync scale-sound-by 2.0: ~A ~A?" mx20 nmx)))
+	  (let ((nmx (maxamp ind2 1)))
+	    (if (fneq (* 2 mx21) nmx) (snd-display ";2:1 sync scale-sound-by 2.0: ~A ~A?" mx21 nmx)))
+	  (scale-sound-to 1.0 20000 40000 ind2 1)
+	  (let ((nmx (maxamp ind1 0)))
+	    (if (fneq mx1 nmx) (snd-display ";sync scale-sound-to 1.0: ~A ~A?" mx1 nmx)))
+	  (let ((nmx (maxamp ind2 0)))
+	    (if (fneq (* 2 mx20) nmx) (snd-display ";2:0 sync scale-sound-to 1.0: ~A ~A?" mx20 nmx)))
+	  (let ((nmx (maxamp ind2 1)))
+	    (if (fneq nmx 1.0) (snd-display ";2:1 sync scale-sound-to 1.0: ~A?" nmx)))
+	  
+	  (close-sound ind1)
+	  (close-sound ind2)))
       
       (let ((ind (open-sound "now.snd")))
 	(set! (amp-control ind) .5)
@@ -43915,14 +43914,11 @@ EDITS: 1
 	(XtGrabButton shell AnyButton AnyModifier #t ButtonPressMask GrabModeSync GrabModeSync (list 'Window None) (list 'Cursor None))
 	(XtUngrabButton shell AnyButton AnyModifier))
       
-      (let* ((sgc (car (snd-gcs)))
-	     (grf1 (car (channel-widgets)))
-	     (dpy (XtDisplay grf1))
-	     (win (XtWindow grf1))
-	     (shl (cadr (main-widgets))))
+      (let ((dpy (XtDisplay (car (channel-widgets))))
+	    (win (XtWindow (car (channel-widgets)))))
 	(let ((wid (XtWindowToWidget dpy win)))
-	  (if (not (equal? wid grf1))
-	      (snd-display ";XtWindowToWidget: ~A ~A" grf1 win)))
+	  (if (not (equal? wid (car (channel-widgets))))
+	      (snd-display ";XtWindowToWidget: ~A ~A" (car (channel-widgets)) win)))
 					; these are causing: X Error of failed request:  BadAccess (attempt to access private resource denied)
 					;	       (if (not (equal? (XGetTransientForHint dpy win) (list 0 #f)))
 					;		   (snd-display ";XGetTransientForHint: ~A" (XGetTransientForHint dpy win)))
@@ -43932,25 +43928,24 @@ EDITS: 1
 	    (snd-display ";XGeometry: ~A" (XGeometry dpy 0 "500x400" "500x400+10+10" 4 7 14 2 2)))
 	(if (< (XEventsQueued dpy QueuedAlready) 0)
 	    (snd-display ";XEventsQueued: ~A" (XEventsQueued dpy QueuedAlready)))
-					;	       (let ((coords (XTranslateCoordinates dpy (XtWindow shl) win 10 10)))
-					;		 (if (not (car coords))
-					;		     (snd-display ";XTranslateCoordinates: ~A" coords)))
-	(let ((coords (XtTranslateCoords shl 10 10)))
-	  (if (not (number? (car coords)))
-	      (snd-display ";XtTranslateCoords: ~A" coords)))
-	(if (not (XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
-	(if (XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
-	(if (XmIsManager shl) (snd-display ";XmIsManager?"))
-	(if (XmIsIconGadget shl) (snd-display ";XmIsIconGadget?"))
-	(if (XmIsGadget shl) (snd-display ";XmIsGadget?"))
-	(if (XmIsIconHeader shl) (snd-display ";XmIsHeader?"))
-	(if (XmIsDropTransfer shl) (snd-display ";XmIsDropTransfer?"))
-	(if (XmIsDropSiteManager shl) (snd-display ";XmIsDropSiteManager?"))
-	(if (XmIsDragContext shl) (snd-display ";XmIsDragContext?"))
-	(if (XmIsDragIconObjectClass shl) (snd-display ";XmIsDragIconObjectClass?"))
-	(if (XmIsMessageBox shl) (snd-display ";XmIsMessageBox?"))
-	(if (XmIsScreen shl) (snd-display ";XmIsScreen?"))
-	(if (XmIsDisplay shl) (snd-display ";XmIsDisplay?"))
+
+	(let ((shl (cadr (main-widgets))))
+	  (let ((coords (XtTranslateCoords shl 10 10)))
+	    (if (not (number? (car coords)))
+		(snd-display ";XtTranslateCoords: ~A" coords)))
+	  (if (not (XmIsVendorShell shl)) (snd-display ";XmIsVendorShell?"))
+	  (if (XmIsPrimitive shl) (snd-display ";XmIsPrimitive?"))
+	  (if (XmIsManager shl) (snd-display ";XmIsManager?"))
+	  (if (XmIsIconGadget shl) (snd-display ";XmIsIconGadget?"))
+	  (if (XmIsGadget shl) (snd-display ";XmIsGadget?"))
+	  (if (XmIsIconHeader shl) (snd-display ";XmIsHeader?"))
+	  (if (XmIsDropTransfer shl) (snd-display ";XmIsDropTransfer?"))
+	  (if (XmIsDropSiteManager shl) (snd-display ";XmIsDropSiteManager?"))
+	  (if (XmIsDragContext shl) (snd-display ";XmIsDragContext?"))
+	  (if (XmIsDragIconObjectClass shl) (snd-display ";XmIsDragIconObjectClass?"))
+	  (if (XmIsMessageBox shl) (snd-display ";XmIsMessageBox?"))
+	  (if (XmIsScreen shl) (snd-display ";XmIsScreen?"))
+	  (if (XmIsDisplay shl) (snd-display ";XmIsDisplay?")))
 	
 	(let ((val 0))
 	  (XSetErrorHandler (lambda (dpy e)
@@ -43958,25 +43953,26 @@ EDITS: 1
 	  (XGetAtomName dpy '(Atom 0))
 	  (if (not (= val 5)) (snd-display ";XSetErrorHandler: ~A" val)))
 	
-	(XDrawImageString dpy win sgc 10 10 "hiho" 4)
-	(XDrawRectangle dpy win sgc 0 0 10 10)
-	(XDrawString dpy win sgc 10 10 "hi" 2)
-	(XDrawSegments dpy win sgc (list (XSegment 1 1 2 20) (XSegment 3 3 40 4)) 2)
-	(XDrawRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
-	(XFillRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
-	(XDrawRectangle dpy win sgc 10 10 10 10)
-	(XFillRectangle dpy win sgc 10 10 10 10)
-	(XDrawPoints dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
-	(XDrawPoint dpy win sgc 10 10)
-	(XDrawLines dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
-	(XDrawLine dpy win sgc 10 10 20 20)
-	(XDrawArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
-	(XFillArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
-	(XDrawArc dpy win sgc 0 0 10 10 45 90)
-	(XFillArc dpy win sgc 0 0 10 10 45 90)
-	(XFillPolygon dpy win sgc (list (XPoint 0 0) (XPoint 0 10) (XPoint 10 10) (XPoint 10 0) (XPoint 0 0)) 5 Convex CoordModeOrigin)
-	(XClearArea dpy win 10 10 20 20 #f)
-	(XClearWindow dpy win))
+	(let ((sgc (car (snd-gcs))))
+	  (XDrawImageString dpy win sgc 10 10 "hiho" 4)
+	  (XDrawRectangle dpy win sgc 0 0 10 10)
+	  (XDrawString dpy win sgc 10 10 "hi" 2)
+	  (XDrawSegments dpy win sgc (list (XSegment 1 1 2 20) (XSegment 3 3 40 4)) 2)
+	  (XDrawRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	  (XFillRectangles dpy win sgc (list (XRectangle 0 0 10 10) (XRectangle 20 20 30 30)) 2)
+	  (XDrawRectangle dpy win sgc 10 10 10 10)
+	  (XFillRectangle dpy win sgc 10 10 10 10)
+	  (XDrawPoints dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	  (XDrawPoint dpy win sgc 10 10)
+	  (XDrawLines dpy win sgc (list (XPoint 23 23) (XPoint 109 10)) 2 CoordModeOrigin)
+	  (XDrawLine dpy win sgc 10 10 20 20)
+	  (XDrawArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	  (XFillArcs dpy win sgc (list (XArc 10 10 4 4 0 360) (XArc 20 20 1 23 0 123)) 2)
+	  (XDrawArc dpy win sgc 0 0 10 10 45 90)
+	  (XFillArc dpy win sgc 0 0 10 10 45 90)
+	  (XFillPolygon dpy win sgc (list (XPoint 0 0) (XPoint 0 10) (XPoint 10 10) (XPoint 10 0) (XPoint 0 0)) 5 Convex CoordModeOrigin)
+	  (XClearArea dpy win 10 10 20 20 #f)
+	  (XClearWindow dpy win)))
       
       (close-sound)
       
@@ -43992,9 +43988,7 @@ EDITS: 1
 	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
 	    (if (not (= calls XtCallbackHasNone))
 		(snd-display ";XtRemoveCallbacks: ~A" calls))))
-	(XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	)
+	(XtUnmanageChild button))
       
       (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
 	    (val1 0)
@@ -44012,9 +44006,7 @@ EDITS: 1
 	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
 	    (if (not (= calls XtCallbackHasNone))
 		(snd-display ";XtRemoveCallbacks: ~A" calls))))
-	(XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	)
+	(XtUnmanageChild button))
       
       (let ((button (XtCreateManagedWidget "button" xmPushButtonWidgetClass (cadr (main-widgets)) () 0))
 	    (val1 0)
@@ -44031,9 +44023,7 @@ EDITS: 1
 	  (let ((calls (XtHasCallbacks button XmNactivateCallback)))
 	    (if (not (= calls XtCallbackHasNone))
 		(snd-display ";XtRemoveCallbacks (add): ~A" calls))))
-	(XtUnmanageChild button)
-					;(XtDestroyWidget button)
-	)
+	(XtUnmanageChild button))
       
       (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
 	     (browsed 0)
@@ -44508,7 +44498,6 @@ EDITS: 1
 	(XmSelectionBoxGetChild (XmCreateSelectionBox shell "selbox" () 0) XmDIALOG_APPLY_BUTTON))
       
       (let* ((frm (add-main-pane "hi" xmFormWidgetClass (list XmNpaneMinimum 120)))
-	     (current-time (list 'Time CurrentTime))
 	     (box (XtCreateManagedWidget "box" xmContainerWidgetClass frm ()))
 	     (tgl (XtCreateManagedWidget "tgl" xmToggleButtonWidgetClass frm
 					 (list XmNleftAttachment      XmATTACH_FORM
@@ -44551,8 +44540,9 @@ EDITS: 1
 					       XmNrightAttachment     XmATTACH_FORM
 					       XmNtopAttachment       XmATTACH_WIDGET
 					       XmNtopWidget           notes
-					       XmNbottomAttachment    XmATTACH_FORM)))
-	     (toggled 0))
+					       XmNbottomAttachment    XmATTACH_FORM))))
+	(let ((current-time (list 'Time CurrentTime))
+	      (toggled 0))
 	(XtCreateManagedWidget "one" xmPushButtonWidgetClass notes ())
 	(XtCreateManagedWidget "two" xmPushButtonWidgetClass notes ())
 	(let ((info (cadr (XmNotebookGetPageInfo notes 1))))
@@ -44560,9 +44550,7 @@ EDITS: 1
 	  (if (.page_widget info) (snd-display ";page_widget: ~A" (.page_widget info)))
 	  (if (.status_area_widget info) (snd-display ";status_area_widget: ~A" (.status_area_widget info)))
 	  (if (not (Widget? (.major_tab_widget info))) (snd-display ";major_tab_widget: ~A" (.major_tab_widget info)))
-	  (if (.minor_tab_widget info) (snd-display ";minor_tab_widget: ~A" (.minor_tab_widget info)))
-					;(segfault)	(XtFree (cadr info))
-	  )
+	  (if (.minor_tab_widget info) (snd-display ";minor_tab_widget: ~A" (.minor_tab_widget info))))
 	
 	(XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "hiho") 0)
 	(XmSimpleSpinBoxAddItem spn (XmStringCreateLocalized "away") 0)
@@ -44627,8 +44615,7 @@ EDITS: 1
 			(member name '("BigTic" "MedTic" "SmallTic") string=?))
 		   (XtDestroyWidget w))))
 	   children))
-	(XmScaleSetTicks scl 5 2 0 10 5 0)
-	)
+	(XmScaleSetTicks scl 5 2 0 10 5 0)))
       
       (XmSetColorCalculation #f)
       (let* ((dpy (XtDisplay (cadr (main-widgets))))
@@ -45978,15 +45965,6 @@ EDITS: 1
   (when with-gui ; to the end!
     (let* ((delay-32 (make-delay 32))
 	   (color-95 (make-color-with-catch .95 .95 .95))
-	   (vector-0 #())
-	   (str-3 "/hiho")
-	   (float-vector-3 (make-float-vector 3))
-	   (float-vector-5 (make-float-vector 5))
-	   (car-main (and with-gui (car (main-widgets))))
-	   (cadr-main (and with-gui (cadr (main-widgets))))
-	   (a-hook (make-hook 'a 'b))
-	   (exts (sound-file-extensions)) ; save across possible set below
-	   
 	   (procs (list 
 		   add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
 		   add-to-main-menu add-to-menu add-transform amp-control ask-about-unsaved-edits
@@ -46179,37 +46157,44 @@ EDITS: 1
 		       phase-vocoder-amp-increments phase-vocoder-amps 
 		       phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 		       html-dir html-program mus-interp-type widget-position widget-size 
-		       mus-clipping mus-file-clipping mus-header-raw-defaults
-		       ))
-	   
-	   (make-procs (list
-			make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
-			make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
-			make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
-			make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
-			make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-			make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
-			make-src make-ncos make-nsin make-table-lookup make-triangle-wave
-			make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
-			make-color make-player make-region 
-			))
-	   
-	   (keyargs
-	    (list 
-	     :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
-	     :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
-	     :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
-	     :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
-	     :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
-	     :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur))
+		       mus-clipping mus-file-clipping mus-header-raw-defaults))
 	   
 	   (procs0 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
 	   (set-procs0 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
 	   (procs1 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
 	   (set-procs1 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
 	   (procs2 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
-	   (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs))
-	   )
+	   (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs)))
+
+      (let ((vector-0 #())
+	    (str-3 "/hiho")
+	    (float-vector-3 (make-float-vector 3))
+	    (float-vector-5 (make-float-vector 5))
+	    (car-main (and with-gui (car (main-widgets))))
+	    (cadr-main (and with-gui (cadr (main-widgets))))
+	    (a-hook (make-hook 'a 'b))
+	    (exts (sound-file-extensions)) ; save across possible set below
+	    
+	    (make-procs (list
+			 make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
+			 make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
+			 make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
+			 make-iir-filter make-locsig make-notch make-one-pole make-one-pole-all-pass make-one-zero make-oscil
+			 make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
+			 make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
+			 make-src make-ncos make-nsin make-table-lookup make-triangle-wave
+			 make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
+			 make-color make-player make-region 
+			 ))
+	    
+	    (keyargs
+	     (list 
+	      :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
+	      :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
+	      :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
+	      :base :duration :offset :end :direction :degree :distance :reverb :output :fft-size :expansion 
+	      :length :hop :ramp :jitter :type :format :comment :channels :filter :revout :width :edit 
+	      :synthesize :analyze :interp :overlap :pitch :distribution :sines :dur)))
       
       (reset-all-hooks)
       
@@ -47378,7 +47363,7 @@ EDITS: 1
 	  (set! cadr-main #f)
 	  (set! a-hook #f)
 	  (set! float-vector-5 #f)
-	  )))))
+	  ))))))
 
 
 ;;; ---------------- test 26: s7 ----------------

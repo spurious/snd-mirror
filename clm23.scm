@@ -2128,11 +2128,11 @@
     (sndclmdoc-tritri 0 1 1000.0 0.5 0.1 0.01) ; sci-fi laser gun
     (sndclmdoc-tritri 1 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
   (with-sound (:srate 22050) (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0)) ; 1.7
-  (let* ((sound "oboe.snd") ; 1.8
-	 (mx (maxamp sound))
-	 (dur (mus-sound-duration sound)))
-    (with-sound (:scaled-to mx :srate 22050) 
-      (sndclmdoc-repitch 0 dur sound 554 1000)))
+  (let ((sound "oboe.snd")) ; 1.8
+    (let ((mx (maxamp sound))
+	  (dur (mus-sound-duration sound)))
+      (with-sound (:scaled-to mx :srate 22050) 
+	(sndclmdoc-repitch 0 dur sound 554 1000))))
   (with-sound () (sndclmdoc-fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
   (with-sound () ; one of JC's favorite demos
     (sndclmdoc-fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 

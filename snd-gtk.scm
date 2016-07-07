@@ -850,26 +850,26 @@
 	      (gtk_label_set_text (GTK_LABEL widget) (object->string var))
 	      (force-update widget)))
 	
-	(if (pair? widget)
-	    (if (or (number? (car widget))
-		    (sound? (car widget)))
-		;; graph/spectrum -- does this need an explicit update?
-		(let ((snd (car widget))
-		      (data (cadr widget)))
-		  (let ((len (length data))
-			(loc (cursor snd 0)))
-		    (set! (data loc) var)
-		    (if (time-graph? snd) (update-time-graph snd))
-		    (if (transform-graph? snd) (update-transform-graph snd))
-		    (set! (cursor snd 0) (if (= (+ loc 1) len) 0 (+ loc 1))))
-		  (if (GTK_IS_PROGRESS_BAR (car widget))
-		      ;; "thermometer"
-		      (let ((y0 (cadr widget))
-			    (y1 (caddr widget)))
-			;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
-			(gtk_progress_bar_set_fraction 
-			 (GTK_PROGRESS_BAR (car widget))
-			 (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0)))))))))))
+	(when (and (pair? widget)
+		   (or (number? (car widget))
+		       (sound? (car widget))))
+	  ;; graph/spectrum -- does this need an explicit update?
+	  (let ((snd (car widget))
+		(data (cadr widget)))
+	    (let ((len (length data))
+		  (loc (cursor snd 0)))
+	      (set! (data loc) var)
+	      (if (time-graph? snd) (update-time-graph snd))
+	      (if (transform-graph? snd) (update-transform-graph snd))
+	      (set! (cursor snd 0) (if (= (+ loc 1) len) 0 (+ loc 1))))
+	    (if (GTK_IS_PROGRESS_BAR (car widget))
+		;; "thermometer"
+		(let ((y0 (cadr widget))
+		      (y1 (caddr widget)))
+		  ;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
+		  (gtk_progress_bar_set_fraction 
+		   (GTK_PROGRESS_BAR (car widget))
+		   (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0))))))))))
     var)
 
   (define (notebook-with-top-tabs)

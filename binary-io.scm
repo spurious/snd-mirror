@@ -127,17 +127,17 @@
   (int_to_float32 (read-lint32)))
 
 (define (float64_to_int32 flt)
-  (let* ((data (integer-decode-float flt))
-	 (signif (car data))
-	 (expon (cadr data))
-	 (sign (caddr data)))
-    (if (= expon signif 0)
-	0
-	;; we're assuming floats are (64-bit) doubles in s7, so this is coercing to a 32-bit float in a sense
-	;;   this causes some round-off error
-	(logior (if (negative? sign) #x80000000 0)
-		(ash (+ expon 179) 23)   ; 179 = (+ 52 127)
-		(logand (ash signif -29) #x7fffff)))))
+  (let ((data (integer-decode-float flt)))
+    (let ((signif (car data))
+	  (expon (cadr data))
+	  (sign (caddr data)))
+      (if (= expon signif 0)
+	  0
+	  ;; we're assuming floats are (64-bit) doubles in s7, so this is coercing to a 32-bit float in a sense
+	  ;;   this causes some round-off error
+	  (logior (if (negative? sign) #x80000000 0)
+		  (ash (+ expon 179) 23)   ; 179 = (+ 52 127)
+		  (logand (ash signif -29) #x7fffff))))))
 
 (define (write-bfloat32 flt)
   (write-bint32 (float64_to_int32 flt)))
@@ -164,15 +164,15 @@
   (int_to_float64 (read-lint64)))
 
 (define (float64_to_int64 flt)
-  (let* ((data (integer-decode-float flt))
-	 (signif (car data))
-	 (expon (cadr data))
-	 (sign (caddr data)))
-    (if (= expon signif 0)
-	0
-	(logior (if (negative? sign) #x8000000000000000 0)
-		(ash (+ expon 1075) 52) ; 1075 = (+ 52 1023)
-		(logand signif #xfffffffffffff)))))
+  (let ((data (integer-decode-float flt)))
+    (let ((signif (car data))
+	  (expon (cadr data))
+	  (sign (caddr data)))
+      (if (= expon signif 0)
+	  0
+	  (logior (if (negative? sign) #x8000000000000000 0)
+		  (ash (+ expon 1075) 52) ; 1075 = (+ 52 1023)
+		  (logand signif #xfffffffffffff))))))
 
 (define (write-bfloat64 flt)
   (write-bint64 (float64_to_int64 flt)))
@@ -253,18 +253,18 @@
   ;; common sample-types: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
   (with-output-to-file file
     (lambda ()
-      (let* ((comlen (length comment))
-	     (data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
-	     (curloc 24))
-	(write-chars ".snd")
-	(for-each write-bint32 (vector data-location data-size sample-type srate chns))
-	(if (> comlen 0)
-	    (begin
-	      (io-write-string comment)
-	      (set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
-	(do ((i curloc (+ i 1)))
-	    ((>= i data-location))
-	  (write-byte 0))))))
+      (let ((comlen (length comment)))
+	(let ((data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
+	      (curloc 24))
+	  (write-chars ".snd")
+	  (for-each write-bint32 (vector data-location data-size sample-type srate chns))
+	  (if (> comlen 0)
+	      (begin
+		(io-write-string comment)
+		(set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
+	  (do ((i curloc (+ i 1)))
+	      ((>= i data-location))
+	    (write-byte 0)))))))
 
 
 (define (read-aif-header file)
