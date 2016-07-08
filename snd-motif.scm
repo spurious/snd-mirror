@@ -1238,33 +1238,33 @@
 ;;;   call from a work proc or whatever with hour going from 0 to 12 then #f
   
   (define snd-clock-icon
-    (let* ((shell ((main-widgets) 1))
-	   (dpy (XtDisplay shell))
-	   (win (XtWindow shell))
-	   (clock-pixmaps (make-vector 12))
-	   (dgc (car (snd-gcs))))
-      (do ((i 0 (+ i 1)))
-	  ((= i 12))
-	;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
-	(let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
-	       (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
-	  (set! (clock-pixmaps i) pix)
-	  (XSetForeground dpy dgc *basic-color*)
-	  (XFillRectangle dpy pixwin dgc 0 0 16 16)
-	  (XSetForeground dpy dgc (white-pixel))
-	  (XFillArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
-	  (XSetForeground dpy dgc (black-pixel))
-	  (XDrawArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
-	  (XDrawLine dpy pixwin dgc 8 8
-		     (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
-		     (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
-      (XSetBackground dpy dgc *graph-color*)
-      (XSetForeground dpy dgc *data-color*)
-      (lambda (snd hour)
-	(if hour
-	    (XtSetValues ((sound-widgets snd) 8)
-			 (list XmNlabelPixmap (clock-pixmaps hour)))
-	    (bomb snd #f))))) ; using bomb to clear the icon
+    (let ((shell ((main-widgets) 1)))
+      (let ((dpy (XtDisplay shell))
+	    (win (XtWindow shell))
+	    (clock-pixmaps (make-vector 12))
+	    (dgc (car (snd-gcs))))
+	(do ((i 0 (+ i 1)))
+	    ((= i 12))
+	  ;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
+	  (let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
+		 (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
+	    (set! (clock-pixmaps i) pix)
+	    (XSetForeground dpy dgc *basic-color*)
+	    (XFillRectangle dpy pixwin dgc 0 0 16 16)
+	    (XSetForeground dpy dgc (white-pixel))
+	    (XFillArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
+	    (XSetForeground dpy dgc (black-pixel))
+	    (XDrawArc dpy pixwin dgc 1 1 14 14 0 23040) ; (* 64 360))
+	    (XDrawLine dpy pixwin dgc 8 8
+		       (+ 8 (round (* 7 (sin (* i (/ 3.1416 6.0))))))
+		       (- 8 (round (* 7 (cos (* i (/ 3.1416 6.0)))))))))
+	(XSetBackground dpy dgc *graph-color*)
+	(XSetForeground dpy dgc *data-color*)
+	(lambda (snd hour)
+	  (if hour
+	      (XtSetValues ((sound-widgets snd) 8)
+			   (list XmNlabelPixmap (clock-pixmaps hour)))
+	      (bomb snd #f)))))) ; using bomb to clear the icon
   
   
   
@@ -1292,19 +1292,19 @@
 				 (max ay1
 				      (round (+ ay1
 						(* height (- 1.0 y)))))))))
-	       (ly (y->grfy (pts 0) range))
 	       (left-margin 2)
-	       (lx left-margin)
-	       (len (length pts))
-	       (xinc (/ (- width left-margin 2) len)) ; 2=right-margin
-	       (y 0))
-	  (do ((i 1 (+ i 1))
-	       (x lx (+ x xinc)))
-	      ((= i len))
-	    (set! y (y->grfy (pts i) range))
-	    (XDrawLine dpy wn gc lx ly (round x) y)
-	    (set! lx (round x))
-	    (set! ly y))))))
+	       (len (length pts)))
+	  (let ((ly (y->grfy (pts 0) range))
+		(lx left-margin)
+		(xinc (/ (- width left-margin 2) len)) ; 2=right-margin
+		(y 0))
+	    (do ((i 1 (+ i 1))
+		 (x lx (+ x xinc)))
+		((= i len))
+	      (set! y (y->grfy (pts i) range))
+	      (XDrawLine dpy wn gc lx ly (round x) y)
+	      (set! lx (round x))
+	      (set! ly y)))))))
   
   (define make-sound-box 
     ;; graphics stuff (fonts etc)
@@ -2539,14 +2539,14 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 		     (or (number? (car widget))
 			 (sound? (car widget))))
 		;; graph/spectrum -- does this need an explicit update?
-		(let* ((snd (car widget))
-		       (data (cadr widget))
-		       (len (length data))
-		       (loc (cursor snd 0)))
-		  (set! (data loc) var)
-		  (if (time-graph? snd) (update-time-graph snd))
-		  (if (transform-graph? snd) (update-transform-graph snd))
-		  (set! cursor (if (= (+ loc 1) len) 0 (+ loc 1))))))
+		(let ((snd (car widget))
+		      (data (cadr widget)))
+		  (let ((len (length data))
+			(loc (cursor snd 0)))
+		    (set! (data loc) var)
+		    (if (time-graph? snd) (update-time-graph snd))
+		    (if (transform-graph? snd) (update-transform-graph snd))
+		    (set! cursor (if (= (+ loc 1) len) 0 (+ loc 1)))))))
 	var)))
   
   (define variable-display-reset 
@@ -2555,13 +2555,13 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 	(if (and (pair? widget)
 		 (number? (car widget)))
 	    ;; graph/spectrum
-	    (let* ((snd (car widget))
-		   (data (cadr widget))
-		   (len (length data)))
-	      (set! (cursor snd 0) 0)
-	      (do ((i 0 (+ i 1)))
-		  ((= i len))
-		(vector-set! data 0 i 0.0)))))))
+	    (let ((data (cadr widget)))
+	      (let ((snd (car widget))
+		    (len (length data)))
+		(set! (cursor snd 0) 0)
+		(do ((i 0 (+ i 1)))
+		    ((= i len))
+		  (vector-set! data 0 i 0.0))))))))
   
   
 #|

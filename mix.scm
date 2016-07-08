@@ -77,14 +77,14 @@
 	 (snd (car (mix-home id)))
 	 (bps (/ (beats-per-minute snd (cadr (mix-home id))) 60.0))
 	 (sr (srate snd))
-	 (beat (floor (/ (* samp bps) sr)))
-	 (lower (floor (/ (* beat sr) bps)))
-	 (higher (floor (/ (* (+ 1 beat) sr) bps))))
-    (set! (mix-position id)
-	  (if (< (- samp lower) (- higher samp))
-	      (max 0 lower)
-	      higher))
-    #t))
+	 (beat (floor (/ (* samp bps) sr))))
+    (let ((lower (floor (/ (* beat sr) bps)))
+	  (higher (floor (/ (* (+ 1 beat) sr) bps))))
+      (set! (mix-position id)
+	    (if (< (- samp lower) (- higher samp))
+		(max 0 lower)
+		higher))
+      #t)))
 
 (define snap-mix-to-beat
   (let ((documentation "(snap-mix-to-beat) forces a dragged mix to end up on a beat (see beats-per-minute).  (hook-remove mix-release-hook snap-mix-1) to cancel."))
@@ -97,12 +97,12 @@
 			      (snd (car (mix-home id)))
 			      (bps (/ (beats-per-minute snd (cadr (mix-home id))) 60.0))
 			      (sr (srate snd))
-			      (beat (floor (/ (* samp bps) sr)))
-			      (lower (floor (/ (* beat sr) bps)))
-			      (higher (floor (/ (* (+ 1 beat) sr) bps))))
-			 (if (< (- samp lower) (- higher samp))
-			     (max 0 lower)
-			     higher)))
+			      (beat (floor (/ (* samp bps) sr))))
+			 (let ((lower (floor (/ (* beat sr) bps)))
+			       (higher (floor (/ (* (+ 1 beat) sr) bps))))
+			   (if (< (- samp lower) (- higher samp))
+			       (max 0 lower)
+			       higher))))
 	 (true-samps-moved (- new-position (mix-position id))))
     (if (= (sync id) 0)
 	(set! (mix-position id) new-position)
@@ -409,95 +409,94 @@ is no longer accessible.  pan-mix returns a list of the mixes performing the
 panning operation."))
     
     (lambda* (name beg pan snd auto-delete)
-      
-      (let* ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))
-	     (deletion-choice (if auto-delete 3 0)) ; multichannel deletion case
-	     (end-deletion-choice (if (= deletion-choice 3) 4 0)))
-	(if (not (sound? index))
-	    (error 'no-such-sound (list "pan-mix" snd)))
-	(if (not (file-exists? name))
-	    (error 'no-such-file (list "pan-mix" name)))
-	
-	(as-one-edit
-	 (lambda ()
-	   
-	   (define (invert-envelope e)
-	     (if (null? e)
-		 ()
-		 (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))
-	   
-	   (let ((incoming-chans (channels name))
-		 (receiving-chans (channels index)))
+      (let ((deletion-choice (if auto-delete 3 0))) ; multichannel deletion case
+	(let ((index (or snd (selected-sound) (and (sounds) (car (sounds)))))
+	      (end-deletion-choice (if (= deletion-choice 3) 4 0)))
+	  (if (not (sound? index))
+	      (error 'no-such-sound (list "pan-mix" snd)))
+	  (if (not (file-exists? name))
+	      (error 'no-such-file (list "pan-mix" name)))
+	  
+	  (as-one-edit
+	   (lambda ()
 	     
-	     (if (= incoming-chans 1)
-		 
-		 ;; mono input
-		 
-		 (if (= receiving-chans 1)
-		     
-		     ;; mono to mono = just scale or envelope
-		     (let ((idx (mix name beg 0 index 0 *with-mix-tags* auto-delete))) ; file start in-chan snd chn ...
-		       (and (pair? idx)
-			    (mix? (car idx))
-			    (let ((id (car idx)))
-			      (set! (mix-amp-env id) (invert-envelope pan))
-			      idx)))
-		     
-		     ;; mono to stereo
-		     (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
-			   (idx1 (mix name beg 0 index 1 *with-mix-tags* end-deletion-choice)))
-		       (and (pair? idx0)
-			    (mix? (car idx0))
-			    (pair? idx1)
-			    (mix? (car idx1))
-			    (let ((id0 (car idx0))
-				  (id1 (car idx1)))
-			      (set! (mix-amp-env id0) (invert-envelope pan))
-			      (set! (mix-amp-env id1) pan)
-			      (list id0 id1)))))
-		 
-		 ;; stero input
-		 
-		 (if (= receiving-chans 1)
-		     
-		     ;; stereo -> mono => scale or envelope both input chans into the output
-		     (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
-			   (idx1 (mix name beg 1 index 0 *with-mix-tags* end-deletion-choice)))
-		       (and (pair? idx0)
-			    (mix? (car idx0))
-			    (pair? idx1)
-			    (mix? (car idx1))
-			    (let ((id0 (car idx0))
-				  (id1 (car idx1)))
-			      (set! (mix-amp-env id0) (invert-envelope pan))
-			      (set! (mix-amp-env id1) (invert-envelope pan))
-			      (list id0 id1))))
-		     
-		     ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
-		     (let ((idx00 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
-			   (idx01 (mix name beg 0 index 1 *with-mix-tags* deletion-choice))
-			   (idx10 (mix name beg 1 index 0 *with-mix-tags* deletion-choice))
-			   (idx11 (mix name beg 1 index 1 *with-mix-tags* end-deletion-choice)))
+	     (define (invert-envelope e)
+	       (if (null? e)
+		   ()
+		   (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))
+	     
+	     (let ((incoming-chans (channels name))
+		   (receiving-chans (channels index)))
+	       
+	       (if (= incoming-chans 1)
+		   
+		   ;; mono input
+		   
+		   (if (= receiving-chans 1)
 		       
-		       (and (pair? idx00)
-			    (mix? (car idx00))
-			    (pair? idx01)
-			    (mix? (car idx01))
-			    (pair? idx10)
-			    (mix? (car idx10))
-			    (pair? idx11)
-			    (mix? (car idx11))
-			    (let ((id00 (car idx00))
-				  (id01 (car idx01))
-				  (id10 (car idx10))
-				  (id11 (car idx11)))
-			      (set! (mix-amp-env id00) (invert-envelope pan))
-			      (set! (mix-amp-env id10) (invert-envelope pan))
-			      (set! (mix-amp-env id01) pan)
-			      (set! (mix-amp-env id11) pan)
-			      (list id00 id01 id10 id11)))))))))))))
-
-
+		       ;; mono to mono = just scale or envelope
+		       (let ((idx (mix name beg 0 index 0 *with-mix-tags* auto-delete))) ; file start in-chan snd chn ...
+			 (and (pair? idx)
+			      (mix? (car idx))
+			      (let ((id (car idx)))
+				(set! (mix-amp-env id) (invert-envelope pan))
+				idx)))
+		       
+		       ;; mono to stereo
+		       (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+			     (idx1 (mix name beg 0 index 1 *with-mix-tags* end-deletion-choice)))
+			 (and (pair? idx0)
+			      (mix? (car idx0))
+			      (pair? idx1)
+			      (mix? (car idx1))
+			      (let ((id0 (car idx0))
+				    (id1 (car idx1)))
+				(set! (mix-amp-env id0) (invert-envelope pan))
+				(set! (mix-amp-env id1) pan)
+				(list id0 id1)))))
+		   
+		   ;; stero input
+		   
+		   (if (= receiving-chans 1)
+		       
+		       ;; stereo -> mono => scale or envelope both input chans into the output
+		       (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+			     (idx1 (mix name beg 1 index 0 *with-mix-tags* end-deletion-choice)))
+			 (and (pair? idx0)
+			      (mix? (car idx0))
+			      (pair? idx1)
+			      (mix? (car idx1))
+			      (let ((id0 (car idx0))
+				    (id1 (car idx1)))
+				(set! (mix-amp-env id0) (invert-envelope pan))
+				(set! (mix-amp-env id1) (invert-envelope pan))
+				(list id0 id1))))
+		       
+		       ;; stereo -> stereo => incoming chans are treated equally, each panned into outputs
+		       (let ((idx00 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))
+			     (idx01 (mix name beg 0 index 1 *with-mix-tags* deletion-choice))
+			     (idx10 (mix name beg 1 index 0 *with-mix-tags* deletion-choice))
+			     (idx11 (mix name beg 1 index 1 *with-mix-tags* end-deletion-choice)))
+			 
+			 (and (pair? idx00)
+			      (mix? (car idx00))
+			      (pair? idx01)
+			      (mix? (car idx01))
+			      (pair? idx10)
+			      (mix? (car idx10))
+			      (pair? idx11)
+			      (mix? (car idx11))
+			      (let ((id00 (car idx00))
+				    (id01 (car idx01))
+				    (id10 (car idx10))
+				    (id11 (car idx11)))
+				(set! (mix-amp-env id00) (invert-envelope pan))
+				(set! (mix-amp-env id10) (invert-envelope pan))
+				(set! (mix-amp-env id01) pan)
+				(set! (mix-amp-env id11) pan)
+				(list id00 id01 id10 id11))))))))))))))
+  
+  
 (define pan-mix-selection 
   (let ((documentation "(pan-mix-selection start pan-env snd) mixes the current selection  into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all chan 1)."))

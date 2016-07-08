@@ -705,49 +705,49 @@
   (define (series m id)
     ;; This routine evaluates the series  sum_k 16^(id-k)/(8*k+m) using the modular exponentiation technique.
     
-    (let ((expm (let* ((ntp 25)
-		       (tp1 0)
-		       (tp (make-vector ntp)))
-		  (lambda (p ak)
-		    ;; expm = 16^p mod ak.  This routine uses the left-to-right binary exponentiation scheme.
-		    
-		    ;; If this is the first call to expm, fill the power of two table tp.
-		    (if (= tp1 0)
-			(begin
-			  (set! tp1 1)
-			  (set! (tp 0) 1.0)
-			  (do ((i 1 (+ i 1)))
-			      ((= i ntp))
-			    (set! (tp i) (* 2.0 (tp (- i 1)))))))
-		    
-		    (if (= ak 1.0)
-			0.0
-			(let ((pl -1))
-			  ;;  Find the greatest power of two less than or equal to p.
-			  (do ((i 0 (+ i 1)))
-			      ((or (not (= pl -1)) 
-				   (= i ntp)))
-			    (if (> (tp i) p)
-				(set! pl i)))
-			  
-			  (if (= pl -1) (set! pl ntp))
-			  (let ((pt (tp (- pl 1)))
-				(p1 p)
-				(r 1.0))
-			    ;;  Perform binary exponentiation algorithm modulo ak.
+    (let ((expm (let ((ntp 25))
+		  (let ((tp1 0)
+			(tp (make-vector ntp)))
+		    (lambda (p ak)
+		      ;; expm = 16^p mod ak.  This routine uses the left-to-right binary exponentiation scheme.
+		      
+		      ;; If this is the first call to expm, fill the power of two table tp.
+		      (if (= tp1 0)
+			  (begin
+			    (set! tp1 1)
+			    (set! (tp 0) 1.0)
+			    (do ((i 1 (+ i 1)))
+				((= i ntp))
+			      (set! (tp i) (* 2.0 (tp (- i 1)))))))
+		      
+		      (if (= ak 1.0)
+			  0.0
+			  (let ((pl -1))
+			    ;;  Find the greatest power of two less than or equal to p.
+			    (do ((i 0 (+ i 1)))
+				((or (not (= pl -1)) 
+				     (= i ntp)))
+			      (if (> (tp i) p)
+				  (set! pl i)))
 			    
-			    (do ((j 1 (+ j 1)))
-				((> j pl) r)
-			      (if (>= p1 pt)
-				  (begin
-				    (set! r (* 16.0 r))
-				    (set! r (- r (* ak (floor (/ r ak)))))
-				    (set! p1 (- p1 pt))))
-			      (set! pt (* 0.5 pt))
-			      (if (>= pt 1.0)
-				  (begin
-				    (set! r (* r r))
-				    (set! r (- r (* ak (floor (/ r ak))))))))))))))
+			    (if (= pl -1) (set! pl ntp))
+			    (let ((pt (tp (- pl 1)))
+				  (p1 p)
+				  (r 1.0))
+			      ;;  Perform binary exponentiation algorithm modulo ak.
+			      
+			      (do ((j 1 (+ j 1)))
+				  ((> j pl) r)
+				(if (>= p1 pt)
+				    (begin
+				      (set! r (* 16.0 r))
+				      (set! r (- r (* ak (floor (/ r ak)))))
+				      (set! p1 (- p1 pt))))
+				(set! pt (* 0.5 pt))
+				(if (>= pt 1.0)
+				    (begin
+				      (set! r (* r r))
+				      (set! r (- r (* ak (floor (/ r ak)))))))))))))))
 	  (eps 1e-17)
 	  (s 0.0))
       (do ((k 0 (+ k 1)))
@@ -813,31 +813,31 @@
 
 (define* (sin-nx-peak n (err 1e-12))
   ;; return the min peak amp and its location for sin(x)+sin(nx+a)
-  (let* ((size (* n 100))
-	 (incr (/ (* 2 pi) size))
-	 (peak 0.0)
-	 (location 0.0)
-	 (offset (if (= (modulo n 4) 3) 0 pi)))
-    (do ((i 0 (+ i 1))
-	 (x 0.0 (+ x incr)))
-	((= i size))
-      (let ((val (abs (+ (sin x) (sin (+ offset (* n x)))))))
-	(if (> val peak)
-	    (begin
-	      (set! peak val)
-	      (set! location x)))))
-    ;; now narrow it by zigzagging around the peak
-    (let ((x location))
-      (do ((zig-size (* incr 2) (/ zig-size 2)))
-	  ((< zig-size err))
-	(let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))
-	      (left (abs (+ (sin (- x zig-size)) (sin (+ (* n (- x zig-size)) offset))))))
-	  (if (< left cur)
-	      (let ((right (abs (+ (sin (+ x zig-size)) (sin (+ (* n (+ x zig-size)) offset))))))
-		(if (> right cur)
-		    (set! x (+ x zig-size))))
-	      (set! x (- x zig-size)))))
-      (list (abs (+ (sin x) (sin (+ (* n x) offset)))) x))))
+  (let ((size (* n 100)))
+    (let ((incr (/ (* 2 pi) size))
+	  (peak 0.0)
+	  (location 0.0)
+	  (offset (if (= (modulo n 4) 3) 0 pi)))
+      (do ((i 0 (+ i 1))
+	   (x 0.0 (+ x incr)))
+	  ((= i size))
+	(let ((val (abs (+ (sin x) (sin (+ offset (* n x)))))))
+	  (if (> val peak)
+	      (begin
+		(set! peak val)
+		(set! location x)))))
+      ;; now narrow it by zigzagging around the peak
+      (let ((x location))
+	(do ((zig-size (* incr 2) (/ zig-size 2)))
+	    ((< zig-size err))
+	  (let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))
+		(left (abs (+ (sin (- x zig-size)) (sin (+ (* n (- x zig-size)) offset))))))
+	    (if (< left cur)
+		(let ((right (abs (+ (sin (+ x zig-size)) (sin (+ (* n (+ x zig-size)) offset))))))
+		  (if (> right cur)
+		      (set! x (+ x zig-size))))
+		(set! x (- x zig-size)))))
+	(list (abs (+ (sin x) (sin (+ (* n x) offset)))) x)))))
 
 ;;; --------------------------------------------------------------------------------
 

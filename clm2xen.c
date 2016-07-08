@@ -5149,7 +5149,7 @@ static mus_float_t *list_to_partials(Xen harms, int *npartials, int *error_code)
 
   for (i = 0, lst = Xen_copy_arg(harms); i < listlen; i += 2, lst = Xen_cddr(lst))
     {
-      if ((!(Xen_is_number(Xen_car(lst)))) ||
+      if ((!(Xen_is_integer(Xen_car(lst)))) ||
 	  (!(Xen_is_number(Xen_cadr(lst)))))
 	{
 	  (*error_code) = NON_NUMBER_IN_LIST;

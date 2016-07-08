@@ -137,76 +137,76 @@ a list (file-name-or-sound-object [beg [channel]])."))
 	      (close-sound output)
 	      (mix output-name output-beg 0 output-snd output-chn #t #t))))
       
-      (let* ((input (if (not (pair? input-data)) 
-			input-data 
-			(car input-data)))
-	     (input-beg (if (or (not (pair? input-data))
-				(< (length input-data) 2)) 
-			    0 
-			    (cadr input-data)))
-	     (input-channel (if (or (not (pair? input-data))
-				    (< (length input-data) 3))
-				0 
-				(caddr input-data)))
-	     (len (or dur (- (if (string? input)
-				 (framples input) 
-				 (framples input input-channel))
-			     input-beg)))
-	     (start (or beg 0)))
-	(if (< start 0) 
-	    (error 'no-such-sample "mix-channel: begin time < 0: ~A" beg)
-	    (when (> len 0)
-	      (cond ((not with-tag)
-		     ;; not a virtual mix
-		     (let ((d1 (samples input-beg len input input-channel))
-			   (d2 (samples start len snd chn edpos)))
-		       (float-vector-add! d1 d2)
-		       (float-vector->channel d1 start len snd chn
-					      current-edit-position
-					      (format #f (if (string? input-data)
-							     "mix-channel ~S ~A ~A"
-							     "mix-channel '~A ~A ~A")
-						      input-data beg dur))))
-		    ;; a virtual mix -- use simplest method available
-		    ((sound? input)          ; sound object case
-		     (channel->mix input input-channel input-beg len snd chn start))
-		    ((and (= start 0)        ; file input
-			  (= len (framples input)))
-		     (mix input start 0 snd chn #t #f)) ; mix entire file (don't delete it)
-		    (else
-		     ;; mix part of file
-		     (let* ((output-name (snd-tempnam))
-			    (output (new-sound output-name :size len)))
-		       (float-vector->channel (samples input-beg len input input-channel) 0 len output 0)
-		       (save-sound output)
-		       (close-sound output)
-		       (mix output-name start 0 snd chn #t #t))))))))))
+      (let ((input (if (not (pair? input-data)) 
+		       input-data 
+		       (car input-data)))
+	    (input-beg (if (or (not (pair? input-data))
+			       (< (length input-data) 2)) 
+			   0 
+			   (cadr input-data)))
+	    (input-channel (if (or (not (pair? input-data))
+				   (< (length input-data) 3))
+			       0 
+			       (caddr input-data))))
+	(let ((len (or dur (- (if (string? input)
+				  (framples input) 
+				  (framples input input-channel))
+			      input-beg)))
+	      (start (or beg 0)))
+	  (if (< start 0) 
+	      (error 'no-such-sample "mix-channel: begin time < 0: ~A" beg)
+	      (when (> len 0)
+		(cond ((not with-tag)
+		       ;; not a virtual mix
+		       (let ((d1 (samples input-beg len input input-channel))
+			     (d2 (samples start len snd chn edpos)))
+			 (float-vector-add! d1 d2)
+			 (float-vector->channel d1 start len snd chn
+						current-edit-position
+						(format #f (if (string? input-data)
+							       "mix-channel ~S ~A ~A"
+							       "mix-channel '~A ~A ~A")
+							input-data beg dur))))
+		      ;; a virtual mix -- use simplest method available
+		      ((sound? input)          ; sound object case
+		       (channel->mix input input-channel input-beg len snd chn start))
+		      ((and (= start 0)        ; file input
+			    (= len (framples input)))
+		       (mix input start 0 snd chn #t #f)) ; mix entire file (don't delete it)
+		      (else
+		       ;; mix part of file
+		       (let* ((output-name (snd-tempnam))
+			      (output (new-sound output-name :size len)))
+			 (float-vector->channel (samples input-beg len input input-channel) 0 len output 0)
+			 (save-sound output)
+			 (close-sound output)
+			 (mix output-name start 0 snd chn #t #t)))))))))))
 
 
 (define insert-channel 
   (let ((documentation "(insert-channel file beg dur snd chn edpos) inserts the file. file can be the file name or a list (file-name [beg [channel]])"))
     (lambda* (file-data beg dur snd chn edpos)
-      (let* ((file-name (if (string? file-data) file-data (car file-data)))
-	     (file-beg (if (or (string? file-data) 
-			       (< (length file-data) 2)) 
-			   0 
-			   (cadr file-data)))
-	     (file-channel (if (or (string? file-data) 
-				   (< (length file-data) 3))
-			       0 
-			       (caddr file-data)))
-	     (len (or dur (- (framples file-name) file-beg)))
-	     (start (or beg 0)))
-	(if (< start 0) (error 'no-such-sample "insert-channel: begin time < 0: ~A" beg))
-	(if (> len 0)
-	    (insert-samples start len 
-			    (samples file-beg len file-name file-channel)
-			    snd chn edpos #f 
-			    (format #f (if (string? file-data)
-					   "insert-channel ~S ~A ~A"
-					   "insert-channel '~A ~A ~A")
-				    file-data beg dur)))))))
-
+      (let ((file-name (if (string? file-data) file-data (car file-data)))
+	    (file-beg (if (or (string? file-data) 
+			      (< (length file-data) 2)) 
+			  0 
+			  (cadr file-data))))
+	(let ((file-channel (if (or (string? file-data) 
+				    (< (length file-data) 3))
+				0 
+				(caddr file-data)))
+	      (len (or dur (- (framples file-name) file-beg)))
+	      (start (or beg 0)))
+	  (if (< start 0) (error 'no-such-sample "insert-channel: begin time < 0: ~A" beg))
+	  (if (> len 0)
+	      (insert-samples start len 
+			      (samples file-beg len file-name file-channel)
+			      snd chn edpos #f 
+			      (format #f (if (string? file-data)
+					     "insert-channel ~S ~A ~A"
+					     "insert-channel '~A ~A ~A")
+				      file-data beg dur))))))))
+  
 
 ;;; -------- redo-channel, undo-channel
 
@@ -441,14 +441,14 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define dither-channel 
   (let ((documentation "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"))
     (lambda* ((amount .00006) (beg 0) dur snd chn edpos)
-      (let* ((dither (* .5 amount))
-	     (len (if (number? dur) dur (- (framples snd chn) beg)))
-	     (data (samples beg len snd chn edpos)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))
-	(float-vector->channel data beg len snd chn current-edit-position
-			       (format #f "dither-channel ~,8F ~A ~A" amount beg dur))))))
+      (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
+	(let ((dither (* .5 amount))
+	      (data (samples beg len snd chn edpos)))
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))
+	  (float-vector->channel data beg len snd chn current-edit-position
+				 (format #f "dither-channel ~,8F ~A ~A" amount beg dur)))))))
 
 
 (define dither-sound 

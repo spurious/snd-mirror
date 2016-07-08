@@ -219,10 +219,9 @@
   ;; sanity checking of configuration
   
   (define (has-duplicates? lst)
-    ;; from ice-9/common-list.scm
-    (cond ((null? lst) #f)
-	  ((member (car lst) (cdr lst)) #t)
-	  (else (has-duplicates? (cdr lst)))))
+    (and (not (null? lst))
+         (or (member (car lst) (cdr lst))
+             (has-duplicates? (cdr lst)))))
   
   (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
     (let ((m (make-float-vector '(3 3))))
@@ -912,14 +911,14 @@
 		  (v ()))
 	      (for-each
 	       (lambda (p)
-		 (let* ((d (car p))
+		 (let ((d (car p))
 			(evec (let ((e (if (and 3d (pair? (cddr p))) (caddr p) 0.0)))
-				(cis (/ (* e 2 pi) dlocsig-one-turn))))
-			(dxy (* d (real-part evec)))
-			(avec (let ((a (cadr p)))
-				(cis (/ (* a 2 pi) dlocsig-one-turn)))))
-		   (set! x (cons (* dxy (imag-part avec)) x))
-		   (set! y (cons (* dxy (real-part avec)) y))
+				(cis (/ (* e 2 pi) dlocsig-one-turn)))))
+		   (let ((dxy (* d (real-part evec)))
+			 (avec (let ((a (cadr p)))
+				 (cis (/ (* a 2 pi) dlocsig-one-turn)))))
+		     (set! x (cons (* dxy (imag-part avec)) x))
+		     (set! y (cons (* dxy (real-part avec)) y)))
 		   (set! z (cons (* d (imag-part evec)) z))
 		   (set! v (cons ((if 3d fourth third) p) v))))
 	       points)
@@ -1081,114 +1080,114 @@
 
 (define (fit path)
   (cond ((not (eq? (car path) 'open-bezier-path))
-	 (let* ((n (- (length (bezier-x path )) 1))
-		(m (/ (- n (if (odd? n) 3 4)) 2))
-		;; data points P(i)
-		(p (vector (apply vector (bezier-x path))
-			   (apply vector (bezier-y path))
-			   (apply vector (bezier-z path))))
-		;; control points D(i)
-		(d (vector (make-vector n 0.0)
-			   (make-vector n 0.0)
-			   (make-vector n 0.0))))
+	 (let ((n (- (length (bezier-x path )) 1)))
+	   (let ((m (/ (- n (if (odd? n) 3 4)) 2))
+		 ;; data points P(i)
+		 (p (vector (apply vector (bezier-x path))
+			    (apply vector (bezier-y path))
+			    (apply vector (bezier-z path))))
+		 ;; control points D(i)
+		 (d (vector (make-vector n 0.0)
+			    (make-vector n 0.0)
+			    (make-vector n 0.0))))
 	   
-	   (define (a-1 k n)
-	     (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
-		 (begin
-		   (if (not path-ak-odd) (make-a-odd))
-		   ((path-ak-odd (/ (- n 3) 2)) (- k 1)))
-		 (begin
-		   (if (not path-ak-even) (make-a-even))
-		   ((path-ak-even (/ (- n 4) 2)) (- k 1)))))
-	   
-	   (define (xvector-ref z j i)
-	     (z j (if (> i (- n 1))
-		      (- i n)
-		      (if (< i 0) 
-			  (+ i n) i))))
-	   
-	   (do ((i 0 (+ i 1)))
-	       ((= i n))
-	     (do ((k 1 (+ k 1)))
-		 ((> k m))
-	       (do ((a 0 (+ 1 a)))
-		   ((> a 2))
-		 (set! (d a i)
-		       (+ (d a i)
-			  (* (a-1 k n)
-			     (- (xvector-ref p a (+ i k))
-				(xvector-ref p a (- i k)))))))))
-	   (if (bezier-curvature path)
-	       (do ((i 0 (+ i 1)))
-		   ((= i n))
-		 (set! (d 0 i) (* (d 0 i) (bezier-curvature path)))
-		 (set! (d 1 i) (* (d 1 i) (bezier-curvature path)))
-		 (set! (d 2 i) (* (d 2 i) (bezier-curvature path)))))
-	   (list (- n 1) p d)))
+	     (define (a-1 k n)
+	       (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
+		   (begin
+		     (if (not path-ak-odd) (make-a-odd))
+		     ((path-ak-odd (/ (- n 3) 2)) (- k 1)))
+		   (begin
+		     (if (not path-ak-even) (make-a-even))
+		     ((path-ak-even (/ (- n 4) 2)) (- k 1)))))
+	     
+	     (define (xvector-ref z j i)
+	       (z j (if (> i (- n 1))
+			(- i n)
+			(if (< i 0) 
+			    (+ i n) i))))
+	     
+	     (do ((i 0 (+ i 1)))
+		 ((= i n))
+	       (do ((k 1 (+ k 1)))
+		   ((> k m))
+		 (do ((a 0 (+ 1 a)))
+		     ((> a 2))
+		   (set! (d a i)
+			 (+ (d a i)
+			    (* (a-1 k n)
+			       (- (xvector-ref p a (+ i k))
+				  (xvector-ref p a (- i k)))))))))
+	     (if (bezier-curvature path)
+		 (do ((i 0 (+ i 1)))
+		     ((= i n))
+		   (set! (d 0 i) (* (d 0 i) (bezier-curvature path)))
+		   (set! (d 1 i) (* (d 1 i) (bezier-curvature path)))
+		   (set! (d 2 i) (* (d 2 i) (bezier-curvature path)))))
+	     (list (- n 1) p d))))
 	(else
-	 (let* ((n (- (length (bezier-x path)) 1))
-		(m (- n 1))
-		;; data points P(i)
-		(p (vector (apply vector (bezier-x path))
-			   (apply vector (bezier-y path))
-			   (apply vector (bezier-z path))))
-		;; control points D(i)
-		(d (vector (make-vector (+ n 1) 0.0) 
-			   (make-vector (+ n 1) 0.0) 
-			   (make-vector (+ n 1) 0.0))))
-	   
-	   (define (ac k n)
-	     (let ((un (min n path-maxcoeff)))
-	       (if (not path-ak-even) (make-a-even))
-	       ((path-ak-even (- un 2)) (- k 1))))
-	   
-	   (define (ref z j i)
-	     (cond ((> i n) (z j (- i n)))
-		   ((< i 0) (z j (+ i n)))
-		   ((= i n) (- (z j n) (d j n)))
-		   ((= i 0) (+ (z j 0) (d j 0)))
-		   (else    (z j i))))
-	   
-	   ;; forced initial direction
-	   (if (initial-direction path)
-	       (begin
-		 (set! (d 0 0) (car (initial-direction path)))
-		 (set! (d 1 0) (cadr (initial-direction path)))
-		 (set! (d 2 0) (third (initial-direction path))))
-	       (begin
-		 (set! (d 0 0) 0.0)
-		 (set! (d 1 0) 0.0)
-		 (set! (d 2 0) 0.0)))
-	   
-	   ;; forced final direction
-	   (if (final-direction path)
-	       (begin
-		 (set! (d 0 n) (car (final-direction path)))
-		 (set! (d 1 n) (cadr (final-direction path)))
-		 (set! (d 2 n) (caddr (final-direction path))))
-	       (begin
-		 (set! (d 0 n) 0.0)
-		 (set! (d 1 n) 0.0)
-		 (set! (d 2 n) 0.0)))
-	   
-	   ;; calculate fit
-	   (do ((i 1 (+ i 1)))
-	       ((= i n))
-	     (do ((k 1 (+ k 1)))
-		 ((> k (min m (- path-maxcoeff 1))))
-	       (let ((d0 (d 0 i))
-		     (d1 (d 1 i))
-		     (d2 (d 2 i)))
-		 (set! (d 0 i) (+ d0 (* (ac k n)
-					(- (ref p 0 (+ i k))
-					   (ref p 0 (- i k))))))
-		 (set! (d 1 i) (+ d1 (* (ac k n)
-					(- (ref p 1 (+ i k))
-					   (ref p 1 (- i k))))))
-		 (set! (d 2 i) (+ d2 (* (ac k n)
-					(- (ref p 2 (+ i k))
-					   (ref p 2 (- i k)))))))))
-	   (list n p d)))))
+	 (let ((n (- (length (bezier-x path)) 1)))
+	   (let ((m (- n 1))
+		 ;; data points P(i)
+		 (p (vector (apply vector (bezier-x path))
+			    (apply vector (bezier-y path))
+			    (apply vector (bezier-z path))))
+		 ;; control points D(i)
+		 (d (vector (make-vector (+ n 1) 0.0) 
+			    (make-vector (+ n 1) 0.0) 
+			    (make-vector (+ n 1) 0.0))))
+	     
+	     (define (ac k n)
+	       (let ((un (min n path-maxcoeff)))
+		 (if (not path-ak-even) (make-a-even))
+		 ((path-ak-even (- un 2)) (- k 1))))
+	     
+	     (define (ref z j i)
+	       (cond ((> i n) (z j (- i n)))
+		     ((< i 0) (z j (+ i n)))
+		     ((= i n) (- (z j n) (d j n)))
+		     ((= i 0) (+ (z j 0) (d j 0)))
+		     (else    (z j i))))
+	     
+	     ;; forced initial direction
+	     (if (initial-direction path)
+		 (begin
+		   (set! (d 0 0) (car (initial-direction path)))
+		   (set! (d 1 0) (cadr (initial-direction path)))
+		   (set! (d 2 0) (third (initial-direction path))))
+		 (begin
+		   (set! (d 0 0) 0.0)
+		   (set! (d 1 0) 0.0)
+		   (set! (d 2 0) 0.0)))
+	     
+	     ;; forced final direction
+	     (if (final-direction path)
+		 (begin
+		   (set! (d 0 n) (car (final-direction path)))
+		   (set! (d 1 n) (cadr (final-direction path)))
+		   (set! (d 2 n) (caddr (final-direction path))))
+		 (begin
+		   (set! (d 0 n) 0.0)
+		   (set! (d 1 n) 0.0)
+		   (set! (d 2 n) 0.0)))
+	     
+	     ;; calculate fit
+	     (do ((i 1 (+ i 1)))
+		 ((= i n))
+	       (do ((k 1 (+ k 1)))
+		   ((> k (min m (- path-maxcoeff 1))))
+		 (let ((d0 (d 0 i))
+		       (d1 (d 1 i))
+		       (d2 (d 2 i)))
+		   (set! (d 0 i) (+ d0 (* (ac k n)
+					  (- (ref p 0 (+ i k))
+					     (ref p 0 (- i k))))))
+		   (set! (d 1 i) (+ d1 (* (ac k n)
+					  (- (ref p 1 (+ i k))
+					     (ref p 1 (- i k))))))
+		   (set! (d 2 i) (+ d2 (* (ac k n)
+					  (- (ref p 2 (+ i k))
+					     (ref p 2 (- i k)))))))))
+	     (list n p d))))))
 
 ;;; Calculate bezier control points for the given open path
 
@@ -1208,56 +1207,56 @@
 	 
 	 (let ((points (length (bezier-x path))))
 	   (cond ((> points 2)
-		  (let* ((vals (fit path))
-			 (n (car vals))
-			 (p (cadr vals))
-			 (d (caddr vals)))
-		    (let ((c (bezier-curvature path))
-			  (cs (make-vector n)))
-		      ;; setup the curvatures array
-		      (cond ((memq c '(#f ()))                          ; no curvature specified, default is 1.0
-			     (do ((i 0 (+ i 1)))
-				 ((= i n))
-			       (set! (cs i) (list 1.0 1.0))))
-			    ((number? c)                    ; same curvature for all segments
-			     (do ((i 0 (+ i 1)))
-				 ((= i n))
-			       (set! (cs i) (list c c))))
-			    ((and (pair? c) (= n (length c)))   ; list of curvatures
-			     (let ((i 0))
-			       (for-each
-				(lambda (ci)
-				  (set! (cs i) (if (pair? ci) 
-						   (if (= (length ci) 2)
-						       ci
-						       (error 'mus-error "curvature sublist must have two elements ~A~%" ci))
-						   (list ci ci)))
-				  (set! i (+ i 1)))
-				c)))
-			    (else (error 'mus-error "bad curvature argument ~A to path, need ~A elements~%" c n)))
-		      
-		      ;; calculate control points
-		      (let ((xc ())
-			    (yc ())
-			    (zc ()))
-			(do ((i 0 (+ i 1)))
-			    ((= i n))
-			  
-			  (set! xc (cons (list (p 0 i)
-					       (+ (p 0 i) (* (d 0 i) (car (cs i))))
-					       (- (p 0 (+ i 1)) (* (d 0 (+ i 1)) (cadr (cs i))))
-					       (p 0 (+ i 1))) xc))
-			  (set! yc (cons (list (p 1 i)
-					       (+ (p 1 i) (* (d 1 i) (car (cs i))))
-					       (- (p 1 (+ i 1)) (* (d 1 (+ i 1)) (cadr (cs i))))
-					       (p 1 (+ i 1))) yc))
-			  (set! zc (cons (list (p 2 i)
-					       (+ (p 2 i) (* (d 2 i) (car (cs i))))
-					       (- (p 2 (+ i 1)) (* (d 2 (+ i 1)) (cadr (cs i))))
-					       (p 2 (+ i 1))) zc)))
-			(set! (bezier-bx path) (reverse xc))
-			(set! (bezier-by path) (reverse yc))
-			(set! (bezier-bz path) (reverse zc))))))
+		  (let ((vals (fit path)))
+		    (let ((n (car vals))
+			  (p (cadr vals))
+			  (d (caddr vals)))
+		      (let ((c (bezier-curvature path))
+			    (cs (make-vector n)))
+			;; setup the curvatures array
+			(cond ((memq c '(#f ()))                          ; no curvature specified, default is 1.0
+			       (do ((i 0 (+ i 1)))
+				   ((= i n))
+				 (set! (cs i) (list 1.0 1.0))))
+			      ((number? c)                    ; same curvature for all segments
+			       (do ((i 0 (+ i 1)))
+				   ((= i n))
+				 (set! (cs i) (list c c))))
+			      ((and (pair? c) (= n (length c)))   ; list of curvatures
+			       (let ((i 0))
+				 (for-each
+				  (lambda (ci)
+				    (set! (cs i) (if (pair? ci) 
+						     (if (= (length ci) 2)
+							 ci
+							 (error 'mus-error "curvature sublist must have two elements ~A~%" ci))
+						     (list ci ci)))
+				    (set! i (+ i 1)))
+				  c)))
+			      (else (error 'mus-error "bad curvature argument ~A to path, need ~A elements~%" c n)))
+			
+			;; calculate control points
+			(let ((xc ())
+			      (yc ())
+			      (zc ()))
+			  (do ((i 0 (+ i 1)))
+			      ((= i n))
+			    
+			    (set! xc (cons (list (p 0 i)
+						 (+ (p 0 i) (* (d 0 i) (car (cs i))))
+						 (- (p 0 (+ i 1)) (* (d 0 (+ i 1)) (cadr (cs i))))
+						 (p 0 (+ i 1))) xc))
+			    (set! yc (cons (list (p 1 i)
+						 (+ (p 1 i) (* (d 1 i) (car (cs i))))
+						 (- (p 1 (+ i 1)) (* (d 1 (+ i 1)) (cadr (cs i))))
+						 (p 1 (+ i 1))) yc))
+			    (set! zc (cons (list (p 2 i)
+						 (+ (p 2 i) (* (d 2 i) (car (cs i))))
+						 (- (p 2 (+ i 1)) (* (d 2 (+ i 1)) (cadr (cs i))))
+						 (p 2 (+ i 1))) zc)))
+			  (set! (bezier-bx path) (reverse xc))
+			  (set! (bezier-by path) (reverse yc))
+			  (set! (bezier-bz path) (reverse zc)))))))
 		 
 		 ((= points 2)
 		  ;; just a line, stays a line
@@ -1283,12 +1282,12 @@
 	     (xparse-path path))
 	 
 	 (if (> (length (bezier-x path)) 4)
-	     (let* ((vals (fit path))
-		    (n (car vals))
-		    (p (cadr vals))
-		    (d (caddr vals)))
-	       ;; enough points, fit path
-	       (let ((xc ())
+	     (let ((vals (fit path)))
+	       (let ((n (car vals))
+		     (p (cadr vals))
+		     (d (caddr vals))
+		     ;; enough points, fit path
+		     (xc ())
 		     (yc ())
 		     (zc ()))
 		 (do ((i 0 (+ i 1)))
@@ -1419,27 +1418,27 @@
 		(cr 1 0)
 		(cr 2 0))))
       
-      (let* ((vals (bezier-point u c))
-	     (x (car vals))
-	     (y (cadr vals))
-	     (z (caddr vals))
-	     (val1 (nearest-point xl yl zl xh yh zh x y z))
-	     (xn (car val1))
-	     (yn (cadr val1))
-	     (zn (caddr val1)))
-	(if (<= (distance (- xn x) (- yn y) (- zn z)) err)
-	    (list () () ())
-	    (let* ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
-		   (xi (car val2))
-		   (yi (cadr val2))
-		   (zi (caddr val2))
-		   (val3 (berny x y z xh yh zh u (/ (+ u uh) 2) uh c err))
-		   (xj (car val3))
-		   (yj (cadr val3))
-		   (zj (caddr val3)))
-	      (list (append xi (cons x xj))
-		    (append yi (cons y yj))
-		    (append zi (cons z zj)))))))
+      (let ((vals (bezier-point u c)))
+	(let ((x (car vals))
+	      (y (cadr vals))
+	      (z (caddr vals)))
+	  (let ((val1 (nearest-point xl yl zl xh yh zh x y z)))
+	    (let ((xn (car val1))
+		  (yn (cadr val1))
+		  (zn (caddr val1)))
+	      (if (<= (distance (- xn x) (- yn y) (- zn z)) err)
+		  (list () () ())
+		  (let ((val2 (berny xl yl zl x y z ul (/ (+ ul u) 2) u c err))
+			(val3 (berny x y z xh yh zh u (/ (+ u uh) 2) uh c err)))
+		    (let ((xi (car val2))
+			  (yi (cadr val2))
+			  (zi (caddr val2))
+			  (xj (car val3))
+			  (yj (cadr val3))
+			  (zj (caddr val3)))
+		      (list (append xi (cons x xj))
+			    (append yi (cons y yj))
+			    (append zi (cons z zj)))))))))))
     
     ;; Create linear segment approximations of the bezier segments
     ;; make sure there are initial and final velocity values
@@ -1464,40 +1463,36 @@
 	    ;; render the path only if it has at least two points
 	    (do ((i 0 (+ i 1)))
 		((= i len))
-	      (let* ((x-bz ((bezier-bx path) i))
-		     (y-bz ((bezier-by path) i))
-		     (z-bz ((bezier-bz path) i))
-		     (vi-bz ((bezier-v path) i))
-		     (vf-bz ((bezier-v path) (+ i 1)))
-		     (xi-bz (car x-bz))
-		     (xf-bz (x-bz (- (length x-bz) 1)))
-		     (yi-bz (car y-bz))
-		     (yf-bz (y-bz (- (length y-bz) 1)))
-		     (zi-bz (car z-bz))
-		     (zf-bz (z-bz (- (length z-bz) 1)))
-		     (vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
-				  (vector (apply vector x-bz)
-					  (apply vector y-bz)
-					  (apply vector z-bz))
-				  (bezier-error path)))
-		     (xs (car vals))
-		     (ys (cadr vals))
-		     (zs (caddr vals)))
-		
-		;; approximate the bezier curve with linear segments
-		(set! xrx (append xrx (cons xi-bz xs)))
-		(set! xry (append xry (cons yi-bz ys)))
-		(set! xrz (append xrz (cons zi-bz zs)))
-		
-		;; accumulate intermediate unknown velocities as nils
-		(set! xrv (append xrv (cons vi-bz (make-list (length xs) #f))))
-		(if (= i (- len 1))
-		    (begin
-		      ;; add the last point
-		      (set! xrx (append xrx (list xf-bz)))
-		      (set! xry (append xry (list yf-bz)))
-		      (set! xrz (append xrz (list zf-bz)))
-		      (set! xrv (append xrv (list vf-bz))))))))
+	      (let ((x-bz ((bezier-bx path) i))
+		    (y-bz ((bezier-by path) i))
+		    (z-bz ((bezier-bz path) i)))
+		(let ((vi-bz ((bezier-v path) i))
+		      (vf-bz ((bezier-v path) (+ i 1)))
+		      (xi-bz (car x-bz))
+		      (xf-bz (x-bz (- (length x-bz) 1)))
+		      (yi-bz (car y-bz))
+		      (yf-bz (y-bz (- (length y-bz) 1)))
+		      (zi-bz (car z-bz))
+		      (zf-bz (z-bz (- (length z-bz) 1))))
+		  (let ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
+				     (vector (apply vector x-bz)
+					     (apply vector y-bz)
+					     (apply vector z-bz))
+				     (bezier-error path))))
+		      ;; approximate the bezier curve with linear segments
+		    (set! xry (append xry (cons yi-bz (cadr vals))))
+		    (set! xrz (append xrz (cons zi-bz (caddr vals))))
+		    (let ((xs (car vals)))
+		      (set! xrx (append xrx (cons xi-bz xs)))
+		      ;; accumulate intermediate unknown velocities as nils
+		      (set! xrv (append xrv (cons vi-bz (make-list (length xs) #f))))
+		      (if (= i (- len 1))
+			  (begin
+			    ;; add the last point
+			    (set! xrx (append xrx (list xf-bz)))
+			    (set! xry (append xry (list yf-bz)))
+			    (set! xrz (append xrz (list zf-bz)))
+			    (set! xrv (append xrv (list vf-bz)))))))))))
 	  
 	  ;; calculate times for each velocity segment
 	  (let ((ti 0)
@@ -1600,71 +1595,71 @@
 	(begin
 	  (set! (path-rt path) (list 0.0))
 	  (reset-transformation path))
-	(let* ((rx (path-rx path))
-	       (ry (path-ry path))
-	       (rz (path-rz path))
-	       (rv (path-rv path))
-	       (xseg (list (car rx)))
-	       (yseg (list (car ry)))
-	       (zseg (list (car rz)))
-	       (vseg (list (car rv)))
-	       (vi (car rv))
-	       (len (length rx))
-	       (ti 0)
-	       (times (list ti)))
-	  (do ((i 1 (+ i 1)))
-	      ((= i len))
-	    (let ((x (rx i))
-		  (y (ry i))
-		  (z (rz i))
-		  (v (rv i)))
-	      (set! xseg (append xseg (list x)))
-	      (set! yseg (append yseg (list y)))
-	      (set! zseg (append zseg (list z)))
-	      (set! vseg (append vseg (list v)))
+	(let ((rx (path-rx path))
+	      (ry (path-ry path))
+	      (rz (path-rz path))
+	      (rv (path-rv path)))
+	  (let ((xseg (list (car rx)))
+		(yseg (list (car ry)))
+		(zseg (list (car rz)))
+		(vseg (list (car rv)))
+		(vi (car rv))
+		(len (length rx))
+		(ti 0))
+	    (let ((times (list ti)))
+	      (do ((i 1 (+ i 1)))
+		  ((= i len))
+		(let ((x (rx i))
+		      (y (ry i))
+		      (z (rz i))
+		      (v (rv i)))
+		  (set! xseg (append xseg (list x)))
+		  (set! yseg (append yseg (list y)))
+		  (set! zseg (append zseg (list z)))
+		  (set! vseg (append vseg (list v)))
+		  
+		  (when (number? v)
+		    (let ((sofar 0.0)
+			  (dseg ())
+			  (len (- (length xseg) 1)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i len))
+			(let ((xsi (xseg i))
+			      (ysi (yseg i))
+			      (zsi (zseg i))
+			      (xsf (xseg (+ i 1)))
+			      (ysf (yseg (+ i 1)))
+			      (zsf (zseg (+ i 1))))
+			  (set! sofar (+ sofar (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
+			  (set! dseg (cons sofar dseg))))
+		      (let ((df (car dseg)))
+			(set! dseg (reverse dseg))
+			(let ((tseg ()))
+			  (let ((a (/ (* (- v vi) (+ v vi)) df 4)))
+			    (for-each
+			     (lambda (d)
+			       (let ((seg (+ ti (if (= v vi)
+						    (/ d vi)
+						    (/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))))
+				 (set! tseg (cons seg tseg))))
+			     dseg))
+			  (set! ti (car tseg))
+			  (set! tseg (reverse tseg))
+			  (set! times (append times tseg))
+			  (set! xseg (list x))
+			  (set! yseg (list y))
+			  (set! zseg (list z))
+			  (set! vseg (list v))
+			  (set! vi v)))))))
 	      
-	      (when (number? v)
-		(let ((sofar 0.0)
-		      (dseg ())
-		      (len (- (length xseg) 1)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i len))
-		    (let ((xsi (xseg i))
-			  (ysi (yseg i))
-			  (zsi (zseg i))
-			  (xsf (xseg (+ i 1)))
-			  (ysf (yseg (+ i 1)))
-			  (zsf (zseg (+ i 1))))
-		      (set! sofar (+ sofar (distance (- xsf xsi) (- ysf ysi) (- zsf zsi))))
-		      (set! dseg (cons sofar dseg))))
-		  (let ((df (car dseg)))
-		    (set! dseg (reverse dseg))
-		    (let ((tseg ()))
-		      (let ((a (/ (* (- v vi) (+ v vi)) df 4)))
-			(for-each
-			 (lambda (d)
-			   (let ((seg (+ ti (if (= v vi)
-						(/ d vi)
-						(/ (- (sqrt (+ (* vi vi) (* 4 a d))) vi) (* 2 a))))))
-			   (set! tseg (cons seg tseg))))
-			 dseg))
-		      (set! ti (car tseg))
-		      (set! tseg (reverse tseg))
-		      (set! times (append times tseg))
-		      (set! xseg (list x))
-		      (set! yseg (list y))
-		      (set! zseg (list z))
-		      (set! vseg (list v))
-		      (set! vi v)))))))
-	  
-	  (set! (path-rt path) (let ((val ())
-				     (tf (times (- (length times) 1))))
-				 (for-each
-				  (lambda (ti)
-				    (set! val (cons (/ ti tf) val)))
-				  times)
-				 (reverse val)))
-	  (reset-transformation path)))))
+	      (set! (path-rt path) (let ((val ())
+					 (tf (times (- (length times) 1))))
+				     (for-each
+				      (lambda (ti)
+					(set! val (cons (/ ti tf) val)))
+				      times)
+				     (reverse val)))
+	      (reset-transformation path)))))))
 
 (define (spiral-render path)
   ;; Render a spiral path from the object data
@@ -1719,11 +1714,11 @@
 		((>= i len))
 	      (let* ((di (dp i))
 		     (df (dp (+ i 1)))
-		     (vp (x-norm (spiral-velocity path) df))
-		     (vi (envelope-interp di vp))
-		     (vf (envelope-interp df vp)))
-		(set! tp (cons td tp))
-		(set! td (+ td (/ (- df di) (+ vi vf) 2)))))
+		     (vp (x-norm (spiral-velocity path) df)))
+		(let ((vi (envelope-interp di vp))
+		      (vf (envelope-interp df vp)))
+		  (set! tp (cons td tp))
+		  (set! td (+ td (/ (- df di) (+ vi vf) 2))))))
 	    (let ((tf (car tp)))
 	      (set! tp (reverse tp))
 	      (set! (path-rx path) x)
@@ -1776,11 +1771,11 @@
     
     (let ((rotate (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
 	  (I (vector (vector 1.0 0.0 0.0) (vector 0.0 1.0 0.0) (vector 0.0 0.0 1.0)))
-	  (A (let* ((vals (normalize x y z))
-		    (dx (car vals))
-		    (dy (cadr vals))
-		    (dz (caddr vals)))
-	       (vector (vector 0.0 dz (- dy)) (vector (- dz) 0.0 dx) (vector dy (- dx) 0.0))))
+	  (A (let ((vals (normalize x y z)))
+	       (let ((dx (car vals))
+		     (dy (cadr vals))
+		     (dz (caddr vals)))
+		 (vector (vector 0.0 dz (- dy)) (vector (- dz) 0.0 dx) (vector dy (- dx) 0.0)))))
 	  (AA (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
 	  (sn (sin (- angle)))
 	  (omcs (- 1 (cos angle)))) ; (cos (- angle)) == (cos angle)
@@ -1836,58 +1831,58 @@
 	     (set! (path-ty path) (reverse ytr))
 	     (set! (path-tz path) (reverse ztr)))
 
-	  (let* ((x (xc i))
-		 (y (yc i))
-		 (z (zc i))
-		 (xw x)
-		 (yw y)
-		 (zw z))
-	    (when rotation
-	      ;; rotating around non-triple zero? translate first
-	      (when rotation-center
-		(set! xw (- xw (car rotation-center)))
-		(set! yw (- yw (cadr rotation-center)))
-		(set! zw (- zw (third rotation-center))))
-	      ;; rotation
-	      (let ((xr (+ (* (matrix 0 0) xw)
-			   (* (matrix 1 0) yw)
-			   (* (matrix 2 0) zw)))
-		    (yr (+ (* (matrix 0 1) xw)
-			   (* (matrix 1 1) yw)
-			   (* (matrix 2 1) zw)))
-		    (zr (+ (* (matrix 0 2) xw)
-			   (* (matrix 1 2) yw)
-			   (* (matrix 2 2) zw))))
-		(set! xw xr)
-		(set! yw yr)
-		(set! zw zr))
-	      ;; rotating around non-triple zero? untranslate
-	      (when rotation-center
-		(set! xw (+ xw (car rotation-center)))
-		(set! yw (+ yw (cadr rotation-center)))
-		(set! zw (+ zw (third rotation-center)))))
-	    
-	    ;; scaling
-	    (when scaling
-	      (set! xw (* xw (car scaling)))
-	      (if (cadr scaling)
-		  (set! yw (* yw (cadr scaling))))
-	      (if (third scaling)
-		  (set! zw (* zw (third scaling)))))
-	    
-	    ;; translating
-	    (when translation
-	      (set! xw (+ xw (car translation)))
-	      (if (cadr translation)
-		  (set! yw (+ yw (cadr translation))))
-	      (if (third translation)
-		  (set! zw (+ zw (third translation)))))
-	    
-	    ;; collect the points
-	    (set! xtr (cons xw xtr))
-	    (set! ytr (cons yw ytr))
-	    (set! ztr (cons zw ztr)))))
-	  
+	  (let ((x (xc i))
+		(y (yc i))
+		(z (zc i)))
+	    (let ((xw x)
+		  (yw y)
+		  (zw z))
+	      (when rotation
+		;; rotating around non-triple zero? translate first
+		(when rotation-center
+		  (set! xw (- xw (car rotation-center)))
+		  (set! yw (- yw (cadr rotation-center)))
+		  (set! zw (- zw (third rotation-center))))
+		;; rotation
+		(let ((xr (+ (* (matrix 0 0) xw)
+			     (* (matrix 1 0) yw)
+			     (* (matrix 2 0) zw)))
+		      (yr (+ (* (matrix 0 1) xw)
+			     (* (matrix 1 1) yw)
+			     (* (matrix 2 1) zw)))
+		      (zr (+ (* (matrix 0 2) xw)
+			     (* (matrix 1 2) yw)
+			     (* (matrix 2 2) zw))))
+		  (set! xw xr)
+		  (set! yw yr)
+		  (set! zw zr))
+		;; rotating around non-triple zero? untranslate
+		(when rotation-center
+		  (set! xw (+ xw (car rotation-center)))
+		  (set! yw (+ yw (cadr rotation-center)))
+		  (set! zw (+ zw (third rotation-center)))))
+	      
+	      ;; scaling
+	      (when scaling
+		(set! xw (* xw (car scaling)))
+		(if (cadr scaling)
+		    (set! yw (* yw (cadr scaling))))
+		(if (third scaling)
+		    (set! zw (* zw (third scaling)))))
+	      
+	      ;; translating
+	      (when translation
+		(set! xw (+ xw (car translation)))
+		(if (cadr translation)
+		    (set! yw (+ yw (cadr translation))))
+		(if (third translation)
+		    (set! zw (+ zw (third translation)))))
+	      
+	      ;; collect the points
+	      (set! xtr (cons xw xtr))
+	      (set! ytr (cons yw ytr))
+	      (set! ztr (cons zw ztr))))))
+      
       (begin
 	;; if there's no transformation just copy the rendered path
 	(set! (path-tt path) (copy (path-rt path)))
@@ -2032,62 +2027,48 @@
   (if (not rev-channels)
       (set! rev-channels (if *reverb* (channels *reverb*) 0)))
   
-  (let* (;; speaker configuration for current number of channels
-	 (speakers (and (not (= render-using ambisonics))
-			(get-speaker-configuration out-channels)))
-	 
-	 ;; array of gains -- envelopes
-	 (channel-gains (make-vector out-channels ()))
-	 (channel-rev-gains (make-vector out-channels ()))
-	 
-	 ;; speaker output delays
-	 (max-out-delay 0.0)
-	 (out-delays (make-vector out-channels))
-	 
-	 ;; coordinates of rendered path
-	 (xpoints (path-x path))
-	 (ypoints (path-y path))
-	 (zpoints (path-z path))
-	 (tpoints (path-time path))
-	 
-	 ;; speed of sound expressed in terms of path time coordinates
-	 (start 0)
-					;(end 0)
-	 (dly ())
-	 (doppler ())
-	 (real-dur 0)
-	 (prev-time #f)
-	 (prev-dist #f)
-	 (first-dist #f)
-	 (last-dist #f)
-	 (min-dist #f)
-	 (max-dist #f)
-	 (min-delay #f)
-	 ;; without this the delay apparently stomps over something else in the structure
-	 ;; and we get artifacts in the output, probably a off-by-one error somewhere
-	 (delay-hack 1)
-	 (min-dist-unity #f)
-	 (unity-gain 1.0)
-	 (unity-rev-gain 1.0)
-	 (amb-unity-gain 1.0)
-	 (amb-unity-rev-gain 1.0)
-	 (run-beg #f)
-	 (run-end #f)
-	 ;; channel offsets in output stream for ambisonics
-	 ;; (depends on horizontal and vertical order, default is h=1,v=1)
-	 (z-offset #f)
-	 (r-offset #f)
-	 (s-offset #f)
-	 (t-offset #f)
-	 (u-offset #f)
-	 (v-offset #f)
-	 (k-offset #f)
-	 (l-offset #f)
-	 (m-offset #f)
-	 (n-offset #f)
-	 (o-offset #f)
-	 (p-offset #f)
-	 (q-offset #f))
+  (let (;; speaker configuration for current number of channels
+	(speakers (and (not (= render-using ambisonics))
+		       (get-speaker-configuration out-channels)))
+	;; coordinates of rendered path
+	(xpoints (path-x path))
+	(ypoints (path-y path))
+	(zpoints (path-z path))
+	(tpoints (path-time path))
+	
+	;; array of gains -- envelopes
+	(channel-gains (make-vector out-channels ()))
+	(channel-rev-gains (make-vector out-channels ()))
+	
+	;; speaker output delays
+	(max-out-delay 0.0)
+	(out-delays (make-vector out-channels))
+	
+	;; speed of sound expressed in terms of path time coordinates
+	(dly ())
+	(doppler ())
+	(prev-time #f)
+	(prev-dist #f)
+	(first-dist #f)
+	(last-dist #f)
+	(min-dist #f)
+	(max-dist #f)
+	(delay-hack 1)
+	;; channel offsets in output stream for ambisonics
+	;; (depends on horizontal and vertical order, default is h=1,v=1)
+	(z-offset #f)
+	(r-offset #f)
+	(s-offset #f)
+	(t-offset #f)
+	(u-offset #f)
+	(v-offset #f)
+	(k-offset #f)
+	(l-offset #f)
+	(m-offset #f)
+	(n-offset #f)
+	(o-offset #f)
+	(p-offset #f)
+	(q-offset #f))
     
     (when (= render-using ambisonics)
       ;; calculate output channel offsets for ambisonics rendering
@@ -2240,15 +2221,15 @@
 	;; calculate transition point between two adjacent two-speaker groups
 	;; original line intersection code from Graphic Gems III
 	(define (transition-point-2 vert xa ya xb yb)
-	  (let* ((Ax (car vert))
-		 (Bx (- xa xb))
-		 (Ay (cadr vert))
-		 (By (- ya yb))
-		 (d (- (* By (- xa)) (* Bx (- ya))))
-		 (f (- (* Ay Bx) (* Ax By))))
-	    (and (not (= f 0))
-		 (list (/ (* d Ax) f)
-		       (/ (* d Ay) f)))))
+	  (let ((Ax (car vert))
+		(Bx (- xa xb))
+		(Ay (cadr vert))
+		(By (- ya yb)))
+	    (let ((d (- (* By (- xa)) (* Bx (- ya))))
+		  (f (- (* Ay Bx) (* Ax By))))
+	      (and (not (= f 0))
+		   (list (/ (* d Ax) f)
+			 (/ (* d Ay) f))))))
 	
 	;; find the speaker group that contains a point
 	(define (find-group x y z)
@@ -2256,11 +2237,11 @@
 	   (lambda (return)
 	     (for-each
 	      (lambda (group)
-		(let* ((vals (find-gains x y z group))
-		       (inside (car vals))
-		       (gains (cadr vals)))
-		  (if inside
-		      (return (list group gains)))))
+		(let ((vals (find-gains x y z group)))
+		  (let ((inside (car vals))
+			(gains (cadr vals)))
+		    (if inside
+			(return (list group gains))))))
 	      (speaker-config-groups speakers))
 	     (list #f #f))))
 	
@@ -2358,146 +2339,146 @@
 	  
 	  ;; output gains for current point
 	  (if prev-group
-	      (let* ((vals (find-gains x y z prev-group))
-		     (inside (car vals))
-		     (gains (cadr vals)))
-		;; check that the source is not moving faster than sound
-		(if (not (= time prev-time))
-		    (let ((speed (/ (- dist prev-dist) (- time prev-time))))
-		      (if (> speed speed-limit)
-			  (format () "warning: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
-		(if inside
-		    ;; still in the same group
-		    (begin
-		      (push-gains prev-group gains dist time)
-		      (set! prev-x x)
-		      (set! prev-y y)
-		      (set! prev-z z))
-		    ;; left the group
-		    (let* ((vals (find-group x y z))
-			   (group (car vals))
-			   (gains (cadr vals)))
-		      (if (not group)
-			  (begin
-			    ;; current point is outside all defined groups
-			    ;; we should send a warning at this point...
-			    (push-zero-gains time)
-			    (set! prev-group #f))
-			  (begin
-			    ;; we have to interpolate a new point that lies on the shared
-			    ;; edge of the adjacent groups so that the speakers opposite
-			    ;; the edge have zero gain when the trajectory switches groups
-			    (let ((edge (equalp-intersection (group-vertices group)
-							     (group-vertices prev-group))))
-			      (cond ((= (length edge) 2)
-				     ;; the groups have two shared points (ie: share an edge)
-				     ;; this must be a three speaker groups transition
-				     (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
-				       (when pint
-					 (let* ((xi (car pint))
-						(yi (cadr pint))
-						(zi (third pint))
-						(di (distance xi yi zi))
-						(ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											     (- yi prev-y)
-											     (- zi prev-z))
-										   (distance (- x prev-x)
-											     (- y prev-y)
-											     (- z prev-z)))
-										(- time prev-time)))))
-						;; see if we are inside the previous group
-						;; we can be on either side due to roundoff errors
-						(vals (find-gains xi yi zi prev-group))
-						(inside (car vals))
-						(gains (cadr vals)))
-					   (if inside
-					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (find-gains xi yi zi group))
-						      (inside (car val1))
-						      (gains (cadr val1)))
+	      (let ((vals (find-gains x y z prev-group)))
+		(let ((inside (car vals))
+		      (gains (cadr vals)))
+		  ;; check that the source is not moving faster than sound
+		  (if (not (= time prev-time))
+		      (let ((speed (/ (- dist prev-dist) (- time prev-time))))
+			(if (> speed speed-limit)
+			    (format () "warning: supersonic radial movement at [~F,~F,~F, ~F], speed=~F~%" x y z time speed))))
+		  (if inside
+		      ;; still in the same group
+		      (begin
+			(push-gains prev-group gains dist time)
+			(set! prev-x x)
+			(set! prev-y y)
+			(set! prev-z z))
+		      ;; left the group
+		      (let ((vals (find-group x y z)))
+			(let ((group (car vals))
+			      (gains (cadr vals)))
+			  (if (not group)
+			      (begin
+				;; current point is outside all defined groups
+				;; we should send a warning at this point...
+				(push-zero-gains time)
+				(set! prev-group #f))
+			      (begin
+				;; we have to interpolate a new point that lies on the shared
+				;; edge of the adjacent groups so that the speakers opposite
+				;; the edge have zero gain when the trajectory switches groups
+				(let ((edge (equalp-intersection (group-vertices group)
+								 (group-vertices prev-group))))
+				  (cond ((= (length edge) 2)
+					 ;; the groups have two shared points (ie: share an edge)
+					 ;; this must be a three speaker groups transition
+					 (let ((pint (transition-point-3 (car edge) (cadr edge) x y z prev-x prev-y prev-z)))
+					   (when pint
+					     (let* ((xi (car pint))
+						    (yi (cadr pint))
+						    (zi (third pint))
+						    (vals (find-gains xi yi zi prev-group)))
+					       (let ((di (distance xi yi zi))
+						     (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+												  (- yi prev-y)
+												  (- zi prev-z))
+											(distance (- x prev-x)
+												  (- y prev-y)
+												  (- z prev-z)))
+										     (- time prev-time)))))
+						     ;; see if we are inside the previous group
+						     ;; we can be on either side due to roundoff errors
+						     (inside (car vals))
+						     (gains (cadr vals)))
 						 (if inside
-						     (push-gains group gains di ti)
-						     ;; how did we get here?
-						     (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti))))))))
-				    
-				    ((and (pair? edge) 
-					  (null? (cdr edge))
-					  (= (group-size group) 2))
-				     ;; two two-speaker groups share one point
-				     ;; z coordinates are silently ignored
-				     (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
-				       (when pint
-					 (let* ((xi (car pint))
-						(yi (cadr pint))
-						(di (distance xi yi 0.0))
-						(ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
-											     (- yi prev-y)
-											     0.0)
-										   (distance (- x prev-x)
-											     (- y prev-y)
-											     0.0))
-										(- time prev-time)))))
-						;; see if we are inside the previous group
-						;; we can be on either side due to roundoff errors
-						(vals (find-gains xi yi 0.0 prev-group))
-						(inside (car vals))
-						(gains (cadr vals)))
-					   (if inside 
-					       (push-gains prev-group gains di ti)
-					       (let* ((val1 (find-gains xi yi 0.0 group))
-						      (inside (car val1))
-						      (gains (cadr val1)))
-						 (if inside
-						     (push-gains group gains di ti)
-						     ;; how did we get here?
-						     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))
-				    
-				    ((and (pair? edge) 
-					  (null? (cdr edge)))
-				     ;; groups share only one point... for now a warning
-				     ;; we should calculate two additional interpolated
-				     ;; points as the trajectory must be crossing a third
-				     ;; group
-				     (for-each
-				      (lambda (int-group)
-					(if (and (member (car edge) (group-vertices int-group))
-						 (not (equal? int-group group))
-						 (not (equal? int-group prev-group)))
-					    (format () "e1=~A; e2=~A~%~%"
-						    (equalp-intersection (group-vertices int-group)
-									 (group-vertices prev-group))
-						    (equalp-intersection (group-vertices int-group)
-									 (group-vertices group)))))
-					      
-				      (speaker-config-groups speakers))
-				     (format () "warning: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
-				    
-				    ;; groups don't share points... how did we get here?
-				    ((null? edge)
-				     (format () "warning: crossing between groups with no common points, ~A~A to ~A~A~%"
-					     (group-id prev-group) (group-speakers prev-group)
-					     (group-id group) (group-speakers group)))))
-			    
-			    ;; finally push gains for current group
-			    (push-gains group gains dist time)
-			    (set! prev-group group)
-			    (set! prev-x x)
-			    (set! prev-y y)
-			    (set! prev-z z))))))
+						     (push-gains prev-group gains di ti)
+						     (let ((val1 (find-gains xi yi zi group)))
+						       (let ((inside (car val1))
+							     (gains (cadr val1)))
+							 (if inside
+							     (push-gains group gains di ti)
+							     ;; how did we get here?
+							     (error 'mus-error "Outside of both adjacent groups [~A:~A:~A @~A]~%~%" xi yi zi ti))))))))))
+					
+					((and (pair? edge) 
+					      (null? (cdr edge))
+					      (= (group-size group) 2))
+					 ;; two two-speaker groups share one point
+					 ;; z coordinates are silently ignored
+					 (let ((pint (transition-point-2 (car edge) x y prev-x prev-y)))
+					   (when pint
+					     (let* ((xi (car pint))
+						    (yi (cadr pint))
+						    (vals (find-gains xi yi 0.0 prev-group)))
+					       (let ((di (distance xi yi 0.0))
+						     (ti (+ prev-time (max .00001 (* (/ (distance (- xi prev-x)
+												  (- yi prev-y)
+												  0.0)
+											(distance (- x prev-x)
+												  (- y prev-y)
+												  0.0))
+										     (- time prev-time)))))
+						     ;; see if we are inside the previous group
+						     ;; we can be on either side due to roundoff errors
+						     (inside (car vals))
+						     (gains (cadr vals)))
+						 (if inside 
+						     (push-gains prev-group gains di ti)
+						     (let ((val1 (find-gains xi yi 0.0 group)))
+						       (let ((inside (car val1))
+							     (gains (cadr val1)))
+							 (if inside
+							     (push-gains group gains di ti)
+							     ;; how did we get here?
+							     (format () "Outside of both adjacent groups [~A:~A @~A]~%~%" xi yi ti))))))))))
+					
+					((and (pair? edge) 
+					      (null? (cdr edge)))
+					 ;; groups share only one point... for now a warning
+					 ;; we should calculate two additional interpolated
+					 ;; points as the trajectory must be crossing a third
+					 ;; group
+					 (for-each
+					  (lambda (int-group)
+					    (if (and (member (car edge) (group-vertices int-group))
+						     (not (equal? int-group group))
+						     (not (equal? int-group prev-group)))
+						(format () "e1=~A; e2=~A~%~%"
+							(equalp-intersection (group-vertices int-group)
+									     (group-vertices prev-group))
+							(equalp-intersection (group-vertices int-group)
+									     (group-vertices group)))))
+					  
+					  (speaker-config-groups speakers))
+					 (format () "warning: crossing between groups with only one point in common~%  prev=~A~%  curr=~A~%" prev-group group))
+					
+					;; groups don't share points... how did we get here?
+					((null? edge)
+					 (format () "warning: crossing between groups with no common points, ~A~A to ~A~A~%"
+						 (group-id prev-group) (group-speakers prev-group)
+						 (group-id group) (group-speakers group)))))
+				
+				;; finally push gains for current group
+				(push-gains group gains dist time)
+				(set! prev-group group)
+				(set! prev-x x)
+				(set! prev-y y)
+				(set! prev-z z))))))))
 	      ;; first time around
-	      (let* ((vals (find-group x y z))
-		     (group (car vals))
-		     (gains (cadr vals)))
-		(if group
-		    (begin
-		      (push-gains group gains dist time)
-		      (set! prev-group group)
-		      (set! prev-x x)
-		      (set! prev-y y)
-		      (set! prev-z z))
-		    (begin
-		      (push-zero-gains time)
-		      (set! prev-group #f))))))))
+	      (let ((vals (find-group x y z)))
+		(let ((group (car vals))
+		      (gains (cadr vals)))
+		  (if group
+		      (begin
+			(push-gains group gains dist time)
+			(set! prev-group group)
+			(set! prev-x x)
+			(set! prev-y y)
+			(set! prev-z z))
+		      (begin
+			(push-zero-gains time)
+			(set! prev-group #f)))))))))
     
     ;; Render a trajectory breakpoint for ambisonics b-format coding
     ;; http://www.york.ac.uk/inst/mustech/3d_audio/ambis2.htm
@@ -2561,19 +2542,12 @@
 	    (ambisonics-k1 (sqrt 135/256)) ;(/ (* 21 45) 224 8)
 	    (ambisonics-k2 (* (sqrt 3) 3 0.5)))
 	(lambda (x y z dist time)
-	  (let* ((att (if (> dist inside-radius)
+	  (let ((att (if (> dist inside-radius)
 			  (expt (/ inside-radius dist) direct-power)
 			  (expt (/ dist inside-radius) (/ inside-direct-power))))
-		 (attW (if (> dist inside-radius)
-			   (* point707 att)
-			   (- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power)))))
 		 (ratt (if (> dist inside-radius)
 			   (expt (/ inside-radius dist) reverb-power)
 			   (expt (/ dist inside-radius) (/ inside-reverb-power))))
-		 (rattW (if (> dist inside-radius)
-			    (* point707 ratt)
-			    (- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power)))))
-		 ;; storage for some intermediate calculations
 		 (u 0)
 		 (v 0)
 		 (lm 0)
@@ -2581,7 +2555,10 @@
 	    ;; output encoding gains for point
 	    ;; W: 0.707
 	    (set! (channel-gains w-offset) (cons time (channel-gains w-offset)))
-	    (set! (channel-gains w-offset) (cons attW (channel-gains w-offset)))
+	    (let ((attW (if (> dist inside-radius)
+			    (* point707 att)
+			    (- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power))))))
+	      (set! (channel-gains w-offset) (cons attW (channel-gains w-offset))))
 	    ;; X: (* (cos A) (cos E))
 	    (set! (channel-gains x-offset) (cons time (channel-gains x-offset)))
 	    (set! (channel-gains x-offset) (cons (* (if (zero? dist) 0 (/ y dist)) att) (channel-gains x-offset)))
@@ -2615,7 +2592,7 @@
 	      ;; V
 	      (set! (channel-gains v-offset) (cons time (channel-gains v-offset)))
 	      (set! (channel-gains v-offset) (cons v (channel-gains v-offset))))
-
+	    
 	    (when (>= ambisonics-v-order 3)
 	      (set! lm (* ambisonics-k1 (- (* 5 z z (if (zero? dist) 1 (/ 1.0 dist dist))) 1) att))
 	      (set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) att))
@@ -2634,7 +2611,7 @@
 	      ;; O
 	      (set! (channel-gains o-offset) (cons time (channel-gains o-offset)))
 	      (set! (channel-gains o-offset) (cons (* (if (zero? dist) 0 no) v) (channel-gains o-offset))))
-
+	    
 	    (when (>= ambisonics-h-order 3)
 	      ;; P
 	      (set! (channel-gains p-offset) (cons time (channel-gains p-offset)))
@@ -2660,7 +2637,10 @@
 	      ;; multichannel reverb, send ambisonics components
 	      ;; W: 0.707
 	      (set! (channel-rev-gains w-offset) (cons time (channel-rev-gains w-offset)))
-	      (set! (channel-rev-gains w-offset) (cons rattW (channel-rev-gains w-offset)))
+	      (let ((rattW (if (> dist inside-radius)
+			       (* point707 ratt)
+			       (- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power))))))
+		(set! (channel-rev-gains w-offset) (cons rattW (channel-rev-gains w-offset))))
 	      ;; X: (* (cos A)(cos E))
 	      (set! (channel-rev-gains x-offset) (cons time (channel-rev-gains x-offset)))
 	      (set! (channel-rev-gains x-offset) (cons (* (if (zero? dist) 0 1) y (if (zero? dist) 1 (/ dist)) ratt)
@@ -2760,62 +2740,62 @@
     ;;         (* Z (sin el)))
     ;; 
     (define (fdecoded-ambisonics x y z dist time)
-      (let* ((att (if (> dist inside-radius)
+      (let ((att (if (> dist inside-radius)
 		      (expt (/ inside-radius dist) direct-power)
 		      (expt (/ dist inside-radius) (/ inside-direct-power))))
-	     (attW (if (> dist inside-radius)
-		       (* point707 att)
-		       (- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power)))))
 	     (ratt (if (> dist inside-radius)
 		       (expt (/ inside-radius dist) reverb-power)
-		       (expt (/ dist inside-radius) (/ inside-reverb-power))))
-	     (rattW (if (> dist inside-radius)
-			(* point707 ratt)
-			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power))))))
-	;; output decoded gains for point
-	(let ((len (speaker-config-number speakers))
-	      (spkrs (speaker-config-coords speakers)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (let ((signal (let ((s (spkrs i)))
-			    (* dlocsig-ambisonics-scaler
-			       (+ 
-				;; W
-				(* attW point707)
-				;; (* X (cos az) (cos el))
-				(* att (if (= dist 0) 0 (/ y dist)) (cadr s))
-				;; (* Y (sin az) (cos el))
-				(* att (if (= dist 0) 0 (/ x dist)) (car s))
-				;; (* Z (sin el)
-				(* att (if (= dist 0) 0 (/ z dist)) (third s)))))))
-	      (set! (channel-gains i) (cons time (channel-gains i)))
-	      (set! (channel-gains i) (cons signal (channel-gains i))))))
-	
-	;; push reverb gain into envelope
-	(if (= rev-channels 1)
-	    (begin
-	      ;; mono reverberation
-	      (set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
-	      (set! (channel-rev-gains 0) (cons (if (>= dist inside-radius)
-						    (expt dist (- reverb-power))
-						    (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
-						(channel-rev-gains 0))))
-	    ;; multichannel reverb
+		       (expt (/ dist inside-radius) (/ inside-reverb-power)))))
+	(let ((attW (if (> dist inside-radius)
+			(* point707 att)
+			(- 1 (* (- 1 point707) (expt (/ dist inside-radius) direct-power)))))
+	      (rattW (if (> dist inside-radius)
+			 (* point707 ratt)
+			 (- 1 (* (- 1 point707) (expt (/ dist inside-radius) reverb-power))))))
+	  ;; output decoded gains for point
+	  (let ((len (speaker-config-number speakers))
+		(spkrs (speaker-config-coords speakers)))
 	    (do ((i 0 (+ i 1)))
-		((= i rev-channels))
-	      (let ((signal (let ((s ((speaker-config-coords speakers) i)))
+		((= i len))
+	      (let ((signal (let ((s (spkrs i)))
 			      (* dlocsig-ambisonics-scaler
 				 (+ 
 				  ;; W
-				  (* rattW point707)
+				  (* attW point707)
 				  ;; (* X (cos az) (cos el))
-				  (* ratt (if (zero? dist) 0 (/ y dist)) (cadr s))
+				  (* att (if (= dist 0) 0 (/ y dist)) (cadr s))
 				  ;; (* Y (sin az) (cos el))
-				  (* ratt (if (zero? dist) 0 (/ x dist)) (car s))
+				  (* att (if (= dist 0) 0 (/ x dist)) (car s))
 				  ;; (* Z (sin el)
-				  (* ratt (if (zero? dist) 0 (/ z dist)) (third s)))))))
-		(set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
-		(set! (channel-rev-gains i) (cons signal (channel-rev-gains i))))))))
+				  (* att (if (= dist 0) 0 (/ z dist)) (third s)))))))
+		(set! (channel-gains i) (cons time (channel-gains i)))
+		(set! (channel-gains i) (cons signal (channel-gains i))))))
+	  
+	  ;; push reverb gain into envelope
+	  (if (= rev-channels 1)
+	      (begin
+		;; mono reverberation
+		(set! (channel-rev-gains 0) (cons time (channel-rev-gains 0)))
+		(set! (channel-rev-gains 0) (cons (if (>= dist inside-radius)
+						      (expt dist (- reverb-power))
+						      (- 1.0 (expt (/ dist inside-radius) (/ inside-reverb-power))))
+						  (channel-rev-gains 0))))
+	      ;; multichannel reverb
+	      (do ((i 0 (+ i 1)))
+		  ((= i rev-channels))
+		(let ((signal (let ((s ((speaker-config-coords speakers) i)))
+				(* dlocsig-ambisonics-scaler
+				   (+ 
+				    ;; W
+				    (* rattW point707)
+				    ;; (* X (cos az) (cos el))
+				    (* ratt (if (zero? dist) 0 (/ y dist)) (cadr s))
+				    ;; (* Y (sin az) (cos el))
+				    (* ratt (if (zero? dist) 0 (/ x dist)) (car s))
+				    ;; (* Z (sin el)
+				    (* ratt (if (zero? dist) 0 (/ z dist)) (third s)))))))
+		  (set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
+		  (set! (channel-rev-gains i) (cons signal (channel-rev-gains i)))))))))
     
     ;; Loop through all virtual rooms for one breakpoint in the trajectory
     (define (walk-all-rooms x y z time)
@@ -2871,21 +2851,21 @@
     ;;   point in the rendered envelopes
     (define (change-direction xa ya za ta xb yb zb tb)
       (walk-all-rooms xa ya za ta)
-      (if (not (and (= xa xb)
-		    (= ya yb)
-		    (= za zb)
-		    (= ta tb)))
-	  (let* ((vals (nearest-point xa ya za xb yb zb 0 0 0))
-		 (xi (car vals))
-		 (yi (cadr vals))
-		 (zi (caddr vals)))
+      (unless (and (= xa xb)
+		   (= ya yb)
+		   (= za zb)
+		   (= ta tb))
+	(let ((vals (nearest-point xa ya za xb yb zb 0 0 0)))
+	  (let ((xi (car vals))
+		(yi (cadr vals))
+		(zi (caddr vals)))
 	    (if (and (if (< xa xb) (<= xa xi xb) (<= xb xi xa))
 		     (if (< ya yb) (<= ya yi yb) (<= yb yi ya))
 		     (if (< za zb) (<= za zi zb) (<= zb zi za)))
 		(walk-all-rooms xi yi zi
 				(+ tb (* (- ta tb)
 					 (/ (distance (- xb xi) (- yb yi) (- zb zi))
-					    (distance (- xb xa) (- yb ya) (- zb za))))))))))
+					    (distance (- xb xa) (- yb ya) (- zb za)))))))))))
     
     ;; Check to see if a segment intersects the inner sphere:
     ;;   points inside are rendered differently so we need to
@@ -2903,41 +2883,41 @@
 	(if (not hit)
 	    (change-direction xa ya za ta xb yb zb tb)
 	    ;; ray defined by two points hits sphere
-	    (let* ((root (sqrt disc))
-		   (rin  (- (+ bsq root)))
-		   (rout (- root bsq))
-		   (xi #f) (yi #f) (zi #f) (ti #f) (xo #f) (yo #f) (zo #f) (to #f))
-	      (if (> mag rin 0) ;(and (> rin 0) (< rin mag))
-		  ;; intersects entering sphere
-		  (begin
-		    (set! xi (+ xa (* vx rin)))
-		    (set! yi (+ ya (* vy rin)))
-		    (set! zi (+ za (* vz rin)))
-		    (set! ti (+ tb (* (- ta tb)
-				      (/ (distance (- xb xi) (- yb yi) (- zb zi))
-					 (distance (- xb xa) (- yb ya) (- zb za))))))))
-	      (if (and (> rout 0) (< (abs rout) mag))
-		  ;; intersects leaving sphere
-		  (begin
-		    (set! xo (+ xa (* vx rout)))
-		    (set! yo (+ ya (* vy rout)))
-		    (set! zo (+ za (* vz rout)))
-		    (set! to (+ tb (* (- ta tb)
-				      (/ (distance (- xb xo) (- yb yo) (- zb zo))
-					 (distance (- xb xa) (- yb ya) (- zb za))))))))
-	      (if xi
-		  (begin
-		    (change-direction xa ya za ta xi yi zi ti)
+	    (let ((root (sqrt disc)))
+	      (let ((rin  (- (+ bsq root)))
+		    (rout (- root bsq))
+		    (xi #f) (yi #f) (zi #f) (ti #f) (xo #f) (yo #f) (zo #f) (to #f))
+		(if (> mag rin 0) ;(and (> rin 0) (< rin mag))
+		    ;; intersects entering sphere
+		    (begin
+		      (set! xi (+ xa (* vx rin)))
+		      (set! yi (+ ya (* vy rin)))
+		      (set! zi (+ za (* vz rin)))
+		      (set! ti (+ tb (* (- ta tb)
+					(/ (distance (- xb xi) (- yb yi) (- zb zi))
+					   (distance (- xb xa) (- yb ya) (- zb za))))))))
+		(if (and (> rout 0) (< (abs rout) mag))
+		    ;; intersects leaving sphere
+		    (begin
+		      (set! xo (+ xa (* vx rout)))
+		      (set! yo (+ ya (* vy rout)))
+		      (set! zo (+ za (* vz rout)))
+		      (set! to (+ tb (* (- ta tb)
+					(/ (distance (- xb xo) (- yb yo) (- zb zo))
+					   (distance (- xb xa) (- yb ya) (- zb za))))))))
+		(if xi
+		    (begin
+		      (change-direction xa ya za ta xi yi zi ti)
+		      (if xo
+			  (begin
+			    (change-direction xi yi zi ti xo yo zo to)
+			    (change-direction xo yo zo to xb yb zb tb))
+			  (change-direction xi yi zi ti xb yb zb tb)))
 		    (if xo
 			(begin
-			  (change-direction xi yi zi ti xo yo zo to)
+			  (change-direction xa ya za ta xo yo zo to)
 			  (change-direction xo yo zo to xb yb zb tb))
-			(change-direction xi yi zi ti xb yb zb tb)))
-		  (if xo
-		      (begin
-			(change-direction xa ya za ta xo yo zo to)
-			(change-direction xo yo zo to xb yb zb tb))
-		      (change-direction xa ya za ta xb yb zb tb)))))))
+			(change-direction xa ya za ta xb yb zb tb))))))))
     
     ;; Recursively split segment if longer than minimum rendering distance:
     ;;   otherwise long line segments that have changes in distance render 
@@ -3009,115 +2989,111 @@
 					      (make-delay (time->samples delayo))))
 	      (set! max-out-delay (max max-out-delay delayo))))))
     
-    ;; delay from the minimum distance to the listener
-    (set! min-delay (dist->samples min-dist))
-    ;; duration of sound at listener's position after doppler src
-    ;;
-    ;; this does not work quite right but the error leads to a longer
-    ;; run with zeroed samples at the end so it should be fine
-    ; (format () "doppler: ~S~%" doppler)
-
-    (set! real-dur (* duration (if (null? doppler) 1.0 (src-duration (reverse doppler)))))
-
     ;; end of the run according to the duration of the note
     ;; (set! end (time->samples duration))
     ;; start and end of the loop in samples
-    (set! run-beg (time->samples start-time))
-    (set! run-end (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
-			       (dist->samples last-dist)
-			       (time->samples max-out-delay))
-			    (if initial-delay 0.0 min-delay))))
-    ;; sample at which signal first arrives to the listener
-    (set! start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
-    ;; minimum distance for unity gain calculation
-    (set! min-dist-unity (max min-dist inside-radius))
-    ;; unity-gain gain scalers
-    (set! unity-gain (* scaler
-			(if (number? unity-gain-dist)
-			    (expt unity-gain-dist direct-power)
-			    (if unity-gain-dist
-				1.0
-				(expt min-dist-unity direct-power)))))
-    (set! unity-rev-gain (* scaler
-			    (if (number? unity-gain-dist)
-				(expt unity-gain-dist reverb-power)
-				(if unity-gain-dist ; defaults to #f above
-				    1.0
-				    (expt min-dist-unity reverb-power)))))
-    ;; unity-gain ambisonics gain scalers
-    (set! amb-unity-gain (* scaler 
-			    (if (number? unity-gain-dist)
-				(expt unity-gain-dist direct-power)
-				(if unity-gain-dist
-				    1.0
-				    (expt min-dist-unity direct-power)))))
-    (set! amb-unity-rev-gain (* scaler
-				(if (number? unity-gain-dist)
-				    (expt unity-gain-dist reverb-power)
-				    (if unity-gain-dist ; defaults to #f above
-					1.0
-					(expt min-dist-unity reverb-power)))))
-
-    ;;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
-    (if (<= real-dur 0.0)
-	(begin
-	  (format () ";;; error: resetting real duration to 0.1 (was ~A)~%" real-dur)
-	(set! real-dur 0.1)))
-
-    (let ((gen (make-move-sound
-		(list
-		 ;; :start 
-		 start
-		 ;; :end 
-		 (time->samples (+ start-time (max duration real-dur)))
-		 ;; :out-channels 
-		 (if speakers (speaker-config-number speakers) out-channels)
-		 ;; :rev-channels 
-		 rev-channels
-		 ;; :path 
-		 (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
-		 ;; :delay 
-		 (make-env (reverse dly)
-			   :offset (if initial-delay 0.0 (- min-delay))
-			   :duration real-dur)
-		 ;; :rev 
-		 (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
-			       (list 0 reverb-amount 1 reverb-amount)
-			       reverb-amount)
-			   :duration real-dur)
-		 ;; :out-delays 
-		 out-delays
-		 ;; :gains 
-		 (let ((v (make-vector out-channels)))
-		   (do ((i 0 (+ i 1)))
-		       ((= i out-channels))
-		     (set! (v i) (make-env (reverse (channel-gains i))
-					   :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
-					   :duration real-dur)))
-		   v)
-		 ;; :rev-gains 
-		 (and (> rev-channels 0)
-		      (let ((v (make-vector rev-channels)))
-			(do ((i 0 (+ i 1)))
-			    ((= i rev-channels))
-			  (set! (v i) (make-env (reverse (channel-rev-gains i))
-						:scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
-						:duration real-dur)))
-			v))
-		 ;; :out-map 
-		 (if speakers 
-		     (speaker-config-map speakers) 
+    (let (;; delay from the minimum distance to the listener
+	  (min-delay (dist->samples min-dist))
+	  ;; duration of sound at listener's position after doppler src
+	  ;; this does not work quite right but the error leads to a longer
+	  ;; run with zeroed samples at the end so it should be fine
+	  (real-dur (* duration (if (null? doppler) 1.0 (src-duration (reverse doppler)))))
+	  ;; minimum distance for unity gain calculation
+	  (min-dist-unity (max min-dist inside-radius))
+	  (run-beg (time->samples start-time)))
+      (let ((run-end (floor (- (+ (time->samples (+ start-time (max duration real-dur)))
+				  (dist->samples last-dist)
+				  (time->samples max-out-delay))
+			       (if initial-delay 0.0 min-delay))))
+	    ;; sample at which signal first arrives to the listener
+	    (start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
+	    ;; unity-gain gain scalers
+	    (unity-gain (* scaler
+			   (if (number? unity-gain-dist)
+			       (expt unity-gain-dist direct-power)
+			       (if unity-gain-dist
+				   1.0
+				   (expt min-dist-unity direct-power)))))
+	    (unity-rev-gain (* scaler
+			       (if (number? unity-gain-dist)
+				   (expt unity-gain-dist reverb-power)
+				   (if unity-gain-dist ; defaults to #f above
+				       1.0
+				       (expt min-dist-unity reverb-power)))))
+	    ;; unity-gain ambisonics gain scalers
+	    (amb-unity-gain (* scaler 
+			       (if (number? unity-gain-dist)
+				   (expt unity-gain-dist direct-power)
+				   (if unity-gain-dist
+				       1.0
+				       (expt min-dist-unity direct-power)))))
+	    (amb-unity-rev-gain (* scaler
+				   (if (number? unity-gain-dist)
+				       (expt unity-gain-dist reverb-power)
+				       (if unity-gain-dist ; defaults to #f above
+					   1.0
+					   (expt min-dist-unity reverb-power))))))
+      
+	;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
+	(if (<= real-dur 0.0)
+	    (begin
+	      (format () ";;; error: resetting real duration to 0.1 (was ~A)~%" real-dur)
+	      (set! real-dur 0.1)))
+	
+	(let ((gen (make-move-sound
+		    (list
+		     ;; :start 
+		     start
+		     ;; :end 
+		     (time->samples (+ start-time (max duration real-dur)))
+		     ;; :out-channels 
+		     (if speakers (speaker-config-number speakers) out-channels)
+		     ;; :rev-channels 
+		     rev-channels
+		     ;; :path 
+		     (make-delay delay-hack :max-size (max 1 (+ (ceiling (dist->samples max-dist)) delay-hack)))
+		     ;; :delay 
+		     (make-env (reverse dly)
+			       :offset (if initial-delay 0.0 (- min-delay))
+			       :duration real-dur)
+		     ;; :rev 
+		     (make-env (if (number? reverb-amount) ; as opposed to an envelope I guess
+				   (list 0 reverb-amount 1 reverb-amount)
+				   reverb-amount)
+			       :duration real-dur)
+		     ;; :out-delays 
+		     out-delays
+		     ;; :gains 
 		     (let ((v (make-vector out-channels)))
 		       (do ((i 0 (+ i 1)))
 			   ((= i out-channels))
-			 (set! (v i) i))
-		       v)))
-		*output*
-		*reverb*)))
-      (list gen
-	    ;; return start and end samples for the run loop
-	    run-beg
-	    run-end))))
+			 (set! (v i) (make-env (reverse (channel-gains i))
+					       :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
+					       :duration real-dur)))
+		       v)
+		     ;; :rev-gains 
+		     (and (> rev-channels 0)
+			  (let ((v (make-vector rev-channels)))
+			    (do ((i 0 (+ i 1)))
+				((= i rev-channels))
+			      (set! (v i) (make-env (reverse (channel-rev-gains i))
+						    :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
+						    :duration real-dur)))
+			    v))
+		     ;; :out-map 
+		     (if speakers 
+			 (speaker-config-map speakers) 
+			 (let ((v (make-vector out-channels)))
+			   (do ((i 0 (+ i 1)))
+			       ((= i out-channels))
+			     (set! (v i) i))
+			   v)))
+		    *output*
+		    *reverb*)))
+	  (list gen
+		;; return start and end samples for the run loop
+		run-beg
+		run-end))))))
 
 ;; (with-sound(:channels 6 :play #f :statistics #t) (sinewave 0 10 440 0.5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :error 0.001)))
 ;;
