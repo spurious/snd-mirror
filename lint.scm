@@ -5008,18 +5008,6 @@
 	;; ---------------- member and assoc ----------------
 	(let ()
 	  (define (sp-memx caller head form env)
-#|
-	    (if (and (pair? (cdr form))
-		     (pair? (cddr form))
-		     (pair? (caddr form))
-		     (eq? (caaddr form) #_{list}))
-		(format *stderr* "~A~%~%" form))
-	    ;; happens a few times, never with apply-values:
-	    ;; (assq (car op) ({list} ({list} '+ +) ({list} '- -)))
-	    ;; (member (cons name alt-semitones) ({list} ({append} ({list} 6) -1) ({append} ({list} 6) -2)))
-	    ;; assq/v -> case?
-	    ;;   others to unqq-d list?
-|#
 	    (define (list-one? p)
 	      (and (pair? p)
 		   (pair? (cdr p))
@@ -16912,7 +16900,6 @@
 ;;; useless binding in generators: (x angle) [in some gens it protects current from next]
 ;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
 ;;; see t347 for another missed scope restriction [let -> begin]
-;;; (assq mode ({list} ({append} ({list} 'dedicated) (lambda (filename)... -> case [5010]
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)

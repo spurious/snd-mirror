@@ -1991,7 +1991,7 @@ static int not_heap = -1;
 
 #define is_symbol(p)                  (type(p) == T_SYMBOL)
 #define symbol_name_cell(p)           _TStr((_TSym(p))->object.sym.name)
-#define set_symbol_name_cell(p, S)    (_TSym(p))->object.sym.name = _TStr(S)
+#define symbol_set_name_cell(p, S)    (_TSym(p))->object.sym.name = _TStr(S)
 #define symbol_name(p)                string_value(symbol_name_cell(p))
 #define symbol_name_length(p)         string_length(symbol_name_cell(p))
 #define symbol_hmap(p)                s7_int_abs(heap_location(p))
@@ -5076,7 +5076,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 
   unheap(x);
   typeflag(x) = T_SYMBOL;
-  set_symbol_name_cell(x, str);
+  symbol_set_name_cell(x, str);
   global_slot(x) = sc->undefined;                          /* was sc->nil; */
   initial_slot(x) = sc->undefined;
   symbol_set_local(x, 0LL, sc->nil);
@@ -5392,7 +5392,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   /* allocate the symbol in the heap so GC'd when inaccessible */
   new_cell(sc, x, T_SYMBOL | T_GENSYM);
-  set_symbol_name_cell(x, str);
+  symbol_set_name_cell(x, str);
   global_slot(x) = sc->undefined;
   initial_slot(x) = sc->undefined;
   symbol_set_local(x, 0LL, sc->nil);
@@ -40548,18 +40548,22 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size)
   hash_entry_t **els;
   /* size is rounded up to the next power of 2 */
 
-  if ((size & (size + 1)) != 0)      /* already 2^n - 1 ? */
+  if ((size == 0) ||                     /* already 2^n ? */
+      ((size & (size - 1)) != 0))
     {
-      size--;
-      size |= (size >> 1);
-      size |= (size >> 2);
-      size |= (size >> 4);
-      size |= (size >> 8);
-      size |= (size >> 16);
-      if (s7_int_bits > 31) /* this is either 31 or 63 */
-	size |= (size >> 32);
+      if ((size & (size + 1)) != 0)      /* already 2^n - 1 ? */
+	{
+	  size--;
+	  size |= (size >> 1);
+	  size |= (size >> 2);
+	  size |= (size >> 4);
+	  size |= (size >> 8);
+	  size |= (size >> 16);
+	  if (s7_int_bits > 31)          /* this is either 31 or 63 */
+	    size |= (size >> 32);
+	}
+      size++;
     }
-  size++;
 
   els = (hash_entry_t **)calloc(size, sizeof(hash_entry_t *));
   if (!els) return(s7_error(sc, make_symbol(sc, "out-of-memory"), set_elist_1(sc, make_string_wrapper(sc, "make-hash-table allocation failed!"))));
@@ -49824,7 +49828,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   x = alloc_pointer();
   unheap(x);
   set_type(x, T_SYMBOL);
-  set_symbol_name_cell(x, str);
+  symbol_set_name_cell(x, str);
   symbol_set_local(x, 0LL, sc->nil);
   symbol_syntax_op(x) = op;
 
@@ -74486,6 +74490,7 @@ int main(int argc, char **argv)
  * symbol as arg of eq? memq defined? case-selector: use gensym?
  * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part,
  *   but then why not numerator/denominator?  
+ * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
