@@ -446,20 +446,20 @@ returns n sinusoids from frequency spaced by 2 * ratio * frequency."))
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((cx angle)
-	       (mx (* cx ratio))
-	       (x (- cx mx))
-	       (sinnx (sin (* n mx)))
-	       (den (* n (sin mx)))) ; "n" is normalization
-	  (set! angle (+ angle fm frequency))
-	  (if (< (abs den) nearly-zero)
-	      (if (< (modulo mx (* 2 pi)) .1)
-		  -1.0
-		  1.0)
-	      (- (* (sin x)
-		    (/ (* sinnx sinnx) den))
-		 (* (cos x)
-		    (/ (sin (* 2 n mx))
-		       (* 2 den))))))))))
+	       (mx (* cx ratio)))
+	  (let ((x (- cx mx))
+		(sinnx (sin (* n mx)))
+		(den (* n (sin mx)))) ; "n" is normalization
+	    (set! angle (+ angle fm frequency))
+	    (if (< (abs den) nearly-zero)
+		(if (< (modulo mx (* 2 pi)) .1)
+		    -1.0
+		    1.0)
+		(- (* (sin x)
+		      (/ (* sinnx sinnx) den))
+		   (* (cos x)
+		      (/ (sin (* 2 n mx))
+			 (* 2 den)))))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1578,16 +1578,16 @@ returns many cosines spaced by frequency with amplitude r^k."))
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((angle1 angle)
-	       (angle2 (* angle1 ratio))
-	       (carsin (sin angle1))
-	       (canrcos (cos angle1))
-	       (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
-	       (sumsin (* r (sin angle2)))
-	       (sumcos (- 1.0 (* r (cos angle2)))))
-	  (set! angle (+ angle1 fm frequency))
-	  (/ (- (* carsin sumsin)
-		(* canrcos sumcos))
-	     (* 2 den)))))))
+	       (angle2 (* angle1 ratio)))
+	  (let ((carsin (sin angle1))
+		(canrcos (cos angle1))
+		(den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
+		(sumsin (* r (sin angle2)))
+		(sumcos (- 1.0 (* r (cos angle2)))))
+	    (set! angle (+ angle1 fm frequency))
+	    (/ (- (* carsin sumsin)
+		  (* canrcos sumcos))
+	       (* 2 den))))))))
 
 
 (define rssb-interp 
@@ -1601,16 +1601,16 @@ with amplitude r^k. The 'interp' argument determines whether the sidebands are a
       (let-set! gen 'interp interp)
       (with-let gen
 	(let* ((angle1 angle)
-	       (angle2 (* angle1 ratio))
-	       (carsin (sin angle1))
-	       (canrcos (cos angle1))
-	       (den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
-	       (sumsin (* r (sin angle2)))
-	       (sumcos (- 1.0 (* r (cos angle2)))))
-	  (set! angle (+ angle1 fm frequency))
-	  (/ (- (* carsin sumsin)
-		(* interp canrcos sumcos))
-	     (* 2 den)))))))
+	       (angle2 (* angle1 ratio)))
+	  (let ((carsin (sin angle1))
+		(canrcos (cos angle1))
+		(den (+ 1.0 (* r r) (* -2.0 r (cos angle2))))
+		(sumsin (* r (sin angle2)))
+		(sumcos (- 1.0 (* r (cos angle2)))))
+	    (set! angle (+ angle1 fm frequency))
+	    (/ (- (* carsin sumsin)
+		  (* interp canrcos sumcos))
+	       (* 2 den))))))))
 
 
 (definstrument (bump beg dur freq amp f0 f1 f2)
@@ -2027,18 +2027,18 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((cx angle)
-	       (mx (* cx ratio))
-	       (cxx (- cx mx))
-	       (ccmx (- (cosh r) (cos mx))))
-	  (set! angle (+ angle fm frequency))
-	  (if (< (abs ccmx) nearly-zero)
-	      1.0
-	      (/ (- (* (cos cxx)
-		       (- (/ (sinh r) ccmx)
-			  1.0))
-		    (* (sin cxx)
-		       (/ (sin mx) ccmx)))
-		 (* 2.0 (- (/ 1.0 (- 1.0 (exp (- r)))) 1.0))))))))) ; normalization
+	       (mx (* cx ratio)))
+	  (let ((cxx (- cx mx))
+		(ccmx (- (cosh r) (cos mx))))
+	    (set! angle (+ angle fm frequency))
+	    (if (< (abs ccmx) nearly-zero)
+		1.0
+		(/ (- (* (cos cxx)
+			 (- (/ (sinh r) ccmx)
+			    1.0))
+		      (* (sin cxx)
+			 (/ (sin mx) ccmx)))
+		   (* 2.0 (- (/ 1.0 (- 1.0 (exp (- r)))) 1.0)))))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2397,16 +2397,16 @@ returns many sinusoids from frequency from spaced by frequency * ratio with ampl
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((cx angle)
-	       (mx (* cx ratio))
-	       (cxx (* (- 1.0 ratio) cx))
-	       (rcosmx (* r (cos mx))))
-	  (set! angle (+ angle fm frequency))
-	  (/ (- (* (cos cxx)
-		   -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
-		(* (sin cxx)
-		   (atan (* r (sin mx))
-			 (- 1.0 rcosmx))))
-	     (- (log (- 1.0 (abs r)))))))))) ; normalization
+	       (mx (* cx ratio)))
+	  (let ((cxx (* (- 1.0 ratio) cx))
+		(rcosmx (* r (cos mx))))
+	    (set! angle (+ angle fm frequency))
+	    (/ (- (* (cos cxx)
+		     -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
+		  (* (sin cxx)
+		     (atan (* r (sin mx))
+			   (- 1.0 rcosmx))))
+	       (- (log (- 1.0 (abs r))))))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
@@ -2551,13 +2551,13 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((cx angle)
-	       (mx (* cx ratio))
-	       (ercosmx (exp (* r (cos mx))))
-	       (rsinmx (* r (sin mx))))
-	  (set! angle (+ angle fm frequency))
-	  (/ (- (* (cos cx) ercosmx (cos rsinmx))
-		(* (sin cx) ercosmx (sin rsinmx)))
-	     (exp (abs r)))))))) ; normalization (keeping DC term here to get "carrier")
+	       (mx (* cx ratio)))
+	  (let ((ercosmx (exp (* r (cos mx))))
+		(rsinmx (* r (sin mx))))
+	    (set! angle (+ angle fm frequency))
+	    (/ (- (* (cos cx) ercosmx (cos rsinmx))
+		  (* (sin cx) ercosmx (sin rsinmx)))
+	       (exp (abs r))))))))) ; normalization (keeping DC term here to get "carrier")
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
@@ -3021,17 +3021,17 @@ returns many sinusoids from frequency spaced by frequency * 2 * ratio with ampli
       (let-set! gen 'fm fm)
       (with-let gen
 	(let* ((cx angle)
-	       (mx (* cx ratio))
-	       (cxx (- cx mx))
-	       (cmx (* 2.0 r (cos mx))))
-	  (set! angle (+ angle fm frequency))
-	  (* (- (* (cos cxx)
-		   0.5
-		   (log (/ (+ rr1 cmx) (- rr1 cmx))))
-		(* (sin cxx)
-		   (atan (* 2.0 r (sin mx))
-			 (- 1.0 (* r r)))))
-	     norm))))))
+	       (mx (* cx ratio)))
+	  (let ((cxx (- cx mx))
+		(cmx (* 2.0 r (cos mx))))
+	    (set! angle (+ angle fm frequency))
+	    (* (- (* (cos cxx)
+		     0.5
+		     (log (/ (+ rr1 cmx) (- rr1 cmx))))
+		  (* (sin cxx)
+		     (atan (* 2.0 r (sin mx))
+			   (- 1.0 (* r r)))))
+	       norm)))))))
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rkoddssb 1000.0 0.1 0.5)))
@@ -3097,13 +3097,13 @@ returns many sines spaced by frequency with amplitude kr^k."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (r1 (- 1.0 r))
-	       (r3 (if (> r .9) r1 1.0)) ; not right yet...
-	       (den (+ 1.0 (* -2.0 r (cos x)) (* r r))))
-	  (set! angle (+ angle fm frequency))
-	  (/ (* r1 r1 r3 (sin x))
-	     (* den den)))))))
+	(let ((x angle)
+	      (r1 (- 1.0 r)))
+	  (let ((r3 (if (> r .9) r1 1.0)) ; not right yet...
+		(den (+ 1.0 (* -2.0 r (cos x)) (* r r))))
+	    (set! angle (+ angle fm frequency))
+	    (/ (* r1 r1 r3 (sin x))
+	       (* den den))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3558,22 +3558,22 @@ returns a sum of cosines scaled by a product of Bessel functions."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (dc (* (bes-j0 (* k a)) (bes-j0 (* k r))))
-	       (norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
+	(let ((x angle)
+	      (dc (* (bes-j0 (* k a)) (bes-j0 (* k r)))))
+	  (let ((norm (- (bes-j0 (* k (sqrt (+ (* a a) (* r r) (* -2 a r))))) dc)))
 	  
-	  ;; this norm only works if the a/r/k values all small enough that the initial J0 bump dominates
-	  ;;   if they're large (k=10 for example), later maxes come into play.
-	  ;; we need a formula for a sum of JJ's
-	  ;;
-	  ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
-	  
-	  (set! angle (+ angle fm frequency))
-	  (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
-				      (* a a)
-				      (* a -2.0 r (cos x))))))
-		dc)             ; get rid of DC component
-	     norm))))))
+	    ;; this norm only works if the a/r/k values all small enough that the initial J0 bump dominates
+	    ;;   if they're large (k=10 for example), later maxes come into play.
+	    ;; we need a formula for a sum of JJ's
+	    ;;
+	    ;; the resultant spectra are similar to FM (we can get sharper bumps, or low-passed bumps, etc)
+	    
+	    (set! angle (+ angle fm frequency))
+	    (/ (- (bes-j0 (* k (sqrt (+ (* r r) 
+					(* a a)
+					(* a -2.0 r (cos x))))))
+		  dc)             ; get rid of DC component
+	       norm)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4064,12 +4064,12 @@ returns a sum of cosines scaled by Yn(r)*Jn(r)."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (b2c2 (+ (* r r) (* a a)))
-	       (dc (* (bes-y0 r) (bes-j0 a)))
-	       (norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 r a)))) dc))))
-	  (set! angle (+ angle fm frequency))
-	  (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 r a (cos x))))) dc) norm))))))
+	(let ((x angle)
+	      (b2c2 (+ (* r r) (* a a)))
+	      (dc (* (bes-y0 r) (bes-j0 a))))
+	  (let ((norm (abs (- (bes-y0 (sqrt (+ b2c2 (* -2 r a)))) dc))))
+	    (set! angle (+ angle fm frequency))
+	    (/ (- (bes-y0 (sqrt (+ b2c2 (* -2.0 r a (cos x))))) dc) norm)))))))
 
 ;;; oops -- bes-y0(0) is -inf!
 ;;; norm only works for "reasonable" a and r
@@ -4304,19 +4304,19 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 
 ;;; FM with complex index
 (define* (fpmc beg dur freq amp mc-ratio fm-index interp)
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-         (cr 0.0)
-	 (cr-frequency (hz->radians freq))
-	 (md-frequency (hz->radians (* freq mc-ratio)))
-	 (md 0.0))
-    (do ((i start (+ i 1)))
-	((= i end))
-      (let ((val (sin (+ cr (* fm-index (sin md))))))
-        (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
-                          (* interp (imag-part val)))))
-        (set! cr (+ cr cr-frequency))
-        (set! md (+ md md-frequency))))))
+  (let ((start (seconds->samples beg)))
+    (let ((end (+ start (seconds->samples dur)))
+	  (cr 0.0)
+	  (cr-frequency (hz->radians freq))
+	  (md-frequency (hz->radians (* freq mc-ratio)))
+	  (md 0.0))
+      (do ((i start (+ i 1)))
+	  ((= i end))
+	(let ((val (sin (+ cr (* fm-index (sin md))))))
+	  (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
+			    (* interp (imag-part val)))))
+	  (set! cr (+ cr cr-frequency))
+	  (set! md (+ md md-frequency)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4466,22 +4466,22 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 |#
 
 (define (fm-cancellation beg dur frequency ratio amp index)
-  (let* ((cx 0.0)
-	 (mx 0.0)
-	 (car-frequency (hz->radians frequency))
-	 (mod-frequency (hz->radians ratio))
-	 (start (seconds->samples beg))
-	 (stop (+ start (seconds->samples dur))))
-    (do ((i start (+ i 1)))
-	((= i stop))
-      (outa i (* amp (- (* (cos cx)
-			   (sin (* index (cos mx))))
-			(* (sin cx)
-			   (sin (* index (sin mx))))))
-	    ;; use -index for reflection
-	    )
-      (set! cx (+ cx car-frequency))
-      (set! mx (+ mx mod-frequency)))))
+  (let ((start (seconds->samples beg)))
+    (let ((cx 0.0)
+	  (mx 0.0)
+	  (car-frequency (hz->radians frequency))
+	  (mod-frequency (hz->radians ratio))
+	  (stop (+ start (seconds->samples dur))))
+      (do ((i start (+ i 1)))
+	  ((= i stop))
+	(outa i (* amp (- (* (cos cx)
+			     (sin (* index (cos mx))))
+			  (* (sin cx)
+			     (sin (* index (sin mx))))))
+	      ;; use -index for reflection
+	      )
+	(set! cx (+ cx car-frequency))
+	(set! mx (+ mx mod-frequency))))))
 
 					;(with-sound () (fm-cancellation 0 1 1000.0 100.0 0.3 9.0))
 
@@ -4605,15 +4605,15 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
     (let ((stop (+ start (seconds->samples dur))))
       (do ((i 0 (+ i 1)))
 	  ((= i 3))
-	(let* ((frq (* freq (expt 2 i)))
-	       (index1 (hz->radians (/ (* fm-index frq 5.0) (log frq))))
-	       (index2 (hz->radians (/ (* fm-index frq 3.0 (- 8.5 (log frq))) (+ 3.0 (* frq 0.001)))))
-	       (index3 (hz->radians (/ (* fm-index frq 4.0) (sqrt frq)))))
-	  (set! (carriers i) (make-oscil frq))
-	  (set! (fmoscs i) (make-polywave frq
-					  :partials (list 1 index1
-							  3 index2
-							  4 index3)))))
+	(let ((frq (* freq (expt 2 i))))
+	  (let ((index1 (hz->radians (/ (* fm-index frq 5.0) (log frq))))
+		(index2 (hz->radians (/ (* fm-index frq 3.0 (- 8.5 (log frq))) (+ 3.0 (* frq 0.001)))))
+		(index3 (hz->radians (/ (* fm-index frq 4.0) (sqrt frq)))))
+	    (set! (carriers i) (make-oscil frq))
+	    (set! (fmoscs i) (make-polywave frq
+					    :partials (list 1 index1
+							    3 index2
+							    4 index3))))))
       
       (set! (ampfs 0) (make-env (or amp-env '(0 0 1 1 2 1 3 0)) :scaler amp :duration dur))
       (set! (ampfs 1) (make-env (list 0 0  .04 1  .075 0 dur 0) :scaler (* amp .0125) :duration dur))
@@ -5092,17 +5092,17 @@ returns a sum of cosines scaled by the binomial coeffcients."))
     (lambda* (gen (fm 0.0))
       (let-set! gen 'fm fm)
       (with-let gen
-	(let* ((x angle)
-	       (max-angle (* pi 0.5 n))
-	       (new-angle (+ x fm frequency))
-	       (DC (/ 1.0 n))
-	       (norm (/ n (- n 1))))
-	  (if (> new-angle max-angle)
-	      (set! new-angle (- new-angle (* pi n))))
-	  (set! angle new-angle)
-	  (if (< (abs x) nearly-zero)
-	      1.0
-	      (* norm (- (/ (sin x) x) DC))))))))
+	(let ((x angle))
+	  (let ((max-angle (* pi 0.5 n))
+		(new-angle (+ x fm frequency))
+		(DC (/ 1.0 n))
+		(norm (/ n (- n 1))))
+	    (if (> new-angle max-angle)
+		(set! new-angle (- new-angle (* pi n))))
+	    (set! angle new-angle)
+	    (if (< (abs x) nearly-zero)
+		1.0
+		(* norm (- (/ (sin x) x) DC)))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -5682,37 +5682,37 @@ returns the sum of the last n inputs weighted by (-n/(n+1))^k"))
 		 (do ((i 0 (+ i 3)))
 		     ((>= i len))
 		   (set! n (max n (floor (partial-amps-and-phases i)))))
-		 n))
-	 (sin-amps (make-float-vector (+ topk 1)))
-	 (cos-amps (make-float-vector (+ topk 1))))
-    (do ((j 0 (+ j 3)))
-	((>= j len))
-      (let ((n (floor (partial-amps-and-phases j)))
-	    (amp (partial-amps-and-phases (+ j 1)))
-	    (phase (partial-amps-and-phases (+ j 2))))
-	(if (> n 0)                                   ; constant only applies to cos side
-	    (set! (sin-amps n) (* amp (cos phase))))
-	(set! (cos-amps n) (* amp (sin phase)))))
-    (make-polywave frequency :xcoeffs cos-amps :ycoeffs sin-amps)))
+		 n)))
+    (let ((sin-amps (make-float-vector (+ topk 1)))
+	  (cos-amps (make-float-vector (+ topk 1))))
+      (do ((j 0 (+ j 3)))
+	  ((>= j len))
+	(let ((n (floor (partial-amps-and-phases j)))
+	      (amp (partial-amps-and-phases (+ j 1)))
+	      (phase (partial-amps-and-phases (+ j 2))))
+	  (if (> n 0)                                   ; constant only applies to cos side
+	      (set! (sin-amps n) (* amp (cos phase))))
+	  (set! (cos-amps n) (* amp (sin phase)))))
+      (make-polywave frequency :xcoeffs cos-amps :ycoeffs sin-amps))))
 
 
 (define (polyoid-env gen fm amps phases)
   ;; amps and phases are the envelopes, one for each harmonic, setting the sample-wise amp and phase
-  (let* ((original-data (polyoid-partial-amps-and-phases gen))
-	 (data-len (length original-data))
-	 (amps-len (length amps))
-	 (tn (polyoid-tn gen))
-	 (un (polyoid-un gen)))
-    (do ((i 0 (+ i 3))
-	 (j 0 (+ j 1)))
-	((or (= j amps-len)
-	     (= i data-len)))
-      (let ((hn (floor (original-data i)))
-	    (amp (env (amps j)))
-	    (phase (env (phases j))))
-	(set! (tn hn) (* amp (sin phase)))
-	(set! (un hn) (* amp (cos phase)))))
-    (polyoid gen fm)))
+  (let ((original-data (polyoid-partial-amps-and-phases gen)))
+    (let ((data-len (length original-data))
+	  (amps-len (length amps))
+	  (tn (polyoid-tn gen))
+	  (un (polyoid-un gen)))
+      (do ((i 0 (+ i 3))
+	   (j 0 (+ j 1)))
+	  ((or (= j amps-len)
+	       (= i data-len)))
+	(let ((hn (floor (original-data i)))
+	      (amp (env (amps j)))
+	      (phase (env (phases j))))
+	  (set! (tn hn) (* amp (sin phase)))
+	  (set! (un hn) (* amp (cos phase)))))
+      (polyoid gen fm))))
 
 #|
 (with-sound (:clipped #f)
@@ -6522,11 +6522,11 @@ input from the readin generator 'reader'.  The output data is available via mus-
 
 (define (moving-pitch gen)
   (with-let gen
-    (if (moving-autocorrelation ac)
-	(let* ((data (mus-data ac))
-	       (peak 0.0)
-	       (peak-loc 0)
-	       (len (length data)))
+    (when (moving-autocorrelation ac)
+      (let ((data (mus-data ac)))
+	(let ((peak 0.0)
+	      (peak-loc 0)
+	      (len (length data)))
 	  (do ((i 8 (+ i 1))) ; assume we're not in the top few octaves
 	      ((= i len))
 	    (let ((apk (abs (data i))))
@@ -6537,14 +6537,14 @@ input from the readin generator 'reader'.  The output data is available via mus-
 	  (if (or (= peak 0.0)
 		  (= peak-loc 0))
 	      (set! val 0.0)
-	      (let* ((la (data (- peak-loc 1)))
-		     (ra (data (+ peak-loc 1)))
-		     (logla (log (/ (max la .0000001) peak) 10))  ; (positive la)?
-		     (logra (log (/ (max ra .0000001) peak) 10)))
-		(set! val
-		      (/ *clm-srate*
-			 (+ peak-loc (/ (* 0.5 (- logla logra))
-					(+ logla logra)))))))))
+	      (let ((la (data (- peak-loc 1)))
+		    (ra (data (+ peak-loc 1))))
+		(let ((logla (log (/ (max la .0000001) peak) 10))  ; (positive la)?
+		      (logra (log (/ (max ra .0000001) peak) 10)))
+		  (set! val
+			(/ *clm-srate*
+			   (+ peak-loc (/ (* 0.5 (- logla logra))
+					  (+ logla logra)))))))))))
     val))
 
 #|
@@ -6679,30 +6679,29 @@ input from the readin generator 'reader'.  The output data is available via mus-
   (let-set! gen 'samp samp)
   (let-set! gen 'input input)
   (with-let gen
-    (let* ((pos (min (max (+ (rand-interp ri) offset) 
-			  (- amplitude)) 
-		     amplitude))
-	   (amp1 (if (<= pos -1.0) 1.0
-		     (if (>= pos 1.0) 0.0
-			 (* (sqrt (- 1.0 pos)) 1/sqrt2))))
-	   (amp2 (if (<= pos -1.0) 0.0
-		     (if (>= pos 1.0) 1.0
-			 (* (sqrt (+ 1.0 pos)) 1/sqrt2))))
-	   (dly1 (abs (min 0.0 pos)))
-	   (frac1 (- dly1 (floor dly1)))
-	   (dly2 (max 0.0 pos))
-	   (frac2 (- dly2 (floor dly2)))
-	   (loc outloc)
-	   (loc10 (modulo (+ loc (floor dly1)) maxd))
-	   (loc11 (modulo (+ loc 1 (floor dly1)) maxd))
-	   (loc20 (modulo (+ loc (floor dly2)) maxd))
-	   (loc21 (modulo (+ loc 1 (floor dly2)) maxd)))
-      
-      (set! (out1 loc10) (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
-      (set! (out1 loc11) (+ (out1 loc11) (* amp1 input frac1)))
-      (set! (out2 loc20) (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
-      (set! (out2 loc21) (+ (out2 loc21) (* amp2 input frac2)))
-      
+    (let ((pos (min (max (+ (rand-interp ri) offset) 
+			 (- amplitude)) 
+		    amplitude))
+	  (loc outloc))
+      (let ((dly1 (abs (min 0.0 pos)))
+	    (dly2 (max 0.0 pos)))
+	(let ((amp1 (if (<= pos -1.0) 1.0
+			(if (>= pos 1.0) 0.0
+			    (* (sqrt (- 1.0 pos)) 1/sqrt2))))
+	      (amp2 (if (<= pos -1.0) 0.0
+			(if (>= pos 1.0) 1.0
+			    (* (sqrt (+ 1.0 pos)) 1/sqrt2))))
+	      (frac1 (- dly1 (floor dly1)))
+	      (frac2 (- dly2 (floor dly2)))
+	      (loc10 (modulo (+ loc (floor dly1)) maxd))
+	      (loc11 (modulo (+ loc 1 (floor dly1)) maxd))
+	      (loc20 (modulo (+ loc (floor dly2)) maxd))
+	      (loc21 (modulo (+ loc 1 (floor dly2)) maxd)))
+	  (set! (out1 loc10) (+ (out1 loc10) (* amp1 input (- 1.0 frac1))))
+	  (set! (out1 loc11) (+ (out1 loc11) (* amp1 input frac1)))
+	  (set! (out2 loc20) (+ (out2 loc20) (* amp2 input (- 1.0 frac2))))
+	  (set! (out2 loc21) (+ (out2 loc21) (* amp2 input frac2)))))
+	  
       (let ((val1 (out1 loc))
 	    (val2 (out2 loc)))
 	(set! (out1 loc) 0.0)
@@ -6716,8 +6715,6 @@ input from the readin generator 'reader'.  The output data is available via mus-
 	      (outa samp (* reverb-amount val1) *reverb*)
 	      (outb samp (* reverb-amount val2) *reverb*)))
 	(set! outloc loc)))))
-
-
 
 
 

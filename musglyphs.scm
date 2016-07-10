@@ -35,21 +35,21 @@
 (define (make-bezier-1 x0 y0 x1 y1 x2 y2 x3 y3 n)
   ;; creates a line-segment approximation of a bezier curve: n = number of segments
   ;; this is built into Snd as make-bezier, but I wanted an all Scheme version
-  (let* ((cx (* 3 (- x1 x0)))
-	 (cy (* 3 (- y1 y0)))
-	 (bx (- (* 3 (- x2 x1)) cx))
-	 (by (- (* 3 (- y2 y1)) cy))
-	 (ax (- x3 x0 cx bx))
-	 (ay (- y3 y0 cy by))
-	 (incr (/ 1.0 n))
-	 (pts (make-vector (* 2 (+ n 1)))))
-    (set! (pts 0) x0)
-    (set! (pts 1) y0)
-    (do ((i 0 (+ 1 i))
-	 (val incr (+ val incr)))
-	((> i n) pts)
-      (set! (pts (* i 2)) (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax))))))))
-      (set! (pts (+ (* i 2) 1)) (floor (+ y0 (* val (+ cy (* val (+ by (* val ay)))))))))))
+  (let ((cx (* 3 (- x1 x0)))
+	(cy (* 3 (- y1 y0))))
+    (let ((bx (- (* 3 (- x2 x1)) cx))
+	  (by (- (* 3 (- y2 y1)) cy)))
+      (let ((ax (- x3 x0 cx bx))
+	    (ay (- y3 y0 cy by))
+	    (incr (/ 1.0 n))
+	    (pts (make-vector (* 2 (+ n 1)))))
+	(set! (pts 0) x0)
+	(set! (pts 1) y0)
+	(do ((i 0 (+ 1 i))
+	     (val incr (+ val incr)))
+	    ((> i n) pts)
+	  (set! (pts (* i 2)) (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax))))))))
+	  (set! (pts (+ (* i 2) 1)) (floor (+ y0 (* val (+ cy (* val (+ by (* val ay)))))))))))))
 
 ;; pass our Snd context into the graphics procedures (there's probably a cleaner way)
 (define ps-snd 0)
@@ -234,23 +234,23 @@
     (floor (* 12 (+ (log (/ freq 16.351) 2) (/ 1.0 24)))))
 
   (let* ((pitch (frequency->pitch freq))
-	 (pclass (modulo pitch 12))
-	 (octave (floor (/ pitch 12)))
-	 (cclass (case pclass
-		   ((0 1) 0) ; c-sharp
-		   ((2) 1) 
-		   ((3 4) 2) ; e-flat
-		   ((5 6) 3) ; f-sharp
-		   ((7) 4) 
-		   ((8 9) 5) ; a-flat
-		   (else 6)))) ; b-flat
-    (list pclass octave 
-	  (if (memv pclass '(1 6))
-	      :sharp
-	      (and (memv pclass '(3 8 10)) 
-		   :flat))
-	  cclass
-	  pitch)))
+	 (pclass (modulo pitch 12)))
+    (let ((octave (floor (/ pitch 12)))
+	  (cclass (case pclass
+		    ((0 1) 0) ; c-sharp
+		    ((2) 1) 
+		    ((3 4) 2) ; e-flat
+		    ((5 6) 3) ; f-sharp
+		    ((7) 4) 
+		    ((8 9) 5) ; a-flat
+		    (else 6)))) ; b-flat
+      (list pclass octave 
+	    (if (memv pclass '(1 6))
+		:sharp
+		(and (memv pclass '(3 8 10)) 
+		     :flat))
+	    cclass
+	    pitch))))
 
 (define note-data->pclass car)
 (define note-data->octave cadr)
@@ -280,94 +280,93 @@
 
 
 (define (draw-a-note freq dur x0 ty0 size with-clef treble)
-  (let* ((line-sep (* size .250))
-	 (note-data (frequency->note-octave-and-accidental freq))
+  (let* ((note-data (frequency->note-octave-and-accidental freq))
 	 (accidental (note-data->accidental note-data))
 	 (cclass (note-data->cclass note-data))
 	 (octave (note-data->octave note-data))
-	 ;(pitch (note-data->pitch note-data))
-	 (y0 (if treble treble-tag-y bass-tag-y))
-	 (width (* (+ (if with-clef (if treble 0.9 1.2) 0.75)
-		      (if accidental 0.1 0.0) 
-		      (if (< dur .8) 0.5 0.0)) 
-		   size))
-	 (line  (- (if treble 
-		       (+ (* (- 5 octave) 7) 3)
-		       (+ (* (- 3 octave) 7) 5))
-		   cclass))
-	 (notehead-x x0)
-	 (notehead-y y0))
-
-    (draw-staff x0 y0 width line-sep) 
-
-    (if with-clef
-	(begin
-	  (if treble 
-	      (draw-treble-clef x0 (+ y0 (* size .76)) size)
-	      (draw-bass-clef (+ x0 (* size .075)) (+ y0 (* size .26)) size))
-	  (set! x0 (+ x0 (* size .8))))
-	(set! x0 (+ x0 (* size (if accidental .1 .25)))))
-
-    ;; accidental
-    (if accidental
-	(begin
-	  ((if (eq? accidental :sharp) draw-sharp draw-flat) x0 (+ y0 (* .02 size) (* line-sep 0.5 line)) size)
-	  (set! x0 (+ x0 line-sep))))
-
-    ;; notehead
-    (set! notehead-y (+ y0 (* .02 size) (* line-sep 0.5 line)))
-    (set! notehead-x x0)
-    ((if (< dur 1.5)
-	 draw-quarter-note
-	 (if (< dur 3.5)
-	     draw-half-note
-	     draw-whole-note))
-     notehead-x notehead-y size)
-
-    ;; leger line(s)
-    (if (> line 9)
-	(do ((i 10 (+ i 2)))
-	    ((>= i line))
-	  (fill-rectangle-1 (floor (- x0 (* .1 size)))
-			  (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
-			  (floor (* .5 size))
-			  (floor (* .05 size)))))
-    (if (< line 0)
-	(do ((i -2 (- i 2)))
-	    ((< i line))
-	  (fill-rectangle-1 (floor (- x0 (* .1 size)))
-			  (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
-			  (floor (* .5 size))
-			  (floor (* .05 size)))))
-    
-    ;; stem
-    (if (< dur 3)
-	(fill-rectangle-1
-	 (if (> line 3) ; stem up
-	     (values (floor (+ x0 line-sep))
-		     (floor (+ y0 (* 0.02 size) (* size -0.8) (* line-sep 0.5 line))))
-	     (values (floor (- x0 (* size 0.02)))
-		     (floor (+ y0 (* line-sep line 0.5)))))
-	 (floor (* size 0.05))
-	 (floor (* size 0.8))))
-
-    ;; flags
-    (if (< dur .6)
-	(let ((base (+ y0 (* line-sep 0.5 line))))
-	  (if (> line 2)
-	      (draw-8th-flag-up (+ x0 line-sep) (+ base (* size -0.6)) size)
-	      (draw-8th-flag-down x0 (+ base (* .7 size)) size))
-	  (if (< dur .3)
-	      (begin
-		(if (> line 2)
-		    (draw-extend-flag-up (+ x0 line-sep) (+ base (* size -0.8)) size)
-		    (draw-extend-flag-down x0 (+ base (* .9 size)) size))
-		(if (< dur .15)
-		    (if (> line 2)
-			(draw-extend-flag-up (+ x0 line-sep) (+ base (* size -1.0)) size)
-			(draw-extend-flag-down x0 (+ base (* 1.1 size)) size)))))))
-    (list notehead-x notehead-y)))
-
+	 (y0 (if treble treble-tag-y bass-tag-y)))
+    (let ((line-sep (* size .250))
+	  (line  (- (if treble 
+			(+ (* (- 5 octave) 7) 3)
+			(+ (* (- 3 octave) 7) 5))
+		    cclass))
+	  (notehead-x x0)
+	  (notehead-y y0))
+      
+      (let ((width (* (+ (if with-clef (if treble 0.9 1.2) 0.75)
+			 (if accidental 0.1 0.0) 
+			 (if (< dur .8) 0.5 0.0)) 
+		      size)))
+	(draw-staff x0 y0 width line-sep))
+      
+      (if with-clef
+	  (begin
+	    (if treble 
+		(draw-treble-clef x0 (+ y0 (* size .76)) size)
+		(draw-bass-clef (+ x0 (* size .075)) (+ y0 (* size .26)) size))
+	    (set! x0 (+ x0 (* size .8))))
+	  (set! x0 (+ x0 (* size (if accidental .1 .25)))))
+      
+      ;; accidental
+      (if accidental
+	  (begin
+	    ((if (eq? accidental :sharp) draw-sharp draw-flat) x0 (+ y0 (* .02 size) (* line-sep 0.5 line)) size)
+	    (set! x0 (+ x0 line-sep))))
+      
+      ;; notehead
+      (set! notehead-y (+ y0 (* .02 size) (* line-sep 0.5 line)))
+      (set! notehead-x x0)
+      ((if (< dur 1.5)
+	   draw-quarter-note
+	   (if (< dur 3.5)
+	       draw-half-note
+	       draw-whole-note))
+       notehead-x notehead-y size)
+      
+      ;; leger line(s)
+      (if (> line 9)
+	  (do ((i 10 (+ i 2)))
+	      ((>= i line))
+	    (fill-rectangle-1 (floor (- x0 (* .1 size)))
+			      (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
+			      (floor (* .5 size))
+			      (floor (* .05 size)))))
+      (if (< line 0)
+	  (do ((i -2 (- i 2)))
+	      ((< i line))
+	    (fill-rectangle-1 (floor (- x0 (* .1 size)))
+			      (floor (+ y0 (* -.02 size) (* line-sep 0.5 i)))
+			      (floor (* .5 size))
+			      (floor (* .05 size)))))
+      
+      ;; stem
+      (if (< dur 3)
+	  (fill-rectangle-1
+	   (if (> line 3) ; stem up
+	       (values (floor (+ x0 line-sep))
+		       (floor (+ y0 (* 0.02 size) (* size -0.8) (* line-sep 0.5 line))))
+	       (values (floor (- x0 (* size 0.02)))
+		       (floor (+ y0 (* line-sep line 0.5)))))
+	   (floor (* size 0.05))
+	   (floor (* size 0.8))))
+      
+      ;; flags
+      (if (< dur .6)
+	  (let ((base (+ y0 (* line-sep 0.5 line))))
+	    (if (> line 2)
+		(draw-8th-flag-up (+ x0 line-sep) (+ base (* size -0.6)) size)
+		(draw-8th-flag-down x0 (+ base (* .7 size)) size))
+	    (if (< dur .3)
+		(begin
+		  (if (> line 2)
+		      (draw-extend-flag-up (+ x0 line-sep) (+ base (* size -0.8)) size)
+		      (draw-extend-flag-down x0 (+ base (* .9 size)) size))
+		  (if (< dur .15)
+		      (if (> line 2)
+			  (draw-extend-flag-up (+ x0 line-sep) (+ base (* size -1.0)) size)
+			  (draw-extend-flag-down x0 (+ base (* 1.1 size)) size)))))))
+      (list notehead-x notehead-y))))
+  
 
 #|
 ;; this is the example in the documentation

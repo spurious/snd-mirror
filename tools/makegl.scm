@@ -151,34 +151,34 @@
 	      (set! sp i)))))))
 
 (define (helpify name type args)
-  (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
-	 (line-len (length initial))
-	 (len (length args))
-	 (typed #f)
-	 (help-max 100))
-    (hey initial)
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (let ((ch (args i)))
-	(if (char=? ch #\space)
-	    (if typed
-		(begin
-		  (heyc ", ")
-		  (set! line-len (+ line-len 2))
-		  (if (> line-len help-max)
-		      (begin
-			(hey "\\~%")
-			(set! line-len 0)))
-		  (set! typed #f))
-		(begin
-		  (set! line-len (+ 1 line-len))
-		  (heyc " ")
-		  (set! typed #t)))
-	    (if (not (memv ch '(#\@ #\#)))
-		(begin
-		  (set! line-len (+ 1 line-len))
-		  (heyc ch))))))
-    (hey ")\"~%")))
+  (let ((initial (format #f "  #define H_~A \"~A ~A(" name type name)))
+    (let ((line-len (length initial))
+	  (len (length args))
+	  (typed #f)
+	  (help-max 100))
+      (hey initial)
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((ch (args i)))
+	  (if (char=? ch #\space)
+	      (if typed
+		  (begin
+		    (heyc ", ")
+		    (set! line-len (+ line-len 2))
+		    (if (> line-len help-max)
+			(begin
+			  (hey "\\~%")
+			  (set! line-len 0)))
+		    (set! typed #f))
+		  (begin
+		    (set! line-len (+ 1 line-len))
+		    (heyc " ")
+		    (set! typed #t)))
+	      (if (not (memv ch '(#\@ #\#)))
+		  (begin
+		    (set! line-len (+ 1 line-len))
+		    (heyc ch))))))
+      (hey ")\"~%"))))
 
 (define direct-types 
   (list (cons "void" #f)
@@ -498,189 +498,185 @@
 
 (hey "~%~%/* ---------------------------------------- functions ---------------------------------------- */~%~%")
 
-(define handle-func
- (lambda (data)
-   (let* ((name (car data))
+(define (handle-func data)
+  (let* ((args (caddr data))
+	 (argslen (length args))
+	 (refargs (ref-args args)))
+    (let ((name (car data))
 	  (return-type (cadr data))
-	  (args (caddr data))
-	  (argslen (length args))
-	  (refargs (ref-args args))
 	  (xgargs (- argslen refargs))
 	  (argstr (cadddr data))
-	  ;(lambda-type (cdr (assoc name names)))
 	  (arg-start 0)
 	  (line-len 0))
-
-     (define (hey-start)
-       ;; start of checked line
-       (set! line-len 0))
-
-     (define (hey-mark)
-       ;; start of checked line
-       (set! arg-start line-len))
-
-     (define (hey-on . args)
-       ;; no cr -- just append
-       (let ((line (apply format #f args)))
-	 (set! line-len (+ line-len (length line)))
-	 (heyc line)))
-
-     (define (hey-ok arg)
-       ;; cr ok after arg
-       (set! line-len (+ line-len (length arg)))
-       (heyc arg)
-       (if (> line-len 120)
-	   (begin
-	     (format gl-file "~%~NC" arg-start #\space)
-	     (set! line-len arg-start))))
-
-     (check-glu name)
-     (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
-
-     (if (and (> (length data) 4)
-	      (eq? (data 4) 'if))
-	 (hey "#if HAVE_~A~%" (string-upcase (symbol->string (data 5)))))
-     (hey "static Xen gxg_~A(" name)
-     (if (null? args)
-	 (heyc "void")
-	 (if (>= argslen max-args)
-	     (heyc "Xen arglist")
-	     (let ((previous-arg #f))
-	       (for-each 
-		(lambda (arg)
-		  (let ((argname (cadr arg))
-			;(argtype (car arg))
-			)
-		    (if previous-arg (heyc ", "))
-		    (set! previous-arg #t)
-		    (hey "Xen ~A" argname)))
-		args))))
-     (hey ")~%{~%")
-     (helpify name return-type argstr)
-     (if (> refargs 0)
-	 (for-each
-	  (lambda (arg)
-	    (if (ref-arg? arg)
-		(if (member name need-vals-check)
-		    (hey "  ~A ~A[16];~%" (deref-type arg) (deref-name arg))
-		    (hey "  ~A ~A[1];~%" (deref-type arg) (deref-name arg)))))
-	  args))
-     (if (and (>= argslen max-args)
-	      (> xgargs 0))
-	 (let ((previous-arg #f))
-	   (heyc "  Xen ")
-	   (for-each
-	    (lambda (arg)
-	      (if (not (ref-arg? arg)) ;(< (length arg) 3)
+      
+      (define (hey-start)
+	;; start of checked line
+	(set! line-len 0))
+      
+      (define (hey-mark)
+	;; start of checked line
+	(set! arg-start line-len))
+      
+      (define (hey-on . args)
+	;; no cr -- just append
+	(let ((line (apply format #f args)))
+	  (set! line-len (+ line-len (length line)))
+	  (heyc line)))
+      
+      (define (hey-ok arg)
+	;; cr ok after arg
+	(set! line-len (+ line-len (length arg)))
+	(heyc arg)
+	(if (> line-len 120)
+	    (begin
+	      (format gl-file "~%~NC" arg-start #\space)
+	      (set! line-len arg-start))))
+      
+      (check-glu name)
+      (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+      
+      (if (and (> (length data) 4)
+	       (eq? (data 4) 'if))
+	  (hey "#if HAVE_~A~%" (string-upcase (symbol->string (data 5)))))
+      (hey "static Xen gxg_~A(" name)
+      (if (null? args)
+	  (heyc "void")
+	  (if (>= argslen max-args)
+	      (heyc "Xen arglist")
+	      (let ((previous-arg #f))
+		(for-each 
+		 (lambda (arg)
+		   (let ((argname (cadr arg))
+					;(argtype (car arg))
+			 )
+		     (if previous-arg (heyc ", "))
+		     (set! previous-arg #t)
+		     (hey "Xen ~A" argname)))
+		 args))))
+      (hey ")~%{~%")
+      (helpify name return-type argstr)
+      (if (> refargs 0)
+	  (for-each
+	   (lambda (arg)
+	     (if (ref-arg? arg)
+		 (if (member name need-vals-check)
+		     (hey "  ~A ~A[16];~%" (deref-type arg) (deref-name arg))
+		     (hey "  ~A ~A[1];~%" (deref-type arg) (deref-name arg)))))
+	   args))
+      (if (and (>= argslen max-args)
+	       (> xgargs 0))
+	  (let ((previous-arg #f))
+	    (heyc "  Xen ")
+	    (for-each
+	     (lambda (arg)
+	       (if (not (ref-arg? arg)) ;(< (length arg) 3)
+		   (begin
+		     (if previous-arg (heyc ", "))
+		     (set! previous-arg #t)
+		     (hey "~A" (cadr arg)))))
+	     args)
+	    (hey ";~%")
+	    (let ((ctr 0)) ; list-ref counts from 0
+	      (for-each
+	       (lambda (arg)
+		 (if (not (ref-arg? arg))
+		     (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
+		 (set! ctr (+ 1 ctr)))
+	       args))))
+      (if (> argslen 0)
+	  (let ((ctr 1))
+	    (for-each
+	     (lambda (arg)
+	       (let ((argname (cadr arg))
+		     (argtype (car arg)))
+		 (if (not (ref-arg? arg))
+		     (if (null-arg? arg)
+			 (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
+			      (no-stars argtype) argname argname argname ctr name argtype)
+			 (if (opt-arg? arg)
+			     (begin
+			       (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
+			       (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
+				    (no-stars argtype) argname argname ctr name argtype))
+			     (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
+				  (no-stars argtype) argname argname ctr name argtype))))
+		 (set! ctr (+ 1 ctr))))
+	     args)))
+      (let ((using-result (and (> refargs 0)
+			       (not (string=? return-type "void")))))
+	(if using-result
+	    (begin
+	      (hey "  {~%")
+	      (hey "    Xen result;~%")))
+	(hey-start)
+	(if (string=? return-type "void")
+	    (hey-on "  ")
+	    (hey-on (if (= refargs 0)
+			"  return(C_to_Xen_~A("
+			"    result = C_to_Xen_~A(")
+		    (no-stars return-type)))
+	
+	(hey-on "~A(" name)
+	(hey-mark)
+	(if (> argslen 0)
+	    (let ((previous-arg #f))
+	      (for-each
+	       (lambda (arg)
+		 (let ((argname (cadr arg))
+		       (argtype (car arg)))
+		   (if previous-arg (hey-ok ", "))
+		   (if (and (not previous-arg)
+			    (> (length data) 4)
+			    (eq? (data 4) 'const))
+		       (hey "(const ~A)" argtype))
+		   (set! previous-arg #t)
+		   (if (ref-arg? arg)
+		       (hey-on "~A" (deref-name arg))
+		       (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
+	       args)))
+	
+	(if (> refargs 0)
+	    (let ((previous-arg using-result))
+	      (if (not (string=? return-type "void")) 
+		  (heyc ")"))
+	      (hey ");~%")
+	      (if using-result (heyc "  "))
+	      (if (member name need-vals-check)
 		  (begin
-		    (if previous-arg (heyc ", "))
-		    (set! previous-arg #t)
-		    (hey "~A" (cadr arg)))))
-	    args)
-	   (hey ";~%")
-	   (let ((ctr 0)) ; list-ref counts from 0
-	     (for-each
-	      (lambda (arg)
-		(if (not (ref-arg? arg))
-		    (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
-		(set! ctr (+ 1 ctr)))
-	      args))))
-     (if (> argslen 0)
-	 (let ((ctr 1))
-	   (for-each
-	    (lambda (arg)
-	      (let ((argname (cadr arg))
-		    (argtype (car arg)))
-		(if (not (ref-arg? arg))
-		    (if (null-arg? arg)
-			(hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
-			     (no-stars argtype) argname argname argname ctr name argtype)
-			(if (opt-arg? arg)
-			    (begin
-			      (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
-			      (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
-				   (no-stars argtype) argname argname ctr name argtype))
-			    (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
-				 (no-stars argtype) argname argname ctr name argtype))))
-		(set! ctr (+ 1 ctr))))
-	    args)))
-     (let ((using-result (and (> refargs 0)
-			      (not (string=? return-type "void")))))
-       (if using-result
-	   (begin
-	     (hey "  {~%")
-	     (hey "    Xen result;~%")))
-       (hey-start)
-       (if (string=? return-type "void")
-	   (hey-on "  ")
-	   (hey-on (if (= refargs 0)
-		       "  return(C_to_Xen_~A("
-		       "    result = C_to_Xen_~A(")
-		   (no-stars return-type)))
-
-       (hey-on "~A(" name)
-       (hey-mark)
-       (if (> argslen 0)
-	   (let ((previous-arg #f))
-	     (for-each
-	      (lambda (arg)
-		(let ((argname (cadr arg))
-		      (argtype (car arg)))
-		  (if previous-arg (hey-ok ", "))
-		  (if (and (not previous-arg)
-			   (> (length data) 4)
-			   (eq? (data 4) 'const))
-		      (hey "(const ~A)" argtype))
-		  (set! previous-arg #t)
-		  (if (ref-arg? arg)
-		      (hey-on "~A" (deref-name arg))
-		      (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
-	      args)))
-
-       (if (> refargs 0)
-	   (let ((previous-arg using-result))
-	     (if (not (string=? return-type "void")) 
-		 (heyc ")"))
-	     (hey ");~%")
-	     (if using-result (heyc "  "))
-	     (if (member name need-vals-check)
-		 (begin
-		   (hey "  {~%")
-		   (if (not using-result)
-		       (hey "    Xen result;~%"))
-		   (hey "    int i, vals;~%    ~
+		    (hey "  {~%")
+		    (if (not using-result)
+			(hey "    Xen result;~%"))
+		    (hey "    int i, vals;~%    ~
                              vals = how_many_vals(Xen_to_C_GLenum(pname));~%    ~
 		             result = Xen_empty_list;~%    ~
                              for (i = 0; i < vals; i++)~%")
-		   (hey "      result = Xen_cons(C_to_Xen_~A(~A[i]), result);~%" 
-			(no-stars (deref-type (args (- argslen 1))))
-			(deref-name (args (- argslen 1))))
-		   (hey "    return(result);~%")
-		   (hey "  }~%"))
-		 (begin
-		   (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
-		   (if using-result (heyc "result"))
-		   (for-each 
-		    (lambda (arg)
-		      (if (ref-arg? arg)
-			  (begin
-			    (if previous-arg (heyc ", "))
-			    (hey "C_to_Xen_~A(~A[0])" (no-stars (deref-type arg)) (deref-name arg))
-			    (set! previous-arg #t))))
-		    args)
-		   (hey "));~%")))
-	     (if using-result (hey "   }~%")))
-	   (if (string=? return-type "void")
-	       (begin
-		 (hey ");~%")
-		 (hey "  return(Xen_false);~%"))
-	       (hey ")));~%")))
-       )
-
-     (hey "}~%")
-     (if (member name glu-1-2) (hey "#endif~%"))
-     (hey "~%")
-     )))
+		    (hey "      result = Xen_cons(C_to_Xen_~A(~A[i]), result);~%" 
+			 (no-stars (deref-type (args (- argslen 1))))
+			 (deref-name (args (- argslen 1))))
+		    (hey "    return(result);~%")
+		    (hey "  }~%"))
+		  (begin
+		    (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
+		    (if using-result (heyc "result"))
+		    (for-each 
+		     (lambda (arg)
+		       (if (ref-arg? arg)
+			   (begin
+			     (if previous-arg (heyc ", "))
+			     (hey "C_to_Xen_~A(~A[0])" (no-stars (deref-type arg)) (deref-name arg))
+			     (set! previous-arg #t))))
+		     args)
+		    (hey "));~%")))
+	      (if using-result (hey "   }~%")))
+	    (if (string=? return-type "void")
+		(begin
+		  (hey ");~%")
+		  (hey "  return(Xen_false);~%"))
+		(hey ")));~%"))))
+      
+      (hey "}~%")
+      (if (member name glu-1-2) (hey "#endif~%"))
+      (hey "~%"))))
 
 (hey "#if USE_MOTIF~%")
 (for-each handle-func (reverse x-funcs))
@@ -890,23 +886,22 @@
 (hey "~%")
 
 (define (defun func)
-  (let* ((cargs (length (caddr func)))
-	 (name (car func))
-	 (refargs (+ (ref-args (caddr func)) (opt-args (caddr func))))
-	 (args (- cargs refargs)))
-    (check-glu name)
-    (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
-
-    (hey "  gl_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
-		     name name
-		     (if (>= cargs max-args) 0 args)
-		     (if (>= cargs max-args) 0 refargs) ; optional ignored
-		     (if (>= cargs max-args) 1 0)
-		     name
-		     (sig-name (make-signature func)))
-
-    (if (member name glu-1-2) (hey "#endif~%"))
-    ))
+  (let ((cargs (length (caddr func)))
+	(refargs (+ (ref-args (caddr func)) (opt-args (caddr func)))))
+    (let ((name (car func))
+	  (args (- cargs refargs)))
+      (check-glu name)
+      (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
+      
+      (hey "  gl_define_procedure(~A, gxg_~A_w, ~D, ~D, ~D, H_~A, ~A);~%"
+	   name name
+	   (if (>= cargs max-args) 0 args)
+	   (if (>= cargs max-args) 0 refargs) ; optional ignored
+	   (if (>= cargs max-args) 1 0)
+	   name
+	   (sig-name (make-signature func)))
+      
+      (if (member name glu-1-2) (hey "#endif~%")))))
 
 (hey "#if USE_MOTIF~%")
 (for-each defun (reverse x-funcs))

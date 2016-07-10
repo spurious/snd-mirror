@@ -5586,15 +5586,15 @@
 		(lint-format "char-ci=? could be char=? here: ~A" caller form)
 		
 		(when (and (eq? head 'char=?)        ; (char=? #\a (char-downcase x)) -> (char-ci=? #\a x)
-			   (every? (let ((op #f))
-				     (lambda (a)
-				       (or (char? a)
-					   (and (pair? a)
-						(memq (car a) '(char-downcase char-upcase))
-						(if op
-						    (eq? op (car a))
-						    (set! op (car a)))))))
-				   (cdr form)))
+			   (let ((casef (let ((op #f))
+					  (lambda (a)
+					    (or (char? a)
+						(and (pair? a)
+						     (memq (car a) '(char-downcase char-upcase))
+						     (if op
+							 (eq? op (car a))
+							 (set! op (car a)))))))))
+			     (every? casef (cdr form))))
 		  (lint-format "perhaps ~A" caller
 			       (lists->string form
 					      `(char-ci=? ,@(map (lambda (a)
@@ -15189,7 +15189,7 @@
 					 (or (null? (cadar body))
 					     (and (pair? (cadar body))
 						  (null? (cdadar body))))))
-				(null? (cdddr form))
+				(null? (cdr body))
 				(not (symbol? (cadar body))))
 		       (lint-format "perhaps ~A" caller
 				    (lists->string form
@@ -16905,4 +16905,4 @@
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 148 23965 638644
+;;; 148 23965 637646

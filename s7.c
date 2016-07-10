@@ -1340,6 +1340,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TDyn(P) check_ref(P, T_DYNAMIC_WIND,      __func__, __LINE__, NULL, NULL)
   #define _TSlt(P) check_ref(P, T_SLOT,              __func__, __LINE__, NULL, NULL)
   #define _TSlp(P) check_ref2(P, T_SLOT, T_PAIR,     __func__, __LINE__, NULL, NULL)
+  #define _TSln(P) check_ref2(P, T_SLOT, T_NIL,      __func__, __LINE__, NULL, NULL)
   #define _TSyn(P) check_ref(P, T_SYNTAX,            __func__, __LINE__, NULL, NULL)
   #define _TMac(P) check_ref(P, T_C_MACRO,           __func__, __LINE__, NULL, NULL)
   #define _TLet(P) check_ref(P, T_LET,               __func__, __LINE__, NULL, NULL)
@@ -1402,6 +1403,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TClo(P)                    P
   #define _TFnc(P)                    P
   #define _TSlt(P)                    P
+  #define _TSln(P)                    P
   #define _TSlp(P)                    P
   #define _TSym(P)                    P
   #define _TLet(P)                    P
@@ -2006,13 +2008,14 @@ static int not_heap = -1;
 #define global_slot(p)                (_TSym(p))->object.sym.global_slot
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
 #define local_slot(p)                 (_TSym(p))->object.sym.local_slot
+#define set_local_slot(p, Val)        (_TSym(p))->object.sym.local_slot = _TSln(Val)
 #define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym
 #define symbol_help(p)                (symbol_name_cell(p))->object.string.doc.documentation
 #define symbol_tag(p)                 (_TSym(p))->object.sym.tag
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
 
-#define symbol_set_local(Symbol, Id, Slot) do {local_slot(Symbol) = Slot; symbol_set_id(Symbol, Id);} while (0)
+#define symbol_set_local(Symbol, Id, Slot) do {set_local_slot(Symbol, Slot); symbol_set_id(Symbol, Id);} while (0)
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
@@ -2021,6 +2024,7 @@ static int not_heap = -1;
 #define slot_symbol(p)                _TSym((_TSlt(p))->object.slt.sym)
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
+#define set_next_slot(p, Val)         (_TSlt(p))->object.slt.nxt = _TSln(Val)
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
 #define slot_expression(p)            (_TSlt(p))->object.slt.expr
 #define slot_accessor(p)              slot_expression(p)
@@ -2049,7 +2053,7 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define let_id(p)                     (_TLid(p))->object.envr.id
 #define is_let(p)                     (type(p) == T_LET)
 #define let_slots(p)                  (_TLet(p))->object.envr.slots
-#define let_set_slots(p, Slot)        (_TLet(p))->object.envr.slots = Slot
+#define let_set_slots(p, Slot)        (_TLet(p))->object.envr.slots = _TSln(Slot)
 #define outlet(p)                     (_TLet(p))->object.envr.nxt
 #define set_outlet(p, ol)             (_TLet(p))->object.envr.nxt = _TLid(ol)
 #define funclet_function(p)           _TSym((_TLet(p))->object.envr.edat.efnc.function)
@@ -2101,7 +2105,8 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define hash_table_checker(p)         (_THsh(p))->object.hasher.hash_func
 #define hash_table_mapper(p)          (_THsh(p))->object.hasher.loc
 #define hash_table_checker_locked(p)  (hash_table_mapper(p) != default_hash_map)
-#define hash_table_procedures(p)      (_THsh(p))->object.hasher.dproc
+#define hash_table_procedures(p)      _TCdr((_THsh(p))->object.hasher.dproc)
+#define hash_table_set_procedures(p, Lst) (_THsh(p))->object.hasher.dproc = _TCdr(Lst)
 #define hash_table_procedures_checker(p) car(hash_table_procedures(p))
 #define hash_table_procedures_mapper(p) cdr(hash_table_procedures(p))
 
@@ -2109,10 +2114,12 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define iterator_sequence(p)          (_TItr(p))->object.iter.obj
 #define iterator_position(p)          (_TItr(p))->object.iter.lc.loc
 #define iterator_length(p)            (_TItr(p))->object.iter.lw.len
-#define iterator_slow(p)              (_TItr(p))->object.iter.lw.slow
+#define iterator_slow(p)              _TCdr((_TItr(p))->object.iter.lw.slow)
+#define iterator_set_slow(p, Val)     (_TItr(p))->object.iter.lw.slow = _TCdr(Val)
 #define iterator_hash_current(p)      (_TItr(p))->object.iter.lw.hcur
 #define iterator_current(p)           (_TItr(p))->object.iter.cur
-#define iterator_let_current(p)       (_TItr(p))->object.iter.lc.lcur
+#define iterator_current_slot(p)      _TSln((_TItr(p))->object.iter.lc.lcur)
+#define iterator_set_current_slot(p, Val) (_TItr(p))->object.iter.lc.lcur = _TSln(Val)
 #define iterator_let_cons(p)          (_TItr(p))->object.iter.cur
 #define iterator_next(p)              (_TItr(p))->object.iter.next
 #define iterator_is_at_end(p)         (iterator_next(p) == iterator_finished)
@@ -5562,7 +5569,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     slot_set_symbol(_slot_, _sym_);			\
     slot_set_value(_slot_, _val_);			\
     symbol_set_local(_sym_, let_id(Frame), _slot_);	\
-    next_slot(_slot_) = let_slots(Frame);		\
+    set_next_slot(_slot_, let_slots(Frame));		\
     let_set_slots(Frame, _slot_);	                \
   } while (0)
 
@@ -5570,11 +5577,11 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {							\
     s7_pointer _slot_, _sym_, _val_;			\
     _sym_ = Symbol; _val_ = Value;			\
-    new_cell(sc, _slot_, T_SLOT);		\
+    new_cell(sc, _slot_, T_SLOT);		        \
     slot_set_symbol(_slot_, _sym_);			\
     slot_set_value(_slot_, _val_);			\
     symbol_set_local(_sym_, let_id(Frame), _slot_);	\
-    next_slot(_slot_) = let_slots(Frame);		\
+    set_next_slot(_slot_, let_slots(Frame));		\
     let_set_slots(Frame, _slot_); 	                \
   } while (0)
 
@@ -5584,15 +5591,15 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {								 \
     s7_pointer _x_, _slot_, _sym_, _val_;			 \
     _sym_ = Symbol; _val_ = Value;				\
-    new_cell(Sc, _x_, T_LET);			\
+    new_cell(Sc, _x_, T_LET);			                \
     let_id(_x_) = ++sc->let_number;				\
-    set_outlet(_x_, Old_Env);			\
+    set_outlet(_x_, Old_Env);			                \
     New_Env = _x_;						\
-    new_cell_no_check(Sc, _slot_, T_SLOT);	\
+    new_cell_no_check(Sc, _slot_, T_SLOT);	                \
     slot_set_symbol(_slot_, _sym_);				\
     slot_set_value(_slot_, _val_);	                        \
     symbol_set_local(_sym_, sc->let_number, _slot_);            \
-    next_slot(_slot_) = sc->nil;                                \
+    set_next_slot(_slot_, sc->nil);			        \
     let_set_slots(_x_, _slot_);					\
   } while (0)
 
@@ -5602,21 +5609,21 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;		\
     _sym1_ = Symbol1; _val1_ = Value1;					\
     _sym2_ = Symbol2; _val2_ = Value2;					\
-    new_cell(Sc, _x_, T_LET);				\
+    new_cell(Sc, _x_, T_LET);				                \
     let_id(_x_) = ++sc->let_number;					\
-    set_outlet(_x_, Old_Env);				\
+    set_outlet(_x_, Old_Env);				                \
     New_Env = _x_;							\
-    new_cell_no_check(Sc, _slot_, T_SLOT);		\
+    new_cell_no_check(Sc, _slot_, T_SLOT);		                \
     slot_set_symbol(_slot_, _sym1_);					\
     slot_set_value(_slot_, _val1_);					\
     symbol_set_local(_sym1_, sc->let_number, _slot_);			\
     let_set_slots(_x_, _slot_);			                        \
-    new_cell_no_check(Sc, _x_, T_SLOT);			\
+    new_cell_no_check(Sc, _x_, T_SLOT);			                \
     slot_set_symbol(_x_, _sym2_);					\
     slot_set_value(_x_, _val2_);					\
     symbol_set_local(_sym2_, sc->let_number, _x_);			\
-    next_slot(_x_) = sc->nil;						\
-    next_slot(_slot_) = _x_;						\
+    set_next_slot(_x_, sc->nil);				        \
+    set_next_slot(_slot_, _x_);			                        \
   } while (0)
 
 
@@ -5805,7 +5812,7 @@ static s7_pointer make_slot_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
   new_cell(sc, slot, T_SLOT);
   slot_set_symbol(slot, symbol);
   slot_set_value(slot, value);
-  next_slot(slot) = let_slots(env);
+  set_next_slot(slot, let_slots(env));
   let_set_slots(env, slot);
   set_local(symbol);
   /* this is called by varlet so we have to be careful about the resultant let_id
@@ -5855,7 +5862,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	{
 	  if (initial_slot(symbol) == sc->undefined)
 	    initial_slot(symbol) = permanent_slot(symbol, value);
-	  local_slot(symbol) = slot;
+	  set_local_slot(symbol, slot);
 	  set_global(symbol);
 	}
       if (is_gensym(symbol))
@@ -5977,7 +5984,7 @@ static s7_pointer g_unlet(s7_scheme *sc, s7_pointer args)
       else
 	{
 	  if ((is_syntax(x)) &&
-	      (local_slot(sym) != sc->nil))
+	      (local_slot(sym) != sc->nil))          /* this can be a freed cell, will be nil if unchanged */
 	    make_slot_1(sc, sc->w, sym, x);
 	}
     }
@@ -6234,7 +6241,7 @@ static s7_pointer g_cutlet(s7_scheme *sc, s7_pointer args)
 		      if (slot_symbol(slot) == sym)
 			{
 			  symbol_set_id(sym, THE_UN_ID);
-			  next_slot(last_slot) = next_slot(slot);
+			  set_next_slot(last_slot, next_slot(slot));
 			  break; 
 			}
 		    }
@@ -6631,7 +6638,7 @@ static s7_pointer reverse_slots(s7_scheme *sc, s7_pointer list)
   while (is_slot(p))
     {
       q = next_slot(p);
-      next_slot(p) = result;
+      set_next_slot(p, result);
       result = p;
       p = q;
     }
@@ -6670,9 +6677,9 @@ static s7_pointer let_copy(s7_scheme *sc, s7_pointer env)
 	      if (symbol_id(slot_symbol(z)) != id) /* keep shadowing intact */
 		symbol_set_local(slot_symbol(x), id, z);
 	      if (is_slot(let_slots(new_e)))
-		next_slot(y) = z;
+		set_next_slot(y, z);
 	      else let_set_slots(new_e, z);
-	      next_slot(z) = sc->nil;              /* in case GC runs during this loop */
+	      set_next_slot(z, sc->nil);              /* in case GC runs during this loop */
 	      y = z;
 	    }
 	}
@@ -29022,10 +29029,10 @@ static s7_pointer iterator_finished(s7_scheme *sc, s7_pointer iterator)
 static s7_pointer let_iterate(s7_scheme *sc, s7_pointer iterator)
 {
   s7_pointer slot;
-  slot = iterator_let_current(iterator);
+  slot = iterator_current_slot(iterator);
   if (is_slot(slot))
     {
-      iterator_let_current(iterator) = next_slot(slot);
+      iterator_set_current_slot(iterator, next_slot(slot));
       if (iterator_let_cons(iterator))
 	{
 	  s7_pointer p;
@@ -29227,7 +29234,7 @@ static s7_pointer pair_iterate_1(s7_scheme *sc, s7_pointer obj)
 	  iterator_next(obj) = iterator_finished;
 	  return(result);
 	}
-      iterator_slow(obj) = cdr(iterator_slow(obj));
+      iterator_set_slow(obj, cdr(iterator_slow(obj)));
       iterator_next(obj) = pair_iterate;
       return(result);
     }
@@ -29273,7 +29280,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
 	  f = iterator_method(sc, e);
 	  sc->temp6 = sc->nil;
 	  if (f) {free_cell(sc, iter); return(f);}
-	  iterator_let_current(iter) = let_slots(e);
+	  iterator_set_current_slot(iter, let_slots(e));
 	  iterator_next(iter) = let_iterate;
 	  iterator_let_cons(iter) = NULL;
 	}
@@ -29311,7 +29318,7 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e)
     case T_PAIR:
       iterator_current(iter) = e;
       iterator_next(iter) = pair_iterate;
-      iterator_slow(iter) = e;
+      iterator_set_slow(iter, e);
       break;
 
     case T_MACRO:   case T_MACRO_STAR:
@@ -31220,7 +31227,7 @@ static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer por
     }
   if (setter)
     collect_locals(sc, closure_body(setter), pe, closure_args(setter), gc_loc);
-  local_slots = gc_protected_at(sc, gc_loc);
+  local_slots = _TCdr(gc_protected_at(sc, gc_loc)); /* possibly a list of slots */
 
   if (!is_null(local_slots))
     {
@@ -40574,7 +40581,7 @@ s7_pointer s7_make_hash_table(s7_scheme *sc, s7_int size)
   hash_table_checker(table) = hash_empty;
   hash_table_mapper(table) = default_hash_map;
   hash_table_entries(table) = 0;
-  hash_table_procedures(table) = sc->F;
+  hash_table_set_procedures(table, sc->nil);
   add_hash_table(sc, table);
 
   return(table);
@@ -40728,7 +40735,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 			  hash_table_mapper(ht) = c_function_hash_map;
 			}
 		      else hash_table_mapper(ht) = closure_hash_map;
-		      hash_table_procedures(ht) = proc;
+		      hash_table_set_procedures(ht, proc);
 		      return(ht);
 		    }
 		}
@@ -44012,7 +44019,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	    gc_loc = s7_gc_protect(sc, new_hash);
 	    hash_table_checker(new_hash) = hash_table_checker(source);
 	    hash_table_mapper(new_hash) = hash_table_mapper(source);
-	    hash_table_procedures(new_hash) = hash_table_procedures(source);
+	    hash_table_set_procedures(new_hash, hash_table_procedures(source));
 	    hash_table_copy(sc, source, new_hash, 0, hash_table_entries(source));
 	    s7_gc_unprotect_at(sc, gc_loc);
 	    return(new_hash);
@@ -56136,7 +56143,7 @@ static void unsafe_closure_star(s7_scheme *sc)
       slot_set_symbol(z, sym);
       symbol_set_local(sym, id, z);
       slot_set_value(z, val);
-      next_slot(z) = let_slots(e);
+      set_next_slot(z, let_slots(e));
       let_set_slots(e, z);
       z = args;
     }
@@ -58153,7 +58160,7 @@ static int dox_ex(s7_scheme *sc)
 	}
       else all_pairs = false;
 
-      next_slot(slot) = let_slots(frame);
+      set_next_slot(slot, let_slots(frame));
       let_set_slots(frame, slot);
     }
   
@@ -58998,7 +59005,7 @@ static int do_init_ex(s7_scheme *sc)
       set_type(y, T_SLOT);
       slot_set_symbol(y, sym);
       slot_set_value(y, val);
-      next_slot(y) = let_slots(sc->envir);
+      set_next_slot(y, let_slots(sc->envir));
       let_set_slots(sc->envir, y);
       symbol_set_local(sym, let_id(sc->envir), y);
       
@@ -60227,7 +60234,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       slot_set_symbol(z, sym);
       symbol_set_local(sym, id, z);
       slot_set_value(z, val);
-      next_slot(z) = let_slots(e);
+      set_next_slot(z, let_slots(e));
       let_set_slots(e, z);
       z = args;
     }
@@ -66525,7 +66532,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      set_type(y, T_SLOT);
 		      slot_set_symbol(y, sym);
 		      slot_set_value(y, val);
-		      next_slot(y) = let_slots(sc->envir);
+		      set_next_slot(y, let_slots(sc->envir));
 		      let_set_slots(sc->envir, y);
 		      symbol_set_local(sym, let_id(sc->envir), y);
 		      
@@ -66554,7 +66561,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      slot_set_symbol(y, sym);
 		      symbol_set_local(sym, id, y);
 		      slot_set_value(y, val);
-		      next_slot(y) = let_slots(e);
+		      set_next_slot(y, let_slots(e));
 		      let_set_slots(e, y);
 		      
 		      y = args;
@@ -66765,7 +66772,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      while (is_slot(p))
 		{
 		  q = next_slot(p);
-		  next_slot(p) = x;
+		  set_next_slot(p, x);
 		  x = p;
 		  p = q;
 		}
@@ -74491,6 +74498,7 @@ int main(int argc, char **argv)
  * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part,
  *   but then why not numerator/denominator?  
  * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
+ *   but how to tie into a list without allocation?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
