@@ -941,8 +941,7 @@ time for perfection...):
 
 <pre class="indented">
 (define* (list-clips snd chn)
-  (let ((clip-data (let ((max-clips (count-clips snd chn)))
-                     (make-vector (* 2 max-clips) 0)))
+  (let ((clip-data (make-vector (* 2 (count-clips snd chn)) 0))
 	(clip-ctr 0)
 	(clip-beg 0)
 	(clip-end 0)
@@ -7365,8 +7364,8 @@ a function of the initial-phase ("phi" below) is (very nearly):
 	 (b (acos (/ (- 1 (sqrt 33)) 8)))
 	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))     ; same for peak 2 (the peak when phi is pi..2pi)
 	 (bx (let ((ap (- (* 2 pi) a))                ; start location of peak 1 (the peak when phi is 0..pi)
-	           (bp (- (* 2 pi) b))                ; end location of peak 1 
-               (+ ap (* phi (/ (- bp ap) pi)))))))    ; the 2 peaks move in opposite directions
+	           (bp (- (* 2 pi) b)))                ; end location of peak 1 
+               (+ ap (* phi (/ (- bp ap) pi))))))     ; the 2 peaks move in opposite directions
     (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi))))    ; plug in the 2 locations and
 	 (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))  ;   return the max 
 </pre>

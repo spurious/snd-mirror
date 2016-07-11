@@ -936,24 +936,24 @@
 			       (not indpos)
 			       (string-position "<em class=def id=" dline))))
 		(let ((xpos (string-position "<TABLE " dline))
-		      (id-pos (string-position " id=" dline))
 		      (tpos (and (not pos) 
 				 (string-position "<!-- TOPIC " line))))
 		  (if (string-position "</TABLE>" dline)
 		      (set! xrefing #f))
 		  
-		  (if id-pos
-		      (let ((sym-name (let ((start (- (char-position #\" dline id-pos) id-pos)))
-					(string->symbol
-					 (substring dline 
-						    (+ id-pos start 1)
-						    (let ((end-start (+ id-pos start 2)))	   
-						      (- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))))))
-			(if (not (hash-table-ref ids sym-name))
-			    (hash-table-set! ids sym-name 0)
-			    (if (memq sym-name local-ids)
-				(format () "~S: id ~S is set twice~%" file sym-name)))
-			(set! local-ids (cons sym-name local-ids))))
+		  (let ((id-pos (string-position " id=" dline)))
+		    (if id-pos
+			(let ((sym-name (let ((start (- (char-position #\" dline id-pos) id-pos)))
+					  (string->symbol
+					   (substring dline 
+						      (+ id-pos start 1)
+						      (let ((end-start (+ id-pos start 2)))	   
+							(- (+ id-pos start (char-position #\" dline end-start) 2) end-start)))))))
+			  (if (not (hash-table-ref ids sym-name))
+			      (hash-table-set! ids sym-name 0)
+			      (if (memq sym-name local-ids)
+				  (format () "~S: id ~S is set twice~%" file sym-name)))
+			  (set! local-ids (cons sym-name local-ids)))))
 		
 		  (cond (tpos
 			 (let ((epos (string-position " -->" dline)))

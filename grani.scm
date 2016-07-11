@@ -40,72 +40,72 @@
 		       (offset 0)
 		       cutoff
 		       (out-scaler 1))
-  (let* ((base (* 1.0 base))
-	 (error (* 1.0 error))
-	 (scaler (* 1.0 scaler))
-	 (offset (* 1.0 offset))
-	 (out-scaler (* 1.0 out-scaler))
-	 (ycutoff (and cutoff (expt base (+ offset (* cutoff scaler)))))
-	 (result ()))
-
-    ;; recursively render one segment
-    ;;   xl,xh   = x coordinates of segment ends
-    ;;   yl,yh   = y coordinates of segment ends
-    ;;   yle,yhe = exponential values of y coords of segment ends
-    ;;   error   = linear domain error bound for rendering
-    (define (exp-seg xl yle xh yhe yl yh error)
-
-      ;; linear interpolation
-      (define (interpolate xl yl xh yh xi)
-	(+ yl (* (- xi xl) (/ (- yh yl) (- xh xl)))))
-    
-      (let* ((xint (/ (+ xl xh) 2.0))
-	     (yint (interpolate xl yl xh yh xint))
-	     (yinte (interpolate xl yle xh yhe xint))
-	     (yexp (expt base yint))
-	     (yerr (- (expt base (+ yint error)) yexp)))
-	;; is the linear approximation accurate enough?
-	;; are we still over the cutoff limit?
-	(if (not (and (> (abs (- yexp yinte)) yerr)
-		      (or (not (real? ycutoff))
-			  (> yinte ycutoff))))
-	    ;; yes --> don't need to add nu'ting to the envelope
-	    (values () ())
-	    ;; no --> add a breakpoint and recurse right and left
-	    ((lambda (xi yi xj yj)
-	       (values (append xi (cons xint xj))
-		       (append yi (cons yexp yj))))
-	     (exp-seg xl yle xint yexp yl yint error)
-	     (exp-seg xint yexp xh yhe yint yh error)))))
-    
-    ;; loop for each segment in the envelope
-    (let segs ((en env1))
-      (let* ((x (car en))
-	     (nx (caddr en))
-	     (yscl (+ offset (* (cadr en) scaler)))
-	     (nyscl (+ offset (* (cadddr en) scaler)))
-	     (xy (list x (if (or (not (real? ycutoff))
-				 (>= (expt base yscl) ycutoff))
-			     (* out-scaler (expt base yscl))
-			     0.0))))
-	(set! result (append result xy))
-	((lambda (xs ys)
-	   (if (pair? ys)
-	       (let vals ((xx xs)
-			  (yy (map (lambda (y) (* y out-scaler)) ys)))
-		 (let ((x (car xx))
-		       (y (car yy)))
-		   (set! result (append result (list x y)))
-		   (if (pair? (cdr xx))
-		       (vals (cdr xx) (cdr yy)))))))
-	 (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
-	(if (<= (length en) 4)
-	    (append result (list nx (if (or (not (real? ycutoff))
-					    (>= (expt base nyscl) ycutoff))
-					(* out-scaler (expt base nyscl))
-					0.0)))
-	    (segs (cddr en)))))))
-
+  (let ((base (* 1.0 base))
+	(error (* 1.0 error))
+	(scaler (* 1.0 scaler))
+	(offset (* 1.0 offset))
+	(out-scaler (* 1.0 out-scaler)))
+    (let ((ycutoff (and cutoff (expt base (+ offset (* cutoff scaler)))))
+	  (result ()))
+      
+      ;; recursively render one segment
+      ;;   xl,xh   = x coordinates of segment ends
+      ;;   yl,yh   = y coordinates of segment ends
+      ;;   yle,yhe = exponential values of y coords of segment ends
+      ;;   error   = linear domain error bound for rendering
+      (define (exp-seg xl yle xh yhe yl yh error)
+	
+	;; linear interpolation
+	(define (interpolate xl yl xh yh xi)
+	  (+ yl (* (- xi xl) (/ (- yh yl) (- xh xl)))))
+	
+	(let* ((xint (/ (+ xl xh) 2.0))
+	       (yint (interpolate xl yl xh yh xint))
+	       (yexp (expt base yint)))
+	  (let ((yinte (interpolate xl yle xh yhe xint))
+		(yerr (- (expt base (+ yint error)) yexp)))
+	    ;; is the linear approximation accurate enough?
+	    ;; are we still over the cutoff limit?
+	    (if (not (and (> (abs (- yexp yinte)) yerr)
+			  (or (not (real? ycutoff))
+			      (> yinte ycutoff))))
+		;; yes --> don't need to add nu'ting to the envelope
+		(values () ())
+		;; no --> add a breakpoint and recurse right and left
+		((lambda (xi yi xj yj)
+		   (values (append xi (cons xint xj))
+			   (append yi (cons yexp yj))))
+		 (exp-seg xl yle xint yexp yl yint error)
+		 (exp-seg xint yexp xh yhe yint yh error))))))
+      
+      ;; loop for each segment in the envelope
+      (let segs ((en env1))
+	(let ((x (car en))
+	      (yscl (+ offset (* (cadr en) scaler))))
+	  (let ((nx (caddr en))
+		(nyscl (+ offset (* (cadddr en) scaler)))
+		(xy (list x (if (or (not (real? ycutoff))
+				    (>= (expt base yscl) ycutoff))
+				(* out-scaler (expt base yscl))
+				0.0))))
+	    (set! result (append result xy))
+	    ((lambda (xs ys)
+	       (if (pair? ys)
+		   (let vals ((xx xs)
+			      (yy (map (lambda (y) (* y out-scaler)) ys)))
+		     (let ((x (car xx))
+			   (y (car yy)))
+		       (set! result (append result (list x y)))
+		       (if (pair? (cdr xx))
+			   (vals (cdr xx) (cdr yy)))))))
+	     (exp-seg x (expt base yscl) nx (expt base nyscl) yscl nyscl error))
+	    (if (<= (length en) 4)
+		(append result (list nx (if (or (not (real? ycutoff))
+						(>= (expt base nyscl) ycutoff))
+					    (* out-scaler (expt base nyscl))
+					    0.0)))
+		(segs (cddr en)))))))))
+  
 ;;; Amplitude envelope in dBs
 ;;;
 ;;; The db scale is defined as:
@@ -243,16 +243,16 @@
 
 (define* (raised-cosine	(duty-cycle 100)
 			(len 128))
-  (let* ((v (make-float-vector len))
-	 (active (* len duty-cycle 0.01))
-	 (incr (/ pi (- active 1)))
-	 (start (max 0 (/ (- len active) 2)))
-	 (end (min len (/ (+ len active) 2))))
-    (do ((i start (+ i 1))
-	 (s 0.0 (+ s incr)))
-	((= i end) v)
-      (let ((sine (sin s)))
-	(set! (v i) (* sine sine))))))
+  (let ((active (* len duty-cycle 0.01)))
+    (let ((v (make-float-vector len))
+	  (incr (/ pi (- active 1)))
+	  (start (max 0 (/ (- len active) 2)))
+	  (end (min len (/ (+ len active) 2))))
+      (do ((i start (+ i 1))
+	   (s 0.0 (+ s incr)))
+	  ((= i end) v)
+	(let ((sine (sin s)))
+	  (set! (v i) (* sine sine)))))))
 
 ;;;=============================================================================
 ;;; Granular synthesis instrument

@@ -97,9 +97,7 @@
   
   (hash-table-set! (*lint* 'walker-functions) 'defgenerator
 		   (lambda (caller form env)
-		     (append (get-generator caller form env) env)))
-
-  (hash-table-set! (*lint* 'macros) 'defgenerator #t))
+		     (append (get-generator caller form env) env))))
 
 	
 ;;; ---------------- no side effect Snd functions ----------------

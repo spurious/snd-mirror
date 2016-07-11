@@ -2010,6 +2010,7 @@ static int not_heap = -1;
 #define local_slot(p)                 (_TSym(p))->object.sym.local_slot
 #define set_local_slot(p, Val)        (_TSym(p))->object.sym.local_slot = _TSln(Val)
 #define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym
+#define keyword_set_symbol(p, Val)    (symbol_name_cell(p))->object.string.doc.ksym = _TSym(Val)
 #define symbol_help(p)                (symbol_name_cell(p))->object.string.doc.documentation
 #define symbol_tag(p)                 (_TSym(p))->object.sym.tag
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
@@ -2299,6 +2300,7 @@ static int num_object_types = 0;
 #define counter_let(p)                _TLid((_TCtr(p))->object.ctr.env)
 #define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
 #define counter_slots(p)              (_TCtr(p))->object.ctr.slots
+#define counter_set_slots(p, Val)     (_TCtr(p))->object.ctr.slots = _TSln(Val)
 
 #define is_baffle(p)                  (type(p) == T_BAFFLE)
 #define baffle_key(p)                 (_TBfl(p))->object.baffle_key
@@ -5094,7 +5096,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
       if (name[0] == ':')
 	{
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
-	  keyword_symbol(x) = make_symbol_with_length(sc, (char *)(name + 1), len - 1);
+	  keyword_set_symbol(x, make_symbol_with_length(sc, (char *)(name + 1), len - 1));
 	  global_slot(x) = s7_make_slot(sc, sc->nil, x, x);
 	}
       else
@@ -5111,7 +5113,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      memcpy((void *)kstr, (void *)name, klen);
 	      kstr[klen] = 0;
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
-	      keyword_symbol(x) = make_symbol_with_length(sc, kstr, klen);
+	      keyword_set_symbol(x, make_symbol_with_length(sc, kstr, klen));
 	      global_slot(x) = s7_make_slot(sc, sc->nil, x, x);
 	      free(kstr);
 	    }
@@ -10517,7 +10519,7 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   counter_list(nobj) = counter_list(obj);
   counter_capture(nobj) = counter_capture(obj);
   counter_set_let(nobj, counter_let(obj));
-  counter_slots(nobj) = counter_slots(obj);
+  counter_set_slots(nobj, counter_slots(obj));
   return(nobj);
 }
 
@@ -48247,7 +48249,7 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
   counter_list(x) = iter;        /* iterator */
   counter_capture(x) = 0;        /* will be capture_let_counter */
   counter_set_let(x, sc->nil);   /* will be the saved env */
-  counter_slots(x) = sc->nil;    /* local env slots before body is evalled */
+  counter_set_slots(x, sc->nil); /* local env slots before body is evalled */
   return(x);
 }
 
@@ -60911,7 +60913,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
 		counter_set_let(args, sc->envir);
-		counter_slots(args) = let_slots(sc->envir);
+		counter_set_slots(args, let_slots(sc->envir));
 		counter_capture(args) = sc->capture_let_counter;
 	      }
 	    else 
@@ -60924,7 +60926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		 *   if the check has been optimized away.  I think each function call should start with
 		 *   the original let slots, so counter_slots saves that pointer, and resets it here.
 		 */
-		let_slots(counter_let(args)) = counter_slots(args);
+		let_set_slots(counter_let(args), counter_slots(args));
 		sc->envir = old_frame_with_slot(sc, counter_let(args), x);
 	      }
 	    sc->code = closure_body(code);
@@ -61016,12 +61018,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(counter, sc->envir);
-		counter_slots(counter) = let_slots(sc->envir);
+		counter_set_slots(counter, let_slots(sc->envir));
 		counter_capture(counter) = sc->capture_let_counter;
 	      }
 	    else 
 	      {
-		let_slots(counter_let(counter)) = counter_slots(counter);
+		let_set_slots(counter_let(counter), counter_slots(counter));
 		sc->envir = old_frame_with_slot(sc, counter_let(counter), arg);
 	      }
 	    push_stack(sc, OP_FOR_EACH_1, counter, code);
@@ -61058,12 +61060,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      {
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(c, sc->envir);
-		counter_slots(c) = let_slots(sc->envir);
+		counter_set_slots(c, let_slots(sc->envir));
 		counter_capture(c) = sc->capture_let_counter;
 	      }
 	    else 
 	      {
-		let_slots(counter_let(c)) = counter_slots(c);
+		let_set_slots(counter_let(c), counter_slots(c));
 		sc->envir = old_frame_with_slot(sc, counter_let(c), arg);
 	      }
 	    sc->code = closure_body(code);
