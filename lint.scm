@@ -4073,113 +4073,113 @@
 		(if (and (just-rationals? args)
 			 (not (zero? (cadr args))))
 		    (apply / args)                         ; including (/ 0 12) -> 0
-		    (let* ((arg1 (car args))
-			   (arg2 (cadr args))
-			   (op1 (and (pair? arg1) (car arg1)))
-			   (op2 (and (pair? arg2) (car arg2))))
-		      (let ((op1-arg1 (and op1 (pair? (cdr arg1)) (cadr arg1)))
-			    (op2-arg1 (and op2 (pair? (cdr arg2)) (cadr arg2))))
-			(cond ((eqv? arg1 1)                 ; (/ 1 x) -> (/ x)
-			       (simplify-numerics `(/ ,arg2) env))
-			      
-			      ((eqv? arg2 1)                 ; (/ x 1) -> x
-			       arg1)
-			      
-			      ((and (pair? arg1)             ; (/ (/ a b) c) -> (/ a b c)
-				    (eq? op1 '/)
-				    (pair? (cddr arg1))
-				    (not (and (pair? arg2)
-					      (eq? op2 '/))))
-			       `(/ ,op1-arg1 ,@(cddr arg1) ,arg2))
-			      
-			      ((and (pair? arg1)             ; (/ (/ a) (/ b)) -> (/ b a)??
-				    (eq? op1 '/)
-				    (pair? arg2)
-				    (eq? '/ op2))
-			       (let ((a1 (if (null? (cddr arg1)) `(/ 1 ,op1-arg1) arg1))
-				     (a2 (if (null? (cddr arg2)) `(/ 1 ,op2-arg1) arg2)))
-				 (simplify-numerics `(/ (* ,(cadr a1) ,@(cddr a2)) (* ,@(cddr a1) ,(cadr a2))) env)))
-			      
-			      ((and (pair? arg2)
-				    (eq? op2 '*)
-				    (not (side-effect? arg1 env))
-				    (member arg1 (cdr arg2)))
-			       (let ((n (remove arg1 (cdr arg2))))
-				 (if (and (pair? n) (null? (cdr n)))
-				     `(/ ,@n)               ; (/ x (* y x)) -> (/ y)
-				     `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
-			      
-			      ((and (pair? arg2)            ; (/ c (/ a b)) -> (/ (* c b) a)
-				    (eq? op2 '/))
-			       (cond ((null? (cddr arg2))
-				      `(* ,arg1 ,op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
-				     ((eqv? op2-arg1 1)
-				      `(* ,arg1 ,@(cddr arg2)))  ; (/ x (/ 1 y z)) -> (* x y z) -- these never actually happen
-				     ((not (pair? (cddr arg2)))
-				      `(/ ,@args))               ; no idea...
-				     ((and (rational? arg1)
-					   (rational? op2-arg1)
-					   (null? (cdddr arg2)))
-				      (let ((val (/ arg1 op2-arg1)))
-					(if (= val 1)
-					    (caddr arg2)
-					    (if (= val -1)
-						`(- ,(caddr arg2))
-						`(* ,val ,(caddr arg2))))))
-				     (else `(/ (* ,arg1 ,@(cddr arg2)) ,op2-arg1))))
-#|
-			      ;; can't decide about this -- result usually looks cruddy
-			      ((and (pair? arg2)             ; (/ x (* y z)) -> (/ x y z)
-				    (eq? op2 '*))
-			       `(/ ,arg1 ,@(cdr arg2)))
-|#			      
-			      ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y) -- (log number) for (log y) never happens
-				    (pair? arg2)
-				    (= (length arg1) (length arg2) 2)
-				    (case op1
-				      ((log) (eq? op2 'log))
-				      ((sin)
-				       (and (eq? op2 'cos)
-					    (equal? op1-arg1 op2-arg1)))
-				      (else #f)))
-			       (if (eq? op1 'log)
-				   `(log ,op1-arg1 ,op2-arg1)
-				   `(tan ,op1-arg1)))
-			      
-			      ((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
-				    (pair? arg2)
-				    (eq? op1 '-)
-				    (eq? op2 '-)
-				    (= (length arg1) (length arg2) 2))
-			       `(/ ,op1-arg1 ,op2-arg1))
-			      
-			      ((and (pair? arg1)             ; (/ (* x y) (* z y)) -> (/ x z)
-				    (pair? arg2)
-				    (eq? op1 '*)
-				    (case op2
-				      ((*)
-				       (and (= (length arg1) (length arg2) 3)
-					    (equal? (caddr arg1) (caddr arg2))))
-				      ((log)
-				       (cond ((assq 'log (cdr arg1)) 
-					      => (lambda (p)
-						   (= (length p) 2)))
-					     (else #f)))
-				      (else #f))           ; (/ (* 12 (log x)) (log 2)) -> (* 12 (log x 2))
-				    (if (eq? op2 '*)
-					`(/ ,op1-arg1 ,op2-arg1)
-					(let ((used-log op2-arg1))
-					  `(* ,@(map (lambda (p)
-						       (if (and used-log
-								(pair? p)
-								(eq? (car p) 'log))
-							   (let ((val `(log ,(cadr p) ,used-log)))
-							     (set! used-log #f)
-							     val)
-							   p))
-						     (cdr arg1)))))))
-			      
-			      (else `(/ ,@args)))))))
+		    (let ((arg1 (car args))
+			  (arg2 (cadr args)))
+		      (let ((op1 (and (pair? arg1) (car arg1)))
+			    (op2 (and (pair? arg2) (car arg2))))
+			(let ((op1-arg1 (and op1 (pair? (cdr arg1)) (cadr arg1)))
+			      (op2-arg1 (and op2 (pair? (cdr arg2)) (cadr arg2))))
+			  (cond ((eqv? arg1 1)                 ; (/ 1 x) -> (/ x)
+				 (simplify-numerics `(/ ,arg2) env))
+				
+				((eqv? arg2 1)                 ; (/ x 1) -> x
+				 arg1)
+				
+				((and (pair? arg1)             ; (/ (/ a b) c) -> (/ a b c)
+				      (eq? op1 '/)
+				      (pair? (cddr arg1))
+				      (not (and (pair? arg2)
+						(eq? op2 '/))))
+				 `(/ ,op1-arg1 ,@(cddr arg1) ,arg2))
+				
+				((and (pair? arg1)             ; (/ (/ a) (/ b)) -> (/ b a)??
+				      (eq? op1 '/)
+				      (pair? arg2)
+				      (eq? '/ op2))
+				 (let ((a1 (if (null? (cddr arg1)) `(/ 1 ,op1-arg1) arg1))
+				       (a2 (if (null? (cddr arg2)) `(/ 1 ,op2-arg1) arg2)))
+				   (simplify-numerics `(/ (* ,(cadr a1) ,@(cddr a2)) (* ,@(cddr a1) ,(cadr a2))) env)))
+				
+				((and (pair? arg2)
+				      (eq? op2 '*)
+				      (not (side-effect? arg1 env))
+				      (member arg1 (cdr arg2)))
+				 (let ((n (remove arg1 (cdr arg2))))
+				   (if (and (pair? n) (null? (cdr n)))
+				       `(/ ,@n)               ; (/ x (* y x)) -> (/ y)
+				       `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
+				
+				((and (pair? arg2)            ; (/ c (/ a b)) -> (/ (* c b) a)
+				      (eq? op2 '/))
+				 (cond ((null? (cddr arg2))
+					`(* ,arg1 ,op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
+				       ((eqv? op2-arg1 1)
+					`(* ,arg1 ,@(cddr arg2)))  ; (/ x (/ 1 y z)) -> (* x y z) -- these never actually happen
+				       ((not (pair? (cddr arg2)))
+					`(/ ,@args))               ; no idea...
+				       ((and (rational? arg1)
+					     (rational? op2-arg1)
+					     (null? (cdddr arg2)))
+					(let ((val (/ arg1 op2-arg1)))
+					  (if (= val 1)
+					      (caddr arg2)
+					      (if (= val -1)
+						  `(- ,(caddr arg2))
+						  `(* ,val ,(caddr arg2))))))
+				       (else `(/ (* ,arg1 ,@(cddr arg2)) ,op2-arg1))))
+#|				
+				;; can't decide about this -- result usually looks cruddy
+				((and (pair? arg2)             ; (/ x (* y z)) -> (/ x y z)
+				      (eq? op2 '*))
+				 `(/ ,arg1 ,@(cdr arg2)))
+|#				
+				((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y) -- (log number) for (log y) never happens
+				      (pair? arg2)
+				      (= (length arg1) (length arg2) 2)
+				      (case op1
+					((log) (eq? op2 'log))
+					((sin)
+					 (and (eq? op2 'cos)
+					      (equal? op1-arg1 op2-arg1)))
+					(else #f)))
+				 (if (eq? op1 'log)
+				     `(log ,op1-arg1 ,op2-arg1)
+				     `(tan ,op1-arg1)))
+				
+				((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
+				      (pair? arg2)
+				      (eq? op1 '-)
+				      (eq? op2 '-)
+				      (= (length arg1) (length arg2) 2))
+				 `(/ ,op1-arg1 ,op2-arg1))
+				
+				((and (pair? arg1)             ; (/ (* x y) (* z y)) -> (/ x z)
+				      (pair? arg2)
+				      (eq? op1 '*)
+				      (case op2
+					((*)
+					 (and (= (length arg1) (length arg2) 3)
+					      (equal? (caddr arg1) (caddr arg2))))
+					((log)
+					 (cond ((assq 'log (cdr arg1)) 
+						=> (lambda (p)
+						     (= (length p) 2)))
+					       (else #f)))
+					(else #f))           ; (/ (* 12 (log x)) (log 2)) -> (* 12 (log x 2))
+				      (if (eq? op2 '*)
+					  `(/ ,op1-arg1 ,op2-arg1)
+					  (let ((used-log op2-arg1))
+					    `(* ,@(map (lambda (p)
+							 (if (and used-log
+								  (pair? p)
+								  (eq? (car p) 'log))
+							     (let ((val `(log ,(cadr p) ,used-log)))
+							       (set! used-log #f)
+							       val)
+							     p))
+						       (cdr arg1)))))))
+				
+				(else `(/ ,@args))))))))
 
 	       (else 
 		(if (and (just-rationals? args)
@@ -7703,11 +7703,11 @@
 				      
 				      (else
 				       (let-temporarily ((target-line-length 120))
-							(truncated-lists->string form
-										 `(varlet (curlet) 
-										    ((lambda ,(cadr form) 
-										       (curlet)) 
-										     ,(caddr form)))))))))))))
+					 (truncated-lists->string form
+								  `(varlet (curlet) 
+								     ((lambda ,(cadr form) 
+									(curlet)) 
+								      ,(caddr form)))))))))))))
 	;; ---------------- eval ----------------
 	(let ()
 	 (define (sp-eval caller head form env)
@@ -12793,49 +12793,51 @@
 		   ;; cond reps
 		   (let ((exprs ())
 			 (reps ())
-			 (ctr 0))
+			 (ctr 0)
+			 (else-leaves 0))
 		     (for-each (lambda (c)
-				 (unless (and (pair? c)
-					      (memq (car c) '(#t else)))
-				   (if (not (and (pair? c)
-						 (pair? (car c))
-						 (or (eq? (caar c) 'and)
-						     (member (car c) reps))))
-				       (begin
-					 (set! exprs ())
-					 (set! reps ())
-					 (set! ctr 0))
-				       (if (null? exprs)
-					   (begin
-					     (set! exprs (cdar c))
-					     (set! reps (cdar c))
-					     (set! ctr 1))
-					   (begin
-					     (set! ctr (+ ctr 1))
-					     (set! reps (remove-if (lambda (rc)
-								     (and (not (equal? rc (car c)))
-									  (not (member rc (cdar c)))))
-								   reps)))))))
+				 (if (and (pair? c)
+					  (memq (car c) '(#t else)))
+				     (set! else-leaves (tree-leaves (cdr c)))
+				     (if (not (and (pair? c)
+						   (pair? (car c))
+						   (or (eq? (caar c) 'and)
+						       (member (car c) reps))))
+					 (begin
+					   (set! exprs ())
+					   (set! reps ())
+					   (set! ctr 0))
+					 (if (null? exprs)
+					     (begin
+					       (set! exprs (cdar c))
+					       (set! reps (cdar c))
+					       (set! ctr 1))
+					     (begin
+					       (set! ctr (+ ctr 1))
+					       (set! reps (remove-if (lambda (rc)
+								       (and (not (equal? rc (car c)))
+									    (not (member rc (cdar c)))))
+								     reps)))))))
 			       (cdr form))
 		     (if (and (pair? reps)
 			      (> ctr 1))
-			 (format *stderr* "~A in ~A~%~%" reps (lint-pp form))))
+			 (format *stderr* "~A(~A): ~A~A in~%   ~A~%~%" 
+				 ctr else-leaves
+				 reps (and (member (if (pair? (cdr reps))
+						       `(and ,@reps)
+						       (car reps))
+						   (cdr form)
+						   (lambda (a b) 
+						     (equal? a (car b))))
+					   #t)
+				 (lint-pp form))))
+		   ;; if reps happens by itself, else can be the not case, reps the else case
+		   ;;   if else is simple, can be repeated (maybe if rep multiple or used > 2 times?)
+		   ;; so in rewrite, output until reps seen
+		   ;;   output ((not (and ,@reps)) ,@else-cdr) [reps is in order already]
+		   ;;   output rest up to else omitting reps, if nothing left, use else and quit
+		   ;;   if else reached, output it
 |#
-#|
-		   ;; cond accumulated #f -- happens only a dozen or so times, normally because list? in s7 subsumes pair?
-		   (let ((exprs ()))
-		     (for-each (lambda (c)
-				 (when (and (pair? c)
-					    (not (memq (car c) '(#t #f else))))
-				   (if (pair? exprs)
-				       (let ((test (simplify-boolean `(and ,(car c) (not (or ,@exprs))) () () env)))
-					 ;(format *stderr* "~A ~A -> ~A~%" exprs (car c) test)
-					 (if (not test)
-					     (format *stderr* "~A in ~A~%~%" (car c) (lint-pp form)))))
-				   (set! exprs (cons (car c) exprs))))
-			       (cdr form)))
-|#
-			       
 		   
 		   ;; (cond (A (and B C)) (else (and B D))) et al never happens
 		   ;;    also (cond (A C) (B C)) -> (if (or A B) C) [non-pair C]
@@ -13375,7 +13377,25 @@
 
 			 (when has-else ; len > 1 here
 			   (let ((last-clause (list-ref form (- len 1)))) ; not the else branch! -- just before it.
-			     
+#|
+			     ;; a few dozen hits here
+			     ;;  the 'case parallel gets 2 hits, complex selectors
+			     (when (and (> len 2)
+					(or (null? (cdr last-clause))
+					    (and (pair? (cdr last-clause))
+						 (null? (cddr last-clause))
+						 (boolean? (cadr last-clause))))
+					(let ((else-clause (list-ref form len)))
+					  (and (pair? (cdr else-clause))
+					       (null? (cddr else-clause))
+					       (boolean? (cadr else-clause))
+					       (not (equal? (cdr last-clause) (cdr else-clause)))))
+					(let ((next-clause (list-ref form (- len 2))))
+					  (and (pair? (cdr next-clause))
+					       (null? (cddr next-clause))
+					       (not (boolean? (cadr next-clause))))))
+			       (format *stderr* "~A~%~%" (lint-pp form)))
+|#			     
 			     (when (= len 3)
 			       (let ((first-clause (cadr form))
 				     (else-clause (list-ref form len)))
@@ -13849,7 +13869,7 @@
 			     
 			     (lint-walk-open-body caller (car form) exprs env))))
 		     (cddr form))
-		    
+
 		    (if (and has-else 
 			     (pair? result)
 			     (not else-foldable))
@@ -14768,11 +14788,10 @@
 		     (unless named-let
 		       
 		       ;; if var val is symbol, val not used (not set!) in body (even hidden via function call)
-		       ;;   and var not set!, and not a function parameter (we already reported those), and
-		       ;;   we're not saving some global locally for a function about-to-be exported,
+		       ;;   and var not set!, and not a function parameter (we already reported those),
 		       ;;   remove it (the var) and replace with val throughout
 		       (when (and (proper-list? (cadr form))
-				  (not (tree-set-member '(lambda lambda*) body)))
+				  (not (tree-memq 'curlet (cddr form))))
 			 (let ((changes ()))
 			   (do ((vs (cadr form) (cdr vs)))
 			       ((null? vs)
@@ -14783,16 +14802,20 @@
 					 (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
 					 (set! new-form (tree-subst (cadr v) (car v) new-form)))
 				       changes)
-				      (lint-format "assuming we see all set!s, ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+				      (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+						   (if (pair? (cdr changes)) "s" "")
 						   changes 
 						   (if (pair? (cdr changes)) "are" "is")
-						   (lists->string form new-form)))))
+						   (lists->string form 
+								  (if (< (tree-leaves new-form) 200)
+								      new-form
+								      `(let ,(cadr new-form)
+									 ,@(one-call-and-dots (cddr new-form)))))))))
 			     (let ((v (car vs)))
 			       (if (and (pair? v)
 					(pair? (cdr v))
 					(null? (cddr v))                  ; good grief
 					(symbol? (cadr v))
-					(not (eq? (car v) (cadr v)))      ; this is handled elsewhere
 					(not (set-target (cadr v) body env))
 					(not (set-target (car v) body env))
 					(let ((data (var-member (cadr v) env)))
@@ -15242,7 +15265,7 @@
 						      ,@(one-call-and-dots (cddar body))))))
 		     
 		     (when (and (proper-list? (cadr form))
-				(not (tree-set-member '(lambda lambda*) body)))
+				(not (tree-memq 'curlet (cddr form))))
 		       ;; see let above
 		       (let ((changes ()))
 			 (do ((vs (cadr form) (cdr vs)))
@@ -15254,20 +15277,23 @@
 				       (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
 				       (set! new-form (tree-subst (cadr v) (car v) new-form)))
 				     changes)
-				    (lint-format "assuming we see all set!s, ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+				    (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+						 (if (pair? (cdr changes)) "s" "")
 						 changes 
 						 (if (pair? (cdr changes)) "are" "is")
 						 (lists->string form
-								`(,(if (and (pair? (cadr new-form))
-									    (pair? (cdadr new-form)))
-								       'let* 'let)
-								  ,@(cdr new-form)))))))
+								(let ((header (if (and (pair? (cadr new-form))
+										       (pair? (cdadr new-form)))
+										  'let* 'let)))
+								(if (< (tree-leaves new-form) 200)
+								    `(,header ,@(cdr new-form))
+								    `(,header ,(cadr new-form)
+									,@(one-call-and-dots (cddr new-form))))))))))
 			   (let ((v (car vs)))
 			     (if (and (pair? v)
 				      (pair? (cdr v))
-				      (null? (cddr v))                  ; good grief
+				      (null? (cddr v))                  
 				      (symbol? (cadr v))
-				      (not (eq? (car v) (cadr v)))      ; this is handled elsewhere
 				      (not (assq (cadr v) (cadr form))) ; value is not a local var
 				      (not (set-target (car v) body env))
 				      (not (set-target (cadr v) body env)))
@@ -16938,12 +16964,11 @@
 ;;;     cond-eqv? for some section of cond
 ;;; [cond not to shorten following: no else, all following share (and ... <expr> ...), expr no side effects]
 ;;; [   see cond reps above/cond-rep.data -- happens a lot but rewrites are tricky (long else etc)]
-;;; useless binding in generators: (x angle) [in some gens it protects current from next]
-;;;    (define call-with-input-file (let ((open-input-file open-input-file)(values values) (apply apply))(lambda (file proc) (let ((in (open-input-file file)...)
+;;; [   and another cond/case simplification [13381], but not case]
 ;;; see t347 for another missed scope restriction [let -> begin]
 ;;;
 ;;; in the "new binding" cases, if only var -- show as two independent lets, else if possible reorder so that there is no shadowing
 ;;;   i.e. preceding let was just cur var, or others aren't in use in new (and can be moved outward)
 ;;;   also set->let  ignore if it's moving the name for curlet?
 ;;;
-;;; 148 23967 637365
+;;; 148 23967 638880
