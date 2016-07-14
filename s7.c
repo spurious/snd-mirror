@@ -1270,6 +1270,7 @@ static s7_scheme *hidden_sc = NULL;
   static s7_pointer check_ref7(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref8(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref9(s7_pointer p, const char *func, int line);
+  static s7_pointer check_ref10(s7_pointer p, const char *func, int line);
   static s7_pointer check_nref(s7_pointer p, const char *func, int line);
   static void print_gc_info(s7_pointer obj, int line);
 
@@ -1363,6 +1364,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TNum(P) check_ref7(P,                     __func__, __LINE__) /* any number (not bignums I think) */
   #define _TSeq(P) check_ref8(P,                     __func__, __LINE__) /* any sequence or structure */
   #define _TMet(P) check_ref9(P,                     __func__, __LINE__) /* anything that might contain a method */
+  #define _TArg(P) check_ref10(P,                    __func__, __LINE__) /* closure arg (list, symbol) */
   #define _NFre(P) check_nref(P,                     __func__, __LINE__) /* not free */
   #define _TSet(P) check_seti(sc, P,                 __func__, __LINE__) /* set of immutable value */
 
@@ -1413,6 +1415,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TSeq(P)                    P
   #define _TMet(P)                    P
   #define _TMac(P)                    P
+  #define _TArg(P)                    P
   #define _NFre(P)                    P
 #endif
 
@@ -2013,6 +2016,7 @@ static int not_heap = -1;
 #define keyword_set_symbol(p, Val)    (symbol_name_cell(p))->object.string.doc.ksym = _TSym(Val)
 #define symbol_help(p)                (symbol_name_cell(p))->object.string.doc.documentation
 #define symbol_tag(p)                 (_TSym(p))->object.sym.tag
+#define symbol_set_tag(p, Val)        (_TSym(p))->object.sym.tag = Val
 #define symbol_has_help(p)            (is_documented(symbol_name_cell(p)))
 #define symbol_set_has_help(p)        set_documented(symbol_name_cell(p))
 
@@ -2231,6 +2235,7 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define is_closure(p)                 (type(p) == T_CLOSURE)
 #define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
 #define closure_args(p)               (_TClo(p))->object.func.args
+#define closure_set_args(p, Val)      (_TClo(p))->object.func.args = _TArg(Val)
 #define closure_body(p)               (_TPair((_TClo(p))->object.func.body))
 #define closure_set_body(p, Val)      (_TClo(p))->object.func.body = _TPair(Val)
 #define closure_let(p)                _TLid((_TClo(p))->object.func.env)
@@ -5091,7 +5096,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   global_slot(x) = sc->undefined;                          /* was sc->nil; */
   initial_slot(x) = sc->undefined;
   symbol_set_local(x, 0LL, sc->nil);
-  symbol_tag(x) = 0;
+  symbol_set_tag(x, 0);
 
   if (symbol_name_length(x) > 1)                           /* not 0, otherwise : is a keyword */
     {
@@ -5518,7 +5523,7 @@ static s7_pointer g_symbol(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 {
-  symbol_tag(sym) = sc->syms_tag;
+  symbol_set_tag(sym, sc->syms_tag);
   return(sym);
 }
 
@@ -7163,7 +7168,7 @@ static s7_pointer make_macro(s7_scheme *sc)
 
   new_cell_no_check(sc, mac, typ);
   sc->temp6 = mac;
-  closure_args(mac) = cdar(sc->code);
+  closure_set_args(mac, cdar(sc->code));
   closure_set_body(mac, cdr(sc->code));
   closure_setter(mac) = sc->F;
   closure_set_let(mac, sc->envir);
@@ -7207,7 +7212,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     }
 
   new_cell(sc, x, typ);
-  closure_args(x) = args;
+  closure_set_args(x, args);
   closure_set_body(x, code);
   closure_setter(x) = sc->F;
   if (is_null(args))
@@ -7226,7 +7231,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
       _T_ = T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS;	\
     else _T_ = T_CLOSURE | T_PROCEDURE | T_COPY_ARGS;			\
     new_cell(Sc, X, _T_);						\
-    closure_args(X) = Args;						\
+    closure_set_args(X, Args);						\
     closure_set_body(X, Code);				                \
     closure_setter(X) = sc->F;						\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
@@ -7242,7 +7247,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
       _T_ = T_CLOSURE | T_PROCEDURE | T_SAFE_CLOSURE | T_COPY_ARGS;	\
     else _T_ = T_CLOSURE | T_PROCEDURE | T_COPY_ARGS;			\
     new_cell(Sc, X, _T_);						\
-    closure_args(X) = Args;						\
+    closure_set_args(X, Args);						\
     closure_set_body(X, Code);				                \
     closure_setter(X) = sc->F;						\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
@@ -7328,7 +7333,7 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
 
   body = copy_body(sc, closure_body(fnc));
   new_cell(sc, x, typeflag(fnc));
-  closure_args(x) = closure_args(fnc);
+  closure_set_args(x, closure_args(fnc));
   closure_set_body(x, body);
   closure_setter(x) = closure_setter(fnc);
   closure_arity(x) = closure_arity(fnc);
@@ -31500,6 +31505,18 @@ static s7_pointer check_ref9(s7_pointer p, const char *func, int line)
   return(p);
 }
 
+static s7_pointer check_ref10(s7_pointer p, const char *func, int line)
+{
+  int typ;
+  typ = unchecked_type(p);
+  if ((typ != T_PAIR) && (typ != T_NIL) && (typ != T_SYMBOL))
+    {
+      fprintf(stderr, "%s%s[%d]: arglist is %s (%d)%s?\n", BOLD_TEXT, func, line, check_name(typ), typ, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(p);
+}
+
 static s7_pointer check_nref(s7_pointer p, const char *func, int line)
 {
   int typ;
@@ -43283,7 +43300,7 @@ static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
       if (symbol_tag(slot_symbol(py)) != 0)
 	{
 	  y_len ++;
-	  symbol_tag(slot_symbol(py)) = 0;
+	  symbol_set_tag(slot_symbol(py), 0);
 	}
   
   if (x_len != y_len)                                        /* symbol in x, not in y */
@@ -43295,7 +43312,7 @@ static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
     for (px = let_slots(ex); is_slot(px); px = next_slot(px))
       if (symbol_tag(slot_symbol(px)) == 0)                /* unshadowed */
 	{
-	  symbol_tag(slot_symbol(px)) = sc->syms_tag;      /* values don't match */
+	  symbol_set_tag(slot_symbol(px), sc->syms_tag);      /* values don't match */
 	  if (!slots_match(sc, px, y, morally, nci))
 	    return(false);
 	}
@@ -54217,7 +54234,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		  (port_filename(p)))
 		s7_warn(sc, 1024, "%s might be undefined (%s %u)\n", DISPLAY(car_expr), port_filename(p), port_line_number(p));
 	      else s7_warn(sc, 1024, "; %s might be undefined\n", DISPLAY(car_expr));
-	      symbol_tag(car_expr) = 1;             /* one warning is enough */
+	      symbol_set_tag(car_expr, 1);             /* one warning is enough */
 	    }
 	  /* we need local definitions and func args in e?  also check is_symbol case below
 	   */
@@ -55951,7 +55968,7 @@ static int define_unchecked_ex(s7_scheme *sc)
 	typ = T_CLOSURE_STAR | T_PROCEDURE | T_SAFE_CLOSURE;
       else typ = T_CLOSURE_STAR | T_PROCEDURE;
       new_cell(sc, x, typ);
-      closure_args(x) = cdar(sc->code);
+      closure_set_args(x, cdar(sc->code));
       closure_set_body(x, cdr(sc->code));
       closure_set_let(x, sc->envir);
       closure_arity(x) = CLOSURE_ARITY_NOT_SET;
@@ -56001,7 +56018,7 @@ static void define_funchecked(s7_scheme *sc)
   sc->value = caar(code);
   
   new_cell(sc, new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS);
-  closure_args(new_func) = cdar(code);
+  closure_set_args(new_func, cdar(code));
   closure_set_body(new_func, cdr(code));
   closure_setter(new_func) = sc->F;
   closure_arity(new_func) = CLOSURE_ARITY_NOT_SET;

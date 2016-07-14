@@ -2609,15 +2609,15 @@ An instrument that uses dlocsig is:
 <pre class="indented">
 (define* (sinewave start-time duration freq amp (amp-env '(0 1 1 1))
 		   (path (make-path :path '(-10 10 0 5 10 10))))
-  (let* ((vals (<em class=red>make-dlocsig</em> :start-time start-time :duration duration :path path))
-	 (dloc (car vals))
-	 (beg (cadr vals))
-	 (end (caddr vals)))
-    (let ((osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq))
-	  (aenv (<a class=quiet href="sndclm.html#make-env">make-env</a> amp-env :scaler amp :duration duration)))
-      (do ((i beg (+ i 1)))
-          ((= i end))
-	(<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="sndclm.html#env">env</a> aenv) (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)))))))
+  (let ((vals (<em class=red>make-dlocsig</em> :start-time start-time :duration duration :path path)))
+    (let ((dloc (car vals))
+	  (beg (cadr vals))
+	  (end (caddr vals)))
+      (let ((osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> freq))
+	    (aenv (<a class=quiet href="sndclm.html#make-env">make-env</a> amp-env :scaler amp :duration duration)))
+        (do ((i beg (+ i 1)))
+            ((= i end))
+	  (<em class=red>dlocsig</em> dloc i (* (<a class=quiet href="sndclm.html#env">env</a> aenv) (<a class=quiet href="sndclm.html#oscil">oscil</a> osc))))))))
 
 (<a class=quiet href="#wsdoc">with-sound</a> (:channels 2) (sinewave 0 1.0 440 .5 :path (make-path '((-10 10) (0.5 0.5) (10 10)) :3d #f)))
 </pre>
@@ -3693,18 +3693,18 @@ then
 </p>
 
 <pre class="indented">
-(let* ((size 128)
-       (x0 (make-float-vector size))	   
-       (x1 (make-float-vector size))	   
-       (x2 (make-float-vector size)))
-  (do ((i 0 (+ i 1)))
-      ((= i 12))
-    (let ((val (sin (/ (* 2 pi i) 12.0))))
-      (set! (x1 (- (+ i (/ size 4)) 6)) val)))
-  (do ((i 0 (+ i 1)))
-      ((= i 1024))
-    (<em class=red>vibrating-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
-    (<a class=quiet href="extsnd.html#graph">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
+(let ((size 128))
+  (let ((x0 (make-float-vector size))	   
+        (x1 (make-float-vector size))	   
+        (x2 (make-float-vector size)))
+    (do ((i 0 (+ i 1)))
+        ((= i 12))
+      (let ((val (sin (/ (* 2 pi i) 12.0))))
+        (set! (x1 (- (+ i (/ size 4)) 6)) val)))
+    (do ((i 0 (+ i 1)))
+        ((= i 1024))
+      (<em class=red>vibrating-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
+      (<a class=quiet href="extsnd.html#graph">graph</a> x0 "string" 0 1.0 -10.0 10.0))))
 </pre>
 
 
@@ -7360,14 +7360,14 @@ a function of the initial-phase ("phi" below) is (very nearly):
 </p>
 
 <pre class="indented">
-  (let* ((a (acos (/ (- (sqrt 33) 1) 8)))
-	 (b (acos (/ (- 1 (sqrt 33)) 8)))
-	 (ax (+ b (* (- phi pi) (/ (- a b) pi))))     ; same for peak 2 (the peak when phi is pi..2pi)
-	 (bx (let ((ap (- (* 2 pi) a))                ; start location of peak 1 (the peak when phi is 0..pi)
-	           (bp (- (* 2 pi) b)))                ; end location of peak 1 
-               (+ ap (* phi (/ (- bp ap) pi))))))     ; the 2 peaks move in opposite directions
+(let ((a (acos (/ (- (sqrt 33) 1) 8)))
+      (b (acos (/ (- 1 (sqrt 33)) 8))))
+  (let ((ax (+ b (* (- phi pi) (/ (- a b) pi))))      ; same for peak 2 (the peak when phi is pi..2pi)
+        (bx (let ((ap (- (* 2 pi) a))                 ; start location of peak 1 (the peak when phi is 0..pi)
+	          (bp (- (* 2 pi) b)))                ; end location of peak 1 
+              (+ ap (* phi (/ (- bp ap) pi))))))      ; the 2 peaks move in opposite directions
     (max (abs (+ (sin ax) (sin (+ (* 2 ax) phi))))    ; plug in the 2 locations and
-	 (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))  ;   return the max 
+         (abs (+ (sin bx) (sin (+ (* 2 bx) phi))))))) ;   return the max 
 </pre>
  
 <!--
@@ -7405,16 +7405,16 @@ We can reduce the peak difference below .00000002 by using:
 </p>
 
 <pre class="indented">
-  (let* ((waver (+ (* .002565 (sin (* 2 phi)))
+  (let ((waver (+ (* .002565 (sin (* 2 phi)))
                    (* .0003645 (sin (* 4 phi)))
                    (* .0001 (sin (* 6 phi)))
                    (* .00004 (sin (* 8 phi)))
                    (* .00002 (sin (* 10 phi)))
                    (* .00001 (sin (* 12 phi)))
-                   (* .0000035 (sin (* 14 phi)))))
-         (ax (- (+ b (* (- phi pi) (/ (- a b) pi))) waver))
-         (bx (- (+ ap (* phi (/ (- bp ap) pi))) waver)))
-    ...)
+                   (* .0000035 (sin (* 14 phi))))))
+    (let ((ax (- (+ b (* (- phi pi) (/ (- a b) pi))) waver))
+          (bx (- (+ ap (* phi (/ (- bp ap) pi))) waver)))
+      ...))
 </pre>
 
 <p>

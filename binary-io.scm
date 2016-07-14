@@ -186,8 +186,6 @@
 
 (define (read-bfloat80->int)
   (let ((exp 0)
-	(mant1 0)
-	(mant0 0)
 	(sign 0)
 	(buf (make-vector 10)))
     (do ((i 0 (+ i 1)))
@@ -196,14 +194,14 @@
     (set! exp (logior (ash (buf 0) 8) (buf 1)))
     (set! sign (if (not (= (logand exp #x8000) 0)) 1 0))
     (set! exp (logand exp #x7FFF))
-    (set! mant1 (+ (ash (buf 2) 24) (ash (buf 3) 16) (ash (buf 4) 8) (buf 5)))
-    (set! mant0 (+ (ash (buf 6) 24) (ash (buf 7) 16) (ash (buf 8) 8) (buf 9)))
-    (if (= mant1 mant0 exp sign 0) 
-	0
-      (round (* (if (= sign 1) -1 1)
-		(expt 2.0 (- exp 16383.0))
-		(+ (* (expt 2.0 -31.0) mant1)
-		   (* (expt 2.0 -63.0) mant0)))))))
+    (let ((mant1 (+ (ash (buf 2) 24) (ash (buf 3) 16) (ash (buf 4) 8) (buf 5)))
+	  (mant0 (+ (ash (buf 6) 24) (ash (buf 7) 16) (ash (buf 8) 8) (buf 9))))
+      (if (= mant1 mant0 exp sign 0) 
+	  0
+	  (round (* (if (= sign 1) -1 1)
+		    (expt 2.0 (- exp 16383.0))
+		    (+ (* (expt 2.0 -31.0) mant1)
+		       (* (expt 2.0 -63.0) mant0))))))))
 
 (define (write-int->bfloat80 val)
   (let ((exp 0)    
@@ -254,17 +252,17 @@
   (with-output-to-file file
     (lambda ()
       (let ((comlen (length comment)))
-	(let ((data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4))))))
-	      (curloc 24))
+	(let ((data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4)))))))
 	  (write-chars ".snd")
 	  (for-each write-bint32 (vector data-location data-size sample-type srate chns))
-	  (if (> comlen 0)
-	      (begin
-		(io-write-string comment)
-		(set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
-	  (do ((i curloc (+ i 1)))
-	      ((>= i data-location))
-	    (write-byte 0)))))))
+	  (let ((curloc 24))
+	    (if (> comlen 0)
+		(begin
+		  (io-write-string comment)
+		  (set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
+	    (do ((i curloc (+ i 1)))
+		((>= i data-location))
+	      (write-byte 0))))))))
 
 
 (define (read-aif-header file)

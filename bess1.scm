@@ -93,15 +93,8 @@
 (define* (make-float-vector-test (srate *clm-srate*)
 			(bufsize *clm-rt-bufsize*)
 			(sample-type *clm-sample-type*))
-  (let ((vmode (vector 0 12 2 4 14 4 5 5 0 7 7 11 11))
-	(vpits (make-vector (+ 1 lim) 0))
-	(vbegs (make-vector (+ 1 lim) 0))
-	(cellbeg 0)
-	(cellsiz 6)
-	(cellctr 0)
-	(func #f)
-	(len 0)
-	(dur 0.0))
+  (let ((vpits (make-vector (+ 1 lim) 0))
+	(vbegs (make-vector (+ 1 lim) 0)))
     (do ((i 0 (+ 1 i)))
 	((= i lim))
       (set! (vpits i) (random 12))
@@ -109,35 +102,42 @@
     (set! *clm-srate* srate)
     (set! *clm-rt-bufsize* bufsize)
     (set! *output* (mus-audio-open-output mus-audio-default srate 1 sample-type (* bufsize 2)))
-    (lambda ()
-      (if (> len 1)
-	  (set! len (- len 1))
-	  (begin
-	    (set! dur (* ctempo (vbegs (+ cellctr 1))))
-	    (set! cellctr (+ cellctr 1))
-	    (if (> cellctr (+ cellsiz cellbeg))
-		(begin
-		  (if (> (random 1.0) 0.5) (set! cellbeg (+ 1 cellbeg)))
-		  (if (> (random 1.0) 0.5) (set! cellsiz (+ 1 cellsiz)))
-		  (set! cellctr cellbeg)))
 
-	    (let ((freq (* cfreq 16.351 16
-			   (expt 2 (/ (vmode (vpits cellctr)) 12.0)))))
-	      (format () "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
-		      dur
-		      (if (< (* 8 freq) *clm-srate*)
-			  freq
-			  (/ freq 4))
-		      (* camp 0.3) 
-		      cindex)
-
-	      (set! func (make-rt-violin dur
-					 (if (< (* 8 freq) *clm-srate*)
-					     freq
-					     (/ freq 4))
-					 (* camp 0.3) :fm-index cindex)))
-	    (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
-      func)))
+    (let ((cellbeg 0)
+	  (cellsiz 6)
+	  (cellctr 0)
+	  (func #f)
+	  (len 0)
+	  (dur 0.0)
+	  (vmode (vector 0 12 2 4 14 4 5 5 0 7 7 11 11)))
+      (lambda ()
+	(if (> len 1)
+	    (set! len (- len 1))
+	    (begin
+	      (set! dur (* ctempo (vbegs (+ cellctr 1))))
+	      (set! cellctr (+ cellctr 1))
+	      (if (> cellctr (+ cellsiz cellbeg))
+		  (begin
+		    (if (> (random 1.0) 0.5) (set! cellbeg (+ 1 cellbeg)))
+		    (if (> (random 1.0) 0.5) (set! cellsiz (+ 1 cellsiz)))
+		    (set! cellctr cellbeg)))
+	      
+	      (let ((freq (* cfreq 16.351 16
+			     (expt 2 (/ (vmode (vpits cellctr)) 12.0)))))
+		(format () "dur: ~A, freq: ~A, amp: ~A, index: ~A~%"
+			dur
+			(if (< (* 8 freq) *clm-srate*)
+			    freq
+			    (/ freq 4))
+			(* camp 0.3) 
+			cindex)
+		(set! func (make-rt-violin dur
+					   (if (< (* 8 freq) *clm-srate*)
+					       freq
+					       (/ freq 4))
+					   (* camp 0.3) :fm-index cindex)))
+	      (set! len (ceiling (/ (seconds->samples dur) bufsize)))))
+	func))))
 
 ;; from clm-2/bess5.cl and clm-2/clm-example.lisp
 (define time 60)
@@ -162,6 +162,18 @@
 (define* (make-agn (srate *clm-srate*)
 		   (bufsize *clm-rt-bufsize*)
 		   (sample-type *clm-sample-type*))
+  (do ((i 0 (+ i 1)))
+      ((= i lim))
+    (set! (octs i) (floor (+ 4 (* 2 (rbell (random 1.0))))))
+    (set! (pits i) (mode (random 12)))
+    (set! (rhys i) (+ 4 (random 6)))
+    (set! (begs i) (if (< (random 1.0) 0.9) 
+		       (+ 4 (random 2))
+		       (random 24)))
+    (set! (amps i) (floor (+ 1 (* 8 (rbell (random 1.0)))))))
+  (set! *clm-srate* srate)
+  (set! *clm-rt-bufsize* bufsize)
+  (set! *output* (mus-audio-open-output mus-audio-default srate 1 sample-type (* bufsize 2)))
   (let ((wins (vector '(0 0 40 0.1 60 0.2 75 0.4 82 1 90 1 100 0)
 		      '(0 0 60 0.1 80 0.2 90 0.4 95 1 100 0)
 		      '(0 0 10 1 16 0 32 0.1 50 1 56 0 60 0 90 0.3 100 0)
@@ -184,18 +196,6 @@
 	(whichway 1)
 	(func #f)
 	(len 0))
-    (do ((i 0 (+ i 1)))
-	((= i lim))
-      (set! (octs i) (floor (+ 4 (* 2 (rbell (random 1.0))))))
-      (set! (pits i) (mode (random 12)))
-      (set! (rhys i) (+ 4 (random 6)))
-      (set! (begs i) (if (< (random 1.0) 0.9) 
-			 (+ 4 (random 2))
-			 (random 24)))
-      (set! (amps i) (floor (+ 1 (* 8 (rbell (random 1.0)))))))
-    (set! *clm-srate* srate)
-    (set! *clm-rt-bufsize* bufsize)
-    (set! *output* (mus-audio-open-output mus-audio-default srate 1 sample-type (* bufsize 2)))
     (lambda ()
       (if (> len 1)
 	  (set! len (- len 1))

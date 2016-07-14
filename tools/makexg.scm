@@ -1984,18 +1984,15 @@
 			((not (= refargs 0))
 			 (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
 
-			((eq? spec 'free)
-			 (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
-
-			((eq? spec 'const-return)
-			 (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
-
-			(else
-			 (if (member name idlers)
-			     (begin
-			       (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
-			       (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
-			 (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))))))
+			((case spec
+			   ((free)         (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
+			   ((const-return) (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
+			   (else
+			    (if (member name idlers)
+				(begin
+				  (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
+				  (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
+			    (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))))))))
 
 	    (let ((using-loc (or (eq? lambda-type 'GCallback)
 				 (and callback-data
