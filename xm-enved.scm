@@ -343,26 +343,19 @@
 	      (begin
 		((*motif* 'XClearWindow) dpy wn)
 		(draw-axes widget gc name ix0 ix1 iy0 iy1)
-		(let ((lx #f)
-		      (ly #f))
-		  (do ((i 0 (+ i 2)))
-		      ((= i len))
-		    (let ((cx (xe-grfx (cur-env i)))
-			  (cy (xe-grfy (cur-env (+ i 1)))))
-		      ((*motif* 'XFillArc)
-		       dpy wn gc 
-		       (- cx mouse-r)
-		       (- cy mouse-r)
-		       mouse-d mouse-d
-		       0 23040) ; (* 360 64))
-		      (if lx
-			  ((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
-		      (set! lx cx)
-		      (set! ly cy)))))
+		(do ((lx #f)
+		     (ly #f)
+		     (i 0 (+ i 2)))
+		    ((= i len))
+		  (let ((cx (xe-grfx (cur-env i)))
+			(cy (xe-grfy (cur-env (+ i 1)))))
+		    ((*motif* 'XFillArc) dpy wn gc (- cx mouse-r) (- cy mouse-r) mouse-d mouse-d 0 23040) ; (* 360 64))
+		    (if lx
+			((*motif* 'XDrawLine) dpy wn gc lx ly cx cy))
+		    (set! lx cx)
+		    (set! ly cy))))
 	      ;; *gtk* 
-	      (let ((lx #f)
-		    (ly #f)
-		    (cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn))))
+	      (let ((cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn))))
 		
 		(let ((size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
 		  ((*gtk* 'cairo_push_group) cr)
@@ -374,7 +367,9 @@
 		
 		((*gtk* 'cairo_set_line_width) cr 1.0)
 		((*gtk* 'cairo_set_source_rgb) cr 0.0 0.0 0.0)
-		(do ((i 0 (+ i 2)))
+		(do ((lx #f)
+		     (ly #f)
+		     (i 0 (+ i 2)))
 		    ((= i len))
 		  (let ((cx (xe-grfx (cur-env i)))
 			(cy (xe-grfy (cur-env (+ i 1)))))

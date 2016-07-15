@@ -1342,6 +1342,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TSlt(P) check_ref(P, T_SLOT,              __func__, __LINE__, NULL, NULL)
   #define _TSlp(P) check_ref2(P, T_SLOT, T_PAIR,     __func__, __LINE__, NULL, NULL)
   #define _TSln(P) check_ref2(P, T_SLOT, T_NIL,      __func__, __LINE__, NULL, NULL)
+  #define _TSld(P) check_ref2(P, T_SLOT, T_UNIQUE,   __func__, __LINE__, NULL, NULL)
   #define _TSyn(P) check_ref(P, T_SYNTAX,            __func__, __LINE__, NULL, NULL)
   #define _TMac(P) check_ref(P, T_C_MACRO,           __func__, __LINE__, NULL, NULL)
   #define _TLet(P) check_ref(P, T_LET,               __func__, __LINE__, NULL, NULL)
@@ -1406,6 +1407,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TFnc(P)                    P
   #define _TSlt(P)                    P
   #define _TSln(P)                    P
+  #define _TSld(P)                    P
   #define _TSlp(P)                    P
   #define _TSym(P)                    P
   #define _TLet(P)                    P
@@ -2009,7 +2011,9 @@ static int not_heap = -1;
 #define symbol_syntax_op(p)           (_TSym(p))->object.sym.op
 
 #define global_slot(p)                (_TSym(p))->object.sym.global_slot
+#define set_global_slot(p, Val)       (_TSym(p))->object.sym.global_slot = _TSld(Val)
 #define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
+#define set_initial_slot(p, Val)      (symbol_name_cell(p))->object.string.initial_slot = _TSld(Val)
 #define local_slot(p)                 (_TSym(p))->object.sym.local_slot
 #define set_local_slot(p, Val)        (_TSym(p))->object.sym.local_slot = _TSln(Val)
 #define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym
@@ -2035,7 +2039,8 @@ static int not_heap = -1;
 #define slot_accessor(p)              slot_expression(p)
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
-#define syntax_symbol(p)              (_TSyn(p))->object.syn.symbol
+#define syntax_symbol(p)              _TSym((_TSyn(p))->object.syn.symbol)
+#define syntax_set_symbol(p, Sym)     (_TSyn(p))->object.syn.symbol = _TSym(Sym)
 #define syntax_opcode(p)              (_TSyn(p))->object.syn.op
 #define syntax_min_args(p)            (_TSyn(p))->object.syn.min_args
 #define syntax_max_args(p)            (_TSyn(p))->object.syn.max_args
@@ -2296,6 +2301,7 @@ static int num_object_types = 0;
 #define c_object_rp(p)                c_object_info(p)->rp
 #define c_object_set_ip(p)            c_object_info(p)->set_ip
 #define c_object_set_rp(p)            c_object_info(p)->set_rp
+#define c_object_scheme_name(p)       _TStr(c_object_info(p)->scheme_name)
 /* #define c_object_outer_type(p)     c_object_info(p)->outer_type */
 
 #define raw_pointer(p)                (_TPtr(p))->object.c_pointer
@@ -5093,8 +5099,8 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   unheap(x);
   typeflag(x) = T_SYMBOL;
   symbol_set_name_cell(x, str);
-  global_slot(x) = sc->undefined;                          /* was sc->nil; */
-  initial_slot(x) = sc->undefined;
+  set_global_slot(x, sc->undefined);                       /* was sc->nil; */
+  set_initial_slot(x, sc->undefined);
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_tag(x, 0);
 
@@ -5104,7 +5110,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	{
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	  keyword_set_symbol(x, make_symbol_with_length(sc, (char *)(name + 1), len - 1));
-	  global_slot(x) = s7_make_slot(sc, sc->nil, x, x);
+	  set_global_slot(x, s7_make_slot(sc, sc->nil, x, x));
 	}
       else
 	{
@@ -5121,7 +5127,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      kstr[klen] = 0;
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	      keyword_set_symbol(x, make_symbol_with_length(sc, kstr, klen));
-	      global_slot(x) = s7_make_slot(sc, sc->nil, x, x);
+	      set_global_slot(x, s7_make_slot(sc, sc->nil, x, x));
 	      free(kstr);
 	    }
 	}
@@ -5409,8 +5415,8 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   /* allocate the symbol in the heap so GC'd when inaccessible */
   new_cell(sc, x, T_SYMBOL | T_GENSYM);
   symbol_set_name_cell(x, str);
-  global_slot(x) = sc->undefined;
-  initial_slot(x) = sc->undefined;
+  set_global_slot(x, sc->undefined);
+  set_initial_slot(x, sc->undefined);
   symbol_set_local(x, 0LL, sc->nil);
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
@@ -5865,12 +5871,12 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 	  for (i = sc->rootlet_entries; i < vector_length(ge); i++)
 	    vector_element(ge, i) = sc->nil;
 	}
-      global_slot(symbol) = slot;
+      set_global_slot(symbol, slot);
       
       if (symbol_id(symbol) == 0) /* never defined locally? */
 	{
 	  if (initial_slot(symbol) == sc->undefined)
-	    initial_slot(symbol) = permanent_slot(symbol, value);
+	    set_initial_slot(symbol, permanent_slot(symbol, value));
 	  set_local_slot(symbol, slot);
 	  set_global(symbol);
 	}
@@ -7438,7 +7444,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
 	  (!is_slot(global_slot(symbol))))
 	{
 	  set_global(symbol); /* is_global => global_slot is usable */
-	  global_slot(symbol) = local_slot(symbol);
+	  set_global_slot(symbol, local_slot(symbol));
 	}
     }
 }
@@ -45713,7 +45719,7 @@ static s7_pointer prepackaged_type_name(s7_scheme *sc, s7_pointer x)
 
   switch (type(x))
     {
-    case T_C_OBJECT:    return(object_types[c_object_type(x)]->scheme_name);
+    case T_C_OBJECT:    return(c_object_scheme_name(x));
     case T_INPUT_PORT:  return((is_file_port(x)) ? an_input_file_port_string : ((is_string_port(x)) ? an_input_string_port_string : an_input_port_string));
     case T_OUTPUT_PORT: return((is_file_port(x)) ? an_output_file_port_string : ((is_string_port(x)) ? an_output_string_port_string : an_output_port_string));
     }
@@ -49825,7 +49831,7 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   unheap(syn);
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS);
   syntax_opcode(syn) = op;
-  syntax_symbol(syn) = x;
+  syntax_set_symbol(syn, x);
   syntax_min_args(syn) = integer(min_args);
   syntax_max_args(syn) = ((max_args == max_arity) ? -1 : integer(max_args));
   syntax_documentation(syn) = s7_make_permanent_string(doc);
@@ -49833,8 +49839,8 @@ static s7_pointer assign_syntax(s7_scheme *sc, const char *name, opcode_t op, s7
   syntax_ip(syn) = NULL;
   syntax_pp(syn) = NULL;
 
-  global_slot(x) = permanent_slot(x, syn);
-  initial_slot(x) = permanent_slot(x, syn);
+  set_global_slot(x, permanent_slot(x, syn));
+  set_initial_slot(x, permanent_slot(x, syn));
   typeflag(x) = SYNTACTIC_TYPE;
   symbol_set_local(x, 0LL, sc->nil);
   symbol_syntax_op(x) = op;
@@ -49861,7 +49867,7 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   heap_location(syn) = heap_location(old_syn);
   set_type(syn, T_SYNTAX | T_SYNTACTIC | T_DONT_EVAL_ARGS);
   syntax_opcode(syn) = op;
-  syntax_symbol(syn) = symbol;
+  syntax_set_symbol(syn, symbol);
   syntax_min_args(syn) = syntax_min_args(old_syn);
   syntax_max_args(syn) = syntax_max_args(old_syn);
   syntax_documentation(syn) = syntax_documentation(old_syn);
@@ -49869,8 +49875,8 @@ static s7_pointer assign_internal_syntax(s7_scheme *sc, const char *name, opcode
   syntax_ip(syn) = syntax_ip(old_syn);
   syntax_pp(syn) = syntax_pp(old_syn);
 
-  global_slot(x) = permanent_slot(x, syn);
-  initial_slot(x) = permanent_slot(x, syn);
+  set_global_slot(x, permanent_slot(x, syn));
+  set_initial_slot(x, permanent_slot(x, syn));
   typeflag(x) = SYNTACTIC_TYPE;
   return(x);
 }

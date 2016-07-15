@@ -35,20 +35,20 @@
 
 #define HAVE_BYTESWAP_H __linux__
 
-#define MUS_BYTE_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
-#define MUS_SHORT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 15)))
-#define MUS_INT_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-#define MUS_INT24_TO_SAMPLE(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
-#define MUS_SAMPLE_TO_INT(n) ((int)((n) * (1 << 23)))
-#define MUS_SAMPLE_TO_INT24(n) ((int)((n) * (1 << 23)))
-#define MUS_SAMPLE_TO_SHORT(n) ((short)((n) * (1 << 15)))
-#define MUS_SAMPLE_TO_BYTE(n) ((char)((n) * (1 << 7)))
+#define mus_byte_to_sample(n)  (((mus_float_t)(n) / (mus_float_t)(1 << 7)))
+#define mus_short_to_sample(n) (((mus_float_t)(n) / (mus_float_t)(1 << 15)))
+#define mus_int_to_sample(n)   (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define mus_int24_to_sample(n) (((mus_float_t)(n) / (mus_float_t)(1 << 23)))
+#define mus_sample_to_int(n)   ((int)((n) * (1 << 23)))
+#define mus_sample_to_int24(n) ((int)((n) * (1 << 23)))
+#define mus_sample_to_short(n) ((short)((n) * (1 << 15)))
+#define mus_sample_to_byte(n)  ((char)((n) * (1 << 7)))
 #if defined(__x86_64__) || defined(__i386__) 
-  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
-  #define INT24_TO_SAMPLE(n) ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define bint24_to_sample(n)  ((mus_float_t)(big_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define int24_to_sample(n)   ((mus_float_t)(little_endian_int(jchar) >> 8) / (mus_float_t)(1 << 23))
 #else
-  #define BINT24_TO_SAMPLE(n) ((mus_float_t)(mus_char_to_bint(jchar) >> 8) / (mus_float_t)(1 << 23))
-  #define INT24_TO_SAMPLE(n) ((mus_float_t)(mus_char_to_lint(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define bint24_to_sample(n)  ((mus_float_t)(mus_char_to_bint(jchar) >> 8) / (mus_float_t)(1 << 23))
+  #define int24_to_sample(n)   ((mus_float_t)(mus_char_to_lint(jchar) >> 8) / (mus_float_t)(1 << 23))
 #endif
 
 static mus_long_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
@@ -880,7 +880,7 @@ static unsigned char to_alaw(int pcm_val)
     }
 }
 
-#define A_(a) MUS_SHORT_TO_SAMPLE(a)
+#define A_(a) mus_short_to_sample(a)
 static const mus_float_t mus_alaw[256] = {
   A_(-5504), A_(-5248), A_(-6016), A_(-5760), A_(-4480), A_(-4224), A_(-4992), A_(-4736), A_(-7552), A_(-7296), 
   A_(-8064), A_(-7808), A_(-6528), A_(-6272), A_(-7040), A_(-6784), A_(-2752), A_(-2624), A_(-3008), A_(-2880), 
@@ -926,7 +926,7 @@ static unsigned char to_mulaw(int pcm_val)
     }
 }
 
-#define MU_(a) MUS_SHORT_TO_SAMPLE(a)
+#define MU_(a) mus_short_to_sample(a)
 static const mus_float_t mus_mulaw[256] = {
   MU_(-32124), MU_(-31100), MU_(-30076), MU_(-29052), MU_(-28028), MU_(-27004), MU_(-25980), MU_(-24956), MU_(-23932), MU_(-22908), 
   MU_(-21884), MU_(-20860), MU_(-19836), MU_(-18812), MU_(-17788), MU_(-16764), MU_(-15996), MU_(-15484), MU_(-14972), MU_(-14460), 
@@ -954,7 +954,7 @@ static const mus_float_t mus_mulaw[256] = {
 };
 
 
-#define B_(a) MUS_BYTE_TO_SAMPLE(a)
+#define B_(a) mus_byte_to_sample(a)
 static const mus_float_t mus_byte[256] = {
   B_(0), B_(1), B_(2), B_(3), B_(4), B_(5), B_(6), B_(7), B_(8), B_(9), B_(10), B_(11), B_(12), B_(13), B_(14), B_(15), B_(16), 
   B_(17), B_(18), B_(19), B_(20), B_(21), B_(22), B_(23), B_(24), B_(25), B_(26), B_(27), B_(28), B_(29), B_(30), B_(31), B_(32), 
@@ -977,7 +977,7 @@ static const mus_float_t mus_byte[256] = {
 };
 
 
-#define UB_(a) MUS_BYTE_TO_SAMPLE(a)
+#define UB_(a) mus_byte_to_sample(a)
 static const mus_float_t mus_ubyte[256] = {
   UB_(-128), UB_(-127), UB_(-126), UB_(-125), UB_(-124), UB_(-123), UB_(-122), UB_(-121), UB_(-120), UB_(-119), UB_(-118), UB_(-117), 
   UB_(-116), UB_(-115), UB_(-114), UB_(-113), UB_(-112), UB_(-111), UB_(-110), UB_(-109), UB_(-108), UB_(-107), UB_(-106), UB_(-105), 
@@ -1021,7 +1021,7 @@ static void initialize_swapped_shorts(void)
     {
       signed short x;
       x = (signed short)(((i >> 8) & 0xff) | ((i & 0xff) << 8));
-      swapped_shorts[i] = MUS_SHORT_TO_SAMPLE(x);
+      swapped_shorts[i] = mus_short_to_sample(x);
     }
 }
 
@@ -1219,7 +1219,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))]; /* bswap16 is much slower here because of the subsequent short->double conversion */
 #else       
 		  for (; bufnow <= bufend; jchar += 2) 
-		    (*bufnow++) = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 
+		    (*bufnow++) = mus_short_to_sample(big_endian_short(jchar)); 
 #endif
 		  break;
 		  
@@ -1230,60 +1230,60 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 #else
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 		      jchar += 2;
 		    }
 		  for (; bufnow <= bufend; jchar += 2) 
-		    (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+		    (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 #endif
 		  break;
 		  
 		case MUS_BINT:    
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 		      jchar += 4;
 		    }
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+		    (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 		  break;
 		  
 		case MUS_LINT: 
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 		      jchar += 4;
-		      (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		      (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 		      jchar += 4;
 		    }
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+		    (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 		  break;
 		  
 		case MUS_BINTN:              
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> 8));
+		    (*bufnow++) = mus_int_to_sample((big_endian_int(jchar) >> 8));
 		  break;
 		  
 		case MUS_LINTN: 
 		  for (; bufnow <= bufend; jchar += 4) 
-		    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> 8));
+		    (*bufnow++) = mus_int_to_sample((little_endian_int(jchar) >> 8));
 		  break;
 		  
 		case MUS_MULAW:  	              
@@ -1410,49 +1410,49 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		case MUS_UBSHORT:   
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
 		    }
 		  for (; bufnow <= bufend; jchar += 2) 
-		    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		    (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		  break;
 		  
 		case MUS_ULSHORT:   
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
-		      (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		      (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		      jchar += 2;
 		    }
 		  for (; bufnow <= bufend; jchar += 2) 
-		    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+		    (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 		  break;
 		  
 		case MUS_B24INT:
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = bint24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = bint24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = bint24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = bint24_to_sample(jchar);
 		      jchar += 3;
 		    }
 		  for (; bufnow <= bufend; jchar += 3) 
-		    (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+		    (*bufnow++) = bint24_to_sample(jchar);
 		  break;
 		  
 		case MUS_L24INT: 
@@ -1460,22 +1460,22 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    int val;
 		    val = (jchar[2] << 16) + (jchar[1] << 8) + jchar[0];
 		    if (val >= (1 << 23)) val -= (1 << 24);
-		    (*bufnow++) = MUS_INT24_TO_SAMPLE(val);
+		    (*bufnow++) = mus_int24_to_sample(val);
 		    jchar += 2;
 		  }
 		  while (bufnow <= bufend4)
 		    {
-		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = int24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = int24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = int24_to_sample(jchar);
 		      jchar += 3;
-		      (*bufnow++) = INT24_TO_SAMPLE(jchar);
+		      (*bufnow++) = int24_to_sample(jchar);
 		      jchar += 3;
 		    }
 		  for (; bufnow <= bufend; jchar += 3) 
-		    (*bufnow++) = INT24_TO_SAMPLE(jchar);
+		    (*bufnow++) = int24_to_sample(jchar);
 		  break;
 
 		default: break;
@@ -1519,7 +1519,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			    (*bufnow++) = swapped_shorts[(*((unsigned short *)jchar))];
 #else       
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_SHORT_TO_SAMPLE(big_endian_short(jchar)); 
+			    (*bufnow++) = mus_short_to_sample(big_endian_short(jchar)); 
 #endif
 			  break;
 			  
@@ -1530,38 +1530,38 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 #else
 			  while (bufnow <= bufend4) 
 			    {
-			      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 			      jchar += siz_chans;
-			      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 			      jchar += siz_chans;
-			      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 			      jchar += siz_chans;
-			      (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			      (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 			      jchar += siz_chans;
 			    }
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_SHORT_TO_SAMPLE(little_endian_short(jchar)); 
+			    (*bufnow++) = mus_short_to_sample(little_endian_short(jchar)); 
 #endif
 			  break;
 			  
 			case MUS_BINT:              
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE(big_endian_int(jchar)); 
+			    (*bufnow++) = mus_int_to_sample(big_endian_int(jchar)); 
 			  break;
 			  
 			case MUS_LINT: 
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE(little_endian_int(jchar)); 
+			    (*bufnow++) = mus_int_to_sample(little_endian_int(jchar)); 
 			  break;
 			  
 			case MUS_BINTN:              
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE((big_endian_int(jchar) >> 8));
+			    (*bufnow++) = mus_int_to_sample((big_endian_int(jchar) >> 8));
 			  break;
 			  
 			case MUS_LINTN: 
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_INT_TO_SAMPLE((little_endian_int(jchar) >> 8));
+			    (*bufnow++) = mus_int_to_sample((little_endian_int(jchar) >> 8));
 			  break;
 			  
 			case MUS_MULAW:  	              
@@ -1648,17 +1648,17 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			  
 			case MUS_UBSHORT:   
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
+			    (*bufnow++) = mus_short_to_sample((int)(big_endian_unsigned_short(jchar)) - USHORT_ZERO);
 			  break;
 			  
 			case MUS_ULSHORT:   
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = MUS_SHORT_TO_SAMPLE((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
+			    (*bufnow++) = mus_short_to_sample((int)(little_endian_unsigned_short(jchar)) - USHORT_ZERO);
 			  break;
 			  
 			case MUS_B24INT:
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = BINT24_TO_SAMPLE(jchar);
+			    (*bufnow++) = bint24_to_sample(jchar);
 			  break;
 			  
 			case MUS_L24INT:   
@@ -1667,11 +1667,11 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 			    int val;
 			    val = (jchar[2] << 16) + (jchar[1] << 8) + jchar[0];
 			    if (val >= (1 << 23)) val -= (1 << 24);
-			    (*bufnow++) = MUS_INT24_TO_SAMPLE(val);
+			    (*bufnow++) = mus_int24_to_sample(val);
 			    jchar += siz_chans - 1;
 			  }
 			  for (; bufnow <= bufend; jchar += siz_chans) 
-			    (*bufnow++) = INT24_TO_SAMPLE(jchar);
+			    (*bufnow++) = int24_to_sample(jchar);
 			  break;
 
 			default: break;
@@ -1962,62 +1962,62 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	    case MUS_BSHORT: 
 	      while (bufnow <= bufend4)
 		{
-		  set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		  set_big_endian_short(jchar, mus_sample_to_short(*bufnow++));
 		  jchar += siz_chans;
-		  set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		  set_big_endian_short(jchar, mus_sample_to_short(*bufnow++));
 		  jchar += siz_chans;
-		  set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		  set_big_endian_short(jchar, mus_sample_to_short(*bufnow++));
 		  jchar += siz_chans;
-		  set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		  set_big_endian_short(jchar, mus_sample_to_short(*bufnow++));
 		  jchar += siz_chans;
 		}
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		set_big_endian_short(jchar, mus_sample_to_short(*bufnow++));
 	      break;
 
 	    case MUS_LSHORT:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_short(jchar, MUS_SAMPLE_TO_SHORT(*bufnow++));
+		set_little_endian_short(jchar, mus_sample_to_short(*bufnow++));
 	      break;
 
 	    case MUS_BINT:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++));
+		set_big_endian_int(jchar, mus_sample_to_int(*bufnow++));
 	      break;
 
 	    case MUS_LINT:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++));
+		set_little_endian_int(jchar, mus_sample_to_int(*bufnow++));
 	      break;
 
 	    case MUS_BINTN:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << 8);
+		set_big_endian_int(jchar, mus_sample_to_int(*bufnow++) << 8);
 	      break;
 
 	    case MUS_LINTN:   
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_int(jchar, MUS_SAMPLE_TO_INT(*bufnow++) << 8);
+		set_little_endian_int(jchar, mus_sample_to_int(*bufnow++) << 8);
 	      break;
 
 	    case MUS_MULAW:     
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		(*jchar) = to_mulaw(MUS_SAMPLE_TO_SHORT(*bufnow++));
+		(*jchar) = to_mulaw(mus_sample_to_short(*bufnow++));
 	      break;
 
 	    case MUS_ALAW:      
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		(*jchar) = to_alaw(MUS_SAMPLE_TO_SHORT(*bufnow++));
+		(*jchar) = to_alaw(mus_sample_to_short(*bufnow++));
 	      break;
 
 	    case MUS_BYTE:    
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		(*((signed char *)jchar)) = MUS_SAMPLE_TO_BYTE(*bufnow++);
+		(*((signed char *)jchar)) = mus_sample_to_byte(*bufnow++);
 	      break;
 
 	    case MUS_UBYTE:  
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		(*jchar) = MUS_SAMPLE_TO_BYTE(*bufnow++) + UBYTE_ZERO;
+		(*jchar) = mus_sample_to_byte(*bufnow++) + UBYTE_ZERO;
 	      break;
 
 	    case MUS_BFLOAT:    
@@ -2084,12 +2084,12 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 
 	    case MUS_UBSHORT: 
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_big_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(*bufnow++) + USHORT_ZERO));
+		set_big_endian_unsigned_short(jchar, (unsigned short)(mus_sample_to_short(*bufnow++) + USHORT_ZERO));
 	      break;
 
 	    case MUS_ULSHORT: 
 	      for (; bufnow <= bufend; jchar += siz_chans) 
-		set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(*bufnow++) + USHORT_ZERO));
+		set_little_endian_unsigned_short(jchar, (unsigned short)(mus_sample_to_short(*bufnow++) + USHORT_ZERO));
 	      break;
 
 	    case MUS_B24INT: 
@@ -2100,7 +2100,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		c3 = chans * 3;
 		for (; bufnow <= bufend; bk += c3) 
 		  {
-		    val = MUS_SAMPLE_TO_INT24(*bufnow++);
+		    val = mus_sample_to_int24(*bufnow++);
 		    charbuf[bk] = (val >> 16); 
 		    charbuf[bk + 1] = (val >> 8); 
 		    charbuf[bk + 2] = (val & 0xFF); 
@@ -2116,7 +2116,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 		c3 = chans * 3;
 		for (; bufnow <= bufend; bk += c3)
 		  {
-		    val = MUS_SAMPLE_TO_INT24(*bufnow++);
+		    val = mus_sample_to_int24(*bufnow++);
 		    charbuf[bk + 2] = (val >> 16); 
 		    charbuf[bk + 1] = (val >> 8); 
 		    charbuf[bk] = (val & 0xFF); 
