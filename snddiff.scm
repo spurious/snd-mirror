@@ -101,10 +101,7 @@
 	;; align sounds and  zero out any non-overlapping sections, keeping track of whether they are zero beforehand
 	(let ((lag (lag? snd0 chn0 snd1 chn1))
 	      (pre0 #f)
-	      (pre1 #f)
-	      (post0 #f)
-	      (post1 #f))
-
+	      (pre1 #f))
 	  (if (> lag 0)
 	      (begin
 		(pad-channel 0 lag snd1 chn1)
@@ -120,31 +117,33 @@
 
 	  (set! len0 (framples snd0 chn0))
 	  (set! len1 (framples snd1 chn1))
-	  (if (> len0 len1)
-	      (let ((dur (- len0 len1)))
-		(set! post0 (float-vector-peak (channel->float-vector len1 dur snd0 chn0)))
-		(scale-channel 0.0 len1 dur snd0 chn0))
-	      (if (> len1 len0)
-		  (let ((dur (- len1 len0)))
-		    (set! post1 (float-vector-peak (channel->float-vector len0 dur snd1 chn1)))
-		    (scale-channel 0.0 len0 dur snd1 chn1))))
-
-	  (let ((s0 (channel->float-vector 0 #f snd0 chn0))
-		(s1 (channel->float-vector 0 #f snd1 chn1)))
-	    (or (let ((res (snddiff-1 s0 s1 0.0)))
-		  (and res
-		       (if (> lag 0)
-			   (list 'lag lag res pre0 pre1 post0 post1)
-			   (list res pre0 pre1 post0 post1))))
-		(let* ((scl (let ((pos (maxamp-position snd0 chn0)))
-			      (/ (sample pos snd1 chn1) (sample pos snd0 chn0)))) ; use actual values to keep possible sign difference
-		       (diff (snddiff-1 (float-vector-scale! s0 scl) s1 0.0001)))
-		  (if (eq? diff 'no-difference)
-		      (list 'scale scl 'lag lag pre0 pre1 post0 post1)
-		      (and (list? diff)
-			   (list 'scale scl 'differences diff 'lag lag pre0 pre1 post0 post1)))))))
-	;; align and zero + scaling didn't find a match
-	)))
+	  (let ((post0 #f)
+		(post1 #f))
+	    (if (> len0 len1)
+		(let ((dur (- len0 len1)))
+		  (set! post0 (float-vector-peak (channel->float-vector len1 dur snd0 chn0)))
+		  (scale-channel 0.0 len1 dur snd0 chn0))
+		(if (> len1 len0)
+		    (let ((dur (- len1 len0)))
+		      (set! post1 (float-vector-peak (channel->float-vector len0 dur snd1 chn1)))
+		      (scale-channel 0.0 len0 dur snd1 chn1))))
+	    
+	    (let ((s0 (channel->float-vector 0 #f snd0 chn0))
+		  (s1 (channel->float-vector 0 #f snd1 chn1)))
+	      (or (let ((res (snddiff-1 s0 s1 0.0)))
+		    (and res
+			 (if (> lag 0)
+			     (list 'lag lag res pre0 pre1 post0 post1)
+			     (list res pre0 pre1 post0 post1))))
+		  (let* ((scl (let ((pos (maxamp-position snd0 chn0)))
+				(/ (sample pos snd1 chn1) (sample pos snd0 chn0)))) ; use actual values to keep possible sign difference
+			 (diff (snddiff-1 (float-vector-scale! s0 scl) s1 0.0001)))
+		    (if (eq? diff 'no-difference)
+			(list 'scale scl 'lag lag pre0 pre1 post0 post1)
+			(and (list? diff)
+			     (list 'scale scl 'differences diff 'lag lag pre0 pre1 post0 post1)))))))
+	  ;; align and zero + scaling didn't find a match
+	  ))))
 
 
 (define (snddiff snd0 chn0 snd1 chn1)

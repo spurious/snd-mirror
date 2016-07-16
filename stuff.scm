@@ -360,9 +360,9 @@
 	    (break))))))
 
 (define-macro (do* spec end . body)
-  `(let* (,@(map (lambda (var) 
-		   (list (car var) (cadr var))) 
-		 spec))
+  `(let* ,(map (lambda (var) 
+		 (list (car var) (cadr var))) 
+	       spec)
      (do () ,end
        ,@body
        ,@(map (lambda (var) 

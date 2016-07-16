@@ -46,10 +46,9 @@
     (lambda (beg)
       (let ((oriup '(0.0 0.0 1.0 1.0))
 	    (oridwn '(0.0 1.0 1.0 .0))
-	    (oriupdwna '(0.0 0.0 .60 1.0 1.0 .60 ))
+	    (oriupdwna '(0.0 0.0 .60 1.0 1.0 .60))
 	    (oriupdwnb '(0.0 .50 .30 1.0 1.0 .0))
 	    (orimid '(0.0 1.0 .05 .50 .10 1.0 .25 0.0 .85 .50 1.0 .0))
-	    (oridwnup '(0.0 .30 .25 0.0 1.0 1.0))
 	    (oriamp '(0.0 0.0 .10 1.0 1.0 .0)))
 	(set! beg (- beg .38))
 	(bird (+ beg .38) .03 3700 100 .05 oridwn main-amp)
@@ -64,7 +63,7 @@
 	(bird (+ beg 1.65) .03 1800 300 .05 oriup main-amp)
 	(bird (+ beg 1.7) .03 2200 100 .04 oridwn main-amp)
 	(bird (+ beg 1.8) .07 2500 2000 .15 oriupdwnb oriamp)
-	(bigbird (+ beg 1.92) .2 2400 1200 .25 oridwnup main-amp '(1 1 2 .04))
+	(bigbird (+ beg 1.92) .2 2400 1200 .25 '(0.0 .30 .25 0.0 1.0 1.0) main-amp '(1 1 2 .04))
 	(bird (+ beg 2.2) .02 2200 3000 .04 oriup main-amp)
 	(bird (+ beg 2.28) .02 2200 3000 .04 oriup main-amp)
 	(bigbird (+ beg 2.4) .17 2000 1000 .2 oriupdwna oriamp '(1 1 2 .04))))))
@@ -74,7 +73,7 @@
   (let ((documentation "(cassins-kingbird beg) produces a cassins kingbird call at time 'beg'"))
     (lambda (beg)
       (let ((kingfirst '(0.0 .30 .45 1.0 .90 .10 1.0 .0))
-	    (kingsecond '(0.0 0.0 .02 .50 .04 0.0 .06 .55 .08 .05 .10 .60 .12 .05 .14 .65 .16 .10 .18 .70 .20 .10 .22 .75 .24 .15 .26 .80 .28 .20 .30 .85 .32 .25 .34 .90 .36 .30 .38 .95 .40 .40 .42 1.0 .44 .50 .46 1.0 .48 .45 .50 1.0 .52 .50 .54 1.0 .56 .40 .58 .95 .60 .40 .62 .90 .64 .40 .66 .85 .68 .35 .70 .80 .72 .30 .74 .75 .76 .25 .78 .70 .80 .20 .82 .65 .84 .10 .86 .60 .88 0.0 .90 .55 .92 0.0 .94 .50 .96 0.0 1.0 .40 )))
+	    (kingsecond '(0.0 0.0 .02 .50 .04 0.0 .06 .55 .08 .05 .10 .60 .12 .05 .14 .65 .16 .10 .18 .70 .20 .10 .22 .75 .24 .15 .26 .80 .28 .20 .30 .85 .32 .25 .34 .90 .36 .30 .38 .95 .40 .40 .42 1.0 .44 .50 .46 1.0 .48 .45 .50 1.0 .52 .50 .54 1.0 .56 .40 .58 .95 .60 .40 .62 .90 .64 .40 .66 .85 .68 .35 .70 .80 .72 .30 .74 .75 .76 .25 .78 .70 .80 .20 .82 .65 .84 .10 .86 .60 .88 0.0 .90 .55 .92 0.0 .94 .50 .96 0.0 1.0 .40)))
 	(set! beg (- beg .03))
 	(bigbird (+ beg .03) .04 1700 1200 .15 kingfirst main-amp '(1 1 2 .5 3 0 4 .2))
 	(bigbird (+ beg .12) .18 1700 900 .25 kingsecond main-amp '(1 1 2 .01 3 0 4 .1))))))
@@ -150,8 +149,8 @@
 (define b-black-throated-gray-warbler
   (let ((documentation "(black-throated-gray-warbler beg) produces a black throated gray warbler call at time 'beg'"))
     (lambda (beg)
-      (let ((grayone '(0.0 .50 .02 .60 .04 .45 .06 .62 .08 .40 .10 .65 .12 .35 .14 .70 .18 .30 .20 .70 .22 .30 .24 .70 .25 .20 .30 .80 .35 .10 .40 .90 .45 0.0 .50 1.0 .55 0.0 .60 1.0 .65 0.0 .70 1.0 .75 0.0 .80 1.0 .85 0.0 .90 1.0 .95 0.0 1.0 .50 ))
-	    (graytwo '(0.0 0.0 .01 .40 .02 0.0 .03 .40 .04 0.0 .05 .40 .06 0.0 .07 .40 .08 0.0 .09 .40 .10 0.0 .25 .80 .40 .30 .55 1.0 .70 0.0 .85 .80 1.0 .40 ))
+      (let ((grayone '(0.0 .50 .02 .60 .04 .45 .06 .62 .08 .40 .10 .65 .12 .35 .14 .70 .18 .30 .20 .70 .22 .30 .24 .70 .25 .20 .30 .80 .35 .10 .40 .90 .45 0.0 .50 1.0 .55 0.0 .60 1.0 .65 0.0 .70 1.0 .75 0.0 .80 1.0 .85 0.0 .90 1.0 .95 0.0 1.0 .50))
+	    (graytwo '(0.0 0.0 .01 .40 .02 0.0 .03 .40 .04 0.0 .05 .40 .06 0.0 .07 .40 .08 0.0 .09 .40 .10 0.0 .25 .80 .40 .30 .55 1.0 .70 0.0 .85 .80 1.0 .40))
 	    (graythree '(0.0 1.0 .01 .60 .02 1.0 .03 .60 .04 1.0 .05 .60 .06 1.0 .07 .60 .08 1.0 .09 .60 .10 1.0 .11 .60 .12 1.0 .13 .60 .14 1.0 .15 .60 .16 1.0 .17 .60 .18 1.0 .19 .60 .20 1.0 .21 .55 .22 1.0 .23 .50 .24 1.0 .25 .50 .26 1.0 .27 .50 .28 1.0 .29 .50 .30 1.0 .31 .50 .32 1.0 .33 .50 .34 1.0 .35 .50 .36 1.0 .37 .50 .38 1.0 .39 .50 .40 1.0 .41 .50 .42 1.0 .43 .50 .44 1.0 .45 .50 .46 1.0 .47 .50 .48 1.0 .49 .50 .50 1.0 .51 .50 .52 1.0 .53 .50 .54 1.0 .55 .50 .56 1.0 .57 .50 .58 1.0 .59 .50 .60 1.0 1.0 .0))
 	    (grayfour '(0.0 0.0 1.0 1.0)))
 	(bird beg .12 3700 600 .05 grayone main-amp)
@@ -170,9 +169,8 @@
 (define b-yellow-warbler
   (let ((documentation "(yellow-warbler beg) produces a yellow warbler call at time 'beg'"))
     (lambda (beg)
-      (let ((yellow-swirl '(0.0 1.0 .05 1.0 .60 0.0 .80 .30 1.0 .10 ))
+      (let ((yellow-swirl '(0.0 1.0 .05 1.0 .60 0.0 .80 .30 1.0 .10))
 	    (yellow-down '(0.0 1.0 1.0 .0))
-	    (yellow-last '(0.0 0.0 .30 .20 .80 .70 1.0 1.0))
 	    (swirl-amp '(0.0 0.0 .90 1.0 1.0 .0)))
 	(bird beg 0.05 5600 400 0.05 '(0.0 0.0 0.6 1.0 1.0 0.5) main-amp)
 	(bird (+ beg .23) .12 5000 1500 .15 yellow-swirl swirl-amp)
@@ -182,7 +180,7 @@
 	(bird (+ beg 1.05) .075 3700 1000 .20 yellow-down main-amp)
 	(bird (+ beg 1.15) .075 3700 800 .15 yellow-down main-amp)
 	(bird (+ beg 1.25) .075 3700 800 .15 yellow-down main-amp)
-	(bird (+ beg 1.4)  .2   3700 2000 .2 yellow-last swirl-amp)))))
+	(bird (+ beg 1.4)  .2   3700 2000 .2 '(0.0 0.0 .30 .20 .80 .70 1.0 1.0) swirl-amp)))))
 
 
 (define b-black-necked-stilt
@@ -194,7 +192,7 @@
 	    ;;	of western birds" just shows it going up.
 	    ;;
 	    (upamp '(0.0 0.0 .90 1.0 1.0 .0))
-	    (rampup '(0.0 0.0 .50 1.0 1.0 .20 )))
+	    (rampup '(0.0 0.0 .50 1.0 1.0 .20)))
 	(bigbird beg .1 900 100 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1))
 	(bigbird (+ beg .30) .1 900 200 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1))
 	(bigbird (+ beg .60) .1 900 250 .2 rampup upamp '( 1 .5  2 1 3 .75 4 .5  5 .1))))))
@@ -205,9 +203,8 @@
     (lambda (beg)
       (let ((ycurve '(0.0 1.0 .30 .50 .60 1.0 .80 .20 1.0 .0))
 	    (vcurve '(0.0 .20 .50 1.0 1.0 .0))
-	    (wcurve '(0.0 .50 .15 0.0 .45 .10 .60 1.0 .70 .90 1.0 .90 ))
+	    (wcurve '(0.0 .50 .15 0.0 .45 .10 .60 1.0 .70 .90 1.0 .90))
 	    (upcurve '(0.0 0.0 .95 1.0 1.0 1.0))
-	    (downcurve '(0.0 1.0 .25 .30 .60 .15 1.0 .0))
 	    (louder '(0.0 0.0 .90 1.0 1.0 .0))
 	    (wamp '(0.0 0.0 .10 1.0 .40 .10 .50 .90 .60 .10 .70 1.0 1.0 .0)))
 	(set! beg (- beg .1))
@@ -223,7 +220,7 @@
 	(bigbird (+ beg 1.05) .12 3800 2200 .15 wcurve wamp '(1 1 2 .1))
 	(bigbird (+ beg 1.20) .12 3800 2200 .15 wcurve wamp '(1 1 2 .1))
 	(bigbird (+ beg 1.35) .12 2500 2200 .25 upcurve louder '(1 1 2 .1))
-	(bigbird (+ beg 1.50) .12 2500 4000 .15 downcurve main-amp '(1 1 2 .1))))))
+	(bigbird (+ beg 1.50) .12 2500 4000 .15 '(0.0 1.0 .25 .30 .60 .15 1.0 .0) main-amp '(1 1 2 .1))))))
 
 
 (define b-grasshopper-sparrow
@@ -290,12 +287,11 @@
       (let (
 	    ;;	these have as different song around here.
 	    (goldone '(0.0 1.0 .25 .20 1.0 .0))
-	    (goldtwo '(0.0 .90 .05 1.0 .10 .40 1.0 .0))
-	    (goldtrill '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 0.0 .80 1.0 .90 0.0 1.0 .50 )))
+	    (goldtrill '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 0.0 .80 1.0 .90 0.0 1.0 .50)))
 	(set! beg (- beg .6))
 	(bird (+ beg .6) .5 4300 1000 .15 goldone main-amp)
 	(bird (+ beg 1.3) .45 3300 200 .15 goldone main-amp)
-	(bird (+ beg 1.75) .4 3800 100 .15 goldtwo main-amp)
+	(bird (+ beg 1.75) .4 3800 100 .15 '(0.0 .90 .05 1.0 .10 .40 1.0 .0) main-amp)
 	(bird (+ beg 2.2) .3 3800 100 .1 goldtrill main-amp)))))
 
 
@@ -304,7 +300,7 @@
     (lambda (beg)
       (let ((buntdwn '(0.0 1.0 1.0 .0))
 	    (buntv '(0.0 0.0 .50 1.0 1.0 .0))
-	    (bunty '(0.0 1.0 .50 0.0 1.0 .90 ))
+	    (bunty '(0.0 1.0 .50 0.0 1.0 .90))
 	    (buntn '(0.0 .80 .30 1.0 .70 .20 1.0 .0))
 	    (buntup '(0.0 0.0 1.0 1.0)))
 	(set! beg (- beg .4))
@@ -379,12 +375,12 @@
       (let ((water-four '(0.0 0.0 1.0 1.0))
 	    (water-five '(0.0 1.0 1.0 .0))
 	    (water-damp '(0.0 0.0 .90 1.0 1.0 .0)))
-	(let ((water-one '(0.0 .80 .35 .40 .45 .90 .50 1.0 .75 1.0 1.0 .10 ))
+	(let ((water-one '(0.0 .80 .35 .40 .45 .90 .50 1.0 .75 1.0 1.0 .10))
 	      (water-amp '(0.0 0.0 .35 1.0 .50 .20 .90 1.0 1.0 .0)))
 	  (bird beg .17 4100 2000 .2 water-one water-amp)
 	  (bird (+ beg .32) .18 4050 2050 .3 water-one water-amp)
 	  (bird (+ beg .64) .20 4000 1900 .25 water-one water-amp))
-	(bird (+ beg .9) .2 3900 2000 .3 '(0.0 1.0 .40 0.0 .60 .10 1.0 .80 ) bird-tap)
+	(bird (+ beg .9) .2 3900 2000 .3 '(0.0 1.0 .40 0.0 .60 .10 1.0 .80) bird-tap)
 	(bird (+ beg 1.25) 0.12 3000 3000 0.25 '(0.0 1.0 0.95 0.0 1.0 0.0) water-damp)
 	(bird (+ beg 1.4) .1 2700 1500 .2 water-four water-damp)
 	(bird (+ beg 1.58) .02 5200 1000 .1 water-five main-amp)
@@ -395,12 +391,12 @@
 (define b-robin
   (let ((documentation "(robin beg) produces a robin call at time 'beg'"))
     (lambda (beg)
-      (bigbird beg .06 2000 800 .15 '(0.0 0.0 .12 .70 .30 0.0 .70 1.0 1.0 .50 ) main-amp '(1 1 2 .1))
-      (bigbird (+ beg .11) .10 2000 900 .15 '(0.0 .10 .08 .70 .30 0.0 .35 1.0 .40 .30 1.0 .30 ) main-amp '(1 1 2 .1))
+      (bigbird beg .06 2000 800 .15 '(0.0 0.0 .12 .70 .30 0.0 .70 1.0 1.0 .50) main-amp '(1 1 2 .1))
+      (bigbird (+ beg .11) .10 2000 900 .15 '(0.0 .10 .08 .70 .30 0.0 .35 1.0 .40 .30 1.0 .30) main-amp '(1 1 2 .1))
       (bigbird (+ beg .59) .24 2000 2000 .25 '(0.0 0.0 .10 1.0 .20 .70 .35 .70 .65 .30 .70 .50 .80 0.0 .90 .20 1.0 .0) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 1.18) .13 1900 1600 .20 '(0.0 .20 .25 1.0 .60 .70 .90 0.0 1.0 .10 ) main-amp '(1 1 2 .1))
+      (bigbird (+ beg 1.18) .13 1900 1600 .20 '(0.0 .20 .25 1.0 .60 .70 .90 0.0 1.0 .10) main-amp '(1 1 2 .1))
       (bigbird (+ beg 1.35) .11 2200 1200 .25 '(0.0 1.0 1.0 .0) main-amp '(1 1 2 .1))
-      (bigbird (+ beg 1.86) .21 1950 2000 .15 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 .50 1.0 .20 ) main-amp '(1 1 2 .1)))))
+      (bigbird (+ beg 1.86) .21 1950 2000 .15 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 .50 1.0 .20) main-amp '(1 1 2 .1)))))
 
 
 (define b-solitary-vireo
@@ -526,7 +522,7 @@
       (let ((phoebe-amp '(0.0 0.0 .10 1.0 1.0 .0)))
 	(bird beg .225 3000 1300 .3 '(0.0 0.0 .30 .30 .35 .50 .55 .40 .70 .80 .75 .70 .80 1.0 .95 .90 1.0 .0) main-amp)
 	(bird (+ beg .35) .12 3000 500 .1 '(0.0 0.0 .50 1.0 1.0 .0) phoebe-amp)
-	(bird (+ beg .4) .10 3000 1500 .2 '(0.0 0.0 .10 .40 .80 1.0 1.0 .10 ) phoebe-amp)
+	(bird (+ beg .4) .10 3000 1500 .2 '(0.0 0.0 .10 .40 .80 1.0 1.0 .10) phoebe-amp)
 	(bird (+ beg .55) .05 3000 1400 .2 '(0.0 1.0 .50 .70 1.0 .0) phoebe-amp)))))
 
 
@@ -539,7 +535,7 @@
 	(bird (+ beg .21) .07 4100 700 .15 '(0.0 1.0 1.0 .0) main-amp)
 	(bird (+ beg .36) .12 3700 1000 .20 '(0.0 0.0 .50 1.0 1.0 .0) main-amp)
 	(bird (+ beg .52) .08 2300 1600 .15
-	      '(0.0 .70 .15 0.0 .40 1.0 .80 1.0 1.0 .50 )
+	      '(0.0 .70 .15 0.0 .40 1.0 .80 1.0 1.0 .50)
 	      '(0.0 0.0 .10 .50 .15 0.0 .40 1.0 .90 1.0 1.0 .0))
 	(bird (+ beg .68) .1 4000 1000 .25 b-one bird-tap)
 	(bird (+ beg .8) .12 2300 1700 .2 '(0.0 1.0 .25 .40 .75 .50 1.0 .0) main-amp)
@@ -552,7 +548,7 @@
 	  (bird (+ beg 1.33) .02 3200 1000 .1 b-eleven main-amp)
 	  (bird (+ beg 1.36) .02 3200 1000 .1 b-eleven main-amp))
 	(bird (+ beg 1.40) .03 4000 2000 .12 
-	      '(0.0 0.0 .50 1.0 1.0 .50 )
+	      '(0.0 0.0 .50 1.0 1.0 .50)
 	      '(0.0 0.0 .05 1.0 .30 .20 .60 .20 .90 1.0 1.0 .0))
 	(bird (+ beg 1.47) .1 2300 1700 .2 
 	      '(0.0 .30 .30 1.0 .60 .30 1.0 .0)
@@ -563,7 +559,7 @@
     (lambda (beg)
       (let ((f-one '(0.0 0.0 .10 1.0 .20 .40 .95 .10 1.0 .0))
 	    (a-one '(0.0 0.0 .10 .20 .20 .10 .30 1.0 .90 1.0 1.0 .0))
-	    (f-two '(0.0 .50 .25 1.0 .50 0.0 .60 0.0 .95 .30 1.0 .60 ))
+	    (f-two '(0.0 .50 .25 1.0 .50 0.0 .60 0.0 .95 .30 1.0 .60))
 	    (a-two '(0.0 0.0 .10 1.0 .20 1.0 .50 .10 .60 .10 .90 1.0 1.0 .0)))
 	(bigbird beg .2 2000 2200 .2 f-one a-one '(1 1 2 .02 3 .1 4 .01))
 	(bigbird (+ beg .3) .2 2000 1100 .2 f-two a-two '(1 1 2 .02 3 .1 4 .01))))))
@@ -610,7 +606,7 @@
 	  (bird (+ beg 3.2) .06 4000 1700 .1 supn main-amp)
 	  (bird (+ beg 3.27) .01 5200 0 .2 supn main-amp))
 	
-	(let ((slast '(0.0 1.0 .25 0.0 .75 .40 1.0 .50 )))
+	(let ((slast '(0.0 1.0 .25 0.0 .75 .40 1.0 .50)))
 	  (bird (+ beg 3.4) .15 3000 1000 .2 slast main-amp)
 	  (bird (+ beg 3.6) .15 3000 1000 .2 slast main-amp)
 	  (bird (+ beg 3.8) .15 3000 1000 .2 slast main-amp)
@@ -623,7 +619,7 @@
   (let ((documentation "(cedar-waxwing beg) produces a cedar waxwing call at time 'beg'"))
     (lambda (beg)
       (bird beg .50 6000 800 .2
-	    '(0.0 0.0 .25 .70 .70 1.0 .90 1.0 1.0 .20 )
+	    '(0.0 0.0 .25 .70 .70 1.0 .90 1.0 1.0 .20)
 	    '(0.0 0.0 .20 1.0 .40 1.0 1.0 .0)))))
 
 (define b-bairds-sparrow
@@ -813,7 +809,7 @@
 	    ;;	(yellow-rumped say the revisionists))
 	    (w-up '(0.0 0.0 1.0 1.0))
 	    (w-down '(0.0 1.0 1.0 .0))
-	    (w-end '(0.0 0.0 .15 1.0 .45 .90 .50 0.0 .55 1.0 .90 .90 1.0 .10 ))
+	    (w-end '(0.0 0.0 .15 1.0 .45 .90 .50 0.0 .55 1.0 .90 .90 1.0 .10))
 	    (w-updown '(0.0 .10 .50 1.0 1.0 .0)))
 	(set! beg (- beg .75))
 	(bird (+ beg .75) .04 2400 200 .05 w-down bird-amp)
@@ -885,37 +881,32 @@
   (let ((documentation "(eastern-bluebird beg) produces an eastern bluebird call at time 'beg'"))
     (lambda (beg)
       (let ((blue-one '(0.0 0.0 1.0 1.0))
-	    (blue-two '(0.0 1.0 1.0 .0))
 	    (blue-three '(0.0 .60 .10 1.0 .20 0.0 .25 1.0 .30 0.0 .35 1.0 .40 0.0 .45 1.0 .50 0.0 .75 1.0 1.0 .0))
-	    (blue-four '(0.0 0.0 .50 1.0 1.0 .0))
-	    (blue-five '(0.0 .50 .10 1.0 .20 0.0 .35 1.0 .50 0.0 .65 1.0 .80 0.0 .95 1.0 1.0 .50 )))
+	    (blue-five '(0.0 .50 .10 1.0 .20 0.0 .35 1.0 .50 0.0 .65 1.0 .80 0.0 .95 1.0 1.0 .50)))
 	(set! beg (- beg .75))
 	(bird (+ beg .75) .02 2000 1600 .1 blue-one bird-amp)
 	(bird (+ beg .80) .02 2000 1600 .1 blue-one bird-amp)
 	(bird (+ beg .86) .02 2000 1600 .1 blue-one bird-amp)
-	(bird (+ beg 1.00) .13 2000 1400 .2 blue-two bird-amp)
+	(bird (+ beg 1.00) .13 2000 1400 .2 '(0.0 1.0 1.0 .0) bird-amp)
 	(bird (+ beg 1.20) .24 2000 800 .2 blue-three bird-amp)
 	(bird (+ beg 1.68) .03 2200 400 .1 blue-one bird-amp)
-	(bird (+ beg 1.72) .10 1950 100 .15 blue-four bird-amp)
+	(bird (+ beg 1.72) .10 1950 100 .15 '(0.0 0.0 .50 1.0 1.0 .0) bird-amp)
 	(bird (+ beg 1.96) .15 2000 600 .20 blue-five bird-amp)))))
 
 
 (define b-chuck-wills-widow
   (let ((documentation "(chuck-wills-widow beg) produces a chuck wills widow call at time 'beg'"))
     (lambda (beg)
-      (let ((wid-down '(0.0 1.0 1.0 .0))
-	    (wid-one '(0.0 0.0 .10 .10 .25 1.0 .50 .30 .80 .70 1.0 .0))
-	    (wid-two '(0.0 .20 .30 1.0 .50 .30 .60 .70 .90 .10 1.0 .0)))
-	(set! beg (- beg .05))
-	(bird (+ beg .05) .03 1000 800 .1 wid-down bird-amp)
-	(bird (+ beg .32) .20 1000 1000 .2 wid-one bird-amp)
-	(bird (+ beg .56) .29 900 1100 .2 wid-two bird-amp)))))
+      (set! beg (- beg .05))
+      (bird (+ beg .05) .03 1000 800 .1 '(0.0 1.0 1.0 .0) bird-amp)
+      (bird (+ beg .32) .20 1000 1000 .2 '(0.0 0.0 .10 .10 .25 1.0 .50 .30 .80 .70 1.0 .0) bird-amp)
+      (bird (+ beg .56) .29 900 1100 .2 '(0.0 .20 .30 1.0 .50 .30 .60 .70 .90 .10 1.0 .0) bird-amp))))
 
 
 (define b-blue-gray-gnatcatcher
   (let ((documentation "(blue-gray-gnatcatcher beg) produces a blue gray gnatcatcher call at time 'beg'"))
     (lambda (beg)
-      (let ((gskw1 '(0.0 0.0 .15 1.0 .75 .80 .90 1.0 1.0 .70 ))
+      (let ((gskw1 '(0.0 0.0 .15 1.0 .75 .80 .90 1.0 1.0 .70))
 	    (gskw2 '(0.0 0.0 .25 1.0 .75 .70 1.0 .0)))
 	(set! beg (- beg .5))
 	(bigbird (+ beg .5) .20 4000 1000 .2 gskw1 bird-amp '(1 .4 2 1 3 .1))
@@ -933,18 +924,17 @@
       (let ((black-up '(0.0 0.0 1.0 1.0))
 	    (black-amp '(0.0 0.0 .50 1.0 1.0 .0)))
 	(set! beg (- beg .8))
-	(let ((black-down '(0.0 1.0 1.0 .0))
-	      (black-down-amp '(0.0 0.0 .75 1.0 1.0 .0)))
+	(let ((black-down '(0.0 1.0 1.0 .0)))
 	  (bird (+ beg .8) .02 2200 1000 .1 black-down bird-amp)
 	  (bird (+ beg .83) .01 3000 200 .05 black-up bird-amp)
 	  (bird (+ beg .96) .02 5800 500 .05 black-up bird-amp)
 	  (bird (+ beg 1.00) .02 4000 200 .05 black-up bird-amp)
-	  (bird (+ beg 1.04) .10 2100 1700 .15 black-down black-down-amp))
+	  (bird (+ beg 1.04) .10 2100 1700 .15 black-down '(0.0 0.0 .75 1.0 1.0 .0)))
 	(bird (+ beg 1.15) .05 5700 400 .25 black-up bird-amp)
 	(bird (+ beg 1.25) .25 2000 900 .2 
 	      '(0.0 0.0 .03 .70 .06 0.0 .09 .75 .12 0.0 .15 .80 .18 .05 .21 .85 .24 .10 .27 .90 
 		.30 .10 .33 1.0 .36 .10 .39 1.0 .42 .10 .45 1.0 .48 .10 .51 1.0 .54 .10 .57 1.0 
-		.60 .10 .63 1.0 .66 .10 .69 1.0 .72 .10 .75 1.0 .78 .10 .81 1.0 .84 .10 .87 1.0 .90 0.0 .93 .95 .96 0.0 1.0 .90 )
+		.60 .10 .63 1.0 .66 .10 .69 1.0 .72 .10 .75 1.0 .78 .10 .81 1.0 .84 .10 .87 1.0 .90 0.0 .93 .95 .96 0.0 1.0 .90)
 	      bird-amp)
 	(bird (+ beg 1.52) .05 5600 400 .15 '(0.0 0.0 .50 1.0 1.0 .20) bird-amp)
 	
@@ -1006,9 +996,8 @@
 (define various-gull-cries-from-end-of-colony-5
   (let ((documentation "(various-gull-cries-from-end-of-colony-5 beg) produces a various gull cries at time 'beg'"))
     (lambda (beg)
-      (let ((gullstart '(0 0 10 1 20 .5000 40 .6000 60 .5000 100 0 ))
-	    (gullmiddle '(0 0 10 1 30 .5000 80 .5000 100 0 ))
-	    (gullend '(0 0 5 1 10 .5000 90 .4000 100 0 ))
+      (let ((gullstart '(0 0 10 1 20 .5000 40 .6000 60 .5000 100 0))
+	    (gullend '(0 0 5 1 10 .5000 90 .4000 100 0))
 	    (gull-frq '(1  .1  2  1  3  .1  4  .01  5  .09  6  .01  7  .01)))
 	(set! beg (- beg .25))
 	(bigbird (+ beg .250) .80  1180  1180  .08 gullend  bird-amp gull-frq)
@@ -1017,7 +1006,7 @@
 	(bigbird (+ beg 4.800) .05  1180 1180  .06  gullstart  bird-amp gull-frq)
 	(bigbird (+ beg 4.950) .10  1180 1180  .08  gullstart  bird-amp gull-frq)
 	(bigbird (+ beg 5.150) .10  1180 1180  .09  gullstart  bird-amp gull-frq)
-	(bigbird (+ beg 5.350) .10  1180 1180  .1  gullmiddle  bird-amp gull-frq)
+	(bigbird (+ beg 5.350) .10  1180 1180  .1  '(0 0 10 1 30 .5000 80 .5000 100 0) bird-amp gull-frq)
 	(bigbird (+ beg 5.450) .40  1050  1050  .1  gullend  bird-amp gull-frq)
 	(bigbird (+ beg 6.250) .80  1050  1050  .1  gullend  bird-amp gull-frq)
 	(bigbird (+ beg 7.450) 1.80  1050  1050  .1 gullend  bird-amp gull-frq)))))

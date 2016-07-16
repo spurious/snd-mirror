@@ -2361,13 +2361,13 @@ static bool start_audio_output_1(void)
 static bool start_audio_output(void)
 {
   /* at this point the desired output srate and chans are set in dacp (via start_dac) */
-  dac_info *dp;
   cursor_time = 0;
   if (start_audio_output_1()) /* number of channels may be less than requested initially */
     {
       int i;
       for (i = 0; i <= max_active_slot; i++)
 	{
+	  dac_info *dp;
 	  dp = play_list[i];
 	  if (dp)
 	    {

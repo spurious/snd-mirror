@@ -3358,8 +3358,8 @@
 						       (pair? (caddr arg1))
 						       (pair? (cadr arg2))
 						       (pair? (caddr arg2))
-						       (eq? (caadr arg1) (caaddr arg1))))
-					     #f)
+						       (eq? (caadr arg1) (caaddr arg1)))))
+
 					    ((assq (caadr arg1)
 						   '((car cdr #t) 
 						     (caar cdar car) (cadr cddr cdr)
@@ -4432,6 +4432,9 @@
 		    form)
 		   ((and (eqv? (car args) 0)            ; (expt 0 x) -> 0
 			 (not (eqv? (cadr args) 0)))
+		    (if (and (integer? (cadr args))
+			     (negative? (cadr args)))
+			(lint-format "attempt to divide by 0: ~A" 'expt (truncated-list->string form)))
 		    0)
 		   ((or (and (eqv? (cadr args) 0)       ; (expt x 0) -> 1
 			     (not (eqv? (car args) 0)))
@@ -5477,8 +5480,7 @@
 				(set! last-arg (car lst))
 				(set! new-args (cons last-arg new-args)))))))))
 	    
-	    (cond ((not (= (length form) 3))
-		   #f)
+	    (cond ((not (= (length form) 3)))
 
 		  ((and (real? (cadr form))
 			(or (< (cadr form) 0)
@@ -6371,6 +6373,12 @@
 			       (let ((chr (checked-eval form)))
 				 (if (char? chr)
 				     (lint-format "perhaps ~A" caller (lists->string form chr))))))
+
+			  ((eq? head 'string->number)
+			   (if (and (pair? (cddr form))
+				    (integer? (caddr form)) ; type error is checked elsewhere
+				    (not (<= 2 (caddr form) 16)))
+			       (lint-format "string->number radix should be between 2 and 16: ~A" caller form)))
 
 			  ((and (eq? head 'symbol->keyword)
 				(pair? (cadr form))
@@ -8443,8 +8451,7 @@
 				 (for-each c-walk (cddr f))))))
 			  
 			  ((values) 
-			   (cond ((not (positive? (length arg)))
-				  #f)
+			   (cond ((not (positive? (length arg))))
 				 
 				 ((null? (cdr arg)) ; #<unspecified>
 				  (if (not (any-checker? checker #<unspecified>))
@@ -13674,8 +13681,10 @@
 	  (hash-table-set! h 'cond cond-walker))
 	
 	;; ---------------- case ----------------		  
-	(let ((selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?)))
-	  (define (case-walker caller form env)
+	(let ()
+	  (define case-walker 
+	    (let ((selector-types '(#t symbol? char? boolean? integer? rational? real? complex? number? null? eof-object?)))
+	      (lambda (caller form env)
 	    ;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 	    ;; also unlike cond, only 'else marks a default branch (not #t)
 	    
@@ -14046,7 +14055,7 @@
 							 (reverse mergers) 
 							 (lists->string form new-form))
 						 (lists->string form new-form)))))))))))
-	    env)
+	    env)))
 	  (hash-table-set! h 'case case-walker))
 	
 	
@@ -14529,29 +14538,31 @@
 			   (when (pair? (cddr p))
 			     (when (and (eq? (car p) 'if)
 					(pair? (cdddr p)))
-			       
-			       (when (and (eq? (cadr p) vname) ; (let ((x (g y))) (if x #t #f)) -> (g y)
-					  (boolean? (caddr p))
-					  (boolean? (cadddr p))
-					  (not (eq? (caddr p) (cadddr p))))
-				 (lint-format "perhaps ~A" caller
-					      (lists->string form (if (caddr p) vvalue `(not ,vvalue)))))
-			       
-			       (when (and (pair? (cadr p)) ; (let ((x (f y))) (if (not x) B (g x))) -> (cond ((f y) => g) (else B))
-					  (eq? (caadr p) 'not)
-					  (eq? (cadadr p) vname)
-					  (pair? (cadddr p))
-					  (pair? (cdr (cadddr p)))
-					  (null? (cddr (cadddr p)))
-					  (eq? vname (cadr (cadddr p))))
-				 (let ((else-clause (if (eq? (caddr p) vname)
-							`((else #f))
-							(if (and (pair? (caddr p))
-								 (tree-unquoted-member vname (caddr p)))
-							    :oops! ; if the let var appears in the else portion, we can't do anything with =>
-							    `((else ,(caddr p)))))))
-				   (unless (eq? else-clause :oops!)
-				     (lint-format "perhaps ~A" caller (lists->string form `(cond (,vvalue => ,(car (cadddr p))) ,@else-clause)))))))
+			       (let ((if-true (caddr p))
+				     (if-false (cadddr p)))
+				 
+				 (when (and (eq? (cadr p) vname) ; (let ((x (g y))) (if x #t #f)) -> (g y)
+					    (boolean? if-true)
+					    (boolean? if-false)
+					    (not (eq? if-true if-false)))
+				   (lint-format "perhaps ~A" caller
+						(lists->string form (if if-true vvalue `(not ,vvalue)))))
+				 
+				 (when (and (pair? (cadr p)) ; (let ((x (f y))) (if (not x) B (g x))) -> (cond ((f y) => g) (else B))
+					    (eq? (caadr p) 'not)
+					    (eq? (cadadr p) vname)
+					    (pair? if-false)
+					    (pair? (cdr if-false))
+					    (null? (cddr if-false))
+					    (eq? vname (cadr if-false)))
+				   (let ((else-clause (if (eq? if-true vname)
+							  `((else #f))
+							  (if (and (pair? if-true)
+								   (tree-unquoted-member vname if-true))
+							      :oops! ; if the let var appears in the else portion, we can't do anything with =>
+							      `((else ,if-true))))))
+				     (unless (eq? else-clause :oops!)
+				       (lint-format "perhaps ~A" caller (lists->string form `(cond (,vvalue => ,(car if-false)) ,@else-clause))))))))
 			     
 			     (let ((crf #f))
 			       ;; all this stuff still misses (cond ((not x)...)) and (set! y (if x (cdr x)...)) i.e. need embedding in this case
@@ -16497,7 +16508,6 @@
 				  (if (and (pair? (cadr form))
 					   (eq? (caadr form) #_{apply_values})     ; `(,@x) -> (copy x)
 					   (not (qq-tree? (cadadr form))))
-				      ;; (not (tree-member #_{apply_values} (cadadr form))))
 				      (lint-format "perhaps ~A" caller
 						   (lists->string form
 								  (un_{list} (if (pair? (cadadr form))
@@ -16510,7 +16520,6 @@
 					   (pair? (cadr form))                  ; `(,@x ,@y) -> (append x y)
 					   (eq? (caadr form) #_{apply_values})
 					   (not (qq-tree? (cadadr form))))
-				      ;; (not (tree-member #_{apply_values} (cadadr form))))
 				      (lint-format "perhaps ~A" caller
 						   (lists->string form 
 								  `(append ,(un_{list} (cadadr form)) 
@@ -16521,7 +16530,6 @@
 						(and (pair? a)
 						     (eq? (car a) #_{apply_values})
 						     (not (qq-tree? (cdr a)))))
-					      ;;(not (tree-member #_{apply_values} (cdr a)))))
 					      (cdr form))
 				      (lint-format "perhaps ~A" caller
 						   (lists->string form `(append ,@(map (lambda (a)
@@ -16590,6 +16598,7 @@
     
     ;; -------- lint-file --------
     (define *report-input* #t)
+    ;; lint-file is called via load etc above and it's a pain to thread this variable all the way down the call chain
     
     (define (lint-file-1 file env)
       (set! linted-files (cons file linted-files))
@@ -17121,5 +17130,9 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; snd|hg-results have a lot of changes
+;;; top-level variables are not checked for scope reduction -- use let-walker code? lint-walk-body 9960
+;;;   need to collect top-level defines somewhere: lint-file will return the new vars I think -- 16900
+;;;   lint-walk-body code looks reusable but how to create the "body" -- at top level there is no list
+;;;   perhaps handle the positions/top-level-defines as we go?
 ;;;
-;;; 147 24004 64780
+;;; 147 24004 647922

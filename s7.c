@@ -1271,6 +1271,7 @@ static s7_scheme *hidden_sc = NULL;
   static s7_pointer check_ref8(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref9(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref10(s7_pointer p, const char *func, int line);
+  static s7_pointer check_ref11(s7_pointer p, const char *func, int line);
   static s7_pointer check_nref(s7_pointer p, const char *func, int line);
   static void print_gc_info(s7_pointer obj, int line);
 
@@ -1366,6 +1367,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TSeq(P) check_ref8(P,                     __func__, __LINE__) /* any sequence or structure */
   #define _TMet(P) check_ref9(P,                     __func__, __LINE__) /* anything that might contain a method */
   #define _TArg(P) check_ref10(P,                    __func__, __LINE__) /* closure arg (list, symbol) */
+  #define _TApp(P) check_ref11(P,                    __func__, __LINE__) /* setter (any_procedure or #f) */
   #define _NFre(P) check_nref(P,                     __func__, __LINE__) /* not free */
   #define _TSet(P) check_seti(sc, P,                 __func__, __LINE__) /* set of immutable value */
 
@@ -1418,6 +1420,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TMet(P)                    P
   #define _TMac(P)                    P
   #define _TArg(P)                    P
+  #define _TApp(P)                    P
   #define _NFre(P)                    P
 #endif
 
@@ -2037,6 +2040,7 @@ static int not_heap = -1;
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
 #define slot_expression(p)            (_TSlt(p))->object.slt.expr
 #define slot_accessor(p)              slot_expression(p)
+#define slot_set_accessor(p, Val)     slot_expression(p) = _TApp(Val)
 
 #define is_syntax(p)                  (type(p) == T_SYNTAX)
 #define syntax_symbol(p)              _TSym((_TSyn(p))->object.syn.symbol)
@@ -2177,14 +2181,16 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define c_function_optional_args(f)   (_TFnc(f))->object.fnc.optional_args
 #define c_function_has_rest_arg(f)    (_TFnc(f))->object.fnc.rest_arg
 #define c_function_all_args(f)        (_TFnc(f))->object.fnc.all_args
-#define c_function_setter(f)          (_TFnc(f))->object.fnc.setter
+#define c_function_setter(f)          _TApp((_TFnc(f))->object.fnc.setter)
+#define c_function_set_setter(f, Val) (_TFnc(f))->object.fnc.setter = _TApp(Val)
 #define c_function_name(f)            c_function_data(f)->name
 #define c_function_name_length(f)     c_function_data(f)->name_length
 #define c_function_documentation(f)   c_function_data(f)->doc
 #define c_function_signature(f)       c_function_data(f)->signature
 #define c_function_class(f)           c_function_data(f)->id
 #define c_function_chooser(f)         c_function_data(f)->chooser
-#define c_function_base(f)            c_function_data(f)->generic_ff
+#define c_function_base(f)            _TApp(c_function_data(f)->generic_ff)
+#define c_function_set_base(f, Val)   c_function_data(f)->generic_ff = _TApp(Val)
 #define c_function_arg_defaults(f)    c_function_data(f)->arg_defaults
 #define c_function_call_args(f)       c_function_data(f)->call_args
 #define c_function_arg_names(f)       c_function_data(f)->arg_names
@@ -2201,7 +2207,8 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define c_macro_name_length(f)        c_macro_data(f)->name_length
 #define c_macro_required_args(f)      (_TMac(f))->object.fnc.required_args
 #define c_macro_all_args(f)           (_TMac(f))->object.fnc.all_args
-#define c_macro_setter(f)             (_TMac(f))->object.fnc.setter
+#define c_macro_setter(f)             _TApp((_TMac(f))->object.fnc.setter)
+#define c_macro_set_setter(f, Val)    (_TMac(f))->object.fnc.setter = _TApp(Val)
 
 #define is_random_state(p)            (type(p) == T_RANDOM_STATE)
 #if WITH_GMP
@@ -2245,7 +2252,8 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {pair_syntax_sym
 #define closure_set_body(p, Val)      (_TClo(p))->object.func.body = _TPair(Val)
 #define closure_let(p)                _TLid((_TClo(p))->object.func.env)
 #define closure_set_let(p, L)         (_TClo(p))->object.func.env = _TLid(L)
-#define closure_setter(p)             (_TClo(p))->object.func.setter
+#define closure_setter(p)             _TApp((_TClo(p))->object.func.setter)
+#define closure_set_setter(p, Val)    (_TClo(p))->object.func.setter = _TApp(Val)
 #define closure_arity(p)              (_TClo(p))->object.func.arity
 #define CLOSURE_ARITY_NOT_SET         0x40000000
 #define MAX_ARITY                     0x20000000
@@ -7176,7 +7184,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   sc->temp6 = mac;
   closure_set_args(mac, cdar(sc->code));
   closure_set_body(mac, cdr(sc->code));
-  closure_setter(mac) = sc->F;
+  closure_set_setter(mac, sc->F);
   closure_set_let(mac, sc->envir);
   closure_arity(mac) = CLOSURE_ARITY_NOT_SET;
 
@@ -7220,7 +7228,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
   new_cell(sc, x, typ);
   closure_set_args(x, args);
   closure_set_body(x, code);
-  closure_setter(x) = sc->F;
+  closure_set_setter(x, sc->F);
   if (is_null(args))
     closure_arity(x) = 0;
   else closure_arity(x) = CLOSURE_ARITY_NOT_SET;
@@ -7239,7 +7247,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     new_cell(Sc, X, _T_);						\
     closure_set_args(X, Args);						\
     closure_set_body(X, Code);				                \
-    closure_setter(X) = sc->F;						\
+    closure_set_setter(X, sc->F);					\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
     closure_set_let(X, Env); \
     sc->capture_let_counter++;						\
@@ -7255,7 +7263,7 @@ static s7_pointer make_closure(s7_scheme *sc, s7_pointer args, s7_pointer code, 
     new_cell(Sc, X, _T_);						\
     closure_set_args(X, Args);						\
     closure_set_body(X, Code);				                \
-    closure_setter(X) = sc->F;						\
+    closure_set_setter(X, sc->F);					\
     if (is_null(Args)) closure_arity(X) = 0; else closure_arity(X) = CLOSURE_ARITY_NOT_SET; \
     closure_set_let(X, Env); \
   } while (0)
@@ -7341,7 +7349,7 @@ static s7_pointer copy_closure(s7_scheme *sc, s7_pointer fnc)
   new_cell(sc, x, typeflag(fnc));
   closure_set_args(x, closure_args(fnc));
   closure_set_body(x, body);
-  closure_setter(x) = closure_setter(fnc);
+  closure_set_setter(x, closure_setter(fnc));
   closure_arity(x) = closure_arity(fnc);
   closure_set_let(x, closure_let(fnc));
   return(x);
@@ -31523,6 +31531,18 @@ static s7_pointer check_ref10(s7_pointer p, const char *func, int line)
   return(p);
 }
 
+static s7_pointer check_ref11(s7_pointer p, const char *func, int line)
+{
+  int typ;
+  typ = unchecked_type(p);
+  if ((typ < T_CLOSURE) && (typ != T_BOOLEAN)) /* actually #t is an error here */
+    {
+      fprintf(stderr, "%s%s[%d]: setter is %s (%d)%s?\n", BOLD_TEXT, func, line, check_name(typ), typ, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(p);
+}
+
 static s7_pointer check_nref(s7_pointer p, const char *func, int line)
 {
   int typ;
@@ -41474,7 +41494,7 @@ static s7_pointer fallback_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 static void s7_function_set_class(s7_pointer f, s7_pointer base_f)
 {
   c_function_class(f) = c_function_class(base_f);
-  c_function_base(f) = base_f;
+  c_function_set_base(f, base_f);
 }
 
 static int c_functions = 0;
@@ -41511,8 +41531,9 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
 
   c_function_data(x) = ptr;
   c_function_call(x) = f;
-  c_function_base(x) = x;
-  c_function_setter(x) = sc->F;
+  /* f is _TApp but needs cast */
+  c_function_set_base(x, x);
+  c_function_set_setter(x, sc->F);
   c_function_name(x) = name;   /* (procedure-name proc) => (format #f "~A" proc) */
   c_function_name_length(x) = safe_strlen(name);
   if (doc)
@@ -41599,7 +41620,7 @@ static void s7_function_set_setter(s7_scheme *sc, const char *getter, const char
 {
   /* this is internal, used only with c_function setters, so we don't need to worry about the GC mark choice
    */
-  c_function_setter(s7_name_to_value(sc, getter)) = s7_name_to_value(sc, setter);
+  c_function_set_setter(s7_name_to_value(sc, getter), s7_name_to_value(sc, setter));
 }
 
 
@@ -42339,7 +42360,7 @@ s7_pointer s7_dilambda(s7_scheme *sc,
   get_func = s7_make_safe_function(sc, name, getter, get_req_args, get_opt_args, false, documentation);
   s7_define(sc, sc->nil, make_symbol(sc, name), get_func);
   set_func = s7_make_function(sc, internal_set_name, setter, set_req_args, set_opt_args, false, documentation);
-  c_function_setter(get_func) = set_func;
+  c_function_set_setter(get_func, set_func);
 
   return(get_func);
 }
@@ -42384,20 +42405,20 @@ static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
     case T_MACRO:   case T_MACRO_STAR:
     case T_BACRO:   case T_BACRO_STAR:
     case T_CLOSURE: case T_CLOSURE_STAR:
-      closure_setter(p) = setter;
+      closure_set_setter(p, setter);
       break;
 
     case T_C_FUNCTION:
     case T_C_ANY_ARGS_FUNCTION:
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
-      c_function_setter(p) = setter;
+      c_function_set_setter(p, setter);
       if (is_any_closure(setter))
 	add_setter(sc, p, setter);
       break;
 
     case T_C_FUNCTION_STAR:
-      c_function_setter(p) = setter;
+      c_function_set_setter(p, setter);
       if (is_any_closure(setter))
 	add_setter(sc, p, setter);
       break;
@@ -42405,7 +42426,7 @@ static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
     case T_C_MACRO:
       if (is_any_closure(setter))
 	add_setter(sc, p, setter);
-      c_macro_setter(p) = setter;
+      c_macro_set_setter(p, setter);
       break;
     }
   return(setter);
@@ -42882,7 +42903,7 @@ s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer fun
 	  symbol_global_accessor_index(symbol) = protect_accessor(sc, func);  
 	}
     }
-  slot_accessor(global_slot(symbol)) = func;
+  slot_set_accessor(global_slot(symbol), func);
   return(func);
 }
 
@@ -42969,7 +42990,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 
   if (is_slot(p))
     {
-      slot_accessor(p) = func;
+      slot_set_accessor(p, func);
       if (func != sc->F)
 	{
 	  slot_set_has_accessor(p);
@@ -55978,7 +55999,7 @@ static int define_unchecked_ex(s7_scheme *sc)
       closure_set_body(x, cdr(sc->code));
       closure_set_let(x, sc->envir);
       closure_arity(x) = CLOSURE_ARITY_NOT_SET;
-      closure_setter(x) = sc->F;
+      closure_set_setter(x, sc->F);
       sc->capture_let_counter++;
       sc->value = x;
       sc->code = caar(sc->code);
@@ -56026,7 +56047,7 @@ static void define_funchecked(s7_scheme *sc)
   new_cell(sc, new_func, T_CLOSURE | T_PROCEDURE | T_COPY_ARGS);
   closure_set_args(new_func, cdar(code));
   closure_set_body(new_func, cdr(code));
-  closure_setter(new_func) = sc->F;
+  closure_set_setter(new_func, sc->F);
   closure_arity(new_func) = CLOSURE_ARITY_NOT_SET;
   sc->capture_let_counter++;
   
@@ -74237,8 +74258,8 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "list-ref",         "list-set!");
   s7_function_set_setter(sc, "let-ref",          "let-set!");
   s7_function_set_setter(sc, "string-ref",       "string-set!");
-  c_function_setter(slot_value(global_slot(sc->outlet_symbol))) = s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter");
-  c_function_setter(slot_value(global_slot(sc->port_line_number_symbol))) = s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter");
+  c_function_set_setter(slot_value(global_slot(sc->outlet_symbol)), s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter"));
+  c_function_set_setter(slot_value(global_slot(sc->port_line_number_symbol)), s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter"));
   {
     int i, top;
 #if WITH_GMP

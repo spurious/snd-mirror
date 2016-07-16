@@ -233,7 +233,7 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_lo
 
   mus_long_t i, j;
   int pks, minpk;
-  mus_float_t minval, la, ra, ca;
+  mus_float_t minval, ra, ca;
   mus_float_t *peaks;
   mus_long_t *inds;
 
@@ -242,13 +242,13 @@ int find_and_sort_peaks(mus_float_t *buf, fft_peak *found, int num_peaks, mus_lo
   inds = (mus_long_t *)calloc(num_peaks, sizeof(mus_long_t));
 
   pks = 0;
-  /* la = 0.0; */
   ca = 0.0;
   ra = 0.0;
   minval = 0.00001;
 
   for (i = losamp; i < hisamp; i++)
     {
+      mus_float_t la;
       la = ca;
       ca = ra;
       ra = buf[i];

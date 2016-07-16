@@ -575,7 +575,6 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   mus_long_t lAt;
   unsigned long lParameterCount;
   Xen xenParameters;
-  LADSPA_PortDescriptor iPortDescriptor;
   LADSPA_Data *pfControls = NULL;
   chan_info *cp;
   snd_info *sp;
@@ -698,6 +697,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   xenParameters = Xen_copy_arg(Xen_cdr(Xen_cdr(ladspa_plugin_configuration)));
   for (lPortIndex = 0; lPortIndex < psDescriptor->PortCount; lPortIndex++) 
     {
+      LADSPA_PortDescriptor iPortDescriptor;
       iPortDescriptor = psDescriptor->PortDescriptors[lPortIndex];
       if (LADSPA_IS_PORT_CONTROL(iPortDescriptor)
 	  && LADSPA_IS_PORT_INPUT(iPortDescriptor)) 

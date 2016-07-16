@@ -251,18 +251,18 @@
   ;; common sample-types: 1 mulaw, 2 linear_8, 3 linear_16, 4 linear_24, 5 linear_32, 6 float, 5 double, 27 alaw
   (with-output-to-file file
     (lambda ()
-      (let ((comlen (length comment)))
-	(let ((data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4)))))))
-	  (write-chars ".snd")
-	  (for-each write-bint32 (vector data-location data-size sample-type srate chns))
-	  (let ((curloc 24))
-	    (if (> comlen 0)
-		(begin
-		  (io-write-string comment)
-		  (set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
-	    (do ((i curloc (+ i 1)))
-		((>= i data-location))
-	      (write-byte 0))))))))
+      (let* ((comlen (length comment))
+	     (data-location (+ 24 (* 4 (floor (+ 1 (/ comlen 4)))))))
+	(write-chars ".snd")
+	(for-each write-bint32 (vector data-location data-size sample-type srate chns))
+	(let ((curloc 24))
+	  (if (> comlen 0)
+	      (begin
+		(io-write-string comment)
+		(set! curloc (+ curloc comlen 1)))) ; io-write-string adds a trailing 0
+	  (do ((i curloc (+ i 1)))
+	      ((>= i data-location))
+	    (write-byte 0)))))))
 
 
 (define (read-aif-header file)

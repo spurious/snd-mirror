@@ -1240,13 +1240,12 @@
   (define snd-clock-icon
     (let ((shell ((main-widgets) 1)))
       (let ((dpy (XtDisplay shell))
-	    (win (XtWindow shell))
 	    (clock-pixmaps (make-vector 12))
 	    (dgc (car (snd-gcs))))
 	(do ((i 0 (+ i 1)))
 	    ((= i 12))
 	  ;; it's actually possible to simply redraw on one pixmap, but updates are unpredictable
-	  (let* ((pix (XCreatePixmap dpy win 16 16 (screen-depth)))
+	  (let* ((pix (XCreatePixmap dpy (XtWindow shell) 16 16 (screen-depth)))
 		 (pixwin (list 'Window (cadr pix)))) ; C-style cast to Window for X graphics procedures
 	    (set! (clock-pixmaps i) pix)
 	    (XSetForeground dpy dgc *basic-color*)
@@ -1282,29 +1281,27 @@
   (define thumbnail-graph 
     (let ((documentation "(thumbnail-graph dpy wn gc pts width height) makes a little graph of the data"))
       (lambda (dpy wn gc pts width height)
-	(let* ((top-margin 2)
-	       (bottom-margin 6)
-	       (range (/ (- height top-margin bottom-margin) 2))
-	       (y->grfy (let ((ay1 top-margin)
-			      (ay0 (- height bottom-margin)))
-			  (lambda (y height)
-			    (min ay0
-				 (max ay1
-				      (round (+ ay1
-						(* height (- 1.0 y)))))))))
-	       (left-margin 2)
-	       (len (length pts)))
-	  (let ((ly (y->grfy (pts 0) range))
-		(lx left-margin)
-		(xinc (/ (- width left-margin 2) len)) ; 2=right-margin
-		(y 0))
-	    (do ((i 1 (+ i 1))
-		 (x lx (+ x xinc)))
-		((= i len))
-	      (set! y (y->grfy (pts i) range))
-	      (XDrawLine dpy wn gc lx ly (round x) y)
-	      (set! lx (round x))
-	      (set! ly y)))))))
+	(let ((top-margin 2)
+	      (bottom-margin 6))
+	  (let ((y->grfy (lambda (y height)
+			   (min (- height bottom-margin)
+				(max top-margin
+				     (round (+ top-margin
+					       (* height (- 1.0 y))))))))
+		(range (/ (- height top-margin bottom-margin) 2))
+		(left-margin 2)
+		(len (length pts)))
+	    (let ((ly (y->grfy (pts 0) range))
+		  (lx left-margin)
+		  (xinc (/ (- width left-margin 2) len)) ; 2=right-margin
+		  (y 0))
+	      (do ((i 1 (+ i 1))
+		   (x lx (+ x xinc)))
+		  ((= i len))
+		(set! y (y->grfy (pts i) range))
+		(XDrawLine dpy wn gc lx ly (round x) y)
+		(set! lx (round x))
+		(set! ly y))))))))
   
   (define make-sound-box 
     ;; graphics stuff (fonts etc)

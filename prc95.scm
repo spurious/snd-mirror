@@ -198,23 +198,22 @@
 	    (dlyout 0.0))
 	(do ((i st (+ i 1)))
 	    ((= i end))
-	  (let ((pressurediff 0.0))
-	    (if blowing
-		(if (not (= maxpressure breathpressure))
-		    (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
-		(if (> breathpressure 0.0)
-		    (set! breathpressure (- breathpressure attackrate))))
-	    (set! pressurediff (- (one-zero filt (* -0.95 dlyout)) breathpressure))
+	  (if blowing
+	      (if (not (= maxpressure breathpressure))
+		  (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
+	      (if (> breathpressure 0.0)
+		  (set! breathpressure (- breathpressure attackrate))))
+	  (let ((pressurediff (- (one-zero filt (* -0.95 dlyout)) breathpressure)))
 	    (set! dlyout (delayl delayline 
 				 (+ breathpressure 
 				    (* pressurediff 
-				       (reedtable rtable pressurediff)))))
-	    (outa i (* amplitude dlyout))
-	    (if (= ctr release)
-		(begin
-		  (set! blowing #f)
-		  (set! attackrate .0005)))
-	    (set! ctr (+ ctr 1))))))))
+				       (reedtable rtable pressurediff))))))
+	  (outa i (* amplitude dlyout))
+	  (if (= ctr release)
+	      (begin
+		(set! blowing #f)
+		(set! attackrate .0005)))
+	  (set! ctr (+ ctr 1)))))))
 
 
 (definstrument (flute beg dur freq amplitude maxa)
@@ -244,9 +243,7 @@
 	(set-gain filt -1.0)
 	(do ((i st (+ i 1)))
 	    ((= i end))
-	  (let ((randpressure (random (* 0.1 breathpressure)))
-		(temp 0.0) 
-		(pressurediff 0.0))
+	  (let ((randpressure (random (* 0.1 breathpressure))))
 	    (set! sinphase (+ sinphase 0.0007))		;5 hz vibrato?
 	    (if (> sinphase 6.28) (set! sinphase (- sinphase 6.28)))
 	    (set! randpressure (+ randpressure (* 0.05 breathpressure (sin sinphase))))
@@ -255,10 +252,10 @@
 		    (set! breathpressure ((if (< breathpressure maxpressure) + -) breathpressure attackrate)))
 		(if (> breathpressure 0.0) 
 		    (set! breathpressure (- breathpressure attackrate))))
-	    (set! temp (dc-block dcblocker (one-pole filt boreout)))
-	    (set! pressurediff (+ (jettable (delayl jetdelay (- (+ breathpressure randpressure) (* jetrefl temp))))
-				  (* endrefl temp)))
-	    (set! boreout (delayl boredelay pressurediff))
+	    (let* ((temp (dc-block dcblocker (one-pole filt boreout)))
+		   (pressurediff (+ (jettable (delayl jetdelay (- (+ breathpressure randpressure) (* jetrefl temp))))
+				    (* endrefl temp))))
+	      (set! boreout (delayl boredelay pressurediff)))
 	    (outa i (* 0.3 amplitude boreout))
 	    (if (= ctr release)
 		(begin
@@ -268,10 +265,10 @@
 
 #|
 (with-sound ()
-	    (plucky 0 .3 440 .2 1.0)
-	    (bowstr .5 .3 220 .2 1.0)
-	    (brass 1 .3 440 .2 1.0)
-	    (clarinet 1.5 .3 440 .2 1.0)
-	    (flute 2 .3 440 .2 1.0))
+  (plucky 0 .3 440 .2 1.0)
+  (bowstr .5 .3 220 .2 1.0)
+  (brass 1 .3 440 .2 1.0)
+  (clarinet 1.5 .3 440 .2 1.0)
+  (flute 2 .3 440 .2 1.0))
 |#
 
