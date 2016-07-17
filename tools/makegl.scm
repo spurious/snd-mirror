@@ -129,16 +129,15 @@
 	    (when (or (char=? ch #\space)
 		      (= i (- len 1)))
 	      (if type
-		  (let ((reftype #f))
+		  (begin
 		    (let ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ i 1) i))))
 		      (case (given-name 0)
 			((#\@) (set! data (cons (list type (substring given-name 1) 'null) data)))
 			((#\#) (set! data (cons (list type (substring given-name 1) 'opt) data)))
 			((#\[)
-			 (set! reftype (deref-type (list type)))
-			 (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data)))
+			 (set! data (cons (list type (substring given-name 1 (- (length given-name) 1)) given-name) data))
+			 (set! type (deref-type (list type))))
 			(else (set! data (cons (list type given-name) data)))))
-		    (if reftype (set! type reftype))
 		    (if (eq? x 'x)
 			(if (not (member type x-types))
 			    (set! x-types (cons type x-types)))
@@ -563,26 +562,26 @@
 		     (hey "  ~A ~A[16];~%" (deref-type arg) (deref-name arg))
 		     (hey "  ~A ~A[1];~%" (deref-type arg) (deref-name arg)))))
 	   args))
-      (if (and (>= argslen max-args)
-	       (> xgargs 0))
-	  (let ((previous-arg #f))
-	    (heyc "  Xen ")
-	    (for-each
-	     (lambda (arg)
-	       (if (not (ref-arg? arg)) ;(< (length arg) 3)
-		   (begin
-		     (if previous-arg (heyc ", "))
-		     (set! previous-arg #t)
-		     (hey "~A" (cadr arg)))))
-	     args)
-	    (hey ";~%")
-	    (let ((ctr 0)) ; list-ref counts from 0
-	      (for-each
-	       (lambda (arg)
-		 (if (not (ref-arg? arg))
-		     (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
-		 (set! ctr (+ 1 ctr)))
-	       args))))
+      (when (and (>= argslen max-args)
+		 (> xgargs 0))
+	(heyc "  Xen ")
+	(for-each
+	 (let ((previous-arg #f))
+	   (lambda (arg)
+	     (if (not (ref-arg? arg)) ;(< (length arg) 3)
+		 (begin
+		   (if previous-arg (heyc ", "))
+		   (set! previous-arg #t)
+		   (hey "~A" (cadr arg))))))
+	 args)
+	(hey ";~%")
+	(for-each
+	 (let ((ctr 0)) ; list-ref counts from 0
+	   (lambda (arg)
+	     (if (not (ref-arg? arg))
+		 (hey "  ~A = Xen_list_ref(arglist, ~D);~%" (cadr arg) ctr))
+	     (set! ctr (+ 1 ctr))))
+	 args))
       (if (> argslen 0)
 	  (let ((ctr 1))
 	    (for-each

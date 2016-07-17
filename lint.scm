@@ -9064,7 +9064,8 @@
 			   (let ((val (if (pair? (var-history local-var)) (car (var-history local-var)) (var-initial-value local-var)))
 				 (def (var-definer local-var)))
 			     (let-temporarily ((line-number (if (eq? caller top-level:) -1 line-number)))
-			       ;; TOD: eval confuses this message (eval '(+ x 1)), no other use of x [perhaps check :let initial-value = outer-form]
+			       ;; eval confuses this message (eval '(+ x 1)), no other use of x [perhaps check :let initial-value = outer-form]
+			       ;;    so does let-ref syntax: (apply (*e* 'g1)...) will miss this reference to g1
 			       (if (symbol? def)
 				   (if (eq? otype 'parameter)
 				       (lint-format "~A not used" caller vname)
@@ -9081,12 +9082,13 @@
 			      (pair? (var-history local-var))
 			      (or (zero? (var-set local-var))
 				  (set! arg-type (all-types-agree local-var))))
-		     (let ((vtype (or arg-type     ; this can't be #f unless no sets so despite appearances there's no contention here
+		     (let ((vtype (or arg-type                ; this can't be #f unless no sets so despite appearances there's no contention here
+				      (eq? caller top-level:) ; might be a global var where init value is largely irrelevant
 				      (->lint-type (var-initial-value local-var))))
 			   (lit? (code-constant? (var-initial-value local-var))))
 
 		       (do ((clause (var-history local-var) (cdr clause)))
-			   ((null? (cdr clause)))  ; ignore the initial value which depends on a different env
+			   ((null? (cdr clause)))             ; ignore the initial value which depends on a different env
 			 (let ((call (car clause)))
 			   (if (pair? call) (set! line-number (pair-line-number call)))
 			   
@@ -11724,8 +11726,7 @@
 		      (if (and (pair? e)
 			       (eq? (var-name (car e)) :lambda))
 			  (set! (var-name (car e)) :dilambda))
-		      e
-		      )))))
+		      e)))))
 
 	  (hash-table-set! h 'dilambda dilambda-walker))
 
@@ -15051,6 +15052,7 @@
 							  (not (= cur-line ((cadr pv) 1))))
 						      (begin
 							(set! cur-vars (reverse (cons (car pv) cur-vars)))
+							(set! max-line (max max-line ((car pv) 2)))
 							(set! lv pv)
 							(lint-format "~{~A~^, ~} ~A only used in expression~A (of ~A),~%~NC~A~A of~%~NC~A" caller
 								     (map (lambda (v) (v 0)) cur-vars)
@@ -16817,11 +16819,14 @@
 					  
 					  ((#\T) (string=? data "T"))
 					  ((#\F) (and (string=? data "F") ''#f))
-					  ((#\X) 
-					   (let ((num (string->number (substring data 1)))) ; mit-scheme, maybe others
+
+					  ((#\X #\B #\O #\D) 
+					   (let ((num (string->number (substring data 1) (case (data 0) ((#\X) 16) ((#\O) 8) ((#\B) 2) ((#\D) 10)))))
 					     (if (number? num)
 						 (begin
-						   (format outport "~NCuse #x~A not #~A~%" lint-left-margin #\space (substring data 1) data)
+						   (format outport "~NCuse #~A~A not #~A~%" 
+							   lint-left-margin #\space 
+							   (char-downcase (data 0)) (substring data 1) data)
 						   num)
 						 (string->symbol data))))
 					  
@@ -17134,5 +17139,8 @@
 ;;;   need to collect top-level defines somewhere: lint-file will return the new vars I think -- 16900
 ;;;   lint-walk-body code looks reusable but how to create the "body" -- at top level there is no list
 ;;;   perhaps handle the positions/top-level-defines as we go?
+;;;   (varlet (curlet) (let ((lv1...)(lv2...)) (define (f1...)) (define (f2...)) (inlet 'f1 f1 'f2 f2)))
+;;; let+cond/case, let+do moving subsequent->do return?
+;;; use else in tricky case
 ;;;
-;;; 147 24004 647922
+;;; 147 23987 645893

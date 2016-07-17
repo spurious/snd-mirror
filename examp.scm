@@ -1203,40 +1203,37 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
 selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
     (lambda (cross-snd amp fftsize r)
       (let ((freq-inc (/ fftsize 2)))
-	(let ((fdr #f)
-	      (fdi (make-float-vector fftsize))
-	      (spectr (make-float-vector freq-inc))
-	      (inctr 0)
-	      (ctr freq-inc)
+	(let ((spectr (make-float-vector freq-inc))
 	      (formants (make-vector freq-inc))
-	      (old-srate *clm-srate*))
-
-	  (let ((radius (- 1.0 (/ r fftsize)))
-		(bin (/ (srate) fftsize)))
-	    (set! *clm-srate* (srate))
-	    ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
-	    ;;    and in any case it's setting its formants incorrectly for the actual output srate
-	    (do ((i 0 (+ i 1)))
-		((= i freq-inc))
-	      (set! (formants i) (make-formant (* i bin) radius))))
+	      (old-srate *clm-srate*)
+	      (radius (- 1.0 (/ r fftsize)))
+	      (bin (/ (srate) fftsize)))
+	  (set! *clm-srate* (srate))
+	  ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
+	  ;;    and in any case it's setting its formants incorrectly for the actual output srate
+	  (do ((i 0 (+ i 1)))
+	      ((= i freq-inc))
+	    (set! (formants i) (make-formant (* i bin) radius)))
 	  (set! formants (make-formant-bank formants spectr))
 	  (set! *clm-srate* old-srate)
-	  
-	  (lambda (inval)
-	    (if (= ctr freq-inc)
-		(begin
-		  (set! fdr (channel->float-vector inctr fftsize cross-snd 0))
-		  (set! inctr (+ inctr freq-inc))
-		  (spectrum fdr fdi #f 2)
-		  (float-vector-subtract! fdr spectr)
-		  (float-vector-scale! fdr (/ 1.0 freq-inc))
-		  (set! ctr 0)))
-	    (set! ctr (+ ctr 1))
-	    (float-vector-add! spectr fdr)
-	    (* amp (formant-bank formants inval))))))))
-
-
-
+	  (let ((fdr #f)
+		(ctr freq-inc))
+	    (lambda (inval)
+	      (if (= ctr freq-inc)
+		  (let ((inctr 0)
+			(fdi (make-float-vector fftsize)))
+		    (set! fdr (channel->float-vector inctr fftsize cross-snd 0))
+		    (set! inctr (+ inctr freq-inc))
+		    (spectrum fdr fdi #f 2)
+		    (float-vector-subtract! fdr spectr)
+		    (float-vector-scale! fdr (/ 1.0 freq-inc))
+		    (set! ctr 0)))
+	      (set! ctr (+ ctr 1))
+	      (float-vector-add! spectr fdr)
+	      (* amp (formant-bank formants inval)))))))))
+  
+  
+  
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
 
 (define voiced->unvoiced 
@@ -1294,12 +1291,8 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
     (lambda* (cosines (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
       (let ((freq-inc (/ fftsize 2))
 	     (len (framples snd chn)))
-	(let ((fdr #f)
-	      (fdi (make-float-vector fftsize))
-	      (spectr (make-float-vector freq-inc))
+	(let ((spectr (make-float-vector freq-inc))
 	      (pulse (make-ncos freq cosines))
-	      (inctr 0)
-	      (ctr 0)
 	      (out-data (make-float-vector len))
 	      (formants (make-vector freq-inc))
 	      (old-peak-amp 0.0))
@@ -1311,7 +1304,11 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	    (set! (formants i) (make-formant (* i bin) radius)))
 	  (set! formants (make-formant-bank formants spectr))
 	  
-	  (do ((i 0 (+ i freq-inc)))
+	  (do ((fdr #f)
+	       (inctr 0)
+	       (fdi (make-float-vector fftsize))
+	       (ctr 0)
+	       (i 0 (+ i freq-inc)))
 	      ((>= i len))
 	    (set! ctr (min (- len i) freq-inc))
 	    
@@ -1478,10 +1475,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 			     (do ((i 0 (+ i hop-frames)))
 				 ((>= i newlen))
 			       (let ((start i)
-				     (stop (min newlen (+ i hop-frames)))
-				     (e #f)
-				     (r #t))
-				 
+				     (stop (min newlen (+ i hop-frames))))
 				 (set! (mus-location read-env) i)
 				 (let ((position-in-original (env read-env)))
 				   (set! (readers next-reader)
@@ -1490,7 +1484,9 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 				 (set! next-reader (modulo (+ next-reader 1) num-readers))
 				 (set! cur-readers (max cur-readers next-reader))
 				 
-				 (do ((k 0 (+ k 1)))
+				 (do ((e #f)
+				      (r #t)
+				      (k 0 (+ k 1)))
 				     ((= k cur-readers))
 				   (set! e (grain-envs k))
 				   (set! r (readers k))

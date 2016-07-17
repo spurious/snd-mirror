@@ -2317,6 +2317,7 @@ static int num_object_types = 0;
 #define is_counter(p)                 (type(p) == T_COUNTER)
 #define counter_result(p)             (_TCtr(p))->object.ctr.result
 #define counter_list(p)               (_TCtr(p))->object.ctr.list
+#define counter_set_list(p, Val)      (_TCtr(p))->object.ctr.list = _NFre(Val)
 #define counter_capture(p)            (_TCtr(p))->object.ctr.cap
 #define counter_let(p)                _TLid((_TCtr(p))->object.ctr.env)
 #define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
@@ -10534,7 +10535,7 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   new_cell(sc, nobj, T_COUNTER);
   counter_result(nobj) = counter_result(obj);
-  counter_list(nobj) = counter_list(obj);
+  counter_set_list(nobj, counter_list(obj));
   counter_capture(nobj) = counter_capture(obj);
   counter_set_let(nobj, counter_let(obj));
   counter_set_slots(nobj, counter_slots(obj));
@@ -48289,7 +48290,7 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
   s7_pointer x;
   new_cell(sc, x, T_COUNTER);
   counter_result(x) = sc->nil;
-  counter_list(x) = iter;        /* iterator */
+  counter_set_list(x, iter);     /* iterator -- here it's always either an iterator or a pair */
   counter_capture(x) = 0;        /* will be capture_let_counter */
   counter_set_let(x, sc->nil);   /* will be the saved env */
   counter_set_slots(x, sc->nil); /* local env slots before body is evalled */
@@ -61080,14 +61081,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    s7_pointer code, c, lst, arg;
 	    c = sc->args; /* the counter */
 	    lst = counter_list(c);
-	    if (!is_pair(lst))  /* '(1 2 . 3) as arg? */
+	    if (!is_pair(lst))  /* '(1 2 . 3) as arg? -- counter_list can be anything here */
 	      {
 		sc->value = sc->unspecified;
 		goto START;
 	      }
 	    code = sc->code;
 	    arg = car(lst);
-	    counter_list(c) = cdr(lst);
+	    counter_set_list(c, cdr(lst));
 	    if (sc->op == OP_FOR_EACH_3)
 	      {
 		counter_result(c) = cdr(counter_result(c));

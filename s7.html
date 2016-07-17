@@ -2453,6 +2453,18 @@ inlet can also be used to copy an environment without accidentally invoking
 that environment's copy method.
 </p>
 
+<p>Here's an example: we want to define two functions that share a
+local variable:
+</p>
+
+<pre class="indented">
+(varlet (curlet)            ; import f1 and f2 into the current environment
+  (let ((x 1))              ; x is our local variable
+    (define (f1 a) (+ a x)) 
+    (define (f2 b) (* b x)) 
+    (inlet 'f1 f1 'f2 f2))) ; export f1 and f2
+</pre>
+
 <p>One way to add reader and writer functions to an individual environment slot is:
 </p>
 

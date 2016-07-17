@@ -635,8 +635,7 @@
 (define (finish-with-sound wsd)
   (if (not (eq? (car wsd) 'with-sound-data))
       (error 'wrong-type-arg (list "finish-with-sound" wsd))
-      (let ((cycles 0)
-	    (output (wsd 1))
+      (let ((output (wsd 1))
 	    (old-srate (wsd 4))
 	    (statistics (wsd 5))
 	    (to-snd (wsd 6))
@@ -659,25 +658,21 @@
 
 	(if (mus-output? *output*)
 	    (mus-close *output*))
-	
-	(if statistics
-	    (set! cycles (/ (- (get-internal-real-time) start) 100)))
 	(if (and to-snd (string? output))
 	    (let ((snd-output (open-sound output)))
 	      (set! (sync snd-output) #t)
 	      (if statistics
-		  (snd-print 
-		   (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
-			   output
-			   (maxamp snd-output #t)
-			   cycles)))
-		 (if (or scaled-to scaled-by)
-		     (begin
-		       (if scaled-to
-			   (scale-to scaled-to snd-output)
-			   (if scaled-by
-			       (scale-by scaled-by snd-output)))
-		       (save-sound snd-output)))
+		  (snd-print (format #f "~A:~%  maxamp: ~A,~%  compute time: ~A~%"
+				     output
+				     (maxamp snd-output #t)
+				     (/ (- (get-internal-real-time) start) 100))))
+	      (if (or scaled-to scaled-by)
+		  (begin
+		    (if scaled-to
+			(scale-to scaled-to snd-output)
+			(if scaled-by
+			    (scale-by scaled-by snd-output)))
+		    (save-sound snd-output)))
 	      (if play (*default-player* snd-output))
 	      (update-time-graph snd-output)))
 	(set! *clm-srate* old-srate)
