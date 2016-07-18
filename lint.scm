@@ -9491,14 +9491,14 @@
 	       (if (eq? (car p1) 'quote)
 		   (and (eq? (car p2) 'quote)
 			(equal? (cdr p1) (cdr p2)))
-		   (and (cond ((not (and (pair? (car p1))
-					 (pair? (car p2))))
-			       (structures-equal? (car p1) (car p2) matches e1 e2))
-			      
-			      ((memq (caar p1) '(let let* letrec letrec* do lambda lambda*))
+		   (and (if (not (and (pair? (car p1))
+				      (pair? (car p2))))
+			    (structures-equal? (car p1) (car p2) matches e1 e2)
+			    (case (caar p1)
+			      ((let let* letrec letrec* do lambda lambda*)
 			       (code-equal? (car p1) (car p2) matches e1 e2))
 			      
-			      ((memq (caar p1) '(define define-constant define-macro define-bacro define-expansion define* define-macro* define-bacro*))
+			      ((define define-constant define-macro define-bacro define-expansion define* define-macro* define-bacro*)
 			       (let ((mat (code-equal? (car p1) (car p2) matches e1 e2)))
 				 (and (pair? mat)
 				      (set! matches mat))))
@@ -9520,7 +9520,7 @@
 						      (null? b)
 						      (not (structures-equal? a b matches e1 e2)))
 						  (and (null? a)
-						       (null? b))))))))
+						       (null? b)))))))))
 			(structures-equal? (cdr p1) (cdr p2) matches e1 e2))))
 	  (let ((match (assq p1 matches)))
 	    (if match
@@ -13356,9 +13356,7 @@
 					       (if (not ok-but-at-end)
 						   (set! nc (cons (car-with-expr (car clauses)) nc))))))))))))))
 
-		   ;; look for case at end
-		   ;;    (case in the middle is tricky due to #f handling)
-		   ;;    actually this is too clever (everyone will tack something else after it later)
+		   ;; look for case at end (case in the middle is tricky due to #f handling)
 		   (when (and (> len 3)
 			      (= suggest made-suggestion))
 		     (let ((rform (reverse form))
@@ -13376,11 +13374,16 @@
 					  (not (cond-eqv? (car clause) eqv-select #t)))))
 			      (when (and (pair? clauses)
 					 (> ctr 1))
-				(lint-format "possibly use case at the end (too tricky...): ~A" caller
+				(lint-format "possibly use case at the end: ~A" caller
 					     (lists->string form
-							    `(cond ,@(copy (cdr form) (make-list (- elen ctr)))
-								   (,(cond->case eqv-select  ; cond->case will handle the else branch
-										 (list-tail (cdr form) (- elen ctr)))))))))))))
+							    (let ((else-case (cond->case eqv-select  ; cond->case will handle the else branch
+											 (list-tail (cdr form) (- elen ctr)))))
+							      (if (= (- elen ctr) 1)
+								  (if (equal? (cdadr form) '(#f))
+								      `(and (not ,(caadr form)) ,else-case)
+								      `(if ,@(cadr form) ,else-case))
+								  `(cond ,@(copy (cdr form) (make-list (- elen ctr)))
+									 (else ,else-case))))))))))))
 		   ;; --------
 
 		   ;; repeated test exprs handled once
@@ -14604,17 +14607,17 @@
 					  (pair? (caddr p))
 					  (or (eq? (car p) 'if)
 					      (null? (cdddr p))))
-				 (let ((else-clause (cond ((pair? (cdddr p))
-							   (if (eq? (cadddr p) vname)
-							       `((else #f)) ; this stands in for the local var
-							       (if (and (pair? (cadddr p))
-									(tree-unquoted-member vname (cadddr p)))
-								   :oops! ; if the let var appears in the else portion, we can't do anything with =>
-								   `((else ,(cadddr p))))))
-							  ((case (car p)
-							     ((and) '((else #f)))
-							     ((or)  '((else #t)))
-							     (else  ()))))))
+				 (let ((else-clause (if (pair? (cdddr p))
+							(if (eq? (cadddr p) vname)
+							    `((else #f)) ; this stands in for the local var
+							    (if (and (pair? (cadddr p))
+								     (tree-unquoted-member vname (cadddr p)))
+								:oops! ; if the let var appears in the else portion, we can't do anything with =>
+								`((else ,(cadddr p)))))
+							(case (car p)
+							  ((and) '((else #f)))
+							  ((or)  '((else #t)))
+							  (else  ())))))
 				   (unless (eq? else-clause :oops!)
 				     (lint-format "perhaps ~A" caller 
 						  (lists->string form `(cond (,vvalue => ,(or crf (caaddr p))) ,@else-clause))))))))
@@ -15575,17 +15578,17 @@
 					  (null? (cddr (caddr p)))
 					  (eq? (car last-var) (cadr (caddr p))))
 				 
-				 (let ((else-clause (cond ((pair? (cdddr p)) ; only if 'if (see above)
-							   (if (eq? (cadddr p) (car last-var))
-							       `((else #f)) ; this stands in for the local var
-							       (if (and (pair? (cadddr p))
-									(tree-unquoted-member (car last-var) (cadddr p)))
-								   :oops! ; if the let var appears in the else portion, we can't do anything with =>
-								   `((else ,(cadddr p))))))
-							  ((case (car p)
-							     ((and) '((else #f)))
-							     ((or)  '((else #t)))
-							     (else  ()))))))
+				 (let ((else-clause (if (pair? (cdddr p)) ; only if 'if (see above)
+							(if (eq? (cadddr p) (car last-var))
+							    `((else #f)) ; this stands in for the local var
+							    (if (and (pair? (cadddr p))
+								     (tree-unquoted-member (car last-var) (cadddr p)))
+								:oops! ; if the let var appears in the else portion, we can't do anything with =>
+								`((else ,(cadddr p)))))
+							(case (car p)
+							  ((and) '((else #f)))
+							  ((or)  '((else #t)))
+							  (else  ())))))
 				   (if (not (eq? else-clause :oops!))
 				       (lint-format "perhaps ~A" caller
 						    (case varlist-len
@@ -16938,7 +16941,7 @@
 		       (if (pair? (car p)) "'" "")
 		       (truncated-list->string (car p)) (cdr p))))
 	 big-constants)
-	
+
 	(if (and *report-undefined-identifiers*
 		 (positive? (hash-table-entries other-identifiers)))
 	    (let ((lst (sort! (map car other-identifiers) (lambda (a b)
@@ -17141,6 +17144,56 @@
 ;;;   perhaps handle the positions/top-level-defines as we go?
 ;;;   (varlet (curlet) (let ((lv1...)(lv2...)) (define (f1...)) (define (f2...)) (inlet 'f1 f1 'f2 f2)))
 ;;; let+cond/case, let+do moving subsequent->do return?
-;;; use else in tricky case
+;;; (abs (- x y)) is reversible internally
+;;; ----
+;;; (vector-set! (vector-copy doc) doc.procedure-name newval)
+;;; (vector-set! vec 0 (reverse! rest)) -> need to check rest thereafter
+;;; (string=? "" (string-copy ""))
+;;; (equal? (vector-copy #(a b c d e f g h ...)) #(a b c d e f g h ...))
+;;; (vector->list (vector-copy v start end)) -> vector->list has start/end itself
+;;; (not (equal? v (copy v)))
+;;; (append (copy form (make-list ctr)) (cdr first-sequel)) [cons?]
+;;; (vector-length (copy arr))
+;;; (round (quotient n 10)) -> quotient
+;;; (string-length (make-string 3))
+;;; (make-vector hilbert-node-size #f)
+;;;  ---- t347
+;;; (string-downcase "SPEAK SOFTLY")
+;;; (string-append (symbol->string var) "-" (symbol->string 'L))
+;;; (max (log x) :minlog)
+;;; (object->string '(scheme cxr))
+;;; (object->string (make-string (- width objwid) #\0))
+;;; (remainder (quotient val 65536) 256)
+;;; (remainder (quotient val 256) 256) 
+;;; (modulo (quotient obj 256) 256)
+;;; (display (string-append " Creating a long-lived array of " (number->string kArraySize) " inexact reals"))
+;;; (display (make-string (- 8 (string-length n)) #\0))
+;;; (display (string-append "#x" (number->string x 16)) cep)
+;;; (display (list->string (make-list (- 70 (string-length str1)) #\space)))
+;;; (display (format "~a (~a)" (number->string b 16) (integer->char b)))
+;;; (format "buffer output?")
+;;; (format t " ")
+;;; (format #f "ls /tmp/snd_* | wc~%")
+;;; (format p "~%")
+;;;   do we catch unknown format directives like ~(?
+;;; (null? (list (time-resolution 'time-tai) ...)
+;;; (< (char->integer key) 256)
+;;; (car (reverse (get-cards slot)))
+;;;   (car (last-pair...)) is common -- is this list-ref in disguise? -- yes srfi, last is car+last-pair
+;;; (cdr (or (assoc 'cpu-pin annot) '(_ . 0))) or (cons ...) at end
+;;;   (cdr (or (assoc n n->oin*) ({list} n)))
+;;;   (cdr (or (memq #\. file) (cons #\. file)))
+;;;   also (cdr (or ... (error...))) and (cdr (or (find ...) (error)))
+;;; (> (logand x LADSPA_PORT_CONTROL) 0) -> logbit? ?
+;;; (<= (string-length m) 0) -> = not <=
+;;; (>= 15794.975000001 result 15794.974999999)
+;;; (set-car! (last-pair l) x)
+;;; (write-string (string-append ind "    has ") port)
+;;; (write-string (format "~a: ~a~%" (car (command-line)) message) (current-error-port))
+;;; format ~^~} redundancy
+;;; 
+;;; (read-char (open-input-string "foo"))
+;;;   what about hidden disorder: (cons (cons (read-char) 1) (read-char))
+;;; any var name ending in -value ? or val, get-value, vals
 ;;;
 ;;; 147 23987 645893

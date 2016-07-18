@@ -156,7 +156,8 @@
   (set! alpha (max alpha -0.5))
   (cond ((= n 0)       1.0)
 	((= alpha 0.0) (* (/ 2.0 n) (cos (* n x))))           ; maxima and A&S 22.3.14 (gsl has bogus values here)
-	((case n
+	(else
+	 (case n
 	   ((1)       (* 2 alpha x))                          ; G&R 8.93(2)
 	   ((2)       (- (* 2 alpha (+ alpha 1) x x) alpha))  ; G&R 8.93(3)
 	   (else

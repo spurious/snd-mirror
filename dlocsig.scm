@@ -2118,12 +2118,12 @@
 	    (zero-gain 1.0e-10)
 	    (size (group-size group))
 	    (mat (group-matrix group))) ; returns float-vector
-	(cond ((and (< (abs x) zero-coord)
-		    (< (abs y) zero-coord)
-		    (< (abs z) zero-coord))
-	       (list #t (list 1.0 1.0 1.0)))
-	      
-	      ((= size 3)
+	(if (and (< (abs x) zero-coord)
+		 (< (abs y) zero-coord)
+		 (< (abs z) zero-coord))
+	    (list #t (list 1.0 1.0 1.0))
+	    (case size
+	      ((3)
 	       (let* ((gain-a (+ (* (mat 0 0) x)
 				 (* (mat 1 0) y)
 				 (* (mat 2 0) z)))
@@ -2144,7 +2144,7 @@
 		 (list (and (>= gain-a 0) (>= gain-b 0) (>= gain-c 0))
 		       (list (/ gain-a mag) (/ gain-b mag) (/ gain-c mag)))))
 	      
-	      ((= size 2)
+	      ((2)
 	       (let* ((gain-a (+ (* (mat 0 0) x)
 				 (* (mat 1 0) y)))
 		      (gain-b (+ (* (mat 0 1) x)
@@ -2159,8 +2159,8 @@
 		 (list (and (>= gain-a 0) (>= gain-b 0))
 		       (list (/ gain-a mag) (/ gain-b mag)))))
 	      
-	      ((= size 1)
-	       (list #t (list 1.0))))))
+	      ((1)
+	       (list #t (list 1.0)))))))
     
 
     ;; Render a trajectory breakpoint through amplitude panning

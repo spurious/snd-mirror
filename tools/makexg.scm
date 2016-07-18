@@ -1984,7 +1984,8 @@
 			((not (= refargs 0))
 			 (hey-on "    result = C_to_Xen_~A(" (no-stars return-type)))
 
-			((case spec
+			(else 
+			 (case spec
 			   ((free)         (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
 			   ((const-return) (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
 			   (else

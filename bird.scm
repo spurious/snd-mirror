@@ -137,12 +137,11 @@
 (define b-great-horned-owl
   (let ((documentation "(great-horned-owl beg) produces a great horned owl call at time 'beg'"))
     (lambda (beg)
-      (set! beg (- beg .3))
-      (bigbird (+ beg .3) .1 300 0 .1 main-amp main-amp '(1 1 3 .02 7 .01))
-      (bigbird (+ beg .6) .4 293 6 .1 '(0.0 1.0 1.0 .0) main-amp '(1 1 3 .02 7 .01))
+      (bigbird beg .1 300 0 .1 main-amp main-amp '(1 1 3 .02 7 .01))
+      (bigbird (+ beg .3) .4 293 6 .1 '(0.0 1.0 1.0 .0) main-amp '(1 1 3 .02 7 .01))
       (let ((owlup '(0.0 0.0 .30 1.0 1.0 1.0)))
-	(bigbird (+ beg 1.75) .35 293 7 .1 owlup main-amp '(1 1 3 .02 7 .01))
-	(bigbird (+ beg 2.5) .2 300 0 .1 owlup main-amp '(1 1 3 .02 7 .01))))))
+	(bigbird (+ beg 1.45) .35 293 7 .1 owlup main-amp '(1 1 3 .02 7 .01))
+	(bigbird (+ beg 2.2) .2 300 0 .1 owlup main-amp '(1 1 3 .02 7 .01))))))
 
 
 (define b-black-throated-gray-warbler
@@ -282,12 +281,11 @@
 (define b-golden-crowned-sparrow
   (let ((documentation "(golden-crowned-sparrow beg) produces a golden crowned sparrow call at time 'beg'"))
     (lambda (beg)
-      (set! beg (- beg .6))
       (let ((goldone '(0.0 1.0 .25 .20 1.0 .0))) ;	these have as different song around here.
-	(bird (+ beg .6) .5 4300 1000 .15 goldone main-amp)
-	(bird (+ beg 1.3) .45 3300 200 .15 goldone main-amp))
-      (bird (+ beg 1.75) .4 3800 100 .15 '(0.0 .90 .05 1.0 .10 .40 1.0 .0) main-amp)
-      (bird (+ beg 2.2) .3 3800 100 .1 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 0.0 .80 1.0 .90 0.0 1.0 .50) main-amp))))
+	(bird beg .5 4300 1000 .15 goldone main-amp)
+	(bird (+ beg 0.7) .45 3300 200 .15 goldone main-amp))
+      (bird (+ beg 1.15) .4 3800 100 .15 '(0.0 .90 .05 1.0 .10 .40 1.0 .0) main-amp)
+      (bird (+ beg 1.6) .3 3800 100 .1 '(0.0 .50 .10 0.0 .20 1.0 .30 0.0 .40 1.0 .50 0.0 .60 1.0 .70 0.0 .80 1.0 .90 0.0 1.0 .50) main-amp))))
 
 
 (define b-indigo-bunting

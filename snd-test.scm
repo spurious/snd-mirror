@@ -9416,7 +9416,7 @@ EDITS: 2
 			      (feql rgb '(1 1 0))
 			      (feql rgb '(0 1 0))
 			      (feql rgb '(0 0 1))
-			      (feql rgb '(0.6667000000000001 0 1))))
+			      (feql rgb '(0.66670000 0 1))))
 		     (snd-display ";prism ~A" rgb))))
 	     
 	     (do ((i 0 (+ i 1))) ((= i 10))
@@ -19488,7 +19488,7 @@ EDITS: 2
 	    (mus-file-mix-1 k (make-mix-input "fmv1.snd" k) 0 12 0 (float-vector 1.0) vf)
 	    (file->array "fmv.snd" 0 0 12 v0)
 
-	    ;; ?? v0: #(0.4 0.42 0.4400000000000001 0.36 0.38 0.4 0.42 0.44 0.46 0.28 0.3 0.31)
+	    ;; ?? v0: #(0.4 0.42 0.44000000 0.36 0.38 0.4 0.42 0.44 0.46 0.28 0.3 0.31)
 	    (if (or (fneq (v0 0) .4) (fneq (v0 3) .360) (fneq (v0 9) .28)) (snd-display ";~D mus-file-mix(env): ~A?" k v0))
 	    (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (float-vector 1.0 1.0 1.0 1.0) vf))
 	  ;; clm2xen should protect us here
@@ -19523,17 +19523,17 @@ EDITS: 2
 	  (mus-file-mix-1 k (make-mix-input "fmv1.snd" k))
 	  (file->array "fmv.snd" 0 0 3 v0) ; chan 0 start 0 len 3
 
-	  ;; v0: #(0.1 0.14 0.18 0.03 0.04 0.05 0.06 0.07000000000000001 0.08 0.09 0.1 0.11)
+	  ;; v0: #(0.1 0.14 0.18 0.03 0.04 0.05 0.06 0.070000000 0.08 0.09 0.1 0.11)
 	  (if (or (fneq (v0 0) .1) (fneq (v0 2) .18)) (snd-display ";~D mus-file-mix(1->4): ~A?" k v0))
 	  (mus-file-mix-1 k (make-mix-input "fmv2.snd" k)  0 3 0 (float-vector 0.3 0.0 0.7 0.0))
 	  (file->array "fmv.snd" 0 0 3 v0)
 
-	  ;; v0: #(0.3 0.34 0.38 0.03 0.04 0.05 0.06 0.07000000000000001 0.08 0.09 0.1 0.11)
+	  ;; v0: #(0.3 0.34 0.38 0.03 0.04 0.05 0.06 0.070000000 0.08 0.09 0.1 0.11)
 	  (if (or (fneq (v0 0) .3) (fneq (v0 2) .38)) (snd-display ";~D mus-file-mix(2->4): ~A?" k v0))
 	  (mus-file-mix-1 k (make-mix-input "fmv3.snd" k) 0 2 0)
 	  (file->array "fmv.snd" 0 0 3 v0)
 
-	  ;;  v0: #(0.6000000000000001 0.6400000000000001 0.38 0.03 0.04 0.05 0.06 0.07000000000000001 0.08 0.09 0.1 0.11)
+	  ;;  v0: #(0.60000000 0.64000000 0.38 0.03 0.04 0.05 0.06 0.070000000 0.08 0.09 0.1 0.11)
 	  (if (or (fneq (v0 0) .6) (fneq (v0 2) .38)) (snd-display ";~D mus-file-mix(4->4): ~A?" k v0)))
 	
 	(if (file-exists? "fmv.snd") (delete-file "fmv.snd"))
@@ -24164,6 +24164,11 @@ EDITS: 2
 
 ;;; ---------------- test 12: extensions ----------------
 
+(define (test-remove-if p lst)
+  (cond ((null? lst) ())
+	((p (car lst)) (test-remove-if p (cdr lst)))
+	(else (cons (car lst) (test-remove-if p (cdr lst))))))
+  
 (define (snd_test_12)
 
   (define (test-spectral-difference snd1 snd2 maxok)
@@ -24191,12 +24196,6 @@ EDITS: 2
 	(close-sound s2)
 	(if (> diff maxok)
 	    (snd-display ";translate spectral difference ~A ~A: ~A > ~A?" snd1 snd2 diff maxok)))))
-  
-  (define (remove-if p lst)
-    (cond ((null? lst) ())
-	  ((p (car lst)) (remove-if p (cdr lst)))
-	  (else (cons (car lst) (remove-if p (cdr lst))))))
-  
   
   (if (null? (sound-file-extensions))
       (set! (sound-file-extensions) original-sound-file-extensions))
@@ -24263,7 +24262,7 @@ EDITS: 2
 		  (if (and (> len 0) (> (random 1.0) 0.3))
 		      (let ((fd (open-files (floor (random (* 1.0 (length open-files)))))))
 			(close-sound fd)
-			(set! open-files (remove-if (lambda (a) (equal? a fd)) open-files)))))))
+			(set! open-files (test-remove-if (lambda (a) (equal? a fd)) open-files)))))))
 	  (if (pair? open-files) (for-each close-sound open-files))
 	  (set! open-files ())
 	  
@@ -25751,7 +25750,7 @@ EDITS: 2
   (hook-push after-open-hook (lambda (hook)
 			       (set! (hook 'result) (make-player (hook 'snd) 0))))
   (do ((open-files ())
-       (cur-dir-files (remove-if 
+       (cur-dir-files (test-remove-if 
 		       (lambda (file)
 			 (catch #t
 			   (lambda ()
@@ -25788,7 +25787,7 @@ EDITS: 2
 	   (lambda (s)
 	     (if (> (chans s) 4)
 		 (begin
-		   (set! open-files (remove-if (lambda (a) (= a s)) open-files))
+		   (set! open-files (test-remove-if (lambda (a) (= a s)) open-files))
 		   (close-sound s))))
 	   (sounds))
 	  (save-state "s61.scm")
@@ -31782,12 +31781,12 @@ EDITS: 1
 	    (if (not (vmus-arrays-equal? v (float-vector 0.0 0.02056010532402247 0.05 0.07720130317537323 0.1 0.1238094543862298 0.15 0.1758514952493174 
 					      0.2 0.2245876821803736 0.25 0.2753688942389073 0.3 0.3249295824364337 0.35 0.3751591614371849 
 					      0.4 0.4250776763951197 0.45 0.4750983986223486 0.5 0.5251191208495776 0.55 0.5750480002850203 
-					      0.6000000000000001 0.6251857364939857 0.65 0.6749656459425423 0.7000000000000001 0.7252971884488815 
-					      0.75 0.7748042296887507 0.8 0.8255720997331736 0.8500000000000001 0.8742119340573964 0.9 
-					      0.9274509253698831 0.9500000000000001 0.9590869443463733 0.9500000000000001 0.9274509253698828 
-					      0.9 0.8742119340573966 0.8500000000000001 0.8255720997331734 0.8 0.7748042296887506 0.75 
-					      0.7252971884488812 0.7000000000000001 0.6749656459425423 0.65 0.6251857364939858 
-					      0.6000000000000001 0.5750480002850203 0.55 0.5251191208495776 0.5 0.4750983986223486 
+					      0.60000000 0.6251857364939857 0.65 0.6749656459425423 0.70000000 0.7252971884488815 
+					      0.75 0.7748042296887507 0.8 0.8255720997331736 0.85000000 0.8742119340573964 0.9 
+					      0.9274509253698831 0.95000000 0.9590869443463733 0.95000000 0.9274509253698828 
+					      0.9 0.8742119340573966 0.85000000 0.8255720997331734 0.8 0.7748042296887506 0.75 
+					      0.7252971884488812 0.70000000 0.6749656459425423 0.65 0.6251857364939858 
+					      0.60000000 0.5750480002850203 0.55 0.5251191208495776 0.5 0.4750983986223486 
 					      0.45 0.4250776763951198 0.4 0.3751591614371849 0.35 0.3249295824364337 0.3
 					      0.2753688942389073 0.25 0.2245876821803736 0.2 0.1758514952493173 0.15 0.1238094543862298
 					      0.1 0.07720130317537324 0.05 0.02056010532402247 0.0 -0.004445073550837984 0.0)))
@@ -45516,10 +45515,10 @@ EDITS: 1
 			     XpmReadPixmapFile XpmWriteFileFromPixmap XpmWritePixmapFile XpmCreatePixmapFromXpmImage
 			     XpmCreateXpmImageFromPixmap XpmAttributes? XpmImage? XpmColorSymbol?)))))
 			   
-	     (xm-procs0 (remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
-	     (xm-procs1 (remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
-	     (xm-procs2 (remove-if (lambda (n) (not (aritable? n 2))) xm-procs))
-	     (xm-procs3 (remove-if (lambda (n) (not (aritable? n 3))) xm-procs))
+	     (xm-procs0 (test-remove-if (lambda (n) (not (aritable? n 0))) xm-procs))
+	     (xm-procs1 (test-remove-if (lambda (n) (not (aritable? n 1))) xm-procs))
+	     (xm-procs2 (test-remove-if (lambda (n) (not (aritable? n 2))) xm-procs))
+	     (xm-procs3 (test-remove-if (lambda (n) (not (aritable? n 3))) xm-procs))
 	     )
 	
 	;; ---------------- 0 Args
@@ -46054,12 +46053,12 @@ EDITS: 1
 		       html-dir html-program mus-interp-type widget-position widget-size 
 		       mus-clipping mus-file-clipping mus-header-raw-defaults))
 	   
-	   (procs0 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
-	   (set-procs0 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
-	   (procs1 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
-	   (set-procs1 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
-	   (procs2 (remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
-	   (set-procs2 (remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs)))
+	   (procs0 (test-remove-if (lambda (n) (not (and (procedure? n) (aritable? n 0)))) procs))
+	   (set-procs0 (test-remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 1)))) set-procs))
+	   (procs1 (test-remove-if (lambda (n) (not (and (procedure? n) (aritable? n 1)))) procs))
+	   (set-procs1 (test-remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 2)))) set-procs))
+	   (procs2 (test-remove-if (lambda (n) (not (and (procedure? n) (aritable? n 2)))) procs))
+	   (set-procs2 (test-remove-if (lambda (n) (not (and (procedure? n) (set-arity-ok n 3)))) set-procs)))
 
       (let ((vector-0 #())
 	    (str-3 "/hiho")
