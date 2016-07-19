@@ -32478,6 +32478,49 @@ static Xen gxg_gtk_scrolled_window_get_max_content_height(Xen scrolled_window)
   return(C_to_Xen_gint(gtk_scrolled_window_get_max_content_height(Xen_to_C_GtkScrolledWindow_(scrolled_window))));
 }
 
+static Xen gxg_gtk_file_chooser_add_choice(Xen chooser, Xen id, Xen label, Xen options, Xen option_labels)
+{
+  #define H_gtk_file_chooser_add_choice "void gtk_file_chooser_add_choice(GtkFileChooser* chooser, char* id, \
+char* label, char** options, char** option_labels)"
+  Xen_check_type(Xen_is_GtkFileChooser_(chooser), chooser, 1, "gtk_file_chooser_add_choice", "GtkFileChooser*");
+  Xen_check_type(Xen_is_char_(id), id, 2, "gtk_file_chooser_add_choice", "char*");
+  Xen_check_type(Xen_is_char_(label), label, 3, "gtk_file_chooser_add_choice", "char*");
+  Xen_check_type(Xen_is_char__(options), options, 4, "gtk_file_chooser_add_choice", "char**");
+  Xen_check_type(Xen_is_char__(option_labels), option_labels, 5, "gtk_file_chooser_add_choice", "char**");
+  gtk_file_chooser_add_choice(Xen_to_C_GtkFileChooser_(chooser), Xen_to_C_char_(id), Xen_to_C_char_(label), Xen_to_C_char__(options), 
+                              Xen_to_C_char__(option_labels));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_file_chooser_remove_choice(Xen chooser, Xen id)
+{
+  #define H_gtk_file_chooser_remove_choice "void gtk_file_chooser_remove_choice(GtkFileChooser* chooser, \
+char* id)"
+  Xen_check_type(Xen_is_GtkFileChooser_(chooser), chooser, 1, "gtk_file_chooser_remove_choice", "GtkFileChooser*");
+  Xen_check_type(Xen_is_char_(id), id, 2, "gtk_file_chooser_remove_choice", "char*");
+  gtk_file_chooser_remove_choice(Xen_to_C_GtkFileChooser_(chooser), Xen_to_C_char_(id));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_file_chooser_set_choice(Xen chooser, Xen id, Xen option)
+{
+  #define H_gtk_file_chooser_set_choice "void gtk_file_chooser_set_choice(GtkFileChooser* chooser, char* id, \
+char* option)"
+  Xen_check_type(Xen_is_GtkFileChooser_(chooser), chooser, 1, "gtk_file_chooser_set_choice", "GtkFileChooser*");
+  Xen_check_type(Xen_is_char_(id), id, 2, "gtk_file_chooser_set_choice", "char*");
+  Xen_check_type(Xen_is_char_(option), option, 3, "gtk_file_chooser_set_choice", "char*");
+  gtk_file_chooser_set_choice(Xen_to_C_GtkFileChooser_(chooser), Xen_to_C_char_(id), Xen_to_C_char_(option));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_file_chooser_get_choice(Xen chooser, Xen id)
+{
+  #define H_gtk_file_chooser_get_choice "char* gtk_file_chooser_get_choice(GtkFileChooser* chooser, char* id)"
+  Xen_check_type(Xen_is_GtkFileChooser_(chooser), chooser, 1, "gtk_file_chooser_get_choice", "GtkFileChooser*");
+  Xen_check_type(Xen_is_char_(id), id, 2, "gtk_file_chooser_get_choice", "char*");
+  return(C_to_Xen_char_(gtk_file_chooser_get_choice(Xen_to_C_GtkFileChooser_(chooser), (const char*)Xen_to_C_char_(id))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -39227,6 +39270,10 @@ Xen_wrap_2_args(gxg_gtk_scrolled_window_set_max_content_width_w, gxg_gtk_scrolle
 Xen_wrap_1_arg(gxg_gtk_scrolled_window_get_max_content_width_w, gxg_gtk_scrolled_window_get_max_content_width)
 Xen_wrap_2_args(gxg_gtk_scrolled_window_set_max_content_height_w, gxg_gtk_scrolled_window_set_max_content_height)
 Xen_wrap_1_arg(gxg_gtk_scrolled_window_get_max_content_height_w, gxg_gtk_scrolled_window_get_max_content_height)
+Xen_wrap_5_args(gxg_gtk_file_chooser_add_choice_w, gxg_gtk_file_chooser_add_choice)
+Xen_wrap_2_args(gxg_gtk_file_chooser_remove_choice_w, gxg_gtk_file_chooser_remove_choice)
+Xen_wrap_3_args(gxg_gtk_file_chooser_set_choice_w, gxg_gtk_file_chooser_set_choice)
+Xen_wrap_2_args(gxg_gtk_file_chooser_get_choice_w, gxg_gtk_file_chooser_get_choice)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -39961,7 +40008,7 @@ Xen_wrap_1_arg(gxg_GDK_IS_DRAWING_CONTEXT_w, gxg_GDK_IS_DRAWING_CONTEXT)
 
 #if HAVE_SCHEME
 static s7_pointer s_boolean, s_integer, s_real, s_string, s_any, s_pair, s_float, s_gtk_enum_t, s_pair_false;
-static s7_pointer pl_iur, pl_iuisi, pl_pig, pl_iuuui, pl_iuuuui, pl_iuis, pl_iug, pl_ius, pl_iusi, pl_iu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_t, pl_tts, pl_tti, pl_dust, pl_dut, pl_du, pl_dusr, pl_dus, pl_pr, pl_s, pl_tsb, pl_st, pl_tsu, pl_tsig, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_ssig, pl_ssi, pl_tusiuiuit, pl_tubu, pl_tuurru, pl_tuurrrrgr, pl_tuurrrrg, pl_tuuur, pl_tusg, pl_tuuuui, pl_tuusb, pl_tugui, pl_turru, pl_tuuugi, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_tugb, pl_tugs, pl_tugug, pl_turgs, pl_tubi, pl_tuttigsi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrrg, pl_tuuiiiirrrrgi, pl_tuiggu, pl_turrrb, pl_tuubbi, pl_tuubbig, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tuusit, pl_tuurbr, pl_tuuiu, pl_tugiiu, pl_tuugi, pl_tuit, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tuig, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tug, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuug, pl_tuibu, pl_tuut, pl_tuuig, pl_tuguig, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tugu, pl_tuuir, pl_tugr, pl_tugi, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tugt, pl_tuis, pl_tuiu, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tuuug, pl_tusuig, pl_tuuubr, pl_psgi, pl_suiig, pl_sug, pl_psgbiiiit, pl_psrrrb, pl_sui, pl_suuub, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psg, pl_psi, pl_psugt, pl_psut, pl_pur, pl_puuui, pl_puiu, pl_pusiig, pl_pusiigu, pl_pusiiugu, pl_puuiig, pl_puur, pl_puiiui, pl_pugi, pl_puuig, pl_pubi, pl_puiig, pl_puiigi, pl_puigu, pl_puuusuug, pl_pusi, pl_puri, pl_pusub, pl_pust, pl_pub, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_pug, pl_put, pl_pusigu, pl_pusig, pl_puui, pl_pusiiu, pl_igi, pl_gi, pl_g, pl_tg, pl_sg, pl_gs, pl_gussitu, pl_gurrsiu, pl_gus, pl_guut, pl_guuut, pl_guiu, pl_guugbuut, pl_pgr, pl_pgu, pl_pgi, pl_gug, pl_pgbi, pl_gu, pl_gugu, pl_pg, pl_gui, pl_big, pl_bi, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsigb, pl_bsiiuusu, pl_bur, pl_buug, pl_buut, pl_buigu, pl_busiu, pl_buuti, pl_buttiiiu, pl_butib, pl_buiuig, pl_buuusuug, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_buusib, pl_busib, pl_buuuub, pl_buuub, pl_buttu, pl_busgu, pl_buurbr, pl_buui, pl_buus, pl_buuui, pl_busu, pl_bug, pl_bu, pl_buuubu, pl_bus, pl_bui, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buig, pl_buuiiu, pl_buuig, pl_iiit, pl_iit, pl_i, pl_itiiub, pl_itsub, pl_itstttg, pl_itgiiut, pl_tiu, pl_ti, pl_it, pl_isigutttiiu, pl_isi, pl_isgt, pl_sig, pl_si, pl_is, pl_trrru, pl_bpt;
+static s7_pointer pl_iur, pl_iuisi, pl_pig, pl_iuuui, pl_iuuuui, pl_iuis, pl_iug, pl_ius, pl_iusi, pl_iu, pl_iuui, pl_pi, pl_iui, pl_iuisut, pl_piu, pl_pit, pl_t, pl_tts, pl_tti, pl_dust, pl_dut, pl_du, pl_dusr, pl_dus, pl_pr, pl_s, pl_tsb, pl_st, pl_tsu, pl_tsig, pl_ts, pl_tsi, pl_tsiu, pl_tsiiuui, pl_tsiuui, pl_p, pl_ssig, pl_ssi, pl_tusiuiuit, pl_tussu, pl_tubu, pl_tuurru, pl_tuurrrrgr, pl_tuurrrrg, pl_tuuur, pl_tusg, pl_tuuuui, pl_tuusb, pl_tugui, pl_turru, pl_tuuugi, pl_tuuuub, pl_tuttti, pl_tuuttti, pl_tuisi, pl_tugb, pl_tugs, pl_tugug, pl_turgs, pl_tubi, pl_tuttigsi, pl_tuiiiiui, pl_tuurb, pl_tuuiiiirrrrg, pl_tuuiiiirrrrgi, pl_tuiggu, pl_turrrb, pl_tuubbi, pl_tuubbig, pl_pt, pl_tuuti, pl_tubbi, pl_tusiu, pl_tuuutti, pl_tuti, pl_tutti, pl_tutui, pl_tutisi, pl_tuuri, pl_tuusit, pl_tuurbr, pl_tuuiu, pl_tugiiu, pl_tuugi, pl_tuit, pl_tusr, pl_tusrt, pl_tusi, pl_turt, pl_tuui, pl_tut, pl_tuur, pl_tuig, pl_tur, pl_tub, pl_tui, pl_tu, pl_tus, pl_tuiiu, pl_tusb, pl_tuuut, pl_tug, pl_tutb, pl_tust, pl_tuub, pl_tuus, pl_tuug, pl_tuibu, pl_tuut, pl_tuuig, pl_tuguig, pl_tuubr, pl_tuuub, pl_tuuiuui, pl_tugu, pl_tuuir, pl_tugr, pl_tugi, pl_tuuui, pl_tuib, pl_tusu, pl_tuusi, pl_tugt, pl_tuis, pl_tuiu, pl_tubiiiu, pl_tusiis, pl_tusiuiu, pl_tusiuibu, pl_tusiiu, pl_tuuug, pl_tusuig, pl_tuuubr, pl_psgi, pl_suiig, pl_sug, pl_psgbiiiit, pl_psrrrb, pl_sui, pl_suuub, pl_psu, pl_psb, pl_su, pl_sus, pl_ps, pl_psg, pl_psi, pl_psugt, pl_psut, pl_pur, pl_puuui, pl_puiu, pl_pusiig, pl_pusiigu, pl_pusiiugu, pl_puuiig, pl_puur, pl_puiiui, pl_pugi, pl_puuig, pl_pubi, pl_puiig, pl_puiigi, pl_puigu, pl_puuusuug, pl_pusi, pl_puri, pl_pusub, pl_pust, pl_pub, pl_pu, pl_puutu, pl_pui, pl_pusu, pl_pus, pl_pug, pl_put, pl_pusigu, pl_pusig, pl_puui, pl_pusiiu, pl_igi, pl_gi, pl_g, pl_tg, pl_sg, pl_gs, pl_gussitu, pl_gurrsiu, pl_gus, pl_guut, pl_guuut, pl_guiu, pl_guugbuut, pl_pgr, pl_pgu, pl_pgi, pl_gug, pl_pgbi, pl_gu, pl_gugu, pl_pg, pl_gui, pl_big, pl_bi, pl_b, pl_btiib, pl_bti, pl_bt, pl_tb, pl_bsiu, pl_bsiuub, pl_bsu, pl_bsigb, pl_bsiiuusu, pl_bur, pl_buug, pl_buut, pl_buigu, pl_busiu, pl_buuti, pl_buttiiiu, pl_butib, pl_buiuig, pl_buuusuug, pl_buuit, pl_butu, pl_buti, pl_butti, pl_busi, pl_buusib, pl_busib, pl_buuuub, pl_buuub, pl_buttu, pl_busgu, pl_buurbr, pl_buui, pl_buus, pl_buuui, pl_busu, pl_bug, pl_bu, pl_buuubu, pl_bus, pl_bui, pl_buutuuiu, pl_but, pl_bussu, pl_buib, pl_buiu, pl_buiiu, pl_bub, pl_buub, pl_pb, pl_buig, pl_buuiiu, pl_buuig, pl_iiit, pl_iit, pl_i, pl_itiiub, pl_itsub, pl_itstttg, pl_itgiiut, pl_tiu, pl_ti, pl_it, pl_isigutttiiu, pl_isi, pl_isgt, pl_sig, pl_si, pl_is, pl_trrru, pl_bpt;
 #endif
 
 static void define_functions(void)
@@ -40022,6 +40069,7 @@ static void define_functions(void)
   pl_ssig = s7_make_circular_signature(s7, 3, 4, s_string, s_string, s_integer, s_gtk_enum_t);
   pl_ssi = s7_make_circular_signature(s7, 2, 3, s_string, s_string, s_integer);
   pl_tusiuiuit = s7_make_circular_signature(s7, 8, 9, s_any, s_pair_false, s_string, s_integer, s_pair_false, s_integer, s_pair_false, s_integer, s_any);
+  pl_tussu = s7_make_circular_signature(s7, 4, 5, s_any, s_pair_false, s_string, s_string, s_pair_false);
   pl_tubu = s7_make_circular_signature(s7, 3, 4, s_any, s_pair_false, s_boolean, s_pair_false);
   pl_tuurru = s7_make_circular_signature(s7, 5, 6, s_any, s_pair_false, s_pair_false, s_real, s_real, s_pair_false);
   pl_tuurrrrgr = s7_make_circular_signature(s7, 8, 9, s_any, s_pair_false, s_pair_false, s_real, s_real, s_real, s_real, s_gtk_enum_t, s_real);
@@ -43681,6 +43729,10 @@ static void define_functions(void)
   Xg_define_procedure(gtk_scrolled_window_get_max_content_width, gxg_gtk_scrolled_window_get_max_content_width_w, 1, 0, 0, H_gtk_scrolled_window_get_max_content_width, pl_iu);
   Xg_define_procedure(gtk_scrolled_window_set_max_content_height, gxg_gtk_scrolled_window_set_max_content_height_w, 2, 0, 0, H_gtk_scrolled_window_set_max_content_height, pl_tui);
   Xg_define_procedure(gtk_scrolled_window_get_max_content_height, gxg_gtk_scrolled_window_get_max_content_height_w, 1, 0, 0, H_gtk_scrolled_window_get_max_content_height, pl_iu);
+  Xg_define_procedure(gtk_file_chooser_add_choice, gxg_gtk_file_chooser_add_choice_w, 5, 0, 0, H_gtk_file_chooser_add_choice, pl_tussu);
+  Xg_define_procedure(gtk_file_chooser_remove_choice, gxg_gtk_file_chooser_remove_choice_w, 2, 0, 0, H_gtk_file_chooser_remove_choice, pl_tus);
+  Xg_define_procedure(gtk_file_chooser_set_choice, gxg_gtk_file_chooser_set_choice_w, 3, 0, 0, H_gtk_file_chooser_set_choice, pl_tus);
+  Xg_define_procedure(gtk_file_chooser_get_choice, gxg_gtk_file_chooser_get_choice_w, 2, 0, 0, H_gtk_file_chooser_get_choice, pl_sus);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create, pl_pu);
@@ -47790,7 +47842,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("20-Jun-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("18-Jul-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND

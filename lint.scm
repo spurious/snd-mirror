@@ -6853,9 +6853,9 @@
 			      (not (string? (cadr form))))
 			 (lint-format "format with one argument takes a string: ~A" caller (truncated-list->string form)))
 
-			((and (not (cadr form))
-			      (string? (caddr form)))
-			 (lint-format "perhaps ~A" caller (lists->string form (caddr form)))))
+			((and (string? (cadr form)) ; (format "str") -> str
+			      (not (char-position #\~ (cadr form))))
+			 (lint-format "perhaps ~A" caller (lists->string form (cadr form)))))
 		  env)
 		
 		(let ((control-string ((if (string? (cadr form)) cadr caddr) form))
@@ -7814,20 +7814,28 @@
 	       (lint-format "the third argument should be boolean (#f=default, #t=include trailing newline): ~A" caller form))))
 	
 	;; ---------------- string-length ----------------
-	(hash-table-set! 
-	 h 'string-length 
-	 (lambda (caller head form env)
-	   (if (and (= (length form) 2)
-		    (string? (cadr form)))
-	       (lint-format "perhaps ~A -> ~A" caller (truncated-list->string form) (string-length (cadr form))))))
+	(let ()
+	  (define (sp-string-length caller head form env)
+	    (when (= (length form) 2)
+	      (if (string? (cadr form))
+		  (lint-format "perhaps ~A -> ~A" caller (truncated-list->string form) (string-length (cadr form)))
+		  (if (and (pair? (cadr form))
+			   (eq? (caadr form) 'make-string))
+		      (lint-format "perhaps ~A" caller (lists->string form (cadadr form)))))))
+
+	  (hash-table-set! h 'string-length sp-string-length))
 	
 	;; ---------------- vector-length ----------------
-	(hash-table-set! 
-	 h 'vector-length 
-	 (lambda (caller head form env)
-	   (if (and (= (length form) 2)
-		    (vector? (cadr form)))
-	       (lint-format "perhaps ~A -> ~A" caller (truncated-list->string form) (vector-length (cadr form))))))
+	(let ()
+	  (define (sp-vector-length caller head form env)
+	    (when (= (length form) 2)
+	      (if (vector? (cadr form))
+		  (lint-format "perhaps ~A -> ~A" caller (truncated-list->string form) (vector-length (cadr form)))
+		  (if (and (pair? (cadr form))
+			   (eq? (caadr form) 'make-vector))
+		      (lint-format "perhaps ~A" caller (lists->string form (cadadr form)))))))
+
+	  (hash-table-set! h 'vector-length sp-vector-length))
 	
 	;; ---------------- dynamic-wind ----------------
 	(let ()
@@ -7990,6 +7998,10 @@
 			     (bitwise-ior . logior) 
 			     (bitwise-xor . logxor) 
 			     (bitwise-not . lognot)
+			     (bit-and . logand) 
+			     (bit-or . logior) 
+			     (bit-xor . logxor) 
+			     (bit-not . lognot)
 			     (arithmetic-shift . ash)
 			     (vector-for-each . for-each)
 			     (string-for-each . for-each)
@@ -8362,7 +8374,8 @@
 					       (not (var-member arg env)))
 					  (symbol->value arg *e*))
 					 (else arg))))
-			  (if (not (or (symbol? val)
+			  (if (not (or (and (symbol? val)
+					    (not (keyword? val)))
 				       (any-checker? checker val)))
 			      (let ((op (->lint-type val)))
 				(unless (memq op '(#f #t values))
@@ -17146,54 +17159,58 @@
 ;;; let+cond/case, let+do moving subsequent->do return?
 ;;; (abs (- x y)) is reversible internally
 ;;; ----
-;;; (vector-set! (vector-copy doc) doc.procedure-name newval)
+;;; (vector-set! (vector-copy doc) doc.procedure-name newval) [perhaps *-set! in this context]
 ;;; (vector-set! vec 0 (reverse! rest)) -> need to check rest thereafter
 ;;; (string=? "" (string-copy ""))
 ;;; (equal? (vector-copy #(a b c d e f g h ...)) #(a b c d e f g h ...))
 ;;; (vector->list (vector-copy v start end)) -> vector->list has start/end itself
 ;;; (not (equal? v (copy v)))
-;;; (append (copy form (make-list ctr)) (cdr first-sequel)) [cons?]
 ;;; (vector-length (copy arr))
-;;; (round (quotient n 10)) -> quotient
-;;; (string-length (make-string 3))
 ;;; (make-vector hilbert-node-size #f)
-;;;  ---- t347
-;;; (string-downcase "SPEAK SOFTLY")
+;;; (string-downcase "SPEAK SOFTLY") [and string-upcase]
 ;;; (string-append (symbol->string var) "-" (symbol->string 'L))
-;;; (max (log x) :minlog)
-;;; (object->string '(scheme cxr))
 ;;; (object->string (make-string (- width objwid) #\0))
-;;; (remainder (quotient val 65536) 256)
-;;; (remainder (quotient val 256) 256) 
-;;; (modulo (quotient obj 256) 256)
 ;;; (display (string-append " Creating a long-lived array of " (number->string kArraySize) " inexact reals"))
 ;;; (display (make-string (- 8 (string-length n)) #\0))
 ;;; (display (string-append "#x" (number->string x 16)) cep)
-;;; (display (list->string (make-list (- 70 (string-length str1)) #\space)))
-;;; (display (format "~a (~a)" (number->string b 16) (integer->char b)))
-;;; (format "buffer output?")
 ;;; (format t " ")
-;;; (format #f "ls /tmp/snd_* | wc~%")
-;;; (format p "~%")
-;;;   do we catch unknown format directives like ~(?
-;;; (null? (list (time-resolution 'time-tai) ...)
 ;;; (< (char->integer key) 256)
 ;;; (car (reverse (get-cards slot)))
-;;;   (car (last-pair...)) is common -- is this list-ref in disguise? -- yes srfi, last is car+last-pair
+;;;   (car (last-pair...)) is common -- is this list-ref in disguise? -- yes srfi-1, last is car+last-pair
 ;;; (cdr (or (assoc 'cpu-pin annot) '(_ . 0))) or (cons ...) at end
 ;;;   (cdr (or (assoc n n->oin*) ({list} n)))
 ;;;   (cdr (or (memq #\. file) (cons #\. file)))
-;;;   also (cdr (or ... (error...))) and (cdr (or (find ...) (error)))
+;;;   also (cdr (or ... (error...))) and (cdr (or (find ...) (error))) [and cadr]
 ;;; (> (logand x LADSPA_PORT_CONTROL) 0) -> logbit? ?
 ;;; (<= (string-length m) 0) -> = not <=
 ;;; (>= 15794.975000001 result 15794.974999999)
-;;; (set-car! (last-pair l) x)
 ;;; (write-string (string-append ind "    has ") port)
-;;; (write-string (format "~a: ~a~%" (car (command-line)) message) (current-error-port))
-;;; format ~^~} redundancy
-;;; 
+;;; (write-string (format #f "~a: ~a~%" (car (command-line)) message) (current-error-port))
+;;; (logior (if (odd? biased-exp) 128 0) (bit-field mantissa 16 23))
+;;; (caar (reverse dcss)) [and cadr]
+;;; (hash-table-ref (car rst) name (lambda () #f))
+;;; (number->string saturation 10)
+;;; (number->string (if (< 1 hour) hour 12))
+;;; (number->string (if (negative? number) (- number) number) 16)
+;;; (number->string (if (> amount 0) amount (- amount)))
+;;; (number->string (cdr (or (assv i alist) (cons 0 0))))
+;;; (string->number (string num-char))
+;;; (string->number (or (getenv "NUMTHREADS") "4"))
+;;; (apply make-string tcnt initializer)
+;;; (apply string>=? (map string-upcase strs))
+;;; (apply string (make-list pad #\null))
+;;; (apply and (map integer? mc-ratios))
+;;; (apply char<=? (map char-upcase chars))
+;;; (imag-part (complex (? x) (? y)))
+;;; (throw (list "not a slotset" slotset)) [also error?]
+;;; (odd? (- x 1)) [+/- even?/odd? any int constant]
+;;; (list-ref (cddr f) (- (length f) 3))
+;;; (not (peek-char)) -- any func that can't return #f
+;;; (append (if (null? drive) (list) (list drive)) (f path)) [also 'or]
+;;; (list->vector (reverse nts))
+;;; (list->vector (append (vector->list v1) (vector->list v2)))
 ;;; (read-char (open-input-string "foo"))
-;;;   what about hidden disorder: (cons (cons (read-char) 1) (read-char))
 ;;; any var name ending in -value ? or val, get-value, vals
+;;; (cond ((autocommit? db) #t) (else (exec (sql db))))
 ;;;
 ;;; 147 23987 645893

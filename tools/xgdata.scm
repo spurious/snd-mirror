@@ -9435,3 +9435,13 @@
 (CFNC-3.22 "gint gtk_scrolled_window_get_max_content_width GtkScrolledWindow* scrolled_window")
 (CFNC-3.22 "void gtk_scrolled_window_set_max_content_height GtkScrolledWindow* scrolled_window gint height")
 (CFNC-3.22 "gint gtk_scrolled_window_get_max_content_height GtkScrolledWindow* scrolled_window")
+
+
+;;; 3.21.4:
+
+(CFNC-3.22 "void gtk_file_chooser_add_choice GtkFileChooser* chooser char* id char* label char** options char** option_labels")
+(CFNC-3.22 "void gtk_file_chooser_remove_choice GtkFileChooser* chooser char* id")
+(CFNC-3.22 "void gtk_file_chooser_set_choice GtkFileChooser* chooser char* id char* option")
+(CFNC-3.22 "char* gtk_file_chooser_get_choice GtkFileChooser* chooser char* id" 'const)
+;;; GVariant *gtk_file_filter_to_gvariant (GtkFileFilter *filter
+;;; GtkFileFilter *gtk_file_filter_new_from_gvariant (GVariant *variant
