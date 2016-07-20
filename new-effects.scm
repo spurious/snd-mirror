@@ -192,75 +192,74 @@
 		(if (Widget? gain-dialog)
 		    (activate-dialog gain-dialog)
 		    ;; if gain-dialog doesn't exist, create it
-		    (let ((initial-gain-amount 1.0)
-			  (sliders ())
-			  (fr #f))
-		      (set! gain-dialog
-			    (make-effect-dialog 
-			     gain-label
-			     
-			     (lambda (w context info)
-			       (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
-						    (scale-envelope (xe-envelope gain-envelope) gain-amount))))
-				 (if (eq? gain-target 'sound)
-				     (if with-env
-					 (env-sound with-env)
-					 (scale-by gain-amount))
-				     (if (eq? gain-target 'selection)
-					 (if (selection?)
-					     (if with-env
-						 (env-selection with-env)
-						 (scale-selection-by gain-amount))
-					     (snd-print ";no selection"))
-					 (let ((pts (catch 'no-such-mark 
-						      plausible-mark-samples
-						      (lambda args #f))))
-					   (if pts
+		    (let ((sliders ()))
+		      (let ((initial-gain-amount 1.0))
+			(set! gain-dialog
+			      (make-effect-dialog 
+			       gain-label
+			       
+			       (lambda (w context info)
+				 (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
+						      (scale-envelope (xe-envelope gain-envelope) gain-amount))))
+				   (if (eq? gain-target 'sound)
+				       (if with-env
+					   (env-sound with-env)
+					   (scale-by gain-amount))
+				       (if (eq? gain-target 'selection)
+					   (if (selection?)
 					       (if with-env
-						   (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-						   (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
-					       (snd-print ";no marks")))))))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Gain"
-					    "Move the slider to change the gain scaling amount."))
-			     
-			     (lambda (w c i)
-			       (set! gain-amount initial-gain-amount)
-			       (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-			       (XtSetValues (car sliders) (list XmNvalue (floor (* gain-amount 100)))))
-			     
-			     (lambda () 
-			       (effect-target-ok gain-target))))
-		      
-		      (set! sliders
-			    (add-sliders gain-dialog
-					 (list (list "gain" 0.0 initial-gain-amount 5.0
-						     (lambda (w context info)
-						       (set! gain-amount (/ (.value info) 100.0)))
-						     100))))
-		      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+						   (env-selection with-env)
+						   (scale-selection-by gain-amount))
+					       (snd-print ";no selection"))
+					   (let ((pts (catch 'no-such-mark 
+							plausible-mark-samples
+							(lambda args #f))))
+					     (if pts
+						 (if with-env
+						     (env-sound with-env (car pts) (- (cadr pts) (car pts)))
+						     (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
+						 (snd-print ";no marks")))))))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Gain"
+					      "Move the slider to change the gain scaling amount."))
+			       
+			       (lambda (w c i)
+				 (set! gain-amount initial-gain-amount)
+				 (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+				 (XtSetValues (car sliders) (list XmNvalue (floor (* gain-amount 100)))))
+			       
+			       (lambda () 
+				 (effect-target-ok gain-target))))
+			
+			(set! sliders
+			      (add-sliders gain-dialog
+					   (list (list "gain" 0.0 initial-gain-amount 5.0
+						       (lambda (w context info)
+							 (set! gain-amount (/ (.value info) 100.0)))
+						       100)))))
+		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
 		      
-		      (let ((target-row (add-target (XtParent (XtParent (car sliders)))
-						    (lambda (target) 
-						      (set! gain-target target)
-						      (XtSetSensitive (XmMessageBoxGetChild gain-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						    #f)))
-			(activate-dialog gain-dialog)
-			
-			(set! gain-envelope (xe-create-enved "gain"  fr
-							     (list XmNheight 200)
-							     '(0.0 1.0 0.0 1.0)))
-			(set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						XmNbottomWidget     target-row))))))))
+			(let ((target-row (add-target (XtParent (XtParent (car sliders)))
+						      (lambda (target) 
+							(set! gain-target target)
+							(XtSetSensitive (XmMessageBoxGetChild gain-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						      #f)))
+			  (activate-dialog gain-dialog)
+			  
+			  (set! gain-envelope (xe-create-enved "gain"  fr
+							       (list XmNheight 200)
+							       '(0.0 1.0 0.0 1.0)))
+			  (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						  XmNbottomWidget     target-row)))))))))
       
 	   (child (XtCreateManagedWidget "Gain" xmPushButtonWidgetClass amp-menu
 					 (list XmNbackground *basic-color*))))
@@ -1533,68 +1532,67 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		(if (Widget? src-timevar-dialog)
 		    (activate-dialog src-timevar-dialog)
 		    ;; if src-timevar-dialog doesn't exist, create it
-		    (let ((initial-src-timevar-scale 1.0)
-			  (sliders ())
-			  (fr #f))
-		      (set! src-timevar-dialog
-			    (make-effect-dialog 
-			     src-timevar-label
-			     
-			     (lambda (w context info)
-			       (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
-							  src-timevar-scale)))
-				 (if (eq? src-timevar-target 'sound)
-				     (src-sound env)
-				     (if (eq? src-timevar-target 'selection)
-					 (if (selection-member? (selected-sound))
-					     (src-selection env)
-					     (display ";no selection"))
-					 (let ((pts (plausible-mark-samples)))
-					   (if pts
-					       (let* ((beg (car pts))
-						      (len (- (cadr pts) beg)))
-						 (src-channel (make-env env :length len) beg len (selected-sound)))))))))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Src-Timevar"
-					    "Move the slider to change the src-timevar scaling amount."))
-			     
-			     (lambda (w c i)
-			       (set! src-timevar-scale initial-src-timevar-scale)
-			       (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
-			       (XtSetValues (car sliders) (list XmNvalue (* src-timevar-scale 100))))
-			     
-			     (lambda () 
-			       (effect-target-ok src-timevar-target))))
-		      
-		      (set! sliders
-			    (add-sliders src-timevar-dialog
-					 (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
-						     (lambda (w context info)
-						       (set! src-timevar-scale (/ (.value info) 100.0)))
-						     100))))
-		      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		    (let ((sliders ()))
+		      (let ((initial-src-timevar-scale 1.0))
+			(set! src-timevar-dialog
+			      (make-effect-dialog 
+			       src-timevar-label
+			       
+			       (lambda (w context info)
+				 (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
+							    src-timevar-scale)))
+				   (if (eq? src-timevar-target 'sound)
+				       (src-sound env)
+				       (if (eq? src-timevar-target 'selection)
+					   (if (selection-member? (selected-sound))
+					       (src-selection env)
+					       (display ";no selection"))
+					   (let ((pts (plausible-mark-samples)))
+					     (if pts
+						 (let* ((beg (car pts))
+							(len (- (cadr pts) beg)))
+						   (src-channel (make-env env :length len) beg len (selected-sound)))))))))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Src-Timevar"
+					      "Move the slider to change the src-timevar scaling amount."))
+			       
+			       (lambda (w c i)
+				 (set! src-timevar-scale initial-src-timevar-scale)
+				 (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+				 (XtSetValues (car sliders) (list XmNvalue (* src-timevar-scale 100))))
+			       
+			       (lambda () 
+				 (effect-target-ok src-timevar-target))))
+			
+			(set! sliders
+			      (add-sliders src-timevar-dialog
+					   (list (list "Resample factor" 0.0 initial-src-timevar-scale 10.0
+						       (lambda (w context info)
+							 (set! src-timevar-scale (/ (.value info) 100.0)))
+						       100)))))
+		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
 		      
-		      (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						    (lambda (target) 
-						      (set! src-timevar-target target)
-						      (XtSetSensitive (XmMessageBoxGetChild src-timevar-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						    #f)))
-			(activate-dialog src-timevar-dialog)
-			
-			(set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
-								    (list XmNheight 200)
-								    '(0.0 1.0 0.0 1.0)))
-			(set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
-			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						XmNbottomWidget     target-row))))))))
+			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
+						      (lambda (target) 
+							(set! src-timevar-target target)
+							(XtSetSensitive (XmMessageBoxGetChild src-timevar-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						      #f)))
+			  (activate-dialog src-timevar-dialog)
+			  
+			  (set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
+								      (list XmNheight 200)
+								      '(0.0 1.0 0.0 1.0)))
+			  (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						  XmNbottomWidget     target-row)))))))))
       
 	   (child (XtCreateManagedWidget "Time-varying sample rate scaling" xmPushButtonWidgetClass freq-menu
 					 (list XmNbackground *basic-color*))))
@@ -1669,64 +1667,63 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		(if (Widget? am-effect-dialog)
 		    (activate-dialog am-effect-dialog)
 		    ;; if am-effect-dialog doesn't exist, create it
-		    (let ((initial-am-effect-amount 100.0)
-			  (sliders ())
-			  (fr #f))
-		      (set! am-effect-dialog
-			    (make-effect-dialog 
-			     am-effect-label
-			     
-			     (lambda (w context info)
-			       (map-chan-over-target-with-sync
-				(lambda (ignored) 
-				  (am-effect am-effect-amount)) 
-				am-effect-target 
-				(lambda (target samps)
-				  (format #f "effects-am ~A ~A" am-effect-amount
-					  (let ((e (and (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0)))
-							(xe-envelope am-effect-envelope))))
-					    (and e (format #f "'~A" e)))))
-				#f))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Amplitude modulation"
-					    "Move the slider to change the modulation amount."))
-			     
-			     (lambda (w c i)
-			       (set! am-effect-amount initial-am-effect-amount)
-			       (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
-			       (XtSetValues (car sliders) (list XmNvalue (floor am-effect-amount))))
-			     
-			     (lambda () 
-			       (effect-target-ok am-effect-target))))
-		      
-		      (set! sliders
-			    (add-sliders am-effect-dialog
-					 (list (list "amplitude modulation" 0.0 initial-am-effect-amount 1000.0
-						     (lambda (w context info)
-						       (set! am-effect-amount (.value info)))
-						     1))))
-		      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		    (let ((sliders ()))
+		      (let ((initial-am-effect-amount 100.0))
+			(set! am-effect-dialog
+			      (make-effect-dialog 
+			       am-effect-label
+			       
+			       (lambda (w context info)
+				 (map-chan-over-target-with-sync
+				  (lambda (ignored) 
+				    (am-effect am-effect-amount)) 
+				  am-effect-target 
+				  (lambda (target samps)
+				    (format #f "effects-am ~A ~A" am-effect-amount
+					    (let ((e (and (not (equal? (xe-envelope am-effect-envelope) '(0.0 1.0 1.0 1.0)))
+							  (xe-envelope am-effect-envelope))))
+					      (and e (format #f "'~A" e)))))
+				  #f))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Amplitude modulation"
+					      "Move the slider to change the modulation amount."))
+			       
+			       (lambda (w c i)
+				 (set! am-effect-amount initial-am-effect-amount)
+				 (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+				 (XtSetValues (car sliders) (list XmNvalue (floor am-effect-amount))))
+			       
+			       (lambda () 
+				 (effect-target-ok am-effect-target))))
+			
+			(set! sliders
+			      (add-sliders am-effect-dialog
+					   (list (list "amplitude modulation" 0.0 initial-am-effect-amount 1000.0
+						       (lambda (w context info)
+							 (set! am-effect-amount (.value info)))
+						       1)))))
+		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
-		      (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						    (lambda (target) 
-						      (set! am-effect-target target)
-						      (XtSetSensitive (XmMessageBoxGetChild am-effect-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						    #f)))
-			
-			(activate-dialog am-effect-dialog)
-			(set! am-effect-envelope (xe-create-enved "am"  fr
-								  (list XmNheight 200)
-								  '(0.0 1.0 0.0 1.0)))
-			(set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
-			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						XmNbottomWidget     target-row))))))))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
+			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
+						      (lambda (target) 
+							(set! am-effect-target target)
+							(XtSetSensitive (XmMessageBoxGetChild am-effect-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						      #f)))
+			  
+			  (activate-dialog am-effect-dialog)
+			  (set! am-effect-envelope (xe-create-enved "am"  fr
+								    (list XmNheight 200)
+								    '(0.0 1.0 0.0 1.0)))
+			  (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						  XmNbottomWidget     target-row)))))))))
       
 	   (child (XtCreateManagedWidget "Amplitude modulation" xmPushButtonWidgetClass mod-menu
 					 (list XmNbackground *basic-color*))))
@@ -1764,71 +1761,70 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		    (activate-dialog rm-dialog)
 		    ;; if rm-dialog doesn't exist, create it
 		    (let ((initial-rm-frequency 100)
-			  (initial-rm-radians 100)
-			  (sliders ())
-			  (fr #f))
-		      (set! rm-dialog
-			    (make-effect-dialog 
-			     rm-label
-			     
-			     (lambda (w context info)
-			       (map-chan-over-target-with-sync
-				(lambda (ignored) 
-				  (rm-effect rm-frequency #f)) ;(list 0 0 1 (hz->radians rm-radians)) -- gliss-env is not implemented above
-				rm-target 
-				(lambda (target samps)
-				  (format #f "effects-rm ~A ~A" rm-frequency
-					  (let ((e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
-							(xe-envelope rm-envelope))))
-					    (and e (format #f "'~A" e)))))
-				#f))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Ring modulation"
-					    "Move the slider to change the ring modulation parameters."))
-			     
-			     (lambda (w c i)
-			       (set! rm-frequency initial-rm-frequency)
-			       (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-			       (XtSetValues (car sliders) (list XmNvalue rm-frequency))
-			       (set! rm-radians initial-rm-radians)
-			       (XtSetValues (cadr sliders) (list XmNvalue rm-radians)))
-			     
-			     (lambda () 
-			       (effect-target-ok rm-target))))
-		      
-		      (set! sliders
-			    (add-sliders rm-dialog
-					 (list 
-					  (list "modulation frequency" 0 initial-rm-frequency 1000
-						(lambda (w context info)
-						  (set! rm-frequency (.value info)))
-						1)
-					  (list "modulation radians" 0 initial-rm-radians 360
-						(lambda (w context info)
-						  (set! rm-radians (.value info)))
-						1))))
-		      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+			  (sliders ()))
+		      (let ((initial-rm-radians 100))
+			(set! rm-dialog
+			      (make-effect-dialog 
+			       rm-label
+			       
+			       (lambda (w context info)
+				 (map-chan-over-target-with-sync
+				  (lambda (ignored) 
+				    (rm-effect rm-frequency #f)) ;(list 0 0 1 (hz->radians rm-radians)) -- gliss-env is not implemented above
+				  rm-target 
+				  (lambda (target samps)
+				    (format #f "effects-rm ~A ~A" rm-frequency
+					    (let ((e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
+							  (xe-envelope rm-envelope))))
+					      (and e (format #f "'~A" e)))))
+				  #f))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Ring modulation"
+					      "Move the slider to change the ring modulation parameters."))
+			       
+			       (lambda (w c i)
+				 (set! rm-frequency initial-rm-frequency)
+				 (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+				 (XtSetValues (car sliders) (list XmNvalue rm-frequency))
+				 (set! rm-radians initial-rm-radians)
+				 (XtSetValues (cadr sliders) (list XmNvalue rm-radians)))
+			       
+			       (lambda () 
+				 (effect-target-ok rm-target))))
+			
+			(set! sliders
+			      (add-sliders rm-dialog
+					   (list 
+					    (list "modulation frequency" 0 initial-rm-frequency 1000
+						  (lambda (w context info)
+						    (set! rm-frequency (.value info)))
+						  1)
+					    (list "modulation radians" 0 initial-rm-radians 360
+						  (lambda (w context info)
+						    (set! rm-radians (.value info)))
+						  1)))))
+		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
-		      (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						    (lambda (target) 
-						      (set! rm-target target)
-						      (XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						    #f)))
-			
-			(activate-dialog rm-dialog)
-			(set! rm-envelope (xe-create-enved "rm frequency"  fr
-							   (list XmNheight 200)
-							   '(0.0 1.0 0.0 1.0)))
-			(set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						XmNbottomWidget     target-row))))))))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
+			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
+						      (lambda (target) 
+							(set! rm-target target)
+							(XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						      #f)))
+			  
+			  (activate-dialog rm-dialog)
+			  (set! rm-envelope (xe-create-enved "rm frequency"  fr
+							     (list XmNheight 200)
+							     '(0.0 1.0 0.0 1.0)))
+			  (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						  XmNbottomWidget     target-row)))))))))
 	  
 	   (child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
 					 (list XmNbackground *basic-color*))))
@@ -2459,59 +2455,59 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	      (lambda ()
 		(unless (Widget? cross-synth-dialog)
 		  ;; if cross-synth-dialog doesn't exist, create it
-		  (let ((initial-cross-synth-sound 1)
-			(initial-cross-synth-amp .5)
-			(initial-cross-synth-radius 6.0)
-			(sliders ()))
-		    (let ((initial-cross-synth-fft-size 128))
-		      (set! cross-synth-dialog
-			    (make-effect-dialog 
-			     cross-synth-label
-			     
-			     (lambda (w context info)
-			       (map-chan-over-target-with-sync
-				(lambda (ignored) 
-				  (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-				cross-synth-target 
-				(lambda (target samps)
-				  (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
-					  cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-				#f))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Cross synthesis"
-					    "The sliders set the number of the soundfile to be cross-synthesized, 
+		  (let ((sliders ()))
+		    (let ((initial-cross-synth-sound 1)
+			  (initial-cross-synth-amp .5)
+			  (initial-cross-synth-radius 6.0))
+		      (let ((initial-cross-synth-fft-size 128))
+			(set! cross-synth-dialog
+			      (make-effect-dialog 
+			       cross-synth-label
+			       
+			       (lambda (w context info)
+				 (map-chan-over-target-with-sync
+				  (lambda (ignored) 
+				    (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+				  cross-synth-target 
+				  (lambda (target samps)
+				    (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+					    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+				  #f))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Cross synthesis"
+					      "The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
-			     
-			     (lambda (w c i)
-			       (set! cross-synth-sound initial-cross-synth-sound)
-			       (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
-			       (set! cross-synth-amp initial-cross-synth-amp)
-			       (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
-			       (set! cross-synth-fft-size initial-cross-synth-fft-size)
-			       (if use-combo-box-for-fft-size ; defined in effects-utils.scm
-				   (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
-				   (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
-			       (set! cross-synth-radius initial-cross-synth-radius)
-			       (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
-			     
-			     (lambda () 
-			       (effect-target-ok cross-synth-target)))))
-		    
-		    (set! sliders
-			  (add-sliders cross-synth-dialog
-				       (list (list "input sound" 0 initial-cross-synth-sound 20
-						   (lambda (w context info)
-						     (set! cross-synth-sound (.value info)))
-						   1)
-					     (list "amplitude" 0.0 initial-cross-synth-amp 1.0
-						   (lambda (w context info)
-						     (set! cross-synth-amp (/ (.value info) 100)))
-						   100)
-					     (list "radius" 0.0 initial-cross-synth-radius 360.0
-						   (lambda (w context info)
-						     (set! cross-synth-radius (/ (.value info) 100)))
-						   100))))
+			       
+			       (lambda (w c i)
+				 (set! cross-synth-sound initial-cross-synth-sound)
+				 (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
+				 (set! cross-synth-amp initial-cross-synth-amp)
+				 (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
+				 (set! cross-synth-fft-size initial-cross-synth-fft-size)
+				 (if use-combo-box-for-fft-size ; defined in effects-utils.scm
+				     (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
+				     (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
+				 (set! cross-synth-radius initial-cross-synth-radius)
+				 (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
+			       
+			       (lambda () 
+				 (effect-target-ok cross-synth-target)))))
+		      
+		      (set! sliders
+			    (add-sliders cross-synth-dialog
+					 (list (list "input sound" 0 initial-cross-synth-sound 20
+						     (lambda (w context info)
+						       (set! cross-synth-sound (.value info)))
+						     1)
+					       (list "amplitude" 0.0 initial-cross-synth-amp 1.0
+						     (lambda (w context info)
+						       (set! cross-synth-amp (/ (.value info) 100)))
+						     100)
+					       (list "radius" 0.0 initial-cross-synth-radius 360.0
+						     (lambda (w context info)
+						       (set! cross-synth-radius (/ (.value info) 100)))
+						     100)))))
 		    
 		    ;; now add either a radio-button box or a combo-box for the fft size
 		    ;;   need to use XtParent here since "mainform" isn't returned by add-sliders
