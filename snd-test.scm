@@ -1171,7 +1171,7 @@
 	'ladspa-dir *ladspa-dir* ""
 	'peak-env-dir *peak-env-dir* (list "" "/home/bil/peaks")
 	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-					;      'listener-prompt *listener-prompt* ">" 
+
 	'log-freq-start *log-freq-start* 32.0	
 	'mark-tag-height *mark-tag-height* 4
 	'mark-tag-width *mark-tag-width* 10
@@ -1241,7 +1241,7 @@
 	'wavo-trace *wavo-trace* 64 
 	'with-mix-tags *with-mix-tags* #t
 	'with-relative-panes *with-relative-panes* #t
-					;      'with-tracking-cursor *with-tracking-cursor* '(#f 1)
+
 	'with-verbose-cursor *with-verbose-cursor* '(#f #t)
 	'with-inset-graph *with-inset-graph* '(#f #t)
 	'with-interrupts *with-interrupts* #t
@@ -1343,7 +1343,6 @@
 	    (list 'enved-filter-order enved-filter-order 40 20 '*enved-filter-order*)
 	    (list 'filter-control-in-hz filter-control-in-hz #f #t '*filter-control-in-hz*)
 	    (list 'filter-control-order filter-control-order 20 40 '*filter-control-order*)
-					;	(list 'graph-cursor graph-cursor 34 32 '*graph-cursor*)
 
 	    (list 'graph-style graph-style 0 1 '*graph-style*)
 	    (list 'initial-beg initial-beg 0.0 1.0 '*initial-beg*)
@@ -4042,7 +4041,7 @@
   
   (if (directory? "oboe.snd") (snd-display ";directory? oboe.snd!"))
   (if (not (directory? ".")) (snd-display ";directory? . #f!"))
-  (if (not (getenv "PATH")) (snd-display ";getenv: no PATH?"))
+  (if (string=? "" (getenv "PATH")) (snd-display ";getenv: no PATH?"))
   (if (not (number? (getpid))) (snd-display ";getpid: ~A" (getpid)))
   
   (unless (provided? 'gmp)

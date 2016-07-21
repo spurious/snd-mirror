@@ -238,28 +238,27 @@
 						       (lambda (w context info)
 							 (set! gain-amount (/ (.value info) 100.0)))
 						       100)))))
-		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
-		      
-			(let ((target-row (add-target (XtParent (XtParent (car sliders)))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+			     (target-row (add-target (XtParent (XtParent (car sliders)))
 						      (lambda (target) 
 							(set! gain-target target)
 							(XtSetSensitive (XmMessageBoxGetChild gain-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
 						      #f)))
-			  (activate-dialog gain-dialog)
+			(activate-dialog gain-dialog)
 			  
-			  (set! gain-envelope (xe-create-enved "gain"  fr
-							       (list XmNheight 200)
-							       '(0.0 1.0 0.0 1.0)))
-			  (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
-			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						  XmNbottomWidget     target-row)))))))))
+			(set! gain-envelope (xe-create-enved "gain"  fr
+							     (list XmNheight 200)
+							     '(0.0 1.0 0.0 1.0)))
+			(set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						XmNbottomWidget     target-row))))))))
       
 	   (child (XtCreateManagedWidget "Gain" xmPushButtonWidgetClass amp-menu
 					 (list XmNbackground *basic-color*))))
@@ -1571,28 +1570,27 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 						       (lambda (w context info)
 							 (set! src-timevar-scale (/ (.value info) 100.0)))
 						       100)))))
-		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
-		      
-			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						      (lambda (target) 
-							(set! src-timevar-target target)
-							(XtSetSensitive (XmMessageBoxGetChild src-timevar-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						      #f)))
-			  (activate-dialog src-timevar-dialog)
-			  
-			  (set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
-								      (list XmNheight 200)
-								      '(0.0 1.0 0.0 1.0)))
-			  (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
-			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						  XmNbottomWidget     target-row)))))))))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+			     (target-row (add-target (XtParent (XtParent (car sliders))) 
+						     (lambda (target) 
+						       (set! src-timevar-target target)
+						       (XtSetSensitive (XmMessageBoxGetChild src-timevar-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						     #f)))
+			(activate-dialog src-timevar-dialog)
+			
+			(set! src-timevar-envelope (xe-create-enved "src-timevar"  fr
+								    (list XmNheight 200)
+								    '(0.0 1.0 0.0 1.0)))
+			(set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						XmNbottomWidget     target-row))))))))
       
 	   (child (XtCreateManagedWidget "Time-varying sample rate scaling" xmPushButtonWidgetClass freq-menu
 					 (list XmNbackground *basic-color*))))
@@ -1703,27 +1701,27 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 						       (lambda (w context info)
 							 (set! am-effect-amount (.value info)))
 						       1)))))
-		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
-			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						      (lambda (target) 
-							(set! am-effect-target target)
-							(XtSetSensitive (XmMessageBoxGetChild am-effect-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						      #f)))
-			  
-			  (activate-dialog am-effect-dialog)
-			  (set! am-effect-envelope (xe-create-enved "am"  fr
-								    (list XmNheight 200)
-								    '(0.0 1.0 0.0 1.0)))
-			  (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
-			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						  XmNbottomWidget     target-row)))))))))
+							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+			     (target-row (add-target (XtParent (XtParent (car sliders))) 
+						     (lambda (target) 
+						       (set! am-effect-target target)
+						       (XtSetSensitive (XmMessageBoxGetChild am-effect-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						     #f)))
+			
+			(activate-dialog am-effect-dialog)
+			(set! am-effect-envelope (xe-create-enved "am"  fr
+								  (list XmNheight 200)
+								  '(0.0 1.0 0.0 1.0)))
+			(set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						XmNbottomWidget     target-row))))))))
       
 	   (child (XtCreateManagedWidget "Amplitude modulation" xmPushButtonWidgetClass mod-menu
 					 (list XmNbackground *basic-color*))))
@@ -1804,28 +1802,28 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 						  (lambda (w context info)
 						    (set! rm-radians (.value info)))
 						  1)))))
-		      (let ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM
 							    XmNrightAttachment     XmATTACH_FORM
 							    XmNtopAttachment       XmATTACH_WIDGET
 							    XmNtopWidget           (sliders (- (length sliders) 1))
 							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
-			(let ((target-row (add-target (XtParent (XtParent (car sliders))) 
-						      (lambda (target) 
-							(set! rm-target target)
-							(XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						      #f)))
-			  
-			  (activate-dialog rm-dialog)
-			  (set! rm-envelope (xe-create-enved "rm frequency"  fr
-							     (list XmNheight 200)
-							     '(0.0 1.0 0.0 1.0)))
-			  (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						  XmNbottomWidget     target-row)))))))))
-	  
+							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
+			     (target-row (add-target (XtParent (XtParent (car sliders))) 
+						     (lambda (target) 
+						       (set! rm-target target)
+						       (XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						     #f)))
+			
+			(activate-dialog rm-dialog)
+			(set! rm-envelope (xe-create-enved "rm frequency"  fr
+							   (list XmNheight 200)
+							   '(0.0 1.0 0.0 1.0)))
+			(set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						XmNbottomWidget     target-row))))))))
+      
 	   (child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
 					 (list XmNbackground *basic-color*))))
       (XtAddCallback child XmNactivateCallback

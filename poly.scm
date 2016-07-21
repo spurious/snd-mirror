@@ -538,14 +538,15 @@
 				 (set! roots (append (poly-as-vector-roots (poly-as-vector-reduce (car q))) roots)))
 			     roots))))))))
 
-	  (else
-	   (if (= deg 1)
-	       (list 0.0)
-	       (let ((pnew (make-vector deg)))
+	  ((= deg 1)
+	   (list 0.0))
+
+	  (else 
+	   (let ((pnew (make-vector deg)))
 		 (do ((i 1 (+ i 1)))
 		     ((> i deg))
 		   (set! (pnew (- i 1)) (p1 i)))
-		 (cons 0.0 (poly-as-vector-roots pnew))))))))
+		 (cons 0.0 (poly-as-vector-roots pnew)))))))
 
   
 (define poly-roots 

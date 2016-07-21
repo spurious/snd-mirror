@@ -241,63 +241,63 @@
     
     ;; -------- Normalize
     
-    (let ((child (gtk_menu_item_new_with_label "Normalize"))
-	  (normalize-amount 1.0)
-	  (normalize-dialog #f)
-	  (normalize-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Normalize")))
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless normalize-dialog
-			    (let ((initial-normalize-amount 1.0)
-				  (sliders ()))
-			      (set! normalize-dialog 
-				    (make-effect-dialog 
-				     "Normalize"
-				     
-				     (lambda (w data) 
-				       (if (eq? normalize-target 'sound)
-					   (scale-to normalize-amount)
-					   (if (eq? normalize-target 'selection)
-					       (if (selection?)
-						   (scale-selection-to normalize-amount)
-						   (snd-print "no selection"))
-					       (let ((pts (plausible-mark-samples)))
-						 (if pts
-						     (scale-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
-				     
-				     (lambda (w data)
-				       (help-dialog 
-					"Normalize"
-					"Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
-				     
-				     (lambda (w data)
-				       (set! normalize-amount initial-normalize-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) normalize-amount)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok normalize-target))))
-			      
-			      (set! sliders
-				    (add-sliders normalize-dialog
-						 (list (list "normalize" 0.0 initial-normalize-amount 1.1
-							     (lambda (w data)
-							       (set! normalize-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG normalize-dialog)) 
-					  (lambda (target) 
-					    (set! normalize-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT normalize-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog normalize-dialog))
-			#f)
-      (set! amp-menu-list (cons (lambda ()
-				  (change-label child (format #f "Normalize (~1,2F)"  normalize-amount)))
-				amp-menu-list)))
+      (let ((normalize-amount 1.0)
+	    (normalize-dialog #f)
+	    (normalize-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless normalize-dialog
+			      (let ((initial-normalize-amount 1.0)
+				    (sliders ()))
+				(set! normalize-dialog 
+				      (make-effect-dialog 
+				       "Normalize"
+				       
+				       (lambda (w data) 
+					 (if (eq? normalize-target 'sound)
+					     (scale-to normalize-amount)
+					     (if (eq? normalize-target 'selection)
+						 (if (selection?)
+						     (scale-selection-to normalize-amount)
+						     (snd-print "no selection"))
+						 (let ((pts (plausible-mark-samples)))
+						   (if pts
+						       (scale-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
+				       
+				       (lambda (w data)
+					 (help-dialog 
+					  "Normalize"
+					  "Normalize scales amplitude to the normalize amount. Move the slider to change the scaling amount."))
+				       
+				       (lambda (w data)
+					 (set! normalize-amount initial-normalize-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) normalize-amount)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok normalize-target))))
+				
+				(set! sliders
+				      (add-sliders normalize-dialog
+						   (list (list "normalize" 0.0 initial-normalize-amount 1.1
+							       (lambda (w data)
+								 (set! normalize-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT w))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG normalize-dialog)) 
+					    (lambda (target) 
+					      (set! normalize-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT normalize-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog normalize-dialog))
+			  #f)
+	(set! amp-menu-list (cons (lambda ()
+				    (change-label child (format #f "Normalize (~1,2F)"  normalize-amount)))
+				  amp-menu-list))))
     
     ;; -------- Gate (gate set by gate-amount)
     
@@ -424,160 +424,159 @@
     
     ;; -------- Echo (controlled by delay-time and echo-amount)
     
-    (let ((child (gtk_menu_item_new_with_label "Echo"))
-	  (delay-time .5) ; i.e. delay between echoes
+    (let ((child (gtk_menu_item_new_with_label "Echo")))
+      (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
+      (gtk_widget_show child)
+      (let ((delay-time .5) ; i.e. delay between echoes
 	  (echo-amount .2)
 	  (echo-dialog #f)
 	  (echo-target 'sound)
 	  (echo-truncate #t))
-      ;; echo-decay? -- using (* 4 delay-time) currently
-      (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
-      (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless echo-dialog
-			    (let ((initial-delay-time 0.5)
-				  (initial-echo-amount 0.2)
-				  (sliders ()))
-			      (set! echo-dialog 
-				    (make-effect-dialog 
-				     "Echo"
-				     
-				     (lambda (w data)
-				       (map-chan-over-target-with-sync 
-					(lambda (cutoff) 
-					  (let ((del (make-delay (round (* delay-time (srate)))))
-						(genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-					    (lambda (inval)
-					      (+ inval
-						 (delay del
-							(* echo-amount (+ (tap del) (* (env genv) inval))))))))
-					echo-target
-					(lambda (target input-samps) 
-					  (format #f "effects-echo ~A ~A ~A" 
-						  (and (not (eq? target 'sound)) input-samps)
-						  delay-time echo-amount))
-					(and (not echo-truncate) 
-					     (* 4 delay-time))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Echo"
-						    "The sliders change the delay time and echo amount."))
-				     
-				     (lambda (w data)   
-				       (set! delay-time initial-delay-time)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) delay-time)
-				       (set! echo-amount initial-echo-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) echo-amount)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok echo-target))))
-			      
-			      (set! sliders
-				    (add-sliders echo-dialog
-						 (list (list "delay time" 0.0 initial-delay-time 2.0
-							     (lambda (w data)
-							       (set! delay-time (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))))
-							     100)
-						       (list "echo amount" 0.0 initial-echo-amount 1.0
-							     (lambda (w data)
-							       (set! echo-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG echo-dialog)) 
-					  (lambda (target) 
-					    (set! echo-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT echo-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  (lambda (truncate) 
-					    (set! echo-truncate truncate)))))
-			  (activate-dialog echo-dialog))
-			#f)
-      (set! delay-menu-list (cons (lambda ()
-				    (change-label child (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
-				  delay-menu-list)))
+	;; echo-decay? -- using (* 4 delay-time) currently
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless echo-dialog
+			      (let ((initial-delay-time 0.5)
+				    (initial-echo-amount 0.2)
+				    (sliders ()))
+				(set! echo-dialog 
+				      (make-effect-dialog 
+				       "Echo"
+				       
+				       (lambda (w data)
+					 (map-chan-over-target-with-sync 
+					  (lambda (cutoff) 
+					    (let ((del (make-delay (round (* delay-time (srate)))))
+						  (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+					      (lambda (inval)
+						(+ inval
+						   (delay del
+							  (* echo-amount (+ (tap del) (* (env genv) inval))))))))
+					  echo-target
+					  (lambda (target input-samps) 
+					    (format #f "effects-echo ~A ~A ~A" 
+						    (and (not (eq? target 'sound)) input-samps)
+						    delay-time echo-amount))
+					  (and (not echo-truncate) 
+					       (* 4 delay-time))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Echo"
+						      "The sliders change the delay time and echo amount."))
+				       
+				       (lambda (w data)   
+					 (set! delay-time initial-delay-time)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) delay-time)
+					 (set! echo-amount initial-echo-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) echo-amount)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok echo-target))))
+				
+				(set! sliders
+				      (add-sliders echo-dialog
+						   (list (list "delay time" 0.0 initial-delay-time 2.0
+							       (lambda (w data)
+								 (set! delay-time (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))))
+							       100)
+							 (list "echo amount" 0.0 initial-echo-amount 1.0
+							       (lambda (w data)
+								 (set! echo-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG echo-dialog)) 
+					    (lambda (target) 
+					      (set! echo-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT echo-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    (lambda (truncate) 
+					      (set! echo-truncate truncate)))))
+			    (activate-dialog echo-dialog))
+			  #f)
+	(set! delay-menu-list (cons (lambda ()
+				      (change-label child (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
+				    delay-menu-list))))
     
     ;; -------- Filtered echo
     
-    (let ((child (gtk_menu_item_new_with_label "Filtered echo"))
-	  (flecho-scaler 0.5)
-	  (flecho-delay 0.9)
-	  (flecho-dialog #f)
-	  (flecho-target 'sound)
-	  (flecho-truncate #t))
-      
+    (let ((child (gtk_menu_item_new_with_label "Filtered echo")))
       (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless flecho-dialog
-			    (let ((initial-flecho-scaler 0.5)
-				  (initial-flecho-delay 0.9)
-				  (sliders ()))
-			      (set! flecho-dialog 
-				    (make-effect-dialog 
-				     "Filtered echo"
-				     
-				     (lambda (w data)
-				       (map-chan-over-target-with-sync
-					(lambda (input-samps) 
-					  (let ((flt (make-fir-filter :order 4 
-								      :xcoeffs (float-vector .125 .25 .25 .125)))
-						(del (make-delay (round (* flecho-delay (srate)))))
-						(genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
-								:length (+ input-samps 100))))
-					    (lambda (inval)
-					      (+ inval 
-						 (delay del 
-							(fir-filter flt (* flecho-scaler 
-									   (+ (tap del) 
-									      (* (env genv) inval)))))))))
-					flecho-target 
-					(lambda (target input-samps) 
-					  (format #f "effects-flecho-1 ~A ~A ~A"
-						  flecho-scaler flecho-delay
-						  (and (not (eq? target 'sound)) input-samps)))
-					(and (not flecho-truncate) 
-					     (* 4 flecho-delay))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Filtered echo"
-						    "Move the sliders to set the filter scaler and the delay time in seconds."))
-				     
-				     (lambda (w data)
-				       (set! flecho-scaler initial-flecho-scaler)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) flecho-scaler)
-				       (set! flecho-delay initial-flecho-delay)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) flecho-delay)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok flecho-target))))
-			      
-			      (set! sliders
-				    (add-sliders flecho-dialog
-						 (list (list "filter scaler" 0.0 initial-flecho-scaler 1.0
-							     (lambda (w data)
-							       (set! flecho-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))))
-							     100)
-						       (list "delay time (secs)" 0.0 initial-flecho-delay 3.0
-							     (lambda (w data)
-							       (set! flecho-delay (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG flecho-dialog)) 
-					  (lambda (target) 
-					    (set! flecho-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT flecho-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  (lambda (truncate) 
-					    (set! flecho-truncate truncate)))))
-			  (activate-dialog flecho-dialog))
-			#f)
-      (set! delay-menu-list (cons (lambda ()
-				    (change-label child (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
-				  delay-menu-list)))
+      (let ((flecho-scaler 0.5)
+	    (flecho-delay 0.9)
+	    (flecho-dialog #f)
+	    (flecho-target 'sound)
+	    (flecho-truncate #t))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless flecho-dialog
+			      (let ((initial-flecho-scaler 0.5)
+				    (initial-flecho-delay 0.9)
+				    (sliders ()))
+				(set! flecho-dialog 
+				      (make-effect-dialog 
+				       "Filtered echo"
+				       
+				       (lambda (w data)
+					 (map-chan-over-target-with-sync
+					  (lambda (input-samps) 
+					    (let ((flt (make-fir-filter :order 4 
+									:xcoeffs (float-vector .125 .25 .25 .125)))
+						  (del (make-delay (round (* flecho-delay (srate)))))
+						  (genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
+								  :length (+ input-samps 100))))
+					      (lambda (inval)
+						(+ inval 
+						   (delay del 
+							  (fir-filter flt (* flecho-scaler 
+									     (+ (tap del) 
+										(* (env genv) inval)))))))))
+					  flecho-target 
+					  (lambda (target input-samps) 
+					    (format #f "effects-flecho-1 ~A ~A ~A"
+						    flecho-scaler flecho-delay
+						    (and (not (eq? target 'sound)) input-samps)))
+					  (and (not flecho-truncate) 
+					       (* 4 flecho-delay))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Filtered echo"
+						      "Move the sliders to set the filter scaler and the delay time in seconds."))
+				       
+				       (lambda (w data)
+					 (set! flecho-scaler initial-flecho-scaler)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) flecho-scaler)
+					 (set! flecho-delay initial-flecho-delay)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) flecho-delay)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok flecho-target))))
+				
+				(set! sliders
+				      (add-sliders flecho-dialog
+						   (list (list "filter scaler" 0.0 initial-flecho-scaler 1.0
+							       (lambda (w data)
+								 (set! flecho-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))))
+							       100)
+							 (list "delay time (secs)" 0.0 initial-flecho-delay 3.0
+							       (lambda (w data)
+								 (set! flecho-delay (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG flecho-dialog)) 
+					    (lambda (target) 
+					      (set! flecho-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT flecho-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    (lambda (truncate) 
+					      (set! flecho-truncate truncate)))))
+			    (activate-dialog flecho-dialog))
+			  #f)
+	(set! delay-menu-list (cons (lambda ()
+				      (change-label child (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
+				    delay-menu-list))))
     
     ;; -------- Modulated echo
     
@@ -744,326 +743,328 @@ the modulation frequency, and the echo amplitude."))
     
     ;; -------- Butterworth band-pass filter
     
-    (let ((child (gtk_menu_item_new_with_label "Band-pass filter"))
-	  (band-pass-freq 1000)
-	  (band-pass-bw 100)
-	  (band-pass-dialog #f)
-	  (band-pass-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Band-pass filter")))
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless band-pass-dialog
-			    (let ((initial-band-pass-freq 1000)
-				  (initial-band-pass-bw 100)
-				  (sliders ()))
-			      (set! band-pass-dialog 
-				    (make-effect-dialog 
-				     "Band-pass filter"
-				     
-				     (lambda (w data) 
-				       (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
-					 (if (eq? band-pass-target 'sound)
-					     (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
-					     (if (eq? band-pass-target 'selection)
-						 (filter-selection flt)
-						 (let ((ms (plausible-mark-samples)))
-						   (let ((bg (car ms))
-							 (nd (- (+ (cadr ms) 1) (car ms))))
-						     (clm-channel flt bg nd #f #f #f #f 
-								  (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Band-pass filter"
-						    "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
-				     
-				     (lambda (w data)
-				       (set! band-pass-freq initial-band-pass-freq)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 band-pass-freq 22050))
-				       (set! band-pass-bw initial-band-pass-bw)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) band-pass-bw)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok band-pass-target))))
-			      
-			      (set! sliders
-				    (add-sliders band-pass-dialog
-						 (list (list "center frequency" 20 initial-band-pass-freq 22050
-							     (lambda (w data)
-							       (set! band-pass-freq (scale-linear->log 20 
-										      (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))
-										      22050)))
-							     1 'log)
-						       (list "bandwidth" 0 initial-band-pass-bw 1000
-							     (lambda (w data)
-							       (set! band-pass-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
-							     1))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG band-pass-dialog)) 
-					  (lambda (target) 
-					    (set! band-pass-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT band-pass-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog band-pass-dialog))
-			#f)
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Band-pass filter (~,2F ~D)" band-pass-freq band-pass-bw)))
-				   filter-menu-list)))
+      (let ((band-pass-freq 1000)
+	    (band-pass-bw 100)
+	    (band-pass-dialog #f)
+	    (band-pass-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless band-pass-dialog
+			      (let ((initial-band-pass-freq 1000)
+				    (initial-band-pass-bw 100)
+				    (sliders ()))
+				(set! band-pass-dialog 
+				      (make-effect-dialog 
+				       "Band-pass filter"
+				       
+				       (lambda (w data) 
+					 (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
+					   (if (eq? band-pass-target 'sound)
+					       (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
+					       (if (eq? band-pass-target 'selection)
+						   (filter-selection flt)
+						   (let ((ms (plausible-mark-samples)))
+						     (let ((bg (car ms))
+							   (nd (- (+ (cadr ms) 1) (car ms))))
+						       (clm-channel flt bg nd #f #f #f #f 
+								    (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Band-pass filter"
+						      "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
+				       
+				       (lambda (w data)
+					 (set! band-pass-freq initial-band-pass-freq)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 band-pass-freq 22050))
+					 (set! band-pass-bw initial-band-pass-bw)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) band-pass-bw)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok band-pass-target))))
+				
+				(set! sliders
+				      (add-sliders band-pass-dialog
+						   (list (list "center frequency" 20 initial-band-pass-freq 22050
+							       (lambda (w data)
+								 (set! band-pass-freq (scale-linear->log 20 
+													 (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders)))
+													 22050)))
+							       1 'log)
+							 (list "bandwidth" 0 initial-band-pass-bw 1000
+							       (lambda (w data)
+								 (set! band-pass-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
+							       1))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG band-pass-dialog)) 
+					    (lambda (target) 
+					      (set! band-pass-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT band-pass-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog band-pass-dialog))
+			  #f)
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Band-pass filter (~,2F ~D)" band-pass-freq band-pass-bw)))
+				     filter-menu-list))))
     
     ;; -------- Butterworth band-reject (notch) filter
     
-    (let ((child (gtk_menu_item_new_with_label "Band-reject filter"))
-	  (notch-freq 100)
-	  (notch-bw 100)
-	  (notch-dialog #f)
-	  (notch-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Band-reject filter")))
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless notch-dialog
-			    (let ((initial-notch-freq 100)
-				  (initial-notch-bw 100)
-				  (sliders ()))
-			      (set! notch-dialog 
-				    (make-effect-dialog 
-				     "Band-reject filter"
-				     
-				     (lambda (w data) 
-				       (let ((flt (make-butter-band-reject notch-freq notch-bw)))
-					 (if (eq? notch-target 'sound)
-					     (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw))
-					     (if (eq? notch-target 'selection)
-						 (filter-selection flt)
-						 (let ((ms (plausible-mark-samples)))
-						   (let ((bg (car ms))
-							 (nd (- (+ (cadr ms) 1) (car ms))))
-						     (clm-channel flt bg nd #f #f #f #f 
-								  (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Band-reject filter"
-						    "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
-				     
-				     (lambda (w data)
-				       (set! notch-freq initial-notch-freq)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 notch-freq 22050))
-				       (set! notch-bw initial-notch-bw)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) notch-bw)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok notch-target))))
-			      
-			      (set! sliders
-				    (add-sliders notch-dialog
-						 (list (list "center frequency" 20 initial-notch-freq 22050
-							     (lambda (w data)
-							       (set! notch-freq (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders))) 22050)))
-							     1 'log)
-						       (list "bandwidth" 0 initial-notch-bw 1000
-							     (lambda (w data)
-							       (set! notch-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
-							     1))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG notch-dialog)) 
-					  (lambda (target) 
-					    (set! notch-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT notch-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog notch-dialog))
-			#f)
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
-				   filter-menu-list)))
+      (let ((notch-freq 100)
+	    (notch-bw 100)
+	    (notch-dialog #f)
+	    (notch-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless notch-dialog
+			      (let ((initial-notch-freq 100)
+				    (initial-notch-bw 100)
+				    (sliders ()))
+				(set! notch-dialog 
+				      (make-effect-dialog 
+				       "Band-reject filter"
+				       
+				       (lambda (w data) 
+					 (let ((flt (make-butter-band-reject notch-freq notch-bw)))
+					   (if (eq? notch-target 'sound)
+					       (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw))
+					       (if (eq? notch-target 'selection)
+						   (filter-selection flt)
+						   (let ((ms (plausible-mark-samples)))
+						     (let ((bg (car ms))
+							   (nd (- (+ (cadr ms) 1) (car ms))))
+						       (clm-channel flt bg nd #f #f #f #f 
+								    (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Band-reject filter"
+						      "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
+				       
+				       (lambda (w data)
+					 (set! notch-freq initial-notch-freq)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 notch-freq 22050))
+					 (set! notch-bw initial-notch-bw)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) notch-bw)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok notch-target))))
+				
+				(set! sliders
+				      (add-sliders notch-dialog
+						   (list (list "center frequency" 20 initial-notch-freq 22050
+							       (lambda (w data)
+								 (set! notch-freq (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (car sliders))) 22050)))
+							       1 'log)
+							 (list "bandwidth" 0 initial-notch-bw 1000
+							       (lambda (w data)
+								 (set! notch-bw (gtk_adjustment_get_value (GTK_ADJUSTMENT (cadr sliders)))))
+							       1))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG notch-dialog)) 
+					    (lambda (target) 
+					      (set! notch-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT notch-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog notch-dialog))
+			  #f)
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
+				     filter-menu-list))))
     
     ;; -------- Butterworth high-pass filter
     
-    (let ((child (gtk_menu_item_new_with_label "High-pass filter"))
-	  (high-pass-freq 100)
-	  (high-pass-dialog #f)
-	  (high-pass-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "High-pass filter")))
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless high-pass-dialog
-			    (let ((initial-high-pass-freq 100)
-				  (sliders ()))
-			      (set! high-pass-dialog 
-				    (make-effect-dialog 
-				     "High-pass filter"
-				     
-				     (lambda (w data) 
-				       (let ((flt (make-butter-high-pass high-pass-freq)))
-					 (if (eq? high-pass-target 'sound)
-					     (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq))
-					     (if (eq? high-pass-target 'selection)
-						 (filter-selection flt)
-						 (let ((ms (plausible-mark-samples)))
-						   (let ((bg (car ms))
-							 (nd (- (+ (cadr ms) 1) (car ms))))
-						     (clm-channel flt bg nd #f #f #f #f 
-								  (format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd))))))))
-				     
-				     (lambda (w data)
-				       (help-dialog "High-pass filter"
-						    "Butterworth high-pass filter. Move the slider to change the high-pass cutoff frequency."))
-				     
-				     (lambda (w data)
-				       (set! high-pass-freq initial-high-pass-freq)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 high-pass-freq 22050))
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok high-pass-target))))
-			      
-			      (set! sliders
-				    (add-sliders high-pass-dialog
-						 (list (list "high-pass cutoff frequency" 20 initial-high-pass-freq 22050
-							     (lambda (w data)
-							       (set! high-pass-freq (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0))) 22050)))
-							     1 'log))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG high-pass-dialog)) 
-					  (lambda (target) 
-					    (set! high-pass-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT high-pass-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog high-pass-dialog))
-			#f)
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "High-pass filter (~,2F)" high-pass-freq)))
-				   filter-menu-list)))
+      (let ((high-pass-freq 100)
+	    (high-pass-dialog #f)
+	    (high-pass-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless high-pass-dialog
+			      (let ((initial-high-pass-freq 100)
+				    (sliders ()))
+				(set! high-pass-dialog 
+				      (make-effect-dialog 
+				       "High-pass filter"
+				       
+				       (lambda (w data) 
+					 (let ((flt (make-butter-high-pass high-pass-freq)))
+					   (if (eq? high-pass-target 'sound)
+					       (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq))
+					       (if (eq? high-pass-target 'selection)
+						   (filter-selection flt)
+						   (let ((ms (plausible-mark-samples)))
+						     (let ((bg (car ms))
+							   (nd (- (+ (cadr ms) 1) (car ms))))
+						       (clm-channel flt bg nd #f #f #f #f 
+								    (format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd))))))))
+				       
+				       (lambda (w data)
+					 (help-dialog "High-pass filter"
+						      "Butterworth high-pass filter. Move the slider to change the high-pass cutoff frequency."))
+				       
+				       (lambda (w data)
+					 (set! high-pass-freq initial-high-pass-freq)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 high-pass-freq 22050))
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok high-pass-target))))
+				
+				(set! sliders
+				      (add-sliders high-pass-dialog
+						   (list (list "high-pass cutoff frequency" 20 initial-high-pass-freq 22050
+							       (lambda (w data)
+								 (set! high-pass-freq
+								       (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0))) 22050)))
+							       1 'log))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG high-pass-dialog)) 
+					    (lambda (target) 
+					      (set! high-pass-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT high-pass-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog high-pass-dialog))
+			  #f)
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "High-pass filter (~,2F)" high-pass-freq)))
+				     filter-menu-list))))
     
     ;; -------- Butterworth low-pass filter
     
-    (let ((child (gtk_menu_item_new_with_label "Low-pass filter"))
-	  (low-pass-freq 1000)
-	  (low-pass-dialog #f)
-	  (low-pass-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Low-pass filter")))
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless low-pass-dialog
-			    (let ((initial-low-pass-freq 1000)
-				  (sliders ()))
-			      (sete! low-pass-dialog 
-				     (make-effect-dialog 
-				      "Low-pass filter"
-				      
-				      (lambda (w data) 
-					(let ((flt (make-butter-low-pass low-pass-freq)))
-					  (if (eq? low-pass-target 'sound)
-					      (filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq))
-					      (if (eq? low-pass-target 'selection)
-						  (filter-selection flt)
-						  (let ((ms (plausible-mark-samples)))
-						    (let ((bg (car ms))
-							  (nd (- (+ (cadr ms) 1) (car ms))))
-						      (clm-channel flt bg nd #f #f #f #f 
-								   (format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd))))))))
-				      
-				      (lambda (w data)
-					(help-dialog "Low-pass filter"
-						     "Butterworth low-pass filter. Move the slider to change the low-pass cutoff frequency."))
-				      
-				      (lambda (w data)
-					(set! low-pass-freq initial-low-pass-freq)
-					(gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 low-pass-freq 22050))
-					)
-				      
-				      (lambda () 
-					(effect-target-ok low-pass-target))))
-			      
-			      (set! sliders
-				    (add-sliders low-pass-dialog
-						 (list (list "low-pass cutoff frequency" 20 initial-low-pass-freq 22050
-							     (lambda (w data)
-							       (set! low-pass-freq (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0))) 22050)))
-							     1 'log))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG low-pass-dialog)) 
-					  (lambda (target) 
-					    (set! low-pass-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT low-pass-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog low-pass-dialog))
-			#f)
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Low-pass filter (~,2F)" low-pass-freq)))
-				   filter-menu-list)))
+      (let ((low-pass-freq 1000)
+	    (low-pass-dialog #f)
+	    (low-pass-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless low-pass-dialog
+			      (let ((initial-low-pass-freq 1000)
+				    (sliders ()))
+				(sete! low-pass-dialog 
+				       (make-effect-dialog 
+					"Low-pass filter"
+					
+					(lambda (w data) 
+					  (let ((flt (make-butter-low-pass low-pass-freq)))
+					    (if (eq? low-pass-target 'sound)
+						(filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq))
+						(if (eq? low-pass-target 'selection)
+						    (filter-selection flt)
+						    (let ((ms (plausible-mark-samples)))
+						      (let ((bg (car ms))
+							    (nd (- (+ (cadr ms) 1) (car ms))))
+							(clm-channel flt bg nd #f #f #f #f 
+								     (format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd))))))))
+					
+					(lambda (w data)
+					  (help-dialog "Low-pass filter"
+						       "Butterworth low-pass filter. Move the slider to change the low-pass cutoff frequency."))
+					
+					(lambda (w data)
+					  (set! low-pass-freq initial-low-pass-freq)
+					  (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) (scale-log->linear 20 low-pass-freq 22050))
+					  )
+					
+					(lambda () 
+					  (effect-target-ok low-pass-target))))
+				
+				(set! sliders
+				      (add-sliders low-pass-dialog
+						   (list (list "low-pass cutoff frequency" 20 initial-low-pass-freq 22050
+							       (lambda (w data)
+								 (set! low-pass-freq 
+								       (scale-linear->log 20 (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0))) 22050)))
+							       1 'log))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG low-pass-dialog)) 
+					    (lambda (target) 
+					      (set! low-pass-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT low-pass-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog low-pass-dialog))
+			  #f)
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Low-pass filter (~,2F)" low-pass-freq)))
+				     filter-menu-list))))
     
     ;; -------- Comb filter
     
-    (let ((child (gtk_menu_item_new_with_label "Comb filter"))
-	  (comb-scaler 0.1)
-	  (comb-size 50)
-	  (comb-dialog #f)
-	  (comb-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Comb filter")))
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless comb-dialog
-			    (let ((initial-comb-scaler 0.1)
-				  (initial-comb-size 50)
-				  (sliders ()))
-			      (set! comb-dialog 
-				    (make-effect-dialog 
-				     "Comb filter"
-				     
-				     (lambda (w data) 
-				       (map-chan-over-target-with-sync
-					(lambda (ignored) 
-					  (effects-comb-filter comb-scaler comb-size)) 
-					comb-target 
-					(lambda (target samps)
-					  (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
-					#f))
-				     
-				     (lambda (w data)
-				       (help-dialog "Comb filter"
-						    "Move the sliders to change the comb scaler and size."))
-				     
-				     (lambda (w data)
-				       (set! comb-scaler initial-comb-scaler)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) comb-scaler)
-				       (set! comb-size initial-comb-size)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) comb-size)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok comb-target))))
-			      
-			      (set! sliders
-				    (add-sliders comb-dialog
-						 (list (list "scaler" 0.0 initial-comb-scaler 1.0
-							     (lambda (w data)
-							       (set! comb-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "size" 0 initial-comb-size 100
-							     (lambda (w data)
-							       (set! comb-size (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     1))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG comb-dialog)) 
-					  (lambda (target) 
-					    (set! comb-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT comb-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog comb-dialog))
-			#f)
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
-				   filter-menu-list)))
+      (let ((comb-scaler 0.1)
+	    (comb-size 50)
+	    (comb-dialog #f)
+	    (comb-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless comb-dialog
+			      (let ((initial-comb-scaler 0.1)
+				    (initial-comb-size 50)
+				    (sliders ()))
+				(set! comb-dialog 
+				      (make-effect-dialog 
+				       "Comb filter"
+				       
+				       (lambda (w data) 
+					 (map-chan-over-target-with-sync
+					  (lambda (ignored) 
+					    (effects-comb-filter comb-scaler comb-size)) 
+					  comb-target 
+					  (lambda (target samps)
+					    (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
+					  #f))
+				       
+				       (lambda (w data)
+					 (help-dialog "Comb filter"
+						      "Move the sliders to change the comb scaler and size."))
+				       
+				       (lambda (w data)
+					 (set! comb-scaler initial-comb-scaler)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) comb-scaler)
+					 (set! comb-size initial-comb-size)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) comb-size)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok comb-target))))
+				
+				(set! sliders
+				      (add-sliders comb-dialog
+						   (list (list "scaler" 0.0 initial-comb-scaler 1.0
+							       (lambda (w data)
+								 (set! comb-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "size" 0 initial-comb-size 100
+							       (lambda (w data)
+								 (set! comb-size (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       1))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG comb-dialog)) 
+					    (lambda (target) 
+					      (set! comb-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT comb-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog comb-dialog))
+			  #f)
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
+				     filter-menu-list))))
     
     ;; -------- Comb-chord filter
     
@@ -1255,159 +1256,159 @@ Move the sliders to set the filter cutoff frequency and resonance."))
     
     ;; -------- Sample rate conversion (resample)
     
-    (let ((child (gtk_menu_item_new_with_label "Sample rate conversion"))
-	  (src-amount 0.0)
-	  (src-dialog #f)
-	  (src-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Sample rate conversion")))
       (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless src-dialog
-			    (let ((initial-src-amount 0.0)
-				  (sliders ()))
-			      (set! src-dialog
-				    (make-effect-dialog
-				     "Sample rate conversion"
-				     
-				     (lambda (w data) 
-				       (if (eq? src-target 'sound)
-					   (src-sound src-amount)
-					   (if (eq? src-target 'selection)
-					       (if (selection?)
-						   (src-selection src-amount)
-						   (snd-print "no selection"))
-					       (snd-print "can't apply src between marks yet"))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Sample rate conversion"
-						    "Move the slider to change the sample rate.
+      (let ((src-amount 0.0)
+	    (src-dialog #f)
+	    (src-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless src-dialog
+			      (let ((initial-src-amount 0.0)
+				    (sliders ()))
+				(set! src-dialog
+				      (make-effect-dialog
+				       "Sample rate conversion"
+				       
+				       (lambda (w data) 
+					 (if (eq? src-target 'sound)
+					     (src-sound src-amount)
+					     (if (eq? src-target 'selection)
+						 (if (selection?)
+						     (src-selection src-amount)
+						     (snd-print "no selection"))
+						 (snd-print "can't apply src between marks yet"))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Sample rate conversion"
+						      "Move the slider to change the sample rate.
 Values greater than 1.0 speed up file play, negative values reverse it."))
-				     
-				     (lambda (w data)
-				       (set! src-amount initial-src-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) src-amount))
-				     
-				     (lambda () 
-				       (effect-target-ok src-target))))
-			      
-			      (set! sliders
-				    (add-sliders src-dialog
-						 (list (list "sample rate" -2.0 initial-src-amount 2.0
-							     (lambda (w data)
-							       (set! src-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)))))
-			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG src-dialog)) 
-					(lambda (target) 
-					  (set! src-target target)
-					  (gtk_widget_set_sensitive 
-					   (GTK_WIDGET (g_object_get_data (G_OBJECT src-dialog) "ok-button")) 
-					   (effect-target-ok target)))
-					#f))
-			  (activate-dialog src-dialog))
-			#f)
-      (set! freq-menu-list (cons (lambda ()
-				   (change-label child (format #f "Sample rate scaling (~1,2F)" src-amount)))
-				 freq-menu-list)))
+				       
+				       (lambda (w data)
+					 (set! src-amount initial-src-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) src-amount))
+				       
+				       (lambda () 
+					 (effect-target-ok src-target))))
+				
+				(set! sliders
+				      (add-sliders src-dialog
+						   (list (list "sample rate" -2.0 initial-src-amount 2.0
+							       (lambda (w data)
+								 (set! src-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)))))
+			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG src-dialog)) 
+					  (lambda (target) 
+					    (set! src-target target)
+					    (gtk_widget_set_sensitive 
+					     (GTK_WIDGET (g_object_get_data (G_OBJECT src-dialog) "ok-button")) 
+					     (effect-target-ok target)))
+					  #f))
+			    (activate-dialog src-dialog))
+			  #f)
+	(set! freq-menu-list (cons (lambda ()
+				     (change-label child (format #f "Sample rate scaling (~1,2F)" src-amount)))
+				   freq-menu-list))))
     
     ;; -------- Time and pitch scaling by granular synthesis and sampling rate conversion
     
-    (let ((child (gtk_menu_item_new_with_label "Time/pitch scaling"))
-	  (time-scale 1.0)
-	  (hop-size 0.05)
-	  (segment-length 0.15)
-	  (ramp-scale 0.5)
-	  (pitch-scale 1.0)
-	  (expsrc-dialog #f)
-	  (expsrc-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Time/pitch scaling")))
       (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless expsrc-dialog
-			    (let ((initial-time-scale 1.0)
-				  (initial-hop-size 0.05)
-				  (initial-segment-length 0.15)
-				  (initial-ramp-scale 0.5)
-				  (initial-pitch-scale 1.0)
-				  (sliders ()))
-			      (set! expsrc-dialog 
-				    (make-effect-dialog
-				     "Time/pitch scaling"
-				     
-				     (lambda (w data) 
-				       (let ((snd (selected-sound)))
-					 (save-controls snd)
-					 (reset-controls snd)
-					 (set! (speed-control snd) pitch-scale)
-					 (let ((new-time (* pitch-scale time-scale)))
-					   (if (not (= new-time 1.0))
-					       (begin
-						 (set! (expand-control? snd) #t)
-						 (set! (expand-control snd) new-time)
-						 (set! (expand-control-hop snd) hop-size)
-						 (set! (expand-control-length snd) segment-length)
-						 (set! (expand-control-ramp snd) ramp-scale))))
-					 (if (eq? expsrc-target 'marks)
-					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
-					     (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
-					 (restore-controls snd)))
-				     
-				     (lambda (w data)
-				       (help-dialog "Time/pitch scaling"
-						    "Move the sliders to change the time/pitch scaling parameters."))
-				     
-				     (lambda (w data)
-				       (set! time-scale initial-time-scale)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) time-scale)
-				       (set! hop-size initial-hop-size)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) hop-size)
-				       (set! segment-length initial-segment-length)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) segment-length)
-				       (set! ramp-scale initial-ramp-scale)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 3)) ramp-scale)
-				       (set! pitch-scale initial-pitch-scale)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 4)) pitch-scale)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok expsrc-target))))
-			      
-			      (set! sliders
-				    (add-sliders expsrc-dialog
-						 (list (list "time scale" 0.0 initial-time-scale 5.0
-							     (lambda (w data)
-							       (set! time-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "hop size" 0.0 initial-hop-size 1.0
-							     (lambda (w data)
-							       (set! hop-size (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100)
-						       (list "segment length" 0.0 initial-segment-length 0.5
-							     (lambda (w data)
-							       (set! segment-length (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     100)
-						       (list "ramp scale" 0.0 initial-ramp-scale 0.5
-							     (lambda (w data)
-							       (set! ramp-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 3)))))
-							     1000)
-						       (list "pitch scale" 0.0 initial-pitch-scale 5.0
-							     (lambda (w data)
-							       (set! pitch-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 4)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG expsrc-dialog)) 
-					  (lambda (target) 
-					    (set! expsrc-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT expsrc-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog expsrc-dialog))
-			#f)
-      (set! freq-menu-list (cons (lambda ()
-				   (change-label child (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
-				 freq-menu-list)))
+      (let ((time-scale 1.0)
+	    (hop-size 0.05)
+	    (segment-length 0.15)
+	    (ramp-scale 0.5)
+	    (pitch-scale 1.0)
+	    (expsrc-dialog #f)
+	    (expsrc-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless expsrc-dialog
+			      (let ((initial-time-scale 1.0)
+				    (initial-hop-size 0.05)
+				    (initial-segment-length 0.15)
+				    (initial-ramp-scale 0.5)
+				    (initial-pitch-scale 1.0)
+				    (sliders ()))
+				(set! expsrc-dialog 
+				      (make-effect-dialog
+				       "Time/pitch scaling"
+				       
+				       (lambda (w data) 
+					 (let ((snd (selected-sound)))
+					   (save-controls snd)
+					   (reset-controls snd)
+					   (set! (speed-control snd) pitch-scale)
+					   (let ((new-time (* pitch-scale time-scale)))
+					     (if (not (= new-time 1.0))
+						 (begin
+						   (set! (expand-control? snd) #t)
+						   (set! (expand-control snd) new-time)
+						   (set! (expand-control-hop snd) hop-size)
+						   (set! (expand-control-length snd) segment-length)
+						   (set! (expand-control-ramp snd) ramp-scale))))
+					   (if (eq? expsrc-target 'marks)
+					       (let ((ms (plausible-mark-samples)))
+						 (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
+					       (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
+					   (restore-controls snd)))
+				       
+				       (lambda (w data)
+					 (help-dialog "Time/pitch scaling"
+						      "Move the sliders to change the time/pitch scaling parameters."))
+				       
+				       (lambda (w data)
+					 (set! time-scale initial-time-scale)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) time-scale)
+					 (set! hop-size initial-hop-size)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) hop-size)
+					 (set! segment-length initial-segment-length)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) segment-length)
+					 (set! ramp-scale initial-ramp-scale)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 3)) ramp-scale)
+					 (set! pitch-scale initial-pitch-scale)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 4)) pitch-scale)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok expsrc-target))))
+				
+				(set! sliders
+				      (add-sliders expsrc-dialog
+						   (list (list "time scale" 0.0 initial-time-scale 5.0
+							       (lambda (w data)
+								 (set! time-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "hop size" 0.0 initial-hop-size 1.0
+							       (lambda (w data)
+								 (set! hop-size (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100)
+							 (list "segment length" 0.0 initial-segment-length 0.5
+							       (lambda (w data)
+								 (set! segment-length (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       100)
+							 (list "ramp scale" 0.0 initial-ramp-scale 0.5
+							       (lambda (w data)
+								 (set! ramp-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 3)))))
+							       1000)
+							 (list "pitch scale" 0.0 initial-pitch-scale 5.0
+							       (lambda (w data)
+								 (set! pitch-scale (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 4)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG expsrc-dialog)) 
+					    (lambda (target) 
+					      (set! expsrc-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT expsrc-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog expsrc-dialog))
+			  #f)
+	(set! freq-menu-list (cons (lambda ()
+				     (change-label child (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
+				   freq-menu-list))))
     
 ;;; -------- Time-varying sample rate conversion (resample)
 ;;; (KSM)
@@ -1741,213 +1742,211 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
     
     ;; -------- Reverb from Michael McNabb's Nrev 
     
-    (let ((child (gtk_menu_item_new_with_label "McNabb reverb"))
-	  (reverb-amount 0.1)
-	  (reverb-filter 0.5)
-	  (reverb-feedback 1.09)
-	  (reverb-dialog #f)
-	  (reverb-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "McNabb reverb")))
       (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  ;; add reverb-control-decay (with ramp?) and reverb-truncate
-			  (unless reverb-dialog
-			    (let ((initial-reverb-amount 0.1)
-				  (initial-reverb-filter 0.5)
-				  (initial-reverb-feedback 1.09)
-				  (sliders ()))
-			      (set! reverb-dialog 
-				    (make-effect-dialog 
-				     "McNabb reverb"
-				     
-				     (lambda (w data)
-				       (let ((snd (selected-sound)))
-					 (save-controls snd)
-					 (reset-controls snd)
-					 (set! (reverb-control? snd) #t)
-					 (set! (reverb-control-scale snd) reverb-amount)
-					 (set! (reverb-control-lowpass snd) reverb-filter)
-					 (set! (reverb-control-feedback snd) reverb-feedback)
-					 (if (eq? reverb-target 'marks)
-					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
-					     (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
-					 (restore-controls snd)))
-				     
-				     (lambda (w data)
-				       (help-dialog "McNabb reverb"
-						    "Reverberator from Michael McNabb.
+      (let ((reverb-amount 0.1)
+	    (reverb-filter 0.5)
+	    (reverb-feedback 1.09)
+	    (reverb-dialog #f)
+	    (reverb-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    ;; add reverb-control-decay (with ramp?) and reverb-truncate
+			    (unless reverb-dialog
+			      (let ((initial-reverb-amount 0.1)
+				    (initial-reverb-filter 0.5)
+				    (initial-reverb-feedback 1.09)
+				    (sliders ()))
+				(set! reverb-dialog 
+				      (make-effect-dialog 
+				       "McNabb reverb"
+				       
+				       (lambda (w data)
+					 (let ((snd (selected-sound)))
+					   (save-controls snd)
+					   (reset-controls snd)
+					   (set! (reverb-control? snd) #t)
+					   (set! (reverb-control-scale snd) reverb-amount)
+					   (set! (reverb-control-lowpass snd) reverb-filter)
+					   (set! (reverb-control-feedback snd) reverb-feedback)
+					   (if (eq? reverb-target 'marks)
+					       (let ((ms (plausible-mark-samples)))
+						 (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
+					       (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
+					   (restore-controls snd)))
+				       
+				       (lambda (w data)
+					 (help-dialog "McNabb reverb"
+						      "Reverberator from Michael McNabb.
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Move the sliders to change the reverb parameters."))
-				     
-				     (lambda (w data)
-				       (set! reverb-amount initial-reverb-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) reverb-amount)
-				       (set! reverb-filter initial-reverb-filter)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) reverb-filter)
-				       (set! reverb-feedback initial-reverb-feedback)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) reverb-feedback)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok reverb-target))))
-			      
-			      (set! sliders
-				    (add-sliders reverb-dialog
-						 (list (list "reverb amount" 0.0 initial-reverb-amount 1.0
-							     (lambda (w data)
-							       (set! reverb-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "reverb filter" 0.0 initial-reverb-filter 1.0
-							     (lambda (w data)
-							       (set! reverb-filter (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100)
-						       (list "reverb feedback" 0.0 initial-reverb-feedback 1.25
-							     (lambda (w data)
-							       (set! reverb-feedback (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG reverb-dialog)) 
-					  (lambda (target) 
-					    (set! reverb-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT reverb-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog reverb-dialog))
-			#f)
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
-				   reverb-menu-list)))
+				       
+				       (lambda (w data)
+					 (set! reverb-amount initial-reverb-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) reverb-amount)
+					 (set! reverb-filter initial-reverb-filter)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) reverb-filter)
+					 (set! reverb-feedback initial-reverb-feedback)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) reverb-feedback)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok reverb-target))))
+				
+				(set! sliders
+				      (add-sliders reverb-dialog
+						   (list (list "reverb amount" 0.0 initial-reverb-amount 1.0
+							       (lambda (w data)
+								 (set! reverb-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "reverb filter" 0.0 initial-reverb-filter 1.0
+							       (lambda (w data)
+								 (set! reverb-filter (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100)
+							 (list "reverb feedback" 0.0 initial-reverb-feedback 1.25
+							       (lambda (w data)
+								 (set! reverb-feedback (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG reverb-dialog)) 
+					    (lambda (target) 
+					      (set! reverb-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT reverb-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog reverb-dialog))
+			  #f)
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" reverb-amount reverb-filter reverb-feedback)))
+				     reverb-menu-list))))
     
     ;; -------- Chowning reverb
     
-    (let ((child (gtk_menu_item_new_with_label "Chowning reverb"))
-	  (jc-reverb-decay 2.0)
-	  (jc-reverb-volume 0.1)
-	  (jc-reverb-dialog #f)
-	  (jc-reverb-target 'sound)
-	  (jc-reverb-truncate #t))
-      
+    (let ((child (gtk_menu_item_new_with_label "Chowning reverb")))
       (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless jc-reverb-dialog
-			    (let ((initial-jc-reverb-decay 2.0)
-				  (initial-jc-reverb-volume 0.1)
-				  (sliders ()))
-			      (set! jc-reverb-dialog
-				    (make-effect-dialog
-				     "Chowning reverb"
-				     
-				     (lambda (w data) 
-				       (map-chan-over-target-with-sync
-					(lambda (samps) (effects-jc-reverb samps jc-reverb-volume))
-					jc-reverb-target 
-					(lambda (target samps) 
-					  (format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
-					(and (not jc-reverb-truncate) jc-reverb-decay)))
-				     
-				     (lambda (w data)
-				       (help-dialog "Chowning reverb"
-						    "Nice reverb from John Chowning. Move the sliders to set the reverb parameters."))
-				     
-				     (lambda (w data)
-				       (set! jc-reverb-decay initial-jc-reverb-decay)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) jc-reverb-decay)
-				       (set! jc-reverb-volume initial-jc-reverb-volume)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) jc-reverb-volume)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok jc-reverb-target))))
-			      
-			      (set! sliders
-				    (add-sliders jc-reverb-dialog
-						 (list (list "decay duration" 0.0 initial-jc-reverb-decay 10.0
-							     (lambda (w data)
-							       (set! jc-reverb-decay (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "reverb volume" 0.0 initial-jc-reverb-volume 1.0
-							     (lambda (w data)
-							       (set! jc-reverb-volume (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG jc-reverb-dialog)) 
-					  (lambda (target) 
-					    (set! jc-reverb-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT jc-reverb-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  (lambda (truncate) 
-					    (set! jc-reverb-truncate truncate)))))
-			  (activate-dialog jc-reverb-dialog))
-			#f)
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
-				   reverb-menu-list)))
+      (let ((jc-reverb-decay 2.0)
+	    (jc-reverb-volume 0.1)
+	    (jc-reverb-dialog #f)
+	    (jc-reverb-target 'sound)
+	    (jc-reverb-truncate #t))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless jc-reverb-dialog
+			      (let ((initial-jc-reverb-decay 2.0)
+				    (initial-jc-reverb-volume 0.1)
+				    (sliders ()))
+				(set! jc-reverb-dialog
+				      (make-effect-dialog
+				       "Chowning reverb"
+				       
+				       (lambda (w data) 
+					 (map-chan-over-target-with-sync
+					  (lambda (samps) (effects-jc-reverb samps jc-reverb-volume))
+					  jc-reverb-target 
+					  (lambda (target samps) 
+					    (format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
+					  (and (not jc-reverb-truncate) jc-reverb-decay)))
+				       
+				       (lambda (w data)
+					 (help-dialog "Chowning reverb"
+						      "Nice reverb from John Chowning. Move the sliders to set the reverb parameters."))
+				       
+				       (lambda (w data)
+					 (set! jc-reverb-decay initial-jc-reverb-decay)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) jc-reverb-decay)
+					 (set! jc-reverb-volume initial-jc-reverb-volume)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) jc-reverb-volume)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok jc-reverb-target))))
+				
+				(set! sliders
+				      (add-sliders jc-reverb-dialog
+						   (list (list "decay duration" 0.0 initial-jc-reverb-decay 10.0
+							       (lambda (w data)
+								 (set! jc-reverb-decay (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "reverb volume" 0.0 initial-jc-reverb-volume 1.0
+							       (lambda (w data)
+								 (set! jc-reverb-volume (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG jc-reverb-dialog)) 
+					    (lambda (target) 
+					      (set! jc-reverb-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT jc-reverb-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    (lambda (truncate) 
+					      (set! jc-reverb-truncate truncate)))))
+			    (activate-dialog jc-reverb-dialog))
+			  #f)
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
+				     reverb-menu-list))))
     
     ;; -------- Convolution
     
-    (let ((child (gtk_menu_item_new_with_label "Convolution"))
-	  (convolve-sound-one 0)
-	  (convolve-sound-two 1)
-	  (convolve-amp 0.01)
-	  (convolve-dialog #f))
+    (let ((child (gtk_menu_item_new_with_label "Convolution")))
       (gtk_menu_shell_append (GTK_MENU_SHELL reverb-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless convolve-dialog
-			    (let ((initial-convolve-sound-one 0)
-				  (initial-convolve-sound-two 1)
-				  (initial-convolve-amp 0.01)
-				  (sliders ()))
-			      (set! convolve-dialog
-				    (make-effect-dialog
-				     "Convolution"
-				     
-				     (lambda (w data)
-				       (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
-				     
-				     (lambda (w data)
-				       (help-dialog "Convolution"
-						    "Very simple convolution. Move the sliders to set the numbers of the soundfiles
+      (let ((convolve-sound-one 0)
+	    (convolve-sound-two 1)
+	    (convolve-amp 0.01)
+	    (convolve-dialog #f))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless convolve-dialog
+			      (let ((initial-convolve-sound-one 0)
+				    (initial-convolve-sound-two 1)
+				    (initial-convolve-amp 0.01)
+				    (sliders ()))
+				(set! convolve-dialog
+				      (make-effect-dialog
+				       "Convolution"
+				       
+				       (lambda (w data)
+					 (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
+				       
+				       (lambda (w data)
+					 (help-dialog "Convolution"
+						      "Very simple convolution. Move the sliders to set the numbers of the soundfiles
 to be convolved and the amount for the amplitude scaler.  Output will be scaled to floating-point values, resulting
 in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output.
 The convolution data file typically defines a natural reverberation source, and the output from this effect
 can provide very striking reverb effects. You can find convolution data files on sites listed at
 http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
-				     (lambda (w data)
-				       (set! convolve-sound-one initial-convolve-sound-one)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) convolve-sound-one)
-				       (set! convolve-sound-two initial-convolve-sound-two)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) convolve-sound-two)
-				       (set! convolve-amp initial-convolve-amp)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) convolve-amp)
-				       )))
-			      
-			      (set! sliders
-				    (add-sliders convolve-dialog
-						 (list (list "impulse response file" 0 initial-convolve-sound-one 24
-							     (lambda (w data)
-							       (set! convolve-sound-one (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     1)
-						       (list "sound file" 0 initial-convolve-sound-two 24
-							     (lambda (w data)
-							       (set! convolve-sound-two (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     1)
-						       (list "amplitude" 0.0 initial-convolve-amp 0.10
-							     (lambda (w data)
-							       (set! convolve-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     1000))))))
-			  (activate-dialog convolve-dialog))
-			#f)
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "Convolution (~D ~D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
-				   reverb-menu-list)))
-    )
-  
-  
+				       (lambda (w data)
+					 (set! convolve-sound-one initial-convolve-sound-one)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) convolve-sound-one)
+					 (set! convolve-sound-two initial-convolve-sound-two)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) convolve-sound-two)
+					 (set! convolve-amp initial-convolve-amp)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) convolve-amp)
+					 )))
+				
+				(set! sliders
+				      (add-sliders convolve-dialog
+						   (list (list "impulse response file" 0 initial-convolve-sound-one 24
+							       (lambda (w data)
+								 (set! convolve-sound-one (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       1)
+							 (list "sound file" 0 initial-convolve-sound-two 24
+							       (lambda (w data)
+								 (set! convolve-sound-two (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       1)
+							 (list "amplitude" 0.0 initial-convolve-amp 0.10
+							       (lambda (w data)
+								 (set! convolve-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       1000))))))
+			    (activate-dialog convolve-dialog))
+			  #f)
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "Convolution (~D ~D ~1,2F)" convolve-sound-one convolve-sound-two convolve-amp)))
+				     reverb-menu-list)))))
+    
+    
 ;;; VARIOUS AND MISCELLANEOUS
   
   (define effects-hello-dentist 
@@ -2129,504 +2128,502 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
     
     ;; -------- Insert silence (at cursor, silence-amount in secs)
     
-    (let ((child (gtk_menu_item_new_with_label "Add silence"))
-	  (silence-amount 1.0)
-	  (silence-dialog #f))
+    (let ((child (gtk_menu_item_new_with_label "Add silence")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless silence-dialog
-			    (let ((initial-silence-amount 1.0)
-				  (sliders ()))
-			      (set! silence-dialog
-				    (make-effect-dialog
-				     "Add silence"
-				     
-				     (lambda (w data)
-				       (insert-silence (cursor) (floor (* (srate) silence-amount))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Add silence"
-						    "Move the slider to change the number of seconds of silence added at the cursor position."))
-				     
-				     (lambda (w data)
-				       (set! silence-amount initial-silence-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) silence-amount)
-				       )))
-			      
-			      (set! sliders
-				    (add-sliders silence-dialog
-						 (list (list "silence" 0.0 initial-silence-amount 5.0
-							     (lambda (w data)
-							       (set! silence-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100))))))
-			  (activate-dialog silence-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Add silence (~1,2F)" silence-amount)))
-				 misc-menu-list)))
+      (let ((silence-amount 1.0)
+	    (silence-dialog #f))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless silence-dialog
+			      (let ((initial-silence-amount 1.0)
+				    (sliders ()))
+				(set! silence-dialog
+				      (make-effect-dialog
+				       "Add silence"
+				       
+				       (lambda (w data)
+					 (insert-silence (cursor) (floor (* (srate) silence-amount))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Add silence"
+						      "Move the slider to change the number of seconds of silence added at the cursor position."))
+				       
+				       (lambda (w data)
+					 (set! silence-amount initial-silence-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) silence-amount)
+					 )))
+				
+				(set! sliders
+				      (add-sliders silence-dialog
+						   (list (list "silence" 0.0 initial-silence-amount 5.0
+							       (lambda (w data)
+								 (set! silence-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100))))))
+			    (activate-dialog silence-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Add silence (~1,2F)" silence-amount)))
+				   misc-menu-list))))
     
 ;;; -------- Contrast (brightness control)
 ;;;
     
-    (let ((child (gtk_menu_item_new_with_label "Contrast enhancement"))
-	  (contrast-amount 1.0)
-	  (contrast-dialog #f)
-	  (contrast-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Contrast enhancement")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless contrast-dialog
-			    (let ((initial-contrast-amount 1.0)
-				  (sliders ()))
-			      (set! contrast-dialog
-				    (make-effect-dialog
-				     "Contrast enhancement"
-				     
-				     (lambda (w data) 
-				       (let ((peak (maxamp))
-					     (snd (selected-sound)))
-					 (save-controls snd)
-					 (reset-controls snd)
-					 (set! (contrast-control? snd) #t)
-					 (set! (contrast-control snd) contrast-amount)
-					 (set! (contrast-control-amp snd) (/ 1.0 peak))
-					 (set! (amp-control snd) peak)
-					 (if (eq? contrast-target 'marks)
-					     (let ((ms (plausible-mark-samples)))
-					       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
-					     (apply-controls snd (if (eq? contrast-target 'sound) 0 2)))
-					 (restore-controls snd)))
-				     
-				     (lambda (w data)
-				       (help-dialog "Contrast enhancement"
-						    "Move the slider to change the contrast intensity."))
-				     
-				     (lambda (w data)
-				       (set! contrast-amount initial-contrast-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) contrast-amount)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok contrast-target))))
-			      
-			      (set! sliders
-				    (add-sliders contrast-dialog
-						 (list (list "contrast enhancement" 0.0 initial-contrast-amount 10.0
-							     (lambda (w data)
-							       (set! contrast-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG contrast-dialog))
-					  (lambda (target) 
-					    (set! contrast-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT contrast-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog contrast-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
-				 misc-menu-list)))
+      (let ((contrast-amount 1.0)
+	    (contrast-dialog #f)
+	    (contrast-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless contrast-dialog
+			      (let ((initial-contrast-amount 1.0)
+				    (sliders ()))
+				(set! contrast-dialog
+				      (make-effect-dialog
+				       "Contrast enhancement"
+				       
+				       (lambda (w data) 
+					 (let ((peak (maxamp))
+					       (snd (selected-sound)))
+					   (save-controls snd)
+					   (reset-controls snd)
+					   (set! (contrast-control? snd) #t)
+					   (set! (contrast-control snd) contrast-amount)
+					   (set! (contrast-control-amp snd) (/ 1.0 peak))
+					   (set! (amp-control snd) peak)
+					   (if (eq? contrast-target 'marks)
+					       (let ((ms (plausible-mark-samples)))
+						 (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
+					       (apply-controls snd (if (eq? contrast-target 'sound) 0 2)))
+					   (restore-controls snd)))
+				       
+				       (lambda (w data)
+					 (help-dialog "Contrast enhancement"
+						      "Move the slider to change the contrast intensity."))
+				       
+				       (lambda (w data)
+					 (set! contrast-amount initial-contrast-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) contrast-amount)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok contrast-target))))
+				
+				(set! sliders
+				      (add-sliders contrast-dialog
+						   (list (list "contrast enhancement" 0.0 initial-contrast-amount 10.0
+							       (lambda (w data)
+								 (set! contrast-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG contrast-dialog))
+					    (lambda (target) 
+					      (set! contrast-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT contrast-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog contrast-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Contrast enhancement (~1,2F)" contrast-amount)))
+				   misc-menu-list))))
     
     ;; -------- Cross synthesis
     
-    (let ((child (gtk_menu_item_new_with_label "Cross synthesis"))
-	  (cross-synth-sound 1)
-	  (cross-synth-amp .5)
-	  (cross-synth-fft-size 128)
-	  (cross-synth-radius 6.0)
-	  (cross-synth-dialog #f)
-	  (cross-synth-target 'sound))
-      
+    (let ((child (gtk_menu_item_new_with_label "Cross synthesis")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless cross-synth-dialog
-			    (let ((initial-cross-synth-sound 1)
-				  (initial-cross-synth-amp .5)
-				  (initial-cross-synth-fft-size 128)
-				  (initial-cross-synth-radius 6.0)
-				  (sliders ()))
-			      (set! cross-synth-dialog
-				    (make-effect-dialog
-				     "Cross synthesis"
-				     
-				     (lambda (w data)
-				       (map-chan-over-target-with-sync
-					(lambda (ignored) 
-					  (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-					cross-synth-target 
-					(lambda (target samps)
-					  (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
-						  cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-					#f))
-				     
-				     (lambda (w data)
-				       (help-dialog "Cross synthesis"
-						    "The sliders set the number of the soundfile to be cross-synthesized, 
+      (let ((cross-synth-sound 1)
+	    (cross-synth-amp .5)
+	    (cross-synth-fft-size 128)
+	    (cross-synth-radius 6.0)
+	    (cross-synth-dialog #f)
+	    (cross-synth-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless cross-synth-dialog
+			      (let ((initial-cross-synth-sound 1)
+				    (initial-cross-synth-amp .5)
+				    (initial-cross-synth-fft-size 128)
+				    (initial-cross-synth-radius 6.0)
+				    (sliders ()))
+				(set! cross-synth-dialog
+				      (make-effect-dialog
+				       "Cross synthesis"
+				       
+				       (lambda (w data)
+					 (map-chan-over-target-with-sync
+					  (lambda (ignored) 
+					    (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+					  cross-synth-target 
+					  (lambda (target samps)
+					    (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+						    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+					  #f))
+				       
+				       (lambda (w data)
+					 (help-dialog "Cross synthesis"
+						      "The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
-				     
-				     (lambda (w data)
-				       (set! cross-synth-sound initial-cross-synth-sound)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) cross-synth-sound)
-				       (set! cross-synth-amp initial-cross-synth-amp)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) cross-synth-amp)
-				       (set! cross-synth-fft-size initial-cross-synth-fft-size)
-				       (set! cross-synth-radius initial-cross-synth-radius)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) cross-synth-radius)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok cross-synth-target))))
-			      
-			      (set! sliders
-				    (add-sliders cross-synth-dialog
-						 (list (list "input sound" 0 initial-cross-synth-sound 20
-							     (lambda (w data)
-							       (set! cross-synth-sound (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     1)
-						       (list "amplitude" 0.0 initial-cross-synth-amp 1.0
-							     (lambda (w data)
-							       (set! cross-synth-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100)
-						       (list "radius" 0.0 initial-cross-synth-radius 360.0
-							     (lambda (w data)
-							       (set! cross-synth-radius (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG cross-synth-dialog)) 
-					  (lambda (target) 
-					    (set! cross-synth-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT cross-synth-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog cross-synth-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
-							       cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
-				 misc-menu-list)))
-    
+				       
+				       (lambda (w data)
+					 (set! cross-synth-sound initial-cross-synth-sound)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 0)) cross-synth-sound)
+					 (set! cross-synth-amp initial-cross-synth-amp)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 1)) cross-synth-amp)
+					 (set! cross-synth-fft-size initial-cross-synth-fft-size)
+					 (set! cross-synth-radius initial-cross-synth-radius)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (sliders 2)) cross-synth-radius)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok cross-synth-target))))
+				
+				(set! sliders
+				      (add-sliders cross-synth-dialog
+						   (list (list "input sound" 0 initial-cross-synth-sound 20
+							       (lambda (w data)
+								 (set! cross-synth-sound (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       1)
+							 (list "amplitude" 0.0 initial-cross-synth-amp 1.0
+							       (lambda (w data)
+								 (set! cross-synth-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100)
+							 (list "radius" 0.0 initial-cross-synth-radius 360.0
+							       (lambda (w data)
+								 (set! cross-synth-radius (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG cross-synth-dialog)) 
+					    (lambda (target) 
+					      (set! cross-synth-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT cross-synth-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog cross-synth-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
+								 cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+				   misc-menu-list))))
+      
     ;; -------- Flange and phasing
     
-    (let ((child (gtk_menu_item_new_with_label "Flange"))
-	  (flange-speed 2.0)
-	  (flange-amount 5.0)
-	  (flange-time 0.001)
-	  (flange-dialog #f)
-	  (flange-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Flange")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless flange-dialog
-			    (let ((initial-flange-speed 2.0)
-				  (initial-flange-amount 5.0)
-				  (initial-flange-time 0.001)
-				  (sliders ()))
-			      (set! flange-dialog
-				    (make-effect-dialog
-				     "Flange"
-				     
-				     (lambda (w data)
-				       (map-chan-over-target-with-sync 
-					(lambda (ignored)
-					  (let ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-						(del (let ((len (round (* flange-time (srate)))))
-						       (make-delay len :max-size (round (+ len flange-amount 1))))))
-					    (lambda (inval)
-					      (* .75 (+ inval
-							(delay del
-							       inval
-							       (rand-interp ri)))))))
-					flange-target 
-					(lambda (target samps) 
-					  (format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
-					#f))
-				     
-				     (lambda (w data)
-				       (help-dialog "Flange"
-						    "Move the sliders to change the flange speed, amount, and time"))
-				     
-				     (lambda (w data)
-				       (set! flange-speed initial-flange-speed)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) flange-speed)
-				       (set! flange-amount initial-flange-amount)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) flange-amount)
-				       (set! flange-time initial-flange-time)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) flange-time)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok flange-target))))
-			      
-			      (set! sliders
-				    (add-sliders flange-dialog
-						 (list (list "flange speed" 0.0 initial-flange-speed 100.0
-							     (lambda (w data)
-							       (set! flange-speed (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     10)
-						       (list "flange amount" 0.0 initial-flange-amount 100.0
-							     (lambda (w data)
-							       (set! flange-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     10)
-						       ;; flange time ought to use a non-linear scale (similar to amp in control panel)
-						       (list "flange time" 0.0 initial-flange-time 1.0
-							     (lambda (w data)
-							       (set! flange-time (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG flange-dialog)) 
-					  (lambda (target) 
-					    (set! flange-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT flange-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog flange-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
-				 misc-menu-list)))
+      (let ((flange-speed 2.0)
+	    (flange-amount 5.0)
+	    (flange-time 0.001)
+	    (flange-dialog #f)
+	    (flange-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless flange-dialog
+			      (let ((initial-flange-speed 2.0)
+				    (initial-flange-amount 5.0)
+				    (initial-flange-time 0.001)
+				    (sliders ()))
+				(set! flange-dialog
+				      (make-effect-dialog
+				       "Flange"
+				       
+				       (lambda (w data)
+					 (map-chan-over-target-with-sync 
+					  (lambda (ignored)
+					    (let ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
+						  (del (let ((len (round (* flange-time (srate)))))
+							 (make-delay len :max-size (round (+ len flange-amount 1))))))
+					      (lambda (inval)
+						(* .75 (+ inval
+							  (delay del
+								 inval
+								 (rand-interp ri)))))))
+					  flange-target 
+					  (lambda (target samps) 
+					    (format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
+					  #f))
+				       
+				       (lambda (w data)
+					 (help-dialog "Flange"
+						      "Move the sliders to change the flange speed, amount, and time"))
+				       
+				       (lambda (w data)
+					 (set! flange-speed initial-flange-speed)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) flange-speed)
+					 (set! flange-amount initial-flange-amount)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) flange-amount)
+					 (set! flange-time initial-flange-time)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) flange-time)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok flange-target))))
+				
+				(set! sliders
+				      (add-sliders flange-dialog
+						   (list (list "flange speed" 0.0 initial-flange-speed 100.0
+							       (lambda (w data)
+								 (set! flange-speed (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       10)
+							 (list "flange amount" 0.0 initial-flange-amount 100.0
+							       (lambda (w data)
+								 (set! flange-amount (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       10)
+							 ;; flange time ought to use a non-linear scale (similar to amp in control panel)
+							 (list "flange time" 0.0 initial-flange-time 1.0
+							       (lambda (w data)
+								 (set! flange-time (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG flange-dialog)) 
+					    (lambda (target) 
+					      (set! flange-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT flange-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog flange-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
+				   misc-menu-list))))
     
     ;; -------- Randomize phase
     
-    (let ((child (gtk_menu_item_new_with_label "Randomize phase"))
-	  (random-phase-amp-scaler 3.14)
-	  (random-phase-dialog #f))
+    (let ((child (gtk_menu_item_new_with_label "Randomize phase")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless random-phase-dialog
-			    (let ((initial-random-phase-amp-scaler 3.14)
-				  (sliders ()))
-			      (set! random-phase-dialog
-				    (make-effect-dialog
-				     "Randomize phase"
-				     
-				     (lambda (w data)
-				       (rotate-phase (lambda (x) (random random-phase-amp-scaler))))
-				     
-				     (lambda (w data)
-				       (help-dialog "Randomize phase"
-						    "Move the slider to change the randomization amplitude scaler."))
-				     
-				     (lambda (w data)
-				       (set! random-phase-amp-scaler initial-random-phase-amp-scaler)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) random-phase-amp-scaler)
-				       )))
-			      
-			      (set! sliders
-				    (add-sliders random-phase-dialog
-						 (list (list "amplitude scaler" 0.0 initial-random-phase-amp-scaler 100.0
-							     (lambda (w data)
-							       (set! random-phase-amp-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100))))))
-			  (activate-dialog random-phase-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
-				 misc-menu-list)))
+      (let ((random-phase-amp-scaler 3.14)
+	    (random-phase-dialog #f))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless random-phase-dialog
+			      (let ((initial-random-phase-amp-scaler 3.14)
+				    (sliders ()))
+				(set! random-phase-dialog
+				      (make-effect-dialog
+				       "Randomize phase"
+				       
+				       (lambda (w data)
+					 (rotate-phase (lambda (x) (random random-phase-amp-scaler))))
+				       
+				       (lambda (w data)
+					 (help-dialog "Randomize phase"
+						      "Move the slider to change the randomization amplitude scaler."))
+				       
+				       (lambda (w data)
+					 (set! random-phase-amp-scaler initial-random-phase-amp-scaler)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) random-phase-amp-scaler)
+					 )))
+				
+				(set! sliders
+				      (add-sliders random-phase-dialog
+						   (list (list "amplitude scaler" 0.0 initial-random-phase-amp-scaler 100.0
+							       (lambda (w data)
+								 (set! random-phase-amp-scaler (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100))))))
+			    (activate-dialog random-phase-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Randomize phase (~1,2F)"  random-phase-amp-scaler)))
+				   misc-menu-list))))
     
     ;; -------- Robotize
     
-    (let ((child (gtk_menu_item_new_with_label "Robotize"))
-	  (samp-rate 1.0)
-	  (osc-amp 0.3)
-	  (osc-freq 20)
-	  (robotize-dialog #f)
-	  (robotize-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Robotize")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless robotize-dialog
-			    (let ((initial-samp-rate 1.0)
-				  (initial-osc-amp 0.3)
-				  (initial-osc-freq 20)
-				  (sliders ()))
-			      (set! robotize-dialog
-				    (make-effect-dialog
-				     "Robotize"
-				     
-				     (lambda (w data)
-				       (let ((ms (and (eq? robotize-target 'marks)
-						      (plausible-mark-samples))))
-					 (effects-fp samp-rate osc-amp osc-freq
-						     (if (eq? robotize-target 'sound)
-							 (values 0 
-								 (framples))
-							 (if (eq? robotize-target 'selection)
-							     (values (selection-position)
-								     (selection-framples))
-							     (values (car ms)
-								     (- (cadr ms) (car ms))))))))
-				     (lambda (w data)
-				       (help-dialog "Robotize"
-						    "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
-				     
-				     (lambda (w data)
-				       (set! samp-rate initial-samp-rate)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) samp-rate)
-				       (set! osc-amp initial-osc-amp)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) osc-amp)
-				       (set! osc-freq initial-osc-freq)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) osc-freq)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok robotize-target))))
-			      
-			      (set! sliders
-				    (add-sliders robotize-dialog
-						 (list (list "sample rate" 0.0 initial-samp-rate 2.0
-							     (lambda (w data)
-							       (set! samp-rate (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "oscillator amplitude" 0.0 initial-osc-amp 1.0
-							     (lambda (w data)
-							       (set! osc-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100)
-						       (list "oscillator frequency" 0.0 initial-osc-freq 60
-							     (lambda (w data)
-							       (set! osc-freq (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG robotize-dialog)) 
-					  (lambda (target) 
-					    (set! robotize-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT robotize-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog robotize-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
-				 misc-menu-list)))
+      (let ((samp-rate 1.0)
+	    (osc-amp 0.3)
+	    (osc-freq 20)
+	    (robotize-dialog #f)
+	    (robotize-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless robotize-dialog
+			      (let ((initial-samp-rate 1.0)
+				    (initial-osc-amp 0.3)
+				    (initial-osc-freq 20)
+				    (sliders ()))
+				(set! robotize-dialog
+				      (make-effect-dialog
+				       "Robotize"
+				       
+				       (lambda (w data)
+					 (let ((ms (and (eq? robotize-target 'marks)
+							(plausible-mark-samples))))
+					   (effects-fp samp-rate osc-amp osc-freq
+						       (if (eq? robotize-target 'sound)
+							   (values 0 
+								   (framples))
+							   (if (eq? robotize-target 'selection)
+							       (values (selection-position)
+								       (selection-framples))
+							       (values (car ms)
+								       (- (cadr ms) (car ms))))))))
+				       (lambda (w data)
+					 (help-dialog "Robotize"
+						      "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
+				       
+				       (lambda (w data)
+					 (set! samp-rate initial-samp-rate)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) samp-rate)
+					 (set! osc-amp initial-osc-amp)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) osc-amp)
+					 (set! osc-freq initial-osc-freq)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (caddr sliders)) osc-freq)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok robotize-target))))
+				
+				(set! sliders
+				      (add-sliders robotize-dialog
+						   (list (list "sample rate" 0.0 initial-samp-rate 2.0
+							       (lambda (w data)
+								 (set! samp-rate (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "oscillator amplitude" 0.0 initial-osc-amp 1.0
+							       (lambda (w data)
+								 (set! osc-amp (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100)
+							 (list "oscillator frequency" 0.0 initial-osc-freq 60
+							       (lambda (w data)
+								 (set! osc-freq (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 2)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG robotize-dialog)) 
+					    (lambda (target) 
+					      (set! robotize-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT robotize-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog robotize-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
+				   misc-menu-list))))
     
     ;; -------- Rubber sound
     
-    (let ((child (gtk_menu_item_new_with_label "Rubber sound"))
-	  (rubber-factor 1.0)
-	  (rubber-dialog #f)
-	  (rubber-target 'sound))
+    (let ((child (gtk_menu_item_new_with_label "Rubber sound")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless rubber-dialog
-			    (let ((initial-rubber-factor 1.0)
-				  (sliders ()))
-			      (set! rubber-dialog
-				    (make-effect-dialog
-				     "Rubber sound"
-				     
-				     (lambda (w data) 
-				       (rubber-sound rubber-factor))
-				     
-				     (lambda (w data)
-				       (help-dialog "Rubber sound"
-						    "Stretches or contracts the time of a sound. Move the slider to change the stretch factor."))
-				     
-				     (lambda (w data)
-				       (set! rubber-factor initial-rubber-factor)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) rubber-factor)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok rubber-target))))
-			      
-			      (set! sliders
-				    (add-sliders rubber-dialog
-						 (list (list "stretch factor" 0.0 initial-rubber-factor 5.0
-							     (lambda (w data)
-							       (set! rubber-factor (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG rubber-dialog)) 
-					  (lambda (target) 
-					    (set! rubber-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT rubber-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog rubber-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Rubber sound (~1,2F)"  rubber-factor)))
-				 misc-menu-list)))
-    
+      (let ((rubber-factor 1.0)
+	    (rubber-dialog #f)
+	    (rubber-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless rubber-dialog
+			      (let ((initial-rubber-factor 1.0)
+				    (sliders ()))
+				(set! rubber-dialog
+				      (make-effect-dialog
+				       "Rubber sound"
+				       
+				       (lambda (w data) 
+					 (rubber-sound rubber-factor))
+				       
+				       (lambda (w data)
+					 (help-dialog "Rubber sound"
+						      "Stretches or contracts the time of a sound. Move the slider to change the stretch factor."))
+				       
+				       (lambda (w data)
+					 (set! rubber-factor initial-rubber-factor)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) rubber-factor)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok rubber-target))))
+				
+				(set! sliders
+				      (add-sliders rubber-dialog
+						   (list (list "stretch factor" 0.0 initial-rubber-factor 5.0
+							       (lambda (w data)
+								 (set! rubber-factor (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG rubber-dialog)) 
+					    (lambda (target) 
+					      (set! rubber-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT rubber-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog rubber-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Rubber sound (~1,2F)"  rubber-factor)))
+				   misc-menu-list))))
+      
     ;; -------- Wobble
     
-    (let ((child (gtk_menu_item_new_with_label "Wobble"))
-	  (wobble-frequency 50)
-	  (wobble-amplitude 0.5)
-	  (wobble-dialog #f)
-	  (wobble-target 'sound))
-      
+    (let ((child (gtk_menu_item_new_with_label "Wobble")))
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)
-      (g_signal_connect child "activate"
-			(lambda (w d) 
-			  (unless wobble-dialog
-			    (let ((initial-wobble-frequency 50)
-				  (initial-wobble-amplitude 0.5)
-				  (sliders ()))
-			      (set! wobble-dialog
-				    (make-effect-dialog
-				     "Wobble"
-				     
-				     (lambda (w data)
-				       (let ((ms (and (eq? wobble-target 'marks)
-						      (plausible-mark-samples))))
-					 (effects-hello-dentist wobble-frequency wobble-amplitude
-								(if (eq? wobble-target 'sound)
-								    (values 0 
-									    (framples))
-								    (if (eq? wobble-target 'selection)
-									(values (selection-position)
-										(selection-framples))
-									(values	(car ms)
-										(- (cadr ms) (car ms))))))))
-				     (lambda (w data)
-				       (help-dialog "Wobble"
-						    "Move the sliders to set the wobble frequency and amplitude."))
-				     
-				     (lambda (w data)
-				       (set! wobble-frequency initial-wobble-frequency)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) wobble-frequency)
-				       (set! wobble-amplitude initial-wobble-amplitude)
-				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) wobble-amplitude)
-				       )
-				     
-				     (lambda () 
-				       (effect-target-ok wobble-target))))
-			      
-			      (set! sliders
-				    (add-sliders wobble-dialog
-						 (list (list "wobble frequency" 0 initial-wobble-frequency 100
-							     (lambda (w data)
-							       (set! wobble-frequency (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
-							     100)
-						       (list "wobble amplitude" 0.0 initial-wobble-amplitude 1.0
-							     (lambda (w data)
-							       (set! wobble-amplitude (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
-							     100))))
-			      (add-target (gtk_dialog_get_content_area (GTK_DIALOG wobble-dialog)) 
-					  (lambda (target) 
-					    (set! wobble-target target)
-					    (gtk_widget_set_sensitive 
-					     (GTK_WIDGET (g_object_get_data (G_OBJECT wobble-dialog) "ok-button")) 
-					     (effect-target-ok target)))
-					  #f)))
-			  (activate-dialog wobble-dialog))
-			#f)
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
-				 misc-menu-list)))
+      (let ((wobble-frequency 50)
+	    (wobble-amplitude 0.5)
+	    (wobble-dialog #f)
+	    (wobble-target 'sound))
+	(g_signal_connect child "activate"
+			  (lambda (w d) 
+			    (unless wobble-dialog
+			      (let ((initial-wobble-frequency 50)
+				    (initial-wobble-amplitude 0.5)
+				    (sliders ()))
+				(set! wobble-dialog
+				      (make-effect-dialog
+				       "Wobble"
+				       
+				       (lambda (w data)
+					 (let ((ms (and (eq? wobble-target 'marks)
+							(plausible-mark-samples))))
+					   (effects-hello-dentist wobble-frequency wobble-amplitude
+								  (if (eq? wobble-target 'sound)
+								      (values 0 
+									      (framples))
+								      (if (eq? wobble-target 'selection)
+									  (values (selection-position)
+										  (selection-framples))
+									  (values	(car ms)
+											(- (cadr ms) (car ms))))))))
+				       (lambda (w data)
+					 (help-dialog "Wobble"
+						      "Move the sliders to set the wobble frequency and amplitude."))
+				       
+				       (lambda (w data)
+					 (set! wobble-frequency initial-wobble-frequency)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) wobble-frequency)
+					 (set! wobble-amplitude initial-wobble-amplitude)
+					 (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) wobble-amplitude)
+					 )
+				       
+				       (lambda () 
+					 (effect-target-ok wobble-target))))
+				
+				(set! sliders
+				      (add-sliders wobble-dialog
+						   (list (list "wobble frequency" 0 initial-wobble-frequency 100
+							       (lambda (w data)
+								 (set! wobble-frequency (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 0)))))
+							       100)
+							 (list "wobble amplitude" 0.0 initial-wobble-amplitude 1.0
+							       (lambda (w data)
+								 (set! wobble-amplitude (gtk_adjustment_get_value (GTK_ADJUSTMENT (sliders 1)))))
+							       100))))
+				(add-target (gtk_dialog_get_content_area (GTK_DIALOG wobble-dialog)) 
+					    (lambda (target) 
+					      (set! wobble-target target)
+					      (gtk_widget_set_sensitive 
+					       (GTK_WIDGET (g_object_get_data (G_OBJECT wobble-dialog) "ok-button")) 
+					       (effect-target-ok target)))
+					    #f)))
+			    (activate-dialog wobble-dialog))
+			  #f)
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
+				   misc-menu-list))))
     )
   
 ;;;
