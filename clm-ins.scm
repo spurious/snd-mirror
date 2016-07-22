@@ -1998,26 +1998,26 @@ is a physical model of a flute:
 	      (do ((i start (+ i outhop)))
 		  ((>= i end))
 		(when (<= filptr filend)
+		  ;; get next block of data and apply window to it
+		  (set! (mus-location fil) filptr)
+		  (do ((k 0 (+ k 1)))
+		      ((= k fftsize-1))
+		    (float-vector-set! fdr k (readin fil)))
+		  (float-vector-multiply! fdr window)
+		  (set! filptr (+ filptr hop))
+		  (fill! fdi 0.0)
+		  ;; get the fft 
+		  (mus-fft fdr fdi fftsize-1 1)
+		  ;; change to polar coordinates (ignoring phases)
+		  (rectangular->magnitudes fdr fdi)
+		  (float-vector-scale! fdr 2.0)
+		  
+		  (float-vector-subseq current-peak-freqs 0 max-oscils last-peak-freqs)
+		  (float-vector-subseq current-peak-amps 0 max-oscils last-peak-amps)
+		  (fill! current-peak-amps 0.0)
+		  (fill! peak-amps 0.0)
+		  
 		  (let ((peaks 0))
-		    ;; get next block of data and apply window to it
-		    (set! (mus-location fil) filptr)
-		    (do ((k 0 (+ k 1)))
-			((= k fftsize-1))
-		      (float-vector-set! fdr k (readin fil)))
-		    (float-vector-multiply! fdr window)
-		    (set! filptr (+ filptr hop))
-		    (fill! fdi 0.0)
-		    ;; get the fft 
-		    (mus-fft fdr fdi fftsize-1 1)
-		    ;; change to polar coordinates (ignoring phases)
-		    (rectangular->magnitudes fdr fdi)
-		    (float-vector-scale! fdr 2.0)
-		    
-		    (float-vector-subseq current-peak-freqs 0 max-oscils last-peak-freqs)
-		    (float-vector-subseq current-peak-amps 0 max-oscils last-peak-amps)
-		    (fill! current-peak-amps 0.0)
-		    (fill! peak-amps 0.0)
-		    
 		    (let ((ra (fdr 0))
 			  (la 0.0)
 			  (ca 0.0))
@@ -2088,40 +2088,40 @@ is a physical model of a flute:
 					;; peak-amp is transferred to appropriate current-amp and zeroed,
 					(set! (current-peak-amps closestp) (peak-amps maxp))
 					(set! (peak-amps maxp) 0.0)
-					(set! (current-peak-freqs closestp) current-freq)))))))))
-		    (do ((k 0 (+ k 1)))
-			((= k max-peaks-1))
-		      (if (> (peak-amps k) 0.0)
-			  ;; find a place for a new oscil and start it up
-			  (let ((new-place -1))
-			    (do ((j 0 (+ j 1)))
-				((or (not (= new-place -1))
-				     (= j max-oscils)))
-			      (if (= (last-peak-amps j) 0.0 (current-peak-amps j))
-				  (set! new-place j)))
-			    (set! (current-peak-amps new-place) (peak-amps k))
-			    (set! (peak-amps k) 0.0)
-			    (set! (current-peak-freqs new-place) (peak-freqs k))
-			    (set! (last-peak-freqs new-place) (peak-freqs k))
-			    (set! (freqs new-place) (hz->radians (* transposition (peak-freqs k)))))))
-		    (set! cur-oscils 0)
-		    (do ((k 0 (+ k 1)))
-			((= k max-oscils))
-		      (set! (rates k) (* amp ifreq (- (current-peak-amps k) (last-peak-amps k))))
-		      (if (not (and (= (current-peak-amps k) 0.0)
-				    (= (last-peak-amps k) 0.0)))
-			  (set! cur-oscils k))
-		      (set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
-		    (set! cur-oscils (+ cur-oscils 1))
-		    (set! (mus-length obank) cur-oscils)
-		    
-		    (let ((stop (min end (+ i outhop))))
-		      (do ((k i (+ k 1)))
-			  ((= k stop))
-			;; run oscils, update envelopes
-			(outa k (oscil-bank obank))
-			(float-vector-add! amps rates)
-			(float-vector-add! freqs sweeps)))))))))))))
+					(set! (current-peak-freqs closestp) current-freq))))))))))
+		  (do ((k 0 (+ k 1)))
+		      ((= k max-peaks-1))
+		    (if (> (peak-amps k) 0.0)
+			;; find a place for a new oscil and start it up
+			(let ((new-place -1))
+			  (do ((j 0 (+ j 1)))
+			      ((or (not (= new-place -1))
+				   (= j max-oscils)))
+			    (if (= (last-peak-amps j) 0.0 (current-peak-amps j))
+				(set! new-place j)))
+			  (set! (current-peak-amps new-place) (peak-amps k))
+			  (set! (peak-amps k) 0.0)
+			  (set! (current-peak-freqs new-place) (peak-freqs k))
+			  (set! (last-peak-freqs new-place) (peak-freqs k))
+			  (set! (freqs new-place) (hz->radians (* transposition (peak-freqs k)))))))
+		  (set! cur-oscils 0)
+		  (do ((k 0 (+ k 1)))
+		      ((= k max-oscils))
+		    (set! (rates k) (* amp ifreq (- (current-peak-amps k) (last-peak-amps k))))
+		    (if (not (and (= (current-peak-amps k) 0.0)
+				  (= (last-peak-amps k) 0.0)))
+			(set! cur-oscils k))
+		    (set! (sweeps k) (* ihifreq transposition (- (current-peak-freqs k) (last-peak-freqs k)))))
+		  (set! cur-oscils (+ cur-oscils 1))
+		  (set! (mus-length obank) cur-oscils)
+		  
+		  (let ((stop (min end (+ i outhop))))
+		    (do ((k i (+ k 1)))
+			((= k stop))
+		      ;; run oscils, update envelopes
+		      (outa k (oscil-bank obank))
+		      (float-vector-add! amps rates)
+		      (float-vector-add! freqs sweeps))))))))))))
 
 ;; (with-sound (:statistics #t) (pins 0 2 "oboe.snd" 1.0 :max-peaks 8))
 
@@ -2248,23 +2248,18 @@ is a physical model of a flute:
 				  :duration dur))
 		(ampe (make-env (or ampenv '(0 0 .5 1 1 0)) :scaler amp :duration dur)))
 	    (let ((exA (make-granulate :expansion initial-exp-amt
-				       :input f0
-				       :max-size max-len
-				       :ramp initial-ramp-time 
-				       :hop initial-out-hop
-				       :length initial-seg-len 
-				       :scaler scaler-amp))
-		  (ex-samp 0.0)
-		  (next-samp 0.0)
-		  (vol 0.0)
-		  (valA0 0.0)
-		  (valA1 0.0))
-
-	      (set! vol (env ampe))
-	      (set! valA0 (* vol (granulate exA)))
-	      (set! valA1 (* vol (granulate exA)))
-	      
-	      (do ((i st (+ i 1)))
+				      :input f0
+				      :max-size max-len
+				      :ramp initial-ramp-time 
+				      :hop initial-out-hop
+				      :length initial-seg-len 
+				      :scaler scaler-amp))
+		  (vol (env ampe)))
+	      (do ((valA0 (* vol (granulate exA)))
+		   (valA1 (* vol (granulate exA)))
+		   (ex-samp 0.0)
+		   (next-samp 0.0)
+		   (i st (+ i 1)))
 		  ((= i nd))
 		(let ((sl (env lenenv))) ;current segment length
 		  ;; now we set the granulate generator internal state to reflect all these envelopes
@@ -2503,15 +2498,11 @@ nil doesnt print anything, which will speed up a bit the process.
 	  (scales (make-float-vector freq-inc 1.0))
 	  (diffs (make-float-vector freq-inc))
 	  (win (make-fft-window blackman2-window fftsize))
-	  (k 0)
-	  (amp 0.0)
 	  (incr (/ (* amp-scaler 4) *clm-srate*))
 	  (beg (seconds->samples start))
 	  (end (seconds->samples (+ start dur)))
 	  (file (make-file->sample infile))
-	  (fs (make-vector freq-inc))
-	  (samp 0)
-	  (fdrc 0.0))
+	  (fs (make-vector freq-inc)))
       (let ((bin (/ *clm-srate* fftsize))
 	    (radius (- 1.0 (/ r fftsize))))
 	(do ((ctr 0 (+ ctr 1)))
@@ -2520,7 +2511,11 @@ nil doesnt print anything, which will speed up a bit the process.
       (set! fs (make-formant-bank fs scales))
 
       (set! (scales 0) 0.0)
-      (do ((i beg (+ i 1)))
+      (do ((k 0)
+	   (amp 0.0)
+	   (samp 0)
+	   (fdrc 0.0)
+	   (i beg (+ i 1)))
 	  ((= i end))
 	(let ((inval (file->sample file samp)))
 	  (set! samp (+ samp 1))

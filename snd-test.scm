@@ -9017,8 +9017,6 @@ EDITS: 2
 	    (snd-display ";float-vector in format {}: ~S" (format #f "~{~A~^-~}" v)))
 	(if (not (= (length v) 3))
 	    (snd-display ";float-vector s7 len: ~A" (length v)))
-	(if (not (equal? v (copy v)))
-	    (snd-display ";float-vector s7 copy is not equal? ~A ~A" v (copy v)))
 	(let ((val (map floor v)))
 	  (if (not (equal? val '(1 2 3)))
 	      (snd-display ";float-vector s7 map: ~A" val)))

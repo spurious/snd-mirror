@@ -2039,6 +2039,7 @@ static int not_heap = -1;
 #define set_next_slot(p, Val)         (_TSlt(p))->object.slt.nxt = _TSln(Val)
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
 #define slot_expression(p)            (_TSlt(p))->object.slt.expr
+#define slot_set_expression(p, Val)   (_TSlt(p))->object.slt.expr = _NFre(Val)
 #define slot_accessor(p)              slot_expression(p)
 #define slot_set_accessor(p, Val)     slot_expression(p) = _TApp(Val)
 
@@ -58191,7 +58192,7 @@ static int dox_ex(s7_scheme *sc)
       slot_set_symbol(slot, caar(vars));
       slot_set_value(slot, val);
       set_stepper(slot);
-      slot_expression(slot) = cddar(vars);
+      slot_set_expression(slot, cddar(vars));
 
       if (is_pair(slot_expression(slot)))
 	{
@@ -60332,7 +60333,7 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
 	      s7_pointer y;
 	      add_slot(sc->envir, car(car_z), sc->undefined);
 	      y = let_slots(sc->envir);
-	      slot_expression(y) = cadr(car_z);
+	      slot_set_expression(y, cadr(car_z));
 	      slot_pending_value(y) = sc->nil;
 	      if (!top)
 		{
@@ -66760,7 +66761,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  s7_pointer slot;
 		  slot = make_slot_1(sc, sc->envir, caar(x), sc->undefined);
 		  slot_pending_value(slot) = sc->undefined;
-		  slot_expression(slot) = cadar(x);
+		  slot_set_expression(slot, cadar(x));
 		  set_checked_slot(slot);
 		}
 	      sc->args = let_slots(sc->envir);
@@ -66810,7 +66811,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  s7_pointer slot;
 		  slot = make_slot_1(sc, sc->envir, caar(x), sc->undefined);
-		  slot_expression(slot) = cadar(x);
+		  slot_set_expression(slot, cadar(x));
 		}
 	      /* these are reversed, and for letrec*, they need to be in order, so... (reverse_in_place on the slot list) */
 	      p = let_slots(sc->envir);
@@ -74545,6 +74546,7 @@ int main(int argc, char **argv)
  *   but then why not numerator/denominator?  
  * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
  *   but how to tie into a list without allocation?
+ * provide and require should take parallel arguments
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

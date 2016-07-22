@@ -93,7 +93,8 @@
 	(define (trim-back-one-channel snd chn)
 	  (if (null? (marks snd chn))
 	      (status-report "trim-back needs a mark" snd)
-	      (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
+	      (let ((endpt (let ((ms (marks snd chn)))
+			     (mark-sample (list-ref ms (- (length ms) 1))))))
 		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
 	(if (> snc 0)
 	    (apply map
@@ -116,8 +117,9 @@
       (as-one-edit
        (lambda ()
 	 (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
-	 (let ((endpt (mark-sample (car (reverse (marks snd chn))))))
-	   (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
+	      (let ((endpt (let ((ms (marks snd chn)))
+			     (mark-sample (list-ref ms (- (length ms) 1))))))
+		(delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
        "crop-one-channel")))
 
 (define crop

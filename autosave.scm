@@ -48,7 +48,7 @@
 	(if auto-saving
 	    (begin
 	      (for-each (lambda (snd)
-			  (if (positive? (or (sound-property 'auto-save snd) 0))
+			  (if (cond ((sound-property 'auto-save snd) => positive?) (else #f))
 			      (let ((save-name (auto-save-temp-name snd)))
 				(status-report (string-append "auto-saving as " save-name "...") snd)
 				(in 3000 (lambda () (status-report "" snd)))

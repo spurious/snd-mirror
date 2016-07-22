@@ -167,7 +167,6 @@
 		 (set! *reverb* reverb-1))))
 
        (let ((start (if statistics (get-internal-real-time)))
-	     (cycles 0)
 	     (revmax #f))
 	 (let ((flush-reverb #f))
 	   (catch 'mus-error
@@ -212,6 +211,7 @@
 	     (mus-close *output*))
 
 	 (let ((snd-output #f)
+	       (cycles 0)
 	       (cur-sync #f))
 	   (if statistics
 	       (set! cycles (* 1.0 (- (get-internal-real-time) start))))
