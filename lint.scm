@@ -13410,54 +13410,54 @@
 				  (memq (car last-res) '(#t else)))
 			     (lint-format "perhaps cond else clause is misplaced: ~A in ~A" caller last-res last-clause))))
 		   
-		   (if (and (= len 2)
-			    (not (check-bool-cond caller form (cadr form) (caddr form) env))
-			    (pair? (cadr form))   ; (cond 1 2)!
-			    (pair? (caddr form)))
-		       (let ((c1 (cadr form))
-			     (c2 (caddr form)))
-			 (if (equal? (simplify-boolean (car c1) () () env)
-				     (simplify-boolean `(not ,(car c2)) () () env))
+		   (when (and (= len 2)
+			      (not (check-bool-cond caller form (cadr form) (caddr form) env))
+			      (pair? (cadr form))   ; (cond 1 2)!
+			      (pair? (caddr form)))
+		     (let ((c1 (cadr form))
+			   (c2 (caddr form)))
+		       (if (equal? (simplify-boolean (car c1) () () env)
+				   (simplify-boolean `(not ,(car c2)) () () env))
 			   (lint-format "perhaps ~A" caller  ; (cond ((x) y) ((not (x)) z)) -> (cond ((x) y) (else z))
 					(lists->string form `(cond ,c1 (else ,@(cdr c2)))))
-			   (if (and (pair? (car c1))         ; (cond ((not x) y) (else z)) -> (cond (x z) (else y))
-				    (pair? (cdr c1))         ;    null case is handled elsewhere
-				    (eq? (caar c1) 'not)
-				    (memq (car c2) '(else #t)))
-			       (let ((c1-len (tree-leaves (cdr c1))) ; try to avoid the dangling short case as in if
-				     (c2-len (tree-leaves (cdr c2))))
-				 (if (and (< (+ c1-len c2-len) 100)
+			   (when (and (pair? (car c1))         ; (cond ((not x) y) (else z)) -> (cond (x z) (else y))
+				      (pair? (cdr c1))         ;    null case is handled elsewhere
+				      (eq? (caar c1) 'not)
+				      (memq (car c2) '(else #t)))
+			     (let ((c1-len (tree-leaves (cdr c1))) ; try to avoid the dangling short case as in if
+				   (c2-len (tree-leaves (cdr c2))))
+			       (when (and (< (+ c1-len c2-len) 100)
 					  (> (* c1-len 4) c2-len))   ; maybe 4 is too much
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form 
-								 (if (or (pair? (cddr c1))
-									 (pair? (cddr c2)))
-								     `(cond (,(cadar c1) ,@(cdr c2)) (else ,@(cdr c1)))
-								     `(if ,(cadar c1) ,(cadr c2) ,(cadr c1)))))))))))
+				 (lint-format "perhaps ~A" caller
+					      (lists->string form 
+							     (if (or (pair? (cddr c1))
+								     (pair? (cddr c2)))
+								 `(cond (,(cadar c1) ,@(cdr c2)) (else ,@(cdr c1)))
+								 `(if ,(cadar c1) ,(cadr c2) ,(cadr c1)))))))))))
 		   (when has-combinations
 		     (let ((new-clauses ())
 			   (current-clauses ()))
 		       (do ((clauses (cdr form) (cdr clauses)))
 			   ((null? clauses)
 			    (let ((len (length new-clauses)))
-			      (if (not (and (= len 2) ; i.e. don't go to check-bool-cond
-					    (check-bool-cond caller form (cadr new-clauses) (car new-clauses) env)))
-				  (lint-format "perhaps ~A" caller 
-					       (lists->string 
-						form
-						(cond (all-eqv
-						       (cond->case eqv-select (reverse new-clauses)))
-						      ((not (and (= len 2) 
-								  (pair? (car new-clauses))
-								  (memq (caar new-clauses) '(else #t))
-								  (pair? (cadr new-clauses))
-								  (pair? (caadr new-clauses))
-								  (eq? (caaadr new-clauses) 'or)
-								  (null? (cdadr new-clauses))))
-						       `(cond ,@(reverse new-clauses)))
-						      ((null? (cddar new-clauses))  ; (cond (A) (B) (else C)) -> (or A B C)
-						       `(or ,@(cdaadr new-clauses) ,(cadar new-clauses)))
-						      (else `(or ,@(cdaadr new-clauses) (begin ,@(cdar new-clauses))))))))
+			      (when (not (and (= len 2) ; i.e. don't go to check-bool-cond
+					      (check-bool-cond caller form (cadr new-clauses) (car new-clauses) env)))
+				(lint-format "perhaps ~A" caller 
+					     (lists->string 
+					      form
+					      (cond (all-eqv
+						     (cond->case eqv-select (reverse new-clauses)))
+						    ((not (and (= len 2) 
+							       (pair? (car new-clauses))
+							       (memq (caar new-clauses) '(else #t))
+							       (pair? (cadr new-clauses))
+							       (pair? (caadr new-clauses))
+							       (eq? (caaadr new-clauses) 'or)
+							       (null? (cdadr new-clauses))))
+						     `(cond ,@(reverse new-clauses)))
+						    ((null? (cddar new-clauses))  ; (cond (A) (B) (else C)) -> (or A B C)
+						     `(or ,@(cdaadr new-clauses) ,(cadar new-clauses)))
+						    (else `(or ,@(cdaadr new-clauses) (begin ,@(cdar new-clauses))))))))
 			      (set! simplifications ())
 			      (set! all-eqv #f)))
 			 
@@ -13729,51 +13729,51 @@
 			 (when has-else ; len > 1 here
 			   (let ((last-clause (list-ref form (- len 1)))) ; not the else branch! -- just before it.
 
-			     (if (and (= suggest made-suggestion) ; look for all results the same
-				      (pair? (cadr form))
-				      (pair? (cdadr form)))
-				 (let ((result (list-ref (cadr form) (- (length (cadr form)) 1)))
-				       (else-clause (list-ref form len)))
-				   (if (every? (lambda (c)
+			     (when (and (= suggest made-suggestion) ; look for all results the same
+					(pair? (cadr form))
+					(pair? (cdadr form)))
+			       (let ((result (list-ref (cadr form) (- (length (cadr form)) 1)))
+				     (else-clause (list-ref form len)))
+				 (when (every? (lambda (c)
 						 (and (pair? c)
 						      (pair? (cdr c))
 						      (equal? result (list-ref c (- (length c) 1)))))
 					       (cddr form))
-				       (lint-format "perhaps ~A" caller
-						    (lists->string form
-								   (if (= len 2)       ; one is else -- this case is very common
-								       (let* ((c1-len (length (cdr last-clause)))
-									      (new-c1 (case c1-len
-											((1) #f)
-											((2) (cadr last-clause))
-											(else `(begin ,@(copy (cdr last-clause) (make-list (- c1-len 1)))))))
-									      (else-len (length (cdr else-clause)))
-									      (new-else (case else-len
-											  ((1) #f)
-											  ((2) (cadr else-clause))
-											  (else `(begin ,@(copy (cdr else-clause) (make-list (- else-len 1))))))))
-									 `(begin
-									    ,(if (= c1-len 1)
-										 (if new-else
-										     `(if (not ,(car last-clause)) ,new-else)
+				   (lint-format "perhaps ~A" caller
+						(lists->string form
+							       (if (= len 2)       ; one is else -- this case is very common
+								   (let* ((c1-len (length (cdr last-clause)))
+									  (new-c1 (case c1-len
+										    ((1) #f)
+										    ((2) (cadr last-clause))
+										    (else `(begin ,@(copy (cdr last-clause) (make-list (- c1-len 1)))))))
+									  (else-len (length (cdr else-clause)))
+									  (new-else (case else-len
+										      ((1) #f)
+										      ((2) (cadr else-clause))
+										      (else `(begin ,@(copy (cdr else-clause) (make-list (- else-len 1))))))))
+								     `(begin
+									,(if (= c1-len 1)
+									     (if new-else
+										 `(if (not ,(car last-clause)) ,new-else)
+										 (car last-clause))
+									     (if (= else-len 1)
+										 (if new-c1
+										     `(if ,(car last-clause) ,new-c1)
 										     (car last-clause))
-										 (if (= else-len 1)
-										     (if new-c1
-											 `(if ,(car last-clause) ,new-c1)
-											 (car last-clause))
-										     `(if ,(car last-clause) ,new-c1 ,new-else)))
-									    ,result))
-								       `(begin          ; this almost never happens
-									  (cond ,@(map (lambda (c)
-											 (let ((len (length c)))
-											   (if (= len 2)
-											       (if (or (memq (car c) '(else #t))
-												       (not (side-effect? (car c) env)))
-												   (values)
-												   (car c))
-											       (copy c (make-list (- len 1))))))
-										      (cdr form)))
-									  ,result)))))))
+										 `(if ,(car last-clause) ,new-c1 ,new-else)))
+									,result))
+								   `(begin          ; this almost never happens
+								      (cond ,@(map (lambda (c)
+										     (let ((len (length c)))
+										       (if (= len 2)
+											   (if (or (memq (car c) '(else #t))
+												   (not (side-effect? (car c) env)))
+											       (values)
+											       (car c))
+											   (copy c (make-list (- len 1))))))
+										   (cdr form)))
+								      ,result)))))))
 			     ;; a few dozen hits here
 			     ;;   the 'case parallel gets 2 hits, complex selectors
 			     ;;   len = (- (length form) 1) = number of clauses
@@ -15014,7 +15014,7 @@
 			(lambda (local-var)
 			  (let ((vname (var-name local-var)))
 			    
-			    ;; ideally we'd collect vars that fir into one let etc
+			    ;; ideally we'd collect vars that fit into one let etc
 			    (when (> (length body) (* 5 (var-set local-var)) 0)
 			      (do ((i 0 (+ i 1))
 				   (preref #f)
@@ -15292,7 +15292,7 @@
 								    ...)))))))))
 
 		       (when (and (pair? varlist)
-				  (> (length body) 3)
+				  (> (length body) 3)  ; setting this to 1 did not catch anything new
 				  (every? pair? varlist)
 				  (not (tree-set-car-member '(define define* define-macro define-macro* 
 							       define-bacro define-bacro* define-constant define-expansion) 
@@ -15407,9 +15407,9 @@
 									     ,@(copy body (make-list (+ cur-end 1))))
 									   ,(list-ref body (+ cur-end 1))
 									   ...)))))
-					))))
+					  ))))
 			     
-			     ;; do body
+			     ;; body of do loop above
 			     (if (and (not got-lambdas)
 				      (pair? (car p))
 				      (pair? (cdr p))
@@ -15419,6 +15419,7 @@
 				 (if (not (side-effect? (caddar p) env))
 				     (lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form))
 				     (lint-format "perhaps ~A" caller (lists->string (car p) (caddar p)))))
+			     ;; 1 use in cadr and none thereafter happens a few times, but looks like set-as-documentation mostly
 			     
 			     (for-each (lambda (v)
 					 (when (tree-memq (v 0) (car p))
@@ -16239,8 +16240,8 @@
 	  (define (require-walker caller form env)
 	    (if (not (pair? (cdr form)))
 		(lint-format "~A is pointless" caller form)
-		(if (not (every? symbol? (cdr form)))
-		    (lint-format "in s7, require's arguments should be unquoted symbols: ~A" caller (truncated-list->string form))))
+		(if (any? string? (cdr form))
+		    (lint-format "in s7, require's arguments should be symbols: ~A" caller (truncated-list->string form))))
 	    (if (not *report-loaded-files*)
 		env
 		(let ((vars env))
@@ -16583,30 +16584,29 @@
 								  (car arg) head
 								  (truncated-list->string (list-ref body (- len 1))))))))
 				     (when (eq? (car arg) 'or)
-				       (let* ((arglen (length arg))
-					      (last-clause (list-ref arg (- arglen 1)))
-					      (else-clause (if (and (pair? last-clause)
-								    (memq (car last-clause) '(error throw)))
-							       last-clause
-							       (if (and (code-constant? last-clause)
-									(not (side-effect? `(,head ,last-clause) env)))
-								   (let ((res (checked-eval `(,head ,last-clause))))
-								     (if (or (and (symbol? res)
-										  (not (eq? res :checked-eval-error)))
-									     (pair? res))
-									 (list 'quote res)
-									 res))
-								   :checked-eval-error))))
+				       (let ((else-clause (let ((last-clause (list-ref arg (- (length arg) 1))))
+							    (if (and (pair? last-clause)
+								     (memq (car last-clause) '(error throw)))
+								last-clause
+								(if (or (not (code-constant? last-clause))
+									(side-effect? `(,head ,last-clause) env))
+								    :checked-eval-error
+								    (let ((res (checked-eval `(,head ,last-clause))))
+								      (if (or (and (symbol? res)
+										   (not (eq? res :checked-eval-error)))
+									      (pair? res))
+									  (list 'quote res)
+									  res)))))))
 					 (when (not (eq? else-clause :checked-eval-error))
 					   (set! last-rewritten-internal-define form)
-					     (lint-format "perhaps ~A" caller
-							  (lists->string form
-									 `(cond (,(if (or (null? (cddr arg))
-											  (null? (cdddr arg)))
-										      (cadr arg)
-										      (copy arg (make-list (- arglen 1))))
-										 => ,head)
-										(else ,else-clause))))))))))
+					   (lint-format "perhaps ~A" caller
+							(lists->string form
+								       `(cond (,(if (or (null? (cddr arg))
+											(null? (cdddr arg)))
+										    (cadr arg)
+										    (copy arg (make-list (- (length arg) 1))))
+									       => ,head)
+									      (else ,else-clause))))))))))
 
 			       (unless (or (<= branches 2)
 					   (any-macro? head env)
@@ -17460,27 +17460,10 @@
 ;;;   (abs|magnitude (- x y)) is reversible internally
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
-;;; the ((lambda ...)) -> let rewriter is still tricked by values
-;;; c-side type checkers need ways to merge into lint's type compatibilty checks (mus-generator etc)
-;;;   current case statements could be ((hash-table-ref...)...) -- too messy?
+;;;   the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
-;;; snd|hg-results have a lot of changes
-;;; top-level variables are not checked for scope reduction -- use let-walker code? lint-walk-body 9960
-;;;   need to collect top-level defines somewhere: lint-file will return the new vars I think -- 16900
-;;;   lint-walk-body code looks reusable but how to create the "body" -- at top level there is no list
-;;;   perhaps handle the positions/top-level-defines as we go?
-;;;   (varlet (curlet) (let ((lv1...)(lv2...)) (define (f1...)) (define (f2...)) (inlet 'f1 f1 'f2 f2)))
-;;; let+cond/case, let+do moving subsequent->do return?
+;;; hg-results has a lot of changes
+;;; let+do moving subsequent->do return? [15252]
 ;;;
-;;; for any no-side-effect? function with a signature, test all cases?
-;;;   for each type, need maker/set of cases
-;;;
-;;; 148 24013 649199
-
-
-;;; <1> (catch (list 1 2) (lambda () (throw (list 1 2))) (lambda args args))
-;;; error:
-;;; is this s7 or repl? -- repl
-;;; ok: (let ((x (list 1 2))) (catch x (lambda () (throw x)) (lambda args args)))
-
+;;; 148 24013 648416

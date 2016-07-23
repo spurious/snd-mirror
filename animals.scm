@@ -2506,9 +2506,6 @@
 	  (frq-envs (make-vector 10 #f))
 	  (gen1 (make-oscil))
 	  (gen2 (make-oscil))
-	  (peep 0)
-	  (peep-dur 0)
-	  (peep-start 0)
 	  (durs (let ((v (make-vector 10 0.0)))
 		  (do ((i 0 (+ i 1)))
 		      ((= i 10))
@@ -2545,26 +2542,26 @@
 				       :scaler (hz->radians (- (high-frqs i) (low-frqs i))) 
 				       :offset (hz->radians (low-frqs i))
 				       :duration (durs i)))))
-      (set! peep-dur (seconds->samples (durs 0)))
-      (set! peep-start (+ start (seconds->samples (begs 0))))
-
       (call-with-exit
        (lambda (done)
-	 (do ((i peep-start peep-start))
-	     ((>= i stop))
-	   (let ((fe (frq-envs peep))
-		 (ae (amp-envs peep))
-		 (reset-stop (min stop (+ i peep-dur))))
-	     (do ((k i (+ k 1)))
-		 ((= k reset-stop))
-	       (let ((frq (+ (env fe) (rand-interp rnd))))
-		 (outa k (* (env ae)
-			    (oscil gen1 frq 
-				   (* .03 (oscil gen2 (* 2.0 frq)))))))))
-	   (set! peep (+ peep 1))
-	   (if (>= peep 10) (done))
-	   (set! peep-start (+ start (seconds->samples (begs peep))))
-	   (set! peep-dur (seconds->samples (durs peep)))))))))
+	 (let ((peep 0)
+	       (peep-dur (seconds->samples (durs 0)))
+	       (peep-start (+ start (seconds->samples (begs 0)))))
+	   (do ((i peep-start peep-start))
+	       ((>= i stop))
+	     (let ((fe (frq-envs peep))
+		   (ae (amp-envs peep))
+		   (reset-stop (min stop (+ i peep-dur))))
+	       (do ((k i (+ k 1)))
+		   ((= k reset-stop))
+		 (let ((frq (+ (env fe) (rand-interp rnd))))
+		   (outa k (* (env ae)
+			      (oscil gen1 frq 
+				     (* .03 (oscil gen2 (* 2.0 frq)))))))))
+	     (set! peep (+ peep 1))
+	     (if (>= peep 10) (done))
+	     (set! peep-start (+ start (seconds->samples (begs peep))))
+	     (set! peep-dur (seconds->samples (durs peep))))))))))
 
 
 ;; (with-sound (:play #t) (fox-sparrow 0 3 .25))
@@ -8925,31 +8922,31 @@
 		     (polywave gen1 (+ (env frqf1)
 				       (* (env vibf) (oscil vib))))))))))
   
-  (let ((main-ampf '(0.000 0.000 0.321 0.215 0.679 0.569 0.826 0.992 0.874 1.000 1.000 0.000))
-	(main-frqf '(0.000 0.228 0.795 0.210 0.816 0.235 0.827 0.199 0.846 0.217 0.882 0.181 1.000 0.206))
-	(other-ampf '(0.000 0.000 0.139 0.356 0.541 0.652 0.766 0.838 0.834 1.000 0.932 0.257 1.000 0.000)))
-    
-    (black-throated-blue-warbler-1 beg1 .053 (* .2 amp1) 
-				   '(0.000 0.000 0.017 0.079 0.082 0.142 0.142 0.122 0.199 0.213 0.237 0.150 0.291 0.201 
-					   0.317 0.102 0.352 0.197 0.395 0.248 0.415 0.201 0.435 0.335 0.468 0.323 0.488 0.429 
-					   0.514 0.350 0.581 0.870 0.616 0.583 0.678 0.697 0.709 0.618 0.752 1.000 0.801 0.350 
-					   0.815 0.295 0.838 0.500 0.895 0.197 0.911 0.366 0.929 0.220 0.955 0.248 0.972 0.134 
-					   0.987 0.197 1.000 0.000)
-				   22000 
-				   '(0.000 0.222 0.038 0.204 0.099 0.208 0.134 0.197 0.205 0.208 0.244 0.186 0.288 0.211 
-					   0.336 0.194 0.382 0.201 0.421 0.190 0.475 0.215 0.511 0.190 0.563 0.208 0.613 0.190
-					   0.656 0.208 0.695 0.194 0.755 0.194 1.000 0.133)
-				   10)
-    
-    (black-throated-blue-warbler-1 (+ beg1 .156) .11 (* .4 amp1) main-ampf 20000 main-frqf 100)
-    (black-throated-blue-warbler-1 (+ beg1 .33) .135 (* .6 amp1) main-ampf 21000 main-frqf 200)
-    (black-throated-blue-warbler-1 (+ beg1 .33) .135 (* .6 amp1) main-ampf 22000 main-frqf 200)
-    (black-throated-blue-warbler-1 (+ beg1 .51) .175 amp1 other-ampf 22400.0 main-frqf 200)
-    (black-throated-blue-warbler-1 (+ beg1 .72) .152 amp1 other-ampf 23000.0 main-frqf 200)
-    
-    (black-throated-blue-warbler-1 (+ beg1 .94) .23 (* .5 amp1) 
-				   '(0.000 0.000 0.022 0.300 0.067 0.788 0.191 0.919 0.331 0.958 0.581 1.000 0.805 0.946 0.929 0.773 1.000 0.000)
-				   5400.0 '(0 1 1 1) 400)))
+  (black-throated-blue-warbler-1 beg1 .053 (* .2 amp1) 
+				 '(0.000 0.000 0.017 0.079 0.082 0.142 0.142 0.122 0.199 0.213 0.237 0.150 0.291 0.201 
+					 0.317 0.102 0.352 0.197 0.395 0.248 0.415 0.201 0.435 0.335 0.468 0.323 0.488 0.429 
+					 0.514 0.350 0.581 0.870 0.616 0.583 0.678 0.697 0.709 0.618 0.752 1.000 0.801 0.350 
+					 0.815 0.295 0.838 0.500 0.895 0.197 0.911 0.366 0.929 0.220 0.955 0.248 0.972 0.134 
+					 0.987 0.197 1.000 0.000)
+				 22000 
+				 '(0.000 0.222 0.038 0.204 0.099 0.208 0.134 0.197 0.205 0.208 0.244 0.186 0.288 0.211 
+					 0.336 0.194 0.382 0.201 0.421 0.190 0.475 0.215 0.511 0.190 0.563 0.208 0.613 0.190
+					 0.656 0.208 0.695 0.194 0.755 0.194 1.000 0.133)
+				 10)
+  
+  (let ((main-frqf '(0.000 0.228 0.795 0.210 0.816 0.235 0.827 0.199 0.846 0.217 0.882 0.181 1.000 0.206)))
+    (let ((main-ampf '(0.000 0.000 0.321 0.215 0.679 0.569 0.826 0.992 0.874 1.000 1.000 0.000)))
+      (black-throated-blue-warbler-1 (+ beg1 .156) .11 (* .4 amp1) main-ampf 20000 main-frqf 100)
+      (black-throated-blue-warbler-1 (+ beg1 .33) .135 (* .6 amp1) main-ampf 21000 main-frqf 200)
+      (black-throated-blue-warbler-1 (+ beg1 .33) .135 (* .6 amp1) main-ampf 22000 main-frqf 200))
+
+    (let ((other-ampf '(0.000 0.000 0.139 0.356 0.541 0.652 0.766 0.838 0.834 1.000 0.932 0.257 1.000 0.000)))
+      (black-throated-blue-warbler-1 (+ beg1 .51) .175 amp1 other-ampf 22400.0 main-frqf 200)
+      (black-throated-blue-warbler-1 (+ beg1 .72) .152 amp1 other-ampf 23000.0 main-frqf 200)))
+  
+  (black-throated-blue-warbler-1 (+ beg1 .94) .23 (* .5 amp1) 
+				 '(0.000 0.000 0.022 0.300 0.067 0.788 0.191 0.919 0.331 0.958 0.581 1.000 0.805 0.946 0.929 0.773 1.000 0.000)
+				 5400.0 '(0 1 1 1) 400))
 
 ;; (with-sound (:play #t) (black-throated-blue-warbler 0 .5))
 

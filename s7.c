@@ -2038,6 +2038,7 @@ static int not_heap = -1;
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
 #define set_next_slot(p, Val)         (_TSlt(p))->object.slt.nxt = _TSln(Val)
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
+#define slot_set_pending_value(p, Val) (_TSlt(p))->object.slt.pending_value = _NFre(Val)
 #define slot_expression(p)            (_TSlt(p))->object.slt.expr
 #define slot_set_expression(p, Val)   (_TSlt(p))->object.slt.expr = _NFre(Val)
 #define slot_accessor(p)              slot_expression(p)
@@ -28800,31 +28801,32 @@ The symbols refer to the argument to \"provide\"."
   sc->temp5 = cons(sc, args, sc->temp5);
   for (p = args; is_pair(p); p = cdr(p))
     {
+      s7_pointer sym;
       if (is_symbol(car(p)))
-	{
-	  if (!is_slot(find_symbol(sc, car(p))))
-	    {
-	      s7_pointer f;
-	      f = g_autoloader(sc, p);
-	      if (is_string(f))
-		s7_load_with_environment(sc, string_value(f), sc->envir);
-	      else
-		{
-		  sc->temp5 = sc->nil;
-		  return(s7_error(sc, make_symbol(sc, "autoload-error"), 
-				  set_elist_2(sc, make_string_wrapper(sc, "require: no autoload info for ~S"), car(p))));
-		}
-	    }
-	}
+	sym = car(p);
       else
 	{
-	  sc->temp5 = sc->nil;
-	  if ((is_pair(car(p))) && (caar(p) == sc->quote_symbol))
-	    return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "require: don't quote ~S"), car(p))));
-	  return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "require: ~S is not a symbol"), car(p))));
+	  if ((is_pair(car(p))) && 
+	      (caar(p) == sc->quote_symbol) &&
+	      (is_symbol(cadar(p))))
+	    sym = cadar(p);
+	  else return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "require: ~S is not a symbol"), car(p))));
+	}
+      if (!is_slot(find_symbol(sc, sym)))
+	{
+	  s7_pointer f;
+	  f = g_autoloader(sc, list_1(sc, sym));
+	  if (is_string(f))
+	    s7_load_with_environment(sc, string_value(f), sc->envir);
+	  else
+	    {
+	      sc->temp5 = sc->nil; 
+	      return(s7_error(sc, make_symbol(sc, "autoload-error"), 
+			      set_elist_2(sc, make_string_wrapper(sc, "require: no autoload info for ~S"), sym)));
+	    }
 	}
     }
-  sc->temp5 = cdr(sc->temp5);
+  sc->temp5 = cdr(sc->temp5); /* in-coming value */
   return(sc->T);
 }
 
@@ -45438,7 +45440,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
       int true_loc;
 
       true_loc = (int)(loc + 1) * 4 - 1;
-      code = stack_code(sc->stack, true_loc);
+      code = stack_code(sc->stack, true_loc); /* can code be free here? [hit this once, could not repeat it] */
 
       if (is_pair(code))
 	{
@@ -58106,7 +58108,7 @@ static bool dox_pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, s7_functio
 
 	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
 		if (is_pair(slot_expression(slot)))
-		  slot_pending_value(slot) = c_call(slot_expression(slot))(sc, car(slot_expression(slot)));
+		  slot_set_pending_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
 	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
 		if (is_pair(slot_expression(slot)))
 		  slot_set_value(slot, slot_pending_value(slot));
@@ -58140,7 +58142,7 @@ static bool dox_pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, s7_functio
 	      
 	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
 		if (is_pair(slot_expression(slot)))
-		  slot_pending_value(slot) = c_call(slot_expression(slot))(sc, car(slot_expression(slot)));
+		  slot_set_pending_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
 	      for (slot = slots; is_slot(slot); slot = next_slot(slot))
 		if (is_pair(slot_expression(slot)))
 		  slot_set_value(slot, slot_pending_value(slot));
@@ -60334,7 +60336,7 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
 	      add_slot(sc->envir, car(car_z), sc->undefined);
 	      y = let_slots(sc->envir);
 	      slot_set_expression(y, cadr(car_z));
-	      slot_pending_value(y) = sc->nil;
+	      slot_set_pending_value(y, sc->nil);
 	      if (!top)
 		{
 		  top = y;
@@ -60342,7 +60344,7 @@ static int apply_lambda_star(s7_scheme *sc) 	                  /* -------- defin
 		}
 	      else
 		{
-		  slot_pending_value(nxt) = y;
+		  slot_set_pending_value(nxt, y);
 		  nxt = y;
 		}
 	    }
@@ -64088,7 +64090,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    for (args = cdr(code), p = let_slots(e), orig_args = closure_args(opt_lambda(code));
 			 is_pair(args);
 			 args = cdr(args), orig_args = cdr(orig_args), p = next_slot(p))
-		      slot_pending_value(p) = c_call(args)(sc, car(args));
+		      slot_set_pending_value(p, c_call(args)(sc, car(args)));
 		    
 		    /* we're out of caller's args, so fill rest of environment slots from the defaults */
 		    for (; is_slot(p); p = next_slot(p), orig_args = cdr(orig_args))
@@ -64098,10 +64100,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  {
 			    defval = cadar(orig_args);
 			    if (is_pair(defval))
-			      slot_pending_value(p) = cadr(defval);
-			    else slot_pending_value(p) = defval;
+			      slot_set_pending_value(p, cadr(defval));
+			    else slot_set_pending_value(p, defval);
 			  }
-			else slot_pending_value(p) = sc->F;
+			else slot_set_pending_value(p, sc->F);
 		      }
 		    
 		    /* we have to put off the actual environment update in case this is a tail recursive call */
@@ -66760,7 +66762,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  s7_pointer slot;
 		  slot = make_slot_1(sc, sc->envir, caar(x), sc->undefined);
-		  slot_pending_value(slot) = sc->undefined;
+		  slot_set_pending_value(slot, sc->undefined);
 		  slot_set_expression(slot, cadar(x));
 		  set_checked_slot(slot);
 		}
@@ -66774,7 +66776,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LETREC1:
-	  slot_pending_value(sc->args) = sc->value;
+	  slot_set_pending_value(sc->args, sc->value);
 	  sc->args = next_slot(sc->args);
 	  if (is_slot(sc->args))
 	    {
@@ -74262,6 +74264,7 @@ s7_scheme *s7_init(void)
   s7_function_set_setter(sc, "string-ref",       "string-set!");
   c_function_set_setter(slot_value(global_slot(sc->outlet_symbol)), s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter"));
   c_function_set_setter(slot_value(global_slot(sc->port_line_number_symbol)), s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter"));
+
   {
     int i, top;
 #if WITH_GMP
@@ -74539,14 +74542,13 @@ int main(int argc, char **argv)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
  * with-let and unlet don't need to be constants
- * let-lambda(*) -- first arg is let, rest are let vars being set, then body with-let
+ * let-let -- first arg is let, rest are let vars being set, then body with-let
  *   this could be a macro, but better built-in (generators)
- * symbol as arg of eq? memq defined? case-selector: use gensym?
- * might be nice to add setters for imag|real-part: (set! (imag-part x) 3) error: no generalized set for imag-part,
- *   but then why not numerator/denominator?  
+ *   (with-let! (e :x 32 :y 12) (+ x y)) where 'e has 'x and 'y fields
+ * symbol as arg of eq? memq defined? case-selector: use gensym? [i.e. don't put make the computed symbol permanent]
  * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
  *   but how to tie into a list without allocation?
- * provide and require should take parallel arguments
+ * provide/require should use keywords -- then require could be a function
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
