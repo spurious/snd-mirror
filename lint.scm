@@ -1199,8 +1199,7 @@
     (define (never-false expr)
       (or (eq? expr #t)
 	  (let ((type (if (pair? expr)
-			  (and (hash-table-ref no-side-effect-functions (car expr))
-			       (return-type (car expr) ()))
+			  (return-type (car expr) ())
 			  (->lint-type expr))))
 	    (and (symbol? type)
 		 (not (symbol? expr))
@@ -3301,6 +3300,16 @@
 						     (eq? (cadr arg1) (cadr arg2)))
 					    (return `(< 0 ,(cadr arg1) ,(caddr arg2))))))
 
+				      (when (and (member (cadr arg1) arg2)
+						 (memq (car arg2) '(string=? char=? eq? eqv? equal?))
+						 (null? (cdddr arg2))
+						 (hash-table-ref bools (car arg1))
+						 (or (and (code-constant? (cadr arg2))
+							  (compatible? (car arg1) (->lint-type (cadr arg2))))
+						     (and (code-constant? (caddr arg2))
+							  (compatible? (car arg1) (->lint-type (caddr arg2))))))
+					(return `(,(if (eq? (car arg1) 'char?) ,eqv? 'equal?) ,@(cdr arg2))))
+
 				      (when (and (equal? (cadr arg1) (cadr arg2))
 						 (eq? (car arg1) 'inexact?)
 						 (eq? (car arg2) 'real?))
@@ -3866,9 +3875,7 @@
 					    (null? (cddr arg2)))
 				       `(* ,(cadr arg1) ,(cadr arg2)))
 				      
-				      ((and (pair? arg1)           ; (* (/ x) (/ y)) -> (/ (* x y)) etc
-					    (pair? arg2)
-					    (eq? op1 '/)
+				      ((and (eq? op1 '/)           ; (* (/ x) (/ y)) -> (/ (* x y)) etc
 					    (eq? op2 '/))
 				       (let ((op1-arg1 (cadr arg1))
 					     (op2-arg1 (cadr arg2)))
@@ -3895,7 +3902,20 @@
 				      ((and (eq? op1 'exp)         ; (* (exp a) (exp b)) -> (exp (+ a b))
 					    (eq? op2 'exp))
 				       `(exp (+ ,(cadr arg1) ,(cadr arg2))))
-				      
+
+				      ((and (eq? op1 'sqrt)        ; (* (sqrt x) (sqrt y)) -> (sqrt (* x y))
+					    (eq? op2 'sqrt))
+				       `(sqrt (* ,(cadr arg1) ,(cadr arg2))))
+
+				      ((not (and (eq? op1 'expt) (eq? op2 'expt)))
+				       `(* ,@val))
+
+				      ((equal? (cadr arg1) (cadr arg2)) ; (* (expt x y) (expt x z)) -> (expt x (+ y z))
+				       `(expt ,(cadr arg1) (+ ,(caddr arg1) ,(caddr arg2))))
+
+				      ((equal? (caddr arg1) (caddr arg2)) ; (* (expt x y) (expt z y)) -> (expt (* x z) y)
+				       `(expt (* ,(cadr arg1) ,(cadr arg2)) ,(caddr arg1)))
+
 				      (else `(* ,@val)))))
 			      
 			     ((and (number? arg1)                  ; (* 2 (random 3.0)) -> (random 6.0)
@@ -4179,6 +4199,16 @@
 							       val)
 							     p))
 						       (cdr arg1)))))))
+
+				((and (pair? arg1)            ; (/ (sqrt x) x) -> (/ (sqrt x))
+				      (eq? (car arg1) 'sqrt)
+				      (equal? (cadr arg1) arg2))
+				 `(/ ,arg1))
+				
+				((and (pair? arg2)            ; (/ x (sqrt x)) -> (sqrt x)
+				      (eq? (car arg2) 'sqrt)
+				      (equal? (cadr arg2) arg1))
+				 arg2)
 				
 				(else `(/ ,@args))))))))
 
@@ -4200,6 +4230,10 @@
 			      `(/ ,@(cons (car args) nargs)))))))))
 	    
 	    ((sin cos tan asin acos sinh cosh tanh asinh acosh atanh exp)
+	     ;; perhaps someday, for amusement:
+	     ;;    (sin (acos x)) == (cos (asin x)) == (sqrt (- 1 (expt x 2)))
+	     ;;    (asin (cos x)) == (acos (sin x)) == (- (* 1/2 pi) x)
+
 	     (cond ((not (= len 1))
 		    `(,(car form) ,@args))
 		   ((and (pair? (car args))                 ; (sin (asin x)) -> x
@@ -4251,26 +4285,35 @@
 	    
 	    ((log)
 	     (cond ((not (pair? args)) form)
-		   ((eqv? (car args) 1) 0)    ; (log 1 ...) -> 0
-		   ((and (= len 1)            ; (log (exp x)) -> x
+		   ((eqv? (car args) 1) 0)      ; (log 1 ...) -> 0
+		   ((and (= len 1)              ; (log (exp x)) -> x
 			 (pair? (car args))
 			 (= (length (car args)) 2)
 			 (eq? (caar args) 'exp))
 		    (cadar args))
-		   ((not (and (= len 2)            ; (log x x) -> 1.0
+		   ((and (pair? (car args))     ; (log (sqrt x)) -> (* 1/2 (log x))
+			 (eq? (caar args) 'sqrt))
+		    `(* 1/2 (log ,(cadar args) ,@(cdr args))))
+		   ((and (pair? (car args))     ; (log (expt x y)) -> (* y (log x))
+			 (eq? (caar args) 'expt))
+		    `(* ,(caddar args) (log ,(cadar args) ,@(cdr args))))
+		   ((not (and (= len 2)         ; (log x x) -> 1.0
 			      (equal? (car args) (cadr args))))
 		    `(log ,@args))
 		   ((integer? (car args)) 1)
 		   (else 1.0)))
 	    
 	    ((sqrt)
-	     (if (not (pair? args))
-		 form
-		 (if (and (rational? (car args))
-			  (rational? (sqrt (car args)))
-			  (= (car args) (* (sqrt (car args)) (sqrt (car args)))))
-		     (sqrt (car args)) ; don't collapse (sqrt (* a a)), a=-1 for example, or -1-i -> 1+i whereas 1-i -> 1-i etc
-		     `(sqrt ,@args))))
+	     (cond ((not (pair? args))
+		    form)
+		   ((and (rational? (car args))
+			 (rational? (sqrt (car args)))
+			 (= (car args) (sqrt (* (car args) (car args)))))
+		    (sqrt (car args))) ; don't collapse (sqrt (* a a)), a=-1 for example, or -1-i -> 1+i whereas 1-i -> 1-i etc
+		   ((and (pair? (car args))
+			 (eq? (caar args) 'exp))
+		    `(exp (/ ,(cadar args) 2))) ; (sqrt (exp x)) -> (exp (/ x 2))
+		   (else `(sqrt ,@args))))
 	    
 	    ((floor round ceiling truncate)
 	     (cond ((not (= len 1))
@@ -4453,7 +4496,10 @@
 			      val
 			      `(expt ,@args))))
 		      (lambda args
-			`(expt ,@args))))
+			`(expt ,@args))))               ; (expt (expt x y) z) -> (expt x (* y z))
+		   ((and (pair? (car args))
+			 (eq? (caar args) 'expt))
+		    `(expt ,(cadar args) (* ,(caddar args) ,(cadr args))))
 		   (else `(expt ,@args))))
 
 	    
@@ -5945,6 +5991,7 @@
 			   (lint-format "perhaps ~A" caller
 					(lists->string form `(,(if (eq? (caadr form) 'char-upcase) 'string-upcase 'string-downcase)
 							      (string ,@(map cadr (cdr form)))))))))))
+	 ;; repeated args as in vector/list (sp-list below) got no hits
 	(hash-table-set! h 'string sp-string))
 	
 	;; ---------------- string? ----------------
@@ -7285,6 +7332,31 @@
 	 
 	 (hash-table-set! h 'substring sp-substring))
 	
+	;; ---------------- list vector ----------------
+	(let ()
+	  (define (sp-list caller head form env)
+	    (let ((len (length form))
+		  (val (and (pair? (cdr form))
+			    (cadr form))))
+	      (when (and (> len 2)
+			 (every? (lambda (a) (equal? a val)) (cddr form)))
+		(if (code-constant? val)
+		    (if (> len 4)
+			(lint-format "perhaps ~A" caller
+				     (lists->string form `(,(if (eq? head 'list) 'make-list 'make-vector) ,(- len 1) ,val))))
+		    (if (pair? val)
+			(if (and (not (side-effect? val env))
+				 (not (memq (car val) makers)))
+			    (lint-format "perhaps ~A" caller
+					 (lists->string  form `(,(if (eq? head 'list) 'make-list 'make-vector) ,(- len 1) ,val)))
+			    (if (> (tree-leaves val) 2)
+				(lint-format "perhaps ~A" caller
+					     (lists->string form 
+							    `(let ((_1_ (lambda () ,val)))
+							       (,head ,@(make-list (- len 1) '(_1_)))))))))))))
+	  (hash-table-set! h 'list sp-list)
+	  (hash-table-set! h 'vector sp-list))
+
 	;; ---------------- list-tail ----------------
 	(let ()
 	  (define (sp-list-tail caller head form env)
@@ -12208,12 +12280,12 @@
 				  (or (not (hash-table-ref syntaces true-op))
 				      (memq true-op '(set! and or begin)))
 				  (pair? (cdr true)))
-			 
+
 			 (define (tree-subst-eq new old tree) 
 			   ;; tree-subst above substitutes every occurence of 'old with 'new, so we check
 			   ;;   in advance that 'old only occurs once in the tree (via tree-count1).  Here
 			   ;;   'old may occur any number of times, but we want to change it only once,
-			   ;;   so we keep the actual pointer to it and use eq?.
+			   ;;   so we keep the actual pointer to it and use eq?.  (This assumes no shared code?)
 			   (cond ((eq? old tree)
 				  (cons new (cdr tree)))
 				 ((not (pair? tree)) 
@@ -12223,16 +12295,20 @@
 				 (else (cons (tree-subst-eq new old (car tree))
 					     (tree-subst-eq new old (cdr tree))))))
 			 
+			 ;; maybe move the unless before this 
 			 (let ((diff (let differ-in-one ((p true)
 							 (q false))
 				       (and (pair? p)
 					    (pair? q)
 					    (if (equal? (car p) (car q))
 						(differ-in-one (cdr p) (cdr q))
-						(and (not (pair? (car p)))
-						     (not (pair? (car q)))
-						     (equal? (cdr p) (cdr q))
-						     (list p (list (car p) (car q)))))))))
+						(and (equal? (cdr p) (cdr q))
+						     (or (and (pair? (car p))
+							      (not (eq? (caar p) 'quote))
+							      (pair? (car q))
+							      (not (eq? (caar q) 'quote))
+							      (differ-in-one (car p) (car q)))
+							 (list p (list (car p) (car q))))))))))
 			   (if (pair? diff)
 			       (unless (or (and (equal? true-op (caadr diff)) ; (if z (or x (g y)) (and (f x) y))? 
 						(or (memq true-op '(or and))
@@ -14170,8 +14246,18 @@
 								 `(if (,op ,selector ',keylist) ,(cadar clauses) ,(cadadr clauses)))
 
 								(else 
-								 `(if (,op ,selector ,keylist) ,(cadar clauses) ,(cadadr clauses)))))))))))
-		  
+								 (let ((select-expr (if (and (eq? op 'eqv?)
+											     (boolean? keylist)
+											     (or (and (symbol? selector)
+												      (not keylist))
+												 (and (pair? selector)
+												      (symbol? (car selector))
+												      (let ((sig (arg-signature (car selector) env)))
+													(and (pair? sig)
+													     (eq? (car sig) 'boolean?))))))
+											(if keylist selector `(not ,selector))
+											`(,op ,selector ,keylist))))
+								   `(if ,select-expr ,(cadar clauses) ,(cadadr clauses))))))))))))
 		  (if (and (not (pair? selector))
 			   (constant? selector))
 		      (lint-format "case selector is a constant: ~A" caller (truncated-list->string form)))
@@ -15251,7 +15337,7 @@
 		       (when (and (pair? (car body))
 				  (eq? (caar body) 'do))
 
-			 (when (and (null? (cdr body))
+			 (when (and (null? (cdr body))  ; removing this restriction gets only 3 hits
 				    (pair? (cadar body)))
 			   (let ((inits (map cadr (cadar body))))
 			     (when (every? (lambda (v)
@@ -16523,7 +16609,8 @@
 
     (define lint-walk-pair 
       (let ((unsafe-makers '(sublet inlet copy cons list append make-shared-vector vector hash-table hash-table* 
-			     make-hash-table make-hook #_{list} #_{append} gentemp or and not)))
+			     make-hash-table make-hook #_{list} #_{append} gentemp or and not))
+	    (qq-form #f))
 	(lambda (caller form env)
 	  (let ((head (car form)))
 	    (set! line-number (pair-line-number form))
@@ -16597,7 +16684,7 @@
 									      (pair? res))
 									  (list 'quote res)
 									  res)))))))
-					 (when (not (eq? else-clause :checked-eval-error))
+					 (unless (eq? else-clause :checked-eval-error)
 					   (set! last-rewritten-internal-define form)
 					   (lint-format "perhaps ~A" caller
 							(lists->string form
@@ -16833,18 +16920,23 @@
 									  (cons form (hash-table-ref other-identifiers sym)))))))))
 				     (cdr form))
 			   
-			   (when (eq? head #_{list})
+			   (when (and (eq? head #_{list})
+				      (not (eq? lint-current-form qq-form)))
 			     (let ((len (length form)))
+			       (set! qq-form lint-current-form) ; only interested in simplest cases here
 			       (case len
 				 ((2)
 				  (if (and (pair? (cadr form))
-					   (eq? (caadr form) #_{apply_values})     ; `(,@x) -> (copy x)
+					   (eq? (caadr form) #_{apply_values})  ; `(,@x) -> (copy x)
 					   (not (qq-tree? (cadadr form))))
 				      (lint-format "perhaps ~A" caller
 						   (lists->string form
 								  (un_{list} (if (pair? (cadadr form))
 										 (cadadr form)
-										 `(copy ,(cadadr form))))))))
+										 `(copy ,(cadadr form))))))
+				      (if (symbol? (cadr form))                
+					  (lint-format "perhaps ~A" caller      ; `(,x) -> (list x) 
+						       (lists->string form `(list ,(cadr form)))))))
 				 ((3)
 				  (if (and (pair? (caddr form))
 					   (eq? (caaddr form) #_{apply_values})
@@ -16856,9 +16948,8 @@
 						   (lists->string form 
 								  `(append ,(un_{list} (cadadr form)) 
 									   ,(un_{list} (cadr (caddr form))))))))
-					  
 				 (else 
-				  (if (every? (lambda (a)          ; `(,@x ,@y etc) -> (append x y ...)
+				  (if (every? (lambda (a)                       ; `(,@x ,@y etc) -> (append x y ...)
 						(and (pair? a)
 						     (eq? (car a) #_{apply_values})
 						     (not (qq-tree? (cdr a)))))
@@ -17464,6 +17555,5 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; let+do moving subsequent->do return? [15252]
 ;;;
-;;; 148 24013 648416
+;;; 148 24013 648401

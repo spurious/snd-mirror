@@ -2414,7 +2414,7 @@ static int write_rf64_header(int fd, int wsrate, int wchans, mus_long_t size, mu
 
 static int mus_header_convert_riff_to_rf64(const char *filename, mus_long_t size)
 {
-  int err = MUS_NO_ERROR, fd;
+  int err, fd;
 
   update_rf64_location = -1;
   update_ssnd_location = 0;
@@ -6513,7 +6513,7 @@ int mus_header_change_srate(const char *filename, mus_header_t type, int new_sra
 
 int mus_header_change_type(const char *filename, mus_header_t new_type, mus_sample_t new_format)
 {
-  int err = MUS_NO_ERROR;
+  int err;
   /* open temp, write header, copy data, replace original with temp */
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
@@ -6693,7 +6693,7 @@ int mus_header_change_location(const char *filename, mus_header_t type, mus_long
 
 int mus_header_change_comment(const char *filename, mus_header_t type, const char *new_comment)
 {
-  int err = MUS_NO_ERROR;
+  int err;
   err = mus_header_read(filename);
   if (err == MUS_NO_ERROR)
     {

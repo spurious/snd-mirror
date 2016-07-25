@@ -369,7 +369,7 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
 {
   char *tempfile = NULL;
   int id = INVALID_MIX_ID;
-  io_error_t io_err = IO_NO_ERROR;
+  io_error_t io_err;
 
   tempfile = snd_tempnam();
   io_err = save_selection(tempfile, snd_srate(cp->sound), MUS_OUT_SAMPLE_TYPE, MUS_NEXT, NULL, SAVE_ALL_CHANS);
@@ -1386,7 +1386,7 @@ static Xen g_selection_to_mix(void)
   if (selection_is_active())
     {
       chan_info *cp;
-      io_error_t io_err = IO_NO_ERROR;
+      io_error_t io_err;
       int i, id = INVALID_MIX_ID, chans = 0, sync = GET_NEW_SYNC;
       sync_info *si_out;
       Xen result = Xen_empty_list;

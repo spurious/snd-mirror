@@ -4914,7 +4914,6 @@ a file, it documents that you're using that function.
 In the more normal use, <code>(require snd-ws.scm)</code>
 looks for the file that has <code>(provide 'snd-ws.scm)</code>
 and if it hasn't already been loaded, loads it ("ws.scm" in this case).
-The "thing" passed to <code>require</code> is not quoted.
 To add your own files to this mechanism, add the provided symbol via <a href="#autoload">autoload</a>.
 Since load can take an environment argument, *features* and its friends follow block structure.
 So, for example, (let () (require stuff.scm) ...) loads "stuff.scm" into the local environment,

@@ -21650,7 +21650,7 @@ static void popup_error_handler(const char *msg, void *data)
 static void popup_cut_to_new_callback_1(bool cut) 
 {
   char *temp_file;
-  io_error_t io_err = IO_NO_ERROR;
+  io_error_t io_err;
 
   temp_file = snd_tempnam();
   io_err = save_selection(temp_file, selection_srate(), default_output_sample_type(ss), default_output_header_type(ss), NULL, SAVE_ALL_CHANS);

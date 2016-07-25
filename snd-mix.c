@@ -3432,7 +3432,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
     }
 
   {
-    file_delete_t delete_file = DONT_DELETE_ME;
+    file_delete_t delete_file;
 
     delete_file = xen_to_file_delete_t(auto_delete, S_mix);
     if ((delete_file == MULTICHANNEL_DELETION) || (delete_file == MULTICHANNEL_DELETION_IF_FILE))
@@ -3689,7 +3689,7 @@ static io_error_t save_mix(int id, const char *name, mus_header_t head_type, mus
   chan_info *cp;
   snd_info *sp;
   mix_state *ms;
-  io_error_t io_err = IO_NO_ERROR;
+  io_error_t io_err;
   mus_long_t framples;
 
   md = md_from_id(id);
