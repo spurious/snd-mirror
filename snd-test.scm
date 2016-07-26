@@ -14572,7 +14572,7 @@ EDITS: 2
 	  (let ((d (make-delay 1)))
 	    (delay d (filter b 1.0))
 	    (fill-float-vector v (delay d (filter b 0.0))))
-	  (if (not (mus-arrays-equal? v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))) ;; ???
+	  (if (not (mus-arrays-equal? v (make-float-vector 10)))
 	      (snd-display ";butter lp: ~A" v)))
 	(set! b (make-butter-lp 4 1000.0))
 	(map-channel (lambda (y) (filter b y)))
@@ -14587,7 +14587,7 @@ EDITS: 2
 	  (let ((d (make-delay 1)))
 	    (delay d (filter b 1.0))
 	    (fill-float-vector v (delay d (filter b 0.0))))
-	  (if (not (mus-arrays-equal? v (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+	  (if (not (mus-arrays-equal? v (make-float-vector 10)))
 	      (snd-display ";butter bp: ~A" v)))
 	(set! b (make-butter-bp 4 1000.0 1500.0))
 	(map-channel (lambda (y) (filter b y)))
@@ -14912,7 +14912,7 @@ EDITS: 2
       (if (not (mus-arrays-equal? gen (float-vector 0.080 0.115 0.215 0.364 0.540 0.716 0.865 1.000 1.000 0.865 0.716 0.540 0.364 0.215 0.115 0.080)))
 	  (snd-display ";hamming window: ~A" gen)))
     (let ((gen (make-fft-window rectangular-window 16)))
-      (if (not (mus-arrays-equal? gen (float-vector 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
+      (if (not (mus-arrays-equal? gen (make-float-vector 16 1.0)))
 	  (snd-display ";rectangular window: ~A" gen)))
     (let ((gen (make-fft-window hann-window 16)))
       (if (not (mus-arrays-equal? gen (float-vector 0.000 0.038 0.146 0.309 0.500 0.691 0.854 1.000 1.000 0.854 0.691 0.500 0.309 0.146 0.038 0.000)))
@@ -18638,9 +18638,7 @@ EDITS: 2
 		       (float-vector 0.000 0.005 0.009 0.014 0.018 0.023 0.027 0.032 0.036 0.041 0.045 0.050 0.055 0.059 0.064 0.068 
 				     0.073 0.077 0.082 0.086 0.091 0.095 0.100 0.105 0.105 0.105 0.105 0.105 0.105 0.105)))
 	  (snd-display ";gran 6 data: ~A" (channel->float-vector 0 30)))
-      (if (not (mus-arrays-equal? (channel->float-vector 85 30) 
-		       (float-vector 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 
-				     0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105 0.105)))
+      (if (not (mus-arrays-equal? (channel->float-vector 85 30) (make-float-vector 30 0.105)))
 	  (snd-display ";gran 6 data 85: ~A" (channel->float-vector 85 30)))
       (undo)
       
@@ -18913,9 +18911,7 @@ EDITS: 2
 		       (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
 				     0.060 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
 	  (snd-display ";granf 5 data 440: ~A" (channel->float-vector 440 30)))
-      (if (not (mus-arrays-equal? (channel->float-vector 800 30) 
-		       (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
-				     0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+      (if (not (mus-arrays-equal? (channel->float-vector 800 30) (make-float-vector 30 0.060)))
 	  (snd-display ";granf 5 data 800: ~A" (channel->float-vector 800 30)))
       (undo)
       
@@ -18931,9 +18927,7 @@ EDITS: 2
 	    (if (fneq mx 0.06) (snd-display ";granf 6 max: ~A" mx)))
 	  (if (> (abs (- (mus-length gen) (* .2 base-len))) 4)
 	      (snd-display ";granf 6 length: ~A ~A" (mus-length gen) (* .2 base-len)))))
-      (if (not (mus-arrays-equal? (channel->float-vector 0 30) 
-		       (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 
-				     0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060)))
+      (if (not (mus-arrays-equal? (channel->float-vector 0 30) (make-float-vector 30 0.060)))
 	  (snd-display ";granf 6 data: ~A" (channel->float-vector 0 30)))
       (if (not (mus-arrays-equal? (channel->float-vector 820 30) 
 		       (float-vector 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.060 0.000 0.000 
@@ -19058,8 +19052,7 @@ EDITS: 2
 			    (float-vector 0.000 0.000 0.110 0.110 0.110 0.111 0.111 0.111 0.111 0.111))
 		    (mus-arrays-equal? (channel->float-vector 4523 10)
 			    (float-vector 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.232 0.233 0.233))
-		    (mus-arrays-equal? (channel->float-vector 8928 10)
-			    (float-vector 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452 0.452))))
+		    (mus-arrays-equal? (channel->float-vector 8928 10) (make-float-vector 10 0.452))))
 	  (snd-display ";granulate ramped 4 data off: ~A ~A ~A" 
 		       (channel->float-vector 2203 10) (channel->float-vector 4523 10) (channel->float-vector 8928 10)))
       (undo)
@@ -19487,7 +19480,7 @@ EDITS: 2
 
 	    ;; ?? v0: #(0.4 0.42 0.44000000 0.36 0.38 0.4 0.42 0.44 0.46 0.28 0.3 0.31)
 	    (if (or (fneq (v0 0) .4) (fneq (v0 3) .360) (fneq (v0 9) .28)) (snd-display ";~D mus-file-mix(env): ~A?" k v0))
-	    (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (float-vector 1.0 1.0 1.0 1.0) vf))
+	    (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (make-float-vector 4 1.0) vf))
 	  ;; clm2xen should protect us here
 	  (let ((vf (make-vector 2))
 		(vf1 (make-vector 2))
@@ -19496,11 +19489,11 @@ EDITS: 2
 	    (set! (vf 1) vf2)
 	    (set! (vf1 0) (make-env '(0 0 1 1) :length 10))
 	    (set! (vf2 1) (make-env '(0 0 1 1) :length 10))
-	    (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (float-vector 1.0 1.0 1.0 1.0) vf)
+	    (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (make-float-vector 4 1.0) vf)
 	    (let ((tag (catch #t
 			 (lambda ()
 			   (set! (vf 0) (make-oscil))
-			   (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (float-vector 1.0 1.0 1.0 1.0) vf))
+			   (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (make-float-vector 4 1.0) vf))
 			 (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-type))
 		  (snd-display ";~D mix w oscil-vect: ~A" k tag)))
@@ -19510,7 +19503,7 @@ EDITS: 2
 			 (lambda ()
 			   (set! (vf1 0) (make-oscil))
 			   (set! (vf2 1) 0+i)
-			   (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (float-vector 1.0 1.0 1.0 1.0) vf))
+			   (mus-file-mix-1 k (make-mix-input "fmv2.snd" k) 0 12 0 (make-float-vector 4 1.0) vf))
 			 (lambda args (car args)))))
 	      (if (not (eq? tag 'bad-type))
 		  (snd-display ";~D mix w oscil-env: ~A" k tag))))
@@ -19624,7 +19617,7 @@ EDITS: 2
 			  (make-env '(0 1 1 0) :length 1000 :scaler .1)
 			  (make-env '(0 1 1 1) :length 1000 :scaler .5)
 			  (make-env '(0 1 1 1) :length 1000 :scaler -.5))))
-	  (mus-file-mix-with-envs rd 0 1000 (float-vector 0.0 0.0 0.0 0.0) #f es #f #f)))
+	  (mus-file-mix-with-envs rd 0 1000 (make-float-vector 4) #f es #f #f)))
       
       (let ((ind (find-sound "mix.snd")))
 	(if (sound? ind)
@@ -19639,7 +19632,7 @@ EDITS: 2
 	(let ((rd (vector (make-readin "flat.snd")))
 	      (es (vector (make-env '(0 0 1 1) :length 1000 :scaler .3) 
 			  (make-env '(0 1 1 0) :length 1000 :scaler .4))))
-	  (mus-file-mix-with-envs rd 0 1000 (float-vector 0.0 0.0 0.0 0.0) #f es #f #f)))
+	  (mus-file-mix-with-envs rd 0 1000 (make-float-vector 4) #f es #f #f)))
       
       (let ((ind (find-sound "mix.snd")))
 	(if (sound? ind)
@@ -19655,7 +19648,7 @@ EDITS: 2
 			  (make-readin "flat.snd")))
 	      (es (vector (make-env '(0 0 1 1) :length 1000 :scaler .3) 
 			  (make-env '(0 1 1 0) :length 1000 :scaler .4))))
-	  (mus-file-mix-with-envs rd 0 1000 (float-vector 0.0 0.0 0.0 0.0) #f es #f #f)))
+	  (mus-file-mix-with-envs rd 0 1000 (make-float-vector 4) #f es #f #f)))
       
       (let ((ind (find-sound "mix.snd")))
 	(if (sound? ind)
@@ -31153,7 +31146,7 @@ EDITS: 1
 	    (lambda (snd i)
 	      (filter-channel (float-vector .1 .2 .1 .1 .1 .1 .1 .2 .1 .1) 10))
 	    (lambda (snd i)
-	      (filter-channel (float-vector .1 .1 .1 .1 .1 .1 .1 .1 .1 .1) 10))
+	      (filter-channel (make-float-vector 10 .1) 10))
 	    (lambda (snd i)
 	      (clm-channel (make-two-zero .5 .5)))
 	    (lambda (snd i)
@@ -31519,7 +31512,7 @@ EDITS: 1
 	(undo)
 	(set! (amp-control ind) 2.0)
 	(apply-controls ind 1 5)
-	(if (not (mus-arrays-equal? (channel->float-vector 0 5) (float-vector 0.4 0.4 0.4 0.4 0.4)))
+	(if (not (mus-arrays-equal? (channel->float-vector 0 5) (make-float-vector 5 0.4)))
 	    (snd-display ";apply controls from 5: ~A" (channel->float-vector)))
 	(if (ffneq (sample 5) .8) (snd-display ";apply-controls at 5: ~A" (sample 5)))
 	(let ((tag (catch 'no-such-edit
@@ -31557,7 +31550,7 @@ EDITS: 1
 	  (map-channel (lambda (y) (set! (data 0) y) data)))
 	(if (not (= (framples ind 0) 101656))
 	    (snd-display ";map-channel oboe -> float-vector: ~A" (framples ind 0))
-	    (if (not (mus-arrays-equal? (channel->float-vector 0 10) (float-vector 0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.000 -0.000 0.0)))
+	    (if (not (mus-arrays-equal? (channel->float-vector 0 10) (float-vector 10)))
 		(snd-display ";map-channel float-vector result: ~A" (channel->float-vector 0 10))))
 	(revert-sound)
 	(close-sound ind))
@@ -34273,11 +34266,11 @@ EDITS: 1
       (fill! d1 0.0)
       (mus-fft d0 d1 8)
       (if (not (and (mus-arrays-equal? d0 (float-vector 8.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))
-		    (mus-arrays-equal? d1 (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
+		    (mus-arrays-equal? d1 (make-float-vector 8))))
 	  (snd-display ";mus-fft 2: ~A ~A?" d0 d1))
       (mus-fft d0 d1 8 -1)
-      (if (not (and (mus-arrays-equal? d0 (float-vector 8.000 8.000 8.000 8.000 8.000 8.000 8.000 8.000))
-		    (mus-arrays-equal? d1 (float-vector 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000))))
+      (if (not (and (mus-arrays-equal? d0 (make-float-vector 8 8.0))
+		    (mus-arrays-equal? d1 (make-float-vector 8))))
 	  (snd-display ";mus-fft -2: ~A ~A?" d0 d1))
       
       (fill! d1 0.0)
@@ -34733,7 +34726,7 @@ EDITS: 1
     (let ((d0 (make-float-vector 8)))
       (set! (d0 0) 1.0)
       (snd-transform walsh-transform d0)
-      (if (not (mus-arrays-equal? d0 (float-vector 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000)))
+      (if (not (mus-arrays-equal? d0 (make-float-vector 8 1.0)))
 	  (snd-display ";walsh 1: ~A" d0))
       (snd-transform walsh-transform d0)
       (if (not (mus-arrays-equal? d0 (float-vector 8.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -36896,7 +36889,7 @@ EDITS: 1
     (test (fv1 2 3 4) (float-vector 2.0 2.0 2.0 2.0))
     (test (fv1 1.0 2.0 3.0) (float-vector 2.0 2.0 2.0 2.0))
     (test (fv1 2.0 3.0 4.0) (float-vector 2.0 2.0 2.0 2.0))
-    (test (fv1 1/2 5/4 3/4) (float-vector 1.0 1.0 1.0 1.0))
+    (test (fv1 1/2 5/4 3/4) (make-float-vector 4 1.0))
     
     (test 
      (catch #t 
@@ -37155,7 +37148,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (+ s3 s1 s2)))))
-    (test (fv27) (float-vector 7.0 7.0 7.0 7.0))
+    (test (fv27) (make-float-vector 4 7.0))
     
     (define (fv28)
       (let ((fv (make-float-vector 4))
@@ -37164,7 +37157,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (+ 4.0 s1 s2)))))
-    (test (fv28) (float-vector 7.0 7.0 7.0 7.0))
+    (test (fv28) (make-float-vector 4 7.0))
     
     (define (fv29)
       (let ((fv (make-float-vector 4))
@@ -37173,7 +37166,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (+ s1 s2 4.0)))))
-    (test (fv29) (float-vector 7.0 7.0 7.0 7.0))
+    (test (fv29) (make-float-vector 4 7.0))
     
     (define (fv30)
       (let ((fv (make-float-vector 4))
@@ -37351,7 +37344,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv i (polynomial g0 x)))))
-    (test (fv44) (float-vector 7.0 7.0 7.0 7.0))
+    (test (fv44) (make-float-vector 4 7.0))
     
     (define (fv45)
       (let ((g0 (make-float-vector 3 1.0))
@@ -37405,7 +37398,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (float-vector-set! fv (vector-ref iv i) 1.0))))
-    (test (fv50) (float-vector 1.0 1.0 1.0 1.0))
+    (test (fv50) (make-float-vector 4 1.0))
 
     (define (fv51)
       (let ((fv (make-float-vector 4))
@@ -37711,7 +37704,7 @@ EDITS: 1
 	(do ((i 0 (+ i 1)))
 	    ((= i 4) fv)
 	  (set! (fv i) (g0 i)))))
-    (test (fv86) (float-vector 1.0 1.0 1.0 1.0))
+    (test (fv86) (make-float-vector 4 1.0))
 
     (define (fv87)
       (do ((fv1 (make-float-vector 4 1.5))
@@ -38028,7 +38021,7 @@ EDITS: 1
 	    ((= i 4) fv)
 	  (let ((x (g0 i)))
 	    (set! (fv i) x)))))
-    (test (fv115) (float-vector 1.0 1.0 1.0 1.0))
+    (test (fv115) (make-float-vector 4 1.0))
     
     (define (fv116)
       (let ((fv (make-float-vector 4))
@@ -38632,56 +38625,56 @@ EDITS: 1
     (test (fv163) (float-vector (sin 0.0) (sin 0.25) (sin 0.5) (sin 0.75)))
 
     (define (fv164) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0)))))
-    (test (fv164) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv164) (make-float-vector 4 6.0))
     
     (define (fv165) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 4.5 3/2)))))
-    (test (fv165) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv165) (make-float-vector 4 6.0))
     
     (define (fv166) (let ((x 1/2) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1 x)))))
     (test (fv166) (float-vector 1.5 1.5 1.5 1.5))
     
     (define (fv167) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) 6.0))))
-    (test (fv167) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv167) (make-float-vector 4 6.0))
     
     (define (fv168) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 5.0)))))
-    (test (fv168) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv168) (make-float-vector 4 6.0))
     
     (define (fv169) (let ((x 1.0) (y 5.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y)))))
-    (test (fv169) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv169) (make-float-vector 4 6.0))
     
     (define (fv170) (let ((x 1.0) (y 6.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y -1.0)))))
-    (test (fv170) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv170) (make-float-vector 4 6.0))
     
     (define (fv171) (let ((x 1.0) (y 6.0) (z -1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y z)))))
-    (test (fv171) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv171) (make-float-vector 4 6.0))
     
     (define (fv172) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x -1.0 6.0)))))
-    (test (fv172) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv172) (make-float-vector 4 6.0))
     
     (define (fv173) (let ((x 3.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x (abs x))))))
-    (test (fv173) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv173) (make-float-vector 4 6.0))
     
     (define (fv174) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 2 (abs x))))))
-    (test (fv174) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv174) (make-float-vector 4 6.0))
     
     (define (fv175) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 2 (abs x))))))
-    (test (fv175) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv175) (make-float-vector 4 6.0))
     
     (define (fv176) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 (abs x) (abs x))))))
-    (test (fv176) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv176) (make-float-vector 4 6.0))
     
     (define (fv177) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x))))))
-    (test (fv177) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv177) (make-float-vector 4 6.0))
     
     (define (fv178) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x))))))
-    (test (fv178) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv178) (make-float-vector 4 6.0))
     
     (define (fv178c) (let ((x 2.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
-    (test (fv178c) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv178c) (make-float-vector 4 6.0))
     
     
     (define (fv179) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1.0 2.0 3.0)))))
-    (test (fv179) (float-vector 6.0 6.0 6.0 6.0))
+    (test (fv179) (make-float-vector 4 6.0))
     
     (define (fv180) (let ((x 1.0) (y 6.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y -1.0)))))
     (test (fv180) (float-vector -6.0 -6.0 -6.0 -6.0))
@@ -38696,22 +38689,22 @@ EDITS: 1
     (test (fv183) (float-vector 9.0 9.0 9.0 9.0))
     
     (define (fv184) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 2 (abs x))))))
-    (test (fv184) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv184) (make-float-vector 4 8.0))
     
     (define (fv185) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 2 (abs x))))))
-    (test (fv185) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv185) (make-float-vector 4 8.0))
     
     (define (fv186) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 (abs x) (abs x))))))
-    (test (fv186) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv186) (make-float-vector 4 8.0))
     
     (define (fv187) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x))))))
-    (test (fv187) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv187) (make-float-vector 4 8.0))
     
     (define (fv188) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x))))))
-    (test (fv188) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv188) (make-float-vector 4 8.0))
     
     (define (fv188c) (let ((x 2.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
-    (test (fv188c) (float-vector 8.0 8.0 8.0 8.0))
+    (test (fv188c) (make-float-vector 4 8.0))
     
     (define (fv189) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 4.5 3/2)))))
     (test (fv189) (float-vector 6.75 6.75 6.75 6.75))
@@ -38726,7 +38719,7 @@ EDITS: 1
     (test (fv193) (float-vector 5.0 5.0 5.0 5.0))
 
     (define (fvi164) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1 2 3)))))
-    (test (fvi164) (int-vector 6 6 6 6))
+    (test (fvi164) (make-int-vector 4 6))
     
     (define (fvi165) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 4.5 3/2)))))
     (test (catch #t fvi165 (lambda args 'error)) 'error)
@@ -38735,47 +38728,47 @@ EDITS: 1
     (test (catch #t fvi166 (lambda args 'error))'error)
     
     (define (fvi167) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) 6))))
-    (test (fvi167) (int-vector 6 6 6 6))
+    (test (fvi167) (make-int-vector 4 6))
     
     (define (fvi168) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 5)))))
-    (test (fvi168) (int-vector 6 6 6 6))
+    (test (fvi168) (make-int-vector 4 6))
     
     (define (fvi169) (let ((x 1) (y 5) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y)))))
-    (test (fvi169) (int-vector 6 6 6 6))
+    (test (fvi169) (make-int-vector 4 6))
     
     (define (fvi170) (let ((x 1) (y 6) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y -1)))))
-    (test (fvi170) (int-vector 6 6 6 6))
+    (test (fvi170) (make-int-vector 4 6))
     
     (define (fvi171) (let ((x 1) (y 6) (z -1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y z)))))
-    (test (fvi171) (int-vector 6 6 6 6))
+    (test (fvi171) (make-int-vector 4 6))
     
     (define (fvi172) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x -1 6)))))
-    (test (fvi172) (int-vector 6 6 6 6))
+    (test (fvi172) (make-int-vector 4 6))
     
     (define (fvi173) (let ((x 3) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x (abs x))))))
-    (test (fvi173) (int-vector 6 6 6 6))
+    (test (fvi173) (make-int-vector 4 6))
     
     (define (fvi174) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 2 (abs x))))))
-    (test (fvi174) (int-vector 6 6 6 6))
+    (test (fvi174) (make-int-vector 4 6))
     
     (define (fvi175) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 2 (abs x))))))
-    (test (fvi175) (int-vector 6 6 6 6))
+    (test (fvi175) (make-int-vector 4 6))
     
     (define (fvi176) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 (abs x) (abs x))))))
-    (test (fvi176) (int-vector 6 6 6 6))
+    (test (fvi176) (make-int-vector 4 6))
     
     (define (fvi177) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x))))))
-    (test (fvi177) (int-vector 6 6 6 6))
+    (test (fvi177) (make-int-vector 4 6))
     
     (define (fvi178) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x))))))
-    (test (fvi178) (int-vector 6 6 6 6))
+    (test (fvi178) (make-int-vector 4 6))
     
     (define (fvk178) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x y)))))
-    (test (fvk178) (int-vector 6 6 6 6))
+    (test (fvk178) (make-int-vector 4 6))
     
     
     (define (fvi179) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 1 2 3)))))
-    (test (fvi179) (int-vector 6 6 6 6))
+    (test (fvi179) (make-int-vector 4 6))
     
     (define (fvi180) (let ((x 1) (y 6) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y -1)))))
     (test (fvi180) (int-vector -6 -6 -6 -6))
@@ -38790,31 +38783,31 @@ EDITS: 1
     (test (fvi183) (int-vector 9 9 9 9))
     
     (define (fvi184) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 2 (abs x))))))
-    (test (fvi184) (int-vector 8 8 8 8))
+    (test (fvi184) (make-int-vector 4 8))
     
     (define (fvi185) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2 2 (abs x))))))
-    (test (fvi185) (int-vector 8 8 8 8))
+    (test (fvi185) (make-int-vector 4 8))
     
     (define (fvi186) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2 (abs x) (abs x))))))
-    (test (fvi186) (int-vector 8 8 8 8))
+    (test (fvi186) (make-int-vector 4 8))
     
     (define (fvi187) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x))))))
-    (test (fvi187) (int-vector 8 8 8 8))
+    (test (fvi187) (make-int-vector 4 8))
     
     (define (fvi188) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x))))))
-    (test (fvi188) (int-vector 8 8 8 8))
+    (test (fvi188) (make-int-vector 4 8))
     
     (define (fvk188) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x y)))))
-    (test (fvk188) (int-vector 8 8 8 8))
+    (test (fvk188) (make-int-vector 4 8))
     
     (define (fvi191) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 6)))))
-    (test (fvi191) (int-vector 6 6 6 6))
+    (test (fvi191) (make-int-vector 4 6))
     
     (define (fvi192) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 5)))))
-    (test (fvi192) (int-vector 5 5 5 5))
+    (test (fvi192) (make-int-vector 4 5))
     
     (define (fvi193) (let ((x 1) (y 5) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x y)))))
-    (test (fvi193) (int-vector 5 5 5 5))
+    (test (fvi193) (make-int-vector 4 5))
     
     
     (define (fv194) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 1.0 2.0 3.0 4.0)))))
@@ -38836,7 +38829,7 @@ EDITS: 1
     
 
     (define (fv164b) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 1.0 2.0 3.0)))))
-    (test (fv164b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv164b) (make-float-vector 4 -4.0))
     
     (define (fv165b) (let ((fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 4.5 3/2)))))
     (test (fv165b) (float-vector 3.0 3.0 3.0 3.0))
@@ -38848,43 +38841,43 @@ EDITS: 1
     (test (fv167b) (float-vector -6.0 -6.0 -6.0 -6.0))
     
     (define (fv168b) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x 5.0)))))
-    (test (fv168b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv168b) (make-float-vector 4 -4.0))
     
     (define (fv169b) (let ((x 1.0) (y 5.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y)))))
-    (test (fv169b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv169b) (make-float-vector 4 -4.0))
     
     (define (fv170b) (let ((x 1.0) (y 6.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y -1.0)))))
-    (test (fv170b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv170b) (make-float-vector 4 -4.0))
     
     (define (fv171b) (let ((x 1.0) (y 6.0) (z -1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y z)))))
-    (test (fv171b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv171b) (make-float-vector 4 -4.0))
     
     (define (fv172b) (let ((x 1.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x -1.0 6.0)))))
-    (test (fv172b) (float-vector -4.0 -4.0 -4.0 -4.0))
+    (test (fv172b) (make-float-vector 4 -4.0))
     
     (define (fv173b) (let ((x 3.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x (abs x))))))
-    (test (fv173b) (float-vector 0.0 0.0 0.0 0.0))
+    (test (fv173b) (make-float-vector 4))
     
     (define (fv174b) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x 2 (abs x))))))
-    (test (fv174b) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv174b) (make-float-vector 4 -2.0))
     
     (define (fv175b) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2.0 2 (abs x))))))
-    (test (fv175b) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv175b) (make-float-vector 4 -2.0))
     
     (define (fv176b) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2.0 (abs x) (abs x))))))
-    (test (fv176b) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv176b) (make-float-vector 4 -2.0))
     
     (define (fv177b) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) (abs x) (abs x))))))
-    (test (fv177b) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv177b) (make-float-vector 4 -2.0))
     
     (define (fv178b) (let ((x 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x (abs x))))))
-    (test (fv178b) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv178b) (make-float-vector 4 -2.0))
     
     (define (fv178bb) (let ((x 2.0) (y 2.0) (fv (make-float-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x y)))))
-    (test (fv178bb) (float-vector -2.0 -2.0 -2.0 -2.0))
+    (test (fv178bb) (make-float-vector 4 -2.0))
     
     (define (fvi164a) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 1 2 3)))))
-    (test (fvi164a) (int-vector -4 -4 -4 -4))
+    (test (fvi164a) (make-int-vector 4 -4))
     
     (define (fvi165a) (let ((fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 4.5 3/2)))))
     (test (catch #t fvi165a (lambda args 'error)) 'error)
@@ -38896,37 +38889,37 @@ EDITS: 1
     (test (fvi167a) (int-vector -6 -6 -6 -6))
     
     (define (fvi168a) (let ((x 1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x 5)))))
-    (test (fvi168a) (int-vector -4 -4 -4 -4))
+    (test (fvi168a) (make-int-vector 4 -4))
     
     (define (fvi169a) (let ((x 1) (y 5) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y)))))
-    (test (fvi169a) (int-vector -4 -4 -4 -4))
+    (test (fvi169a) (make-int-vector 4 -4))
     
     (define (fvi170a) (let ((x 1) (y 6) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y -1)))))
-    (test (fvi170a) (int-vector -4 -4 -4 -4))
+    (test (fvi170a) (make-int-vector 4 -4))
     
     (define (fvi171a) (let ((x 1) (y 6) (z -1) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x y z)))))
-    (test (fvi171a) (int-vector -4 -4 -4 -4))
+    (test (fvi171a) (make-int-vector 4 -4))
     
     (define (fvi173a) (let ((x 3) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x (abs x))))))
     (test (fvi173a) (int-vector 0 0 0 0))
     
     (define (fvi174a) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- x 2 (abs x))))))
-    (test (fvi174a) (int-vector -2 -2 -2 -2))
+    (test (fvi174a) (make-int-vector 4 -2))
     
     (define (fvi175a) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2 2 (abs x))))))
-    (test (fvi175a) (int-vector -2 -2 -2 -2))
+    (test (fvi175a) (make-int-vector 4 -2))
     
     (define (fvi176a) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2 (abs x) (abs x))))))
-    (test (fvi176a) (int-vector -2 -2 -2 -2))
+    (test (fvi176a) (make-int-vector 4 -2))
     
     (define (fvi177a) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) (abs x) (abs x))))))
-    (test (fvi177a) (int-vector -2 -2 -2 -2))
+    (test (fvi177a) (make-int-vector 4 -2))
     
     (define (fvi178a) (let ((x 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x (abs x))))))
-    (test (fvi178a) (int-vector -2 -2 -2 -2))
+    (test (fvi178a) (make-int-vector 4 -2))
     
     (define (fvi178aa) (let ((x 2) (y 2) (fv (make-int-vector 4))) (do ((i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x y)))))
-    (test (fvi178aa) (int-vector -2 -2 -2 -2))
+    (test (fvi178aa) (make-int-vector 4 -2))
 
     )
   

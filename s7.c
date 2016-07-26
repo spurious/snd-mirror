@@ -56493,7 +56493,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 		  int i;
 		  pair_set_syntax_symbol(sc->code, sc->cond_all_x_symbol);
 		  for (i = 0, p = sc->code; is_pair(p); i++, p = cdr(p))
-		    set_c_call(car(p), cond_all_x_eval(sc, caar(p), sc->envir)); /* handle 'else' specially here */
+		    set_c_call(car(p), cond_all_x_eval(sc, caar(p), (is_null(sc->envir)) ? sc->rootlet : sc->envir));  /* handle 'else' specially here */
 		  if (i == 2)
 		    pair_set_syntax_symbol(sc->code, sc->cond_all_x_2_symbol);
 		}
@@ -69715,7 +69715,7 @@ static s7_pointer big_magnitude(s7_scheme *sc, s7_pointer args)
     }
 
   if (is_t_complex(p))
-    return(make_real(sc, my_hypot(imag_part(p), real_part(p))));
+    return(make_real(sc, hypot(imag_part(p), real_part(p))));
 
   return(big_abs(sc, args));
 }

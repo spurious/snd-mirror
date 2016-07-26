@@ -387,8 +387,8 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
 	    (if (< ft fx)
 		(begin
 		  (set! fx ft)
-		  (set! xmax (if (< j (- n 1)) (x (+ j 1)) (x (- n 1))))
-		  (set! xmin (if (> j 0) (x (- j 1)) (x 0))))))))
+		  (set! xmax (x (if (< j (- n 1)) (+ j 1) (- n 1))))
+		  (set! xmin (x (if (> j 0) (- j 1) 0))))))))
       (/ (+ xmax xmin) 2.0)))
   
   (define (findm m arg1 arg2)

@@ -2710,22 +2710,22 @@ Xen_wrap_1_arg(g_snd_warning_w, g_snd_warning)
 void g_xen_initialize(void)
 {
 #if HAVE_SCHEME
-  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, s, i, b, r, d, p, t;
+  s7_pointer pl_dr, pl_dir, pl_ss, pl_b, s, i, b, r, d, t;
 #if WITH_GMP
   s7_pointer v;
 #endif
-#if HAVE_GSL
-  s7_pointer pl_prr;
-#endif
 #if HAVE_GSL_EIGEN_NONSYMMV_WORKSPACE
   s7_pointer pl_pf;
+#endif
+#if HAVE_GSL
+  s7_pointer pl_prr, p;
+  p = s7_make_symbol(s7, "pair?");
 #endif
   s = s7_make_symbol(s7, "string?");
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   r = s7_make_symbol(s7, "real?");
   d = s7_make_symbol(s7, "float?");
-  p = s7_make_symbol(s7, "pair?");
 #if WITH_GMP
   v = s7_make_symbol(s7, "vector?");
 #endif

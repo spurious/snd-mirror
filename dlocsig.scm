@@ -505,7 +505,7 @@
 (define get-speaker-configuration 
   (let ((documentation "(get-speaker-configuration channels (3d dlocsig-3d) (configs dlocsig-speaker-configs)) returns a dlocsig speaker configuration"))
     (lambda* (channels (3d dlocsig-3d) (configs dlocsig-speaker-configs))
-      (let ((config (if 3d ((cadr configs) channels) ((car configs) channels))))
+      (let ((config (((if 3d cadr car) configs) channels)))
 	(if (null? config)
 	    (error 'mus-error "no speaker configuration exists for ~A ~A output channel~A~%~%" 
 		   (if 3d "tridimensional" "bidimensional")
@@ -965,19 +965,11 @@
   (let ((polar (bezier-polar xpath))
 	(points (bezier-path xpath))
 	(3d (bezier-3d xpath)))
-    (if polar
-	;; parse a polar path
-	(let ((vals (parse-polar-coordinates points 3d)))
-	  (set! (bezier-x xpath) (car vals))
-	  (set! (bezier-y xpath) (cadr vals))
-	  (set! (bezier-z xpath) (caddr vals))
-	  (set! (bezier-v xpath) (cadddr vals)))
-	(let ((vals (parse-cartesian-coordinates points 3d)))
-	  ;; parse a cartesian path
-	  (set! (bezier-x xpath) (car vals))
-	  (set! (bezier-y xpath) (cadr vals))
-	  (set! (bezier-z xpath) (caddr vals))
-	  (set! (bezier-v xpath) (cadddr vals)))))
+    (let ((vals ((if polar parse-polar-coordinates parse-cartesian-coordinates) points 3d)))
+      (set! (bezier-x xpath) (car vals))
+      (set! (bezier-y xpath) (cadr vals))
+      (set! (bezier-z xpath) (caddr vals))
+      (set! (bezier-v xpath) (cadddr vals))))
   (for-each
    (lambda (v)
      (if (and (real? v) 
@@ -1087,9 +1079,8 @@
 			    (apply vector (bezier-y path))
 			    (apply vector (bezier-z path))))
 		 ;; control points D(i)
-		 (d (vector (make-vector n 0.0)
-			    (make-vector n 0.0)
-			    (make-vector n 0.0))))
+		 (d (let ((maker (lambda () (make-vector n 0.0))))
+		      (vector (maker) (maker) (maker)))))
 	   
 	     (define (a-1 k n)
 	       (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
