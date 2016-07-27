@@ -1140,7 +1140,8 @@ static dac_info *add_channel_to_play_list(chan_info *cp, snd_info *sp, mus_long_
 	{
 	  sp->playing++;
 	  if (((with_tracking_cursor(ss) != DONT_TRACK) || (ss->tracking)) &&
-              (!(is_player_sound(sp))))
+              (!(is_player_sound(sp))) &&
+	      (sp->inuse == SOUND_NORMAL))
 	    {
 	      cp->original_cursor = cursor_sample(cp);
 	      if (cp->axis)

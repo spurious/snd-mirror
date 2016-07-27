@@ -87,9 +87,10 @@
 	  (set! last-file-opened (file-name (or (selected-sound)
 						(car (sounds))))))
       (if (not current-directory)
-	  (if (null? (sounds))
-	      (get-current-files (getcwd))
-	      (get-current-files (directory-from-path last-file-opened))))
+	  (get-current-files
+	   (if (null? (sounds))
+	       (getcwd)
+	       (directory-from-path last-file-opened))))
       (if (null? current-sorted-files)
 	  (error 'no-such-file (list "open-next-file-in-directory" current-directory))
 	  (let ((next-file (find-next-file)))

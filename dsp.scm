@@ -173,9 +173,8 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	       (i 0 (+ i 1)))
 	      ((= i n))
 	    ;; DFT + split
-	    (if (< i n2)
-		(set! (fr i) (edot-product (* freq 0.0-1.0i i) in-data))
-		(set! (fr (- (+ i out-n) n 1)) (edot-product (* freq 0.0-1.0i i) in-data))))
+	    (set! (fr (if (< i n2) i (- (+ i out-n) n 1))) 
+		  (edot-product (* freq 0.0-1.0i i) in-data)))
 	  (set! freq (/ (* 2 pi) out-n))
 	  (do ((i 0 (+ i 1)))
 	      ((= i out-n))

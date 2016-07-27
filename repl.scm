@@ -110,12 +110,11 @@
 	  (define history (dilambda 
 			   (lambda (back)
 			     (let ((i (+ histpos back)))
-			       (copy (if (< i 0)
-					 (histbuf (+ histsize i))
-					 (if (>= i histsize)
-					     (histbuf (- i histsize))
-					     (histbuf i))))))
-
+			       (copy (histbuf (if (< i 0)
+						  (+ histsize i)
+						  (if (>= i histsize)
+						      (- i histsize)
+						      i))))))
 			   (lambda (new-line)
 			     (let ((pos (history-member new-line)))
 			       (when (integer? pos)                   ; remove the earlier case, circularly compress the buffer

@@ -7364,13 +7364,17 @@
 			(if (or (side-effect? val env)
 				(memq (car val) makers))
 			    (if (> (tree-leaves val) 2)
+				;; I think we need to laboriously repeat the function call here:
+				;;    (let ((a 1) (b 2) (c 3)) 
+				;;      (define f (let ((ctr 0)) (lambda (x y z) (set! ctr (+ ctr 1)) (+ x y ctr (* 2 z)))))
+				;;      (list (f a b c) (f a b c) (f a b c) (f a b c))
+				;; so (apply list (make-list 4 (_1_))) or variants thereof fail
+				;;   (eval (append '(list) (make-list 4 '(_1_))))
+				;; works, but it's too ugly.
 				(lint-format "perhaps ~A" caller
 					     (lists->string form 
-							    (if (> len 4)
-								`(let ((_1_ (lambda () ,val)))
-								   (apply ,head (make-list ,(- len 1) (_1_))))
-								`(let ((_1_ (lambda () ,val)))
-								   (,head ,@(make-list (- len 1) '(_1_))))))))
+							    `(let ((_1_ (lambda () ,val)))
+							       (,head ,@(make-list (- len 1) '(_1_)))))))
 			    ;; if seq copy else
 			    (lint-format "perhaps ~A" caller
 					 (lists->string  form `(,(seq-maker head) ,(- len 1) ,val)))))))))
@@ -12337,65 +12341,67 @@
 						(any? pair? (cdr true)))      ; (if x (set! y (+ x 1)) (set! y 1))
 					   (and (eq? true-op 'set!)           ; (if x (set! y w) (set! z w))
 						(equal? (caar diff) (cadr true))))
-				 ;; for let/let* if tree-subst position can't affect the test, just subst, else save test first
-				 ;;   named let diff in args gets no hits
-				 (if (memq true-op '(let let*))
-				     (if (not (or (symbol? (cadr true))         ; assume named let is moving an if outside the loop
-						  (eq? (car diff) (cdr true)))) ;   avoid confusion about the vars list
-					 (let ((vars (cadr true)))
-					   (lint-format "perhaps ~A" caller 
-							(lists->string form
-								       (if (and (pair? vars)
-										(case true-op
-										  ((let)  (tree-memq (car diff) vars))
-										  ((let*) (tree-memq (car diff) (car vars)))
-										  (else #f)))
-									   (tree-subst-eq `(if ,expr ,@(cadr diff)) (car diff) true)
-									   `(let ((_1_ ,expr))
-									      ,(tree-subst-eq `(if _1_ ,@(cadr diff)) (car diff) true)))))))
-				     
-				     ;; also not any-macro? (car true|false) probably
-				     (lint-format "perhaps ~A" caller 
-						  (lists->string form
-								 (cond ((eq? true-op (caadr diff))  ; very common!
-									;; (if x (f y) (g y)) -> ((if x f g) y)
-									;; but f and g can't be or/and unless there are no expressions
-									;;   I now like all of these -- originally found them odd: CL influence!
-									(if (equal? true-op test)
-									    `((or ,test ,false-op) ,@(cdr true))
-									    `((if ,test ,true-op ,false-op) ,@(cdr true))))
-								       
-								       ((and (eq? (caadr diff) #t)
-									     (not (cadadr diff)))
-									;; (if x (set! y #t) (set! y #f)) -> (set! y x)
-									(tree-subst-eq test (car diff) true))
-								       
-								       ((and (not (caadr diff))
-									     (eq? (cadadr diff) #t))
-									;; (if x (set! y #f) (set! y #t)) -> (set! y (not x))
-									(tree-subst-eq (simplify-boolean `(not ,expr) () () env)
-										       (car diff) true))
-								       
-								       ((equal? (caadr diff) test)
-									;; (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
-									(tree-subst-eq (simplify-boolean `(or ,@(cadr diff)) () () env)
-										       (car diff) true))
-								       
-								       ((or (memq true-op '(set! begin and or))
-										(let list-memq ((a (car diff)) (lst true))
-										  (and (pair? lst)
-										       (or (eq? a lst)
-											   (list-memq a (cdr lst))))))
-									;; (if x (set! y z) (set! y w)) -> (set! y (if x z w))
-									;; true op moved out, if expr moved in
-									;;  (if A (and B C) (and B D)) -> (and B (if A C D))
-									;;  here differ-in-one means that preceding/trailing stuff must match exactly
-									(tree-subst-eq `(if ,expr ,@(cadr diff)) (car diff) true))
-								       
-								       ;; paranoia... normally the extra let is actually not needed,
-								       ;;   but it's very hard to distinguish the bad cases
-								       (else `(let ((_1_ ,expr))
-										,(tree-subst-eq `(if _1_ ,@(cadr diff)) (car diff) true))))))))
+				 (let ((subst-loc (car diff)))
+				   ;; for let/let* if tree-subst position can't affect the test, just subst, else save test first
+				   ;;   named let diff in args gets no hits
+				   (if (memq true-op '(let let*))
+				       (if (not (or (symbol? (cadr true))         ; assume named let is moving an if outside the loop
+						    (eq? subst-loc (cdr true)))) ;   avoid confusion about the vars list
+					   (let ((vars (cadr true)))
+					     (lint-format "perhaps ~A" caller 
+							  (lists->string form
+									 (if (and (pair? vars)
+										  (case true-op
+										    ((let)  (tree-memq subst-loc vars))
+										    ((let*) (tree-memq subst-loc (car vars)))
+										    (else #f)))
+									     (tree-subst-eq `(if ,expr ,@(cadr diff)) subst-loc true)
+									     `(let ((_1_ ,expr))
+										,(tree-subst-eq `(if _1_ ,@(cadr diff)) subst-loc true)))))))
+				       
+				       ;; also not any-macro? (car true|false) probably
+				       (lint-format "perhaps ~A" caller 
+						    (lists->string form
+								   (cond ((eq? true-op (caadr diff))  ; very common!
+									  ;; (if x (f y) (g y)) -> ((if x f g) y)
+									  ;; but f and g can't be or/and unless there are no expressions
+									  ;;   I now like all of these -- originally found them odd: CL influence!
+									  (if (equal? true-op test)
+									      `((or ,test ,false-op) ,@(cdr true))
+									      `((if ,test ,true-op ,false-op) ,@(cdr true))))
+									 
+									 ((and (eq? (caadr diff) #t)
+									       (not (cadadr diff)))
+									  ;; (if x (set! y #t) (set! y #f)) -> (set! y x)
+									  (tree-subst-eq test subst-loc true))
+									 
+									 ((and (not (caadr diff))
+									       (eq? (cadadr diff) #t))
+									  ;; (if x (set! y #f) (set! y #t)) -> (set! y (not x))
+									  (tree-subst-eq (simplify-boolean `(not ,expr) () () env)
+											 subst-loc true))
+									 
+									 ((equal? (caadr diff) test)
+									  ;; (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
+									  (tree-subst-eq (simplify-boolean `(or ,@(cadr diff)) () () env)
+											 subst-loc true))
+									 
+									 ((or (memq true-op '(set! begin and or))
+									      (let list-memq ((a subst-loc) (lst true))
+										(and (pair? lst)
+										     (or (eq? a lst)
+											 (list-memq a (cdr lst))))))
+									  ;; (if x (set! y z) (set! y w)) -> (set! y (if x z w))
+									  ;; true op moved out, if expr moved in
+									  ;;  (if A (and B C) (and B D)) -> (and B (if A C D))
+									  ;;  here differ-in-one means that preceding/trailing stuff must subst-loc exactly
+									  (tree-subst-eq `(if ,expr ,@(cadr diff)) subst-loc true))
+									 
+									 ;; paranoia... normally the extra let is actually not needed,
+									 ;;   but it's very hard to distinguish the bad cases
+									 (else 
+									  `(let ((_1_ ,expr))
+									     ,(tree-subst-eq `(if _1_ ,@(cadr diff)) subst-loc true)))))))))
 			       ;; else not pair? diff
 			       (unless (memq true-op '(let let*))
 				 ;; differ-in-trailers can (sometimes) take advantage of values
@@ -16648,6 +16654,42 @@
 	    
 	    (when *report-function-stuff* 
 	      (function-match caller form env))
+
+#|
+	    (if (or (> (length form) 4)
+                    (and (> (length form) 2)
+                         (> (tree-leaves form) 24)))
+		(let ((first (cadr form)))
+		  (if (every? (lambda (a)
+				(equal? a first))
+			      (cddr form))
+		      (format *stderr* "equal: ~A~%~%" (lint-pp form))
+		      (letrec* ((car-equal? 
+				 (lambda args
+				   (and (every? pair? args)
+					(let ((first (caar args)))
+					  (every? (lambda (a)
+						    (equal? (car a) first))
+						  (cdr args))))))
+				(differ-in-one 
+				 (lambda args
+				   (or (every? null? args)
+				       (if (apply car-equal? args)
+					   (apply differ-in-one (map cdr args))
+					   (or (not (every? pair? args))
+					       (let ((first (car args)))
+						 (every? (lambda (a)
+							   (and (equal? (cdr a) (cdr first))
+								(if (not (pair? (car a)))
+								    (not (pair? (car first)))
+								    (and (pair? (car first))
+									 (equal? (cdar a) (cdar first))))))
+							 (cdr args)))))))))
+			(let ((args (cdr form)))
+			  (if (and (apply car-equal? args)
+				   (apply differ-in-one (map cdr args)))
+			      (format *stderr* "one: ~A~%~%" (lint-pp form))))))))
+|#
 	    
 	    (cond 
 	     ((hash-table-ref walker-functions head)
@@ -17586,8 +17628,8 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; currently differ-by-one is only in if-walker -- would it make sense elsewhere?
-;;;   (two branch cond/case), f+args (each can differ at the same spot)
+;;; currently differ-by-one is only in if/cond/case-walker -- would it make sense elsewhere? [16685]
+;;;   (two branch cond/case), f+args (each can differ at the same spot) -- the simple cases here already work
 ;;;   differ-in-trailers would require values I think
 ;;;
 ;;; 148 24013 651668
