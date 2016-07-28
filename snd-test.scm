@@ -7294,11 +7294,10 @@ EDITS: 5
 			    (regions)))
 	      ;; (old-pos0 (edit-position index 0))
 	      ;; (old-pos1 (edit-position index 1))
-	      (old-reglen (map region-framples (regions)))
-	      (s61-files ()))
+	      (old-reglen (map region-framples (regions))))
 	  (hook-push save-state-hook
 		     (lambda (hook)
-		       (set! s61-files (cons (hook 'name) s61-files))))
+		       (if (not (string? (hook 'name))) (format *stderr* "save-state-hook name: ~S~%" (hook 'name)))))
 	  (if (file-exists? "s61.scm") (delete-file "s61.scm"))
 	  (save-state "s61.scm")
 	  (close-sound index)

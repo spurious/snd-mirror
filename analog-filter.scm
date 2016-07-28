@@ -284,11 +284,10 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
   (define (bessel-i n)
 
     (define (fact n)
-      (let ((x 1))
-	(do ((i 2 (+ i 1)))
-	    ((> i n))
-	  (set! x (* x i)))
-	x))
+      (do ((x 1)
+	   (i 2 (+ i 1)))
+	  ((> i n) x)
+	(set! x (* x i))))
     ;; this form overflows if we don't have bignums
     ;;  (define (bessel-i n)
     ;;    (let ((cs (make-float-vector (+ n 1))))
