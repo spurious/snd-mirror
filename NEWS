@@ -1,11 +1,7 @@
-Snd 16.6.
+Snd 16.7.
 
-added snd-lint.scm (Snd extensions for lint)
+changed compute-string and compute-uniform-circular-string to vibrating-string, etc.
 
-s7's symbol function now takes any number of string args
-  these are all concatenated to form the new symbol name
-s7's make-vector no longer takes an optional fourth argument.
+checked: gtk 3.21.3|4, sbcl 1.3.7.
 
-checked: gtk 3.21.2, sbcl 1.3.6, Fedora 24
-
-Thanks!: Joe Python, Tito Latini.
+Thanks!: Carlos Carrasco

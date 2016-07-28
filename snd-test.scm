@@ -66,6 +66,8 @@
 (define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
+(define hooked #t)
+
 (if (<= tests 0) (set! tests 1))
 
 (define (copy-file source dest) (system (string-append "cp " source " " dest)))
@@ -47246,6 +47248,7 @@ EDITS: 1
 
 ;;; ---------------- test 26: s7 ----------------
 
+(define s7test-exits #f)
 (define (snd_test_26)
   (load "s7test.scm"))
 
@@ -47287,12 +47290,67 @@ EDITS: 1
 (set! (test-funcs 25) snd_test_25)
 (set! (test-funcs 26) snd_test_26)
 
+
+(define all-hooks
+  (list after-graph-hook after-lisp-graph-hook lisp-graph-hook before-transform-hook mix-release-hook save-hook mus-error-hook
+	mouse-enter-graph-hook mouse-leave-graph-hook open-raw-sound-hook select-channel-hook after-open-hook close-hook drop-hook update-hook
+	mark-click-hook mark-drag-hook name-click-hook open-hook help-hook before-save-state-hook
+	output-comment-hook play-hook snd-error-hook snd-warning-hook start-playing-hook stop-playing-hook
+	mouse-enter-listener-hook mouse-leave-listener-hook select-sound-hook
+	exit-hook during-open-hook after-transform-hook mouse-enter-label-hook mouse-leave-label-hook initial-graph-hook
+	graph-hook key-press-hook mouse-drag-hook mouse-press-hook enved-hook mouse-click-hook new-widget-hook
+	mark-hook stop-playing-selection-hook after-apply-controls-hook draw-mark-hook
+	bad-header-hook save-state-hook new-sound-hook color-hook orientation-hook listener-click-hook mix-click-hook after-save-state-hook
+	mouse-enter-text-hook mouse-leave-text-hook mix-drag-hook 
+	start-playing-selection-hook after-save-as-hook before-save-as-hook draw-mix-hook
+	before-exit-hook before-close-hook clip-hook))
+
+(define hook-names
+  (list 'after-graph-hook 'after-lisp-graph-hook 'lisp-graph-hook 'before-transform-hook 'mix-release-hook 'save-hook 'mus-error-hook
+	'mouse-enter-graph-hook 'mouse-leave-graph-hook 'open-raw-sound-hook 'select-channel-hook 'after-open-hook 'close-hook 'drop-hook 'update-hook
+	'mark-click-hook 'mark-drag-hook 'name-click-hook 'open-hook 'help-hook 'before-save-state-hook
+	'output-comment-hook 'play-hook 'snd-error-hook 'snd-warning-hook 'start-playing-hook 'stop-playing-hook
+	'mouse-enter-listener-hook 'mouse-leave-listener-hook 'select-sound-hook
+	'exit-hook 'during-open-hook 'after-transform-hook 'mouse-enter-label-hook 'mouse-leave-label-hook 'initial-graph-hook
+	'graph-hook 'key-press-hook 'mouse-drag-hook 'mouse-press-hook 'enved-hook 'mouse-click-hook 'new-widget-hook
+	'mark-hook 'stop-playing-selection-hook 'after-apply-controls-hook 'draw-mark-hook
+	'bad-header-hook 'save-state-hook 'new-sound-hook 'color-hook 'orientation-hook 'listener-click-hook 'mix-click-hook 'after-save-state-hook
+	'mouse-enter-text-hook 'mouse-leave-text-hook 'mix-drag-hook 
+	'start-playing-selection-hook 'after-save-as-hook 'before-save-as-hook 'draw-mix-hook
+	'before-exit-hook 'before-close-hook 'clip-hook))
+
+(define hook-calls (make-vector (length all-hooks) 0))
+
+(define (set-all-hooks)
+  (for-each
+   (let ((ctr 0))
+     (lambda (h)
+       (set! (hook-functions h)
+	     (list
+	      (let ((local-ctr ctr))
+		(lambda (hook)
+		  (set! (hook-calls local-ctr) (+ (hook-calls local-ctr) 1))))))
+       (set! ctr (+ ctr 1))))
+   all-hooks))
+
+(define (report-hook-calls)
+  (let ((not-called ()))
+    (do ((i 0 (+ i 1)))
+	((= i (length all-hooks)))
+      (if (positive? (hook-calls i))
+	  (format *stderr* "~A: ~D~%" (hook-names i) (hook-calls i))
+	  (set! not-called (cons (hook-names i) not-called))))
+    (if (pair? not-called)
+	(format *stderr* "not called: ~{~A~^, ~}~%" not-called))))
+
+
 (cond ((> test-at-random 0)             ; run tests in any random order
        (do ((i 0 (+ i 1)))
 	   ((= i test-at-random))
 	 (set! snd-test (random 23))
 	 (format *stderr* "~%~A: ~A~%" i snd-test)
 	 (before-test-hook snd-test)
+	 (if hooked (set-all-hooks))
 	 ((vector-ref test-funcs snd-test))
 	 (after-test-hook snd-test)))
 
@@ -47300,6 +47358,7 @@ EDITS: 1
 		keep-going
 		(< snd-test 0)))
        (before-test-hook snd-test)
+       (if hooked (set-all-hooks))
        ((vector-ref test-funcs snd-test))
        (after-test-hook snd-test))
 
@@ -47310,8 +47369,17 @@ EDITS: 1
 		    (or full-test
 			(and keep-going (<= snd-test i))))
 	   (before-test-hook i)
+	   (if hooked (set-all-hooks))
 	   ((vector-ref test-funcs i))
 	   (after-test-hook i)))))
+
+
+;;; currently not called:
+;;;    before-exit-hook, mix-drag-hook, mouse-leave-text-hook, mouse-enter-text-hook, mix-click-hook, listener-click-hook, 
+;;;    stop-playing-selection-hook, mouse-click-hook, enved-hook, mouse-press-hook, mouse-drag-hook, key-press-hook, 
+;;;    mouse-leave-label-hook, mouse-enter-label-hook, exit-hook, mouse-leave-listener-hook, mouse-enter-listener-hook, 
+;;;    snd-error-hook, name-click-hook, mark-drag-hook, mark-click-hook, drop-hook, mouse-leave-graph-hook, 
+;;;    mouse-enter-graph-hook, mix-release-hook
 
 
 ;;; ---------------- test all done
@@ -47336,6 +47404,8 @@ EDITS: 1
 
 (set! *print-length* 64)
 (format *stderr* "~%;times: ~A~%;total: ~A~%" timings (round (- (real-time) overall-start-time)))
+
+(if hooked (report-hook-calls))
 
 
 ;; #(59 58 114 95 2244 5373 613 134 11680 2892 609 743 868 976 815 1288 3020 197 168 2952 758 1925 4997 6567 846  183 0 242 6696 0))) ; 571

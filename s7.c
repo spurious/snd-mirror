@@ -66324,22 +66324,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LET_opCq:  /* one var, init is safe_c_c */
+#if DEBUGGING
 	  {
 	    s7_pointer old_code, old_env; /* trying to define lots of Snd function safe -- they crash here if they aren't actually safe */
 	    old_code = sc->code;          /*   so, add a bandage while I track them down... */
 	    old_env = sc->envir;
 	    sc->value = c_call(opt_pair2(sc->code))(sc, cdr(opt_pair2(sc->code)));
-#if DEBUGGING
 	    if ((sc->code != old_code) ||
 		(sc->envir != old_env))
 	      fprintf(stderr, "something changed: %s -> %s, %s -> %s\n",
 		      DISPLAY(old_code), DISPLAY(sc->code),
 		      DISPLAY(old_env), DISPLAY(sc->envir));
-#endif	    
 	    new_frame_with_slot(sc, sc->envir, sc->envir, opt_sym3(old_code), sc->value);
 	    sc->code = cdr(old_code);
 	    goto BEGIN1;
 	  }
+#else
+	  sc->value = c_call(opt_pair2(sc->code))(sc, cdr(opt_pair2(sc->code)));
+	  new_frame_with_slot(sc, sc->envir, sc->envir, opt_sym3(sc->code), sc->value);
+	  sc->code = cdr(sc->code);
+	  goto BEGIN1;
+#endif
 	  
 	  
 	case OP_LET_opSSq:  /* one var, init is safe_c_ss */
@@ -74591,5 +74596,4 @@ int main(int argc, char **argv)
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
- * can hooks (open-sound) be made safer via call-with-catch? no -- and push/pop_stack depends on normal returns
  */
