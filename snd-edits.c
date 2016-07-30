@@ -9326,8 +9326,7 @@ void g_init_edits(void)
   Xen_define_typed_procedure(S_is_snd_to_sample,    g_is_snd_to_sample_w,    1, 0, 0, H_is_snd_to_sample,   s7_make_signature(s7, 2, b, t));
   Xen_define_typed_procedure(S_make_snd_to_sample,  g_make_snd_to_sample_w,  0, 1, 0, H_make_snd_to_sample, s7_make_signature(s7, 2, t, t));
   Xen_define_typed_procedure(S_snd_to_sample,       g_snd_to_sample_w,       2, 1, 0, H_snd_to_sample,      s7_make_signature(s7, 4, f, t, i, i));
-  /* Xen_define_typed_procedure(S_edit_list_to_function, g_edit_list_to_function_w, 0, 4, 0, H_edit_list_to_function, s7_make_signature(s7, 5, t, t, t, i, i)); */
-  Xen_define_procedure(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
+  Xen_define_unsafe_typed_procedure(S_edit_list_to_function, g_edit_list_to_function_w, 0, 4, 0, H_edit_list_to_function, s7_make_signature(s7, 5, t, t, t, i, i)); 
   /* not safe because it calls eval-string */
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \

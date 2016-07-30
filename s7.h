@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.8"
-#define S7_DATE "30-May-16"
+#define S7_VERSION "4.9"
+#define S7_DATE "29-Jul-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -475,6 +475,9 @@ s7_pointer s7_define_safe_function(s7_scheme *sc, const char *name, s7_function 
 s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
 				    int required_args, int optional_args, bool rest_arg, 
 				    const char *doc, s7_pointer signature);
+s7_pointer s7_define_unsafe_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
+					   int required_args, int optional_args, bool rest_arg, 
+					   const char *doc, s7_pointer signature);
 
 void s7_define_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
 void s7_define_safe_function_star(s7_scheme *sc, const char *name, s7_function fnc, const char *arglist, const char *doc);
@@ -775,6 +778,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 29-Jul:    s7_define_unsafe_typed_function.
  * 30-May:    symbol takes any number of args.  make-vector no longer takes an optional fourth argument.
  * 24-May:    let-ref/set! check rootlet now if let is not an open let; setter for with-let.
  * 20-Feb:    removed last vestiges of quasiquoted vector support.

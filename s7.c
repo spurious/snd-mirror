@@ -41771,9 +41771,9 @@ s7_pointer s7_define_typed_function(s7_scheme *sc, const char *name, s7_function
 }
 
 
-static s7_pointer s7_define_unsafe_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
-				    int required_args, int optional_args, bool rest_arg, 
-				    const char *doc, s7_pointer signature)
+s7_pointer s7_define_unsafe_typed_function(s7_scheme *sc, const char *name, s7_function fnc,
+					   int required_args, int optional_args, bool rest_arg, 
+					   const char *doc, s7_pointer signature)
 {
   /* returns (string->symbol name), not the c_proc_t func */
   s7_pointer func, sym;
@@ -74531,23 +74531,23 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.1  16.2  16.7
+ *           12  |  13  |  14  |  15  | 16.0  16.7
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1117  1295  1928
- * index    44.3 | 3291 | 1725 | 1276 | 1156  1158  1159  1166
- * teq           |      |      | 6612 | 2380  2376  2382  2382
- * tauto     265 |   89 |  9   |  8.4 | 2638  2643  2644  2688
- * tcopy         |      |      | 13.6 | 3204  3203  3204  3133
- * bench    42.7 | 8752 | 4220 | 3506 | 3230  3229  3218  3220
- * tform         |      |      | 6816 | 3627  3589  3621  3709
- * tmap          |      |      |  9.3 | 4176  4177  4173  4172
- * titer         |      |      | 7503 | 5218  5219  5211  5235
- * thash         |      |      | 50.7 | 8491  8484  8477  8496
- * lg            |      |      |      |                   180.
+ * s7test   1721 | 1358 |  995 | 1194 | 1122  1928
+ * index    44.3 | 3291 | 1725 | 1276 | 1156  1166
+ * teq           |      |      | 6612 | 2380  2382
+ * tauto     265 |   89 |  9   |  8.4 | 2638  2688
+ * tcopy         |      |      | 13.6 | 3204  3133
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230  3220
+ * tform         |      |      | 6816 | 3627  3709
+ * tmap          |      |      |  9.3 | 4176  4172
+ * titer         |      |      | 7503 | 5218  5235
+ * thash         |      |      | 50.7 | 8491  8496
+ * lg            |      |      |      |       180.
  *               |      |      |      |       
- * tgen          |   71 | 70.6 | 38.0 | 12.0  11.7  11.8  11.8
- * tall       90 |   43 | 14.5 | 12.7 | 15.0  15.0  15.0  14.9
- * calls     359 |  275 | 54   | 34.7 | 37.1  37.0  37.2  39.1
+ * tgen          |   71 | 70.6 | 38.0 | 12.0  11.8
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0  14.9
+ * calls     359 |  275 | 54   | 34.7 | 37.1  39.1
  * 
  * --------------------------------------------------------------------
  *
@@ -74567,7 +74567,6 @@ int main(int argc, char **argv)
  * symbol as arg of eq? memq defined? case-selector: use gensym? [i.e. don't put make the computed symbol permanent]
  * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
  *   but how to tie into a list without allocation?
- * provide/require should use keywords -- then require could be a function
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs

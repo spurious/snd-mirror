@@ -10,11 +10,13 @@
  */
 
 #define XEN_MAJOR_VERSION 3
-#define XEN_MINOR_VERSION 25
-#define XEN_VERSION "3.25"
+#define XEN_MINOR_VERSION 26
+#define XEN_VERSION "3.26"
 
 /* HISTORY:
  *
+ *  29-Jul-16: Xen_define_unsafe_typed_procedure.
+ *  --------
  *  20-Aug-15: Xen_define_typed_procedure, Xen_define_typed_dilambda.
  *  --------
  *  27-Dec:    Xen_arity in s7 now uses s7_arity. Xen_define_integer_procedure, Xen_define_dilambda.
@@ -1697,10 +1699,12 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 
 #if HAVE_SCHEME
 #define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) s7_define_typed_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc, Sig)
+#define Xen_define_unsafe_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) s7_define_unsafe_typed_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc, Sig)
 #define Xen_define_typed_dilambda(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt, Get_Sig, Set_Sig) \
   s7_typed_dilambda(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help, Get_Sig, Set_Sig)
 #else
 #define Xen_define_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) Xen_define_safe_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
+#define Xen_define_unsafe_typed_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc, Sig) Xen_define_procedure(Name, Func, ReqArg, OptArg, RstArg, Doc)
 #define Xen_define_typed_dilambda(a, b, c, d, e, f, g, h, i, j, k) XEN_DEFINE_PROCEDURE_WITH_SETTER(a, b, c, d, e, f, g, h, i)
 #endif
 

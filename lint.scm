@@ -209,11 +209,16 @@
 				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
-	(makers '(gensym sublet inlet make-iterator let->list random-state random-state->list number->string
-		  make-string string string-copy copy list->string string->list string-append substring object->string
-		  format cons list make-list reverse append vector-append list->vector vector->list make-vector
-		  make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
-		  hash-table hash-table* make-hash-table make-hook #_{list} #_{append} gentemp)) ; gentemp for other schemes
+	(makers (let ((h (make-hash-table)))
+		  (for-each
+		   (lambda (op)
+		     (set! (h op) #t))
+		   '(gensym sublet inlet make-iterator let->list random-state random-state->list number->string
+		     make-string string string-copy copy list->string string->list string-append substring object->string
+		     format cons list make-list reverse append vector-append list->vector vector->list make-vector
+		     make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
+		     hash-table hash-table* make-hash-table make-hook #_{list} #_{append} gentemp)) ; gentemp for other schemes
+		  h))
 
 	(non-negative-ops (let ((h (make-hash-table)))
 			    (for-each
@@ -666,8 +671,17 @@
 	       (and (pair? (cdr tree))
 		    (member #f (cdr tree) (lambda (a b) (tree-set-car-member set b)))))))
     
+    (define (tree-table-car-member set tree) ; hash-table as car
+      (and (pair? tree)
+	   (or (and (hash-table-ref set (car tree))
+		    tree)
+	       (and (pair? (car tree))
+		    (tree-table-car-member set (car tree)))
+	       (and (pair? (cdr tree))
+		    (member #f (cdr tree) (lambda (a b) (tree-table-car-member set b)))))))
+    
     (define (maker? tree)
-      (tree-set-car-member makers tree))
+      (tree-table-car-member makers tree))
     
     (define (tree-symbol-walk tree syms)
       (if (pair? tree)
@@ -5503,7 +5517,7 @@
 	     (when (= len 3)
 	       (let ((arg1 (cadr form))
 		     (arg2 (caddr form)))
-		 ;; (= (+ x 1) (+ y 1)) and various equivalents happens very rarely
+		 ;; (= (+ x a) (+ y a)) and various equivalents happen very rarely (only in test suites it appears)
 		 (let ((var (or (and (memv arg1 '(0 1))
 				     (pair? arg2)
 				     (eq? (car arg2) 'length)
@@ -7362,7 +7376,7 @@
 					 "")))
 		    (if (pair? val)
 			(if (or (side-effect? val env)
-				(memq (car val) makers))
+				(hash-table-ref makers (car val)))
 			    (if (> (tree-leaves val) 2)
 				;; I think we need to laboriously repeat the function call here:
 				;;    (let ((a 1) (b 2) (c 3)) 
@@ -9215,6 +9229,40 @@
 	 (let ((vname (var-name local-var))
 	       (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
 
+#|
+	   ;; happens a lot
+	   ;;   need to check that other portions of the expression are constant (+ x y) etc
+	   ;; another case: all uses can be simplified: (cdr x) (cadr x) (cddr x) -> pre cdr
+	   ;;   other than cxr?  reversibles: (< x 1) (> 1 x), notables -- code-equal? below?
+
+	   (when (and (zero? (var-set local-var))
+	              (not (eq? otype 'parameter)))
+	   (let ((hist (var-history local-var)))
+	     (if (and (pair? hist)
+		      (pair? (car hist))
+		      (symbol? (caar hist))
+		      (not (hash-table-ref makers (caar hist)))
+		      (not (eq? (var-name local-var) (caar hist))) ; not a function
+		      (pair? (cdr hist))
+		      (pair? (cddr hist))
+		      (every? (lambda (a) 
+				(and (pair? a)
+				     (not (side-effect? a env))
+				     (or (equal? (car hist) a)
+					 (and ;; need structures-equal or something here
+					      (hash-table-ref reversibles (car hist))
+					      (eq? (cadr (hash-table-ref reversibles (car hist))) (car a)))
+					 (and (memq (caar hist) '(car cdr caar cadr cddr cdar caaar caadr caddr cdddr cdaar cddar cadar cdadr cadddr cddddr
+							          caaaar caaadr caadar caaddr cadaar cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar))
+					      (memq (car a) '(car cdr caar cadr cddr cdar caaar caadr caddr cdddr cdaar cddar cadar cdadr cadddr cddddr
+							          caaaar caaadr caadar caaddr cadaar cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar))
+					      (string=? (substring (symbol->string (car a)) (- (length (symbol->string (car a))) 2))
+							(substring (symbol->string (caar hist)) (- (length (symbol->string (caar hist))) 2)))))))
+			      (copy (cdr hist) (make-list (- (length hist) 2)))))
+		 (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
+		   (format *stderr* "~A in ~A~%   ~A~%~%" (var-name local-var) hist (truncated-list->string outer-form))))))
+|#
+
 	   ;; translate to dilambda fixing arg if necessary and mention generic set!
 	   (let ((init (var-initial-value local-var)))
 	     (when (and (pair? init)
@@ -10708,6 +10756,25 @@
 				       (if (= ctr (- len 1)) "" "...")
 				       `(copy ,(cadr ncar) ,(cadr f))))))
 
+#|
+		  ;; this happens enough to be worth rewriting, most are two -> else of first if at least
+		  ;;   else of second if -> else of case, need to be sure first if is one-branch
+		  ;;
+		  ;; could this be extended to ifs->cond?
+		  ;; and need to say "assuming no hidden sets or something if not obvious in first if's true branch
+		  (when (and (eq? f-func 'if)
+			     (eq? (car prev-f) 'if)
+			     (pair? (cadr f))
+			     (pair? (cadr prev-f))
+			     (memq (caadr f) '(eq? eqv?))
+			     (eq? (caadr f) (caadr prev-f))
+			     (or (eq? (cadadr f) (cadadr prev-f)) ; and symbol! -- matches #t for example
+				 (eq? (caddr (cadr f)) (caddr (cadr prev-f))))
+			     (not (tree-change-member (list (cadadr f)) (cddr prev-f))))
+		    (format *stderr* "~A~%~%" (lint-pp body)))
+|#
+		  ;; another is (if expr...) (if same-expr ...) -> (if expr... (if same-expr ...))
+
 		  (when (and (eq? f-func 'set!)
 			     (eq? (car prev-f) 'set!))
 		    (let ((arg1 (caddr prev-f))
@@ -11444,7 +11511,7 @@
 			      (and (hash-table-ref no-side-effect-functions (car tree))
 				   (or (not (hash-table-ref syntaces (car tree)))
 				       (memq (car tree) '(if begin cond or and unless when)))
-				   (not (memq (car tree) makers))
+				   (not (hash-table-ref makers (car tree)))
 				   (list? (cdr tree))
 				   (every? all-ok? (cdr tree))))))
 		    (if (not (or (eq? (car tree) 'quote) (member tree constant-exprs)))
@@ -15380,10 +15447,43 @@
 				    (pair? (cddr last)) ; (set! a)
 				    (symbol? (cadr last))
 				    (assq (cadr last) varlist)
+				    ;; this is overly restrictive:
 				    (not (tree-set-member '(call/cc call-with-current-continuation curlet lambda lambda*) form)))
 			       (lint-format "set! is pointless in ~A: use ~A" caller
 					    last (caddr last))))
-			 
+
+#|
+			 ;; set! local-var as last ref in let body almost never happens, and is caught elsewhere (pointless set!)
+			 ;; caadr history = set! if set! was next-to-last etc
+			 ;;   need to get out if any exporters (especially lambda)
+			 ;; this should work in let* etc
+
+			 ;; if only set+use, is the moved scope reported anyway?
+			 ;; if last is loop, ignore, or if last uses it more than once [use let?]
+			 ;; if x ... as last, if not used previously, do/let at set! point
+
+			 ;; this is overly restrictive:
+			 (when (not (tree-set-member '(lambda define curlet) body))
+			 (for-each (lambda (v)
+				     (let ((hist (var-history v)))
+				       (if (and (pair? hist)
+						(pair? (cdr hist))
+						(pair? (cadr hist))
+						(eq? (caadr hist) 'set!))
+					   (do ((i (- (length body) 1) (- i 1)))
+					       ((or (= i 0)
+						    (let ((expr (list-ref body i)))
+						      (and (pair? expr)
+							   (eq? (car expr) 'set!)
+							   (eq? (cadr expr) (var-name v)))))
+						(if (and (> i 0)
+							 (not (tree-memq (var-name v) (list-tail body (+ i 2)))))
+						    (format *stderr* "~NC~%~S ~A:~%   ~A~%~%" 
+							    16 #\-
+							    *current-file* (var-name v) (lint-pp form))))))))
+				   vars))
+|#
+
 			 (when (and (pair? (car body))
 				    (eq? (caar body) 'do))
 			   (when (and (null? (cdr body))  ; removing this restriction gets only 3 hits
@@ -17642,8 +17742,6 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; currently differ-by-one is only in if/cond/case-walker -- would it make sense elsewhere? [16685]
-;;;   (two branch cond/case), f+args (each can differ at the same spot) -- the simple cases here already work
-;;;   differ-in-trailers would require values I think
+;;; lint output needs to be organized somehow
 ;;;
-;;; 148 24013 659015
+;;; 148 24013 663200

@@ -138,6 +138,15 @@
      ladspa-dir left-sample lgamma linear->db lisp-graph-style lisp-graph?
      listener-color listener-colorized listener-font listener-prompt listener-selection listener-text-color little-endian?
      localtime locsig-ref locsig-reverb-ref locsig-type locsig? log-freq-start main-menu main-widgets 
+
+     make-env make-pulsed-env make-one-pole make-fir-coeffs make-formant make-all-pass-bank make-iir-filter make-filter 
+     make-comb make-polywave make-bezier make-delay make-nrxycos make-moving-norm make-nrxysin make-firmant make-cairo 
+     make-sawtooth-wave make-color make-graph-data make-oscil make-oscil-bank make-two-zero make-fft-window make-moving-max 
+     make-filtered-comb-bank make-filtered-comb make-nsin make-rand-interp make-one-pole-all-pass make-rand make-formant-bank 
+     make-all-pass make-table-lookup make-one-zero make-notch make-square-wave make-moving-average make-polyshape
+     make-triangle-wave make-comb-bank make-ncos make-rxyk!sin make-fir-filter make-two-pole make-asymmetric-fm 
+     make-rxyk!cos make-pulse-train 
+
      mark->integer mark-color mark-home mark-hook mark-name mark-properties
      mark-property mark-sample mark-sync mark-sync-max mark-tag-height mark-tag-width mark?
      marks max-regions max-transform-peaks maxamp maxamp-position menu-widgets min-dB mix->integer mix-color mix-dialog-mix mix-drag-hook mix-home
@@ -183,6 +192,22 @@
      with-tracking-cursor with-verbose-cursor x->position x-axis-label x-axis-style x-bounds x-position-slider
      x-zoom-slider y->position y-axis-label y-bounds y-position-slider y-zoom-slider zoom-color
      zoom-focus-style zoom-one-pixel)))
+
+
+;;; ---------------- Snd makers ----------------
+(let ((h (*lint* 'makers)))
+  (for-each
+   (lambda (s)
+     (hash-table-set! h s #t))
+   '(make-env make-pulsed-env make-one-pole make-fir-coeffs make-convolve make-wave-train make-formant make-all-pass-bank 
+     make-iir-filter make-filter make-comb make-sample->file make-polywave make-bezier make-delay make-nrxycos make-moving-norm 
+     make-nrxysin make-firmant make-cairo make-sawtooth-wave make-color make-player make-graph-data make-oscil make-oscil-bank 
+     make-two-zero make-fft-window make-moving-max make-filtered-comb-bank make-filtered-comb make-nsin make-rand-interp 
+     make-one-pole-all-pass make-rand make-formant-bank make-readin make-all-pass make-phase-vocoder make-table-lookup 
+     make-one-zero make-notch make-square-wave make-file->frample make-moving-average make-granulate make-polyshape 
+     make-locsig make-triangle-wave make-mix-sampler make-move-sound make-comb-bank make-ncos make-rxyk!sin 
+     make-variable-graph make-fir-filter make-file->sample make-ssb-am make-two-pole make-region-sampler 
+     make-frample->file make-asymmetric-fm make-sampler make-region make-snd->sample make-src make-rxyk!cos make-pulse-train)))
 
 
 ;;; ---------------- Snd booleans ----------------
