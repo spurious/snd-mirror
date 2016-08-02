@@ -1950,17 +1950,17 @@ homogeneous vector functions are currently built-in:
 <pre>
 (define (matrix-multiply A B)
   ;; assume square matrices and so on for simplicity
-  (let* ((size (car (vector-dimensions A)))
-	 (C (make-vector (list size size) 0)))
-    (do ((i 0 (+ i 1)))
+  (let ((size (car (vector-dimensions A))))
+    (do ((C (make-vector (list size size) 0))
+         (i 0 (+ i 1)))
 	((= i size) C)
       (do ((j 0 (+ j 1)))
 	  ((= j size))
-	(let ((sum 0))
-	  (do ((k 0 (+ k 1)))
-	      ((= k size))
-	    (set! sum (+ sum (* (A i k) (B k j)))))
-	  (set! (C i j) sum))))))
+	(do ((sum 0)
+             (k 0 (+ k 1)))
+	    ((= k size)
+             (set! (C i j) sum))
+	  (set! sum (+ sum (* (A i k) (B k j)))))))))
 </pre>
 </div>
 
@@ -9273,7 +9273,8 @@ To try  it:
 </pre>
 
 
-<p>lint tries to reduce false positives, so its default behavior is somewhat laconic.  There are several
+<p>
+There are several
 variables at the start of lint.scm to control additional output:
 </p>
 

@@ -1164,7 +1164,6 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data);
 void redirect_everything_to(void (*handler)(const char *msg, void *ufd), void *data);
 Xen snd_catch_any(Xen_catch_t body, void *body_data, const char *caller);
-Xen snd_throw(Xen key, Xen args);
 Xen snd_no_such_file_error(const char *caller, Xen filename);
 Xen snd_no_such_channel_error(const char *caller, Xen snd, Xen chn);
 Xen snd_bad_arity_error(const char *caller, Xen errstr, Xen proc);

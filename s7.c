@@ -3339,8 +3339,6 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- GC -------------------------------- */
 
-#define is_gc_nil(p) ((p) == sc->gc_nil)
-
 unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
   unsigned int loc;
