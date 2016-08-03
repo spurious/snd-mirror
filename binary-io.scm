@@ -10,12 +10,12 @@
 ;;; -------- strings (0-terminated)
 
 (define (io-read-string)
-  (let ((chars ()))
-    (do ((c (read-byte) (read-byte)))
-	((or (eof-object? c)
-	     (= c 0))
-	 (reverse (apply string chars)))
-      (set! chars (cons (integer->char c) chars)))))
+  (do ((chars ())
+       (c (read-byte) (read-byte)))
+      ((or (eof-object? c)
+	   (= c 0))
+       (reverse (apply string chars)))
+    (set! chars (cons (integer->char c) chars))))
 
 (define (io-write-string str)
   (format () "~{~A~}" str)
@@ -26,10 +26,10 @@
 ;;; -------- strings (unterminated)
 
 (define* (read-chars (len 4))
-  (let ((str (make-string len)))
-    (do ((i 0 (+ i 1)))
-	((= i len) str)
-      (set! (str i) (read-char)))))
+  (do ((str (make-string len))
+       (i 0 (+ i 1)))
+      ((= i len) str)
+    (set! (str i) (read-char))))
 	 
 (define (write-chars str)
   (format () "~{~A~}" str))
@@ -88,16 +88,16 @@
 ;;; -------- 64-bit ints
 
 (define (read-bint64)
-  (let ((int 0))
-    (do ((i 56 (- i 8)))
-	((< i 0) int)
-      (set! int (logior int (ash (read-byte) i))))))
+  (do ((int 0)
+       (i 56 (- i 8)))
+      ((< i 0) int)
+    (set! int (logior int (ash (read-byte) i)))))
 
 (define (read-lint64)
-  (let ((int 0))
-    (do ((i 0 (+ i 8)))
-	((= i 64) int)
-      (set! int (logior int (ash (read-byte) i))))))
+  (do ((int 0)
+       (i 0 (+ i 8)))
+      ((= i 64) int)
+    (set! int (logior int (ash (read-byte) i)))))
     
 (define (write-bint64 int)
   (do ((i 56 (- i 8)))
