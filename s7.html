@@ -1284,7 +1284,7 @@ control over the environment at any point:
                                  ;   but (+ a b) is 15 because at that point + is *: (* 1 15)
 </pre>
 
-<p>Hygenic macros are trivial!  So s7 does not have syntax-rules because it is not needed.
+<p>Hygienic macros are trivial!  So s7 does not have syntax-rules because it is not needed.
 s7's lint.scm will warn you about any such problematic macro expansion, so I'd
 say just write macros as simply as possible, then let lint tell you
 that it's time to do the with-let shuffle. When that happens, wrap the macro body in
