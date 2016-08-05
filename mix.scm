@@ -426,13 +426,13 @@ panning operation."))
 		   (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))
 	     
 	     (let ((incoming-chans (channels name))
-		   (receiving-chans (channels index)))
+		   (receiving-mono (= (channels index) 1)))
 	       
 	       (if (= incoming-chans 1)
 		   
 		   ;; mono input
 		   
-		   (if (= receiving-chans 1)
+		   (if receiving-mono
 		       
 		       ;; mono to mono = just scale or envelope
 		       (let ((idx (mix name beg 0 index 0 *with-mix-tags* auto-delete))) ; file start in-chan snd chn ...
@@ -457,7 +457,7 @@ panning operation."))
 		   
 		   ;; stero input
 		   
-		   (if (= receiving-chans 1)
+		   (if receiving-mono
 		       
 		       ;; stereo -> mono => scale or envelope both input chans into the output
 		       (let ((idx0 (mix name beg 0 index 0 *with-mix-tags* deletion-choice))

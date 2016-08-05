@@ -260,7 +260,7 @@
 	  (format () "~%;notch hum 0: ~A" mx)))
     (close-sound (find-sound test)))
   (let ((test (with-sound ("test.snd" :srate 22050)
-		(let ((p (make-polywave 20.0 (list 2 1 3 1 4 1)))
+		(let ((p (make-polywave 20.0 '(2 1 3 1 4 1)))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :scaler 1/3 :length 44100)))
 		   (do ((i 0 (+ i 1)))
 		       ((= i 44100))
@@ -280,7 +280,7 @@
     (close-sound (find-sound test)))
 
   (let ((test (with-sound ("test.snd" :srate 22050)
-		(let ((p (make-polywave 5.0 (list 11 1 12 1 13 1)))
+		(let ((p (make-polywave 5.0 '(11 1 12 1 13 1)))
 		      (e (make-env '(0 0 1 .3 9 .3 10 0) :scaler 1/3 :length 44100)))
 		   (do ((i 0 (+ i 1)))
 		       ((= i 44100))

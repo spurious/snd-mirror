@@ -849,29 +849,29 @@ between two marks,using the granulate generator to fix up the selection duration
 		 
 		 (for-each
 		  (lambda (rparent loc)
-		    (let ((sus-rel-start (* offset 2)))
+		    (let ((sus-rel-start (+ (* offset 2) 1)))
 		      (let ((someright (XtCreateManagedWidget " > " xmPushButtonWidgetClass rparent ())))
 			(XtAddCallback someright XmNactivateCallback
 				       (lambda (w c i)
-					 (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					 (let ((ml (if (= loc 0) (loop-data sus-rel-start) (framples))))
 					   (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 1)))
 					   (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
 		      (let ((lotsright (XtCreateManagedWidget " >>" xmPushButtonWidgetClass rparent ())))
 			(XtAddCallback lotsright XmNactivateCallback
 				       (lambda (w c i)
-					 (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					 (let ((ml (if (= loc 0) (loop-data sus-rel-start) (framples))))
 					   (set! (loop-data (+ loc (* offset 2))) (min ml (+ (loop-data (+ loc (* offset 2))) 10)))
 					   (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
 		      (let ((stopright (XtCreateManagedWidget " O " xmPushButtonWidgetClass rparent ())))
 			(XtAddCallback stopright XmNactivateCallback
 				       (lambda (w c i)
-					 (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					 (let ((ml (if (= loc 0) (loop-data sus-rel-start) (framples))))
 					   (set! (loop-data (+ loc (* offset 2))) ml)
 					   (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))
 		      (let ((farright (XtCreateManagedWidget ">>" xmPushButtonWidgetClass rparent ())))
 			(XtAddCallback farright XmNactivateCallback
 				       (lambda (w c i)
-					 (let ((ml (if (= loc 0) (loop-data (+ sus-rel-start 1)) (framples))))
+					 (let ((ml (if (= loc 0) (loop-data sus-rel-start) (framples))))
 					   (set! (loop-data (+ loc (* offset 2))) ml)
 					   (update-labels midlab1 midlab2 midlab3 offset range-in-secs)))))))
 		  (list rowrighttop rowrightbottom)
