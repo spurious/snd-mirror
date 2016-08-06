@@ -2931,11 +2931,11 @@
     ;; returns the new duration of a sound after using an envelope for time-varying sampling-rate conversion
     ;; (from Bill's dsp.scm)
     (define (src-duration e)
-      (let* ((len (length e))
-	     (all-x (- (e (- len 2)) (e 0))) ; last x - first x
+      (let* ((len (- (length e) 2))
+	     (all-x (- (e len) (e 0))) ; last x - first x
 	     (dur 0.0))
 	(do ((i 0 (+ i 2)))
-	    ((>= i (- len 2)) dur)
+	    ((>= i len) dur)
 	  (let ((area (let ((x0 (e i))
 			    (x1 (e (+ i 2)))
 			    (y0 (e (+ i 1))) ; 1/x x points

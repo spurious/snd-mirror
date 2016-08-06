@@ -8,10 +8,13 @@
 
 ;;; see generators.scm for the old scheme versions of one-pole-all-pass, pnoise, one-pole-swept, and expseg
 
+;; converts t60 values to suitable :rate values for expseg
+(define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 *clm-srate*))))
+  
 (define number-of-stiffness-allpasses 8)
 (define longitudinal-mode-cutoff-keynum 29)
 (define longitudinal-mode-stiffness-coefficient -.5)
-(define loop-gain-env-t60 .05)
+(define loop-gain-env-t60 (In-t60 .05))
 (define loop-gain-default .9999)
 (define nstrings 3)
 (define two-pi (* 2 pi))
@@ -125,9 +128,6 @@
 		  unaCordaGain
 		  (unaCordaGain-table default-unaCordaGain-table))
   
-  ;; converts t60 values to suitable :rate values for expseg
-  (define (In-t60 t60) (- 1.0 (expt 0.001 (/ 1.0 t60 *clm-srate*))))
-  
   (define (make-one-pole-one-zero a0 a1 b1)
     (list (make-one-zero a0 a1)
 	  (make-one-pole 1.0 b1)))
@@ -200,13 +200,13 @@
 	(singleStringPole (or singleStringPole (envelope-interp keyNum singleStringPole-table)))
 	
 	(releaseLoopGain (or releaseLoopGain (envelope-interp keyNum releaseLoopGain-table)))
-	(DryTapFiltCoeft60 (or DryTapFiltCoeft60 (envelope-interp keyNum DryTapFiltCoeft60-table)))
+	(DryTapFiltCoeft60 (In-t60 (or DryTapFiltCoeft60 (envelope-interp keyNum DryTapFiltCoeft60-table))))
 	(DryTapFiltCoefTarget (or DryTapFiltCoefTarget (envelope-interp keyNum DryTapFiltCoefTarget-table)))
 	(DryTapFiltCoefCurrent (or DryTapFiltCoefCurrent (envelope-interp keyNum DryTapFiltCoefCurrent-table)))
-	(DryTapAmpt60 (or DryTapAmpt60 (envelope-interp keyNum DryTapAmpt60-table)))
+	(DryTapAmpt60 (In-t60 (or DryTapAmpt60 (envelope-interp keyNum DryTapAmpt60-table))))
 	(sustainPedalLevel (or sustainPedalLevel (envelope-interp keyNum sustainPedalLevel-table)))
 	(pedalResonancePole (or pedalResonancePole (envelope-interp keyNum pedalResonancePole-table)))
-	(pedalEnvelopet60 (or pedalEnvelopet60 (envelope-interp keyNum pedalEnvelopet60-table)))
+	(pedalEnvelopet60 (In-t60 (or pedalEnvelopet60 (envelope-interp keyNum pedalEnvelopet60-table))))
 	(soundboardCutofft60 (or soundboardCutofft60 (envelope-interp keyNum soundboardCutofft60-table)))
 	(DryPedalResonanceFactor (or DryPedalResonanceFactor (envelope-interp keyNum DryPedalResonanceFactor-table)))
 	(unaCordaGain (or unaCordaGain (envelope-interp keyNum unaCordaGain-table)))
@@ -322,16 +322,16 @@
 			  
 			  ;;initialize loop-gain envelope
 			  (loop-gain loop-gain-default) 
-			  (loop-gain-ry (* releaseLoopGain (In-t60 loop-gain-env-t60)))
-			  (loop-gain-rx (- 1.0 (In-t60 loop-gain-env-t60)))
+			  (loop-gain-ry (* releaseLoopGain loop-gain-env-t60))
+			  (loop-gain-rx (- 1.0 loop-gain-env-t60))
 			  
 			  (dry-coef (* 1.0 DryTapFiltCoefCurrent))
-			  (dry-coef-ry (* DryTapFiltCoefTarget (In-t60 DryTapFiltCoeft60)))
-			  (dry-coef-rx (- 1.0 (In-t60 DryTapFiltCoeft60)))
+			  (dry-coef-ry (* DryTapFiltCoefTarget DryTapFiltCoeft60))
+			  (dry-coef-rx (- 1.0 DryTapFiltCoeft60))
 			  
 			  (wet-coef 0.0)
-			  (wet-coef-ry (* -0.5 (In-t60 pedalEnvelopet60)))
-			  (wet-coef-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+			  (wet-coef-ry (* -0.5 pedalEnvelopet60))
+			  (wet-coef-rx (- 1.0 pedalEnvelopet60))
 			  
 			  (dryTap 0.0)
 			  (dryTap-x 1.0)
@@ -404,8 +404,8 @@
 			  
 			  (outa i couplingFilter-input)))))
 		  
-		  (set! dryTap-rx (- 1.0 (In-t60 DryTapAmpt60)))
-		  (set! wetTap-rx (- 1.0 (In-t60 pedalEnvelopet60)))
+		  (set! dryTap-rx (- 1.0 DryTapAmpt60))
+		  (set! wetTap-rx (- 1.0 pedalEnvelopet60))
 		  
 		  (piano-loop beg release-time)
 		  (set! dryTap-rx (- 1.0 sb-cutoff-rate))

@@ -326,9 +326,9 @@
 	    (let ((rl (channel->float-vector (left-sample) 512))
 		  (im (make-float-vector 512)))
 	      (mus-fft rl im)
-	      (let ((peak (* 2 (max (float-vector-peak rl) (float-vector-peak im)))))
-		(float-vector-scale! rl (/ 1.0 peak))
-		(float-vector-scale! im (/ 1.0 peak)))
+	      (let ((peak (/ (* 2 (max (float-vector-peak rl) (float-vector-peak im))))))
+		(float-vector-scale! rl peak)
+		(float-vector-scale! im peak))
 	      ;; display each element in the complex plane rotated to stack along the x axis
 	      (glNewList gl-list GL_COMPILE)
 	      (glBegin GL_LINES)

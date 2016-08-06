@@ -2973,10 +2973,11 @@
 						  (pair? (cdadr p))
 						  (or selector
 						      (set! selector (cadadr p)))
-						  (let ((expr (cadr p)))
+						  (let ((expr (cadr p))
+							(arg1 (cadadr p)))
 						    (case (car expr)
 						      ((null?)
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (not (memq () keys))
 							    (set! keys (cons () keys))))
 						      ;; we have to make sure no keys are repeated:
@@ -2984,24 +2985,24 @@
 						      ;;   this rewrite has become much trickier than expected...
 						      
 						      ((boolean?)
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (not (memq #f keys))
 							    (not (memq #t keys))
 							    (set! keys (cons #f (cons #t keys)))))
 						      
 						      ((eof-object?)
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (not (memq #<eof> keys))
 							    (set! keys (cons #<eof> keys))))
 						      
 						      ((zero?)
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (not (memv 0 keys))
 							    (not (memv 0.0 keys))
 							    (set! keys (cons 0.0 (cons 0 keys)))))
 						      
 						      ((memq memv)
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (pair? (cddr expr))
 							    (pair? (caddr expr))
 							    (eq? (caaddr expr) 'quote)
@@ -3014,18 +3015,18 @@
 						      ((eq? eqv? char=?)
 						       (and (pair? (cddr expr))
 							    (null? (cdddr expr))
-							    (or (and (equal? selector (cadr expr))
+							    (or (and (equal? selector arg1)
 								     (code-constant? (caddr expr))
 								     (not (memv (unquoted (caddr expr)) keys))
 								     (set! keys (cons (unquoted (caddr expr)) keys)))
 								(and (equal? selector (caddr expr))
-								     (code-constant? (cadr expr))
-								     (not (memv (unquoted (cadr expr)) keys))
-								     (set! keys (cons (unquoted (cadr expr)) keys))))))
+								     (code-constant? arg1)
+								     (not (memv (unquoted arg1) keys))
+								     (set! keys (cons (unquoted arg1) keys))))))
 						      
 						      ((not)
 						       ;; no hits here for last+not eq(etc)+no collision in keys
-						       (and (equal? selector (cadr expr))
+						       (and (equal? selector arg1)
 							    (not (memq #f keys))
 							    (set! keys (cons #f keys))))
 						      
@@ -9298,6 +9299,8 @@
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
+
+		 ;(format *stderr* "~A: ~A ~A ~A~%" vname (var-ref local-var) (var-set local-var) (var-history local-var))
 		 
 		 ;; do all refs to an unset var go through the same function (at some level)
 		 (when (and (zero? (var-set local-var))
@@ -10343,7 +10346,8 @@
 		       ;;(not (tree-car-member (cadr first-expr) (caddr first-expr)))
 		       ;;(not (tree-set-car-member '(lambda lambda*) (caddr first-expr)))
 		       (not (and (pair? (caddr first-expr))
-				 (memq (caaddr first-expr) '(lambda lambda*)))))
+				 (memq (caaddr first-expr) '(lambda lambda*))))
+		       (> (length body) 2))
 	      ;; this still is not ideal -- we need to omit let+lambda as well
 	      (do ((names ())
 		   (letx 'let)
@@ -10408,168 +10412,160 @@
 				       (eqv? (length (cdadr n-1)) (length (cdr call))))
 			      (let ((new-call `(let ,@named ,(map list (cdadr n-1) (cdr call)) ,@(cddr n-1))))
 				(lint-format "perhaps embed ~A: ~A" caller new-var
-					     (lists->string outer-form `(... ,(tree-subst new-call call n))))))))))))))
-
-	  ;; this comment has strayed?
-	  ;; needs to check outer let also -- and maybe complain? [outer = form: we're already closed?]
-	  ;; bounds of closable context might be dependent on body length
-	  ;; (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f)))
-	  ;;  if used just once, move to that point in the expr+1? -- need to point it out somehow?
+					     (lists->string outer-form `(... ,(tree-subst new-call call n)))))))))))))
 
 	  (let ((suggest made-suggestion))
-
-	  (when (and (> len 2)
-		     (not (tree-memq 'curlet (list-ref body (- len 1)))))
-	    (do ((q body (cdr q))
-		 (k 0 (+ k 1)))
-		((null? q))
-	      (let ((expr (car q)))
-		(when (and (pair? expr)
-			   (eq? (car expr) 'define)
-			   (pair? (cdr expr))
-			   (pair? (cddr expr))
-			   (null? (cdddr expr)))
-		  (let ((name (and (symbol? (cadr expr)) (cadr expr))))
-		    (when name
-		      (do ((last-ref k)
-			   (p (cdr q) (cdr p))
-			   (i (+ k 1) (+ i 1)))
-			  ((null? p)
-			   (if (and (< k last-ref (+ k 2)) 
-				    (pair? (list-ref body (+ k 1))))
-			       (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
-				     (letx (if (tree-member name (cddr expr)) 'letrec 'let))
-				     (use-expr (list-ref body (+ k 1)))
-				     (seen-earlier (or (var-member name env)
-						       (do ((s body (cdr s)))
-							   ((or (eq? s q)
-								(and (pair? (car s))
-								     (tree-memq name (car s))))
-							    (not (eq? s q)))))))
-				 (cond (seen-earlier)
-				       
-				       ((not (eq? (car use-expr) 'define))
-					(let-temporarily ((target-line-length 120))
-					  ;; (... (define f14 (lambda (x y) (if (positive? x) (+ x y) y))) (+ (f11 1 2) (f14 1 2))) ->
-					  ;;    (... (let ((f14 (lambda (x y) (if (positive? x) (+ x y) y)))) (+ (f11 1 2) (f14 1 2))))
-					  (lint-format "the scope of ~A could be reduced: ~A" caller name
-						       (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
-										`(... (,letx ((,name ,(caddr expr))) 
-											     ,use-expr)
-										      ,@end-dots)))))
-				       ((eq? (cadr use-expr) name)
-					;; (let () (display 33) (define x 2) (define x (+ x y)) (display 43)) ->
-					;;    (... (set! x (+ x y)) ...)
-					(lint-format "use set! to redefine ~A: ~A" caller name
-						     (lists->string `(... ,use-expr ,@end-dots)
-								    `(... (set! ,name ,(caddr use-expr)) ,@end-dots))))
-				       ((pair? (cadr use-expr))
-					(if (symbol? (caadr use-expr))
-					    (let-temporarily ((target-line-length 120))
-					      ;; (let () (display 32) (define x 2) (define (f101 y) (+ x y)) (display 41) (f101 2)) ->
-					      ;;    (... (define f101 (let ((x 2)) (lambda (y) (+ x y)))) ...)
-					      (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (caadr use-expr)
-							   (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
-										    `(... (define ,(caadr use-expr)
-											    (,letx ((,name ,(caddr expr)))
-												   (lambda ,(cdadr use-expr)
-												     ,@(cddr use-expr))))
-											  ,@end-dots))))))
-				       ((and (symbol? (cadr use-expr))
-					     (pair? (cddr use-expr)))
-					(let-temporarily ((target-line-length 120))
-					  (if (and (pair? (caddr use-expr))
-						   (eq? (caaddr use-expr) 'lambda))
-					      ;; (let () (display 34) (define x 2) (define f101 (lambda (y) (+ x y))) (display 41) (f101 2))
-					      ;;    (... (define f101 (let ((x 2)) (lambda (y) (+ x y)))) ...)
-					      (lint-format "perhaps move ~A into ~A's closure: ~A" caller name (cadr use-expr)
-							   (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
-										    `(... (define ,(cadr use-expr)
-											    (,letx ((,name ,(caddr expr)))
-												   ,(caddr use-expr)))
-											  ,@end-dots)))
-					      ;; (... (define lib (r file)) (define exports (caddr lib)) ...) ->
-					      ;;    (... (define exports (let ((lib (r file))) (caddr lib))) ...)
-					      (lint-format "the scope of ~A could be reduced: ~A" caller name
-							   (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
-										    `(... (define ,(cadr use-expr)
-											    (,letx ((,name ,(caddr expr)))
-												   ,(caddr use-expr)))
-											  ,@end-dots))))))))
-			       (when (and (> len 3)
-					  (< k last-ref (+ k 3))  ; larger cases happen very rarely -- 3 or 4 altogether
-					  (pair? (list-ref body (+ k 1)))
-					  (pair? (list-ref body (+ k 2))))
+	    (when (not (tree-memq 'curlet (list-ref body (- len 1))))
+	      (do ((q body (cdr q))
+		   (k 0 (+ k 1)))
+		  ((null? q))
+		(let ((expr (car q)))
+		  (when (and (pair? expr)
+			     (eq? (car expr) 'define)
+			     (pair? (cdr expr))
+			     (pair? (cddr expr))
+			     (null? (cdddr expr)))
+		    (let ((name (and (symbol? (cadr expr)) (cadr expr))))
+		      (when name
+			(do ((last-ref k)
+			     (p (cdr q) (cdr p))
+			     (i (+ k 1) (+ i 1)))
+			    ((null? p)
+			     (if (and (< k last-ref (+ k 2)) 
+				      (pair? (list-ref body (+ k 1))))
 				 (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
 				       (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+				       (use-expr (list-ref body (+ k 1)))
 				       (seen-earlier (or (var-member name env)
 							 (do ((s body (cdr s)))
 							     ((or (eq? s q)
 								  (and (pair? (car s))
 								       (tree-memq name (car s))))
 							      (not (eq? s q)))))))
-				   (unless seen-earlier
-				     (let ((use-expr1 (list-ref body (+ k 1)))
-					   (use-expr2 (list-ref body (+ k 2))))
-				       (if (not (or (tree-set-member '(define lambda) use-expr1)
-						    (tree-set-member '(define lambda) use-expr2)))
-					   ;; (... (define f101 (lambda (y) (+ x y))) (display 41) (f101 2)) ->
-					   ;;    (... (let ((f101 (lambda (y) (+ x y)))) (display 41) (f101 2)))
-					   (lint-format "the scope of ~A could be reduced: ~A" caller name
-							(let-temporarily ((target-line-length 120))
-							  (truncated-lists->string `(... ,expr ,use-expr1 ,use-expr2 ,@end-dots)
-										   `(... (,letx ((,name ,(caddr expr))) 
-											    ,use-expr1
-											    ,use-expr2)
-											 ,@end-dots)))))))))))
+				   (cond (seen-earlier)
+					 
+					 ((not (eq? (car use-expr) 'define))
+					  (let-temporarily ((target-line-length 120))
+					    ;; (... (define f14 (lambda (x y) (if (positive? x) (+ x y) y))) (+ (f11 1 2) (f14 1 2))) ->
+					    ;;    (... (let ((f14 (lambda (x y) (if (positive? x) (+ x y) y)))) (+ (f11 1 2) (f14 1 2))))
+					    (lint-format "the scope of ~A could be reduced: ~A" caller name
+							 (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+										  `(... (,letx ((,name ,(caddr expr))) 
+											       ,use-expr)
+											,@end-dots)))))
+					 ((eq? (cadr use-expr) name)
+					  ;; (let () (display 33) (define x 2) (define x (+ x y)) (display 43)) ->
+					  ;;    (... (set! x (+ x y)) ...)
+					  (lint-format "use set! to redefine ~A: ~A" caller name
+						       (lists->string `(... ,use-expr ,@end-dots)
+								      `(... (set! ,name ,(caddr use-expr)) ,@end-dots))))
+					 ((pair? (cadr use-expr))
+					  (if (symbol? (caadr use-expr))
+					      (let-temporarily ((target-line-length 120))
+						;; (let () (display 32) (define x 2) (define (f101 y) (+ x y)) (display 41) (f101 2)) ->
+						;;    (... (define f101 (let ((x 2)) (lambda (y) (+ x y)))) ...)
+						(lint-format "perhaps move ~A into ~A's closure: ~A" caller name (caadr use-expr)
+							     (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+										      `(... (define ,(caadr use-expr)
+											      (,letx ((,name ,(caddr expr)))
+												     (lambda ,(cdadr use-expr)
+												       ,@(cddr use-expr))))
+											    ,@end-dots))))))
+					 ((and (symbol? (cadr use-expr))
+					       (pair? (cddr use-expr)))
+					  (let-temporarily ((target-line-length 120))
+					    (if (and (pair? (caddr use-expr))
+						     (eq? (caaddr use-expr) 'lambda))
+						;; (let () (display 34) (define x 2) (define f101 (lambda (y) (+ x y))) (display 41) (f101 2))
+						;;    (... (define f101 (let ((x 2)) (lambda (y) (+ x y)))) ...)
+						(lint-format "perhaps move ~A into ~A's closure: ~A" caller name (cadr use-expr)
+							     (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+										      `(... (define ,(cadr use-expr)
+											      (,letx ((,name ,(caddr expr)))
+												     ,(caddr use-expr)))
+											    ,@end-dots)))
+						;; (... (define lib (r file)) (define exports (caddr lib)) ...) ->
+						;;    (... (define exports (let ((lib (r file))) (caddr lib))) ...)
+						(lint-format "the scope of ~A could be reduced: ~A" caller name
+							     (truncated-lists->string `(... ,expr ,use-expr ,@end-dots)
+										      `(... (define ,(cadr use-expr)
+											      (,letx ((,name ,(caddr expr)))
+												     ,(caddr use-expr)))
+											    ,@end-dots))))))))
+				 (when (and (> len 3)
+					    (< k last-ref (+ k 3))  ; larger cases happen very rarely -- 3 or 4 altogether
+					    (pair? (list-ref body (+ k 1)))
+					    (pair? (list-ref body (+ k 2))))
+				   (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
+					 (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+					 (seen-earlier (or (var-member name env)
+							   (do ((s body (cdr s)))
+							       ((or (eq? s q)
+								    (and (pair? (car s))
+									 (tree-memq name (car s))))
+								(not (eq? s q)))))))
+				     (unless seen-earlier
+				       (let ((use-expr1 (list-ref body (+ k 1)))
+					     (use-expr2 (list-ref body (+ k 2))))
+					 (if (not (or (tree-set-member '(define lambda) use-expr1)
+						      (tree-set-member '(define lambda) use-expr2)))
+					     ;; (... (define f101 (lambda (y) (+ x y))) (display 41) (f101 2)) ->
+					     ;;    (... (let ((f101 (lambda (y) (+ x y)))) (display 41) (f101 2)))
+					     (lint-format "the scope of ~A could be reduced: ~A" caller name
+							  (let-temporarily ((target-line-length 120))
+							    (truncated-lists->string `(... ,expr ,use-expr1 ,use-expr2 ,@end-dots)
+										     `(... (,letx ((,name ,(caddr expr))) 
+												  ,use-expr1
+												  ,use-expr2)
+											   ,@end-dots)))))))))))
 			  (when (tree-memq name (car p))
 			    (set! last-ref i)))))))))
-
-	  (when (= suggest made-suggestion)
-	    ;; look for define+binding-expr at end and combine
-	    (do ((prev-f #f)
-		 (fs body (cdr fs)))
-		((not (pair? fs)))
-	      (let ((f (car fs)))
-		;; define can come after the use, and in an open body can be equivalent to set!:
-		;;   (let () (if x (begin (define y 12) (do ((i 0 (+ i 1))) ((= i y)) (f i))) (define y 21)) y)
-		;;   (let () (define (f x) (+ y x)) (if z (define y 12) (define y 1)) (f 12))
-		;; so we can't do this check in walk-open-body
-		;;
-		;; define + do -- if cadr prev-f not used in do inits, fold into do, else use let
-		;;   the let case is semi-redundant (it's already reported elsewhere)
-		(when (and (pair? prev-f)
-			   (pair? f)
-			   (eq? (car prev-f) 'define)
-			   (symbol? (cadr prev-f))
-			   (not (hash-table-ref other-identifiers (cadr prev-f))) ; (cadr prev-f) already ref'd, so it's a member of env
-			   (or (null? (cdr fs))
-			       (not (tree-memq (cadr prev-f) (cdr fs)))))
-		  (if (eq? (car f) 'do)
-		      ;; (... (define z (f x)) (do ((i z (+ i 1))) ((= i 3)) (display (+ z i))) ...) -> (do ((i (f x) (+ i 1))) ((= i 3)) (display (+ z i)))
-		      (lint-format "perhaps ~A" caller
-				   (lists->string `(... ,prev-f ,f ...)
-						  (if (any? (lambda (p)
-							      (tree-memq (cadr prev-f) (cadr p)))
-							    (cadr f))
-						      (if (and (eq? (cadr prev-f) (cadr (caadr f)))
-							       (null? (cdadr f)))
-							  `(do ((,(caaadr f) ,(caddr prev-f) ,(caddr (caadr f)))) ,@(cddr f))
-							  `(let (,(cdr prev-f)) ,f))
-						      `(do (,(cdr prev-f)
-							    ,@(cadr f))
-							   ,@(cddr f)))))
-		      ;; just changing define -> let seems officious, though it does reduce (cadr prev-f)'s scope
-		      (if (and (or (and (eq? (car f) 'let)
-					(not (tree-memq (cadr prev-f) (cadr f))))
-				   (eq? (car f) 'let*))
-			       (not (symbol? (cadr f))))
-			  (lint-format "perhaps ~A" caller
-				       (lists->string 
-					`(... ,prev-f ,f ,@(if (null? (cdr fs)) () '(...)))
-					`(... (,(car f) (,(cdr prev-f) ,@(cadr f)) ...) ,@(if (null? (cdr fs)) () '(...))))))))
-		(set! prev-f f)))))))
-
+	    
+	    (when (= suggest made-suggestion)
+	      ;; look for define+binding-expr at end and combine
+	      (do ((prev-f #f)
+		   (fs body (cdr fs)))
+		  ((not (pair? fs)))
+		(let ((f (car fs)))
+		  ;; define can come after the use, and in an open body can be equivalent to set!:
+		  ;;   (let () (if x (begin (define y 12) (do ((i 0 (+ i 1))) ((= i y)) (f i))) (define y 21)) y)
+		  ;;   (let () (define (f x) (+ y x)) (if z (define y 12) (define y 1)) (f 12))
+		  ;; so we can't do this check in walk-open-body
+		  ;;
+		  ;; define + do -- if cadr prev-f not used in do inits, fold into do, else use let
+		  ;;   the let case is semi-redundant (it's already reported elsewhere)
+		  (when (and (pair? prev-f)
+			     (pair? f)
+			     (eq? (car prev-f) 'define)
+			     (symbol? (cadr prev-f))
+			     (not (hash-table-ref other-identifiers (cadr prev-f))) ; (cadr prev-f) already ref'd, so it's a member of env
+			     (or (null? (cdr fs))
+				 (not (tree-memq (cadr prev-f) (cdr fs)))))
+		    (if (eq? (car f) 'do)
+			;; (... (define z (f x)) (do ((i z (+ i 1))) ((= i 3)) (display (+ z i))) ...) -> (do ((i (f x) (+ i 1))) ((= i 3)) (display (+ z i)))
+			(lint-format "perhaps ~A" caller
+				     (lists->string `(... ,prev-f ,f ...)
+						    (if (any? (lambda (p)
+								(tree-memq (cadr prev-f) (cadr p)))
+							      (cadr f))
+							(if (and (eq? (cadr prev-f) (cadr (caadr f)))
+								 (null? (cdadr f)))
+							    `(do ((,(caaadr f) ,(caddr prev-f) ,(caddr (caadr f)))) ,@(cddr f))
+							    `(let (,(cdr prev-f)) ,f))
+							`(do (,(cdr prev-f)
+							      ,@(cadr f))
+							     ,@(cddr f)))))
+			;; just changing define -> let seems officious, though it does reduce (cadr prev-f)'s scope
+			(if (and (or (and (eq? (car f) 'let)
+					  (not (tree-memq (cadr prev-f) (cadr f))))
+				     (eq? (car f) 'let*))
+				 (not (symbol? (cadr f))))
+			    (lint-format "perhaps ~A" caller
+					 (lists->string 
+					  `(... ,prev-f ,f ,@(if (null? (cdr fs)) () '(...)))
+					  `(... (,(car f) (,(cdr prev-f) ,@(cadr f)) ...) ,@(if (null? (cdr fs)) () '(...))))))))
+		  (set! prev-f f))))))))
+      
       ;; definer as last in body is rare outside let-syntax, and tricky -- only one clear optimizable case found
       (lint-walk-open-body caller head body env))
 
@@ -13375,8 +13371,12 @@
 		       (if (symbol? expr)
 			   (set-ref expr caller form env)
 			   (lint-walk caller expr env))
-		       (set! env (lint-walk caller true env))
-		       (if (= len 4) 
+		       (if (symbol? true)
+			   (set-ref true caller form env)
+			   (set! env (lint-walk caller true env)))   
+		       (if (symbol? false)
+			   (if (not (eq? false 'no-false))
+			       (set-ref false caller form env))
 			   (set! env (lint-walk caller false env))))))
 	     env))
 	 (hash-table-set! h 'if if-walker))
@@ -14865,22 +14865,10 @@
 	
 	
 	;; ---------------- do ----------------
-	(let ((cxars (hash-table
-		      (cons 'car (lambda (sym) sym))
-		      (cons 'caar (lambda (sym) (list 'car sym)))
-		      (cons 'cdar (lambda (sym) (list 'cdr sym)))
-		      (cons 'caaar (lambda (sym) (list 'caar sym)))
-		      (cons 'cdaar (lambda (sym) (list 'cdar sym)))
-		      (cons 'cddar (lambda (sym) (list 'cddr sym)))
-		      (cons 'cadar (lambda (sym) (list 'cadr sym)))
-		      (cons 'caaaar (lambda (sym) (list 'caaar sym)))
-		      (cons 'caadar (lambda (sym) (list 'caadr sym)))
-		      (cons 'cadaar (lambda (sym) (list 'cadar sym)))
-		      (cons 'caddar (lambda (sym) (list 'caddr sym)))
-		      (cons 'cdaaar (lambda (sym) (list 'cdaar sym)))
-		      (cons 'cdadar (lambda (sym) (list 'cdadr sym)))
-		      (cons 'cddaar (lambda (sym) (list 'cddar sym)))
-		      (cons 'cdddar (lambda (sym) (list 'cdddr sym))))))
+	(let ((cxars (hash-table '(car . ()) '(caar . car) '(cdar . cdr) 
+				 '(caaar . caar) '(cdaar . cdar) '(cddar . cddr) '(cadar . cadr)
+				 '(caaaar . caaar) '(caadar . caadr) '(cadaar . cadar) '(caddar . caddr)
+				 '(cdaaar . cdaar) '(cdadar . cdadr) '(cddaar . cddar) '(cdddar . cdddr))))
 
 	  (define (car-subst sym new-sym tree)
 	    (cond ((or (not (pair? tree))
@@ -14893,8 +14881,23 @@
 		   (cons (car-subst sym new-sym (car tree))
 			 (car-subst sym new-sym (cdr tree))))
 
-		   ((hash-table-ref cxars (car tree)) => (lambda (f) (f new-sym)))
+		   ((hash-table-ref cxars (car tree)) => (lambda (f) (if (symbol? f) (list f new-sym) new-sym)))
 		   (else tree)))
+
+	  (define (cadr-subst sym new-sym tree)
+	    ;(format *stderr* "subst: ~A ~A ~A~%" sym new-sym tree)
+	    (cond ((or (not (pair? tree))
+		       (eq? (car tree) 'quote))
+		   tree)
+		  ((and (memq (car tree) '(vector-ref string-ref list-ref))
+			(pair? (cdr tree))
+			(pair? (cddr tree))
+			(null? (cdddr tree))
+			(equal? sym (cadr tree)))
+		   new-sym)
+		  (else
+		   (cons (cadr-subst sym new-sym (car tree))
+			 (cadr-subst sym new-sym (cdr tree))))))
 
 	  (define (var-step v) ((cdr v) 'step))
 		   
@@ -14954,35 +14957,32 @@
 		   (set! inner-env (append vars env))
 		   
 		   ;; walk the step exprs
-		   (let ((baddies ())) ; these are step vars (with step exprs) used within other step vars step expressions			   
-		     (do ((bindings step-vars (cdr bindings)))
-			 ((not (pair? bindings)))
-		       (let ((stepper (car bindings))) ; the entire binding: '(i 0 (+ i 1))
-			 (when (and (binding-ok? caller 'do stepper env #t)
-				    (pair? (cddr stepper)))
-			   (let ((data (var-member (car stepper) vars)))
-			     (let ((old-ref (var-ref data)))
-			       (lint-walk caller (caddr stepper) inner-env)
-			       (set! (var-ref data) old-ref))
-			     (if (eq? (car stepper) (caddr stepper))  ; (i 0 i) -> (i 0)
-				 (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
-			     ;; pointless caddr here happens very rarely
-			     (set! (var-set data) (+ (var-set data) 1))) ; (pair? cddr) above
-			   (when (and (pair? (caddr stepper))
-				      (not (eq? (car stepper) (cadr stepper))) ; (lst lst (cdr lst))
-				      (eq? (car (caddr stepper)) 'cdr)
-				      (eq? (cadr stepper) (cadr (caddr stepper))))
-			     ;; (do ((x lst (cdr lst))) ((null? x) y))
-			     (lint-format "this looks suspicious: ~A" caller stepper))
-			   (for-each (lambda (v)
-				       (if (and (var-step v)
-						(not (eq? (var-name v) (car stepper)))
-						(or (eq? (var-name v) (caddr stepper))
-						    (and (pair? (caddr stepper))
-							 (tree-unquoted-member (var-name v) (caddr stepper)))))
-					   (set! baddies (cons (car stepper) baddies))))
-				     vars))))
-		     
+		   (let ((baddies ())) ; these are step vars (with step exprs) used within other step vars step expressions
+		     (for-each (lambda (stepper)
+				 (when (and (binding-ok? caller 'do stepper env #t)
+					    (pair? (cddr stepper)))
+				   (let ((data (var-member (car stepper) vars)))
+				     (let ((old-ref (var-ref data)))
+				       (lint-walk caller (caddr stepper) inner-env)
+				       (set! (var-ref data) old-ref))
+				     (if (eq? (car stepper) (caddr stepper))
+					 (lint-format "perhaps ~A" caller (lists->string stepper (list (car stepper) (cadr stepper)))))
+				     (set! (var-set data) (+ (var-set data) 1)))
+				   (when (and (pair? (caddr stepper))
+					      (not (eq? (car stepper) (cadr stepper)))
+					      (eq? (car (caddr stepper)) 'cdr)
+					      (eq? (cadr stepper) (cadr (caddr stepper))))
+				     (lint-format "this looks suspicious: ~A" caller stepper))
+				   (for-each (lambda (v)
+					       (if (and (var-step v)
+							(not (eq? (var-name v) (car stepper)))
+							(or (eq? (var-name v) (caddr stepper))
+							    (and (pair? (caddr stepper))
+								 (tree-unquoted-member (var-name v) (caddr stepper)))))
+						   (set! baddies (cons (car stepper) baddies))))
+					     vars)))
+			       step-vars)
+
 		     (check-unordered-exprs caller form (map var-initial-value vars) env)
 		     
 		     (when (pair? baddies)
@@ -15171,54 +15171,95 @@
 									 ,@new-body)))))))))))))
 		   
 		   ;; do -> for-each
-		   ;; TODO: handle two lists
-		   (when (and (pair? (cadr form))
-			      (null? (cdadr form)))
-		     (let ((var (caadr form)))
+		   (when (and (pair? step-vars)
+			      (null? (cdr step-vars)))
+		     (let ((var (car step-vars)))
 		       (when (and (pair? (cdr var))
 				  (pair? (cddr var))
 				  (pair? (caddr var))
-				  (eq? (caaddr var) 'cdr)
-				  (eq? (car var) (cadr (caddr var)))
 				  (pair? (caddr form))
 				  (pair? (caaddr form))
-				  (null? (cdaddr form)))
+				  (null? (cdaddr form))
+				  (pair? (cdaddr var))
+				  (eq? (car var) (cadr (caddr var))))
 			 (let ((vname (car var))
 			       (end (caaddr form)))
-			   (when (and (case (car end)
-					((null?) 
-					 (eq? (cadr end) vname))
-					((not)
-					 (and (pair? (cadr end))
-					      (eq? (caadr end) 'pair?)
-					      (eq? (cadadr end) vname)))
-					(else #f))
-				      (not (let walker ((tree (cddr form))) ; since only (cxar sym) is accepted, surely sym can't be shadowed?
-					     (and (pair? tree)
-						  (or (and (match-cxr 'cdr (car tree))
-							   (pair? (cdr tree))
-							   (eq? vname (cadr tree)))
-						      (and (not (hash-table-ref cxars (car tree)))
-							   (pair? (cdr tree))
-							   (any? (lambda (p)
-								   (or (eq? p vname)
-								       (and (pair? p)
-									    (walker p))))
-								 (cdr tree))))))))
-			     ;; this assumes slightly more than the do-loop if (not (pair? var)) is the end-test
-			     ;;   for-each wants a sequence, but the do loop checks that in advance.
-			     (lint-format "perhaps ~A" caller
-					  (lists->string form
-							 (let ((new-sym (symbol "[" (symbol->string vname) "]")))
-							   `(for-each (lambda (,new-sym)
-									,@(car-subst vname new-sym (cdddr form)))
-								      ,(cadr var))))))))))
-		   
+			   (case (caaddr var)
+			     ((cdr)
+			      (when (and (case (car end)
+					   ((null?) 
+					    (eq? (cadr end) vname))
+					   ((not)
+					    (and (pair? (cadr end))
+						 (eq? (caadr end) 'pair?)
+						 (eq? (cadadr end) vname)))
+					   (else #f))
+					 (not (let walker ((tree (cdddr form))) ; since only (cxar sym) is accepted, surely sym can't be shadowed?
+						(or (eq? tree vname)
+						    (and (pair? tree)
+							 (or (and (match-cxr 'cdr (car tree))
+								  (pair? (cdr tree))
+								  (eq? vname (cadr tree)))
+							     (and (not (hash-table-ref cxars (car tree)))
+								  (or (walker (car tree))
+								      (walker (cdr tree))))))))))
+				;; this assumes slightly more than the do-loop if (not (pair? var)) is the end-test
+				;;   for-each wants a sequence, but the do loop checks that in advance.
+				;; (do ((p lst (cdr p))) ((null? p)) (display (car p))) -> (for-each (lambda ([p]) (display [p])) lst)
+				(lint-format "perhaps ~A" caller
+					     (lists->string form
+							    (let ((new-sym (symbol "[" (symbol->string vname) "]")))
+							      `(for-each (lambda (,new-sym)
+									   ,@(car-subst vname new-sym (cdddr form)))
+									 ,(cadr var)))))))
+			     ((+)
+			      (when (and (eqv? (cadr var) 0)
+					 (pair? (cddr (caddr var)))
+					 (eqv? (caddr (caddr var)) 1)
+					 (null? (cdddr (caddr var))))
+				(let ((end-var (if (eq? vname (cadr end)) (caddr end) (cadr end))))
+				  (if (and (pair? end-var)
+					   (memq (car end-var) '(length string-length vector-length)))
+				      (set! end-var (cadr end-var))
+				      (let ((v (var-member end-var env)))
+					(if (and (var? v)
+						 (pair? (var-initial-value v))
+						 (memq (car (var-initial-value v)) '(length string-length vector-length)))
+					    (set! end-var (cadr (var-initial-value v))))))
+				  (when (and (memq (car end) '(= >=))
+					     (memq vname end)
+					     (tree-memq vname (cdddr form))
+					     (not (let walker ((tree (cdddr form)))
+						    (if (and (pair? tree)
+							     (memq vname tree)
+							     (memq (car tree) '(string-ref list-ref vector-ref))
+							     (eq? (caddr tree) vname))
+							(not (equal? (cadr tree) end-var))
+							(or (eq? tree vname)
+							    (and (pair? tree)
+								 (if (memq vname tree)
+								     (not (and (memq (car tree) '(string-ref list-ref vector-ref))
+									       (pair? (cdr tree))
+									       (pair? (cddr tree))
+									       (eq? (caddr tree) vname)))
+								     (or (walker (car tree))
+									 (walker (cdr tree))))))))))
+				    ;; (do ((i 0 (+ i 1))) ((= i (vector-length x))) (find (vector-ref x i))) ->
+				    ;;    (for-each (lambda ([x]) (find [x])) x)
+				    (lint-format "perhaps ~A" caller
+						 (lists->string form
+								(let ((new-sym (if (symbol? end-var)
+										   (symbol "[" (symbol->string end-var) "]")
+										   (symbol "[" (symbol->string (car end-var)) "]"))))
+								  `(for-each (lambda (,new-sym)
+									       ,@(cadr-subst end-var new-sym (cdddr form)))
+									     ,end-var)))))))))))))
+
 		   ;; check for do-loop as copy/fill! stand-in and other similar cases
 		   (when (and (pair? vars)
 			      (null? (cdr vars)))
 		     (let ((end-test (and (pair? (caddr form)) (caaddr form)))
-			   (first-var (caadr form))
+			   (first-var (car step-vars))
 			   (body (cdddr form))
 			   (setv #f))
 		       (when (and (pair? end-test)
@@ -15353,7 +15394,9 @@
 						   (lint-format "~A in ~A refers to the caller's ~A, not the let variable" caller
 								(var-name v) (car bindings) (var-name v)))))
 					 vars)))
-			 (lint-walk caller val env)
+			 (if (symbol? val)
+			     (set-ref val caller form env)
+			     (lint-walk caller val env))
 			 (set! vars (cons (make-var :name (caar bindings) 
 						    :initial-value val 
 						    :definer (if named-let 'named-let 'let))
@@ -15913,7 +15956,7 @@
 									...)
 								   `(do ,(append varlist (car do-form))
 									(,(and (pair? (cadr do-form)) (caadr do-form))
-									 ,@(if (side-effect? (cdr (cadr do-form)) env) (cdr (cadr do-form)) ())
+									 ,@(if (side-effect? (cdadr do-form) env) (cdadr do-form) ())
 									 ,@(cdr body))   ; include rest of let as do return value
 								      ...)))))))))
 			 
@@ -18156,11 +18199,8 @@
 ;;; hg-results has a lot of changes
 ;;; lint output needs to be organized somehow
 ;;; define-macro used once -> expand? -- would have to be a local definition [see define-walker]
-;;; accessor rep 9349 misses if <expr> sym, and let name ((arg sym)) -- how to store these in the history?
-;;;   [<syntax> sym]? -- need to check binding forms etc
 ;;; do->map similar to do->for-each? named-let|recursive func->for-each|map
-;;;   what about do+int-step from 0+1 using list|vector|string-ref?
-;;; for-each/map stepping explicitly (not using added args), or similarly for do
-;;; named-let->do if one arg is counter, ->for-each if only null? ends
+;;; named-let->do if one arg is counter, ->for-each if only null? ends or step to len
+;;; define next-to-last -> let needs to check for letrec, also if not previous expr, ignore!
 ;;;
-;;; 148 24013 656883
+;;; 148 24013 652957

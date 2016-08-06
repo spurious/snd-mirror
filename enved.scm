@@ -148,17 +148,17 @@
   (let ((snd (hook 'snd))
 	(chn (hook 'chn))
 	(key (hook 'key))
-	(state (hook 'state)))
+	(state4 (= (hook 'state) 4)))
     
     ;; C-g returns to original env
     ;; C-. applies current env to amplitude
     (if (and (= key (char->integer #\.))
-	     (= state 4))
+	     state4)
 	(begin
 	  (env-channel (channel-envelope snd chn) 0 (framples snd chn) snd chn)
 	  (set! (hook 'result) #t))
 	(if (and (= key (char->integer #\g))
-		 (= state 4))
+		 state4)
 	    (begin
 	      (set! (channel-envelope snd chn) '(0.0 1.0 1.0 1.0))
 	      (set! (hook 'result) #t))))))

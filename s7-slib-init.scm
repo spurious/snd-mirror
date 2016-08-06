@@ -100,12 +100,12 @@
 (define sub-vicinity
   (if (eq? (software-type) 'vms)
       (lambda (vic name)
-	(let ((L (string-length vic)))
+	(let ((L (- (string-length vic) 1)))
 	  (string-append
 	   (if (or (string=? vic "")
-		   (not (char=? #\] (string-ref vic (- L 1)))))
+		   (not (char=? #\] (string-ref vic L))))
 	       (values vic "[")
-	       (values (substring vic 0 (- L 1)) "."))
+	       (values (substring vic 0 L) "."))
 	   name "]")))
       (let ((*vicinity-suffix* (case (software-type)
 				 ((nosve) ".")

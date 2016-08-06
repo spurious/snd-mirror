@@ -64,9 +64,9 @@
 	    0
 	    (if (= mn 0)
 		1
-		(let* ((mx (max k (- n k)))
-		       (cnk (+ 1 mx)))
-		  (do ((i 2 (+ i 1)))
+		(let ((mx (max k (- n k))))
+		  (do ((cnk (+ 1 mx))
+		       (i 2 (+ i 1)))
 		      ((> i mn) cnk)
 		    (set! cnk (/ (* cnk (+ mx i)) i))))))))))
     
@@ -95,15 +95,14 @@
 	    (let ((pmmp1 (* x pmm (+ (* 2 m) 1))))
 	      (if (= L (+ m 1)) 
 		  pmmp1
-		  (let ((pk 0.0)) ; NR used "ll" which is unreadable
-		    (do ((k (+ m 2) (+ k 1)))
-			((> k L))
-		      (set! pk (/ (- (* x (- (* 2 k) 1) pmmp1) 
-				      (* (+ k m -1) pmm)) 
-				   (- k m)))
-		      (set! pmm pmmp1)
-		      (set! pmmp1 pk))
-		    pk)))))))
+		  (do ((pk 0.0) ; NR used "ll" which is unreadable
+		       (k (+ m 2) (+ k 1)))
+		      ((> k L) pk)
+		    (set! pk (/ (- (* x (- (* 2 k) 1) pmmp1) 
+				   (* (+ k m -1) pmm)) 
+				(- k m)))
+		    (set! pmm pmmp1)
+		    (set! pmmp1 pk))))))))
 
 
 ;;; A&S (bessel.lisp)
@@ -375,57 +374,52 @@
 (define (Si x) 
   (if (>= x 1.0)
       (- (/ pi 2) (* (cos x) (aux-f x)) (* (sin x) (aux-g x)))
-    (let ((sum x)
-	  (fact 2.0)
-	  (one -1.0)
-	  (xs x)
-	  (x2 (* x x))
-	  (err .000001)
-	  (unhappy #t))
-      (do ((i 3.0 (+ i 2.0)))
-	  ((not unhappy))
+      (do ((sum x)
+	   (fact 2.0)
+	   (one -1.0)
+	   (xs x)
+	   (x2 (* x x))
+	   (err .000001)
+	   (unhappy #t)
+	   (i 3.0 (+ i 2.0)))
+	  ((not unhappy) sum)
 	(set! xs (/ (* one x2 xs) (* i fact)))
 	(set! one (- one))
 	(set! fact (+ 1 fact))
 	(set! xs (/ xs fact))
 	(set! unhappy (> (abs xs) err))
-	(set! sum (+ sum xs)))
-      sum)))
+	(set! sum (+ sum xs)))))
 
 (define (Ci x) 
   (if (>= x 1.0)
       (- (* (sin x) (aux-f x)) (* (cos x) (aux-g x)))
-    (let ((g .5772156649)
-	  (sum 0.0)
-	  (fact 1.0)
-	  (one -1.0)
-	  (xs 1.0)
-	  (x2 (* x x))
-	  (err .000001)
-	  (unhappy #t))
-      (do ((i 2.0 (+ i 2.0)))
-	  ((not unhappy))
+      (do ((g .5772156649)
+	   (sum 0.0)
+	   (fact 1.0)
+	   (one -1.0)
+	   (xs 1.0)
+	   (x2 (* x x))
+	   (err .000001)
+	   (unhappy #t)
+	   (i 2.0 (+ i 2.0)))
+	  ((not unhappy) 
+	   (+ g (log x) sum))
 	(set! xs (/ (* one x2 xs) (* i fact)))
 	(set! one (- one))
 	(set! fact (+ 1 fact))
 	(set! xs (/ xs fact))
 	(set! unhappy (> (abs xs) err))
-	(set! sum (+ sum xs)))
-      (+ g (log x) sum))))
+	(set! sum (+ sum xs)))))
 
 
 ;;; --------------------------------------------------------------------------------
 
 (define bernoulli3
-  (let ((saved-values (let ((v (make-vector 100 #f))
-			    (vals (vector 1 -1/2 1/6 0 -1/30 0 1/42 0 -1/30 0 5/66 0 -691/2730
-					  0 7/6 0 -3617/510 0 43867/798 0 -174611/330 0
-					  854513/138 0 -236364091/2730 0 8553103/6 0
-					  -23749461029/870 0 8615841276005/14322 0)))
-			(do ((i 0 (+ i 1)))
-			    ((= i 30))
-			  (set! (v i) (vals i)))
-			v)))
+  (let ((saved-values (copy #(1 -1/2 1/6 0 -1/30 0 1/42 0 -1/30 0 5/66 0 -691/2730
+			      0 7/6 0 -3617/510 0 43867/798 0 -174611/330 0
+			      854513/138 0 -236364091/2730 0 8553103/6 0
+			      -23749461029/870 0 8615841276005/14322 0)
+			    (make-vector 100 #f))))
     (lambda (n)
       (if (number? (saved-values n))
 	  (saved-values n)
@@ -696,13 +690,12 @@
 
   (define (ihex x nhx chx)
     ;; This returns, in chx, the first nhx hex digits of the fraction of x.
-    (let ((y (abs x))
-	  (hx "0123456789ABCDEF"))
-      (do ((i 0 (+ i 1)))
-	  ((= i nhx))
-	(set! y (* 16.0 (- y (floor y))))
-	(set! (chx i) (hx (floor y))))
-      chx))
+    (do ((y (abs x))
+	 (hx "0123456789ABCDEF")
+	 (i 0 (+ i 1)))
+	((= i nhx) chx)
+      (set! y (* 16.0 (- y (floor y))))
+      (set! (chx i) (hx (floor y)))))
   
   (define (series m id)
     ;; This routine evaluates the series  sum_k 16^(id-k)/(8*k+m) using the modular exponentiation technique.
@@ -760,13 +753,13 @@
 	  (set! s (- s (floor s)))))
       
       ;; Compute a few terms where k >= id.
-      (let ((happy #f))
-	(do ((k id (+ k 1)))
-	    ((or (> k (+ id 100)) happy) s)
-	  (let ((t (/ (expt 16.0 (- id k)) (+ (* 8 k) m))))
-	    (set! happy (< t eps))
-	    (set! s (+ s t))
-	    (set! s (- s (floor s))))))))
+      (do ((happy #f)
+	   (k id (+ k 1)))
+	  ((or (> k (+ id 100)) happy) s)
+	(let ((t (/ (expt 16.0 (- id k)) (+ (* 8 k) m))))
+	  (set! happy (< t eps))
+	  (set! s (+ s t))
+	  (set! s (- s (floor s)))))))
   
   ;; id is the digit position.  Digits generated follow immediately after id.
   (let ((chx (make-string 17))
@@ -829,17 +822,18 @@
 		(set! peak val)
 		(set! location x)))))
       ;; now narrow it by zigzagging around the peak
-      (let ((x location))
-	(do ((zig-size (* incr 2) (/ zig-size 2)))
-	    ((< zig-size err))
-	  (let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))
-		(left (abs (+ (sin (- x zig-size)) (sin (+ (* n (- x zig-size)) offset))))))
-	    (if (< left cur)
-		(let ((right (abs (+ (sin (+ x zig-size)) (sin (+ (* n (+ x zig-size)) offset))))))
-		  (if (> right cur)
-		      (set! x (+ x zig-size))))
-		(set! x (- x zig-size)))))
-	(list (abs (+ (sin x) (sin (+ (* n x) offset)))) x)))))
+      (do ((x location)
+	   (zig-size (* incr 2) (/ zig-size 2)))
+	  ((< zig-size err)
+	   (list (abs (+ (sin x) (sin (+ (* n x) offset)))) x))   
+	(let ((cur (abs (+ (sin x) (sin (+ offset (* n x))))))
+	      (left (abs (+ (sin (- x zig-size)) (sin (+ (* n (- x zig-size)) offset))))))
+	  (if (< left cur)
+	      (let ((right (abs (+ (sin (+ x zig-size)) (sin (+ (* n (+ x zig-size)) offset))))))
+		(if (> right cur)
+		    (set! x (+ x zig-size))))
+	      (set! x (- x zig-size))))))))
+	
 
 ;;; --------------------------------------------------------------------------------
 

@@ -30,11 +30,11 @@
   ;;init-array - initial x and y breakpoints for wave. x values must be 
   ;;             integers and 1 or greater, y values between -1.0 and 1.0
   (let* ((beg (seconds->samples start))
-	 (end (+ beg (seconds->samples dur)))
-	 (d-click (make-env (list 0 1 (- end 100) 1 end 0) :duration dur))
-	 ;;make float-vector to hold x,y breakpoints
-	 (xy-array (make-float-vector (* (length init-array) 2))))
-    (let ((y 0.0)
+	 (end (+ beg (seconds->samples dur))))
+    (let ((d-click (make-env (list 0 1 (- end 100) 1 end 0) :duration dur))
+	  ;;make float-vector to hold x,y breakpoints
+	  (xy-array (make-float-vector (* (length init-array) 2)))
+	  (y 0.0)
 	  (dx 0)
 	  (prev-dx 0)
 	  (dy 0.0)
@@ -46,7 +46,7 @@
 	  (xdev 0)
 	  (ydev 0)
 	  (b (expt 2 (- bits 1)))
-	  (xy-array-l (floor (length xy-array))))
+	  (xy-array-l (* (length init-array) 2)))
 
       ;;fill xy-array with values from init-array
       (do ((iy 0 (+ iy 2));;index for reading values from init-array (a 2-dimensional list)

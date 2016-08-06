@@ -160,13 +160,14 @@ x typed in the graph, or C-g in the listener exits the loop."))
   (let ((documentation "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"))
     (lambda (sound . amps)
-      (let ((chans (channels sound)))
-	(do ((chan 0 (+ 1 chan)))
-	    ((= chan chans))
-	  (let ((player (make-player sound chan)))
-	    (set! (amp-control player) (amps chan))
-	    (add-player player)))
-	(start-playing chans (srate sound))))))
+      (do ((chans (channels sound))
+	   (chan 0 (+ 1 chan)))
+	  ((= chan chans)
+	   (start-playing chans (srate sound)))
+	(let ((player (make-player sound chan)))
+	  (set! (amp-control player) (amps chan))
+	  (add-player player))))))
+      
 
 ;;; play-sine and play-sines
 

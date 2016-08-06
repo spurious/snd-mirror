@@ -412,23 +412,23 @@
   (define effects-echo 
     (let ((documentation "(effects-echo input-samps-1 delay-time echo-amount beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (input-samps-1 delay-time echo-amount beg dur snd chn)
-	(let* ((del (make-delay (round (* delay-time (srate snd)))))
-	       (len (or dur (framples snd chn)))
-	       (input-samps (or input-samps-1 len)))
-	  (as-one-edit
-	   (lambda ()
-	     (map-channel
-	      (lambda (inval)
-		(+ inval
-		   (delay del (* echo-amount (+ (tap del) inval)))))
-	      beg input-samps snd chn)
-	     (if (> len input-samps)
-		 (map-channel
-		  (lambda (inval)
-		    (+ inval
-		       (delay del (* echo-amount (tap del)))))
-		  (+ beg input-samps) (- dur input-samps) snd chn)))
-	   (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))))
+	(let ((del (make-delay (round (* delay-time (srate snd)))))
+	      (len (or dur (framples snd chn))))
+	  (let ((input-samps (or input-samps-1 len)))
+	    (as-one-edit
+	     (lambda ()
+	       (map-channel
+		(lambda (inval)
+		  (+ inval
+		     (delay del (* echo-amount (+ (tap del) inval)))))
+		beg input-samps snd chn)
+	       (if (> len input-samps)
+		   (map-channel
+		    (lambda (inval)
+		      (+ inval
+			 (delay del (* echo-amount (tap del)))))
+		    (+ beg input-samps) (- dur input-samps) snd chn)))
+	     (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur)))))))
   
   (define effects-flecho-1 
     (let ((documentation "(effects-flecho-1 scaler secs input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
@@ -2995,14 +2995,14 @@ the synthesis amplitude, the FFT size, and the radius value."))
     (let* ((len (framples snd chn))
 	   (data (make-float-vector len))
 	   (reader (make-sampler 0 snd chn)))
-      (let ((lastx 0.0)
-	    (lasty 0.0))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (let ((inval (next-sample reader)))
-	    (set! lasty (- (+ inval (* 0.999 lasty)) lastx))
-	    (set! lastx inval)
-	    (float-vector-set! data i lasty))))
+      (do ((lastx 0.0)
+	   (lasty 0.0)
+	   (i 0 (+ i 1)))
+	  ((= i len))
+	(let ((inval (next-sample reader)))
+	  (set! lasty (- (+ inval (* 0.999 lasty)) lastx))
+	  (set! lastx inval)
+	  (float-vector-set! data i lasty)))
       (float-vector->channel data 0 len snd chn current-edit-position "effects-remove-dc")))
   
   (add-to-menu effects-menu "Remove DC" effects-remove-dc)
