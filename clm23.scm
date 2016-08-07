@@ -2194,10 +2194,8 @@
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
   (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))
   (with-sound () (move-formants 0 "oboe.snd" 2.0 0.99 '(0 1200 1.6 2400 2 1400) 4))
-  (test-filter (make-one-zero 0.5 0.5))
-  (test-filter (make-one-pole 0.1 -0.9))
-  (test-filter (make-two-pole 0.1 0.1 0.9))
-  (test-filter (make-two-zero 0.5 0.2 0.3))
+
+  (for-each test-filter (vector (make-one-zero 0.5 0.5) (make-one-pole 0.1 -0.9) (make-two-pole 0.1 0.1 0.9) (make-two-zero 0.5 0.2 0.3)))
   
   (with-sound (:scaled-to .5) ; .875
     (flux 0 "oboe.snd" 10.0 '(1.0 1.25 1.5) '(1.0 1.333 1.6))

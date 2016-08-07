@@ -5786,7 +5786,7 @@
 	  (for-each (lambda (f)
 		      (hash-table-set! h f sp-char<))
 		    '(char<? char>? char<=? char>=? char=? char-ci<? char-ci>? char-ci<=? char-ci>=? char-ci=?)))
-	
+
 	
 	;; ---------------- string< string> etc ----------------
 	(let ()
@@ -10337,7 +10337,6 @@
 	  
 	  ;; look for non-function defines at the start of the body and use let(*) instead
 	  ;;   we're in a closed body here, so the define can't propagate backwards
-
 	  (let ((first-expr (car body)))
 	    ;; another case: f(args) (let(...)set! arg < no let>)
 	    (when (and (eq? (car first-expr) 'define)
@@ -10357,16 +10356,16 @@
 			     (let ((expr (car p)))
 			       (and (pair? expr)
 				    (eq? (car expr) 'define)
-				    (symbol? (cadr expr))
+				    (symbol? (cadr expr))          ; not (define (f ...))
 				    (pair? (cddr expr))
-				    ;;(not (tree-set-car-member '(lambda lambda*) (caddr expr)))))
-				    (not (and (pair? (caddr expr))
-					      (memq (caaddr expr) '(lambda lambda*))))))))
+				    (not (and (pair? (caddr expr)) ; not (define f (lambda...))
+					      (memq (caaddr expr) '(lambda let lambda* let* letrec letrec*))))))))
 		   ;; (... (define x 3) 32) -> (... (let ((x 3)) ...))
-		   (lint-format "perhaps ~A" caller
-				(lists->string `(... ,@body)
-					       `(... (,letx ,(reverse vars&vals)
-							    ...)))))
+		   (if (pair? vars&vals)
+		       (lint-format "perhaps ~A" caller
+				    (lists->string `(... ,@body)
+						   `(... (,letx ,(reverse vars&vals)
+								...))))))
 		;; define acts like letrec(*), not let -- reference to name in lambda body is current name
 		(let ((expr (cdar p)))
 		  (set! vars&vals (cons (if (< (tree-leaves (cdr expr)) 12)
@@ -11485,7 +11484,8 @@
 						 (lint-format "strange parameter for ~A: ~S" function-name definer arg)
 						 (values))
 					       (begin
-						 (if (not (cadr arg)) ; (define* (f4 (a #f)) a)
+						 (if (and (not (cadr arg))                     ; (define* (f4 (a #f)) a)
+							  (not (eq? definer 'define*-public))) ; who knows?
 						     (lint-format "the default argument value is #f in ~A ~A" function-name definer arg))
 						 (make-var :name (car arg) :definer 'parameter)))))
 				     (proper-list args)))))
@@ -12485,7 +12485,19 @@
 				(if (eq? settee (cadddr setval))
 				    (lint-format "perhaps ~A" caller 
 						 (lists->string form `(if ,(cadr setval) (set! ,settee ,(caddr setval)))))))))
-		       
+
+		       ((cond)                      ; (set! x (cond (z w) (else x))) -> (if z (set! x w)) -- this never happens
+			(if (and (= (length setval) 3)
+				 (memq (caaddr setval) '(#t else))
+				 (null? (cddr (caddr setval)))
+				 (null? (cddadr setval)))
+			    (if (eq? (cadr (caddr setval)) (cadr form))
+				(lint-format "perhaps ~A" caller
+					     (lists->string form `(if ,(caadr setval) (set! ,(cadr form) ,(cadadr setval)))))
+				(if (eq? (cadadr setval) (cadr form))
+				    (lint-format "perhaps ~A" caller
+						 (lists->string form `(if (not ,(caadr setval)) (set! ,(cadr form) ,(cadr (caddr setval))))))))))
+
 		       ((or)                        ; (set! x (or x y)) -> (if (not x) (set! x y))
 			(if (and (= (length setval) 3)   ;    the other case here is not improved by using 'if
 				 (eq? settee (cadr setval)))
@@ -12645,7 +12657,7 @@
 				       (lint-format "perhaps ~A" caller 
 						    (lists->string form
 								   (cond ((eq? true-op (caadr diff))  ; very common!
-									  ;; (if x (f y) (g y)) -> ((if x f g) y)
+									  ;;          (if x (f y) (g y)) -> ((if x f g) y)
 									  ;; but f and g can't be or/and unless there are no expressions
 									  ;;   I now like all of these -- originally found them odd: CL influence!
 									  (if (equal? true-op test)
@@ -12654,17 +12666,17 @@
 									 
 									 ((and (eq? (caadr diff) #t)
 									       (not (cadadr diff)))
-									  ;; (if x (set! y #t) (set! y #f)) -> (set! y x)
+									  ;;          (if x (set! y #t) (set! y #f)) -> (set! y x)
 									  (tree-subst-eq test subst-loc true))
 									 
 									 ((and (not (caadr diff))
 									       (eq? (cadadr diff) #t))
-									  ;; (if x (set! y #f) (set! y #t)) -> (set! y (not x))
+									  ;;          (if x (set! y #f) (set! y #t)) -> (set! y (not x))
 									  (tree-subst-eq (simplify-boolean `(not ,expr) () () env)
 											 subst-loc true))
 									 
 									 ((equal? (caadr diff) test)
-									  ;; (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
+									  ;;          (if x (set! y x) (set! y 21)) -> (set! y (or x 21))
 									  (tree-subst-eq (simplify-boolean `(or ,@(cadr diff)) () () env)
 											 subst-loc true))
 									 
@@ -12673,7 +12685,7 @@
 										(and (pair? lst)
 										     (or (eq? a lst)
 											 (list-memq a (cdr lst))))))
-									  ;; (if x (set! y z) (set! y w)) -> (set! y (if x z w))
+									  ;;          (if x (set! y z) (set! y w)) -> (set! y (if x z w))
 									  ;; true op moved out, if expr moved in
 									  ;;  (if A (and B C) (and B D)) -> (and B (if A C D))
 									  ;;  here differ-in-one means that preceding/trailing stuff must subst-loc exactly
@@ -15318,7 +15330,6 @@
 		     (lint-format "bad let name: ~A" caller named-let))
 
 		 (unless named-let
-		   
 		   (if (and (null? (cadr form)) ; this can be fooled by macros that define things
 			    (eq? form lint-current-form) ; i.e. we're in a body?
 			    (not (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
@@ -15928,7 +15939,7 @@
 				   ;; (let ((a 1)) (do ((i a (+ i 1))) ((= i 3)) (display i))) -> (do ((i 1 (+ i 1))) ...)
 				   (lint-format "perhaps ~A" caller
 						(lists->string form `(do ,new-cadr ...)))))))
-			   
+
 			   ;; let->do -- sometimes a bad idea, set *max-cdr-len* to #f to disable this.
 			   ;;   (the main objection is that the s7/clm optimizer can't handle it, and
 			   ;;   instruments using it look kinda dumb -- the power of habit or something)
@@ -15959,7 +15970,7 @@
 									 ,@(if (side-effect? (cdadr do-form) env) (cdadr do-form) ())
 									 ,@(cdr body))   ; include rest of let as do return value
 								      ...)))))))))
-			 
+
 			 (when (and (> (length body) 3)  ; setting this to 1 did not catch anything new
 				    (every? pair? varlist)
 				    (not (tree-set-car-member '(define define* define-macro define-macro* 
@@ -18198,9 +18209,10 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
 ;;; lint output needs to be organized somehow
-;;; define-macro used once -> expand? -- would have to be a local definition [see define-walker]
-;;; do->map similar to do->for-each? named-let|recursive func->for-each|map
-;;; named-let->do if one arg is counter, ->for-each if only null? ends or step to len
-;;; define next-to-last -> let needs to check for letrec, also if not previous expr, ignore!
+;;; perhaps check do->for-each with return or other vars (could be locals to the function, but steppers get ugly)
+;;;   similarly do->map, check again the tmp/named-let->cdr code (and check +/-) -- maybe there's a further restriction?
+;;;   named-let -> copy/fill!, member/assoc, string/char-position -- could do be mimicking these? orlist->vector et al, list-ref|tail
+;;; try treating all known macros as expansions
+;;; (define (f x y) (not (> x y))) -> <=  (this is not explicitly caught)
 ;;;
-;;; 148 24013 652957
+;;; 148 24013 652331

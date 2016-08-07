@@ -1252,13 +1252,13 @@
 (define listable-types ())
 (for-each
  (lambda (type)
-   (let ((dereftype (let ((len (length type)))
-		      (and (char=? (type (- len 1)) #\*)
+   (let ((dereftype (let ((len (- (length type) 1)))
+		      (and (char=? (type len) #\*)
 			   (not (string=? type "char*")) ; these are surely strings (and set would need Xen_to_C_gchar etc)
 			   (not (string=? type "GError*"))
 			   (not (string=? type "GError**"))
 			   (not (string=? type "gchar*"))
-			   (substring type 0 (- len 1))))))
+			   (substring type 0 len)))))
      (if (and dereftype
 	      (assoc dereftype direct-types))
 	 (set! listable-types (cons type listable-types)))))
@@ -1725,7 +1725,7 @@
 	     (let* ((name (callback-func func))
 		    (type (callback-type func))
 		    (args (callback-args func))
-		    (gctype (callback-gc func))
+		    (gcc-permanent? (eq? (callback-gc func) 'permanent-gcc))
 		    (fname (callback-name func))
 		    (void? (string=? type "void")))
 	       (unless (member name funcs-done)
@@ -1764,7 +1764,7 @@
 		      (if void? 
 			  ""
 			  (format #f "((~A)0)" (no-stars type))))
-		 (if (eq? gctype 'permanent-gcc)
+		 (if gcc-permanent?
 		     (hey "#if (!(defined(__cplusplus)))~%  ")) ; const arg conversion causes trouble if g++
 		 (let ((castlen (+ 12 (if void?
 					  1
@@ -1797,7 +1797,7 @@
 		   (if void?
 		       (hey ";~%")
 		       (hey "));~%")))
-		 (if (eq? gctype 'permanent-gcc)
+		 (if gcc-permanent?
 		     (begin
 		       (if (not void?)
 			   (begin
@@ -1874,10 +1874,9 @@
 	;; cr ok after arg
 	(set! line-len (+ line-len (length arg)))
 	(heyc arg)
-	(if (> line-len 120) ; line-max originally
-	    (begin
-	      (format xg-file "~%~NC" arg-start #\space)
-	      (set! line-len arg-start))))
+	(when (> line-len 120) ; line-max originally
+	  (format xg-file "~%~NC" arg-start #\space)
+	  (set! line-len arg-start)))
       
       (hey "static Xen gxg_~A(" name)
       (if (null? args)
@@ -1913,11 +1912,10 @@
 	    (heyc "  Xen ")
 	    (for-each
 	     (lambda (arg)
-	       (if (not (ref-arg? arg)) ;(< (length arg) 3)
-		   (begin
-		     (if previous-arg (heyc ", "))
-		     (set! previous-arg #t)
-		     (hey "~A" (cadr arg)))))
+	       (unless (ref-arg? arg) ;(< (length arg) 3)
+		 (if previous-arg (heyc ", "))
+		 (set! previous-arg #t)
+		 (hey "~A" (cadr arg))))
 	     args)
 	    (hey ";~%")
 	    (let ((ctr 0)) ; list-ref counts from 0
@@ -1950,19 +1948,18 @@
 			   (begin
 			     (set! argc (deref-name arg))
 			     (hey "  ~A = Xen_to_C_~A(~A);~%" (deref-name arg) (deref-type arg) argname))
-			   (if (char=? ((arg 2) 0) #\|)
-			       (begin
-				 (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
-				      (deref-name arg)
-				      (deref-type arg)
-				      argc
-				      (deref-element-type arg))
-				 (hey "  {~%   int i;~%   Xen lst;~%   lst = Xen_copy_arg(~A);~%" argname)
-				 (hey "   for (i = 0; i < ~A; i++, lst = Xen_cdr(lst)) ~A[i] = Xen_to_C_~A(Xen_car(lst));~%"
-				      argc
-				      (deref-name arg)
-				      (no-stars (deref-element-type arg)))
-				 (hey "  }~%"))))))
+			   (when (char=? ((arg 2) 0) #\|)
+			     (hey "  ~A = (~A)calloc(~A, sizeof(~A));~%" 
+				  (deref-name arg)
+				  (deref-type arg)
+				  argc
+				  (deref-element-type arg))
+			     (hey "  {~%   int i;~%   Xen lst;~%   lst = Xen_copy_arg(~A);~%" argname)
+			     (hey "   for (i = 0; i < ~A; i++, lst = Xen_cdr(lst)) ~A[i] = Xen_to_C_~A(Xen_car(lst));~%"
+				  argc
+				  (deref-name arg)
+				  (no-stars (deref-element-type arg)))
+			     (hey "  }~%")))))
 	       (set! ctr (+ ctr 1))))
 	     args)))
       (let ((using-result #f))
@@ -1970,10 +1967,9 @@
 	    (begin 
 	      (set! using-result (and (> refargs 0)
 				      (not return-type-void)))
-	      (if using-result
-		  (begin
-		    (hey "  {~%")
-		    (hey "    Xen result;~%")))
+	      (when using-result
+		(hey "  {~%")
+		(hey "    Xen result;~%"))
 	      (hey-start)
 
 	      (if (not (eq? spec 'etc))
@@ -1989,10 +1985,9 @@
 			   ((free)         (hey-on "  {~%   ~A result;~%   Xen rtn;~%   result = " return-type))
 			   ((const-return) (hey "    return(C_to_Xen_~A((~A)" (no-stars return-type) return-type))
 			   (else
-			    (if (member name idlers)
-				(begin
-				  (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
-				  (set! idlers (remove-if (lambda (x) (string=? x name)) idlers))))
+			    (when (member name idlers)
+			      (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args))
+			      (set! idlers (remove-if (lambda (x) (string=? x name)) idlers)))
 			    (hey-on "  return(C_to_Xen_~A(" (no-stars return-type))))))))
 
 	    (let ((using-loc (or (eq? lambda-type 'GCallback)
@@ -2038,19 +2033,17 @@
 
 	;; pass args
 	(if (eq? spec 'etc)
-	    (begin
-	      ;; goes to end
-	      ;; need to check ... list, set up locals, send out switch, return result
-	      (let* ((list-name (cadr (args (- cargs 1))))
-		     (min-len (car spec-data))
-		     (max-len (cadr spec-data))
-		     (types (caddr spec-data))
-		     (with-minus-one (member name '("gtk_list_store_set" "gtk_tree_store_set") string=?))
-		     (with-null (not (or with-minus-one
-					 (and (pair? types)
-					      (null? (cdr types))
-					      (string=? (car types) "GType")))))
-		     (modlen (length types)))
+	    ;; need to check ... list, set up locals, send out switch, return result
+	    (let ((list-name (cadr (args (- cargs 1))))
+		  (types (caddr spec-data))
+		  (with-minus-one (member name '("gtk_list_store_set" "gtk_tree_store_set") string=?)))
+	      (let ((min-len (car spec-data))
+		    (max-len (cadr spec-data))
+		    (with-null (not (or with-minus-one
+					(and (pair? types)
+					     (null? (cdr types))
+					     (string=? (car types) "GType")))))
+		    (modlen (length types)))
 		(hey "  {~%")
 		(hey "    int etc_len = 0;~%")
 		(if (not return-type-void)
@@ -2074,164 +2067,157 @@
 		    (hey "    p_arg~D = Xen_to_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))))
 		(hey "    switch (etc_len)~%")
 		(hey "      {~%")
-		(let ((name-is-file-chooser (string=? name "gtk_file_chooser_dialog_new")))
-		  (do ((i min-len (+ i modlen)))
-		      ((> i max-len))
-		    (if (not return-type-void)
-			(hey "        case ~D: result = ~A(" i name)
-			(hey "        case ~D: ~A(" i name))
-		    (do ((j 0 (+ 1 j)))
-			((= j (- cargs 1)))
-		      (hey "p_arg~D, " j))
-		    ;; assume ending null for now
-		    (let ((modctr 0))
-		      (do ((j 0 (+ 1 j)))
-			  ((= j i))
-			(let ((type (types modctr)))
-			  (set! modctr (+ 1 modctr))
-			  (if (>= modctr modlen) (set! modctr 0))
-			  (hey (cond ((assoc type '(("int" . "XLI(") 
-						    ("gchar*" . "XLS(") 
-						    ("GtkTextTag*" . "XLT(") 
-						    ("GType" . "XLG("))
-					     string=?) => cdr)
-				     (else "XLA("))))
-			(hey "~A, ~D)" list-name j)
-			(if (or with-null with-minus-one (< j (- i 1)))
-			    (hey ", "))))
-		    (if with-null
-			(if (and (= i 0)
-				 name-is-file-chooser)
-			    (hey "NULL, NULL); break;~%") ; extra NULL needed I guess for the valist pass-through -- gcc 4.1 grumbles about it
-			    (hey "NULL); break;~%"))
-			(if with-minus-one
-			    (hey "-1); break;~%")
-			    (hey "); break;~%")))))
+		(do ((name-is-file-chooser (string=? name "gtk_file_chooser_dialog_new"))
+		     (i min-len (+ i modlen)))
+		    ((> i max-len))
+		  (if (not return-type-void)
+		      (hey "        case ~D: result = ~A(" i name)
+		      (hey "        case ~D: ~A(" i name))
+		  (do ((j 0 (+ 1 j)))
+		      ((= j (- cargs 1)))
+		    (hey "p_arg~D, " j))
+		  ;; assume ending null for now
+		  (do ((modctr 0)
+		       (j 0 (+ 1 j)))
+		      ((= j i))
+		    (let ((type (types modctr)))
+		      (set! modctr (+ 1 modctr))
+		      (if (>= modctr modlen) (set! modctr 0))
+		      (hey (cond ((assoc type '(("int" . "XLI(") 
+						("gchar*" . "XLS(") 
+						("GtkTextTag*" . "XLT(") 
+						("GType" . "XLG("))
+					 string=?) => cdr)
+				 (else "XLA("))))
+		    (hey "~A, ~D)" list-name j)
+		    (if (or with-null with-minus-one (< j (- i 1)))
+			(hey ", ")))
+		  (if with-null
+		      (if (and (= i 0)
+			       name-is-file-chooser)
+			  (hey "NULL, NULL); break;~%") ; extra NULL needed I guess for the valist pass-through -- gcc 4.1 grumbles about it
+			  (hey "NULL); break;~%"))
+		      (if with-minus-one
+			  (hey "-1); break;~%")
+			  (hey "); break;~%"))))
 		(hey "      }~%")
 		
 		(if return-type-void
 		    (hey "    return(Xen_false);~%")
 		    (hey "    return(C_to_Xen_~A(result));~%" (no-stars return-type)))
-		(hey "  }~%")
-		))
-
-	    (begin
-
-	      (if (eq? lambda-type 'lambda)
-		  (begin ; 'lambda (see line 1846)
-		    (hey "if (Xen_is_aritable(func, 2))~%")
-		    (hey-start)
-		    (if return-type-void
-			(hey-on "       ~A(" name)
-			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
-		    (hey-mark)
-		    (let ((previous-arg #f))
-		      (for-each
-		       (lambda (arg)
-			 (let ((argname (cadr arg))
-			       (argtype (car arg)))
-			   (if previous-arg (hey-ok ", "))
-			   (set! previous-arg #t)
-			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
-		       args))
-		    (if return-type-void
+		(hey "  }~%")))
+	    
+	    ;; not eq? spec 'etc
+	    (if (eq? lambda-type 'lambda)
+		(begin ; 'lambda (see line 1846)
+		  (hey "if (Xen_is_aritable(func, 2))~%")
+		  (hey-start)
+		  (if return-type-void
+		      (hey-on "       ~A(" name)
+		      (hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
+		  (hey-mark)
+		  (let ((previous-arg #f))
+		    (for-each
+		     (lambda (arg)
+		       (let ((argname (cadr arg))
+			     (argtype (car arg)))
+			 (if previous-arg (hey-ok ", "))
+			 (set! previous-arg #t)
+			 (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
+		     args))
+		  (if return-type-void
+		      (hey ");~%")
+		      (hey ")));~%"))
+		  (hey "     else~%")
+		  (hey-start)
+		  (if return-type-void
+		      (hey-on "       ~A(" name)
+		      (hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
+		  (hey-mark)
+		  (let ((previous-arg #f))
+		    (for-each
+		     (lambda (arg)
+		       (let ((argname (cadr arg))
+			     (argtype (car arg)))
+			 (if previous-arg (hey-ok ", "))
+			 (set! previous-arg #t)
+			 (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
+		     args))
+		  (if return-type-void
+		      (begin
 			(hey ");~%")
-			(hey ")));~%"))
-		    (hey "     else~%")
-		    (hey-start)
-		    (if return-type-void
-			(hey-on "       ~A(" name)
-			(hey-on "       return(C_to_Xen_~A(~A(" (no-stars return-type) name))
-		    (hey-mark)
-		    (let ((previous-arg #f))
-		      (for-each
-		       (lambda (arg)
-			 (let ((argname (cadr arg))
-			       (argtype (car arg)))
-			   (if previous-arg (hey-ok ", "))
-			   (set! previous-arg #t)
-			   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname)))
-		       args))
-		    (if return-type-void
-			(begin
-			  (hey ");~%")
-			  (hey "    return(Xen_false);~%"))
-			(hey ")));~%"))
-		    (hey "  }~%")) ;'lambda
-
-		  (begin
-		    (hey-on "~A(" name)
-		    (hey-mark)
-		    (if (pair? args)
-			(let ((previous-arg #f))
-			  (for-each
-			   (lambda (arg)
-			     (let ((argname (cadr arg))
-				   (argtype (car arg)))
-			       (if previous-arg (hey-ok ", "))
-			       (if (and (eq? spec 'const)
-					(member argtype '("char**" "gchar**" "gchar*" "char*" "GValue*") string=?))
-				   (hey "(const ~A)" argtype))
-			       (set! previous-arg #t)
-			       (if (ref-arg? arg)
-				   (hey-on "&~A" (deref-name arg))
-				   (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
-			   args)))
-		    (if (not return-type-void)
-			(if (not (and (eq? lambda-type 'fnc)
-				      (= refargs 0)))
-			    (heyc ")")
-			    (if (not (eq? spec 'free)) 
-				(heyc "))"))))
-		    (hey ");~%")
-		    (if (not (eq? lambda-type 'fnc))
-			(begin
-			  (if (and callback-data
-				   (eq? (callback-gc callback-data) 'temporary))
-			      (hey "    xm_unprotect_at(loc);~%"))
-			  (if (and callback-data
-				   (eq? (callback-gc callback-data) 'semi-permanent))
-			      (hey "    Xen_list_set(gxg_ptr, 2, Xen_list_3(xg_idler_symbol, ~A, C_int_to_Xen_integer(loc)));~%"
-				   (if return-type-void "Xen_false" "result")))
-			  (if using-result
-			      (hey "    return(result);~%")
-			      (hey "    return(Xen_false);~%"))
-			  (hey "   }~%"))
-			(begin ;'fnc
-			  (if (> refargs 0)
-			      (let ((previous-arg using-result))
-				(if using-result (heyc "  "))
-				(if (string=? name "gdk_property_get")
-				    (begin
-				      ;; special case -- type returned is dependent to some extent on atom
-				      (hey "  {~%      Xen data_val = Xen_false;~%\
+			(hey "    return(Xen_false);~%"))
+		      (hey ")));~%"))
+		  (hey "  }~%")) ;'lambda
+		
+		(begin
+		  (hey-on "~A(" name)
+		  (hey-mark)
+		  (if (pair? args)
+		      (let ((previous-arg #f))
+			(for-each
+			 (lambda (arg)
+			   (let ((argname (cadr arg))
+				 (argtype (car arg)))
+			     (if previous-arg (hey-ok ", "))
+			     (if (and (eq? spec 'const)
+				      (member argtype '("char**" "gchar**" "gchar*" "char*" "GValue*") string=?))
+				 (hey "(const ~A)" argtype))
+			     (set! previous-arg #t)
+			     (if (ref-arg? arg)
+				 (hey-on "&~A" (deref-name arg))
+				 (hey-on "Xen_to_C_~A(~A)" (no-stars argtype) argname))))
+			 args)))
+		  (if (not return-type-void)
+		      (if (not (and (eq? lambda-type 'fnc)
+				    (= refargs 0)))
+			  (heyc ")")
+			  (if (not (eq? spec 'free)) 
+			      (heyc "))"))))
+		  (hey ");~%")
+		  (if (not (eq? lambda-type 'fnc))
+		      (begin
+			(if (and callback-data
+				 (eq? (callback-gc callback-data) 'temporary))
+			    (hey "    xm_unprotect_at(loc);~%"))
+			(if (and callback-data
+				 (eq? (callback-gc callback-data) 'semi-permanent))
+			    (hey "    Xen_list_set(gxg_ptr, 2, Xen_list_3(xg_idler_symbol, ~A, C_int_to_Xen_integer(loc)));~%"
+				 (if return-type-void "Xen_false" "result")))
+			(if using-result
+			    (hey "    return(result);~%")
+			    (hey "    return(Xen_false);~%"))
+			(hey "   }~%"))
+		      
+		      (if (> refargs 0)
+			  (let ((previous-arg using-result))
+			    (if using-result (heyc "  "))
+			    (if (string=? name "gdk_property_get")   ; special case -- type returned is dependent to some extent on atom
+				(hey "  {~%      Xen data_val = Xen_false;~%\
       if (ref_actual_property_type == GDK_TARGET_STRING)~%\
 	data_val = C_string_to_Xen_string((char *)ref_data);~%\
       else if (ref_actual_length > 0) data_val = C_string_to_Xen_string_with_length((char *)ref_data, ref_actual_length * ref_actual_format / 8);~%\
      return(Xen_list_5(result, C_to_Xen_GdkAtom(ref_actual_property_type), C_to_Xen_gint(ref_actual_format), ~%\
                        C_to_Xen_gint(ref_actual_length), data_val));~%\
     }~%  }~%")
-				      )
-				    (begin
-				      (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
-				      (if using-result (heyc "result"))
-				      (for-each 
-				       (lambda (arg)
-					 (if (ref-arg? arg)
-					     (begin
-					       (if previous-arg (heyc ", "))
-					       (hey "C_to_Xen_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
-					       (set! previous-arg #t))))
-				       args)
-				      (hey "));~%")
-				      (if using-result (hey "   }~%")))))
-			      ;; refargs = 0
-			      (begin
-				(if (member name idlers)
-				    (hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args)))
-				(if return-type-void
-				    (hey "  return(Xen_false);~%")))))))
-		  ))) ; 'begin
+				(begin
+				  (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
+				  (if using-result (heyc "result"))
+				  (for-each 
+				   (lambda (arg)
+				     (when (ref-arg? arg)
+				       (if previous-arg (heyc ", "))
+				       (hey "C_to_Xen_~A(~A)" (no-stars (deref-type arg)) (deref-name arg))
+				       (set! previous-arg #t)))
+				   args)
+				  (hey "));~%")
+				  (if using-result (hey "   }~%")))))
+			  ;; refargs = 0
+			  (begin
+			    (if (member name idlers)
+				(hey "  xm_unprotect_at(Xen_integer_to_C_int(Xen_caddr(~A)));~%" (cadar args)))
+			    (if return-type-void
+				(hey "  return(Xen_false);~%"))))))))
 	(if (eq? spec 'free)
 	    (hey "   rtn = C_to_Xen_~A(result);~%   g_free(result);~%   return(rtn);~%  }~%" (no-stars return-type)))
 	(hey "}~%~%")
@@ -2942,16 +2928,16 @@
 (hey "static enummer_t enum_info[] = {~%")
 (set! declared-names (sort! declared-names (lambda (a b)
 					     (string<? (caddr a) (caddr b)))))
-(let ((version ""))
-  (do ((names declared-names (cdr names)))
-      ((null? names)
-       (hey "#endif~%~NC{NULL, NULL, 0}};~%~%" 8 #\space)) ; end marker
-    (unless (string=? (caddar names) version)
-      (if (> (length version) 0)
-	  (hey "#endif~%"))
-      (set! version (caddar names))
-      (hey (string-append "#if GTK_CHECK_VERSION(" (substring version 0 1) ", " (substring version 2) ", 0)~%")))
-    (hey "~NC{~S, ~S, ~A},~%" 8 #\space (caar names) (cadar names) (caar names))))
+(do ((version "")
+     (names declared-names (cdr names)))
+    ((null? names)
+     (hey "#endif~%~NC{NULL, NULL, 0}};~%~%" 8 #\space)) ; end marker
+  (unless (string=? (caddar names) version)
+    (if (> (length version) 0)
+	(hey "#endif~%"))
+    (set! version (caddar names))
+    (hey (string-append "#if GTK_CHECK_VERSION(" (substring version 0 1) ", " (substring version 2) ", 0)~%")))
+  (hey "~NC{~S, ~S, ~A},~%" 8 #\space (caar names) (cadar names) (caar names)))
 
 (hey "static s7_pointer enum_value_to_name(s7_scheme *sc, long long int val, const char *type) ~%")
 (hey "{ ~%")

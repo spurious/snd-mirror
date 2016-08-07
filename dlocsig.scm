@@ -244,13 +244,12 @@
 		    (* (m 0 1) (mat 1 0))
 		    (* (m 0 2) (mat 2 0)))))
 	(and (> (abs det) 1e-06)
-	     (let ((invdet (/ 1.0 det)))
-	       (do ((row 0 (+ 1 row)))
-		   ((= row 3))
-		 (do ((col 0 (+ 1 col)))
-		     ((= col 3))
-		   (set! (mat row col) (* (mat row col) invdet))))
-	       mat)))))
+	     (do ((invdet (/ 1.0 det))
+		  (row 0 (+ 1 row)))
+		 ((= row 3) mat)
+	       (do ((col 0 (+ 1 col)))
+		   ((= col 3))
+		 (set! (mat row col) (* (mat row col) invdet))))))))
   
   (define (invert2x2 mat) ; invert a 2x2 matrix
     (let ((m (make-float-vector '(2 2)))
@@ -367,21 +366,21 @@
 		      (let* ((size (length group))
 			     (vertices (map coords group))
 			     (matrix (if (= size 3)
-					 (let ((m (make-float-vector '(3 3))))
-					   (do ((i 0 (+ i 1)))
-					       ((= i 3))
-					     (do ((j 0 (+ j 1)))
-						 ((= j 3))
-					       (set! (m i j) ((vertices i) j))))
-					   (invert3x3 m))
+					 (do ((m (make-float-vector '(3 3)))
+					      (i 0 (+ i 1)))
+					     ((= i 3)
+					      (invert3x3 m))   
+					   (do ((j 0 (+ j 1)))
+					       ((= j 3))
+					     (set! (m i j) ((vertices i) j))))
 					 (and (= size 2)
-					      (let ((m (make-float-vector '(2 2))))
-						(do ((i 0 (+ i 1)))
-						    ((= i 2))
-						  (do ((j 0 (+ j 1)))
-						      ((= j 2))
-						    (set! (m i j) ((vertices i) j))))
-						(invert2x2 m))))))
+					      (do ((m (make-float-vector '(2 2)))
+						   (i 0 (+ i 1)))
+						  ((= i 2)
+						   (invert2x2 m))   
+						(do ((j 0 (+ j 1)))
+						    ((= j 2))
+						  (set! (m i j) ((vertices i) j))))))))
 			(set! vals (cons (make-group :id id
 						     :size size
 						     :speakers group
@@ -410,12 +409,11 @@
 			 :coords coords
 			 :groups groups
 			 :delays times
-			 :omap (let ((v (make-vector (length speakers))))
-				 (do ((chan 0 (+ 1 chan)))
-				     ((= chan (length speakers)))
-				   (set! (v chan) (or (and (pair? channel-map) (channel-map chan))
-						      chan)))
-				 v))))
+			 :omap (do ((v (make-vector (length speakers)))
+				    (chan 0 (+ 1 chan)))
+				   ((= chan (length speakers)) v)
+				 (set! (v chan) (or (and (pair? channel-map) (channel-map chan))
+						    chan))))))
 
 ;;; Default speaker configurations
 
@@ -869,23 +867,21 @@
 		;; it's a three dimensional list
 		;; '(x0 y0 z0 x1 y1 z1 ... xn yn zn)
 		;;     x, y, z: coordinates of source
-		(let ((pz ()))
-		  (do ((i 0 (+ i 3)))
-		      ((>= i len))
-		    (set! px (cons (points i) px))
-		    (set! py (cons (points (+ i 1)) py))
-		    (set! pz (cons (points (+ i 2)) pz)))
-		  (list (reverse px) (reverse py) (reverse pz) (make-list (length px) #f)))
-	      
+		(do ((pz ())
+		     (i 0 (+ i 3)))
+		    ((>= i len)
+		     (list (reverse px) (reverse py) (reverse pz) (make-list (length px) #f)))   
+		  (set! px (cons (points i) px))
+		  (set! py (cons (points (+ i 1)) py))
+		  (set! pz (cons (points (+ i 2)) pz)))
 		;; it's a two dimensional list
 		;; '(x0 y0 x1 y1 ... xn yn)
 		;;     x, y, z: coordinates of source [missing z's assumed 0.0]
-		(let ()
-		  (do ((i 0 (+ i 2)))
-		      ((>= i len))
-		    (set! px (cons (points i) px))
-		    (set! py (cons (points (+ i 1)) py)))
-		  (list (reverse px) (reverse py) (make-list (length px) 0.0) (make-list (length px) #f)))))))))
+		(do ((i 0 (+ i 2)))
+		    ((>= i len)
+		     (list (reverse px) (reverse py) (make-list (length px) 0.0) (make-list (length px) #f)))   
+		  (set! px (cons (points i) px))
+		  (set! py (cons (points (+ i 1)) py)))))))))
 
 ;;; Parse a set of 2d or 3d polar points into the separate coordinates
 
