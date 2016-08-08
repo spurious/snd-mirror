@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [401]
-;;;  test 1: defaults                           [1063]
-;;;  test 2: headers                            [1436]
-;;;  test 3: variables                          [1751]
-;;;  test 4: sndlib                             [2314]
-;;;  test 5: simple overall checks              [4163]
-;;;  test 6: float-vectors                      [8880]
-;;;  test 7: colors                             [9146]
-;;;  test 8: clm                                [9650]
-;;;  test 9: mix                                [21512]
-;;;  test 10: marks                             [23266]
-;;;  test 11: dialogs                           [24197]
-;;;  test 12: extensions                        [24358]
-;;;  test 13: menus, edit lists, hooks, etc     [24616]
-;;;  test 14: all together now                  [25895]
-;;;  test 15: chan-local vars                   [26762]
-;;;  test 16: regularized funcs                 [28472]
-;;;  test 17: dialogs and graphics              [32169]
-;;;  test 18: save and restore                  [32276]
-;;;  test 19: transforms                        [33901]
-;;;  test 20: new stuff                         [35983]
-;;;  test 21: optimizer                         [37166]
-;;;  test 22: with-sound                        [39734]
-;;;  test 23: X/Xt/Xm                           [42618]
-;;;  test 24: GL                                [46218]
-;;;  test 25: errors                            [46339]
-;;;  test 26: s7                                [47753]
-;;;  test all done                              [47822]
-;;;  test the end                               [47994]
+;;;  test 0: constants                          [400]
+;;;  test 1: defaults                           [1056]
+;;;  test 2: headers                            [1428]
+;;;  test 3: variables                          [1743]
+;;;  test 4: sndlib                             [2306]
+;;;  test 5: simple overall checks              [4129]
+;;;  test 6: float-vectors                      [8784]
+;;;  test 7: colors                             [9047]
+;;;  test 8: clm                                [9542]
+;;;  test 9: mix                                [21296]
+;;;  test 10: marks                             [23040]
+;;;  test 11: dialogs                           [23967]
+;;;  test 12: extensions                        [24128]
+;;;  test 13: menus, edit lists, hooks, etc     [24384]
+;;;  test 14: all together now                  [25653]
+;;;  test 15: chan-local vars                   [26473]
+;;;  test 16: regularized funcs                 [28162]
+;;;  test 17: dialogs and graphics              [31841]
+;;;  test 18: save and restore                  [31948]
+;;;  test 19: transforms                        [33535]
+;;;  test 20: new stuff                         [35593]
+;;;  test 21: optimizer                         [36772]
+;;;  test 22: with-sound                        [39295]
+;;;  test 23: X/Xt/Xm                           [42079]
+;;;  test 24: GL                                [45656]
+;;;  test 25: errors                            [45777]
+;;;  test 26: s7                                [47206]
+;;;  test all done                              [47342]
+;;;  test the end                               [47516]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -2403,11 +2403,11 @@
       (if (not (string=? str "23-Nov 06:56 PST"))
 	  (snd-display ";mus-sound-write-date pistol.snd: ~A?" str)))
     
-    (let ((long-file-name (let ((name "test"))
-			    (do ((i 0 (+ i 1)))
-				((= i 10)) ; 40 is about the limit in Linux (256 char limit here from OS, not Snd)
-			      (set! name (string-append name "-test")))
-			    (string-append name ".snd"))))
+    (let ((long-file-name (do ((name "test")
+			       (i 0 (+ i 1)))
+			      ((= i 10)
+			       (string-append name ".snd"))
+			    (set! name (string-append name "-test")))))
       (let ((index (open-sound "oboe.snd")))
 	(if (variable-graph? index) (snd-display ";variable-graph thinks anything is a graph..."))
 	(if (player? index) (snd-display ";player? thinks anything is a player..."))
@@ -10866,23 +10866,18 @@ EDITS: 2
 	(if (not (mus-arrays-equal? vals1 vals2))
 	    (snd-display ";poly* convolve: ~A ~A" vals1 vals2)))
       
-      
-      (do ((i 0 (+ i 1))) ((= i 10)) 
-	(poly-as-vector-roots (vector (complex (mus-random 1.0) (mus-random 1.0)) 
-				      (complex (mus-random 1.0) (mus-random 1.0)))))
-      (do ((i 0 (+ i 1))) ((= i 10)) 
-	(poly-as-vector-roots (vector (complex (mus-random 1.0) (mus-random 1.0)) 
-				      (complex (mus-random 1.0) (mus-random 1.0))
-				      (complex (mus-random 1.0) (mus-random 1.0)))))
-      
-      (do ((i 0 (+ i 1))) ((= i 10)) 
-	(poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
-      
-      (do ((i 0 (+ i 1))) ((= i 10)) 
-	(poly-as-vector-roots (vector (complex (mus-random 1.0) (mus-random 1.0)) 
-				      (complex (mus-random 1.0) (mus-random 1.0))
-				      (complex (mus-random 1.0) (mus-random 1.0))
-				      (complex (mus-random 1.0) (mus-random 1.0)))))
+      (let ((random-complex (lambda () (complex (mus-random 1.0) (mus-random 1.0)))))
+	(do ((i 0 (+ i 1))) ((= i 10)) 
+	  (poly-as-vector-roots (vector (random-complex) (random-complex))))
+	
+	(do ((i 0 (+ i 1))) ((= i 10)) 
+	  (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex))))
+	
+	(do ((i 0 (+ i 1))) ((= i 10)) 
+	  (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
+	
+	(do ((i 0 (+ i 1))) ((= i 10)) 
+	  (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex) (random-complex)))))
       
       (do ((i 3 (+ i 1))) ((= i 20)) 
 	(let ((v (make-float-vector i)))
@@ -11610,7 +11605,7 @@ EDITS: 2
 	  (snd-display ";cos cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))))  
       (do ((lv8 (partials->polynomial '(7 1) mus-chebyshev-second-kind))
 	   (sa (sin (acos 0.5)))
-	   (ca (* 7 (acos 0.5)))
+	   (ca (sin (* 7 (acos 0.5))))
 	   (i 0 (+ i 1)))
 	  ((= i 10))
 	(let* ((val (mus-random 1.0))
@@ -11622,8 +11617,8 @@ EDITS: 2
 	  (if (fneq (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))
 	      (snd-display ";acos cheb 7 ~A: ~A ~A" val (polynomial lv8 val) (/ (sin (* 7 aval)) (sin aval)))))
 	(if (not (mus-arrays-equal? lv8 (float-vector -1.000 0.000 24.000 0.000 -80.000 0.000 64.000 0.000))) (snd-display ";partials->polynomial(9): ~A?" lv8))
-	(if (fneq (polynomial lv8 0.5) (/ (sin ca) sa))
-	    (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 0.5) (/ (sin ca) sa)))))
+	(if (fneq (polynomial lv8 0.5) (/ ca sa))
+	    (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 0.5) (/ ca sa)))))
     ;; G&R 8.943 p 984 uses n+1 where we use n in Un? (our numbering keeps harmonics aligned between Tn and Un)
     
     (if (not (mus-arrays-equal? (normalize-partials (list 1 1 2 1)) (float-vector 1.000 0.500 2.000 0.500)))
@@ -13401,13 +13396,13 @@ EDITS: 2
 	     (snd-display ";oscil pm output: ~A" v0)))
       (set! (v0 i) (gen 0.0 (* pm-index (gen1 0.0)))))
     
-    (let ((gen (make-oscil 440.0)))
-      (do ((i 0 (+ i 1)))
-	  ((= i 1100))
-	(let ((val1 (sin (mus-phase gen)))
-	       (val2 (gen 0.0)))
-	  (if (fneq val1 val2)
-	      (snd-display ";oscil: ~A: ~A ~A" i val1 val2)))))
+    (do ((gen (make-oscil 440.0))
+	 (i 0 (+ i 1)))
+	((= i 1100))
+      (let ((val1 (sin (mus-phase gen)))
+	    (val2 (gen 0.0)))
+	(if (fneq val1 val2)
+	    (snd-display ";oscil: ~A: ~A ~A" i val1 val2))))
     
     (do ((gen (make-oscil 440.0 :initial-phase (* pi 0.5)))
 	 (incr (/ (* 2 pi 440.0) 22050.0))
@@ -13446,20 +13441,20 @@ EDITS: 2
     
     (let ()
       (define (oscil-1-1)
-	(let ((osc (make-oscil 440.0)))
-	  (let ((v1 (make-vector 10 0.0))
-		(v2 (make-vector 10 0.0)))
-	    (set! (v1 0) (oscil osc))
-	    (set! (v1 1) (oscil osc))
-	    (do ((osc (make-oscil 440.0))
-		 (i 0 (+ i 1)))
-		((= i 10))
-	      (set! (v2 i) (oscil osc)))
-	    (do ((i 2 (+ i 1)))
-		((= i 10))
-	      (set! (v1 i) (oscil osc)))
-	    (if (not (equal? v1 v2))
-		(snd-display ";oscil-1 shadowing test1: ~A ~A" v1 v2)))))
+	(let ((osc (make-oscil 440.0))
+	      (v1 (make-vector 10 0.0))
+	      (v2 (make-vector 10 0.0)))
+	  (set! (v1 0) (oscil osc))
+	  (set! (v1 1) (oscil osc))
+	  (do ((osc (make-oscil 440.0))
+	       (i 0 (+ i 1)))
+	      ((= i 10))
+	    (set! (v2 i) (oscil osc)))
+	  (do ((i 2 (+ i 1)))
+	      ((= i 10))
+	    (set! (v1 i) (oscil osc)))
+	  (if (not (equal? v1 v2))
+	      (snd-display ";oscil-1 shadowing test1: ~A ~A" v1 v2))))
       
       (define (oscil-1-2)
 	(define (ho-1 osc v i)
@@ -14679,14 +14674,14 @@ EDITS: 2
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";set! triangle-wave scaler: ~F?" (mus-scaler gen)))
       (if (or (fneq (v0 1) 0.080) (fneq (v0 8) 0.639)) (snd-display ";triangle-wave output: ~A" v0)))
     
-    (let ((gen1 (make-triangle-wave 100.0))
-	  (gen2 (make-triangle-wave -100.0))
-	  (mx 0.0))
-      (do ((i 0 (+ i 1)))
-	  ((= i 100))
-	(set! mx (max mx (abs (+ (gen1) (gen2))))))
-      (if (fneq mx 0.0)
-	  (snd-display ";triangle +-: ~A" mx)))
+    (do ((gen1 (make-triangle-wave 100.0))
+	 (gen2 (make-triangle-wave -100.0))
+	 (mx 0.0)
+	 (i 0 (+ i 1)))
+	((= i 100)
+	 (if (fneq mx 0.0)
+	     (snd-display ";triangle +-: ~A" mx)))
+      (set! mx (max mx (abs (+ (gen1) (gen2))))))
     
     (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 120.0))
     (test-gen-equal (make-triangle-wave 440.0) (make-triangle-wave 440.0) (make-triangle-wave 440.0 1.0 1.0))
@@ -14972,18 +14967,18 @@ EDITS: 2
        (let ((window (car window-data))
 	     (func (caddr window-data))
 	     (name (cadr window-data)))
-	 (let ((v1 (make-fft-window window 16))
-	       (v2 (make-float-vector 16))
-	       (incr (/ (* 2 pi) 16.0)))
-	   (do ((i 0 (+ i 1))
-		(j 15 (- j 1))
-		(ang 0.0 (+ ang incr)))
-	       ((> i 8)) ; yikes -- even size + smallness = questionable code...
-	     (let ((val (func ang)))
-	       (set! (v2 i) val)
-	       (set! (v2 j) val)))
-	   (if (not (mus-arrays-equal? v1 v2)) 
-	       (snd-display ";~A by hand:~%;  mus: ~A~%;  loc: ~A" name v1 v2)))))
+	 (do ((v1 (make-fft-window window 16))
+	      (v2 (make-float-vector 16))
+	      (incr (/ (* 2 pi) 16.0))
+	      (i 0 (+ i 1))
+	      (j 15 (- j 1))
+	      (ang 0.0 (+ ang incr)))
+	     ((> i 8) ; yikes -- even size + smallness = questionable code...
+	      (if (not (mus-arrays-equal? v1 v2)) 
+		  (snd-display ";~A by hand:~%;  mus: ~A~%;  loc: ~A" name v1 v2)))
+	   (let ((val (func ang)))
+	     (set! (v2 i) val)
+	     (set! (v2 j) val)))))
      
      (list 
       (list hann-window "hann" (lambda (ang) 

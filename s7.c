@@ -997,8 +997,8 @@ struct s7_scheme {
              make_vector_symbol, map_symbol, max_symbol, member_symbol, memq_symbol, memv_symbol, min_symbol, modulo_symbol,
              multiply_symbol, 
              newline_symbol, not_symbol, number_to_string_symbol, numerator_symbol, 
-             object_to_string_symbol, open_input_file_symbol, open_input_string_symbol, open_output_file_symbol, openlet_symbol,
-             outlet_symbol, owlet_symbol, 
+             object_to_string_symbol, object_to_let_symbol, open_input_file_symbol, open_input_string_symbol, open_output_file_symbol, 
+             openlet_symbol, outlet_symbol, owlet_symbol, 
              pair_filename_symbol, pair_line_number_symbol, peek_char_symbol, pi_symbol, port_filename_symbol, port_line_number_symbol,
              procedure_documentation_symbol, procedure_signature_symbol, procedure_source_symbol, provide_symbol,
              quotient_symbol, 
@@ -72956,6 +72956,17 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
 /* -------------------------------- */
+ 
+
+/* another experiment */
+static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
+{
+  #define H_object_to_let "(object->let obj) returns a let (namespace) describing obj"
+  #define Q_object_to_let s7_make_signature(sc, 2, sc->is_let_symbol, sc->T)
+
+  return(sc->F);
+}
+/* -------------------------------- */
 
 
 s7_scheme *s7_init(void)
@@ -73935,6 +73946,7 @@ s7_scheme *s7_init(void)
   sc->object_to_string_symbol =      defun("object->string",	object_to_string,	1, 1, false);
   sc->format_symbol =                defun("format",		format,			1, 0, true);
   /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists? */
+  sc->object_to_let_symbol =         defun("object->let",	object_to_let,	        1, 0, false);
 
   sc->cons_symbol =                  defun("cons",		cons,			2, 0, false);
   sc->car_symbol =                   defun("car",		car,			1, 0, false);
@@ -74563,13 +74575,15 @@ int main(int argc, char **argv)
  *   this could be a macro, but better built-in (generators)
  *   (with-let! (e :x 32 :y 12) (+ x y)) where 'e has 'x and 'y fields
  * symbol as arg of eq? memq defined? case-selector: use gensym? [i.e. don't put make the computed symbol permanent]
- * maybe a freelist (or several) for hash_entry** in s7_make_hash_table (see free_hash_table)
- *   but how to tie into a list without allocation?
  *
  * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
  *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
  *   also port-filename|line-number could use let syntax, then maybe add position|data etc -- mock let like *s7*
  *   gc troubles with the string wrapper. Another such case: iterator.  But how to handle default port as in (port-line-number)?
+ *   [port|iterator|closure|c-object|] object->let (for closure/func this could include file/line of definition etc)
+ *     for c_object, it could add fields thus handling all the <mark> stuff mentioned below
+ *     and a let could as well (object->let method wrapper?)
+ *     and *s7* could be all the fields as a let??
  *
  * append: 44522: what if method not first arg?  use 'values: check_values?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character

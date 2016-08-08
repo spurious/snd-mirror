@@ -4755,9 +4755,14 @@
 	     (lint-format "~A binding is messed up: ~A" caller head binding)
 	     #f)
 	    (else 
-	     (if (and *report-shadowed-variables*      ; (let ((x 1)) (+ (let ((x 2)) (+ x 1)) x))
-		      (var-member (car binding) env))
-		 (lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head (car binding) binding))
+	     (if (and (eq? caller (car binding))
+		      (let ((fv (var-member caller env)))
+			(and (var? fv)
+			     (memq (var-ftype fv) '(define lambda let define* lambda*)))))
+		 (lint-format "~A variable ~A in ~S shadows the current function?" caller head caller binding)
+		 (if (and *report-shadowed-variables*      ; (let ((x 1)) (+ (let ((x 2)) (+ x 1)) x))
+			  (var-member (car binding) env))
+		     (lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head (car binding) binding)))
 	     #t)))
 
     (define (check-char-cmp caller op form)
@@ -5984,13 +5989,16 @@
 	(let ()
 	 (define (sp-/ caller head form env)
 	   (when (pair? (cdr form))
-	     (if (and (null? (cddr form))
-		      (number? (cadr form))
-		      (zero? (cadr form)))     ; (/ 0)
-		 (lint-format "attempt to invert zero: ~A" caller (truncated-list->string form))
-		 (if (and (pair? (cddr form))  ; (/ x y 2 0)
-			  (memv 0 (cddr form)))
-		     (lint-format "attempt to divide by 0: ~A" caller (truncated-list->string form))))))
+	     (cond ((and (null? (cddr form))
+			 (number? (cadr form))
+			 (zero? (cadr form)))     ; (/ 0)
+		    (lint-format "attempt to invert zero: ~A" caller (truncated-list->string form)))
+		   ((and (pair? (cddr form))  ; (/ x y 2 0)
+			 (memv 0 (cddr form)))
+		    (lint-format "attempt to divide by 0: ~A" caller (truncated-list->string form)))
+		   (else
+		    (let ((len (assq 'length (cdr form))))
+		      (if len (lint-format "~A will cause division by 0 if ~A is empty" caller len (cadr len))))))))
 	 (hash-table-set! h '/ sp-/))
 	
 	;; ---------------- copy ----------------
@@ -7420,25 +7428,24 @@
 	    (let ((len (length form))
 		  (val (and (pair? (cdr form))
 			    (cadr form))))
-	      (when (and (> len 2)
+	      (when (and (> len 4)
 			 (every? (lambda (a) (equal? a val)) (cddr form)))
-		(if (code-constant? val)
-		    (if (> len 4)                     ; (vector 12 12 12 12 12 12) -> (make-vector 6 12)
-			(lint-format "perhaps ~A~A" caller
-				     (lists->string form 
-						    (if (eqv? (seq-default head) val)
-							`(,(seq-maker head) ,(- len 1))
-							`(,(seq-maker head) ,(- len 1) ,val)))
-				     (if (and (sequence? val)
-					      (not (null? val)))
-					 (format #f "~%~NCor wrap (copy ~S) in a function and call that ~A times"
-						 lint-left-margin #\space
-						 val (- len 1))
-					 "")))
+		(if (code-constant? val)        ; (vector 12 12 12 12 12 12) -> (make-vector 6 12)
+		    (lint-format "perhaps ~A~A" caller
+				 (lists->string form 
+						(if (eqv? (seq-default head) val)
+						    `(,(seq-maker head) ,(- len 1))
+						    `(,(seq-maker head) ,(- len 1) ,val)))
+				 (if (and (sequence? val)
+					  (not (null? val)))
+				     (format #f "~%~NCor wrap (copy ~S) in a function and call that ~A times"
+					     lint-left-margin #\space
+					     val (- len 1))
+				     ""))
 		    (if (pair? val)
 			(if (or (side-effect? val env)
 				(hash-table-ref makers (car val)))
-			    (if (> (tree-leaves val) 2)
+			    (if (> (tree-leaves val) 3)
 				;; I think we need to laboriously repeat the function call here:
 				;;    (let ((a 1) (b 2) (c 3)) 
 				;;      (define f (let ((ctr 0)) (lambda (x y z) (set! ctr (+ ctr 1)) (+ x y ctr (* 2 z)))))
@@ -11484,8 +11491,8 @@
 						 (lint-format "strange parameter for ~A: ~S" function-name definer arg)
 						 (values))
 					       (begin
-						 (if (and (not (cadr arg))                     ; (define* (f4 (a #f)) a)
-							  (not (eq? definer 'define*-public))) ; who knows?
+						 (if (not (or (cadr arg)                      ; (define* (f4 (a #f)) a)
+							      (eq? definer 'define*-public))) ; who knows?
 						     (lint-format "the default argument value is #f in ~A ~A" function-name definer arg))
 						 (make-var :name (car arg) :definer 'parameter)))))
 				     (proper-list args)))))
@@ -12057,7 +12064,7 @@
 			       (not (pair? (car sym)))) ; pair would indicate a curried func or something equally stupid
 			  (let ((outer-args (cdr sym))
 				(outer-name (car sym)))
-			    
+
 			    (cond ((not *report-forward-functions*))
 				  ;; need to ignore macro usages here -- this happens ca 20000 times!
 				  ((hash-table-ref other-identifiers (car sym))
@@ -18209,10 +18216,8 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
 ;;; lint output needs to be organized somehow
-;;; perhaps check do->for-each with return or other vars (could be locals to the function, but steppers get ugly)
-;;;   similarly do->map, check again the tmp/named-let->cdr code (and check +/-) -- maybe there's a further restriction?
-;;;   named-let -> copy/fill!, member/assoc, string/char-position -- could do be mimicking these? orlist->vector et al, list-ref|tail
 ;;; try treating all known macros as expansions
-;;; (define (f x y) (not (> x y))) -> <=  (this is not explicitly caught)
+;;; redefine to current value?
+;;; (define (f . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot?
 ;;;
-;;; 148 24013 652331
+;;; 148 24013 652957

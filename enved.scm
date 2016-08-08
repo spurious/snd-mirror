@@ -189,17 +189,17 @@
 (define play-with-envs
   (let ((documentation "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"))
     (lambda* (sound)
-      (let ((chans (channels sound)))
-	(do ((chan 0 (+ 1 chan)))
-	    ((= chan chans))
-	  (let ((player (make-player sound chan))
-		(e (make-env (channel-envelope sound chan) 
-			     :length (floor (/ (framples sound chan) *dac-size*)))))
-	    (add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) ())))
-	    (hook-push play-hook (lambda (hook)
-				   ;; if dac buffer size in framples is not dac-size, we should do something debonair
-				   (set! (amp-control player) (env e))))))
-	(start-playing chans (srate sound))))))
+      (do ((chans (channels sound))
+	   (chan 0 (+ 1 chan)))
+	  ((= chan chans)
+	   (start-playing chans (srate sound)))   
+	(let ((player (make-player sound chan))
+	      (e (make-env (channel-envelope sound chan) 
+			   :length (floor (/ (framples sound chan) *dac-size*)))))
+	  (add-player player 0 -1 -1 (lambda (reason) (set! (hook-functions play-hook) ())))
+	  (hook-push play-hook (lambda (hook)
+				 ;; if dac buffer size in framples is not dac-size, we should do something debonair
+				 (set! (amp-control player) (env e)))))))))
 
 #|
 (define play-panned 
