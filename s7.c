@@ -1042,8 +1042,8 @@ struct s7_scheme {
              when_symbol, unless_symbol, begin_symbol, cond_symbol, case_symbol, and_symbol, or_symbol, do_symbol, 
              define_symbol, define_star_symbol, define_constant_symbol, with_baffle_symbol, define_macro_symbol, 
              define_macro_star_symbol, define_bacro_symbol, define_bacro_star_symbol, letrec_symbol, letrec_star_symbol, 
-             let_star_symbol, key_rest_symbol, key_allow_other_keys_symbol, key_readable_symbol, baffled_symbol, 
-             __func___symbol, set_symbol, body_symbol, class_name_symbol, feed_to_symbol, format_error_symbol, 
+             let_star_symbol, key_rest_symbol, key_allow_other_keys_symbol, key_readable_symbol, value_symbol, type_symbol, 
+             baffled_symbol, __func___symbol, set_symbol, body_symbol, class_name_symbol, feed_to_symbol, format_error_symbol, 
              wrong_number_of_args_symbol, read_error_symbol, string_read_error_symbol, syntax_error_symbol, division_by_zero_symbol, 
              no_catch_symbol, io_error_symbol, invalid_escape_function_symbol, wrong_type_arg_symbol, out_of_range_symbol;
 
@@ -1960,10 +1960,11 @@ static int not_heap = -1;
   #define cons(Sc, A, B)              s7_cons(Sc, A, B)
 #endif
 
-#define list_1(Sc, A)                 cons(Sc, A, sc->nil)
-#define list_2(Sc, A, B)              cons_unchecked(Sc, A, cons(Sc, B, sc->nil))
-#define list_3(Sc, A, B, C)           cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons(Sc, C, sc->nil)))
-#define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, sc->nil))))
+#define list_1(Sc, A)                 cons(Sc, A, Sc->nil)
+#define list_2(Sc, A, B)              cons_unchecked(Sc, A, cons(Sc, B, Sc->nil))
+#define list_3(Sc, A, B, C)           cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons(Sc, C, Sc->nil)))
+#define list_4(Sc, A, B, C, D)        cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons(Sc, D, Sc->nil))))
+#define list_5(Sc, A, B, C, D, E)     cons_unchecked(Sc, A, cons_unchecked(Sc, B, cons_unchecked(Sc, C, cons_unchecked(Sc, D, cons(sc, E, Sc->nil)))))
 
 #define is_string(p)                  (type(p) == T_STRING)
 #define string_value(p)               (_TStr(p))->object.string.svalue
@@ -6376,7 +6377,7 @@ s7_pointer s7_inlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_inlet "(inlet ...) adds its \
 arguments, each an environment, a cons: '(symbol . value), or a keyword/value pair, to a new environment, and returns the \
-new environment."
+new environment. (inlet :a 1 :b 2) or (inlet '(a . 1) '(b . 2))"
   #define Q_inlet s7_make_circular_signature(sc, 1, 2, sc->is_let_symbol, sc->T)
 
   return(sublet_1(sc, sc->rootlet, args, sc->inlet_symbol));
@@ -36566,7 +36567,7 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 #if DEBUGGING
   {
     s7_pointer x;
-    for (x = p; is_pair(x); x = cdr(x))
+    for (i = 0, x = p; is_pair(x); x = cdr(x), i++) /* i is for (backwards) position info in gdb */
       _NFre(car(x));
   }
 #endif
@@ -72927,19 +72928,6 @@ char *s7_decode_bt(void)
 #endif
 
 
-/* -------------------------------- initialization -------------------------------- */
-
-static s7_pointer make_unique_object(const char* name, unsigned int typ)
-{
-  s7_pointer p;
-  p = alloc_pointer();
-  set_type(p, typ | T_IMMUTABLE);
-  unique_name_length(p) = safe_strlen(name);
-  unique_name(p) = copy_string_with_length(name, unique_name_length(p));
-  unheap(p);
-  return(p);
-}
-
 /* ---------------- an experiment ---------------- */
 static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
 {
@@ -72955,19 +72943,302 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
-/* -------------------------------- */
+
  
 
-/* another experiment */
+/* ---------------- another experiment ---------------- */
 static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 {
-  #define H_object_to_let "(object->let obj) returns a let (namespace) describing obj"
+  #define H_object_to_let "(object->let obj) returns a let (namespace) describing obj."
   #define Q_object_to_let s7_make_signature(sc, 2, sc->is_let_symbol, sc->T)
+
+  s7_pointer obj;
+  obj = car(args);
+
+  switch (type(obj))
+    {
+    case T_NIL:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_null_symbol)));
+
+    case T_UNSPECIFIED:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, obj)));
+
+    case T_SYNTAX:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, s7_make_symbol(sc, "syntax?"))));
+
+    case T_UNIQUE:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, (is_eof(obj)) ? sc->is_eof_object_symbol : obj)));
+
+    case T_BOOLEAN:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_boolean_symbol)));
+      
+    case T_SYMBOL:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, (is_keyword(obj)) ? sc->is_keyword_symbol : sc->is_symbol_symbol)));
+      
+    case T_CHARACTER:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_char_symbol)));
+      
+    case T_INTEGER:
+    case T_BIG_INTEGER:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_integer_symbol)));
+      
+    case T_RATIO:
+    case T_BIG_RATIO:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_rational_symbol)));
+      
+    case T_REAL:
+    case T_BIG_REAL:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_real_symbol)));
+      
+    case T_COMPLEX:
+    case T_BIG_COMPLEX:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_complex_symbol)));
+
+    case T_STRING:
+      return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
+				  sc->type_symbol, (is_byte_vector(obj)) ? sc->is_byte_vector_symbol : sc->is_string_symbol,
+				  sc->length_symbol, s7_length(sc, obj))));
+
+    case T_PAIR:
+      return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
+				  sc->type_symbol, sc->is_pair_symbol,
+				  sc->length_symbol, s7_length(sc, obj))));
+
+    case T_RANDOM_STATE:
+#if WITH_GMP
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_random_state_symbol)));
+#else
+      return(s7_inlet(sc, s7_list(sc, 8, sc->value_symbol, obj,
+				  sc->type_symbol, sc->is_random_state_symbol,
+				  s7_make_symbol(sc, "seed"), s7_make_integer(sc, random_seed(obj)),
+				  s7_make_symbol(sc, "carry"), s7_make_integer(sc, random_carry(obj)))));
+#endif
+
+    case T_CONTINUATION:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_continuation_symbol)));
+
+    case T_GOTO:
+      return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
+				  sc->type_symbol, s7_make_symbol(sc, "goto?"),
+				  s7_make_symbol(sc, "active"), s7_make_boolean(sc, call_exit_active(obj)))));
+
+    case T_INT_VECTOR:
+    case T_FLOAT_VECTOR:
+    case T_VECTOR:
+      return(s7_inlet(sc, s7_list(sc, 10, sc->value_symbol, obj, 
+				 sc->type_symbol, 
+				   (is_int_vector(obj)) ? sc->is_int_vector_symbol : ((is_float_vector(obj)) ? sc->is_float_vector_symbol : sc->is_vector_symbol),
+				 sc->length_symbol, s7_length(sc, obj),
+				 s7_make_symbol(sc, "dimensions"), g_vector_dimensions(sc, list_1(sc, obj)),
+				 s7_make_symbol(sc, "shared"), 
+				  ((vector_has_dimensional_info(obj)) && (is_normal_vector(shared_vector(obj)))) ? shared_vector(obj) : sc->F)));
+
+    case T_C_POINTER:
+      return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
+				  sc->type_symbol, sc->is_c_pointer_symbol,
+				  s7_make_symbol(sc, "s7-value"),
+				    ((is_decodable(sc, (s7_pointer)raw_pointer(obj))) && 
+				     (!is_free(obj))) ? g_object_to_let(sc, cons(sc, (s7_pointer)raw_pointer(obj), sc->nil)) : sc->F)));
+
+    case T_ITERATOR:
+      {
+	s7_pointer let, seq;
+	seq = iterator_sequence(obj);
+	let = s7_inlet(sc, s7_list(sc, 8, sc->value_symbol, obj,
+				   sc->type_symbol, sc->is_iterator_symbol,
+				   s7_make_symbol(sc, "at-end"), s7_make_boolean(sc, iterator_is_at_end(obj)),
+				   s7_make_symbol(sc, "sequence"), iterator_sequence(obj)));
+	if (is_pair(seq))
+	  g_varlet(sc, list_3(sc, let, sc->length_symbol, s7_length(sc, seq)));
+	else
+	  {
+	    if (is_hash_table(seq))
+	      g_varlet(sc, list_3(sc, let, sc->length_symbol, s7_make_integer(sc, hash_table_entries(seq))));
+	    else g_varlet(sc, list_3(sc, let, sc->length_symbol, s7_length(sc, obj)));
+	  }
+	if ((is_string(seq)) || 
+	    (is_normal_vector(seq)) ||
+	    (is_int_vector(seq)) ||
+	    (is_float_vector(seq)) ||
+	    (seq == sc->rootlet) ||
+	    (is_c_object(seq)) ||
+	    (is_hash_table(seq)))
+	  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "position"), s7_make_integer(sc, iterator_position(obj))));
+	else
+	  {
+	    if (is_pair(seq))
+	      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "position"), iterator_current(obj)));
+	  }
+	return(let);
+      }
+
+    case T_HASH_TABLE:
+      {
+	s7_pointer let;
+	let = s7_inlet(sc, s7_list(sc, 10, sc->value_symbol, obj,
+				   sc->type_symbol, sc->is_hash_table_symbol,
+				   sc->length_symbol, s7_length(sc, obj),
+				   s7_make_symbol(sc, "entries"), s7_make_integer(sc, hash_table_entries(obj)),
+				   s7_make_symbol(sc, "locked"), s7_make_boolean(sc, hash_table_checker_locked(obj))));
+
+	if ((hash_table_checker(obj) == hash_eq) ||
+	    (hash_table_checker(obj) == hash_c_function) ||
+	    (hash_table_checker(obj) == hash_closure) ||
+	    (hash_table_checker(obj) == hash_equal_eq) ||
+	    (hash_table_checker(obj) == hash_equal_syntax) ||
+	    (hash_table_checker(obj) == hash_symbol))
+	  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->is_eq_symbol));
+	else
+	  {
+	    if (hash_table_checker(obj) == hash_eqv) 
+	      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->is_eqv_symbol));
+	    else
+	      {
+		if ((hash_table_checker(obj) == hash_equal) || 
+		    (hash_table_checker(obj) == hash_empty))
+		  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->is_equal_symbol));
+		else
+		  {
+		    if (hash_table_checker(obj) == hash_morally_equal) 
+		      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->is_morally_equal_symbol));
+		    else
+		      {
+			if ((hash_table_checker(obj) == hash_number) ||
+			    (hash_table_checker(obj) == hash_int) ||
+			    (hash_table_checker(obj) == hash_float) ||
+			    (hash_table_checker(obj) == hash_equal_real) ||
+			    (hash_table_checker(obj) == hash_equal_complex))
+			  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->eq_symbol));
+			else
+			  {
+			    if (hash_table_checker(obj) == hash_string) 
+			      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->string_eq_symbol));
+			    else
+			      {
+				if (hash_table_checker(obj) == hash_char) 
+				  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->char_eq_symbol));
+#if (!WITH_PURE_S7)
+				else
+				  {
+				    if (hash_table_checker(obj) == hash_ci_char) 
+				      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->char_ci_eq_symbol));
+				    else
+				      {
+					if (hash_table_checker(obj) == hash_ci_string) 
+					  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), sc->string_ci_eq_symbol));
+				      }}
+#endif
+			      }}}}}}
+	return(let);
+      }
+
+    case T_LET:
+      {
+	s7_pointer let;
+	let = s7_inlet(sc, s7_list(sc, 10, sc->value_symbol, obj,
+				   sc->type_symbol, sc->is_let_symbol,
+				   sc->length_symbol, s7_length(sc, obj),
+				   s7_make_symbol(sc, "open"), s7_make_boolean(sc, has_methods(obj)),
+				   sc->outlet_symbol, (obj == sc->rootlet) ? sc->nil : outlet(obj)));
+	if (obj == sc->rootlet)
+	  g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "alias"), sc->rootlet_symbol));
+	else
+	  {
+	    if (obj == sc->owlet)
+	      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "alias"), sc->owlet_symbol));
+	    else
+	      {
+		if (is_function_env(obj))
+		  {
+		    g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "function"), funclet_function(obj)));
+		    if ((let_file(obj) > 0) && 
+			(let_file(obj) < (s7_int)sc->file_names_top) &&
+			(let_line(obj) > 0))
+		      g_varlet(sc, list_5(sc, let, 
+					  s7_make_symbol(sc, "file"), sc->file_names[let_file(obj)], 
+					  s7_make_symbol(sc, "line"), make_integer(sc, let_line(obj))));
+		  }}}
+	return(let);
+      }
+
+    case T_C_OBJECT:
+      return(s7_inlet(sc, s7_list(sc, 12, sc->value_symbol, obj,
+				  sc->type_symbol, sc->is_c_object_symbol,
+				  sc->length_symbol, s7_length(sc, obj),
+				  s7_make_symbol(sc, "c-type"), s7_make_integer(sc, c_object_type(obj)),
+				  sc->let_symbol, c_object_let(obj),
+				  s7_make_symbol(sc, "class"), c_object_scheme_name(obj))));
+      /* object->let in the c_object let?? or add a field for this?
+       */
+
+    case T_INPUT_PORT:
+    case T_OUTPUT_PORT:
+      {
+	s7_pointer let;
+	let = s7_inlet(sc, s7_list(sc, 8, sc->value_symbol, obj,
+				   sc->type_symbol, (is_input_port(obj)) ? sc->is_input_port_symbol : sc->is_output_port_symbol,
+				   s7_make_symbol(sc, "port-type"), 
+				     (is_string_port(obj)) ? sc->string_symbol : 
+				       ((is_file_port(obj)) ? s7_make_symbol(sc, "file") : s7_make_symbol(sc, "function")),
+				   s7_make_symbol(sc, "closed"), s7_make_boolean(sc, port_is_closed(obj))));
+	if (is_file_port(obj))
+	  {
+	    g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "file"), g_port_filename(sc, list_1(sc, obj))));
+	    if (is_input_port(obj))
+	      g_varlet(sc, list_3(sc, let, s7_make_symbol(sc, "line"), g_port_line_number(sc, list_1(sc, obj))));
+	  }
+	if (port_data_size(obj) > 0)
+	  {
+	    g_varlet(sc, list_3(sc, let, sc->length_symbol, s7_make_integer(sc, port_data_size(obj))));
+	    g_varlet(sc, list_5(sc, let, s7_make_symbol(sc, "position"), s7_make_integer(sc, port_position(obj)),
+				s7_make_symbol(sc, "data"), s7_make_string(sc, (const char *)port_data(obj))));
+	  }
+	return(let);
+	/* how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
+	 *   need an example
+	 */
+      }
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+    case T_MACRO:
+    case T_MACRO_STAR:
+    case T_BACRO:
+    case T_BACRO_STAR:
+    case T_C_MACRO:
+    case T_C_FUNCTION_STAR:
+    case T_C_FUNCTION:
+    case T_C_ANY_ARGS_FUNCTION:
+    case T_C_OPT_ARGS_FUNCTION:
+    case T_C_RST_ARGS_FUNCTION:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj,
+				  sc->type_symbol, (is_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol)));
+      /* doc sig source setter file/line arity arglist funclet name[c func] [built-in?]
+       *  need bacro?
+       */
+
+    default:
+#if DEBUGGING
+      fprintf(stderr, "object->let: %s, type: %d\n", DISPLAY(obj), type(obj));
+#endif
+      return(sc->F);
+    }
 
   return(sc->F);
 }
-/* -------------------------------- */
 
+
+/* -------------------------------- initialization -------------------------------- */
+
+static s7_pointer make_unique_object(const char* name, unsigned int typ)
+{
+  s7_pointer p;
+  p = alloc_pointer();
+  set_type(p, typ | T_IMMUTABLE);
+  unique_name_length(p) = safe_strlen(name);
+  unique_name(p) = copy_string_with_length(name, unique_name_length(p));
+  unheap(p);
+  return(p);
+}
 
 s7_scheme *s7_init(void)
 {
@@ -73597,6 +73868,9 @@ s7_scheme *s7_init(void)
   sc->key_allow_other_keys_symbol = s7_make_keyword(sc, "allow-other-keys");
   sc->key_rest_symbol =             s7_make_keyword(sc, "rest");
   sc->key_readable_symbol =         s7_make_keyword(sc, "readable");
+
+  sc->value_symbol =                s7_make_symbol(sc, "value");
+  sc->type_symbol =                 s7_make_symbol(sc, "type");
 
   sc->__func___symbol = make_symbol(sc, "__func__");
   s7_make_slot(sc, sc->nil, sc->else_symbol = make_symbol(sc, "else"), sc->else_object);
@@ -74575,15 +74849,7 @@ int main(int argc, char **argv)
  *   this could be a macro, but better built-in (generators)
  *   (with-let! (e :x 32 :y 12) (+ x y)) where 'e has 'x and 'y fields
  * symbol as arg of eq? memq defined? case-selector: use gensym? [i.e. don't put make the computed symbol permanent]
- *
- * how to get at read-error cause in catch?  port-data=string, port-position=int, port_data_size=int last-open-paren (sc->current_line)
- *   port-data port-position, length=remaining (unread) chars, copy->string gets that data, so no need for new funcs
- *   also port-filename|line-number could use let syntax, then maybe add position|data etc -- mock let like *s7*
- *   gc troubles with the string wrapper. Another such case: iterator.  But how to handle default port as in (port-line-number)?
- *   [port|iterator|closure|c-object|] object->let (for closure/func this could include file/line of definition etc)
- *     for c_object, it could add fields thus handling all the <mark> stuff mentioned below
- *     and a let could as well (object->let method wrapper?)
- *     and *s7* could be all the fields as a let??
+ * doc object->let
  *
  * append: 44522: what if method not first arg?  use 'values: check_values?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character

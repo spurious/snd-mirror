@@ -15963,6 +15963,8 @@
 							    (tree-memq (car v) inits)
 							    (side-effect? (cadr v) env))) ; let var opens *stdin*, do stepper reads it at init
 						      varlist))
+					   (and (pair? (cdr body))
+						(pair? (cddr body))) ; moving more than one expr here is ugly
 					   (> (tree-leaves (cdr body)) *max-cdr-len*))
 				 ;; (let ((xx 0)) (do ((x 1 (+ x 1)) (y x (- y 1))) ((= x 3) xx) (display y))) ->
 				 ;;    (do ((xx 0) (x 1 (+ x 1)) (y x (- y 1))) ...)
@@ -18218,6 +18220,6 @@
 ;;; lint output needs to be organized somehow
 ;;; try treating all known macros as expansions
 ;;; redefine to current value?
-;;; (define (f . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot?
+;;; (define (f . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot? check assumed args here and passed
 ;;;
 ;;; 148 24013 652957
