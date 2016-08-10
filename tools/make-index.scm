@@ -191,8 +191,8 @@
 				(string-position (car cap) line))
 			    (pair? cap)))))
 	     ;; find the first character of the >name< business and downcase it
-	     (let ((bpos (char-position #\> line)))
-	       (set! (line (+ bpos 1)) (char-downcase (line (+ bpos 1))))))
+	     (let ((bpos (+ 1 (char-position #\> line))))
+	       (set! (line bpos) (char-downcase (line bpos)))))
 	 
 	 (let ((bpos (char-position #\> line))
 	       (epos (or (string-position "</a>" line) 
@@ -1112,49 +1112,43 @@
 		      
 	  (format ofil "<table>~%  <tr>")
 	  (set! got-tr #t)
-	  (let ((row 0)
-		(ctr 0)
-		(offset (ceiling (/ n cols))))
-	    (do ((i 0 (+ i 1)))
-		((>= row offset))
-	      (let ((x (+ row (* ctr offset))))
-		(if (>= x n)
-		    (format ofil "~%")
-		    (let ((name (tnames x)))
-		      (format ofil 
-			      "<td~A>~A~A~A</td>" 
-			      (if (or (not (ind-name name))
-				      (ind-sortby name))
-				  ""
-				  " class=\"green\"")
-			      (if (ind-char name)
-				  "<div class=\"centered\">"
-				  "<em class=tab>")
-			      (or (ind-char name)
-				  (ind-name name)
-				  "    ")
-;			      (if (and (not (ind-char name))
-;				       (string? (ind-file name))
-;				       (string=? (ind-file name) "s7.html"))
-;				  " (s7)"
-;				  "")
-;; this looks kinda dumb
-			      (if (ind-char name)
-				  "</div>"
-				  "</em>")
-			      )
-		      (if (ind-indexed name) 
-			  (format () "~A indexed twice~%" (ind-name name)))
-		      (set! (ind-indexed name) #t))))
-	      (set! ctr (+ ctr 1))
-	      (when (< ctr cols)
-	        (format ofil "<td></td>"))
-			  
-	      (when (= ctr cols)
-		(if got-tr (begin (format ofil "</tr>~%") (set! got-tr #f)))
-		(set! row (+ row 1))
-		(if (< i n) (begin (format ofil "  <tr>") (set! got-tr #t)))
-		(set! ctr 0))))
+	  (do ((row 0)
+	       (ctr 0)
+	       (offset (ceiling (/ n cols)))
+	       (i 0 (+ i 1)))
+	      ((>= row offset))
+	    (let ((x (+ row (* ctr offset))))
+	      (if (>= x n)
+		  (format ofil "~%")
+		  (let ((name (tnames x)))
+		    (format ofil 
+			    "<td~A>~A~A~A</td>" 
+			    (if (or (not (ind-name name))
+				    (ind-sortby name))
+				""
+				" class=\"green\"")
+			    (if (ind-char name)
+				"<div class=\"centered\">"
+				"<em class=tab>")
+			    (or (ind-char name)
+				(ind-name name)
+				"    ")
+			    (if (ind-char name)
+				"</div>"
+				"</em>")
+			    )
+		    (if (ind-indexed name) 
+			(format () "~A indexed twice~%" (ind-name name)))
+		    (set! (ind-indexed name) #t))))
+	    (set! ctr (+ ctr 1))
+	    (when (< ctr cols)
+	      (format ofil "<td></td>"))
+	    
+	    (when (= ctr cols)
+	      (if got-tr (begin (format ofil "</tr>~%") (set! got-tr #f)))
+	      (set! row (+ row 1))
+	      (if (< i n) (begin (format ofil "  <tr>") (set! got-tr #t)))
+	      (set! ctr 0)))
 	  (format ofil "~%</table>~%</body></html>~%")))
       ;; end output
 
@@ -1272,342 +1266,342 @@
      (lambda (file)
        (call-with-input-file file
 	 (lambda (f)
-	   (let ((linectr -1)
-		 (commands ())
-		 (comments 0)
-		 (openctr 0)
-		 (warned #f)
-		 (p-parens 0)
-		 (p-quotes 0)
-		 (p-curlys 0)
-		 (in-comment #f)
-		 (scripting #f))
-	     (do ((line (read-line f) (read-line f)))
-		 ((eof-object? line))
-	       (set! linectr (+ linectr 1))
-	       (let* ((len (length line))
-		      (opos (and (positive? len)
-				 (char-position "<>\"(){}&" line)))
-		      (cpos (and (not opos)
-				 in-comment
-				 (string-position " -- " line))))
-		 (when cpos
-		   (format () "~A[~D]: possible -- in comment: ~A~%" file linectr line))
-		 (when opos
-		   ;; open/close html entities
-		   (do ((i opos (or (char-position "<>\"(){}&" line (+ i 1)) len)))
-		       ((>= i len))
-		     (case (string-ref line i)
-		       ((#\<)
-			(unless scripting
-			  (if (not (or (zero? openctr)
-				       (positive? p-quotes)
-				       in-comment))
-			      (format () "~A[~D]: ~A has unclosed <?~%" file linectr line))
-			  (set! openctr (+ openctr 1))
-			  (if (and (< i (- len 3))
-				   (char=? (line (+ i 1)) #\!)
-				   (char=? (line (+ i 2)) #\-)
-				   (char=? (line (+ i 3)) #\-))
-			      (begin
-				(set! comments (+ comments 1))
-				(if (> comments 1)
-				    (begin 
-				      (format () "~A[~D]: nested <!--?~%" file linectr)
-				      (set! comments (- comments 1))))
-				(set! in-comment #t)))
-			  (if (and (not in-comment)
-				   (< i (- len 1))
-				   (char=? (line (+ i 1)) #\space))
-			      (format () "~A[~D]: '< ' in ~A?~%" file linectr line))))
-		       ;; else c != <
-		       
-		       ((#\>)
-			(unless scripting
-			  (set! openctr (- openctr 1))
-			  (if (and (>= i 2)
-				   (char=? (line (- i 1)) #\-)
-				   (char=? (line (- i 2)) #\-))
-			      (begin
-				(set! in-comment #f)
-				(set! comments (- comments 1))
-				(if (< comments 0)
-				    (begin
-				      (format () "~A[~D]: extra -->?~%" file linectr)
-				      (set! comments 0))))
-			      (if (not (or (zero? openctr)
-					   (positive? p-quotes)
-					   in-comment))
-				  (format () "~A[~D]: ~A has unmatched >?~%" file linectr line)))
-			  (set! openctr 0)
-			  (if (and (not in-comment)
-				   (>= i 2)
-				   (char=? (line (- i 1)) #\-)
-				   (not (char=? (line (- i 2)) #\-))
-				   (< i (- len 1))
-				   (alphanumeric? (line (+ i 1))))
-			      (format () "~A[~D]: untranslated '>': ~A~%" file linectr line))))
-		       ;; else c != < or >
-		       
-		       ((#\()
-			(set! p-parens (+ p-parens 1)))
-		       
-		       ((#\)) 
-			(set! p-parens (- p-parens 1)))
-		       
-		       ((#\")
-			(if (or (= i 0)
-				(not (char=? (line (- i 1)) #\\)))
-			    (set! p-quotes (+ p-quotes 1))))
-
-		       ((#\&) 
+	   (do ((linectr -1)
+		(commands ())
+		(comments 0)
+		(openctr 0)
+		(warned #f)
+		(p-parens 0)
+		(p-quotes 0)
+		(p-curlys 0)
+		(in-comment #f)
+		(scripting #f)
+		(line (read-line f) (read-line f)))
+	       ((eof-object? line)
+		(if (pair? commands) 
+		    (format () "open directives at end of ~A: ~A~%" file commands)))
+	     (set! linectr (+ linectr 1))
+	     (let* ((len (length line))
+		    (opos (and (positive? len)
+			       (char-position "<>\"(){}&" line)))
+		    (cpos (and (not opos)
+			       in-comment
+			       (string-position " -- " line))))
+	       (when cpos
+		 (format () "~A[~D]: possible -- in comment: ~A~%" file linectr line))
+	       (when opos
+		 ;; open/close html entities
+		 (do ((i opos (or (char-position "<>\"(){}&" line (+ i 1)) len)))
+		     ((>= i len))
+		   (case (string-ref line i)
+		     ((#\<)
+		      (unless scripting
+			(if (not (or (zero? openctr)
+				     (positive? p-quotes)
+				     in-comment))
+			    (format () "~A[~D]: ~A has unclosed <?~%" file linectr line))
+			(set! openctr (+ openctr 1))
+			(if (and (< i (- len 3))
+				 (char=? (line (+ i 1)) #\!)
+				 (char=? (line (+ i 2)) #\-)
+				 (char=? (line (+ i 3)) #\-))
+			    (begin
+			      (set! comments (+ comments 1))
+			      (if (> comments 1)
+				  (begin 
+				    (format () "~A[~D]: nested <!--?~%" file linectr)
+				    (set! comments (- comments 1))))
+			      (set! in-comment #t)))
 			(if (and (not in-comment)
-				 (case (string-ref line (+ i 1))
-				   ((#\g) (not (string=? "&gt;" (substring line i (min len (+ i 4))))))
-				   ((#\l) (not (or (string=? "&lt;" (substring line i (min len (+ i 4))))
-						   (string=? "&lambda;" (substring line i (min len (+ i 8)))))))
-				   ((#\a) (not (string=? "&amp;" (substring line i (min len (+ i 5))))))
-				   ((#\q) (not (string=? "&quot;" (substring line i (min len (+ i 6))))))
-				   ((#\o) (not (string=? "&ouml;" (substring line i (min len (+ i 6))))))
-				   ((#\m) (not (member (substring line i (min len (+ i 7))) '("&mdash;" "&micro;") string=?)))
-				   ((#\n) (not (string=? "&nbsp;" (substring line i (min len (+ i 6))))))
-				   ((#\&) (not (string=? "&&" (substring line i (min len (+ i 2))))))
-				   ((#\space) (not (string=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
-				   (else #t)))
-			    (format () "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
-		       
-		       ((#\{) 
-			(set! p-curlys (+ p-curlys 1)))
-		       
-		       ((#\})
-			(set! p-curlys (- p-curlys 1)))))
-		   
-		   ;; end line scan
-		   (unless in-comment
-		     (let ((start #f)
-			   (closing #f)
-			   (pos (char-position #\< line)))
-		       (when pos
-			 (do ((i pos (or (char-position "</! >" line (+ i 1)) len)))
-			     ((>= i len))
-			   (case (string-ref line i)
-			     ((#\space #\>)
-			      (when start
-				(if closing
-				    (let ((closer (string->symbol (substring line (+ start 2) i))))
-				      (if (eq? closer 'TABLE) (set! closer 'table))
-				      (cond ((memq closer '(center big font))
-					     (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
-
-					    ((eq? closer 'script)
-					     (set! scripting #f))
-
-					    (scripting)
-
-					    ((not (memq closer commands))
-					     (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
-						     file linectr closer line (+ start 2) i commands))
-
-					    ((not (hash-table-ref closables closer))
-					     (set! commands (remove-all closer commands)))
-
-					    (else 
-					     (if (not (eq? (car commands) closer))
-						 (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
-					     
-					     (if (memq closer '(p td pre))
-						 (begin
-						   (if (odd? p-quotes)
-						       (format () "~A[~D]: unmatched quote~%" file linectr))
-						   (set! p-quotes 0)
-						   (cond ((= p-curlys 1) 
-							  (format () "~A[~D]: extra '{'~%" file linectr))
-							 ((= p-curlys -1) 
-							  (format () "~A[~D]: extra '}'~%" file linectr))
-							 ((not (= p-curlys 0)) 
-							  (format () "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
-						   (set! p-curlys 0)
-						   (cond ((= p-parens 1) 
-							  (format () "~A[~D]: extra '('~%" file linectr))
-							 ((= p-parens -1) 
-							  (format () "~A[~D]: extra ')'~%" file linectr))
-							 ((not (= p-parens 0)) 
-							  (format () "~A[~D]: parens: ~D~%" file linectr p-parens)))
-						   (set! p-parens 0)))
-					     
-					     (set! commands (remove-one closer commands))
-					     (when (and (not warned)
-							(eq? closer 'table)
-							(not (memq 'table commands)))
-					       (if (memq 'tr commands)
-						   (begin
-						     (set! warned #t)
-						     (set! commands (remove-all 'tr commands))
-						     (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
-					       (if (memq 'td commands)
-						   (begin
-						     (set! warned #t)
-						     (set! commands (remove-all 'td commands))
-						     (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))
-				      (set! closing #f))
-				    
-				    ;; not closing
-				    (unless scripting
-				      (let ((opener (string->symbol (substring line (+ start 1) i))))
-					(if (eq? opener 'TABLE) (set! opener 'table))
-					(cond ((memq opener '(center big font))
-					       (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
-					      
-					      ((eq? opener 'script)
-					       (set! scripting #t))
-					      
-					      ((eq? opener 'img)
-					       (let ((rest-line (substring line (+ start 4))))
-						 (let ((alt-pos (string-position "alt=" rest-line))
-						       (src-pos (string-position "src=" rest-line)))
-						   (if (not alt-pos)
-						       (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
-						   (if src-pos
-						       (let ((png-pos (string-position ".png" rest-line)))
-							 (if png-pos
-							     (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
-							       (if (not (file-exists? file))
-								   (format () "~A[~D]: src not found: ~S~%" file linectr file)))))))))
-					      
-					      ((and (not (memq opener '(br spacer li hr area ul tr td table small sub blockquote)))
-						    (memq opener commands)
-						    (= p-quotes 0))
-					       (format () "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands))
-					      (else
-					       (case opener
-						 ((td)
-						  (if (not (eq? 'tr (car commands)))
-						      (format () "~A[~D]: td without tr?~%" file linectr))
-						  (if (and (not warned)
-							   (memq 'td commands)
-							   (< (count-table commands) 2))
-						      (begin
-							(set! warned #t)
-							(set! commands (remove-one 'td commands))
-							(format () "~A[~D]: unclosed td at table~%" file linectr))))
-						 ((tr)
-						  (if (not (or (eq? (car commands) 'table)
-							       (eq? (cadr commands) 'table)))
-						      (format () "~A[~D]: tr without table?~%" file linectr))
-						  (if (and (not warned)
-							   (memq 'tr commands)
-							   (< (count-table commands) 2))
-						      (begin
-							(set! warned #t)
-							(set! commands (remove-one 'tr commands))
-							(format () "~A[~D]: unclosed tr at table~%" file linectr))))
-						 ((p)
-						  (if (eq? (car commands) 'table)
-						      (format () "~A[~D]: unclosed table?~%" file linectr)))
-						 
-						 ((pre br table hr img ul)
-						  (if (memq 'p commands)
-						      (format () "~A[~D]: ~A within <p>?~%" file linectr opener)))
-						 ((li)
-						  (if (not (memq 'ul commands))
-						      (format () "~A[~D]: li without ul~%" file linectr)))
-						 ((small)
-						  (if (memq (car commands) '(pre code))
-						      (format () "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
-						 ((--)
-						  (format () "~A[~D]: <-- missing !?~%" file linectr)))
-					       (if (not (memq opener '(br meta spacer li hr area)))
-						   (set! commands (cons opener commands))))))))
-				;; end if closing
-				(set! start #f)))
-			     
-			     ((#\<)
-			      (if start
-				  (if (not (or scripting
-					       (positive? p-quotes)))
-				      (format () "~A[~D]: nested < ~A~%" file linectr line))
-				  (set! start i)))
-			     ((#\/)
-			      (if (and (integer? start) (= start (- i 1)))
-				  (set! closing #t)))
-			     
-			     ((#\!)
-			      (if (and (integer? start) (= start (- i 1)))
-				  (set! start #f)))))))
-		     ) ; if not in-comment...
-		   
-		   ;; search for name
-		   (let ((dline line))
-		     (do ((pos (string-position "<em class=def id=" dline))
-			  (pos-len 18))
-			 ((not pos))
-		       (set! dline (substring dline (+ pos pos-len)))
-		       (let ((epos (or (string-position "</a>" dline) 
-				       (string-position "</em>" dline) 
-				       (string-position "</A>" dline))))
-			 ;;actually should look for close double quote
-			 (if (not epos) 
-			     (format () "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline)
-			     (begin
-			       (let ((min-epos (char-position #\space dline)))
-				 (set! epos (char-position #\> dline))
-				 (if (and (real? min-epos)
-					  (< min-epos epos))
-				     (set! epos min-epos)))
-			       
-			       (let ((new-name (string-append file "#" (substring dline 0 (- epos 1)))))
-				 (if (hash-table-ref names new-name)
-				     (format () "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
-				 (hash-table-set! names new-name file))
-			       
-			       (set! name (+ name 1))
-			       (set! dline (substring dline epos))
-			       (set! pos (string-position "<em class=def id=" dline))
-			       (set! pos-len 18))))))
+				 (< i (- len 1))
+				 (char=? (line (+ i 1)) #\space))
+			    (format () "~A[~D]: '< ' in ~A?~%" file linectr line))))
+		     ;; else c != <
 		     
-		   ;; search for href
-		   (let ((dline line))
-		     (do ((pos (string-position " href=" dline)) ; ignore A HREF
-			  (pos-len 7))
-			 ((not pos))
-		       ;; (format () "~A dline: ~A~%" pos dline)
-		       (if (zero? (length dline)) (exit))
-		       (set! dline (substring dline (+ pos pos-len)))
-		       (let ((epos (char-position #\> dline)))
-			 (if (not epos) 
-			     (format () "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
-			     (begin
-			       (set! epos (char-position #\" dline 1))
-			       (let ((cur-href #f))
-				 (if (char=? (dline 0) #\#)
-				     (set! cur-href (string-append file (substring dline 0 epos)))
-				     (begin
-				       (set! cur-href (substring dline 0 epos))
-				       (let ((pos (char-position #\# cur-href)))
-					 (if (not (or pos
-						      (<= epos 5)
-						      (file-exists? cur-href)
-						      (string=? (substring cur-href 0 4) "ftp:")
-						      (string=? (substring cur-href 0 5) "http:")))
-					     (format () "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
-				 
-				 ;; cur-href here is the full link: sndclm.html#make-filetosample for example
-				 ;;   it can also be a bare file name
-				 (let* ((name (let ((start (char-position #\# cur-href)))
-						(and (number? start) 
-						     (string->symbol (substring cur-href (+ start 1))))))
-					(data (and (symbol? name) 
-						   (hash-table-ref ids name))))
-				   (if name 
-				       (if (not data)
-					   (format () ";can't find id ~A~%" name)
-					   (hash-table-set! ids name (+ data 1))))))
-			       (set! href (+ href 1))
-			       (set! dline (substring dline epos))
-			       (set! pos (string-position " href=" dline))
-			       (set! pos-len 7)))))))))
-	     (if (pair? commands) 
-		 (format () "open directives at end of ~A: ~A~%" file commands))))))
+		     ((#\>)
+		      (unless scripting
+			(set! openctr (- openctr 1))
+			(if (and (>= i 2)
+				 (char=? (line (- i 1)) #\-)
+				 (char=? (line (- i 2)) #\-))
+			    (begin
+			      (set! in-comment #f)
+			      (set! comments (- comments 1))
+			      (if (< comments 0)
+				  (begin
+				    (format () "~A[~D]: extra -->?~%" file linectr)
+				    (set! comments 0))))
+			    (if (not (or (zero? openctr)
+					 (positive? p-quotes)
+					 in-comment))
+				(format () "~A[~D]: ~A has unmatched >?~%" file linectr line)))
+			(set! openctr 0)
+			(if (and (not in-comment)
+				 (>= i 2)
+				 (char=? (line (- i 1)) #\-)
+				 (not (char=? (line (- i 2)) #\-))
+				 (< i (- len 1))
+				 (alphanumeric? (line (+ i 1))))
+			    (format () "~A[~D]: untranslated '>': ~A~%" file linectr line))))
+		     ;; else c != < or >
+		     
+		     ((#\()
+		      (set! p-parens (+ p-parens 1)))
+		     
+		     ((#\)) 
+		      (set! p-parens (- p-parens 1)))
+		     
+		     ((#\")
+		      (if (or (= i 0)
+			      (not (char=? (line (- i 1)) #\\)))
+			  (set! p-quotes (+ p-quotes 1))))
+		     
+		     ((#\&) 
+		      (if (and (not in-comment)
+			       (case (string-ref line (+ i 1))
+				 ((#\g) (not (string=? "&gt;" (substring line i (min len (+ i 4))))))
+				 ((#\l) (not (or (string=? "&lt;" (substring line i (min len (+ i 4))))
+						 (string=? "&lambda;" (substring line i (min len (+ i 8)))))))
+				 ((#\a) (not (string=? "&amp;" (substring line i (min len (+ i 5))))))
+				 ((#\q) (not (string=? "&quot;" (substring line i (min len (+ i 6))))))
+				 ((#\o) (not (string=? "&ouml;" (substring line i (min len (+ i 6))))))
+				 ((#\m) (not (member (substring line i (min len (+ i 7))) '("&mdash;" "&micro;") string=?)))
+				 ((#\n) (not (string=? "&nbsp;" (substring line i (min len (+ i 6))))))
+				 ((#\&) (not (string=? "&&" (substring line i (min len (+ i 2))))))
+				 ((#\space) (not (string=? "& " (substring line i (min len (+ i 2)))))) ; following char -- should skip this
+				 (else #t)))
+			  (format () "~A[~D]: unknown escape sequence: ~A~%" file linectr line)))
+		     
+		     ((#\{) 
+		      (set! p-curlys (+ p-curlys 1)))
+		     
+		     ((#\})
+		      (set! p-curlys (- p-curlys 1)))))
+		 
+		 ;; end line scan
+		 (unless in-comment
+		   (let ((start #f)
+			 (closing #f)
+			 (pos (char-position #\< line)))
+		     (when pos
+		       (do ((i pos (or (char-position "</! >" line (+ i 1)) len)))
+			   ((>= i len))
+			 (case (string-ref line i)
+			   ((#\space #\>)
+			    (when start
+			      (if closing
+				  (let ((closer (string->symbol (substring line (+ start 2) i))))
+				    (if (eq? closer 'TABLE) (set! closer 'table))
+				    (cond ((memq closer '(center big font))
+					   (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr closer line))
+					  
+					  ((eq? closer 'script)
+					   (set! scripting #f))
+					  
+					  (scripting)
+					  
+					  ((not (memq closer commands))
+					   (format () "~A[~D]: ~A without start? ~A from [~D:~D] (commands: ~A)~%" 
+						   file linectr closer line (+ start 2) i commands))
+					  
+					  ((not (hash-table-ref closables closer))
+					   (set! commands (remove-all closer commands)))
+					  
+					  (else 
+					   (if (not (eq? (car commands) closer))
+					       (format () "~A[~D]: ~A -> ~A?~%" file linectr closer commands))
+					   
+					   (if (memq closer '(p td pre))
+					       (begin
+						 (if (odd? p-quotes)
+						     (format () "~A[~D]: unmatched quote~%" file linectr))
+						 (set! p-quotes 0)
+						 (cond ((= p-curlys 1) 
+							(format () "~A[~D]: extra '{'~%" file linectr))
+						       ((= p-curlys -1) 
+							(format () "~A[~D]: extra '}'~%" file linectr))
+						       ((not (= p-curlys 0)) 
+							(format () "~A[~D]: curlys: ~D~%" file linectr p-curlys)))
+						 (set! p-curlys 0)
+						 (cond ((= p-parens 1) 
+							(format () "~A[~D]: extra '('~%" file linectr))
+						       ((= p-parens -1) 
+							(format () "~A[~D]: extra ')'~%" file linectr))
+						       ((not (= p-parens 0)) 
+							(format () "~A[~D]: parens: ~D~%" file linectr p-parens)))
+						 (set! p-parens 0)))
+					   
+					   (set! commands (remove-one closer commands))
+					   (when (and (not warned)
+						      (eq? closer 'table)
+						      (not (memq 'table commands)))
+					     (if (memq 'tr commands)
+						 (begin
+						   (set! warned #t)
+						   (set! commands (remove-all 'tr commands))
+						   (format () "~A[~D]: unclosed tr at table (~A)~%" file linectr commands)))
+					     (if (memq 'td commands)
+						 (begin
+						   (set! warned #t)
+						   (set! commands (remove-all 'td commands))
+						   (format () "~A[~D]: unclosed td at table (~A)~%" file linectr commands))))))
+				    (set! closing #f))
+				  
+				  ;; not closing
+				  (unless scripting
+				    (let ((opener (string->symbol (substring line (+ start 1) i))))
+				      (if (eq? opener 'TABLE) (set! opener 'table))
+				      (cond ((memq opener '(center big font))
+					     (format () "~A[~D]: ~A is obsolete, ~A~%" file linectr opener line))
+					    
+					    ((eq? opener 'script)
+					     (set! scripting #t))
+					    
+					    ((eq? opener 'img)
+					     (let ((rest-line (substring line (+ start 4))))
+					       (let ((alt-pos (string-position "alt=" rest-line))
+						     (src-pos (string-position "src=" rest-line)))
+						 (if (not alt-pos)
+						     (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
+						 (if src-pos
+						     (let ((png-pos (string-position ".png" rest-line)))
+						       (if png-pos
+							   (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
+							     (if (not (file-exists? file))
+								 (format () "~A[~D]: src not found: ~S~%" file linectr file)))))))))
+					    
+					    ((and (not (memq opener '(br spacer li hr area ul tr td table small sub blockquote)))
+						  (memq opener commands)
+						  (= p-quotes 0))
+					     (format () "~A[~D]: nested ~A? ~A from: ~A~%" file linectr opener line commands))
+					    (else
+					     (case opener
+					       ((td)
+						(if (not (eq? 'tr (car commands)))
+						    (format () "~A[~D]: td without tr?~%" file linectr))
+						(if (and (not warned)
+							 (memq 'td commands)
+							 (< (count-table commands) 2))
+						    (begin
+						      (set! warned #t)
+						      (set! commands (remove-one 'td commands))
+						      (format () "~A[~D]: unclosed td at table~%" file linectr))))
+					       ((tr)
+						(if (not (or (eq? (car commands) 'table)
+							     (eq? (cadr commands) 'table)))
+						    (format () "~A[~D]: tr without table?~%" file linectr))
+						(if (and (not warned)
+							 (memq 'tr commands)
+							 (< (count-table commands) 2))
+						    (begin
+						      (set! warned #t)
+						      (set! commands (remove-one 'tr commands))
+						      (format () "~A[~D]: unclosed tr at table~%" file linectr))))
+					       ((p)
+						(if (eq? (car commands) 'table)
+						    (format () "~A[~D]: unclosed table?~%" file linectr)))
+					       
+					       ((pre br table hr img ul)
+						(if (memq 'p commands)
+						    (format () "~A[~D]: ~A within <p>?~%" file linectr opener)))
+					       ((li)
+						(if (not (memq 'ul commands))
+						    (format () "~A[~D]: li without ul~%" file linectr)))
+					       ((small)
+						(if (memq (car commands) '(pre code))
+						    (format () "~A[~D]: small shouldn't follow ~A~%" file linectr (car commands))))
+					       ((--)
+						(format () "~A[~D]: <-- missing !?~%" file linectr)))
+					     (if (not (memq opener '(br meta spacer li hr area)))
+						 (set! commands (cons opener commands))))))))
+			      ;; end if closing
+			      (set! start #f)))
+			   
+			   ((#\<)
+			    (if start
+				(if (not (or scripting
+					     (positive? p-quotes)))
+				    (format () "~A[~D]: nested < ~A~%" file linectr line))
+				(set! start i)))
+			   ((#\/)
+			    (if (and (integer? start) (= start (- i 1)))
+				(set! closing #t)))
+			   
+			   ((#\!)
+			    (if (and (integer? start) (= start (- i 1)))
+				(set! start #f)))))))
+		   ) ; if not in-comment...
+		 
+		 ;; search for name
+		 (let ((dline line))
+		   (do ((pos (string-position "<em class=def id=" dline))
+			(pos-len 18))
+		       ((not pos))
+		     (set! dline (substring dline (+ pos pos-len)))
+		     (let ((epos (or (string-position "</a>" dline) 
+				     (string-position "</em>" dline) 
+				     (string-position "</A>" dline))))
+		       ;;actually should look for close double quote
+		       (if (not epos) 
+			   (format () "~A[~D]: <em...> but no </em> for ~A~%" file linectr dline)
+			   (begin
+			     (let ((min-epos (char-position #\space dline)))
+			       (set! epos (char-position #\> dline))
+			       (if (and (real? min-epos)
+					(< min-epos epos))
+				   (set! epos min-epos)))
+			     
+			     (let ((new-name (string-append file "#" (substring dline 0 (- epos 1)))))
+			       (if (hash-table-ref names new-name)
+				   (format () "~A[~D]: ambiguous name: ~A~%" file linectr new-name))
+			       (hash-table-set! names new-name file))
+			     
+			     (set! name (+ name 1))
+			     (set! dline (substring dline epos))
+			     (set! pos (string-position "<em class=def id=" dline))
+			     (set! pos-len 18))))))
+		 
+		 ;; search for href
+		 (let ((dline line))
+		   (do ((pos (string-position " href=" dline)) ; ignore A HREF
+			(pos-len 7))
+		       ((not pos))
+		     ;; (format () "~A dline: ~A~%" pos dline)
+		     (if (zero? (length dline)) (exit))
+		     (set! dline (substring dline (+ pos pos-len)))
+		     (let ((epos (char-position #\> dline)))
+		       (if (not epos) 
+			   (format () "~A[~D]: <a href but no </a> for ~A~%" file linectr dline)
+			   (begin
+			     (set! epos (char-position #\" dline 1))
+			     (let ((cur-href #f))
+			       (if (char=? (dline 0) #\#)
+				   (set! cur-href (string-append file (substring dline 0 epos)))
+				   (begin
+				     (set! cur-href (substring dline 0 epos))
+				     (let ((pos (char-position #\# cur-href)))
+				       (if (not (or pos
+						    (<= epos 5)
+						    (file-exists? cur-href)
+						    (string=? (substring cur-href 0 4) "ftp:")
+						    (string=? (substring cur-href 0 5) "http:")))
+					   (format () "~A[~D]: reference to missing file ~S~%" file linectr cur-href)))))
+			       
+			       ;; cur-href here is the full link: sndclm.html#make-filetosample for example
+			       ;;   it can also be a bare file name
+			       (let* ((name (let ((start (char-position #\# cur-href)))
+					      (and (number? start) 
+						   (string->symbol (substring cur-href (+ start 1))))))
+				      (data (and (symbol? name) 
+						 (hash-table-ref ids name))))
+				 (if name 
+				     (if (not data)
+					 (format () ";can't find id ~A~%" name)
+					 (hash-table-set! ids name (+ data 1))))))
+			     (set! href (+ href 1))
+			     (set! dline (substring dline epos))
+			     (set! pos (string-position " href=" dline))
+			     (set! pos-len 7))))))))))))
      files)
     ;; end file scan
     

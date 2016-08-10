@@ -362,23 +362,23 @@
   (define effects-echo 
     (let ((documentation "(effects-echo input-samps-1 delay-time echo-amount beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
       (lambda* (input-samps-1 delay-time echo-amount beg dur snd chn)
-	(let* ((del (make-delay (round (* delay-time (srate snd)))))
-	       (len (or dur (framples snd chn)))
-	       (input-samps (or input-samps-1 len)))
-	  (as-one-edit
-	   (lambda ()
-	     (map-channel
-	      (lambda (inval)
-		(+ inval
-		   (delay del (* echo-amount (+ (tap del) inval)))))
-	      beg input-samps snd chn)
-	     (if (> len input-samps)
-		 (map-channel
-		  (lambda (inval)
-		    (+ inval
-		       (delay del (* echo-amount (tap del)))))
-		  (+ beg input-samps) (- dur input-samps) snd chn)))
-	   (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur))))))
+	(let ((len (or dur (framples snd chn))))
+	  (let ((del (make-delay (round (* delay-time (srate snd)))))
+		(input-samps (or input-samps-1 len)))
+	    (as-one-edit
+	     (lambda ()
+	       (map-channel
+		(lambda (inval)
+		  (+ inval
+		     (delay del (* echo-amount (+ (tap del) inval)))))
+		beg input-samps snd chn)
+	       (if (> len input-samps)
+		   (map-channel
+		    (lambda (inval)
+		      (+ inval
+			 (delay del (* echo-amount (tap del)))))
+		    (+ beg input-samps) (- dur input-samps) snd chn)))
+	     (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur)))))))
   
   (define* (effects-flecho-1 scaler secs input-samps-1 beg dur snd chn)
     (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
@@ -1613,16 +1613,16 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
       
       (define rm-effect ; avoid collision with examp.scm
 	(lambda (freq gliss-env)
-	  (let* ((os (make-oscil freq))
-		 (need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))))
-		 (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target))))
-		 (genv (make-env :envelope gliss-env :length (framples))))
-	    (if need-env
-		(lambda (inval)
-		  (* inval (env e) (oscil os (env genv))))
-		(lambda (inval)
-		  (* inval (oscil os (env genv))))))))
-      
+	  (let ((need-env (and rm-envelope (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0))))))
+	    (let ((os (make-oscil freq))
+		  (e (and need-env (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target))))
+		  (genv (make-env :envelope gliss-env :length (framples))))
+	      (if need-env
+		  (lambda (inval)
+		    (* inval (env e) (oscil os (env genv))))
+		  (lambda (inval)
+		    (* inval (oscil os (env genv)))))))))
+	
       (gtk_menu_shell_append (GTK_MENU_SHELL mod-cascade) child)
       (gtk_widget_show child)
       (g_signal_connect child "activate"

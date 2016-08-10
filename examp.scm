@@ -409,20 +409,20 @@ read an ASCII sound file"))
 	    (bufsize1 8191))
 	(as-one-edit
 	 (lambda ()
-	   (let ((data (make-float-vector bufsize))
-		 (short->float (/ 1.0 32768.0)))
-	     (do ((fr 0 (+ fr bufsize)))
-		 ((eof-object? (peek-char in-fd)))
-	       (do ((loc 0 (+ loc 1))
-		    (val (read-line in-fd) (read-line in-fd)))
-		   ((or (eof-object? val)
-			(= loc bufsize1)) ; bufsize-1 so that we don't throw away a sample at the buffer end
-		    (if (number? val)
-			(begin
-			  (float-vector-set! data loc (* (string->number val) short->float))
-			  (float-vector->channel data fr (+ loc 1) out-fd 0))
-			(float-vector->channel data fr loc out-fd 0)))
-		 (float-vector-set! data loc (* (string->number val) short->float)))))))
+	   (do ((data (make-float-vector bufsize))
+		(short->float (/ 1.0 32768.0))
+		(fr 0 (+ fr bufsize)))
+	       ((eof-object? (peek-char in-fd)))
+	     (do ((loc 0 (+ loc 1))
+		  (val (read-line in-fd) (read-line in-fd)))
+		 ((or (eof-object? val)
+		      (= loc bufsize1)) ; bufsize-1 so that we don't throw away a sample at the buffer end
+		  (if (number? val)
+		      (begin
+			(float-vector-set! data loc (* (string->number val) short->float))
+			(float-vector->channel data fr (+ loc 1) out-fd 0))
+		      (float-vector->channel data fr loc out-fd 0)))
+	       (float-vector-set! data loc (* (string->number val) short->float))))))
 	(close-input-port in-fd)
 	out-fd))))
 
@@ -796,18 +796,18 @@ then inverse ffts."))
   (let ((documentation "(fft-env-interp env1 env2 interp snd chn) interpolates between two fft-filtered versions (env1 and env2 are the 
 spectral envelopes) following interp (an env between 0 and 1)"))
     (lambda* (env1 env2 interp snd chn)
-      (let* ((data1 (fft-env-data env1 snd chn))
+      (let ((data1 (fft-env-data env1 snd chn))
 	     (data2 (fft-env-data env2 snd chn))
-	     (len (framples snd chn))
-	     (new-data (make-float-vector len))
-	     (e (make-env interp :length len))
-	     (erev (make-env (scale-envelope interp -1.0 1.0) :length len))) ; 1.0 - e
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (float-vector-set! new-data i
-			     (+ (* (env erev) (float-vector-ref data1 i))
-				(* (env e) (float-vector-ref data2 i)))))
-	(float-vector->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))))
+	     (len (framples snd chn)))
+	(let ((new-data (make-float-vector len))
+	      (e (make-env interp :length len))
+	      (erev (make-env (scale-envelope interp -1.0 1.0) :length len))) ; 1.0 - e
+	  (do ((i 0 (+ i 1)))
+	      ((= i len))
+	    (float-vector-set! new-data i
+			       (+ (* (env erev) (float-vector-ref data1 i))
+				  (* (env e) (float-vector-ref data2 i)))))
+	  (float-vector->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp)))))))
 
 
 (define filter-fft 

@@ -2376,6 +2376,8 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="openlet">openlet</em> env)            mark env as open (see below)
 (<em class=def id="openletp">openlet?</em> env)           #t is env is open
 (<em class=def id="coverlet">coverlet</em> env)           mark env as closed (undo an earlier openlet)
+
+(<em class=def id="objecttolet">object-&gt;let</em> obj)        return an environment containing information about obj 
 </pre>
 
 <br>
@@ -2512,7 +2514,9 @@ As mentioned in the macro section, #_&lt;name&gt; is a built-in reader macro
 for <code>(with-let (unlet) &lt;name&gt;)</code>,
 so for example, #_+ is the built-in + function, no matter what.
 <code>(unlet)</code> cleans up the current environment whenever it's called,
-so you can use it to revert the REPL. 
+so you can use it to revert the REPL. (The environment of built-in functions
+that unlet accesses is not accessible from scheme code, so there's no way 
+that those values can be clobbered).
 </p>
 
 <blockquote>
@@ -2678,6 +2682,21 @@ A slightly more complex example:
 <p>Perhaps these names would be better: openlet -&gt; with-methods, coverlet -&gt; without-methods,
 and openlet? -&gt; methods?.
 </p>
+
+<p>object-&gt;let returns an environment (more of a dictionary really) that
+contains details about its argument.  It
+is intended as a debugging aid.  
+</p>
+
+<pre class="indented">
+&gt; (let ((iter (make-iterator "1234")))
+    (iter)
+    (iter)
+    (object-&gt;let iter))
+<em class="gray">(inlet 'value #&lt;iterator: string&gt; 'type iterator? 'at-end #f 'sequence "1234" 'length 4 'position 2)</em>
+</pre>
+<br>
+
 
 <blockquote>
 

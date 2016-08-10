@@ -15964,7 +15964,11 @@
 							    (side-effect? (cadr v) env))) ; let var opens *stdin*, do stepper reads it at init
 						      varlist))
 					   (and (pair? (cdr body))
-						(pair? (cddr body))) ; moving more than one expr here is ugly
+						(pair? (cddr body))) 
+					   ;; moving more than one expr here is usually ugly -- the only exception I've
+					   ;;   seen is where the do body is enormous and the end stuff very short, and
+					   ;;   it (the end stuff) refers to the let/do variables -- in the unedited case,
+					   ;;   the result is hard to see.
 					   (> (tree-leaves (cdr body)) *max-cdr-len*))
 				 ;; (let ((xx 0)) (do ((x 1 (+ x 1)) (y x (- y 1))) ((= x 3) xx) (display y))) ->
 				 ;;    (do ((xx 0) (x 1 (+ x 1)) (y x (- y 1))) ...)

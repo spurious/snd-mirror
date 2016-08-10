@@ -245,11 +245,11 @@
 			(if output-to-file
 			    (if to-snd
 				(maxamp snd-output #t) ; this is a list of chan maxs '(.1 .2)
-				(let ((lst (mus-sound-maxamp output-1)))
-				  (do ((i 0 (+ i 2)))
-				      ((>= i (length lst)))
-				    (set! (lst i) (/ (lst i) *clm-srate*)))
-				  lst))
+				(do ((lst (mus-sound-maxamp output-1))
+				     (i 0 (+ i 2)))
+				      ((>= i (length lst))
+				       lst)
+				  (set! (lst i) (/ (lst i) *clm-srate*))))
 			    (if (vector? output-1)
 				(list (maxamp output-1))
 				'(0.0)))
@@ -282,11 +282,10 @@
 		 (scaled-to
 		  (let ((pk (maxamp output-1)))
 		    (if (> pk 0.0)
-			(let ((scl (/ scaled-to pk)))
-			  (do ((i 0 (+ i 1)))
-			      ((= i (length output-1)))
-			    (set! (output-1 i) (* scl (output-1 i))))))))
-		 
+			(do ((scl (/ scaled-to pk))
+			     (i 0 (+ i 1)))
+			    ((= i (length output-1)))
+			  (set! (output-1 i) (* scl (output-1 i)))))))
 		 (else
 		  (do ((i 0 (+ i 1)))
 		      ((= i (length output-1)))

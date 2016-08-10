@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.9"
-#define S7_DATE "29-Jul-16"
+#define S7_VERSION "4.10"
+#define S7_DATE "9-Aug-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -403,6 +403,7 @@ s7_pointer s7_set_curlet(s7_scheme *sc, s7_pointer e);                      /* r
 s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e);                          /* (outlet e) */
 s7_pointer s7_sublet(s7_scheme *sc, s7_pointer env, s7_pointer bindings);   /* (sublet e ...) */
 s7_pointer s7_inlet(s7_scheme *sc, s7_pointer bindings);                    /* (inlet ...) */
+s7_pointer s7_varlet(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value); /* (varlet env symbol value) */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env);                   /* (let->list env) */
 bool s7_is_let(s7_pointer e);                                               /* )let? e) */
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);       /* (let-ref e sym) */
@@ -778,6 +779,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 9-Aug:     s7_varlet.
  * 29-Jul:    s7_define_unsafe_typed_function.
  * 30-May:    symbol takes any number of args.  make-vector no longer takes an optional fourth argument.
  * 24-May:    let-ref/set! check rootlet now if let is not an open let; setter for with-let.
