@@ -2040,6 +2040,9 @@ static xen_mark *xen_mark_make(int n)
   return(new_v);
 }
 
+#if HAVE_SCHEME
+  static s7_pointer g_mark_methods = NULL;
+#endif
 
 Xen new_xen_mark(int n)
 {
@@ -2048,7 +2051,16 @@ Xen new_xen_mark(int n)
     return(Xen_false);
 
   mx = xen_mark_make(n);
+#if HAVE_SCHEME
+  {
+    s7_pointer m;
+    m = Xen_make_object(xen_mark_tag, mx, 0, free_xen_mark);
+    s7_object_set_let(m, g_mark_methods);
+    return(m);
+  }
+#else
   return(Xen_make_object(xen_mark_tag, mx, 0, free_xen_mark));
+#endif
 }
 
 
@@ -2078,13 +2090,19 @@ static Xen s7_xen_mark_copy(s7_scheme *sc, s7_pointer args)
     }
   return(obj);
 }
+
+static s7_pointer mark_to_let_func = NULL;
 #endif
 
 
 static void init_xen_mark(void)
 {
 #if HAVE_SCHEME
-  xen_mark_tag = s7_new_type_x(s7, "<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
+  {
+    g_mark_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mark_to_let_func)));
+    s7_gc_protect(s7, g_mark_methods);
+    xen_mark_tag = s7_new_type_x(s7, "<mark>", print_xen_mark, free_xen_mark, s7_xen_mark_equalp, NULL, NULL, NULL, NULL, s7_xen_mark_copy, NULL, NULL);
+  }
 #else
 #if HAVE_RUBY
   xen_mark_tag = Xen_make_object_type("XenMark", sizeof(xen_mark));
@@ -2909,6 +2927,22 @@ Xen_wrap_3_args(g_set_mark_property_w, g_set_mark_property)
 #if HAVE_SCHEME
 static s7_pointer acc_mark_tag_height(s7_scheme *sc, s7_pointer args) {return(g_set_mark_tag_height(s7_cadr(args)));}
 static s7_pointer acc_mark_tag_width(s7_scheme *sc, s7_pointer args) {return(g_set_mark_tag_width(s7_cadr(args)));}
+
+static s7_pointer s7_mark_to_let(s7_scheme *sc, s7_pointer args)
+{
+  /* this is called upon (object->let <mark>) */
+  s7_pointer mark, env, val;
+  mark = s7_car(args);
+  env = s7_cadr(args);
+  val = mark_get(mark, MARK_NAME, Xen_undefined, S_mark_name);
+  if ((s7_is_string(val)) && 
+      (s7_string_length(val) > 0))
+    s7_varlet(sc, env, s7_make_symbol(sc, "name"), val);
+  s7_varlet(sc, env, s7_make_symbol(sc, "sample"), mark_get(mark, MARK_SAMPLE, Xen_undefined, S_mark_sample));
+  s7_varlet(sc, env, s7_make_symbol(sc, "sync"), mark_get(mark, MARK_SYNC, Xen_undefined, S_mark_sync));
+  s7_varlet(sc, env, s7_make_symbol(sc, "home"), mark_get(mark, MARK_HOME, Xen_undefined, S_mark_home));
+  return(env);
+}
 #endif
 
 void g_init_marks(void)
@@ -2928,6 +2962,8 @@ void g_init_marks(void)
   pl_im = s7_make_signature(s7, 2, i, m);
   pl_add = s7_make_signature(s7, 6, s7_make_signature(s7, 2, m, b), i, t, t, s7_make_signature(s7, 2, s, b), i);
   pl_i = s7_make_circular_signature(s7, 0, 1, i);
+
+  mark_to_let_func = s7_make_function(s7, "mark->let", s7_mark_to_let, 2, 0, false, "mark->let");
 #endif
 
   init_xen_mark();

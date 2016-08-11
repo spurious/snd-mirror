@@ -16550,6 +16550,9 @@
 			   (let ((cur-var (car v))
 				 (nxt-var (cadr v)))
 			     (when (and (pair? cur-var)
+					(let ((v (var-member (car cur-var) vars)))
+					  (and (var? v)
+					       (zero? (var-set v))))
 					(pair? nxt-var)
 					(pair? (cdr cur-var))
 					(pair? (cdr nxt-var))
@@ -18222,8 +18225,6 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
 ;;; lint output needs to be organized somehow
-;;; try treating all known macros as expansions
-;;; redefine to current value?
-;;; (define (f . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot? check assumed args here and passed
+;;; (define (f <any> . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot? check assumed args here and passed
 ;;;
-;;; 148 24013 652957
+;;; 148 24013 652080

@@ -2685,7 +2685,7 @@ and openlet? -&gt; methods?.
 
 <p>object-&gt;let returns an environment (more of a dictionary really) that
 contains details about its argument.  It
-is intended as a debugging aid.  
+is intended as a debugging aid, underlying a debugger's "inspect" for example. 
 </p>
 
 <pre class="indented">
@@ -2695,6 +2695,13 @@ is intended as a debugging aid.
     (object-&gt;let iter))
 <em class="gray">(inlet 'value #&lt;iterator: string&gt; 'type iterator? 'at-end #f 'sequence "1234" 'length 4 'position 2)</em>
 </pre>
+
+<p>A c-object (in the sense of s7_new_type), can add its own info to this namespace via an object-&gt;let
+method in its local environment.  snd-marks.c has a simple example using a class-wide environment (g_mark_methods),
+holding as the value of its 'object-&gt;let field the function s7_mark_to_let.  The latter uses s7_varlet to
+add information to the namespace created by <code>(object-&gt;let mark)</code>.
+</p>
+
 <br>
 
 
