@@ -4989,8 +4989,8 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   sc->stack_end += 4;
 }
 
-#define push_stack_no_code(Sc, Op, Args) push_stack(Sc, Op, Args, Sc->F)
-#define push_stack_no_args(Sc, Op, Code) push_stack(Sc, Op, Sc->F, Code)
+#define push_stack_no_code(Sc, Op, Args) push_stack(Sc, Op, Args, Sc->gc_nil)
+#define push_stack_no_args(Sc, Op, Code) push_stack(Sc, Op, Sc->gc_nil, Code)
 /* in the non-debugging case, the sc->F's here are not set, so we can (later) pop free cells */
 
 #else
@@ -44933,7 +44933,7 @@ static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer c
   int i;
   s7_int len = 0;
 
-  for (i = 0, p = args; is_pair(p); p = cdr(p), i++)
+  for (i = 1, p = args; is_pair(p); p = cdr(p), i++)
     {
       s7_pointer seq;
       s7_int n;
@@ -72894,7 +72894,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->print_length_symbol)                                    /* print-length */
     return(s7_make_integer(sc, sc->print_length));
 
-  if (sym == sc->stack_top_symbol)                                       /* stack-top = #frames active (4 stack entries per frame) */
+  if (sym == sc->stack_top_symbol)                                       /* stack-top = how many frames active (4 stack entries per frame) */
     return(s7_make_integer(sc, (sc->stack_end - sc->stack_start) / 4));
   if (sym == sc->stack_size_symbol)                                      /* stack-size (max so far) */
     return(s7_make_integer(sc, sc->stack_size));
@@ -72926,7 +72926,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, sc->heap_size));
   if (sym == sc->free_heap_size_symbol)                                  /* free-heap-size (number of unused cells in the heap) */
     return(s7_make_integer(sc, sc->free_heap_top - sc->free_heap));
-  if (sym == sc->gc_freed_symbol)                                        /* gc-freed = # cells freed during last GC sweep */
+  if (sym == sc->gc_freed_symbol)                                        /* gc-freed = how many cells freed during last GC sweep */
     return(s7_make_integer(sc, sc->gc_freed));
   if (sym == sc->gc_protected_objects_symbol)                            /* gc-protected-objects */
     return(sc->protected_objects);
@@ -73227,14 +73227,14 @@ static s7_pointer g_is_float(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_proper_list "(proper-list? x) returns #t is x is a list that is not circular or dotted."
+  #define H_is_proper_list "(proper-list? x) returns #t is x is a list that is neither circular nor dotted."
   #define Q_is_proper_list pl_bt
   s7_pointer p;
   p = car(args);
   return(make_boolean(sc, is_proper_list(sc, p)));
 }
 
-/* how to handle this? */
+/* how to handle this? (float-vector-set! and vector-set! signature entries) */
 static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
 
@@ -74840,8 +74840,8 @@ s7_scheme *s7_init(void)
                               (let ((body ()))                                                                \n\
                                 (apply lambda* args                                                           \n\
                                   '(let ((result #<unspecified>))                                             \n\
-                                     (let ((e (curlet)))                                                      \n\
-                                       (for-each (lambda (f) (f e)) body)                                     \n\
+                                     (let ((hook (curlet)))                                                   \n\
+                                       (for-each (lambda (hook-function) (hook-function hook)) body)          \n\
                                        result))                                                               \n\
                                   ())))))");
 
@@ -75001,18 +75001,12 @@ int main(int argc, char **argv)
  * display of let can still get into infinite recursion! (as can a circular list in some weird way)
  * (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
- * let-let -- first arg is let, rest are let vars being set, then body with-let
- *   this could be a macro, but better built-in (generators)
- *   (with-let! (e :x 32 :y 12) (+ x y)) where 'e has 'x and 'y fields
- * symbol as arg of eq? memq defined? case-selector: use gensym? [i.e. don't make the computed symbol permanent]
- * perhaps move the clm optimization stuff to a compile-time switch
+ * stacktrace now shows (hook-function hook) (rather than (f e)), but it should give the hook name
+ * maybe current_line|file in *s7*?
  *
  * append: 44522: what if method not first arg?  use 'values: check_values?
  *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
  *   s7 44522 -- method check is unfinished -- should look for append and make arglists, not length
- *   (append "asd" ((*mock-char* 'mock-char) #\g)): error: append argument 1, #\g, is mock-char but should be a sequence
- *   also arg num is incorrect -- always off by 1?
- *   append in string case uses string_append, not g_string_append!
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75025,6 +75019,7 @@ int main(int argc, char **argv)
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
  * when trying to display a big 128-channel file, Snd cores up until it crashes?
+ *   this is after it has read the data and created the graphs -- it must be the peak-env process -- is this still needed?
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num

@@ -9306,13 +9306,9 @@
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
-
-		 ;(format *stderr* "~A: ~A ~A ~A~%" vname (var-ref local-var) (var-set local-var) (var-history local-var))
-		 
 		 ;; do all refs to an unset var go through the same function (at some level)
 		 (when (and (zero? (var-set local-var))
-			    (> (var-ref local-var) 1)
-			    (not (eq? otype 'parameter)))
+			    (> (var-ref local-var) 1))
 		   (let ((hist (var-history local-var)))
 		     (when (pair? hist)
 		       (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
@@ -9343,7 +9339,9 @@
 							       (and (eq? (hash-table-ref reversibles (car first)) (car a))
 								    (equal? (cdr first) (reverse (cdr a))))
 							       (set! op (match-cxr op (car a))))))
-						    (copy (cdr hist) (make-list (- (length hist) 2)))))
+						    (if (eq? otype 'parameter)
+							(cdr hist)
+							(copy (cdr hist) (make-list (- (length hist) 2))))))
 				   (let* ((new-op (or op (car first)))
 					  (set-target (let walker ((tree outer-form)) ; check for new-op dilambda as target of set!
 							(and (pair? tree)
@@ -9354,16 +9352,20 @@
 								 (walker (car tree))
 								 (walker (cdr tree)))))))
 				     (unless set-target
-				       (lint-format* caller 
-						     (symbol->string vname)
-						     " is not set, and is always accessed via "
-						     (object->string `(,new-op ,@(cdr first)))
-						     " so its binding could probably be "
-						     ;;        "probably" here because the accesses could have hidden protective assumptions
-						     ;;          i.e. full accessor is not valid at point of let binding
-						     (object->string `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first)))))
-						     " in "
-						     (truncated-list->string outer-form)))))))))))))
+				       (if (eq? otype 'parameter)
+					   (if (> (var-ref local-var) 2)
+					       (lint-format "parameter ~A is always accessed (~A times) via ~S" caller
+							    vname (var-ref local-var) `(,new-op ,@(cdr first))))
+					   (lint-format* caller 
+							 (symbol->string vname)
+							 " is not set, and is always accessed via "
+							 (object->string `(,new-op ,@(cdr first)))
+							 " so its binding could probably be "
+							 ;;        "probably" here because the accesses could have hidden protective assumptions
+							 ;;          i.e. full accessor is not valid at point of let binding
+							 (object->string `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first)))))
+							 " in "
+							 (truncated-list->string outer-form))))))))))))))
 		 
 		 ;; translate to dilambda fixing arg if necessary and mention generic set!
 		 (let ((init (var-initial-value local-var)))
@@ -11477,25 +11479,24 @@
 		  (lint-format "strange ~A parameter list ~A" function-name definer args)
 		  env)
 		(let ((args-as-vars (if (symbol? args)                            ; this is getting arg names to add to the environment
-				    (list (make-var :name args :definer 'parameter))
-				    (map
-				     (lambda (arg)
-				       (if (symbol? arg)
-					   (if (memq arg '(:rest :allow-other-keys))
-					       (values)                  ; omit :rest and :allow-other-keys
-					       (make-var :name arg :definer 'parameter))
-					   (if (not (and (pair? arg)
-							 (= (length arg) 2)
-							 (memq definer '(define* lambda* defmacro* define-macro* define-bacro* definstrument define*-public))))
-					       (begin
-						 (lint-format "strange parameter for ~A: ~S" function-name definer arg)
-						 (values))
-					       (begin
-						 (if (not (or (cadr arg)                      ; (define* (f4 (a #f)) a)
-							      (eq? definer 'define*-public))) ; who knows?
-						     (lint-format "the default argument value is #f in ~A ~A" function-name definer arg))
-						 (make-var :name (car arg) :definer 'parameter)))))
-				     (proper-list args)))))
+					(list (make-var :name args :definer 'parameter))
+					(map (lambda (arg)
+					       (if (symbol? arg)
+						   (if (memq arg '(:rest :allow-other-keys))
+						       (values)                  ; omit :rest and :allow-other-keys
+						       (make-var :name arg :definer 'parameter))
+						   (if (not (and (pair? arg)
+								 (= (length arg) 2)
+								 (memq definer '(define* lambda* defmacro* define-macro* define-bacro* definstrument define*-public))))
+						       (begin
+							 (lint-format "strange parameter for ~A: ~S" function-name definer arg)
+							 (values))
+						       (begin
+							 (if (not (or (cadr arg)                      ; (define* (f4 (a #f)) a)
+								      (eq? definer 'define*-public))) ; who knows?
+							     (lint-format "the default argument value is #f in ~A ~A" function-name definer arg))
+							 (make-var :name (car arg) :definer 'parameter)))))
+					     (proper-list args)))))
 		  
 		  (let* ((cur-env (cons (make-var :name :let
 						  :initial-value form
@@ -18225,6 +18226,5 @@
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
 ;;; lint output needs to be organized somehow
-;;; (define (f <any> . args) -- using only cxar args, (f .a) -> .a not used, a used -- misplaced dot? check assumed args here and passed
 ;;;
-;;; 148 24013 652080
+;;; 148 24013 652016
