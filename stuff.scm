@@ -2129,4 +2129,3 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 						   (set! dir-name full-dir-name)))
 					     (reader))
 					   (string-append dir-name "/" file)))))))))))))))))
-

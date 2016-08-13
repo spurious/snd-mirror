@@ -1410,6 +1410,61 @@
 	    '----)))))
 
 
+
+#|
+;;; --------------------------------------------------------------------------------
+;;; just a first stab at this -- where to put this code?
+
+(define-expansion (debug)
+  `(with-let (inlet :orig (curlet) :line ,(port-line-number) :func __func__)
+     (format () "line ~D: ~A~{~^ ~A~}~%" 
+	     line (if (pair? func) (car func) func)
+	     (reverse
+	      (map (lambda (slot)
+		     (format #f "~%    ~S: ~A" 
+			     (car slot) 
+			     (let ((val (object->string (cdr slot) #f)))
+			       (if (> (length val) 60)
+				   (string-append (substring val 0 60) "...")
+				   val))))
+		   orig)))
+
+     (let ((C-q (integer->char 17)))
+       (let ((old-C-q ((*repl* 'keymap) C-q))
+	     (old-top-level (*repl* 'top-level-let))
+	     (old-prompt-string ((*repl* 'repl-let) 'prompt-string))
+	     (old-prompt (*repl* 'prompt)))
+
+	 (dynamic-wind
+	     (lambda ()
+	       (set! (*repl* 'top-level-let) orig)
+	       (with-let (*repl* 'repl-let)
+		 (set! cur-line "")
+		 (set! red-par-pos #f)
+		 (set! cursor-pos 0)
+		 (set! prompt-string (format #f "<debug ~D> " (+ (length histtop) 1)))
+		 (set! prompt-length (length prompt-string)))
+	       (with-let *repl*
+		 (set! prompt (lambda (num) 
+				(with-let (sublet repl-let :num num)
+				  (set! prompt-string (format #f "<debug ~D> " num))
+				  (set! prompt-length (length prompt-string)))))
+		 (set! (keymap (integer->char 17))
+		       (lambda (c)
+			 (set! (repl-let 'all-done) #t)))))
+
+	     (lambda ()
+	       ((*repl* 'run)))
+
+	     (lambda ()
+	       (set! (*repl* 'top-level-let) old-top-level)
+	       (set! ((*repl* 'repl-let) 'prompt-string) old-prompt)
+	       (set! ((*repl* 'repl-let) 'prompt-length) (length old-prompt))
+	       (set! (*repl* 'prompt) old-prompt)
+	       (set! ((*repl* 'keymap) C-q) old-C-q)))))))
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 #|
 to work in a particular environment:
@@ -1498,10 +1553,10 @@ to post a help string (kinda tedious, but the helper list is aimed more at posti
 		    (old-cursor-pos cursor-pos)
 		    (old-enter-func (keymap-functions 10))
 		    (filename #f))
-		(set! (*repl 'prompt) (lambda (num) 
-					(with-let (*repl* 'repl-let)
-					  (set! prompt-string "load: ")
-					  (set! prompt-length 6))))
+		(set! (*repl* 'prompt) (lambda (num) 
+					 (with-let (*repl* 'repl-let)
+					   (set! prompt-string "load: ")
+					   (set! prompt-length 6))))
 		(set! cur-line "")
 		(set! cursor-pos 0)
 		(set! (keymap-functions 10) (lambda (c)

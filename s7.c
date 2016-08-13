@@ -44939,7 +44939,11 @@ static s7_int total_sequence_length(s7_scheme *sc, s7_pointer args, s7_pointer c
       s7_int n;
       seq = car(p);
       n = sequence_length(sc, seq);
-      if ((n > 0) && (typ != T_FREE) && ((type(seq) == T_HASH_TABLE) || (type(seq) == T_LET)))
+      if ((n > 0) && 
+	  (typ != T_FREE) && 
+	  ((type(seq) == T_HASH_TABLE) ||  /* can't append hash-tables (no obvious meaning to the operation) */
+	   ((type(seq) == T_LET) &&        /*   similarly for lets, unless this is a mock-string or something similar */
+	    ((!has_methods(seq)) || (find_method(sc, seq, sc->append_symbol) == sc->undefined)))))
 	{
 	  wrong_type_argument(sc, sc->append_symbol, i, seq, typ);
 	  return(0);
@@ -45246,6 +45250,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
 /* -------------------------------- object->let -------------------------------- */
 
 static bool is_decodable(s7_scheme *sc, s7_pointer p);
+static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int top);
 
 static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 {
@@ -45314,9 +45319,6 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				  s7_make_symbol(sc, "carry"), s7_make_integer(sc, random_carry(obj)))));
 #endif
 
-    case T_CONTINUATION:
-      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_continuation_symbol)));
-
     case T_GOTO:
       return(s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj, 
 				  sc->type_symbol, s7_make_symbol(sc, "goto?"),
@@ -45339,6 +45341,17 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 				  s7_make_symbol(sc, "s7-value"),
 				    ((is_decodable(sc, (s7_pointer)raw_pointer(obj))) && 
 				     (!is_free(obj))) ? g_object_to_let(sc, cons(sc, (s7_pointer)raw_pointer(obj), sc->nil)) : sc->F)));
+
+    case T_CONTINUATION:
+      {
+	s7_pointer let;
+	int gc_loc;
+	let = s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_continuation_symbol));
+	gc_loc = s7_gc_protect(sc, let);
+	s7_varlet(sc, let, s7_make_symbol(sc, "stack"), stack_entries(sc, continuation_stack(obj), continuation_stack_top(obj)));
+	s7_gc_unprotect_at(sc, gc_loc);
+	return(let);
+      }
 
     case T_ITERATOR:
       {
@@ -46582,19 +46595,19 @@ static s7_pointer active_exits(s7_scheme *sc)
   return(reverse_in_place_unchecked(sc, sc->nil, lst));
 }
 
-static s7_pointer stack_entries(s7_scheme *sc)
+static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int top)
 {
   int i;
   s7_pointer lst;
   lst = sc->nil;
-  for (i = s7_stack_top(sc) - 1; i >= 3; i -= 4)
+  for (i = top - 1; i >= 3; i -= 4)
     {
       s7_pointer func, args, e;
       opcode_t op;
-      func = stack_code(sc->stack, i);
-      args = stack_args(sc->stack, i);
-      e = stack_let(sc->stack, i);
-      op = stack_op(sc->stack, i);
+      func = stack_code(stack, i);
+      args = stack_args(stack, i);
+      e = stack_let(stack, i);
+      op = stack_op(stack, i);
       if ((s7_is_valid(sc, func)) &&
 	  (s7_is_valid(sc, args)) &&
 	  (s7_is_valid(sc, e)) &&
@@ -54585,7 +54598,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
   if (is_symbol(car_expr))
     {
       s7_pointer func;
-      if (is_syntactic(car_expr))
+      if (is_syntactic(car_expr)) 
 	return(optimize_syntax(sc, expr, slot_value(global_slot(car_expr)), hop, e));
 
       if (car_expr == sc->quote_symbol)
@@ -54595,7 +54608,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
       if (is_slot(func))
 	{
 	  func = slot_value(func);
-	  if (is_syntactic(func))
+	  if (is_syntax(func))   /* 12-8-16 was is_syntactic, but that is only appropriate above -- here we have the value */
 	    return(optimize_syntax(sc, expr, func, hop, e));
 
 	  /* we miss implicit indexing here because at this time, the data are not set */
@@ -72920,7 +72933,7 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->exits_symbol)                                           /* exits */
     return(active_exits(sc));
   if (sym == sc->stack_symbol)                                           /* stack */
-    return(stack_entries(sc));
+    return(stack_entries(sc, sc->stack, s7_stack_top(sc)));
 
   if (sym == sc->heap_size_symbol)                                       /* heap-size */
     return(s7_make_integer(sc, sc->heap_size));
@@ -74994,19 +75007,11 @@ int main(int argc, char **argv)
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
- * mockery.scm needs documentation (and stuff.scm: doc cyclic-seq+stuff under circular lists)
- * cyclic-seq in stuff.scm, but current code is really clumsy 
- * doc how cload ties things into rf/sig 
- * libutf8proc.scm doc/examples? cload gtk/sndlib
- * display of let can still get into infinite recursion! (as can a circular list in some weird way)
- * (> (length x) 1) and friends could be optimized by quitting as soon as possible
- * doc (set! (with-let...) ...) and let-temporarily? this could also be greatly optimized
- * stacktrace now shows (hook-function hook) (rather than (f e)), but it should give the hook name
- * maybe current_line|file in *s7*?
- *
- * append: 44522: what if method not first arg?  use 'values: check_values?
- *   (append "asd" ((*mock-string* 'mock-string) "hi")): error: append argument 1, "hi", is mock-string but should be a character
- *   s7 44522 -- method check is unfinished -- should look for append and make arglists, not length
+ * pair/let (> (length x) 1) and friends could be optimized by quitting as soon as possible
+ * with-set setter (op_set_with_let) still conses up the new expression
+ * funclet trace?
+ * if with_history, each func could keep a history of calls(args/results/stack), vars via symbol-access?
+ * debug macro: stack/curlet? where to put this code?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75015,13 +75020,10 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *
- * check stdin-prompt and s7webserver
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
- * when trying to display a big 128-channel file, Snd cores up until it crashes?
- *   this is after it has read the data and created the graphs -- it must be the peak-env process -- is this still needed?
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
- * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd, vct, xg, xm 
+ * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd, xg
  */

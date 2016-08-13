@@ -348,6 +348,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      (cp->sound) &&
 	      (cp->sound->inuse == SOUND_NORMAL) &&
 	      (cp->sound->hdr) &&
+	      (cp->sound->nchans <= 4) &&
 	      (cp->sounds) &&
 	      (cp->sounds[0] != NULL) &&
 	      (cp->sounds[0]->io))

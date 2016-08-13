@@ -1732,7 +1732,7 @@ And of course:
 <p>By my count, around 20 of the Scheme built-in functions are already generic in the sense
 that they accept arguments of many types (leaving aside the numeric and type checking functions, take for example equal?, display,
 member, assoc, apply, eval, quasiquote, and values).  s7 extends that list with map, for-each, reverse,
-and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, and append.
+and length, and adds a few others such as copy, fill!, sort!, object-&gt;string, object-&gt;let, and append.
 newLisp takes a more radical approach than s7: it extends operators such as '&gt;' 
 to compare strings and lists, as well as numbers.  In map and for-each, however, you can mix the argument
 types, so I'm not as attracted to making '&gt;' generic; you can't, for example, <code>(&gt; "hi" 32.1)</code>,
@@ -2437,6 +2437,31 @@ Or better,
         (b (+ c 2)))
   (+ a b c)))
 </pre>
+
+
+<details>
+<summary class="indented">let-temporarily</summary>
+<div class="indented">
+<p>let-temporarily (in stuff.scm) is somewhat similar to fluid-let in other Schemes,
+but without the baloney about dynamic scope.  Its syntax looks like
+let, but for each variable, it first saves the current value, then sets the
+variable to the new value (via set!), then calls the body, then restores the
+original values.  But to be hygienic, and also be able to handle anything
+with a setter, the macro code is a lot cleaner if we add a setter to with-let.
+</p>
+<pre>
+(let-temporarily (((*s7* 'print-length) 8)) (display x))
+</pre>
+<p>sets s7's print-length variable to 8 while displaying x, then
+puts it back to its original value.  The with-let side of this
+is essentially: <code>(set! (with-let callers-curlet (*s7* 'print-length)) 8)</code>.
+So with-let's setter evaluates the let (callers-let above) and the new value (8) in the macro's local
+environment, and the thing-being-set ((*s7* 'print-length)) in the caller's environment (the value of callers-let).
+</p>
+</div>
+</details>
+
+
 
 <p>
 sublet adds bindings (symbols with associated values) to an environment.
