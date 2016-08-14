@@ -2297,7 +2297,7 @@ static c_object_t **object_types = NULL;
 static int object_types_size = 0;
 static int num_object_types = 0;
 
-#define c_object_info(p)              object_types[c_object_type(p)]
+#define c_object_info(p)              object_types[c_object_type(_TObj(p))]
 #define c_object_ref(p)               c_object_info(p)->ref
 #define c_object_set(p)               c_object_info(p)->set
 #define c_object_print(p)             c_object_info(p)->print
@@ -4570,7 +4570,6 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
 
 #define new_cell_no_check(Sc, Obj, Type)		\
   do {						\
-    if ((Sc->free_heap_top + 16) < Sc->free_heap_trigger) fprintf(stderr, "[%d: cell %d] ", __LINE__, (int)(sc->free_heap_top - sc->free_heap)); \
     Obj = (*(--(Sc->free_heap_top)));					\
     Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;		\
     set_type(Obj, Type);						\
@@ -54599,7 +54598,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
     {
       s7_pointer func;
       if (is_syntactic(car_expr)) 
-	return(optimize_syntax(sc, expr, slot_value(global_slot(car_expr)), hop, e));
+	return(optimize_syntax(sc, expr, _TSyn(slot_value(global_slot(car_expr))), hop, e));
 
       if (car_expr == sc->quote_symbol)
 	return(false);
@@ -66394,19 +66393,37 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_SET_WITH_LET_1:
 	  /* here sc->value is the new value for the settee, args has the (as yet unevaluated) let and settee-expression. */
 	  /* fprintf(stderr, "with_let_1: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
-	  sc->code = car(sc->args);
-	  sc->args = list_2(sc, cadr(sc->args), sc->value);
-	  push_stack(sc, OP_SET_WITH_LET_2, sc->args, sc->code);
-	  goto EVAL;
+	  if (is_symbol(car(sc->args)))
+	    {
+	      s7_pointer p;
+	      p = list_2(sc, cadr(sc->args), sc->value);
+	      sc->value = find_symbol_checked(sc, car(sc->args));
+	      sc->args = p;
+	      /* fall through */
+	    }
+	  else
+	    {
+	      sc->code = car(sc->args);
+	      sc->args = list_2(sc, cadr(sc->args), sc->value);
+	      push_stack(sc, OP_SET_WITH_LET_2, sc->args, sc->code);
+	      goto EVAL;
+	    }
 
 	case OP_SET_WITH_LET_2:
-	  /* fprintf(stderr, "with_let_2: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
+	  /* fprintf(stderr, "with_let_2: value: %s, code: %s, args: %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
+	  if (is_symbol(car(sc->args)))
+	    {
+	      let_set_1(sc, sc->value, car(sc->args), cadr(sc->args));
+	      sc->value = cadr(sc->args);
+	      goto START;
+	    }
+
 	  /* avoid double evaluation */
 	  if ((is_symbol(cadr(sc->args))) ||
 	      (is_pair(cadr(sc->args))))
 	    sc->code = cons(sc, sc->set_symbol, list_2(sc, car(sc->args), list_2(sc, sc->quote_symbol, cadr(sc->args))));
 	  else sc->code = cons(sc, sc->set_symbol, sc->args);
-	  activate_let(sc);
+	  activate_let(sc);  /* this activates sc->value, so the set! will happen in that environment */
 	  goto EVAL;
 
 	  
@@ -75008,10 +75025,10 @@ int main(int argc, char **argv)
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
  * pair/let (> (length x) 1) and friends could be optimized by quitting as soon as possible
- * with-set setter (op_set_with_let) still conses up the new expression
- * funclet trace?
+ * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a history of calls(args/results/stack), vars via symbol-access?
- * debug macro: stack/curlet? where to put this code?
+ * any?/every?/let-temporarily should be in a separate file (utils.scm?) or built in via eval_c_string.
+ *   but what about multiple sequences?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75025,5 +75042,5 @@ int main(int argc, char **argv)
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
- * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd, xg
+ * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  */

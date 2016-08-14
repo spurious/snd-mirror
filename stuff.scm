@@ -1657,10 +1657,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   (cdr* obj start))
 
           (else
-           (let ((lst (make-list new-len #f)))
-             (do ((i 0 (+ i 1)))
-                 ((= i new-len) lst)
-               (set! (lst i) (obj (+ i start)))))))))
+           (do ((lst (make-list new-len #f))
+		(i 0 (+ i 1)))
+	       ((= i new-len) lst)
+	     (set! (lst i) (obj (+ i start))))))))
 
 
 (define (sequence->string val)

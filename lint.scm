@@ -18225,6 +18225,5 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; lint output needs to be organized somehow
 ;;;
-;;; 148 24013 651794
+;;; 148 24187 651488

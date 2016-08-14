@@ -1092,20 +1092,25 @@
 			    (lambda ()
 			      (call-with-exit
 			       (lambda (return)
+				 
+				 ;; if (< ctr chars), just send the next char in the buffer (90 lines down after (return #\null))
+				 ;;   otherwise call read again
 				 (when (>= ctr chars)
 				   (set! ctr 0)
 				   (set! chars (read input-fd cc read-size))
 				   (if (= chars 0)
 				       (tty-reset))
-				   
-				   (when (= chars read-size)
-				     ;; concatenate buffers until we get the entire selection
-				     (let ((str (substring c 0 read-size)))
-				       (let reading ((num (read input-fd cc read-size)))
-					 (set! str (string-append str (substring c 0 num)))
-					 (set! chars (+ chars num))
-					 (if (= num read-size)
-					     (reading (read input-fd cc read-size))))
+
+				   (when (> chars (- last-col prompt-length 12))
+				     (let ((str (substring c 0 chars)))
+
+				       (when (= chars read-size)
+					 ;; concatenate buffers until we get the entire selection
+					 (let reading ((num (read input-fd cc read-size)))
+					   (set! str (string-append str (substring c 0 num)))
+					   (set! chars (+ chars num))
+					   (if (= num read-size)
+					       (reading (read input-fd cc read-size)))))
 				       
 				       ;; look for simple cut/paste -- no control chars etc
 				       (when (= input-fd terminal-fd)
@@ -1136,31 +1141,34 @@
 						    (if (< (+ old-pos 1) (length str))
 							(set! cur-line (string-append cur-line (substring str (+ old-pos 1)))))
 						    
-						    ;; if the line is too long, the cursor gets confused, so try to reformat over-long strings
-						    ;; this still messes up sometimes
-						    
+						    ;; if the line is too long, the cursor gets confused, so try to reformat long strings
+						    ;;    this still messes up sometimes
 						    (when (> max-cols (- last-col prompt-length))
 						      (let ((old-len ((funclet pretty-print) '*pretty-print-length*)))
-							(set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 2))
+							(set! ((funclet pretty-print) '*pretty-print-length*) (- last-col prompt-length 12))
 							(set! cur-line (with-output-to-string
 									 (lambda ()
 									   (pretty-print (with-input-from-string cur-line #_read)))))
 							(set! ((funclet pretty-print) '*pretty-print-length*) old-len))))
+						  ;; this is still bad if the code has a long string -- need to tell pretty print to break it as well
 						    
 						  (set! cursor-pos (length cur-line))
 						  (set! chars 0)
 						  (set! ctr 1)
 						  (display-lines)
 						  (return #\newline))))))
-				       
+				       ;; now the pasted-in line has inserted newlines, we hope
+
 				       (set! c str)
 				       (set! cc (string->c-pointer c))
+
 				       ;; avoid time-consuming redisplays.  We need to use a recursive call on next-char here
 				       ;;   since we might have multi-char commands (embedded #\escape -> meta, etc)
 				       ;; actually, the time is not the repl's fault -- xterm seems to be waiting
 				       ;;   for the window manager or someone to poke it -- if I move the mouse,
 				       ;;   I get immediate output.  I also get immediate output in any case in OSX.
 				       ;;   valgrind and ps say we're not computing, we're just sitting there.
+
 				       (catch #t
 					 (lambda ()
 					   (do ((ch (next-char) (next-char)))
@@ -1181,6 +1189,7 @@
 					   (new-prompt)
 					   (return #\null))))))
 				 
+				 ;; send out the next char
 				 (let ((result (c ctr)))
 				   (set! ctr (+ ctr 1))
 				   result)))))))
@@ -1411,11 +1420,10 @@
 
 
 
-#|
 ;;; --------------------------------------------------------------------------------
 ;;; just a first stab at this -- where to put this code?
 
-(define-expansion (debug)
+(define-expansion (repl-debug)
   `(with-let (inlet :orig (curlet) :line ,(port-line-number) :func __func__)
      (format () "line ~D: ~A~{~^ ~A~}~%" 
 	     line (if (pair? func) (car func) func)
@@ -1462,7 +1470,7 @@
 	       (set! ((*repl* 'repl-let) 'prompt-length) (length old-prompt))
 	       (set! (*repl* 'prompt) old-prompt)
 	       (set! ((*repl* 'keymap) C-q) old-C-q)))))))
-|#
+
 
 
 ;;; --------------------------------------------------------------------------------

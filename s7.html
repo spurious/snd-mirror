@@ -2444,9 +2444,9 @@ Or better,
 <div class="indented">
 <p>let-temporarily (in stuff.scm) is somewhat similar to fluid-let in other Schemes,
 but without the baloney about dynamic scope.  Its syntax looks like
-let, but for each variable, it first saves the current value, then sets the
-variable to the new value (via set!), then calls the body, then restores the
-original values.  But to be hygienic, and also be able to handle anything
+let, it first saves the current value, then sets the
+variable to the new value (via set!), calls the body, and finally restores the
+original value.  But to be hygienic, and also be able to handle anything
 with a setter, the macro code is a lot cleaner if we add a setter to with-let.
 </p>
 <pre>
