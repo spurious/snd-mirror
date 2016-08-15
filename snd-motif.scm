@@ -73,9 +73,9 @@
     (let ((documentation "(xm-clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"))
       (lambda (str)
 	;; full file name should be unique, so I think we need only fix it up to look like a flat name
-	(let* ((len (length str))
-	       (new-str (make-string len #\.)))
-	  (do ((i 0 (+ i 1)))
+	(let ((len (length str)))
+	  (do ((new-str (make-string len #\.))
+	       (i 0 (+ i 1)))
 	      ((= i len) new-str)
 	    (let ((c (str i)))
 	      (set! (new-str i) (if (memv c '(#\\ #\/)) #\_ c))))))))
@@ -269,25 +269,25 @@
 		      (or (sound-property 'save-state-ignore snd)
 			  (list 'save-state-ignore))))
 	  (set! (sound-property 'dragger snd)
-		(let ((calls ()))
-		  (do ((chn 0 (+ 1 chn)))
-		      ((= chn (channels snd)))
-		    (let ((new-callback 
-			   (let* ((zy ((channel-widgets snd chn) 6))
-				  (zy-div (max 10 (- (cadr (XtGetValues zy (list XmNmaximum 0))) 
-						     (cadr (XtGetValues zy (list XmNsliderSize 0))))))) ; this is relative to max size
-			     (XtAddCallback zy
-					    XmNdragCallback 
-					    (lambda (w data info)
-					      (let ((v (/ (.value info) zy-div)))
-						(do ((i 0 (+ i 1)))
-						    ((= i (channels snd)))
-						  (if (not (= i chn))
-						      (begin
-							(set! (y-zoom-slider snd i) (* v v))
-							(set! (y-position-slider snd i) (y-position-slider snd chn)))))))))))
-		      (set! calls (cons new-callback calls))))
-		  (set! (hook 'result) (reverse calls))))))))
+		(do ((calls ())
+		     (chn 0 (+ 1 chn)))
+		    ((= chn (channels snd))
+		     (set! (hook 'result) (reverse calls)))     
+		  (let ((new-callback 
+			 (let* ((zy ((channel-widgets snd chn) 6))
+				(zy-div (max 10 (- (cadr (XtGetValues zy (list XmNmaximum 0))) 
+						   (cadr (XtGetValues zy (list XmNsliderSize 0))))))) ; this is relative to max size
+			   (XtAddCallback zy
+					  XmNdragCallback 
+					  (lambda (w data info)
+					    (let ((v (/ (.value info) zy-div)))
+					      (do ((i 0 (+ i 1)))
+						  ((= i (channels snd)))
+						(if (not (= i chn))
+						    (begin
+						      (set! (y-zoom-slider snd i) (* v v))
+						      (set! (y-position-slider snd i) (y-position-slider snd chn)))))))))))
+		    (set! calls (cons new-callback calls)))))))))
   
   (define zync
     (let ((documentation "(zync) ties each sound's y-zoom sliders together so that all change in parallel if one changes"))
@@ -1837,8 +1837,8 @@
 		  (do ((i 0 (+ i 1)))
 		      ((= i chns))
 		    (let* ((ampscr (find-child snd-amp (scroller-name i)))
-			   (ampvals (XmScrollBarGetValues ampscr)))
-		      (XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t)
+			   (ampvals (cdr (XmScrollBarGetValues ampscr))))
+		      (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t)
 		      (set! (amp-control snd i) amp))))
 		(set! (amp-control snd chn) amp))))
 	
@@ -1926,8 +1926,8 @@
 					   (do ((i 1 (+ i 1)))
 					       ((= i chns))
 					     (let* ((ampscr (find-child snd-amp (scroller-name i)))
-						    (ampvals (XmScrollBarGetValues ampscr)))
-					       (XmScrollBarSetValues ampscr (.value info) (cadr ampvals) (caddr ampvals) (cadddr ampvals) #t))))))))
+						    (ampvals (cdr (XmScrollBarGetValues ampscr))))
+					       (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t))))))))
 		(let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
 		  (if (< existing-controls chns)
 		      (begin
@@ -2940,9 +2940,7 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
   
   (define* (equalize-panes snd)
     (define (equalize-sound ind)
-      (let ((old-style (channel-style ind)))
-	(set! (channel-style ind) channels-combined)
-	(set! (channel-style ind) old-style)))
+      (let-temporarily (((channel-style ind) channels-combined))))
     (if snd
 	(equalize-sound snd)
 	(for-each equalize-sound (sounds))))

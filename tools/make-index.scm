@@ -771,7 +771,7 @@
     (typecase "stuff.scm")
     (enum "stuff.scm")
     (while "stuff.scm")
-    (let-temporarily "stuff.scm")
+    (let*-temporarily "stuff.scm")
     (define-class "stuff.scm")
     (elambda "stuff.scm")
     (value->symbol "stuff.scm")

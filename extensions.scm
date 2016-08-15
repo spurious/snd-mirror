@@ -57,11 +57,9 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	(let ((new-maxamp (maxamp snd chn)))
 	  (if (= original-maxamp new-maxamp)
 	      1.0
-	      (let ((scaler (/ original-maxamp new-maxamp))
-		    (old-sync (sync snd)))
-		(set! (sync snd) (+ (sync-max) 1))
-		(scale-by scaler snd chn)
-		(set! (sync snd) old-sync)
+	      (let ((scaler (/ original-maxamp new-maxamp)))
+		(let-temporarily (((sync snd) (+ (sync-max) 1)))
+		  (scale-by scaler snd chn))
 		scaler)))))))
 
 
@@ -420,10 +418,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (lambda* (off (beg 0) dur snd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
-	    (let ((out-chans (channels index)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn out-chans))
-		(offset-channel off beg dur index chn)))
+	    (do ((out-chans (channels index))
+		 (chn 0 (+ 1 chn)))
+		((= chn out-chans))
+	      (offset-channel off beg dur index chn))
 	    (error 'no-such-sound "offset-sound: no such sound: ~A" snd))))))
 
 
@@ -434,10 +432,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (lambda* (beg dur snd) 
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
-	    (let ((out-chans (channels index)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn out-chans))
-		(pad-channel beg dur index chn)))
+	    (do ((out-chans (channels index))
+		 (chn 0 (+ 1 chn)))
+		((= chn out-chans))
+	      (pad-channel beg dur index chn))
 	    (error 'no-such-sound "pad-sound: no such sound: ~A" snd))))))
 
 
@@ -487,10 +485,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
     (lambda* (index (beg 0) dur snd)
       (let ((ind (or snd (selected-sound) (car (sounds)))))
 	(if (sound? ind)
-	    (let ((out-chans (channels ind)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn out-chans))
-		(contrast-channel index beg dur ind chn)))
+	    (do ((out-chans (channels ind))
+		 (chn 0 (+ 1 chn)))
+		((= chn out-chans))
+	      (contrast-channel index beg dur ind chn))
 	    (error 'no-such-sound "contrast-sound: no such sound: ~A" snd))))))
 
 
@@ -503,10 +501,10 @@ connects them with 'func', and applies the result as an amplitude envelope to th
       ;; (map-sound (lambda (fr) (frame* fr scl)) beg dur snd))
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
-	    (let ((out-chans (channels index)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn out-chans))
-		(scale-channel scl beg dur index chn)))
+	    (do ((out-chans (channels index))
+		 (chn 0 (+ 1 chn)))
+		((= chn out-chans))
+	      (scale-channel scl beg dur index chn))
 	    (error 'no-such-sound "scale-sound: no such sound: ~A" snd))))))
 
 

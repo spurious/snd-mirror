@@ -2378,6 +2378,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="coverlet">coverlet</em> env)           mark env as closed (undo an earlier openlet)
 
 (<em class=def id="objecttolet">object-&gt;let</em> obj)        return an environment containing information about obj 
+(<em class=def id="lettemporarily">let-temporarily</em> vars . body)
 </pre>
 
 <br>
@@ -2410,7 +2411,7 @@ contain the same symbols with the same values leaving aside shadowing, and takin
 chain up to the rootlet.  That is, two environments are equal if any local variable of either has the same value in both.
 </p>
 
-<p>with-let evaluates its body in the given environment, so
+<p><b>with-let</b> evaluates its body in the given environment, so
 <code>(with-let e . body)</code> is equivalent to
 <code>(eval `(begin ,@body) e)</code>, but probably faster.
 Similarly, <code>(let bindings . body)</code> is equivalent to
@@ -2439,41 +2440,31 @@ Or better,
 </pre>
 
 
-<details>
-<summary class="indented">let-temporarily</summary>
-<div class="indented">
-<p>let-temporarily (in stuff.scm) is somewhat similar to fluid-let in other Schemes,
-but without the baloney about dynamic scope.  Its syntax looks like
-let, it first saves the current value, then sets the
+<p><b>let-temporarily</b> (now built-into s7) is somewhat similar to fluid-let in other Schemes.
+Its syntax looks like
+let, but it first saves the current value, then sets the
 variable to the new value (via set!), calls the body, and finally restores the
-original value.  But to be hygienic, and also be able to handle anything
-with a setter, the macro code is a lot cleaner if we add a setter to with-let.
+original value.  It can handle anything settable:
 </p>
-<pre>
+<pre class="indented">
 (let-temporarily (((*s7* 'print-length) 8)) (display x))
 </pre>
-<p>sets s7's print-length variable to 8 while displaying x, then
-puts it back to its original value.  The with-let side of this
-is essentially: <code>(set! (with-let callers-curlet (*s7* 'print-length)) 8)</code>.
-So with-let's setter evaluates the let (callers-let above) and the new value (8) in the macro's local
-environment, and the thing-being-set ((*s7* 'print-length)) in the caller's environment (the value of callers-let).
+<p>This sets s7's print-length variable to 8 while displaying x, then
+puts it back to its original value.
 </p>
-</div>
-</details>
-
 
 
 <p>
-sublet adds bindings (symbols with associated values) to an environment.
+<b>sublet</b> adds bindings (symbols with associated values) to an environment.
 It does not change the environment passed to it, but
 just prepends the new bindings, shadowing any old ones,
 as if you had called "let".
 To add the bindings directly to the environment,
-use varlet.  Both of these functions accept nil as the
+use <b>varlet</b>.  Both of these functions accept nil as the
 'env' argument as shorthand for <code>(rootlet)</code>.
 Both also accept other environments as well as individual bindings,
 adding all the argument's bindings to the new environment.
-inlet is very similar, but normally omits the environment argument.
+<b>inlet</b> is very similar, but normally omits the environment argument.
 The arguments to sublet and inlet can be passed as
 symbol/value pairs, as a cons, or using keywords as if in define*.
 inlet can also be used to copy an environment without accidentally invoking
@@ -2668,7 +2659,7 @@ such as abs, we need to put it back to its original form:
 </blockquote>
 
 
-<p>openlet marks its argument, either an environment, a closure, or a c-object
+<p><b>openlet</b> marks its argument, either an environment, a closure, or a c-object
 as open.  I need better terminology here!  An open object is one that the
 built-in s7 functions handle specially.  If they encounter one in their
 argument list, they look in the object for their own name, and call that
@@ -2708,7 +2699,7 @@ A slightly more complex example:
 and openlet? -&gt; methods?.
 </p>
 
-<p>object-&gt;let returns an environment (more of a dictionary really) that
+<p><b>object-&gt;let</b> returns an environment (more of a dictionary really) that
 contains details about its argument.  It
 is intended as a debugging aid, underlying a debugger's "inspect" for example. 
 </p>

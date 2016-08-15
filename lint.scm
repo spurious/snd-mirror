@@ -74,47 +74,6 @@
      (lint-format*-1 ,caller ,@args)))
 |#
 
-(define-macro (let*-temporarily vars . body)
-  `(with-let (#_inlet :orig (#_curlet) 
-		      :saved (#_list ,@(map car vars)))
-     (dynamic-wind
-	 (lambda () #f)
-	 (lambda ()
-	   (with-let orig
-	     ,@(map (lambda (v)
-		      `(set! ,(car v) ,(cadr v)))
-		    vars)
-	     ,@body))
-	 (lambda ()
-	   ,@(map (let ((ctr -1))
-		    (lambda (v)
-		      (if (symbol? (car v))
-			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
-			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
-		  vars)))))
-
-(define-macro (let-temporarily vars . body)
-  `(with-let (#_inlet :orig (#_curlet) 
-		      :saved (#_list ,@(map car vars))
-		      :new (#_list ,@(map cadr vars)))
-     (dynamic-wind
-	 (lambda () #f)
-	 (lambda () ; this could be (with-let orig (let ,vars ,@body)) but I want to handle stuff like individual vector locations
-	   ,@(map (let ((ctr -1))
-		    (lambda (v)
-		      (if (symbol? (car v))
-			  `(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1))))
-			  `(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1)))))))
-		  vars)
-	   (with-let orig ,@body)) 
-	 (lambda ()
-	   ,@(map (let ((ctr -1))
-		    (lambda (v)
-		      (if (symbol? (car v))
-			  `(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))
-			  `(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))))))
-		  vars)))))
-
 
 ;;; --------------------------------------------------------------------------------
 (define lint
@@ -9946,7 +9905,7 @@
 							(append new-matches new-matches)
 							e1 e2))
 				   (cons (cons (caar rest1) (caar rest2)) matches))))
-			 
+
 			 (else #f))))))))) ; can't happen I hope
 
     (define (structures-equal? p1 p2 matches e1 e2)
@@ -9967,9 +9926,7 @@
 				 (and (pair? mat)
 				      (set! matches mat))))
 			      
-			      ;; this ignores possible reversible equivalence (i.e. (< x 0) is the same as (> 0 x)
-			      ;;   (structures-equal? (car p1) (car p2) matches e1 e2)))
-			      
+			      ;; if/when/unless here got no hits
 			      ;; check for reversible equivalence
 			      ;;   half-humorous problem: infinite loop here switching back and forth!
 			      ;;   so I guess we have to check cdar by hand
@@ -15237,7 +15194,7 @@
 					 (pair? (cddr (caddr var)))
 					 (eqv? (caddr (caddr var)) 1)
 					 (null? (cdddr (caddr var))))
-				(let ((end-var (if (eq? vname (cadr end)) (caddr end) (cadr end))))
+				(let ((end-var ((if (eq? vname (cadr end)) caddr cadr) end)))
 				  (if (and (pair? end-var)
 					   (memq (car end-var) '(length string-length vector-length)))
 				      (set! end-var (cadr end-var))
@@ -15736,8 +15693,12 @@
 				    (set! preref i))))
 			    
 			    (when (and (zero? (var-set local-var))
-				       (= (var-ref local-var) 2) ; initial value and set!
-				       (symbol? (var-initial-value local-var)))
+				       (= (var-ref local-var) 2)) ; initial value and set!
+			      (define (tree-equal-member sym tree)
+				(and (pair? tree)
+				     (or (equal? (car tree) sym)
+					 (tree-member sym (car tree))
+					 (tree-member sym (cdr tree)))))
 			      (do ((saved-name (var-initial-value local-var))
 				   (p body (cdr p))
 				   (last-pos #f)
@@ -15745,10 +15706,10 @@
 				  ((not (pair? p))
 				   (when (and (pair? last-pos)
 					      (not (eq? first-pos last-pos))
-					      (not (tree-member saved-name (cdr last-pos))))
+					      (not (tree-equal-member saved-name (cdr last-pos))))
 				     ;; (let ((old-x x)) (set! x 12) (display (log x)) (set! x 1) (set! x old-x)) ->
 				     ;;    (let-temporarily ((x 12)) (display (log x)) (set! x 1))
-				     (lint-format "perhaps use let-temporarily here (see stuff.scm): ~A" caller
+				     (lint-format "perhaps use let-temporarily here: ~A" caller
 						  (lists->string form
 								 (let ((new-let `(let-temporarily 
 										     ((,saved-name ,(if (pair? first-pos) 
@@ -15770,12 +15731,12 @@
 										   (cadr form))
 									  ,new-let)))))))
 				;; someday maybe look for additional saved vars, but this happens only in snd-test
-				;;   also the let-temp could be reduced to the set locations (so the tree-member
+				;;   also the let-temp could be reduced to the set locations (so the tree-equal-member
 				;;   check above would be unneeded).
 				(let ((expr (car p)))
 				  (when (and (pair? expr)
 					     (eq? (car expr) 'set!)
-					     (eq? (cadr expr) saved-name)
+					     (equal? (cadr expr) saved-name)
 					     (pair? (cddr expr)))
 				    (if (not first-pos)
 					(set! first-pos p))
@@ -18215,15 +18176,12 @@
 ;;; --------------------------------------------------------------------------------
 ;;; TODO:
 ;;;
-;;; code-equal if/when/unless/cond, case: any order of clauses, let: any order of vars, etc, zero/=0
-;;;   include named-lets in this search
-;;;   these should translate when/unless first -> if?
-;;;   (abs|magnitude (- x y)) is reversible internally
 ;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
 ;;; there are now lots of cases where we need to check for values (/ as invert etc)
 ;;;   the ((lambda ...)) -> let rewriter is still tricked by values
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
+;;; if setter in dilambda has same number of args as getter, (set! (h) y) -- lint thinks (h) needs an argument
 ;;;
-;;; 148 24187 651488
+;;; 148 24187 651205

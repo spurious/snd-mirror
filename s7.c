@@ -74891,6 +74891,29 @@ s7_scheme *s7_init(void)
                                     (set! ((funclet hook) 'body) lst)                                         \n\
                                     (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst))))))");
 
+  s7_eval_c_string(sc, "(define-macro (let-temporarily vars . body)                                           \n\
+                          `(with-let (#_inlet :orig (#_curlet)                                                \n\
+                        		      :saved (#_list ,@(map car vars))                                \n\
+                        		      :new (#_list ,@(map cadr vars)))                                \n\
+                             (dynamic-wind                                                                    \n\
+                               (lambda () #f)                                                                 \n\
+                               (lambda ()                                                                     \n\
+                        	 ,@(map (let ((ctr -1))                                                       \n\
+                        	          (lambda (v)                                                         \n\
+                        		    (if (symbol? (car v))                                             \n\
+                        			`(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1)))) \n\
+                        			`(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1))))))) \n\
+                        		  vars)                                                               \n\
+                                 ,(if (pair? body) `(with-let orig ,@body) #f))                               \n\
+                               (lambda ()                                                                     \n\
+                        	 ,@(map (let ((ctr -1))                                                       \n\
+                        	          (lambda (v)                                                         \n\
+                        		    (if (symbol? (car v))                                             \n\
+                        			`(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))) \n\
+                        			`(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))))) \n\
+                        		vars)))))");
+
+
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
   s7_define_constant_with_documentation(sc, "*unbound-variable-hook*", sc->unbound_variable_hook, 
@@ -75027,8 +75050,6 @@ int main(int argc, char **argv)
  * pair/let (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a history of calls(args/results/stack), vars via symbol-access?
- * any?/every?/let-temporarily should be in a separate file (utils.scm?) or built in via eval_c_string.
- *   but what about multiple sequences?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -897,10 +897,10 @@ section: (float-vector->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"))
 			(float-vector-scale! rl (/ oldmax newmax)))
 		    (let* ((new0 (rl 0))
 			   (new1 (rl (- samps 1)))
-			   (offset0 (- old0 new0))
-			   (incr (let ((offset1 (- old1 new1)))
-				   (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps)))))
-		      (do ((i 0 (+ i 1))
+			   (offset0 (- old0 new0)))
+		      (do ((incr (let ((offset1 (- old1 new1)))
+				   (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps))))
+			   (i 0 (+ i 1))
 			   (trend offset0 (+ trend incr)))
 			  ((= i samps))
 			(set! (rl i) (+ (rl i) trend)))
@@ -1096,11 +1096,11 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define vibro 
   (let ((documentation "(vibro speed depth) adds vibrato or tremolo"))
     (lambda (speed depth)
-      (let* ((sine (make-oscil speed))
-	     (scl (* 0.5 depth))
-	     (offset (- 1.0 scl)))
-	(lambda (y)
-	  (* y (+ offset (* scl (oscil sine)))))))))
+      (let ((sine (make-oscil speed))
+	    (scl (* 0.5 depth)))
+	(let ((offset (- 1.0 scl)))
+	  (lambda (y)
+	    (* y (+ offset (* scl (oscil sine))))))))))
 
 
 ;;; -------- hello-dentist
@@ -1181,17 +1181,17 @@ to produce a sound at a new pitch but at the original tempo.  It returns a funct
       (let* ((dur (/ (* (/ (framples snd chn) (srate snd)) 
 			(integrate-envelope gr-env)) ; in env.scm
 		     (envelope-last-x gr-env)))
+	     (len (max (round (* (srate snd) dur)) (framples snd chn))))
+	(do ((out-data (make-float-vector len))
 	     (gr (make-granulate :expansion (cadr gr-env) 
 				 :jitter 0
 				 :input (make-sampler 0 snd chn)))
 	     (ge (make-env gr-env :duration dur))
-	     (len (max (round (* (srate snd) dur)) (framples snd chn)))
-	     (out-data (make-float-vector len)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
+	     (i 0 (+ i 1)))
+	    ((= i len)
+	     (float-vector->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env)))
 	  (float-vector-set! out-data i (granulate gr))
-	  (set! (mus-increment gr) (env ge)))
-	(float-vector->channel out-data 0 len snd chn #f (format #f "expsnd '~A" gr-env))))))
+	  (set! (mus-increment gr) (env ge)))))))
 
 
 ;;; -------- cross-synthesis
@@ -1204,18 +1204,16 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
     (lambda (cross-snd amp fftsize r)
       (let ((freq-inc (/ fftsize 2)))
 	(let ((spectr (make-float-vector freq-inc))
-	      (formants (make-vector freq-inc))
-	      (old-srate *clm-srate*))
-	  (set! *clm-srate* (srate))
-	  ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
-	  ;;    and in any case it's setting its formants incorrectly for the actual output srate
-	  (do ((radius (- 1.0 (/ r fftsize)))
-	       (bin (/ (srate) fftsize))
-	       (i 0 (+ i 1)))
-	      ((= i freq-inc))
-	    (set! (formants i) (make-formant (* i bin) radius)))
-	  (set! formants (make-formant-bank formants spectr))
-	  (set! *clm-srate* old-srate)
+	      (formants (make-vector freq-inc)))
+	  (let-temporarily ((*clm-srate* (srate)))
+	    ;; if mus-srate is 44.1k and srate is 48k, make-formant thinks we're trying to go past srate/2
+	    ;;    and in any case it's setting its formants incorrectly for the actual output srate
+	    (do ((radius (- 1.0 (/ r fftsize)))
+		 (bin (/ (srate) fftsize))
+		 (i 0 (+ i 1)))
+		((= i freq-inc))
+	      (set! (formants i) (make-formant (* i bin) radius)))
+	    (set! formants (make-formant-bank formants spectr)))
 	  (let ((fdr #f)
 		(ctr freq-inc)
 		(inctr 0))
@@ -1231,7 +1229,6 @@ selected sound: (map-channel (cross-synthesis (integer->sound 0) .5 128 6.0))"))
 	      (set! ctr (+ ctr 1))
 	      (float-vector-add! spectr fdr)
 	      (* amp (formant-bank formants inval)))))))))
-  
   
   
 ;;; similar ideas can be used for spectral cross-fades, etc -- for example:
@@ -1766,20 +1763,20 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	(current-sorted-files #f))
     
     (define (file-from-path curfile)
-      (let ((last-slash 0))
-	(do ((i 0 (+ i 1)))
-	    ((= i (length curfile)))
-	  (if (char=? (curfile i) #\/)
-	      (set! last-slash i)))
-	(substring curfile (+ 1 last-slash))))
+      (do ((last-slash 0)
+	   (i 0 (+ i 1)))
+	  ((= i (length curfile))
+	   (substring curfile (+ 1 last-slash)))   
+	(if (char=? (curfile i) #\/)
+	    (set! last-slash i))))
     
     (define (directory-from-path curfile)
-      (let ((last-slash 0))
-	(do ((i 0 (+ i 1)))
-	    ((= i (length curfile)))
-	  (if (char=? (curfile i) #\/)
-	      (set! last-slash i)))
-	(substring curfile 0 last-slash)))
+      (do ((last-slash 0)
+	   (i 0 (+ i 1)))
+	  ((= i (length curfile))
+	   (substring curfile 0 last-slash))   
+	(if (char=? (curfile i) #\/)
+	    (set! last-slash i))))
     
     (define (find-next-file)
       ;; find the next file in the sorted list, with wrap-around
@@ -1817,9 +1814,11 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	  (set! last-file-opened (file-name (or (selected-sound)
 						(car (sounds))))))
       (if (not current-directory)
-	  (if (null? (sounds))
-	      (get-current-files (getcwd))
-	      (get-current-files (directory-from-path last-file-opened))))
+	  (get-current-files 
+	   (if (null? (sounds))
+	       (getcwd)
+	       (directory-from-path last-file-opened))))
+
       (if (null? current-sorted-files)
 	  (error 'no-such-file (list "open-next-file-in-directory" current-directory))
 	  (let ((next-file (find-next-file)))
@@ -1917,11 +1916,11 @@ passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, a
       
       (define (scramble-channels-1 cur-chans end-chans chans loc)
 	(define (find-chan chans chan len)
-	  (let ((pos #f))
-	    (do ((i 0 (+ i 1)))
-		((or pos (= i len)) pos)
-	      (if (= (chans i) chan)
-		  (set! pos i)))))
+	  (do ((pos #f)
+	       (i 0 (+ i 1)))
+	      ((or pos (= i len)) pos)
+	    (if (= (chans i) chan)
+		(set! pos i))))
 	(if (> chans loc)
 	    (let* ((end-chan (end-chans loc)) ; we want this channel at loc
 		   (cur-chan (cur-chans loc)) ; this (original) channel is currently at loc
