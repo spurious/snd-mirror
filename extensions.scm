@@ -445,24 +445,23 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (let ((documentation "(dither-channel (amount .00006) (beg 0) dur snd chn edpos) adds amount dither to each sample"))
     (lambda* ((amount .00006) (beg 0) dur snd chn edpos)
       (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
-	(let ((dither (* .5 amount))
-	      (data (samples beg len snd chn edpos)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))
-	  (float-vector->channel data beg len snd chn current-edit-position
-				 (format #f "dither-channel ~,8F ~A ~A" amount beg dur)))))))
-
+	(do ((dither (* .5 amount))
+	     (data (samples beg len snd chn edpos))
+	     (i 0 (+ i 1)))
+	    ((= i len)
+	     (float-vector->channel data beg len snd chn current-edit-position
+				    (format #f "dither-channel ~,8F ~A ~A" amount beg dur)))
+	  (float-vector-set! data i (+ (float-vector-ref data i) (mus-random dither) (mus-random dither))))))))
 
 (define dither-sound 
   (let ((documentation "(dither-sound (amount .00006) beg dur snd) adds dithering to every channel of 'snd'"))
     (lambda* ((amount .00006) (beg 0) dur snd)
       (let ((index (or snd (selected-sound) (car (sounds)))))
 	(if (sound? index)
-	    (let ((out-chans (channels index)))
-	      (do ((chn 0 (+ 1 chn)))
-		  ((= chn out-chans))
-		(dither-channel amount beg dur index chn)))
+	    (do ((out-chans (channels index))
+		 (chn 0 (+ 1 chn)))
+		((= chn out-chans))
+	      (dither-channel amount beg dur index chn))
 	    (error 'no-such-sound "dither-sound: no such sound: ~A" snd))))))
 
 
@@ -471,14 +470,13 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 (define contrast-channel 
   (let ((documentation "(contrast-channel index (beg 0) dur snd chn edpos) applies contrast enhancement to the sound"))
     (lambda* (index (beg 0) dur snd chn edpos)
-      (let* ((len (if (number? dur) dur (- (framples snd chn) beg)))
-	     (data (samples beg len snd chn edpos)))
-	(do ((i 0 (+ i 1)))
-	    ((= i len))
-	  (float-vector-set! data i (contrast-enhancement (float-vector-ref data i) index))) ; (sin (+ (* 0.5 pi y) (* index (sin (* 2.0 pi y))))))))
-	(float-vector->channel data beg len snd chn current-edit-position
-			       (format #f "contrast-channel ~A ~A ~A" index beg dur))))))
-
+      (let ((len (if (number? dur) dur (- (framples snd chn) beg))))
+	(do ((data (samples beg len snd chn edpos))
+	     (i 0 (+ i 1)))
+	    ((= i len)
+	     (float-vector->channel data beg len snd chn current-edit-position
+				    (format #f "contrast-channel ~A ~A ~A" index beg dur)))
+	  (float-vector-set! data i (contrast-enhancement (float-vector-ref data i) index))))))) ; (sin (+ (* 0.5 pi y) (* index (sin (* 2.0 pi y))))))))
 
 (define contrast-sound 
   (let ((documentation "(contrast-sound index beg dur snd) applies contrast-enhancement to every channel of 'snd'"))

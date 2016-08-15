@@ -163,7 +163,7 @@
 		     (let ((ampsum (make-one-pole 1.0 -1.0))
 			   (diffsum (make-one-pole 1.0 -1.0)))
 		       (do ((sr0 (make-sampler (floor start)))
-			    (sr1 (make-sampler (floor (floor (cross-samples k)))))
+			    (sr1 (make-sampler (floor (cross-samples k))))
 			    (samp0 0.0)
 			    (i 0 (+ i 1)))
 			   ((= i autolen))

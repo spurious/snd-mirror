@@ -1093,9 +1093,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		    0
 		    (if (= mn 0)
 			1
-			(let* ((mx (max k (- n k)))
-			       (cnk (+ 1 mx)))
-			  (do ((i 2 (+ i 1)))
+			(let ((mx (max k (- n k))))
+			  (do ((cnk (+ 1 mx))
+			       (i 2 (+ i 1)))
 			      ((> i mn) cnk)
 			    (set! cnk (/ (* cnk (+ mx i)) i))))))))))))
 	      

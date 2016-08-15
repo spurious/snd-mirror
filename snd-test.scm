@@ -8250,32 +8250,32 @@ EDITS: 1
 	(snd-display ";as-one-edit edits: ~A" (display-edits ind 0)))
     (revert-sound ind)
     
-    (let ((m3 #f)
-	  (m4 #f))
-      (let ((m2 #f))
-	(let ((m1 #f))
-	  (as-one-edit
-	   (lambda ()
-	     (set! m1 (mix-float-vector (float-vector .1 .2 .3) 1234 ind 0))
-	     (set! (sample 1236 ind 0) .6)
-	     (as-one-edit
-	      (lambda ()
-		(set! (sample 123 ind 0) .3)
-		(set! m2 (mix-float-vector (float-vector .1 .2 .3) 1235 ind 0)))
-	      "as-one-edit inner 1")
-	     (if (not (mix? m1)) (snd-display ";as-one-edit stepped on m1: ~A" m1))
-	     (if (not (mix? m2)) (snd-display ";as-one-edit stepped on m2: ~A" m2))
-	     (as-one-edit
-	      (lambda ()
-		(set! m3 (mix-float-vector (float-vector .1 .2 .3) 1238 ind 0))
-		(set! (sample 1238 ind 0) .8))
-	      "as-one-edit inner 2")
-	     (set! (sample 1239 ind 0) .9)
-	     (set! m4 (mix-float-vector (float-vector .1 .2 .3) 1237 ind 0)))
-	   "outer as-one-edit")
-	  (if (not (mix? m1)) (snd-display ";second as-one-edit stepped on mx1: ~A" m1)))
-	(if (not (mix? m2)) (snd-display ";second as-one-edit stepped on mx2: ~A" m2)))
-      (if (not (mix? m3)) (snd-display ";second as-one-edit stepped on mx3: ~A" m3))
+    (let ((m4 #f))
+      (let ((m3 #f))
+	(let ((m2 #f))
+	  (let ((m1 #f))
+	    (as-one-edit
+	     (lambda ()
+	       (set! m1 (mix-float-vector (float-vector .1 .2 .3) 1234 ind 0))
+	       (set! (sample 1236 ind 0) .6)
+	       (as-one-edit
+		(lambda ()
+		  (set! (sample 123 ind 0) .3)
+		  (set! m2 (mix-float-vector (float-vector .1 .2 .3) 1235 ind 0)))
+		"as-one-edit inner 1")
+	       (if (not (mix? m1)) (snd-display ";as-one-edit stepped on m1: ~A" m1))
+	       (if (not (mix? m2)) (snd-display ";as-one-edit stepped on m2: ~A" m2))
+	       (as-one-edit
+		(lambda ()
+		  (set! m3 (mix-float-vector (float-vector .1 .2 .3) 1238 ind 0))
+		  (set! (sample 1238 ind 0) .8))
+		"as-one-edit inner 2")
+	       (set! (sample 1239 ind 0) .9)
+	       (set! m4 (mix-float-vector (float-vector .1 .2 .3) 1237 ind 0)))
+	     "outer as-one-edit")
+	    (if (not (mix? m1)) (snd-display ";second as-one-edit stepped on mx1: ~A" m1)))
+	  (if (not (mix? m2)) (snd-display ";second as-one-edit stepped on mx2: ~A" m2)))
+	(if (not (mix? m3)) (snd-display ";second as-one-edit stepped on mx3: ~A" m3)))
       (if (not (mix? m4)) (snd-display ";second as-one-edit stepped on mx4: ~A" m4))
       (revert-sound ind))
     
@@ -22636,7 +22636,7 @@ EDITS: 2
       (set! *with-mix-tags* #t)
       
       (let ((ind (open-sound "oboe.snd"))
-	    (fr (mus-sound-framples "1a.snd")))
+	    (fr (+ 1000 (mus-sound-framples "1a.snd"))))
 	(mix-float-vector (make-float-vector 100 .1) 1000)
 	(for-each
 	 (lambda (mtest)
@@ -22663,9 +22663,9 @@ EDITS: 2
 	  (list (lambda () (insert-samples 1110 100 (make-float-vector 100 .2))) 1000 #f 'insert1110)
 	  (list (lambda () (insert-samples 2000 100 (make-float-vector 100 .2))) 1000 #f 'insert2000)
 	  
-	  (list (lambda () (insert-sound "1a.snd" 0)) (+ fr 1000) #f 'inserts0)
-	  (list (lambda () (insert-sound "1a.snd" 800)) (+ fr 1000) #f 'inserts800)
-	  (list (lambda () (insert-sound "1a.snd" 990)) (+ fr 1000) #f 'inserts990)
+	  (list (lambda () (insert-sound "1a.snd" 0)) fr #f 'inserts0)
+	  (list (lambda () (insert-sound "1a.snd" 800)) fr #f 'inserts800)
+	  (list (lambda () (insert-sound "1a.snd" 990)) fr #f 'inserts990)
 	  (list (lambda () (insert-sound "1a.snd" 1010)) 1000 #t 'inserts1010)
 	  (list (lambda () (insert-sound "1a.snd" 1050)) 1000 #t 'inserts1050)
 	  (list (lambda () (insert-sound "1a.snd" 1110)) 1000 #f 'inserts1110)
@@ -24528,11 +24528,11 @@ EDITS: 2
 	       (set! (x-axis-style (hook 'snd) #t) x-axis-as-percentage)))
   (hook-push initial-graph-hook
 	     (lambda (hook)
-	       (let ((snd (hook 'snd))
+	       (let ((snd (file-name (hook 'snd)))
 		     (chn (hook 'chn))
 		     (dur (hook 'duration)))
-		 (if (mus-sound-maxamp-exists? (file-name snd))
-		     (let ((max-val ((mus-sound-maxamp (file-name snd)) (+ (* chn 2) 1)))) ; implicit index
+		 (if (mus-sound-maxamp-exists? snd)
+		     (let ((max-val ((mus-sound-maxamp snd) (+ (* chn 2) 1)))) ; implicit index
 		       (set! (hook 'result) (list 0.0 dur (- max-val) max-val)))
 		     (set! (hook 'result) (list 0.0 dur -1.0 1.0))))))
   (set! (hook-functions after-open-hook) ())
@@ -28074,7 +28074,7 @@ EDITS: 2
 	(if (fneq (maxamp snd 0) .334) (snd-display ";maxamp of sound (0): ~A" (maxamp snd)))
 	(if (fneq (maxamp snd 0 0) .14724) (snd-display ";maxamp of sound (0 0): ~A" (maxamp snd)))
 	(if (fneq (maxamp v) .3) (snd-display ";maxamp of float-vector: ~A" (maxamp v)))
-	(let ((vc (maxamp (vector .1 .2 .3 .4))))
+	(let ((vc (maxamp #(.1 .2 .3 .4))))
 	  (if (fneq vc .4) (snd-display ";maxamp of vector: ~A" vc)))
 	(let ((str (maxamp "pistol.snd"))) ; can't use oboe.snd since we messed with mus-sound-maxamp above
 	  (if (fneq str .49267) (snd-display ";maxamp of string: ~A" str)))
@@ -30174,8 +30174,7 @@ EDITS: 2
 				       -0.003 -0.002 -0.000 0.001 0.001 0.000 0.000 -0.000 -0.000 -0.000)))
 	    (snd-display ";src-channel 0.25 -> ~A" (channel->float-vector 360 80 ind 0)))
 	(undo 2 ind 0)
-					;(map-channel (let ((i 0)) (lambda (y) (let ((val (sin (* i (/ pi 100))))) (set! i (+ i 1)) (* .5 val)))))
-	(let ((e (make-env (list 0.0 0.0 1.0 1.0) :scaler (* .01 pi (- (framples) 1.0)) :length (framples))))
+	(let ((e (make-env '(0.0 0.0 1.0 1.0) :scaler (* .01 pi (- (framples) 1.0)) :length (framples))))
 	  (map-channel (lambda (y) (* .5 (sin (env e))))))
 	(for-each
 	 (lambda (sr df)
@@ -38630,9 +38629,6 @@ EDITS: 1
     (define (fvi176) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 (abs x) (abs x)))))
     (test (fvi176) (make-int-vector 4 6))
     
-    (define (fvi177) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x)))))
-    (test (fvi177) (make-int-vector 4 6))
-    
     (define (fvi178) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x)))))
     (test (fvi178) (make-int-vector 4 6))
     
@@ -38737,9 +38733,6 @@ EDITS: 1
     (define (fv176b) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2.0 (abs x) (abs x)))))
     (test (fv176b) (make-float-vector 4 -2.0))
     
-    (define (fv177b) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) (abs x) (abs x)))))
-    (test (fv177b) (make-float-vector 4 -2.0))
-    
     (define (fv178b) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x (abs x)))))
     (test (fv178b) (make-float-vector 4 -2.0))
     
@@ -38781,9 +38774,6 @@ EDITS: 1
     
     (define (fvi176a) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- 2 (abs x) (abs x)))))
     (test (fvi176a) (make-int-vector 4 -2))
-    
-    (define (fvi177a) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) (abs x) (abs x)))))
-    (test (fvi177a) (make-int-vector 4 -2))
     
     (define (fvi178a) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (- (abs x) x (abs x)))))
     (test (fvi178a) (make-int-vector 4 -2))
@@ -42475,7 +42465,7 @@ EDITS: 1
 		(XFreeFontSet dpy fs))))
 	(XBell dpy 10)
 	(let ((cmd (XGetCommand dpy win)))
-	  (if (or (<= (length cmd) 0)
+	  (if (or (null? cmd)
 		  (not (string=? (substring (car cmd) (- (length (car cmd)) 3)) "snd")))
 	      (snd-display ";XGetCommand: ~A" cmd)))
 	(XSetCommand dpy win (list "hiho" "away") 2)

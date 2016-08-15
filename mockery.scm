@@ -292,7 +292,7 @@
 		  'getenv                 (lambda (obj) (#_getenv (obj 'value)))
 		  'delete-file            (lambda (obj) (#_delete-file (obj 'value)))
 		  'system                 (lambda* (obj cap) (#_system (obj 'value) cap))
-		  '->byte-vector           (lambda (obj) (#_->byte-vector (obj 'value))) ; this is in-place! 
+		  'string->byte-vector    (lambda (obj) (#_string->byte-vector (obj 'value))) ; this is in-place! 
 		  'load                   (lambda* (obj (e (curlet))) (#_load (obj 'value) e))
 		  'eval-string            (lambda* (obj (e (curlet))) (#_eval-string (obj 'value) e))
 		  'char-position          (make-local-method #_char-position)

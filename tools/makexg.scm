@@ -1835,14 +1835,13 @@
 
 (define max-args 8)
 
-(define handle-func
-  (lambda (data)
-    (let* ((name (car data))
-	   (args (caddr data))
-	   (cargs (length args))
-	   (refargs (ref-args args))
-	    (return-type (cadr data))
-	   (lambda-type (hash-table-ref names name)))
+(define (handle-func data)
+  (let ((name (car data))
+	(args (caddr data))
+	(return-type (cadr data)))
+    (let ((cargs (length args))
+	  (refargs (ref-args args))
+	  (lambda-type (hash-table-ref names name)))
       (let ((callback-data (and (not (eq? lambda-type 'fnc))
 				(find-callback 
 				 (lambda (func)

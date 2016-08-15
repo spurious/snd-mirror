@@ -163,7 +163,7 @@
 			         make-list length copy fill! reverse reverse! sort! append assq assv memq memv vector-append 
 			         list->vector vector-fill! vector-length vector->list vector-ref vector-set! vector-dimensions 
 			         make-vector make-shared-vector vector float-vector make-float-vector float-vector-set! 
-			         float-vector-ref int-vector make-int-vector int-vector-set! int-vector-ref ->byte-vector 
+			         float-vector-ref int-vector make-int-vector int-vector-set! int-vector-ref string->byte-vector 
 			         byte-vector make-byte-vector hash-table hash-table* make-hash-table hash-table-ref 
 			         hash-table-set! hash-table-entries cyclic-sequences call/cc call-with-current-continuation 
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
@@ -9259,72 +9259,72 @@
 						       head (truncated-list->string `(set! ,vn ,(var-initial-value (car cur)))))))
 			      (lint-format "~A ~A ~A is declared twice" caller head type vn)))))))))
 	  
-	  (let ((old-line-number line-number))
+	  (let ((old-line-number line-number)
+		(outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
 	    
 	    (for-each 
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
+
 		 ;; do all refs to an unset var go through the same function (at some level)
 		 (when (and (zero? (var-set local-var))
 			    (> (var-ref local-var) 1))
 		   (let ((hist (var-history local-var)))
-		     (when (pair? hist)
-		       (let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
-			 ;; if outer-form is #f, local-var is probably a top-level var
-			 (when (and (pair? outer-form)
-				    (not (and (memq (car outer-form) '(let let*))  ; not a named-let parameter
-					      (symbol? (cadr outer-form)))))
-			   (let ((first (car hist)))                               ; all but the initial binding have to match this
-			     (when (pair? first)
-			       (let ((op (car first)))
-				 (when (and (symbol? op)
-					    (not (eq? op 'unquote))
-					    (not (hash-table-ref makers op))
-					    (not (eq? vname op))                   ; not a function (this kind if repetition is handled elsewhere)
-					    (pair? (cdr hist))
-					    (pair? (cddr hist))
-					    (pair? (cdr first))
-					    (not (side-effect? first env))
-					    (every? (lambda (a)
-						      (or (eq? a vname)
-							  (code-constant? a)))
-						    (cdr first))
-					    (or (code-constant? (var-initial-value local-var))
-						(= (tree-count1 vname first 0) 1))
-					    (every? (lambda (a) 
-						      (and (pair? a)
-							   (or (equal? first a)
-							       (and (eq? (hash-table-ref reversibles (car first)) (car a))
-								    (equal? (cdr first) (reverse (cdr a))))
-							       (set! op (match-cxr op (car a))))))
-						    (if (eq? otype 'parameter)
-							(cdr hist)
-							(copy (cdr hist) (make-list (- (length hist) 2))))))
-				   (let* ((new-op (or op (car first)))
-					  (set-target (let walker ((tree outer-form)) ; check for new-op dilambda as target of set!
-							(and (pair? tree)
-							     (or (and (eq? (car tree) 'set!)
-								      (pair? (cdr tree))
-								      (pair? (cadr tree))
-								      (eq? (caadr tree) new-op))
-								 (walker (car tree))
-								 (walker (cdr tree)))))))
-				     (unless set-target
-				       (if (eq? otype 'parameter)
-					   (if (> (var-ref local-var) 2)
-					       (lint-format "parameter ~A is always accessed (~A times) via ~S" caller
-							    vname (var-ref local-var) `(,new-op ,@(cdr first))))
-					   (lint-format* caller 
-							 (symbol->string vname)
-							 " is not set, and is always accessed via "
-							 (object->string `(,new-op ,@(cdr first)))
-							 " so its binding could probably be "
-							 ;;        "probably" here because the accesses could have hidden protective assumptions
-							 ;;          i.e. full accessor is not valid at point of let binding
-							 (object->string `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first)))))
-							 " in "
-							 (truncated-list->string outer-form))))))))))))))
+		     (when (and (pair? hist)
+				(pair? outer-form)                             ; if outer-form is #f, local-var is probably a top-level var
+				(not (and (memq (car outer-form) '(let let*))  ; not a named-let parameter
+					  (symbol? (cadr outer-form)))))
+		       (let ((first (car hist)))                               ; all but the initial binding have to match this
+			 (when (pair? first)
+			   (let ((op (car first)))
+			     (when (and (symbol? op)
+					(not (eq? op 'unquote))
+					(not (hash-table-ref makers op))
+					(not (eq? vname op))                   ; not a function (this kind if repetition is handled elsewhere)
+					(pair? (cdr hist))
+					(pair? (cddr hist))
+					(pair? (cdr first))
+					(not (side-effect? first env))
+					(every? (lambda (a)
+						  (or (eq? a vname)
+						      (code-constant? a)))
+						(cdr first))
+					(or (code-constant? (var-initial-value local-var))
+					    (= (tree-count1 vname first 0) 1))
+					(every? (lambda (a) 
+						  (and (pair? a)
+						       (or (equal? first a)
+							   (and (eq? (hash-table-ref reversibles (car first)) (car a))
+								(equal? (cdr first) (reverse (cdr a))))
+							   (set! op (match-cxr op (car a))))))
+						(if (eq? otype 'parameter)
+						    (cdr hist)
+						    (copy (cdr hist) (make-list (- (length hist) 2))))))
+			       (let* ((new-op (or op (car first)))
+				      (set-target (let walker ((tree outer-form)) ; check for new-op dilambda as target of set!
+						    (and (pair? tree)
+							 (or (and (eq? (car tree) 'set!)
+								  (pair? (cdr tree))
+								  (pair? (cadr tree))
+								  (eq? (caadr tree) new-op))
+							     (walker (car tree))
+							     (walker (cdr tree)))))))
+				 (unless set-target
+				   (if (eq? otype 'parameter)
+				       (if (> (var-ref local-var) 2)
+					   (lint-format "parameter ~A is always accessed (~A times) via ~S" caller
+							vname (var-ref local-var) `(,new-op ,@(cdr first))))
+				       (lint-format* caller 
+						     (symbol->string vname)
+						     " is not set, and is always accessed via "
+						     (object->string `(,new-op ,@(cdr first)))
+						     " so its binding could probably be "
+						     ;;        "probably" here because the accesses could have hidden protective assumptions
+						     ;;          i.e. full accessor is not valid at point of let binding
+						     (object->string `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first)))))
+						     " in "
+						     (truncated-list->string outer-form))))))))))))
 		 
 		 ;; translate to dilambda fixing arg if necessary and mention generic set!
 		 (let ((init (var-initial-value local-var)))
@@ -9444,6 +9444,31 @@
 		       (format outport "~NCdefine-expansion for ~A is not at the top-level, so it is ignored~%" 
 			       lint-left-margin #\space
 			       vname))
+
+		   ;; look for port opened but not closed
+		   ;;    (let ((p (open-output-file str))) (display 32 p) x)
+		   (when (and (pair? outer-form)
+			      (not (tree-memq vname (list-ref outer-form (- (length outer-form) 1)))))  ; vname never returned from outer-form??
+		     (let ((hist (var-history local-var))
+			   (open-set '(open-input-string open-input-file open-output-string open-output-file))
+			   (open-form #f))
+		       (when (and (any? (lambda (tree)
+					  (and (pair? tree)
+					       (or (and (memq (car tree) open-set)
+							(pair? (cdr tree))
+							(not (memq vname (cdr tree))))
+						   (and (eq? (car tree) 'set!)
+							(pair? (cdr tree))
+							(eq? (cadr tree) vname)
+							(pair? (cddr tree))
+							(pair? (caddr tree))
+							(memq (caaddr tree) open-set)))
+					       (set! open-form tree)))
+					hist)
+				  (not (tree-set-member '(close-input-port close-output-port close-port close current-output-port current-input-port) hist)))
+			 (lint-format "in ~A~%     perhaps ~A is opened via ~A, but never closed" caller
+				      (truncated-list->string outer-form) 
+				      vname open-form))))
 		   
 		   (when (and *report-function-stuff*
 			      (memq (var-ftype local-var) '(define lambda define* lambda*))
@@ -18182,6 +18207,8 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; if setter in dilambda has same number of args as getter, (set! (h) y) -- lint thinks (h) needs an argument
+;;; if setter in dilambda has same number of args as getter, (set! (h) y) -- lint thinks (h) needs an argument 9004
+;;;   lambdas seem to be unchecked (t347)
+;;; open/close mismatches (and IO to wrong type?)
 ;;;
 ;;; 148 24187 651205

@@ -1011,7 +1011,7 @@ struct s7_scheme {
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
              sublet_symbol, substring_symbol, subtract_symbol, symbol_access_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
              symbol_to_keyword_symbol, symbol_to_string_symbol, symbol_to_value_symbol, 
-             tan_symbol, tanh_symbol, throw_symbol, to_byte_vector_symbol, truncate_symbol,
+             tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, truncate_symbol,
              unlet_symbol, 
              values_symbol, varlet_symbol, vector_append_symbol, vector_dimensions_symbol, vector_fill_symbol, vector_ref_symbol,
              vector_set_symbol, vector_symbol, 
@@ -5978,7 +5978,7 @@ static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- unlet -------------------------------- */
-#define UNLET_ENTRIES 400
+#define UNLET_ENTRIES 410 /* 401 if not --disable-deprecated etc */
 
 static void save_unlet(s7_scheme *sc)
 {
@@ -26073,10 +26073,10 @@ static s7_pointer g_is_byte_vector(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_to_byte_vector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_to_byte_vector(s7_scheme *sc, s7_pointer args)
 {
-  #define H_to_byte_vector "(->byte-vector obj) turns a string into a byte-vector."
-  #define Q_to_byte_vector s7_make_signature(sc, 2, sc->is_byte_vector_symbol, sc->is_string_symbol)
+  #define H_string_to_byte_vector "(string->byte-vector obj) turns a string into a byte-vector."
+  #define Q_string_to_byte_vector s7_make_signature(sc, 2, sc->is_byte_vector_symbol, sc->is_string_symbol)
   s7_pointer str;
   str = car(args);
   if (is_integer(str))
@@ -26084,15 +26084,15 @@ static s7_pointer g_to_byte_vector(s7_scheme *sc, s7_pointer args)
   else
     {
       if (!is_string(str))
-	method_or_bust(sc, str, sc->to_byte_vector_symbol, set_plist_1(sc, str), T_STRING, 1);
+	method_or_bust(sc, str, sc->string_to_byte_vector_symbol, set_plist_1(sc, str), T_STRING, 1);
     }
   set_byte_vector(str);
   return(str);
 }
 
-static s7_pointer c_to_byte_vector(s7_scheme *sc, s7_pointer str) {return(g_to_byte_vector(sc, set_plist_1(sc, str)));}
+static s7_pointer c_string_to_byte_vector(s7_scheme *sc, s7_pointer str) {return(g_string_to_byte_vector(sc, set_plist_1(sc, str)));}
 
-PF_TO_PF(to_byte_vector, c_to_byte_vector)
+PF_TO_PF(string_to_byte_vector, c_string_to_byte_vector)
 
 
 static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
@@ -52167,7 +52167,7 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->list_set_symbol)), list_set_pf);
   s7_pf_set_function(slot_value(global_slot(sc->let_ref_symbol)), let_ref_pf);
   s7_pf_set_function(slot_value(global_slot(sc->let_set_symbol)), let_set_pf);
-  s7_pf_set_function(slot_value(global_slot(sc->to_byte_vector_symbol)), to_byte_vector_pf);
+  s7_pf_set_function(slot_value(global_slot(sc->string_to_byte_vector_symbol)), string_to_byte_vector_pf);
 
   s7_rf_set_function(slot_value(global_slot(sc->float_vector_ref_symbol)), float_vector_ref_rf);
   s7_rf_set_function(slot_value(global_slot(sc->float_vector_set_symbol)), float_vector_set_rf);
@@ -74496,7 +74496,7 @@ s7_scheme *s7_init(void)
   sc->int_vector_set_symbol =        defun("int-vector-set!",	int_vector_set,		3, 0, true);
   sc->int_vector_ref_symbol =        defun("int-vector-ref",	int_vector_ref,		2, 0, true);
 
-  sc->to_byte_vector_symbol =        defun("->byte-vector",	to_byte_vector,		1, 0, false);
+  sc->string_to_byte_vector_symbol = defun("string->byte-vector", string_to_byte_vector, 1, 0, false);
   sc->byte_vector_symbol =           defun("byte-vector",	byte_vector,		0, 0, true);
   sc->make_byte_vector_symbol =      defun("make-byte-vector",  make_byte_vector,	1, 1, false);
 
@@ -74954,6 +74954,7 @@ s7_scheme *s7_init(void)
                           (define procedure-with-setter?     dilambda?)\n\
                           (define make-random-state          random-state) \n\
                           (define make-complex               complex) \n\
+                          (define ->byte-vector              string->byte-vector) \n\
                           (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
 
@@ -75050,6 +75051,7 @@ int main(int argc, char **argv)
  * pair/let (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a history of calls(args/results/stack), vars via symbol-access?
+ * ideally, let-temporarily would be built-in syntax
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
