@@ -5982,7 +5982,6 @@ static s7_pointer g_is_let(s7_scheme *sc, s7_pointer args)
 
 static void save_unlet(s7_scheme *sc)
 {
-  /* there are ca 374 predefined functions and whatnot */
   int i, k = 0;
   s7_pointer x;
   s7_pointer *inits;

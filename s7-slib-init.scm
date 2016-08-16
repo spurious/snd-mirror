@@ -6,6 +6,9 @@
 ;;; S7 is embedded in Snd or Sndlib;
 ;;; It does not exist as a stand-alone program.
 
+;;@ define an error procedure for the library
+(define slib:error error)
+
 ;;@ (software-type) should be set to the generic operating system type.
 ;;; unix, vms, macos, amiga and ms-dos are supported.
 (define (software-type) 'unix)
@@ -320,9 +323,6 @@
     (let ((cep (current-error-port)))
       (if (provided? 'trace) (print-call-stack cep))
       (format cep "Warn: ~{ ~S~}~%" args))))
-
-;;@ define an error procedure for the library
-(define slib:error error)
 
 ;@
 (define (make-exchanger obj)
