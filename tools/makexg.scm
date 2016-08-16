@@ -2786,11 +2786,12 @@
  all-funcs all-func-withs)
 
 (define (cast-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\", pl_bpt);~%" 
-       (no-arg (car func)) 
-       (no-arg (car func))
-       (no-arg (car func))
-       (no-arg (car func))))
+  (let ((f (car func)))
+    (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\", pl_bpt);~%" 
+	 (no-arg f)
+	 (no-arg f)
+	 (no-arg f)
+	 (no-arg f))))
 
 (hey "  Xg_define_procedure(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, \"(GPOINTER obj) casts obj to GPOINTER\", NULL);~%")
 
@@ -2814,12 +2815,13 @@
 (hey "  Xg_define_procedure(gtk_init_check, gxg_gtk_init_check_w, 0, 2, 0, H_gtk_init_check, NULL);~%")
 
 (define (check-out func)
-  (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0,~%~NC\"(~A obj): \" PROC_TRUE \" if obj is a ~A\", pl_bt);~%" 
-       (no-arg (car func)) 
-       (no-arg (car func))
+  (let ((f (car func)))
+    (hey "  Xg_define_procedure(~A, gxg_~A_w, 1, 0, 0,~%~NC\"(~A obj): \" PROC_TRUE \" if obj is a ~A\", pl_bt);~%" 
+       (no-arg f)
+       (no-arg f)
        22 #\space
-       (no-arg (car func))
-       (no-arg (car func))))
+       (no-arg f)
+       (no-arg f))))
 
 (for-each check-out (reverse checks))
 (for-each
