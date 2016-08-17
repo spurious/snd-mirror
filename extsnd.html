@@ -2254,16 +2254,15 @@ and decay portions in the envelope editor, or use functions such as
 (hook-push <em class=red>enved-hook</em>
   (lambda (hook)
     (let ((env (hook 'envelope))
-          (pt (hook 'point))
+          (pt (* 2 (hook 'point)))
           (x (hook 'x))
           (y (hook 'y))
           (reason (hook 'reason)))
       (if (and (= reason enved-move-point)
                (&gt; x 0.0)
                (&lt; x (envelope-last-x env)))
-          (let* ((old-x (env (* pt 2)))
-                 (new-env (stretch-envelope env old-x x)))
-            (set! (new-env (+ (* pt 2) 1)) y)
+          (let ((new-env (stretch-envelope env (env pt) x)))
+            (set! (new-env (+ pt 1)) y)
             (set! (hook 'result) new-env))))))
 </pre>
 
@@ -6123,15 +6122,13 @@ The Edit:Mix selection menu choice is (mix-selection (cursor)).
 saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"))
     (lambda (dur base)
       (let ((hop (floor (* (<a class=quiet href="#srate">srate</a>) dur)))
-	    (len (<a class=quiet href="#framples">framples</a>))
-            (old-sync (<a class=quiet href="#sync">sync</a>)))
-        (set! (<a class=quiet href="#sync">sync</a>) 1) ; save all chans
-        (do ((i 0 (+ i hop))
-	     (j 0 (+ j 1)))
-	    ((&gt;= i len))
-          (<a class=quiet href="sndscm.html#makeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
-          (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
-        (set! (<a class=quiet href="#sync">sync</a>) old-sync)))))
+	    (len (<a class=quiet href="#framples">framples</a>)))
+        (let-temporarily (((sync) 1))          ; save all chans
+          (do ((i 0 (+ i hop))
+	       (j 0 (+ j 1)))
+	      ((&gt;= i len))
+            (<a class=quiet href="sndscm.html#makeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
+            (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j)))))))))
 </pre>
 
 <pre class="indented">
@@ -9298,13 +9295,13 @@ the end points:
 
 <pre class="indented">
 (define (smoother y0 y1 num)
-   (let ((v (make-float-vector (+ 1 num))) 
-	 (angle (if (&gt; y1 y0) pi 0.0)) 
-	 (off (* .5 (+ y0 y1))) 
-	 (scale (* 0.5 (abs (- y1 y0)))))
-     (do ((i 0 (+ i 1)))
-         ((= i num) v)
-       (set! (v i) (+ off (* scale (cos (+ angle (* i (/ pi num))))))))))
+   (do ((v (make-float-vector (+ 1 num))) 
+	(angle (if (&gt; y1 y0) pi 0.0)) 
+	(off (* .5 (+ y0 y1))) 
+	(scale (* 0.5 (abs (- y1 y0))))
+        (i 0 (+ i 1)))
+       ((= i num) v)
+     (set! (v i) (+ off (* scale (cos (+ angle (* i (/ pi num)))))))))
 </pre>
 
 <img class="indented" src="pix/click.png" alt="smoother">
@@ -11292,16 +11289,16 @@ Here's an example that displays a histogram of the current values in 16 bins:
 <pre class="indented">
 (<em class=red>add-transform</em> "histogram" "bins" 0.0 1.0 
   (lambda (len fd)
-    (let ((v (make-float-vector len))
-          (steps (/ len 16))
-          (step (/ 1.0 len)))
-      (do ((i 0 (+ i 1))) 
-          ((= i len) v)
-        (let* ((val (<a class=quiet href="#readsample">read-sample</a> fd))
-               (bin (floor (* (abs val) 16.0))))
-          (do ((j 0 (+ j 1))) 
-              ((= j steps))
-            (set! (v (+ j bin)) (+ step (v (+ j bin))))))))))
+    (do ((v (make-float-vector len))
+         (steps (/ len 16))
+         (step (/ 1.0 len))
+         (i 0 (+ i 1))) 
+        ((= i len) v)
+      (let* ((val (<a class=quiet href="#readsample">read-sample</a> fd))
+             (bin (floor (* (abs val) 16.0))))
+        (do ((j 0 (+ j 1))) 
+            ((= j steps))
+          (set! (v (+ j bin)) (+ step (v (+ j bin)))))))))
 </pre>
 
 <p>If GSL is included in Snd, the following code ties in the (slow) Hankel transform:

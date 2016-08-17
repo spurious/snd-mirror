@@ -3055,10 +3055,11 @@ filter 'order'.  A common application cancels 60 Hz hum:
 </p>
 
 <pre class="indented">
-(notch-channel (let ((freqs ())) 
-                 (do ((i 60 (+ i 60))) 
-                     ((= i 3000)) 
-                   (set! freqs (cons i freqs))) (reverse freqs)))
+(notch-channel (do ((freqs ())
+                    (i 60 (+ i 60))) 
+                   ((= i 3000) 
+                    (reverse freqs))
+                 (set! freqs (cons i freqs))))
 </pre>
 
 <p>Here we've built a list of multiples of 60 and passed it to notch-channel. Its default notch
@@ -3070,10 +3071,12 @@ But, if the hum is not absolutely stable, you'll probably want wider notches:
 </p>
 
 <pre class="indented">
-(notch-channel (let ((freqs ())) 
-                 (do ((i 60 (+ i 60))) 
-                     ((= i 3000)) 
-                   (set! freqs (cons i freqs))) (reverse freqs)) 1024)
+(notch-channel (do ((freqs ())
+                    (i 60 (+ i 60))) 
+                   ((= i 3000)
+                    (reverse freqs))
+                 (set! freqs (cons i freqs)))
+                1024)
 </pre>
 
 <p>The order of 1024 means we get 20 Hz width minima (44100 Hz srate), so this
@@ -9386,12 +9389,11 @@ pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 		512 4 128 1.0
 		#f ;no change to analysis
 		(lambda (v)
-		  (let ((N (length v)))
-		    (do ((i 0 (+ i 1)))
-		        ((= i N))
-		      (if (&lt; ((phase-vocoder-amp-increments v) i) gate)
-		          (set! ((phase-vocoder-amp-increments v) i) 0.0)))
-		    #t))
+		  (do ((N (length v))
+		       (i 0 (+ i 1)))
+		      ((= i N) #t)
+		    (if (&lt; ((phase-vocoder-amp-increments v) i) gate)
+		        (set! ((phase-vocoder-amp-increments v) i) 0.0))))
 	        #f))) ;no change to synthesis
       (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (val)
 		  (<a class=quiet href="sndclm.html#phase-vocoder">phase-vocoder</a> pv))))))

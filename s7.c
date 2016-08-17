@@ -74903,7 +74903,7 @@ s7_scheme *s7_init(void)
                         			`(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1)))) \n\
                         			`(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1))))))) \n\
                         		  vars)                                                               \n\
-                                 ,(if (pair? body) `(with-let orig ,@body) #f))                               \n\
+                                 ,(and (pair? body) `(with-let orig ,@body)))                                 \n\
                                (lambda ()                                                                     \n\
                         	 ,@(map (let ((ctr -1))                                                       \n\
                         	          (lambda (v)                                                         \n\

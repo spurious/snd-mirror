@@ -579,15 +579,15 @@ is the word "definstrument":
 
 <pre class="indented">
 (define (telephone start telephone-number)
-  (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
-	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
-    (do ((i 0 (+ i 1)))
-	((= i (length telephone-number)))
-      (let* ((num (telephone-number i))
-	     (frq1 (touch-tab-1 num))
-	     (frq2 (touch-tab-2 num)))
-        (<em class=red>simp</em> (+ start (* i .4)) .3 frq1 .1)
-        (<em class=red>simp</em> (+ start (* i .4)) .3 frq2 .1)))))
+  (do ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
+       (touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477))
+       (i 0 (+ i 1)))
+      ((= i (length telephone-number)))
+    (let* ((num (telephone-number i))
+	   (frq1 (touch-tab-1 num))
+	   (frq2 (touch-tab-2 num)))
+      (<em class=red>simp</em> (+ start (* i .4)) .3 frq1 .1)
+      (<em class=red>simp</em> (+ start (* i .4)) .3 frq2 .1))))
 
 (with-sound () (telephone 0.0 '(7 2 3 4 9 7 1)))
 </pre>
@@ -3423,14 +3423,14 @@ large component for the carrier, and all the others are very small.
   ;;   "wc" as carrier, "modfreq" as ncos freq,
   ;;   "baseindex" as FM-index of first harmonic, 
   ;;   "n" as number of harmonics
-  (let ((harms ())
-	(amps ()))
-    (do ((i 1 (+ i 1)))
-	((&gt; i n))
-      (set! harms (cons (* i modfreq) harms))
-      (set! amps (cons (/ baseindex i n) amps)))
-    (<a class=quiet href="sndscm.html#fmparallelcomponent">fm-parallel-component</a> freq-we-want wc 
-      (reverse harms) (reverse amps) () () #f)))
+  (do ((harms ())
+       (amps ())
+       (i 1 (+ i 1)))
+      ((&gt; i n)
+       (<a class=quiet href="sndscm.html#fmparallelcomponent">fm-parallel-component</a> freq-we-want wc 
+          (reverse harms) (reverse amps) () () #f))
+    (set! harms (cons (* i modfreq) harms))
+    (set! amps (cons (/ baseindex i n) amps))))
 </pre>
 
 <table class="method">
@@ -4869,10 +4869,10 @@ do perfectly well:
 
 <pre class="indented">
 (define (gaussian-noise)
-  (let ((val 0.0))
-    (do ((i 0 (+ i 1))) 
-        ((= i 12) (/ val 12.0) )
-      (set! val (+ val (random 1.0))))))
+  (do ((val 0.0)
+       (i 0 (+ i 1))) 
+      ((= i 12) (/ val 12.0))
+    (set! val (+ val (random 1.0)))))
 </pre>
 
 <p>You can watch this (or any other distribution) in action via:
@@ -4888,12 +4888,12 @@ do perfectly well:
       (rand (rands i)))
     (do ((i 0 (+ i 1)))
 	((= i 100000))
-      (let ((sum 0.0))
-	(do ((k 0 (+ k 1)))
-	    ((= k n))
-	  (set! sum (+ sum (<em class=red>rand</em> (rands k)))))
-	(let ((bin (floor (+ 100 (round sum)))))
-	  (set! (bins bin) (+ (bins bin) 1)))))
+      (do ((sum 0.0)
+	   (k 0 (+ k 1)))
+	  ((= k n)
+	   (let ((bin (floor (+ 100 (round sum)))))
+	     (set! (bins bin) (+ (bins bin) 1))))
+        (set! sum (+ sum (<em class=red>rand</em> (rands k))))))
     bins))
 
 (let ((ind (<a class=quiet href="extsnd.html#newsound">new-sound</a> "test.snd")))
@@ -4947,10 +4947,10 @@ but 0.5 should happen three times as often as either of the others:
 </p>
 
 <pre class="indented">
-(let ((vals (float-vector 0.0 0.5 0.5 0.5 1.0)))
-  (do ((i 0 (+ i 1)))
-      ((= i 10))
-    (<a class=quiet>format</a> () ";~A " (vals (random 5)))))
+(do ((vals (float-vector 0.0 0.5 0.5 0.5 1.0))
+     (i 0 (+ i 1)))
+    ((= i 10))
+  (<a class=quiet>format</a> () ";~A " (vals (random 5))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number
@@ -4968,10 +4968,10 @@ than the preceding:
 <pre class="indented">
 (define (make-1f-noise n)
   ;; returns an array of rand's ready for the 1f-noise generator
-  (let ((rans (make-vector n)))
-    (do ((i 0 (+ i 1))) 
-        ((= i n) rans)
-      (set! (rans i) (<em class=red>make-rand</em> :frequency (/ *clm-srate* (expt 2 i)))))))
+  (do ((rans (make-vector n))
+       (i 0 (+ i 1))) 
+      ((= i n) rans)
+    (set! (rans i) (<em class=red>make-rand</em> :frequency (/ *clm-srate* (expt 2 i))))))
 
 (define (1f-noise rans)
   (let ((val 0.0) 
@@ -5099,11 +5099,11 @@ We can also get all the period doublings and so on from sin:
 
 <pre class="indented">
 (<a class=quiet href="sndscm.html#withsound">with-sound</a> (:clipped #f :scaled-to 0.5)
-  (let ((x 0.5)) 
-    (do ((i 0 (+ i 1)))
-	((= i 44100))
-      (outa i x)
-      (set! x (* 4 (sin (* pi x)))))))
+  (do ((x 0.5)
+       (i 0 (+ i 1)))
+      ((= i 44100))
+    (outa i x)
+    (set! x (* 4 (sin (* pi x))))))
 </pre>
 
 <p>For an extended discussion of this case, complete with pictures of the
@@ -5557,10 +5557,10 @@ explicit do loop:
 </p>
 
 <pre class="indented">
-(let ((sum 0.0)) ; say we have n formant generators in the formants vector, and we're passing each a signal x
-  (do ((i 0 (+ i 1)))
-      ((= i n) sum)
-    (set! sum (+ sum (formant (formants i) x)))))
+(do ((sum 0.0)  ; say we have n formant generators in the formants vector, and we're passing each a signal x
+     (i 0 (+ i 1)))
+    ((= i n) sum)
+  (set! sum (+ sum (formant (formants i) x))))
 </pre>
 
 <p>can be replaced with:
@@ -6089,10 +6089,10 @@ be called via comb-bank.
 </p>
 
 <pre class="indented">
-(let ((sum 0.0)) 
-  (do ((i 0 (+ i 1)))
-      ((= i n) sum)
-    (set! sum (+ sum (comb (combs i) x)))))
+(do ((sum 0.0)
+     (i 0 (+ i 1)))
+    ((= i n) sum)
+  (set! sum (+ sum (comb (combs i) x))))
 </pre>
 
 <p>can be replaced with:

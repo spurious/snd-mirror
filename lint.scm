@@ -407,7 +407,7 @@
     (define var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
     (define var-decl    (dilambda (lambda (v) (let-ref (cdr v) 'decl))    (lambda (v x) (let-set! (cdr v) 'decl x))))
     (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
-    (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not settable
+    (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
     (define var-side-effect (dilambda (lambda (v) 
 					(if (null? (let-ref (cdr v) 'side-effect))
@@ -17464,7 +17464,7 @@
 				   (cond ((hash-table-ref special-case-functions head)
 					  => (lambda (f)
 					       (f caller head form env))))
-				   
+
 				   ;; change (list ...) to '(....) if it's safe as a constant list
 				   ;;   and (vector ...) -> #(...) 
 				   (if (and (pair? (cdr form))
@@ -18237,6 +18237,6 @@
 ;;; for scope calc, each macro call needs to be expanded or use out-vars?
 ;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
 ;;; hg-results has a lot of changes
-;;; t347 dilambda checks
+;;; t347 dilambda checks [define as opposed to let is triggering the incorrect error]
 ;;;
 ;;; 148 24187 652032

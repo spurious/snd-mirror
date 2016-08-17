@@ -1752,6 +1752,7 @@ or even <code>(&gt; 1 0+i)</code>.
 (<em class=def id="fillb">fill!</em> sequence value (start 0) end)
 (<em class=def id="s7copy">copy</em> obj) and (copy source destination (start 0) end)
 (<em class=def id="objecttostring">object-&gt;string</em> obj)
+(object-&gt;let obj)
 (length obj)
 (append . sequences)
 (map func . sequences) and (for-each func . sequences)
@@ -1863,7 +1864,7 @@ an integer as in the one dimensional case:
 <pre class="indented">
 (make-vector (list 2 3 4))
 (make-vector '(2 3) 1.0)
-(vector-dimensions (make-vector (list 2 3 4))) -&gt; (2 3 4)
+(vector-dimensions (make-vector '(2 3 4))) -&gt; (2 3 4)
 </pre>
 
 <p>The second example includes the optional initial element.
@@ -4826,9 +4827,9 @@ so this seems like a natural convention.
 
   (g_signal_connect (G_OBJECT (listener-text-widget *listener*)) "motion_notify_event" 
 		    (lambda (w e d) 
-		      (let ((mxy (gdk_event_get_coords (GDK_EVENT e))))
-			(set! *mouse-x* (cadr mxy))
-			(set! *mouse-y* (caddr mxy))))))
+		      (let ((mxy (cdr (gdk_event_get_coords (GDK_EVENT e)))))
+			(set! *mouse-x* (car mxy))
+			(set! *mouse-y* (cadr mxy))))))
 </pre>
 
 <!--
