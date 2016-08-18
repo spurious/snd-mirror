@@ -16886,9 +16886,44 @@
 		 (lint-format "stray dot in begin? ~A" caller (truncated-list->string form))
 		 env)
 	       (begin
-		 (if (and (pair? (cdr form))
-			  (null? (cddr form)))  ;  (begin (f y))
-		     (lint-format "begin could be omitted: ~A" caller (truncated-list->string form)))
+		 (when (pair? (cdr form))
+		   (if (null? (cddr form))      ;  (begin (f y))
+		       (lint-format "begin could be omitted: ~A" caller (truncated-list->string form))
+		   
+		       ;; these two are questionable -- simpler, but scope enlarged
+		       (when (and (pair? (cadr form))   
+				  (pair? (cddr form))
+				  (null? (cdddr form)))
+			 (if (and (eq? (caadr form) 'do)
+				  (< (tree-leaves (caddr form)) 24) ; or maybe (< ... (min 24 (tree-leaves do-form)))?
+				  (not (tree-set-member (map car (cadadr form)) (caddr form))))
+			     ;;  (begin (do ((i 0 (+ i 1))) ((= i 3)) (display i)) 32) -> (do ((i 0 (+ i 1))) ((= i 3) 32) (display i))
+			     ;; the do loop has to end normally to go on? That is, moving the following expr into the do end section is safe?
+			     (lint-format "perhaps ~A" caller
+					  (lists->string form
+							 (let ((do-form (cadr form)))
+							   (let ((do-test (and (pair? (caddr do-form))
+									       (caaddr do-form)))
+								 (new-end (if (and (pair? (caddr do-form))
+										   (pair? (cdaddr do-form)))
+									      (append (cdaddr do-form) (cddr form))
+									      (cddr form))))
+							     `(do ,(cadr do-form)
+								  (,do-test ,@new-end)
+								,@(cdddr do-form))))))
+
+			     (if (and (memq (caadr form) '(let let* letrec letrec*)) ; same for begin + let + expr -- not sure about this...
+				      (not (symbol? (cadadr form)))
+				      (< (tree-leaves (caddr form)) 24) ; or maybe (< ... (min 24 (tree-leaves do-form)))?
+				      (not (tree-set-member (map car (cadadr form)) (caddr form))))
+				 (lint-format "perhaps ~A" caller
+					      (lists->string form
+							     (let ((let-form (cadr form)))
+							       `(,(car let-form) ,(cadr let-form)
+								 ,@(if (< (tree-leaves (cddr let-form)) 60)
+								       (cddr let-form)
+								       (one-call-and-dots (cddr let-form)))
+								 ,(caddr form))))))))))
 		 (lint-walk-open-body caller 'begin (cdr form) env))))
 	 (hash-table-set! h 'begin begin-walker))
 	
