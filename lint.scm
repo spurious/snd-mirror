@@ -169,7 +169,7 @@
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
-			         exit dilambda make-hook hook-functions stacktrace tree-leaves
+			         exit dilambda make-hook hook-functions stacktrace tree-leaves object->let
 				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
@@ -177,7 +177,7 @@
 		  (for-each
 		   (lambda (op)
 		     (set! (h op) #t))
-		   '(gensym sublet inlet make-iterator let->list random-state random-state->list number->string
+		   '(gensym sublet inlet make-iterator let->list random-state random-state->list number->string object->let
 		     make-string string string-copy copy list->string string->list string-append substring object->string
 		     format cons list make-list reverse append vector-append list->vector vector->list make-vector
 		     make-shared-vector vector make-float-vector float-vector make-int-vector int-vector byte-vector
@@ -590,6 +590,12 @@
 	       (tree-member sym (car tree))
 	       (tree-member sym (cdr tree)))))
     
+    (define (tree-equal-member sym tree)
+      (and (pair? tree)
+	   (or (equal? (car tree) sym)
+	       (tree-member sym (car tree))
+	       (tree-member sym (cdr tree)))))
+
     (define (tree-unquoted-member sym tree)
       (and (pair? tree)
 	   (not (eq? (car tree) 'quote))
@@ -8294,6 +8300,16 @@
 		      (hash-table-set! h f sp-null))
 		    '(null eq eqv equal))) ; (null (cdr...)) 
 
+	;; ---------------- set-car set-cdr list-set vector-set string-set ----------------
+	(let ()
+	  (define (sp-set caller head form env)
+	    (if (not (var-member head env))          ;  (list-set x 1 y)
+		(lint-format "misspelled '~A! in ~A?" caller head form)))
+	  (for-each (lambda (f)
+		      (hash-table-set! h f sp-set))
+		    '(set-car set-cdr list-set vector-set string-set)))
+	;; set and sort occur a million times, but aren't interesting
+
 	;; ---------------- string-index ----------------
 	(let ()
 	  (define (sp-string-index caller head form env)
@@ -10640,8 +10656,16 @@
 		    
 		    (let ((test1 (cadr prev-f))
 			  (test2 (cadr f)))
-		      (let ((equal-tests  ; test1 = test2
+		      ;;     (if A...) (if (not A)...) happens very rarely -- only two rewritable hits
+		      (let ((equal-tests  ; test1 = test2 [check for side-effects already]
 			     (lambda ()
+
+			       (if (and (pair? (caddr prev-f))
+					(escape? (caddr prev-f) env))
+				   ;; (begin (if x (error 'oops)) (if x y)) -> begin: x is #f in (if x y) -- this never happens
+				   (lint-format "~A is #f in ~A" caller 
+						test2 (truncated-list->string f)))
+
 			       ;; (... (if (and A B) (f C)) (if (and B A) (g E) (h F)) ...) -> (... (if (and A B) (begin (f C) (g E)) (begin (h F))) ...)
 			       (lint-format "perhaps ~A" caller
 					    (lists->string
@@ -10977,6 +11001,15 @@
 		    (let ((arg1 (caddr prev-f))
 			  (arg2 (caddr f))
 			  (settee (cadr f)))
+
+		      (if (and (or (and (equal? settee arg1)          ; (set! x y) (set! y x)
+					(equal? arg2 (cadr prev-f)))
+				   (and (equal? settee (cadr prev-f)) ; (set! x y) (set! x y)
+					(equal? arg1 arg2)))
+			       (not (tree-equal-member settee arg2)))
+			  (lint-format "this pair of set!s looks odd: ~A" caller
+				       `(... ,prev-f ,f ...)))
+			    
 		      (if (eq? settee (cadr prev-f))
 			  (cond ((not (and (pair? arg2)          ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
 					   (tree-unquoted-member settee arg2)))
@@ -11012,7 +11045,7 @@
 				 (lint-format "perhaps ~A ~A ->~%~NC~A" caller 
 					      prev-f f pp-left-margin #\space
 					      (object->string `(set! ,settee ,(tree-subst arg1 settee arg2))))))
-			  
+
 			  (if (and (symbol? (cadr prev-f)) ; (set! x (A)) (set! y (A)) -> (set! x (A)) (set! y x)
 				   (pair? arg1)            ;   maybe more trouble than it's worth
 				   (equal? arg1 arg2)
@@ -14918,7 +14951,7 @@
 			 (cadr-subst sym new-sym (cdr tree))))))
 
 	  (define (var-step v) ((cdr v) 'step))
-		   
+		  
 	 (define (do-walker caller form env)
 	   (let ((vars ()))
 	     (if (not (and (>= (length form) 3)
@@ -14932,6 +14965,7 @@
 		   ;; do+lambda in body with stepper as free var never happens
 
 		   (unless (side-effect? form env)
+		     ;; a much more permissive check here (allowing sets of locals etc) got only a half-dozen hits
 		     (let ((end+result (caddr form)))
 		       (if (or (not (pair? end+result))
 			       (null? (cdr end+result)))
@@ -15742,11 +15776,6 @@
 			    
 			    (when (and (zero? (var-set local-var))
 				       (= (var-ref local-var) 2)) ; initial value and set!
-			      (define (tree-equal-member sym tree)
-				(and (pair? tree)
-				     (or (equal? (car tree) sym)
-					 (tree-member sym (car tree))
-					 (tree-member sym (cdr tree)))))
 			      (do ((saved-name (var-initial-value local-var))
 				   (p body (cdr p))
 				   (last-pos #f)
@@ -16952,8 +16981,8 @@
 			  (and (pair? e)
 			       (let ((op (return-type (car e) env)))
 				 (and op
-				      (not (return-type-ok? 'let? op))))))  ;  (with-let 123 123)
-		      (lint-format "~A: first argument should be an environment: ~A" 'with-let caller (truncated-list->string form)))
+				      (not (return-type-ok? 'let? op))))))  ;  (with-let 123 123)	
+	      (lint-format "~A: first argument should be an environment: ~A" 'with-let caller (truncated-list->string form)))
 		  
 		  (if (symbol? e)
 		      (set-ref e caller form env)
@@ -17590,6 +17619,14 @@
 				       (pair? (cdr form))) ; identity needs an argument
 				  ;; ((lambda (x) x) 32) -> 32
 				  (lint-format "perhaps ~A" caller (truncated-lists->string form (cadr form))))
+
+				 ((and (symbol? (cadr head)) ; ((lambda x x) 1 2 3) -> (list 1 2 3)
+				       (pair? (cddr head))
+				       (eq? (cadr head) (caddr head))
+				       (null? (cdddr head)))
+				  (lint-format "perhaps ~A" caller
+					       (lists->string form
+							      `(list ,@(cdr form)))))
 				 
 				 ((and (null? (cadr head))
 				       (pair? (cddr head)))
@@ -18274,4 +18311,4 @@
 ;;; hg-results has a lot of changes
 ;;; t347 dilambda checks [define as opposed to let is triggering the incorrect error]
 ;;;
-;;; 148 24187 652032
+;;; 148 24187 652907

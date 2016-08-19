@@ -283,12 +283,11 @@
 	  (let ((len (length speakers)))
 	    (if (= len 1)
 		(set! groups (list (list 0)))
-		(begin
-		  (do ((i 0 (+ i 1))
-		       (j 1 (+ j 1)))
-		      ((= i len))
-		    (set! groups (cons (list i (modulo j len)) groups)))
-		  (set! groups (reverse groups)))))))
+		(do ((i 0 (+ i 1))
+		     (j 1 (+ j 1)))
+		    ((= i len)
+		     (set! groups (reverse groups)))
+		  (set! groups (cons (list i (modulo j len)) groups)))))))
   
   (if (null? groups)
       (error 'mus-error "no groups specified, speakers must be arranged in groups~%"))

@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [371]
-;;;  test 1: defaults                           [1026]
-;;;  test 2: headers                            [1397]
-;;;  test 3: variables                          [1712]
-;;;  test 4: sndlib                             [2273]
-;;;  test 5: simple overall checks              [4067]
-;;;  test 6: float-vectors                      [8709]
-;;;  test 7: colors                             [8970]
-;;;  test 8: clm                                [9461]
-;;;  test 9: mix                                [21164]
-;;;  test 10: marks                             [22902]
-;;;  test 11: dialogs                           [23829]
-;;;  test 12: extensions                        [23990]
-;;;  test 13: menus, edit lists, hooks, etc     [24245]
-;;;  test 14: all together now                  [25502]
-;;;  test 15: chan-local vars                   [26310]
-;;;  test 16: regularized funcs                 [27974]
-;;;  test 17: dialogs and graphics              [31634]
-;;;  test 18: save and restore                  [31740]
-;;;  test 19: transforms                        [33327]
-;;;  test 20: new stuff                         [35367]
-;;;  test 21: optimizer                         [36543]
-;;;  test 22: with-sound                        [38981]
-;;;  test 23: X/Xt/Xm                           [41757]
-;;;  test 24: GL                                [45330]
-;;;  test 25: errors                            [45451]
-;;;  test 26: s7                                [46880]
-;;;  test all done                              [47016]
-;;;  test the end                               [47188]
+;;;  test 0: constants                          [370]
+;;;  test 1: defaults                           [1025]
+;;;  test 2: headers                            [1396]
+;;;  test 3: variables                          [1710]
+;;;  test 4: sndlib                             [2271]
+;;;  test 5: simple overall checks              [4065]
+;;;  test 6: float-vectors                      [8707]
+;;;  test 7: colors                             [8968]
+;;;  test 8: clm                                [9459]
+;;;  test 9: mix                                [21162]
+;;;  test 10: marks                             [22900]
+;;;  test 11: dialogs                           [23827]
+;;;  test 12: extensions                        [23988]
+;;;  test 13: menus, edit lists, hooks, etc     [24243]
+;;;  test 14: all together now                  [25500]
+;;;  test 15: chan-local vars                   [26308]
+;;;  test 16: regularized funcs                 [27972]
+;;;  test 17: dialogs and graphics              [31632]
+;;;  test 18: save and restore                  [31737]
+;;;  test 19: transforms                        [33324]
+;;;  test 20: new stuff                         [35364]
+;;;  test 21: optimizer                         [36540]
+;;;  test 22: with-sound                        [38881]
+;;;  test 23: X/Xt/Xm                           [41657]
+;;;  test 24: GL                                [45230]
+;;;  test 25: errors                            [45351]
+;;;  test 26: s7                                [46780]
+;;;  test all done                              [46916]
+;;;  test the end                               [47088]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -5344,7 +5344,7 @@ EDITS: 5
 	     (line (read-line p)))
 	(if (not (string=? "Snd: fft peaks" (substring line 0 14)))
 	    (snd-display ";peaks 1: ~A?" line))
-	(set! line (read-line p))
+	(read-line p)
 	(set! line (read-line p))
 	(if (not (member line '(#<eof> "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2"
 				       "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), Blackman2\n")))
@@ -31698,7 +31698,6 @@ EDITS: 1
 	(set! (hook-functions after-graph-hook) ())
 	(set! (hook-functions lisp-graph-hook) ())
 	
-	(set! (hook-functions lisp-graph-hook) ())
 	(let ((ind (open-sound "oboe.snd")))
 	  (set! (time-graph? ind 0) #f)
 	  (graph (list (float-vector 0 1 2) (float-vector 3 2 1) (float-vector 1 2 3) (float-vector 1 1 1) (float-vector 0 1 0) (float-vector 3 1 2)))
@@ -37601,17 +37600,6 @@ EDITS: 1
 	    (set! ctr (+ ctr 1)))))
     (test (fv101) 2)
 
-    (define (fv103)
-      (do ((fv (make-float-vector 100))
-	   (n 100)
-	   (i 0 (+ i 1)))
-	  ((= i n))
-	(do ((j 0 (+ j 1))
-	     (k i (+ k 1)))
-	    ((= j n) k)
-	  (float-vector-set! fv i (+ (float-vector-ref fv i) 1.0)))))
-    (fv103) ; just run without overflow
-
     (define (fv104)
       (do ((fv (make-float-vector 10))
 	   (i 0 (+ i 1))) 
@@ -37865,13 +37853,6 @@ EDITS: 1
 	(float-vector-set! fv i ((if (or (> i j) (= i 3)) + -) i 10.0))))
     (test (fv127) (float-vector -10.0 -9.0 -8.0 13.0))
     
-    (define (fv128)
-      (do ((fv (make-float-vector 4))
-	   (i 0 (+ i 1)))
-	  ((= i 4) fv)
-	(float-vector-set! fv i ((if (or (= i 1) (= i 3)) + -) i 10.0))))
-    (test (fv128) (float-vector -10.0 11.0 -8.0 13.0))
-
     (define (fv129)
       (do ((fv (make-float-vector 4))
 	   (j 2)
@@ -38032,23 +38013,6 @@ EDITS: 1
     (test (fv132a) (float-vector 0.0 0.0 0.2754865742400099 0.2754865742400099 0.5330915108442034 0.5330915108442034 
 				 0.7567925994733748 0.7567925994733748 0.9340879688376413 0.9340879688376413))
     
-    (define (fv133)
-      (do ((fv (make-float-vector 4))
-	   (i 0 (+ i 1)))
-	  ((= i 4) fv)
-	((lambda ()
-	   (set! (fv i) i)))))
-    (test (fv133) (float-vector 0.0 1.0 2.0 3.0))
-    
-    (define (fv135)
-      (do ((fv (make-float-vector 4))
-	   (i 0 (+ i 1))
-	   (x 0.0 (+ x 1.0)))
-	  ((= i 4) (and (positive? x) fv))
-	((lambda ()
-	   (set! (fv i) i)))))
-    (test (fv135) (float-vector 0.0 1.0 2.0 3.0))
-
     (define (fv136)
       (do ((fv (make-vector 4))
 	   (i 0 (+ i 1))
@@ -38274,35 +38238,6 @@ EDITS: 1
 	(set! (v (syms i)) (g0 (syms i)))))
     (test (fv158) (hash-table* 'a 0 'b 1 'c 2 'd 3))
 
-    (define (fv159)
-      (let ((o (make-oscil 1000))
-	    (oscs (vector (make-oscil 400) (make-oscil 500) (make-oscil 600)))
-	    (v1 (make-float-vector 10))
-	    (v2 (make-float-vector 10))
-	    (v3 (float-vector 0.1419943179576268 1.008255926858552 -0.3982998307862416 -0.4953385977530639 
-			      1.122094083214508 0.6986797544826313 -0.5752063448650614 0.5489621715396582 
-			      1.499234145268148 0.1194943083560847))
-	    (k 1))
-	(do ((i 0 (+ i 1))) ((= i 10))
-	  (let ((x (oscil o)))
-	    (set! (v1 i) (+ (oscil (vector-ref oscs k)) (oscil o 1.5)))))
-	(set! o (make-oscil 1000))
-	(set! oscs (vector (make-oscil 400) (make-oscil 500) (make-oscil 600)))
-	(set! (v2 0) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 1) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 2) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 3) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 4) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 5) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 6) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 7) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 8) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(set! (v2 9) (begin (oscil o) (+ (oscil (vector-ref oscs k)) (oscil o 1.5))))
-	(if (not (and (morally-equal? v1 v2)
-		      (morally-equal? v1 v3)))
-	    (format *stderr* "~A~%~A~%~A~%" v1 v2 v3))))
-    (fv159)
-
     (define (fv160)
       (do ((fv (make-float-vector 4))
 	   (g (make-oscil 1000))
@@ -38359,9 +38294,6 @@ EDITS: 1
     (define (fv175) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 2 (abs x)))))
     (test (fv175) (make-float-vector 4 6.0))
     
-    (define (fv176) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 (abs x) (abs x)))))
-    (test (fv176) (make-float-vector 4 6.0))
-    
     (define (fv177) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x)))))
     (test (fv177) (make-float-vector 4 6.0))
     
@@ -38392,12 +38324,6 @@ EDITS: 1
     
     (define (fv185) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 2 (abs x)))))
     (test (fv185) (make-float-vector 4 8.0))
-    
-    (define (fv186) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2.0 (abs x) (abs x)))))
-    (test (fv186) (make-float-vector 4 8.0))
-    
-    (define (fv187) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x)))))
-    (test (fv187) (make-float-vector 4 8.0))
     
     (define (fv188) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x)))))
     (test (fv188) (make-float-vector 4 8.0))
@@ -38438,20 +38364,11 @@ EDITS: 1
     (define (fvi171) (do ((x 1) (y 6) (z -1) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x y z))))
     (test (fvi171) (make-int-vector 4 6))
     
-    (define (fvi172) (do ((x 1) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x -1 6))))
-    (test (fvi172) (make-int-vector 4 6))
-    
     (define (fvi173) (do ((x 3) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x (abs x)))))
     (test (fvi173) (make-int-vector 4 6))
     
     (define (fvi174) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ x 2 (abs x)))))
     (test (fvi174) (make-int-vector 4 6))
-    
-    (define (fvi175) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 2 (abs x)))))
-    (test (fvi175) (make-int-vector 4 6))
-    
-    (define (fvi176) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2 (abs x) (abs x)))))
-    (test (fvi176) (make-int-vector 4 6))
     
     (define (fvi178) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x)))))
     (test (fvi178) (make-int-vector 4 6))
@@ -38467,12 +38384,6 @@ EDITS: 1
     
     (define (fvi184) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* x 2 (abs x)))))
     (test (fvi184) (make-int-vector 4 8))
-    
-    (define (fvi186) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* 2 (abs x) (abs x)))))
-    (test (fvi186) (make-int-vector 4 8))
-    
-    (define (fvi187) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) (abs x) (abs x)))))
-    (test (fvi187) (make-int-vector 4 8))
     
     (define (fvi188) (do ((x 2) (fv (make-int-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (* (abs x) x (abs x)))))
     (test (fvi188) (make-int-vector 4 8))
