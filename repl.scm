@@ -1419,6 +1419,8 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;; just a first stab at this -- where to put this code?
+;;;
+;;; debug-help can be set running via: (((*repl* 'repl-let) 'debug-help))
 
 (define-expansion (repl-debug)
   `(with-let (inlet :orig (curlet) :line ,(port-line-number) :func __func__)
@@ -1468,6 +1470,10 @@
 	       (set! (*repl* 'prompt) old-prompt)
 	       (set! ((*repl* 'keymap) C-q) old-C-q)))))))
 
+
+;;; to display a variable's value as s7 runs using the repl help window:
+;;;    (define xyz 1) ; some variable...
+;;;    (set! (symbol-access 'xyz) (lambda (sym val) (set! (*repl* 'helpers) (list (lambda (c) (format #f "xyz: ~S" val)))) val))
 
 
 ;;; --------------------------------------------------------------------------------

@@ -373,7 +373,6 @@
        url-str))))
   
   
-  
 ;;; --------------------------------------------------------------------------------
 ;;; get indexer.data
 
@@ -783,6 +782,7 @@
     (reactive-lambda* "stuff.scm")
     (pretty-print "write.scm")
     (fully-macroexpand "stuff.scm")
+    (null-environment "stuff.scm")
     (*mock-vector* "mockery.scm")
     (*mock-port* "mockery.scm")
     (*mock-symbol* "mockery.scm")

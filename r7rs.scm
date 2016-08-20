@@ -148,6 +148,7 @@
 
 
 (define interaction-environment curlet)
+;; for null-environment see stuff.scm
 (define-macro (include . files) 
   `(begin
      ,@(map (lambda (file)

@@ -3720,6 +3720,8 @@
 		     (if (pair? p)
 			 (set-car! p (* 1.0 (car p))))))))
 	  val)
+	
+	;; polar notation (@) is never used anywhere except test suites
 
 	(let* ((args (map simplify-arg (cdr form)))
 	       (len (length args)))
@@ -9298,6 +9300,9 @@
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
+
+		 ;; if's possible for an unused function to have ref=1, null cdr history, but it appears to
+		 ;;   always involve curlet exports and the like.
 
 		 ;; do all refs to an unset var go through the same function (at some level)
 		 (when (and (zero? (var-set local-var))
@@ -16352,7 +16357,7 @@
 						vars))))
 			 
 			 ;; look for duplicate values
-			 ;; TODO: protect against any shadows if included in any expr
+			 ;;   someday protect against any shadows if included in any expr
 			 (unless (or side 
 				     (not (pair? expr))
 				     (code-constant? expr)
@@ -18300,15 +18305,4 @@
     #f))
 |#
 
-;;; --------------------------------------------------------------------------------
-;;; TODO:
-;;;
-;;; indentation is confused in pp by if expr+values?, pp handling of (list ((lambda...)..)) is bad
-;;; there are now lots of cases where we need to check for values (/ as invert etc)
-;;;   the ((lambda ...)) -> let rewriter is still tricked by values
-;;; for scope calc, each macro call needs to be expanded or use out-vars?
-;;;   if we know a macro's value, expand via macroexpand each time encountered and run lint on that? [see tmp for expansion]
-;;; hg-results has a lot of changes
-;;; t347 dilambda checks [define as opposed to let is triggering the incorrect error]
-;;;
 ;;; 148 24187 652907

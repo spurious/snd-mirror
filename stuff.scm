@@ -2109,3 +2109,24 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 						   (set! dir-name full-dir-name)))
 					     (reader))
 					   (string-append dir-name "/" file)))))))))))))))))
+
+
+;;; --------------------------------------------------------------------------------
+
+(define null-environment
+  (let ((e (sublet (let ((lt (inlet)))
+		     (for-each (lambda (c)
+				 (if (and (or (procedure? (cdr c))
+					      (macro? (cdr c)))
+					  (not (constant? (car c)))
+					  (not (eq? (car c) 'object->string)))
+				     (varlet lt (car c) (symbol "[" (symbol->string (car c)) "]"))))
+			       (rootlet))
+		     lt))))
+    (lambda () e))) ; always return the same env
+
+;;; since this is in the rootlet after we load stuff.scm, a subsequent reload
+;;;   of stuff.scm will see it during the for-each above.  If null-environment is the
+;;;   environment (not a procedure), and is open (via openlet), (procedure? (cdr c))
+;;;   becomes ((null-environment 'procedure?) null-environment) which is an error
+;;;   because in that env, procedure? is the symbol '[procedure?] -- kind of confusing!

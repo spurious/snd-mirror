@@ -2322,9 +2322,11 @@ static int num_object_types = 0;
 
 #define is_counter(p)                 (type(p) == T_COUNTER)
 #define counter_result(p)             (_TCtr(p))->object.ctr.result
+#define counter_set_result(p, Val)    (_TCtr(p))->object.ctr.result = _NFre(Val)
 #define counter_list(p)               (_TCtr(p))->object.ctr.list
 #define counter_set_list(p, Val)      (_TCtr(p))->object.ctr.list = _NFre(Val)
 #define counter_capture(p)            (_TCtr(p))->object.ctr.cap
+#define counter_set_capture(p, Val)   (_TCtr(p))->object.ctr.cap = Val
 #define counter_let(p)                _TLid((_TCtr(p))->object.ctr.env)
 #define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
 #define counter_slots(p)              (_TCtr(p))->object.ctr.slots
@@ -10605,9 +10607,9 @@ static s7_pointer copy_counter(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   new_cell(sc, nobj, T_COUNTER);
-  counter_result(nobj) = counter_result(obj);
+  counter_set_result(nobj, counter_result(obj));
   counter_set_list(nobj, counter_list(obj));
-  counter_capture(nobj) = counter_capture(obj);
+  counter_set_capture(nobj, counter_capture(obj));
   counter_set_let(nobj, counter_let(obj));
   counter_set_slots(nobj, counter_slots(obj));
   return(nobj);
@@ -36626,13 +36628,6 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 
   p = sc->w;
   sc->w = sc->nil;
-#if DEBUGGING
-  {
-    s7_pointer x;
-    for (i = 0, x = p; is_pair(x); x = cdr(x), i++) /* i is for (backwards) position info in gdb */
-      _NFre(car(x));
-  }
-#endif
   return(safe_reverse_in_place(sc, p));
 }
 
@@ -48744,9 +48739,9 @@ static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
 {
   s7_pointer x;
   new_cell(sc, x, T_COUNTER);
-  counter_result(x) = sc->nil;
+  counter_set_result(x, sc->nil);
   counter_set_list(x, iter);     /* iterator -- here it's always either an iterator or a pair */
-  counter_capture(x) = 0;        /* will be capture_let_counter */
+  counter_set_capture(x, 0);     /* will be capture_let_counter */
   counter_set_let(x, sc->nil);   /* will be the saved env */
   counter_set_slots(x, sc->nil); /* local env slots before body is evalled */
   return(x);
@@ -48775,7 +48770,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
     {
       s7_pointer c;
       c = make_counter(sc, p);
-      counter_result(c) = p;
+      counter_set_result(c, p);
       push_stack(sc, OP_FOR_EACH_2, c, f);
       return(sc->unspecified);
     }
@@ -58621,11 +58616,11 @@ static int dox_ex(s7_scheme *sc)
   long long int id;
   s7_pointer frame, vars, slot, code;
   s7_function endf;
+  int gc_loc;
   bool all_pairs = true;
-
-  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY(sc->code)); */
 	    
-  new_frame(sc, sc->envir, frame); /* new frame is not tied into the symbol lookup process yet */
+  new_frame(sc, sc->envir, frame);   /* new frame is not tied into the symbol lookup process yet */
+  gc_loc = s7_gc_protect(sc, frame); /* maybe use temp3 here?  can c_call below jump out? */
   for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
     {
       s7_pointer expr, val;
@@ -58666,6 +58661,7 @@ static int dox_ex(s7_scheme *sc)
     }
   
   sc->envir = frame;
+  s7_gc_unprotect_at(sc, gc_loc);
   id = let_id(frame);
   for (slot = let_slots(frame); is_slot(slot); slot = next_slot(slot))
     symbol_set_local(slot_symbol(slot), id, slot);
@@ -61386,8 +61382,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->value != sc->no_value)
 	    {
 	      if (is_multiple_value(sc->value))
-		counter_result(sc->args) = revappend(sc, multiple_value(sc->value), counter_result(sc->args));
-	      else counter_result(sc->args) = cons(sc, sc->value, counter_result(sc->args));
+		counter_set_result(sc->args, revappend(sc, multiple_value(sc->value), counter_result(sc->args)));
+	      else counter_set_result(sc->args, cons(sc, sc->value, counter_result(sc->args)));
 	    }
 	  
 	case OP_MAP_1:
@@ -61409,7 +61405,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), x);
 		counter_set_let(args, sc->envir);
 		counter_set_slots(args, let_slots(sc->envir));
-		counter_capture(args) = sc->capture_let_counter;
+		counter_set_capture(args, sc->capture_let_counter);
 	      }
 	    else 
 	      {
@@ -61433,9 +61429,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->value != sc->no_value)                   /* (map (lambda (x) (values)) (list 1)) */
 	    {
 	      if (is_multiple_value(sc->value))            /* (map (lambda (x) (if (odd? x) (values x (* x 20)) (values))) (list 1 2 3 4)) */
-		counter_result(sc->args) = revappend(sc, multiple_value(sc->value), counter_result(sc->args));
+		counter_set_result(sc->args, revappend(sc, multiple_value(sc->value), counter_result(sc->args)));
 	      /* not append_in_place here because sc->value has the multiple-values bit set */
-	      else counter_result(sc->args) = cons(sc, sc->value, counter_result(sc->args));
+	      else counter_set_result(sc->args, cons(sc, sc->value, counter_result(sc->args)));
 	    }
 	  
 	case OP_MAP:
@@ -61514,7 +61510,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(counter, sc->envir);
 		counter_set_slots(counter, let_slots(sc->envir));
-		counter_capture(counter) = sc->capture_let_counter;
+		counter_set_capture(counter, sc->capture_let_counter);
 	      }
 	    else 
 	      {
@@ -61542,7 +61538,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    counter_set_list(c, cdr(lst));
 	    if (sc->op == OP_FOR_EACH_3)
 	      {
-		counter_result(c) = cdr(counter_result(c));
+		counter_set_result(c, cdr(counter_result(c)));
 		if (counter_result(c) == counter_list(c))
 		  {
 		    sc->value = sc->unspecified;
@@ -61556,7 +61552,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), arg);
 		counter_set_let(c, sc->envir);
 		counter_set_slots(c, let_slots(sc->envir));
-		counter_capture(c) = sc->capture_let_counter;
+		counter_set_capture(c, sc->capture_let_counter);
 	      }
 	    else 
 	      {
@@ -75060,7 +75056,7 @@ int main(int argc, char **argv)
  *   If start/end selection changed while playing, are these loop points updated?
  *
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
- * the old mus-audio-* code needs to use play or something, especially bess* -- what about soundio
+ * the old mus-audio-* code needs to use play or something, especially bess*
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
