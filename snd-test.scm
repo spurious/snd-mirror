@@ -1223,8 +1223,7 @@
 	'with-pointer-focus *with-pointer-focus* '(#f #t)
 	'x-axis-style *x-axis-style* 0 
 	'zero-pad *zero-pad* 0
-	'zoom-focus-style *zoom-focus-style* 2 
-	))
+	'zoom-focus-style *zoom-focus-style* 2))
       (if *snd-opened-sound* (snd-display ";*snd-opened-sound*: ~A" *snd-opened-sound*))
 
       (let ((s (open-sound "oboe.snd")))
@@ -1381,13 +1380,10 @@
 	    (list 'zero-pad zero-pad 0 1 '*zero-pad*)
 	    (list 'zoom-focus-style zoom-focus-style 2 1 '*zoom-focus-style*)
 	    )))
-	(close-sound s)
-	))
+	(close-sound s)))
 
     (set! *ask-about-unsaved-edits* #f)
-    (set! *remember-sound-state* #f)
-    ))
-
+    (set! *remember-sound-state* #f)))
 
 (set! (with-mix-tags) #t) ; assumed in test 16(!)
 (set! *default-output-sample-type* mus-ldouble)
@@ -1987,13 +1983,6 @@
 	  (snd-display ";window width: ~A is not 300?" (window-width)))
       (if (<= (window-height) 30)
 	  (snd-display ";window height: ~A is not 300?" (window-height)))
-					;    (set! (window-x) 123)
-					;    (set! (window-y) 321)
-					;    (if (not (equal? (window-x) 123))
-					;	(snd-display ";window x: ~A is not 123?" (window-x)))
-					;    (if (not (equal? (window-y) 321))
-					;	(snd-display ";window y: ~A is not 321?" (window-y)))
-					;    (set! (window-y) 10) ; get it back out of harm's way
       (set! *color-scale* 100.0)
       (if (fneq *color-scale* 100.0) (snd-display ";color-scale to 100: ~A" *color-scale*))
       
@@ -2264,9 +2253,8 @@
 	     (set! undef (cons n undef))))
        names)
       (if (pair? undef)
-	  (snd-display ";undefined: ~A" undef)))
-    
-    ))
+	  (snd-display ";undefined: ~A" undef)))))
+
 
 ;;; ---------------- test 4: sndlib ----------------
 
@@ -2283,6 +2271,7 @@
       ((= clmtest tests)) 
     (log-mem clmtest)
     (clear-listener)
+
     (let ((mz (mus-sound-maxamp "z.snd")))
       (if (or (not (= (car mz) 0))
 	      (fneq (cadr mz) 0.0))
@@ -2526,7 +2515,6 @@
 	(snd-display ";oboe: mus-sound-type-specifier: ~X?" (mus-sound-type-specifier "oboe.snd")))
     (if (not (string=? (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd"))) "23-Nov-2012 06:56"))
 	(snd-display ";oboe: file-write-date: ~A?" (strftime "%d-%b-%Y %H:%M" (localtime (file-write-date "oboe.snd")))))
-					;	(mus-sound-forget "oboe.snd")
     
     (let ((lasth (do ((i 1 (+ i 1)))
 		     ((string=? (mus-header-type-name i) "unknown") i))))

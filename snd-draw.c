@@ -2033,7 +2033,7 @@ Xen_wrap_3_args(g_set_combined_data_color_w, g_set_combined_data_color)
 void g_init_draw(void)
 {
 #if HAVE_SCHEME
-  s7_pointer i, b, p, t, r, mx, s, v, pcl_p, pcl_t;
+  s7_pointer i, b, p, t, r, mx, s, v, pcl_p, pcl_t, bi;
   i = s7_make_symbol(s7, "integer?");
   b = s7_make_symbol(s7, "boolean?");
   p = s7_make_symbol(s7, "pair?");
@@ -2044,6 +2044,7 @@ void g_init_draw(void)
   t = s7_t(s7);
   pcl_p = s7_make_circular_signature(s7, 0, 1, p);
   pcl_t = s7_make_circular_signature(s7, 0, 1, t);
+  bi = s7_make_signature(s7, 2, i, b);
 #endif
 
   dialog_widgets = Xen_undefined;
@@ -2061,7 +2062,7 @@ void g_init_draw(void)
   Xen_define_typed_procedure(S_fill_rectangle,   g_fill_rectangle_w,  4, 5, 0, H_fill_rectangle,  s7_make_signature(s7, 10, b, i, i, i, i, t, t, i, b, p));
   Xen_define_typed_procedure(S_fill_polygon,     g_fill_polygon_w,    1, 4, 0, H_fill_polygon,    s7_make_signature(s7, 6, v, v, t, t, i, p));
   Xen_define_typed_procedure(S_make_graph_data,  g_make_graph_data_w, 0, 5, 0, H_make_graph_data, s7_make_signature(s7, 6, t, t, t, t, i, i));
-  Xen_define_typed_procedure(S_graph_data,       g_graph_data_w,      1, 7, 0, H_graph_data,      s7_make_signature(s7, 9, t, t, t, t, t, i, i, i, p));
+  Xen_define_typed_procedure(S_graph_data,       g_graph_data_w,      1, 7, 0, H_graph_data,      s7_make_signature(s7, 9, t, t, t, t, t, bi, bi, bi, p));
 
   Xen_define_typed_procedure(S_main_widgets,     g_main_widgets_w,    0, 0, 0, H_main_widgets,   pcl_p);
   Xen_define_typed_procedure(S_dialog_widgets,   g_dialog_widgets_w,  0, 0, 0, H_dialog_widgets, pcl_p);

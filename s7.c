@@ -75043,10 +75043,8 @@ int main(int argc, char **argv)
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
- * pair/let (> (length x) 1) and friends could be optimized by quitting as soon as possible
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
- * if with_history, each func could keep a history of calls(args/results/stack), vars via symbol-access?
- * ideally, let-temporarily would be built-in syntax
+ * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

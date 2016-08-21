@@ -14641,27 +14641,34 @@
 			    (when (and (pair? clause)
 				       (pair? (car clause))
 				       (pair? (cdr clause)))
-			      ;; (case 3 ((0) #t)) -> (if (eqv? 3 0) #t)
-			      ;; (case x ((#(0)) 2)) -> (if (eqv? x #(0)) 2)
-			      (lint-format "perhaps ~A" caller
-					   (lists->string form
-							  (let ((test (cond ((pair? (cdar clause))
-									     `(memv ,(cadr form) ',(car clause)))
-									    ((and (symbol? (caar clause))
-										  (not (keyword? (caar clause))))
-									     `(eq? ,(cadr form) ',(caar clause)))
-									    ((or (keyword? (caar clause))
-										 (null? (caar clause)))
-									     `(eq? ,(cadr form) ,(caar clause)))
-									    ((not (boolean? (caar clause)))
-									     `(eqv? ,(cadr form) ,(caar clause)))
-									    ((caar clause)
-									     (cadr form))
-									    (else `(not ,(cadr form)))))
-								(op (if (and (pair? (cdr clause))
-									     (pair? (cddr clause)))
-									'when 'if)))
-							    `(,op ,test ,@(cdr clause)))))))
+			      (let ((keys (car clause)))
+				;; (case 3 ((0) #t)) -> (if (eqv? 3 0) #t)
+				;; (case x ((#(0)) 2)) -> (if (eqv? x #(0)) 2)
+				(lint-format "perhaps ~A" caller
+					     (lists->string form
+							    (let ((test (cond ((pair? (cdr keys))
+									       `(memv ,(cadr form) ',keys))
+
+									      ((and (symbol? (car keys))
+										    (not (keyword? (car keys))))
+									       `(eq? ,(cadr form) ',(car keys)))
+
+									      ((or (keyword? (car keys))
+										   (null? (car keys)))
+									       `(eq? ,(cadr form) ,(car keys)))
+
+									      ((not (boolean? (car keys)))
+									       `(eqv? ,(cadr form) ,(car keys)))
+
+									      ((car keys)
+									       (cadr form))
+
+									      (else `(not ,(cadr form)))))
+
+								  (op (if (and (pair? (cdr clause))
+									       (pair? (cddr clause)))
+									  'when 'if)))
+							      `(,op ,test ,@(cdr clause))))))))
 			  (when (and (null? (cddr clauses))
 				     (pair? (car clauses))
 				     (pair? (cadr clauses))
@@ -14813,21 +14820,22 @@
 					   (when (and (pair? exprs)
 						      (pair? (car exprs))
 						      (null? (cdr exprs)))
-					     (case (caar exprs)
-					       ((case)                     ; just the case statement in the else clause
-						(when (and (equal? selector (cadar exprs))
-							   (not (side-effect? selector env)))
-						  (set! else-foldable (cddar exprs))))
-					       ((if)                       ; just if -- if foldable, make it look like it came from case
-						(when (and (equal? selector (eqv-selector (cadar exprs)))
-							   (cond-eqv? (cadar exprs) selector #t)
-							   (not (side-effect? selector env)))
-						  ;; else-foldable as (((keys-from-test) true-branch) (else false-branch))
-						  (set! else-foldable 
-							(if (pair? (cdddar exprs))
-							    `(,(case-branch (cadar exprs) selector (list (caddar exprs)))
-							      (else ,(car (cdddar exprs))))
-							    (list (case-branch (cadar exprs) selector (cddar exprs)))))))))))))
+					     (let ((expr (car exprs)))
+					       (case (car expr)
+						 ((case)                     ; just the case statement in the else clause
+						  (when (and (equal? selector (cadr expr))
+							     (not (side-effect? selector env)))
+						    (set! else-foldable (cddr expr))))
+						 ((if)                       ; just if -- if foldable, make it look like it came from case
+						  (when (and (equal? selector (eqv-selector (cadr expr)))
+							     (cond-eqv? (cadr expr) selector #t)
+							     (not (side-effect? selector env)))
+						    ;; else-foldable as (((keys-from-test) true-branch) (else false-branch))
+						    (set! else-foldable 
+							  (if (pair? (cdddr expr))
+							      `(,(case-branch (cadr expr) selector (list (caddr expr)))
+								(else ,(car (cdddr expr))))
+							      (list (case-branch (cadr expr) selector (cddr expr))))))))))))))
 			     
 			     (lint-walk-open-body caller (car form) exprs env))))
 		     (cddr form))
