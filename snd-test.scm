@@ -38282,9 +38282,6 @@ EDITS: 1
     (define (fv175) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ 2.0 2 (abs x)))))
     (test (fv175) (make-float-vector 4 6.0))
     
-    (define (fv177) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) (abs x) (abs x)))))
-    (test (fv177) (make-float-vector 4 6.0))
-    
     (define (fv178) (do ((x 2.0) (fv (make-float-vector 4)) (i 0 (+ i 1))) ((= i 4) fv) (set! (fv i) (+ (abs x) x (abs x)))))
     (test (fv178) (make-float-vector 4 6.0))
     
