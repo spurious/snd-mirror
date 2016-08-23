@@ -106,11 +106,11 @@
 (define home-dir (getenv "HOME"))
 (define sf-dir "/sf1")
 
-(if (not (file-exists? (string-append home-dir "/cl/oboe.snd")))
-    (cond ((file-exists? "/export/home/bil/cl/oboe.snd") (set! home-dir "/export/home/bil"))
-          ((file-exists? "/Users/bil/cl/oboe.snd")       (set! home-dir "/Users/bil"))
-          ((file-exists? "/users/b/bil/cl/oboe.snd")     (set! home-dir "/users/b/bil"))
-          ((file-exists? "/usr/home/bil/cl/oboe.snd")    (set! home-dir "/usr/home/bil"))))
+(cond ((file-exists? (string-append home-dir "/cl/oboe.snd")))
+      ((file-exists? "/export/home/bil/cl/oboe.snd") (set! home-dir "/export/home/bil"))
+      ((file-exists? "/Users/bil/cl/oboe.snd")       (set! home-dir "/Users/bil"))
+      ((file-exists? "/users/b/bil/cl/oboe.snd")     (set! home-dir "/users/b/bil"))
+      ((file-exists? "/usr/home/bil/cl/oboe.snd")    (set! home-dir "/usr/home/bil")))
 
 (define cwd (string-append (getcwd) "/"))
 
