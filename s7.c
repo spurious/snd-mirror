@@ -74851,10 +74851,11 @@ s7_scheme *s7_init(void)
                                 (lambda (clause)                                                              \n\
 	                          (let ((val (eval (car clause))))                                            \n\
                                     (if val                                                                   \n\
-                                        (if (null? (cdr clause)) (return val)                                 \n\
-	                                    (if (null? (cddr clause))                                         \n\
-                                                (return (cadr clause))                                        \n\
-                                                (return (apply values (map quote (cdr clause)))))))))         \n\
+                                        (return (if (null? (cdr clause))                                      \n\
+                                                    val                                                       \n\
+	                                            (if (null? (cddr clause))                                 \n\
+                                                        (cadr clause)                                         \n\
+                                                        (apply values (map quote (cdr clause)))))))))         \n\
                                 clauses)                                                                      \n\
                               (values))))");
 
@@ -75059,4 +75060,5 @@ int main(int argc, char **argv)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
+ *   for snd-mix, tie-ins are in place -- if no mix (object->let (integer->mix 0)) complains about a length problem?
  */

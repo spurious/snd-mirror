@@ -2613,8 +2613,13 @@ static Xen g_xen_mix_to_string(Xen obj)
 }
 #endif
 
+#if HAVE_SCHEME
+static s7_pointer g_mix_methods = NULL;
+static s7_pointer g_mix_sampler_methods = NULL;
+static s7_pointer mix_to_let_func = NULL;
+static s7_pointer mix_sampler_to_let_func = NULL;
+#else
 
-#if (!HAVE_SCHEME)
 static bool xen_mix_equalp(xen_mix *v1, xen_mix *v2) 
 {
   return((v1 == v2) ||
@@ -2645,7 +2650,16 @@ Xen new_xen_mix(int n)
     return(Xen_false);
 
   mx = xen_mix_make(n);
+#if HAVE_SCHEME
+  {
+    s7_pointer m;
+    m = Xen_make_object(xen_mix_tag, mx, 0, free_xen_mix);
+    s7_object_set_let(m, g_mix_methods);
+    return(m);
+  }
+#else
   return(Xen_make_object(xen_mix_tag, mx, 0, free_xen_mix));
+#endif
 }
 
 
@@ -2675,6 +2689,8 @@ static Xen s7_xen_mix_copy(s7_scheme *sc, s7_pointer args)
 static void init_xen_mix(void)
 {
 #if HAVE_SCHEME
+  g_mix_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mix_to_let_func)));
+  s7_gc_protect(s7, g_mix_methods);
   xen_mix_tag = s7_new_type_x(s7, "<mix>", print_xen_mix, free_xen_mix, s7_xen_mix_equalp, NULL, NULL, NULL, s7_xen_mix_length, s7_xen_mix_copy, NULL, NULL);
 #else
 #if HAVE_RUBY
@@ -3592,7 +3608,16 @@ Xen g_make_mix_sampler(Xen mix_id, Xen ubeg)
       if (mf->sf)
 	{
 	  mf->sf->region = md->id;
+#if HAVE_SCHEME
+	  {
+	    s7_pointer m;
+	    m = Xen_make_object(mf_tag, mf, 0, free_mf);
+	    s7_object_set_let(m, g_mix_sampler_methods);
+	    return(m);
+	  }
+#else
 	  return(Xen_make_object(mf_tag, mf, 0, free_mf));
+#endif
 	}
       free(mf);
     }
@@ -3989,6 +4014,41 @@ static s7_pointer acc_mix_tag_height(s7_scheme *sc, s7_pointer args) {return(g_s
 static s7_pointer acc_mix_tag_width(s7_scheme *sc, s7_pointer args) {return(g_set_mix_tag_width(s7_cadr(args)));}
 static s7_pointer acc_mix_waveform_height(s7_scheme *sc, s7_pointer args) {return(g_set_mix_waveform_height(s7_cadr(args)));}
 static s7_pointer acc_with_mix_tags(s7_scheme *sc, s7_pointer args) {return(g_set_with_mix_tags(s7_cadr(args)));}
+
+static s7_pointer s7_mix_sampler_to_let(s7_scheme *sc, s7_pointer args)
+{
+  /* this is called upon (object->let <mix-sampler>) */
+  s7_pointer m, env;
+  mix_fd *mf;
+  mix_info *md;
+
+  m = s7_car(args);
+  env = s7_cadr(args);
+  mf = Xen_to_mix_sampler(m);
+  md = mf->md;
+  
+  s7_varlet(sc, env, s7_make_symbol(sc, "id"), s7_make_integer(sc, md->id));
+#if 0
+	  snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler mix %d, (from %lld, at %lld%s): %s>",
+		       md->id,
+		       fd->sf->initial_samp,
+		       fd->sf->loc,
+		       (fd->sf->at_eof) ? ", at eof" : "",
+		       (md->in_filename) ? md->in_filename : S_vct);
+#endif
+  return(env);
+}
+
+static s7_pointer s7_mix_to_let(s7_scheme *sc, s7_pointer args)
+{
+  /* this is called upon (object->let <mix>) */
+  s7_pointer m, env;
+  m = s7_car(args);
+  env = s7_cadr(args);
+  
+  s7_varlet(sc, env, s7_make_symbol(sc, "position"), g_mix_position(m));
+  return(env);
+}
 #endif
 
 void g_init_mix(void)
@@ -4004,11 +4064,16 @@ void g_init_mix(void)
   f = s7_make_symbol(s7, "float?");
   fv = s7_make_symbol(s7, "float-vector?");
   t = s7_t(s7);
+
+  mix_to_let_func = s7_make_function(s7, "mix->let", s7_mix_to_let, 2, 0, false, "mix->let");
+  mix_sampler_to_let_func = s7_make_function(s7, "mix-sampler->let", s7_mix_sampler_to_let, 2, 0, false, "mix-sampler->let");
 #endif
 
   init_xen_mix();
 
 #if HAVE_SCHEME
+  g_mix_sampler_methods = s7_openlet(s7, s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "object->let"), mix_sampler_to_let_func)));
+  s7_gc_protect(s7, g_mix_sampler_methods);
   mf_tag = s7_new_type_x(s7, "<mix-sampler>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL, NULL, NULL, NULL, NULL);
 #else
   mf_tag = Xen_make_object_type("MixSampler", sizeof(mix_fd));

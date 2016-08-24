@@ -156,28 +156,27 @@
 
 		 (set! min-samps (round (* 0.5 current-min)))
 		 (do ((top (min (- crosses 1) current-mark (+ i zeros-checked)))
-		      (k (+ i 1) (+ k 1)))
+		      (k (+ i 1) (+ k 1))
+		      (wgt 0.0 0.0))
 		     ((= k top))
-		   (let ((wgt 0.0))
-		     
-		     (let ((ampsum (make-one-pole 1.0 -1.0))
-			   (diffsum (make-one-pole 1.0 -1.0)))
-		       (do ((sr0 (make-sampler (floor start)))
-			    (sr1 (make-sampler (floor (cross-samples k))))
-			    (samp0 0.0)
-			    (i 0 (+ i 1)))
-			   ((= i autolen))
-			 (set! samp0 (next-sample sr0))
-			 (one-pole ampsum (abs samp0))
-			 (one-pole diffsum (abs (- (next-sample sr1) samp0))))
-		       (set! diffsum (one-pole diffsum 0.0))
-		       (set! ampsum (one-pole ampsum 0.0))
-		       (set! wgt (if (= diffsum 0.0) 0.0 (/ diffsum ampsum))))
-		     
-		     (if (< wgt min-samps)
-			 (begin
-			   (set! min-samps (floor wgt))
-			   (set! min-i k)))))
+		   (let ((ampsum (make-one-pole 1.0 -1.0))
+			 (diffsum (make-one-pole 1.0 -1.0)))
+		     (do ((sr0 (make-sampler (floor start)))
+			  (sr1 (make-sampler (floor (cross-samples k))))
+			  (samp0 0.0)
+			  (i 0 (+ i 1)))
+			 ((= i autolen))
+		       (set! samp0 (next-sample sr0))
+		       (one-pole ampsum (abs samp0))
+		       (one-pole diffsum (abs (- (next-sample sr1) samp0))))
+		     (set! diffsum (one-pole diffsum 0.0))
+		     (set! ampsum (one-pole ampsum 0.0))
+		     (set! wgt (if (= diffsum 0.0) 0.0 (/ diffsum ampsum))))
+		   
+		   (if (< wgt min-samps)
+		       (begin
+			 (set! min-samps (floor wgt))
+			 (set! min-i k))))
 
 		 (if (not (= current-mark min-i))
 		     (set! (cross-weights i) 1000.0) ; these are confused, so effectively erase them

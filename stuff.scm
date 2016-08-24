@@ -1644,16 +1644,15 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 
 (define (sequence->string val)
-  (format #f
-	  (cond ((or (not (sequence? val)) 
-		     (empty? val))    "~S")
-		((vector? val)        "#(~{~A~| ~})")
-		((let? val)           "(inlet ~{'~A~| ~})")
-		((hash-table? val)    "(hash-table ~{'~A~| ~})")
-		((not (string? val))  "(~{~A~| ~})")
-		((byte-vector? val)   "#u8(~{~D~| ~})")
-		(else                 "\"~{~A~|~}\""))
-            val))
+  (let ((ctrl-str (cond ((or (not (sequence? val)) 
+			     (empty? val))    "~S")
+			((vector? val)        "#(~{~A~| ~})")
+			((let? val)           "(inlet ~{'~A~| ~})")
+			((hash-table? val)    "(hash-table ~{'~A~| ~})")
+			((not (string? val))  "(~{~A~| ~})")
+			((byte-vector? val)   "#u8(~{~D~| ~})")
+			(else                 "\"~{~A~|~}\""))))
+    (format #f ctrl-str val)))
 
 
 ;;; ----------------

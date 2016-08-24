@@ -517,13 +517,13 @@
 	      (set! (*repl* 'helpers)
 		    (list
 		     (lambda (c) 
-		       (format #f "cursor: ~A, ~C, line: ~S"
-			       cursor-pos
-			       (if (zero? (length cur-line))
-				   #\space
-				   (let ((c (cur-line (max 0 (min cursor-pos (- (length cur-line) 1))))))
-				     (if (char=? c #\newline) #\| c)))
-			       (one-line cur-line)))
+		       (let ((cur-char (if (zero? (length cur-line))
+					   #\space
+					   (let ((c (cur-line (max 0 (min cursor-pos (- (length cur-line) 1))))))
+					     (if (char=? c #\newline) #\| c)))))
+			 (format #f "cursor: ~A, ~C, line: ~S"
+				 cursor-pos cur-char
+				 (one-line cur-line))))
 		     (lambda (c)
 		       (format #f "len: ~D, selection: ~S, previous: ~S" 
 			       (length cur-line) 

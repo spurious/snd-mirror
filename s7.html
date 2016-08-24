@@ -4918,10 +4918,10 @@ the directory:
 <pre class="indented">
 (set! (hook-functions <em class=red>*load-hook*</em>)
   (list (lambda (hook)
-          (let* ((pos -1)
-                 (filename (hook 'name))
-	         (len (length filename)))
-            (do ((i 0 (+ i 1)))
+          (let ((pos -1)
+                (filename (hook 'name)))
+            (do ((len (length filename))
+                 (i 0 (+ i 1)))
 	        ((= i len))
 	      (if (char=? (filename i) #\/)
 	          (set! pos i)))
@@ -5500,7 +5500,7 @@ is simply returned, unevaluated.
 	  `(display ',(car args))
 	  (list 'begin
                 `(display ',(car args))
-		(apply macroexpand (list (append '(rmac) (cdr args))))))))
+		(apply macroexpand (list (cons 'rmac (cdr args))))))))
 
 &gt; (macroexpand (rmac a b c))
 <em class="gray">(begin (display 'a) (begin (display 'b) (display 'c)))</em>
