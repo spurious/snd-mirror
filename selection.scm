@@ -48,11 +48,11 @@
 		(error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection")
 		(let* ((snd-chn0 (find-selection-sound ()))
 		       (snd-chn1 (find-selection-sound snd-chn0)))
-		  (let ((beg (selection-position))
-			(len (selection-framples)))
-		    (if snd-chn1
-			(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
-			(error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap"))))))))))
+		  (if snd-chn1
+		      (let ((beg (selection-position))
+			    (len (selection-framples)))
+			(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len))
+		      (error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap")))))))))
 
 
 ;;; -------- replace-with-selection

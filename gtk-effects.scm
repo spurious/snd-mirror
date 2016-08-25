@@ -62,12 +62,12 @@
 				  0)))
 		 (apply for-each
 			(lambda (snd chn)
-			  (let ((end (if (memq target '(sound cursor))
-					 (- (framples snd chn) 1)
-					 (if (eq? target 'selection)
-					     (+ (selection-position) (selection-framples))
-					     (cadr ms)))))
-			    (if (= (sync snd) snc)
+			  (if (= (sync snd) snc)
+			      (let ((end (if (memq target '(sound cursor))
+					     (- (framples snd chn) 1)
+					     (if (eq? target 'selection)
+						 (+ (selection-position) (selection-framples))
+						 (cadr ms)))))
 				(map-channel (func (- end beg)) beg (+ end overlap 1) snd chn #f
 					     (format #f "~A ~A ~A" 
 						     (origin target (- end beg))

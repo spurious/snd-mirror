@@ -123,16 +123,13 @@
 	    (XtAddCallback new-dialog XmNokCallback 
 			   (lambda (w c i)
 			     (let ((new-name (XmTextFieldGetString rename-text)))
-			       (if (and (string? new-name)
-					(> (length new-name) 0)
-					(>= (selected-sound) 0))
-				   (let ();(current-name (file-name)))
-				     (save-sound-as new-name)
-				     (close-sound)
-					;(rename-file current-name new-name)
-				     ;; (delete-file current-name) perhaps?
-				     (open-sound new-name)
-				     (XtUnmanageChild w))))))
+			       (when (and (string? new-name)
+					  (> (length new-name) 0)
+					  (>= (selected-sound) 0))
+				 (save-sound-as new-name)
+				 (close-sound)
+				 (open-sound new-name)
+				 (XtUnmanageChild w)))))
 	    (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
 	    (set! rename-dialog new-dialog)
 	    (let* ((mainform (XtCreateManagedWidget "formd" xmRowColumnWidgetClass rename-dialog

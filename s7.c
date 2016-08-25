@@ -75060,5 +75060,5 @@ int main(int argc, char **argv)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
- *   for snd-mix, tie-ins are in place -- if no mix (object->let (integer->mix 0)) complains about a length problem?
+ *   for snd-mix, tie-ins are in place [integer->* like mix>]
  */

@@ -46099,16 +46099,6 @@ EDITS: 1
 		    (let ((tag
 			   (catch #t
 			     (lambda ()
-			       (n (integer->mix 1234)))
-			     (lambda args (car args)))))
-		      (if (not (eq? tag 'no-such-mix))
-			  (snd-display ";[1]: mix procs ~A: ~A" n tag))))
-		  (list mix-amp mix-length mix-name mix-position mix-home mix-speed mix-tag-y))
-	
-	(for-each (lambda (n)
-		    (let ((tag
-			   (catch #t
-			     (lambda ()
 			       (set! (n (integer->mix 1234)) float-vector-5))
 			     (lambda args (car args)))))
 		      (if (not (memq tag '(error wrong-type-arg syntax-error no-such-mix)))
@@ -46297,8 +46287,6 @@ EDITS: 1
 	  (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	  (check-error-tag 'no-such-mix (lambda () (mix-properties (integer->mix (+ 1 (mix-sync-max))))))
-	  (check-error-tag 'no-such-mix (lambda () (set! (mix-properties (integer->mix (+ 1 (mix-sync-max)))) '(a 1))))
 	  (check-error-tag 'no-such-region (lambda () (make-region-sampler (integer->region 1234567) 0)))
 	  (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	  (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
@@ -46493,7 +46481,6 @@ EDITS: 1
 	    (make-region 0 100 ind 0)
 	    (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
 	    (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))
-	    (check-error-tag 'no-such-mix (lambda () (make-mix-sampler (integer->mix 1234))))
 	    (check-error-tag 'no-such-sound (lambda () (make-region 0 12 1234 #t)))
 	    (set! (read-only ind) #t)
 	    (check-error-tag 'bad-arity (lambda () (play (selected-sound) 0 :stop (lambda () #f))))

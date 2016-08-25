@@ -561,29 +561,28 @@
 (define* (ambisonics-channels 
 	  (h-order dlocsig-ambisonics-h-order)
 	  (v-order dlocsig-ambisonics-v-order))
-  (let ((count 0))
-    (if (< h-order 0)
-	0              ;; error: we need at least horizontal order 1!
-	(begin
-	  (if (>= h-order 1)
-	      ;; W X Y
-	      (set! count (+ count 3)))
-	  (if (>= v-order 1)
-	      ;; Z
-	      (set! count (+ count 1)))
-	  (if (>= v-order 2)
-	      ;; R S T
-	      (set! count (+ count 3)))
-	  (if (>= h-order 2)
-	      ;; U V
-	      (set! count (+ count 2)))
-	  (if (>= v-order 3)
-	      ;; K L M N O
-	      (set! count (+ count 5)))
-	  (if (>= h-order 3)
-	      ;; P Q
-	      (set! count (+ count 2)))
-	  count))))
+  (if (< h-order 0)
+      0              ;; error: we need at least horizontal order 1!
+      (let ((count 0))
+	(if (>= h-order 1)
+	    ;; W X Y
+	    (set! count (+ count 3)))
+	(if (>= v-order 1)
+	    ;; Z
+	    (set! count (+ count 1)))
+	(if (>= v-order 2)
+	    ;; R S T
+	    (set! count (+ count 3)))
+	(if (>= h-order 2)
+	    ;; U V
+	    (set! count (+ count 2)))
+	(if (>= v-order 3)
+	    ;; K L M N O
+	    (set! count (+ count 5)))
+	(if (>= h-order 3)
+	    ;; P Q
+	    (set! count (+ count 2)))
+	count)))
 	
 
 ;;;;;;;;;
@@ -1066,8 +1065,8 @@
 ;;; (path-x (make-path '((-10 10)(0 5)(10 10))))
 
 (define (fit path)
-  (cond ((not (eq? (car path) 'open-bezier-path))
-	 (let ((n (- (length (bezier-x path )) 1)))
+  (let ((n (- (length (bezier-x path )) 1)))
+    (cond ((not (eq? (car path) 'open-bezier-path))
 	   (let ((m (/ (- n (if (odd? n) 3 4)) 2))
 		 ;; data points P(i)
 		 (p (vector (apply vector (bezier-x path))
@@ -1076,7 +1075,7 @@
 		 ;; control points D(i)
 		 (d (let ((maker (lambda () (make-vector n 0.0))))
 		      (vector (maker) (maker) (maker)))))
-	   
+	     
 	     (define (a-1 k n)
 	       (if (odd? (min (+ (* path-maxcoeff 2) 1) n))
 		   (begin
@@ -1109,9 +1108,8 @@
 		   (set! (d 0 i) (* (d 0 i) (bezier-curvature path)))
 		   (set! (d 1 i) (* (d 1 i) (bezier-curvature path)))
 		   (set! (d 2 i) (* (d 2 i) (bezier-curvature path)))))
-	     (list (- n 1) p d))))
-	(else
-	 (let ((n (- (length (bezier-x path)) 1)))
+	     (list (- n 1) p d)))
+	  (else
 	   (let ((m (- n 1))
 		 ;; data points P(i)
 		 (p (vector (apply vector (bezier-x path))

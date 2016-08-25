@@ -2051,16 +2051,13 @@
 			     (XtAddCallback new-dialog XmNokCallback 
 					    (lambda (w c i)
 					      (let ((new-name (XmTextFieldGetString rename-text)))
-						(if (and (string? new-name)
-							 (> (length new-name) 0)
-							 (selected-sound))
-						    (let ();(current-name (file-name)))
-						      (save-sound-as new-name)
-						      (close-sound)
-					;(rename-file current-name new-name) ; was this from Guile?
-					;(system (format #f "mv ~A ~A" new-name current-name)) ; surely it should be (delete-file current-name)?
-						      (open-sound new-name)
-						      (XtUnmanageChild w))))))
+						(when (and (string? new-name)
+							   (> (length new-name) 0)
+							   (selected-sound))
+						  (save-sound-as new-name)
+						  (close-sound)
+						  (open-sound new-name)
+						  (XtUnmanageChild w)))))
 			     (for-each XmStringFree (vector xhelp xok xdismiss titlestr))
 			     (set! rename-dialog new-dialog)
 			     

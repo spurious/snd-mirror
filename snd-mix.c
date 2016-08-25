@@ -2723,7 +2723,9 @@ static Xen g_integer_to_mix(Xen n)
 {
   #define H_integer_to_mix "(" S_integer_to_mix " n) returns a mix object corresponding to the given integer"
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_mix, "an integer");
-  return(new_xen_mix(Xen_integer_to_C_int(n)));
+  if (mix_is_active(Xen_integer_to_C_int(n)))
+    return(new_xen_mix(Xen_integer_to_C_int(n)));
+  return(Xen_false);
 }
 
 
