@@ -2131,8 +2131,12 @@ static void init_xen_mark(void)
 static Xen g_integer_to_mark(Xen n)
 {
   #define H_integer_to_mark "(" S_integer_to_mark " n) returns a mark object corresponding to the given integer"
+  mark *m;
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_mark, "an integer");
-  return(new_xen_mark(Xen_integer_to_C_int(n)));
+  m = find_mark_from_id(Xen_integer_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
+  if (m)
+    return(new_xen_mark(m->id));
+  return(Xen_false);
 }
 
 

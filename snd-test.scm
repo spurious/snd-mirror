@@ -5724,9 +5724,6 @@ EDITS: 5
 	  (insert-region id 60 index) 
 	  (if (not (= (framples) (+ len 100))) (snd-display ";insert-region len: ~A?" (framples)))
 	  (if (fneq (sample 100) s40) (snd-display ";insert-region: ~A ~A?" (sample 100) s40))
-	  (let ((var (catch #t (lambda () (insert-region (integer->region (+ 1000 (apply max (map region->integer (regions))))) 0)) (lambda args args))))
-	    (if (not (eq? (car var) 'no-such-region))
-		(snd-display ";insert-region bad id: ~A" var)))
 	  (save-region id "fmv.snd")
 	  (if (not (= (mus-sound-header-type "fmv.snd") mus-next))
 	      (snd-display ";save-region header: ~A?" (mus-header-type-name (mus-sound-header-type "fmv.snd"))))
@@ -9336,25 +9333,6 @@ EDITS: 2
 		(snd-display ";colormap white: ~A ~A ~A" tag ind *colormap*)))
 	  (if (not (string=? (colormap-name ind) "white"))
 	      (snd-display ";white colormap name: ~A" (colormap-name ind))))
-	
-	(let ((tag (catch #t (lambda () (delete-colormap (integer->colormap 1234))) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-colormap))
-	      (snd-display ";delete-colormap 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (colormap-ref (integer->colormap 1234) 0.5)) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-colormap))
-	      (snd-display ";colormap-ref 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (colormap-ref (integer->colormap -1) 0.5)) (lambda args (car args)))))
-	  (if (not (memq tag '(no-such-colormap wrong-type-arg)))
-	      (snd-display ";colormap-ref -1: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! *colormap* (integer->colormap 1234))) (lambda args (car args)))))
-	  (if (not (eq? tag 'no-such-colormap))
-	      (snd-display "; set colormap 1234: ~A" tag)))
-	(let ((tag (catch #t (lambda () (set! *colormap* (integer->colormap -1))) (lambda args (car args)))))
-	  (if (not (memq tag '(no-such-colormap wrong-type-arg)))
-	      (snd-display "; set colormap -1: ~A" tag)))
-	(let ((tag (catch #t (lambda () (colormap-ref copper-colormap 2.0)) (lambda args (car args)))))
-	  (if (not (eq? tag 'out-of-range))
-	      (snd-display ";colormap-ref 2.0: ~A" tag)))
 	
 	(set! *colormap-size* old-colormap-size)
 	(if (not (= *colormap-size* old-colormap-size))
@@ -23132,8 +23110,6 @@ EDITS: 2
       (set! (mark-property :hiho m1) 123)
       (if (not (= (mark-property :hiho m1) 123)) (snd-display ";mark-property: ~A" (mark-property :hiho m1)))
       (if (mark-property :not-there m1) (snd-display ";mark-not-property: ~A" (mark-property :not-there m1)))
-      (if (not (eq? (without-errors (mark-sample (integer->mark 12345678))) 'no-such-mark)) 
-	  (snd-display ";mark-sample err: ~A?" (without-errors (mark-sample 12345678))))
       (if (not (eq? (without-errors (add-mark 123 123)) 'no-such-sound)) 
 	  (snd-display ";add-mark err: ~A?" (without-errors (add-mark 123 123))))
       (let ((m2 (without-errors (add-mark 12345 fd 0))))
@@ -45644,7 +45620,7 @@ EDITS: 1
 			     (lambda ()
 			       (n (integer->sound 123)))
 			     (lambda args (car args)))))
-		      (if (not (eq? tag 'no-such-sound))
+		      (if (not (memq tag '(wrong-type-arg no-such-sound)))
 			  (snd-display ";snd no-such-sound ~A: ~A" n tag))))
 		  (list amp-control apply-controls channels chans comment contrast-control 
 			amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -46131,16 +46107,6 @@ EDITS: 1
 			  (snd-display "; mark procs ~A: ~A" n tag))))
 		  (list add-mark mark-name mark-sample mark-sync mark-home delete-mark delete-marks find-mark))
 	
-	(for-each (lambda (n)
-		    (let ((tag
-			   (catch #t
-			     (lambda ()
-			       (n (integer->mark 1234)))
-			     (lambda args (car args)))))
-		      (if (not (eq? tag 'no-such-mark))
-			  (snd-display "; no mark procs ~A: ~A" n tag))))
-		  (list mark-name mark-sample mark-sync mark-home delete-mark))
-	
 	(let* ((index (open-sound "oboe.snd"))
 	       (id (add-mark 0 index 0)))
 	  (for-each (lambda (n)
@@ -46169,17 +46135,6 @@ EDITS: 1
 				    region-position region-maxamp region-maxamp-position region-sample 
 				    region->float-vector region-srate forget-region)))
 		  (list float-vector-5 #(0 1) 0+i "hiho" (list 0 1)))
-	
-	(for-each (lambda (n)
-		    (let ((tag
-			   (catch #t
-			     (lambda ()
-			       (n (integer->region 1234)))
-			     (lambda args (car args)))))
-		      (if (not (eq? tag 'no-such-region))
-			  (snd-display "; (no) region procs ~A: ~A" n tag))))
-		  (list region-chans region-home region-framples region-position 
-			region-maxamp region-maxamp-position region-srate forget-region))
 	
 	(for-each (lambda (n)
 		    (let ((tag
@@ -46287,7 +46242,6 @@ EDITS: 1
 	  (check-error-tag 'no-such-menu (lambda () (add-to-menu 1234 "hi" (lambda () #f))))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu -1)))
 	  (check-error-tag 'no-such-menu (lambda () (main-menu 111)))
-	  (check-error-tag 'no-such-region (lambda () (make-region-sampler (integer->region 1234567) 0)))
 	  (check-error-tag 'no-such-sound (lambda () (edit-header-dialog 1234)))
 	  (check-error-tag 'no-such-sound (lambda () (set! (sound-loop-info 123) '(0 0 1 1))))
 	  (for-each (lambda (arg)
@@ -46331,8 +46285,6 @@ EDITS: 1
 			    (lambda () (set! *mus-array-print-length* -1))
 			    (lambda () (set! *play-arrow-size* -1))
 			    (lambda () (set! *print-length* -1))
-			    (lambda () (set! *transform-type* (integer->transform 123)))
-			    (lambda () (snd-transform (integer->transform 20) (make-float-vector 4)))
 			    (lambda () (src (make-src :input (lambda (dir) 1.0)) 2000000.0))))
 	  (for-each (lambda (arg)
 		      (check-error-tag 'wrong-type-arg arg))
@@ -46348,7 +46300,6 @@ EDITS: 1
 			    (lambda () (set! *ask-about-unsaved-edits* 123))
 			    (lambda () (set! *save-as-dialog-auto-comment* 123))
 			    (lambda () (set! *save-as-dialog-src* 123))
-			    (lambda () (set! *transform-type* (integer->transform -1)))
 			    (lambda () (set! *with-menu-icons* 123))
 			    (lambda () (set! *with-smpte-label* 123))
 			    (lambda () (set! *with-toolbar* 123))
@@ -46477,7 +46428,6 @@ EDITS: 1
 	    (check-error-tag 'no-active-selection (lambda () (filter-selection (float-vector 0 0 1 1) 4)))
 	    (check-error-tag 'no-active-selection (lambda () (save-selection "/bad/baddy.snd")))
 	    (check-error-tag 'no-active-selection (lambda () (env-selection '(0 0 1 1))))
-	    (check-error-tag 'no-such-region (lambda () (save-region (integer->region 1234) "/bad/baddy.snd")))
 	    (make-region 0 100 ind 0)
 	    (check-error-tag 'cannot-save (lambda () (save-selection "/bad/baddy.snd")))
 	    (check-error-tag 'cannot-save (lambda () (save-region (car (regions)) "/bad/baddy.snd")))

@@ -1518,8 +1518,12 @@ static void init_xen_region(void)
 static Xen g_integer_to_region(Xen n)
 {
   #define H_integer_to_region "(" S_integer_to_region " n) returns a region object corresponding to the given integer"
+  region* r;
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_region, "an integer");
-  return(new_xen_region(Xen_integer_to_C_int(n)));
+  r = id_to_region(Xen_integer_to_C_int(n));
+  if (r)
+    return(new_xen_region(r->id));
+  return(Xen_false);
 }
 
 

@@ -2330,8 +2330,12 @@ static void init_xen_sound(void)
 static Xen g_integer_to_sound(Xen n)
 {
   #define H_integer_to_sound "(" S_integer_to_sound " n) returns a sound object corresponding to the given integer"
+  int index;
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_sound, "an integer");
-  return(new_xen_sound(Xen_integer_to_C_int(n)));
+  index = Xen_integer_to_C_int(n);
+  if (get_sp_1(index))
+    return(new_xen_sound(index));
+  return(Xen_false);
 }
 
 

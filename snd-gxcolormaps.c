@@ -1032,8 +1032,12 @@ static void init_xen_colormap(void)
 static Xen g_integer_to_colormap(Xen n)
 {
   #define H_integer_to_colormap "(" S_integer_to_colormap " n) returns a colormap object corresponding to the given integer"
+  int id;
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_colormap, "an integer");
-  return(new_xen_colormap(Xen_integer_to_C_int(n)));
+  id = Xen_integer_to_C_int(n);
+  if (is_colormap(id))
+    return(new_xen_colormap(id));
+  return(Xen_false);
 }
 
 
