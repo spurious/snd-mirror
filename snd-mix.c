@@ -4021,23 +4021,26 @@ static s7_pointer s7_mix_sampler_to_let(s7_scheme *sc, s7_pointer args)
 {
   /* this is called upon (object->let <mix-sampler>) */
   s7_pointer m, env;
-  mix_fd *mf;
-  mix_info *md;
+  mix_fd *fd;
 
   m = s7_car(args);
   env = s7_cadr(args);
-  mf = Xen_to_mix_sampler(m);
-  md = mf->md;
+  fd = Xen_to_mix_sampler(m);
   
-  s7_varlet(sc, env, s7_make_symbol(sc, "id"), s7_make_integer(sc, md->id));
-#if 0
-	  snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler mix %d, (from %lld, at %lld%s): %s>",
-		       md->id,
-		       fd->sf->initial_samp,
-		       fd->sf->loc,
-		       (fd->sf->at_eof) ? ", at eof" : "",
-		       (md->in_filename) ? md->in_filename : S_vct);
-#endif
+  if ((fd) && (fd->sf) && 
+      (mix_is_active(fd->sf->region)) &&
+      (fd->md) &&
+      (fd->sf->region == (fd->md->id)))
+    {
+      mix_info *md;
+      md = fd->md;
+
+      s7_varlet(sc, env, s7_make_symbol(sc, "mix"), (mix_is_active(md->id)) ? new_xen_mix(md->id) : Xen_false);
+      s7_varlet(sc, env, s7_make_symbol(sc, "source"), (md->in_filename) ? s7_make_string(sc, md->in_filename) : Xen_false);
+      s7_varlet(sc, env, s7_make_symbol(sc, "start"), s7_make_integer(sc, fd->sf->initial_samp));
+      s7_varlet(sc, env, s7_make_symbol(sc, "position"), s7_make_integer(sc, fd->sf->loc));
+      s7_varlet(sc, env, s7_make_symbol(sc, "eof"), s7_make_boolean(sc, fd->sf->at_eof));
+    }
   return(env);
 }
 

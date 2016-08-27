@@ -27,6 +27,7 @@
 (define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
 (define *report-bloated-arg* 24)                          ; min arg expr tree size that can trigger a rewrite-as-let suggestion
 (define *report-clobbered-function-return-value* #f)      ; function returns constant sequence, which is then stomped on -- very rare!
+(define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -863,19 +864,22 @@
 	    ((pair? (car args))	(cons (caar args) (args->proper-list (cdr args))))
 	    (else               (cons (car args) (args->proper-list (cdr args))))))
     
-    (define (out-vars func-name arglist body) ; t367 has tests
+    (define (out-vars func-name arglist body)
       (let ((ref ())
 	    (set ()))
 	(let var-walk ((tree body)
 		       (e (cons func-name arglist)))
+
 	  (define (var-walk-body tree e) 
 	    (when (pair? tree)
 	      (for-each (lambda (p) (set! e (var-walk p e))) tree)))
+
 	  (define (shadowed v) 
 	    (if (and (or (memq v e) (memq v ref))
 		     (not (memq v set)))
 		(set! set (cons v set)))
 	    v)
+
 	  (if (symbol? tree)
 	      (if (not (or (memq tree e) (memq tree ref) (defined? tree (rootlet))))
 		  (set! ref (cons tree ref)))
@@ -907,18 +911,8 @@
 						      (pair? (cdr v)))
 					     (var-walk (cadr v) e)
 					     (set! vars (cons (shadowed (car v)) vars))))
-					 ((if named caddr cadr) tree))
-			       (var-walk-body ((if named cdddr cddr) tree) (append vars e))))))
-
-		      ((case)
-		       (when (and (pair? (cdr tree)) 
-				  (pair? (cddr tree)))
-			 (for-each (lambda (c) 
-				     (when (pair? c) 
-				       (var-walk (cdr c) e)))
-				   (cddr tree))))
-
-		      ((quote) #f)
+					 ((if named caddr cadr) tree)))
+			     (var-walk-body ((if named cdddr cddr) tree) (append vars e)))))
 
 		      ((let* letrec*)
 		       (let* ((named (symbol? (cadr tree)))
@@ -930,8 +924,18 @@
 						  (pair? (cdr v)))
 					 (var-walk (cadr v) (append vars e))
 					 (set! vars (cons (shadowed (car v)) vars))))
-				     varlist)
-			   (var-walk-body ((if named cdddr cddr) tree) (append vars e)))))
+				     varlist))
+			 (var-walk-body ((if named cdddr cddr) tree) (append vars e))))
+
+		      ((case)
+		       (when (and (pair? (cdr tree)) 
+				  (pair? (cddr tree)))
+			 (for-each (lambda (c) 
+				     (when (pair? c) 
+				       (var-walk (cdr c) e)))
+				   (cddr tree))))
+
+		      ((quote) #f)
 
 		      ((do)
 		       (let ((vars ()))
@@ -6427,7 +6431,7 @@
 		 (lint-format "(current-input-port) is the default port for ~A: ~A" caller head form)
 		 (if (and (eq? head 'port-filename)
 			  (memq (cadr form) '(*stdin* *stdout* *stderr*)))
-		     (lint-format "~A: ~S~%" caller form
+		     (lint-format "~A: ~S" caller form
 				  (case (cadr form) ((*stdin*) "*stdin*") ((*stdout*) "*stdout*") ((*stderr*) "*stderr*")))))))
 	 (for-each (lambda (c)
 		     (lint-hash h c sp-read))
@@ -6451,7 +6455,7 @@
 	    ;; type of initial value (for make-float|int-vector) is checked elsewhere
 	    (if (and (= (length form) 4)
 		     (eq? head 'make-vector))   ;  (make-vector 3 0 #t)
-		(lint-format "make-vector no longer has a fourth argument: ~A~%" caller form))
+		(lint-format "make-vector no longer has a fourth argument: ~A" caller form))
 
 	    (if (>= (length form) 3)
 		(case (caddr form)
@@ -9385,6 +9389,10 @@
 
 	(lambda (caller head vars env)
 	  ;; report unused or set-but-unreferenced variables, then look at the overall history
+	  ;;   vars used before defined are kind of a mess -- history has #f for the (unknown) enclosing form
+	  ;;   and any definition wipes out the accumulated pre-def uses -- this should be by closed-body and
+	  ;;   ignore local defines (i.e. really only define[x] propogates backwards) -- changing this is
+	  ;;   tricky (fools current unused func arg + value message for example).
 	  
 	  (define (all-types-agree v)
 	    (let ((base-type (->lint-type (var-initial-value v)))
@@ -9432,14 +9440,28 @@
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
-#|
-		 (if (and (pair? outer-form)
-			  (eq? otype 'variable)
-			  (> (var-set local-var) 2)
-			  (> (var-ref local-var) 2)
-			  (assq 'set! (var-history local-var)))
-		     (format *stderr* "~A: ~A ~A~%~{  ~A~%~}~%~%" vname (var-ref local-var) (var-set local-var) (reverse (var-history local-var))))
-|#
+
+		 ;; (let ((x 0)...) ... (set! x 1)...) -> move the set! value  to let init value
+		 ;; car body as set! is handled in let-walker etc
+		 (when (and outer-form
+			    (positive? (var-set local-var))
+			    (memq (car outer-form) '(let let*))
+			    (list? (cadr outer-form))
+			    (not (side-effect? (var-initial-value local-var) env)))
+		   (let* ((len (length (var-history local-var)))
+			  (nxt (and (> len 1)
+				    (list-ref (var-history local-var) (- len 2)))))
+		     (when (and (pair? nxt)
+			       (eq? (car nxt) 'set!)
+			       (eq? (cadr nxt) vname)
+			       (code-constant? (caddr nxt)) ; so vname is not involved etc
+			       (not (tree-memq vname (caddr outer-form))) ; not redundant with next -- need to exclude this case
+			       (let ((f (member vname (cdddr outer-form) tree-memq)))
+				 (and (pair? f)
+				      (eq? (car f) nxt))))
+		       (lint-format "perhaps change ~A's initial value to ~A, and remove ~A in ~A" caller
+				    vname (caddr nxt) nxt (truncated-list->string outer-form)))))
+
 		 ;; if's possible for an unused function to have ref=1, null cdr history, but it appears to
 		 ;;   always involve curlet exports and the like.
 
@@ -9788,7 +9810,7 @@
 							   (pair? (cdr lst))
 							   (or (eq? (car lst) vname)
 							       (amidst? (cdr lst)))))   ; don't clobber possible trailing vname (returned by expression)
-						(lint-format "~A is ~A, so ~A~%" caller       ; (let ((x 1)) (and x (< x 1))) -> (< x 1)
+						(lint-format "~A is ~A, so ~A" caller   ; (let ((x 1)) (and x (< x 1))) -> (< x 1)
 							     vname (prettify-checker-unq vtype)
 							     (lists->string call 
 									    (simplify-boolean (remove vname call) () () vars)))))
@@ -11406,68 +11428,83 @@
 			   (pair? (cdr f)))
 		  (if (and (pair? (cadr f))
 			   (memq f-func '(define define* define-macro define-constant define-macro* define-expansion define-bacro define-bacro*)))
-		      (set-ref (caadr f) caller #f env)
+		      (set-ref (caadr f) caller f env)
 		      (if (memq f-func '(defmacro defmacro*))
-			  (set-ref (cadr f) caller #f env))))
+			  (set-ref (cadr f) caller f env))))
 		))
 	    (set! lint-mid-form old-mid-form)
 	    (set! lint-current-form old-current-form)))
       env)
     
     
-    (define (check-sequence-constant function-name last)
-      (let ((seq (if (not (pair? last))
-		     last
-		     (and (eq? (car last) 'quote)
-			  (pair? (cdr last)) ; (quote . 1)
-			  (cadr last)))))
-	(if (and (sequence? seq)
-		 (> (length seq) 0))
-	    (begin
-	      (lint-format "returns ~A constant: ~A~S" function-name ; (define-macro (m a) `(+ 1 a))
-			   (if (pair? seq)
-			       (values "a list" "'" seq)
-			       (values (prettify-checker-unq (->lint-type last)) "" seq)))
-	      (throw 'sequence-constant-done)) ; just report one constant -- the full list is annoying
-	    (when (pair? last)
-	      (case (car last)
+    (define (return-walker last func)
+      (if (not (pair? last))
+	  (func last)
+	  (case (car last)
+	    
+	    ((begin let let* letrec letrec* when unless with-baffle with-let)
+	     (when (pair? (cdr last))
+	       (let ((len (length last)))
+		 (when (positive? len)
+		   (return-walker (list-ref last (- len 1)) func)))))
+	    
+	    ((if)
+	     (when (and (pair? (cdr last))
+			(pair? (cddr last)))
+	       (return-walker (caddr last) func)
+	       (if (pair? (cdddr last))
+		   (return-walker (cadddr last) func))))
+	    
+	    ((cond)
+	     (for-each (lambda (c)
+			 (if (and (pair? c)
+				  (pair? (cdr c)))
+			     (return-walker (list-ref c (- (length c) 1)) func)))
+		       (cdr last)))
+	    
+	    ((case)
+	     (when (and (pair? (cdr last))
+			(pair? (cddr last)))
+	       (for-each (lambda (c)
+			   (if (and (pair? c)
+				    (pair? (cdr c)))
+			       (return-walker (list-ref c (- (length c) 1)) func)))
+			 (cddr last))))
+	    
+	    ((do)
+	     (if (and (pair? (cdr last))
+		      (pair? (cddr last))
+		      (pair? (caddr last))
+		      (pair? (cdaddr last)))
+		 (return-walker (list-ref (caddr last) (- (length (caddr last)) 1)) func)))
 
-		((begin let let* letrec letrec* when unless with-baffle with-let)
-		 (when (pair? (cdr last))
-		   (let ((len (length last)))
-		     (when (positive? len)
-		       (check-sequence-constant function-name (list-ref last (- len 1)))))))
-		
-		((if)
-		 (when (and (pair? (cdr last))
-			    (pair? (cddr last)))
-		   (check-sequence-constant function-name (caddr last))
-		   (if (pair? (cdddr last))
-		       (check-sequence-constant function-name (cadddr last)))))
-		
-		((cond)
-		 (for-each (lambda (c)
-			     (if (and (pair? c)
-				      (pair? (cdr c)))
-				 (check-sequence-constant function-name (list-ref c (- (length c) 1)))))
-			   (cdr last)))
-		
-		((case)
-		 (when (and (pair? (cdr last))
-			    (pair? (cddr last)))
-		   (for-each (lambda (c)
-			       (if (and (pair? c)
-					(pair? (cdr c)))
-				   (check-sequence-constant function-name (list-ref c (- (length c) 1)))))
-			     (cddr last))))
-		
-		((do)
-		 (if (and (pair? (cdr last))
-			  (pair? (cddr last))
-			  (pair? (caddr last))
-			  (pair? (cdaddr last)))
-		     (check-sequence-constant function-name (list-ref (caddr last) (- (length (caddr last)) 1))))))))))
+	    ((set!)
+	     (if (and (pair? (cdr last))
+		      (pair? (cddr last)))
+		 (func (caddr last))))
+
+	    (else (func last)) ; includes quote
+
+	    ;; call-with-exit et al also or|and
+	    ;; or|and -- call return-walker on each entry?
+	    ;; call-with-exit: walker on last on body, and scan for return func, walker on arg(s...)->values?
+
+	    )))
 		   
+    (define (check-sequence-constant function-name last)
+      (return-walker last
+		     (lambda (in-seq)
+		       (when (or (not (pair? in-seq))
+				 (eq? (car in-seq) 'quote))
+			 (let ((seq (if (pair? in-seq) (cadr in-seq) in-seq)))
+			   (when (and (sequence? seq)
+				      (not (zero? (length seq))))
+			     (lint-format "returns ~A constant: ~A~S" function-name ; (define-macro (m a) `(+ 1 a))
+					  (if (pair? seq)
+					      (values "a list" "'" seq)
+					    (values (prettify-checker-unq (->lint-type in-seq)) "" seq)))
+			     (throw 'sequence-constant-done))))))) ; just report one constant -- the full list is annoying
+
 	
     (define (lint-walk-function-body definer function-name args body env)
       ;; walk function body, with possible doc string at the start
@@ -11502,7 +11539,7 @@
       (let ((tag 'yup))
 	(catch 'sequence-constant-done
 	  (lambda ()
-	    (check-sequence-constant function-name (list-ref body (- (length body) 1)))
+	    (check-sequence-constant function-name (list-ref body (- (length body) 1))) ; some of these are innocuous -- lambda forms in midst of outer body etc
 	    (set! tag 'nope))
 	  (lambda args #f))
 	(if (eq? tag 'yup)
@@ -12176,8 +12213,8 @@
 			(check-definee caller sym form env)
 			
 			(if (memq head '(define define-constant define-envelope 
-					  define-public define*-public defmacro-public define-inlinable 
-					  define-integrable define^))
+					 define-public define*-public defmacro-public define-inlinable 
+					 define-integrable define^))
 			    (let ((len (length form)))
 			      (if (not (= len 3))  ;  (define a b c)
 				  (lint-format "~A has ~A value~A?"
@@ -12278,6 +12315,29 @@
 				  ((hash-table-ref other-identifiers (car sym))
 				   => (lambda (p)
 					(lint-format "~A is used before it is defined" caller (car sym)))))
+
+			    (if (and *report-boolean-functions-misbehaving*
+				     (symbol? (car sym))
+				     (not (memq head '(lambda lambda*))) ; how to catch this case? -- this appears to be ignored
+				     (char=? #\? ((reverse (symbol->string (car sym))) 0)))
+				(catch 'one-is-enough
+				  (lambda ()
+				    (return-walker (list-ref val (- (length val) 1))
+						   (lambda (last)
+						     (when (or (and (code-constant? last)
+								    (not (boolean? last))
+								    (not (and (pair? last)
+									      (eq? (car last) 'quote)
+									      (boolean? (cadr last)))))
+							       (and (pair? last)
+								    (let ((sig (arg-signature (car last) env)))
+								      (and (pair? sig)
+									   (if (pair? (car sig))
+									       (not (tree-set-member '(boolean? #t values) (car sig)))
+									       (not (memq (car sig) '(boolean? #t values))))))))
+						       (lint-format "~A looks boolean, but it can return ~A" caller (car sym) (truncated-list->string last))
+						       (throw 'one-is-enough)))))
+				  (lambda args #f)))
 			    
 			    (check-definee caller (car sym) form env)
 			    
@@ -15984,7 +16044,7 @@
 			      (when (and (not (memq test vars))
 					 (not (tree-set-member vars test))
 					 (not (side-effect? test env)))
-				(lint-format "perhaps move the let inside the ~A: ~A~%" caller
+				(lint-format "perhaps move the let inside the ~A: ~A" caller
 					     (caar body)
 					     (truncated-lists->string form `(,(caar body) ,test (let ,(cadr form) ,@(cddar body))))))))))
 		       ;; ----------------------------------------
@@ -18664,15 +18724,8 @@
     #f))
 |#
 
-;;; 152 25022 656603
+;;; 152 25022 656782
 
-;;; expr+sets->expr+uses [case->cond for example]
-;;; check f? for bool rtn? -- walk-return? -- used also in arg-sig calc?
 ;;; reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
-;;; report-usage, all hash-ref/set are string-constants -- use symbols
-;;; all sets and refs are int-related -> equal? -> = or eqv??
-;;;    successive sets in history -> find in outer-form and report? [no call/cc etc]
-;;; reverse is no-op if all vals are alike
-;;; first set-val = init? or init, then set before ref--are these caught?
-;;; does let* get init value into history? -- angle-list missed I think -- or is this predef use?
-;;;    predef use (as global in func) is recorded as #f in history!
+;;; code-equal? across all fragments
+;;; are there other typed-func cases? sort! 
