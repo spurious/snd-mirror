@@ -75061,4 +75061,5 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
+ * let-temporarily doesn't report undefined locals? (let-temporarily (((*lint* 'with-fragments) #t)) ...)
  */

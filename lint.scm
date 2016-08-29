@@ -27,7 +27,7 @@
 (define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
 (define *report-bloated-arg* 24)                          ; min arg expr tree size that can trigger a rewrite-as-let suggestion
 (define *report-clobbered-function-return-value* #f)      ; function returns constant sequence, which is then stomped on -- very rare!
-(define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value
+(define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -62,6 +62,7 @@
 
 (set! reader-cond #f)
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid (incorrect) unbound-variable errors
+
 
 #|
 ;; debugging version
@@ -277,6 +278,9 @@
 	(*current-file* "")
 	(*top-level-objects* (make-hash-table))
 	(*output-port* *stderr*)
+	(*with-fragments* #f)
+	(*with-blocks* #f)
+	(fragments (make-hash-table))
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
     
     (set! *e* (curlet))
@@ -5038,21 +5042,20 @@
 	     caaaar caaadr caadar caaddr cadaar cadadr caddar cdaaar cdaadr cdadar cdaddr cddaar cddadr cdddar))
       (list (reverse ci) (reverse ic)))
 |#
-    (define match-cxr
-      (let ((cxr->int (hash-table '(car . 1) '(cdr . 2) 
-				  '(caar . 5) '(cadr . 6) '(cddr . 10) '(cdar . 9) 
-				  '(caaar . 21) '(caadr . 22) '(caddr . 26) '(cdddr . 42) '(cdaar . 37) '(cddar . 41) '(cadar . 25) '(cdadr . 38) 
-				  '(cadddr . 106) '(cddddr . 170) '(caaaar . 85) '(caaadr . 86) '(caadar . 89) '(caaddr . 90) '(cadaar . 101) '(cadadr . 102) 
-				  '(caddar . 105) '(cdaaar . 149) '(cdaadr . 150) '(cdadar . 153) '(cdaddr . 154) '(cddaar . 165) '(cddadr . 166) '(cdddar . 169)))
-	    (int->cxr (hash-table '(1 . car) '(2 . cdr) 
-				  '(5 . caar) '(6 . cadr) '(10 . cddr) '(9 . cdar) 
-				  '(21 . caaar) '(22 . caadr) '(26 . caddr) '(42 . cdddr) '(37 . cdaar) '(41 . cddar) '(25 . cadar) '(38 . cdadr) 
-				  '(106 . cadddr) '(170 . cddddr) '(85 . caaaar) '(86 . caaadr) '(89 . caadar) '(90 . caaddr) '(101 . cadaar) '(102 . cadadr) 
-				  '(105 . caddar) '(149 . cdaaar) '(150 . cdaadr) '(153 . cdadar) '(154 . cdaddr) '(165 . cddaar) '(166 . cddadr) '(169 . cdddar))))
-	(lambda (c1 c2)
-	  (hash-table-ref int->cxr (logand (or (hash-table-ref cxr->int c1) 0) 
-					   (or (hash-table-ref cxr->int c2) 0))))))
-	
+    (define cxr->int (hash-table '(car . 1) '(cdr . 2) 
+				 '(caar . 5) '(cadr . 6) '(cddr . 10) '(cdar . 9) 
+				 '(caaar . 21) '(caadr . 22) '(caddr . 26) '(cdddr . 42) '(cdaar . 37) '(cddar . 41) '(cadar . 25) '(cdadr . 38) 
+				 '(cadddr . 106) '(cddddr . 170) '(caaaar . 85) '(caaadr . 86) '(caadar . 89) '(caaddr . 90) '(cadaar . 101) '(cadadr . 102) 
+				 '(caddar . 105) '(cdaaar . 149) '(cdaadr . 150) '(cdadar . 153) '(cdaddr . 154) '(cddaar . 165) '(cddadr . 166) '(cdddar . 169)))
+    (define int->cxr (hash-table '(1 . car) '(2 . cdr) 
+				 '(5 . caar) '(6 . cadr) '(10 . cddr) '(9 . cdar) 
+				 '(21 . caaar) '(22 . caadr) '(26 . caddr) '(42 . cdddr) '(37 . cdaar) '(41 . cddar) '(25 . cadar) '(38 . cdadr) 
+				 '(106 . cadddr) '(170 . cddddr) '(85 . caaaar) '(86 . caaadr) '(89 . caadar) '(90 . caaddr) '(101 . cadaar) '(102 . cadadr) 
+				 '(105 . caddar) '(149 . cdaaar) '(150 . cdaadr) '(153 . cdadar) '(154 . cdaddr) '(165 . cddaar) '(166 . cddadr) '(169 . cdddar)))
+    (define (match-cxr c1 c2)
+      (hash-table-ref int->cxr (logand (or (hash-table-ref cxr->int c1) 0) 
+				       (or (hash-table-ref cxr->int c2) 0))))
+    
     
     (define (mv-range producer env)
       (if (symbol? producer)
@@ -6362,6 +6365,11 @@
 	 
 	(lint-hash h 'object->string sp-object->string))
 	
+	(define (all-caps-warning arg)
+	  (and (string? arg)
+	       (or (string-position "ERROR" arg)
+		   (string-position "WARNING" arg))))
+	  
 	;; ---------------- display ----------------
 	(let ()
 	 (define (sp-display caller head form env)
@@ -6370,9 +6378,7 @@
 		   (port (if (pair? (cddr form))
 			     (caddr form)
 			     ())))
-	       (cond ((and (string? arg)
-			   (or (string-position "ERROR" arg)
-			       (string-position "WARNING" arg)))
+	       (cond ((all-caps-warning arg)
 		      (lint-format  "There's no need to shout: ~A" caller (truncated-list->string form)))
 		     
 		     ((not (and (pair? arg)
@@ -7370,11 +7376,7 @@
 			     (string? (cadr form))) ; (format "s")
 		    (lint-format "please include the port argument to format, perhaps ~A" caller `(format () ,@(cdr form))))
 		  
-		  (if (any? (lambda (arg)
-			      (and (string? arg)
-				   (or (string-position "ERROR" arg)
-				       (string-position "WARNING" arg))))
-			    (cdr form))
+		  (if (any? all-caps-warning (cdr form))
 		      (lint-format "There's no need to shout: ~A" caller (truncated-list->string form)))
 
 		  (if (and (eq? (cadr form) 't)   ; (format t " ")
@@ -7432,11 +7434,7 @@
 	;; ---------------- error ----------------
 	(let ()
 	  (define (sp-error caller head form env)
-	    (if (any? (lambda (arg)
-			(and (string? arg)
-			     (or (string-position "ERROR" arg)
-				 (string-position "WARNING" arg))))
-		      (cdr form))
+	    (if (any? all-caps-warning (cdr form))
 		(lint-format "There's no need to shout: ~A" caller (truncated-list->string form))))
 	  (lint-hash h 'error sp-error))
 	
@@ -9443,22 +9441,22 @@
 
 		 ;; (let ((x 0)...) ... (set! x 1)...) -> move the set! value  to let init value
 		 ;; car body as set! is handled in let-walker etc
-		 (when (and outer-form
+		 (when (and (pair? outer-form)
 			    (positive? (var-set local-var))
 			    (memq (car outer-form) '(let let*))
 			    (list? (cadr outer-form))
 			    (not (side-effect? (var-initial-value local-var) env)))
-		   (let* ((len (length (var-history local-var)))
-			  (nxt (and (> len 1)
-				    (list-ref (var-history local-var) (- len 2)))))
+		   (let ((nxt (let ((len (length (var-history local-var))))
+				(and (> len 1)
+				     (list-ref (var-history local-var) (- len 2))))))
 		     (when (and (pair? nxt)
-			       (eq? (car nxt) 'set!)
-			       (eq? (cadr nxt) vname)
-			       (code-constant? (caddr nxt)) ; so vname is not involved etc
-			       (not (tree-memq vname (caddr outer-form))) ; not redundant with next -- need to exclude this case
-			       (let ((f (member vname (cdddr outer-form) tree-memq)))
-				 (and (pair? f)
-				      (eq? (car f) nxt))))
+				(eq? (car nxt) 'set!)
+				(eq? (cadr nxt) vname)
+				(code-constant? (caddr nxt)) ; so vname is not involved etc
+				(not (tree-memq vname (caddr outer-form))) ; not redundant with next -- need to exclude this case
+				(let ((f (member vname (cdddr outer-form) tree-memq)))
+				  (and (pair? f)
+				       (eq? (car f) nxt))))
 		       (lint-format "perhaps change ~A's initial value to ~A, and remove ~A in ~A" caller
 				    vname (caddr nxt) nxt (truncated-list->string outer-form)))))
 
@@ -12915,11 +12913,11 @@
 							      (differ-in-one (car p) (car q)))
 							 (list p (list (car p) (car q))))))))))
 			   (if (pair? diff)
-			       (unless (or (and (equal? true-op (caadr diff)) ; (if x (+ y 1) (- y 1)) -- are we trying to keep really simple stuff out?
+			       (unless (or (and (equal? true-op (caadr diff))   ; (if x (+ y 1) (- y 1)) -- are we trying to keep really simple stuff out?
 						(or (hash-table-ref syntaces true-op)
 						    (hash-table-ref syntaces false-op))
-						(any? pair? true-rest))      ; (if x (set! y (+ x 1)) (set! y 1))
-					   (and (eq? true-op 'set!)           ; (if x (set! y w) (set! z w))
+						(any? pair? true-rest))         ; (if x (set! y (+ x 1)) (set! y 1))
+					   (and (eq? true-op 'set!)             ; (if x (set! y w) (set! z w))
 						(equal? (caar diff) (car true-rest))))
 				 (let ((subst-loc (car diff)))
 				   ;; for let/let* if tree-subst position can't affect the test, just subst, else save test first
@@ -15958,13 +15956,13 @@
 		       ;; move let in:
 		       ;;   (let ((a (car x))) (if b (+ a (f a)) (display c))) -> (if b (let ((a (car x))) (+ a (f a))) (display c))
 		       ;;   let* version gets only 3 hits
-		       (when (and (not named-let)
-				  (not (any? (lambda (c)
-					       (or (not (pair? c))
-						   (not (symbol? (car c)))
-						   (not (pair? (cdr c)))
-						   (side-effect? (cadr c) env)))
-					     (cadr form))))
+		       (unless (or named-let
+				   (any? (lambda (c)
+					   (or (not (pair? c))
+					       (not (symbol? (car c)))
+					       (not (pair? (cdr c)))
+					       (side-effect? (cadr c) env)))
+					 (cadr form)))
 			 (case (caar body)
 			   ((if)
 			    (let ((test (cadar body))
@@ -15978,8 +15976,8 @@
 						  (not (tree-set-member vars true))
 						  (set! false-let #t))
 					     (not false)
-					     (and (not (memq false vars))
-						  (not (tree-set-member vars false))))
+					     (not (or (memq false vars)
+						      (tree-set-member vars false))))
 					 (tree-set-member vars body)) ; otherwise we'll complain elsewhere about unused variables
 				(lint-format "perhaps move the let to the ~A branch: ~A" caller
 					     (if false-let "false" "true")
@@ -16041,9 +16039,9 @@
 			   ((when unless) ; no hits -- maybe someday?
 			    (let ((test (cadar body))
 				  (vars (map car (cadr form))))
-			      (when (and (not (memq test vars))
-					 (not (tree-set-member vars test))
-					 (not (side-effect? test env)))
+			      (unless (or (memq test vars)
+					  (tree-set-member vars test)
+					  (side-effect? test env))
 				(lint-format "perhaps move the let inside the ~A: ~A" caller
 					     (caar body)
 					     (truncated-lists->string form `(,(caar body) ,test (let ,(cadr form) ,@(cddar body))))))))))
@@ -17788,7 +17786,110 @@
     ;; end walker-functions
     ;; ----------------------------------------
 
+    (define (lint-fragment form env)
+      (let ((form-leaves (tree-leaves form)))
+	(when (< 5 form-leaves 100)
+	  (when (eq? (car form) 'or)
+	    (do ((i (length form) (- i 1))
+		 (p (cdr form) (cdr p)))
+		((<= i 2))
+	      (call-with-exit
+	       (lambda (quit)
+		 (let ((vars ())
+		       (var-ctr 0)
+		       (new-form (cons 'or p)))
+		   (let ((reduced-form
+			  (let walker ((tree new-form))
+			    (cond ((not (symbol? tree))
+				   (if (or (not (pair? tree))
+					   (eq? (car tree) 'quote)
+					   (not (pair? (cdr tree))))
+				       tree
+				       (cons (car tree)
+					     (map walker (cdr tree)))))
+				  
+				  ((assq tree vars) => cdr) ; replace in-tree symbol with its reduction
+				  
+				  (else 
+				   (set! var-ctr (+ var-ctr 1))
+				   (if (> var-ctr 3) (quit))
+				   (let ((nvar (symbol "_" (number->string var-ctr) "_")))
+				     (set! vars (cons (cons tree nvar) vars))
+				     nvar))))))
+		     (hash-table-set! fragments reduced-form (+ 1 (or (hash-table-ref fragments reduced-form) 0)))
+		     
+		     ;; TODO: only reduce further if resultant tree is still large enough
 
+		     (let ((rvars (map (lambda (v) (vector (cdr v) 0 ())) vars))
+			   (rnames (map cdr vars)))
+		       (let walker ((tree reduced-form))
+			 (cond ((assq tree rvars) => 
+				(lambda (rv)
+				  (let ((v (cdr rv)))
+				    (set! (v 1) (+ (v 1) 1))
+				    (set! (v 2) (cons tree (v 2))))))
+			       
+			       ((or (not (pair? tree))
+				    (eq? (car tree) 'quote)
+				    (not (pair? (cdr tree)))))
+			       
+			       (else 
+				(for-each (lambda (v)
+					    (when (memq (v 0) tree)
+					      (set! (v 1) (+ (v 1) 1))
+					      (set! (v 2) (cons tree (v 2))))
+					    (for-each (lambda (p)
+							(if (pair? p)
+							    (walker p)))
+						      (cdr tree)))
+					  rvars))))
+		       (let ((reducibles ()))
+			 (for-each (lambda (v)
+				     (if (and (pair? (car (v 2)))
+					      (null? (cddar (v 2)))
+					      (not (side-effect-with-vars? (car (v 2)) env rnames))
+					      (or (= (v 1) 1)
+						  (let ((first (car (v 2))))
+						    (not (member first (cdr (v 2))
+								 (lambda (a b)
+								   (not (equal? a b))))))))
+					 (set! reducibles (cons (car (v 2)) reducibles))))
+				   rvars)
+			 (when (pair? reducibles)
+			   (for-each (lambda (r)
+				       (let ((rf (let walker ((tree reduced-form))
+						   (if (or (not (pair? tree))
+							   (eq? (car tree) 'quote))
+						       tree
+						       (if (equal? tree r)
+							   (cadr tree)
+							   (cons (walker (car tree))
+								 (walker (cdr tree))))))))
+					 (hash-table-set! fragments rf (+ 1 (or (hash-table-ref fragments rf) 0)))))
+				     reducibles)
+			   (when (pair? (cdr reducibles))
+			     (let ((combo (if (null? (cddr reducibles))
+					      (list (list (reducibles 0) (reducibles 1)))
+					      (list (list (reducibles 0) (reducibles 1))
+						    (list (reducibles 0) (reducibles 2))
+						    (list (reducibles 1) (reducibles 2))
+						    (list (reducibles 0) (reducibles 1) (reducibles 2))))))
+
+		     ;; TODO: only reduce further if resultant tree is still large enough
+
+			       (for-each (lambda (r)
+					   (let ((rf (let walker ((tree reduced-form))
+						       (if (or (not (pair? tree))
+							       (eq? (car tree) 'quote))
+							   tree
+							   (if (member tree r)
+							       (cadr tree)
+							       (cons (walker (car tree))
+								     (walker (cdr tree))))))))
+					     (hash-table-set! fragments rf (+ 1 (or (hash-table-ref fragments rf) 0)))))
+					 combo)))))))))))))))
+    ;; ----------------------------------------
+      
     (define lint-walk-pair 
       (let ((unsafe-makers '(sublet inlet copy cons list append make-shared-vector vector hash-table hash-table* 
 			     make-hash-table make-hook #_{list} #_{append} gentemp or and not))
@@ -17796,6 +17897,9 @@
 	(lambda (caller form env)
 	  (let ((head (car form)))
 	    (set! line-number (pair-line-number form))
+
+	    (when *with-fragments*
+	      (lint-fragment form env))
 
 	    (when *report-function-stuff* 
 	      (function-match caller form env))
@@ -18236,6 +18340,12 @@
 
 	       (if (not (input-port? file))
 		   (close-input-port fp))
+
+	       (if *with-fragments*
+		   (for-each (lambda (o)
+			       (if (> (cdr o) 1)
+				   (format *stderr* "~A: ~A~%" (cdr o) (truncated-list->string (car o)))))
+			     fragments))
 	       vars)
 
 	    (if (pair? form)
@@ -18316,6 +18426,7 @@
 	(set! other-identifiers (make-hash-table))
 	(set! linted-files ())
 	(fill! other-names-counts 0)
+	(if *with-fragments* (fill! fragments #f))
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! last-simplify-cxr-line-number -1)
@@ -18727,5 +18838,6 @@
 ;;; 152 25022 656782
 
 ;;; reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
-;;; code-equal? across all fragments
-;;; are there other typed-func cases? sort! 
+;;;   but this collides with current 1-call->embedded code in lint-walk-body unless we use the closure
+;;;   so... perhaps use out-vars to get names -- if < 5, func?
+;;; code-equal? across all fragments -- t451
