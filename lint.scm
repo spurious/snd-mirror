@@ -29,6 +29,10 @@
 (define *report-clobbered-function-return-value* #f)      ; function returns constant sequence, which is then stomped on -- very rare!
 (define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
 
+;;; work-in-progress
+(define *report-fragments* #f)
+(define *report-blocks* #f)
+
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
 ;;   table of functions that are simple (no side effects) is (*lint* 'no-side-effect-functions)
@@ -278,9 +282,7 @@
 	(*current-file* "")
 	(*top-level-objects* (make-hash-table))
 	(*output-port* *stderr*)
-	(*with-fragments* #f)
-	(*with-blocks* #f)
-	(fragments (make-hash-table))
+	(fragments (make-vector 128 #f))
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
     
     (set! *e* (curlet))
@@ -11494,7 +11496,10 @@
 		     (lambda (in-seq)
 		       (when (or (not (pair? in-seq))
 				 (eq? (car in-seq) 'quote))
-			 (let ((seq (if (pair? in-seq) (cadr in-seq) in-seq)))
+			 (let ((seq (if (and (pair? in-seq)
+					     (pair? (cdr in-seq))) ; (quote . 1)??
+					(cadr in-seq) 
+					in-seq)))
 			   (when (and (sequence? seq)
 				      (not (zero? (length seq))))
 			     (lint-format "returns ~A constant: ~A~S" function-name ; (define-macro (m a) `(+ 1 a))
@@ -17786,108 +17791,247 @@
     ;; end walker-functions
     ;; ----------------------------------------
 
-    (define (lint-fragment form env)
-      (let ((form-leaves (tree-leaves form)))
-	(when (< 5 form-leaves 100)
-	  (when (eq? (car form) 'or)
-	    (do ((i (length form) (- i 1))
-		 (p (cdr form) (cdr p)))
-		((<= i 2))
-	      (call-with-exit
-	       (lambda (quit)
-		 (let ((vars ())
-		       (var-ctr 0)
-		       (new-form (cons 'or p)))
-		   (let ((reduced-form
-			  (let walker ((tree new-form))
-			    (cond ((not (symbol? tree))
-				   (if (or (not (pair? tree))
-					   (eq? (car tree) 'quote)
-					   (not (pair? (cdr tree))))
-				       tree
-				       (cons (car tree)
-					     (map walker (cdr tree)))))
-				  
-				  ((assq tree vars) => cdr) ; replace in-tree symbol with its reduction
-				  
-				  (else 
-				   (set! var-ctr (+ var-ctr 1))
-				   (if (> var-ctr 3) (quit))
-				   (let ((nvar (symbol "_" (number->string var-ctr) "_")))
-				     (set! vars (cons (cons tree nvar) vars))
-				     nvar))))))
-		     (hash-table-set! fragments reduced-form (+ 1 (or (hash-table-ref fragments reduced-form) 0)))
-		     
-		     ;; TODO: only reduce further if resultant tree is still large enough
+    (define (reduce-tree new-form env)
+      (let ((leaves (tree-leaves new-form)))
+	(when (< 5 leaves 128)
+	  (call-with-exit
+	   (lambda (quit)
+	     (let ((outer-vars (list (list () '_1_) (list () '_2_) (list () '_3_)))
+		   (local-ctr 0))
+	       (let ((reduced-form
+		      (let walker ((tree new-form) (vars outer-vars))
+			(cond ((not (symbol? tree))
+			       (if (or (not (pair? tree))
+				       (eq? (car tree) 'quote))
+				   tree
+				   (case (car tree)
+				     ((let let*)
+				      ;; in let we need to sort locals by order of appearance in the body
+				      (if (or (not (pair? (cdr tree)))
+					      (not (pair? (cddr tree))))
+					  (quit))
+				      (let ((locals ())
+					    (body ())
+					    (named-let (symbol? (cadr tree)))
+					    (lvars ()))
+					(if named-let
+					    (begin
+					      (set! lvars (cons (list (cadr tree) (symbol "_NL" (number->string local-ctr) "_") -1) lvars))
+					      (set! local-ctr (+ local-ctr 1))
+					      (set! locals (caddr tree))
+					      (set! body (cdddr tree)))
+					    (begin
+					      (set! locals (cadr tree))
+					      (set! body (cddr tree))))
+					
+					    (for-each (lambda (local)
+							(set! lvars (cons (list (car local) () 0
+										(walker (cadr local)
+											(if (eq? (car tree) 'let) vars lvars)))
+									  lvars)))
+						      locals)
 
-		     (let ((rvars (map (lambda (v) (vector (cdr v) 0 ())) vars))
-			   (rnames (map cdr vars)))
-		       (let walker ((tree reduced-form))
-			 (cond ((assq tree rvars) => 
-				(lambda (rv)
-				  (let ((v (cdr rv)))
-				    (set! (v 1) (+ (v 1) 1))
-				    (set! (v 2) (cons tree (v 2))))))
-			       
-			       ((or (not (pair? tree))
-				    (eq? (car tree) 'quote)
-				    (not (pair? (cdr tree)))))
-			       
-			       (else 
-				(for-each (lambda (v)
-					    (when (memq (v 0) tree)
-					      (set! (v 1) (+ (v 1) 1))
-					      (set! (v 2) (cons tree (v 2))))
-					    (for-each (lambda (p)
-							(if (pair? p)
-							    (walker p)))
-						      (cdr tree)))
-					  rvars))))
-		       (let ((reducibles ()))
-			 (for-each (lambda (v)
-				     (if (and (pair? (car (v 2)))
-					      (null? (cddar (v 2)))
-					      (not (side-effect-with-vars? (car (v 2)) env rnames))
-					      (or (= (v 1) 1)
-						  (let ((first (car (v 2))))
-						    (not (member first (cdr (v 2))
-								 (lambda (a b)
-								   (not (equal? a b))))))))
-					 (set! reducibles (cons (car (v 2)) reducibles))))
-				   rvars)
-			 (when (pair? reducibles)
+					;; now walk the body, setting the reduced local name by order of encounter
+					(let ((new-body (walker body (append lvars vars))))
+					  (when (pair? lvars)
+					    (for-each (lambda (v)
+							(when (null? (cadr v))
+							  (list-set! v 1 (symbol "_L" (number->string local-ctr) "_"))
+							  (list-set! v 2 local-ctr)
+							  (set! local-ctr (+ local-ctr 1))))
+						      lvars)
+					    (set! lvars (sort! lvars (lambda (a b) (< (caddr a) (caddr b))))))
+
+					  (if named-let
+					      `(,(car tree) ,(cadr (assq (cadr tree) lvars)) 
+						 ,(map (lambda (v) (list (cadr v) (cadddr v))) (cdr lvars))
+						 ,@new-body)
+					      `(,(car tree) ,(map (lambda (v) (list (cadr v) (cadddr v))) lvars)
+						 ,@new-body)))))
+
+				     ((case)
+				      `(case ,(walker (cadr tree) vars)
+					 ,(map (lambda (c)
+						 (cons (car c)
+						       (walker (cdr c) vars)))
+					       (cddr tree))))
+
+				     ((if)
+				      (let ((expr (walker (cadr tree) vars))
+					    (true (walker (caddr tree) vars)))
+					(if (null? (cdddr tree))
+					    (if (and (pair? expr)
+						     (eq? (car expr) 'not))
+						`(unless ,(cadr expr) ,@(unbegin true))
+						`(when ,expr ,@(unbegin true)))
+					    `(if ,expr ,true ,(walker (cadddr tree) vars)))))
+
+				     ((when unless)
+				      `(,(car tree) ,(walker (cadr tree) vars) 
+					,@(walker (cddr tree) vars)))
+
+				     ((lambda)
+				      (let ((lvars (map (lambda (a)
+							  (list a () 0))
+							(args->proper-list (cadr tree)))))
+					`(lambda ,(cadr tree)
+					   ,@(walker (cddr tree) (append lvars vars)))))
+
+
+				     (else (cons (if (pair? (car tree))
+						     (walker (car tree) vars)
+						     (cond ((assq (car tree) vars) =>
+							    (lambda (v)
+							      (if (symbol? (cadr v))
+								  (cadr v)
+								  (car tree))))
+							   (else (car tree))))
+						 (if (pair? (cdr tree))
+						     (map (lambda (p)
+							    (walker p vars))
+							  (cdr tree))
+						     (cdr tree)))))))
+	      
+			      ((assq tree vars) => ; replace in-tree symbol with its reduction
+			       (lambda (v)
+				 ;; v is a list: local-name possible-reduced-name [counter value]
+				 ;(format *stderr* "v: ~A~%" v)
+				 (when (null? (cadr v))
+				   (list-set! v 1 (symbol "_L" (number->string local-ctr) "_"))
+				   (list-set! v 2 local-ctr)
+				   (set! local-ctr (+ local-ctr 1)))
+				 ;(format *stderr* " -> ~A~%" v)
+				 (cadr v)))
+	      
+			      (else 
+			       (let set-outer ((ovars outer-vars))
+				 (if (null? ovars)
+				     (quit)
+				     (if (null? (caar ovars))
+					 (begin
+					   (set-car! (car ovars) tree)
+					   (cadar ovars))
+					 (set-outer (cdr ovars))))))))))
+
+		 ;; if->when, for example, so tree length might change
+		 (set! leaves (tree-leaves reduced-form))
+		 (unless (fragments leaves)
+		   (set! (fragments leaves) (make-hash-table)))
+		 (hash-table-set! (fragments leaves) reduced-form (+ 1 (or (hash-table-ref (fragments leaves) reduced-form) 0)))
+		 
+		 ;; now look for (f _1_) -> _1_ possibilities
+		 ;;   every reference to _1_ has to be via (f _1_), and f must have no side-effects
+		 ;;   so first rescan the form, gathering info about each _n_ var
+		 (let* ((rnames (map (lambda (v) 
+				       (if (symbol? (car v))
+					   (cadr v)
+					   (values)))
+				     outer-vars))
+			(rvars (map (lambda (v)
+				      (vector v 0 ()))
+				    rnames)))
+
+		   (let walker ((tree reduced-form))
+		     (cond ((assq tree rvars) => 
+			    (lambda (rv)
+			      (let ((v (cdr rv)))
+				(set! (v 1) (+ (v 1) 1))
+				(set! (v 2) (cons tree (v 2))))))
+			   
+			   (else (or (not (pair? tree))
+				     (eq? (car tree) 'quote)
+				     (for-each (lambda (v)
+						 (when (memq (v 0) tree)
+						   (set! (v 1) (+ (v 1) 1))
+						   (set! (v 2) (cons tree (v 2))))
+						 (for-each (lambda (p)
+							     (if (pair? p)
+								 (walker p)))
+							   tree))
+					       rvars)))))
+
+		   (let ((reducibles ()))
+		     (for-each (lambda (v)
+				 (if (and (pair? (car (v 2)))
+					  (pair? (cdar (v 2)))
+					  (null? (cddar (v 2)))
+					  (not (side-effect-with-vars? (car (v 2)) env rnames))
+					  (or (= (v 1) 1)
+					      (let ((first (car (v 2))))
+						(not (member first (cdr (v 2))
+							     (lambda (a b)
+							       (not (equal? a b))))))))
+				     (set! reducibles (cons (car (v 2)) reducibles))))
+			       rvars)
+
+		     ;; reducibles is a list of _n_ vars that can be simplified one more level
+		     (when (pair? reducibles)
+		       (for-each (lambda (r)
+				   (let ((rf (let walker ((tree reduced-form))
+					       (if (or (not (pair? tree))
+						       (eq? (car tree) 'quote))
+						   tree
+						   (if (equal? tree r)
+						       (cadr tree)
+						       (cons (walker (car tree))
+							     (walker (cdr tree))))))))
+				     (set! leaves (tree-leaves rf))
+				     (when (> leaves 5)
+				       (unless (fragments leaves)
+					 (set! (fragments leaves) (make-hash-table)))
+				       (hash-table-set! (fragments leaves) rf (+ 1 (or (hash-table-ref (fragments leaves) rf) 0))))))
+				 reducibles)
+		       
+		       ;; if more than one reducible, try all combinations
+		       (when (pair? (cdr reducibles))
+			 (let ((combo (if (null? (cddr reducibles))
+					  (list (list (reducibles 0) (reducibles 1)))
+					  (list (list (reducibles 0) (reducibles 1))
+						(list (reducibles 0) (reducibles 2))
+						(list (reducibles 1) (reducibles 2))
+						(list (reducibles 0) (reducibles 1) (reducibles 2))))))
 			   (for-each (lambda (r)
 				       (let ((rf (let walker ((tree reduced-form))
 						   (if (or (not (pair? tree))
 							   (eq? (car tree) 'quote))
 						       tree
-						       (if (equal? tree r)
+						       (if (member tree r)
 							   (cadr tree)
 							   (cons (walker (car tree))
 								 (walker (cdr tree))))))))
-					 (hash-table-set! fragments rf (+ 1 (or (hash-table-ref fragments rf) 0)))))
-				     reducibles)
-			   (when (pair? (cdr reducibles))
-			     (let ((combo (if (null? (cddr reducibles))
-					      (list (list (reducibles 0) (reducibles 1)))
-					      (list (list (reducibles 0) (reducibles 1))
-						    (list (reducibles 0) (reducibles 2))
-						    (list (reducibles 1) (reducibles 2))
-						    (list (reducibles 0) (reducibles 1) (reducibles 2))))))
+					 (set! leaves (tree-leaves rf))
+					 (when (> (tree-leaves rf) 5)
+					   (unless (fragments leaves)
+					     (set! (fragments leaves) (make-hash-table)))
+					   (hash-table-set! (fragments leaves) rf (+ 1 (or (hash-table-ref (fragments leaves) rf) 0))))))
+				     combo)))))))))))))
 
-		     ;; TODO: only reduce further if resultant tree is still large enough
+    (define (lint-fragment form env)
+      (case (car form)
+	((or and) ; or/and are special because trailing cases (and leading for that matter) are separable -- perhaps add leading cases??
+	 (do ((i (length form) (- i 1))
+	      (p (cdr form) (cdr p)))
+	     ((<= i 2))
+	   (reduce-tree (cons (car form) p) env))) ; perhaps simplify-boolean here?
+	(else #f)))
 
-			       (for-each (lambda (r)
-					   (let ((rf (let walker ((tree reduced-form))
-						       (if (or (not (pair? tree))
-							       (eq? (car tree) 'quote))
-							   tree
-							   (if (member tree r)
-							       (cadr tree)
-							       (cons (walker (car tree))
-								     (walker (cdr tree))))))))
-					     (hash-table-set! fragments rf (+ 1 (or (hash-table-ref fragments rf) 0)))))
-					 combo)))))))))))))))
+    ;; for the subsequent print-out to be useful, we need info on where the substitutions are, and
+    ;;   what they look like (function + function calls + line numbers)
+    ;;   right now we get "8: (or (not (pair? _1_)) (eq? (car _1_) 'quote))" -- just try to find me!
+
+    ;; also have preset built-in reduced forms of as many kinds as needed [and remove code-equal? etc]
+    ;; reversibles/nots choose some order (if 2 args) [and remove not if possible]
+    ;; + * -> symbol order?
+    ;; collapse cxrs
+    ;; s7 uses (essentially) loc(car) + loc(cadr) to hash a list -- need to check if this gives good spread
+    ;;   in the vector+car hashes, need to hash leaving out car
+    ;; this appears to hang in html-form and hits (let temp) in macrotst
+    ;;
+    ;; all the added compute time is in the reduction process, not the hashing
+    ;;
+    ;; todo: letrec letrec* do lambda* define define* define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+    ;;   also call-with*
+
     ;; ----------------------------------------
       
     (define lint-walk-pair 
@@ -17898,7 +18042,7 @@
 	  (let ((head (car form)))
 	    (set! line-number (pair-line-number form))
 
-	    (when *with-fragments*
+	    (when *report-fragments*
 	      (lint-fragment form env))
 
 	    (when *report-function-stuff* 
@@ -18341,11 +18485,17 @@
 	       (if (not (input-port? file))
 		   (close-input-port fp))
 
-	       (if *with-fragments*
-		   (for-each (lambda (o)
-			       (if (> (cdr o) 1)
-				   (format *stderr* "~A: ~A~%" (cdr o) (truncated-list->string (car o)))))
-			     fragments))
+	       (when *report-fragments*
+		 (let ((new-table (make-hash-table)))
+		   (do ((i 0 (+ i 1)))
+		       ((= i 128))
+		     (when (hash-table? (fragments i))
+		       (copy (fragments i) new-table)))
+		   (let ((v (sort! (copy new-table (make-vector (hash-table-entries new-table))) (lambda (a b) (> (cdr a) (cdr b))))))
+		     (for-each (lambda (o)
+				 (if (> (cdr o) 2)
+				     (format *stderr* "~A: ~A~%" (cdr o) (truncated-list->string (car o)))))
+			       v))))
 	       vars)
 
 	    (if (pair? form)
@@ -18426,7 +18576,7 @@
 	(set! other-identifiers (make-hash-table))
 	(set! linted-files ())
 	(fill! other-names-counts 0)
-	(if *with-fragments* (fill! fragments #f))
+	(when *report-fragments* (fill! fragments #f))
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! last-simplify-cxr-line-number -1)
@@ -18835,9 +18985,14 @@
     #f))
 |#
 
-;;; 152 25022 656782
+;;; 155 25022 656537
 
 ;;; reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
 ;;;   but this collides with current 1-call->embedded code in lint-walk-body unless we use the closure
 ;;;   so... perhaps use out-vars to get names -- if < 5, func?
-;;; code-equal? across all fragments -- t451
+;;;
+;;; reverse! avoidable as in (cdr (reverse!...))
+;;; what is (and (symbol? x) (set! x (eval x))) really trying to accomplish?
+;;;   (and (symbol? proc) (set! proc (eval proc))) in /home/bil/test/scheme-code/scwm-0.99.6.2/scheme/reflection.scm
+;;;   wants proc, gets symbol, so evals sym (sigh) -- maybe use symbol->value here?
+

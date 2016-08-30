@@ -74891,6 +74891,9 @@ s7_scheme *s7_init(void)
                           `(with-let (#_inlet :orig (#_curlet)                                                \n\
                         		      :saved (#_list ,@(map car vars))                                \n\
                         		      :new (#_list ,@(map cadr vars)))                                \n\
+                             (when (memq #<undefined> saved)                                                  \n\
+                               (error 'unbound-variable \"let-temporarily: ~A is unbound\"                    \n\
+	                              (car (list-ref ',vars (- (length saved) (length (memq #<undefined> saved))))))) \n\
                              (dynamic-wind                                                                    \n\
                                (lambda () #f)                                                                 \n\
                                (lambda ()                                                                     \n\
@@ -75061,5 +75064,4 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
- * let-temporarily doesn't report undefined locals? (let-temporarily (((*lint* 'with-fragments) #t)) ...)
  */
