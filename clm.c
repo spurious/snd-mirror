@@ -7774,8 +7774,8 @@ static mus_float_t fb_one_with_amps_c1_c2(mus_any *fbank, mus_float_t inval)
 	   *   we still need to set x0[0]=gain: enter mctr.
 	   *
 	   * So in the current case, we can save x0[0]=gain -> x1 -> x2, then in fm_many
-	   *   mctr=1 -- x2 is ok, x1[0] needs to be propogated
-	   *   mctr>1 -- x2 and x1 need propogation
+	   *   mctr=1 -- x2 is ok, x1[0] needs to be propagated
+	   *   mctr>1 -- x2 and x1 need propagation
 	   * On the other side, if mctr>=3, then x2[i] was not set, so don't access it.
 	   */
 	  

@@ -9146,8 +9146,8 @@
 
 ;;; 3.15.8:
 
-(CFNC-3.16 "void gtk_popover_set_transitions_enabled GtkPopover* popover gboolean transitions_enabled")
-(CFNC-3.16 "gboolean gtk_popover_get_transitions_enabled GtkPopover* popover")
+;;; 3.21.5 (CFNC-3.16 "void gtk_popover_set_transitions_enabled GtkPopover* popover gboolean transitions_enabled")
+;;; 3.21.5 (CFNC-3.16 "gboolean gtk_popover_get_transitions_enabled GtkPopover* popover")
 
 ;;; 3.16.0
 ;;; 3.16.1
@@ -9445,3 +9445,63 @@
 (CFNC-3.22 "char* gtk_file_chooser_get_choice GtkFileChooser* chooser char* id" 'const)
 ;;; GVariant *gtk_file_filter_to_gvariant (GtkFileFilter *filter
 ;;; GtkFileFilter *gtk_file_filter_new_from_gvariant (GVariant *variant
+
+
+;;; 3.21.5:
+
+;;; GDK_SOURCE_TABLET_PAD "GdkInputSource"
+
+(CCAST-3.22 "GDK_DEVICE_PAD(object)" "GdkDevicePad*")
+(CCHK-3.22 "GDK_IS_DEVICE_PAD(object)" "GdkDevicePad*")
+
+(CINT-3.22 "GDK_DEVICE_PAD_FEATURE_BUTTON" "GdkDevicePadFeature")
+(CINT-3.22 "GDK_DEVICE_PAD_FEATURE_RING" "GdkDevicePadFeature")
+(CINT-3.22 "GDK_DEVICE_PAD_FEATURE_STRIP" "GdkDevicePadFeature")
+
+(CINT-3.22 "GDK_PAD_BUTTON_PRESS" "GdkEventType")
+(CINT-3.22 "GDK_PAD_BUTTON_RELEASE" "GdkEventType")
+(CINT-3.22 "GDK_PAD_RING" "GdkEventType")
+(CINT-3.22 "GDK_PAD_STRIP" "GdkEventType")
+(CINT-3.22 "GDK_PAD_GROUP_MODE" "GdkEventType")
+
+(CINT-3.22 "GDK_TABLET_PAD_MASK" "GdkEventMask")
+
+(CINT-3.22 "GDK_ANCHOR_FLIP_X" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_FLIP_Y" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_SLIDE_X" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_SLIDE_Y" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_RESIZE_X" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_RESIZE_Y" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_FLIP" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_SLIDE" "GdkAnchorHints")
+(CINT-3.22 "GDK_ANCHOR_RESIZE" "GdkAnchorHints")
+
+(CCAST-3.22 "GTK_PAD_CONTROLLER(object)" "GtkPadController*")
+(CCHK-3.22 "GTK_IS_PAD_CONTROLLER(object)" "GtkPadController*")
+
+(CINT-3.22 "GTK_PAD_ACTION_BUTTON" "GtkPadActionType")
+(CINT-3.22 "GTK_PAD_ACTION_RING" "GtkPadActionType")
+(CINT-3.22 "GTK_PAD_ACTION_STRIP" "GtkPadActionType")
+
+(CCAST-3.22 "GTK_SHORTCUT_LABEL(obj)" "GtkShortcutLabel*")
+(CCHK-3.22 "GTK_IS_SHORTCUT_LABEL(obj)" "GtkShortcutLabel*")
+
+(CFNC-3.22 "gint gdk_device_pad_get_n_groups GdkDevicePad* pad")
+(CFNC-3.22 "gint gdk_device_pad_get_group_n_modes GdkDevicePad* pad gint group_idx")
+(CFNC-3.22 "gint gdk_device_pad_get_n_features GdkDevicePad* pad GdkDevicePadFeature feature")
+(CFNC-3.22 "gint gdk_device_pad_get_feature_group GdkDevicePad* pad GdkDevicePadFeature feature gint feature_idx")
+(CFNC-3.22 "void gtk_menu_popup_at_rect GtkMenu* menu GdkWindow* rect_window const GdkRectangle* rect GdkGravity rect_anchor GdkGravity menu_anchor const GdkEvent* trigger_event")
+(CFNC-3.22 "void gtk_menu_popup_at_widget GtkMenu* menu GtkWidget* widget GdkGravity widget_anchor GdkGravity menu_anchor const GdkEvent* trigger_event")
+(CFNC-3.22 "void gtk_menu_popup_at_pointer GtkMenu* menu const GdkEvent* trigger_event")
+(CFNC-3.22 "GtkPadController* gtk_pad_controller_new GtkWindow* window GActionGroup* group GdkDevice* pad")
+(CFNC-3.22 "void gtk_pad_controller_set_action_entries GtkPadController* controller GtkPadActionEntry* entries gint n_entries")
+(CFNC-3.22 "void gtk_pad_controller_set_action GtkPadController* controller GtkPadActionType type gint index gint mode gchar* label gchar* action_name" 'const)
+(CFNC-3.22 "void gtk_popover_popup GtkPopover* popover")
+(CFNC-3.22 "void gtk_popover_popdown GtkPopover* popover")
+(CFNC-3.22 "GtkWidget* gtk_shortcut_label_new gchar* accelerator" 'const)
+(CFNC-3.22 "gchar* gtk_shortcut_label_get_accelerator GtkShortcutLabel* self" 'const-return)
+(CFNC-3.22 "void gtk_shortcut_label_set_accelerator GtkShortcutLabel* self gchar* accelerator" 'const)
+(CFNC-3.22 "gchar* gtk_shortcut_label_get_disabled_text GtkShortcutLabel* self" 'const-return)
+(CFNC-3.22 "void gtk_shortcut_label_set_disabled_text GtkShortcutLabel* self gchar* disabled_text" 'const)
+
+

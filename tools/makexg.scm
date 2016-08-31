@@ -584,6 +584,9 @@
 	(cons "GdkAxisFlags" "INT")
 	(cons "GdkDeviceToolType" "INT")
 	(cons "GdkSubpixelLayout" "INT")
+	(cons "GdkDevicePadFeature" "INT")
+	(cons "GdkAnchorHints" "INT")
+	(cons "GtkPadActionType" "INT")
 	))
 
 (define (c-to-xen-macro-name type str)

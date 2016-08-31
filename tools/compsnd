@@ -25,6 +25,9 @@ fgrep -e "double* " *.h
 fgrep -e "int* " *.h
 fgrep -e "off_t* " *.[ch]
 fgrep -e " long* " *.[ch]
+fgrep -e "propogat" *.[ch]
+fgrep -e "propogat" *.html
+fgrep -e "propogat" *.scm
 grep ' \-\-$' *.html
 /home/bil/cl/snd tools/va.scm
 

@@ -13396,7 +13396,7 @@ static s7_double string_to_double_with_radix(const char *ur_str, int radix, bool
 
       if (int_part != 0) /* 0.<310 zeros here>1e310 for example --
 			  *   pow (via ipow) thinks it has to be too big, returns Nan,
-			  *   then Nan * 0 -> Nan and the NaN propogates
+			  *   then Nan * 0 -> Nan and the NaN propagates
 			  */
 	{
 	  if (int_len <= max_len)
@@ -69624,7 +69624,7 @@ static s7_pointer big_bignum(s7_scheme *sc, s7_pointer args)
     case T_RATIO:
       return(promote_number(sc, T_BIG_RATIO, p));
 
-      /* we can't use promote_number here because it propogates C-double inaccuracies
+      /* we can't use promote_number here because it propagates C-double inaccuracies
        *    (rationalize (bignum "0.1") 0) should return 1/10 not 3602879701896397/36028797018963968
        */
     case T_REAL:
