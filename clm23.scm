@@ -53,8 +53,8 @@
   (let ((fm-index (hz->radians (* index mc-ratio freq))))
     (let ((start (seconds->samples beg))
 	  (end (seconds->samples (+ beg dur)))
-	  (cr (make-oscil freq))                     ; our carrier
-	  (md (make-oscil (* freq mc-ratio)))        ; our modulator
+	  (cr (make-oscil freq))                     ; carrier
+	  (md (make-oscil (* freq mc-ratio)))        ; modulator
 	  (ampf (make-env (or amp-env '(0 0 .5 1 1 0)) :scaler amp :duration dur))
 	  (indf (make-env (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :duration dur)))
       (do ((i start (+ i 1)))
@@ -1417,18 +1417,6 @@
 	((= i end))
       (outa i (* amp (oscil os (env frqe)))))))
 
-(definstrument (sndclmdoc-simple-fm beg dur freq amp mc-ratio index amp-env index-env)
-  (let ((fm-index (hz->radians (* index mc-ratio freq))))
-    (let ((start (seconds->samples beg))
-	  (end (seconds->samples (+ beg dur)))
-	  (cr (make-oscil freq))                     ; carrier
-	  (md (make-oscil (* freq mc-ratio)))        ; modulator
-	  (ampf (make-env (or amp-env '(0 0  .5 1  1 0)) :scaler amp :duration dur))
-	  (indf (make-env (or index-env '(0 0  .5 1  1 0)) :scaler fm-index :duration dur)))
-      (do ((i start (+ i 1)))
-	  ((= i end))
-	(outa i (* (env ampf) (oscil cr (* (env indf) (oscil md)))))))))
-
 (define (sndclmdoc-simple-add beg dur freq amp)
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))
@@ -2114,7 +2102,7 @@
 	(outa i (my-oscil osc 0.0)))))
   (with-sound () 
     (sndclmdoc-simp-5 0 10000 440 .1 '(0 0 1 1)) ; sweep up an octave
-    (sndclmdoc-simple-fm 1 1 440 .1 2 1.0)
+    (simple-fm 1 1 440 .1 2 1.0)
     (sndclmdoc-simple-add 2 1 220 .3)
     (sndclmdoc-mapenv 3 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
   (if (file-exists? "/home/bil/sf1/forest.aiff")

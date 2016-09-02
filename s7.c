@@ -75049,6 +75049,7 @@ int main(int argc, char **argv)
  *
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
+ * if expansion at top-level is loaded into let (not top), expansion->macro can cause unknown operator: 4113?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
