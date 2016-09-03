@@ -966,13 +966,15 @@ sync_info *snd_sync(int sync)
       si->chans = chans;
       for (i = 0, j = 0; i < ss->max_sounds; i++)
 	{
-	  int k;
 	  sp = ss->sounds[i];
 	  if ((sp) && 
 	      (sp->inuse == SOUND_NORMAL) && 
 	      (sp->sync == sync))
-	    for (k = 0; k < sp->nchans; k++, j++)
-	      si->cps[j] = sp->chans[k];
+	    {
+	      int k;
+	      for (k = 0; k < sp->nchans; k++, j++)
+		si->cps[j] = sp->chans[k];
+	    }
 	}
       return(si);
     }

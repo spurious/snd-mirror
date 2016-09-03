@@ -40232,9 +40232,24 @@ static unsigned int hash_map_pair(s7_scheme *sc, s7_pointer table, s7_pointer ke
 
   if (!is_sequence(car(key)))
     loc = hash_loc(sc, table, car(key)) + 1;
+  else 
+    {
+      if ((is_pair(car(key))) &&
+	  (!is_sequence(caar(key))))
+	loc = hash_loc(sc, table, caar(key)) + 1;
+    }
   p1 = cdr(key);
-  if ((is_pair(p1)) && (!is_sequence(car(p1))))
-    loc += hash_loc(sc, table, car(p1)) + 1;
+  if (is_pair(p1))
+    {
+      if (!is_sequence(car(p1)))
+	loc += hash_loc(sc, table, car(p1)) + 1;
+      else
+	{
+	  if ((is_pair(car(p1))) &&
+	      (!is_sequence(caar(p1))))
+	    loc += hash_loc(sc, table, caar(p1)) + 1;
+	}
+    }
   return(loc);
 }
 
@@ -74966,7 +74981,6 @@ s7_scheme *s7_init(void)
   save_unlet(sc);
   init_s7_let(sc);          /* set up *s7* */
   already_inited = true;
-
   return(sc);
 }
 

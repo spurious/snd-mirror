@@ -13,7 +13,7 @@
 (let* ((hpsum 0) ; for average readings
        (lpsum 0)
        (ind (find-sound
-	     (with-sound (:channels 6 :sample-type mus-lfloat)X
+	     (with-sound (:channels 6 :sample-type mus-lfloat)
 	      (let ((samp 0))	    
 		(call-with-input-file 
 		    (list-ref (script-args) 1) ; invocation arg = text file of data ("snd heart.scm data.txt")
