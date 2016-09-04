@@ -8270,13 +8270,15 @@
 	;; ---------------- write-string ----------------
 	(let ()
 	  (define (sp-write-string caller head form env)
-	    (if (= (length form) 4)
-		(check-start-and-end caller 'write-string (cddr form) form env)
-		(if (and (pair? (cdr form))
-			 (pair? (cddr form))
-			 (pair? (caddr form))
-			 (eq? (caaddr form) 'current-output-port))
-		    (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form))))
+	    (cond ((= (length form) 4)
+		   (check-start-and-end caller 'write-string (cddr form) form env))
+		  ((and (pair? (cdr form))
+			(pair? (cddr form))
+			(pair? (caddr form))
+			(eq? (caaddr form) 'current-output-port))
+		   (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form))
+		  ((equal? (cadr form) (string #\newline))
+		   (lint-format "perhaps ~A" caller (lists->string form `(newline ,@(cddr form)))))))
 	(lint-hash h 'write-string sp-write-string))
 
 	;; ---------------- read-line ----------------
@@ -17460,20 +17462,24 @@
     ;; end walker-functions
     ;; ----------------------------------------
 
-    (define (hash-fragment reduced-form leaves env func)
+    (define (hash-fragment reduced-form leaves env func orig-form)
       ;; func here is either #f or an env-style entry (cons name let) as produced by make-fvar,
       ;;   the let entries accessed are initial-value, history, arglist
-      (let ((old (hash-table-ref (fragments leaves) reduced-form)))
+      (let ((old (hash-table-ref (fragments leaves) reduced-form))
+	    (line (pair-line-number orig-form)))
 	;(if func (format *stderr* "hash-fragment ~A ~A~%~%" (var-name func) reduced-form))
-	(if (not (pair? old))
-	    (hash-table-set! (fragments leaves) reduced-form (list 1 (and func (list func))))
+	(if (not (vector? old))
+	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form))
+	    ;; key = reduced-form
+	    ;; value = #(list uses line-numbers fvar original-form)
 	    (begin
-	      (set-car! old (+ (car old) 1))
+	      (vector-set! old 0 (+ (vector-ref old 0) 1))
+	      (vector-set! old 1 (cons (pair-line-number orig-form) (vector-ref old 1)))
 	      (when func
-		(if (not (cadr old))
-		    (list-set! old 1 (list func))
+		(if (not (vector-ref old 2))
+		    (vector-set! old 2 (list func))
 		    (let ((caller (if (keyword? (var-name func)) 'define (var-name func))))
-		      (let search ((vs (cadr old)))
+		      (let search ((vs (vector-ref old 2)))
 			(when (pair? vs)
 			  (let ((v (car vs)))
 			    (cond ((not (eqv? (length (var-arglist v)) (length (var-arglist func))))
@@ -17500,9 +17506,9 @@
 						    (if (eq? (var-name func) (var-name v))
 							(format #f "previous ~A" (var-name v))
 							(var-name v)))))))))
-		      (list-set! old 1 (cons func (cadr old))))))))))
+		      (vector-set! old 2 (cons func (vector-ref old 2))))))))))
     
-    (define (reduce-tree new-form env fvar)
+    (define (reduce-tree new-form env fvar orig-form)
       ;(format *stderr* "reduce-tree: ~A ~A~%" new-form (and fvar (var-name fvar)))
       (let ((leaves (tree-leaves new-form)))
 	(when (< 5 leaves *fragments-size*)
@@ -17800,7 +17806,7 @@
 
 		 ;; if->when, for example, so tree length might change
 		 (set! leaves (tree-leaves reduced-form))
-		 (hash-fragment reduced-form leaves env fvar)
+		 (hash-fragment reduced-form leaves env fvar orig-form)
 
 		 (if (and (memq (car reduced-form) '(or and))
 			  (> (length reduced-form) 3))
@@ -17811,7 +17817,7 @@
 		       (let ((rf (copy reduced-form (make-list i))))
 			 (set! rfsize (tree-leaves rf))
 			 (when (> rfsize 5)
-			   (hash-fragment rf rfsize env #f)))))
+			   (hash-fragment rf rfsize env #f orig-form)))))
 
 		 (if fvar (quit))
 
@@ -17819,8 +17825,8 @@
 		 (unless (and (pair? lint-function-body)
 			      (equal? new-form (car lint-function-body)))
 		   (let* ((fcase (hash-table-ref (fragments leaves) (list reduced-form)))
-			  (fvars (and (pair? fcase)
-				      (cadr fcase))))
+			  (fvars (and (vector? fcase)
+				      (vector-ref fcase 2))))
 		     (when (pair? fvars)
 		       (call-with-exit
 			(lambda (ok)
@@ -17903,7 +17909,7 @@
 							     (walker (cdr tree))))))))
 				     (set! leaves (tree-leaves rf))
 				     (when (> leaves 5)
-				       (hash-fragment rf leaves env fvar))))
+				       (hash-fragment rf leaves env fvar orig-form))))
 				 reducibles)
 		       
 		       ;; if more than one reducible, try all combinations
@@ -17925,18 +17931,17 @@
 								 (walker (cdr tree))))))))
 					 (set! leaves (tree-leaves rf))
 					 (when (> (tree-leaves rf) 5)
-					   (hash-fragment rf leaves env fvar))))
+					   (hash-fragment rf leaves env fvar orig-form))))
 				     combo)))))))))))))
 
     (define (lint-fragment form env)
-      ;(format *stderr* "  walk: ~A~%" form)
       (if (memq (car form) '(or and))
 	  ;; or/and are special because leading and trailing cases are separable (like leading cases for bodies)
 	  (do ((i (length form) (- i 1))
 	       (p (cdr form) (cdr p)))
 	      ((<= i 2))
-	    (reduce-tree (cons (car form) p) env #f))
-	  (reduce-tree form env #f)))
+	    (reduce-tree (cons (car form) p) env #f form))
+	  (reduce-tree form env #f form)))
 
     (define (reduce-function-tree fvar env)
       (let ((definition (cond ((var-initial-value fvar) => cddr) (else #f))))
@@ -17945,24 +17950,19 @@
 				(pair? (cdr definition)))
 			   (cdr definition)
 			   definition)
-		       env (and (not (keyword? (var-name fvar)))
-				fvar)))))
+		       env 
+		       (and (not (keyword? (var-name fvar)))
+			    fvar)
+		       (var-initial-value fvar)))))
 
     ;; fragments:
-    ;; for the subsequent print-out to be useful, we need info on where the substitutions are, and
-    ;;   what they look like (function + function calls + line numbers)
-    ;;   right now we get "8: (or (not (pair? _1_)) (eq? (car _1_) 'quote))" -- just try to find me!
-    ;; in printout, choose largest of equivalents (i.e. least reduced), and show the entire tree
-    ;;
-    ;; also have preset built-in reduced forms of as many kinds as needed [char|string-pos in particular :nearly-built-in]
     ;; perhaps for fragment hash-ref (list fragment) to find function?
     ;;   and check leading cases for all bodies? -- would need to handle this in reduce-tree walker? 
     ;;   need any-match arg nums (a 2nd level match) 
     ;;
-    ;; maybe reduce all the 0 <>ops->zero/positive? etc
+    ;; maybe reduce the 0 <>ops->positive? etc
     ;; string->symbol -> symbol? simplify-numerics exact->rational? string|vector-length->length 
     ;; vector|string-append->append and fill! call-with-...->call/cc
-    ;; all the renaming above (hash-ref->hash-table-ref)
     ;; cond1->when/unless, cond2(no=>)->if
     ;;
     ;; blocks:
@@ -18423,19 +18423,41 @@
 	       (do ((i 6 (+ i 1)))
 		   ((= i *fragments-size*))
 		 (when (> (hash-table-entries (fragments i)) 0)
-		   (let ((v (sort! (copy (fragments i) (make-vector (hash-table-entries (fragments i))))
-				   (lambda (a b) 
-				     (> (cadr a) (cadr b))))))
-		     (for-each (lambda (o)
-				 (if (and (>= (cadr o) 2)
-					  (> (* (cadr o) (cadr o) i) 100))
-				     (format outport "~NC~A uses (size: ~A):~%~NC~A~%" 
+		   (let ((v (copy (fragments i) (make-vector (hash-table-entries (fragments i)))))) ; (key . vector)
+		     (for-each (lambda (a1)
+				 (let ((a (cdr a1)))
+				   (when (> (vector-ref a 0) 1)
+				     (vector-set! a 1 (map (lambda (b)
+							     (if (< 0 b 100000)
+								 b
+								 (values)))
+							 (reverse (vector-ref a 1)))))))
+			       v)
+		     (for-each (lambda (keyval)
+				 (let ((val (cdr keyval)))
+				   (if (and (>= (vector-ref val 0) 2)
+					    (> (* (vector-ref val 0) (vector-ref val 0) i) 100))
+				       (if (equal? (vector-ref val 3) (car keyval))
+					   (format outport "~NC~A uses, size: ~A, lines: '~A):~%~NCexpression: ~A~%" 
 					     lint-left-margin #\space
-					     (cadr o) i
+					     (vector-ref val 0) i (vector-ref val 1)
 					     (+ lint-left-margin 2) #\space
-					     (truncated-list->string (car o)))))
-			       v))))
-	       vars)
+					     (truncated-list->string (car keyval)))
+					   (format outport "~NC~A uses, size: ~A, lines: '~A):~%~NCpattern: ~A~%~NCexample: ~A~%" 
+						   lint-left-margin #\space
+						   (vector-ref val 0) i (vector-ref val 1)
+						   (+ lint-left-margin 2) #\space
+						   (truncated-list->string (car keyval))
+						   (+ lint-left-margin 2) #\space
+						   (truncated-list->string (vector-ref val 3)))))))
+			       (sort! v (lambda (kv1 kv2)
+					  (let ((a (cdr kv1))
+						(b (cdr kv2)))
+					    (or (> (vector-ref a 0) (vector-ref b 0))
+						(and (= (vector-ref a 0) (vector-ref b 0))
+						     (pair? (vector-ref a 1))
+						     (pair? (vector-ref b 1))
+						     (< (car (vector-ref a 1)) (car (vector-ref b 1)))))))))))))
 
 	    (if (pair? form)
 		(set! line (max line (pair-line-number form))))
@@ -18515,9 +18537,11 @@
 	(set! other-identifiers (make-hash-table))
 	(set! linted-files ())
 	(fill! other-names-counts 0)
+
 	(do ((i 0 (+ i 1))) 
 	    ((= i *fragments-size*))
 	  (fill! (fragments i) #f))
+
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
 	(set! last-simplify-cxr-line-number -1)
@@ -18711,22 +18735,22 @@
 					   (string->symbol data))))
 				      (lambda args #f)))))))))
 
-	;; preload various built-in functions defined in scheme
-	(for-each (lambda (d)
-		    (reduce-function-tree (cons (caadr d) (inlet :initial-value d :arglist (cdadr d) :history :built-in)) ()))
-		  '((define (abs n) (if (>= n 0.0) n (- n)))
-		    (define (abs n) (if (< n 0) (- n) n))
-		    (define (even? n) (= (remainder n 2) 0))
-		    (define (odd? n) (not (= (remainder n 2) 0)))
-		    (define (logbit? index n) (not (zero? (logand n (ash 1 index)))))
-		    (define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
-		    (define (make-list count elem) (if (not (positive? count)) () (cons elem (make-list (- count 1) elem)))) 
-		    (define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
-		    (define (list->vector x) (apply vector x))
-		    (define-macro (when test . body) `(if ,test (begin ,@body)))
-		    (define-macro (unless test . body) `(if (not ,test) (begin ,@body)))
-		    ;; memq=no hits
-		    ))
+	;; preset list-tail and list-ref
+	(hash-table-set! (fragments 10) '((if (zero? _2_) _1_ (_F_ (cdr _1_) (- _2_ 1))))
+			 (vector 0 () 
+				 (list (cons 'list-tail 
+					     (inlet :initial-value '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
+						    :arglist '(x k) 
+						    :history :built-in)))
+				 '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))))
+
+	(hash-table-set! (fragments 12) '((if (= _2_ 0) (car _1_) (_F_ (cdr _1_) (- _2_ 1))))
+			 (vector 0 ()
+				 (list (cons 'list-ref (inlet :initial-value '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
+							      :arglist '(items n)
+							      :history :built-in)))
+				 '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))))
+
 
 	;; -------- call lint --------
 	(let ((vars (lint-file file ())))
@@ -18942,4 +18966,4 @@
     #f))
 |#
 
-;;; 184 25029 664383
+;;; 184 25029 665340
