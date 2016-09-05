@@ -17469,7 +17469,7 @@
 	    (line (pair-line-number orig-form)))
 	;(if func (format *stderr* "hash-fragment ~A ~A~%~%" (var-name func) reduced-form))
 	(if (not (vector? old))
-	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form))
+	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f))
 	    ;; key = reduced-form
 	    ;; value = #(list uses line-numbers fvar original-form)
 	    (begin
@@ -17522,7 +17522,6 @@
 				     (set! e (cons (list (car args) (symbol "_" (number->string i) "_") i ()) e)))
 				   (list (list () '_1_) (list () '_2_) (list () '_3_))))
 		   (local-ctr 0))
-	       ;(format *stderr* "outer-vars: ~A~%" outer-vars)
 	       (let ((reduced-form
 		      (let walker ((tree new-form) (vars outer-vars))
 			;(format *stderr* "walker: ~A, vars: ~A~%" tree vars)
@@ -17668,7 +17667,8 @@
 							     res))
 							 (let ((args (args->proper-list (cadr tree))))
 							   (if (pair? args) args (quit)))))
-					     (new-body (walker (cddr tree) (append lvars vars)))
+					     (new-body (let ((new-vars (append lvars vars)))
+							 (map (lambda (p) (walker p new-vars)) (cddr tree))))
 					     (new-args (if (symbol? (cadr tree))
 							   (cadar lvars)
 							   (if (proper-list? (cadr tree))
@@ -17691,7 +17691,8 @@
 								 (set! local-ctr (+ local-ctr 1))
 								 res)))
 							 (args->proper-list (cadr tree))))
-					     (new-body (walker (cddr tree) (append lvars vars)))
+					     (new-body (let ((new-vars (append lvars vars)))
+							 (map (lambda (p) (walker p new-vars)) (cddr tree))))
 					     (new-args (if (symbol? (cadr tree))
 							   (cadar lvars)
 							   (map (lambda (a)
@@ -17715,7 +17716,7 @@
 							       (pair? (cdr c))))
 						     (quit))
 						 (cons (car c)
-						       (walker (cdr c) vars)))
+						       (map (lambda (p) (walker p vars)) (cdr c))))
 					       (cddr tree))))
 
 				     ((if)
@@ -17737,7 +17738,7 @@
 						    (pair? (cddr tree))))
 					  (quit))
 				      `(,(car tree) ,(walker (cadr tree) vars) 
-					,@(walker (cddr tree) vars)))
+					,@(map (lambda (p) (walker p vars)) (cddr tree))))
 
 				     ((set!)
 				      (if (not (and (pair? (cdr tree)) (pair? (cddr tree)))) (quit))
@@ -17754,8 +17755,6 @@
 					    `(set! ,(cadr v) ,(walker (caddr tree) vars)))
 					  `(set! ,(walker (cadr tree) vars) ,(walker (caddr tree) vars))))
 
-				     ;; reversible (> >=) got only 1 hit, +/* ordered args got a dozen or so
-
 				     ((define define*
 				      ;; these propagate backwards and we're not returning the new env in this loop,
 				      ;; lvars can be null, so splicing a new local into vars is a mess, 
@@ -17764,8 +17763,6 @@
 				      ;; functions within a function (fvar not #f).
 				      ;; but adding that possibility got no hits
 
-				       call/cc call-with-current-continuation 
-				       ;#_{list} #_{append} #_{apply_values} 
 				       define-constant define-macro define-macro*
 				       define-syntax let-syntax letrec-syntax match syntax-rules case-lambda
 				       require import module cond-expand quasiquote reader-cond while unquote
@@ -17793,7 +17790,7 @@
 				   (set! local-ctr (+ local-ctr 1)))
 				 (cadr v)))
 
-			      (else 
+			      (else
 			       (if fvar (quit))
 			       (let set-outer ((ovars outer-vars))
 				 (if (null? ovars)
@@ -17819,7 +17816,7 @@
 			 (when (> rfsize 5)
 			   (hash-fragment rf rfsize env #f orig-form)))))
 
-		 (if fvar (quit))
+		 (when fvar (quit))
 
 		 ;; TODO: also below and clean this up!
 		 (unless (and (pair? lint-function-body)
@@ -17954,23 +17951,6 @@
 		       (and (not (keyword? (var-name fvar)))
 			    fvar)
 		       (var-initial-value fvar)))))
-
-    ;; fragments:
-    ;; perhaps for fragment hash-ref (list fragment) to find function?
-    ;;   and check leading cases for all bodies? -- would need to handle this in reduce-tree walker? 
-    ;;   need any-match arg nums (a 2nd level match) 
-    ;;
-    ;; maybe reduce the 0 <>ops->positive? etc
-    ;; string->symbol -> symbol? simplify-numerics exact->rational? string|vector-length->length 
-    ;; vector|string-append->append and fill! call-with-...->call/cc
-    ;; cond1->when/unless, cond2(no=>)->if
-    ;;
-    ;; blocks:
-    ;; reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
-    ;;   but this collides with current 1-call->embedded code in lint-walk-body unless we use the closure
-    ;;   so... perhaps use out-vars to get names -- if < 5, func? (if any out-var set, quit)
-    ;;   perhaps start with if branches, when/unless
-
 
     ;; ----------------------------------------
       
@@ -18436,7 +18416,7 @@
 		     (for-each (lambda (keyval)
 				 (let ((val (cdr keyval)))
 				   (if (and (>= (vector-ref val 0) 2)
-					    (> (* (vector-ref val 0) (vector-ref val 0) i) 100))
+					    (> (* (vector-ref val 0) (vector-ref val 0) i) 100)) ; 120 seems too high
 				       (if (equal? (vector-ref val 3) (car keyval))
 					   (format outport "~NC~A uses, size: ~A, lines: '~A):~%~NCexpression: ~A~%" 
 					     lint-left-margin #\space
@@ -18455,9 +18435,10 @@
 						(b (cdr kv2)))
 					    (or (> (vector-ref a 0) (vector-ref b 0))
 						(and (= (vector-ref a 0) (vector-ref b 0))
-						     (pair? (vector-ref a 1))
-						     (pair? (vector-ref b 1))
-						     (< (car (vector-ref a 1)) (car (vector-ref b 1)))))))))))))
+						     (string<? (or (vector-ref a 4)
+								   (vector-set! a 4 (object->string (vector-ref a 3))))
+							       (or (vector-ref b 4)
+								   (vector-set! b 4 (object->string (vector-ref b 3)))))))))))))))
 
 	    (if (pair? form)
 		(set! line (max line (pair-line-number form))))
@@ -18742,14 +18723,16 @@
 					     (inlet :initial-value '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
 						    :arglist '(x k) 
 						    :history :built-in)))
-				 '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))))
+				 '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
+				 #f))
 
 	(hash-table-set! (fragments 12) '((if (= _2_ 0) (car _1_) (_F_ (cdr _1_) (- _2_ 1))))
 			 (vector 0 ()
 				 (list (cons 'list-ref (inlet :initial-value '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
 							      :arglist '(items n)
 							      :history :built-in)))
-				 '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))))
+				 '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
+				 #f))
 
 
 	;; -------- call lint --------
@@ -18965,5 +18948,22 @@
 	(display str p)))
     #f))
 |#
+
+;;; fragments:
+;;;   perhaps for fragment hash-ref (list fragment) to find function?
+;;;     and check leading cases for all bodies? -- would need to handle this in reduce-tree walker? 
+;;;     need any-match arg nums (a 2nd level match) 
+;;;   2-arg func, reversed -> nth for list-ref -- need reversal signal
+;;;     this is tricky (initial code in tmp) -- if recursive call, need args reversed so check shadowing etc
+;;;
+;;; blocks:
+;;;   reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
+;;;     but this collides with current 1-call->embedded code in lint-walk-body unless we use the closure
+;;;     so... perhaps use out-vars to get names -- if < 5, func? (if any out-var set, quit)
+;;;     perhaps start with if branches, when/unless
+;;;
+;;; do+set of non-local->moved inward
+;;; named-let/do + map init ->embed as in map+map
+;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
 
 ;;; 184 25029 665340
