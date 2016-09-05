@@ -7247,7 +7247,8 @@ static s7_pointer make_macro(s7_scheme *sc)
 		typ = T_BACRO_STAR | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 	      else
 		{
-		  if (sc->op == OP_DEFINE_EXPANSION)
+		  if ((sc->op == OP_DEFINE_EXPANSION) &&
+		      (!is_let(sc->envir)))        /* local expansions are just normal macros */
 		    typ = T_MACRO | T_EXPANSION | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 		  else typ = T_MACRO | T_DONT_EVAL_ARGS | T_COPY_ARGS;
 		}
@@ -7265,9 +7266,9 @@ static s7_pointer make_macro(s7_scheme *sc)
 
   sc->capture_let_counter++;
   sc->code = caar(sc->code);
-  if (sc->op == OP_DEFINE_EXPANSION)
+  if ((sc->op == OP_DEFINE_EXPANSION) &&
+      (!is_let(sc->envir)))
     set_type(sc->code, T_EXPANSION | T_SYMBOL); /* see comment under READ_TOK */
-
   /* symbol? macro name has already been checked, find name in environment, and define it */
   cx = find_local_symbol(sc, sc->code, sc->envir);
   if (is_slot(cx))
@@ -45545,7 +45546,10 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	  {
 	    s7_varlet(sc, let, sc->length_symbol, s7_make_integer(sc, port_data_size(obj)));
 	    s7_varlet(sc, let, s7_make_symbol(sc, "position"), s7_make_integer(sc, port_position(obj)));
-	    s7_varlet(sc, let, s7_make_symbol(sc, "data"), s7_make_string(sc, (const char *)port_data(obj)));
+	    /* I think port_data need not be null-terminated, but s7_make_string assumes it is:
+	     *   both valgrind and lib*san complain about the uninitialized data during strlen.
+	     */
+	    s7_varlet(sc, let, s7_make_symbol(sc, "data"), s7_make_string_with_length(sc, (const char *)port_data(obj), port_data_size(obj)));
 	  }
 	s7_gc_unprotect_at(sc, gc_loc);
 	return(let);
@@ -75039,7 +75043,7 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.7
+ *           12  |  13  |  14  |  15  | 16.0  16.7  16.8
  *                                           
  * s7test   1721 | 1358 |  995 | 1194 | 1122  1928
  * index    44.3 | 3291 | 1725 | 1276 | 1156  1166
@@ -75063,7 +75067,6 @@ int main(int argc, char **argv)
  *
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
- * if expansion at top-level is loaded into let (not top), expansion->macro can cause unknown operator: 4113?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
