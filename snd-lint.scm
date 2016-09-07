@@ -74,14 +74,14 @@
   (define (get-generator caller form env)
     (with-let (sublet *lint* :caller caller :form form :env env)
       (when (pair? (cdr form))
-	(let ((name ((if (pair? (cadr form)) caadr cadr) form)))
+	(let ((name (symbol->string ((if (pair? (cadr form)) caadr cadr) form))))
 	  
 	  (if (and (pair? (cadr form))
 		   (pair? (cdadr form)))
 	      (lint-walk caller (cdadr form) env))
 	  
-	  (let ((gen? (symbol (symbol->string name) "?"))
-		(gen-make (symbol "make-" (symbol->string name))))
+	  (let ((gen? (symbol name "?"))
+		(gen-make (symbol "make-" name)))
 	    (list (make-fvar :name gen?
 			     :ftype 'define
 			     :decl (dummy-func 'define `(define (,gen? x) (let? x)) '(define (_ x) #f))

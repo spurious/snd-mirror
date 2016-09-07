@@ -6,16 +6,15 @@
 (provide 'libutf8proc.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let ((current-file (port-filename (current-input-port))))
-  (let ((directory (and (or (char=? (current-file 0) #\/)
-			    (char=? (current-file 0) #\~))
-			(substring current-file 0 (- (length current-file) 9)))))
-    (when (and directory (not (member directory *load-path*)))
-      (set! *load-path* (cons directory *load-path*)))
-    (with-let (rootlet)
-      (require cload.scm))
-    (when (and directory (not (string-position directory *cload-cflags*)))
-      (set! *cload-cflags* (string-append "-I" directory " " *cload-cflags*)))))
+(let* ((current-file (port-filename))
+       (directory (and (memv (current-file 0) '(#\/ #\~))
+		       (substring current-file 0 (- (length current-file) 9)))))
+  (when (and directory (not (member directory *load-path*)))
+    (set! *load-path* (cons directory *load-path*)))
+  (with-let (rootlet)
+    (require cload.scm))
+  (when (and directory (not (string-position directory *cload-cflags*)))
+    (set! *cload-cflags* (string-append "-I" directory " " *cload-cflags*))))
 
 
 (if (not (defined? '*libutf8proc*))
@@ -111,13 +110,6 @@
                     return(s7_make_integer(sc, res));
                    }")
 	   (C-function ("utf8proc_reencode" g_utf8proc_reencode "" 1))
-#|
-	   (in-C "static s7_pointer g_utf8proc_utf8class(s7_scheme *sc, s7_pointer args)
-                  {
-	            return(s7_make_string_with_length(sc, (char *)utf8proc_utf8class, 256));
-                  }")
-	   (C-function ("utf8proc_utf8class" g_utf8proc_utf8class "" 0))
-|#
 	   (in-C "static s7_pointer g_utf8proc_get_property(s7_scheme *sc, s7_pointer args)
                   {
 	            const utf8proc_property_t *info;
