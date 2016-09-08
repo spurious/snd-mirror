@@ -194,7 +194,7 @@
 			     (lambda (op)
 			       (set! (h op) #t))
 			     '(string-length vector-length abs magnitude denominator gcd lcm tree-leaves
-			       char->integer byte-vector-ref byte-vector-set! hash-table-entries write-byte
+			       char->integer hash-table-entries write-byte
 			       char-position string-position pair-line-number port-line-number))
 			    h))
 	
@@ -232,6 +232,18 @@
 		     unspecified? exact? inexact? defined? provided? even? odd? char-whitespace? char-numeric? char-alphabetic?
 		     negative? positive? zero? constant? infinite? nan? char-upper-case? char-lower-case? directory? file-exists?))
 		  h))
+
+	(notables (let ((h (make-hash-table)))
+		    (for-each
+		     (lambda (op)
+		       (set! (h (car op)) (cadr op)))
+		     '((< >=) (> <=) (<= >) (>= <)
+		       (char<? char>=?) (char>? char<=?) (char<=? char>?) (char>=? char<?)
+		       (string<? string>=?) (string>? string<=?) (string<=? string>?) (string>=? string<?)
+		       (char-ci<? char-ci>=?) (char-ci>? char-ci<=?) (char-ci<=? char-ci>?) (char-ci>=? char-ci<?)
+		       (string-ci<? string-ci>=?) (string-ci>? string-ci<=?) (string-ci<=? string-ci>?) (string-ci>=? string-ci<?)
+		       (odd? even?) (even? odd?) (exact? inexact?) (inexact? exact?)))
+		    h))
 
 	(reversibles (let ((h (make-hash-table)))
 		       (for-each
@@ -936,6 +948,7 @@
 		      ((case)
 		       (when (and (pair? (cdr tree)) 
 				  (pair? (cddr tree)))
+			 (var-walk (cadr tree) e)
 			 (for-each (lambda (c) 
 				     (when (pair? c) 
 				       (var-walk (cdr c) e)))
@@ -1893,18 +1906,7 @@
     ;; --------------------------------
     (define simplify-boolean
 
-      (let ((notables (let ((h (make-hash-table)))
-		    (for-each
-		     (lambda (op)
-		       (set! (h (car op)) (cadr op)))
-		     '((< >=) (> <=) (<= >) (>= <)
-		       (char<? char>=?) (char>? char<=?) (char<=? char>?) (char>=? char<?)
-		       (string<? string>=?) (string>? string<=?) (string<=? string>?) (string>=? string<?)
-		       (char-ci<? char-ci>=?) (char-ci>? char-ci<=?) (char-ci<=? char-ci>?) (char-ci>=? char-ci<?)
-		       (string-ci<? string-ci>=?) (string-ci>? string-ci<=?) (string-ci<=? string-ci>?) (string-ci>=? string-ci<?)
-		       (odd? even?) (even? odd?) (exact? inexact?) (inexact? exact?)))
-		    h))
-	    (relsub
+      (let ((relsub
 	     (let ((relops '((< <= > number?) (<= < >= number?) (> >= < number?) (>= > <= number?)
 			     (char<? char<=? char>? char?) (char<=? char<? char>=? char?)  ; these never happen
 			     (char>? char>=? char<? char?) (char>=? char>? char<=? char?)
@@ -8509,10 +8511,10 @@
 			     (bytevector? . byte-vector?)
 			     (bytevector . byte-vector)
 			     (make-bytevector . make-byte-vector)
-			     (bytevector-u8-ref . byte-vector-ref)
-			     (bytevector-u8-set! . byte-vector-set!)
-			     (bytevector-ref . byte-vector-ref)
-			     (bytevector-set! . byte-vector-set!)
+			     (bytevector-u8-ref . string-ref)
+			     (bytevector-u8-set! . string-set!)
+			     (bytevector-ref . string-ref)
+			     (bytevector-set! . string-set!)
 			     (bytevector-length . length)
 			     (write-bytevector . write-string)
 			     (hash-set! . hash-table-set!)     ; Guile
@@ -9769,11 +9771,28 @@
 					       (when (and (pair? sig)
 							  (< pos (length sig)))
 						 (let ((desired-type (list-ref sig pos)))
-						   (if (not (compatible? vtype desired-type))
-						       (lint-format "~A is ~A, but ~A in ~A wants ~A" caller
-								    vname (prettify-checker-unq vtype)
-								    func (truncated-list->string call) 
-								    (prettify-checker desired-type))))))))
+						   (cond ((not (compatible? vtype desired-type))
+							  (lint-format "~A is ~A, but ~A in ~A wants ~A" caller
+								       vname (prettify-checker-unq vtype)
+								       func (truncated-list->string call) 
+								       (prettify-checker desired-type)))
+
+							 ((and (memq vtype '(float-vector? int-vector?))
+							       (memq func '(vector-set! vector-ref)))
+							  (lint-format "~A is ~A, so perhaps use ~A, not ~A" caller
+								       vname (prettify-checker-unq vtype)
+								       (if (eq? vtype 'float-vector?)
+									   (if (eq? func 'vector-set!) 'float-vector-set! 'float-vector-ref)
+									   (if (eq? func 'vector-set!) 'int-vector-set! 'int-vector-ref))
+								       func))
+
+							 ((and (eq? vtype 'vector?)
+							       (memq func '(float-vector-set! float-vector-ref int-vector-set! int-vector-ref)))
+							  (lint-format "~A is ~A, so use ~A, not ~A" caller
+								       vname (prettify-checker-unq vtype)
+								       (if (memq func '(float-vector-set! int-vector-set!))
+									   'vector-set! 'vector-ref)
+								       func))))))))
 					 
 					 (let ((suggest made-suggestion))
 					   ;; check for pointless vtype checks
@@ -10957,8 +10976,7 @@
 			     (lint-format "~A returns its first argument, so this could be omitted: ~A" caller 
 					  (car prev-f) (truncated-list->string f))))
 		      
-			((vector-set! float-vector-set! int-vector-set! byte-vector-set! 
-                          string-set! list-set! hash-table-set! let-set!  set-car! set-cdr!)
+			((vector-set! float-vector-set! int-vector-set! string-set! list-set! hash-table-set! let-set!  set-car! set-cdr!)
 			 (if (equal? f (list-ref prev-f (- (length prev-f) 1)))
 			     ;; (begin (vector-set! x 0 (* y 2)) (* y 2))
 			     (lint-format "~A returns the new value, so this could be omitted: ~A" caller 
@@ -11182,6 +11200,21 @@
 					      (values "a list" "'" seq)
 					    (values (prettify-checker-unq (->lint-type in-seq)) "" seq)))
 			     (throw 'sequence-constant-done))))))) ; just report one constant -- the full list is annoying
+
+    (define (code-equal? a b) ; these extra tests get no hits
+      (or (equal? a b)
+	  (and (pair? a)
+	       (pair? b)
+	       (or (and (eq? (car a) (hash-table-ref reversibles (car b)))
+			(equal? (cdr a) (reverse (cdr b))))
+		   (and (eq? (car a) 'not)
+			(pair? (cadr a))
+			(eq? (hash-table-ref notables (caadr a)) (car b))
+			(equal? (cdadr a) (cdr b)))
+		   (and (eq? (car b) 'not)
+			(pair? (cadr b))
+			(eq? (hash-table-ref notables (caadr b)) (car a))
+			(equal? (cdr a) (cdadr b)))))))
 
 	
     (define lint-function-body #f) ; a momentary kludge??
@@ -12582,8 +12615,9 @@
 				  (copy-tree tree))
 				 (else (cons (tree-subst-eq new old (car tree))
 					     (tree-subst-eq new old (cdr tree))))))
-			 
+
 			 ;; maybe move the unless before this 
+			 ;; reversible ops here got no real hits (test case junk)
 			 (let ((diff (let differ-in-one ((p true)
 							 (q false))
 				       (and (pair? p)
@@ -13069,7 +13103,7 @@
 				  ;; (if (negative? (gcd x y)) a b) -> b
 				  (lint-format "perhaps ~A" caller (lists->string form false))))
 			     
-			     ((not (equal? true false))
+			     ((not (code-equal? true false))
 			      (if (boolean? true)
 				  (if (boolean? false) ; !  (if expr #t #f) turned into something less verbose
 				      ;; (if x #f #t) -> (not x)
@@ -13377,7 +13411,9 @@
 								     `(let ((,uniq ,expr))
 									(let ,(reverse sv)
 									  (if ,uniq ,ntv ,nfv))))))))))))) ; (when (and (= suggestion made-suggestion)...))
-		       
+
+		       ;; walking the if's with true/false lists for simplify-boolean found only 1 case of a collapsible test
+
 		       (when (and *report-one-armed-if*
 				  (eq? false 'no-false)
 				  (or (not (integer? *report-one-armed-if*))
@@ -15338,7 +15374,7 @@
 			     ;; we have (do ((v start (+ v 1)|(+ 1 v))) ((= v end)|(= end v)|(>= v end)) one-statement)
 			     (set! body (car body))
 			     ;; write-char is the only other common case here -> write-string in a few cases
-			     (when (and (memq (car body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set! byte-vector-set!))
+			     (when (and (memq (car body) '(vector-set! float-vector-set! int-vector-set! list-set! string-set!))
 					;; integer type check here isn't needed because we're using this as an index below
 					;;   the type error will be seen in report-usage if not earlier
 					(eq? (caddr body) vname)
@@ -15346,7 +15382,7 @@
 					  (set! setv val)
 					  (or (code-constant? val)
 					      (and (pair? val)
-						   (memq (car val) '(vector-ref float-vector-ref int-vector-ref list-ref string-ref byte-vector-ref))
+						   (memq (car val) '(vector-ref float-vector-ref int-vector-ref list-ref string-ref))
 						   (eq? (caddr val) vname)))))
 			       ;; (do ((i 2 (+ i 1))) ((= i len)) (string-set! s i #\a)) -> (fill! s #\a 2 len)
 			       (lint-format "perhaps ~A" caller 
@@ -17469,13 +17505,13 @@
     ;; end walker-functions
     ;; ----------------------------------------
 
-    (define (hash-fragment reduced-form leaves env func orig-form line)
+    (define (hash-fragment reduced-form leaves env func orig-form line outer-vars)
       ;(format *stderr* "hash ~A~%~%" reduced-form)
       ;; func here is either #f or an env-style entry (cons name let) as produced by make-fvar,
       ;;   the let entries accessed are initial-value, history, arglist
       (let ((old (hash-table-ref (fragments leaves) reduced-form)))
 	(if (not (vector? old))
-	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f))
+	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f outer-vars))
 	    ;; key = reduced-form
 	    ;; value = #(list uses line-numbers fvar original-form)
 	    (begin
@@ -17824,7 +17860,7 @@
 		   (if (not line) (set! line 0)))
 		 
 		 (set! leaves (tree-leaves reduced-form))        ; if->when, for example, so tree length might change
-		 (hash-fragment reduced-form leaves env fvar orig-form line)
+		 (hash-fragment reduced-form leaves env fvar orig-form line outer-vars)
 		 
 		 (if (and (memq (car reduced-form) '(or and))
 			  (> (length reduced-form) 3))
@@ -17835,7 +17871,7 @@
 		       (let ((rf (copy reduced-form (make-list i))))
 			 (set! rfsize (tree-leaves rf))
 			 (when (> rfsize 5)
-			   (hash-fragment rf rfsize env #f (copy orig-form (make-list i)) line)))))
+			   (hash-fragment rf rfsize env #f (copy orig-form (make-list i)) line outer-vars)))))
 		 
 		 (when fvar (quit))
 		 
@@ -17927,7 +17963,7 @@
 							     (walker (cdr tree))))))))
 				     (set! leaves (tree-leaves rf))
 				     (when (> leaves 5)
-				       (hash-fragment rf leaves env fvar orig-form line))))
+				       (hash-fragment rf leaves env fvar orig-form line #f)))) ; here and below outer-vars should reflect reducible change
 				 reducibles)
 		       
 		       ;; if more than one reducible, try all combinations
@@ -17949,7 +17985,7 @@
 								 (walker (cdr tree))))))))
 					 (set! leaves (tree-leaves rf))
 					 (when (> (tree-leaves rf) 5)
-					   (hash-fragment rf leaves env fvar orig-form line))))
+					   (hash-fragment rf leaves env fvar orig-form line #f))))
 				     combo)))))))))))))
 
     (define (lint-fragment form env)
@@ -18422,8 +18458,10 @@
 		 (when (and *report-repeated-code-fragments*
 			    (or (not *report-loaded-files*)
 				(= lint-left-margin 1)))
-		   (do ((i 6 (+ i 1)))
-		       ((= i *fragments-size*))
+		   (do ((reported-lines ())
+			(reported #f)
+			(i (- *fragments-size* 1) (- i 1)))
+		       ((<= i 5))
 		     (when (> (hash-table-entries (fragments i)) 0)
 		       (let ((v (copy (fragments i) (make-vector (hash-table-entries (fragments i)))))) ; (key . vector)
 			 (for-each (lambda (a1)
@@ -18437,30 +18475,56 @@
 				   v)
 			 (for-each (lambda (keyval)
 				     (let ((val (cdr keyval)))
-				       (if (and (>= (vector-ref val 0) 2)
-						(> (* (vector-ref val 0) (vector-ref val 0) i) 100)) ; 120 seems too high
-					   (if (equal? (vector-ref val 3) (car keyval))
-					       (format outport "~NC~A uses, size: ~A, lines: '~A):~%~NCexpression: ~A~%" 
-						       lint-left-margin #\space
-						       (vector-ref val 0) i (vector-ref val 1)
-						       (+ lint-left-margin 2) #\space
+				       (when (and (>= (vector-ref val 0) 2)
+						  (> (* (vector-ref val 0) (vector-ref val 0) i) 100) ; 120 seems too high
+						  (not (and (pair? (vector-ref val 1))
+							    (memv (car (vector-ref val 1)) reported-lines))))
+					 (if (pair? (vector-ref val 1))
+					     (set! reported-lines (cons (car (vector-ref val 1)) reported-lines)))
+					 (unless reported
+					   (set! reported #t)
+					   (format outport "~%~NCrepeated code fragments:~%" lint-left-margin #\space))
+					 (if (equal? (vector-ref val 3) (car keyval))
+					     (format outport "~NCsize: ~A, uses: ~A, lines: '~A:~%~NCexpression: ~A~%" 
+						     lint-left-margin #\space
+						     i (vector-ref val 0) (vector-ref val 1)
+						     (+ lint-left-margin 2) #\space
+						     (let-temporarily ((target-line-length 120))
+						       (truncated-list->string (car keyval))))
+					     (format outport "~NCsize: ~A, uses: ~A, lines: '~A:~%~NCpattern: ~A~%~NCexample: ~A~A~%" 
+						     lint-left-margin #\space
+						     i (vector-ref val 0) (vector-ref val 1)
+						     (+ lint-left-margin 2) #\space
+						     (let-temporarily ((target-line-length 120))
 						       (truncated-list->string (car keyval)))
-					       (format outport "~NC~A uses, size: ~A, lines: '~A):~%~NCpattern: ~A~%~NCexample: ~A~%" 
-						       lint-left-margin #\space
-						       (vector-ref val 0) i (vector-ref val 1)
-						       (+ lint-left-margin 2) #\space
-						       (truncated-list->string (car keyval))
-						       (+ lint-left-margin 2) #\space
-						       (truncated-list->string (vector-ref val 3)))))))
+						     (+ lint-left-margin 2) #\space
+						     (let-temporarily ((target-line-length 120))
+						       (truncated-list->string (vector-ref val 3)))
+						     (if (and (> i 10)
+							      (vector-ref val 5))
+							 (let ((vars (map (lambda (v)
+									    (if (null? (car v))
+										(values)
+										(car v)))
+									  (vector-ref val 5))))
+							   (if (pair? vars)
+							       (format #f "~%~NCwith var~P: ~{~A ~}" 
+								       (+ lint-left-margin 4) #\space (length vars) vars)
+							       ""))
+							 ""))))))
 				   (sort! v (lambda (kv1 kv2)
 					      (let ((a (cdr kv1))
 						    (b (cdr kv2)))
 						(or (> (vector-ref a 0) (vector-ref b 0))
 						    (and (= (vector-ref a 0) (vector-ref b 0))
-							 (string<? (or (vector-ref a 4)
-								       (vector-set! a 4 (object->string (vector-ref a 3))))
-								   (or (vector-ref b 4)
-								       (vector-set! b 4 (object->string (vector-ref b 3)))))))))))))))
+							 (or (string<? (or (vector-ref a 4)
+									   (vector-set! a 4 (object->string (vector-ref a 3))))
+								       (or (vector-ref b 4)
+									   (vector-set! b 4 (object->string (vector-ref b 3)))))
+							     (and (string=? (vector-ref a 4) 
+									    (vector-ref b 4))
+								  (string<? (object->string (car kv1)) 
+									    (object->string (car kv2)))))))))))))))
 		 vars) ; lint-file-1 should return the environment
 	      
 	      (if (pair? form)
@@ -18801,7 +18865,7 @@
 		      (if (string? file) (format #f " in ~S" file) "")
 		      lst)
 	      (fill! other-identifiers #f)))))))
-	      
+
 
 
 
@@ -18975,22 +19039,9 @@
 ;;; fragments:
 ;;;   perhaps for fragment hash-ref (list fragment) to find function?
 ;;;     and check leading cases for all bodies? -- would need to handle this in reduce-tree walker? 
-;;;     need any-match arg nums (a 2nd level match) 
-;;;       if 2-arg func, reversed -> nth for list-ref -- need reversal signal
-;;;         this is tricky (initial code in tmp) -- if recursive call, need args reversed so check shadowing etc
-;;;  if several fragments share the same code, report just the biggest, and maybe give the _n_ values for at least the example?
-;;;    check lines here?
-;;;  maybe divide the trigger by the _n_ top? (need to save this number -- check outer-vars for symbol? car)
-;;;
-;;; blocks:
-;;;   reduce-dependencies -- look for blocks with restricted outer vars, make func and add to closure, check for func-reuse
-;;;     but this collides with current 1-call->embedded code in lint-walk-body unless we use the closure
-;;;     so... perhaps use out-vars to get names -- if < 5, func? (if any out-var set, quit)
-;;;     perhaps start with if branches, when/unless
-;;;     reduced-tree could give the number/usage of vars if handled with incoming (func-level) env -- #f if too many
-;;;       but need to avoid hashing
+;;;   should fragment report include all known vars?
 ;;;
 ;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
-;;; need s7tests for all the report switches
+;;;   all patterns in fragments could be searchable
 
-;;; 184 25038 668817
+;;; 184 25038 668481

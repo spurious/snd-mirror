@@ -13,7 +13,7 @@
 (define scan-chan scan-channel)
 
 (define* (map-chan proc beg end origin snd chn edpos) 
-  (map-channel proc beg (+ (- end beg) 1) snd chn edpos origin))
+  (map-channel proc beg (- (+ end 1) beg) snd chn edpos origin))
 
 
 (define smooth-vct smooth-float-vector)
@@ -182,9 +182,10 @@
 (define frame->file? frample->file?)
 
 (define (frame->frame a b c)
-  (if (> (length a) (length b))
-      (frample->frample a b c)
-      (frample->frample b a c)))
+  (frample->frample (if (> (length a) (length b))
+			(values a b) 
+			(values b a)) 
+		    c))
 
 (define (frame->list a) 
   (copy a (make-list (length a))))
@@ -210,11 +211,11 @@
 (define make-float-vector->file make-frample->file)
 
 (define (make-frame chans . args)
-  (let ((v (make-float-vector chans)))
-    (do ((i 0 (+ i 1))
-	 (arg args (cdr args)))
-	((null? arg) v)
-      (set! (v i) (car arg)))))
+  (do ((v (make-float-vector chans))
+       (i 0 (+ i 1))
+       (arg args (cdr arg)))
+      ((null? arg) v)
+    (set! (v i) (car arg))))
 
 (define make-frame! make-frame)
 
@@ -223,19 +224,19 @@
 (define (mixer-rows mx) (floor (sqrt (length mx))))
 
 (define (make-mixer chans . args)
-  (let ((v (make-float-vector (* chans chans))))
-    (do ((i 0 (+ i 1))
-	 (arg args (cdr args)))
-	((null? arg) v)
-      (set! (v i) (car arg)))))
+  (do ((v (make-float-vector (* chans chans)))
+       (i 0 (+ i 1))
+       (arg args (cdr arg)))
+      ((null? arg) v)
+    (set! (v i) (car arg))))
 
 (define make-mixer! make-mixer)
 
 (define (make-scalar-mixer chans val)
-  (let ((m (make-float-vector (* chans chans) 0.0)))
-    (do ((i 0 (+ i 1)))
-	((= i chans) m)
-      (set! (m (+ (* i chans) i)) val))))
+  (do ((m (make-float-vector (* chans chans)))
+       (i 0 (+ i 1)))
+      ((= i chans) m)
+    (set! (m (+ (* i chans) i)) val)))
 
 (define (make-sound-data c f)
   (make-float-vector (list c f)))
@@ -258,17 +259,17 @@
 	 (= (* d d) (length obj)))))
 
 (define* (mixer* m1 m2 m3)
-  (let ((rows (mixer-rows m1))
-	(m4 (or m3 (make-float-vector (length m1)))))
-    (do ((i 0 (+ i 1)))
-	((= i rows) m4)
-      (do ((j 0 (+ j 1)))
-	  ((= j rows))
-	(let ((sum 0.0))
-	  (do ((k 0 (+ k 1)))
-	      ((= k rows))
-	    (set! sum (+ sum (* (m1 (+ (* i rows) k)) (m2 (+ (* k rows) j))))))
-	  (set! (m4 (+ (* i rows) j)) sum))))))
+  (do ((rows (mixer-rows m1))
+       (m4 (or m3 (make-float-vector (length m1))))
+       (i 0 (+ i 1)))
+      ((= i rows) m4)
+    (do ((j 0 (+ j 1)))
+	((= j rows))
+      (set! (m4 (+ (* i rows) j))
+	    (do ((sum 0.0)
+		 (k 0 (+ k 1)))
+		((= k rows) sum)
+	      (set! sum (+ sum (* (m1 (+ (* i rows) k)) (m2 (+ (* k rows) j))))))))))
 
 (define multiply-arrays float-vector-multiply!)
 
@@ -280,21 +281,13 @@
 
 (define (sound-data+ x1 x2)
   (if (real? x1)
-      (if (real? x2)
-	  (+ x1 x2)
-	  (float-vector-offset! x2 x1))
-      (if (real? x2)
-	  (float-vector-offset! x1 x2)
-	  (float-vector-add! x1 x2))))
+      ((if (real? x2) + float-vector-offset!) x2 x1)
+      ((if (real? x2) float-vector-offset! float-vector-add!) x1 x2)))
 
 (define (sound-data* x1 x2)
   (if (real? x1)
-      (if (real? x2)
-	  (* x1 x2)
-	  (float-vector-scale! x2 x1))
-      (if (real? x2)
-	  (float-vector-scale! x1 x2)
-	  (float-vector-multiply! x1 x2))))
+      ((if (real? x2) * float-vector-scale!) x2 x1)
+      ((if (real? x2) float-vector-scale! float-vector-multiply!) x1 x2)))
 
 (define sound-data-add! float-vector-add!)
 
@@ -309,9 +302,9 @@
   ((vector-dimensions s) 1))
 
 (define (sound-data-maxamp s)
-  (let* ((chans (sound-data-chans s))
-	 (maxamps (make-list chans)))
-    (do ((i 0 (+ i 1)))
+  (let ((chans (sound-data-chans s)))
+    (do ((maxamps (make-list chans))
+	 (i 0 (+ i 1)))
 	((= i chans) maxamps)
       (set! (maxamps i) (float-vector-peak (s i))))))
 
@@ -327,7 +320,7 @@
   (let ((chans (sound-data-chans s)))
     (do ((i 0 (+ i 1)))
 	((= i chans) s)
-      (reverse! (s i)))))
+      (set! (s i) (reverse (s i))))))
 
 (define sound-data-scale! float-vector-scale!)
 

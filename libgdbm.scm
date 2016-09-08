@@ -6,9 +6,9 @@
 (provide 'libgdbm.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let* ((current-file (port-filename))
-       (directory (and (memv (current-file 0) '(#\/ #\~))
-		       (substring current-file 0 (- (length current-file) 9)))))
+(let ((directory (let ((current-file (port-filename)))
+		   (and (memv (current-file 0) '(#\/ #\~))
+			(substring current-file 0 (- (length current-file) 9))))))
   (when (and directory (not (member directory *load-path*)))
     (set! *load-path* (cons directory *load-path*)))
   (with-let (rootlet)

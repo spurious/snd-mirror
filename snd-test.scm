@@ -26109,7 +26109,7 @@ EDITS: 2
       (letrec ((reset-vars
 		(lambda (lst)
 		  (when (pair? lst)
-		    (let* ((name ((car lst) 0))
+		    (let* ((name (eq? #t ((car lst) 0)))
 			   (index (and ((car lst) 2) (choose-fd)))
 			   (getfnc ((car lst) 1))
 			   (setfnc (lambda (val snd) (set! (getfnc snd) val)))
@@ -26118,7 +26118,7 @@ EDITS: 2
 			   (maxval ((car lst) 4))
 			   (fncval (or (not minval)
 				       (if (rational? minval)
-					   (if (eq? name #t)
+					   (if name
 					       (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2)))))
 					       (+ minval (floor (random (- maxval minval)))))
 					   (+ minval (random (- maxval minval)))))))
@@ -26127,7 +26127,7 @@ EDITS: 2
 			     (setfnc-1 #t))
 			    ((not (rational? minval))
 			     (setfnc-1 (+ minval (random (- maxval minval)))))
-			    ((eq? name #t)
+			    (name
 			     (setfnc-1 (floor (expt 2 (min 31 (ceiling (log (+ minval (floor (random (- maxval minval)))) 2)))))))
 			    (else
 			     (setfnc-1 (+ minval (floor (random (- maxval minval)))))))
@@ -30176,7 +30176,7 @@ EDITS: 2
 	    ((8) (let ((dur (max 2 (random 100)))) (float-vector->channel (make-float-vector dur) (random len) dur)))
 	    ((9) (map-channel (lambda (y) (* y 2.0)) (random (floor (/ (framples) 2))) (random 1000)))))
 	(close-sound ind))
-      
+
       (let ((ind (open-sound "oboe.snd")))
 	(if (fneq (maxamp) 0.14724731445312)
 	    (snd-display ";oboe max: ~A (should be ~A)~%" (maxamp) 0.14724731445312))
@@ -40473,24 +40473,6 @@ EDITS: 1
 	      (if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length sd: ~A" (mus-length *output*)))
 	      (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0))))
     (let ((v4 (with-sound ((make-float-vector '(1 44100))) 
-		(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
-      (if (mus-arrays-equal? v1 v4) (snd-display ";2 reverb output not written to sd?")))
-    (if (< (maxamp v1) .28) 
-	(snd-display ";2 rev with-sound -> vector2 fm-violin maxamp (opt): ~A" (maxamp v1)))
-    (let ((v2 (with-sound ((make-float-vector '(1 44100)) :revfile (make-float-vector '(1 44100)) :reverb jc-reverb) 
-		(fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-      (if (< (maxamp v2) .28) 
-	  (snd-display ";2 rev with-sound -> vector2 fm-violin maxamp: ~A" (maxamp v2)))
-      (with-sound (v1 :revfile v2 :reverb jc-reverb)
-	(fm-violin 0 .1 440 .1 :reverb-amount 0.9)
-	(fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-      (if (< (maxamp v1) .5) 
-	  (snd-display ";2 with-sound -> vector2 fm-violin maxamp (opt 2): ~A" (maxamp v1)))))
-  
-  (let ((v1 (with-sound ((make-float-vector '(1 44100)) :revfile (make-float-vector '(1 44100)) :reverb jc-reverb) 
-	      (if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length sd: ~A" (mus-length *output*)))
-	      (fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0))))
-    (let ((v4 (with-sound ((make-float-vector '(1 44100)))
 		(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
       (if (mus-arrays-equal? v1 v4) (snd-display ";2 reverb output not written to sd?")))
     (if (< (maxamp v1) .28) 

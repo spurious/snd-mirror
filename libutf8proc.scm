@@ -6,9 +6,9 @@
 (provide 'libutf8proc.scm)
 
 ;; if loading from a different directory, pass that info to C
-(let* ((current-file (port-filename))
-       (directory (and (memv (current-file 0) '(#\/ #\~))
-		       (substring current-file 0 (- (length current-file) 9)))))
+(let ((directory (let ((current-file (port-filename)))
+		   (and (memv (current-file 0) '(#\/ #\~))
+			(substring current-file 0 (- (length current-file) 9))))))
   (when (and directory (not (member directory *load-path*)))
     (set! *load-path* (cons directory *load-path*)))
   (with-let (rootlet)
@@ -115,29 +115,29 @@
 	            const utf8proc_property_t *info;
                     info = utf8proc_get_property((utf8proc_int32_t)s7_integer(s7_car(args)));
                     return(s7_inlet(sc, s7_list(sc, 30,
-                             s7_make_symbol(sc, \"category\"),          s7_make_integer(sc, info->category),
-                             s7_make_symbol(sc, \"combining_class\"),   s7_make_integer(sc, info->combining_class),
-                             s7_make_symbol(sc, \"bidi_class\"),        s7_make_integer(sc, info->bidi_class),
-                             s7_make_symbol(sc, \"decomp_type\"),       s7_make_integer(sc, info->decomp_type),
+                             s7_make_symbol(sc, \"category\"),           s7_make_integer(sc, info->category),
+                             s7_make_symbol(sc, \"combining_class\"),    s7_make_integer(sc, info->combining_class),
+                             s7_make_symbol(sc, \"bidi_class\"),         s7_make_integer(sc, info->bidi_class),
+                             s7_make_symbol(sc, \"decomp_type\"),        s7_make_integer(sc, info->decomp_type),
                  #if (UTF8PROC_VERSION_MAJOR >= 2)
                              s7_make_symbol(sc, \"uppercase_seqindex\"), s7_make_integer(sc, info->uppercase_seqindex),
                              s7_make_symbol(sc, \"lowercase_seqindex\"), s7_make_integer(sc, info->lowercase_seqindex),
                              s7_make_symbol(sc, \"titlecase_seqindex\"), s7_make_integer(sc, info->titlecase_seqindex),
-                             s7_make_symbol(sc, \"casefold_seqindex\"), s7_make_integer(sc, info->casefold_seqindex),
-                             s7_make_symbol(sc, \"comb_index\"),     s7_make_integer(sc, info->comb_index),
+                             s7_make_symbol(sc, \"casefold_seqindex\"),  s7_make_integer(sc, info->casefold_seqindex),
+                             s7_make_symbol(sc, \"comb_index\"),         s7_make_integer(sc, info->comb_index),
                  #else
-                             s7_make_symbol(sc, \"uppercase_mapping\"), s7_make_integer(sc, info->uppercase_mapping),
-                             s7_make_symbol(sc, \"lowercase_mapping\"), s7_make_integer(sc, info->lowercase_mapping),
-                             s7_make_symbol(sc, \"titlecase_mapping\"), s7_make_integer(sc, info->titlecase_mapping),
-                             s7_make_symbol(sc, \"comb1st_index\"),     s7_make_integer(sc, info->comb1st_index),
-                             s7_make_symbol(sc, \"comb2nd_index\"),     s7_make_integer(sc, info->comb2nd_index),
+                             s7_make_symbol(sc, \"uppercase_mapping\"),  s7_make_integer(sc, info->uppercase_mapping),
+                             s7_make_symbol(sc, \"lowercase_mapping\"),  s7_make_integer(sc, info->lowercase_mapping),
+                             s7_make_symbol(sc, \"titlecase_mapping\"),  s7_make_integer(sc, info->titlecase_mapping),
+                             s7_make_symbol(sc, \"comb1st_index\"),      s7_make_integer(sc, info->comb1st_index),
+                             s7_make_symbol(sc, \"comb2nd_index\"),      s7_make_integer(sc, info->comb2nd_index),
                  #endif
-                             s7_make_symbol(sc, \"bidi_mirrored\"),     s7_make_integer(sc, info->bidi_mirrored),
-                             s7_make_symbol(sc, \"comp_exclusion\"),    s7_make_integer(sc, info->comp_exclusion),
-                             s7_make_symbol(sc, \"ignorable\"),         s7_make_integer(sc, info->ignorable),
-                             s7_make_symbol(sc, \"control_boundary\"),  s7_make_integer(sc, info->control_boundary),
-                             s7_make_symbol(sc, \"boundclass\"),        s7_make_integer(sc, info->boundclass),
-                             s7_make_symbol(sc, \"charwidth\"),         s7_make_integer(sc, info->charwidth))));
+                             s7_make_symbol(sc, \"bidi_mirrored\"),      s7_make_integer(sc, info->bidi_mirrored),
+                             s7_make_symbol(sc, \"comp_exclusion\"),     s7_make_integer(sc, info->comp_exclusion),
+                             s7_make_symbol(sc, \"ignorable\"),          s7_make_integer(sc, info->ignorable),
+                             s7_make_symbol(sc, \"control_boundary\"),   s7_make_integer(sc, info->control_boundary),
+                             s7_make_symbol(sc, \"boundclass\"),         s7_make_integer(sc, info->boundclass),
+                             s7_make_symbol(sc, \"charwidth\"),          s7_make_integer(sc, info->charwidth))));
                    }")
 	   (C-function ("utf8proc_get_property" g_utf8proc_get_property "" 1))
 
