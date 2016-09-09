@@ -3043,7 +3043,7 @@
       (if (fneq (sd 0 0) 0.0) (snd-display ";vector2 ref: ~A" (sd 0 0)))
       (set! (sd 0 0) 1.0)
       (if (fneq (sd 0 0) 1.0) (snd-display ";vector2 set: ~A" (sd 0 0)))
-      (if (not (equal? sd (let ((sd1 (make-float-vector '(1 1)))) (vector-set! sd1 0 0 1.0) sd1)))
+      (if (not (equal? sd (let ((sd1 (make-float-vector '(1 1)))) (float-vector-set! sd1 0 0 1.0) sd1)))
 	  (snd-display ";vector2 set not equal: ~A" sd)))
     
     (let ((sd (make-float-vector '(2 3))))
@@ -3053,8 +3053,8 @@
       (set! (sd 1 2) 2.0)
       (if (fneq (sd 1 2) 2.0) (snd-display ";vector2 set (1 2): ~A" (sd 1 2)))
       (if (not (equal? sd (let ((sd1 (make-float-vector '(2 3))))
-			    (vector-set! sd1 1 0 1.0)
-			    (vector-set! sd1 1 2 2.0)
+			    (float-vector-set! sd1 1 0 1.0)
+			    (float-vector-set! sd1 1 2 2.0)
 			    sd1)))
 	  (snd-display ";vector2 set (3) not equal: ~A" sd)))
     
@@ -37087,14 +37087,6 @@ EDITS: 1
 	  ((= i 4) fv)
 	(float-vector-set! fv i (+ (oscil g0) (oscil g1) (oscil g2) (oscil g3)))))
     (test (fv49a) (float-vector 0.0 0.5679772718305071 1.12444445332662 1.658124706761181))
-
-    (define (fv50)
-      (do ((iv (int-vector 0 1 2 3 4 5 6))
-	   (fv (make-float-vector 4))
-	   (i 0 (+ i 1)))
-	  ((= i 4) fv)
-	(float-vector-set! fv (vector-ref iv i) 1.0)))
-    (test (fv50) (make-float-vector 4 1.0))
 
     (define (fv51)
       (do ((fv (make-float-vector 4))

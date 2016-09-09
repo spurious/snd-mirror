@@ -15,11 +15,11 @@
 		    (file (pair-filename expr))
 		    (line (pair-line-number expr)))
 		(if (> (ash key -20) 0)
-		    (format *stderr* "~A[~A]: ~A~40T~A~%" 
+		    (format *stderr* "~A[~A]: ~A~30T~A~%" 
 			    file line count
 			    (let ((val (object->string expr)))
-			      (if (> (length val) 40)
-				  (string-append (substring val 0 36) " ...")
+			      (if (> (length val) 60)
+				  (string-append (substring val 0 56) " ...")
 				  val)))))))))))
 
 #|

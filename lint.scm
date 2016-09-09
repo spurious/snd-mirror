@@ -29,8 +29,8 @@
 (define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
 (define *report-repeated-code-fragments* #t)
 
-;;; work-in-progress
-(define *fragments-size* 128)  ; biggest seen if 512: 180 -- appears to be in a test suite
+(define *fragment-max-size* 128)  ; biggest seen if 512: 180 -- appears to be in a test suite
+(define *fragment-min-size* 5)    ; smallest seen - 1 -- maybe 8 would be better
 
 (define *lint* #f)                                        ; the lint let
 ;; this gives other programs a way to extend or edit lint's tables: for example, the
@@ -122,7 +122,7 @@
 	      string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
-	      tan tanh tree-leaves truncate
+	      tan tanh tree-leaves tree-memq truncate
 	      unless
 	      values vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
@@ -174,7 +174,7 @@
 			         call-with-exit load autoload eval eval-string apply for-each map dynamic-wind values 
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
-			         exit dilambda make-hook hook-functions stacktrace tree-leaves object->let
+			         exit dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
 				 #_{list} #_{apply_values} #_{append} unquote))
 			      ht))
 
@@ -291,9 +291,9 @@
 	(*current-file* "")
 	(*top-level-objects* (make-hash-table))
 	(*output-port* *stderr*)
-	(fragments (do ((v (make-vector *fragments-size* #f))
+	(fragments (do ((v (make-vector *fragment-max-size* #f))
 			(i 0 (+ i 1)))
-		       ((= i *fragments-size*) v)
+		       ((= i *fragment-max-size*) v)
 		     (set! (v i) (make-hash-table))))
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
     
@@ -536,14 +536,17 @@
 		    (copy-tree (cdr lis)))
 	      lis))))
     
-    (define (tree-count1 x tree count)
-      (if (eq? x tree)
-	  (+ count 1)
-	  (if (or (>= count 2)
-		  (not (pair? tree))
-		  (eq? (car tree) 'quote))
-	      count
-	      (tree-count1 x (car tree) (tree-count1 x (cdr tree) count)))))
+    (define (tree-nonce x tree)
+      (let ((count 0))
+	(let nonce ((t tree))
+	  (cond ((eq? x t)
+		 (set! count (+ count 1)))
+		((and (pair? t)
+		      (not (eq? (car t) 'quote))
+		      (< count 2))
+		 (nonce (car t))
+		 (nonce (cdr t)))))
+	(= count 1)))
 
     (define (tree-count2 x tree count)
       (if (eq? x tree)
@@ -597,6 +600,7 @@
 			(cdr tree))
 		       #f))))))
     
+#|
     (define (tree-memq sym tree)     ; ignore quoted lists, accept symbol outside a pair
       (or (eq? sym tree)
 	  (and (pair? tree)
@@ -604,6 +608,7 @@
 	       (or (eq? (car tree) sym)
 		   (tree-memq sym (car tree))
 		   (tree-memq sym (cdr tree))))))
+|#
 
     (define (tree-member sym tree)
       (and (pair? tree)
@@ -859,8 +864,8 @@
 		    (lambda (arg)       ; new function's parameter
 		      (set! sig (cons #t sig))
 		      ;; (if (pair? arg) (set! arg (car arg)))
-		      ;; causes trouble when tree-count1 sees keyword args in s7test.scm
-		      (if (= (tree-count1 arg body 0) 1)
+		      ;; causes trouble when tree-nonce sees keyword args in s7test.scm
+		      (if (tree-nonce arg body)
 			  (let ((p (tree-arg-member arg body)))
 			    (when (pair? p)
 			      (let ((f (car p))
@@ -1432,27 +1437,41 @@
 			  caller
 			  (cons caller env))
 		      (var-scope v))))))
-
     
-    (define (check-for-bad-variable-name caller vname)
-      (define (bad-variable-name-numbered vname bad-names)
-	(let ((str (symbol->string vname)))
-	  (let loop ((bads bad-names))
-	    (and (pair? bads)
-		 (let* ((badstr (symbol->string (car bads)))
-			(pos (string-position badstr str)))
-		   (or (and (eqv? pos 0)
-			    (string->number (substring str (length badstr))))
-		       (loop (cdr bads))))))))
-      (if (and (symbol? vname)
-	       (pair? *report-bad-variable-names*)
-	       (or (memq vname *report-bad-variable-names*)
-		   (let ((sname (symbol->string vname)))
-		     (and (> (length sname) 8)
-			  (or (string=? "compute" (substring sname 0 7))      ; compute-* is as bad as get-*
-			      (string=? "calculate" (substring sname 0 9))))) ;   perhaps one exception: computed-goto*
-		   (bad-variable-name-numbered vname *report-bad-variable-names*)))
-	  (lint-format "surely there's a better name for this variable than ~A" caller vname)))
+    (define check-for-bad-variable-name 
+      (let ((bad-var-names ()))
+	(define (initialize-bad-var-names vars)
+	  (set! bad-var-names ())
+	  (for-each (lambda (n)
+		      (let ((name (symbol->string n)))
+			(cond ((assq (name 0) bad-var-names) =>
+			       (lambda (cur)
+				 (set! (cdr cur) (cons (list n name (length name)) (cdr cur)))))
+			      (else 
+			       (set! bad-var-names (cons (list (name 0) (list n name (length name))) bad-var-names))))))
+		    vars))
+	(initialize-bad-var-names *report-bad-variable-names*)
+	(set! (symbol-access '*report-bad-variable-names*) ; update these local variables if the global variable changes
+	      (lambda (sym val)
+		(when (every? symbol? val)
+		  (initialize-bad-var-names val))
+		val))
+	(lambda (caller vname)
+	  (when (and (symbol? vname)
+		     (let ((sname (symbol->string vname)))
+		       (or (cond ((assq (sname 0) bad-var-names) =>
+				  (lambda (baddies)
+				    (or (assq vname (cdr baddies))
+					(any? (lambda (b)
+						(and (eqv? (string-position (cadr b) sname) 0)
+						     (string->number (substring sname (caddr b)))))
+					      (cdr baddies)))))
+				 (else #f))
+			   (and (char=? (sname 0) #\c)
+				(> (length sname) 8)
+				(or (string=? "compute" (substring sname 0 7))      ; compute-* is as bad as get-*
+				    (string=? "calculate" (substring sname 0 9))))))) ;   perhaps one exception: computed-goto*
+	    (lint-format "surely there's a better name for this variable than ~A" caller vname)))))
 
     (define (set-ref name caller form env)
       ;; if name is in env, set its "I've been referenced" flag
@@ -4877,7 +4896,7 @@
 	   (null? (cdadr x))
 	   (pair? (cddr x))
 	   (null? (cdddr x))
-	   (= (tree-count1 (caadr x) (caddr x) 0) 1)))
+	   (tree-nonce (caadr x) (caddr x))))
     
     (define (less-simple-lambda? x)
       (and (pair? x)
@@ -4886,7 +4905,7 @@
 	   (pair? (cadr x))
 	   (null? (cdadr x))
 	   (pair? (cddr x))
-	   (= (tree-count1 (caadr x) (cddr x) 0) 1)))
+	   (tree-nonce (caadr x) (cddr x))))
     
     (define (tree-subst new old tree)
       (cond ((equal? old tree)
@@ -7223,7 +7242,7 @@
 						     (let ((last-arg (list-ref args (- (length args) 1))))
 						       (if (and (pair? last-arg)
 								(eq? (car last-arg) #_{apply_values})
-								(= (tree-count1 #_{apply_values} args 0) 1))
+								(tree-nonce #_{apply_values} args))
 							   (lint-format "perhaps ~A" caller
 									(lists->string form
 										       `(apply ,f
@@ -8434,23 +8453,17 @@
 		    deprecated-ops))
 
 	;; ---------------- eq null eqv equal ----------------
-	(let ()
+	(let ((spellings 
+		    '((null . null?) (eq . eq?) (eqv . eqv?) (equal . equal?)   ; (null (cdr...)) 
+		      (set-car . set-car!) (set-cdr . set-cdr!) (list-set . list-set!) (vector-set . vector-set!) (string-set . string-set!))))
 	  (define (sp-null caller head form env)
 	    (if (not (var-member head env))          ;  (if (null (cdr x)) 0)
-		(lint-format "misspelled '~A? in ~A?" caller head form)))
+		(lint-format "misspelled '~A in ~A?" caller (cdr (assq head spellings)) form)))
 	  (for-each (lambda (f)
 		      (hash-special f sp-null))
-		    '(null eq eqv equal))) ; (null (cdr...)) 
-
-	;; ---------------- set-car set-cdr list-set vector-set string-set ----------------
-	(let ()
-	  (define (sp-set caller head form env)
-	    (if (not (var-member head env))          ;  (list-set x 1 y)
-		(lint-format "misspelled '~A! in ~A?" caller head form)))
-	  (for-each (lambda (f)
-		      (hash-special f sp-set))
-		    '(set-car set-cdr list-set vector-set string-set)))
-	;; set and sort occur a million times, but aren't interesting
+		    '(null eq eqv equal 
+		      set-car set-cdr list-set vector-set string-set)))
+	;; set and sort occur a million times, but aren't interesting, memq? is in scheme48
 
 	;; ---------------- string-index ----------------
 	(let ()
@@ -9492,7 +9505,7 @@
 						      (code-constant? a)))
 						(cdr first))
 					(or (code-constant? (var-initial-value local-var))
-					    (= (tree-count1 vname first 0) 1))
+					    (tree-nonce vname first))
 					(every? (lambda (a) 
 						  (and (pair? a)
 						       (or (equal? first a)
@@ -10217,7 +10230,7 @@
 		  (fbody (cddar body)))
 	      (when (and (symbol? fname)
 			 (proper-list? fargs)
-			 (= (tree-count1 fname (cdr body) 0) 1)
+			 (tree-nonce fname (cdr body))
 			 (not (any? keyword? fargs)))
 		(let ((call (find-call fname (cdr body))))
 		  (when (pair? call)
@@ -10305,7 +10318,7 @@
 				  (eqv? (length (cdadr n-1)) (length (cdr n)))) ; not values -> let!
 			     (and (< (tree-leaves n-1) 12)
 				  (tree-car-member (caadr n-1) (cdr n))         ; skip car -- see preceding
-				  (= (tree-count1 (caadr n-1) n 0) 1))))
+				  (tree-nonce (caadr n-1) n))))
 		(let ((outer-form (cond ((var-member :let env) => var-initial-value) (else #f)))
 		      (new-var (caadr n-1)))
 		  (when (and (pair? outer-form)
@@ -10935,7 +10948,7 @@
 					  prev-f f
 					  `(set! ,settee (append ,settee ,@(cddr arg1) ,@(cddr arg2)))))
 			    
-			    ((and (= (tree-count1 settee arg2 0) 1) ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
+			    ((and (tree-nonce settee arg2)    ; (set! x y) (set! x (+ x 1)) -> (set! x (+ y 1))
 				  (or (not (pair? arg1))
 				      (< (tree-leaves arg1) 5)))
 			     (lint-format "perhaps ~A ~A ->~%~NC~A" caller 
@@ -12007,7 +12020,7 @@
 										       ,@(cddadr var)))))
 						      (let ((call (find-call (car var) (caddr body))))
 							(when (and (pair? call)       ; inner lambda body is (...some-expr...(sym...) ...)
-								   (= (tree-count1 (car var) (caddr body) 0) 1))
+								   (tree-nonce (car var) (caddr body)))
 							  (let ((new-call `(let ,(car var)
 									     ,(map list (cadadr var) (cdr call))
 									     ,@(cddadr var))))
@@ -12091,7 +12104,7 @@
 				  (when (and (symbol? inner-name)
 					     (proper-list? inner-args)
 					     (pair? (car outer-body))
-					     (= (tree-count1 inner-name outer-body 0) 1))
+					     (tree-nonce inner-name outer-body))
 				    (let ((call (find-call inner-name outer-body)))
 				      (when (pair? call)
 					(set! last-rewritten-internal-define (car val))
@@ -12211,7 +12224,7 @@
 						    (every? (lambda (a)
 							      (or (code-constant? a)
 								  (and (memq a outer-args)
-								       (= (tree-count1 a (cddr body) 0) 1))))
+								       (tree-nonce a (cddr body)))))
 							    (cddr body)))  
 					       ;; marginal -- there are many debatable cases here
 					       (lint-format "perhaps ~A" caller
@@ -12604,7 +12617,7 @@
 
 			 (define (tree-subst-eq new old tree) 
 			   ;; tree-subst above substitutes every occurence of 'old with 'new, so we check
-			   ;;   in advance that 'old only occurs once in the tree (via tree-count1).  Here
+			   ;;   in advance that 'old only occurs once in the tree (via tree-nonce).  Here
 			   ;;   'old may occur any number of times, but we want to change it only once,
 			   ;;   so we keep the actual pointer to it and use eq?.  (This assumes no shared code?)
 			   (cond ((eq? old tree)
@@ -15247,7 +15260,7 @@
 					(< (tree-leaves vbody) 16))
 			       (do ((pp (var-arglist v) (cdr pp)))
 				   ((or (null? pp)
-					(> (tree-count1 (car pp) vbody 0) 1))
+					(> (tree-count2 (car pp) vbody 0) 1))
 				    (when (null? pp)
 				      (let ((new-body (copy vbody)))
 					(for-each (lambda (par arg)
@@ -15786,7 +15799,7 @@
 					    (and (pair? v)
 						 (pair? (cdr v))
 						 (< (tree-leaves (cadr v)) 8)
-						 (= (tree-count1 (car v) body 0) 1)))
+						 (tree-nonce (car v) body)))
 					  varlist))
 			 (let ((new-body (copy (car body)))
 			       (bool-arg? #f))
@@ -15988,7 +16001,7 @@
 						  (lists->string 
 						   form `(let ,(map list (cadr lform) (cdr body))
 							   ,@(cddr lform)))))
-				 (if (= (tree-count1 sym body 0) 1)
+				 (if (tree-nonce sym body)
 				     (let ((call (find-call sym body)))
 				       (when (pair? call) 
 					 (let ((new-call `(let ,(map list (cadr lform) (cdr call))
@@ -16109,7 +16122,7 @@
 				      (pair? (cadar body)))
 			     (let ((inits (map cadr (cadar body))))
 			       (when (every? (lambda (v)
-					       (and (= (tree-count1 (car v) (car body) 0) 1)
+					       (and (tree-nonce (car v) (car body))
 						    (tree-memq (car v) inits)))
 					     varlist)
 				 (let ((new-cadr (copy (cadar body))))
@@ -16306,7 +16319,7 @@
 			     (let ((named-body (cdddr inner))
 				   (named-args (caddr inner)))
 			       (unless (any? (lambda (v)
-					       (or (not (= (tree-count1 (car v) named-args 0) 1))
+					       (or (not (tree-nonce (car v) named-args))
 						   (tree-memq (car v) named-body)))
 					     varlist)
 				 (let ((new-args (copy named-args)))
@@ -16748,7 +16761,7 @@
 						      (or (code-constant? a)
 							  (assq a varlist)))
 						    (cdadr nxt-var)))
-					(= (tree-count1 (car cur-var) (cadr nxt-var) 0) 1)
+					(tree-nonce (car cur-var) (cadr nxt-var))
 					(not (tree-memq (car cur-var) (cddr v)))
 					(not (tree-memq (car cur-var) body)))
 			       (set! gone-vars (cons cur-var gone-vars))
@@ -16762,7 +16775,7 @@
 			 
 			 (when (and (pair? (cdr last-var))  ; varlist-len can be 1 here
 				    (< (tree-leaves (cadr last-var)) 12)
-				    (= (tree-count1 (car last-var) body 0) 1)
+				    (tree-nonce (car last-var) body)
 				    (pair? (car body))
 				    (null? (cdr body))
 				    (not (memq (caar body) '(lambda lambda* define define* define-macro)))
@@ -17000,7 +17013,7 @@
 							,(map list (cadr lform) (cdr body))
 							,@(cddr lform)))))
 			      (if (and (not (eq? caller 'define))
-				       (= (tree-count1 sym body 0) 1))
+				       (tree-nonce sym body))
 				  (let ((call (find-call sym body)))
 				    (when (pair? call)
 				      (let ((new-call `(let ,sym
@@ -17553,7 +17566,7 @@
     
     (define (reduce-tree new-form env fvar orig-form)
       (let ((leaves (tree-leaves new-form)))
-	(when (< 5 leaves *fragments-size*)
+	(when (< *fragment-min-size* leaves *fragment-max-size*)
 	  (call-with-exit
 	   (lambda (quit)
 	     (let ((outer-vars (if fvar
@@ -17861,21 +17874,20 @@
 		 
 		 (set! leaves (tree-leaves reduced-form))        ; if->when, for example, so tree length might change
 		 (hash-fragment reduced-form leaves env fvar orig-form line outer-vars)
-		 
+
 		 (if (and (memq (car reduced-form) '(or and))
 			  (> (length reduced-form) 3))
 		     (do ((i (- (length reduced-form) 1) (- i 1))
 			  (rfsize leaves))
 			 ((or (= i 2)
-			      (< rfsize 6)))
+			      (<= rfsize *fragment-min-size*)))
 		       (let ((rf (copy reduced-form (make-list i))))
 			 (set! rfsize (tree-leaves rf))
-			 (when (> rfsize 5)
+			 (when (> rfsize *fragment-min-size*)
 			   (hash-fragment rf rfsize env #f (copy orig-form (make-list i)) line outer-vars)))))
 		 
 		 (when fvar (quit))
 		 
-		 ;; TODO: also below and clean this up!
 		 (unless (and (pair? lint-function-body)
 			      (equal? new-form (car lint-function-body)))
 		   (let ((fvars (let ((fcase (hash-table-ref (fragments leaves) (list reduced-form))))
@@ -17904,89 +17916,7 @@
 					 (if (null? (car a))
 					     (values)
 					     (car a)))
-				       outer-vars)))))))
-		 
-		 ;; now look for (f _1_) -> _1_ possibilities
-		 ;;   every reference to _1_ has to be via (f _1_), and f must have no side-effects
-		 ;;   so first rescan the form, gathering info about each _n_ var
-		 (let* ((rnames (map (lambda (v) 
-				       (if (symbol? (car v))
-					   (cadr v)
-					   (values)))
-				     outer-vars))
-			(rvars (map (lambda (v)
-				      (vector v 0 ()))
-				    rnames)))
-		   (when (and (pair? reduced-form)
-			      (not (eq? (car reduced-form) 'quote)))
-		     (let walker ((tree reduced-form))
-		       (for-each (lambda (p)
-				   (if (pair? p)
-				       (if (not (eq? (car p) 'quote))
-					   (walker p))
-				       (if (and (symbol? p)
-						(memq p rnames))
-					   (let search ((rv rvars))
-					     (let ((v (car rv)))
-					       (if (eq? (v 0) p)
-						   (begin
-						     (set! (v 1) (+ (v 1) 1))
-						     (set! (v 2) (cons tree (v 2))))
-						   (search (cdr rv))))))))
-				 tree)))
-		   
-		   (let ((reducibles ()))
-		     (for-each (lambda (v)
-				 (if (and (pair? (v 2))
-					  (pair? (car (v 2)))
-					  (pair? (cdar (v 2)))
-					  (null? (cddar (v 2)))
-					  (not (side-effect-with-vars? (car (v 2)) env rnames))
-					  (or (= (v 1) 1)
-					      (let ((first (car (v 2))))
-						(not (member first (cdr (v 2))
-							     (lambda (a b)
-							       (not (equal? a b))))))))
-				     (set! reducibles (cons (car (v 2)) reducibles))))
-			       rvars)
-		     
-		     ;; reducibles is a list of _n_ vars that can be simplified one more level
-		     (when (pair? reducibles)
-		       (for-each (lambda (r)
-				   (let ((rf (let walker ((tree reduced-form))
-					       (if (or (not (pair? tree))
-						       (eq? (car tree) 'quote))
-						   tree
-						   (if (equal? tree r)
-						       (cadr tree)
-						       (cons (walker (car tree))
-							     (walker (cdr tree))))))))
-				     (set! leaves (tree-leaves rf))
-				     (when (> leaves 5)
-				       (hash-fragment rf leaves env fvar orig-form line #f)))) ; here and below outer-vars should reflect reducible change
-				 reducibles)
-		       
-		       ;; if more than one reducible, try all combinations
-		       (when (pair? (cdr reducibles))
-			 (let ((combo (if (null? (cddr reducibles))
-					  (list (list (reducibles 0) (reducibles 1)))
-					  (list (list (reducibles 0) (reducibles 1))
-						(list (reducibles 0) (reducibles 2))
-						(list (reducibles 1) (reducibles 2))
-						(list (reducibles 0) (reducibles 1) (reducibles 2))))))
-			   (for-each (lambda (r)
-				       (let ((rf (let walker ((tree reduced-form))
-						   (if (or (not (pair? tree))
-							   (eq? (car tree) 'quote))
-						       tree
-						       (if (member tree r)
-							   (cadr tree)
-							   (cons (walker (car tree))
-								 (walker (cdr tree))))))))
-					 (set! leaves (tree-leaves rf))
-					 (when (> (tree-leaves rf) 5)
-					   (hash-fragment rf leaves env fvar orig-form line #f))))
-				     combo)))))))))))))
+				       outer-vars))))))))))))))
 
     (define (lint-fragment form env)
       (if (memq (car form) '(or and))
@@ -18460,8 +18390,8 @@
 				(= lint-left-margin 1)))
 		   (do ((reported-lines ())
 			(reported #f)
-			(i (- *fragments-size* 1) (- i 1)))
-		       ((<= i 5))
+			(i (- *fragment-max-size* 1) (- i 1)))
+		       ((<= i *fragment-min-size*))
 		     (when (> (hash-table-entries (fragments i)) 0)
 		       (let ((v (copy (fragments i) (make-vector (hash-table-entries (fragments i)))))) ; (key . vector)
 			 (for-each (lambda (a1)
@@ -18475,7 +18405,7 @@
 				   v)
 			 (for-each (lambda (keyval)
 				     (let ((val (cdr keyval)))
-				       (when (and (>= (vector-ref val 0) 2)
+				       (when (and (> (vector-ref val 0) 1)
 						  (> (* (vector-ref val 0) (vector-ref val 0) i) 100) ; 120 seems too high
 						  (not (and (pair? (vector-ref val 1))
 							    (memv (car (vector-ref val 1)) reported-lines))))
@@ -18607,7 +18537,7 @@
 	(fill! other-names-counts 0)
 
 	(do ((i 0 (+ i 1))) 
-	    ((= i *fragments-size*))
+	    ((= i *fragment-max-size*))
 	  (fill! (fragments i) #f))
 
 	(set! last-simplify-boolean-line-number -1)
@@ -19036,12 +18966,8 @@
     #f))
 |#
 
-;;; fragments:
-;;;   perhaps for fragment hash-ref (list fragment) to find function?
-;;;     and check leading cases for all bodies? -- would need to handle this in reduce-tree walker? 
-;;;   should fragment report include all known vars?
-;;;
+;;; run valgrind lg on f3
 ;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
 ;;;   all patterns in fragments could be searchable
 
-;;; 184 25038 668481
+;;; 161 25038 670146

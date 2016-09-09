@@ -2159,7 +2159,7 @@ static Xen g_preferences_dialog(void)
 }
 
 
-static Xen g_abort(void)
+static Xen g_abortt(void) /* glib now exports g_abort (8-Sep-16) -- perhaps use some other prefix? (g=guile originally) */
 {
   #define H_abort "(" S_abort "): exit Snd via \"abort\", presumably to land in the debugger"
   abort();
@@ -2258,7 +2258,7 @@ Xen_wrap_1_optional_arg(g_color_orientation_dialog_w, g_color_orientation_dialog
 Xen_wrap_1_optional_arg(g_transform_dialog_w, g_transform_dialog)
 Xen_wrap_2_optional_args(g_print_dialog_w, g_print_dialog)
 Xen_wrap_no_args(g_preferences_dialog_w, g_preferences_dialog)
-Xen_wrap_no_args(g_abort_w, g_abort)
+Xen_wrap_no_args(g_abort_w, g_abortt)
 #if (!HAVE_SCHEME)
 Xen_wrap_no_args(g_abortq_w, g_abortq)
 #endif

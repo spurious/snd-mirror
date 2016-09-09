@@ -6935,7 +6935,6 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* fin
 #endif
 {
   s7_pointer x;
-  
   /* fprintf(stderr, "let_id: %lld, %s id: %lld\n", let_id(sc->envir), DISPLAY(symbol), symbol_id(symbol)); */
 
   if (let_id(sc->envir) == symbol_id(symbol))
@@ -73424,6 +73423,19 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
+
+static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
+{
+  if (sym == tree) return(true);
+  return((is_pair(tree)) &&
+	 (car(tree) != sc->quote_symbol) &&
+	 ((tree_memq(sc, sym, car(tree))) || (tree_memq(sc, sym, cdr(tree)))));
+}
+
+static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
+{
+  return(make_boolean(sc, tree_memq(sc, car(args), cadr(args))));
+}
  
 
 
@@ -74589,7 +74601,9 @@ s7_scheme *s7_init(void)
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
   sc->object_set_function = slot_value(global_slot(sym));
 
+
   s7_define_safe_function(sc, "tree-leaves", g_tree_leaves, 1, 0, false, "an experiment");
+  s7_define_safe_function(sc, "tree-memq", g_tree_memq, 2, 0, false, "an experiment");
 
 
   /* -------- *features* -------- */
@@ -75055,7 +75069,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4172
  * titer         |      |      | 7503 | 5218  5235
  * thash         |      |      | 50.7 | 8491  8496
- * lg            |      |      |      |       180.
+ * lg            |      |      |      |       221.
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  14.9
@@ -75067,6 +75081,9 @@ int main(int argc, char **argv)
  *
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
+ * should byte-vector-ref|set! be added (string-set+type check)? should vector-ref|set! work with byte-vectors?
+ * let lookup is too slow! -- 1/4 of lint time.
+ * not_is_eq_car_q?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
