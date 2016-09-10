@@ -75069,7 +75069,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4172
  * titer         |      |      | 7503 | 5218  5235
  * thash         |      |      | 50.7 | 8491  8496
- * lg            |      |      |      |       221.
+ * lg            |      |      |      |       211.
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  14.9
@@ -75082,8 +75082,6 @@ int main(int argc, char **argv)
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * should byte-vector-ref|set! be added (string-set+type check)? should vector-ref|set! work with byte-vectors?
- * let lookup is too slow! -- 1/4 of lint time.
- * not_is_eq_car_q?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
