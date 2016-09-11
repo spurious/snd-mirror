@@ -270,10 +270,6 @@ typedef struct chan_info {
   GdkCursor *current_cursor;
   slist *edhist_list;
   color_info *combined_data_color;
-#if CAIRO_HAS_RECORDING_SURFACE && (0)
-  cairo_surface_t *fft_pix;
-  bool fft_pix_ready;
-#endif
 #endif
 
 #if USE_MOTIF

@@ -16094,7 +16094,7 @@
 		     ;;  check for side-effect in init above
 		     ;;    but not if other locals in ... (or itself?)
 		     ;;    also other makers + fill! and make-hash-table -> fill+#f is a no-op
-		     
+		     ;;  another case: set! v make -> fill v
 
 		     (unless named-let
 		       
@@ -19018,6 +19018,7 @@
 ;;; run valgrind lg on f3
 ;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
 ;;;   all patterns in fragments could be searchable
-;;; fragment constants if not too many? 
+;;; fragment constants if not too many? second pass?
+;;; named-let/recur func if unchanging arg reduce
 
 ;;; 160 25038 666115

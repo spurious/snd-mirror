@@ -1098,31 +1098,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 #else
       /* for gtk, we need to redisplay the sonogram? 
        */
-#if CAIRO_HAS_RECORDING_SURFACE && (0)
-      /*
-      fprintf(stderr, "%p %d %d %d\n",
-	      (active_channel->fft_pix),
-	      (active_channel->fft_pix_ready),
-	      (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM),
-	      (active_channel->graph_transform_on));
-      */
-      if ((active_channel->fft_pix) &&
-	  (active_channel->fft_pix_ready) &&
-	  (active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
-	  (active_channel->graph_transform_on))
-	{
-	  cairo_t *lcr, *old_cr;
-	  old_cr = ss->cr;
-	  lcr = gdk_cairo_create(gray_ap->ax->wn);
-	  ss->cr = lcr;
-
-	  cairo_set_source_surface(lcr, active_channel->fft_pix, 0.0, 0.0);
-	  cairo_paint(lcr);
-	  cairo_destroy(lcr);
-	  ss->cr = old_cr;
-	}
-      else 
-#else
 	/* this is not so slow as to be an annoyance, so maybe it's ok */
       if ((active_channel->transform_graph_type == GRAPH_AS_SONOGRAM) &&
 	  (active_channel->graph_transform_on))
@@ -1147,7 +1122,6 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 	  old_ap->y_axis_y1 = y1;
 	}
       else
-#endif
 	display_enved_spectrum(active_channel, make_enved_spectrum(active_channel), gray_ap);
 #endif
     }

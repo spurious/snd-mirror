@@ -11,6 +11,15 @@ cairo_t *make_cairo(GdkDrawable *win)
   return(gdk_cairo_create(win));
 }
 
+/* TODO: gtk 3.21: snd-gutils.c:11:3: warning: 'gdk_cairo_create' is deprecated: Use 'gdk_window_begin_draw_frame() and gdk_drawing_context_get_cairo_context()' instead
+ *   also snd-prefs.c, xg.c (*.scm??)
+ * Debian crashed and can't be rebuilt, so I can't test anything in the new gtk
+ * they say use a cairo_surface if the cairo_create was not just a response to a expose event, and they deprecated GDK_EXPOSURE_MASK etc
+ * this is a nightmare... snd-gfile|mix|snd|gdraw|gprefs + xg, snd-gtk.scm, and make_cairo is used everywhere -- every graph!!
+ * cairo_surface in snd-chn? -- this is commented out currently -- it never worked (segfaults etc)
+ * also g_make_cairo in snd-draw.c -> make-cairo used everywhere: draw.scm, musglyphs snd-test xm-enved etc
+ */
+
 void free_cairo(cairo_t *cr)
 {
   ss->line_width = -1.0;
