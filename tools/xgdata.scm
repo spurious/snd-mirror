@@ -274,7 +274,7 @@
 ;;; (CCAST-gtk2 "GDK_DRAWABLE(object)" "GdkDrawable*")
 ;;; (CCHK-gtk2 "GDK_IS_DRAWABLE(object)" "GdkDrawable*")
 
-(CFNC-3.0 "cairo_t* gdk_cairo_create GdkWindow* window") ;-- moved up
+;;; 3.21.5 (CFNC-3.0 "cairo_t* gdk_cairo_create GdkWindow* window") ;-- moved up
 ;;; (CFNC-gtk2 "cairo_t* gdk_cairo_create GdkDrawable* drawable") ;-- moved up
 
 ;;;;(CFNC "GType gdk_drawable_get_type void")
@@ -6685,7 +6685,6 @@
 (CFNC "void pango_cairo_layout_path cairo_t* cr PangoLayout* layout")
 (CFNC "void pango_cairo_error_underline_path cairo_t* cr gdouble x gdouble y gdouble width gdouble height")
 
-;(CFNC "cairo_t* gdk_cairo_create GdkDrawable* drawable") -- moved up
 ;;; (CFNC-gtk2 "void gdk_cairo_set_source_color cairo_t* cr GdkColor* color")
 (CFNC "void gdk_cairo_set_source_pixbuf cairo_t* cr GdkPixbuf* pixbuf gdouble pixbuf_x gdouble pixbuf_y")
 ;;; 2.91.0 (CFNC "void gdk_cairo_set_source_pixmap cairo_t* cr GdkPixmap* pixmap double pixmap_x double pixmap_y")
@@ -7428,7 +7427,7 @@
 (CFNC-3.0 "void gdk_window_invalidate_region GdkWindow* window cairo_region_t* region gboolean invalidate_children")
 ;(CFNC-3.0 "void gdk_window_invalidate_maybe_recurse GdkWindow* window cairo_region_t* region lambda2 func lambda_data #func_info")
 (CFNC-3.0 "cairo_region_t* gdk_window_get_update_area GdkWindow* window")
-(CFNC-3.0 "void gdk_window_begin_paint_region GdkWindow* window cairo_region_t* region")
+;;; 3.21.5! (CFNC-3.0 "void gdk_window_begin_paint_region GdkWindow* window cairo_region_t* region")
 ;;; (CFNC-3.0 "cairo_region_t* gtk_widget_region_intersect GtkWidget* widget cairo_region_t* region") ; FREE
 (CFNC-3.0 "void gdk_window_move_region GdkWindow* window cairo_region_t* region gint dx gint dy")
 (CFNC-3.0 "gboolean gdk_keymap_get_num_lock_state GdkKeymap* keymap")
@@ -9405,7 +9404,7 @@
 (CFNC-3.22 "GdkMonitor* gdk_display_get_monitor_at_point GdkDisplay* display int x int y")
 (CFNC-3.22 "GdkMonitor* gdk_display_get_monitor_at_window GdkDisplay* display GdkWindow* window")
 (CFNC-3.22 "gboolean gdk_event_get_pointer_emulated GdkEvent* event")
-(CFNC-3.22 "gtk_menu_place_on_monitor GtkMenu* menu GdkMonitor* monitor")
+(CFNC-3.22 "void gtk_menu_place_on_monitor GtkMenu* menu GdkMonitor* monitor")
 (CFNC-3.22 "GdkDisplay* gdk_monitor_get_display GdkMonitor* monitor")
 (CFNC-3.22 "void gdk_monitor_get_geometry GdkMonitor* monitor GdkRectangle* geometry")
 (CFNC-3.22 "void gdk_monitor_get_workarea GdkMonitor* monitor GdkRectangle* workarea")
@@ -9439,7 +9438,7 @@
 
 ;;; 3.21.4:
 
-(CFNC-3.22 "void gtk_file_chooser_add_choice GtkFileChooser* chooser char* id char* label char** options char** option_labels")
+(CFNC-3.22 "void gtk_file_chooser_add_choice GtkFileChooser* chooser char* id char* label char** options char** option_labels" 'const) ; both are const
 (CFNC-3.22 "void gtk_file_chooser_remove_choice GtkFileChooser* chooser char* id")
 (CFNC-3.22 "void gtk_file_chooser_set_choice GtkFileChooser* chooser char* id char* option")
 (CFNC-3.22 "char* gtk_file_chooser_get_choice GtkFileChooser* chooser char* id" 'const)
@@ -9490,9 +9489,9 @@
 (CFNC-3.22 "gint gdk_device_pad_get_group_n_modes GdkDevicePad* pad gint group_idx")
 (CFNC-3.22 "gint gdk_device_pad_get_n_features GdkDevicePad* pad GdkDevicePadFeature feature")
 (CFNC-3.22 "gint gdk_device_pad_get_feature_group GdkDevicePad* pad GdkDevicePadFeature feature gint feature_idx")
-(CFNC-3.22 "void gtk_menu_popup_at_rect GtkMenu* menu GdkWindow* rect_window const GdkRectangle* rect GdkGravity rect_anchor GdkGravity menu_anchor const GdkEvent* trigger_event")
-(CFNC-3.22 "void gtk_menu_popup_at_widget GtkMenu* menu GtkWidget* widget GdkGravity widget_anchor GdkGravity menu_anchor const GdkEvent* trigger_event")
-(CFNC-3.22 "void gtk_menu_popup_at_pointer GtkMenu* menu const GdkEvent* trigger_event")
+(CFNC-3.22 "void gtk_menu_popup_at_rect GtkMenu* menu GdkWindow* rect_window GdkRectangle* rect GdkGravity rect_anchor GdkGravity menu_anchor GdkEvent* trigger_event")
+(CFNC-3.22 "void gtk_menu_popup_at_widget GtkMenu* menu GtkWidget* widget GdkGravity widget_anchor GdkGravity menu_anchor GdkEvent* trigger_event")
+(CFNC-3.22 "void gtk_menu_popup_at_pointer GtkMenu* menu GdkEvent* trigger_event")
 (CFNC-3.22 "GtkPadController* gtk_pad_controller_new GtkWindow* window GActionGroup* group GdkDevice* pad")
 (CFNC-3.22 "void gtk_pad_controller_set_action_entries GtkPadController* controller GtkPadActionEntry* entries gint n_entries")
 (CFNC-3.22 "void gtk_pad_controller_set_action GtkPadController* controller GtkPadActionType type gint index gint mode gchar* label gchar* action_name" 'const)
@@ -9504,4 +9503,6 @@
 (CFNC-3.22 "gchar* gtk_shortcut_label_get_disabled_text GtkShortcutLabel* self" 'const-return)
 (CFNC-3.22 "void gtk_shortcut_label_set_disabled_text GtkShortcutLabel* self gchar* disabled_text" 'const)
 
+(CFNC-3.22 "GdkDrawingContext* gdk_window_begin_draw_frame GdkWindow* window cairo_region_t* region")
+(CFNC-3.22 "void gdk_window_end_draw_frame GdkWindow* window GdkDrawingContext* context")
 

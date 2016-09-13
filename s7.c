@@ -75082,6 +75082,7 @@ int main(int argc, char **argv)
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * should byte-vector-ref|set! be added (string-set+type check)? should vector-ref|set! work with byte-vectors?
+ * with-let+lambda to increase opt?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75097,4 +75098,5 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
+ * see snd-gutils for cairo troubles coming with gtk 3.22
  */

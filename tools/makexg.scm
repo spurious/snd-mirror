@@ -2272,6 +2272,18 @@
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
+
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
+(hey "static Xen gxg_gdk_cairo_create(Xen window)~%")
+(hey "{~%")
+(hey "  #define H_gdk_cairo_create \"cairo_t* gdk_cairo_create(GdkWindow* window)\"~%")
+(hey "  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, \"gdk_cairo_create\", \"GdkWindow*\");~%")
+(hey "  return(C_to_Xen_cairo_t_(gdk_cairo_create(Xen_to_C_GdkWindow_(window))));~%")
+(hey "}~%")
+(hey "#endif~%")
+(hey "#endif~%")
+
 ;;; from Mike Scholz -- improve the error checking
 (hey "static Xen gxg_gtk_init(Xen argc, Xen argv) ~%")
 (hey "{ ~%")
@@ -2539,9 +2551,16 @@
 (hey "Xen_wrap_no_args(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)~%")
 (hey "Xen_wrap_4_args(gxg_gtk_text_view_get_iter_at_location_w, gxg_gtk_text_view_get_iter_at_location)~%")
 (hey "Xen_wrap_5_optional_args(gxg_gtk_text_view_get_iter_at_position_w, gxg_gtk_text_view_get_iter_at_position)~%")
+
 (hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
 (hey "Xen_wrap_no_args(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)~%")
 (hey "#endif~%")
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
+(hey "Xen_wrap_1_arg(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)~%")
+(hey "#endif~%")
+(hey "#endif~%")
+
 (hey "~%~%")
 (hey "static void define_structs(void)~%")
 (hey "{~%")
@@ -2833,6 +2852,12 @@
        (check-func hey (lambda () 
 			 (for-each check-out (reverse check-list))))))
  all-checks all-check-withs)
+
+(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
+(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
+(hey "Xg_define_procedure(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create, pl_pu);~%")
+(hey "#endif~%")
+(hey "#endif~%")
 
 (hey "}~%~%")
 
