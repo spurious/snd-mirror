@@ -47671,7 +47671,7 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
-  #define Q_apply s7_make_circular_signature(sc, 2, 3, sc->values_symbol, sc->is_procedure_symbol, sc->T)
+  #define Q_apply s7_make_circular_signature(sc, 2, 3, sc->values_symbol, s7_make_signature(sc, 2, sc->is_procedure_symbol, sc->is_sequence_symbol), sc->T)
 
   /* can apply always be replaced with apply values?
    *   (apply + '(1 2 3)) is the same as (+ (apply values '(1 2 3)))
@@ -68056,6 +68056,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  stack_reset(sc);
 	  sc->op = OP_ERROR_QUIT;
 	  if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_QUIT_JUMP);
+#if DEBUGGING
+	  fprintf(stderr, "%d: op_error_hook_quit did not jump, returns %s\n", __LINE__, DISPLAY(sc->value));
+#endif
 	  return(sc->value); /* not executed I hope */
 	  
 	  
