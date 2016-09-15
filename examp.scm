@@ -295,9 +295,9 @@
 	      (if (= layer 0)
 		  (snd-print (format #f "odd: ~S is using a reserved layer description" mpgfile)))
 	      (let ((chans (if (= channel-mode 3) 1 2))
-		    (mpeg-layer (if (= layer 3) 1 (if (= layer 2) 2 3)))
+		    (mpeg-layer (case layer ((3) 1) ((2) 2) (else 3)))
 		    (srate (/ (#(44100 48000 32000 0) srate-index)
-			      (if (= id 0) 4 (if (= id 2) 2 1)))))
+			      (case id ((0) 4) ((2) 2) (else 1)))))
 		(snd-print (format #f "~S: ~A Hz, ~A, MPEG-~A~%" 
 				   mpgfile srate (if (= chans 1) "mono" "stereo") mpeg-layer))
 		(system (format #f "mpg123 -s ~A > ~A" mpgfile rawfile))

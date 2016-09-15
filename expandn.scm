@@ -117,229 +117,231 @@
 							  :length (if (pair? seglen) (cadr seglen) seglen)
 							  :scaler segment-scaler)))
 		;; split out 1 and 2 chan input 
-		(if (= in-chans 1)
-		    (let ((ingen (vector-ref ex-array 0))
-			  (sample-0 0.0)
-			  (sample-1 0.0))
-			  ;; these vars used for resampling
-
-		      (if (not (or (pair? srate) 
-				   update-envs 
-				   (not (= out-chans 1)) 
-				   matrix 
-				   rev-mx))
-
-			  (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
-								      (/ (* (mus-sound-duration fnam) (mus-sound-srate fnam) expand) 
-									 *clm-srate* srate))))))
-			    (set! end (min end file-end))
-			  
-			    (do ((i beg (+ i 1)))
-				((= i end))
-			      
-			      (let ((vol (env ampenv)))
-				(if (negative? ex-samp)
-				    (begin
-				      (set! sample-0 (* vol (granulate ingen)))
-				      (set! sample-1 (* vol (granulate ingen)))
-				      (set! ex-samp (+ ex-samp 1))
-				      (set! next-samp ex-samp)
-				      (outa i sample-0))
-				    (begin
-				      (set! next-samp (+ next-samp srate))
-				      (if (> next-samp (+ ex-samp 1))
-					  (let ((samps (floor (- next-samp ex-samp))))
-					    (if (= samps 2)
-						(begin
-						  (set! sample-0 (* vol (granulate ingen)))
-						  (set! sample-1 (* vol (granulate ingen))))
-						(do ((k 0 (+ k 1)))
-						    ((= k samps))
-						  (set! sample-0 sample-1)
-						  (set! sample-1 (* vol (granulate ingen)))))
-					    (set! ex-samp (+ ex-samp samps))))
-				      (if (= next-samp ex-samp) 
-					  (outa i (if (= next-samp ex-samp)
-						      sample-0
-						      (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))))))))
-			  
-			  (do ((i beg (+ i 1)))
-			      ((= i end))
-			    
-			    (let ((vol (env ampenv))
-				  (resa (env srenv)))
-			      
-			      (if update-envs
-				  (begin
-				    (set! update-ctr (+ update-ctr 1))
-				    (if (>= update-ctr update-rate)
-					(let ((sl (floor (* (env lenenv) *clm-srate*))))
-					  (set! update-ctr 0)
-					  (set! (mus-length ingen) sl)
-					  (set! (mus-ramp ingen) (floor (* sl (env rampenv))))
-					  (set! (mus-frequency ingen) (env hopenv))
-					  (set! (mus-increment ingen) (env expenv))))))
-			      
-			      (if (negative? ex-samp)
-				  (begin
-				    (set! sample-0 (* vol (granulate ingen)))
-				    (set! sample-1 (* vol (granulate ingen)))
-				    (set! ex-samp (+ ex-samp 1))
-				    (set! next-samp ex-samp))
-				  (begin
-				    (set! next-samp (+ next-samp resa))
-				    (if (> next-samp (+ ex-samp 1))
-					(let ((samps (floor (- next-samp ex-samp))))
-					  (if (= samps 2)
-					      (begin
-						(set! sample-0 (* vol (granulate ingen)))
-						(set! sample-1 (* vol (granulate ingen))))
-					      (do ((k 0 (+ k 1)))
-						  ((= k samps))
-						(set! sample-0 sample-1)
-						(set! sample-1 (* vol (granulate ingen)))))
-					  (set! ex-samp (+ ex-samp samps)))))))
-			    (set! (invals 0) (if (= next-samp ex-samp)
-						 sample-0                      ; output actual samples
-						 (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))) ; output interpolated samples
-			      
-			    ;; output mixed result
-			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			    ;; if reverb is turned on, output to the reverb streams
-			    (if rev-mx
-				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
-		    
-		    (if (= in-chans 2)
-			(let ((sample-0-0 0.0)
-			      (sample-1-0 0.0)
-			      (sample-0-1 0.0)
-			      (sample-1-1 0.0)
-			      (ingen0 (vector-ref ex-array 0))
-			      (ingen1 (vector-ref ex-array 1)))
-			  (do ((i beg (+ i 1)))
-			      ((= i end))
-			    
-			    (let ((vol (env ampenv))
-				  (resa (env srenv)))
-			      
-			      (if update-envs
-				  (begin
-				    (set! update-ctr (+ update-ctr 1))
-				    (if (>= update-ctr update-rate)
-					(let ((expa (env expenv))                ;current expansion amount
-					      (segl (env lenenv))                ;current segment length
-					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					      (hp (env hopenv)))                 ;current hop size
-					  (let* ((sl (floor (* segl *clm-srate*)))
-						 (rl (floor (* rmpl sl))))
-					    (set! update-ctr 0)
-					    (set! (mus-length ingen0) sl)
-					    (set! (mus-ramp ingen0) rl)
-					    (set! (mus-frequency ingen0) hp)
-					    (set! (mus-increment ingen0) expa)
-					    (set! (mus-length ingen1) sl)
-					    (set! (mus-ramp ingen1) rl)
-					    (set! (mus-frequency ingen1) hp)
-					    (set! (mus-increment ingen1) expa))))))
-			      
-			      (if (negative? ex-samp)
-				  (begin
-				    (set! sample-0-0 (* vol (granulate ingen0)))
-				    (set! sample-1-0 (* vol (granulate ingen0)))
-				    (set! sample-0-1 (* vol (granulate ingen1)))
-				    (set! sample-1-1 (* vol (granulate ingen1)))
-				    (set! ex-samp (+ ex-samp 1))
-				    (set! next-samp ex-samp))
-				  (begin
-				    (set! next-samp (+ next-samp resa))
-				    (if (> next-samp (+ ex-samp 1))
-					(let ((samps (floor (- next-samp ex-samp))))
-					  (do ((k 0 (+ k 1)))
-					      ((= k samps))
-					    (set! sample-0-0 sample-1-0)
-					    (set! sample-1-0 (* vol (granulate ingen0)))
-					    (set! sample-0-1 sample-1-1)
-					    (set! sample-1-1 (* vol (granulate ingen1))))
-					  (set! ex-samp (+ ex-samp samps)))))))
-			      
-			    (if (= next-samp ex-samp)
-				;; output actual samples
-				(begin
-				  (set! (invals 0) sample-0-0)
-				  (set! (invals 1) sample-0-1))
-				(begin
-				  ;; output interpolated samples
-				  (set! (invals 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
-				  (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
-			    
-			    ;; output mixed result
-			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			    ;; if reverb is turned on, output to the reverb streams
-			    (if rev-mx
-				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))
-			
-			(let ((samples-0 (make-float-vector in-chans))
-			      (samples-1 (make-float-vector in-chans)))
-			  ;; more than 2 chans in input file
-			  (do ((i beg (+ i 1)))
-			      ((= i end))
-			    (let ((vol (env ampenv))
-				  (resa (env srenv)))
-			      
-			      (if update-envs
-				  (begin
-				    (set! update-ctr (+ update-ctr 1))
-				    (if (>= update-ctr update-rate)
-					(let ((expa (env expenv))                ;current expansion amount
-					      (segl (env lenenv))                ;current segment length
-					      (rmpl (env rampenv))               ;current ramp length (0 to .5)
-					      (hp (env hopenv)))                 ;current hop size
-					  (let* ((sl (floor (* segl *clm-srate*)))
-						 (rl (floor (* rmpl sl))))
-					    (set! update-ctr 0)
-					    (do ((ix 0 (+ ix 1)))
-						((= ix in-chans))
-					      (let ((gen (vector-ref ex-array ix)))
-						(set! (mus-length gen) sl)
-						(set! (mus-ramp gen) rl)
-						(set! (mus-frequency gen) hp)
-						(set! (mus-increment gen) expa))))))))
-			      
-			      (if (negative? ex-samp)
-				  (begin
-				    (do ((ix 0 (+ ix 1)))
-					((= ix in-chans))
-				      (let ((gen (vector-ref ex-array ix)))
-					(float-vector-set! samples-0 ix (* vol (granulate gen)))
-					(float-vector-set! samples-1 ix (* vol (granulate gen)))))
-				    (set! ex-samp (+ ex-samp 1))
-				    (set! next-samp ex-samp))
-				  (begin
-				    (set! next-samp (+ next-samp resa))
-				    (if (> next-samp (+ ex-samp 1))
-					(let ((samps (floor (- next-samp ex-samp))))
-					  (do ((k 0 (+ k 1)))
-					      ((= k samps))
-					    (do ((ix 0 (+ ix 1)))
-						((= ix in-chans))
-					      (let ((gen (vector-ref ex-array ix)))
-						(float-vector-set! samples-0 ix (float-vector-ref samples-1 ix))
-						(float-vector-set! samples-1 ix (* vol (granulate gen))))))
-					  (set! ex-samp (+ ex-samp samps)))))))
-			      
-			    (if (= next-samp ex-samp)
-				;; output actual samples
-				(copy samples-0 invals 0 in-chans)
-				;; output interpolated samples
-				(do ((ix 0 (+ ix 1)))
-				    ((= ix in-chans))
-				  (let ((v0 (float-vector-ref samples-0 ix))
-					(v1 (float-vector-ref samples-1 ix)))
-				    (float-vector-set! invals ix (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
-			    ;; output mixed result
-			    (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
-			    ;; if reverb is turned on, output to the reverb streams
-			    (if rev-mx
-				(frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))))))))))
+		(case in-chans
+		  ((1)
+		   (let ((ingen (vector-ref ex-array 0))
+			 (sample-0 0.0)
+			 (sample-1 0.0))
+		     ;; these vars used for resampling
+		     
+		     (if (not (or (pair? srate) 
+				  update-envs 
+				  (not (= out-chans 1)) 
+				  matrix 
+				  rev-mx))
+			 
+			 (let ((file-end (+ beg (seconds->samples (+ (* 2 seglen) 
+								     (/ (* (mus-sound-duration fnam) (mus-sound-srate fnam) expand) 
+									*clm-srate* srate))))))
+			   (set! end (min end file-end))
+			   
+			   (do ((i beg (+ i 1)))
+			       ((= i end))
+			     
+			     (let ((vol (env ampenv)))
+			       (if (negative? ex-samp)
+				   (begin
+				     (set! sample-0 (* vol (granulate ingen)))
+				     (set! sample-1 (* vol (granulate ingen)))
+				     (set! ex-samp (+ ex-samp 1))
+				     (set! next-samp ex-samp)
+				     (outa i sample-0))
+				   (begin
+				     (set! next-samp (+ next-samp srate))
+				     (if (> next-samp (+ ex-samp 1))
+					 (let ((samps (floor (- next-samp ex-samp))))
+					   (if (= samps 2)
+					       (begin
+						 (set! sample-0 (* vol (granulate ingen)))
+						 (set! sample-1 (* vol (granulate ingen))))
+					       (do ((k 0 (+ k 1)))
+						   ((= k samps))
+						 (set! sample-0 sample-1)
+						 (set! sample-1 (* vol (granulate ingen)))))
+					   (set! ex-samp (+ ex-samp samps))))
+				     (if (= next-samp ex-samp) 
+					 (outa i (if (= next-samp ex-samp)
+						     sample-0
+						     (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))))))))
+			 
+			 (do ((i beg (+ i 1)))
+			     ((= i end))
+			   
+			   (let ((vol (env ampenv))
+				 (resa (env srenv)))
+			     
+			     (if update-envs
+				 (begin
+				   (set! update-ctr (+ update-ctr 1))
+				   (if (>= update-ctr update-rate)
+				       (let ((sl (floor (* (env lenenv) *clm-srate*))))
+					 (set! update-ctr 0)
+					 (set! (mus-length ingen) sl)
+					 (set! (mus-ramp ingen) (floor (* sl (env rampenv))))
+					 (set! (mus-frequency ingen) (env hopenv))
+					 (set! (mus-increment ingen) (env expenv))))))
+			     
+			     (if (negative? ex-samp)
+				 (begin
+				   (set! sample-0 (* vol (granulate ingen)))
+				   (set! sample-1 (* vol (granulate ingen)))
+				   (set! ex-samp (+ ex-samp 1))
+				   (set! next-samp ex-samp))
+				 (begin
+				   (set! next-samp (+ next-samp resa))
+				   (if (> next-samp (+ ex-samp 1))
+				       (let ((samps (floor (- next-samp ex-samp))))
+					 (if (= samps 2)
+					     (begin
+					       (set! sample-0 (* vol (granulate ingen)))
+					       (set! sample-1 (* vol (granulate ingen))))
+					     (do ((k 0 (+ k 1)))
+						 ((= k samps))
+					       (set! sample-0 sample-1)
+					       (set! sample-1 (* vol (granulate ingen)))))
+					 (set! ex-samp (+ ex-samp samps)))))))
+			   (set! (invals 0) (if (= next-samp ex-samp)
+						sample-0                      ; output actual samples
+						(+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))) ; output interpolated samples
+			   
+			   ;; output mixed result
+			   (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+			   ;; if reverb is turned on, output to the reverb streams
+			   (if rev-mx
+			       (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans)))))))
+		  
+		  ((2) ; 2 chans
+		   (let ((sample-0-0 0.0)
+			 (sample-1-0 0.0)
+			 (sample-0-1 0.0)
+			 (sample-1-1 0.0)
+			 (ingen0 (vector-ref ex-array 0))
+			 (ingen1 (vector-ref ex-array 1)))
+		     (do ((i beg (+ i 1)))
+			 ((= i end))
+		       
+		       (let ((vol (env ampenv))
+			     (resa (env srenv)))
+			 
+			 (if update-envs
+			     (begin
+			       (set! update-ctr (+ update-ctr 1))
+			       (if (>= update-ctr update-rate)
+				   (let ((expa (env expenv))                ;current expansion amount
+					 (segl (env lenenv))                ;current segment length
+					 (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					 (hp (env hopenv)))                 ;current hop size
+				     (let* ((sl (floor (* segl *clm-srate*)))
+					    (rl (floor (* rmpl sl))))
+				       (set! update-ctr 0)
+				       (set! (mus-length ingen0) sl)
+				       (set! (mus-ramp ingen0) rl)
+				       (set! (mus-frequency ingen0) hp)
+				       (set! (mus-increment ingen0) expa)
+				       (set! (mus-length ingen1) sl)
+				       (set! (mus-ramp ingen1) rl)
+				       (set! (mus-frequency ingen1) hp)
+				       (set! (mus-increment ingen1) expa))))))
+			 
+			 (if (negative? ex-samp)
+			     (begin
+			       (set! sample-0-0 (* vol (granulate ingen0)))
+			       (set! sample-1-0 (* vol (granulate ingen0)))
+			       (set! sample-0-1 (* vol (granulate ingen1)))
+			       (set! sample-1-1 (* vol (granulate ingen1)))
+			       (set! ex-samp (+ ex-samp 1))
+			       (set! next-samp ex-samp))
+			     (begin
+			       (set! next-samp (+ next-samp resa))
+			       (if (> next-samp (+ ex-samp 1))
+				   (let ((samps (floor (- next-samp ex-samp))))
+				     (do ((k 0 (+ k 1)))
+					 ((= k samps))
+				       (set! sample-0-0 sample-1-0)
+				       (set! sample-1-0 (* vol (granulate ingen0)))
+				       (set! sample-0-1 sample-1-1)
+				       (set! sample-1-1 (* vol (granulate ingen1))))
+				     (set! ex-samp (+ ex-samp samps)))))))
+		       
+		       (if (= next-samp ex-samp)
+			   ;; output actual samples
+			   (begin
+			     (set! (invals 0) sample-0-0)
+			     (set! (invals 1) sample-0-1))
+			   (begin
+			     ;; output interpolated samples
+			     (set! (invals 0) (+ sample-0-0 (* (- next-samp ex-samp) (- sample-1-0 sample-0-0))))
+			     (set! (invals 1) (+ sample-0-1 (* (- next-samp ex-samp) (- sample-1-1 sample-0-1))))))
+		       
+		       ;; output mixed result
+		       (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+		       ;; if reverb is turned on, output to the reverb streams
+		       (if rev-mx
+			   (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))
+		  
+		  (else 
+		   (let ((samples-0 (make-float-vector in-chans))
+			 (samples-1 (make-float-vector in-chans)))
+		     ;; more than 2 chans in input file
+		     (do ((i beg (+ i 1)))
+			 ((= i end))
+		       (let ((vol (env ampenv))
+			     (resa (env srenv)))
+			 
+			 (if update-envs
+			     (begin
+			       (set! update-ctr (+ update-ctr 1))
+			       (if (>= update-ctr update-rate)
+				   (let ((expa (env expenv))                ;current expansion amount
+					 (segl (env lenenv))                ;current segment length
+					 (rmpl (env rampenv))               ;current ramp length (0 to .5)
+					 (hp (env hopenv)))                 ;current hop size
+				     (let* ((sl (floor (* segl *clm-srate*)))
+					    (rl (floor (* rmpl sl))))
+				       (set! update-ctr 0)
+				       (do ((ix 0 (+ ix 1)))
+					   ((= ix in-chans))
+					 (let ((gen (vector-ref ex-array ix)))
+					   (set! (mus-length gen) sl)
+					   (set! (mus-ramp gen) rl)
+					   (set! (mus-frequency gen) hp)
+					   (set! (mus-increment gen) expa))))))))
+			 
+			 (if (negative? ex-samp)
+			     (begin
+			       (do ((ix 0 (+ ix 1)))
+				   ((= ix in-chans))
+				 (let ((gen (vector-ref ex-array ix)))
+				   (float-vector-set! samples-0 ix (* vol (granulate gen)))
+				   (float-vector-set! samples-1 ix (* vol (granulate gen)))))
+			       (set! ex-samp (+ ex-samp 1))
+			       (set! next-samp ex-samp))
+			     (begin
+			       (set! next-samp (+ next-samp resa))
+			       (if (> next-samp (+ ex-samp 1))
+				   (let ((samps (floor (- next-samp ex-samp))))
+				     (do ((k 0 (+ k 1)))
+					 ((= k samps))
+				       (do ((ix 0 (+ ix 1)))
+					   ((= ix in-chans))
+					 (let ((gen (vector-ref ex-array ix)))
+					   (float-vector-set! samples-0 ix (float-vector-ref samples-1 ix))
+					   (float-vector-set! samples-1 ix (* vol (granulate gen))))))
+				     (set! ex-samp (+ ex-samp samps)))))))
+		       
+		       (if (= next-samp ex-samp)
+			   ;; output actual samples
+			   (copy samples-0 invals 0 in-chans)
+			   ;; output interpolated samples
+			   (do ((ix 0 (+ ix 1)))
+			       ((= ix in-chans))
+			     (let ((v0 (float-vector-ref samples-0 ix))
+				   (v1 (float-vector-ref samples-1 ix)))
+			       (float-vector-set! invals ix (+ v0 (* (- next-samp ex-samp) (- v1 v0)))))))
+		       ;; output mixed result
+		       (frample->file *output* i (frample->frample mx invals ochans outvals ochans))
+		       ;; if reverb is turned on, output to the reverb streams
+		       (if rev-mx
+			   (frample->file *reverb* i (frample->frample rev-mx outvals ochans revvals rev-chans))))))))))))))
 
 ;;; (with-sound () (expandn 0 1 "oboe.snd" 1 :expand 4))

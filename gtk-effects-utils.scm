@@ -23,11 +23,10 @@
 	(update-label (cdr effects)))))
 
 (define (effect-target-ok target)
-  (if (eq? target 'sound) 
-      (pair? (sounds))
-      (if (eq? target 'selection) 
-	  (selection?)
-	  (and (selected-sound)
+  (case target 
+    ((sound) (pair? (sounds)))
+    ((selection) (selection?))
+    (else (and (selected-sound)
 	       (>= (length (marks (selected-sound) (selected-channel))) 2)))))
 
 (define* (make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback)

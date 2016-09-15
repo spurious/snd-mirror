@@ -67,11 +67,10 @@
 		 (apply for-each
 			(lambda (snd chn)
 			  (if (= (sync snd) snc)
-			      (let ((end (if (memq target '(sound cursor))
-					     (- (framples snd chn) 1)
-					     (if (eq? target 'selection)
-						 (+ (selection-position) (selection-framples))
-						 (cadr ms)))))
+			      (let ((end (case target 
+					   ((sound cursor) (- (framples snd chn) 1))
+					   ((selection)    (+ (selection-position) (selection-framples)))
+					   (else (cadr ms)))))
 				(map-channel (func (- end beg)) beg (+ end overlap 1) snd chn
 					     #f
 					     (format #f "~A ~A ~A" (origin target (- end beg)) (if (eq? target 'sound) 0 beg)
@@ -136,15 +135,14 @@
       rc))
   
   (define (effect-framples target)
-    (if (eq? target 'sound)
-	(- (framples) 1)
-	(if (eq? target 'selection)
-	    (selection-framples)
-	    (+ 1 (abs (apply - (plausible-mark-samples)))))))
+    (case target 
+      ((sound)	    (- (framples) 1))
+      ((selection) (selection-framples))
+      (else (+ 1 (abs (apply - (plausible-mark-samples)))))))
   
   
-;;; (Bill) changed 12-Oct-04 to make detached edit lists work (need globally accessible effect functions, etc)
-;;; (Bill) changed 12-Oct-06 for new watcher mechanism, rather than the selection-button list, selection-changed-hook etc
+;;; changed 12-Oct-04 to make detached edit lists work (need globally accessible effect functions, etc)
+;;; changed 12-Oct-06 for new watcher mechanism, rather than the selection-button list, selection-changed-hook etc
   
   
 ;;; *******************************
@@ -201,24 +199,26 @@
 			       (lambda (w context info)
 				 (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
 						      (scale-envelope (xe-envelope gain-envelope) gain-amount))))
-				   (if (eq? gain-target 'sound)
-				       (if with-env
-					   (env-sound with-env)
-					   (scale-by gain-amount))
-				       (if (eq? gain-target 'selection)
-					   (if (selection?)
-					       (if with-env
-						   (env-selection with-env)
-						   (scale-selection-by gain-amount))
-					       (snd-print ";no selection"))
-					   (let ((pts (catch 'no-such-mark 
-							plausible-mark-samples
-							(lambda args #f))))
-					     (if pts
-						 (if with-env
-						     (env-sound with-env (car pts) (- (cadr pts) (car pts)))
-						     (scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
-						 (snd-print ";no marks")))))))
+				   (case gain-target 
+				     ((sound)
+				      (if with-env
+					  (env-sound with-env)
+					  (scale-by gain-amount)))
+				     ((selection)
+				      (if (selection?)
+					  (if with-env
+					      (env-selection with-env)
+					      (scale-selection-by gain-amount))
+					  (snd-print ";no selection")))
+				     (else 
+				      (let ((pts (catch 'no-such-mark 
+						   plausible-mark-samples
+						   (lambda args #f))))
+					(if pts
+					    (if with-env
+						(env-sound with-env (car pts) (- (cadr pts) (car pts)))
+						(scale-by gain-amount (car pts) (- (cadr pts) (car pts))))
+					    (snd-print ";no marks")))))))
 			       
 			       (lambda (w context info)
 				 (help-dialog "Gain"
@@ -288,15 +288,17 @@
 			   normalize-label
 			   
 			   (lambda (w context info)
-			     (if (eq? normalize-target 'sound)
-				 (scale-to normalize-amount)
-				 (if (eq? normalize-target 'selection)
-				     (if (selection?)
-					 (scale-selection-to normalize-amount)
-					 (snd-print ";no selection"))
-				     (let ((pts (plausible-mark-samples)))
-				       (if pts
-					   (scale-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
+			     (case normalize-target 
+			       ((sound) 
+				(scale-to normalize-amount))
+				((selection)
+				 (if (selection?)
+				     (scale-selection-to normalize-amount)
+				     (snd-print ";no selection")))
+				(else
+				 (let ((pts (plausible-mark-samples)))
+				   (if pts
+				       (scale-to normalize-amount (car pts) (- (cadr pts) (car pts))))))))
 			   
 			   (lambda (w context info)
 			     (help-dialog "Normalize"
@@ -833,15 +835,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			   
 			   (lambda (w context info)
 			     (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
-			       (if (eq? band-pass-target 'sound)
-				   (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw))
-				   (if (eq? band-pass-target 'selection)
-				       (filter-selection flt)
-				       (let ((ms (plausible-mark-samples)))
-					 (let ((bg (car ms))
-					       (nd (- (+ (cadr ms) 1) (car ms))))
-					   (clm-channel flt bg nd #f #f #f #f 
-							(format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
+			       (case band-pass-target 
+				 ((sound)
+				  (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw)))
+				 ((selection)
+				  (filter-selection flt))
+				 (else
+				  (let ((ms (plausible-mark-samples)))
+				    (let ((bg (car ms))
+					  (nd (- (+ (cadr ms) 1) (car ms))))
+				      (clm-channel flt bg nd #f #f #f #f 
+						   (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
 			   (lambda (w context info)
 			     (help-dialog "Band-pass filter"
 					  "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
@@ -903,15 +907,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			   
 			   (lambda (w context info) 
 			     (let ((flt (make-butter-band-reject notch-freq notch-bw)))
-			       (if (eq? notch-target 'sound)
-				   (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw))
-				   (if (eq? notch-target 'selection)
-				       (filter-selection flt)
-				       (let ((ms (plausible-mark-samples)))
-					 (let ((bg (car ms))
-					       (nd (- (+ (cadr ms) 1) (car ms))))
-					   (clm-channel flt bg nd #f #f #f #f 
-							(format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
+			       (case notch-target 
+				 ((sound)
+				  (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw)))
+				 ((selection)
+				  (filter-selection flt))
+				 (else
+				  (let ((ms (plausible-mark-samples)))
+				    (let ((bg (car ms))
+					  (nd (- (+ (cadr ms) 1) (car ms))))
+				      (clm-channel flt bg nd #f #f #f #f 
+						   (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
 			   (lambda (w context info)
 			     (help-dialog "Band-reject filter"
 					  "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
@@ -971,15 +977,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			   
 			   (lambda (w context info)
 			     (let ((flt (make-butter-high-pass high-pass-freq)))
-			       (if (eq? high-pass-target 'sound)
-				   (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq))
-				   (if (eq? high-pass-target 'selection)
-				       (filter-selection flt)
-				       (let ((ms (plausible-mark-samples)))
-					 (let ((bg (car ms))
-					       (nd (- (+ (cadr ms) 1) (car ms))))
-					   (clm-channel flt bg nd #f #f #f #f 
-							(format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd))))))))
+			       (case high-pass-target 
+				 ((sound)
+				  (filter-sound flt #f #f #f #f (format #f "effects-bhp ~A 0 #f" high-pass-freq)))
+				 ((selection)
+				  (filter-selection flt))
+				 (else
+				  (let ((ms (plausible-mark-samples)))
+				    (let ((bg (car ms))
+					  (nd (- (+ (cadr ms) 1) (car ms))))
+				      (clm-channel flt bg nd #f #f #f #f 
+						   (format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd))))))))
 			   
 			   (lambda (w context info)
 			     (help-dialog "High-pass filter"
@@ -1035,15 +1043,17 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			   
 			   (lambda (w context info)
 			     (let ((flt (make-butter-low-pass low-pass-freq)))
-			       (if (eq? low-pass-target 'sound)
-				   (filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq))
-				   (if (eq? low-pass-target 'selection)
-				       (filter-selection flt)
-				       (let ((ms (plausible-mark-samples)))
-					 (let ((bg (car ms))
-					       (nd (- (+ (cadr ms) 1) (car ms))))
-					   (clm-channel flt bg nd #f #f #f #f 
-							(format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd))))))))
+			       (case low-pass-target 
+				 ((sound)
+				  (filter-sound flt #f #f #f #f (format #f "effects-blp ~A 0 #f" low-pass-freq)))
+				 ((selection)
+				  (filter-selection flt))
+				 (else
+				  (let ((ms (plausible-mark-samples)))
+				    (let ((bg (car ms))
+					  (nd (- (+ (cadr ms) 1) (car ms))))
+				      (clm-channel flt bg nd #f #f #f #f 
+						   (format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd))))))))
 			   
 			   (lambda (w context info)
 			     (help-dialog "Low-pass filter"
@@ -1367,13 +1377,14 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			   src-label
 			   
 			   (lambda (w context info)		     
-			     (if (eq? src-target 'sound)
-				 (src-sound src-amount)
-				 (if (eq? src-target 'selection)
-				     (if (selection?)
-					 (src-selection src-amount)
-					 (snd-print ";no selection"))
-				     (snd-print "can't apply src between marks yet"))))		   
+			     (case src-target 
+			       ((sound)
+				(src-sound src-amount))
+			       ((selection)
+				(if (selection?)
+				    (src-selection src-amount)
+				    (snd-print ";no selection")))
+			       (else (snd-print "can't apply src between marks yet"))))
 			   
 			   (lambda (w context info)
 			     (help-dialog "Sample rate conversion"
@@ -1540,17 +1551,19 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 			       (lambda (w context info)
 				 (let ((env (scale-envelope (xe-envelope src-timevar-envelope)
 							    src-timevar-scale)))
-				   (if (eq? src-timevar-target 'sound)
-				       (src-sound env)
-				       (if (eq? src-timevar-target 'selection)
-					   (if (selection-member? (selected-sound))
-					       (src-selection env)
-					       (display ";no selection"))
-					   (let ((pts (plausible-mark-samples)))
-					     (if pts
-						 (let* ((beg (car pts))
-							(len (- (cadr pts) beg)))
-						   (src-channel (make-env env :length len) beg len (selected-sound)))))))))
+				   (case src-timevar-target
+				     ((sound)
+				      (src-sound env))
+				     ((selection)
+				      (if (selection-member? (selected-sound))
+					  (src-selection env)
+					  (display ";no selection")))
+				     (else 
+				      (let ((pts (plausible-mark-samples)))
+					(if pts
+					    (let* ((beg (car pts))
+						   (len (- (cadr pts) beg)))
+					      (src-channel (make-env env :length len) beg len (selected-sound)))))))))
 			       
 			       (lambda (w context info)
 				 (help-dialog "Src-Timevar"
@@ -2775,14 +2788,10 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			     (let ((ms (and (eq? robotize-target 'marks)
 					    (plausible-mark-samples))))
 			       (effects-fp samp-rate osc-amp osc-freq
-					   (if (eq? robotize-target 'sound)
-					       (values 0 
-						       (framples))
-					       (if (eq? robotize-target 'selection)
-						   (values (selection-position)
-							   (selection-framples))
-						   (values (car ms)
-							   (- (cadr ms) (car ms))))))))
+					   (case robotize-target 
+					     ((sound)     (values 0 (framples)))
+					     ((selection) (values (selection-position) (selection-framples)))
+					     (else        (values (car ms) (- (cadr ms) (car ms))))))))
 			   (lambda (w context info)
 			     (help-dialog "Robotize"
 					  "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
@@ -2910,15 +2919,11 @@ the synthesis amplitude, the FFT size, and the radius value."))
 					    (plausible-mark-samples))))
 			       (effects-hello-dentist
 				wobble-frequency wobble-amplitude
-				(if (eq? wobble-target 'sound)
-				    (values 0 
-					    (framples))
-				    (if (eq? wobble-target 'selection)
-					(values (selection-position)
-						(selection-framples))
-					(values (car ms)
-						(- (cadr ms) (car ms))))))))
-			   
+				(case wobble-target 
+				  ((sound)     (values 0 (framples)))
+				  ((selection) (values (selection-position) (selection-framples)))
+				  (else        (values (car ms)	(- (cadr ms) (car ms))))))))
+
 			   (lambda (w context info)
 			     (help-dialog "Wobble"
 					  "Move the sliders to set the wobble frequency and amplitude."))

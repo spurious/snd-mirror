@@ -1542,9 +1542,10 @@
 	(if (>= i next-pulse)
 	    (let ((pulse-dur (+ .01 (random .003)))
 		  (env-choice (random 3)))
-	      (set! pulse-ampf (make-env (if (= env-choice 0) env1
-					     (if (= env-choice 1) env2
-						 env3))
+	      (set! pulse-ampf (make-env (case env-choice
+					   ((0) env1)
+					   ((1) env2)
+					   (else env3))
 					 :duration pulse-dur
 					 :scaler (+ .7 (random .3))))
 	      (set! pulse-samps (seconds->samples (+ pulse-dur (random 0.005))))

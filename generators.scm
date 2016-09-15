@@ -73,6 +73,13 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 
 ;;; G&R first col rows 1&2
 
+(define (nodds x n) 
+  (let ((den (sin x))
+	(num (sin (* n x))))
+    (if (= den 0.0)
+	0.0
+	(/ (* num num) den))))
+
 (define (find-nxysin-max n ratio)
   
   (define (find-mid-max n lo hi)
@@ -92,12 +99,6 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 			      (values mid hi))))))
   
   (define (find-nodds-mid-max n lo hi)
-    (define (nodds x n) 
-      (let ((den (sin x))
-	    (num (sin (* n x))))
-	(if (= den 0.0)
-	    0.0
-	    (/ (* num num) den))))
     (let ((mid (/ (+ lo hi) 2))
 	  (ylo (nodds lo n))
 	  (yhi (nodds hi n)))
@@ -107,11 +108,10 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 				    (values lo mid)
 				    (values mid hi))))))
   
-  (if (= ratio 1)
-      (find-mid-max n 0.0 (/ pi (+ n .5)))
-      (if (= ratio 2)
-	  (find-nodds-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5)))
-	  n)))
+  (case ratio
+    ((1) (find-mid-max n 0.0 (/ pi (+ n .5))))
+    ((2) (find-nodds-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
+    (else n)))
 
 
 (defgenerator (nxysin
@@ -329,12 +329,6 @@ returns n sines from frequency spaced by frequency * ratio with every other sine
   (let find-mid-max ((n n)
 		     (lo 0.0000)
 		     (hi (/ pi (+ (* 2 n) 0.5))))
-    (define (nodds x n) 
-      (let ((den (sin x))
-	    (num (sin (* n x))))
-	(if (= den 0.0)
-	    0.0000
-	    (/ (* num num) den))))
     (let ((mid (/ (+ lo hi) 2))
 	  (ylo (nodds lo n))
 	  (yhi (nodds hi n)))

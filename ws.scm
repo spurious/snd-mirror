@@ -732,7 +732,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				 (name 1)))
 		 (octave (if octave-char (- (char->integer octave-char) (char->integer #\0)) last-octave))
 		 (base-pitch (let ((base (modulo (- (+ (char->integer (name 0)) 5) (char->integer #\a)) 7)) ; c-based (diatonic) octaves	   
-				   (sign (if (not sign-char) 0 (if (char=? sign-char #\f) -1 1))))
+				   (sign (case sign-char ((#f) 0) ((#\f) -1) (else 1))))
 			       (+ sign (case base ((0) 0) ((1) 2) ((2) 4) ((3) 5) ((4) 7) ((5) 9) ((6) 11)))))
 		 (et-pitch (+ base-pitch (* 12 octave))))
 	    (set! last-octave octave)

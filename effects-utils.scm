@@ -53,20 +53,18 @@
   (define update-label 
     (let ((documentation "(update-label effects) evaluates the elements of the list 'effects'"))
       (lambda (effects)
-	(if (pair? effects)
-	    (begin
-	      ((car effects))
-	      (update-label (cdr effects)))))))
+	(when (pair? effects)
+	  ((car effects))
+	  (update-label (cdr effects))))))
   
   (define effect-target-ok 
     (let ((documentation "(effect-target-ok target) returns #t if the current effect's chosen target is ready"))
       (lambda (target)
-	(if (eq? target 'sound) 
-	    (pair? (sounds))
-	    (if (eq? target 'selection) 
-		(selection?)
-		(and (selected-sound)
-		     (>= (length (marks (selected-sound) (selected-channel))) 2)))))))
+	(case target 
+	  ((sound) (pair? (sounds)))
+	  ((selection)    (selection?))
+	  (else           (and (selected-sound)
+			       (>= (length (marks (selected-sound) (selected-channel))) 2)))))))
   
   (define make-effect-dialog 
     (let ((documentation "(make-effect-dialog label ok-callback help-callback reset-callback target-ok-callback) makes a standard effects dialog"))

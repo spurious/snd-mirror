@@ -139,16 +139,17 @@ are (1.0-based) edge freqs: (make-butterworth-bandpass 4 .1 .2)"))
 	(lambda (y) 
 	  (filter lp (filter hp y)))))))
 
+(define (make-bandstop-filter lp hp)
+  (lambda (y) 
+    (+ (filter lp y) (filter hp y))))
+  
 (define make-butterworth-bandstop
   (let ((documentation "(make-butterworth-bandstop n fl fh) returns a bandstop Butterworth filter; n = order, fl and fh \
 are (1.0-based) edge freqs: (make-butterworth-bandstop 4 .1 .2)"))
     (lambda (n fl fh)
       (if (odd? n) (set! n (+ n 1)))
-      (let ((lp (make-butterworth-lowpass n fl))
-	    (hp (make-butterworth-highpass n fh)))
-	(lambda (y) 
-	  (+ (filter lp y) (filter hp y)))))))
-
+      (make-bandstop-filter (make-butterworth-lowpass n fl)
+			    (make-butterworth-highpass n fh)))))
 
 
 ;;; ---------------- Chebyshev ---------------- 
@@ -207,10 +208,8 @@ fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandpass 4 .1 .2)"))
 fl and fh = edge freqs (srate = 1.0): (make-chebyshev-bandstop 8 .1 .4 .01)"))
     (lambda* (n fl fh (ripple 1.0))
       (if (odd? n) (set! n (+ n 1)))
-      (let ((lp (make-chebyshev-lowpass n fl ripple))
-	    (hp (make-chebyshev-highpass n fh ripple)))
-	(lambda (y) 
-	  (+ (filter lp y) (filter hp y)))))))
+      (make-bandstop-filter (make-chebyshev-lowpass n fl ripple)
+			    (make-chebyshev-highpass n fh ripple)))))
 
 
 
@@ -271,9 +270,8 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandpass 8 .1 .4)"
 fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 90)"))
     (lambda* (n fl fh (loss-dB 60.0))
       (if (odd? n) (set! n (+ n 1)))
-      (let ((lp (make-inverse-chebyshev-lowpass n fl loss-dB))
-	    (hp (make-inverse-chebyshev-highpass n fh loss-dB)))
-	(lambda (y) (+ (filter lp y) (filter hp y)))))))
+      (make-bandstop-filter (make-inverse-chebyshev-lowpass n fl loss-dB)
+			    (make-inverse-chebyshev-highpass n fh loss-dB)))))
 
 
 
@@ -357,11 +355,8 @@ fl and fh are edge freqs (srate=1.0): (make-inverse-chebyshev-bandstop 8 .1 .4 9
   (let ((documentation "(make-bessel-bandstop n fl fh) returns a bandstop Bessel filter; n = order, fl and fh are edge freqs (srate=1.0): (make-bessel-bandstop 8 .1 .2)"))
     (lambda* (n fl fh)
       (if (odd? n) (set! n (+ n 1)))
-      (let ((lp (make-bessel-lowpass n fl))
-	    (hp (make-bessel-highpass n fh)))
-	(lambda (y) 
-	  (+ (filter lp y) (filter hp y)))))))
-
+      (make-bandstop-filter (make-bessel-lowpass n fl)
+			    (make-bessel-highpass n fh)))))
 
 
 ;;; ---------------- Elliptic ---------------- 
@@ -483,8 +478,5 @@ fl and fh are edge freqs (srate=1.0): (make-elliptic-bandpass 6 .1 .2 .1 90)"))
 fl and fh are edge freqs (srate=1.0): (make-elliptic-bandstop 6 .1 .2 .1 90)"))
     (lambda* (n fl fh (ripple 1.0) (loss-dB 60.0))
       (if (odd? n) (set! n (+ n 1)))
-      (let ((lp (make-elliptic-lowpass n fl ripple loss-dB))
-	    (hp (make-elliptic-highpass n fh ripple loss-dB)))
-	(lambda (y) 
-	  (+ (filter lp y) (filter hp y)))))))
-
+      (make-bandstop-filter (make-elliptic-lowpass n fl ripple loss-dB)
+			    (make-elliptic-highpass n fh ripple loss-dB)))))

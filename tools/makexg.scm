@@ -1778,11 +1778,10 @@
 		   (hey "Xen_call_with_~A_arg~A(~A((Xen)func_info),~%"
 			(if (null? args) "no" (length args))
 			(if (and (pair? args) (null? (cdr args))) "" "s")
-			(if (eq? fname 'GtkClipboardClearFunc)
-			    "Xen_caddr"
-			    (if (eq? fname 'GtkDestroyNotify)
-				"Xen_cadddr"
-				"Xen_car")))
+			(case fname 
+			  ((GtkClipboardClearFunc) "Xen_caddr")
+			  ((GtkDestroyNotify)      "Xen_cadddr")
+			  (else                    "Xen_car")))
 		   (for-each
 		    (lambda (arg)
 		      (hey (make-string castlen #\space))
