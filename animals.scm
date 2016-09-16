@@ -4636,15 +4636,16 @@
 	  
 	  (mus-reset call-ampf)
 	  (mus-reset call-frqf)
-	  (if (= call 0)
-	      (set! next-call (+ start (seconds->samples 0.35)))
-	      (if (= call 1)
-		  (begin
-		    (set! next-call (+ next-call (seconds->samples (- 0.63 0.35))))
-		    (set! call-samps (seconds->samples call2-dur))
-		    (set! call-ampf call2-ampf)
-		    (set! call-frqf call2-frqf))
-		  (set! next-call (+ next-call (seconds->samples 0.24)))))
+	  (case call
+	    ((0)
+	     (set! next-call (+ start (seconds->samples 0.35))))
+	    ((1)
+	     (set! next-call (+ next-call (seconds->samples (- 0.63 0.35))))
+	     (set! call-samps (seconds->samples call2-dur))
+	     (set! call-ampf call2-ampf)
+	     (set! call-frqf call2-frqf))
+	    (else 
+	     (set! next-call (+ next-call (seconds->samples 0.24)))))
 	  (set! call (+ call 1)))))))
 
 ;; (with-sound (:play #t) (cardinal 0 .5))

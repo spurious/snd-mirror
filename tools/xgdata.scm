@@ -9506,3 +9506,9 @@
 (CFNC-3.22 "GdkDrawingContext* gdk_window_begin_draw_frame GdkWindow* window cairo_region_t* region")
 (CFNC-3.22 "void gdk_window_end_draw_frame GdkWindow* window GdkDrawingContext* context")
 
+;;; 3.21.6:
+
+(CFNC-3.22 "void gtk_scrolled_window_set_propagate_natural_width GtkScrolledWindow* scrolled_window gboolean propagate")
+(CFNC-3.22 "gboolean gtk_scrolled_window_get_propagate_natural_width GtkScrolledWindow* scrolled_window")
+(CFNC-3.22 "void gtk_scrolled_window_set_propagate_natural_height GtkScrolledWindow* scrolled_window gboolean propagate")
+(CFNC-3.22 "gboolean gtk_scrolled_window_get_propagate_natural_height GtkScrolledWindow* scrolled_window")

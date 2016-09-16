@@ -17,14 +17,16 @@
 (define nearly-zero 1.0e-10) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 (define two-pi (* 2.0 pi))
 
+(define (convert-frequency g)
+  (set! (g 'frequency) (hz->radians (g 'frequency)))
+  g)
+
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; nssb (see nxycos) -- wouldn't a more consistent name be nxycos? but it already exists -- perhaps delete nssb?
 
-(defgenerator (nssb 
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (nssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -194,10 +196,7 @@ generator. (nxysin gen (fm 0.0)) returns n sines from frequency spaced by freque
 |#
 
 
-(defgenerator (nxycos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (nxycos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -233,10 +232,7 @@ returns n cosines from frequency spaced by frequency * ratio."))
 ;;;
 ;;; G&R first col rows 3 4
 
-(defgenerator (nxy1cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (nxy1cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -282,10 +278,7 @@ generator. (nxy1cos gen (fm 0.0)) returns 2n cosines from frequency spaced by fr
 |#
 
 
-(defgenerator (nxy1sin
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (nxy1sin :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -385,10 +378,7 @@ returns n odd-numbered sines spaced by frequency."))
 
 
 
-(defgenerator (noddcos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (noddcos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -424,10 +414,7 @@ returns n odd-numbered cosines spaced by frequency."))
 
 
 
-(defgenerator (noddssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (noddssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -477,10 +464,7 @@ returns n sinusoids from frequency spaced by 2 * ratio * frequency."))
 ;;;
 ;;; various kernels: ncos2 = ncos squared (Fejer), ncos4 = ncos2 squared (Jackson), npcos = Poussin kernel
 
-(defgenerator (ncos2
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (ncos2 :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -540,10 +524,7 @@ returns n sinusoids spaced by frequency scaled by ((n-k)/(n+1))^2"))
 
 
 
-(defgenerator (npcos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (npcos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -583,10 +564,7 @@ returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent sh
 
 ;;; ncos5 and nsin5 are minor variants of nsin and ncos -- the last component is at half amplitude
 
-(defgenerator (ncos5
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (ncos5 :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -1304,10 +1282,7 @@ returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1
 ;;;
 ;;; Ramanujan, "On certain Arithmetical Functions"
 
-(defgenerator (n1cos 
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (n1cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 (define* (n1cos gen (fm 0.0))
@@ -1339,10 +1314,7 @@ returns n cosines spaced by frequency with amplitude sin(k*pi/(n+1))/sin(pi/(n+1
 
 ;;; Dimitrov and Merlo
 
-(defgenerator (npos1cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (npos1cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -1375,10 +1347,7 @@ returns n cosines spaced by frequency."))
       (outa i (npos1cos gen)))))
 
 
-(defgenerator (npos3cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (npos3cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (angle 0.0) fm)
 
 
@@ -2005,10 +1974,7 @@ returns many cosines from frequency with amplitude e^(-kr)."))
 |#
 
 
-(defgenerator (erssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (erssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
@@ -2120,10 +2086,7 @@ returns many even-numbered cosines from frequency with amplitude r^(2k)/(2k)!.")
 
 
 
-(defgenerator (r2ssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (r2ssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
@@ -2332,11 +2295,8 @@ returns many cosines from spaced by frequency with amplitude (r^k)/k."))
 	  (lambda (g) (g 'r))
 	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
 
-(defgenerator (rksin
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g)
-	       :methods rksin-methods)
+(defgenerator (rksin :make-wrapper convert-frequency
+		     :methods rksin-methods)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 ;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
@@ -2375,9 +2335,7 @@ returns many sines from spaced by frequency with amplitude (r^k)/k."))
 	  (lambda (g val) (set! (g 'r) (generator-clamp-r val)))))))
 
 (defgenerator (rkssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g)
+	       :make-wrapper convert-frequency
 	       :methods rkssb-methods)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
@@ -2529,10 +2487,7 @@ returns many cosines spaced by frequency with amplitude (r^k)/k!."))
 |#
 
 
-(defgenerator (rk!ssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (rk!ssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0) fm)
 
 
@@ -2602,10 +2557,7 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 ;;; rxyk!cos
 ;;; moved to clm.c 18-Apr-13)
 
-(defgenerator (rxyk!sin
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (rxyk!sin :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5) (angle 0.0) fm)
 
 
@@ -2838,10 +2790,7 @@ returns many cosines spaced by frequency with amplitude too messy to write down.
 
 ;;; not flexible -- very similar to several others
 
-(defgenerator (k2sin
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (k2sin :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 
@@ -2870,10 +2819,7 @@ returns many sines spaced by frequency with amplitude 1/(2^k)."))
 
 ;;; using the second Sansone formula, we get the sum of cos case by using a=-5b/4 or 3/(4cosx-5)
 
-(defgenerator (k2cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (k2cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 
@@ -2901,10 +2847,7 @@ returns many cosines spaced by frequency with amplitude 1/(2^k)."))
 
 
 
-(defgenerator (k2ssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (k2ssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (angle 0.0) fm)
 
 
@@ -2947,11 +2890,8 @@ returns many sinusoids from frequency spaced by frequency * ratio with amplitude
 	  (lambda (g) (radians->hz (* 0.5 (g 'frequency))))
 	  (lambda (g val) (set! (g 'frequency) (hz->radians (* 2 val))) val)))))
 
-(defgenerator (dblsum
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (* 2 (g 'frequency))))
-			       g)
-	       :methods dblsum-methods)
+(defgenerator (dblsum :make-wrapper convert-frequency
+		      :methods dblsum-methods)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
@@ -3076,10 +3016,7 @@ returns many sinusoids from frequency spaced by frequency * 2 * ratio with ampli
 ;;;   for low n, we could use the Tn roots stuff (clm.c)
 ;;;   the formula must be assuming r<1.0 -- if greater than 1 it's acting like r2k! above
 
-(defgenerator (krksin
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (krksin :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (r 0.5) (angle 0.0) fm)
 
 
@@ -3283,10 +3220,7 @@ returns many sines spaced by frequency with amplitude (-a+sqrt(a^2-b^2))^k/b^k."
 
 ;;; J second col third row
 
-(defgenerator (r2k2cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (r2k2cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (r 1.0) (angle 0.0) fm)
 
 
@@ -3338,10 +3272,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 ;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
 ;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
 
-(defgenerator (blsaw
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (blsaw :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (r 0.5) (angle 0.0) fm)
 
 
@@ -3381,10 +3312,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 
 ;;; asymmetric fm gens
 
-(defgenerator (asyfm
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (asyfm :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0) fm)
 
 
@@ -3537,10 +3465,7 @@ returns many cosines spaced by frequency with amplitude 1/(r^2+k^2)."))
 ;;; Watson "Bessel Functions" p358 127 128 (J0(k sqrt(r^2+a^2- 2ar cos x)) = sum em Jm(ka)Jm(kr) cos mx
 ;;;   em here is "Neumann's factor" (p22) = 1 if m=0, 2 otherwise
 
-(defgenerator (jjcos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (jjcos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (r 0.5) (a 1.0) (k 1.0) (angle 0.0) fm)
 
 
@@ -3666,10 +3591,7 @@ which again matches
 ;;; check J0(zsinx) formula 
 ;;; main difference from FM: index is divided by 2, J value is squared, else just like cos(sin)
 
-(defgenerator (j0evencos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (j0evencos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (index 1.0) (angle 0.0) fm)
 
 
@@ -3949,10 +3871,7 @@ returns a sum of cosines scaled in a very complicated way."))
 
 ;;; use J0(cos)+J1(cos) to get full spectrum
 
-(defgenerator (j0j1cos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (j0j1cos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (index 1.0) (angle 0.0) fm)
 
 
@@ -4099,10 +4018,7 @@ returns a sum of cosines scaled by Yn(r)*Jn(r)."))
 ;;; --------------------------------------------------------------------------------
 
 #|
-(defgenerator (jcos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (jcos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0) fm)
 
@@ -4135,10 +4051,7 @@ returns a sum of cosines scaled in some complex manner."))
 ;;; --------------------------------------------------------------------------------
 
 #|
-(defgenerator (sin2n
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (sin2n :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (n 1) (r 1.0) (angle 0.0) fm)
 
 
@@ -4276,10 +4189,7 @@ returns the nth Blackman-Harris fft data window as a periodic waveform. (n <= 10
 ;;;
 ;;; the same trick would work in the other two cases -- gapped spectra
 
-(defgenerator (fmssb
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (fmssb :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (index 1.0) (angle 0.0) fm)
 
 
@@ -5006,10 +4916,7 @@ generator. (round-interp gen (fm 0.0)) returns a rand-interp sequence low-pass f
 
 ;;; cos^n J 121
 
-(defgenerator (nchoosekcos
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (nchoosekcos :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0) fm)
 
 
@@ -6600,10 +6507,7 @@ input from the readin generator 'reader'.  The output data is available via mus-
 
 
 #|
-(defgenerator (circler
-	       :make-wrapper (lambda (g)
-			       (set! (g 'frequency) (hz->radians (g 'frequency)))
-			       g))
+(defgenerator (circler :make-wrapper convert-frequency)
   (frequency *clm-default-frequency*) (angle 0.0) fm)
 
 (define circler 

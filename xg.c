@@ -32683,6 +32683,40 @@ static Xen gxg_gdk_window_end_draw_frame(Xen window, Xen context)
   return(Xen_false);
 }
 
+static Xen gxg_gtk_scrolled_window_set_propagate_natural_width(Xen scrolled_window, Xen propagate)
+{
+  #define H_gtk_scrolled_window_set_propagate_natural_width "void gtk_scrolled_window_set_propagate_natural_width(GtkScrolledWindow* scrolled_window, \
+gboolean propagate)"
+  Xen_check_type(Xen_is_GtkScrolledWindow_(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_set_propagate_natural_width", "GtkScrolledWindow*");
+  Xen_check_type(Xen_is_gboolean(propagate), propagate, 2, "gtk_scrolled_window_set_propagate_natural_width", "gboolean");
+  gtk_scrolled_window_set_propagate_natural_width(Xen_to_C_GtkScrolledWindow_(scrolled_window), Xen_to_C_gboolean(propagate));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_scrolled_window_get_propagate_natural_width(Xen scrolled_window)
+{
+  #define H_gtk_scrolled_window_get_propagate_natural_width "gboolean gtk_scrolled_window_get_propagate_natural_width(GtkScrolledWindow* scrolled_window)"
+  Xen_check_type(Xen_is_GtkScrolledWindow_(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_get_propagate_natural_width", "GtkScrolledWindow*");
+  return(C_to_Xen_gboolean(gtk_scrolled_window_get_propagate_natural_width(Xen_to_C_GtkScrolledWindow_(scrolled_window))));
+}
+
+static Xen gxg_gtk_scrolled_window_set_propagate_natural_height(Xen scrolled_window, Xen propagate)
+{
+  #define H_gtk_scrolled_window_set_propagate_natural_height "void gtk_scrolled_window_set_propagate_natural_height(GtkScrolledWindow* scrolled_window, \
+gboolean propagate)"
+  Xen_check_type(Xen_is_GtkScrolledWindow_(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_set_propagate_natural_height", "GtkScrolledWindow*");
+  Xen_check_type(Xen_is_gboolean(propagate), propagate, 2, "gtk_scrolled_window_set_propagate_natural_height", "gboolean");
+  gtk_scrolled_window_set_propagate_natural_height(Xen_to_C_GtkScrolledWindow_(scrolled_window), Xen_to_C_gboolean(propagate));
+  return(Xen_false);
+}
+
+static Xen gxg_gtk_scrolled_window_get_propagate_natural_height(Xen scrolled_window)
+{
+  #define H_gtk_scrolled_window_get_propagate_natural_height "gboolean gtk_scrolled_window_get_propagate_natural_height(GtkScrolledWindow* scrolled_window)"
+  Xen_check_type(Xen_is_GtkScrolledWindow_(scrolled_window), scrolled_window, 1, "gtk_scrolled_window_get_propagate_natural_height", "GtkScrolledWindow*");
+  return(C_to_Xen_gboolean(gtk_scrolled_window_get_propagate_natural_height(Xen_to_C_GtkScrolledWindow_(scrolled_window))));
+}
+
 #endif
 
 static Xen gxg_cairo_create(Xen target)
@@ -39472,6 +39506,10 @@ Xen_wrap_1_arg(gxg_gtk_shortcut_label_get_disabled_text_w, gxg_gtk_shortcut_labe
 Xen_wrap_2_args(gxg_gtk_shortcut_label_set_disabled_text_w, gxg_gtk_shortcut_label_set_disabled_text)
 Xen_wrap_2_args(gxg_gdk_window_begin_draw_frame_w, gxg_gdk_window_begin_draw_frame)
 Xen_wrap_2_args(gxg_gdk_window_end_draw_frame_w, gxg_gdk_window_end_draw_frame)
+Xen_wrap_2_args(gxg_gtk_scrolled_window_set_propagate_natural_width_w, gxg_gtk_scrolled_window_set_propagate_natural_width)
+Xen_wrap_1_arg(gxg_gtk_scrolled_window_get_propagate_natural_width_w, gxg_gtk_scrolled_window_get_propagate_natural_width)
+Xen_wrap_2_args(gxg_gtk_scrolled_window_set_propagate_natural_height_w, gxg_gtk_scrolled_window_set_propagate_natural_height)
+Xen_wrap_1_arg(gxg_gtk_scrolled_window_get_propagate_natural_height_w, gxg_gtk_scrolled_window_get_propagate_natural_height)
 #endif
 
 Xen_wrap_1_arg(gxg_cairo_create_w, gxg_cairo_create)
@@ -43956,6 +43994,10 @@ static void define_functions(void)
   Xg_define_procedure(gtk_shortcut_label_set_disabled_text, gxg_gtk_shortcut_label_set_disabled_text_w, 2, 0, 0, H_gtk_shortcut_label_set_disabled_text, pl_tus);
   Xg_define_procedure(gdk_window_begin_draw_frame, gxg_gdk_window_begin_draw_frame_w, 2, 0, 0, H_gdk_window_begin_draw_frame, pl_pu);
   Xg_define_procedure(gdk_window_end_draw_frame, gxg_gdk_window_end_draw_frame_w, 2, 0, 0, H_gdk_window_end_draw_frame, pl_tu);
+  Xg_define_procedure(gtk_scrolled_window_set_propagate_natural_width, gxg_gtk_scrolled_window_set_propagate_natural_width_w, 2, 0, 0, H_gtk_scrolled_window_set_propagate_natural_width, pl_tub);
+  Xg_define_procedure(gtk_scrolled_window_get_propagate_natural_width, gxg_gtk_scrolled_window_get_propagate_natural_width_w, 1, 0, 0, H_gtk_scrolled_window_get_propagate_natural_width, pl_bu);
+  Xg_define_procedure(gtk_scrolled_window_set_propagate_natural_height, gxg_gtk_scrolled_window_set_propagate_natural_height_w, 2, 0, 0, H_gtk_scrolled_window_set_propagate_natural_height, pl_tub);
+  Xg_define_procedure(gtk_scrolled_window_get_propagate_natural_height, gxg_gtk_scrolled_window_get_propagate_natural_height_w, 1, 0, 0, H_gtk_scrolled_window_get_propagate_natural_height, pl_bu);
 #endif
 
   Xg_define_procedure(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create, pl_pu);
@@ -48126,7 +48168,7 @@ void Init_libxg(void)
       #else
         Xen_provide_feature("gtk2");
       #endif
-      Xen_define("xg-version", C_string_to_Xen_string("14-Sep-16"));
+      Xen_define("xg-version", C_string_to_Xen_string("15-Sep-16"));
       xg_already_inited = true;
 #if HAVE_SCHEME
 #if USE_SND
