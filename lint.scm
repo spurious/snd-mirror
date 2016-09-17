@@ -3780,8 +3780,7 @@
 	(define (simplify-arg x)
 	  (if (or (null? x)                      ; constants and the like look dumb if simplified
 		  (not (proper-list? x))
-		  (not (hash-table-ref numeric-ops (car x)))
-		  (eq? (car x) 'random)
+		  (not (hash-table-ref no-side-effect-functions (car x)))
 		  (var-member (car x) env))
 	      x
 	      (let ((f (simplify-numerics x env)))
@@ -3894,10 +3893,41 @@
 				       (negative? arg1)
 				       (not (number? arg2)))
 				  `(- ,arg2 ,(abs arg1)))
+
+				 ((and (pair? arg1)                  ; (+ (if x 0 y) z) -> (if x z (+ y z))
+				       (eq? (car arg1) 'if)
+				       (= (length arg1) 4))
+				  (if (and (pair? arg2)
+					   (eq? (car arg2) 'if))
+				      `(+ ,@val)
+				      (let ((true (caddr arg1))
+					    (false (cadddr arg1)))
+					(if (eqv? true 0) ; does not include 0.0
+					    (if (eqv? false 0)
+						arg2
+						`(if ,(cadr arg1) ,arg2 (+ ,false ,arg2)))
+					    (if (eqv? false 0)
+						`(if ,(cadr arg1) (+ ,true ,arg2) ,arg2)
+						`(+ ,@val))))))
+
+				 ((and (pair? arg2)                   ; (+ z (if x 0 y)) -> (if x z (+ z y))
+				       (eq? (car arg2) 'if)
+				       (= (length arg2) 4))
+				  (let ((true (caddr arg2))
+					(false (cadddr arg2)))
+				    (if (eqv? true 0) ; does not include 0.0
+					(if (eqv? false 0)
+					    arg1
+					    `(if ,(cadr arg2) ,arg1 (+ ,arg1 ,false)))
+					(if (eqv? false 0)
+					    `(if ,(cadr arg2) (+ ,arg1 ,true) ,arg1)
+					    `(+ ,@val)))))
+
+				 ((not (and (pair? arg1)
+					    (pair? arg2)))
+				   `(+ ,@val))
 				 
-				 ((and (pair? arg1)
-				       (eq? (car arg1) '*)           ; (+ (* a b) (* a c)) -> (* a (+ b c))
-				       (pair? arg2)
+				 ((and (eq? (car arg1) '*)           ; (+ (* a b) (* a c)) -> (* a (+ b c))
 				       (eq? (car arg2) '*)
 				       (any? (lambda (a)
 					       (member a (cdr arg2)))
@@ -3920,8 +3950,8 @@
 					  (set! rset (remove (car p) rset)))
 					(set! pluses (cons (car p) pluses)))))
 				 
-				 ((and (pair? arg1) (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
-				       (pair? arg2) (eq? (car arg2) '/)
+				 ((and (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
+				       (eq? (car arg2) '/)
 				       (pair? (cddr arg1)) (pair? (cddr arg2))
 				       (equal? (cddr arg1) (cddr arg2)))
 				  `(/ (+ ,(cadr arg1) ,(cadr arg2)) ,@(cddr arg1)))
@@ -3929,8 +3959,9 @@
 				 (else `(+ ,@val)))))
 			(else 
 			 (or (horners-rule val)
-			 ;; not many cases here, oddly enough, Horner's rule gets most
-			 ;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
+			     ;; not many cases here, oddly enough, Horner's rule gets most
+			     ;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
+			     ;; the 3-arg case of embedded if looks fussy
 			     `(+ ,@val)))))))))
 	    
 	    ((*)
@@ -3955,7 +3986,6 @@
 		    ((2)
 		     (let ((arg1 (car val))
 			   (arg2 (cadr val)))
-
 		       (cond ((just-rationals? val)
 			      (let ((new-val (apply * val))) ; huge numbers here are less readable
 				(if (< (abs new-val) 1000000)
@@ -3966,6 +3996,31 @@
 			      0) 
 			     ((memv -1 val)
 			      `(- ,@(remove -1 val)))              ; (* -1 x) -> (- x)
+
+			     ((and (pair? arg1)                    ; (* (if x 1 y) z) -> (if x z (* y z))
+				   (eq? (car arg1) 'if)            ; (* (if x 0 y) z) -> (if x 0 (* y z))
+				   (= (length arg1) 4))
+			      (if (and (pair? arg2)
+				       (eq? (car arg2) 'if))
+				  `(* ,@val)
+				  (let ((true (caddr arg1))
+					(false (cadddr arg1)))
+				    (if (memv true '(0 1)) ; does not include 0.0
+					`(if ,(cadr arg1) ,(if (eqv? true 1) arg2 0) (* ,false ,arg2))
+					(if (memv false '(0 1))
+					    `(if ,(cadr arg1) (* ,true ,arg2) ,(if (eqv? false 1) arg2 0))
+					    `(* ,@val))))))
+			     
+			     ((and (pair? arg2)                   ; (* z (if x 1 y)) -> (if x z (* z y))
+				   (eq? (car arg2) 'if)
+				   (= (length arg2) 4))
+			      (let ((true (caddr arg2))
+				    (false (cadddr arg2)))
+				(if (memv true '(0 1)) ; does not include 0.0
+				    `(if ,(cadr arg2) ,(if (eqv? true 1) arg1 0) (* ,arg1 ,false))
+				    (if (memv false '(0 1))
+					`(if ,(cadr arg2) (* ,arg1 ,true) ,(if (eqv? false 1) arg1 0))
+					`(* ,@val)))))
 
 			     ((not (pair? arg2))
 			      `(* ,@val))
@@ -4041,6 +4096,21 @@
 
 			   ((memv -1 val)
 			    `(- (* ,@(remove -1 val))))    ; (* -1 x y) -> (- (* x y))
+
+			   ((let search ((args val))       ; (* x (if y 0 z) w) -> (if y 0 (* x z w))
+			      (and (pair? args)
+				   (or (and (pair? (car args))
+					    (eq? (caar args) 'if)
+					    (= (length (car args)) 4)
+					    (or (eqv? (caddar args) 0)
+						(eqv? (car (cdddar args)) 0))
+					    (car args))
+				       (search (cdr args))))) 
+			    => (lambda (gif)
+				 (let ((other-args (remove gif val)))
+				   `(if ,(cadr gif) 
+					,(if (eqv? (caddr gif) 0) 0 `(* ,(caddr gif) ,@other-args))
+					,(if (eqv? (cadddr gif) 0) 0 `(* ,(cadddr gif) ,@other-args))))))
 
 			   ((any? (lambda (p)              ; collect * and / vals -> (/ (* ...) ...)
 				    (and (pair? p) 
@@ -4128,6 +4198,17 @@
 			      (negative? arg2)
 			      (not (number? arg1)))
 			 `(+ ,arg1 ,(abs arg2)))
+
+			((and (pair? arg2)                      ; (- x (if y 0 z)) -> (if y x (- x z))
+			      (eq? (car arg2) 'if)              ; (- x (if y z 0)) -> (if y (- x z) x)
+			      (= (length arg2) 4)
+			      (or (eqv? (caddr arg2) 0)
+				  (eqv? (cadddr arg2) 0)))
+			 (let ((true (caddr arg2))
+			       (false (cadddr arg2)))
+			   `(if ,(cadr arg2)
+				,(if (eqv? true 0) arg1 `(- ,arg1 ,true))
+				,(if (eqv? true 0) `(- ,arg1 ,false) arg1))))
 
 			(else `(- ,@args)))))
 	       (else 
@@ -18378,8 +18459,8 @@
 						 (cdr form)))
 				   
 				   (when (and (not (= line-number last-simplify-numeric-line-number))
-					    (hash-table-ref numeric-ops head)
-					    (proper-tree? form))
+					      (hash-table-ref numeric-ops head)
+					      (proper-tree? form))
 				     ;; head always is (car form) here
 				     (let ((val (simplify-numerics form env)))
 				       (if (not (equal-ignoring-constants? form val))
@@ -19240,17 +19321,11 @@
     #f))
 |#
 
-;;; run valgrind lg on f3
 ;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
 ;;; recur -> iter: if +n->do, if cdr->for-each|map [1068]
 ;;;   if test val ...+f(+arg), if test +f(+arg)...
 ;;; redundant checks across func? (if (pair? x) (f x)) where f=(if (pair? x)...) [12690]
 ;;;   also numerics/reversibles -- these can be in report-usage? [10100]
 ;;;   here -- all of arg the same, so only one comparison per par -- need to check first ref?
-;;; (* x x (if (zero? dist) 1 (/ 1.0 dist dist))) -> (* x (if... x (/ x dist dist)))? or (if... (* x x) (/ (* x x) dist dist))? [3821]
-;;;   perhaps restrict to 2 (other?) arg cases?
-;;;   in boolean case it would be (or (if x #f ...)...) or the like
-;;;   watch out for side-effect args (tap)
-;;; what about write-string|symbol|string-append+if[""], vector-append+if[#()] etc complex|make-rectangular+if[0 imag]
 ;;;
-;;; 160 25208 669801
+;;; 160 25208 670537
