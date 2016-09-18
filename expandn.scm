@@ -159,10 +159,10 @@
 						 (set! sample-0 sample-1)
 						 (set! sample-1 (* vol (granulate ingen)))))
 					   (set! ex-samp (+ ex-samp samps))))
-				     (if (= next-samp ex-samp) 
-					 (outa i (if (= next-samp ex-samp)
-						     sample-0
-						     (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0)))))))))))
+				     ;(if (= next-samp ex-samp)  ; something is wrong!  which of these if's is correct?
+				     (outa i (if (= next-samp ex-samp)
+						 sample-0
+						 (+ sample-0 (* (- next-samp ex-samp) (- sample-1 sample-0))))))))))
 			 
 			 (do ((i beg (+ i 1)))
 			     ((= i end))

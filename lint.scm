@@ -12777,6 +12777,35 @@
 			   (true-rest (and (pair? (caddr form)) (cdaddr form)))
 			   (false-op (and (= len 4) (pair? (cadddr form)) (car (cadddr form))))
 			   (false-rest (and (= len 4) (pair? (cadddr form)) (cdr (cadddr form)))))
+
+#|
+		       ;; these get a few hits
+		       (if (and (pair? true)
+				(not (hash-table-ref syntaces true-op)))
+			   (let search ((tree (cdr true)))
+			     (when (pair? tree)
+			       (let ((p (car tree)))
+				 (when (and (pair? p)
+					    (eq? (car p) 'if))
+				   (let ((nexpr (simplify-boolean (cadr p) (list expr) () env))
+					 (pexpr (simplify-boolean (cadr p) () () env)))
+				     (if (not (equal? nexpr pexpr))
+					 (format *stderr* "~A~%   ~A -> ~A~%" (truncated-list->string true) (cadr p) nexpr)))))
+			       (search (cdr tree)))))
+		       (if (and (pair? false)
+				(not (hash-table-ref syntaces false-op)))
+			   (let search ((tree (cdr false)))
+			     (when (pair? tree)
+			       (let ((p (car tree)))
+				 (when (and (pair? p)
+					    (eq? (car p) 'if))
+				   (let ((nexpr (simplify-boolean (cadr p) () (list expr) env))
+					 (pexpr (simplify-boolean (cadr p) () () env)))
+				     ;; need to compare against the unexpr'd form
+				     (if (not (equal? nexpr pexpr))
+					 (format *stderr* "~A~%   ~A -> ~A~%" (truncated-list->string true) (cadr p) nexpr)))))
+			       (search (cdr tree)))))
+|#				
 #|
 		       ;; this gets ca. 20 hits
 		       (when (and (pair? true)
@@ -15697,13 +15726,22 @@
 
 		 (unless named-let
 		   (if (and (null? (cadr form)) ; this can be fooled by macros that define things
-			    (eq? form lint-current-form) ; i.e. we're in a body?
 			    (not (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
-							    define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-							    load eval eval-string require)
+						    define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+						    load eval eval-string require unquote)
 						  (cddr form))))
 		       ;; (begin (let () (display x)) y)
-		       (lint-format "pointless let: ~A" caller (truncated-list->string form))
+		       (if (or (eq? form lint-current-form) ; i.e. we're in a body?
+			       (null? (cdddr form)))
+			   (lint-format "pointless let: ~A" caller (truncated-list->string form))
+			   (if (every? (lambda (p)
+					 (or (not (pair? p))
+					     (hash-table-ref built-in-functions (car p))
+					     (hash-table-ref syntaces (car p))
+					     (not (side-effect? p env))))
+				       (cddr form))
+			       (lint-format "let could be begin: ~A" caller 
+					    (truncated-lists->string form `(begin ,@(cddr form))))))
 		       (let ((body (cddr form)))
 			 (when (and (null? (cdr body))
 				    (pair? (car body)))
@@ -19327,5 +19365,7 @@
 ;;; redundant checks across func? (if (pair? x) (f x)) where f=(if (pair? x)...) [12690]
 ;;;   also numerics/reversibles -- these can be in report-usage? [10100]
 ;;;   here -- all of arg the same, so only one comparison per par -- need to check first ref?
+;;; if expr in arg list in true/false branch of if -- carry in the outer booleans
+;;; dlocsig needs tests!
 ;;;
 ;;; 160 25208 670537
