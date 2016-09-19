@@ -743,11 +743,14 @@
     
     ;; -------- types --------
 
+    (define (quoted-pair? x)
+      (and (eq? (car x) 'quote)
+	   (pair? (cdr x))
+	   (pair? (cadr x))))
+
     (define (quoted-undotted-pair? x)
       (and (pair? x)
-	   (eq? (car x) 'quote)
-	   (pair? (cdr x))
-	   (pair? (cadr x))
+	   (quoted-pair? x)
 	   (positive? (length (cadr x)))))
     
     (define (quoted-null? x)
@@ -2988,8 +2991,7 @@
 						    (set! eqfnc 'eq?)))
 					     (and (= (length p) 3)
 						  (pair? (caddr p))
-						  (eq? 'quote (caaddr p))
-						  (pair? (cadr (caddr p)))
+						  (quoted-pair? (caddr p))
 						  (set! vals (append (cadr (caddr p)) vals))))
 					    
 					    (else #f)))
@@ -3074,8 +3076,7 @@
 						       (and (equal? selector arg1)
 							    (pair? (cddr expr))
 							    (pair? (caddr expr))
-							    (eq? (caaddr expr) 'quote)
-							    (pair? (cadr (caddr expr)))
+							    (quoted-pair? (caddr expr))
 							    (not (any? (lambda (g)
 									 (memv g keys))
 								       (cadr (caddr expr))))
@@ -5391,8 +5392,7 @@
 			;; check for head mismatch with items
 			(when (pair? items)
 			  (when (or (eq? (car items) 'list)
-				    (and (eq? (car items) 'quote)
-					 (pair? (cadr items))))
+				    (quoted-pair? items))
 			    (let ((elements ((if (eq? (car items) 'quote) cadr cdr) items)))
 			      (let ((baddy #f))
 				(catch #t 
@@ -5535,8 +5535,7 @@
 								       (,head ,selector ,(caddr items))))))))))))
 		(when (and (memq head '(memq memv))
 			   (pair? items)
-			   (eq? (car items) 'quote)
-			   (pair? (cadr items)))
+			   (quoted-pair? items))
 		  (let ((nitems (length (cadr items))))
 
 		    (if (pair? selector)                        ; (memv (string-ref x 0) '(+ -)) -> #f etc
@@ -5616,9 +5615,7 @@
 			     (or (and (memq (car arg2) '(cons list #_{list}))
 				      (eq? head 'cdr))
 				 (memq (car arg2) '(error throw))
-				 (and (eq? (car arg2) 'quote)
-				      (pair? (cdr arg2))
-				      (pair? (cadr arg2)))))
+				 (quoted-pair? arg2)))
 			(lint-format "perhaps ~A" caller
 				     (lists->string form ; (cdr (or (assoc n oi) (list n y))) -> (cond ((assoc n oi) => cdr) (else (list y)))
 						    `(cond (,arg1 => ,head)
@@ -5628,9 +5625,7 @@
 								    ((error throw) arg2)
 								    (else `(list ,@(cddr arg2)))))))))))
 		(if (and (pair? arg)               ; (cdr '(a)) -> ()
-			 (eq? (car arg) 'quote)
-			 (pair? (cdr arg))
-			 (pair? (cadr arg))
+			 (quoted-pair? arg)
 			 (not (var-member head env)))
 		    (let ((val (checked-eval form)))
 		      (if (not (eq? val :checked-eval-error))
@@ -7008,6 +7003,8 @@
 			 
 			 (else (set! nargs (cons (car p) nargs))))))
 	     
+	       ;; (if ... "" ...) as arg split out got a couple dozen hits but we still need copy for the "" branch, so it's not much better
+
 	       (cond ((null? args)                 ; (string-append) -> ""
 		      (lint-format "perhaps ~A" caller (lists->string form "")))
 		     
@@ -7180,9 +7177,7 @@
 		       (let ((last (list-ref new-args (- len1 1))))
 			 ;; (define (f) (append '(1) '(2))) (define a (f)) (set! (a 1) 32) (f) -> '(1 32)
 			 (if (and (pair? last)
-				  (eq? (car last) 'quote)
-				  (pair? (cdr last))
-				  (pair? (cadr last)))
+				  (quoted-pair? last))
 			     (lint-format "append does not copy its last argument, so ~A is dangerous" caller form))))
 		   
 		   (case len1
@@ -7231,8 +7226,7 @@
 				    (eq? (car arg2) 'vector->list))
 			       (lint-format "perhaps ~A" caller (lists->string form `(vector->list (append ,(cadr arg1) ,(cadr arg2))))))
 			      
-			      ((and (eq? (car arg1) 'quote)            ; (append '(x) y) -> (cons 'x y)
-				    (pair? (cadr arg1))
+			      ((and (quoted-pair? arg1)                 ; (append '(x) y) -> (cons 'x y)
 				    (null? (cdadr arg1)))
 			       (lint-format "perhaps ~A" caller 
 					    (lists->string form
@@ -12441,9 +12435,7 @@
 				     (let ((pargs (args->proper-list outer-args)))
 				       (for-each (lambda (p)
 						   (if (and (pair? p)
-							    (eq? (car p) 'quote)
-							    (pair? (cdr p))
-							    (pair? (cadr p))
+							    (quoted-pair? p)
 							    (tree-set-member pargs (cadr p)))
 						       (lint-format "missing comma? ~A" caller form)))
 						 (cdr body))))
@@ -18795,8 +18787,7 @@
 		     (let ((reported-lines ())
 			   (reported #f))
 		       (for-each (lambda (rp)
-				   (let ((score (car rp))
-					 (size (cadr rp))
+				   (let ((size (cadr rp))
 					 (keyval (caddr rp)))
 				     (let ((val (cdr keyval)))
 				       (unless (and (pair? (val 1))
@@ -19365,7 +19356,5 @@
 ;;; redundant checks across func? (if (pair? x) (f x)) where f=(if (pair? x)...) [12690]
 ;;;   also numerics/reversibles -- these can be in report-usage? [10100]
 ;;;   here -- all of arg the same, so only one comparison per par -- need to check first ref?
-;;; if expr in arg list in true/false branch of if -- carry in the outer booleans
-;;; dlocsig needs tests!
 ;;;
 ;;; 160 25208 670537

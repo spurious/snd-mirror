@@ -75094,6 +75094,7 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *
+ * dlocsig tests
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
  * musglyphs gtk version is broken (probably cairo_t confusion)
