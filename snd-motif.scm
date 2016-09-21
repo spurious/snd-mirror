@@ -2310,8 +2310,10 @@
 							     (let* ((search-str (XmTextFieldGetString find-text))
 								    (len (length search-str))
 								    (pos (XmTextFindString listener-text
-											   (+ (XmTextGetCursorPosition listener-text)
-											      (if find-new 0 (if find-forward 1 -1)))
+											   (if find-new
+											       (XmTextGetCursorPosition listener-text)
+											       (+ (XmTextGetCursorPosition listener-text)
+												  (if find-forward 1 -1)))
 											   search-str
 											   (if find-forward XmTEXT_FORWARD XmTEXT_BACKWARD))))
 							       (if (not pos)

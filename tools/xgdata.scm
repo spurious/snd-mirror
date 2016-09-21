@@ -9512,3 +9512,7 @@
 (CFNC-3.22 "gboolean gtk_scrolled_window_get_propagate_natural_width GtkScrolledWindow* scrolled_window")
 (CFNC-3.22 "void gtk_scrolled_window_set_propagate_natural_height GtkScrolledWindow* scrolled_window gboolean propagate")
 (CFNC-3.22 "gboolean gtk_scrolled_window_get_propagate_natural_height GtkScrolledWindow* scrolled_window")
+
+
+;;; 3.22.0: no changes
+
