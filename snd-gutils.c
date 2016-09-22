@@ -1,5 +1,15 @@
 #include "snd.h"
 
+/* TODO: gtk 3.21: snd-gutils.c:11:3: warning: 'gdk_cairo_create' is deprecated: Use 'gdk_window_begin_draw_frame() and gdk_drawing_context_get_cairo_context()' instead
+ *   also snd-prefs.c, xg.c (*.scm??)
+ *   also g_make_cairo in snd-draw.c -> make-cairo used everywhere: draw.scm, musglyphs snd-test xm-enved etc
+ * here is a first stab:
+ */
+
+#if GTK_CHECK_VERSION(3, 22, 0)
+  static GdkWindow *last_window = NULL;
+  static GdkDrawingContext *last_context = NULL;
+#endif
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 cairo_t *make_cairo(GdkWindow *win)
@@ -8,22 +18,23 @@ cairo_t *make_cairo(GdkDrawable *win)
 #endif
 {
   ss->line_width = -1.0;
+#if GTK_CHECK_VERSION(3, 22, 0)
+  last_window = win;
+  last_context = gdk_window_begin_draw_frame(win, gdk_window_get_visible_region(win));
+  return(gdk_drawing_context_get_cairo_context(last_context));
+#else
   return(gdk_cairo_create(win));
+#endif
 }
-
-/* TODO: gtk 3.21: snd-gutils.c:11:3: warning: 'gdk_cairo_create' is deprecated: Use 'gdk_window_begin_draw_frame() and gdk_drawing_context_get_cairo_context()' instead
- *   also snd-prefs.c, xg.c (*.scm??)
- * Debian crashed and can't be rebuilt, so I can't test anything in the new gtk
- * they say use a cairo_surface if the cairo_create was not just a response to a expose event, and they deprecated GDK_EXPOSURE_MASK etc
- * this is a nightmare... snd-gfile|mix|snd|gdraw|gprefs + xg, snd-gtk.scm, and make_cairo is used everywhere -- every graph!!
- * cairo_surface in snd-chn? -- this is commented out currently -- it never worked (segfaults etc)
- * also g_make_cairo in snd-draw.c -> make-cairo used everywhere: draw.scm, musglyphs snd-test xm-enved etc
- */
 
 void free_cairo(cairo_t *cr)
 {
   ss->line_width = -1.0;
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gdk_window_end_draw_frame(last_window, last_context);
+#else
   cairo_destroy(cr);
+#endif
 }
 
 

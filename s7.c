@@ -3365,7 +3365,7 @@ unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 
   loc = sc->gpofl[sc->gpofl_loc--];
 #if DEBUGGING
-  if ((loc < 0) || (loc >= sc->protected_objects_size))
+  if (loc >= sc->protected_objects_size)
     fprintf(stderr, "sc->gpofl loc: %u (%d)\n", loc, sc->protected_objects_size);
   if (vector_element(sc->protected_objects, loc) != sc->gc_nil)
     fprintf(stderr, "protected object at %u about to be clobbered? %s\n", loc, DISPLAY(vector_element(sc->protected_objects, loc)));
@@ -49232,10 +49232,10 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
        *    these need to be read in order into the current reader lists (we'll assume OP_READ_LIST is next in the stack.
        *    and that it will be expecting the next arg entry in sc->value).
        */
-      pop_stack(sc);
       top -= 4;
       for (x = args; is_not_null(cdr(x)); x = cdr(x))
 	stack_args(sc->stack, top) = cons(sc, car(x), stack_args(sc->stack, top));
+      pop_stack(sc);               /* need GC protection in loop above, so do this afterwards */
       return(car(x));              /* sc->value from OP_READ_LIST point of view */
       
     default:
@@ -54458,12 +54458,17 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
   if (is_pair(e)) sc->w = e;
   /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
 
-  for (p = cdr(expr); is_pair(p); p = cdr(p))
-    {
-      if (p == body) orig_e = e;
-      if ((is_pair(car(p))) && (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
-	optimize_expression(sc, car(p), hop, orig_e);
-    }
+  {
+    int gc_loc;
+    gc_loc = s7_gc_protect(sc, e);
+    for (p = cdr(expr); is_pair(p); p = cdr(p))
+      {
+	if (p == body) orig_e = e;
+	if ((is_pair(car(p))) && (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
+	  optimize_expression(sc, car(p), hop, orig_e);
+      }
+    s7_gc_unprotect_at(sc, gc_loc);
+  }
 
   if ((hop == 1) &&
       (symbol_id(car(expr)) == 0))
@@ -56315,13 +56320,17 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 
   if (len > 0)  /* i.e. not circular */
     {
-      s7_pointer lst;
-
       clear_syms_in_list(sc);
       if (is_symbol(func))
-	lst = list_1(sc, add_sym_to_list(sc, func));
-      else lst = sc->nil;
-      optimize(sc, body, 1, collect_collisions_star(sc, args, lst));
+ 	{
+ 	  s7_pointer lst;
+ 	  int gc_loc;
+ 	  lst = list_1(sc, add_sym_to_list(sc, func));
+ 	  gc_loc = s7_gc_protect(sc, lst);
+ 	  optimize(sc, body, 1, collect_collisions_star(sc, args, lst));
+ 	  s7_gc_unprotect_at(sc, gc_loc);
+ 	}
+      else optimize(sc, body, 1, collect_collisions_star(sc, args, sc->nil));
 
       /* if the body is safe, we can optimize the calling sequence */
       if ((is_proper_list(sc, args)) &&
@@ -75072,7 +75081,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176  4172
  * titer         |      |      | 7503 | 5218  5235
  * thash         |      |      | 50.7 | 8491  8496
- * lg            |      |      |      |       208.
+ * lg            |      |      |      |       211.
  *               |      |      |      |       
  * tgen          |   71 | 70.6 | 38.0 | 12.0  11.8
  * tall       90 |   43 | 14.5 | 12.7 | 15.0  14.9

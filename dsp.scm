@@ -1821,7 +1821,9 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 
 (define harmonicizer 
   (let ((documentation "(harmonicizer freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos) splits out each harmonic \
-and replaces it with the spectrum given in coeffs"))
+and replaces it with the spectrum given in coeffs")
+	(startup 40))
+	
     (lambda* (freq coeffs pairs (order 40) (bw 50.0) (beg 0) dur snd chn edpos)
       (let ((bands (make-vector pairs))
 	    (pcoeffs (partials->polynomial coeffs))
@@ -1829,7 +1831,6 @@ and replaces it with the spectrum given in coeffs"))
 	    (peaks2 (make-vector pairs))
 	    (flt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.9)))
 	    (old-mx (maxamp))
-	    (startup 40)
 	    (len (- (or dur (framples snd chn edpos)) beg)))
 	(let ((summer (make-float-vector len))
 	      (indata (channel->float-vector beg len snd chn edpos)))

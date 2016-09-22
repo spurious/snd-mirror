@@ -1355,8 +1355,9 @@
 			  ((> j L1))
 			(let ((c1 (+ (distance i (- j 1)) 1))
 			      (c2 (+ (distance (- i 1) j) 1))
-			      (c3 (+ (distance (- i 1) (- j 1)) 
-				     (if (char=? (s2 (- i 1)) (s1 (- j 1))) 0 1))))
+			      (c3 (if (char=? (s2 (- i 1)) (s1 (- j 1)))
+				      (distance (- i 1) (- j 1))
+				      (+ (distance (- i 1) (- j 1)) 1))))
 			  (set! (distance i j) (min c1 c2 c3)))))
 		    (distance L2 L1))))))
 

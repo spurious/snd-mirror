@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [370]
-;;;  test 1: defaults                           [1025]
-;;;  test 2: headers                            [1392]
-;;;  test 3: variables                          [1706]
-;;;  test 4: sndlib                             [2259]
-;;;  test 5: simple overall checks              [3994]
-;;;  test 6: float-vectors                      [8615]
-;;;  test 7: colors                             [8875]
-;;;  test 8: clm                                [9347]
-;;;  test 9: mix                                [20976]
-;;;  test 10: marks                             [22694]
-;;;  test 11: dialogs                           [23617]
-;;;  test 12: extensions                        [23778]
-;;;  test 13: menus, edit lists, hooks, etc     [24033]
-;;;  test 14: all together now                  [25290]
-;;;  test 15: chan-local vars                   [26097]
-;;;  test 16: regularized funcs                 [27761]
-;;;  test 17: dialogs and graphics              [31239]
-;;;  test 18: save and restore                  [31344]
-;;;  test 19: transforms                        [32931]
-;;;  test 20: new stuff                         [34966]
-;;;  test 21: optimizer                         [36142]
-;;;  test 22: with-sound                        [38472]
-;;;  test 23: X/Xt/Xm                           [41232]
-;;;  test 24: GL                                [44803]
-;;;  test 25: errors                            [44924]
-;;;  test 26: s7                                [46314]
-;;;  test all done                              [46450]
-;;;  test the end                               [46622]
+;;;  test 0: constants                          [376]
+;;;  test 1: defaults                           [1031]
+;;;  test 2: headers                            [1398]
+;;;  test 3: variables                          [1712]
+;;;  test 4: sndlib                             [2265]
+;;;  test 5: simple overall checks              [3996]
+;;;  test 6: float-vectors                      [8617]
+;;;  test 7: colors                             [8877]
+;;;  test 8: clm                                [9349]
+;;;  test 9: mix                                [20972]
+;;;  test 10: marks                             [22690]
+;;;  test 11: dialogs                           [23609]
+;;;  test 12: extensions                        [23770]
+;;;  test 13: menus, edit lists, hooks, etc     [24025]
+;;;  test 14: all together now                  [25282]
+;;;  test 15: chan-local vars                   [26089]
+;;;  test 16: regularized funcs                 [27749]
+;;;  test 17: dialogs and graphics              [31222]
+;;;  test 18: save and restore                  [31327]
+;;;  test 19: transforms                        [32905]
+;;;  test 20: new stuff                         [34940]
+;;;  test 21: optimizer                         [36114]
+;;;  test 22: with-sound                        [38444]
+;;;  test 23: X/Xt/Xm                           [41204]
+;;;  test 24: GL                                [44775]
+;;;  test 25: errors                            [44896]
+;;;  test 26: s7                                [46286]
+;;;  test all done                              [46422]
+;;;  test the end                               [46594]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -209,6 +209,12 @@
 
 (define (within-.01? b) (< (abs (- 1.0 b)) .01))
 (define (very-close? a b) (< (abs (- a b)) .01))
+
+(define (clean-up-sound ind)
+   (let ((new-file-name (file-name ind)))
+     (close-sound ind)
+     (if (file-exists? new-file-name)
+	 (delete-file new-file-name))))
 
 (define dismiss-all-dialogs
   (let ((documentation "(dismiss-all-dialogs) hides all dialogs"))
@@ -3850,15 +3856,11 @@
   (let ((ind (new-sound :size 0)))
     (if (not (= (framples ind) 0)) (snd-display ";new-sound :size 0 -> ~A framples" (framples ind)))
     (if (fneq (sample 0) 0.0) (snd-display ";new-sound :size 0 sample 0: ~A" (sample 0)))
-    (let ((new-file-name (file-name ind)))
-      (close-sound ind)
-      (if (file-exists? new-file-name) (delete-file new-file-name))))
+    (clean-up-sound ind))
   (let ((ind (new-sound :size 1)))
     (if (not (= (framples ind) 1)) (snd-display ";new-sound :size 1 -> ~A framples" (framples ind)))
     (if (fneq (sample 0) 0.0) (snd-display ";new-sound :size 1 sample 0: ~A" (sample 0)))
-    (let ((new-file-name (file-name ind)))
-      (close-sound ind)
-      (if (file-exists? new-file-name) (delete-file new-file-name))))
+    (clean-up-sound ind))
   (let ((tag (catch #t
 	       (lambda () (new-sound :size -1))
 	       (lambda args (car args)))))
@@ -15592,9 +15594,7 @@ EDITS: 2
 		  (fneq (vals 10) 1.0))
 	      (snd-display ";window-samples: ~A" vals))))
       (revert-sound ind)
-      (let ((new-file-name (file-name ind)))
-	(close-sound ind)
-	(if (file-exists? new-file-name) (delete-file new-file-name))))
+      (clean-up-sound ind))
     
     (let ((gen (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1))))
 	  (v0 (make-float-vector 10))
@@ -16352,9 +16352,7 @@ EDITS: 2
       (if (> (edit-position ind 0) 2) (snd-display ";map-channel pad edits (3): ~A" (edit-position ind 0)))
       (revert-sound ind)
       (if (scan-channel (lambda (y) #f) 30 10) (snd-display ";scan-channel past end?"))
-      (let ((new-file-name (file-name ind)))
-	(close-sound ind)
-	(if (file-exists? new-file-name) (delete-file new-file-name))))
+      (clean-up-sound ind))
     
     (let ((ind (new-sound :size 1000))
 	  (gen (make-wave-train 1000.0 :wave (float-vector 0.0 .1 .2 .3 .4 .5 .6))))
@@ -17188,9 +17186,7 @@ EDITS: 2
 	(map-channel (lambda (y) (any-random 1.0 g))))
       (let ((g (pareto-distribution 1.0))) 
 	(map-channel (lambda (y) (any-random 1.0 g))))
-      (let ((new-file-name (file-name ind)))
-	(close-sound ind)
-	(if (file-exists? new-file-name) (delete-file new-file-name))))
+      (clean-up-sound ind))
     
     (let ((v1 (inverse-integrate '(-1 1 1 1))))
       (if (fneq (v1 4) -0.984)
@@ -23555,9 +23551,7 @@ EDITS: 2
     (add-mark 567 ind 0 #f 1)
     (hook-push output-comment-hook (lambda (hook) (set! (hook 'result) (marks->string (selected-sound)))))
     (save-sound-as "tst.snd")
-    (let ((new-file-name (file-name ind)))
-      (close-sound ind)
-      (if (file-exists? new-file-name) (delete-file new-file-name))))
+    (clean-up-sound ind))
   
   (let ((ind (open-sound "tst.snd")))
     (set! (hook-functions output-comment-hook) ())
@@ -23608,9 +23602,7 @@ EDITS: 2
 	  (close-sound ind1)
 	  (delete-file "mark-2.snd")))
     (if (file-exists? "mark-3.snd") (snd-display ";mark-explode wrote too many files?"))
-    (let ((name (file-name ind)))
-      (close-sound ind)
-      (if (file-exists? name) (delete-file name)))))
+    (clean-up-sound ind)))
 
 
 
@@ -26525,9 +26517,7 @@ EDITS: 2
 	(let ((vals (channel->float-vector 0 20 ind1)))
 	  (if (not (mus-arrays-equal? vals (float-vector 0.95 0.90 0.85 0.80 0.75 0.70 0.65 0.60 0.55 0.50 0.45 0.40 0.35 0.30 0.25 0.20 0.15 0.10 0.05 0.00)))
 	      (snd-display ";sound-via-sound: ~A" vals)))
-	(let ((new-file-name (file-name ind2)))
-	  (close-sound ind2)
-	  (if (file-exists? new-file-name) (delete-file new-file-name)))
+	(clean-up-sound ind2)
 	(revert-sound ind1)
 	(let ((val -.5)) (map-channel (lambda (y) (set! val (+ val .05)))))
 	(let ((val (scan-channel (zero+))))
@@ -26541,9 +26531,7 @@ EDITS: 2
 	  (if (not (eqv? val 9))
 	      (snd-display ";search-for-click: ~A" val)))
 	(if (not (= (find-click 0) 8)) (snd-display ";find-click: ~A" (find-click 0)))
-	(let ((new-file-name (file-name ind1)))
-	  (close-sound ind1)
-	  (if (file-exists? new-file-name) (delete-file new-file-name))))
+	(clean-up-sound ind1))
       
       (let ((id (open-sound "oboe.snd")))
 	(let ((fr (framples id 0))
@@ -29267,10 +29255,7 @@ EDITS: 2
 		 (if (not (mus-arrays-equal? vals (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 1.000 1.000 1.000)))
 		     (snd-display "; 5 vals: ~A" vals))))
 	     (undo 2))
-	   (let ((file (file-name i1)))
-	     (close-sound i1)
-	     (if (file-exists? file) (delete-file file)))
-	   ))
+	   (clean-up-sound i1)))
        '(10 10000))
       
       (let ((ind (new-sound "fmv.snd" 1 22050 mus-ldouble mus-next "envd edit trees")))
@@ -29539,9 +29524,7 @@ EDITS: 2
 	       (set! vals (channel->float-vector 0 10 i2 1))
 	       (if (not (mus-arrays-equal? vals (float-vector 0.0 (/ 1.111 dur) (/ 2.222 dur) 1 1 1 (/ 6.66  dur) (/ 7.77  dur) (/ 8.88  dur) (/ 10.0 dur))))
 		   (snd-display "; 2 1 vals: ~A" vals))))
-	   (let ((file (file-name i1)))
-	     (close-sound i1)
-	     (if (file-exists? file) (delete-file file)))
+	   (clean-up-sound i1)
 	   (close-sound i2)
 	   ))
        '(10 10000))
@@ -32526,10 +32509,7 @@ EDITS: 1
 	(if (and (ffneq (maxamp) .142) (ffneq (maxamp) .155)) (snd-display ";cross fade maxamp: ~A" (maxamp)))
 	(revert-sound)
 	(float-vector->channel (with-sound ((make-float-vector 44100)) (dissolve-fade 0 2 1.0 "oboe.snd" "trumpet.snd" 512 2 2 #f)))
-	
-	(let ((new-file-name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? new-file-name) (delete-file new-file-name))))
+	(clean-up-sound ind))	
       
       (let ((vals (apply float-vector (rms-envelope "oboe.snd" :rfreq 4))))
 	(if (not (mus-arrays-equal? vals (float-vector 0.0 0.0430 0.25 0.0642 0.5 0.0695 0.75 0.0722 1.0 0.0738 1.25 0.0713 
@@ -32575,9 +32555,7 @@ EDITS: 1
 		       (mus-arrays-equal? vals (float-vector 0.375 0.393 0.410 0.427 0.442 0.457 0.469 0.480 0.489 0.495 0.499 0.500 
 						  0.499 0.495 0.489 0.480 0.470 0.457 0.443 0.428))))
 	      (snd-display ";no vibro? ~A" vals)))
-	(let ((new-file-name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? new-file-name) (delete-file new-file-name))))
+	(clean-up-sound ind))
       
       (let ((ind (open-sound "pistol.snd")))
 	(transposed-echo 1.1 .95 .25)
@@ -32636,9 +32614,7 @@ EDITS: 1
 			 (sample 0 ind 3) (sample 10 ind 0) (sample 20 ind 1) (sample 30 ind 2)
 			 (sample 0 ind 0) (sample 10 ind 1) (sample 20 ind 2) (sample 30 ind 3)))
 	(do ((i 0 (+ i 1))) ((= i 4)) (set! (edit-position ind i) 1))
-	(let ((new-file-name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? new-file-name) (delete-file new-file-name))))
+	(clean-up-sound ind))
       
       (let ((ind (new-sound :channels 8 :size 10 :comment "new-sound for scramble-channels")))
 	(do ((i 0 (+ i 1))) ((= i 8)) (set! (sample i ind i) .5))
@@ -32654,9 +32630,7 @@ EDITS: 1
 	    (snd-display ";scramble-channels 8 ways: ~A"
 			 (list (sample 1 ind 0) (sample 2 ind 1) (sample 3 ind 2) (sample 4 ind 3)
 			       (sample 7 ind 4) (sample 6 ind 5) (sample 5 ind 6) (sample 0 ind 7))))
-	(let ((new-file-name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? new-file-name) (delete-file new-file-name))))
+	(clean-up-sound ind))
       
       ;; ---- *.scm
       (when (and (defined? 'effects-squelch-channel)
@@ -35193,9 +35167,7 @@ EDITS: 1
 					       0.803 0.830 0.855 0.875 0.893 0.909 0.923 0.934 0.945 0.953 0.961 
 					       0.968 0.973 0.978 0.982 0.986 0.987 0.990 0.992 0.995 0.997 0.998))))
 	      (snd-display ";power-env .01: ~A" (channel->float-vector))))
-	(let ((name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? name) (delete-file name)))))
+	(clean-up-sound ind)))
     
     (let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 50)))
       (set! (sample 3) 1.0)
