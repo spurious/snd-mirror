@@ -993,7 +993,7 @@ struct s7_scheme {
              let_set_symbol, list_ref_symbol, list_set_symbol, list_symbol, list_tail_symbol, load_path_symbol,
              load_symbol, log_symbol, logand_symbol, logbit_symbol, logior_symbol, lognot_symbol, logxor_symbol, lt_symbol,
              magnitude_symbol, make_byte_vector_symbol, make_float_vector_symbol, make_hash_table_symbol, make_int_vector_symbol,
-             make_iterator_symbol, make_keyword_symbol, make_list_symbol, make_shared_vector_symbol, make_string_symbol,
+             make_iterator_symbol, string_to_keyword_symbol, make_list_symbol, make_shared_vector_symbol, make_string_symbol,
              make_vector_symbol, map_symbol, max_symbol, member_symbol, memq_symbol, memv_symbol, min_symbol, modulo_symbol,
              multiply_symbol, 
              newline_symbol, not_symbol, number_to_string_symbol, numerator_symbol, 
@@ -7614,7 +7614,7 @@ static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------------------------------- make-keyword -------------------------------- */
+/* -------------------------------- string->keyword -------------------------------- */
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 {
   s7_pointer sym;
@@ -7631,24 +7631,20 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 }
 
 
-static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_to_keyword(s7_scheme *sc, s7_pointer args)
 {
-  /* this should be keyword, not make-keyword, but the latter is in use elsewhere, and in s7.h
-   *   (string->)symbol is s7_make_symbol.  string->symbol is redundant.  
-   *   Either use symbol/keyword/gensym, or string->symbol/string->keyword/string->gensym?
-   */
-  #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
-  #define Q_make_keyword s7_make_signature(sc, 2, sc->is_keyword_symbol, sc->is_string_symbol)
+  #define H_string_to_keyword "(string->keyword str) prepends ':' to str and defines that as a keyword"
+  #define Q_string_to_keyword s7_make_signature(sc, 2, sc->is_keyword_symbol, sc->is_string_symbol)
 
   if (!is_string(car(args)))
-    method_or_bust(sc, car(args), sc->make_keyword_symbol, args, T_STRING, 0);
+    method_or_bust(sc, car(args), sc->string_to_keyword_symbol, args, T_STRING, 0);
   return(s7_make_keyword(sc, string_value(car(args))));
 }
 
-static s7_pointer c_make_keyword(s7_scheme *sc, s7_pointer x)
+static s7_pointer c_string_to_keyword(s7_scheme *sc, s7_pointer x)
 {
   if (!is_string(x))
-    method_or_bust(sc, x, sc->make_keyword_symbol, list_1(sc, x), T_STRING, 0);
+    method_or_bust(sc, x, sc->string_to_keyword_symbol, list_1(sc, x), T_STRING, 0);
   return(s7_make_keyword(sc, string_value(x)));
 }
 
@@ -9279,7 +9275,7 @@ bool_with_method(is_list, opt_is_list, sc->is_list_symbol)
 bool_with_method(iterator_is_at_end, iterator_is_at_end, sc->iterator_is_at_end_symbol)
 bool_with_method(is_random_state, is_random_state, sc->is_random_state_symbol)
 
-PF_TO_PF(make_keyword, c_make_keyword)
+PF_TO_PF(string_to_keyword, c_string_to_keyword)
 PF_TO_PF(keyword_to_symbol, c_keyword_to_symbol)
 PF_TO_PF(symbol_to_keyword, c_symbol_to_keyword)
 
@@ -32044,7 +32040,10 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       break;
 
     case T_UNIQUE:
-      /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? */
+      /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? '#<eof> or (begin #<eof>) as below
+       * but this is silly -- to fool read, the #<eof> has to be all by itself at the top-level!
+       * and the read of #<eof> does not affect the port, so if you know it's there, just ignore #<eof> and continue reading.
+       */
       if ((use_write == USE_READABLE_WRITE) &&
 	  (obj == sc->eof_object))
 	port_write_string(port)(sc, "(begin #<eof>)", 14, port);
@@ -52298,7 +52297,7 @@ static void init_choosers(s7_scheme *sc)
   s7_pf_set_function(slot_value(global_slot(sc->symbol_symbol)), symbol_pf);
   s7_pf_set_function(slot_value(global_slot(sc->string_to_symbol_symbol)), string_to_symbol_pf);
   s7_gf_set_function(slot_value(global_slot(sc->symbol_to_string_symbol)), symbol_to_string_pf);
-  s7_pf_set_function(slot_value(global_slot(sc->make_keyword_symbol)), make_keyword_pf);
+  s7_pf_set_function(slot_value(global_slot(sc->string_to_keyword_symbol)), string_to_keyword_pf);
   s7_pf_set_function(slot_value(global_slot(sc->keyword_to_symbol_symbol)), keyword_to_symbol_pf);
   s7_pf_set_function(slot_value(global_slot(sc->symbol_to_keyword_symbol)), symbol_to_keyword_pf);
   s7_pf_set_function(slot_value(global_slot(sc->symbol_to_value_symbol)), symbol_to_value_pf);
@@ -54460,7 +54459,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 
   {
     int gc_loc;
-    gc_loc = s7_gc_protect(sc, e);
+    gc_loc = s7_gc_protect(sc, e); /* perhaps use sc->temp9 here */
     for (p = cdr(expr); is_pair(p); p = cdr(p))
       {
 	if (p == body) orig_e = e;
@@ -56326,7 +56325,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
  	  s7_pointer lst;
  	  int gc_loc;
  	  lst = list_1(sc, add_sym_to_list(sc, func));
- 	  gc_loc = s7_gc_protect(sc, lst);
+ 	  gc_loc = s7_gc_protect(sc, lst); /* perhaps use sc->temp10 here */
  	  optimize(sc, body, 1, collect_collisions_star(sc, args, lst));
  	  s7_gc_unprotect_at(sc, gc_loc);
  	}
@@ -74210,7 +74209,7 @@ s7_scheme *s7_init(void)
   s7_typed_dilambda(sc, "symbol-access", g_symbol_access, 1, 1, g_symbol_set_access,	2, 1, H_symbol_access, Q_symbol_access, NULL);
   sc->symbol_access_symbol = make_symbol(sc, "symbol-access");
 
-  sc->make_keyword_symbol =          defun("make-keyword",	make_keyword,		1, 0, false);
+  sc->string_to_keyword_symbol =     defun("string->keyword",	string_to_keyword,      1, 0, false);
   sc->symbol_to_keyword_symbol =     defun("symbol->keyword",	symbol_to_keyword,	1, 0, false);
   sc->keyword_to_symbol_symbol =     defun("keyword->symbol",	keyword_to_symbol,	1, 0, false);
 
@@ -74991,13 +74990,14 @@ s7_scheme *s7_init(void)
 
 
 #if (!DISABLE_DEPRECATED)
-  s7_eval_c_string(sc, "(begin                                         \n\
-                          (define global-environment         rootlet)  \n\
-                          (define current-environment        curlet)   \n\
-                          (define make-procedure-with-setter dilambda) \n\
-                          (define procedure-with-setter?     dilambda?)\n\
-                          (define make-random-state          random-state) \n\
-                          (define make-complex               complex) \n\
+  s7_eval_c_string(sc, "(begin                                                    \n\
+                          (define global-environment         rootlet)             \n\
+                          (define current-environment        curlet)              \n\
+                          (define make-procedure-with-setter dilambda)            \n\
+                          (define procedure-with-setter?     dilambda?)           \n\
+                          (define make-random-state          random-state)        \n\
+                          (define make-complex               complex)             \n\
+                          (define make-keyword               string->keyword)     \n\
                           (define ->byte-vector              string->byte-vector) \n\
                           (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
@@ -75093,8 +75093,8 @@ int main(int argc, char **argv)
  *
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
- * should byte-vector-ref|set! be added (string-set+type check)? should vector-ref|set! work with byte-vectors?
- * with-let+lambda to increase opt?
+ * with-let+lambda to increase opt? glosure for example
+ * perhaps keyword paralleling symbol
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75111,5 +75111,4 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
- * see snd-gutils for cairo troubles coming with gtk 3.22
  */

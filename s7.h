@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.10"
-#define S7_DATE "9-Aug-16"
+#define S7_VERSION "4.11"
+#define S7_DATE "23-Sep-16"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -779,6 +779,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 23-Sep:    make-keyword -> string->keyword.
  * 9-Aug:     s7_varlet.
  * 29-Jul:    s7_define_unsafe_typed_function.
  * 30-May:    symbol takes any number of args.  make-vector no longer takes an optional fourth argument.

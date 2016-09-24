@@ -2991,32 +2991,18 @@
 			       (if initial-delay 0.0 min-delay))))
 	    ;; sample at which signal first arrives to the listener
 	    (start (+ run-beg (dist->samples (- first-dist (if initial-delay 0.0 min-dist)))))
-	    ;; unity-gain gain scalers
-	    (unity-gain (* scaler
-			   (if (number? unity-gain-dist)
-			       (expt unity-gain-dist direct-power)
-			       (if unity-gain-dist
-				   1.0
-				   (expt min-dist-unity direct-power)))))
-	    (unity-rev-gain (* scaler
-			       (if (number? unity-gain-dist)
-				   (expt unity-gain-dist reverb-power)
-				   (if unity-gain-dist ; defaults to #f above
-				       1.0
-				       (expt min-dist-unity reverb-power)))))
-	    ;; unity-gain ambisonics gain scalers
-	    (amb-unity-gain (* scaler 
-			       (if (number? unity-gain-dist)
-				   (expt unity-gain-dist direct-power)
-				   (if unity-gain-dist
-				       1.0
-				       (expt min-dist-unity direct-power)))))
-	    (amb-unity-rev-gain (* scaler
-				   (if (number? unity-gain-dist)
-				       (expt unity-gain-dist reverb-power)
-				       (if unity-gain-dist ; defaults to #f above
-					   1.0
-					   (expt min-dist-unity reverb-power))))))
+	    (direct-gain (* scaler
+			    (if (number? unity-gain-dist)
+				(expt unity-gain-dist direct-power)
+				(if unity-gain-dist
+				    1.0
+				    (expt min-dist-unity direct-power)))))
+	    (reverb-gain (* scaler 
+			    (if (number? unity-gain-dist)
+				(expt unity-gain-dist reverb-power)
+				(if unity-gain-dist ; defaults to #f above
+				    1.0
+				    (expt min-dist-unity reverb-power))))))
       
 	;; XXX hack!! this should be intercepted in the calling code, no 0 duration please...
 	(if (<= real-dur 0.0)
@@ -3052,7 +3038,7 @@
 			  (i 0 (+ i 1)))
 			 ((= i out-channels) v)
 		       (set! (v i) (make-env (reverse (channel-gains i))
-					     :scaler (if (= render-using ambisonics) amb-unity-gain unity-gain)
+					     :scaler direct-gain
 					     :duration real-dur)))
 		     ;; :rev-gains 
 		     (and (> rev-channels 0)
@@ -3060,7 +3046,7 @@
 			       (i 0 (+ i 1)))
 			      ((= i rev-channels) v)
 			    (set! (v i) (make-env (reverse (channel-rev-gains i))
-						  :scaler (if (= render-using ambisonics) amb-unity-rev-gain unity-rev-gain)
+						  :scaler reverb-gain
 						  :duration real-dur))))
 		     ;; :out-map 
 		     (if speakers 

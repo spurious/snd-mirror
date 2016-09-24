@@ -112,7 +112,7 @@
 	      keyword->symbol keyword?
 	      lambda lambda* lcm let->list length let let* let-ref let? letrec letrec* list list->string list->vector list-ref
 	      list-tail list? log logand logbit? logior lognot logxor
-	      macro? magnitude make-byte-vector make-float-vector make-int-vector make-hash-table make-hook make-iterator make-keyword make-list make-polar
+	      macro? magnitude make-byte-vector make-float-vector make-int-vector make-hash-table make-hook make-iterator string->keyword make-list make-polar
 	      make-rectangular make-shared-vector make-string make-vector map max member memq memv min modulo morally-equal?
 	      nan? negative? not null? number->string number? numerator
 	      object->string odd? openlet? or outlet output-port? owlet
@@ -143,7 +143,7 @@
 			         char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
 			         continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
 			         symbol->string string->symbol symbol symbol->value symbol->dynamic-value symbol-access 
-			         make-keyword symbol->keyword keyword->symbol outlet rootlet curlet unlet sublet varlet 
+			         string->keyword symbol->keyword keyword->symbol outlet rootlet curlet unlet sublet varlet 
 			         cutlet inlet owlet coverlet openlet let-ref let-set! make-iterator iterate iterator-sequence
 			         iterator-at-end? provided? provide defined? c-pointer port-line-number port-filename 
 			         pair-line-number pair-filename port-closed? current-input-port current-output-port 
@@ -6594,7 +6594,6 @@
 		      (hash-special f sp-vector-ref))
 		    '(vector-ref list-ref hash-table-ref let-ref int-vector-ref float-vector-ref)))
 	
-	
 	;; ---------------- vector-set! etc ----------------
 	(let ()
 	  (define (sp-vector-set! caller head form env)
@@ -7068,9 +7067,9 @@
 					    (lists->string form `(- (char->integer ,(cadr arg)) (char->integer #\0)))))))
 		      
 		      ((symbol->keyword)
-		       (if (and (pair? arg)             ;  (symbol->keyword (string->symbol x)) -> (make-keyword x)
+		       (if (and (pair? arg)             ;  (symbol->keyword (string->symbol x)) -> (string->keyword x)
 				(eq? (car arg) 'string->symbol))
-			   (lint-format "perhaps ~A" caller (lists->string form `(make-keyword ,(cadr arg))))
+			   (lint-format "perhaps ~A" caller (lists->string form `(string->keyword ,(cadr arg))))
 			   (if (quoted-symbol? arg)
 			       (lint-format "perhaps ~A" caller (lists->string form (symbol->keyword (cadr arg)))))))
 		      
@@ -7503,7 +7502,7 @@
 						    ;; (apply append (map...)) is very common but changing it to
 						    ;;     (map (lambda (x) (apply values (f x))) ...) from (apply append (map f ...))
 						    ;;     is not an obvious win.  The code is more complicated, and currently apply values 
-						    ;;     copies its args (as do apply and append -- how many copies are there here?!
+						    ;;     copies its args as do apply and append -- how many copies are there here?!
 						    
 						    ;; need to check for only one apply values
 						    ((#_{list})          ; (apply f `(,x ,@z)) -> (apply f x z)
@@ -8712,6 +8711,7 @@
 				(current-environment . curlet)
 				(make-procedure-with-setter . dilambda)
 				(procedure-with-setter? . dilambda?)
+				(make-keyword . string->keyword)
 				(make-random-state . random-state))))
 
 	  (define (sp-deprecate caller head form env)  ;  (make-random-state 123 432)
@@ -8799,10 +8799,6 @@
 			     (bitwise-xor . logxor) 
 			     (bytevector . byte-vector)
 			     (bytevector-length . length)
-			     (bytevector-ref . string-ref)
-			     (bytevector-set! . string-set!)
-			     (bytevector-u8-ref . string-ref)
-			     (bytevector-u8-set! . string-set!)
 			     (bytevector? . byte-vector?)
 			     (environment-ref . let-ref)
 			     (environment-set! . let-set!)
@@ -9742,7 +9738,7 @@
 					       (format #f "in the ~A body.  Perhaps use set! instead: ~A"
 						       head (truncated-list->string `(set! ,vn ,(var-initial-value (car cur)))))))
 			      (lint-format "~A ~A ~A is declared twice" caller head type vn)))))))))
-	  
+
 	  (let ((old-line-number line-number)
 		(outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
 	    
@@ -18627,7 +18623,7 @@
 					  => (lambda (f)
 					       (f caller head form env))))
 
-				   ;; change (list ...) to '(....) if it's safe as a constant list
+				   ;; change (list ...) to '(...) if it's safe as a constant list
 				   ;;   and (vector ...) -> #(...) 
 				   (if (and (pair? (cdr form))
 					    (hash-table-ref no-side-effect-functions head)
@@ -19138,7 +19134,7 @@
 				(list 'unsyntax (if (string=? str "'") (read) (string->symbol str)))))
 
 		    (cons #\& (lambda (str)                      ; ancient Guile code
-				(make-keyword (substring str 1))))
+				(string->keyword (substring str 1))))
 
 		    (cons #\\ (lambda (str)
 				(cond ((assoc str '(("\\x0"        . #\null)
@@ -19156,7 +19152,7 @@
 
 		    (cons #\! (lambda (str)
 				(if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true" "!r6rs") string-ci=?) ; for MIT-scheme
-				    (make-keyword (substring str 1))
+				    (string->keyword (substring str 1))
 				    (let ((lc (str 0))) ; s7 should handle this, but...
 				      (do ((c (read-char) (read-char)))
 					  ((or (and (eof-object? c)
@@ -19329,8 +19325,9 @@
 
 	(if (and *report-undefined-identifiers*
 		 (positive? (hash-table-entries other-identifiers)))
-	    (let ((lst (sort! (map car other-identifiers) (lambda (a b)
-							    (string<? (symbol->string a) (symbol->string b))))))
+	    (let ((lst (sort! (map car other-identifiers) 
+			      (lambda (a b)
+				(string<? (symbol->string a) (symbol->string b))))))
 	      (format outport "~NCth~A identifier~A not defined~A: ~{~S~^ ~}~%"
 		      lint-left-margin #\space 
 		      (if (= (hash-table-entries other-identifiers) 1)
@@ -19510,11 +19507,27 @@
     #f))
 |#
 
-;;; where <expr> assumed <expr>, or where <expr> set to <expr> or assert <expr> and report violations [expr=pattern here]
-;;; recur -> iter: if +n->do, if cdr->for-each|map [1068]
-;;;   if test val ...+f(+arg), if test +f(+arg)...
-;;; redundant checks across func? (if (pair? x) (f x)) where f=(if (pair? x)...) [12690]
-;;;   also numerics/reversibles -- these can be in report-usage? [10100]
-;;;   here -- all of arg the same, so only one comparison per par -- need to check first ref?
+;;; (with-output-to-string (lambda () (display object)))
+;;; (with-output-to-string (lambda () (write answer)))
+;;; (set-cdr! (assv re backrefs) (cons i i1))
+;;; (make-rectangular x 0.0)
+;;; (with-output-to-file "/dev/null" (lambda () (pmaze 500 35)))
+;;; (help "Read source code on current input channel")
+;;; (integer-length 1)
+;;; (with-output-to-string (lambda () (if display? (display x) (write x))))
+;;; (string->keyword (string-append ":" (car (car next))))
+;;; (gensym (string->symbol (string-append (->string name) "init")))
+;;; (with-output-to-string (lambda () (write (car defs)) (newline)))
+;;; (c-pointer "void *")
+;;; (c-pointer (c-pointer char))
+;;; (string->keyword (symbol->string sym))
+;;; (with-input-from-string "" read)
+;;; (read-string 0)
+;;; u8vector? make-u u-set! u-ref list->u u->list u-length u-fill! u reverse-u
+;;; (with-input-from-string elt (lambda () (let ((n (read))) (if (number? n) n 0.0))))
+;;; (symbol)
+;;; (read-string)
+;;; (make-rectangular (exact->inexact (real-part a)) (exact->inexact (imag-part a)))
+;;; (make-rectangular (/ real denominator) (/ imag denominator))
 ;;;
-;;; 164 25376 669734
+;;; 164 25447 669508

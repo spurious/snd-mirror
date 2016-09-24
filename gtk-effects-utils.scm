@@ -17,10 +17,7 @@
 	(list sndlist chnlist))))
 
 (define (update-label effects)
-  (if (pair? effects)
-      (begin
-	((car effects))
-	(update-label (cdr effects)))))
+  (for-each (lambda (effect) (effect)) effects))
 
 (define (effect-target-ok target)
   (case target 

@@ -283,7 +283,7 @@
 		  'string->symbol         (lambda (obj) (#_string->symbol (obj 'value)))
 		  'symbol                 (lambda (obj) (#_symbol (obj 'value)))
 		  'gensym                 (lambda (obj) (#_gensym (obj 'value)))
-		  'make-keyword           (lambda (obj) (#_make-keyword (obj 'value)))
+		  'string->keyword        (lambda (obj) (#_string->keyword (obj 'value)))
 		  'open-input-string      (lambda (obj) (#_open-input-string (obj 'value)))
 		  'call-with-input-string (lambda (obj f) (#_call-with-input-string (obj 'value) f))
 		  'with-input-from-string (lambda (obj f) (#_with-input-from-string (obj 'value) f))

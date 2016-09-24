@@ -21,11 +21,9 @@
 
 (define fft-list ()) ; menu labels are updated to show current default settings
 
-(define fft-menu (add-to-main-menu "FFT Edits" (lambda ()
-						 (let update-label ((fft fft-list))
-						   (when (pair? fft)
-						     ((car fft))
-						     (update-label (cdr fft)))))))
+(define fft-menu (add-to-main-menu "FFT Edits" 
+				   (lambda ()
+				     (for-each (lambda (fft) (fft)) fft-list))))
 
 ;;; ------ FFT edit
 ;;;

@@ -1657,19 +1657,19 @@ Here's a generic FFT:
        (pow (/ n 2) (/ pow 2))
        (theta (complex 0.0 (* pi dir)) (* theta 0.5)))
       ((= lg ipow))
-    (let ((wpc (exp theta))
-          (wc 1.0))
-      (do ((ii 0 (+ ii 1)))
-	  ((= ii prev))
-	(do ((jj 0 (+ jj 1))
-	     (i ii (+ i mmax))
-	     (j (+ ii prev) (+ j mmax)))
-	    ((&gt;= jj pow))
-	  (let ((tc (* wc (data j))))
-	    (set! (data j) (- (data i) tc))
-	    (set! (data i) (+ (data i) tc))))
-	(set! wc (* wc wpc)))
-      (set! prev mmax)))
+    (do ((wpc (exp theta))
+         (wc 1.0)
+         (ii 0 (+ ii 1)))
+	((= ii prev)
+	 (set! prev mmax))
+      (do ((jj 0 (+ jj 1))
+           (i ii (+ i mmax))
+           (j (+ ii prev) (+ j mmax)))
+          ((&gt;= jj pow))
+        (let ((tc (* wc (data j))))
+          (set! (data j) (- (data i) tc))
+          (set! (data i) (+ (data i) tc))))
+      (set! wc (* wc wpc))))
   data)
 
 &gt; (cfft! (list 0.0 1+i 0.0 0.0))
@@ -4365,9 +4365,20 @@ The error function itself takes at least 2 arguments, the error type, a symbol,
 and the error message.  There may also be other arguments describing the error.
 The default action, in the absence of any catch, is to treat the message as
 a format control string, apply format to it and the other arguments, and
-send that info to the current-error-port.
+send that info to the current-error-port:
 </p>
 
+<pre class="indented">
+(catch #t
+  (lambda ()
+    (error 'oops)
+  (lambda args
+    (format (current-error-port) "~A: ~A~%~A[~A]:~%~A~%" 
+      (car args)                        ; the error type
+      (apply format #f (cadr args))     ; the error info
+      (port-filename) (port-line-number); error file location
+      (stacktrace)))))                  ; and a stacktrace
+</pre>
 
 <blockquote>
 <div class="indented">
@@ -4567,12 +4578,12 @@ To evaluate the error handler in the environment of the error:
 <pre class="indented">
 (let ((x 1))
   (catch #t
-	 (lambda ()
-	   (let ((y 2))
-	     (error 'oops)))
-	 (lambda args
-	   (with-let (sublet (owlet) :args args)    ; add the error handler args
-	     (list args x y)))))    ; we have access to 'y'
+    (lambda ()
+      (let ((y 2))
+        (error 'oops)))
+    (lambda args
+      (with-let (sublet (owlet) :args args)    ; add the error handler args
+        (list args x y)))))    ; we have access to 'y'
 </pre>
 
 <p>To limit the maximum size of the stack, set (*s7* 'max-stack-size).
@@ -5153,7 +5164,7 @@ to work right in this context).
 
 <p id="keywords">
 Keywords exist mainly for define*'s benefit.  The keyword functions are:
-<b>keyword?</b>, <b>make-keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
+<b>keyword?</b>, <b>string-&gt;keyword</b>, <b>symbol-&gt;keyword</b>, and <b>keyword-&gt;symbol</b>.
 A keyword is a symbol that starts or ends with a colon. The colon
 is considered to be a part of the symbol name.  A keyword is a constant that evaluates to itself.
 </p>
@@ -5357,6 +5368,11 @@ macro that returns an anonymous macro that returns an anonymous function that &m
 <div class="separator"></div>
 
 <p id="s7gc"><b>gc</b> calls the garbage collector.  <code>(gc #f)</code> turns off the GC, and <code>(gc #t)</code> turns it on.
+</p>
+
+<p>If you get an error complaining about a "free cell", this is usually a sign that the GC freed some object
+that it should have left alone.  In straight scheme code, it's an s7 bug; please send me mail about it!
+In foreign code, it probably indicates that you need to protect some s7_pointer with s7_gc_protect.
 </p>
 
 

@@ -1,10 +1,5 @@
 #include "snd.h"
 
-/* TODO: gtk 3.21: snd-gutils.c:11:3: warning: 'gdk_cairo_create' is deprecated: Use 'gdk_window_begin_draw_frame() and gdk_drawing_context_get_cairo_context()' instead
- *   also snd-prefs.c, xg.c (*.scm??)
- *   also g_make_cairo in snd-draw.c -> make-cairo used everywhere: draw.scm, musglyphs snd-test xm-enved etc
- * here is a first stab:
- */
 
 #if GTK_CHECK_VERSION(3, 22, 0)
   static GdkWindow *last_window = NULL;

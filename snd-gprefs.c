@@ -1092,11 +1092,23 @@ static void pixel_to_rgb(color_t pix, float *r, float *g, float *b)
 static void display_color(GtkWidget *w, color_t pixel)
 {
   cairo_t *cr;
+#if GTK_CHECK_VERSION(3, 22, 0)
+  GdkWindow *window;
+  GdkDrawingContext *context;
+  window = WIDGET_TO_WINDOW(w);
+  context = gdk_window_begin_draw_frame(window, gdk_window_get_visible_region(window));
+  cr = gdk_drawing_context_get_cairo_context(context));
+#else
   cr = gdk_cairo_create(WIDGET_TO_WINDOW(w));
+#endif
   cairo_set_source_rgba(cr, pixel->red, pixel->green, pixel->blue, pixel->alpha);
   cairo_rectangle(cr, 0, 0, widget_width(w), widget_height(w));
   cairo_fill(cr);
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gdk_window_end_draw_frame(window, context);
+#else
   cairo_destroy(cr);
+#endif
 }
 #endif
 
