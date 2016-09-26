@@ -24969,6 +24969,7 @@ unsigned int s7_string_length(s7_pointer str)
 /* -------------------------------- string-ref -------------------------------- */
 static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index)
 {
+  /* every use of this has already checked for the byte-vector case */
   char *str;
   s7_int ind;
 
@@ -25017,6 +25018,8 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, its_too_large_string));
 
   str = string_value(strng);
+  if (is_byte_vector(strng))
+    return(small_int((unsigned char)(str[ind])));
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
 }
 
@@ -25028,6 +25031,8 @@ static s7_pointer c_string_ref(s7_scheme *sc, s7_pointer str, s7_int ind)
     return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, make_integer(sc, ind), a_non_negative_integer_string));
   if (ind >= string_length(str))
     return(out_of_range(sc, sc->string_ref_symbol, small_int(2), make_integer(sc, ind), its_too_large_string));
+  if (is_byte_vector(str))
+    return(small_int(((unsigned char *)string_value(str))[ind]));
   return(s7_make_character(sc, ((unsigned char *)string_value(str))[ind]));
 }
 
@@ -25122,12 +25127,24 @@ static int c_string_tester(s7_scheme *sc, s7_pointer expr)
 
 static s7_pointer c_string_set_s(s7_scheme *sc, s7_pointer vec, s7_int index, s7_pointer val)
 {
-  if (!s7_is_character(val))
-    method_or_bust(sc, val, sc->string_set_symbol, list_3(sc, vec, make_integer(sc, index), val), T_CHARACTER, 3);    
   if ((index < 0) ||
       (index >= string_length(vec)))
     return(out_of_range(sc, sc->string_set_symbol, small_int(2), make_integer(sc, index), (index < 0) ? its_negative_string : its_too_large_string));
 
+  if (!s7_is_character(val))
+    {
+      if ((is_byte_vector(vec)) &&
+	  (s7_is_integer(val)))
+	{
+	  s7_int ic;  /* not int here! */
+	  ic = s7_integer(val);
+	  if ((ic < 0) || (ic > 255))
+	    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 3, val, an_unsigned_byte_string));
+	  string_value(vec)[index] = (char)ic;
+	  return(val);
+	}
+      method_or_bust(sc, val, sc->string_set_symbol, list_3(sc, vec, make_integer(sc, index), val), T_CHARACTER, 3);
+    }
   string_value(vec)[index] = (char)character(val);
   return(val);
 }
@@ -74412,6 +74429,8 @@ s7_scheme *s7_init(void)
   sc->make_string_symbol =           defun("make-string",	make_string,		1, 1, false);
   sc->string_ref_symbol =            defun("string-ref",	string_ref,		2, 0, false);
   sc->string_set_symbol =            defun("string-set!",	string_set,		3, 0, false);
+                                     defun("byte-vector-ref",	string_ref,		2, 0, false);
+                                     defun("byte-vector-set!",	string_set,		3, 0, false);
   sc->string_eq_symbol =             defun("string=?",		strings_are_equal,	2, 0, true);
   sc->string_lt_symbol =             defun("string<?",		strings_are_less,	2, 0, true);
   sc->string_gt_symbol =             defun("string>?",		strings_are_greater,	2, 0, true);

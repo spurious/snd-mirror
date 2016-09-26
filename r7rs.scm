@@ -48,8 +48,8 @@
 ;(define ->bytevector string->byte-vector)
 (define bytevector? byte-vector?)
 (define make-bytevector make-byte-vector)
-(define (bytevector-ref bv ind) (bv ind))
-(define (bytevector-set! bv ind byte) (set! (bv ind) byte))
+(define bytevector-ref string-ref)
+(define bytevector-set! string-set!)
 
 (define bytevector-copy! vector-copy!)
 (define string-copy! vector-copy!)

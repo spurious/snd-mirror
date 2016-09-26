@@ -1097,7 +1097,7 @@ static void display_color(GtkWidget *w, color_t pixel)
   GdkDrawingContext *context;
   window = WIDGET_TO_WINDOW(w);
   context = gdk_window_begin_draw_frame(window, gdk_window_get_visible_region(window));
-  cr = gdk_drawing_context_get_cairo_context(context));
+  cr = gdk_drawing_context_get_cairo_context(context);
 #else
   cr = gdk_cairo_create(WIDGET_TO_WINDOW(w));
 #endif

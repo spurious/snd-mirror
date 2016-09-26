@@ -74,11 +74,6 @@
   `(begin
      (format outport "lint.scm line ~A~%" ,(port-line-number))
      (lint-format-1 ,str ,caller ,@args)))
-
-(define-expansion (lint-format* caller . args)
-  `(begin
-     (format outport "lint.scm line ~A~%" ,(port-line-number))
-     (lint-format*-1 ,caller ,@args)))
 |#
 
 
@@ -248,11 +243,11 @@
 			  (set! (h op) #t))
 			'(+ * - / 
 			  sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh 
-			  log exp expt sqrt make-polar complex
+			  log exp expt sqrt make-polar complex make-rectangular
 			  imag-part real-part abs magnitude angle max min exact->inexact
 			  modulo remainder quotient lcm gcd
 			  rationalize inexact->exact random
-			  logior lognot logxor logand numerator denominator 
+			  logior lognot logxor logand integer-length numerator denominator 
 			  floor round truncate ceiling ash))
 		       h))
 
@@ -436,31 +431,6 @@
 	(display outstr outport)
 	(if (> (length outstr) (+ target-line-length 40))
 	    (newline outport))))
-
-    (define (lint-format* caller . strs)
-      (let* ((outstr (format #f 
-			   (if (< 0 line-number 100000)
-			       "~NC~A (line ~D): " 
-			       "~NC~A:~A")
-			   lint-left-margin #\space
-			   (truncated-list->string caller)
-			   (if (< 0 line-number 100000)
-			       line-number
-			       " ")))
-	     (current-end (length outstr)))
-	;; (set! made-suggestion (+ made-suggestion 1))
-	(display outstr outport)
-	(for-each (lambda (s)
-		    (let ((len (length s)))
-		      (if (> (+ len current-end) target-line-length)
-			  (begin
-			    (format outport "~%~NC~A" (+ lint-left-margin 4) #\space s)
-			    (set! current-end len))
-			  (begin
-			    (display s outport)
-			    (set! current-end (+ current-end len))))))
-		  strs)
-	(newline outport)))
 
     (define (local-line-number tree)
       (let ((tree-line (if (pair? tree) (pair-line-number tree) 0)))
@@ -892,9 +862,9 @@
 	(lambda ()
 	  (eval f))
 	(lambda args
-	  (lint-format* caller
-			(string-append "in " (truncated-list->string form) ", ")
-			(apply format #f (cadr args))))))
+	  (lint-format "in ~A, ~A" caller
+		       (truncated-list->string form)
+		       (apply format #f (cadr args))))))
     
     (define (count-values body)
       (let ((mn #f)
@@ -4599,6 +4569,13 @@
 		    `(log ,@args))
 		   ((integer? (car args)) 1)
 		   (else 1.0)))
+
+	    ((integer-length)
+	     (if (and (pair? (cdr form))
+		      (null? (cddr form))
+		      (integer? (cadr form)))
+		 (integer-length (cadr form))
+		 form))
 	    
 	    ((sqrt)
 	     (cond ((not (pair? args))
@@ -8118,12 +8095,12 @@
 		    (for-each 
 		     (lambda (obj)
 		       (if (and (pair? obj)
-				(memq (car obj) '(vector->list string->list let->list)))
-			   (lint-format* caller               ; (vector->list #(1 2)) could be simplified to: #(1 2)
-					 (truncated-list->string obj) 
-					 " could be simplified to: "
-					 (truncated-list->string (cadr obj))
-					 (string-append " ; (" (symbol->string head) " accepts non-list sequences)"))))
+				(memq (car obj) '(vector->list string->list let->list))) ; (vector->list #(1 2)) could be simplified to: #(1 2)
+			   (lint-format "~A could be simplified to:~%~NC~A ; (~A accepts non-list sequences)" caller
+					(truncated-list->string obj)
+					(+ lint-left-margin 4) #\space
+					(truncated-list->string (cadr obj))
+					head)))
 		     (cddr form))
 		    
 		    (when (eq? head 'map)
@@ -8667,6 +8644,14 @@
 					(lists->string form (if (null? (cdddr body)) (caddr body) `(begin ,@(cddr body))))))))))))
 	 (hash-special 'dynamic-wind sp-dw))
 	
+	;; ---------------- help ----------------
+	(hash-special 'help
+	  (lambda (caller head form env)
+	    (if (and (not (var-member 'help env))
+		     (= (length form) 2)
+		     (string? (cadr form)))
+		(lint-format "s7's help function takes a symbol or a procedure as its argument: ~A" caller (truncated-list->string form)))))
+
 	;; ---------------- *s7* ----------------
 	(hash-special '*s7* 
 	 (let ((s7-fields (let ((h (make-hash-table)))
@@ -8800,6 +8785,10 @@
 			     (bytevector . byte-vector)
 			     (bytevector-length . length)
 			     (bytevector? . byte-vector?)
+			     (bytevector-ref . byte-vector-ref)
+			     (bytevector-set! . byte-vector-set!)
+			     (bytevector-u8-ref . byte-vector-ref)
+			     (bytevector-u8-set! . byte-vector-set!)
 			     (environment-ref . let-ref)
 			     (environment-set! . let-set!)
 			     (environment? . let?)
@@ -8825,6 +8814,7 @@
 			     (interaction-environment . curlet)
 			     (list-copy . copy)
 			     (make-bytevector . make-byte-vector)
+			     (make-u8vector . make-byte-vector)
 			     (open-input-bytevector . open-input-string)
 			     (open-output-bytevector . open-output-string)
 			     (peek-u8 . peek-char)
@@ -8832,6 +8822,7 @@
 			     (raise . error)
 			     (raise-continuable . error)
 			     (read-u8 . read-byte)
+			     (reverse-u8vector . reverse)
 			     (string-for-each . for-each)
 			     (system-global-environment . rootlet)
 			     (the-environment . curlet)
@@ -8843,6 +8834,12 @@
 			     (unspecific . #<unspecified>)
 			     (user-global-environment . rootlet)
 			     (user-initial-environment . rootlet)
+			     (u8vector . byte-vector)
+			     (u8vector? . byte-vector?)
+			     (u8vector-length . length)
+			     (u8vector-fill! . fill!)
+			     (u8vector-ref . byte-vector-ref)
+			     (u8vector-set! . byte-vector-set!)
 			     (vector-for-each . for-each)
 			     (write-bytevector . write-string)
 			     (write-simple . write)
@@ -8986,18 +8983,23 @@
 	    (if (and (pair? op)
 		     (member checker op any-compatible?))
 		(if (and *report-sloppy-assoc*
-			 (not (var-member :catch env)))
-		    (lint-format* caller               ; (round (char-position #\a "asb"))
-				  (string-append "in " (truncated-list->string form) ", ")
-				  (string-append (symbol->string head) "'s argument " (prettify-arg-number arg-number))
-				  (string-append "should be " (prettify-checker-unq checker) ", ")
-				  (string-append "but " (truncated-list->string arg) " might also be " 
-						 (object->string (car (remove-if (lambda (o) (any-compatible? checker o)) op))))))
-		(lint-format* caller                   ; (string-ref (char-position #\a "asb") 1)
-			      (string-append "in " (truncated-list->string form) ", ")
-			      (string-append (symbol->string head) "'s argument " (prettify-arg-number arg-number))
-			      (string-append "should be " (prettify-checker-unq checker) ", ")
-			      (string-append "but " (truncated-list->string arg) " is " (prettify-checker op)))))))
+			 (not (var-member :catch env)))   ; (round (char-position #\a "asb"))
+		    (lint-format "in ~A,~%~NC~A's argument ~A should be ~A, but ~A might also be ~A" caller
+				 (truncated-list->string form)
+				 (+ lint-left-margin 4) #\space
+				 head
+				 (prettify-arg-number arg-number)
+				 (prettify-checker-unq checker)
+				 (truncated-list->string arg)
+				 (car (remove-if (lambda (o) (any-compatible? checker o)) op))))
+		(lint-format "in ~A,~%~NC~A's argument ~A should be ~A, but ~A is ~A" caller
+			     (truncated-list->string form)
+			     (+ lint-left-margin 4) #\space
+			     head
+			     (prettify-arg-number arg-number)
+			     (prettify-checker-unq checker)
+			     (truncated-list->string arg)
+			     (prettify-checker op))))))
       
       (when *report-func-as-arg-arity-mismatch*
 	(let ((v (var-member head env)))
@@ -9154,26 +9156,24 @@
 			   (pair? (car arg)))
 		      (let ((rtn (return-type (caar arg) env)))
 			(if (memq rtn '(boolean? real? integer? rational? number? complex? float? keyword? symbol? null? char?))
-			    (lint-format* caller    ;  (cons ((pair? x) 2) y)
-					  (string-append (symbol->string head) "'s argument ")
-					  (string-append (truncated-list->string arg) " looks odd: ")
-					  (string-append (object->string (caar arg)) " returns " (symbol->string rtn))
-					  " which is not applicable"))))
+			    (lint-format "~A's argument ~A looks odd: ~A returns ~A which is not applicable" caller    ;  (cons ((pair? x) 2) y)
+					 head
+					 (truncated-list->string arg)
+					 (caar arg) rtn))))
 		  
 		  (when (or (pair? checker)
 			    (symbol? checker)) ; otherwise ignore type check on this argument (#t -> anything goes)
 		    (if arg
 			(case checker 
-			  ((unused-parameter?)
-			   (lint-format* caller    ;  (define (f5 a . b) a) (f5 1 2)
-					 (string-append (symbol->string head) "'s parameter " (number->string arg-number))
-					 " is not used, but a value is passed: "
-					 (truncated-list->string arg)))
-			  ((unused-set-parameter?)
-			   (lint-format* caller  ;  (define (f21 x y) (set! x 3) (+ y 1)) (f21 (+ z 1) z)
-					 (string-append (symbol->string head) "'s parameter " (number->string arg-number))
-					 "'s value is not used, but a value is passed: "
-					 (truncated-list->string arg)))))
+			  ((unused-parameter?)     ;  (define (f5 a . b) a) (f5 1 2)
+			   (lint-format "~A's parameter ~A is not used, but a value is passed: ~A" caller
+					head arg-number
+					(truncated-list->string arg)))
+			  ((unused-set-parameter?) ;  (define (f21 x y) (set! x 3) (+ y 1)) (f21 (+ z 1) z)
+			   (lint-format "~A's parameter ~A's value is not used, but a value is passed: ~A" caller  
+					head arg-number
+					(truncated-list->string arg)))))
+
 		    (if (not (pair? arg))
 			(let ((val (cond ((not (symbol? arg))
 					  arg)
@@ -9337,11 +9337,11 @@
 				    emergency-exit exit error throw))
 			h)))
 	(lambda (caller form vals env)
-	  (define (report-trouble)
-	    (lint-format* caller   ;  (let ((x (read-byte)) (y (read-byte))) (- x y))
-			  (string-append "order of evaluation of " (object->string (car form)) "'s ")
-			  (string-append (if (memq (car form) '(let letrec do)) "bindings" "arguments") " is unspecified, ")
-			  (string-append "so " (truncated-list->string form) " is trouble")))
+	  (define (report-trouble)  ;  (let ((x (read-byte)) (y (read-byte))) (- x y))
+	    (lint-format "order of evaluation of ~A's ~A is unspecified, so ~A is trouble" caller   
+			 (car form)
+			 (if (memq (car form) '(let letrec do)) "bindings" "arguments")
+			 (truncated-list->string form)))
 	  (let ((reads ())
 		(writes ())
 		(jumps ()))
@@ -9819,15 +9819,13 @@
 				       (if (> (var-ref local-var) 2)
 					   (lint-format "parameter ~A is always accessed (~A times) via ~S" caller
 							vname (var-ref local-var) `(,new-op ,@(cdr first))))
-				       (lint-format* caller 
-						     (symbol->string vname)
-						     " is not set, and is always accessed via "
-						     (object->string `(,new-op ,@(cdr first)))
-						     " so its binding could probably be "
+				       (lint-format "~A is not set, and is always accessed via ~A~%~NCso its binding could probably be ~A in ~A" caller 
+						     vname
+						     `(,new-op ,@(cdr first))
+						     (+ lint-left-margin 4) #\space
 						     ;;        "probably" here because the accesses could have hidden protective assumptions
 						     ;;          i.e. full accessor is not valid at point of let binding
-						     (object->string `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first)))))
-						     " in "
+						     `(,vname (,new-op ,@(tree-subst (var-initial-value local-var) vname (cdr first))))
 						     (truncated-list->string outer-form))))))))))))
 		 
 		 ;; translate to dilambda fixing arg if necessary and mention generic set!
@@ -10009,12 +10007,8 @@
 				     (if (symbol? def)
 					 (if (eq? otype 'parameter)
 					     (lint-format "~A not used" caller vname)
-					     (lint-format* caller 
-							   (string-append (object->string vname) " not used, initially: ")
-							   (string-append (truncated-list->string val) " from " (symbol->string def))))
-					 (lint-format* caller 
-						       (string-append (object->string vname) " not used, value: ")
-						       (truncated-list->string val))))))))
+					     (lint-format "~A not used, initially: ~A from ~A" caller vname (truncated-list->string val) def))
+					 (lint-format "~A not used, value: ~A" caller vname (truncated-list->string val))))))))
 		       ;; not zero var-ref
 		       (let ((arg-type #f))
 			 
@@ -10245,10 +10239,7 @@
 									     repeats)))))
 					     h)
 				   (if (pair? repeats)
-				       (apply lint-format* 
-					      caller
-					      (string-append (object->string vname) " is not set, but ")
-					      repeats)))))
+				       (lint-format "~A is not set, but ~A" caller vname (apply string-append repeats))))))
 			     
 			     ;; check for function parameters whose values never change and are not just symbols
 			     ;;   ignore recursive functions (arg=(+ k 1) -> counter or whatever)
@@ -12539,11 +12530,9 @@
 									      (loop (car tree))))))))))))
 						(if (and (pair? call)
 							 (pair? (cdr call))
-							 (not (eq? par (cadr call))))
-						    (lint-format* caller ; (define (f50 abs) (abs -1))
-								  (string-append (object->string outer-name) "'s parameter " (symbol->string par))
-								  (string-append " is called " (truncated-list->string call))
-								  ": find a less confusing parameter name!"))))))
+							 (not (eq? par (cadr call)))) ; (define (f50 abs) (abs -1))
+						    (lint-format "~A's parameter ~A is called ~A: find a less confusing parameter name!" caller
+								 outer-name par (truncated-list->string call)))))))
 					outer-args))
 			    
 			    (when (and (eq? head 'define-macro)
@@ -14150,9 +14139,7 @@
 				  (if (memq (car clause) '(else #t))        ; (cond ... (x z) (else z)) -> (cond ... (else z))
 				      (unless (side-effect? (car prev-clause) env)
 					;; (cond (x y) (z 32) (else 32))
-					(lint-format* caller
-						      "this clause could be omitted: "
-						      (truncated-list->string prev-clause)))
+					(lint-format "this clause could be omitted: ~A" caller (truncated-list->string prev-clause)))
 				      (set! has-combinations #t)))          ; handle these later
 			      (set! prev-clause clause)
 
@@ -17866,9 +17853,9 @@
 				 (tree-sym-set-member continuation '(lambda lambda* define define* curlet error apply) body)))
 			;; this checks for continuation as arg (of anything), and any of set as car
 			;; (call/cc (lambda (p) (+ x (p 1))))
-			(lint-format* caller
-				      (string-append "perhaps " (symbol->string head))
-				      " could be call-with-exit: " 
+			(lint-format "perhaps ~A could be call-with-exit:~%~NC~A" caller
+				      head
+				      (+ lint-left-margin 4) #\space
 				      (truncated-list->string form)))
 		    
 		    (if (not (tree-unquoted-member continuation body))
@@ -18470,6 +18457,8 @@
 	    (set! line-number (pair-line-number form))
 
 	    (lint-fragment form env)
+
+	    ;; (error...) as arg happens very rarely (a half-dozen hits, one: (values (error...))!
 
 	    (cond 
 	     ((hash-table-ref walker-functions head)
@@ -19507,27 +19496,24 @@
     #f))
 |#
 
-;;; (with-output-to-string (lambda () (display object)))
-;;; (with-output-to-string (lambda () (write answer)))
-;;; (set-cdr! (assv re backrefs) (cons i i1))
-;;; (make-rectangular x 0.0)
-;;; (with-output-to-file "/dev/null" (lambda () (pmaze 500 35)))
-;;; (help "Read source code on current input channel")
-;;; (integer-length 1)
-;;; (with-output-to-string (lambda () (if display? (display x) (write x))))
-;;; (string->keyword (string-append ":" (car (car next))))
-;;; (gensym (string->symbol (string-append (->string name) "init")))
-;;; (with-output-to-string (lambda () (write (car defs)) (newline)))
-;;; (c-pointer "void *")
-;;; (c-pointer (c-pointer char))
-;;; (string->keyword (symbol->string sym))
-;;; (with-input-from-string "" read)
-;;; (read-string 0)
-;;; u8vector? make-u u-set! u-ref list->u u->list u-length u-fill! u reverse-u
-;;; (with-input-from-string elt (lambda () (let ((n (read))) (if (number? n) n 0.0))))
-;;; (symbol)
-;;; (read-string)
-;;; (make-rectangular (exact->inexact (real-part a)) (exact->inexact (imag-part a)))
-;;; (make-rectangular (/ real denominator) (/ imag denominator))
+;;; recur->do should be similar to for-each case
+;;; what macro calls can be detected?
+;;; redundant set via and|or|cond?
+;;; repeats printout needs revision
 ;;;
-;;; 164 25447 669508
+;;; (make-rectangular (/ real denominator) (/ imag denominator))
+;;; (make-rectangular (exact->inexact (real-part a)) (exact->inexact (imag-part a)))
+;;;   (exact->inexact ...) is not needed
+;;;
+;;; (set-cdr! (assv re backrefs) (cons i i1)) [set-car! also here]
+;;; (string->keyword (string-append ":" (car (car next))))
+;;; (string->keyword (symbol->string sym)) -- use symbol->keyword
+;;; (with-input-from-string "" read) -> #<eof>
+;;; (with-input-from-string elt (lambda () (let ((n (read))) (if (number? n) n 0.0)))) -> (or (string->number elt) 0.0)
+;;; (with-output-to-file "/dev/null" (lambda () (pmaze 500 35))) -> (display (pmaze 500 35) #f)
+;;; (with-output-to-string (lambda () (display object)))
+;;; (with-output-to-string (lambda () (if display? (display x) (write x)))) -> (object->string x (not display?))
+;;; (with-output-to-string (lambda () (write (car defs)) (newline)))
+;;; (with-output-to-string (lambda () (write answer)))
+;;;
+;;; 164 25447 666346
