@@ -680,7 +680,8 @@ typedef struct s7_cell {
       unsigned int length;
       union {
 	bool needs_free;
-	int accessor;
+	unsigned int accessor;
+	int temp_len;
       } str_ext;
       char *svalue;
       unsigned long long int hash;          /* string hash-index */
@@ -1972,7 +1973,7 @@ static int not_heap = -1;
 #define string_length(p)              (_TStr(p))->object.string.length
 #define string_hash(p)                (_TStr(p))->object.string.hash
 #define string_needs_free(p)          (_TStr(p))->object.string.str_ext.needs_free
-#define string_temp_true_length(p)    (_TStr(p))->object.string.str_ext.accessor
+#define string_temp_true_length(p)    (_TStr(p))->object.string.str_ext.temp_len
 
 #define tmpbuf_malloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) P = sc->tmpbuf; else P = (char *)malloc((Len) * sizeof(char));} while (0)
 #define tmpbuf_calloc(P, Len)         do {if ((Len) < TMPBUF_SIZE) {P = sc->tmpbuf; memset((void *)P, 0, Len);} else P = (char *)calloc(Len, sizeof(char));} while (0)
@@ -34267,6 +34268,35 @@ static bool symbol_is_in_arg_list(s7_pointer sym, s7_pointer lst)
 }
 
 
+static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
+{
+  if (is_null(p))
+    return(i);
+  if ((!is_pair(p)) ||
+      (car(p) == sc->quote_symbol))
+    return(i + 1);
+  return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
+}
+
+static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
+}
+
+static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
+{
+  if (sym == tree) return(true);
+  return((is_pair(tree)) &&
+	 (car(tree) != sc->quote_symbol) &&
+	 ((tree_memq(sc, sym, car(tree))) || (tree_memq(sc, sym, cdr(tree)))));
+}
+
+static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
+{
+  return(make_boolean(sc, tree_memq(sc, car(args), cadr(args))));
+}
+ 
+
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x, y;
@@ -42948,6 +42978,7 @@ static s7_pointer g_is_sequence(s7_scheme *sc, s7_pointer args)
 
 static unsigned int protect_accessor(s7_scheme *sc, s7_pointer acc)
 {
+  /* this is intended for foreign variables */
   unsigned int loc;
   if (sc->protected_accessors_size == sc->protected_accessors_loc)
     {
@@ -42970,31 +43001,34 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
   /* these refer to the rootlet */
   if ((is_slot(global_slot(sym))) &&
       (slot_has_accessor(global_slot(sym))))
-    /* return(s7_gc_protected_at(sc, symbol_global_accessor_index(sym))); */ /* 26-Feb-16 */
-    return(vector_element(sc->protected_accessors, symbol_global_accessor_index(sym)));
-
+    return(slot_accessor(global_slot(sym)));
   return(sc->F);
 }
 
-
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func)
 {
+  /* a mess: it's possible to have a global symbol with an accessor but not a protected accessor,
+   *   so the index can be bad.  These protections are for foreign variables, not scheme side
+   *   stuff -- maybe if index is bad, assume the latter?
+   */
   if (slot_has_accessor(global_slot(symbol)))
     {
       unsigned int index;
       index = symbol_global_accessor_index(symbol);
-      if (is_immutable(vector_element(sc->protected_accessors, index)))
-	return(func);
-      vector_element(sc->protected_accessors, index) = func;
-    }
-  else
-    {
-      if (func != sc->F)
+      if (index < sc->protected_accessors_size)
 	{
-	  slot_set_has_accessor(global_slot(symbol));
-	  symbol_set_has_accessor(symbol);
-	  symbol_global_accessor_index(symbol) = protect_accessor(sc, func);  
+	  if (is_immutable(vector_element(sc->protected_accessors, index)))
+	    return(func);
+	  vector_element(sc->protected_accessors, index) = func;
+	  slot_set_accessor(global_slot(symbol), func);
+	  return(func);
 	}
+    }
+  if (func != sc->F)
+    {
+      slot_set_has_accessor(global_slot(symbol));
+      symbol_set_has_accessor(symbol);
+      symbol_global_accessor_index(symbol) = protect_accessor(sc, func);  
     }
   slot_set_accessor(global_slot(symbol), func);
   return(func);
@@ -43019,17 +43053,22 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       e = cadr(args);
-      if (!is_let(e))
+      if ((!is_let(e)) && (!is_null(e)))
 	return(wrong_type_argument(sc, sc->symbol_access_symbol, 2, e, T_LET));
     }
   else e = sc->envir;
 
   if ((e == sc->rootlet) ||
       (e == sc->nil))
-    return(s7_symbol_access(sc, sym));
+    {
+      if ((is_slot(global_slot(sym))) &&
+	  (slot_has_accessor(global_slot(sym))))
+	return(slot_accessor(global_slot(sym)));
+      return(sc->F);
+    }
 
   if (is_null(cdr(args)))
-    p = find_symbol(sc, sym);
+    p = find_symbol(sc, sym); /* follows outlet */
   else p = find_local_symbol(sc, sym, e);
 
   if ((is_slot(p)) &&
@@ -43055,7 +43094,7 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   if (is_pair(cddr(args)))
     {
       e = cadr(args);
-      if (!is_let(e))
+      if ((!is_let(e)) && (!is_null(e)))
 	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "a let"));
       func = caddr(args);
     }
@@ -43074,7 +43113,10 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
     {
       if (!is_slot(global_slot(sym)))
 	return(sc->F);
-      return(s7_symbol_set_access(sc, sym, func));
+      slot_set_has_accessor(global_slot(sym));
+      symbol_set_has_accessor(sym);
+      slot_set_accessor(global_slot(sym), func);
+      return(func);
     }
 
   if (is_null(cddr(args)))
@@ -47095,29 +47137,13 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	format_to_port(sc, sc->error_port, "\n;~S ~S", set_plist_2(sc, type, info), NULL, false, 7);
       else
 	{
-	  int len = 0;
-	  bool use_format = false;
-
 	  /* it's possible that the error string is just a string -- not intended for format */
-	  if (type != sc->format_error_symbol)          /* avoid an infinite loop of format errors */
-	    {
-	      int i;
-	      const char *carstr;
-	      carstr = string_value(car(info));
-	      len = string_length(car(info));
-	      for (i = 0; i < len; i++)
-		if (carstr[i] == '~')
-		  {
-		    use_format = true;
-		    break;
-		  }
-	    }
-
-	  if (use_format)
+	  if ((type != sc->format_error_symbol) &&      /* avoid an infinite loop of format errors */
+	      (strchr(string_value(car(info)), '~') != NULL))
 	    {
 	      char *errstr;
-	      int str_len;
-	      len += 8;
+	      int len, str_len;
+	      len = string_length(car(info)) + 8;
 	      tmpbuf_malloc(errstr, len);
 	      str_len = snprintf(errstr, len, "\n;%s", string_value(car(info)));
 	      format_to_port(sc, sc->error_port, errstr, cdr(info), NULL, false, str_len);
@@ -56418,7 +56444,7 @@ static s7_pointer check_define(s7_scheme *sc)
   if (!is_pair(car(sc->code)))
     {
       if (is_not_null(cddr(sc->code)))                                           /* (define var 1 . 2) */
-	eval_error_with_caller(sc, "~A: more than 1 value? ~A", caller, sc->code); /* (define var 1 2) */
+	eval_error_with_caller(sc, "~A: more than one value? ~A", caller, sc->code); /* (define var 1 2) */
       if (starred)
 	eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code);
 
@@ -73436,36 +73462,6 @@ char *s7_decode_bt(void)
 #endif
 
 
-/* ---------------- an experiment ---------------- */
-static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
-{
-  if (is_null(p))
-    return(i);
-  if ((!is_pair(p)) ||
-      (car(p) == sc->quote_symbol))
-    return(i + 1);
-  return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
-}
-
-static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
-{
-  return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
-}
-
-static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
-{
-  if (sym == tree) return(true);
-  return((is_pair(tree)) &&
-	 (car(tree) != sc->quote_symbol) &&
-	 ((tree_memq(sc, sym, car(tree))) || (tree_memq(sc, sym, cdr(tree)))));
-}
-
-static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
-{
-  return(make_boolean(sc, tree_memq(sc, car(args), cadr(args))));
-}
- 
-
 
 /* -------------------------------- initialization -------------------------------- */
 
@@ -75113,7 +75109,15 @@ int main(int argc, char **argv)
  * with-set setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
- * perhaps keyword paralleling symbol
+ * perhaps keyword paralleling symbol, keyword->string since string->keyword
+ * symbol-access closure GC protection?
+ * need truncated error output if sc->code is ridiculous: (*s7* 'error-print-length) ?
+ *   would need to implement this in format_to_port_1 I think [47149=s7_error]
+ *   [33200 to truncated the columnized output -- MIN(port_position(strport), s7-format-print-length) + ...]
+ *   how to limit this to eval_error?  see ~/old/format-print-s7.c -- how to clear if handled?
+ *   perhaps set a bit on sc->code so object output will see it should be truncated? then clear as soon as read?
+ *   for a pair, only T_MUTABLE is available, I think: T_TRUNCATE_DISPLAY?
+ *   don't burn up a bit for this -- need something else. sc->format_temp?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

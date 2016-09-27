@@ -1104,19 +1104,18 @@
 	    (let ((f (car body))
 		  (iters ()))
 	      
-	      (define (find-iter args)
-		(any? (lambda (p)
-			(and (pair? p)
-			     (memq (car p) '(+ - cdr))
-			     (let ((sym (if (or (eq? (car p) 'cdr)
-						(not (integer? (cadr p))))
-					    (cadr p)
-					    (caddr p))))
-			       (and (symbol? sym)
-				    (set! iters (cons (list sym (car p)) iters))))))
-		      args))
-	      
 	      (define (find-rec lst)
+		(define (find-iter args)
+		  (any? (lambda (p)
+			  (and (pair? p)
+			       (memq (car p) '(+ - cdr))
+			       (let ((sym (if (or (eq? (car p) 'cdr)
+						  (not (integer? (cadr p))))
+					      (cadr p)
+					      (caddr p))))
+				 (and (symbol? sym)
+				      (set! iters (cons (list sym (car p)) iters))))))
+			args))
 		(and (pair? lst)
 		     (or (and (eq? name (car lst))
 			      (find-iter (cdr lst)))
@@ -4700,8 +4699,10 @@
 		   (else `(random ,@args))))
 	    
 	    ((complex make-rectangular)
+	     ;; (complex (/ a b) (/ c b)) can't be simplified because a b c might be complex and
+	     ;;    (/ (complex a c) b) would raise an error that a and c were not real (similarly for other such cases)
 	     (if (and (= len 2)
-		      (morally-equal? (cadr args) 0.0)) ; morally so that 0 matches
+		      (memv (cadr args) '(0 0.0))) ; (complex 2 0.0) -> 2 which is dubious...
 		 (car args)
 		 `(complex ,@args)))
 	    
@@ -6758,7 +6759,7 @@
 		       (zero? (cadr form)))
 	      (if (pair? (cddr form))           ; (make-byte-vector 0 0)
 		  (lint-format "initial value is pointless here: ~A" caller form))
-	      (lint-format "perhaps ~A" caller (lists->string form "")))) ; #u8() but (equal? #u8() "") -> #t so lint combines these clauses!
+	      (lint-format "perhaps ~A" caller (lists->string form (if (eq? head 'make-string) "" #u8())))))
 	  (for-each (lambda (f)
 		      (hash-special f sp-make-string))
 		    '(make-string make-byte-vector)))
@@ -6937,7 +6938,7 @@
 							       `(if ,arg-of-arg ',(string->symbol (cadr arg-args)) ',(string->symbol (caddr arg-args)))
 							       `(if ,arg-of-arg ',(string->symbol (cadr arg-args)) (string->symbol ,(caddr arg-args))))
 							   `(if ,arg-of-arg (string->symbol ,(cadr arg-args)) ',(string->symbol (caddr arg-args)))))))
-			  
+
 			  ((case head                             ; (reverse (reverse! x)) could be (copy x)
 			     ((reverse) (eq? func-of-arg 'reverse!))
 			     ((reverse!) (eq? func-of-arg 'reverse))
@@ -7051,13 +7052,30 @@
 			       (lint-format "perhaps ~A" caller (lists->string form (symbol->keyword (cadr arg)))))))
 		      
 		      ((keyword->symbol)
-		       (if (keyword? arg)
-			   (lint-format "perhaps ~A -> '~A" caller (object->string form) (object->string (keyword->symbol arg))))))))))
+		       (if (and (pair? arg)
+				(eq? (car arg) 'string->keyword))
+			   (lint-format "perhaps ~A" caller (lists->string form `(string->symbol ,(cadr arg))))
+			   (if (keyword? arg)
+			       (lint-format "perhaps ~A -> '~A" caller (object->string form) (object->string (keyword->symbol arg)))))))))))
 	
 	  (for-each (lambda (f)
 		      (hash-special f sp-char->integer))
 		    '(char->integer integer->char symbol->keyword keyword->symbol string->number)))
 	
+	;; ---------------- string->keyword ----------------
+	(let ()
+	  (define (sp-str->key caller head form env)
+	    (if (and (pair? (cdr form))
+		     (pair? (cadr form)))
+		(if (eq? (caadr form) 'symbol->string)
+		    (lint-format "perhaps ~A" caller (lists->string form `(symbol->keyword ,(cadadr form))))
+		    (if (and (memq (caadr form) '(string-append append))
+			     (string? (cadadr form))
+			     (> (length (cadadr form)) 0)
+			     (eqv? ((cadadr form) 0) #\:))
+			(lint-format "string->keyword prepends #\\: for you: ~A" caller form)))))
+	  (hash-special 'string->keyword sp-str->key))
+
 	;; ---------------- string-append ----------------
 	(let ()
 	 (define (sp-string-append caller head form env)
@@ -7729,7 +7747,8 @@
 	       
 	       (let ((str (cadr form)))
 
-		 (when (string? str)           ; (substring "++++++" 0 2) -> (make-string 2 #\+)
+		 (when (and (string? str)           ; (substring "++++++" 0 2) -> (make-string 2 #\+)
+			    (not (byte-vector? str)))
 		   (let ((len (length str)))
 		     (when (and (> len 0)
 				(string=? str (make-string len (string-ref str 0))))
@@ -8847,11 +8866,14 @@
 
 	  (define (sp-other-names caller head form env)
 	    (if (not (var-member head env))
-		(let ((counts (or (hash-table-ref other-names-counts head) 0)))
+		(let ((counts (or (hash-table-ref other-names-counts head) 0))
+		      (our-name (cdr (assq head other-names))))
 		  (when (< counts 2)
 		    (hash-table-set! other-names-counts head (+ counts 1))
-		    (lint-format "~A is probably ~A in s7" caller head (cdr (assq head other-names)))))))
-
+		    (lint-format "~A is probably ~A in s7" caller head our-name))
+		  (cond ((hash-table-ref special-case-functions our-name)
+			 => (lambda (f)
+			      (f caller our-name (cons our-name (cdr form)) env)))))))
 	  (for-each (lambda (f)
 		      (hash-special (car f) sp-other-names))
 		    other-names))
@@ -10224,22 +10246,38 @@
 								       (hash-table-set! h (cons c (cdr call)) (+ 1 (or (hash-table-ref h (cons c (cdr call))) 0))))
 								     lst))))))
 					   (var-history local-var))
-				 (let ((repeats ()))
+
+				 (let ((intro #f)
+				       (column 0)
+				       (calls 0))
 				   (for-each (lambda (call)
-					       (if (and (> (cdr call) (max 3 (/ 20 (tree-leaves (car call))))) ; was 5
-							(not (memq (caar call) '(make-vector make-float-vector)))
-							(or (null? (cddar call))
-							    (every? (lambda (p)
-								      (or (not (symbol? p))
-									  (eq? p vname)))
-								    (cdar call))))
-						   (set! repeats (cons (string-append (truncated-list->string (car call)) " occurs ")
-								       (cons (string-append (object->string (cdr call)) " times"
-											    (if (pair? repeats) ", " ""))
-									     repeats)))))
+					       (when (and (> (cdr call) (max 3 (/ 20 (tree-leaves (car call))))) ; was 5
+							  (not (memq (caar call) '(make-vector make-float-vector)))
+							  (or (null? (cddar call))
+							      (every? (lambda (p)               ; make sure only current var is involved
+									(or (not (symbol? p))
+									    (eq? p vname)))
+								      (cdar call))))
+						 (when (not intro)
+						   (let ((str (format #f "~NC~A: ~A is not set, but " 
+								      lint-left-margin #\space	      
+								      caller vname)))
+						     (set! column (length str))
+						     (display str outport))
+						   (set! intro #t))
+						 (let ((str (truncated-list->string (car call))))
+						   (if (> (+ column (length str) 12) 100)
+						       (begin
+							 (format outport "~%~NC" (+ lint-left-margin 4) #\space)
+							 (set! column lint-left-margin)
+							 (set! calls 1))
+						       (set! calls (+ calls 1)))
+						   (set! column (+ column (length str) 12))
+						   (format outport "~A~A occurs ~A times" 
+							   (if (> calls 1) ", " "")
+							   str (cdr call)))))
 					     h)
-				   (if (pair? repeats)
-				       (lint-format "~A is not set, but ~A" caller vname (apply string-append repeats))))))
+				   (if intro (newline outport)))))
 			     
 			     ;; check for function parameters whose values never change and are not just symbols
 			     ;;   ignore recursive functions (arg=(+ k 1) -> counter or whatever)
@@ -18836,13 +18874,17 @@
 
 	    ((string? form)
 	     (let ((len (length form)))
-	       (if (and (> len 8)
-			(string=? form (make-string len (string-ref form 0))))
-		   ;; "*****************************" -> (format #f "~NC" 29 #\*)
-		   (lint-format "perhaps ~S -> ~A" caller form `(format #f "~NC" ,len ,(string-ref form 0)))))
+	       (when (> len 8)
+		 (hash-table-set! big-constants form (+ 1 (or (hash-table-ref big-constants form) 0)))
+		 (if (and (not (byte-vector? form))
+			  (string=? form (make-string len (string-ref form 0))))
+		     ;; "*****************************" -> (format #f "~NC" 29 #\*)
+		     (lint-format "perhaps ~S -> ~A" caller form `(format #f "~NC" ,len ,(string-ref form 0))))))
 	     env)
 
 	    ((vector? form)
+	     (when (> (length form) 8)
+	       (hash-table-set! big-constants form (+ 1 (or (hash-table-ref big-constants form) 0))))
 	     (let ((happy #t))
 	       (for-each
 		(lambda (x)
@@ -19304,12 +19346,14 @@
 
 	(for-each 
 	 (lambda (p)
-	   (if (or (> (cdr p) 5)
-		   (and (> (cdr p) 3) 
+	   (if (and (pair? (car p))
+		    (> (cdr p) 3)
+		    (or (> (cdr p) 5) 
 			(> (length (car p)) 12)))
-	       (format outport "~A~A occurs ~D times~%"
-		       (if (pair? (car p)) "'" "")
-		       (truncated-list->string (car p)) (cdr p))))
+	       (format outport "'~A occurs ~D times~%"
+		       (truncated-list->string (car p)) (cdr p))
+	       (if (> (cdr p) 6)
+		   (format outport "~S occurs ~D times~%" (car p) (cdr p)))))
 	 big-constants)
 
 	(if (and *report-undefined-identifiers*
@@ -19325,7 +19369,6 @@
 		      (if (string? file) (format #f " in ~S" file) "")
 		      lst)
 	      (fill! other-identifiers #f)))))))
-
 
 
 
@@ -19497,23 +19540,23 @@
 |#
 
 ;;; recur->do should be similar to for-each case
+;;;   1-call at return pos, each arg in recur call only involves itself [or outer var?] and constants, result not too complex
+;;;   (n ((a b) (c d)) (if .1. (begin .2. (n (+ a 1) (cdr c))) .3.)) -> 
+;;;      (do ((a b (+ a 1)) (c d (cdr c))) ((not .1.) .3.) .2.)
+;;;   (n ((a b)) (if .1. .2. (begin .3. (n (f a))))) -> 
+;;;      (do ((a b (f a))) (.1. .2.) .3.)
+;;;   similar for 2-branch cond
+;;;   if arg doesn't change, omit the stepper
+;;;
 ;;; what macro calls can be detected?
-;;; redundant set via and|or|cond?
-;;; repeats printout needs revision
 ;;;
-;;; (make-rectangular (/ real denominator) (/ imag denominator))
-;;; (make-rectangular (exact->inexact (real-part a)) (exact->inexact (imag-part a)))
-;;;   (exact->inexact ...) is not needed
-;;;
-;;; (set-cdr! (assv re backrefs) (cons i i1)) [set-car! also here]
-;;; (string->keyword (string-append ":" (car (car next))))
-;;; (string->keyword (symbol->string sym)) -- use symbol->keyword
 ;;; (with-input-from-string "" read) -> #<eof>
 ;;; (with-input-from-string elt (lambda () (let ((n (read))) (if (number? n) n 0.0)))) -> (or (string->number elt) 0.0)
 ;;; (with-output-to-file "/dev/null" (lambda () (pmaze 500 35))) -> (display (pmaze 500 35) #f)
-;;; (with-output-to-string (lambda () (display object)))
+;;; (with-output-to-string (lambda () (display object)))                    -> (object->string object #f)
 ;;; (with-output-to-string (lambda () (if display? (display x) (write x)))) -> (object->string x (not display?))
-;;; (with-output-to-string (lambda () (write (car defs)) (newline)))
-;;; (with-output-to-string (lambda () (write answer)))
+;;; (with-output-to-string (lambda () (write (car defs)) (newline)))        -> (format #f "~S~%" (car defs))
+;;; (with-output-to-string (lambda () (write answer)))                      -> (object->string answer)
 ;;;
-;;; 164 25447 666346
+;;; 164 25447 667364
+
