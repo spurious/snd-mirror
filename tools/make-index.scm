@@ -441,7 +441,7 @@
 					;(load "snd-test.scm")
 (load "jcvoi.scm")		   
 (load "sndwarp.scm")
-
+(load "tankrev.scm")
 					; (load "special-menu.scm")
 (load "maraca.scm")		   
 (load "spectr.scm")

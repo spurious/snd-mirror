@@ -4226,7 +4226,7 @@ static mus_float_t mus_wave_train_any(mus_any *ptr, mus_float_t fm)
 	  gen->first_time = false;
 	  gen->out_pos = (mus_long_t)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
 	  if (gen->out_pos >= wave_size)
-	    gen->out_pos = gen->out_pos % wave_size;
+	    gen->out_pos = gen->out_pos % wave_size; /* both are mus_long_t */
 	  result = out_data[gen->out_pos++];
 	  gen->next_wave_time = ((mus_float_t)sampling_rate / (gen->freq + fm));
 	}
@@ -4382,7 +4382,11 @@ static mus_float_t dtap(mus_any *ptr, mus_float_t loc)
   int taploc;
   if (gen->size == 0) return(gen->line[0]);
   if ((int)loc == 0) return(gen->line[gen->loc]);
-  taploc = (int)(gen->loc - (int)loc) % gen->size;
+  taploc = (int)(gen->loc - (int)loc) % (int)gen->size;
+  /* cast to int for gen->size is needed, as Tito Latini noticed, because the % operator in C is not smart about unsigned ints:
+   *    (int)-1 % (unsigned int)10    => 5
+   *    (int)-1 % (int)10             => -1
+   */
   if (taploc < 0) taploc += gen->size;
   return(gen->line[taploc]);
 }
@@ -15812,7 +15816,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 		    pv->in_data[i] = pv->input(pv->closure, 1);
 		}
 	    }
-	  buf = pv->filptr % pv->N;
+	  buf = pv->filptr % pv->N; /* filptr and N are both ints */
 	  for (i = 0; i < pv->N; i++)
 	    {
 	      pv->ampinc[buf++] = pv->win[i] * pv->in_data[i];

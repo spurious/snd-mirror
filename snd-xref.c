@@ -1765,7 +1765,7 @@ static const char *Reverb_urls[] = {
 
 #if HAVE_SCHEME
 
-static const char *snd_names[11634] = {
+static const char *snd_names[11652] = {
     "*clm-array-print-length*", "ws.scm",
     "*clm-channels*", "ws.scm",
     "*clm-clipped*", "ws.scm",
@@ -3926,6 +3926,7 @@ static const char *snd_names[11634] = {
     "continue-from-error", "stuff.scm",
     "contrast-channel", "extensions.scm",
     "contrast-sound", "extensions.scm",
+    "convert-frequency", "generators.scm",
     "copy-tree", "stuff.scm",
     "copysign", "libm.scm",
     "count-if", "stuff.scm",
@@ -6437,6 +6438,7 @@ static const char *snd_names[11634] = {
     "make-asyfm", "generators.scm",
     "make-bandpass", "dsp.scm",
     "make-bandstop", "dsp.scm",
+    "make-bandstop-filter", "analog-filter.scm",
     "make-bess", "generators.scm",
     "make-bessel-bandpass", "analog-filter.scm",
     "make-bessel-bandstop", "analog-filter.scm",
@@ -6474,6 +6476,7 @@ static const char *snd_names[11634] = {
     "make-dc-block", "prc95.scm",
     "make-delayl", "prc95.scm",
     "make-differentiator", "dsp.scm",
+    "make-diffuser", "tankrev.scm",
     "make-directory-iterator", "stuff.scm",
     "make-dlocsig", "dlocsig.scm",
     "make-elliptic-bandpass", "analog-filter.scm",
@@ -6521,6 +6524,7 @@ static const char *snd_names[11634] = {
     "make-local-method", "mockery.scm",
     "make-lowpass", "dsp.scm",
     "make-method", "mockery.scm",
+    "make-mod-all-pass", "tankrev.scm",
     "make-moog", "moog.scm",
     "make-moog-filter", "moog.scm",
     "make-moving-autocorrelation", "generators.scm",
@@ -6715,6 +6719,7 @@ static const char *snd_names[11634] = {
     "nkssber", "generators.scm",
     "noddcos", "generators.scm",
     "noddcos?", "generators.scm",
+    "nodds", "generators.scm",
     "noddsin", "generators.scm",
     "noddsin?", "generators.scm",
     "noddssb", "generators.scm",
@@ -7186,6 +7191,7 @@ static const char *snd_names[11634] = {
     "sleep", "libc.scm",
     "slightly-musical-conehead", "animals.scm",
     "smooth-float-vector", "clean.scm",
+    "smpls->samples", "tankrev.scm",
     "snap-mark-to-beat", "marks.scm",
     "snap-marks", "marks.scm",
     "snap-mix-1", "mix.scm",
@@ -7261,6 +7267,7 @@ static const char *snd_names[11634] = {
     "snd-special-menu.scm", "special-menu.scm",
     "snd-spectr.scm", "spectr.scm",
     "snd-strad.scm", "strad.scm",
+    "snd-tankrev.scm", "tankrev.scm",
     "snd-v.scm", "v.scm",
     "snd-ws.scm", "ws.scm",
     "snd-xm-enved.scm", "xm-enved.scm",
@@ -7381,6 +7388,7 @@ static const char *snd_names[11634] = {
     "stuff.scm", "stuff.scm",
     "submatrix", "poly.scm",
     "subsequence", "stuff.scm",
+    "sum-sines", "peak-phases.scm",
     "summer-tanager", "animals.scm",
     "superimpose-ffts", "examp.scm",
     "swainsons-thrush", "animals.scm",
@@ -7394,6 +7402,7 @@ static const char *snd_names[11634] = {
     "sysconf", "libc.scm",
     "tanhsin", "generators.scm",
     "tanhsin?", "generators.scm",
+    "tank-reverb", "tankrev.scm",
     "tcdrain", "libc.scm",
     "tcflow", "libc.scm",
     "tcflush", "libc.scm",
@@ -7587,7 +7596,7 @@ static const char *snd_names[11634] = {
 
 static void autoload_info(s7_scheme *sc)
 {
-  s7_autoload_set_names(sc, snd_names, 5817);
+  s7_autoload_set_names(sc, snd_names, 5826);
 }
 #endif
 

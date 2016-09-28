@@ -1131,7 +1131,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
   siz_chans = siz * chans;
   leftover = (nints * siz_chans);
-  k = (BUFLIM) % siz_chans;
+  k = (BUFLIM) % siz_chans; /* both are ints */
   if (k != 0) /* for example, 3 channel output of 1-byte (mulaw) samples will need a mod 3 buffer */
     buflim = (BUFLIM) - k;
   else buflim = BUFLIM;

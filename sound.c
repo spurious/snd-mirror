@@ -222,7 +222,7 @@ static int sound_file_hash_index(const char *name, int len)
   if (!name) return(0);
   if (len < 8) return(len);
   s = (unsigned char *)(name + len - 8);
-  return((s[0] + s[1] + s[2] + s[3]) % NUM_SOUND_TABLES);
+  return((int)(s[0] + s[1] + s[2] + s[3]) % (int)NUM_SOUND_TABLES);
 }
 
 

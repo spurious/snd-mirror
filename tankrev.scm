@@ -22,6 +22,12 @@
 ;;; bandwidth = 0.9995		; High-frequncey attenuation on input; full bandwidth = 0.99999999
 ;;; damping = 0.0005		; High-frequncey damping; no damping = 0.0
 
+(provide 'snd-tankrev.scm)
+
+(if (provided? 'snd)
+    (require snd-ws.scm)
+    (require sndlib-ws.scm))
+
 (define (make-diffuser siz scl)
   (make-all-pass (* -1 scl) scl siz))
 

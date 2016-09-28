@@ -11836,6 +11836,25 @@ EDITS: 2
     (let ((tag (catch #t (lambda () (mus-interpolate mus-interp-linear 1.0 (make-float-vector 3) -1)) (lambda args (car args)))))
       (if (not (eq? tag 'out-of-range))
 	  (snd-display ";mus-interpolate size -1: ~A" tag)))
+
+    ;; this test (for % trouble in C) is from Anders Vinjar, bugfix thanks to Tito Latini
+    (let ((d (make-delay 10)))
+      (do ((i 0 (+ 1 i)))
+	  ((= i 10))
+	(delay d i))
+      (if (not (mus-arrays-equal? (mus-data d) (float-vector 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)))
+	  (snd-display ";delay data (0..9): ~A~%" (mus-data d)))
+      (let ((vals (make-float-vector 10)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (set! (vals i) (tap d (- i))))
+	(if (not (mus-arrays-equal? vals (float-vector 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0)))
+	    (snd-display ";delay tapped backwards: ~A~%" vals))
+	(do ((i 0 (+ i 1)))
+	    ((= i 10))
+	  (set! (vals i) (tap d i)))
+	(if (not (mus-arrays-equal? vals (float-vector 0.0 9.0 8.0 7.0 6.0 5.0 4.0 3.0 2.0 1.0)))
+	    (snd-display ";delay tapped forwards: ~A~%" vals))))
     
     (let ((gen1 (make-delay 4 :initial-contents '(1.0 0.5 0.25 0.0)))
 	  (gen3 (make-delay 4 :initial-contents (float-vector 1.0 0.5 0.25 0.0))))
@@ -38445,7 +38464,7 @@ EDITS: 1
 
 (require snd-prc95.scm snd-jcrev.scm snd-maraca.scm snd-singer.scm snd-strad.scm snd-noise.scm snd-clm-ins.scm snd-jcvoi.scm)
 (require snd-piano.scm snd-play.scm snd-zip.scm snd-clm23.scm snd-freeverb.scm snd-grani.scm snd-animals.scm snd-big-gens.scm)
-(require snd-dlocsig.scm snd-sndwarp.scm)
+(require snd-dlocsig.scm snd-sndwarp.scm snd-tankrev.scm)
 
 (defgenerator st1 one two)
 (defgenerator st2 (one 11) (two 22))
@@ -38987,6 +39006,17 @@ EDITS: 1
       (close-sound ind)
       (delete-file "test1.snd"))
     
+    ;; tankrev from Anders Vinjar
+    (let* ((dur 3000)
+	   (s (make-oscil 10))
+	   (e (make-env `(0 ,pi 1 0) :length dur)))
+      (with-sound (:reverb tank-reverb :reverb-data '(:damping 0.0 :reverb-decay-time 3.0))
+	(do ((i 0 (+ 1 i)))
+	    ((= i dur))
+	  (let ((sig (* 0.8 (oscil s (env e)))))
+	    (outa i sig) (outb i sig)
+	    (outa i (* 0.3 sig) *reverb*)))))
+
     (set! *clm-srate* 22050)
     (set! *default-output-srate* 22050)
     
