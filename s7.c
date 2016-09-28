@@ -74425,8 +74425,14 @@ s7_scheme *s7_init(void)
   sc->make_string_symbol =           defun("make-string",	make_string,		1, 1, false);
   sc->string_ref_symbol =            defun("string-ref",	string_ref,		2, 0, false);
   sc->string_set_symbol =            defun("string-set!",	string_set,		3, 0, false);
+
                                      defun("byte-vector-ref",	string_ref,		2, 0, false);
                                      defun("byte-vector-set!",	string_set,		3, 0, false);
+  c_function_signature(slot_value(global_slot(s7_make_symbol(sc, "byte-vector-ref")))) = 
+    s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol);
+  c_function_signature(slot_value(global_slot(s7_make_symbol(sc, "byte-vector-set!")))) = 
+    s7_make_signature(sc, 4, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol, sc->is_integer_symbol);
+
   sc->string_eq_symbol =             defun("string=?",		strings_are_equal,	2, 0, true);
   sc->string_lt_symbol =             defun("string<?",		strings_are_less,	2, 0, true);
   sc->string_gt_symbol =             defun("string>?",		strings_are_greater,	2, 0, true);
@@ -75120,6 +75126,7 @@ int main(int argc, char **argv)
  *   don't burn up a bit for this -- need something else. sc->format_temp?
  *
  * Snd:
+ * doc/snd-test for tankrev.scm
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can

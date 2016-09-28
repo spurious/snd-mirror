@@ -53,9 +53,7 @@
   (define update-label 
     (let ((documentation "(update-label effects) evaluates the elements of the list 'effects'"))
       (lambda (effects)
-	(when (pair? effects)
-	  ((car effects))
-	  (update-label (cdr effects))))))
+	(for-each (lambda (effect) (effect)) effects))))
   
   (define effect-target-ok 
     (let ((documentation "(effect-target-ok target) returns #t if the current effect's chosen target is ready"))
