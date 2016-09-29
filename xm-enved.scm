@@ -61,11 +61,9 @@
   (define (xe-mouse-press drawer xx yy)
 
     (define (xe-envelope-position x cur-env)
-      (let search-point ((e cur-env)
-			 (pos 0))
-	(if (= (car e) x)
-	    pos
-	    (search-point (cddr e) (+ pos 2)))))
+      (do ((e cur-env (cddr e)) 
+	   (pos 0 (+ pos 2))) 
+	  ((= (car e) x) pos)))
 
     (define (xe-on-dot? x y cur-env pos)
       (let ((xe-mouse-radius .03))
@@ -103,13 +101,11 @@
 
     (define (xe-edit-envelope-point pos x y cur-env)
       (let ((new-env ()))
-	(let search-point ((e cur-env)
-			   (npos 0))
-	  (if (= npos pos)
-	      (append new-env (list x y) (cddr e))
-	      (begin
-		(set! new-env (append new-env (list (car e) (cadr e))))
-		(search-point (cddr e) (+ npos 2)))))))
+	(do ((e cur-env (cddr e))
+	     (npos 0 (+ npos 2)))
+	    ((= npos pos) 
+	     (append new-env (list x y) (cddr e)))
+	  (set! new-env (append new-env (list (car e) (cadr e)))))))
     
     ;; point exists, needs to be edited with check for various bounds
     (let* ((cur-env (xe-envelope drawer))

@@ -75126,7 +75126,7 @@ int main(int argc, char **argv)
  *   don't burn up a bit for this -- need something else. sc->format_temp?
  *
  * Snd:
- * doc/snd-test for tankrev.scm
+ * doc tankrev.scm
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can

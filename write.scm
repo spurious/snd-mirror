@@ -432,7 +432,7 @@
 						      (do ((obj-start line-start)
 							   (lst (cdr obj) (cdr lst)))
 							  ((null? lst))
-							(let* ((str (format #f "~S" (car lst)))
+							(let* ((str (object->string (car lst)))
 							       (strlen1 (length str)))
 							  (if (and (> strlen1 (- *pretty-print-length* obj-start))
 								   (not (eq? lst (cdr obj))))

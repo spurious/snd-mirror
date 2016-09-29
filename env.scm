@@ -144,10 +144,9 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 (define envelope-last-x 
   (let ((documentation "(envelope-last-x env) -> max x axis break point position"))
     (lambda (e)
-      (if (null? (cddr e))
-	  (car e)
-	  (envelope-last-x (cddr e))))))
-
+      (do ((e e (cddr e))) 
+	  ((null? (cddr e))
+	   (car e))))))
 
 ;;; -------- stretch-envelope
 

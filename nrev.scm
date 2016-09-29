@@ -23,13 +23,15 @@
 	(let ((srscale (/ *clm-srate* 25641)))
 
 	  (define (next-prime val)
-	    (if (or (= val 2)
-		    (and (odd? val)
-			 (do ((i 3 (+ i 2))
-			      (lim (sqrt val)))
-			     ((or (= 0 (modulo val i)) (> i lim)) (> i lim)))))
-		val
-		(next-prime (+ val 2))))
+	    (do ((val val (+ val 2)))
+		((or (= val 2)
+		     (and (odd? val)
+			  (do ((i 3 (+ i 2))
+			       (lim (sqrt val)))
+			      ((or (= 0 (modulo val i))
+				   (> i lim))
+			       (> i lim)))))
+		 val)))
 
 	  (set! dly-len #(1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))
 	  (do ((i 0 (+ i 1)))

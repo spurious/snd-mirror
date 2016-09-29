@@ -813,9 +813,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (lognot (apply logior ints)))
 
 (define (logeqv . ints)
-  (lognot (if (odd? (length ints))
-	      (apply logxor -1 ints) ; Clisp does it this way
-	      (apply logxor ints))))
+  (lognot (apply logxor (if (odd? (length ints))
+			    (values -1 ints) ; Clisp does it this way
+			    ints))))
 
 (define (log-none-of . ints)  ; bits on in none of ints
   (lognot (apply logior ints)))

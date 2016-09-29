@@ -7114,6 +7114,11 @@
 			   (let ((chr (checked-eval form)))  ; (integer->char (+ (char->integer #\space) 215)) -> #\xf7
 			     (if (char? chr)
 				 (lint-format "perhaps ~A" caller (lists->string form chr))))))
+
+		      ((char->integer)
+		       (if (and (pair? arg)
+				(memq (car arg) '(read read-char)))
+			   (lint-format "perhaps ~A" caller (lists->string form `(read-byte ,@(cdr arg))))))
 		      
 		      ((string->number)
 		       (if (and (pair? (cddr form))
@@ -10100,6 +10105,7 @@
 		     (let ((hist (var-history local-var))
 			   (open-set '(open-input-string open-input-file open-output-string open-output-file))
 			   (open-form #f))
+
 		       (when (and (any? (lambda (tree)
 					  (and (pair? tree)
 					       (or (and (memq (car tree) open-set)
@@ -12973,7 +12979,7 @@
 					   ;; (set! (print-length) "asd")
 					   (lint-format "~A: new value should be a~A ~A: ~S: ~A" 
 							caller (car settee)
-							(if (char=? (string-ref (format #f "~A" checker) 0) #\i) "n" "")
+							(if (char=? (string-ref (object->string checker #f) 0) #\i) "n" "")
 							checker arg-type
 							(truncated-list->string form)))))))))
 			     (set! settee (do ((sym (car settee) (car sym)))
@@ -13070,75 +13076,6 @@
 			   (true-rest (and (pair? (caddr form)) (cdaddr form)))
 			   (false-op (and (= len 4) (pair? (cadddr form)) (car (cadddr form))))
 			   (false-rest (and (= len 4) (pair? (cadddr form)) (cdr (cadddr form)))))
-
-#|
-		       ;; these get a few hits
-		       (if (and (pair? true)
-				(not (hash-table-ref syntaces true-op)))
-			   (let search ((tree (cdr true)))
-			     (when (pair? tree)
-			       (let ((p (car tree)))
-				 (when (and (pair? p)
-					    (eq? (car p) 'if))
-				   (let ((nexpr (simplify-boolean (cadr p) (list expr) () env))
-					 (pexpr (simplify-boolean (cadr p) () () env)))
-				     (if (not (equal? nexpr pexpr))
-					 (format *stderr* "~A~%   ~A -> ~A~%" (truncated-list->string true) (cadr p) nexpr)))))
-			       (search (cdr tree)))))
-		       (if (and (pair? false)
-				(not (hash-table-ref syntaces false-op)))
-			   (let search ((tree (cdr false)))
-			     (when (pair? tree)
-			       (let ((p (car tree)))
-				 (when (and (pair? p)
-					    (eq? (car p) 'if))
-				   (let ((nexpr (simplify-boolean (cadr p) () (list expr) env))
-					 (pexpr (simplify-boolean (cadr p) () () env)))
-				     ;; need to compare against the unexpr'd form
-				     (if (not (equal? nexpr pexpr))
-					 (format *stderr* "~A~%   ~A -> ~A~%" (truncated-list->string true) (cadr p) nexpr)))))
-			       (search (cdr tree)))))
-|#				
-#|
-		       ;; this gets ca. 20 hits
-		       (when (and (pair? true)
-				  (not (eq? caller (car true))))
-			 (let ((f (var-member (car true) env)))
-			   (if (and (var? f)
-				    (pair? (var-initial-value f))
-				    (proper-list? (var-arglist f)))
-			       (let ((body (cddr (var-initial-value f)))
-				     (pars (var-arglist f))
-				     (args (cdr true)))
-				 (if (and (pair? (car body))
-					  (eq? (caar body) 'if))
-				     (let ((intest (cadar body)))
-				       (if (and (pair? intest)
-						(pair? expr)
-						(= (length pars) (length args)))
-					   (let ((inner (let subst ((tree intest))
-							  (if (symbol? tree)
-							      (let ((memp (memq tree pars)))
-								(if memp
-								    (list-ref args (- (length pars) (length memp)))
-								    tree))
-							      (if (pair? tree)
-								  (cons (subst (car tree)) (subst (cdr tree)))
-								  tree)))))
-					     (if (memq (car inner) '(or and))
-						 (set! inner (cdr inner))
-						 (set! inner (list inner)))
-					     (if (let search ((a (if (memq (car expr) '(or and))
-								     (cdr expr)
-								     (list expr))))
-						   (and (pair? a)
-							(or (member (car a) inner)
-							    (search (cdr a)))))
-						 (format *stderr* "~S:~%  expr: ~A ~A~%  f:    ~A~%  form: ~A~%~%"
-							 *current-file*
-							 expr inner
-							 (car body) form))))))))))
-|#		       
 
 		       (if (eq? false #<unspecified>)
 			   (lint-format "this #<unspecified> is redundant: ~A" caller form))
@@ -19698,9 +19635,13 @@
 |#
 
 ;;; what macro calls can be detected?
-;;; 13075 for two unfinished checks
-;;; (char->int (read-char))? write-char also
 ;;; open-output-string write get-output-string close-port?
+;;;   common: (let ((p (open-output-string))) (display val p) (close-output-port p)) -- makes no sense!
+;;;     also same but (f ... (close-output-port p)) -- who returns a string here?
+;;;     if no get-output-string, pointless IO
+;;;   common: (let ((s (open-output-string))) (write obj s) (let ((result (get-output-string s))) (close-output-port s) result))
+;;; logbit? in other schemes? [slib it's logbit? with args reversed] bitwise-bit-set? in Guile? == logbit? arg order I think
+;;;   Gauche args are reversed logbit?
 ;;;
 ;;; 164 28138 676270
 

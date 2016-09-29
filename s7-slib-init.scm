@@ -361,7 +361,9 @@
 (define slib:form-feed #\xc) ;(integer->char 12))
 
 ;;@ Support for older versions of Scheme.  Not enough code for its own file.
-(define (last-pair lst) (if (pair? (cdr lst)) (last-pair (cdr lst)) lst))
+;(define (last-pair lst) (if (pair? (cdr lst)) (last-pair (cdr lst)) lst))
+(define (last-pair lst) (do ((lst lst (cdr lst))) ((not (pair? (cdr lst))) lst)))
+
 (define t #t)
 (define nil #f)
 

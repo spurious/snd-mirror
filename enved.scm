@@ -56,12 +56,11 @@
 		 (search-point (cddr e)))))))
       
     (define (envelope-position x cur-env)
-      (let search-point ((e cur-env)
-                         (pos 0))
-        (if (= (car e) x)
-            pos
-            (search-point (cddr e) (+ pos 2)))))
-    
+      (do ((e cur-env (cddr e))
+	   (pos 0 (+ pos 2)))
+	  ((= (car e) x) 
+	   pos)))
+
     (letrec ((on-dot? (let ((mouse-radius .03))
 			(lambda (x y cur-env pos)
 			  (and (pair? cur-env)
@@ -93,13 +92,11 @@
     
     (define (edit-envelope-point pos x y cur-env)
       (let ((new-env ()))
-	(let search-point ((e cur-env)
-			   (npos 0))
-	  (if (= npos pos)
-	      (append new-env (list x y) (cddr e))
-	      (begin
-		(set! new-env (append new-env (list (car e) (cadr e))))
-		(search-point (cddr e) (+ npos 2)))))))
+	(do ((e cur-env (cddr e))
+	     (npos 0 (+ npos 2)))
+	    ((= npos pos) 
+	     (append new-env (list x y) (cddr e)))
+	  (set! new-env (append new-env (list (car e) (cadr e)))))))
 
     (let ((cur-env (channel-envelope snd chn)))
       (let ((lx (if (= mouse-pos 0)

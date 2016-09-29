@@ -1027,13 +1027,15 @@ is a physical model of a flute:
   ;; output-scale can be used to boost the reverb output
 
   (define (next-prime val)
-    (if (or (= val 2)
-	    (and (odd? val)
-		 (do ((i 3 (+ i 2))
-		      (lim (sqrt val)))
-		     ((or (= 0 (modulo val i)) (> i lim)) (> i lim)))))
-	val
-	(next-prime (+ val 2))))
+    (do ((val val (+ val 2)))
+	((or (= val 2)
+	     (and (odd? val)
+		  (do ((i 3 (+ i 2))
+		       (lim (sqrt val)))
+		      ((or (= 0 (modulo val i))
+			   (> i lim))
+		       (> i lim)))))
+           val)))
   
   (let ((srscale (/ *clm-srate* 25641))
 	(dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19))

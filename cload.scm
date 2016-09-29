@@ -237,11 +237,11 @@
       (define (make-signature rtn args)
 	
 	(define (compress sig)
-	  (if (and (pair? sig)
-		   (pair? (cdr sig))
-		   (eq? (car sig) (cadr sig)))
-	      (compress (cdr sig))
-	      sig))
+	  (do ((sig sig (cdr sig)))
+	      ((not (and (pair? sig) 
+			 (pair? (cdr sig))
+			 (eq? (car sig) (cadr sig))))
+	       sig)))
 	
 	(let ((sig (list (cload->signature rtn #t)))
 	      (cyclic #f))
@@ -619,8 +619,8 @@
 		   (file-exists? so-file-name)
 		   (provided? 'system-extras)
 		   (>= (file-mtime so-file-name) (file-mtime c-file-name))
-		   (not (and (file-exists? (port-filename (current-input-port)))
-			     (< (file-mtime so-file-name) (file-mtime (port-filename (current-input-port)))))))
+		   (not (and (file-exists? (port-filename))
+			     (< (file-mtime so-file-name) (file-mtime (port-filename))))))
 	(format *stderr* "writing ~A~%" c-file-name)
 	;; write a new C file and compile it
 	(initialize-c-file)
