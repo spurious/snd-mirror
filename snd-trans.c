@@ -576,7 +576,7 @@ static int read_hcom(const char *oldname, const char *newname, char *hdr)
 	  if (bits == 0) 
 	    {
 	      curval = mus_char_to_bint((unsigned char *)(buf + isp)); 
-	      isp+=4; 
+	      isp += 4; 
 	      bits = 32;
 	    }
 	  if (curval & 0x80000000) di = d[di][1]; else di = d[di][0];

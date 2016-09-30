@@ -927,7 +927,8 @@ Xen g_mus_sound_path(void)
 }
 
 #if HAVE_SCHEME
-  static int sound_path_loc = -1;
+  static bool have_sound_path = false;
+  static unsigned int sound_path_loc = 0;
   static s7_pointer mus_sound_path_symbol;
 #endif
 
@@ -935,10 +936,11 @@ static Xen g_mus_set_sound_path(Xen val)
 {
   Xen_check_type(Xen_is_list(val), val, 1, S_set S_mus_sound_path, "a list");
 #if HAVE_SCHEME
-  if (sound_path_loc != -1)
+  if (have_sound_path)
     s7_gc_unprotect_at(s7, sound_path_loc);
   sound_path = val;
   sound_path_loc = s7_gc_protect(s7, sound_path);
+  have_sound_path = true;
   s7_symbol_set_value(s7, mus_sound_path_symbol, val);
 #else
   if (sound_path != Xen_empty_list)

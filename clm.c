@@ -4387,7 +4387,7 @@ static mus_float_t dtap(mus_any *ptr, mus_float_t loc)
    *    (int)-1 % (unsigned int)10    => 5
    *    (int)-1 % (int)10             => -1
    */
-  if (taploc < 0) taploc += gen->size;
+  if (taploc < 0) taploc += (int)gen->size;
   return(gen->line[taploc]);
 }
 
@@ -4650,6 +4650,7 @@ mus_any *mus_make_delay(int size, mus_float_t *preloaded_line, int line_size, mu
   else gen = (dly *)malloc(sizeof(dly));
   gen->core = &DELAY_CLASS;
   gen->loc = 0;
+  if (line_size < size) line_size = size;
   gen->size = size;
   gen->zsize = line_size;
   gen->zdly = ((line_size != size) || (type != MUS_INTERP_NONE));

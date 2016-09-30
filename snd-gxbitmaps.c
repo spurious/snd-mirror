@@ -3344,7 +3344,7 @@ static cairo_status_t png_read(void *closure, unsigned char *data, unsigned int 
   /* put the next size bytes in data from whatever we're reading */
   png_info *p = (png_info *)closure;
   memcpy((void *)data, (void *)(p->png + p->loc), size);
-  p->loc += size;
+  p->loc += (int)size;
   return(CAIRO_STATUS_SUCCESS);
 }
 

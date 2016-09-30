@@ -6288,7 +6288,7 @@ static void show_inset_graph(chan_info *cp, graphics_context *cur_ax)
 	      mus_float_t *v0data = NULL, *v1data = NULL;
 	      int data_len;
 #if HAVE_SCHEME
-	      int gc_loc;
+	      unsigned int gc_loc;
 #endif
 
 	      data = make_graph_data(cp, cp->edit_ctr, 0, framples);

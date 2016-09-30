@@ -3491,9 +3491,8 @@ static int read_sdif_header(const char *filename, int fd)
   static const char *sdif_names[7] = {"fundamental frequency", "FFT", "spectral peak", "sinusoidal track", "harmonic track", "resonance", "unknown"};
 
   int offset;
-  bool happy = false;
   offset = 16;
-  while (!happy)
+  while (true)
     {
       int size;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)

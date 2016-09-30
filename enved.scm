@@ -91,12 +91,12 @@
     ;; point exists, needs to be edited with check for various bounds
     
     (define (edit-envelope-point pos x y cur-env)
-      (let ((new-env ()))
-	(do ((e cur-env (cddr e))
-	     (npos 0 (+ npos 2)))
-	    ((= npos pos) 
-	     (append new-env (list x y) (cddr e)))
-	  (set! new-env (append new-env (list (car e) (cadr e)))))))
+      (do ((new-env ())
+	   (e cur-env (cddr e))
+	   (npos 0 (+ npos 2)))
+	  ((= npos pos) 
+	   (append new-env (list x y) (cddr e)))
+	(set! new-env (append new-env (list (car e) (cadr e))))))
 
     (let ((cur-env (channel-envelope snd chn)))
       (let ((lx (if (= mouse-pos 0)

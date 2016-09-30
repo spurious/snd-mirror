@@ -552,41 +552,41 @@ If func approves of one, index-if returns the index that gives that element's po
 
 
 (define (make-complete-iterator obj)
-  (make-iterator
-   (let ((iters ())
-	 (cycles (cyclic-sequences obj))
-	 (seen-cycles ()))
-
-     (define (make-careful-iterator p)
-       (if (not (pair? p))
-	   (make-iterator p)
-	   (let ((len (length p)))
-	     (make-iterator
-	      (cond ((infinite? len)      ; circular list
-		     (let ((cur p)
-			   (iterator? #t))
-		       (lambda ()
-			 (if (memq cur seen-cycles)
-			     #<eof>
-			     (let ((result (car cur)))
-			       (if (memq cur cycles) 
-				   (set! seen-cycles (cons cur seen-cycles)))
-			       (set! cur (cdr cur))
-			       result)))))
-		    ((positive? len)      ; normal list
-		     p)
-		    (else 
-		     (let ((cur p)        ; dotted list
-			   (iterator? #t))
-		       (lambda ()
-			 (if (pair? cur)
-			     (let ((result (car cur)))
-			       (set! cur (cdr cur))
-			       result)
-			     (let ((result cur))
-			       (set! cur #<eof>)
-			       result))))))))))
-
+  (let ((iters ())
+	(cycles (cyclic-sequences obj))
+	(seen-cycles ()))
+    
+    (define (make-careful-iterator p)
+      (if (not (pair? p))
+	  (make-iterator p)
+	  (let ((len (length p)))
+	    (make-iterator
+	     (cond ((infinite? len)      ; circular list
+		    (let ((cur p)
+			  (iterator? #t))
+		      (lambda ()
+			(if (memq cur seen-cycles)
+			    #<eof>
+			    (let ((result (car cur)))
+			      (if (memq cur cycles) 
+				  (set! seen-cycles (cons cur seen-cycles)))
+			      (set! cur (cdr cur))
+			      result)))))
+		   ((positive? len)      ; normal list
+		    p)
+		   (else 
+		    (let ((cur p)        ; dotted list
+			  (iterator? #t))
+		      (lambda ()
+			(if (pair? cur)
+			    (let ((result (car cur)))
+			      (set! cur (cdr cur))
+			      result)
+			    (let ((result cur))
+			      (set! cur #<eof>)
+			      result))))))))))
+    
+    (make-iterator
      (let ((iter (make-careful-iterator obj))
 	   (iterator? #t))       
        (define (iterloop) ; define returns the new value

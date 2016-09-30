@@ -100,12 +100,12 @@
   (define (xe-mouse-drag drawer xx yy)
 
     (define (xe-edit-envelope-point pos x y cur-env)
-      (let ((new-env ()))
-	(do ((e cur-env (cddr e))
-	     (npos 0 (+ npos 2)))
-	    ((= npos pos) 
-	     (append new-env (list x y) (cddr e)))
-	  (set! new-env (append new-env (list (car e) (cadr e)))))))
+      (do ((new-env ())
+	   (e cur-env (cddr e))
+	   (npos 0 (+ npos 2)))
+	  ((= npos pos) 
+	   (append new-env (list x y) (cddr e)))
+	(set! new-env (append new-env (list (car e) (cadr e))))))
     
     ;; point exists, needs to be edited with check for various bounds
     (let* ((cur-env (xe-envelope drawer))

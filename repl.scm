@@ -617,12 +617,12 @@
 	      (set! cur-row (+ cur-row 1)))
 	    
 	    (define (word-break pos)                 ; assume we're at the start of a word
-	      (let ((len (length cur-line)))
-		(do ((i pos (+ i 1)))
-		    ((or (>= i len) 
-			 (not (or (char-alphabetic? (cur-line i)) 
-				  (char-numeric? (cur-line i)))))
-		     i))))
+	      (do ((len (length cur-line))
+		   (i pos (+ i 1)))
+		  ((or (>= i len) 
+		       (not (or (char-alphabetic? (cur-line i)) 
+				(char-numeric? (cur-line i)))))
+		   i)))
 	    
 	    (define (save-line)
 	      (set! prev-line (cons (cons cursor-pos (copy cur-line)) prev-line)))

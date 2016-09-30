@@ -462,7 +462,7 @@ typedef struct {
   bool needs_free;
   FILE *file;
   char *filename;
-  int filename_length, gc_loc;
+  int filename_length, gc_loc; /* gc_loc uses -1 as unset flag -- kinda ugly */
   void *next;
   s7_pointer (*input_function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port);
   void (*output_function)(s7_scheme *sc, unsigned char c, s7_pointer port);
@@ -958,7 +958,7 @@ struct s7_scheme {
   s7_pointer abs_symbol, acos_symbol, acosh_symbol, add_symbol, angle_symbol, append_symbol, apply_symbol, arity_symbol,
              ash_symbol, asin_symbol, asinh_symbol, assoc_symbol, assq_symbol, assv_symbol, atan_symbol, atanh_symbol,
              autoload_symbol, autoloader_symbol,
-             byte_vector_symbol, 
+             byte_vector_symbol, byte_vector_ref_symbol, byte_vector_set_symbol, 
              c_pointer_symbol, caaaar_symbol, caaadr_symbol, caaar_symbol, caadar_symbol, caaddr_symbol, caadr_symbol,
              caar_symbol, cadaar_symbol, cadadr_symbol, cadar_symbol, caddar_symbol, cadddr_symbol, caddr_symbol, cadr_symbol,
              call_cc_symbol, call_with_current_continuation_symbol, call_with_exit_symbol, call_with_input_file_symbol, 
@@ -988,7 +988,7 @@ struct s7_scheme {
              is_port_closed_symbol, is_positive_symbol, is_procedure_symbol, is_proper_list_symbol, is_provided_symbol,
              is_random_state_symbol, is_rational_symbol, is_real_symbol, is_sequence_symbol, is_string_symbol, is_symbol_symbol,
              is_vector_symbol, is_zero_symbol, iterate_symbol, iterator_is_at_end_symbol, iterator_sequence_symbol,
-             is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, 
+             is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, is_unspecified_symbol,
              keyword_to_symbol_symbol, 
              lcm_symbol, length_symbol, leq_symbol, let_ref_fallback_symbol, let_ref_symbol, let_set_fallback_symbol,
              let_set_symbol, list_ref_symbol, list_set_symbol, list_symbol, list_tail_symbol, load_path_symbol,
@@ -4904,7 +4904,7 @@ static void resize_op_stack(s7_scheme *sc)
   sc->op_stack = (s7_pointer *)realloc((void *)(sc->op_stack), new_size * sizeof(s7_pointer));
   for (i = sc->op_stack_size; i < new_size; i++)
     sc->op_stack[i] = sc->nil;
-  sc->op_stack_size = new_size;
+  sc->op_stack_size = (unsigned int)new_size;
   sc->op_stack_now = (s7_pointer *)(sc->op_stack + loc);
   sc->op_stack_end = (s7_pointer *)(sc->op_stack + sc->op_stack_size);
 }
@@ -24536,7 +24536,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   #define H_char_position "(char-position char-or-str str (start 0)) returns the position of the first occurrence of char in str, or #f"
   #define Q_char_position s7_make_signature(sc, 4, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_boolean_symbol), s7_make_signature(sc, 2, sc->is_char_symbol, sc->is_string_symbol), sc->is_string_symbol, sc->is_integer_symbol)
 
-  const char *porig, *p, *pset;
+  const char *porig, *pset;
   s7_int start, pos, len; /* not "int" because start arg might be most-negative-fixnum */
   s7_pointer arg1, arg2;
 
@@ -24573,6 +24573,7 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   if (s7_is_character(arg1))
     {
       char c;
+      const char *p;
       c = character(arg1);
       p = strchr((const char *)(porig + start), (int)c); /* use strchrnul in Gnu C to catch embedded null case */
       if (p)
@@ -24992,36 +24993,47 @@ static s7_pointer string_ref_1(s7_scheme *sc, s7_pointer strng, s7_pointer index
 }
 
 
-static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_ref_2(s7_scheme *sc, s7_pointer args, s7_pointer caller)
 {
   s7_pointer strng, index, p;
   char *str;
   s7_int ind;
 
-  #define H_string_ref "(string-ref str index) returns the character at the index-th element of the string str"
-  #define Q_string_ref s7_make_signature(sc, 3, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol)
-
   strng = car(args);
   if (!is_string(strng))
-    method_or_bust(sc, strng, sc->string_ref_symbol, args, T_STRING, 1);
+    method_or_bust(sc, strng, caller, args, T_STRING, 1);
 
   index = cadr(args);
   if (!s7_is_integer(index))
     {
       if (!s7_is_integer(p = check_values(sc, index, cdr(args))))
-	method_or_bust(sc, index, sc->string_ref_symbol, args, T_INTEGER, 2);
+	method_or_bust(sc, index, caller, args, T_INTEGER, 2);
       index = p;
     }
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_ref_symbol, 2, index, a_non_negative_integer_string));
+    return(wrong_type_argument_with_type(sc, caller, 2, index, a_non_negative_integer_string));
   if (ind >= string_length(strng))
-    return(out_of_range(sc, sc->string_ref_symbol, small_int(2), index, its_too_large_string));
+    return(out_of_range(sc, caller, small_int(2), index, its_too_large_string));
 
   str = string_value(strng);
   if (is_byte_vector(strng))
     return(small_int((unsigned char)(str[ind])));
   return(s7_make_character(sc, ((unsigned char *)str)[ind]));
+}
+
+static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_ref "(string-ref str index) returns the character at the index-th element of the string str"
+  #define Q_string_ref s7_make_signature(sc, 3, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol)
+  return(g_string_ref_2(sc, args, sc->string_ref_symbol));
+}
+
+static s7_pointer g_byte_vector_ref(s7_scheme *sc, s7_pointer args)
+{
+  #define H_byte_vector_ref "(byte-vector-ref vect index) returns the byte at the index-th element of the byte-vector vect"
+  #define Q_byte_vector_ref s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol)
+  return(g_string_ref_2(sc, args, sc->byte_vector_ref_symbol));
 }
 
 static s7_pointer c_string_ref(s7_scheme *sc, s7_pointer str, s7_int ind)
@@ -25041,32 +25053,29 @@ PIF_TO_PF(string_ref, c_string_ref)
 
 
 /* -------------------------------- string-set! -------------------------------- */
-static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_string_set_2(s7_scheme *sc, s7_pointer args, s7_pointer caller)
 {
-  #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
-  #define Q_string_set s7_make_signature(sc, 4, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol, sc->is_char_symbol)
-
   s7_pointer x, c, index;
   char *str;
   s7_int ind;
 
   x = car(args);
   if (!is_string(x))
-    method_or_bust(sc, x, sc->string_set_symbol, args, T_STRING, 1);
+    method_or_bust(sc, x, caller, args, T_STRING, 1);
 
   index = cadr(args);
   if (!s7_is_integer(index))
     {
       s7_pointer p;
       if (!s7_is_integer(p = check_values(sc, index, cdr(args))))
-	method_or_bust(sc, index, sc->string_set_symbol, args, T_INTEGER, 2);
+	method_or_bust(sc, index, caller, args, T_INTEGER, 2);
       index = p;
     }
   ind = s7_integer(index);
   if (ind < 0)
-    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 2, index, a_non_negative_integer_string));
+    return(wrong_type_argument_with_type(sc, caller, 2, index, a_non_negative_integer_string));
   if (ind >= string_length(x))
-    return(out_of_range(sc, sc->string_set_symbol, small_int(2), index, its_too_large_string));
+    return(out_of_range(sc, caller, small_int(2), index, its_too_large_string));
   str = string_value(_TSet(x));
 
   c = caddr(args);
@@ -25078,15 +25087,28 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
 	  s7_int ic;  /* not int here! */
 	  ic = s7_integer(c);
 	  if ((ic < 0) || (ic > 255))
-	    return(wrong_type_argument_with_type(sc, sc->string_set_symbol, 3, c, an_unsigned_byte_string));
+	    return(wrong_type_argument_with_type(sc, caller, 3, c, an_unsigned_byte_string));
 	  str[ind] = (char)ic;
 	  return(c);
 	}
-      method_or_bust(sc, c, sc->string_set_symbol, list_3(sc, x, index, c), T_CHARACTER, 3);
+      method_or_bust(sc, c, caller, list_3(sc, x, index, c), T_CHARACTER, 3);
     }
-
   str[ind] = (char)s7_character(c);
   return(c);
+}
+
+static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_set "(string-set! str index chr) sets the index-th element of the string str to the character chr"
+  #define Q_string_set s7_make_signature(sc, 4, sc->is_char_symbol, sc->is_string_symbol, sc->is_integer_symbol, sc->is_char_symbol)
+  return(g_string_set_2(sc, args, sc->string_set_symbol));
+}
+
+static s7_pointer g_byte_vector_set(s7_scheme *sc, s7_pointer args)
+{
+  #define H_byte_vector_set "(byte-vector-set! vect index byte) sets the index-th element of the byte-vector vect to the integer byte"
+  #define Q_byte_vector_set s7_make_signature(sc, 4, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol, sc->is_integer_symbol)
+  return(g_string_set_2(sc, args, sc->byte_vector_set_symbol));
 }
 
 static int c_string_tester(s7_scheme *sc, s7_pointer expr)
@@ -26570,7 +26592,7 @@ static s7_pointer c_close_input_port(s7_scheme *sc, s7_pointer pt)
 static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_input_port "(close-input-port port) closes the port"
-  #define Q_close_input_port s7_make_signature(sc, 2, sc->T, sc->is_input_port_symbol)
+  #define Q_close_input_port s7_make_signature(sc, 2, sc->is_unspecified_symbol, sc->is_input_port_symbol)
   return(c_close_input_port(sc, car(args)));
 }
 
@@ -26689,7 +26711,7 @@ static s7_pointer c_close_output_port(s7_scheme *sc, s7_pointer pt)
 static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_output_port "(close-output-port port) closes the port"
-  #define Q_close_output_port s7_make_signature(sc, 2, sc->T, sc->is_output_port_symbol)
+  #define Q_close_output_port s7_make_signature(sc, 2, sc->is_unspecified_symbol, sc->is_output_port_symbol)
   return(c_close_output_port(sc, car(args)));
 }
 
@@ -27358,7 +27380,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
 #ifndef _MSC_VER
   long size;
 #endif
-  int port_loc;
+  unsigned int port_loc;
 
   new_cell(sc, port, T_INPUT_PORT);
   port_loc = s7_gc_protect(sc, port);
@@ -28276,6 +28298,10 @@ static s7_pointer c_read_string(s7_scheme *sc, s7_int chars, s7_pointer port)
 
 static s7_pointer g_read_string(s7_scheme *sc, s7_pointer args)
 {
+  /* read-chars would be a better name -- read-string could mean CL-style read-from-string (like eval-string) 
+   *   similarly read-bytes could return a byte-vector (rather than r7rs's read-bytevector)
+   *   and write-string -> write-chars, write-bytevector -> write-bytes
+   */
   #define H_read_string "(read-string k port) reads k characters from port into a new string and returns it."
   #define Q_read_string s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_string_symbol, sc->is_eof_object_symbol), sc->is_integer_symbol, sc->is_input_port_symbol)
   s7_pointer k, port;
@@ -30869,7 +30895,8 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 
 static void hash_table_to_port(s7_scheme *sc, s7_pointer hash, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
-  int i, len, gc_iter;
+  int i, len;
+  unsigned int gc_iter;
   bool too_long = false;
   s7_pointer iterator, p;
 
@@ -31124,7 +31151,7 @@ static bool arg_memq(s7_pointer symbol, s7_pointer args)
 }
 
 
-static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_pointer args, int gc_loc)
+static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_pointer args, unsigned int gc_loc)
 {
   if (is_pair(body))
     {
@@ -31313,7 +31340,7 @@ static void write_closure_readably_1(s7_scheme *sc, s7_pointer obj, s7_pointer a
 static void write_closure_readably(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
   s7_pointer body, arglist, pe, local_slots, setter = NULL;
-  int gc_loc;
+  unsigned int gc_loc;
   
   body = closure_body(obj);
   arglist = closure_args(obj);
@@ -32446,7 +32473,7 @@ void s7_newline(s7_scheme *sc, s7_pointer port)
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 {
   #define H_newline "(newline (port (current-output-port))) writes a carriage return to the port"
-  #define Q_newline s7_make_signature(sc, 2, sc->T, sc->is_output_port_symbol)
+  #define Q_newline s7_make_signature(sc, 2, sc->is_unspecified_symbol, sc->is_output_port_symbol)
   s7_pointer port;
 
   if (is_not_null(args))
@@ -32723,11 +32750,11 @@ static void format_append_string(s7_scheme *sc, format_data *fdat, const char *s
 
 static void format_append_chars(s7_scheme *sc, format_data *fdat, char pad, int chars, s7_pointer port)
 {
-  int j;
   if (chars > 0)
     {
       if (chars < TMPBUF_SIZE)
 	{
+	  int j;
 	  for (j = 0; j < chars; j++)
 	    sc->tmpbuf[j] = pad;
 	  sc->tmpbuf[chars] = '\0';
@@ -32735,6 +32762,7 @@ static void format_append_chars(s7_scheme *sc, format_data *fdat, char pad, int 
 	}
       else
 	{
+	  int j;
 	  for (j = 0; j < chars; j++)
 	    format_append_char(sc, fdat, pad, port);
 	}
@@ -38653,7 +38681,8 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
    * also should we let an empty vector have any number of dimensions? currently ndims is an int.
    */
   s7_pointer vec, x;
-  int i, vec_loc, err;
+  int i, err;
+  unsigned int vec_loc;
   int *sizes;
 
   /* (#2d((1 2 3) (4 5 6)) 0 0) -> 1
@@ -39511,7 +39540,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   s7_int len = 0, n, k;
   int (*sort_func)(const void *v1, const void *v2);
   s7_pointer *elements;
-  int gc_loc = -1;
+  unsigned int gc_loc = 0;
 
   /* both the intermediate vector (if any) and the current args pointer need GC protection,
    *   but it is a real bother to unprotect args at every return statement, so I'll use temp3
@@ -41414,7 +41443,7 @@ That is, (hash-table '(\"hi\" . 3) (\"ho\" . 32)) returns a new hash-table with 
   ht = s7_make_hash_table(sc, (len > sc->default_hash_table_length) ? len : sc->default_hash_table_length);
   if (len > 0)
     {
-      int ht_loc;
+      unsigned int ht_loc;
       ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
       for (x = args; is_pair(x); x = cdr(x))
 	if (is_pair(car(x)))
@@ -41443,7 +41472,7 @@ That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value
   ht = s7_make_hash_table(sc, (len > sc->default_hash_table_length) ? len : sc->default_hash_table_length);
   if (len > 0)
     {
-      int ht_loc;
+      unsigned int ht_loc;
       s7_pointer x, y;
       ht_loc = s7_gc_protect(sc, ht); /* hash_table_set can cons, so we need to protect this */
 
@@ -41581,7 +41610,7 @@ static s7_pointer hash_table_reverse(s7_scheme *sc, s7_pointer old_hash)
   int i, len;
   s7_pointer new_hash;
   hash_entry_t **old_lists;
-  int gc_loc;
+  unsigned int gc_loc;
 
   len = hash_table_mask(old_hash) + 1;
   new_hash = s7_make_hash_table(sc, len);
@@ -41932,7 +41961,8 @@ static void define_function_star_1(s7_scheme *sc, const char *name, s7_function 
 {
   s7_pointer func, sym, local_args, p;
   char *internal_arglist;
-  int i, len, n_args, gc_loc;
+  int i, len, n_args;
+  unsigned int gc_loc;
   s7_pointer *names, *defaults;
 
   len = safe_strlen(arglist) + 8;
@@ -44193,7 +44223,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	  
 	case T_HASH_TABLE:              /* this has to copy nearly everything */
 	  {
-	    int gc_loc;
+	    unsigned int gc_loc;
 	    s7_pointer new_hash;
 	    new_hash = s7_make_hash_table(sc, hash_table_mask(source) + 1);
 	    gc_loc = s7_gc_protect(sc, new_hash);
@@ -44439,7 +44469,7 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	case T_C_OBJECT:
 	  {
 	    s7_pointer mi, mj;
-	    int gc_loc1, gc_loc2;
+	    unsigned int gc_loc1, gc_loc2;
 	    s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 	    s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 
@@ -45278,7 +45308,7 @@ static s7_pointer object_to_list(s7_scheme *sc, s7_pointer obj)
       {
 	long int i, len; /* the "long" matters on 64-bit machines */
 	s7_pointer x, z, result;
-	int gc_z = -1;
+	unsigned int gc_z;
 
 	x = object_length(sc, obj);
 	if (s7_is_integer(x))
@@ -45411,7 +45441,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
     case T_CONTINUATION:
       {
 	s7_pointer let;
-	int gc_loc;
+	unsigned int gc_loc;
 	let = s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_continuation_symbol));
 	gc_loc = s7_gc_protect(sc, let);
 	s7_varlet(sc, let, s7_make_symbol(sc, "stack"), stack_entries(sc, continuation_stack(obj), continuation_stack_top(obj)));
@@ -45546,7 +45576,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	    func = find_method(sc, obj, sc->object_to_let_symbol);
 	    if (func != sc->undefined)
 	      {
-		int gc_loc;
+		unsigned int gc_loc;
 		gc_loc = s7_gc_protect(sc, let);
 		s7_apply_function(sc, func, list_2(sc, obj, let));
 		s7_gc_unprotect_at(sc, gc_loc);
@@ -45572,7 +45602,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	    func = find_method(sc, clet, sc->object_to_let_symbol);
 	    if (func != sc->undefined)
 	      {
-		int gc_loc;
+		unsigned int gc_loc;
 		gc_loc = s7_gc_protect(sc, let);
 		s7_apply_function(sc, func, list_2(sc, obj, let));
 		s7_gc_unprotect_at(sc, gc_loc);
@@ -45585,7 +45615,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
     case T_OUTPUT_PORT:
       {
 	s7_pointer let;
-	int gc_loc;
+	unsigned int gc_loc;
 	let = s7_inlet(sc, s7_list(sc, 8, sc->value_symbol, obj,
 				   sc->type_symbol, (is_input_port(obj)) ? sc->is_input_port_symbol : sc->is_output_port_symbol,
 				   s7_make_symbol(sc, "port-type"), 
@@ -45621,7 +45651,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
       {
 	s7_pointer let, sig;
 	const char* doc;
-	int gc_loc;
+	unsigned int gc_loc;
 	let = s7_inlet(sc, s7_list(sc, 6, sc->value_symbol, obj,
 				   sc->type_symbol, (is_procedure(obj)) ? sc->is_procedure_symbol : sc->is_macro_symbol,
 				   s7_make_symbol(sc, "arity"), s7_arity(sc, obj)));
@@ -45750,7 +45780,7 @@ static bool stacktrace_error_hook_function(s7_scheme *sc, s7_pointer sym)
 }
 
 static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
-			       char *notes, int gc_syms,
+			       char *notes, unsigned int gc_syms,
 			       int code_cols, int total_cols, int notes_start_col,
 			       bool as_comment)
 {
@@ -45922,7 +45952,8 @@ static char *stacktrace_add_func(s7_scheme *sc, s7_pointer f, s7_pointer code, c
 static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int total_cols, int notes_start_col, bool as_comment)
 {
   char *str;
-  int loc, top, frames = 0, gc_syms;
+  int loc, top, frames = 0;
+  unsigned int gc_syms;
 
   gc_syms = s7_gc_protect(sc, sc->nil);
   str = NULL;
@@ -46598,7 +46629,7 @@ It has the additional local variables: error-type, error-data, error-code, error
   /* if owlet is not copied, (define e (owlet)), e changes as owlet does!
    */
   s7_pointer e, x;
-  int gc_loc;
+  unsigned int gc_loc;
 
   e = let_copy(sc, sc->owlet);
   gc_loc = s7_gc_protect(sc, e);
@@ -48811,7 +48842,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc object . objects) applies proc to each element of the objects traversed in parallel. \
 Each object can be a list, string, vector, hash-table, or any other sequence."
-  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->T, sc->is_procedure_symbol, sc->is_sequence_symbol)
+  #define Q_for_each s7_make_circular_signature(sc, 2, 3, sc->is_unspecified_symbol, sc->is_procedure_symbol, sc->is_sequence_symbol)
 
   s7_pointer p, f;
   int len;
@@ -49073,7 +49104,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	  (is_all_x_op(optimize_op(expr))))
 	{
 	  s7_function func;
-	  s7_pointer slot, iter, val, z;
+	  s7_pointer slot, iter, val;
 	  
 	  iter = car(sc->z);
 	  push_stack(sc, OP_NO_OP, sc->args, val = cons(sc, sc->nil, cons(sc, f, iter))); /* second cons is GC protection */
@@ -49088,6 +49119,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	    }
 	  while (true)
 	    {
+	      s7_pointer z;
 	      slot_set_value(slot, s7_iterate(sc, iter));
 	      if (iterator_is_at_end(iter))
 		{
@@ -49471,7 +49503,8 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
     return(list_2(sc, sc->quote_symbol, form));
 
   {
-    int len, i, loc;
+    int len, i;
+    unsigned int loc;
     s7_pointer orig, bq, old_scw;
     bool dotted = false;
 
@@ -54501,7 +54534,7 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
   /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
 
   {
-    int gc_loc;
+    unsigned int gc_loc;
     gc_loc = s7_gc_protect(sc, e); /* perhaps use sc->temp9 here */
     for (p = cdr(expr); is_pair(p); p = cdr(p))
       {
@@ -56366,7 +56399,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
       if (is_symbol(func))
  	{
  	  s7_pointer lst;
- 	  int gc_loc;
+ 	  unsigned int gc_loc;
  	  lst = list_1(sc, add_sym_to_list(sc, func));
  	  gc_loc = s7_gc_protect(sc, lst); /* perhaps use sc->temp10 here */
  	  optimize(sc, body, 1, collect_collisions_star(sc, args, lst));
@@ -58685,7 +58718,7 @@ static int dox_ex(s7_scheme *sc)
   long long int id;
   s7_pointer frame, vars, slot, code;
   s7_function endf;
-  int gc_loc;
+  unsigned int gc_loc;
   bool all_pairs = true;
 	    
   new_frame(sc, sc->envir, frame);   /* new frame is not tied into the symbol lookup process yet */
@@ -69651,7 +69684,7 @@ void s7_vector_fill(s7_scheme *sc, s7_pointer vec, s7_pointer obj)
    */
   if ((is_normal_vector(vec)) && (is_big_number(obj)))
     {
-      int gc_loc;
+      unsigned int gc_loc;
       s7_int i, len;
       s7_pointer *tp;
 
@@ -73331,10 +73364,6 @@ static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, is_proper_list(sc, p)));
 }
 
-/* how to handle this? (float-vector-set! and vector-set! signature entries) */
-static s7_pointer g_is_integer_or_real_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
-static s7_pointer g_is_integer_or_any_at_end(s7_scheme *sc, s7_pointer args) {return(sc->T);}
-
 
 #ifndef _MSC_VER
 /* gdb stacktrace decoding */
@@ -74189,8 +74218,10 @@ s7_scheme *s7_init(void)
   sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false);
   /* do we need 'syntax? */
 
-  sc->is_integer_or_real_at_end_symbol = s7_define_function(sc, "integer:real?", g_is_integer_or_real_at_end, 1, 0, false, "internal signature helper");
-  sc->is_integer_or_any_at_end_symbol =  s7_define_function(sc, "integer:any?",  g_is_integer_or_any_at_end,  1, 0, false, "internal signature helper");
+  /* these are for signatures */
+  sc->is_unspecified_symbol = s7_make_symbol(sc, "unspecified?");
+  sc->is_integer_or_real_at_end_symbol = s7_make_symbol(sc, "integer:real?");
+  sc->is_integer_or_any_at_end_symbol =  s7_make_symbol(sc, "integer:any?");
 
   pl_p =   s7_make_signature(sc, 2, sc->T, sc->is_pair_symbol);
   pl_tl =  s7_make_signature(sc, 3, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->T, sc->is_list_symbol); /* memq and memv signature */
@@ -74426,13 +74457,6 @@ s7_scheme *s7_init(void)
   sc->string_ref_symbol =            defun("string-ref",	string_ref,		2, 0, false);
   sc->string_set_symbol =            defun("string-set!",	string_set,		3, 0, false);
 
-                                     defun("byte-vector-ref",	string_ref,		2, 0, false);
-                                     defun("byte-vector-set!",	string_set,		3, 0, false);
-  c_function_signature(slot_value(global_slot(s7_make_symbol(sc, "byte-vector-ref")))) = 
-    s7_make_signature(sc, 3, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol);
-  c_function_signature(slot_value(global_slot(s7_make_symbol(sc, "byte-vector-set!")))) = 
-    s7_make_signature(sc, 4, sc->is_integer_symbol, sc->is_byte_vector_symbol, sc->is_integer_symbol, sc->is_integer_symbol);
-
   sc->string_eq_symbol =             defun("string=?",		strings_are_equal,	2, 0, true);
   sc->string_lt_symbol =             defun("string<?",		strings_are_less,	2, 0, true);
   sc->string_gt_symbol =             defun("string>?",		strings_are_greater,	2, 0, true);
@@ -74557,6 +74581,8 @@ s7_scheme *s7_init(void)
   sc->string_to_byte_vector_symbol = defun("string->byte-vector", string_to_byte_vector, 1, 0, false);
   sc->byte_vector_symbol =           defun("byte-vector",	byte_vector,		0, 0, true);
   sc->make_byte_vector_symbol =      defun("make-byte-vector",  make_byte_vector,	1, 1, false);
+  sc->byte_vector_ref_symbol =       defun("byte-vector-ref",	byte_vector_ref,        2, 0, false);
+  sc->byte_vector_set_symbol =       defun("byte-vector-set!",	byte_vector_set,	3, 0, false);
 
   sc->hash_table_symbol =            defun("hash-table",	hash_table,		0, 0, true);
   sc->hash_table_star_symbol =       defun("hash-table*",	hash_table_star,	0, 0, true);
@@ -75112,7 +75138,7 @@ int main(int argc, char **argv)
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
- * with-set setter (op_set_with_let) still sometimes conses up the new expression
+ * with-let setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
@@ -75126,7 +75152,6 @@ int main(int argc, char **argv)
  *   don't burn up a bit for this -- need something else. sc->format_temp?
  *
  * Snd:
- * doc tankrev.scm
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can

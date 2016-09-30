@@ -360,7 +360,7 @@ static s7_pointer g_set_top_level_let(s7_scheme *sc, s7_pointer args)
 
 static void evaluator(glistener *g, const char *text)
 {
-  int gc_loc;
+  unsigned int gc_loc;
   s7_pointer old_port, result;
   char *errmsg = NULL;
   

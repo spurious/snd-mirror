@@ -1933,7 +1933,6 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   chan_info *cp;
   axis_info *ap;
   mus_float_t low = 0.0, hi = 0.0;
-  Xen y0 = Xen_undefined, y1 = Xen_undefined;
 
   Snd_assert_channel(S_set S_y_bounds, snd, chn, 2);
   Xen_check_type((Xen_is_number(bounds)) || (Xen_is_list(bounds)), bounds, 1, S_set S_y_bounds, "a list or a number");
@@ -1951,6 +1950,7 @@ static Xen g_set_y_bounds(Xen bounds, Xen snd, Xen chn, Xen ax)
   else
     {
       int len;
+      Xen y0 = Xen_undefined, y1 = Xen_undefined;
       len = Xen_list_length(bounds);
       if (len > 0)
 	{

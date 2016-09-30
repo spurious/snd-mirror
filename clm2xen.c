@@ -3844,7 +3844,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
   mus_long_t len = 0;
   bool partials_allocated = true;
 #if HAVE_SCHEME
-  int gc_loc;
+  unsigned int gc_loc;
 #endif
 
   Xen_check_type(mus_is_vct(partials) || Xen_is_list(partials), partials, 1, S_partials_to_wave, "a list or a " S_vct);
@@ -3924,7 +3924,7 @@ static Xen g_phase_partials_to_wave(Xen partials, Xen utable, Xen normalize)
   mus_long_t len = 0;
   bool partials_allocated = true;
 #if HAVE_SCHEME
-  int gc_loc;
+  unsigned int gc_loc;
 #endif
 
   #if HAVE_SCHEME
@@ -8436,7 +8436,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
     {
       Xen src_obj;
 #if HAVE_SCHEME
-      int loc;
+      unsigned int loc;
 #endif
 
       gn->gen = ge;

@@ -763,6 +763,9 @@
     
     ;; -------- types --------
 
+    (define (unspecified? x)
+      (eq? x #<unspecified>))
+
     (define (quoted-pair? x)
       (and (pair? x)
 	   (eq? (car x) 'quote)
@@ -1313,6 +1316,7 @@
 		(and (var? fd)
 		     (memq (var-ftype fd) '(define-macro define-macro* define-expansion 
 					    define-bacro define-bacro* defmacro defmacro* define-syntax))))))))
+
     (define (any-procedure? f env)
       (or (hash-table-ref built-in-functions f)
 	  (let ((v (var-member f env)))
@@ -6765,13 +6769,18 @@
 		      (pair? (caddr form))
 		      (eq? (caaddr form) 'current-output-port))
 		 (lint-format "(current-output-port) is the default port for ~A: ~A" caller head form))
-	     (if (and (eq? head 'write-byte)
-		      (integer? (cadr form))
-		      (not (<= 0 (cadr form) 255)))
-		 (lint-format "write-byte argument must be (<= 0 byte 255): ~A" caller form)
-		 (if (and (eq? head 'write-char)
-			  (eqv? (cadr form) #\newline))
-		     (lint-format "perhaps ~A" caller (lists->string form `(newline ,@(cddr form))))))))
+	     (case head
+	       ((write-byte)
+		(if (and (integer? (cadr form))
+			 (not (<= 0 (cadr form) 255)))
+		    (lint-format "write-byte argument must be (<= 0 byte 255): ~A" caller form)))
+	       ((write-char)
+		(if (eqv? (cadr form) #\newline)
+		    (lint-format "perhaps ~A" caller (lists->string form `(newline ,@(cddr form))))
+		    (if (and (pair? (cadr form))
+			     (eq? (caadr form) 'integer->char))
+			(lint-format "perhaps ~A" caller (lists->string form `(write-byte ,(cadadr form) ,@(cddr form))))))))))
+
 	 (hash-special 'write-char sp-write-char)
 	 (hash-special 'write-byte sp-write-char)
 	 (hash-special 'write sp-write-char))
@@ -19634,14 +19643,11 @@
     #f))
 |#
 
-;;; what macro calls can be detected?
 ;;; open-output-string write get-output-string close-port?
 ;;;   common: (let ((p (open-output-string))) (display val p) (close-output-port p)) -- makes no sense!
 ;;;     also same but (f ... (close-output-port p)) -- who returns a string here?
-;;;     if no get-output-string, pointless IO
 ;;;   common: (let ((s (open-output-string))) (write obj s) (let ((result (get-output-string s))) (close-output-port s) result))
-;;; logbit? in other schemes? [slib it's logbit? with args reversed] bitwise-bit-set? in Guile? == logbit? arg order I think
-;;;   Gauche args are reversed logbit?
+;;;   open-output-string in report-usage? -- scan outer-form for binding, then close -- look for get-output-string
 ;;;
-;;; 164 28138 676270
+;;; 164 28139 676226
 

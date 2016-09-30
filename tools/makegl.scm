@@ -656,7 +656,7 @@
 		    (hey "    return(result);~%")
 		    (hey "  }~%"))
 		  (begin
-		    (hey "  return(Xen_list_~D(" (+ refargs (if using-result 1 0)))
+		    (hey "  return(Xen_list_~D(" (if using-result (+ refargs 1) refargs))
 		    (if using-result (heyc "result"))
 		    (for-each 
 		     (lambda (arg)

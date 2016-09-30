@@ -150,16 +150,16 @@
 	  (fill! obj arg)))))
 
 (define (map-values lst)
-  (if (or (not (pair? lst))
-	  (not (car lst))
-	  (procedure? (car lst)))
-      lst
-      (begin
-	(set-car! lst (if (symbol? (car lst))
-			  (symbol->value (car lst))
-			  (and (pair? (car lst))
-			       (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))))
-	(map-values (cdr lst)))))
+  (do ((lst lst (cdr lst)))
+      ((or (not (pair? lst))
+	   (not (car lst))
+	   (procedure? (car lst))) 
+       lst)
+    (set-car! lst
+	      (if (symbol? (car lst))
+		  (symbol->value (car lst))
+		  (and (pair? (car lst))
+		       (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))))))
 
 (define baddies '(exit emergency-exit abort autotest 
 		  all delete-file system set-cdr! stacktrace test-sym

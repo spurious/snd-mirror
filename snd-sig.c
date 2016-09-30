@@ -3460,7 +3460,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 
 #if HAVE_SCHEME
   mus_float_t *in_data;
-  int gc_loc, proc_loc;
+  unsigned int gc_loc, proc_loc;
   bool use_apply;
   s7_pointer arg_list, body, e, slot;
 
@@ -3882,7 +3882,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 #if HAVE_SCHEME
   {
   s7_pointer arg_list;
-  int gc_loc;
+  unsigned int gc_loc;
   bool use_apply;
   s7_pointer body, e, slot;
 
