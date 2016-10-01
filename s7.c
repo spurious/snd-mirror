@@ -43008,7 +43008,6 @@ static s7_pointer g_is_sequence(s7_scheme *sc, s7_pointer args)
 
 static unsigned int protect_accessor(s7_scheme *sc, s7_pointer acc)
 {
-  /* this is intended for foreign variables */
   unsigned int loc;
   if (sc->protected_accessors_size == sc->protected_accessors_loc)
     {
@@ -43037,10 +43036,6 @@ s7_pointer s7_symbol_access(s7_scheme *sc, s7_pointer sym)
 
 s7_pointer s7_symbol_set_access(s7_scheme *sc, s7_pointer symbol, s7_pointer func)
 {
-  /* a mess: it's possible to have a global symbol with an accessor but not a protected accessor,
-   *   so the index can be bad.  These protections are for foreign variables, not scheme side
-   *   stuff -- maybe if index is bad, assume the latter?
-   */
   if (slot_has_accessor(global_slot(symbol)))
     {
       unsigned int index;
@@ -43072,7 +43067,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_access "(symbol-access sym (env (curlet))) is the function called when the symbol is set!."
   #define Q_symbol_access s7_make_signature(sc, 3, sc->T, sc->is_symbol_symbol, sc->is_let_symbol)
-  s7_pointer sym, p, e;
+  s7_pointer sym, p;
 
   sym = car(args);
   if (!is_symbol(sym))
@@ -43082,27 +43077,26 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
   if (is_pair(cdr(args)))
     {
+      s7_pointer e, old_e;
       e = cadr(args);
-      if ((!is_let(e)) && (!is_null(e)))
-	return(wrong_type_argument(sc, sc->symbol_access_symbol, 2, e, T_LET));
+      if ((e == sc->rootlet) || (e == sc->nil))
+	p = global_slot(sym);
+      else
+	{
+	  if (!is_let(e))
+	    return(wrong_type_argument(sc, sc->symbol_access_symbol, 2, e, T_LET));
+	  old_e = sc->envir;
+	  sc->envir = e;
+	  p = find_symbol(sc, sym);
+	  sc->envir = old_e;
+	}
     }
-  else e = sc->envir;
+  else p = find_symbol(sc, sym);
 
-  if ((e == sc->rootlet) ||
-      (e == sc->nil))
-    {
-      if ((is_slot(global_slot(sym))) &&
-	  (slot_has_accessor(global_slot(sym))))
-	return(slot_accessor(global_slot(sym)));
-      return(sc->F);
-    }
+  if (!is_slot(p))
+    return(sc->F);
 
-  if (is_null(cdr(args)))
-    p = find_symbol(sc, sym); /* follows outlet */
-  else p = find_local_symbol(sc, sym, e);
-
-  if ((is_slot(p)) &&
-      (slot_has_accessor(p)))
+  if (slot_has_accessor(p))
     return(slot_accessor(p));
 
   return(sc->F);
@@ -43111,8 +43105,7 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer sym, func, e, p;
-  /* perhaps: check func */
+  s7_pointer sym, func, p;
 
   sym = car(args);
   if (!is_symbol(sym))                 /* no check method because no method name? */
@@ -43123,14 +43116,24 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
   /* (set! (symbol-access sym) f) or (set! (symbol-access sym env) f) */
   if (is_pair(cddr(args)))
     {
+      s7_pointer e, old_e;
       e = cadr(args);
-      if ((!is_let(e)) && (!is_null(e)))
-	return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "a let"));
       func = caddr(args);
+      if ((e == sc->rootlet) || (e == sc->nil))
+	p = global_slot(sym);
+      else
+	{
+	  if (!is_let(e))
+	    return(s7_wrong_type_arg_error(sc, "set! symbol-access", 2, e, "a let"));
+	  old_e = sc->envir;
+	  sc->envir = e;
+	  p = find_symbol(sc, sym);
+	  sc->envir = old_e;
+	}
     }
   else
     {
-      e = sc->envir;
+      p = find_symbol(sc, sym);
       func = cadr(args);
     }
 
@@ -43138,32 +43141,22 @@ static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
       (func != sc->F))
     return(s7_wrong_type_arg_error(sc, "set! symbol-access", 3, func, "a function or #f"));
 
-  if ((e == sc->rootlet) ||
-      (e == sc->nil))
+  if (!is_slot(p))
+    return(sc->F);
+
+  if (p == global_slot(sym))
     {
-      if (!is_slot(global_slot(sym)))
-	return(sc->F);
-      slot_set_has_accessor(global_slot(sym));
+      s7_symbol_set_access(sc, sym, func); /* special GC protection for global vars */
+      return(func);
+    }
+
+  slot_set_accessor(p, func);
+  if (func != sc->F)
+    {
+      slot_set_has_accessor(p);
       symbol_set_has_accessor(sym);
-      slot_set_accessor(global_slot(sym), func);
-      return(func);
     }
-
-  if (is_null(cddr(args)))
-    p = find_symbol(sc, sym);
-  else p = find_local_symbol(sc, sym, e);
-
-  if (is_slot(p))
-    {
-      slot_set_accessor(p, func);
-      if (func != sc->F)
-	{
-	  slot_set_has_accessor(p);
-	  symbol_set_has_accessor(sym);
-	}
-      return(func);
-    }
-  return(sc->F);
+  return(func);
 }
 
 
@@ -75142,7 +75135,7 @@ int main(int argc, char **argv)
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
- * symbol-access closure GC protection?
+ * more extensive symbol-access tests
  * need truncated error output if sc->code is ridiculous: (*s7* 'error-print-length) ?
  *   would need to implement this in format_to_port_1 I think [47149=s7_error]
  *   [33200 to truncated the columnized output -- MIN(port_position(strport), s7-format-print-length) + ...]

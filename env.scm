@@ -1,4 +1,4 @@
-;;; various envelope functions
+;;; Various envelope functions
 ;;;
 ;;; window-envelope (beg end env) -> portion of env lying between x axis values beg and end
 ;;; map-envelopes (func env1 env2) maps func over the breakpoints in env1 and env2 returning a new envelope
@@ -502,7 +502,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
   ;; the smaller the grid, the less likely a given bump will get through
   ;; original x and y values are not changed, just sometimes omitted.
   
-  (define (point-on-line? px py qx qy tx ty)
+  (define (point-on-line px py qx qy tx ty)
     
     ;; is point tx ty on line defined by px py and qx qy --
     ;; #f if no, :before if on ray from p, :after if on ray from q, :within if between p and q
@@ -546,7 +546,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 		(set! tx (round (* ttx x-scl)))
 		(set! ty (round (* tty y-scl)))
 		(if px
-		    (if (not (point-on-line? px py qx qy tx ty))
+		    (if (not (point-on-line px py qx qy tx ty))
 			(begin
 			  (set! new-env (cons qty (cons qtx new-env)))
 			  (set! px qx)

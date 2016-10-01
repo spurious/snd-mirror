@@ -123,6 +123,8 @@
      (GTK_WIDGET (g_object_get_data (G_OBJECT dialog) "ok-button")) 
      (effect-target-ok target)))
 
+  (define (init-xe-envelope e)
+    (set! (xe-envelope e) (list 0.0 1.0 1.0 1.0)))
 
   
 ;;; *******************************
@@ -212,7 +214,7 @@
 				     
 				     (lambda (w data)
 				       (set! gain-amount initial-gain-amount)
-				       (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+				       (init-xe-envelope gain-envelope)
 				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) gain-amount)
 				       )
 				     
@@ -230,7 +232,7 @@
 								 (gtk_dialog_get_content_area (GTK_DIALOG gain-dialog))
 								 #f
 								 '(0.0 1.0 0.0 1.0)))
-			    (set! (xe-envelope gain-envelope) (list 0.0 1.0 1.0 1.0))
+			    (init-xe-envelope gain-envelope)
 			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG gain-dialog)) 
 					(lambda (target) 
 					  (set! gain-target target)
@@ -1438,7 +1440,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				     
 				     (lambda (w data)
 				       (set! src-timevar-amount initial-src-timevar-scale)
-				       (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+				       (init-xe-envelope src-timevar-envelope) 
 				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) src-timevar-scale)
 				       )
 				     
@@ -1456,7 +1458,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 									(gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog))
 									#f
 									'(0.0 1.0 0.0 1.0)))
-			    (set! (xe-envelope src-timevar-envelope) (list 0.0 1.0 1.0 1.0))
+			    (init-xe-envelope src-timevar-envelope)
 			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG src-timevar-dialog)) 
 					(lambda (target) 
 					  (set! src-timevar-target target)
@@ -1549,7 +1551,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				     
 				     (lambda (w data)
 				       (set! am-effect-amount initial-am-effect-amount)
-				       (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+				       (init-xe-envelope am-effect-envelope)
 				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) am-effect-amount)
 				       )
 				     
@@ -1567,7 +1569,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 								      (gtk_dialog_get_content_area (GTK_DIALOG am-effect-dialog))
 								      #f
 								      '(0.0 1.0 0.0 1.0)))
-			    (set! (xe-envelope am-effect-envelope) (list 0.0 1.0 1.0 1.0))
+			    (init-xe-envelope am-effect-envelope)
 			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG am-effect-dialog))
 					(lambda (target) 
 					  (set! am-effect-target target)
@@ -1630,7 +1632,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				     
 				     (lambda (w data)
 				       (set! rm-frequency initial-rm-frequency)
-				       (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+				       (init-xe-envelope rm-envelope)
 				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car sliders)) rm-frequency)
 				       (set! rm-radians initial-rm-radians)
 				       (gtk_adjustment_set_value (GTK_ADJUSTMENT (cadr sliders)) rm-radians))
@@ -1654,7 +1656,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 							       (gtk_dialog_get_content_area (GTK_DIALOG rm-dialog))
 							       #f
 							       '(0.0 1.0 0.0 1.0)))
-			    (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+			    (init-xe-envelope rm-envelope)
 			    (add-target (gtk_dialog_get_content_area (GTK_DIALOG rm-dialog))
 					(lambda (target) 
 					  (set! rm-target target)
@@ -2090,7 +2092,7 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 									(gtk_dialog_get_content_area (GTK_DIALOG place-sound-dialog))
 									#f
 									'(0.0 1.0 0.0 1.0)))
-			    (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0)))
+			    (init-xe-envelope place-sound-envelope))
 			  (activate-dialog place-sound-dialog))
 			#f)
       (set! misc-menu-list (cons (lambda ()

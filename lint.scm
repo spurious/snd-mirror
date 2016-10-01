@@ -353,7 +353,7 @@
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
     
     (set! *e* (curlet))
-    (set! *lint* *e*)                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
+    (set! *lint* (curlet))                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
 
     ;; -------- lint-format --------
@@ -490,6 +490,11 @@
     
     
     ;; -------- the usual list functions --------
+    (define (len=2? x)
+      (and (pair? x)
+	   (pair? (cdr x))
+	   (null? (cddr x))))
+
     (define (remove item sequence)
       (cond ((null? sequence) ())
 	    ((equal? item (car sequence)) (cdr sequence))
@@ -1792,9 +1797,7 @@
 	((pair? vector? float-vector? int-vector? hash-table?) '(equal? equal?))
 	((eof-object?) '(eq? eof-object?))
 	(else 
-	 (if (and (pair? x)
-		  (pair? (cdr x))
-		  (null? (cddr x))
+	 (if (and (len=2? x)
 		  (or (and (memq 'boolean? x)
 			   (or (memq 'real? x) (memq 'number? x) (memq 'integer? x)))
 		      (and (memq 'eof-object? x)
@@ -5476,9 +5479,7 @@
 	(let ()
 	  (define (sp-memx caller head form env)
 	    (define (list-one? p)
-	      (and (pair? p)
-		   (pair? (cdr p))
-		   (null? (cddr p))
+	      (and (len=2? p)
 		   (case (car p)
 		     ((list) cadr)
 		     ((quote)
@@ -5881,9 +5882,9 @@
 		      (lint-format "if you want a boolean, (not (not ~A)) -> (and ~A #t)" 'paranoia str str))
 		    (let ((sig (arg-signature (caadr form) env)))
 		      (if (and (pair? sig)
-			       (if (pair? (car sig))                    ; (not (+ x y))
-				   (not (memq 'boolean? (car sig)))
-				   (not (memq (car sig) '(#t values boolean?)))))
+			       (not (if (pair? (car sig))                    ; (not (+ x y))
+					(memq 'boolean? (car sig))
+					(memq (car sig) '(#t values boolean?)))))
 			  (lint-format "~A can't be true (~A never returns #f)" caller (truncated-list->string form) (caadr form))))))
 					 
 	    (if (not (= line-number last-simplify-boolean-line-number))
@@ -6201,18 +6202,16 @@
 							   (cdr form)))))))
 
 	    (if (any? (lambda (a) ; string-copy is redundant in arg list
-			(and (pair? a)
-			     (memq (car a) '(copy string-copy))
-			     (null? (cddr a))))
+			(and (len=2? a)
+			     (memq (car a) '(copy string-copy))))
 		      (cdr form))
 		(let cleaner ((args (cdr form)) (new-args ())) ; (string=? "" (string-copy "")) -> (string=? "" "")
 		  (if (not (pair? args))
 		      (lint-format "perhaps ~A" caller (lists->string form `(,head ,@(reverse new-args))))
 		      (let ((a (car args)))
 			(cleaner (cdr args)
-				 (cons (if (and (pair? a)
-						(memq (car a) '(copy string-copy))
-						(null? (cddr a)))
+				 (cons (if (and (len=2? a)
+						(memq (car a) '(copy string-copy)))
 					   (cadr a)
 					   a)
 				       new-args))))))
@@ -6788,8 +6787,7 @@
 	;; ---------------- read, port-filename, port-line-number, read-char, read-byte ----------------
 	(let ()
 	 (define (sp-read caller head form env)
-	   (when (and (pair? (cdr form))
-		      (null? (cddr form)))
+	   (when (len=2? form)
 	     (if (and (pair? (cadr form))
 		      (eq? (caadr form) 'current-input-port))
 		 (lint-format "(current-input-port) is the default port for ~A: ~A" caller head form)
@@ -7134,11 +7132,9 @@
 				(integer? (caddr form)) ; type error is checked elsewhere
 				(not (<= 2 (caddr form) 16)))  ;  (string->number "123" 21)
 			   (lint-format "string->number radix should be between 2 and 16: ~A" caller form)
-			   (if (and (pair? arg)
+			   (if (and (len=2? arg)
 				    (eq? (car arg) 'string)
-				    (pair? (cdr arg))
-				    (null? (cddr form))
-				    (null? (cddr arg))) ; (string->number (string num-char)) -> (- (char->integer num-char) (char->integer #\0))
+				    (null? (cddr form)))  ; (string->number (string num-char)) -> (- (char->integer num-char) (char->integer #\0))
 			       (lint-format "perhaps ~A" caller
 					    (lists->string form `(- (char->integer ,(cadr arg)) (char->integer #\0)))))))
 		      
@@ -7452,10 +7448,8 @@
 			     (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadar new-args) (append ,@(cdr new-args))))))
 			    
 			    ((let ((n-1 (list-ref new-args (- len1 2))))
-			       (and (pair? n-1)
-				    (eq? (car n-1) 'list)
-				    (pair? (cdr n-1))
-				    (null? (cddr n-1))))               ; (append x (list y) z) -> (append x (cons y z))
+			       (and (len=2? n-1)
+				    (eq? (car n-1) 'list)))            ; (append x (list y) z) -> (append x (cons y z))
 			     (lint-format "perhaps ~A" caller 
 					  (lists->string form 
 							 `(append ,@(copy new-args (make-list (- len1 2)))
@@ -9077,9 +9071,7 @@
 		       (lint-format "perhaps ~A" caller 
 				    (lists->string form   ;  (and-let* ((x (f y))) (abs x)) -> (cond ((f y) => abs))
 						   (if (and (null? (cdddr form))
-							    (pair? (caddr form))
-							    (pair? (cdaddr form))
-							    (null? (cddr (caddr form)))
+							    (len=2? (caddr form))
 							    (eq? (caaadr form) (cadr (caddr form))))
 						       `(cond (,(cadar (cadr form)) => ,(caaddr form)))
 						       `(cond (,(cadar (cadr form)) => (lambda (,(caaadr form)) ,@(cddr form))))))))))))
@@ -10107,32 +10099,75 @@
 			       lint-left-margin #\space
 			       vname))
 
-		   ;; look for port opened but not closed
+		   ;; look for port opened but not closed, or not used
 		   ;;    (let ((p (open-output-file str))) (display 32 p) x)
 		   (when (and (pair? outer-form)
-			      (not (tree-memq vname (list-ref outer-form (- (length outer-form) 1)))))  ; vname never returned from outer-form??
+			      (not (memq (var-definer local-var) '(call-with-input-string call-with-input-file call-with-output-string call-with-output-file)))
+			      ;; call-with-io-walker below uses open-input-string et al for the initial value to get type checks
+			      (let ((last (list-ref outer-form (- (length outer-form) 1))))
+				(or (not (tree-memq vname last))
+				    (and (pair? last)
+					 (memq (car last) '(close-input-port close-output-port close-port close))))))
 		     (let ((hist (var-history local-var))
 			   (open-set '(open-input-string open-input-file open-output-string open-output-file))
 			   (open-form #f))
+		       (when (any? (lambda (tree)
+				     (and (pair? tree)
+					  (or (and (memq (car tree) open-set)
+						   (not (and (pair? (cdr tree))
+							     (memq vname (cdr tree)))))
+					      (and (eq? (car tree) 'set!)
+						   (pair? (cdr tree))
+						   (eq? (cadr tree) vname)
+						   (pair? (cddr tree))
+						   (pair? (caddr tree))
+						   (memq (caaddr tree) open-set)))
+					  (set! open-form tree)))
+				   hist)
+			 (if (not (tree-set-member '(close-input-port close-output-port close-port close current-output-port current-input-port) hist))
+			     (lint-format "in ~A~%     perhaps ~A is opened via ~A, but never closed" caller
+					  (truncated-list->string outer-form) 
+					  vname open-form)
+			     (if (= (length hist) 2)
+				 (lint-format "in ~A~%   ~A is opened and closed, but never used" caller
+					      (truncated-list->string outer-form) vname))))))
 
-		       (when (and (any? (lambda (tree)
-					  (and (pair? tree)
-					       (or (and (memq (car tree) open-set)
-							(pair? (cdr tree))
-							(not (memq vname (cdr tree))))
-						   (and (eq? (car tree) 'set!)
-							(pair? (cdr tree))
-							(eq? (cadr tree) vname)
-							(pair? (cddr tree))
-							(pair? (caddr tree))
-							(memq (caaddr tree) open-set)))
-					       (set! open-form tree)))
-					hist)
-				  (not (tree-set-member '(close-input-port close-output-port close-port close current-output-port current-input-port) hist)))
-			 (lint-format "in ~A~%     perhaps ~A is opened via ~A, but never closed" caller
-				      (truncated-list->string outer-form) 
-				      vname open-form))))
-		   
+		   (let ((init (var-initial-value local-var))) ; look for various open-output-string problems
+		     (when (and (pair? init)
+				(eq? (car init) 'open-output-string)
+				(pair? outer-form)
+				(eq? (car outer-form) 'let)
+				(pair? (cadr outer-form))
+				(null? (cdadr outer-form)))
+		       (let ((var (caadr outer-form)))
+			 (when (and (eq? (car var) vname)
+				    (pair? (cadr var))
+				    (eq? (caadr var) 'open-output-string))
+			   (let ((hist (var-history local-var)))
+			     (if (and (pair? (car hist))
+				      (eq? (caar hist) 'close-output-port)
+				      (eq? vname (cadar hist))
+				      (not (tree-memq 'get-output-string hist))
+				      (= (length hist) 3)
+				      (pair? (cadr hist))
+				      (memq (caadr hist) '(display write)))
+				 (lint-format "~A is missing get-output-string" vname (truncated-list->string outer-form))
+				 (when (and (pair? (cddr outer-form))
+					    (pair? (cdddr outer-form)))
+				   (let ((mid (cadddr outer-form)))
+				     (when (and (pair? mid)
+						(eq? (car mid) 'let)
+						(= (length hist) 4))
+				       (let ((writer (caddr hist)))
+					 (when (and (pair? writer)
+						    (memq (car writer) '(write display))
+						    (pair? (cddr writer))
+						    (eq? (caddr writer) vname)
+						    (equal? writer (caddr outer-form)))  ; all this is sloppy -- maybe not worth this effort
+					   (lint-format "perhaps ~A" vname
+							(lists->string outer-form 
+								       `(object->string ,(cadr writer) 
+											,@(if (eq? (car writer) 'display) '(#f) ())))))))))))))))
 		   ;; redundant vars are hard to find -- tons of false positives
 		   
 		   (if (zero? (var-ref local-var))
@@ -12591,9 +12626,9 @@
 							       (and (pair? last)
 								    (let ((sig (arg-signature (car last) env)))
 								      (and (pair? sig)
-									   (if (pair? (car sig))
-									       (not (tree-set-member '(boolean? #t values) (car sig)))
-									       (not (memq (car sig) '(boolean? #t values))))))))
+									   (not (if (pair? (car sig))
+										    (tree-set-member '(boolean? #t values) (car sig))
+										    (memq (car sig) '(boolean? #t values))))))))
 						       (lint-format "~A looks boolean, but it can return ~A" caller (car sym) (truncated-list->string last))
 						       (throw 'one-is-enough)))))
 				  (lambda args #f)))
@@ -14148,10 +14183,8 @@
 					    (or (not (hash-table-ref syntaces first-func))
 						(eq? first-func 'set!))
 					    (every? (lambda (c)
-						      (and (pair? c)
-							   (pair? (cdr c))
+						      (and (len=2? c)
 							   (pair? (cadr c))
-							   (null? (cddr c))
 							   (pair? (cdadr c))
 							   (or (equal? first-func (caadr c))
 							       (and (eq? c else-clause)
@@ -14202,10 +14235,8 @@
 			       ;; not escaping else here because the trailing args might be evaluated first
 			       (when (and (not (hash-table-ref syntaces (car first-result)))
 					  (every? (lambda (c)
-						    (and (pair? c)
-							 (pair? (cdr c))
+						    (and (len=2? c)
 							 (pair? (cadr c))
-							 (null? (cddr c))
 							 (not (hash-table-ref syntaces (caadr c)))
 							 (equal? (cdadr c) (cdr first-result))))
 						  (cddr form)))
@@ -14357,9 +14388,7 @@
 					 ;; (cond ((= x 0) x) ((= x 1) (= x 1)))
 					 (lint-format "no need to repeat the test: ~A" caller (lists->string clause (list test))))
 					
-					((and (pair? first-sequel)
-					      (pair? (cdr first-sequel))
-					      (null? (cddr first-sequel))
+					((and (len=2? first-sequel)
 					      (equal? test (cadr first-sequel)))
 					 (if (eq? (car first-sequel) 'not)
 					     ;; (cond ((> x 2) (not (> x 2))))
@@ -14962,14 +14991,10 @@
 			     
 			     (let ((arg1 (cadr form))
 				   (arg2 (caddr form)))
-			       (when (and (pair? arg1)
+			       (when (and (len=2? arg1)
 					  (pair? (car arg1))
-					  (pair? (cdr arg1))
-					  (pair? arg2)
+					  (len=2? arg2)
 					  (eq? (caar arg1) 'and)
-					  (null? (cddr arg1))
-					  (pair? (cdr arg2))
-					  (null? (cddr arg2))
 					  (member (car arg2) (cdar arg1))
 					  (= (length (cdar arg1)) 2))
 				 ;; (cond ((and A B) c) (B d) (else e)) -> (cond (B (if A c d)) (else e))
@@ -14996,9 +15021,7 @@
 								      (else (or ,@(cdar last-clause) ,else-clause))))))))))
 		     
 		     (let ((last-clause (list-ref form (if has-else (- len 1) len)))) ; not the else branch! -- just before it.
-		       (if (and (pair? last-clause)          ; (cond ... (A (cond ...)) (else B)) -> (cond ... ((not A) B) ...)
-				(pair? (cdr last-clause))
-				(null? (cddr last-clause))
+		       (if (and (len=2? last-clause)          ; (cond ... (A (cond ...)) (else B)) -> (cond ... ((not A) B) ...)
 				(pair? (cadr last-clause))
 				(memq (caadr last-clause) '(if cond)))
 			   (let ((new-test (simplify-boolean `(not ,(car last-clause)) () () env))
@@ -15034,9 +15057,7 @@
 				     ((or (not (pair? p))
 					  (= i lim)))
 				   (let ((nc (car p)))
-				     (if (and (pair? nc)        
-					      (pair? (cdr nc))
-					      (null? (cddr nc))
+				     (if (and (len=2? nc)        
 					      (pair? (cadr nc))
 					      (eq? (caadr nc) 'cond)
 					      (>= (length (cdadr nc)) (* 2 k))
@@ -15133,10 +15154,8 @@
 				       (or (not (hash-table-ref syntaces first-func))
 					   (eq? first-func 'set!))
 				       (every? (lambda (c)
-						 (and (pair? c)
-						      (pair? (cdr c))
+						 (and (len=2? c)
 						      (pair? (cadr c))
-						      (null? (cddr c))
 						      (pair? (cdadr c))
 						      (or (equal? first-func (caadr c))
 							  (and (eq? c else-clause)
@@ -15189,12 +15208,10 @@
 		  ;; ----------------
 
 		  (if (every? (lambda (c)               ; (case x ((a) a) ((b) b)) -> (symbol->value x)
-				(and (pair? c)
+				(and (len=2? c)
 				     (pair? (car c))
 				     (symbol? (caar c))
 				     (null? (cdar c))
-				     (pair? (cdr c))
-				     (null? (cddr c))
 				     (eq? (caar c) (cadr c)))) ; the quoted case happens only in test suites
 			      (cddr form))
 		      (lint-format "perhaps (ignoring the unmatched case) ~A" caller (lists->string form `(symbol->value ,(cadr form)))))
@@ -16094,9 +16111,7 @@
 					     (eq? (car b) 'if)
 					     (= (tree-count2 vname b) 2)
 					     (eq? vname (cadr b))
-					     (pair? (caddr b))
-					     (pair? (cdaddr b))
-					     (null? (cddr (caddr b)))
+					     (len=2? (caddr b))
 					     (eq? vname (cadr (caddr b))))))
 				  (if (pair? bp)
 				      (let ((else-clause (if (pair? (cdddar bp)) `((else ,@(cdddar bp))) ())))
@@ -16110,9 +16125,7 @@
 				      (eq? (caadr p) vname)
 				      (pair? (cdadr p))
 				      (null? (cddadr p))
-				      (or (and (pair? (cadadr p))
-					       (pair? (cdr (cadadr p)))
-					       (null? (cddr (cadadr p))) ; one arg to func
+				      (or (and (len=2? (cadadr p))  ; one arg to func
 					       (eq? vname (cadr (cadadr p))))
 					  (eq? vname (cadadr p)))
 				      (or (null? (cddr p))
@@ -16159,9 +16172,7 @@
 				 (when (and (pair? (cadr p)) ; (let ((x (f y))) (if (not x) B (g x))) -> (cond ((f y) => g) (else B))
 					    (eq? (caadr p) 'not)
 					    (eq? (cadadr p) vname)
-					    (pair? if-false)
-					    (pair? (cdr if-false))
-					    (null? (cddr if-false))
+					    (len=2? if-false)
 					    (eq? vname (cadr if-false)))
 				   (let ((else-clause (if (eq? if-true vname)
 							  `((else #f))
@@ -16189,9 +16200,7 @@
 							    #f))
 						   (eq? (cadadr p) vname)))
 					  
-					  (or (and (pair? (caddr p))
-						   (pair? (cdaddr p))
-						   (null? (cddr (caddr p))) ; one func arg
+					  (or (and (len=2? (caddr p))   ; one func arg
 						   (or (eq? vname (cadr (caddr p)))
 						       (and (hash-table-ref combinable-cxrs (caaddr p))
 							    ((lambda* (cr arg) ; lambda* not lambda because combine-cxrs might return just #f
@@ -16415,6 +16424,7 @@
 
 		     (when (pair? vars)
 		       (when (and (not named-let)
+				  (pair? lint-function-body)  ; (let ((v 3)) v)?
 				  (eq? form (car lint-function-body))
 				  (symbol? lint-function-name))
 			 (evert-function-locals form vars e))
@@ -16696,9 +16706,7 @@
 								    `(let ,(cadr new-form)
 								       ,@(one-call-and-dots (cddr new-form)))))))))
 			   (let ((v (car vs)))
-			     (when (and (pair? v)
-					(pair? (cdr v))
-					(null? (cddr v))                  ; good grief
+			     (when (and (len=2? v)
 					(symbol? (cadr v))
 					(not (set-target (cadr v) body env))
 					(not (set-target (car v) body env))
@@ -17303,9 +17311,7 @@
 								    `(,header ,(cadr new-form)
 									      ,@(one-call-and-dots (cddr new-form))))))))))
 			 (let ((v (car vs)))
-			   (if (and (pair? v)
-				    (pair? (cdr v))
-				    (null? (cddr v))                  
+			   (if (and (len=2? v)
 				    (symbol? (cadr v))
 				    (not (assq (cadr v) (cadr form))) ; value is not a local var
 				    (not (set-target (car v) body env))
@@ -17424,12 +17430,10 @@
 					    ((or)     (equal? (cadr p) `(not ,(car last-var))))
 					    (else #f))
 					  (pair? (cddr p))
-					  (pair? (caddr p))
+					  (len=2? (caddr p))
 					  (or (eq? (car p) 'if)
 					      (null? (cdddr p)))
-					  (pair? (cdaddr p))
 					  (not (eq? (caaddr p) (car last-var))) ; ! (let* (...(x A)) (if x (x x)))
-					  (null? (cddr (caddr p)))
 					  (eq? (car last-var) (cadr (caddr p))))
 				 
 				 (let ((else-clause (if (pair? (cdddr p)) ; only if 'if (see above)
@@ -17464,9 +17468,7 @@
 				 ;; (let* ((x (log y))) x) -> (log y)
 				 (lint-format "perhaps ~A" caller (lists->string form (cadar varlist)))
 				 (if (and (> varlist-len 1)         ; (let* (... (x y)) x) -> (let(*)(...) y)
-					  (pair? last-var)
-					  (pair? (cdr last-var))
-					  (null? (cddr last-var))
+					  (len=2? last-var)
 					  (eq? (car body) (car last-var)))
 				     ;; (let* ((y 3) (x (log y))) x) -> (let ((y 3)) (log y))
 				     (lint-format "perhaps ~A" caller 
@@ -19643,11 +19645,4 @@
     #f))
 |#
 
-;;; open-output-string write get-output-string close-port?
-;;;   common: (let ((p (open-output-string))) (display val p) (close-output-port p)) -- makes no sense!
-;;;     also same but (f ... (close-output-port p)) -- who returns a string here?
-;;;   common: (let ((s (open-output-string))) (write obj s) (let ((result (get-output-string s))) (close-output-port s) result))
-;;;   open-output-string in report-usage? -- scan outer-form for binding, then close -- look for get-output-string
-;;;
-;;; 164 28139 676226
-
+;;; 164 28139 676322

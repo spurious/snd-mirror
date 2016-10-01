@@ -2647,27 +2647,24 @@
 							 (channel-rev-gains r-offset)))
 		;; S
 		(set! (channel-rev-gains s-offset) (cons time (channel-rev-gains s-offset)))
-		(set! (channel-rev-gains s-offset) (cons (if (zero? dist) 0 (* (/ (* -2 z x) dist dist)
-									       dlocsig-ambisonics-ho-rev-scaler ratt))
+		(set! (channel-rev-gains s-offset) (cons (if (zero? dist) 0 (/ (* -2 z x dlocsig-ambisonics-ho-rev-scaler ratt)
+									       dist dist))
 							 (channel-rev-gains s-offset)))
 		;; T
 		(set! (channel-rev-gains t-offset) (cons time (channel-rev-gains t-offset)))
-		(set! (channel-rev-gains t-offset) (cons (if (zero? dist) 0 (* (/ (* 2 z y) dist dist)
-									       dlocsig-ambisonics-ho-rev-scaler ratt))
+		(set! (channel-rev-gains t-offset) (cons (if (zero? dist) 0 (/ (* 2 z y dlocsig-ambisonics-ho-rev-scaler ratt)
+									       dist dist))
 							 (channel-rev-gains t-offset))))
 	      (when (>= ambisonics-h-order 2)
 		;; U
 		(set! (channel-rev-gains u-offset) (cons time (channel-rev-gains u-offset)))
-		(set! (channel-rev-gains u-offset) (let ((dist-u (if (zero? dist) 0 
-								     (* (/ (- (* x x) (* y y)) dist dist)
-									dlocsig-ambisonics-ho-rev-scaler ratt))))
+		(set! (channel-rev-gains u-offset) (let ((dist-u (if (zero? dist) 0 (/ (* (- (* x x) (* y y)) dlocsig-ambisonics-ho-rev-scaler ratt)
+										       dist dist))))
 						     (cons dist-u (channel-rev-gains u-offset))))
 		;; V
 		(set! (channel-rev-gains v-offset) (cons time (channel-rev-gains v-offset)))
-		(set! (channel-rev-gains v-offset) (let ((dist-v (if (zero? dist) 0
-								     (* -2 x y
-									(/ 1.0 dist dist)
-									dlocsig-ambisonics-ho-rev-scaler ratt))))
+		(set! (channel-rev-gains v-offset) (let ((dist-v (if (zero? dist) 0 (/ (* -2 x y dlocsig-ambisonics-ho-rev-scaler ratt)
+										       dist dist))))
 						     (cons dist-v (channel-rev-gains v-offset)))))
 	      
 	      (when (>= ambisonics-v-order 3)
@@ -2676,9 +2673,7 @@
 		(set! no (* ambisonics-k2 z (if (zero? dist) 1 (/ dist)) ratt))
 		;; K
 		(set! (channel-rev-gains k-offset) (cons time (channel-rev-gains k-offset)))
-		(set! (channel-rev-gains k-offset) (let ((dist-k (if (zero? dist) 0
-								     (* (- (* 2.5 z z (/ 1.0 dist dist)) 1.5)
-									dlocsig-ambisonics-ho-rev-scaler ratt))))
+		(set! (channel-rev-gains k-offset) (let ((dist-k (if (zero? dist) 0 (* (- (/ (* 2.5 z z) dist dist) 1.5) dlocsig-ambisonics-ho-rev-scaler ratt))))
 						     (cons dist-k (channel-rev-gains k-offset))))
 		;; L
 		(set! (channel-rev-gains l-offset) (cons time (channel-rev-gains l-offset)))
@@ -2699,15 +2694,17 @@
 	      (when (>= ambisonics-h-order 3)
 		;; P
 		(set! (channel-rev-gains p-offset) (cons time (channel-rev-gains p-offset)))
-		(set! (channel-rev-gains p-offset) (let ((dist-p (if (zero? dist) 0 
-								     (* (/ ratt dist) dlocsig-ambisonics-ho-rev-scaler x
-									(/ (- (* x x) (* 3 y y)) dist dist)))))
+		(set! (channel-rev-gains p-offset) (let ((dist-p (if (zero? dist) 
+								     0 
+								     (/ (* ratt dlocsig-ambisonics-ho-rev-scaler x (- (* x x) (* 3 y y)))
+									dist dist dist))))
 						     (cons dist-p (channel-rev-gains p-offset))))
 		;; Q
 		(set! (channel-rev-gains q-offset) (cons time (channel-rev-gains q-offset)))
-		(set! (channel-rev-gains q-offset) (let ((dist-q (if (zero? dist) 0 
-								     (* (/ ratt dist) dlocsig-ambisonics-ho-rev-scaler y
-									(/ (- (* 3 x x) (* y y)) dist dist)))))
+		(set! (channel-rev-gains q-offset) (let ((dist-q (if (zero? dist) 
+								     0 
+								     (/ (* ratt dlocsig-ambisonics-ho-rev-scaler y (- (* 3 x x) (* y y))) 
+									dist dist dist))))
 						     (cons dist-q (channel-rev-gains q-offset)))))
 	      )))))
     
@@ -2745,7 +2742,8 @@
 				  ;; W
 				  (* attW point707)
 				  ;; (* X (cos az) (cos el))
-				  (if (zero? dist) 0
+				  (if (zero? dist) 
+				      0
 				      (+ (* att (/ y dist) (cadr s))
 					 ;; (* Y (sin az) (cos el))
 					 (* att (/ x dist) (car s))
