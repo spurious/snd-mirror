@@ -560,7 +560,7 @@
 			     (return arg)))
 		       sequence)
 	     #f)))))
-    
+
     
     ;; -------- trees --------
     (define copy-tree 
@@ -764,6 +764,12 @@
 		  (begin
 		    (tree-symbol-walk (car tree) syms)
 		    (tree-symbol-walk (cdr tree) syms))))))
+    
+    (define (unbegin x)
+      ((if (and (pair? x)
+		(eq? (car x) 'begin))
+	  cdr list)
+       x))
     
     
     ;; -------- types --------
@@ -1104,89 +1110,14 @@
 		 (pair? arglist)
 		 (proper-list? arglist)
 		 (= (tree-count name (cddr initial-value)) 1))
-	(let ((body ((if (memq ftype '(let let*)) cdddr cddr) initial-value)))
+	(let ((body ((if (memq ftype '(let let*)) cdddr cddr) initial-value))
+	      (for-each-case #f)) ; avoid rewriting twice
 	  (when (and (pair? body)
 		     (pair? (car body))
 		     (null? (cdr body)))
 	    ;; recursion->map got 1 hit
 	    ;; the for-each and do cases can be handled independently -- no hits on both
 	
-	    ;; recursion->do
-	    ;;   (n ((a b) (c d)) (if .1. (begin .2. (n (+ a 1) (cdr c))) .3.)) -> (do ((a b (+ a 1)) (c d (cdr c))) ((not .1.) .3.) .2.)
-	    ;;   (n ((a b)) (if .1. .2. (begin .3. (n (f a))))) -> (do ((a b (f a))) (.1. .2.) .3.)
-	    ;;
-	    ;; if (define loop (lambda ...)), then initial-value is (lambda ...)
-	    ;;   but name is :lambda -- define-walker around 12440 catches this case and gives true name, so it calls this function
-	    ;;
-	    ;; case gets a few hits
-
-	    (when (let ((p (car body)))
-		    (or (eq? (car p) 'if)
-			(and (eq? (car p) 'cond)
-			     (= (length p) 3)
-			     (eq? 'else (caaddr p))
-			     (set! body `((if ,(caadr p) 
-					      (begin ,@(if (null? (cdadr p)) '(#t) (cdadr p))) 
-					      (begin ,@(cdaddr p))))))))
-	      (let ((f (car body)))
-		(let ((test (cadr f))
-		      (true (caddr f))
-		      (false (and (pair? (cdddr f)) (cadddr f))))
-		  (when false
-		    (let ((end-test test)
-			  (result true)
-			  (do-body false))
-		      (when (tree-memq name true)
-			(set! end-test (simplify-boolean (list 'not test) () () env))
-			(set! result false)
-			(set! do-body true))
-		      (when (< (tree-leaves result) 30)
-			(let ((call (if (eq? (car do-body) name)
-					do-body
-					(and (eq? (car do-body) 'begin)
-					     (let ((lp (last-par do-body)))
-					       (and (pair? lp)
-						    (eq? (car lp) name)
-						    lp))))))
-			  (when (and (pair? call)
-				     (pair? (cdr call))
-				     ;; now check arglist/call -- each arg just current name or outer vars [leaving aside car]
-				     (or (and (null? (cddr call))
-					      (null? (cdr arglist)))
-					 (let check-iters ((pars arglist) (args (cdr call)))
-					   (if (null? pars)
-					       (null? args)
-					       (and (pair? args)
-						    (let ((par ((if (pair? (car pars)) caar car) pars)))
-						      (and (not (memq (car args) (remove par arglist)))
-							   (not (tree-set-member (remove par arglist) (car args)))
-							   (check-iters (cdr pars) (cdr args)))))))))
-			    (let ((do-loop `(do ,(map (lambda (par init arg)
-							(let ((var (if (pair? par) (car par) par)))
-							  (if (eq? var arg)
-							      (list var 
-								    (if (pair? init) (cadr init) init))
-							      (list var
-								    (if (pair? init) (cadr init) init)
-								    arg))))
-						      arglist
-						      (if (memq ftype '(let let*)) 
-							  (caddr initial-value)
-							  (map (lambda (p)
-								 (if (pair? p)
-								     (car p)
-								     p))
-							       arglist))
-						      (cdr call))
-						(,end-test ,@(unbegin result))
-					      ,@(if (eq? (car do-body) name) 
-						    ()
-						    (unbegin (copy do-body (make-list (- (length do-body) 1))))))))
-			      (lint-format "perhaps ~A" name
-					   (lists->string initial-value
-							  (if (memq ftype '(let let*))
-							      do-loop
-							      `(,(car initial-value) ,(cadr initial-value) ,do-loop)))))))))))))
 	    ;;   recursion -> for-each
 	    (when (and (null? (cdr arglist))
 		       (memq (caar body) '(if when))) ; unless gets 4 hits, cond gets 2 in for-each, cost 1%
@@ -1256,6 +1187,7 @@
 					       (else (cons (rem (car tree))
 							   (rem (cdr tree)))))))))
 		    (unless (tree-memq (caar iters) new-form) ; did we catch every reference to the iter?
+		      (set! for-each-case #t)
 		      (lint-format "perhaps ~A" name
 				   (lists->string initial-value
 						  (if (eq? (car initial-value) 'let)
@@ -1264,7 +1196,84 @@
 							(for-each ,new-form
 								  ,(if (memq (car initial-value) '(lambda lambda*))
 								       (caadr initial-value)
-								       (cadadr initial-value))))))))))))))))
+								       (cadadr initial-value))))))))))))
+	    ;; recursion->do
+	    ;;   (n ((a b) (c d)) (if .1. (begin .2. (n (+ a 1) (cdr c))) .3.)) -> (do ((a b (+ a 1)) (c d (cdr c))) ((not .1.) .3.) .2.)
+	    ;;   (n ((a b)) (if .1. .2. (begin .3. (n (f a))))) -> (do ((a b (f a))) (.1. .2.) .3.)
+	    ;;
+	    ;; if (define loop (lambda ...)), then initial-value is (lambda ...)
+	    ;;   but name is :lambda -- define-walker around 12440 catches this case and gives true name, so it calls this function
+	    ;;
+	    ;; case gets a few hits
+
+	    (when (and (not for-each-case)
+		       (let ((p (car body)))
+			 (or (eq? (car p) 'if)
+			     (and (eq? (car p) 'cond)
+				  (= (length p) 3)
+				  (eq? 'else (caaddr p))
+				  (set! body `((if ,(caadr p) 
+						   (begin ,@(if (null? (cdadr p)) '(#t) (cdadr p))) 
+						   (begin ,@(cdaddr p)))))))))
+	      (let ((f (car body)))
+		(let ((test (cadr f))
+		      (true (caddr f))
+		      (false (if (pair? (cdddr f)) (cadddr f) (list 'begin)))) ; assume end is ,@(unbegin...)
+		  (when false
+		    (let ((end-test test)
+			  (result true)
+			  (do-body false))
+		      (when (tree-memq name true)
+			(set! end-test (simplify-boolean (list 'not test) () () env))
+			(set! result false)
+			(set! do-body true))
+		      (when (< (tree-leaves result) 30)
+			(let ((call (if (eq? (car do-body) name)
+					do-body
+					(and (eq? (car do-body) 'begin)
+					     (let ((lp (last-par do-body)))
+					       (and (pair? lp)
+						    (eq? (car lp) name)
+						    lp))))))
+			  (when (and (pair? call)
+				     (pair? (cdr call))
+				     ;; now check arglist/call -- each arg just current name or outer vars [leaving aside car]
+				     (or (and (null? (cddr call))
+					      (null? (cdr arglist)))
+					 (let check-iters ((pars arglist) (args (cdr call)))
+					   (if (null? pars)
+					       (null? args)
+					       (and (pair? args)
+						    (let ((par ((if (pair? (car pars)) caar car) pars)))
+						      (and (not (memq (car args) (remove par arglist)))
+							   (not (tree-set-member (remove par arglist) (car args)))
+							   (check-iters (cdr pars) (cdr args)))))))))
+			    (let ((do-loop `(do ,(map (lambda (par init arg)
+							(let ((var (if (pair? par) (car par) par)))
+							  (if (eq? var arg)
+							      (list var 
+								    (if (pair? init) (cadr init) init))
+							      (list var
+								    (if (pair? init) (cadr init) init)
+								    arg))))
+						      arglist
+						      (if (memq ftype '(let let*)) 
+							  (caddr initial-value)
+							  (map (lambda (p)
+								 (if (pair? p)
+								     (car p)
+								     p))
+							       arglist))
+						      (cdr call))
+						(,end-test ,@(unbegin result))
+					      ,@(if (eq? (car do-body) name) 
+						    ()
+						    (unbegin (copy do-body (make-list (- (length do-body) 1))))))))
+			      (lint-format "perhaps ~A" name
+					   (lists->string initial-value
+							  (if (memq ftype '(let let*))
+							      do-loop
+							      `(,(car initial-value) ,(cadr initial-value) ,do-loop)))))))))))))))))
 		  
     ;; --------------------------------------------------------------------------------
 
@@ -5429,12 +5438,6 @@
 		(lint-format "perhaps ~A" caller (lists->string form val)))) ; (eq? #(0) #(0)) -> #f
 	    (lambda args
 	      #t))))
-
-    (define (unbegin x)
-      ((if (and (pair? x)
-		(eq? (car x) 'begin))
-	  cdr list)
-       x))
 
     (define (un_{list} tree)
       (if (not (pair? tree))
@@ -19645,4 +19648,4 @@
     #f))
 |#
 
-;;; 164 28139 676322
+;;; 164 28139 679708

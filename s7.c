@@ -75135,7 +75135,6 @@ int main(int argc, char **argv)
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
- * more extensive symbol-access tests
  * need truncated error output if sc->code is ridiculous: (*s7* 'error-print-length) ?
  *   would need to implement this in format_to_port_1 I think [47149=s7_error]
  *   [33200 to truncated the columnized output -- MIN(port_position(strport), s7-format-print-length) + ...]
