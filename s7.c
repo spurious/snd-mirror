@@ -73880,74 +73880,74 @@ s7_scheme *s7_init(void)
   make_standard_ports(sc);
 
   sc->syn_docs = (s7_pointer *)calloc(OP_MAX_DEFINED, sizeof(s7_pointer));
-  #define QUOTE_HELP             "(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj)."
-  #define IF_HELP                "(if expr true-stuff optional-false-stuff) evaluates expr, then if it is true, evaluates true-stuff; otherwise, \
+  #define quote_help             "(quote obj) returns obj unevaluated.  'obj is an abbreviation for (quote obj)."
+  #define if_help                "(if expr true-stuff optional-false-stuff) evaluates expr, then if it is true, evaluates true-stuff; otherwise, \
                                       if optional-false-stuff exists, it is evaluated."
-  #define WHEN_HELP              "(when expr ...) evaluates expr, and if it is true, evaluates each form in its body, returning the value of the last"
-  #define UNLESS_HELP            "(unless expr ...) evaluates expr, and if it is false, evaluates each form in its body, returning the value of the last"
-  #define BEGIN_HELP             "(begin ...) evaluates each form in its body, returning the value of the last one"
-  #define SET_HELP               "(set! variable value) sets the value of variable to value."
-  #define LET_HELP               "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
+  #define when_help              "(when expr ...) evaluates expr, and if it is true, evaluates each form in its body, returning the value of the last"
+  #define unless_help            "(unless expr ...) evaluates expr, and if it is false, evaluates each form in its body, returning the value of the last"
+  #define begin_help             "(begin ...) evaluates each form in its body, returning the value of the last one"
+  #define set_help               "(set! variable value) sets the value of variable to value."
+  #define let_help               "(let ((var val)...) ...) binds each variable to its initial value, then evaluates its body,\
                                       returning the value of the last form.  The let variables are local to it, and \
                                       are not available for use until all have been initialized."
-  #define LET_STAR_HELP          "(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body, \
+  #define let_star_help          "(let* ((var val)...) ...) binds each variable to its initial value, then evaluates its body, \
                                       returning the value of the last form.  The let* variables are local to it, and are available immediately."
-  #define LETREC_HELP            "(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in its value \
+  #define letrec_help            "(letrec ((var (lambda ...)))...) is like let, but var can refer to itself in its value \
                                       (i.e. you can define local recursive functions)"
-  #define LETREC_STAR_HELP       "(letrec* ((var val))...) is like letrec, but successive bindings are handled as in let*"
-  #define COND_HELP              "(cond (expr clause...)...) is like if..then.  Each expr is evaluated in order, and if one is not #f, \
+  #define letrec_star_help       "(letrec* ((var val))...) is like letrec, but successive bindings are handled as in let*"
+  #define cond_help              "(cond (expr clause...)...) is like if..then.  Each expr is evaluated in order, and if one is not #f, \
                                       the associated clauses are evaluated, whereupon cond returns."
-  #define AND_HELP               "(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) \
+  #define and_help               "(and expr expr ...) evaluates each of its arguments in order, quitting (and returning #f) \
                                       as soon as one of them returns #f.  If all are non-#f, it returns the last value."
-  #define OR_HELP                "(or expr expr ...) evaluates each of its argments in order, quitting as soon as one of them is not #f.  \
+  #define or_help                "(or expr expr ...) evaluates each of its argments in order, quitting as soon as one of them is not #f.  \
                                       If all are #f, or returns #f."
-  #define CASE_HELP              "(case val ((key...) clause...)...) looks for val in the various lists of keys, and if a \
+  #define case_help              "(case val ((key...) clause...)...) looks for val in the various lists of keys, and if a \
                                       match is found (via eqv?), the associated clauses are evaluated, and case returns."
-  #define DO_HELP                "(do (vars...) (loop control and return value) ...) is a do-loop."
-  #define LAMBDA_HELP            "(lambda args ...) returns a function."
-  #define LAMBDA_STAR_HELP       "(lambda* args ...) returns a function; the args list can have default values, \
+  #define do_help                "(do (vars...) (loop control and return value) ...) is a do-loop."
+  #define lambda_help            "(lambda args ...) returns a function."
+  #define lambda_star_help       "(lambda* args ...) returns a function; the args list can have default values, \
                                       the parameters themselves can be accessed via keywords."
-  #define DEFINE_HELP            "(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
+  #define define_help            "(define var val) assigns val to the variable (symbol) var.  (define (func args) ...) is \
                                       shorthand for (define func (lambda args ...))"
-  #define DEFINE_STAR_HELP       "(define* (func args) ...) defines a function with optional/keyword arguments."
-  #define DEFINE_CONSTANT_HELP   "(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val."
-  #define DEFINE_MACRO_HELP      "(define-macro (mac args) ...) defines mac to be a macro."
-  #define DEFINE_MACRO_STAR_HELP "(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments."
-  #define DEFINE_EXPANSION_HELP  "(define-expansion (mac args) ...) defines mac to be a read-time macro."
-  #define DEFINE_BACRO_HELP      "(define-bacro (mac args) ...) defines mac to be a bacro."
-  #define DEFINE_BACRO_STAR_HELP "(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments."
-  #define WITH_BAFFLE_HELP       "(with-baffle ...) evaluates its body in a context that is safe from outside interference."
-  #define MACROEXPAND_HELP       "(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call."
-  #define WITH_LET_HELP          "(with-let env ...) evaluates its body in the environment env."
+  #define define_star_help       "(define* (func args) ...) defines a function with optional/keyword arguments."
+  #define define_constant_help   "(define-constant var val) defines var to be a constant (it can't be set or bound), with the value val."
+  #define define_macro_help      "(define-macro (mac args) ...) defines mac to be a macro."
+  #define define_macro_star_help "(define-macro* (mac args) ...) defines mac to be a macro with optional/keyword arguments."
+  #define define_expansion_help  "(define-expansion (mac args) ...) defines mac to be a read-time macro."
+  #define define_bacro_help      "(define-bacro (mac args) ...) defines mac to be a bacro."
+  #define define_bacro_star_help "(define-bacro* (mac args) ...) defines mac to be a bacro with optional/keyword arguments."
+  #define with_baffle_help       "(with-baffle ...) evaluates its body in a context that is safe from outside interference."
+  #define macroexpand_help       "(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call."
+  #define with_let_help          "(with-let env ...) evaluates its body in the environment env."
 
-  sc->quote_symbol =             assign_syntax(sc, "quote",           OP_QUOTE,             small_int(1), small_int(1), QUOTE_HELP);
-  sc->if_symbol =                assign_syntax(sc, "if",              OP_IF,                small_int(2), small_int(3), IF_HELP);
-  sc->when_symbol =              assign_syntax(sc, "when",            OP_WHEN,              small_int(2), max_arity,    WHEN_HELP);
-  sc->unless_symbol =            assign_syntax(sc, "unless",          OP_UNLESS,            small_int(2), max_arity,    UNLESS_HELP);
-  sc->begin_symbol =             assign_syntax(sc, "begin",           OP_BEGIN,             small_int(0), max_arity,    BEGIN_HELP);
-  sc->set_symbol =               assign_syntax(sc, "set!",            OP_SET,               small_int(2), small_int(2), SET_HELP);
-  sc->let_symbol =               assign_syntax(sc, "let",             OP_LET,               small_int(2), max_arity,    LET_HELP);
-  sc->let_star_symbol =          assign_syntax(sc, "let*",            OP_LET_STAR,          small_int(2), max_arity,    LET_STAR_HELP);
-  sc->letrec_symbol =            assign_syntax(sc, "letrec",          OP_LETREC,            small_int(2), max_arity,    LETREC_HELP);
-  sc->letrec_star_symbol =       assign_syntax(sc, "letrec*",         OP_LETREC_STAR,       small_int(2), max_arity,    LETREC_STAR_HELP);
-  sc->cond_symbol =              assign_syntax(sc, "cond",            OP_COND,              small_int(1), max_arity,    COND_HELP);
-  sc->and_symbol =               assign_syntax(sc, "and",             OP_AND,               small_int(0), max_arity,    AND_HELP);
-  sc->or_symbol =                assign_syntax(sc, "or",              OP_OR,                small_int(0), max_arity,    OR_HELP);
-  sc->case_symbol =              assign_syntax(sc, "case",            OP_CASE,              small_int(2), max_arity,    CASE_HELP);
-  sc->do_symbol =                assign_syntax(sc, "do",              OP_DO,                small_int(2), max_arity,    DO_HELP); /* 2 because body can be null */
-  sc->lambda_symbol =            assign_syntax(sc, "lambda",          OP_LAMBDA,            small_int(2), max_arity,    LAMBDA_HELP);
-  sc->lambda_star_symbol =       assign_syntax(sc, "lambda*",         OP_LAMBDA_STAR,       small_int(2), max_arity,    LAMBDA_STAR_HELP);
-  sc->define_symbol =            assign_syntax(sc, "define",          OP_DEFINE,            small_int(2), max_arity,    DEFINE_HELP);
-  sc->define_star_symbol =       assign_syntax(sc, "define*",         OP_DEFINE_STAR,       small_int(2), max_arity,    DEFINE_STAR_HELP);
-  sc->define_constant_symbol =   assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT,   small_int(2), max_arity,    DEFINE_CONSTANT_HELP);
-  sc->define_macro_symbol =      assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO,      small_int(2), max_arity,    DEFINE_MACRO_HELP);
-  sc->define_macro_star_symbol = assign_syntax(sc, "define-macro*",   OP_DEFINE_MACRO_STAR, small_int(2), max_arity,    DEFINE_MACRO_STAR_HELP);
-  sc->define_expansion_symbol =  assign_syntax(sc, "define-expansion",OP_DEFINE_EXPANSION,  small_int(2), max_arity,    DEFINE_EXPANSION_HELP);
-  sc->define_bacro_symbol =      assign_syntax(sc, "define-bacro",    OP_DEFINE_BACRO,      small_int(2), max_arity,    DEFINE_BACRO_HELP);
-  sc->define_bacro_star_symbol = assign_syntax(sc, "define-bacro*",   OP_DEFINE_BACRO_STAR, small_int(2), max_arity,    DEFINE_BACRO_STAR_HELP);
-  sc->with_baffle_symbol =       assign_syntax(sc, "with-baffle",     OP_WITH_BAFFLE,       small_int(1), max_arity,    WITH_BAFFLE_HELP);
-  sc->macroexpand_symbol =       assign_syntax(sc, "macroexpand",     OP_MACROEXPAND,       small_int(1), small_int(1), MACROEXPAND_HELP);
-  sc->with_let_symbol =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    WITH_LET_HELP);
+  sc->quote_symbol =             assign_syntax(sc, "quote",           OP_QUOTE,             small_int(1), small_int(1), quote_help);
+  sc->if_symbol =                assign_syntax(sc, "if",              OP_IF,                small_int(2), small_int(3), if_help);
+  sc->when_symbol =              assign_syntax(sc, "when",            OP_WHEN,              small_int(2), max_arity,    when_help);
+  sc->unless_symbol =            assign_syntax(sc, "unless",          OP_UNLESS,            small_int(2), max_arity,    unless_help);
+  sc->begin_symbol =             assign_syntax(sc, "begin",           OP_BEGIN,             small_int(0), max_arity,    begin_help);
+  sc->set_symbol =               assign_syntax(sc, "set!",            OP_SET,               small_int(2), small_int(2), set_help);
+  sc->let_symbol =               assign_syntax(sc, "let",             OP_LET,               small_int(2), max_arity,    let_help);
+  sc->let_star_symbol =          assign_syntax(sc, "let*",            OP_LET_STAR,          small_int(2), max_arity,    let_star_help);
+  sc->letrec_symbol =            assign_syntax(sc, "letrec",          OP_LETREC,            small_int(2), max_arity,    letrec_help);
+  sc->letrec_star_symbol =       assign_syntax(sc, "letrec*",         OP_LETREC_STAR,       small_int(2), max_arity,    letrec_star_help);
+  sc->cond_symbol =              assign_syntax(sc, "cond",            OP_COND,              small_int(1), max_arity,    cond_help);
+  sc->and_symbol =               assign_syntax(sc, "and",             OP_AND,               small_int(0), max_arity,    and_help);
+  sc->or_symbol =                assign_syntax(sc, "or",              OP_OR,                small_int(0), max_arity,    or_help);
+  sc->case_symbol =              assign_syntax(sc, "case",            OP_CASE,              small_int(2), max_arity,    case_help);
+  sc->do_symbol =                assign_syntax(sc, "do",              OP_DO,                small_int(2), max_arity,    do_help); /* 2 because body can be null */
+  sc->lambda_symbol =            assign_syntax(sc, "lambda",          OP_LAMBDA,            small_int(2), max_arity,    lambda_help);
+  sc->lambda_star_symbol =       assign_syntax(sc, "lambda*",         OP_LAMBDA_STAR,       small_int(2), max_arity,    lambda_star_help);
+  sc->define_symbol =            assign_syntax(sc, "define",          OP_DEFINE,            small_int(2), max_arity,    define_help);
+  sc->define_star_symbol =       assign_syntax(sc, "define*",         OP_DEFINE_STAR,       small_int(2), max_arity,    define_star_help);
+  sc->define_constant_symbol =   assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT,   small_int(2), max_arity,    define_constant_help);
+  sc->define_macro_symbol =      assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO,      small_int(2), max_arity,    define_macro_help);
+  sc->define_macro_star_symbol = assign_syntax(sc, "define-macro*",   OP_DEFINE_MACRO_STAR, small_int(2), max_arity,    define_macro_star_help);
+  sc->define_expansion_symbol =  assign_syntax(sc, "define-expansion",OP_DEFINE_EXPANSION,  small_int(2), max_arity,    define_expansion_help);
+  sc->define_bacro_symbol =      assign_syntax(sc, "define-bacro",    OP_DEFINE_BACRO,      small_int(2), max_arity,    define_bacro_help);
+  sc->define_bacro_star_symbol = assign_syntax(sc, "define-bacro*",   OP_DEFINE_BACRO_STAR, small_int(2), max_arity,    define_bacro_star_help);
+  sc->with_baffle_symbol =       assign_syntax(sc, "with-baffle",     OP_WITH_BAFFLE,       small_int(1), max_arity,    with_baffle_help);
+  sc->macroexpand_symbol =       assign_syntax(sc, "macroexpand",     OP_MACROEXPAND,       small_int(1), small_int(1), macroexpand_help);
+  sc->with_let_symbol =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    with_let_help);
   set_immutable(sc->with_let_symbol);
 
 #if WITH_OPTIMIZATION
@@ -75150,7 +75150,6 @@ int main(int argc, char **argv)
  *   use begs/other-ends to get loop points, so free_dac_info does not need to restart the loop(?)
  *   If start/end selection changed while playing, are these loop points updated?
  *
- * dlocsig tests
  * gtk gl: I can't see how to switch gl in and out as in the motif version -- I guess I need both gl_area and drawing_area
  * the old mus-audio-* code needs to use play or something, especially bess*
  * musglyphs gtk version is broken (probably cairo_t confusion)

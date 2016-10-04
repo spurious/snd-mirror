@@ -101,15 +101,13 @@
     (lambda ids
       (let* ((samps (map mark-sample ids))
 	     (max-samp (apply max samps)))
-	(let pad-to-sync ((lst-ids ids)
-			  (lst-samps samps))
-	  (if (pair? lst-ids)
-	      (begin
-		(if (< (car lst-samps) max-samp)
-		    (let ((nsamps (- max-samp (car lst-samps)))
-			  (snd-chn (mark-home (car lst-ids))))
-		      (insert-samples 0 nsamps (make-float-vector nsamps) (car snd-chn) (cadr snd-chn))))
-		(pad-to-sync (cdr lst-ids) (cdr lst-samps)))))))))
+	(do ((lst-ids ids (cdr lst-ids))
+	     (lst-samps samps (cdr lst-samps)))
+	    ((not (pair? lst-ids)))
+	  (if (< (car lst-samps) max-samp)
+	      (let ((nsamps (- max-samp (car lst-samps)))
+		    (snd-chn (mark-home (car lst-ids))))
+		(insert-samples 0 nsamps (make-float-vector nsamps) (car snd-chn) (cadr snd-chn)))))))))
 
 
 ;;; -------- fit selection between marks, expanding via granulate (this needs some tweaking...)

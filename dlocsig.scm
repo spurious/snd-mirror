@@ -1966,6 +1966,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Create a new dlocsig structure
 
+
+
 (define* (make-dlocsig start-time
 		       duration
 		       (path dlocsig-path)
@@ -2270,8 +2272,7 @@
 		    (let ((speaker ((group-speakers group) i))
 			  (gain (gains i)))
 		      (set! (outputs speaker) (* gain att))
-		      (if (and (> rev-channels 1)
-			       (< speaker (length rev-outputs)))
+		      (if (> rev-channels (max 1 speaker))
 			  (set! (rev-outputs speaker) (* gain ratt)))))
 		  
 		  (let ((gain 0.0)
@@ -2285,11 +2286,13 @@
 			    (begin
 			      (set! gain (gains found))
 			      (set! (outputs speaker) (+ gain (* (- 1.0 gain) att)))
-			      (if (> rev-channels 1) (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
+			      (if (> rev-channels (max 1 speaker))
+				  (set! (rev-outputs speaker) (+ gain (* (- 1.0 gain) ratt)))))
 			    ;; speaker outside of group
 			    (begin
 			      (set! (outputs speaker) att)
-			      (if (> rev-channels 1) (set! (rev-outputs speaker) ratt)))))))))
+			      (if (> rev-channels (max 1 speaker))
+				  (set! (rev-outputs speaker) ratt)))))))))
 	    
 	    ;; push all channel gains into envelopes
 	    (let ((len (speaker-config-number speakers)))
@@ -2738,17 +2741,13 @@
 		((= i len))
 	      (let ((signal (let ((s (spkrs i)))
 			      (* dlocsig-ambisonics-scaler
-				 (+ 
-				  ;; W
-				  (* attW point707)
-				  ;; (* X (cos az) (cos el))
-				  (if (zero? dist) 
-				      0
-				      (+ (* att (/ y dist) (cadr s))
-					 ;; (* Y (sin az) (cos el))
-					 (* att (/ x dist) (car s))
-					 ;; (* Z (sin el)
-					 (* att (/ z dist) (third s)))))))))
+				 (+ (* attW point707)
+				    (if (zero? dist) 
+					0
+					(/ (* att (+ (* x (car s))
+						     (* y (cadr s))
+						     (* z (caddr s))))
+					   dist)))))))
 		(set! (channel-gains i) (cons time (channel-gains i)))
 		(set! (channel-gains i) (cons signal (channel-gains i))))))
 	  
@@ -2766,16 +2765,12 @@
 		  ((= i rev-channels))
 		(let ((signal (let ((s ((speaker-config-coords speakers) i)))
 				(* dlocsig-ambisonics-scaler
-				   (+ 
-				    ;; W
-				    (* rattW point707)
-				    ;; (* X (cos az) (cos el))
-				    (if (zero? dist) 0
-					(+ (* ratt (/ y dist) (cadr s))
-					   ;; (* Y (sin az) (cos el))
-					   (* ratt (/ x dist) (car s))
-					   ;; (* Z (sin el)
-					   (* ratt (/ z dist) (third s)))))))))
+				   (+ (* rattW point707)
+				      (if (zero? dist) 0
+					  (/ (* ratt (+ (* x (car s)) 
+							(* y (cadr s))
+							(* z (caddr s))))
+					     dist)))))))
 		  (set! (channel-rev-gains i) (cons time (channel-rev-gains i)))
 		  (set! (channel-rev-gains i) (cons signal (channel-rev-gains i)))))))))
     

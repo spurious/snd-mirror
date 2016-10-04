@@ -1115,88 +1115,139 @@
 	  (when (and (pair? body)
 		     (pair? (car body))
 		     (null? (cdr body)))
-	    ;; recursion->map got 1 hit
-	    ;; the for-each and do cases can be handled independently -- no hits on both
-	
-	    ;;   recursion -> for-each
+
+	    ;; recursion -> for-each and map
+
+	    ;; another map form: (let loop ((lst x) (res ())) (if (null? lst) (reverse res) (loop (cdr lst) (cons ... res))))
+	    ;;   args can be reversed, if reversed, need new-form check on arg->res 
+	    ;;   to spot-check -- look for reverse, 2 args one cdr, other cons
+	    ;;   also perhaps could use set on outer var -- kinda ugly
+
 	    (when (and (null? (cdr arglist))
 		       (memq (caar body) '(if when))) ; unless gets 4 hits, cond gets 2 in for-each, cost 1%
 	      (let ((f (car body))
-		    (iters ()))
-		
-		(define (find-rec lst)
-		  (define (find-iter args)
-		    (any? (lambda (p)
-			    (and (pair? p)
-				 (memq (car p) '(+ - cdr))
-				 (let ((sym (if (or (eq? (car p) 'cdr)
-						    (not (integer? (cadr p))))
-						(cadr p)
-						(caddr p))))
-				   (and (symbol? sym)
-					(set! iters (cons (list sym (car p)) iters))))))
-			  args))
-		  (and (pair? lst)
-		       (or (and (eq? name (car lst))
-				(find-iter (cdr lst)))
-			   (and (memq (car lst) '(begin when unless let let*))
-				(let ((ret (last-par lst)))
-				  (and (pair? ret)
-				       (eq? name (car ret))
-				       (find-iter (cdr ret))))))))
-		
-		(when (and (pair? (cdr f))
-			   (pair? (cddr f))
-			   (case (car f)
-			     ((if)
-			      (and (null? (cdddr f))
-				   (find-rec (caddr f))))
-			     ((when)
-			      (find-rec (if (null? (cdddr f))
-					    (caddr f)
-					    (cons 'begin (cddr f))))))
-			   (pair? iters)
-			   (null? (cdr iters))
-			   (eq? (cadar iters) 'cdr)
-			   (eq? (caar iters) (car arglist))
-			   (or (equal? (cadr f) (list 'pair? (caar iters)))
-			       (equal? (cadr f) `(not (null? ,(caar iters))))))
-		  (let ((new-form `(lambda (_1_)
-				     ,@(let rem ((tree (case (car f) 
+		    (nf (cdar body)))
+
+		(when (and (pair? nf)
+			   (pair? (cdr nf)))
+		  (let ((sequence (case (car initial-value) 
+				    ((let let*) ; named-let, not define
+				     (cadar (caddr initial-value)))
+				    ((lambda lambda*)
+				     (caadr initial-value))
+				    (else (cadadr initial-value)))))
+		    
+		    (define (make-new-form form iter)
+		      `(lambda (_1_)
+			 ,@(let rem ((tree form))
+			     (cond ((or (not (pair? tree))
+					(eq? (car tree) 'quote))
+				    tree)
+				   ((and (pair? (cdr tree))
+					 (eq? (cadr tree) iter)
+					 (hash-table-ref cxars (car tree)))
+				    => (lambda (cxar)
+					 (if (null? cxar)
+					     '_1_
+					     (list cxar '_1_))))
+				   (else (cons (rem (car tree))
+					       (rem (cdr tree))))))))
+		      
+		    (when (and (eq? (car f) 'if)
+			       (pair? (cddr nf))
+			       (pair? (car nf))
+			       (memq (caar nf) '(null? not pair?)))
+		      ;; recursion -> map
+		      (let ((cdrf #f)
+			    (iter (car arglist)))
+			
+			(when (and (or (and (any-null? (cadr nf))
+					    (or (equal? (car nf) `(null? ,iter))
+						(equal? (car nf) `(not (pair? ,iter))))
+					    (set! cdrf (caddr nf)))
+				       (and (any-null? (caddr nf))
+					    (or (equal? (car nf) `(not (null? ,iter)))
+						(equal? (car nf) `(pair? ,iter)))
+					    (set! cdrf (cadr nf))))
+				   (pair? cdrf)
+				   (eq? (car cdrf) 'cons)
+				   (pair? (cdr cdrf))
+				   (pair? (cddr cdrf))
+				   (equal? (caddr cdrf) `(,name (cdr ,iter))))
+			  
+			  (let ((new-form (make-new-form (unbegin (copy (cadr cdrf))) iter)))
+			    (unless (tree-memq iter new-form) ; did we catch every reference to the iter?
+			      (set! for-each-case #t)
+			      (if (eq? '_1_ (caddr new-form))
+				  (lint-format "perhaps ~A" name (lists->string initial-value `(copy ,sequence)))
+				  (begin
+				    (if (and (pair? (cddr new-form))
+					     (null? (cdddr new-form))
+					     (pair? (caddr new-form))
+					     (pair? (cdaddr new-form))
+					     (null? (cddr (caddr new-form)))
+					     (eq? '_1_ (cadr (caddr new-form))))
+					(set! new-form (car (caddr new-form))))
+				    (lint-format "perhaps ~A" name
+						 (lists->string initial-value
+								(if (eq? (car initial-value) 'let) ; named-let, not define
+								    `(map ,new-form ,sequence)
+								    `(,(car initial-value) ,(cadr initial-value)
+								      (map ,new-form ,sequence))))))))))))
+		    (let ((iters ()))
+		      ;; recursion -> for-each
+		      (define (find-rec lst)
+			(define (find-iter args)
+			  (any? (lambda (p)
+				  (and (pair? p)
+				       (memq (car p) '(+ - cdr))
+				       (let ((sym ((if (or (eq? (car p) 'cdr)
+							   (not (integer? (cadr p))))
+						      cadr caddr) p)))
+					 (and (symbol? sym)
+					      (set! iters (cons (list sym (car p)) iters))))))
+				args))
+			(and (pair? lst)
+			     (or (and (eq? name (car lst))
+				      (find-iter (cdr lst)))
+				 (and (memq (car lst) '(begin when unless let let*))
+				      (let ((ret (last-par lst)))
+					(and (pair? ret)
+					     (eq? name (car ret))
+					     (find-iter (cdr ret))))))))
+		      
+		      (when (and (case (car f)
+				   ((if)
+				    (and (null? (cddr nf))
+					 (find-rec (cadr nf))))
+				   ((when)
+				    (find-rec (if (null? (cddr nf))
+						  (cadr nf)
+						  (cons 'begin (cdr nf))))))
+				 (pair? iters)
+				 (null? (cdr iters))
+				 (eq? (cadar iters) 'cdr)
+				 (eq? (caar iters) (car arglist))
+				 (or (equal? (car nf) (list 'pair? (caar iters)))
+				     (equal? (car nf) `(not (null? ,(caar iters))))))
+			(let ((new-form (make-new-form (case (car f) 
 							 ((if)
-							  (unbegin (copy (caddr f) 
-									 (make-list (- (length (caddr f)) 1)))))
+							  (unbegin (copy (cadr nf) 
+									 (make-list (- (length (cadr nf)) 1)))))
 							 ((when)
-							  (if (null? (cdddr f))
-							      (list (copy (caddr f)
-									  (make-list (- (length (caddr f)) 1))))
-							      (copy (cddr f) (make-list (- (length (cddr f)) 1))))))))
-					 (cond ((or (not (pair? tree))
-						    (eq? (car tree) 'quote))
-						tree)
-					       
-					       ((and (pair? (cdr tree))
-						     (eq? (cadr tree) (caar iters))
-						     (hash-table-ref cxars (car tree)))
-						=> (lambda (cxar)
-						     (if (null? cxar)
-							 '_1_
-							 (list cxar '_1_))))
-					       
-					       ;; (list-ref (caar iters) 0) gets no hits
-					       (else (cons (rem (car tree))
-							   (rem (cdr tree)))))))))
-		    (unless (tree-memq (caar iters) new-form) ; did we catch every reference to the iter?
-		      (set! for-each-case #t)
-		      (lint-format "perhaps ~A" name
-				   (lists->string initial-value
-						  (if (eq? (car initial-value) 'let)
-						      `(for-each ,new-form ,(cadar (caddr initial-value)))
-						      `(,(car initial-value) ,(cadr initial-value)
-							(for-each ,new-form
-								  ,(if (memq (car initial-value) '(lambda lambda*))
-								       (caadr initial-value)
-								       (cadadr initial-value))))))))))))
+							  (if (null? (cddr nf))
+							      (list (copy (cadr nf)
+									  (make-list (- (length (cadr nf)) 1))))
+							      (copy (cdr nf) (make-list (- (length (cdr nf)) 1))))))
+						       (caar iters))))
+			  (unless (tree-memq (caar iters) new-form) ; did we catch every reference to the iter?
+			    (set! for-each-case #t)
+			    (lint-format "perhaps ~A" name
+					 (lists->string initial-value
+							(if (eq? (car initial-value) 'let)
+							    `(for-each ,new-form ,sequence)
+							    `(,(car initial-value) ,(cadr initial-value)
+							      (for-each ,new-form ,sequence)))))))))))))
 	    ;; recursion->do
 	    ;;   (n ((a b) (c d)) (if .1. (begin .2. (n (+ a 1) (cdr c))) .3.)) -> (do ((a b (+ a 1)) (c d (cdr c))) ((not .1.) .3.) .2.)
 	    ;;   (n ((a b)) (if .1. .2. (begin .3. (n (f a))))) -> (do ((a b (f a))) (.1. .2.) .3.)
@@ -1205,20 +1256,33 @@
 	    ;;   but name is :lambda -- define-walker around 12440 catches this case and gives true name, so it calls this function
 	    ;;
 	    ;; case gets a few hits
-
+	    
 	    (when (and (not for-each-case)
 		       (let ((p (car body)))
-			 (or (eq? (car p) 'if)
-			     (and (eq? (car p) 'cond)
-				  (= (length p) 3)
-				  (eq? 'else (caaddr p))
-				  (set! body `((if ,(caadr p) 
-						   (begin ,@(if (null? (cdadr p)) '(#t) (cdadr p))) 
-						   (begin ,@(cdaddr p)))))))))
-	      (let ((f (car body)))
-		(let ((test (cadr f))
-		      (true (caddr f))
-		      (false (if (pair? (cdddr f)) (cadddr f) (list 'begin)))) ; assume end is ,@(unbegin...)
+			 (case (car p) 
+			   ((if) #t)
+			   ((cond)
+			    (and (= (length p) 3) ; (cond ((a b)) (else c)) -> (if a b c)
+				 (not (tree-memq '=> p))
+				 (eq? 'else (caaddr p))
+				 (set! body `((if ,(caadr p) 
+						  (begin ,@(if (null? (cdadr p)) '(#t) (cdadr p))) 
+						  (begin ,@(cdaddr p)))))))
+			   ((when)
+			    (set! body `((if ,(cadr p) (begin ,@(cddr p)) (begin)))))
+			   ((unless)
+			    (set! body `((if (not ,(cadr p)) (begin ,@(cddr p)) (begin)))))
+			   ((case)
+			    (and (= (length p) 4)
+				 (not (tree-memq '=> p))
+				 (eq? 'else (car (cadddr p)))
+				 (set! body `((if (memv ,(cadr p) ',(car (caddr p))) (begin ,@(cdr (caddr p))) (begin ,@(cdr (cadddr p))))))))
+			   (else #f))))
+
+	      (let ((f (cdar body)))
+		(let ((test (car f))
+		      (true (cadr f))
+		      (false (if (pair? (cddr f)) (caddr f) (list 'begin)))) ; assume end is ,@(unbegin...)
 		  (when false
 		    (let ((end-test test)
 			  (result true)
@@ -5885,9 +5949,9 @@
 		      (lint-format "if you want a boolean, (not (not ~A)) -> (and ~A #t)" 'paranoia str str))
 		    (let ((sig (arg-signature (caadr form) env)))
 		      (if (and (pair? sig)
-			       (not (if (pair? (car sig))                    ; (not (+ x y))
-					(memq 'boolean? (car sig))
-					(memq (car sig) '(#t values boolean?)))))
+			       (if (pair? (car sig))                    ; (not (+ x y))
+				   (not (memq 'boolean? (car sig)))
+				   (not (memq (car sig) '(#t values boolean?)))))
 			  (lint-format "~A can't be true (~A never returns #f)" caller (truncated-list->string form) (caadr form))))))
 					 
 	    (if (not (= line-number last-simplify-boolean-line-number))
@@ -13162,7 +13226,7 @@
 
 		       (when (and (pair? true)
 				  (pair? false)
-				  (not (memq true-op (list 'quote {list})))
+				  (not (memq true-op (list 'quote {list} 'not)))
 				  (not (any-macro? true-op env))
 				  (or (not (hash-table-ref syntaces true-op))
 				      (memq true-op '(let let* set! and or begin)))
@@ -19648,4 +19712,8 @@
     #f))
 |#
 
-;;; 164 28139 679708
+;;; maybe extend the r->i naming scheme
+;;; spot check for recur->map via 2 args, maybe recur->for-each via 2 args? check cond etc here also else+#t elsewhere
+;;;   and map+values if 3 branch, one without cons etc
+
+;;; 165 28158 687259
