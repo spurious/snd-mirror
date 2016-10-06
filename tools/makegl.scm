@@ -110,7 +110,7 @@
       (if (string=? type "XVisualInfo*")
 	  (copy "XVisualInfo")
 	  (let ((len (length type))
-		(val (string-copy type)))
+		(val (copy type)))
 	    (do ((i 0 (+ i 1)))
 		((= i len) val)
 	      (if (char=? (val i) #\*)

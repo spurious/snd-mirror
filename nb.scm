@@ -45,7 +45,7 @@
 	(do ((ptr ptr)
 	     (files files (cdr files)))
 	    ((not (pair? files)))
-	  (when (not (file-exists? (car files)))
+	  (unless (file-exists? (car files))
 	    (snd-print (format #f "pruning ~A" (car files)))
 	    (gdbm-delete! ptr (car files)))))
       (let ((ptr (gdbm-open nb-database 'read)))
