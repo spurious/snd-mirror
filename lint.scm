@@ -4022,15 +4022,15 @@
 						  (boolean? rel))
 					      (set! new-form (cons rel (cddr new-form))))))))))))))))))))))))
     
-    (define (splice-if f lst)
+    (define (splice-if func lst)
       (cond ((null? lst) ())
 	    ((not (pair? lst)) lst)
 	    ((and (pair? (car lst)) 
-		  (f (caar lst)))
-	     (append (splice-if f (cdar lst)) 
-		     (splice-if f (cdr lst))))
+		  (eq? func (caar lst)))
+	     (append (splice-if func (cdar lst)) 
+		     (splice-if func (cdr lst))))
 	    (else (cons (car lst) 
-			(splice-if f (cdr lst))))))
+			(splice-if func (cdr lst))))))
 
     (define (horners-rule form)
       (and (pair? form)
@@ -4174,7 +4174,7 @@
 	       ((0) 0)
 	       ((1) (car args))
 	       (else 
-		(let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) args))))
+		(let ((val (remove-all 0 (splice-if '+ args))))
 		  (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 		      (let ((rats (collect-if list rational? val)))
 			(if (and (pair? rats)
@@ -4306,7 +4306,7 @@
 	       ((0) 1)
 	       ((1) (car args))
 	       (else 
-		(let ((val (remove-all 1 (splice-if (lambda (x) (eq? x '*)) args))))
+		(let ((val (remove-all 1 (splice-if '* args))))
 		  (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 		      (let ((rats (collect-if list rational? val)))
 			(if (and (pair? rats)
@@ -4552,7 +4552,7 @@
 	       (else 
 		(if (just-rationals? args)
 		    (apply - args)
-		    (let ((val (remove-all 0 (splice-if (lambda (x) (eq? x '+)) (cdr args)))))
+		    (let ((val (remove-all 0 (splice-if '+ (cdr args)))))
 		      (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 			  (let ((rats (collect-if list rational? val)))
 			    (if (and (pair? rats) 
@@ -4740,7 +4740,7 @@
 			 (not (memv 0.0 (cdr args))))
 		    (apply / args)
 		    (let ((nargs                            ; (/ x a (* b 1 c) d) -> (/ x a b c d)
-			   (remove-all 1 (splice-if (lambda (x) (eq? x '*)) (cdr args)))))
+			   (remove-all 1 (splice-if '* (cdr args)))))
 		      (if (null? nargs) ; (/ x 1 1) -> x
 			  (car args)
 			  (if (and (member (car args) (cdr args))
@@ -5090,7 +5090,7 @@
 		   ;; not (inexact (random 3)) -> (random 3.0) because results are different
 	    
 	    ((logior)
-	     (set! args (lint-remove-duplicates (remove-all 0 (splice-if (lambda (x) (eq? x 'logior)) args)) env))
+	     (set! args (lint-remove-duplicates (remove-all 0 (splice-if 'logior args)) env))
 	     (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		 (let ((rats (collect-if list integer? args)))
 		   (if (and (pair? rats) 
@@ -5106,7 +5106,7 @@
 		   (else `(logior ,@args))))
 	    
 	    ((logand)
-	     (set! args (lint-remove-duplicates (remove-all -1 (splice-if (lambda (x) (eq? x 'logand)) args)) env))
+	     (set! args (lint-remove-duplicates (remove-all -1 (splice-if 'logand args)) env))
 	     (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		 (let ((rats (collect-if list integer? args)))
 		   (if (and (pair? rats) 
@@ -5127,7 +5127,7 @@
 	    ;; similarly for (logior...(logand...))
 	    
 	    ((logxor)
-	     (set! args (splice-if (lambda (x) (eq? x 'logxor)) args)) ; is this correct??
+	     (set! args (splice-if 'logxor args)) ; is this correct??
 	     (cond ((null? args) 0)                                    ; (logxor) -> 0
 		   ((null? (cdr args)) (car args))                     ; (logxor x) -> x??
 		   ((just-integers? args) (apply logxor args))         ; (logxor 1 2) -> 3
@@ -5135,7 +5135,7 @@
 		   (else `(logxor ,@args))))                           ; (logxor x (logxor y z)) -> (logxor x y z)
 	    
 	    ((gcd)
-	     (set! args (lint-remove-duplicates (splice-if (lambda (x) (eq? x 'gcd)) args) env))
+	     (set! args (lint-remove-duplicates (splice-if 'gcd args) env))
 	     (cond ((null? args) 0) 
 		   ((memv 1 args) 1)
 		   ((just-rationals? args)
@@ -5150,7 +5150,7 @@
 		   (else `(gcd ,@args))))
 	    
 	    ((lcm)
-	     (set! args (lint-remove-duplicates (splice-if (lambda (x) (eq? x 'lcm)) args) env))
+	     (set! args (lint-remove-duplicates (splice-if 'lcm args) env))
 	     (cond ((null? args) 1)         ; (lcm) -> 1
 		   ((memv 0 args) 0)        ; (lcm ... 0 ...) -> 0
 		   ((just-rationals? args)   ; (lcm 3 4) -> 12
@@ -5167,7 +5167,7 @@
 	     (if (not (pair? args))
 		 form
 		 (begin
-		   (set! args (lint-remove-duplicates (splice-if (lambda (x) (eq? x (car form))) args) env))
+		   (set! args (lint-remove-duplicates (splice-if (car form) args) env))
 		   (if (any? (lambda (p) ; if non-negative-op, remove any non-positive numbers
 			       (and (pair? p)
 				    (hash-table-ref non-negative-ops (car p))))
@@ -6863,7 +6863,7 @@
 	(define (all-caps-warning arg)
 	  (and (string? arg)
 	       (or (string-position "ERROR" arg)
-		   (string-position "WARNING" arg))))
+		   (string-position "WARN" arg))))
 	  
 	;; ---------------- display ----------------
 	(let ()
@@ -7318,33 +7318,43 @@
 	(let ()
 	 (define (sp-string-append caller head form env)
 	   (unless (= line-number last-checker-line-number)
-	     (let ((args (remove-all "" (splice-if (lambda (x) (eq? x 'string-append)) (cdr form))))
+	     (let ((args (remove-all "" (splice-if 'string-append (cdr form))))
 		   (combined #f))
-	       (when (or (any? string? args)
-			 (member 'string args (lambda (a b) (and (pair? b) (eq? (car b) a)))))
+
+	       (when (any? (lambda (s)
+			     (or (string? s)
+				 (and (pair? s)
+				      (memq (car s) '(string apply)))))
+			   args)
 		 (do ((nargs ())               ; look for (string...) (string...) in the arg list and combine
 		      (p args (cdr p)))
 		     ((null? p)
 		      (set! args (reverse nargs)))
-		   (cond ((not (pair? (cdr p)))
-			  (set! nargs (cons (car p) nargs)))
-			 
-			 ((and (pair? (car p))
-			       (eq? (caar p) 'string)
-			       (pair? (cadr p))
-			       (eq? (caadr p) 'string))
-			  (set! nargs (cons `(string ,@(cdar p) ,@(cdadr p)) nargs))
-			  (set! combined #t)
-			  (set! p (cdr p)))
-			 
-			 ((and (string? (car p))
-			       (string? (cadr p)))
-			  (set! nargs (cons (string-append (car p) (cadr p)) nargs))
-			  (set! combined #t)
-			  (set! p (cdr p)))
-			 
-			 (else (set! nargs (cons (car p) nargs))))))
-	     
+		   (let ((arg (car p)))
+		     (cond ((and (len=3? arg)   ; (string-append (apply string-append strs) str) -> (string-append (apply values strs) str)
+				 (eq? (car arg) 'apply)
+				 (eq? (cadr arg) 'string-append))
+			    (set! nargs (cons `(apply values ,(caddr arg)) nargs)))
+			   
+			   ((not (pair? (cdr p)))
+			    (set! nargs (cons arg nargs)))
+			   
+			   ((and (pair? arg)
+				 (eq? (car arg) 'string)
+				 (pair? (cadr p))
+				 (eq? (caadr p) 'string))
+			    (set! nargs (cons `(string ,@(cdr arg) ,@(cdadr p)) nargs))
+			    (set! combined #t)
+			    (set! p (cdr p)))
+			   
+			   ((and (string? arg)
+				 (string? (cadr p)))
+			    (set! nargs (cons (string-append arg (cadr p)) nargs))
+			    (set! combined #t)
+			    (set! p (cdr p)))
+			   
+			   (else (set! nargs (cons (car p) nargs)))))))
+
 	       ;; (if ... "" ...) as arg split out got a couple dozen hits but we still need copy for the "" branch, so it's not much better
 
 	       (cond ((null? args)                 ; (string-append) -> ""
@@ -7392,7 +7402,8 @@
 	(let ()
 	 (define (sp-vector-append caller head form env)
 	   (unless (= line-number last-checker-line-number)
-	     (let ((args (remove-all #() (splice-if (lambda (x) (eq? x 'vector-append)) (cdr form)))))
+	     (let ((args (remove-all #() (splice-if 'vector-append (cdr form)))))
+	       ;; no hits on (apply vector-append ...)
 	       (cond ((null? args)                    ;  (vector-append) -> #()
 		      (lint-format "perhaps ~A" caller (lists->string form #())))
 		     
@@ -7472,24 +7483,37 @@
 	     (letrec ((splice-append (lambda (lst)
 				       (cond ((null? lst)
 					      ())
+
 					     ((not (pair? lst))
 					      lst)
+
 					     ((and (pair? (car lst))
 						   (eq? (caar lst) 'append))
 					      (if (null? (cdar lst))
 						  (if (null? (cdr lst)) ; (append) at end -> () to keep copy intact?
 						      (list ())
 						      (splice-append (cdr lst)))
-						  (append (splice-append (cdar lst)) (splice-append (cdr lst)))))
+						  (append (splice-append (cdar lst)) 
+							  (splice-append (cdr lst)))))
+
 					     ((and (len=2? (car lst))
 						   (eq? (caar lst) 'copy)
 						   (pair? (cdr lst)))
 					      (cons (cadar lst) (splice-append (cdr lst))))
+
+					     ((and (len=3? (car lst))   ; (append (apply append x)...) -> (append (apply values x)...)
+						   (eq? (caar lst) 'apply)
+						   (memq (cadar lst) '(append string-append vector-append)))
+					      (cons (list 'apply 'values (caddar lst)) 
+						    (splice-append (cdr lst))))
+
 					     ((or (null? (cdr lst))
 						  (not (or (any-null? (car lst))
 							   (and (len=1? (car lst))
 								(eq? (caar lst) 'list)))))
-					      (cons (car lst) (splice-append (cdr lst))))
+					      (cons (car lst) 
+						    (splice-append (cdr lst))))
+
 					     (else (splice-append (cdr lst)))))))
 	       
 	       (let ((new-args (splice-append (cdr form))))     ; (append '(1) (append '(2) '(3))) -> (append '(1) '(2) '(3))
@@ -7509,7 +7533,8 @@
 			(lambda (item)
 			  (set! lst (append lst (if (eq? (car item) 'list)
 						    (cdr item)
-						    (distribute-quote (cadr item))))))
+						    ((if (eq? (car item) 'cons) list distribute-quote) 
+						     (cadr item))))))
 			items)
 		       lst))
 		   
@@ -7519,14 +7544,6 @@
 			 (if (quoted-pair? last)
 			     (lint-format "append does not copy its last argument, so ~A is dangerous" caller form))))
 		   
-		   ;; (append (cons a b) c) -> (cons a (append b c))?
-		   ;; (append (cons a ()) c) -> (cons a c)
-		   ;; (append (list a b) (cons c d)) -> (append (list a b c) d)?
-		   ;; (append (reverse (cdr x)) (list (car x))) -> (reverse x)?
-		   ;; (cdr (reverse (cdr (reverse x)))) -> (copy (cdr x) (make-list (- (length x) 2)))
-		   ;; (append (list x y) (list z)) -> (list x y z)? (or (cons z ()) at end) -- if all list, combine all -- this works already but cons is messy
-		   ;; (append (apply append x) y) -> (append (apply values x) y)?
-
 		   (case len1
 		     ((0)					        ; (append) -> ()
 		      (lint-format "perhaps ~A" caller (lists->string form ())))
@@ -7546,8 +7563,12 @@
 			      
 			      ((and (pair? arg2)                        ; (append (list x y) '(z)) -> (list x y z) or extensions thereof
 				    (or (eq? (car arg1) 'list)
+					(and (eq? (car arg1) 'cons)
+					     (any-null? (caddr arg1)))
 					(quoted-undotted-pair? arg1))
 				    (or (eq? (car arg2) 'list)
+					(and (eq? (car arg2) 'cons)
+					     (any-null? (caddr arg2)))
 					(quoted-undotted-pair? arg2)))
 			       (lint-format "perhaps ~A" caller (lists->string form (apply append->list new-args))))
 			      
@@ -7555,16 +7576,23 @@
 				    (len=1? (cdr arg1)))
 			       (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadr arg1) ,arg2))))
 			      
+			      ((eq? (car arg1) 'cons)                   ; (append (cons x y) z) -> (cons x z) or (cons z (append y z))
+			       (lint-format "perhaps ~A" caller         ;    append insists on proper lists, so this should be equivalent
+					    (lists->string form 
+							   (if (any-null? (caddr arg1))
+							       `(cons ,(cadr arg1) ,arg2)
+							       `(cons ,(cadr arg1) (append ,(caddr arg1) ,arg2))))))
+			      
 			      ((and (eq? (car arg1) 'list)              ; (append (list x y) z) -> (cons x (cons y z))
 				    (len=2? (cdr arg1)))
 			       (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadr arg1) (cons ,(caddr arg1) ,arg2)))))
 
-			      ;; not sure about this: reports the un-qq'd form (and never happens)
+			      ;; not sure about this: reports the un-qq'd form
 			      ((and (eq? (car arg1) #_{list})
 				    (not (qq-tree? arg1)))
 			       (set! last-checker-line-number -1)
 			       (sp-append caller 'append `(append ,(un_{list} arg1) ,arg2) env))
-			      
+
 			      ((and (eq? (car arg1) 'vector->list)
 				    (pair? arg2)
 				    (eq? (car arg2) 'vector->list))
@@ -7585,6 +7613,8 @@
 		      (cond ((every? (lambda (item)
 				       (and (pair? item)
 					    (or (eq? (car item) 'list)
+						(and (eq? (car item) 'cons)
+						     (any-null? (caddr item)))
 						(quoted-undotted-pair? item))))
 				     new-args)                         ; (append '(1) (append '(2) '(3)) '(4)) -> (list 1 2 3 4)
 			     (lint-format "perhaps ~A" caller (lists->string form (apply append->list new-args))))
@@ -7592,6 +7622,12 @@
 			    ((and (len=2? (car new-args))               ; (append (list x) y (list z)) -> (cons x (append y (list z)))?
 				  (eq? (caar new-args) 'list))
 			     (lint-format "perhaps ~A" caller (lists->string form `(cons ,(cadar new-args) (append ,@(cdr new-args))))))
+
+			    ((and (pair? (car new-args))
+				  (eq? (caar new-args) 'cons))
+			     (lint-format "perhaps ~A" caller 
+					  (lists->string form 
+							 `(cons ,(cadar new-args) (append ,(caddar new-args) ,@(cdr new-args))))))
 			    
 			    ((let ((n-1 (list-ref new-args (- len1 2))))
 			       (and (len=2? n-1)
@@ -7920,16 +7956,20 @@
 			(let ((pos (char-position #\null control-string)))
 			  (if (and pos (< pos (length control-string)))  ; (format #f "~a\x00b" x)
 			      (lint-format "#\\null in a format control string will confuse both lint and format: ~S in ~A" caller control-string form)))
-			(if (not (or (= ndirs nargs)
-				     (tree-memq 'values form)))
-			    (lint-format "~A has ~A arguments: ~A"       ; (format #f "~nT" 1 2)
-					 caller head 
-					 (if (> ndirs nargs) "too few" "too many")
-					 (truncated-list->string form))
-			    (if (and (not (cadr form))                   ; (format #f "123")
-				     (zero? ndirs)
-				     (not (char-position #\~ control-string)))
-				(lint-format "~A could be ~S, (format is a no-op here)" caller (truncated-list->string form) (caddr form))))))
+			(cond ((not (or (= ndirs nargs)
+					(tree-memq 'values form)))
+			       (lint-format "~A has ~A arguments: ~A"       ; (format #f "~nT" 1 2)
+					    caller head 
+					    (if (> ndirs nargs) "too few" "too many")
+					    (truncated-list->string form)))
+
+			      ((and (not (cadr form))                   ; (format #f "123")
+				    (zero? ndirs)
+				    (not (char-position #\~ control-string)))
+			       (lint-format "~A could be ~S, (format is a no-op here)" caller (truncated-list->string form) (caddr form)))
+
+			      ((string-position "~^~}" control-string)
+			       (lint-format "pointless ~~^ in ~S" caller control-string)))))
 		  
 		  (when (pair? args)
 		    (for-each
@@ -8533,7 +8573,7 @@
 	    (cond ((member 'values (cdr form) (lambda (a b)
 						(and (pair? b)   ;  (values 2 (values 3 4) 5) -> (values 2 3 4 5)
 						     (eq? (car b) 'values))))
-		   (lint-format "perhaps ~A" caller (lists->string form `(values ,@(splice-if (lambda (x) (eq? x 'values)) (cdr form))))))
+		   (lint-format "perhaps ~A" caller (lists->string form `(values ,@(splice-if 'values (cdr form))))))
 		  ((= (length form) 2)
 		   (lint-format "perhaps ~A" caller 
 				(lists->string form              ;  (values ({list} 'x ({apply_values} y))) -> (cons 'x y)
@@ -9072,12 +9112,17 @@
 			     (bitwise-not . lognot)
 			     (bitwise-xor . logxor) 
 			     (bytevector . byte-vector)
+			     (bytevector-copy . copy)
+			     (bytevector-fill! . fill!)
 			     (bytevector-length . length)
 			     (bytevector? . byte-vector?)
 			     (bytevector-ref . byte-vector-ref)
 			     (bytevector-set! . byte-vector-set!)
 			     (bytevector-u8-ref . byte-vector-ref)
 			     (bytevector-u8-set! . byte-vector-set!)
+			     (copy-list . copy)
+			     (copy-string . copy)
+			     (copy-vector . copy)
 			     (environment-ref . let-ref)
 			     (environment-set! . let-set!)
 			     (environment? . let?)
@@ -9089,10 +9134,12 @@
 			     (hash-ref . hash-table-ref)
 			     (hash-set! . hash-table-set!)     ; Guile
 			     (hash-table-get . hash-table-ref) ; Gauche
+			     (hash-table-copy . copy)
 			     (hash-table-num-entries . hash-table-entries)
 			     (hash-table-put! . hash-table-set!)
 			     (hashq-ref . hash-table-ref)
 			     (hashq-set! . hash-table-set!)
+			     (hashtable-copy . copy)
 			     (hashtable-get . hash-table-ref)
 			     (hashtable-put! . hash-table-set!)
 			     (hashtable-set! . hash-table-set!)
@@ -9102,6 +9149,7 @@
 			     (hashv-set! . hash-table-set!)
 			     (interaction-environment . curlet)
 			     (list-copy . copy)
+			     (list-reverse . reverse)
 			     (make-bytevector . make-byte-vector)
 			     (make-u8vector . make-byte-vector)
 			     (open-input-bytevector . open-input-string)
@@ -9112,13 +9160,16 @@
 			     (raise-continuable . error)
 			     (read-u8 . read-byte)
 			     (reverse-u8vector . reverse)
+			     (reverse-string . reverse)
 			     (string-for-each . for-each)
+			     (string-reverse! . reverse!)
 			     (system-global-environment . rootlet)
 			     (the-environment . curlet)
 			     (truncate-quotient . quotient)
 			     (truncate-remainder . remainder)
 			     (u8-ready? . char-ready?) 
 			     (u8vector . byte-vector)
+			     (u8vector-copy . copy)
 			     (u8vector? . byte-vector?)
 			     (u8vector-length . length)
 			     (u8vector-fill! . fill!)
@@ -9130,6 +9181,7 @@
 			     (user-global-environment . rootlet)
 			     (user-initial-environment . rootlet)
 			     (vector-for-each . for-each)
+			     (vector-reverse! . reverse!)
 			     (write-bytevector . write-string)
 			     (write-simple . write)
 			     (write-u8 . write-byte))))
@@ -10588,15 +10640,15 @@
 			     
 			     ;; check for function parameters whose values never change and are not just symbols
 			     ;;   ignore recursive functions (arg=(+ k 1) -> counter or whatever)
-			     (when (and (> (var-ref local-var) 2) ; was 3
+			     (when (and (> (var-ref local-var) 1) ; was 3
 					(zero? (var-set local-var))
 					(memq (var-ftype local-var) '(define lambda))
 					(pair? (var-arglist local-var))
-					(let loop ((calls (var-history local-var)))         ; if func passed as arg, ignore it
+					(let loop ((calls (var-history local-var)))          ; if func passed as arg, ignore it
 					  (or (null? calls)
 					      (null? (cdr calls))
 					      (and (pair? (car calls))
-						   (not (memq (var-name local-var) (cdar calls)))
+						   (not (memq vname (cdar calls)))
 						   (loop (cdr calls))))))
 			       (let ((pars (map list (proper-list (var-arglist local-var))))
 				     (recursive (tree-memq vname (cddr (var-initial-value local-var)))))
@@ -10612,21 +10664,25 @@
 				 (let ((init (cddr (var-initial-value local-var)))
 				       (arglist (var-arglist local-var)))
 				   (for-each (lambda (p)
-					       (if (and (len=1? (cdr p))                       ; so all calls, this parameter has the same value
-							(if recursive
-							    (or (code-constant? (cadr p))      ; repeated recursive call arg is not interesting
-								(and (memq (cadr p) arglist)
-								     (not (shadowed? (cadr p) init))
-								     (not (let search ((tree init))
-									    (and (pair? tree)
-										 (or (and (eq? (car tree) 'set!)
-											  (pair? (cdr tree))
-											  (eq? (cadr p) (cadr tree)))
-										     (search (car tree))
-										     (search (cdr tree))))))))
-							    (not (symbol? (cadr p)))))
-						   (lint-format "~A's '~A parameter is always ~S (~D calls)" caller
-								(var-name local-var) (car p) (cadr p) (var-ref local-var))))
+					       (when (and (not recursive)                    ;   self-inflicted...
+							  (pair? (cdr p))
+							  (not (symbol? (cadr p))))
+						 (if (null? (cddr p))
+						     (lint-format "~A's '~A parameter is always ~S (~D calls)" caller
+								  vname (car p) (cadr p) (var-ref local-var))
+#|
+					; also need to check call in vname -- not passed as arg internally: tree-car-member (car p) (cddr ...)
+					; only a few hits for this
+						     (if (and (= (tree-count (car p) (var-initial-value local-var)) 2)
+							      (every? (lambda (arg)
+									(and (pair? arg)
+									     (eq? (car arg) 'lambda)
+									     (eqv? (length (cadr arg)) 1)
+									     (len=1? (cddr arg))))
+								      (cdr p)))
+							 (format *stderr* "~A ~A:~{~%   ~A~}~%~%" vname (car p) (cdr p)))
+|#
+						     )))
 					     pars))))
 			     )))) ; end (if zero var-ref)
 		   
@@ -19716,6 +19772,5 @@
 ;;; maybe extend the r->i naming scheme
 ;;; recursion -> tail-recursion?
 ;;;   i.e. add arg for res, start at init, move outer inward
-;;; list-copy
 
-;;; 168 28158 685640
+;;; 165 28217 672496
