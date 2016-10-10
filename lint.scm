@@ -490,6 +490,7 @@
     
     
     ;; -------- the usual list functions --------
+
     (define (len=1? x)
       (and (pair? x)
 	   (null? (cdr x))))
@@ -4032,75 +4033,13 @@
 	    (else (cons (car lst) 
 			(splice-if func (cdr lst))))))
 
-    (define (horners-rule form)
-      (and (pair? form)
-	   (call-with-exit 
-	    (lambda (return)
-	      (do ((p form (cdr p))
-		   (coeffs #f)
-		   (top 0)
-		   (sym #f))
-		  ((not (pair? p))
-		   (do ((x (- top 1) (- x 1))
-			(result (coeffs top)))
-		       ((< x 0)
-			result)
-		     (set! result 
-			   (if (zero? (coeffs x))
-			       `(* ,sym ,result)
-			       `(+ ,(coeffs x) (* ,sym ,result))))))
-		(let ((cx (car p)))
-		  (cond ((number? cx)
-			 (if (not coeffs) (set! coeffs (make-vector 4 0)))
-			 (set! (coeffs 0) (+ (coeffs 0) cx)))
-
-			((symbol? cx)
-			 (if (not sym)
-			     (set! sym cx)
-			     (if (not (eq? sym cx))
-				 (return #f)))
-			 (if (not coeffs) (set! coeffs (make-vector 4 0)))
-			 (set! top (max top 1))
-			 (set! (coeffs 1) (+ (coeffs 1) 1)))
-
-			((not (and (pair? cx)
-				   (eq? (car cx) '*)))
-			 (return #f))
-
-			(else
-			 (let ((ctr 0)
-			       (ax 1))
-			   (for-each (lambda (qx)
-				       (if (symbol? qx)
-					   (if (not sym)
-					       (begin
-						 (set! sym qx)
-						 (set! ctr 1))
-					       (if (not (eq? sym qx))
-						   (return #f)
-						   (set! ctr (+ ctr 1))))
-					   (if (number? qx)
-					       (set! ax (* ax qx))
-					       (return #f))))
-				     (cdr cx))
-			   (if (not coeffs) (set! coeffs (make-vector 4 0)))
-			   (if (>= ctr (length coeffs))
-			       (set! coeffs (copy coeffs (make-vector (* ctr 2) 0))))
-			   (set! top (max top ctr))
-			   (set! (coeffs ctr) (+ (coeffs ctr) ax)))))))))))
-    
-    (define (simplify-numerics form env)
+    (define simplify-numerics
       ;; this returns a form, possibly the original simplified
-      (let ((real-result? (lambda (op) (memq op '(imag-part real-part abs magnitude angle max min exact->inexact inexact
-						  modulo remainder quotient lcm gcd))))
-	    (rational-result? (lambda (op) (memq op '(rationalize inexact->exact exact))))
-	    (integer-result? (lambda (op) (memq op '(logior lognot logxor logand numerator denominator floor round truncate ceiling ash)))))
-	
-	(define (inverse-op op)
-	  (case op 
-	    ((sin) 'asin) ((cos) 'acos) ((tan) 'atan) ((asin) 'sin) ((acos) 'cos) ((atan) 'tan)
-	    ((sinh) 'asinh) ((cosh) 'acosh) ((tanh) 'atanh) ((asinh) 'sinh) ((acosh) 'cosh) ((atanh) 'tanh)
-	    ((log) 'exp) ((exp) 'log)))
+
+      (let ()
+
+	(define (integer-result? op)
+	  (memq op '(logior lognot logxor logand numerator denominator floor round truncate ceiling ash)))
 	
 	(define (just-rationals? form)
 	  (or (null? form)
@@ -4108,35 +4047,6 @@
 	      (and (pair? form)
 		   (rational? (car form))
 		   (just-rationals? (cdr form)))))
-	
-	(define (just-reals? form)
-	  (or (null? form)
-	      (real? form)
-	      (and (pair? form)
-		   (real? (car form))
-		   (just-reals? (cdr form)))))
-	
-	(define (just-integers? form)
-	  (or (null? form)
-	      (integer? form)
-	      (and (pair? form)
-		   (integer? (car form))
-		   (just-integers? (cdr form)))))
-	
-	(define (simplify-arg x)
-	  (if (or (null? x)                      ; constants and the like look dumb if simplified
-		  (not (proper-list? x))
-		  (not (hash-table-ref no-side-effect-functions (car x)))
-		  (var-member (car x) env))
-	      x
-	      (let ((f (simplify-numerics x env)))
-		(if (and (pair? f)
-			 (just-rationals? f))
-		    (catch #t
-		      (lambda ()
-			(eval f))
-		      (lambda ignore f))
-		    f))))
 	
 	(define (remove-inexactions val)
 	  (when (and (or (assq 'exact->inexact val)
@@ -4159,1069 +4069,1237 @@
 		     (if (pair? p)
 			 (set-car! p (* 1.0 (car p))))))))
 	  val)
-
+	
 	(define (collect-non-numbers args)
 	  (collect-if list (lambda (x) (not (number? x))) args))
 	
 	;; polar notation (@) is never used anywhere except test suites
-
-	(let* ((args (map simplify-arg (cdr form)))
-	       (len (length args)))
-	  (case (car form)
-
-	    ((+)
-	     (case len
-	       ((0) 0)
-	       ((1) (car args))
-	       (else 
-		(let ((val (remove-all 0 (splice-if '+ args))))
-		  (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
-		      (let ((rats (collect-if list rational? val)))
-			(if (and (pair? rats)
-				 (pair? (cdr rats)))
-			    (let ((y (apply + rats)))
-			      (set! val (if (zero? y) 
-					    (collect-non-numbers val)
-					    (cons y (collect-non-numbers val))))))))
-		  (set! val (remove-inexactions val))
-		  (if (any? (lambda (p)        ; collect all + and - vals -> (- (+ ...) ...)
-			      (and (pair? p) 
-				   (eq? (car p) '-)))
-			    val)
-		      (let ((plus ())
-			    (minus ())
-			    (c 0))
-			(for-each (lambda (p)
-				    (if (not (and (pair? p)
-						  (eq? (car p) '-)))
-					(if (rational? p)
-					    (set! c (+ c p))
-					    (set! plus (cons p plus)))
-					(if (null? (cddr p))
-					    (if (rational? (cadr p))
-						(set! c (- c (cadr p)))
-						(set! minus (cons (cadr p) minus)))
-					    (begin
-					      (if (rational? (cadr p))
-						  (set! c (+ c (cadr p)))
-						  (set! plus (cons (cadr p) plus)))
-					      (for-each (lambda (p1) 
-							  (if (rational? p1) 
-							      (set! c (- c p1)) 
-							      (set! minus (cons p1 minus))))
-							(cddr p))))))
-				  val)
-			(simplify-numerics `(- (+ ,@(reverse plus) ,@(if (positive? c) (list c) ()))
-					       ,@(reverse minus) ,@(if (negative? c) (list (abs c)) ()))
-					   env))
-		      
-		      (case (length val)
-			((0) 0)                                      ; (+) -> 0
-			((1) (car val))                              ; (+ x) -> x
-			((2)
-			 (let ((arg1 (car val))
-			       (arg2 (cadr val)))
-			   (cond ((and (real? arg2)                  ; (+ x -1) -> (- x 1)
-				       (negative? arg2)
-				       (not (number? arg1)))
-				  `(- ,arg1 ,(abs arg2)))
-				 
-				 ((and (real? arg1)                  ; (+ -1 x) -> (- x 1)
-				       (negative? arg1)
-				       (not (number? arg2)))
-				  `(- ,arg2 ,(abs arg1)))
-
-				 ((and (pair? arg1)                  ; (+ (if x 0 y) z) -> (if x z (+ y z))
-				       (eq? (car arg1) 'if)
-				       (= (length arg1) 4))
-				  (if (and (pair? arg2)
-					   (eq? (car arg2) 'if))
-				      `(+ ,@val)
-				      (let ((true (caddr arg1))
-					    (false (cadddr arg1)))
-					(if (eqv? true 0) ; does not include 0.0
-					    (if (eqv? false 0)
-						arg2
-						`(if ,(cadr arg1) ,arg2 (+ ,false ,arg2)))
-					    (if (eqv? false 0)
-						`(if ,(cadr arg1) (+ ,true ,arg2) ,arg2)
-						`(+ ,@val))))))
-
-				 ((and (pair? arg2)                   ; (+ z (if x 0 y)) -> (if x z (+ z y))
-				       (eq? (car arg2) 'if)
-				       (= (length arg2) 4))
-				  (let ((true (caddr arg2))
-					(false (cadddr arg2)))
-				    (if (eqv? true 0) ; does not include 0.0
-					(if (eqv? false 0)
-					    arg1
-					    `(if ,(cadr arg2) ,arg1 (+ ,arg1 ,false)))
-					(if (eqv? false 0)
-					    `(if ,(cadr arg2) (+ ,arg1 ,true) ,arg1)
-					    `(+ ,@val)))))
-
-				 ((not (and (pair? arg1)
-					    (pair? arg2)))
-				   `(+ ,@val))
-				 
-				 ((and (eq? (car arg1) '*)           ; (+ (* a b) (* a c)) -> (* a (+ b c))
-				       (eq? (car arg2) '*)
-				       (any? (lambda (a)
-					       (member a (cdr arg2)))
-					     (cdr arg1)))
-				  (do ((times ())
-				       (pluses ())
-				       (rset (cdr arg2))
-				       (p (cdr arg1) (cdr p)))
-				      ((null? p)
-				       ;; times won't be () because we checked above for a match
-				       ;;  if pluses is (), arg1 is completely included in arg2
-				       ;;  if rset is (), arg2 is included in arg1
-				       (simplify-numerics `(* ,@(reverse times)
-							      (+ (* ,@(reverse (if (pair? pluses) pluses (list (if (null? pluses) 1 pluses)))))
-								 (* ,@rset)))
-							  env))
-				    (if (member (car p) rset)
-					(begin
-					  (set! times (cons (car p) times))
-					  (set! rset (remove (car p) rset)))
-					(set! pluses (cons (car p) pluses)))))
-				 
-				 ((and (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
-				       (eq? (car arg2) '/)
-				       (pair? (cddr arg1)) (pair? (cddr arg2))
-				       (equal? (cddr arg1) (cddr arg2)))
-				  `(/ (+ ,(cadr arg1) ,(cadr arg2)) ,@(cddr arg1)))
-				 
-				 (else `(+ ,@val)))))
-			(else 
-			 (or (horners-rule val)
-			     ;; not many cases here, oddly enough, Horner's rule gets most
-			     ;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
-			     ;; the 3-arg case of embedded if looks fussy
-			     `(+ ,@val)))))))))
-	    
-	    ((*)
-	     (case len
-	       ((0) 1)
-	       ((1) (car args))
-	       (else 
-		(let ((val (remove-all 1 (splice-if '* args))))
-		  (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
-		      (let ((rats (collect-if list rational? val)))
-			(if (and (pair? rats)
-				 (pair? (cdr rats)))
-			    (let ((y (apply * rats)))
-			      (set! val (if (= y 1)
-					    (collect-non-numbers val)
-					    (cons y (collect-non-numbers val))))))))
-		  (set! val (remove-inexactions val))
-		      
-		  (case (length val)
-		    ((0) 1)
-		    ((1) (car val))                         ; (* x) -> x
-		    ((2)
-		     (let ((arg1 (car val))
-			   (arg2 (cadr val)))
-		       (cond ((just-rationals? val)
-			      (let ((new-val (apply * val))) ; huge numbers here are less readable
-				(if (< (abs new-val) 1000000)
-				    new-val
-				    `(* ,@val))))
-
-			     ((memv 0 val)                         ; (* x 0) -> 0
-			      0) 
-			     ((memv -1 val)
-			      `(- ,@(remove -1 val)))              ; (* -1 x) -> (- x)
-
-			     ((and (pair? arg1)                    ; (* (if x 1 y) z) -> (if x z (* y z))
-				   (eq? (car arg1) 'if)            ; (* (if x 0 y) z) -> (if x 0 (* y z))
-				   (= (length arg1) 4))
-			      (if (and (pair? arg2)
-				       (eq? (car arg2) 'if))
-				  `(* ,@val)
-				  (let ((true (caddr arg1))
-					(false (cadddr arg1)))
-				    (if (memv true '(0 1)) ; does not include 0.0
-					`(if ,(cadr arg1) ,(if (eqv? true 1) arg2 0) (* ,false ,arg2))
-					(if (memv false '(0 1))
-					    `(if ,(cadr arg1) (* ,true ,arg2) ,(if (eqv? false 1) arg2 0))
-					    `(* ,@val))))))
-			     
-			     ((and (pair? arg2)                   ; (* z (if x 1 y)) -> (if x z (* z y))
-				   (eq? (car arg2) 'if)
-				   (= (length arg2) 4))
-			      (let ((true (caddr arg2))
-				    (false (cadddr arg2)))
-				(if (memv true '(0 1)) ; does not include 0.0
-				    `(if ,(cadr arg2) ,(if (eqv? true 1) arg1 0) (* ,arg1 ,false))
-				    (if (memv false '(0 1))
-					`(if ,(cadr arg2) (* ,arg1 ,true) ,(if (eqv? false 1) arg1 0))
-					`(* ,@val)))))
-
-			     ((not (pair? arg2))
-			      `(* ,@val))
-
-			     ((pair? arg1)
-			      (let ((op1 (car arg1))
-				    (op2 (car arg2)))
-				(cond ((and (eq? op1 '-)           ; (* (- x) (- y)) -> (* x y)
-					    (null? (cddr arg1))
-					    (eq? op2 '-)
-					    (null? (cddr arg2)))
-				       `(* ,(cadr arg1) ,(cadr arg2)))
-				      
-				      ((and (eq? op1 '/)           ; (* (/ x) (/ y)) -> (/ (* x y)) etc
-					    (eq? op2 '/))
-				       (let ((op1-arg1 (cadr arg1))
-					     (op2-arg1 (cadr arg2)))
-					 (if (null? (cddr arg1))
-					     (if (null? (cddr arg2))
-						 `(/ (* ,op1-arg1 ,op2-arg1))
-						 (if (equal? op1-arg1 op2-arg1)
-						     `(/ ,(caddr arg2))
-						     (simplify-numerics `(/ ,op2-arg1 (* ,op1-arg1 ,(caddr arg2))) env)))
-					     (if (null? (cddr arg2))
-						 (if (equal? op1-arg1 op2-arg1)
-						     `(/ ,(caddr arg1))
-						     (simplify-numerics `(/ ,op1-arg1 (* ,(caddr arg1) ,op2-arg1)) env))
-						 (simplify-numerics `(/ (* ,op1-arg1 ,op2-arg1) (* ,@(cddr arg1) ,@(cddr arg2))) env)))))
-				      
-				      ((and (= (length arg1) 3)
-					    (equal? (cdr arg1) (cdr arg2))
-					    (case op1
-					      ((gcd) (eq? op2 'lcm))
-					      ((lcm) (eq? op2 'gcd))
-					      (else #f)))
-				       `(abs (* ,@(cdr arg1))))    ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
-				      
-				      ((and (eq? op1 'exp)         ; (* (exp a) (exp b)) -> (exp (+ a b))
-					    (eq? op2 'exp))
-				       `(exp (+ ,(cadr arg1) ,(cadr arg2))))
-
-				      ((and (eq? op1 'sqrt)        ; (* (sqrt x) (sqrt y)) -> (sqrt (* x y))
-					    (eq? op2 'sqrt))
-				       `(sqrt (* ,(cadr arg1) ,(cadr arg2))))
-
-				      ((not (and (eq? op1 'expt) (eq? op2 'expt)))
-				       `(* ,@val))
-
-				      ((equal? (cadr arg1) (cadr arg2)) ; (* (expt x y) (expt x z)) -> (expt x (+ y z))
-				       `(expt ,(cadr arg1) (+ ,(caddr arg1) ,(caddr arg2))))
-
-				      ((equal? (caddr arg1) (caddr arg2)) ; (* (expt x y) (expt z y)) -> (expt (* x z) y)
-				       `(expt (* ,(cadr arg1) ,(cadr arg2)) ,(caddr arg1)))
-
-				      (else `(* ,@val)))))
-			      
-			     ((and (number? arg1)                  ; (* 2 (random 3.0)) -> (random 6.0)
-				   (eq? (car arg2) 'random)
-				   (number? (cadr arg2))
-				   (not (rational? (cadr arg2))))
-			      `(random ,(* arg1 (cadr arg2))))
-
-			     (else `(* ,@val)))))
-		    (else 
-		     (cond ((just-rationals? val)
-			    (let ((new-val (apply * val))) ; huge numbers here are less readable
-			      (if (< (abs new-val) 1000000)
-				  new-val
-				  `(* ,@val))))
-
-			   ((memv 0 val)                   ; (* x 0 2) -> 0
-			    0) 
-
-			   ((memv -1 val)
-			    `(- (* ,@(remove -1 val))))    ; (* -1 x y) -> (- (* x y))
-
-			   ((let search ((args val))       ; (* x (if y 0 z) w) -> (if y 0 (* x z w))
-			      (and (pair? args)
-				   (let ((has-zero (and (pair? (car args))
-							(eq? (caar args) 'if)
-							(= (length (car args)) 4)
-							(or (eqv? (caddar args) 0)
-							    (eqv? (car (cdddar args)) 0))
-							(car args))))
-				     (or has-zero 
-					 (search (cdr args))))))
-			    => (lambda (gif)
-				 (let ((other-args (remove gif val)))
-				   `(if ,(cadr gif) 
-					,(if (eqv? (caddr gif) 0) 0 `(* ,(caddr gif) ,@other-args))
-					,(if (eqv? (cadddr gif) 0) 0 `(* ,(cadddr gif) ,@other-args))))))
-
-			   ((any? (lambda (p)              ; collect * and / vals -> (/ (* ...) ...)
-				    (and (pair? p) 
-					 (eq? (car p) '/)))
-				  val)
-			    (let ((mul ())
-				  (div ()))
-			      (for-each (lambda (p)
-					  (if (not (and (pair? p)
-							(eq? (car p) '/)))
-					      (set! mul (cons p mul))
-					      (if (null? (cddr p))
-						  (set! div (cons (cadr p) div))
-						  (begin
-						    (set! mul (cons (cadr p) mul))
-						    (set! div (append (cddr p) div))))))
-					val)
-			      (for-each (lambda (n)
-					  (when (member n div)
-					    (set! div (remove n div))
-					    (set! mul (remove n mul))))
-					(copy mul))
-			      (let ((expr (if (null? mul)
-					      (if (null? div)
-						  `(*)       ; for simplify-numerics' benefit
-						  `(/ 1 ,@(reverse div)))
-					      (if (null? div)
-						  `(* ,@(reverse mul))
-						  `(/ (* ,@(reverse mul)) ,@(reverse div))))))
-				(simplify-numerics expr env))))
-
-			   (else `(* ,@val)))))))))
-	    
-	    ((-)
-	     (set! args (remove-inexactions args))
-	     (case len
-	       ((0) form)
-	       ((1) ; negate
-		(if (number? (car args))
-		    (- (car args))
-		    (if (not (list? (car args)))
-			`(- ,@args)
-			(case (length (car args))
-			  ((2) (if (eq? (caar args) '-)
-				   (cadar args)                 ; (- (- x)) -> x
-				   `(- ,@args)))
-			  ((3) (if (eq? (caar args) '-)
-				   `(- ,(caddar args) ,(cadar args)) ; (- (- x y)) -> (- y x)
-				   `(- ,@args)))
-			  (else `(- ,@args))))))
-	       ((2) 
-		(let ((arg1 (car args))
-		      (arg2 (cadr args)))
-		  (cond ((just-rationals? args) (apply - args)) ; (- 3 2) -> 1
-
-			((eqv? arg1 0) `(- ,arg2))              ; (- 0 x) -> (- x)
-
-			((eqv? arg2 0) arg1)                    ; (- x 0) -> x
-
-			((equal? arg1 arg2) 0)                  ; (- x x) -> 0
-
-			((and (pair? arg2)
-			      (eq? (car arg2) '-)
-			      (pair? (cdr arg2)))
-			 (if (null? (cddr arg2)) 
-			     `(+ ,arg1 ,(cadr arg2))            ; (- x (- y)) -> (+ x y)
-			     (simplify-numerics `(- (+ ,arg1 ,@(cddr arg2)) ,(cadr arg2)) env))) ; (- x (- y z)) -> (- (+ x z) y)
-
-			((and (pair? arg2)                      ; (- x (+ y z)) -> (- x y z)
-			      (eq? (car arg2) '+))
-			 (simplify-numerics `(- ,arg1 ,@(cdr arg2)) env))
-
-			((and (pair? arg1)                      ; (- (- x y) z) -> (- x y z)
-			      (eq? (car arg1) '-))
-			 (if (> (length arg1) 2)
-			     `(- ,@(cdr arg1) ,arg2)
-			     (simplify-numerics `(- (+ ,(cadr arg1) ,arg2)) env)))  ; (- (- x) y) -> (- (+ x y))
-
-			((and (pair? arg2)                      ; (- x (truncate x)) -> (remainder x 1)
-			      (eq? (car arg2) 'truncate)
-			      (equal? arg1 (cadr arg2)))
-			 `(remainder ,arg1 1))
-
-			((and (real? arg2)                      ; (- x -1) -> (+ x 1)
-			      (negative? arg2)
-			      (not (number? arg1)))
-			 `(+ ,arg1 ,(abs arg2)))
-
-			((and (pair? arg2)                      ; (- x (if y 0 z)) -> (if y x (- x z))
-			      (eq? (car arg2) 'if)              ; (- x (if y z 0)) -> (if y (- x z) x)
-			      (= (length arg2) 4)
-			      (or (eqv? (caddr arg2) 0)
-				  (eqv? (cadddr arg2) 0)))
-			 (let ((true (caddr arg2))
-			       (false (cadddr arg2)))
-			   `(if ,(cadr arg2)
-				,(if (eqv? true 0) arg1 `(- ,arg1 ,true))
-				,(if (eqv? true 0) `(- ,arg1 ,false) arg1))))
-
-			(else `(- ,@args)))))
-	       (else 
-		(if (just-rationals? args)
-		    (apply - args)
-		    (let ((val (remove-all 0 (splice-if '+ (cdr args)))))
-		      (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
-			  (let ((rats (collect-if list rational? val)))
-			    (if (and (pair? rats) 
-				     (pair? (cdr rats)))
-				(let ((y (apply + rats)))
-				  (set! val (if (zero? y)
-						(collect-non-numbers val)
-						(cons y (collect-non-numbers val))))))))
-		      (set! val (cons (car args) val))
-		      (let ((first-arg (car args))
-			    (nargs (cdr val)))
-			(if (member first-arg nargs)
-			    (begin
-			      (set! nargs (remove first-arg nargs)) ; remove once
-			      (set! first-arg 0)))
-			(cond ((null? nargs) first-arg)       ; (- x 0 0 0)?
-
-			      ((eqv? first-arg 0)
-			       (if (null? (cdr nargs))
-				   (if (number? (car nargs))
-				       (- (car nargs))
-				       `(- ,(car nargs)))     ; (- 0 0 0 x)?
-				   `(- (+ ,@nargs))))         ; (- 0 z y) -> (- (+ x y))
-
-			      ((not (and (pair? (car args))
-					 (eq? (caar args) '-)))
-			       `(- ,@(cons first-arg nargs)))
-
-			      ((> (length (car args)) 2)      ; (- (- x y) z w) -> (- x y z w)
-			       (simplify-numerics `(- ,@(cdar args) ,@(cdr args)) env))
-
-			      (else (simplify-numerics `(- (+ ,(cadar args) ,@(cdr args))) env)))))))))
-
-	    ((/)
-	     (set! args (remove-inexactions args))
-	     (case len
-	       ((0) form)
-	       ((1) ; invert
-		(if (number? (car args))
-		    (if (zero? (car args))
-			`(/ ,(car args))
-			(/ (car args)))
-		    (if (not (pair? (car args)))
-			`(/ ,@args)
-			(case (caar args)
-			  ((/) 
-			   (case (length (car args))
-			     ((2)                         ; (/ (/ x)) -> x
-			      (cadar args))
-			     ((3)                         ; (/ (/ z x)) -> (/ x z)
-			      `(/ ,@(reverse (cdar args))))
-			     (else
-			      (if (eqv? (cadar args) 1)
-				  `(* ,@(cddar args))     ; (/ (/ 1 x y)) -> (* x y)
-				  `(/ (* ,@(cddar args)) ,(cadar args)))))) ; (/ (/ z x y)) -> (/ (* x y) z)
-			  ((expt)                         ; (/ (expt x y)) -> (expt x (- y))
-			   `(expt ,(cadar args) (- ,(caddar args))))
-			  ((exp)                          ; (/ (exp x)) -> (exp (- x))
-			   `(exp (- ,(cadar args))))
-			  (else `(/ ,@args))))))
-	       ((2)
-		(if (and (just-rationals? args)
-			 (not (zero? (cadr args))))
-		    (apply / args)                         ; including (/ 0 12) -> 0
-		    (let ((arg1 (car args))
-			  (arg2 (cadr args)))
-		      (let ((op1 (and (pair? arg1) (car arg1)))
-			    (op2 (and (pair? arg2) (car arg2))))
-			(let ((op1-arg1 (and op1 (pair? (cdr arg1)) (cadr arg1)))
-			      (op2-arg1 (and op2 (pair? (cdr arg2)) (cadr arg2))))
-			  (cond ((eqv? arg1 1)                 ; (/ 1 x) -> (/ x)
-				 (simplify-numerics `(/ ,arg2) env))
-				
-				((eqv? arg2 1)                 ; (/ x 1) -> x
-				 arg1)
-				
-				((and (pair? arg1)             ; (/ (/ a b) c) -> (/ a b c)
-				      (eq? op1 '/)
-				      (pair? (cddr arg1))
-				      (not (and (pair? arg2)
-						(eq? op2 '/))))
-				 `(/ ,op1-arg1 ,@(cddr arg1) ,arg2))
-				
-				((and (pair? arg1)             ; (/ (/ a) (/ b)) -> (/ b a)??
-				      (eq? op1 '/)
-				      (pair? arg2)
-				      (eq? '/ op2))
-				 (let ((a1 (if (null? (cddr arg1)) (list 1 op1-arg1) (cdr arg1)))
-				       (a2 (if (null? (cddr arg2)) (list 1 op2-arg1) (cdr arg2))))
-				   (simplify-numerics `(/ (* ,(car a1) ,@(cdr a2)) (* ,@(cdr a1) ,(car a2))) env)))
-				
-				((and (pair? arg2)
-				      (eq? op2 '*)
-				      (not (side-effect? arg1 env))
-				      (member arg1 (cdr arg2)))
-				 (let ((n (remove arg1 (cdr arg2))))
-				   (if (len=1? n)
-				       `(/ ,@n)               ; (/ x (* y x)) -> (/ y)
-				       `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
-				
-				((and (pair? arg2)            ; (/ c (/ a b)) -> (/ (* c b) a)
-				      (eq? op2 '/))
-				 (cond ((null? (cddr arg2))
-					`(* ,arg1 ,op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
-				       ((eqv? op2-arg1 1)
-					`(* ,arg1 ,@(cddr arg2)))  ; (/ x (/ 1 y z)) -> (* x y z) -- these never actually happen
-				       ((not (pair? (cddr arg2)))
-					`(/ ,@args))               ; no idea...
-				       ((and (rational? arg1)
-					     (rational? op2-arg1)
-					     (null? (cdddr arg2)))
-					(let ((val (/ arg1 op2-arg1)))
-					  (case val
-					    ((1)  (caddr arg2))
-					    ((-1) `(- ,(caddr arg2)))
-					    (else `(* ,val ,(caddr arg2))))))
-				       (else `(/ (* ,arg1 ,@(cddr arg2)) ,op2-arg1))))
-#|				
-				;; can't decide about this -- result usually looks cruddy
-				((and (pair? arg2)             ; (/ x (* y z)) -> (/ x y z)
-				      (eq? op2 '*))
-				 `(/ ,arg1 ,@(cdr arg2)))
-|#				
-				((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y) -- (log number) for (log y) never happens
-				      (pair? arg2)
-				      (= (length arg1) (length arg2) 2)
-				      (case op1
-					((log) (eq? op2 'log))
-					((sin)
-					 (and (eq? op2 'cos)
-					      (equal? op1-arg1 op2-arg1)))
-					(else #f)))
-				 (if (eq? op1 'log)
-				     `(log ,op1-arg1 ,op2-arg1)
-				     `(tan ,op1-arg1)))
-				
-				((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
-				      (pair? arg2)
-				      (eq? op1 '-)
-				      (eq? op2 '-)
-				      (= (length arg1) (length arg2) 2))
-				 `(/ ,op1-arg1 ,op2-arg1))
-				
-				((and (pair? arg1)             ; (/ (* x y) (* z y)) -> (/ x z)
-				      (pair? arg2)
-				      (eq? op1 '*)
-				      (case op2
-					((*)
-					 (and (= (length arg1) (length arg2) 3)
-					      (equal? (caddr arg1) (caddr arg2))))
-					((log)
-					 (cond ((assq 'log (cdr arg1)) 
-						=> (lambda (p)
-						     (= (length p) 2)))
-					       (else #f)))
-					(else #f))           ; (/ (* 12 (log x)) (log 2)) -> (* 12 (log x 2))
-				      (if (eq? op2 '*)
-					  `(/ ,op1-arg1 ,op2-arg1)
-					  (let ((used-log op2-arg1))
-					    `(* ,@(map (lambda (p)
-							 (if (and used-log
-								  (pair? p)
-								  (eq? (car p) 'log))
-							     (let ((val `(log ,(cadr p) ,used-log)))
-							       (set! used-log #f)
-							       val)
-							     p))
-						       (cdr arg1)))))))
-
-				((and (pair? arg1)            ; (/ (sqrt x) x) -> (/ (sqrt x))
-				      (eq? (car arg1) 'sqrt)
-				      (equal? (cadr arg1) arg2))
-				 `(/ ,arg1))
-				
-				((and (pair? arg2)            ; (/ x (sqrt x)) -> (sqrt x)
-				      (eq? (car arg2) 'sqrt)
-				      (equal? (cadr arg2) arg1))
-				 arg2)
-				
-				(else `(/ ,@args))))))))
-
-	       (else 
-		(if (and (just-rationals? args)
-			 (not (memv 0 (cdr args)))
-			 (not (memv 0.0 (cdr args))))
-		    (apply / args)
-		    (let ((nargs                            ; (/ x a (* b 1 c) d) -> (/ x a b c d)
-			   (remove-all 1 (splice-if '* (cdr args)))))
-		      (if (null? nargs) ; (/ x 1 1) -> x
-			  (car args)
-			  (if (and (member (car args) (cdr args))
-				   (not (side-effect? (car args) env)))
-			      (let ((n (remove (car args) (cdr args))))
-				(if (null? (cdr n))
-				    `(/ ,@n)                ; (/ x y x) -> (/ y)
-				    `(/ 1 ,@n)))            ; (/ x y x z) -> (/ 1 y z)
-			      `(/ ,@(cons (car args) nargs)))))))))
-	    
-	    ((sin cos tan asin acos sinh cosh tanh asinh acosh atanh exp)
-	     ;; perhaps someday, for amusement:
-	     ;;    (sin (acos x)) == (cos (asin x)) == (sqrt (- 1 (expt x 2)))
-	     ;;    (asin (cos x)) == (acos (sin x)) == (- (* 1/2 pi) x)
-
-	     (cond ((not (= len 1))
-		    `(,(car form) ,@args))
-		   ((and (pair? (car args))                 ; (sin (asin x)) -> x
-			 (= (length (car args)) 2)
-			 (eq? (caar args) (inverse-op (car form))))
-		    (cadar args))
-		   ((eqv? (car args) 0)                     ; (sin 0) -> 0
-		    (case (car form)
-		      ((sin asin sinh asinh tan tanh atanh) 0)
-		      ((exp cos cosh) 1)
-		      (else `(,(car form) ,@args))))
-		   ((and (eq? (car form) 'cos)              ; (cos (- x)) -> (cos x)
-			 (len=2? (car args))
-			 (eq? (caar args) '-))
-		    `(cos ,(cadar args)))
-		   ((or (eq? (car args) 'pi)                ; (sin pi) -> 0.0
-			(and (len=2? (car args))
-			     (eq? (caar args) '-)
-			     (eq? (cadar args) 'pi)))
-		    (case (car form)
-		      ((sin tan) 0.0)
-		      ((cos) -1.0)
-		      (else `(,(car form) ,@args))))
-		   ((eqv? (car args) 0.0)                   ; (sin 0.0) -> 0.0
-		    ((symbol->value (car form)) 0.0))
-		   ((and (eq? (car form) 'acos)             ; (acos -1) -> pi
-			 (eqv? (car args) -1))
-		    'pi)
-		   ((and (eq? (car form) 'exp)              ; (exp (* a (log b))) -> (expt b a)
-			 (pair? (car args))
-			 (eq? (caar args) '*))
-		    (let ((targ (cdar args)))
-		      (cond ((not (= (length targ) 2))
-			     `(,(car form) ,@args))
-			    ((and (len=2? (car targ))
-				  (eq? (caar targ) 'log))
-			     `(expt ,(cadar targ) ,(cadr targ)))
-			    ((and (len=2? (cadr targ))
-				  (eq? (caadr targ) 'log))
-			     `(expt ,(cadadr targ) ,(car targ)))
-			    (else `(,(car form) ,@args)))))
-		   (else `(,(car form) ,@args))))
-	    
-	    ((log)
-	     (cond ((not (pair? args)) form)
-		   ((eqv? (car args) 1) 0)      ; (log 1 ...) -> 0
-		   ((and (= len 1)              ; (log (exp x)) -> x
-			 (pair? (car args))
-			 (= (length (car args)) 2)
-			 (eq? (caar args) 'exp))
-		    (cadar args))
-		   ((and (pair? (car args))     ; (log (sqrt x)) -> (* 1/2 (log x))
-			 (eq? (caar args) 'sqrt))
-		    `(* 1/2 (log ,(cadar args) ,@(cdr args))))
-		   ((and (pair? (car args))     ; (log (expt x y)) -> (* y (log x))
-			 (eq? (caar args) 'expt))
-		    `(* ,(caddar args) (log ,(cadar args) ,@(cdr args))))
-		   ((not (and (= len 2)         ; (log x x) -> 1.0
-			      (equal? (car args) (cadr args))))
-		    `(log ,@args))
-		   ((integer? (car args)) 1)
-		   (else 1.0)))
-
-	    ((integer-length)
-	     (if (and (len=1? (cdr form))
-		      (integer? (cadr form)))
-		 (integer-length (cadr form))
-		 form))
-	    
-	    ((sqrt)
-	     (cond ((not (pair? args))
-		    form)
-		   ((and (rational? (car args))
-			 (rational? (sqrt (car args)))
-			 (= (car args) (sqrt (* (car args) (car args)))))
-		    (sqrt (car args))) ; don't collapse (sqrt (* a a)), a=-1 for example, or -1-i -> 1+i whereas 1-i -> 1-i etc
-		   ((and (pair? (car args))
-			 (eq? (caar args) 'exp))
-		    `(exp (/ ,(cadar args) 2))) ; (sqrt (exp x)) -> (exp (/ x 2))
-		   (else `(sqrt ,@args))))
-	    
-	    ((floor round ceiling truncate)
-	     (cond ((not (= len 1))
-		    form)
-
-		   ((number? (car args))
-		    (catch #t 
-		      (lambda () (apply (symbol->value (car form)) args)) 
-		      (lambda any `(,(car form) ,@args))))
-
-		   ((not (pair? (car args)))
-		    `(,(car form) ,@args))
-
-		   ((or (integer-result? (caar args))
-			(and (eq? (caar args) 'random)
-			     (integer? (cadar args))))
-		    (car args))
-			  
-		   ((memq (caar args) '(inexact->exact exact))
-		    `(,(car form) ,(cadar args)))
-			  
-		   ((memq (caar args) '(* + / -)) ; maybe extend this list
-		    `(,(car form) (,(caar args) ,@(map (lambda (p)
-							 (if (and (pair? p)
-								  (memq (car p) '(inexact->exact exact)))
-							     (cadr p)
-							     p))
-						       (cdar args)))))
-		   ((and (eq? (caar args) 'random)
-			 (eq? (car form) 'floor)
-			 (float? (cadar args))
-			 (= (floor (cadar args)) (cadar args)))
-		    `(random ,(floor (cadar args))))
-			  
-		   (else `(,(car form) ,@args))))
-	    
-	    ((abs magnitude)
-	     (cond ((not (= len 1))
-		    form)
-
-		   ((and (pair? (car args))        ; (abs (abs x)) -> (abs x)
-			 (hash-table-ref non-negative-ops (caar args)))
-		    (car args))
-
-		   ((rational? (car args))
-		    (abs (car args)))
-
-		   ((not (pair? (car args)))
-		    `(,(car form) ,@args))
-
-		   ((and (memq (caar args) '(modulo random))
-			 (= (length (car args)) 3) ; (abs (modulo x 2)) -> (modulo x 2)
-			 (real? (caddar args))
-			 (positive? (caddar args)))
-		    (car args))
-
-		   ((and (eq? (caar args) '-)      ; (abs (- x)) -> (abs x)
-			 (len=1? (cdar args)))
-		    `(,(car form) ,(cadar args)))
-
-		   (else `(,(car form) ,@args))))
 	
-	    ((imag-part)
-	     (if (not (= len 1))
-		 form
-		 (if (or (real? (car args))
-			 (and (pair? (car args))
-			      (real-result? (caar args))))
-		     0.0
-		     `(imag-part ,@args))))
+	(define numerics-table
+	  (let ((h (make-hash-table)))
 	    
-	    ((real-part)
-	     (if (not (= len 1))
-		 form
-		 (if (or (real? (car args))
-			 (and (pair? (car args))
-			      (real-result? (caar args))))
-		     (car args)
-		     `(real-part ,@args))))
+	    (let ()
+	      (define (horners-rule form)
+		(and (pair? form)
+		     (call-with-exit 
+		      (lambda (return)
+			(do ((p form (cdr p))
+			     (coeffs #f)
+			     (top 0)
+			     (sym #f))
+			    ((not (pair? p))
+			     (do ((x (- top 1) (- x 1))
+				  (result (coeffs top)))
+				 ((< x 0)
+				  result)
+			       (set! result 
+				     (if (zero? (coeffs x))
+					 `(* ,sym ,result)
+					 `(+ ,(coeffs x) (* ,sym ,result))))))
+			  (let ((cx (car p)))
+			    (cond ((number? cx)
+				   (if (not coeffs) (set! coeffs (make-vector 4 0)))
+				   (set! (coeffs 0) (+ (coeffs 0) cx)))
+				  
+				  ((symbol? cx)
+				   (if (not sym)
+				       (set! sym cx)
+				       (if (not (eq? sym cx))
+					   (return #f)))
+				   (if (not coeffs) (set! coeffs (make-vector 4 0)))
+				   (set! top (max top 1))
+				   (set! (coeffs 1) (+ (coeffs 1) 1)))
+				  
+				  ((not (and (pair? cx)
+					     (eq? (car cx) '*)))
+				   (return #f))
+				  
+				  (else
+				   (let ((ctr 0)
+					 (ax 1))
+				     (for-each (lambda (qx)
+						 (if (symbol? qx)
+						     (if (not sym)
+							 (begin
+							   (set! sym qx)
+							   (set! ctr 1))
+							 (if (not (eq? sym qx))
+							     (return #f)
+							     (set! ctr (+ ctr 1))))
+						     (if (number? qx)
+							 (set! ax (* ax qx))
+							 (return #f))))
+					       (cdr cx))
+				     (if (not coeffs) (set! coeffs (make-vector 4 0)))
+				     (if (>= ctr (length coeffs))
+					 (set! coeffs (copy coeffs (make-vector (* ctr 2) 0))))
+				     (set! top (max top ctr))
+				     (set! (coeffs ctr) (+ (coeffs ctr) ax)))))))))))
+	      
+	      (define (num+ args form env)
+		(case (length args)
+		  ((0) 0)
+		  ((1) (car args))
+		  (else 
+		   (let ((val (remove-all 0 (splice-if '+ args))))
+		     (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			 (let ((rats (collect-if list rational? val)))
+			   (if (and (pair? rats)
+				    (pair? (cdr rats)))
+			       (let ((y (apply + rats)))
+				 (set! val (if (zero? y) 
+					       (collect-non-numbers val)
+					       (cons y (collect-non-numbers val))))))))
+		     (set! val (remove-inexactions val))
+		     (if (any? (lambda (p)        ; collect all + and - vals -> (- (+ ...) ...)
+				 (and (pair? p) 
+				      (eq? (car p) '-)))
+			       val)
+			 (let ((plus ())
+			       (minus ())
+			       (c 0))
+			   (for-each (lambda (p)
+				       (if (not (and (pair? p)
+						     (eq? (car p) '-)))
+					   (if (rational? p)
+					       (set! c (+ c p))
+					       (set! plus (cons p plus)))
+					   (if (null? (cddr p))
+					       (if (rational? (cadr p))
+						   (set! c (- c (cadr p)))
+						   (set! minus (cons (cadr p) minus)))
+					       (begin
+						 (if (rational? (cadr p))
+						     (set! c (+ c (cadr p)))
+						     (set! plus (cons (cadr p) plus)))
+						 (for-each (lambda (p1) 
+							     (if (rational? p1) 
+								 (set! c (- c p1)) 
+								 (set! minus (cons p1 minus))))
+							   (cddr p))))))
+				     val)
+			   (simplify-numerics `(- (+ ,@(reverse plus) ,@(if (positive? c) (list c) ()))
+						  ,@(reverse minus) ,@(if (negative? c) (list (abs c)) ()))
+					      env))
+			 
+			 (case (length val)
+			   ((0) 0)                                      ; (+) -> 0
+			   ((1) (car val))                              ; (+ x) -> x
+			   ((2)
+			    (let ((arg1 (car val))
+				  (arg2 (cadr val)))
+			      (cond ((and (real? arg2)                  ; (+ x -1) -> (- x 1)
+					  (negative? arg2)
+					  (not (number? arg1)))
+				     `(- ,arg1 ,(abs arg2)))
+				    
+				    ((and (real? arg1)                  ; (+ -1 x) -> (- x 1)
+					  (negative? arg1)
+					  (not (number? arg2)))
+				     `(- ,arg2 ,(abs arg1)))
+				    
+				    ((and (pair? arg1)                  ; (+ (if x 0 y) z) -> (if x z (+ y z))
+					  (eq? (car arg1) 'if)
+					  (= (length arg1) 4))
+				     (if (and (pair? arg2)
+					      (eq? (car arg2) 'if))
+					 `(+ ,@val)
+					 (let ((true (caddr arg1))
+					       (false (cadddr arg1)))
+					   (if (eqv? true 0) ; does not include 0.0
+					       (if (eqv? false 0)
+						   arg2
+						   `(if ,(cadr arg1) ,arg2 (+ ,false ,arg2)))
+					       (if (eqv? false 0)
+						   `(if ,(cadr arg1) (+ ,true ,arg2) ,arg2)
+						   `(+ ,@val))))))
+				    
+				    ((and (pair? arg2)                   ; (+ z (if x 0 y)) -> (if x z (+ z y))
+					  (eq? (car arg2) 'if)
+					  (= (length arg2) 4))
+				     (let ((true (caddr arg2))
+					   (false (cadddr arg2)))
+				       (if (eqv? true 0) ; does not include 0.0
+					   (if (eqv? false 0)
+					       arg1
+					       `(if ,(cadr arg2) ,arg1 (+ ,arg1 ,false)))
+					   (if (eqv? false 0)
+					       `(if ,(cadr arg2) (+ ,arg1 ,true) ,arg1)
+					       `(+ ,@val)))))
+				    
+				    ((not (and (pair? arg1)
+					       (pair? arg2)))
+				     `(+ ,@val))
+				    
+				    ((and (eq? (car arg1) '*)           ; (+ (* a b) (* a c)) -> (* a (+ b c))
+					  (eq? (car arg2) '*)
+					  (any? (lambda (a)
+						  (member a (cdr arg2)))
+						(cdr arg1)))
+				     (do ((times ())
+					  (pluses ())
+					  (rset (cdr arg2))
+					  (p (cdr arg1) (cdr p)))
+					 ((null? p)
+					  ;; times won't be () because we checked above for a match
+					  ;;  if pluses is (), arg1 is completely included in arg2
+					  ;;  if rset is (), arg2 is included in arg1
+					  (simplify-numerics `(* ,@(reverse times)
+								 (+ (* ,@(reverse (if (pair? pluses) pluses (list (if (null? pluses) 1 pluses)))))
+								    (* ,@rset)))
+							     env))
+				       (if (member (car p) rset)
+					   (begin
+					     (set! times (cons (car p) times))
+					     (set! rset (remove (car p) rset)))
+					   (set! pluses (cons (car p) pluses)))))
+				    
+				    ((and (eq? (car arg1) '/)  ; (+ (/ a b) (/ c b)) -> (/ (+ a c) b)
+					  (eq? (car arg2) '/)
+					  (pair? (cddr arg1)) (pair? (cddr arg2))
+					  (equal? (cddr arg1) (cddr arg2)))
+				     `(/ (+ ,(cadr arg1) ,(cadr arg2)) ,@(cddr arg1)))
+				    
+				    (else `(+ ,@val)))))
+			   (else 
+			    (or (horners-rule val)
+				;; not many cases here, oddly enough, Horner's rule gets most
+				;; (+ (/ (f x) 3) (/ (g x) 3) (/ (h x) 3) 15) [ignoring problems involving overflow]
+				;; the 3-arg case of embedded if looks fussy
+				`(+ ,@val)))))))))
+	      (hash-table-set! h '+ num+))
 	    
-	    ((denominator)
-	     (if (not (= len 1))
-		 form
-		 (if (or (integer? (car args))
-			 (and (pair? (car args))
-			      (integer-result? (caar args))))
-		     1
-		     `(denominator ,(car args)))))
+	    (let ()
+	      (define (num* args form env)
+		(case (length args)
+		  ((0) 1)
+		  ((1) (car args))
+		  (else 
+		   (let ((val (remove-all 1 (splice-if '* args))))
+		     (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			 (let ((rats (collect-if list rational? val)))
+			   (if (and (pair? rats)
+				    (pair? (cdr rats)))
+			       (let ((y (apply * rats)))
+				 (set! val (if (= y 1)
+					       (collect-non-numbers val)
+					       (cons y (collect-non-numbers val))))))))
+		     (set! val (remove-inexactions val))
+		     
+		     (case (length val)
+		       ((0) 1)
+		       ((1) (car val))                         ; (* x) -> x
+		       ((2)
+			(let ((arg1 (car val))
+			      (arg2 (cadr val)))
+			  (cond ((just-rationals? val)
+				 (let ((new-val (apply * val))) ; huge numbers here are less readable
+				   (if (< (abs new-val) 1000000)
+				       new-val
+				       `(* ,@val))))
+				
+				((memv 0 val)                         ; (* x 0) -> 0
+				 0) 
+				((memv -1 val)
+				 `(- ,@(remove -1 val)))              ; (* -1 x) -> (- x)
+				
+				((and (pair? arg1)                    ; (* (if x 1 y) z) -> (if x z (* y z))
+				      (eq? (car arg1) 'if)            ; (* (if x 0 y) z) -> (if x 0 (* y z))
+				      (= (length arg1) 4))
+				 (if (and (pair? arg2)
+					  (eq? (car arg2) 'if))
+				     `(* ,@val)
+				     (let ((true (caddr arg1))
+					   (false (cadddr arg1)))
+				       (if (memv true '(0 1)) ; does not include 0.0
+					   `(if ,(cadr arg1) ,(if (eqv? true 1) arg2 0) (* ,false ,arg2))
+					   (if (memv false '(0 1))
+					       `(if ,(cadr arg1) (* ,true ,arg2) ,(if (eqv? false 1) arg2 0))
+					       `(* ,@val))))))
+				
+				((and (pair? arg2)                   ; (* z (if x 1 y)) -> (if x z (* z y))
+				      (eq? (car arg2) 'if)
+				      (= (length arg2) 4))
+				 (let ((true (caddr arg2))
+				       (false (cadddr arg2)))
+				   (if (memv true '(0 1)) ; does not include 0.0
+				       `(if ,(cadr arg2) ,(if (eqv? true 1) arg1 0) (* ,arg1 ,false))
+				       (if (memv false '(0 1))
+					   `(if ,(cadr arg2) (* ,arg1 ,true) ,(if (eqv? false 1) arg1 0))
+					   `(* ,@val)))))
+				
+				((not (pair? arg2))
+				 `(* ,@val))
+				
+				((pair? arg1)
+				 (let ((op1 (car arg1))
+				       (op2 (car arg2)))
+				   (cond ((and (eq? op1 '-)           ; (* (- x) (- y)) -> (* x y)
+					       (null? (cddr arg1))
+					       (eq? op2 '-)
+					       (null? (cddr arg2)))
+					  `(* ,(cadr arg1) ,(cadr arg2)))
+					 
+					 ((and (eq? op1 '/)           ; (* (/ x) (/ y)) -> (/ (* x y)) etc
+					       (eq? op2 '/))
+					  (let ((op1-arg1 (cadr arg1))
+						(op2-arg1 (cadr arg2)))
+					    (if (null? (cddr arg1))
+						(if (null? (cddr arg2))
+						    `(/ (* ,op1-arg1 ,op2-arg1))
+						    (if (equal? op1-arg1 op2-arg1)
+							`(/ ,(caddr arg2))
+							(simplify-numerics `(/ ,op2-arg1 (* ,op1-arg1 ,(caddr arg2))) env)))
+						(if (null? (cddr arg2))
+						    (if (equal? op1-arg1 op2-arg1)
+							`(/ ,(caddr arg1))
+							(simplify-numerics `(/ ,op1-arg1 (* ,(caddr arg1) ,op2-arg1)) env))
+						    (simplify-numerics `(/ (* ,op1-arg1 ,op2-arg1) (* ,@(cddr arg1) ,@(cddr arg2))) env)))))
+					 
+					 ((and (= (length arg1) 3)
+					       (equal? (cdr arg1) (cdr arg2))
+					       (case op1
+						 ((gcd) (eq? op2 'lcm))
+						 ((lcm) (eq? op2 'gcd))
+						 (else #f)))
+					  `(abs (* ,@(cdr arg1))))    ; (* (gcd a b) (lcm a b)) -> (abs (* a b)) but only if 2 args?
+					 
+					 ((and (eq? op1 'exp)         ; (* (exp a) (exp b)) -> (exp (+ a b))
+					       (eq? op2 'exp))
+					  `(exp (+ ,(cadr arg1) ,(cadr arg2))))
+					 
+					 ((and (eq? op1 'sqrt)        ; (* (sqrt x) (sqrt y)) -> (sqrt (* x y))
+					       (eq? op2 'sqrt))
+					  `(sqrt (* ,(cadr arg1) ,(cadr arg2))))
+					 
+					 ((not (and (eq? op1 'expt) (eq? op2 'expt)))
+					  `(* ,@val))
+					 
+					 ((equal? (cadr arg1) (cadr arg2)) ; (* (expt x y) (expt x z)) -> (expt x (+ y z))
+					  `(expt ,(cadr arg1) (+ ,(caddr arg1) ,(caddr arg2))))
+					 
+					 ((equal? (caddr arg1) (caddr arg2)) ; (* (expt x y) (expt z y)) -> (expt (* x z) y)
+					  `(expt (* ,(cadr arg1) ,(cadr arg2)) ,(caddr arg1)))
+					 
+					 (else `(* ,@val)))))
+				
+				((and (number? arg1)                  ; (* 2 (random 3.0)) -> (random 6.0)
+				      (eq? (car arg2) 'random)
+				      (number? (cadr arg2))
+				      (not (rational? (cadr arg2))))
+				 `(random ,(* arg1 (cadr arg2))))
+				
+				(else `(* ,@val)))))
+		       (else 
+			(cond ((just-rationals? val)
+			       (let ((new-val (apply * val))) ; huge numbers here are less readable
+				 (if (< (abs new-val) 1000000)
+				     new-val
+				     `(* ,@val))))
+			      
+			      ((memv 0 val)                   ; (* x 0 2) -> 0
+			       0) 
+			      
+			      ((memv -1 val)
+			       `(- (* ,@(remove -1 val))))    ; (* -1 x y) -> (- (* x y))
+			      
+			      ((let search ((args val))       ; (* x (if y 0 z) w) -> (if y 0 (* x z w))
+				 (and (pair? args)
+				      (let ((has-zero (and (pair? (car args))
+							   (eq? (caar args) 'if)
+							   (= (length (car args)) 4)
+							   (or (eqv? (caddar args) 0)
+							       (eqv? (car (cdddar args)) 0))
+							   (car args))))
+					(or has-zero 
+					    (search (cdr args))))))
+			       => (lambda (gif)
+				    (let ((other-args (remove gif val)))
+				      `(if ,(cadr gif) 
+					   ,(if (eqv? (caddr gif) 0) 0 `(* ,(caddr gif) ,@other-args))
+					   ,(if (eqv? (cadddr gif) 0) 0 `(* ,(cadddr gif) ,@other-args))))))
+			      
+			      ((any? (lambda (p)              ; collect * and / vals -> (/ (* ...) ...)
+				       (and (pair? p) 
+					    (eq? (car p) '/)))
+				     val)
+			       (let ((mul ())
+				     (div ()))
+				 (for-each (lambda (p)
+					     (if (not (and (pair? p)
+							   (eq? (car p) '/)))
+						 (set! mul (cons p mul))
+						 (if (null? (cddr p))
+						     (set! div (cons (cadr p) div))
+						     (begin
+						       (set! mul (cons (cadr p) mul))
+						       (set! div (append (cddr p) div))))))
+					   val)
+				 (for-each (lambda (n)
+					     (when (member n div)
+					       (set! div (remove n div))
+					       (set! mul (remove n mul))))
+					   (copy mul))
+				 (let ((expr (if (null? mul)
+						 (if (null? div)
+						     `(*)       ; for simplify-numerics' benefit
+						     `(/ 1 ,@(reverse div)))
+						 (if (null? div)
+						     `(* ,@(reverse mul))
+						     `(/ (* ,@(reverse mul)) ,@(reverse div))))))
+				   (simplify-numerics expr env))))
+			      
+			      (else `(* ,@val)))))))))
+	      (hash-table-set! h '* num*))
 	    
-	    ((numerator)
-	     (cond ((not (= len 1))
-		    form)
-		   ((or (integer? (car args))
-			(and (pair? (car args))
-			     (integer-result? (caar args))))
-		    (car args))
-		   ((rational? (car args))
-		    (numerator (car args)))
-		   (else `(numerator ,(car args)))))
+	    (let ()
+	      (define (num- args form env)
+		(set! args (remove-inexactions args))
+		(case (length args)
+		  ((0) form)
+		  ((1) ; negate
+		   (if (number? (car args))
+		       (- (car args))
+		       (if (not (list? (car args)))
+			   `(- ,@args)
+			   (case (length (car args))
+			     ((2) (if (eq? (caar args) '-)
+				      (cadar args)                 ; (- (- x)) -> x
+				      `(- ,@args)))
+			     ((3) (if (eq? (caar args) '-)
+				      `(- ,(caddar args) ,(cadar args)) ; (- (- x y)) -> (- y x)
+				      `(- ,@args)))
+			     (else `(- ,@args))))))
+		  ((2) 
+		   (let ((arg1 (car args))
+			 (arg2 (cadr args)))
+		     (cond ((just-rationals? args) (apply - args)) ; (- 3 2) -> 1
+			   
+			   ((eqv? arg1 0) `(- ,arg2))              ; (- 0 x) -> (- x)
+			   
+			   ((eqv? arg2 0) arg1)                    ; (- x 0) -> x
+			   
+			   ((equal? arg1 arg2) 0)                  ; (- x x) -> 0
+			   
+			   ((and (pair? arg2)
+				 (eq? (car arg2) '-)
+				 (pair? (cdr arg2)))
+			    (if (null? (cddr arg2)) 
+				`(+ ,arg1 ,(cadr arg2))            ; (- x (- y)) -> (+ x y)
+				(simplify-numerics `(- (+ ,arg1 ,@(cddr arg2)) ,(cadr arg2)) env))) ; (- x (- y z)) -> (- (+ x z) y)
+			   
+			   ((and (pair? arg2)                      ; (- x (+ y z)) -> (- x y z)
+				 (eq? (car arg2) '+))
+			    (simplify-numerics `(- ,arg1 ,@(cdr arg2)) env))
+			   
+			   ((and (pair? arg1)                      ; (- (- x y) z) -> (- x y z)
+				 (eq? (car arg1) '-))
+			    (if (> (length arg1) 2)
+				`(- ,@(cdr arg1) ,arg2)
+				(simplify-numerics `(- (+ ,(cadr arg1) ,arg2)) env)))  ; (- (- x) y) -> (- (+ x y))
+			   
+			   ((and (pair? arg2)                      ; (- x (truncate x)) -> (remainder x 1)
+				 (eq? (car arg2) 'truncate)
+				 (equal? arg1 (cadr arg2)))
+			    `(remainder ,arg1 1))
+			   
+			   ((and (real? arg2)                      ; (- x -1) -> (+ x 1)
+				 (negative? arg2)
+				 (not (number? arg1)))
+			    `(+ ,arg1 ,(abs arg2)))
+			   
+			   ((and (pair? arg2)                      ; (- x (if y 0 z)) -> (if y x (- x z))
+				 (eq? (car arg2) 'if)              ; (- x (if y z 0)) -> (if y (- x z) x)
+				 (= (length arg2) 4)
+				 (or (eqv? (caddr arg2) 0)
+				     (eqv? (cadddr arg2) 0)))
+			    (let ((true (caddr arg2))
+				  (false (cadddr arg2)))
+			      `(if ,(cadr arg2)
+				   ,(if (eqv? true 0) arg1 `(- ,arg1 ,true))
+				   ,(if (eqv? true 0) `(- ,arg1 ,false) arg1))))
+			   
+			   (else `(- ,@args)))))
+		  (else 
+		   (if (just-rationals? args)
+		       (apply - args)
+		       (let ((val (remove-all 0 (splice-if '+ (cdr args)))))
+			 (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			     (let ((rats (collect-if list rational? val)))
+			       (if (and (pair? rats) 
+					(pair? (cdr rats)))
+				   (let ((y (apply + rats)))
+				     (set! val (if (zero? y)
+						   (collect-non-numbers val)
+						   (cons y (collect-non-numbers val))))))))
+			 (set! val (cons (car args) val))
+			 (let ((first-arg (car args))
+			       (nargs (cdr val)))
+			   (if (member first-arg nargs)
+			       (begin
+				 (set! nargs (remove first-arg nargs)) ; remove once
+				 (set! first-arg 0)))
+			   (cond ((null? nargs) first-arg)       ; (- x 0 0 0)?
+				 
+				 ((eqv? first-arg 0)
+				  (if (null? (cdr nargs))
+				      (if (number? (car nargs))
+					  (- (car nargs))
+					  `(- ,(car nargs)))     ; (- 0 0 0 x)?
+				      `(- (+ ,@nargs))))         ; (- 0 z y) -> (- (+ x y))
+				 
+				 ((not (and (pair? (car args))
+					    (eq? (caar args) '-)))
+				  `(- ,@(cons first-arg nargs)))
+				 
+				 ((> (length (car args)) 2)      ; (- (- x y) z w) -> (- x y z w)
+				  (simplify-numerics `(- ,@(cdar args) ,@(cdr args)) env))
+				 
+				 (else (simplify-numerics `(- (+ ,(cadar args) ,@(cdr args))) env)))))))))
+	      (hash-table-set! h '- num-))
 	    
-	    ((random)
-	     (cond ((not (and (= len 1)
-			      (number? (car args))))
-		    `(random ,@args))  
-		   ((eqv? (car args) 0)
-		    0)
-		   ((morally-equal? (car args) 0.0)
-		    0.0)
-		   (else `(random ,@args))))
+	    (let ()
+	      (define (num/ args form env)
+		(set! args (remove-inexactions args))
+		(case (length args)
+		  ((0) form)
+		  ((1) ; invert
+		   (if (number? (car args))
+		       (if (zero? (car args))
+			   `(/ ,(car args))
+			   (/ (car args)))
+		       (if (not (pair? (car args)))
+			   `(/ ,@args)
+			   (case (caar args)
+			     ((/) 
+			      (case (length (car args))
+				((2)                         ; (/ (/ x)) -> x
+				 (cadar args))
+				((3)                         ; (/ (/ z x)) -> (/ x z)
+				 `(/ ,@(reverse (cdar args))))
+				(else
+				 (if (eqv? (cadar args) 1)
+				     `(* ,@(cddar args))     ; (/ (/ 1 x y)) -> (* x y)
+				     `(/ (* ,@(cddar args)) ,(cadar args)))))) ; (/ (/ z x y)) -> (/ (* x y) z)
+			     ((expt)                         ; (/ (expt x y)) -> (expt x (- y))
+			      `(expt ,(cadar args) (- ,(caddar args))))
+			     ((exp)                          ; (/ (exp x)) -> (exp (- x))
+			      `(exp (- ,(cadar args))))
+			     (else `(/ ,@args))))))
+		  ((2)
+		   (if (and (just-rationals? args)
+			    (not (zero? (cadr args))))
+		       (apply / args)                         ; including (/ 0 12) -> 0
+		       (let ((arg1 (car args))
+			     (arg2 (cadr args)))
+			 (let ((op1 (and (pair? arg1) (car arg1)))
+			       (op2 (and (pair? arg2) (car arg2))))
+			   (let ((op1-arg1 (and op1 (pair? (cdr arg1)) (cadr arg1)))
+				 (op2-arg1 (and op2 (pair? (cdr arg2)) (cadr arg2))))
+			     (cond ((eqv? arg1 1)                 ; (/ 1 x) -> (/ x)
+				    (simplify-numerics `(/ ,arg2) env))
+				   
+				   ((eqv? arg2 1)                 ; (/ x 1) -> x
+				    arg1)
+				   
+				   ((and (pair? arg1)             ; (/ (/ a b) c) -> (/ a b c)
+					 (eq? op1 '/)
+					 (pair? (cddr arg1))
+					 (not (and (pair? arg2)
+						   (eq? op2 '/))))
+				    `(/ ,op1-arg1 ,@(cddr arg1) ,arg2))
+				   
+				   ((and (pair? arg1)             ; (/ (/ a) (/ b)) -> (/ b a)??
+					 (eq? op1 '/)
+					 (pair? arg2)
+					 (eq? '/ op2))
+				    (let ((a1 (if (null? (cddr arg1)) (list 1 op1-arg1) (cdr arg1)))
+					  (a2 (if (null? (cddr arg2)) (list 1 op2-arg1) (cdr arg2))))
+				      (simplify-numerics `(/ (* ,(car a1) ,@(cdr a2)) (* ,@(cdr a1) ,(car a2))) env)))
+				   
+				   ((and (pair? arg2)
+					 (eq? op2 '*)
+					 (not (side-effect? arg1 env))
+					 (member arg1 (cdr arg2)))
+				    (let ((n (remove arg1 (cdr arg2))))
+				      (if (len=1? n)
+					  `(/ ,@n)               ; (/ x (* y x)) -> (/ y)
+					  `(/ 1 ,@n))))          ; (/ x (* y x z)) -> (/ 1 y z)
+				   
+				   ((and (pair? arg2)            ; (/ c (/ a b)) -> (/ (* c b) a)
+					 (eq? op2 '/))
+				    (cond ((null? (cddr arg2))
+					   `(* ,arg1 ,op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
+					  ((eqv? op2-arg1 1)
+					   `(* ,arg1 ,@(cddr arg2)))  ; (/ x (/ 1 y z)) -> (* x y z) -- these never actually happen
+					  ((not (pair? (cddr arg2)))
+					   `(/ ,@args))               ; no idea...
+					  ((and (rational? arg1)
+						(rational? op2-arg1)
+						(null? (cdddr arg2)))
+					   (let ((val (/ arg1 op2-arg1)))
+					     (case val
+					       ((1)  (caddr arg2))
+					       ((-1) `(- ,(caddr arg2)))
+					       (else `(* ,val ,(caddr arg2))))))
+					  (else `(/ (* ,arg1 ,@(cddr arg2)) ,op2-arg1))))
+				   ((and (pair? arg1)             ; (/ (log x) (log y)) -> (log x y) -- (log number) for (log y) never happens
+					 (pair? arg2)
+					 (= (length arg1) (length arg2) 2)
+					 (case op1
+					   ((log) (eq? op2 'log))
+					   ((sin)
+					    (and (eq? op2 'cos)
+						 (equal? op1-arg1 op2-arg1)))
+					   (else #f)))
+				    (if (eq? op1 'log)
+					`(log ,op1-arg1 ,op2-arg1)
+					`(tan ,op1-arg1)))
+				   
+				   ((and (pair? arg1)             ; (/ (- x) (- y)) -> (/ x y)
+					 (pair? arg2)
+					 (eq? op1 '-)
+					 (eq? op2 '-)
+					 (= (length arg1) (length arg2) 2))
+				    `(/ ,op1-arg1 ,op2-arg1))
+				   
+				   ((and (pair? arg1)             ; (/ (* x y) (* z y)) -> (/ x z)
+					 (pair? arg2)
+					 (eq? op1 '*)
+					 (case op2
+					   ((*)
+					    (and (= (length arg1) (length arg2) 3)
+						 (equal? (caddr arg1) (caddr arg2))))
+					   ((log)
+					    (cond ((assq 'log (cdr arg1)) 
+						   => (lambda (p)
+							(= (length p) 2)))
+						  (else #f)))
+					   (else #f))           ; (/ (* 12 (log x)) (log 2)) -> (* 12 (log x 2))
+					 (if (eq? op2 '*)
+					     `(/ ,op1-arg1 ,op2-arg1)
+					     (let ((used-log op2-arg1))
+					       `(* ,@(map (lambda (p)
+							    (if (and used-log
+								     (pair? p)
+								     (eq? (car p) 'log))
+								(let ((val `(log ,(cadr p) ,used-log)))
+								  (set! used-log #f)
+								  val)
+								p))
+							  (cdr arg1)))))))
+				   
+				   ((and (pair? arg1)            ; (/ (sqrt x) x) -> (/ (sqrt x))
+					 (eq? (car arg1) 'sqrt)
+					 (equal? (cadr arg1) arg2))
+				    `(/ ,arg1))
+				   
+				   ((and (pair? arg2)            ; (/ x (sqrt x)) -> (sqrt x)
+					 (eq? (car arg2) 'sqrt)
+					 (equal? (cadr arg2) arg1))
+				    arg2)
+				   
+				   (else `(/ ,@args))))))))
+		  
+		  (else 
+		   (if (and (just-rationals? args)
+			    (not (memv 0 (cdr args)))
+			    (not (memv 0.0 (cdr args))))
+		       (apply / args)
+		       (let ((nargs                            ; (/ x a (* b 1 c) d) -> (/ x a b c d)
+			      (remove-all 1 (splice-if '* (cdr args)))))
+			 (if (null? nargs) ; (/ x 1 1) -> x
+			     (car args)
+			     (if (and (member (car args) (cdr args))
+				      (not (side-effect? (car args) env)))
+				 (let ((n (remove (car args) (cdr args))))
+				   (if (null? (cdr n))
+				       `(/ ,@n)                ; (/ x y x) -> (/ y)
+				       `(/ 1 ,@n)))            ; (/ x y x z) -> (/ 1 y z)
+				 `(/ ,@(cons (car args) nargs)))))))))
+	      (hash-table-set! h '/ num/))
 	    
-	    ((complex make-rectangular)
-	     ;; (complex (/ a b) (/ c b)) can't be simplified because a b c might be complex and
-	     ;;    (/ (complex a c) b) would raise an error that a and c were not real (similarly for other such cases)
-	     (if (and (= len 2)
-		      (memv (cadr args) '(0 0.0))) ; (complex 2 0.0) -> 2 which is dubious...
-		 (car args)
-		 `(complex ,@args)))
-	    
-	    ((make-polar)
-	     (if (and (= len 2)
-		      (morally-equal? (cadr args) 0.0))
-		 (car args)
-		 `(make-polar ,@args)))
-
-	    ((rationalize lognot ash modulo remainder quotient)
-	     (cond ((just-rationals? args)
-		    (catch #t ; catch needed here for things like (ash 2 64)
-		      (lambda ()
-			(apply (symbol->value (car form)) args))
-		      (lambda ignore
-			`(,(car form) ,@args)))) ; use this form to pick up possible arg changes
-		   
-		   ((and (eq? (car form) 'ash)          ; (ash x 0) -> x
-			 (= len 2) ; length of args
-			 (eqv? (cadr args) 0))
-		    (car args))
-		   
-		   ((case (car form)
-		      ((quotient)                       ; (quotient (remainder x y) y) -> 0
-		       (and (= len 2)
+	    (let ()
+	      (define (numtrig args form env)
+		;; perhaps someday, for amusement:
+		;;    (sin (acos x)) == (cos (asin x)) == (sqrt (- 1 (expt x 2)))
+		;;    (asin (cos x)) == (acos (sin x)) == (- (* 1/2 pi) x)
+		
+		(define (inverse-op op)
+		  (case op 
+		    ((sin) 'asin) ((cos) 'acos) ((tan) 'atan) ((asin) 'sin) ((acos) 'cos) ((atan) 'tan)
+		    ((sinh) 'asinh) ((cosh) 'acosh) ((tanh) 'atanh) ((asinh) 'sinh) ((acosh) 'cosh) ((atanh) 'tanh)
+		    ((log) 'exp) ((exp) 'log)))
+		
+		(cond ((not (= (length args) 1))
+		       `(,(car form) ,@args))
+		      ((and (pair? (car args))                 ; (sin (asin x)) -> x
+			    (= (length (car args)) 2)
+			    (eq? (caar args) (inverse-op (car form))))
+		       (cadar args))
+		      ((eqv? (car args) 0)                     ; (sin 0) -> 0
+		       (case (car form)
+			 ((sin asin sinh asinh tan tanh atanh) 0)
+			 ((exp cos cosh) 1)
+			 (else `(,(car form) ,@args))))
+		      ((and (eq? (car form) 'cos)              ; (cos (- x)) -> (cos x)
+			    (len=2? (car args))
+			    (eq? (caar args) '-))
+		       `(cos ,(cadar args)))
+		      ((or (eq? (car args) 'pi)                ; (sin pi) -> 0.0
+			   (and (len=2? (car args))
+				(eq? (caar args) '-)
+				(eq? (cadar args) 'pi)))
+		       (case (car form)
+			 ((sin tan) 0.0)
+			 ((cos) -1.0)
+			 (else `(,(car form) ,@args))))
+		      ((eqv? (car args) 0.0)                   ; (sin 0.0) -> 0.0
+		       ((symbol->value (car form)) 0.0))
+		      ((and (eq? (car form) 'acos)             ; (acos -1) -> pi
+			    (eqv? (car args) -1))
+		       'pi)
+		      ((and (eq? (car form) 'exp)              ; (exp (* a (log b))) -> (expt b a)
 			    (pair? (car args))
-			    (eq? (caar args) 'remainder)
+			    (eq? (caar args) '*))
+		       (let ((targ (cdar args)))
+			 (cond ((not (= (length targ) 2))
+				`(,(car form) ,@args))
+			       ((and (len=2? (car targ))
+				     (eq? (caar targ) 'log))
+				`(expt ,(cadar targ) ,(cadr targ)))
+			       ((and (len=2? (cadr targ))
+				     (eq? (caadr targ) 'log))
+				`(expt ,(cadadr targ) ,(car targ)))
+			       (else `(,(car form) ,@args)))))
+		      (else `(,(car form) ,@args))))
+	      (for-each
+	       (lambda (f)
+		 (hash-table-set! h f numtrig))
+	       '(sin cos tan asin acos sinh cosh tanh asinh acosh atanh exp)))
+	    
+	    (let ()
+	      (define (numlog args form env)
+		(let ((len (length args)))
+		  (cond ((not (pair? args)) form)
+			((eqv? (car args) 1) 0)      ; (log 1 ...) -> 0
+			((and (= len 1)              ; (log (exp x)) -> x
+			      (pair? (car args))
+			      (= (length (car args)) 2)
+			      (eq? (caar args) 'exp))
+			 (cadar args))
+			((and (pair? (car args))     ; (log (sqrt x)) -> (* 1/2 (log x))
+			      (eq? (caar args) 'sqrt))
+			 `(* 1/2 (log ,(cadar args) ,@(cdr args))))
+			((and (pair? (car args))     ; (log (expt x y)) -> (* y (log x))
+			      (eq? (caar args) 'expt))
+			 `(* ,(caddar args) (log ,(cadar args) ,@(cdr args))))
+			((not (and (= len 2)         ; (log x x) -> 1.0
+				   (equal? (car args) (cadr args))))
+			 `(log ,@args))
+			((integer? (car args)) 1)
+			(else 1.0))))
+	      (hash-table-set! h 'log numlog))
+	    
+	    (let ()
+	      (define (numintlen args form env)
+		(if (and (len=1? (cdr form))
+			 (integer? (cadr form)))
+		    (integer-length (cadr form))
+		    form))
+	      (hash-table-set! h 'integer-length numintlen))
+	    
+	    (let ()
+	      (define (numsqrt args form env)
+		(cond ((not (pair? args))
+		       form)
+		      ((and (rational? (car args))
+			    (rational? (sqrt (car args)))
+			    (= (car args) (sqrt (* (car args) (car args)))))
+		       (sqrt (car args))) ; don't collapse (sqrt (* a a)), a=-1 for example, or -1-i -> 1+i whereas 1-i -> 1-i etc
+		      ((and (pair? (car args))
+			    (eq? (caar args) 'exp))
+		       `(exp (/ ,(cadar args) 2))) ; (sqrt (exp x)) -> (exp (/ x 2))
+		      (else `(sqrt ,@args))))
+	      (hash-table-set! h 'sqrt numsqrt))
+	    
+	    (let ()
+	      (define (numfloor args form env)
+		(cond ((not (= (length args) 1))
+		       form)
+		      
+		      ((number? (car args))
+		       (catch #t 
+			 (lambda () (apply (symbol->value (car form)) args)) 
+			 (lambda any `(,(car form) ,@args))))
+		      
+		      ((not (pair? (car args)))
+		       `(,(car form) ,@args))
+		      
+		      ((or (integer-result? (caar args))
+			   (and (eq? (caar args) 'random)
+				(integer? (cadar args))))
+		       (car args))
+		      
+		      ((memq (caar args) '(inexact->exact exact))
+		       `(,(car form) ,(cadar args)))
+		      
+		      ((memq (caar args) '(* + / -)) ; maybe extend this list
+		       `(,(car form) (,(caar args) ,@(map (lambda (p)
+							    (if (and (pair? p)
+								     (memq (car p) '(inexact->exact exact)))
+								(cadr p)
+								p))
+							  (cdar args)))))
+		      ((and (eq? (caar args) 'random)
+			    (eq? (car form) 'floor)
+			    (float? (cadar args))
+			    (= (floor (cadar args)) (cadar args)))
+		       `(random ,(floor (cadar args))))
+		      
+		      (else `(,(car form) ,@args))))
+	      
+	      (for-each
+	       (lambda (f)
+		 (hash-table-set! h f numfloor))
+	       '(floor round ceiling truncate)))
+	    
+	    (let ()
+	      (define (numabs args form env)
+		(cond ((not (= (length args) 1))
+		       form)
+		      
+		      ((and (pair? (car args))        ; (abs (abs x)) -> (abs x)
+			    (hash-table-ref non-negative-ops (caar args)))
+		       (car args))
+		      
+		      ((rational? (car args))
+		       (abs (car args)))
+		      
+		      ((not (pair? (car args)))
+		       `(,(car form) ,@args))
+		      
+		      ((and (memq (caar args) '(modulo random))
+			    (= (length (car args)) 3) ; (abs (modulo x 2)) -> (modulo x 2)
+			    (real? (caddar args))
+			    (positive? (caddar args)))
+		       (car args))
+		      
+		      ((and (eq? (caar args) '-)      ; (abs (- x)) -> (abs x)
+			    (len=1? (cdar args)))
+		       `(,(car form) ,(cadar args)))
+		      
+		      (else `(,(car form) ,@args))))
+	      (hash-table-set! h 'abs numabs)
+	      (hash-table-set! h 'magnitude numabs))
+	    
+	    (let ()
+	      (define (real-result? op)
+		(memq op '(imag-part real-part abs magnitude angle max min exact->inexact inexact modulo remainder quotient lcm gcd)))
+	      
+	      (define (numimag args form env)
+		(if (not (= (length args) 1))
+		    form
+		    (if (or (real? (car args))
+			    (and (pair? (car args))
+				 (real-result? (caar args))))
+			0.0
+			`(imag-part ,@args))))
+	      (hash-table-set! h 'imag-part numimag)
+	      
+	      (define (numreal args form env)
+		(if (not (= (length args) 1))
+		    form
+		    (if (or (real? (car args))
+			    (and (pair? (car args))
+				 (real-result? (caar args))))
+			(car args)
+			`(real-part ,@args))))
+	      (hash-table-set! h 'real-part numreal))
+	    
+	    (let ()
+	      (define (numden args form env)
+		(if (not (= (length args) 1))
+		    form
+		    (if (or (integer? (car args))
+			    (and (pair? (car args))
+				 (integer-result? (caar args))))
+			1
+			`(denominator ,(car args)))))
+	      (hash-table-set! h 'denominator numden))
+	    
+	    (let ()
+	      (define (numnum args form env)
+		(cond ((not (= (length args) 1))
+		       form)
+		      ((or (integer? (car args))
+			   (and (pair? (car args))
+				(integer-result? (caar args))))
+		       (car args))
+		      ((rational? (car args))
+		       (numerator (car args)))
+		      (else `(numerator ,(car args)))))
+	      (hash-table-set! h 'numerator numnum))
+	    
+	    (let ()
+	      (define (numran args form env)
+		(cond ((not (and (= (length args) 1)
+				 (number? (car args))))
+		       `(random ,@args))  
+		      ((eqv? (car args) 0)
+		       0)
+		      ((morally-equal? (car args) 0.0)
+		       0.0)
+		      (else `(random ,@args))))
+	      (hash-table-set! h 'random numran))
+	    
+	    (let ()
+	      (define (numcmplx args form env)
+		;; (complex (/ a b) (/ c b)) can't be simplified because a b c might be complex and
+		;;    (/ (complex a c) b) would raise an error that a and c were not real (similarly for other such cases)
+		(if (and (= (length args) 2)
+			 (memv (cadr args) '(0 0.0))) ; (complex 2 0.0) -> 2 which is dubious...
+		    (car args)
+		    `(complex ,@args)))
+	      (hash-table-set! h 'complex numcmplx)
+	      (hash-table-set! h 'make-rectangular numcmplx))
+	    
+	    (let ()
+	      (define (numpol args form env)
+		(if (and (= (length args) 2)
+			 (morally-equal? (cadr args) 0.0))
+		    (car args)
+		    `(make-polar ,@args)))
+	      (hash-table-set! h 'make-polar numpol))
+	    
+	    (let ()
+	      (define (numrat args form env)
+		(let ((len (length args)))
+		  (cond ((just-rationals? args)
+			 (catch #t ; catch needed here for things like (ash 2 64)
+			   (lambda ()
+			     (apply (symbol->value (car form)) args))
+			   (lambda ignore
+			     `(,(car form) ,@args)))) ; use this form to pick up possible arg changes
+			
+			((and (eq? (car form) 'ash)          ; (ash x 0) -> x
+			      (= len 2) 
+			      (eqv? (cadr args) 0))
+			 (car args))
+			
+			((case (car form)
+			   ((quotient)                       ; (quotient (remainder x y) y) -> 0
+			    (and (= len 2)
+				 (pair? (car args))
+				 (eq? (caar args) 'remainder)
+				 (= (length (car args)) 3)
+				 (eqv? (caddar args) (cadr args))))
+			   ((ash modulo)                     ; (modulo 0 x) -> 0
+			    (and (= len 2) (eqv? (car args) 0)))
+			   (else #f))
+			 0)
+			
+			((and (eq? (car form) 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
+			      (= len 2)
+			      (pair? (car args))
+			      (eq? (caar args) 'abs))
+			 `(modulo ,(cadar args) ,(cadr args)))
+			
+			(else `(,(car form) ,@args)))))
+	      (for-each
+	       (lambda (f)
+		 (hash-table-set! h f numrat))
+	       '(rationalize lognot ash modulo remainder quotient)))
+	    
+	    (let ()
+	      (define (numexpt args form env)
+		(cond ((not (= (length args) 2))
+		       form)
+		      ((and (eqv? (car args) 0)            ; (expt 0 x) -> 0
+			    (not (eqv? (cadr args) 0)))
+		       (if (and (integer? (cadr args))
+				(negative? (cadr args)))
+			   (lint-format "attempt to divide by 0: ~A" 'expt (truncated-list->string form)))
+		       0)
+		      ((or (and (eqv? (cadr args) 0)       ; (expt x 0) -> 1
+				(not (eqv? (car args) 0)))
+			   (eqv? (car args) 1))            ; (expt 1 x) -> 1    
+		       1)
+		      ((eqv? (cadr args) 1)                ; (expt x 1) -> x
+		       (car args))
+		      ((eqv? (cadr args) -1)               ; (expt x -1) -> (/ x)
+		       `(/ ,(car args)))
+		      ((just-rationals? args)              ; (expt 2 3) -> 8
+		       (catch #t
+			 (lambda ()
+			   (let ((val (apply expt args)))
+			     (if (and (integer? val)
+				      (< (abs val) 1000000))
+				 val
+				 `(expt ,@args))))
+			 (lambda args
+			   `(expt ,@args))))               ; (expt (expt x y) z) -> (expt x (* y z))
+		      ((and (pair? (car args))
+			    (eq? (caar args) 'expt))
+		       `(expt ,(cadar args) (* ,(caddar args) ,(cadr args))))
+		      (else `(expt ,@args))))
+	      (hash-table-set! h 'expt numexpt))
+	    
+	    (let ()
+	      (define (numang args form env)
+		(cond ((not (pair? args)) form)
+		      ((eqv? (car args) -1) 'pi)
+		      ((or (morally-equal? (car args) 0.0)
+			   (eq? (car args) 'pi))
+		       0.0)
+		      (else `(angle ,@args))))
+	      (hash-table-set! h 'angle numang))
+	    
+	    (let ()
+	      (define (numatan args form env)
+		(cond ((and (= (length args) 1)                    ; (atan (x y)) -> (atan x y)
+			    (pair? (car args))
 			    (= (length (car args)) 3)
-			    (eqv? (caddar args) (cadr args))))
-		      ((ash modulo)                     ; (modulo 0 x) -> 0
-		       (and (= len 2) (eqv? (car args) 0)))
-		      (else #f))
-		    0)
-		   
-		   ((and (eq? (car form) 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
-			 (= len 2)
-			 (pair? (car args))
-			 (eq? (caar args) 'abs))
-		    `(modulo ,(cadar args) ,(cadr args)))
-		   
-		   (else `(,(car form) ,@args))))
+			    (eq? (caar args) '/))
+		       `(atan ,@(cdar args)))
+		      ((and (= (length args) 2)                    ; (atan 0 -1) -> pi
+			    (eqv? (car args) 0)
+			    (eqv? (cadr args) -1))
+		       'pi)
+		      (else `(atan ,@args))))
+	      (hash-table-set! h 'atan numatan))
 	    
-	    ((expt) 
-	     (cond ((not (= len 2))
-		    form)
-		   ((and (eqv? (car args) 0)            ; (expt 0 x) -> 0
-			 (not (eqv? (cadr args) 0)))
-		    (if (and (integer? (cadr args))
-			     (negative? (cadr args)))
-			(lint-format "attempt to divide by 0: ~A" 'expt (truncated-list->string form)))
-		    0)
-		   ((or (and (eqv? (cadr args) 0)       ; (expt x 0) -> 1
-			     (not (eqv? (car args) 0)))
-			(eqv? (car args) 1))            ; (expt 1 x) -> 1    
-		    1)
-		   ((eqv? (cadr args) 1)                ; (expt x 1) -> x
-		    (car args))
-		   ((eqv? (cadr args) -1)               ; (expt x -1) -> (/ x)
-		    `(/ ,(car args)))
-		   ((just-rationals? args)              ; (expt 2 3) -> 8
-		    (catch #t
-		      (lambda ()
-			(let ((val (apply expt args)))
-			  (if (and (integer? val)
-				   (< (abs val) 1000000))
-			      val
-			      `(expt ,@args))))
-		      (lambda args
-			`(expt ,@args))))               ; (expt (expt x y) z) -> (expt x (* y z))
-		   ((and (pair? (car args))
-			 (eq? (caar args) 'expt))
-		    `(expt ,(cadar args) (* ,(caddar args) ,(cadr args))))
-		   (else `(expt ,@args))))
-
+	    (let ()
+	      (define (rational-result? op)
+		(memq op '(rationalize inexact->exact exact)))
+	      
+	      (define (numexact args form env)
+		(cond ((not (= (length args) 1)) 
+		       form)
+		      ((or (rational? (car args))
+			   (and (pair? (car args))
+				(or (rational-result? (caar args))
+				    (integer-result? (caar args))
+				    (and (eq? (caar args) 'random)
+					 (rational? (cadar args))))))
+		       (car args))
+		      ((number? (car args))
+		       (catch #t (lambda () (inexact->exact (car args))) (lambda any `(,(car form) ,@args))))
+		      (else `(,(car form) ,@args))))
+	      (hash-table-set! h 'inexact->exact numexact)
+	      (hash-table-set! h 'exact numexact))
 	    
-	    ((angle)
-	     (cond ((not (pair? args)) form)
-		   ((eqv? (car args) -1) 'pi)
-		   ((or (morally-equal? (car args) 0.0)
-			(eq? (car args) 'pi))
-		    0.0)
-		   (else `(angle ,@args))))
+	    (let ()
+	      (define (numinexact args form env)
+		(cond ((not (= (length args) 1))
+		       form)
+		      
+		      ((memv (car args) '(0 0.0))
+		       0.0)
+		      
+		      ((not (and (pair? (car args))
+				 (not (eq? (caar args) 'random))
+				 (hash-table-ref numeric-ops (caar args))
+				 (any? number? (cdar args))))
+		       `(,(car form) ,@args))
+		      
+		      ((any? (lambda (x)
+			       (and (number? x)
+				    (inexact? x)))
+			     (cdar args))
+		       (car args))
+		      
+		      (else
+		       (let ((new-form (copy (car args))))
+			 (do ((p (cdr new-form) (cdr p)))
+			     ((or (null? p)
+				  (number? (car p)))
+			      (if (pair? p)
+				  (set-car! p (* 1.0 (car p))))
+			      new-form))))))
+	      ;; not (inexact (random 3)) -> (random 3.0) because results are different
+	      (hash-table-set! h 'exact->inexact numinexact)
+	      (hash-table-set! h 'inexact numinexact))
 	    
-	    ((atan)
-	     (cond ((and (= len 1)                    ; (atan (x y)) -> (atan x y)
-			 (pair? (car args))
-			 (= (length (car args)) 3)
-			 (eq? (caar args) '/))
-		    `(atan ,@(cdar args)))
-		   ((and (= len 2)                    ; (atan 0 -1) -> pi
-			 (eqv? (car args) 0)
-			 (eqv? (cadr args) -1))
-		    'pi)
-		   (else `(atan ,@args))))
+	    (let ()
+	      (define (just-integers? form)
+		(or (null? form)
+		    (integer? form)
+		    (and (pair? form)
+			 (integer? (car form))
+			 (just-integers? (cdr form)))))
+	      
+	      (define (numior args form env)
+		(set! args (lint-remove-duplicates (remove-all 0 (splice-if 'logior args)) env))
+		(if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		    (let ((rats (collect-if list integer? args)))
+		      (if (and (pair? rats) 
+			       (pair? (cdr rats)))
+			  (let ((y (apply logior rats)))
+			    (set! args (if (zero? y)
+					   (collect-non-numbers args)
+					   (cons y (collect-non-numbers args))))))))
+		(cond ((null? args) 0)                ; (logior) -> 0
+		      ((null? (cdr args)) (car args)) ; (logior x) -> x
+		      ((memv -1 args) -1)             ; (logior ... -1 ...) -> -1
+		      ((just-integers? args) (apply logior args))
+		      (else `(logior ,@args))))
+	      (hash-table-set! h 'logior numior)
+	      
+	      (define (numand args form env)
+		(set! args (lint-remove-duplicates (remove-all -1 (splice-if 'logand args)) env))
+		(if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		    (let ((rats (collect-if list integer? args)))
+		      (if (and (pair? rats) 
+			       (pair? (cdr rats)))
+			  (let ((y (apply logand rats)))
+			    (set! args (if (= y -1)
+					   (collect-non-numbers args)
+					   (cons y (collect-non-numbers args))))))))
+		(cond ((null? args) -1)
+		      ((null? (cdr args)) (car args)) ; (logand x) -> x
+		      ((memv 0 args) 0)
+		      ((just-integers? args) (apply logand args))
+		      (else `(logand ,@args))))
+	      
+	      ;; (logand 1 (logior 2 x)) -> (logand 1 x)? 
+	      ;; (logand 1 (logior 1 x)) -> 1
+	      ;; (logand 3 (logior 1 x))?
+	      ;; similarly for (logior...(logand...))
+	      
+	      (hash-table-set! h 'logand numand)
+	      
+	      (define (numxor args form env)
+		(set! args (splice-if 'logxor args)) ; is this correct??
+		(cond ((null? args) 0)                                    ; (logxor) -> 0
+		      ((null? (cdr args)) (car args))                     ; (logxor x) -> x??
+		      ((just-integers? args) (apply logxor args))         ; (logxor 1 2) -> 3
+		      ((and (= (length args) 2) (equal? (car args) (cadr args))) 0) ; (logxor x x) -> 0
+		      (else `(logxor ,@args))))                           ; (logxor x (logxor y z)) -> (logxor x y z)
+	      (hash-table-set! h 'logxor numxor))
 	    
-	    ((inexact->exact exact)
-	     (cond ((not (= len 1)) 
-		    form)
-		   ((or (rational? (car args))
-			(and (pair? (car args))
-			     (or (rational-result? (caar args))
-				 (integer-result? (caar args))
-				 (and (eq? (caar args) 'random)
-				      (rational? (cadar args))))))
-		    (car args))
-		   ((number? (car args))
-		    (catch #t (lambda () (inexact->exact (car args))) (lambda any `(,(car form) ,@args))))
-		   (else `(,(car form) ,@args))))
+	    (let ()
+	      (define (numgcd args form env)
+		(set! args (lint-remove-duplicates (splice-if 'gcd args) env))
+		(cond ((null? args) 0) 
+		      ((memv 1 args) 1)
+		      ((just-rationals? args)
+		       (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
+			 (lambda ()
+			   (apply gcd args))
+			 (lambda ignore
+			   `(gcd ,@args))))
+		      ((null? (cdr args))   `(abs ,(car args)))
+		      ((eqv? (car args) 0)  `(abs ,(cadr args)))
+		      ((eqv? (cadr args) 0) `(abs ,(car args)))
+		      (else `(gcd ,@args))))
+	      (hash-table-set! h 'gcd numgcd))
 	    
-	    ((exact->inexact inexact)
-	     (cond ((not (= len 1))
-		    form)
-
-		   ((memv (car args) '(0 0.0))
-		    0.0)
-
-		   ((not (and (pair? (car args))
-			      (not (eq? (caar args) 'random))
-			      (hash-table-ref numeric-ops (caar args))
-			      (any? number? (cdar args))))
-		    `(,(car form) ,@args))
-
-		    ((any? (lambda (x)
-			     (and (number? x)
-				  (inexact? x)))
-			   (cdar args))
-		     (car args))
-
-		    (else
-		     (let ((new-form (copy (car args))))
-		       (do ((p (cdr new-form) (cdr p)))
-			   ((or (null? p)
-				(number? (car p)))
-			    (if (pair? p)
-				(set-car! p (* 1.0 (car p))))
-			    new-form))))))
-		   ;; not (inexact (random 3)) -> (random 3.0) because results are different
+	    (let ()
+	      (define (numlcm args form env)
+		(set! args (lint-remove-duplicates (splice-if 'lcm args) env))
+		(cond ((null? args) 1)         ; (lcm) -> 1
+		      ((memv 0 args) 0)        ; (lcm ... 0 ...) -> 0
+		      ((just-rationals? args)   ; (lcm 3 4) -> 12
+		       (catch #t
+			 (lambda ()
+			   (apply lcm args))
+			 (lambda ignore
+			   `(lcm ,@args))))
+		      ((null? (cdr args))      ; (lcm x) -> (abs x)
+		       `(abs ,(car args)))
+		      (else `(lcm ,@args))))
+	      (hash-table-set! h 'lcm numlcm))
 	    
-	    ((logior)
-	     (set! args (lint-remove-duplicates (remove-all 0 (splice-if 'logior args)) env))
-	     (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
-		 (let ((rats (collect-if list integer? args)))
-		   (if (and (pair? rats) 
-			    (pair? (cdr rats)))
-		       (let ((y (apply logior rats)))
-			 (set! args (if (zero? y)
-					(collect-non-numbers args)
-					(cons y (collect-non-numbers args))))))))
-	     (cond ((null? args) 0)                ; (logior) -> 0
-		   ((null? (cdr args)) (car args)) ; (logior x) -> x
-		   ((memv -1 args) -1)             ; (logior ... -1 ...) -> -1
-		   ((just-integers? args) (apply logior args))
-		   (else `(logior ,@args))))
-	    
-	    ((logand)
-	     (set! args (lint-remove-duplicates (remove-all -1 (splice-if 'logand args)) env))
-	     (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
-		 (let ((rats (collect-if list integer? args)))
-		   (if (and (pair? rats) 
-			    (pair? (cdr rats)))
-		       (let ((y (apply logand rats)))
-			 (set! args (if (= y -1)
-					(collect-non-numbers args)
-					(cons y (collect-non-numbers args))))))))
-	     (cond ((null? args) -1)
-		   ((null? (cdr args)) (car args)) ; (logand x) -> x
-		   ((memv 0 args) 0)
-		   ((just-integers? args) (apply logand args))
-		   (else `(logand ,@args))))
-	    
-	    ;; (logand 1 (logior 2 x)) -> (logand 1 x)? 
-	    ;; (logand 1 (logior 1 x)) -> 1
-	    ;; (logand 3 (logior 1 x))?
-	    ;; similarly for (logior...(logand...))
-	    
-	    ((logxor)
-	     (set! args (splice-if 'logxor args)) ; is this correct??
-	     (cond ((null? args) 0)                                    ; (logxor) -> 0
-		   ((null? (cdr args)) (car args))                     ; (logxor x) -> x??
-		   ((just-integers? args) (apply logxor args))         ; (logxor 1 2) -> 3
-		   ((and (= len 2) (equal? (car args) (cadr args))) 0) ; (logxor x x) -> 0
-		   (else `(logxor ,@args))))                           ; (logxor x (logxor y z)) -> (logxor x y z)
-	    
-	    ((gcd)
-	     (set! args (lint-remove-duplicates (splice-if 'gcd args) env))
-	     (cond ((null? args) 0) 
-		   ((memv 1 args) 1)
-		   ((just-rationals? args)
-		    (catch #t  ; maybe (gcd -9223372036854775808 -9223372036854775808)
-		      (lambda ()
-			(apply gcd args))
-		      (lambda ignore
-			`(gcd ,@args))))
-		   ((null? (cdr args))   `(abs ,(car args)))
-		   ((eqv? (car args) 0)  `(abs ,(cadr args)))
-		   ((eqv? (cadr args) 0) `(abs ,(car args)))
-		   (else `(gcd ,@args))))
-	    
-	    ((lcm)
-	     (set! args (lint-remove-duplicates (splice-if 'lcm args) env))
-	     (cond ((null? args) 1)         ; (lcm) -> 1
-		   ((memv 0 args) 0)        ; (lcm ... 0 ...) -> 0
-		   ((just-rationals? args)   ; (lcm 3 4) -> 12
-		    (catch #t
-		      (lambda ()
-			(apply lcm args))
-		      (lambda ignore
-			`(lcm ,@args))))
-		   ((null? (cdr args))      ; (lcm x) -> (abs x)
-		    `(abs ,(car args)))
-		   (else `(lcm ,@args))))
-	    
-	    ((max min)
-	     (if (not (pair? args))
-		 form
-		 (begin
-		   (set! args (lint-remove-duplicates (splice-if (car form) args) env))
-		   (if (any? (lambda (p) ; if non-negative-op, remove any non-positive numbers
-			       (and (pair? p)
-				    (hash-table-ref non-negative-ops (car p))))
-			     args)
-		       (set! args (remove-if (lambda (x)
-					       (and (real? x)
-						    (not (positive? x))))
-					     args)))
-		   (if (= len 1)
-		       (car args)
-		       (if (just-reals? args)
-			   (apply (symbol->value (car form)) args)
-			   (let ((nums (collect-if list number? args))
-				 (other (if (eq? (car form) 'min) 'max 'min)))
-			     (if (and (pair? nums)
-				      (just-reals? nums)) ; non-real case checked elsewhere (later)
-				 (let ((relop (if (eq? (car form) 'min) >= <=)))
-				   (if (pair? (cdr nums))
-				       (set! nums (list (apply (symbol->value (car form)) nums))))
-				   (let ((new-args (append nums (collect-non-numbers args))))
-				     (let ((c1 (car nums)))
-				       (set! new-args (collect-if list (lambda (x)
-									 (or (not (pair? x))
-									     (<= (length x) 2)
-									     (not (eq? (car x) other))
-									     (let ((c2 (find-if number? (cdr x))))
-									       (or (not c2)
-										   (relop c1 c2)))))
-								  new-args)))
-				     (if (< (length new-args) (length args))
-					 (set! args new-args)))))
-
-			     ;; if (max c1 (min c2 . args1) . args2) where (> c1 c2) -> (max c1 . args2), if = -> c1
-			     ;; if (min c1 (max c2 . args1) . args2) where (< c1 c2) -> (min c1 . args2), if = -> c1
-			     ;;   and if (max 4 x (min x 4)) -- is it (max x 4)?
-			     ;; (max a b) is (- (min (- a) (- b))), but that doesn't help here -- the "-" gets in our way
-			     ;;   (min (- a) (- b)) -> (- (max a b))?
-			     ;; (+ a (max|min b c)) = (max|min (+ a b) (+ a c)))
-
-			     (if (null? (cdr args)) ; (max (min x 3) (min x 3)) -> (max (min x 3)) -> (min x 3)
-				 (car args)
-				 (if (and (null? (cddr args))   ; (max|min x (min|max x ...) -> x
-					  (or (and (pair? (car args))
-						   (eq? (caar args) other)
-						   (member (cadr args) (car args))
-						   (not (side-effect? (cadr args) env)))
-					      (and (pair? (cadr args))
-						   (eq? (caadr args) other)
-						   (member (car args) (cadr args))
-						   (not (side-effect? (car args) env)))))
-				     ((if (pair? (car args)) cadr car) args)
-				     `(,(car form) ,@args)))))))))
-	    (else 
-	     `(,(car form) ,@args))))))
+	    (let ()
+	      (define (just-reals? form)
+		(or (null? form)
+		    (real? form)
+		    (and (pair? form)
+			 (real? (car form))
+			 (just-reals? (cdr form)))))
+	      
+	      (define (nummax args form env)
+		(if (not (pair? args))
+		    form
+		    (begin
+		      (set! args (lint-remove-duplicates (splice-if (car form) args) env))
+		      (if (any? (lambda (p) ; if non-negative-op, remove any non-positive numbers
+				  (and (pair? p)
+				       (hash-table-ref non-negative-ops (car p))))
+				args)
+			  (set! args (remove-if (lambda (x)
+						  (and (real? x)
+						       (not (positive? x))))
+						args)))
+		      (if (= (length args) 1)
+			  (car args)
+			  (if (just-reals? args)
+			      (apply (symbol->value (car form)) args)
+			      (let ((nums (collect-if list number? args))
+				    (other (if (eq? (car form) 'min) 'max 'min)))
+				(if (and (pair? nums)
+					 (just-reals? nums)) ; non-real case checked elsewhere (later)
+				    (let ((relop (if (eq? (car form) 'min) >= <=)))
+				      (if (pair? (cdr nums))
+					  (set! nums (list (apply (symbol->value (car form)) nums))))
+				      (let ((new-args (append nums (collect-non-numbers args))))
+					(let ((c1 (car nums)))
+					  (set! new-args (collect-if list (lambda (x)
+									    (or (not (pair? x))
+										(<= (length x) 2)
+										(not (eq? (car x) other))
+										(let ((c2 (find-if number? (cdr x))))
+										  (or (not c2)
+										      (relop c1 c2)))))
+								     new-args)))
+					(if (< (length new-args) (length args))
+					    (set! args new-args)))))
+				
+				;; if (max c1 (min c2 . args1) . args2) where (> c1 c2) -> (max c1 . args2), if = -> c1
+				;; if (min c1 (max c2 . args1) . args2) where (< c1 c2) -> (min c1 . args2), if = -> c1
+				;;   and if (max 4 x (min x 4)) -- is it (max x 4)?
+				;; (max a b) is (- (min (- a) (- b))), but that doesn't help here -- the "-" gets in our way
+				;;   (min (- a) (- b)) -> (- (max a b))?
+				;; (+ a (max|min b c)) = (max|min (+ a b) (+ a c)))
+				
+				(if (null? (cdr args)) ; (max (min x 3) (min x 3)) -> (max (min x 3)) -> (min x 3)
+				    (car args)
+				    (if (and (null? (cddr args))   ; (max|min x (min|max x ...) -> x
+					     (or (and (pair? (car args))
+						      (eq? (caar args) other)
+						      (member (cadr args) (car args))
+						      (not (side-effect? (cadr args) env)))
+						 (and (pair? (cadr args))
+						      (eq? (caadr args) other)
+						      (member (car args) (cadr args))
+						      (not (side-effect? (car args) env)))))
+					((if (pair? (car args)) cadr car) args)
+					`(,(car form) ,@args)))))))))
+	      (hash-table-set! h 'max nummax)
+	      (hash-table-set! h 'min nummax))
+	    h)) ; define numerics-table
+	
+	(lambda (form env)
+	  (define (simplify-arg x)
+	    (if (or (null? x)                      ; constants and the like look dumb if simplified
+		    (not (proper-list? x))
+		    (not (hash-table-ref no-side-effect-functions (car x)))
+		    (var-member (car x) env))
+		x
+		(let ((f (simplify-numerics x env)))
+		  (if (and (pair? f)
+			   (just-rationals? f))
+		      (catch #t
+			(lambda ()
+			  (eval f))
+			(lambda ignore f))
+		      f))))
+	  (let ((args (map simplify-arg (cdr form))))
+	    (cond ((hash-table-ref numerics-table (car form))
+		   => (lambda (f)
+			(f args form env)))
+		  (else `(,(car form) ,@args)))))))
     
     
     (define (binding-ok? caller head binding env second-pass)
@@ -10650,6 +10728,7 @@
 					      (and (pair? (car calls))
 						   (not (memq vname (cdar calls)))
 						   (loop (cdr calls))))))
+			       (unless (tree-memq vname (cddr (var-initial-value local-var)))
 			       (let ((pars (map list (proper-list (var-arglist local-var))))
 				     (recursive (tree-memq vname (cddr (var-initial-value local-var)))))
 				 (do ((clauses (var-history local-var) (cdr clauses)))
@@ -10661,29 +10740,48 @@
 						       (set-cdr! par (cons arg (cdr par))))) ;   add it to the list for this parameter
 						 (cdar clauses)
 						 pars)))
-				 (let ((init (cddr (var-initial-value local-var)))
-				       (arglist (var-arglist local-var)))
-				   (for-each (lambda (p)
-					       (when (and (not recursive)                    ;   self-inflicted...
-							  (pair? (cdr p))
-							  (not (symbol? (cadr p))))
-						 (if (null? (cddr p))
-						     (lint-format "~A's '~A parameter is always ~S (~D calls)" caller
-								  vname (car p) (cadr p) (var-ref local-var))
-#|
-					; also need to check call in vname -- not passed as arg internally: tree-car-member (car p) (cddr ...)
-					; only a few hits for this
-						     (if (and (= (tree-count (car p) (var-initial-value local-var)) 2)
-							      (every? (lambda (arg)
-									(and (pair? arg)
-									     (eq? (car arg) 'lambda)
-									     (eqv? (length (cadr arg)) 1)
-									     (len=1? (cddr arg))))
-								      (cdr p)))
-							 (format *stderr* "~A ~A:~{~%   ~A~}~%~%" vname (car p) (cdr p)))
-|#
-						     )))
-					     pars))))
+;				 (unless recursive
+				   (let ((init (cddr (var-initial-value local-var)))
+					 (arglist (var-arglist local-var)))
+				     (for-each (lambda (p)
+						 (when (and (pair? (cdr p))
+							    (not (symbol? (cadr p))))
+						   (if (null? (cddr p))
+						       (lint-format "~A's '~A parameter is always ~S (~D calls)" caller
+								    vname (car p) (cadr p) (var-ref local-var)))
+						   (when (and (pair? (cadr p))
+							      (eq? (caadr p) 'lambda))
+						     (let ((pars (cadadr p))
+							   (body (cddr (cadr p))))
+						       (when (proper-list? pars)
+							 (let ((unused (do ((ps pars (cdr ps))
+									    (i 0 (+ i 1))
+									    (res ()))
+									   ((null? ps)
+									    res)
+									 (if (not (tree-memq (car ps) body))
+									     (set! res (cons i res))))))
+							   (if (and (pair? unused)
+								    (or (null? (cddr p))
+									(every? (lambda (arg)
+										  (and (pair? arg)
+										       (eq? (car arg) 'lambda)
+										       (proper-list? (cadr arg))
+										       (let ((new-unused (copy unused)))
+											 (for-each (lambda (parnum)
+												     (let ((par-name (list-ref (cadr arg) parnum)))
+												       (if (tree-memq par-name (cddr arg))
+													   (set! new-unused (remove parnum new-unused)))))
+												   unused)
+											 (and (pair? new-unused)
+											      (set! unused new-unused)))))
+										(cddr p))))
+							       (lint-format "~A parameter ~A is a function whose parameter~P ~{~A~^, ~} ~A never used~%" caller
+									    vname (car p) 
+									    (length unused) 
+									    (map (lambda (p) (+ p 1)) (reverse unused))
+									    (if (> (length unused) 1) "are" "is")))))))))
+					       pars)))))
 			     )))) ; end (if zero var-ref)
 		   
 		   ;; vars with multiple incompatible ascertainable types don't happen much and obvious type errors are extremely rare
@@ -19772,5 +19870,10 @@
 ;;; maybe extend the r->i naming scheme
 ;;; recursion -> tail-recursion?
 ;;;   i.e. add arg for res, start at init, move outer inward
+;;; get a lint-test case for the non-simplify-arg condition
+;;; wrapper for reverse in recur->map
+;;; try again on char|string-pos
+;;; . arg -> define* if possible (and named let*)
+;;; t347 unused arg test
 
-;;; 165 28217 672496
+;;; 164 28217 672496
