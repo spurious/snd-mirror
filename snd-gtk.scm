@@ -182,22 +182,22 @@
       
       (define (redraw-graph)
 	(let* ((wn (GDK_WINDOW (gtk_widget_get_window scan-pane)))
-	       (cr (gdk_cairo_create wn)))
+	       (cr (make_cairo wn)))
 	  (set! bounds (draw-axes scan-pane gc "scanned synthesis" 0.0 1.0 -10.0 10.0 x-axis-in-seconds show-all-axes cr))
 	  (set! ax0 (+ (car bounds) 4))
 	  (set! ax1 (caddr bounds))
 	  (set! ay1 (cadr bounds))
 	  (set! ay0 (cadddr bounds))
 	  (draw-graph cr)
-	  (cairo_destroy cr)))
+	  (free_cairo cr)))
       
       (define (tick-synthesis n)
 	;; background process
 	(vibrating-uniform-circular-string size gx0 gx1 gx2 mass xspring damp)
 	(let* ((wn (GDK_WINDOW (gtk_widget_get_window scan-pane)))
-	       (cr (gdk_cairo_create wn)))
+	       (cr (make_cairo wn)))
 	  (draw-graph cr)
-	  (cairo_destroy cr))
+	  (free_cairo cr))
 	#t)
       
       (define (stop-synthesis)
@@ -473,7 +473,7 @@
   
   (define snd-clock-icon
     (lambda (snd hour)
-      (let ((cr (gdk_cairo_create (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))))
+      (let ((cr (make_cairo (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))))
 	(let ((bg (color->list *basic-color*)))
 	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg)))
 	(cairo_rectangle cr 0 0 16 16) ; icon bg
@@ -487,7 +487,7 @@
 	(cairo_line_to cr (+ 8 (* 7 (sin (* hour (/ 3.1416 6.0)))))
 		       (- 8 (* 7 (cos (* hour (/ 3.1416 6.0))))))
 	(cairo_stroke cr)
-	(cairo_destroy cr))))
+	(free_cairo cr))))
   
   
 #|  
@@ -495,7 +495,7 @@
   
   (define (snd-happy-face snd progress)
     (let* ((window (GDK_WINDOW (gtk_widget_get_window ((sound-widgets snd) 8))))
-	   (cr (gdk_cairo_create window))
+	   (cr (make_cairo window))
 	   (fc (list 1.0 progress 0.0)))
       (let ((bg (color->list *basic-color*)))
         ;; overall background
@@ -527,7 +527,7 @@
 	      (cairo_arc cr 8 8 5 (* 1/16 pi) (* 15/16 pi))))
       (cairo_stroke cr)
       
-      (cairo_destroy cr)))
+      (free_cairo cr)))
 |#
   
   
@@ -622,7 +622,7 @@
 	   (win (GDK_WINDOW (gtk_widget_get_window meter))))
       
       ;; this is too slow -- can we save the plate? (also if just 1 meter, put pivot higher?)
-      (let ((cr (gdk_cairo_create win)))
+      (let ((cr (make_cairo win)))
 	
 	;; put our origin at the meter pivot point scaled (as a square so the dial remains circular) to 0..1
 	(cairo_translate cr (* 0.5 width) (+ (* 0.5 width) (* 0.2 height)))
@@ -704,7 +704,7 @@
 		  (cairo_arc cr 0 0 (- 0.5 (/ 3.0 width))  (+ (* 5 (/ pi 4)) (max 0.0 (- redx bubble-size))) (+ (* 5 (/ pi 4)) redx))
 		  (cairo_stroke cr)))))
 	
-	(cairo_destroy cr))))
+	(free_cairo cr))))
   
   
   (define (with-level-meters n)

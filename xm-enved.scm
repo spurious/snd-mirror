@@ -349,7 +349,7 @@
 		    (set! lx cx)
 		    (set! ly cy))))
 	      ;; *gtk* 
-	      (let ((cr ((*gtk* 'gdk_cairo_create) ((*gtk* 'GDK_WINDOW) wn))))
+	      (let ((cr ((*gtk* 'make_cairo) ((*gtk* 'GDK_WINDOW) wn))))
 		
 		(let ((size (widget-size ((*gtk* 'GTK_WIDGET) widget))))
 		  ((*gtk* 'cairo_push_group) cr)
@@ -378,5 +378,5 @@
 		    (set! ly cy)))
 		((*gtk* 'cairo_pop_group_to_source) cr)
 		((*gtk* 'cairo_paint) cr)
-		((*gtk* 'cairo_destroy) cr))))))))
+		((*gtk* 'free_cairo) cr))))))))
 

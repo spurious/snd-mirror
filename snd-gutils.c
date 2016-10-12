@@ -2,6 +2,7 @@
 
 
 #if GTK_CHECK_VERSION(3, 22, 0)
+  /* surely nothing can go wrong... */
   static GdkWindow *last_window = NULL;
   static GdkDrawingContext *last_context = NULL;
 #endif

@@ -127,6 +127,7 @@
 
 	"GtkGLArea*" "GtkStyleContext*" "GtkPopoverMenu*" "GtkSearchEntry*" "GtkStackSidebar*" 
 	"GtkShortcutsWindow*"
+	"GdkDevicePadFeature" "GtkPadActionType"
 	))
 
 (define no-xen-p 
@@ -149,7 +150,7 @@
 	"GdkEventAny*" "GdkDeviceManager*"
 	"cairo_font_type_t" "cairo_pattern_type_t" "cairo_surface_type_t" "cairo_bool_t" "cairo_region_overlap_t"
 
-	"glong" "double"
+	"glong" "double" "GdkAxisFlags" "GdkSubpixelLayout" 
 	))
 
 (define no-xen-to-c 
@@ -174,7 +175,7 @@
 	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t" "cairo_bool_t"
 	"cairo_region_overlap_t" "cairo_device_type_t"
 
-	"glong" 
+	"glong" "GdkAxisFlags" "GdkSubpixelLayout" 
 	))
 
 (define (cadr-str data)
@@ -2271,17 +2272,48 @@
 
 (hey "~%~%/* ---------------------------------------- special functions ---------------------------------------- */~%~%")
 
-
 (hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
-(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
-(hey "static Xen gxg_gdk_cairo_create(Xen window)~%")
+(hey "#if GTK_CHECK_VERSION(3, 22, 0)~%")
+(hey "  static GdkWindow *last_window = NULL;~%")
+(hey "  static GdkDrawingContext *last_context = NULL;~%")
+(hey "#endif~%")
+(hey "~%")
+(hey "static cairo_t *make_cairo_1(GdkWindow *win)~%")
 (hey "{~%")
-(hey "  #define H_gdk_cairo_create \"cairo_t* gdk_cairo_create(GdkWindow* window)\"~%")
-(hey "  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, \"gdk_cairo_create\", \"GdkWindow*\");~%")
-(hey "  return(C_to_Xen_cairo_t_(gdk_cairo_create(Xen_to_C_GdkWindow_(window))));~%")
+(hey "#if GTK_CHECK_VERSION(3, 22, 0)~%")
+(hey "  last_window = win;~%")
+(hey "  last_context = gdk_window_begin_draw_frame(win, gdk_window_get_visible_region(win));~%")
+(hey "  return(gdk_drawing_context_get_cairo_context(last_context));~%")
+(hey "#else~%")
+(hey "  return(gdk_cairo_create(win));~%")
+(hey "#endif~%")
+(hey "}~%")
+(hey "~%")
+(hey "static void free_cairo_1(cairo_t *cr)~%")
+(hey "{~%")
+(hey "#if GTK_CHECK_VERSION(3, 22, 0)~%")
+(hey "  gdk_window_end_draw_frame(last_window, last_context);~%")
+(hey "#else~%")
+(hey "  cairo_destroy(cr);~%")
+(hey "#endif~%")
+(hey "}~%")
+(hey "~%")
+(hey "static Xen gxg_make_cairo(Xen window)~%")
+(hey "{~%")
+(hey "  #define H_make_cairo \"cairo_t* make_cairo(GdkWindow* window)\"~%")
+(hey "  Xen_check_type(Xen_is_GdkWindow_(window), window, 1, \"make_cairo\", \"GdkWindow*\");~%")
+(hey "  return(C_to_Xen_cairo_t_(make_cairo_1(Xen_to_C_GdkWindow_(window))));~%")
+(hey "}~%")
+(hey "~%")
+(hey "static Xen gxg_free_cairo(Xen cr)~%")
+(hey "{~%")
+(hey "  #define H_free_cairo \"void free_cairo(cairo_t* cr)\"~%")
+(hey "  Xen_check_type(Xen_is_cairo_t_(cr), cr, 1, \"free_cairo\", \"cairo_t*\");~%")
+(hey "  free_cairo_1(Xen_to_C_cairo_t_(cr));~%")
+(hey "  return(Xen_false);~%")
 (hey "}~%")
 (hey "#endif~%")
-(hey "#endif~%")
+(hey "~%")
 
 ;;; from Mike Scholz -- improve the error checking
 (hey "static Xen gxg_gtk_init(Xen argc, Xen argv) ~%")
@@ -2553,11 +2585,8 @@
 
 (hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
 (hey "Xen_wrap_no_args(gxg_make_GdkRGBA_w, gxg_make_GdkRGBA)~%")
-(hey "#endif~%")
-(hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
-(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
-(hey "Xen_wrap_1_arg(gxg_gdk_cairo_create_w, gxg_gdk_cairo_create)~%")
-(hey "#endif~%")
+(hey "Xen_wrap_1_arg(gxg_make_cairo_w, gxg_make_cairo)~%")
+(hey "Xen_wrap_1_arg(gxg_free_cairo_w, gxg_free_cairo)~%")
 (hey "#endif~%")
 
 (hey "~%~%")
@@ -2853,9 +2882,8 @@
  all-checks all-check-withs)
 
 (hey "#if GTK_CHECK_VERSION(3, 0, 0)~%")
-(hey "#if (!(GTK_CHECK_VERSION(3, 22, 0)))~%")
-(hey "Xg_define_procedure(gdk_cairo_create, gxg_gdk_cairo_create_w, 1, 0, 0, H_gdk_cairo_create, pl_pu);~%")
-(hey "#endif~%")
+(hey "Xg_define_procedure(make_cairo, gxg_make_cairo_w, 1, 0, 0, H_make_cairo, pl_pu);~%")
+(hey "Xg_define_procedure(free_cairo, gxg_free_cairo_w, 1, 0, 0, H_free_cairo, pl_pu);~%")
 (hey "#endif~%")
 
 (hey "}~%~%")

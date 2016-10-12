@@ -75142,7 +75142,7 @@ int main(int argc, char **argv)
  *   perhaps set a bit on sc->code so object output will see it should be truncated? then clear as soon as read?
  *   for a pair, only T_MUTABLE is available, I think: T_TRUNCATE_DISPLAY?
  *   don't burn up a bit for this -- need something else. sc->format_temp?
- *
+ * 
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
