@@ -24032,13 +24032,7 @@ EDITS: 2
 	    (if (and (file-exists? "s24.snd")
 		     (not (and (equal? ffiles '("s24.snd"))
 			       (equal? sfiles '("s24.snd")))))
-		(snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles)))
-	  )
-					;	      (if sf-dir-files
-					;		  (for-each (lambda (n) (mus-sound-forget (string-append sf-dir n))) sf-dir-files))
-	))))
-
-
+		(snd-display ";map|for-each-sound-file(s): ~A ~A" ffiles sfiles))))))))
 
 
 ;;; ---------------- test 13: menus, edit lists, hooks, etc ----------------
@@ -24962,139 +24956,188 @@ EDITS: 2
 	(close-sound in2)))
   
   (let* ((ind (open-sound "oboe.snd"))
-	 (all-tests (list (list 'apply-controls (lambda () 
-						  (set! (amp-control ind 0) .5) 
-						  (apply-controls ind) 
-						  (set! (amp-control ind 0) 1.0)))
-			  (list 'clm-channel (lambda () 
-					       (clm-channel (make-two-zero 1 -1))))
-			  (list 'convolve-selection-with (lambda () 
-							   (let ((reg (select-all ind 0))) 
-							     (convolve-selection-with "1a.snd" .5) 
-							     (if (region? reg) (forget-region reg)))))
-			  (list 'convolve-with (lambda () 
-						 (convolve-with "1a.snd" 0.5 ind 0)))
-			  (list 'delete-mix (lambda () 
-					      (let ((mx (mix-float-vector (make-float-vector 3 .2) 123))) 
-						(if (mix? mx) (set! (mix-amp mx) 0.0)))))
-			  (list 'delete-sample (lambda () 
-						 (delete-sample 123 ind 0)))
-			  (list 'delete-samples (lambda () 
-						  (delete-samples 123 123 ind 0)))
-			  (list 'delete-selection (lambda () 
-						    (let ((reg (select-all ind 0))) 
-						      (delete-selection) 
-						      (if (region? reg) (forget-region reg)))))
-			  (list 'env-channel (lambda () 
-					       (env-channel '(0 0 1 1))))
-			  (list 'env-selection (lambda () 
-						 (let ((reg (select-all ind 0))) 
-						   (env-selection '(0 0 1 1) 1.0) 
-						   (if (region? reg) (forget-region reg)))))
-			  (list 'env-sound (lambda () 
-					     (env-sound '(0 0 1 1))))
-			  (list 'filter-sound (lambda () 
-						(filter-sound '(0 1 1 0) 1024)))
-			  (list 'filter-selection (lambda () 
-						    (let ((reg (select-all ind 0))) 
-						      (filter-selection '(0 0 1 1) 6) 
-						      (if (region? reg) (forget-region reg)))))
-			  (list 'insert-region (lambda () 
-						 (let ((reg (make-region 0 100 ind 0))) 
-						   (insert-region reg 123 ind 0) 
-						   (if (region? reg) (forget-region reg)))))
-			  (list 'insert-sample (lambda () 
-						 (insert-sample 123 .5 ind 0)))
-			  (list 'insert-samples (lambda () 
-						  (insert-samples 123 3 (make-float-vector 3 1.0) ind 0)))
-			  (list 'insert-selection (lambda () 
-						    (let ((reg (select-all ind 0))) 
-						      (insert-selection 120 ind 0) 
-						      (if (region? reg) (forget-region reg)))))
-			  (list 'insert-silence (lambda () 
-						  (insert-silence 123 456 ind 0)))
-			  (list 'insert-sound (lambda () 
-						(insert-sound "1a.snd" 123)))
-			  (list 'map-channel (lambda () 
-					       (map-channel (lambda (y) (+ y .2)))))
-			  (list 'map-channel (lambda () 
-					       (map-channel (lambda (y) (+ y .2)))))
-			  (list 'mix (lambda () 
-				       (mix "1a.snd" 123)))
-			  (list 'mix-amp (lambda () 
-					   (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
-					     (if (mix? mx) (set! (mix-amp mx) .123)))))
-			  (list 'mix-amp-env (lambda () 
-					       (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
-						 (if (mix? mx) (set! (mix-amp-env mx) '(0 0 1 1))))))
-			  (list 'mix-position (lambda () 
-						(let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
-						  (if (mix? mx) (set! (mix-position mx) 123)))))
-			  (list 'mix-speed (lambda () 
-					     (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
-					       (if (mix? mx) (set! (mix-speed mx) .123)))))
-			  (list 'mix-region (lambda () 
-					      (let ((reg (make-region 0 100 ind 0))) 
-						(mix-region reg 123 ind 0) 
-						(if (region? reg) (forget-region reg)))))
-			  (list 'mix-selection (lambda () 
-						 (let ((reg (select-all ind 0))) 
-						   (mix-selection 1234 ind 0) 
-						   (if (region? reg) (forget-region reg)))))
-			  (list 'mix-float-vector (lambda () 
-						    (mix-float-vector (make-float-vector 10 .3) 123)))
-			  (list 'pad-channel (lambda () 
-					       (pad-channel 123 456 ind 0)))
-			  (list 'ramp-channel (lambda () 
-						(ramp-channel 0.0 0.5 123 456)))
-			  (list 'reverse-channel (lambda () 
-						   (reverse-channel 123 456 ind 0)))
-			  (list 'reverse-sound (lambda () 
-						 (reverse-sound ind 0)))
-			  (list 'reverse-selection (lambda () 
-						     (let ((reg (select-all ind 0))) 
-						       (reverse-selection) 
-						       (if (region? reg) (forget-region reg)))))
-			  (list 'scale-by (lambda () 
-					    (scale-by 2.0)))
-			  (list 'scale-channel (lambda () 
-						 (scale-channel .5 123 456 ind 0)))
-			  (list 'scale-selection-by (lambda () 
-						      (let ((reg (select-all ind 0)))
-							(scale-selection-by 2.0) 
-							(if (region? reg) (forget-region reg)))))
-			  (list 'scale-selection-to (lambda () 
-						      (let ((reg (select-all ind 0)))
-							(scale-selection-to 0.5) 
-							(if (region? reg) (forget-region reg)))))
-			  (list 'scale-to (lambda () 
-					    (scale-to 0.4)))
-			  (list 'scale-sound-to (lambda () 
-						  (scale-sound-to 0.5)))
-			  (list 'smooth-channel (lambda () 
-						  (smooth-channel 123 456 ind 0)))
-			  (list 'smooth-sound (lambda ()
-						(smooth-sound 123 456 ind 0)))
-			  (list 'smooth-selection (lambda () 
-						    (let ((reg (select-all ind 0))) 
-						      (smooth-selection)
-						      (if (region? reg) (forget-region reg)))))
-			  (list 'src-channel (lambda ()
-					       (src-channel .5 123 456 ind 0)))
-			  (list 'src-sound (lambda () 
-					     (src-sound '(0 0.5 1 1))))
-			  (list 'src-selection (lambda () 
-						 (let ((reg (select-all ind 0))) 
-						   (src-selection 0.5) 
-						   (if (region? reg) (forget-region reg)))))
-			  (list 'swap-channels (lambda () 
-						 (let ((ind1 (open-sound "1a.snd"))) 
-						   (swap-channels ind 0 ind1 0)
-						   (close-sound ind1))))
-			  (list 'float-vector->channel (lambda () 
-							 (float-vector->channel (make-float-vector 3) 123 3 ind 0)))
-			  (list 'xramp-channel (lambda () 
-						 (xramp-channel .5 1.0 32.0 123 456 ind 0))))))
+	 (all-tests (list (list 'apply-controls 
+				(lambda () 
+				  (set! (amp-control ind 0) .5) 
+				  (apply-controls ind) 
+				  (set! (amp-control ind 0) 1.0)))
+			  (list 'clm-channel 
+				(lambda () 
+				  (clm-channel (make-two-zero 1 -1))))
+			  (list 'convolve-selection-with 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (convolve-selection-with "1a.snd" .5) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'convolve-with 
+				(lambda () 
+				  (convolve-with "1a.snd" 0.5 ind 0)))
+			  (list 'delete-mix 
+				(lambda () 
+				  (let ((mx (mix-float-vector (make-float-vector 3 .2) 123))) 
+				    (if (mix? mx) (set! (mix-amp mx) 0.0)))))
+			  (list 'delete-sample 
+				(lambda () 
+				  (delete-sample 123 ind 0)))
+			  (list 'delete-samples 
+				(lambda () 
+				  (delete-samples 123 123 ind 0)))
+			  (list 'delete-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (delete-selection) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'env-channel 
+				(lambda () 
+				  (env-channel '(0 0 1 1))))
+			  (list 'env-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (env-selection '(0 0 1 1) 1.0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'env-sound 
+				(lambda () 
+				  (env-sound '(0 0 1 1))))
+			  (list 'filter-sound 
+				(lambda () 
+				  (filter-sound '(0 1 1 0) 1024)))
+			  (list 'filter-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (filter-selection '(0 0 1 1) 6) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'insert-region 
+				(lambda () 
+				  (let ((reg (make-region 0 100 ind 0))) 
+				    (insert-region reg 123 ind 0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'insert-sample 
+				(lambda () 
+				  (insert-sample 123 .5 ind 0)))
+			  (list 'insert-samples 
+				(lambda () 
+				  (insert-samples 123 3 (make-float-vector 3 1.0) ind 0)))
+			  (list 'insert-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (insert-selection 120 ind 0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'insert-silence 
+				(lambda () 
+				  (insert-silence 123 456 ind 0)))
+			  (list 'insert-sound 
+				(lambda () 
+				  (insert-sound "1a.snd" 123)))
+			  (list 'map-channel 
+				(lambda () 
+				  (map-channel (lambda (y) (+ y .2)))))
+			  (list 'map-channel 
+				(lambda () 
+				  (map-channel (lambda (y) (+ y .2)))))
+			  (list 'mix 
+				(lambda () 
+				  (mix "1a.snd" 123)))
+			  (list 'mix-amp 
+				(lambda () 
+				  (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
+				    (if (mix? mx) (set! (mix-amp mx) .123)))))
+			  (list 'mix-amp-env 
+				(lambda () 
+				  (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
+				    (if (mix? mx) (set! (mix-amp-env mx) '(0 0 1 1))))))
+			  (list 'mix-position 
+				(lambda () 
+				  (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
+				    (if (mix? mx) (set! (mix-position mx) 123)))))
+			  (list 'mix-speed 
+				(lambda () 
+				  (let ((mx (mix-float-vector (make-float-vector 3 1.0) 123))) 
+				    (if (mix? mx) (set! (mix-speed mx) .123)))))
+			  (list 'mix-region 
+				(lambda () 
+				  (let ((reg (make-region 0 100 ind 0))) 
+				    (mix-region reg 123 ind 0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'mix-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (mix-selection 1234 ind 0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'mix-float-vector 
+				(lambda () 
+				  (mix-float-vector (make-float-vector 10 .3) 123)))
+			  (list 'pad-channel 
+				(lambda () 
+				  (pad-channel 123 456 ind 0)))
+			  (list 'ramp-channel 
+				(lambda () 
+				  (ramp-channel 0.0 0.5 123 456)))
+			  (list 'reverse-channel 
+				(lambda () 
+				  (reverse-channel 123 456 ind 0)))
+			  (list 'reverse-sound 
+				(lambda () 
+				  (reverse-sound ind 0)))
+			  (list 'reverse-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (reverse-selection) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'scale-by 
+				(lambda () 
+				  (scale-by 2.0)))
+			  (list 'scale-channel 
+				(lambda () 
+				  (scale-channel .5 123 456 ind 0)))
+			  (list 'scale-selection-by 
+				(lambda () 
+				  (let ((reg (select-all ind 0)))
+				    (scale-selection-by 2.0) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'scale-selection-to 
+				(lambda () 
+				  (let ((reg (select-all ind 0)))
+				    (scale-selection-to 0.5) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'scale-to 
+				(lambda () 
+				  (scale-to 0.4)))
+			  (list 'scale-sound-to 
+				(lambda () 
+				  (scale-sound-to 0.5)))
+			  (list 'smooth-channel 
+				(lambda () 
+				  (smooth-channel 123 456 ind 0)))
+			  (list 'smooth-sound 
+				(lambda ()
+				  (smooth-sound 123 456 ind 0)))
+			  (list 'smooth-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (smooth-selection)
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'src-channel 
+				(lambda ()
+				  (src-channel .5 123 456 ind 0)))
+			  (list 'src-sound 
+				(lambda () 
+				  (src-sound '(0 0.5 1 1))))
+			  (list 'src-selection 
+				(lambda () 
+				  (let ((reg (select-all ind 0))) 
+				    (src-selection 0.5) 
+				    (if (region? reg) (forget-region reg)))))
+			  (list 'swap-channels 
+				(lambda () 
+				  (let ((ind1 (open-sound "1a.snd"))) 
+				    (swap-channels ind 0 ind1 0)
+				    (close-sound ind1))))
+			  (list 'float-vector->channel 
+				(lambda () 
+				  (float-vector->channel (make-float-vector 3) 123 3 ind 0)))
+			  (list 'xramp-channel 
+				(lambda () 
+				  (xramp-channel .5 1.0 32.0 123 456 ind 0))))))
     
     (if (and (provided? 'snd-motif)
 	     (provided? 'xm))
@@ -25301,7 +25344,6 @@ EDITS: 2
 ;;; ---------------- test 14: all together now ----------------
 
 (define sfile 0) ; used globally by save-state stuff (... is this a bug?)
-
 
 (define safe-make-selection 
   (let ((documentation "make-region with error checks"))
@@ -26098,7 +26140,6 @@ EDITS: 2
   
   (set! *clipping* #f)
   (for-each close-sound (sounds)))
-
 
 
 

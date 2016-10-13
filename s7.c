@@ -3154,6 +3154,13 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       if (!_Err_) _Err_ = s7_make_permanent_string(ErrMsg); \
       return(s7_error(Sc, Sc->syntax_error_symbol, set_elist_3(Sc, _Err_, Caller, Obj)));} while (0)
 
+static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code);
+
+#define eval_error_with_caller_and_print_limit(Sc, ErrMsg, Caller, Obj)	\
+  do {static s7_pointer _Err_ = NULL; \
+      if (!_Err_) _Err_ = s7_make_permanent_string(ErrMsg); \
+      return(s7_error(Sc, Sc->syntax_error_symbol, set_elist_3(Sc, _Err_, Caller, print_truncate(Sc, Obj))));} while (0)
+
 static s7_pointer set_elist_1(s7_scheme *sc, s7_pointer x1)
 {
   set_car(sc->elist_1, x1);
@@ -34311,6 +34318,19 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
   return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
 }
 
+
+static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
+{
+  if (tree_len(sc, code, 0) > sc->print_length)
+    {
+      char *str;
+      str = object_to_truncated_string(sc, code, sc->print_length * 10);
+      return(make_string_uncopied_with_length(sc, str, safe_strlen(str)));
+    }
+  return(code);
+}  
+
+
 static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
   if (sym == tree) return(true);
@@ -56470,7 +56490,7 @@ static s7_pointer check_define(s7_scheme *sc)
   if (!is_pair(car(sc->code)))
     {
       if (is_not_null(cddr(sc->code)))                                           /* (define var 1 . 2) */
-	eval_error_with_caller(sc, "~A: more than one value? ~A", caller, sc->code); /* (define var 1 2) */
+	eval_error_with_caller_and_print_limit(sc, "~A: more than one value? ~A", caller, sc->code); /* (define var 1 2) */
       if (starred)
 	eval_error(sc, "define* is restricted to functions: (define* ~{~S~^ ~})", sc->code);
 
@@ -75135,14 +75155,8 @@ int main(int argc, char **argv)
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
- * need truncated error output if sc->code is ridiculous: (*s7* 'error-print-length) ?
- *   would need to implement this in format_to_port_1 I think [47149=s7_error]
- *   [33200 to truncated the columnized output -- MIN(port_position(strport), s7-format-print-length) + ...]
- *   how to limit this to eval_error?  see ~/old/format-print-s7.c -- how to clear if handled?
- *   perhaps set a bit on sc->code so object output will see it should be truncated? then clear as soon as read?
- *   for a pair, only T_MUTABLE is available, I think: T_TRUNCATE_DISPLAY?
- *   don't burn up a bit for this -- need something else. sc->format_temp?
- * 
+ * could (apply append (map...)) omit the extra copy?
+ *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]

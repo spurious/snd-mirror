@@ -153,7 +153,7 @@
 	    (format port "~NC(set! histpos ~D)~%" spaces #\space histpos)
 	    (format port "~NC(set! histsize ~D)~%" spaces #\space histsize)
 	    (let-temporarily (((*s7* 'print-length) (* 2 histsize)))
-	      (format port "~NC(set! histbuf ~A)" spaces #\space (object->string histbuf))))
+	      (format port "~NC(set! histbuf ~A)" spaces #\space histbuf)))
 	  
 	  (define* (save-history (file "repl-history.scm"))
 	    (call-with-output-file file
@@ -535,7 +535,7 @@
 			       prompt-row))
 		     (lambda (c)
 		       (format #f "c: ~S ~D, start: ~A, end: ~A" 
-			       (object->string c #t) 
+			       c
 			       (char->integer c)	
 			       (start-of-line cursor-pos)	
 			       (end-of-line cursor-pos))))))
