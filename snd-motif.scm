@@ -162,7 +162,7 @@
     
     (let ((dialog (open-file-dialog #f))
 	   ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
-	   (rendertable (let* ((tags (list "one" "two" "three" "four"))
+	   (rendertable (let* ((tags (vector "one" "two" "three" "four"))
 			       (pixels (let* ((dpy (XtDisplay (cadr (main-widgets))))
 					      (cmap (DefaultColormap dpy (DefaultScreen dpy))))
 					 (map

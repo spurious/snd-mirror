@@ -75158,6 +75158,7 @@ int main(int argc, char **argv)
  * could (apply append (map...)) omit the extra copy?
  *
  * Snd:
+ * we're hung in FC 25
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can

@@ -19736,7 +19736,7 @@ EDITS: 2
 	      (snd-display ";external reader trouble")))
 	(free-sampler reader)))
     
-    (let ((make-procs (list
+    (let ((make-procs (vector
 		       make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
 		       make-comb (lambda () (make-convolve :filter (float-vector 0 1 2))) make-delay (lambda () (make-env '(0 1 1 0) :length 10))
 		       (lambda () (make-filter :xcoeffs (float-vector 0 1 2))) (lambda () (make-fir-filter :xcoeffs (float-vector 0 1 2))) 
@@ -19749,7 +19749,7 @@ EDITS: 2
 		       make-two-pole make-two-zero make-wave-train make-polyshape make-phase-vocoder make-ssb-am
 		       (lambda () (make-filter :ycoeffs (float-vector 0 1 2)))
 		       (lambda () (make-filter :xcoeffs (float-vector 1 2 3) :ycoeffs (float-vector 0 1 2)))))
-	  (gen-procs (list all-pass asymmetric-fm moving-average moving-max moving-norm
+	  (gen-procs (vector all-pass asymmetric-fm moving-average moving-max moving-norm
 			   comb convolve delay env 
 			   filter fir-filter filtered-comb formant granulate
 			   iir-filter (lambda (gen a) (locsig gen 0 a)) notch one-pole one-pole-all-pass one-zero oscil 
@@ -19781,10 +19781,10 @@ EDITS: 2
 			  0.0 (lambda (dir) 0.0) 0.0 0.0
 			  0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			  0.0 0.0))
-	  (generic-procs (list mus-channel mus-channels mus-data
+	  (generic-procs (vector mus-channel mus-channels mus-data
 			       mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			       mus-location mus-order mus-phase mus-ramp mus-scaler mus-xcoeffs mus-ycoeffs))
-	  (generic-names (list 'mus-channel 'mus-channels 'mus-data
+	  (generic-names (vector 'mus-channel 'mus-channels 'mus-data
 			       'mus-feedback 'mus-feedforward 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-scaler 'mus-xcoeffs 'mus-ycoeffs)))
       (for-each
@@ -19975,7 +19975,7 @@ EDITS: 2
 	   '(100 1))
 	  (set! *clm-srate* old-clm-srate))
 	
-	(let ((random-args (list 
+	(let ((random-args (vector
 			    (expt 2.0 21.5) (expt 2.0 -18.0)
 			    1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
 			    (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2))))
@@ -24956,7 +24956,7 @@ EDITS: 2
 	(close-sound in2)))
   
   (let* ((ind (open-sound "oboe.snd"))
-	 (all-tests (list (list 'apply-controls 
+	 (all-tests (vector (list 'apply-controls 
 				(lambda () 
 				  (set! (amp-control ind 0) .5) 
 				  (apply-controls ind) 
@@ -31749,19 +31749,19 @@ EDITS: 1
 	(close-sound ind)))
     
     (let ((ind (open-sound "oboe.snd"))
-	  (funcs (list transform-graph-type time-graph-type show-axes transform-normalization
+	  (funcs (vector transform-graph-type time-graph-type show-axes transform-normalization
 		       graph-style x-axis-style spectro-x-scale transform-size fft-window
 		       dot-size max-transform-peaks with-verbose-cursor zero-pad min-dB spectro-hop spectrum-end
 		       cursor-size cursor-style)))
-      (let ((func-names (list 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
+      (let ((func-names (vector 'transform-graph-type 'time-graph-type 'show-axes 'transform-normalization
 			      'graph-style 'x-axis-style 'spectro-x-scale 'transform-size 'fft-window
 			      'dot-size 'max-transform-peaks 'with-verbose-cursor 'zero-pad 'min-dB 'spectro-hop 'spectrum-end
 			      'cursor-size 'cursor-style))
 	    (old-globals (map (lambda (func) (func)) funcs))
-	    (new-globals (list graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
+	    (new-globals (vector graph-as-sonogram graph-as-wavogram show-all-axes normalize-by-sound
 			       graph-dots x-axis-in-samples 0.1 32 bartlett-window
 			       4 10 #t 1 -90 12 .1 15 cursor-cross))
-	    (new-locals (list graph-once graph-once show-x-axis normalize-by-channel
+	    (new-locals (vector graph-once graph-once show-x-axis normalize-by-channel
 			      graph-lines x-axis-in-seconds 1.0 256 blackman2-window
 			      1 100 #f 0 -60 4 1.0 25 cursor-line)))
 	(for-each (lambda (func func-name global local)
@@ -44851,7 +44851,7 @@ EDITS: 1
       (gl-info)
       (if all-args (gl-dump-state))
       (let ((gl-procs 
-	     (list
+	     (vector
 	      glXChooseVisual glXCopyContext glXCreateContext glXCreateGLXPixmap glXDestroyContext glXDestroyGLXPixmap glXGetConfig
 	      glXGetCurrentContext glXGetCurrentDrawable glXIsDirect glXMakeCurrent glXQueryExtension glXQueryVersion glXSwapBuffers
 	      glXUseXFont glXWaitGL glXWaitX glXGetClientString glXQueryServerString glXQueryExtensionsString glClearIndex glClearColor
@@ -45198,7 +45198,7 @@ EDITS: 1
 	    (a-hook (make-hook 'a 'b))
 	    (exts (sound-file-extensions)) ; save across possible set below
 	    
-	    (make-procs (list
+	    (make-procs (vector
 			 make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-moving-max make-moving-norm
 			 make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frample
 			 make-file->sample make-filter make-fir-filter make-formant make-firmant make-frample->file make-granulate
@@ -45211,7 +45211,7 @@ EDITS: 1
 			 ))
 	    
 	    (keyargs
-	     (list 
+	     (vector
 	      :frequency :initial-phase :wave :cosines :amplitude :ratio :size :a0 :a1 :a2 :b1 :b2 :input 
 	      :srate :file :channel :start :initial-contents :initial-element :scaler :feedforward :feedback 
 	      :max-size :radius :gain :partials :r :a :n :fill-time :order :xcoeffs :ycoeffs :envelope 
