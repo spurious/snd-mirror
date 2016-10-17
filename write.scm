@@ -375,10 +375,13 @@
 			    (pretty-print-1 (cadr obj) port column))))
 		     
 		     ((catch)
-		      (format port "(~A ~S" catch (cadr obj))
-		      (spaces (+ column *pretty-print-spacing*))
-		      (stacked-list (cddr obj) (+ column *pretty-print-spacing*))
-		      (write-char #\) port))
+		      (if (not (pair? (cdr obj))) ; (quote) or (quote . 1)
+			  (write obj port)
+			  (begin
+			    (format port "(~A ~S" catch (cadr obj))
+			    (spaces (+ column *pretty-print-spacing*))
+			    (stacked-list (cddr obj) (+ column *pretty-print-spacing*))
+			    (write-char #\) port))))
 		     
 		     (else
 		      (let* ((objstr (object->string obj))
