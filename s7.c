@@ -50717,7 +50717,8 @@ static s7_pointer g_is_pair_cadr(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer val;
   val = find_symbol_checked(sc, cadar(args));
-  if (!is_pair(val))
+  if ((!is_pair(val)) ||
+      (!is_pair(cdr(val))))
     return(g_is_pair(sc, list_1(sc, g_cadr(sc, set_plist_1(sc, val)))));
   return(make_boolean(sc, is_pair(cadr(val))));
 }

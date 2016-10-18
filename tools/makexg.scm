@@ -3,7 +3,7 @@
 (define xg-file (open-output-file "xg.c"))
 
 (define-macro (hey . args)
-  `(format xg-file ,@args))
+  (cons 'format (cons 'xg-file args)))
 
 (define (heyc arg)
   (display arg xg-file))

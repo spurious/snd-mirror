@@ -438,7 +438,7 @@
 	      ;; if a line wraps, it will confuse the redisplay/cursor positioning code. so truncate the display
 	      (let ((line-len (- (+ end prompt-length 1) start)))
 		(if (>= line-len last-col)
-		    (set! end (- (+ end line-len) last-col))))
+		    (set! end (- (+ start last-col) prompt-length 1))))
 	      
 	      (if (and (integer? red-par-pos)
 		       (<= start red-par-pos)

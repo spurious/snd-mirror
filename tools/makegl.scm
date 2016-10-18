@@ -3,7 +3,7 @@
 (define gl-file (open-output-file "gl.c"))
 
 (define-expansion (hey . args)
-  `(format gl-file ,@args))
+  (cons 'format (cons 'gl-file args)))
 
 (define (heyc arg)
   (display arg gl-file))
