@@ -202,7 +202,7 @@
 	    ,@body)
 	  ,expr))
       (if (and (null? vars) (null? expr))
-	  `(begin ,@body)
+	  (cons 'begin body)
 	  (error "multiple-value-set! vars/exprs messed up"))))
 
 
@@ -287,14 +287,15 @@
   `(for-each define ',args (iota (length ',args))))
 
 (define-macro (destructuring-bind lst expr . body) ; if only there were some use for this!
-  `(let ,(let flatten ((lst1 lst)
-		       (lst2 (eval expr))
-		       (args ()))
-	   (cond ((null? lst1) args)
-		 ((not (pair? lst1)) (cons (list lst1 lst2) args))
-		 (else (flatten (car lst1) (car lst2) 
-				(flatten (cdr lst1) (cdr lst2) args)))))
-     ,@body))
+  (cons 'let 
+	(cons (let flatten ((lst1 lst)
+			    (lst2 (eval expr))
+			    (args ()))
+		(cond ((null? lst1) args)
+		      ((not (pair? lst1)) (cons (list lst1 lst2) args))
+		      (else (flatten (car lst1) (car lst2) 
+				     (flatten (cdr lst1) (cdr lst2) args)))))
+	      body)))
 
 #|
 ;; kinda ugly!
