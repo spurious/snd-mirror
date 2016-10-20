@@ -197,7 +197,8 @@
 					   (not too-long))
 				      (begin
 					(write (cadar lst) port)
-					(when has=>
+					(when (and has=>
+						   (pair? (cddar lst)))
 					  (write-char #\space port)
 					  (write (caddar lst) port)))
 				      (if (not (null? (cdar lst)))
@@ -214,7 +215,8 @@
 			  (write obj port)))
 		     
 		     ((case)
-		      (if (not (pair? (cdr obj)))
+		      (if (or (not (pair? (cdr obj)))
+			      (not (pair? (cddr obj))))
 			  (write obj port)
 			  (begin
 			    (format port "(case ~A" (cadr obj)) ; send out the selector
