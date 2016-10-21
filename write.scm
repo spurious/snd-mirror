@@ -377,7 +377,7 @@
 			    (pretty-print-1 (cadr obj) port column))))
 		     
 		     ((catch)
-		      (if (not (pair? (cdr obj))) ; (quote) or (quote . 1)
+		      (if (not (pair? (cdr obj))) ; (catch) or (catch . 1)
 			  (write obj port)
 			  (begin
 			    (format port "(~A ~S" catch (cadr obj))
