@@ -360,13 +360,14 @@
 			    (display str port)
 			    (let ((settee (object->string (cadr obj))))
 			      (format port "(set! ~A" settee)
-			      (if (> (length settee) 20)
-				  (begin
-				    (spaces (+ column 6))
-				    (pretty-print-1 (caddr obj) port (+ column 6)))
-				  (begin
-				    (write-char #\space port)
-				    (pretty-print-1 (caddr obj) port (+ column 7 (length settee)))))
+			      (if (pair? (cddr obj))
+				  (if (> (length settee) 20)
+				      (begin
+					(spaces (+ column 6))
+					(pretty-print-1 (caddr obj) port (+ column 6)))
+				      (begin
+					(write-char #\space port)
+					(pretty-print-1 (caddr obj) port (+ column 7 (length settee))))))
 			      (write-char #\) port)))))
 		     
 		     ((quote)

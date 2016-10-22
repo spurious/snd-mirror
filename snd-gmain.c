@@ -48,7 +48,7 @@ static gint window_close(GtkWidget *w, GdkEvent *event, gpointer context)
 {
   if (snd_exit_cleanly(EXIT_FORCED))
     snd_exit(0);
-  return(false);
+  return(0);
 }
 
 
@@ -90,7 +90,7 @@ static gint window_iconify(GtkWidget *w, GdkEventWindowState *event, gpointer co
 	    }
 	}
     }
-  return(false);
+  return(0);
 }
 
 

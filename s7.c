@@ -75157,6 +75157,7 @@ int main(int argc, char **argv)
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
  * could (apply append (map...)) omit the extra copy?
+ * add a check for symbol-table glommage
  *
  * Snd:
  * in FC 25 the close-window decoration does not close Snd -- under gdb it works?
