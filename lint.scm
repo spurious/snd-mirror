@@ -3360,106 +3360,107 @@
 					     ((#f eq?) 'eq?)
 					     (else 'eqv?))))
 
+			     (define (collect-vals p)
+			       ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
+			       ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
+			       ;;   We could add both: 1 1.0 as in cond?
+			       ;;
+			       ;; another problem: using memx below means the returned value of the expression
+			       ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
+			       ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
+			       ;;
+			       ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
+			       ;;   is more sensible, but that also changes the behavior of the expression:
+			       ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
+			       ;;
+			       ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
+					  
+			       (case (car p) 
+				 ((string=? equal?)
+				  (set! eqfnc (if (or (not eqfnc)
+						      (eq? eqfnc (car p)))
+						  (car p)
+						  'equal?))
+				  (and (= (length p) 3)
+				       (constant-arg p)))
+				 
+				 ((char=?)
+				  (if (memq eqfnc '(#f char=?))
+				      (set! eqfnc 'char=?)
+				      (if (not (eq? eqfnc 'equal?))
+					  (set! eqfnc 'eqv?)))
+				  (and (= (length p) 3)
+				       (constant-arg p)))
+				 
+				 ((eq? eqv?)
+				  (let ((leqf (car (->eqf (->lint-type ((if (code-constant? (cadr p)) cadr caddr) p))))))
+				    (cond ((not eqfnc) 
+					   (set! eqfnc leqf))
+					  
+					  ((or (memq leqf '(#t equal?))
+					       (not (eq? eqfnc leqf)))
+					   (set! eqfnc 'equal?))
+					  
+					  ((memq eqfnc '(#f eq?))
+					   (set! eqfnc leqf))))
+				  (and (= (length p) 3)
+				       (constant-arg p)))
+				 
+				 ((char-ci=? string-ci=? =)
+				  (and (or (not eqfnc)
+					   (eq? eqfnc (car p)))
+				       (set! eqfnc (car p))
+				       (= (length p) 3)
+				       (constant-arg p)))
+				 
+				 ((eof-object?)
+				  (upgrade-eqf)
+				  (set! vals (cons #<eof> vals)))
+				 
+				 ((not)
+				  (upgrade-eqf)
+				  (set! vals (cons #f vals)))
+				 
+				 ((boolean?) 
+				  (upgrade-eqf)
+				  (set! vals (cons #f (cons #t vals))))
+				 
+				 ((zero?)
+				  (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
+				  (set! vals (cons 0 (cons 0.0 vals))))
+				 
+				 ((null?)
+				  (upgrade-eqf)
+				  (set! vals (cons () vals)))
+				 
+				 ((memq memv member)
+				  (cond ((eq? (car p) 'member)
+					 (set! eqfnc 'equal?))
+					
+					((eq? (car p) 'memv)
+					 (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
+					
+					((not eqfnc)
+					 (set! eqfnc 'eq?)))
+				  (and (= (length p) 3)
+				       (quoted-pair? (caddr p))
+				       (set! vals (append (cadr (caddr p)) vals))))
+				 
+				 (else #f)))
+
 			     (do ((fp (cdr form) (cdr fp)))
-				 ((null? fp))
-			       (let ((p (and (pair? fp)
-					     (car fp))))
+				 ((not (pair? fp)))
+			       (let ((p (car fp)))
 				 (if (and (pair? p)
 					  (if (not sym)
 					      (set! sym (eqv-selector p))
 					      (equal? sym (eqv-selector p)))
 					  (or (not (memq eqfnc '(char-ci=? string-ci=? =)))
 					      (memq (car p) '(char-ci=? string-ci=? =)))
-					  
-					  ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
-					  ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
-					  ;;   We could add both: 1 1.0 as in cond?
-					  ;;
-					  ;; another problem: using memx below means the returned value of the expression
-					  ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
-					  ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
-					  ;;
-					  ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
-					  ;;   is more sensible, but that also changes the behavior of the expression:
-					  ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
-					  ;;
-					  ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
-					  
-					  (case (car p) 
-					    ((string=? equal?)
-					     (set! eqfnc (if (or (not eqfnc)
-								 (eq? eqfnc (car p)))
-							     (car p)
-							     'equal?))
-					     (and (= (length p) 3)
-						  (constant-arg p)))
-					    
-					    ((char=?)
-					     (if (memq eqfnc '(#f char=?))
-						 (set! eqfnc 'char=?)
-						 (if (not (eq? eqfnc 'equal?))
-						     (set! eqfnc 'eqv?)))
-					     (and (= (length p) 3)
-						  (constant-arg p)))
-					    
-					    ((eq? eqv?)
-					     (let ((leqf (car (->eqf (->lint-type ((if (code-constant? (cadr p)) cadr caddr) p))))))
-					       (cond ((not eqfnc) 
-						      (set! eqfnc leqf))
-						     
-						     ((or (memq leqf '(#t equal?))
-							  (not (eq? eqfnc leqf)))
-						      (set! eqfnc 'equal?))
-						     
-						     ((memq eqfnc '(#f eq?))
-						      (set! eqfnc leqf))))
-					     (and (= (length p) 3)
-						  (constant-arg p)))
-					    
-					    ((char-ci=? string-ci=? =)
-					     (and (or (not eqfnc)
-						      (eq? eqfnc (car p)))
-						  (set! eqfnc (car p))
-						  (= (length p) 3)
-						  (constant-arg p)))
-					    
-					    ((eof-object?)
-					     (upgrade-eqf)
-					     (set! vals (cons #<eof> vals)))
-					    
-					    ((not)
-					     (upgrade-eqf)
-					     (set! vals (cons #f vals)))
-					    
-					    ((boolean?) 
-					     (upgrade-eqf)
-					     (set! vals (cons #f (cons #t vals))))
-					    
-					    ((zero?)
-					     (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
-					     (set! vals (cons 0 (cons 0.0 vals))))
-					    
-					    ((null?)
-					     (upgrade-eqf)
-					     (set! vals (cons () vals)))
-					    
-					    ((memq memv member)
-					     (cond ((eq? (car p) 'member)
-						    (set! eqfnc 'equal?))
-						   
-						   ((eq? (car p) 'memv)
-						    (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
-						   
-						   ((not eqfnc)
-						    (set! eqfnc 'eq?)))
-					     (and (= (length p) 3)
-						  (quoted-pair? (caddr p))
-						  (set! vals (append (cadr (caddr p)) vals))))
-					    
-					    (else #f)))
+					  (collect-vals p))
 
 				     (if (not start)
-					 (set! start fp)
+					 (set! start fp) ; we're in a loop above...
 					 (if (and (proper-list? form)
 						  (len=1? fp))
 					     (return (if (eq? start (cdr form))
@@ -3469,6 +3470,8 @@
 												((eq? g start) 
 												 len))))
 							      ,(gather-or-eqf-elements eqfnc sym vals))))))
+				     
+				     ;; false branch of if above -- not consequent on previous
 				     (when (pair? start)
 				       (if (eq? fp (cdr start))
 					   (begin
@@ -3496,7 +3499,7 @@
 			     (do ((selector #f)              ; (or (and (eq?...)...)....) -> (case ....)
 				  (keys ())
 				  (fp (cdr form) (cdr fp)))
-				 ((or (null? fp)
+				 ((or (not (pair? fp))
 				      (let ((p (and (pair? fp)
 						    (car fp))))
 					(not (and (len>1? p)
@@ -3583,7 +3586,7 @@
 			     (do ((new-form ())
 				  (retry #f)
 				  (exprs (cdr form) (cdr exprs)))
-				 ((null? exprs) 
+				 ((not (pair? exprs))
 				  (return (and (pair? new-form)
 					       (if (null? (cdr new-form))
 						   (car new-form)
@@ -4586,7 +4589,9 @@
 						 (if (null? div)
 						     (cons '* (reverse mul))
 						     `(/ (* ,@(reverse mul)) ,@(reverse div))))))
-				   (simplify-numerics expr env))))
+				   (if (equal? expr form)
+				       form
+				       (simplify-numerics expr env)))))
 			      
 			      (else (cons '* val)))))))))
 	      (hash-table-set! h '* num*)
@@ -14893,34 +14898,34 @@
 					     ;; (cond ((= x y) z) (else #<unspecified>)
 					     (lint-format "this #<unspecified> is redundant: ~A" caller clause))
 				       
-					 (if (and (pair? first-sequel)   ; (cond (a A) (else (cond ...))) -> (cond (a A) ...)
-						  (null? (cdr sequel)))  ;    similarly for if, when, and unless
-					     (case (car first-sequel)
-					       ((cond)
-						;; (cond ((< x 1) 2) (else (cond ((< y 3) 2) (#t 4))))
+					 (when (and (pair? first-sequel)   ; (cond (a A) (else (cond ...))) -> (cond (a A) ...)
+						    (null? (cdr sequel)))  ;    similarly for if, when, and unless
+					   (case (car first-sequel)
+					     ((cond)
+					      ;; (cond ((< x 1) 2) (else (cond ((< y 3) 2) (#t 4))))
+					      (lint-format "else clause could be folded into the outer cond: ~A" caller 
+							   (lists->string form (append (copy form (make-list ctr)) 
+										       (cdr first-sequel)))))
+					     ((if)
+					      ;; (cond (a A) (else (if b B)))
+					      (when (and (len>1? (cdr first-sequel))
+							 (proper-list? first-sequel))
 						(lint-format "else clause could be folded into the outer cond: ~A" caller 
-							     (lists->string form (append (copy form (make-list ctr)) 
-											 (cdr first-sequel)))))
-					       ((if)
-						;; (cond (a A) (else (if b B)))
-						(when (and (len>1? (cdr first-sequel))
-							   (proper-list? first-sequel))
-						  (lint-format "else clause could be folded into the outer cond: ~A" caller 
-							       (lists->string form 
-									      (append (copy form (make-list ctr)) 
-										      (if (= (length first-sequel) 3)
-											  (list (cdr first-sequel))
-											  `((,(cadr first-sequel) ,@(unbegin (caddr first-sequel)))
-											    (else ,@(unbegin (cadddr first-sequel))))))))))
-					       ((when unless)
-						;; (cond (a A) (else (when b B)))
-						(when (len>1? (cdr first-sequel)) 
-						  (lint-format "else clause could be folded into the outer cond: ~A" caller 
-							       (lists->string form 
-									      (append (copy form (make-list ctr))
-										      (if (eq? (car first-sequel) 'when)
-											  `((,(cadr first-sequel) ,@(cddr first-sequel)))
-											  `(((not ,(cadr first-sequel)) ,@(cddr first-sequel)))))))))))))
+							     (lists->string form 
+									    (append (copy form (make-list ctr)) 
+										    (if (= (length first-sequel) 3)
+											(list (cdr first-sequel))
+											`((,(cadr first-sequel) ,@(unbegin (caddr first-sequel)))
+											  (else ,@(unbegin (cadddr first-sequel))))))))))
+					     ((when unless)
+					      ;; (cond (a A) (else (when b B)))
+					      (when (len>1? (cdr first-sequel)) 
+						(lint-format "else clause could be folded into the outer cond: ~A" caller 
+							     (lists->string form 
+									    (append (copy form (make-list ctr))
+										    (if (eq? (car first-sequel) 'when)
+											`((,(cadr first-sequel) ,@(cddr first-sequel)))
+											`(((not ,(cadr first-sequel)) ,@(cddr first-sequel)))))))))))))
 				      ((not (= ctr len)))
 
 				      ((equal? test ''else)
@@ -20201,7 +20206,15 @@
 ;;; if x `() `() -- lint could embed the if here and elsewhere
 ;;; recur|do->assoc/member/*-position -- didn't I check this?
 ;;;
+;;; 3472 3849 4619 12932 14923 16868 17303 18896
 ;;; 
+;;; "(let () (define (func x) (if (close-input-port ) (caaddr /) (with-input-from-file 0(let   (make-dilambda (lambda () 1) (lambda (a) a))  (set!  i01+))))) 16868
+;;; "(let () (define (func x) (if (or . 1+0/0i  ) (caaddr (caaadr  /)))) (define (hi) (func (make-hook '(0 0 #f)))) 3472
+;;; "(let () (define (func x) (cond ((byte-vector-ref ) (iterator? 12.)) (else (unless .+2 '((x 1) y . 2)  1  - or  case  quote  . __asdf__  ))))" 14923
+;;; "(let () (define (func x) (lambda* .(lcm  . do  ))) (define (hi) (func (string #\\a #\\null #\\b))) (hi))" 18896
+;;; "(let () (define (func x) (let . `(((x 1)))   )) (define (hi) (func =>)) (hi))" 12923
+;;; "(let () (define (func x) (do . 1  )) (define (hi) (func (cons 1 2))) (hi))" (list 'do (append varlist (car do-form)) '...) 17303
+;;;
 ;;; repl complification 
 ;;;   (let ((line-len (- (+ end prompt-length 1) start))) (if (>= line-len last-col) (set! end (- (+ end line-len) last-col))))
 ;;;   (let ((line-len (- (+ end prompt-length 1) start))) (if (>= line-len last-col) (set! end (- (+ start last-col) prompt-length 1))))
