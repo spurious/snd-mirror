@@ -1587,7 +1587,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	}
 
       PANE_BOX(sp) = gtk_vbox_new(false, 0);
-      gtk_paned_add1(GTK_PANED(SND_PANE(sp)), PANE_BOX(sp));
+      gtk_paned_pack1(GTK_PANED(SND_PANE(sp)), PANE_BOX(sp), false, false); /* not add1 as of gtk 3.18.9 (Tito Latini) */
       gtk_widget_show(PANE_BOX(sp));
 
       NAME_HBOX(sp) = gtk_hbox_new(false, 0);

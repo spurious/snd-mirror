@@ -21,7 +21,7 @@
 (define all-types ())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "gboolean*" "GdkWindow*"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 (set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*"
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
@@ -141,7 +141,7 @@
 					;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" ;"GdkVisibilityState"
 	"GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda" "gboolean*"
+	"GtkImageType" "GtkTreeModelFlags" "gint8" "gshort" "guint8" "lambda"
 	
 	"time_t" ;"GtkWindowGroup*" 
 	;"GtkSettings*" ;"GdkDevice*" 
@@ -164,7 +164,7 @@
 					;"GdkOverlapType" 
 	"GdkScrollDirection" "GdkSettingAction" ;"GdkVisibilityState" 
 	"GdkWindowState" "GdkWindowType"
-	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"  "gboolean*"
+	"GtkImageType" "GtkTreeModelFlags" "etc" "gshort"
 	
 					;"GtkWindowGroup*" 
 	"time_t" ;"GtkSettings*" ;"GdkDevice*" 
@@ -823,26 +823,26 @@
 	 "event_func"
 	 (parse-args "GdkEvent* event lambda_data func_info" 'callback)
 	 'permanent)
-					;			(list 'GdkSpanFunc
-					;			      "void"
-					;			      "span_func"
-					;			      (parse-args "GdkSpan* span lambda_data func_info" 'callback)
-					;			      'temporary)
-					;			(list 'GtkFunction
-					;			      "gboolean"
-					;			      "func1"
-					;			      (parse-args "lambda_data func_info" 'callback)
-					;			      'semi-permanent)
-					;			(list 'GtkKeySnoopFunc
-					;			      "gint"
-					;			      "snoop_func"
-					;			      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_info" 'callback)
-					;			      'semi-permanent)
-   (list 'GtkMenuPositionFunc
-	 "void"
-	 "menu_position_func"
-	 (parse-args "GtkMenu* menu gint* [x] gint* [y] gboolean* [push] lambda_data func_info" 'callback)
-	 'permanent)
+					;	(list 'GdkSpanFunc
+					;	      "void"
+					;	      "span_func"
+					;	      (parse-args "GdkSpan* span lambda_data func_info" 'callback)
+					;	      'temporary)
+					;	(list 'GtkFunction
+					;	      "gboolean"
+					;	      "func1"
+					;	      (parse-args "lambda_data func_info" 'callback)
+					;	      'semi-permanent)
+					;	(list 'GtkKeySnoopFunc
+					;	      "gint"
+					;	      "snoop_func"
+					;	      (parse-args "GtkWidget* widget GdkEventKey* event lambda_data func_info" 'callback)
+					;	      'semi-permanent)
+					;   (list 'GtkMenuPositionFunc
+					;	 "void"
+					;	 "menu_position_func"
+					;	 (parse-args "GtkMenu* menu gint* [x] gint* [y] gboolean* [push] lambda_data func_info" 'callback)
+					;	 'permanent)
    (list 'GtkTextTagTableForeach
 	 "void"
 	 "text_tag_table_foreach"
