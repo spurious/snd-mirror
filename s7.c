@@ -5167,7 +5167,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   unheap(x);
   typeflag(x) = T_SYMBOL;
   symbol_set_name_cell(x, str);
-  set_global_slot(x, sc->undefined);                       /* was sc->nil; */
+  set_global_slot(x, sc->undefined);                       /* was sc->nil */
   set_initial_slot(x, sc->undefined);
   symbol_set_local(x, 0LL, sc->nil);
   symbol_set_tag(x, 0);
@@ -74667,7 +74667,7 @@ s7_scheme *s7_init(void)
                                      defun("emergency-exit",	emergency_exit,		0, 1, false);
                                      defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
-                              s7_define_function(sc, "abort",  g_abort,         0, 0, true, "drop into gdb I hope");
+  s7_define_function(sc, "abort", g_abort, 0, 0, true, "drop into gdb I hope");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
@@ -74927,14 +74927,14 @@ s7_scheme *s7_init(void)
   s7_define_macro(sc, "quasiquote", g_quasiquote, 1, 0, false, H_quasiquote);
 
 #if (!WITH_PURE_S7)
-  s7_eval_c_string(sc, "(define-macro (defmacro name args . body) `(define-macro ,(cons name args) ,@body))");
-  s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) `(define-macro* ,(cons name args) ,@body))");
+  s7_eval_c_string(sc, "(define-macro (defmacro name args . body) (cons 'define-macro (cons (cons name args) body)))");
+  s7_eval_c_string(sc, "(define-macro (defmacro* name args . body) (cons 'define-macro* (cons (cons name args) body)))");
 
-  s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) `(,consumer (,producer)))");   
+  s7_eval_c_string(sc, "(define-macro (call-with-values producer consumer) (list consumer (list producer)))");   
   /* (call-with-values (lambda () (values 1 2 3)) +) */
 
   s7_eval_c_string(sc, "(define-macro (multiple-value-bind vars expression . body)                            \n\
-                          `((lambda ,vars ,@body) ,expression))");
+                          (list (cons 'lambda (cons vars body)) expression))");
 
   s7_eval_c_string(sc, "(define-macro (cond-expand . clauses)                                                 \n\
                           (letrec ((traverse (lambda (tree)                                                   \n\
@@ -74943,10 +74943,10 @@ s7_scheme *s7_init(void)
 				                          (if (null? (cdr tree)) () (traverse (cdr tree))))   \n\
 			                            (if (memq tree '(and or not else)) tree                   \n\
 			                                (and (symbol? tree) (provided? tree)))))))            \n\
-                            `(cond ,@(map (lambda (clause)                                                    \n\
-		                             (cons (traverse (car clause))                                    \n\
-			                           (if (null? (cdr clause)) '(#f) (cdr clause))))             \n\
-		                          clauses))))");
+                            (cons 'cond (map (lambda (clause)                                                 \n\
+		                               (cons (traverse (car clause))                                  \n\
+			                             (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
+		                             clauses))))");
 #endif
 
   s7_eval_c_string(sc, "(define-expansion (reader-cond . clauses)                                             \n\
@@ -75158,6 +75158,7 @@ int main(int argc, char **argv)
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
  * could (apply append (map...)) omit the extra copy?
  * add a check for symbol-table glommage
+ * (list 1 (symbol ".") 2) -> (1 . 2)
  *
  * Snd:
  * in FC 25 the close-window decoration does not close Snd -- under gdb it works?

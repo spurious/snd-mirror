@@ -828,7 +828,7 @@ leaves the lisp listener pane"
   mouse_enter_listener_hook = Xen_define_hook(S_mouse_enter_listener_hook, "(make-hook 'widget)", 1, H_mouse_enter_listener_hook);
   mouse_leave_listener_hook = Xen_define_hook(S_mouse_leave_listener_hook, "(make-hook 'widget)", 1, H_mouse_leave_listener_hook);
 
-  Xen_define_typed_procedure(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection,    s7_make_signature(s7, 1, s));
+  Xen_define_typed_procedure(S_listener_selection, g_listener_selection_w,       0, 0, 0, H_listener_selection,    s7_make_signature(s7, 1, s7_make_signature(s7, 2, s, b)));
   Xen_define_typed_procedure(S_reset_listener_cursor, g_reset_listener_cursor_w, 0, 0, 0, H_reset_listener_cursor, s7_make_signature(s7, 1, b));
   Xen_define_typed_procedure(S_goto_listener_end, g_goto_listener_end_w,         0, 0, 0, H_goto_listener_end,     s7_make_signature(s7, 1, b));
 

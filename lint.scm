@@ -20,7 +20,7 @@
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (slow, and this error almost never happens)
 (define *report-constant-expressions-in-do* #f)           ; kinda dumb
-(define *report-bad-variable-names* '(l ll O ~))          ; bad names -- a list to check such as:
+(define *report-bad-variable-names* '(l ll .. O ~)) ; bad names -- a list to check such as:
 ;;;             '(l ll .. ~ data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
@@ -321,7 +321,7 @@
 				(hash-table-set! h d #t))
 			      '(define define* define-constant lambda lambda* curlet require load eval eval-string
 				define-macro define-macro* define-bacro define-bacro* define-expansion 
-				definstrument defanimal define-envelope 
+				definstrument define-animal define-envelope 
 				define-values define-module define-method
 				define-syntax define-public define-inlinable define-integrable define^))
 		    h))
@@ -714,8 +714,8 @@
     (define (tree-equal-member sym tree)
       (and (pair? tree)
 	   (or (equal? (car tree) sym)
-	       (tree-member sym (car tree))
-	       (tree-member sym (cdr tree)))))
+	       (tree-equal-member sym (car tree))
+	       (tree-equal-member sym (cdr tree)))))
 
     (define (tree-unquoted-member sym tree)
       (and (unquoted-pair? tree)
@@ -5074,6 +5074,8 @@
 		      ((and (eq? (caar args) '-)      ; (abs (- x)) -> (abs x)
 			    (len=1? (cdar args)))
 		       (list (car form) (cadar args)))
+
+		      ;; make-polar as arg never happens
 		      
 		      (else (cons (car form) args))))
 	      (hash-table-set! h 'abs numabs)
@@ -8617,6 +8619,17 @@
 				      form))))))
 	  (hash-special 'eqv? sp-eqv?)
 	  (hash-special 'equal? sp-eqv?))
+
+	(let ()
+	  (define (sp-morally-equal caller head form env)
+	    (if (and (= (length form) 3)
+		     (code-constant? (cadr form))
+		     (code-constant? (caddr form)))
+		(lint-format "perhaps ~A" caller
+			     (lists->string form
+					    (apply morally-equal? (cdr form))))))
+	  (hash-special 'morally-equal? sp-morally-equal))
+
 	
 	;; ---------------- map for-each ----------------
 	(let ()
@@ -10465,10 +10478,9 @@
 		       (when (> (length hist) 2) ; an experiment -- if all refs are by list-ref (in effect) suggest a vector
 			 (let ((init (var-initial-value local-var)))
 			   ;; (format *stderr* "hist: ~A~%init: ~A~%outer: ~A~%" hist init outer-form)
-			   (when (pair? init)
-			     
-			     ;; list->vector
-			     (if (and (or (memq (car init) '(list make-list string->list vector->list))
+			   (when (and (pair? init)
+				      ;; list->vector
+				      (or (memq (car init) '(list make-list string->list vector->list))
 					  (and (eq? (car init) 'quote)
 					       (pair? (cdr init))
 					       (pair? (cadr init))))
@@ -10480,11 +10492,10 @@
 							 (memq (car p) '(list-ref list-set! length reverse map for-each
 									 list->vector list->string list? pair? null? quote)))))
 					      hist))
-				 (lint-format "~A could be a vector, rather than a list" caller vname))
+			     (lint-format "~A could be a vector, rather than a list" caller vname))))
 			     ;; string->byte-vector got no hits (see tmp)
 			     ;; vector->int|float-vector is mostly test stuff
 			     ;; there are only a few a-lists>20 in len
-			     )))
 		       ;; --------
 
 		       (let ((first (car hist)))                               ; all but the initial binding have to match this
@@ -10747,7 +10758,7 @@
 						vname (truncated-list->string (var-initial-value local-var)) (var-definer local-var))))
 			     
 			     ;; not ref'd or set
-			     (if (not (memq vname '(documentation signature iterator? defanimal)))
+			     (if (not (memq vname '(documentation signature iterator? define-animal)))
 				 (let ((val (if (pair? (var-history local-var)) (car (var-history local-var)) (var-initial-value local-var)))
 				       (def (var-definer local-var)))
 				   (let-temporarily ((line-number (if (eq? caller top-level:) -1 line-number)))
@@ -12649,16 +12660,18 @@
 			     (let ((cc1 (simplify-boolean (list 'not (car c1)) () () env)))
 			       (lint-format "perhaps ~A" caller 
 					    (lists->string form 
-							   (if (null? (cddr c2)) 
-							       (list 'and cc1 (cadr c2))
-							       (list 'and cc1 (cons 'begin (cdr c2))))))))
+							   (list 'and cc1
+								 (if (null? (cddr c2))
+								     (cadr c2)
+								     (cons 'begin (cdr c2))))))))
 			(and (pair? (car c1))  ; (cond ((null? x) #t) (else y)) -> (or (null? x) y)
 			     (eq? (return-type (caar c1) env) 'boolean?)
 			     (lint-format "perhaps ~A" caller
 					  (lists->string form 
-							 (if (null? (cddr c2)) 
-							     (list 'or (car c1) (cadr c2))
-							     (list 'or (car c1) (cons 'begin (cdr c2)))))))))
+							 (list 'or (car c1)
+							       (if (null? (cddr c2)) 
+								   (cadr c2)
+								   (cons 'begin (cdr c2)))))))))
 	       (and (boolean? (cadr c2))
 		    (null? (cddr c2))
 		    (not (equal? (cadr c1) (cadr c2)))
@@ -13427,7 +13440,7 @@
 		      (hash-walker op define-walker))
 		    '(define define* define-constant 
 		      define-macro define-macro* define-bacro define-bacro* define-expansion
-		      definstrument defanimal define-envelope        ; for clm
+		      definstrument define-animal define-envelope        ; for clm
 		      define-public define*-public defmacro-public define-inlinable 
 		      define-integrable define^)))                   ; these give more informative names in Guile and scmutils (MIT-scheme))
 
@@ -13796,9 +13809,10 @@
 							   ;;          (if x (f y) (g y)) -> ((if x f g) y)
 							   ;; but f and g can't be or/and unless there are no expressions
 							   ;;   I now like all of these -- originally found them odd: CL influence!
-							   (if (equal? true-op test)
-							       (cons (list 'or test false-op) true-rest)
-							       (cons (list 'if test true-op false-op) true-rest)))
+							   (cons (if (equal? true-op test)
+								     (list 'or test false-op)
+								     (list 'if test true-op false-op))
+								 true-rest))
 							  
 							  ((and (eq? (caadr diff) #t)
 								(not (cadadr diff)))
@@ -15423,7 +15437,7 @@
 								   (if (and (pair? (car clause))
 									    (eq? (caar clause) 'not))
 								       (cons 'unless (append (cdar clause) (cdr clause)))
-								       (cons 'when (cons (car clause) (cdr clause))))))))))
+								       (cons 'when (copy clause)))))))))
 
 			 (when has-else ; len > 1 here
 			   (let ((last-clause (list-ref form (- len 1)))) ; not the else branch! -- just before it.
@@ -15676,6 +15690,9 @@
 		(let ((sel-type #t)
 		      (selector (cadr form))
 		      (suggest made-suggestion))
+
+                  ;(let ((leaves (tree-leaves form)) (branches (length (cddr form))))
+                  ;  (if (> leaves 100) (format *stderr* "case: ~A in ~A: ~A~%" leaves branches (/ (* 1.0 leaves) branches))))
 
 		  ;; ----------------
 		  ;; if regular case + else -- just like cond above
@@ -16745,14 +16762,24 @@
 						   (equal? (cadr p) (list 'not vname)))
 					      (and (pair? vvalue)
 						   (memq (car vvalue) '(assoc assv assq member memv memq))
-						   (pair? (cadr p))
+						   (len>1? (cadr p))         ; (let ((x (memq z y))) (if (pair? x) (g x))) -> (cond ((memq z y) => g))
 						   (or (eq? (caadr p) 'pair?)
+						       (and (eq? (caadr p) 'list?)
+							    (lint-format "in ~A, ~A can't be null so pair? might be better" caller p vname)
+							    #t)
 						       (and (eq? (caadr p) 'null?)
 							    ;; (let ((x (assoc y z))) (if (null? x) (g x)))
 							    (lint-format "in ~A, ~A can't be null because ~A in ~A only returns #f or a pair" 
 									 caller p vname (car vvalue) (truncated-list->string (car varlist)))
 							    #f))
-						   (eq? (cadadr p) vname)))
+						   (eq? (cadadr p) vname))
+					      (and (memq (car vvalue) '(char-position string-position string->number length)) ; length only in s7
+						   (or (eq? (cadr p) vname)
+						       (and (len>1? (cadr p))
+							    (or (memq (caadr p) '(number? complex?))
+								(and (not (eq? (car vvalue) 'string->number))
+								     (eq? (caadr p) 'integer?)))
+							    (eq? (cadadr p) vname)))))
 					  
 					  (or (and (len=2? (caddr p))   ; one func arg
 						   (or (eq? vname (cadr (caddr p)))
@@ -18464,9 +18491,9 @@
 				  ;; (call-with-input-file "file" (lambda (p) (read-char p))) -> (call-with-input-file "file" read-char)
 				  (lint-format "perhaps ~A" caller 
 					       (lists->string form 
-							      (if (= len 2)
-								  (list head (caar body))
-								  (list head (cadr form) (caar body)))))
+							      (list head (if (= len 2)
+									     (caar body)
+									     (values (cadr form) (caar body))))))
 				  (let ((cc (make-var :name port
 						      :initial-value (list (case head 
 									     ((call-with-input-string)  'open-input-string)
@@ -18659,9 +18686,9 @@
 		   (lint-format "perhaps ~A" caller 
 				(lists->string form 
 					       (if doc-string
-						   `(let ((documentation ,doc-string))
-						      (lambda ,(caar body) ,@(cdar body)))
-						   (cons 'lambda (cons (caar body) (cdar body)))))))
+						   (list 'let (list (list 'documentation doc-string))
+						      (cons 'lambda (copy (car body))))
+						   (cons 'lambda (copy (car body)))))))
 		  ((2) 
 		   (when (let arglists-equal? ((args1 (caar body))
 					       (args2 (caadr body)))
@@ -19877,7 +19904,7 @@
 		    (cons #\! (lambda (str)
 				(if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true" "!r6rs") string-ci=?) ; for MIT-scheme
 				    (string->keyword (substring str 1))
-				    (if (string=? str "!eof") ; Bigloo?
+				    (if (string=? str "!eof") ; Bigloo? or chicken? Guile uses *eof* I think
 					(begin
 					  (format outport "~NC#!eof is probably #<eof> in s7~%" lint-left-margin #\space)
 					  #<eof>)
@@ -20231,7 +20258,4 @@
     #f))
 |#
 
-;;; real-part make-polar?
-;;; magnitude make-polar?
-
-;;; 169 28358 696772
+;;; 172 28358 717695

@@ -234,7 +234,7 @@
 
 (set! *clm-default-frequency* 0.0)
 
-(define-macro (defanimal args . body)
+(define-macro (define-animal args . body)
   (let ((name (car args))
 	(targs (cdr args)))
   `(begin 
@@ -247,7 +247,7 @@
            (list)))))
 
 #|
-(define-macro (defanimal args . body)
+(define-macro (define-animal args . body)
   (let ((name (car args))
 	(targs (cdr args)))
   `(begin
@@ -431,7 +431,7 @@
 ;;;
 ;;; Knudsen's frog
 
-(defanimal (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
+(define-animal (a-frog beg dur freq amp amp-env gliss gliss-env pulse-dur pulse-env fm-index fm-freq)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(base (make-oscil freq))
@@ -474,7 +474,7 @@
 	  0.0 10))
 |#
 
-(defanimal (a-cricket beg dur freq freq1 amp amp-env pulse-dur pulse-env)
+(define-animal (a-cricket beg dur freq freq1 amp amp-env pulse-dur pulse-env)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(base (make-oscil freq))
@@ -497,7 +497,7 @@
 ;;; Oak Toad
 ;;;   might be slightly too much noise (the peep I worked on turned out to be a raspy one)
 
-(defanimal (oak-toad beg amp)
+(define-animal (oak-toad beg amp)
   (let ((dur .15)
 	(start (seconds->samples beg)))
     (let ((stop (seconds->samples (+ beg dur)))
@@ -527,7 +527,7 @@
 ;;;
 ;;; Southern cricket frog
 
-(defanimal (southern-cricket-frog beg amp)
+(define-animal (southern-cricket-frog beg amp)
   (let ((dur1 .03)
 	(start (seconds->samples beg)))
     (let ((stop (seconds->samples (+ beg dur1)))
@@ -554,7 +554,7 @@
 ;;;
 ;;; Northern leopard frog (2)
 
-(defanimal (northern-leopard-frog-1 beg amp)
+(define-animal (northern-leopard-frog-1 beg amp)
   ;; this is slightly low-passed, and I don't quite have the vowel right at the end
   (let ((dur 4.2))
     (let ((start (seconds->samples beg))
@@ -614,7 +614,7 @@
 ;; (with-sound (:statistics #t :play #t) (northern-leopard-frog-1 0 .5))
 
 
-(defanimal (northern-leopard-frog-2 beg amp)
+(define-animal (northern-leopard-frog-2 beg amp)
   ;; rocky 57 2
   (let ((start (seconds->samples beg))
 	(dur 1.53)
@@ -711,7 +711,7 @@
 ;;;
 ;;; Green tree-frog
 
-(defanimal (green-tree-frog beg amp)
+(define-animal (green-tree-frog beg amp)
   (let ((dur 0.2)
 	(pitch 277)
 	(start (seconds->samples beg)))
@@ -743,7 +743,7 @@
 ;;;
 ;;; Pinewoods tree-frog
 
-(defanimal (pinewoods-tree-frog beg dur amp)
+(define-animal (pinewoods-tree-frog beg dur amp)
   (let ((pitch 205.0)
 	(pulse-dur .009)
 	(start (seconds->samples beg))
@@ -790,7 +790,7 @@
 ;;;
 ;;; Squirrel tree frog
 
-(defanimal (squirrel-tree-frog beg dur amp)
+(define-animal (squirrel-tree-frog beg dur amp)
   (let ((pitch 120)
 	(pulse-dur 0.24))
     (let ((start (seconds->samples beg))
@@ -835,7 +835,7 @@
 ;;;
 ;;; Ornate chorus frog
 
-(defanimal (ornate-chorus-frog beg dur amp)
+(define-animal (ornate-chorus-frog beg dur amp)
   (let ((pulse-dur 0.024)
 	(pitch 1210)
 	(start (seconds->samples beg))
@@ -862,7 +862,7 @@
 ;;;
 ;;; Spring peeper
 
-(defanimal (spring-peeper beg amp)
+(define-animal (spring-peeper beg amp)
   (let ((dur 0.17)
 	(pause 0.23)
 	(dur2 .13)
@@ -903,7 +903,7 @@
 ;;;
 ;;; Crawfish frog
 
-(defanimal (crawfish-frog beg amp)
+(define-animal (crawfish-frog beg amp)
   (let ((dur 0.6)
 	(pitch 58))
     (let ((start (seconds->samples beg))
@@ -946,7 +946,7 @@
 ;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
 ;;; animal seems to group these in 3's
 
-(defanimal (river-frog beg amp)
+(define-animal (river-frog beg amp)
   (let ((dur 1.85)
 	(pulse-pitch 42)
 	(mid-pitch 185)
@@ -992,7 +992,7 @@
 ;;;
 ;;; Bullfrog
 
-(defanimal (bullfrog beg amp)
+(define-animal (bullfrog beg amp)
   (let ((start (seconds->samples beg))
 	(dur 0.81))
     (let ((stop (seconds->samples (+ beg dur)))
@@ -1043,7 +1043,7 @@
 
 (define (texas-toad beg1 dur1 amp1)
   
-  (defanimal (texas-toad-1 beg dur amp)
+  (define-animal (texas-toad-1 beg dur amp)
     (let ((pulse-dur .0173))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -1079,7 +1079,7 @@
 ;;;
 ;;; American toad
 
-(defanimal (american-toad beg dur amp)
+(define-animal (american-toad beg dur amp)
   (let ((pulse-dur .024)
 	(pulse-sep .045)
 	(start (seconds->samples beg)))
@@ -1118,7 +1118,7 @@
 ;;;
 ;;; Plains spadefoot
 
-(defanimal (plains-spadefoot beg amp)
+(define-animal (plains-spadefoot beg amp)
   (let ((dur 0.73)
 	(pulse-dur .019)
 	(start (seconds->samples beg)))
@@ -1166,7 +1166,7 @@
 ;;;
 ;;; Barking tree-frog
 
-(defanimal (barking-tree-frog beg amp)
+(define-animal (barking-tree-frog beg amp)
   (let ((dur 0.165))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -1204,7 +1204,7 @@
 ;;;
 ;;; Western toad
 
-(defanimal (western-toad beg dur amp)
+(define-animal (western-toad beg dur amp)
   (do ((stop (seconds->samples (+ beg dur)))
        (gen (make-polywave 0.0 '(1 .95  2 .02  3 .03  4 .005)))
        (cur-start (seconds->samples beg))
@@ -1247,7 +1247,7 @@
 ;;;
 ;;; Southwestern toad
 
-(defanimal (southwestern-toad beg dur amp)
+(define-animal (southwestern-toad beg dur amp)
   (let ((pulse-dur 0.0135)
 	(pulse-space 0.0236)
 	(start (seconds->samples beg)))
@@ -1284,7 +1284,7 @@
 ;;;
 ;;; Great Plains Narrow-mouthed toad
 
-(defanimal (great-plains-narrow-mouthed-toad beg dur1 amp)
+(define-animal (great-plains-narrow-mouthed-toad beg dur1 amp)
   ;; rocky 75 28
   (let ((attack-dur 0.155))
     (let ((start (seconds->samples beg))
@@ -1364,7 +1364,7 @@
 ;;;
 ;;; Pacific chorus frog
 
-(defanimal (pacific-chorus-frog beg amp)
+(define-animal (pacific-chorus-frog beg amp)
   (let ((dur 0.25))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -1398,7 +1398,7 @@
 ;;;
 ;;; Red-spotted toad
 
-(defanimal (red-spotted-toad beg dur amp)
+(define-animal (red-spotted-toad beg dur amp)
   ;; rocky 23 1
   (let ((pulse-dur 0.0138)
 	(pulse-space 0.0234)
@@ -1433,7 +1433,7 @@
 ;;;
 ;;; Green toad
 
-(defanimal (green-toad beg dur amp)
+(define-animal (green-toad beg dur amp)
   ;; rocky 31 1
   ;;  (an experiment with wave-train in place of pulsed env)
   (let ((pulse (let ((wave-len 256))
@@ -1468,7 +1468,7 @@
 ;;;
 ;;; Little grass frog
 
-(defanimal (little-grass-frog beg amp)
+(define-animal (little-grass-frog beg amp)
   ;; frogs 26 8.5
   (let ((dur .032))
     ;; initial note
@@ -1513,7 +1513,7 @@
 ;;;
 ;;; Sonoran desert toad
 
-(defanimal (sonoran-desert-toad beg dur amp)
+(define-animal (sonoran-desert-toad beg dur amp)
   ;; rocky 13 1
   (let ((start (seconds->samples beg)))
     (let ((stop (seconds->samples (+ beg dur)))
@@ -1576,7 +1576,7 @@
 (define (amargosa-toad beg1 amp1)
   ;; rocky 17 0
   
-  (defanimal (amargosa-toad-1 beg dur frqscl frqenv ampscl ampenv)
+  (define-animal (amargosa-toad-1 beg dur frqscl frqenv ampscl ampenv)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env ampenv :duration dur :scaler ampscl))
@@ -1635,7 +1635,7 @@
 ;;; close in spectrum, amp, freq, but the original has what sounds like a ton of reverb
 ;;;   if I add the reverb, it's close -- is this really what this animal sounds like?
 
-(defanimal (indri beg amp)
+(define-animal (indri beg amp)
   (let ((pitch 900)
 	(dur 1.5))
     (let ((start (seconds->samples beg))
@@ -1669,7 +1669,7 @@
 ;;;
 ;;; need to make freq env flicks at call time (is there a comb-filter effect as it gets near?)
 
-(defanimal (mosquito beg dur freq amp)
+(define-animal (mosquito beg dur freq amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(carrier (make-oscil freq))
@@ -1699,7 +1699,7 @@
 ;;;
 ;;; Southern mole cricket
 
-(defanimal (southern-mole-cricket beg dur amp)
+(define-animal (southern-mole-cricket beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 2700))
@@ -1726,7 +1726,7 @@
 ;;;
 ;;; Broad-winged Tree cricket
 
-(defanimal (broad-winged-tree-cricket beg dur amp)
+(define-animal (broad-winged-tree-cricket beg dur amp)
   (let ((freq 1700))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -1769,7 +1769,7 @@
 ;;;    done down one or two octaves -- I think the recording has cut off high info (above 20Khz) --
 ;;;    need much higher srate to see what this guy is really doing.  This is not very good...
 
-(defanimal (long-spurred-meadow-katydid beg amp)
+(define-animal (long-spurred-meadow-katydid beg amp)
   (let ((dur 10.1) ; overall duration
 	(slow-start 2.2)) ; buzz at start
     (let ((soft-end (+ slow-start 4.0))) ; softer section, rest is full vol
@@ -1798,7 +1798,7 @@
 ;; (with-sound (:statistics #t) (long-spurred-meadow-katydid 0 .5))
 
 #|
-(defanimal (long-spurred-meadow-katydid beg amp)
+(define-animal (long-spurred-meadow-katydid beg amp)
   (let ((dur 10.1) ; overall duration
 	(slow-start 2.2)) ; buzz at start
     (let ((soft-end (+ slow-start 4.0))) ; softer section, rest is full vol
@@ -1842,7 +1842,7 @@
 ;;;
 ;;; Handsome trig
 
-(defanimal (handsome-trig beg dur amp)
+(define-animal (handsome-trig beg dur amp)
   (let ((freqs (apply float-vector (map hz->radians '(6439 6585 6860 6940 7090 7266 7362))))
 	(amps (float-vector 0.355 0.355 0.089 0.060 0.071 0.035 0.035))
 	(pulse-dur .02))
@@ -1882,7 +1882,7 @@
 ;;;
 ;;; (use fm for noise to get the burble right, and pm for spectrum)
 
-(defanimal (fast-calling-tree-cricket beg dur amp)
+(define-animal (fast-calling-tree-cricket beg dur amp)
   (let ((pulse-dur .0167))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -1915,7 +1915,7 @@
 ;;;
 ;;; Dog-day cicada
 
-(defanimal (dog-day-cicada beg dur amp) ; dur ca 10 ..15 secs
+(define-animal (dog-day-cicada beg dur amp) ; dur ca 10 ..15 secs
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(ampf (make-env '(0.0 0.0    0.1 0.03   0.2 0.2   0.3 0.6   0.34 0.8  0.44 1.0 
@@ -1943,7 +1943,7 @@
 ;;;
 ;;; Linnaeus' Cicada
 
-(defanimal (linnaeus-cicada beg dur amp)
+(define-animal (linnaeus-cicada beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(ampf (make-env '(0 0 1 .8 10 1 11 0) :duration dur :scaler amp))
@@ -1970,7 +1970,7 @@
 ;;;
 ;;; Lyric cicada
 
-(defanimal (lyric-cicada beg dur amp)
+(define-animal (lyric-cicada beg dur amp)
   (let ((p0 400))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2005,7 +2005,7 @@
 ;;;
 ;;; Confused ground cricket
 
-(defanimal (confused-ground-cricket beg dur amp)
+(define-animal (confused-ground-cricket beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 5700))
@@ -2042,7 +2042,7 @@
 ;;;
 ;;;  There's a secondary (slower) peep -- is this part of our cricket's song, or another cricket in the background?
 
-(defanimal (tinkling-ground-cricket beg dur amp)
+(define-animal (tinkling-ground-cricket beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 7200))
@@ -2069,7 +2069,7 @@
 ;;;
 ;;; this is just a random number generator with an elaborate amplitude envelope
 
-(defanimal (marsh-meadow-grasshopper beg amp)
+(define-animal (marsh-meadow-grasshopper beg amp)
   (let ((dur 4.8))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2107,7 +2107,7 @@
 ;;; tricky!  spikes are at 48 Hz, but the sound they make requires 24 Hz pulse -- I presume
 ;;;   I'm seeing the 2 or 4 wings alternating?
 
-(defanimal (carolina-grasshopper beg dur amp)
+(define-animal (carolina-grasshopper beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(ampf (make-env ;'(0.000 0.000 0.032 0.115 0.151 0.044 0.181 0.485 0.254 0.841 0.620 0.431 0.731 0.051 0.757 0.292 0.898 0.620 0.984 0.380 1.000 0.000)
@@ -2141,7 +2141,7 @@
 ;;;
 ;;; Striped ground cricket
 
-(defanimal (striped-ground-cricket beg dur amp)
+(define-animal (striped-ground-cricket beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 13200)) ;(* 2 6600)))
@@ -2189,7 +2189,7 @@
 ;;;
 ;;; Sphagnum ground cricket
 
-(defanimal (sphagnum-ground-cricket beg dur amp)
+(define-animal (sphagnum-ground-cricket beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 8850))
@@ -2220,7 +2220,7 @@
 ;;;
 ;;; Southeastern field cricket
 
-(defanimal (southeastern-field-cricket beg dur amp)
+(define-animal (southeastern-field-cricket beg dur amp)
   (let ((pulse-dur 0.027)) ; occasionally a hicccup = .039, 30..100 pulses per song
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2265,7 +2265,7 @@
 ;;;
 ;;; Snowy tree cricket
 
-(defanimal (snowy-tree-cricket beg dur amp)
+(define-animal (snowy-tree-cricket beg dur amp)
   (let ((pitch 1690))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2307,7 +2307,7 @@
 ;;;
 ;;; this could use some work
 
-(defanimal (slightly-musical-conehead beg dur amp)
+(define-animal (slightly-musical-conehead beg dur amp)
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
 	(gen1 (make-oscil 11000))
@@ -2341,7 +2341,7 @@
 ;;;
 ;;; Pine tree cricket
 
-(defanimal (pine-tree-cricket beg dur amp)
+(define-animal (pine-tree-cricket beg dur amp)
   (let ((pulse-dur .014))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2371,7 +2371,7 @@
 ;;;
 ;;; Davis's tree cricket
 
-(defanimal (davis-tree-cricket beg dur amp)
+(define-animal (davis-tree-cricket beg dur amp)
   (let ((pulse-dur .013)
 	(pitch 2420))
     (let ((start (seconds->samples beg))
@@ -2399,7 +2399,7 @@
 ;;;
 ;;; Black-horned tree cricket
 
-(defanimal (black-horned-tree-cricket beg dur amp)
+(define-animal (black-horned-tree-cricket beg dur amp)
   (let ((pulse-dur 0.0173)
 	(pulse-space 0.0219)
 	(start (seconds->samples beg)))
@@ -2435,7 +2435,7 @@
 ;;;
 ;;; Narrow-winged tree cricket
 
-(defanimal (narrow-winged-tree-cricket beg dur amp)
+(define-animal (narrow-winged-tree-cricket beg dur amp)
   ;; insects 18 4
   (let ((start (seconds->samples beg))
 	(stop (seconds->samples (+ beg dur)))
@@ -2459,7 +2459,7 @@
 ;;;
 ;;; Four-spotted tree cricket
 
-(defanimal (four-spotted-tree-cricket beg dur amp)
+(define-animal (four-spotted-tree-cricket beg dur amp)
   ;; insects 16 4
   (let ((index (hz->radians 400)))
     (let ((start (seconds->samples beg))
@@ -2495,7 +2495,7 @@
 ;;;
 ;;; Fox sparrow
 
-(defanimal (fox-sparrow beg dur amp)
+(define-animal (fox-sparrow beg dur amp)
   (let ((begs (vector 0.0   0.3  0.6   0.93  1.23  1.49 1.74  1.98  2.12  2.29 3.0))  
 	(ends (vector 0.12  0.46 0.85  1.17  1.44  1.7  1.95  2.08  2.26  2.45))
 	(low-frqs (vector  4260 4010 3910 4970 3360 3160 2810 2310 2700 2700))
@@ -2573,7 +2573,7 @@
 ;;;
 ;;; probably music of birds 14, first song
 
-(defanimal (white-throated-sparrow beg amp)
+(define-animal (white-throated-sparrow beg amp)
   (let ((dur (+ 3.25 (random .2)))
 	 (pitch 3800))
     (let ((start (seconds->samples beg))
@@ -2617,7 +2617,7 @@
 ;;;
 ;;; Henslow's sparrow
 
-(defanimal (henslows-sparrow beg amp)
+(define-animal (henslows-sparrow beg amp)
   ;; "the poorest vocal effort of any bird" -- R T Peterson
   (let ((dur 0.24))
     (let ((start (seconds->samples beg))
@@ -2654,7 +2654,7 @@
 ;;;
 ;;; Eastern wood-pewee
 
-(defanimal (eastern-wood-pewee-1 beg amp)
+(define-animal (eastern-wood-pewee-1 beg amp)
   ;; probably east 39 3
   (let ((dur 1.07))
     (let ((start (seconds->samples beg))
@@ -2677,7 +2677,7 @@
 ;; (with-sound (:play #t) (eastern-wood-pewee-1 0 .25))
 
 
-(defanimal (eastern-wood-pewee-2 beg amp)
+(define-animal (eastern-wood-pewee-2 beg amp)
   ;; probably east 39 14
   (let ((dur 1.07))
     (let ((start (seconds->samples beg))
@@ -2710,7 +2710,7 @@
 ;;;
 ;;; Field sparrow
 
-(defanimal (field-sparrow beg amp)
+(define-animal (field-sparrow beg amp)
   (let ((dur 2.92))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -2764,7 +2764,7 @@
 ;;;
 ;;; Tufted titmouse
 
-(defanimal (tufted-titmouse beg amp)
+(define-animal (tufted-titmouse beg amp)
   (let ((dur 1.0))
     (let ((start (seconds->samples beg))
 	  
@@ -2792,7 +2792,7 @@
 ;;;
 ;;; 8 separate calls make up a song
 
-(defanimal (savannah-sparrow beg amp)
+(define-animal (savannah-sparrow beg amp)
   
   (define (savannah-1 beg amp)
     ;; peeps
@@ -2977,7 +2977,7 @@
 ;;;
 ;;; Chipping sparrow
 
-(defanimal (chipping-sparrow beg amp)
+(define-animal (chipping-sparrow beg amp)
   (let ((dur .055)
 	(repeats (+ 20 (random 25))))
     (let ((start (seconds->samples beg))
@@ -3017,7 +3017,7 @@
 ;;;
 ;;; Least flycatcher
 
-(defanimal (least-flycatcher beg amp)
+(define-animal (least-flycatcher beg amp)
   (let ((call1-dur .032)
 	(pause .065)
 	(call2-dur .04)
@@ -3058,7 +3058,7 @@
 ;;;
 ;;; Acadian flycatcher
 
-(defanimal (acadian-flycatcher beg amp)
+(define-animal (acadian-flycatcher beg amp)
   (let ((dur 0.3))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3084,7 +3084,7 @@
 ;;;   are there really multiphonics in this birdsong? 
 ;;;   also, is this a song that uses both parts of the syrinx? -- I think the doubled stuff is reverb
 
-(defanimal (swainsons-thrush beg amp)
+(define-animal (swainsons-thrush beg amp)
   (let ((dur 2.0))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3138,7 +3138,7 @@
 ;;;
 ;;; Carolina wren
 
-(defanimal (carolina-wren beg amp)
+(define-animal (carolina-wren beg amp)
   (let ((dur 1.84)
 	(pulse-dur 0.25))
     (let ((start (seconds->samples beg))
@@ -3176,7 +3176,7 @@
 ;;;
 ;;; Bachman's sparrow
 
-(defanimal (bachmans-sparrow beg amp)
+(define-animal (bachmans-sparrow beg amp)
   ;; two pieces -- initial steady tone, then 10 repetitions of 2nd call
   (let ((call1-dur .576)
 	(call2-dur .172)
@@ -3229,7 +3229,7 @@
 ;;;
 ;;; Grasshopper sparrow
 
-(defanimal (grasshopper-sparrow beg amp)
+(define-animal (grasshopper-sparrow beg amp)
   ;; 2 portions -- simple tones, then a buzz (calif case has much tighter (faster) buzz)
   (let ((start (seconds->samples beg))
 	(begs (vector 0.0 .24 .36 .44 .55))
@@ -3282,7 +3282,7 @@
 ;;;
 ;;; American robin
 
-(defanimal (american-robin beg amp)
+(define-animal (american-robin beg amp)
   (let ((start (seconds->samples beg))
 	 
 	 (ampfs (make-vector 4 #f))
@@ -3364,7 +3364,7 @@
 ;;;
 ;;; Common loon
 
-(defanimal (common-loon-1 beg amp)
+(define-animal (common-loon-1 beg amp)
   (let ((dur 2.5))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3383,7 +3383,7 @@
 ;; (with-sound (:play #t) (common-loon-1 0 .25))
 
 
-(defanimal (common-loon-2 beg amp)
+(define-animal (common-loon-2 beg amp)
   (let ((dur 0.63))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3416,7 +3416,7 @@
 ;;;
 ;;; Hermit thrush
 
-(defanimal (hermit-thrush beg amp)
+(define-animal (hermit-thrush beg amp)
   (let ((start (seconds->samples beg))
 	 
 	 (ampfs (make-vector 3 #f))
@@ -3522,7 +3522,7 @@
 ;;;
 ;;; Chuck-will's-widow
 
-(defanimal (chuck-wills-widow beg amp)
+(define-animal (chuck-wills-widow beg amp)
   (let ((dur 1.05))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3556,7 +3556,7 @@
 ;;;
 ;;; California towhee
 
-(defanimal (california-towhee beg amp)
+(define-animal (california-towhee beg amp)
   (let ((dur 1.17)
 	;; peep pitch changes
 	(amps (vector .5 .8 .85 .9 .95 1.0))
@@ -3604,7 +3604,7 @@
 ;;;
 ;;; Black-chinned sparrow
 
-(defanimal (black-chinned-sparrow beg amp gliss-up)
+(define-animal (black-chinned-sparrow beg amp gliss-up)
   (let ((initial-dur .36)
 	(initial-pitch 6800)
 	(initial-amp .05)
@@ -3670,7 +3670,7 @@
 ;;;
 ;;; Mourning dove
 
-(defanimal (mourning-dove beg amp)
+(define-animal (mourning-dove beg amp)
   (let ((dur 4.1))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3703,7 +3703,7 @@
 ;;;
 ;;; Bobwhite
 
-(defanimal (bobwhite beg amp)
+(define-animal (bobwhite beg amp)
   (let ((call1-dur .32)
 	(call1-amp .07)
 	(call2-beg .80)
@@ -3760,7 +3760,7 @@
 ;;;
 ;;; Warbling vireo
 
-(defanimal (warbling-vireo beg amp)
+(define-animal (warbling-vireo beg amp)
   (let ((dur 2.25))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3810,7 +3810,7 @@
 ;;;
 ;;; Great-horned owl
 
-(defanimal (great-horned-owl beg amp)
+(define-animal (great-horned-owl beg amp)
   (let ((begs (vector 0.0  0.26 1.42 2.16))
 	(durs (vector 0.14 0.40 0.43 0.37))
 	(amps (vector .75 .9 .95 1.0)))
@@ -3836,7 +3836,7 @@
 ;;;
 ;;; Western tanager
 
-(defanimal (western-tanager beg amp)
+(define-animal (western-tanager beg amp)
   (let ((gen (make-polywave 0.0 '(1 .98 2 .02)))
 	 (begs (vector 0.0  0.7  1.4  2.0))
 	 (durs (vector 0.27 0.32 0.25 0.24))
@@ -3901,7 +3901,7 @@
 ;;;
 ;;; Pileated woodpecker
 
-(defanimal (pileated-woodpecker beg amp)
+(define-animal (pileated-woodpecker beg amp)
   (let ((dur 2.28)
 	(pulse-space .137)
 	(pulse-dur .06)
@@ -3943,7 +3943,7 @@
 ;;;
 ;;; Whip-poor-will
 
-(defanimal (whip-poor-will beg amp)
+(define-animal (whip-poor-will beg amp)
   (let ((dur 0.75))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -3976,7 +3976,7 @@
 ;;;
 ;;; Varied thrush
 
-(defanimal (varied-thrush beg amp)
+(define-animal (varied-thrush beg amp)
   (let ((dur 1.02))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4004,7 +4004,7 @@
 ;;;
 ;;; Nashville warbler
 
-(defanimal (nashville-warbler beg amp)
+(define-animal (nashville-warbler beg amp)
   
   (define (nashville-warbler-1 beg dur amp)
     (let ((start (seconds->samples beg))
@@ -4090,7 +4090,7 @@
 ;;;
 ;;; Ruffed grouse
 
-(defanimal (ruffed-grouse beg amp)
+(define-animal (ruffed-grouse beg amp)
   (let ((dur 10.33)
 	(bump-dur 0.27))
     (let ((start (seconds->samples beg))
@@ -4152,7 +4152,7 @@
 ;;;
 ;;; Plumbeous vireo
 
-(defanimal (plumbeous-vireo-1 beg amp)
+(define-animal (plumbeous-vireo-1 beg amp)
   (let ((dur 0.34))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4189,7 +4189,7 @@
 ;; (with-sound (:play #t) (plumbeous-vireo-1 0 .25))
 
 
-(defanimal (plumbeous-vireo-2 beg amp)
+(define-animal (plumbeous-vireo-2 beg amp)
   (let ((dur 0.455))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4241,7 +4241,7 @@
 ;;;
 ;;; Least bittern
 
-(defanimal (least-bittern beg amp)
+(define-animal (least-bittern beg amp)
   (let ((dur 1.25)
 	(pulse-dur .09))
     (let ((start (seconds->samples beg))
@@ -4294,7 +4294,7 @@
 	    ((= i n) (reverse lst))
 	  (set! lst (cons (* scl (expt r i)) (cons (+ i 1) lst)))))))
 
-(defanimal (american-crow beg amp)
+(define-animal (american-crow beg amp)
   (let ((dur 0.27))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4329,7 +4329,7 @@
 ;; (with-sound (:play #t) (american-crow 0 .5))
 
 
-(defanimal (american-crow-no-formants beg amp) ; this is for sndclm.html
+(define-animal (american-crow-no-formants beg amp) ; this is for sndclm.html
   (let ((dur 0.27))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4354,7 +4354,7 @@
 ;;;
 ;;; Orange-crowned warbler
 
-(defanimal (orange-crowned-warbler beg amp)
+(define-animal (orange-crowned-warbler beg amp)
   (let ((dur 1.5)
 	(pulse-dur 0.045)
 	(call2-dur 0.13)
@@ -4408,7 +4408,7 @@
 ;;;
 ;;; Loggerhead shrike
 
-(defanimal (loggerhead-shrike-1 beg amp)
+(define-animal (loggerhead-shrike-1 beg amp)
   (let ((dur 0.65)
 	(open-dur .036)
 	(pulse-dur .008)
@@ -4461,7 +4461,7 @@
 ;; (with-sound (:play #t) (loggerhead-shrike-1 0 .5))
 
 
-(defanimal (loggerhead-shrike-2 beg amp)
+(define-animal (loggerhead-shrike-2 beg amp)
   (let ((dur 0.4)
 	(pulse-dur .08)
 	(frqs (vector .9 .95 .95 1.0 1.0 1.0))
@@ -4507,7 +4507,7 @@
 ;;;
 ;;; California Quail
 
-(defanimal (california-quail beg amp)
+(define-animal (california-quail beg amp)
   (let ((durs (vector .075 .23 .16))
 	(begs (vector 0.0 .21 .58))
 	(ampfs (make-vector 3 #f))
@@ -4561,7 +4561,7 @@
 ;;;
 ;;; Vermillion flycatcher
 
-(defanimal (vermillion-flycatcher beg amp)
+(define-animal (vermillion-flycatcher beg amp)
   (let ((dur 0.72))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4595,7 +4595,7 @@
 ;;;
 ;;; Cardinal
 
-(defanimal (cardinal beg amp)
+(define-animal (cardinal beg amp)
   (let ((call1-dur 0.185)
 	(call2-dur 0.19)
 	(start (seconds->samples beg)))
@@ -4656,7 +4656,7 @@
 ;;;
 ;;; Black phoebe
 
-(defanimal (black-phoebe beg amp)
+(define-animal (black-phoebe beg amp)
   (let ((dur 0.36))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4687,7 +4687,7 @@
 ;;;
 ;;; Yellow warbler
 
-(defanimal (yellow-warbler beg amp)
+(define-animal (yellow-warbler beg amp)
   (let ((dur 1.38))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4721,7 +4721,7 @@
 ;;;
 ;;; Barred owl (the "hoo-aw" call, not the more complex one -- I haven't succeeded with the latter yet)
 
-(defanimal (barred-owl-1 beg amp)
+(define-animal (barred-owl-1 beg amp)
   (let ((dur 1.27)
 	(owl-env '(0 0 .53 0 .54 1 1 1)))
     (let ((start (seconds->samples beg))
@@ -4771,7 +4771,7 @@
 ;;;
 ;;; Say's phoebe
 
-(defanimal (says-phoebe beg amp)
+(define-animal (says-phoebe beg amp)
   (let ((dur 0.64))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4798,7 +4798,7 @@
 ;;;
 ;;; Yellow-rumped warbler
 
-(defanimal (yellow-rumped-warbler beg amp)
+(define-animal (yellow-rumped-warbler beg amp)
   (let ((dur 1.6))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4852,7 +4852,7 @@
 ;;;
 ;;; Purple finch
 
-(defanimal (purple-finch beg amp)
+(define-animal (purple-finch beg amp)
   (let ((dur 2.5))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4932,7 +4932,7 @@
 ;;;
 ;;; Northern goshawk
 
-(defanimal (northern-goshawk beg amp)
+(define-animal (northern-goshawk beg amp)
   (let ((dur 0.31))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -4954,7 +4954,7 @@
 ;;;
 ;;; Common Gull
 
-(defanimal (common-gull beg amp)
+(define-animal (common-gull beg amp)
   (let ((dur 0.42))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5004,7 +5004,7 @@
 ;;;
 ;;; Ash-throated flycatcher
 
-(defanimal (ash-throated-flycatcher beg amp)
+(define-animal (ash-throated-flycatcher beg amp)
   (let ((dur 0.47))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5044,7 +5044,7 @@
 ;;;
 ;;; White-header woodpecker
 
-(defanimal (white-headed-woodpecker beg amp)
+(define-animal (white-headed-woodpecker beg amp)
   ;; spectrum travels right off the top -- I wonder how high it actually goes
   (let ((dur 0.16))
     (let ((start (seconds->samples beg))
@@ -5089,7 +5089,7 @@
 ;;;
 ;;; Phainopepla
 
-(defanimal (phainopepla beg amp)
+(define-animal (phainopepla beg amp)
   (let ((dur 0.26))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5117,7 +5117,7 @@
 ;;;
 ;;; Golden-crowned sparrow
 
-(defanimal (golden-crowned-sparrow beg amp)
+(define-animal (golden-crowned-sparrow beg amp)
   (let ((dur 2.13))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5147,7 +5147,7 @@
 ;;;
 ;;; House finch
 
-(defanimal (house-finch beg amp)
+(define-animal (house-finch beg amp)
   (let ((dur 3.16))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5217,7 +5217,7 @@
 ;;;
 ;;; Ruby-crowned kinglet
 
-(defanimal (ruby-crowned-kinglet beg amp)
+(define-animal (ruby-crowned-kinglet beg amp)
   (let ((dur 2.17))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5257,7 +5257,7 @@
 ;;;
 ;;; not very elegant, but a real test of the envelope editor
 
-(defanimal (green-tailed-towhee beg amp)
+(define-animal (green-tailed-towhee beg amp)
   (let ((dur 1.86))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5325,7 +5325,7 @@
 ;;;
 ;;; Lucy's warbler
 
-(defanimal (lucys-warbler beg amp)
+(define-animal (lucys-warbler beg amp)
   (let ((dur 1.72))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5373,7 +5373,7 @@
 ;;;
 ;;; Cassin's vireo
 
-(defanimal (cassins-vireo beg amp)
+(define-animal (cassins-vireo beg amp)
   (let ((dur 0.5))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5433,7 +5433,7 @@
 
 (define (plain-chacalaca beg1 amp)
   
-  (defanimal (plain-chacalaca-1 beg dur amp frmfrq frqlst)
+  (define-animal (plain-chacalaca-1 beg dur amp frmfrq frqlst)
     (let ((start (seconds->samples beg))
 	   (stop (seconds->samples (+ beg dur)))
 	   (ampf (make-env '(0.000 0.000 2 1 4 1 6 0) :duration dur :scaler (* 0.5 amp)))
@@ -5472,7 +5472,7 @@
 ;;;
 ;;; Black-billed cuckoo
 
-(defanimal (black-billed-cuckoo beg amp)
+(define-animal (black-billed-cuckoo beg amp)
   (let ((dur 0.68))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5504,7 +5504,7 @@
 ;;;
 ;;; Eared grebe
 
-(defanimal (eared-grebe beg amp)
+(define-animal (eared-grebe beg amp)
   ;; note #1
   (let ((dur 0.3))
     (let ((start (seconds->samples beg))
@@ -5581,7 +5581,7 @@
 ;;;
 ;;; Brown jay
 
-(defanimal (brown-jay beg amp)
+(define-animal (brown-jay beg amp)
   (let ((dur 0.26))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5611,7 +5611,7 @@
 ;;;
 ;;; Blue grosbeak
 
-(defanimal (blue-grosbeak beg amp)
+(define-animal (blue-grosbeak beg amp)
   (let ((dur 2.26))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5673,7 +5673,7 @@
 ;;;
 ;;; Acorn woodpecker
 
-(defanimal (acorn-woodpecker beg1 amp1)
+(define-animal (acorn-woodpecker beg1 amp1)
   
   (define (acorn-woodpecker-1 beg dur ampf frqf ampf2 ampf4 rndf)
     (let ((start (seconds->samples beg))
@@ -5736,7 +5736,7 @@
 ;;;
 ;;; Lesser nighhawk
 
-(defanimal (lesser-nighthawk beg dur amp)
+(define-animal (lesser-nighthawk beg dur amp)
   (let ((pulse-dur .021)
 	(pulse-sep .047))
     (let ((start (seconds->samples beg))
@@ -5770,7 +5770,7 @@
 ;;;
 ;;; Olive-sided flycatcher
 
-(defanimal (olive-sided-flycatcher beg amp)
+(define-animal (olive-sided-flycatcher beg amp)
   (let ((dur 1.08))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -5802,7 +5802,7 @@
 ;;;
 ;;;   ending is not right
 
-(defanimal (red-shouldered-hawk beg amp)
+(define-animal (red-shouldered-hawk beg amp)
   (let ((dur 0.475))
     (let ((start (seconds->samples beg))
 	  
@@ -5852,7 +5852,7 @@
 
 (define (common-yellowthroat beg1 amp1)
   
-  (defanimal (common-yellowthroat-1 beg amp) 
+  (define-animal (common-yellowthroat-1 beg amp) 
     (let ((dur .42))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6003,7 +6003,7 @@
 
 (define (stellers-jay beg1 amp1)
   
-  (defanimal (stellers-jay-1 beg amp)
+  (define-animal (stellers-jay-1 beg amp)
     (let ((dur .09))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6058,7 +6058,7 @@
 ;;;
 ;;; Black rail
 
-(defanimal (black-rail beg amp)
+(define-animal (black-rail beg amp)
   
   ;; notes 1 and 2
   (let ((dur 0.2))
@@ -6112,7 +6112,7 @@
 ;;;
 ;;; Pinyon jay
 
-(defanimal (pinyon-jay beg amp)
+(define-animal (pinyon-jay beg amp)
   (let ((dur 0.3))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6144,7 +6144,7 @@
 ;;;
 ;;; Sora
 
-(defanimal (sora beg amp)
+(define-animal (sora beg amp)
   (let ((dur 0.41))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6169,7 +6169,7 @@
 ;;;
 ;;; Killdeer
 
-(defanimal (killdeer beg amp)
+(define-animal (killdeer beg amp)
   (let ((dur 0.88))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6207,7 +6207,7 @@
 
 (define (oak-titmouse beg1 amp1)
   
-  (defanimal (oak-titmouse-1 beg amp)
+  (define-animal (oak-titmouse-1 beg amp)
     (let ((dur 0.117))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6231,7 +6231,7 @@
 		     (polywave gen1 (+ (env frqf)
 				       (* vib-amp (oscil gen2))))))))))
   
-  (defanimal (oak-titmouse-2 beg amp)
+  (define-animal (oak-titmouse-2 beg amp)
     (let ((dur 0.14))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6271,7 +6271,7 @@
 (define (macgillivrays-warbler beg1 amp1)
   ;; much more complex than it sounds -- like the Hermit Thrush, this has 2 independent sources
   
-  (defanimal (macgillivrays-warbler-1 beg amp)
+  (define-animal (macgillivrays-warbler-1 beg amp)
     ;; 5 of these to start
     (let ((dur 0.137))
       (let ((start (seconds->samples beg))
@@ -6306,7 +6306,7 @@
 			(* (env ampf2)
 			   (polywave gen2 (env frqf2))))))))))
     
-  (defanimal (macgillivrays-warbler-2 beg amp)
+  (define-animal (macgillivrays-warbler-2 beg amp)
     ;; 3 of these to end
     (let ((dur 0.135))
       (let ((start (seconds->samples beg))
@@ -6363,7 +6363,7 @@
 ;;;
 ;;; Hutton's vireo
 
-(defanimal (huttons-vireo beg amp)
+(define-animal (huttons-vireo beg amp)
   (let ((dur 0.4))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6420,7 +6420,7 @@
 (define (western-meadowlark beg1 amp1)
   
   ;; first sequence of notes
-  (defanimal (western-meadowlark-1 beg amp)
+  (define-animal (western-meadowlark-1 beg amp)
     (let ((dur 1.075))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6444,7 +6444,7 @@
 		     (oscil gen1 (env frqf))))))))
   
   ;; 2nd sequence of notes
-  (defanimal (western-meadowlark-2 beg amp)
+  (define-animal (western-meadowlark-2 beg amp)
     (let ((dur 0.45))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6489,7 +6489,7 @@
 ;;;
 ;;; this should have used 4 calls on one note
 
-(defanimal (northern-beardless-tyrannulet beg amp)
+(define-animal (northern-beardless-tyrannulet beg amp)
   (let ((dur 1.91))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6535,7 +6535,7 @@
 ;;;
 ;;; Scott's oriole
 
-(defanimal (scotts-oriole beg amp)
+(define-animal (scotts-oriole beg amp)
   (let ((dur 1.83))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6580,7 +6580,7 @@
 (define (wilsons-warbler beg1 amp1)
   ;; 3 different calls, 2(?) with 2 different tones
   
-  (defanimal (wilsons-warbler-1 beg dur amp)
+  (define-animal (wilsons-warbler-1 beg dur amp)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  
@@ -6609,7 +6609,7 @@
 		      (* (env ampf2)
 			 (oscil gen2 (env frqf2)))))))))
   
-  (defanimal (wilsons-warbler-2 beg dur frq amp)
+  (define-animal (wilsons-warbler-2 beg dur frq amp)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  
@@ -6631,7 +6631,7 @@
 				  (rand-interp rnd))))))))
   
   
-  (defanimal (wilsons-warbler-3 beg amp)
+  (define-animal (wilsons-warbler-3 beg amp)
     (let ((dur 0.07))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6677,7 +6677,7 @@
 ;;;
 ;;; Willow flycatcher
 
-(defanimal (willow-flycatcher beg amp)
+(define-animal (willow-flycatcher beg amp)
   (let ((dur 0.65))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6732,7 +6732,7 @@
 ;;; 
 ;;; Black-necked stilt
 
-(defanimal (black-necked-stilt beg amp)
+(define-animal (black-necked-stilt beg amp)
   (let ((dur 0.085))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6766,7 +6766,7 @@
 ;;;
 ;;; Bushtit
 
-(defanimal (bushtit beg amp)
+(define-animal (bushtit beg amp)
   (let ((dur 0.368)
 	(pulse-dur .044)
 	(start (seconds->samples beg)))
@@ -6814,7 +6814,7 @@
 ;;;
 ;;; Red-breasted nuthatch
 
-(defanimal (red-breasted-nuthatch beg amp)
+(define-animal (red-breasted-nuthatch beg amp)
   (let ((dur 0.287))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6843,7 +6843,7 @@
 ;;;
 ;;; White-breasted nuthatch
 
-(defanimal (white-breasted-nuthatch beg amp)
+(define-animal (white-breasted-nuthatch beg amp)
   (let ((dur 0.31))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6881,7 +6881,7 @@
 ;;;
 ;;; Pygmy nuthatch
 
-(defanimal (pygmy-nuthatch beg amp)
+(define-animal (pygmy-nuthatch beg amp)
   (let ((dur 0.12))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6907,7 +6907,7 @@
 ;;;
 ;;; Flammulated owl
 
-(defanimal (flammulated-owl beg amp)
+(define-animal (flammulated-owl beg amp)
   (let ((dur 0.25))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -6930,7 +6930,7 @@
 
 (define (song-sparrow beg1 amp1)
   
-  (defanimal (song-sparrow-big-buzz beg amp)
+  (define-animal (song-sparrow-big-buzz beg amp)
     (let ((dur 0.25))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6970,7 +6970,7 @@
 	    (mus-reset ampf-up)
 	    (mus-reset ampf-down))))))
   
-  (defanimal (song-sparrow-clear-tone beg frq amp)
+  (define-animal (song-sparrow-clear-tone beg frq amp)
     (let ((dur 0.062))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -6986,7 +6986,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (song-sparrow-sweep-tone beg amp)
+  (define-animal (song-sparrow-sweep-tone beg amp)
     (let ((dur 0.036))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7003,7 +7003,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (song-sparrow-sweep-caw beg amp)
+  (define-animal (song-sparrow-sweep-caw beg amp)
     (let ((dur 0.025))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7020,7 +7020,7 @@
 	    ((= i stop))
 	  (outa i (* (env ampf) (polywave gen (+ (env frqf) (rand-interp rnd)))))))))
   
-  (defanimal (song-sparrow-little-buzz beg amp)
+  (define-animal (song-sparrow-little-buzz beg amp)
     (let ((dur 0.17))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7036,7 +7036,7 @@
 		     (polywave gen (+ (env frqf)
 				      (rand-interp rnd)))))))))
   
-  (defanimal (song-sparrow-sweep-down beg amp)
+  (define-animal (song-sparrow-sweep-down beg amp)
     (let ((dur 0.186))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7054,7 +7054,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (song-sparrow-sweep-up beg amp)
+  (define-animal (song-sparrow-sweep-up beg amp)
     (let ((dur 0.076))
       (let ((start (seconds->samples beg))
 	    
@@ -7069,7 +7069,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (song-sparrow-2nd-buzz beg amp)
+  (define-animal (song-sparrow-2nd-buzz beg amp)
     (let ((dur 0.053))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7092,7 +7092,7 @@
 		       (polywave gen1 (+ (env frqf)
 					 (* scl vb))))))))))
   
-  (defanimal (song-sparrow-chiff beg amp)
+  (define-animal (song-sparrow-chiff beg amp)
     (let ((dur 0.019))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7135,7 +7135,7 @@
 ;;;
 ;;; Burrowing owl
 
-(defanimal (burrowing-owl beg amp)
+(define-animal (burrowing-owl beg amp)
   (let ((dur 0.6))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7172,7 +7172,7 @@
 ;;;
 ;;; (I didn't really intend to do 5 of these calls)
 
-(defanimal (gray-vireo-1 beg amp)
+(define-animal (gray-vireo-1 beg amp)
   (let ((dur 0.23))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7202,7 +7202,7 @@
 
 ;; (with-sound (:play #t) (gray-vireo-1 0 .5))
 
-(defanimal (gray-vireo-2 beg amp)
+(define-animal (gray-vireo-2 beg amp)
   ;; probably calif2 18 4
   (let ((dur 0.23))
     (let ((start (seconds->samples beg))
@@ -7244,7 +7244,7 @@
 ;; (with-sound (:play #t) (gray-vireo-2 0 .5))
 
 
-(defanimal (gray-vireo-3 beg amp)
+(define-animal (gray-vireo-3 beg amp)
   ;; south 44 4
   
   ;; part 1 -- I could not find a way to get this right short of brute force additive synthesis
@@ -7310,7 +7310,7 @@
 ;; (with-sound (:play #t) (gray-vireo-3 0 .5))
 
 
-(defanimal (gray-vireo-4 beg amp)
+(define-animal (gray-vireo-4 beg amp)
   (let ((dur 0.23))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7340,7 +7340,7 @@
 
 ;; (with-sound (:play #t) (gray-vireo-4 0 .5))
 
-(defanimal (gray-vireo-5 beg amp)
+(define-animal (gray-vireo-5 beg amp)
   (let ((dur 0.256))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7385,7 +7385,7 @@
 
 (define (bald-eagle beg amp)
   
-  (defanimal (bald-eagle-1 beg amp)
+  (define-animal (bald-eagle-1 beg amp)
     (let ((dur 0.153))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7415,7 +7415,7 @@
 		       (+ (* (env intrpf) (polywave gen1 (+ (env frqf1) noise)))
 			  (* (env intrpf-1) (polywave gen2 (+ (env frqf2) (* 2.0 noise))))))))))))
   
-  (defanimal (bald-eagle-2 beg amp)
+  (define-animal (bald-eagle-2 beg amp)
     (let ((dur 0.074))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7437,7 +7437,7 @@
 				       (* (env rndf)
 					  (rand-interp rnd))))))))))
   
-  (defanimal (bald-eagle-3 beg amp)
+  (define-animal (bald-eagle-3 beg amp)
     (let ((dur 0.074))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7462,7 +7462,7 @@
 			  (* (env ampf2)
 			     (polywave gen2 (* 2.0 frq)))))))))))
   
-  (defanimal (bald-eagle-4 beg frqscl amp)
+  (define-animal (bald-eagle-4 beg frqscl amp)
     (let ((dur 0.056))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7495,7 +7495,7 @@
 ;;;
 ;;; Eastern meadowlark
 
-(defanimal (eastern-meadowlark beg amp)
+(define-animal (eastern-meadowlark beg amp)
   (let ((dur 1.65))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7533,7 +7533,7 @@
 ;;;
 ;;; Yellow-green vireo
 
-(defanimal (yellow-green-vireo beg amp)
+(define-animal (yellow-green-vireo beg amp)
   ;; south 48 3.5
   (let ((dur 0.22))
     (let ((start (seconds->samples beg))
@@ -7567,7 +7567,7 @@
 ;;;
 ;;; Magnolia warbler
 
-(defanimal (magnolia-warbler beg amp)
+(define-animal (magnolia-warbler beg amp)
   ;; east 13 3
   (let ((dur 0.96))
     (let ((start (seconds->samples beg))
@@ -7613,7 +7613,7 @@
 (define (eastern-bluebird beg1 amp1)
   ;; east 75 10
   
-  (defanimal (eastern-bluebird-1 beg amp)
+  (define-animal (eastern-bluebird-1 beg amp)
     (let ((dur 0.285))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7641,7 +7641,7 @@
 			  (* (env ampf2)
 			     (polywave gen2 (* 1.5 frq)))))))))))
   
-  (defanimal (eastern-bluebird-2 beg amp)
+  (define-animal (eastern-bluebird-2 beg amp)
     (let ((dur 0.33))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7678,7 +7678,7 @@
 ;;;
 ;;; Greater roadrunner
 
-(defanimal (greater-roadrunner beg amp)
+(define-animal (greater-roadrunner beg amp)
   ;; south 13 3
   (let ((dur 4.36))
     (let ((start (seconds->samples beg))
@@ -7711,7 +7711,7 @@
 ;;;
 ;;; Evening grosbeak
 
-(defanimal (evening-grosbeak beg amp)
+(define-animal (evening-grosbeak beg amp)
   ;; east 98 7.5
   (let ((dur 0.17))
     (let ((start (seconds->samples beg))
@@ -7752,7 +7752,7 @@
 
 (define (dark-eyed-junco beg1 amp1)
   ;; calif 49 3
-  (defanimal (dark-eyed-junco-1 beg amp)
+  (define-animal (dark-eyed-junco-1 beg amp)
     (let ((dur 0.11))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -7783,7 +7783,7 @@
 ;;;
 ;;; Groove-billed ani
 
-(defanimal (groove-billed-ani beg amp)
+(define-animal (groove-billed-ani beg amp)
   ;; south 14 17
   
   ;; first note
@@ -7850,7 +7850,7 @@
 ;;;
 ;;; Common pauraque
 
-(defanimal (common-pauraque beg amp)
+(define-animal (common-pauraque beg amp)
   ;; south 20 1.7
   (let ((dur 0.65))
     (let ((start (seconds->samples beg))
@@ -7880,7 +7880,7 @@
 ;;;
 ;;; Hammond's flycatcher
 
-(defanimal (hammonds-flycatcher beg amp)
+(define-animal (hammonds-flycatcher beg amp)
   ;; calif2 5 8.2
   (let ((dur 0.23))
     (let ((start (seconds->samples beg))
@@ -7915,7 +7915,7 @@
 ;;;
 ;;; not as good as some of the others -- ending slightly wrong, formants need tuning a bit, etc
 
-(defanimal (barn-owl beg amp)
+(define-animal (barn-owl beg amp)
   ;; calif 50 2.9
   (let ((dur 0.9))
     (let ((start (seconds->samples beg))
@@ -7964,7 +7964,7 @@
 ;;;
 ;;; Long-eared owl
 
-(defanimal (long-eared-owl beg amp)
+(define-animal (long-eared-owl beg amp)
   (let ((dur 0.37))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -7990,7 +7990,7 @@
 (define (summer-tanager beg1 amp1)
   ;; calif 24 18
   
-  (defanimal (summer-tanager-1 beg dur amp ampl frq frql rndl)
+  (define-animal (summer-tanager-1 beg dur amp ampl frq frql rndl)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env ampl :duration dur :scaler amp))
@@ -8102,7 +8102,7 @@
 ;;;
 ;;; Whooping crane
 
-(defanimal (whooping-crane beg amp)
+(define-animal (whooping-crane beg amp)
   ;; east 63 53 (is this 2 birds?)
   (let ((dur 0.68))
     (let ((start (seconds->samples beg))
@@ -8155,7 +8155,7 @@
 ;;;
 ;;; Sandhill crane
 
-(defanimal (sandhill-crane beg amp)
+(define-animal (sandhill-crane beg amp)
   ;; calif 30 13
   (let ((dur 0.64))
     (let ((start (seconds->samples beg))
@@ -8200,7 +8200,7 @@
 ;;;
 ;;; Gray-crowned rosy-finch
 
-(defanimal (gray-crowned-rosy-finch beg amp)
+(define-animal (gray-crowned-rosy-finch beg amp)
   ;; calif 64 5.1
   (let ((dur 0.15))
     (let ((start (seconds->samples beg))
@@ -8243,7 +8243,7 @@
 (define (virginia-rail beg amp)
   ;; calif 28 20
   
-  (defanimal (virginia-rail-1 beg amp)
+  (define-animal (virginia-rail-1 beg amp)
     (let ((dur 0.048))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -8263,7 +8263,7 @@
 		     (+ (polywave gen1 (rand-interp rnd))
 			(polywave gen2))))))))
   
-  (defanimal (virginia-rail-2 beg amp)
+  (define-animal (virginia-rail-2 beg amp)
     (let ((dur 0.048))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -8285,7 +8285,7 @@
 		       (+ (polywave gen1 frq)
 			  (polywave gen2 frq)))))))))
   
-  (defanimal (virginia-rail-3 beg amp)
+  (define-animal (virginia-rail-3 beg amp)
     (let ((dur 0.048))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -8332,7 +8332,7 @@
 ;;;
 ;;; this is one of the best so far
 
-(defanimal (sage-sparrow beg amp)
+(define-animal (sage-sparrow beg amp)
   ;; calif 39 4
   
   ;; first 4 pure tones
@@ -8514,7 +8514,7 @@
 ;;;
 ;;; Hairy woodpecker
 
-(defanimal (hairy-woodpecker beg amp)
+(define-animal (hairy-woodpecker beg amp)
   ;; calif 81 10
   (let ((dur 0.08))
     (let ((start (seconds->samples beg))
@@ -8546,7 +8546,7 @@
 ;;;
 ;;; Pacific-slope flycatcher
 
-(defanimal (pacific-slope-flycatcher beg amp)
+(define-animal (pacific-slope-flycatcher beg amp)
   ;; calif 8 22
   (let ((dur 0.3))
     (let ((start (seconds->samples beg))
@@ -8575,7 +8575,7 @@
 ;;;
 ;;; Dusky flycatcher
 
-(defanimal (dusky-flycatcher beg amp)
+(define-animal (dusky-flycatcher beg amp)
   ;; calif 7 20.4
   (let ((dur 0.125))
     (let ((start (seconds->samples beg))
@@ -8604,7 +8604,7 @@
 ;;;
 ;;; Inca dove
 
-(defanimal (inca-dove-1 beg amp)
+(define-animal (inca-dove-1 beg amp)
   ;; south 11 9.6
   (let ((dur 0.76))
     (let ((start (seconds->samples beg))
@@ -8630,7 +8630,7 @@
 ;; (with-sound (:play #t) (inca-dove-1 0 .5))
 
 
-(defanimal (inca-dove-2 beg amp)
+(define-animal (inca-dove-2 beg amp)
   ;; south 11 11.3 ("what the hell")
   (let ((pitch (hz->radians 5150))
 	(dur1 .1)
@@ -8696,7 +8696,7 @@
 ;;;
 ;;; Great kiskadee
 
-(defanimal (great-kiskadee beg amp)
+(define-animal (great-kiskadee beg amp)
   ;; south 37 16.5
   ;; note #1
   (let ((dur 0.123))
@@ -8762,7 +8762,7 @@
 (define (chestnut-sided-warbler beg1 amp1)
   ;; east 12 3.5
   
-  (defanimal (chestnut-sided-warbler-1 beg amp)
+  (define-animal (chestnut-sided-warbler-1 beg amp)
     ;; first 6 notes
     (let ((dur 0.11))
       (let ((start (seconds->samples beg))
@@ -8784,7 +8784,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (chestnut-sided-warbler-2 beg amp)
+  (define-animal (chestnut-sided-warbler-2 beg amp)
     ;; notes 7 and 8
     (let ((dur 0.17))
       (let ((start (seconds->samples beg))
@@ -8807,7 +8807,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (chestnut-sided-warbler-3 beg amp)
+  (define-animal (chestnut-sided-warbler-3 beg amp)
     ;; last note
     (let ((dur 0.19))
       (let ((start (seconds->samples beg))
@@ -8850,7 +8850,7 @@
 ;;;
 ;;; Yellow-bellied flycatcher
 
-(defanimal (yellow-bellied-flycatcher beg amp)
+(define-animal (yellow-bellied-flycatcher beg amp)
   ;; east 40 3.1
   (let ((dur 0.167))
     (let ((start (seconds->samples beg))
@@ -8902,7 +8902,7 @@
 (define (black-throated-blue-warbler beg1 amp1)
   ;; east 15 9.8
   
-  (defanimal (black-throated-blue-warbler-1 beg dur amp ampf frq frqf ind)
+  (define-animal (black-throated-blue-warbler-1 beg dur amp ampf frq frqf ind)
     (let ((speed 200))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -8954,7 +8954,7 @@
 ;;;
 ;;; Great crested flycatcher
 
-(defanimal (great-crested-flycatcher beg amp)
+(define-animal (great-crested-flycatcher beg amp)
   ;; east 46 6
   (let ((dur 0.318))
     (let ((start (seconds->samples beg))
@@ -9000,7 +9000,7 @@
 ;;;
 ;;; House sparrow
 
-(defanimal (house-sparrow-1 beg amp)
+(define-animal (house-sparrow-1 beg amp)
   ;; east 99 2.9
   (let ((dur 0.144))
     (let ((start (seconds->samples beg))
@@ -9049,7 +9049,7 @@
 ;;;
 ;;; Gambel's quail
 
-(defanimal (gambels-quail beg amp)
+(define-animal (gambels-quail beg amp)
   ;; south 8 3
   (let ((dur 0.56))
     (let ((start (seconds->samples beg))
@@ -9084,7 +9084,7 @@
 (define (scaled-quail beg1 amp1)
   ;; south 7 7
   
-  (defanimal (scaled-quail-1 beg dur amp frqscl frm1frq frm2frq frmamp vibamp vibf amp4 amp5)
+  (define-animal (scaled-quail-1 beg dur amp frqscl frm1frq frm2frq frmamp vibamp vibf amp4 amp5)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.000 0.026 0.166 0.052 0.609 0.058 0.250 0.066 0.892 0.070 0.465 0.073 0.909 
@@ -9154,7 +9154,7 @@
 ;;;
 ;;; Montezuma quail
 
-(defanimal (montezuma-quail beg amp)
+(define-animal (montezuma-quail beg amp)
   ;; south 9 15
   (let ((dur 1.3))
     (let ((start (seconds->samples beg))
@@ -9189,7 +9189,7 @@
 ;;;
 ;;; Mountain quail
 
-(defanimal (mountain-quail beg amp)
+(define-animal (mountain-quail beg amp)
   (let ((dur .2))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -9222,7 +9222,7 @@
 ;;;
 ;;; Verdin
 
-(defanimal (verdin beg amp)
+(define-animal (verdin beg amp)
   ;; south 57 18
   (let ((begs (vector 0.0 0.28 0.57))
 	(durs (vector 0.12 0.15 0.15))
@@ -9255,7 +9255,7 @@
 ;;;
 ;;; White-tipped dove
 
-(defanimal (white-tipped-dove beg amp)
+(define-animal (white-tipped-dove beg amp)
   (let ((dur 1.7))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -9279,7 +9279,7 @@
 ;;;
 ;;; Zone-tailed hawk
 
-(defanimal (zone-tailed-hawk beg amp)
+(define-animal (zone-tailed-hawk beg amp)
   (let ((dur 1.82))
     (let ((start (seconds->samples beg))
 	  
@@ -9329,7 +9329,7 @@
 ;;;
 ;;; Red-eyed vireo
 
-(defanimal (red-eyed-vireo beg amp)
+(define-animal (red-eyed-vireo beg amp)
   ;; south 47 46
   (let ((dur 0.29))
     (let ((start (seconds->samples beg))
@@ -9366,7 +9366,7 @@
 ;;;
 ;;; not perfect... original seems to have a harder attack, slightly different timbre, etc
 
-(defanimal (crested-caracara beg amp)
+(define-animal (crested-caracara beg amp)
   ;; south 5 6.5
   
   (do ((i 0 (+ i 1)))
@@ -9404,7 +9404,7 @@
 (define (trumpeter-swan-1 beg amp)
   ;; east 19 44
   
-  (defanimal (trumpeter-swan-a beg amp)
+  (define-animal (trumpeter-swan-a beg amp)
     (let ((dur 0.053))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9418,7 +9418,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (* index (oscil vib)))))))))
   
-  (defanimal (trumpeter-swan-b beg amp)
+  (define-animal (trumpeter-swan-b beg amp)
     (let ((dur 0.12))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9448,7 +9448,7 @@
 			  (* (env ampf1) (oscil gen1 frq))
 			  (* (env ampf3) (nrxysin gen3 (* 9.0 frq)))))))))))
   
-  (defanimal (trumpeter-swan-c beg amp)
+  (define-animal (trumpeter-swan-c beg amp)
     (let ((dur 0.11))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9473,7 +9473,7 @@
 			  (* (env intrpf-1) (+ (polywave gen2 frq)
 					       (* .03 (nrxysin gen3 (* 9.0 frq)))))))))))))
   
-  (defanimal (trumpeter-swan-d beg amp)
+  (define-animal (trumpeter-swan-d beg amp)
     (let ((dur 0.082))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9509,7 +9509,7 @@
 			  (* (env ampf4)
 			     (polywave gen4 frq))))))))))
   
-  (defanimal (trumpeter-swan-e beg amp)
+  (define-animal (trumpeter-swan-e beg amp)
     (let ((dur 0.04)
 	  (frq 434))
       (let ((start (seconds->samples beg))
@@ -9548,7 +9548,7 @@
 (define (wrentit beg1 amp1)
   ;; calif 1 3
   
-  (defanimal (wrentit-1 beg dur amp frqscl)
+  (define-animal (wrentit-1 beg dur amp frqscl)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.000 0.095 0.221 0.193 0.692 0.293 0.814 0.380 0.727 0.486 1.000 0.543 0.972 
@@ -9563,7 +9563,7 @@
 	(outa i (* (env ampf)
 		   (polywave gen1 (env frqf)))))))
   
-  (defanimal (wrentit-2 beg dur amp frqscl)
+  (define-animal (wrentit-2 beg dur amp frqscl)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env '(0.000 0.000 0.091 0.616 0.150 0.724 0.195 0.667 0.259 0.686 0.387 1.000 0.447 0.770 
@@ -9620,7 +9620,7 @@
 ;;;
 ;;; Western wood-pewee
 
-(defanimal (western-wood-pewee-1 beg amp)
+(define-animal (western-wood-pewee-1 beg amp)
   ;; calif 2 8
   (let ((dur 0.89))
     (let ((start (seconds->samples beg))
@@ -9655,7 +9655,7 @@
 
 ;; (with-sound (:play #t) (western-wood-pewee-1 0 .5))
 
-(defanimal (western-wood-pewee-2 beg amp)
+(define-animal (western-wood-pewee-2 beg amp)
   (let ((dur 0.69))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -9689,7 +9689,7 @@
 ;;;
 ;;; Cedar waxwing
 
-(defanimal (cedar-waxwing beg amp)
+(define-animal (cedar-waxwing beg amp)
   ;; probably the simplest bird call
   ;; calif 10 10 (hard to find one call by itself)
   ;;   a cleaner original is east 3 3 with a slightly sharper frq env
@@ -9718,7 +9718,7 @@
 (define (townsends-solitaire beg1 amp1)
   ;; calif 67 33
   
-  (defanimal (townsends-solitaire-1 beg amp)
+  (define-animal (townsends-solitaire-1 beg amp)
     (let ((dur 0.15))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9737,7 +9737,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (townsends-solitaire-2 beg amp)
+  (define-animal (townsends-solitaire-2 beg amp)
     (let ((dur 0.037))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9754,7 +9754,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (townsends-solitaire-3 beg amp)
+  (define-animal (townsends-solitaire-3 beg amp)
     (let ((dur 0.323))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9779,7 +9779,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (townsends-solitaire-4 beg amp)
+  (define-animal (townsends-solitaire-4 beg amp)
     (let ((dur 0.217))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9802,7 +9802,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (townsends-solitaire-5 beg amp)
+  (define-animal (townsends-solitaire-5 beg amp)
     (let ((dur 0.007))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -9834,7 +9834,7 @@
 ;;;
 ;;; Canada goose
 
-(defanimal (canada-goose-1 beg amp)
+(define-animal (canada-goose-1 beg amp)
   ;; east 21 28
   (let ((dur 0.375))
     (let ((start (seconds->samples beg))
@@ -9879,7 +9879,7 @@
 			   (* (env ampf6) (nrxysin gen6 (* 3.0 frq)))
 			   (* (env humf) (oscil hum (* .25 frq))))))))))))
 
-(defanimal (canada-goose-2 beg amp)
+(define-animal (canada-goose-2 beg amp)
   (let ((dur 0.245))
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
@@ -9922,7 +9922,7 @@
 			   (* (env ampf6) (nrxysin gen6 (* 3.0 frq)))
 			   (* (env humf) (oscil hum (* .25 frq))))))))))))
 
-(defanimal (canada-goose-3 beg amp)
+(define-animal (canada-goose-3 beg amp)
   ;; east 21 29
   (let ((dur 0.33))
     (let ((start (seconds->samples beg))
@@ -9982,7 +9982,7 @@
 ;;;
 ;;; Pine warbler
 
-(defanimal (pine-warbler beg amp)
+(define-animal (pine-warbler beg amp)
   ;; east 21 3
   
   (let ((call-ampf (make-env '(0 .05 1 .2  3 .8 5 1 10 1 16 .4) :length 16))
@@ -10026,7 +10026,7 @@
 (define (black-throated-sparrow beg1 amp1)
   ;; south 85 2
   
-  (defanimal (black-throated-sparrow-1 beg amp)
+  (define-animal (black-throated-sparrow-1 beg amp)
     (let ((dur .034))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -10042,7 +10042,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (black-throated-sparrow-2 beg amp)
+  (define-animal (black-throated-sparrow-2 beg amp)
     (let ((dur .11))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -10062,7 +10062,7 @@
 	  (outa i (* (env ampf)
 		     (polywave gen1 (env frqf))))))))
   
-  (defanimal (black-throated-sparrow-3 beg amp)
+  (define-animal (black-throated-sparrow-3 beg amp)
     (let ((dur .153))
       (let ((start (seconds->samples beg))
 	    (stop (seconds->samples (+ beg dur)))
@@ -10104,7 +10104,7 @@
 ;;;
 ;;; Cape May warbler
 
-(defanimal (cape-may-warbler beg amp)
+(define-animal (cape-may-warbler beg amp)
   ;; east 14 2
   
   ;; note #1
@@ -10159,7 +10159,7 @@
 (define (kirtlands-warbler beg1 amp1)
   ;; east 22 3
   
-  (defanimal (kirtlands-warbler-1 beg dur frqscl frqenv ampscl ampenv)
+  (define-animal (kirtlands-warbler-1 beg dur frqscl frqenv ampscl ampenv)
     (let ((start (seconds->samples beg))
 	  (stop (seconds->samples (+ beg dur)))
 	  (ampf (make-env ampenv :duration dur :scaler ampscl))
@@ -10248,7 +10248,7 @@
 ;;;
 ;;; reverb in original makes this hard to match
 
-(defanimal (wood-duck beg amp)
+(define-animal (wood-duck beg amp)
   ;; east 22 19
   (let ((dur 0.75))
     (let ((start (seconds->samples beg))
@@ -10302,7 +10302,7 @@
 ;;;
 ;;; White-eyed vireo
 
-(defanimal (white-eyed-vireo beg amp)
+(define-animal (white-eyed-vireo beg amp)
   ;; south 41 2
   
   ;; note #1
@@ -10422,7 +10422,7 @@
 ;;;
 ;;; Willet
 
-(defanimal (willet beg amp)
+(define-animal (willet beg amp)
   ;; calif2 36 2
   
   ;; note #1
@@ -10461,7 +10461,7 @@
 ;;;
 ;;; Philadelphia vireo
 
-(defanimal (philadelphia-vireo beg amp)
+(define-animal (philadelphia-vireo beg amp)
   ;; east 58 3
   (let ((dur 0.364))
     (let ((start (seconds->samples beg))
@@ -10492,7 +10492,7 @@
 ;;;
 ;;; Black-crowned night heron
 
-(defanimal (black-crowned-night-heron beg amp)
+(define-animal (black-crowned-night-heron beg amp)
   ;; east 15 6
   (let ((dur 0.145))
     (let ((start (seconds->samples beg))
@@ -10529,7 +10529,7 @@
 ;;;
 ;;; Scrub Euphonia
 
-(defanimal (scrub-euphonia beg amp)
+(define-animal (scrub-euphonia beg amp)
   ;; arizona 90 3.0
   (let ((dur 0.49))
     (let ((start (seconds->samples beg))
@@ -10558,7 +10558,7 @@
 ;;;
 ;;; Greater pewee
 
-(defanimal (greater-pewee beg1 amp)
+(define-animal (greater-pewee beg1 amp)
   ;; arizona 52 2
   
   (define (greater-pewee-first-and-last beg)
@@ -10613,7 +10613,7 @@
 ;;;
 ;;; Brown-crested flycatcher
 
-(defanimal (brown-crested-flycatcher-1 beg amp)
+(define-animal (brown-crested-flycatcher-1 beg amp)
   ;; calif 13 7
   (let ((dur 0.66))
     (let ((start (seconds->samples beg))
@@ -10650,7 +10650,7 @@
 ;; (with-sound (:play #t) (brown-crested-flycatcher-1 0 .5))
 
 
-(defanimal (brown-crested-flycatcher-2 beg amp)
+(define-animal (brown-crested-flycatcher-2 beg amp)
   ;; calif 13 63.5
   (let ((dur 0.47))
     (let ((start (seconds->samples beg))

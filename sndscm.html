@@ -8026,15 +8026,15 @@ If this worked in general, we could use it to speed up our search by following a
 
 <pre class="indented">
 ;; this starts at the current min and marches to an n+1 min
-(let ((n 3)
-      (phases (vector 0.0 0.0 1.0)))
-  (do ((x 0.1 (+ x .1)))
-      ((&gt;= x 1.0))
-    (let ((p (fpsap x 0 n 1000 0.1 50 #f #t phases))) ; args may change without warning.
-      (format () ";~A: ~A~%" x p)
-      (do ((k 0 (+ k 1)))
-	  ((= k n))
-	(set! (phases k) (modulo (p k) 2.0))))))
+(do ((n 3)
+     (phases (vector 0.0 0.0 1.0)))
+     (x 0.1 (+ x .1)))
+    ((&gt;= x 1.0))
+  (let ((p (fpsap x 0 n 1000 0.1 50 #f #t phases))) ; args may change without warning.
+    (format () ";~A: ~A~%" x p)
+    (do ((k 0 (+ k 1)))
+        ((= k n))
+      (set! (phases k) (modulo (p k) 2.0)))))
 </pre>
 
 <p>
@@ -11677,20 +11677,20 @@ by calling the oscils and whatnot directly in the with-sound body:
 	((= i 12))
       (set! (oscs i) (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> :frequency 0.0)))
     (<a class=quiet href="#wsdoc">with-sound</a> (:srate 44100)
-     (do ((samp 0 (+ 1 samp)))
+     (do ((samp 0 (+ 1 samp))
+          (sum 0.0 0.0))
          ((= samp 300000))
-       (let ((sum 0.0))
-	 (do ((i 0 (+ i 1)))
-	     ((= i 12))
-	   (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
-	     (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
-	     (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
-	                           (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
-			         (<a class=quiet href="sndclm.html#oscil">oscil</a> (oscs i) 
-			                (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0))))))))))
-                                        ;; (- 1.0 loc) to go down
-	 (set! x (+ x incr))
-	 (<a class=quiet href="sndclm.html#outa">outa</a> samp (* .1 sum)))))))
+       (do ((i 0 (+ i 1)))
+           ((= i 12))
+         (let ((loc (+ x (/ i 12.0))))  ; location of current oscil in overall trajectory
+           (if (&gt; loc 1.0) (set! loc (- loc 1.0)))
+           (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
+                                 (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
+                               (<a class=quiet href="sndclm.html#oscil">oscil</a> (oscs i) 
+                                      (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0))))))))))
+                                      ;; (- 1.0 loc) to go down
+       (set! x (+ x incr))
+       (<a class=quiet href="sndclm.html#outa">outa</a> samp (* .1 sum))))))
 </pre>
 
 <img class="indented" src="pix/shepard.png" alt="shepard tone spectrum" >

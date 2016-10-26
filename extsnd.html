@@ -3531,10 +3531,10 @@ in the Scheme, Ruby, and Forth files.
          (error 'no-such-region (list "region-&gt;float-vector" reg)))
 
         ((&lt; chn (channels reg))
-         (let* ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
-                (len (region-framples reg))
-                (data (make-float-vector len)))
-           (do ((i 0 (+ i 1)))
+         (let ((reader (<em class=red>make-region-sampler</em> 0 reg chn))
+               (len (region-framples reg)))
+           (do ((data (make-float-vector len))
+                (i 0 (+ i 1)))
                ((= i len) data)
              (set! (data i) (<em class=red>reader</em>)))))
 
@@ -9343,14 +9343,12 @@ at the loop points:
 </p>
 <pre class="indented">
 (define (mark-sf2)
-  (let sf2it ((lst (soundfont-info)))
-    (if (pair? lst)
-        (let ((vals (car lst)))
-          (let ((m1 (add-mark (cadr vals))))
-            (set! (mark-name m1) (car vals)))
-          (add-mark (caddr vals))
-          (add-mark (cadddr vals))
-          (sf2it (cdr lst))))))
+  (for-each (lambda (vals)
+              (let ((m1 (add-mark (cadr vals))))
+                (set! (mark-name m1) (car vals)))
+              (add-mark (caddr vals))
+              (add-mark (cadddr vals)))
+    (soundfont-info)))
 </pre>
 
 <img class="indented" src="pix/bongo.png" alt="soundfont marks">
@@ -9685,9 +9683,9 @@ how long the resultant note will be given an src envelope:
 
 (define (<em class="noem">src-duration</em> e)
   (let* ((len (length e))
-	 (all-x (- (e (- len 2)) (e 0))) ; last x - first x
-	 (dur 0.0))
-    (do ((i 0 (+ i 2)))
+	 (all-x (- (e (- len 2)) (e 0)))) ; last x - first x
+    (do ((dur 0.0)
+         (i 0 (+ i 2)))
 	((&gt;= i (- len 2)) dur)
       (let* ((x0 (e i))
 	     (x1 (e (+ i 2)))
@@ -11297,9 +11295,9 @@ Here's an example that displays a histogram of the current values in 16 bins:
          (step (/ 1.0 len))
          (i 0 (+ i 1))) 
         ((= i len) v)
-      (let* ((val (<a class=quiet href="#readsample">read-sample</a> fd))
-             (bin (floor (* (abs val) 16.0))))
-        (do ((j 0 (+ j 1))) 
+      (let ((val (<a class=quiet href="#readsample">read-sample</a> fd)))
+        (do ((bin (floor (* (abs val) 16.0)))
+             (j 0 (+ j 1))) 
             ((= j steps))
           (set! (v (+ j bin)) (+ step (v (+ j bin)))))))))
 </pre>
