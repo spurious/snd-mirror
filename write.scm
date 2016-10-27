@@ -215,8 +215,8 @@
 			  (write obj port)))
 		     
 		     ((case)
-		      (if (or (not (pair? (cdr obj)))
-			      (not (pair? (cddr obj))))
+		      (if (not (and (pair? (cdr obj))
+				    (pair? (cddr obj))))
 			  (write obj port)
 			  (begin
 			    (format port "(case ~A" (cadr obj)) ; send out the selector

@@ -42863,7 +42863,7 @@ s7_pointer s7_arity(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_arity "(arity obj) the min and max acceptable args for obj if it is applicable, otherwise #f."
-  #define Q_arity pcl_t
+  #define Q_arity s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_pair_symbol, sc->is_boolean_symbol), sc->T)
   /* check_method(sc, p, sc->arity_symbol, args); */
   return(s7_arity(sc, car(args)));
 }
@@ -75159,6 +75159,7 @@ int main(int argc, char **argv)
  * could (apply append (map...)) omit the extra copy?
  * add a check for symbol-table glommage
  * (list 1 (symbol ".") 2) -> (1 . 2)
+ * maybe use 'not for signature of #f?
  *
  * Snd:
  * in FC 25 the close-window decoration does not close Snd -- under gdb it works?

@@ -23758,10 +23758,10 @@ EDITS: 2
 	(let ((vf-files (view-files-files dialog)))
 	  (if (not (and (or (member "1a.snd" vf-files)
 			    (member (string-append home-dir "/cl/1a.snd") vf-files)
-			    (member (string-append home-dir "/snd-16/1a.snd") vf-files))
+			    (member (string-append home-dir "/snd-17/1a.snd") vf-files))
 			(or (member "pistol.snd" vf-files)
 			    (member (string-append home-dir "/cl/pistol.snd") vf-files)
-			    (member (string-append home-dir "/snd-16/pistol.snd") vf-files))
+			    (member (string-append home-dir "/snd-17/pistol.snd") vf-files))
 			(= (length vf-files) 4)))
 	      (snd-display "vf files set: ~A (~A, ~A)" vf-files (string-append home-dir "/cl/1a.snd") (length vf-files))))
 	(set! (hook-functions view-files-select-hook) ())
@@ -23774,11 +23774,11 @@ EDITS: 2
 	  (set! (view-files-selected-files dialog) (list "1a.snd"))
 	  (if (not (or (equal? selected-file "1a.snd")
 		       (equal? selected-file (string-append home-dir "/cl/1a.snd"))
-		       (equal? selected-file (string-append home-dir "/snd-16/1a.snd"))))
+		       (equal? selected-file (string-append home-dir "/snd-17/1a.snd"))))
 	      (snd-display "vf set selected select hook arg: ~A" selected-file))
 	  (if (not (or (equal? (view-files-selected-files dialog) '("1a.snd"))
 		       (equal? (view-files-selected-files dialog) (list (string-append home-dir "/cl/1a.snd")))
-		       (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-16/1a.snd")))))
+		       (equal? (view-files-selected-files dialog) (list (string-append home-dir "/snd-17/1a.snd")))))
 	      (snd-display "vf selected files set: ~A" (view-files-selected-files dialog))))
 	(hide-widget dialog)
 	))
@@ -24536,7 +24536,7 @@ EDITS: 2
       (set! (hook-functions after-save-as-hook) ())
       (if save-as-dialog (snd-display "after-save-as-hook dialog: ~A" save-as-dialog)))
     (if (not (or (string=? (string-append home-dir "/cl/test.snd") save-as-name) 
-		 (string=? (string-append home-dir "/snd-16/test.snd") save-as-name)))
+		 (string=? (string-append home-dir "/snd-17/test.snd") save-as-name)))
 	(snd-display "after-save-as-hook name: ~A (~A)" save-as-name (string-append home-dir "/cl/test.snd"))))
   (hook-push open-raw-sound-hook 
 	     (lambda (hook)
@@ -32227,7 +32227,7 @@ EDITS: 1
 	      (snd-display "edit-list->function 10a: ~A" func))
 	  (if (not (member (procedure-source func) 
 			   '((lambda (snd chn) (insert-sound "/home/bil/cl/pistol.snd" 1000 0 snd chn))
-			     (lambda (snd chn) (insert-sound "/home/bil/snd-16/pistol.snd" 1000 0 snd chn)))))
+			     (lambda (snd chn) (insert-sound "/home/bil/snd-17/pistol.snd" 1000 0 snd chn)))))
 	      (snd-display "edit-list->function 10a: ~A" (procedure-source func)))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -32242,7 +32242,7 @@ EDITS: 1
 	      (snd-display "edit-list->function 11: ~A" func))
 	  (if (not (member (procedure-source func) 
 			   '((lambda (snd chn) (insert-samples 1000 41623 "/home/bil/cl/pistol.snd" snd chn))
-			     (lambda (snd chn) (insert-samples 1000 41623 "/home/bil/snd-16/pistol.snd" snd chn)))))
+			     (lambda (snd chn) (insert-samples 1000 41623 "/home/bil/snd-17/pistol.snd" snd chn)))))
 	      (snd-display "edit-list->function 11: ~A" (procedure-source func)))
 	  (revert-sound ind)
 	  (func ind 0)
@@ -46677,100 +46677,66 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 14,486,041,393  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
 10,836,543,187  run.c:eval_ptree [/home/bil/snd-11/snd]
 
-10-Dec-10 (64-bit)
-224,005,122,781 
-32,349,320,555  s7.c:eval [/home/bil/snd-11/snd]
-24,560,182,751  s7.c:eval'2 [/home/bil/snd-11/snd]
-19,534,468,570  ???:sin [/lib64/libm-2.12.so]
-16,408,681,106  io.c:mus_read_any_1 [/home/bil/snd-11/snd]
-11,540,583,151  snd-edits.c:channel_local_maxamp [/home/bil/snd-11/snd]
-11,175,405,494  s7.c:gc [/home/bil/snd-11/snd]
- 8,937,855,502  run.c:eval_ptree [/home/bil/snd-11/snd]
- 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-11/snd]
-
 14-Dec-11:
 153,472,402,051
 15,964,352,672  ???:sin [/lib64/libm-2.12.so]
-15,349,566,001  io.c:mus_read_any_1 [/home/bil/snd-16/snd]
- 9,724,315,504  s7.c:eval [/home/bil/snd-16/snd]
- 9,340,050,109  snd-edits.c:channel_local_maxamp [/home/bil/snd-16/snd]
- 8,904,652,480  snd-sig.c:direct_filter [/home/bil/snd-16/snd]
- 8,727,766,020  run.c:eval_ptree [/home/bil/snd-16/snd]
- 7,219,826,287  io.c:mus_write_1 [/home/bil/snd-16/snd]
- 5,925,019,812  s7.c:eval'2 [/home/bil/snd-16/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-16/snd]
- 2,765,667,308  clm.c:mus_out_any_to_file [/home/bil/snd-16/snd]
+15,349,566,001  io.c:mus_read_any_1 [/home/bil/snd-17/snd]
+ 9,724,315,504  s7.c:eval [/home/bil/snd-17/snd]
+ 9,340,050,109  snd-edits.c:channel_local_maxamp [/home/bil/snd-17/snd]
+ 8,904,652,480  snd-sig.c:direct_filter [/home/bil/snd-17/snd]
+ 8,727,766,020  run.c:eval_ptree [/home/bil/snd-17/snd]
+ 7,219,826,287  io.c:mus_write_1 [/home/bil/snd-17/snd]
+ 5,925,019,812  s7.c:eval'2 [/home/bil/snd-17/snd]
+ 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-17/snd]
+ 2,765,667,308  clm.c:mus_out_any_to_file [/home/bil/snd-17/snd]
  2,732,722,538  ???:cos [/lib64/libm-2.12.so]
- 2,654,002,973  clm.c:mus_src [/home/bil/snd-16/snd]
- 2,216,029,830  s7.c:find_symbol_or_bust [/home/bil/snd-16/snd]
- 2,051,926,172  s7.c:gc [/home/bil/snd-16/snd]
-
-2-Jul-12:
-152,015,041,884
-15,958,491,763  ???:sin [/lib64/libm-2.12.so]
-14,742,080,012  io.c:mus_read_any_1 [/home/bil/snd-16/snd]
-10,457,919,006  s7.c:eval [/home/bil/snd-16/snd]
- 9,312,647,839  snd-edits.c:channel_local_maxamp [/home/bil/snd-16/snd]
- 8,913,093,185  snd-sig.c:direct_filter [/home/bil/snd-16/snd]
- 8,725,479,212  run.c:eval_ptree [/home/bil/snd-16/snd]
- 7,219,930,929  io.c:mus_write_1 [/home/bil/snd-16/snd]
- 4,366,174,949  s7.c:eval'2 [/home/bil/snd-16/snd]
- 3,042,551,502  clm.c:mus_src [/home/bil/snd-16/snd]
- 2,960,895,840  clm.c:mus_fir_filter [/home/bil/snd-16/snd]
- 2,762,641,235  clm.c:mus_out_any_to_file [/home/bil/snd-16/snd]
- 2,745,046,475  ???:cos [/lib64/libm-2.12.so]
- 2,227,836,598  s7.c:find_symbol_or_bust [/home/bil/snd-16/snd]
- 1,839,006,887  s7.c:gc [/home/bil/snd-16/snd]
- 1,306,950,910  run.c:eval_ptree'2 [/home/bil/snd-16/snd]
- 1,273,733,564  ???:t2_32 [/home/bil/snd-16/snd]
- 1,259,047,832  clm.c:mus_formant_bank [/home/bil/snd-16/snd]
- 1,204,213,789  snd-edits.c:next_sample_value [/home/bil/snd-16/snd]
- 1,129,624,275  clm.c:mus_ssb_am_unmodulated [/home/bil/snd-16/snd]
- 1,116,765,922  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-16/snd]
+ 2,654,002,973  clm.c:mus_src [/home/bil/snd-17/snd]
+ 2,216,029,830  s7.c:find_symbol_or_bust [/home/bil/snd-17/snd]
+ 2,051,926,172  s7.c:gc [/home/bil/snd-17/snd]
 
 6-Jul-12:
 314,557,435,854
-96,266,822,080  s7.c:eval [/home/bil/snd-16/snd]
-20,140,459,790  s7.c:find_symbol_or_bust [/home/bil/snd-16/snd]
+96,266,822,080  s7.c:eval [/home/bil/snd-17/snd]
+20,140,459,790  s7.c:find_symbol_or_bust [/home/bil/snd-17/snd]
 15,094,536,285  ???:sin [/lib64/libm-2.12.so]
-14,561,228,879  io.c:mus_read_any_1 [/home/bil/snd-16/snd]
-13,267,844,138  s7.c:gc [/home/bil/snd-16/snd]
-10,735,806,413  s7.c:s7_make_real [/home/bil/snd-16/snd]
- 9,597,104,099  snd-edits.c:channel_local_maxamp [/home/bil/snd-16/snd]
- 8,903,732,430  snd-sig.c:direct_filter [/home/bil/snd-16/snd]
- 8,756,184,253  s7.c:eval'2 [/home/bil/snd-16/snd]
- 6,939,439,659  io.c:mus_write_1 [/home/bil/snd-16/snd]
- 4,221,129,319  s7.c:g_add [/home/bil/snd-16/snd]
- 3,790,496,511  s7.c:g_multiply_2 [/home/bil/snd-16/snd]
- 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-16/snd]
- 2,866,346,964  s7.c:g_equal_2 [/home/bil/snd-16/snd]
- 2,647,149,349  clm.c:mus_src [/home/bil/snd-16/snd]
- 2,373,255,704  s7.c:g_add_2 [/home/bil/snd-16/snd]
- 2,365,017,452  s7.c:g_add_1s [/home/bil/snd-16/snd]
+14,561,228,879  io.c:mus_read_any_1 [/home/bil/snd-17/snd]
+13,267,844,138  s7.c:gc [/home/bil/snd-17/snd]
+10,735,806,413  s7.c:s7_make_real [/home/bil/snd-17/snd]
+ 9,597,104,099  snd-edits.c:channel_local_maxamp [/home/bil/snd-17/snd]
+ 8,903,732,430  snd-sig.c:direct_filter [/home/bil/snd-17/snd]
+ 8,756,184,253  s7.c:eval'2 [/home/bil/snd-17/snd]
+ 6,939,439,659  io.c:mus_write_1 [/home/bil/snd-17/snd]
+ 4,221,129,319  s7.c:g_add [/home/bil/snd-17/snd]
+ 3,790,496,511  s7.c:g_multiply_2 [/home/bil/snd-17/snd]
+ 2,960,895,524  clm.c:mus_fir_filter [/home/bil/snd-17/snd]
+ 2,866,346,964  s7.c:g_equal_2 [/home/bil/snd-17/snd]
+ 2,647,149,349  clm.c:mus_src [/home/bil/snd-17/snd]
+ 2,373,255,704  s7.c:g_add_2 [/home/bil/snd-17/snd]
+ 2,365,017,452  s7.c:g_add_1s [/home/bil/snd-17/snd]
  2,014,711,657  ???:cos [/lib64/libm-2.12.so]
 
 23-Apr-13:
 52,886,592,302
-6,697,050,795  s7.c:eval [/home/bil/snd-16/snd]
+6,697,050,795  s7.c:eval [/home/bil/snd-17/snd]
 6,228,616,918  ???:sin [/lib64/libm-2.12.so]
-2,546,631,823  clm.c:mus_src [/home/bil/snd-16/snd]
+2,546,631,823  clm.c:mus_src [/home/bil/snd-17/snd]
 2,496,647,180  ???:cos [/lib64/libm-2.12.so]
-2,176,750,987  s7.c:find_symbol_or_bust [/home/bil/snd-16/snd]
-1,263,726,083  s7.c:eval'2 [/home/bil/snd-16/snd]
-1,248,608,065  s7.c:gc [/home/bil/snd-16/snd]
-1,021,282,278  io.c:mus_read_any_1 [/home/bil/snd-16/snd]
-1,003,986,022  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-16/snd]
-  933,290,098  clm.c:mus_formant_bank [/home/bil/snd-16/snd]
-  911,248,552  clm.c:fir_8 [/home/bil/snd-16/snd]
-  885,305,356  ???:t2_32 [/home/bil/snd-16/snd]
-  796,412,317  snd-edits.c:channel_local_maxamp [/home/bil/snd-16/snd]
-  785,981,295  ???:t2_64 [/home/bil/snd-16/snd]
-  693,360,038  clm.c:run_hilbert [/home/bil/snd-16/snd]
-  507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-16/snd]
-  459,853,855  clm.c:mus_src_20 [/home/bil/snd-16/snd]
-  449,476,048  ???:n1_64 [/home/bil/snd-16/snd]
-  444,970,752  io.c:mus_write_1 [/home/bil/snd-16/snd]
-  428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-16/snd]
+2,176,750,987  s7.c:find_symbol_or_bust [/home/bil/snd-17/snd]
+1,263,726,083  s7.c:eval'2 [/home/bil/snd-17/snd]
+1,248,608,065  s7.c:gc [/home/bil/snd-17/snd]
+1,021,282,278  io.c:mus_read_any_1 [/home/bil/snd-17/snd]
+1,003,986,022  clm.c:mus_phase_vocoder_with_editors [/home/bil/snd-17/snd]
+  933,290,098  clm.c:mus_formant_bank [/home/bil/snd-17/snd]
+  911,248,552  clm.c:fir_8 [/home/bil/snd-17/snd]
+  885,305,356  ???:t2_32 [/home/bil/snd-17/snd]
+  796,412,317  snd-edits.c:channel_local_maxamp [/home/bil/snd-17/snd]
+  785,981,295  ???:t2_64 [/home/bil/snd-17/snd]
+  693,360,038  clm.c:run_hilbert [/home/bil/snd-17/snd]
+  507,150,000  clm.c:mus_formant_bank_with_inputs [/home/bil/snd-17/snd]
+  459,853,855  clm.c:mus_src_20 [/home/bil/snd-17/snd]
+  449,476,048  ???:n1_64 [/home/bil/snd-17/snd]
+  444,970,752  io.c:mus_write_1 [/home/bil/snd-17/snd]
+  428,928,818  float-vector.c:g_float-vector_add [/home/bil/snd-17/snd]
 
 27-Apr-14:
 35,390,341,125
@@ -46791,28 +46757,6 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
   394,639,129  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
   372,681,428  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
-  338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
-  327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-
-14-Aug-14:
-35,133,061,231
-5,365,681,646  s7.c:eval [/home/bil/gtk-snd/snd]
-2,256,581,832  ???:sin [/lib64/libm-2.12.so]
-2,050,537,059  ???:cos [/lib64/libm-2.12.so]
-1,266,976,906  clm.c:fir_ge_20 [/home/bil/gtk-snd/snd]
-1,095,141,759  clm.c:mus_src [/home/bil/gtk-snd/snd]
-  901,140,028  ???:t2_32 [/home/bil/gtk-snd/snd]
-  795,199,572  s7.c:gc [/home/bil/gtk-snd/snd]
-  720,395,914  ???:t2_64 [/home/bil/gtk-snd/snd]
-  648,414,838  clm.c:mus_phase_vocoder_with_editors [/home/bil/gtk-snd/snd]
-  592,801,688  clm.c:fb_one_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
-  573,460,056  snd-edits.c:channel_local_maxamp [/home/bil/gtk-snd/snd]
-  557,892,664  io.c:mus_read_any_1 [/home/bil/gtk-snd/snd]
-  452,423,080  s7.c:eval'2 [/home/bil/gtk-snd/snd]
-  435,066,604  ???:n1_64 [/home/bil/gtk-snd/snd]
-  414,027,948  vct.c:g_vct_add [/home/bil/gtk-snd/snd]
-  405,194,494  clm.c:mus_src_to_buffer [/home/bil/gtk-snd/snd]
-  379,588,776  clm.c:mus_env_linear [/home/bil/gtk-snd/snd]
   338,359,320  clm.c:run_hilbert [/home/bil/gtk-snd/snd]
   327,141,926  clm.c:fb_many_with_amps_c1_c2 [/home/bil/gtk-snd/snd]
 

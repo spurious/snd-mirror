@@ -3099,7 +3099,7 @@
 				    ((begin)
 				     (let* ((len1 (- (length val) 1))
 					    (new-last (simplify-boolean (list 'not (list-ref val len1)) () () env)))
-				       `(,@(copy val (make-list len1)) ,new-last)))))
+				       (append (copy val (make-list len1)) (list new-last))))))
 
 				 ((not (equal? val arg))
 				  (list 'not val))
@@ -5269,7 +5269,7 @@
 				    (integer-result? (caar args))
 				    (and (eq? (caar args) 'random)
 					 (pair? (cdar args))
-					 (rational? (cadar args))))))
+					 (rational? (cadar args)))))) ; perhaps (exact (random 10.0)) -> (random 10)??
 		       (car args))
 		      ((number? (car args))
 		       (catch #t (lambda () (inexact->exact (car args))) (lambda any (cons (car form) args))))
@@ -8581,7 +8581,7 @@
 			
 		  ;; (equal? a (list b)) and equivalents happens a lot, but is the extra consing worse than 
 		  ;;    (and (pair? a) (equal? (car a) b) (null? (cdr a))) -- code readability seems more important here
-		  
+
 		  (cond ((or (eq? (car eq1) 'equal?)
 			     (eq? (car eq2) 'equal?))
 			 (if (eq? head 'equal?)
@@ -8596,10 +8596,10 @@
 			 (if (eq? head 'eqv?)
 			     (if specific-op                    ; (eqv? (integer->char x) #\null)
 				 (lint-format "~A could be ~A in ~S" caller head specific-op form))
-				 (lint-format "~A ~A be eqv?~A in ~S" caller head 
-					      (if (eq? head 'eq?) "should" "could") 
-					      (if specific-op (format #f " or ~A" specific-op) "")
-					      form)))
+			     (lint-format "~A ~A be eqv?~A in ~S" caller head 
+					  (if (eq? head 'eq?) "should" "could") 
+					  (if specific-op (format #f " or ~A" specific-op) "")
+					  form)))
 			
 			((not (or (eq? (car eq1) 'eq?)
 				  (eq? (car eq2) 'eq?))))
@@ -16746,11 +16746,11 @@
 					    (len=2? if-false)
 					    (eq? vname (cadr if-false)))
 				   (let ((else-clause (if (eq? if-true vname)
-							  `((else #f))
+							  (list (list 'else #f))
 							  (if (and (pair? if-true)
 								   (tree-unquoted-member vname if-true))
 							      :oops! ; if the let var appears in the else portion, we can't do anything with =>
-							      `((else ,if-true))))))
+							      (list (list 'else if-true))))))
 				     (unless (eq? else-clause :oops!)
 				       (lint-format "perhaps ~A" caller (lists->string form `(cond (,vvalue => ,(car if-false)) ,@else-clause))))))))
 			     
@@ -16773,7 +16773,7 @@
 									 caller p vname (car vvalue) (truncated-list->string (car varlist)))
 							    #f))
 						   (eq? (cadadr p) vname))
-					      (and (memq (car vvalue) '(char-position string-position string->number length)) ; length only in s7
+					      (and (memq (car vvalue) '(char-position string-position string->number length arity)) ; length|arity only in s7
 						   (or (eq? (cadr p) vname)
 						       (and (len>1? (cadr p))
 							    (or (memq (caadr p) '(number? complex?))
@@ -16805,11 +16805,11 @@
 					      (null? (cdddr p))))
 				 (let ((else-clause (if (pair? (cdddr p))
 							(if (eq? (cadddr p) vname)
-							    `((else #f)) ; this stands in for the local var
+							    (list (list 'else #f)) ; this stands in for the local var
 							    (if (and (pair? (cadddr p))
 								     (tree-unquoted-member vname (cadddr p)))
 								:oops! ; if the let var appears in the else portion, we can't do anything with =>
-								`((else ,(cadddr p)))))
+								(list (list 'else (cadddr p)))))
 							(case (car p)
 							  ((and) '((else #f)))
 							  ((or)  '((else #t)))
@@ -16817,7 +16817,9 @@
 				   (unless (eq? else-clause :oops!)
 				     ;; (let ((x (assoc y z))) (if x (cdr x))) -> (cond ((assoc y z) => cdr))
 				     (lint-format "perhaps ~A" caller 
-						  (lists->string form `(cond (,vvalue => ,(or crf (caaddr p))) ,@else-clause))))))))
+						  (lists->string form (cons 'cond 
+									    (cons (list vvalue '=> (or crf (caaddr p))) 
+										  else-clause)))))))))
 			   )) ; one var in varlist
 		       
 
@@ -17078,17 +17080,18 @@
 				       ;; the pattern (set! x y) ... (set! y x) happens a few times (say 5 to 10)
 				       (lint-format "perhaps use let-temporarily here: ~A" caller
 						    (lists->string form
-								   (let ((new-let `(let-temporarily 
-										       ((,saved-name ,(if (pair? first-pos) 
-													  (caddar first-pos) 
-													  saved-name)))
-										     ,@(map (lambda (expr)
-											      (if (or (and (pair? first-pos)
-													   (eq? expr (car first-pos)))
-												      (eq? expr (car last-pos)))
-												  (values)
-												  expr))
-											    body))))
+								   (let ((new-let (cons 'let-temporarily 
+											(cons (list (list saved-name 
+													  (if (pair? first-pos) 
+													      (caddar first-pos) 
+													      saved-name)))
+											      (map (lambda (expr)
+												     (if (or (and (pair? first-pos)
+														  (eq? expr (car first-pos)))
+													     (eq? expr (car last-pos)))
+													 (values)
+													 expr))
+												   body)))))
 								     (if (null? (cdr vars)) ; we know vars is a pair, want len=1
 									 new-let
 									 (list 'let (map (lambda (v)
@@ -18028,7 +18031,9 @@
 				     (lint-format "perhaps ~A" caller
 						  (case varlist-len
 						    ((1) (lists->string form 
-									`(cond (,(cadr last-var) => ,(caaddr p)) ,@else-clause)))
+									(cons 'cond 
+									      (cons (list (cadr last-var) '=> (caaddr p)) 
+										    else-clause))))
 						    ((2) (lists->string form 
 									`(let (,(car varlist))
 									   (cond (,(cadr last-var) => ,(caaddr p)) ,@else-clause))))
@@ -19291,7 +19296,7 @@
 						     (lint-format "perhaps~A~%~NC~A ->~%~NC~A" caller 
 								  disclaimer
 								  (+ lint-left-margin 4) #\space
-								  (lint-pp `(,@header ,(one-call-and-dots (car p)) ,@trailer))
+								  (lint-pp (append header (cons (one-call-and-dots (car p)) trailer)))
 								  (+ lint-left-margin 4) #\space
 								  (if (and (memq (caar p) '(let let*))
 									   (list? (cadar p))
@@ -19301,7 +19306,7 @@
 									(if (< (tree-leaves last) 12)
 									    (format #f "(~A ... ~A)"
 										    (caar p)
-										    (lint-pp `(,@header ,last ,@trailer)))
+										    (lint-pp (append header (cons last trailer))))
 									    (lint-pp `(let ((_1_ ,(one-call-and-dots (car p))))
 											(,@header _1_ ,@trailer)))))
 								      (lint-pp `(let ((_1_ ,(one-call-and-dots (car p))))
@@ -19416,7 +19421,7 @@
 							 (if (side-effect? test env)
 							     (format #f " (ignoring ~S's possible side-effects)" test)
 							     "")
-							 (lists->string form `(,@header ,middle ,@q))))))))))))
+							 (lists->string form (append header (cons middle q)))))))))))))
 			  ((pair? head)
 			   (cond ((not (and (pair? (cdr head))
 					    (memq (car head) '(lambda lambda*)))))
@@ -19519,61 +19524,91 @@
 					(lint-format "perhaps ~A" caller      ; `(,x) -> (list x) 
 						     (lists->string form (list 'list (cadr form)))))))
 			       ((3)
-				(when (pair? (caddr form))
-				  (let ((arg1 (cadr form))
-					(arg2 (caddr form)))
-				    (if (not (or (and (pair? arg1)
-						      (tree-set-member '(#_{apply_values} #_{list} #_{append} unquote) arg1))
-						 (tree-set-member '(#_{append} unquote) arg2)
-						 (tree-set-member '(#_{list} #_{apply_values}) (cdr arg2))))
+				(let ((arg1 (cadr form))
+				      (arg2 (caddr form)))
+				  (if (not (or (and (pair? arg1)
+						    (tree-set-member '(#_{apply_values} #_{append} unquote) arg1))
+					       (and (pair? arg2)
+						    (or (tree-set-member '(#_{append} unquote) arg2)
+							(tree-set-member '(#_{list} #_{apply_values}) (cdr arg2))))))
 					(lint-format "perhaps ~A" caller        ; `(f ,(map g x)) -> (list 'f (map g x))
 						     (lists->string form        ; `(f ,@(map g x)) -> (cons 'f (map g x))
-								    (case (car arg2)
-								      ((#_{apply_values})
-								       (list 'cons arg1 (cadr arg2)))
-								      ((#_{list})
-								       (list 'list arg1 (cons 'list (cdr arg2))))
-								      (else 
-								       (list 'list arg1 arg2)))))
-					(if (and (eq? (car arg2) #_{apply_values})
-						 (not (qq-tree? (cadr arg2)))
-						 (pair? arg1)            ; `(,@x ,@y) -> (append x y)
+								    (if (pair? arg2)
+									(case (car arg2)
+									  ((#_{apply_values})
+									   (list 'cons (un_{list} arg1) (cadr arg2)))
+									  ((#_{list})
+									   (list 'list (un_{list} arg1) (cons 'list (cdr arg2))))
+									  (else 
+									   (list 'list (un_{list} arg1) arg2)))
+									(list 'list (un_{list} arg1) arg2))))
+					(if (and (len=2? arg1)
 						 (eq? (car arg1) #_{apply_values})
 						 (not (qq-tree? (cadr arg1))))
-					    (lint-format "perhaps ~A" caller
-							 (lists->string form 
-									(list 'append 
-									      (un_{list} (cadr arg1)) 
-									      (un_{list} (cadr arg2))))))))))
-			       
-			       ;; `(+ ,y ,@(map f x)) -> (cons '+ (cons y (map f x)))
-			       ;; `(+ ,y ,@x ,@z etc) -> (cons '+ (cons y (append x z ...)))
-			       ;; `(f ,@x ,@y etc) -> (cons 'f (append x y ...))
-			       ;; `(,@x ,@y etc) -> (append x y ...)
-			       (else                       ; checked already that form is a proper-list, so the length here is > 3
+					    (if (and (len=2? arg2)
+						     (not (qq-tree? (cadr arg2)))
+						     (eq? (car arg2) #_{apply_values}))  ; `(,@x ,@y) -> (append x y)
+						(lint-format "perhaps ~A" caller
+							     (lists->string form 
+									    (list 'append 
+										  (un_{list} (cadr arg1)) 
+										  (un_{list} (cadr arg2)))))
+						(if (not (and (pair? arg2)
+							      (tree-set-member '(#_{apply_values} #_{append} unquote) arg2)))
+						    (lint-format "perhaps ~A" caller     ; `(,@x ,y) -> (append x (list y))
+								 (lists->string form
+										(list 'append 
+										      (un_{list} (cadr arg1))
+										      (list 'list (un_{list} arg2)))))))))))
+
+			       (else                  ; checked already that form is a proper-list, so the length here is > 3
 				(define (safe-av? p)
 				  (and (pair? p)
 				       (eq? (car p) #_{apply_values})
 				       (not (tree-set-member '(#_{apply_values} #_{list} #_{append} unquote) (cdr p)))))
 				  
 				(let ((args (cdr form)))      ; car is #_{list}
-				  (when (every? safe-av? (cddr args))
-				    (if (safe-av? (cadr args))
-					(if (safe-av? (car args))
-					    (lint-format "perhaps ~A" caller
-							 (lists->string form
-									(cons 'append (map cadr args))))
-					    (if (not (tree-set-member '(#_{apply_values} #_{list} #_{append} unquote) (car args)))
-						(lint-format "perhaps ~A" caller
-							     (lists->string form
-									    `(cons ,(car args) (append ,@(map cadr (cdr args))))))))
-					(if (not (or (tree-set-member '(#_{apply_values} #_{list} #_{append} unquote) (car args))
-						     (tree-set-member '(#_{apply_values} #_{list} #_{append} unquote) (cadr args))))
-					    (lint-format "perhaps ~A" caller
-							 (lists->string form
-									(if (null? (cdddr args))
-									    `(cons ,(car args) (cons ,(cadr args) ,(cadr (caddr args))))
-									    `(cons ,(car args) (cons ,(cadr args) (append ,@(map cadr (cddr args)))))))))))))))))
+				  (cond ((not (every? safe-av? (cddr args)))
+					 (if (and (len=3? args)
+						  (safe-av? (car args))   ; `(,@x ,@y ,z) -> (append x y (list z)) etc
+						  (safe-av? (cadr args))
+						  (not (and (pair? (caddr args))
+							    (memq (caaddr args) '(#_{apply_values} #_{append} unquote)))))
+					     (lint-format "perhaps ~A" caller
+							  (lists->string form
+									 (list 'append (cadar args) (cadadr args) 
+									       (list 'list (un_{list} (caddr args))))))))
+					
+					;; `(+ ,y ,@(map f x)) -> (cons '+ (cons y (map f x)))
+					;; `(+ ,y ,@x ,@z etc) -> (cons '+ (cons y (append x z ...)))
+					;; `(f ,@x ,@y etc) -> (cons 'f (append x y ...))
+					;; `(,@x ,@y etc) -> (append x y ...)
+					((safe-av? (cadr args))
+					 (if (safe-av? (car args))
+					     (lint-format "perhaps ~A" caller
+							  (lists->string form
+									 (cons 'append (map cadr args))))
+					     (if (not (tree-set-member '(#_{apply_values} #_{append} unquote) (car args)))
+						 (lint-format "perhaps ~A" caller
+							      (lists->string form
+									     `(cons ,(un_{list} (car args)) (append ,@(map cadr (cdr args)))))))))
+
+					((not (or (tree-set-member '(#_{apply_values} #_{append} unquote) (car args))
+						  (tree-set-member '(#_{apply_values} #_{append} unquote) (cadr args))))
+					 (lint-format "perhaps ~A" caller
+						      (lists->string form
+								     `(cons ,(un_{list} (car args))
+									    (cons ,(un_{list} (cadr args))
+										  ,(if (null? (cdddr args))
+										       (cadr (caddr args))
+										       (cons 'append (map cadr (cddr args)))))))))
+					((and (len=3? args)
+					      (safe-av? (car args))   ; `(,@x ,y ,@z) -> (append x (cons y z))
+					      (not (tree-set-member '(#_{apply_values} #_{append} unquote) (cadr args))))
+					 (lint-format "perhaps ~A" caller
+						      (lists->string form
+								     (list 'append (cadar args) 
+									   (list 'cons (un_{list} (cadr args)) (cadr (caddr args))))))))))))))
 		    (let ((vars env))
 		      (for-each
 		       (lambda (f)
@@ -20258,4 +20293,8 @@
     #f))
 |#
 
-;;; 172 28358 717695
+;;; multi-arg map/for-each (check current recur->do)
+;;;   check the multi-statement case here
+;;; unnecessary copy args/(car args)
+;;;
+;;; 172 28550 718099
