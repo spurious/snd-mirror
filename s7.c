@@ -45829,6 +45829,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  spaces_len = strlen(spaces);
 
 		  if (notes_start_col < 0) notes_start_col = 50;
+		  if (notes_start_col > total_cols) notes_start_col = 0;
 		  notes_max = total_cols - notes_start_col;
 
 		  old_short_print = sc->short_print;
