@@ -1649,8 +1649,10 @@ widget_t make_preferences_dialog(void)
   /* gtk_container_set_border_width (GTK_CONTAINER(preferences_dialog), 10); */
   gtk_widget_realize(preferences_dialog);
 
+#if (!GTK_CHECK_VERSION(3, 22, 0))
   if ((STARTUP_WIDTH < gdk_screen_width()) &&
       (STARTUP_HEIGHT < gdk_screen_height()))
+#endif
     gtk_window_resize(GTK_WINDOW(preferences_dialog), STARTUP_WIDTH, STARTUP_HEIGHT);
 
   help_button = gtk_dialog_add_button(GTK_DIALOG(preferences_dialog), "Help", GTK_RESPONSE_NONE);

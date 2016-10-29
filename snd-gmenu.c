@@ -973,7 +973,11 @@ void post_basic_popup_menu(void *e)
   if ((!sp) || (sp->nchans == 1))
     gtk_widget_hide(popup_play);
   else gtk_widget_show(popup_play);
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gtk_menu_popup_at_pointer(GTK_MENU(basic_popup_menu), (const GdkEvent *)ev);
+#else
   gtk_menu_popup(GTK_MENU(basic_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
+#endif
 }
 
 
@@ -1140,7 +1144,11 @@ void post_selection_popup_menu(void *e)
       add_menu_item(selection_popup_menu, "Info",           NULL, (GCallback)popup_selection_info_callback);
     }
 
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gtk_menu_popup_at_pointer(GTK_MENU(selection_popup_menu), (const GdkEvent *)ev);
+#else
   gtk_menu_popup(GTK_MENU(selection_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
+#endif
 }
 
 
@@ -1322,7 +1330,11 @@ void post_fft_popup_menu(void *e)
       add_menu_item(fft_popup_menu, "Peaks->fft.txt", NULL, (GCallback)popup_peaks_callback);
     }
 
+#if GTK_CHECK_VERSION(3, 22, 0)
+  gtk_menu_popup_at_pointer(GTK_MENU(fft_popup_menu), (const GdkEvent *)ev);
+#else
   gtk_menu_popup(GTK_MENU(fft_popup_menu), NULL, NULL, NULL, NULL, POPUP_BUTTON, EVENT_TIME(ev));
+#endif
 }
 
 

@@ -78,7 +78,7 @@
 					;0 <= m <= L and -1<= x <= 1 (x real)
   (if (or (not (<= 0 m L)) 
 	  (> (abs x) 1.0))
-      (snd-error "invalid arguments to plgndr")
+      (error 'wrong-type-arg "invalid arguments to plgndr: ~A ~A ~A" L m x)
       (let ((pmm 1.0)
 	    (fact 0.0) 
 	    (somx2 0.0))
@@ -486,7 +486,7 @@
 
     (cond ((zero? m) 0)
 
-	  ((zero? n) (error "divide by zero (sin-m*pi/n n = 0)"))
+	  ((zero? n) (error 'divide-by-zero "divide by zero (sin-m*pi/n n = 0)"))
 
 	  ((= n 1) 0)
 

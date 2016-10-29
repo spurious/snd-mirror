@@ -86,7 +86,7 @@
 	  (format () ";;; freeverb: ~d input channels, ~d output channels~%" in-chans out-chans))
       (if (and (> in-chans 1)
 	       (not (= in-chans out-chans)))
-	  (error "input must be mono or input channels must equal output channels"))
+	  (error 'wrong-type-arg "input must be mono or input channels must equal output channels"))
 
       (let ((out-mix (or output-mixer
 		       (let ((v (make-float-vector (list out-chans out-chans))))

@@ -2850,7 +2850,7 @@ indexing syntax with the field or method name.  To evaluate a form in the contex
        (let ((gf ((car args) ',name))) ; get local definition
 	 (if (not (eq? gf ,name))      ; avoid infinite recursion
              (apply gf args)
-	     (error "attempt to call generic function wrapper recursively"))))))
+	     (error 'syntax-error "attempt to call generic function wrapper recursively"))))))
 
 (define-macro (define-slot-accessor name slot)
   `(define ,name (dilambda 
@@ -4374,13 +4374,13 @@ send that info to the current-error-port:
 <pre class="indented">
 (catch #t
   (lambda ()
-    (error 'oops)
+    (error 'oops))
   (lambda args
     (format (current-error-port) "~A: ~A~%~A[~A]:~%~A~%" 
       (car args)                        ; the error type
       (apply format #f (cadr args))     ; the error info
       (port-filename) (port-line-number); error file location
-      (stacktrace)))))                  ; and a stacktrace
+      (stacktrace))))                   ; and a stacktrace
 </pre>
 
 <blockquote>
@@ -5108,7 +5108,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 	    expr
 	    (values))
 	(if (not (pair? e))
-	    (error "strange #+ chooser: ~S~%" e)
+	    (error 'wrong-type-arg "strange #+ chooser: ~S~%" e)
 	    (begin      ; evaluate the #+(...) expression as in cond-expand
 	      (define (traverse tree)
 		(if (pair? tree)                                             

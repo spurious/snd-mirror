@@ -95,16 +95,16 @@
 
 
 ;;; ----------------
-(define (first obj)  (if (sequence? obj) (obj 0) (error "first argument, ~S, is not a sequence" obj)))
-(define (second obj) (if (sequence? obj) (obj 1) (error "second argument, ~S, is not a sequence" obj)))
-(define (third obj)  (if (sequence? obj) (obj 2) (error "third argument, ~S, is not a sequence" obj)))
-(define (fourth obj) (if (sequence? obj) (obj 3) (error "fourth argument, ~S, is not a sequence" obj)))
-(define (fifth obj)  (if (sequence? obj) (obj 4) (error "fifth argument, ~S, is not a sequence" obj)))
-(define (sixth obj)  (if (sequence? obj) (obj 5) (error "sixth argument, ~S, is not a sequence" obj)))
-(define (seventh obj)(if (sequence? obj) (obj 6) (error "seventh argument, ~S, is not a sequence" obj)))
-(define (eighth obj) (if (sequence? obj) (obj 7) (error "eighthment, ~S, is not a sequence" obj)))
-(define (ninth obj)  (if (sequence? obj) (obj 8) (error "ninth argument, ~S, is not a sequence" obj)))
-(define (tenth obj)  (if (sequence? obj) (obj 9) (error "tenth argument, ~S, is not a sequence" obj)))
+(define (first obj)  (if (sequence? obj) (obj 0) (error 'wrong-type-arg "first argument, ~S, is not a sequence" obj)))
+(define (second obj) (if (sequence? obj) (obj 1) (error 'wrong-type-arg "second argument, ~S, is not a sequence" obj)))
+(define (third obj)  (if (sequence? obj) (obj 2) (error 'wrong-type-arg "third argument, ~S, is not a sequence" obj)))
+(define (fourth obj) (if (sequence? obj) (obj 3) (error 'wrong-type-arg "fourth argument, ~S, is not a sequence" obj)))
+(define (fifth obj)  (if (sequence? obj) (obj 4) (error 'wrong-type-arg "fifth argument, ~S, is not a sequence" obj)))
+(define (sixth obj)  (if (sequence? obj) (obj 5) (error 'wrong-type-arg "sixth argument, ~S, is not a sequence" obj)))
+(define (seventh obj)(if (sequence? obj) (obj 6) (error 'wrong-type-arg "seventh argument, ~S, is not a sequence" obj)))
+(define (eighth obj) (if (sequence? obj) (obj 7) (error 'wrong-type-arg "eighthment, ~S, is not a sequence" obj)))
+(define (ninth obj)  (if (sequence? obj) (obj 8) (error 'wrong-type-arg "ninth argument, ~S, is not a sequence" obj)))
+(define (tenth obj)  (if (sequence? obj) (obj 9) (error 'wrong-type-arg "tenth argument, ~S, is not a sequence" obj)))
 
 
 (define iota 
@@ -203,7 +203,7 @@
 	  ,expr))
       (if (and (null? vars) (null? expr))
 	  (cons 'begin body)
-	  (error "multiple-value-set! vars/exprs messed up"))))
+	  (error 'syntax-error "multiple-value-set! vars/exprs messed up"))))
 
 
 
@@ -379,7 +379,7 @@
     (lambda (table)
       (if (hash-table? table)
 	  (map values table)
-	  (error "hash-table->alist argument, ~A, is not a hash-table" table)))))
+	  (error 'wrong-type-arg "hash-table->alist argument, ~A, is not a hash-table" table)))))
 
 (define merge-hash-tables 
   (let ((documentation "(merge-hash-tables . tables) returns a new hash-table with the contents of all the tables"))
@@ -514,8 +514,8 @@ If func approves of one, index-if returns the index that gives that element's po
 			  (if (sequence? x) (full-find-if-1 x))))
 		    seq))
 		 #f))
-	      (error "full-find-if second argument, ~A, is not a sequence" sequence))
-	  (error "full-find-if first argument, ~A, is not a procedure of one argument" f)))))
+	      (error 'wrong-type-arg "full-find-if second argument, ~A, is not a sequence" sequence))
+	  (error 'wrong-type-arg "full-find-if first argument, ~A, is not a procedure of one argument" f)))))
 
 (define full-count-if 
   (let ((documentation "(full-count-if func sequence) searches sequence, and recursively any sequences it contains, returning the number of elements that satisfy func"))
@@ -639,8 +639,8 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  (let ((count 0))
 	    (safe-find-if (lambda (x) (if (f x) (set! count (+ count 1))) #f) sequence)
 	    count)
-	  (error "safe-count-if first argument, ~A, should be a function" f))
-      (error "safe-count-if second argument, ~A, should be a sequence" sequence)))
+	  (error 'wrong-type-arg "safe-count-if first argument, ~A, should be a function" f))
+      (error 'wrong-type-arg "safe-count-if second argument, ~A, should be a sequence" sequence)))
 
 
 
@@ -675,7 +675,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 					    (set! lst (cons obj lst))))
 				      (car sequences)))
 			(reverse lst)))
-	  (error "intersection arguments should be sequences: ~A" sequences)))))
+	  (error 'wrong-type-arg "intersection arguments should be sequences: ~A" sequences)))))
   
 (define union 
   (let ((documentation "(union type . sequences) returns via type the union of the sequences:\n\
@@ -770,7 +770,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	       (aritable? p 1))
 	  (let ((e (funclet ->predicate)))
 	    (set! (e 'predicates) (cons p (e 'predicates))))
-	  (error "add-predicate argument, ~A, is not a procedure of one argument" p)))))
+	  (error 'wrong-type-arg "add-predicate argument, ~A, is not a procedure of one argument" p)))))
 
 (define typeq? 
   (let ((documentation "(typeq? . objs) returns #t if all objs have the same type (as determined by ->predicate)"))
@@ -826,9 +826,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define (log-n-of n . ints)   ; return the bits on in exactly n of ints
   (if (not (integer? n))
-      (error "log-n-of first argument, ~A, should be an integer" n)
+      (error 'wrong-type-arg "log-n-of first argument, ~A, should be an integer" n)
       (if (not (every? integer? ints))
-	  (error "log-n-of ints arguments, ~A, should all be integers" ints)
+	  (error 'wrong-type-arg "log-n-of ints arguments, ~A, should all be integers" ints)
 	  (let ((len (length ints)))
 	    (cond ((= len 0) (if (= n 0) -1 0))
 		  ((= n 0)   (lognot (apply logior ints)))
@@ -980,7 +980,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
        (let ((gf ((car args) ',name))) ; get local definition
 	 (if (not (eq? gf ,name))      ; avoid infinite recursion
              (apply gf args)
-	     (error "attempt to call generic function wrapper recursively"))))))
+	     (error 'syntax-error "attempt to call generic function wrapper recursively"))))))
 
 (define-macro (define-slot-accessor name slot)
   `(define ,name (dilambda 
@@ -1034,7 +1034,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		 (set! methods (cons next-method methods)))))
 	 (obj 'inherited))
 	(reverse methods))
-      (error "all-methods 'method argument should be a symbol: ~A" method)))
+      (error 'wrong-type-arg "all-methods 'method argument should be a symbol: ~A" method)))
 
 
 
@@ -1085,9 +1085,9 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
   (let ((documentation "(n-choose-k n k) returns the binomial coefficient C(N,K)"))
     (lambda (n k)
       (if (not (integer? n))
-	  (error "n-choose-k 'n argument, ~A, should be an integer" n)
+	  (error 'wrong-type-arg "n-choose-k 'n argument, ~A, should be an integer" n)
 	  (if (not (integer? k))
-	      (error "n-choose-k 'k argument, ~A, should be an integer" k)
+	      (error 'wrong-type-arg "n-choose-k 'k argument, ~A, should be an integer" k)
 	      (let ((mn (min k (- n k))))
 		(if (or (negative? mn)
 			(negative? n))
@@ -1121,7 +1121,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	(proc (openlet
 	       (inlet 'read (lambda (p)
 			      (v (set! i (+ i 1))))))))
-      (error "call-with-input-vector first argument, ~A, should be a vector" v)))
+      (error 'wrong-type-arg "call-with-input-vector first argument, ~A, should be a vector" v)))
 
 (define (call-with-output-vector proc)
   (let* ((size 1)
@@ -1150,7 +1150,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define* (flatten-let e (n -1))
   (if (not (let? e))
-      (error "flatten-let argument, ~A, is not a let" e)
+      (error 'wrong-type-arg "flatten-let argument, ~A, is not a let" e)
       (do ((slots ())
 	   (pe e (outlet pe))
 	   (i 0 (+ i 1)))
@@ -2057,12 +2057,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define* (make-directory-iterator name (recursive #t))
   (if (not (string? name))
-      (error "directory name should be a string: ~S" name)
+      (error 'wrong-type-arg "directory name should be a string: ~S" name)
       (make-iterator
        (with-let (sublet *libc* :name name :recursive recursive)
 	 (let ((dir (opendir name)))
 	   (if (equal? dir NULL)
-	       (error "can't open ~S: ~S" name (strerror (errno)))
+	       (error 'io-error "can't open ~S: ~S" name (strerror (errno)))
 	       (let ((iterator? #t))
 		 (define reader
 		   (let ((dirs ())

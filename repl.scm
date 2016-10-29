@@ -188,7 +188,7 @@
 	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
 	      (let ((ow (owlet)))
 		(if (ow 'error-file)
-		    (error "missing close paren in ~S" (ow 'error-file))
+		    (error 'syntax-error "missing close paren in ~S" (ow 'error-file))
 		    (set! (h 'result) 'string-read-error))))
 	    
 	    (define (shell? h)             ; *unbound-variable-hook* function, also for Enter

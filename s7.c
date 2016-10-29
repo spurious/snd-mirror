@@ -47441,9 +47441,9 @@ and applies it to the rest of the arguments."
 
   if (is_not_null(args))
     {
-      if (is_string(car(args)))                    /* CL-style error? -- use tag = 'no-catch */
+      if (is_string(car(args)))                     /* CL-style error? -- use tag = 'no-catch */
 	{
-	  s7_error(sc, sc->no_catch_symbol, args);        /* this can have trailing args (implicit format) */
+	  s7_error(sc, sc->no_catch_symbol, args);  /* this can have trailing args (implicit format) */
 	  return(sc->unspecified);
 	}
       return(s7_error(sc, car(args), cdr(args)));

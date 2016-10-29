@@ -136,7 +136,7 @@
      fffneq ffneq fft-log-frequency fft-log-magnitude fft-window fft-window-alpha
      fft-window-beta fft-with-phases file->frample? file->sample? file-name file-write-date filter-control-coeffs filter-control-envelope
      filter-control-in-dB filter-control-in-hz filter-control-order filter-control-waveform-color filter-control? filter? filtered-comb-bank?
-     filtered-comb? find-dialog find-mark find-sound fir-filter? firmant?  float-vector-equal? float-vector-max float-vector-min float-vector-peak
+     filtered-comb? find-dialog find-mark find-sound fir-filter? firmant? float-vector-equal? float-vector-max float-vector-min float-vector-peak
      float-vector-peak-and-location fneq foreground-color formant-bank? formant? frample
      framples ftell fveql get-internal-real-time getcwd getpid granulate? graph-color graph-cursor
      graph-style graphs-horizontal grid-density gsl-ellipj gsl-ellipk gsl-roots header-type html-dir html-program hz->radians
@@ -183,7 +183,7 @@
      sawtooth-wave? script-arg script-args search-procedure seconds->samples selected-channel selected-data-color
      selected-graph-color selected-sound selection selection-chans selection-creates-region selection-framples selection-maxamp
      selection-maxamp-position selection-member? selection-position selection-srate selection? short-file-name
-     sinc-width singer-filter singer-nose-filter snd->sample?  snd-gcs snd-global-state snd-help snd-tempnam
+     sinc-width singer-filter singer-nose-filter snd->sample? snd-gcs snd-global-state snd-help snd-tempnam
      snd-url snd-urls snd-version sound->integer sound-file-extensions sound-file?
      sound-files-in-directory sound-loop-info sound-properties sound-property sound-widgets sound? soundfont-info
      sounds spectro-hop spectro-x-angle spectro-x-scale spectro-y-angle spectro-y-scale spectro-z-angle
@@ -230,4 +230,3 @@
 	    two-zero? wave-train? file->frample? frample->file?
 
 	    mark? mix? mix-sampler? region?))
-
