@@ -1705,8 +1705,12 @@ static int snd_screen_height(void)
 #if USE_MOTIF
   return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
 #else
-#if (USE_GTK) && (!GTK_CHECK_VERSION(3, 22, 0))
-  return(gdk_screen_height());
+#if USE_GTK
+#if (!GTK_CHECK_VERSION(3, 22, 0)) /* don't combine with USE_GTK above! */
+   return(gdk_screen_height());
+ #else
+   return(4000);
+ #endif
 #else
   return(4000);
 #endif
@@ -1719,8 +1723,12 @@ static int snd_screen_width(void)
 #if USE_MOTIF
   return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
 #else
-#if (USE_GTK) && (!GTK_CHECK_VERSION(3, 22, 0))
-  return(gdk_screen_width());
+#if USE_GTK
+  #if (!GTK_CHECK_VERSION(3, 22, 0))
+    return(gdk_screen_width());
+  #else
+    return(4000);
+  #endif
 #else
   return(4000);
 #endif

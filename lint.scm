@@ -6059,13 +6059,12 @@
 					   (lint-format "~A should be ~A in ~A" caller 
 							head 
 							(if (memq head '(memq memv)) 'member 'assoc)
-							form)))))))
-			      ;; --------------------------------
+							form))))))
 
-			      (if (and (= (length elements) 2)  ; (memq expr '(#t #f))
-				       (memq #t elements)
-				       (memq #f elements))
-				  (lint-format "perhaps ~A" caller (lists->string form (list 'boolean? selector))))))
+				(if (and (= (length elements) 2)  ; (memq expr '(#t #f))
+					 (memq #t elements)
+					 (memq #f elements))
+				    (lint-format "perhaps ~A" caller (lists->string form (list 'boolean? selector)))))))
 			  ;; not (memv x '(0 0.0)) -> (zero? x) because x might not be a number
 
 			  (case (car items)
@@ -9016,10 +9015,11 @@
 						       (car body)
 						       (cons 'begin body)))))
 		   
-		   (unless (symbol? vars)               ; else any number of values is ok
+		   (unless (symbol? vars)                      ; else any number of values is ok
 		     (let ((vals (mv-range producer env))      ;  (multiple-value-bind (a b) (values 1 2 3) b)
 			   (args (length vars)))
-		       (if (and (pair? vals)
+		       (if (and (integer? args)
+				(pair? vals)
 				(not (<= (car vals) args (cadr vals))))
 			   (lint-format "multiple-value-bind wants ~D values, but ~A returns ~A" 
 					caller args 
@@ -9046,7 +9046,7 @@
 	 (define (sp-let-values caller head form env)
 	   (if (and (pair? (cdr form))
 		    (pair? (cadr form)))
-	       (if (null? (cdadr form)) ; just one set of vars
+	       (if (null? (cdadr form))                        ; just one set of vars
 		   (let ((call (caadr form)))
 		     (if (len>1? call)
 			 (lint-format "perhaps ~A" caller      ;  (let-values (((x) (values 1))) x) -> ((lambda (x) x) (values 1))
@@ -9074,7 +9074,8 @@
 	(hash-special 'let*-values 
 	 (lambda (caller head form env)
 	   (if (and (pair? (cdr form))
-		    (pair? (cadr form)))
+		    (pair? (cadr form))
+		    (every? pair? (cadr form))) 
 	       (lint-format "perhaps ~A" caller
 			    (lists->string form               ;   (let*-values (((a) (f x))) (+ a b)) -> (let ((a (f x))) (+ a b))
 					   (let loop ((var-data (cadr form)))
@@ -9126,7 +9127,9 @@
 		      ((string->symbol)               ;  (eval (string->symbol "x")) -> x
 		       (if (and (pair? (cdr arg))
 				(string? (cadr arg)))
-			   (lint-format "perhaps ~A" caller (lists->string form (string->symbol (cadr arg))))))
+			   (if (equal? (cadr arg) "")
+			       (lint-format "string->symbol argument can't be a null string:~A" caller (truncated-list->string form))
+			       (lint-format "perhaps ~A" caller (lists->string form (string->symbol (cadr arg)))))))
 		      
 		      ((with-input-from-string call-with-input-string)
 		       (if (and (len>1? (cdr arg))     ;  (eval (call-with-input-string port read)) -> (eval-string port)
@@ -10096,7 +10099,8 @@
 					(if (memq () writes)
 					    (return (report-trouble))
 					    (set! writes (cons () writes)))
-					(if (memq (caddr p) writes)
+					(if (or (not (pair? (cddr p)))
+						(memq (caddr p) writes))
 					    (return (report-trouble))
 					    (set! writes (cons (caddr p) writes))))))
 			       
@@ -11262,19 +11266,19 @@
 				      (truncated-list->string f))))))
 	      ((do)
 	       (let ((returned (if (len>1? (cdr f))
-				   (let ((end+res (caddr f)))
-				     (if (pair? (cdr end+res))
+				   (let* ((end+res (caddr f))
+					  (len (or (length end+res) -1)))
+				     (if (> len 1)
 					 (list-ref end+res (- (length end+res) 1)))))))
-		 (if (or (eq? returned #<unspecified>)
-			 (and (pair? returned)
-			      (side-effect? returned env)))
-		     (if (pair? returned)
-			 (check-returns caller returned env))
-		     ;; (begin (do ((i 0 (+ i 1))) ((= i 10) i) (display i)) x)
-		     (lint-format "~A: result ~A~A is not used" caller 
-				  (truncated-list->string f) 
-				  (truncated-list->string returned)
-				  (local-line-number returned)))))
+		 (unless (eq? returned #<unspecified>)
+		   (if (and (pair? returned)
+			    (side-effect? returned env))
+		       (check-returns caller returned env)
+		       ;; (begin (do ((i 0 (+ i 1))) ((= i 10) i) (display i)) x)
+		       (lint-format "~A: result ~A~A is not used" caller 
+				    (truncated-list->string f) 
+				    (truncated-list->string returned)
+				    (local-line-number returned))))))
 	      ((call-with-exit)
 	       (if (and (pair? (cdr f))
 			(len>1? (cadr f))
@@ -20349,5 +20353,52 @@
 	(display str p)))
     #f))
 |#
+
+;;; mid-body or|and (from if) -> when?
+;;;   (begin (if x #f (display y)) y) should suggest (unless x (display y)) not (and (not x) (display y))
+;;;
+;;; name-let no side-effect (or any func call)
+;;;   (begin (let loop ((x y)) (if (null? x) 1 (loop (cdr x)))) x) -- equivalent do-loop is flagged
+;;;
+;;; (let ((n m)) where no set! n but *-set! -- warn about copy
+;;;   let is useless if no shadow and shadow should be renamed
+;;;   (let ((x y)) (display (abs x)) x) is caught -> "pointless let -> (let () (display (abs y)) y)
+;;;   it does also catch the vector-set case
+;;;
+;;; equal? fv -> morally-eq or eqx diff types [or memx/assx?]
+;;;   similarly in report-usage (save vtype)
+;;;   (let ((fv (float-vector 1.0 2.0))) (equal? fv X)) -> embeds fv but should suggest morally-equal?
+;;;   (let ((fv (float-vector 1.0 2.0)) (iv (int-vector 1 2))) (equal? fv iv)) -- same!
+;;;   (equal? (float-vector 1.0 2.0) (int-vector 1 2)) -> no suggestion, also (equal? (float-vector 1.0 2.0) 0)!
+;;;   memv here is oblivious, (memq (vector 1) (list a b)) suggests member
+;;;     if string here, suggests member
+;;;   
+;;; unchanging arg to recur? -- currently can suggest a do-loop:
+;;;   (let loop ((x X) (y Y)) (if (null? x) y (loop (cdr x) y))) -> (do ((x X (cdr x)) (y Y)) ((null? x) y))
+;;;   but better: (let loop ((x X)) (if (null? x) Y (loop (cdr x)))) [(do ((x X (cdr x))) ((null? x) Y))]
+;;;   (do ((x X (cdr x)) (y Y)) ((null? x) y)) -> no suggestion
+;;;
+;;; cond/if use of simplify-boolean true/false backwards? -- should have caught the subsumption cases?
+;;;
+;;; repeated if: (begin (if (> x 1) (set! x y)) (if (> x 1) (display x))) -- no suggestion
+;;;   another: (> x 1) then (> x 2) or similar (real? x) then (integer? x) etc
+;;;   but (begin (if (> x 1) (display x)) (if (> x 1) (set! x y))) -> (... (when (> x 1) (display x) (set! x y)) ...)
+;;;   are case+selector or cond+first test repeated?
+;;;   set+val? -- here the sets can at least be combined?
+;;;
+;;; map/for-each nil/1-arg
+;;; cond of repeated <?
+;;; very long var name (and maybe numerical names, and "." as well as digit -- used a lot however)
+;;; cond-expand/reader-cond #f to read and check
+;;; values+reads?
+;;; with-let as let (check inlet/sublet as if let)
+;;; letrec + reads?
+;;; (inlet e)?  -- is this copy or just e? -- copy I think = (sublet (rootlet) e)?
+;;;
+;;; (if (or A (and B C)) (if B x) y) -> (unless A (if (and B C) x y))?? -- A and B are contradictory (#<unspc> vs pair?)
+;;;
+;;; 7508 (define (func x) (case x ((define*) (current-input-port .1+)) (((values #\\c 3 1.2)) (symbol .2/)) (else (procedure-documentation 2-2i(char=?  (+  (reverse  (list-tail  (reverse  /)))))))))
+;;; 6010 (define (func x) (if (values i-(caaaar  )) (cdaddr ++) (assv +(list  (quote  2)))))
+;;; 4804 (define (func x) (/ 0(/  0(let-temporarily  ))))
 
 ;;; 174 28550 727902
