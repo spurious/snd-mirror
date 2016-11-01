@@ -492,11 +492,11 @@
 
 	  ((negative? n)
 	   (let ((val (sin-m*pi/n m (- n))))
-	     (and val `(- ,val))))
+	     (and val (list '- val))))
 
 	  ((> m n) 
 	   (let ((val (sin-m*pi/n (- m n) n)))
-	     (and val `(- ,val))))
+	     (and val (list '- val))))
 
 	  ((= n 2) (if (= m 0) 0 1))
 

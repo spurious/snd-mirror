@@ -18,10 +18,11 @@
 (define *report-loaded-files* #f)                         ; if load is encountered, include that file in the lint process
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
-(define *report-func-as-arg-arity-mismatch* #f)           ; as it says... (slow, and this error almost never happens)
+(define *report-func-as-arg-arity-mismatch* #f)           ; as it says...
 (define *report-constant-expressions-in-do* #f)           ; kinda dumb
 (define *report-bad-variable-names* '(l ll .. O ~)) ; bad names -- a list to check such as:
 ;;;             '(l ll .. ~ data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
+(define *report-ridiculous-variable-names* 60)            ; max length of var name 
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
 (define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
@@ -1978,6 +1979,10 @@
 
 	(lambda (caller vname)
 	  (when (symbol? vname)
+
+	    (if (> (length (symbol->string vname)) *report-ridiculous-variable-names*)
+		(lint-format "the name ~A (~A chars!) is unreadable" caller vname (length (symbol->string vname))))
+
 	    (let ((sname (symbol->string vname)))
 	      (if (or (cond ((assq (sname 0) bad-var-names) =>
 			     (lambda (baddies)
@@ -4793,7 +4798,9 @@
 				     ((and (len>1? arg2)              ; (/ c (/ a b)) -> (/ (* c b) a)
 					   (eq? op2 '/))
 				      (cond ((null? (cddr arg2))
-					     (list '* arg1 op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)				 
+					     (list '* arg1 op2-arg1))  ; ignoring divide by zero here (/ x (/ y)) -> (* x y)	
+					    ((memv op2-arg1 '(0 0.0))
+					     (cons 'a args))          ; same: (/ x (/ 0 ...)) -- give up
 					    ((eqv? op2-arg1 1)
 					     (cons '* (cons arg1 (cddr arg2))))  ; (/ x (/ 1 y z)) -> (* x y z) -- these never actually happen
 					    ((not (pair? (cddr arg2)))
@@ -6005,9 +6012,10 @@
 							 elements)
 						    (and (every? (lambda (e)
 								   (and (len=2? e)
-									(eq? (car e) 'quote)))
+									(eq? (car e) 'quote)
+									(pair? (cadr e))))
 								 elements)
-							 (map caadr elements))))))
+							 (map caadr elements)))))) 
 				  (when (proper-list? keys)
 				    (if (eq? (car items) 'quote)
 					(do ((p keys (cdr p)))
@@ -7500,7 +7508,10 @@
 			    (arg-arg (and (pair? (cdadr form)) (cadadr form))))
 			(when (and (pair? arg-args)
 				   (pair? arg-arg))
-			  (if (and (memq arg-op '(cdr list-tail)) ; (reverse (cdr (reverse lst))) = all but last of lst -> copy to len-1
+			  (if (and (case arg-op
+				     ((cdr)       (len=1? arg-args))  ; (reverse (cdr (reverse lst))) = all but last of lst -> copy to len-1
+				     ((list-tail) (len=2? arg-args))
+				     (else #f))
 				   (memq (car arg-arg) '(reverse reverse!))
 				   (symbol? (cadr arg-arg)))
 			      (lint-format "perhaps ~A" caller 
@@ -9083,7 +9094,7 @@
 					       (if (and (pair? (car v))  ; just one var
 							(null? (cdar v)))
 						   (if (null? (cdr var-data))
-						       `(let ((,(caar v) ,(cadr v))) ,@(cddr form))
+						       (cons 'let (cons (list (list (caar v) (cadr v))) (cddr form)))
 						       `(let ((,(caar v) ,(cadr v))) ,(loop (cdr var-data))))
 						   (if (null? (cdr var-data))
 						       `((lambda ,(car v) ,@(cddr form)) ,(cadr v))
@@ -9472,6 +9483,11 @@
 			     (environment-set! . let-set!)
 			     (environment? . let?)
 			     (exact-integer? . integer?)
+			     (f64vector . float-vector)
+			     (f64vector-length . length)
+			     (f64vector-ref . float-vector-ref)
+			     (f64vector-set! . float-vector-set!)
+			     (f64vector? . float-vector?)
 			     (fixnum? . integer?)
 			     (floor-remainder . modulo)
 			     (fluid-let . let-temporarily)
@@ -9497,7 +9513,9 @@
 			     (list-copy . copy)
 			     (list-reverse . reverse)
 			     (make-bytevector . make-byte-vector)
+			     (make-f64vector . make-float-vector)
 			     (make-hashtable . make-hash-table)
+			     (make-s64vector . make-int-vector)
 			     (make-u8vector . make-byte-vector)
 			     (open-input-bytevector . open-input-string)
 			     (open-output-bytevector . open-output-string)
@@ -9508,6 +9526,11 @@
 			     (read-u8 . read-byte)
 			     (reverse-u8vector . reverse)
 			     (reverse-string . reverse)
+			     (s64vector . int-vector)
+			     (s64vector-length . length)
+			     (s64vector-ref . int-vector-ref)
+			     (s64vector-set! . int-vector-set!)
+			     (s64vector? . int-vector?)
 			     (string-for-each . for-each)
 			     (string-reverse! . reverse!)
 			     (system-global-environment . rootlet)
@@ -11112,10 +11135,10 @@
 			      (positive? (var-set local-var)))
 		     (let ((start (var-initial-value local-var)))
 		       (let ((func #f)
-			     (retcons? (and (pair? start)
-					  (let ((v (var-member (car start) env)))
-					    (and (var? v)
-						 (eq? (var-retcons v) #t))))))
+			     (retcons? (and (pair? start) ; is this var's initial value from a function that returns a constant sequence?
+					    (let ((v (var-member (car start) env)))
+					      (and (var? v)
+						   (eq? (var-retcons v) #t))))))
 			 (for-each (lambda (f)
 				     (when (pair? f)
 				       (case (car f)
@@ -12705,8 +12728,8 @@
       (case (car test)
 	((eq? eqv? = equal? char=?)
 	 (if (equal? eqv-select (cadr test))
-	     `((,(unquoted (caddr test))) ,@exprs)
-	     `((,(unquoted (cadr test))) ,@exprs)))
+	     (cons (list (unquoted (caddr test))) exprs)
+	     (cons (list (unquoted (cadr test))) exprs)))
 	
 	((memq memv member)
 	 (cons (unquoted (caddr test)) exprs))
@@ -13023,42 +13046,43 @@
 
 
     (define (check-definee caller sym form env)
-      (when (pair? (cddr form))
-	(cond ((keyword? sym)               ; (define :x 1)
-	       (lint-format "keywords are constants ~A" caller sym))
-	      
-	      ((and (eq? sym 'pi)           ; (define pi (atan 0 -1))
-		    (member (caddr form) '((atan 0 -1)
-					   (acos -1)
-					   (* 2 (acos 0))
-					   (* 4 (atan 1))
-					   (* 4 (atan 1 1)))))
-	       (lint-format "~A is one of its many names, but pi is a predefined constant in s7" caller (caddr form)))
-	      
-	      ((constant? sym)              ; (define most-positive-fixnum 432)
-	       (lint-format "~A is a constant in s7: ~A" caller sym form))
-	      
-	      ((eq? sym 'quote)
-	       (lint-format "either a stray quote, or a real bad idea: ~A" caller (truncated-list->string form)))
-	      
-	      ((pair? sym)
-	       (check-definee caller (car sym) form env))
-	      
-	      ((let ((v (var-member sym env)))
-		 (and (var? v)
-		      (eq? (var-definer v) 'define-constant)
-		      (len>2? form)
-		      (not (equal? (caddr form) (var-initial-value v)))
-		      v))
-	       => (lambda (v)
-		    (let ((line (if (and (pair? (var-initial-value v))
-					 (positive? (pair-line-number (var-initial-value v))))
-				    (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-				    "")))
-		      (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
-				   (truncated-list->string form)
-				   line
-				   (truncated-list->string (var-initial-value v)))))))))
+      (cond ((not (pair? (cddr form))))
+	    
+	    ((keyword? sym)               ; (define :x 1)
+	     (lint-format "keywords are constants ~A" caller sym))
+	    
+	    ((and (eq? sym 'pi)           ; (define pi (atan 0 -1))
+		  (member (caddr form) '((atan 0 -1)
+					 (acos -1)
+					 (* 2 (acos 0))
+					 (* 4 (atan 1))
+					 (* 4 (atan 1 1)))))
+	     (lint-format "~A is one of its many names, but pi is a predefined constant in s7" caller (caddr form)))
+	    
+	    ((constant? sym)              ; (define most-positive-fixnum 432)
+	     (lint-format "~A is a constant in s7: ~A" caller sym form))
+	    
+	    ((eq? sym 'quote)
+	     (lint-format "either a stray quote, or a real bad idea: ~A" caller (truncated-list->string form)))
+	    
+	    ((pair? sym)
+	     (check-definee caller (car sym) form env))
+	    
+	    ((let ((v (var-member sym env)))
+	       (and (var? v)
+		    (eq? (var-definer v) 'define-constant)
+		    (len>2? form)
+		    (not (equal? (caddr form) (var-initial-value v)))
+		    v))
+	     => (lambda (v)
+		  (let ((line (if (and (pair? (var-initial-value v))
+				       (positive? (pair-line-number (var-initial-value v))))
+				  (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
+				  "")))
+		    (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
+				 (truncated-list->string form)
+				 line
+				 (truncated-list->string (var-initial-value v))))))))
     
     (define binders (let ((h (make-hash-table)))
 		      (for-each
@@ -13732,6 +13756,69 @@
 			   (false-op (and (= len 4) (pair? (cadddr form)) (car (cadddr form))))
 			   (false-rest (and (= len 4) (pair? (cadddr form)) (cdr (cadddr form)))))
 
+#|
+		       (if (and (pair? true)
+				(eq? (car true) 'if)
+				(or (and (pair? test)
+					 (or (equal? (cadr true) test)
+					     (member (cadr true) (cdr test))
+					     (and (memq (car test) '(and or not))
+						  (any? (lambda (p)
+							  (or (equal? p true)
+							      (and (pair? (cadr true))
+								   (member p (cdadr true)))))
+							(cdr test)))))
+				    (and (pair? (cadr true))
+					 (or (equal? test (cadr true))
+					     (member test (cadr true))
+					     (and (memq (caadr true) '(and or not))
+						  (any? (lambda (p)
+							  (or (equal? p test)
+							      (and (pair? test)
+								   (member p (cdr test)))))
+							(cdadr true)))))))
+			   (format *stderr* "~A~%~%" (lint-pp form)))
+		       ;; very common (if x (if (= x 0) or whatever -- make (if x ...) less stupid
+		       
+		       ;; (if (or (not (null? string)) (eqv? digit 0)) (if (eqv? digit 0) ... ...))
+		       ;; (if (char? c2) (if (and (char? c2) (= (char->integer c2) 962)) ... ...) ...)
+		       ;; (if seglen (if (pair? seglen) (max-envelope seglen) seglen) 0.1500): (if (pair) max (or seglen 0.15))
+
+		       ;; (if (and (pair? x) ...) ... (if (and (pair? x) ...) ...))! -- happens a ton -- 2 cases in this file...
+		       ;; (if x ... (if x ...))!
+		       ;; (if x ... (if (and (not x) ...)))!
+		       ;; (if (not x) ... (if (= x 1)...))!
+		       
+		       (if (and (pair? false)
+				(eq? (car false) 'if)
+				(or (and (pair? test)
+					 (or (equal? (cadr false) test)
+					     (member (cadr false) (cdr test))
+					     (and (memq (car test) '(and or not))
+						  (any? (lambda (p)
+							  (or (equal? p false)
+							      (and (pair? (cadr false))
+								   (member p (cdadr false)))))
+							(cdr test)))))
+				    (and (pair? (cadr false))
+					 (or (equal? test (cadr false))
+					     (member test (cadr false))
+					     (and (memq (caadr false) '(and or not))
+						  (any? (lambda (p)
+							  (or (equal? p test)
+							      (and (pair? test)
+								   (member p (cdr test)))))
+							(cdadr false)))))))
+			   (format *stderr* "~A~%~%" (lint-pp form)))
+
+		       (if (and (symbol? test)
+				(or (and (len>1? true)
+					 (eq? test (cadr true)))
+				    (and (len>1? false)
+					 (eq? test (cadr false)))
+				    ))
+			   (format *stderr* "~A~%~%" (lint-pp form)))
+|#
 		       (if (eq? false #<unspecified>) ; true as #<unspecified> got no hits
 			   (lint-format "this #<unspecified> is redundant: ~A" caller form))
 
@@ -17914,7 +18001,7 @@
 			      (pair? varlist)) ; from here to end
 		     
 		     ;; (let*->let*) combined into one
-		     (when (and (pair? (car body))
+		     (when (and (len>1? (car body))
 				(or (eq? (caar body) 'let*)      ; let*+let* -> let*
 				    (and (eq? (caar body) 'let)  ; let*+let(1) -> let*
 					 (or (null? (cadar body))
@@ -20362,7 +20449,7 @@
 ;;;
 ;;; (let ((n m)) where no set! n but *-set! -- warn about copy
 ;;;   let is useless if no shadow and shadow should be renamed
-;;;   (let ((x y)) (display (abs x)) x) is caught -> "pointless let -> (let () (display (abs y)) y)
+;;;   (let ((x y)) (display (abs x)) x) is caught -> "pointless let -> (begin (display (abs y)) y)
 ;;;   it does also catch the vector-set case
 ;;;
 ;;; equal? fv -> morally-eq or eqx diff types [or memx/assx?]
@@ -20380,25 +20467,33 @@
 ;;;
 ;;; cond/if use of simplify-boolean true/false backwards? -- should have caught the subsumption cases?
 ;;;
-;;; repeated if: (begin (if (> x 1) (set! x y)) (if (> x 1) (display x))) -- no suggestion
+;;; repeated if: (begin (if (> x 1) (set! x y)) (if (> x 1) (display x))) -- no suggestion -- cond does catch these
 ;;;   another: (> x 1) then (> x 2) or similar (real? x) then (integer? x) etc
 ;;;   but (begin (if (> x 1) (display x)) (if (> x 1) (set! x y))) -> (... (when (> x 1) (display x) (set! x y)) ...)
 ;;;   are case+selector or cond+first test repeated?
 ;;;   set+val? -- here the sets can at least be combined?
 ;;;
-;;; map/for-each nil/1-arg
-;;; cond of repeated <?
-;;; very long var name (and maybe numerical names, and "." as well as digit -- used a lot however)
-;;; cond-expand/reader-cond #f to read and check
-;;; values+reads?
-;;; with-let as let (check inlet/sublet as if let)
-;;; letrec + reads?
-;;; (inlet e)?  -- is this copy or just e? -- copy I think = (sublet (rootlet) e)?
+;;; map/for-each nil (1-arg if list seems ok) but nil also unless display->format ? see t347 -- this is a mess
+;;; cond-expand/reader-cond #f to read and check [cond-expand is a macro so we can handle it unchanged, reader-cond is set to #f]
+;;;   reader-cond: check that it has structure of cond and tests are ok
+;;;   cond-expand is reported as "caller"
+;;;   library/and/or/not -- combinations as in cond?
+;;;   pointless: (cond-expand (srfi-31))
+;;; macroexpand should have a plausible macro call as arg
+;;;
+;;; with-let as let (check inlet/sublet as if let) -- t347 (fixup env if possible)
+;;; (inlet e) copies: (let ((a 21)) (let ((e (inlet (curlet)))) (set! a 32) (with-let e a))) -> 21
+;;;   sublet e->outlet: (let ((a 21)) (let ((e (sublet (curlet)))) (set! a 32) (with-let e a))) -> 32
+;;;   so if no set! perhaps suggest sublet?
 ;;;
 ;;; (if (or A (and B C)) (if B x) y) -> (unless A (if (and B C) x y))?? -- A and B are contradictory (#<unspc> vs pair?)
+;;;   and the rest in t347 -- see 13774 for a bunch more -- dumber happens more often
+;;;   most common: (if (and X Y) ... (if (and X Z) ...)) and (if X (if (car X)...)) but this is assoc related sometimes
+;;;     and the direct case is caught(?) (if x (cdr x)) suggests (if (pair? x)...)
 ;;;
-;;; 7508 (define (func x) (case x ((define*) (current-input-port .1+)) (((values #\\c 3 1.2)) (symbol .2/)) (else (procedure-documentation 2-2i(char=?  (+  (reverse  (list-tail  (reverse  /)))))))))
-;;; 6010 (define (func x) (if (values i-(caaaar  )) (cdaddr ++) (assv +(list  (quote  2)))))
-;;; 4804 (define (func x) (/ 0(/  0(let-temporarily  ))))
+;;; extend constant-exprs in do to named-let/map etc?
+;;; instead of made-suggestion and related line numbers, use the actual forms, in local closures
+;;;
+;;; 12315 (define (func x) (if (real? ) (string-ci<=? 0 1/0+i  1.5  '(1 2 . 3)  '(- 1)   '((x 1) (y) . 2)  (values #\\c 3 1.2)  0  ) (string-ci>=? . macroexpand  )))
 
 ;;; 174 28550 727902
