@@ -8674,34 +8674,47 @@
 			(ary #f))
 
 		    ;; if zero or one args, the map/for-each is either a no-op or a function call
-		    (if (any? any-null? (cddr form))  ; (map abs ())
-			(lint-format "this ~A has no effect (null arg)" caller (truncated-list->string form))
+		    (if (or (any? any-null? (cddr form))  ; (map abs ())
+			    (any? (lambda (p)
+				    (or (and (code-constant? p)
+					     (eqv? (length p) 0))
+					(and (pair? p)
+					     (memq (car p) '(vector string))
+					     (null? (cdr p)))))
+				  (cddr form)))
+			(lint-format "this ~A has no effect (~A arg)" caller
+				     (truncated-list->string form)
+				     (if (any? any-null? (cddr form)) "null" "zero length"))
 			(if (and (not (tree-memq 'values form)) ; e.g. flatten in s7.html
 				 (any? (lambda (p)
-				    (and (len>1? p)
-					 (case (car p)
-					   ((quote)
-					    (len=1? (cadr p)))
-					   ((list)
-					    (null? (cddr p)))
-					   ((cons)
-					    (and (pair? (cddr p))
-						 (any-null? (caddr p))))
-					   (else #f))))
+					 (or (and (code-constant? p)
+						  (eqv? (length p) 1))
+					     (and (len>1? p)
+						  (case (car p)
+						    ((quote)
+						     (len=1? (cadr p)))
+						    ((list vector string)
+						     (null? (cddr p)))
+						    ((cons)
+						     (and (pair? (cddr p))
+							  (any-null? (caddr p))))
+						    (else #f)))))
 				  (cddr form)))    ; (for-each display (list a)) -> (display a)
 			    (lint-format "perhaps ~A" caller
 					 (lists->string form
 							(let ((args (map (lambda (a)
 									   (if (len>1? a)
 									       (case (car a)
-										 ((list cons)
+										 ((list cons vector string)
 										  (cadr a))      ; slightly inaccurate
 										 ((quote)        ; might be '#(0) or '(0) etc
 										  (if (sequence? (cadr a))
 										      ((cadr a) 0)
 										      (list a 0)))
 										 (else (list a 0))) ; not car -- might not be a list
-									       (list a 0)))         ;   but still not right -- arg might be a hash-table
+									       (if (code-constant? a)
+										   (a 0)            ; (map abs #(1)) -> (list (abs 1))
+										   (list a 0))))    ;  but still not right -- arg might be a hash-table
 									 (cddr form))))
 							  (if (eq? head 'for-each)
 							      (cons (cadr form) args)
@@ -9375,6 +9388,36 @@
 			  (not (memq func '(eq? eqv? equal? morally-equal? char=? char-ci=? string=? string-ci=? =))))
 		     (lint-format "make-hash-table function, ~A, is not a hash function" caller func))))))
 	
+	;; ---------------- cond-expand ----------------
+	(let ()
+	  (define (sp-cond-expand caller head form env)
+	    (if (every? (lambda (c)
+			  (not (and (pair? c)
+				    (pair? (cdr c)))))
+			(cdr form))
+		(lint-format "pointless cond-expand: ~A" caller (truncated-list->string form))
+		(for-each (lambda (c)
+			    (if (not (or (symbol? (car c))
+					 (and (pair? (car c))
+					      (memq (caar c) '(and or not library)))))
+				(lint-format "messed up cond-expand clause: ~A" caller (truncated-list->string c))
+				(if (and (pair? (car c))
+					 (eq? (caar c) 'library))
+				    (lint-format "the cond-expand library option is not implemented in s7: ~A" caller (truncated-list->string c)))))
+			  (cdr form))))
+	  (hash-special 'cond-expand sp-cond-expand))
+
+	;; ---------------- macroexpand ----------------
+	(let ()
+	  (define (sp-macroexpand caller head form env)
+	    (let ((arg (and (len=1? (cdr form))
+			    (cadr form))))
+	      (if (not (and (pair? arg)
+			    (symbol? (car arg))
+			    (any-macro? (car arg) env)))
+		  (lint-format "in s7, macroexpand's argument should be an expression whose car is a macro: ~A" caller (truncated-list->string form)))))
+	  (hash-special 'macroexpand sp-macroexpand))
+
 	;; ---------------- deprecated funcs ---------------- 
 	(let ((deprecated-ops '((global-environment . rootlet)
 				(current-environment . curlet)
@@ -12331,10 +12374,12 @@
 			     (throw 'sequence-constant-done))))))) ; just report one constant -- the full list is annoying
 
     (define (code-equal? a b) ; these extra tests get no hits
+      ;; given NaNs, these 'equal?s should probably be morally-equal?
       (or (equal? a b)
 	  (and (pair? a)
 	       (pair? b)
 	       (or (and (eq? (car a) (hash-table-ref reversibles (car b)))
+			(proper-list? b)
 			(equal? (cdr a) (reverse (cdr b))))
 		   (and (eq? (car a) 'not)
 			(pair? (cdr a))
@@ -18745,7 +18790,6 @@
 		      (hash-walker op call-with-exit-walker))
 		    '(call/cc call-with-current-continuation call-with-exit)))
 	
-	
 	;; ---------------- import etc ----------------
 	(for-each (lambda (op)
 		    (hash-walker op (lambda (caller form env) env)))
@@ -19916,9 +19960,9 @@
 								       (format #f "~%~NCwith var~P: ~{~A ~}" 
 									       (+ lint-left-margin 4) #\space (length vars) vars)
 								       ""))))))))))
-				 (sort! reportables                              ; the sort needs to stable across calls so diff works on the output
+				 (sort! reportables                              ; the sort needs to be stable across calls so diff works on the output
 					(lambda (kv1 kv2)
-					  (or (> (car kv1) (car kv2))            ; first sort by score (size * uses * uses)
+					  (or (> (car kv1) (car kv2))            ; first sort by (size * uses * uses)
 					      (and (= (car kv1) (car kv2))
 						   (let ((a (cdaddr kv1))
 							 (b (cdaddr kv2)))
@@ -20473,14 +20517,6 @@
 ;;;   are case+selector or cond+first test repeated?
 ;;;   set+val? -- here the sets can at least be combined?
 ;;;
-;;; map/for-each nil (1-arg if list seems ok) but nil also unless display->format ? see t347 -- this is a mess
-;;; cond-expand/reader-cond #f to read and check [cond-expand is a macro so we can handle it unchanged, reader-cond is set to #f]
-;;;   reader-cond: check that it has structure of cond and tests are ok
-;;;   cond-expand is reported as "caller"
-;;;   library/and/or/not -- combinations as in cond?
-;;;   pointless: (cond-expand (srfi-31))
-;;; macroexpand should have a plausible macro call as arg
-;;;
 ;;; with-let as let (check inlet/sublet as if let) -- t347 (fixup env if possible)
 ;;; (inlet e) copies: (let ((a 21)) (let ((e (inlet (curlet)))) (set! a 32) (with-let e a))) -> 21
 ;;;   sublet e->outlet: (let ((a 21)) (let ((e (sublet (curlet)))) (set! a 32) (with-let e a))) -> 32
@@ -20493,7 +20529,6 @@
 ;;;
 ;;; extend constant-exprs in do to named-let/map etc?
 ;;; instead of made-suggestion and related line numbers, use the actual forms, in local closures
-;;;
-;;; 12315 (define (func x) (if (real? ) (string-ci<=? 0 1/0+i  1.5  '(1 2 . 3)  '(- 1)   '((x 1) (y) . 2)  (values #\\c 3 1.2)  0  ) (string-ci>=? . macroexpand  )))
+;;; do we catch the built-in-as-par shadowing macro expansion version? yes but see t347
 
-;;; 174 28550 727902
+;;; 174 28537 728148
