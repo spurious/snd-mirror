@@ -79,23 +79,23 @@
 	  (dc-block-2 (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99)))
 	  (tank_1 0.0) (tank_2 0.0)
 	  
-	  (smpl-266 (smpls->samples 266))
-	  (smpl-2974 (smpls->samples 2974))
-	  (smpl-1913 (smpls->samples 1913))
-	  (smpl-1996 (smpls->samples 1996))
-	  (smpl-1990 (smpls->samples 1990))
-	  (smpl-187 (smpls->samples 187))
-	  (smpl-1066 (smpls->samples 1066))
+	  (smpl-266 (* 1.0 (smpls->samples 266)))
+	  (smpl-2974 (* 1.0 (smpls->samples 2974)))
+	  (smpl-1913 (* 1.0 (smpls->samples 1913)))
+	  (smpl-1996 (* 1.0 (smpls->samples 1996)))
+	  (smpl-1990 (* 1.0 (smpls->samples 1990)))
+	  (smpl-187 (* 1.0 (smpls->samples 187)))
+	  (smpl-1066 (* 1.0 (smpls->samples 1066)))
 	  
-	  (smpl-353 (smpls->samples 353))
-	  (smpl-3627 (smpls->samples 3627))
-	  (smpl-1228 (smpls->samples 1228))
-	  (smpl-2673 (smpls->samples 2673))
-	  (smpl-2111 (smpls->samples 2111))
-	  (smpl-335 (smpls->samples 335))
-	  (smpl-121 (smpls->samples 121))
+	  (smpl-353 (* 1.0 (smpls->samples 353)))
+	  (smpl-3627 (* 1.0 (smpls->samples 3627)))
+	  (smpl-1228 (* 1.0 (smpls->samples 1228)))
+	  (smpl-2673 (* 1.0 (smpls->samples 2673)))
+	  (smpl-2111 (* 1.0 (smpls->samples 2111)))
+	  (smpl-335 (* 1.0 (smpls->samples 335)))
+	  (smpl-121 (* 1.0 (smpls->samples 121)))
 	  
-	  (smpl-8 (smpls->samples 8)))
+	  (smpl-8 (* 1.0 (smpls->samples 8))))
       
       (do ((i 0 (+ i 1)))
 	  ((= i len))
@@ -123,6 +123,7 @@
 								   (+ smpl-8
 								      (* smpl-8 (oscil excursion_48)))))))))
 	  ;; tap reflections and output:
+
 	  (outa i 
 		(+ (* +0.6 (tap delay_48_54 smpl-266))
 		   (* +0.6 (tap delay_48_54 smpl-2974))
