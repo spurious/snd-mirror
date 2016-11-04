@@ -3135,7 +3135,7 @@
 						(eq? (caaddr arg) 'not))))
 				  (let ((rel (if (eq? arg-op 'or) 'and 'or)))
 				    (cons rel (map (lambda (p)
-						     (if (and (pair? p)
+						     (if (and (len=2? p)
 							      (eq? (car p) 'not))
 							 (cadr p)
 							 (simplify-boolean (list 'not p) () () env)))
@@ -3470,6 +3470,7 @@
 					     (set! eqfnc 'eq?)))
 				      (and (= (length p) 3)
 					   (quoted-pair? (caddr p))
+					   (proper-list? (cadr (caddr p)))
 					   (set! vals (append (cadr (caddr p)) vals))))
 				     
 				     (else #f)))))
@@ -10426,12 +10427,16 @@
 					       (and (= (length form) 3)
 						    (hash-table-ref repeated-args-table head)))
 					   (repeated-member? (cdr form) env))
-				      (lint-format "this looks odd: ~A"
+				      (lint-format "this looks odd: ~A~A"
 						   caller
 						   ;; sigh (= a a) could be used to check for non-finite numbers, I suppose,
 						   ;;   and (/ 0 0) might be deliberate (as in gmp)
+						   ;;   but the former is better (not (nan? a)) and the latter is an error
 						   ;;   also (min (random x) (random x)) is not pointless
-						   (truncated-list->string form))
+						   (truncated-list->string form)
+						   (if (eq? head '=)
+						       (format #f ", perhaps use (not (nan? ~A))" (car (repeated-member? (cdr form) env)))
+						       ""))
 				      (if (and (hash-table-ref repeated-args-table-2 head)
 					       (repeated-member? (cdr form) env))
 					  (lint-format "it looks odd to have repeated arguments in ~A" caller (truncated-list->string form))))
@@ -13006,7 +13011,8 @@
 
     (define (one-call-and-dots body) ; body is unchanged here, so it's not interesting
       (if (< (tree-leaves body) 30)
-	  (if (null? (cdr body))
+	  (if (or (null? body)
+		  (null? (cdr body)))
 	      body
 	      (list (car body) '...))
 	  (if (pair? (car body))
@@ -20519,11 +20525,6 @@
     #f))
 |#
 
-;;; (let ((n m)) where no set! n but *-set! -- warn about copy
-;;;   let is useless if no shadow and shadow should be renamed
-;;;   (let ((x y)) (display (abs x)) x) is caught -> "pointless let -> (begin (display (abs y)) y)
-;;;   it does also catch the vector-set case
-;;;
 ;;; unchanging arg to recur? -- currently can suggest a do-loop:
 ;;;   (let loop ((x X) (y Y)) (if (null? x) y (loop (cdr x) y))) -> (do ((x X (cdr x)) (y Y)) ((null? x) y))
 ;;;   but better: (let loop ((x X)) (if (null? x) Y (loop (cdr x)))) [(do ((x X (cdr x))) ((null? x) Y))]
@@ -20551,7 +20552,11 @@
 ;;; instead of line numbers, use the actual forms, in local closures
 ;;; do we catch the built-in-as-par shadowing macro expansion version? yes but see t347
 ;;;
-;;; 3458 (define (func x) (case x ((#t) (dynamic-wind -1-)) (((values \"hi\")) (input-port? +/)) (else (or  +i  (memq   define-macro  '((x 1) y . 2)  )))))
-;;; 3125 (define (func x) (if (and -(not  )) (input-port? .i abs  inf.0  define-macro*  ) (quote 0///i.)))
+;;; check let/sublet -- either cons or symbol/value? -- like hash-table* sig but it also says #t for args!
+;;;   hash-table is (symbol . value)
+;;;   hash-table* is same but as separate args
+;;;
+;;; 4765 (define (func x) (char-ci>? (inexact->exact  (/  1 3/4  ))))
+;;; 7926 (define (func x) (cond ((number? ) (1- #t lambda* '(- 1) let* i(let-values))) (else (cdaaar -(char? (append `((x)) `((set! x (+ x 1)) (* x 2)) (cons)))))))
 ;;;
 ;;; 174 28539 728909

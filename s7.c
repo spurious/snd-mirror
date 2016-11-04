@@ -6108,7 +6108,7 @@ s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_openlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_openlet "(openlet e) tells the built-in generic functions that the environment 'e might have an over-riding method."
-  #define Q_openlet pcl_t
+  #define Q_openlet pcl_e
   s7_pointer e;
 
   e = car(args);
@@ -6142,7 +6142,7 @@ static s7_pointer c_coverlet(s7_scheme *sc, s7_pointer e)
 static s7_pointer g_coverlet(s7_scheme *sc, s7_pointer args)
 {
   #define H_coverlet "(coverlet e) undoes an earlier openlet."
-  #define Q_coverlet pcl_t
+  #define Q_coverlet pcl_e
   return(c_coverlet(sc, car(args)));
 }
 
@@ -41479,7 +41479,7 @@ static s7_pointer g_hash_table_star(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_star "(hash-table* ...) returns a hash-table containing the symbol/value pairs passed as its arguments. \
 That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value pairs preinstalled."
-  #define Q_hash_table_star s7_make_circular_signature(sc, 1, 2, sc->is_hash_table_symbol, sc->T)
+  #define Q_hash_table_star s7_make_circular_signature(sc, 1, 3, sc->is_hash_table_symbol, sc->is_symbol_symbol, sc->T)
 
   int len;
   s7_pointer ht;
@@ -68632,7 +68632,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 /* needed in s7_gmp_init and s7_init, initialized in s7_init before we get to gmp */
-static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c, pl_tl;
+static s7_pointer pl_bt, pl_p, pl_bc, pcl_bc, pcl_bs, pl_bn, pl_sf, pcl_bt, pcl_e, pcl_i, pcl_t, pcl_r, pcl_n, pcl_s, pcl_v, pcl_f, pcl_c, pl_tl;
 
 
 
@@ -74255,6 +74255,7 @@ s7_scheme *s7_init(void)
   pcl_s =  s7_make_circular_signature(sc, 0, 1, sc->is_string_symbol);
   pcl_v =  s7_make_circular_signature(sc, 0, 1, sc->is_vector_symbol);
   pcl_c =  s7_make_circular_signature(sc, 0, 1, sc->is_char_symbol);
+  pcl_e =  s7_make_circular_signature(sc, 0, 1, s7_make_signature(sc, 4, sc->is_let_symbol, sc->is_procedure_symbol, sc->is_macro_symbol, sc->is_c_object_symbol));
 
   sc->values_symbol = make_symbol(sc, "values");
 

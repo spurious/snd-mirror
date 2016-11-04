@@ -1516,7 +1516,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   if (auto_resize(ss))
     {
       int screen_y;
+#if GTK_CHECK_VERSION(3, 22, 0)
+      screen_y = 600; /* who knows? */
+#else
       screen_y = gdk_screen_height();
+#endif
       app_dy = (screen_y - app_y - app_dy - 20 * nchans);
     }
   else app_dy -= listener_height();
