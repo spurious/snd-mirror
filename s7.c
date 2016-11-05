@@ -41479,7 +41479,7 @@ static s7_pointer g_hash_table_star(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_star "(hash-table* ...) returns a hash-table containing the symbol/value pairs passed as its arguments. \
 That is, (hash-table* 'a 1 'b 2) returns a new hash-table with the two key/value pairs preinstalled."
-  #define Q_hash_table_star s7_make_circular_signature(sc, 1, 3, sc->is_hash_table_symbol, sc->is_symbol_symbol, sc->T)
+  #define Q_hash_table_star s7_make_circular_signature(sc, 1, 2, sc->is_hash_table_symbol, sc->T)
 
   int len;
   s7_pointer ht;

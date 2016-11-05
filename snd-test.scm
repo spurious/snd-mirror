@@ -8622,14 +8622,14 @@ EDITS: 2
       (if (not (= (length v0) 10)) (snd-display "v0 length = ~D?" (length v0)))
       (fill! v0 1.0)
       (fill! v1 0.5)
-      (if (equal? v0 v1) (snd-display "float-vector equal? ~A ~A" v0 v1))
+      (if (morally-equal? v0 v1) (snd-display "float-vector equal? ~A ~A" v0 v1))
       (if (eq? v0 v1) (snd-display "float-vector eq? ~A ~A" v0 v1))
       (if (fneq (float-vector-max v0) 1.0) (snd-display "float-vector max ~A" (float-vector-max v0)))
       (if (fneq (float-vector-min v0) 1.0) (snd-display "float-vector min ~A" (float-vector-min v0)))
       (let ((v3 (make-float-vector 10 0.5))
 	    (v4 (make-float-vector 3)))
-	(if (not (equal? v3 v1)) (snd-display "float-vector not equal? ~A ~A" v3 v1))
-	(if (equal? v4 v1) (snd-display "len diff float-vector equal? ~A ~A" v4 v1))
+	(if (not (morally-equal? v3 v1)) (snd-display "float-vector not equal? ~A ~A" v3 v1))
+	(if (morally-equal? v4 v1) (snd-display "len diff float-vector equal? ~A ~A" v4 v1))
 	(set! (v3 0) 1.0)
 	(if (fneq (v3 0) 1.0) (snd-display "set! float-vector-ref: ~A" (v3 0))))
       (let ((vlst (make-float-vector 3)))
@@ -39115,57 +39115,57 @@ EDITS: 1
       ;;   the .5 business in the bassdr2 works because it is like adding abs(sin)
       (with-sound (:reverb nrev :play #f)
 	(drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
-		.030  45.000 1  .010 10)
+		.030  45.0 1  .010 10)
 	(drone  .000  4.000  229.000  (* .25 .500) solid tenordr  .100  .500
-		.030  45.000 1  .010 11)
+		.030  45.0 1  .010 11)
 	(drone  .000  4.000  229.500  (* .25 .500) solid tenordr  .100  .500
-		.030  45.000 1  .010 9)
-	(canter  .000  2.100 918  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+		.030  45.0 1  .010 9)
+	(canter  .000  2.100 918  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  2.100  .300 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  2.100  .300 688.5  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  2.400  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  2.400  .040 826.2  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  2.440  .560 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  2.440  .560 459  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.000  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.000  .040 408  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.040  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.040  .040 619.65  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.080  .040 408  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.080  .040 408  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.120  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.120  .040 688.5  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.160  .290 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.160  .290 459  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.450  .150 516.375  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.450  .150 516.375  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.600  .040 826.2  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.600  .040 826.2  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.640  .040 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.640  .040 573.75  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.680  .040 619.65  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.680  .040 619.65  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.720  .180 573.75  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.720  .180 573.75  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.900  .040 688.5  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.900  .040 688.5  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.940  .260 459  (* .25 .700)  45.000 1  .050 ampf ranf skwf
+	(canter  3.940  .260 459  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)))
     
