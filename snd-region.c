@@ -54,7 +54,7 @@ typedef struct region {
   int id;
   deferred_region *dr;      /* REGION_DEFERRED descriptor */
   peak_env_info **peak_envs;
-  mus_long_t *begs, *lens;
+  mus_long_t *begs, *ends;
 } region;
 
 
@@ -78,7 +78,7 @@ static void free_region(region *r, int complete)
 	  if (r->start) free(r->start);
 	  if (r->end) free(r->end);
 	  if (r->begs) free(r->begs);
-	  if (r->lens) free(r->lens);
+	  if (r->ends) free(r->ends);
 	  if (r->peak_envs)
 	    {
 	      int i;
@@ -774,7 +774,7 @@ int define_region(sync_info *si, mus_long_t *ends)
   r->end = prettyf((double)(ends[0]) / (double)(r->srate), 2);
   r->use_temp_file = REGION_DEFERRED;
   r->begs = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
-  r->lens = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
+  r->ends = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
 
   ss->deferred_regions++;
   r->dr = (deferred_region *)calloc(1, sizeof(deferred_region));
@@ -788,9 +788,9 @@ int define_region(sync_info *si, mus_long_t *ends)
     {
       drp->cps[i] = si->cps[i];
       r->begs[i] = si->begs[i];
-      r->lens[i] = ends[i] - si->begs[i];
+      r->ends[i] = ends[i] - si->begs[i];
       drp->edpos[i] = drp->cps[i]->edit_ctr;
-      if (r->lens[i] > PEAK_ENV_CUTOFF)
+      if (r->ends[i] > PEAK_ENV_CUTOFF)
 	{
 	  peak_env_info *ep;
 	  ep = drp->cps[i]->edits[drp->edpos[i]]->peak_env;
@@ -798,7 +798,7 @@ int define_region(sync_info *si, mus_long_t *ends)
 	    {
 	      if (r->peak_envs == NULL)
 		r->peak_envs = (peak_env_info **)calloc(r->chans, sizeof(peak_env_info *));
-	      r->peak_envs[i] = peak_env_section(drp->cps[i], r->begs[i], r->lens[i], drp->edpos[i]);
+	      r->peak_envs[i] = peak_env_section(drp->cps[i], r->begs[i], r->ends[i] + 1, drp->edpos[i]);
 	    }
 	}
     }
@@ -829,13 +829,13 @@ static void deferred_region_to_temp_file(region *r)
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->sample_type)) && 
 	     (r->chans == sp0->nchans) &&
 	     (r->peak_envs != NULL) &&
-	     ((drp->len - 1) == r->lens[0]));
+	     ((drp->len - 1) == r->ends[0]));
   if (copy_ok)
     for (i = 0; i < r->chans; i++)
       if ((drp->edpos[i] != 0) || 
 	  (drp->cps[i]->sound != sp0) ||
 	  (r->begs[i] != r->begs[0]) ||
-	  (r->lens[i] != (drp->len - 1)) ||
+	  (r->ends[i] != (drp->len - 1)) ||
 	  (r->peak_envs[i] == NULL))
 	{
 	  copy_ok = false;
@@ -934,7 +934,7 @@ static void deferred_region_to_temp_file(region *r)
 	    }
 
 	  if ((r->chans == 1) &&
-	      (r->lens[0] == (len - 1)))
+	      (r->ends[0] == (len - 1)))
 	    {
 	      snd_fd *sf;
 	      mus_float_t *d;
@@ -1028,10 +1028,10 @@ void sequester_deferred_regions(chan_info *cp, int edit_top)
 	    if ((drp->cps[j] == cp) &&
 		(drp->edpos[j] > edit_top))
 	      {
-		if (r->lens[j] > 1000000)
+		if (r->ends[j] > 1000000)
 		  status_report(cp->sound, "sequestering region %d...", r->id);
 		deferred_region_to_temp_file(r);
-		if (r->lens[j] > 1000000)
+		if (r->ends[j] > 1000000)
 		  clear_status_area(cp->sound);
 		break;
 	      }
@@ -1250,12 +1250,17 @@ void save_region_backpointer(snd_info *sp)
       val = channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION);
       if (val > r->maxamp) r->maxamp = val;
 
-      if (r->lens[i] > PEAK_ENV_CUTOFF)
+      if (r->ends[i] > PEAK_ENV_CUTOFF)
         {
           chan_info *cp;
           cp = sp->chans[i];
-          if (r->peak_envs[i])
-            free_peak_env_info(r->peak_envs[i]);
+          if (r->peak_envs == NULL)
+            r->peak_envs = (peak_env_info **)calloc(r->chans, sizeof(peak_env_info *));
+          else 
+	    {
+	      if (r->peak_envs[i])
+		free_peak_env_info(r->peak_envs[i]);
+	    }
           /* if region file was edited, the peak_envs probably changed */
           r->peak_envs[i] = copy_peak_env_info(cp->edits[0]->peak_env, false);
         }
@@ -1551,7 +1556,7 @@ static Xen g_restore_region(Xen args)
 {
   /* internal function used by save-state mechanism -- not intended for external use */
   region *r;
-  int regn;
+  int i, regn;
   Xen arg, pos, chans, len, srate, maxamp, name, start, end, filename, date;
   
   arg = args;
@@ -1615,6 +1620,15 @@ static Xen g_restore_region(Xen args)
   r->use_temp_file = REGION_FILE;
   r->filename = mus_strdup(Xen_string_to_C_string(filename));
 
+  /* bugfix for saved regions -- thanks to Tito Latini */
+  r->begs = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
+  r->ends = (mus_long_t *)calloc(r->chans, sizeof(mus_long_t));
+  for (i = 0; i < r->chans; i++)
+    {
+      r->begs[i] = 0;
+      r->ends[i] = r->framples - 1;
+    }
+ 
   reflect_regions_in_region_browser();
   return(C_int_to_Xen_integer(r->id));
 }
@@ -1702,7 +1716,7 @@ Xen g_region_framples(Xen n, Xen chan)
     return(snd_no_such_channel_error(S_region_framples, Xen_list_1(n), chan));
 
   r = id_to_region(rg);
-  return(C_llong_to_Xen_llong(r->lens[chn] + 1));
+  return(C_llong_to_Xen_llong(r->ends[chn] + 1));
 }
 
 
@@ -1751,7 +1765,7 @@ static Xen region_get(region_field_t field, Xen n, const char *caller)
 	if (r)
 	  return(Xen_list_3(C_string_to_Xen_string(r->name), 
 			    C_llong_to_Xen_llong(r->begs[0]), 
-			    C_llong_to_Xen_llong(r->lens[0]))); 
+			    C_llong_to_Xen_llong(r->ends[0] + 1))); 
       }
       break;
     default: break;

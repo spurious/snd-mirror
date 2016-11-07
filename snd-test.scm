@@ -5425,7 +5425,7 @@ EDITS: 5
 	(if (not (selection-member? index)) (snd-display "selection-member?: ~A" (selection-member? index)))
 	(if (not (= (region-srate r0) 22050)) (snd-display "region-srate: ~A?" (region-srate r0)))
 	(if (not (= (region-chans r0) 1)) (snd-display "region-chans: ~A?" (region-chans r0)))
-	(if (not (equal? (region-home r0) '("oboe.snd" 0 50827))) (snd-display "region-home: ~A" (region-home r0)))
+	(if (not (equal? (region-home r0) '("oboe.snd" 0 50828))) (snd-display "region-home: ~A" (region-home r0))) ; region-home docs say length
 	(if (not (= (region-framples r0) 50828)) (snd-display "region-framples: ~A?" (region-framples r0)))
 	(if (not (= (selection-framples) 50828)) (snd-display "selection-framples: ~A?" (selection-framples 0)))
 	(if (not (= (framples sel) 50828)) (snd-display "generic selection-framples: ~A?" (framples sel)))
@@ -6518,7 +6518,7 @@ EDITS: 5
 	(close-sound ind1))
       (let* ((ind (open-sound "2.snd"))
 	     (reg (make-region 0 100 ind #t)))
-	(if (not (equal? (region-home reg) '("2.snd" 0 100))) 
+	(if (not (equal? (region-home reg) '("2.snd" 0 101))) 
 	    (snd-display "make + region-home: ~A" (region-home reg)))
 	(if (not (= (region-chans reg) 2))
 	    (snd-display "make-region chan #t: ~A" (region-chans reg)))
