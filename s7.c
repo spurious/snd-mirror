@@ -75161,7 +75161,7 @@ int main(int argc, char **argv)
  * could (apply append (map...)) omit the extra copy?
  * add a check for symbol-table glommage
  * (list 1 (symbol ".") 2) -> (1 . 2)
- * maybe use 'not for signature of #f?
+ * maybe use 'not for signature of #f? or #f?
  *
  * Snd:
  * in FC 25 the close-window decoration does not close Snd -- under gdb it works?

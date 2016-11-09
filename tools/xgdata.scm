@@ -136,7 +136,7 @@
 ;;; (CCHK-gtk2 "GDK_IS_COLORMAP(object)" "GdkColormap*")
 ;;;;(CFNC "GType gdk_colormap_get_type void")
 
-(CFNC "GdkVisual* gdk_visual_get_system void") ; -- moved ahead of the gtk2 stuff
+;;; 3.22.3 (CFNC "GdkVisual* gdk_visual_get_system void") ; -- moved ahead of the gtk2 stuff -- use gdk_screen_get_system_visual
 ;;; (CFNC-gtk2 "GdkColor* gdk_color_copy GdkColor* color")
 
 ;;; (CFNC-gtk2 "GdkColormap* gdk_colormap_new GdkVisual* visual gboolean allocate")
@@ -1271,16 +1271,16 @@
 (CINT "GDK_VISUAL_TRUE_COLOR" "GdkVisualType")
 (CINT "GDK_VISUAL_DIRECT_COLOR" "GdkVisualType")
 ;;;;(CFNC "GType gdk_visual_get_type void")
-(CFNC "gint gdk_visual_get_best_depth void")
-(CFNC "GdkVisualType gdk_visual_get_best_type void")
-;(CFNC "GdkVisual* gdk_visual_get_system void") -- moved up
-(CFNC "GdkVisual* gdk_visual_get_best void")
-(CFNC "GdkVisual* gdk_visual_get_best_with_depth gint depth")
-(CFNC "GdkVisual* gdk_visual_get_best_with_type GdkVisualType visual_type")
-(CFNC "GdkVisual* gdk_visual_get_best_with_both gint depth GdkVisualType visual_type")
-(CFNC "void gdk_query_depths gint** [depths] gint* [count]")
-(CFNC "void gdk_query_visual_types GdkVisualType** [visual_types] gint* [count]")
-(CFNC "GList* gdk_list_visuals void")
+;;; 3.22.3 (CFNC "gint gdk_visual_get_best_depth void")
+;;; 3.22.3 (CFNC "GdkVisualType gdk_visual_get_best_type void")
+;;; 3.22.3 ;(CFNC "GdkVisual* gdk_visual_get_system void") -- moved up
+;;; 3.22.3 (CFNC "GdkVisual* gdk_visual_get_best void")
+;;; 3.22.3 (CFNC "GdkVisual* gdk_visual_get_best_with_depth gint depth")
+;;; 3.22.3 (CFNC "GdkVisual* gdk_visual_get_best_with_type GdkVisualType visual_type")
+;;; 3.22.3 (CFNC "GdkVisual* gdk_visual_get_best_with_both gint depth GdkVisualType visual_type")
+;;; 3.22.3 (CFNC "void gdk_query_depths gint** [depths] gint* [count]")
+;;; 3.22.3 (CFNC "void gdk_query_visual_types GdkVisualType** [visual_types] gint* [count]")
+;;; 3.22.3 (CFNC "GList* gdk_list_visuals void")
 
 (CINT "GDK_INPUT_OUTPUT" "GdkWindowClass") ; GdkWindowWindowClass in gtk 3
 (CINT "GDK_INPUT_ONLY" "GdkWindowClass")
@@ -5855,7 +5855,7 @@
 (CFNC "GtkTreeViewSearchPositionFunc gtk_tree_view_get_search_position_func GtkTreeView* tree_view")
 (CFNC "void gtk_tree_view_set_search_position_func GtkTreeView* tree_view GtkTreeViewSearchPositionFunc func lambda_data #func_info GDestroyNotify destroy")
 
-(CFNC "gboolean gtk_widget_is_composited GtkWidget* widget")
+;;; 3.22.3 (CFNC "gboolean gtk_widget_is_composited GtkWidget* widget")
 ;;; 2.91.0 (CFNC "void gtk_widget_input_shape_combine_mask GtkWidget* widget GdkBitmap* shape_mask gint offset_x gint offset_y")
 (CFNC "void gtk_window_set_deletable GtkWindow* window gboolean setting")
 (CFNC "gboolean gtk_window_get_deletable GtkWindow* window")
@@ -9517,4 +9517,4 @@
 ;;; 3.22.0: no changes
 ;;; 3.22.1: no changes
 ;;; 3.22.2: nothing new (many deprecations)
-
+;;; 3.22.3: same
