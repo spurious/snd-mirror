@@ -249,7 +249,7 @@ static char *tagged_mix_to_string(const char *mixinfile, mus_long_t beg, int fil
   return(mus_format("\"%s\" %lld %d snd chn %s %s %s to -mix-%d", mixinfile, beg, file_channel, b2s(true), b2s(delete_file), S_mix, mix_infos_ctr));
 #endif
 #if HAVE_SCHEME
-  return(mus_format("(set! -mix-%d (%s \"%s\" %lld %d snd chn %s %s))", mix_infos_ctr, S_mix, mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
+  return(mus_format("(varlet -env- '-mix-%d (%s \"%s\" %lld %d snd chn %s %s))", mix_infos_ctr, S_mix, mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
 #endif
 #if HAVE_RUBY
   return(mus_format("_mix_%d = %s(\"%s\", %lld, %d, snd, chn, %s, %s)", mix_infos_ctr, to_proc_name(S_mix), mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
@@ -1108,7 +1108,7 @@ bool mix_set_amp_edit(int id, mus_float_t amp)
 	  origin = mus_format("-mix-%d %.4f set-mix-amp", id, amp);
 #endif
 #if HAVE_SCHEME
-	  origin = mus_format("(set! (mix-amp -mix-%d) %.4f)", id, amp);
+	  origin = mus_format("(set! (mix-amp (car -mix-%d)) %.4f)", id, amp);
 #endif
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_amp(_mix_%d, %.4f)", id, amp);
@@ -1314,7 +1314,7 @@ bool mix_set_amp_env_edit(int id, env *e)
 	  origin = mus_format("-mix-%d %s set-mix-amp-env", id, envstr);
 #endif
 #if HAVE_SCHEME
-	  origin = mus_format("(set! (mix-amp-env -mix-%d) %s)", id, envstr);
+	  origin = mus_format("(set! (mix-amp-env (car -mix-%d)) %s)", id, envstr);
 #endif
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_amp_env(_mix_%d, %s)", id, envstr);
@@ -1379,7 +1379,7 @@ bool mix_set_position_edit(int id, mus_long_t pos)
 	  origin = mus_format("-mix-%d %lld set-mix-position", id, pos);
 #endif
 #if HAVE_SCHEME
-	  origin = mus_format("(set! (mix-position -mix-%d) %lld)", id, pos);
+	  origin = mus_format("(set! (mix-position (car -mix-%d)) %lld)", id, pos);
 #endif
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_position(_mix_%d, %lld)", id, pos);
@@ -1420,7 +1420,7 @@ bool mix_set_speed_edit(int id, mus_float_t spd)
 	  origin = mus_format("-mix-%d %.4f set-mix-speed", id, spd);
 #endif
 #if HAVE_SCHEME
-	  origin = mus_format("(set! (mix-speed -mix-%d) %.4f)", id, spd);
+	  origin = mus_format("(set! (mix-speed (car -mix-%d)) %.4f)", id, spd);
 #endif
 #if HAVE_RUBY
 	  origin = mus_format("set_mix_speed(_mix_%d, %.4f)", id, spd);
@@ -3313,7 +3313,7 @@ mix data (a " S_vct ") into snd's channel chn starting at beg; return the new mi
     } 
 #endif
 #if HAVE_SCHEME
-    new_origin = mus_format("(set! -mix-%d (%s %lld snd chn))", mix_infos_ctr, edname, bg);
+    new_origin = mus_format("(varlet -env- '-mix-%d (%s %lld snd chn))", mix_infos_ctr, edname, bg);
 #endif
 #if HAVE_RUBY
     /* mix_vct(vct(0.1, 0.2, 0.3), 100, snd, chn, true, "mix_vct(vct(0.1, 0.2, 0.3)") */ 

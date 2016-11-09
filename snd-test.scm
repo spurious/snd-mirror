@@ -32986,8 +32986,83 @@ EDITS: 1
 	  (snd-display "save-sound-as with comment: ~A" (comment ind)))
       (close-sound ind))
 
-    (mus-sound-prune)
-    ))
+    ;; these are from Tito Latini
+
+    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+    
+    (let ((ind (new-sound "fmv.snd" :size 100)))
+      (src-sound .5)
+      (set! (cursor) 150)
+      (set! (selection-position) 170)
+      (set! (selection-framples) 20)
+      (set! (speed-control) -2.0)
+      (save-state "s61.scm")
+      (close-sound ind))
+    
+    (load "s61.scm")
+    
+    (if (not (= (cursor) 150)) 
+	(snd-display "save-state cursor: ~A" (cursor)))
+    (if (not (= (selection-position) 170)) 
+	(snd-display "save-state selection-position: ~A" (selection-position)))
+    (if (not (= (selection-framples) 20)) 
+	(snd-display "save-state selection-framples: ~A" (selection-framples)))
+    (if (fneq (speed-control) -2.0) 
+	(snd-display "save-state srate: ~A" (srate)))
+    (close-sound)
+    
+    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+    
+    (let ((ind (new-sound "fmv.snd" :size 100000)))
+      (define m1 (car (mix "oboe.snd" 0)))
+      (define m2 (car (mix "pistol.snd" 48000)))
+      (set! (mix-position m2) 20000)
+      (set! (mix-position m1) 60000)
+      (set! (mix-amp m1) 0.5)
+      (set! (mix-amp-env m1) '(0 0 2 1 10 0))
+      (set! (mix-amp m2) 0.25)
+      (set! (mix-amp-env m2) '(0 0 8 1 10 0))
+      (set! (mix-speed m2) 1.5)
+      (save-state "s61.scm")
+      (close-sound ind))
+    
+    (load "s61.scm")
+    
+    (let ((m1 (if (= (mix-position (caaar (mixes))) 20000) (caaar (mixes)) (cadaar (mixes))))
+	  (m2 (if (= (mix-position (caaar (mixes))) 60000) (caaar (mixes)) (cadaar (mixes)))))
+      (if (fneq (mix-amp m1) 0.25)
+	  (snd-display "save-state mix-amp 0: ~A" (mix-amp m1)))
+      (if (fneq (mix-amp m2) 0.5)
+	  (snd-display "save-state mix-amp 1: ~A" (mix-amp m2)))
+      (if (fneq (mix-speed m1) 1.5)
+	  (snd-display "save-state mix-speed 0: ~A" (mix-speed m1)))
+      (if (fneq (mix-speed m2) 1.0)
+	  (snd-display "save-state mix-speed 1: ~A" (mix-speed m2)))
+      (if (not (morally-equal? (mix-amp-env m1) '(0.0 0.0 8.0 1.0 10.0 0.0)))
+	  (snd-display "save-state mix-amp-env 0: ~A" (mix-amp-env m1)))  
+      (if (not (morally-equal? (mix-amp-env m2) '(0.0 0.0 2.0 1.0 10.0 0.0)))
+	  (snd-display "save-state mix-amp-env 1: ~A" (mix-amp-env m2)))
+      (close-sound))
+    
+    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+    
+    (for-each forget-region (regions))
+    
+    (let ((ind (new-sound "fmv.snd" :size 321)))
+      (make-region 0 123)
+      (save-state "s61.scm")
+      (close-sound ind))
+    
+    (load "s61.scm")
+    
+    (let ((reg (region-home (car (regions)))))
+      (if (not (equal? reg '("fmv.snd" 0 124)))
+	  (snd-display "save-state region-home: ~A" reg)))
+    (close-sound)
+    (for-each forget-region (regions))
+  
+    (mus-sound-prune)))
+
 
 
 ;;; ---------------- test 19: transforms ----------------

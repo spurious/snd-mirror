@@ -1947,7 +1947,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
       ed = cp->edits[i];
       if (ed)
 	{
-	  if (ed->backed_up)
+          if (ed->backed_up && (ed->edit_type != MIX_EDIT))
 	    {
 	      /* as-one-edit (and internally backup_edit_list) remove edit history entries,
 	       * making it impossible to reconstruct exactly the edit sequence in save/restore.
@@ -2163,7 +2163,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  break;
 
 		case CHANGE_MIX_EDIT:
-		  fprintf(fd, "%s", ed->origin);
+		  fprintf(fd, "begin %s", ed->origin);
 		  break;
 
 		default:

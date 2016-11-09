@@ -743,7 +743,9 @@
 		   (not (and (eq? (car sig) 'pair?) (null? (cddr sig))))
 		   (eq? (car sig) (cadr sig))))
 	 sig)))
-  (let ((sig (list (gtk-type->s7-type (cadr fnc)))))
+  (let ((sig (list (if (positive? (ref-args (caddr fnc))) ; these are returned as cadr of list
+		       'pair?
+		       (gtk-type->s7-type (cadr fnc))))))
     (for-each
      (lambda (arg)
        (set! sig (cons (gtk-type->s7-type (car arg)) sig)))
@@ -784,15 +786,27 @@
   (call-with-output-string
    (lambda (p)
      (display "pl_" p)
+     (display (case (car sig)
+		((integer?)    "i")
+		((boolean?)    "b")
+		((real?)       "d")
+		((string?)     "s")
+		((pair?)       "p")
+		((gtk_enum_t?) "g")
+		(else          "t"))
+	      p)
      (for-each
       (lambda (typ)
 	(display (case typ
-		   ((integer?) "i")
-		   ((boolean?) "b")
-		   ((real?) "r")
-		   (else "t"))
+		   ((integer?)    "i")
+		   ((boolean?)    "b")
+		   ((real?)       "r")
+		   ((string?)     "s")
+		   ((pair?)       "u") ; because we're stupidly using #f=null
+		   ((gtk_enum_t?) "g")
+		   (else          "t"))
 		 p))
-      sig))))
+      (cdr sig)))))
      
 (let ((ctr 0))
   (for-each

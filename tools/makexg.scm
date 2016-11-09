@@ -2692,9 +2692,9 @@
 			     (null? (cddr sig))))
 		   (eq? (car sig) (cadr sig))))
 	 sig)))
-  (let ((sig (if (positive? (ref-args (caddr fnc))) ; these are returned as cadr of list
-		 (list 'pair?)
-		 (list (gtk-type->s7-type (cadr fnc))))))
+  (let ((sig (list (if (positive? (ref-args (caddr fnc))) ; these are returned as cadr of list
+		       'pair?
+		       (gtk-type->s7-type (cadr fnc))))))
     (for-each
      (lambda (arg)
        (set! sig (cons (gtk-type->s7-type (car arg)) sig)))

@@ -905,7 +905,9 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
   
 #endif
 #if HAVE_SCHEME
-  fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (begin\n",
+  fprintf(fd, "(let* ((sfile (or (%s \"%s\" %d) (%s \"%s\")))\n"
+              "       (-env- (curlet)))\n"
+              "  (if sfile\n    (begin\n",
 	  S_find_sound,
 	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
 	  (with_nth) ? find_sound_nth(sp) : 0,
@@ -981,18 +983,22 @@ void save_sound_state(snd_info *sp, void *ptr)
   if (fneq(sp->speed_control, DEFAULT_SPEED_CONTROL)) 
     {
 #if XEN_HAVE_RATIOS
-      if (sp->speed_control == SPEED_CONTROL_AS_RATIO)
+      if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
 	{
 	  /* no ratios in Ruby */
 #if HAVE_FORTH
-	  fprintf(fd, "%s%d/%d set-%s drop\n", white_space, sp->speed_control_numerator, sp->speed_control_denominator, S_speed_control);
+	  fprintf(fd, "%s%d/%d set-%s drop\n", white_space,
+                  sp->speed_control_numerator * sp->speed_control_direction,
+                  sp->speed_control_denominator, S_speed_control);
 #else
-	  fprintf(fd, "%s(set! (%s sfile) %d/%d)\n", white_space, S_speed_control, sp->speed_control_numerator, sp->speed_control_denominator);
+	  fprintf(fd, "%s(set! (%s sfile) %d/%d)\n", white_space, S_speed_control,
+                  sp->speed_control_numerator * sp->speed_control_direction,
+                  sp->speed_control_denominator);
 #endif
 	}
       else
 #endif
-      psp_sf(fd, S_speed_control, sp->speed_control);
+      psp_sf(fd, S_speed_control, sp->speed_control * sp->speed_control_direction);
     }
   if ((fneq(sp->speed_control_min, DEFAULT_SPEED_CONTROL_MIN)) ||
       (fneq(sp->speed_control_max, DEFAULT_SPEED_CONTROL_MAX)))
@@ -1045,7 +1051,6 @@ void save_sound_state(snd_info *sp, void *ptr)
 	  if (((ap->x0 != 0.0) || (ap->x1 != 0.1)) && (ap->x1 > .0005)) pcp_sl(fd, S_x_bounds, ap->x0, ap->x1, chan);
 	  if ((ap->y0 != -1.0) || (ap->y1 != 1.0)) pcp_sl(fd, S_y_bounds, ap->y0, ap->y1, chan);
 	}
-      if (cursor_sample(cp) != 0) pcp_sod(fd, S_cursor, cursor_sample(cp), chan);
       if (cp->cursor_size != DEFAULT_CURSOR_SIZE) pcp_sd(fd, S_cursor_size, cp->cursor_size, chan);
       if (cp->cursor_style != DEFAULT_CURSOR_STYLE) pcp_ss(fd, S_cursor_style, cursor_style_name(cp->cursor_style), chan);
       if (cp->tracking_cursor_style != DEFAULT_TRACKING_CURSOR_STYLE) pcp_ss(fd, S_tracking_cursor_style, cursor_style_name(cp->tracking_cursor_style), chan);
@@ -1133,6 +1138,7 @@ void save_sound_state(snd_info *sp, void *ptr)
 	  }
       }
 
+      if (cursor_sample(cp) != 0) pcp_sod(fd, S_cursor, cursor_sample(cp), chan);
       check_selection(fd, cp);
       if ((!sp->remembering) &&
 	  (selected_channel() == cp))
