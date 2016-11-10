@@ -4884,15 +4884,15 @@
 <1> (load "test-phases.scm")
 test-all-phases
 <2> (test-all-phases #f)
-;all peaks... Mon 05-Sep-2016 04:08
+;all peaks... Wed 09-Nov-2016 16:29
 (0.001495737399423547 101)
-;odd peaks... Mon 05-Sep-2016 04:16
+;odd peaks... Wed 09-Nov-2016 16:36
 (0.001687315629258279 125)
-;even peaks... Mon 05-Sep-2016 04:20
+;even peaks... Wed 09-Nov-2016 16:41
 (0.001467169674692848 4)
-;prime peaks... Mon 05-Sep-2016 04:24
+;prime peaks... Wed 09-Nov-2016 16:45
 (0.001975582609148319 2048)
-;all done! Mon 05-Sep-2016 04:29
+;all done! Wed 09-Nov-2016 16:51
 |#
 
 ;;; gad161: clean-up-evens

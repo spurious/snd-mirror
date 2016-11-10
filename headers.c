@@ -988,11 +988,23 @@ static void read_aif_appl_chunk(unsigned char *buf, mus_long_t offset, int chunk
 }
 
 
+static void mus_ubint_to_char(unsigned char *j, unsigned int x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if MUS_LITTLE_ENDIAN
+  j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
+#else
+  memcpy((void *)j, (void *)ox, 4);
+#endif
+}
+
+
 static int read_aiff_header(const char *filename, int fd, int overall_offset)
 {
   /* we know we have checked for FORM xxxx AIFF|AIFC when we arrive here */
   /* as far as I can tell, the COMM block has the header data we seek, and the SSND block has the sound data */
-  int chunkloc, i, ssnd_bytes = 0;
+  unsigned int chunkloc, ssnd_bytes = 0;
+  int i;
   bool happy = true, got_comm = false;
   mus_long_t offset = 0;
 
@@ -1014,7 +1026,7 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 
   while (happy)
     {
-      int chunksize;
+      unsigned int chunksize;
       offset += chunkloc;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 32) <= 0)
 	{
@@ -1026,18 +1038,16 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
 	  return(mus_error(MUS_HEADER_READ_FAILED, "%s, aiff header: chunks confused at %lld" , filename, offset));
 	}
 
-      chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+      chunksize = mus_char_to_ubint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
-	break;
-      if (chunksize < 0)
 	break;
 
       /* fprintf(stderr, "chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
 
       if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	{
-	  int framples;
+	  unsigned int framples;
 	  got_comm = true;
 
 	  chans = mus_char_to_bshort((unsigned char *)(hdrbuf + 8));
@@ -1260,7 +1270,7 @@ static const char *sndlib_format_to_aifc_name(mus_sample_t samp_type)
 }
 
 
-static int write_aif_header(int fd, int wsrate, int wchans, int siz, mus_sample_t samp_type, const char *comment, int len, bool aifc_header)
+static int write_aif_header(int fd, int wsrate, int wchans, mus_long_t siz, mus_sample_t samp_type, const char *comment, int len, bool aifc_header)
 {
   /* we write the simplest possible AIFC header: AIFC | COMM | APPL-MUS_ if needed | SSND eof. */
   /* the assumption being that we're going to be appending sound data once the header is out   */
@@ -1279,8 +1289,8 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, mus_sample_
 
   write_four_chars((unsigned char *)hdrbuf, I_FORM);
   if (aifc_header) 
-    mus_bint_to_char((unsigned char *)(hdrbuf + 4), len + 30 + 16 + lenloop + siz + lenhdr + extra + 12 + 10);
-  else mus_bint_to_char((unsigned char *)(hdrbuf + 4), len + 30 + 16 + lenloop + siz + lenhdr + extra);
+    mus_ubint_to_char((unsigned char *)(hdrbuf + 4), len + 30 + 16 + lenloop + siz + lenhdr + extra + 12 + 10);
+  else mus_ubint_to_char((unsigned char *)(hdrbuf + 4), len + 30 + 16 + lenloop + siz + lenhdr + extra);
 
   /* 
    * comment length + 4 for AIFF 18+8 for I_COMM info + 16 for I_SSND info + 38 for INST and MARK +
@@ -1306,7 +1316,7 @@ static int write_aif_header(int fd, int wsrate, int wchans, int siz, mus_sample_
 
   mus_bshort_to_char((unsigned char *)(hdrbuf + 20), (short)wchans);
   if (wchans > 0)
-    mus_bint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_bytes_per_sample(samp_type)));
+    mus_ubint_to_char((unsigned char *)(hdrbuf + 22), siz / (wchans * mus_bytes_per_sample(samp_type)));
 
   mus_bshort_to_char((unsigned char *)(hdrbuf + 26), sndlib_format_to_aiff_bits(samp_type));
   double_to_ieee_80((double)wsrate, (unsigned char *)(hdrbuf + 28));
@@ -1966,15 +1976,13 @@ static int read_riff_header(const char *filename, int fd)
 
   while (true)
     {
-      int chunksize;
+      unsigned int chunksize;
       offset += chunkloc;
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
-      chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
+      chunksize = big_or_little_endian_uint((unsigned char *)(hdrbuf + 4), little);
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
-	break;
-      if (chunksize < -1)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
@@ -2080,7 +2088,18 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
 }
 
 
-static int write_riff_header(int fd, int wsrate, int wchans, int siz, mus_sample_t samp_type, const char *comment, int len)
+static void mus_ulint_to_char(unsigned char *j, unsigned int x)
+{
+  unsigned char *ox = (unsigned char *)&x;
+#if (!MUS_LITTLE_ENDIAN)
+  j[0] = ox[3]; j[1] = ox[2]; j[2] = ox[1]; j[3] = ox[0];
+#else
+  memcpy((void *)j, (void *)ox, 4);
+#endif
+}
+
+
+static int write_riff_header(int fd, int wsrate, int wchans, mus_long_t siz, mus_sample_t samp_type, const char *comment, int len)
 {
   int j, extra = 0, err = MUS_NO_ERROR;
 
@@ -2095,7 +2114,7 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, mus_sample
   /*   second 36 is for "JUNK" chunk, 8 is data chunk header */
 
   write_four_chars((unsigned char *)hdrbuf, I_RIFF);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), data_location + siz - 8); /* added -8 25-June-07 */
+  mus_ulint_to_char((unsigned char *)(hdrbuf + 4), (unsigned int)(data_location + siz - 8)); /* added -8 25-June-07 */
   write_four_chars((unsigned char *)(hdrbuf + 8), I_WAVE);
   header_write(fd, hdrbuf, 12);
 
@@ -2114,7 +2133,7 @@ static int write_riff_header(int fd, int wsrate, int wchans, int siz, mus_sample
 
   /* start the data chunk */
   write_four_chars((unsigned char *)hdrbuf, I_data);
-  mus_lint_to_char((unsigned char *)(hdrbuf + 4), siz);
+  mus_ulint_to_char((unsigned char *)(hdrbuf + 4), (unsigned int)siz);
   header_write(fd, hdrbuf, 8);
   return(err);
 }

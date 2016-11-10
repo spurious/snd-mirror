@@ -3185,7 +3185,7 @@
 			     (let ((arg1 (cadr form))
 				   (arg2 (caddr form)))
 
-			       (if (and (pair? arg2)     ; (or A (and ... A ...)) -> A
+			       (if (and (len>1? arg2)     ; (or A (and ... A ...)) -> A
 					(eq? (car arg2) 'and)
 					(member arg1 (cdr arg2))
 					(not (side-effect? arg2 env)))
@@ -3205,7 +3205,8 @@
 				     (return (cons 'or (cons arg1 (cddr arg2)))))
 				 
 				 (when (pair? arg1)
-				   (when (eq? (car arg1) 'not)
+				   (when (and (eq? (car arg1) 'not)
+					      (len=1? (cdr arg1)))
 				     (if (symbol? (cadr arg1))
 					 (if (memq (cadr arg1) arg2)
 					     (begin
@@ -3341,7 +3342,7 @@
 				   (revers 0)
 				   (arglen (- len 1)))
 			       (for-each (lambda (a)
-					   (if (pair? a)
+					   (if (len>1? a)
 					       (if (eq? (car a) 'not)
 						   (set! nots (+ nots 1))
 						   (if (hash-table-ref notables (car a))
@@ -3627,7 +3628,7 @@
 					    (memq (car val) '(and or not)))
 				   (set! val (classify (simplify-boolean val true false env)))
 				   (when (and (> len 3)
-					      (pair? val)
+					      (len=2? val) ; pair? val needs to precede car val 
 					      (eq? (car val) 'not)
 					      (pair? (cdr exprs)))
 				     (if (symbol? (cadr val))
@@ -3677,7 +3678,7 @@
 						 (and (pair? val)         ;   and redundant tests
 						      (hash-table-ref booleans (car val))
 						      (any? (lambda (p)
-							      (and (pair? p)
+							      (and (len>1? p)
 								   (subsumes? (car p) (car val))
 								   (equal? (cadr val) (cadr p))))
 							    new-form))))
@@ -6244,7 +6245,8 @@
 					   (lists->string form ; (cdr (or (assoc n oi) (list n y))) -> (cond ((assoc n oi) => cdr) (else (list y)))
 							  `(cond (,arg1 => ,head) (else ,else-val)))))))))
 
-		(if (and (quoted-pair? arg) ; (cdr '(a)) -> ()
+		(if (and (quoted-pair? arg)   ; (cdr '(a)) -> ()
+			 (null? (cddr form))  ; else possibly bad trailing args in form (like (read-char))
 			 (not (var-member head env)))
 		    (let ((val (checked-eval form)))
 		      (if (not (eq? val :checked-eval-error))
@@ -15978,7 +15980,9 @@
 					       (cdddr form)))
 			      
 			      ((lambda (header-len trailer-len result-mid-len)
-				 (when (and (or (not (eq? first-func 'set!))
+				 (when (and (>= header-len 0)
+					    (>= trailer-len 0)
+					    (or (not (eq? first-func 'set!))
 						(> header-len 1))
 					    (or (not (eq? first-func '/))
 						(> header-len 1)
@@ -16604,7 +16608,7 @@
 		       ;;    very tricky if val is not a constant
 		       (if (and (eq? (caar body) 'let)
 				(not (symbol? (cadar body)))
-				(every? (lambda (c) (code-constant? (cadr c))) (cadar body)))
+				(every? (lambda (c) (and (len>1? c) (code-constant? (cadr c)))) (cadar body)))
 			   ;; (do ((i 0 (+ i 1))) ((= i 3)) (let ((a 12)) (set! a (+ a i)) (display a))) ->
 			   ;;    (do ((i 0 (+ i 1)) (a 12 12)) ((= i 3)) (set! a (+ a i)) ...)
 			   (lint-format "perhaps ~A" caller
@@ -20601,8 +20605,8 @@
 ;;; take open mid-body, remove header/trailer no-side-effect exprs [re-lint],
 ;;;   then cast as net of mini-bodies of no-outer-refs sequences
 ;;;   then see if ordering can simplify, or some sequence can be omitted (no side-effects, not used anywhere else)
-;;; cond/case handled like arglist/if -- check for oversized branches
+;;; cond/case handled like arglist/if -- check for oversized branches [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]
 ;;; when-if... -> cond [t347 has many cases]
 ;;; (let () (define...)) -> add to let -- at least simple cases? 17466 [also let*?] -- see 11513
 ;;;
-;;; 175 28728 732132
+;;; 175 28728 732770

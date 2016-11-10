@@ -6,29 +6,29 @@
 ;;;  test 3: variables                          [1712]
 ;;;  test 4: sndlib                             [2265]
 ;;;  test 5: simple overall checks              [3996]
-;;;  test 6: float-vectors                      [8617]
-;;;  test 7: colors                             [8877]
-;;;  test 8: clm                                [9349]
-;;;  test 9: mix                                [20972]
-;;;  test 10: marks                             [22690]
-;;;  test 11: dialogs                           [23609]
-;;;  test 12: extensions                        [23770]
-;;;  test 13: menus, edit lists, hooks, etc     [24025]
-;;;  test 14: all together now                  [25282]
-;;;  test 15: chan-local vars                   [26089]
-;;;  test 16: regularized funcs                 [27749]
-;;;  test 17: dialogs and graphics              [31222]
-;;;  test 18: save and restore                  [31327]
-;;;  test 19: transforms                        [32905]
-;;;  test 20: new stuff                         [34940]
-;;;  test 21: optimizer                         [36114]
-;;;  test 22: with-sound                        [38444]
-;;;  test 23: X/Xt/Xm                           [41204]
-;;;  test 24: GL                                [44775]
-;;;  test 25: errors                            [44896]
-;;;  test 26: s7                                [46286]
-;;;  test all done                              [46422]
-;;;  test the end                               [46594]
+;;;  test 6: float-vectors                      [8615]
+;;;  test 7: colors                             [8875]
+;;;  test 8: clm                                [9347]
+;;;  test 9: mix                                [20988]
+;;;  test 10: marks                             [22706]
+;;;  test 11: dialogs                           [23625]
+;;;  test 12: extensions                        [23786]
+;;;  test 13: menus, edit lists, hooks, etc     [24035]
+;;;  test 14: all together now                  [25341]
+;;;  test 15: chan-local vars                   [26143]
+;;;  test 16: regularized funcs                 [27802]
+;;;  test 17: dialogs and graphics              [31310]
+;;;  test 18: save and restore                  [31415]
+;;;  test 19: transforms                        [33068]
+;;;  test 20: new stuff                         [35103]
+;;;  test 21: optimizer                         [36277]
+;;;  test 22: with-sound                        [38607]
+;;;  test 23: X/Xt/Xm                           [41378]
+;;;  test 24: GL                                [44949]
+;;;  test 25: errors                            [45070]
+;;;  test 26: s7                                [46460]
+;;;  test all done                              [46596]
+;;;  test the end                               [46768]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -33045,7 +33045,6 @@ EDITS: 1
       (close-sound))
     
     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
-    
     (for-each forget-region (regions))
     
     (let ((ind (new-sound "fmv.snd" :size 321)))

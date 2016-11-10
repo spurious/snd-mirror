@@ -1289,6 +1289,7 @@ void save_state(const char *save_state_name)
    *   loading, and trying to map over the current module's obarray, saving each such variable in
    *   its current form, is a major undertaking (although this can be done for simple vars); additionally, 
    *   what if the user has changed these before restoring -- should the old forms be restored?
+   * (this comment dates back to Guile days -- I think hook functions could be saved now)
    */
   
   snd_fclose(save_fd, save_state_name);
