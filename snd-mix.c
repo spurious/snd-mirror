@@ -282,6 +282,9 @@ int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const c
   /* used in mix_selection and paste(mix)_region, and in mix_complete_file */
 
   int i, id = MIX_FILE_NO_MIX, in_chans;
+#if HAVE_SCHEME
+  int is_mix_selection = ((origin) && (strncmp(origin, "-mix-selection-", 15) == 0));
+#endif
   char *new_origin = NULL;
 
   in_chans =  mus_sound_chans(mixinfile);
@@ -295,13 +298,22 @@ int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const c
       chan_info *cp;
       cp = cps[i];
 
+#if HAVE_SCHEME
+      if (is_mix_selection)
+        new_origin = mus_format("(varlet -env- '-mix-%d (%s %d %d))", mix_infos_ctr, origin,
+                                start_chan + i, start_chan);
+#endif
       if ((!with_tag) ||
 	  (!virtual_mix_ok(cp, cp->edit_ctr)))
 	{
 	  /* not a virtual mix */
 	  if (!origin)
 	    new_origin = untagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
-	  else new_origin = mus_strdup(origin);
+	  else
+	    {
+	      if (!new_origin)
+	        new_origin = mus_strdup(origin);
+	    }
 	  mix_file_untagged(mixinfile, i + start_chan, cp, beg, num, temp, new_origin);
 	}
       else 
@@ -310,7 +322,11 @@ int mix_file(mus_long_t beg, mus_long_t num, int chans, chan_info **cps, const c
 	  int cur_id;
 	  if (!origin)
 	    new_origin = tagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
-	  else new_origin = mus_strdup(origin);
+	  else
+	    {
+	      if (!new_origin)
+	        new_origin = mus_strdup(origin);
+	    }
 	  cur_id = mix_file_with_tag(cp, mixinfile, i + start_chan, beg, temp, new_origin);
 	  if (id == MIX_FILE_NO_MIX) id = cur_id;
 	}

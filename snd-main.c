@@ -907,7 +907,15 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 #if HAVE_SCHEME
   fprintf(fd, "(let* ((sfile (or (%s \"%s\" %d) (%s \"%s\")))\n"
               "       (-env- (curlet)))\n"
-              "  (if sfile\n    (begin\n",
+              "  (if sfile\n"
+              "    (begin\n"
+              "      (define (-mix-selection- beg pos len snd chn sel-chn start-chn)\n"
+              "        (do ((ch start-chn (+ ch 1)))\n"
+              "            ((> ch sel-chn))\n"
+              "          (set! (selection-member? snd ch) #t)\n"
+              "          (set! (selection-position snd ch) pos)\n"
+              "          (set! (selection-framples snd ch) len))\n"
+              "        (mix-selection beg snd chn sel-chn))\n",
 	  S_find_sound,
 	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
 	  (with_nth) ? find_sound_nth(sp) : 0,

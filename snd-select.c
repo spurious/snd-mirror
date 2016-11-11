@@ -379,7 +379,12 @@ static int mix_selection(chan_info *cp, sync_info *si_out, mus_long_t beg, io_er
 #if HAVE_FORTH
       origin = mus_format("%lld snd chn %s", beg, S_mix_selection);
 #else
+  #if HAVE_SCHEME
+      origin = mus_format("-mix-selection- %lld %lld %lld snd chn",
+                          beg, selection_beg(cp), selection_len());
+  #else
       origin = mus_format("%s" PROC_OPEN "%lld", to_proc_name(S_mix_selection), beg);
+  #endif
 #endif
       if (si_out->chans > 1)
 	remember_temp(tempfile, si_out->chans);

@@ -39709,7 +39709,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 	}
       if (compare_func)
 	{
-	  int i;
+	  s7_int i;
 	  s7_pointer vec, p;
 
 	  vec = g_vector(sc, data);
@@ -39733,7 +39733,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     case T_STRING:
       {
 	/* byte-vectors here also, so this isn't completely silly */
-	int i;
+	s7_int i;
 	s7_pointer vec;
 	unsigned char *chrs;
 
@@ -39807,7 +39807,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
     case T_INT_VECTOR:
     case T_FLOAT_VECTOR:
       {
-	int i;
+	s7_int i;
 	s7_pointer vec;
 
 	len = vector_length(data);
@@ -39886,17 +39886,20 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 #if (!WITH_GMP)
 	  if ((compare_func == g_less_2) || (compare_func == g_greater_2))
 	    {
-	      int i, typ;
+	      int typ;
 	      s7_pointer *els;
 	      els = s7_vector_elements(data);
 	      typ = type(els[0]);
 	      if ((typ == T_INTEGER) || (typ == T_REAL))
-		for (i = 1; i < len; i++)
-		  if (type(els[i]) != typ)
-		    {
-		      typ = T_FREE;
-		      break;
-		    }
+		{
+		  s7_int i;
+		  for (i = 1; i < len; i++)
+		    if (type(els[i]) != typ)
+		      {
+			typ = T_FREE;
+			break;
+		      }
+		}
 	      if (typ == T_INTEGER)
 		{
 		  qsort((void *)els, len, sizeof(s7_pointer), ((compare_func == g_less_2) ? int_less_2 : int_greater_2));
@@ -56767,9 +56770,9 @@ static void fill_closure_star(s7_scheme *sc, s7_pointer p)
 {
   for (; is_pair(p); p = cdr(p))
     {
-      s7_pointer defval;
       if (is_pair(car(p)))
 	{
+	  s7_pointer defval;
 	  defval = cadar(p);
 	  if (is_pair(defval))
 	    sc->args = cons(sc, cadr(defval), sc->args);

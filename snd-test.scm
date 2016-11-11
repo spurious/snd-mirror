@@ -33043,7 +33043,6 @@ EDITS: 1
       (if (not (morally-equal? (mix-amp-env m2) '(0.0 0.0 2.0 1.0 10.0 0.0)))
 	  (snd-display "save-state mix-amp-env 1: ~A" (mix-amp-env m2)))
       (close-sound))
-    
     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
     (for-each forget-region (regions))
     
@@ -33058,8 +33057,36 @@ EDITS: 1
       (if (not (equal? reg '("fmv.snd" 0 124)))
 	  (snd-display "save-state region-home: ~A" reg)))
     (close-sound)
+    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
     (for-each forget-region (regions))
   
+    (let ((ind (open-sound "2.snd")))
+      (set! (selection-position) 2400)
+      (set! (selection-framples) 4800)
+      (define mx (car (mix-selection 6000)))
+      (set! (mix-amp-env mx) '(0 0 1 1 2 0))
+      (set! (selection-position) 5000)
+      (set! (selection-framples) 2000)
+      (mix "2a.snd" 8000)
+      (mix-selection 4000)
+      (save-state "s61.scm")
+      (close-sound ind))
+
+    (load "s61.scm")
+    (if (not (selection?))
+	(snd-display "save-state: no selection")
+	(begin
+	  (if (not (= (selection-position) 5000))
+	      (snd-display "save-state selection-position: ~A" (selection-position)))
+	  (if (not (= (selection-framples) 2000))
+	      (snd-display "save-state selection-framples: ~A" (selection-framples)))
+	  (if (not (equal? (sort! (map mix-position (caar (mixes))) <) '(4000 6000 8000)))
+	      (snd-display "save-state mix-positions: ~A" (map mix-position (caar (mixes)))))
+	  (if (not (equal? (sort! (map mix-length (cadar (mixes))) <) '(2000 4800)))
+	      (snd-display "save-state mix lengths: ~A" (map mix-length (cadar (mixes)))))))
+    (close-sound)
+    (if (file-exists? "s61.scm") (delete-file "s61.scm"))
+    (for-each forget-region (regions))
     (mus-sound-prune)))
 
 

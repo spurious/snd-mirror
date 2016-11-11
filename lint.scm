@@ -2298,7 +2298,8 @@
 		    (case type2
 		      ((real? rational? complex? number? exact?) type1)
 		      ((=)
-		       (and (or (integer? (caddr arg2))
+		       (and (pair? (cddr arg2))
+			    (or (integer? (caddr arg2))
 				(integer? (cadr arg2)))
 			    'eqv?))
 		      (else #f)))
@@ -3675,7 +3676,7 @@
 					(set! exprs (append val (cdr exprs)))) ; we'll skip the 'or in do step
 				       
 				       ((not (or (memq val new-form)
-						 (and (pair? val)         ;   and redundant tests
+						 (and (len>1? val)         ;   and redundant tests
 						      (hash-table-ref booleans (car val))
 						      (any? (lambda (p)
 							      (and (len>1? p)
@@ -10520,7 +10521,7 @@
 	    (let ((base-type (->lint-type (var-initial-value v)))
 		  (vname (var-name v)))
 	      (let ((typef (lambda (p)
-			     (or (not (and (pair? p)
+			     (or (not (and (len>2? p)
 					   (eq? (car p) 'set!)
 					   (eq? vname (cadr p))))
 				 (let ((nt (->lint-type (caddr p))))
@@ -14231,6 +14232,7 @@
 				  ;; (if (= x 1) 2 (if (= x 3) 3 4)) -> (case x ((1) 2) ((3) 3) (else 4))
 				  (when (and eqv-select
 					     (cond-eqv? expr eqv-select #t)
+					     (pair? (cdr false))
 					     (cond-eqv? (cadr false) eqv-select #t))
 				    (let ((clauses (list (list expr true))))
 				      (let gather-clauses ((f false))
@@ -16306,12 +16308,9 @@
 			    (lint-format "perhaps ~A" caller 
 					 ;; (case x (else (case x (else 1)))) -> 1
 					 (lists->string form 
-							(if (or (null? else-clause)    ; can this happen? (it's caught above as an error)
-								(null? (cdr else-clause)))
-							    ()
-							    (if (null? (cddr else-clause))
-								(cadr else-clause)
-								(cons 'begin (cdr else-clause))))))
+							(if (null? (cddr else-clause)) ; null else is caught above
+							    (cadr else-clause)
+							    (cons 'begin (cdr else-clause)))))
 			    (begin
 			      ;; (null? (cdr new-keys-and-exprs)) is rare and kinda dumb -- cases look like test suite entries
 			      (for-each 
@@ -20602,11 +20601,20 @@
 |#
 
 ;;; extend constant-exprs in do to named-let/map etc?
+;;;
 ;;; take open mid-body, remove header/trailer no-side-effect exprs [re-lint],
 ;;;   then cast as net of mini-bodies of no-outer-refs sequences
 ;;;   then see if ordering can simplify, or some sequence can be omitted (no side-effects, not used anywhere else)
-;;; cond/case handled like arglist/if -- check for oversized branches [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]
+;;;
+;;; cond/case handled like arglist/if -- check for oversized branches 
+;;;   [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]
+;;;
 ;;; when-if... -> cond [t347 has many cases]
+;;;   if false=ifx use test+true, goto to false (or use whichever of true/false is deeper??)
+;;;   if false=simple and true=ifx use (not test) + false, go to true
+;;;     if no false but true=ifx, use (not test)+either nothing[mid form] or #<unspecified> and goto true
+;;;   if true not ifx, use test+true and else+false, if no false no else
+;;;   
 ;;; (let () (define...)) -> add to let -- at least simple cases? 17466 [also let*?] -- see 11513
 ;;;
 ;;; 175 28728 732770

@@ -6320,10 +6320,10 @@ int mus_header_change_data_size(const char *filename, mus_header_t type, mus_lon
       /* cancel old data_size from previous possible write */
       header_write(fd, hdrbuf, 4);
       lseek(fd, update_framples_location, SEEK_SET);
-      mus_bint_to_char((unsigned char *)hdrbuf, (int)size / (chans * mus_bytes_per_sample(sample_type)));
+      mus_ubint_to_char((unsigned char *)hdrbuf, (unsigned int)size / (chans * mus_bytes_per_sample(sample_type)));
       header_write(fd, hdrbuf, 4);
       lseek(fd, update_ssnd_location, SEEK_SET);
-      mus_bint_to_char((unsigned char *)hdrbuf, (int)size + 8);
+      mus_ubint_to_char((unsigned char *)hdrbuf, (unsigned int)size + 8);
       header_write(fd, hdrbuf, 4);
       break;
 
@@ -6335,10 +6335,10 @@ int mus_header_change_data_size(const char *filename, mus_header_t type, mus_lon
 	  return(mus_header_convert_riff_to_rf64(filename, size));
 	}
       lseek(fd, 4L, SEEK_SET);
-      mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(sample_type, data_size)); 
+      mus_lint_to_char((unsigned char *)hdrbuf, (unsigned int)size + update_form_size - mus_samples_to_bytes(sample_type, data_size)); 
       header_write(fd, hdrbuf, 4);
       lseek(fd, update_ssnd_location, SEEK_SET);
-      mus_lint_to_char((unsigned char *)hdrbuf, (int)size);
+      mus_ulint_to_char((unsigned char *)hdrbuf, (unsigned int)size);
       header_write(fd, hdrbuf, 4);
       break;
 

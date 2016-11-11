@@ -3317,7 +3317,7 @@ setting this to " PROC_TRUE " starts them; setting it to " PROC_FALSE " stops ou
 
 static Xen g_set_playing(Xen on)
 {
-  bool starting = false;
+  bool starting;
   Xen_check_type(Xen_is_boolean(on), on, 1, S_set S_playing, "a boolean");
   starting = Xen_boolean_to_C_bool(on);
   if (starting)
