@@ -56788,9 +56788,9 @@ static void fill_safe_closure_star(s7_scheme *sc, s7_pointer x, s7_pointer p)
 {
   for (; is_pair(p); p = cdr(p), x = next_slot(x))
     {
-      s7_pointer defval;
       if (is_pair(car(p)))
 	{
+	  s7_pointer defval;
 	  defval = cadar(p);
 	  if (is_pair(defval))
 	    slot_set_value(x, cadr(defval));
@@ -58142,16 +58142,14 @@ static void activate_let(s7_scheme *sc)
     }
 }
 
-
-static bool tree_match(s7_scheme *sc, s7_pointer tree)
+static bool tree_match(s7_pointer tree)
 {
   if (is_symbol(tree))
     return(is_matched_symbol(tree));
   if (is_pair(tree))
-    return((tree_match(sc, car(tree))) || (tree_match(sc, cdr(tree))));
+    return((tree_match(car(tree))) || (tree_match(cdr(tree))));
   return(false);
 }
-
 
 static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_pointer var_list, bool *has_set)
 {
@@ -58246,7 +58244,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 			      {
 				bool res;
 				set_match_symbol(settee);
-				res = tree_match(sc, caadr(sc->code)); /* (set! end ...) in some fashion */
+				res = tree_match(caadr(sc->code)); /* (set! end ...) in some fashion */
 				clear_match_symbol(settee);
 				if (res) return(false);
 			      }
@@ -58405,14 +58403,23 @@ static s7_pointer check_do(s7_scheme *sc)
       (has_opt_back(sc->code)))
     {
       s7_pointer vars, end, body;
-      bool one_line;
 
       vars = car(sc->code);
       end = cadr(sc->code);
       body = cddr(sc->code);
 
-      one_line = ((safe_list_length(sc, body) == 1) && (is_pair(car(body))));
       pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
+
+      /* an extremely annoying kludge -- define in the body can clobber the step expressions set up below! 
+       *   perhaps add a frame at the body so defines can't leak into the steppers?
+       *   or add a check at define -- if optimized do let interpose a let?
+       *   walking the tree here is very expensive, and no one ever actually does this, so I'll wait.
+       *   maybe insert this into the loop above
+       */
+      if ((is_pair(body)) && 
+	  (is_pair(car(body))) &&
+	  (caar(body) == sc->define_symbol))
+	return(sc->code);
 
       /* (define (hi) (do ((i 0 (+ i 1))) ((= i 3)) (display i)) (newline)) */
       /* (define (hi) (do ((i 1.5 (+ i 1))) ((= i 2.5)) (display i) (newline)))
@@ -58458,7 +58465,8 @@ static s7_pointer check_do(s7_scheme *sc)
 		      /* end var is (op var const|symbol) using same var as step
 		       *   so at least we can use SIMPLE_DO
 		       */
-		      bool has_set = false;
+		      bool has_set = false, one_line;
+		      one_line = ((safe_list_length(sc, body) == 1) && (is_pair(car(body))));
 
 		      if (opt_cfunc(step_expr) == add_cs1)
 			{
@@ -58575,6 +58583,8 @@ static s7_pointer check_do(s7_scheme *sc)
 	   *   the current val is not referred to in any trailing step exprs.  The inits
 	   *   are ok because at init-time, the new frame is not connected.
 	   * another tricky case: current var might be used in previous step expr(!)
+	   *   and worse, the loop env can be changed by a top-level define in the body,
+	   *   clobbering the step_expression accessors in dox_step!
 	   */
 	  for (p = vars; is_pair(p); p = cdr(p))
 	    {
@@ -58585,7 +58595,7 @@ static s7_pointer check_do(s7_scheme *sc)
 		{
 		  var = car(var);
 		  clear_match_symbol(var); /* ignore current var */
-		  if (tree_match(sc, car(val)))
+		  if (tree_match(car(val)))
 		    {
 		      s7_pointer q;
 		      for (q = vars; is_pair(q); q = cdr(q))
@@ -58863,8 +58873,6 @@ static int dox_ex(s7_scheme *sc)
       (dox_pf_ok(sc, code, sc->code, endf, all_pairs)))
     return(goto_DO_END_CLAUSES);
       
-  /* fprintf(stderr, "dox: %s\n", DISPLAY(code)); */
-
   set_unsafe_do(sc->code);
   if ((is_null(cdr(code))) && /* one expr */
       (is_pair(car(code))))
@@ -58897,8 +58905,6 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
   s7_pointer body, step_expr, step_var, ctr, end;
   s7_function stepf, endf;
   s7_pf_t rf;
-
-  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY(sc->code)); */
 
   body = car(opt_pair2(code));
   if (!is_symbol(car(body)))
@@ -62169,11 +62175,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_DOX_STEP:
 	  {
 	    s7_pointer slot;
-	    
 	    for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	      if (is_pair(slot_expression(slot)))
 		slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
-	    
 	    if (is_true(sc, c_call(cdr(sc->code))(sc, opt_pair2(sc->code))))
 	      {
 		sc->code = cdadr(sc->code);
@@ -75135,23 +75139,23 @@ int main(int argc, char **argv)
 
 /* --------------------------------------------------------------------
  *
- *           12  |  13  |  14  |  15  | 16.0  16.7
+ *           12  |  13  |  14  |  15  |  16  
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122  1928
- * index    44.3 | 3291 | 1725 | 1276 | 1156  1166
- * teq           |      |      | 6612 | 2380  2382
- * tauto     265 |   89 |  9   |  8.4 | 2638  2688
- * tcopy         |      |      | 13.6 | 3204  3133
- * bench    42.7 | 8752 | 4220 | 3506 | 3230  3220
- * tform         |      |      | 6816 | 3627  3709
- * tmap          |      |      |  9.3 | 4176  4172
- * titer         |      |      | 7503 | 5218  5235
- * thash         |      |      | 50.7 | 8491  8496
- * lg            |      |      |      |       211.
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 
+ * teq           |      |      | 6612 | 2380 
+ * tauto     265 |   89 |  9   |  8.4 | 2638 
+ * tcopy         |      |      | 13.6 | 3204 
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 
+ * tform         |      |      | 6816 | 3627 
+ * tmap          |      |      |  9.3 | 4176 
+ * titer         |      |      | 7503 | 5218 
+ * thash         |      |      | 50.7 | 8491 
+ * lg            |      |      |      |      
  *               |      |      |      |       
- * tgen          |   71 | 70.6 | 38.0 | 12.0  11.8
- * tall       90 |   43 | 14.5 | 12.7 | 15.0  14.9
- * calls     359 |  275 | 54   | 34.7 | 37.1  39.1
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 
+ * calls     359 |  275 | 54   | 34.7 | 37.1 
  * 
  * --------------------------------------------------------------------
  *

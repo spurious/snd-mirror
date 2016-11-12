@@ -2258,7 +2258,9 @@
 	     (symbol? type2)
 	     (hash-table-ref booleans type1)
 	     (or (hash-table-ref booleans type2)     ; return #f if not (obviously) redundant, else return which of the two to keep
-		 (memq type2 '(= char=? string=? not eq?)))
+		 (eq? type2 'not)
+		 (and (memq type2 '(= char=? string=? eq?))
+		      (pair? (cddr arg2))))
 	     (if (eq? type1 type2)
 		 type1
 		 (case type1
@@ -16308,9 +16310,12 @@
 			    (lint-format "perhaps ~A" caller 
 					 ;; (case x (else (case x (else 1)))) -> 1
 					 (lists->string form 
-							(if (null? (cddr else-clause)) ; null else is caught above
-							    (cadr else-clause)
-							    (cons 'begin (cdr else-clause)))))
+							(if (or (null? else-clause)    ; this can happen...
+								(null? (cdr else-clause)))
+							    ()
+							    (if (null? (cddr else-clause)) 
+								(cadr else-clause)
+								(cons 'begin (cdr else-clause))))))
 			    (begin
 			      ;; (null? (cdr new-keys-and-exprs)) is rare and kinda dumb -- cases look like test suite entries
 			      (for-each 
@@ -16606,6 +16611,7 @@
 		       ;; do+let: tons of hits but how to distinguish the rewritable ones? 
 		       ;;    very tricky if val is not a constant
 		       (if (and (eq? (caar body) 'let)
+				(len>1? (cdar body)) ; body not ((let))!
 				(not (symbol? (cadar body)))
 				(every? (lambda (c) (and (len>1? c) (code-constant? (cadr c)))) (cadar body)))
 			   ;; (do ((i 0 (+ i 1))) ((= i 3)) (let ((a 12)) (set! a (+ a i)) (display a))) ->
@@ -17393,6 +17399,19 @@
 					   (lint-format "perhaps ~A" caller
 							(lists->string form (tree-subst new-call call body))))))))))))
 		   (when (pair? body)
+#|
+		     ;; these happen a lot and many can collapse to format etc
+		     ;;   possibly also vector-set!+caddr etc see 12218 for open-body return value
+		     ;;   least problematic if value is simple, display(v) not followed by more display/newline etc
+		     (if (and (len>1? (car body))
+			      (memq (caar body) '(display write write-char write-byte))
+			      (not named-let)
+			      (assq (cadar body) vars)
+			      (or (null? (cddar body))
+				  (and (symbol? (caddar body))
+				       (not (assq (caddar body) vars)))))
+			 (format *stderr* "~A~%~%" (lint-pp form)))
+|#
 		     (when (len>2? (car body))
 		       (case (caar body)
 			 ((set!)
@@ -17456,7 +17475,7 @@
 											      (eq? (car v) settee))
 											    varlist)
 									    setval)))))))))
-#|
+#|			 
 			 ((define)
 			  (define (define-ok f)
 			    (and (pair? f)
@@ -20617,4 +20636,4 @@
 ;;;   
 ;;; (let () (define...)) -> add to let -- at least simple cases? 17466 [also let*?] -- see 11513
 ;;;
-;;; 175 28728 732770
+;;; 179 28720 732770
