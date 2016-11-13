@@ -643,7 +643,7 @@
 
     (define (shadowed? sym tree1)
       (let shadow? ((tree tree1))
-	(and (pair? tree)
+	(and (len>2? tree)
 	     (if (not (pair? (cdr tree)))
 		 (shadow? (car tree))
 		 (case (car tree)
@@ -652,8 +652,9 @@
 			(assq sym ((if (symbol? (cadr tree)) caddr cadr) tree))
 			(shadow? ((if (symbol? (cadr tree)) cddr cdr) tree))))
 		   ((letrec letrec* do)
-		    (or (assq sym (cadr tree))
-			(shadow? (cdr tree))))
+		    (and (pair? (cadr tree))
+			 (or (assq sym (cadr tree))
+			     (shadow? (cdr tree)))))
 		   ((define lambda define-macro define-constant)
 		    (or (eq? sym (cadr tree))
 			(and (pair? (cadr tree))
@@ -14316,12 +14317,14 @@
 			     ((case)
 			      (if (and (pair? expr)
 				       (pair? false-rest)
+				       (not (code-constant? (car false-rest)))
 				       (cond-eqv? expr (car false-rest) #t))
 				  ;; (if (eof-object? x) 32 (case x ((#\a) 3) (else 4))) -> (case x ((#<eof>) 32) ((#\a) 3) (else 4))
 				  (lint-format "perhaps ~A" caller
 					       (lists->string form `(case ,(car false-rest)
 								      ,(case-branch expr (car false-rest) (list true))
 								      ,@(cdr false-rest))))))
+
 			     ((else)  ; (if x (f y) (else z)) ! -- this gets 3 hits
 			      (if (not (var-member 'else env))
 				  (lint-format "else (as car of false branch of if) makes no sense: ~A" caller form))))
@@ -17399,19 +17402,6 @@
 					   (lint-format "perhaps ~A" caller
 							(lists->string form (tree-subst new-call call body))))))))))))
 		   (when (pair? body)
-#|
-		     ;; these happen a lot and many can collapse to format etc
-		     ;;   possibly also vector-set!+caddr etc see 12218 for open-body return value
-		     ;;   least problematic if value is simple, display(v) not followed by more display/newline etc
-		     (if (and (len>1? (car body))
-			      (memq (caar body) '(display write write-char write-byte))
-			      (not named-let)
-			      (assq (cadar body) vars)
-			      (or (null? (cddar body))
-				  (and (symbol? (caddar body))
-				       (not (assq (caddar body) vars)))))
-			 (format *stderr* "~A~%~%" (lint-pp form)))
-|#
 		     (when (len>2? (car body))
 		       (case (caar body)
 			 ((set!)
@@ -17475,36 +17465,26 @@
 											      (eq? (car v) settee))
 											    varlist)
 									    setval)))))))))
-#|			 
-			 ((define)
-			  (define (define-ok f)
-			    (and (pair? f)
-				 (eq? (car f) 'define)
-				 (len=2? (cdr f))
-				 (symbol? (cadr f))
-				 (or (code-constant? (caddr f))
-				     (not (or (tree-memq 'lambda (caddr f))
-					      (assq (cadr f) (cadr form))
-					      (tree-set-member (map car (cadr form)) (caddr f)))))))
-					      
-			  (when (not named-let)
-			    (do ((started #f)
-				 (len 1 (+ len 1))
-				 (f body (cdr f)))
-				((or (not (pair? f))
-				     (not (define-ok (car f))))
-				 (if started (format *stderr* "~%~%")))
-			      (if (not started) (begin (format *stderr* "(let ~A" (cadr form)) (set! started #t)))
-			      (format *stderr* "~%  ~A" (car f)))))
-			 ;; in reconstruction, if any side-effects, probably need let*
-			 ;;   (this includes let orig vars?)
-			 ;; `(let (,@(cadr form) ,@(map cdr (copy body (make-list len)))) '...)
-			 ;; is (list (cadr x) (caddr x)) always (cdr x) in this context?
-			 ;; also need to include previous definees in the list of local vars (letx choice)
 
-			 ;; 11513 treats this as a new let -- need to use one or the other
-			 ;;   in 11513 case, we don't have the enclosing let? (it's lint-walk-body, length(body)>2)
-|#
+			 ((define)
+			  (unless named-let
+			    (let ((f (car body)))
+			      (when (and (len=2? (cdr f))
+					 (symbol? (cadr f))
+					 (not (assq (cadr f) (cadr form)))           ; this (let ((x ...)) (set! x ...)) is handled elsewhere
+					 (or (code-constant? (caddr f))
+					     (not (or (tree-memq 'lambda (caddr f))  ; else we have to scan forward for pending refs
+						      (and (pair? (cadr form))
+							   (or (side-effect? (caddr f) env)   ; might be depending on the let var calcs
+							       (tree-set-member (map car (cadr form)) (caddr f))))))))
+				(lint-format "perhaps ~A" caller
+					     (lists->string form
+							    `(let (,@(cadr form)
+								   ,(cdr f))
+							       ...)))))))
+
+			 ;; display et al here happen a lot, but only a few are rewritable or collapsible
+			 ;; *-set! happen a couple dozen times, but not in ways we can rewrite
 
 			 ((fill! string-fill! vector-fill!) ; (let ((x (make-vector 3))) (fill! x 1) ...) -> (let ((x (make-vector 3 1))) ...)
 			  (cond ((assq (cadar body) vars) =>
@@ -20623,7 +20603,7 @@
 ;;;
 ;;; take open mid-body, remove header/trailer no-side-effect exprs [re-lint],
 ;;;   then cast as net of mini-bodies of no-outer-refs sequences
-;;;   then see if ordering can simplify, or some sequence can be omitted (no side-effects, not used anywhere else)
+;;;   then see if ordering can simplify, or some sequence can be omitted (no outer side-effects, not used anywhere else)
 ;;;
 ;;; cond/case handled like arglist/if -- check for oversized branches 
 ;;;   [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]
@@ -20633,7 +20613,7 @@
 ;;;   if false=simple and true=ifx use (not test) + false, go to true
 ;;;     if no false but true=ifx, use (not test)+either nothing[mid form] or #<unspecified> and goto true
 ;;;   if true not ifx, use test+true and else+false, if no false no else
-;;;   
-;;; (let () (define...)) -> add to let -- at least simple cases? 17466 [also let*?] -- see 11513
 ;;;
-;;; 179 28720 732770
+;;; extend to let*? define if no collision in names (vars in value ok)
+;;;
+;;; 175 28720 732770
