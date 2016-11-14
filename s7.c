@@ -926,7 +926,7 @@ struct s7_scheme {
   unsigned int read_line_buf_size;
 
   s7_pointer v, w, x, y, z;         /* evaluator local vars */
-  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9, temp10;
+  s7_pointer temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9, temp10, temp11;
   s7_pointer temp_cell, temp_cell_1, temp_cell_2;
   s7_pointer d1, d2, d3, d4;
   s7_pointer t1_1, t2_1, t2_2, t3_1, t3_2, t3_3, z2_1, z2_2;
@@ -4347,6 +4347,7 @@ static int gc(s7_scheme *sc)
   S7_MARK(sc->temp8);
   S7_MARK(sc->temp9);
   S7_MARK(sc->temp10);
+  S7_MARK(sc->temp11);
   gf_mark(sc);
 
   set_mark(sc->input_port);
@@ -58746,11 +58747,10 @@ static int dox_ex(s7_scheme *sc)
   long long int id;
   s7_pointer frame, vars, slot, code;
   s7_function endf;
-  unsigned int gc_loc;
   bool all_pairs = true;
 	    
   new_frame(sc, sc->envir, frame);   /* new frame is not tied into the symbol lookup process yet */
-  gc_loc = s7_gc_protect(sc, frame); /* maybe use temp3 here?  can c_call below jump out? */
+  sc->temp11 = frame;
   for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
     {
       s7_pointer expr, val;
@@ -58791,7 +58791,7 @@ static int dox_ex(s7_scheme *sc)
     }
   
   sc->envir = frame;
-  s7_gc_unprotect_at(sc, gc_loc);
+  sc->temp11 = sc->nil;
   id = let_id(frame);
   for (slot = let_slots(frame); is_slot(slot); slot = next_slot(slot))
     symbol_set_local(slot_symbol(slot), id, slot);
@@ -73684,6 +73684,7 @@ s7_scheme *s7_init(void)
   sc->temp8 = sc->nil;
   sc->temp9 = sc->nil;
   sc->temp10 = sc->nil;
+  sc->temp11 = sc->nil;
 
   sc->begin_hook = NULL;
   sc->autoload_table = sc->nil;
@@ -75168,7 +75169,6 @@ int main(int argc, char **argv)
  * add a check for symbol-table glommage
  * (list 1 (symbol ".") 2) -> (1 . 2)
  * maybe use 'not for signature of #f? or #f?
- * main s7_gc_protect is at start of dox_ex
  *
  * Snd:
  * in FC 25 the close-window decoration does not close Snd -- under gdb it works?

@@ -648,9 +648,13 @@
 		 (shadow? (car tree))
 		 (case (car tree)
 		   ((let let*)
-		    (or (eq? sym (cadr tree))
-			(assq sym ((if (symbol? (cadr tree)) caddr cadr) tree))
-			(shadow? ((if (symbol? (cadr tree)) cddr cdr) tree))))
+		    (and (len>1? (cdr tree))
+			 (or (eq? sym (cadr tree))
+			     (let ((vars ((if (symbol? (cadr tree)) cddr cdr) tree)))
+			       (and (pair? vars)
+				    (pair? (car vars))
+				    (or (assq sym (car vars))
+					(shadow? vars)))))))
 		   ((letrec letrec* do)
 		    (and (pair? (cadr tree))
 			 (or (assq sym (cadr tree))
@@ -11681,8 +11685,8 @@
 		    ;;
 		    ;; define + do -- if cadr prev-f not used in do inits, fold into do, else use let
 		    ;;   the let case is semi-redundant (it's already reported elsewhere)
-		    (when (and (pair? prev-f)
-			       (pair? f)
+		    (when (and (len>1? prev-f)
+			       (len>1? f)
 			       (eq? (car prev-f) 'define)
 			       (symbol? (cadr prev-f))
 			       (not (hash-table-ref other-identifiers (cadr prev-f))) ; (cadr prev-f) already ref'd, so it's a member of env
@@ -14239,7 +14243,7 @@
 					     (cond-eqv? (cadr false) eqv-select #t))
 				    (let ((clauses (list (list expr true))))
 				      (let gather-clauses ((f false))
-					(if (and (pair? f)
+					(if (and (len>2? f)
 						 (eq? (car f) 'if)
 						 (cond-eqv? (cadr f) eqv-select #t))
 					    (begin
@@ -15923,9 +15927,6 @@
 		(let ((sel-type #t)
 		      (selector (cadr form))
 		      (suggest made-suggestion))
-
-                  ;(let ((leaves (tree-leaves form)) (branches (length (cddr form))))
-                  ;  (if (> leaves 100) (format *stderr* "case: ~A in ~A: ~A~%" leaves branches (/ (* 1.0 leaves) branches))))
 
 		  ;; ----------------
 		  ;; if regular case + else -- just like cond above
@@ -17892,7 +17893,8 @@
 	   (if (< (length form) 3)
 	       (lint-format "let* is messed up: ~A" caller (truncated-list->string form))
 	       (let ((named-let (and (symbol? (cadr form)) (cadr form))))
-		 
+		 ;; (define...) as first in body rarely happens in rewritablle contexts
+
 		 ;; this is overkill (it's copied from let-walker), but having two versions is confusing
 		 (let ((vars (if (or (not named-let)
 				     (keyword? named-let)
@@ -20613,7 +20615,11 @@
 ;;;   if false=simple and true=ifx use (not test) + false, go to true
 ;;;     if no false but true=ifx, use (not test)+either nothing[mid form] or #<unspecified> and goto true
 ;;;   if true not ifx, use test+true and else+false, if no false no else
+;;;   also if repeated test clause in all non-escaped branches, or return leaving aside all escapes, bring out or to top
+;;;     this appears to work already in cond
 ;;;
-;;; extend to let*? define if no collision in names (vars in value ok)
+;;; perhaps in t471 look at what isn't flagged -- probably noise
+;;; new seq split (cons->car in report or body, eqx/memx of new seq etc -- perhaps map? (eq car + eq cdr or equal cons ... -- no need for cons)
+;;; what about similar = cases: (= (- x y) (- x z)) -> (= y z) assuming x not NaN
 ;;;
 ;;; 175 28720 732770
