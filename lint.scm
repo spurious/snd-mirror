@@ -3239,6 +3239,7 @@
 							  (and-forgetful form 'or (cadr arg1) (car p) env)))))))
 				 
 				     (if (and (eq? (car arg2) 'and) ; (or (not A) (and A B)) -> (or (not A) B) -- this stuff actually happens!
+					      (len>1? (cdr arg2))
 					      (equal? (cadr arg1) (cadr arg2)))
 					 (return (cons 'or (cons arg1 (cddr arg2))))))
 
@@ -4201,10 +4202,11 @@
 			    (undumb (cdr tree))))))))
 	
     (define (splice-if func lst)
-      (cond ((null? lst) ())
+      (cond ;((null? lst) ())
 	    ((not (pair? lst)) lst)
-	    ((and (pair? (car lst)) 
-		  (eq? func (caar lst)))
+	    ((and (pair? (car lst))
+		  (eq? func (caar lst))
+		  (proper-list? (cdar lst))) ; for apply
 	     (append (splice-if func (cdar lst)) 
 		     (splice-if func (cdr lst))))
 	    (else (cons (car lst) 
@@ -6372,6 +6374,7 @@
 	;; ---------------- = ----------------
 	(let ()
 	 (define (sp-= caller head form env)
+	   ;; repeated factors (= (+ x y) (+ x z)) never happen
 	   (let ((len (length form)))
 	     (if (and (> len 2)
 		      (let any-real? ((lst (cdr form))) ; ignore 0.0 and 1.0 in this since they normally work
@@ -7432,7 +7435,9 @@
 				       (lint-format "possibly ~A" caller (lists->string form (list 'sort! arg-of-arg op)))))))
 		    
 			  ((and (len>1? arg-of-arg)
-				(memq func-of-arg '(cdr cddr cdddr cddddr list-tail))
+				(or (memq func-of-arg '(cdr cddr cdddr cddddr))
+				    (and (eq? func-of-arg 'list-tail)
+					 (len=2? arg-args)))
 				(case head
 				  ((list->string) (eq? (car arg-of-arg) 'string->list))
 				  ((list->vector) (eq? (car arg-of-arg) 'vector->list))
@@ -7539,6 +7544,7 @@
 				     ((list-tail) (len=2? arg-args))
 				     (else #f))
 				   (memq (car arg-arg) '(reverse reverse!))
+				   (pair? (cdr arg-arg))
 				   (symbol? (cadr arg-arg)))
 			      (lint-format "perhaps ~A" caller 
 					   (lists->string form `(copy ,(cadr arg-arg) 
@@ -8679,6 +8685,11 @@
 			 (lint-format "~A could be eq?~A in ~S" caller head 
 				      (if specific-op (format #f " or ~A" specific-op) "") 
 				      form))))))
+		  ;; very few hits:
+		  ;; (equal? (reverse em) '((0 -2 0) (0 -1 0) (1 -2 0) (1 -1 0)))
+		  ;; (equal? post-date (cons 0 0))
+		  ;; (equal? (cadr arg1) (list 'not (cadr arg2)))
+
 	  (hash-special 'eqv? sp-eqv?)
 	  (hash-special 'equal? sp-eqv?))
 
@@ -8823,7 +8834,9 @@
 		    
 		    (let ((arg1 (caddr form)))
 		      (when (and (len>1? arg1)
-				 (memq (car arg1) '(cdr cddr cdddr cddddr list-tail))
+				 (or (memq (car arg1) '(cdr cddr cdddr cddddr))
+				     (and (eq? (car arg1) 'list-tail)
+					  (pair? (cddr arg1))))
 				 (len>1? (cadr arg1))
 				 (memq (caadr arg1) '(string->list vector->list)))
 			(let ((string-case (eq? (caadr arg1) 'string->list))
@@ -11689,6 +11702,7 @@
 			       (len>1? f)
 			       (eq? (car prev-f) 'define)
 			       (symbol? (cadr prev-f))
+			       (list? (cadr f))
 			       (not (hash-table-ref other-identifiers (cadr prev-f))) ; (cadr prev-f) already ref'd, so it's a member of env
 			       (or (null? (cdr fs))
 				   (not (tree-memq (cadr prev-f) (cdr fs)))))
@@ -11707,10 +11721,9 @@
 								,@(cadr f))
 							       ,@(cddr f)))))
 			  ;; just changing define -> let seems officious, though it does reduce (cadr prev-f)'s scope
-			  (if (and (or (and (eq? (car f) 'let)
-					    (not (tree-memq (cadr prev-f) (cadr f))))
-				       (eq? (car f) 'let*))
-				   (not (symbol? (cadr f))))
+			  (if (or (and (eq? (car f) 'let)
+				       (not (tree-memq (cadr prev-f) (cadr f))))
+				  (eq? (car f) 'let*))
 			      (lint-format "perhaps ~A" caller
 					   (lists->string 
 					    `(... ,prev-f ,f ,@(if (null? (cdr fs)) () '(...)))
@@ -14080,7 +14093,7 @@
 					     (= (length iff) 3)
 					     (eq? (car iff) 'if)))
 				(set! last-if-line-number line-number)
-				;; (if a b (if c d (if e f g))) -> (cond (a b) (c d) (e f) (else g))
+				;; (if a b (if c d (if e f g))) -> (cond (a b) (c d) (e f) (else g)) -- what about *report-nested-if*?
 				(lint-format "perhaps use cond: ~A" caller
 					     (lists->string form 
 							    `(cond ,@(do ((iff form (cadddr iff))
@@ -14094,7 +14107,9 @@
 											   (eq? (car iff) 'if))
 										      `((,(cadr iff) ,@(unbegin (caddr iff))))
 										      `((else ,@(unbegin iff))))))
-								       (set! clauses (cons (cons (cadr iff) (unbegin (caddr iff))) clauses))))))))))
+								       (set! clauses (cons (cons (cadr iff) 
+												 (unbegin (caddr iff)))
+											   clauses))))))))))
 		       
 		       (if (never-false test)
 			   (lint-format "if test is never false: ~A" caller (truncated-list->string form))
@@ -14612,22 +14627,24 @@
 							,@(cdr lfalse))
 						 `(cond (,expr ,@(unbegin ltrue))
 							(else ,@(unbegin lfalse)))))))))))
-			 
+
+			 ;; TODO: check before rebuilding that this will be over *report-nested-if* and collapsible to cond
+			 ;;   also cond as ltrue/lfalse is already embedded above??
 			 (let ((new-if (swap-clauses form)))
-			   (if (eq? (car new-if) 'cond)
-			       (if (> (length new-if) *report-nested-if*)
-				   (begin
-				     (set! last-if-line-number line-number)
-				     (lint-format "perhaps ~A" caller (lists->string form new-if)))
-				   
-				   (when (= len 4)
-				     (let ((true-len (tree-leaves (caddr form))))
-				       (if (and (> true-len *report-short-branch*)
-						(< (tree-leaves (cadddr form)) (/ true-len *report-short-branch*)))
-					   (let ((new-expr (simplify-boolean (list 'not (cadr form)) () () env)))
-					     (lint-format "perhaps place the much shorter branch first~A: ~A" caller
-							  (local-line-number (cadr form))
-							  (truncated-lists->string form (list 'if new-expr false true))))))))))
+			   (when (and (eq? (car new-if) 'cond)
+				      (> (length new-if) *report-nested-if*))
+			     (set! last-if-line-number line-number)
+			     (lint-format "perhaps ~A" caller (lists->string form new-if))))
+
+			 (when (and (= suggestion made-suggestion)
+				    (= len 4))
+			   (let ((true-len (tree-leaves (caddr form))))
+			     (when (and (> true-len *report-short-branch*)
+					(< (tree-leaves (cadddr form)) (/ true-len *report-short-branch*)))
+			       (let ((new-expr (simplify-boolean (list 'not (cadr form)) () () env)))
+				 (lint-format "perhaps place the much shorter branch first~A: ~A" caller
+					      (local-line-number (cadr form))
+					      (truncated-lists->string form (list 'if new-expr false true)))))))
 			 
 			 ;; if+let() -> when: about a dozen hits
 			 (let ((ntrue (and (len>1? true)                    ; (if A B (let () (display x))) -> (if A B (begin (display x)))
@@ -14651,7 +14668,7 @@
 								       `(if ,expr (begin ,@ntrue) ,false))
 								   `(if ,expr ,true (begin ,@nfalse))))))))
 			 (when (= len 4)
-			   ;; move repeated test to top, if no inner false branches
+			   ;; move repeated test to top, if no inner false branches -- aren't we assuming A does not affect B?  yes, but this never happens.
 			   ;;   (if A (if B C) (if B D)) -> (if B (if A C D))
 			   (when (and (len=3? true)         
 				      (len=3? false)
@@ -17921,6 +17938,7 @@
 			      (pair? (car body))
 			      (eq? (caar body) 'do)
 			      (len>2? (car body))
+			      (every? pair? (cadar body))
 			      (< (tree-leaves (cdr body)) *max-cdr-len*))
 		     (let ((inits (if (pair? (cadar body))
 				      (map cadr (cadar body))
@@ -20603,23 +20621,18 @@
 
 ;;; extend constant-exprs in do to named-let/map etc?
 ;;;
-;;; take open mid-body, remove header/trailer no-side-effect exprs [re-lint],
-;;;   then cast as net of mini-bodies of no-outer-refs sequences
+;;; take open mid-body, cast as net of mini-bodies of no-outer-refs sequences
 ;;;   then see if ordering can simplify, or some sequence can be omitted (no outer side-effects, not used anywhere else)
 ;;;
 ;;; cond/case handled like arglist/if -- check for oversized branches 
 ;;;   [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]
 ;;;
-;;; when-if... -> cond [t347 has many cases]
+;;; when-if... -> cond [t347 has many cases][14632 *report-nested-if*]
 ;;;   if false=ifx use test+true, goto to false (or use whichever of true/false is deeper??)
 ;;;   if false=simple and true=ifx use (not test) + false, go to true
 ;;;     if no false but true=ifx, use (not test)+either nothing[mid form] or #<unspecified> and goto true
 ;;;   if true not ifx, use test+true and else+false, if no false no else
 ;;;   also if repeated test clause in all non-escaped branches, or return leaving aside all escapes, bring out or to top
 ;;;     this appears to work already in cond
-;;;
-;;; perhaps in t471 look at what isn't flagged -- probably noise
-;;; new seq split (cons->car in report or body, eqx/memx of new seq etc -- perhaps map? (eq car + eq cdr or equal cons ... -- no need for cons)
-;;; what about similar = cases: (= (- x y) (- x z)) -> (= y z) assuming x not NaN
 ;;;
 ;;; 175 28720 732770
