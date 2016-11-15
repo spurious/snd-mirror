@@ -9230,7 +9230,7 @@
 			   (lint-format "perhaps ~A" caller
 					(lists->string form
 						       (map (lambda (p)
-							      (if (and (pair? p)
+							      (if (and (len>1? p)
 								       (eq? (car p) 'quote))
 								  (cadr p)
 								  (if (code-constant? p)
@@ -11711,7 +11711,8 @@
 			  (lint-format "perhaps ~A" caller
 				       (lists->string (list '... prev-f f '...)
 						      (if (any? (lambda (p)
-								  (tree-memq (cadr prev-f) (cadr p)))
+								  (and (len>1? p)
+								       (tree-memq (cadr prev-f) (cadr p))))
 								(cadr f))
 							  (if (and (eq? (cadr prev-f) (cadr (caadr f)))
 								   (null? (cdadr f)))
@@ -14885,7 +14886,7 @@
 			(lint-walk caller test env)))
 
 		  (when (and (len=1? (cddr form))           ; (when t1 (if t2 A)) -> (when (and t1 t2) A)
-			     (pair? (caddr form)))
+			     (len>1? (caddr form)))
 		    (let ((body (caddr form)))
 		      (if (eq? (car body) 'cond)           ; (when (cond ...)) -> (cond ...)
 			  (lint-format "perhaps ~A" caller
@@ -14895,10 +14896,9 @@
 									     (cadr form))
 									#f)
 								       ,@(cdr body))))
-			  (when (case (car body) 
-				  ((when unless) (len>1? body))
-				  ((if)		 (len=3? body))
-				  (else #f))
+			  (when (or (memq (car body) '(when unless))
+				    (and (eq? (car body) 'if)
+					 (len=3? body)))
 			    (let ((new-test (let ((inner-test (if (eq? (car body) 'unless)
 								  (list 'not (cadr body))
 								  (cadr body)))
@@ -20620,9 +20620,6 @@
 |#
 
 ;;; extend constant-exprs in do to named-let/map etc?
-;;;
-;;; take open mid-body, cast as net of mini-bodies of no-outer-refs sequences
-;;;   then see if ordering can simplify, or some sequence can be omitted (no outer side-effects, not used anywhere else)
 ;;;
 ;;; cond/case handled like arglist/if -- check for oversized branches 
 ;;;   [*report-one-armed-if* or *report-short-branch* 14614 -- latter is a divisor]

@@ -30001,6 +30001,33 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
    */
   if (ev->type == UnmapNotify) 
     {
+      Atom _NET_WM_STATE, _NET_WM_STATE_HIDDEN, actual_type;
+      int actual_format;
+      unsigned long nitems, bytes_after;
+      unsigned char *prop = NULL;
+      
+      /* this code thanks to Tito Latini */
+      _NET_WM_STATE = XInternAtom(MAIN_DISPLAY(ss), "_NET_WM_STATE", false);
+      _NET_WM_STATE_HIDDEN = XInternAtom(MAIN_DISPLAY(ss), "_NET_WM_STATE_HIDDEN", false);
+
+      if (XGetWindowProperty(MAIN_DISPLAY(ss), XtWindow(w), _NET_WM_STATE, 0, 1024,
+                             false, XA_ATOM, &actual_type, &actual_format, &nitems,
+                             &bytes_after, &prop) == Success)
+        {
+          Atom *atoms = (Atom *)prop;
+          bool iconified = false;
+          for (i = 0; i < nitems; i++)
+            {
+              if (atoms[i] == _NET_WM_STATE_HIDDEN)
+                {
+                  iconified = true;
+                  break;
+                }
+            }
+          XFree(prop);
+          if (!iconified) return;
+        }
+
       if (iconify_active_dialogs) free(iconify_active_dialogs);
       iconify_active_dialogs = (Widget *)calloc(ss->num_dialogs, sizeof(Widget));
 
