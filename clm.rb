@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 09/10/14 23:02:57
-# Changed: 16/01/05 22:49:21
+# Changed: 16/11/17 15:26:36
 
 # Ruby extensions:
 # 
@@ -44,7 +44,7 @@
 #  snd_apropos(str_or_sym)
 #
 # NilClass(arg)
-# Fixnum(arg)
+# Integer(arg)
 #
 # class NilClass
 #  each
@@ -137,7 +137,7 @@
 #  step(n)
 #  [](idx, size)
 #
-# class Fixnum
+# class Fixnum/Integer
 #  +(other)   handles other.offset on Vct, Array, and Vec
 #  *(other)   handles other.scale on Vct, Array, and Vec
 #
@@ -322,7 +322,7 @@ def number?(obj)
 end
 
 def integer?(obj)
-  obj.kind_of?(Fixnum)
+  obj.kind_of?(Integer)
 end
 
 def float?(obj)
@@ -635,8 +635,6 @@ end
 def NilClass(arg)
   nil
 end
-
-alias Fixnum Integer
 
 class NilClass
   def each
@@ -1337,7 +1335,8 @@ class Vct
   # v[-1]    ==> 4.0
   def vct_ref_extend(idx, size = nil)
     case idx
-    when Fixnum
+    # when Fixnum
+    when Integer
       if idx < 0 then idx += self.length end
       if idx < 0 then Snd.raise(:out_of_range, "index < 0", idx) end
       if integer?(size)
@@ -1373,36 +1372,73 @@ class Vct
   alias zip clm_zip if [].respond_to?(:zip)
 end
 
-class Fixnum
-  # no reloading (load "clm.rb")
-  unless defined? 0.new_int_plus
-    alias int_plus +
-    def new_int_plus(other)
-      case other
-      when Vct, Array, Vec
-        other.offset(Float(self))
-      when NilClass
-        self
-      else
-        self.int_plus(other)
-      end
-    end
-    alias + new_int_plus
-  end
+# As of Ruby 2.4.x Fixnum and Bignum are unified into Integer and
+# Fixnum is deprecated.
 
-  unless defined? 0.new_int_times
-    alias int_times *
-    def new_int_times(other)
-      case other
-      when Vct, Array, Vec
-        other.scale(self)
-      when NilClass
-        0
-      else
-        self.int_times(other)
+if RUBY_VERSION < "2.4.0"
+  class Fixnum
+    # no reloading (load "clm.rb")
+    unless defined? 0.new_int_plus
+      alias int_plus +
+      def new_int_plus(other)
+        case other
+        when Vct, Array, Vec
+          other.offset(Float(self))
+        when NilClass
+          self
+        else
+          self.int_plus(other)
+        end
       end
+      alias + new_int_plus
     end
-    alias * new_int_times
+
+    unless defined? 0.new_int_times
+      alias int_times *
+      def new_int_times(other)
+        case other
+        when Vct, Array, Vec
+          other.scale(self)
+        when NilClass
+          0
+        else
+          self.int_times(other)
+        end
+      end
+      alias * new_int_times
+    end
+  end
+else
+  class Integer
+    unless defined? 0.new_int_plus
+      alias int_plus +
+      def new_int_plus(other)
+        case other
+        when Vct, Array, Vec
+          other.offset(Float(self))
+        when NilClass
+          self
+        else
+          self.int_plus(other)
+        end
+      end
+      alias + new_int_plus
+    end
+
+    unless defined? 0.new_int_times
+      alias int_times *
+      def new_int_times(other)
+        case other
+        when Vct, Array, Vec
+          other.scale(self)
+        when NilClass
+          0
+        else
+          self.int_times(other)
+        end
+      end
+      alias * new_int_times
+    end
   end
 end
 
@@ -2147,7 +2183,8 @@ def random(val)
     val
   else
     case val
-    when Fixnum
+    # when Fixnum
+    when Integer
       kernel_rand(val)
     when Float
       val.negative? ? -mus_random(val).abs : mus_random(val).abs
@@ -2673,11 +2710,11 @@ add_help(:gloop,
 
 args[0]: Range    (each)
          Hash(s)  (each)
-         Array(s) (each_with_index) [args.last == Fixnum ==> step]
-         Fixnum   (times)
-         Fixnum   [args[1] == :step ==> step]
+         Array(s) (each_with_index) [args.last == Integer ==> step]
+         Integer  (times)
+         Integer  [args[1] == :step ==> step]
 
-A general purpose loop, handling Range, Hash, Array, Vec, Vct, Fixnum,
+A general purpose loop, handling Range, Hash, Array, Vec, Vct, Integer,
 with optional step.  Returns the result of body as array like map.
 
 Examples:

@@ -1,14 +1,14 @@
 # snd-test.rb -- Snd Ruby code and tests
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
-# Created: 05/02/18 10:18:34
-# Changed: 16/03/06 15:04:53
+# Created: 2005/02/18 10:18:34
+# Changed: 2016/11/17 15:25:21
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
 #
 # Tested with:
-#   Snd 16.x
+#   Snd 17.x
 #   Ruby 2.x.x
 #
 # Reads init file ./.sndtest.rb or ~/.sndtest.rb for global variables,
@@ -34480,7 +34480,8 @@ def test_28_00
     :swap_channels]
   procs1.each do |n|
     tag = Snd.catch do snd_func(n, integer2sound(123)) end
-    if tag.first != :no_such_sound
+    if tag.first != :wrong_type_arg and
+        tag.first != :no_such_sound
       snd_display("snd :no_such_sound %s: %s", n, tag)
     end
   end
@@ -34895,16 +34896,13 @@ def test_28_01
     end
   end
   close_sound(idx)
-  [:mix_amp, :mix_amp_env, :mix_length, :mix_name, :mix_position, :mix_home, :mix_speed,
-   :mix_tag_y].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
-      snd_display("%s: mix (1) procs %s: %s", i, n, tag)
-    end
-  end
   [:mix_amp, :mix_length, :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, integer2mix(1234)) end).first != :no_such_mix
-      snd_display("%s: mix (2) procs %s: %s", i, n, tag)
+    tag = Snd.catch do snd_func(n, integer2mix(1234)) end
+    if tag.car != :wrong_type_arg and
+        tag.car != :syntax_error  and
+        tag.car != :no_such_mix
+      snd_display("%s: [2] mix procs %s: %s", i, n, tag)
     end
   end
   [:mix_name, :mix_position, :mix_speed, :mix_tag_y].each_with_index do |n, i|
@@ -34924,19 +34922,14 @@ def test_28_01
   [:add_mark, :mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark,
    :delete_marks, :find_mark].each_with_index do |n, i|
     if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
-      snd_display("%s: mark (1) procs %s: %s", i, n, tag)
-    end
-  end
-  [:mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, integer2mark(1234)) end).first != :no_such_mark
-      snd_display("%s: mark (2) procs %s: %s", i, n, tag)
+      snd_display("%s: mark procs %s: %s", i, n, tag)
     end
   end
   index = open_sound("oboe.snd")
   id = add_mark(0, index, 0)
   [:mark_name, :mark_sample, :mark_sync].each_with_index do |n, i|
     if (tag = Snd.catch do set_snd_func(n, id, $vct_3) end).first != :wrong_type_arg
-      snd_display("%s: set mark (3) procs %s: %s", i, n, tag)
+      snd_display("%s: set mark procs %s: %s", i, n, tag)
     end
   end
   close_sound(index)
@@ -34947,13 +34940,6 @@ def test_28_01
       if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
         snd_display("%s: region (1) procs %s: %s %s", i, n, tag, arg)
       end
-    end
-  end
-  [:region_chans, :region_home, :region_framples, :region_position,
-   :region_maxamp, :region_maxamp_position, :region_srate,
-   :forget_region].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, integer2region(1234)) end).first != :no_such_region
-      snd_display("%s: (no) region (2) procs %s: %s", i, n, tag)
     end
   end
   [:enved_filter_order, :enved_filter, :filter_control_waveform_color,
@@ -35292,15 +35278,11 @@ def test_28_02
   end
   check_error_tag(:no_active_selection) do save_selection("/bad/baddy.snd") end
   check_error_tag(:no_active_selection) do env_selection([0, 0, 1, 1]) end
-  check_error_tag(:no_such_region) do
-    save_region(integer2region(1234), "/bad/baddy.snd")
-  end
   make_region(0, 100, ind, 0)
   check_error_tag(:cannot_save) do save_selection("/bad/baddy.snd") end
   check_error_tag(:cannot_save) do
     save_region(regions.car, "/bad/baddy.snd")
   end
-  check_error_tag(:no_such_mix) do make_mix_sampler(integer2mix(1234)) end
   check_error_tag(:no_such_sound) do make_region(0, 12, 1234, true) end
   set_read_only(true, ind)
   check_error_tag(:cannot_save) do set_sound_loop_info(ind, [0, 0, 1, 1]) end
@@ -35391,9 +35373,6 @@ def test_28_02
   end
   check_error_tag(:no_such_file) do view_sound("/bad/baddy.snd") end
   check_error_tag(:no_such_file) do make_sampler(0, "/bad/baddy.snd") end
-  check_error_tag(:no_such_region) do
-    make_region_sampler(integer2region(1234567), 0)
-  end
   check_error_tag(:no_such_key) do bind_key(12345678, 0, false) end
   check_error_tag(:no_such_key) do bind_key(-1, 0, false) end
   check_error_tag(:no_such_key) do bind_key(12, 17, false) end
@@ -35504,12 +35483,6 @@ def test_28_02
   check_error_tag(:wrong_type_arg) do set_save_as_dialog_auto_comment(123) end
   check_error_tag(:wrong_type_arg) do set_with_smpte_label(123) end
   check_error_tag(:wrong_type_arg) do set_ask_about_unsaved_edits(123) end
-  check_error_tag(:no_such_mix) do
-    mix_properties(integer2mix(mix_sync_max + 1))
-  end
-  check_error_tag(:no_such_mix) do
-    set_mix_properties(integer2mix(mix_sync_max + 1), 1)
-  end
   # 
   if $with_test_motif
     [:widget_position, :widget_size, :widget_text,
