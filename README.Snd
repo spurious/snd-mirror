@@ -166,7 +166,7 @@ Kjetil S. Matheussen:                   the Jack support and many other improvem
 Dave Phillips:                          the tutorial, new-effects.scm, and many other files.
 Fernando Lopez-Lezcano:                 the current ALSA support.
 Rick Taube and Anders Vinjar:           CM scheme files ported to Snd
-Tito Latini:                            many bugfixes.
+Tito Latini:                            many bugfixes and new features.
 Richard W.E. Furse:                     the original LADSPA support.
 Nick Bailey:                            the ESD support.
 Volker Kuhlmann and Seppo Ingalsuo:     the Solaris port.

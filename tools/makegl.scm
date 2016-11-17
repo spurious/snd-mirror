@@ -589,17 +589,20 @@
 	     (lambda (arg)
 	       (let ((argname (cadr arg))
 		     (argtype (car arg)))
-		 (if (not (ref-arg? arg))
-		     (if (null-arg? arg)
-			 (hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
-			      (no-stars argtype) argname argname argname ctr name argtype)
-			 (if (opt-arg? arg)
-			     (begin
-			       (hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
-			       (hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
-				    (no-stars argtype) argname argname ctr name argtype))
-			     (hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
-				  (no-stars argtype) argname argname ctr name argtype))))
+		 (cond ((ref-arg? arg))
+
+		       ((null-arg? arg)
+			(hey "  Xen_check_type(Xen_is_~A(~A) || Xen_is_false(~A), ~A, ~D, ~S, ~S);~%" 
+			     (no-stars argtype) argname argname argname ctr name argtype))
+
+		       ((opt-arg? arg)
+			(hey "  if (!Xen_is_bound(~A)) ~A = Xen_false; ~%" argname argname)
+			(hey "  else Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%" 
+			     (no-stars argtype) argname argname ctr name argtype))
+
+		       (else
+			(hey "  Xen_check_type(Xen_is_~A(~A), ~A, ~D, ~S, ~S);~%"
+			     (no-stars argtype) argname argname ctr name argtype)))
 		 (set! ctr (+ 1 ctr))))
 	     args)))
       (let ((using-result (and (> refargs 0)

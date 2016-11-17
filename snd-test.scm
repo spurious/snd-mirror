@@ -3062,7 +3062,7 @@
       (close-sound snd))
     (let ((snd (open-sound "test.snd")))
       (let ((data (channel->float-vector 0 10)))
-	(if (not (mus-arrays-equal? data (float-vector 0.000 1.000 -1.000 1.000 0.000 0.000 -0.700 0.700 -0.200 0.200)))
+	(if (not (mus-arrays-equal? data (float-vector 0.0 1.0 -1.0 1.0 0.0 0.0 -0.700 0.700 -0.200 0.200)))
 	    (snd-display "unclipped 1: ~A" data)))
       (close-sound snd))
     (mus-sound-forget "test.snd")
@@ -3083,7 +3083,7 @@
       (close-sound snd))
     (let ((snd (open-sound "test.snd")))
       (let ((data (channel->float-vector 0 10)))
-	(if (not (mus-arrays-equal? data (float-vector 0.000 1.000 -1.000 1.000 1.000 -1.000 1.000 -1.000 1.000 -1.000)))
+	(if (not (mus-arrays-equal? data (float-vector 0.0 1.0 -1.0 1.0 1.0 -1.0 1.0 -1.0 1.0 -1.000)))
 	    (snd-display "clipped: ~A" data)))
       (close-sound snd))
     (set! *clipping* #f)
@@ -3104,7 +3104,7 @@
       (test-data (string-append sf-dir "clbonef.wav") 1000 10 (float-vector 0.111 0.101 0.070 0.032 -0.014 -0.060 -0.085 -0.108 -0.129 -0.152))
       
       (test-data (string-append sf-dir "next-8.snd") 10 10 (float-vector 0.898 0.945 0.977 0.992 0.992 0.977 0.945 0.906 0.844 0.773))
-      (test-data (string-append sf-dir "o2_u8.wave") 1000 10 (float-vector -0.164 -0.219 -0.258 -0.242 -0.180 -0.102 -0.047 0.000 0.039 0.055))
+      (test-data (string-append sf-dir "o2_u8.wave") 1000 10 (float-vector -0.164 -0.219 -0.258 -0.242 -0.180 -0.102 -0.047 0.0 0.039 0.055))
       
       (test-data (string-append sf-dir "next-16.snd") 1000 10 (float-vector -0.026 -0.022 -0.024 -0.030 -0.041 -0.048 -0.050 -0.055 -0.048 -0.033))
       (test-data (string-append sf-dir "o2.wave") 1000 10 (float-vector -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
@@ -3116,7 +3116,7 @@
       (test-data (string-append sf-dir "mono24.wav") 1000 10 (float-vector 0.005 0.010 0.016 0.008 -0.007 -0.018 -0.025 -0.021 -0.005 0.001))
       
       (test-data (string-append sf-dir "o2_711u.wave") 1000 10 (float-vector -0.164 -0.219 -0.254 -0.242 -0.172 -0.103 -0.042 0.005 0.042 0.060))
-      (test-data (string-append sf-dir "alaw.wav") 1000 10 (float-vector -0.024 -0.048 -0.024 0.000 0.008 0.008 0.000 -0.040 -0.064 -0.024))
+      (test-data (string-append sf-dir "alaw.wav") 1000 10 (float-vector -0.024 -0.048 -0.024 0.0 0.008 0.008 0.0 -0.040 -0.064 -0.024))
       
       ;; it is not a bug if these don't match if MUS_SAMPLE_BITS is not 24
       (test-data (string-append sf-dir "b32.pvf") 1000 10 (float-vector -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
@@ -3128,7 +3128,7 @@
       (test-data (string-append sf-dir "wood.sds") 1000 10 (float-vector -0.160 -0.216 -0.254 -0.239 -0.175 -0.102 -0.042 0.005 0.041 0.059))
       (test-data (string-append sf-dir "mus10.snd") 10000 10 (float-vector 0.004 0.001 0.005 0.009 0.017 0.015 0.008 0.011 0.009 0.012))
       (test-data (string-append sf-dir "ieee-text-16.snd") 1000 10 (float-vector -0.052 -0.056 -0.069 -0.077 -0.065 -0.049 -0.054 -0.062 -0.066 -0.074))
-      (test-data (string-append sf-dir "hcom-16.snd") 10000 10 (float-vector 0.000 0.000 0.000 0.008 0.000 -0.016 -0.016 -0.016 -0.008 0.000))
+      (test-data (string-append sf-dir "hcom-16.snd") 10000 10 (float-vector 0.0 0.0 0.0 0.008 0.0 -0.016 -0.016 -0.016 -0.008 0.000))
       (test-data (string-append sf-dir "ce-c3.w02") 1000 10 (float-vector 0.581 0.598 0.596 0.577 0.552 0.530 0.508 0.479 0.449 0.425))
       (test-data (string-append sf-dir "nasahal.avi") 20000 10 (float-vector 0.390 0.120 -0.399 -0.131 0.464 0.189 -0.458 -0.150 0.593 0.439))
       (test-data (string-append sf-dir "oki.wav") 100 10 (float-vector 0.396 0.564 0.677 0.779 0.761 0.540 0.209 -0.100 -0.301 -0.265))
@@ -3376,7 +3376,7 @@
     (let ((ind (new-sound "tmp.snd" 1 22050 mus-ldouble mus-next :size 10 :comment #f)))
       (map-channel (lambda (y) 1.0))
       (env-channel '(0 0 .1 .1 .2 .2 .3 .3 .4 .4 .5 .5 .6 .6 .7 .7 .8 .8 .9  .9))
-      (if (not (mus-arrays-equal? (channel->float-vector) (float-vector 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+      (if (not (mus-arrays-equal? (channel->float-vector) (float-vector 0.0 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display "ramp env by .1: ~A" (channel->float-vector)))
       (close-sound ind)))
   
@@ -4115,17 +4115,17 @@
       (float-vector->channel (make-float-vector 10 1.0))
       (env-channel '(0 0 1 1 2 0))
       (let ((data (channel->float-vector)))
-	(if (not (mus-arrays-equal? data (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
+	(if (not (mus-arrays-equal? data (float-vector 0.0 0.200 0.400 0.600 0.800 1.0 0.750 0.500 0.250 0.000)))
 	    (snd-display "pyr 10: ~A" data)))
       (undo)
       (env-channel '((0 0) (1 1) (2 0)))
       (let ((data (channel->float-vector)))
-	(if (not (mus-arrays-equal? data (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
+	(if (not (mus-arrays-equal? data (float-vector 0.0 0.200 0.400 0.600 0.800 1.0 0.750 0.500 0.250 0.000)))
 	    (snd-display "pyr 10: ~A" data)))
       (undo)
       (env-channel (make-env '(0 0 1 1 2 0) :length 10))
       (let ((data (channel->float-vector)))
-	(if (not (mus-arrays-equal? data (float-vector 0.000 0.200 0.400 0.600 0.800 1.000 0.750 0.500 0.250 0.000)))
+	(if (not (mus-arrays-equal? data (float-vector 0.0 0.200 0.400 0.600 0.800 1.0 0.750 0.500 0.250 0.000)))
 	    (snd-display "pyr 10: ~A" data)))
       (undo)
       (close-sound ind))
@@ -9446,7 +9446,7 @@ EDITS: 2
 	      (format () "~A: ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F ~1,4F~%" i o1 o2 o3 o4 o5 o6))))))
   
   (define (test-simple-polywave n offset kind)
-    (let ((p (do ((h (if offset (list offset 0) (list)))
+    (let ((p (do ((h (if offset (list offset 0) ()))
 		  (i 1 (+ i 1)))
 		 ((> i n)
 		  (make-polywave 400.0 (reverse h) kind))  
@@ -9454,7 +9454,7 @@ EDITS: 2
 	  (vp (make-float-vector 200))
 	  (vo (make-float-vector 200))
 	  (ob (make-oscil-bank
-	       (apply float-vector (do ((frqs (if offset (list 0.0) (list)))
+	       (apply float-vector (do ((frqs (if offset (list 0.0) ()))
 					(i 1 (+ i 1)))
 				       ((> i n)
 					(reverse frqs))
@@ -9464,7 +9464,7 @@ EDITS: 2
 		 (if (and offset (= kind mus-chebyshev-second-kind))
 		     (set! (phases 0) (/ pi 2)))
 		 phases)
-	       (apply float-vector (do ((amps (if offset (list offset) (list)))
+	       (apply float-vector (do ((amps (if offset (list offset) ()))
 					(i 1 (+ i 1)))
 					 ((> i n)
 					  (reverse amps))  
@@ -15664,7 +15664,7 @@ EDITS: 2
       (if (not (eq? tag 'wrong-type-arg)) (snd-display "bad length arg to phase-partials->wave: ~A" tag)))
     (let ((tag (catch #t (lambda () (phase-partials->wave '("hiho" .3 2 .2))) (lambda args (car args)))))
       (if (not (eq? tag 'wrong-type-arg)) (snd-display "bad harmonic arg to phase-partials->wave: ~A" tag)))
-    (let ((tag (catch #t (lambda () (phase-partials->wave (list))) (lambda args (car args)))))
+    (let ((tag (catch #t (lambda () (phase-partials->wave ())) (lambda args (car args)))))
       (if (not (eq? tag 'no-data)) (snd-display "nil list to phase-partials->wave: ~A" tag)))
     
     (do ((vals (phase-partials->wave '(1 1 0) (make-float-vector 16) #f))
@@ -23848,7 +23848,7 @@ EDITS: 2
 	(let ((exts (sound-file-extensions)))
 	  (if (not (member "wave" exts))
 	      (snd-display "sound-file-extensions: ~A" exts))
-	  (set! (sound-file-extensions) (list))
+	  (set! (sound-file-extensions) ())
 	  (if (pair? (sound-file-extensions))
 	      (snd-display "sound-file-extesions set to (): ~A" (sound-file-extensions)))
 	  (set! (sound-file-extensions) exts)
@@ -35318,8 +35318,7 @@ EDITS: 1
       (if (not (penv? pe)) (snd-display "penv? ~A" pe))
       (let ((x (power-env pe))) (if (fneq x 0.0) (snd-display "power-env start: ~A" x)))
       (if (> (abs (- (pe 'current-pass) 2203)) 2) (snd-display "power-env pass: ~A" (pe 'current-pass))) ; 4410/2 - 1 because x1=2
-      (if (not (= (pe 'current-env) 0)) (snd-display "power-env seg: ~A" (pe 'current-env)))
-      )
+      (if (not (= (pe 'current-env) 0)) (snd-display "power-env seg: ~A" (pe 'current-env))))
     
     (let-temporarily ((*clm-srate* 22050))
       (set! *print-length* (max *print-length* 48))
@@ -35518,7 +35517,6 @@ EDITS: 1
       (close-sound ind))
     
     (when with-gui
-      
       (set! *transform-graph-type* graph-once)
       (set! *fft-window* 6)
       (set! *show-y-zero* #f)
@@ -36296,7 +36294,6 @@ EDITS: 1
 	    (g1700 (goertzel-channel 1700.0)))
 	(if (> (* 1000 g1700) g550) (snd-display "goertzel-channel oboe: ~A ~A" g550 g1700))
 	(close-sound ind)))
-    
     ))
 
 
@@ -39215,13 +39212,13 @@ EDITS: 1
       ;;   we currently get away with it because it is normalized out of existence
       ;;   the .5 business in the bassdr2 works because it is like adding abs(sin)
       (with-sound (:reverb nrev :play #f)
-	(drone  .000  4.000  115.000  (* .25 .500) solid bassdr2  .100  .500
+	(drone  .0  4.0  115.0  (* .25 .500) solid bassdr2  .100  .500
 		.030  45.0 1  .010 10)
-	(drone  .000  4.000  229.000  (* .25 .500) solid tenordr  .100  .500
+	(drone  .0  4.0  229.0  (* .25 .500) solid tenordr  .100  .500
 		.030  45.0 1  .010 11)
-	(drone  .000  4.000  229.500  (* .25 .500) solid tenordr  .100  .500
+	(drone  .0  4.0  229.500  (* .25 .500) solid tenordr  .100  .500
 		.030  45.0 1  .010 9)
-	(canter  .000  2.100 918  (* .25 .700)  45.0 1  .050 ampf ranf skwf
+	(canter  .0  2.100 918  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
 	(canter  2.100  .300 688.5  (* .25 .700)  45.0 1  .050 ampf ranf skwf
@@ -39233,7 +39230,7 @@ EDITS: 1
 	(canter  2.440  .560 459  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
-	(canter  3.000  .040 408  (* .25 .700)  45.0 1  .050 ampf ranf skwf
+	(canter  3.0  .040 408  (* .25 .700)  45.0 1  .050 ampf ranf skwf
 		 .050  .010 10 index  .005  .005 amp1 ind1 fmt1 amp2
 		 ind2 fmt2 amp3 ind3 fmt3 amp4 ind4 fmt4)
 	(canter  3.040  .040 619.65  (* .25 .700)  45.0 1  .050 ampf ranf skwf
@@ -41279,12 +41276,12 @@ EDITS: 1
 			      0.377 0.438 0.389 0.858 0.394 0.467 0.403 0.241 0.414 0.197 0.415 0.127 0.425 0.075 
 			      0.436 0.090 0.441 0.526 0.454 0.869 0.471 0.239 0.490 0.029 0.503 0.117 0.505 0.485
 			      0.514 0.811 0.528 0.415 0.538 0.088 0.552 0.056 0.561 0.106 0.580 0.075 0.597 0.0 
-			      0.776 0.0 0.777 0.573 0.786 0.145 0.801 0.054 0.826 0.0 0.827 0.632 0.844 1.000 
+			      0.776 0.0 0.777 0.573 0.786 0.145 0.801 0.054 0.826 0.0 0.827 0.632 0.844 1.0 
 			      0.856 0.524 0.866 0.031 0.883 0.074 0.891 0.136 0.896 0.745 0.907 0.424 0.915 0.765 
-			      0.934 0.059 0.951 0.048 0.962 0.079 0.970 0.436 0.986 0.266 1.000 0.000)
+			      0.934 0.059 0.951 0.048 0.962 0.079 0.970 0.436 0.986 0.266 1.0 0.000)
 			    :duration 0.25 :scaler 0.5))
 	    (frqf (make-env '(0.0 0.220 0.074 0.249 0.133 0.249 0.194 0.240 0.258 0.252 0.324 0.264 0.389 0.267 
-			      0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.000 0.279)
+			      0.456 0.270 0.520 0.264 0.847 0.270 0.920 0.273 1.0 0.279)
 			    :duration 0.25 :scaler (hz->radians (* 0.5 0.205 22050.0))))
 	    (gen1 (make-polywave :partials '(2 .35  3 .1 4 .8  5 .01 6 .03  8 .005)))
 	    (rnd (make-rand-interp 600 (hz->radians 50))))
@@ -45340,8 +45337,7 @@ EDITS: 1
 			 make-nrxysin make-nrxycos make-rxyk!cos make-rxyk!sin make-square-wave 
 			 make-src make-ncos make-nsin make-table-lookup make-triangle-wave
 			 make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
-			 make-color make-player make-region 
-			 ))
+			 make-color make-player make-region))
 	    
 	    (keyargs
 	     (vector
@@ -46383,7 +46379,7 @@ EDITS: 1
 				(random-state 12) (float-vector) (vector)))
 	       (less-args (if all-args 
 			      main-args 
-			      (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) (list) ""
+			      (list 1.5 str-3 (list 0 1) 12 float-vector-3 color-95 #(0 1) 3/4 -1.0 (float-vector) (vector) () ""
 				    0+i delay-32 :feedback -1 0 1 'hi (lambda (a) (+ a 1)) -64 #f #t vector-0))))
 
 	  ;; ---------------- 1 Arg

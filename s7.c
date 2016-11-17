@@ -75166,12 +75166,9 @@ int main(int argc, char **argv)
  * with-let+lambda to increase opt? glosure for example
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
  * could (apply append (map...)) omit the extra copy?
- * add a check for symbol-table glommage
- * (list 1 (symbol ".") 2) -> (1 . 2)
  * maybe use 'not for signature of #f? or #f?
  *
  * Snd:
- * in FC 25 the close-window decoration does not close Snd -- under gdb it works?
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
  *   looper does not stop/restart -- just keep going]
  *   play_selection_1 could put ends somewhere, set ends to NO_END_SPECIFIED, dac_loop_sample can
