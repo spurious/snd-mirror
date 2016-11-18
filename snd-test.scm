@@ -136,8 +136,6 @@
 (for-each mus-sound-preload '("4.aiff" "2.snd" "obtest.snd" "oboe.snd" "pistol.snd" "1a.snd" "now.snd" 
 			      "fyow.snd" "storm.snd" "1.snd" "cardinal.snd" "2a.snd"))
 
-
-
 ;;(setlocale LC_ALL "de_DE")
 (set! *with-background-processes* #f)
 
