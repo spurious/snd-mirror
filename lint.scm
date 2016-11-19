@@ -7704,7 +7704,8 @@
 				(or (string? a)
 				    (and (pair? a)
 					 (eq? (car a) 'string)
-					 (char? (cadr a)))))
+					 (or (null? (cdr a))
+					     (char? (cadr a))))))
 			      args)
 		      (catch #t
 			(lambda ()                 ; (string-append (string #\C) "ZLl*()def") -> "CZLl*()def"
@@ -9222,7 +9223,7 @@
 		      
 		      ((read)
 		       (if (and (= (length arg) 2)    ;  (eval (read (open-input-string expr))) -> (eval-string expr)
-				(pair? (cadr arg))
+				(len>1? (cadr arg))
 				(eq? (caadr arg) 'open-input-string))
 			   (lint-format "perhaps ~A" caller (lists->string form (list 'eval-string (cadadr arg))))))
 

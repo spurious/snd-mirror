@@ -2220,6 +2220,16 @@ void move_mix_tag(int mix_id, int x, int y)
   mus_long_t pos;
 
   md = md_from_id(mix_id);
+  if (md == NULL)
+    {
+      mix_dragged = false;
+      if (watch_mix_proc != 0)
+        {
+          stop_watch_mix_proc();
+          watch_mix_proc = 0;
+        }
+      return;
+    }
   cp = md->cp;
 
   if (!mix_dragged) /* starting to drag -- unmix now while we know the original position */
@@ -2491,6 +2501,7 @@ void start_dragging_syncd_mixes(int mix_id)
   for_each_syncd_mix(mix_id, count_syncd_mixes, NULL);
   if (syncd_mixes_length > 0)
     {
+      if (syncd_mixes) free(syncd_mixes);
       syncd_mixes = (syncd_mix_info *)calloc(syncd_mixes_length, sizeof(syncd_mix_info));
       syncd_mixes_length = 0;
       for_each_syncd_mix(mix_id, add_syncd_mix, NULL);
