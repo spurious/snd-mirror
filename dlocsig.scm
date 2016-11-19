@@ -1499,7 +1499,7 @@
 		  (set! vseg (append vseg (list v)))
 		  
 		  (when v
-		    (let ((dseg (list))
+		    (let ((dseg ())
 			  (sum 0.0)
 			  (len (- (length xseg) 1)))
 		      (do ((i 0 (+ i 1)))

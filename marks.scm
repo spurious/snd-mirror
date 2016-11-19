@@ -261,7 +261,7 @@
 (define snap-marks
   (let ((documentation "snap-marks places marks at current selection boundaries"))
     (lambda ()
-      (let ((ms (list)))
+      (let ((ms ()))
 	(if (selection?)
 	    (for-each 
 	     (lambda (select)

@@ -7,7 +7,7 @@
 ;;   then again 18-Dec-09 to use s7 rather than Guile
 ;; changed float-vector-map! to use a loop instead (Bill 4-July-12)
 
-(if (not (provided? 'snd-motif)) (error "bess1.scm needs motif"))
+(if (not (provided? 'snd-motif)) (error 'gui-error "bess1.scm needs motif"))
 
 ;;; Commentary:
 

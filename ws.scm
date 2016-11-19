@@ -61,7 +61,7 @@
 		 ,@(cdr body))))
 	   ,@(if *definstrument-hook*
 		 (list (*definstrument-hook* name targs))
-		 (list)))
+		 ()))
 	`(begin 
 	   (define* (,name ,@targs)
 	     (if *clm-notehook*
@@ -69,7 +69,7 @@
 	     ,@body)
 	   ,@(if *definstrument-hook*
 		 (list (*definstrument-hook* name targs))
-		 (list))))))
+		 ())))))
 
      
 

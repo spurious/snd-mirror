@@ -363,7 +363,7 @@ last end of the mixes in 'mix-list'"))
   (let ((documentation "(syncd-mixes val) returns a list (possibly null) of all mixes whose mix-sync field is set to 'val'"))
     (lambda (val)
       (if (<= val 0)
-	  (list)
+	  ()
 	  (let ((mix-list ()))
 	    (for-each
 	     (lambda (snd-m)

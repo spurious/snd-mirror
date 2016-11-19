@@ -2987,7 +2987,7 @@
       (if (fneq (sd 0 0) 0.0) (snd-display "vector2 ref: ~A" (sd 0 0)))
       (set! (sd 0 0) 1.0)
       (if (fneq (sd 0 0) 1.0) (snd-display "vector2 set: ~A" (sd 0 0)))
-      (if (not (equal? sd (let ((sd1 (make-float-vector '(1 1)))) (float-vector-set! sd1 0 0 1.0) sd1)))
+      (if (not (morally-equal? sd (let ((sd1 (make-float-vector '(1 1)))) (float-vector-set! sd1 0 0 1.0) sd1)))
 	  (snd-display "vector2 set not equal: ~A" sd)))
     
     (let ((sd (make-float-vector '(2 3))))
@@ -2996,10 +2996,10 @@
       (if (fneq (sd 1 0) 1.0) (snd-display "vector2 set (1 0): ~A" (sd 1 0)))
       (set! (sd 1 2) 2.0)
       (if (fneq (sd 1 2) 2.0) (snd-display "vector2 set (1 2): ~A" (sd 1 2)))
-      (if (not (equal? sd (let ((sd1 (make-float-vector '(2 3))))
-			    (float-vector-set! sd1 1 0 1.0)
-			    (float-vector-set! sd1 1 2 2.0)
-			    sd1)))
+      (if (not (morally-equal? sd (let ((sd1 (make-float-vector '(2 3))))
+				    (float-vector-set! sd1 1 0 1.0)
+				    (float-vector-set! sd1 1 2 2.0)
+				    sd1)))
 	  (snd-display "vector2 set (3) not equal: ~A" sd)))
     
     ;; check clipping choices
@@ -3384,17 +3384,17 @@
   (hook-push bad-header-hook (lambda (hook) (set! (hook 'result) #t)))
   (if (null? (hook-functions open-raw-sound-hook)) (snd-display "add hook open-raw-sound-hook failed??"))
   (if (null? (hook-functions bad-header-hook)) (snd-display "add hook bad-header-hook failed??"))
-  (let ((magic-words (list ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
-			    "FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
-			    "FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
-			    "data" "fact" "clm " "NIST" "8SVX" "16SV" "Crea" "tive" "SOUN" "D SA" "MPLE"
-			    "BODY" "VHDR" "CHAN" "ANNO" "NAME" "2BIT" "HCOM" "FSSD" "%//\n" "%---" "ALaw"
-			    "Soun" "MAUD" "MHDR" "MDAT" "mdat" "MThd" "sfbk" "sdta" "shdr" "pdta"
-			    "LIST" "GF1P" "ATCH" "$SIG" "NAL_" "GOLD" " SAM" "SRFS" "Diam" "ondW" "CSRE"
-			    "SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
-			    "AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
-			    "SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
-			    "IMPS" "SMP1" "Maui" "SDIF")))
+  (let ((magic-words (vector ".snd" "FORM" "AIFF" "AIFC" "COMM" "COMT" "INFO" "INST" "inst" "MARK" "SSND"
+			     "FVER" "NONE" "ULAW" "ulaw" "ima4" "raw " "sowt" "in32" "in24" "ni23" "fl32"
+			     "FL32" "fl64" "twos" "ALAW" "alaw" "APPL" "CLM " "RIFF" "RIFX" "WAVE" "fmt "
+			     "data" "fact" "clm " "NIST" "8SVX" "16SV" "Crea" "tive" "SOUN" "D SA" "MPLE"
+			     "BODY" "VHDR" "CHAN" "ANNO" "NAME" "2BIT" "HCOM" "FSSD" "%//\n" "%---" "ALaw"
+			     "Soun" "MAUD" "MHDR" "MDAT" "mdat" "MThd" "sfbk" "sdta" "shdr" "pdta"
+			     "LIST" "GF1P" "ATCH" "$SIG" "NAL_" "GOLD" " SAM" "SRFS" "Diam" "ondW" "CSRE"
+			     "SND " "SNIN" "SNDT" "DDSF" "FSMu" "UWFD" "LM89" "SY80" "SY85" "SCRS" "DSPL"
+			     "AVI " "strf" "movi" "PRAM" " paf" "fap " "DS16" "HEDR" "HDR8" "SDA_" "SDAB"
+			     "SD_B" "NOTE" "file" "=sam" "SU7M" "SU7R" "PVF1" "PVF2" "AUTH" "riff" "TWIN"
+			     "IMPS" "SMP1" "Maui" "SDIF")))
     (let ((len (length magic-words))
 	  (ctr 0))
       (for-each
@@ -3913,11 +3913,11 @@
   (unless (provided? 'gmp)
     (let ((LONG_MAX 2147483647)
 	  (LONG_MIN -2147483648))
-      (let ((ints (list 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
-	    (shorts (list 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
-	    (longs (list 0 1 -1 11 -11 LONG_MAX LONG_MIN most-positive-fixnum most-negative-fixnum 1000 -1000))
-	    (floats (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
-	    (doubles (list 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
+      (let ((ints (vector 0 1 -1 10 -10 1234 -1234 LONG_MAX LONG_MIN 65536 -65536))
+	    (shorts (vector 0 1 -1 10 -10 1234 -1234 32767 -32768 8191 -8191))
+	    (longs (vector 0 1 -1 11 -11 LONG_MAX LONG_MIN most-positive-fixnum most-negative-fixnum 1000 -1000))
+	    (floats (vector 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003))
+	    (doubles (vector 0.0 1.0 -1.0 0.1 -0.1 10.0 -10.0 1234.0 65536.0 -1234.0 -0.003)))
 	(load "binary-io.scm")
 	
 	(with-output-to-file "idf1.data"
@@ -10165,22 +10165,22 @@ EDITS: 2
       
       ;; ripple .01 .1 1 for 2..10 even
       
-      (do ((poles-01 (list (float-vector 1.000 4.456 10.426)
+      (do ((poles-01 (vector (float-vector 1.000 4.456 10.426)
 			    (float-vector 1.000 0.822 2.006 1.000 1.984 1.299)
 			    (float-vector 1.000 0.343 1.372 1.000 0.937 0.939 1.000 1.280 0.506)
 			    (float-vector 1.000 0.189 1.196 1.000 0.537 0.925 1.000 0.804 0.542 1.000 0.948 0.272)
 			    (float-vector 1.000 0.119 1.121 1.000 0.347 0.940 1.000 0.540 0.646 1.000 0.680 0.352 1.000 0.754 0.170)))
-	    (zeros    (list (float-vector 0.000 0.000 1.000)
+	    (zeros    (vector (float-vector 0.000 0.000 1.000)
 			    (float-vector 0.000 0.000 0.250 0.000 0.000 1.000)
 			    (float-vector 0.000 0.000 0.062 0.000 0.000 1.000 0.000 0.000 1.000)
 			    (float-vector 0.000 0.000 0.016 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000)
 			    (float-vector 0.000 0.000 0.004 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000 0.000 0.000 1.000)))
-	    (poles-1  (list (float-vector 1.000 2.372 3.314)
+	    (poles-1  (vector (float-vector 1.000 2.372 3.314)
 			    (float-vector 1.000 0.528 1.330 1.000 1.275 0.623)
 			    (float-vector 1.000 0.229 1.129 1.000 0.627 0.696 1.000 0.856 0.263)
 			    (float-vector 1.000 0.128 1.069 1.000 0.364 0.799 1.000 0.545 0.416 1.000 0.643 0.146)
 			    (float-vector 1.000 0.082 1.044 1.000 0.237 0.862 1.000 0.369 0.568 1.000 0.465 0.274 1.000 0.515 0.092)))
-	    (poles-10 (list (float-vector 1.000 1.098 1.103)
+	    (poles-10 (vector (float-vector 1.000 1.098 1.103)
 			    (float-vector 1.000 0.279 0.987 1.000 0.674 0.279)
 			    (float-vector 1.000 0.124 0.991 1.000 0.340 0.558 1.000 0.464 0.125)
 			    (float-vector 1.000 0.070 0.994 1.000 0.199 0.724 1.000 0.298 0.341 1.000 0.352 0.070)
@@ -13131,7 +13131,7 @@ EDITS: 2
 	  (phs (float-vector 0.0 0.0)))
       (let ((ob (make-oscil-bank frqs phs amps)))
 	(if (not (oscil-bank? ob)) (snd-display "oscil-bank? ~A" ob))
-	(if (not (equal? (mus-data ob) phs)) (snd-display "oscil-bank data: ~A ~A" (mus-data ob) phs))
+	(if (not (morally-equal? (mus-data ob) phs)) (snd-display "oscil-bank data: ~A ~A" (mus-data ob) phs))
 	(let ((x (oscil-bank ob)))
 	  (if (not (= x 0.0)) (snd-display "oscil-bank 0.0: ~A~%" x)))
 	(set! (amps 0) 0.5)
@@ -20154,7 +20154,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-table-lookup :wave v1))))
 	(if (not (eq? v1 g1)) (snd-display "table-lookup data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "table-lookup data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "table-lookup data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "table-lookup data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "table-lookup float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20163,7 +20163,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-wave-train :wave v1))))
 	(if (not (eq? v1 g1)) (snd-display "wave-train data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "wave-train data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "wave-train data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "wave-train data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "wave-train float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20172,7 +20172,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-polyshape :coeffs v1))))
 	(if (not (eq? v1 g1)) (snd-display "polyshape data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "polyshape data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "polyshape data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "polyshape data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "polyshape float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20181,7 +20181,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-delay :initial-contents v1))))
 	(if (not (eq? v1 g1)) (snd-display "delay data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "delay data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "delay data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "delay data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "delay float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20190,7 +20190,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-filtered-comb :scaler .5 :initial-contents v1 :filter (make-one-zero .1 .2)))))
 	(if (not (eq? v1 g1)) (snd-display "filtered-comb data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "filtered-comb data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "filtered-comb data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "filtered-comb data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "filtered-comb float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20199,7 +20199,7 @@ EDITS: 2
       (let ((g1 (mus-data (make-rand :distribution v1))))
 	(if (not (eq? v1 g1)) (snd-display "rand data not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "rand data not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "rand data not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "rand data not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "rand float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20208,7 +20208,7 @@ EDITS: 2
       (let ((g1 (mus-xcoeffs (make-fir-filter :xcoeffs v1))))
 	(if (not (eq? v1 g1)) (snd-display "fir-filter xcoeffs not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "fir-filter xcoeffs not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "fir-filter xcoeffs not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "fir-filter xcoeffs not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "fir-filter float-vectorset: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -20217,7 +20217,7 @@ EDITS: 2
       (let ((g1 (mus-ycoeffs (make-iir-filter :ycoeffs v1))))
 	(if (not (eq? v1 g1)) (snd-display "iir-filter ycoeffs not eq?: ~A ~A" v1 g1))
 	(if (not (eqv? v1 g1)) (snd-display "iir-filter ycoeffs not eqv?: ~A ~A" v1 g1))
-	(if (not (equal? v1 g1)) (snd-display "iir-filter ycoeffs not equal?: ~A ~A" v1 g1))
+	(if (not (morally-equal? v1 g1)) (snd-display "iir-filter ycoeffs not equal?: ~A ~A" v1 g1))
 	(set! (v1 1) .3)
 	(if (fneq (g1 1) .3) (snd-display "iir-filter float-vector-set: ~A ~A" (v1 1) (g1 1)))
 	(float-vector-set! g1 1 .5)
@@ -34395,10 +34395,9 @@ EDITS: 1
 	  (if (not (mus-arrays-equal? d0 (float-vector 0.625 0.375 -0.217 1.083 -0.354 0.0 0.0 0.354)))
 	      (snd-display "fxt wavelet 1: ~A" d0)))
 	
-	(let ((wts (list 
-		    daub4 daub6 daub8 daub10 daub12 daub14 daub16 daub18 daub20
-		    Battle-Lemarie Burt-Adelson Beylkin coif2 coif4 coif6
-		    sym2 sym3 sym4 sym5 sym6)))
+	(let ((wts (vector daub4 daub6 daub8 daub10 daub12 daub14 daub16 daub18 daub20
+			   Battle-Lemarie Burt-Adelson Beylkin coif2 coif4 coif6
+			   sym2 sym3 sym4 sym5 sym6)))
 	  (for-each 
 	   (lambda (size)
 	     (do ((i 0 (+ i 1)))

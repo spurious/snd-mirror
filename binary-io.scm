@@ -239,7 +239,7 @@
     (lambda ()
       (let ((magic (read-chars)))
 	(if (not (string=? magic ".snd"))
-	    (error 'bad-header "~A is not an au file: ~A" file)
+	    (error 'bad-header "~A is not an au file" file)
 	    (let* ((data-location (read-bint32))
 		   (data-size (read-bint32))
 		   (sample-type (read-bint32))

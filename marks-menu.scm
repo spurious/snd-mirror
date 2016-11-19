@@ -37,7 +37,7 @@
       (let ((ms (marks (selected-sound) (selected-channel))))
 	(if (> (length ms) 1)
 	    (map mark->integer (list (car ms) (cadr ms)))
-	    (list))))))
+	    ())))))
 
 
 ;;; -------- Play between by marks
@@ -637,15 +637,16 @@ between two marks,using the granulate generator to fix up the selection duration
     (define loop-data '(0 0 0 0 0 0 1 1))
     
     (define (update-labels start range end sus-rel range-in-secs)
-      (if range-in-secs
-	  (begin
-	    (change-label start (format #f "~,3F" (/ (loop-data (* sus-rel 2)) (srate))))
-	    (change-label range (format #f "~,3F" (/ (- (loop-data (+ 1 (* sus-rel 2))) (loop-data (* sus-rel 2))) (srate))))
-	    (change-label end (format #f "~,3F" (/ (loop-data (+ 1 (* sus-rel 2))) (srate)))))
-	  (begin
-	    (change-label start (format #f "~D" (loop-data (* sus-rel 2))))
-	    (change-label range (format #f "~D" (- (loop-data (+ 1 (* sus-rel 2))) (loop-data (* sus-rel 2)))))
-	    (change-label end (format #f "~D" (loop-data (+ 1 (* sus-rel 2))))))))
+      (let ((sr2 (* sus-rel 2)))
+	(if range-in-secs
+	    (begin
+	      (change-label start (format #f "~,3F" (/ (loop-data sr2) (srate))))
+	      (change-label range (format #f "~,3F" (/ (- (loop-data (+ 1 sr2)) (loop-data sr2)) (srate))))
+	      (change-label end (format #f "~,3F" (/ (loop-data (+ 1 sr2)) (srate)))))
+	    (begin
+	      (change-label start (format #f "~D" (loop-data sr2)))
+	      (change-label range (format #f "~D" (- (loop-data (+ 1 sr2)) (loop-data sr2))))
+	      (change-label end (format #f "~D" (loop-data (+ 1 sr2))))))))
     
     (define (create-loop-dialog)
       (unless (Widget? loop-dialog)

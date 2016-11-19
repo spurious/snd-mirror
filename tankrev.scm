@@ -29,10 +29,10 @@
     (require sndlib-ws.scm))
 
 (define (make-diffuser siz scl)
-  (make-all-pass (* -1 scl) scl siz))
+  (make-all-pass (- scl) scl siz))
 
 (define (make-mod-all-pass siz diffusion)
-  (make-all-pass diffusion (* -1 diffusion) siz :max-size (* 2 siz)))
+  (make-all-pass diffusion (- diffusion) siz :max-size (* 2 siz)))
 
 (define (smpls->samples smpl)
   (let ((FS 29761))			;orig. srate
@@ -48,12 +48,11 @@
   (let ((decay-diffusion-1 0.70)
 	(decay-diffusion-2 0.50)
 	(input-diffusion-1 0.750)
-	(input-diffusion-2 0.625)
-	(excursion (smpls->samples 16)))
+	(input-diffusion-2 0.625))
     
     (let ((len (+ (framples *reverb*) (seconds->samples reverb-decay-time)))
 	  (predly (make-delay (seconds->samples predelay)))
-	  (lp1 (make-one-pole bandwidth (* -1 (- 1 bandwidth))))
+	  (lp1 (make-one-pole bandwidth (- bandwidth 1)))
 	  
 	  ;; input diffusers = series of 4 all-pass-filters (mono input):
 	  (input-diffusers (make-all-pass-bank
@@ -69,8 +68,8 @@
 	  (modallpass_46 (make-mod-all-pass (smpls->samples 908) decay-diffusion-1))
 	  (delay_24_30 (make-delay (smpls->samples 4453)))
 	  (delay_48_54 (make-delay (smpls->samples 4217)))
-	  (damper_30 (make-one-pole (- 1 damping) (* -1 damping)))
-	  (damper_54 (make-one-pole (- 1 damping) (* -1 damping)))
+	  (damper_30 (make-one-pole (- 1 damping) (- damping)))
+	  (damper_54 (make-one-pole (- 1 damping) (- damping)))
 	  (diffuser_31_33 (make-diffuser (smpls->samples 1800) decay-diffusion-2))
 	  (diffuser_55_59 (make-diffuser (smpls->samples 2656) decay-diffusion-2))
 	  (delay_33_39 (make-delay (smpls->samples 3720)))

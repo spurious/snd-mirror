@@ -535,7 +535,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	    (am (* 0.5 (+ order 1)))
 	    (q (/ (* pi 2.0) order)))
 	(if (not (float-vector? spectr))
-	    (error "spectrum->coeffs spectrum argument should be a float-vector"))
+	    (error 'wrong-type-arg "spectrum->coeffs spectrum argument should be a float-vector: ~A" spectr))
 	(do ((j 0 (+ j 1))
 	     (jj (- order 1) (- jj 1)))
 	    ((= j m) coeffs)

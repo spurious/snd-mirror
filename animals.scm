@@ -244,7 +244,7 @@
        ,@body)
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
-           (list)))))
+           ()))))
 
 #|
 (define-macro (define-animal args . body)
@@ -259,7 +259,7 @@
 	 (format () "~A: ~A~%" (- (get-internal-real-time) start) ,name)))
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
-           (list)))))
+           ()))))
 |#
 
 
