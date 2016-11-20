@@ -17039,6 +17039,95 @@
 				 :initial-value form
 				 :env env)))))
 
+	;; -------- remove-null-let --------
+	(define (remove-null-let caller form env)
+	  (if (and (null? (cadr form)) ; this can be fooled by macros that define things
+		   (not (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
+						   define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
+						   load eval eval-string require unquote)
+					 (cddr form))))
+	      ;; (begin (let () (display x)) y)
+	      (if (or (eq? form lint-current-form) ; i.e. we're in a body?
+		      (null? (cdddr form)))
+		  (lint-format "pointless let: ~A" caller (truncated-list->string form))
+		  (if (every? (lambda (p)
+				(or (not (pair? p))
+				    (hash-table-ref built-in-functions (car p))
+				    (hash-table-ref syntaces (car p))
+				    (not (side-effect? p env))))
+			      (cddr form))
+		      (lint-format "let could be begin: ~A" caller 
+				   (truncated-lists->string form (cons 'begin (cddr form))))))
+	      (let ((body (cddr form)))
+		(when (and (null? (cdr body))
+			   (len>1? (car body)))
+		  (if (memq (caar body) '(let let*))
+		      (if (null? (cadr form))
+			  ;; (let () (let ((a x)) (+ a 1)))
+			  (lint-format "pointless let: ~A" caller (lists->string form (car body)))
+			  (if (null? (cadar body))
+			      ;; (let ((a x)) (let () (+ a 1)))
+			      (lint-format "pointless let: ~A" caller (lists->string form (cons 'let (cons (cadr form) (cddar body)))))))
+		      (if (and (memq (caar body) '(lambda lambda*)) ; or any definer?
+			       (null? (cadr form)))
+			  ;; (let () (lambda (a b) (if (positive? a) (+ a b) b))) -> (lambda (a b) (if (positive? a) (+ a b) b))
+			  (lint-format "pointless let: ~A" caller (lists->string form (car body)))))))))
+		
+	;; -------- walk-let-vars --------
+	(define (walk-let-vars caller form varlist vars env)
+	  (let ((named-let (and (symbol? (cadr form)) (cadr form))))
+	    (do ((bindings varlist (cdr bindings)))
+		((not (pair? bindings))
+		 (if (not (null? bindings))                       ; (let ((a 1) . b) a)
+		     (lint-format "let variable list is not a proper list? ~S" caller varlist)))
+	      (when (binding-ok? caller 'let (car bindings) env #f)
+		(let ((val (cadar bindings)))
+		  (if (and (pair? val)
+			   (eq? 'lambda (car val))
+			   (tree-car-member (caar bindings) val)
+			   (not (var-member (caar bindings) env))) ; (let ((x (lambda (a) (x 1)))) x)
+		      (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec: ~A"
+				   caller (caar bindings) 
+				   (truncated-list->string bindings))
+		      (unless named-let
+			(for-each (lambda (v)
+				    (if (and (tree-memq (var-name v) (cadar bindings))
+					     (not (hash-table-ref built-in-functions (var-name v)))
+					     (not (tree-table-member binders (cadar bindings))))
+					(if (not (var-member (var-name v) env))
+					    ;; (let ((x 1) (y x)) (+ x y)): x in (y x)
+					    (lint-format "~A in ~A does not appear to be defined in the calling environment" caller
+							 (var-name v) (car bindings))
+					    ;; (let ((x 3)) (+ x (let ((x 1) (y x)) (+ x y)))): x in (y x)
+					    (lint-format "~A in ~A refers to the caller's ~A, not the let variable" caller
+							 (var-name v) (car bindings) (var-name v)))))
+				  vars)))
+		  (let ((e (if (symbol? val)
+			       (set-ref val caller form env)
+			       (lint-walk caller val env))))
+		    (if (and (pair? e)
+			     (not (eq? e env))
+			     (memq (var-name (car e)) '(:lambda :dilambda)))
+			(let ((ldata (cdar e)))
+			  (set! (var-name (car e)) (caar bindings))
+			  (set! (ldata 'initial-value) val)
+			  (set! vars (cons (car e) vars)))
+			(set! vars (cons (make-var :name (caar bindings) 
+						   :initial-value val 
+						   :definer (if named-let 'named-let 'let))
+					 vars)))))))
+
+	    (check-unordered-exprs caller form 
+				   (map (if (not named-let)
+					    var-initial-value
+					    (lambda (v)
+					      (if (eq? (var-name v) named-let)
+						  (values)
+						  (var-initial-value v))))
+					vars)
+				   env)
+	    vars))
+	    
 	;; -------- move-let-into-if --------
 	(define (move-let-into-if caller form env)
 	  (let ((body (cddr form)))
@@ -17329,6 +17418,443 @@
 							      ,@(cdr body))   ; include rest of let as do return value
 							   ...)))))))))))
 
+	;; -------- split-let --------
+	(define (split-let caller form body vars env)
+	  ;; look for splittable lets and let-temporarily possibilities
+	  (for-each 
+	   (lambda (local-var)
+	     (let ((vname (var-name local-var)))
+	       
+	       ;; ideally we'd collect vars that fit into one let etc
+	       (when (> (length body) (* 5 (var-set local-var)) 0)
+		 (do ((i 0 (+ i 1))
+		      (preref #f)
+		      (p body (cdr p)))
+		     ((or (not (pair? (cdr p)))
+			  (and (pair? (car p))
+			       (eq? (caar p) 'set!)
+			       (eq? (cadar p) vname)
+			       (> i 5)
+			       (begin
+				 (if (or preref
+					 (side-effect? (var-initial-value local-var) env))
+				     ;; (let ((x 32)) (display x) (set! y (f x)) (g (+ x 1) y) (a y) (f y) (g y) (h y) (i y) (set! x 3) (display x) (h y x))
+				     ;;     (let ... (let ((x 3)) ...))
+				     (lint-format "perhaps add a new binding for ~A to replace ~A: ~A" caller
+						  vname
+						  (truncated-list->string (car p))
+						  (lists->string form
+								 `(let ...
+								    (let ((,vname ,(caddar p)))
+								      ...))))
+				     ;; (let ((x 32)) (set! y (f 1)) (a y) (f y) (g y) (h y) (i y) (set! x (+ x... -> (let () ... (let ((x (+ 32 1))) ...))
+				     (lint-format "perhaps move the ~A binding to replace ~A: ~A" caller
+						  vname 
+						  (truncated-list->string (car p))
+						  (let ((new-value (if (tree-memq vname (caddar p))
+								       (tree-subst (var-initial-value local-var) vname (copy (caddar p)))
+								       (caddar p))))
+						    (lists->string form 
+								   `(let ,(let rewrite ((lst (cadr form)))
+									    (cond ((null? lst) ())
+										  ((and (pair? (car lst))
+											(eq? (caar lst) vname))
+										   (rewrite (cdr lst)))
+										  (else (cons (if (< (tree-leaves (cadar lst)) 30)
+												  (car lst)
+												  (list (caar lst) '...))
+											      (rewrite (cdr lst))))))
+								      ...
+								      (let ((,vname ,new-value))
+									...))))))
+				 #t))))
+		   (if (tree-memq vname (car p))
+		       (set! preref i))))
+	       
+	       (when (and (zero? (var-set local-var))
+			  (= (var-ref local-var) 2)) ; initial value and set!'s value
+		 (do ((saved-name (var-initial-value local-var))
+		      (p body (cdr p))
+		      (last-pos #f)
+		      (first-pos #f))
+		     ((not (pair? p))
+		      (when (and (pair? last-pos)
+				 (not (eq? first-pos last-pos))
+				 (not (tree-equal-member saved-name (cdr last-pos))))
+			;; (let ((old-x x)) (set! x 12) (display (log x)) (set! x 1) (set! x old-x)) ->
+			;;    (let-temporarily ((x 12)) (display (log x)) (set! x 1))
+			;; the pattern (set! x y) ... (set! y x) happens a few times (say 5 to 10)
+			(lint-format "perhaps use let-temporarily here: ~A" caller
+				     (lists->string form
+						    (let ((new-let (cons 'let-temporarily 
+									 (cons (list (list saved-name 
+											   (if (pair? first-pos) 
+											       (caddar first-pos) 
+											       saved-name)))
+									       (map (lambda (expr)
+										      (if (or (and (pair? first-pos)
+												   (eq? expr (car first-pos)))
+											      (eq? expr (car last-pos)))
+											  (values)
+											  expr))
+										    body)))))
+						      (if (null? (cdr vars)) ; we know vars is a pair, want len=1
+							  new-let
+							  (list 'let (map (lambda (v)
+									    (if (eq? (car v) vname)
+										(values)
+										v))
+									  (cadr form))
+								new-let)))))))
+		   ;; someday maybe look for additional saved vars, but this happens only in snd-test
+		   ;;   also the let-temp could be reduced to the set locations (so the tree-equal-member
+		   ;;   check above would be unneeded).
+		   (let ((expr (car p)))
+		     (when (and (len>2? expr)
+				(eq? (car expr) 'set!)
+				(equal? (cadr expr) saved-name))
+		       (if (not first-pos)
+			   (set! first-pos p))
+		       (if (eq? (caddr expr) vname)
+			   (set! last-pos p))))))))
+	   vars))
+
+	;; -------- let-var->body --------
+	(define (let-var->body caller form body varlist)
+	  (if (and (len=1? body)                ; (let ((x y)) x) -> y, named let is possible here 
+		   (eq? (car body) (caar varlist))
+		   (pair? (cdar varlist)))     ; (let ((a))...)
+	      (lint-format "perhaps ~A" caller (lists->string form (cadar varlist))))
+	  ;; also (let ((x ...)) (let ((y x)...))) happens but it looks like automatically generated code or test suite junk
+	  
+	  ;; copied from letrec below -- happens about a dozen times
+	  (when (and (list? (cadr form)) ; not named let
+		     (len=1? (cddr form))
+		     (pair? (caddr form)))
+	    (let ((body (caddr form))
+		  (sym (caar varlist))
+		  (lform (and (pair? (caadr form))
+			      (pair? (cdaadr form))
+			      (cadar (cadr form)))))
+	      (if (and (len>1? lform)
+		       (eq? (car lform) 'lambda)
+		       (proper-list? (cadr lform)))
+		  ;; unlike in letrec, here there can't be recursion (ref to same name is ref to outer env)
+		  (if (eq? sym (car body))
+		      (if (not (tree-memq sym (cdr body)))
+			  ;; (let ((x (lambda (y) (+ y (x (- y 1)))))) (x 2)) -> (let ((y 2)) (+ y (x (- y 1))))
+			  (lint-format "perhaps ~A" caller
+				       (lists->string form 
+						      (cons 'let 
+							    (cons (map list (cadr lform) (cdr body))
+								  (cddr lform))))))
+		      (if (tree-nonce sym body)
+			  (let ((call (find-call sym body)))
+			    (when (pair? call) 
+			      (let ((new-call (cons 'let 
+						    (cons (map list (cadr lform) (cdr call))
+							  (cddr lform)))))
+				;; (let ((f60 (lambda (x) (* 2 x)))) (+ 1 (f60 y))) -> (+ 1 (let ((x y)) (* 2 x)))
+				(lint-format "perhaps ~A" caller
+					     (lists->string form (tree-subst new-call call body))))))))))))
+
+	;; -------- combine-lets --------
+	(define (combine-lets caller form varlist env)
+	  (when (and (pair? (cadr form))
+		     (len=1? (cddr form))
+		     (pair? (caddr form)))
+	    (let ((inner (caddr form))  ; the inner let
+		  (outer-vars (cadr form)))
+	      
+	      (when (len>1? (cdr inner))
+		(let ((inner-vars (cadr inner)))
+		  (when (and (eq? (car inner) 'let)
+			     (symbol? inner-vars))
+		    (let ((named-body (cdddr inner))
+			  (named-args (caddr inner)))
+		      (unless (any? (lambda (v)
+				      (or (not (pair? v))
+					  (not (tree-nonce (car v) named-args))
+					  (tree-memq (car v) named-body)))
+				    varlist)
+			(let ((new-args (copy named-args)))
+			  (for-each (lambda (v)
+				      (set! new-args (tree-subst (cadr v) (car v) new-args)))
+				    varlist)
+			  ;; (let ((x 1) (y (f g 2))) (let loop ((a (+ x 1)) (b y)) (loop a b))) -> (let loop ((a (+ 1 1)) (b (f g 2))) (loop a b))
+			  (lint-format "perhaps ~A" caller
+				       (lists->string form
+						      (cons 'let 
+							    (cons inner-vars 
+								  (cons new-args named-body)))))))))
+		  
+		  ;; maybe more code than this is worth -- combine lets
+		  (when (and (memq (car inner) '(let let*))
+			     (pair? inner-vars))
+		    
+		    (define (letstar . lets)
+		      (let loop ((vars (list 'curlet)) (forms lets))
+			(and (pair? forms)
+			     (or (and (pair? (car forms))
+				      (or (tree-set-member vars (car forms))
+					  (any? (lambda (a) 
+						  (or (not (pair? a))
+						      (not (pair? (cdr a))) 
+						      (side-effect? (cadr a) env)))
+						(car forms))))
+				 (loop (append (map car (car forms)) vars) 
+				       (cdr forms))))))
+		    
+		    (cond ((and (null? (cdadr form))   ; let(1) + let* -> let*
+				(eq? (car inner) 'let*)
+				(not (symbol? inner-vars))) ; not named let*
+			   ;; (let ((a 1)) (let* ((b (+ a 1)) (c (* b 2))) (display (+ a b c)))) -> (let* ((a 1) (b (+ a 1)) (c (* b 2))) (display (+ a b c)))
+			   (lint-format "perhaps ~A" caller
+					(lists->string form
+						       (cons 'let* 
+							     (cons (append outer-vars inner-vars)
+								   (one-call-and-dots (cddr inner)))))))
+			  ((and (len=1? (cddr inner))
+				(len>1? (caddr inner))
+				(eq? (caaddr inner) 'let)
+				(pair? (cadr (caddr inner))))
+			   (let* ((inner1 (cdaddr inner))
+				  (inner1-vars (car inner1)))
+			     (if (and (len=1? (cdr inner1))
+				      (len>1? (cadr inner1))
+				      (eq? (caadr inner1) 'let)
+				      (pair? (cadadr inner1)))
+				 (let* ((inner2 (cdadr inner1))
+					(inner2-vars (car inner2)))
+				   (if (not (letstar outer-vars
+						     inner-vars
+						     inner1-vars
+						     inner2-vars))
+				       ;; (let ((a 1)) (let ((b 2)) (let ((c 3)) (let ((d 4)) (+ a b c d))))) -> (let ((a 1) (b 2) (c 3) (d 4)) (+ a b c d))
+				       (lint-format "perhaps ~A" caller
+						    (lists->string form
+								   (cons 'let 
+									 (cons (append outer-vars inner-vars inner1-vars inner2-vars)
+									       (one-call-and-dots (cdr inner2))))))))
+				 (if (not (letstar outer-vars
+						   inner-vars
+						   inner1-vars))
+				     ;; (let ((b 2)) (let ((c 3)) (let ((d 4)) (+ a b c d)))) -> (let ((b 2) (c 3) (d 4)) (+ a b c d))
+				     (lint-format "perhaps ~A" caller
+						  (lists->string form
+								 (cons 'let 
+								       (cons (append outer-vars inner-vars inner1-vars)
+									     (one-call-and-dots (cdr inner1))))))))))
+			  ((not (letstar outer-vars
+					 inner-vars))
+			   ;; (let ((c 3)) (let ((d 4)) (+ a b c d))) -> (let ((c 3) (d 4)) (+ a b c d))
+			   (lint-format "perhaps ~A" caller
+					(lists->string form
+						       (cons 'let 
+							     (cons (append outer-vars inner-vars)
+								   (one-call-and-dots (cddr inner)))))))
+			  
+			  ((and (null? (cdadr form))   ; 1 outer var
+				(pair? inner-vars)  
+				(null? (cdadr inner))) ; 1 inner var, dependent on outer
+			   ;; (let ((x 0)) (let ((y (g 0))) (+ x y))) -> (let* ((x 0) (y (g 0))) (+ x y))
+			   (lint-format "perhaps ~A" caller
+					(lists->string form
+						       (cons 'let* 
+							     (cons (append outer-vars inner-vars)
+								   (one-call-and-dots (cddr inner))))))))))))))
+
+	;; -------- tighten-let --------
+	(define (tighten-let caller form vars env)
+	  (let ((body (cddr form))
+		(varlist (cadr form)))
+	    ;; define et al are like a continuation of the let bindings, so we can't restrict them by accident
+	    ;;   (let ((x 1)) (define y x) ...)
+	    (let ((last-refs (map (lambda (v) 
+				    (vector (var-name v) #f 0 v))
+				  vars))
+		  (got-lambdas (tree-set-car-member '(lambda lambda*) body)))
+	      ;; (let ((x #f) (y #t)) (set! x (lambda () y)) (set! y 5) (x))
+	      (do ((p body (cdr p))
+		   (i 0 (+ i 1)))
+		  ((null? p)
+		   (let ((end 0))
+		     (for-each (lambda (v)
+				 (set! end (max end (v 2))))
+			       last-refs)
+		     (if (and (< end (/ i lint-let-reduction-factor))
+			      (eq? form lint-current-form)
+			      (< (tree-leaves (car body)) 100))
+			 (let ((old-start (let ((old-pp ((funclet lint-pretty-print) '*pretty-print-left-margin*)))
+					    (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) (+ lint-left-margin 4))
+					    (let ((res (lint-pp (cons 'let 
+								      (cons (cadr form) 
+									    (copy body (make-list (+ end 1))))))))
+					      (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) old-pp)
+					      res))))
+			   (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
+					(+ lint-left-margin 4) #\space
+					(truncated-list->string form)
+					(+ lint-left-margin 4) #\space
+					old-start
+					(+ lint-left-margin 4) #\space
+					(lint-pp (list-ref body (+ end 1)))))
+			 (begin
+			   ;; look for bindings that can be severely localized 
+			   (let ((locals (map (lambda (v)
+						(if (and (integer? (v 1))
+							 (< (- (v 2) (v 1)) 2)
+							 (code-constant? (var-initial-value (v 3))))
+						    v
+						    (values)))
+					      last-refs)))
+			     ;; should this omit cases where most of the let is in the one or two lines?
+			     (when (pair? locals)
+			       (set! locals (sort! locals (lambda (a b) 
+							    (or (< (a 1) (b 1))
+								(< (a 2) (b 2))))))
+			       (do ((lv locals (cdr lv)))
+				   ((null? lv))
+				 (let* ((v (car lv))
+					(cur-line (v 1)))
+				   (let gather ((pv lv) (cur-vars ()) (max-line (v 2)))
+				     (if (or (null? (cdr pv))
+					     (not (= cur-line ((cadr pv) 1))))
+					 (begin
+					   (set! cur-vars (reverse (cons (car pv) cur-vars)))
+					   (set! max-line (max max-line ((car pv) 2)))
+					   (set! lv pv)
+					   (lint-format "~{~A~^, ~} ~A only used in expression~A (of ~A),~%~NC~A~A of~%~NC~A" caller
+							(map (lambda (v) (v 0)) cur-vars)
+							(if (null? (cdr cur-vars)) "is" "are")
+							(format #f (if (= cur-line max-line)
+								       (values " ~D" (+ cur-line 1))
+								       (values "s ~D and ~D" (+ cur-line 1) (+ max-line 1))))
+							(length body)
+							(+ lint-left-margin 6) #\space
+							(truncated-list->string (list-ref body cur-line))
+							(if (= cur-line max-line)
+							    ""
+							    (format #f "~%~NC~A" 
+								    (+ lint-left-margin 6) #\space
+								    (truncated-list->string (list-ref body max-line))))
+							(+ lint-left-margin 4) #\space
+							(truncated-list->string form)))
+					 (gather (cdr pv) 
+						 (cons (car pv) cur-vars) 
+						 (max max-line ((car pv) 2)))))))))
+			   (let ((mnv ())
+				 (cur-end i))
+			     (for-each (lambda (v)
+					 (when (and (or (null? mnv)
+							(<= (v 2) cur-end))
+						    (positive? (var-ref (v 3)))
+						    (let ((expr (var-initial-value (v 3))))
+						      (not (any? (lambda (ov) ; watch out for shadowed vars
+								   (tree-memq (car ov) expr))
+								 varlist))))
+					   (set! mnv (if (= (v 2) cur-end)
+							 (cons v mnv)
+							 (list v)))
+					   (set! cur-end (v 2))))
+				       last-refs)
+			     
+			     ;; look for vars used only at the start of the let
+			     (when (and (pair? mnv)
+					(< cur-end (/ i lint-let-reduction-factor))
+					(> (- i cur-end) 3))
+			       ;; mnv is in the right order because last-refs is reversed
+			       (lint-format "the scope of ~{~A~^, ~} could be reduced: ~A" caller 
+					    (map (lambda (v) (v 0)) mnv)
+					    (lists->string form
+							   `(let ,(map (lambda (v)
+									 (if (member (car v) mnv (lambda (a b) (eq? a (b 0))))
+									     (values)
+									     v))
+								       varlist)
+							      (let ,(map (lambda (v)
+									   (list (v 0) (var-initial-value (v 3))))
+									 mnv)
+								,@(copy body (make-list (+ cur-end 1))))
+							      ,(list-ref body (+ cur-end 1))
+							      ...)))))))))
+		
+		;; body of do loop above
+		(if (and (not got-lambdas)
+			 (pair? (car p))
+			 (pair? (cdr p))
+			 (eq? (caar p) 'set!)
+			 (var-member (cadar p) vars)
+			 (not (tree-memq (cadar p) (cdr p))))
+		    (if (not (side-effect? (caddar p) env))     ;  (set! v0 (channel->vct 1000 100)) -> (channel->vct 1000 100)
+			(lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form))
+			(lint-format "perhaps ~A" caller (lists->string (car p) (caddar p)))))
+		;; 1 use in cadr and none thereafter happens a few times, but looks like set-as-documentation mostly
+		
+		(for-each (lambda (v)
+			    (when (tree-memq (v 0) (car p))
+			      (set! (v 2) i)
+			      (if (not (v 1)) (set! (v 1) i))))
+			  last-refs)))))
+
+	;; -------- let-ends-in-set --------
+	(define (let-ends-in-set caller form env)
+	  (let ((body (cddr form))
+		(varlist (cadr form)))
+	    ;; if last is (set! local-var...) and no complications, complain
+	    (let ((last (list-ref body (- (length body) 1))))
+	      (when (and (len>2? last)
+			 (eq? (car last) 'set!)
+			 (symbol? (cadr last))
+			 (assq (cadr last) varlist)       ; (let ((a 1) (b (display 2))) (set! a 2))
+			 ;; this is overly restrictive:
+			 (not (tree-set-member '(call/cc call-with-current-continuation curlet lambda lambda*) form)))
+		(lint-format "set! is pointless in ~A: use ~A" caller
+			     last (caddr last))))))
+	    
+	;; -------- pointless-var --------
+	(define (pointless-var caller form env)
+	  (let ((varlist (cadr form))
+		(body (cddr form)))
+	    ;; if var val is symbol, val not used (not set!) in body (even hidden via function call)
+	    ;;   and var not set!, and not a function parameter (we already reported those),
+	    ;;   remove it (the var) and replace with val throughout
+	    
+	    (when (and (proper-list? varlist)
+		       (not (tree-set-member '(curlet lambda lambda* define define*) body)))
+	      (do ((changes ())
+		   (vs (cadr form) (cdr vs)))
+		  ((null? vs)
+		   (if (pair? changes)
+		       (let ((new-form (copy form)))
+			 (for-each 
+			  (lambda (v)
+			    (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
+			    (set! new-form (tree-subst (cadr v) (car v) new-form)))
+			  changes)
+			 (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
+				      (if (pair? (cdr changes)) "s" "")
+				      changes 
+				      (if (pair? (cdr changes)) "are" "is")
+				      (lists->string form 
+						     (if (< (tree-leaves new-form) 200)
+							 new-form
+							 (cons 'let 
+							       (cons (cadr new-form)
+								     (one-call-and-dots (cddr new-form))))))))))
+		(let ((v (car vs)))
+		  (when (and (len=2? v)
+			     (symbol? (cadr v))
+			     (not (set-target (cadr v) body env))
+			     (not (set-target (car v) body env))
+			     (let ((data (var-member (cadr v) env)))
+			       (or (not (var? data))
+				   (and (not (eq? (var-definer data) 'parameter))
+					(or (null? (var-setters data))
+					    (not (tree-set-member (var-setters data) body)))))))
+		    (set! changes (cons v changes))))))))
+	    
+
 	;; -------- let-walker --------
 	(define (let-walker caller form env)
 	  (if (or (< (length form) 3)
@@ -17337,108 +17863,24 @@
 	      ;; (let ((a 1) (set! a 2)))
 	      (lint-format "let is messed up: ~A" caller (truncated-list->string form))
 	      (let ((named-let (and (symbol? (cadr form)) (cadr form))))
-		(if (keyword? named-let)
-		     ;; (let :x ((i y)) (x i))
-		     (lint-format "bad let name: ~A" caller named-let))
+		(if (keyword? named-let)          ; (let :x ((i y)) (x i))
+		    (lint-format "bad let name: ~A" caller named-let))
+		
+		(unless named-let
+		  (remove-null-let caller form env))
 
-		 (unless named-let
-		   (if (and (null? (cadr form)) ; this can be fooled by macros that define things
-			    (not (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
-						    define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-						    load eval eval-string require unquote)
-						  (cddr form))))
-		       ;; (begin (let () (display x)) y)
-		       (if (or (eq? form lint-current-form) ; i.e. we're in a body?
-			       (null? (cdddr form)))
-			   (lint-format "pointless let: ~A" caller (truncated-list->string form))
-			   (if (every? (lambda (p)
-					 (or (not (pair? p))
-					     (hash-table-ref built-in-functions (car p))
-					     (hash-table-ref syntaces (car p))
-					     (not (side-effect? p env))))
-				       (cddr form))
-			       (lint-format "let could be begin: ~A" caller 
-					    (truncated-lists->string form (cons 'begin (cddr form))))))
-		       (let ((body (cddr form)))
-			 (when (and (null? (cdr body))
-				    (len>1? (car body)))
-			   (if (memq (caar body) '(let let*))
-			       (if (null? (cadr form))
-				   ;; (let () (let ((a x)) (+ a 1)))
-				   (lint-format "pointless let: ~A" caller (lists->string form (car body)))
-				   (if (null? (cadar body))
-				       ;; (let ((a x)) (let () (+ a 1)))
-				       (lint-format "pointless let: ~A" caller (lists->string form (cons 'let (cons (cadr form) (cddar body)))))))
-			       (if (and (memq (caar body) '(lambda lambda*)) ; or any definer?
-					(null? (cadr form)))
-				   ;; (let () (lambda (a b) (if (positive? a) (+ a b) b))) -> (lambda (a b) (if (positive? a) (+ a b) b))
-				   (lint-format "pointless let: ~A" caller (lists->string form (car body)))))))))
-
-		 (let ((vars (declare-named-let caller form env))
-		       (varlist ((if named-let caddr cadr) form))
-		       (body ((if named-let cdddr cddr) form)))
-		   
-		   (if (not (list? varlist))
-		       (lint-format "let is messed up: ~A" caller (truncated-list->string form))
-		       (if (and (null? varlist)
-				(len=1? body)
-				(not (side-effect? (car body) env)))
-			   ;; (let xx () z)
-			   (lint-format "perhaps ~A" caller (lists->string form (car body)))))
-		   
-		   (do ((bindings varlist (cdr bindings)))
-		       ((not (pair? bindings))
-			(if (not (null? bindings))
-			    ;; (let ((a 1) . b) a)
-			    (lint-format "let variable list is not a proper list? ~S" caller varlist)))
-		     (when (binding-ok? caller 'let (car bindings) env #f)
-		       (let ((val (cadar bindings)))
-			 (if (and (pair? val)
-				  (eq? 'lambda (car val))
-				  (tree-car-member (caar bindings) val)
-				  (not (var-member (caar bindings) env)))
-			     ;; (let ((x (lambda (a) (x 1)))) x)
-			     (lint-format "let variable ~A is called in its binding?  Perhaps let should be letrec: ~A"
-					  caller (caar bindings) 
-					  (truncated-list->string bindings))
-			     (unless named-let
-			       (for-each (lambda (v)
-					   (if (and (tree-memq (var-name v) (cadar bindings))
-						    (not (hash-table-ref built-in-functions (var-name v)))
-						    (not (tree-table-member binders (cadar bindings))))
-					       (if (not (var-member (var-name v) env))
-						   ;; (let ((x 1) (y x)) (+ x y)): x in (y x)
-						   (lint-format "~A in ~A does not appear to be defined in the calling environment" caller
-								(var-name v) (car bindings))
-						   ;; (let ((x 3)) (+ x (let ((x 1) (y x)) (+ x y)))): x in (y x)
-						   (lint-format "~A in ~A refers to the caller's ~A, not the let variable" caller
-								(var-name v) (car bindings) (var-name v)))))
-					 vars)))
-			 (let ((e (if (symbol? val)
-				      (set-ref val caller form env)
-				      (lint-walk caller val env))))
-			   (if (and (pair? e)
-				    (not (eq? e env))
-				    (memq (var-name (car e)) '(:lambda :dilambda)))
-			       (let ((ldata (cdar e)))
-				 (set! (var-name (car e)) (caar bindings))
-				 (set! (ldata 'initial-value) val)
-				 (set! vars (cons (car e) vars)))
-			       (set! vars (cons (make-var :name (caar bindings) 
-							  :initial-value val 
-							  :definer (if named-let 'named-let 'let))
-					  vars)))))))
-		   
-		   (check-unordered-exprs caller form 
-					  (map (if (not named-let)
-						   var-initial-value
-						   (lambda (v)
-						     (if (eq? (var-name v) named-let)
-							 (values)
-							 (var-initial-value v))))
-					       vars)
-					  env)
-
+		(let ((vars (declare-named-let caller form env))
+		      (varlist ((if named-let caddr cadr) form))
+		      (body ((if named-let cdddr cddr) form)))
+		  (if (not (list? varlist))
+		      (lint-format "let is messed up: ~A" caller (truncated-list->string form))
+		      (if (and (null? varlist)
+			       (len=1? body)
+			       (not (side-effect? (car body) env))) ; (let xx () z)
+			  (lint-format "perhaps ~A" caller (lists->string form (car body)))))
+		  
+		  (set! vars (walk-let-vars caller form varlist vars env))
+		  
 #|
 		   (if (and (not named-let)
 			    (pair? varlist)
@@ -17771,448 +18213,32 @@
 				(symbol? lint-function-name))
 		       (evert-function-locals form vars env))
 		     
-		     ;; look for splittable lets and let-temporarily possibilities
 		     (when (and (pair? (cadr form))
 				(pair? (caadr form)))
-		       (for-each 
-			(lambda (local-var)
-			  (let ((vname (var-name local-var)))
-			    
-			    ;; ideally we'd collect vars that fit into one let etc
-			    (when (> (length body) (* 5 (var-set local-var)) 0)
-			      (do ((i 0 (+ i 1))
-				   (preref #f)
-				   (p body (cdr p)))
-				  ((or (not (pair? (cdr p)))
-				       (and (pair? (car p))
-					    (eq? (caar p) 'set!)
-					    (eq? (cadar p) vname)
-					    (> i 5)
-					    (begin
-					      (if (or preref
-						      (side-effect? (var-initial-value local-var) env))
-						  ;; (let ((x 32)) (display x) (set! y (f x)) (g (+ x 1) y) (a y) (f y) (g y) (h y) (i y) (set! x 3) (display x) (h y x))
-						  ;;     (let ... (let ((x 3)) ...))
-						  (lint-format "perhaps add a new binding for ~A to replace ~A: ~A" caller
-							       vname
-							       (truncated-list->string (car p))
-							       (lists->string form
-									      `(let ...
-										 (let ((,vname ,(caddar p)))
-										   ...))))
-						  ;; (let ((x 32)) (set! y (f 1)) (a y) (f y) (g y) (h y) (i y) (set! x (+ x... -> (let () ... (let ((x (+ 32 1))) ...))
-						  (lint-format "perhaps move the ~A binding to replace ~A: ~A" caller
-							       vname 
-							       (truncated-list->string (car p))
-							       (let ((new-value (if (tree-memq vname (caddar p))
-										    (tree-subst (var-initial-value local-var) vname (copy (caddar p)))
-										    (caddar p))))
-								 (lists->string form 
-										`(let ,(let rewrite ((lst (cadr form)))
-											 (cond ((null? lst) ())
-											       ((and (pair? (car lst))
-												     (eq? (caar lst) vname))
-												(rewrite (cdr lst)))
-											       (else (cons (if (< (tree-leaves (cadar lst)) 30)
-													       (car lst)
-													       (list (caar lst) '...))
-													   (rewrite (cdr lst))))))
-										   ...
-										   (let ((,vname ,new-value))
-										     ...))))))
-					      #t))))
-				(if (tree-memq vname (car p))
-				    (set! preref i))))
-			    
-			    (when (and (zero? (var-set local-var))
-				       (= (var-ref local-var) 2)) ; initial value and set!'s value
-			      (do ((saved-name (var-initial-value local-var))
-				   (p body (cdr p))
-				   (last-pos #f)
-				   (first-pos #f))
-				  ((not (pair? p))
-				   (when (and (pair? last-pos)
-					      (not (eq? first-pos last-pos))
-					      (not (tree-equal-member saved-name (cdr last-pos))))
-				     ;; (let ((old-x x)) (set! x 12) (display (log x)) (set! x 1) (set! x old-x)) ->
-				     ;;    (let-temporarily ((x 12)) (display (log x)) (set! x 1))
-				     ;; the pattern (set! x y) ... (set! y x) happens a few times (say 5 to 10)
-				     (lint-format "perhaps use let-temporarily here: ~A" caller
-						  (lists->string form
-								 (let ((new-let (cons 'let-temporarily 
-										      (cons (list (list saved-name 
-													(if (pair? first-pos) 
-													    (caddar first-pos) 
-													    saved-name)))
-											    (map (lambda (expr)
-												   (if (or (and (pair? first-pos)
-														(eq? expr (car first-pos)))
-													   (eq? expr (car last-pos)))
-												       (values)
-												       expr))
-												 body)))))
-								   (if (null? (cdr vars)) ; we know vars is a pair, want len=1
-								       new-let
-								       (list 'let (map (lambda (v)
-											 (if (eq? (car v) vname)
-											     (values)
-											     v))
-										       (cadr form))
-									     new-let)))))))
-				;; someday maybe look for additional saved vars, but this happens only in snd-test
-				;;   also the let-temp could be reduced to the set locations (so the tree-equal-member
-				;;   check above would be unneeded).
-				(let ((expr (car p)))
-				  (when (and (len>2? expr)
-					     (eq? (car expr) 'set!)
-					     (equal? (cadr expr) saved-name))
-				    (if (not first-pos)
-					(set! first-pos p))
-				    (if (eq? (caddr expr) vname)
-					(set! last-pos p))))))))
-			vars)))
+		       (split-let caller form body vars env)))
 		   
 		   (when (and (len=1? varlist)
 			      (pair? (car varlist)))
+		     (let-var->body caller form body varlist))
 		     
-		     (if (and (len=1? body)                ; (let ((x y)) x) -> y, named let is possible here 
-			      (eq? (car body) (caar varlist))
-			      (pair? (cdar varlist)))     ; (let ((a))...)
-			 (lint-format "perhaps ~A" caller (lists->string form (cadar varlist))))
-		     ;; also (let ((x ...)) (let ((y x)...))) happens but it looks like automatically generated code or test suite junk
-		     
-		     ;; copied from letrec below -- happens about a dozen times
-		     (when (and (not named-let)
-				(len=1? (cddr form))
-				(pair? (caddr form)))
-		       (let ((body (caddr form))
-			     (sym (caar varlist))
-			     (lform (and (pair? (caadr form))
-					 (pair? (cdaadr form))
-					 (cadar (cadr form)))))
-			 (if (and (len>1? lform)
-				  (eq? (car lform) 'lambda)
-				  (proper-list? (cadr lform)))
-			     ;; unlike in letrec, here there can't be recursion (ref to same name is ref to outer env)
-			     (if (eq? sym (car body))
-				 (if (not (tree-memq sym (cdr body)))
-				     ;; (let ((x (lambda (y) (+ y (x (- y 1)))))) (x 2)) -> (let ((y 2)) (+ y (x (- y 1))))
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form 
-								 (cons 'let 
-								       (cons (map list (cadr lform) (cdr body))
-									     (cddr lform))))))
-				 (if (tree-nonce sym body)
-				     (let ((call (find-call sym body)))
-				       (when (pair? call) 
-					 (let ((new-call (cons 'let 
-							       (cons (map list (cadr lform) (cdr call))
-								     (cddr lform)))))
-					   ;; (let ((f60 (lambda (x) (* 2 x)))) (+ 1 (f60 y))) -> (+ 1 (let ((x y)) (* 2 x)))
-					   (lint-format "perhaps ~A" caller
-							(lists->string form (tree-subst new-call call body))))))))))))
-		   
 		   (when (pair? body)
 		     (when (len>2? (car body))
 		       (let-body->value caller form vars env))
-
 		     (unless named-let
-		       
-		       ;; if var val is symbol, val not used (not set!) in body (even hidden via function call)
-		       ;;   and var not set!, and not a function parameter (we already reported those),
-		       ;;   remove it (the var) and replace with val throughout
-
-		       (when (and (proper-list? (cadr form))
-				  (not (tree-set-member '(curlet lambda lambda* define define*) (cddr form))))
-			 (do ((changes ())
-			      (vs (cadr form) (cdr vs)))
-			     ((null? vs)
-			      (if (pair? changes)
-				  (let ((new-form (copy form)))
-				    (for-each 
-				     (lambda (v)
-				       (list-set! new-form 1 (remove-if (lambda (p) (equal? p v)) (cadr new-form)))
-				       (set! new-form (tree-subst (cadr v) (car v) new-form)))
-				     changes)
-				    (lint-format "assuming we see all set!s, the binding~A ~{~A~^, ~} ~A pointless: perhaps ~A" caller
-						 (if (pair? (cdr changes)) "s" "")
-						 changes 
-						 (if (pair? (cdr changes)) "are" "is")
-						 (lists->string form 
-								(if (< (tree-leaves new-form) 200)
-								    new-form
-								    (cons 'let 
-									  (cons (cadr new-form)
-										(one-call-and-dots (cddr new-form))))))))))
-			   (let ((v (car vs)))
-			     (when (and (len=2? v)
-					(symbol? (cadr v))
-					(not (set-target (cadr v) body env))
-					(not (set-target (car v) body env))
-					(let ((data (var-member (cadr v) env)))
-					  (or (not (var? data))
-					      (and (not (eq? (var-definer data) 'parameter))
-						   (or (null? (var-setters data))
-						       (not (tree-set-member (var-setters data) body)))))))
-			       (set! changes (cons v changes))))))
-		       
+		       (pointless-var caller form env)		       
 		       (when (pair? varlist)
-
-			 ;; if last is (set! local-var...) and no complications, complain
-			 (let ((last (list-ref body (- (length body) 1))))
-			   (when (and (len>2? last)
-				      (eq? (car last) 'set!)
-				      (symbol? (cadr last))
-				      (assq (cadr last) varlist)       ; (let ((a 1) (b (display 2))) (set! a 2))
-				      ;; this is overly restrictive:
-				      (not (tree-set-member '(call/cc call-with-current-continuation curlet lambda lambda*) form)))
-			     (lint-format "set! is pointless in ~A: use ~A" caller
-					  last (caddr last))))
-
+			 (let-ends-in-set caller form env)
 			 (when (and (pair? (car body))
 				    (eq? (caar body) 'do))
 			   (normal-let->do caller form env))
-
 			 (when (and (> (length body) 3)  ; setting this to 1 did not catch anything new
 				    (every? pair? varlist)
 				    (not (tree-set-car-member '(define define* define-macro define-macro* 
 								 define-bacro define-bacro* define-constant define-expansion) 
 							      body)))
-			   ;; define et al are like a continuation of the let bindings, so we can't restrict them by accident
-			   ;;   (let ((x 1)) (define y x) ...)
-			   (let ((last-refs (map (lambda (v) 
-						   (vector (var-name v) #f 0 v))
-						 vars))
-				 (got-lambdas (tree-set-car-member '(lambda lambda*) body)))
-			     ;; (let ((x #f) (y #t)) (set! x (lambda () y)) (set! y 5) (x))
-			     (do ((p body (cdr p))
-				  (i 0 (+ i 1)))
-				 ((null? p)
-				  (let ((end 0))
-				    (for-each (lambda (v)
-						(set! end (max end (v 2))))
-					      last-refs)
-				    (if (and (< end (/ i lint-let-reduction-factor))
-					     (eq? form lint-current-form)
-					     (< (tree-leaves (car body)) 100))
-					(let ((old-start (let ((old-pp ((funclet lint-pretty-print) '*pretty-print-left-margin*)))
-							   (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) (+ lint-left-margin 4))
-							   (let ((res (lint-pp (cons 'let 
-										     (cons (cadr form) 
-											   (copy body (make-list (+ end 1))))))))
-							     (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) old-pp)
-							     res))))
-					  (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
-						       (+ lint-left-margin 4) #\space
-						       (truncated-list->string form)
-						       (+ lint-left-margin 4) #\space
-						       old-start
-						       (+ lint-left-margin 4) #\space
-						       (lint-pp (list-ref body (+ end 1)))))
-					(begin
-					  ;; look for bindings that can be severely localized 
-					  (let ((locals (map (lambda (v)
-							       (if (and (integer? (v 1))
-									(< (- (v 2) (v 1)) 2)
-									(code-constant? (var-initial-value (v 3))))
-								   v
-								   (values)))
-							     last-refs)))
-					    ;; should this omit cases where most of the let is in the one or two lines?
-					    (when (pair? locals)
-					      (set! locals (sort! locals (lambda (a b) 
-									   (or (< (a 1) (b 1))
-									       (< (a 2) (b 2))))))
-					      (do ((lv locals (cdr lv)))
-						  ((null? lv))
-						(let* ((v (car lv))
-						       (cur-line (v 1)))
-						  (let gather ((pv lv) (cur-vars ()) (max-line (v 2)))
-						    (if (or (null? (cdr pv))
-							    (not (= cur-line ((cadr pv) 1))))
-							(begin
-							  (set! cur-vars (reverse (cons (car pv) cur-vars)))
-							  (set! max-line (max max-line ((car pv) 2)))
-							  (set! lv pv)
-							  (lint-format "~{~A~^, ~} ~A only used in expression~A (of ~A),~%~NC~A~A of~%~NC~A" caller
-								       (map (lambda (v) (v 0)) cur-vars)
-								       (if (null? (cdr cur-vars)) "is" "are")
-								       (format #f (if (= cur-line max-line)
-										      (values " ~D" (+ cur-line 1))
-										      (values "s ~D and ~D" (+ cur-line 1) (+ max-line 1))))
-								       (length body)
-								       (+ lint-left-margin 6) #\space
-								       (truncated-list->string (list-ref body cur-line))
-								       (if (= cur-line max-line)
-									   ""
-									   (format #f "~%~NC~A" 
-										   (+ lint-left-margin 6) #\space
-										   (truncated-list->string (list-ref body max-line))))
-								       (+ lint-left-margin 4) #\space
-								       (truncated-list->string form)))
-							(gather (cdr pv) 
-								(cons (car pv) cur-vars) 
-								(max max-line ((car pv) 2)))))))))
-					  (let ((mnv ())
-						(cur-end i))
-					    (for-each (lambda (v)
-							(when (and (or (null? mnv)
-								       (<= (v 2) cur-end))
-								   (positive? (var-ref (v 3)))
-								   (let ((expr (var-initial-value (v 3))))
-								     (not (any? (lambda (ov) ; watch out for shadowed vars
-										  (tree-memq (car ov) expr))
-										varlist))))
-							  (set! mnv (if (= (v 2) cur-end)
-									(cons v mnv)
-									(list v)))
-							  (set! cur-end (v 2))))
-						      last-refs)
-					    
-					    ;; look for vars used only at the start of the let
-					    (when (and (pair? mnv)
-						       (< cur-end (/ i lint-let-reduction-factor))
-						       (> (- i cur-end) 3))
-					      ;; mnv is in the right order because last-refs is reversed
-					      (lint-format "the scope of ~{~A~^, ~} could be reduced: ~A" caller 
-							   (map (lambda (v) (v 0)) mnv)
-							   (lists->string form
-									  `(let ,(map (lambda (v)
-											(if (member (car v) mnv (lambda (a b) (eq? a (b 0))))
-											    (values)
-											    v))
-										      varlist)
-									     (let ,(map (lambda (v)
-											  (list (v 0) (var-initial-value (v 3))))
-											mnv)
-									       ,@(copy body (make-list (+ cur-end 1))))
-									     ,(list-ref body (+ cur-end 1))
-									     ...)))))))))
-			       
-			       ;; body of do loop above
-			       (if (and (not got-lambdas)
-					(pair? (car p))
-					(pair? (cdr p))
-					(eq? (caar p) 'set!)
-					(var-member (cadar p) vars)
-					(not (tree-memq (cadar p) (cdr p))))
-				   (if (not (side-effect? (caddar p) env))     ;  (set! v0 (channel->vct 1000 100)) -> (channel->vct 1000 100)
-				       (lint-format "~A in ~A could be omitted" caller (car p) (truncated-list->string form))
-				       (lint-format "perhaps ~A" caller (lists->string (car p) (caddar p)))))
-			       ;; 1 use in cadr and none thereafter happens a few times, but looks like set-as-documentation mostly
-			       
-			       (for-each (lambda (v)
-					   (when (tree-memq (v 0) (car p))
-					     (set! (v 2) i)
-					     (if (not (v 1)) (set! (v 1) i))))
-					 last-refs))))))
-		     ) ; (when (pair? body)...)
+			   (tighten-let caller form vars env))))) ; (when (pair? body)...)
 
-		   ;; out of place and repetitive code...
-		   (when (and (pair? (cadr form))
-			      (len=1? (cddr form))
-			      (pair? (caddr form)))
-		     (let ((inner (caddr form))  ; the inner let
-			   (outer-vars (cadr form)))
-		       
-		       (when (len>1? (cdr inner))
-			 (let ((inner-vars (cadr inner)))
-			   (when (and (eq? (car inner) 'let)
-				      (symbol? inner-vars))
-			     (let ((named-body (cdddr inner))
-				   (named-args (caddr inner)))
-			       (unless (any? (lambda (v)
-					       (or (not (pair? v))
-						   (not (tree-nonce (car v) named-args))
-						   (tree-memq (car v) named-body)))
-					     varlist)
-				 (let ((new-args (copy named-args)))
-				   (for-each (lambda (v)
-					       (set! new-args (tree-subst (cadr v) (car v) new-args)))
-					     varlist)
-				   ;; (let ((x 1) (y (f g 2))) (let loop ((a (+ x 1)) (b y)) (loop a b))) -> (let loop ((a (+ 1 1)) (b (f g 2))) (loop a b))
-				   (lint-format "perhaps ~A" caller
-						(lists->string form
-							       (cons 'let 
-								     (cons inner-vars 
-									   (cons new-args named-body)))))))))
-			   
-			   ;; maybe more code than this is worth -- combine lets
-			   (when (and (memq (car inner) '(let let*))
-				      (pair? inner-vars))
-			     
-			     (define (letstar . lets)
-			       (let loop ((vars (list 'curlet)) (forms lets))
-				 (and (pair? forms)
-				      (or (and (pair? (car forms))
-					       (or (tree-set-member vars (car forms))
-						   (any? (lambda (a) 
-							   (or (not (pair? a))
-							       (not (pair? (cdr a))) 
-							       (side-effect? (cadr a) env)))
-							 (car forms))))
-					  (loop (append (map car (car forms)) vars) 
-						(cdr forms))))))
-			     
-			     (cond ((and (null? (cdadr form))   ; let(1) + let* -> let*
-					 (eq? (car inner) 'let*)
-					 (not (symbol? inner-vars))) ; not named let*
-				    ;; (let ((a 1)) (let* ((b (+ a 1)) (c (* b 2))) (display (+ a b c)))) -> (let* ((a 1) (b (+ a 1)) (c (* b 2))) (display (+ a b c)))
-				    (lint-format "perhaps ~A" caller
-						 (lists->string form
-								(cons 'let* 
-								      (cons (append outer-vars inner-vars)
-									    (one-call-and-dots (cddr inner)))))))
-				   ((and (len=1? (cddr inner))
-					 (len>1? (caddr inner))
-					 (eq? (caaddr inner) 'let)
-					 (pair? (cadr (caddr inner))))
-				    (let* ((inner1 (cdaddr inner))
-					   (inner1-vars (car inner1)))
-				      (if (and (len=1? (cdr inner1))
-					       (len>1? (cadr inner1))
-					       (eq? (caadr inner1) 'let)
-					       (pair? (cadadr inner1)))
-					  (let* ((inner2 (cdadr inner1))
-						 (inner2-vars (car inner2)))
-					    (if (not (letstar outer-vars
-							      inner-vars
-							      inner1-vars
-							      inner2-vars))
-						;; (let ((a 1)) (let ((b 2)) (let ((c 3)) (let ((d 4)) (+ a b c d))))) -> (let ((a 1) (b 2) (c 3) (d 4)) (+ a b c d))
-						(lint-format "perhaps ~A" caller
-							     (lists->string form
-									    (cons 'let 
-										  (cons (append outer-vars inner-vars inner1-vars inner2-vars)
-											(one-call-and-dots (cdr inner2))))))))
-					  (if (not (letstar outer-vars
-							    inner-vars
-							    inner1-vars))
-					      ;; (let ((b 2)) (let ((c 3)) (let ((d 4)) (+ a b c d)))) -> (let ((b 2) (c 3) (d 4)) (+ a b c d))
-					      (lint-format "perhaps ~A" caller
-							   (lists->string form
-									  (cons 'let 
-										(cons (append outer-vars inner-vars inner1-vars)
-										      (one-call-and-dots (cdr inner1))))))))))
-				   ((not (letstar outer-vars
-						  inner-vars))
-				    ;; (let ((c 3)) (let ((d 4)) (+ a b c d))) -> (let ((c 3) (d 4)) (+ a b c d))
-				    (lint-format "perhaps ~A" caller
-						 (lists->string form
-								(cons 'let 
-								      (cons (append outer-vars inner-vars)
-									    (one-call-and-dots (cddr inner)))))))
-				   
-				   ((and (null? (cdadr form))   ; 1 outer var
-					 (pair? inner-vars)  
-					 (null? (cdadr inner))) ; 1 inner var, dependent on outer
-				    ;; (let ((x 0)) (let ((y (g 0))) (+ x y))) -> (let* ((x 0) (y (g 0))) (+ x y))
-				    (lint-format "perhaps ~A" caller
-						 (lists->string form
-								(cons 'let* 
-								      (cons (append outer-vars inner-vars)
-									    (one-call-and-dots (cddr inner)))))))))))))
-		   ))) ; messed up let
+		   (combine-lets caller form varlist env)))) ; messed up let
 	   env)
 	 (hash-walker 'let let-walker)
 
