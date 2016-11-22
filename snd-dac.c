@@ -109,7 +109,7 @@ static mus_float_t speed(dac_info *dp, mus_float_t sr)
 {
   if (dp->never_sped)
     return((*(dp->dac_sample))(dp));
-  if (dp->src == NULL)
+  if (!dp->src)
     dp->src = mus_make_src(&dac_src_input_as_needed, sr, sinc_width(ss), (void *)dp);
   mus_set_increment(dp->src, sr);
   return(mus_src(dp->src, 0.0, &dac_src_input_as_needed));
@@ -306,7 +306,7 @@ static rev_info *make_nrev(snd_info *sp, int chans)
   int i, j, len;
   rev_info *r;
 
-  if (sp == NULL) return(NULL);
+  if (!sp) return(NULL);
 
   srscale = sp->reverb_control_length * snd_srate(sp) / 25641.0;
   for (i = 0; i < BASE_DLY_LEN; i++) 
@@ -491,7 +491,7 @@ static void dac_set_field(snd_info *sp, mus_float_t newval, dac_field_t field)
 		{
 		  dac_info *dp;
 		  dp = play_list[i];
-		  if ((dp) && ((sp == NULL) || (sp == dp->sp)))
+		  if ((dp) && ((!sp) || (sp == dp->sp)))
 		    {
 		      int val;
 		      switch (field)
@@ -644,7 +644,7 @@ static void stop_playing_with_toggle(dac_info *dp, dac_toggle_t toggle, with_hoo
   snd_info *sp = NULL;
   bool sp_stopping = false;
 
-  if ((dp == NULL) || (play_list == NULL)) return;
+  if ((!dp) || (!play_list)) return;
   sp = dp->sp;
   if ((sp) && (sp->inuse != SOUND_IDLE))
     {
@@ -919,7 +919,7 @@ static int find_slot_to_play(void)
 {
   int i, old_size;
 
-  if (play_list == NULL)
+  if (!play_list)
     {
       dac_max_sounds = INITIAL_MAX_SOUNDS;
       play_list = (dac_info **)calloc(dac_max_sounds, sizeof(dac_info *));
@@ -1051,7 +1051,7 @@ static void start_dac(int srate, int channels, play_process_t background, mus_fl
 	  /* in the "normal" (non-apply) case the reverb allocation is deferred until we're sure about the number of output channels */
 	  if ((dp->reverbing) && 
 	      (dp->sp) && 
-	      (global_rev == NULL))
+	      (!global_rev))
 	    make_reverb(dp->sp, channels);
 	  if (snd_dacp)
 	    {
@@ -1199,7 +1199,7 @@ void play_region_1(int region, play_process_t background, Xen stop_proc)
       dp = add_region_channel_to_play_list(region, i, 0, NO_END_SPECIFIED, i); /* i = out chan */
       if (dp) 
 	{
-	  if (rtn_dp == NULL) rtn_dp = dp;
+	  if (!rtn_dp) rtn_dp = dp;
 	}
     }
   if (rtn_dp)
@@ -1367,7 +1367,7 @@ static dac_info *play_sound_1(snd_info *sp, mus_long_t start, mus_long_t end, pl
       int pos;
       pos  = to_c_edit_position(sp->chans[i], edpos, caller, arg_pos);
       dp = add_channel_to_play_list(sp->chans[i], sp, start, end, pos, i); /* i = out chan */
-      if ((dp) && (rtn_dp == NULL)) rtn_dp = dp;
+      if ((dp) && (!rtn_dp)) rtn_dp = dp;
     }
   if (rtn_dp)
     {
@@ -1427,11 +1427,11 @@ static dac_info *play_channels_1(chan_info **cps, int chans, mus_long_t *starts,
       dp = add_channel_to_play_list(cps[i], sp, starts[i], ends[i], pos, i);
       if (dp) 
 	{
-	  if (rtn_dp == NULL) rtn_dp = dp;
+	  if (!rtn_dp) rtn_dp = dp;
 	  if (selection) dp->selection = true;
 	}
     }
-  if (ur_ends == NULL) free(ends);
+  if (!ur_ends) free(ends);
   if ((sp) && (rtn_dp)) 
     {
       rtn_dp->stop_procedure = stop_proc;
@@ -1649,7 +1649,7 @@ static int fill_dac_buffers(int write_ok)
 
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
-	      if (buf == NULL) continue;
+	      if (!buf) continue;
 	      revin = rev_ins[dp->audio_chan];
 	      switch (choose_dac_op(dp, sp))
 		{
@@ -1816,7 +1816,7 @@ static int fill_dac_buffers(int write_ok)
 		}
 	      if ((dp->end != NO_END_SPECIFIED) && (dp->end != 0))
 		{
-		  if ((dp->chn_fd->cb == NULL) ||
+		  if ((!dp->chn_fd->cb) ||
 		      ((dp->sp->speed_control_direction > 0) && 
 		       ((dp->chn_fd->at_eof) || 
 			(dp->end <= current_location(dp->chn_fd)))) ||
@@ -1988,7 +1988,7 @@ static void make_dac_buffers(void)
   /* make the per-channel buffers and audio output buffers */
   int bytes, i;
 
-  if ((dac_buffers == NULL) || 
+  if ((!dac_buffers) || 
       (dac_buffer_chans < snd_dacp->channels) || 
       (dac_buffer_size < snd_dacp->framples))
     {
@@ -2375,7 +2375,7 @@ static bool start_audio_output(void)
 	      /* deferred reverb allocation since start_audio_output_1 may force more chans open */
 	      if ((dp->reverbing) && 
 		  (dp->sp) && 
-		  (global_rev == NULL))
+		  (!global_rev))
 		make_reverb(dp->sp, snd_dacp->channels);
 
 	      if (dp->audio_chan >= snd_dacp->channels)
@@ -2417,13 +2417,13 @@ static idle_func_t dac_in_background(any_pointer_t ptr)
    *       1: loop sending data until the play_list is empty or some error (C-g) happens
    *       2: try to close all active outputs and remove background procedure
    */
-  if (snd_dacp == NULL) return(BACKGROUND_QUIT);
+  if (!snd_dacp) return(BACKGROUND_QUIT);
   switch (snd_dacp->slice)
     {
     case 0:
       if (start_audio_output())
 	{
-	  if (snd_dacp == NULL) return(BACKGROUND_QUIT);
+	  if (!snd_dacp) return(BACKGROUND_QUIT);
 	  snd_dacp->slice = 1;
 	  return(BACKGROUND_CONTINUE);
 	}
@@ -2436,8 +2436,8 @@ static idle_func_t dac_in_background(any_pointer_t ptr)
 
     case 1:
       fill_dac_buffers(WRITE_TO_DAC);
-      if (snd_dacp == NULL) return(BACKGROUND_QUIT); /* dac-hook called stop-playing or something equally perverse */
-      if ((global_rev == NULL) && (play_list_members == 0)) snd_dacp->slice = 2;
+      if (!snd_dacp) return(BACKGROUND_QUIT); /* dac-hook called stop-playing or something equally perverse */
+      if ((!global_rev) && (play_list_members == 0)) snd_dacp->slice = 2;
       return(BACKGROUND_CONTINUE);
       break;
 
@@ -2566,7 +2566,7 @@ static int new_player_index(void)
     }
 
   for (i = 1; i < players_size; i++)
-    if (players[i] == NULL)
+    if (!players[i])
       return(-i);
 
   old_size = players_size;
@@ -2619,9 +2619,9 @@ void clear_players(void)
       sp = players[i];
       if (sp)
 	for (j = 0; j < sp->nchans; j++)
-	  if ((sp->chans[j] == NULL) ||
+	  if ((!sp->chans[j]) ||
 	      (sp->chans[j]->active < CHANNEL_HAS_EDIT_LIST) ||
-	      (sp->chans[j]->sound == NULL))
+	      (!sp->chans[j]->sound))
 	    {
 	      int k;
 	      for (k = 0; k <= max_active_slot; k++)
@@ -2684,7 +2684,7 @@ static char *xen_player_to_string(xen_player *v)
 {
   #define PLAYER_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(PLAYER_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, PLAYER_PRINT_BUFFER_SIZE, "#<player %d>", v->n);
   return(buf);
@@ -2989,7 +2989,7 @@ If object is a string, it is assumed to be a file name: \n    " play_example "\n
     sp = get_player_sound(object);
   else sp = get_sp(object);
 
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_play, object));
 
   if ((with_sync) && 
@@ -3095,7 +3095,7 @@ to be played (via " S_start_playing ")."
 
   Snd_assert_channel(S_make_player, snd, chn, 1);
   true_sp = get_sp(snd);
-  if (true_sp == NULL) 
+  if (!true_sp) 
     return(snd_no_such_sound_error(S_make_player, snd));
 
   cp = get_cp(snd, chn, S_make_player);
@@ -3183,7 +3183,7 @@ channel number in the sound that contains the channel being played."
 				(Xen_is_llong(end)) ? Xen_llong_to_C_llong(end) : NO_END_SPECIFIED,
 				pos,
 				ochan);
-  if (dp == NULL) return(Xen_false);
+  if (!dp) return(Xen_false);
 
   dp->stop_procedure = stop_proc;
   if (Xen_is_procedure(stop_proc))

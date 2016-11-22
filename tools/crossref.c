@@ -69,7 +69,7 @@ int add_name(char *name, char *hdr)
 {
   int i;
   
-  if (name == NULL) return(-1);
+  if (!name) return(-1);
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
   
   /*
@@ -111,7 +111,7 @@ static int add_count(char *name, int curfile)
   for (i = 0; i < names_ctr; i++)
     if (local_strcmp(names[i], name))
       {
-	if (counts[i] == NULL) counts[i] = (int *)calloc(files_size, sizeof(int));
+	if (!counts[i]) counts[i] = (int *)calloc(files_size, sizeof(int));
 	counts[i][curfile] += 1;
 	return(i);
       }
@@ -604,7 +604,7 @@ int main(int argc, char **argv)
 				    {
 				      bool happy = false;
 				      int m;
-				      if (all_names == NULL)
+				      if (!all_names)
 					{
 					  all_names_size = 1024;
 					  all_names_top = 0;
@@ -659,7 +659,7 @@ int main(int argc, char **argv)
 					{
 					  if (procs[loc])
 					    results[loc] += get_result(input, j, k);
-					  if (lines[loc] == NULL)
+					  if (!lines[loc])
 					    {
 					      lines[loc] = (char **)calloc(MAX_LINES, sizeof(char *));
 					      lines[loc][0] = get_call(input, j, k, curname, chars, files[i]);
@@ -668,7 +668,7 @@ int main(int argc, char **argv)
 					    {
 					      int m;
 					      for (m = 0; m < MAX_LINES; m++)
-						if (lines[loc][m] == NULL)
+						if (!lines[loc][m])
 						  {
 						    lines[loc][m] = get_call(input, j, k, curname, chars, files[i]);
 						    break;
@@ -819,8 +819,8 @@ int main(int argc, char **argv)
 		  
 	      menu_case = (!local_strcmp(qs[i]->hname, "snd-menu.h"));
 	      file_case = (!local_strcmp(qs[i]->hname, "snd-file.h"));
-	      static_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
-	      ffitest_case = ((qs[i]->def != NULL) && (qs[i]->calls > 0));
+	      static_case = ((qs[i]->def) && (qs[i]->calls > 0));
+	      ffitest_case = ((qs[i]->def) && (qs[i]->calls > 0));
 
 	      menu_count  = 0;
 	      file_count = 0;
@@ -950,7 +950,7 @@ int main(int argc, char **argv)
 		    fprintf(FD, "\n");
 		    for (m = 0; m < MAX_LINES; m++)
 		      {
-			if (lines[qs[i]->i][m] == NULL) break;
+			if (!lines[qs[i]->i][m]) break;
 			fprintf(FD, "\n        %s", lines[qs[i]->i][m]);
 		      }
 		  }

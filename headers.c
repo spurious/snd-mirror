@@ -174,8 +174,8 @@ int mus_header_initialize(void)
       loop_modes = (int *)calloc(LOOPS, sizeof(int));
       loop_starts = (int *)calloc(LOOPS, sizeof(int));
       loop_ends = (int *)calloc(LOOPS, sizeof(int));
-      if ((hdrbuf == NULL) || (aux_comment_start == NULL) || (aux_comment_end == NULL) ||
-	  (loop_modes == NULL) || (loop_starts == NULL) || (loop_ends == NULL))
+      if ((!hdrbuf) || (!aux_comment_start) || (!aux_comment_end) ||
+	  (!loop_modes) || (!loop_starts) || (!loop_ends))
 	return(mus_error(MUS_MEMORY_ALLOCATION_FAILED, "mus_header_initialize: buffer allocation failed"));
     }
   return(MUS_NO_ERROR);
@@ -2641,7 +2641,7 @@ static void soundfont_entry(const char *name, int start, int end, int loop_start
 	}
       for (i = soundfont_entries; i < soundfont_size; i++) soundfont_names[i] = NULL;
     }
-  if (soundfont_names[soundfont_entries] == NULL) soundfont_names[soundfont_entries] = (char *)calloc(20, sizeof(char));
+  if (!soundfont_names[soundfont_entries]) soundfont_names[soundfont_entries] = (char *)calloc(20, sizeof(char));
   strcpy(soundfont_names[soundfont_entries], name);
   soundfont_starts[soundfont_entries] = start;
   soundfont_ends[soundfont_entries] = end;
@@ -6733,7 +6733,7 @@ int mus_header_change_comment(const char *filename, mus_header_t type, const cha
 	case MUS_NEXT:
 	  fd = mus_file_reopen_write(filename);
 	  lseek(fd, 24L, SEEK_SET);
-	  if (new_comment == NULL)
+	  if (!new_comment)
 	    write_next_comment(fd, new_comment, 0, data_location); /* erase old possibly */
 	  else
 	    {

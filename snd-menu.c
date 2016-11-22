@@ -182,7 +182,7 @@ void reflect_file_revert_in_label(snd_info *sp)
 static void file_update(snd_info *sp)
 {
   /* here we should only update files that have changed on disk */
-  if ((sp) && (sp->edited_region == NULL) &&
+  if ((sp) && (!sp->edited_region) &&
       ((sp->need_update) || 
        (file_write_date(sp->filename) != sp->write_date)))
     {
@@ -328,7 +328,7 @@ static Xen gl_add_to_main_menu(Xen label, Xen callback)
     {
       char *err;
       err = procedure_ok(callback, 0, S_add_to_main_menu, "menu callback", 2);
-      if (err == NULL)
+      if (!err)
 	add_callback(slot, callback);
       else 
 	{
@@ -361,7 +361,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
 
   if (Xen_is_procedure(callback))
     errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
-  if (errmsg == NULL)
+  if (!errmsg)
     {
       int slot = -1, m, position = -1;
 
@@ -376,7 +376,7 @@ func (a function of no args) when the new menu is activated. Returns the new men
 			     (Xen_is_false(label)) ? NULL : Xen_string_to_C_string(label),
 			     slot,
 			     position);
-      if (result == NULL)
+      if (!result)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
       if (Xen_is_procedure(callback)) add_callback(slot, callback);
     }

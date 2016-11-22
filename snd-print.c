@@ -517,7 +517,7 @@ static char *snd_print_or_error(const char *output)
       chan_info *ccp;
       char *errstr = NULL;
       ccp = current_channel();
-      if (ccp == NULL) 
+      if (!ccp) 
 	return(mus_strdup("nothing to print?"));
       si = sync_to_chan(ccp);
       offsets = (int *)calloc(si->chans, sizeof(int));
@@ -531,7 +531,7 @@ static char *snd_print_or_error(const char *output)
 	  {
 	    snd_info *sp;
 	    sp = (si->cps[i])->sound;
-	    if (sp == NULL) break;
+	    if (!sp) break;
 	    if (sp->channel_style == CHANNELS_COMBINED)
 	      for (j = i + 1; (j < i + sp->nchans) && (j < si->chans); j++) 
 		offsets[j] = offsets[i];

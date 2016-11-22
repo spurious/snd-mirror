@@ -162,7 +162,7 @@ static void loadLADSPALibrary(void *pvPluginHandle,
   const LADSPA_Descriptor *psDescriptor;
 
   for (lIndex = 0;
-       (psDescriptor = fDescriptorFunction(lIndex)) != NULL;
+       (psDescriptor = fDescriptorFunction(lIndex));
        lIndex++)
     {
       LADSPAPluginInfo *psInfo;
@@ -244,7 +244,7 @@ static void loadLADSPADirectory(const char *pcDirectory)
 	  fDescriptorFunction
 	    = (LADSPA_Descriptor_Function)dlsym(pvPluginHandle,
 						"ladspa_descriptor");
-	  if (dlerror() == NULL && fDescriptorFunction) 
+	  if ((!dlerror()) && (fDescriptorFunction))
 	    {
 	      loadLADSPALibrary(pvPluginHandle, pcFilename, fDescriptorFunction);
 	    }
@@ -280,7 +280,7 @@ static void loadLADSPA(void)
   if (!pcLADSPAPath)
     {
       pcLADSPAPath = getenv("LADSPA_PATH");
-      if (pcLADSPAPath == NULL) 
+      if (!pcLADSPAPath) 
 	{
 	  snd_warning("Warning: You have not set " S_ladspa_dir " or the environment variable LADSPA_PATH.\nUsing /usr/lib/ladspa instead."); 
 	  pcLADSPAPath = "/usr/lib/ladspa"; 
@@ -737,7 +737,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 	  free_file_info(hdr);
 	  if (pfControls) free(pfControls);
 	  psDescriptor->cleanup(psHandle);
-	  Xen_error(CANNOT_SAVE,
+	  Xen_error(Xen_make_error_type("cannot-save"),
 		    Xen_list_3(C_string_to_Xen_string(S_apply_ladspa ": can't save ~S, ~A"),
 			       C_string_to_Xen_string(ofile),
 			       C_string_to_Xen_string(snd_io_strerror())));

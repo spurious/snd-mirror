@@ -24,7 +24,7 @@ static bool compare_names(const char *symbol_name, void *data)
     {
       m->matches++;
       add_possible_completion(symbol_name);
-      if (current_match == NULL)
+      if (!current_match)
 	current_match = mus_strdup(symbol_name);
       else 
 	{
@@ -91,7 +91,7 @@ static int completions(const char *text)
 	{
 	  matches++;
 	  add_possible_completion(sym);
-	  if (current_match == NULL)
+	  if (!current_match)
 	    current_match = mus_strdup(sym);
 	  else 
 	    {
@@ -121,7 +121,7 @@ static int completions(const char *text)
     {
       char *sym = Xen_string_to_C_string(Xen_vector_ref(tab, i));
       add_possible_completion(sym);
-      if (current_match == NULL)
+      if (!current_match)
 	current_match = mus_strdup(sym);
       else 
 	{
@@ -332,7 +332,7 @@ int add_completer_func(char *(*func)(widget_t w, const char *text, void *context
   if (completer_funcs_size == completer_funcs_end)
     {
       completer_funcs_size += 8;
-      if (completer_funcs == NULL)
+      if (!completer_funcs)
 	{
 	  completer_funcs = (completer_func *)calloc(completer_funcs_size, sizeof(completer_func));
 	  multicompleter_funcs = (multicompleter_func *)calloc(completer_funcs_size, sizeof(multicompleter_func));
@@ -383,7 +383,7 @@ void add_possible_completion(const char *text)
       if (possible_completions_size == possible_completions_ctr)
 	{
 	  possible_completions_size += 16;
-	  if (possible_completions == NULL)
+	  if (!possible_completions)
 	    possible_completions = (char **)calloc(possible_completions_size, sizeof(char *));
 	  else
 	    {
@@ -449,7 +449,7 @@ static list_completer_info *srate_info = NULL;
 
 static void init_srate_list(void)
 {
-  if (srate_info == NULL)
+  if (!srate_info)
     {
       int loc = 0;
       srate_info = (list_completer_info *)calloc(1, sizeof(list_completer_info));
@@ -538,10 +538,10 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
     }
 
   len = mus_strlen(file_name);
-  if ((dpos = opendir(dir_name)) != NULL)
+  if ((dpos = opendir(dir_name)))
     {
       struct dirent *dirp;
-      while ((dirp = readdir(dpos)) != NULL)
+      while ((dirp = readdir(dpos)))
 	if ((dirp->d_name[0] != '.') && 
 	    (strncmp(dirp->d_name, file_name, len) == 0)) /* match dirp->d_name against rest of text */
 	  {
@@ -550,7 +550,7 @@ static char *filename_completer_1(widget_t w, const char *text, int file_type)
 	      {
 		matches++;
 		add_possible_completion(dirp->d_name);
-		if (current_match == NULL)
+		if (!current_match)
 		  current_match = mus_strdup(dirp->d_name);
 		else 
 		  {
@@ -713,7 +713,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
       if (isspace((int)(old_text[i]))) break;
     }
 
-  if (new_text == NULL) new_text = expression_completer(NULL_WIDGET, old_text, NULL);
+  if (!new_text) new_text = expression_completer(NULL_WIDGET, old_text, NULL);
   (*try_completion) = true;
   (*to_file_text) = file_text;
   return(new_text);

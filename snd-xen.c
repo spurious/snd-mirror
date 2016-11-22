@@ -159,7 +159,7 @@ void snd_warning(const char *format, ...)
   int bytes_needed = 0;
   va_list ap;
 
-  if (snd_error_buffer == NULL) 
+  if (!snd_error_buffer) 
     snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
   va_start(ap, format);
 
@@ -192,7 +192,7 @@ void snd_error(const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;
-  if (snd_error_buffer == NULL) 
+  if (!snd_error_buffer) 
     snd_error_buffer = (char *)calloc(snd_error_buffer_size, sizeof(char));
 
   va_start(ap, format);
@@ -394,7 +394,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
   ss->xen_error_data = data;
 
 #if HAVE_SCHEME
-  if (handler == NULL)
+  if (!handler)
     s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) ())");
   else s7_eval_c_string(s7, "(set! (hook-functions *error-hook*) (list  \n\
                                (lambda (hook)                           \n\
@@ -1595,7 +1595,7 @@ static Xen g_dlopen(Xen name, Xen flags)
   if (cname)
     {
       handle = dlopen(cname, RTLD_LAZY);
-      if (handle == NULL)
+      if (!handle)
 	{
 	  char *longname;
 
@@ -1605,7 +1605,7 @@ static Xen g_dlopen(Xen name, Xen flags)
 	  else handle = dlopen(longname, RTLD_LAZY);
 	  free(longname);
 
-	  if (handle == NULL)
+	  if (!handle)
 	    {
 	      char *err;
 	      err = (char *)dlerror();
@@ -1644,7 +1644,7 @@ static Xen g_dlsym(Xen handle, Xen func)
   Xen_check_type(Xen_is_string(func), func, 2, "dlsym", "a string (function name)");
 
   proc = dlsym((void *)(Xen_unwrap_C_pointer(handle)), Xen_string_to_C_string(func));
-  if (proc == NULL) return(Xen_false);
+  if (!proc) return(Xen_false);
   return(Xen_wrap_C_pointer(func));
 }
 
@@ -1659,7 +1659,7 @@ static Xen g_dlinit(Xen handle, Xen func)
   Xen_check_type(Xen_is_string(func), func, 2, "dlinit", "a string (init func name)");
 
   proc = dlsym((void *)(Xen_unwrap_C_pointer(handle)), Xen_string_to_C_string(func));
-  if (proc == NULL) return(C_string_to_Xen_string(dlerror()));
+  if (!proc) return(C_string_to_Xen_string(dlerror()));
   ((snd_dl_func)proc)();
   return(Xen_true);
 }
@@ -2509,7 +2509,7 @@ static void add_source_file_extension(const char *ext)
   if (source_file_extensions_end == source_file_extensions_size)
     {
       source_file_extensions_size += 8;
-      if (source_file_extensions == NULL)
+      if (!source_file_extensions)
 	source_file_extensions = (char **)calloc(source_file_extensions_size, sizeof(char *));
       else source_file_extensions = (char **)realloc(source_file_extensions, source_file_extensions_size * sizeof(char *));
     }

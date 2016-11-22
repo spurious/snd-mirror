@@ -443,7 +443,7 @@ static int added_transforms_size = 0;
 static added_transform *new_transform(void)
 {
   int loc = -1;
-  if (added_transforms == NULL)
+  if (!added_transforms)
     {
       loc = 0;
       added_transforms_size = 4;
@@ -453,7 +453,7 @@ static added_transform *new_transform(void)
     {
       int i;
       for (i = 0; i < added_transforms_size; i++)
-	if (added_transforms[i] == NULL)
+	if (!added_transforms[i])
 	  {
 	    loc = i;
 	    break;
@@ -502,7 +502,7 @@ bool is_transform(int type)
 {
   if (type < 0) return(false);
   if (type < NUM_BUILTIN_TRANSFORM_TYPES) return(true);
-  return(type_to_transform(type) != NULL);
+  return(type_to_transform(type));
 }
 
 
@@ -690,7 +690,7 @@ static void make_sonogram_axes(chan_info *cp)
 	}
       else 
 	{
-	  if (fp->xlabel == NULL)
+	  if (!fp->xlabel)
 	    fp->xlabel = mus_strdup("time");
 	  fp->axis = make_axis_info(cp,
 				    ap->x0, ap->x1,
@@ -827,7 +827,7 @@ static void apply_fft(fft_state *fs)
 
   if (data_len > fs->size) data_len = fs->size;
   sf = init_sample_read(ind0, cp, READ_FORWARD);
-  if (sf == NULL) return;
+  if (!sf) return;
 
   switch (cp->transform_type)
     {
@@ -914,17 +914,17 @@ static void display_fft(fft_state *fs)
   mus_long_t i, lo, hi;
 
   cp = fs->cp;
-  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES)) return;
+  if ((!cp) || (cp->active < CHANNEL_HAS_AXES)) return;
   if (cp->transform_graph_type != GRAPH_ONCE) return;
 
   fp = cp->fft;
-  if (fp == NULL) return; /* can happen if selection transform set, but no selection */
+  if (!fp) return; /* can happen if selection transform set, but no selection */
 
   data = fp->data;
-  if (data == NULL) return;
+  if (!data) return;
 
   sp = cp->sound;
-  if (fp->xlabel == NULL)
+  if (!fp->xlabel)
     xlabel = spectro_xlabel(cp);
   else xlabel = fp->xlabel;
   /* this only works until the fft data is remade in some way, then the label reverts to "frequency" */
@@ -1271,7 +1271,7 @@ static void one_fft(fft_state *fs)
 
       fp->current_size = fs->size; /* protect against parallel size change via fft size menu */
       fs->data = fp->data;
-      if (fs->window == NULL)
+      if (!fs->window)
 	{
 	  static mus_long_t last_size = 0;
 	  static int last_zero = 0;
@@ -1463,7 +1463,7 @@ static bool memory_is_available(mus_long_t slices, mus_long_t bins)
       for (i = 0; i < 10; i++)
 	{
 	  check_alloc[i] = (char *)malloc(bytes_needed_10);
-	  if (check_alloc[i] == NULL)
+	  if (!check_alloc[i])
 	    {
 	      int j;
 	      snd_warning("can't allocate enough memory to run this set of FFTS: %lld bytes needed", bytes_needed);
@@ -1695,13 +1695,13 @@ static void finish_sonogram(sonogram_state *sg)
 	}
       else
 	{
-	  if ((sg->scp != NULL) && (sg->outlim > 1))
+	  if ((sg->scp) && (sg->outlim > 1))
 	    make_sonogram_axes(cp);
 	  if (sg->fs)
 	    sg->fs = free_fft_state(sg->fs);
 	  cp->fft_data = NULL;
 	  set_chan_fft_in_progress(cp, 0); /* i.e. clear it */
-	  if ((sg->scp != NULL) && (sg->outlim > 1))
+	  if ((sg->scp) && (sg->outlim > 1))
 	    {
 	      display_channel_fft_data(cp);
 	      if (sg->outer == sg->outlim) sg->done = true;
@@ -1814,9 +1814,9 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
       fbuffer = (mus_float_t **)calloc(filter_chans, sizeof(mus_float_t *));
       if (fbuffer) fbuffer[filter_chan] = (mus_float_t *)calloc(filtersize, sizeof(mus_float_t));
 
-      if ((rl0 == NULL) || (rl1 == NULL) || 
-	  (pbuffer == NULL) || (pbuffer[0] == NULL) ||
-	  (fbuffer == NULL) || (fbuffer[filter_chan] == NULL))
+      if ((!rl0) || (!rl1) || 
+	  (!pbuffer) || (!pbuffer[0]) ||
+	  (!fbuffer) || (!fbuffer[filter_chan]))
 	{
 	  snd_error("not enough memory for convolve of %s (filter size: %lld, fft size: %lld)", 
 		    fname, filtersize, fftsize);
@@ -1904,8 +1904,8 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 static void update_log_freq_fft_graph(chan_info *cp)
 {
   if ((cp->active < CHANNEL_HAS_AXES) ||
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!cp->sounds) || 
+      (!cp->sounds[cp->sound_ctr]) ||
       (!(cp->graph_transform_on)) ||
       (!(cp->fft_log_frequency)) ||
       (chan_fft_in_progress(cp)))
@@ -2018,7 +2018,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 		      (fbin < si->target_bins) && 
 		      (fslice < si->active_slices))
 		    return(C_double_to_Xen_real(si->data[fslice][fbin]));
-		  else Xen_error(NO_SUCH_SAMPLE,
+		  else Xen_error(Xen_make_error_type("no-such-sample"),
 				 Xen_list_8(C_string_to_Xen_string(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, slice: ~A, max slice: ~A, sound index: ~A (~A), chan: ~A"),
 					    bin,
 					    C_int_to_Xen_integer((si) ? si->target_bins : 0),
@@ -2029,7 +2029,7 @@ return the current transform sample at bin and slice in snd channel chn (assumin
 					    chn_n));
 		}
 	    }
-	  else Xen_error(NO_SUCH_SAMPLE,
+	  else Xen_error(Xen_make_error_type("no-such-sample"),
 			 Xen_list_6(C_string_to_Xen_string(S_transform_sample ": no such sample, bin: ~A, max bin: ~A, sound index: ~A (~A), chan: ~A"),
 				    bin,
 				    C_int_to_Xen_integer(fp->current_size),
@@ -2136,7 +2136,7 @@ static char *xen_transform_to_string(xen_transform *v)
 {
   #define TRANSFORM_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(TRANSFORM_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, TRANSFORM_PRINT_BUFFER_SIZE, "#<transform %s>", transform_name(v->n));
   return(buf);
@@ -2246,8 +2246,12 @@ static void init_xen_transform(void)
 static Xen g_integer_to_transform(Xen n)
 {
   #define H_integer_to_transform "(" S_integer_to_transform " n) returns a transform object corresponding to the given integer"
+  int type;
   Xen_check_type(Xen_is_integer(n), n, 1, S_integer_to_transform, "an integer");
-  return(new_xen_transform(Xen_integer_to_C_int(n)));
+  type = Xen_integer_to_C_int(n);
+  if (is_transform(type))
+    return(new_xen_transform(type));
+  return(Xen_false);
 }
 
 

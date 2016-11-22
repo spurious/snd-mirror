@@ -245,7 +245,7 @@ static char *float_array_to_string(mus_float_t *arr, int len, int loc)
   #define MAX_NUM_SIZE 64
   char *base, *str;
   int i, lim, size = 512;
-  if (arr == NULL) 
+  if (!arr) 
     {
       str = (char *)malloc(4 * sizeof(char));
       snprintf(str, 4, "nil");
@@ -383,7 +383,7 @@ int mus_type(mus_any *ptr)
 
 const char *mus_name(mus_any *ptr) 
 {
-  return((ptr == NULL) ? "null" : ptr->core->name);
+  return((!ptr) ? "null" : ptr->core->name);
 }
 
 
@@ -396,7 +396,7 @@ void mus_free(mus_any *gen)
 
 char *mus_describe(mus_any *gen)
 {
-  if (gen == NULL)
+  if (!gen)
     return(mus_strdup((char *)"null"));
   if ((gen->core) && (gen->core->describe))
     return((*(gen->core->describe))(gen));
@@ -10018,7 +10018,7 @@ mus_any *mus_make_env(mus_float_t *brkpts, int npts, mus_float_t scaler, mus_flo
 	  e->style = MUS_ENV_EXPONENTIAL;
 	  e->env_func = mus_env_exponential;
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
-	  if (edata == NULL)
+	  if (!edata)
 	    {
 	      free(e);
 	      return(NULL);
@@ -10445,7 +10445,7 @@ static mus_float_t mus_in_any_from_file(mus_any *ptr, mus_long_t samp, int chan)
 				      gen->file_name, STRERROR(errno)));
       else
 	{ 
-	  if (gen->ibufs == NULL) 
+	  if (!gen->ibufs) 
 	    make_ibufs(gen);
 	  mus_file_seek_frample(fd, gen->data_start);
 
@@ -10541,7 +10541,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, mus_long
 {
   rdin *gen;
 
-  if (filename == NULL)
+  if (!filename)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_file_to_sample " requires a file name");
   else
     {
@@ -11017,7 +11017,7 @@ static void flush_buffers(rdout *gen)
 {
   int fd;
 
-  if ((gen->obufs == NULL) || 
+  if ((!gen->obufs) || 
       (mus_file_probe(gen->file_name) == 0) ||
       (gen->chans == 0))
     return; /* can happen if output abandoned, then later mus_free called via GC sweep */
@@ -11430,7 +11430,7 @@ bool mus_is_sample_to_file(mus_any *ptr)
 static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int out_chans, 
 						       mus_sample_t samp_type, mus_header_t head_type, const char *comment, bool reopen)
 {
-  if (filename == NULL)
+  if (!filename)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_sample_to_file " requires a file name");
   else
     {
@@ -11714,7 +11714,8 @@ static bool locsig_equalp(mus_any *p1, mus_any *p2)
 	 (g1->core->type == g2->core->type) &&
 	 (g1->chans == g2->chans) &&
 	 (clm_arrays_are_equal(g1->outn, g2->outn, g1->chans)) &&
-	 (((bool)(g1->revn != NULL)) == ((bool)(g2->revn != NULL))) &&
+	 (((g1->revn) && (g2->revn)) || 
+	  ((!g1->revn) && (!g2->revn))) &&
 	 ((!(g1->revn)) || (clm_arrays_are_equal(g1->revn, g2->revn, g1->rev_chans))));
 }
 
@@ -12369,7 +12370,7 @@ mus_any *mus_make_locsig(mus_float_t degree, mus_float_t distance, mus_float_t r
 
   /* now choose the output function based on chans, and reverb
    */
-  if ((output == NULL) && (revput == NULL))
+  if ((!output) && (!revput))
     gen->locsig_func = mus_locsig_detour;
   else
     {
@@ -13823,7 +13824,7 @@ mus_float_t mus_granulate_with_editor(mus_any *ptr, mus_float_t (*input)(void *a
       int i;
       int (*spd_edit)(void *closure) = edit;
       if (input) {spd->rd = input; spd->block_rd = NULL;}
-      if (spd_edit == NULL) spd_edit = spd->edit;
+      if (!spd_edit) spd_edit = spd->edit;
 
       if (spd->first_samp)
 	{
@@ -14334,7 +14335,7 @@ mus_float_t *mus_make_fft_window_with_window(mus_fft_window_t type, mus_long_t s
 
   mus_long_t i, j, midn, midp1;
   mus_float_t freq, rate, angle = 0.0, cx;
-  if (window == NULL) return(NULL);
+  if (!window) return(NULL);
 
   midn = size >> 1;
   midp1 = (size + 1) / 2;
@@ -15772,7 +15773,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
   mus_float_t sum, sum1;
   mus_float_t (*pv_synthesize)(void *arg) = synthesize;
 
-  if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
+  if (!pv_synthesize) pv_synthesize = pv->synthesize;
   N2 = pv->N / 2;
 
   if (pv->outctr >= pv->interp)
@@ -15781,17 +15782,17 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
       bool (*pv_analyze)(void *arg, mus_float_t (*input)(void *arg1, int direction)) = analyze;
       int (*pv_edit)(void *arg) = edit;
 
-      if (pv_analyze == NULL) pv_analyze = pv->analyze;
-      if (pv_edit == NULL) pv_edit = pv->edit;
+      if (!pv_analyze) pv_analyze = pv->analyze;
+      if (!pv_edit) pv_edit = pv->edit;
       if (input) {pv->input = input; pv->block_input = NULL;}
       pv->outctr = 0;
 
-      if ((pv_analyze == NULL) || 
+      if ((!pv_analyze) || 
 	  ((*pv_analyze)(pv->closure, pv->input)))
 	{
 	  int buf;
 	  memset((void *)(pv->freqs), 0, pv->N * sizeof(mus_float_t));
-	  if (pv->in_data == NULL)
+	  if (!pv->in_data)
 	    {
 	      pv->in_data = (mus_float_t *)malloc(pv->N * sizeof(mus_float_t));
 	      if (pv->block_input)
@@ -15828,7 +15829,7 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	  mus_rectangular_to_polar(pv->ampinc, pv->freqs, N2);
 	}
       
-      if ((pv_edit == NULL) || 
+      if ((!pv_edit) || 
 	  ((*pv_edit)(pv->closure)))
 	{
 	  mus_float_t pscl, kscl, ks;
@@ -16529,7 +16530,7 @@ void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
       break;
 
     case ENVELOPED_MIX:
-      if (mx == NULL) 
+      if (!mx) 
 	{
 	  int i;
 	  mx_chans = (in_chans < out_chans) ? out_chans : in_chans;
@@ -16550,7 +16551,7 @@ void mus_file_mix_with_reader_and_writer(mus_any *outf, mus_any *inf,
 		local_mx[j * mx_chans + k] = mus_env(envs[j][k]);
 	  mus_frample_to_file(outf, outc, mus_frample_to_frample(local_mx, mx_chans, mus_file_to_frample(inf, inc, in_data), in_chans, out_data, out_chans));
 	}
-      if (mx == NULL) free(local_mx);
+      if (!mx) free(local_mx);
       break;
 
     case IDENTITY_MONO_MIX:

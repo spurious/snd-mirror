@@ -152,7 +152,7 @@ void erase_rectangle(chan_info *cp, graphics_context *ax, int x0, int y0, int wi
 
 void draw_string(graphics_context *ax, int x0, int y0, const char *str, int len)
 {
-  if (ax->current_font == NULL) return;
+  if (!ax->current_font) return;
   if ((!str) || (!(*str))) return;
   if (!(g_utf8_validate(str, -1, NULL)))
     return;

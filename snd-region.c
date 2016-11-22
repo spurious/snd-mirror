@@ -189,7 +189,7 @@ static region *id_to_region(int id)
 
 bool region_ok(int id) 
 {
-  return(id_to_region(id) != NULL);
+  return((bool)id_to_region(id));
 }
 
 
@@ -619,7 +619,7 @@ static int paste_region_1(int n, chan_info *cp, bool add, mus_long_t beg, io_err
   sync_info *si = NULL;
 
   r = id_to_region(n);
-  if ((r == NULL) || 
+  if ((!r) || 
       (r->framples == 0)) 
     return(INVALID_REGION);
 
@@ -796,7 +796,7 @@ int define_region(sync_info *si, mus_long_t *ends)
 	  ep = drp->cps[i]->edits[drp->edpos[i]]->peak_env;
 	  if ((ep) && (ep->completed))
 	    {
-	      if (r->peak_envs == NULL)
+	      if (!r->peak_envs)
 		r->peak_envs = (peak_env_info **)calloc(r->chans, sizeof(peak_env_info *));
 	      r->peak_envs[i] = peak_env_section(drp->cps[i], r->begs[i], r->ends[i] + 1, drp->edpos[i]);
 	    }
@@ -828,7 +828,7 @@ static void deferred_region_to_temp_file(region *r)
 
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->sample_type)) && 
 	     (r->chans == sp0->nchans) &&
-	     (r->peak_envs != NULL) &&
+	     (r->peak_envs) &&
 	     ((drp->len - 1) == r->ends[0]));
   if (copy_ok)
     for (i = 0; i < r->chans; i++)
@@ -836,7 +836,7 @@ static void deferred_region_to_temp_file(region *r)
 	  (drp->cps[i]->sound != sp0) ||
 	  (r->begs[i] != r->begs[0]) ||
 	  (r->ends[i] != (drp->len - 1)) ||
-	  (r->peak_envs[i] == NULL))
+	  (!r->peak_envs[i]))
 	{
 	  copy_ok = false;
 	  break;
@@ -1254,7 +1254,7 @@ void save_region_backpointer(snd_info *sp)
         {
           chan_info *cp;
           cp = sp->chans[i];
-          if (r->peak_envs == NULL)
+          if (!r->peak_envs)
             r->peak_envs = (peak_env_info **)calloc(r->chans, sizeof(peak_env_info *));
           else 
 	    {
@@ -1415,7 +1415,7 @@ static char *xen_region_to_string(xen_region *v)
 {
   #define REGION_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(REGION_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, REGION_PRINT_BUFFER_SIZE, "#<region %d>", v->n);
   return(buf);
@@ -1943,7 +1943,7 @@ static void init_region_keywords(void)
 static void save_region_to_xen_error(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
-  Xen_error(CANNOT_SAVE,
+  Xen_error(Xen_make_error_type("cannot-save"),
 	    Xen_list_2(C_string_to_Xen_string(S_save_region ": can't save ~S"),
 		       C_string_to_Xen_string(msg)));
 }
@@ -1985,7 +1985,7 @@ using sample-type (default depends on machine byte order), header-type (" S_mus_
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
 
-  if (file == NULL) 
+  if (!file) 
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_1(C_string_to_Xen_string(S_save_region ": no output file?")));
 

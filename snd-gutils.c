@@ -142,7 +142,7 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   int wid = 0;
   PangoLayout *layout = NULL;
   PangoContext *ctx;
-  if (txt == NULL) return(0);
+  if (!txt) return(0);
   if (mus_strlen(txt) == 0) return(0);
   if (!(g_utf8_validate(txt, -1, NULL)))
     return(0);
@@ -1318,7 +1318,7 @@ void slist_append(slist *lst, const char *name)
       for (i = lst->num_items; i < lst->items_size; i++) lst->items[i] = NULL;
     }
   loc = lst->num_items++;
-  if (lst->items[loc] == NULL)
+  if (!lst->items[loc])
     lst->items[loc] = slist_new_item(lst, name, loc);
   else 
     {

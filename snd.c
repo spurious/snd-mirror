@@ -35,7 +35,7 @@ static void mus_error_to_snd(int type, char *msg)
   if (!(ignore_mus_error(type, msg)))
     {
 #if HAVE_EXTENSION_LANGUAGE
-      if (msg == NULL)
+      if (!msg)
 	Xen_error(Xen_make_error_type("mus-error"),
 		  Xen_list_1(C_string_to_Xen_string((char *)mus_error_type_to_string(type))));
       else Xen_error(Xen_make_error_type("mus-error"),
@@ -545,7 +545,7 @@ int main(int argc, char **argv)
 #if HAVE_GSL
   /* if HAVE_GSL and the environment variable GSL_IEEE_MODE exists, use it */
   /* GSL_IEEE_MODE=double-precision,mask-underflow,mask-denormalized */
-  if (getenv("GSL_IEEE_MODE") != NULL) 
+  if (getenv("GSL_IEEE_MODE")) 
     gsl_ieee_env_setup();
   gsl_set_error_handler(snd_gsl_error);
 #endif

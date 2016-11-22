@@ -45,10 +45,10 @@ int mus_error(int error, const char *format, ...)
   int bytes_needed = 0;
   va_list ap;
 
-  if (format == NULL) 
+  if (!format) 
     return(MUS_ERROR); /* else bus error in Mac OSX */
 
-  if (mus_error_buffer == NULL)
+  if (!mus_error_buffer)
     mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
 
   va_start(ap, format);
@@ -101,7 +101,7 @@ void mus_print(const char *format, ...)
     {
       int bytes_needed = 0;
 
-      if (mus_error_buffer == NULL)
+      if (!mus_error_buffer)
 	mus_error_buffer = (char *)calloc(mus_error_buffer_size, sizeof(char));
 
       va_start(ap, format);
@@ -275,7 +275,7 @@ static sound_file *add_to_sound_table(const char *name)
   sound_table_size = sound_table_sizes[index];
 
   for (i = 0; i < sound_table_size; i++)
-    if (sound_table[i] == NULL) 
+    if (!sound_table[i]) 
       {
 	pos = i;
 	break;
@@ -285,7 +285,7 @@ static sound_file *add_to_sound_table(const char *name)
     {
       pos = sound_table_size;
       sound_table_size += 16;
-      if (sound_table == NULL)
+      if (!sound_table)
 	{
 	  sound_table = (sound_file **)calloc(sound_table_size, sizeof(sound_file *));
 	}
@@ -353,7 +353,7 @@ int mus_sound_forget(const char *name)
   int sound_table_size, index;
   char c;
 
-  if (name == NULL) return(MUS_ERROR);
+  if (!name) return(MUS_ERROR);
   len = strlen(name);
   if (len > 6)
     len2 = len - 6;
@@ -671,7 +671,7 @@ static sound_file *read_sound_file_header(const char *name) /* 2 calls on this: 
 static sound_file *get_sf(const char *arg) 
 {
   sound_file *sf = NULL;
-  if (arg == NULL) return(NULL);
+  if (!arg) return(NULL);
   sf = find_sound_file(arg);
   return((sf) ? sf : read_sound_file_header(arg));
 }
@@ -833,7 +833,7 @@ mus_float_t **mus_sound_saved_data(const char *arg)
   /* slightly tricky -- we don't want to trigger a sound_file table entry here!
    */
   sound_file *sf;
-  if (arg == NULL) return(NULL);
+  if (!arg) return(NULL);
   sf = find_sound_file(arg); /* not get_sf which will make an entry in the table */
   return((sf) ? sf->saved_data : NULL);
 }
@@ -882,7 +882,7 @@ void mus_sound_set_loop_info(const char *arg, int *loop)
   sf = get_sf(arg); 
   if (sf)
     {
-      if (sf->loop_modes == NULL)
+      if (!sf->loop_modes)
 	{
 	  sf->loop_modes = (int *)calloc(2, sizeof(int));
 	  sf->loop_starts = (int *)calloc(2, sizeof(int));
@@ -1325,7 +1325,7 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_float_t *vals, mus_l
       else
 	{
 	  ichans = sf->chans;
-	  if (sf->maxamps == NULL) 
+	  if (!sf->maxamps) 
 	    {
 	      /* here we need to use the max, since the caller may be confused */
 	      int max_chans;

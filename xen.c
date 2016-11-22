@@ -528,7 +528,7 @@ static char *lstbuf = NULL;
 static char *xen_rb_list_to_s(Xen lst)
 {
   int i, len;
-  if (lstbuf == NULL) 
+  if (!lstbuf) 
     lstbuf = (char *)calloc(512, sizeof(char));
   else lstbuf[0] = '\0';
   len = Xen_list_length(lst);
@@ -1330,7 +1330,7 @@ void xen_repl(int argc, char **argv)
 	  fprintf(stdout, "\n%s", xen_s7_repl_prompt);
 	  expr_ok = false; /* don't get into an infinite loop if running in the background! */
 	}
-      if (fgets(buffer, size, stdin) != NULL)
+      if (fgets(buffer, size, stdin))
 	{
 	  /* also, it's possible to get a string of spaces or nulls (? -- not sure what is coming in) if stdin is /dev/null */
 	  /*   then if (as in condor) stdout is being saved in a file, we get in an infinite loop storing "snd>" until the disk fills up */
@@ -1512,9 +1512,9 @@ static Xen g_getcwd(void)
   Xen result = Xen_false;
   buf = (char *)calloc(1024, sizeof(char));
 #ifdef _MSC_VER
-  if (_getcwd(buf, 1024) != NULL)
+  if (_getcwd(buf, 1024))
 #else
-  if (getcwd(buf, 1024) != NULL)
+  if (getcwd(buf, 1024))
 #endif
     result = C_string_to_Xen_string(buf);
   free(buf);
@@ -1533,7 +1533,7 @@ static Xen g_strftime(Xen format, Xen tm)
   Xen_check_type(Xen_is_wrapped_c_pointer(tm), tm, 2, "strftime", "a localtime struct");
 
   p = (const struct tm *)Xen_unwrap_C_pointer(tm);
-  Xen_check_type(p != NULL, tm, 2, "strftime", "a localtime struct");
+  Xen_check_type(p, tm, 2, "strftime", "a localtime struct");
 
   buf = (char *)calloc(1024, sizeof(char));
   strftime(buf, 1024, Xen_string_to_C_string(format), p);
@@ -1577,7 +1577,7 @@ static Xen g_tmpnam(void)
   tmpdir = xen_strdup(getenv("TMPDIR"));
 
 #ifdef P_tmpdir
-  if (tmpdir == NULL) 
+  if (!tmpdir) 
     tmpdir = xen_strdup(P_tmpdir); /* /usr/include/stdio.h */
   if (tmpdir)
     {
@@ -1595,7 +1595,7 @@ static Xen g_tmpnam(void)
 	}
     }
 #else
-  if (tmpdir == NULL) tmpdir = xen_strdup("/tmp");
+  if (!tmpdir) tmpdir = xen_strdup("/tmp");
 #endif
 
   snprintf(str, BUFFER_SIZE, "%s/xen_%d_%d", tmpdir, (int)getpid(), file_ctr++);

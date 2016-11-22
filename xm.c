@@ -650,7 +650,7 @@ static Xen type_to_event_symbol(int utype)
 
 static Xen C_to_Xen_XEvent_1(XEvent *e, int need_free)
 {
-  if (e == NULL) return(Xen_false); /* synthetic callback may have no event */
+  if (!e) return(Xen_false); /* synthetic callback may have no event */
   if (need_free)
     return(Xen_list_4(type_to_event_symbol(e->type),
 		      Xen_wrap_C_pointer(e),
@@ -1618,7 +1618,7 @@ static XtCallbackList Xen_to_C_XtCallbackList(Xen call_list1)
 
 static Xen C_to_Xen_STRING_WITH_TERMINATION(char *str, unsigned long len)
 {
-  if ((len == 0) || (str == NULL)) return(Xen_false);
+  if ((len == 0) || (!str)) return(Xen_false);
   str[len] = '\0';
   return(C_string_to_Xen_string(str));
 }
@@ -2064,7 +2064,7 @@ static void fixup_args(Widget w, Arg *args, int len)
 	      cl = (XtCallbackRec *)(args[i].value);
 	      for (j = 0 ;; j++)
 		{
-		  if (cl[j].callback == NULL) break;
+		  if (!cl[j].callback) break;
 		  data = (Xen)(cl[j].closure);
 		  Xen_list_set(data, CALLBACK_STRUCT_TYPE, C_int_to_Xen_integer(callback_struct_type(w, name)));
 		}
@@ -11963,7 +11963,7 @@ are defined for the specified window or returns NULL if no properties were found
   Xen_check_type(Xen_is_Display(arg1), arg1, 1, "XListProperties", "Display*");
   Xen_check_type(Xen_is_Window(arg2), arg2, 2, "XListProperties", "Window");
   ats = XListProperties(Xen_to_C_Display(arg1), Xen_to_C_Window(arg2), &len);
-  if (ats == NULL)
+  if (!ats)
     return(Xen_false);
   loc = xm_protect(lst);
   for (i = len - 1; i >= 0; i--)
@@ -13718,7 +13718,7 @@ static Xen gxm_XtResolvePathname(Xen arg1, Xen arg2, Xen arg3, Xen arg4, Xen arg
   if (Xen_is_list(arg6)) 
     {
       subs = gxm_make_subs(Xen_copy_arg(arg6));
-      if (subs == NULL) return(Xen_false); /* type error? */
+      if (!subs) return(Xen_false); /* type error? */
     }
   if (Xen_is_procedure(arg8))
     {
@@ -13764,7 +13764,7 @@ searches for a file using substitutions in the path list"
   if (Xen_is_list(arg2)) 
     {
       subs = gxm_make_subs(Xen_copy_arg(arg2));
-      if (subs == NULL) return(Xen_false); /* type error? */
+      if (!subs) return(Xen_false); /* type error? */
     }
   if (Xen_is_procedure(arg4))
     {

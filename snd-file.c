@@ -342,7 +342,7 @@ static void load_dir(DIR *dpos, dir_info *dp, bool (*filter)(const char *filenam
   fullname = (char *)calloc(path_max, sizeof(char));
   strcopy(fullname, dp->dir_name, path_max);
   fullname_start = strlen(dp->dir_name);
-  while ((dirp = readdir(dpos)) != NULL)
+  while ((dirp = readdir(dpos)))
     if (dirp->d_name[0] != '.')
       {
 	strcat(fullname, dirp->d_name);
@@ -396,7 +396,7 @@ dir_info *find_filtered_files_in_dir(const char *name, int filter_choice)
 #else
   DIR *dpos;
   dir_info *dp = NULL;
-  if ((dpos = opendir(name)) != NULL)
+  if ((dpos = opendir(name)))
     {
       bool (*filter)(const char *filename);
       if (filter_choice == JUST_SOUNDS_FILTER)
@@ -464,7 +464,7 @@ static void add_sound_file_extension(const char *ext)
   if (sound_file_extensions_end == sound_file_extensions_size)
     {
       sound_file_extensions_size += 8;
-      if (sound_file_extensions == NULL)
+      if (!sound_file_extensions)
 	sound_file_extensions = (char **)calloc(sound_file_extensions_size, sizeof(char *));
       else sound_file_extensions = (char **)realloc(sound_file_extensions, sound_file_extensions_size * sizeof(char *));
     }
@@ -792,7 +792,7 @@ static file_info *translate_file(const char *filename, mus_header_t type)
       if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname);
-	  if (hdr->loops == NULL) 
+	  if (!hdr->loops) 
 	    hdr->loops = loops;
 	  else 
 	    if (loops) free(loops);
@@ -1101,7 +1101,7 @@ static void remember_sound_file(snd_info *sp)
   newname = remembered_sound_file_name(sp);
   fd = FOPEN(newname, "w");
 
-  if (fd == NULL)
+  if (!fd)
     {
       snd_error("remember sound state can't write %s: %s", newname, snd_io_strerror());
       return;
@@ -1382,7 +1382,7 @@ void snd_close_file(snd_info *sp)
 	ss->selected_sound = NO_SELECTION;
 
       if ((!(ss->exiting)) && 
-	  (any_selected_sound() == NULL)) /* I hope this can't be fooled... */
+	  (!any_selected_sound())) /* I hope this can't be fooled... */
 	reset_mix_ctr();
     }
   
@@ -1904,7 +1904,7 @@ static void snd_update_error_handler(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
-  Xen_error(CANT_UPDATE_FILE,
+  Xen_error(Xen_make_error_type("cant-update-file"),
 	    Xen_list_3(C_string_to_Xen_string("~A: ~A"),
 		       C_string_to_Xen_string((char *)data),
 		       C_string_to_Xen_string(msg)));
@@ -2970,7 +2970,7 @@ list: (sustain-start sustain-end release-start release-end baseNote detune)"
   snd_info *sp;
   Snd_assert_sound(S_sound_loop_info, snd, 1);
   sp = get_sp(snd);
-  if (sp == NULL)
+  if (!sp)
     return(snd_no_such_sound_error(S_sound_loop_info, snd));
   res = sp->hdr->loops;
   if (res)
@@ -3009,12 +3009,12 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
     }
   len = Xen_list_length(vals);
 
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_set S_sound_loop_info, snd));
 
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_2(C_string_to_Xen_string(S_set S_sound_loop_info ": ~S is write-protected"),
 			 C_string_to_Xen_string(sp->filename)));
 
@@ -3053,7 +3053,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
 				Xen_check_type(Xen_is_integer(mode1), mode1, 2, S_set S_sound_loop_info, "mode1 must be an integer");
 				}}}}}}}}
 
-  if (hdr->loops == NULL)
+  if (!hdr->loops)
     hdr->loops = (int *)calloc(MUS_LOOP_INFO_SIZE, sizeof(int));
   else memset((void *)(hdr->loops), 0, MUS_LOOP_INFO_SIZE * sizeof(int));
   hdr->loops[0] = Xen_integer_to_C_int(start0);
@@ -3102,7 +3102,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
     if ((err != IO_NO_ERROR) &&
 	(err != IO_SAVE_HOOK_CANCELLATION))
       {
-	Xen_error(CANNOT_SAVE,
+	Xen_error(Xen_make_error_type("cannot-save"),
 		  Xen_list_3(C_string_to_Xen_string(S_set S_sound_loop_info ": can't save ~S, ~A"),
 			     C_string_to_Xen_string(tmp_file),
 			     C_string_to_Xen_string(snd_io_strerror())));
@@ -3118,7 +3118,7 @@ static Xen g_set_sound_loop_info(Xen snd, Xen vals)
 	  {
 	    free(tmp_file);
 	    sp->writing = false;
-	    Xen_error(CANT_UPDATE_FILE,
+	    Xen_error(Xen_make_error_type("cant-update-file"),
 		      Xen_list_4(C_string_to_Xen_string(S_set S_sound_loop_info ": can't update ~S: ~A ~A"),
 				 C_string_to_Xen_string(sp->filename),
 				 C_string_to_Xen_string(io_error_name(err)),
@@ -3145,7 +3145,7 @@ each inner list has the form: (name start loopstart loopend)"
   snd_info *sp;
   Snd_assert_sound(S_soundfont_info, snd, 1);
   sp = get_sp(snd);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_soundfont_info, snd));
   mus_header_read(sp->filename);
   if (mus_header_type() == MUS_SOUNDFONT)
@@ -3238,7 +3238,7 @@ static Xen g_edit_header_dialog(Xen snd_n)
   #define H_edit_header_dialog "(" S_edit_header_dialog " :optional snd): start the Edit Header dialog on sound snd"
   snd_info *sp; 
   sp = get_sp(snd_n);
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL))
+  if ((!sp) || (sp->inuse != SOUND_NORMAL))
     return(snd_no_such_sound_error(S_edit_header_dialog, snd_n));
   return(Xen_wrap_widget(edit_header(sp)));
 }

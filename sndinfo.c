@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	  else
 	    {
 	      int orig_type;
-	      if (samp_type_info == NULL) samp_type_info = (char *)calloc(64, sizeof(char));
+	      if (!samp_type_info) samp_type_info = (char *)calloc(64, sizeof(char));
 	      orig_type = mus_sound_original_sample_type(argv[ctr]);
 	      samp_type_name = (char *)mus_header_original_sample_type_name(orig_type, type);
 	      if (samp_type_name)

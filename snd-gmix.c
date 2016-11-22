@@ -286,7 +286,7 @@ static void show_mix_background_wave(int mix_id)
   int pts;
   bool two_sided = false;
   e = spf;
-  if (e == NULL) return;
+  if (!e) return;
   pts = prepare_mix_dialog_waveform(mix_id, e->axis, &two_sided);
   if (pts > 0)
     {
@@ -302,7 +302,7 @@ static void show_mix_background_wave(int mix_id)
 static void mix_amp_env_resize(GtkWidget *w)
 {
   if (!(mix_is_active(mix_dialog_id))) return;
-  if (ax == NULL)
+  if (!ax)
     {
       cur_gc = gc_new();
       gc_set_background(cur_gc, ss->graph_color);
@@ -661,7 +661,7 @@ static GtkWidget *w_sync;
 
 GtkWidget *make_mix_dialog(void)
 {
-  if (mix_dialog == NULL)
+  if (!mix_dialog)
     {
       GtkWidget *dismiss_button, *help_button, *rc, *mix_frame, *rc_top, *copy_button;
       GtkWidget *lo_hbox, *w_dB_frame, *w_dB, *w_clip, *w_wave, *w_dB_row;

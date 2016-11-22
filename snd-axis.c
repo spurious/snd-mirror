@@ -1569,7 +1569,7 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
   Snd_assert_channel(S_axis_info, snd, chn, 1);
   Xen_check_type(Xen_is_integer_or_unbound(ap_id), ap_id, 3, S_axis_info, S_time_graph ", " S_transform_graph ", or " S_lisp_graph);
   ap = TO_C_AXIS_INFO(snd, chn, ap_id, S_axis_info);
-  if (ap == NULL) return(Xen_empty_list);
+  if (!ap) return(Xen_empty_list);
   return(Xen_cons(C_llong_to_Xen_llong(ap->losamp),
 	  Xen_cons(C_llong_to_Xen_llong(ap->hisamp),
 	   Xen_cons(C_double_to_Xen_real(ap->x0),

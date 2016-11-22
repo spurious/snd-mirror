@@ -1195,7 +1195,7 @@ void save_state(const char *save_state_name)
     save_fd = FOPEN(fullname, "a");
   else save_fd = FOPEN(fullname, "w");
   if (fullname) {free(fullname); fullname = NULL;}
-  if (save_fd == NULL)
+  if (!save_fd)
     {
       snd_error("can't write %s: %s", save_state_name, snd_io_strerror());
       return;
@@ -1424,7 +1424,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 		  /* preload sound files in dir (can be ., should be unquoted) */
 		  auto_open_ctr++;
 		  if ((auto_open_ctr >= args) ||
-		      (auto_open_file_names[auto_open_ctr] == NULL))
+		      (!auto_open_file_names[auto_open_ctr]))
 		    snd_error("%s but no directory to add?", argname);
 		  else view_files_add_directory(NULL_WIDGET, auto_open_file_names[auto_open_ctr]);
 		}
@@ -1447,7 +1447,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			  (mus_strcmp("--batch", argname)))
 			auto_open_ctr++;
 		      if ((auto_open_ctr >= args) ||
-			  (auto_open_file_names[auto_open_ctr] == NULL))
+			  (!auto_open_file_names[auto_open_ctr]))
 			snd_error("%s but no file to load?", argname);
 		      else 
 			{
@@ -1470,7 +1470,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			  /* evaluate expression */
 			  auto_open_ctr++;
 			  if ((auto_open_ctr >= args) ||
-			      (auto_open_file_names[auto_open_ctr] == NULL))
+			      (!auto_open_file_names[auto_open_ctr]))
 			    snd_error("%s but no form to evaluate?", argname);
 			  else 
 			    {
@@ -1488,7 +1488,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			    {
 			      auto_open_ctr++;
 			      if ((auto_open_ctr >= args) ||
-				  (auto_open_file_names[auto_open_ctr] == NULL))
+				  (!auto_open_file_names[auto_open_ctr]))
 				snd_error_without_format("-title but no title?"); /* for gtk -- Xt handles the Motif case */
 			      else ss->startup_title = mus_strdup(auto_open_file_names[auto_open_ctr]);
 			    }
@@ -1499,7 +1499,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				  /* added 24-Oct-02: add to load path in either extension language */
 				  auto_open_ctr++;
 				  if ((auto_open_ctr >= args) ||
-				      (auto_open_file_names[auto_open_ctr] == NULL))
+				      (!auto_open_file_names[auto_open_ctr]))
 				    snd_error_without_format("-I but no path?");
 				  else 
 				    {
@@ -1508,10 +1508,10 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				}
 			      else
 				{
-				  if (startup_filename == NULL)
+				  if (!startup_filename)
 				    startup_filename = mus_strdup(argname);
 				  ss->open_requestor = FROM_STARTUP;
-				  if (snd_open_file(argname, FILE_READ_WRITE) == NULL)
+				  if (!snd_open_file(argname, FILE_READ_WRITE))
 				    {
 				      /* non-existent file at startup */
 				      if (argname[0] == '-')
@@ -1550,7 +1550,7 @@ static void save_state_error_handler(const char *msg, void *data)
     }
   else fname = C_string_to_Xen_string(save_state_file(ss));
   redirect_snd_error_to(NULL, NULL);
-  Xen_error(CANNOT_SAVE,
+  Xen_error(Xen_make_error_type("cannot-save"),
 	    Xen_list_2(C_string_to_Xen_string(S_save_state ": can't save ~S"),
 		       fname));
 }

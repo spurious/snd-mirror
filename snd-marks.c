@@ -303,7 +303,7 @@ static mark *hit_mark_1(chan_info *cp, mark *mp, void *m)
   mx = grf_x((double)(mp->samp) / (double)snd_srate(cp->sound), cp->axis);
   if (mx > (md->x + mark_tag_width(ss))) return(md->all_done); /* past it */
   if (mx < (md->x - mark_tag_width(ss))) return(NULL);         /* before it */
-  if (mp->name == NULL)                                    /* check y if unnamed */
+  if (!mp->name)                                    /* check y if unnamed */
     {
       if ((md->y >= ap->y_axis_y1) && 
 	  (md->y <= (ap->y_axis_y1 + mark_tag_height(ss)))) 
@@ -1394,7 +1394,7 @@ mark *hit_mark(chan_info *cp, int x, int y)
 
 static void allocate_erase_grf_points(mark_context *ms)
 {
-  if (ms->p0 == NULL)
+  if (!ms->p0)
     {
       ms->p0 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
       ms->p1 = (point_t *)calloc(POINT_BUFFER_SIZE, sizeof(point_t));
@@ -1723,7 +1723,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
     {
       double incr;
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-      if (sf == NULL) return;
+      if (!sf) return;
       incr = (double)1.0 / cur_srate;
       if (current_sample < initial_sample)
 	{
@@ -1828,7 +1828,7 @@ static void make_mark_graph(chan_info *cp, mus_long_t initial_sample, mus_long_t
 	{
 	  mus_float_t msamp;
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	  if (sf == NULL) return;
+	  if (!sf) return;
 	  j = 0;      /* graph point counter */
 	  x = ap->x0;
 	  xi = grf_x(x, ap);
@@ -1991,7 +1991,7 @@ static char *xen_mark_to_string(xen_mark *v)
 {
   #define MARK_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(MARK_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, MARK_PRINT_BUFFER_SIZE, "#<mark %d>", v->n);
   return(buf);
@@ -2169,7 +2169,7 @@ static Xen mark_get(Xen n, mark_field_t fld, Xen pos_n, const char *caller)
   pos = (Xen_is_integer(pos_n)) ? Xen_integer_to_C_int(pos_n) : AT_CURRENT_EDIT_POSITION;
 
   m = find_mark_from_id(Xen_mark_to_C_int(n), ncp, pos);
-  if (m == NULL) 
+  if (!m) 
     return(snd_no_such_mark_error(caller, n));
 
   switch (fld)
@@ -2203,7 +2203,7 @@ static Xen mark_set(Xen mark_n, Xen val, mark_field_t fld, const char *caller)
   mark *m;
 
   m = find_mark_from_id(Xen_mark_to_C_int(mark_n), cp, AT_CURRENT_EDIT_POSITION);
-  if (m == NULL) 
+  if (!m) 
     return(snd_no_such_mark_error(caller, mark_n));
 
   switch (fld)
@@ -2380,7 +2380,7 @@ static Xen g_add_mark_1(Xen samp_n, Xen snd, Xen chn_n, Xen name, Xen sync, bool
 
   if ((loc < 0) || 
       (loc >= current_samples(cp)))
-    Xen_error(NO_SUCH_SAMPLE,
+    Xen_error(Xen_make_error_type("no-such-sample"),
 	      Xen_list_2(C_string_to_Xen_string(S_add_mark ": no such sample, ~A"), 
 			 samp_n));
 
@@ -2424,7 +2424,7 @@ static Xen g_delete_mark(Xen id_n)
   id = Xen_mark_to_C_int(id_n);
 
   m = find_mark_from_id(id, cp, AT_CURRENT_EDIT_POSITION);
-  if (m == NULL) 
+  if (!m) 
     return(snd_no_such_mark_error(S_delete_mark, id_n));
 
   if (delete_mark_id(id, cp[0]))
@@ -2479,7 +2479,7 @@ static Xen g_syncd_marks(Xen sync)
   Xen_check_type(Xen_is_integer(sync), sync, 1, S_syncd_marks, "an integer");
   ids = syncd_marks(Xen_integer_to_C_int(sync));
 
-  if (ids == NULL) return(Xen_empty_list);
+  if (!ids) return(Xen_empty_list);
   if (ids[0] == 0) {free(ids); return(Xen_empty_list);}
 
   res = int_array_to_mark_list(ids, 1, ids[0]);
@@ -2566,14 +2566,14 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 		pos = Xen_integer_to_C_int(pos_n);
 		if (pos == AT_CURRENT_EDIT_POSITION)
 		  pos = cp->edit_ctr;
-		if ((pos < 0) || (pos >= cp->edit_size) || (cp->edits[pos] == NULL))
-		  Xen_error(NO_SUCH_EDIT,
+		if ((pos < 0) || (pos >= cp->edit_size) || (!cp->edits[pos]))
+		  Xen_error(Xen_make_error_type("no-such-edit"),
 			    Xen_list_2(C_string_to_Xen_string(S_marks ": no such edit, ~A"),
 				       pos_n));
 	      }
 	    else pos = cp->edit_ctr;
 	    ids = channel_marks(cp, pos);
-	    if (ids == NULL) return(Xen_empty_list);
+	    if (!ids) return(Xen_empty_list);
 	    if (ids[0] == 0) 
 	      {
 		free(ids); 
@@ -2587,13 +2587,13 @@ mark list is: channel given: (id id ...), snd given: ((id id) (id id ...)), neit
 	  {
 	    int i;
 	    sp = get_sp(snd);
-	    if (sp == NULL) 
+	    if (!sp) 
 	      return(snd_no_such_sound_error(S_marks, snd));
 	    for (i = sp->nchans - 1; i >= 0; i--)
 	      {
 		cp = sp->chans[i];
 		ids = channel_marks(cp, cp->edit_ctr);
-		if ((ids == NULL) || (ids[0] == 0))
+		if ((!ids) || (ids[0] == 0))
 		  res1 = Xen_cons(Xen_empty_list, res1);
 		else res1 = Xen_cons(int_array_to_mark_list(ids, 1, ids[0]), 
 				     res1);
@@ -2794,7 +2794,7 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
   Xen_check_type(Xen_is_string_or_unbound(filename), filename, 2, S_save_marks, "a string");  
 
   sp = get_sp(snd);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_save_marks, snd));
 
   if (map_over_sound_chans(sp, find_any_marks)) /* are there any marks? */
@@ -2817,12 +2817,12 @@ The saved file is " Xen_language " code, so to restore the marks, load that file
 	  strcat(newname, ".marks");
 	}
       fd = FOPEN(newname, "w");
-      if (fd == NULL)
+      if (!fd)
 	{
 	  Xen lname;
 	  lname = C_string_to_Xen_string(newname);
 	  free(newname);
-	  Xen_error(CANNOT_SAVE,
+	  Xen_error(Xen_make_error_type("cannot-save"),
 		    Xen_list_3(C_string_to_Xen_string(S_save_marks ": can't save ~S, ~A"),
 			       lname,
 			       C_string_to_Xen_string(snd_open_strerror())));
@@ -2852,7 +2852,7 @@ static Xen g_mark_properties(Xen n)
   Xen_check_type(xen_is_mark(n), n, 1, S_mark_properties, "a mark");
 
   m = find_mark_from_id(Xen_mark_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
-  if (m == NULL)
+  if (!m)
     return(snd_no_such_mark_error(S_mark_properties, n));
 
   if (!(Xen_is_vector(m->properties)))
@@ -2870,7 +2870,7 @@ static Xen g_set_mark_properties(Xen n, Xen val)
   Xen_check_type(xen_is_mark(n), n, 1, S_mark_properties, "a mark");
 
   m = find_mark_from_id(Xen_mark_to_C_int(n), NULL, AT_CURRENT_EDIT_POSITION);
-  if (m == NULL)
+  if (!m)
     return(snd_no_such_mark_error(S_set S_mark_properties, n));
 
   if (!(Xen_is_vector(m->properties)))

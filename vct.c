@@ -209,7 +209,7 @@ static char *mus_vct_to_string(vct *v)
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;
 
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   len = vct_print_length;
   if (len > mus_vct_length(v)) len = mus_vct_length(v);
   d = mus_vct_data(v);
@@ -217,7 +217,7 @@ static char *mus_vct_to_string(vct *v)
   buf = (char *)calloc(size, sizeof(char));
   snprintf(buf, size, "#<vct[len=%lld" "]", mus_vct_length(v));
 
-  if ((len > 0) && (d != NULL))
+  if ((len > 0) && (d))
     {
       int i;
       strcat(buf, ":");
@@ -242,7 +242,7 @@ char *mus_vct_to_readable_string(vct *v)
   char flt[VCT_PRINT_BUFFER_SIZE];
   mus_float_t *d;
 
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   len = (int)(mus_vct_length(v));
   size = (len + 1) * VCT_PRINT_BUFFER_SIZE;
   buf = (char *)calloc(size, sizeof(char));
@@ -352,7 +352,7 @@ Xen xen_make_vct(mus_long_t len, mus_float_t *data)
 
   if (len < 0) return(Xen_false);
   if ((len > 0) && 
-      (data == NULL))
+      (!data))
     Xen_error(Xen_make_error_type("out-of-memory"),
 	      Xen_list_2(C_string_to_Xen_string(S_make_vct ": can't allocate size ~A"),
 			 C_int_to_Xen_integer(len)));

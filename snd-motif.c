@@ -620,7 +620,7 @@ static Pixmap rotate_text(Widget w, const char *str, XFontStruct *font, mus_floa
   Visual *vis;
   int scr;
   int bx0 = 0, bx1 = 0, by0 = 0, by1 = 0, b;
-  if (str == NULL) return(BadPixmap);
+  if (!str) return(BadPixmap);
 
   angle_in_radians = mus_degrees_to_radians(angle_in_degrees);
   matrix[0] = cos(angle_in_radians);
@@ -2581,13 +2581,13 @@ static void create_help_monolog(void)
   /* to display the url-related portion of the text in red, we need a rendition for it in the rendertable */
   /* try to find the current default render table. */
   parent = help_text;
-  while ((parent != NULL) && (rs == NULL))
+  while ((parent) && (!rs))
     {
       XtVaGetValues(parent, XmNrenderTable, &rs, NULL);
       parent = XtParent(parent);
     }
   n = 0;
-  if (rs == NULL)
+  if (!rs)
     {
       /* failed to find a rendertable to specialize, so we need an explicit font */
       XtSetArg(args[n], XmNfontName, listener_font(ss)); n++;
@@ -3376,7 +3376,7 @@ static void show_mix_background_wave(int mix_id)
 {
   int pts;
   bool two_sided = false;
-  if (spf == NULL) return;
+  if (!spf) return;
   pts = prepare_mix_dialog_waveform(mix_id, spf->axis, &two_sided);
   if (pts > 0)
     {
@@ -3394,7 +3394,7 @@ static void mix_amp_env_resize(Widget w, XtPointer context, XtPointer info)
   env *cur_env;
   if (!(mix_is_active(mix_dialog_id))) return;
 
-  if (ax == NULL)
+  if (!ax)
     {
       XGCValues gv;
       gv.function = GXcopy;
@@ -3792,7 +3792,7 @@ static Widget w_sync;
 
 Widget make_mix_dialog(void) 
 {
-  if (mix_dialog == NULL)
+  if (!mix_dialog)
     {
       Widget mainform, mix_row, mix_frame, sep, w_sep1;
       Widget w_dB_frame, w_dB, w_clip, w_wave, w_dB_row, env_button, copy_button;
@@ -4723,7 +4723,7 @@ static void order_activate_callback(Widget w, XtPointer context, XtPointer info)
 static void save_button_pressed(Widget w, XtPointer context, XtPointer info) 
 {
   char *name = NULL;
-  if (active_env == NULL) return;
+  if (!active_env) return;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
     name = mus_strdup("unnamed");
@@ -4909,7 +4909,7 @@ static void revert_button_pressed(Widget w, XtPointer context, XtPointer info)
   revert_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  if (active_env == NULL)
+  if (!active_env)
     text_field_activated();
   env_redisplay();
 }
@@ -5812,7 +5812,7 @@ static Xen g_set_enved_envelope(Xen e)
     active_env = name_to_env((Xen_is_string(e)) ? Xen_string_to_C_string(e) : Xen_symbol_to_C_string(e)); /* xen_to_env in name_to_env, so no copy */
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(Xen_is_list(e))))
-    Xen_error(NO_SUCH_ENVELOPE,
+    Xen_error(Xen_make_error_type("no-such-envelope"),
 	      Xen_list_2(C_string_to_Xen_string(S_set S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 
@@ -5899,7 +5899,7 @@ static void graph_redisplay(void)
   mus_float_t xincr, x;
   graphics_context *ax;
 
-  if (axis_ap == NULL) 
+  if (!axis_ap) 
     {
       axis_ap = (axis_info *)calloc(1, sizeof(axis_info));
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));
@@ -7811,7 +7811,7 @@ static void highlight_region(void)
 static void make_region_labels(file_info *hdr)
 {
   char *str;
-  if (hdr == NULL) return;
+  if (!hdr) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
   set_label(reg_srtxt, str);
@@ -8006,7 +8006,7 @@ static void region_focus_callback(Widget w, XtPointer context, XtPointer info)
   set_sensitive(channel_f(cp), false);
   set_sensitive(channel_w(cp), (region_chans(region_list_position_to_id(current_region)) > 1));
   rsp->hdr = fixup_region_data(cp, 0, current_region);
-  if (rsp->hdr == NULL) return;
+  if (!rsp->hdr) return;
   make_region_labels(rsp->hdr);
   region_update_graph(cp);
 }
@@ -8404,7 +8404,7 @@ static void make_region_dialog(void)
 static void view_region_callback(Widget w, XtPointer context, XtPointer info)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
-  if (region_dialog == NULL)
+  if (!region_dialog)
     make_region_dialog();
   else raise_dialog(region_dialog);
   if (!XtIsManaged(region_dialog)) 
@@ -8417,7 +8417,7 @@ static void view_region_callback(Widget w, XtPointer context, XtPointer info)
 
 bool region_dialog_is_active(void)
 {
-  return((region_dialog != NULL) && 
+  return((region_dialog) && 
 	 (XtIsManaged(region_dialog)));
 }
 
@@ -8440,7 +8440,7 @@ static regrow *region_row(int n)
   if (n < region_rows_size)
     {
       regrow *r;
-      if (region_rows[n] == NULL)
+      if (!region_rows[n])
 	{
 	  r = make_regrow(region_ww, 
 			  (n > 0) ? (region_rows[n - 1]->rw) : NULL, 
@@ -8883,7 +8883,7 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
       char *current_filename;
       int i, filenames_to_display = 0;
 
-      if (fd->file_text_items == NULL)
+      if (!fd->file_text_items)
 	{
 	  int n = 0;
 	  Arg args[12];
@@ -8966,7 +8966,7 @@ static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer in
       char *current_filtername;
       int i, filternames_to_display = 0;
 
-      if (fd->file_filter_items == NULL)
+      if (!fd->file_filter_items)
 	{
 	  int n = 0;
 	  Arg args[12];
@@ -9043,7 +9043,7 @@ static void file_dir_popup_callback(Widget w, XtPointer context, XtPointer info)
       char *current_filename = NULL;
       int i, dirs_to_display = 0;
 
-      if (fd->file_dir_items == NULL)
+      if (!fd->file_dir_items)
 	{
 	  int n = 0;
 	  Arg args[12];
@@ -9187,7 +9187,7 @@ static void file_list_popup_callback(Widget w, XtPointer context, XtPointer info
   if (e->type == ButtonPress)
     {
       int i;
-      if (fd->file_list_items == NULL)
+      if (!fd->file_list_items)
 	{
 	  /* set up the default menu items */
 
@@ -9510,7 +9510,7 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
       XmListSetPos(file_list, list_pos);
   }
 
-  if ((fp->last_dir == NULL) ||
+  if ((!fp->last_dir) ||
       (!mus_strcmp(our_dir, fp->last_dir)))
     {
       if (fp->directory_watcher)
@@ -10617,7 +10617,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, mus_header_t heade
   else fdat->current_header_type = MUS_RAW;
   fdat->current_sample_type = sample_type;
   fl = header_type_and_sample_type_to_position(fdat, fdat->current_header_type, fdat->current_sample_type);
-  if (fl == NULL) return;
+  if (!fl) return;
   
   if ((header_type != IGNORE_HEADER_TYPE) &&
       (fdat->header_type_list))
@@ -13512,7 +13512,7 @@ widget_t post_it(const char *subject, const char *str)
 {
   /* place string in scrollable help window */
   XmString xstr1, xstr2;
-  if (ss == NULL) return(NULL); /* an attempt to call this before X/Motif is ready */
+  if (!ss) return(NULL); /* an attempt to call this before X/Motif is ready */
   if (!(post_it_dialog)) 
     create_post_it_monolog(); 
   else raise_dialog(post_it_dialog);
@@ -14271,7 +14271,7 @@ static bool view_files_play(view_files_info *vdat, int pos, bool play)
       if (play_sp)
 	{
 	  if (play_sp->playing) return(true); /* can't play two of these at once */
-	  if ((vdat->names[pos] == NULL) || 
+	  if ((!vdat->names[pos]) || 
 	      (!mus_strcmp(play_sp->short_filename, vdat->names[pos])))
 	    {
 	      completely_free_snd_info(play_sp);
@@ -14400,7 +14400,7 @@ static void vf_add_file(view_files_info *vdat, const char *filename, const char 
 	      vdat->full_names[i] = NULL; 
 	    }
 	}
-      if (vdat->file_list_entries == NULL)
+      if (!vdat->file_list_entries)
 	vdat->file_list_entries = (vf_row **)calloc(new_size, sizeof(vf_row *));
       else 
 	{
@@ -16101,7 +16101,7 @@ static void vf_amp_drag_callback(Widget w, XtPointer context, XtPointer info)
 static void vf_amp_env_resize(Widget w, XtPointer context, XtPointer info) 
 {
   view_files_info *vdat = (view_files_info *)context;
-  if (vdat->env_ax == NULL)
+  if (!vdat->env_ax)
     {
       XGCValues gv;
       gv.function = GXcopy;
@@ -17687,7 +17687,7 @@ static void post_prefs_dialog_error(const char *message, void *data)
 		XmNmessageString, title, 
 		NULL);
   XmStringFree(title);
-  prefs_dialog_error_is_posted = (message != NULL);
+  prefs_dialog_error_is_posted = (bool)message;
 }
 
 
@@ -20667,7 +20667,7 @@ static void file_open_recent_callback(Widget w, XtPointer info, XtPointer contex
 
       for (i = 0; i < size; i++)
 	{
-	  if (recent_file_items[i] == NULL)
+	  if (!recent_file_items[i])
 	    {
 	      int n = 0;
 	      Arg args[6];
@@ -20712,7 +20712,7 @@ static void file_menu_update_1(Widget w, XtPointer info, XtPointer context)
 {
   if (recent_files_size() > 0)
     {
-      if (file_open_recent_menu == NULL)
+      if (!file_open_recent_menu)
 	make_open_recent_menu();
       else set_sensitive(file_open_recent_cascade_menu, true);
     }
@@ -20854,7 +20854,7 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
 	  
 	  for (i = 0; i < size; i++)
 	    {
-	      if (view_files_items[i] == NULL)
+	      if (!view_files_items[i])
 		{
 		  int n = 0;
 		  Arg args[6];
@@ -22484,7 +22484,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
   Arg args[12];
   int n = 0;
   menw = menu_widget(which_menu);
-  if (menw == NULL) return(NULL);
+  if (!menw) return(NULL);
   if (label)
     {
       unsigned int i;
@@ -23329,7 +23329,7 @@ static void listener_return(widget_t w, int last_prompt)
 	     *   are very slow.  So with_interrupts can turn off this check.
 	     */
 	    
-	    if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
+	    if (s7_begin_hook(s7)) return;      /* s7 is already running (user typed <cr> during computation) */
 	    
 	    if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	      {
@@ -25383,7 +25383,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   XExposeEvent *ev;
   oclock_t curtime;
 
-  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return;
+  if ((!cp) || (cp->active < CHANNEL_HAS_AXES) || (!cp->sound)) return;
 
   ev = (XExposeEvent *)(cb->event);
 
@@ -25774,7 +25774,7 @@ static void cp_graph_key_press(Widget w, XtPointer context, XEvent *event, Boole
   KeySym keysym;
   int key_state;
   chan_info *cp = (chan_info *)context;
-  if ((cp == NULL) || (cp->sound == NULL)) return; /* can't happen */
+  if ((!cp) || (!cp->sound)) return; /* can't happen */
   key_state = ev->state;
   keysym = XkbKeycodeToKeysym(XtDisplay(w),
 			      (int)(ev->keycode),
@@ -25838,11 +25838,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
   /* if ((main) && ((!(XmIsForm(main))) || (!(XtWindow(main))))) return(-1); */ /* new gcc complains about the XmIsForm for some reason */
   if ((main) && (!(XtWindow(main)))) return(-1); /* can this happen? */
 
-  make_widgets = ((sp->chans[channel]) == NULL);
+  make_widgets = (!sp->chans[channel]);
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
 
-  if (cp->chan_widgets == NULL) 
+  if (!cp->chan_widgets) 
     cp->chan_widgets = (Widget *)calloc(NUM_CHAN_WIDGETS, sizeof(Widget));
   cw = cp->chan_widgets;
   need_extra_scrollbars = ((!main) && (channel == 0));
@@ -26075,7 +26075,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
       XtAddEventHandler(cw[W_graph], ButtonReleaseMask, false, graph_button_release, (XtPointer)cp);
       /* XtAddEventHandler(cw[W_graph], ButtonMotionMask, false, graph_button_motion, (XtPointer)cp); */
       XtAddEventHandler(cw[W_graph], PointerMotionMask, false, graph_mouse_motion, (XtPointer)cp);
-      if (main == NULL)
+      if (!main)
 	{
 	  pointer_or_int_t data;
 	  XtAddEventHandler(cw[W_graph], EnterWindowMask, false, graph_mouse_enter, (XtPointer)cp);
@@ -27294,7 +27294,7 @@ void display_filter_env(snd_info *sp)
     sp->filter_control_xmax = (mus_float_t)(snd_srate(sp) / 2);
   else sp->filter_control_xmax = 1.0;
 
-  if (sp->filter_control_envelope == NULL) 
+  if (!sp->filter_control_envelope) 
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 
   env_editor_display_env(edp, sp->filter_control_envelope, ax, "frequency response", 0, 0, width, height, NOT_PRINTING);
@@ -27669,7 +27669,7 @@ static void sync_button_callback(Widget w, XtPointer context, XtPointer info)
       chan_info *cp;
       if (sp->sync > ss->sound_sync_max) ss->sound_sync_max = sp->sync;
       cp = sp->lacp;
-      if (cp == NULL) cp = any_selected_channel(sp);
+      if (!cp) cp = any_selected_channel(sp);
       goto_graph(cp);
       if (cp->cursor_on) sync_cursors(cp, cursor_sample(cp));
       apply_x_axis_change(cp);
@@ -27912,7 +27912,7 @@ static void remember_sash(Widget w)
       for (i = 0; i < sashes_size; i++)
 	{
 	  if (sashes[i] == w) return;
-	  if (sashes[i] == NULL)
+	  if (!sashes[i])
 	    {
 	      loc = i;
 	      break;
@@ -28132,6 +28132,7 @@ static void allocate_icons(Widget w)
 	  break;
 	}
       pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
+      /* NUM_HOURGLASSES == NUM_BOMBS so this is safe */
       if (pixerr != XpmSuccess) 
 	{
 	  snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
@@ -28274,14 +28275,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       old_chans = osp->allocated_chans;
     }
   else old_chans = 0;
-  make_widgets = (ss->sounds[snd_slot] == NULL);
+  make_widgets = (!ss->sounds[snd_slot]);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
   sp->bomb_ctr = 0;
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
 
-  if (sp->snd_widgets == NULL) 
+  if (!sp->snd_widgets) 
     sp->snd_widgets = (Widget *)calloc(NUM_SND_WIDGETS, sizeof(Widget));
   sw = sp->snd_widgets;
 
@@ -28298,7 +28299,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	{
 	  title = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 	  snprintf(title, PRINT_BUFFER_SIZE, "%d: %s", snd_slot, sp->short_filename);
-	  if (sp->dialog == NULL)
+	  if (!sp->dialog)
 	    {
 	      n = 0;
 	      XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -29856,7 +29857,7 @@ widgets: (0)pane (1)name (2)control-panel (3)status area (4)play-button (5)filte
   Snd_assert_sound(S_sound_widgets, snd, 1);
 
   sp = get_sp(snd);
-  if (sp == NULL)
+  if (!sp)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (!has_widgets(sp))
     return(Xen_empty_list);
@@ -30003,7 +30004,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
     {
       Atom _NET_WM_STATE, _NET_WM_STATE_HIDDEN, actual_type;
       int actual_format;
-      unsigned long nitems, bytes_after;
+      unsigned long i, nitems, bytes_after;
       unsigned char *prop = NULL;
       
       /* this code thanks to Tito Latini */
@@ -30503,13 +30504,13 @@ void snd_doit(int argc, char **argv)
 	ss->gl_has_double_buffer = false;
 	vi = glXChooseVisual(dpy, DefaultScreen(dpy), snglBuf);
       }
-    if (vi == NULL) 
+    if (!vi) 
       fprintf(stderr, "%s", "no RGB visual with desired depth\n"); /* not snd_error -- shell not ready yet */
     else
       {
 	/* create an OpenGL rendering context */
 	cx = glXCreateContext(dpy, vi, /* no display list sharing */ None, /* favor direct */ GL_TRUE);
-	if (cx == NULL) 
+	if (!cx) 
 	  fprintf(stderr, "%s", "could not create rendering context\n");
 	else
 	  {

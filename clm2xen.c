@@ -2745,10 +2745,10 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
       else max_size = size;
     }
 
-  if (initial_contents == NULL)
+  if (!initial_contents)
     {
       line = (mus_float_t *)malloc(max_size * sizeof(mus_float_t));
-      if (line == NULL)
+      if (!line)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
       orig_v = xen_make_vct(max_size, line);
       if (initial_element != 0.0)
@@ -2972,10 +2972,10 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
   if (size == 0)
     Xen_out_of_range_error(caller, 0, C_llong_to_Xen_llong(size), "size = 0?");
 
-  if (initial_contents == NULL)
+  if (!initial_contents)
     {
       line = (mus_float_t *)malloc(size * sizeof(mus_float_t));
-      if (line == NULL)
+      if (!line)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate delay line", caller));
       orig_v = xen_make_vct(size, line);
       if (initial_element != 0.0)
@@ -3880,7 +3880,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     {
       mus_float_t *wave;
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
-      if (wave == NULL)
+      if (!wave)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table", S_partials_to_wave));
       table = xen_make_vct(clm_table_size, wave);
     }
@@ -3897,7 +3897,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       Xen lst;
       int i;
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-      if (partial_data == NULL)
+      if (!partial_data)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_partials_to_wave));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
 	partial_data[i] = Xen_real_to_C_double(Xen_car(lst));
@@ -3975,7 +3975,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
     {
       mus_float_t *wave;
       wave = (mus_float_t *)calloc(clm_table_size, sizeof(mus_float_t));
-      if (wave == NULL)
+      if (!wave)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave table", S_phase_partials_to_wave));
       table = xen_make_vct(clm_table_size, wave);
     }
@@ -3992,7 +3992,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       int i;
       Xen lst;
       partial_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-      if (partial_data == NULL)
+      if (!partial_data)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate partials table", S_phase_partials_to_wave));
       for (i = 0, lst = Xen_copy_arg(partials); i < len; i++, lst = Xen_cdr(lst)) 
 	partial_data[i] = Xen_real_to_C_double(Xen_car(lst));
@@ -4083,7 +4083,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   if (!(mus_is_vct(orig_v)))
     {
       table = (mus_float_t *)calloc(table_size, sizeof(mus_float_t));
-      if (table == NULL)
+      if (!table)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table", S_make_table_lookup));
       orig_v = xen_make_vct(table_size, table);
     }
@@ -5067,10 +5067,10 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	Xen_out_of_range_error(S_make_wave_train, orig_arg[4], keys[4], "no such interp-type");
     }
 
-  if (wave == NULL) 
+  if (!wave) 
     {
       wave = (mus_float_t *)calloc(wsize, sizeof(mus_float_t));
-      if (wave == NULL)
+      if (!wave)
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table", S_make_wave_train));
       orig_v = xen_make_vct(wsize, wave);
     }
@@ -5175,7 +5175,7 @@ static mus_float_t *list_to_partials(Xen harms, int *npartials, int *error_code)
   /* here and elsewhere? this won't be null until we touch it in linux, but that gloms up all our
    *   code with once-in-a-billion-years error checks.
    */
-  if (partials == NULL)
+  if (!partials)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
 
@@ -5225,7 +5225,7 @@ static mus_float_t *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
     return(NULL);
 
   partials = (mus_float_t *)calloc(maxpartial + 1, sizeof(mus_float_t));
-  if (partials == NULL)
+  if (!partials)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
 
@@ -5274,7 +5274,7 @@ static mus_float_t *mus_vector_to_partials(Xen v, int *npartials, int *error_cod
     return(NULL);
 
   partials = (mus_float_t *)calloc(maxpartial + 1, sizeof(mus_float_t));
-  if (partials == NULL)
+  if (!partials)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
 
@@ -5324,7 +5324,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     partials = mus_vct_to_partials(Xen_to_vct(amps), &npartials, &error);
   else partials = list_to_partials(amps, &npartials, &error);
 
-  if (partials == NULL)
+  if (!partials)
     Xen_error(NO_DATA, 
 	      Xen_list_3(C_string_to_Xen_string(list_to_partials_error_to_string(error)), 
 			 C_string_to_Xen_string(S_partials_to_polynomial), 
@@ -5605,7 +5605,7 @@ is the same in effect as " S_make_oscil
 		  Xen_check_type(Xen_is_list(keys[3]), keys[3], orig_arg[3], S_make_polyshape, "a list or a " S_vct);
 		  partials = list_to_partials(keys[3], &npartials, &error);
 		}
-	      if (partials == NULL)
+	      if (!partials)
 		Xen_error(NO_DATA, 
 			  Xen_list_3(C_string_to_Xen_string(list_to_partials_error_to_string(error)), 
 				     C_string_to_Xen_string(S_make_polyshape), 
@@ -5724,7 +5724,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 		  partials = list_to_partials(keys[1], &npartials, &error);
 		}
 	    }
-	  if (partials == NULL) /* here if null, something went wrong in the translation functions */
+	  if (!partials) /* here if null, something went wrong in the translation functions */
 	    Xen_error(NO_DATA, 
 		      Xen_list_3(C_string_to_Xen_string(list_to_partials_error_to_string(error)), 
 				 C_string_to_Xen_string(S_make_polywave), 
@@ -6154,16 +6154,16 @@ static Xen g_make_filter_1(xclm_fir_t choice, Xen arg1, Xen arg2, Xen arg3, Xen 
 
   if (choice == G_FILTER)
     {
-      if (y == NULL)
+      if (!y)
 	choice = G_FIR_FILTER;
       else 
 	{
-	  if (x == NULL)
+	  if (!x)
 	    choice = G_IIR_FILTER;
 	}
     }
-  if (((x == NULL) && (choice != G_IIR_FILTER)) ||
-      ((y == NULL) && (choice != G_FIR_FILTER)))
+  if (((!x) && (choice != G_IIR_FILTER)) ||
+      ((!y) && (choice != G_FIR_FILTER)))
     Xen_error(NO_DATA,
 	      Xen_list_2(C_string_to_Xen_string("~A: no coeffs?"),
 			 C_string_to_Xen_string(caller)));
@@ -6382,7 +6382,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	  else
 	    {
 	      brkpts = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-	      if (brkpts == NULL)
+	      if (!brkpts)
 		return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate env list", S_make_env));
 	      if (vect)
 		{
@@ -6424,7 +6424,7 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
         }
     }
 
-  if (brkpts == NULL) 
+  if (!brkpts) 
     {
       Xen_error(NO_DATA,
 		Xen_list_1(C_string_to_Xen_string(S_make_env ": no envelope?"))); 
@@ -7431,7 +7431,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 	Xen_out_of_range_error(S_make_readin, orig_arg[4], keys[4], "must be > 0");
     }
 
-  if (file == NULL)
+  if (!file)
     Xen_out_of_range_error(S_make_readin, orig_arg[0], keys[0], "no file name given");
   if (!(mus_file_probe(file)))
     Xen_error(NO_SUCH_FILE,
@@ -8702,7 +8702,7 @@ return a new convolution generator which convolves its input with the impulse re
 	Xen_out_of_range_error(S_make_convolve, orig_arg[2], keys[2], "fft-size invalid (see mus-max-malloc))");
     }
 
-  if (filter == NULL)
+  if (!filter)
     Xen_error(NO_DATA,
 	      Xen_list_1(C_string_to_Xen_string(S_make_convolve ": no impulse (filter)?")));
 

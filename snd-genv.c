@@ -395,7 +395,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 static void enved_save_button_pressed(GtkWidget *w, gpointer context)
 {
   char *name = NULL;
-  if (active_env == NULL) return;
+  if (!active_env) return;
   name = (char *)gtk_entry_get_text(GTK_ENTRY(enved_text_label));
   if ((!name) || (!(*name))) 
     name = (char *)"unnamed";
@@ -609,7 +609,7 @@ static void enved_revert_button_pressed(GtkWidget *w, gpointer context)
   revert_env_edit();
   if (active_env) active_env = free_env(active_env);
   active_env = enved_next_env();
-  if (active_env == NULL)
+  if (!active_env)
     text_field_activated(enved_text_label, NULL);
   env_redisplay();
 }
@@ -1338,7 +1338,7 @@ static Xen g_set_enved_envelope(Xen e)
     active_env = name_to_env((Xen_is_string(e)) ? Xen_string_to_C_string(e) : Xen_symbol_to_C_string(e));
   else active_env = xen_to_env(e);
   if ((!active_env) && (!(Xen_is_list(e))))
-    Xen_error(NO_SUCH_ENVELOPE,
+    Xen_error(Xen_make_error_type("no-such-envelope"),
 	      Xen_list_2(C_string_to_Xen_string(S_set S_enved_envelope ": bad envelope arg: ~A"),
 			 e));
   if (enved_dialog) 

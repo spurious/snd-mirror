@@ -9,12 +9,6 @@
   #define DISPLAY(Obj) s7_object_to_c_string(s7, Obj)
 #endif
 
-#define NO_SUCH_ENVELOPE Xen_make_error_type("no-such-envelope")
-#define NO_SUCH_SAMPLE   Xen_make_error_type("no-such-sample")
-#define NO_SUCH_EDIT     Xen_make_error_type("no-such-edit")
-#define CANNOT_SAVE      Xen_make_error_type("cannot-save")
-#define CANT_UPDATE_FILE Xen_make_error_type("cant-update-file")
-
 #if (SIZEOF_VOID_P == 4)
   typedef int pointer_or_int_t;
 #else

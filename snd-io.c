@@ -534,7 +534,7 @@ void remember_temp(const char *filename, int chans)
 	  return;
 
       for (i = 0; i < tempfiles_size; i++)
-	if (tempfiles[i] == NULL)
+	if (!tempfiles[i])
 	  break;
 
       if (i >= tempfiles_size)

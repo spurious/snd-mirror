@@ -407,7 +407,7 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   chan_info *cp;
   snd_info *sp;
   cp = (chan_info *)data;
-  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return(false);
+  if ((!cp) || (cp->active < CHANNEL_HAS_AXES) || (!cp->sound)) return(false);
 
 #if (!GTK_CHECK_VERSION(3, 0, 0))
   if ((EVENT_AREA_HEIGHT(ev) < MIN_REGRAPH_Y) || 
@@ -770,11 +770,11 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   graphics_context *cax;
   bool make_widgets, need_extra_scrollbars;
 
-  make_widgets = ((sp->chans[channel]) == NULL);
+  make_widgets = !sp->chans[channel];
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
 
-  if (cp->chan_widgets == NULL) 
+  if (!cp->chan_widgets) 
     {
       cw = (GtkWidget **)calloc(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));
       adjs = (GtkAdjustment **)calloc(NUM_CHAN_ADJS, sizeof(GtkAdjustment *));
@@ -840,7 +840,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
       SG_SIGNAL_CONNECT(cw[W_graph], "button_press_event", graph_button_press, cp);
       SG_SIGNAL_CONNECT(cw[W_graph], "button_release_event", graph_button_release, cp);
       SG_SIGNAL_CONNECT(cw[W_graph], "motion_notify_event", graph_button_motion, cp);
-      if (main == NULL)
+      if (!main)
 	{
 	  SG_SIGNAL_CONNECT(cw[W_graph], "enter_notify_event", graph_mouse_enter, NULL);
 	  SG_SIGNAL_CONNECT(cw[W_graph], "leave_notify_event", graph_mouse_leave, NULL);

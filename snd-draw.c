@@ -785,7 +785,7 @@ static Xen g_dialog_widgets(void)
 
 void set_dialog_widget(snd_dialog_t which, widget_t wid)
 {
-  if (ss->dialogs == NULL)
+  if (!ss->dialogs)
     {
       ss->dialogs_size = 8;
       ss->num_dialogs = 0;

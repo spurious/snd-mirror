@@ -110,7 +110,7 @@ static Xen g_save_listener(Xen filename)
       snd_fclose(fp, name);
     }
   if ((!fp) || (err == -1))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_3(C_string_to_Xen_string(S_save_listener ": can't save ~S, ~A"),
 			 filename,
 			 C_string_to_Xen_string(snd_io_strerror())));
@@ -191,7 +191,7 @@ static Xen g_set_listener_prompt(Xen val)
 
   if (listener_prompt(ss)) free(listener_prompt(ss));
   new_prompt = mus_strdup(Xen_string_to_C_string(val));
-  if (new_prompt == NULL)   /* without this fixup, (set! (listener-prompt) "") can cause a segfault, at least in Motif */
+  if (!new_prompt)   /* without this fixup, (set! (listener-prompt) "") can cause a segfault, at least in Motif */
     {
       new_prompt = (char *)malloc(sizeof(char));
       new_prompt[0] = 0;
@@ -212,7 +212,7 @@ static Xen g_set_stdin_prompt(Xen val)
 
   if (stdin_prompt(ss)) free(stdin_prompt(ss));
   new_prompt = mus_strdup(Xen_string_to_C_string(val));
-  if (new_prompt == NULL)
+  if (!new_prompt)
     {
       new_prompt = (char *)malloc(sizeof(char));
       new_prompt[0] = 0;

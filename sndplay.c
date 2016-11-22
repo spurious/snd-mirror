@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 		      else name = argv[i];
 		    }}}}}
 
-  if (name == NULL) 
+  if (!name) 
     {
       printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-mutable 1]\n", BUFFER_SIZE); 
       exit(0);

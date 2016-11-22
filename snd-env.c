@@ -245,7 +245,7 @@ env *default_env(mus_float_t x1, mus_float_t y)
 
 bool is_default_env(env *e)
 {
-  if (e == NULL) return(true);
+  if (!e) return(true);
   if (e->pts != 2) return(false);
   return((snd_feq(e->data[0], 0.0)) &&
 	 (snd_feq(e->data[1], 1.0)) &&
@@ -495,7 +495,7 @@ void env_editor_display_env(env_editor *edp, env *e, graphics_context *ax, const
 	      old_error_handler = mus_error_set_handler(local_mus_error);
 	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
 	      mus_error_set_handler(old_error_handler);
-	      if (ce == NULL) return;
+	      if (!ce) return;
 	      if (dur < e->pts) dur = e->pts;
 	      env_val = mus_env(ce);
 	      ix1 = grf_x(0.0, ap);
@@ -539,7 +539,7 @@ void env_editor_button_motion_with_xy(env_editor *edp, int evx, int evy, oclock_
 {
   axis_info *ap;
   mus_float_t x0, x1, x, y;
-  if ((e == NULL) || (edp == NULL)) return;
+  if ((!e) || (!edp)) return;
   if ((motion_time - edp->down_time) < ss->click_time) return;
   edp->env_dragged = true;
   edp->click_to_delete = false;
@@ -778,7 +778,7 @@ void redo_env_edit(void)
 	  set_enved_revert_sensitive(true);
 	}
       if ((env_list_top == env_list_size) || 
-	  (env_list[env_list_top] == NULL)) 
+	  (!env_list[env_list_top])) 
 	set_enved_redo_sensitive(false);
       set_enved_save_sensitive(true);
     }
@@ -902,7 +902,7 @@ void alert_envelope_editor(const char *name, env *val)
 {
   /* whenever an envelope is defined, we get notification through this function */
   int i;
-  if (val == NULL) return;
+  if (!val) return;
   i = find_env(name);
   if (i != -1)
     {
@@ -951,7 +951,7 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
 {
   enved_fft *ef;
 
-  if (cp->edits[cp->edit_ctr]->fft == NULL)
+  if (!cp->edits[cp->edit_ctr]->fft)
     cp->edits[cp->edit_ctr]->fft = (enved_fft *)calloc(1, sizeof(enved_fft));
   ef = cp->edits[cp->edit_ctr]->fft;
 
@@ -968,11 +968,11 @@ static enved_fft *make_enved_spectrum(chan_info *cp)
       if (data_len == 0) return(NULL);
 
       sf = init_sample_read(cp->axis->losamp, cp, READ_FORWARD);
-      if (sf == NULL) return(NULL);
+      if (!sf) return(NULL);
 
       ef->size = snd_to_int_pow2(data_len);
       ef->data = (mus_float_t *)malloc(ef->size * sizeof(mus_float_t));
-      if (ef->data == NULL) return(NULL);
+      if (!ef->data) return(NULL);
 
       fourier_spectrum(sf, ef->data, ef->size, data_len, NULL, NULL);
       free_snd_fd(sf);
@@ -1053,7 +1053,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   active_channel = current_channel();
   if ((!active_channel) || 
       (active_channel->active < CHANNEL_HAS_AXES) ||
-      (active_channel->edits == NULL)) 
+      (!active_channel->edits)) 
     return;
 
   old_printing = active_channel->printing;
@@ -1202,7 +1202,7 @@ char *env_name_completer(widget_t w, const char *text, void *data)
 	  {
 	    matches++;
 	    add_possible_completion(all_names[i]);
-	    if (current_match == NULL)
+	    if (!current_match)
 	      current_match = mus_strdup(all_names[i]);
 	    else 
 	      {
@@ -1592,7 +1592,7 @@ static Xen g_save_envelopes(Xen filename)
 
       if (!fd)
 	{
-	  Xen_error(CANNOT_SAVE,
+	  Xen_error(Xen_make_error_type("cannot-save"),
 		    Xen_list_3(C_string_to_Xen_string(S_save_envelopes ": can't save ~S, ~A"),
 			       filename,
 			       C_string_to_Xen_string(snd_open_strerror())));

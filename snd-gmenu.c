@@ -48,7 +48,7 @@ static void file_print_callback(GtkWidget *w, gpointer info)
   GError *error = NULL;
 
   operation = gtk_print_operation_new ();
-  if (settings != NULL) 
+  if (settings) 
     gtk_print_operation_set_print_settings(operation, settings);
 
   g_signal_connect(G_OBJECT(operation), "begin-print", G_CALLBACK(begin_print), NULL);
@@ -58,7 +58,7 @@ static void file_print_callback(GtkWidget *w, gpointer info)
   res = gtk_print_operation_run(operation, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG, GTK_WINDOW(MAIN_SHELL(ss)), &error);
   if (res == GTK_PRINT_OPERATION_RESULT_APPLY)
     {
-      if (settings != NULL)
+      if (settings)
         g_object_unref(settings);
       settings = (GtkPrintSettings *)g_object_ref(gtk_print_operation_get_print_settings(operation));
     }
@@ -143,7 +143,7 @@ static void file_open_recent_callback(GtkWidget *w, gpointer info)
 
       for (i = 0; i < size; i++)
 	{
-	  if (recent_file_items[i] == NULL)
+	  if (!recent_file_items[i])
 	    {
 	      recent_file_items[i] = gtk_menu_item_new_with_label(recent_file_names[i]);
 	      gtk_menu_shell_append(GTK_MENU_SHELL(file_open_recent_cascade_menu), recent_file_items[i]);

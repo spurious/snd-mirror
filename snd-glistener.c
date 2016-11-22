@@ -157,7 +157,7 @@ static const char *checker(glistener *g, const char *text)
   bool err = false;
   result = s7_f(s7);
 
-  if (s7_begin_hook(s7) != NULL) return(NULL); 
+  if (s7_begin_hook(s7)) return(NULL); 
   err_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
   err_loc = s7_gc_protect(s7, err_port);
   port = s7_open_input_string(s7, text);
@@ -364,7 +364,7 @@ static void evaluator(glistener *g, const char *text)
   s7_pointer old_port, result;
   char *errmsg = NULL;
   
-  if (s7_begin_hook(s7) != NULL) return;      /* s7 is already running (user typed <cr> during computation) */
+  if (s7_begin_hook(s7)) return;      /* s7 is already running (user typed <cr> during computation) */
   
   old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
   gc_loc = s7_gc_protect(s7, old_port);

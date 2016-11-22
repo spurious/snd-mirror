@@ -740,7 +740,7 @@ int find_free_sound_slot(int desired_chans)
     {
       /* snd_update should change the underlying slot only when it has to (user increased chans) */
       sp = ss->sounds[ss->reloading_updated_file - 1];
-      if ((sp == NULL) ||
+      if ((!sp) ||
 	  ((sp->inuse == SOUND_IDLE) && (sp->allocated_chans >= desired_chans)))
 	return(ss->reloading_updated_file - 1);
     }
@@ -757,7 +757,7 @@ int find_free_sound_slot(int desired_chans)
   for (i = 0; i < ss->max_sounds; i++)
     {
       sp = ss->sounds[i];
-      if (sp == NULL) return(i);
+      if (!sp) return(i);
       if (sp->inuse == SOUND_IDLE) return(i);
     }
   j = ss->max_sounds;
@@ -772,7 +772,7 @@ int find_free_sound_slot_for_channel_display(void)
 {
   int i, j;
   for (i = 0; i < ss->max_sounds; i++)
-    if (ss->sounds[i] == NULL) return(i);
+    if (!ss->sounds[i]) return(i);
   j = ss->max_sounds;
   ss->max_sounds += SOUNDS_ALLOC_SIZE;
   ss->sounds = (snd_info **)realloc(ss->sounds, ss->max_sounds * sizeof(snd_info *));
@@ -845,7 +845,7 @@ static int current_selectpos = 0;
 
 static void select_sound(snd_info *sp)
 {
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
   if (Xen_hook_has_list(select_sound_hook))
     run_hook(select_sound_hook,
@@ -881,7 +881,7 @@ void select_channel(snd_info *sp, int chan)
 {
   chan_info *cp;
 
-  if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
   cp = selected_channel();
   if (cp != sp->chans[chan])
     {
@@ -1009,7 +1009,7 @@ snd_info *find_sound(const char *name, int nth)
 {
   char *sname;
   int i, which = 0;
-  if (name == NULL) return(NULL);
+  if (!name) return(NULL);
   sname = filename_without_directory(name);
   for (i = 0; i < ss->max_sounds; i++)
     {

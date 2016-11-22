@@ -425,7 +425,7 @@ void add_ed_mix(ed_list *ed, mix_state *ms)
       int i;
       mxl = (mix_list *)(ed->mixes);
       for (i = 0; i < mxl->size; i++)
-	if (mxl->list[i] == NULL)
+	if (!mxl->list[i])
 	  {
 	    loc = i;
 	    break;
@@ -696,7 +696,7 @@ int mix_name_to_id(const char *name)
 static mix_info *make_mix_info(chan_info *cp)
 {
   mix_info *md;
-  if (mix_infos == NULL)
+  if (!mix_infos)
     {
       mix_infos_size = MIX_INFO_INCREMENT;
       mix_infos = (mix_info **)calloc(mix_infos_size, sizeof(mix_info *));
@@ -793,7 +793,7 @@ bool channel_has_mixes(chan_info *cp)
 
 bool channel_has_active_mixes(chan_info *cp)
 {
-  return(cp->edits[cp->edit_ctr]->mixes != NULL);
+  return((bool)(cp->edits[cp->edit_ctr]->mixes));
 }
 
 
@@ -2220,7 +2220,7 @@ void move_mix_tag(int mix_id, int x, int y)
   mus_long_t pos;
 
   md = md_from_id(mix_id);
-  if (md == NULL)
+  if (!md)
     {
       mix_dragged = false;
       if (watch_mix_proc != 0)
@@ -2615,7 +2615,7 @@ static char *xen_mix_to_string(xen_mix *v)
 {
   #define xen_is_mixRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(xen_is_mixRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, xen_is_mixRINT_BUFFER_SIZE, "#<mix %d>", v->n);
   return(buf);
@@ -3025,7 +3025,7 @@ static Xen g_mix_properties(Xen n)
   Xen_check_type(xen_is_mix(n), n, 1, S_mix_properties, "a mix");
 
   md = md_from_id(Xen_mix_to_C_int(n));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_mix_properties, n));
 
   if (!(Xen_is_vector(md->properties)))
@@ -3043,7 +3043,7 @@ static Xen g_set_mix_properties(Xen n, Xen val)
   Xen_check_type(xen_is_mix(n), n, 1, S_mix_properties, "a mix");
 
   md = md_from_id(Xen_mix_to_C_int(n));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_set S_mix_properties, n));
 
   if (!(Xen_is_vector(md->properties)))
@@ -3079,7 +3079,7 @@ filename or " PROC_FALSE " and the input channel for its data."
 
   Xen_check_type(xen_is_mix(n), n, 1, S_mix_home, "a mix");
   md = md_from_id(Xen_mix_to_C_int(n));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_mix_home, n));
 
   return(Xen_list_4(C_int_to_Xen_sound((md->cp->sound)->index),
@@ -3111,7 +3111,7 @@ static double mix_maxamp(int mix_id)
   mus_float_t mx = 0.0;
 
   md = md_from_id(mix_id);
-  if (md == NULL)
+  if (!md)
     return(0.0);
 
   ms = current_mix_state(md);
@@ -3249,7 +3249,7 @@ static Xen g_mixes(Xen snd, Xen chn)
       else
 	{
 	  sp = get_sp(snd);
-	  if (sp == NULL) 
+	  if (!sp) 
 	    return(snd_no_such_sound_error(S_mixes, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
 	    res1 = Xen_cons(g_mixes(snd, C_int_to_Xen_integer(i)), res1);
@@ -3564,7 +3564,7 @@ static char *mix_sampler_to_string(mix_fd *fd)
 {
   char *desc;
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  if ((fd == NULL) || (fd->sf == NULL))
+  if ((!fd) || (!fd->sf))
     snprintf(desc, PRINT_BUFFER_SIZE, "#<mix-sampler: null>");
   else
     {
@@ -3623,7 +3623,7 @@ Xen g_make_mix_sampler(Xen mix_id, Xen ubeg)
   Snd_assert_sample_type(S_make_mix_sampler, ubeg, 2);
 
   md = md_from_id(Xen_mix_to_C_int(mix_id));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_make_mix_sampler, mix_id));
   beg = beg_to_sample(ubeg, S_make_mix_sampler);
 
@@ -3891,7 +3891,7 @@ static bool play_mix(mix_info *md, mus_long_t beg, bool start_playing)
   if (!ms)
     {
       int i;
-      for (i = md->cp->edit_ctr - 1; (ms == NULL) && (i < 0); i--)
+      for (i = md->cp->edit_ctr - 1; (!ms) && (i < 0); i--)
 	ms = ed_mix_state(md->cp->edits[i], md->id);
     }
   if (ms)
@@ -3918,7 +3918,7 @@ Xen g_play_mix(Xen num, mus_long_t samp)
   mix_info *md;
 
   md = md_from_id(Xen_mix_to_C_int(num));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_play, num));
   play_mix(md, samp, true); 
 
@@ -3956,7 +3956,7 @@ Xen g_mix_to_vct(Xen mix_n, Xen beg_n, Xen num)
   Xen_check_type(Xen_is_integer_or_unbound(num), num, 3, S_mix_to_vct, "an integer");
 
   md = md_from_id(Xen_mix_to_C_int(mix_n));
-  if (md == NULL)
+  if (!md)
     return(snd_no_such_mix_error(S_mix_to_vct, mix_n));
   ms = current_mix_state(md);
 

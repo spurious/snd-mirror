@@ -110,7 +110,7 @@ static int be_snd_checked_write(int fd, unsigned char *buf, int bytes, const cha
         return_mus_io_error("open", OldName); \
       } \
     buf = (BufType *)calloc(BufSize, sizeof(BufType)); \
-    if (buf == NULL) \
+    if (!buf) \
       { \
         CLEANUP(OldName, NewName); \
         return_mus_alloc_error(OldName, BufSize, "buf"); \
@@ -1411,7 +1411,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
   mus_bint_to_char((unsigned char *)(hdr + 16), srate);
   mus_bint_to_char((unsigned char *)(hdr + 20), chans);
   fd = FOPEN(oldname, "rb");
-  if (fd == NULL) 
+  if (!fd) 
     {
       snd_close(fs, newname); 
       return_mus_io_error("fopen", oldname);
@@ -1423,7 +1423,7 @@ static int read_g72x_adpcm(const char *oldname, const char *newname, char *hdr, 
       return_mus_write_error(oldname, newname);
     }
   buf = (short *)calloc(TRANS_BUF_SIZE, sizeof(short));
-  if (buf == NULL) 
+  if (!buf) 
     {
       snd_close(fs, newname); 
       snd_fclose(fd, oldname); 

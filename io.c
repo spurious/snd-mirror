@@ -592,7 +592,7 @@ int mus_file_open_descriptors(int tfd, const char *name, mus_sample_t samp_type,
 	  for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
 	}
 
-      if (io_fds[tfd] == NULL)
+      if (!io_fds[tfd])
 	io_fds[tfd] = io_fd_alloc();
 
       if (io_fds[tfd])
@@ -651,7 +651,7 @@ void scan_io_fds_for_saved_data(mus_float_t **data)
 bool mus_file_clipping(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(false);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(false);
   fd = io_fds[tfd];
   return(fd->clipping);
 }
@@ -660,7 +660,7 @@ bool mus_file_clipping(int tfd)
 int mus_file_set_clipping(int tfd, bool clipped)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->clipping = clipped;
   return(MUS_NO_ERROR);
@@ -670,7 +670,7 @@ int mus_file_set_clipping(int tfd, bool clipped)
 int mus_file_set_header_type(int tfd, mus_header_t type)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->header_type = type;
   return(MUS_NO_ERROR);
@@ -680,7 +680,7 @@ int mus_file_set_header_type(int tfd, mus_header_t type)
 mus_header_t mus_file_header_type(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_UNKNOWN_HEADER);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(MUS_UNKNOWN_HEADER);
   fd = io_fds[tfd];
   return(fd->header_type);
 }
@@ -689,7 +689,7 @@ mus_header_t mus_file_header_type(int tfd)
 char *mus_file_fd_name(int tfd)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(NULL);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(NULL);
   fd = io_fds[tfd];
   return(fd->name);
 }
@@ -698,7 +698,7 @@ char *mus_file_fd_name(int tfd)
 int mus_file_set_chans(int tfd, int chans)
 {
   io_fd *fd;
-  if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+  if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd])) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fd = io_fds[tfd];
   fd->chans = chans;
   return(MUS_NO_ERROR);
@@ -798,7 +798,7 @@ int mus_file_close(int fd)
   int close_result = 0;
 #endif
 
-  if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+  if ((!io_fds) || (fd >= io_fd_size) || (fd < 0) || (!io_fds[fd])) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
 
 #if USE_SND
@@ -825,7 +825,7 @@ int mus_file_close(int fd)
 mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
 {
   io_fd *fd;
-  if (io_fds == NULL) 
+  if (!io_fds) 
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: no file descriptors!"));
 
   if (tfd >= io_fd_size)
@@ -833,7 +833,7 @@ mus_long_t mus_file_seek_frample(int tfd, mus_long_t frample)
 		     "mus_file_seek_frample: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size));
 
   if ((tfd < 0) || 
-      (io_fds[tfd] == NULL))
+      (!io_fds[tfd]))
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frample: file descriptor = %d?", tfd));
 
   fd = io_fds[tfd];
@@ -1049,7 +1049,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
     {
       io_fd *fd;
 
-      if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
+      if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd]))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!"));
 
       fd = io_fds[tfd];
@@ -1104,7 +1104,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  else
 	    {
 	      for (k = 0; k < chans; k++)
-		if ((cm == NULL) || (cm[k]))
+		if ((!cm) || (cm[k]))
 		  {
 		    buffer = (mus_float_t *)(bufs[k]);
 		    if (buffer)
@@ -1118,7 +1118,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	  return(lim);
 	}
 
-      if (ur_charbuf == NULL) 
+      if (!ur_charbuf) 
 	ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
       charbuf = ur_charbuf;
     }
@@ -1169,7 +1169,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
 	      if (loc < nints)
 		for (k = 0; k < chans; k++)
-		  if ((cm == NULL) || (cm[k]))
+		  if ((!cm) || (cm[k]))
 		    {
 		      mus_float_t *p;
 		      p = bufs[k];
@@ -1487,7 +1487,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	{
 	  for (k = 0; k < chans; k++)
 	    {
-	      if ((cm == NULL) || (cm[k]))
+	      if ((!cm) || (cm[k]))
 		{
 		  buffer = (mus_float_t *)(bufs[k]);
 		  if (buffer)
@@ -1745,7 +1745,7 @@ mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t num, int chan
 
   if (rtn < num) 
     for (k = 0; k < chans; k++)
-      if ((cm == NULL) || (cm[k]))
+      if ((!cm) || (cm[k]))
 	{
 	  mus_float_t *buffer;
 	  buffer = bufs[k];
@@ -1765,7 +1765,7 @@ static int checked_write(int tfd, char *buf, mus_long_t chars)
   if (bytes != chars) 
     {
       io_fd *fd;
-      if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
+      if ((!io_fds) || (tfd >= io_fd_size) || (tfd < 0) || (!io_fds[tfd]))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
       fd = io_fds[tfd];
       if (fd->sample_type == MUS_UNKNOWN_SAMPLE) 
@@ -1819,10 +1819,10 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
   if (!inbuf)
     {
       io_fd *fd;
-      if ((io_fds == NULL) || 
+      if ((!io_fds) || 
 	  (tfd >= io_fd_size) || 
 	  (tfd < 0) || 
-	  (io_fds[tfd] == NULL))
+	  (!io_fds[tfd]))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_write: no file descriptors!"));
 
       fd = io_fds[tfd];
@@ -1879,7 +1879,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	  mus_long_t loclim;
 	  mus_float_t *bufnow, *bufend, *bufend4;
 
-	  if (bufs[k] == NULL) continue;
+	  if (!bufs[k]) continue;
 	  loc = oldloc;
 	  buffer = (mus_float_t *)(bufs[k]);
 
@@ -1942,7 +1942,7 @@ static int mus_write_1(int tfd, mus_long_t beg, mus_long_t end, int chans, mus_f
 	  loclim = loc + lim;
 	  if (!charbuf)
 	    {
-	      if (ur_charbuf == NULL)
+	      if (!ur_charbuf)
 		ur_charbuf = (char *)malloc(BUFLIM * sizeof(char)); 
 	      /*
 		ur_charbuf = (char *)calloc(BUFLIM, sizeof(char)); 

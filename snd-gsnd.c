@@ -521,7 +521,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
       chan_info *cp;
       if (sp->sync > ss->sound_sync_max) ss->sound_sync_max = sp->sync;
       cp = sp->lacp;
-      if (cp == NULL) cp = any_selected_channel(sp);
+      if (!cp) cp = any_selected_channel(sp);
       goto_graph(cp);
       if (cp->cursor_on) sync_cursors(cp, cursor_sample(cp));
       apply_x_axis_change(cp);
@@ -1133,7 +1133,7 @@ void display_filter_env(snd_info *sp)
   if (height < MIN_FILTER_GRAPH_HEIGHT) return;
   width = widget_width(drawer);
 
-  if (sp->filter_ax == NULL)
+  if (!sp->filter_ax)
     {
       ax = (graphics_context *)calloc(1, sizeof(graphics_context));
       ax->wn = WIDGET_TO_WINDOW(drawer);
@@ -1156,7 +1156,7 @@ void display_filter_env(snd_info *sp)
 
   edp->in_dB = sp->filter_control_in_dB;
   edp->with_dots = true;
-  if (sp->filter_control_envelope == NULL) 
+  if (!sp->filter_control_envelope) 
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);
 
   
@@ -1540,7 +1540,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
     }
   else old_chans = 0;
 
-  make_widgets = (ss->sounds[snd_slot] == NULL);
+  make_widgets = (!ss->sounds[snd_slot]);
   ss->sounds[snd_slot] = make_snd_info(ss->sounds[snd_slot], filename, hdr, snd_slot, read_only);
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
@@ -1548,7 +1548,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp->write_date = file_write_date(filename); /* needed early in this process by the peak-env handlers */
   make_pixmaps();
 
-  if (sp->snd_widgets == NULL)
+  if (!sp->snd_widgets)
     {
       sp->snd_widgets = (GtkWidget **)calloc(NUM_SND_WIDGETS, sizeof(GtkWidget *));
       sp->snd_adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
@@ -2060,7 +2060,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void set_sound_pane_file_label(snd_info *sp, const char *str)
 {
-  if ((sp->name_string == NULL) || 
+  if ((!sp->name_string) || 
       (strcmp(sp->name_string, str) != 0))
     {
       if (sp->name_string) free(sp->name_string);
@@ -2434,7 +2434,7 @@ pane-box (10)name-form"
   Snd_assert_sound(S_sound_widgets, snd, 1);
 
   sp = get_sp(snd);
-  if (sp == NULL)
+  if (!sp)
     return(snd_no_such_sound_error(S_sound_widgets, snd));
   if (!has_widgets(sp))
     return(Xen_empty_list);

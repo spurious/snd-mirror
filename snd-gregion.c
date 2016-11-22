@@ -136,7 +136,7 @@ static void highlight_region(void)
 static void make_region_labels(file_info *hdr)
 {
   char *str;
-  if (hdr == NULL) return;
+  if (!hdr) return;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(str, PRINT_BUFFER_SIZE, "srate: %d", hdr->srate);
 #if (!GTK_CHECK_VERSION(3, 0, 0))
@@ -788,7 +788,7 @@ static void make_region_dialog(void)
 void view_region_callback(GtkWidget *w, gpointer context)
 {
   /* put up scrollable dialog describing/playing/editing the region list */
-  if (region_dialog == NULL)
+  if (!region_dialog)
     make_region_dialog();
   else 
     {
@@ -801,7 +801,7 @@ void view_region_callback(GtkWidget *w, gpointer context)
 
 bool region_dialog_is_active(void)
 {
-  return((region_dialog != NULL) && 
+  return((region_dialog) && 
 	 (widget_is_active(region_dialog)));
 }
 
@@ -823,7 +823,7 @@ static regrow *region_row(int n)
 {
   if (n < region_rows_size)
     {
-      if (region_rows[n] == NULL)
+      if (!region_rows[n])
 	{
 	  regrow *r;
 	  r = make_regrow(region_list, (void (*)())region_play_callback, (void (*)())region_focus_callback);

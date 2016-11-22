@@ -275,13 +275,13 @@ static char *get_tmpdir(void)
   char *tmpdir = NULL;
   int len;
   tmpdir = mus_strdup(getenv("TMPDIR"));
-  if ((tmpdir == NULL) && (MUS_DEFAULT_TEMP_DIR)) tmpdir = mus_strdup(MUS_DEFAULT_TEMP_DIR);
+  if ((!tmpdir) && (MUS_DEFAULT_TEMP_DIR)) tmpdir = mus_strdup(MUS_DEFAULT_TEMP_DIR);
 #ifdef P_tmpdir
-  if (tmpdir == NULL) tmpdir = mus_strdup(P_tmpdir); /* /usr/include/stdio.h */
+  if (!tmpdir) tmpdir = mus_strdup(P_tmpdir); /* /usr/include/stdio.h */
 #else
-  if (tmpdir == NULL) return(mus_strdup("/tmp"));
+  if (!tmpdir) return(mus_strdup("/tmp"));
 #endif
-  if (tmpdir == NULL) return(mus_strdup("."));
+  if (!tmpdir) return(mus_strdup("."));
   len = strlen(tmpdir);
   if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0; /* this is what forces us to copy the string above (Sun segfaults otherwise) */
   return(tmpdir);
@@ -295,7 +295,7 @@ char *shorter_tempnam(const char *udir, const char *prefix)
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
   str = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
-  if ((udir == NULL) || (mus_strlen(udir) == 0)) 
+  if ((!udir) || (mus_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
   else tmpdir = mus_strdup(udir);
   snprintf(str, PRINT_BUFFER_SIZE, "%s%s%s%d_%d.snd", 

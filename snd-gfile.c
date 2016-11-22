@@ -181,7 +181,7 @@ void monitor_sound(snd_info *sp)
   file = g_file_new_for_path(sp->filename);
 
   sp->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
-  if (err != NULL)
+  if (err)
     snd_warning("%s", err->message);
   else g_signal_connect(G_OBJECT(sp->file_watcher), "changed", G_CALLBACK(sp_file_changed), (gpointer)sp);   
 
@@ -856,7 +856,7 @@ static void start_unsound_watcher(file_dialog_info *fd, const char *filename)
 
   file = g_file_new_for_path(fd->unsound_dirname);
   fd->unsound_directory_watcher = (void *)g_file_monitor_directory(file, G_FILE_MONITOR_NONE, NULL, &err);
-  if (err != NULL)
+  if (err)
     snd_warning("%s", err->message);
   else g_signal_connect(G_OBJECT(fd->unsound_directory_watcher), "changed", G_CALLBACK(unpost_unsound_error), (gpointer)fd);
   g_object_unref(file);
@@ -1082,7 +1082,7 @@ static void file_mix_ok_callback(GtkWidget *w, gpointer context)
 
 widget_t make_mix_file_dialog(bool managed)
 {
-  if (mdat == NULL)
+  if (!mdat)
     {
       mdat = make_file_dialog(FILE_READ_ONLY, "Mix", "mix:", "Mix", FILE_MIX_DIALOG,
 			      (GCallback)file_mix_ok_callback,
@@ -1173,7 +1173,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
   
 widget_t make_insert_file_dialog(bool managed)
 {
-  if (idat == NULL)
+  if (!idat)
     idat = make_file_dialog(FILE_READ_ONLY, "Insert", "insert:", "Insert", FILE_INSERT_DIALOG,
 			    (GCallback)file_insert_ok_callback,
 			    NULL, /* no mkdir */
@@ -1301,7 +1301,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat, mus_header_t heade
   else fdat->current_header_type = MUS_RAW;
   fdat->current_sample_type = sample_type;
   fl = header_type_and_sample_type_to_position(fdat, fdat->current_header_type, fdat->current_sample_type);
-  if (fl == NULL) return;
+  if (!fl) return;
 
   if ((header_type != IGNORE_HEADER_TYPE) &&
       (fdat->header_type_list))
@@ -2144,7 +2144,7 @@ static void save_or_extract(file_dialog_info *fd, bool saving)
 		GError *err = NULL;
 		file = g_file_new_for_path(fullname);
 		fd->file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
-		if (err != NULL)
+		if (err)
 		  snd_warning("%s", err->message);
 		else g_signal_connect(G_OBJECT(fd->file_watcher), "changed", G_CALLBACK(watch_save_as_file), (gpointer)fd);
 		g_object_unref(file);
@@ -2919,7 +2919,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		GError *err = NULL;
 		file = g_file_new_for_path(new_file_filename);
 		new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
-		if (err != NULL)
+		if (err)
 		  snd_warning("%s", err->message);
 		else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		g_object_unref(file);
@@ -2950,7 +2950,7 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 		      GError *err = NULL;
 		      file = g_file_new_for_path(new_file_filename);
 		      new_file_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
-		      if (err != NULL)
+		      if (err)
 			snd_warning("%s", err->message);
 		      else g_signal_connect(G_OBJECT(new_file_watcher), "changed", G_CALLBACK(watch_new_file), NULL);
 		      g_object_unref(file);
@@ -3456,7 +3456,7 @@ GtkWidget *edit_header(snd_info *sp)
     GError *err = NULL;
     file = g_file_new_for_path(ep->sp->filename);
     ep->file_ro_watcher = (void *)g_file_monitor_file(file, G_FILE_MONITOR_NONE, NULL, &err);
-    if (err != NULL)
+    if (err)
       snd_warning("%s", err->message);
     else g_signal_connect(G_OBJECT(ep->file_ro_watcher), "changed", G_CALLBACK(watch_file_read_only), (gpointer)ep);
     g_object_unref(file);
@@ -3543,7 +3543,7 @@ static void create_post_it_monolog(void)
 
 widget_t post_it(const char *subject, const char *str)
 {
-  if (ss == NULL) return(NULL);
+  if (!ss) return(NULL);
   if (!(post_it_dialog)) create_post_it_monolog(); else raise_dialog(post_it_dialog);
   gtk_window_set_title(GTK_WINDOW(post_it_dialog), subject);
   gtk_text_buffer_set_text(gtk_text_view_get_buffer(GTK_TEXT_VIEW(post_it_text)), "", 0);

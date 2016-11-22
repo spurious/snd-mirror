@@ -5090,7 +5090,7 @@ static void resize_stack(s7_scheme *sc)
     s7_error(sc, s7_make_symbol(sc, "stack-too-big"), set_elist_1(sc, make_string_wrapper(sc, "stack has grown past (*s7* 'max-stack-size)")));
 
   vector_elements(sc->stack) = (s7_pointer *)realloc(vector_elements(sc->stack), new_size * sizeof(s7_pointer));
-  if (vector_elements(sc->stack) == NULL)
+  if (!vector_elements(sc->stack))
     s7_error(sc, s7_make_symbol(sc, "stack-too-big"), set_elist_1(sc, make_string_wrapper(sc, "no room to expand stack?")));
 
   for (i = sc->stack_size; i < new_size; i++)
@@ -12213,8 +12213,8 @@ static const char *float_format_g = NULL;
 
 static char *floatify(char *str, int *nlen)
 {
-  if ((strchr(str, 'e') == NULL) &&
-      (strchr(str, '.') == NULL))
+  if ((!strchr(str, 'e')) &&
+      (!strchr(str, '.')))
     {
       /* this assumes there is room in str for 2 more chars */
       int len;
@@ -26785,13 +26785,13 @@ static s7_pointer function_read_line(s7_scheme *sc, s7_pointer port, bool with_e
 
 static s7_pointer stdin_read_line(s7_scheme *sc, s7_pointer port, bool with_eol, bool copied)
 {
-  if (sc->read_line_buf == NULL)
+  if (!sc->read_line_buf)
     {
       sc->read_line_buf_size = 1024;
       sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
     }
 
-  if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin) != NULL)
+  if (fgets(sc->read_line_buf, sc->read_line_buf_size, stdin))
     return(s7_make_string(sc, sc->read_line_buf)); /* fgets adds the trailing '\0' */
   return(s7_make_string_with_length(sc, NULL, 0));
 }
@@ -26802,7 +26802,7 @@ static s7_pointer file_read_line(s7_scheme *sc, s7_pointer port, bool with_eol, 
   char *buf;
   int read_size, previous_size = 0;
 
-  if (sc->read_line_buf == NULL)
+  if (!sc->read_line_buf)
     {
       sc->read_line_buf_size = 1024;
       sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
@@ -28760,7 +28760,7 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size)
    *
    */
 
-  if (sc->autoload_names == NULL)
+  if (!sc->autoload_names)
     {
       sc->autoload_names = (const char ***)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(const char **));
       sc->autoload_names_sizes = (int *)calloc(INITIAL_AUTOLOAD_NAMES_SIZE, sizeof(int));
@@ -29901,7 +29901,7 @@ static shared_info *collect_shared_info(s7_scheme *sc, shared_info *ci, s7_point
 static shared_info *new_shared_info(s7_scheme *sc)
 {
   shared_info *ci;
-  if (sc->circle_info == NULL)
+  if (!sc->circle_info)
     {
       ci = (shared_info *)calloc(1, sizeof(shared_info));
       ci->size = INITIAL_SHARED_INFO_SIZE;
@@ -33747,10 +33747,10 @@ static s7_pointer c_directory_to_list(s7_scheme *sc, s7_pointer name)
     method_or_bust(sc, name, sc->directory_to_list_symbol, list_1(sc, name), T_STRING, 0);
 
   sc->w = sc->nil;
-  if ((dpos = opendir(string_value(name))) != NULL)
+  if ((dpos = opendir(string_value(name))))
     {
       struct dirent *dirp;
-      while ((dirp = readdir(dpos)) != NULL)
+      while ((dirp = readdir(dpos)))
 	sc->w = cons(sc, s7_make_string(sc, dirp->d_name), sc->w);
       closedir(dpos);
     }
@@ -46018,8 +46018,8 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 	    {
 	      if ((!local_strcmp(codestr, "(result)")) &&
 		  (!local_strcmp(codestr, "(#f)")) &&
-		  (strstr(codestr, "(stacktrace)") == NULL) &&
-		  (strstr(codestr, "(stacktrace ") == NULL))
+		  (!strstr(codestr, "(stacktrace)")) &&
+		  (!strstr(codestr, "(stacktrace ")))
 		{
 		  s7_pointer e, f;
 
@@ -47188,7 +47188,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	{
 	  /* it's possible that the error string is just a string -- not intended for format */
 	  if ((type != sc->format_error_symbol) &&      /* avoid an infinite loop of format errors */
-	      (strchr(string_value(car(info)), '~') != NULL))
+	      (strchr(string_value(car(info)), '~')))
 	    {
 	      char *errstr;
 	      int len, str_len;
@@ -47249,7 +47249,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	  if (call_name)
 	    {
 	      sc->s7_call_name = NULL;
-	      if ((sc->s7_call_file != NULL) &&
+	      if ((sc->s7_call_file) &&
 		  (sc->s7_call_line >= 0))
 		{
 		  format_to_port(sc, sc->error_port, "\n;  ~A ~A[~D]",
@@ -48084,7 +48084,7 @@ static s7_pointer g_abort(s7_scheme *sc, s7_pointer args) {abort();}
 
 
 static s7_function all_x_function[OPT_MAX_DEFINED];
-#define is_all_x_op(Op) (all_x_function[Op] != NULL)
+#define is_all_x_op(Op) (all_x_function[Op])
 
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p)
 {

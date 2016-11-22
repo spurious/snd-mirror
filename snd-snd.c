@@ -341,8 +341,8 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  return(true);
 	}
 
-      if ((es->sf == NULL) &&
-	  (es->direct_data == NULL))
+      if ((!es->sf) &&
+	  (!es->direct_data))
 	{
 	  if ((cp->edit_ctr == 0) &&
 	      (cp->sound) &&
@@ -350,7 +350,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      (cp->sound->hdr) &&
 	      (cp->sound->nchans <= 4) &&
 	      (cp->sounds) &&
-	      (cp->sounds[0] != NULL) &&
+	      (cp->sounds[0]) &&
 	      (cp->sounds[0]->io))
 	    {
 	      es->fd = mus_file_open_read(cp->sound->filename);
@@ -370,11 +370,11 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  else es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
 	}
       
-      if (es->direct_data == NULL)
+      if (!es->direct_data)
 	{
 	  snd_fd *sfd;
 	  sfd = es->sf;
-	  if (sfd == NULL) return(false);
+	  if (!sfd) return(false);
 
 	  for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
 	    {
@@ -591,7 +591,7 @@ bool peak_env_usable(chan_info *cp, mus_float_t samples_per_pixel, mus_long_t hi
   if ((start_new) &&
       (!(cp->peak_env_in_progress)) && 
       (current_samples(cp) > PEAK_ENV_CUTOFF) &&
-      (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
+      (cp->sound->short_filename))             /* region browser jumped in too soon during autotest */
     start_peak_env(cp);
   return(false);
 }
@@ -724,7 +724,7 @@ void peak_env_scale_by(chan_info *cp, mus_float_t scl, int pos)
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
-      if (new_ep == NULL)
+      if (!new_ep)
 	{
 	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
 	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -768,7 +768,7 @@ void pick_one_bin(peak_env_info *ep, int bin, mus_long_t cursamp, chan_info *cp,
 
   /* here we have to read the current bin using the current fragments */
   sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
-  if (sf == NULL) return;
+  if (!sf) return;
 
   val = read_sample(sf); 
   ymin = val;
@@ -804,7 +804,7 @@ void peak_env_scale_selection_by(chan_info *cp, mus_float_t scl, mus_long_t beg,
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
 
-      if (new_ep == NULL)
+      if (!new_ep)
 	{
 	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
 	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -864,7 +864,7 @@ peak_env_info *peak_env_section(chan_info *cp, mus_long_t beg, mus_long_t num, i
   mus_long_t cursamp, start, end;
 
   old_ep = cp->edits[edpos]->peak_env;
-  if (old_ep == NULL) return(NULL);
+  if (!old_ep) return(NULL);
 
   new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
   new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -958,7 +958,7 @@ void amp_env_env(chan_info *cp, mus_float_t *brkpts, int npts, int pos, mus_floa
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
 
-      if (new_ep == NULL)
+      if (!new_ep)
 	{
 	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
 	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -1020,7 +1020,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, mus_long_t beg, mus_lon
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
 
-      if (new_ep == NULL)
+      if (!new_ep)
 	{
 	  new_ep = (peak_env_info *)calloc(1, sizeof(peak_env_info));
 	  new_ep->data_max = (mus_float_t *)malloc(old_ep->peak_env_size * sizeof(mus_float_t));
@@ -1600,7 +1600,7 @@ static bool apply_controls(apply_state *ap)
   mus_float_t mult_dur;
   int i, added_dur = 0;
 
-  if (ap == NULL) return(false);
+  if (!ap) return(false);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
 
@@ -1636,7 +1636,7 @@ static bool apply_controls(apply_state *ap)
 	cp = sp->chans[0];
       else cp = sp->chans[sp->selected_channel];
       si = sync_to_chan(cp);
-      if (si == NULL)
+      if (!si)
 	{
 	  sp->sync = old_sync;
 	  return(false);
@@ -1701,7 +1701,7 @@ static bool apply_controls(apply_state *ap)
 	      break;
 	    }
 
-	  if (ap->origin == NULL)
+	  if (!ap->origin)
 	    {
 	      /* from apply-controls */
 	      /* to reproduce this on a channel-independent basis, we need to use controls->channel
@@ -2140,7 +2140,7 @@ static char *xen_sound_to_string(xen_sound *v)
 {
   #define SOUND_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(SOUND_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, SOUND_PRINT_BUFFER_SIZE, "#<sound %d>", v->n);
   return(buf);
@@ -2474,7 +2474,7 @@ static Xen sound_get(Xen snd, sp_field_t fld, const char *caller)
       if (!sp)
 	return(snd_no_such_sound_error(caller, snd));
     }
-  if ((sp == NULL) || 
+  if ((!sp) || 
       (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd));
 
@@ -2690,7 +2690,7 @@ static Xen sound_set(Xen snd, Xen val, sp_field_t fld, const char *caller)
       if (!sp)
 	return(snd_no_such_sound_error(caller, snd));
     }
-  if ((sp == NULL) || 
+  if ((!sp) || 
       (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd));
 
@@ -3462,7 +3462,7 @@ static Xen g_channel_style(Xen snd)
 
   Snd_assert_sound(S_channel_style, snd, 1);
   sp = get_sp(snd);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_channel_style, snd));
 
   return(C_int_to_Xen_integer((int)(sp->channel_style)));
@@ -3518,7 +3518,7 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
 
   Snd_assert_sound(S_set S_channel_style, snd, 2);
   sp = get_sp(snd);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_set S_channel_style, snd));
 
   set_sound_channel_style(sp, new_style);
@@ -3717,7 +3717,7 @@ static Xen g_set_selected_channel(Xen snd, Xen chn_n)
 
   Snd_assert_sound(S_set S_selected_channel, snd, 1); 
   sp = get_sp(snd);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_set S_selected_channel, snd));
 
   if (Xen_is_false(chn_n))
@@ -3824,7 +3824,7 @@ static void save_sound_error_handler(const char *msg, void *data)
 {
   redirect_snd_error_to(NULL, NULL);
   redirect_snd_warning_to(NULL, NULL);
-  Xen_error(CANNOT_SAVE,
+  Xen_error(Xen_make_error_type("cannot-save"),
 	    Xen_list_3(C_string_to_Xen_string("~A: ~A"),
 		       C_string_to_Xen_string((char *)data),
 		       C_string_to_Xen_string(msg)));
@@ -3840,7 +3840,7 @@ static Xen g_save_sound(Xen index)
   Snd_assert_sound(S_save_sound, index, 1);
 
   sp = get_sp(index);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_save_sound, index));
 
   if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -3853,7 +3853,7 @@ static Xen g_save_sound(Xen index)
 		       sp->index);
       str = C_string_to_Xen_string(msg);
       free(msg);
-      Xen_error(CANNOT_SAVE,
+      Xen_error(Xen_make_error_type("cannot-save"),
 		Xen_list_2(C_string_to_Xen_string(S_save_sound ": can't save sound, ~A"),
 			   str));
       return(Xen_false);
@@ -3867,7 +3867,7 @@ static Xen g_save_sound(Xen index)
 
   /* if err and we got here, report it */
   if (is_serious_io_error(err))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_2(C_string_to_Xen_string(S_save_sound ": IO error ~A"),
 			 C_string_to_Xen_string(io_error_name(err))));
 	      
@@ -3884,7 +3884,7 @@ static Xen g_revert_sound(Xen index)
   Snd_assert_sound(S_revert_sound, index, 1);
 
   sp = get_sp(index);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_revert_sound, index));
 
   for (i = 0; i < sp->nchans; i++) 
@@ -4019,7 +4019,7 @@ open file assuming the data matches the attributes indicated unless the file act
       if (!(Xen_is_keyword(keys[3]))) set_fallback_sample_type(ofr);
     }
 
-  if (file == NULL) 
+  if (!file) 
     Xen_error(NO_SUCH_FILE,
 	      Xen_list_1(C_string_to_Xen_string(S_open_raw_sound ": no output file?")));
 
@@ -4143,7 +4143,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       sr = mus_optkey_to_int(keys[2], S_save_sound_as, orig_arg[2], sr);
 
       if ((sr <= 0) && (!Xen_is_keyword(keys[2])))
-	Xen_error(CANNOT_SAVE,
+	Xen_error(Xen_make_error_type("cannot-save"),
 		  Xen_list_2(C_string_to_Xen_string(S_save_sound_as ": srate (~A) can't be <= 0"),
 			     C_int_to_Xen_integer(sr)));
 
@@ -4157,7 +4157,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       outcom = mus_optkey_to_string(keys[7], S_save_sound_as, orig_arg[7], NULL);
     }
 
-  if ((file == NULL) || 
+  if ((!file) || 
       (is_directory(file)))
     Xen_error(NO_SUCH_FILE,
 	      Xen_list_1(C_string_to_Xen_string(S_save_sound_as ": no output file?")));
@@ -4165,13 +4165,13 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   Snd_assert_sound(S_save_sound_as, index, 2);
 
   sp = get_sp(index);
-  if (sp == NULL) 
+  if (!sp) 
     return(snd_no_such_sound_error(S_save_sound_as, index));
   hdr = sp->hdr;
 
   if (ht == MUS_UNKNOWN_HEADER) ht = hdr->type;
   if (!(mus_header_writable(ht, MUS_IGNORE_SAMPLE)))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_2(C_string_to_Xen_string(S_save_sound_as ": can't write ~A headers"),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
 
@@ -4210,7 +4210,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
 
   if (!mus_header_writable(ht, df))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_3(C_string_to_Xen_string(S_save_sound_as ": can't write ~A data to ~A headers"),
 			 C_string_to_Xen_string(mus_sample_type_name(df)),
 			 C_string_to_Xen_string(mus_header_type_name(ht))));
@@ -4223,7 +4223,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       edit_position = to_c_edit_position(sp->chans[(chan >= 0) ? chan : 0], edpos, S_save_sound_as, 7);
       for (i = 0; i < sp->nchans; i++)
 	if (edit_position > sp->chans[i]->edit_ctr)
-	  Xen_error(NO_SUCH_EDIT,
+	  Xen_error(Xen_make_error_type("no-such-edit"),
 		    Xen_list_5(C_string_to_Xen_string(S_save_sound_as ": no such edit position: ~A (~S chan ~A has ~A edits)"),
 			       C_int_to_Xen_integer(edit_position),
 			       C_string_to_Xen_string(sp->short_filename),
@@ -4232,7 +4232,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
 
   fname = mus_expand_filename(file);
-  if (outcom == NULL) 
+  if (!outcom) 
     {
       outcom = output_comment(hdr);
       if (outcom) free_outcom = true;
@@ -4260,7 +4260,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	  Xen errstr;
 	  errstr = C_string_to_Xen_string(fname);
 	  if (fname) {free(fname); fname = NULL;}
-	  Xen_error(CANNOT_SAVE,
+	  Xen_error(Xen_make_error_type("cannot-save"),
 		    Xen_list_3(C_string_to_Xen_string(S_save_sound_as ": ~A (~A)"),
 			       errstr,
 			       C_string_to_Xen_string(snd_open_strerror())));
@@ -4470,7 +4470,7 @@ static Xen g_set_amp_control(Xen on, Xen snd, Xen chn_n)
       Snd_assert_channel(S_amp_control, snd, chn_n, 2);
       cp = get_cp(snd, chn_n, S_amp_control);
       if (!cp) return(Xen_false);
-      if (cp->amp_control == NULL)
+      if (!cp->amp_control)
 	cp->amp_control = (mus_float_t *)calloc(1, sizeof(mus_float_t));
       cp->amp_control[0] = (mus_float_t)Xen_real_to_C_double(on);
       return(on);
@@ -5172,7 +5172,7 @@ bool write_peak_env_info_file(chan_info *cp)
 
   if (!(cp->edits)) return(true);
   ep = cp->edits[0]->peak_env;
-  if (ep == NULL) return(false);
+  if (!ep) return(false);
 
   fullname = expanded_peak_name(cp->sound->filename, cp->chan);
   fd = mus_file_create(fullname);
@@ -5306,7 +5306,7 @@ const char *read_peak_env_info_file(chan_info *cp)
     }
   if (fullname) free(fullname);
 
-  if ((cp->edits[0]->peak_env == NULL) &&
+  if ((!cp->edits[0]->peak_env) &&
       (err != PEAK_ENV_NO_ERROR))
     return(peak_env_error[(int)err]);
 
@@ -5463,7 +5463,7 @@ If 'filename' is a sound index or a sound object, 'size' is interpreted as an ed
 	  int pos;
 
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3); /* here "pts" is edpos, not vector size */
-	  if (cp->edits == NULL)
+	  if (!cp->edits)
 	    return(Xen_empty_list);
 
 	  ep = cp->edits[pos]->peak_env; /* this can be null -- we run the peak envs if necessary */
@@ -5705,7 +5705,7 @@ If there is no sound or listener, it is sent to stderr."
   message = Xen_string_to_C_string(msg);
   sp = get_sp(snd);
 
-  if ((sp == NULL) || 
+  if ((!sp) || 
       (sp->inuse != SOUND_NORMAL))
     {
       if ((message) && (*message))

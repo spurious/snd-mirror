@@ -900,7 +900,7 @@ static char *xen_selection_to_string(xen_selection *v)
 {
   #define xen_is_selectionRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(xen_is_selectionRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, xen_is_selectionRINT_BUFFER_SIZE, "#<selection %d>", v->n);
   return(buf);
@@ -1704,23 +1704,23 @@ save the current selection in file using the indicated file attributes.  If chan
       chn = mus_optkey_to_int(keys[5], S_save_selection, orig_arg[5], SAVE_ALL_CHANS);
     }
 
-  if (file == NULL) 
+  if (!file) 
     Xen_error(Xen_make_error_type("IO-error"),
 	      Xen_list_1(C_string_to_Xen_string(S_save_selection ": no output file?")));
 
   if ((head_type != MUS_UNKNOWN_HEADER) && (!(mus_header_writable(head_type, MUS_IGNORE_SAMPLE))))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": can't write a ~A header"),
 			 C_string_to_Xen_string(mus_header_type_name(head_type))));
 
   if ((head_type != MUS_UNKNOWN_HEADER) && (samp_type != MUS_UNKNOWN_SAMPLE) && (!(mus_header_writable(head_type, samp_type))))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't write ~A data to a ~A header"),
 			 C_string_to_Xen_string(mus_sample_type_name(samp_type)),
 			 C_string_to_Xen_string(mus_header_type_name(head_type))));
 
   if ((sr != -1) && (sr <= 0))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_2(C_string_to_Xen_string(S_save_selection ": srate (~A) can't be <= 0"),
 			 C_int_to_Xen_integer(sr)));
 
@@ -1731,7 +1731,7 @@ save the current selection in file using the indicated file attributes.  If chan
   if ((io_err != IO_NO_ERROR) &&
       (io_err != IO_INTERRUPTED) &&
       (io_err != IO_SAVE_HOOK_CANCELLATION))
-    Xen_error(CANNOT_SAVE,
+    Xen_error(Xen_make_error_type("cannot-save"),
 	      Xen_list_3(C_string_to_Xen_string(S_save_selection ": can't save ~S, ~A"),
 			 keys[0],
 			 C_string_to_Xen_string(snd_open_strerror())));

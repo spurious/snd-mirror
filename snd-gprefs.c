@@ -154,7 +154,7 @@ static bool prefs_dialog_error_is_posted = false;
 static void post_prefs_dialog_error(const char *message, void *data)
 {
   gtk_window_set_title(GTK_WINDOW(preferences_dialog), (char *)message);
-  prefs_dialog_error_is_posted = (message != NULL);
+  prefs_dialog_error_is_posted = (bool)message;
 }
 
 

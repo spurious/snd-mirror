@@ -913,7 +913,7 @@ static char *xen_colormap_to_string(xen_colormap *v)
 {
   #define COLORMAP_PRINT_BUFFER_SIZE 64
   char *buf;
-  if (v == NULL) return(NULL);
+  if (!v) return(NULL);
   buf = (char *)calloc(COLORMAP_PRINT_BUFFER_SIZE, sizeof(char));
   snprintf(buf, COLORMAP_PRINT_BUFFER_SIZE, "#<colormap %s>", colormap_name(v->n));
   return(buf);

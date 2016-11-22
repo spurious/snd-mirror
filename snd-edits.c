@@ -157,7 +157,7 @@ static bool prepare_edit_list(chan_info *cp, int pos, const char *caller)
   if (!(is_editable(cp))) return(false); /* this may represent a second call on edit-hook for this edit */
   if (pos > cp->edit_ctr)
     {
-      Xen_error(NO_SUCH_EDIT,
+      Xen_error(Xen_make_error_type("no-such-edit"),
 		Xen_list_6(C_string_to_Xen_string("~A: edpos: ~A but ~A chan ~A has ~A edits"),
 			   C_string_to_Xen_string(caller),
 			   C_int_to_Xen_integer(pos),
@@ -1158,9 +1158,9 @@ static void check_type_info_entry(int op, int expected_ramps, int expected_xramp
     fprintf(stderr, "%s type: %d %d\n", type_info[op].name, op, type_info[op].type);
   if (op != ED_SIMPLE)
     {
-      if (type_info[op].next == NULL) 
+      if (!type_info[op].next) 
 	fprintf(stderr, "%s no next\n", type_info[op].name);
-      if (type_info[op].previous == NULL) 
+      if (!type_info[op].previous) 
 	fprintf(stderr, "%s no previous\n", type_info[op].name);
     }
   if (is_zero != type_info[op].zero) 
@@ -1316,7 +1316,7 @@ static void setup_ramps(snd_fd *sf, int typ)
   rmps = ED_RAMP_LIST_SIZE(ed);
   xrmps = ED_XRAMP_LIST_SIZE(ed);
 
-  if (sf->ramps == NULL)
+  if (!sf->ramps)
     sf->ramps = (void *)calloc(1, sizeof(reader_ramps));
   
   /* make sure the ramp arrays are large enough (we'll free them at the end of the read) */
@@ -1440,7 +1440,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 {
   int len, j;
   snd_data *sd;
-  if (ed == NULL)
+  if (!ed)
     {
       fprintf(outp, "\n (NULL FRAGMENT at %d)", i);
       return;
@@ -1529,7 +1529,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed)
 	  if (index != EDIT_LIST_ZERO_MARK)
 	    {
 	      sd = cp->sounds[index];
-	      if (sd == NULL) 
+	      if (!sd) 
 		fprintf(outp, " [nil!]");
 	      else 
 		if (sd->type == SND_DATA_FILE)
@@ -1783,7 +1783,7 @@ static io_error_t channel_to_file_with_bounds(chan_info *cp, const char *ofile, 
   sf = (snd_fd **)malloc(sizeof(snd_fd *));
   
   sf[0] = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, len);
-  if (sf[0] == NULL)
+  if (!sf[0])
     {
       free(sf);
       snd_error("no such edit: %s[%d]: %d (this channel has %d edit%s",
@@ -5222,8 +5222,8 @@ static void previous_sound_1(snd_fd *sf)
       reader_out_of_data(sf);
       return;
     }
-  at_start = ((sf->cb == NULL) || 
-	      (sf->current_sound == NULL) || 
+  at_start = ((!sf->cb) || 
+	      (!sf->current_sound) || 
 	      (READER_LOCAL_POSITION(sf) >= io_beg(sf->current_sound->io)));
   if (at_start)
     {
@@ -5262,7 +5262,7 @@ static void previous_sound_1(snd_fd *sf)
 	      if (prev_snd->inuse) 
 		{
 		  prev_snd = copy_snd_data(prev_snd, ind0, FILE_BUFFER_SIZE);
-		  if (prev_snd == NULL)
+		  if (!prev_snd)
 		    {
 		      /* too many files open or something of that sort */
 		      reader_out_of_data(sf);
@@ -5315,8 +5315,8 @@ static void next_sound_1(snd_fd *sf)
       reader_out_of_data(sf);
       return;
     }
-  at_end = ((sf->cb == NULL) || 
-	    (sf->current_sound == NULL) || 
+  at_end = ((!sf->cb) || 
+	    (!sf->current_sound) || 
 	    (READER_LOCAL_END(sf) <= io_end(sf->current_sound->io)));
 
   if (at_end)
@@ -5361,7 +5361,7 @@ static void next_sound_1(snd_fd *sf)
 	      if (nxt_snd->inuse)
 		{
 		  nxt_snd = copy_snd_data(nxt_snd, ind0, FILE_BUFFER_SIZE);
-		  if (nxt_snd == NULL)
+		  if (!nxt_snd)
 		    {
 		      reader_out_of_data(sf);
 		      return;
@@ -5555,7 +5555,7 @@ io_error_t save_edits_and_update_display(snd_info *sp)
   for (i = 0; i < sp->nchans; i++)
     {
       sf[i] = init_sample_read(0, sp->chans[i], READ_FORWARD);
-      if (sf[i] == NULL)
+      if (!sf[i])
 	{
 	  int j;
 	  for (j = 0; j < i; j++) free_snd_fd(sf[j]);
@@ -5720,7 +5720,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, mus_he
       if (pos == AT_CURRENT_EDIT_POSITION) local_pos = cp->edit_ctr; else local_pos = pos;
       if (framples < cp->edits[local_pos]->samples) framples = cp->edits[local_pos]->samples;
       sf[i] = init_sample_read_any(0, cp, READ_FORWARD, local_pos); 
-      if (sf[i] == NULL)
+      if (!sf[i])
 	{
 	  int k;
 	  /* this should not (cannot?) happen since we've supposedly checked before getting here... */
@@ -5815,7 +5815,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   io_error_t err;
   time_t current_write_date;
 
-  if (sp == NULL)
+  if (!sp)
     snd_error_without_format("save edits of null sound!");
   if ((sp->user_read_only == FILE_READ_ONLY) || 
       (sp->file_read_only == FILE_READ_ONLY))
@@ -6067,7 +6067,7 @@ static void make_mix_fragment(ed_list *new_ed, int i, mix_state *ms)
     {
       int j;
       for (j = 0; j < mxs->size; j++)
-	if (MIX_LIST_STATE(mxs, j) == NULL)
+	if (!(MIX_LIST_STATE(mxs, j)))
 	  {
 	    mloc = j;
 	    break;
@@ -6316,7 +6316,7 @@ static void ripple_mixes_1(chan_info *cp, mus_long_t beg, mus_long_t len, mus_lo
 	      (FRAGMENT_MIX_LIST_SIZE(ed, i) > 0))
 	    {
 	      int j;
-	      if (current_states == NULL)
+	      if (!current_states)
 		{
 		  low_id = lowest_mix_id();
 		  high_id = highest_mix_id();
@@ -6607,7 +6607,7 @@ static Xen g_display_edits(Xen snd, Xen chn, Xen edpos)
       if (pos == AT_CURRENT_EDIT_POSITION)
 	pos = cp->edit_ctr;
       if ((pos < 0) || (pos >= cp->edit_size) || (!(cp->edits[pos])))
-	Xen_error(NO_SUCH_EDIT,
+	Xen_error(Xen_make_error_type("no-such-edit"),
 		  Xen_list_2(C_string_to_Xen_string(S_display_edits ": no such edit: ~A"),
 			     edpos));
     }
@@ -6620,7 +6620,7 @@ static Xen g_display_edits(Xen snd, Xen chn, Xen edpos)
       else display_edits(cp, tmp);
       snd_fclose(tmp, name);
     }
-  else Xen_error(CANNOT_SAVE,
+  else Xen_error(Xen_make_error_type("cannot-save"),
 		 Xen_list_3(C_string_to_Xen_string(S_display_edits ": can't save ~S, ~A"),
 			    C_string_to_Xen_string(name),
 			    C_string_to_Xen_string(snd_io_strerror())));
@@ -6664,7 +6664,7 @@ associated with snd's channel chn; the returned value is a list (origin type sta
 			  C_llong_to_Xen_llong(ed->beg),
 			  C_llong_to_Xen_llong(ed->len)));
     }
-  Xen_error(NO_SUCH_EDIT,
+  Xen_error(Xen_make_error_type("no-such-edit"),
 	    Xen_list_2(C_string_to_Xen_string(S_edit_fragment ": no such edit ~A"),
 		       uctr));
   return(uctr);
@@ -6768,7 +6768,7 @@ char *sampler_to_string(snd_fd *fd)
 #else
   desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #endif
-  if (fd == NULL)
+  if (!fd)
     snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: null>");
   else
     {
@@ -6783,7 +6783,7 @@ char *sampler_to_string(snd_fd *fd)
 	      if (fd->type == SAMPLER)
 		{
 		  name = cp->sound->short_filename;
-		  if (name == NULL)
+		  if (!name)
 		    switch (cp->sound->inuse)
 		      {
 		      case SOUND_IDLE:    name = "idle source";      break;
@@ -6796,7 +6796,7 @@ char *sampler_to_string(snd_fd *fd)
 	      else name = "region as source";
 	    }
 	}
-      if (name == NULL) name = "unknown source";
+      if (!name) name = "unknown source";
       if (fd->at_eof)
 	snprintf(desc, PRINT_BUFFER_SIZE, "#<sampler: %s at eof or freed>",
 		     name);
@@ -6834,7 +6834,7 @@ static void list_reader(snd_fd *fd)
     {
       int loc = -1;
       sf_info *lst = NULL;
-      if (ed->readers == NULL)
+      if (!ed->readers)
 	{
 	  ed->readers = (void *)calloc(1, sizeof(sf_info));
 	  lst = (sf_info *)(ed->readers);
@@ -7362,7 +7362,7 @@ static Xen g_save_edit_history(Xen filename, Xen snd, Xen chn)
     }
   else
     {
-      Xen_error(CANNOT_SAVE,
+      Xen_error(Xen_make_error_type("cannot-save"),
 		Xen_list_3(C_string_to_Xen_string(S_save_edit_history ": can't save ~S: ~A"),
 			   filename,
 			   C_string_to_Xen_string(snd_open_strerror())));
@@ -7685,7 +7685,7 @@ mus_float_t channel_local_maxamp(chan_info *cp, mus_long_t beg, mus_long_t num, 
   mus_long_t i, k, lim8, kend, mpos;
 
   sf = init_sample_read_any_with_bufsize(beg, cp, READ_FORWARD, edpos, (num > MAX_BUFFER_SIZE) ? MAX_BUFFER_SIZE : num);
-  if (sf == NULL) return(0.0);
+  if (!sf) return(0.0);
   
   ymax = 0.0;
   mpos = -1;
@@ -7971,7 +7971,7 @@ static Xen g_set_sample(Xen samp_n, Xen val, Xen snd, Xen chn_n, Xen edpos)
   if (!cp) return(Xen_false);
   pos = to_c_edit_position(cp, edpos, S_set S_sample, 5);
   if (pos > cp->edit_ctr)
-    Xen_error(NO_SUCH_EDIT,
+    Xen_error(Xen_make_error_type("no-such-edit"),
 	      Xen_list_2(C_string_to_Xen_string(S_set S_sample ": no such edit: ~A"),
 			 edpos));
   if (Xen_is_bound(samp_n))
@@ -8818,7 +8818,7 @@ static Xen g_delete_sample(Xen samp_n, Xen snd, Xen chn_n, Xen edpos)
   samp = beg_to_sample(samp_n, S_delete_sample);
   pos = to_c_edit_position(cp, edpos, S_delete_sample, 4);
   if ((samp < 0) || (samp > cp->edits[pos]->samples))
-    Xen_error(NO_SUCH_SAMPLE,
+    Xen_error(Xen_make_error_type("no-such-sample"),
 	      Xen_list_2(C_string_to_Xen_string(S_delete_sample ": no such sample: ~A"),
 			 samp_n));
 
@@ -9028,7 +9028,7 @@ static Xen g_make_snd_to_sample(Xen snd)
   Snd_assert_sound(S_make_snd_to_sample, snd, 1);
 
   sp = get_sp(snd);
-  if (sp == NULL)
+  if (!sp)
     return(snd_no_such_sound_error(S_make_snd_to_sample, snd));
 
   ge = make_snd_to_sample(sp);

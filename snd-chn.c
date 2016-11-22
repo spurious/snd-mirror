@@ -31,7 +31,7 @@ chan_info *get_cp(Xen snd, Xen x_chn_n, const char *caller)
 
   sp = get_sp(snd);
 
-  if ((sp == NULL) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
+  if ((!sp) || (!(sp->active)) || (sp->inuse == SOUND_IDLE))
     {
       snd_no_such_sound_error(caller, snd); 
       return(NULL); /* just in case our catch has been clobbered */
@@ -527,8 +527,8 @@ static void update_graph_1(chan_info *cp, bool warn)
 
   if ((cp->updating) || 
       (cp->active != CHANNEL_HAS_AXES) ||
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL)) 
+      (!cp->sounds) || 
+      (!cp->sounds[cp->sound_ctr])) 
     return;
 
   sp = cp->sound;
@@ -872,8 +872,8 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
   else
     {
       if ((current_samples(cp) > PEAK_ENV_CUTOFF) &&
-	  (cp->edits[0]->peak_env == NULL) &&              /* perhaps created at initial graph time */
-	  (sp->short_filename != NULL))                    /* region browser jumped in too soon during autotest */
+	  (!cp->edits[0]->peak_env) &&              /* perhaps created at initial graph time */
+	  (sp->short_filename))                    /* region browser jumped in too soon during autotest */
 	start_peak_env(cp);
     }
 #endif
@@ -1559,7 +1559,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
        *   mouse uses grf_x so in this case we have to also (to make the cursor hit the dots etc) 
        */
       sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-      if (sf == NULL) return(0);
+      if (!sf) return(0);
 
       incr = (double)1.0 / cur_srate;
       grfpts = (int)(ap->hisamp - ap->losamp + 1);
@@ -1624,7 +1624,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, graph_choice_t graph_ch
 		}
 	    }
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	  if (sf == NULL) return(0);
+	  if (!sf) return(0);
 
 	  j = 0;      /* graph point counter */
 	  x = ap->x0;
@@ -1908,7 +1908,7 @@ Xen make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
       int i;
       data_size = (int)samps;
       sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
-      if (sf == NULL) return(Xen_false); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
+      if (!sf) return(Xen_false); /* should this throw an error? (CHANNEL_BEING_DEALLOCATED) */
 
       data = (mus_float_t *)malloc(data_size * sizeof(mus_float_t));
       for (i = 0; i < data_size; i++)
@@ -1962,7 +1962,7 @@ Xen make_graph_data(chan_info *cp, int edit_pos, mus_long_t losamp, mus_long_t h
 
 	  data_size = pixels + 1;
 	  sf = init_sample_read_any(losamp, cp, READ_FORWARD, edit_pos);
-	  if (sf == NULL) return(Xen_false);
+	  if (!sf) return(Xen_false);
 
 	  data = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
 	  data1 = (mus_float_t *)calloc(data_size, sizeof(mus_float_t));
@@ -2016,7 +2016,7 @@ void draw_graph_data(chan_info *cp, mus_long_t losamp, mus_long_t hisamp, int da
 
   ap = cp->axis;
   sp = cp->sound;
-  if (data1 == NULL)
+  if (!data1)
     {
       double start_time = 0.0, cur_srate, x, incr;
 
@@ -3435,7 +3435,7 @@ static int make_wavogram(chan_info *cp)
       if (need_new_list)
 	{
 	  sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-	  if (sf == NULL) return(0);
+	  if (!sf) return(0);
 
 	  lines = (int)(ap->height / cp->wavo_hop);
 	  if (lines == 0) return(0);
@@ -3598,7 +3598,7 @@ static int make_wavogram(chan_info *cp)
 #endif
 
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-  if (sf == NULL) return(0);
+  if (!sf) return(0);
 
   /* set up the graph width and so on */
   make_axes_1(ap, cp->x_axis_style, snd_srate(sp), SHOW_NO_AXES, NOT_PRINTING, NO_X_AXIS, NO_GRID, WITH_LINEAR_AXES, 1.0);
@@ -3733,7 +3733,7 @@ static void make_lisp_graph(chan_info *cp, Xen pixel_list)
   sp = cp->sound;
   up = cp->lisp_info;
   if (up) uap = up->axis; else return;
-  if ((!uap) || (!uap->graph_active) || (up->len == NULL) || (up->len[0] <= 0)) return;
+  if ((!uap) || (!uap->graph_active) || (!up->len) || (up->len[0] <= 0)) return;
 
   if (cp->printing) ps_allocate_grf_points();
 
@@ -3943,7 +3943,7 @@ static void display_channel_data_with_size(chan_info *cp,
     }
 
   ap = cp->axis;
-  if (ap == NULL) return;
+  if (!ap) return;
 
   /* -------- decide which graphs to draw -------- */
   ap->height = height;
@@ -3960,7 +3960,7 @@ static void display_channel_data_with_size(chan_info *cp,
     {
       displays++;
       up = cp->lisp_info;
-      if (up == NULL)
+      if (!up)
 	{
 	  /* this should only happen the first time such a graph is needed */
 	  cp->lisp_info = (lisp_grf *)calloc(1, sizeof(lisp_grf));
@@ -4574,7 +4574,7 @@ kbd_cursor_t cursor_decision(chan_info *cp)
 void handle_cursor(chan_info *cp, kbd_cursor_t redisplay)
 {
   /* no sync here */
-  if (cp == NULL) return;
+  if (!cp) return;
   if (redisplay != KEYBOARD_NO_ACTION)
     {
       snd_info *sp;
@@ -4938,7 +4938,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	    return(CLICK_MIX_PLAY);
 
 	  mouse_mark = hit_mark(cp, x, y);
-	  if (mouse_mark != NULL)
+	  if (mouse_mark)
 	    return(CLICK_MARK);
 
 	  if (selection_is_active_in_channel(cp))
@@ -4995,7 +4995,7 @@ static click_loc_t within_graph(chan_info *cp, int x, int y)
 	}
       
       play_mark = hit_mark_triangle(cp, x, y);
-      if (play_mark != NULL)
+      if (play_mark)
 	return(CLICK_MARK_PLAY);
 
       if (hit_cursor_triangle(cp, x, y))
@@ -5428,7 +5428,7 @@ void graph_button_press_callback(chan_info *cp, void *ev, int x, int y, int key_
   snd_info *sp;
 
   sp = cp->sound;
-  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (!sp)) return; /* autotest silliness */
 
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y); /* select this?? */
@@ -5596,7 +5596,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   snd_info *sp;
 
   sp = cp->sound;
-  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (!sp)) return; /* autotest silliness */
 
   if (sp->channel_style == CHANNELS_COMBINED)
     {
@@ -5807,7 +5807,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 #endif
 
   sp = cp->sound;
-  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (!sp)) return; /* autotest silliness */
 
   if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
     {
@@ -5948,7 +5948,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 void channel_resize(chan_info *cp)
 {
   snd_info *sp;
-  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return;
+  if ((!cp) || (cp->active < CHANNEL_HAS_AXES) || (!cp->sound)) return;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
@@ -5974,7 +5974,7 @@ void edit_history_select(chan_info *cp, int row)
 	    ncp = sp->chans[k - 1];
 	    break;
 	  }
-      if (ncp == NULL) ncp = sp->chans[sp->nchans - 1];
+      if (!ncp) ncp = sp->chans[sp->nchans - 1];
       undo_edit_with_sync(ncp, ncp->edit_ctr - row + ncp->edhist_base);
       goto_graph(ncp);
     }
@@ -6495,7 +6495,7 @@ static Xen channel_get(Xen snd, Xen chn_n, cp_field_t fld, const char *caller)
       if (Xen_is_true(chn_n))
 	{
 	  sp = get_sp(snd);
-	  if (sp == NULL)
+	  if (!sp)
 	    return(snd_no_such_sound_error(caller, snd));
 	  for (i = sp->nchans - 1; i >= 0; i--)
 	    res = Xen_cons(channel_get(snd, C_int_to_Xen_integer(i), fld, caller), res);
@@ -6720,7 +6720,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
   if (Xen_is_true(chn_n))
     {
       sp = get_sp(snd);
-      if (sp == NULL) 
+      if (!sp) 
 	return(snd_no_such_sound_error(caller, snd));
       for (i = sp->nchans - 1; i >= 0; i--)
 	res = Xen_cons(channel_set(snd, C_int_to_Xen_integer(i), on, fld, caller), res);
@@ -6842,7 +6842,7 @@ static Xen channel_set(Xen snd, Xen chn_n, Xen on, cp_field_t fld, const char *c
 	{
 	  char *error = NULL;
 	  error = procedure_ok(on, 3, S_cursor_style, "", 1);
-	  if (error == NULL)
+	  if (!error)
 	    {
 	      if ((cp->cursor_style == CURSOR_PROC) &&
 		  (Xen_is_procedure(cp->cursor_proc)))
@@ -7357,7 +7357,7 @@ static Xen g_set_cursor_style(Xen on, Xen snd, Xen chn_n)
 	{
 	  char *error;
 	  error = procedure_ok(on, 3, S_cursor_style, "", 1);
-	  if (error == NULL)
+	  if (!error)
 	    {	  
 	      if ((cursor_style(ss) == CURSOR_PROC) && (Xen_is_procedure(ss->cursor_proc)))
 		snd_unprotect_at(ss->cursor_proc_loc);
@@ -7895,8 +7895,8 @@ static void update_db_graph(chan_info *cp, mus_float_t new_db)
   cp->min_dB = new_db;
   cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
   if ((cp->active < CHANNEL_HAS_AXES) ||
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
+      (!cp->sounds) || 
+      (!cp->sounds[cp->sound_ctr]) ||
       (!(cp->graph_transform_on)) ||
       (!(cp->fft_log_magnitude)) ||
       (chan_fft_in_progress(cp)))
@@ -9374,9 +9374,9 @@ If 'data' is a list of numbers, it is treated as an envelope."
   if (!cp) return(Xen_false);
 
   if ((cp->sound_ctr == NOT_A_SOUND) || 
-      (cp->sounds == NULL) || 
-      (cp->sounds[cp->sound_ctr] == NULL) ||
-      (cp->axis == NULL))
+      (!cp->sounds) || 
+      (!cp->sounds[cp->sound_ctr]) ||
+      (!cp->axis))
     return(Xen_false);
 
   lg = cp->lisp_info;
@@ -9613,7 +9613,7 @@ to a standard Snd channel graph placed in the widget 'container'."
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(Xen_unwrap_widget(container)), WITH_EVENTS);
 
-  if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
+  if (!sp) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
     Xen_error(Xen_make_error_type("wrong-type-arg"),
 	      Xen_list_2(C_string_to_Xen_string(S_make_variable_graph ": container, ~A, must be a Form widget with a legitimate window"),
 			 container));

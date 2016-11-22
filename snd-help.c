@@ -11,7 +11,7 @@ static int snd_itoa_ctr = 0, snd_itoa_size = 0;
 static char *snd_itoa(int n)
 {
   char *str;
-  if (snd_itoa_strs == NULL)
+  if (!snd_itoa_strs)
     {
       snd_itoa_size = 32;
       snd_itoa_strs = (char **)calloc(snd_itoa_size, sizeof(char *));
@@ -231,8 +231,8 @@ static char *glx_version(void)
   #define VERSION_SIZE 128
   char *version = NULL;
 
-  if ((ss->dialogs == NULL) || /* snd --help for example */
-      (MAIN_DISPLAY(ss) == NULL))
+  if ((!ss->dialogs) || /* snd --help for example */
+      (!(MAIN_DISPLAY(ss))))
     return(mus_strdup(" "));
 
   version = (char *)calloc(VERSION_SIZE, sizeof(char));
@@ -257,7 +257,7 @@ static char *glx_version(void)
   char *version = NULL;
   int major, minor;
 
-  if ((ss->dialogs == NULL) || (MAIN_DISPLAY(ss) == NULL)) /* TODO: MAIN_DISPLAY needs to be the gl context here (it's not otherwise used in gtk snd) */
+  if ((!ss->dialogs) || (!(MAIN_DISPLAY(ss)))) /* TODO: MAIN_DISPLAY needs to be the gl context here (it's not otherwise used in gtk snd) */
     return(mus_strdup(" "));
 
   version = (char *)calloc(VERSION_SIZE, sizeof(char));
@@ -3437,7 +3437,7 @@ void name_to_html_viewer(const char *red_text)
 {
   const char *url;
   url = snd_url(red_text);
-  if (url == NULL) url = topic_url(red_text);
+  if (!url) url = topic_url(red_text);
   if (url)
     url_to_html_viewer(url);
 }
@@ -3567,14 +3567,14 @@ and its value is returned."
 
     if (!str) str = (char *)s7_help(s7, sym);
 
-    if ((str == NULL) ||
+    if ((!str) ||
 	(mus_strlen(str) == 0))
       {
 	if (Xen_is_procedure(sym))
 	  {
 	    str = (char *)s7_procedure_documentation(s7, sym);
 
-	    if (((str == NULL) || 
+	    if (((!str) || 
 		 (mus_strlen(str) == 0)) &&
 		(s7_funclet(s7, sym) != sym))
 	      {
@@ -3625,7 +3625,7 @@ and its value is returned."
     {
       bool need_free = false;
       
-      if ((str == NULL) || 
+      if ((!str) || 
 	  (mus_strlen(str) == 0) ||
 	  (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
 	{

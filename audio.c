@@ -198,7 +198,7 @@ static char *dev_name = NULL;
 
 static char *oss_mus_audio_moniker(void)
 {
-  if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
+  if (!version_name) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (SOUND_VERSION < 361)
     {
       char version[LABEL_BUFFER_SIZE];
@@ -1266,7 +1266,7 @@ static snd_pcm_hw_params_t *alsa_get_hardware_params(const char *name, snd_pcm_s
     {
       snd_pcm_hw_params_t *params;
       params = (snd_pcm_hw_params_t *)calloc(1, snd_pcm_hw_params_sizeof());
-      if (params == NULL) 
+      if (!params) 
 	{
 	  snd_pcm_close(handle);
 	  alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
@@ -1298,7 +1298,7 @@ static snd_pcm_sw_params_t *alsa_get_software_params(void)
 {
   snd_pcm_sw_params_t *params = NULL;
   params = (snd_pcm_sw_params_t *)calloc(1, snd_pcm_sw_params_sizeof());
-  if (params == NULL) 
+  if (!params) 
     {
       alsa_mus_error(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, 
 		     mus_format("could not allocate memory for software params"));
@@ -1392,7 +1392,7 @@ static void alsa_mus_oss_set_buffers(int num, int size)
 
 static char *alsa_mus_audio_moniker(void)
 {
-  if (version_name == NULL) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
+  if (!version_name) version_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   snprintf(version_name, LABEL_BUFFER_SIZE, "ALSA %s", SND_LIB_VERSION_STR);
   return(version_name);
 }
@@ -2275,7 +2275,7 @@ char *mus_audio_moniker(void)
 #endif
   int audio_fd, err;
   char *dev_name;
-  if (getenv(AUDIODEV_ENV) != NULL) 
+  if (getenv(AUDIODEV_ENV)) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = (char *)DAC_NAME;
   audio_fd = open(dev_name, O_RDONLY | O_NONBLOCK, 0);
@@ -2292,7 +2292,7 @@ char *mus_audio_moniker(void)
     }
   mus_audio_close(audio_fd);
 
-  if (version_name == NULL) version_name = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
+  if (!version_name) version_name = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
 #ifndef AUDIO_DEV_AMD
   snprintf(version_name, LABEL_BUFFER_SIZE, "audio: %s (%s)", ad.name, ad.version);
 #else
@@ -2350,7 +2350,7 @@ int mus_audio_open_output(int ur_dev, int srate, int chans, mus_sample_t samp_ty
 		      mus_format("sample type %d (%s) not available",
 				 samp_type, 
 				 mus_sample_type_name(samp_type)));
-  if (getenv(AUDIODEV_ENV) != NULL) 
+  if (getenv(AUDIODEV_ENV)) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = (char *)DAC_NAME;
   if (dev != MUS_AUDIO_DUPLEX_DEFAULT)
@@ -2465,7 +2465,7 @@ int mus_audio_open_input(int ur_dev, int srate, int chans, mus_sample_t samp_typ
 		      mus_format("sample type %d bits, %d encode (%s) not available",
 				 bits, encode, 
 				 mus_sample_type_name(samp_type)));
-  if (getenv(AUDIODEV_ENV) != NULL) 
+  if (getenv(AUDIODEV_ENV)) 
     dev_name = getenv(AUDIODEV_ENV); 
   else dev_name = (char *)DAC_NAME;
   if (dev != MUS_AUDIO_DUPLEX_DEFAULT)
@@ -2617,7 +2617,7 @@ static const char *sun_out_device_name(int dev)
 static char *sun_vol_name = NULL;
 static char *sun_volume_name(float vol, int balance, int chans)
 {
-  if (sun_vol_name == NULL) sun_vol_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
+  if (!sun_vol_name) sun_vol_name = (char *)calloc(LABEL_BUFFER_SIZE, sizeof(char));
   if (chans != 2)
     snprintf(sun_vol_name, LABEL_BUFFER_SIZE, "%.3f", vol);
   else 
@@ -3412,7 +3412,7 @@ int mus_audio_open_output(int dev, int srate, int chans, mus_sample_t samp_type,
   dac_out_srate = (int)(device_desc.mSampleRate);
 
   open_for_input = false;
-  if ((bufs == NULL) || (bufsize > current_bufsize))
+  if ((!bufs) || (bufsize > current_bufsize))
     {
       int i;
       if (bufs)
@@ -3674,7 +3674,7 @@ int mus_audio_open_input(int dev, int srate, int chans, mus_sample_t samp_type, 
     }
   open_for_input = true;
   /* assume for now that recorder (higher level) will enforce match */
-  if ((bufs == NULL) || (bufsize > current_bufsize))
+  if ((!bufs) || (bufsize > current_bufsize))
     {
       int i;
       if (bufs)
@@ -4100,7 +4100,7 @@ static int sndjack_init(void){
   {
     jack_status_t status;
     sndjack_client=jack_client_open("sndlib",JackNoStartServer,&status,NULL);
-    if (sndjack_client == NULL) {
+    if (!sndjack_client) {
 #if 0
       fprintf (stderr, "jack_client_open() failed, "
 	       "status = 0x%2.0x\n", status);

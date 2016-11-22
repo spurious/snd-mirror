@@ -49,10 +49,10 @@ static void graph_redisplay(void)
   graphics_context *ax;
 
   if (!(transform_dialog_is_active())) return;
-  if (graph_drawer == NULL) return;
+  if (!graph_drawer) return;
 
   wn = WIDGET_TO_WINDOW(graph_drawer);
-  if (wn == NULL) return;
+  if (!wn) return;
 
   if (!axis_ap)
     {
