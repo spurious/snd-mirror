@@ -118,7 +118,7 @@
 
 ;;; to place the new function in the caller's current environment, we need to pass the environment in explicitly:
 (define-macro (c-define . args) 
-  `(c-define-1 (curlet) ,@args))
+  (cons 'c-define-1 (cons '(curlet) args)))
 
 
 (define* (c-define-1 cur-env function-info (prefix "") (headers ()) (cflags "") (ldflags "") output-name)

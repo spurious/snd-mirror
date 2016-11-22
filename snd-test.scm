@@ -23414,12 +23414,12 @@ EDITS: 2
     (let ((m1 (add-mark 23 ind 0)))
       (set! (mark-name m1) "23")
       (delete-sample 0)
-      (let ((m00 (find-mark 123 ind 0 0))
-	    (m01 (find-mark "23"))
-	    (m02 (find-mark 121)))
-	(if (not m00) (snd-display "can't find 00th mark"))
-	(if (not m01) (snd-display "can't find 01th mark"))
-	(if (not m02) (snd-display "can't find 02th mark")))
+      (if (not (find-mark 123 ind 0 0))
+	  (snd-display "can't find 00th mark"))
+      (if (not (find-mark "23"))
+	  (snd-display "can't find 01th mark"))
+      (if (not (find-mark 121))
+	  (snd-display "can't find 02th mark"))
       (delete-mark (find-mark "23"))
       (scale-by 2.0)
       (set! m1 (add-mark 1234))
@@ -30820,12 +30820,11 @@ EDITS: 1
 	(filter-channel (float-vector 1.0 0.5))
 	(let ((data (channel->float-vector 0 20)))
 	  (undo 2)
-	  (let ((v (convolve-coeffs (float-vector 1.0 0.5) (float-vector 1.0 0.5))))
-	    (filter-channel v)
-	    (let ((vdata (channel->float-vector 0 20)))
-	      (if (not (mus-arrays-equal? data vdata)) 
-		  (snd-display "filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
-	    (undo)))
+	  (filter-channel (convolve-coeffs (float-vector 1.0 0.5) (float-vector 1.0 0.5)))
+	  (let ((vdata (channel->float-vector 0 20)))
+	    (if (not (mus-arrays-equal? data vdata)) 
+		(snd-display "filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+	  (undo))
 	(let ((v1 (make-float-vector 8))
 	      (v2 (make-float-vector 5)))
 	  (do ((i 0 (+ i 1))) ((= i 8)) (float-vector-set! v1 i (random 1.0)))
@@ -30834,12 +30833,11 @@ EDITS: 1
 	  (filter-channel v2)
 	  (let ((data (channel->float-vector 0 20)))
 	    (undo 2)
-	    (let ((v (convolve-coeffs v1 v2)))
-	      (filter-channel v)
-	      (let ((vdata (channel->float-vector 0 20)))
-		(if (not (mus-arrays-equal? data vdata)) 
-		    (snd-display "random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
-	      (undo))))
+	    (filter-channel (convolve-coeffs v1 v2))
+	    (let ((vdata (channel->float-vector 0 20)))
+	      (if (not (mus-arrays-equal? data vdata)) 
+		  (snd-display "random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+	    (undo)))
 	(let ((v1 (make-float-vector 18))
 	      (v2 (make-float-vector 15)))
 	  (do ((i 0 (+ i 1))) ((= i 18)) (float-vector-set! v1 i (random 1.0)))
@@ -30848,12 +30846,11 @@ EDITS: 1
 	  (filter-channel v2)
 	  (let ((data (channel->float-vector 0 20)))
 	    (undo 2)
-	    (let ((v (convolve-coeffs v1 v2)))
-	      (filter-channel v)
-	      (let ((vdata (channel->float-vector 0 20)))
-		(if (not (mus-arrays-equal? data vdata)) 
-		    (snd-display "big random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
-	      (undo))))
+	    (filter-channel (convolve-coeffs v1 v2))
+	    (let ((vdata (channel->float-vector 0 20)))
+	      (if (not (mus-arrays-equal? data vdata)) 
+		  (snd-display "big random filter convolved: ~%  standard: ~A~%   virtual: ~A~%" data vdata)))
+	    (undo)))
 	(close-sound ind))
       
       (let ((ind (new-sound "fmv.snd" :size 100)))
@@ -31036,14 +31033,12 @@ EDITS: 1
 	      (snd-display "new-sound temp? ~A" name))))
       
       (let ((ind (new-sound "test.snd" :size 40000)))
-	(let ((gen (make-triangle-wave 10.0 0.5)))
-	  (clm-channel gen)
-	  (src-channel 2))
+	(clm-channel (make-triangle-wave 10.0 0.5))
+	(src-channel 2)
 	
 	(let ((ind1 (new-sound "test.snd" :size 40000)))
-	  (let ((gen (make-triangle-wave 10.0 0.5)))
-	    (clm-channel gen)
-	    (src-channel 2.00001))
+	  (clm-channel (make-triangle-wave 10.0 0.5))
+	  (src-channel 2.00001)
 	  
 	  (let ((dist (channel-distance ind 0 ind1 0)))
 	    (if (> dist 0.5)
@@ -31285,23 +31280,19 @@ EDITS: 1
 	  (close-sound res)))
       
       (let ((ind (new-sound "test.snd" :size 40000)))
-	(let ((gen (make-triangle-wave 10.0 0.5)))
-	  (clm-channel gen)
-	  (src-channel 0.5))
+	(clm-channel (make-triangle-wave 10.0 0.5))
+	(src-channel 0.5)
 	
 	(let ((ind1 (new-sound "test.snd" :size 40000)))
-	  (let ((gen (make-triangle-wave 10.0 0.5)))
-	    (clm-channel gen)
-	    (src-channel 0.50001))
+	  (clm-channel (make-triangle-wave 10.0 0.5))
+	  (src-channel 0.50001)
 	  
 	  (let ((dist (channel-distance ind 0 ind1 0)))
 	    (if (> dist 0.5)
 		(snd-display "src 0.5/0.5001: ~A" dist)))
 	  
 	  (close-sound ind)
-	  (close-sound ind1)))
-      ))
-  )
+	  (close-sound ind1))))))
 
 
 
@@ -33012,22 +33003,22 @@ EDITS: 1
     (if (file-exists? "s61.scm") (delete-file "s61.scm"))
     
     (let ((ind (new-sound "fmv.snd" :size 100000)))
-      (define m1 (car (mix "oboe.snd" 0)))
-      (define m2 (car (mix "pistol.snd" 48000)))
-      (set! (mix-position m2) 20000)
-      (set! (mix-position m1) 60000)
-      (set! (mix-amp m1) 0.5)
-      (set! (mix-amp-env m1) '(0 0 2 1 10 0))
-      (set! (mix-amp m2) 0.25)
-      (set! (mix-amp-env m2) '(0 0 8 1 10 0))
-      (set! (mix-speed m2) 1.5)
+      (let ((m1 (car (mix "oboe.snd" 0)))
+	    (m2 (car (mix "pistol.snd" 48000))))
+	(set! (mix-position m2) 20000)
+	(set! (mix-position m1) 60000)
+	(set! (mix-amp m1) 0.5)
+	(set! (mix-amp-env m1) '(0 0 2 1 10 0))
+	(set! (mix-amp m2) 0.25)
+	(set! (mix-amp-env m2) '(0 0 8 1 10 0))
+	(set! (mix-speed m2) 1.5))
       (save-state "s61.scm")
       (close-sound ind))
     
     (load "s61.scm")
     
-    (let ((m1 (if (= (mix-position (caaar (mixes))) 20000) (caaar (mixes)) (cadaar (mixes))))
-	  (m2 (if (= (mix-position (caaar (mixes))) 60000) (caaar (mixes)) (cadaar (mixes)))))
+    (let ((m1 ((if (= (mix-position (caaar (mixes))) 20000) caaar cadaar) (mixes)))
+	  (m2 ((if (= (mix-position (caaar (mixes))) 60000) caaar cadaar) (mixes))))
       (if (fneq (mix-amp m1) 0.25)
 	  (snd-display "save-state mix-amp 0: ~A" (mix-amp m1)))
       (if (fneq (mix-amp m2) 0.5)
@@ -33061,8 +33052,8 @@ EDITS: 1
     (let ((ind (open-sound "2.snd")))
       (set! (selection-position) 2400)
       (set! (selection-framples) 4800)
-      (define mx (car (mix-selection 6000)))
-      (set! (mix-amp-env mx) '(0 0 1 1 2 0))
+      (let ((mx (car (mix-selection 6000))))
+	(set! (mix-amp-env mx) '(0 0 1 1 2 0)))
       (set! (selection-position) 5000)
       (set! (selection-framples) 2000)
       (mix "2a.snd" 8000)
@@ -43928,16 +43919,16 @@ EDITS: 1
 	       (if (not fonts-dialog)
 		   (set! fonts-dialog new-dialog)
 		   (set! colors-dialog new-dialog))
-	       (let ((fnts (make-dialog 
-			    (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
-						   (list XmNleftAttachment   XmATTACH_FORM
-							 XmNrightAttachment  XmATTACH_FORM
-							 XmNtopAttachment    XmATTACH_FORM
-							 XmNbottomAttachment XmATTACH_WIDGET
-							 XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
-							 XmNbackground       *basic-color*)))))
-		 (XtManageChild fnts)
-		 (XtManageChild (or colors-dialog fonts-dialog)))))
+	       (XtManageChild
+		(make-dialog 
+		 (XtCreateManagedWidget "mainform" xmFormWidgetClass new-dialog
+					(list XmNleftAttachment   XmATTACH_FORM
+					      XmNrightAttachment  XmATTACH_FORM
+					      XmNtopAttachment    XmATTACH_FORM
+					      XmNbottomAttachment XmATTACH_WIDGET
+					      XmNbottomWidget     (XmMessageBoxGetChild new-dialog XmDIALOG_SEPARATOR)
+					      XmNbackground       *basic-color*))))
+	       (XtManageChild (or colors-dialog fonts-dialog))))
 	   
 	   (list 
 	    (lambda (mainform)

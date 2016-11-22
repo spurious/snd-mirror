@@ -1004,11 +1004,10 @@
 			       (string-position "<a class=quiet href" dline)
 			       (string-position "<a class=def href" dline)))
 		      (set! (xrefs current-general) (string-append (xrefs current-general) dline (format #f "~%"))))
-		  (when topic
-		    (let ((hpos (string-position "<hr>" dline)))
-		      (when hpos 
-			(set! topic #f)))))))))))
-      ;; end call-with-input-file loop
+		  (when (and topic
+			     (string-position "<hr>" dline))
+		    (set! topic #f)))))))))
+    ;; end call-with-input-file loop
 
     (let ((tnames (make-vector (+ n g)))
 	  (ctr 0))
@@ -1459,9 +1458,8 @@
 					    
 					    ((eq? opener 'img)
 					     (let ((rest-line (substring line (+ start 4))))
-					       (let ((alt-pos (string-position "alt=" rest-line))
-						     (src-pos (string-position "src=" rest-line)))
-						 (if (not alt-pos)
+					       (let ((src-pos (string-position "src=" rest-line)))
+						 (if (not (string-position "alt=" rest-line))
 						     (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
 						 (if src-pos
 						     (let ((png-pos (string-position ".png" rest-line)))

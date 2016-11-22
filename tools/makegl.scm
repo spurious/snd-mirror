@@ -760,10 +760,9 @@
   (for-each
    (lambda (f)
      (let ((sig (make-signature f)))
-       (if (pair? sig)
-	   (let ((count (signatures sig)))
-	     (if (not count)
-		 (set! (signatures sig) type))))))
+       (if (and (pair? sig)
+		(not (signatures sig)))
+	   (set! (signatures sig) type))))
    lst))
 
 (make-signatures funcs :gtk)
