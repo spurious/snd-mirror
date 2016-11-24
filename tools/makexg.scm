@@ -316,6 +316,7 @@
 		      ((g-3.18)     (set! types-3.18 (cons type types-3.18)))
 		      ((g-3.20)     (set! types-3.20 (cons type types-3.20)))
 		      ((g-3.22)     (set! types-3.22 (cons type types-3.22)))
+		      ((g-3.99)     (set! types-3.99 (cons type types-3.99)))
 		      ((cairo)      (set! cairo-types (cons type cairo-types)))
 		      ((cairo-810)  (set! cairo-types-810 (cons type cairo-types-810)))
 		      ((cairo-912)  (set! cairo-types-912 (cons type cairo-types-912)))
@@ -785,6 +786,7 @@
 (make-fnc "3.18")
 (make-fnc "3.20")
 (make-fnc "3.22")
+(make-fnc "3.99")
 
 (define callbacks
   (list            
@@ -1012,6 +1014,12 @@
 	 'permanent
 	 "3.20")
 
+   (list 'GtkDrawingAreaFunc
+	 "void"
+	 "draw_func"
+	 (parse-args "GtkDrawingArea* self lambda_data func_info" 'g-3.99)
+	 'permanent
+	 "3.99")
    ))
 
 
@@ -1289,46 +1297,57 @@
 
 
 (define all-ntypes (list types-2.14 types-2.16 types-2.18 types-2.20 
-			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-3.12 types-3.14 types-3.16 types-3.18 types-3.20 types-3.22
+			types-3.0 types-3.2 types-3.4 types-3.6 types-3.8 types-3.10 types-3.12 types-3.14 types-3.16 types-3.18 
+			types-3.20 types-3.22 types-3.99
 			cairo-types cairo-types-810 cairo-types-912))
 (define all-ntype-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 
+			     with-3.20 with-3.22 with-3.99
 			     with-cairo with-cairo-810 with-cairo-912))
 
 (define all-funcs (list funcs-2.14 funcs-2.16 funcs-2.18 funcs-2.20 
-			funcs-3.0 funcs-3.2 funcs-3.4 funcs-3.6 funcs-3.8 funcs-3.10 funcs-3.12 funcs-3.14 funcs-3.16 funcs-3.18 funcs-3.20 funcs-3.22
+			funcs-3.0 funcs-3.2 funcs-3.4 funcs-3.6 funcs-3.8 funcs-3.10 funcs-3.12 funcs-3.14 funcs-3.16 funcs-3.18 
+			funcs-3.20 funcs-3.22 funcs-3.99
 			cairo-funcs cairo-png-funcs cairo-funcs-810 cairo-funcs-912))
 (define all-func-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 
+			     with-3.20 with-3.22 with-3.99
 			     with-cairo with-cairo-png with-cairo-810 with-cairo-912))
 
 (define all-ints (list ints-2.14 ints-2.16 ints-2.18  
-		       ints-3.0 ints-3.2 ints-3.4 ints-3.6 ints-3.8 ints-3.10 ints-3.12 ints-3.14 ints-3.16 ints-3.18 ints-3.20 ints-3.22
+		       ints-3.0 ints-3.2 ints-3.4 ints-3.6 ints-3.8 ints-3.10 ints-3.12 ints-3.14 ints-3.16 ints-3.18 
+		       ints-3.20 ints-3.22 ints-3.99
 		       cairo-ints cairo-ints-810 cairo-ints-912))
 (define all-int-withs (list with-2.14 with-2.16 with-2.18 
-			    with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			    with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 
+			    with-3.20 with-3.22 with-3.99
 			    with-cairo with-cairo-810 with-cairo-912))
 
 (define all-casts (list casts-2.14 casts-2.16 casts-2.18 casts-2.20 
-			casts-3.0 casts-3.2 casts-3.4 casts-3.6 casts-3.8 casts-3.10 casts-3.12 casts-3.14 casts-3.16 casts-3.18 casts-3.20 casts-3.22
+			casts-3.0 casts-3.2 casts-3.4 casts-3.6 casts-3.8 casts-3.10 casts-3.12 casts-3.14 casts-3.16 casts-3.18 
+			casts-3.20 casts-3.22 casts-3.99
 			))
 (define all-cast-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			     with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 
+			     with-3.20 with-3.22 with-3.99
 			     ))
 
 (define all-checks (list checks-2.14 checks-2.16 checks-2.18 checks-2.20 
-			 checks-3.0 checks-3.2 checks-3.4 checks-3.6 checks-3.8 checks-3.10 checks-3.12 checks-3.14 checks-3.16 checks-3.18 checks-3.20 checks-3.22
+			 checks-3.0 checks-3.2 checks-3.4 checks-3.6 checks-3.8 checks-3.10 checks-3.12 checks-3.14 checks-3.16 checks-3.18 
+			 checks-3.20 checks-3.22 checks-3.99
 			 ))
 (define all-check-withs (list with-2.14 with-2.16 with-2.18 with-2.20 
-			      with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			      with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12 with-3.14 with-3.16 with-3.18 
+			      with-3.20 with-3.22 with-3.99
 			      ))
 
 (define all-strings (list strings-2.14 strings-2.16 
-			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 strings-3.12  strings-3.14 strings-3.16 strings-3.18 strings-3.20
-			  strings-3.22
+			  strings-3.0 strings-3.2 strings-3.4 strings-3.6 strings-3.8 strings-3.10 strings-3.12  strings-3.14 strings-3.16 strings-3.18 
+			  strings-3.20 strings-3.22 strings-3.99
 			  cairo-strings-912))
 (define all-string-withs (list with-2.14 with-2.16 
-			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12  with-3.14 with-3.16 with-3.18 with-3.20 with-3.22
+			       with-3.0 with-3.2 with-3.4 with-3.6 with-3.8 with-3.10 with-3.12  with-3.14 with-3.16 with-3.18 
+			       with-3.20 with-3.22 with-3.99
 			       with-cairo-912))
 
 

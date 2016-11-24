@@ -353,12 +353,13 @@
 	      spec))))
 
 (define-macro (string-case selector . clauses)
-  `(case (symbol ,selector)             ; case with string constant keys
-     ,@(map (lambda (clause)
-	      (if (pair? (car clause))
-		  (cons (map symbol (car clause)) (cdr clause))
-		  clause))
-	    clauses)))
+  (cons 'case       ; case with string constant keys
+	(cons (list 'symbol selector)
+	      (map (lambda (clause)
+		     (if (pair? (car clause))
+			 (cons (map symbol (car clause)) (cdr clause))
+			 clause))
+		   clauses))))
 
 (define-macro (eval-case key . clauses) ; case with evaluated key-lists
   (let ((select (gensym)))

@@ -1362,7 +1362,9 @@
 		  (let ((nf (cdar body))
 			(sequence (case (car initial-value)
 				    ((let let*) ; named-let, not define
-				     (cadar (caddr initial-value)))
+				     (let ((args (caddr initial-value)))
+				       (and (pair? (cdar args))
+					    (cadar args))))
 				    ((lambda lambda*)
 				     (caadr initial-value))
 				    (else (cadadr initial-value)))))
@@ -9122,6 +9124,7 @@
 					    (lists->string form 
 							   (if (and (null? (cdr body))
 								    (pair? (car body))
+								    (symbol? (caar body))
 								    (equal? vars (cdar body))
 								    (defined? (caar body))
 								    (equal? (arity (symbol->value (caar body))) (cons args args)))
@@ -9133,7 +9136,8 @@
 	(let ()
 	 (define (sp-let-values caller head form env)
 	   (if (and (pair? (cdr form))
-		    (pair? (cadr form)))
+		    (pair? (cadr form))
+		    (proper-list? (cadr form)))
 	       (if (null? (cdadr form))                        ; just one set of vars
 		   (let ((call (caadr form)))
 		     (if (len>1? call)
@@ -9142,7 +9146,7 @@
 						     `((lambda ,(car call)
 							 ,@(cddr form))
 						       ,(cadr call))))))
-		   (if (every? pair? (cadr form))
+		   (if (every? len>1? (cadr form))
 		       (lint-format "perhaps ~A" caller        ;  (let-values (((x) (values 1)) ((y) (values 2))) (list x y)) ...
 				    (lists->string 
 				     form
@@ -9163,7 +9167,8 @@
 	 (lambda (caller head form env)
 	   (if (and (pair? (cdr form))
 		    (pair? (cadr form))
-		    (every? pair? (cadr form))) 
+		    (proper-list? (cadr form)) ; every? uses for-each which ignores dotted-list cdr?
+		    (every? len>1? (cadr form))) 
 	       (lint-format "perhaps ~A" caller
 			    (lists->string form               ;   (let*-values (((a) (f x))) (+ a b)) -> (let ((a (f x))) (+ a b))
 					   (let loop ((var-data (cadr form)))
@@ -10056,9 +10061,8 @@
 			  
 			  ((if)
 			   (if (len>1? (cdr arg))
-			       (let ((t (caddr arg))
-				     (f (if (pair? (cdddr arg)) (cadddr arg))))
-				 (check-arg t)
+			       (let ((f (if (pair? (cdddr arg)) (cadddr arg))))
+				 (check-arg (caddr arg))
 				 (when (and f (not (symbol? f)))
 				   (check-arg f)))))
 			  
@@ -10602,6 +10606,7 @@
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
 		     (otype (if (eq? (var-definer local-var) 'parameter) 'parameter 'variable)))
+		 ;; vname can be a pair (probably a bug): '(setter object-info)
 
 		 ;; (let ((x 0)...) ... (set! x 1)...) -> move the set! value  to let init value
 		 ;; car body as set! is handled in let-walker etc
@@ -11312,12 +11317,12 @@
 
 
     (define (check-returns caller f env) ; f is not the last form in the body
-      ;(format *stderr* "check returns ~A ~A~%" f (side-effect? f env))
       (if (not (or (side-effect? f env)
 		   (eq? '=> f)))
 	  (lint-format "this could be omitted: ~A" caller (truncated-list->string f))
 	  (when (pair? f)
 	    (case (car f)
+	      ;; no-side-effect function as (car f) got a couple hits -- not worth the bother
 	      ((if)
 	       (when (len>1? (cdr f))
 		 (let ((true (caddr f))
@@ -14204,7 +14209,7 @@
 										(car headdiff))))))))))))))))))
 
 	  ;; -------- if->cond --------
-	  (define (if->cond caller form)
+	  (define (easy-if->cond caller form)
 	    (do ((iff form (cadddr iff))
 		 (iffs 0 (+ iffs 1)))
 		((not (and (<= iffs 2)
@@ -14259,6 +14264,457 @@
 		   (lint-format "perhaps ~A" caller 
 				(lists->string form (simplify-boolean (list 'or false true) () () env))))))
 
+	  ;; -------- big-if->when --------
+	  (define (big-if->when caller form test expr true false)
+	    (when (and *report-one-armed-if*
+		       (eq? false 'no-false)
+		       (or (not (integer? *report-one-armed-if*))
+			   (> (tree-leaves true) *report-one-armed-if*)))
+	      ;; (if a (begin (set! x y) z)) -> (when a (set! x y) z)
+	      (lint-format "~A~A~A perhaps ~A" caller
+			   (if (integer? *report-one-armed-if*)
+			       "this one-armed if is too big"
+			       "")
+			   (local-line-number test)
+			   (if (integer? *report-one-armed-if*) ";" "")
+			   (truncated-lists->string 
+			    form (if (and (pair? expr)
+					  (eq? (car expr) 'not))
+				     (cons 'unless (cons (cadr expr) (unbegin true)))
+				     (cons 'when (cons expr (unbegin true))))))))
+	    
+	  ;; -------- move-cond-outward --------
+	  (define (move-cond-outward caller form expr true false env)
+	    ;; true-op = case happens a lot, but never in a way that (not expr)->false can be combined in the case
+	    (when (and (pair? true)
+		       (proper-list? (cdr true))
+		       (eq? (car true) 'cond)
+		       (not (boolean? false)) ; these cases are handled elsewhere via or/and
+		       (not (and (pair? false)
+				 (eq? (car false) 'cond))))
+	      ;; (if A (cond...) B) -> (cond ((not A) B) ...)
+	      ;;    if no false and cond is one-shot => this can be optimized to (cond ((and (not A) C) => ...))
+	      (lint-format "perhaps ~A" caller
+			   (let ((nexpr (simplify-boolean (list 'not expr) () () env))
+				 (nfalse (if (eq? false 'no-false)
+					     (if (eq? form lint-mid-form)
+						 ()
+						 '(#<unspecified>))
+					     (list (if (not (and (pair? false)
+								 (> (tree-leaves false) 100)))
+						       false
+						       (if (pair? (car false))
+							   (list (list (caar false) '...))
+							   (list (car false) '...)))))))
+			     (lists->string form (cons 'cond (cons (cons nexpr nfalse) (cdr true))))))))
+			   
+	  ;; --------------------------------------------------------------------------------
+
+	  ;; -------- if->cond --------
+	  (define (if->cond caller form env)
+	    ;; unravel complicated if-then-else nestings into a single cond, if possible.
+	    ;;
+	    ;; The (> new-len *report-nested-if*) below can mean (nearly) all nested ifs are turned into conds.
+	    ;;   For a long time I thought the if form was easier to read, but now
+	    ;;   I like cond better.  But cond also has serious readability issues:
+	    ;;   it needs to be clearer where the test separates from the result,
+	    ;;   and in a stack of these clauses, it's hard to see anything at all.
+	    ;;   Maybe a different color for the test than the result?
+	    ;;
+	    ;; Also, the check for tree-leaves being hugely different is taken
+	    ;;   from C -- I think it is easier to read a large if statement if
+	    ;;   the shortest clause is at the start -- especially in a nested if where
+	    ;;   it can be nearly impossible to see which dangling one-liner matches
+	    ;;   which if (this even in emacs because it unmarks or doesn't remark the matching
+	    ;;   paren as you're trying to scroll up to it). 
+	    ;;
+	    ;; the cond form is not always an improvement:
+	    ;;   (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
+	    ;;   (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
+	    ;;   perhaps: (case (+ (if A 4 0) (if B 2 0) (if C 1 0)) ((#b000)...))!
+	    ;;   how often (and how deeply nested) does this happen? -- not very, but nesting can be ridiculous.
+	    ;;   and this assumes all tests are always hit
+	    ;;
+	    ;; the len>2 below could be len>1 + handling of empty false branch, but
+	    ;;   I don't like the rewrites (using cond).  There are a lot of hits here but they
+	    ;;   need special-case handling, perhaps.
+	    
+	    (define (swap-clauses form)
+	      (if (not (len>2? (cdr form)))
+		  form
+		  (let ((expr (cadr form))
+			(ltrue (caddr form))
+			(lfalse (cadddr form)))
+		    
+		    (if (or (and (pair? ltrue)
+				 (not (proper-list? ltrue)))
+			    (and (pair? lfalse)
+				 (not (proper-list? lfalse))))
+			form
+			
+			(let ((true-n (tree-leaves ltrue))
+			      (false-n (if (not (pair? lfalse)) 
+					   1
+					   (tree-leaves lfalse))))
+			  
+			  (if (< false-n (/ true-n 4))
+			      (let ((new-expr (simplify-boolean (list 'not expr) () () env)))
+				(if (and (pair? ltrue)
+					 (eq? (car ltrue) 'if))
+				    (set! ltrue (swap-clauses ltrue)))
+				(if (and (pair? ltrue)
+					 (eq? (car ltrue) 'cond))
+				    `(cond (,new-expr ,@(unbegin lfalse))
+					   ,@(cdr ltrue))
+				    `(cond (,new-expr ,@(unbegin lfalse))
+					   (else ,@(unbegin ltrue)))))
+			      (begin
+				(if (and (pair? lfalse)
+					 (eq? (car lfalse) 'if))
+				    (set! lfalse (swap-clauses lfalse)))
+				
+				(if (and (pair? lfalse)
+					 (eq? (car lfalse) 'cond))
+				    `(cond (,expr ,@(unbegin ltrue))
+					   ,@(cdr lfalse))
+				    `(cond (,expr ,@(unbegin ltrue))
+					   (else ,@(unbegin lfalse)))))))))))
+	    
+	    ;; TODO: check before rebuilding that this will be over *report-nested-if* and collapsible to cond
+	    ;;   also cond as ltrue/lfalse is already embedded above??
+	    (let ((new-if (swap-clauses form)))
+	      (when (and (eq? (car new-if) 'cond)
+			 (> (length new-if) *report-nested-if*))
+		(set! last-if-line-number line-number)
+		(lint-format "perhaps ~A" caller (lists->string form new-if)))))
+
+	  ;; -------- if->bool --------
+	  (define (if->bool caller form expr true false env no-suggestion)
+	    (cond ((eq? expr #t) ; (if #t #f) -> #f
+		   (lint-format "perhaps ~A" caller (lists->string form true)))
+		  
+		  ((not expr)
+		   (if (eq? false 'no-false)
+		       (if true                             ; (if #f x) as a kludgey #<unspecified>
+			   (lint-format "perhaps ~A" caller (lists->string form #<unspecified>)))
+		       ;; (if (negative? (gcd x y)) a b) -> b
+		       (lint-format "perhaps ~A" caller (lists->string form false))))
+		  
+		  ((code-equal? true false)   ; (if x (+ y 1) (+ y 1)) -> (+ y 1)
+		   (lint-format "if is not needed here: ~A" caller 
+				(lists->string form (if (not (side-effect? expr env))
+							true
+							(list 'begin expr true)))))
+
+		   ((boolean? true)
+		    (if (boolean? false)          ; !  (if expr #t #f) turned into something less verbose
+			;; (if x #f #t) -> (not x)
+			(lint-format "perhaps ~A" caller 
+				     (lists->string form (if true expr (simplify-boolean (list 'not expr) () () env))))
+			(when no-suggestion	  ; (if x #f y) -> (and (not x) y)
+			  (lint-format "perhaps ~A" caller 
+				       (lists->string form (if true
+							       (if (eq? false 'no-false)
+								   expr
+								   (simplify-boolean (list 'or expr false) () () env))
+							       (if (eq? form lint-mid-form)
+								   (if (and (pair? expr)
+									    (eq? (car expr) 'not))
+								       (cons 'when (cons (cadr expr) (unbegin false)))
+								       (cons 'unless (cons expr (unbegin false))))
+								   (simplify-boolean 
+								    (if (eq? false 'no-false)
+									(list 'not expr)
+									(list 'and (list 'not expr) false))
+								    () () env))))))))
+		   ((and (boolean? false)
+			 no-suggestion)        ; (if x y #t) -> (or (not x) y)
+		    (lint-format "perhaps ~A" caller
+				 (let ((nexpr (cond (false 
+						     (list 'or (if (and (len>1? expr) 
+									(eq? (car expr) 'not))
+								   (cadr expr)
+								   (list 'not expr))
+							   true))
+						    ((not (eq? form lint-mid-form))
+						     (list 'and expr true))
+						    ((and (pair? expr)
+							  (eq? (car expr) 'not))
+						     (cons 'unless (cons (cadr expr) (unbegin true))))
+						    (else (cons 'when (cons expr (unbegin true)))))))
+				   (lists->string form 
+						  (if (and (eq? form lint-mid-form)
+							   (eq? (car nexpr) 'when))
+						      nexpr
+						      (simplify-boolean nexpr () () env))))))))
+
+	  ;; -------- move-let-outward --------
+	  (define (move-let-outward caller form expr true false env)
+	    ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
+	    (when (and (len>1? true)     ; len>1? so true-rest is a pair
+		       (len>1? false)    ; same for false-rest
+		       (eq? (car true) 'let)
+		       (eq? (car false) 'let))
+	      (let ((true-rest (cdr true))
+		    (false-rest (cdr false)))
+		(when (and (pair? (car true-rest))
+			   (every? pair? (car true-rest))
+			   (pair? (car false-rest))
+			   (every? pair? (car false-rest)))
+		  (let ((true-vars (map car (car true-rest)))
+			(false-vars (map car (car false-rest)))
+			(shared-vars ()))
+		    (for-each (lambda (v)
+				(if (and (memq v false-vars)
+					 (equal? (cadr (assq v (car true-rest)))
+						 (cadr (assq v (car false-rest)))))
+				    (set! shared-vars (cons v shared-vars))))
+			      true-vars)
+		    (when (pair? shared-vars)
+		      ;; now remake true/false lets (maybe nil) without shared-vars
+		      (let ((ntv ())
+			    (nfv ())
+			    (sv ()))
+			(for-each (lambda (v)
+				    (if (memq (car v) shared-vars)
+					(set! sv (cons v sv))
+					(set! ntv (cons v ntv))))
+				  (car true-rest))
+			(set! ntv (if (or (pair? ntv)
+					  (pair? (cddr true-rest))) ; even define is safe here because outer let blocks it just as inner let used to
+				      (cons 'let (cons (reverse ntv) (cdr true-rest)))
+				      (cadr true-rest)))
+			(for-each (lambda (v)
+				    (if (not (memq (car v) shared-vars))
+					(set! nfv (cons v nfv))))
+				  (car false-rest))
+			(set! nfv (if (or (pair? nfv)
+					  (pair? (cddr false-rest)))
+				      (cons 'let (cons (reverse nfv) (cdr false-rest)))
+				      (cadr false-rest)))
+			;; (if (> (+ a b) 3) (let ((a x) (c y)) (* a (log c))) (let ((b z) (c y)) (+... ->
+			;;    (let ((c y)) (if (> (+ a b) 3) (let ((a x)) (* a (log c))) (let ((b z)) (+ b (log c)))))
+			(lint-format "perhaps ~A" caller
+				     (lists->string form 
+						    (if (not (or (side-effect? expr env)
+								 (tree-set-member (map car sv) expr)))
+							(list 'let (reverse sv) (list 'if expr ntv nfv))
+							(let ((uniq (find-unique-name form)))
+							  `(let ((,uniq ,expr))
+							     (let ,(reverse sv)
+							       (if ,uniq ,ntv ,nfv))))))))))))))
+
+	  ;; -------- move-false-outward --------
+	  (define (move-false-outward caller form expr true false env)
+	    (let ((true-rest (and (pair? true) (cdr true)))
+		  (false-rest (cdr false)))
+	      (case (car false)
+		((cond)                 ; (if a A (cond...)) -> (cond (a  A) ...)
+		 (when (proper-list? false-rest)
+		   (lint-format "perhaps ~A" caller (lists->string form (cons 'cond (cons (list expr true) false-rest))))))
+		
+		((if)
+		 (unless (= last-if->case-line-number line-number)
+		   (let ((eqv-select (eqv-selector expr))) ; this is just an accessor -- no check for case compatibility of expr
+		     ;; (if (= x 1) 2 (if (= x 3) 3 4)) -> (case x ((1) 2) ((3) 3) (else 4))
+		     (when (and eqv-select
+				(cond-eqv? expr eqv-select #t)
+				(pair? (cdr false))
+				(cond-eqv? (cadr false) eqv-select #t))
+		       (let ((clauses (list (list expr true))))
+			 (let gather-clauses ((f false))
+			   (if (and (len>2? f)
+				    (eq? (car f) 'if)
+				    (cond-eqv? (cadr f) eqv-select #t))
+			       (begin
+				 (set! clauses (cons (list (cadr f) (caddr f)) clauses))
+				 (if (pair? (cdddr f))
+				     (gather-clauses (cadddr f))))
+			       (set! clauses (cons (list 'else f) clauses))))
+			 (when (or (> (length clauses) 2)
+				   (not (eq? (caar clauses) 'else)))
+			   (set! last-if->case-line-number line-number)
+			   (lint-format "perhaps ~A" caller
+					(lists->string form 
+						       (cond->case eqv-select (reverse clauses)))))))))
+		 
+		 (when (= (length false) 4)
+		   (let ((false-test (car false-rest))
+			 (false-true (cadr false-rest))
+			 (false-false (caddr false-rest)))
+		     (if (equal? true false-true)
+			 ;; (if a A (if b A B)) -> (if (or a b) A B)
+			 (lint-format "perhaps ~A" caller 
+				      (if (and (pair? false-false)
+					       (eq? (car false-false) 'if)
+					       (equal? true (caddr false-false)))
+					  (lists->string form 
+							 (let ((nexpr (simplify-boolean
+								       (list 'or expr false-test (cadr false-false))
+								       () () env)))
+							   `(if ,nexpr ,true ,@(cdddr false-false))))
+					  (if true
+					      (let ((nexpr (simplify-boolean (list 'or expr false-test) () () env)))
+						(lists->string form (list 'if nexpr true false-false)))
+					      (lists->string form 
+							     (simplify-boolean 
+							      `(and (not (or ,expr ,false-test)) ,false-false)
+							      () () env)))))
+			 (when (equal? true false-false)
+			   ;; (if a A (if b B A)) -> (if (or a (not b)) A B)
+			   (lint-format "perhaps ~A" caller 
+					(if true
+					    (let ((nexpr (simplify-boolean `(or ,expr (not ,false-test)) () () env)))
+					      (lists->string form (list 'if nexpr true false-true)))
+					    (lists->string form 
+							   (simplify-boolean
+							    `(and (not (or ,expr (not ,false-test))) ,false-true)
+							    () () env))))))))
+		 ;; (if (and x y) ... (if (and x z) ...)) gets 3 hits (one tricky)
+		 
+		 (when (and (pair? true)
+			    (eq? (car true) 'if)
+			    (= (length true) 3)
+			    (= (length false) 3)
+			    (equal? (cdr true-rest) (cdr false-rest)))
+		   ;; (if a (if b d) (if c d)) -> (if (if a b c) d)
+		   (lint-format "perhaps ~A" caller
+				(lists->string form
+					       (if (> (+ (tree-leaves expr)
+							 (tree-leaves (car true-rest))
+							 (tree-leaves (car false-rest)))
+						      12)
+						   `(let ((_1_ (if ,expr ,(car true-rest) ,(car false-rest))))
+						      (if _1_ ,@(cdr true-rest)))
+						   `(if (if ,expr ,(car true-rest) ,(car false-rest)) ,@(cdr true-rest)))))))
+		
+		((map)  ; (if (null? x) () (map abs x)) -> (map abs x)
+		 (when (and (len>1? expr)
+			    (eq? (car expr) 'null?)
+			    (or (null? true)
+				(equal? true (cadr expr)))
+			    (equal? (cadr expr) (cadr false-rest))
+			    (or (null? (cddr false-rest))
+				(not (side-effect? (cddr false-rest) env))))
+		   (lint-format "perhaps ~A" caller (lists->string form false))))
+		
+		((case)
+		 (if (and (pair? expr)
+			  (pair? false-rest)
+			  (not (code-constant? (car false-rest)))
+			  (cond-eqv? expr (car false-rest) #t))
+		     ;; (if (eof-object? x) 32 (case x ((#\a) 3) (else 4))) -> (case x ((#<eof>) 32) ((#\a) 3) (else 4))
+		     (lint-format "perhaps ~A" caller
+				  (lists->string form `(case ,(car false-rest)
+							 ,(case-branch expr (car false-rest) (list true))
+							 ,@(cdr false-rest))))))
+		
+		((else)  ; (if x (f y) (else z)) ! -- this gets 3 hits
+		 (if (not (var-member 'else env))
+		     (lint-format "else (as car of false branch of if) makes no sense: ~A" caller form))))
+			       
+	      (let ((false-test (and (pair? false-rest) (car false-rest))))
+		(if (and (eq? (car false) 'if)   ; (if x 3 (if (not x) 4)) -> (if x 3 4)
+			 (> (or (length false-rest) 0) 1) ; proper-list and len>1?
+			 (not (side-effect? expr env)))
+		    (if (equal? expr false-test)
+			(lint-format "perhaps ~A" caller (lists->string form `(if ,expr ,true ,@(cddr false-rest))))
+			(if (and (pair? false-test)
+				 (eq? (car false-test) 'not)
+				 (equal? expr (cadr false-test)))
+			    (lint-format "perhaps ~A" caller (lists->string form (list 'if expr true (cadr false-rest)))))))
+		
+		(if (and (eq? (car false) 'if)          ; (if test0 expr (if test1 expr)) -> if (or test0 test1) expr) 
+			 (len=2? false-rest)         ; other case is dealt with above
+			 (equal? true (cadr false-rest)))
+		    (let ((test1 (simplify-boolean (list 'or expr false-test) () () env)))
+		      (lint-format "~Aperhaps ~A" caller 
+				   (if (equal? expr false-test) "weird repetition! " "")
+				   (lists->string form (list 'if test1 true))))))))
+
+	  ;; -------- combine-if --------
+	  (define (combine-if caller form expr true false env)
+	    (let ((true-op (and (pair? true) (car true)))
+		  (true-rest (and (pair? true) (cdr true)))
+		  (false-op (and (pair? false) (car false)))
+		  (false-rest (and (pair? false) (cdr false))))
+	      (when (and (len>2? true)
+			 (eq? true-op 'if))
+		(let ((true-test (car true-rest))
+		      (true-true (and (pair? (cdr true-rest)) (cadr true-rest))))
+		  (if (= (length true) 4)
+		      (let ((true-false (caddr true-rest)))
+			(if (equal? expr (simplify-boolean (list 'not true-test) () () env))
+			    ;; (if a (if (not a) B C) A) -> (if a C A)
+			    (lint-format "perhaps ~A" caller
+					 (lists->string form (list 'if expr true-false false))))
+			(if (equal? expr true-test)
+			    ;; (if x (if x z w) y) -> (if x z y)
+			    (lint-format "perhaps ~A" caller
+					 (lists->string form (list 'if expr true-true false))))
+			(if (equal? false true-false)
+			    ;; (if a (if b B A) A) -> (if (and a b) B A)
+			    (lint-format "perhaps ~A" caller 
+					 (lists->string form 
+							(simplify-boolean
+							 (if (not false)
+							     (list 'and expr true-test true-true)
+							     (list 'if (list 'and expr true-test) true-true false))
+							 () () env)))
+			    (if (equal? false true-true)
+				;; (if a (if b A B) A) -> (if (and a (not b)) B A)
+				(lint-format "perhaps ~A" caller 
+					     (lists->string form 
+							    (simplify-boolean
+							     (if (not false)
+								 (list 'and expr (list 'not true-test) true-false)
+								 (list 'if (list 'and expr (list 'not true-test)) true-false false))
+							     () () env)))))
+			
+			;; (if a (if b d e) (if c d e)) -> (if (if a b c) d e)? reversed does not happen.
+			;; (if a (if b d) (if c d)) -> (if (if a b c) d)
+			;; (if a (if b d e) (if (not b) d e)) -> (if (eq? (not a) (not b)) d e)
+			(when (and (pair? false)
+				   (eq? false-op 'if)
+				   (= (length false) 4)
+				   (not (equal? true-test (car false-rest)))
+				   (equal? (cdr true-rest) (cdr false-rest)))
+			  (let ((false-test (car false-rest)))
+			    (lint-format "perhaps ~A" caller
+					 (lists->string form
+							(cond ((and (len>1? true-test)
+								    (eq? (car true-test) 'not)
+								    (equal? (cadr true-test) false-test))
+							       `(if (not (eq? (not ,expr) ,true-test))
+								    ,@(cdr true-rest)))
+							      
+							      ((and (len>1? false-test)
+								    (eq? (car false-test) 'not)
+								    (equal? true-test (cadr false-test)))
+							       `(if (eq? (not ,expr) ,false-test)
+								    ,@(cdr true-rest)))
+							      
+							      ((> (+ (tree-leaves expr)
+								     (tree-leaves true-test)
+								     (tree-leaves false-test))
+								  12)
+							       `(let ((_1_ (if ,expr ,true-test ,false-test)))
+								  (if _1_ ,@(cdr true-rest))))
+							      
+							      (else
+							       `(if (if ,expr ,true-test ,false-test) ,@(cdr true-rest)))))))))
+		      (begin ; (length true) != 4
+			(if (equal? expr (simplify-boolean (list 'not true-test) () () env))
+			    (lint-format "perhaps ~A" caller  ; (if a (if (not a) B) A) -> (if (not a) A)
+					 (lists->string form (list 'if (list 'not expr) false))))
+			(if (equal? expr true-test)           ; (if x (if x z) w) -> (if x z w)
+			    (lint-format "perhaps ~A" caller 
+					 (lists->string form (list 'if expr true-true false))))
+			(if (equal? false true-true)          ; (if a (if b A) A)
+			    (lint-format "perhaps ~A" caller
+					 (let ((nexpr (simplify-boolean (list 'or (list 'not expr) true-test) () () env)))
+					   (lists->string form (list 'if nexpr false)))))))))))
+			     
 
 	  (define (if-walker caller form env)
 	   (let ((len (length form)))
@@ -14269,710 +14725,286 @@
 		     (let ((test (cadr form))
 			   (true (caddr form))
 			   (false (if (= len 4) (cadddr form) 'no-false))
-			   (expr (simplify-boolean (cadr form) () () env))
-			   (suggestion made-suggestion))
+			   (expr (simplify-boolean (cadr form) () () env)))
 
-		       (sensible-if? caller form test true false env)
-		       (move-if-inward caller form expr true false env)
-		       (unless (= last-if-line-number line-number)
-			 (if->cond caller form))
-		       (if->or caller form test true false env)
-		       
-		       (let ((true-op (and (pair? true) (car true)))
-			     (true-rest (and (pair? true) (cdr true)))
-			     (false-op (and (pair? false) (car false)))
-			     (false-rest (and (pair? false) (cdr false))))
-
-		       ;; move-true-cond-outward
-		       (when (and (pair? true)
-				  (proper-list? true-rest)
-				  (eq? true-op 'cond)
-				  (not (eq? false-op 'cond))
-				  (not (boolean? false))) ; these cases are handled elsewhere via or/and
-			 ;; (if A (cond...) B) -> (cond ((not A) B) ...)
-			 ;;    if no false and cond is one-shot => this can be optimized to (cond ((and (not A) C) => ...))
-			 (lint-format "perhaps ~A" caller
-				      (let ((nexpr (simplify-boolean (list 'not expr) () () env))
-					    (nfalse (if (eq? false 'no-false)
-							(if (eq? form lint-mid-form)
-							    ()
-							    '(#<unspecified>))
-							(list (if (not (and (pair? false)
-									    (> (tree-leaves false) 100)))
-								  false
-								  (if (pair? (car false))
-								      (list (list (caar false) '...))
-								      (list (car false) '...)))))))
-					(lists->string form (cons 'cond (cons (cons nexpr nfalse) true-rest))))))
-
-		       ;; true-op = case happens a lot, but never in a way that (not expr)->false can be combined in the case
-
-		       (when (= len 4)
-			 ;; combine-if?
-			 (when (and (len>2? true)
-				    (eq? true-op 'if))
-			   (let ((true-test (car true-rest))
-				 (true-true (and (pair? (cdr true-rest)) (cadr true-rest))))
-			     (if (= (length true) 4)
-				 (let ((true-false (caddr true-rest)))
-				   (if (equal? expr (simplify-boolean (list 'not true-test) () () env))
-				       ;; (if a (if (not a) B C) A) -> (if a C A)
-				       (lint-format "perhaps ~A" caller
-						    (lists->string form (list 'if expr true-false false))))
-				   (if (equal? expr true-test)
-				       ;; (if x (if x z w) y) -> (if x z y)
-				       (lint-format "perhaps ~A" caller
-						    (lists->string form (list 'if expr true-true false))))
-				   (if (equal? false true-false)
-				       ;; (if a (if b B A) A) -> (if (and a b) B A)
-				       (lint-format "perhaps ~A" caller 
-						    (lists->string form 
-								   (simplify-boolean
-								    (if (not false)
-									(list 'and expr true-test true-true)
-									(list 'if (list 'and expr true-test) true-true false))
-								    () () env)))
-				       (if (equal? false true-true)
-					   ;; (if a (if b A B) A) -> (if (and a (not b)) B A)
-					   (lint-format "perhaps ~A" caller 
-							(lists->string form 
-								       (simplify-boolean
-									(if (not false)
-									    (list 'and expr (list 'not true-test) true-false)
-									    (list 'if (list 'and expr (list 'not true-test)) true-false false))
-									() () env)))))
-				   
-				   ;; (if a (if b d e) (if c d e)) -> (if (if a b c) d e)? reversed does not happen.
-				   ;; (if a (if b d) (if c d)) -> (if (if a b c) d)
-				   ;; (if a (if b d e) (if (not b) d e)) -> (if (eq? (not a) (not b)) d e)
-				   (when (and (pair? false)
-					      (eq? false-op 'if)
-					      (= (length false) 4)
-					      (not (equal? true-test (car false-rest)))
-					      (equal? (cdr true-rest) (cdr false-rest)))
-				     (let ((false-test (car false-rest)))
-				       (lint-format "perhaps ~A" caller
-						    (lists->string form
-								   (cond ((and (len>1? true-test)
-									       (eq? (car true-test) 'not)
-									       (equal? (cadr true-test) false-test))
-									  `(if (not (eq? (not ,expr) ,true-test))
-									       ,@(cdr true-rest)))
-									 
-									 ((and (len>1? false-test)
-									       (eq? (car false-test) 'not)
-									       (equal? true-test (cadr false-test)))
-									  `(if (eq? (not ,expr) ,false-test)
-									       ,@(cdr true-rest)))
-									 
-									 ((> (+ (tree-leaves expr)
-										(tree-leaves true-test)
-										(tree-leaves false-test))
-									     12)
-									  `(let ((_1_ (if ,expr ,true-test ,false-test)))
-									     (if _1_ ,@(cdr true-rest))))
-									 
-									 (else
-									  `(if (if ,expr ,true-test ,false-test) ,@(cdr true-rest)))))))))
-				 (begin ; (length true) != 4
-				   (if (equal? expr (simplify-boolean (list 'not true-test) () () env))
-				       (lint-format "perhaps ~A" caller  ; (if a (if (not a) B) A) -> (if (not a) A)
-						    (lists->string form (list 'if (list 'not expr) false))))
-				   (if (equal? expr true-test)           ; (if x (if x z) w) -> (if x z w)
-				       (lint-format "perhaps ~A" caller 
-						    (lists->string form (list 'if expr true-true false))))
-				   (if (equal? false true-true)          ; (if a (if b A) A)
-				       (lint-format "perhaps ~A" caller
-						    (let ((nexpr (simplify-boolean (list 'or (list 'not expr) true-test) () () env)))
-						      (lists->string form (list 'if nexpr false)))))))))
-			 
-			 (when (pair? false)
-			   ;; move-false-outward
-			   (case false-op
-			     ((cond)                 ; (if a A (cond...)) -> (cond (a  A) ...)
-			      (when (proper-list? false-rest)
-				(lint-format "perhaps ~A" caller (lists->string form (cons 'cond (cons (list expr true) false-rest))))))
-			     
-			     ((if)
-			      (unless (= last-if->case-line-number line-number)
-				(let ((eqv-select (eqv-selector expr))) ; this is just an accessor -- no check for case compatibility of expr
-				  ;; (if (= x 1) 2 (if (= x 3) 3 4)) -> (case x ((1) 2) ((3) 3) (else 4))
-				  (when (and eqv-select
-					     (cond-eqv? expr eqv-select #t)
-					     (pair? (cdr false))
-					     (cond-eqv? (cadr false) eqv-select #t))
-				    (let ((clauses (list (list expr true))))
-				      (let gather-clauses ((f false))
-					(if (and (len>2? f)
-						 (eq? (car f) 'if)
-						 (cond-eqv? (cadr f) eqv-select #t))
-					    (begin
-					      (set! clauses (cons (list (cadr f) (caddr f)) clauses))
-					      (if (pair? (cdddr f))
-						  (gather-clauses (cadddr f))))
-					    (set! clauses (cons (list 'else f) clauses))))
-				      (when (or (> (length clauses) 2)
-						(not (eq? (caar clauses) 'else)))
-					(set! last-if->case-line-number line-number)
-					(lint-format "perhaps ~A" caller
-						     (lists->string form 
-								    (cond->case eqv-select (reverse clauses)))))))))
-
-			      (when (= (length false) 4)
-				(let ((false-test (car false-rest))
-				      (false-true (cadr false-rest))
-				      (false-false (caddr false-rest)))
-				  (if (equal? true false-true)
-				      ;; (if a A (if b A B)) -> (if (or a b) A B)
-				      (lint-format "perhaps ~A" caller 
-						   (if (and (pair? false-false)
-							    (eq? (car false-false) 'if)
-							    (equal? true (caddr false-false)))
-						       (lists->string form 
-								      (let ((nexpr (simplify-boolean
-										    (list 'or expr false-test (cadr false-false))
-										    () () env)))
-									`(if ,nexpr ,true ,@(cdddr false-false))))
-						       (if true
-							   (let ((nexpr (simplify-boolean (list 'or expr false-test) () () env)))
-							     (lists->string form (list 'if nexpr true false-false)))
-							   (lists->string form 
-									  (simplify-boolean 
-									   `(and (not (or ,expr ,false-test)) ,false-false)
-									   () () env)))))
-				      (when (equal? true false-false)
-					;; (if a A (if b B A)) -> (if (or a (not b)) A B)
-					(lint-format "perhaps ~A" caller 
-						     (if true
-							 (let ((nexpr (simplify-boolean `(or ,expr (not ,false-test)) () () env)))
-							   (lists->string form (list 'if nexpr true false-true)))
-							 (lists->string form 
-									(simplify-boolean
-									 `(and (not (or ,expr (not ,false-test))) ,false-true)
-									 () () env))))))))
-			      ;; (if (and x y) ... (if (and x z) ...)) gets 3 hits (one tricky)
-
-			      (when (and (pair? true)
-					 (eq? true-op 'if)
-					 (= (length true) 3)
-					 (= (length false) 3)
-					 (equal? (cdr true-rest) (cdr false-rest)))
-				;; (if a (if b d) (if c d)) -> (if (if a b c) d)
-				(lint-format "perhaps ~A" caller
-					     (lists->string form
-							    (if (> (+ (tree-leaves expr)
-								      (tree-leaves (car true-rest))
-								      (tree-leaves (car false-rest)))
-								   12)
-								`(let ((_1_ (if ,expr ,(car true-rest) ,(car false-rest))))
-								   (if _1_ ,@(cdr true-rest)))
-								`(if (if ,expr ,(car true-rest) ,(car false-rest)) ,@(cdr true-rest)))))))
-
-			     ((map)  ; (if (null? x) () (map abs x)) -> (map abs x)
-			      (when (and (len>1? test)
-					 (eq? (car test) 'null?)
-					 (or (null? true)
-					     (equal? true (cadr test)))
-					 (equal? (cadr test) (cadr false-rest))
-					 (or (null? (cddr false-rest))
-					     (not (side-effect? (cddr false-rest) env))))
-				(lint-format "perhaps ~A" caller (lists->string form false))))
-			     
-			     ((case)
-			      (if (and (pair? expr)
-				       (pair? false-rest)
-				       (not (code-constant? (car false-rest)))
-				       (cond-eqv? expr (car false-rest) #t))
-				  ;; (if (eof-object? x) 32 (case x ((#\a) 3) (else 4))) -> (case x ((#<eof>) 32) ((#\a) 3) (else 4))
-				  (lint-format "perhaps ~A" caller
-					       (lists->string form `(case ,(car false-rest)
-								      ,(case-branch expr (car false-rest) (list true))
-								      ,@(cdr false-rest))))))
-
-			     ((else)  ; (if x (f y) (else z)) ! -- this gets 3 hits
-			      (if (not (var-member 'else env))
-				  (lint-format "else (as car of false branch of if) makes no sense: ~A" caller form))))
-
-			   (let ((false-test (and (pair? false-rest) (car false-rest))))
-			     (if (and (eq? false-op 'if)   ; (if x 3 (if (not x) 4)) -> (if x 3 4)
-				      (> (or (length false-rest) 0) 1) ; proper-list and len>1?
-				      (not (side-effect? test env)))
-				 (if (or (equal? test false-test) 
-					 (equal? expr false-test))
-				     (lint-format "perhaps ~A" caller (lists->string form `(if ,expr ,true ,@(cddr false-rest))))
-				     (if (and (pair? false-test)
-					      (eq? (car false-test) 'not)
-					      (or (equal? test (cadr false-test))
-						  (equal? expr (cadr false-test))))
-					 (lint-format "perhaps ~A" caller (lists->string form (list 'if expr true (cadr false-rest)))))))
-			     
-			     (if (and (eq? false-op 'if)          ; (if test0 expr (if test1 expr)) -> if (or test0 test1) expr) 
-				      (len=2? false-rest)         ; other case is dealt with above
-				      (equal? true (cadr false-rest)))
-				 (let ((test1 (simplify-boolean (list 'or expr false-test) () () env)))
-				   (lint-format "~Aperhaps ~A" caller 
-						(if (equal? expr false-test) "weird repetition! " "")
-						(lists->string form (list 'if test1 true))))))))
-		       ;; = len 4
-		       
-		       (when (and (eq? false 'no-false)                         ; no false branch
-				  (pair? true))
-			 (when (pair? test)
-			   (let ((test-op (car test)))
-			     ;; the min+max case is seldom hit, and takes about 50 lines
-			     (when (and (memq test-op '(< > <= >=))
-					(len=2? (cdr test)))
-			       (let ((rel-arg1 (cadr test))
-				     (rel-arg2 (caddr test)))
-				 
-				 ;; (if (< x y) (set! x y) -> (set! x (max x y))
-				 (case true-op 
-				   ((set!)
-				    (when (len>1? true-rest)
-				      (let ((settee (car true-rest))
-					    (setval (cadr true-rest)))
-					(if (and (member settee test)
-						 (member setval test)) ; that's all there's room for
-					    (let ((f (if (equal? settee (if (memq test-op '(< <=)) rel-arg1 rel-arg2)) 'max 'min)))
-					      (lint-format "perhaps ~A" caller
-							   (lists->string form (list 'set! settee (cons f true-rest)))))))))
-				   
-				   ;; (if (<= (list-ref ind i) 32) (list-set! ind i 32)) -> (list-set! ind i (max (list-ref ind i) 32))
-				   ((list-set! vector-set!)
-				    (when (len>1? (cdr true-rest))
-				      (let ((settee (car true-rest))   
-					    (index (cadr true-rest))
-					    (setval (caddr true-rest)))
-					(let ((mx-op (if (and (equal? setval rel-arg1)
-							      (eqv? (length rel-arg2) 3)
-							      (equal? settee (cadr rel-arg2))
-							      (equal? index (caddr rel-arg2)))
-							 (if (memq test-op '(< <=)) 'min 'max)
-							 (and (equal? setval rel-arg2)
-							      (eqv? (length rel-arg1) 3)
-							      (equal? settee (cadr rel-arg1))
-							      (equal? index (caddr rel-arg1))
-							      (if (memq test-op '(< <=)) 'max 'min)))))
-					  (if mx-op
-					      (lint-format "perhaps ~A" caller
-							   (lists->string form (list true-op settee index (cons mx-op (cdr test)))))))))))))))
-			 
-			 (cond ((not (pair? true-rest)))
-			       ((not (eq? (car true) 'if))                ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr)
-				(if (memq true-op '(when unless))         ; (if test0 (when test1 expr...)) -> (when (and test0 test1) expr...)
-				    (let ((test1 (simplify-boolean (list 'and expr (if (eq? true-op 'when)
-										       (car true-rest)
-										       (list 'not (car true-rest))))
-								   () () env)))
-				      ;; (if (and (< x 1) y) (when z (display z) x)) -> (when (and (< x 1) y z) (display z) x)
-				      (lint-format "perhaps ~A" caller 
-						   (lists->string form 
-								  (if (and (len>1? test1)
-									   (eq? (car test1) 'not))
-								      (cons 'unless (cons (cadr test1) (cdr true-rest)))
-								      (cons 'when (cons test1 (cdr true-rest)))))))))
-			       ((len=1? (cdr true-rest))
-				(let ((test1 (simplify-boolean (list 'and expr (car true-rest)) () () env)))
-				  (lint-format "perhaps ~A" caller (lists->string form (list 'if test1 (cadr true-rest))))))
-			       
-			       ((equal? expr (car true-rest))
-				(lint-format "perhaps ~A" caller (lists->string form true)))
-			       
-			       ((equal? (car true-rest) (list 'not expr))
-				(lint-format "perhaps ~A" caller 
-					     (lists->string form (caddr true-rest))))))
-		       
-		       (if (and (len=3? test)
-				(memq (car test) '(< <= > >= =))       ; (if (< x y) x y) -> (min x y)
-				(member false test)
-				(member true test))
-			   (if (eq? (car test) '=)                     ; (if (= x y) y x) -> y [this never happens]
-			       (lint-format "perhaps ~A" caller (lists->string form false))
-			       (let ((f (if (equal? (cadr test) (if (memq (car test) '(< <=)) true false))
-					    'min 'max)))
-				 (lint-format "perhaps ~A" caller (lists->string form (list f true false))))))
-		       ;; no hits for negative?/positive? and 0/0.0 here
-		       
-		       (cond ((eq? expr #t) ; (if #t #f) -> #f
-			      (lint-format "perhaps ~A" caller (lists->string form true)))
-			     
-			     ((not expr)
-			      (if (eq? false 'no-false)
-				  (if true                             ; (if #f x) as a kludgey #<unspecified>
-				      (lint-format "perhaps ~A" caller (lists->string form #<unspecified>)))
-				  ;; (if (negative? (gcd x y)) a b) -> b
-				  (lint-format "perhaps ~A" caller (lists->string form false))))
-			     
-			     ((not (code-equal? true false))
-			      (if (boolean? true)
-				  (if (boolean? false) ; !  (if expr #t #f) turned into something less verbose
-				      ;; (if x #f #t) -> (not x)
-				      (lint-format "perhaps ~A" caller 
-						   (lists->string form (if true 
-									   expr 
-									   (simplify-boolean (list 'not expr) () () env))))
-				      (when (= suggestion made-suggestion)
-					;; (if x #f y) -> (and (not x) y)
-					(lint-format "perhaps ~A" caller 
-						     (lists->string form (if true
-									     (if (eq? false 'no-false)
-										 expr
-										 (simplify-boolean (list 'or expr false) () () env))
-									     (if (eq? form lint-mid-form)
-										 (if (and (pair? expr)
-											  (eq? (car expr) 'not))
-										     (cons 'when (cons (cadr expr) (unbegin false)))
-										     (cons 'unless (cons expr (unbegin false))))
-										 (simplify-boolean 
-										  (if (eq? false 'no-false)
-										      (list 'not expr)
-										      (list 'and (list 'not expr) false))
-										  () () env)))))))
-				  (if (and (boolean? false)
-					   (= suggestion made-suggestion))
-				      ;; (if x y #t) -> (or (not x) y)
-				      (lint-format "perhaps ~A" caller
-						   (let ((nexpr (cond (false 
-								       (list 'or (if (and (len>1? expr) 
-											  (eq? (car expr) 'not))
-										     (cadr expr)
-										     (list 'not expr))
-									     true))
-								      ((not (eq? form lint-mid-form))
-								       (list 'and expr true))
-								      ((and (pair? expr)
-									    (eq? (car expr) 'not))
-								       (cons 'unless (cons (cadr expr) (unbegin true))))
-								      (else (cons 'when (cons expr (unbegin true)))))))
-						     (lists->string form 
-								    (if (and (eq? form lint-mid-form)
-									     (eq? (car nexpr) 'when))
-									nexpr
-									(simplify-boolean nexpr () () env))))))))
-			     ((= len 4)
-			      ;; (if x (+ y 1) (+ y 1)) -> (+ y 1)
-			      (lint-format "if is not needed here: ~A" caller 
-					   (lists->string form (if (not (side-effect? test env))
-								   true
-								   (list 'begin expr true))))))
-		       
-		       (when (and (= suggestion made-suggestion)
-				  (not (equal? expr test))) ; make sure the boolean simplification gets reported
-			 ;; (or (not (pair? x)) (not (pair? z))) -> (not (and (pair? x) (pair? z)))
+		       (unless (equal? expr test)             ; (or (not (pair? x)) (not (pair? z))) -> (not (and (pair? x) (pair? z)))
 			 (lint-format "perhaps ~A" caller (lists->string test expr)))
-		       
-		       (when (pair? true)
-			 (if (and (pair? test)
-				  (len=1? true-rest)
-				  (or (equal? test (car true-rest))
-				      (equal? expr (car true-rest))))
-			     (lint-format "perhaps ~A" caller
-					  (lists->string form 
-							 (if (eq? false 'no-false)
-							     (list 'cond (list expr '=> true-op))
-							     (list 'cond (list expr '=> true-op) (list 'else false))))))
-			 
-			 (when (and (pair? false)
-				    (eq? true-op 'if)
-				    (eq? false-op 'if)
-				    (= (length true) (length false) 4)
-				    (equal? (car true-rest) (car false-rest)))
-			   (if (and (equal? (cadr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B b a)) -> (if (eq? (not A) (not B)) a b) 
-				    (equal? (caddr true-rest) (cadr false-rest)))
-			       (let* ((switch #f)
-				      (a (if (and (pair? expr)
-						  (eq? (car expr) 'not))
-					     (begin (set! switch #t) expr)
-					     (simplify-boolean (list 'not expr) () () env)))
-				      (b (if (and (pair? (car true-rest))
-						  (eq? (caar true-rest) 'not))
-					     (begin (set! switch (not switch)) (car true-rest))
-					     (simplify-boolean (list 'not (car true-rest)) () () env))))
+		       ;; (if (cond...)...) doesn't happen much and is tricky to rewrite
+
+		       (let ((suggestion made-suggestion))
+			 (sensible-if? caller form test true false env)
+			 (move-if-inward caller form expr true false env)
+			 (unless (= last-if-line-number line-number)     ; avoid recursive (redundant) call
+			   (easy-if->cond caller form))
+			 (if->or caller form test true false env)
+			 (big-if->when caller form test expr true false) ; test for a reasonable line number, expr for a corrected test (sigh)
+			 (move-cond-outward caller form expr true false env)
+			   
+			 (when (= len 4)
+			   (combine-if caller form expr true false env)
+			   (when (pair? false)
+			     (move-false-outward caller form expr true false env)))
+			   
+			 (let ((true-op (and (pair? true) (car true)))
+			       (true-rest (and (pair? true) (cdr true)))
+			       (false-op (and (pair? false) (car false)))
+			       (false-rest (and (pair? false) (cdr false))))
+			   
+			   (when (and (eq? false 'no-false)                         ; no false branch
+				      (pair? true))
+			     ;; if->max?
+			     (when (pair? test)
+			       (let ((test-op (car test)))
+				 ;; the min+max case is seldom hit, and takes about 50 lines
+				 (when (and (memq test-op '(< > <= >=))
+					    (len=2? (cdr test)))
+				   (let ((rel-arg1 (cadr test))
+					 (rel-arg2 (caddr test)))
+				     
+				     ;; (if (< x y) (set! x y) -> (set! x (max x y))
+				     (case true-op 
+				       ((set!)
+					(when (len>1? true-rest)
+					  (let ((settee (car true-rest))
+						(setval (cadr true-rest)))
+					    (if (and (member settee test)
+						     (member setval test)) ; that's all there's room for
+						(let ((f (if (equal? settee (if (memq test-op '(< <=)) rel-arg1 rel-arg2)) 'max 'min)))
+						  (lint-format "perhaps ~A" caller
+							       (lists->string form (list 'set! settee (cons f true-rest)))))))))
+				       
+				       ;; (if (<= (list-ref ind i) 32) (list-set! ind i 32)) -> (list-set! ind i (max (list-ref ind i) 32))
+				       ((list-set! vector-set!)
+					(when (len>1? (cdr true-rest))
+					  (let ((settee (car true-rest))   
+						(index (cadr true-rest))
+						(setval (caddr true-rest)))
+					    (let ((mx-op (if (and (equal? setval rel-arg1)
+								  (eqv? (length rel-arg2) 3)
+								  (equal? settee (cadr rel-arg2))
+								  (equal? index (caddr rel-arg2)))
+							     (if (memq test-op '(< <=)) 'min 'max)
+							     (and (equal? setval rel-arg2)
+								  (eqv? (length rel-arg1) 3)
+								  (equal? settee (cadr rel-arg1))
+								  (equal? index (caddr rel-arg1))
+								  (if (memq test-op '(< <=)) 'max 'min)))))
+					      (if mx-op
+						  (lint-format "perhaps ~A" caller
+							       (lists->string form (list true-op settee index (cons mx-op (cdr test)))))))))))))))
+			     ;; if+if->and?
+			     (cond ((not (pair? true-rest)))
+				   ((not (eq? (car true) 'if))                ; (if test0 (if test1 expr)) -> (if (and test0 test1) expr)
+				    (if (memq true-op '(when unless))         ; (if test0 (when test1 expr...)) -> (when (and test0 test1) expr...)
+					(let ((test1 (simplify-boolean (list 'and expr (if (eq? true-op 'when)
+											   (car true-rest)
+											   (list 'not (car true-rest))))
+								       () () env)))
+					  ;; (if (and (< x 1) y) (when z (display z) x)) -> (when (and (< x 1) y z) (display z) x)
+					  (lint-format "perhaps ~A" caller 
+						       (lists->string form 
+								      (if (and (len>1? test1)
+									       (eq? (car test1) 'not))
+									  (cons 'unless (cons (cadr test1) (cdr true-rest)))
+									  (cons 'when (cons test1 (cdr true-rest)))))))))
+				   ((len=1? (cdr true-rest))
+				    (let ((test1 (simplify-boolean (list 'and expr (car true-rest)) () () env)))
+				      (lint-format "perhaps ~A" caller (lists->string form (list 'if test1 (cadr true-rest))))))
+				   
+				   ((equal? expr (car true-rest))
+				    (lint-format "perhaps ~A" caller (lists->string form true)))
+				   
+				   ((equal? (car true-rest) (list 'not expr))
+				    (lint-format "perhaps ~A" caller 
+						 (lists->string form (caddr true-rest))))))
+			   
+			   ;; if->max above? is this a len=3/4 repetition?
+			   (if (and (len=3? test)
+				    (memq (car test) '(< <= > >= =))       ; (if (< x y) x y) -> (min x y)
+				    (member false test)
+				    (member true test))
+			       (if (eq? (car test) '=)                     ; (if (= x y) y x) -> y [this never happens]
+				   (lint-format "perhaps ~A" caller (lists->string form false))
+				   (let ((f (if (equal? (cadr test) (if (memq (car test) '(< <=)) true false))
+						'min 'max)))
+				     (lint-format "perhaps ~A" caller (lists->string form (list f true false))))))
+			   ;; no hits for negative?/positive? and 0/0.0 here
+			   
+			   (if->bool caller form expr true false env (= suggestion made-suggestion))
+
+
+			   ;; if->feed-to? where is the rest of this?
+			   (when (pair? true)
+			     (if (and (pair? test)
+				      (len=1? true-rest)
+				      (or (equal? test (car true-rest))
+					  (equal? expr (car true-rest))))
 				 (lint-format "perhaps ~A" caller
 					      (lists->string form 
-							     (if switch
-								 `(if (eq? ,a ,b) ,(cadr false-rest) ,(cadr true-rest))
-								 `(if (eq? ,a ,b) ,(cadr true-rest) ,(cadr false-rest))))))
-			       (unless (or (side-effect? expr env)
-					   (equal? (cdr true-rest) (cdr false-rest))) ; handled elsewhere
-				 (if (equal? (cadr true-rest) (cadr false-rest))  ; (if A (if B a b) (if B a c)) -> (if B a (if A b c))
+							     (if (eq? false 'no-false)
+								 (list 'cond (list expr '=> true-op))
+								 (list 'cond (list expr '=> true-op) (list 'else false))))))
+			     ;; reduce-if?
+			     (when (and (pair? false)
+					(eq? true-op 'if)
+					(eq? false-op 'if)
+					(= (length true) (length false) 4)
+					(equal? (car true-rest) (car false-rest)))
+			       (if (and (equal? (cadr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B b a)) -> (if (eq? (not A) (not B)) a b) 
+					(equal? (caddr true-rest) (cadr false-rest)))
+				   (let* ((switch #f)
+					  (a (if (and (pair? expr)
+						      (eq? (car expr) 'not))
+						 (begin (set! switch #t) expr)
+						 (simplify-boolean (list 'not expr) () () env)))
+					  (b (if (and (pair? (car true-rest))
+						      (eq? (caar true-rest) 'not))
+						 (begin (set! switch (not switch)) (car true-rest))
+						 (simplify-boolean (list 'not (car true-rest)) () () env))))
 				     (lint-format "perhaps ~A" caller
-						  (lists->string form
-								 `(if ,(car true-rest) ,(cadr true-rest) 
-								      (if ,expr ,(caddr true-rest) ,(caddr false-rest)))))
-				     (if (equal? (caddr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B c b)) -> (if B (if A a c) b)
+						  (lists->string form 
+								 (if switch
+								     `(if (eq? ,a ,b) ,(cadr false-rest) ,(cadr true-rest))
+								     `(if (eq? ,a ,b) ,(cadr true-rest) ,(cadr false-rest))))))
+				   (unless (or (side-effect? expr env)
+					       (equal? (cdr true-rest) (cdr false-rest))) ; handled elsewhere
+				     (if (equal? (cadr true-rest) (cadr false-rest))  ; (if A (if B a b) (if B a c)) -> (if B a (if A b c))
 					 (lint-format "perhaps ~A" caller
 						      (lists->string form
-								     `(if ,(car true-rest)
-									  (if ,expr ,(cadr true-rest) ,(cadr false-rest))
-									  ,(caddr true-rest))))))))))
-		       ;; --------
-		       (when (and (= suggestion made-suggestion)
-				  (not (= line-number last-if-line-number)))
-			 ;; unravel complicated if-then-else nestings into a single cond, if possible.
-			 ;;
-			 ;; The (> new-len *report-nested-if*) below can mean (nearly) all nested ifs are turned into conds.
-			 ;;   For a long time I thought the if form was easier to read, but now
-			 ;;   I like cond better.  But cond also has serious readability issues:
-			 ;;   it needs to be clearer where the test separates from the result,
-			 ;;   and in a stack of these clauses, it's hard to see anything at all.
-			 ;;   Maybe a different color for the test than the result?
-			 ;;
-			 ;; Also, the check for tree-leaves being hugely different is taken
-			 ;;   from C -- I think it is easier to read a large if statement if
-			 ;;   the shortest clause is at the start -- especially in a nested if where
-			 ;;   it can be nearly impossible to see which dangling one-liner matches
-			 ;;   which if (this even in emacs because it unmarks or doesn't remark the matching
-			 ;;   paren as you're trying to scroll up to it). 
-			 ;;
-			 ;; the cond form is not always an improvement:
-			 ;;   (if A (if B (if C a b) (if C c d)) (if B (if C e f) (if C g h)))
-			 ;;   (cond (A (cond (B (cond (C a) (else b))) ... oh forget it ...))))
-			 ;;   perhaps: (case (+ (if A 4 0) (if B 2 0) (if C 1 0)) ((#b000)...))!
-			 ;;   how often (and how deeply nested) does this happen? -- not very, but nesting can be ridiculous.
-			 ;;   and this assumes all tests are always hit
-			 ;;
-			 ;; the len>2 below could be len>1 + handling of empty false branch, but
-			 ;;   I don't like the rewrites (using cond).  There are a lot of hits here but they
-			 ;;   need special-case handling, perhaps.
-
-			 (define (swap-clauses form)
-			   (if (not (len>2? (cdr form)))
-			       form
-			       (let ((expr (cadr form))
-				     (ltrue (caddr form))
-				     (lfalse (cadddr form)))
-
-				 (if (or (and (pair? ltrue)
-					      (not (proper-list? ltrue)))
-					 (and (pair? lfalse)
-					      (not (proper-list? lfalse))))
-				     form
-				 
-				     (let ((true-n (tree-leaves ltrue))
-					   (false-n (if (not (pair? lfalse)) 
-							1
-							(tree-leaves lfalse))))
-				       
-				       (if (< false-n (/ true-n 4))
-					   (let ((new-expr (simplify-boolean (list 'not expr) () () env)))
-					     (if (and (pair? ltrue)
-						      (eq? (car ltrue) 'if))
-						 (set! ltrue (swap-clauses ltrue)))
-					     (if (and (pair? ltrue)
-						      (eq? (car ltrue) 'cond))
-						 `(cond (,new-expr ,@(unbegin lfalse))
-							,@(cdr ltrue))
-						 `(cond (,new-expr ,@(unbegin lfalse))
-							(else ,@(unbegin ltrue)))))
-					   (begin
-					     (if (and (pair? lfalse)
-						      (eq? (car lfalse) 'if))
-						 (set! lfalse (swap-clauses lfalse)))
-					     
-					     (if (and (pair? lfalse)
-						      (eq? (car lfalse) 'cond))
-						 `(cond (,expr ,@(unbegin ltrue))
-							,@(cdr lfalse))
-						 `(cond (,expr ,@(unbegin ltrue))
-							(else ,@(unbegin lfalse)))))))))))
-
-			 ;; TODO: check before rebuilding that this will be over *report-nested-if* and collapsible to cond
-			 ;;   also cond as ltrue/lfalse is already embedded above??
-			 (let ((new-if (swap-clauses form)))
-			   (when (and (eq? (car new-if) 'cond)
-				      (> (length new-if) *report-nested-if*))
-			     (set! last-if-line-number line-number)
-			     (lint-format "perhaps ~A" caller (lists->string form new-if))))
-
-			 (when (and (= suggestion made-suggestion)
-				    (= len 4))
-			   (let ((true-len (tree-leaves (caddr form))))
-			     (when (and (> true-len *report-short-branch*)
-					(< (tree-leaves (cadddr form)) (/ true-len *report-short-branch*)))
-			       (let ((new-expr (simplify-boolean (list 'not (cadr form)) () () env)))
-				 (lint-format "perhaps place the much shorter branch first~A: ~A" caller
-					      (local-line-number (cadr form))
-					      (truncated-lists->string form (list 'if new-expr false true)))))))
-			 
-			 ;; if+let() -> when: about a dozen hits
-			 (let ((ntrue (and (len>1? true)                    ; (if A B (let () (display x))) -> (if A B (begin (display x)))
-					   (eq? true-op 'let)
-					   (null? (cadr true))
-					   (not (tree-table-member definers (cddr true)))
-					   (cddr true)))
-			       (nfalse (and (len>1? false)
-					    (eq? false-op 'let)
-					    (null? (cadr false))
-					    (not (tree-table-member definers (cddr false)))
-					    (cddr false))))
-			   (if (or ntrue nfalse)
-			       (lint-format "perhaps ~A" caller
-					    (lists->string form
-							   (if (eq? false 'no-false)
-							       (cons 'when (cons expr ntrue))
-							       (if ntrue
-								   (if nfalse
-								       `(if ,expr (begin ,@ntrue) (begin ,@nfalse))
-								       `(if ,expr (begin ,@ntrue) ,false))
-								   `(if ,expr ,true (begin ,@nfalse))))))))
-			 (when (= len 4)
-			   ;; move repeated test to top, if no inner false branches -- aren't we assuming A does not affect B?  yes, but this never happens.
-			   ;;   (if A (if B C) (if B D)) -> (if B (if A C D))
-			   (when (and (len=3? true)         
-				      (len=3? false)
-				      (eq? true-op 'if)
-				      (eq? false-op 'if)
-				      (equal? (car true-rest) (car false-rest)))
-			     (lint-format "perhaps ~A" caller
-					  (lists->string form `(if ,(car true-rest)
-								   (if ,expr
-								       ,(cadr true-rest)
-								       ,(cadr false-rest))))))
-			   
-			   ;; move repeated start/end statements out of the if
-			   (let ((ltrue (if (and (pair? true) (eq? true-op 'begin)) true (list 'begin true)))
-				 (lfalse (if (and (pair? false) (eq? false-op 'begin)) false (list 'begin false))))
-			     (let ((true-len (length ltrue))
-				   (false-len (length lfalse)))
-			       (when (and (integer? true-len)
-					  (> true-len 1)
-					  (integer? false-len)
-					  (> false-len 1))
-				 (let ((start (if (and (equal? (cadr ltrue) (cadr lfalse))
-						       (not (side-effect? expr env))) ; expr might affect start, so we can't pull it ahead
-						  (list (cadr ltrue))
-						  ()))
-				       (end (if (and (not (= true-len false-len 2))
-						     (equal? (list-ref ltrue (- true-len 1))
-							     (list-ref lfalse (- false-len 1))))
-						(list (list-ref ltrue (- true-len 1)))
-						())))
-				   (when (or (pair? start)
-					     (pair? end))
-				     (let ((new-true (cdr ltrue))
-					   (new-false (cdr lfalse)))
-				       (when (pair? end)
-					 (set! new-true (copy new-true (make-list (- true-len 2)))) ; (copy lst ()) -> () 
-					 (set! new-false (copy new-false (make-list (- false-len 2)))))
-				       (when (pair? start)
-					 (if (pair? new-true) (set! new-true (cdr new-true)))
-					 (if (pair? new-false) (set! new-false (cdr new-false))))
-				       (when (or (pair? end)
-						 (and (pair? new-true)
-						      (pair? new-false))) ; otherwise the rewrite changes the returned value
-					 (if (pair? new-true)
-					     (set! new-true (if (null? (cdr new-true)) 
-								(car new-true)
-								(cons 'begin new-true))))
-					 (if (pair? new-false)
-					     (set! new-false (if (null? (cdr new-false)) 
-								 (car new-false)
-								 (cons 'begin new-false))))
-					 ;; (if x (display y) (begin (set! z y) (display y))) -> (begin (if (not x) (set! z y)) (display y))
-					 (lint-format "perhaps ~A" caller
-						      (lists->string form 
-								     (let ((body (if (null? new-true)
-										     (list 'if (list 'not expr) new-false)
-										     (if (null? new-false)
-											 (list 'if expr new-true)
-											 (list 'if expr new-true new-false)))))
-								       `(begin ,@start
-									       ,body
-									       ,@end)))))))))))
-			   
-			   (when (and (= suggestion made-suggestion)      ; not redundant -- this will repeat the earlier suggestion in many cases
-				      (not (= line-number last-if-line-number))
-				      (len>1? expr)                       ; (if (not a) A B) -> (if a B A)
-				      (eq? (car expr) 'not)
-				      (> (tree-leaves true) (tree-leaves false)))
-			     (lint-format "perhaps ~A" caller
-					  (lists->string form (list 'if (cadr expr) false true))))
-
-			   ;; move-let-outward?
-			   ;; this happens occasionally -- scarcely worth this much code! (gather copied vars outside the if)
-			   (when (and (len>1? true)     ; len>1? so true-rest is a pair
-				      (len>1? false)    ; same for false-rest
-				      (eq? true-op 'let)
-				      (eq? false-op 'let)
-				      (pair? (car true-rest))
-				      (every? pair? (car true-rest))
-				      (pair? (car false-rest))
-				      (every? pair? (car false-rest)))
-			     (let ((true-vars (map car (car true-rest)))
-				   (false-vars (map car (car false-rest)))
-				   (shared-vars ()))
-			       (for-each (lambda (v)
-					   (if (and (memq v false-vars)
-						    (equal? (cadr (assq v (car true-rest)))
-							    (cadr (assq v (car false-rest)))))
-					       (set! shared-vars (cons v shared-vars))))
-					 true-vars)
-			       (when (pair? shared-vars)
-				 ;; now remake true/false lets (maybe nil) without shared-vars
-				 (let ((ntv ())
-				       (nfv ())
-				       (sv ()))
-				   (for-each (lambda (v)
-					       (if (memq (car v) shared-vars)
-						   (set! sv (cons v sv))
-						   (set! ntv (cons v ntv))))
-					     (car true-rest))
-				   (set! ntv (if (or (pair? ntv)
-						     (pair? (cddr true-rest))) ; even define is safe here because outer let blocks it just as inner let used to
-						 (cons 'let (cons (reverse ntv) (cdr true-rest)))
-						 (cadr true-rest)))
-				   (for-each (lambda (v)
-					       (if (not (memq (car v) shared-vars))
-						   (set! nfv (cons v nfv))))
-					     (car false-rest))
-				   (set! nfv (if (or (pair? nfv)
-						     (pair? (cddr false-rest)))
-						 (cons 'let (cons (reverse nfv) (cdr false-rest)))
-						 (cadr false-rest)))
-				   ;; (if (> (+ a b) 3) (let ((a x) (c y)) (* a (log c))) (let ((b z) (c y)) (+... ->
-				   ;;    (let ((c y)) (if (> (+ a b) 3) (let ((a x)) (* a (log c))) (let ((b z)) (+ b (log c)))))
+								     `(if ,(car true-rest) ,(cadr true-rest) 
+									  (if ,expr ,(caddr true-rest) ,(caddr false-rest)))))
+					 (if (equal? (caddr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B c b)) -> (if B (if A a c) b)
+					     (lint-format "perhaps ~A" caller
+							  (lists->string form
+									 `(if ,(car true-rest)
+									      (if ,expr ,(cadr true-rest) ,(cadr false-rest))
+									      ,(caddr true-rest))))))))))
+			   ;; --------
+			   (when (and (= suggestion made-suggestion)
+				      (not (= line-number last-if-line-number)))
+			     (if->cond caller form env)
+			     
+			     ;; if+let() -> when: about a dozen hits
+			     (let ((ntrue (and (len>1? true)                    ; (if A B (let () (display x))) -> (if A B (begin (display x)))
+					       (eq? true-op 'let)
+					       (null? (cadr true))
+					       (not (tree-table-member definers (cddr true)))
+					       (cddr true)))
+				   (nfalse (and (len>1? false)
+						(eq? false-op 'let)
+						(null? (cadr false))
+						(not (tree-table-member definers (cddr false)))
+						(cddr false))))
+			       (if (or ntrue nfalse)
 				   (lint-format "perhaps ~A" caller
-						(lists->string form 
-							       (if (not (or (side-effect? expr env)
-									    (tree-set-member (map car sv) expr)))
-								   (list 'let (reverse sv) (list 'if expr ntv nfv))
-								   (let ((uniq (find-unique-name form)))
-								     `(let ((,uniq ,expr))
-									(let ,(reverse sv)
-									  (if ,uniq ,ntv ,nfv))))))))))))) ; 14675 (when (and (= suggestion made-suggestion)...))
+						(lists->string form
+							       (if (eq? false 'no-false)
+								   (cons 'when (cons expr ntrue))
+								   (if ntrue
+								       (if nfalse
+									   `(if ,expr (begin ,@ntrue) (begin ,@nfalse))
+									   `(if ,expr (begin ,@ntrue) ,false))
+								       `(if ,expr ,true (begin ,@nfalse))))))))
+			     (when (= len 4)
 
-		       ;; walking the if's with true/false lists for simplify-boolean found only 1 case of a collapsible test
+			       ;; juggle-branches?
+			       (when (= suggestion made-suggestion) ; not redundant (if->cond above)
+					;	(= len 4))
+				 (let ((true-len (tree-leaves (caddr form))))
+				   (when (and (> true-len *report-short-branch*)
+					      (< (tree-leaves (cadddr form)) (/ true-len *report-short-branch*)))
+				     (let ((new-expr (simplify-boolean (list 'not (cadr form)) () () env)))
+				       (lint-format "perhaps place the much shorter branch first~A: ~A" caller
+						    (local-line-number (cadr form))
+						    (truncated-lists->string form (list 'if new-expr false true)))))))
 
-		       ;; if->when
-		       (when (and *report-one-armed-if*
-				  (eq? false 'no-false)
-				  (or (not (integer? *report-one-armed-if*))
-				      (> (tree-leaves true) *report-one-armed-if*)))
-			 ;; (if a (begin (set! x y) z)) -> (when a (set! x y) z)
-			 (lint-format "~A~A~A perhaps ~A" caller
-				      (if (integer? *report-one-armed-if*)
-					  "this one-armed if is too big"
-					  "")
-				      (local-line-number test)
-				      (if (integer? *report-one-armed-if*) ";" "")
-				      (truncated-lists->string 
-				       form (if (and (pair? expr)
-						     (eq? (car expr) 'not))
-						(cons 'unless (cons (cadr expr) (unbegin true)))
-						(cons 'when (cons expr (unbegin true)))))))
-
-		       (if (symbol? expr)
-			   (set-ref expr caller form env)
-			   (lint-walk caller expr env))
-		       (if (symbol? true)
-			   (set-ref true caller form env)
-			   (set! env (lint-walk caller true env)))   
-		       (if (symbol? false)
-			   (if (not (eq? false 'no-false))
-			       (set-ref false caller form env))
-			   (set! env (lint-walk caller false env))))))
-		 )
+			       ;; move repeated test to top, if no inner false branches -- aren't we assuming A does not affect B?  yes, but this never happens.
+			       ;;   (if A (if B C) (if B D)) -> (if B (if A C D))
+			       (when (and (len=3? true)         
+					  (len=3? false)
+					  (eq? true-op 'if)
+					  (eq? false-op 'if)
+					  (equal? (car true-rest) (car false-rest)))
+				 (lint-format "perhaps ~A" caller
+					      (lists->string form `(if ,(car true-rest)
+								       (if ,expr
+									   ,(cadr true-rest)
+									   ,(cadr false-rest))))))
+			       
+			       ;; move-begin-outward?
+			       ;; move repeated start/end statements out of the if
+			       (let ((ltrue (if (and (pair? true) (eq? true-op 'begin)) true (list 'begin true)))
+				     (lfalse (if (and (pair? false) (eq? false-op 'begin)) false (list 'begin false))))
+				 (let ((true-len (length ltrue))
+				       (false-len (length lfalse)))
+				   (when (and (integer? true-len)
+					      (> true-len 1)
+					      (integer? false-len)
+					      (> false-len 1))
+				     (let ((start (if (and (equal? (cadr ltrue) (cadr lfalse))
+							   (not (side-effect? expr env))) ; expr might affect start, so we can't pull it ahead
+						      (list (cadr ltrue))
+						      ()))
+					   (end (if (and (not (= true-len false-len 2))
+							 (equal? (list-ref ltrue (- true-len 1))
+								 (list-ref lfalse (- false-len 1))))
+						    (list (list-ref ltrue (- true-len 1)))
+						    ())))
+				       (when (or (pair? start)
+						 (pair? end))
+					 (let ((new-true (cdr ltrue))
+					       (new-false (cdr lfalse)))
+					   (when (pair? end)
+					     (set! new-true (copy new-true (make-list (- true-len 2)))) ; (copy lst ()) -> () 
+					     (set! new-false (copy new-false (make-list (- false-len 2)))))
+					   (when (pair? start)
+					     (if (pair? new-true) (set! new-true (cdr new-true)))
+					     (if (pair? new-false) (set! new-false (cdr new-false))))
+					   (when (or (pair? end)
+						     (and (pair? new-true)
+							  (pair? new-false))) ; otherwise the rewrite changes the returned value
+					     (if (pair? new-true)
+						 (set! new-true (if (null? (cdr new-true)) 
+								    (car new-true)
+								    (cons 'begin new-true))))
+					     (if (pair? new-false)
+						 (set! new-false (if (null? (cdr new-false)) 
+								     (car new-false)
+								     (cons 'begin new-false))))
+					     ;; (if x (display y) (begin (set! z y) (display y))) -> (begin (if (not x) (set! z y)) (display y))
+					     (lint-format "perhaps ~A" caller
+							  (lists->string form 
+									 (let ((body (if (null? new-true)
+											 (list 'if (list 'not expr) new-false)
+											 (if (null? new-false)
+											     (list 'if expr new-true)
+											     (list 'if expr new-true new-false)))))
+									   `(begin ,@start
+										   ,body
+										   ,@end)))))))))))
+			       
+			       (when (and (= suggestion made-suggestion)      ; not redundant -- this will repeat the earlier suggestion in many cases
+					  (not (= line-number last-if-line-number))
+					  (len>1? expr)                       ; (if (not a) A B) -> (if a B A)
+					  (eq? (car expr) 'not)
+					  (> (tree-leaves true) (tree-leaves false)))
+				 (lint-format "perhaps ~A" caller
+					      (lists->string form (list 'if (cadr expr) false true))))
+			       
+			       (move-let-outward caller form expr true false env)))
+			   
+			   ;; walking the if's with true/false lists for simplify-boolean found only 1 case of a collapsible test
+			   (if (symbol? expr)
+			       (set-ref expr caller form env)
+			       (lint-walk caller expr env))
+			   (if (symbol? true)
+			       (set-ref true caller form env)
+			       (set! env (lint-walk caller true env)))   
+			   (if (symbol? false)
+			       (if (not (eq? false 'no-false))
+				   (set-ref false caller form env))
+			       (set! env (lint-walk caller false env))))))
+		     ))
 	     env))
 	 (hash-walker 'if if-walker))
 	 
@@ -16491,7 +16523,7 @@
 			     (when (len>1? clause)             ; ignore clauses that are messed up
 			       (let ((keys (car clause))
 				     (exprs (cdr clause)))
-				 (unless (or (eq? keys 'else)
+				 (unless (or (not (pair? keys)) ; else clause or buggy case key list
 					     (equal? exprs else-exprs))
 				   (let ((prev (member exprs new-keys-and-exprs (lambda (a b) (equal? a (cdr b))))))
 				     (if prev
@@ -16550,7 +16582,8 @@
 		;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 		;; also unlike cond, only 'else marks a default branch (not #t)
 		
-		(if (< (length form) 3)
+		(if (or (< (length form) 3)
+			(not (every? pair? (cddr form))))
 		    ;; (case 3)
 		    (lint-format "case is messed up: ~A" caller (truncated-list->string form))
 		    (let ((suggest made-suggestion))
@@ -17350,19 +17383,20 @@
 								   setval)))))))))
 		
 		((define)
-		 (unless named-let
+		 (unless (or named-let
+			     (not (proper-list? varlist)))
 		   (let ((f (car body)))
 		     (when (and (len=2? (cdr f))
 				(symbol? (cadr f))
-				(not (assq (cadr f) (cadr form)))           ; this (let ((x ...)) (set! x ...)) is handled elsewhere
+				(not (assq (cadr f) varlist))           ; this (let ((x ...)) (set! x ...)) is handled elsewhere
 				(or (code-constant? (caddr f))
 				    (not (or (tree-memq 'lambda (caddr f))  ; else we have to scan forward for pending refs
-					     (and (pair? (cadr form))
+					     (and (pair? varlist)
 						  (or (side-effect? (caddr f) env)   ; might be depending on the let var calcs
-						      (tree-set-member (map car (cadr form)) (caddr f))))))))
+						      (tree-set-member (map car varlist) (caddr f))))))))
 		       (lint-format "perhaps ~A" caller
 				    (lists->string form
-						   `(let (,@(cadr form)
+						   `(let (,@varlist
 							  ,(cdr f))
 						      ...)))))))
 		
@@ -17462,7 +17496,8 @@
 		  ;; (let ((xx 0)) (do ((x 1 (+ x 1)) (y x (- y 1))) ((= x 3) xx) (display y))) ->
 		  ;;    (do ((xx 0) (x 1 (+ x 1)) (y x (- y 1))) ...)
 		  (let ((do-form (cdar body)))
-		    (if (pair? do-form)
+		    (if (and (pair? do-form)
+			     (proper-list? varlist))
 			(lint-format "perhaps ~A" caller
 				     (lists->string form
 						    (if (null? (cdr body))    ; do is only expr in let
@@ -18238,7 +18273,20 @@
 		(let ((vars (declare-named-let caller form env))
 		      (varlist ((if named-let caddr cadr) form))
 		      (body ((if named-let cdddr cddr) form)))
-
+#|
+		(if (and (not named-let)
+			 (pair? varlist)
+			 (> (length body) 2)
+			 (pair? (last-par body))
+			 (pair? (list-ref body (- (length body) 2)))
+			 (eq? 'set! (car (list-ref body (- (length body) 2))))
+			 (assq (cadr (list-ref body (- (length body) 2))) varlist)
+			 (= (tree-count (cadr (list-ref body (- (length body) 2))) (last-par body)) 1))
+		    (format *stderr* "~A~%~%" (lint-pp form)))
+		;; if last is do, add to locals? esp if not used except there
+		;;    don't move into loop
+		;; if long value use let, perhaps remove var from outer let
+|#
 		  (if (not (list? varlist))
 		      (lint-format "let is messed up: ~A" caller (truncated-list->string form))
 		      (if (and (null? varlist)
@@ -18313,6 +18361,7 @@
 		  (unless (and (pair? inits)
 			       (or (memq (car lv) locals) ; shadowing
 				   (tree-memq (car lv) inits)
+				   (not (pair? (cdr lv)))
 				   (side-effect? (cadr lv) env)))
 		    ;; (let* ((x (log z))) (do ((i 0 (+ x z))) ((= i 3)) (display x))) -> (do ((x (log z)) (i 0 (+ x z))) ...)
 		    (lint-format "perhaps ~A" caller
@@ -18762,7 +18811,7 @@
 		    
 		    (if (not (list? varlist))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
-		    
+		   
 		   (let ((es (walk-letx-body caller form body 
 					     (walk-let*-vars caller form vars env)
 					     env)))
@@ -18773,6 +18822,7 @@
 			       (pair? body)
 			       (pair? varlist)
 			       (proper-list? varlist))
+		      
 		      (when (pair? vars)
 			(let*->let+let caller form vars env))
 		      (let*+let*->let* caller form)
@@ -18786,7 +18836,8 @@
 		      (let ((last-var (last-par varlist)))
 			(when (pair? last-var) 
 			  (combine-let*-last-var caller form last-var env)))
-			  
+		      ;; last var -> if/cond in car(body) as in let only happens a few times (leaving aside stuff caught above)
+
 		      (when (and (> (length body) 3)
 				 (> (length vars) 1)
 				 (every? pair? varlist)
@@ -19471,7 +19522,7 @@
 				  
 				  ((let let*)
 				   ;; in let we need to sort locals by order of appearance in the body
-				   (if (not (len>1? (cdr tree)))
+				   (if (not (> (length tree) 2))
 				       (quit))
 				   (let ((locals ())
 					 (body ())
@@ -20990,8 +21041,13 @@
 
 ;;; extend constant-exprs in do to named-let/map etc? looks like find-constant-exprs + report[16793]
 ;;;    in map/for-each/named-let/recursive-func, vars are pars/locals?
+;;; let*->let recursively (etc)
 ;;; rewrite if-walker [13983]
-;;; check let* cases paralleling let: t347 -- look for these first using tmp code
-;;; magic numbers? accessors via *-ref -> let?
+;;; accessors via *-ref -> let? possibly hidden?
+;;; open end: (set! x ...) (f x) where x is local (so even works in do) -- these are like let->if/cond [several dozen rewritable hits, 18275]
+;;;   or mid body if no further use of x: actually the set! can be embedded
+;;;   in let-walker, set! case can include *-set!
+;;; pointless rtn (like 'ok and 'done)
+;;; check partial side-effect of mid expr (abs ...): t347 has a case
 ;;;
-;;; 179 28735 736293
+;;; 181 28774 737656

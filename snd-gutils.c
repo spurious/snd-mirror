@@ -981,7 +981,7 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 }
 
 
-#if GTK_CHECK_VERSION(3, 0, 0)
+#if ((GTK_CHECK_VERSION(3, 0, 0)) && (!(GTK_CHECK_VERSION(3, 89, 0))))
 static GtkCssProvider *wb_provider, *listener_provider, *dialog_provider, *hl_provider, *tb_provider, *mu_provider;
 static GtkCssProvider *rsc_provider, *gsc_provider, *bsc_provider, *pd_provider, *cb_provider, *entry_provider;
 static GtkCssProvider *cl_provider;
@@ -1463,6 +1463,10 @@ widget \"*.white_button\" style \"white_button\"\n");
 
 #else
 
+#if (GTK_CHECK_VERSION(3, 89, 0))
+/* border-width and -gtk-gradient have been removed, and as far as I can tell, this stuff never works anyway */
+void init_gtk(void) {return;}
+#else
 void init_gtk(void)
 {
   wb_provider = gtk_css_provider_new();
@@ -1611,5 +1615,5 @@ void init_gtk(void)
  */
 }
 #endif
-
+#endif
 

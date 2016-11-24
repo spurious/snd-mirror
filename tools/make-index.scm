@@ -1457,16 +1457,16 @@
 					     (set! scripting #t))
 					    
 					    ((eq? opener 'img)
-					     (let ((rest-line (substring line (+ start 4))))
-					       (let ((src-pos (string-position "src=" rest-line)))
-						 (if (not (string-position "alt=" rest-line))
-						     (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
-						 (if src-pos
-						     (let ((png-pos (string-position ".png" rest-line)))
-						       (if png-pos
-							   (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
-							     (if (not (file-exists? file))
-								 (format () "~A[~D]: src not found: ~S~%" file linectr file)))))))))
+					     (let* ((rest-line (substring line (+ start 4)))
+						    (src-pos (string-position "src=" rest-line)))
+					       (if (not (string-position "alt=" rest-line))
+						   (format () "~A[~D]: img but no alt: ~A~%" file linectr line))
+					       (if src-pos
+						   (let ((png-pos (string-position ".png" rest-line)))
+						     (if png-pos
+							 (let ((file (substring rest-line (+ src-pos 5) (+ png-pos 4))))
+							   (if (not (file-exists? file))
+							       (format () "~A[~D]: src not found: ~S~%" file linectr file))))))))
 					    
 					    ((and (not (memq opener '(br spacer li hr area ul tr td table small sub blockquote)))
 						  (memq opener commands)

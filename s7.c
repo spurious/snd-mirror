@@ -75182,4 +75182,5 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
+ * gtk4: no draw signal -- need to set the draw func
  */
