@@ -48,7 +48,7 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const ch
   XtSetArg(args[n], XmNfontName, font); n++;
   XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
   XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
-  tmp = XmRenditionCreate(MAIN_SHELL(ss), (char *)tag, args, n);
+  tmp = XmRenditionCreate(main_shell(ss), (char *)tag, args, n);
   tabl = XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW);
 
   /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
@@ -62,11 +62,11 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const ch
 bool set_tiny_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
       /* it's not clear to me whether this is safe -- what if two fontstructs are pointing to the same font? */
-      if (TINY_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), TINY_FONT(ss));
+      if (TINY_FONT(ss)) XFreeFont(main_display(ss), TINY_FONT(ss));
       if (tiny_font(ss)) free(tiny_font(ss));
       in_set_tiny_font(mus_strdup(font));
       TINY_FONT(ss) = fs;
@@ -81,10 +81,10 @@ bool set_tiny_font(const char *font)
 bool set_listener_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
-      if (LISTENER_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), LISTENER_FONT(ss));
+      if (LISTENER_FONT(ss)) XFreeFont(main_display(ss), LISTENER_FONT(ss));
       if (listener_font(ss)) free(listener_font(ss));
       in_set_listener_font(mus_strdup(font));
       LISTENER_FONT(ss) = fs;
@@ -100,10 +100,10 @@ bool set_listener_font(const char *font)
 bool set_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
-      if (PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), PEAKS_FONT(ss));
+      if (PEAKS_FONT(ss)) XFreeFont(main_display(ss), PEAKS_FONT(ss));
       if (peaks_font(ss)) free(peaks_font(ss));
       in_set_peaks_font(mus_strdup(font));
       PEAKS_FONT(ss) = fs;
@@ -118,10 +118,10 @@ bool set_peaks_font(const char *font)
 bool set_bold_peaks_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
-      if (BOLD_PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), BOLD_PEAKS_FONT(ss));
+      if (BOLD_PEAKS_FONT(ss)) XFreeFont(main_display(ss), BOLD_PEAKS_FONT(ss));
       if (bold_peaks_font(ss)) free(bold_peaks_font(ss));
       in_set_bold_peaks_font(mus_strdup(font));
       BOLD_PEAKS_FONT(ss) = fs;
@@ -136,10 +136,10 @@ bool set_bold_peaks_font(const char *font)
 bool set_axis_label_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
-      if (AXIS_LABEL_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_LABEL_FONT(ss));
+      if (AXIS_LABEL_FONT(ss)) XFreeFont(main_display(ss), AXIS_LABEL_FONT(ss));
       if (axis_label_font(ss)) free(axis_label_font(ss));
       in_set_axis_label_font(mus_strdup(font));
       AXIS_LABEL_FONT(ss) = fs;
@@ -155,10 +155,10 @@ bool set_axis_label_font(const char *font)
 bool set_axis_numbers_font(const char *font)
 {
   XFontStruct *fs = NULL;
-  fs = XLoadQueryFont(MAIN_DISPLAY(ss), font);
+  fs = XLoadQueryFont(main_display(ss), font);
   if (fs)
     {
-      if (AXIS_NUMBERS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_NUMBERS_FONT(ss));
+      if (AXIS_NUMBERS_FONT(ss)) XFreeFont(main_display(ss), AXIS_NUMBERS_FONT(ss));
       if (axis_numbers_font(ss)) free(axis_numbers_font(ss));
       in_set_axis_numbers_font(mus_strdup(font));
       AXIS_NUMBERS_FONT(ss) = fs;
@@ -325,7 +325,7 @@ void set_button_label(Widget label, const char *str)
 
 void set_title(const char *title)
 {
-  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)title, NULL);
+  XtVaSetValues(main_shell(ss), XmNtitle, (char *)title, NULL);
 }
 
 
@@ -367,7 +367,7 @@ void check_for_event(void)
   if (ss->checking_explicitly) return;
   ss->checking_explicitly = true;
 
-  app = MAIN_APP(ss);
+  app = main_app(ss);
   while (true)
     {
       msk = XtAppPending(app);
@@ -391,8 +391,8 @@ void color_cursor(Pixel color)
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->cursor_color_symbol, Xen_wrap_pixel(color));
 #endif
-  XSetForeground(MAIN_DISPLAY(ss), ss->cursor_gc, (Pixel)(XOR(color, ss->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), ss->selected_cursor_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
+  XSetForeground(main_display(ss), ss->cursor_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(main_display(ss), ss->selected_cursor_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
@@ -402,8 +402,8 @@ void color_marks(Pixel color)
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->mark_color_symbol, Xen_wrap_pixel(color));
 #endif
-  XSetForeground(MAIN_DISPLAY(ss), ss->mark_gc, (Pixel)(XOR(color, ss->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), ss->selected_mark_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
+  XSetForeground(main_display(ss), ss->mark_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(main_display(ss), ss->selected_mark_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
@@ -413,15 +413,15 @@ void color_selection(Pixel color)
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->selection_color_symbol, Xen_wrap_pixel(color));
 #endif
-  XSetForeground(MAIN_DISPLAY(ss), ss->selection_gc, (Pixel)(XOR(color, ss->graph_color)));
-  XSetForeground(MAIN_DISPLAY(ss), ss->selected_selection_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
+  XSetForeground(main_display(ss), ss->selection_gc, (Pixel)(XOR(color, ss->graph_color)));
+  XSetForeground(main_display(ss), ss->selected_selection_gc, (Pixel)(XOR(color, ss->selected_graph_color)));
 }
 
 
 void color_graph(Pixel color)
 {
   Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   XSetBackground(dpy, ss->basic_gc, color);
   XSetForeground(dpy, ss->erase_gc, color);
   XSetForeground(dpy, ss->selection_gc, (Pixel)(XOR(ss->selection_color, color)));
@@ -433,7 +433,7 @@ void color_graph(Pixel color)
 void color_selected_graph(Pixel color)
 {
   Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   XSetBackground(dpy, ss->selected_basic_gc, color);
   XSetForeground(dpy, ss->selected_erase_gc, color);
   XSetForeground(dpy, ss->selected_selection_gc, (Pixel)(XOR(ss->selection_color, color)));
@@ -445,7 +445,7 @@ void color_selected_graph(Pixel color)
 void color_data(Pixel color)
 {
   Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   XSetForeground(dpy, ss->basic_gc, color);
   XSetBackground(dpy, ss->erase_gc, color);
 }
@@ -454,7 +454,7 @@ void color_data(Pixel color)
 void color_selected_data(Pixel color)
 {
   Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   XSetForeground(dpy, ss->selected_basic_gc, color);
   XSetBackground(dpy, ss->selected_erase_gc, color);
 }
@@ -469,7 +469,7 @@ void recolor_graph(chan_info *cp, bool selected)
 void set_mix_color(Pixel color)
 {
   Display *dpy;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   ss->mix_color = color;
 #if HAVE_SCHEME
   s7_symbol_set_value(s7, ss->mix_color_symbol, Xen_wrap_pixel(color));
@@ -563,7 +563,7 @@ idle_t add_work_proc(XtWorkProc func, XtPointer data)
 {
   /* during auto-testing I need to force the background procs to run to completion */
   if (with_background_processes(ss))
-    return(XtAppAddWorkProc(MAIN_APP(ss), func, data));
+    return(XtAppAddWorkProc(main_app(ss), func, data));
   else
     {
       while (((*func)(data)) == BACKGROUND_CONTINUE) ;
@@ -728,7 +728,7 @@ void draw_rotated_axis_label(chan_info *cp, graphics_context *ax, const char *te
     widget = channel_graph(cp->sound->chans[0]);
   else widget = channel_graph(cp);
   dp = XtDisplay(widget);
-  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground | GCBackground, &gv);
+  XGetGCValues(main_display(ss), ax->gc, GCForeground | GCBackground, &gv);
 
   pix = rotate_text(widget, text, AXIS_LABEL_FONT(ss), -90.0, &w, &h, gv.background, gv.foreground, ax->gc);
 
@@ -859,13 +859,13 @@ void gtk_style_draw_string(graphics_context *ax, int x0, int y0, const char *str
   XGCValues gv;
   static XFontStruct *fs = NULL;
 
-  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCFont, &gv);
+  XGetGCValues(main_display(ss), ax->gc, GCFont, &gv);
 
   /* now gv.font is the default font */
   if (fs) XFree(fs);
   /*  this doesn't free all the space */
   /* but this: */
-  /* if (fs) XFreeFont(MAIN_DISPLAY(ss), fs); */
+  /* if (fs) XFreeFont(main_display(ss), fs); */
   /* gets:
      X Error of failed request:  BadFont (invalid Font parameter)
      Major opcode of failed request:  56 (X_ChangeGC)
@@ -874,7 +874,7 @@ void gtk_style_draw_string(graphics_context *ax, int x0, int y0, const char *str
      Current serial number in output stream:  8479240
   */
 
-  fs = XQueryFont(MAIN_DISPLAY(ss), gv.font);
+  fs = XQueryFont(main_display(ss), gv.font);
   if (fs)
     XDrawString(ax->dp, ax->wn, ax->gc, x0, y0 + fs->ascent, str, len);
   else XDrawString(ax->dp, ax->wn, ax->gc, x0, y0, str, len); /* not sure why this happens... */
@@ -1048,7 +1048,7 @@ void check_colormap_sizes(int colors)
 	  int scr;
 	  Colormap cmap;
 	  Display *dpy;
-	  dpy = XtDisplay(MAIN_SHELL(ss));
+	  dpy = XtDisplay(main_shell(ss));
 	  scr = DefaultScreen(dpy);
 	  cmap = DefaultColormap(dpy, scr);
 	  XFreeColors(dpy, cmap, current_colors, current_colors_size, 0);
@@ -1077,7 +1077,7 @@ static void initialize_colormap(void)
   XGCValues gv;
   gv.background = ss->white;
   gv.foreground = ss->data_color;
-  colormap_GC = XCreateGC(MAIN_DISPLAY(ss), XtWindow(MAIN_SHELL(ss)), GCForeground | GCBackground, &gv);
+  colormap_GC = XCreateGC(main_display(ss), XtWindow(main_shell(ss)), GCForeground | GCBackground, &gv);
   sono_colors = color_map_size(ss);
   sono_data = (XRectangle **)calloc(sono_colors, sizeof(XRectangle *));
   current_colors_size = color_map_size(ss);
@@ -1138,7 +1138,7 @@ void allocate_color_map(int colormap)
       int scr;
       tmp_color.flags = DoRed | DoGreen | DoBlue;
 
-      dpy = XtDisplay(MAIN_SHELL(ss));
+      dpy = XtDisplay(main_shell(ss));
       scr = DefaultScreen(dpy);
       cmap = DefaultColormap(dpy, scr);
 
@@ -1787,7 +1787,7 @@ Widget make_color_orientation_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      ccd_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Color and Orientation", args, n);
+      ccd_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Color and Orientation", args, n);
 
       XtAddCallback(ccd_dialog, XmNcancelCallback, dismiss_color_orientation_callback, NULL);
       XtAddCallback(ccd_dialog, XmNhelpCallback, help_color_orientation_callback, NULL);
@@ -2549,7 +2549,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNtransient, false); n++;
   XtSetArg(args[n], XmNcancelLabelString, go_away); n++;
 
-  help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"snd-help", args, n);
+  help_dialog = XmCreateMessageDialog(main_pane(ss), (char *)"snd-help", args, n);
   XtAddEventHandler(help_dialog, ExposureMask, false, help_expose, NULL);
 
   XtAddCallback(help_dialog, XmNcancelCallback, help_quit_callback, NULL);
@@ -2946,7 +2946,7 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      edit_find_dialog = XmCreateMessageDialog(MAIN_SHELL(ss), (char *)I_FIND, args, n);
+      edit_find_dialog = XmCreateMessageDialog(main_shell(ss), (char *)I_FIND, args, n);
       
       XmStringFree(go_away);
       XmStringFree(next);
@@ -3021,7 +3021,7 @@ static void make_edit_find_dialog(bool managed, chan_info *cp)
       if (managed) XtManageChild(edit_find_dialog);
       {
 	Atom wm_delete_window;
-	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
+	wm_delete_window = XmInternAtom(main_display(ss), (char *)"WM_DELETE_WINDOW", false);
 	XmAddWMProtocolCallback(XtParent(edit_find_dialog), wm_delete_window, find_dialog_close, NULL);
       }
     }
@@ -3380,11 +3380,11 @@ static void show_mix_background_wave(int mix_id)
   pts = prepare_mix_dialog_waveform(mix_id, spf->axis, &two_sided);
   if (pts > 0)
     {
-      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->enved_waveform_color);
+      XSetForeground(main_display(ss), ax->gc, ss->enved_waveform_color);
       if (two_sided)
 	draw_both_grf_points(1, ax, pts, GRAPH_LINES);
       else draw_grf_points(1, ax, pts, spf->axis, ungrf_y(spf->axis, 0.0), GRAPH_LINES);
-      XSetForeground(MAIN_DISPLAY(ss), ax->gc, ss->black);
+      XSetForeground(main_display(ss), ax->gc, ss->black);
     }
 }
 
@@ -3486,7 +3486,7 @@ static void errors_to_mix_text(const char *msg, void *data)
   /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
    *   to clear things, so we'll just use a timer
    */
-  XtAppAddTimeOut(MAIN_APP(ss),
+  XtAppAddTimeOut(main_app(ss),
 		  5000,
 		  (XtTimerCallbackProc)unpost_mix_error,
 		  NULL);
@@ -3751,15 +3751,15 @@ static void mix_previous_callback(Widget w, XtPointer context, XtPointer info)
 static Pixmap make_pixmap(unsigned char *bits, int width, int height, int depth, GC gc)
 {
   Pixmap rb, nr;
-  rb = XCreateBitmapFromData(MAIN_DISPLAY(ss), 
-			     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+  rb = XCreateBitmapFromData(main_display(ss), 
+			     RootWindowOfScreen(XtScreen(main_pane(ss))), 
 			     (const char *)bits, 
 			     width, height);
-  nr = XCreatePixmap(MAIN_DISPLAY(ss), 
-		     RootWindowOfScreen(XtScreen(MAIN_PANE(ss))), 
+  nr = XCreatePixmap(main_display(ss), 
+		     RootWindowOfScreen(XtScreen(main_pane(ss))), 
 		     width, height, depth);
-  XCopyPlane(MAIN_DISPLAY(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
-  XFreePixmap(MAIN_DISPLAY(ss), rb);
+  XCopyPlane(main_display(ss), rb, nr, gc, 0, 0, width, height, 0, 0, 1);
+  XFreePixmap(main_display(ss), rb);
   return(nr);
 }
 
@@ -3821,7 +3821,7 @@ Widget make_mix_dialog(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      mix_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Mixes", args, n);
+      mix_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Mixes", args, n);
       copy_button = XmMessageBoxGetChild(mix_dialog, XmDIALOG_OK_BUTTON);
 
       /* XtAddCallback(mix_dialog, XmNokCallback, copy_mix_dialog_callback, NULL); */
@@ -4629,7 +4629,7 @@ static void unpost_xenv_error(XtPointer data, XtIntervalId *id)
 static void errors_to_xenv_text(const char *msg, void *data)
 {
   set_button_label(brkptL, msg);
-  XtAppAddTimeOut(MAIN_APP(ss),
+  XtAppAddTimeOut(main_app(ss),
 		  5000,
 		  (XtTimerCallbackProc)unpost_xenv_error,
 		  NULL);
@@ -5177,7 +5177,7 @@ Widget create_envelope_editor(void)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      enved_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"envelope editor", args, n);
+      enved_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"envelope editor", args, n);
   
       XtAddCallback(enved_dialog, XmNcancelCallback, dismiss_enved_callback, NULL);
       XtAddCallback(enved_dialog, XmNhelpCallback, help_enved_callback, NULL);
@@ -5789,7 +5789,7 @@ void color_enved_waveform(Pixel pix)
 {
   if (enved_dialog)
     {
-      XSetForeground(MAIN_DISPLAY(ss), ggc, pix);
+      XSetForeground(main_display(ss), ggc, pix);
       if ((enved_with_wave(ss)) && 
 	  (enved_dialog)) 
 	env_redisplay();
@@ -6034,7 +6034,7 @@ static void errors_to_fft_text(const char *msg, void *data)
   /* since the offending text is automatically overwritten, we can't depend on subsequent text modify callbacks
    *   to clear things, so we'll just use a timer
    */
-  XtAppAddTimeOut(MAIN_APP(ss),
+  XtAppAddTimeOut(main_app(ss),
 		  5000,
 		  (XtTimerCallbackProc)unpost_fft_error,
 		  NULL);
@@ -6869,7 +6869,7 @@ Widget make_transform_dialog(bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      transform_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Transform Options", args, n);
+      transform_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Transform Options", args, n);
       ok_button = XmMessageBoxGetChild(transform_dialog, XmDIALOG_OK_BUTTON);
 
       XtAddCallback(transform_dialog, XmNcancelCallback, dismiss_transform_callback, NULL);
@@ -8175,7 +8175,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  region_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Regions", args, n);
+  region_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Regions", args, n);
   save_as_button = XmMessageBoxGetChild(region_dialog, XmDIALOG_OK_BUTTON);
 
   n = 0;
@@ -8464,7 +8464,7 @@ static Xen g_view_regions_dialog(void)
 {
   #define H_view_regions_dialog "(" S_view_regions_dialog "): start the region dialog"
   if (snd_regions() > 0) 
-    view_region_callback(MAIN_PANE(ss), NULL, NULL);
+    view_region_callback(main_pane(ss), NULL, NULL);
   return(Xen_wrap_widget(region_dialog));
 }
 
@@ -9949,7 +9949,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
 
   fd->fp->dir_list = make_dirpos_list();
 
-  w = MAIN_SHELL(ss);
+  w = main_shell(ss);
 
   s1 = XmStringCreateLocalized(select_title);
   s2 = XmStringCreateLocalized(title);
@@ -10047,7 +10047,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   /* -------- the WM 'close' button */
   {
     Atom wm_delete_window;
-    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
+    wm_delete_window = XmInternAtom(main_display(ss), (char *)"WM_DELETE_WINDOW", false);
     XmAddWMProtocolCallback(XtParent(fd->dialog), wm_delete_window, file_wm_delete_callback, (XtPointer)(fd->dp));
   }
 
@@ -12010,7 +12010,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, mus_h
       XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;
       XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */      
 
-      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), (char *)"save-as", args, n);
+      sd->dialog = XmCreateFileSelectionDialog(main_shell(ss), (char *)"save-as", args, n);
       sd->fp->dialog = sd->dialog;
       sd->dp->dialog = sd->dialog;
       sd->fpop->dialog = sd->dialog;
@@ -12558,7 +12558,7 @@ widget_t make_new_file_dialog(bool managed)
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
-      new_file_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"new", args, n);
+      new_file_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"new", args, n);
 
       XmStringFree(titlestr);
       XmStringFree(xok);
@@ -12895,7 +12895,7 @@ Widget edit_header(snd_info *sp)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      ep->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Edit Header", args, n);
+      ep->dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Edit Header", args, n);
 
       XtAddCallback(ep->dialog, XmNcancelCallback, edit_header_cancel_callback, (XtPointer)ep);
       XtAddCallback(ep->dialog, XmNhelpCallback,   edit_header_help_callback,   (XtPointer)ep);
@@ -12954,7 +12954,7 @@ Widget edit_header(snd_info *sp)
 
       {
 	Atom wm_delete_window;
-	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
+	wm_delete_window = XmInternAtom(main_display(ss), (char *)"WM_DELETE_WINDOW", false);
 	XmAddWMProtocolCallback(XtParent(ep->dialog), wm_delete_window, edit_header_wm_delete_callback, (XtPointer)ep);
       }
 
@@ -13337,7 +13337,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   /* not transient -- we want this window to remain visible if possible */
-  rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), (char *)"raw data", args, n);
+  rp->dialog = XmCreateWarningDialog(main_shell(ss), (char *)"raw data", args, n);
 
   XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
   XtAddCallback(rp->dialog, XmNhelpCallback,   raw_data_help_callback,   (XtPointer)rp);
@@ -13480,7 +13480,7 @@ static void create_post_it_monolog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  post_it_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"info", args, n);
+  post_it_dialog = XmCreateMessageDialog(main_pane(ss), (char *)"info", args, n);
 
   XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_HELP_BUTTON));
@@ -13668,7 +13668,7 @@ void save_edits_now(snd_info *sp)
       XtSetArg(args[n], XmNokLabelString, yes); n++;
       XtSetArg(args[n], XmNcancelLabelString, no); n++;
       XtSetArg(args[n], XmNmessageString, q); n++;
-      dialog = XmCreateQuestionDialog(MAIN_PANE(ss), sp->filename, args, n);
+      dialog = XmCreateQuestionDialog(main_pane(ss), sp->filename, args, n);
       save_unsaved_edits_dialog(dialog, sp);
 
       XtAddCallback(dialog, XmNhelpCallback,   unsaved_edits_help_callback, (XtPointer)sp);
@@ -13799,7 +13799,7 @@ void changed_file_dialog(snd_info *sp)
       XtSetArg(args[n], XmNokLabelString, yes); n++;
       XtSetArg(args[n], XmNcancelLabelString, no); n++;
       XtSetArg(args[n], XmNmessageString, q); n++;
-      dialog = XmCreateQuestionDialog(MAIN_PANE(ss), sp->filename, args, n);
+      dialog = XmCreateQuestionDialog(main_pane(ss), sp->filename, args, n);
       save_file_has_changed_dialog(dialog, sp);
 
       XtAddCallback(dialog, XmNhelpCallback,   file_has_changed_help_callback, (XtPointer)sp);
@@ -15393,7 +15393,7 @@ static void vf_flash_row(vf_row *r)
   XtVaGetValues(r->rw, XmNbackground, &(v->old_color), NULL);
   XtVaSetValues(r->rw, XmNbackground, ss->light_blue, NULL);
   XtVaSetValues(r->nm, XmNbackground, ss->light_blue, NULL);
-  XtAppAddTimeOut(MAIN_APP(ss),
+  XtAppAddTimeOut(main_app(ss),
 		  500,
 		  (XtTimerCallbackProc)vf_unflash_row,
 		  (void *)v);
@@ -16271,7 +16271,7 @@ static widget_t make_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      vdat->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Files", args, n);
+      vdat->dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"Files", args, n);
       new_viewer_button = MSG_BOX(vdat->dialog, XmDIALOG_OK_BUTTON);
 
       XtAddCallback(vdat->dialog, XmNhelpCallback,   view_files_help_callback,       (XtPointer)vdat);
@@ -17472,7 +17472,7 @@ static void handle_drop(Widget w, XtPointer context, XtPointer info)
       fprintf(stderr, "failed drop attempt:\n");
       for (i = 0; i < num_targets; i++) 
 	fprintf(stderr, "  target %d = %s\n", i, 
-		XGetAtomName(MAIN_DISPLAY(ss),
+		XGetAtomName(main_display(ss),
 			     targets[i]));
 #endif
       cb->dropSiteStatus = XmINVALID_DROP_SITE;
@@ -17530,7 +17530,7 @@ void add_drag_and_drop(Widget w,
   int n;
   Atom targets[NUM_TARGETS];
   Arg args[12];
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   targets[0] = XA_STRING;
   FILE_NAME = XInternAtom(dpy, "FILE_NAME", false);
   targets[1] = FILE_NAME;
@@ -17638,7 +17638,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define black_text(Prf)           XtVaSetValues(Prf->label, XmNforeground, ss->black, NULL)
 #define red_text(Prf)             XtVaSetValues(Prf->label, XmNforeground, ss->red, NULL)
 
-#define TIMEOUT(Func)             XtAppAddTimeOut(MAIN_APP(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
+#define TIMEOUT(Func)             XtAppAddTimeOut(main_app(ss), ERROR_WAIT_TIME, Func, (XtPointer)prf)
 
 
 static int get_scale_1(Widget scale)
@@ -17874,7 +17874,7 @@ static void arrow_func_up(XtPointer context, XtIntervalId *id)
       if ((prf) && (prf->arrow_up_func))
 	{
 	  (*(prf->arrow_up_func))(prf);
-	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+	  prf->power_id = XtAppAddTimeOut(main_app(ss),
 					  POWER_WAIT_TIME,
 					  arrow_func_up,
 					  (XtPointer)prf);
@@ -17892,7 +17892,7 @@ static void arrow_func_down(XtPointer context, XtIntervalId *id)
       if ((prf) && (prf->arrow_down_func))
 	{
 	  (*(prf->arrow_down_func))(prf);
-	  prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+	  prf->power_id = XtAppAddTimeOut(main_app(ss),
 					  POWER_WAIT_TIME,
 					  arrow_func_down,
 					  (XtPointer)prf);
@@ -17909,7 +17909,7 @@ static void call_arrow_down_press(Widget w, XtPointer context, XtPointer info)
     {
       (*(prf->arrow_down_func))(prf);
       if (XtIsSensitive(w))
-	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+	prf->power_id = XtAppAddTimeOut(main_app(ss),
 					POWER_INITIAL_WAIT_TIME,
 					arrow_func_down,
 					(XtPointer)prf);
@@ -17925,7 +17925,7 @@ static void call_arrow_up_press(Widget w, XtPointer context, XtPointer info)
     {
       (*(prf->arrow_up_func))(prf);
       if (XtIsSensitive(w))
-	prf->power_id = XtAppAddTimeOut(MAIN_APP(ss),
+	prf->power_id = XtAppAddTimeOut(main_app(ss),
 					POWER_INITIAL_WAIT_TIME,
 					arrow_func_up,
 					(XtPointer)prf);
@@ -18678,7 +18678,7 @@ static XColor *rgb_to_color_1(mus_float_t r, mus_float_t g, mus_float_t b)
   new_color->red = float_to_rgb(r);
   new_color->green = float_to_rgb(g);
   new_color->blue = float_to_rgb(b);
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   XAllocColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), new_color);
   return(new_color);
 }
@@ -18703,7 +18703,7 @@ static void pixel_to_rgb(Pixel pix, float *r, float *g, float *b)
 {
   XColor tmp_color;
   Display *dpy;
-  dpy = XtDisplay(MAIN_SHELL(ss));
+  dpy = XtDisplay(main_shell(ss));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = pix;
   XQueryColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), &tmp_color);
@@ -18774,7 +18774,7 @@ static void errors_to_color_text(const char *msg, void *data)
   prf->got_error = true;
   red_text(prf);
   set_label(prf->label, msg);
-  XtAppAddTimeOut(MAIN_APP(ss),
+  XtAppAddTimeOut(main_app(ss),
 		  ERROR_WAIT_TIME,
 		  (XtTimerCallbackProc)unpost_color_error,
 		  data);
@@ -19252,13 +19252,13 @@ widget_t make_preferences_dialog(void)
     XtSetArg(args[n], XmNautoUnmanage, false); n++;
     {
       Dimension width, height;
-      width = XDisplayWidth(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
-      height = XDisplayHeight(MAIN_DISPLAY(ss), DefaultScreen(MAIN_DISPLAY(ss)));
+      width = XDisplayWidth(main_display(ss), DefaultScreen(main_display(ss)));
+      height = XDisplayHeight(main_display(ss), DefaultScreen(main_display(ss)));
 
       XtSetArg(args[n], XmNwidth, (STARTUP_WIDTH < width) ? (Dimension)STARTUP_WIDTH : ((Dimension)(width - 50))); n++;
       XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? (Dimension)STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
     }
-    preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
+    preferences_dialog = XmCreateTemplateDialog(main_pane(ss), (char *)"preferences", args, n);
     revert_button = XmMessageBoxGetChild(preferences_dialog, XmDIALOG_OK_BUTTON);
 
     n = 0;
@@ -20247,7 +20247,7 @@ widget_t make_preferences_dialog(void)
 
   {
     Atom wm_delete_window;
-    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
+    wm_delete_window = XmInternAtom(main_display(ss), (char *)"WM_DELETE_WINDOW", false);
     XmAddWMProtocolCallback(XtParent(preferences_dialog), wm_delete_window, wm_delete_callback, NULL);
   }
 
@@ -20482,7 +20482,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
       XtSetArg(args[n], XmNallowResize, true); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++; /* this gives us the resize handles */
-      print_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"eps file:", args, n);
+      print_dialog = XmCreateMessageDialog(main_pane(ss), (char *)"eps file:", args, n);
 
       XtVaSetValues(XmMessageBoxGetChild(print_dialog, XmDIALOG_MESSAGE_LABEL), XmNbackground, ss->basic_color, NULL);
 
@@ -21047,7 +21047,7 @@ static void menu_drag_watcher(Widget w, const char *str, Position x, Position y,
     {
     case DRAG_ENTER:
       new_title = mus_format("%s: drop to open file", ss->startup_title);
-      XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)new_title, NULL);
+      XtVaSetValues(main_shell(ss), XmNtitle, (char *)new_title, NULL);
       XmChangeColor(w, ss->selection_color);
       free(new_title);
       break;
@@ -21101,7 +21101,7 @@ Widget add_menu(void)
   XtSetArg(high_args[n], XmNleftAttachment, XmATTACH_FORM); n++;
   XtSetArg(high_args[n], XmNrightAttachment, XmATTACH_FORM); n++;
 
-  main_menu = XmCreateMenuBar(MAIN_PANE(ss), (char *)"menuBar", high_args, n);
+  main_menu = XmCreateMenuBar(main_pane(ss), (char *)"menuBar", high_args, n);
 
 
   /* FILE MENU */
@@ -21598,7 +21598,7 @@ void post_basic_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      basic_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"basic-popup-menu", args, n);
+      basic_popup_menu = XmCreatePopupMenu(main_pane(ss), (char *)"basic-popup-menu", args, n);
 
       add_menu_item(basic_popup_menu, "Info",           popup_info_callback);
       add_menu_item(basic_popup_menu, "Select all",     edit_select_all_callback);
@@ -21760,7 +21760,7 @@ void post_selection_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      selection_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"selection-popup-menu", args, n);
+      selection_popup_menu = XmCreatePopupMenu(main_pane(ss), (char *)"selection-popup-menu", args, n);
 
       add_menu_item(selection_popup_menu, "Fill window",    popup_show_selection_callback);
       add_menu_item(selection_popup_menu, "Cut",            edit_cut_callback);
@@ -21873,7 +21873,7 @@ void post_fft_popup_menu(void *e)
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
       XtSetArg(args[n], XmNpopupEnabled, false); n++;      /* this was XmPOPUP_AUTOMATIC_RECURSIVE */
-      fft_popup_menu = XmCreatePopupMenu(MAIN_PANE(ss), (char *)"fft-popup-menu", args, n);
+      fft_popup_menu = XmCreatePopupMenu(main_pane(ss), (char *)"fft-popup-menu", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->highlight_color); n++;
@@ -22027,7 +22027,7 @@ static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
 
   if (!tooltip_shell)
     {
-      tooltip_shell = XtVaCreatePopupShell(tip, overrideShellWidgetClass, MAIN_SHELL(ss), 
+      tooltip_shell = XtVaCreatePopupShell(tip, overrideShellWidgetClass, main_shell(ss), 
 					   XmNallowShellResize, true, 
 					   NULL);
       tooltip_label = XtVaCreateManagedWidget("tooltip", xmLabelWidgetClass, tooltip_shell,
@@ -22042,7 +22042,7 @@ static void handle_tooltip(XtPointer tooltip, XtIntervalId *id)
   XtTranslateCoords(tool_w, tool_x, tool_y, &rx, &ry);
   XtVaSetValues(tooltip_shell, XmNx, rx, XmNy, ry, NULL);
   XtManageChild(tooltip_shell);
-  quit_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)10000, (XtTimerCallbackProc)leave_tooltip, NULL);
+  quit_proc = XtAppAddTimeOut(main_app(ss), (unsigned long)10000, (XtTimerCallbackProc)leave_tooltip, NULL);
 #endif
 }
 
@@ -22058,7 +22058,7 @@ static void tool_starter(Widget w, XtPointer context, XEvent *event, Boolean *co
       tool_y = ev->y;
       tool_w = w;
       tool_last_time = ev->time;
-      tool_proc = XtAppAddTimeOut(MAIN_APP(ss), (unsigned long)300, (XtTimerCallbackProc)handle_tooltip, (XtPointer)tip);
+      tool_proc = XtAppAddTimeOut(main_app(ss), (unsigned long)300, (XtTimerCallbackProc)handle_tooltip, (XtPointer)tip);
     }
 }
 
@@ -22256,7 +22256,7 @@ void show_toolbar(void)
       Arg args[32];
       int n;
 
-      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
+      XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
 
       n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNbackground, ss->basic_color); n++;
@@ -22269,14 +22269,14 @@ void show_toolbar(void)
 
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || 
 	  (sound_style(ss) == SOUNDS_HORIZONTAL))
-	toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE_BOX(ss), args, n);
-      else toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, SOUND_PANE(ss), args, n);
+	toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, sound_pane_box(ss), args, n);
+      else toolbar = XtCreateManagedWidget("toolbar", xmRowColumnWidgetClass, sound_pane(ss), args, n);
       ss->toolbar = toolbar;
 
       if (auto_resize(ss))
-	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+	XtVaSetValues(main_shell(ss), XmNallowShellResize, true, NULL);
 
-      make_toolbar_icons(MAIN_SHELL(ss));
+      make_toolbar_icons(main_shell(ss));
 
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_NEW),           "new sound",                  file_new_callback);
       add_to_toolbar(toolbar, toolbar_icon(SND_XPM_OPEN),          "open sound",                 file_open_callback);
@@ -22313,10 +22313,10 @@ void show_toolbar(void)
     }
   else
     {
-      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
+      XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
       XtManageChild(toolbar);
       if (auto_resize(ss))
-	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+	XtVaSetValues(main_shell(ss), XmNallowShellResize, true, NULL);
     }
 }
 
@@ -22325,10 +22325,10 @@ void hide_toolbar(void)
 {
   if (toolbar)
     {
-      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
+      XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
       XtUnmanageChild(toolbar);
       if (auto_resize(ss))
-	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+	XtVaSetValues(main_shell(ss), XmNallowShellResize, true, NULL);
     }
 }
 
@@ -22443,7 +22443,7 @@ int g_add_to_main_menu(const char *label, int slot)
   Widget m, cas;
   int n;
 
-  if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
+  if (auto_resize(ss)) XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
   new_menu++;
 
   n = 0;
@@ -22458,7 +22458,7 @@ int g_add_to_main_menu(const char *label, int slot)
   cas = XtCreateManagedWidget(label, xmCascadeButtonWidgetClass, main_menu, args, n);
   if (slot >= 0) XtAddCallback(cas, XmNcascadingCallback, GHC_callback, NULL);
 
-  if (auto_resize(ss)) XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+  if (auto_resize(ss)) XtVaSetValues(main_shell(ss), XmNallowShellResize, true, NULL);
   
   if (main_menus_size == 0)
     {
@@ -24310,7 +24310,7 @@ void add_completer_to_builtin_textfield(Widget w, int completer)
   /* used to make file selection dialog's file and filter text widgets act like other text field widgets */
   if (!actions_loaded) 
     {
-      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      XtAppAddActions(main_app(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
   if (!transTable2) 
@@ -24355,7 +24355,7 @@ Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, 
 
   if (!actions_loaded) 
     {
-      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      XtAppAddActions(main_app(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
 
@@ -24404,7 +24404,7 @@ Widget make_text_widget(const char *name, Widget parent, Arg *args, int n)
   Widget df;
   if (!actions_loaded) 
     {
-      XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); 
+      XtAppAddActions(main_app(ss), acts, NUM_ACTS); 
       actions_loaded = true;
     }
   XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
@@ -24468,7 +24468,7 @@ static void flash_unbalanced_paren(XtPointer context, XtIntervalId *id)
   flashes--;
   XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, (flashes & 1) ? XmHIGHLIGHT_NORMAL : XmHIGHLIGHT_SELECTED);
   if (flashes > 0)
-    XtAppAddTimeOut(MAIN_APP(ss),
+    XtAppAddTimeOut(main_app(ss),
 		    (unsigned long)FLASH_TIME,
 		    (XtTimerCallbackProc)flash_unbalanced_paren,
 		    NULL);
@@ -24498,7 +24498,7 @@ static bool highlight_unbalanced_paren(void)
 	    {
 	      XmTextSetHighlight(listener_text, paren_pos, paren_pos + 1, XmHIGHLIGHT_SELECTED);
 	      flashes = 4;
-	      XtAppAddTimeOut(MAIN_APP(ss),
+	      XtAppAddTimeOut(main_app(ss),
 			      (unsigned long)FLASH_TIME,
 			      (XtTimerCallbackProc)flash_unbalanced_paren,
 			      NULL);
@@ -24681,15 +24681,15 @@ static void make_listener_widget(int height)
       Widget wv, wh, w;
       int n;
 
-      if (!actions_loaded) {XtAppAddActions(MAIN_APP(ss), acts, NUM_ACTS); actions_loaded = true;}
+      if (!actions_loaded) {XtAppAddActions(main_app(ss), acts, NUM_ACTS); actions_loaded = true;}
 
       n = attach_all_sides(args, 0);
       XtSetArg(args[n], XmNheight, height); n++;
       XtSetArg(args[n], XmNpaneMaximum, LOTSA_PIXELS); n++; /* Xm/Paned initializes each pane max to 1000 apparently! */
 
       if ((sound_style(ss) == SOUNDS_IN_NOTEBOOK) || (sound_style(ss) == SOUNDS_HORIZONTAL))
-	listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE_BOX(ss), args, n);
-      else listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, SOUND_PANE(ss), args, n);
+	listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, sound_pane_box(ss), args, n);
+      else listener_pane = XtCreateManagedWidget("frm", xmFormWidgetClass, sound_pane(ss), args, n);
       /* this widget is not redundant at least in Metroworks Motif */
 
       n = 0;
@@ -24729,7 +24729,7 @@ static void make_listener_widget(int height)
       w = XtCreateManagedWidget("Save", xmPushButtonWidgetClass, listener_popup, args, n);
       XtAddCallback(w, XmNactivateCallback, listener_save_callback, NULL);
 
-      XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
+      XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
 
       XtManageChild(listener_text);
       XmTextSetCursorPosition(listener_text, 1);
@@ -24752,10 +24752,10 @@ static void make_listener_widget(int height)
 		                 NULL);
       XmChangeColor(wv, ss->basic_color);
       XmChangeColor(wh, ss->basic_color);
-      map_over_children(SOUND_PANE(ss), color_sashes);
+      map_over_children(sound_pane(ss), color_sashes);
 
       if (auto_resize(ss))
-	XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, true, NULL);
+	XtVaSetValues(main_shell(ss), XmNallowShellResize, true, NULL);
     }
 }
 
@@ -25393,7 +25393,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
    *   last_cp if last_count>0 or times equal (not sure which is safest).
    */
 
-  curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
+  curtime = XtLastTimestampProcessed(main_display(ss));
 
   if ((ev->count == 0) ||
       (last_expose_event_time != curtime) ||
@@ -26218,14 +26218,14 @@ void set_bold_peak_numbers_font(chan_info *cp, graphics_context *ax) {set_graph_
 color_t get_foreground_color(graphics_context *ax)
 {
   XGCValues gv;
-  XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCForeground, &gv);
+  XGetGCValues(main_display(ss), ax->gc, GCForeground, &gv);
   return(gv.foreground);
 }
 
 
 void set_foreground_color(graphics_context *ax, Pixel color)
 {
-  XSetForeground(MAIN_DISPLAY(ss), ax->gc, color);
+  XSetForeground(main_display(ss), ax->gc, color);
 }
 
 
@@ -26516,7 +26516,7 @@ static Xen g_in(Xen ms, Xen code)
 	  Xen lst;
 	  lst = Xen_list_2(Xen_false, code);
 	  Xen_list_set(lst, 0, C_int_to_Xen_integer(snd_protect(lst)));
-	  XtAppAddTimeOut(MAIN_APP(ss), 
+	  XtAppAddTimeOut(main_app(ss), 
 			  (unsigned long)secs,
 			  (XtTimerCallbackProc)timed_eval, 
 			  (XtPointer)lst);
@@ -26597,7 +26597,7 @@ static Xen g_set_graph_cursor(Xen curs)
   if ((val >= 0) && (val <= XC_xterm))
     {
       ss->Graph_Cursor = val;
-      ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
+      ss->graph_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), in_graph_cursor(ss));
     }
   else Xen_out_of_range_error(S_set S_graph_cursor, 1, curs, "invalid cursor");
   return(curs);
@@ -27933,7 +27933,7 @@ static void remember_sash(Widget w)
 
 static void add_sash_watchers(Widget w)
 {
-  /* if relative panes, add sash watchers to the outer paned window sashes (SOUND_PANE(ss)) */
+  /* if relative panes, add sash watchers to the outer paned window sashes (sound_pane(ss)) */
   unsigned int i;
   CompositeWidget cw = (CompositeWidget)w;
   for (i = 0; i < cw->composite.num_children; i++) /* only outermost sashes count here */
@@ -28040,7 +28040,7 @@ static void tick_bomb(XtPointer context, XtIntervalId *id)
   if ((sp->need_update) || (sp->file_unreadable))
     {
       show_bomb(sp);
-      XtAppAddTimeOut(MAIN_APP(ss),
+      XtAppAddTimeOut(main_app(ss),
 		      (unsigned long)BOMB_TIME,
 		      (XtTimerCallbackProc)tick_bomb,
 		      context);
@@ -28060,7 +28060,7 @@ void start_bomb(snd_info *sp)
   if (!(sp->bomb_in_progress))
     {
       sp->bomb_in_progress = true;
-      XtAppAddTimeOut(MAIN_APP(ss),
+      XtAppAddTimeOut(main_app(ss),
 		      (unsigned long)BOMB_TIME,
 		      (XtTimerCallbackProc)tick_bomb,
 		      (void *)sp);
@@ -28185,16 +28185,16 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
 void make_sound_icons_transparent_again(Pixel old_color, Pixel new_color)
 {
   int i;
-  if (!mini_lock_allocated) allocate_icons(MAIN_SHELL(ss));
-  change_pixmap_background(MAIN_SHELL(ss), mini_lock, old_color, new_color, 16, 14);
-  change_pixmap_background(MAIN_SHELL(ss), blank_pixmap, old_color, new_color, 16, 14);
-  change_pixmap_background(MAIN_SHELL(ss), close_icon, old_color, new_color, 16, 14);
-  /* change_pixmap_background(MAIN_SHELL(ss), stop_sign, old_color, new_color, 17, 17); */
+  if (!mini_lock_allocated) allocate_icons(main_shell(ss));
+  change_pixmap_background(main_shell(ss), mini_lock, old_color, new_color, 16, 14);
+  change_pixmap_background(main_shell(ss), blank_pixmap, old_color, new_color, 16, 14);
+  change_pixmap_background(main_shell(ss), close_icon, old_color, new_color, 16, 14);
+  /* change_pixmap_background(main_shell(ss), stop_sign, old_color, new_color, 17, 17); */
   /* memory corruption here! */
   for (i = 0; i < NUM_BOMBS; i++)
-    change_pixmap_background(MAIN_SHELL(ss), bombs[i], old_color, new_color, 16, 14);
+    change_pixmap_background(main_shell(ss), bombs[i], old_color, new_color, 16, 14);
   for (i = 0; i < NUM_HOURGLASSES; i++)
-    change_pixmap_background(MAIN_SHELL(ss), hourglasses[i], old_color, new_color, 16, 14);
+    change_pixmap_background(main_shell(ss), hourglasses[i], old_color, new_color, 16, 14);
 }
 
 
@@ -28254,12 +28254,12 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
-  XtVaGetValues(MAIN_SHELL(ss),
+  XtVaGetValues(main_shell(ss),
 		XmNy, &app_y,
 		XmNheight, &app_dy,
 		NULL);
-  screen_y = DisplayHeight(MAIN_DISPLAY(ss),
-			   DefaultScreen(MAIN_DISPLAY(ss)));
+  screen_y = DisplayHeight(main_display(ss),
+			   DefaultScreen(main_display(ss)));
   app_dy = (screen_y - app_y - app_dy - 20 * nchans);
   chan_min_y = (Dimension)(app_dy / (Dimension)nchans);
   if (chan_min_y > (Dimension)(ss->channel_min_height)) 
@@ -28307,7 +28307,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	      XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
 	      XtSetArg(args[n], XmNnoResize, false); n++;
 	      XtSetArg(args[n], XmNtransient, false); n++;
-	      sp->dialog = XtCreatePopupShell(title, xmDialogShellWidgetClass, MAIN_SHELL(ss), args, n);
+	      sp->dialog = XtCreatePopupShell(title, xmDialogShellWidgetClass, main_shell(ss), args, n);
 	      /* using popup shell here gets around the problem that the shell passes resize requests to all its children
 	       * -- as a popup, it's not considered a child, but that means we don't inherit things like popup menus from 
 	       * the main shell.
@@ -28350,8 +28350,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       else 
 	{
 	  unsigned int i;
-	  CompositeWidget cw = (CompositeWidget)SOUND_PANE(ss);
-	  SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, SOUND_PANE(ss), args, n);
+	  CompositeWidget cw = (CompositeWidget)sound_pane(ss);
+	  SND_PANE(sp) = XtCreateManagedWidget("snd-pane", xmPanedWindowWidgetClass, sound_pane(ss), args, n);
 
 	  /* try to make the division between sounds more obvious */
 	  for (i = 0; i < cw->composite.num_children; i++)
@@ -29211,7 +29211,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	  XtSetArg(args[n], XmNbackground, ss->graph_color); n++;
 	  XtSetArg(args[n], XmNnotebookChildType, XmMAJOR_TAB); n++;
 	  XtSetArg(args[n], XmNuserData, sp->index); n++;
-	  sp->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, SOUND_PANE(ss), args, n);
+	  sp->tab = XtCreateManagedWidget(name, xmPushButtonWidgetClass, sound_pane(ss), args, n);
 	  free(name);
 	}
 
@@ -29222,7 +29222,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 #if WITH_RELATIVE_PANES
       if (sound_style(ss) == SOUNDS_VERTICAL)
-	add_sash_watchers(SOUND_PANE(ss)); /* add in any case since we might later change the sense of with_relative_panes */
+	add_sash_watchers(sound_pane(ss)); /* add in any case since we might later change the sense of with_relative_panes */
 #endif
 
     } /* new sound ss */
@@ -29259,7 +29259,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	}
     }
 
-  map_over_children(SOUND_PANE(ss), color_sashes);
+  map_over_children(sound_pane(ss), color_sashes);
   if (!(in_show_controls(ss)))
     hide_controls(sp);
   else show_controls(sp);
@@ -29310,7 +29310,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       /* this is not redundant -- apparently they're trying to ignore size resets to the "current" */
       /* value, but forgot that unmanage/remanage does not return to the previous size */
       XtVaSetValues(sp->dialog,
-		    XmNwidth, (Dimension)(widget_width(MAIN_SHELL(ss))),
+		    XmNwidth, (Dimension)(widget_width(main_shell(ss))),
 		    XmNheight, (Dimension)(chan_min_y * nchans), /* bugfix thanks to Paul @pobox */
 		    NULL);
     }
@@ -29392,7 +29392,7 @@ void set_sound_pane_file_label(snd_info *sp, const char *str)
 void color_filter_waveform(Pixel color)
 {
   int i;
-  XSetForeground(MAIN_DISPLAY(ss), ss->fltenv_data_gc, color);
+  XSetForeground(main_display(ss), ss->fltenv_data_gc, color);
   for (i = 0; i < ss->max_sounds; i++)
     {
       snd_info *sp;
@@ -29556,14 +29556,14 @@ void reflect_sound_selection(snd_info *sp)
 	  XmNotebookPageStatus status;
 	  XmNotebookPageInfo info;
 	  XmChangeColor(sp->tab, ss->selected_graph_color);
-	  XtVaGetValues(SOUND_PANE(ss), XmNcurrentPageNumber, &current_page, NULL);
+	  XtVaGetValues(sound_pane(ss), XmNcurrentPageNumber, &current_page, NULL);
 	  XtVaGetValues(sp->tab, XmNpageNumber, &page, NULL);
 	  if (page != current_page)
 	    {
-	      status = XmNotebookGetPageInfo(SOUND_PANE(ss), page, &info);
+	      status = XmNotebookGetPageInfo(sound_pane(ss), page, &info);
 	      if (status == XmPAGE_FOUND)
 		{
-		  XtVaSetValues(SOUND_PANE(ss), XmNcurrentPageNumber, page, NULL);
+		  XtVaSetValues(sound_pane(ss), XmNcurrentPageNumber, page, NULL);
 		}
 	    }
 	}
@@ -29689,7 +29689,7 @@ void make_controls_dialog(void)
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
       XtSetArg(args[n], XmNwidth, 400); n++;
-      controls_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"More controls", args, n);
+      controls_dialog = XmCreateTemplateDialog(main_shell(ss), (char *)"More controls", args, n);
       reset_button = MSG_BOX(controls_dialog, XmDIALOG_OK_BUTTON);
 
       XtAddCallback(controls_dialog, XmNhelpCallback,   controls_help_callback,  NULL);
@@ -29948,7 +29948,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
     {
       if (!(play_in_progress()))
 	for_each_sound(sound_not_current);
-      auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
+      auto_update_proc = XtAppAddTimeOut(main_app(ss),
 					 (unsigned long)(auto_update_interval(ss) * 1000),
 					 (XtTimerCallbackProc)auto_update_check,
 					 context);
@@ -29960,7 +29960,7 @@ static void auto_update_check(XtPointer context, XtIntervalId *id)
 void auto_update_restart(void)
 {
   if (auto_update_proc == 0)
-    auto_update_proc = XtAppAddTimeOut(MAIN_APP(ss),
+    auto_update_proc = XtAppAddTimeOut(main_app(ss),
 				       (unsigned long)(auto_update_interval(ss) * 1000),
 				       (XtTimerCallbackProc)auto_update_check,
 				       (XtPointer)NULL);
@@ -30008,10 +30008,10 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
       unsigned char *prop = NULL;
       
       /* this code thanks to Tito Latini */
-      _NET_WM_STATE = XInternAtom(MAIN_DISPLAY(ss), "_NET_WM_STATE", false);
-      _NET_WM_STATE_HIDDEN = XInternAtom(MAIN_DISPLAY(ss), "_NET_WM_STATE_HIDDEN", false);
+      _NET_WM_STATE = XInternAtom(main_display(ss), "_NET_WM_STATE", false);
+      _NET_WM_STATE_HIDDEN = XInternAtom(main_display(ss), "_NET_WM_STATE_HIDDEN", false);
 
-      if (XGetWindowProperty(MAIN_DISPLAY(ss), XtWindow(w), _NET_WM_STATE, 0, 1024,
+      if (XGetWindowProperty(main_display(ss), XtWindow(w), _NET_WM_STATE, 0, 1024,
                              false, XA_ATOM, &actual_type, &actual_format, &nitems,
                              &bytes_after, &prop) == Success)
         {
@@ -30117,7 +30117,7 @@ static void startup_funcs(void)
   ss->file_monitor_ok = initialize_file_monitor();
 
   shell = ss->mainshell;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
 
 #ifndef __alpha__
   add_menu_drop();
@@ -30128,12 +30128,12 @@ static void startup_funcs(void)
   XmAddWMProtocolCallback(shell, wm_delete_window, window_close, NULL);
   XtAddEventHandler(shell, StructureNotifyMask, false, minify_maxify_window, NULL);
 
-  ss->graph_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), in_graph_cursor(ss));
-  ss->wait_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_watch);
-  ss->bounds_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_h_double_arrow);
-  ss->yaxis_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_v_double_arrow);
-  ss->play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_right_arrow);
-  ss->loop_play_cursor = XCreateFontCursor(XtDisplay(MAIN_SHELL(ss)), XC_sb_left_arrow);
+  ss->graph_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), in_graph_cursor(ss));
+  ss->wait_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), XC_watch);
+  ss->bounds_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), XC_sb_h_double_arrow);
+  ss->yaxis_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), XC_sb_v_double_arrow);
+  ss->play_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), XC_sb_right_arrow);
+  ss->loop_play_cursor = XCreateFontCursor(XtDisplay(main_shell(ss)), XC_sb_left_arrow);
 
 #if HAVE_EXTENSION_LANGUAGE
   snd_load_init_file(noglob, noinit);
@@ -30148,7 +30148,7 @@ static void startup_funcs(void)
        * but try to read stdin (needed to support the emacs subjob connection).  If
        * we don't do this, the background job is suspended when the shell sends SIGTTIN.
        */
-      stdin_id = XtAppAddInput(MAIN_APP(ss), 
+      stdin_id = XtAppAddInput(main_app(ss), 
 			       STDIN_FILENO, 
 			       (XtPointer)XtInputReadMask, 
 			       get_stdin_string, 
@@ -30159,15 +30159,15 @@ static void startup_funcs(void)
   while (auto_open_ctr < auto_open_files)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, false, auto_open_files);
 
-  if (ss->init_window_width > 0) set_widget_width(MAIN_SHELL(ss), ss->init_window_width);
-  if (ss->init_window_height > 0) set_widget_height(MAIN_SHELL(ss), ss->init_window_height);
-  if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(MAIN_SHELL(ss), ss->init_window_x);
-  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(MAIN_SHELL(ss), ss->init_window_y);
+  if (ss->init_window_width > 0) set_widget_width(main_shell(ss), ss->init_window_width);
+  if (ss->init_window_height > 0) set_widget_height(main_shell(ss), ss->init_window_height);
+  if (ss->init_window_x != DEFAULT_INIT_WINDOW_X) set_widget_x(main_shell(ss), ss->init_window_x);
+  if (ss->init_window_y != DEFAULT_INIT_WINDOW_Y) set_widget_y(main_shell(ss), ss->init_window_y);
 
   if (!ss->file_monitor_ok)
     {
       if (auto_update_interval(ss) > 0.0)
-	XtAppAddTimeOut(MAIN_APP(ss), 
+	XtAppAddTimeOut(main_app(ss), 
 			(unsigned long)(auto_update_interval(ss) * 1000), 
 			auto_update_check, 
 			NULL);
@@ -30186,7 +30186,7 @@ static void startup_funcs(void)
     }
 
   if ((ss->init_window_height == 0) && (sound_style(ss) == SOUNDS_HORIZONTAL))
-    set_widget_height(MAIN_SHELL(ss), 200); /* otherwise it's just a title bar! */
+    set_widget_height(main_shell(ss), 200); /* otherwise it's just a title bar! */
 }
 
 
@@ -30248,7 +30248,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
   Display *dpy;
   int scr;
   XColor fg_color, bg_color, new_color;
-  dpy = MAIN_DISPLAY(ss);
+  dpy = main_display(ss);
   scr = DefaultScreen(dpy);
   cmap = DefaultColormap(dpy, scr);
   fg_color.flags = DoRed | DoGreen | DoBlue;

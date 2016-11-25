@@ -610,8 +610,8 @@ static void make_listener_widget(int height)
       gtk_widget_show(frame);
 
       if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
-	gtk_paned_pack2(GTK_PANED(SOUND_PANE(ss)), frame, false, true); /* add2 but resize=false */
-      else gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), frame);
+	gtk_paned_pack2(GTK_PANED(sound_pane(ss)), frame, false, true); /* add2 but resize=false */
+      else gtk_container_add(GTK_CONTAINER(main_pane(ss)), frame);
 
       ss->listener = glistener_new(frame, listener_init);
       glistener_set_evaluator(ss->listener, evaluator);
@@ -682,15 +682,15 @@ void handle_listener(bool open)
       gtk_widget_hide(view_listener_menu);
     }
 
-  if ((SOUND_PANE(ss)) && /* might be run -separate with no sound open */
+  if ((sound_pane(ss)) && /* might be run -separate with no sound open */
       (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS))
     {
       int hgt;
-      hgt = widget_height(SOUND_PANE(ss));
+      hgt = widget_height(sound_pane(ss));
       if (hgt > 100) /* we can get here before the sound window has opened, but with one pending.
 		      *   the position is in terms of current size, which is useless in this case.
 		      */
-	gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(hgt * .75));
+	gtk_paned_set_position(GTK_PANED(sound_pane(ss)), (gint)(hgt * .75));
     }
 }
 

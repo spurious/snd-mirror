@@ -608,7 +608,7 @@ static file_dialog_info *make_fsb(const char *title, const char *file_lab, const
   /* -------- base dialog -------- */
   fd->dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(fd->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(fd->dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   gtk_window_set_title(GTK_WINDOW(fd->dialog), title);
   sg_make_resizable(fd->dialog);
@@ -2714,7 +2714,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
  
   rp->dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(rp->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(rp->dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   if (!title)
     gtk_window_set_title(GTK_WINDOW(rp->dialog), "No header on file");
@@ -3051,7 +3051,7 @@ widget_t make_new_file_dialog(bool managed)
       GtkWidget *name_label, *hform, *help_button, *cancel_button, *reset_button;
       new_file_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(new_file_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(new_file_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       gtk_window_set_title(GTK_WINDOW(new_file_dialog), "New file");
       sg_make_resizable(new_file_dialog);
@@ -3387,7 +3387,7 @@ GtkWidget *edit_header(snd_info *sp)
       GtkWidget *help_button, *cancel_button;
       ep->dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(ep->dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(ep->dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       /* gtk_window_set_title(GTK_WINDOW(ep->dialog), "Edit Header"); */
       sg_make_resizable(ep->dialog);
@@ -3515,7 +3515,7 @@ static void create_post_it_monolog(void)
   GtkWidget *ok_button;
   post_it_dialog = gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(post_it_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(post_it_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   SG_SIGNAL_CONNECT(post_it_dialog, "delete_event", delete_post_it, NULL);
 

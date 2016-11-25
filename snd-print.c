@@ -338,7 +338,7 @@ static void ps_set_color(color_t color)
   Colormap cmap;
   XColor tmp_color;
   Display *dpy;
-  dpy = XtDisplay(MAIN_SHELL(ss));
+  dpy = XtDisplay(main_shell(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = color;
@@ -370,7 +370,7 @@ void ps_bg(axis_info *ap, graphics_context *ax)
 #if USE_MOTIF
   {
     XGCValues gv;
-    XGetGCValues(MAIN_DISPLAY(ss), ax->gc, GCBackground, &gv);
+    XGetGCValues(main_display(ss), ax->gc, GCBackground, &gv);
     ps_set_color(gv.background);
   }
 #else

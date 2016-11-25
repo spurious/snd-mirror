@@ -42,10 +42,10 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, ACTIVATABLE_BUT_NOT_FOCUSED} text_cr
 #define BACKGROUND_QUIT 1
 #define BACKGROUND_CONTINUE 0
 #define BACKGROUND_REMOVE(func) XtRemoveWorkProc(func)
-/* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(MAIN_APP(ss), func, (XtPointer)data) */
+/* #define BACKGROUND_ADD(func, data) XtAppAddWorkProc(main_app(ss), func, (XtPointer)data) */
 #define BACKGROUND_ADD(func, data) add_work_proc(func, (XtPointer)data)
 
-#define CALL_TIMEOUT(Func, Wait, Data) XtAppAddTimeOut(MAIN_APP(ss), Wait, Func, (XtPointer)Data)
+#define CALL_TIMEOUT(Func, Wait, Data) XtAppAddTimeOut(main_app(ss), Wait, Func, (XtPointer)Data)
 #define TIMEOUT_ARGS                   XtPointer context, XtIntervalId *id
 #define TIMEOUT_TYPE                   void
 #define TIMEOUT_RESULT
@@ -106,12 +106,12 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
   #define snd_MetaMask (Mod1Mask | Mod4Mask)
 #endif
 
-#define MAIN_SHELL(a) (a)->mainshell
-#define MAIN_PANE(a) (a)->mainpane
-#define SOUND_PANE(a) (a)->soundpane
-#define SOUND_PANE_BOX(a) (a)->soundpanebox
-#define MAIN_APP(a) (a)->mainapp
-#define MAIN_DISPLAY(a) (a)->mdpy
+#define main_shell(a) (a)->mainshell
+#define main_pane(a) (a)->mainpane
+#define sound_pane(a) (a)->soundpane
+#define sound_pane_box(a) (a)->soundpanebox
+#define main_app(a) (a)->mainapp
+#define main_display(a) (a)->mdpy
 #define PEAKS_FONT(a) (a)->peaks_fontstruct
 #define BOLD_PEAKS_FONT(a) (a)->bold_peaks_fontstruct
 #define AXIS_NUMBERS_FONT(a) (a)->axis_numbers_fontstruct
@@ -130,7 +130,7 @@ typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 #define KEY_TO_NAME(key) XKeysymToString(key)
 /* on the Sun, if key is 0, XKeysymToString segfaults! */
 
-/* #define GUI_CURRENT_TIME(ss) XtLastTimestampProcessed(MAIN_DISPLAY(ss)) */
+/* #define GUI_CURRENT_TIME(ss) XtLastTimestampProcessed(main_display(ss)) */
 
 
 /* now pull in the key names (/usr/include/X11/keysymdef.h) */

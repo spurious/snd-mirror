@@ -529,7 +529,9 @@
 (define (pp obj)
   (call-with-output-string
     (lambda (p)
-      (pretty-print obj p))))
+      (if (keyword? obj)
+	  (symbol->string obj)
+	  (pretty-print obj p)))))
 
 #|
 (define (pretty-print-all)

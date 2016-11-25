@@ -1718,7 +1718,7 @@ static Xen g_set_open_file_dialog_directory(Xen val)
 static int snd_screen_height(void)
 {
 #if USE_MOTIF
-  return(HeightOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
+  return(HeightOfScreen(ScreenOfDisplay(main_display(ss), 0)));
 #else
 #if USE_GTK
 #if (!GTK_CHECK_VERSION(3, 22, 0)) /* don't combine with USE_GTK above! */
@@ -1736,7 +1736,7 @@ static int snd_screen_height(void)
 static int snd_screen_width(void)
 {
 #if USE_MOTIF
-  return(WidthOfScreen(ScreenOfDisplay(MAIN_DISPLAY(ss), 0)));
+  return(WidthOfScreen(ScreenOfDisplay(main_display(ss), 0)));
 #else
 #if USE_GTK
   #if (!GTK_CHECK_VERSION(3, 22, 0))
@@ -1754,7 +1754,7 @@ static int snd_screen_width(void)
 static Xen g_window_height(void) 
 {
   #define H_window_height "(" S_window_height "): current Snd window height in pixels"
-  return(C_int_to_Xen_integer(widget_height(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_height(main_shell(ss))));
 }
 
 
@@ -1766,7 +1766,7 @@ static Xen g_set_window_height(Xen height)
   if ((val > 0) && (val < snd_screen_height()))
     {
 #if (!USE_NO_GUI)
-      set_widget_height(MAIN_SHELL(ss), val);
+      set_widget_height(main_shell(ss), val);
 #endif
       ss->init_window_height = val;
     }
@@ -1777,7 +1777,7 @@ static Xen g_set_window_height(Xen height)
 static Xen g_window_width(void) 
 {
   #define H_window_width "(" S_window_width "): current Snd window width in pixels"
-  return(C_int_to_Xen_integer(widget_width(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_width(main_shell(ss))));
 }
 
 
@@ -1789,7 +1789,7 @@ static Xen g_set_window_width(Xen width)
   if ((val > 0) && (val < snd_screen_width()))
     {
 #if (!USE_NO_GUI)
-      set_widget_width(MAIN_SHELL(ss), val);
+      set_widget_width(main_shell(ss), val);
 #endif
       ss->init_window_width = val;
     }
@@ -1800,7 +1800,7 @@ static Xen g_set_window_width(Xen width)
 static Xen g_window_x(void) 
 {
   #define H_window_x "(" S_window_x "): current Snd window x position in pixels"
-  return(C_int_to_Xen_integer(widget_x(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_x(main_shell(ss))));
 }
 
 
@@ -1811,7 +1811,7 @@ static Xen g_set_window_x(Xen val)
   x = Xen_integer_to_C_int(val);
   if ((x >= 0) && (x < snd_screen_width()))
     {
-      set_widget_x(MAIN_SHELL(ss), x);
+      set_widget_x(main_shell(ss), x);
       ss->init_window_x = x;
     }
   return(val);
@@ -1821,7 +1821,7 @@ static Xen g_set_window_x(Xen val)
 static Xen g_window_y(void) 
 {
   #define H_window_y "(" S_window_y "): current Snd window y position in pixels"
-  return(C_int_to_Xen_integer(widget_y(MAIN_SHELL(ss))));
+  return(C_int_to_Xen_integer(widget_y(main_shell(ss))));
 }
 
 
@@ -1832,7 +1832,7 @@ static Xen g_set_window_y(Xen val)
   y = Xen_integer_to_C_int(val);
   if ((y >= 0) && (y < snd_screen_height()))
     {
-      set_widget_y(MAIN_SHELL(ss), y);
+      set_widget_y(main_shell(ss), y);
       ss->init_window_y = y;
     }
   return(val);
@@ -2013,7 +2013,7 @@ static Xen g_set_auto_resize(Xen val)
   Xen_check_type(Xen_is_boolean(val), val, 1, S_set S_auto_resize, "a boolean");
   set_auto_resize(Xen_boolean_to_C_bool(val)); 
 #if USE_MOTIF
-  XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, auto_resize(ss), NULL);
+  XtVaSetValues(main_shell(ss), XmNallowShellResize, auto_resize(ss), NULL);
 #endif
   return(C_bool_to_Xen_boolean(auto_resize(ss)));
 }

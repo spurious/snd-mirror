@@ -441,7 +441,7 @@ void check_for_event(void)
 
 void set_title(const char *title)
 {
-  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), title);
+  gtk_window_set_title(GTK_WINDOW(main_shell(ss)), title);
 }
 
 
@@ -872,7 +872,7 @@ GtkWidget *snd_gtk_dialog_new(void)
   GtkWidget *w;
   w = gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(main_shell(ss)));
 #endif
   add_dialog_style(w);
   g_object_ref(w); 

@@ -1735,8 +1735,8 @@ snd_info *snd_update(snd_info *sp)
       return(sp);
     }
 
-  app_x = widget_width(MAIN_SHELL(ss));
-  app_y = widget_height(MAIN_SHELL(ss));
+  app_x = widget_width(main_shell(ss));
+  app_y = widget_height(main_shell(ss));
   ur_filename = sp->filename;
 
   if (peak_env_dir(ss))
@@ -1829,7 +1829,7 @@ snd_info *snd_update(snd_info *sp)
 		    XmNpaneMaximum, snd_height,
 		    NULL);
 #endif
-  set_widget_size(MAIN_SHELL(ss), app_x, app_y); /* was at end */
+  set_widget_size(main_shell(ss), app_x, app_y); /* was at end */
 
   ss->reloading_updated_file = 0;
   if (old_raw)

@@ -906,7 +906,7 @@ GtkWidget *make_color_orientation_dialog(bool managed)
 
       ccd_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(ccd_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(ccd_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       SG_SIGNAL_CONNECT(ccd_dialog, "delete_event", delete_color_orientation_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(ccd_dialog), "Color");

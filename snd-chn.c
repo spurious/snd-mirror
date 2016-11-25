@@ -2914,14 +2914,14 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 #if USE_MOTIF
 static void set_up_for_gl(chan_info *cp)
 {
-  glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)), ss->cx);
+  glXMakeCurrent(main_display(ss), XtWindow(channel_graph(cp)), ss->cx);
 }
 
 
 static void gl_display(chan_info *cp)
 {
   if (ss->gl_has_double_buffer)
-    glXSwapBuffers(MAIN_DISPLAY(ss), XtWindow(channel_graph(cp)));
+    glXSwapBuffers(main_display(ss), XtWindow(channel_graph(cp)));
   else glFlush();
 }
 #else
@@ -3099,7 +3099,7 @@ static bool make_gl_spectrogram(chan_info *cp)
 
 #if USE_MOTIF
   /* get the background color */
-  dpy = XtDisplay(MAIN_SHELL(ss));
+  dpy = XtDisplay(main_shell(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   if (cp == selected_channel())
@@ -3161,7 +3161,7 @@ static bool make_gl_spectrogram(chan_info *cp)
     display_channel_lisp_data(cp); 
 
 #if USE_MOTIF
-  return(XtAppPending(MAIN_APP(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
+  return(XtAppPending(main_app(ss)) == 0); /* return true if there are no pending events to force current buffer to be displayed */
 #endif
 }
 #endif

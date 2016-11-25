@@ -862,7 +862,7 @@ GtkWidget *create_envelope_editor(void)
 
       enved_dialog = gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(enved_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(enved_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       add_dialog_style(enved_dialog);
       SG_SIGNAL_CONNECT(enved_dialog, "delete_event", delete_enved_dialog, NULL);

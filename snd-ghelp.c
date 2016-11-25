@@ -209,7 +209,7 @@ static void create_help_monolog(void)
   GtkWidget *ok_button, *search, *frame;
   help_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(help_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(help_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   SG_SIGNAL_CONNECT(help_dialog, "delete_event", delete_help_dialog, NULL);
 

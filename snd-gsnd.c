@@ -1510,8 +1510,8 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
 
-  app_y = widget_y(MAIN_SHELL(ss));
-  app_dy = widget_height(MAIN_SHELL(ss));
+  app_y = widget_y(main_shell(ss));
+  app_dy = widget_height(main_shell(ss));
 
   if (auto_resize(ss))
     {
@@ -1554,7 +1554,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sp->snd_adjs = (GtkAdjustment **)calloc(NUM_SND_ADJS, sizeof(GtkAdjustment *));
     }
 
-  if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), false);
+  if (!(auto_resize(ss))) gtk_window_set_resizable(GTK_WINDOW(main_shell(ss)), false);
   if ((!make_widgets) && (old_chans < nchans))
     {
       for (i = old_chans; i < nchans; i++) 
@@ -1584,9 +1584,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	      GtkWidget *tablab;
 	      tablab = gtk_label_new(sp->short_filename);
 	      gtk_widget_show(tablab);
-	      gtk_notebook_append_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp), tablab);
+	      gtk_notebook_append_page(GTK_NOTEBOOK(sound_pane_box(ss)), SND_PANE(sp), tablab);
 	    }
-	  else gtk_box_pack_start(GTK_BOX(SOUND_PANE_BOX(ss)), SND_PANE(sp), true, true, 0);
+	  else gtk_box_pack_start(GTK_BOX(sound_pane_box(ss)), SND_PANE(sp), true, true, 0);
 	  /* child2 is listener */
 	}
 
@@ -2000,11 +2000,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_label_set_text(GTK_LABEL(NAME_BUTTON(sp)), shortname_indexed(sp));
       reset_user_int_data(G_OBJECT(SND_PANE(sp)), sp->index); /* is this necessary? */
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
-	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp), sp->short_filename);
+	gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(sound_pane_box(ss)), SND_PANE(sp), sp->short_filename);
       else reset_controls(sp); /* segfault here in notebook case! */
     }
 
-  gtk_window_set_resizable(GTK_WINDOW(MAIN_SHELL(ss)), true);
+  gtk_window_set_resizable(GTK_WINDOW(main_shell(ss)), true);
   if (currently_showing_controls) show_controls(sp); else hide_controls(sp);
 
   if (sound_style(ss) == SOUNDS_IN_SEPARATE_WINDOWS)
@@ -2044,14 +2044,14 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   after_open(sp);
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
-      sp->page = gtk_notebook_page_num(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), SND_PANE(sp));
+      sp->page = gtk_notebook_page_num(GTK_NOTEBOOK(sound_pane_box(ss)), SND_PANE(sp));
       reset_controls(sp);
     }
   if (free_filename) free(filename);
   
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (listener_exists())
-    gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), 50);
+    gtk_paned_set_position(GTK_PANED(sound_pane(ss)), 50);
   /* actually we haven't reached full size here at start-up */
 #endif
   return(sp);
@@ -2106,7 +2106,7 @@ void show_controls(snd_info *sp)
 {
   gtk_widget_show_all(CONTROL_PANEL(sp));
   /* control panel is pane 2 of SND_PANE(sp); PANE_BOX is pane 1 */
-  /* gtk_paned_set_position(GTK_PANED(SOUND_PANE(ss)), (gint)(widget_height(SOUND_PANE(ss)) * .75)); (glistener) */
+  /* gtk_paned_set_position(GTK_PANED(sound_pane(ss)), (gint)(widget_height(sound_pane(ss)) * .75)); (glistener) */
 }
 
 
@@ -2239,12 +2239,12 @@ void reflect_sound_selection(snd_info *sp)
   if (sound_style(ss) == SOUNDS_IN_NOTEBOOK) 
     {
       int page, current_page;
-      current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)));
+      current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(sound_pane_box(ss)));
       page = sp->page;
       if ((page != current_page) && (current_page >= 0))
 	{
 	  ss->selected_sound = sp->index; /* break infinite recursion here */
-	  gtk_notebook_set_current_page(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), page);
+	  gtk_notebook_set_current_page(GTK_NOTEBOOK(sound_pane_box(ss)), page);
 	}
     }
 }
@@ -2374,7 +2374,7 @@ void make_controls_dialog(void)
 
       controls_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(controls_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(controls_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       SG_SIGNAL_CONNECT(controls_dialog, "delete_event", delete_controls_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(controls_dialog), "Controls");

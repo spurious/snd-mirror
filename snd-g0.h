@@ -287,11 +287,11 @@ typedef enum {WITHOUT_DATA_LOCATION_FIELD, WITH_DATA_LOCATION_FIELD} dialog_data
 typedef enum {WITHOUT_HEADER_TYPE_FIELD, WITH_HEADER_TYPE_FIELD} dialog_header_type_t;
 typedef enum {WITHOUT_COMMENT_FIELD, WITH_COMMENT_FIELD} dialog_comment_t;
 
-#define MAIN_SHELL(a) (a)->mainshell
-#define MAIN_WINDOW(a) (a)->mainwindow
-#define MAIN_PANE(a) (a)->mainpane
-#define SOUND_PANE(a) (a)->soundpane
-#define SOUND_PANE_BOX(a) (a)->soundpanebox
+#define main_shell(a) (a)->mainshell
+#define main_window(a) (a)->mainwindow
+#define main_pane(a) (a)->mainpane
+#define sound_pane(a) (a)->soundpane
+#define sound_pane_box(a) (a)->soundpanebox
 #define AXIS_NUMBERS_FONT(a) (a)->axis_numbers_fnt
 #define AXIS_LABEL_FONT(a) (a)->axis_label_fnt
 #define LISTENER_FONT(a) (a)->listener_fnt

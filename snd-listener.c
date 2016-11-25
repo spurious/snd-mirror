@@ -24,10 +24,10 @@ void listener_begin_hook(s7_scheme *sc, bool *val)
   ss->C_g_typed = false;
 
 #if USE_MOTIF
-  if (XtAppPending(MAIN_APP(ss)) & XtIMXEvent)
+  if (XtAppPending(main_app(ss)) & XtIMXEvent)
     {
       XEvent event;
-      XtAppNextEvent(MAIN_APP(ss), &event);
+      XtAppNextEvent(main_app(ss), &event);
       XtDispatchEvent(&event);
     }
 #endif

@@ -1642,7 +1642,7 @@ widget_t make_preferences_dialog(void)
 
   preferences_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(preferences_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(preferences_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   gtk_window_set_title(GTK_WINDOW(preferences_dialog), "Preferences");
   sg_make_resizable(preferences_dialog);

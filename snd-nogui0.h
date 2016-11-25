@@ -66,9 +66,9 @@ typedef enum {NOT_A_SCANF_WIDGET} scanf_widget_t;
 #define snd_ControlMask 0
 #define snd_MetaMask 0
 
-#define MAIN_SHELL(a) 0
-#define MAIN_PANE(a) 0
-#define SOUND_PANE(a) 0
+#define main_shell(a) 0
+#define main_pane(a) 0
+#define sound_pane(a) 0
 #define KEY_TO_NAME(key) "?"
 /* not NULL here because that causes a segfault in solaris (key name null -> strlen of null in vsprintf) */
 

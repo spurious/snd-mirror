@@ -55,7 +55,7 @@ static void file_print_callback(GtkWidget *w, gpointer info)
   g_signal_connect(G_OBJECT(operation), "draw-page", G_CALLBACK(draw_page), NULL);
   g_signal_connect(G_OBJECT(operation), "end-print", G_CALLBACK(end_print), NULL);
 
-  res = gtk_print_operation_run(operation, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG, GTK_WINDOW(MAIN_SHELL(ss)), &error);
+  res = gtk_print_operation_run(operation, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG, GTK_WINDOW(main_shell(ss)), &error);
   if (res == GTK_PRINT_OPERATION_RESULT_APPLY)
     {
       if (settings)
@@ -371,7 +371,7 @@ static void menu_drag_watcher(GtkWidget *w, const char *str, int x, int y, drag_
 	{
 	  char *new_title;
 	  new_title = mus_format("%s: drop to open file", ss->startup_title);
-	  gtk_window_set_title(GTK_WINDOW(MAIN_SHELL(ss)), new_title);
+	  gtk_window_set_title(GTK_WINDOW(main_shell(ss)), new_title);
 	  have_drag_title = true;
 	  free(new_title);
 	}
@@ -440,7 +440,7 @@ GtkWidget *add_menu(void)
    */
   GtkAccelGroup *accel_group;
   accel_group = gtk_accel_group_new();
-  gtk_window_add_accel_group(GTK_WINDOW(MAIN_SHELL(ss)), accel_group);
+  gtk_window_add_accel_group(GTK_WINDOW(main_shell(ss)), accel_group);
 #endif
 
   ss->mw = (GtkWidget **)calloc(NUM_MENU_WIDGETS, sizeof(GtkWidget *));
@@ -448,7 +448,7 @@ GtkWidget *add_menu(void)
   main_menu = gtk_menu_bar_new();
   ml[m_menu] = NULL;
   add_drag_and_drop(main_menu, menu_drop_watcher, menu_drag_watcher, NULL);
-  gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), main_menu, false, true, 0);
+  gtk_box_pack_start(GTK_BOX(main_pane(ss)), main_menu, false, true, 0);
   add_menu_style(main_menu);
   gtk_widget_show(main_menu);
 
@@ -1873,8 +1873,8 @@ void show_toolbar(void)
       add_toolbar_style(toolbar);
       gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
 #endif
-      gtk_box_pack_start(GTK_BOX(MAIN_PANE(ss)), toolbar, false, false, 0); /* MAIN_PANE = top level vbox */
-      gtk_box_reorder_child(GTK_BOX(MAIN_PANE(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
+      gtk_box_pack_start(GTK_BOX(main_pane(ss)), toolbar, false, false, 0); /* main_pane = top level vbox */
+      gtk_box_reorder_child(GTK_BOX(main_pane(ss)), toolbar, 1);            /* put toolbar just under the top level menubar */
 
 
       add_to_toolbar(toolbar, ICON_NEW,                 "open a new sound",           (GCallback)file_new_callback);

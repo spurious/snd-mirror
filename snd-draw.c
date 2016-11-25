@@ -730,17 +730,17 @@ widgets (list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-p
   int loc;
 #if USE_MOTIF
   bad_temp = Xen_list_2(C_string_to_Xen_symbol("XtAppContext"), 
-			C_ulong_to_Xen_ulong((unsigned long)MAIN_APP(ss)));
+			C_ulong_to_Xen_ulong((unsigned long)main_app(ss)));
 #else
-  bad_temp = Xen_wrap_window(MAIN_WINDOW(ss));
+  bad_temp = Xen_wrap_window(main_window(ss));
 #endif
   loc = snd_protect(bad_temp);
   res = Xen_cons(bad_temp,
-	   Xen_cons(Xen_wrap_widget(MAIN_SHELL(ss)),
-             Xen_cons(Xen_wrap_widget(MAIN_PANE(ss)),
-               Xen_cons(Xen_wrap_widget(SOUND_PANE(ss)),
+	   Xen_cons(Xen_wrap_widget(main_shell(ss)),
+             Xen_cons(Xen_wrap_widget(main_pane(ss)),
+               Xen_cons(Xen_wrap_widget(sound_pane(ss)),
 		 Xen_cons(Xen_wrap_widget(ss->listener_pane),
-		   Xen_cons(Xen_wrap_widget(SOUND_PANE_BOX(ss)),
+		   Xen_cons(Xen_wrap_widget(sound_pane_box(ss)),
 		     Xen_empty_list))))));
   snd_unprotect_at(loc);
   return(res);
@@ -1312,7 +1312,7 @@ void set_highlight_color(color_t color)
   s7_symbol_set_value(s7, ss->highlight_color_symbol, Xen_wrap_pixel(color));
 #endif
 #if USE_MOTIF
-  map_over_children_with_color(MAIN_SHELL(ss), highlight_recolor_everything, old_color);
+  map_over_children_with_color(main_shell(ss), highlight_recolor_everything, old_color);
 #endif
 }
 
@@ -1784,7 +1784,7 @@ static Xen g_color_to_list(Xen obj)
 
   Xen_check_type(Xen_is_pixel(obj), obj, 1, S_color_to_list, "a color"); 
 
-  dpy = XtDisplay(MAIN_SHELL(ss));
+  dpy = XtDisplay(main_shell(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.pixel = Xen_unwrap_pixel(obj);
@@ -1812,7 +1812,7 @@ static Xen g_make_color(Xen r, Xen g, Xen b, Xen alpha)
   rf = check_color_range(S_make_color, r);
   gf = check_color_range(S_make_color, g);
   bf = check_color_range(S_make_color, b);
-  dpy = XtDisplay(MAIN_SHELL(ss));
+  dpy = XtDisplay(main_shell(ss));
   cmap = DefaultColormap(dpy, DefaultScreen(dpy));
   tmp_color.flags = DoRed | DoGreen | DoBlue;
   tmp_color.red = float_to_rgb(rf);
@@ -1840,10 +1840,10 @@ void set_basic_color(color_t color)
 #endif
   ss->basic_color = color; 
 #if USE_MOTIF
-  map_over_children_with_color(MAIN_SHELL(ss), recolor_everything, old_color);
+  map_over_children_with_color(main_shell(ss), recolor_everything, old_color);
 #endif
 #if USE_GTK
-  recolor_everything(MAIN_SHELL(ss), color);
+  recolor_everything(main_shell(ss), color);
 #endif
 
 #if USE_MOTIF

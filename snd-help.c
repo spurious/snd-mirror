@@ -232,19 +232,19 @@ static char *glx_version(void)
   char *version = NULL;
 
   if ((!ss->dialogs) || /* snd --help for example */
-      (!(MAIN_DISPLAY(ss))))
+      (!(main_display(ss))))
     return(mus_strdup(" "));
 
   version = (char *)calloc(VERSION_SIZE, sizeof(char));
   if (ss->cx)
     {
-      glXMakeCurrent(MAIN_DISPLAY(ss), XtWindow(ss->mainshell), ss->cx);
+      glXMakeCurrent(main_display(ss), XtWindow(ss->mainshell), ss->cx);
       snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
     }
   else 
     {
       int major = 0, minor = 0;
-      glXQueryVersion(MAIN_DISPLAY(ss), &major, &minor);
+      glXQueryVersion(main_display(ss), &major, &minor);
       snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
     }
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
@@ -257,11 +257,11 @@ static char *glx_version(void)
   char *version = NULL;
   int major, minor;
 
-  if ((!ss->dialogs) || (!(MAIN_DISPLAY(ss)))) /* TODO: MAIN_DISPLAY needs to be the gl context here (it's not otherwise used in gtk snd) */
+  if ((!ss->dialogs) || (!(main_display(ss)))) /* TODO: main_display needs to be the gl context here (it's not otherwise used in gtk snd) */
     return(mus_strdup(" "));
 
   version = (char *)calloc(VERSION_SIZE, sizeof(char));
-  gdk_gl_context_get_version(MAIN_DISPLAY(ss), &major, &minor);
+  gdk_gl_context_get_version(main_display(ss), &major, &minor);
   snprintf(version, VERSION_SIZE, " %d.%d", major, minor);
   if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
   return(version);

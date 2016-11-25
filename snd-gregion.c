@@ -569,7 +569,7 @@ static void make_region_dialog(void)
 
   region_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-  gtk_window_set_transient_for(GTK_WINDOW(region_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+  gtk_window_set_transient_for(GTK_WINDOW(region_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
   SG_SIGNAL_CONNECT(region_dialog, "delete_event", region_browser_delete_callback, NULL);
   gtk_window_set_title(GTK_WINDOW(region_dialog), "Regions");
@@ -846,7 +846,7 @@ static Xen g_view_regions_dialog(void)
 {
   #define H_view_regions_dialog "(" S_view_regions_dialog "): start the region dialog"
   if (snd_regions() > 0) 
-    view_region_callback(MAIN_PANE(ss), NULL); 
+    view_region_callback(main_pane(ss), NULL); 
   return(Xen_wrap_widget(region_dialog));
 }
 
@@ -1060,7 +1060,7 @@ void view_files_callback(GtkWidget *w, gpointer info)
 #endif      
       view_files_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(view_files_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(view_files_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       SG_SIGNAL_CONNECT(view_files_dialog, "delete_event", vf_delete_callback, NULL);
       gtk_window_set_title(GTK_WINDOW(view_files_dialog), "Files");

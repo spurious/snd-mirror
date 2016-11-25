@@ -675,7 +675,7 @@ GtkWidget *make_mix_dialog(void)
       mix_dialog_id = any_mix_id();
       mix_dialog = snd_gtk_dialog_new();
 #if GTK_CHECK_VERSION(3, 14, 0)
-      gtk_window_set_transient_for(GTK_WINDOW(mix_dialog), GTK_WINDOW(MAIN_SHELL(ss)));
+      gtk_window_set_transient_for(GTK_WINDOW(mix_dialog), GTK_WINDOW(main_shell(ss)));
 #endif
       SG_SIGNAL_CONNECT(mix_dialog, "delete_event", delete_mix_dialog, NULL);
       gtk_window_set_title(GTK_WINDOW(mix_dialog), "Mixes");

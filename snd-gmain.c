@@ -305,9 +305,9 @@ static void startup_funcs(void)
   ss->file_monitor_ok = true;
 
   /* trap outer-level Close for cleanup check */
-  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "delete_event", window_close, NULL);
+  SG_SIGNAL_CONNECT(main_shell(ss), "delete_event", window_close, NULL);
   /* when iconified, we need to hide any dialogs as well */
-  SG_SIGNAL_CONNECT(MAIN_SHELL(ss), "window_state_event", window_iconify, NULL);
+  SG_SIGNAL_CONNECT(main_shell(ss), "window_state_event", window_iconify, NULL);
 
   ss->graph_cursor = GDK_CURSOR_NEW((GdkCursorType)in_graph_cursor(ss));
   ss->wait_cursor = GDK_CURSOR_NEW(GDK_WATCH);
@@ -344,9 +344,9 @@ static void startup_funcs(void)
     auto_open_ctr = handle_next_startup_arg(auto_open_ctr, auto_open_file_names, true, auto_open_files);
 
   if ((ss->init_window_width > 0) && (ss->init_window_height > 0))
-    set_widget_size(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_width, ss->init_window_height);
+    set_widget_size(GTK_WIDGET(main_shell(ss)), ss->init_window_width, ss->init_window_height);
   if ((ss->init_window_x != DEFAULT_INIT_WINDOW_X) && (ss->init_window_y != DEFAULT_INIT_WINDOW_Y))
-    set_widget_position(GTK_WIDGET(MAIN_SHELL(ss)), ss->init_window_x, ss->init_window_y);
+    set_widget_position(GTK_WIDGET(main_shell(ss)), ss->init_window_x, ss->init_window_y);
 
   if (!(ss->file_monitor_ok))
     {
@@ -369,7 +369,7 @@ static void startup_funcs(void)
 
 static void set_up_icon(void)
 {
-  gtk_window_set_icon(GTK_WINDOW(MAIN_SHELL(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
+  gtk_window_set_icon(GTK_WINDOW(main_shell(ss)), gdk_pixbuf_new_from_xpm_data(snd_icon_bits()));
 }
 
 
@@ -582,59 +582,59 @@ void snd_doit(int argc, char **argv)
   init_gtk();
 #endif
 
-  MAIN_PANE(ss) = gtk_vbox_new(false, 0); /* not homogeneous, spacing 0 */
+  main_pane(ss) = gtk_vbox_new(false, 0); /* not homogeneous, spacing 0 */
 
 #if (GTK_CHECK_VERSION(3, 0, 0))
   init_gtk();
 #endif
   
-  MAIN_SHELL(ss) = shell;
-  gtk_container_add(GTK_CONTAINER(MAIN_SHELL(ss)), MAIN_PANE(ss));
+  main_shell(ss) = shell;
+  gtk_container_add(GTK_CONTAINER(main_shell(ss)), main_pane(ss));
 
-  add_menu(); /* adds menubar to MAIN_PANE (via box_pack_start) */
+  add_menu(); /* adds menubar to main_pane (via box_pack_start) */
   if (with_toolbar(ss)) show_toolbar();
 
   if (sound_style(ss) != SOUNDS_IN_SEPARATE_WINDOWS)
     {
       /* hseparator here looks bad */
 
-      SOUND_PANE(ss) = gtk_vpaned_new();
-      add_paned_style(SOUND_PANE(ss));
-      gtk_container_set_border_width(GTK_CONTAINER(SOUND_PANE(ss)), 0);
-      gtk_container_add(GTK_CONTAINER(MAIN_PANE(ss)), SOUND_PANE(ss));
+      sound_pane(ss) = gtk_vpaned_new();
+      add_paned_style(sound_pane(ss));
+      gtk_container_set_border_width(GTK_CONTAINER(sound_pane(ss)), 0);
+      gtk_container_add(GTK_CONTAINER(main_pane(ss)), sound_pane(ss));
 
       if (sound_style(ss) == SOUNDS_IN_NOTEBOOK)
 	{
-	  SOUND_PANE_BOX(ss) = gtk_notebook_new();
-	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(SOUND_PANE_BOX(ss)), GTK_POS_TOP);
-          SG_SIGNAL_CONNECT(SOUND_PANE_BOX(ss), "switch_page", notebook_switch_page, NULL);
+	  sound_pane_box(ss) = gtk_notebook_new();
+	  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(sound_pane_box(ss)), GTK_POS_TOP);
+          SG_SIGNAL_CONNECT(sound_pane_box(ss), "switch_page", notebook_switch_page, NULL);
 	}
       else 
 	{
 	  if (sound_style(ss) == SOUNDS_HORIZONTAL)
-	    SOUND_PANE_BOX(ss) = gtk_hbox_new(false, 0);
-	  else SOUND_PANE_BOX(ss) = gtk_vbox_new(false, 0);
+	    sound_pane_box(ss) = gtk_hbox_new(false, 0);
+	  else sound_pane_box(ss) = gtk_vbox_new(false, 0);
 #if GTK_CHECK_VERSION(3, 0, 0)
-	  gtk_widget_set_hexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
-	  gtk_widget_set_vexpand(GTK_WIDGET(SOUND_PANE_BOX(ss)), true);
+	  gtk_widget_set_hexpand(GTK_WIDGET(sound_pane_box(ss)), true);
+	  gtk_widget_set_vexpand(GTK_WIDGET(sound_pane_box(ss)), true);
 #endif
 	}
-      gtk_paned_add1(GTK_PANED(SOUND_PANE(ss)), SOUND_PANE_BOX(ss));
-      gtk_widget_show(SOUND_PANE_BOX(ss));
-      gtk_widget_show(SOUND_PANE(ss));
+      gtk_paned_add1(GTK_PANED(sound_pane(ss)), sound_pane_box(ss));
+      gtk_widget_show(sound_pane_box(ss));
+      gtk_widget_show(sound_pane(ss));
     }
-  gtk_widget_show(MAIN_PANE(ss));
-  gtk_widget_show(MAIN_SHELL(ss));
+  gtk_widget_show(main_pane(ss));
+  gtk_widget_show(main_shell(ss));
   
 #if HAVE_GTK_ADJUSTMENT_GET_UPPER
-  MAIN_WINDOW(ss) = gtk_widget_get_window(MAIN_SHELL(ss));
+  main_window(ss) = gtk_widget_get_window(main_shell(ss));
 #else
-  MAIN_WINDOW(ss) = MAIN_SHELL(ss)->window;
+  main_window(ss) = main_shell(ss)->window;
 #endif
   
   setup_gcs();
-  if (batch) gtk_widget_hide(MAIN_SHELL(ss));
-  else gdk_window_resize(WIDGET_TO_WINDOW(MAIN_SHELL(ss)), INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
+  if (batch) gtk_widget_hide(main_shell(ss));
+  else gdk_window_resize(WIDGET_TO_WINDOW(main_shell(ss)), INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT);
   
 #ifndef _MSC_VER
   if (setjmp(top_level_jump))
