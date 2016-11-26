@@ -1461,7 +1461,8 @@
 			  (set! result do-body)
 			  (set! do-body old-res)))
 
-		      (when (< (tree-leaves result) 50)
+		      (when (and (pair? do-body)
+				 (< (tree-leaves result) 50))
 			(let ((call (if (eq? (car do-body) name)
 					do-body
 					(and (eq? (car do-body) 'begin)
@@ -11734,7 +11735,9 @@
 			       (not (hash-table-ref other-identifiers (cadr prev-f))) ; (cadr prev-f) already ref'd, so it's a member of env
 			       (or (null? (cdr fs))
 				   (not (tree-memq (cadr prev-f) (cdr fs)))))
-		      (if (eq? (car f) 'do)
+		      (if (and (eq? (car f) 'do)
+			       (len>2? f)
+			       (proper-list? (cadr f)))
 			  ;; (... (define z (f x)) (do ((i z (+ i 1))) ((= i 3)) (display (+ z i))) ...) -> (do ((i (f x) (+ i 1))) ((= i 3)) (display (+ z i)))
 			  (lint-format "perhaps ~A" caller
 				       (lists->string (list '... prev-f f '...)
@@ -18296,20 +18299,7 @@
 		(let ((vars (declare-named-let caller form env))
 		      (varlist ((if named-let caddr cadr) form))
 		      (body ((if named-let cdddr cddr) form)))
-#|
-		(if (and (not named-let)
-			 (pair? varlist)
-			 (> (length body) 2)
-			 (pair? (last-par body))
-			 (pair? (list-ref body (- (length body) 2)))
-			 (eq? 'set! (car (list-ref body (- (length body) 2))))
-			 (assq (cadr (list-ref body (- (length body) 2))) varlist)
-			 (= (tree-count (cadr (list-ref body (- (length body) 2))) (last-par body)) 1))
-		    (format *stderr* "~A~%~%" (lint-pp form)))
-		;; if last is do, add to locals? esp if not used except there
-		;;    don't move into loop
-		;; if long value use let, perhaps remove var from outer let
-|#
+
 		  (if (not (list? varlist))
 		      (lint-format "let is messed up: ~A" caller (truncated-list->string form))
 		      (if (and (null? varlist)
@@ -18355,7 +18345,44 @@
 			 (when (and (pair? (car body))
 				    (eq? (caar body) 'do))
 			   (normal-let->do caller form env))
-			 (tighten-let caller form vars env))))
+			 (tighten-let caller form vars env)
+#|
+			 (let ((hits ())
+			       (prev ()))
+			   (do ((p body (cdr p))) ; or start at (cdr body)??
+			       ((not (pair? p))
+				(if (pair? hits)
+				    (format *stderr* "~A~%~%  hits: ~{~A~^~%        ~}~%~NC~%~%" 
+					    (lint-pp form) 
+					    (map (lambda (h)
+						   (truncated-lists->string (car h) (caadr h)))
+						 hits)
+					    40 #\-)))
+			     (let ((call (car p)))
+			       (if (pair? call)
+				   (if (and (eq? (car call) 'set!)
+					    (assq (cadr call) varlist))
+				       (set! prev call)
+				       (begin
+					 ;; check actual use here: syntax do/begin/if/when/unless [all as test?]
+
+					 (if (and (pair? prev)
+						  (= (tree-count (cadr prev) call) 1)
+						  (not (tree-memq (cadr prev) (cdr p))))
+					     (set! hits (cons (list prev p) hits)))
+					 (set! prev ())))
+				   (set! prev ())))))
+					     
+			 ;; look for (set! x) then (use x once) with no further x ref where x is local (use alist)
+			 ;; if use is syntax-not-do or macro, ignore
+			 ;;   if do and use is in body/test/result (not inits), add to do without step
+			 ;;   else embed set! in following
+			 ;;   if no preceding ref, remove from let
+			 ;; ref after set can't depend on preceding set -- i.e. not rewritten-out let* [do inits here also]
+			 ;;   i.e. (set! c (read)) (f c (read)) -- where is order check?
+			 ;; 151 cases in lg
+|#
+			 )))
 
 		   (combine-lets caller form varlist env))))
 	   env)
@@ -18372,7 +18399,7 @@
 			 (pair? (car body))
 			 (eq? (caar body) 'do)
 			 (len>2? (car body))
-			 (every? pair? (cadar body))
+			 (every? len>1? (cadar body))
 			 (< (tree-leaves (cdr body)) *max-cdr-len*))
 		(let ((inits (if (pair? (cadar body))
 				 (map cadr (cadar body))
@@ -21070,5 +21097,6 @@
 ;;;   or mid body if no further use of x: actually the set! can be embedded
 ;;;   in let-walker, set! case can include *-set!
 ;;; pointless rtn (like 'ok and 'done)
+;;; rewrite walk-open-body
 ;;;
 ;;; 181 28774 737656
