@@ -45854,8 +45854,7 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  sc->print_length = old_len;
 
 		  new_note_len = symbol_name_length(code) + 3 + objlen;
-		  /* we want to append this much info to the notes, but does it need a new line?
-		   */
+		  /* we want to append this much info to the notes, but does it need a new line? */
 		  if (notes_start_col < code_cols)
 		    new_notes_line = true;
 		  else
@@ -46042,7 +46041,7 @@ static char *stacktrace_1(s7_scheme *sc, int frames_max, int code_cols, int tota
 			notes = stacktrace_walker(sc, code, e, NULL, gc_syms, code_cols, total_cols, notes_start_col, as_comment);
 		      newstr = stacktrace_add_func(sc, f, code, codestr, notes, code_cols, as_comment);
 		      free(codestr);
-		      if (notes) free(notes);
+		      if ((notes) && (notes != newstr) && (is_let(e)) && (e != sc->rootlet)) free(notes); /* double free somehow?? */
 
 		      newlen = strlen(newstr) + 1 + ((str) ? strlen(str) : 0);
 		      codestr = (char *)malloc(newlen * sizeof(char));
@@ -75142,20 +75141,20 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                           
- * s7test   1721 | 1358 |  995 | 1194 | 1122 |
- * index    44.3 | 3291 | 1725 | 1276 | 1156 |
- * teq           |      |      | 6612 | 2380 |
- * tauto     265 |   89 |  9   |  8.4 | 2638 |
- * tcopy         |      |      | 13.6 | 3204 |
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 |
- * tform         |      |      | 6816 | 3627 |
- * tmap          |      |      |  9.3 | 4176 |
- * titer         |      |      | 7503 | 5218 |
- * thash         |      |      | 50.7 | 8491 |
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170
+ * teq           |      |      | 6612 | 2380 | 2380
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889
+ * tcopy         |      |      | 13.6 | 3204 | 3088
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221
+ * tform         |      |      | 6816 | 3627 | 3724
+ * tmap          |      |      |  9.3 | 4176 | 4171
+ * titer         |      |      | 7503 | 5218 | 5227
+ * thash         |      |      | 50.7 | 8491 | 8518
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 |
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 |
- * calls     359 |  275 | 54   | 34.7 | 37.1 |
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2
  * 
  * --------------------------------------------------------------------
  *

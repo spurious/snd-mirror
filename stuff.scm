@@ -1667,7 +1667,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 
 (define-macro* (rlambda args . body) ; lambda* but eval arg defaults in run-time env
   (let ((arg-names (map (lambda (arg) (if (pair? arg) (car arg) arg)) args))
-	(arg-defaults (map (lambda (arg) (if (pair? arg) `(,(car arg) (eval ,(cadr arg))) arg)) args)))
+	(arg-defaults (map (lambda (arg) (if (pair? arg) (list (car arg) (list 'eval (cadr arg))) arg)) args)))
     `(define-bacro* (,(gensym) ,@arg-defaults)
        `((lambda ,',arg-names ,'(begin ,@body)) ,,@arg-names))))
 

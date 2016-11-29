@@ -6,7 +6,7 @@
     (correlate (channel->float-vector 0 fftlen snd1 chn1) 
 	       (channel->float-vector 0 fftlen snd0 chn0))))
 
-(define (lag? snd0 chn0 snd1 chn1)
+(define (lag-time snd0 chn0 snd1 chn1)
   ;; returns the probable lagtime between the two sounds (negative means second sound is delayed)
   (let ((corr (cross-correlate snd0 chn0 snd1 chn1)))
     (let ((len (length corr))
@@ -98,7 +98,7 @@
 			      (list 'scale scl 'differences diff)))))))
 
 	;; align sounds and  zero out any non-overlapping sections, keeping track of whether they are zero beforehand
-	(let ((lag (lag? snd0 chn0 snd1 chn1))
+	(let ((lag (lag-time snd0 chn0 snd1 chn1))
 	      (pre0 #f)
 	      (pre1 #f))
 	  (if (> lag 0)
