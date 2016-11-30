@@ -19,7 +19,7 @@
 (define *report-any-!-as-setter* #t)                      ; unknown funcs/macros ending in ! are treated as setters
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says...
-(define *report-constant-expressions-in-do* #f)           ; kinda dumb
+(define *report-constant-expressions-in-do* #f)           ; kinda dumb, includes map, for-each, and named let
 (define *report-bad-variable-names* '(l ll .. O ~))       ; bad names -- a list to check such as:
 ;;;             '(l ll .. ~ data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
 (define *report-ridiculous-variable-names* 60)            ; max length of var name 
@@ -5869,7 +5869,8 @@
           (and (pair? producer)
                (case (car producer) 
 		 ((lambda lambda*)
-		  (count-values (cddr producer)))
+		  (and (len>1? (cdr producer))
+		       (count-values (cddr producer))))
 		 ((values)
 		  (let ((len (- (length producer) 1)))
 		    (for-each
@@ -5920,6 +5921,103 @@
 		       (qq-tree? (cdr tree)))))))
 
 
+    (define (find-constant-exprs caller vars form body)
+      (if (or (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
+					 define-macro define-macro* define-bacro define-bacro* define-constant define-expansion)
+			       body)
+	      (let set-walk ((tree body)) ; generalized set! causes confusion
+		(and (pair? tree)
+		     (or (and (eq? (car tree) 'set!)
+			      (pair? (cdr tree))
+			      (pair? (cadr tree)))
+			 (set-walk (car tree))
+			 (set-walk (cdr tree))))))
+	  ()
+	  (let ((refs (let ((vs (out-vars caller vars body)))
+			(remove-if (lambda (v)
+				     (or (assq v vars)        ; vars = do-loop steppers
+					 (memq v (cadr vs)))) ; (cadr vs) = sets
+				   (car vs))))
+		;; refs are the external variables accessed in the do-loop body
+		;;   that are not set or shadowed or changed (vector-set! etc)
+		(constant-exprs ()))
+	    
+	    (let expr-walk ((tree body))
+	      (when (pair? tree)
+		(if (let all-ok? ((tree tree))
+		      (if (symbol? tree)
+			  (memq tree refs)
+			  (or (not (pair? tree))
+			      (eq? (car tree) 'quote)
+			      (and (hash-table-ref no-side-effect-functions (car tree))
+				   (or (not (hash-table-ref syntaces (car tree)))
+				       (memq (car tree) '(if begin cond or and unless when)))
+				   (not (hash-table-ref makers (car tree)))
+				   (list? (cdr tree))
+				   (every? all-ok? (cdr tree))))))
+		    (if (not (or (eq? (car tree) 'quote) (member tree constant-exprs)))
+			(set! constant-exprs (cons tree constant-exprs)))
+		    (begin
+		      (if (pair? (car tree))
+			  (expr-walk (car tree)))
+		      (when (pair? (cdr tree))
+			(let ((f (cdr tree)))
+			  (case (car f)
+			    ((case)
+			     (when (len>1? (cdr f)) 
+			       (expr-walk (cadr f))
+			       (for-each (lambda (c) 
+					   (if (len>1? c)
+					       (expr-walk (cdr c))))
+					 (cddr f))))
+			    ((letrec letrec*)
+			     (when (and (len>1? (cdr f))
+					(list? (cadr f)))
+			       (for-each (lambda (c)
+					   (if (len>1? c) 
+					       (expr-walk (cadr c))))
+					 (cadr f))
+			       (expr-walk (cddr f))))
+			    ((let let*)
+			     (when (len>1? (cdr f))
+			       (if (symbol? (cadr f))
+				   (set! f (cdr f)))
+			       (when (list? (cadr f))
+				 (for-each (lambda (c)
+					     (if (len>1? c) 
+						 (expr-walk (cadr c))))
+					   (cadr f))
+				 (expr-walk (cddr f)))))
+			    ((do)
+			     (when (and (len>1? (cdr f))
+					(list? (cadr f))
+					(list? (caddr f)) 
+					(pair? (cdddr f)))
+			       (for-each (lambda (c) 
+					   (if (len>2? c)
+					       (expr-walk (caddr c))))
+					 (cadr f))
+			       (expr-walk (cdddr f))))
+			    (else (for-each expr-walk f)))))))))
+	    (when (pair? constant-exprs)
+	      (set! constant-exprs (remove-if (lambda (p)
+						(or (null? (cdr p))
+						    (and (null? (cddr p))
+							 (memq (car p) '(not -))
+							 (symbol? (cadr p)))
+						    (tree-unquoted-member 'port-line-number p)))
+					      constant-exprs))
+	      (when (pair? constant-exprs)
+		(if (null? (cdr constant-exprs))
+		    (lint-format "in ~A, ~A appears to be constant" caller
+				 (truncated-list->string form)
+				 (car constant-exprs))
+		    (lint-format "in ~A, the following expressions appear to be constant:~%~NC~A" caller
+				 (truncated-list->string form)
+				 (+ lint-left-margin 4) #\space
+				 (format #f "~{~A~^, ~}" constant-exprs))))))))
+
+    
     (define special-case-functions
       (let ((special-case-table (make-hash-table)))
 	
@@ -8499,10 +8597,33 @@
 		  (val (and (pair? (cdr form))
 			    (cadr form))))
 
-	      (if (and (= len 1)
-		       (eq? head 'list)         ; (eq? (vector) #()) -> #f (same for string etc)
-		       (not (var-member 'list env)))
-		  (lint-format "perhaps (list) -> (); there is only one nil" caller))
+	      (when (eq? head 'list)                ; (list) -> () but not (vector) -> #()
+		(if (= len 1)                       ;    (eq? (vector) #()) -> #f (same for string etc)
+		    (if (not (var-member 'list env))
+			(lint-format "perhaps (list) -> (); there is only one nil" caller))
+		    (if (and (> len 3)
+			     (len=2? (cadr form)))  ; (list (f a) (f b) (f c)) -> (map f (list a b c))
+			(let ((f (caadr form)))     ;    map orders this process whereas list is unordered?
+			  ;; not any-macro? f?? or no side-effect? in the args?
+			  (if (and (not (memq f '(quote values)))
+				   (every? (lambda (p)
+					     (and (len=2? p)
+						  (eq? f (car p))))
+					   (cddr form)))
+			      (lint-format "perhaps ~A" caller 
+					   (truncated-lists->string form
+					    (if (every? (lambda (p) 
+							  (code-constant? 
+							   (cadr p))) 
+							(cdr form))
+						`(map ,f ',(map (lambda (p)
+								   (if (and (pair? (cadr p))
+									    (eq? (caadr p) 'quote))
+								       (cadadr p)
+								       (cadr p)))
+								 (cdr form)))
+						`(map ,f (list ,@(map cadr (cdr form))))))))))))
+	      ;; *vector here gets a dozen or so hits but (apply vector (map f (list ...))) involves too much consing
 
 	      (when (and (> len 4)
 			 (every? (lambda (a) (equal? a val)) (cddr form)))
@@ -8910,6 +9031,13 @@
 											    ,@(tree-subst (tree-subst arg-name (caadr seq-func) (caddr seq-func))
 													  (caadr func) (cddr func)))
 											  ,(caddr seq)))))))))))))
+			(when *report-constant-expressions-in-do*
+			  (let ((func (cadr form)))
+			    (when (and (pair? func)
+				       (eq? (car func) 'lambda)
+				       (proper-list? (cadr func)))
+			      (find-constant-exprs head (cadr func) form (cddr func)))))
+			
 			;; repetitive code...
 			(when (eq? head 'for-each) ; args = 1 above  ; (for-each display (list a)) -> (format () "~A" a)
 			  (let ((func (cadr form)))
@@ -9581,6 +9709,7 @@
 
 	;; ---------------- the-environment etc ----------------
 	(let ((other-names '((->string . object->string)
+			     (any . any?)
 			     (arithmetic-shift . ash)
 			     (bit-and . logand) 
 			     (bit-not . lognot)
@@ -9606,6 +9735,7 @@
 			     (environment-ref . let-ref)
 			     (environment-set! . let-set!)
 			     (environment? . let?)
+			     (every . every?)
 			     (exact-integer? . integer?)
 			     (f64vector . float-vector)
 			     (f64vector-length . length)
@@ -9634,6 +9764,7 @@
 			     (hashv-ref . hash-table-ref)
 			     (hashv-set! . hash-table-set!)
 			     (interaction-environment . curlet)
+			     (intern . string->symbol)
 			     (list-copy . copy)
 			     (list-reverse . reverse)
 			     (make-bytevector . make-byte-vector)
@@ -9641,6 +9772,7 @@
 			     (make-hashtable . make-hash-table)
 			     (make-s64vector . make-int-vector)
 			     (make-u8vector . make-byte-vector)
+			     (nreverse . reverse!)
 			     (open-input-bytevector . open-input-string)
 			     (open-output-bytevector . open-output-string)
 			     (peek-u8 . peek-char)
@@ -9655,6 +9787,8 @@
 			     (s64vector-ref . int-vector-ref)
 			     (s64vector-set! . int-vector-set!)
 			     (s64vector? . int-vector?)
+			     (some . any?)
+			     (some? . any?)
 			     (string-for-each . for-each)
 			     (string-reverse! . reverse!)
 			     (system-global-environment . rootlet)
@@ -10120,7 +10254,7 @@
 				 (define c-walk 
 				   (let ((rtn (caar f)))
 				     (lambda (tree)
-				       (if (pair? tree)
+				       (if (len>1? tree)
 					   (if (eq? (car tree) rtn)
 					       (check-arg (if (null? (cdr tree)) () (cadr tree)))
 					       (begin
@@ -13039,90 +13173,6 @@
 	     (equal? eqv-select (cadr clause)))
 	    
 	    (else #f))))
-    
-    (define (find-constant-exprs caller vars body)
-      (if (or (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
-				 define-macro define-macro* define-bacro define-bacro* define-constant define-expansion)
-			       body)
-	      (let set-walk ((tree body)) ; generalized set! causes confusion
-		(and (pair? tree)
-		     (or (and (eq? (car tree) 'set!)
-			      (pair? (cdr tree))
-			      (pair? (cadr tree)))
-			 (set-walk (car tree))
-			 (set-walk (cdr tree))))))
-	  ()
-	  (let ((refs (let ((vs (out-vars caller vars body)))
-			(remove-if (lambda (v)
-				     (or (assq v vars)        ; vars = do-loop steppers
-					 (memq v (cadr vs)))) ; (cadr vs) = sets
-				   (car vs))))
-		;; refs are the external variables accessed in the do-loop body
-		;;   that are not set or shadowed or changed (vector-set! etc)
-		(constant-exprs ()))
-
-	    (let expr-walk ((tree body))
-	      (when (pair? tree)
-		(if (let all-ok? ((tree tree))
-		      (if (symbol? tree)
-			  (memq tree refs)
-			  (or (not (pair? tree))
-			      (eq? (car tree) 'quote)
-			      (and (hash-table-ref no-side-effect-functions (car tree))
-				   (or (not (hash-table-ref syntaces (car tree)))
-				       (memq (car tree) '(if begin cond or and unless when)))
-				   (not (hash-table-ref makers (car tree)))
-				   (list? (cdr tree))
-				   (every? all-ok? (cdr tree))))))
-		    (if (not (or (eq? (car tree) 'quote) (member tree constant-exprs)))
-			(set! constant-exprs (cons tree constant-exprs)))
-		    (begin
-		      (if (pair? (car tree))
-			  (expr-walk (car tree)))
-		      (when (pair? (cdr tree))
-			(let ((f (cdr tree)))
-			  (case (car f)
-			    ((case)
-			     (when (len>1? (cdr f)) 
-			       (expr-walk (cadr f))
-			       (for-each (lambda (c) 
-					   (expr-walk (cdr c)))
-					 (cddr f))))
-			    ((letrec letrec*)
-			     (when (pair? (cddr f))
-			       (for-each (lambda (c)
-					   (if (len>1? c) 
-					       (expr-walk (cadr c))))
-					 (cadr f))
-			       (expr-walk (cddr f))))
-			    ((let let*)
-			     (when (pair? (cddr f))
-			       (if (symbol? (cadr f))
-				   (set! f (cdr f)))
-			       (for-each (lambda (c)
-					   (if (len>1? c) 
-					       (expr-walk (cadr c))))
-					 (cadr f))
-			       (expr-walk (cddr f))))
-			    ((do)
-			     (when (and (list? (cadr f))
-					(list? (cddr f)) 
-					(pair? (cdddr f)))
-			       (for-each (lambda (c) 
-					   (if (pair? (cddr c)) 
-					       (expr-walk (caddr c))))
-					 (cadr f))
-			       (expr-walk (cdddr f))))
-			    (else (for-each expr-walk f)))))))))
-	    (when (pair? constant-exprs)
-	      (set! constant-exprs (remove-if (lambda (p)
-						(or (null? (cdr p))
-						    (and (null? (cddr p))
-							 (memq (car p) '(not -))
-							 (symbol? (cadr p)))
-						    (tree-unquoted-member 'port-line-number p)))
-					      constant-exprs)))
-	    constant-exprs)))
     
     (define (partition-form start len)
       (let ((ps (make-vector len))
@@ -16938,17 +16988,7 @@
 	    
 	    ;; look for constant expressions in the do body
 	    (when *report-constant-expressions-in-do*
-	      (let ((constant-exprs (find-constant-exprs 'do (map var-name vars) (cdddr form))))
-		(when (pair? constant-exprs)
-		  (if (null? (cdr constant-exprs))
-		      ;; (do ((p (list 1) (cdr p))) ((null? p)) (set! y (log z 2)) (display x))
-		      (lint-format "in ~A, ~A appears to be constant" caller
-				   (truncated-list->string form)
-				   (car constant-exprs))
-		      (lint-format "in ~A, the following expressions appear to be constant:~%~NC~A" caller
-				   (truncated-list->string form)
-				   (+ lint-left-margin 4) #\space
-				   (format #f "~{~A~^, ~}" constant-exprs)))))))
+	      (find-constant-exprs 'do (map var-name vars) form (cdddr form))))
 
 	  ;; -------- simplify-do --------
 	  (define (simplify-do caller form env)
@@ -17175,14 +17215,17 @@
 			     (and (proper-list? (caddr form))
 				  (every? pair? (caddr form))))))
 		()
-		(list (make-fvar :name named-let 
-				 :ftype (car form)
-				 :decl (dummy-func caller form (list (if (eq? (car form) 'let) 'define 'define*)
-								     (cons '_ (map car (caddr form)))
-								     #f))
-				 :arglist (map car (caddr form))
-				 :initial-value form
-				 :env env)))))
+		(let ((vars (map car (caddr form))))
+		  (when *report-constant-expressions-in-do*
+		    (find-constant-exprs (car form) vars form (cdddr form)))
+		  (list (make-fvar :name named-let 
+				   :ftype (car form)
+				   :decl (dummy-func caller form (list (if (eq? (car form) 'let) 'define 'define*)
+								       (cons '_ (map car (caddr form)))
+								       #f))
+				   :arglist vars
+				   :initial-value form
+				   :env env))))))
 
 	;; -------- remove-null-let --------
 	(define (remove-null-let caller form env)
@@ -21127,9 +21170,21 @@
     #f))
 |#
 
-;;; extend constant-exprs in do to named-let/map etc? looks like find-constant-exprs + report[16793]
-;;;    in map/for-each/named-let/recursive-func, vars are pars/locals?
 ;;; let*->let recursively (etc)
 ;;; accessors via *-ref -> let? possibly hidden?
+;;; multiple (not...) inverted? are there other such cases?
+;;; (and (not (null? x)) (car x)) and variations [if nn crx... cond etc]
+;;; long cond of (= same sym, sym not set ands not equal...) -> hash [also alist + made from qq]
+;;; letrec of f then g using f -> letrec*? (or vice-versa)
+;;; (if A (f x) (or (f x) (g y))) -> (or (f x) (and (not A) (g y)))
+;;; when A x; when B x;... (also unless if) if x no side-effect?
+;;; maybe check module/export/import for repeated name?
+;;; ({list} (f x) (f y) ...) -> (map f (list x y...))
+;;;    possibly list->map for 2 arg procs -- 2 extra lists
+;;;    sequence->for-each (see t347 -- (format #f...) is not side-effect [12174 -- currently just constants I think]
+;;;      as section of body here also
+;;; ifs->cond + assoc? ((if (equal? "space" (car tsil)) (display ".")) (if (equal? "baddie" (car tsil))...))
+;;; letrec+lambda -> lambda+named-let
+;;; cond ((not x)...) ((string=? x...)...) -> (not (string? x))
 ;;;
-;;; 181 28774 737656
+;;; 181 28774 743422
