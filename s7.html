@@ -829,6 +829,45 @@ such as:
 </div>
 </details>
 
+<!--
+unknown key handling is not good -- :allow-key-values?
+
+(define* (f1 a) (list a))
+(f1 :hi) -> (:hi)
+(f1 ':hi) -> (:hi)
+(f1 :a :hi) -> (:hi)
+
+(define* (f2 a :allow-other-keys) (list a))
+(f2 :hi) -> (:hi)
+
+(define* (f3 a b :allow-other-keys) (list a b))
+(f3 :hi 0) -> (#f #f)
+(f3 :hi) => (:hi #f)
+
+(define* (f4 a) (list (symbol->keyword a))) ; or string->keyword
+(f4 'hi) -> (:hi)
+
+(define* (f5 a)
+  ((lambda* (hi) (list hi)) (symbol->keyword a) 32))
+(f5 'hi) -> (32)
+
+(define* (f6 a b)
+  ((lambda* (hi) (list hi)) a b))
+(f6 :hi 1) -> unknown key :hi
+
+(define* (f7 a b) (list a b))
+(f7 :hi) -> (:hi #f)
+(f7 0 :hi) -> (0 :hi)
+(f7 :hi 0) -> unknown key
+(f7 :a :hi) -> (:hi #f)
+(f7 :a :hi 32) -> (:hi 32)
+
+(define* (f8 a b)
+  ((lambda* (hi ho) (list hi ho)) (symbol->keyword a) b))
+(f8 'hi 32) -> (32 #f)
+(f8 'ho 32) -> (#f 32)
+-->
+
 </blockquote>
 
 
