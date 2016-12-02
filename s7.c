@@ -36731,6 +36731,7 @@ static s7_int sequence_length(s7_scheme *sc, s7_pointer lst);
 static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer y, tp, np = NULL, pp;
+  bool args_are_lists = true;
 
   /* we know here that args is a pair and cdr(args) is a pair */
   tp = sc->nil;
@@ -36745,8 +36746,11 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	{
 	  if (is_null(tp))
 	    return(p);
-	  if ((s7_is_list(sc, p)) ||
-	      (!is_sequence(p)))
+	  /* (append (list 1) "hi") should return '(1 . "hi") not '(1 #\h #\i) 
+	   *   but this is inconsistent with (append (list 1) "hi" "hi") -> '(1 #\h #\i . "hi") ?
+	   *   Perhaps if all args but last are lists, returned dotted list?
+	   */
+	  if (args_are_lists || (is_null(p)))
 	    set_cdr(np, p);
 	  else 
 	    {
@@ -36795,6 +36799,7 @@ static s7_pointer g_list_append(s7_scheme *sc, s7_pointer args)
 	  else
 	    {
 	      s7_int len;
+	      args_are_lists = false;
 	      len = sequence_length(sc, p);
 	      if (len > 0)
 		{
@@ -75183,4 +75188,5 @@ int main(int argc, char **argv)
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
  *   for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
+ * snd-test.scm for rest of numerics.scm?
  */
