@@ -68139,6 +68139,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_ERROR_QUIT:
 	case OP_EVAL_DONE:
 	  /* this is the "time to quit" operator */
+	  if (sc->stack_end < (sc->stack_start + 3)) /* maybe good enough: sc->stack_env <= sc->stack_start */
+	    stack_reset(sc);
 	  return(sc->F);
 	  break;
 	  

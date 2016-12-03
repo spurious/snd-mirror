@@ -571,8 +571,7 @@
 	  (and (sequence? sequence)
 	       (call-with-exit
 		(lambda (return) 
-		  (for-each (lambda (arg) (if (not (f arg)) (return #f))) sequence)
-		  #t))))))
+		  (for-each (lambda (arg) (if (not (f arg)) (return #f))) sequence)))))))
     
     (define any? 
       (let ((documentation "(any? func sequence) returns #t if func approves of any member of sequence")
@@ -581,8 +580,7 @@
 	  (and (sequence? sequence)
 	       (call-with-exit
 		(lambda (return) 
-		  (for-each (lambda (arg) (if (f arg) (return #t))) sequence)
-		  #f))))))
+		  (not (for-each (lambda (arg) (if (f arg) (return #t))) sequence))))))))
     
     (define collect-if 
       (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
@@ -1207,10 +1205,11 @@
 			   ((if) 
 			    #t) ; only 1 hit for 2 reversal branches, say 20 hits for 2 ifs + repeated return vals (collapsible) -- see tmp
 			   ((when)
-			    (set! body `((if ,(cadar body) 
-					     ,@(if (null? (cdddar body)) 
-						   (cddar body) 
-						   (list (cons 'begin (cddar body))))))))
+			    (and (pair? (cddar body))
+				 (set! body `((if ,(cadar body) 
+						  ,@(if (null? (cdddar body)) 
+							(cddar body) 
+							(list (cons 'begin (cddar body)))))))))
 			   ((unless)
 			    (set! body `((if (not ,(cadar body)) 
 					     ,@(if (null? (cdddar body))
@@ -6272,9 +6271,10 @@
 			  (if (and (pair? sig)
 				   (symbol? (car sig))
 				   (not (eq? (car sig) 'values)))
-			      (let ((vals (map (lambda (item)
-						 (if ((symbol->value (car sig)) item) item (values)))
-					       (cadr items))))
+			      (let ((vals (let ((car-sig-val (symbol->value (car sig))))
+					    (map (lambda (item)
+						   (if (car-sig-val item) item (values)))
+						 (cadr items)))))
 				(if (not (= (length vals) nitems))
 				    (lint-format "perhaps ~A" caller
 						 (lists->string form
@@ -8626,10 +8626,10 @@
 							   (cadr p))) 
 							(cdr form))
 						`(map ,f ',(map (lambda (p)
-								   (if (and (pair? (cadr p))
+								  ((if (and (pair? (cadr p))
 									    (eq? (caadr p) 'quote))
-								       (cadadr p)
-								       (cadr p)))
+								       cadadr cadr)
+								   p))
 								 (cdr form)))
 						`(map ,f (list ,@(map cadr (cdr form))))))))))))
 	      ;; *vector here gets a dozen or so hits but (apply vector (map f (list ...))) involves too much consing
@@ -12481,7 +12481,8 @@
 	      
 	      (let ((len (length body))
 		    (old-current-form lint-current-form)
-		    (old-mid-form lint-mid-form))
+		    (old-mid-form lint-mid-form)
+		    (macdef (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))))
 
 		(if (eq? head 'do) (set! len (+ len 1))) ; last form in do body is not returned
 		(do ((prev-f #f)
@@ -12584,8 +12585,8 @@
 			(set! dpy-start #f))
 		      (unless dpy-case (set! dpy-start #f)))
 		    
-		    (if (and (pair? f)
-			     (memq head '(defmacro defmacro* define-macro define-macro* define-bacro define-bacro*))
+		    (if (and macdef
+			     (pair? f)
 			     (tree-member 'unquote f))
 			(lint-format "~A probably has too many unquotes: ~A" caller head (truncated-list->string f)))
 		    
@@ -12979,25 +12980,26 @@
 		(begin
 		  (lint-format "strange ~A parameter list ~A" function-name definer args)
 		  env)
-		(let ((args-as-vars (if (symbol? args)                            ; this is getting arg names to add to the environment
-					(list (make-var :name args :definer 'parameter))
-					(map (lambda (arg)
-					       (if (symbol? arg)
-						   (if (memq arg '(:rest :allow-other-keys))
-						       (values)                  ; omit :rest and :allow-other-keys
-						       (make-var :name arg :definer 'parameter))
-						   (if (not (and (len=2? arg)
-								 (memq definer '(define* lambda* defmacro* define-macro* define-bacro* definstrument define*-public))))
-						       (begin
-							 (lint-format "strange parameter for ~A: ~S" function-name definer arg)
-							 (values))
-						       (begin
-							 (if (not (or (cadr arg)                      ; (define* (f4 (a #f)) a)
-								      (eq? definer 'define*-public))) ; who knows?
-							     (lint-format "the default argument value is #f in ~A, so ~A can be ~A" function-name
-									  definer arg (car arg)))
-							 (make-var :name (car arg) :definer 'parameter)))))
-					     (proper-list args)))))
+		(let ((args-as-vars 
+		       (if (symbol? args)                            ; this is getting arg names to add to the environment
+			   (list (make-var :name args :definer 'parameter))
+			   (let ((star-definer (memq definer '(define* lambda* defmacro* define-macro* define-bacro* definstrument define*-public))))
+			     (map (lambda (arg)
+				    (if (symbol? arg)
+					(if (memq arg '(:rest :allow-other-keys))
+					    (values)                  ; omit :rest and :allow-other-keys
+					    (make-var :name arg :definer 'parameter))
+					(if (not (and star-definer (len=2? arg)))
+					    (begin
+					      (lint-format "strange parameter for ~A: ~S" function-name definer arg)
+					      (values))
+					    (begin
+					      (if (not (or (cadr arg)                      ; (define* (f4 (a #f)) a)
+							   (eq? definer 'define*-public))) ; who knows?
+						  (lint-format "the default argument value is #f in ~A, so ~A can be ~A" function-name
+							       definer arg (car arg)))
+					      (make-var :name (car arg) :definer 'parameter)))))
+				  (proper-list args))))))
 		  
 		  (let* ((cur-env (cons (make-var :name :let
 						  :initial-value form
@@ -14250,18 +14252,19 @@
 		      ;; else not pair? diff
 		      (unless (memq true-op '(let let*))
 			;; differ-in-trailers can (sometimes) take advantage of values
-			(let ((enddiff (let differ-in-trailers ((p true)
-								(q false)
-								(c 0))
-					 (and (pair? p)
-					      (pair? q)
-					      (if (equal? (car p) (car q))
-						  (differ-in-trailers (cdr p) (cdr q) (+ c 1))
-						  (and (> c 1)
-						       (let ((op (if (memq true-op '(and or + * begin max min)) true-op 'values)))
-							 (list p 
-							       (if (null? (cdr p)) (car p) (cons op p))
-							       (if (null? (cdr q)) (car q) (cons op q))))))))))
+			(let ((enddiff 
+			       (let ((op (if (memq true-op '(and or + * begin max min)) true-op 'values)))
+				 (let differ-in-trailers ((p true)
+							  (q false)
+							  (c 0))
+				   (and (pair? p)
+					(pair? q)
+					(if (equal? (car p) (car q))
+					    (differ-in-trailers (cdr p) (cdr q) (+ c 1))
+					    (and (> c 1)
+						 (list p 
+						       (if (null? (cdr p)) (car p) (cons op p))
+						       (if (null? (cdr q)) (car q) (cons op q))))))))))
 			  
 			  ;; (if A (+ B C E) (+ B D)) -> (+ B (if A (+ C E) D))
 			  ;; if p/q null, don't change because for example
@@ -15059,28 +15062,37 @@
 							       (if ,expr ,(cadr true-rest) ,(cadr false-rest))
 							       ,(caddr true-rest)))))))))))
 	  
-	  ;;-------- if->or --------
-	  (define (if->or caller form expr true false env)
+	  ;;-------- if->or/begin --------
+	  (define (if->or/begin caller form expr true false env)
 	    ;; cond version of this gets no hits
-	    (when (not (side-effect? expr env))
-	      (if (and (pair? false)
-		       (eq? (car false) 'or)
+	    ;; moving the test after the first statement assumes the statement won't affect the test.
+	    ;;   this seems to be always the case -- a check could involve outvars or
+	    ;;     (if (and (pair? true) (eq? (car true) 'set!) (tree-memq (cadr true) expr))...)
+	    ;;   but it gets no hits.  The same problem probably affects move-false-outward etc.
+	    (unless (side-effect? expr env)
+	      (if (and (len>2? false)
+		       (memq (car false) '(or begin))
 		       (equal? true (cadr false)))
-		  (lint-format "perhaps ~A" caller   ; (if A (f x) (or (f x) ...)) -> (or (f x) (and (not A) (or ...)))
+		  (lint-format "perhaps ~A" caller            ; (if A (f x) (or (f x) ...)) -> (or (f x) (and (not A) (or ...)))
 			       (lists->string form
-					      `(or ,true (and ,(simplify-boolean (list 'not expr) () () env)
-							      ,(if (pair? (cdddr false))
-								   (cons 'or (cddr false))
-								   (caddr false))))))
-		  (if (and (pair? true)
-			   (eq? (car true) 'or)      ; (if A (or (f x)...) (f x)) -> (or (f x) (and A (or ...)))
+					      (if (eq? (car false) 'or)
+						  `(or ,true (and ,(simplify-boolean (list 'not expr) () () env)
+								  ,(if (pair? (cdddr false))
+								       (cons 'or (cddr false))
+								       (caddr false))))
+						  `(begin ,true (when ,(simplify-boolean (list 'not expr) () () env) 
+								  ,@(cddr false))))))
+		  (if (and (len>2? true)
+			   (memq (car true) '(or begin))      ; (if A (or (f x)...) (f x)) -> (or (f x) (and A (or ...)))
 			   (equal? false (cadr true)))
 		      (lint-format "perhaps ~A" caller
 				   (lists->string form
-						  `(or ,false (and ,expr
-								   ,(if (pair? (cdddr true))
-									(cons 'or (cddr true))
-									(caddr true))))))))))
+						  (if (eq? (car true) 'or)
+						      `(or ,false (and ,expr
+								       ,(if (pair? (cdddr true))
+									    (cons 'or (cddr true))
+									    (caddr true))))
+						      `(begin ,false (when ,expr ,@(cddr true))))))))))
 
 	  ;; -------- if-walker --------
 	  (define (if-walker caller form env)
@@ -15137,7 +15149,7 @@
 					(not (= line-number last-if-line-number)))
 			       (flip-out-not caller form expr true false))
 			     (move-let-outward caller form expr true false env)
-			     (if->or caller form expr true false env)))))
+			     (if->or/begin caller form expr true false env)))))
 
 		       ;; walking the if's with true/false lists for simplify-boolean found only 1 case of a collapsible test
 		       (if (symbol? expr)
@@ -16865,14 +16877,16 @@
 				       (eq? (car (caddr stepper)) 'cdr)
 				       (eq? (cadr stepper) (cadr (caddr stepper))))
 			      (lint-format "this looks suspicious: ~A" caller stepper))
-			    (for-each (lambda (v)
-					(if (and (var-step v)
-						 (not (eq? (var-name v) (car stepper)))
-						 (or (eq? (var-name v) (caddr stepper))
-						     (and (pair? (caddr stepper))
-							  (tree-unquoted-member (var-name v) (caddr stepper)))))
-					    (set! baddies (cons (car stepper) baddies))))
-				      vars)))
+			    (let ((step-name (car stepper))
+				  (step-step (caddr stepper)))
+			      (for-each (lambda (v)
+					  (if (and (var-step v)
+						   (not (eq? (var-name v) step-name))
+						   (or (eq? (var-name v) step-step)
+						       (and (pair? step-step)
+							    (tree-unquoted-member (var-name v) step-step))))
+					      (set! baddies (cons step-name baddies))))
+					vars))))
 			step-vars)
 	      
 	      (check-unordered-exprs caller form (map var-initial-value vars) env)
@@ -18419,14 +18433,16 @@
 				 (= (tree-count (cadr prev) call) 1)
 				 (not (tree-memq (cadr prev) (cdr p)))
 				 (not (hash-table-ref definers (car call)))
-				 (not (side-effect? (caddr prev) env))
+				 (not (side-effect? (caddr prev) env)) ; this is needed -- let* in effect
 				 (not (any-macro? (car call) env))
 				 (not (memq (car call) '(map for-each {list} #_{list})))
 				 (not (and (eq? (car call) 'let)
-					   (symbol? (cadr call))))
+					   (symbol? (cadr call)))) ; i.e. not named-let
 				 (or (not (eq? (car call) 'do))
 				     (and (pair? (caddr call))
-					  (tree-memq (cadr prev) (caddr call)))))
+					  (tree-memq (cadr prev) (caddr call)))  ; in the end+result section
+				     (and (pair? (cadr call))
+					  (memq (cadr prev) (map cadr (cadr call)))))) ; initial value 
 			    (set! hits (cons (list prev p) hits)))
 			(set! prev ())))))))
 
@@ -20405,8 +20421,8 @@
 	      
 	      (let ((old-current-form lint-current-form))
 		;; maybe put these on a switch -- some days I think they're good, and others...
-		(when (not (and qq-form
-				(eq? lint-current-form qq-form)))
+		(unless (and qq-form
+			     (eq? lint-current-form qq-form))
 		  (if (not lint-current-form) (set! lint-current-form form))
 		  (set! qq-form lint-current-form) ; only interested in simplest cases here
 		  (if (eq? head #_{append})                   ; `(f . g) -> (cons f g) ignoring quotes etc
@@ -20498,14 +20514,12 @@
 					  (ca2 (cadr arg2)))
 				      (let ((len1 (length ca1))
 					    (len2 (length ca2)))
-					(let ((pa1 (if (= len1 2) 
-						       (list 'cons (cadr ca1) (caddr arg1))
-						       (if (= len1 3)
-							   (list 'cons (cadr ca1) (list 'cons (caddr ca1) (caddr arg1))))))
-					      (pa2 (if (= len2 2) 
-						       (list 'cons (cadr ca2) (caddr arg2))
-						       (if (= len2 3)
-							   (list 'cons (cadr ca2) (list 'cons (caddr ca2) (caddr arg2)))))))
+					(let ((pa1 (case len1
+						     ((2) (list 'cons (cadr ca1) (caddr arg1)))
+						     ((3) (list 'cons (cadr ca1) (list 'cons (caddr ca1) (caddr arg1))))))
+					      (pa2 (case len2
+						     ((2) (list 'cons (cadr ca2) (caddr arg2)))
+						     ((3) (list 'cons (cadr ca2) (list 'cons (caddr ca2) (caddr arg2)))))))
 					  (if (and (pair? pa1) 
 						   (pair? pa2))
 					      (lint-format "perhaps ~A" caller 
@@ -20527,7 +20541,7 @@
 					    args)
 				    (lint-format "perhaps ~A" caller
 						 (truncated-lists->string form
-									  `(list (cons ,(cadadr (car args)) ,(caddr (car args)))
+									  `(list (cons ,(cadadr (car args)) ,(caddar args))
 										 (cons ,(cadadr (cadr args)) ,(caddr (cadr args)))
 										 ...))))
 				   ((not (every? safe-av? (cddr args)))
@@ -21292,7 +21306,7 @@
 ;;; let*->let recursively (etc)
 ;;; accessors via *-ref -> let? possibly hidden?
 ;;; multiple (not...) inverted? are there other such cases?
-;;; (and (not (null? x)) (car x)) and variations [if nn crx... cond etc]
+;;; (and (not (null? x)) (car x)) and variations [if nn crx... cond etc] [and-incomplete currently handles (and x (car x))]
 ;;; long cond of (= same sym, sym not set ands not equal...) -> hash [also alist + made from qq]
 ;;; when A x; when B x;... (also unless if) if x no side-effect?
 ;;;   do we catch when A... when A... alongside if?
@@ -21300,6 +21314,15 @@
 ;;; letrec+lambda -> lambda+named-let
 ;;; cond ((not x)...) ((string=? x...)...) -> (not (string? x)) [direct is ok]
 ;;; let->for-each [i.e. let lambda, (var...) over and over, but what about return? -- if not mid, extract last)
-;;; last set x do ((i x ...)) -> move into do? or let etc
-;;;
-;;; 181 28795 749804
+;;; (not (for-each...)) parallels (map...) followed by #f/#t
+;;; look for (set! x y) (... (eq? x y)...)
+;;; "any? (line 583): (not (for-each (lambda (arg) (if (f arg) (return #t))) sequence)) can't be true (for-each never returns #f)"
+;;;    which is true but not useful
+;;; constant exprs in recursive func, maybe func arg to member/assoc [find-constant-exprs]
+;;; let var=symbol used once (t347), also pointless resets there, see also lis case 
+;;; case key matches only changing arg (t347) (case key (....) => call) or (call key)
+;;; list indexed -> vector (t347)
+;;; `((a . b)...) handled by un_{list} -- cons
+;;; func defined in named-let -- is this evaluated every time?
+;;; 
+;;; 181 28791 750006
