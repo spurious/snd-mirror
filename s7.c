@@ -68137,10 +68137,32 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_ERROR_QUIT:
+	  if (sc->stack_end <= sc->stack_start)
+	    stack_reset(sc); /* sets stack_end to stack_start, then pushes op_barrier and op_eval_done */
+	  return(sc->F);
+	  break;
+
+	case OP_ERROR_HOOK_QUIT:
+	  sc->error_hook = sc->code;  /* restore old value */
+	  
+	  /* now mimic the end of the normal error handler.  Since this error hook evaluation can happen
+	   *   in an arbitrary s7_call nesting, we can't just return from the current evaluation --
+	   *   we have to jump to the original (top-level) call.  Otherwise '#<unspecified> or whatever
+	   *   is simply treated as the (non-error) return value, and the higher level evaluations
+	   *   get confused.
+	   */
+	  stack_reset(sc);                                 /* is this necessary? */
+	  push_stack(sc, OP_ERROR_QUIT, sc->nil, sc->nil); /* added 3-Dec-16: try to make sure we actually exit! */
+	  sc->op = OP_ERROR_QUIT;
+	  if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_QUIT_JUMP);
+#if DEBUGGING
+	  fprintf(stderr, "%d: op_error_hook_quit did not jump, returns %s\n", __LINE__, DISPLAY(sc->value));
+#endif
+	  return(sc->value); /* not executed I hope */
+	  
+	  
 	case OP_EVAL_DONE:
 	  /* this is the "time to quit" operator */
-	  if (sc->stack_end < (sc->stack_start + 3)) /* maybe good enough: sc->stack_env <= sc->stack_start */
-	    stack_reset(sc);
 	  return(sc->F);
 	  break;
 	  
@@ -68154,24 +68176,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_DEACTIVATE_GOTO:
 	  call_exit_active(sc->args) = false;      /* as we leave the call-with-exit body, deactivate the exiter */
 	  break;
-	  
-	  
-	case OP_ERROR_HOOK_QUIT:
-	  sc->error_hook = sc->code;  /* restore old value */
-	  
-	  /* now mimic the end of the normal error handler.  Since this error hook evaluation can happen
-	   *   in an arbitrary s7_call nesting, we can't just return from the current evaluation --
-	   *   we have to jump to the original (top-level) call.  Otherwise '#<unspecified> or whatever
-	   *   is simply treated as the (non-error) return value, and the higher level evaluations
-	   *   get confused.
-	   */
-	  stack_reset(sc);
-	  sc->op = OP_ERROR_QUIT;
-	  if (sc->longjmp_ok) longjmp(sc->goto_start, ERROR_QUIT_JUMP);
-#if DEBUGGING
-	  fprintf(stderr, "%d: op_error_hook_quit did not jump, returns %s\n", __LINE__, DISPLAY(sc->value));
-#endif
-	  return(sc->value); /* not executed I hope */
 	  
 	  
 	case OP_GET_OUTPUT_STRING:          /* from get-output-string -- return a new string */
