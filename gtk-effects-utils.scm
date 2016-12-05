@@ -34,7 +34,7 @@
     (if (defined? 'gtk_widget_set_clip) ; gtk 3.14.0
 	(gtk_window_set_transient_for (GTK_WINDOW new-dialog) (GTK_WINDOW ((main-widgets) 1))))
     (gtk_window_set_title (GTK_WINDOW new-dialog) label)
-    (gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
+    ;(gtk_container_set_border_width (GTK_CONTAINER new-dialog) 10)
     (gtk_window_set_default_size (GTK_WINDOW new-dialog) -1 -1)
     (gtk_window_set_resizable (GTK_WINDOW new-dialog) #t)
     (gtk_widget_realize new-dialog)

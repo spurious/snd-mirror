@@ -1,5 +1,8 @@
 #include "snd.h"
 
+static void mix_set_file_name(int id, int chans, const char *name);
+
+
 static bool mix_vct_untagged(vct *v, chan_info *cp, mus_long_t beg, const char *origin)
 {
   mus_float_t *data, *vdata;
@@ -230,6 +233,9 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
 	free(cps);
     }
   sp->sync = old_sync;
+
+  if (mix_exists(id))
+    mix_set_file_name(id, chans, fullname);
 
   return(id);
 }
@@ -671,6 +677,24 @@ const char *mix_file_name(int id)
   if (mix_exists(id))
     return(mix_infos[id]->in_filename);
   return(NULL);
+}
+
+
+static void mix_set_file_name(int id, int chans, const char *name)
+{
+  int i;
+
+  for (i = 0; i < chans; i++)
+    {
+      if (mix_exists(id + i))
+        {
+          mix_info *md;
+          md = md_from_id(id + i);
+          if (md->in_filename) free(md->in_filename);
+          md->in_filename = mus_strdup(name);
+          md->in_chan = i;
+        }
+    }
 }
 
 
@@ -3521,7 +3545,10 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 		mix_info *md;
 		md = md_from_id(id);
 		if (!md->in_filename)
-		  md->in_filename = mus_strdup(name);
+		  {
+		    md->in_filename = mus_strdup(name);
+		    md->in_chan = file_channel;
+		  }
 	      }
 	  }
 	free(origin);

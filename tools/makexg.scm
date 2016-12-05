@@ -21,9 +21,9 @@
 (define all-types ())
 
 ;;; preset some types that are getting confused
-(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*"
+(set! types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*" "GtkDrawingArea*"
 		  "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
-(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*"
+(set! all-types (list "GdkEventMotion*" "gdouble*" "GdkEventAny*" "GdkEvent*" "GdkWindow*" "GtkDrawingArea*"
 		      "cairo_t*" "cairo_font_options_t*" "PangoFontDescription*"))
 
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
@@ -128,6 +128,8 @@
 	"GtkGLArea*" "GtkStyleContext*" "GtkPopoverMenu*" "GtkSearchEntry*" "GtkStackSidebar*" 
 	"GtkShortcutsWindow*"
 	"GdkDevicePadFeature" "GtkPadActionType"
+
+	"GtkShortcutLabel*" "GtkPadActionEntry*" "GdkDevicePad*" "GActionGroup*"
 	))
 
 (define no-xen-p 
@@ -1567,7 +1569,7 @@
  (cdr all-types))
 
 (define other-types 
-  (list 'idler 'GtkCellRendererPixbuf_ 'GtkCheckButton_ 'GtkDrawingArea_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
+  (list 'idler 'GtkCellRendererPixbuf_ 'GtkCheckButton_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
 	'GdkEventExpose_ 'GdkEventNoExpose_ 'GdkEventVisibility_ 'GdkEventButton_ 'GdkEventScroll_ 'GdkEventCrossing_
 	'GdkEventFocus_ 'GdkEventConfigure_ 'GdkEventProperty_ 'GdkEventSelection_ 'GdkEventProximity_ 'GdkEventSetting_
 	'GdkEventWindowState_ 'GdkEventDND_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkColorButton_ 'GtkAccelMap

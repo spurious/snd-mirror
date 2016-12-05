@@ -1,17 +1,13 @@
-Snd 16.9:
+Snd 17.0.
 
-Anders Vinjar provided tankrev.scm
-Tito Latini fixed a bug in clm's tap generator (discovered by AV).
+Tito Latini fixed many bugs, especially in save-state and snd-mix, 
+  and made it possible to move dialogs between desktops in Motif.
 
-Snd: removed snd13.scm
+Mike Scholz updated snd-test.fs|rb and made clm.rb compatible
+  with the latest Ruby.
 
-s7: make-keyword -> string->keyword
+checked: gtk 3.22.2|3|4, gtk 3.89.1, sbcl 1.3.11|12.
 
-checked: FC 25, gtk 3.21.6 3.22.0|1, sbcl 1.3.10
-  in gtk 3.22.0, the basic display mechanism changed again(!) so
-  (at least today) the window-manager close decoration is messed up,
-  and I probably missed other troubles -- please let me know
-  as you encounter them.
-
-Thanks!:  Anders Vinjar, IOhannes m zmölnig, Tito Latini.
+Thanks!: Mike Scholz, Anders Vinjar, Tito Latini, Kjetil Matheussen, 
+         IOhannes m zmölnig.
 

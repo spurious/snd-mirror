@@ -45847,7 +45847,8 @@ static char *stacktrace_walker(s7_scheme *sc, s7_pointer code, s7_pointer e,
 		  if (sc->print_length > 4) sc->print_length = 4;
 		  objstr = s7_object_to_c_string(sc, val);
 		  objlen = safe_strlen(objstr);
-		  if (objlen > notes_max)
+		  if ((objlen > notes_max) && 
+		      (notes_max > 5))
 		    {
 		      objstr[notes_max - 4] = '.';
 		      objstr[notes_max - 3] = '.';
