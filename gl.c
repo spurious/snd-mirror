@@ -5731,7 +5731,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       Xen_provide_feature("gl");
-      Xen_define("gl-version", C_string_to_Xen_string("09-Nov-16"));
+      Xen_define("gl-version", C_string_to_Xen_string("05-Dec-16"));
       gl_already_inited = true;
     }
 }

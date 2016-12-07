@@ -887,7 +887,7 @@ struct s7_scheme {
   s7_pointer sharp_readers;           /* the binding pair for the global *#readers* list */
   s7_pointer load_hook;               /* *load-hook* hook object */
   s7_pointer unbound_variable_hook;   /* *unbound-variable-hook* hook object */
-  s7_pointer missing_close_paren_hook;
+  s7_pointer missing_close_paren_hook, rootlet_redefinition_hook;
   s7_pointer error_hook, read_error_hook; /* *error-hook* hook object, and *read-error-hook* */
   s7_pointer direct_str;
 
@@ -1533,8 +1533,8 @@ static s7_scheme *hidden_sc = NULL;
 
   static void set_local_1(s7_scheme *sc, s7_pointer symbol, const char *func, int line)
   {
-    if ((is_global(symbol)) || (is_syntactic(symbol)))
-      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(current_code(sc)));
+    if (is_global(symbol)) /* || (is_syntactic(symbol))) */
+      fprintf(stderr, "%s[%d]: %s%s%s in %s\n", func, line, BOLD_TEXT, DISPLAY(symbol), UNBOLD_TEXT, DISPLAY_80(sc->cur_code));
     typeflag(symbol) = (typeflag(symbol) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC));
   }
   #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
@@ -2036,10 +2036,31 @@ static int not_heap = -1;
 /* set slot before id in case Slot is an expression that tries to find the current Symbol slot (using its old Id obviously) */
 
 #define is_slot(p)                    (type(p) == T_SLOT)
-#define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
-#define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
 #define slot_symbol(p)                _TSym((_TSlt(p))->object.slt.sym)
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
+#define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
+#define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
+
+#if 1
+static s7_pointer set_elist_2(s7_scheme *sc, s7_pointer x1, s7_pointer x2);
+static void slot_set_value_with_hook_1(s7_scheme *sc, s7_pointer slot, s7_pointer value)
+  {
+    /* global funcs: 5945 6294 7300 7548 61107 66359 66522, global vars: 7136, some of these are set!s, not defines */
+    /* (set! (hook-functions *rootlet-redefinition-hook*) (list (lambda (hook) (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value))))) */
+    s7_pointer symbol;
+    symbol = slot_symbol(slot);
+    if ((global_slot(symbol) == slot) &&      
+	(value != slot_value(slot)))
+      s7_call(sc, sc->rootlet_redefinition_hook, set_elist_2(sc, symbol, value));
+    slot_set_value(slot, value);
+  }
+#define slot_set_value_with_hook(Slot, Value) \
+  do {if (hook_has_functions(sc->rootlet_redefinition_hook)) slot_set_value_with_hook_1(sc, Slot, Value); else slot_set_value(Slot, Value);} while (0)
+
+#else
+#define slot_set_value_with_hook(p, Val) (_TSlt(p))->object.slt.val = _NFre(Val)
+#endif
+
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
 #define set_next_slot(p, Val)         (_TSlt(p))->object.slt.nxt = _TSln(Val)
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
@@ -5925,7 +5946,7 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       if (is_slot(global_slot(symbol)))
 	{
 	  slot = global_slot(symbol);
-	  slot_set_value(slot, value);
+	  slot_set_value_with_hook(slot, value);
 	  return(slot);
 	}
 
@@ -6274,7 +6295,7 @@ to the environment env, and returns the environment."
 	       *   1
 	       * or worse set quote to a function of one arg that tries to quote something -- infinite loop
 	       */
-	      slot_set_value(global_slot(sym), val);
+	      slot_set_value_with_hook(global_slot(sym), val);
 	    }
 	  else s7_make_slot(sc, e, sym, val);
 	}
@@ -7118,7 +7139,7 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
   /* if immutable should this return an error? */
   x = find_symbol(sc, sym);
   if (is_slot(x))
-    slot_set_value(x, val);
+    slot_set_value(x, val); /* with_hook? */
   return(val);
 }
 
@@ -7280,7 +7301,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   /* symbol? macro name has already been checked, find name in environment, and define it */
   cx = find_local_symbol(sc, sc->code, sc->envir);
   if (is_slot(cx))
-    slot_set_value(cx, mac);
+    slot_set_value_with_hook(cx, mac);
   else s7_make_slot(sc, sc->envir, sc->code, mac); /* was current but we've checked immutable already */
 
   optimize(sc, closure_body(mac), 0, sc->nil);
@@ -7528,7 +7549,7 @@ void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer va
     envir = sc->shadow_rootlet;
   x = find_local_symbol(sc, symbol, envir);
   if (is_slot(x))
-    slot_set_value(x, value);
+    slot_set_value_with_hook(x, value);
   else
     {
       s7_make_slot(sc, envir, symbol, value); /* I think this means C code can override "constant" defs */
@@ -61087,7 +61108,7 @@ static void define2_ex(s7_scheme *sc)
       /* add the newly defined thing to the current environment */
       lx = find_local_symbol(sc, sc->code, sc->envir);
       if (is_slot(lx))
-	slot_set_value(lx, sc->value);
+	slot_set_value_with_hook(lx, sc->value);
       else s7_make_slot(sc, sc->envir, sc->code, sc->value);
     }
 }
@@ -75064,6 +75085,11 @@ s7_scheme *s7_init(void)
   s7_define_constant_with_documentation(sc, "*read-error-hook*", sc->read_error_hook, 
 					"*read-error-hook* functions are called by the reader if it is unhappy, passing the current program string as (hook 'data).");
 
+  /* -------- *rootlet-redefinition-hook* -------- */
+  sc->rootlet_redefinition_hook = s7_eval_c_string(sc, "(make-hook 'symbol 'value)");
+  s7_define_constant_with_documentation(sc, "*rootlet-redefinition-hook*", sc->rootlet_redefinition_hook, 
+					"*rootlet-redefinition-hook* functions are called when a top-level variable's value is changed, (hook 'symbol 'value).");
+
   s7_define_constant(sc, "*s7*",
     s7_openlet(sc, s7_inlet(sc,
        s7_list(sc, 2,
@@ -75197,4 +75223,5 @@ int main(int argc, char **argv)
  *   for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
  * snd-test.scm for rest of numerics.scm?
+ * sample->file descr should put file name in double quotes?
  */

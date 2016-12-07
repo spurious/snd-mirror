@@ -3829,7 +3829,7 @@ a modern GUI leaves formatting decisions to a text or table widget.
 In GUI toolkits hooks are called callback-lists, in CL conditions,
 in other contexts watchpoints or signals.  s7 itself has several
 hooks: <a href="#errorhook">*error-hook*</a>, <a href="#readerrorhook">*read-error-hook*</a>,
-<a href="#unboundvariablehook">*unbound-variable-hook*</a>, *missing-close-paren-hook*,
+<a href="#unboundvariablehook">*unbound-variable-hook*</a>, *missing-close-paren-hook*, *rootlet-redefinition-hook*,
 and <a href="#loadhook">*load-hook*</a>.
 make-hook is:
 </p>
@@ -4697,6 +4697,17 @@ returned to the reader.  Otherwise a 'read-error is raised and you drop into the
 Similarly, if some bizaare \ use occurs, *read-error-hook* is called with two arguments,
 #f and the offending character.  If you return a character, it is passed to the reader;
 otherwise you get an error.  lint.scm has an example.
+</p>
+
+<p><em class=def id="rootletredefinitionhook">*rootlet-redefinition-hook*</em> is called when
+a top-level variable is redefined (via define and friends, not set!). 
+</p>
+<pre class="indented">
+(set! (hook-functions *rootlet-redefinition-hook*) 
+      (list (lambda (hook) 
+              (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value)))))
+</pre>
+<p>will print out the variable's name and the new value.
 </p>
 
 <p>
@@ -5880,7 +5891,7 @@ Better ideas are always welcome!
 <li>*s7*
 <li>nan.0 -nan.0 inf.0 -inf.0 (what crappy names! nan.0 is an inexact integer that is not a number?)
 <li>most-positive-fixnum most-negative-fixnum
-<li>*unbound-variable-hook* *missing-close-paren-hook* *load-hook* *error-hook* *read-error-hook*
+<li>*unbound-variable-hook* *missing-close-paren-hook* *load-hook* *error-hook* *read-error-hook* *rootlet-redefinition-hook*
 </ul>
 
 <p>__func__ is the name (or name and location) of the function currently being called, as in C.

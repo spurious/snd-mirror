@@ -20870,7 +20870,7 @@
 	      (set! last-line-number line)
 	      
 	      (if (and (len>1? form)
-		       (memq (car form) '(define define-macro))
+		       (memq (car form) '(define define-macro)) ; TODO: and the rest, also set! as in (set! if 2)
 		       (pair? (cadr form)))
 		  (let ((f (caadr form)))
 		    (if (and (symbol? f)
@@ -21386,5 +21386,6 @@
 ;;; (and (pair? c) (string? (car c)) (string=? (car c) x)) number? et al, char?, string? -> equal?/eqv?
 ;;; case selectors => symbol->value (t347)
 ;;; let->for-each + locals if used only in list or constants
+;;; optional checks for stepping on rootlet names
 ;;;
 ;;; 185 28791 756087
