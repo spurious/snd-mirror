@@ -2,6 +2,23 @@
 ;;;
 ;;; tie the gsl library into the *libgsl* environment
 
+
+#|
+2.1: gsl_multilarge.h
++ double
++ gsl_multifit_linear_rcond (const gsl_multifit_linear_workspace * w);
++
+changes to sigs in multifit.h
+
+2.2:
+gsl_multifit_nlinear.h
+gsl_multilarge_nlinear.h
+gsl_permute_matrix_char.h
+gsl_permute_matrix_complex_double.h and float/long double and all other types
+many other additions/sig changes (triangular matrices primiarily)
+|#
+
+
 (require cload.scm)
 (provide 'libgsl.scm)
 
@@ -23,15 +40,19 @@
 	(complex (* mag (cos ang)) (* mag (sin ang)))
 	(error 'wrong-type-arg "make-polar args should be real"))))
 
+
 ;; since we might be loading this locally, reader-cond (in that case) won't find gsl-version unless...
-(if (not (defined? '*libgsl*))
-    (with-let (rootlet)
-      (define gsl-version 0.0)		; define at top-level no matter where we are now
-      (when (and (provided? 'linux)
-		 (defined? 'system))
-	(let ((version (system "pkg-config gsl --modversion" #t)))
-	  (if (positive? (length version))
-	      (set! gsl-version (with-input-from-string version read)))))))
+(when (not (defined? '*libgsl*))
+  (with-let (rootlet)
+    (define gsl-version 0.0)		; define at top-level no matter where we are now
+    (when (and (provided? 'linux)
+	       (defined? 'system))
+      (let ((version (system "pkg-config gsl --modversion" #t)))
+	(when (positive? (length version))
+	  (set! gsl-version (string->number version))
+	  (when (not (number? gsl-version)) ; "2.2.1" -> 2.2?
+	    (let ((i1 (char-position #\. version (+ (char-position #\. version) 1))))
+	      (set! gsl-version (string->number (substring version 0 i1))))))))))
 
 (unless (defined? '*libgsl*)
   (define *libgsl*

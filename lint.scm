@@ -580,7 +580,8 @@
 	  (and (sequence? sequence)
 	       (call-with-exit
 		(lambda (return) 
-		  (not (for-each (lambda (arg) (if (f arg) (return #t))) sequence))))))))
+		  (for-each (lambda (arg) (if (f arg) (return #t))) sequence)
+		  #f))))))
     
     (define collect-if 
       (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
@@ -6444,12 +6445,13 @@
 		    (if (len>1? (cadr form))
 			(let ((str (truncated-list->string (cadadr form)))) ; (not (not x)) -> (and x #t)
 			  (lint-format "if you want a boolean, (not (not ~A)) -> (and ~A #t)" 'paranoia str str)))
-		    (let ((sig (arg-signature (caadr form) env)))
-		      (if (and (pair? sig)
-			       (if (pair? (car sig))                    ; (not (+ x y))
-				   (not (memq 'boolean? (car sig)))
-				   (not (memq (car sig) '(#t values boolean?)))))
-			  (lint-format "~A can't be true (~A never returns #f)" caller (truncated-list->string form) (caadr form))))))
+		    (when (not (eq? (caadr form) 'for-each))
+		      (let ((sig (arg-signature (caadr form) env)))
+			(if (and (pair? sig)
+				 (if (pair? (car sig))                    ; (not (+ x y))
+				     (not (memq 'boolean? (car sig)))
+				     (not (memq (car sig) '(#t values boolean?)))))
+			    (lint-format "~A can't be true (~A never returns #f)" caller (truncated-list->string form) (caadr form)))))))
 					 
 	    (if (not (= line-number last-simplify-boolean-line-number))
 		(let ((val (simplify-boolean form () () env)))
@@ -8167,7 +8169,7 @@
 							  (lint-format "perhaps ~A" caller 
 								       (lists->string form (cons f (distribute-quote (car cdr-args)))))))
 						    
-						    ((cons)             ; (apply f (cons a b)) -> (apply f a b)
+						    ((cons cons*)             ; (apply f (cons a b)) -> (apply f a b)
 						     (lint-format "perhaps ~A" caller 
 								  (lists->string form 
 										 (if (and (len>1? cdr-args)
@@ -13663,6 +13665,20 @@
 				       (throw 'one-is-enough)))))
 		  (lambda args #f)))))
 
+	  ;; -------- rewrite-let-optionals --------
+	  (define (rewrite-let-optionals caller form outer-name outer-args val)
+	    (let ((args (args->proper-list outer-args)))
+	      (if (and (eq? (cadar val) (last-par args))
+		       (every? len=2? (caddar val))) ; some seem to include a type check?
+		  (lint-format "perhaps ~A" caller
+			       (lists->string form
+					      `(define* (,outer-name 
+							 ,@(copy args (make-list (- (length args) 1)))
+							 ,@(map (lambda (p)
+								  (if (cadr p) p (car p))) ; remove #f default vals
+								(caddar val)))
+						 ...))))))
+	
 	  ;; -------- define-walker --------
 	  (define (define-walker caller form env)
 	    (if (< (length form) 2)
@@ -13762,8 +13778,11 @@
 						(null? (cdr val)))
 				       (replace-redundant-named-let caller form outer-name outer-args (car val))))
 				   
-				   (inner-define->let caller form))
-				 
+				   (inner-define->let caller form)
+
+				   (if (memq (caar val) '(let-optionals let-optionals*))
+				       (rewrite-let-optionals caller form outer-name outer-args val)))
+
 				 (when (pair? outer-args)
 				   (if (repeated-member? (proper-list outer-args) env)
 				       (lint-format "~A parameter is repeated: ~A" caller head (truncated-list->string sym)))
@@ -18409,6 +18428,47 @@
 						(lists->string form
 							       (wrap-new-form header (tree-subst vvalue vname p) trailer)))))))))))))))
 	
+	;; -------- let->for-each --------
+	(define (let->for-each caller form varlist body)
+	  (when (and (len>2? body)
+		     (null? (cdr varlist))
+		     (pair? (car varlist))
+		     (pair? (cdar varlist))
+		     (pair? (cadar varlist)))
+	    (let ((name (caar varlist))
+		  (value (cadar varlist)))
+	      (when (and (eq? (car value) 'lambda)
+			 (pair? (cadr value))
+			 (< 0 (length (cadr value)) 3))
+		(do ((arg1 ())
+		     (arg2 ())
+		     (p body (cdr p))
+		     (i 0 (+ i 1)))
+		    ((or (null? p) 
+			 (not (and (pair? (car p))
+				   (eq? name (caar p)))))
+		     (if (and (>= i 3)
+			      (not (tree-memq name p))) ; we could split the body into for-each sections, but that would repeat the lambda
+			 (lint-format "perhaps ~A" caller
+				      (lists->string form
+						     (let* ((a1 (if (every? code-constant? arg1)
+								    (list 'quote (map unquoted (reverse arg1)))
+								    (cons 'list (reverse arg1))))
+							    (a2 (if (pair? arg2)
+								    (if (every? code-constant? arg2)
+									(list 'quote (map unquoted (reverse arg2)))
+									(cons 'list (reverse arg2)))
+								    ()))
+							    (fe (if (pair? arg2)
+								    `(for-each ,value ,a1 ,a2)
+								    `(for-each ,value ,a1))))
+						       (if (null? p)
+							   fe
+							   `(let () ,fe ...)))))))
+		  (set! arg1 (cons (cadar p) arg1))
+		  (if (pair? (cddar p))
+		      (set! arg2 (cons (caddar p) arg2))))))))
+
 	;; -------- combine set+one-use --------
 	(define (combine-set+one-use caller body varlist env)
 	  (do ((hits ())
@@ -18505,6 +18565,7 @@
 		      (unless named-let
 			(pointless-var caller form env)		       
 			(when (pair? varlist)
+			  (let->for-each caller form varlist body)
 			  (let-ends-in-set caller form)
 			  (when (and (pair? (car body))
 				     (eq? (caar body) 'do))
@@ -20336,7 +20397,10 @@
 	
 	;; -------- walk head=pair --------
 	(define (walk-pair caller head form env)
-	  (cond ((not (and (pair? (cdr head))
+	  (cond ((eq? (car head) 'list)
+		 (lint-format "perhaps use vector here: ~A" caller (truncated-list->string form)))
+
+		((not (and (pair? (cdr head))
 			   (memq (car head) '(lambda lambda*)))))
 		
 		((and (identity? head)
@@ -21308,21 +21372,19 @@
 ;;; multiple (not...) inverted? are there other such cases?
 ;;; (and (not (null? x)) (car x)) and variations [if nn crx... cond etc] [and-incomplete currently handles (and x (car x))]
 ;;; long cond of (= same sym, sym not set ands not equal...) -> hash [also alist + made from qq]
-;;; when A x; when B x;... (also unless if) if x no side-effect?
+;;; when A x; when B x;... (also unless if) if x doesn't affect test [(when (= x 1) (display x)) (when (= x 2) (display x)) -- etc]
 ;;;   do we catch when A... when A... alongside if?
 ;;; ifs->cond + assoc? ((if (equal? "space" (car tsil)) (display ".")) (if (equal? "baddie" (car tsil))...))
 ;;; letrec+lambda -> lambda+named-let
 ;;; cond ((not x)...) ((string=? x...)...) -> (not (string? x)) [direct is ok]
-;;; let->for-each [i.e. let lambda, (var...) over and over, but what about return? -- if not mid, extract last)
-;;; (not (for-each...)) parallels (map...) followed by #f/#t
-;;; look for (set! x y) (... (eq? x y)...)
-;;; "any? (line 583): (not (for-each (lambda (arg) (if (f arg) (return #t))) sequence)) can't be true (for-each never returns #f)"
-;;;    which is true but not useful
-;;; constant exprs in recursive func, maybe func arg to member/assoc [find-constant-exprs]
 ;;; let var=symbol used once (t347), also pointless resets there, see also lis case 
 ;;; case key matches only changing arg (t347) (case key (....) => call) or (call key)
-;;; list indexed -> vector (t347)
 ;;; `((a . b)...) handled by un_{list} -- cons
-;;; func defined in named-let -- is this evaluated every time?
-;;; 
-;;; 181 28791 750006
+;;; constant exprs in recursive func, maybe func arg to member/assoc [find-constant-exprs]
+;;; func defined in named-let -- is this evaluated every time? yes: define_funchecked -- measureably slower than putting it in the closure.
+;;;   any func-define in iteration -> closure?
+;;; (and (pair? c) (string? (car c)) (string=? (car c) x)) number? et al, char?, string? -> equal?/eqv?
+;;; case selectors => symbol->value (t347)
+;;; let->for-each + locals if used only in list or constants
+;;;
+;;; 185 28791 756087

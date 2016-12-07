@@ -4579,11 +4579,11 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
     set_type(Obj, Type);	      \
     } while (0)
 
-#define new_cell_no_check(Sc, Obj, Type)		\
-  do {						\
-    Obj = (*(--(Sc->free_heap_top)));					\
-    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;		\
-    set_type(Obj, Type);						\
+#define new_cell_no_check(Sc, Obj, Type)		    \
+  do {							    \
+    Obj = (*(--(Sc->free_heap_top)));			    \
+    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;\
+    set_type(Obj, Type);				    \
     } while (0)
 #endif
 
@@ -75179,6 +75179,7 @@ int main(int argc, char **argv)
  * could (apply append (map...)) omit the extra copy?
  * maybe use 'not for signature of #f? or #f?
  * repl: why does it drop the initial open paren?  or refuse to show it if window is wide?
+ * update libgsl.scm
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
