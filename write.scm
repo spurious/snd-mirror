@@ -287,11 +287,18 @@
 							(write-char #\) port)))))
 					    (if (not (null? (cdr lst)))
 						(if (and (pair? (cdr lst))
-							 (null? (cddr lst))
-							 (< (length (object->string (cadr lst))) 60))
+							 (or (and (null? (cddr lst))
+								  (< (length (object->string (cadr lst))) 60))
+							     (and (eq? (cadr lst) '=>)
+								  (null? (cdddr lst))
+								  (< (length (object->string (caddr lst))) 60))))
 						    (begin
 						      (write-char #\space port)
-						      (write (cadr lst) port))
+						      (write (cadr lst) port)
+						      (if (eq? (cadr lst) '=>)
+							  (begin
+							    (write-char #\space port)
+							    (write (caddr lst) port))))
 						    (begin
 						      (spaces port (+ column 3))
 						      (stacked-list port (cdr lst) (+ column 3)))))

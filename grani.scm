@@ -220,7 +220,7 @@
 ;;; convert a time in seconds to a number of samples
 
 (define-macro (to-samples time srate)
-  `(floor (* ,time ,srate)))
+  (list 'floor (list '* time srate)))
 
 ;;; create a constant envelope if argument is a number
 

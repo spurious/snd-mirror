@@ -2031,11 +2031,11 @@ is a physical model of a flute:
 			(set! la ca)
 			(set! ca ra)
 			(set! ra (fdr k))
-			(when (and (> ca .001) ; lowest-magnitude
-				   (> ca ra)
-				   (> ca la)
-				   (not (zero? ra))
-				   (not (zero? la)))
+			(unless (or (<= ca 0.001)  ; lowest-magnitude
+				    (<= ca ra) 
+				    (<= ca la) 
+				    (zero? ra) 
+				    (zero? la))
 			  ;; found a local maximum above the current threshold (its bin number is k-1)
 			  (let ((logla (log la 10.0))
 				(logca (log ca 10.0))

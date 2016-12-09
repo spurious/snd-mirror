@@ -2040,27 +2040,8 @@ static int not_heap = -1;
 #define slot_set_symbol(p, Sym)       (_TSlt(p))->object.slt.sym = _TSym(Sym)
 #define slot_value(p)                 _NFre((_TSlt(p))->object.slt.val)
 #define slot_set_value(p, Val)        (_TSlt(p))->object.slt.val = _NFre(Val)
-
-#if 1
-static s7_pointer set_elist_2(s7_scheme *sc, s7_pointer x1, s7_pointer x2);
-static void slot_set_value_with_hook_1(s7_scheme *sc, s7_pointer slot, s7_pointer value)
-  {
-    /* global funcs: 5945 6294 7300 7548 61107 66359 66522, global vars: 7136, some of these are set!s, not defines */
-    /* (set! (hook-functions *rootlet-redefinition-hook*) (list (lambda (hook) (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value))))) */
-    s7_pointer symbol;
-    symbol = slot_symbol(slot);
-    if ((global_slot(symbol) == slot) &&      
-	(value != slot_value(slot)))
-      s7_call(sc, sc->rootlet_redefinition_hook, set_elist_2(sc, symbol, value));
-    slot_set_value(slot, value);
-  }
 #define slot_set_value_with_hook(Slot, Value) \
   do {if (hook_has_functions(sc->rootlet_redefinition_hook)) slot_set_value_with_hook_1(sc, Slot, Value); else slot_set_value(Slot, Value);} while (0)
-
-#else
-#define slot_set_value_with_hook(p, Val) (_TSlt(p))->object.slt.val = _NFre(Val)
-#endif
-
 #define next_slot(p)                  (_TSlt(p))->object.slt.nxt
 #define set_next_slot(p, Val)         (_TSlt(p))->object.slt.nxt = _TSln(Val)
 #define slot_pending_value(p)         (_TSlt(p))->object.slt.pending_value
@@ -5908,6 +5889,22 @@ static int let_length(s7_scheme *sc, s7_pointer e)
   for (i = 0, p = let_slots(e); is_slot(p); i++, p = next_slot(p));
   return(i);
 }
+
+
+static void slot_set_value_with_hook_1(s7_scheme *sc, s7_pointer slot, s7_pointer value)
+  {
+    /* global funcs: 5945 6294 7300 7548 61107 66359 66522
+     * global vars: 7136
+     * some of these are set!s, not defines.
+     *   (set! (hook-functions *rootlet-redefinition-hook*) (list (lambda (hook) (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value))))) 
+     */
+    s7_pointer symbol;
+    symbol = slot_symbol(slot);
+    if ((global_slot(symbol) == slot) &&      
+	(value != slot_value(slot)))
+      s7_call(sc, sc->rootlet_redefinition_hook, set_elist_2(sc, symbol, value));
+    slot_set_value(slot, value);
+  }
 
 
 static s7_pointer make_slot_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)

@@ -42,7 +42,7 @@ many other additions/sig changes (triangular matrices primiarily)
 
 
 ;; since we might be loading this locally, reader-cond (in that case) won't find gsl-version unless...
-(when (not (defined? '*libgsl*))
+(unless (defined? '*libgsl*)
   (with-let (rootlet)
     (define gsl-version 0.0)		; define at top-level no matter where we are now
     (when (and (provided? 'linux)
@@ -50,7 +50,7 @@ many other additions/sig changes (triangular matrices primiarily)
       (let ((version (system "pkg-config gsl --modversion" #t)))
 	(when (positive? (length version))
 	  (set! gsl-version (string->number version))
-	  (when (not (number? gsl-version)) ; "2.2.1" -> 2.2?
+	  (unless (number? gsl-version) ; "2.2.1" -> 2.2?
 	    (let ((i1 (char-position #\. version (+ (char-position #\. version) 1))))
 	      (set! gsl-version (string->number (substring version 0 i1))))))))))
 
@@ -3061,7 +3061,9 @@ many other additions/sig changes (triangular matrices primiarily)
 		"gsl/gsl_wavelet2d.h"
 		)
        
-       "-I/usr/local/include -g3 -DGSL_DISABLE_DEPRECATED" "-lgsl -lgslcblas" "libgsl_s7")
+       "-I/usr/local/include -g3 -DGSL_DISABLE_DEPRECATED"
+       "-L/usr/local/lib -lgsl -lgslcblas"
+       "libgsl_s7")
 					; GSL_DISABLE_DEPRECATED is needed to avoid a name collision (dating from version 1.7!!)
       (curlet))))
 
