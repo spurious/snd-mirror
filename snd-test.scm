@@ -1,34 +1,34 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [376]
-;;;  test 1: defaults                           [1031]
-;;;  test 2: headers                            [1398]
-;;;  test 3: variables                          [1712]
-;;;  test 4: sndlib                             [2265]
-;;;  test 5: simple overall checks              [3996]
-;;;  test 6: float-vectors                      [8615]
-;;;  test 7: colors                             [8875]
-;;;  test 8: clm                                [9347]
-;;;  test 9: mix                                [20988]
-;;;  test 10: marks                             [22706]
-;;;  test 11: dialogs                           [23625]
-;;;  test 12: extensions                        [23786]
-;;;  test 13: menus, edit lists, hooks, etc     [24035]
-;;;  test 14: all together now                  [25341]
-;;;  test 15: chan-local vars                   [26143]
-;;;  test 16: regularized funcs                 [27802]
-;;;  test 17: dialogs and graphics              [31310]
-;;;  test 18: save and restore                  [31415]
-;;;  test 19: transforms                        [33068]
-;;;  test 20: new stuff                         [35103]
-;;;  test 21: optimizer                         [36277]
-;;;  test 22: with-sound                        [38607]
-;;;  test 23: X/Xt/Xm                           [41378]
-;;;  test 24: GL                                [44949]
-;;;  test 25: errors                            [45070]
-;;;  test 26: s7                                [46460]
-;;;  test all done                              [46596]
-;;;  test the end                               [46768]
+;;;  test 0: constants                          [374]
+;;;  test 1: defaults                           [1029]
+;;;  test 2: headers                            [1396]
+;;;  test 3: variables                          [1710]
+;;;  test 4: sndlib                             [2263]
+;;;  test 5: simple overall checks              [3994]
+;;;  test 6: float-vectors                      [8610]
+;;;  test 7: colors                             [8870]
+;;;  test 8: clm                                [9342]
+;;;  test 9: mix                                [20983]
+;;;  test 10: marks                             [22701]
+;;;  test 11: dialogs                           [23619]
+;;;  test 12: extensions                        [23780]
+;;;  test 13: menus, edit lists, hooks, etc     [24029]
+;;;  test 14: all together now                  [25334]
+;;;  test 15: chan-local vars                   [26135]
+;;;  test 16: regularized funcs                 [27794]
+;;;  test 17: dialogs and graphics              [31293]
+;;;  test 18: save and restore                  [31398]
+;;;  test 19: transforms                        [33077]
+;;;  test 20: new stuff                         [35109]
+;;;  test 21: optimizer                         [36280]
+;;;  test 22: with-sound                        [38610]
+;;;  test 23: X/Xt/Xm                           [41381]
+;;;  test 24: GL                                [44876]
+;;;  test 25: errors                            [44997]
+;;;  test 26: s7                                [46386]
+;;;  test all done                              [46522]
+;;;  test the end                               [46694]
 
 ;;; (set! (hook-functions *load-hook*) (list (lambda (hook) (format *stderr* "loading ~S...~%" (hook 'name)))))
 
@@ -42158,39 +42158,24 @@ EDITS: 1
 	      (if (not (= (.descent struct) 0)) (snd-display "descent: ~A" (.descent struct)))
 	      (if (not (= (.attributes struct) 0)) (snd-display "attributes: ~A" (.attributes struct)))
 	      (let ((fid (load-font "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*")))
-		(if (not (Font? fid)) (snd-display "load-font -> ~A" fid)))
-	      )
-	    (XFreeGC (XtDisplay (cadr (main-widgets))) sgc)
-	    )))
+		(if (not (Font? fid)) (snd-display "load-font -> ~A" fid))))
+	    (XFreeGC (XtDisplay (cadr (main-widgets))) sgc))))
       
-      (let ((atoms (list XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
-			 XA_CUT_BUFFER1 XA_CUT_BUFFER2 XA_CUT_BUFFER3 XA_CUT_BUFFER4 XA_CUT_BUFFER5 XA_CUT_BUFFER6
-			 XA_CUT_BUFFER7 XA_DRAWABLE XA_FONT XA_INTEGER XA_PIXMAP XA_POINT XA_RECTANGLE XA_RESOURCE_MANAGER
-			 XA_RGB_COLOR_MAP XA_RGB_BEST_MAP XA_RGB_BLUE_MAP XA_RGB_DEFAULT_MAP XA_RGB_GRAY_MAP XA_RGB_GREEN_MAP
-			 XA_RGB_RED_MAP XA_STRING XA_VISUALID XA_WINDOW XA_WM_COMMAND XA_WM_HINTS XA_WM_CLIENT_MACHINE
-			 XA_WM_ICON_NAME XA_WM_ICON_SIZE XA_WM_NAME XA_WM_NORMAL_HINTS XA_WM_SIZE_HINTS XA_WM_ZOOM_HINTS
-			 XA_MIN_SPACE XA_NORM_SPACE XA_MAX_SPACE XA_END_SPACE XA_SUPERSCRIPT_X XA_SUPERSCRIPT_Y
-			 XA_SUBSCRIPT_X XA_SUBSCRIPT_Y XA_UNDERLINE_POSITION XA_UNDERLINE_THICKNESS XA_STRIKEOUT_ASCENT
-			 XA_STRIKEOUT_DESCENT XA_ITALIC_ANGLE XA_X_HEIGHT XA_QUAD_WIDTH XA_WEIGHT XA_POINT_SIZE
-			 XA_RESOLUTION XA_COPYRIGHT XA_NOTICE XA_FONT_NAME XA_FAMILY_NAME XA_FULL_NAME XA_CAP_HEIGHT
-			 XA_WM_CLASS XA_WM_TRANSIENT_FOR))
-	    (atom-names (list 'XA_PRIMARY 'XA_SECONDARY 'XA_ARC 'XA_ATOM 'XA_BITMAP 'XA_CARDINAL 'XA_COLORMAP 'XA_CURSOR 'XA_CUT_BUFFER0
-			      'XA_CUT_BUFFER1 'XA_CUT_BUFFER2 'XA_CUT_BUFFER3 'XA_CUT_BUFFER4 'XA_CUT_BUFFER5 'XA_CUT_BUFFER6
-			      'XA_CUT_BUFFER7 'XA_DRAWABLE 'XA_FONT 'XA_INTEGER 'XA_PIXMAP 'XA_POINT 'XA_RECTANGLE 'XA_RESOURCE_MANAGER
-			      'XA_RGB_COLOR_MAP 'XA_RGB_BEST_MAP 'XA_RGB_BLUE_MAP 'XA_RGB_DEFAULT_MAP 'XA_RGB_GRAY_MAP 'XA_RGB_GREEN_MAP
-			      'XA_RGB_RED_MAP 'XA_STRING 'XA_VISUALID 'XA_WINDOW 'XA_WM_COMMAND 'XA_WM_HINTS 'XA_WM_CLIENT_MACHINE
-			      'XA_WM_ICON_NAME 'XA_WM_ICON_SIZE 'XA_WM_NAME 'XA_WM_NORMAL_HINTS 'XA_WM_SIZE_HINTS 'XA_WM_ZOOM_HINTS
-			      'XA_MIN_SPACE 'XA_NORM_SPACE 'XA_MAX_SPACE 'XA_END_SPACE 'XA_SUPERSCRIPT_X 'XA_SUPERSCRIPT_Y
-			      'XA_SUBSCRIPT_X 'XA_SUBSCRIPT_Y 'XA_UNDERLINE_POSITION 'XA_UNDERLINE_THICKNESS 'XA_STRIKEOUT_ASCENT
-			      'XA_STRIKEOUT_DESCENT 'XA_ITALIC_ANGLE 'XA_X_HEIGHT 'XA_QUAD_WIDTH 'XA_WEIGHT 'XA_POINT_SIZE
-			      'XA_RESOLUTION 'XA_COPYRIGHT 'XA_NOTICE 'XA_FONT_NAME 'XA_FAMILY_NAME 'XA_FULL_NAME 'XA_CAP_HEIGHT
-			      'XA_WM_CLASS 'XA_WM_TRANSIENT_FOR)))
 	(for-each
-	 (lambda (n name)
-	   (if (not (Atom? n))
-	       (snd-display "Atom: ~A -> ~A" name (Atom? n))))
-	 atoms
-	 atom-names))
+	 (lambda (name)
+	   (if (not (Atom? (symbol->value name)))
+	       (snd-display "Atom: ~A -> ~A" name (Atom? (symbol->value name)))))
+	 '(XA_PRIMARY XA_SECONDARY XA_ARC XA_ATOM XA_BITMAP XA_CARDINAL XA_COLORMAP XA_CURSOR XA_CUT_BUFFER0
+	   XA_CUT_BUFFER1 XA_CUT_BUFFER2 XA_CUT_BUFFER3 XA_CUT_BUFFER4 XA_CUT_BUFFER5 XA_CUT_BUFFER6
+	   XA_CUT_BUFFER7 XA_DRAWABLE XA_FONT XA_INTEGER XA_PIXMAP XA_POINT XA_RECTANGLE XA_RESOURCE_MANAGER
+	   XA_RGB_COLOR_MAP XA_RGB_BEST_MAP XA_RGB_BLUE_MAP XA_RGB_DEFAULT_MAP XA_RGB_GRAY_MAP XA_RGB_GREEN_MAP
+	   XA_RGB_RED_MAP XA_STRING XA_VISUALID XA_WINDOW XA_WM_COMMAND XA_WM_HINTS XA_WM_CLIENT_MACHINE
+	   XA_WM_ICON_NAME XA_WM_ICON_SIZE XA_WM_NAME XA_WM_NORMAL_HINTS XA_WM_SIZE_HINTS XA_WM_ZOOM_HINTS
+	   XA_MIN_SPACE XA_NORM_SPACE XA_MAX_SPACE XA_END_SPACE XA_SUPERSCRIPT_X XA_SUPERSCRIPT_Y
+	   XA_SUBSCRIPT_X XA_SUBSCRIPT_Y XA_UNDERLINE_POSITION XA_UNDERLINE_THICKNESS XA_STRIKEOUT_ASCENT
+	   XA_STRIKEOUT_DESCENT XA_ITALIC_ANGLE XA_X_HEIGHT XA_QUAD_WIDTH XA_WEIGHT XA_POINT_SIZE
+	   XA_RESOLUTION XA_COPYRIGHT XA_NOTICE XA_FONT_NAME XA_FAMILY_NAME XA_FULL_NAME XA_CAP_HEIGHT
+	   XA_WM_CLASS XA_WM_TRANSIENT_FOR))
       
       (let ((r (XRectangle 10 20 100 110)))
 	(if (not (= (.width r) 100))
@@ -42439,10 +42424,8 @@ EDITS: 1
 	(XtMakeResizeRequest wid 200 200)
 	(XtMapWidget wid)
 	(XtUnmapWidget wid)
-	(XtUnrealizeWidget wid)
-					;(XtDestroyWidget wid1)
-	)
-					;	     (XtFree 0) (XtCalloc 0 0) (XtMalloc 0) (XtRealloc 0 0)
+	(XtUnrealizeWidget wid))
+
       (XtSetLanguageProc 
        (car (main-widgets)) 
        (lambda (dpy str data)
@@ -42522,8 +42505,7 @@ EDITS: 1
 	(let ((acts (XtGetActionList xmLabelWidgetClass)))
 	  (if (not (and (= (length acts) 4) 
 			(string=? (caar acts) "Enter")))
-	      (snd-display "XtGetActionList: ~A" acts)))
-	)
+	      (snd-display "XtGetActionList: ~A" acts))))
       
       (let ((pop (XtCreatePopupShell "hiho" xmGrabShellWidgetClass (cadr (main-widgets))
 				     (list XmNiconNameEncoding XA_STRING))))
@@ -42560,8 +42542,7 @@ EDITS: 1
 	  (let ((tag (catch #t (lambda () (XtVaGetValues (car (sound-widgets)) (list "XmNpaneMaximum" 0)))
 			    (lambda args (car args)))))
 	    (if (not (eq? tag 'no-such-resource))
-		(snd-display "XtVaGetValues of incorrectly quoted resource name: ~A" tag)))
-	  )
+		(snd-display "XtVaGetValues of incorrectly quoted resource name: ~A" tag))))
 	
 	(close-sound ind))
       
@@ -44807,136 +44788,88 @@ EDITS: 1
 		(list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
 		      :phase -1 0 #f #t () #())))
 	     (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 0+i (make-delay 32) 
-		   :channels -1 0 #f #t () #()))
-	    )
+		   :channels -1 0 #f #t () #())))
 	
-	(let ((struct-accessors
-	       (let ((struct-accessors-1 
-		      (list  .pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
-			     .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
-			     .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
-			     .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
-			     .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
-			     .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
-			     .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
-			     .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
-			     .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
-			     .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
-			     .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
-			     .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
-			     .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
-			     .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
-			     .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
-			     .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
-			     .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
-					;			    .last_page 
-			     .crossed_boundary
-			     .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
-			     .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
-			     .animate .length .click_count .widget .item_position .callbackstruct
-			     .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
-			     .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
-			     .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
-			     .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
-			     .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
-			     .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
-			     .send_event .serial .type .value .doit .colormap .menuToPost .postIt)))
-		 (if (not (defined? 'XpmImage?))
-		     struct-accessors-1
-		     (append struct-accessors-1
-			     (list .valuemask .ncolors .cpp .numsymbols .colorsymbols .npixels 
-				   .y_hotspot .x_hotspot .colormap_size)))))
-	       (struct-accessor-names 
-		(let ((struct-accessor-names-1
-		       (list  '.pixel '.red '.green '.blue '.flags '.pad '.x '.y '.width '.height '.angle1 '.angle2 '.ptr
-			      '.x1 '.y1 '.x2 '.y2 '.dashes '.dash_offset '.clip_mask '.clip_y_origin '.clip_x_origin '.graphics_exposures
-			      '.subwindow_mode '.font '.ts_y_origin '.ts_x_origin '.stipple '.tile '.arc_mode '.fill_rule '.fill_style
-			      '.join_style '.cap_style '.line_style '.line_width '.background '.foreground '.plane_mask '.function '.delta
-			      '.nchars '.chars '.name '.depth '.visual '.mwidth '.mheight '.ndepths '.depths '.root_depth '.root_visual
-			      '.default_gc '.cmap '.white_pixel '.black_pixel '.max_maps '.min_maps '.backing_store '.save_unders '.root_input_mask
-			      '.lbearing '.rbearing '.ascent '.descent '.attributes '.card32 '.fid '.properties '.min_bounds '.max_bounds '.per_char
-			      '.input '.initial_state '.icon_pixmap '.icon_window '.icon_x '.icon_y '.icon_mask '.window_group '.visualid
-			      '.class  '.red_mask '.green_mask '.blue_mask '.bits_per_rgb '.map_entries '.nvisuals '.visuals '.bits_per_pixel
-			      '.background_pixmap '.background_pixel '.border_pixmap '.border_pixel '.bit_gravity '.win_gravity '.backing_planes
-			      '.backing_pixel '.save_under '.event_mask '.do_not_propagate_mask '.cursor '.map_installed '.map_state '.all_event_masks
-			      '.your_event_mask '.screen '.xoffset '.byte_order '.bitmap_unit '.bitmap_bit_order '.bitmap_pad '.bytes_per_line
-			      '.obdata '.sibling '.stack_mode '.red_max '.red_mult '.green_max '.green_mult '.blue_max '.blue_mult '.base_pixel
-			      '.killid '.data '.min_height '.max_height '.min_width '.max_width '.height_inc '.width_inc '.page_number
-			      '.page_widget '.status_area_widget '.major_tab_widget '.minor_tab_widget '.source_data '.location_data '.parm
-			      '.parm_format '.parm_length '.parm_type '.transfer_id '.destination_data '.remaining '.item_or_text '.auto_selection_type
-			      '.new_outline_state '.prev_page_number '.prev_page_widget '.rendition '.render_table 
-					;			    '.last_page 
-			      '.crossed_boundary
-			      '.client_data '.status '.font_name '.tag '.traversal_destination '.dragProtocolStyle '.direction '.reason
-			      '.timeStamp '.operation '.operations '.dropSiteStatus '.dropAction '.iccHandle '.completionStatus '.dragContext
-			      '.animate '.length '.click_count '.widget '.item_position '.callbackstruct
-			      '.set '.item '.item_length '.selected_items '.selected_item_count '.selected_item_positions '.selection_type
-			      '.mask '.mask_length '.dir '.dir_length '.pattern '.pattern_length '.position '.currInsert '.newInsert '.startPos
-			      '.endPos '.text '.request_code '.error_code '.first_keycode '.request '.resourceid '.format '.message_type '.new
-			      '.property '.display '.target '.requestor '.owner '.selection '.atom '.place '.value_mask '.above '.from_configure
-			      '.event '.override_redirect '.border_width '.parent '.minor_code '.major_code '.drawable '.count '.key_vector '.focus
-			      '.detail '.mode '.is_hint '.button '.same_screen '.keycode '.state '.y_root '.x_root '.root '.time '.subwindow '.window
-			      '.send_event '.serial '.type '.value '.doit '.colormap '.menuToPost '.postIt)))
-		  (if (not (defined? 'XpmImage?))
-		      struct-accessor-names-1
-		      (append struct-accessor-names-1
-			      (list '.valuemask '.ncolors '.cpp
-				    '.numsymbols '.colorsymbols '.npixels '.y_hotspot '.x_hotspot '.colormap_size)))))
-
+	(let ((struct-accessors '(.pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
+			          .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures
+				  .subwindow_mode .font .ts_y_origin .ts_x_origin .stipple .tile .arc_mode .fill_rule .fill_style
+				  .join_style .cap_style .line_style .line_width .background .foreground .plane_mask .function .delta
+				  .nchars .chars .name .depth .visual .mwidth .mheight .ndepths .depths .root_depth .root_visual
+				  .default_gc .cmap .white_pixel .black_pixel .max_maps .min_maps .backing_store .save_unders .root_input_mask
+				  .lbearing .rbearing .ascent .descent .attributes .card32 .fid .properties .min_bounds .max_bounds .per_char
+				  .input .initial_state .icon_pixmap .icon_window .icon_x .icon_y .icon_mask .window_group .visualid
+				  .class  .red_mask .green_mask .blue_mask .bits_per_rgb .map_entries .nvisuals .visuals .bits_per_pixel
+				  .background_pixmap .background_pixel .border_pixmap .border_pixel .bit_gravity .win_gravity .backing_planes
+				  .backing_pixel .save_under .event_mask .do_not_propagate_mask .cursor .map_installed .map_state .all_event_masks
+				  .your_event_mask .screen .xoffset .byte_order .bitmap_unit .bitmap_bit_order .bitmap_pad .bytes_per_line
+				  .obdata .sibling .stack_mode .red_max .red_mult .green_max .green_mult .blue_max .blue_mult .base_pixel
+				  .killid .data .min_height .max_height .min_width .max_width .height_inc .width_inc .page_number
+				  .page_widget .status_area_widget .major_tab_widget .minor_tab_widget .source_data .location_data .parm
+				  .parm_format .parm_length .parm_type .transfer_id .destination_data .remaining .item_or_text .auto_selection_type
+				  .new_outline_state .prev_page_number .prev_page_widget .rendition .render_table 
+				  .crossed_boundary
+				  .client_data .status .font_name .tag .traversal_destination .dragProtocolStyle .direction .reason
+				  .timeStamp .operation .operations .dropSiteStatus .dropAction .iccHandle .completionStatus .dragContext
+				  .animate .length .click_count .widget .item_position .callbackstruct
+				  .set .item .item_length .selected_items .selected_item_count .selected_item_positions .selection_type
+				  .mask .mask_length .dir .dir_length .pattern .pattern_length .position .currInsert .newInsert .startPos
+				  .endPos .text .request_code .error_code .first_keycode .request .resourceid .format .message_type .new
+				  .property .display .target .requestor .owner .selection .atom .place .value_mask .above .from_configure
+				  .event .override_redirect .border_width .parent .minor_code .major_code .drawable .count .key_vector .focus
+				  .detail .mode .is_hint .button .same_screen .keycode .state .y_root .x_root .root .time .subwindow .window
+				  .send_event .serial .type .value .doit .colormap .menuToPost .postIt))
 	       (dpy (XtDisplay (cadr (main-widgets))))
 	       (win (XtWindow (cadr (main-widgets)))))
 	  
 	  ;; ---------------- 0 Args
 	  (for-each 
-	   (lambda (n name)
-	     (let ((tag
-		    (catch #t
-		      n
-		      (lambda args (car args)))))
-	       (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
-		   (snd-display "(~A) -> ~A" name tag)))
-	     (if (dilambda? n)
-		 (let ((tag
-			(catch #t
-			  (lambda () 
-			    (set! (n) 0))
-			  (lambda args (car args)))))
-		   (if (not (eq? tag 'wrong-number-of-args))
-		       (snd-display "(~A) -> ~A" name tag)))))
-	   struct-accessors
-	   struct-accessor-names)
+	   (lambda (name)
+	     (let ((n (symbol->value name)))
+	       (let ((tag
+		      (catch #t
+			n
+			(lambda args (car args)))))
+		 (if (not (memq tag '(wrong-type-arg wrong-number-of-args)))
+		     (snd-display "(~A) -> ~A" name tag)))
+	       (if (dilambda? n)
+		   (let ((tag
+			  (catch #t
+			    (lambda () 
+			      (set! (n) 0))
+			    (lambda args (car args)))))
+		     (if (not (eq? tag 'wrong-number-of-args))
+			 (snd-display "(~A) -> ~A" name tag))))))
+	   struct-accessors)
 	  
 	  ;; ---------------- 1 Arg
 	  (for-each 
 	   (lambda (arg)
 	     (for-each 
-	      (lambda (n name)
-		(let ((tag 
-		       (catch #t
-			 (lambda () (n arg))
-			 (lambda args (car args)))))
-		  (if (not (eq? tag 'wrong-type-arg))
-		      (snd-display "(~A ~A) -> ~A" name arg tag)))
-		(when (dilambda? n)
+	      (lambda (name)
+		(let ((n (symbol->value name)))
 		  (let ((tag 
 			 (catch #t
-			   (lambda () (set! (n arg) 0))
+			   (lambda () (n arg))
 			   (lambda args (car args)))))
 		    (if (not (eq? tag 'wrong-type-arg))
 			(snd-display "(~A ~A) -> ~A" name arg tag)))
-		  (let ((tag 
-			 (catch #t
-			   (lambda () (set! (n 0) arg))
-			   (lambda args (car args)))))
-		    (if (not (eq? tag 'wrong-type-arg))
-			(snd-display "(set ~A ~A) -> ~A" name arg tag)))))
-	      struct-accessors
-	      struct-accessor-names))
-	   (list dpy win '(Atom 0) '(Colormap 0) 1.5 "/hiho" 1234 #f #\c '(Time 0) '(Font 0) #() '(Cursor 1))))
-	)
-      (show-sounds-in-directory)
-					;(show-all-atoms)
-      )))
+		  (when (dilambda? n)
+		    (let ((tag 
+			   (catch #t
+			     (lambda () (set! (n arg) 0))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display "(~A ~A) -> ~A" name arg tag)))
+		    (let ((tag 
+			   (catch #t
+			     (lambda () (set! (n 0) arg))
+			     (lambda args (car args)))))
+		      (if (not (eq? tag 'wrong-type-arg))
+			  (snd-display "(set ~A ~A) -> ~A" name arg tag))))))
+	      struct-accessors))
+	   (list dpy win 1.5 "/hiho" 1234 #f #\c #()))))
+
+      (show-sounds-in-directory))))
 
 
 
