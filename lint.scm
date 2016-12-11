@@ -647,27 +647,35 @@
 
     (define (shadowed? sym tree1)
       (let shadow? ((tree tree1))
-	(and (len>2? tree)
-	     (if (not (pair? (cdr tree)))
-		 (shadow? (car tree))
+	(and (pair? tree)
+	     (or (and (null? (cdr tree))
+		      (shadow? (car tree)))
+		 (and (pair? (cdr tree))
+		      (null? (cddr tree))
+		      (or (shadow? (car tree))
+			  (shadow? (cdr tree))))
+		 (and (pair? (cdr tree))
+		      (pair? (cddr tree))
 		 (case (car tree)
 		   ((let let*)
 		    (and (len>1? (cdr tree))
 			 (or (eq? sym (cadr tree))
-			     (let ((vars ((if (symbol? (cadr tree)) cddr cdr) tree)))
-			       (and (pair? vars)
-				    (pair? (car vars))
-				    (or (assq sym (car vars))
-					(shadow? vars)))))))
+			     (let ((vars ((if (symbol? (cadr tree)) caddr cadr) tree)))
+			       (or (and (pair? vars)
+					(assq sym vars))
+				   (shadow? ((if (symbol? (cadr tree)) cdddr cddr) tree)))))))
+
 		   ((letrec letrec* do)
-		    (and (pair? (cadr tree))
-			 (or (assq sym (cadr tree))
-			     (shadow? (cdr tree)))))
+		    (or (and (pair? (cadr tree))
+			     (assq sym (cadr tree)))
+			(shadow? (cddr tree))))
+
 		   ((define lambda define-macro define-constant)
 		    (or (eq? sym (cadr tree))
 			(and (pair? (cadr tree))
 			     (memq sym (cadr tree)))
 			(shadow? (cddr tree))))
+
 		   ((lambda* define* define-macro*)
 		    (or (eq? sym (cadr tree))
 			(and (pair? (cadr tree))
@@ -678,7 +686,7 @@
 			(shadow? (cddr tree))))
 		   (else 
 		    (or (shadow? (car tree))
-			(shadow? (cdr tree)))))))))
+			(shadow? (cdr tree))))))))))
 
     (define (gather-symbols tree)
       (let ((syms ()))
@@ -12062,7 +12070,7 @@
 								 ,(caddr f))
 							       ,(cadddr f))
 							   ,@(if (null? (cdr fs)) () '(...)))))))))
-	      
+
 	      (cond ((equal? test1 test2)
 		     (when (and (eq? f-func (car prev-f))
 				(not (side-effect? test1 env)))
@@ -16830,14 +16838,14 @@
 				 (pair? (car c))))
 		       (set! others #t))
 		      
-		      ((and (null? (cdar c))                         ; ((a) a)
+		      ((and (null? (cdar c))                 ; ((a) a)
 			    (symbol? (caar c))
-			    (eq? (caar c) (cadr c)))                 ; the quoted case happens only in test suites
+			    (eq? (caar c) (cadr c)))         ; the quoted case happens only in test suites
 		       (cond ((assq 'symbol->value svs) => (lambda (sv-data)
 							     (set-cdr! sv-data (cons (caar c) (cdr sv-data)))))
 			     (else (set! svs (cons (cons 'symbol->value (list (caar c))) svs)))))
 		      
-		      ((and (every? symbol? (car c))             ; ((a b c) (eval selector))
+		      ((and (every? symbol? (car c))         ; ((a b c) (eval selector))
 			    (len=2? (cadr c))
 			    (memq (caadr c) '(eval symbol->value))
 			    (equal? (cadadr c) selector))
@@ -16853,7 +16861,7 @@
 							(set-cdr! func-data (cons (caar c) (cdr func-data)))))
 			     (else (set! svs (cons (cons (caadr c) (list (caar c))) svs)))))
 		      
-		      ((and (len=2? (cadr c))            ; ((1 b #f) (func selector))
+		      ((and (len=2? (cadr c))                ; ((1 b #f) (func selector))
 			    (equal? (cadadr c) selector))
 		       (cond ((assq (caadr c) svs) => (lambda (func-data)
 							(set-cdr! func-data (append (reverse (car c)) (cdr func-data)))))
@@ -16876,7 +16884,7 @@
 		      
 		      ;; if regular case + else, focus case on diff
 		      (let ((len (- (length form) 2))) ; number of clauses
-			(when (and (> len 1)                        ; (case x (else ...)) is handled elsewhere
+			(when (and (> len 1)                 ; (case x (else ...)) is handled elsewhere
 				   (len>1? (cdr form))
 				   (pair? (caddr form))
 				   (not (tree-set-member '(unquote #_{list}) form)))
@@ -18733,9 +18741,11 @@
 		   (if (not (null? bindings))
 		       (lint-format "let* variable list is not a proper list? ~S" 
 				    caller ((if named-let caddr cadr) form)))
-		   (if (not (or side-effects
-				(any? (lambda (v) (positive? (var-ref v))) vars)))
-		       ;; (let* ((x (log y))) x)
+		   (if (or (null? varlist)
+			   (and (pair? varlist)
+				(null? (cdr varlist)))       ; (let* ((x (log y))) x)
+			   (not (or side-effects             ; (let* ((x (log y)) (z 32))...)
+				    (any? (lambda (v) (positive? (var-ref v))) vars))))
 		       (lint-format "let* could be let: ~A" caller (truncated-list->string form))))
 		;; in s7, let evaluates var values top down, so this message is correct
 		;;   even in cases like (let ((ind (open-sound...)) (mx (maxamp))) ...)
@@ -19318,7 +19328,8 @@
 		       (pair? (caadr form))
 		       (tree-nonce (caaadr form) (cddr form)))
 	      (let ((lr-lambda (cadr (caadr form))))
-		(when (eq? 'lambda (car lr-lambda))
+		(when (and (pair? lr-lambda)
+			   (eq? 'lambda (car lr-lambda)))
 		  (let ((pars (cadr lr-lambda)))
 		    (when (proper-list? pars)
 		      (let* ((lr-name (caaadr form))
@@ -19328,15 +19339,21 @@
 						 (cdr tree)
 						 (or (search (car tree))
 						     (search (cdr tree))))))))
-			;; slightly inaccurate -- we should make sure no free var in letrec lambda (ref to outer)
-			;;   is shadowed at the point of the lr-lambda call in the body lambda, but as far as
-			;;   I can see, that never happens.
-			(lint-format "perhaps ~A" caller
-				     (lists->string form
-						    (tree-subst `(let ,lr-name ,(map list pars lr-args)
-								      ,@(one-call-and-dots (cddr lr-lambda)))
-								(cons lr-name lr-args) 
-								(caddr form)))))))))))
+			
+			(call-with-exit
+			 (lambda (quit)
+			   (let ((vs (out-vars lr-name pars (cddr lr-lambda))))
+			     (when (pair? (car vs))
+			       (for-each (lambda (v)
+					   (if (shadowed? v (caddr form)) ; this never happens
+					       (quit)))
+					 (car vs))))                      ; set (cadr) appears to include args which leads to false positives here
+			   (lint-format "perhaps ~A" caller
+					(lists->string form
+						       (tree-subst `(let ,lr-name ,(map list pars lr-args)
+									 ,@(one-call-and-dots (cddr lr-lambda)))
+								   (cons lr-name lr-args) 
+								   (caddr form)))))))))))))
 
 	  ;; -------- letrec-walker --------
 	  (define (letrec-walker caller form env)
@@ -21002,7 +21019,8 @@
 	      (set! last-line-number line)
 	      
 	      (if (and (len>1? form)
-		       (memq (car form) '(define define-macro)) ; TODO: and the rest, also set! as in (set! if 2)
+		       (hash-table-ref definers (car form))    ; set! case is handled elsewhere
+		       (not (memq (car form) '(eval eval-string load require)))  ; (eval-string|load (string-append...)) (eval (string->symbol...))
 		       (pair? (cadr form)))
 		  (let ((f (caadr form)))
 		    (if (and (symbol? f)
@@ -21506,11 +21524,11 @@
 ;;; long cond of (= same sym, sym not set ands not equal...) -> hash [also alist + made from qq]
 ;;; when A x; when B x;... (also unless if) if x doesn't affect test [(when (= x 1) (display x)) (when (= x 2) (display x)) -- etc]
 ;;;   do we catch when A... when A... alongside if?
-;;; ifs->cond + assoc? ((if (equal? "space" (car tsil)) (display ".")) (if (equal? "baddie" (car tsil))...))
 ;;; cond ((not x)...) ((string=? x...)...) -> (not (string? x)) [direct is ok]
 ;;; let var=symbol used once (t347), also pointless resets there, see also lis case 
 ;;; `((a . b)...) handled by un_{list} -- cons
 ;;; constant exprs in recursive func, maybe also in func arg to member/assoc [find-constant-exprs]
 ;;; optional checks for redef rootlet names
+;;; (define (f ... (let f | (define f shadowing top)) ?
 ;;;
-;;; 187 28825 768679
+;;; 187 28825 768757
