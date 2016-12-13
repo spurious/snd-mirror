@@ -855,7 +855,7 @@
 	       (set! z (cons (if 3d (or (third p) 0.0) 0.0) z))
 	       (set! v (cons ((if 3d fourth third) p) v)))
 	     points)
-	    (list (reverse x) (reverse y) (reverse z) (reverse v)))
+	    (map reverse (list x y z v)))
 	  
 	  ;; decode a plain list
 	  (let ((px ())
@@ -916,7 +916,7 @@
 		   (set! z (cons (* d (imag-part evec)) z))
 		   (set! v (cons ((if 3d fourth third) p) v))))
 	       points)
-	      (list (reverse x) (reverse y) (reverse z) (reverse v)))
+	      (map reverse (list x y z v)))
 	    
 	    ;; decode a list of d:a:e components
 	    (let ((len (length points)))

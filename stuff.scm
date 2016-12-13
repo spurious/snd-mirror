@@ -1929,21 +1929,21 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	  
 	  ((dynamic-wind)
 	   ;; here we want to ignore the first and last clauses, and report the last of the second
-	   (let* ((body (let ((p (caddr source)))
-			  (and (eq? (car p) 'lambda)
-			       (cddr p))))
-		  (previous (and body (butlast body)))
-		  (end (and body (last body))))
-	     (if (not body)
-		 source
-		 `(dynamic-wind
-		      ,(cadr source)
-		      (lambda ()
-			,@previous
-			(let ((,result ,end))
-			  (format (Display-port) "(dynamic-wind ... ~A) -> ~A~%" ',end ,result)
-			  ,result))
-		      ,(cadddr source)))))
+	   (let ((body (let ((p (caddr source)))
+			 (and (eq? (car p) 'lambda)
+			      (cddr p)))))
+	     (let ((previous (and body (butlast body)))
+		   (end (and body (last body))))
+	       (if (not body)
+		   source
+		   `(dynamic-wind
+			,(cadr source)
+			(lambda ()
+			  ,@previous
+			  (let ((,result ,end))
+			    (format (Display-port) "(dynamic-wind ... ~A) -> ~A~%" ',end ,result)
+			    ,result))
+			,(cadddr source))))))
 	  
 	  (else
 	   (cons (proc-walk (car source)) 
@@ -1962,7 +1962,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	;; (Display (define (f ...) ...)
 	(let ((func (caadr definition))
 	      (args (cdadr definition))
-	      (body `(begin ,@(proc-walk (cddr definition)))))
+	      (body (cons 'begin (proc-walk (cddr definition)))))
 	  ;(format *stderr* "~A ~A ~A~%" func args body)
 	  (let* ((no-noise-args (remove-keys args))                               ; omit noise words like :optional
 		 (arg-names (cond ((null? args)
