@@ -180,7 +180,7 @@
 #ifndef WITH_GMP
   #define WITH_GMP 0
   /* this includes multiprecision arithmetic for all numeric types and functions, using gmp, mpfr, and mpc
-   * WITH_GMP adds the following functions: bignum, bignum?, bignum-precision
+   * WITH_GMP adds the following functions: bignum and bignum?, and (*s7* 'bignum-precision)
    * using gmp with precision=128 is about 50 times slower than using C doubles and long long ints.
    */
 #endif
@@ -75203,6 +75203,7 @@ int main(int argc, char **argv)
  * maybe use 'not for signature of #f? or #f?
  * repl: why does it drop the initial open paren?  or refuse to show it if window is wide?
  * update libgsl.scm
+ * pretty-print needs docs/tests
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -20,9 +20,15 @@
 (define *report-doc-strings* #f)                          ; old-style (CL) doc strings
 (define *report-func-as-arg-arity-mismatch* #f)           ; as it says...
 (define *report-constant-expressions-in-do* #f)           ; kinda dumb, includes map, for-each, and named let
-(define *report-bad-variable-names* '(l ll .. O ~))       ; bad names -- a list to check such as:
-;;;             '(l ll .. ~ data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
+
 (define *report-ridiculous-variable-names* 50)            ; max length of var name 
+(define *report-bad-variable-names* '(l ll .. O ~ else))  ; bad names -- a list to check such as:
+;;;             '(l ll .. ~ else data datum new item info temp tmp temporary val vals value foo bar baz aux dummy O var res retval result count str)
+;;;   else is evaluated in cond
+;;;   => is evaluated in both cond and case, so both are better left alone (see s7test.scm for examples)
+;;;     at the top-level, r7rs deems it an error to change their value,
+;;;   but => is used to excess is testing macros (via define-syntax), so we get buried in useless warnings.
+
 (define *report-built-in-functions-used-as-variables* #f) ; string and length are the most common cases
 (define *report-forward-functions* #f)                    ; functions used before being defined
 (define *report-sloppy-assoc* #t)                         ; i.e. (cdr (assoc x y)) and the like
@@ -30,6 +36,7 @@
 (define *report-clobbered-function-return-value* #f)      ; function returns constant sequence, which is then stomped on -- very rare!
 (define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
 (define *report-repeated-code-fragments* #t)              ; or an int = min reported fragment size * uses * uses, default 130.
+(define *report-quasiquote-rewrites* #t)                  ; simple quasiquote stuff rewritten as a normal list expression
 
 (define *fragment-max-size* 128)  ; biggest seen if 512: 180 -- appears to be in a test suite, if 128 max at 125
 (define *fragment-min-size* 5)    ; smallest seen - 1 -- maybe 8 would be better
@@ -6002,7 +6009,7 @@
 
     (define (find-constant-exprs caller vars form body)
       (if (or (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
-					 define-macro define-macro* define-bacro define-bacro* define-constant define-expansion)
+				 define-macro define-macro* define-bacro define-bacro* define-constant define-expansion)
 			       body)
 	      (let set-walk ((tree body)) ; generalized set! causes confusion
 		(and (pair? tree)
@@ -13415,26 +13422,26 @@
 	     (lint-format "~A is a constant in s7: ~A" caller sym form))
 	    
 	    ((eq? sym 'quote)
-	     (lint-format "either a stray quote, or a real bad idea: ~A" caller (truncated-list->string form)))
+	     (lint-format "either a stray quote, or a really bad idea: ~A" caller (truncated-list->string form)))
 	    
 	    ((pair? sym)
 	     (check-definee caller (car sym) form env))
 	    
-	    ((let ((v (var-member sym env)))
-	       (and (var? v)
-		    (eq? (var-definer v) 'define-constant)
-		    (len>2? form)
-		    (not (equal? (caddr form) (var-initial-value v)))
-		    v))
-	     => (lambda (v)
-		  (let ((line (if (and (pair? (var-initial-value v))
-				       (positive? (pair-line-number (var-initial-value v))))
-				  (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-				  "")))
-		    (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
-				 (truncated-list->string form)
-				 line
-				 (truncated-list->string (var-initial-value v))))))))
+	    ((var-member sym env) => (lambda (v)
+				       (if (and (eq? (var-definer v) 'define-constant)
+						(len>2? form)
+						(not (equal? (caddr form) (var-initial-value v))))
+					   (let ((line (if (and (pair? (var-initial-value v))
+								(positive? (pair-line-number (var-initial-value v))))
+							   (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
+							   "")))
+					     (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
+							  (truncated-list->string form)
+							  line
+							  (truncated-list->string (var-initial-value v)))))))
+
+	    ((memq sym '(else =>)) ; also in r7rs ... and _, but that is for syntax-rules
+	     (lint-format "redefinition of ~A is a bad idea: ~A" caller sym (truncated-list->string form)))))
     
     (define binders (let ((h (make-hash-table)))
 		      (for-each
@@ -13981,6 +13988,22 @@
 			     (or (null? args)
 				 (symbol? args)))
 			(lint-format "lambda* could be lambda ~A" caller form))
+#|
+		  (when (and (pair? (cddr form))
+			     (pair? (caddr form))
+			     (eq? head 'lambda)
+			     (proper-list? args))
+		    (let ((names args))
+		      (let ((f (caddr form)))
+			(if (and (len>2? f)
+				 (eq? (car f) 'define)
+				 (or (pair? (cadr f))
+				     (and (symbol? (cadr f))
+					  (pair? (caddr f))
+					  (eq? (caaddr f) 'lambda)))
+				 (not (tree-set-member names (cddr f))))
+			    (format *stderr* "~A (~A):~%~A~%~%" *current-file* (cadr f) (lint-pp form))))))
+|#
 
 		    (when (or (= len 3)
 			      (and (= len 4)
@@ -14072,10 +14095,13 @@
 							  (truncated-list->string form)
 							  line
 							  (truncated-list->string (var-initial-value v))))))
+
 				      ((and (not lint-in-with-let)
 					    (hash-table-ref built-in-functions settee))
 				       (lint-format "not recommended: ~A" caller (truncated-list->string form)))
-				      ((hash-table-ref syntaces settee)
+
+				      ((or (hash-table-ref syntaces settee)
+					   (memq settee '(else => ... _))) ; r7rs says (set! else #f) is an error
 				       (lint-format "bad idea: ~A" caller (truncated-list->string form)))))))
 		   
 			 ((not (pair? settee))  ; (set! 3 1)
@@ -16742,7 +16768,12 @@
 							      (list 'else (cadddr expr)))
 							(list (case-branch (cadr expr) selector (cddr expr))))))))))))))
 		       
-		       (lint-walk-open-body caller (car form) exprs env)))) ; walk the result exprs
+		       (lint-walk-open-body caller (car form) 
+					    (if (and (pair? exprs)
+						     (eq? (car exprs) '=>))
+						(cdr exprs)
+						exprs)
+					    env)))) ; walk the result exprs
 	       (cddr form))
 	      
 	      (let ((key-phrase 
@@ -16938,7 +16969,7 @@
 			  (if (and (symbol? sel-type)                ; (case (list 1) ((0) #t))
 				   (not (memq sel-type selector-types)))   
 			      (lint-format "case selector may not work with eqv: ~A" caller (truncated-list->string selector)))
-			  (check-keys caller form selector sel-type env)))))
+			  (check-keys caller form selector sel-type env))))) ; calls lint-walk-open-body on each result
 		env)))
 	  (hash-walker 'case case-walker))
 	
@@ -18672,6 +18703,23 @@
 		  
 		  (set! vars (walk-let-vars caller form varlist vars env))
 		  
+#|
+		  (when (and named-let
+			     (pair? body))
+		    (let ((names (map var-name vars)))
+		      (let ((f (car body)))
+			(if (and (len>2? f)
+				 (eq? (car f) 'define)
+				 (or (pair? (cadr f))
+				     (and (symbol? (cadr f))
+					  (pair? (caddr f))
+					  (eq? (caaddr f) 'lambda)))
+				 (not (tree-set-member names (cddr f))))
+			    (format *stderr* "~A (~A):~%~A~%~%" *current-file* (cadr f) (lint-pp form))))))
+		  ;; if not recursive and used once, maybe embed, else to closure
+		  ;; (let|rec () (define...) (let loop...))
+|#
+
 		  (let ((suggest made-suggestion))
 		    (unless named-let
 		      (when (and (pair? varlist)
@@ -20874,7 +20922,8 @@
 	     ((pair? head)
 	      (walk-pair caller head form env))
 
-	     ((and (procedure? head)
+	     ((and *report-quasiquote-rewrites*
+		   (procedure? head)
 		   (memq head '(#_{list} #_{apply_values} #_{append})))
 	      (walk-qq caller head form env))
 
@@ -21558,4 +21607,12 @@
     #f))
 |#
 
-;;; 187 28825 777950
+;;; (let ((x...)) (cond (... => use-x-only-here))) -> (cond (... (let ((x...)) ...)))? 
+;;; another constant expr: local function definition with no refs to locals: 
+;;;   not in do -- only in snd-test!
+;;;   does happen in named let -- maybe a dozen hits 18701
+;;;   in lambda, a zillion hits 14005 -- check for recursion here (also in define-walker)
+;;;   check define-walker here (but is opt ok??)
+;;;   also use letrec, I guess, if embedded func is recursive
+;;;
+;;; 187 28825 777993
