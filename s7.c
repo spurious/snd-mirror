@@ -75203,7 +75203,7 @@ int main(int argc, char **argv)
  * maybe use 'not for signature of #f? or #f?
  * repl: why does it drop the initial open paren?  or refuse to show it if window is wide?
  * update libgsl.scm
- * pretty-print needs docs/tests
+ * pretty-print needs docs/tests, special case seq code
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -25,32 +25,39 @@
 	    (do ((p lst (cdr p))
 		 (added 0 0))
 		((not (pair? p)))
-	      (if (not (eq? p lst)) (spaces port col))
-	      (let ((len (length (object->string (car p)))))
-		(if (and (keyword? (car p))
-			 (pair? (cdr p)))
-		    (begin
-		      (write (car p) port)
-		      (write-char #\space port)
-		      (set! added (+ 1 len))
-		      (set! p (cdr p))))
-		(if (not (pair? p))
-		    (format port " . ~S" p)
-		    (if (and (pair? (car p))
-			     (pair? (cdar p))
-			     (null? (cddar p))
-			     (> len (/ *pretty-print-length* 2)))
-			(begin
-			  (if (eq? (caar p) 'quote)
-			      (write-char #\' port)
-			      (begin
-				(write-char #\( port)
-				(pretty-print-1 (caar p) port col)
-				(spaces port (+ col 1))))
-			  (pretty-print-1 (cadar p) port (+ col 1))
-			  (if (not (eq? (caar p) 'quote))
-			      (write-char #\) port)))
-			(pretty-print-1 (car p) port (+ col added)))))))
+	      (let ((obj (car p)))
+		(if (not (eq? p lst))
+		    (spaces port col))
+		(let ((len (length (object->string obj))))
+		  (if (and (keyword? obj)
+			   (pair? (cdr p)))
+		      (begin
+			(write obj port)
+			(write-char #\space port)
+			(set! added (+ 1 len))
+			(set! p (cdr p))
+			(set! obj (car p)))) ; pair? cdr p above
+		  
+		  (cond ((or (hash-table? obj)
+			     (let? obj))
+			 (pretty-print-1 obj port col))
+			
+			((and (pair? obj)
+			      (pair? (cdr obj))
+			      (null? (cddr obj))
+			      (> len (/ *pretty-print-length* 2)))
+			 (if (eq? (car obj) 'quote)
+			     (write-char #\' port)
+			     (begin
+			       (write-char #\( port)
+			       (pretty-print-1 (car obj) port col)
+			       (spaces port (+ col 1))))
+			 (pretty-print-1 (cadr obj) port (+ col 1))
+			 (if (not (eq? (car obj) 'quote))
+			     (write-char #\) port)))
+			
+			(else
+			 (pretty-print-1 obj port (+ col added))))))))
 	  
 	  (define (stacked-split-list port lst col)
 	    (if (not (pair? lst))
@@ -420,11 +427,32 @@
 			   h)))
 	
 	    (lambda (obj port column) ; pretty-print-1
-	    
+
 	      (cond ((number? obj)
 		     (if (rational? obj)
 			 (write obj port)
 			 (display (messy-number obj) port)))
+		    
+		    ((hash-table? obj)
+		     (display "(hash-table" port)
+		     (for-each (lambda (field)
+				 (let ((symstr (object->string (car field))))
+				   (spaces port (+ column 2))
+				   (format port "'(~A . " symstr)
+				   (pretty-print-1 (cdr field) port (+ column 4 (length symstr)))
+				   (write-char #\) port)))
+			       obj)
+		     (write-char #\) port))
+
+		    ((let? obj)
+		     (display "(inlet" port)
+		     (for-each (lambda (field)
+				 (let ((symstr (symbol->string (car field))))
+				   (spaces port (+ column 2))
+				   (format port ":~A " symstr)
+				   (pretty-print-1 (cdr field) port (+ column 2 (length symstr)))))
+			       obj)
+		     (write-char #\) port))
 		    
 		    ((not (pair? obj))
 		     (write obj port))
@@ -432,6 +460,18 @@
 		    ((hash-table-ref writers (car obj)) => (lambda (f) 
 							     (f obj port column)))
 
+		    ((any? (lambda (p)
+			     (or (hash-table? p)
+				 (let? p)))
+			   obj)
+		     (let ((first #t))
+		       (write-char #\( port)
+		       (for-each (lambda (p)
+				   (if first (set! first #f) (spaces port (+ column 4)))
+				   (pretty-print-1 p port (+ column 4)))
+				 obj)
+		       (write-char #\) port)))
+		    
 		    (else
 		     (let* ((objstr (object->string obj))
 			    (strlen (length objstr)))
