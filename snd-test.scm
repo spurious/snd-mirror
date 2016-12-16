@@ -16552,7 +16552,7 @@ EDITS: 2
 	  (v0 (make-float-vector 10)))
       (print-and-check gen 
 		       "file->sample"
-		       "file->sample oboe.snd")
+		       "file->sample \"oboe.snd\"")
       (if (not (mus-input? gen)) (snd-display "~A not input?" gen))
       (if (not (= (mus-length gen) 50828)) (snd-display "file->sample length: ~A?" (mus-length gen)))
       (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display "file->sample mus-file-name: ~A" (mus-file-name gen)))
@@ -16614,8 +16614,8 @@ EDITS: 2
 	  (g1 (float-vector 0.0)))
       (print-and-check gen 
 		       "file->frample"
-		       "file->frample oboe.snd"
-		       "file->frample oboe.snd")
+		       "file->frample \"oboe.snd\""
+		       "file->frample \"oboe.snd\"")
       (if (not (mus-input? gen)) (snd-display "~A not input?" gen))
       (if (not (= (mus-length gen) 50828)) (snd-display "file->frample length: ~A?" (mus-length gen)))
       (if (not (string=? (mus-file-name gen) "oboe.snd")) (snd-display "file->frample mus-file-name: ~A" (mus-file-name gen)))
@@ -16632,7 +16632,7 @@ EDITS: 2
     (let ((gen (make-sample->file "fmv.snd" 2 mus-lshort mus-riff)))
       (print-and-check gen 
 		       "sample->file"
-		       "sample->file fmv.snd")
+		       "sample->file \"fmv.snd\"")
       (if (not (mus-output? gen)) (snd-display "~A not output?" gen))
       (if (not (sample->file? gen)) (snd-display "~A not sample->file?" gen))
       (if (not (= (mus-length gen) *clm-file-buffer-size*)) (snd-display "sample->file length: ~A?" (mus-length gen)))
@@ -16659,7 +16659,7 @@ EDITS: 2
 	   (val9 (in-any 60 1 gen)))
       (print-and-check gen 
 		       "file->sample"
-		       "file->sample fmv.snd")
+		       "file->sample \"fmv.snd\"")
       (if (not (= (mus-channels gen) 2)) (snd-display "make-sample->file chans: ~A?" (mus-channels gen)))
       (if (not (mus-input? gen)) (snd-display "~A not input?" gen))
       (if (or (fneq val0 .02) (fneq val1 .2)) (snd-display "in-any: ~A ~A?" val0 val1))
@@ -16736,7 +16736,7 @@ EDITS: 2
     (let ((gen (make-sample->file "fmv.snd" 4 mus-lshort mus-riff)))
       (print-and-check gen 
 		       "sample->file"
-		       "sample->file fmv.snd")
+		       "sample->file \"fmv.snd\"")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(outa i .1 gen)
@@ -16753,7 +16753,7 @@ EDITS: 2
     (let ((gen (make-file->sample "fmv.snd")))
       (print-and-check gen 
 		       "file->sample"
-		       "file->sample fmv.snd")
+		       "file->sample \"fmv.snd\"")
       (do ((i 0 (+ i 1)))
 	  ((= i 10))
 	(if (or (fneq (ina i gen) .11)
@@ -16843,7 +16843,7 @@ EDITS: 2
     (let ((gen (make-sample->file "fmv2.snd" 4 mus-bshort mus-aifc)))
       (print-and-check gen 
 		       "sample->file"
-		       "sample->file fmv2.snd")
+		       "sample->file \"fmv2.snd\"")
       (if (not (mus-output? gen)) (snd-display "~A not output?" gen))
       (if (not (sample->file? gen)) (snd-display "~A not sample->file?" gen))
       (do ((i 0 (+ i 1)))

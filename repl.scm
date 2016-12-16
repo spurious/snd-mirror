@@ -187,7 +187,8 @@
 	    ;; -------- evaluation ---------
 	    (define (badexpr h)            ; *missing-close-paren-hook* function for Enter command
 	      (let ((ow (owlet)))
-		(if (ow 'error-file)
+		(if (and (ow 'error-file)
+			 (not (equal? (ow 'error-file) "repl.scm")))
 		    (error 'syntax-error "missing close paren in ~S" (ow 'error-file))
 		    (set! (h 'result) 'string-read-error))))
 	    

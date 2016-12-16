@@ -75201,9 +75201,9 @@ int main(int argc, char **argv)
  * perhaps keyword paralleling symbol, keyword->string since string->keyword
  * could (apply append (map...)) omit the extra copy?
  * maybe use 'not for signature of #f? or #f?
- * repl: why does it drop the initial open paren?  or refuse to show it if window is wide?
+ * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
- * pretty-print needs docs/tests, special case seq code
+ * pretty-print needs docs/tests [s7test has some minimal tests]
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75217,9 +75217,7 @@ int main(int argc, char **argv)
  * musglyphs gtk version is broken (probably cairo_t confusion)
  * snd+gtk+script->eps fails??  Also why not make a graph in the no-gui case? t415.scm.
  * remove as many edpos args as possible, and num+bool->num
- * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd
- *   for snd-mix, tie-ins are in place
+ * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
  * snd-test.scm for rest of numerics.scm?
- * sample->file descr should put file name in double quotes?
  */

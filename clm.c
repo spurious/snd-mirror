@@ -10330,7 +10330,7 @@ static char *describe_file_to_sample(mus_any *ptr)
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s \"%s\"", 
 	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
@@ -10806,7 +10806,7 @@ static char *describe_file_to_frample(mus_any *ptr)
   rdin *gen = (rdin *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s \"%s\"", 
 	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
@@ -10922,7 +10922,7 @@ static char *describe_sample_to_file(mus_any *ptr)
   rdout *gen = (rdout *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s \"%s\"", 
 	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
@@ -11583,7 +11583,7 @@ static char *describe_frample_to_file(mus_any *ptr)
   rdout *gen = (rdout *)ptr;
   char *describe_buffer;
   describe_buffer = (char *)malloc(DESCRIBE_BUFFER_SIZE);
-  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+  snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s \"%s\"", 
 	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
