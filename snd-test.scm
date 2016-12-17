@@ -9454,7 +9454,7 @@ EDITS: 2
 				       ((> i n)
 					(reverse frqs))
 				     (set! frqs (cons (hz->radians (* i 400.0)) frqs))))
-	       (let ((phases (make-float-vector (+ n (if offset 1 0))
+	       (let ((phases (make-float-vector (if offset (+ n 1) n)
 						(if (= kind mus-chebyshev-second-kind) 0.0 (/ pi 2)))))
 		 (if (and offset (= kind mus-chebyshev-second-kind))
 		     (set! (phases 0) (/ pi 2)))
@@ -24054,7 +24054,7 @@ EDITS: 2
 		 (set! ldata (cons "maximum" (cons hi ldata))))
 	     (if (not (= (logand hint LADSPA_HINT_BOUNDED_BELOW) 0) )
 		 (set! ldata (cons "minimum" (cons lo ldata))))
-	     (set! data (cons (cons port-name ldata)) data))))
+	     (set! data (cons (cons port-name ldata) data)))))
        descriptors hints names)
       (append (list name maker copy) data)))
 

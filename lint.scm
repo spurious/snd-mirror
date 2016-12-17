@@ -334,6 +334,16 @@
 				define-syntax define-public define-inlinable define-integrable define^))
 		    h))
 
+	(open-definers (let ((h (make-hash-table)))
+			 (for-each (lambda (d)
+				     (set! (h d) #t))
+				   '(define define* define-constant require load eval eval-string
+				      define-macro define-macro* define-bacro define-bacro* define-expansion 
+				      definstrument define-animal define-envelope defgenerator
+				      define-values define-module define-method
+				      define-syntax define-public define-inlinable define-integrable define^))
+			 h))
+
 	(cxars (hash-table '(car . ()) '(caar . car) '(cdar . cdr) 
 			   '(caaar . caar) '(cdaar . cdar) '(cddar . cddr) '(cadar . cadr)
 			   '(caaaar . caaar) '(caadar . caadr) '(cadaar . cadar) '(caddar . caddr)
@@ -6002,48 +6012,15 @@
 		       (qq-tree? (cdr tree)))))))
 
 
-    (define udefiners (let ((h (make-hash-table)))
-			(for-each (lambda (d)
-				    (set! (h d) #t))
-				  '(define define* define-constant lambda lambda* curlet require load eval eval-string
-				     define-macro define-macro* define-bacro define-bacro* define-expansion 
-				     definstrument define-animal define-envelope 
-				     define-values define-module define-method
-				     define-syntax define-public define-inlinable define-integrable define^
-				     call/cc call-with-current-continuation unquote))
-			h))
+    (define (func-definer? f)
+      (and (len>2? f)
+	   (or (eq? (car f) 'define*)
+	       (and (memq (car f) '(define define-constant))
+		    (or (pair? (cadr f))
+			(and (symbol? (cadr f))
+			     (pair? (caddr f))
+			     (memq (caaddr f) '(lambda lambda*))))))))
 
-    (define (unsafe-definer? form)
-      (and (pair? form)
-	   (not (eq? (car form) 'quote))
-	   (or (hash-table-ref udefiners (car form)) ; TODO: here if def* and cadr is symbol and caddr is code-constant, we're ok
-	       (and (pair? (car form))
-		    (unsafe-definer? ((if (memq (caar form) '(lambda lambda*)) cdar car) form)))
-	       (case (car form)
-		 ((map for-each any? every? call-with-exit call-with-output-string with-output-to-string =>) ; skip lambda in cadr
-		  (and (len>1? (cdr form))
-		       (or (unsafe-definer? (cddr form))
-			   (and (len>1? (cadr form))
-				(unsafe-definer? (cdadr form))))))
-		 ((sort! call-with-input-string call-with-input-file call-with-output-file with-output-to-file with-input-from-string with-input-from-file)
-		  (and (len>1? (cdr form))
-		       (or (unsafe-definer? (cdddr form))
-			   (and (len>1? (caddr form))
-				(unsafe-definer? (cdaddr form))))))
-		 ((assoc member)
-		  (and (len=3? (cdr form))
-		       (len>1? (cadddr form))
-		       (unsafe-definer? (cdr (cadddr form)))))
-		 ((catch)
-		  (and (len=4? form)
-		       (or (unsafe-definer? (cdaddr form))
-			   (unsafe-definer? (cdr (cadddr form))))))
-		 ((dynamic-wind)
-		  (and (len=4? form)
-		       (or (unsafe-definer? (cdadr form))
-			   (unsafe-definer? (cdaddr form))
-			   (unsafe-definer? (cdr (cadddr form))))))
-		 (else (unsafe-definer? (cdr form)))))))
     
     (define special-case-functions
       (let ((special-case-table (make-hash-table)))
@@ -8293,8 +8270,8 @@
 				       
 				       ;; can't cleanly go from (apply write o p) to (write o (car p)) since p can be ()
 				       
-				       (when (and (not happy) ; TODO: safe
-						  (not (memq f '(define define* define-macro define-macro* define-bacro define-bacro* lambda lambda*)))
+				       (when (and (not happy)
+						  (not (hash-table-ref syntaces f))
 						  (any-null? last-arg))                 ; (apply f ... ()) -> (f ...)
 					 (lint-format "perhaps ~A" caller (lists->string form (cons f (copy (cddr form) (make-list (- len 3)))))))))))))))
 	       (if (and (= suggestion made-suggestion)
@@ -12521,7 +12498,29 @@
 		     (ctr 0 (+ ctr 1)))
 		    ((not (pair? fs)))
 		  (let ((f (car fs)))
-		    
+#|
+		    (if (and (pair? prev-f)
+			     (pair? f)
+			     (not (null? (cdr fs)))
+			     (symbol? (car f))
+			     (let ((fstr (symbol->string (car f))))
+			       (and (>= (length fstr) 6)
+				    (string=? (substring fstr 0 6) "define"))) ; perhaps restrict this to define
+			     (not (and (symbol? (car prev-f))
+				       (or (and (eq? (car prev-f) 'begin)
+						(every? (lambda (p)
+							  (and (pair? p)
+							       (symbol? (car p))
+							       (let ((fstr (symbol->string (car p))))
+								 (and (>= (length fstr) 6)
+								      (string=? (substring fstr 0 6) "define")))))
+							(cdr prev-f)))
+					   (memq (car prev-f) '(use declare require hash-table-set! defgenerator test assert))
+					   (let ((fstr (symbol->string (car prev-f))))
+					     (and (>= (length fstr) 6)
+						  (string=? (substring fstr 0 6) "define")))))))
+			(format *stderr* "~A~%  ~A~%~%" (truncated-list->string prev-f) (truncated-list->string f)))
+|#
 		    (when (len>1? f)
 		      (when (and *report-shadowed-variables*
 				 (eq? (car f) 'define))
@@ -13924,19 +13923,12 @@
 			     (pair? (caddr form))
 			     (eq? head 'lambda)
 			     (proper-list? args))
-		    (define (func? f)
-		      (and (len>2? f)
-			   (eq? (car f) 'define)
-			   (or (pair? (cadr f))
-			       (and (symbol? (cadr f))
-				    (pair? (caddr f))
-				    (eq? (caaddr f) 'lambda)))))
 		    (let ((f (caddr form)))
-		      (when (and (func? f)
+		      (when (and (func-definer? f)
 				 (not (tree-set-member args (cddr f))))
 			(do ((p (cdddr form) (cdr p)))
 			    ((or (not (pair? p))
-				 (and (func? (car p))
+				 (and (func-definer? (car p))
 				      (tree-memq ((if (symbol? (cadar p)) cadar caadar) p) (cddr f))))
 			     (if (null? p)
 				 (format *stderr* "~A:~%~A~%~%" (cadr f) (lint-pp form))))))))
@@ -17354,6 +17346,55 @@
 	;; ---------------- let, let*, letrec ----------------
 	(let ()	
 	  
+	  (define unsafe-definer?
+	    (let ((udefiners (let ((h (make-hash-table)))
+			       (for-each (lambda (d)
+					   (set! (h d) #t))
+					 '(define define* define-constant lambda lambda* 
+					    curlet require load eval eval-string
+					    define-macro define-macro* define-bacro define-bacro* define-expansion 
+					    definstrument define-animal define-envelope defgenerator
+					    define-values define-module define-method
+					    define-syntax define-public define-inlinable define-integrable define^
+					    call/cc call-with-current-continuation))
+			       h)))
+	      (lambda (form)
+		(and (pair? form)
+		     (not (eq? (car form) 'quote))
+		     (or (hash-table-ref udefiners (car form))
+			 (and (pair? (car form))
+			      (unsafe-definer? (car form))) ; unfortunate -- perhaps member below?
+			 (case (car form)
+			   ((map for-each any? every? call-with-exit call-with-output-string with-output-to-string =>) ; skip lambda in cadr
+			    (and (len>1? (cdr form))
+				 (or (unsafe-definer? (cddr form))
+				     (and (len>1? (cadr form))
+					  (unsafe-definer? (cdadr form))))))
+			   ((sort! call-with-input-string call-with-input-file call-with-output-file with-output-to-file with-input-from-string with-input-from-file)
+			    (and (len>1? (cdr form))
+				 (or (unsafe-definer? (cdddr form))
+				     (and (len>1? (caddr form))
+					  (unsafe-definer? (cdaddr form))))))
+			   ((assoc member)
+			    (and (len=3? (cdr form))
+				 (len>1? (cadddr form))
+				 (unsafe-definer? (cdr (cadddr form)))))
+			   ((catch)
+			    (and (len=3? (cdr form))
+				 (or (and (len>1? (caddr form))
+					  (unsafe-definer? (cdaddr form)))
+				     (and (len>1? (cadddr form))
+					  (unsafe-definer? (cdr (cadddr form)))))))
+			   ((dynamic-wind)
+			    (and (len=3? (cdr form))
+				 (or (and (len>1? (cadr form))
+					  (unsafe-definer? (cdadr form)))
+				     (and (len>1? (caddr form))
+					  (unsafe-definer? (cdaddr form)))
+				     (and (len>1? (cadddr form))
+					  (unsafe-definer? (cdr (cadddr form)))))))
+			   (else (unsafe-definer? (cdr form)))))))))
+
 	  ;; -------- walk-letx-body --------
 	  (define (walk-letx-body caller form body vars env)
 	    (let* ((cur-env (cons (make-var :name :let
@@ -17394,11 +17435,8 @@
 	  
 	  ;; -------- remove-null-let --------
 	  (define (remove-null-let caller form env)
-	    (if (and (null? (cadr form)) ; this can be fooled by macros that define things TODO: safe
-		     (not (tree-set-member '(call/cc call-with-current-continuation lambda lambda* define define* 
-						     define-macro define-macro* define-bacro define-bacro* define-constant define-expansion
-						     load eval eval-string require unquote)
-					   (cddr form))))
+	    (if (and (null? (cadr form)) ; this can be fooled by macros that define things
+		     (not (tree-table-member open-definers (cddr form)))) ; somewhat too restrictive but hard to improve
 		;; (begin (let () (display x)) y)
 		(if (or (eq? form lint-current-form) ; i.e. we're in a body?
 			(null? (cdddr form)))
@@ -18035,10 +18073,8 @@
 	    (let ((body (cddr form))
 		  (varlist (cadr form)))
 	      (when (and (> (length body) 3)  ; setting this to 1 did not catch anything new
-			 (every? pair? varlist) ; TODO: safe
-			 (not (tree-set-car-member '(define define* define-macro define-macro* 
-						      define-bacro define-bacro* define-constant define-expansion) 
-						   body)))
+			 (every? pair? varlist)
+			 (not (tree-table-member open-definers body)))
 		;; define et al are like a continuation of the let bindings, so we can't restrict them by accident
 		;;   (let ((x 1)) (define y x) ...)
 		(let ((last-refs (map (lambda (v) 
@@ -18191,8 +18227,8 @@
 	      ;;   and var not set!, and not a function parameter (we already reported those),
 	      ;;   remove it (the var) and replace with val throughout
 	      
-	      (when (and (proper-list? varlist) ; TODO: safe
-			 (not (tree-set-member '(curlet lambda lambda* define define*) body)))
+	      (when (and (proper-list? varlist)
+			 (not (unsafe-definer? body)))
 		(do ((changes ())
 		     (vs (cadr form) (cdr vs)))
 		    ((null? vs)
@@ -18209,7 +18245,12 @@
 					(if (pair? (cdr changes)) "are" "is")
 					(lists->string form 
 						       (if (< (tree-leaves new-form) 200)
-							   new-form
+							   (if (and (null? (cadr new-form))
+								    (null? (cdddr new-form))
+								    (not (and (pair? (caddr new-form))
+									      (hash-table-ref open-definers (caaddr new-form)))))
+							       (caddr new-form)
+							       new-form)
 							   (cons 'let 
 								 (cons (cadr new-form)
 								       (one-call-and-dots (cddr new-form))))))))))
@@ -18637,19 +18678,12 @@
 #|
 		  (when (and (pair? body)
                              (pair? vars)) 
-		    (define (func? f)
-		      (and (len>2? f)
-			   (eq? (car f) 'define)
-			   (or (pair? (cadr f))
-			       (and (symbol? (cadr f))
-				    (pair? (caddr f))
-				    (eq? (caaddr f) 'lambda)))))
 		    (let ((f (car body)))
-		      (when (and (func? f)
+		      (when (and (func-definer? f)
 				 (not (tree-set-member (map var-name vars) (cddr f))))
 			(do ((p (cdr body) (cdr p)))
 			    ((or (not (pair? p))
-				 (and (func? (car p))
+				 (and (func-definer? (car p))
 				      (tree-memq ((if (symbol? (cadar p)) cadar caadar) p) (cddr f))))
 			     (if (null? p)
 				 (format *stderr* "~A:~%~A~%~%" (cadr f) (lint-pp form))))))))
@@ -19185,19 +19219,12 @@
 #|
 		   (when (and (pair? body)
 			      (pair? vars)) 
-		     (define (func? f)
-		       (and (len>2? f)
-			    (eq? (car f) 'define)
-			    (or (pair? (cadr f))
-				(and (symbol? (cadr f))
-				     (pair? (caddr f))
-				     (eq? (caaddr f) 'lambda)))))
 		     (let ((f (car body)))
-		       (when (and (func? f)
+		       (when (and (func-definer? f)
 				  (not (tree-set-member (map var-name vars) (cddr f))))
 			 (do ((p (cdr body) (cdr p)))
 			     ((or (not (pair? p))
-				  (and (func? (car p))
+				  (and (func-definer? (car p))
 				       (tree-memq ((if (symbol? (cadar p)) cadar caadar) p) (cddr f))))
 			      (if (null? p)
 				  (format *stderr* "~A:~%~A~%~%" (cadr f) (lint-pp form))))))))
@@ -19212,7 +19239,7 @@
 		      (let*->let+do caller form env)
 		      ;; (define...) as first in body rarely happens in rewritable contexts
 
-		      (unless (tree-set-member '(curlet lambda lambda* define define*) body) ; TODO: safe
+		      (unless (unsafe-definer? body)
 			(remove-unneeded-let*-vars caller form env))
 		      (combine-let*-vars caller form vars env)
 			  
@@ -19717,7 +19744,7 @@
 		    
 		    (if (not (or (eq? head 'call-with-exit)    ;   (call/cc (lambda (p) (+ x (p 1))))
 				 (eq? continuation (car body)) ; and (null? (cdr) I think (call/cc (lambda (k) k)) is intended 
-				 (tree-sym-set-member continuation '(lambda lambda* define define* curlet apply error) body))) ; TODO safe ??
+				 (tree-sym-set-member continuation '(lambda lambda* define define* curlet apply error) body)))
 			;; this checks for continuation as arg (of anything), and any of set as car
 			;;   for define and define* it would be tighter to check that they aren't returned or used as an arg
 			(lint-format "perhaps ~A could be call-with-exit:~%~NC~A" caller
@@ -21585,6 +21612,13 @@
 ;;;     need list of current moved, move-if-forward-found
 ;;;
 ;;; simple (non-recursive) func in let called once with (partially-)known args -> expand and remove vars?
-;;; pp method
+;;; t485.scm -> s7test
+;;; mid-body lambda?
+;;; define-constant when same level sym is in use?
+;;; load default second arg is (rootlet) -- can we check the loaded file for collisions?
 ;;;
-;;; 190 28876 775551
+;;; define after executable if no curlet? (i.e. not in "library") [12523 -- about 450 hits, afterdefs.data]
+;;;   do we say use set! if local-var redefined?
+;;;   if no previous ref, use let else move define to top of body or use set!
+;;;
+;;; 185 28891 775438

@@ -7468,6 +7468,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   /* is this correct?
    *    (defined? '_x) #f (symbol->value '_x) #<undefined>
    *    (define x #<undefined>) (defined? 'x) #t
+   * can't return the value here because it might be #f
    */
 
   sym = car(args);
@@ -7489,8 +7490,12 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 	}
       else b = sc->F;
 
-      if (e == sc->rootlet)
-	return(make_boolean(sc, is_slot(global_slot(sym)))); /* new_symbol and gensym initialize global_slot to #<undefined> */
+      if (e == sc->rootlet) /* we checked (let? e) above */
+	{
+	  if (b == sc->F)
+	    return(make_boolean(sc, is_slot(global_slot(sym)))); /* new_symbol and gensym initialize global_slot to #<undefined> */
+	  return(sc->F);
+	}
 
       x = find_local_symbol(sc, sym, e);
       if (is_slot(x))
@@ -64000,10 +64005,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case HOP_SAFE_C_opCq_opCq:
 		  {
-		    s7_pointer args;
+		    s7_pointer args, val1;
 		    args = cdr(code);
-		    set_car(sc->t2_1, c_call(car(args))(sc, cdr(car(args))));
-		    set_car(sc->t2_2, c_call(cadr(args))(sc, cdr(cadr(args))));
+		    val1 = c_call(car(args))(sc, cdr(car(args)));
+		    set_car(sc->t2_2, c_call(cadr(args))(sc, cdr(cadr(args)))); /* this can clobber sc->t2_1! */
+		    set_car(sc->t2_1, val1);
 		    sc->value = c_call(code)(sc, sc->t2_1);
 		    goto START;
 		  }
@@ -64120,8 +64126,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    val3 = find_symbol_checked(sc, caddr(arg1));
 		    set_car(sc->t2_1, find_symbol_checked(sc, cadr(arg1)));
 		    set_car(sc->t2_2, val3);
-		    set_car(sc->t2_1, c_call(arg1)(sc, sc->t2_1));
+		    val3 = c_call(arg1)(sc, sc->t2_1);
 		    set_car(sc->t2_2, c_call(arg2)(sc, cdr(arg2)));
+		    set_car(sc->t2_1, val3);
 		    sc->value = c_call(code)(sc, sc->t2_1);
 		    goto START;
 		  }
@@ -75204,6 +75211,15 @@ int main(int argc, char **argv)
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
+ * scheme side method call needs attention: 
+ *   (if (and (openlet? e) (defined? m e)) ((e m) ...)) involves two lookups but defined? can't return the value
+ *   maybe (cond ((and (openlet? e) (symbol->value m e)) => (lambda (f) (f ...)))) but this requires an extra frame/binding
+ *   if we knew there was a fallback (global def) then ((symbol->value m e)...) would work modulo infinite loops
+ *   defined? can't return the value -- might be #f
+ *   let-apply let func . args -> #<undefined> if none?
+ * (make-float-vector pi) complains about make-vector arg 1!
+ *   how to add debugging checks that sc->tn_n are not stepped on or GC'd?
+ *   have debug set_car hit a circular-buffer of sc->tns and compare at call? 64000 64130
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
