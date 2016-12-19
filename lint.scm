@@ -11616,6 +11616,9 @@
 		   (lint-format "~A might leave ~A in an undefined state; perhaps ~A" caller (car f) (cadr f)
 				(list 'set! (cadr f) f))))
 
+	      ((lambda lambda*)
+	       (lint-format "this has no effect: ~A" caller (truncated-list->string f)))
+
 	      ((format)
 	       (if (and (pair? (cdr f))
 			(eq? (cadr f) #t))  ;  (let () (format #t "~A" x) x)
@@ -12520,6 +12523,7 @@
 					     (and (>= (length fstr) 6)
 						  (string=? (substring fstr 0 6) "define")))))))
 			(format *stderr* "~A~%  ~A~%~%" (truncated-list->string prev-f) (truncated-list->string f)))
+;; also remove if define followed by name and end -- this is handled already
 |#
 		    (when (len>1? f)
 		      (when (and *report-shadowed-variables*
@@ -16008,11 +16012,10 @@
 	       (lambda (clause)
 		 (set! ctr (+ ctr 1))
 		 (if (not (pair? clause))
-		     (begin
+		     (begin                           ; (cond 1)
 		       (set! all-eqv #f)
 		       (set! has-combinations #f)
 		       (set! prev-bool #f)
-		       ;; (cond 1)
 		       (lint-format "cond clause ~A in ~A is not a pair?" caller clause (truncated-list->string form))) 
 		     (begin
 		       
@@ -16093,13 +16096,17 @@
 					(if (pair? p)
 					    (and-forgetful form 'cond test (car p) env)))))))
 			 ;; code here to check every arg against its use in the sequel found no problems?!?
+
+			 (if (and (len>1? sequel)
+				  (memq '=> (cdr sequel)))
+			     (lint-format "'=> has no effect here: ~A~%" caller (truncated-list->string clause)))
+			 ;; args>1 never happens so no need for mismatch check
 			 
 			 (cond ((memq test '(else #t))
 				(set! has-else #t)
 				
 				(when (pair? sequel)
-				  (if (eq? first-sequel #<unspecified>)
-				      ;; (cond ((= x y) z) (else #<unspecified>)
+				  (if (eq? first-sequel #<unspecified>)    ; (cond ((= x y) z) (else #<unspecified>)
 				      (lint-format "this #<unspecified> is redundant: ~A" caller clause))
 				  
 				  (when (and (pair? first-sequel)   ; (cond (a A) (else (cond ...))) -> (cond (a A) ...)
@@ -16621,6 +16628,10 @@
 			   (set! result exprs)
 			   (if (not (equal? result exprs))
 			       (set! result :unequal)))
+
+		       (if (and (len>1? exprs)
+				(memq '=> (cdr exprs)))
+			   (lint-format "'=> has no effect here: ~A~%" caller (truncated-list->string clause)))
 		       
 		       (if (member exprs all-exprs)
 			   (set! exprs-repeated exprs)
@@ -16865,7 +16876,7 @@
 	      (lambda (caller form env)
 		;; here the keys are not evaluated, so we might have a list like (letrec define ...)
 		;; also unlike cond, only 'else marks a default branch (not #t)
-		
+
 		(if (or (< (length form) 3)
 			(not (every? pair? (cddr form))))    ; (case 3)
 		    (lint-format "case is messed up: ~A" caller (truncated-list->string form))
@@ -21613,12 +21624,12 @@
 ;;;
 ;;; simple (non-recursive) func in let called once with (partially-)known args -> expand and remove vars?
 ;;; t485.scm -> s7test
-;;; mid-body lambda?
-;;; define-constant when same level sym is in use?
+;;; define-constant when same level sym is in use? -- just complains about double declaration
 ;;; load default second arg is (rootlet) -- can we check the loaded file for collisions?
 ;;;
 ;;; define after executable if no curlet? (i.e. not in "library") [12523 -- about 450 hits, afterdefs.data]
 ;;;   do we say use set! if local-var redefined?
 ;;;   if no previous ref, use let else move define to top of body or use set!
+;;;   need to omit define x, x at end
 ;;;
 ;;; 185 28891 775438

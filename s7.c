@@ -75217,9 +75217,8 @@ int main(int argc, char **argv)
  *   if we knew there was a fallback (global def) then ((symbol->value m e)...) would work modulo infinite loops
  *   defined? can't return the value -- might be #f
  *   let-apply let func . args -> #<undefined> if none?
- * (make-float-vector pi) complains about make-vector arg 1!
- *   how to add debugging checks that sc->tn_n are not stepped on or GC'd?
- *   have debug set_car hit a circular-buffer of sc->tns and compare at call? 64000 64130
+ * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
+ *   and how to generate tests for all cases?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
