@@ -525,36 +525,38 @@
 					    (stacked-list port (cdr obj) (+ column *pretty-print-spacing*)))
 					  (let ((line-start (+ column *pretty-print-spacing*
 							       (if (> carstrlen 16) 0 carstrlen))))
-					    (if (= lstlen 2)
-						(begin
-						  (write-char #\space port)
-						  (pretty-print-1 (cadr obj) port line-start))
-						(if (= lstlen 3)
-						    (begin
-						      (write-char #\space port)
-						      (stacked-list port (cdr obj) line-start))
-						    (do ((obj-start line-start)
-							 (lst (cdr obj) (cdr lst)))
-							((null? lst))
-						      (let* ((str (object->string (car lst)))
-							     (strlen1 (length str)))
-							(if (and (> strlen1 (- *pretty-print-length* obj-start))
-								 (not (eq? lst (cdr obj))))
-							    (begin
-							      (set! obj-start (+ line-start 1 strlen1))
-							      (spaces port line-start)
-							      (pretty-print-1 (car lst) port line-start))
-							    (let ((at-line-start (= line-start obj-start)))
-							      (set! obj-start (+ obj-start 1 strlen1))
-							      (if (> strlen1 40)
-								  (begin
-								    (if at-line-start
-									(write-char #\space port)
-									(spaces port line-start))
-								    (pretty-print-1 (car lst) port line-start))
-								  (begin
-								    (write-char #\space port)
-								    (display str port)))))))))))
+					    (case lstlen
+					      ((2)
+					       (write-char #\space port)
+					       (pretty-print-1 (cadr obj) port line-start))
+
+					      ((3)
+					       (write-char #\space port)
+					       (stacked-list port (cdr obj) line-start))
+
+					      (else
+					       (do ((obj-start line-start)
+						    (lst (cdr obj) (cdr lst)))
+						   ((null? lst))
+						 (let* ((str (object->string (car lst)))
+							(strlen1 (length str)))
+						   (if (and (> strlen1 (- *pretty-print-length* obj-start))
+							    (not (eq? lst (cdr obj))))
+						       (begin
+							 (set! obj-start (+ line-start 1 strlen1))
+							 (spaces port line-start)
+							 (pretty-print-1 (car lst) port line-start))
+						       (let ((at-line-start (= line-start obj-start)))
+							 (set! obj-start (+ obj-start 1 strlen1))
+							 (if (> strlen1 40)
+							     (begin
+							       (if at-line-start
+								   (write-char #\space port)
+								   (spaces port line-start))
+							       (pretty-print-1 (car lst) port line-start))
+							     (begin
+							       (write-char #\space port)
+							       (display str port)))))))))))
 				      (if (not (eq? (car obj) 'quote))
 					  (write-char #\) port))))))))))))))
       

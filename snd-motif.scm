@@ -2115,18 +2115,15 @@
 ;;; (mark-sync-color "blue")
   
   (define mark-sync-color 
-    (let ((documentation "(mark-sync-color new-color) sets the color for sync'd marks"))
+    (let ((documentation "(mark-sync-color new-color) sets the color for sync'd marks")
+	  (get-color (lambda (color-name)
+		       (let* ((col (XColor))
+			      (dpy (XtDisplay (cadr (main-widgets))))
+			      (cmap (DefaultColormap dpy (DefaultScreen dpy))))
+			 (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
+			     (snd-error (format #f "can't allocate ~A" color-name))
+			     (.pixel col))))))
       (lambda (new-color)
-	
-	(define get-color
-	  (lambda (color-name)
-	    (let* ((col (XColor))
-		   (dpy (XtDisplay (cadr (main-widgets))))
-		   (cmap (DefaultColormap dpy (DefaultScreen dpy))))
-	      (if (= (XAllocNamedColor dpy cmap color-name col col) 0)
-		  (snd-error (format #f "can't allocate ~A" color-name))
-		  (.pixel col)))))
-	
 	(let ((mark-gc ((snd-gcs) 9))
 	      (selected-mark-gc ((snd-gcs) 10))
 	      (dpy (XtDisplay (cadr (main-widgets))))
