@@ -573,44 +573,45 @@
 	       (system (format #f "gcc ~A -shared -o ~A ~A ~A" 
 			       o-file-name so-file-name *cload-ldflags* ldflags)))))
       
-      (define (handle-declaration func)
-	
-	(define (add-one-constant type name)
-	  ;; C constant -> scheme
-	  (let ((c-type (if (pair? type) (cadr type) type)))
-	    (if (symbol? name)
-		(set! constants (cons (list c-type (symbol->string (collides? name))) constants))
-		(for-each 
-		 (lambda (c)
-		   (set! constants (cons (list c-type (symbol->string (collides? c))) constants)))
-		 name))))
-	
-	(define (add-one-macro type name)
-	  ;; C macro (with definition check) -> scheme
-	  (let ((c-type (if (pair? type) (cadr type) type)))
-	    (if (symbol? name)
-		(set! macros (cons (list c-type (symbol->string (collides? name))) macros))
-		(for-each 
-		 (lambda (c)
-		   (set! macros (cons (list c-type (symbol->string (collides? c))) macros)))
-		 name))))
-	
-	(define (check-doc func-data)
-	  (let ((doc (caddr func-data)))
-	    (if (and (string? doc)
-		     (> (length doc) 0))
-		func-data
-		(append (list (car func-data) (cadr func-data) (car func-data)) (cdddr func-data)))))
-	
-	;; functions
-	(if (>= (length func) 3)
-	    (apply add-one-function func)
-	    (case (car func)
-	      ((in-C)       (format p "~A~%" (cadr func)))
-	      ((C-init)     (set! inits (cons (cadr func) inits)))
-	      ((C-macro)    (apply add-one-macro (cadr func)))
-	      ((C-function) (collides? (caadr func)) (set! functions (cons (check-doc (cadr func)) functions)))
-	      (else         (apply add-one-constant func)))))
+      (define handle-declaration 
+	(let ()
+	  (define (add-one-constant type name)
+	    ;; C constant -> scheme
+	    (let ((c-type (if (pair? type) (cadr type) type)))
+	      (if (symbol? name)
+		  (set! constants (cons (list c-type (symbol->string (collides? name))) constants))
+		  (for-each 
+		   (lambda (c)
+		     (set! constants (cons (list c-type (symbol->string (collides? c))) constants)))
+		   name))))
+	  
+	  (define (add-one-macro type name)
+	    ;; C macro (with definition check) -> scheme
+	    (let ((c-type (if (pair? type) (cadr type) type)))
+	      (if (symbol? name)
+		  (set! macros (cons (list c-type (symbol->string (collides? name))) macros))
+		  (for-each 
+		   (lambda (c)
+		     (set! macros (cons (list c-type (symbol->string (collides? c))) macros)))
+		   name))))
+	  
+	  (define (check-doc func-data)
+	    (let ((doc (caddr func-data)))
+	      (if (and (string? doc)
+		       (> (length doc) 0))
+		  func-data
+		  (append (list (car func-data) (cadr func-data) (car func-data)) (cdddr func-data)))))
+	  
+	  (lambda (func)
+	    ;; functions
+	    (if (>= (length func) 3)
+		(apply add-one-function func)
+		(case (car func)
+		  ((in-C)       (format p "~A~%" (cadr func)))
+		  ((C-init)     (set! inits (cons (cadr func) inits)))
+		  ((C-macro)    (apply add-one-macro (cadr func)))
+		  ((C-function) (collides? (caadr func)) (set! functions (cons (check-doc (cadr func)) functions)))
+		  (else         (apply add-one-constant func)))))))
       
       
       ;; this is the body of c-define

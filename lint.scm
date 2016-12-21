@@ -364,6 +364,8 @@
 	(last-checker-line-number -1)
 	(last-cons-line-number -1)
 	(last-rewritten-internal-define #f)
+	(last-lambda-let #f)
+	(local-function-context 40)
 	(line-number -1)
 	(lint-in-with-let #f)
 	(pp-left-margin 4)
@@ -1043,6 +1045,8 @@
 	     ())
 	    ((pair? (car args))	
 	     (cons (caar args) (args->proper-list (cdr args))))
+	    ((keyword? (car args))              ; omit :rest et al
+	     (args->proper-list (cdr args)))
 	    (else               
 	     (cons (car args) (args->proper-list (cdr args))))))
     
@@ -2888,116 +2892,6 @@
 			(and (not (eq? type2 'byte-vector?)) arg2))
 		       (else #f))))))
 	
-	(define (classify e env)
-	  (if (not (just-constants? e env))
-	      e
-	      (catch #t
-		(lambda ()
-		  (let ((val (eval e)))
-		    (if (boolean? val)
-			val
-			e)))
-		(lambda ignore e))))
-	
-	(define (bsimp x env) ; quick check for common easy cases
-	  (set! last-simplify-boolean-line-number line-number)
-	  (if (not (len>1? x))
-	      x
-	      (case (car x)
-		((and) (and (cadr x)              ; (and #f ...) -> #f
-			    x))
-		((or) (if (and (cadr x)           ; (or #t ...) -> #t
-			       (code-constant? (cadr x)))
-			  (cadr x)
-			  x))
-		(else 
-		 (if (not (and (len=2? x)
-			       (pair? (cadr x))
-			       (symbol? (caadr x))))
-		     x
-		     (let ((rt (if (and (eq? (caadr x) 'quote)
-					(pair? (cdadr x)))
-				   (->simple-type (cadadr x))
-				   (return-type (caadr x) env)))
-			   (head (car x)))
-		       (or (and (subsumes? head rt) #t) ; don't return the memq list!
-			   (and (or (memq rt '(#t #f values))
-				    (any-compatible? head rt))
-				(case head
-				  ((null?) (if (eq? (caadr x) 'list)
-					       (null? (cdadr x))
-					       x))
-				  ((pair?) (if (eq? (caadr x) 'list)
-					       (pair? (cdadr x))
-					       x))
-				  ((negative?) (and (not (hash-table-ref non-negative-ops (caadr x)))
-						    x))
-				  (else x))))))))))
-	
-	(define (bcomp x true false env) ; not so quick...
-	  (cond ((not (pair? x))
-		 x)
-		
-		((eq? (car x) 'and)
-		 (call-with-exit
-		  (lambda (return)
-		    (let ((newx (list 'and)))
-		      (do ((p (cdr x) (cdr p))
-			   (sidex newx)
-			   (endx newx))
-			  ((not (pair? p))
-			   (and (null? p) newx))
-			(let ((next (car p)))
-			  (if (or (not next)        ; #f in and -> end of expr
-				  (member next false))
-			      (if (eq? sidex newx)  ; no side-effects
-				  (return #f)       
-				  (begin
-				    (set-cdr! endx (list #f))
-				    (return newx)))
-			      (if (or (code-constant? next)  ; (and ... true-expr ...)
-				      (member next sidex)    ; if a member, and no side-effects since, it must be true
-				      (member next true))
-				  (if (and (null? (cdr p))
-					   (not (equal? next (car endx))))
-				      (set-cdr! endx (list next)))
-				  (begin
-				    (set-cdr! endx (list next))
-				    (set! endx (cdr endx))
-				    (if (side-effect? next env)
-					(set! sidex endx)))))))))))
-		
-		((not (eq? (car x) 'or))
-		 x)
-		
-		(else
-		 (call-with-exit
-		  (lambda (return)
-		    (let ((newx (list 'or)))
-		      (do ((p (cdr x) (cdr p))
-			   (sidex newx)
-			   (endx newx))
-			  ((not (pair? p))
-			   (if (null? p) newx x))
-			(let ((next (car p)))
-			  (if (or (and next                 ; (or ... #t ...)
-				       (code-constant? next))
-				  (member next true))
-			      (begin
-				(set-cdr! endx (list next))
-				(return newx))          ; we're done since this is true
-			      (if (or (not next)
-				      (member next sidex) ; so its false in some way
-				      (member next false))
-				  (if (and (null? (cdr p))
-					   (not (equal? next (car endx))))
-				      (set-cdr! endx (list next)))
-				  (begin
-				    (set-cdr! endx (list next))
-				    (set! endx (cdr endx))
-				    (if (side-effect? next env)
-					(set! sidex endx)))))))))))))
-	
 	(define (gather-or-eqf-elements eqfnc sym vals env)
 	  (let* ((func (case eqfnc 
 			 ((eq?) 'memq) 
@@ -3384,6 +3278,17 @@
 				     (cdr form))
 			      (else #f)))))))
 	
+	
+	(define (classify e env)
+	  (if (not (just-constants? e env))
+	      e
+	      (catch #t
+		(lambda ()
+		  (let ((val (eval e)))
+		    (if (boolean? val)
+			val
+			e)))
+		(lambda ignore e))))
 	
 	;; -------- reduce-or --------
 	(define (reduce-or return form len true false env)
@@ -4244,6 +4149,105 @@
 			
 			(reduce-and return form len false env)))))))))
 
+	(define (bsimp x env) ; quick check for common easy cases
+	  (set! last-simplify-boolean-line-number line-number)
+	  (if (not (len>1? x))
+	      x
+	      (case (car x)
+		((and) (and (cadr x)              ; (and #f ...) -> #f
+			    x))
+		((or) (if (and (cadr x)           ; (or #t ...) -> #t
+			       (code-constant? (cadr x)))
+			  (cadr x)
+			  x))
+		(else 
+		 (if (not (and (len=2? x)
+			       (pair? (cadr x))
+			       (symbol? (caadr x))))
+		     x
+		     (let ((rt (if (and (eq? (caadr x) 'quote)
+					(pair? (cdadr x)))
+				   (->simple-type (cadadr x))
+				   (return-type (caadr x) env)))
+			   (head (car x)))
+		       (or (and (subsumes? head rt) #t) ; don't return the memq list!
+			   (and (or (memq rt '(#t #f values))
+				    (any-compatible? head rt))
+				(case head
+				  ((null?) (if (eq? (caadr x) 'list)
+					       (null? (cdadr x))
+					       x))
+				  ((pair?) (if (eq? (caadr x) 'list)
+					       (pair? (cdadr x))
+					       x))
+				  ((negative?) (and (not (hash-table-ref non-negative-ops (caadr x)))
+						    x))
+				  (else x))))))))))
+	
+	(define (bcomp x true false env) ; not so quick...
+	  (cond ((not (pair? x))
+		 x)
+		
+		((eq? (car x) 'and)
+		 (call-with-exit
+		  (lambda (return)
+		    (let ((newx (list 'and)))
+		      (do ((p (cdr x) (cdr p))
+			   (sidex newx)
+			   (endx newx))
+			  ((not (pair? p))
+			   (and (null? p) newx))
+			(let ((next (car p)))
+			  (if (or (not next)        ; #f in and -> end of expr
+				  (member next false))
+			      (if (eq? sidex newx)  ; no side-effects
+				  (return #f)       
+				  (begin
+				    (set-cdr! endx (list #f))
+				    (return newx)))
+			      (if (or (code-constant? next)  ; (and ... true-expr ...)
+				      (member next sidex)    ; if a member, and no side-effects since, it must be true
+				      (member next true))
+				  (if (and (null? (cdr p))
+					   (not (equal? next (car endx))))
+				      (set-cdr! endx (list next)))
+				  (begin
+				    (set-cdr! endx (list next))
+				    (set! endx (cdr endx))
+				    (if (side-effect? next env)
+					(set! sidex endx)))))))))))
+		
+		((not (eq? (car x) 'or))
+		 x)
+		
+		(else
+		 (call-with-exit
+		  (lambda (return)
+		    (let ((newx (list 'or)))
+		      (do ((p (cdr x) (cdr p))
+			   (sidex newx)
+			   (endx newx))
+			  ((not (pair? p))
+			   (if (null? p) newx x))
+			(let ((next (car p)))
+			  (if (or (and next                 ; (or ... #t ...)
+				       (code-constant? next))
+				  (member next true))
+			      (begin
+				(set-cdr! endx (list next))
+				(return newx))          ; we're done since this is true
+			      (if (or (not next)
+				      (member next sidex) ; so its false in some way
+				      (member next false))
+				  (if (and (null? (cdr p))
+					   (not (equal? next (car endx))))
+				      (set-cdr! endx (list next)))
+				  (begin
+				    (set-cdr! endx (list next))
+				    (set! endx (cdr endx))
+				    (if (side-effect? next env)
+					(set! sidex endx)))))))))))))
+	
 	;; --------------------------------
 	;; simplify-boolean
 	;;   this is not really simplify boolean as in boolean algebra because in scheme there are many unequal truths, but only one falsehood
@@ -6017,7 +6021,7 @@
     (define (func-definer? f)
       (and (len>2? f)
 	   (or (eq? (car f) 'define*)
-	       (and (memq (car f) '(define define-constant))
+	       (and (memq (car f) '(define define*)) ; all the other define-* choices got no hits
 		    (or (pair? (cadr f))
 			(and (symbol? (cadr f))
 			     (pair? (caddr f))
@@ -13429,7 +13433,35 @@
 					(truncated-list->string form)
 					v))))))))
 				
-	;; ---------------- define and defmacro ----------------		  
+	(define (local-movable-funcs body largs)
+	  (let ((ok-funcs ())
+		(bad-funcs ())
+		(all-bad #f))
+	    (for-each (lambda (f)
+			(if (not (func-definer? f))
+			    (set! all-bad #t)
+			    (let ((fname ((if (symbol? (cadr f)) cadr caadr) f)))
+			      (if (or all-bad
+				      (memq fname largs)
+				      (let ((fargs (args->proper-list (if (symbol? (cadr f)) (cadr (caddr f)) (cdadr f)))))
+					(tree-set-member (let remove-shadows ((args largs) (nargs ()))
+							   (if (null? args)
+							       nargs
+							       (remove-shadows (cdr args) 
+									       (if (memq (car args) fargs)
+										   nargs
+										   (cons (car args) nargs)))))
+							 (cddr f))))
+				  (set! bad-funcs (cons fname bad-funcs))
+				  (set! ok-funcs (cons (cons fname f) ok-funcs))))))
+		      body)
+	    (map (lambda (f)
+		   (if (tree-set-member bad-funcs (cddr (cdr f)))
+		       (values)
+		       f))
+		 (reverse ok-funcs))))
+	  
+	;; ---------------- define and defmacro ----------------
 	(let ()
 	  
 	  (define (check-define-macro caller form env)
@@ -13721,6 +13753,31 @@
 								(caddar val)))
 						 ...))))))
 	
+	  ;; -------- define-local-funcs->closure --------
+	  (define (define-local-funcs->closure caller form args)
+	    (let ((largs (args->proper-list args))
+		  (body ((if (string? (caddr form)) cdddr cddr) form)))
+	      (when (and (pair? body)
+			 (func-definer? (car body)))     ; if first is not a function, forget it
+		(let ((ok-funcs (local-movable-funcs body largs)))
+		  (when (pair? ok-funcs)
+		    (lint-format "the inner function~A ~{~A~^, ~} could be moved to ~A's closure: ~A" caller
+				 (if (null? (cdr ok-funcs)) "" "s")
+				 (map car ok-funcs)
+				 (caadr form)
+				 (lists->string form
+						`(define ,(caadr form)       ; define* -> lambda* below
+						  (let ()
+						   ,@(map (lambda (f)
+							    (let ((def (cdr f)))
+							      (if (< (tree-leaves def) local-function-context)
+								  def
+								  (list (car def) (cadr def) '...))))
+							  ok-funcs)
+						    (,(if (eq? (car form) 'define*) 'lambda* 'lambda)
+						     ,(cdr args)
+						     ...))))))))))
+		    
 	  ;; -------- define-walker --------
 	  (define (define-walker caller form env)
 	    (if (< (length form) 2)
@@ -13790,6 +13847,13 @@
 					  e))))))) ; symbol? sym
 		      
 		      (begin                       ; not (symbol? sym)
+
+			(when (and (memq head '(define define*)) ; can't include define-macro et al because we use lambda(*) as rewrite
+				   (len>1? val)
+				   (or (pair? (cdr sym))
+				       (symbol? (cdr sym))))
+			  (define-local-funcs->closure caller form sym))
+
 			(cond ((not (and (pair? sym)
 					 (pair? val)))
 			       (lint-format "strange form: ~A" head (truncated-list->string form)))
@@ -13914,39 +13978,37 @@
 
 	;; ---------------- lambda, lambda* ----------------		  
 	(let ()
-
-	  ;; -------- local-funcs->closure --------
-	  (define (local-funcs->closure caller form args)
+	  
+	  ;; -------- lambda-local-funcs->closure --------
+	  (define (lambda-local-funcs->closure caller form args)
 	    (let ((largs (args->proper-list args))
 		  (body ((if (string? (caddr form)) cdddr cddr) form)))
 	      (when (and (pair? body)
-			 (func-definer? (car body)))      ; if first is not a function, forget it
-		(let ((ok-funcs ())
-		      (bad-funcs ())
-		      (all-bad #f))
-		  (for-each (lambda (f)
-			      (if (not (func-definer? f))
-				  (set! all-bad #t)
-				  (let ((fname ((if (symbol? (cadr f)) cadr caadr) f)))
-				    (if (or all-bad
-					    (tree-set-member largs (cddr f)))
-					(set! bad-funcs (cons fname bad-funcs))
-					(set! ok-funcs (cons (cons fname f) ok-funcs))))))
-			    body)
-		  (set! ok-funcs (map (lambda (f)
-					(if (tree-set-member bad-funcs (cddr (cdr f)))
-					    (values)
-					    f))
-				      (reverse ok-funcs)))
-		  (if (pair? ok-funcs)
-		      (lint-format "the inner function~A ~{~A~^, ~} could be moved outside the ~A: ~A" caller
-				   (if (null? (cdr ok-funcs)) "" "s")
-				   (map car ok-funcs)
-				   (car form)
-				   (lists->string form
-						  `(let ()  ; kinda lazy but otherwise we need to check let vs letrec
-						     ,@(map cdr ok-funcs)
-						     (,(car form) ,args ...)))))))))
+			 (or (func-definer? (car body))     ; if first is not a function, forget it
+			     (and (len>2? (car body))
+				  (eq? (caar body) 'let)
+				  (list? (cadar body))
+				  (every? pair? (cadar body))
+				  (pair? (cddar body))
+				  (set! largs (append largs (map car (cadar body))))
+				  (set! body (cddar body))
+				  (func-definer? (car body)))))
+		(let ((ok-funcs (local-movable-funcs body largs)))
+		  (when (pair? ok-funcs)
+		    (set! last-lambda-let body)
+		    (lint-format "the inner function~A ~{~A~^, ~} could be moved outside the ~A: ~A" caller
+				 (if (null? (cdr ok-funcs)) "" "s")
+				 (map car ok-funcs)
+				 (car form)
+				 (lists->string form
+						`(let ()  ; kinda lazy but otherwise we need to check let vs letrec
+						   ,@(map (lambda (f)
+							    (let ((def (cdr f)))
+							      (if (< (tree-leaves def) local-function-context)
+								  def
+								  (list (car def) (cadr def) '...))))
+							  ok-funcs)
+						   (,(car form) ,args ...)))))))))
 		    
 	  ;; -------- lambda-walker --------
 	  (define (lambda-walker caller form env)
@@ -13976,8 +14038,12 @@
 			(lint-format "lambda* could be lambda ~A" caller form))
 		    
 		    (when (and (pair? (cddr form))
-			       (not (null? args)))            ; nothing gained in this case
-		      (local-funcs->closure caller form args))
+			       (or (not (null? args))         ; nothing gained if no args
+				   (and (null? (cdddr form))
+					(len>1? (caddr form))
+					(eq? (caaddr form) 'let)
+					(pair? (cadr (caddr form))))))
+		      (lambda-local-funcs->closure caller form args))
 
 		    (when (or (= len 3)
 			      (and (= len 4)
@@ -18700,6 +18766,60 @@
 			      (set! hits (cons (list prev p) hits)))
 			  (set! prev ())))))))
 	  
+	  ;; --------- rewrite-funcs --------
+	  (define (rewrite-funcs f)
+	    (let ((def (cdr f)))
+	      (if (symbol? (cadr def))
+		  (cdr def)
+		  (list (caadr def)
+			(cons (if (eq? (car def) 'define*) 
+				  'lambda* 
+				  'lambda)
+			      (cons (cdadr def)
+				    (if (< (tree-leaves (cddr def)) local-function-context)
+					(cddr def)
+					'(...))))))))
+
+	  ;; -------- let-local-funcs->closure --------
+	  (define (let-local-funcs->closure caller form body largs)
+	    (let ((named-let (symbol? (cadr form))))
+	      (if named-let (set! largs (cons (cadr form) largs)))
+	      (let ((ok-funcs (local-movable-funcs body largs)))
+		(when (pair? ok-funcs)
+		  (let* ((func-names (map car ok-funcs))
+			 (letrec? (any? (lambda (f)
+					  (tree-set-member func-names (cddr (cdr f))))
+					ok-funcs)))
+		    
+		    ;; the letrec has to be a added (we can't combine let+letrec) because
+		    ;;   (let ((x 1)) (letrec ((x (+ x 1))) x)) is an error ("+ argument 1, #<undefined>...")
+		    ;;   so the original (let ((x (+ x 1))) (define ...)...) has to be
+		    ;;   (let ((x (+ x 1))) (letrec ...) ...) or the reverse: (let ((x 1)) (letrec (...) (let ((x (+ x 1))) x)))
+		    ;;   there's no straightforward way to say "these entities are independent" if one is a recursive function
+		    ;;     and another shadows but depends on the outer environment!  Also, it's not impossible that letrec here should
+		    ;;     be letrec* in r7rs -- the example below may be incorrect in r7rs.
+		    ;;   I think I'll put the functions on the outside.
+		    ;; (letrec ((f1 () (lambda () (f2 1))) (f2 (lambda () (f1 2))))...) is happy in s7.
+		    
+		    (lint-format "the inner function~A ~{~A~^, ~} could be moved ~A: ~A" caller
+				 (if (null? (cdr ok-funcs)) "" "s")
+				 func-names
+				 (if named-let 
+				     (format #f "out to ~A's closure" (cadr form)) 
+				     (if letrec?
+					 "to an outer letrec"
+					 "into the let"))
+				 (lists->string form
+						(if named-let
+						    `(,(if letrec? 'letrec 'let) (,@(map rewrite-funcs ok-funcs))
+						      (let ,(cadr form) ...))
+						    (if letrec? 
+							`(letrec ,(map rewrite-funcs ok-funcs)
+							   (let ,(cadr form) ...))
+							`(let (,@(cadr form) 
+							       ,@(map rewrite-funcs ok-funcs))
+							   ...))))))))))
+
 	  ;; -------- let-walker --------
 	  (define (let-walker caller form env)
 	    (if (or (< (length form) 3)             ; (let ((a 1) (set! a 2)))
@@ -18727,19 +18847,12 @@
 		    
 		    (set! vars (walk-let-vars caller form varlist vars env))
 
-#|
-		  (when (and (pair? body)
-                             (pair? vars)) 
-		    (let ((f (car body)))
-		      (when (and (func-definer? f)
-				 (not (tree-set-member (map var-name vars) (cddr f))))
-			(do ((p (cdr body) (cdr p)))
-			    ((or (not (pair? p))
-				 (and (func-definer? (car p))
-				      (tree-memq ((if (symbol? (cadar p)) cadar caadar) p) (cddr f))))
-			     (if (null? p)
-				 (format *stderr* "~A:~%~A~%~%" (cadr f) (lint-pp form))))))))
-|#
+		    (when (and (not (eq? body last-lambda-let))
+			       (pair? body)
+			       (pair? vars)
+			       (proper-list? varlist)
+			       (func-definer? (car body)))
+		      (let-local-funcs->closure caller form body (map var-name vars)))
 		    
 		    (let ((suggest made-suggestion))
 		      (unless named-let
@@ -19249,6 +19362,21 @@
 		  (set! (last-ref 2) i)
 		  (if (not (last-ref 1)) (set! (last-ref 1) i))))))
 
+	  ;; -------- let*-local-funcs->closure --------
+	  (define (let*-local-funcs->closure caller form body largs)
+	    (let ((ok-funcs (local-movable-funcs body largs)))
+	      (when (pair? ok-funcs)
+		(let* ((func-names (map car ok-funcs))
+		       (letrec? (any? (lambda (f)
+					(tree-set-member func-names (cddr (cdr f))))
+				      ok-funcs)))
+		  (lint-format "the inner function~A ~{~A~^, ~} could be moved out of the let*: ~A" caller
+			       (if (null? (cdr ok-funcs)) "" "s")
+			       func-names
+			       (lists->string form
+					      `(,(if letrec? 'letrec 'let) ,(map rewrite-funcs ok-funcs)
+						 (let* ,(cadr form) 
+						   ...))))))))
 
 	  ;; -------- let*-walker --------
 	  (define (let*-walker caller form env)
@@ -19262,25 +19390,18 @@
 		    (if (not (list? varlist))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
 		   
+		    (when (and (not named-let)
+			       (pair? body)
+			       (pair? varlist)
+			       (every? pair? varlist)
+			       (func-definer? (car body)))
+		      (let*-local-funcs->closure caller form body (map car varlist)))
+
 		   (let ((es (walk-letx-body caller form body 
 					     (walk-let*-vars caller form vars env)
 					     env)))
 		     (set! vars (car es))
 		     (set! env (cdr es)))
-
-#|
-		   (when (and (pair? body)
-			      (pair? vars)) 
-		     (let ((f (car body)))
-		       (when (and (func-definer? f)
-				  (not (tree-set-member (map var-name vars) (cddr f))))
-			 (do ((p (cdr body) (cdr p)))
-			     ((or (not (pair? p))
-				  (and (func-definer? (car p))
-				       (tree-memq ((if (symbol? (cadar p)) cadar caadar) p) (cddr f))))
-			      (if (null? p)
-				  (format *stderr* "~A:~%~A~%~%" (cadr f) (lint-pp form))))))))
-|#
 
 		    (when (and (not named-let)
 			       (pair? body)
@@ -21232,6 +21353,7 @@
 	(set! last-if-line-number -1)
 	(set! last-if->case-line-number -1)
 	(set! last-rewritten-internal-define #f)
+	(set! last-lambda-let #f)
 	(set! line-number -1)
 	(set! quote-warnings 0)
 	(set! pp-left-margin 0)
@@ -21651,31 +21773,13 @@
     #f))
 |#
 
-;;; this is done for lambda-walker except for the let-as-car case:
-;;; another constant expr: local function definition with no refs to locals: 
-;;;   [not in do -- only in snd-test!]
-;;;   does happen in named let -- maybe a dozen hits 18701, normal let a zillion hits
-;;;   [in lambda, a zillion hits 14005]
-;;;     also car=let+cdr=null, and its car=define-func without outer-args/let-vars -- or... let this be an iteration 
-;;;   check define-walker here (but is opt ok??) -- this is tricky
-;;;   also use letrec(*), I guess, if embedded func is recursive
-;;;   move multiple cross-ref funcs
-;;;   let-funcs.data -- if no locals, ignore; most can be just: move let inward + new outer (let () (define...)...)
-;;;     but is this an improvement? -- best perhaps to add to the let unless recursive to emphasize lack of dependency in either direction
-;;;     and let->letrec otherwise?
-;;;     but add to outer let if value defines something -- escaped def!
-;;;   many let* cases as well (more than a dozen anyway)
-;;;   so: get full list of funcs to move, any recursive (possibly indirectly)
-;;;     [if lambda, let()(rec(*)) defines + lambda]
-;;;        perhaps look for body=let+define and move out two levels?
-;;;     if let, combine into let if no recursion, else let()(rec(*)) defines + let
-;;;     if let*, let()(rec(*))+defines + let*
-;;;   also forward ref is ok if it gets included in the moved set
-;;;     need list of current moved, move-if-movable-forward-found
-;;;
-;;; simple (non-recursive) func in let called once with (partially-)known args -> expand and remove vars?
-;;; load default second arg is (rootlet) -- can we check the loaded file for collisions?
+;;; define*: maybe pp should stack the arg list if endless, and pp of vector should do something reasonable
+;;; tons of rewrites in lg*
+;;;    maybe suggest (let ((x (define (...)...)))?
+;;; (if (= e x) (number->string e) (number->string x)) -> (number->string x)
+;;;    this is doable for any eqx, and in cond, and reversed if not
+;;; (define-macro* (define-register-set set-symbol doc :optional definition)... as rewrite -- remove :optional
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 185 29144 779994
+;;; 185 29227 815365
