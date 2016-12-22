@@ -47,12 +47,16 @@ many other additions/sig changes (triangular matrices primiarily)
     (define gsl-version 0.0)		; define at top-level no matter where we are now
     (when (and (provided? 'linux)
 	       (defined? 'system))
-      (let ((version (system "pkg-config gsl --modversion" #t)))
-	(when (positive? (length version))
-	  (set! gsl-version (string->number version))
+      (let* ((version (system "pkg-config gsl --modversion" #t))
+	     (len (length version)))
+	(when (positive? len)
+	  (set! gsl-version (string->number (if (char=? (version (- len 1)) #\newline)
+						(substring version 0 (- len 1))
+						version)))
 	  (unless (number? gsl-version) ; "2.2.1" -> 2.2?
 	    (let ((i1 (char-position #\. version (+ (char-position #\. version) 1))))
-	      (set! gsl-version (string->number (substring version 0 i1))))))))))
+	      (if (integer? i1)
+		  (set! gsl-version (string->number (substring version 0 i1)))))))))))
 
 (unless (defined? '*libgsl*)
   (define *libgsl*

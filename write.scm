@@ -389,7 +389,8 @@
 					   (pair? (cddr obj))))
 				 (write obj port)
 				 (begin
-				   (format port "(~A ~A" (car obj) (cadr obj))
+				   (format port "(~A " (car obj)); (cadr obj))
+				   (pretty-print-1 (cadr obj) port (+ column *pretty-print-spacing* (length (symbol->string (car obj)))))
 				   (spaces port (+ column *pretty-print-spacing*))
 				   (stacked-list port (cddr obj) (+ column *pretty-print-spacing*))
 				   (write-char #\) port))))
@@ -486,6 +487,17 @@
 			     (cond ((or (infinite? lstlen)
 					(not (positive? lstlen)))
 				    (display objstr port))
+
+				   ((and (symbol? (car obj))
+					 (> (length (symbol->string (car obj))) 12)
+					 (pair? (cdr obj))
+					 (pair? (cadr obj))
+					 (memq (caadr obj) '(lambda lambda* let let* cond case letrec)))
+				    (write-char #\( port)
+				    (pretty-print-1 (car obj) port column)
+				    (spaces port (+ column 2))
+				    (stacked-list port (cdr obj) (+ column 2))
+				    (write-char #\) port))
 
 				   ((= lstlen 1)
 				    (if (pair? (car obj))
