@@ -235,14 +235,6 @@
 	  (signatures (make-hash-table)))
       
       (define (make-signature rtn args)
-	
-	(define (compress sig)
-	  (do ((sig sig (cdr sig)))
-	      ((not (and (pair? sig) 
-			 (pair? (cdr sig))
-			 (eq? (car sig) (cadr sig))))
-	       sig)))
-	
 	(let ((sig (list (cload->signature rtn #t)))
 	      (cyclic #f))
 	  (for-each
@@ -250,7 +242,11 @@
 	     (set! sig (cons (cload->signature arg) sig)))
 	   args)
 	  (let ((len (length sig)))
-	    (set! sig (compress sig))
+	    (set! sig (do ((sig sig (cdr sig)))
+			  ((not (and (pair? sig) 
+				     (pair? (cdr sig))
+				     (eq? (car sig) (cadr sig))))
+			   sig)))
 	    (set! cyclic (not (= len (length sig)))))
 	  (set! sig (reverse sig))
 	  (unless (signatures sig) ; it's not in our collection yet

@@ -1361,7 +1361,7 @@
 (CFNC "void gdk_window_move GdkWindow* window gint x gint y")
 (CFNC "void gdk_window_resize GdkWindow* window gint width gint height")
 (CFNC "void gdk_window_move_resize GdkWindow* window gint x gint y gint width gint height")
-(CFNC "void gdk_window_reparent GdkWindow* window GdkWindow* new_parent gint x gint y")
+;;; 3.89.2 (CFNC "void gdk_window_reparent GdkWindow* window GdkWindow* new_parent gint x gint y")
 ;;; (CFNC-gtk2 "void gdk_window_clear GdkWindow* window")
 ;;; (CFNC-gtk2 "void gdk_window_clear_area GdkWindow* window gint x gint y gint width gint height")
 ;;; (CFNC-gtk2 "void gdk_window_clear_area_e GdkWindow* window gint x gint y gint width gint height")
@@ -1415,8 +1415,8 @@
 ;;; (CFNC "GdkRegion* gdk_window_get_update_area GdkWindow* window")
 (CFNC "void gdk_window_freeze_updates GdkWindow* window")
 (CFNC "void gdk_window_thaw_updates GdkWindow* window")
-(CFNC "void gdk_window_process_all_updates void")
-(CFNC "void gdk_window_process_updates GdkWindow* window gboolean update_children")
+;;; 3.89.2 (CFNC "void gdk_window_process_all_updates void")
+;;; 3.89.2 (CFNC "void gdk_window_process_updates GdkWindow* window gboolean update_children")
 ;;; 3.22.2 (CFNC "void gdk_window_set_debug_updates gboolean setting")
 (CFNC "void gdk_window_constrain_size GdkGeometry* geometry GdkWindowHints flags gint width gint height gint* [new_width] gint* [new_height]")
 ;;; (CFNC-gtk2 "void gdk_window_get_internal_paint_info GdkWindow* window GdkDrawable** [real_drawable] gint* [x_offset] gint* [y_offset]")
@@ -7114,7 +7114,7 @@
 (CINT-2.18 "GDK_WINDOW_OFFSCREEN" "GdkWindowType")
 
 ;;; (CFNC-2.18 "gboolean gdk_region_rect_equal GdkRegion* region GdkRectangle* rectangle" 'const)
-(CFNC-2.18 "gboolean gdk_window_ensure_native GdkWindow* window")
+;;; 3.89.2 (CFNC-2.18 "gboolean gdk_window_ensure_native GdkWindow* window")
 (CFNC-2.18 "void gdk_window_get_root_coords GdkWindow* window gint x gint y gint* [root_x] gint* [root_y]")
 ;;; 2.91.0 (CFNC-2.18 "GdkPixmap* gdk_offscreen_window_get_pixmap GdkWindow* window")
 ;;; 3.89 (CFNC-2.18 "void gdk_offscreen_window_set_embedder GdkWindow* window GdkWindow* embedder")
@@ -7661,7 +7661,7 @@
 (CFNC-3.0 "void gtk_widget_set_margin_bottom GtkWidget* widget gint margin")
 (CFNC-3.0 "void gtk_widget_shape_combine_region GtkWidget* widget cairo_region_t* region")
 (CFNC-3.0 "void gtk_widget_input_shape_combine_region GtkWidget* widget cairo_region_t* region")
-(CFNC-3.0 "gboolean gtk_cairo_should_draw_window cairo_t* cr GdkWindow* window")
+;;; 3.89.2 (CFNC-3.0 "gboolean gtk_cairo_should_draw_window cairo_t* cr GdkWindow* window")
 (CFNC-3.0 "void gtk_cairo_transform_to_window cairo_t* cr GtkWidget* widget GdkWindow* window")
 ;;; 2.91.1 (CFNC-3.0 "GtkWidget* gtk_wrap_box_new GtkWrapAllocationMode mode GtkWrapBoxSpreading horizontal_spreading GtkWrapBoxSpreading vertical_spreading guint horizontal_spacing guint vertical_spacing")
 ;;; 2.91.1 (CFNC-3.0 "void gtk_wrap_box_set_allocation_mode GtkWrapBox* box GtkWrapAllocationMode mode")
@@ -7730,7 +7730,7 @@
 
 (CFNC-3.0 "void gdk_cairo_set_source_rgba cairo_t* cr GdkRGBA* rgba" 'const) 
 ;;; 3.22.2 (CFNC-3.0 "void gdk_window_set_background_rgba GdkWindow* window GdkRGBA* rgba") 
-(CFNC-3.0 "void gtk_cell_view_set_background_rgba GtkCellView* cell_view GdkRGBA* rgba" 'const) 
+;;; 3.89.2 (CFNC-3.0 "void gtk_cell_view_set_background_rgba GtkCellView* cell_view GdkRGBA* rgba" 'const) 
 ;;; 3.3.16 (CFNC-3.0 "GtkWidget* gtk_color_button_new_with_rgba GdkRGBA* rgba" 'const) 
 ;;; 3.3.16 (CFNC-3.0 "void gtk_color_button_set_rgba GtkColorButton* color_button GdkRGBA* rgba" 'const) 
 ;;; 3.3.16 ;(CFNC-3.0 "void gtk_color_button_get_rgba GtkColorButton* color_button GdkRGBA* [rgba]") 
@@ -8533,7 +8533,7 @@
 (CFNC-3.10 "void gtk_grid_set_baseline_row GtkGrid* grid gint row")
 (CFNC-3.10 "gint gtk_grid_get_baseline_row GtkGrid* grid")
 (CFNC-3.10 "void gtk_widget_size_allocate_with_baseline GtkWidget* widget GtkAllocation* allocation gint baseline")
-(CFNC-3.10 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
+;;; 3.89.2 (CFNC-3.10 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
 ;;; (CFNC-3.10 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* minimum_size GtkRequisition* natural_size gint* [minimum_baseline] gint* [natural_baseline]")
 (CFNC-3.10 "int gtk_widget_get_allocated_baseline GtkWidget* widget")
 (CFNC-3.10 "GtkAlign gtk_widget_get_valign_with_baseline GtkWidget* widget")
@@ -9503,7 +9503,6 @@
 (CFNC-3.22 "gchar* gtk_shortcut_label_get_disabled_text GtkShortcutLabel* self" 'const-return)
 (CFNC-3.22 "void gtk_shortcut_label_set_disabled_text GtkShortcutLabel* self gchar* disabled_text" 'const)
 
-(CFNC-3.22 "GdkDrawingContext* gdk_window_begin_draw_frame GdkWindow* window cairo_region_t* region")
 (CFNC-3.22 "void gdk_window_end_draw_frame GdkWindow* window GdkDrawingContext* context")
 
 ;;; 3.21.6:
@@ -9520,7 +9519,7 @@
 ;;; 3.22.3: same
 ;;; 3.22.4: no changes
 
-;;; 3.99.1: 
+;;; 3.89.1: 
 
 (CINT-3.99 "GTK_SHORTCUT_GESTURE_SWIPE_LEFT" "GtkShortcutType")
 (CINT-3.99 "GTK_SHORTCUT_GESTURE_SWIPE_RIGHT" "GtkShortcutType")
@@ -9539,3 +9538,17 @@
 (CFNC-3.99 "void gtk_drawing_area_set_content_height GtkDrawingArea* self int height")
 (CFNC-3.99 "int gtk_drawing_area_get_content_height GtkDrawingArea* self")
 (CFNC-3.99 "void gtk_drawing_area_set_draw_func GtkDrawingArea* self GtkDrawingAreaDrawFunc draw_func lambda_data #func_info GDestroyNotify destroy")
+
+;;; 3.89.2
+
+;;; ignoring the vulkan context stuff and gtk snapshot
+;;;   the snapshot functions are for widget writers, I think
+
+(CFNC-3.99 "GdkDrawContext* gdk_drawing_context_get_paint_context GdkDrawingContext* context")
+(CFNC-3.99 "cairo_region_t* gdk_gl_context_get_damage GdkGLContext* context")
+(CFNC-3.99 "gboolean gdk_rgba_is_clear GdkRGBA* rgba")
+(CFNC-3.99 "gboolean gdk_rgba_is_opaque GdkRGBA* rgba")
+(CFNC-3.99 "GdkDrawingContext* gdk_window_begin_draw_frame GdkWindow* window GdkDrawContext* context cairo_region_t* region")
+(CFNC-3.99 "GtkFlowBoxChild* gtk_flow_box_get_child_at_pos GtkFlowBox* box gint x gint y")
+
+ 
