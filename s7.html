@@ -5827,12 +5827,12 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove list-ref|set!, string-ref|set!, vector-ref|set!, hash-table-ref|set!, set-car!|cdr!, and set-current-output|input|error-port.
 <li>change file-exists? to file? (or omit it and assume the use of libc.scm &mdash; why reinvent the wheel?).
 <li>remove all the conversion and copy functions like vector-&gt;list and vector-copy (use copy or map).
-<li>add typeq? and perhaps make null? generic (see stuff.scm).
 <li>change string-&gt;symbol to symbol (what to do with symbol-&gt;string in that case?)
 <li>change with-output-to-* and with-input-from-* to omit the pointless lambda.
 <li>remove the with-* IO functions (e.g. with-input-from-string), keeping the call-with-* versions (call-with-input-string).
 <li>remove assq, assv, memq, and memv (these are pointless now that assoc and member can be passed eq? and eqv?).
 <li>remove unless: it is much harder to read than when.  The 'not should not be hidden.
+<li>remove letrec*: it is a useless and pedantic complication of letrec.
 </ul>
 
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
@@ -6509,6 +6509,7 @@ and it can contain both definitions and expressions.  These are evaluated in the
 in which they occur, and in the environment at the point of the evaluation.  I think
 of it as being a little REPL.  begin does not introduce a new frame in
 the current environment, so defines happen in the enclosing environment.
+Finally, begin, explicit or otherwise, does not pretend to emulate letrec*.
 </p>
 </div>
 

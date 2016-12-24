@@ -558,7 +558,17 @@
     (define (remove item sequence)
       (cond ((null? sequence) ())
 	    ((equal? item (car sequence)) (cdr sequence))
-	    (else (cons (car sequence) (remove item (cdr sequence))))))
+	    (else (cons (car sequence) 
+			(remove item (cdr sequence))))))
+    
+    (define (remq-set items sequence)
+      (cond ((null? sequence) 
+	     ())
+	    ((memq (car sequence) items) 
+	     (remq-set items (cdr sequence)))
+	    (else
+	     (cons (car sequence) 
+		   (remq-set items (cdr sequence))))))
     
     (define (remove-all item sequence)
       (map (lambda (x)
@@ -884,11 +894,6 @@
 	   (eq? (car x) 'quote)
 	   (symbol? (cadr x))))
     
-    (define (code-constant? x)
-      (and (or (not (symbol? x))
-	       (keyword? x))
-	   (not (unquoted-pair? x))))
-    
     (define (just-symbols? form)
       (or (null? form)
 	  (symbol? form)
@@ -896,6 +901,18 @@
 	       (symbol? (car form))
 	       (just-symbols? (cdr form)))))
     
+    (define (code-constant? x)
+      (and (or (not (symbol? x))
+	       (keyword? x))
+	   (not (unquoted-pair? x))))
+    
+    (define (constant-expression? val env)
+      (or (code-constant? val)
+	  (and (pair? val)
+	       (hash-table-ref constant-functions (car val))
+	       (not (var-member (car val) env))
+	       (every? code-constant? (cdr val)))))
+
     (define (list-any? f lst)
       (if (pair? lst)
 	  (or (f (car lst))
@@ -12784,11 +12801,7 @@
 		 (vvalue (var-initial-value local-var)))
 	     (when (and (zero? (var-set local-var))
 			(not (eq? (var-definer local-var) 'parameter))
-			(or (code-constant? vvalue)
-			    (and (pair? vvalue)
-				 (hash-table-ref constant-functions (car vvalue))
-				 (not (var-member (car vvalue) env))
-				 (every? code-constant? (cdr vvalue))))
+			(constant-expression? vvalue env)
 			(every? (lambda (p)
 				  (not (and (pair? p)
 					    (or (memq (car p) '(vector-set! float-vector-set! int-vector-set! 
@@ -13445,14 +13458,7 @@
 			      (if (or all-bad
 				      (memq fname largs)
 				      (let ((fargs (args->proper-list (if (symbol? (cadr f)) (cadr (caddr f)) (cdadr f)))))
-					(tree-set-member (let remove-shadows ((args largs) (nargs ()))
-							   (if (null? args)
-							       nargs
-							       (remove-shadows (cdr args) 
-									       (if (memq (car args) fargs)
-										   nargs
-										   (cons (car args) nargs)))))
-							 (cddr f))))
+					(tree-set-member (remq-set fargs largs) (cddr f))))
 				  (set! bad-funcs (cons fname bad-funcs))
 				  (set! ok-funcs (cons (cons fname f) ok-funcs))))))
 		      body)
@@ -13462,6 +13468,102 @@
 		       f))
 		 (reverse ok-funcs))))
 	  
+	;; -------- local-funcs->closure --------
+
+	(define local-funcs->closure 
+	  (let* ((rewrite-funcs
+		  (let* ((funcs->list 
+			  (lambda (ok-funcs)
+			    (map (lambda (f)
+				   (let ((def (cdr f)))
+				     (if (< (tree-leaves def) local-function-context)
+					 def
+					 (list (car def) (cadr def) '...))))
+				 ok-funcs)))
+			 
+			 (rewrite-define
+			  (lambda (form ok-funcs outer-args let-case)
+			    `(define ,(caadr form)       ; define* -> lambda* below
+			       (let ,(if let-case (funcs->list ok-funcs) ())
+				 ,@(if let-case () (funcs->list ok-funcs))
+				 (,(if (eq? (car form) 'define*) 'lambda* 'lambda)
+				  ,(cdr outer-args)
+				  ...)))))
+			 
+			 (rewrite-lambda 
+			  (lambda (form ok-funcs outer-args let-case)
+			    `(let ,(if let-case (funcs->list ok-funcs) ())
+			       ,@(if let-case () (funcs->list ok-funcs))
+			       (,(car form) ,outer-args ...)))))
+		    
+		    (lambda (caller form ok-funcs outer-args define-case let-case)
+		      (let ((msg (string-append "the " 
+						(if let-case "local" "inner") 
+						" function~A ~{~A~^, ~} could be moved "
+						(if define-case 
+						    "to ~A's closure: ~A" 
+						    "outside the ~A: ~A")))
+			    (rewriter (if define-case rewrite-define rewrite-lambda))
+			    (fname (if define-case (caadr form) (car form))))
+			(lint-format msg caller
+				     (if (null? (cdr ok-funcs)) "" "s")
+				     (map car ok-funcs)
+				     fname
+				     (lists->string form (rewriter form ok-funcs outer-args let-case)))))))
+		 
+		 (largs->let 
+		  (lambda (caller form body largs outer-args define-case)
+		    (let ((ok-funcs (local-movable-funcs body largs)))
+		      (when (pair? ok-funcs)
+			(set! last-lambda-let body)
+			(set! last-lambda-let-funcs ok-funcs)
+			(rewrite-funcs caller form ok-funcs outer-args define-case #f))))))
+	    
+	    (lambda (caller form outer-args define-case)
+	      (let ((largs (args->proper-list outer-args))
+		    (body ((if (string? (caddr form)) cdddr cddr) form)))
+		(when (pair? body)
+		  (if (func-definer? (car body))
+		      (largs->let caller form body largs outer-args define-case)
+		      (when (and (null? (cdr body))
+				 (len>2? (car body))
+				 (eq? (caar body) 'let)
+				 (list? (cadar body))
+				 (every? pair? (cadar body))
+				 (pair? (cddar body)))
+			(if (func-definer? (caddar body))
+			    (largs->let caller form 
+					(cddar body)
+					(if define-case
+					    (cons (caadr form) (append largs (map car (cadar body))))
+					    (append largs (map car (cadar body))))    
+					outer-args define-case))
+			
+			;; if define-case (caadr form) is ok here, but confusing
+			;;    ok-funcs here are lambdas in a let, so the other let vars don't matter, and cross-refs can't happen
+			(do ((ok-funcs ())
+			     (p (cadar body) (cdr p)))
+			    ((null? p)
+			     (when (pair? ok-funcs)
+			       (rewrite-funcs caller form ok-funcs outer-args define-case #t)))
+			  (let ((var&val (car p)))
+			    (if (and (len=2? var&val)
+				     (len>2? (cadr var&val))
+				     (memq (caadr var&val) '(lambda lambda*)))
+				(let* ((val (cadr var&val))
+				       (fname (car var&val))
+				       (fargs (args->proper-list (cadr val))))
+				  (if (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
+							      (if (null? args)
+								  nargs
+								  (remove-shadows (cdr args) 
+										  (if (memq (car args) fargs)
+										      nargs
+										      (cons (car args) nargs)))))
+							    (cddr val)))
+				      (set! ok-funcs (cons (cons fname var&val) ok-funcs))))))))))))))
+
+	
 	;; ---------------- define and defmacro ----------------
 	(let ()
 	  
@@ -13753,90 +13855,6 @@
 								  (if (cadr p) p (car p))) ; remove #f default vals
 								(caddar val)))
 						 ...))))))
-	
-	  ;; -------- define-local-funcs->closure --------
-	  (define define-local-funcs->closure 
-	    (let ((largs->let 
-		   (lambda (caller form body largs outer-args)
-		     (let ((ok-funcs (local-movable-funcs body largs)))
-		       (when (pair? ok-funcs)
-			 (set! last-lambda-let body)
-			 (set! last-lambda-let-funcs ok-funcs)
-			 (lint-format "the inner function~A ~{~A~^, ~} could be moved to ~A's closure: ~A" caller
-				      (if (null? (cdr ok-funcs)) "" "s")
-				      (map car ok-funcs)
-				      (caadr form)
-				      (lists->string form
-						     `(define ,(caadr form)       ; define* -> lambda* below
-							(let ()
-							  ,@(map (lambda (f)
-								   (let ((def (cdr f)))
-								     (if (< (tree-leaves def) local-function-context)
-									 def
-									 (list (car def) (cadr def) '...))))
-								 ok-funcs)
-							  (,(if (eq? (car form) 'define*) 'lambda* 'lambda)
-							   ,(cdr outer-args)
-							   ...))))))))))
-	      (lambda (caller form outer-args)
-		(let ((largs (args->proper-list outer-args))
-		      (body ((if (string? (caddr form)) cdddr cddr) form)))
-		  (when (pair? body)
-		    (if (func-definer? (car body))
-			(largs->let caller form body largs outer-args)
-			(when (and (null? (cdr body))
-				   (len>2? (car body))
-				   (eq? (caar body) 'let)
-				   (list? (cadar body))
-				   (every? pair? (cadar body))
-				   (pair? (cddar body)))
-			  (if (func-definer? (caddar body))
-			      (largs->let caller form 
-					  (cddar body)
-					  (cons (caadr form) (append largs (map car (cadar body))))
-					  outer-args)
-			      
-			      ;; expand by hand for now... TODO: do this in lambda-locals also, and s7test cases
-			      ;;  yet another case val=(let(...)(lambda...))!
-			      
-			      ;; (caadr form) is ok here, but confusing
-			      ;;    ok-funcs here are lambdas in a let, so the other let vars don't matter, and cross-refs can't happen
-			      (do ((ok-funcs ())
-				   (p (cadar body) (cdr p)))
-				  ((null? p)
-				   (when (pair? ok-funcs)
-				     (lint-format "the local function~A ~{~A~^, ~} could be moved to ~A's closure: ~A" caller
-						  (if (null? (cdr ok-funcs)) "" "s")
-						  (map car ok-funcs)
-						  (caadr form)
-						  (lists->string form
-								 `(define ,(caadr form)       ; define* -> lambda* below
-								    (let ,(map (lambda (f)
-										 (let ((def (cdr f)))
-										   (if (< (tree-leaves def) local-function-context)
-										       def
-										       (list (car def) (cadr def) '...))))
-									       ok-funcs)
-								      (,(if (eq? (car form) 'define*) 'lambda* 'lambda)
-								       ,(cdr outer-args)
-								       ...)))))))
-				(let ((var&val (car p)))
-				  (if (and (len=2? var&val)
-					   (len>2? (cadr var&val))
-					   (memq (caadr var&val) '(lambda lambda*)))
-				      (let* ((val (cadr var&val))
-					     (fname (car var&val))
-					     (fargs (args->proper-list (cadr val))))
-					(if (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
-								    (if (null? args)
-									nargs
-									(remove-shadows (cdr args) 
-											(if (memq (car args) fargs)
-											    nargs
-											    (cons (car args) nargs)))))
-								  (cddr val)))
-					    (set! ok-funcs (cons (cons fname var&val) ok-funcs)))))))))))))))
-
 		    
 	  ;; -------- define-walker --------
 	  (define (define-walker caller form env)
@@ -13910,10 +13928,8 @@
 
 			(when (and (memq head '(define define*)) ; can't include define-macro et al because we use lambda(*) as rewrite
 				   (pair? val)
-				   (pair? sym)
-				   (or (pair? (cdr sym))
-				       (symbol? (cdr sym))))
-			  (define-local-funcs->closure caller form sym))
+				   (pair? sym))
+			  (local-funcs->closure caller form sym #t))
 
 			(cond ((not (and (pair? sym)
 					 (pair? val)))
@@ -14047,45 +14063,6 @@
 	;; ---------------- lambda, lambda* ----------------		  
 	(let ()
 	  
-	  ;; -------- lambda-local-funcs->closure --------
-	  (define lambda-local-funcs->closure 
-	    (let ((largs->let 
-		   (lambda (caller form body largs outer-args)
-		     (let ((ok-funcs (local-movable-funcs body largs)))
-		       (when (pair? ok-funcs)
-			 (set! last-lambda-let body)
-			 (set! last-lambda-let-funcs ok-funcs)
-			 (lint-format "the inner function~A ~{~A~^, ~} could be moved outside the ~A: ~A" caller
-				      (if (null? (cdr ok-funcs)) "" "s")
-				      (map car ok-funcs)
-				      (car form)
-				      (lists->string form
-						     `(let ()  ; kinda lazy but otherwise we need to check let vs letrec
-							,@(map (lambda (f)
-								 (let ((def (cdr f)))
-								   (if (< (tree-leaves def) local-function-context)
-								       def
-								       (list (car def) (cadr def) '...))))
-							       ok-funcs)
-							(,(car form) ,outer-args ...)))))))))
-	      (lambda (caller form args)
-		(let ((largs (args->proper-list args))
-		      (body ((if (string? (caddr form)) cdddr cddr) form)))
-		  (when (pair? body)
-		    (if (func-definer? (car body))
-			(largs->let caller form body largs args)
-			(when (and (null? (cdr body))
-				   (len>2? (car body))
-				   (eq? (caar body) 'let)
-				   (list? (cadar body))
-				   (every? pair? (cadar body))
-				   (pair? (cddar body))
-				   (func-definer? (caddar body)))
-			  (largs->let caller form (cddar body)
-				      (append largs (map car (cadar body)))
-				      args))))))))
-
-		    
 	  ;; -------- lambda-walker --------
 	  (define (lambda-walker caller form env)
 	    (let ((len (length form))
@@ -14113,13 +14090,8 @@
 				 (symbol? args)))
 			(lint-format "lambda* could be lambda ~A" caller form))
 		    
-		    (when (and (pair? (cddr form))
-			       (or (not (null? args))         ; nothing gained if no args
-				   (and (null? (cdddr form))
-					(len>1? (caddr form))
-					(eq? (caaddr form) 'let)
-					(pair? (cadr (caddr form))))))
-		      (lambda-local-funcs->closure caller form args))
+		    (when (pair? (cddr form))
+		      (local-funcs->closure caller form args #f))
 
 		    (when (or (= len 3)
 			      (and (= len 4)
@@ -18896,7 +18868,7 @@
 					 "into the let"))
 				 (lists->string form
 						(if named-let
-						    `(,(if letrec? 'letrec 'let) (,@(map rewrite-funcs ok-funcs))
+						    `(,(if letrec? 'letrec 'let) ,(map rewrite-funcs ok-funcs)
 						      (let ,(cadr form) ...))
 						    (if letrec? 
 							`(letrec ,(map rewrite-funcs ok-funcs)
@@ -19158,36 +19130,88 @@
 					      (list (if (null? (cdr new-let-binds)) 'let 'let*)
 						    new-let-binds
 						    '...)))))
-	      
-	      ;; this could be folded into the for-each above
-	      (unless repeats
+
+	      (when (and (not repeats)
+			 (len>2? vars))
 		(let ((outer-vars ())
-		      (inner-vars ()))
+		      (inner-vars ())
+		      (let-vars ())
+		      (cur-vars ())
+		      (varlist ((if (symbol? (cadr form)) caddr cadr) form)))
 		  (do ((vs (reverse vars) (cdr vs)))
 		      ((null? vs))
+
 		    (let* ((v (car vs))
-			   (vname (var-name v)))
-		      (if (not (or (side-effect? (var-initial-value v) env)
-				   (any? (lambda (trailing-var)
-					   ;; vname is possible inner let var if it is not mentioned in any trailing initial value
-					   ;;   (repeated name can't happen here)
-					   (tree-memq vname (var-initial-value trailing-var)))
-					 (cdr vs))))
-			  (set! inner-vars (cons v inner-vars))
-			  (set! outer-vars (cons v outer-vars)))))
+			   (vname (var-name v))
+			   (value (var-initial-value v)))
+
+		      (if (or (side-effect? value env)
+			      (any? (lambda (trailing-var)
+				      ;; vname is possible inner let var if it is not mentioned in any trailing initial value
+				      ;;   (repeated name can't happen here)
+				      (tree-memq vname (var-initial-value trailing-var)))
+				    (cdr vs)))
+			  (set! outer-vars (cons vname outer-vars))
+			  (set! inner-vars (cons vname inner-vars)))
+
+		      (if (and (not (and (pair? value)
+					 (memq (car value) cur-vars)))
+			       (constant-expression? value env)
+			       (do ((oldv varlist (cdr oldv)))
+				   ((or (not (pair? oldv))
+					(tree-memq vname (car oldv)))
+				    (and (pair? oldv)
+					 (eq? vname (caar oldv))))))
+			  (set! let-vars (cons vname let-vars)))
+		      (set! cur-vars (cons vname cur-vars))))
+
+		  ;; (format *stderr* "outer: ~A, inner: ~A, const: ~A:~%~A~%~%" outer-vars inner-vars let-vars (lint-pp form))
 		  (when (and (pair? outer-vars)
-			     (len>1? inner-vars))
-		    ;; (let* ((a 1) (b 2) (c (+ a 1))) (* c 2)) -> (let ((a 1)) (let ((b 2) (c (+ a 1))) ...))
+			     (or (len>1? let-vars)
+				 (len>1? inner-vars)))
+		    (let ((lv ())
+			  (ov ())
+			  (iv ()))
+
+		      ;; TODO: all values need to be truncated if too big
+		      ;; TODO t347 -> s7test
+
+		    (if (len>1? let-vars)
+			(begin
+			  (set! outer-vars (remq-set let-vars outer-vars))
+			  (set! inner-vars (remq-set let-vars inner-vars))
+			  (set! lv (map (lambda (v)
+					  (list v (var-initial-value (var-member v vars))))
+					let-vars))))
+
+		    (if (pair? outer-vars)
+			(set! ov (map (lambda (v)
+					(list v (var-initial-value (var-member v vars))))
+				      outer-vars)))
+
+		    (if (len>1? inner-vars)
+			(set! iv (map (lambda (v)
+					(list v (var-initial-value (var-member v vars))))
+				      inner-vars))
+			(if (pair? inner-vars)
+			    (set! ov (cons (list (car inner-vars) 
+						 (var-initial-value (var-member (car inner-vars) vars)))
+					   ov))))
+		    
+		    (if (null? ov)
+			(set! ov (list 'let (reverse iv) '...))
+			(set! ov (list (if (pair? (cdr ov)) 'let* 'let)
+				       (reverse ov)
+				       (if (pair? iv)
+					   (list 'let (reverse iv) '...)
+					   '...))))
+		    (if (pair? lv)
+			(set! lv (list 'let (reverse lv) ov))
+			(set! lv ov))
+
 		    (lint-format "perhaps split this let*: ~A" caller
-				 (lists->string form
-						`(,(if (pair? (cdr outer-vars)) 'let* 'let)
-						  ,(map (lambda (v)
-							  (list (var-name v) (var-initial-value v)))
-							(reverse outer-vars))
-						  (let ,(map (lambda (v)
-							       (list (var-name v) (var-initial-value v)))
-							     (reverse inner-vars))
-						    ...)))))))))
+				 (lists->string form lv))))))))
+
 	  
 	  ;; -------- let*+let*->let*
 	  (define (let*+let*->let* caller form)
@@ -19472,38 +19496,41 @@
 		    
 		    (if (not (list? varlist))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form)))
-		   
-		    (when (and (not named-let)
-			       (pair? body)
+		    
+		    (when (and (pair? body)
 			       (pair? varlist)
 			       (every? pair? varlist)
 			       (func-definer? (car body)))
-		      (let*-local-funcs->closure caller form body (map car varlist)))
-
-		   (let ((es (walk-letx-body caller form body 
-					     (walk-let*-vars caller form vars env)
-					     env)))
-		     (set! vars (car es))
-		     (set! env (cdr es)))
-
+		      (let*-local-funcs->closure caller form body 
+						 (if named-let
+						     (cons (cadr form) (map car varlist))
+						     (map car varlist))))
+		    
+		    (let ((es (walk-letx-body caller form body 
+					      (walk-let*-vars caller form vars env)
+					      env)))
+		      (set! vars (car es))
+		      (set! env (cdr es)))
+		    
 		    (when (and (not named-let)
 			       (pair? body)
 			       (proper-pair? varlist))
 		      (when (pair? vars)
 			(let*->let+let caller form vars env))
+		      
 		      (let*+let*->let* caller form)
 		      (let*->let+do caller form env)
 		      ;; (define...) as first in body rarely happens in rewritable contexts
-
+		      
 		      (unless (unsafe-definer? body)
 			(remove-unneeded-let*-vars caller form env))
 		      (combine-let*-vars caller form vars env)
-			  
+		      
 		      (let ((last-var (last-par varlist)))
 			(when (pair? last-var) 
 			  (combine-let*-last-var caller form last-var env)))
 		      ;; last var -> if/cond in car(body) as in let only happens a few times (leaving aside stuff caught above)
-
+		      
 		      (when (and (> (length body) 3)
 				 (> (length vars) 1)
 				 (every? pair? varlist)
@@ -19511,6 +19538,7 @@
 							     define-bacro define-bacro* define-constant define-expansion)
 							   body)))
 			(reduce-let*-var-scope caller form vars))))))
+
 	    env)
 	  (hash-walker 'let* let*-walker)		
 
@@ -19642,7 +19670,8 @@
 		       (pair? (caddr form))
 		       (eq? (caaddr form) 'lambda)
 		       (pair? (caadr form))
-		       (tree-nonce (caaadr form) (cddr form)))
+		       (tree-car-member (caaadr form) (cddr form))
+		       (tree-nonce (caaadr form) (cddr form))) ; this alone can give (caaadr form) passed as a function arg
 	      (let ((lr-lambda (cadr (caadr form))))
 		(when (and (pair? lr-lambda)
 			   (eq? 'lambda (car lr-lambda)))
@@ -19690,6 +19719,7 @@
 			 (lint-format "letrec* could be letrec: ~A" caller (truncated-list->string form))))
 		  
 		  (let ((vars (walk-letrec-vars caller form env)))
+		    ;; no hits for func-definer as car of body
 		    
 		    (when (eq? head 'letrec)
 		      (check-unordered-exprs caller form (map var-initial-value vars) env)
@@ -20976,7 +21006,7 @@
 
 		      (when (eq? head #_{list})
 			(case (length form)
-			  ((1) #f)
+			  ((1) ())
 			  ((2)
 			   (let ((arg1 (cadr form)))
 			     (cond ((and (pair? arg1)
@@ -21862,11 +21892,8 @@
 |#
 
 ;;; pp of vector should do something reasonable
-;;; tons of rewrites in lg*
-;;;   define|lambda+global-let(*)+lambdas [13777] -> lambda-locals
-;;; why no qq rewrite of (,@(...)) -> ,(...)? ({list} ({apply_values} (f x)))) -> (f x)??
-;;;   it works in isolation?
+;;; tons of rewrites in lg* (7000 lines)
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 185 29237 818065
+;;; 185 29237 823403

@@ -271,11 +271,6 @@
 	    (error (format #f "can't allocate ~A" color))
 	    (.pixel col))))
 
-    (define (set-flabel label value)
-      (let ((s1 (XmStringCreate (format #f "~5,3F" value) XmFONTLIST_DEFAULT_TAG)))
-	(XtVaSetValues label (list XmNlabelString s1))
-	(XmStringFree s1)))
-
     (XtSetValues shell (list XmNtitle "FM Forever!"))
     (let* ((light-blue (get-color sliderback))
 	   (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
@@ -447,7 +442,12 @@
 	    (high-index 2.0)
 	    (which-play 0)
 	    (proc #f)
-	    (func #f))
+	    (func #f)
+	    (set-flabel 
+	     (lambda (label value)
+	       (let ((s1 (XmStringCreate (format #f "~5,3F" value) XmFONTLIST_DEFAULT_TAG)))
+		 (XtVaSetValues label (list XmNlabelString s1))
+		 (XmStringFree s1)))))
 	
 	(define (tempo-callback w c i)
 	  (set! ctempo (+ low-tempo (* (.value i) (/ (- high-tempo low-tempo) 100.0))))
