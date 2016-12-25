@@ -3369,6 +3369,7 @@
 		     (set! exprs '(#t)))
 		    
 		    ((and (pair? val)                       ; (or ...) -> splice into current
+			  (proper-list? val)
 			  (eq? (car val) 'or))
 		     (set! exprs (append val (cdr exprs)))) ; we'll skip the 'or in do step
 		    
@@ -13469,7 +13470,6 @@
 		 (reverse ok-funcs))))
 	  
 	;; -------- local-funcs->closure --------
-
 	(define local-funcs->closure 
 	  (let* ((rewrite-funcs
 		  (let* ((funcs->list 
@@ -13528,7 +13528,7 @@
 		      (when (and (null? (cdr body))
 				 (len>2? (car body))
 				 (eq? (caar body) 'let)
-				 (list? (cadar body))
+				 (proper-list? (cadar body))
 				 (every? pair? (cadar body))
 				 (pair? (cddar body)))
 			(if (func-definer? (caddar body))
@@ -18846,8 +18846,13 @@
 		  (let* ((func-names (map car ok-funcs))
 			 (letrec? (any? (lambda (f)
 					  (tree-set-member func-names (cdddr f)))
-					ok-funcs)))
-		    
+					ok-funcs))
+			 (old-vars (if (< (tree-leaves (cadr form)) local-function-context)
+				       (cadr form)
+				       (if (< (tree-leaves (caadr form)) local-function-context)
+					   (list (caadr form) '...)
+					   (list (list (caaadr form) '...) '...)))))
+
 		    ;; the letrec has to be a added (we can't combine let+letrec) because
 		    ;;   (let ((x 1)) (letrec ((x (+ x 1))) x)) is an error ("+ argument 1, #<undefined>...")
 		    ;;   so the original (let ((x (+ x 1))) (define ...)...) has to be
@@ -18869,11 +18874,11 @@
 				 (lists->string form
 						(if named-let
 						    `(,(if letrec? 'letrec 'let) ,(map rewrite-funcs ok-funcs)
-						      (let ,(cadr form) ...))
+						      (let ,old-vars ...))
 						    (if letrec? 
 							`(letrec ,(map rewrite-funcs ok-funcs)
-							   (let ,(cadr form) ...))
-							`(let (,@(cadr form) 
+							   (let ,old-vars ...))
+							`(let (,@old-vars
 							       ,@(map rewrite-funcs ok-funcs))
 							   ...))))))))))
 
@@ -19161,42 +19166,37 @@
 				   ((or (not (pair? oldv))
 					(tree-memq vname (car oldv)))
 				    (and (pair? oldv)
+					 (pair? (car oldv))
 					 (eq? vname (caar oldv))))))
 			  (set! let-vars (cons vname let-vars)))
 		      (set! cur-vars (cons vname cur-vars))))
 
-		  ;; (format *stderr* "outer: ~A, inner: ~A, const: ~A:~%~A~%~%" outer-vars inner-vars let-vars (lint-pp form))
 		  (when (and (pair? outer-vars)
 			     (or (len>1? let-vars)
 				 (len>1? inner-vars)))
 		    (let ((lv ())
 			  (ov ())
-			  (iv ()))
-
-		      ;; TODO: all values need to be truncated if too big
-		      ;; TODO t347 -> s7test
-
+			  (iv ())
+			  (truncate-value 
+			   (lambda (v)
+			     (list v (let ((val (var-initial-value (var-member v vars))))
+				       (if (and (pair? val)
+						(> (tree-leaves val) 20))
+					   (list (car val) '...)
+					   val))))))
 		    (if (len>1? let-vars)
 			(begin
 			  (set! outer-vars (remq-set let-vars outer-vars))
 			  (set! inner-vars (remq-set let-vars inner-vars))
-			  (set! lv (map (lambda (v)
-					  (list v (var-initial-value (var-member v vars))))
-					let-vars))))
+			  (set! lv (map truncate-value let-vars))))
 
 		    (if (pair? outer-vars)
-			(set! ov (map (lambda (v)
-					(list v (var-initial-value (var-member v vars))))
-				      outer-vars)))
+			(set! ov (map truncate-value outer-vars)))
 
 		    (if (len>1? inner-vars)
-			(set! iv (map (lambda (v)
-					(list v (var-initial-value (var-member v vars))))
-				      inner-vars))
+			(set! iv (map truncate-value inner-vars))
 			(if (pair? inner-vars)
-			    (set! ov (cons (list (car inner-vars) 
-						 (var-initial-value (var-member (car inner-vars) vars)))
-					   ov))))
+			    (set! ov (cons (truncate-value (car inner-vars)) ov))))
 		    
 		    (if (null? ov)
 			(set! ov (list 'let (reverse iv) '...))
@@ -19482,7 +19482,9 @@
 			       func-names
 			       (lists->string form
 					      `(,(if letrec? 'letrec 'let) ,(map rewrite-funcs ok-funcs)
-						 (let* ,(cadr form) 
+						 (let* ,(if (> (tree-leaves (cadr form)) local-function-context)
+							    (list (caadr form) '...)
+							    (cadr form))
 						   ...))))))))
 
 	  ;; -------- let*-walker --------
@@ -21892,8 +21894,10 @@
 |#
 
 ;;; pp of vector should do something reasonable
-;;; tons of rewrites in lg* (7000 lines)
+;;; tons of rewrites in lg* (5500 lines)
+;;; define* -> define (only used with all args, or no undef'd args can be #f)
+;;; top-level function used, but only in other func?
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 185 29237 823403
+;;; 195 29237 822898

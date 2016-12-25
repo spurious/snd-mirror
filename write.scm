@@ -65,17 +65,17 @@
 		(do ((p lst (cdr p)))
 		    ((not (pair? p)))
 		  (if (not (eq? p lst)) (spaces port col))
-		  (write-char #\( port)
 		  (if (pair? (car p))
 		      (begin
+			(write-char #\( port)
 			(write (caar p) port)
 			(write-char #\space port)
 			(if (and (pair? (cdar p))
 				 (symbol? (caar p)))
 			    (pretty-print-1 (cadar p) port (+ col (length (symbol->string (caar p))) 2))
-			    (write (cdar p) port)))
-		      (write (car p) port))
-		  (write-char #\) port))))
+			    (write (cdar p) port))
+			(write-char #\) port))
+		      (write (car p) port))))) ; pretty-print? (it's always a symbol)
 	  
 	  (define (messy-number z)
 	    (if (real? z)
@@ -302,7 +302,8 @@
 						    (begin
 						      (write-char #\space port)
 						      (write (cadr lst) port)
-						      (if (eq? (cadr lst) '=>)
+						      (if (and (eq? (cadr lst) '=>)
+							       (pair? (cddr lst)))
 							  (begin
 							    (write-char #\space port)
 							    (write (caddr lst) port))))

@@ -26,34 +26,34 @@
 ;;; -------- swap selection chans
 
 (define swap-selection-channels
-  (let ((documentation "(swap-selection-channels) swaps the currently selected data's channels"))
+  (let ((documentation "(swap-selection-channels) swaps the currently selected data's channels")
+	(find-selection-sound 
+	 (lambda (not-this)
+	   (let ((scs (all-chans)))
+	     (call-with-exit
+	      (lambda (return)
+		(map 
+		 (lambda (snd chn)
+		   (if (and (selection-member? snd chn)
+			    (or (null? not-this)
+				(not (equal? snd (car not-this)))
+				(not (= chn (cadr not-this)))))
+		       (return (list snd chn))))
+		 (car scs)
+		 (cadr scs))))))))
     (lambda ()
-      (let ((find-selection-sound 
-	     (lambda (not-this)
-	       (let ((scs (all-chans)))
-		 (call-with-exit
-		  (lambda (return)
-		    (map 
-		     (lambda (snd chn)
-		       (if (and (selection-member? snd chn)
-				(or (null? not-this)
-				    (not (equal? snd (car not-this)))
-				    (not (= chn (cadr not-this)))))
-			   (return (list snd chn))))
-		     (car scs)
-		     (cadr scs))))))))
-	(if (not (selection?))
-	    (error 'no-active-selection "swap-selection-channels needs a selection")
-	    (if (not (= (selection-chans) 2))
-		(error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection")
-		(let* ((snd-chn0 (find-selection-sound ()))
-		       (snd-chn1 (find-selection-sound snd-chn0)))
-		  (if snd-chn1
-		      (swap-channels (car snd-chn0) (cadr snd-chn0) 
-				     (car snd-chn1) (cadr snd-chn1)
-				     (selection-position)
-				     (selection-framples))
-		      (error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap")))))))))
+      (if (not (selection?))
+	  (error 'no-active-selection "swap-selection-channels needs a selection")
+	  (if (not (= (selection-chans) 2))
+	      (error 'wrong-number-of-channels "swap-selection-channels needs a stereo selection")
+	      (let* ((snd-chn0 (find-selection-sound ()))
+		     (snd-chn1 (find-selection-sound snd-chn0)))
+		(if snd-chn1
+		    (swap-channels (car snd-chn0) (cadr snd-chn0) 
+				   (car snd-chn1) (cadr snd-chn1)
+				   (selection-position)
+				   (selection-framples))
+		    (error 'wrong-number-of-channels "swap-selection-channels needs two channels to swap"))))))))
 
 
 ;;; -------- replace-with-selection
@@ -93,16 +93,16 @@
 (define make-selection 
   (let ((documentation "(make-selection beg end snd chn) makes a selection like make-region but without creating a region.
 make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
-to end of channel, beg defaults to 0, snd defaults to the currently selected sound."))
+to end of channel, beg defaults to 0, snd defaults to the currently selected sound.")
+
+	(add-chan-to-selection 
+	 (lambda (s0 s1 s c)
+	   (set! (selection-member? s c) #t)
+	   (set! (selection-position s c) (or s0 0))
+	   (set! (selection-framples s c) (- (or (and (number? s1) (+ 1 s1)) (framples s c)) (or s0 0))))))
+	
     (lambda* (beg end snd chn)
-      
       (let ((current-sound (or snd (selected-sound) (car (sounds)))))
-	
-	(define (add-chan-to-selection s0 s1 s c)
-	  (set! (selection-member? s c) #t)
-	  (set! (selection-position s c) (or s0 0))
-	  (set! (selection-framples s c) (- (or (and (number? s1) (+ 1 s1)) (framples s c)) (or s0 0))))
-	
 	(if (not (sound? current-sound))
 	    (error 'no-such-sound "make-selection can't find sound"))
 	
