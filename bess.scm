@@ -220,33 +220,33 @@
 	(XtRealizeWidget shell)
 	
 	;; send fm data to dac
-	(let* ((bufsize 256)
-	       (work-proc #f)
-	       (port (mus-audio-open-output mus-audio-default 22050 1 mus-lshort (* bufsize 2))))
-	  (if (< port 0) 
-	      (format () "can't open DAC!"))
-	  
-	  (XmAddWMProtocolCallback (cadr (main-widgets)) ; shell
-				   (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
-				   (lambda (w c i)
-				     (XtRemoveWorkProc work-proc) ; odd that there's no XtAppRemoveWorkProc
-				     (mus-audio-close port))
-				   #f)
-	  (XtAddCallback shell
-			 XmNcancelCallback (lambda (w context info)
-					     (XtRemoveWorkProc work-proc)
-					     (mus-audio-close port)
-					     (XtUnmanageChild shell)))
-	  (set! work-proc (XtAppAddWorkProc app 
-					    (lambda (ignored-arg)
-					      (let ((data (make-float-vector bufsize)))
-						(do ((i 0 (+ 1 i)))
-						    ((= i bufsize))
-						  (float-vector-set! data i (* amplitude playing
-									       (oscil carosc 
-										      (+ (hz->radians frequency)
-											 (* index 
-											    (oscil modosc 
-												   (hz->radians (* ratio frequency)))))))))
-						(mus-audio-write port data bufsize)
-						#f)))))))))
+	(let ((bufsize 256)
+	      (work-proc #f))
+	  (let ((port (mus-audio-open-output mus-audio-default 22050 1 mus-lshort (* bufsize 2))))
+	    (if (< port 0) 
+		(format () "can't open DAC!"))
+	    
+	    (XmAddWMProtocolCallback (cadr (main-widgets)) ; shell
+				     (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
+				     (lambda (w c i)
+				       (XtRemoveWorkProc work-proc) ; odd that there's no XtAppRemoveWorkProc
+				       (mus-audio-close port))
+				     #f)
+	    (XtAddCallback shell
+			   XmNcancelCallback (lambda (w context info)
+					       (XtRemoveWorkProc work-proc)
+					       (mus-audio-close port)
+					       (XtUnmanageChild shell)))
+	    (set! work-proc (XtAppAddWorkProc app 
+					      (lambda (ignored-arg)
+						(let ((data (make-float-vector bufsize)))
+						  (do ((i 0 (+ 1 i)))
+						      ((= i bufsize))
+						    (float-vector-set! data i (* amplitude playing
+										 (oscil carosc 
+											(+ (hz->radians frequency)
+											   (* index 
+											      (oscil modosc 
+												     (hz->radians (* ratio frequency)))))))))
+						  (mus-audio-write port data bufsize)
+						  #f))))))))))

@@ -406,7 +406,13 @@ starting at 'start' (in samples) using 'pan-env' to decide how to split the soun
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
 is no longer accessible.  pan-mix returns a list of the mixes performing the
-panning operation."))
+panning operation.")
+
+	(invert-envelope 
+	 (lambda (e)
+	   (if (null? e)
+	       ()
+	       (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))))
     
     (lambda* (name beg pan snd auto-delete)
       (let ((deletion-choice (if auto-delete 3 0))) ; multichannel deletion case
@@ -419,19 +425,11 @@ panning operation."))
 	  
 	  (as-one-edit
 	   (lambda ()
-	     
-	     (define (invert-envelope e)
-	       (if (null? e)
-		   ()
-		   (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))
-	     
 	     (let ((incoming-chans (channels name))
 		   (receiving-mono (= (channels index) 1)))
 	       
 	       (if (= incoming-chans 1)
-		   
 		   ;; mono input
-		   
 		   (if receiving-mono
 		       
 		       ;; mono to mono = just scale or envelope
@@ -456,7 +454,6 @@ panning operation."))
 				(list id0 id1)))))
 		   
 		   ;; stero input
-		   
 		   (if receiving-mono
 		       
 		       ;; stereo -> mono => scale or envelope both input chans into the output

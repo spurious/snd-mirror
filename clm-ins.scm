@@ -22,28 +22,30 @@
 Anything other than .5 = longer decay.  Must be between 0 and less than 1.0. 
 'lossfact' can be used to shorten decays.  Most useful values are between .8 and 1.0. (with-sound () (pluck 0 1 330 .3 .7 .995))"
 
-  (define (tuneIt f s1)
-
-    (define (getOptimumC S o p)
-      (let* ((pa (* (/ 1.0 o) (atan (* S (sin o)) (- (+ 1.0 (* S (cos o))) S))))
-	     (tmpInt (floor (- p pa)))
-	     (pc (- p pa tmpInt)))
-	(if (< pc .1)
-	    (do ()
-		((>= pc .1))
-	      (set! tmpInt (- tmpInt 1))
-	      (set! pc (+ pc 1.0))))
-	(list tmpInt (/ (- (sin o) (sin (* o pc))) (sin (+ o (* o pc)))))))
-    
-    (let ((p (/ *clm-srate* f))	;period as float
-	  (s (if (= s1 0.0) 0.5 s1))
-	  (o (hz->radians f)))
-      (let ((vals (getOptimumC s o p))
-	    (vals1 (getOptimumC (- 1.0 s) o p)))
-	(if (and (not (= s 1/2))
-		 (< (abs (cadr vals)) (abs (cadr vals1))))
-	    (list (- 1.0 s) (cadr vals) (car vals))
-	    (list s (cadr vals1) (car vals1))))))
+  (define tuneIt 
+    (let ((getOptimumC (lambda (S o p)
+			 (let* ((pa (* (/ 1.0 o) 
+				       (atan (* S (sin o))
+					     (- (+ 1.0 (* S (cos o))) S))))
+				(tmpInt (floor (- p pa)))
+				(pc (- p pa tmpInt)))
+			   (if (< pc .1)
+			       (do ()
+				   ((>= pc .1))
+				 (set! tmpInt (- tmpInt 1))
+				 (set! pc (+ pc 1.0))))
+			   (list tmpInt (/ (- (sin o) (sin (* o pc)))
+					   (sin (+ o (* o pc)))))))))
+      (lambda (f s1)
+	(let ((p (/ *clm-srate* f))	;period as float
+	      (s (if (= s1 0.0) 0.5 s1))
+	      (o (hz->radians f)))
+	  (let ((vals (getOptimumC s o p))
+		(vals1 (getOptimumC (- 1.0 s) o p)))
+	    (if (and (not (= s 1/2))
+		     (< (abs (cadr vals)) (abs (cadr vals1))))
+		(list (- 1.0 s) (cadr vals) (car vals))
+		(list s (cadr vals1) (car vals1))))))))
   
   (let ((vals (tuneIt freq weighting)))
     (let ((wt0 (car vals))
@@ -85,8 +87,8 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 
 (definstrument (vox beg dur freq amp ampfun freqfun freqscl phonemes formant-amps formant-indices (vibscl .1) (deg 0) (pcrev 0))  
 
-  (define (vox-fun phons which)
-    (let ((formants
+  (define vox-fun 
+    (let ((formants   ; formant center frequencies for a male speaker
 	   '((I 390 1990 2550)  (E 530 1840 2480)  (AE 660 1720 2410)
 	     (UH 520 1190 2390) (A 730 1090 2440)  (OW 570 840 2410)
 	     (U 440 1020 2240)  (OO 300 870 2240)  (ER 490 1350 1690)
@@ -98,21 +100,18 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	     (T 200 1700 2600)  (K 350 1350 2000)  (F 175 900 4400)
 	     (TH 200 1400 2200) (S 200 1300 2500)  (SH 200 1800 2000)
 	     (V 175 1100 2400)  (THE 200 1600 2200)(Z 200 1300 2500)
-	     (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400))))
-      ;;formant center frequencies for a male speaker
-      
-      (define (find-phoneme phoneme forms)
-	(do ((phoneme phoneme)
-	     (forms forms (cdr forms)))
-	    ((eq? phoneme (caar forms)) 
-	     (cdar forms))))
-
-      (let ((f1 ())
-	    (len (length phons)))
-	(do ((i 0 (+ i 2)))
-	    ((>= i len))
-	  (set! f1 (cons ((find-phoneme (phons (+ i 1)) formants) which) (cons (phons i) f1))))
-	(reverse f1))))
+	     (ZH 175 1800 2000) (ZZ 900 2400 3800) (VV 565 1045 2400)))
+	  (find-phoneme (lambda (phoneme forms)
+			  (do ((forms forms (cdr forms)))
+			      ((eq? phoneme (caar forms)) 
+			       (cdar forms))))))
+      (lambda (phons which)
+	(let ((f1 ())
+	      (len (length phons)))
+	  (do ((i 0 (+ i 2)))
+	      ((>= i len))
+	    (set! f1 (cons ((find-phoneme (phons (+ i 1)) formants) which) (cons (phons i) f1))))
+	  (reverse f1)))))
     
   (let ((start (seconds->samples beg))
 	(end (seconds->samples (+ beg dur)))

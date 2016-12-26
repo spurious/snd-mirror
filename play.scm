@@ -86,11 +86,11 @@
 ;;; -------- play sound until c-g
 
 (define play-until-c-g
-  (let ((documentation "(play-until-c-g) plays the selected sound until you interrupt it via C-g"))
+  (let ((documentation "(play-until-c-g) plays the selected sound until you interrupt it via C-g")
+	(play-once (lambda (reason)
+		     (if (= reason 0)
+			 (play (selected-sound) :start 0 :stop play-once)))))
     (lambda ()
-      (define (play-once reason)
-	(if (= reason 0)
-	    (play (selected-sound) :start 0 :stop play-once)))
       (play (selected-sound) :start 0 :stop play-once))))
 
 

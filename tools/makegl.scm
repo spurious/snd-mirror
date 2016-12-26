@@ -738,22 +738,23 @@
 			string=?) => cdr)
 		(#t #t))))))
 	       
-(define (make-signature fnc)
-  (define (compress sig)
-    (do ((sig sig (cdr sig)))
-	((not (and (pair? sig)
-		   (pair? (cdr sig))
-		   (not (and (eq? (car sig) 'pair?) (null? (cddr sig))))
-		   (eq? (car sig) (cadr sig))))
-	 sig)))
-  (let ((sig (list (if (positive? (ref-args (caddr fnc))) ; these are returned as cadr of list
-		       'pair?
-		       (gtk-type->s7-type (cadr fnc))))))
-    (for-each
-     (lambda (arg)
-       (set! sig (cons (gtk-type->s7-type (car arg)) sig)))
-     (caddr fnc))
-    (reverse (compress sig))))
+(define make-signature 
+  (let ((compress (lambda (sig)
+		    (do ((sig sig (cdr sig)))
+			((not (and (pair? sig)
+				   (pair? (cdr sig))
+				   (not (and (eq? (car sig) 'pair?) (null? (cddr sig))))
+				   (eq? (car sig) (cadr sig))))
+			 sig)))))
+    (lambda (fnc)
+      (let ((sig (list (if (positive? (ref-args (caddr fnc))) ; these are returned as cadr of list
+			   'pair?
+			   (gtk-type->s7-type (cadr fnc))))))
+	(for-each
+	 (lambda (arg)
+	   (set! sig (cons (gtk-type->s7-type (car arg)) sig)))
+	 (caddr fnc))
+	(reverse (compress sig))))))
 
 (define signatures (make-hash-table))
 (define (make-signatures lst type)

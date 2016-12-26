@@ -670,7 +670,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-(define (show-digits-of-pi-starting-at-digit id)
+(define show-digits-of-pi-starting-at-digit
   ;; piqpr8.c
   ;;
   ;;    This program implements the BBP algorithm to generate a few hexadecimal
@@ -688,89 +688,87 @@
   ;;
   ;; translated to Scheme 29-Dec-08
 
-  (define (ihex x nhx chx)
-    ;; This returns, in chx, the first nhx hex digits of the fraction of x.
-    (do ((y (abs x))
-	 (hx "0123456789ABCDEF")
-	 (i 0 (+ i 1)))
-	((= i nhx) chx)
-      (set! y (* 16.0 (- y (floor y))))
-      (set! (chx i) (hx (floor y)))))
-  
-  (define (series m id)
-    ;; This routine evaluates the series  sum_k 16^(id-k)/(8*k+m) using the modular exponentiation technique.
-    
-    (let ((expm (let ((ntp 25))
-		  (let ((tp1 0)
-			(tp (make-vector ntp)))
-		    (lambda (p ak)
-		      ;; expm = 16^p mod ak.  This routine uses the left-to-right binary exponentiation scheme.
-		      
-		      ;; If this is the first call to expm, fill the power of two table tp.
-		      (if (= tp1 0)
-			  (begin
-			    (set! tp1 1)
-			    (set! (tp 0) 1.0)
-			    (do ((i 1 (+ i 1)))
-				((= i ntp))
-			      (set! (tp i) (* 2.0 (tp (- i 1)))))))
-		      
-		      (if (= ak 1.0)
-			  0.0
-			  (let ((pl -1))
-			    ;;  Find the greatest power of two less than or equal to p.
-			    (do ((i 0 (+ i 1)))
-				((or (not (= pl -1)) 
-				     (= i ntp)))
-			      (if (> (tp i) p)
-				  (set! pl i)))
-			    
-			    (if (= pl -1) (set! pl ntp))
-			    (let ((pt (tp (- pl 1)))
-				  (p1 p)
-				  (r 1.0))
-			      ;;  Perform binary exponentiation algorithm modulo ak.
-			      
-			      (do ((j 1 (+ j 1)))
-				  ((> j pl) r)
-				(if (>= p1 pt)
-				    (begin
-				      (set! r (* 16.0 r))
-				      (set! r (- r (* ak (floor (/ r ak)))))
-				      (set! p1 (- p1 pt))))
-				(set! pt (* 0.5 pt))
-				(if (>= pt 1.0)
-				    (begin
-				      (set! r (* r r))
-				      (set! r (- r (* ak (floor (/ r ak)))))))))))))))
-	  (eps 1e-17)
-	  (s 0.0))
-      (do ((k 0 (+ k 1)))
-	  ((= k id))
-	(let* ((ak (+ (* 8 k) m))
-	       (t (expm (- id k) ak)))
-	  (set! s (+ s (/ t ak)))
-	  (set! s (- s (floor s)))))
-      
-      ;; Compute a few terms where k >= id.
-      (do ((happy #f)
-	   (k id (+ k 1)))
-	  ((or (> k (+ id 100)) happy) s)
-	(let ((t (/ (expt 16.0 (- id k)) (+ (* 8 k) m))))
-	  (set! happy (< t eps))
-	  (set! s (+ s t))
-	  (set! s (- s (floor s)))))))
-  
-  ;; id is the digit position.  Digits generated follow immediately after id.
-  (let ((chx (make-string 17))
-	(pid (let ((s1 (series 1 id))
-		   (s2 (series 4 id))
-		   (s3 (series 5 id))
-		   (s4 (series 6 id)))
-	       (- (+ (* 4.0 s1) (* -2.0 s2)) s3 s4))))
-    (set! pid (- (+ 1.0 pid) (floor pid)))
-    (ihex pid 10 chx)
-    (format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))
+  (let ((ihex (lambda (x nhx chx)
+		;; This returns, in chx, the first nhx hex digits of the fraction of x.
+		(do ((y (abs x))
+		     (hx "0123456789ABCDEF")
+		     (i 0 (+ i 1)))
+		    ((= i nhx) chx)
+		  (set! y (* 16.0 (- y (floor y))))
+		  (set! (chx i) (hx (floor y))))))
+	(series (lambda (m id)
+		  ;; This routine evaluates the series  sum_k 16^(id-k)/(8*k+m) using the modular exponentiation technique.
+		  (let ((expm (let ((ntp 25))
+				(let ((tp1 0)
+				      (tp (make-vector ntp)))
+				  (lambda (p ak)
+				    ;; expm = 16^p mod ak.  This routine uses the left-to-right binary exponentiation scheme.
+				    
+				    ;; If this is the first call to expm, fill the power of two table tp.
+				    (if (= tp1 0)
+					(begin
+					  (set! tp1 1)
+					  (set! (tp 0) 1.0)
+					  (do ((i 1 (+ i 1)))
+					      ((= i ntp))
+					    (set! (tp i) (* 2.0 (tp (- i 1)))))))
+				    
+				    (if (= ak 1.0)
+					0.0
+					(let ((pl -1))
+					  ;;  Find the greatest power of two less than or equal to p.
+					  (do ((i 0 (+ i 1)))
+					      ((or (not (= pl -1)) 
+						   (= i ntp)))
+					    (if (> (tp i) p)
+						(set! pl i)))
+					  
+					  (if (= pl -1) (set! pl ntp))
+					  (let ((pt (tp (- pl 1)))
+						(p1 p)
+						(r 1.0))
+					    ;;  Perform binary exponentiation algorithm modulo ak.
+					    
+					    (do ((j 1 (+ j 1)))
+						((> j pl) r)
+					      (if (>= p1 pt)
+						  (begin
+						    (set! r (* 16.0 r))
+						    (set! r (- r (* ak (floor (/ r ak)))))
+						    (set! p1 (- p1 pt))))
+					      (set! pt (* 0.5 pt))
+					      (if (>= pt 1.0)
+						  (begin
+						    (set! r (* r r))
+						    (set! r (- r (* ak (floor (/ r ak)))))))))))))))
+			(eps 1e-17)
+			(s 0.0))
+		    (do ((k 0 (+ k 1)))
+			((= k id))
+		      (let* ((ak (+ (* 8 k) m))
+			     (t (expm (- id k) ak)))
+			(set! s (+ s (/ t ak)))
+			(set! s (- s (floor s)))))
+		    
+		    ;; Compute a few terms where k >= id.
+		    (do ((happy #f)
+			 (k id (+ k 1)))
+			((or (> k (+ id 100)) happy) s)
+		      (let ((t (/ (expt 16.0 (- id k)) (+ (* 8 k) m))))
+			(set! happy (< t eps))
+			(set! s (+ s t))
+			(set! s (- s (floor s)))))))))
+    (lambda (id)  
+      ;; id is the digit position.  Digits generated follow immediately after id.
+      (let ((chx (make-string 17))
+	    (pid (let ((s1 (series 1 id))
+		       (s2 (series 4 id))
+		       (s3 (series 5 id))
+		       (s4 (series 6 id)))
+		   (- (+ (* 4.0 s1) (* -2.0 s2)) s3 s4))))
+	(set! pid (- (+ 1.0 pid) (floor pid)))
+	(ihex pid 10 chx)
+	(format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))))
   
 
 #|

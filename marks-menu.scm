@@ -337,13 +337,14 @@
 ;;; -------- trim from and back (goes by first or last mark)
 
 (define trim-front
-  (let ((documentation "trim-front finds the first mark in each of the syncd channels and removes all samples before it"))
+  (let ((documentation "trim-front finds the first mark in each of the syncd channels and removes all samples before it")
+	(trim-front-one-channel 
+	 (lambda (snd chn)
+	   (if (null? (marks snd chn))
+	       (status-report "trim-front needs a mark" snd)
+	       (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))))
     (lambda ()
       (let ((snc (sync)))
-	(define (trim-front-one-channel snd chn)
-	  (if (null? (marks snd chn))
-	      (status-report "trim-front needs a mark" snd)
-	      (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
 	(if (> snc 0)
 	    (apply map
 		   (lambda (snd chn)
@@ -355,15 +356,16 @@
 (add-to-menu marks-menu "Trim before mark" trim-front)
 
 (define trim-back
-  (let ((documentation "trim-back finds the last mark in each of the syncd channels and removes all samples after it"))
+  (let ((documentation "trim-back finds the last mark in each of the syncd channels and removes all samples after it")
+	(trim-back-one-channel 
+	 (lambda (snd chn)
+	   (if (null? (marks snd chn))
+	       (status-report "trim-back needs a mark" snd)
+	       (let ((endpt (let ((ms (marks snd chn)))
+			      (mark-sample (list-ref ms (- (length ms) 1))))))
+		 (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))))
     (lambda ()
       (let ((snc (sync)))
-	(define (trim-back-one-channel snd chn)
-	  (if (null? (marks snd chn))
-	      (status-report "trim-back needs a mark" snd)
-	      (let ((endpt (let ((ms (marks snd chn)))
-			     (mark-sample (list-ref ms (- (length ms) 1))))))
-		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
 	(if (> snc 0)
 	    (apply map
 		   (lambda (snd chn)
@@ -378,19 +380,20 @@
 ;;; -------- crop (trims front and back)
 
 (define crop
-  (let ((documentation "crop finds the first and last marks in each of the syncd channels and removes all samples outside them"))
+  (let ((documentation "crop finds the first and last marks in each of the syncd channels and removes all samples outside them")
+	(crop-one-channel 
+	 (lambda (snd chn)
+	   (if (< (length (marks snd chn)) 2)
+	       (status-report "crop needs start and end marks" snd)
+	       (as-one-edit
+		(lambda ()
+		  (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
+		  (let ((endpt (let ((ms (marks snd chn)))
+				 (mark-sample (list-ref ms (- (length ms) 1))))))
+		    (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
+		"crop")))))
     (lambda ()
       (let ((snc (sync)))
-	(define (crop-one-channel snd chn)
-	  (if (< (length (marks snd chn)) 2)
-	      (status-report "crop needs start and end marks" snd)
-	      (as-one-edit
-	       (lambda ()
-		 (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)
-		 (let ((endpt (let ((ms (marks snd chn)))
-				(mark-sample (list-ref ms (- (length ms) 1))))))
-		   (delete-samples (+ endpt 1) (- (framples snd chn) endpt))))
-	       "crop")))
 	(if (> snc 0)
 	    (apply map
 		   (lambda (snd chn)

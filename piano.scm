@@ -139,14 +139,15 @@
 	    -1)))
 
   (define apfloor 
-    (let ((golden-mean .618))
-      (define (get-allpass-coef samp-frac wT)
-	(let ((ta (tan (- (* samp-frac wT))))
-	      (c (cos wT))
-	      (s (sin wT)))
-	  (/ (- (* (signum ta) 
-		   (sqrt (* (+ 1 (* ta ta)) s s))) ta)  ; is the (* s s) correct? it's in the original
-	     (- (* c ta) s))))
+    (let ((golden-mean .618)
+	  (get-allpass-coef 
+	   (lambda (samp-frac wT)
+	     (let ((ta (tan (- (* samp-frac wT))))
+		   (c (cos wT))
+		   (s (sin wT)))
+	       (/ (- (* (signum ta) 
+			(sqrt (* (+ 1 (* ta ta)) s s))) ta)  ; is the (* s s) correct? it's in the original
+		  (- (* c ta) s))))))
       (lambda (len wT)
 	(let* ((len-int (floor len))
 	       (len-frac (- len len-int)))
