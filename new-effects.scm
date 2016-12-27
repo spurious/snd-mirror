@@ -165,13 +165,15 @@
 			(* y (moving-average f1 (ceiling (- (moving-average f0 (* y y)) amp)))))))))
       (map-channel avgf 0 #f snd chn #f (format #f "effects-squelch-channel ~A ~A" amp gate-size))))
   
-  (let* ((amp-menu-list ())
-	 (amp-menu (XmCreatePulldownMenu (main-menu effects-menu) "Amplitude Effects"
-					 (list XmNbackground *basic-color*)))
-	 (amp-cascade (XtCreateManagedWidget "Amplitude Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
-					     (list XmNsubMenuId amp-menu
-						   XmNbackground *basic-color*))))
-    (XtAddCallback amp-cascade XmNcascadingCallback (lambda (w c i) (update-label amp-menu-list)))
+  (let ((amp-menu-list ())
+	(amp-menu (XmCreatePulldownMenu (main-menu effects-menu) "Amplitude Effects"
+					(list XmNbackground *basic-color*))))
+    (XtAddCallback (XtCreateManagedWidget "Amplitude Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
+					  (list XmNsubMenuId amp-menu
+						XmNbackground *basic-color*))
+		   XmNcascadingCallback 
+		   (lambda (w c i)
+		     (update-label amp-menu-list)))
     
     
 ;;; -------- Gain (gain set by gain-amount)
@@ -182,10 +184,6 @@
 		  (gain-dialog #f)
 		  (gain-target 'sound)
 		  (gain-envelope #f))
-	      (define (scale-envelope e scl)
-		(if (null? e)
-		    ()
-		    (cons (car e) (cons (* scl (cadr e)) (scale-envelope (cddr e) scl)))))
 	      (lambda ()
 		(if (Widget? gain-dialog)
 		    (activate-dialog gain-dialog)
@@ -198,7 +196,13 @@
 			       
 			       (lambda (w context info)
 				 (let ((with-env (and (not (equal? (xe-envelope gain-envelope) '(0.0 1.0 1.0 1.0)))
-						      (scale-envelope (xe-envelope gain-envelope) gain-amount))))
+						      (let scale-envelope ((e (xe-envelope gain-envelope))
+									   (scl gain-amount))
+							(if (null? e)
+							    ()
+							    (cons (car e) 
+								  (cons (* scl (cadr e)) 
+									(scale-envelope (cddr e) scl))))))))
 				   (case gain-target 
 				     ((sound)
 				      (if with-env
@@ -231,13 +235,14 @@
 			       
 			       (lambda () 
 				 (effect-target-ok gain-target))))
-			
+
 			(set! sliders
 			      (add-sliders gain-dialog
 					   (list (list "gain" 0.0 initial-gain-amount 5.0
 						       (lambda (w context info)
 							 (set! gain-amount (/ (.value info) 100.0)))
 						       100)))))
+
 		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
 						      (list XmNheight              200
 							    XmNleftAttachment      XmATTACH_FORM

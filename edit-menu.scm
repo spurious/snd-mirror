@@ -67,13 +67,14 @@
 ;;; -------- trim front and back (goes by first or last mark)
 
 (define trim-front
-  (let ((documentation "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it"))
+  (let ((documentation "(trim-front) finds the first mark in each of the syncd channels and removes all samples before it")
+	(trim-front-one-channel 
+	 (lambda (snd chn)
+	   (if (null? (marks snd chn))
+	       (status-report "trim-front needs a mark" snd)
+	       (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))))
     (lambda ()
       (let ((snc (sync)))
-	(define (trim-front-one-channel snd chn)
-	  (if (null? (marks snd chn))
-	      (status-report "trim-front needs a mark" snd)
-	      (delete-samples 0 (mark-sample (car (marks snd chn))) snd chn)))
 	(if (> snc 0)
 	    (apply map
 		   (lambda (snd chn)
@@ -87,15 +88,16 @@
 (add-to-menu edit-menu "Trim front" trim-front)
 
 (define trim-back
-  (let ((documentation "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it"))
+  (let ((documentation "(trim-back) finds the last mark in each of the syncd channels and removes all samples after it")
+	(trim-back-one-channel 
+	 (lambda (snd chn)
+	   (if (null? (marks snd chn))
+	       (status-report "trim-back needs a mark" snd)
+	       (let ((endpt (let ((ms (marks snd chn)))
+			      (mark-sample (list-ref ms (- (length ms) 1))))))
+		 (delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))))
     (lambda ()
       (let ((snc (sync)))
-	(define (trim-back-one-channel snd chn)
-	  (if (null? (marks snd chn))
-	      (status-report "trim-back needs a mark" snd)
-	      (let ((endpt (let ((ms (marks snd chn)))
-			     (mark-sample (list-ref ms (- (length ms) 1))))))
-		(delete-samples (+ endpt 1) (- (framples snd chn) endpt)))))
 	(if (> snc 0)
 	    (apply map
 		   (lambda (snd chn)
@@ -144,18 +146,17 @@
 (when (and (not (provided? 'snd-gtk))
 	   (provided? 'xm))
   (with-let (sublet *motif*)
+    (define (for-each-child w func)
+      ;; (for-each-child w func) applies func to w and its descendents
+      (func w)
+      (if (XtIsComposite w)
+	  (for-each 
+	   (lambda (n)
+	     (for-each-child n func))
+	   (cadr (XtGetValues w (list XmNchildren 0) 1)))))
+      
     (let* ((edit-cascade (list-ref (menu-widgets) 2))
 	   (edit-menu (cadr (XtGetValues edit-cascade (list XmNsubMenuId 0)))))
-      
-      (define (for-each-child w func)
-	;; (for-each-child w func) applies func to w and its descendents
-	(func w)
-	(if (XtIsComposite w)
-	    (for-each 
-	     (lambda (n)
-	       (for-each-child n func))
-	     (cadr (XtGetValues w (list XmNchildren 0) 1)))))
-      
       (XtAddCallback edit-cascade XmNcascadingCallback 
 		     (lambda (w c i)
 		       (for-each-child 

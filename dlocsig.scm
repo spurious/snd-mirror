@@ -211,209 +211,211 @@
   (and (pair? lst) 
        (list-tail lst (- (length lst) n))))
 
-(define* (arrange-speakers (speakers ())
-			   (groups ())
-			   (delays ())
-			   (distances ())
-			   (channel-map ()))
+(define arrange-speakers
   ;; sanity checking of configuration
-  
-  (define (has-duplicates? lst)
-    (and (not (null? lst))
-         (or (member (car lst) (cdr lst))
-             (has-duplicates? (cdr lst)))))
-  
-  (define (invert3x3 mat) ; invert a 3x3 matrix using cofactors
-    (let ((m (make-float-vector '(3 3))))
-      (do ((i 0 (+ i 1)))
-	  ((= i 3))
-	(do ((j 0 (+ j 1)))
-	    ((= j 3))
-	  (set! (m i j) (mat i j))))
-      (set! (mat 0 0) (- (* (m 1 1) (m 2 2)) (* (m 1 2) (m 2 1))))
-      (set! (mat 0 1) (- (* (m 0 2) (m 2 1)) (* (m 0 1) (m 2 2))))
-      (set! (mat 0 2) (- (* (m 0 1) (m 1 2)) (* (m 0 2) (m 1 1))))
-      (set! (mat 1 0) (- (* (m 1 2) (m 2 0)) (* (m 1 0) (m 2 2))))
-      (set! (mat 1 1) (- (* (m 0 0) (m 2 2)) (* (m 0 2) (m 2 0))))
-      (set! (mat 1 2) (- (* (m 0 2) (m 1 0)) (* (m 0 0) (m 1 2))))
-      (set! (mat 2 0) (- (* (m 1 0) (m 2 1)) (* (m 1 1) (m 2 0))))
-      (set! (mat 2 1) (- (* (m 0 1) (m 2 0)) (* (m 0 0) (m 2 1))))
-      (set! (mat 2 2) (- (* (m 0 0) (m 1 1)) (* (m 0 1) (m 1 0))))
-
-      (let ((det (+ (* (m 0 0) (mat 0 0))
-		    (* (m 0 1) (mat 1 0))
-		    (* (m 0 2) (mat 2 0)))))
-	(and (> (abs det) 1e-06)
-	     (do ((invdet (/ 1.0 det))
-		  (row 0 (+ 1 row)))
-		 ((= row 3) mat)
-	       (do ((col 0 (+ 1 col)))
-		   ((= col 3))
-		 (set! (mat row col) (* (mat row col) invdet))))))))
-  
-  (define (invert2x2 mat) ; invert a 2x2 matrix
-    (let ((m (make-float-vector '(2 2)))
-	  (det (- (* (mat 0 0) (mat 1 1))
-		  (* (mat 1 0) (mat 0 1)))))
-      (and (> (abs det) 1e-06)
-	   (begin
-	     (set! (m 0 0) (/ (mat 1 1) det))
-	     (set! (m 1 1) (/ (mat 0 0) det))
-	     (set! (m 0 1) (- (/ (mat 0 1) det)))
-	     (set! (m 1 0) (- (/ (mat 1 0) det)))
-	     m))))
-  
-  (if (null? speakers)
-      (error 'mus-error "a speaker configuration must have at least one speaker!~%"))
-  
-  (if (pair? groups)
-      (let ((first-len (length (car groups))))
-	(for-each
-	 (lambda (group)
-	   (if (not (= (length group) first-len))
-	       (error 'mus-error "all groups must be of the same length! (~A)~%" first-len)))
-	 groups))
+  (letrec ((has-duplicates? 
+	    (lambda (lst)
+	      (and (not (null? lst))
+		   (or (member (car lst) (cdr lst))
+		       (has-duplicates? (cdr lst))))))
+	   (invert3x3 
+	    (lambda (mat) ; invert a 3x3 matrix using cofactors
+	      (let ((m (make-float-vector '(3 3))))
+		(do ((i 0 (+ i 1)))
+		    ((= i 3))
+		  (do ((j 0 (+ j 1)))
+		      ((= j 3))
+		    (set! (m i j) (mat i j))))
+		(set! (mat 0 0) (- (* (m 1 1) (m 2 2)) (* (m 1 2) (m 2 1))))
+		(set! (mat 0 1) (- (* (m 0 2) (m 2 1)) (* (m 0 1) (m 2 2))))
+		(set! (mat 0 2) (- (* (m 0 1) (m 1 2)) (* (m 0 2) (m 1 1))))
+		(set! (mat 1 0) (- (* (m 1 2) (m 2 0)) (* (m 1 0) (m 2 2))))
+		(set! (mat 1 1) (- (* (m 0 0) (m 2 2)) (* (m 0 2) (m 2 0))))
+		(set! (mat 1 2) (- (* (m 0 2) (m 1 0)) (* (m 0 0) (m 1 2))))
+		(set! (mat 2 0) (- (* (m 1 0) (m 2 1)) (* (m 1 1) (m 2 0))))
+		(set! (mat 2 1) (- (* (m 0 1) (m 2 0)) (* (m 0 0) (m 2 1))))
+		(set! (mat 2 2) (- (* (m 0 0) (m 1 1)) (* (m 0 1) (m 1 0))))
+		
+		(let ((det (+ (* (m 0 0) (mat 0 0))
+			      (* (m 0 1) (mat 1 0))
+			      (* (m 0 2) (mat 2 0)))))
+		  (and (> (abs det) 1e-06)
+		       (do ((invdet (/ 1.0 det))
+			    (row 0 (+ 1 row)))
+			   ((= row 3) mat)
+			 (do ((col 0 (+ 1 col)))
+			     ((= col 3))
+			   (set! (mat row col) (* (mat row col) invdet)))))))))
+	   (invert2x2 
+	    (lambda (mat) ; invert a 2x2 matrix
+	      (let ((m (make-float-vector '(2 2)))
+		    (det (- (* (mat 0 0) (mat 1 1))
+			    (* (mat 1 0) (mat 0 1)))))
+		(and (> (abs det) 1e-06)
+		     (begin
+		       (set! (m 0 0) (/ (mat 1 1) det))
+		       (set! (m 1 1) (/ (mat 0 0) det))
+		       (set! (m 0 1) (- (/ (mat 0 1) det)))
+		       (set! (m 1 0) (- (/ (mat 1 0) det)))
+		       m))))))
+    
+    ;; arrange-speakers
+    (lambda* ((speakers ())
+	      (groups ())
+	      (delays ())
+	      (distances ())
+	      (channel-map ()))
+      (if (null? speakers)
+	  (error 'mus-error "a speaker configuration must have at least one speaker!~%"))
       
-      ;; if the speakers are defined with only azimuth angles (no elevation)
-      (if (not (pair? (car speakers)))
-	  ;; then create the groups ourselves because it is a 2d configuration;
-	  ;; we could create the 3d configuration groups but the algorithm for
-	  ;; doing that in the generic case is not trivial
-	  
-	  (let ((len (length speakers)))
-	    (if (= len 1)
-		(set! groups (list (list 0)))
-		(do ((i 0 (+ i 1))
-		     (j 1 (+ j 1)))
-		    ((= i len)
-		     (set! groups (reverse groups)))
-		  (set! groups (cons (list i (modulo j len)) groups)))))))
-  
-  (if (null? groups)
-      (error 'mus-error "no groups specified, speakers must be arranged in groups~%"))
-  
-  (when (pair? delays)
-    (if (pair? distances)
-	(error 'mus-error "please specify delays or distances but not both~%"))
-  
-    (if (> (length speakers) (length delays))
-	(error 'mus-error "all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
-	(if (< (length speakers) (length delays))
-	    (error 'mus-error "more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays)))
-  
-    (for-each
-     (lambda (dly)
-       (if (< dly 0.0) (error 'mus-error "delays must be all positive, ~A is negative~%" dly)))
-     delays))
-  
-  (when (pair? distances)
-    (if (> (length speakers) (length distances))
-	(error 'mus-error "all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
-	(if (< (length speakers) (length distances))
-	    (error 'mus-error "more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances)))
-  
-    (for-each
-     (lambda (dly)
-       (if (< dly 0.0) (error 'mus-error "distances must be all positive, ~A is negative~%" dly)))
-     distances))
-  
-  (if (pair? channel-map)
-      (if (> (length speakers) (length channel-map))
-	  (error 'mus-error "must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
-	  (if (< (length speakers) (length channel-map))
-	      (error 'mus-error "trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]~%" 
-		     (length channel-map) (length speakers) channel-map))))
-  
-  ;; collect unit vectors describing the speaker positions
-  (let* ((coords
-	  (let ((val ()))
+      (if (pair? groups)
+	  (let ((first-len (length (car groups))))
 	    (for-each
-	     (lambda (s) ; speakers
-	       (let* ((evec (let ((e (if (pair? s) (or (cadr s) 0.0) 0.0)))
-			      (cis (/ (* e 2 pi) dlocsig-one-turn))))
-		      (avec (let ((a (if (pair? s) (car s) s)))
-			      (cis (/ (* a 2 pi) dlocsig-one-turn))))
-		      (dxy (real-part evec))
-		      (z (imag-part evec))
-		      (x (* dxy (imag-part avec)))
-		      (y (* dxy (real-part avec)))
-		      (mag (sqrt (+ (* x x) (* y y) (* z z)))))
-		 (set! val (cons (list (/ x mag) (/ y mag) (/ z mag)) val))))
-	     speakers)
-	    (reverse val)))
-
-	 ;; find delay times from specified distances or delays
-	 (times (let ((min-dist (if (pair? distances)  ; minimum distance
-				    (apply min distances)
-				    0.0))
-		      (v (make-float-vector (length speakers))))
-		  (do ((i 0 (+ i 1)))
-		      ((= i (length speakers)))
-		    (set! (v i) (let ((distance (and (pair? distances) (distances i)))
-				      (dly (and (pair? delays) (delays i))))
-				  (or dly
-				      (and (number? distance)
-					   (/ (- distance min-dist) dlocsig-speed-of-sound))
-				      0.0))))
-		  v))
-	 
-	 ;; create the group structures
-	 (groups (let ((vals ())
-		       (id 0))
-		   (for-each 
-		    (lambda (group)
-		      (let* ((size (length group))
-			     (vertices (map coords group))
-			     (matrix (if (= size 3)
-					 (do ((m (make-float-vector '(3 3)))
-					      (i 0 (+ i 1)))
-					     ((= i 3)
-					      (invert3x3 m))   
-					   (do ((j 0 (+ j 1)))
-					       ((= j 3))
-					     (set! (m i j) ((vertices i) j))))
-					 (and (= size 2)
-					      (do ((m (make-float-vector '(2 2)))
-						   (i 0 (+ i 1)))
-						  ((= i 2)
-						   (invert2x2 m))   
-						(do ((j 0 (+ j 1)))
-						    ((= j 2))
-						  (set! (m i j) ((vertices i) j))))))))
-			(set! vals (cons (make-group :id id
-						     :size size
-						     :speakers group
-						     :vertices vertices
-						     :matrix matrix)
-					 vals))
-			(set! id (+ 1 id))))
-		    groups)
-		   (reverse vals))))
+	     (lambda (group)
+	       (if (not (= (length group) first-len))
+		   (error 'mus-error "all groups must be of the same length! (~A)~%" first-len)))
+	     groups))
+	  
+	  ;; if the speakers are defined with only azimuth angles (no elevation)
+	  (if (not (pair? (car speakers)))
+	      ;; then create the groups ourselves because it is a 2d configuration;
+	      ;; we could create the 3d configuration groups but the algorithm for
+	      ;; doing that in the generic case is not trivial
+	      
+	      (let ((len (length speakers)))
+		(if (= len 1)
+		    (set! groups (list (list 0)))
+		    (do ((i 0 (+ i 1))
+			 (j 1 (+ j 1)))
+			((= i len)
+			 (set! groups (reverse groups)))
+		      (set! groups (cons (list i (modulo j len)) groups)))))))
+      
+      (if (null? groups)
+	  (error 'mus-error "no groups specified, speakers must be arranged in groups~%"))
+      
+      (when (pair? delays)
+	(if (pair? distances)
+	    (error 'mus-error "please specify delays or distances but not both~%"))
+	
+	(if (> (length speakers) (length delays))
+	    (error 'mus-error "all speaker delays have to be specified, only ~A supplied [~A]~%" (length delays) delays)
+	    (if (< (length speakers) (length delays))
+		(error 'mus-error "more speaker delays than speakers, ~A supplied instead of ~A [~A]~%" (length delays) (length speakers) delays)))
+	
+	(for-each
+	 (lambda (dly)
+	   (if (< dly 0.0) (error 'mus-error "delays must be all positive, ~A is negative~%" dly)))
+	 delays))
+      
+      (when (pair? distances)
+	(if (> (length speakers) (length distances))
+	    (error 'mus-error "all speaker distances have to be specified, only ~A supplied [~A]~%" (length distances) distances)
+	    (if (< (length speakers) (length distances))
+		(error 'mus-error "more speaker distances than speakers, ~A supplied instead of ~A [~A]~%" (length distances) (length speakers) distances)))
+	
+	(for-each
+	 (lambda (dly)
+	   (if (< dly 0.0) (error 'mus-error "distances must be all positive, ~A is negative~%" dly)))
+	 distances))
+      
+      (if (pair? channel-map)
+	  (if (> (length speakers) (length channel-map))
+	      (error 'mus-error "must map all speakers to output channels, only ~A mapped [~A]~%" (length channel-map) channel-map)
+	      (if (< (length speakers) (length channel-map))
+		  (error 'mus-error "trying to map more channels than there are speakers, ~A supplied instead of ~A [~A]~%" 
+			 (length channel-map) (length speakers) channel-map))))
+      
+      ;; collect unit vectors describing the speaker positions
+      (let* ((coords
+	      (let ((val ()))
+		(for-each
+		 (lambda (s) ; speakers
+		   (let* ((evec (let ((e (if (pair? s) (or (cadr s) 0.0) 0.0)))
+				  (cis (/ (* e 2 pi) dlocsig-one-turn))))
+			  (avec (let ((a (if (pair? s) (car s) s)))
+				  (cis (/ (* a 2 pi) dlocsig-one-turn))))
+			  (dxy (real-part evec))
+			  (z (imag-part evec))
+			  (x (* dxy (imag-part avec)))
+			  (y (* dxy (real-part avec)))
+			  (mag (sqrt (+ (* x x) (* y y) (* z z)))))
+		     (set! val (cons (list (/ x mag) (/ y mag) (/ z mag)) val))))
+		 speakers)
+		(reverse val)))
+	     
+	     ;; find delay times from specified distances or delays
+	     (times (let ((min-dist (if (pair? distances)  ; minimum distance
+					(apply min distances)
+					0.0))
+			  (v (make-float-vector (length speakers))))
+		      (do ((i 0 (+ i 1)))
+			  ((= i (length speakers)))
+			(set! (v i) (let ((distance (and (pair? distances) (distances i)))
+					  (dly (and (pair? delays) (delays i))))
+				      (or dly
+					  (and (number? distance)
+					       (/ (- distance min-dist) dlocsig-speed-of-sound))
+					  0.0))))
+		      v))
+	     
+	     ;; create the group structures
+	     (groups (let ((vals ())
+			   (id 0))
+		       (for-each 
+			(lambda (group)
+			  (let* ((size (length group))
+				 (vertices (map coords group))
+				 (matrix (if (= size 3)
+					     (do ((m (make-float-vector '(3 3)))
+						  (i 0 (+ i 1)))
+						 ((= i 3)
+						  (invert3x3 m))   
+					       (do ((j 0 (+ j 1)))
+						   ((= j 3))
+						 (set! (m i j) ((vertices i) j))))
+					     (and (= size 2)
+						  (do ((m (make-float-vector '(2 2)))
+						       (i 0 (+ i 1)))
+						      ((= i 2)
+						       (invert2x2 m))   
+						    (do ((j 0 (+ j 1)))
+							((= j 2))
+						      (set! (m i j) ((vertices i) j))))))))
+			    (set! vals (cons (make-group :id id
+							 :size size
+							 :speakers group
+							 :vertices vertices
+							 :matrix matrix)
+					     vals))
+			    (set! id (+ 1 id))))
+			groups)
+		       (reverse vals))))
+	
+	;; check validity of map entries
+	(if channel-map
+	    (let ((entries (length channel-map)))
+	      (for-each
+	       (lambda (entry)
+		 (if (>= entry entries)
+		     (error 'mus-error "channel ~A in map ~A is out of range (max=~A)~%" entry channel-map entries)))
+	       channel-map)
+	      (if (has-duplicates? channel-map)
+		  (error 'mus-error "there are duplicate channels in channel-map ~A~%" channel-map))))
+	
+	;; create the speaker configuration structure
+	
+	(make-speaker-config :number (length speakers)
+			     :dimension (group-size (car groups))
+			     :coords coords
+			     :groups groups
+			     :delays times
+			     :omap (do ((v (make-vector (length speakers)))
+					(chan 0 (+ 1 chan)))
+				       ((= chan (length speakers)) v)
+				     (set! (v chan) (or (and (pair? channel-map) (channel-map chan))
+							chan))))))))
     
-    ;; check validity of map entries
-    (if channel-map
-	(let ((entries (length channel-map)))
-	  (for-each
-	   (lambda (entry)
-	     (if (>= entry entries)
-		 (error 'mus-error "channel ~A in map ~A is out of range (max=~A)~%" entry channel-map entries)))
-	   channel-map)
-	  (if (has-duplicates? channel-map)
-	      (error 'mus-error "there are duplicate channels in channel-map ~A~%" channel-map))))
-    
-    ;; create the speaker configuration structure
-    
-    (make-speaker-config :number (length speakers)
-			 :dimension (group-size (car groups))
-			 :coords coords
-			 :groups groups
-			 :delays times
-			 :omap (do ((v (make-vector (length speakers)))
-				    (chan 0 (+ 1 chan)))
-				   ((= chan (length speakers)) v)
-				 (set! (v chan) (or (and (pair? channel-map) (channel-map chan))
-						    chan))))))
-
 ;;; Default speaker configurations
 
 (define dlocsig-speaker-configs
@@ -986,30 +988,28 @@
 
 ;;; Nearest point in a line
 
-(define (nearest-point x0 y0 z0 x1 y1 z1 px py pz)
-  
-  (define (vcos a0 b0 c0 a1 b1 c1)
-    (/ (+ (* a0 a1) (* b0 b1) (* c0 c1))
-       (* (distance a0 b0 c0) (distance a1 b1 c1))))
-  
-  (define (same a0 b0 c0 a1 b1 c1)
-    (and (= a0 a1) (= b0 b1) (= c0 c1)))
-  
-  (cond ((same x0 y0 z0 px py pz) (list x0 y0 z0))
-	((same x1 y1 z1 px py pz) (list x1 y1 z1))
-	((same x0 y0 z0 x1 y1 z1) (list x0 y0 z0))
-	(else (let* ((xm0 (- x1 x0))
-		     (ym0 (- y1 y0))
-		     (zm0 (- z1 z0))
-		     (ratio (let ((p (let ((xm1 (- px x0))
-					   (ym1 (- py y0))
-					   (zm1 (- pz z0)))
-				       (* (distance xm1 ym1 zm1)
-					  (vcos xm0 ym0 zm0 xm1 ym1 zm1)))))
-			      (/ p (distance xm0 ym0 zm0)))))
-		(list (+ x0 (* xm0 ratio))
-		      (+ y0 (* ym0 ratio))
-		      (+ z0 (* zm0 ratio)))))))
+(define nearest-point 
+  (let ((vcos (lambda (a0 b0 c0 a1 b1 c1)
+		(/ (+ (* a0 a1) (* b0 b1) (* c0 c1))
+		   (* (distance a0 b0 c0) (distance a1 b1 c1)))))
+	(same (lambda (a0 b0 c0 a1 b1 c1)
+		(and (= a0 a1) (= b0 b1) (= c0 c1)))))
+    (lambda (x0 y0 z0 x1 y1 z1 px py pz)
+      (cond ((same x0 y0 z0 px py pz) (list x0 y0 z0))
+	    ((same x1 y1 z1 px py pz) (list x1 y1 z1))
+	    ((same x0 y0 z0 x1 y1 z1) (list x0 y0 z0))
+	    (else (let* ((xm0 (- x1 x0))
+			 (ym0 (- y1 y0))
+			 (zm0 (- z1 z0))
+			 (ratio (let ((p (let ((xm1 (- px x0))
+					       (ym1 (- py y0))
+					       (zm1 (- pz z0)))
+					   (* (distance xm1 ym1 zm1)
+					      (vcos xm0 ym0 zm0 xm1 ym1 zm1)))))
+				  (/ p (distance xm0 ym0 zm0)))))
+		    (list (+ x0 (* xm0 ratio))
+			  (+ y0 (* ym0 ratio))
+			  (+ z0 (* zm0 ratio)))))))))
 
 ;;; Bezier curve fitting auxilliary functions
 

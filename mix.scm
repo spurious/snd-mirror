@@ -401,18 +401,20 @@ last end of the mixes in 'mix-list'"))
 
 (define pan-mix 
   
-  (let ((documentation "(pan-mix file start pan-env snd (auto-delete #f)) mixes 'file' into the sound 'snd'
+  (letrec ((documentation "(pan-mix file start pan-env snd (auto-delete #f)) mixes 'file' into the sound 'snd'
 starting at 'start' (in samples) using 'pan-env' to decide how to split the sound between the output channels (0: all chan 0, 1: all chan 1).
 So, (pan-mix \"oboe.snd\" 0 '(0 0 1 1)) goes from all chan 0 to all chan 1.
 'auto-delete' determines whether the in-coming file should be treated as a temporary file and deleted when the mix
 is no longer accessible.  pan-mix returns a list of the mixes performing the
 panning operation.")
 
-	(invert-envelope 
-	 (lambda (e)
-	   (if (null? e)
-	       ()
-	       (cons (car e) (cons (- 1.0 (cadr e)) (invert-envelope (cddr e))))))))
+	   (invert-envelope 
+	    (lambda (e)
+	      (if (null? e)
+		  ()
+		  (cons (car e)
+			(cons (- 1.0 (cadr e))
+			      (invert-envelope (cddr e))))))))
     
     (lambda* (name beg pan snd auto-delete)
       (let ((deletion-choice (if auto-delete 3 0))) ; multichannel deletion case

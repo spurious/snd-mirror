@@ -1541,7 +1541,7 @@ static s7_scheme *hidden_sc = NULL;
 #else
 #define set_local(p)                  typeflag(_TSym(p)) &= ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC)
 #endif
-/* this marks something defined (bound) at the top-level, and never defined locally */
+/* this (T_GLOBAL) marks something defined (bound) at the top-level, and never defined locally */
 
 #define T_UNSAFE_DO                   T_GLOBAL
 #define is_unsafe_do(p)               ((typeflag(_TPair(p)) & T_UNSAFE_DO) != 0)
@@ -38426,14 +38426,8 @@ static s7_pointer g_vector_set_3(s7_scheme *sc, s7_pointer args)
 PIPF_TO_PF(vector_set, c_vector_set_s, c_vector_set_3, c_vector_tester)
 
 
-static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_make_vector_1(s7_scheme *sc, s7_pointer args, s7_pointer err_sym)
 {
-  #define H_make_vector "(make-vector len (value #<unspecified>)) returns a vector of len elements initialized to value. \
-To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
-(make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
-returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
-  #define Q_make_vector s7_make_signature(sc, 3, sc->is_vector_symbol, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_pair_symbol), sc->T)
-
   s7_int len;
   s7_pointer x, fill, vec;
   int result_type = T_VECTOR;
@@ -38444,15 +38438,15 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
     {
       len = s7_integer(x);
       if (len < 0)
-	return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, a_non_negative_integer_string));
+	return(wrong_type_argument_with_type(sc, err_sym, 1, x, a_non_negative_integer_string));
     }
   else
     {
       if (!(is_pair(x)))
-	method_or_bust_with_type(sc, x, sc->make_vector_symbol, args, make_string_wrapper(sc, "an integer or a list of integers"), 1);
+	method_or_bust_with_type(sc, x, err_sym, args, make_string_wrapper(sc, "an integer or a list of integers"), 1);
 
       if (!s7_is_integer(car(x)))
-	return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, car(x),
+	return(wrong_type_argument_with_type(sc, err_sym, 1, car(x),
 					     make_string_wrapper(sc, "each dimension should be an integer")));
       if (is_null(cdr(x)))
 	len = s7_integer(car(x));
@@ -38463,17 +38457,17 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 
 	  dims = s7_list_length(sc, x);
 	  if (dims <= 0)                /* 0 if circular, negative if dotted */
-	    return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, 1, x, a_proper_list_string));
+	    return(wrong_type_argument_with_type(sc, err_sym, 1, x, a_proper_list_string));
 	  if (dims > sc->max_vector_dimensions)
-	    return(out_of_range(sc, sc->make_vector_symbol, small_int(1), x, its_too_large_string));
+	    return(out_of_range(sc, err_sym, small_int(1), x, its_too_large_string));
 
 	  for (len = 1, y = x; is_not_null(y); y = cdr(y))
 	    {
 	      if (!s7_is_integer(car(y)))
-		return(wrong_type_argument(sc, sc->make_vector_symbol, position_of(y, x), car(y), T_INTEGER));
+		return(wrong_type_argument(sc, err_sym, position_of(y, x), car(y), T_INTEGER));
 	      len *= s7_integer(car(y));
 	      if (len < 0)
-		return(wrong_type_argument_with_type(sc, sc->make_vector_symbol, position_of(y, x), car(y), a_non_negative_integer_string));
+		return(wrong_type_argument_with_type(sc, err_sym, position_of(y, x), car(y), a_non_negative_integer_string));
 	    }
 	}
     }
@@ -38492,13 +38486,13 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
 		{
 		  if (s7_is_real(fill)) /* might be gmp with big_real by accident (? see above) */
 		    result_type = T_FLOAT_VECTOR;
-		  else method_or_bust_with_type(sc, fill, sc->make_vector_symbol, args, make_string_wrapper(sc, "an integer or a real since 'homogeneous' is #t"), 2);
+		  else method_or_bust_with_type(sc, fill, err_sym, args, make_string_wrapper(sc, "an integer or a real since 'homogeneous' is #t"), 2);
 		}
 	    }
 	  else
 	    {
 	      if (caddr(args) != sc->F)
-		method_or_bust_with_type(sc, caddr(args), sc->make_vector_symbol, args, a_boolean_string, 3);
+		method_or_bust_with_type(sc, caddr(args), err_sym, args, a_boolean_string, 3);
 	    }
 	}
     }
@@ -38535,6 +38529,17 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   return(vec);
 }
 
+static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_vector "(make-vector len (value #<unspecified>)) returns a vector of len elements initialized to value. \
+To create a multidimensional vector, put the dimension bounds in a list (this is to avoid ambiguities such as \
+(make-vector 1 2) where it's not clear whether the '2' is an initial value or a dimension size).  (make-vector '(2 3) 1.0) \
+returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
+  #define Q_make_vector s7_make_signature(sc, 3, sc->is_vector_symbol, s7_make_signature(sc, 2, sc->is_integer_symbol, sc->is_pair_symbol), sc->T)
+  return(g_make_vector_1(sc, args, sc->make_vector_symbol));
+}
+
+
 IF_TO_PF(make_vector, s7_make_vector)
 
 
@@ -38558,13 +38563,13 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 	    method_or_bust(sc, init, sc->make_float_vector_symbol, args, T_REAL, 2);
 #if WITH_GMP
 	  if (s7_is_bignum(init))
-	    return(g_make_vector(sc, set_plist_3(sc, p, make_real(sc, real_to_double(sc, init, "make-float-vector")), sc->T)));
+	    return(g_make_vector_1(sc, set_plist_3(sc, p, make_real(sc, real_to_double(sc, init, "make-float-vector")), sc->T), sc->make_float_vector_symbol));
 #endif
 	  if (is_rational(init))
-	    return(g_make_vector(sc, set_plist_3(sc, p, make_real(sc, rational_to_double(sc, init)), sc->T)));
+	    return(g_make_vector_1(sc, set_plist_3(sc, p, make_real(sc, rational_to_double(sc, init)), sc->T), sc->make_float_vector_symbol));
 	}
       else init = real_zero;
-      return(g_make_vector(sc, set_plist_3(sc, p, init, sc->T)));
+      return(g_make_vector_1(sc, set_plist_3(sc, p, init, sc->T), sc->make_float_vector_symbol));
     }
 
   len = s7_integer(p);
@@ -38613,7 +38618,7 @@ static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
 	    method_or_bust(sc, init, sc->make_int_vector_symbol, args, T_INTEGER, 2);
 	}
       else init = small_int(0);
-      return(g_make_vector(sc, set_plist_3(sc, p, init, sc->T)));
+      return(g_make_vector_1(sc, set_plist_3(sc, p, init, sc->T), sc->make_int_vector_symbol));
     }
 
   len = s7_integer(p);
@@ -38792,7 +38797,7 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
   if (is_float_vector(old_vect))
     {
       if (vector_rank(old_vect) > 1)
-	new_vect = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), real_zero, sc->T));
+	new_vect = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), real_zero, sc->T), sc->make_float_vector_symbol);
       else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
       if (len > 0) 
 	memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_double));
@@ -38802,7 +38807,7 @@ s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
       if (is_int_vector(old_vect))
 	{
 	  if (vector_rank(old_vect) > 1)
-	    new_vect = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), small_int(0), sc->T));
+	    new_vect = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), small_int(0), sc->T), sc->make_int_vector_symbol);
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
 	  if (len > 0) 
 	    memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_int));
@@ -44791,7 +44796,7 @@ also accepts a string or vector argument."
 	s7_int len;
 	len = vector_length(p);
 	if (vector_rank(p) > 1)
-	  np = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), small_int(0), sc->T));
+	  np = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), small_int(0), sc->T), sc->make_int_vector_symbol);
 	else np = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
 	source = int_vector_elements(p);
 	end = (s7_int *)(source + len);
@@ -44806,7 +44811,7 @@ also accepts a string or vector argument."
 	s7_int len;
 	len = vector_length(p);
 	if (vector_rank(p) > 1)
-	  np = g_make_vector(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), real_zero, sc->T));
+	  np = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, p)), real_zero, sc->T), sc->make_float_vector_symbol);
 	else np = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
 	source = float_vector_elements(p);
 	end = (s7_double *)(source + len);
@@ -52984,7 +52989,6 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_S_opAAAq);
 	}
-      /* fprintf(stderr, "%s: %s\n", opt_names[op2], DISPLAY(e1)); */
       return(OP_SAFE_C_SZ);
 
     case E_C_PS:
@@ -54532,11 +54536,23 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 	  s7_pointer name_args;
 	  name_args = cadr(expr);
 	  if (is_symbol(car(name_args)))
-	    e = cons(sc, add_sym_to_list(sc, car(name_args)), e);
-	  if (is_symbol(cdr(name_args)))
+	    {
+	      if (is_pair(e))
+		set_cdr(e, cons(sc, add_sym_to_list(sc, car(name_args)), cdr(e))); /* export it */
+	      else e = cons(sc, add_sym_to_list(sc, car(name_args)), e);
+	    }
+	  if (is_symbol(cdr(name_args)))        /* (define (f . a)...) */
 	    e = cons(sc, add_sym_to_list(sc, cdr(name_args)), e);
 	  else e = collect_collisions_star(sc, cdr(name_args), e);
-	  /* fprintf(stderr, "%s -> e: %s\n", DISPLAY(expr), DISPLAY(e)); */
+	}
+      else 
+	{
+	  if (is_symbol(cadr(expr)))
+	    {
+	      if (is_pair(e))
+		set_cdr(e, cons(sc, add_sym_to_list(sc, cadr(expr)), cdr(e)));     /* export it */
+	      else e = cons(sc, add_sym_to_list(sc, cadr(expr)), e);
+	    }
 	}
       body = cddr(expr);
       break;
@@ -54747,7 +54763,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 	{
 	  func = slot_value(func);
 	  if (is_syntax(func))   /* 12-8-16 was is_syntactic, but that is only appropriate above -- here we have the value */
-	    return(optimize_syntax(sc, expr, func, hop, e));
+	    return(optimize_syntax(sc, expr, func, hop, e));  /* e can be extended via set-cdr! here */
 
 	  /* we miss implicit indexing here because at this time, the data are not set */
 	  if ((is_procedure(func)) ||
@@ -54785,6 +54801,9 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		   *   (define (call-func func arg1 arg2) (define (call) (func arg1 arg2)) (call)) (call-func + 1 2.5) (call-func - 5 2)
 		   *   when we get here originally "func" is +, hop=1, but just checking for !is_global(car_expr) is
 		   *   not good enough -- if we load mockery.scm, nothing is global!
+		   * Yet another case (define (test-abs) (define (abs x) (+ x 1)) (format *stderr* "abs ~A~%" (abs -1)))
+		   *   when optimize_syntax sees the (define abs ...), it inserts abs into e so that the caller's e is extended (set-cdr!)
+		   *   so that find_uncomplicated_symbol above will be unhappy when we reach (abs -1) as the format arg!
 		   */
 		}
 	      /* but if we make a recursive call on a func, we've obviously already looked up that function, and
@@ -56434,7 +56453,7 @@ static s7_pointer check_if(s7_scheme *sc)
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
   int len;
-  /* fprintf(stderr, "opt %s %s\n", DISPLAY(args), DISPLAY(body)); */
+  /* fprintf(stderr, "opt %s %s %s %d\n", DISPLAY(func), DISPLAY(args), DISPLAY(body), (is_symbol(func)) && (is_global(func))); */
 
   len = s7_list_length(sc, body);
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
@@ -56443,7 +56462,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
   if (len > 0)  /* i.e. not circular */
     {
       clear_syms_in_list(sc);
-      if (is_symbol(func))
+      if (is_symbol(func))  /* func can be sc->gc_nil (see check_lambda and check_lambda_star) */
  	{
  	  s7_pointer lst;
  	  unsigned int gc_loc;

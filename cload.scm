@@ -610,7 +610,7 @@
 		  (else         (apply add-one-constant func)))))))
       
       
-      ;; this is the body of c-define
+      ;; c-define-1 (called in c-define macro above)
       (unless (and output-name
 		   (file-exists? c-file-name)
 		   (file-exists? so-file-name)
@@ -634,11 +634,6 @@
       (let ((new-env (sublet cur-env 'init_func (string->symbol init-name))))
 	(format *stderr* "loading ~A~%" so-file-name)
 	(load so-file-name new-env)))))
-
-
-
-;;; backwards compatibility
-(define define-c-function c-define)
 
 
 #|

@@ -122,19 +122,20 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 (define mix-channel 
   
   (let ((documentation "(mix-channel file beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound object, or \
-a list (file-name-or-sound-object [beg [channel]])."))
+a list (file-name-or-sound-object [beg [channel]]).")
+	
+	(channel->mix 
+	 (lambda (input-snd input-chn input-beg input-len output-snd output-chn output-beg)
+	   (if (< input-len 1000000)
+	       (mix-float-vector (channel->float-vector input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
+	       (let* ((output-name (snd-tempnam))
+		      (output (new-sound output-name :size input-len)))
+		 (float-vector->channel (samples input-beg input-len input-snd input-chn) 0 input-len output 0)
+		 (save-sound output)
+		 (close-sound output)
+		 (mix output-name output-beg 0 output-snd output-chn #t #t))))))
+	 
     (lambda* (input-data (beg 0) dur snd (chn 0) edpos with-tag)
-      
-      (define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
-	(if (< input-len 1000000)
-	    (mix-float-vector (channel->float-vector input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
-	    (let* ((output-name (snd-tempnam))
-		   (output (new-sound output-name :size input-len)))
-	      (float-vector->channel (samples input-beg input-len input-snd input-chn) 0 input-len output 0)
-	      (save-sound output)
-	      (close-sound output)
-	      (mix output-name output-beg 0 output-snd output-chn #t #t))))
-      
       (let ((input (if (not (pair? input-data)) 
 		       input-data 
 		       (car input-data)))

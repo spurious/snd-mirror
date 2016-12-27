@@ -53,30 +53,30 @@
       ;;   yl,yh   = y coordinates of segment ends
       ;;   yle,yhe = exponential values of y coords of segment ends
       ;;   error   = linear domain error bound for rendering
-      (define (exp-seg xl yle xh yhe yl yh error)
-	
-	;; linear interpolation
-	(define (interpolate xl yl xh yh xi)
-	  (+ yl (* (- xi xl) (/ (- yh yl) (- xh xl)))))
-	
-	(let* ((xint (/ (+ xl xh) 2.0))
-	       (yint (interpolate xl yl xh yh xint))
-	       (yexp (expt base yint)))
-	  (let ((yinte (interpolate xl yle xh yhe xint))
-		(yerr (- (expt base (+ yint error)) yexp)))
-	    ;; is the linear approximation accurate enough?
-	    ;; are we still over the cutoff limit?
-	    (if (not (and (> (abs (- yexp yinte)) yerr)
-			  (or (not (real? ycutoff))
-			      (> yinte ycutoff))))
-		;; yes --> don't need to add nu'ting to the envelope
-		(values () ())
-		;; no --> add a breakpoint and recurse right and left
-		((lambda (xi yi xj yj)
-		   (values (append xi (cons xint xj))
-			   (append yi (cons yexp yj))))
-		 (exp-seg xl yle xint yexp yl yint error)
-		 (exp-seg xint yexp xh yhe yint yh error))))))
+      (define exp-seg 
+	(let ((interpolate (lambda (xl yl xh yh xi)
+			     (+ yl (* (- xi xl) 
+				      (/ (- yh yl) 
+					 (- xh xl)))))))
+	  (lambda (xl yle xh yhe yl yh error)
+	    (let* ((xint (/ (+ xl xh) 2.0))
+		   (yint (interpolate xl yl xh yh xint))
+		   (yexp (expt base yint)))
+	      (let ((yinte (interpolate xl yle xh yhe xint))
+		    (yerr (- (expt base (+ yint error)) yexp)))
+		;; is the linear approximation accurate enough?
+		;; are we still over the cutoff limit?
+		(if (not (and (> (abs (- yexp yinte)) yerr)
+			      (or (not (real? ycutoff))
+				  (> yinte ycutoff))))
+		    ;; yes --> don't need to add nu'ting to the envelope
+		    (values () ())
+		    ;; no --> add a breakpoint and recurse right and left
+		    ((lambda (xi yi xj yj)
+		       (values (append xi (cons xint xj))
+			       (append yi (cons yexp yj))))
+		     (exp-seg xl yle xint yexp yl yint error)
+		     (exp-seg xint yexp xh yhe yint yh error))))))))
       
       ;; loop for each segment in the envelope
       (let segs ((en env1))

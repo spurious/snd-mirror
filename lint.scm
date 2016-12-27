@@ -4153,9 +4153,10 @@
 				    (cdr form))
 			    (return (cons '= (cons 0 (lint-remove-duplicates
 						      (map (lambda (a)
-							     (if (eq? (car a) 'zero?)
-								 (cadr a)
-								 ((if (eqv? (cadr a) 0) caddr cadr) a)))
+							     ((if (or (eq? (car a) 'zero?)
+								      (not (eqv? (cadr a) 0)))
+								  cadr caddr)
+							      a))
 							   (cdr form))
 						      env)))))
 			
@@ -13468,7 +13469,7 @@
 				  (set! ok-funcs (cons (cons fname f) ok-funcs))))))
 		      body)
 	    (map (lambda (f)
-		   (if (tree-set-member bad-funcs (cddr (cdr f)))
+		   (if (tree-set-member bad-funcs (cdddr f))
 		       (values)
 		       f))
 		 (reverse ok-funcs))))
@@ -19486,7 +19487,7 @@
 	      (when (pair? ok-funcs)
 		(let* ((func-names (map car ok-funcs))
 		       (letrec? (any? (lambda (f)
-					(tree-set-member func-names (cddr (cdr f))))
+					(tree-set-member func-names (cdddr f)))
 				      ok-funcs)))
 		  (lint-format "the inner function~A ~{~A~^, ~} could be moved out of the let*: ~A" caller
 			       (if (null? (cdr ok-funcs)) "" "s")
@@ -21905,11 +21906,17 @@
 |#
 
 ;;; pp of vector should do something reasonable
-;;; tons of rewrites in lg* (4500 lines)
+;;; tons of rewrites in lg* (4200 lines)
 ;;; define* -> define (only used with all args, or no undef'd args can be #f)
 ;;; top-level function used, but only in other func?
 ;;; (do ((phoneme phoneme)...) where phoneme never set -- like let (pointless-var?)
+;;; letrec sometimes can be moved from lambda body to closure
+;;; "occurs in the midst of the body" is confused by (if ... (define)) etc
+;;;    this also confuses "is declared twice"
+;;;    and "assuming we see all the set!s" is confused by globals -- if any outer vars occur, omit?
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 195 29312 822438
+;;; s7 t489 cases -- why is log different in s7test vs t489?
+;;;
+;;; 196 29312 822226

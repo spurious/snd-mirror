@@ -379,7 +379,12 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define chorus-size 5)
 
 (define chorus
-  (let ((documentation "(chorus) tries to produce the chorus sound effect"))
+  (let ((documentation "(chorus) tries to produce the chorus sound effect")
+	(flanger (lambda (dly inval)
+		   (+ inval 
+		      (delay (car dly)
+			     inval
+			     (rand-interp (cadr dly)))))))
     (lambda ()
       (let ((make-flanger
 	     (let ((chorus-time .05)
@@ -389,12 +394,6 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 		 (let ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
 		       (len (floor (random (* 3.0 chorus-time (srate))))))
 		   (list (make-delay len :max-size (+ len chorus-amount 1)) ri)))))
-
-	    (flanger (lambda (dly inval)
-		       (+ inval 
-			  (delay (car dly)
-				 inval
-				 (rand-interp (cadr dly))))))
 	    (dlys (make-vector chorus-size)))
 
 	(do ((i 0 (+ i 1)))
@@ -958,21 +957,19 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
 
 
 (define cascade->canonical
-  (let ((documentation "(cascade->canonical A) converts a list of cascade coeffs (float-vectors with 3 entries) to canonical form"))
+  (let ((documentation "(cascade->canonical A) converts a list of cascade coeffs (float-vectors with 3 entries) to canonical form")
+	(conv (lambda (M h L x y)        ; x * h -> y
+		(do ((n 0 (+ n 1)))
+		    ((= n (+ L M)))
+		  (let ((sum 0.0)
+			(start (max 0 (- n L 1)))
+			(end (min n M)))
+		    (do ((m start (+ m 1)))
+			((> m end))
+		      (set! sum (+ sum (* (h m) (x (- n m))))))
+		    (set! (y n) sum))))))
     ;; from Orfanidis "Introduction to Signal Processing"
     (lambda (A)
-      (define (conv M h L x y)
-	;; x * h -> y
-	(do ((n 0 (+ n 1)))
-	    ((= n (+ L M)))
-	  (let ((sum 0.0)
-		(start (max 0 (- n L 1)))
-		(end (min n M)))
-	    (do ((m start (+ m 1)))
-		((> m end))
-	      (set! sum (+ sum (* (h m) (x (- n m))))))
-	    (set! (y n) sum))))
-      
       (let ((K (length A)))
 	(let ((d (make-float-vector (+ 1 (* 2 K))))
 	      (a1 (make-float-vector (+ 1 (* 2 K)))))
@@ -1920,22 +1917,20 @@ and replaces it with the spectrum given in coeffs")
   
   (let ((snd-color-1 (lambda args
 		       (and (defined? 'snd-color)
-			    (apply snd-color args)))))
+			    (apply snd-color args))))
+	(bark (lambda (f) 
+		(let ((f2 (/ f 7500))) 
+		  (+ (* 13.5 (atan (* .00076 f))) (* 3.5 (atan (* f2 f2)))))))
+	(mel (lambda (f) 
+	       (* 1127 (log (+ 1.0 (/ f 700.0))))))
+	(erb (lambda (f) 
+	       (+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))))
+	
     (let ((bark-fft-size 0)
 	  (bark-tick-function 0)
 	  (color1 (snd-color-1 8))  ; selected-data-color
 	  (color2 (snd-color-1 2))  ; red
 	  (color3 (snd-color-1 4))) ; blue
-      
-      (define (bark f) 
-	(let ((f2 (/ f 7500))) 
-	  (+ (* 13.5 (atan (* .00076 f))) (* 3.5 (atan (* f2 f2))))))
-      
-      (define (mel f) 
-	(* 1127 (log (+ 1.0 (/ f 700.0)))))
-      
-      (define (erb f) 
-	(+ 43.0 (* 11.17 (log (/ (+ f 312) (+ f 14675))))))
       
       (define (display-bark-fft-1 hook)
 	(let* ((snd (hook 'snd))
@@ -2605,68 +2600,68 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 ;;; find not-so-spikey amps for waveshaping
 
-(define* (flatten-partials any-partials (tries 32))
+(define flatten-partials 
   
-  (define (cos-fft-to-max n cur-amps)
-    (let ((size 1024))
-      (do ((fft-rl (make-float-vector size))
-	   (fft-im (make-float-vector size))
-	   (i 0 (+ i 1))
-	   (bin 2 (+ bin 2)))
-	  ((= i n)
-	   (float-vector-peak (mus-fft fft-rl fft-im size -1)))   
-	(set! (fft-rl bin) (cur-amps i)))))
+  (let ((cos-fft-to-max 
+	 (let ((size 1024))	 
+	   (lambda (n cur-amps)
+	     (do ((fft-rl (make-float-vector size))
+		  (fft-im (make-float-vector size))
+		  (i 0 (+ i 1))
+		  (bin 2 (+ bin 2)))
+		 ((= i n)
+		  (float-vector-peak (mus-fft fft-rl fft-im size -1)))   
+	       (set! (fft-rl bin) (cur-amps i)))))))
   
-  (let* ((partials (if (list? any-partials)
-		       (apply float-vector any-partials)
-		       any-partials))
-	 (len (length partials))
-	 (topk 0)
-	 (DC 0.0)
-	 (original-sum (do ((sum 0.0)
-			    (i 0 (+ i 2)))
-			   ((>= i len) sum)
-			 (let ((hnum (partials i))
-			       (amp (partials (+ i 1))))
-			   (if (= hnum 0)
-			       (set! DC amp)
-			       (begin
-				 (set! topk (max topk hnum))
-				 (set! sum (+ sum amp)))))))
-	 (min-sum original-sum)
-	 (original-partials (do ((v (make-float-vector topk))
-				 (i 0 (+ i 2)))
-				((>= i len) v)
-			      (let ((hnum (partials i)))
-				(if (not (= hnum 0))
-				    (set! (v (- hnum 1)) (partials (+ i 1)))))))
-	 (min-partials (copy original-partials)))
-    
-    (if (<= topk (log tries 2))
-	(set! tries (floor (expt 2 (- topk 1)))))
-    
-    (do ((try 0 (+ 1 try)))
-	((= try tries))
-      (let ((new-partials (copy original-partials)))
-	(do ((k 0 (+ k 1)))
-	    ((= k topk))
-	  (if (> (random 1.0) 0.5)
-	      (set! (new-partials k) (- (new-partials k)))))
-	(let ((new-sum (cos-fft-to-max topk new-partials)))
-	  (if (< new-sum min-sum)
-	      (begin
-		(set! min-partials (copy new-partials))
-		(set! min-sum new-sum))))))
-    
-    (let ((new-amps (float-vector-scale! min-partials (/ original-sum min-sum)))
-	  (new-partials (copy partials)))
-      (do ((i 0 (+ i 2)))
-	  ((>= i len))
-	(let ((hnum (new-partials i)))
-	  (set! (new-partials (+ i 1)) (if (= hnum 0) DC (new-amps (- hnum 1))))))
-      new-partials)))
-
-
+    (lambda* (any-partials (tries 32))
+      (let ((topk 0)
+	    (DC 0.0))
+	(let* ((partials (if (list? any-partials)
+			     (apply float-vector any-partials)
+			     any-partials))
+	       (len (length partials))
+	       (original-sum (do ((sum 0.0)
+				  (i 0 (+ i 2)))
+				 ((>= i len) sum)
+			       (let ((hnum (floor (partials i)))
+				     (amp (partials (+ i 1))))
+				 (if (= hnum 0)
+				     (set! DC amp)
+				     (begin
+				       (set! topk (max topk hnum))
+				       (set! sum (+ sum amp)))))))
+	       (min-sum original-sum)
+	       (original-partials (do ((v (make-float-vector topk))
+				       (i 0 (+ i 2)))
+				      ((>= i len) v)
+				    (let ((hnum (floor (partials i))))
+				      (if (not (= hnum 0))
+					  (set! (v (- hnum 1)) (partials (+ i 1)))))))
+	       (min-partials (copy original-partials)))
+	  
+	  (if (<= topk (log tries 2))
+	      (set! tries (floor (expt 2 (- topk 1)))))
+	  
+	  (do ((try 0 (+ 1 try)))
+	      ((= try tries))
+	    (let ((new-partials (copy original-partials)))
+	      (do ((k 0 (+ k 1)))
+		  ((= k topk))
+		(if (> (random 1.0) 0.5)
+		    (set! (new-partials k) (- (new-partials k)))))
+	      (let ((new-sum (cos-fft-to-max topk new-partials)))
+		(if (< new-sum min-sum)
+		    (begin
+		      (set! min-partials (copy new-partials))
+		      (set! min-sum new-sum))))))
+	  
+	  (let ((new-amps (float-vector-scale! min-partials (/ original-sum min-sum)))
+		(new-partials (copy partials)))
+	    (do ((i 0 (+ i 2)))
+		((>= i len))
+	      (let ((hnum (floor (new-partials i))))
+		(set! (new-partials (+ i 1)) (if (= hnum 0) DC (new-amps (- hnum 1))))))
+	    new-partials))))))
 #|
 (with-sound (:clipped #f :statistics #t :channels 2)
   (let* ((amps (normalize-partials (list 1 .25 2 .5 3 .25)))

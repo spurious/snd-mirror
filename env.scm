@@ -228,34 +228,34 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 (define reverse-envelope 
   (let ((documentation "(reverse-envelope env) reverses the breakpoints in 'env'"))
     (lambda (e)
-      (define (reverse-env-1 e newe xd)
-	(if (null? e)
-	    newe
-	    (reverse-env-1 (cddr e)
-			   (cons (- xd (car e))
-				 (cons (cadr e)
-				       newe))
-			   xd)))
       (let ((len (length e)))
-	(if (memv len '(0 2))
+	(if (or (not (integer? len))
+		(< len 3))
 	    e
-	    (reverse-env-1 e () (e (- len 2))))))))
+	    (let ((xd (e (- len 2))))
+	      (let reverse-env-1 ((e e) (newe ()))
+		(if (null? e)
+		    newe
+		    (reverse-env-1 (cddr e)
+				   (cons (- xd (car e))
+					 (cons (cadr e)
+					       newe)))))))))))
 
 
 ;;; -------- concatenate-envelopes
 
 (define concatenate-envelopes 
-  (let ((documentation "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope"))
+  (letrec ((documentation "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope")
+	   (cat-1 (lambda (e newe xoff x0)
+		    (if (null? e)
+			newe
+			(cat-1 (cddr e)
+			       (cons (cadr e)
+				     (cons (- (+ (car e) xoff) x0)
+					   newe))
+			       xoff
+			       x0)))))
     (lambda envs
-      (define (cat-1 e newe xoff x0)
-	(if (null? e)
-	    newe
-	    (cat-1 (cddr e)
-		   (cons (cadr e)
-			 (cons (- (+ (car e) xoff) x0)
-			       newe))
-		   xoff
-		   x0)))
       (let ((ne ())
 	    (xoff 0.0))
 	(for-each 
@@ -496,66 +496,69 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"))
 ;;;
 ;;; this is not very good...
 
-(define* (simplify-envelope env1 (ygrid 10) (xgrid 100))
+(define simplify-envelope 
   
   ;; grid = how fine a fluctuation we will allow.
   ;; the smaller the grid, the less likely a given bump will get through
   ;; original x and y values are not changed, just sometimes omitted.
   
-  (define (point-on-line px py qx qy tx ty)
-    
-    ;; is point tx ty on line defined by px py and qx qy --
-    ;; #f if no, :before if on ray from p, :after if on ray from q, :within if between p and q
-    ;; (these are looking at the "line" as a fat vector drawn on a grid)
-    ;; taken from "Graphics Gems" by Glassner, code by A Paeth
-    
-    (if (or (= py qy ty) 
-	    (= px qx tx))
-	:within
-	(and (< (abs (- (* (- qy py) (- tx px))
-			(* (- ty py) (- qx px))))
-		(max (abs (- qx px))
-		     (abs (- qy py))))
-	     (if (or (< qx px tx) (< qy py ty) (< tx px qx) (< ty py qy)) 
-		 :before
-		 (if (or (< px qx tx) (< py qy ty) (< tx qx px) (< ty qy py)) 
-		     :after
-		     :within)))))
-  (if (not (and env1
-		(> (length env1) 4)))
-      env1
-      (let ((new-env (list (cadr env1) (car env1)))
-	    (ymax (max-envelope env1))
-	    (ymin (min-envelope env1))
-	    (xmax (env1 (- (length env1) 2)))
-	    (xmin (car env1)))
-	(if (= ymin ymax)
-	    (list xmin ymin xmax ymax)
-	    (do ((y-scl (/ ygrid (- ymax ymin)))
-		 (x-scl (/ (or xgrid ygrid) (- xmax xmin)))
-		 (px #f) (py #f)
-		 (qx #f) (qy #f) 
-		 (tx #f) (ty #f) 
-		 (qtx #f) (qty #f)
-		 (i 0 (+ i 2)))
-		((>= i (length env1))
-		 (set! new-env (cons qty (cons qtx new-env)))
-		 (reverse new-env))
-	      (let ((ttx (env1 i))
-		    (tty (env1 (+ i 1))))
-		(set! tx (round (* ttx x-scl)))
-		(set! ty (round (* tty y-scl)))
-		(if px
-		    (if (not (point-on-line px py qx qy tx ty))
+  (let ((point-on-line 
+	 (lambda (px py qx qy tx ty)
+	   
+	   ;; is point tx ty on line defined by px py and qx qy --
+	   ;; #f if no, :before if on ray from p, :after if on ray from q, :within if between p and q
+	   ;; (these are looking at the "line" as a fat vector drawn on a grid)
+	   ;; taken from "Graphics Gems" by Glassner, code by A Paeth
+	   
+	   (if (or (= py qy ty) 
+		   (= px qx tx))
+	       :within
+	       (and (< (abs (- (* (- qy py) (- tx px))
+			       (* (- ty py) (- qx px))))
+		       (max (abs (- qx px))
+			    (abs (- qy py))))
+		    (if (or (< qx px tx) (< qy py ty) (< tx px qx) (< ty py qy)) 
+			:before
+			(if (or (< px qx tx) (< py qy ty) (< tx qx px) (< ty qy py)) 
+			    :after
+			    :within)))))))
+	 
+    (lambda* (env1 (ygrid 10) (xgrid 100))
+      (if (not (and env1
+		    (> (length env1) 4)))
+	  env1
+	  (let ((new-env (list (cadr env1) (car env1)))
+		(ymax (max-envelope env1))
+		(ymin (min-envelope env1))
+		(xmax (env1 (- (length env1) 2)))
+		(xmin (car env1)))
+	    (if (= ymin ymax)
+		(list xmin ymin xmax ymax)
+		(do ((y-scl (/ ygrid (- ymax ymin)))
+		     (x-scl (/ (or xgrid ygrid) (- xmax xmin)))
+		     (px #f) (py #f)
+		     (qx #f) (qy #f) 
+		     (tx #f) (ty #f) 
+		     (qtx #f) (qty #f)
+		     (i 0 (+ i 2)))
+		    ((>= i (length env1))
+		     (set! new-env (cons qty (cons qtx new-env)))
+		     (reverse new-env))
+		  (let ((ttx (env1 i))
+			(tty (env1 (+ i 1))))
+		    (set! tx (round (* ttx x-scl)))
+		    (set! ty (round (* tty y-scl)))
+		    (if px
+			(if (not (point-on-line px py qx qy tx ty))
+			    (begin
+			      (set! new-env (cons qty (cons qtx new-env)))
+			      (set! px qx)
+			      (set! py qy)))
 			(begin
-			  (set! new-env (cons qty (cons qtx new-env)))
 			  (set! px qx)
 			  (set! py qy)))
-		    (begin
-		      (set! px qx)
-		      (set! py qy)))
-		(set! qx tx)
-		(set! qy ty)
-		(set! qtx ttx)
-		(set! qty tty)))))))
-	    
+		    (set! qx tx)
+		    (set! qy ty)
+		    (set! qtx ttx)
+		    (set! qty tty)))))))))
+    

@@ -82,38 +82,38 @@ similar to nxysin. (nssb gen (fm 0.0)) returns n sinusoids from frequency spaced
 	0.0
 	(/ (* num num) den))))
 
-(define (find-nxysin-max n ratio)
-  
-  (define (find-mid-max n lo hi)
-    (define (ns x n) 
-      (let* ((a2 (/ x 2))
-	     (den (sin a2)))
-	(if (= den 0.0)
-	    0.0
-	    (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
-    (let ((mid (/ (+ lo hi) 2))
-	  (ylo (ns lo n))
-	  (yhi (ns hi n)))
-      (if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
-	  (ns mid n)
-	  (find-mid-max n (if (> ylo yhi)
-			      (values lo mid)
-			      (values mid hi))))))
-  
-  (define (find-nodds-mid-max n lo hi)
-    (let ((mid (/ (+ lo hi) 2))
-	  (ylo (nodds lo n))
-	  (yhi (nodds hi n)))
-      (if (< (abs (- ylo yhi)) nearly-zero)
-	  (nodds mid n)
-	  (find-nodds-mid-max n (if (> ylo yhi)
-				    (values lo mid)
-				    (values mid hi))))))
-  
-  (case ratio
-    ((1) (find-mid-max n 0.0 (/ pi (+ n .5))))
-    ((2) (find-nodds-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
-    (else n)))
+(define find-nxysin-max 
+  (letrec ((find-mid-max 
+	    (let ((ns (lambda (x n) 
+			(let* ((a2 (/ x 2))
+			       (den (sin a2)))
+			  (if (= den 0.0)
+			      0.0
+			      (/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))))
+	      (lambda (n lo hi)
+		(let ((mid (/ (+ lo hi) 2))
+		      (ylo (ns lo n))
+		      (yhi (ns hi n)))
+		  (if (< (abs (- ylo yhi)) nearly-zero) ; was e-100 but that hangs if not using doubles
+		      (ns mid n)
+		      (find-mid-max n (if (> ylo yhi)
+					  (values lo mid)
+					  (values mid hi))))))))
+	   (find-nodds-mid-max 
+	    (lambda (n lo hi)
+	      (let ((mid (/ (+ lo hi) 2))
+		    (ylo (nodds lo n))
+		    (yhi (nodds hi n)))
+		(if (< (abs (- ylo yhi)) nearly-zero)
+		    (nodds mid n)
+		    (find-nodds-mid-max n (if (> ylo yhi)
+					      (values lo mid)
+					      (values mid hi))))))))
+    (lambda (n ratio)
+      (case ratio
+	((1) (find-mid-max n 0.0 (/ pi (+ n .5))))
+	((2) (find-nodds-mid-max n 0.0 (/ pi (+ (* 2 n) 0.5))))
+	(else n)))))
 
 
 (defgenerator (nxysin

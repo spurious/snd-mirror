@@ -35,19 +35,19 @@
 	      (gdbm-close! ptr)))))))
 
 (define prune-db
-  (let ((documentation "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files"))
+  (letrec ((documentation "(prune-db) cleans up the nb (gdbm) data base by removing references to non-existent files")
+	   (collect-files (lambda (ptr key files)
+			    (if key
+				(collect-files ptr (gdbm-next-key ptr key) (cons key files))
+				files)))
+	   (prune-file (lambda (ptr files)
+			 (do ((ptr ptr)
+			      (files files (cdr files)))
+			     ((not (pair? files)))
+			   (unless (file-exists? (car files))
+			     (snd-print (format #f "pruning ~A" (car files)))
+			     (gdbm-delete! ptr (car files)))))))
     (lambda ()
-      (define (collect-files ptr key files)
-	(if key
-	    (collect-files ptr (gdbm-next-key ptr key) (cons key files))
-	    files))
-      (define (prune-file ptr files)
-	(do ((ptr ptr)
-	     (files files (cdr files)))
-	    ((not (pair? files)))
-	  (unless (file-exists? (car files))
-	    (snd-print (format #f "pruning ~A" (car files)))
-	    (gdbm-delete! ptr (car files)))))
       (let ((ptr (gdbm-open nb-database 'read)))
 	(if (gdbm? ptr)
 	    (let ((files (collect-files ptr (gdbm-first-key ptr) ())))
@@ -61,51 +61,52 @@
 
 (define files-popup-info
   (let ((documentation "(files-popup-info type position name) is intended as a mouse-enter-label hook function. 
-It causes a description of the file to popup when the mouse crosses the filename"))
+It causes a description of the file to popup when the mouse crosses the filename")
+
+	(file-info (lambda (file)
+		     ;; (file-info file) -> description (as a string) of file
+		     (format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
+			     file
+			     (channels file)
+			     (srate file)
+			     (let ((den (* (channels file) (srate file))))
+			       (if (> den 0)
+				   (format #f "~1,3F" (* 1.0 (/ (mus-sound-samples file) den)))
+				   "unknown"))
+			     (mus-header-type-name (mus-sound-header-type file))
+			     (mus-sample-type-name (mus-sound-sample-type file))
+			     (if (mus-sound-maxamp-exists? file)
+				 (format #f "~%  maxamp: ~A" (mus-sound-maxamp file))
+				 "")
+			     (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
+			     (let ((comment (mus-sound-comment file)))
+			       (if (and (string? comment)
+					(> (length comment) 0))
+				   (format #f "~%  comment: ~A" comment)
+				   ""))
+			     (if (not (and use-gdbm
+					   (file-exists? nb-database)))
+				 ""
+				 (let* ((ptr (gdbm-open nb-database 'read))
+					(note (gdbm-fetch ptr file)))
+				   (gdbm-close! ptr)
+				   (if (string? note)
+				       (format #f "~%~A" note)
+				       ""))))))
+	(region-viewer 2))
     (lambda (type position name)
-      (let ((file-info (lambda (file)
-			 ;; (file-info file) -> description (as a string) of file
-			 (format #f "~A:  ~%  chans: ~D, srate: ~D, len: ~A~%  ~A ~A~A~%  written: ~A~A~A"
-				 file
-				 (channels file)
-				 (srate file)
-				 (let ((den (* (channels file) (srate file))))
-				   (if (> den 0)
-				       (format #f "~1,3F" (* 1.0 (/ (mus-sound-samples file) den)))
-				       "unknown"))
-				 (mus-header-type-name (mus-sound-header-type file))
-				 (mus-sample-type-name (mus-sound-sample-type file))
-				 (if (mus-sound-maxamp-exists? file)
-				     (format #f "~%  maxamp: ~A" (mus-sound-maxamp file))
-				     "")
-				 (strftime "%d-%b %H:%M %Z" (localtime (mus-sound-write-date file)))
-				 (let ((comment (mus-sound-comment file)))
-				   (if (and (string? comment)
-					    (> (length comment) 0))
-				       (format #f "~%  comment: ~A" comment)
-				       ""))
-				 (if (not (and use-gdbm
-					       (file-exists? nb-database)))
-				     ""
-				     (let* ((ptr (gdbm-open nb-database 'read))
-					    (note (gdbm-fetch ptr file)))
-				       (gdbm-close! ptr)
-				       (if (string? note)
-					   (format #f "~%~A" note)
-					   ""))))))
-	    (region-viewer 2))
-	(set! nb-mouse-response-time (get-internal-real-time))
-	(if (not (= type region-viewer))
-	    (let ((info-exists (list-ref (dialog-widgets) 15)))
-	      (info-dialog name (file-info name))
-	      (let ((info-widget (list-ref (dialog-widgets) 15)))
-		(if (and info-widget
-			 (not info-exists)) ; keep the help dialog from overlapping the files dialog
-		    (let ((files-dialog (list-ref (dialog-widgets) 5)))
-		      (let ((files-position (widget-position files-dialog))
-			    (files-size (widget-size files-dialog)))
-			(set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
-								  (+ (cadr files-position) 10)))))))))))))
+      (set! nb-mouse-response-time (get-internal-real-time))
+      (if (not (= type region-viewer))
+	  (let ((info-exists (list-ref (dialog-widgets) 15)))
+	    (info-dialog name (file-info name))
+	    (let ((info-widget (list-ref (dialog-widgets) 15)))
+	      (if (and info-widget
+		       (not info-exists)) ; keep the help dialog from overlapping the files dialog
+		  (let ((files-dialog (list-ref (dialog-widgets) 5)))
+		    (let ((files-position (widget-position files-dialog))
+			  (files-size (widget-size files-dialog)))
+		      (set! (widget-position info-widget) (list (+ (car files-position) (car files-size) 10)
+								(+ (cadr files-position) 10))))))))))))
 
 
 (define (files-popdown-info)

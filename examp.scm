@@ -106,7 +106,11 @@
 
 
 (define display-db 
-  (let ((documentation "(display-db hook) is a lisp-graph-hook function to display the time domain data in dB"))
+  (let ((documentation "(display-db hook) is a lisp-graph-hook function to display the time domain data in dB")
+	(dB (lambda (val)
+	      (if (< val .001)
+		  -60.0
+		  (* 20.0 (log val 10))))))
     (lambda (hook)
       (let ((snd (hook 'snd))
 	    (chn (hook 'chn)))
@@ -116,10 +120,6 @@
 	      (let ((data (if (float-vector? datal) datal (cadr datal))))
 		(let ((len (length data))
 		      (sr (srate snd)))
-		  (define (dB val)
-		    (if (< val .001)
-			-60.0
-			(* 20.0 (log val 10))))
 		  (do ((i 0 (+ i 1)))
 		      ((= i len))
 		    (set! (data i) (+ 60.0 (dB (abs (data i))))))
