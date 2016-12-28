@@ -5,6 +5,13 @@
 
 (with-let (sublet *gtk*)
   
+  (define (scale-envelope e scl)
+    (if (null? e)
+	()
+	(cons (car e) 
+	      (cons (* scl (cadr e))
+		    (scale-envelope (cddr e) scl)))))
+      
   (define (plausible-mark-samples)
     ;; find two marks in the current channel (in or nearest to current window)
     (let* ((snd (selected-sound))
@@ -162,17 +169,12 @@
     (g_signal_connect amp-menu "activate" (lambda (w d) (update-label amp-menu-list)) #f)
     
     ;; -------- Gain (gain set by gain-amount)
-    
+
     (let ((child (gtk_menu_item_new_with_label "Gain"))
 	  (gain-amount 1.0)
 	  (gain-dialog #f)
 	  (gain-target 'sound)
 	  (gain-envelope #f))
-      
-      (define (scale-envelope e scl)
-	(if (null? e)
-	    ()
-	    (cons (car e) (cons (* scl (cadr e)) (scale-envelope (cddr e) scl)))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL amp-cascade) child)
       (gtk_widget_show child)
@@ -244,7 +246,7 @@
       (set! amp-menu-list (cons (lambda ()
 				  (change-label child (format #f "Gain (~1,2F)"  gain-amount)))
 				amp-menu-list)))
-    
+  
     ;; -------- Normalize
     
     (let ((child (gtk_menu_item_new_with_label "Normalize")))
@@ -589,19 +591,19 @@
 	  (zecho-amp 10.0)
 	  (zecho-dialog #f)
 	  (zecho-target 'sound)
-	  (zecho-truncate #t))
+	  (zecho-truncate #t)
       
-      (define zecho-1
-	(lambda (scaler secs frq amp cutoff)
-	  (let ((os (make-oscil frq))
-		(del (let ((len (round (* secs (srate)))))
-		       (make-delay len :max-size (round (+ len amp 1)))))
-		 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-	    (lambda (inval)
-	      (+ inval 
-		 (delay del 
-			(* scaler (+ (tap del) (* (env genv) inval)))
-			(* amp (oscil os))))))))
+	  (zecho-1
+	   (lambda (scaler secs frq amp cutoff)
+	     (let ((os (make-oscil frq))
+		   (del (let ((len (round (* secs (srate)))))
+			  (make-delay len :max-size (round (+ len amp 1)))))
+		   (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+	       (lambda (inval)
+		 (+ inval 
+		    (delay del 
+			   (* scaler (+ (tap del) (* (env genv) inval)))
+			   (* amp (oscil os)))))))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL delay-cascade) child)
       (gtk_widget_show child)
@@ -1064,16 +1066,16 @@ the modulation frequency, and the echo amplitude."))
 	  (new-comb-chord-interval-one 0.75)
 	  (new-comb-chord-interval-two 1.20)
 	  (new-comb-chord-dialog #f)
-	  (new-comb-chord-target 'sound))
+	  (new-comb-chord-target 'sound)
       
-      (define new-comb-chord
-	(lambda (scaler size amp interval-one interval-two)
-	  ;; Comb chord filter: create chords by using filters at harmonically related sizes.
-	  (let ((cs (make-comb-bank (vector (make-comb scaler size)
-					    (make-comb scaler (* size interval-one))
-					    (make-comb scaler (* size interval-two))))))
-	    (lambda (x)
-	      (* amp (comb-bank cs x))))))
+	  (new-comb-chord
+	   (lambda (scaler size amp interval-one interval-two)
+	     ;; Comb chord filter: create chords by using filters at harmonically related sizes.
+	     (let ((cs (make-comb-bank (vector (make-comb scaler size)
+					       (make-comb scaler (* size interval-one))
+					       (make-comb scaler (* size interval-two))))))
+	       (lambda (x)
+		 (* amp (comb-bank cs x)))))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
@@ -1164,12 +1166,12 @@ Move the sliders to set the comb chord parameters."))
 	  (moog-cutoff-frequency 10000)
 	  (moog-resonance 0.5)
 	  (moog-dialog #f)
-	  (moog-target 'sound))
+	  (moog-target 'sound)
       
-      (define (moog freq Q)
-	(let ((gen (make-moog-filter freq Q)))
-	  (lambda (inval)
-	    (moog-filter gen inval))))
+	  (moog (lambda (freq Q)
+		  (let ((gen (make-moog-filter freq Q)))
+		    (lambda (inval)
+		      (moog-filter gen inval))))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL filter-cascade) child)
       (gtk_widget_show child)
@@ -1400,11 +1402,6 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 	  (src-timevar-dialog #f)
 	  (src-timevar-target 'sound)
 	  (src-timevar-envelope #f))
-      
-      (define (scale-envelope e scl)
-	(if (null? e)
-	    ()
-	    (cons (car e) (cons (* scl (cadr e)) (scale-envelope (cddr e) scl)))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL freq-cascade) child)
       (gtk_widget_show child)
@@ -2027,19 +2024,20 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
 	  (pan-pos 45)
 	  (place-sound-dialog #f)
 	  (place-sound-target 'sound)
-	  (place-sound-envelope #f))
-      
-      (define (place-sound mono-snd stereo-snd pan-env)
-	;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting
-	;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
-	;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
-	(if (number? pan-env)
-	    (let ((pos (/ pan-env 90.0)))
-	      (effects-position-sound mono-snd pos stereo-snd 1)
-	      (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
-	    (begin
-	      (effects-position-sound mono-snd pan-env stereo-snd 1)
-	      (effects-position-sound mono-snd pan-env stereo-snd 0))))
+	  (place-sound-envelope #f)
+
+	  (place-sound 
+	   (lambda (mono-snd stereo-snd pan-env)
+	     ;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting
+	     ;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
+	     ;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
+	     (if (number? pan-env)
+		 (let ((pos (/ pan-env 90.0)))
+		   (effects-position-sound mono-snd pos stereo-snd 1)
+		   (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+		 (begin
+		   (effects-position-sound mono-snd pan-env stereo-snd 1)
+		   (effects-position-sound mono-snd pan-env stereo-snd 0))))))
       
       (gtk_menu_shell_append (GTK_MENU_SHELL misc-cascade) child)
       (gtk_widget_show child)

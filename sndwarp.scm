@@ -143,12 +143,14 @@
 		  (rev sndwarp-rev)
 		  (srcwidth sndwarp-srcwidth))
 
-  (define (clmsw-envelope-or-number in)
-    (if (number? in) (list 0 in 1 in) in))
   (let* ((stereo-i (= (mus-sound-chans file) 2))
 	 (f-a (make-readin file :channel 0))
 	 (f-b (and stereo-i
-		   (make-readin file :channel 1))))
+		   (make-readin file :channel 1)))
+	 (clmsw-envelope-or-number 
+	  (lambda (in)
+	    (if (number? in) (list 0 in 1 in) in))))
+  
     (let ((beg (seconds->samples begtime))
 	  (fsr (mus-sound-srate file))
 	  (rdA (make-src :input (lambda (dir) (readin f-a)) :srate 0.0 :width srcwidth))
@@ -167,6 +169,7 @@
 			time-env)
 		    :duration dur)))
 	  (locf (make-env (clmsw-envelope-or-number loc) :duration dur)))
+
       (let ((end (+ beg (seconds->samples dur)))
             (stereo-o #f)
             (writestart 0)

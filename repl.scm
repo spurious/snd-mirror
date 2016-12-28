@@ -1335,86 +1335,88 @@
 	    (* 0.000001 (- (cadr end) (cadr ,start))))))))
 
 
-(define* (apropos name (e (*repl* 'top-level-let)))
-  
-  (define (levenshtein s1 s2)
-    (let ((L1 (length s1))
-	  (L2 (length s2)))
-      (cond ((zero? L1) L2)
-	    ((zero? L2) L1)
-	    (else (let ((distance (make-vector (list (+ L2 1) (+ L1 1)) 0)))
-		    (do ((i 0 (+ i 1)))
-			((> i L1))
-		      (set! (distance 0 i) i))
-		    (do ((i 0 (+ i 1)))
-			((> i L2))
-		      (set! (distance i 0) i))
-		    (do ((i 1 (+ i 1)))
-			((> i L2))
-		      (do ((j 1 (+ j 1)))
-			  ((> j L1))
-			(let ((c1 (+ (distance i (- j 1)) 1))
-			      (c2 (+ (distance (- i 1) j) 1))
-			      (c3 (if (char=? (s2 (- i 1)) (s1 (- j 1)))
-				      (distance (- i 1) (- j 1))
-				      (+ (distance (- i 1) (- j 1)) 1))))
-			  (set! (distance i j) (min c1 c2 c3)))))
-		    (distance L2 L1))))))
-
-  (define* (make-full-let-iterator lt (stop (rootlet))) ; walk the entire let chain
-    (if (eq? stop lt)
-	(make-iterator lt)
-	(letrec ((iterloop 
-		  (let ((iter (make-iterator lt))
-			(iterator? #t))
-		    (lambda ()
-		      (let ((result (iter)))
-			(if (and (eof-object? result)
-				 (iterator-at-end? iter)
-				 (not (eq? stop (iterator-sequence iter))))
-			    (begin 
-			      (set! iter (make-iterator (outlet (iterator-sequence iter))))
-			      (iterloop))
-			    result))))))
-	    (make-iterator iterloop))))
-  
-  (let ((ap-name (if (string? name) name 
-		     (if (symbol? name) (symbol->string name)
-			 (error 'wrong-type-arg "apropos argument 1 should be a string or a symbol"))))
-	(ap-env (if (let? e) e 
-		    (error 'wrong-type-arg "apropos argument 2 should be an environment"))))
-    (let ((strs ())
-	  (min2 (floor (log (length ap-name) 2)))
-	  (have-orange (string=? ((*libc* 'getenv) "TERM") "xterm-256color")))
-      (for-each
-       (lambda (binding)
-	 (if (pair? binding)
-	     (let ((symbol-name (symbol->string (car binding))))
-	       (if (string-position ap-name symbol-name)
-		   (set! strs (cons (cons binding 0) strs))
-		   (let ((distance (levenshtein ap-name symbol-name)))
-		     (if (< distance min2)
-			 (set! strs (cons (cons binding distance) strs))))))))
-       (make-full-let-iterator ap-env))
-
-      (if (not (pair? strs))
-	  'no-match
-	  (begin
-	    (for-each (lambda (b)
-			(format *stderr*
-				(if (zero? (cdr b)) "~C[1m~A~C[0m: ~S~%"                           ; black if exact match somewhere
-				    (if (or (< (cdr b) 2) (not have-orange)) "~C[31m~A~C[0m: ~S~%" ; red for near miss
-					"~C[38;5;208m~A~C[0m: ~S~%"))                              ; orange for less likely choices
-				#\escape (caar b) #\escape
-				(if (procedure? (cdar b))
-				    (let ((doc (procedure-documentation (cdar b)))) ; returns "" if no doc
-				      (if (positive? (length doc))
-					  doc
-					  'procedure))
-				    (cdar b))))
-		      (sort! strs (lambda (a b)
-				    (string<? (symbol->string (caar a)) (symbol->string (caar b))))))
-	    '----)))))
+(define apropos 
+  (let ((levenshtein 
+	 (lambda (s1 s2)
+	   (let ((L1 (length s1))
+		 (L2 (length s2)))
+	     (cond ((zero? L1) L2)
+		   ((zero? L2) L1)
+		   (else (let ((distance (make-vector (list (+ L2 1) (+ L1 1)) 0)))
+			   (do ((i 0 (+ i 1)))
+			       ((> i L1))
+			     (set! (distance 0 i) i))
+			   (do ((i 0 (+ i 1)))
+			       ((> i L2))
+			     (set! (distance i 0) i))
+			   (do ((i 1 (+ i 1)))
+			       ((> i L2))
+			     (do ((j 1 (+ j 1)))
+				 ((> j L1))
+			       (let ((c1 (+ (distance i (- j 1)) 1))
+				     (c2 (+ (distance (- i 1) j) 1))
+				     (c3 (if (char=? (s2 (- i 1)) (s1 (- j 1)))
+					     (distance (- i 1) (- j 1))
+					     (+ (distance (- i 1) (- j 1)) 1))))
+				 (set! (distance i j) (min c1 c2 c3)))))
+			   (distance L2 L1)))))))
+	
+	(make-full-let-iterator             ; walk the entire let chain
+	 (lambda* (lt (stop (rootlet))) 
+	   (if (eq? stop lt)
+	       (make-iterator lt)
+	       (letrec ((iterloop 
+			 (let ((iter (make-iterator lt))
+			       (iterator? #t))
+			   (lambda ()
+			     (let ((result (iter)))
+			       (if (and (eof-object? result)
+					(iterator-at-end? iter)
+					(not (eq? stop (iterator-sequence iter))))
+				   (begin 
+				     (set! iter (make-iterator (outlet (iterator-sequence iter))))
+				     (iterloop))
+				   result))))))
+		 (make-iterator iterloop))))))
+    
+    (lambda* (name (e (*repl* 'top-level-let)))
+      (let ((ap-name (if (string? name) name 
+			 (if (symbol? name) (symbol->string name)
+			     (error 'wrong-type-arg "apropos argument 1 should be a string or a symbol"))))
+	    (ap-env (if (let? e) e 
+			(error 'wrong-type-arg "apropos argument 2 should be an environment"))))
+	(let ((strs ())
+	      (min2 (floor (log (length ap-name) 2)))
+	      (have-orange (string=? ((*libc* 'getenv) "TERM") "xterm-256color")))
+	  (for-each
+	   (lambda (binding)
+	     (if (pair? binding)
+		 (let ((symbol-name (symbol->string (car binding))))
+		   (if (string-position ap-name symbol-name)
+		       (set! strs (cons (cons binding 0) strs))
+		       (let ((distance (levenshtein ap-name symbol-name)))
+			 (if (< distance min2)
+			     (set! strs (cons (cons binding distance) strs))))))))
+	   (make-full-let-iterator ap-env))
+	  
+	  (if (not (pair? strs))
+	      'no-match
+	      (begin
+		(for-each (lambda (b)
+			    (format *stderr*
+				    (if (zero? (cdr b)) "~C[1m~A~C[0m: ~S~%"                           ; black if exact match somewhere
+					(if (or (< (cdr b) 2) (not have-orange)) "~C[31m~A~C[0m: ~S~%" ; red for near miss
+					    "~C[38;5;208m~A~C[0m: ~S~%"))                              ; orange for less likely choices
+				    #\escape (caar b) #\escape
+				    (if (procedure? (cdar b))
+					(let ((doc (procedure-documentation (cdar b)))) ; returns "" if no doc
+					  (if (positive? (length doc))
+					      doc
+					      'procedure))
+					(cdar b))))
+			  (sort! strs (lambda (a b)
+					(string<? (symbol->string (caar a)) (symbol->string (caar b))))))
+		'----)))))))
 
 
 

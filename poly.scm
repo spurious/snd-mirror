@@ -339,209 +339,214 @@
 ;;; (poly-gcd (float-vector 2 -2 -1 1) (float-vector -2.5 1)) -> #<float-vector[len=1]: 0.000>
 
 
-(define (poly-as-vector-roots p1)
-  
-  (define (linear-root a b) ; ax + b
-    (list (/ (- b) a)))
-  
-  (define (quadratic-roots a b c) ; ax^2 + bx + c
-    (let ((d (sqrt (- (* b b) (* 4 a c)))))
-      (list (/ (- d b) (* 2 a))
-	    (/ (- (+ d b)) (* 2 a)))))
-  
-  (define (cubic-roots a b c d) ; ax^3 + bx^2 + cx + d
-    ;; Abramowitz & Stegun 3.8.2
-    (let ((a0 (/ d a))
-	  (a1 (/ c a))
-	  (a2 (/ b a)))
-      (let* ((r (- (/ (- (* a1 a2) (* 3 a0)) 6) (/ (* a2 a2 a2) 27)))
-	     (sq3r2 (let ((q (- (/ a1 3) (/ (* a2 a2) 9))))
-		      (sqrt (+ (* q q q) (* r r))))))
-	(let ((r1 (expt (+ r sq3r2) 1/3))
-	      (r2 (expt (- r sq3r2) 1/3))
-	      (incr (/ (* 2 pi 0+i) 3)))
-	  (call-with-exit
-	   (lambda (return)
-	     (do ((i 0 (+ i 1)))   ; brute force! this can almost certainly be optimized
-		 ((= i 3))
-	       (do ((j 0 (+ j 1)))
-		   ((= j 3))
-		 (let* ((s1 (* r1 (exp (* i incr))))
-			(s2 (* r2 (exp (* j incr))))
-			(z1 (simplify-complex (- (+ s1 s2) (/ a2 3)))))
-		   (if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z1)) poly-roots-epsilon)
-		       (let ((z2 (simplify-complex (+ (* -0.5 (+ s1 s2))
-						      (/ a2 -3) 
-						      (* (- s1 s2) 0.5 (sqrt -3))))))
-			 (if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z2)) poly-roots-epsilon)
-			     (let ((z3 (simplify-complex (+ (* -0.5 (+ s1 s2)) 
-							    (/ a2 -3) 
-							    (* (- s1 s2) -0.5 (sqrt -3))))))
-			       (if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z3)) poly-roots-epsilon)
-				   (return (list z1 z2 z3))))))))))
-	     #f))))))
-  
-  (define (quartic-roots a b c d e) ; ax^4 + bx^3 + cx^2 + dx + e
-    ;; Weisstein, "Encyclopedia of Mathematics"
-    (call-with-exit
-     (lambda (return)
-       (let ((a0 (/ e a))
-	     (a1 (/ d a))
-	     (a2 (/ c a))
-	     (a3 (/ b a)))
-	 (let ((yroot (poly-as-vector-roots (vector (- (* 4 a2 a0) (* a1 a1) (* a3 a3 a0))
-						    (- (* a1 a3) (* 4 a0))
-						    (- a2)
-						    1.0))))
-	   (when (and (pair? yroot)
-		      (= (length yroot) 4))
-	     (do ((i 0 (+ i 1)))
-		 ((= i 3))
-	       (let* ((y1 (yroot i))
-		      (R (sqrt (- (+ (* 0.25 a3 a3) y1) a2))))
-		 (let ((D (sqrt (if (= R 0)
-				    (+ (* 0.75 a3 a3) (* -2 a2) (* 2 (sqrt (- (* y1 y1) (* 4 a0)))))
-				    (- (+ (* 0.75 a3 a3) (* -2 a2) (/ (* 0.25 (- (+ (* 4 a3 a2) (* -8 a1)) (* a3 a3 a3))) R)) (* R R)))))
-		       (E (sqrt (if (= R 0)
-				    (+ (* 0.75 a3 a3) (* -2 a2) (* -2 (sqrt (- (* y1 y1) (* 4 a0)))))
-				    (- (+ (* 0.75 a3 a3) (* -2 a2) (/ (* -0.25 (- (+ (* 4 a3 a2) (* -8 a1)) (* a3 a3 a3))) R)) (* R R))))))
-		   (let ((z1 (+ (* -0.25 a3) (* 0.5 R) (* 0.5 D)))
-			 (z2 (+ (* -0.25 a3) (* 0.5 R) (* -0.5 D)))
-			 (z3 (+ (* -0.25 a3) (* -0.5 R) (* 0.5 E)))
-			 (z4 (+ (* -0.25 a3) (* -0.5 R) (* -0.5 E))))
-		   
-		     (if (< (magnitude (poly-as-vector-eval (vector e d c b a) z1)) poly-roots-epsilon)
-			 (return (list z1 z2 z3 z4))))))))
-	   #f)))))
-  
-  (define (nth-roots a b deg) ; ax^n + b
-    (do ((n (expt (/ (- b) a) (/ 1.0 deg)))
-	 (incr (/ (* 2 pi 0+i) deg))
-	 (roots ())
-	 (i 0 (+ i 1)))
-	((= i deg) roots)
-      (set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots))))
-  
-  (let ((deg (- (length p1) 1)))
-    
-    (cond ((= deg 0)                               ; just constant
-	   ())
+(define poly-as-vector-roots
+  (let ((linear-root          ; ax + b
+	 (lambda (a b) 
+	   (list (/ (- b) a))))
 	
-	  ((not (= (p1 0) 0.0))                          ; constant=0.0, divide through by x, recurse on new
-	   (case deg
-	     ((1)                             ; ax + b -> -b/a
-	      (linear-root (p1 1) (p1 0)))
-	     
-	     ((2)                             ; ax^2 + bx + c -> -b +/- sqrt(b^2 - 4ac) / 2a
-	      (quadratic-roots (p1 2) (p1 1) (p1 0)))
-	     
-	     (else
-	      (or (and (= deg 3)
-		       ;; it may be better to fall into Newton's method here
-		       (cubic-roots (p1 3) (p1 2) (p1 1) (p1 0)))
-		  
-		  (and (= deg 4)
-		       (quartic-roots (p1 4) (p1 3) (p1 2) (p1 1) (p1 0)))
-		  
-		  ;; degree>4 (or trouble above), use Newton's method unless some simple case pops up
-		  (let ((ones 0))
-		    (do ((i 1 (+ i 1)))
-			((> i deg))
-		      (if (not (= (p1 i) 0.0))
-			  (set! ones (+ 1 ones))))
-		    
-		    (cond ((= ones 1)                  ; x^n + b -- "linear" in x^n
-			   (nth-roots (p1 deg) (p1 0) deg))
-			  
-			  ((and (= ones 2)
-				(even? deg)
-				(not (= (p1 (/ deg 2)) 0.0)))
-			   (let ((roots ())       ; quadratic in x^(n/2)
-				 (n (/ deg 2)))
-			     (for-each
-			      (lambda (r)
-				(set! roots (append roots (nth-roots 1.0 (- r) n))))
-			      (poly-as-vector-roots (vector (p1 0) 
-							    (p1 (/ deg 2)) 
-							    (p1 deg))))
-			     roots))
-			  
-			  ((and (> deg 3)
-				(= ones 3)
-				(= (modulo deg 3) 0)
-				(not (= (p1 (/ deg 3)) 0.0))
-				(not (= (p1 (/ (* 2 deg) 3)) 0.0)))
-			   (let ((roots ())   ; cubic in x^(n/3)
-				 (n (/ deg 3)))
-			     (for-each
-			      (lambda (r)
-				(set! roots (append roots (nth-roots 1.0 (- r) n))))
-			      (poly-as-vector-roots (vector (p1 0) 
-							    (p1 (/ deg 3)) 
-							    (p1 (/ (* 2 deg) 3))
-							    (p1 deg))))
-			     roots))
-			  
-			  (else 
-			   ;; perhaps get derivative roots, plug in main -- need to get nth derivative to be safe in this
-			   ;; from Cohen, "Computational Algebraic Number Theory"
-			   (let ((roots ())
-				 (q (copy p1))
-				 (n deg)
-				 (x 1.3+0.314159i))
-			     (let ((pp (poly-as-vector-derivative p1)))
-			       (let ((happy #f)
-				     (qp (copy pp))
-				     (dx 0.0)
-				     (v (poly-as-vector-eval q x))
-				     (last-dx 1.0)) ; guard against infinite loop
-				 (do ((m (* (magnitude v) (magnitude v))))
-				     (happy)
-				   (set! dx (/ v (poly-as-vector-eval qp x)))
-				   (if (or (<= (magnitude dx) poly-roots-epsilon)
-					   (= dx last-dx))
-				       (set! happy #t)
-				       (begin
-					 (set! last-dx dx)
-					 (do ((c 0 (+ 1 c))
-					      (step3 #f))
-					     ((or (>= c 20)
-						  step3
-						  (<= (magnitude dx) poly-roots-epsilon)))
-					   (let* ((y (- x dx))
-						  (v1 (poly-as-vector-eval q y))
-						  (m1 (* (magnitude v1) (magnitude v1))))
-					     (if (< m1 m)
-						 (begin
-						   (set! x y)
-						   (set! v v1)
-						   (set! m m1)
-						   (set! step3 #t))
-						 (set! dx (/ dx 4.0)))))))))
-			       (set! x (- x (/ (poly-as-vector-eval p1 x) (poly-as-vector-eval pp x))))
-			       (set! x (- x (/ (poly-as-vector-eval p1 x) (poly-as-vector-eval pp x)))))
-			     (if (< (imag-part x) poly-roots-epsilon)
-				 (begin
-				   (set! x (real-part x))
-				   (set! q (poly-as-vector/ q (vector (- x) 1.0)))
-				   (set! n (- n 1)))
-				 (begin
-				   (set! q (poly-as-vector/ q (vector (magnitude x) 0.0 1.0)))
-				   (set! n (- n 2))))
-			     (set! roots (cons x roots))
-			     (if (> n 0) 
-				 (set! roots (append (poly-as-vector-roots (poly-as-vector-reduce (car q))) roots)))
-			     roots))))))))
-
-	  ((= deg 1)
-	   (list 0.0))
-
-	  (else 
-	   (do ((pnew (make-vector deg))
-		(i 1 (+ i 1)))
-	       ((> i deg)
-		(cons 0.0 (poly-as-vector-roots pnew)))
-	     (set! (pnew (- i 1)) (p1 i)))))))
+	(quadratic-roots      ; ax^2 + bx + c
+	 (lambda (a b c) 
+	   (let ((d (sqrt (- (* b b) (* 4 a c)))))
+	     (list (/ (- d b) (* 2 a))
+		   (/ (- (+ d b)) (* 2 a))))))
+	
+	(cubic-roots          ; ax^3 + bx^2 + cx + d
+	 (lambda (a b c d) 
+	   ;; Abramowitz & Stegun 3.8.2
+	   (let ((a0 (/ d a))
+		 (a1 (/ c a))
+		 (a2 (/ b a)))
+	     (let* ((r (- (/ (- (* a1 a2) (* 3 a0)) 6) (/ (* a2 a2 a2) 27)))
+		    (sq3r2 (let ((q (- (/ a1 3) (/ (* a2 a2) 9))))
+			     (sqrt (+ (* q q q) (* r r))))))
+	       (let ((r1 (expt (+ r sq3r2) 1/3))
+		     (r2 (expt (- r sq3r2) 1/3))
+		     (incr (/ (* 2 pi 0+i) 3)))
+		 (call-with-exit
+		  (lambda (return)
+		    (do ((i 0 (+ i 1)))   ; brute force! this can almost certainly be optimized
+			((= i 3))
+		      (do ((j 0 (+ j 1)))
+			  ((= j 3))
+			(let* ((s1 (* r1 (exp (* i incr))))
+			       (s2 (* r2 (exp (* j incr))))
+			       (z1 (simplify-complex (- (+ s1 s2) (/ a2 3)))))
+			  (if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z1)) poly-roots-epsilon)
+			      (let ((z2 (simplify-complex (+ (* -0.5 (+ s1 s2))
+							     (/ a2 -3) 
+							     (* (- s1 s2) 0.5 (sqrt -3))))))
+				(if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z2)) poly-roots-epsilon)
+				    (let ((z3 (simplify-complex (+ (* -0.5 (+ s1 s2)) 
+								   (/ a2 -3) 
+								   (* (- s1 s2) -0.5 (sqrt -3))))))
+				      (if (< (magnitude (poly-as-vector-eval (vector a0 a1 a2 1) z3)) poly-roots-epsilon)
+					  (return (list z1 z2 z3))))))))))
+		    #f)))))))
+	
+	(quartic-roots          ; ax^4 + bx^3 + cx^2 + dx + e
+	 (lambda (a b c d e)    ; Weisstein, "Encyclopedia of Mathematics"
+	   (call-with-exit
+	    (lambda (return)
+	      (let ((a0 (/ e a))
+		    (a1 (/ d a))
+		    (a2 (/ c a))
+		    (a3 (/ b a)))
+		(let ((yroot (poly-as-vector-roots (vector (- (* 4 a2 a0) (* a1 a1) (* a3 a3 a0))
+							   (- (* a1 a3) (* 4 a0))
+							   (- a2)
+							   1.0))))
+		  (when (and (pair? yroot)
+			     (= (length yroot) 4))
+		    (do ((i 0 (+ i 1)))
+			((= i 3))
+		      (let* ((y1 (yroot i))
+			     (R (sqrt (- (+ (* 0.25 a3 a3) y1) a2))))
+			(let ((D (sqrt (if (= R 0)
+					   (+ (* 0.75 a3 a3) (* -2 a2) (* 2 (sqrt (- (* y1 y1) (* 4 a0)))))
+					   (- (+ (* 0.75 a3 a3) (* -2 a2) (/ (* 0.25 (- (+ (* 4 a3 a2) (* -8 a1)) (* a3 a3 a3))) R)) (* R R)))))
+			      (E (sqrt (if (= R 0)
+					   (+ (* 0.75 a3 a3) (* -2 a2) (* -2 (sqrt (- (* y1 y1) (* 4 a0)))))
+					   (- (+ (* 0.75 a3 a3) (* -2 a2) (/ (* -0.25 (- (+ (* 4 a3 a2) (* -8 a1)) (* a3 a3 a3))) R)) (* R R))))))
+			  (let ((z1 (+ (* -0.25 a3) (* 0.5 R) (* 0.5 D)))
+				(z2 (+ (* -0.25 a3) (* 0.5 R) (* -0.5 D)))
+				(z3 (+ (* -0.25 a3) (* -0.5 R) (* 0.5 E)))
+				(z4 (+ (* -0.25 a3) (* -0.5 R) (* -0.5 E))))
+			    
+			    (if (< (magnitude (poly-as-vector-eval (vector e d c b a) z1)) poly-roots-epsilon)
+				(return (list z1 z2 z3 z4))))))))
+		  #f))))))
+	
+	(nth-roots           ; ax^n + b
+	 (lambda (a b deg) 
+	   (do ((n (expt (/ (- b) a) (/ 1.0 deg)))
+		(incr (/ (* 2 pi 0+i) deg))
+		(roots ())
+		(i 0 (+ i 1)))
+	       ((= i deg) roots)
+	     (set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots))))))
+    
+    ;; poly-as-vector-roots
+    (lambda (p1)
+      (let ((deg (- (length p1) 1)))
+	
+	(cond ((= deg 0)                          ; just constant
+	       ())
+	      
+	      ((not (= (p1 0) 0.0))               ; constant=0.0, divide through by x, recurse on new
+	       (case deg
+		 ((1)                             ; ax + b -> -b/a
+		  (linear-root (p1 1) (p1 0)))
+		 
+		 ((2)                             ; ax^2 + bx + c -> -b +/- sqrt(b^2 - 4ac) / 2a
+		  (quadratic-roots (p1 2) (p1 1) (p1 0)))
+		 
+		 (else
+		  (or (and (= deg 3)
+			   ;; it may be better to fall into Newton's method here
+			   (cubic-roots (p1 3) (p1 2) (p1 1) (p1 0)))
+		      
+		      (and (= deg 4)
+			   (quartic-roots (p1 4) (p1 3) (p1 2) (p1 1) (p1 0)))
+		      
+		      ;; degree>4 (or trouble above), use Newton's method unless some simple case pops up
+		      (let ((ones 0))
+			(do ((i 1 (+ i 1)))
+			    ((> i deg))
+			  (if (not (= (p1 i) 0.0))
+			      (set! ones (+ 1 ones))))
+			
+			(cond ((= ones 1)                  ; x^n + b -- "linear" in x^n
+			       (nth-roots (p1 deg) (p1 0) deg))
+			      
+			      ((and (= ones 2)
+				    (even? deg)
+				    (not (= (p1 (/ deg 2)) 0.0)))
+			       (let ((roots ())       ; quadratic in x^(n/2)
+				     (n (/ deg 2)))
+				 (for-each
+				  (lambda (r)
+				    (set! roots (append roots (nth-roots 1.0 (- r) n))))
+				  (poly-as-vector-roots (vector (p1 0) 
+								(p1 (/ deg 2)) 
+								(p1 deg))))
+				 roots))
+			      
+			      ((and (> deg 3)
+				    (= ones 3)
+				    (= (modulo deg 3) 0)
+				    (not (= (p1 (/ deg 3)) 0.0))
+				    (not (= (p1 (/ (* 2 deg) 3)) 0.0)))
+			       (let ((roots ())   ; cubic in x^(n/3)
+				     (n (/ deg 3)))
+				 (for-each
+				  (lambda (r)
+				    (set! roots (append roots (nth-roots 1.0 (- r) n))))
+				  (poly-as-vector-roots (vector (p1 0) 
+								(p1 (/ deg 3)) 
+								(p1 (/ (* 2 deg) 3))
+								(p1 deg))))
+				 roots))
+			      
+			      (else 
+			       ;; perhaps get derivative roots, plug in main -- need to get nth derivative to be safe in this
+			       ;; from Cohen, "Computational Algebraic Number Theory"
+			       (let ((roots ())
+				     (q (copy p1))
+				     (n deg)
+				     (x 1.3+0.314159i))
+				 (let ((pp (poly-as-vector-derivative p1)))
+				   (let ((happy #f)
+					 (qp (copy pp))
+					 (dx 0.0)
+					 (v (poly-as-vector-eval q x))
+					 (last-dx 1.0)) ; guard against infinite loop
+				     (do ((m (* (magnitude v) (magnitude v))))
+					 (happy)
+				       (set! dx (/ v (poly-as-vector-eval qp x)))
+				       (if (or (<= (magnitude dx) poly-roots-epsilon)
+					       (= dx last-dx))
+					   (set! happy #t)
+					   (begin
+					     (set! last-dx dx)
+					     (do ((c 0 (+ 1 c))
+						  (step3 #f))
+						 ((or (>= c 20)
+						      step3
+						      (<= (magnitude dx) poly-roots-epsilon)))
+					       (let* ((y (- x dx))
+						      (v1 (poly-as-vector-eval q y))
+						      (m1 (* (magnitude v1) (magnitude v1))))
+						 (if (< m1 m)
+						     (begin
+						       (set! x y)
+						       (set! v v1)
+						       (set! m m1)
+						       (set! step3 #t))
+						     (set! dx (/ dx 4.0)))))))))
+				   (set! x (- x (/ (poly-as-vector-eval p1 x) (poly-as-vector-eval pp x))))
+				   (set! x (- x (/ (poly-as-vector-eval p1 x) (poly-as-vector-eval pp x)))))
+				 (if (< (imag-part x) poly-roots-epsilon)
+				     (begin
+				       (set! x (real-part x))
+				       (set! q (poly-as-vector/ q (vector (- x) 1.0)))
+				       (set! n (- n 1)))
+				     (begin
+				       (set! q (poly-as-vector/ q (vector (magnitude x) 0.0 1.0)))
+				       (set! n (- n 2))))
+				 (set! roots (cons x roots))
+				 (if (> n 0) 
+				     (set! roots (append (poly-as-vector-roots (poly-as-vector-reduce (car q))) roots)))
+				 roots))))))))
+	      
+	      ((= deg 1)
+	       (list 0.0))
+	      
+	      (else 
+	       (do ((pnew (make-vector deg))
+		    (i 1 (+ i 1)))
+		   ((> i deg)
+		    (cons 0.0 (poly-as-vector-roots pnew)))
+		 (set! (pnew (- i 1)) (p1 i)))))))))
 
   
 (define poly-roots 
@@ -598,13 +603,11 @@
     (set! (v (/ (- i 1) 2)) 1.0)
     (poly-roots v)))
 
-
 ;;; these can be off by a lot!
 (do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
 (poly-roots (poly* (poly* (poly* (float-vector -1 1) (float-vector 1 1)) (poly* (float-vector -2 1) (float-vector 2 1))) (poly* (float-vector -3 1) (float-vector 3 1)))) -> (-3.0 3.0 -1.0 1.0 -2.0 2.0)
-(poly-roots (poly* (poly* (float-vector -1 1) (float-vector 1 1)) (poly* (float-vector -2 1) (poly* (float-vector 2 1) (float-vector 3 1))))) -> (2.0 -1.0 -2.0 -3.0 1.0)
 
 ;;; numerical trouble: 
 (poly-roots (float-vector 1000 .01 0 1))

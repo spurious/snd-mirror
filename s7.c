@@ -54804,6 +54804,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 		   * Yet another case (define (test-abs) (define (abs x) (+ x 1)) (format *stderr* "abs ~A~%" (abs -1)))
 		   *   when optimize_syntax sees the (define abs ...), it inserts abs into e so that the caller's e is extended (set-cdr!)
 		   *   so that find_uncomplicated_symbol above will be unhappy when we reach (abs -1) as the format arg!
+		   *   This can be confused if lambda is redefined at some point, but...
 		   */
 		}
 	      /* but if we make a recursive call on a func, we've obviously already looked up that function, and

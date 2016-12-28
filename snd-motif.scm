@@ -144,77 +144,76 @@
 ;;;
 ;;; replaces the current file search procedure in the File Selection Box
   
-  (define (install-searcher-with-colors proc)
-    
-    (define match-sound-files
-      (lambda args
-	(let ((func (car args))
-	      (matches ()))
-	  (for-each
-	   (lambda (file)
-	     (if (func file)
-		 (set! matches (cons file matches))))
-	   (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
-	  matches)))
-    
-    (define (XmString->string str)
-      (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
-    
-    (let ((dialog (open-file-dialog #f))
-	   ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
-	   (rendertable (let* ((tags (vector "one" "two" "three" "four"))
-			       (pixels (let* ((dpy (XtDisplay (cadr (main-widgets))))
-					      (cmap (DefaultColormap dpy (DefaultScreen dpy))))
-					 (map
-					  (lambda (color)
-					    (let ((col (XColor)))
-					      (if (= (XAllocNamedColor dpy cmap color col col) 0)
-						  (snd-error (format #f "can't allocate ~A" color))
-						  (.pixel col))))
-					  '("black" "red" "blue" "orange")))))
-			  (XmRenderTableAddRenditions 
-			   #f 
-			   (map (lambda (tag pix)
-				  (XmRenditionCreate 
-				   (cadr (main-widgets))
-				   tag
-				   (list XmNrenditionForeground pix
-					 XmNfontName "9x15"
-					 XmNfontType XmFONT_IS_FONT)))
-				tags pixels)
-			   (length tags)
-			   XmMERGE_NEW))))
-      (XtSetValues dialog
-		   (list XmNfileSearchProc
-			 (lambda (widget info)
-			   (let* ((files (let ((dir (XmString->string (.dir info))))  ; may need filter text here?
-					   (sort! (map 
-						   (lambda (n) 
-						     (string-append dir n)) 
-						   (match-sound-files proc dir))
-						  string<?)))               ; alphabetical order
-				  (fileTable (map
-					      (lambda (n)
-						(XmStringGenerate 
-						 n #f XmCHARSET_TEXT 
-						 (case (channels n)
-						   ((1) "one")
-						   ((2) "two")
-						   ((3) "three")
-						   (else "four"))))
-					      files)))
-			     (XtSetValues widget
-					  (list XmNfileListItems fileTable
-						XmNfileListItemCount (length files)
-						XmNlistUpdated #t))
-			     (for-each XmStringFree fileTable)))))
-      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
-      (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
-      (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
-		   (list XmNrenderTable rendertable))
-      (XmFileSelectionDoSearch dialog #f)))
-  
-					;(install-searcher-with-colors (lambda (file) #t))
+  (define install-searcher-with-colors 
+    (let ((match-sound-files 
+	   (lambda args
+	     (let ((func (car args))
+		   (matches ()))
+	       (for-each
+		(lambda (file)
+		  (if (func file)
+		      (set! matches (cons file matches))))
+		(sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
+	       matches)))
+	  (XmString->string 
+	   (lambda (str)
+	     (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))))
+      (lambda (proc)
+	(let ((dialog (open-file-dialog #f))
+	      ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
+	      (rendertable (let* ((tags (vector "one" "two" "three" "four"))
+				  (pixels (let* ((dpy (XtDisplay (cadr (main-widgets))))
+						 (cmap (DefaultColormap dpy (DefaultScreen dpy))))
+					    (map
+					     (lambda (color)
+					       (let ((col (XColor)))
+						 (if (= (XAllocNamedColor dpy cmap color col col) 0)
+						     (snd-error (format #f "can't allocate ~A" color))
+						     (.pixel col))))
+					     '("black" "red" "blue" "orange")))))
+			     (XmRenderTableAddRenditions 
+			      #f 
+			      (map (lambda (tag pix)
+				     (XmRenditionCreate 
+				      (cadr (main-widgets))
+				      tag
+				      (list XmNrenditionForeground pix
+					    XmNfontName "9x15"
+					    XmNfontType XmFONT_IS_FONT)))
+				   tags pixels)
+			      (length tags)
+			      XmMERGE_NEW))))
+	  (XtSetValues dialog
+		       (list XmNfileSearchProc
+			     (lambda (widget info)
+			       (let* ((files (let ((dir (XmString->string (.dir info))))  ; may need filter text here?
+					       (sort! (map 
+						       (lambda (n) 
+							 (string-append dir n)) 
+						       (match-sound-files proc dir))
+						      string<?)))               ; alphabetical order
+				      (fileTable (map
+						  (lambda (n)
+						    (XmStringGenerate 
+						     n #f XmCHARSET_TEXT 
+						     (case (channels n)
+						       ((1) "one")
+						       ((2) "two")
+						       ((3) "three")
+						       (else "four"))))
+						  files)))
+				 (XtSetValues widget
+					      (list XmNfileListItems fileTable
+						    XmNfileListItemCount (length files)
+						    XmNlistUpdated #t))
+				 (for-each XmStringFree fileTable)))))
+	  (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST))
+	  (XtUnmanageChild (XmFileSelectionBoxGetChild dialog XmDIALOG_DIR_LIST_LABEL))
+	  (XtSetValues (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
+		       (list XmNrenderTable rendertable))
+	  (XmFileSelectionDoSearch dialog #f)))))
+      
+  ;; (install-searcher-with-colors (lambda (file) #t))
   
   
 ;;; -------- keep-file-dialog-open-upon-ok
@@ -989,157 +988,160 @@
   
   (define including-mark-pane #f) ; for prefs
   
-  (define (add-mark-pane)
+  (define add-mark-pane
+    (letrec ((find-mark-list 
+	      (lambda (snd chn dats)
+		(and (pair? dats)
+		     (let ((cur (car dats)))
+		       (if (and (equal? (car cur) snd)
+				(= (cadr cur) chn))
+			   (caddr cur)
+			   (find-mark-list snd chn (cdr dats)))))))
     
-    (define (find-mark-list snd chn dats)
-      (and (pair? dats)
-	   (let ((cur (car dats)))
-	     (if (and (equal? (car cur) snd)
-		      (= (cadr cur) chn))
-		 (caddr cur)
-		 (find-mark-list snd chn (cdr dats))))))
+	     (mark-list-length
+	      (let* ((mark-list-lengths ())
+		     (remove-mark-list 
+		      (lambda (snd chn)
+			(set! mark-list-lengths (remove-if 
+						 (lambda (n) 
+						   (and (equal? (car n) snd) 
+							(= (cadr n) chn))) 
+						 mark-list-lengths)))))
+		(dilambda
+		 (lambda (snd chn)
+		   (or (find-mark-list snd chn mark-list-lengths)
+		       0))
+		 (lambda (snd chn len)
+		   (remove-mark-list snd chn)
+		   (set! mark-list-lengths (cons (list snd chn len) mark-list-lengths))))))
     
-    (define mark-list-length
-      (let ((mark-list-lengths ()))
-	(define (remove-mark-list snd chn)
-	  (set! mark-list-lengths (remove-if 
-				   (lambda (n) 
-				     (and (equal? (car n) snd) 
-					  (= (cadr n) chn))) 
-				   mark-list-lengths)))
-	(dilambda
-	 (lambda (snd chn)
-	   (or (find-mark-list snd chn mark-list-lengths)
-	       0))
-	 (lambda (snd chn len)
-	   (remove-mark-list snd chn)
-	   (set! mark-list-lengths (cons (list snd chn len) mark-list-lengths))))))
+	     (mark-list
+	      (let ((mark-lists ()))
+		(dilambda
+		 (lambda (snd chn)
+		   (cond ((find-mark-list snd chn mark-lists) => caddr) (else #f)))
+		 (lambda (snd chn wid)
+		   (set! mark-lists (cons (list snd chn wid) mark-lists))))))
     
-    (define mark-list
-      (let ((mark-lists ()))
-	(dilambda
-	 (lambda (snd chn)
-	   (cond ((find-mark-list snd chn mark-lists) => caddr) (else #f)))
-	 (lambda (snd chn wid)
-	   (set! mark-lists (cons (list snd chn wid) mark-lists))))))
+	     (deactivate-mark-list 
+	      (lambda (snd chn)
+		(let ((current-mark-list-length (mark-list-length snd chn)))
+		  (if (and (> current-mark-list-length 0)
+			   (Widget? (mark-list snd chn)))
+		      (for-each XtUnmanageChild (cadr (XtGetValues (mark-list snd chn) (list XmNchildren 0) 1)))))))
     
-    (define (deactivate-mark-list snd chn)
-      (let ((current-mark-list-length (mark-list-length snd chn)))
-	(if (and (> current-mark-list-length 0)
-		 (Widget? (mark-list snd chn)))
-	    (for-each XtUnmanageChild (cadr (XtGetValues (mark-list snd chn) (list XmNchildren 0) 1))))))
+	     (make-mark-list 
+	      (lambda (snd chn)
+		(let ((current-mark-list-length (mark-list-length snd chn)))
+		  (deactivate-mark-list snd chn)
+		  (if (not (Widget? (mark-list snd chn)))
+		      (let* ((mark-box (add-channel-pane snd chn "mark-box" xmFormWidgetClass
+							 (list XmNbackground       *basic-color*
+							       XmNorientation      XmVERTICAL
+							       XmNpaneMinimum      100
+							       XmNbottomAttachment XmATTACH_FORM)))
+			     (mark-scroller (let ((mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
+										     (list XmNbackground       *highlight-color*
+											   XmNleftAttachment   XmATTACH_FORM
+											   XmNrightAttachment  XmATTACH_FORM
+											   XmNalignment        XmALIGNMENT_CENTER
+											   XmNtopAttachment    XmATTACH_FORM))))
+					      (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
+								     (list XmNbackground       *basic-color*
+									   XmNscrollingPolicy  XmAUTOMATIC
+									   XmNscrollBarDisplayPolicy XmSTATIC
+									   XmNleftAttachment   XmATTACH_FORM
+									   XmNrightAttachment  XmATTACH_FORM
+									   XmNtopAttachment    XmATTACH_WIDGET
+									   XmNtopWidget        mark-label
+									   XmNbottomAttachment XmATTACH_FORM))))
+			     (mlist (XtCreateManagedWidget "mark-list"  xmRowColumnWidgetClass mark-scroller
+							   (list XmNorientation      XmVERTICAL
+								 XmNtopAttachment    XmATTACH_FORM
+								 XmNbottomAttachment XmATTACH_FORM
+								 XmNspacing          0))))
+			(set-main-color-of-widget mark-scroller)
+			(XtSetValues mark-box (list XmNpaneMinimum 1))
+			(set! (mark-list snd chn) (list snd chn mlist))))
+		  
+		  (let ((new-marks (marks snd chn)))
+		    (when (> (length new-marks) current-mark-list-length)
+		      (let ((lst (mark-list snd chn)))
+			(do ((i current-mark-list-length (+ i 1)))
+			    ((= i (length new-marks)))
+			  (let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
+						    (list XmNbackground *basic-color*))))
+			    (XtAddCallback tf XmNfocusCallback
+					   (lambda (w c i)
+					     (XtSetValues w (list XmNbackground (white-pixel)))))
+			    (XtAddCallback tf XmNlosingFocusCallback
+					   (lambda (w c i)
+					     (XtSetValues w (list XmNbackground *basic-color*))))
+			    (XtAddCallback tf XmNactivateCallback
+					   (lambda (w c i)
+					     (let ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
+						   (samp (let ((txt (cadr (XtGetValues w (list XmNvalue 0)))))
+							   (and (string? txt) 
+								(> (length txt) 0)
+								(string->number txt)))))
+					       (if samp
+						   (if (mark? id)
+						       (set! (mark-sample id) samp))
+						   (delete-mark id))
+					       (XtSetValues w (list XmNbackground *basic-color*)))))))))
+		    
+		    (set! (mark-list-length snd chn) (length new-marks))
+		    (let ((lst (mark-list snd chn)))
+		      (call-with-exit
+		       (lambda (quit)
+			 (for-each
+			  (lambda (n)
+			    (if (null? new-marks) (quit #f))
+			    (if (XmIsTextField n)
+				(begin
+				  (XtSetValues n (list XmNvalue (number->string (mark-sample (car new-marks)))
+						       XmNuserData (mark->integer (car new-marks))))
+				  (XtManageChild n)
+				  (set! new-marks (cdr new-marks)))))
+			  (cadr (XtGetValues lst (list XmNchildren 0) 1)))))))
+		  #f)))
     
-    (define (make-mark-list snd chn)
-      (let ((current-mark-list-length (mark-list-length snd chn)))
-	(deactivate-mark-list snd chn)
-	(if (not (Widget? (mark-list snd chn)))
-	    (let* ((mark-box (add-channel-pane snd chn "mark-box" xmFormWidgetClass
-					       (list XmNbackground       *basic-color*
-						     XmNorientation      XmVERTICAL
-						     XmNpaneMinimum      100
-						     XmNbottomAttachment XmATTACH_FORM)))
-		   (mark-scroller (let ((mark-label (XtCreateManagedWidget "Marks" xmLabelWidgetClass mark-box
-									   (list XmNbackground       *highlight-color*
-										 XmNleftAttachment   XmATTACH_FORM
-										 XmNrightAttachment  XmATTACH_FORM
-										 XmNalignment        XmALIGNMENT_CENTER
-										 XmNtopAttachment    XmATTACH_FORM))))
-				    (XtCreateManagedWidget "mark-scroller" xmScrolledWindowWidgetClass mark-box
-							   (list XmNbackground       *basic-color*
-								 XmNscrollingPolicy  XmAUTOMATIC
-								 XmNscrollBarDisplayPolicy XmSTATIC
-								 XmNleftAttachment   XmATTACH_FORM
-								 XmNrightAttachment  XmATTACH_FORM
-								 XmNtopAttachment    XmATTACH_WIDGET
-								 XmNtopWidget        mark-label
-								 XmNbottomAttachment XmATTACH_FORM))))
-		   (mlist (XtCreateManagedWidget "mark-list"  xmRowColumnWidgetClass mark-scroller
-						 (list XmNorientation      XmVERTICAL
-						       XmNtopAttachment    XmATTACH_FORM
-						       XmNbottomAttachment XmATTACH_FORM
-						       XmNspacing          0))))
-	      (set-main-color-of-widget mark-scroller)
-	      (XtSetValues mark-box (list XmNpaneMinimum 1))
-	      (set! (mark-list snd chn) (list snd chn mlist))))
-	
-	(let ((new-marks (marks snd chn)))
-	  (when (> (length new-marks) current-mark-list-length)
-	    (let ((lst (mark-list snd chn)))
-	      (do ((i current-mark-list-length (+ i 1)))
-		  ((= i (length new-marks)))
-		(let ((tf (XtCreateWidget "field" xmTextFieldWidgetClass lst
-					  (list XmNbackground *basic-color*))))
-		  (XtAddCallback tf XmNfocusCallback
-				 (lambda (w c i)
-				   (XtSetValues w (list XmNbackground (white-pixel)))))
-		  (XtAddCallback tf XmNlosingFocusCallback
-				 (lambda (w c i)
-				   (XtSetValues w (list XmNbackground *basic-color*))))
-		  (XtAddCallback tf XmNactivateCallback
-				 (lambda (w c i)
-				   (let ((id (integer->mark (cadr (XtGetValues w (list XmNuserData 0)))))
-					 (samp (let ((txt (cadr (XtGetValues w (list XmNvalue 0)))))
-						 (and (string? txt) 
-						      (> (length txt) 0)
-						      (string->number txt)))))
-				     (if samp
-					 (if (mark? id)
-					     (set! (mark-sample id) samp))
-					 (delete-mark id))
-				     (XtSetValues w (list XmNbackground *basic-color*)))))))))
-	  
-	  (set! (mark-list-length snd chn) (length new-marks))
-	  (let ((lst (mark-list snd chn)))
-	    (call-with-exit
-	     (lambda (quit)
-	       (for-each
-		(lambda (n)
-		  (if (null? new-marks) (quit #f))
-		  (if (XmIsTextField n)
-		      (begin
-			(XtSetValues n (list XmNvalue (number->string (mark-sample (car new-marks)))
-					     XmNuserData (mark->integer (car new-marks))))
-			(XtManageChild n)
-			(set! new-marks (cdr new-marks)))))
-		(cadr (XtGetValues lst (list XmNchildren 0) 1)))))))
-	#f))
+	     (remark (lambda (hook)
+		       (make-mark-list (hook 'snd) (hook 'chn))))
     
-    (define (remark hook)
-      (make-mark-list (hook 'snd) (hook 'chn)))
+	     (unremark (lambda (hook)
+			 (do ((i 0 (+ i 1)))
+			     ((= i (channels (hook 'snd))))
+			   (deactivate-mark-list (hook 'snd) i))))
     
-    (define (unremark hook)
-      (do ((i 0 (+ i 1)))
-	  ((= i (channels (hook 'snd))))
-	(deactivate-mark-list (hook 'snd) i)))
-    
-    (define (open-remarks hook)
-      (let ((snd (hook 'snd)))
-	(do ((i 0 (+ i 1)))
-	    ((= i (channels snd)))
-	  (hook-push (after-edit-hook snd i) 
-		     (lambda (hook)
-		       (if (Widget? (mark-list snd i)) 
-			   (make-mark-list snd i))))
-	  (hook-push (undo-hook snd i) 
-		     (lambda (hook) 
-		       (if (Widget? (mark-list snd i)) 
-			   (make-mark-list snd i)))))))
-    
-    (set! including-mark-pane #t)
-    (hook-push mark-hook remark)
-    (hook-push close-hook unremark)
-    (hook-push after-open-hook open-remarks)
-    (hook-push update-hook (lambda (hook) 
-			     ;; update-sound (called if header is changed, for example), calls open-sound
-			     ;;   which restores our channel-local mark-pane hooks, but doesn't re-activate
-			     ;;   the mark pane itself. So, we return a procedure from the update-hook
-			     ;;   evaluation that will recreate our pane immediately upon update completion.
-			     (set! (hook 'result)
-				   (lambda (updated-snd) 
-				     ;; this is the procedure to be called when the update is done
-				     (do ((i 0 (+ i 1)))
-					 ((= i (channels updated-snd)))
-				       (make-mark-list updated-snd i)))))))
+	     (open-remarks (lambda (hook)
+			     (let ((snd (hook 'snd)))
+			       (do ((i 0 (+ i 1)))
+				   ((= i (channels snd)))
+				 (hook-push (after-edit-hook snd i) 
+					    (lambda (hook)
+					      (if (Widget? (mark-list snd i)) 
+						  (make-mark-list snd i))))
+				 (hook-push (undo-hook snd i) 
+					    (lambda (hook) 
+					      (if (Widget? (mark-list snd i)) 
+						  (make-mark-list snd i)))))))))
+      (lambda ()
+	(set! including-mark-pane #t)
+	(hook-push mark-hook remark)
+	(hook-push close-hook unremark)
+	(hook-push after-open-hook open-remarks)
+	(hook-push update-hook (lambda (hook) 
+				 ;; update-sound (called if header is changed, for example), calls open-sound
+				 ;;   which restores our channel-local mark-pane hooks, but doesn't re-activate
+				 ;;   the mark pane itself. So, we return a procedure from the update-hook
+				 ;;   evaluation that will recreate our pane immediately upon update completion.
+				 (set! (hook 'result)
+				       (lambda (updated-snd) 
+					 ;; this is the procedure to be called when the update is done
+					 (do ((i 0 (+ i 1)))
+					     ((= i (channels updated-snd)))
+					   (make-mark-list updated-snd i)))))))))
   
   
 ;;; -------- select-file --------
