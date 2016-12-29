@@ -2194,8 +2194,8 @@ static Xen C_to_Xen_ANY(Widget w, Arg arg)
     {
     case XM_INT:	      return(C_int_to_Xen_integer((*((int *)(arg.value)))));
     case XM_ULONG:	      return(C_ulong_to_Xen_ulong((*((unsigned long *)(arg.value)))));
-    case XM_XTPOINTER:	      /* return(Xen_wrap_C_pointer((XtPointer)(arg.value))); */ /* a c-pointer is not useful in this context */
-                              return(C_llong_to_Xen_llong(*((long long int *)(arg.value))));
+    case XM_XTPOINTER:	      /* return(Xen_wrap_C_pointer((XtPointer)(arg.value))); */  /* a c-pointer is not useful in this context */
+      return(C_llong_to_Xen_llong(*((long long int *)(arg.value))));                     /* this also seems to work in 32-bit systems */
     case XM_UCHAR:	      return(C_int_to_Xen_integer((*((unsigned char *)(arg.value)))));
     case XM_FLOAT:	      return(C_double_to_Xen_real((*((float *)(arg.value))))); /* the resource values are floats */
     case XM_STRING:	      return(C_string_to_Xen_string((char *)(*((char **)(arg.value)))));

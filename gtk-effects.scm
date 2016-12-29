@@ -736,12 +736,12 @@ the modulation frequency, and the echo amplitude."))
 		   (format #f "effects-blp ~A ~A ~A" freq beg dur))))
   
   (let ((filter-menu-list ())
-	(filter-menu (gtk_menu_item_new_with_label "Filter Effects"))
 	(filter-cascade (gtk_menu_new)))
-    (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) filter-menu)
-    (gtk_widget_show filter-menu)
-    (gtk_menu_item_set_submenu (GTK_MENU_ITEM filter-menu) filter-cascade)
-    (g_signal_connect filter-menu "activate" (lambda (w d) (update-label filter-menu-list)) #f)
+    (let ((filter-menu (gtk_menu_item_new_with_label "Filter Effects")))
+      (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) filter-menu)
+      (gtk_widget_show filter-menu)
+      (gtk_menu_item_set_submenu (GTK_MENU_ITEM filter-menu) filter-cascade)
+      (g_signal_connect filter-menu "activate" (lambda (w d) (update-label filter-menu-list)) #f))
     
     ;; -------- Butterworth band-pass filter
     
@@ -2009,12 +2009,12 @@ http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
       (map-channel csf beg dur snd chn #f (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur))))
   
   (let ((misc-menu-list ())
-	(misc-menu (gtk_menu_item_new_with_label "Various"))
 	(misc-cascade (gtk_menu_new)))
-    (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) misc-menu)
-    (gtk_widget_show misc-menu)
-    (gtk_menu_item_set_submenu (GTK_MENU_ITEM misc-menu) misc-cascade)
-    (g_signal_connect misc-menu "activate" (lambda (w d) (update-label misc-menu-list)) #f)
+    (let ((misc-menu (gtk_menu_item_new_with_label "Various")))
+      (gtk_menu_shell_append (GTK_MENU_SHELL (gtk_menu_item_get_submenu (GTK_MENU_ITEM (main-menu effects-menu)))) misc-menu)
+      (gtk_widget_show misc-menu)
+      (gtk_menu_item_set_submenu (GTK_MENU_ITEM misc-menu) misc-cascade)
+      (g_signal_connect misc-menu "activate" (lambda (w d) (update-label misc-menu-list)) #f))
     
     ;; -------- Place sound
     

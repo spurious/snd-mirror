@@ -408,26 +408,25 @@
 ;;; adds a label to the status-area area showing the current free space 
   
   (define show-disk-space
-    (let ((labelled-snds ()))
-      
-      (define (kmg num)
-	(cond ((<= num 0)      (copy "disk full!"))
-	      ((<= num 1024)   (format #f "space: ~10DK" num))
-	      ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
-	      (else            (format #f "space: ~6,3FM" (/ num 1024.0)))))
-      
-      (define (show-label data)
-	(if (sound? (car data))
-	    (let ((space (kmg (disk-kspace (file-name (car data))))))
-	      (gtk_label_set_text (GTK_LABEL (cadr data)) space)
-	      (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
-	      0)))
-      
-      (define (find-if pred lst)
-	(cond ((null? lst) #f)
-	      ((pred (car lst)) (car lst))
-	      (else (find-if pred (cdr lst)))))
-      
+    (let ((labelled-snds ())
+	  
+	  (kmg (lambda (num)
+		 (cond ((<= num 0)      (copy "disk full!"))
+		       ((<= num 1024)   (format #f "space: ~10DK" num))
+		       ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
+		       (else            (format #f "space: ~6,3FM" (/ num 1024.0))))))
+	  
+	  (show-label (lambda (data)
+			(if (sound? (car data))
+			    (let ((space (kmg (disk-kspace (file-name (car data))))))
+			      (gtk_label_set_text (GTK_LABEL (cadr data)) space)
+			      (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
+			      0))))
+	  
+	  (find-if (lambda (pred lst)
+		     (cond ((null? lst) #f)
+			   ((pred (car lst)) (car lst))
+			   (else (find-if pred (cdr lst)))))))
       (lambda (hook)
 	;; (show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)
 	

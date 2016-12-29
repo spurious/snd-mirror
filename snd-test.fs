@@ -3,6 +3,7 @@
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: 2006/08/05 00:09:28
 \ Changed: 2016/11/17 15:24:33
+\ Changed: 2016/12/28 23:20:33
 
 \ Tags:  FIXME - something is wrong
 \        XXX   - info marker
@@ -7379,8 +7380,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   123 <'> player-home 'wrong-type-arg check-error-tag
   "/hiho" <'> set-temp-dir 'no-such-file check-error-tag
   "/hiho" <'> set-save-dir 'no-such-file check-error-tag
-  20 integer->transform 4 0.0 make-vct <'> snd-transform 'out-of-range 
-    check-error-tag
   sf-dir "bad_chans.snd" $+ <'> mus-sound-maxamp 'bad-header check-error-tag
   :order 32 :ycoeffs 4 0.0 make-vct <'> make-iir-filter 'mus-error 
     check-error-tag
@@ -7616,8 +7615,6 @@ set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
   1234 "hi" <'> noop 0 make-proc <'> add-to-menu 'no-such-menu check-error-tag
   "hi" <'> noop 2 make-proc <'> add-to-main-menu 'bad-arity check-error-tag
   1 "hi" <'> noop 2 make-proc <'> add-to-menu 'bad-arity check-error-tag
-  -1 integer->transform <'> set-transform-type 'wrong-type-arg check-error-tag
-  123 integer->transform <'> set-transform-type 'out-of-range check-error-tag
   '( 0 1 ) "hiho" <'> help-dialog 'wrong-type-arg check-error-tag
   '( 0 1 ) "hiho" <'> info-dialog 'wrong-type-arg check-error-tag
   1234 <'> edit-header-dialog 'no-such-sound check-error-tag

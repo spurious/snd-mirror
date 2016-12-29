@@ -3,6 +3,7 @@
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: 2005/02/18 10:18:34
 # Changed: 2016/11/17 15:25:21
+# Changed: 2016/12/29 00:20:51
 
 # Tags: FIXME - something is wrong
 #       XXX   - info marker
@@ -10781,39 +10782,13 @@ end
 
 def test_07_02(old_colormap_size)
   ind = add_colormap("white", lambda do |size|
-                       [make_vct(size, 1.0), make_vct(size, 1.0), make_vct(size, 1.0)]
-                     end)
+          [make_vct(size, 1.0), make_vct(size, 1.0), make_vct(size, 1.0)]
+        end)
   unless res = colormap?(ind)
     snd_display("add_colormap %s: %s?", ind, res)
   end
   unless vequal(res = colormap_ref(ind, 0.5), [1.0, 1.0, 1.0])
     snd_display("white colormap: %s?", res)
-  end
-  if (res = Snd.catch do set_colormap(ind) end).first == :no_such_colormap or colormap != ind
-    snd_display("colormap white: %s %s %s", res, ind, colormap)
-  end
-  if (res = colormap_name(ind)) != "white"
-    snd_display("white colormap name: %s?", res)
-  end
-  if (res = Snd.catch do delete_colormap(integer2colormap(1234)) end).first != :no_such_colormap
-    snd_display("delete_colormap 1234: %s?", res)
-  end
-  if (res = Snd.catch do colormap_ref(integer2colormap(1234), 0.5) end).first != :no_such_colormap
-    snd_display("colormap_ref 1234: %s?", res)
-  end
-  res = Snd.catch do colormap_ref(integer2colormap(-1), 0.5) end
-  if res.first != :no_such_colormap and res.first != :wrong_type_arg
-    snd_display("colormap_ref -1: %s?", res)
-  end
-  if (res = Snd.catch do set_colormap(integer2colormap(1234)) end).first != :no_such_colormap
-    snd_display("set_colormap 1234: %s?", res)
-  end
-  res = Snd.catch do set_colormap(integer2colormap(-1)) end
-  if res.first != :no_such_colormap and res.first != :wrong_type_arg
-    snd_display("set_colormap -1: %s?", res)
-  end
-  if (res = Snd.catch do colormap_ref($copper_colormap, 2.0) end).first != :out_of_range
-    snd_display("colormap_ref 2.0: %s?", res)
   end
   #
   set_colormap_size(old_colormap_size)
@@ -16157,7 +16132,7 @@ def test_08_10
   print_and_check(gen, "readin", "readin 2.snd[chan 1], loc: 10, dir: 1")
   # 
   gen = make_file2sample("oboe.snd")
-  print_and_check(gen, "file->sample", "file->sample oboe.snd")
+  print_and_check(gen, "file->sample", "file->sample \"oboe.snd\"")
   unless file2sample?(gen)
     snd_display("%s not file2sample?", gen)
   end
@@ -16253,7 +16228,7 @@ end
 
 def test_08_11
   gen = make_file2frample("oboe.snd")
-  print_and_check(gen, "file->frample", "file->frample oboe.snd")
+  print_and_check(gen, "file->frample", "file->frample \"oboe.snd\"")
   unless file2frample?(gen)
     snd_display("%s not file2frample?", gen)
   end
@@ -16279,7 +16254,7 @@ def test_08_11
   # 
   delete_files("fmv.snd", "fmv1.snd", "fmv2.snd", "fmv3.snd")
   gen = make_sample2file("fmv.snd", 2, Mus_lshort, Mus_riff)
-  print_and_check(gen, "sample->file", "sample->file fmv.snd")
+  print_and_check(gen, "sample->file", "sample->file \"fmv.snd\"")
   unless sample2file?(gen)
     snd_display("%s not sample2file?", gen)
   end
@@ -16306,7 +16281,7 @@ def test_08_11
   out_any(60, 0.150, 1, gen)
   mus_close(gen)
   gen = make_file2sample("fmv.snd")
-  print_and_check(gen, "file->sample", "file->sample fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample \"fmv.snd\"")
   val0 = in_any(20, 0, gen)
   val1 = in_any(20, 1, gen)
   val2 = ina(30, gen)
@@ -16364,7 +16339,7 @@ def test_08_11
   end
   #
   gen = make_sample2file("fmv.snd", 4, Mus_lshort, Mus_riff)
-  print_and_check(gen, "sample->file", "sample->file fmv.snd")
+  print_and_check(gen, "sample->file", "sample->file \"fmv.snd\"")
   10.times do |i|
     outa(i, 0.1, gen)
     outb(i, 0.2, gen)
@@ -16379,7 +16354,7 @@ def test_08_11
   end
   mus_close(gen)
   gen = make_file2sample("fmv.snd")
-  print_and_check(gen, "file->sample", "file->sample fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample \"fmv.snd\"")
   10.times do |i|
     if fneq(res1 = ina(i, gen), 0.11) or
         fneq(res2 = inb(i, gen), 0.22) or
@@ -16408,7 +16383,7 @@ def test_08_11
   end
   # 
   gen = make_frample2file("fmv1.snd", 2, Mus_bshort, Mus_next)
-  print_and_check(gen, "frample->file", "frample->file fmv1.snd")
+  print_and_check(gen, "frample->file", "frample->file \"fmv1.snd\"")
   unless frample2file?(gen)
     snd_display("%s not frample2file?", gen)
   end
@@ -16446,7 +16421,7 @@ def test_08_11
   end
   #
   gen = make_sample2file("fmv2.snd", 4, Mus_bshort, Mus_aifc)
-  print_and_check(gen, "sample->file", "sample->file fmv2.snd")
+  print_and_check(gen, "sample->file", "sample->file \"fmv2.snd\"")
   unless sample2file?(gen)
     snd_display("%s not sample2file?", gen)
   end
@@ -18966,8 +18941,11 @@ def test_08_19
   reverse_sound(nind)
   revert_sound(nind)
   mid = mix_sound("pistol.snd", 0).car
+  # INFO: mix_home()
+  # According to g_mix_home() in snd-mix.c it can be
+  # [selected_sound(), 0, file_name() or false, 0].
   if mix?(mid) and mix_home(mid) != [selected_sound, 0, false, 0]
-    snd_display("mix_sound mix_home: %s (%s or %s 0)?", mix_home(mid), selected_sound, nind)
+    snd_display("mix_sound mix_home: %s?", mix_home(mid))
   end
   hello_dentist(40.0, 0.1)
   fp(1.0, 0.3, 20)
@@ -20754,9 +20732,6 @@ def test_10_01
   end
   if (res = mark_property(:not_there, m1))
     snd_display("mark_not_property: %s?", res)
-  end
-  if (res = Snd.catch do mark_sample(integer2mark(12345678)) end).first != :no_such_mark
-    snd_display("mark_sample err: %s", res.inspect)
   end
   if (res = Snd.catch do add_mark(123, 123) end).first != :no_such_sound
     snd_display("add_mark err: %s", res.inspect)
@@ -35030,9 +35005,6 @@ def test_28_02
   check_error_tag(:wrong_type_arg) do player_home(123) end
   check_error_tag(:no_such_file) do set_temp_dir("/hiho") end
   check_error_tag(:no_such_file) do set_save_dir("/hiho") end
-  check_error_tag(:out_of_range) do
-    snd_transform(integer2transform(20), make_vct(4))
-  end
   check_error_tag(:bad_header) do
     mus_sound_maxamp($sf_dir + "bad_chans.snd")
   end
@@ -35357,12 +35329,6 @@ def test_28_02
   end
   check_error_tag(:bad_arity) do
     add_to_menu(1, "hi", lambda do |a, b| false end)
-  end
-  check_error_tag(:wrong_type_arg) do
-    set_transform_type(integer2transform(-1))
-  end
-  check_error_tag(:out_of_range) do
-    set_transform_type(integer2transform(123))
   end
   check_error_tag(:wrong_type_arg) do help_dialog([0, 1], "hiho") end
   check_error_tag(:wrong_type_arg) do info_dialog([0, 1], "hiho") end

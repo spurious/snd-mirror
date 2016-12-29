@@ -232,11 +232,11 @@
 ;;; create a float-vector from an envelope
 
 (define* (make-gr-env env1 (len 512))
-  (let ((env-float-vector (make-float-vector len))
-	(length-1 (* 1.0 (- len 1))))
-    (do ((i 0 (+ 1 i)))
-	((= i len) env-float-vector)
-      (set! (env-float-vector i) (envelope-interp (/ i length-1) env1)))))
+  (do ((env-float-vector (make-float-vector len))
+       (length-1 (* 1.0 (- len 1)))
+       (i 0 (+ i 1)))
+      ((= i len) env-float-vector)
+    (set! (env-float-vector i) (envelope-interp (/ i length-1) env1))))
 
 ;;;-----------------------------------------------------------------------------
 ;;; Grain envelopes
