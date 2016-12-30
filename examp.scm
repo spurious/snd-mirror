@@ -1760,39 +1760,38 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 (define open-next-file-in-directory
   (let ((last-file-opened #f)
 	(current-directory #f)
-	(current-sorted-files #f))
-    
-    (define (file-from-path curfile)
-      (do ((last-slash 0)
-	   (i 0 (+ i 1)))
-	  ((= i (length curfile))
-	   (substring curfile (+ 1 last-slash)))   
-	(if (char=? (curfile i) #\/)
-	    (set! last-slash i))))
-    
-    (define (directory-from-path curfile)
-      (do ((last-slash 0)
-	   (i 0 (+ i 1)))
-	  ((= i (length curfile))
-	   (substring curfile 0 last-slash))   
-	(if (char=? (curfile i) #\/)
-	    (set! last-slash i))))
-    
-    (define (find-next-file)
-      ;; find the next file in the sorted list, with wrap-around
-      (let ((choose-next (not (string? last-file-opened)))
-	    (just-filename (file-from-path last-file-opened)))
-	(call-with-exit
-	 (lambda (return)
-	   (for-each 
-	    (lambda (file)
-	      (if choose-next
-		  (return file)
-		  (if (string=? file just-filename)
-		      (set! choose-next #t))))
-	    current-sorted-files)
-	   ;; if we get here we wrapped around
-	   (car current-sorted-files)))))
+	(current-sorted-files #f)
+	(directory-from-path (lambda (curfile)
+			       (do ((last-slash 0)
+				    (i 0 (+ 1 i)))
+				   ((= i (length curfile))
+				    (substring curfile 0 last-slash))   
+				 (if (char=? (curfile i) #\/)
+				     (set! last-slash i))))))
+
+    (define find-next-file
+      (let ((file-from-path (lambda (curfile)
+			      (do ((last-slash 0)
+				   (i 0 (+ 1 i)))
+				  ((= i (length curfile))
+				   (substring curfile (+ 1 last-slash)))   
+				(if (char=? (curfile i) #\/)
+				    (set! last-slash i))))))
+	(lambda ()
+	  ;; find the next file in the sorted list, with wrap-around
+	  (let ((choose-next (not (string? last-file-opened)))
+		(just-filename (file-from-path last-file-opened)))
+	    (call-with-exit
+	     (lambda (return)
+	       (for-each
+		(lambda (file)
+		  (if choose-next
+		      (return file)
+		      (if (string=? file just-filename)
+			  (set! choose-next #t))))
+		current-sorted-files)
+	       ;; if we get here we wrapped around
+	       (car current-sorted-files)))))))
     
     (define (get-current-files dir)
       (set! current-directory dir)
@@ -1869,20 +1868,21 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 	      ((= i len))
 	    (let ((g (dsp-chain i))
 		  (gname (string->symbol (format #f "g~D" i))))
-	      (set! closure (cons `(,gname (dsp-chain ,i)) closure))
-	      (cond ((env? g)
-		     (set! body (if (eqv? body 0.0)
-				    `(env ,gname)
-				    `(* (env ,gname) ,body))))
-		    ((readin? g)
-		     (set! body (if (eqv? body 0.0)
-				    `(readin ,gname)
-				    `(+ ,body (readin ,gname)))))
-		    ((mus-generator? g)
-		     (set! body (if (eqv? body 0.0)
-				    (list (string->symbol (mus-name g)) gname)
-				    (list (string->symbol (mus-name g)) gname body))))
-		    (else (set! body (list gname body))))))
+	      (set! closure (cons (list gname (list 'dsp-chain i)) closure))
+	      (set! body (cond ((env? g)
+				(if (eqv? body 0.0)
+				    (list 'env gname)
+				    (list '* (list 'env gname) body)))
+			       ((readin? g)
+				(if (eqv? body 0.0)
+				    (list 'readin gname)
+				    (list '+ body (list 'readin gname))))
+			       ((not (mus-generator? g))
+				(list gname body))
+			       ((eqv? body 0.0)
+				(list (string->symbol (mus-name g)) gname))
+			       (else
+				(list (string->symbol (mus-name g)) gname body))))))
 	  
 	  ;; now patch the two together (the apply let below) and evaluate the resultant thunk
 	  (apply define (list 'inner)
@@ -1910,29 +1910,30 @@ a sort of play list: (region-play-list (list (list reg0 0.0) (list reg1 0.5) (li
 
 (define scramble-channels
   
-  (let ((documentation "scramble-channels can arbitrarily re-order a sound's channels. The new channel order is \
-passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)"))
+  (letrec ((documentation "scramble-channels can arbitrarily re-order a sound's channels. The new channel order is \
+passed as the arguments so to end with channel 3 in channel 0, 2 in 1, 0 in 2, and 1 in 3, (scramble-channels 3 2 0 1)")
+      
+	   (scramble-channels-1
+	    (let ((find-chan (lambda (chans chan len)
+			       (do ((pos #f)
+				    (i 0 (+ i 1)))
+				   ((or pos (= i len)) pos)
+				 (if (= (chans i) chan)
+				     (set! pos i))))))
+	      (lambda (cur-chans end-chans chans loc)
+		(if (> chans loc)
+		    (let* ((end-chan (end-chans loc)) ; we want this channel at loc
+			   (cur-chan (cur-chans loc)) ; this (original) channel is currently at loc
+			   (end-loc (find-chan cur-chans end-chan chans))) ; where is end-chan currently?
+		      ;; end-chan goes in cur-chan's slot
+		      (if (not (= cur-chan end-chan))
+			  (begin
+			    (swap-channels #f end-loc #f loc)
+			    (set! (cur-chans end-loc) cur-chan)
+			    (set! (cur-chans loc) end-chan)))
+		      (scramble-channels-1 cur-chans end-chans chans (+ 1 loc))))))))
+      
     (lambda new-order
-      
-      (define (scramble-channels-1 cur-chans end-chans chans loc)
-	(define (find-chan chans chan len)
-	  (do ((pos #f)
-	       (i 0 (+ i 1)))
-	      ((or pos (= i len)) pos)
-	    (if (= (chans i) chan)
-		(set! pos i))))
-	(if (> chans loc)
-	    (let* ((end-chan (end-chans loc)) ; we want this channel at loc
-		   (cur-chan (cur-chans loc)) ; this (original) channel is currently at loc
-		   (end-loc (find-chan cur-chans end-chan chans))) ; where is end-chan currently?
-	      ;; end-chan goes in cur-chan's slot
-	      (if (not (= cur-chan end-chan))
-		  (begin
-		    (swap-channels #f end-loc #f loc)
-		    (set! (cur-chans end-loc) cur-chan)
-		    (set! (cur-chans loc) end-chan)))
-	      (scramble-channels-1 cur-chans end-chans chans (+ 1 loc)))))
-      
       (let ((len (length new-order)))
 	(if (> len 1)
 	    (let ((end-chans (apply vector new-order))

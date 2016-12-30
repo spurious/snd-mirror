@@ -1755,52 +1755,52 @@
   (define showing-disk-space #f) ; for prefs dialog
   
   (define show-disk-space
-    (let ((labelled-snds ()))
-      (define (kmg num)
-	(cond ((<= num 0)      (copy "disk full!"))
-	      ((<= num 1024)   (format #f "space: ~10DK" num))
-	      ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
-	      (else            (format #f "space: ~6,3FM" (/ num 1024.0)))))
-		
-      (define (show-label data id)
-	(if (sound? (car data))
-	    (let ((str (XmStringCreateLocalized (kmg (disk-kspace (file-name (car data)))))))
-	      (XtSetValues (cadr data) (list XmNlabelString str))
-	      (XmStringFree str)
-	      (XtAppAddTimeOut (caddr data) 10000 show-label data))))
-      
-      (let ((documentation "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)"))
-	(lambda (hook)
-	  (let* ((snd (hook 'snd))
-		 (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
-	    (unless previous-label
-	      (if (not snd)
-		  (snd-error "no sound found for disk space label")
-		  (let* ((app (car (main-widgets)))
-			 (widgets (sound-widgets snd))
-			 (status-area (widgets 3))
-			 (unite-button (widgets 6))
-			 (sync-button (widgets 9))
-			 (name-form (XtParent status-area)) ; "snd-name-form"
-			 (str (XmStringCreateLocalized (kmg (disk-kspace (file-name snd))))))
-		    (set! showing-disk-space #t)
-		    (XtUnmanageChild status-area)
-		    (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
-		    (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
-							    (list XmNbackground      *basic-color*
-								  XmNleftAttachment  XmATTACH_NONE
-								  XmNlabelString     str
-								  XmNrightAttachment XmATTACH_WIDGET
-								  XmNrightWidget     (if (XtIsManaged unite-button)
-											 unite-button
-											 sync-button)
-								  XmNtopAttachment   XmATTACH_FORM))))
-		      (XtVaSetValues status-area (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
-		      (XtManageChild status-area)
-		      (XmStringFree str)
-		      (set! previous-label (list snd new-label app))
-		      (set! labelled-snds (cons previous-label labelled-snds))
-		      (XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label))))))))))
+    (let ((documentation "(show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)")
+	  (labelled-snds ())
+
+	  (kmg (lambda (num)
+		 (cond ((<= num 0)      (copy "disk full!"))
+		       ((<= num 1024)   (format #f "space: ~10DK" num))
+		       ((> num 1048576) (format #f "space: ~6,3FG" (/ num (* 1024.0 1024.0))))
+		       (else            (format #f "space: ~6,3FM" (/ num 1024.0))))))
+	  
+	  (show-label (lambda (data id)
+			(if (sound? (car data))
+			    (let ((str (XmStringCreateLocalized (kmg (disk-kspace (file-name (car data)))))))
+			      (XtSetValues (cadr data) (list XmNlabelString str))
+			      (XmStringFree str)
+			      (XtAppAddTimeOut (caddr data) 10000 show-label data))))))
+      (lambda (hook)
+	(let* ((snd (hook 'snd))
+	       (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
+	  (unless previous-label
+	    (if (not snd)
+		(snd-error "no sound found for disk space label")
+		(let* ((app (car (main-widgets)))
+		       (widgets (sound-widgets snd))
+		       (status-area (widgets 3))
+		       (unite-button (widgets 6))
+		       (sync-button (widgets 9))
+		       (name-form (XtParent status-area)) ; "snd-name-form"
+		       (str (XmStringCreateLocalized (kmg (disk-kspace (file-name snd))))))
+		  (set! showing-disk-space #t)
+		  (XtUnmanageChild status-area)
+		  (XtVaSetValues status-area (list XmNrightAttachment XmATTACH_NONE))
+		  (let ((new-label (XtCreateManagedWidget "space:" xmLabelWidgetClass name-form 
+							  (list XmNbackground      *basic-color*
+								XmNleftAttachment  XmATTACH_NONE
+								XmNlabelString     str
+								XmNrightAttachment XmATTACH_WIDGET
+								XmNrightWidget     (if (XtIsManaged unite-button)
+										       unite-button
+										       sync-button)
+								XmNtopAttachment   XmATTACH_FORM))))
+		    (XtVaSetValues status-area (list XmNrightWidget new-label XmNrightAttachment XmATTACH_WIDGET))
+		    (XtManageChild status-area)
+		    (XmStringFree str)
+		    (set! previous-label (list snd new-label app))
+		    (set! labelled-snds (cons previous-label labelled-snds))
+		    (XtAppAddTimeOut (caddr previous-label) 10000 show-label previous-label)))))))))
   
   
   
@@ -2935,12 +2935,14 @@ display widget; type = 'text, 'meter, 'graph, 'spectrum, 'scale"))
 ;;;
 ;;; this used to be built-in, but never really worked right
   
-  (define* (equalize-panes snd)
-    (define (equalize-sound ind)
-      (let-temporarily (((channel-style ind) channels-combined))))
-    (if snd
-	(equalize-sound snd)
-	(for-each equalize-sound (sounds))))
+  (define equalize-panes
+    (let ((equalize-sound 
+	   (lambda (ind)
+	     (let-temporarily (((channel-style ind) channels-combined))))))
+      (lambda* (snd)
+	(if snd
+	    (equalize-sound snd)
+	    (for-each equalize-sound (sounds))))))
   
   ) ; end with-let *motif*
 

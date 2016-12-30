@@ -34,13 +34,6 @@
   (let ((last-file-opened #f)
 	(current-directory #f)
 	(current-sorted-files #f)
-	(file-from-path (lambda (curfile)
-			  (do ((last-slash 0)
-			       (i 0 (+ 1 i)))
-			      ((= i (length curfile))
-			       (substring curfile (+ 1 last-slash)))   
-			    (if (char=? (curfile i) #\/)
-				(set! last-slash i)))))
 	(directory-from-path (lambda (curfile)
 			       (do ((last-slash 0)
 				    (i 0 (+ 1 i)))
@@ -48,21 +41,30 @@
 				    (substring curfile 0 last-slash))   
 				 (if (char=? (curfile i) #\/)
 				     (set! last-slash i))))))
-    (define (find-next-file)
-      ;; find the next file in the sorted list, with wrap-around
-      (let ((choose-next (not (string? last-file-opened)))
-	    (just-filename (file-from-path last-file-opened)))
-	(call-with-exit
-	 (lambda (return)
-	   (for-each
-	    (lambda (file)
-	      (if choose-next
-		  (return file)
-		  (if (string=? file just-filename)
-		      (set! choose-next #t))))
-	    current-sorted-files)
-	   ;; if we get here we wrapped around
-	   (car current-sorted-files)))))
+
+    (define find-next-file
+      (let ((file-from-path (lambda (curfile)
+			      (do ((last-slash 0)
+				   (i 0 (+ 1 i)))
+				  ((= i (length curfile))
+				   (substring curfile (+ 1 last-slash)))   
+				(if (char=? (curfile i) #\/)
+				    (set! last-slash i))))))
+	(lambda ()
+	  ;; find the next file in the sorted list, with wrap-around
+	  (let ((choose-next (not (string? last-file-opened)))
+		(just-filename (file-from-path last-file-opened)))
+	    (call-with-exit
+	     (lambda (return)
+	       (for-each
+		(lambda (file)
+		  (if choose-next
+		      (return file)
+		      (if (string=? file just-filename)
+			  (set! choose-next #t))))
+		current-sorted-files)
+	       ;; if we get here we wrapped around
+	       (car current-sorted-files)))))))
     
     (define (get-current-files dir)
       (set! current-directory dir)

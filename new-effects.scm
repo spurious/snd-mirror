@@ -485,81 +485,81 @@
     
 ;;; -------- Echo (controlled by delay-time and echo-amount)
     
-    (let* ((delay-time .5) ; i.e. delay between echoes
-	   (echo-amount .2)
-	   (post-echo-dialog
-	    (let ((echo-label "Echo")
-		  (echo-dialog #f)
-		  (echo-target 'sound)
-		  (echo-truncate #t))
-	      (lambda ()
-		(unless (Widget? echo-dialog)
-		  ;; if echo-dialog doesn't exist, create it
-		  (let ((initial-delay-time 0.5)
-			(initial-echo-amount 0.2)
-			(sliders ()))
-		    (set! echo-dialog 
-			  (make-effect-dialog 
-			   echo-label
-			   
-			   (lambda (w context info)
-			     (map-chan-over-target-with-sync
-			      (lambda (cutoff) 
-				(let ((del (make-delay (round (* delay-time (srate)))))
-				      (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-				  (lambda (inval)
-				    (+ inval
-				       (delay del
-					      (* echo-amount (+ (tap del) (* (env genv) inval))))))))
-			      echo-target
-			      (lambda (target input-samps) 
-				(format #f "effects-echo ~A ~A ~A" 
-					(and (not (eq? target 'sound)) input-samps)
-					delay-time echo-amount))
-			      (and (not echo-truncate) 
-				   (* 4 delay-time))))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Echo"
-					  "The sliders change the delay time and echo amount."))
-			   
-			   (lambda (w c i)   
-			     (set! delay-time initial-delay-time)
-			     (XtSetValues (car sliders) (list XmNvalue (floor (* delay-time 100))))
-			     (set! echo-amount initial-echo-amount)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* echo-amount 100)))))
-			   
-			   (lambda ()
-			     (effect-target-ok echo-target))))
-		    
-		    (set! sliders
-			  (add-sliders echo-dialog
-				       (list (list "delay time" 0.0 initial-delay-time 2.0
-						   (lambda (w context info)
-						     (set! delay-time (/ (.value info) 100.0)))
-						   100)
-					     (list "echo amount" 0.0 initial-echo-amount 1.0
-						   (lambda (w context info)
-						     (set! echo-amount (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! echo-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild echo-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				(lambda (truncate) 
-				  (set! echo-truncate truncate)))))
-		
-		(activate-dialog echo-dialog))))
-      
-	   (child (XtCreateManagedWidget "Echo" xmPushButtonWidgetClass delay-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-echo-dialog)))
-      
-      (set! delay-menu-list (cons (lambda ()
-				    (change-label child (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
-				  delay-menu-list)))
+    (let ((delay-time .5) ; i.e. delay between echoes
+	  (echo-amount .2))
+      (let* ((post-echo-dialog
+	      (let ((echo-label "Echo")
+		    (echo-dialog #f)
+		    (echo-target 'sound)
+		    (echo-truncate #t))
+		(lambda ()
+		  (unless (Widget? echo-dialog)
+		    ;; if echo-dialog doesn't exist, create it
+		    (let ((initial-delay-time 0.5)
+			  (initial-echo-amount 0.2)
+			  (sliders ()))
+		      (set! echo-dialog 
+			    (make-effect-dialog 
+			     echo-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync
+				(lambda (cutoff) 
+				  (let ((del (make-delay (round (* delay-time (srate)))))
+					(genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+				    (lambda (inval)
+				      (+ inval
+					 (delay del
+						(* echo-amount (+ (tap del) (* (env genv) inval))))))))
+				echo-target
+				(lambda (target input-samps) 
+				  (format #f "effects-echo ~A ~A ~A" 
+					  (and (not (eq? target 'sound)) input-samps)
+					  delay-time echo-amount))
+				(and (not echo-truncate) 
+				     (* 4 delay-time))))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Echo"
+					    "The sliders change the delay time and echo amount."))
+			     
+			     (lambda (w c i)   
+			       (set! delay-time initial-delay-time)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* delay-time 100))))
+			       (set! echo-amount initial-echo-amount)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* echo-amount 100)))))
+			     
+			     (lambda ()
+			       (effect-target-ok echo-target))))
+		      
+		      (set! sliders
+			    (add-sliders echo-dialog
+					 (list (list "delay time" 0.0 initial-delay-time 2.0
+						     (lambda (w context info)
+						       (set! delay-time (/ (.value info) 100.0)))
+						     100)
+					       (list "echo amount" 0.0 initial-echo-amount 1.0
+						     (lambda (w context info)
+						       (set! echo-amount (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! echo-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild echo-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  (lambda (truncate) 
+				    (set! echo-truncate truncate)))))
+		  
+		  (activate-dialog echo-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Echo" xmPushButtonWidgetClass delay-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-echo-dialog)))
+	
+	(set! delay-menu-list (cons (lambda ()
+				      (change-label child (format #f "Echo (~1,2F ~1,2F)" delay-time echo-amount)))
+				    delay-menu-list))))
     
     
 ;;; -------- Filtered echo

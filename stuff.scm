@@ -1932,10 +1932,10 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	   (let ((body (let ((p (caddr source)))
 			 (and (eq? (car p) 'lambda)
 			      (cddr p)))))
-	     (let ((previous (and body (butlast body)))
-		   (end (and body (last body))))
-	       (if (not body)
-		   source
+	     (if (not body)
+		 source
+		 (let ((previous (and body (butlast body)))
+		       (end (and body (last body))))
 		   `(dynamic-wind
 			,(cadr source)
 			(lambda ()

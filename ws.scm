@@ -376,14 +376,13 @@
 ;;; -------- with-mixed-sound --------
 
 (define (with-mixed-sound-mix-info id snd)
-  (let ((all-info (sound-property 'with-mixed-sound-info snd)))   ; each entry is '(mx-id beg chans note)
-    (let find-if ((pred (lambda (info)
-			  (and (>= id (car info))
-			       (< id (+ (car info) (caddr info))))))
-		  (lst all-info))
-      (cond ((null? lst) #f)
-	    ((pred (car lst)) (car lst))
-	    (else (find-if pred (cdr lst)))))))
+  (let find-if ((pred (lambda (info)
+			(and (>= id (car info))
+			     (< id (+ (car info) (caddr info))))))
+		(lst (sound-property 'with-mixed-sound-info snd)))   ; each entry is '(mx-id beg chans note)
+    (cond ((null? lst) #f)
+	  ((pred (car lst)) (car lst))
+	  (else (find-if pred (cdr lst))))))
 
 
 (define-macro (with-mixed-sound args . body)

@@ -7,6 +7,7 @@
     (require sndlib-ws.scm))
 
 (define two-pi (* 2 pi))
+(define num-beans 64)
 
 (definstrument (maraca beg dur (amp .1) 
 		 (sound-decay 0.95) 
@@ -14,43 +15,42 @@
 		 (probability .0625)
 		 (shell-freq 3200.0)
 		 (shell-reso 0.96))
-  (let ((num-beans 64))
-    (let ((st (seconds->samples beg))
-	  (nd (seconds->samples (+ beg dur)))
-	  (temp 0.0)
-	  (shake-energy 0.0)
-	  (snd-level 0.0)
-	  (input 0.0)
-	  (stop 0)
-	  (h20 (hz->radians 20.0))
-	  (sndamp (/ amp 16384.0))
-	  (srate4 (floor (/ *clm-srate* 4)))
-	  (gain (/ (* (log num-beans 4.0) 40) num-beans))
-	  (tz (make-two-pole 1.0 (* -2.0 shell-reso (cos (hz->radians shell-freq))) (* shell-reso shell-reso))) 
-	  (oz (make-one-zero 1.0 -1.0))
-	  ;; gourd resonance filter
-	  )
-      (do ((i st (+ i srate4)))
-	  ((>= i nd))
-	(set! temp 0.0)
-	(set! stop (min nd (+ i srate4)))
-	(do ((k i (+ k 1)))
-	    ((= k stop))
-	  (if (< temp two-pi)
-	      (begin
-		;; shake over 50msec and add shake energy
-		(set! temp (+ temp h20))
-		(set! shake-energy (- (+ shake-energy 1.0) (cos temp)))))
-	  (set! shake-energy (* shake-energy system-decay))
-	  ;; if collision, add energy
-	  (if (< (random 1.0) probability)
-	      (set! snd-level (+ snd-level (* gain shake-energy))))
-	  ;; actual sound is random
-	  (set! input (mus-random snd-level))
-	  ;; compute exponential sound decay
-	  (set! snd-level (* snd-level sound-decay))
-	  ;; gourd resonance filter calc
-	  (outa k (* sndamp (one-zero oz (two-pole tz input)))))))))
+  (let ((st (seconds->samples beg))
+	(nd (seconds->samples (+ beg dur)))
+	(temp 0.0)
+	(shake-energy 0.0)
+	(snd-level 0.0)
+	(input 0.0)
+	(stop 0)
+	(h20 (hz->radians 20.0))
+	(sndamp (/ amp 16384.0))
+	(srate4 (floor (/ *clm-srate* 4)))
+	(gain (/ (* (log num-beans 4.0) 40) num-beans))
+	(tz (make-two-pole 1.0 (* -2.0 shell-reso (cos (hz->radians shell-freq))) (* shell-reso shell-reso))) 
+	(oz (make-one-zero 1.0 -1.0))
+	;; gourd resonance filter
+	)
+    (do ((i st (+ i srate4)))
+	((>= i nd))
+      (set! temp 0.0)
+      (set! stop (min nd (+ i srate4)))
+      (do ((k i (+ k 1)))
+	  ((= k stop))
+	(if (< temp two-pi)
+	    (begin
+	      ;; shake over 50msec and add shake energy
+	      (set! temp (+ temp h20))
+	      (set! shake-energy (- (+ shake-energy 1.0) (cos temp)))))
+	(set! shake-energy (* shake-energy system-decay))
+	;; if collision, add energy
+	(if (< (random 1.0) probability)
+	    (set! snd-level (+ snd-level (* gain shake-energy))))
+	;; actual sound is random
+	(set! input (mus-random snd-level))
+	;; compute exponential sound decay
+	(set! snd-level (* snd-level sound-decay))
+	;; gourd resonance filter calc
+	(outa k (* sndamp (one-zero oz (two-pole tz input))))))))
 
 ;;; maraca: (with-sound (:statistics #t :play #t) (maraca 0 5 .5))
 ;;; cabasa: (with-sound (:statistics #t :play #t) (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
@@ -64,8 +64,7 @@
 			   (randiff .01)
 			   (with-filters #t))
   ;; like maraca, but takes a list of resonances and includes low-pass filter (or no filter)	
-  (let ((num-beans 64)
-	(resn (length shell-freqs)))
+  (let ((resn (length shell-freqs)))
     (let ((st (seconds->samples beg))
 	  (nd (seconds->samples (+ beg dur)))
 	  (temp 0.0)

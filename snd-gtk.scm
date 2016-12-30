@@ -421,17 +421,17 @@
 			    (let ((space (kmg (disk-kspace (file-name (car data))))))
 			      (gtk_label_set_text (GTK_LABEL (cadr data)) space)
 			      (g_timeout_add 10000 show-label data) ; every 10 seconds recheck space
-			      0))))
-	  
-	  (find-if (lambda (pred lst)
-		     (cond ((null? lst) #f)
-			   ((pred (car lst)) (car lst))
-			   (else (find-if pred (cdr lst)))))))
+			      0)))))
       (lambda (hook)
 	;; (show-disk-space snd) adds a label to snd's status-area area showing the current free space (for use with after-open-hook)
 	
 	(let* ((snd (hook 'snd))
-	       (previous-label (find-if (lambda (n) (equal? (car n) snd)) labelled-snds)))
+	       (previous-label (let find-if ((pred (lambda (n)
+						     (equal? (car n) snd)))
+					     (lst labelled-snds))
+				 (cond ((null? lst) #f)
+				       ((pred (car lst)) (car lst))
+				       (else (find-if pred (cdr lst)))))))
 	  (if (not previous-label)
 	      (if (not snd)
 		  (snd-error "no sound found for disk space label")
@@ -551,19 +551,17 @@
   
   (define select-file
     
-    (let ((file-selector-dialogs ()))
-      ;; (list (list widget inuse func title help) ...)
-      
-      (define (find-free-dialog ds)
-	(and (pair? ds)
-	     (pair? (car ds))
-	     (pair? (cdar ds))
-	     (if (cadar ds)
-		 (find-free-dialog (cdr ds))
-		 (begin
-		   (set! ((car ds) 1) #t)
-		   (caar ds)))))
-
+    (letrec ((file-selector-dialogs ())   ; (list (list widget inuse func title help) ...)
+	     (find-free-dialog 
+	      (lambda (ds)
+		(and (pair? ds)
+		     (pair? (car ds))
+		     (pair? (cdar ds))
+		     (if (cadar ds)
+			 (find-free-dialog (cdr ds))
+			 (begin
+			   (set! ((car ds) 1) #t)
+			   (caar ds)))))))
       (lambda args
 	;; (file-select func title dir filter help)
 	(let* ((func (and (pair? args) (args 0)))
@@ -582,7 +580,7 @@
 	      (func (gtk_file_chooser_get_filename (GTK_FILE_CHOOSER dialog))))
 	  (gtk_widget_hide (GTK_WIDGET dialog))))))
   
-  ;;(select-file (lambda (n) (snd-print n)))
+  ;; ((*gtk* 'select-file) (lambda (n) (snd-print n)))
   
   
   
