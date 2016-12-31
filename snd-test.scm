@@ -374,655 +374,647 @@
 ;;; ---------------- test 0: constants ----------------
 
 (define (snd_test_0)
-  (letrec ((test-constants 
-	    (lambda (lst)
-	      (when (pair? lst)
-		(if (not (= (cadr lst) (caddr lst)))
-		    (snd-display "~A is not ~A (~A)~%"
-				 (car lst) (cadr lst) (caddr lst)))
-		(test-constants (cdddr lst))))))
-    
-    (if (or (pair? (sounds))
-	    (pair? (mixes))
-	    (pair? (marks))
-	    (pair? (regions)))
-	(snd-display "start up: ~A ~A ~A ~A" (sounds) (mixes) (marks) (regions)))
-    (test-constants
-     (list
-      'enved-amplitude enved-amplitude 0 
-      'bartlett-window bartlett-window 4 
-      'bartlett-hann-window bartlett-hann-window 21
-      'blackman2-window blackman2-window 6 
-      'blackman3-window blackman3-window 7 
-      'blackman4-window blackman4-window 8
-      'blackman5-window blackman5-window 24
-      'blackman6-window blackman6-window 25
-      'blackman7-window blackman7-window 26
-      'blackman8-window blackman8-window 27
-      'blackman9-window blackman9-window 28
-      'blackman10-window blackman10-window 29
-      'bohman-window bohman-window 22
-      'cauchy-window cauchy-window 12 
-      'mlt-sine-window mlt-sine-window 33
-      'papoulis-window papoulis-window 34
-      'dpss-window dpss-window 35
-      'sinc-window sinc-window 36
-      'channels-combined channels-combined 1 
-      'channels-separate channels-separate 0 
-      'channels-superimposed channels-superimposed 2
-      'connes-window connes-window 18
-      'cursor-in-middle cursor-in-middle 3
-      'cursor-in-view cursor-in-view 0 
-      'cursor-on-left cursor-on-left 1 
-      'cursor-on-right cursor-on-right 2 
-      'dolph-chebyshev-window dolph-chebyshev-window 16
-      'exponential-window exponential-window 9 
-      'flat-top-window flat-top-window 23
-      'sync-none sync-none 0
-      'sync-all sync-all 1
-      'sync-by-sound sync-by-sound 2
-      'zoom-focus-active zoom-focus-active 2
-      'zoom-focus-left zoom-focus-left 0
-      'zoom-focus-middle zoom-focus-middle 3
-      'zoom-focus-right zoom-focus-right 1 
-      'gaussian-window gaussian-window 14 
-      'graph-dots graph-dots 1
-      'graph-dots-and-lines graph-dots-and-lines 3 
-      'graph-filled graph-filled 2 
-      'graph-lines graph-lines 0 
-      'graph-lollipops graph-lollipops 4
-      'hamming-window hamming-window 5
-      'hann-window hann-window 1
-      'hann-poisson-window hann-poisson-window 17
-      'kaiser-window kaiser-window 11 
-      'keyboard-no-action keyboard-no-action 4
-      'graph-once graph-once 0 
-      'parzen-window parzen-window 3
-      'poisson-window poisson-window 13
-      'rectangular-window rectangular-window 0 
-      'riemann-window riemann-window 10 
-      'rv2-window rv2-window 30
-      'rv3-window rv3-window 31
-      'rv4-window rv4-window 32
-      'samaraki-window samaraki-window 19
-      'ultraspherical-window ultraspherical-window 20
-      'graph-as-sonogram graph-as-sonogram 1
-      'graph-as-spectrogram graph-as-spectrogram 2 
-      'graph-once graph-once 0
-      'graph-as-wavogram graph-as-wavogram 3
-      'enved-spectrum enved-spectrum 1
-      'speed-control-as-float speed-control-as-float 0 
-      'speed-control-as-ratio speed-control-as-ratio 1 
-      'speed-control-as-semitone speed-control-as-semitone 2 
-      'enved-srate enved-srate 2 
-      'tukey-window tukey-window 15 
-      'welch-window welch-window 2 
-      'cursor-cross cursor-cross 0
-      'cursor-line cursor-line 1
-      'dont-normalize dont-normalize 0
-      'envelope-linear envelope-linear 0
-      'envelope-exponential envelope-exponential 1
-      'normalize-by-channel normalize-by-channel 1
-      'normalize-by-sound normalize-by-sound 2
-      'normalize-globally normalize-globally 3
-      'x-axis-in-samples x-axis-in-samples 1 
-      'x-axis-in-beats x-axis-in-beats 3
-      'x-axis-in-measures x-axis-in-measures 4
-      'x-axis-in-seconds x-axis-in-seconds 0 
-      'x-axis-as-clock x-axis-as-clock 5
-      'x-axis-as-percentage x-axis-as-percentage 2
-      'enved-add-point enved-add-point 0
-      'enved-delete-point enved-delete-point 1
-      'enved-move-point enved-move-point 2
-      'time-graph time-graph 0
-      'transform-graph transform-graph 1
-      'lisp-graph lisp-graph 2
-      'copy-context copy-context 0
-      'cursor-context cursor-context 3
-      'selection-context selection-context 2
-      'mark-context mark-context 4
-      'show-no-axes show-no-axes 0
-      'show-all-axes show-all-axes 1
-      'show-x-axis show-x-axis 2
-      'show-all-axes-unlabelled show-all-axes-unlabelled 3
-      'show-x-axis-unlabelled show-x-axis-unlabelled 4
-      'show-bare-x-axis show-bare-x-axis 5
-      
-      ;; sndlib constants
-      'mus-unknown-header mus-unknown-header 0
-      'mus-next mus-next 1
-      'mus-aifc mus-aifc 2
-      'mus-riff mus-riff 3
-      'mus-nist mus-nist 6
-      'mus-raw mus-raw 12
-      'mus-ircam mus-ircam 15
-      'mus-aiff mus-aiff 49
-      'mus-bicsf mus-bicsf 5
-      'mus-voc mus-voc 10
-      'mus-svx mus-svx 9
-      'mus-soundfont mus-soundfont 26
-      'mus-rf64 mus-rf64 4
-      'mus-caff mus-caff 60
-      
-      'mus-interp-none mus-interp-none 0
-      'mus-interp-linear mus-interp-linear 1
-      'mus-interp-sinusoidal mus-interp-sinusoidal 2
-      'mus-interp-all-pass mus-interp-all-pass 3
-      'mus-interp-lagrange mus-interp-lagrange 4
-      'mus-interp-bezier mus-interp-bezier 5
-      'mus-interp-hermite mus-interp-hermite 6
-      
-      'mus-chebyshev-first-kind mus-chebyshev-first-kind 1
-      'mus-chebyshev-second-kind mus-chebyshev-second-kind 2
-      
-      'mus-unknown-sample mus-unknown-sample 0
-      'mus-bshort mus-bshort 1
-      'mus-lshort mus-lshort 10
-      'mus-mulaw mus-mulaw 2
-      'mus-alaw mus-alaw 6
-      'mus-byte mus-byte 3
-      'mus-ubyte mus-ubyte 7
-      'mus-bfloat mus-bfloat 4
-      'mus-lfloat mus-lfloat 12
-      'mus-bint mus-bint 5
-      'mus-lint mus-lint 11
-      'mus-bintn mus-bintn 17
-      'mus-lintn mus-lintn 18
-      'mus-b24int mus-b24int 8
-      'mus-l24int mus-l24int 16
-      'mus-bdouble mus-bdouble 9
-      'mus-ldouble mus-ldouble 13
-      'mus-ubshort mus-ubshort 14
-      'mus-ulshort mus-ulshort 15
-      'mus-bfloat-unscaled mus-bfloat-unscaled 19
-      'mus-lfloat-unscaled mus-lfloat-unscaled 20
-      'mus-bdouble-unscaled mus-bdouble-unscaled 21
-      'mus-ldouble-unscaled mus-ldouble-unscaled 22
-      ))
-    
-    (if (not (equal? *region-graph-style* graph-lines))
-	(snd-display "region-graph-style set default: ~A" *region-graph-style*))
-    (if *ask-about-unsaved-edits*
-	(snd-display "ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
-    (if (not (boolean? *show-full-duration*))
-	(snd-display "show-full-duration set default: ~A" *show-full-duration*))
-    (if *show-full-range*
-	(snd-display "show-full-range set default: ~A" *show-full-range*))
-    (if (fneq *initial-beg* 0.0)
-	(snd-display "initial-beg set default: ~A" *initial-beg*))
-    (if (fneq *initial-dur* 0.1)
-	(snd-display "initial-dur set default: ~A" *initial-dur*))
-    (if *ask-before-overwrite*
-	(snd-display "ask-before-overwrite set default: ~A" *ask-before-overwrite*))
-    (if (not *auto-resize*)
-	(snd-display "auto-resize set default: ~A" *auto-resize*))
-    (if *auto-update*
-	(snd-display "auto-update set default: ~A" *auto-update*))
-    (if (not (eqv? *channel-style* 1)) 
-	(snd-display "channel-style set default: ~A" *channel-style*))
-    (if (and (fneq *color-cutoff* 0.003) (fneq *color-cutoff* 0.001))
-	(snd-display "color-cutoff set default: ~A" *color-cutoff*))
-    (if (not *color-inverted*)
-	(snd-display "color-inverted set default: ~A" *color-inverted*))
-    (if (fneq *color-scale* 1.0)
-	(snd-display "color-scale set default: ~A" *color-scale*))
-    (if (fneq *auto-update-interval* 60.0)
-	(snd-display "auto-update-interval set default: ~A" *auto-update-interval*))
-    (if (fneq *cursor-update-interval* 0.05)
-	(snd-display "cursor-update-interval set default: ~A" *cursor-update-interval*))
-    (if (not (= *cursor-location-offset* 0))
-	(snd-display "cursor-location-offset set default: ~A" *cursor-location-offset*))
-    (if (not *dac-combines-channels*)
-	(snd-display "dac-combines-channels set default: ~A" *dac-combines-channels*))
-    (if (not (eqv? *dac-size* 256)) 
-	(snd-display "dac-size set default: ~A" *dac-size*))
-    (if *clipping*
-	(snd-display "clipping set default: ~A" *clipping*))
-    (if (not (eqv? *default-output-chans* 1)) 
-	(snd-display "default-output-chans set default: ~A" *default-output-chans*))
-    (if (not (or (equal? *default-output-sample-type* mus-bdouble)
-		 (equal? *default-output-sample-type* mus-ldouble)))
-	(snd-display "default-output-sample-type set default: ~A" *default-output-sample-type*))
-    (if (not (eqv? *default-output-srate* 44100)) 
-	(snd-display "default-output-srate set default: ~A" *default-output-srate*))
-    (if (not (equal? *default-output-header-type* mus-next)) 
-	(snd-display "default-output-header-type set default: ~A" *default-output-header-type*))
-    (if (not (eqv? *dot-size* 1)) 
-	(snd-display "dot-size set default: ~A" *dot-size*))
-    (if (not (eqv? *cursor-size* 15)) 
-	(snd-display "cursor-size set default: ~A" *cursor-size*))
-    (if (not (equal? *cursor-style* cursor-cross)) 
-	(snd-display "cursor-style set default: ~A" *cursor-style*))
-    (if (not (equal? *tracking-cursor-style* cursor-line)) 
-	(snd-display "tracking-cursor-style set default: ~A" *tracking-cursor-style*))
-    (if (fneq *enved-base* 1.0)
-	(snd-display "enved-base set default: ~A" *enved-base*))
-    (if (not (enved-clip?))
-	(snd-display "enved-clip? set default: ~A" (enved-clip?)))
-    (if (not (enved-filter))
-	(snd-display "enved-filter set default: ~A" (enved-filter)))
-    (if (not (eqv? *enved-filter-order* 40)) 
-	(snd-display "enved-filter-order set default: ~A" *enved-filter-order*))
-    (if (enved-in-dB)
-	(snd-display "enved-in-dB set default: ~A" (enved-in-dB)))
-    (if (not (equal? *enved-style* envelope-linear)) 
-	(snd-display "enved-style set default: ~A" *enved-style*))
-    (if (fneq *enved-power* 3.0)
-	(snd-display "enved-power set default: ~A" *enved-power*))
-    (if (not (eqv? *enved-target* 0)) 
-	(snd-display "enved-target set default: ~A" *enved-target*))
-    (if *enved-wave?*
-	(snd-display "enved-wave? set default: ~A" *enved-wave?*))
-    (if (and with-gui
-	     (pair? (enved-envelope)))
-	(snd-display "enved-envelope set default: ~A" (enved-envelope)))
-    (if (not (equal? *eps-file* "snd.eps")) 
-	(snd-display "eps-file set default: ~A" *eps-file*))
-    (if (fneq *eps-bottom-margin* 0.0)
-	(snd-display "eps-bottom-margin set default: ~A" *eps-bottom-margin*))
-    (if (fneq *eps-left-margin* 0.0)
-	(snd-display "eps-left-margin set default: ~A" *eps-left-margin*))
-    (if (fneq *eps-size* 1.0)
-	(snd-display "eps-size set default: ~A" *eps-size*))
-    (if (fneq *fft-window-alpha* 0.0)
-	(snd-display "fft-window-alpha set default: ~A" *fft-window-alpha*))
-    (if (fneq *fft-window-beta* 0.0)
-	(snd-display "fft-window-beta set default: ~A" *fft-window-beta*))
-    (if *fft-log-frequency*
-	(snd-display "fft-log-frequency set default: ~A" *fft-log-frequency*))
-    (if *fft-log-magnitude*
-	(snd-display "fft-log-magnitude set default: ~A" *fft-log-magnitude*))
-    (if *fft-with-phases*
-	(snd-display "fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (memv *transform-size* '(1024 4096)))
-	(snd-display "transform-size set default: ~A" *transform-size*))
-    (if (not (equal? *transform-graph-type* graph-once))
-	(snd-display "transform-graph-type set default: ~A" *transform-graph-type*))
-    (if (not (eqv? *fft-window* 6)) 
-	(snd-display "fft-window set default: ~A" *fft-window*))
-    (if (not (eqv? *graph-cursor* 34)) 
-	(snd-display "graph-cursor set default: ~A" *graph-cursor*))
-    (if (not (equal? *graph-style* graph-lines)) 
-	(snd-display "graph-style set default: ~A" *graph-style*))
-    (if (not *graphs-horizontal*)
-	(snd-display "graphs-horizontal set default: ~A" *graphs-horizontal*))
-    (if (not (equal? *html-dir* ".")) 
-	(snd-display "html-dir set default: ~A" *html-dir*))
-    (if (not (equal? *html-program* "firefox")) 
-	(snd-display "html-program set default: ~A" *html-program*))
-    (if (not *just-sounds*) 
-	(snd-display "just-sounds set default: ~A" *just-sounds*))
-    (if (not (string? *listener-prompt*)) 
-	(snd-display "listener-prompt set default: ~A" *listener-prompt*))
-    (if (not (string? *stdin-prompt*)) 
-	(snd-display "stdin-prompt set default: ~A" *stdin-prompt*))
-    (unless (eqv? *max-transform-peaks* 100)
-      (snd-display "max-transform-peaks set default: ~A" *max-transform-peaks*))
-    (if (not (eqv? *max-regions* 16)) 
-	(snd-display "max-regions set default: ~A" *max-regions*))
-    (if (fneq *min-dB* -60.0)
-	(snd-display "min-dB set default: ~A" *min-dB*))
-    (if (fneq *log-freq-start* 32.0)
-	(snd-display "log-freq-start set default: ~A" *log-freq-start*))
-    (if (not *selection-creates-region*) 
-	(snd-display "selection-creates-region set default: ~A" *selection-creates-region*))
-    (if (not (equal? *transform-normalization* normalize-by-channel)) 
-	(snd-display "transform-normalization set default: ~A" *transform-normalization*))
-
-    (if (and with-motif 
-	     (not (eqv? (view-files-sort) 0))) 
-	(snd-display "view-files-sort set default: ~A" (view-files-sort)))
-
-    (if (not (memv *print-length* '(12 32)))
-	(snd-display "print-length set default: ~A" *print-length*))
-    (if (not (eqv? *play-arrow-size* 10)) 
-	(snd-display "play-arrow-size set default: ~A" *play-arrow-size*))
-    (if (not (equal? *save-state-file* "saved-snd.scm")) 
-	(snd-display "save-state-file set default: ~A" *save-state-file*))
-    (if (not (eqv? *show-axes* 1)) 
-	(snd-display "show-axes set default: ~A" *show-axes*))
-    (if (not (boolean? *show-transform-peaks*)) 
-	(snd-display "show-transform-peaks set default: ~A" *show-transform-peaks*))
-    (if (not (boolean? *show-indices*)) 
-	(snd-display "show-indices set default: ~A" *show-indices*))
-    (if (not *show-marks*)
-	(snd-display "show-marks set default: ~A" *show-marks*))
-    (if (not *show-mix-waveforms*) 
-	(snd-display "show-mix-waveforms set default: ~A" *show-mix-waveforms*))
-    (if *show-selection-transform*
-	(snd-display "show-selection-transform set default: ~A" *show-selection-transform*))
-    (if *show-y-zero*
-	(snd-display "show-y-zero set default: ~A" *show-y-zero*))
-    (if *show-grid*
-	(snd-display "show-grid set default: ~A" *show-grid*))
-    (if (fneq *grid-density* 1.0)
-	(snd-display "grid-density set default: ~A" *grid-density*))
-    (if *show-sonogram-cursor* 
-	(snd-display "show-sonogram-cursor set default: ~A" *show-sonogram-cursor*))
-    (if (not (eqv? *sinc-width* 10)) 
-	(snd-display "sinc-width set default: ~A" *sinc-width*))
-    (if (fneq *spectrum-end* 1.0)
-	(snd-display "spectrum-end set default: ~A" *spectrum-end*))
-    (if (not (eqv? *spectro-hop* 4)) 
-	(snd-display "spectro-hop set default: ~A" *spectro-hop*))
-    (if (fneq *spectrum-start* 0.0)
-	(snd-display "spectrum-start set default: ~A" *spectrum-start*))
-    (if (fneq *spectro-x-angle* (if (provided? 'gl) 300.0 90.0))
-	(snd-display "spectro-x-angle set default: ~A" *spectro-x-angle*))
-    (if (fneq *spectro-x-scale* (if (provided? 'gl) 1.5 1.0))
-	(snd-display "spectro-x-scale set default: ~A" *spectro-x-scale*))
-    (if (fneq *spectro-y-angle* (if (provided? 'gl) 320.0 0.0))
-	(snd-display "spectro-y-angle set default: ~A" *spectro-y-angle*))
-    (if (fneq *spectro-y-scale* 1.0)
-	(snd-display "spectro-y-scale set default: ~A" *spectro-y-scale*))
-    (if (fneq *spectro-z-angle* (if (provided? 'gl) 0.0 358.0))
-	(snd-display "spectro-z-angle set default: ~A" *spectro-z-angle*))
-    (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
-	(snd-display "spectro-z-scale set default: ~A" *spectro-z-scale*))
-    (if (and *temp-dir* (not (equal? *temp-dir* "/home/bil/zap/tmp")))
-	(snd-display "temp-dir set default: ~A" *temp-dir*))
-    (if (not (equal? *ladspa-dir* "")) 
-	(snd-display "ladspa-dir set default: ~A" *ladspa-dir*))
-    (if (and *peak-env-dir* (not (equal? *peak-env-dir* "/home/bil/peaks")))
-	(snd-display "peak-env-dir set default: ~A" *peak-env-dir*))
-    (if (not (member *tiny-font* '("6x12" "Sans 8")))
-	(snd-display "tiny-font set default: ~A" *tiny-font*))
-    (if (not (equal? *transform-type* fourier-transform)) 
-	(snd-display "transform-type set default: ~A" *transform-type*))
-    (if (not (eq? *with-file-monitor* #t)) 
-	(snd-display "with-file-monitor set default: ~A" *with-file-monitor*))
-    (if (not (eqv? *clm-table-size* 512)) 
-	(snd-display "clm-table-size set default: ~A" *clm-table-size*))
-    (if (fneq *clm-default-frequency* 0.0)
-	(snd-display "clm-default-frequency set default: ~A" *clm-default-frequency*))
-    (if (not (boolean? *with-verbose-cursor*)) 
-	(snd-display "with-verbose-cursor set default: ~A" *with-verbose-cursor*))
-    (if (not (boolean? *with-inset-graph*))
-	(snd-display "with-inset-graph set default: ~A" *with-inset-graph*))
-    (if (not *with-interrupts*)
-	(snd-display "with-interrupts set default: ~A" *with-interrupts*))
-    (if *remember-sound-state*
-	(snd-display "remember-sound-state set default: ~A" *remember-sound-state*))
-    (if *with-smpte-label*
-	(snd-display "with-smpte-label set default: ~A" *with-smpte-label*))
-    (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
-	(snd-display "with-toolbar set default: ~A" *with-toolbar*))
-    (if (not *with-tooltips*)
-	(snd-display "with-tooltips set default: ~A" *with-tooltips*))
-    (if (not (boolean? *with-menu-icons*))
-	(snd-display "with-menu-icons set default: ~A" *with-menu-icons*))
-    (if *save-as-dialog-src*
-	(snd-display "save-as-dialog-src set default: ~A" *save-as-dialog-src*))
-    (if *save-as-dialog-auto-comment*
-	(snd-display "save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
-    (if (not (boolean? *with-pointer-focus*)) 
-	(snd-display "with-pointer-focus set default: ~A" *with-pointer-focus*))
-    (if (not (eqv? *wavelet-type* 0)) 
-	(snd-display "wavelet-type set default: ~A" *wavelet-type*))
-    (if (not (equal? *time-graph-type* graph-once)) 
-	(snd-display "time-graph-type set default: ~A" *time-graph-type*))
-    (if (not (eqv? *wavo-hop* 3)) 
-	(snd-display "wavo-hop set default: ~A" *wavo-hop*))
-    (if (not (eqv? *wavo-trace* 64)) 
-	(snd-display "wavo-trace set default: ~A" *wavo-trace*))
-    (if (not (eqv? *x-axis-style* 0)) 
-	(snd-display "x-axis-style set default: ~A" *x-axis-style*))
-    (if (fneq *beats-per-minute* 60.0)
-	(snd-display "beats-per-minute set default: ~A" *beats-per-minute*))
-    (if (not (= *beats-per-measure* 4))
-	(snd-display "beats-per-measure set default: ~A" *beats-per-measure*))
-    (if (not (eqv? *zero-pad* 0)) 
-	(snd-display "zero-pad set default: ~A" *zero-pad*))
-    (if (not (null? (zero-pad #t #t)))
-	(snd-display "zero-pad #t: ~A" (zero-pad #t #t)))
-    (if (not (eqv? *zoom-focus-style* 2)) 
-	(snd-display "zoom-focus-style set default: ~A" *zoom-focus-style*))
-    (if (not (equal? *sync-style* sync-by-sound)) 
-	(snd-display "sync-style set default: ~A" *sync-style*))    
-    (if (not (eqv? *mix-waveform-height* 20)) 
-	(snd-display "mix-waveform-height set default: ~A" *mix-waveform-height*))
-    (if (not (eqv? *mix-tag-width* 6)) 
-	(snd-display "mix-tag-width set default: ~A" *mix-tag-width*))
-    (if (not (eqv? *mix-tag-height* 14)) 
-	(snd-display "mix-tag-height set default: ~A" *mix-tag-height*))
-    (if (not (eqv? *mark-tag-width* 10)) 
-	(snd-display "mark-tag-width set default: ~A" *mark-tag-width*))
-    (if (not (eqv? *mark-tag-height* 4)) 
-	(snd-display "mark-tag-height set default: ~A" *mark-tag-height*))
-
-    (if (not (equal? *region-graph-style* graph-lines))
-	(snd-display "* region-graph-style set default: ~A" *region-graph-style*))
-    (if *ask-about-unsaved-edits*
-	(snd-display "* ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
-    (if *show-full-range*
-	(snd-display "* show-full-range set default: ~A" *show-full-range*))
-    (if (fneq *initial-beg* 0.0)
-	(snd-display "* initial-beg set default: ~A" *initial-beg*))
-    (if (fneq *initial-dur* 0.1)
-	(snd-display "* initial-dur set default: ~A" *initial-dur*))
-    (if *ask-before-overwrite*
-	(snd-display "* ask-before-overwrite set default: ~A" *ask-before-overwrite*))
-    (if (not *auto-resize*) 
-	(snd-display "* auto-resize set default: ~A" *auto-resize*))
-    (if *auto-update*
-	(snd-display "* auto-update set default: ~A" *auto-update*))
-    (if (not (eqv? *channel-style* 1)) 
-	(snd-display "* channel-style set default: ~A" *channel-style*))
-    (if (and (fneq *color-cutoff* 0.003) (fneq *color-cutoff* 0.001))
-	(snd-display "* color-cutoff set default: ~A" *color-cutoff*))
-    (if (not (eq? *color-inverted* #t)) 
-	(snd-display "* color-inverted set default: ~A" *color-inverted*))
-    (if (fneq *color-scale* 1.0)
-	(snd-display "* color-scale set default: ~A" *color-scale*))
-    (if (fneq *auto-update-interval* 60.0)
-	(snd-display "* auto-update-interval set default: ~A" *auto-update-interval*))
-    (if (fneq *cursor-update-interval* 0.05)
-	(snd-display "* cursor-update-interval set default: ~A" *cursor-update-interval*))
-    (if (not (= *cursor-location-offset* 0))
-	(snd-display "* cursor-location-offset set default: ~A" *cursor-location-offset*))
-    (if (not (eq? *dac-combines-channels* #t)) 
-	(snd-display "* dac-combines-channels set default: ~A" *dac-combines-channels*))
-    (if (not (eqv? *dac-size* 256)) 
-	(snd-display "* dac-size set default: ~A" *dac-size*))
-    (if *clipping*
-	(snd-display "* clipping set default: ~A" *clipping*))
-    (if (not (eqv? *default-output-chans* 1)) 
-	(snd-display "* default-output-chans set default: ~A" *default-output-chans*))
-    (if (not (or (equal? *default-output-sample-type* mus-bdouble)
-		 (equal? *default-output-sample-type* mus-ldouble)))
-	(snd-display "* default-output-sample-type set default: ~A" *default-output-sample-type*))
-    (if (not (eqv? *default-output-srate* 44100)) 
-	(snd-display "* default-output-srate set default: ~A" *default-output-srate*))
-    (if (not (equal? *default-output-header-type* mus-next)) 
-	(snd-display "* default-output-header-type set default: ~A" *default-output-header-type*))
-    (if (not (eqv? *dot-size* 1)) 
-	(snd-display "* dot-size set default: ~A" *dot-size*))
-    (if (not (eqv? *cursor-size* 15)) 
-	(snd-display "* cursor-size set default: ~A" *cursor-size*))
-    (if (not (equal? *cursor-style* cursor-cross)) 
-	(snd-display "* cursor-style set default: ~A" *cursor-style*))
-    (if (not (equal? *tracking-cursor-style* cursor-line)) 
-	(snd-display "* tracking-cursor-style set default: ~A" *tracking-cursor-style*))
-    (if (fneq *enved-base* 1.0)
-	(snd-display "* enved-base set default: ~A" *enved-base*))
-    (if (not (eqv? *enved-filter-order* 40)) 
-	(snd-display "* enved-filter-order set default: ~A" *enved-filter-order*))
-    (if (not (equal? *enved-style* envelope-linear)) 
-	(snd-display "* enved-style set default: ~A" *enved-style*))
-    (if (fneq *enved-power* 3.0)
-	(snd-display "* enved-power set default: ~A" *enved-power*))
-    (if (not (eqv? *enved-target* 0)) 
-	(snd-display "* enved-target set default: ~A" *enved-target*))
-    (if *enved-wave?*
-	(snd-display "* enved-wave? set default: ~A" *enved-wave?*))
-    (if (not (equal? *eps-file* "snd.eps")) 
-	(snd-display "* eps-file set default: ~A" *eps-file*))
-    (if (fneq *eps-bottom-margin* 0.0)
-	(snd-display "* eps-bottom-margin set default: ~A" *eps-bottom-margin*))
-    (if (fneq *eps-left-margin* 0.0)
-	(snd-display "* eps-left-margin set default: ~A" *eps-left-margin*))
-    (if (fneq *eps-size* 1.0)
-	(snd-display "* eps-size set default: ~A" *eps-size*))
-    (if (fneq *fft-window-alpha* 0.0)
-	(snd-display "* fft-window-alpha set default: ~A" *fft-window-alpha*))
-    (if (fneq *fft-window-beta* 0.0)
-	(snd-display "* fft-window-beta set default: ~A" *fft-window-beta*))
-    (if *fft-log-frequency*
-	(snd-display "* fft-log-frequency set default: ~A" *fft-log-frequency*))
-    (if *fft-log-magnitude*
-	(snd-display "* fft-log-magnitude set default: ~A" *fft-log-magnitude*))
-    (if *fft-with-phases*
-	(snd-display "* fft-with-phases set default: ~A" *fft-with-phases*))
-    (if (not (memv *transform-size* '(1024 4096)))
-	(snd-display "* transform-size set default: ~A" *transform-size*))
-    (if (not (equal? *transform-graph-type* graph-once))
-	(snd-display "* transform-graph-type set default: ~A" *transform-graph-type*))
-    (if (not (eqv? *fft-window* 6)) 
-	(snd-display "* fft-window set default: ~A" *fft-window*))
-    (if (not (eqv? *graph-cursor* 34)) 
-	(snd-display "* graph-cursor set default: ~A" *graph-cursor*))
-    (if (not (equal? *graph-style* graph-lines)) 
-	(snd-display "* graph-style set default: ~A" *graph-style*))
-    (if (not *graphs-horizontal*) 
-	(snd-display "* graphs-horizontal set default: ~A" *graphs-horizontal*))
-    (if (not (equal? *html-dir* ".")) 
-	(snd-display "* html-dir set default: ~A" *html-dir*))
-    (if (not (equal? *html-program* "firefox")) 
-	(snd-display "* html-program set default: ~A" *html-program*))
-    (if (not *just-sounds*) 
-	(snd-display "* just-sounds set default: ~A" *just-sounds*))
-    (if (not (eqv? *max-transform-peaks* 100)) 
-	(snd-display "* max-transform-peaks set default: ~A" *max-transform-peaks*))
-    (if (not (eqv? *max-regions* 16)) 
-	(snd-display "* max-regions set default: ~A" *max-regions*))
-    (if (fneq *min-dB* -60.0)
-	(snd-display "* min-dB set default: ~A" *min-dB*))
-    (if (fneq *log-freq-start* 32.0)
-	(snd-display "* log-freq-start set default: ~A" *log-freq-start*))
-    (if (not (eq? *selection-creates-region* #t)) 
-	(snd-display "* selection-creates-region set default: ~A" *selection-creates-region*))
-    (if (not (equal? *transform-normalization* normalize-by-channel)) 
-	(snd-display "* transform-normalization set default: ~A" *transform-normalization*))
-
-    (if (and with-motif 
-	     (not (eqv? *view-files-sort* 0)))
-	(snd-display "* view-files-sort set default: ~A" *view-files-sort*))
-
-    (if (not (eqv? *play-arrow-size* 10)) 
-	(snd-display "* play-arrow-size set default: ~A" *play-arrow-size*))
-    (if (not (equal? *save-state-file* "saved-snd.scm")) 
-	(snd-display "* save-state-file set default: ~A" *save-state-file*))
-    (if (not (eqv? *show-axes* 1)) 
-	(snd-display "* show-axes set default: ~A" *show-axes*))
-    (if (not *show-marks*) 
-	(snd-display "* show-marks set default: ~A" *show-marks*))
-    (if (not *show-mix-waveforms*) 
-	(snd-display "* show-mix-waveforms set default: ~A" *show-mix-waveforms*))
-    (if *show-selection-transform*
-	(snd-display "* show-selection-transform set default: ~A" *show-selection-transform*))
-    (if *show-y-zero*
-	(snd-display "* show-y-zero set default: ~A" *show-y-zero*))
-    (if *show-grid*
-	(snd-display "* show-grid set default: ~A" *show-grid*))
-    (if (fneq *grid-density* 1.0)
-	(snd-display "* grid-density set default: ~A" *grid-density*))
-    (if *show-sonogram-cursor*
-	(snd-display "* show-sonogram-cursor set default: ~A" *show-sonogram-cursor*))
-    (if (not (eqv? *sinc-width* 10)) 
-	(snd-display "* sinc-width set default: ~A" *sinc-width*))
-    (if (fneq *spectrum-end* 1.0)
-	(snd-display "* spectrum-end set default: ~A" *spectrum-end*))
-    (if (not (eqv? *spectro-hop* 4)) 
-	(snd-display "* spectro-hop set default: ~A" *spectro-hop*))
-    (if (fneq *spectrum-start* 0.0)
-	(snd-display "* spectrum-start set default: ~A" *spectrum-start*))
-    (if (fneq *spectro-x-angle* (if (provided? 'gl) 300.0 90.0))
-	(snd-display "* spectro-x-angle set default: ~A" *spectro-x-angle*))
-    (if (fneq *spectro-x-scale* (if (provided? 'gl) 1.5 1.0))
-	(snd-display "* spectro-x-scale set default: ~A" *spectro-x-scale*))
-    (if (fneq *spectro-y-angle* (if (provided? 'gl) 320.0 0.0))
-	(snd-display "* spectro-y-angle set default: ~A" *spectro-y-angle*))
-    (if (fneq *spectro-y-scale* 1.0)
-	(snd-display "* spectro-y-scale set default: ~A" *spectro-y-scale*))
-    (if (fneq *spectro-z-angle* (if (provided? 'gl) 0.0 358.0))
-	(snd-display "* spectro-z-angle set default: ~A" *spectro-z-angle*))
-    (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
-	(snd-display "* spectro-z-scale set default: ~A" *spectro-z-scale*))
-    (if (not (member *tiny-font* '("6x12" "Sans 8")))
-	(snd-display "* tiny-font set default: ~A" *tiny-font*))
-    (if (not *with-file-monitor*) 
-	(snd-display "* with-file-monitor set default: ~A" *with-file-monitor*))
-    (if (not *with-interrupts*)
-	(snd-display "* with-interrupts set default: ~A" *with-interrupts*))
-    (if *remember-sound-state*
-	(snd-display "* remember-sound-state set default: ~A" *remember-sound-state*))
-    (if *with-smpte-label*
-	(snd-display "* with-smpte-label set default: ~A" *with-smpte-label*))
-    (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
-	(snd-display "* with-toolbar set default: ~A" *with-toolbar*))
-    (if (not *with-tooltips*)
-	(snd-display "* with-tooltips set default: ~A" *with-tooltips*))
-    (if *save-as-dialog-src*
-	(snd-display "* save-as-dialog-src set default: ~A" *save-as-dialog-src*))
-    (if *save-as-dialog-auto-comment*
-	(snd-display "* save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
-    (if (not (eqv? *wavelet-type* 0)) 
-	(snd-display "* wavelet-type set default: ~A" *wavelet-type*))
-    (if (not (equal? *time-graph-type* graph-once)) 
-	(snd-display "* time-graph-type set default: ~A" *time-graph-type*))
-    (if (not (eqv? *wavo-hop* 3)) 
-	(snd-display "* wavo-hop set default: ~A" *wavo-hop*))
-    (if (not (eqv? *wavo-trace* 64)) 
-	(snd-display "* wavo-trace set default: ~A" *wavo-trace*))
-    (if (not (eqv? *x-axis-style* 0)) 
-	(snd-display "* x-axis-style set default: ~A" *x-axis-style*))
-    (if (fneq *beats-per-minute* 60.0)
-	(snd-display "* beats-per-minute set default: ~A" *beats-per-minute*))
-    (if (not (= *beats-per-measure* 4))
-	(snd-display "* beats-per-measure set default: ~A" *beats-per-measure*))
-    (if (not (eqv? *zero-pad* 0)) 
-	(snd-display "* zero-pad set default: ~A" *zero-pad*))
-    (if (not (eqv? *zoom-focus-style* 2)) 
-	(snd-display "* zoom-focus-style set default: ~A" *zoom-focus-style*))
-    (if (not (equal? *sync-style* sync-by-sound)) 
-	(snd-display "* sync-style set default: ~A" *sync-style*))    
-    (if (not (eqv? *mix-waveform-height* 20)) 
-	(snd-display "* mix-waveform-height set default: ~A" *mix-waveform-height*))
-    (if (not (eqv? *mix-tag-width* 6)) 
-	(snd-display "* mix-tag-width set default: ~A" *mix-tag-width*))
-    (if (not (eqv? *mix-tag-height* 14)) 
-	(snd-display "* mix-tag-height set default: ~A" *mix-tag-height*))
-    (if (not (eqv? *mark-tag-width* 10)) 
-	(snd-display "* mark-tag-width set default: ~A" *mark-tag-width*))
-    (if (not (eqv? *mark-tag-height* 4)) 
-	(snd-display "* mark-tag-height set default: ~A" *mark-tag-height*))
-
-    (if (and with-motif
-	     (not (= (view-files-sort) 0)))
-	(snd-display "view-files-sort def: ~A" (view-files-sort)))
-    
-    (let-temporarily ((*mus-max-malloc* (expt 2 36)))
-      (if (not (= *mus-max-malloc* (expt 2 36)))
-	  (snd-display "mus-max-malloc as bignum: ~A" *mus-max-malloc*)))
-    
-    (let-temporarily ((*mus-max-table-size* (expt 2 36)))
-      (if (not (= *mus-max-table-size* (expt 2 36)))
-	  (snd-display "mus-max-table-size as bignum: ~A" *mus-max-table-size*)))
-    
-    (if (not (provided? 'snd-gtk))
-	(for-each
-	 (lambda (func name)
-	   (let ((val (func)))
-	     (set! (func) "8x123")
-	     (if (not (and (string? (func))
-			   (string=? val (func))))
-		 (snd-display "set ~A to bogus value: ~A ~A" name val (func)))))
-	 (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
-	 '(axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)))
-
-    (set! *ask-about-unsaved-edits* #f)
-    (set! *remember-sound-state* #f)
-    ))
+  (if (or (pair? (sounds))
+	  (pair? (mixes))
+	  (pair? (marks))
+	  (pair? (regions)))
+      (snd-display "start up: ~A ~A ~A ~A" (sounds) (mixes) (marks) (regions)))
+  (do ((lst '(enved-amplitude 0 
+		  bartlett-window 4 
+		  bartlett-hann-window 21
+		  blackman2-window 6 
+		  blackman3-window 7 
+		  blackman4-window 8
+		  blackman5-window 24
+		  blackman6-window 25
+		  blackman7-window 26
+		  blackman8-window 27
+		  blackman9-window 28
+		  blackman10-window 29
+		  bohman-window 22
+		  cauchy-window 12 
+		  mlt-sine-window 33
+		  papoulis-window 34
+		  dpss-window 35
+		  sinc-window 36
+		  channels-combined 1 
+		  channels-separate 0 
+		  channels-superimposed 2
+		  connes-window 18
+		  cursor-in-middle 3
+		  cursor-in-view 0 
+		  cursor-on-left 1 
+		  cursor-on-right 2 
+		  dolph-chebyshev-window 16
+		  exponential-window 9 
+		  flat-top-window 23
+		  sync-none 0
+		  sync-all 1
+		  sync-by-sound 2
+		  zoom-focus-active 2
+		  zoom-focus-left 0
+		  zoom-focus-middle 3
+		  zoom-focus-right 1 
+		  gaussian-window 14 
+		  graph-dots 1
+		  graph-dots-and-lines 3 
+		  graph-filled 2 
+		  graph-lines 0 
+		  graph-lollipops 4
+		  hamming-window 5
+		  hann-window 1
+		  hann-poisson-window 17
+		  kaiser-window 11 
+		  keyboard-no-action 4
+		  graph-once 0 
+		  parzen-window 3
+		  poisson-window 13
+		  rectangular-window 0 
+		  riemann-window 10 
+		  rv2-window 30
+		  rv3-window 31
+		  rv4-window 32
+		  samaraki-window 19
+		  ultraspherical-window 20
+		  graph-as-sonogram 1
+		  graph-as-spectrogram 2 
+		  graph-once 0
+		  graph-as-wavogram 3
+		  enved-spectrum 1
+		  speed-control-as-float 0 
+		  speed-control-as-ratio 1 
+		  speed-control-as-semitone 2 
+		  enved-srate 2 
+		  tukey-window 15 
+		  welch-window 2 
+		  cursor-cross 0
+		  cursor-line 1
+		  dont-normalize 0
+		  envelope-linear 0
+		  envelope-exponential 1
+		  normalize-by-channel 1
+		  normalize-by-sound 2
+		  normalize-globally 3
+		  x-axis-in-samples 1 
+		  x-axis-in-beats 3
+		  x-axis-in-measures 4
+		  x-axis-in-seconds 0 
+		  x-axis-as-clock 5
+		  x-axis-as-percentage 2
+		  enved-add-point 0
+		  enved-delete-point 1
+		  enved-move-point 2
+		  time-graph 0
+		  transform-graph 1
+		  lisp-graph 2
+		  copy-context 0
+		  cursor-context 3
+		  selection-context 2
+		  mark-context 4
+		  show-no-axes 0
+		  show-all-axes 1
+		  show-x-axis 2
+		  show-all-axes-unlabelled 3
+		  show-x-axis-unlabelled 4
+		  show-bare-x-axis 5
+		  
+		  ;; sndlib constants
+		  mus-unknown-header 0
+		  mus-next 1
+		  mus-aifc 2
+		  mus-riff 3
+		  mus-nist 6
+		  mus-raw 12
+		  mus-ircam 15
+		  mus-aiff 49
+		  mus-bicsf 5
+		  mus-voc 10
+		  mus-svx 9
+		  mus-soundfont 26
+		  mus-rf64 4
+		  mus-caff 60
+		  
+		  mus-interp-none 0
+		  mus-interp-linear 1
+		  mus-interp-sinusoidal 2
+		  mus-interp-all-pass 3
+		  mus-interp-lagrange 4
+		  mus-interp-bezier 5
+		  mus-interp-hermite 6
+		  
+		  mus-chebyshev-first-kind 1
+		  mus-chebyshev-second-kind 2
+		  
+		  mus-unknown-sample 0
+		  mus-bshort 1
+		  mus-lshort 10
+		  mus-mulaw 2
+		  mus-alaw 6
+		  mus-byte 3
+		  mus-ubyte 7
+		  mus-bfloat 4
+		  mus-lfloat 12
+		  mus-bint 5
+		  mus-lint 11
+		  mus-bintn 17
+		  mus-lintn 18
+		  mus-b24int 8
+		  mus-l24int 16
+		  mus-bdouble 9
+		  mus-ldouble 13
+		  mus-ubshort 14
+		  mus-ulshort 15
+		  mus-bfloat-unscaled 19
+		  mus-lfloat-unscaled 20
+		  mus-bdouble-unscaled 21
+		  mus-ldouble-unscaled 22)
+	    (cddr lst)))
+      ((null? lst))
+    (if (not (= (symbol->value (car lst)) (cadr lst)))
+	(snd-display "~A is not ~A (~A)~%" (car lst) (cadr lst) (symbol->value (car lst)))))
+  
+  (if (not (equal? *region-graph-style* graph-lines))
+      (snd-display "region-graph-style set default: ~A" *region-graph-style*))
+  (if *ask-about-unsaved-edits*
+      (snd-display "ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
+  (if (not (boolean? *show-full-duration*))
+      (snd-display "show-full-duration set default: ~A" *show-full-duration*))
+  (if *show-full-range*
+      (snd-display "show-full-range set default: ~A" *show-full-range*))
+  (if (fneq *initial-beg* 0.0)
+      (snd-display "initial-beg set default: ~A" *initial-beg*))
+  (if (fneq *initial-dur* 0.1)
+      (snd-display "initial-dur set default: ~A" *initial-dur*))
+  (if *ask-before-overwrite*
+      (snd-display "ask-before-overwrite set default: ~A" *ask-before-overwrite*))
+  (if (not *auto-resize*)
+      (snd-display "auto-resize set default: ~A" *auto-resize*))
+  (if *auto-update*
+      (snd-display "auto-update set default: ~A" *auto-update*))
+  (if (not (eqv? *channel-style* 1)) 
+      (snd-display "channel-style set default: ~A" *channel-style*))
+  (if (and (fneq *color-cutoff* 0.003) (fneq *color-cutoff* 0.001))
+      (snd-display "color-cutoff set default: ~A" *color-cutoff*))
+  (if (not *color-inverted*)
+      (snd-display "color-inverted set default: ~A" *color-inverted*))
+  (if (fneq *color-scale* 1.0)
+      (snd-display "color-scale set default: ~A" *color-scale*))
+  (if (fneq *auto-update-interval* 60.0)
+      (snd-display "auto-update-interval set default: ~A" *auto-update-interval*))
+  (if (fneq *cursor-update-interval* 0.05)
+      (snd-display "cursor-update-interval set default: ~A" *cursor-update-interval*))
+  (if (not (= *cursor-location-offset* 0))
+      (snd-display "cursor-location-offset set default: ~A" *cursor-location-offset*))
+  (if (not *dac-combines-channels*)
+      (snd-display "dac-combines-channels set default: ~A" *dac-combines-channels*))
+  (if (not (eqv? *dac-size* 256)) 
+      (snd-display "dac-size set default: ~A" *dac-size*))
+  (if *clipping*
+      (snd-display "clipping set default: ~A" *clipping*))
+  (if (not (eqv? *default-output-chans* 1)) 
+      (snd-display "default-output-chans set default: ~A" *default-output-chans*))
+  (if (not (or (equal? *default-output-sample-type* mus-bdouble)
+	       (equal? *default-output-sample-type* mus-ldouble)))
+      (snd-display "default-output-sample-type set default: ~A" *default-output-sample-type*))
+  (if (not (eqv? *default-output-srate* 44100)) 
+      (snd-display "default-output-srate set default: ~A" *default-output-srate*))
+  (if (not (equal? *default-output-header-type* mus-next)) 
+      (snd-display "default-output-header-type set default: ~A" *default-output-header-type*))
+  (if (not (eqv? *dot-size* 1)) 
+      (snd-display "dot-size set default: ~A" *dot-size*))
+  (if (not (eqv? *cursor-size* 15)) 
+      (snd-display "cursor-size set default: ~A" *cursor-size*))
+  (if (not (equal? *cursor-style* cursor-cross)) 
+      (snd-display "cursor-style set default: ~A" *cursor-style*))
+  (if (not (equal? *tracking-cursor-style* cursor-line)) 
+      (snd-display "tracking-cursor-style set default: ~A" *tracking-cursor-style*))
+  (if (fneq *enved-base* 1.0)
+      (snd-display "enved-base set default: ~A" *enved-base*))
+  (if (not (enved-clip?))
+      (snd-display "enved-clip? set default: ~A" (enved-clip?)))
+  (if (not (enved-filter))
+      (snd-display "enved-filter set default: ~A" (enved-filter)))
+  (if (not (eqv? *enved-filter-order* 40)) 
+      (snd-display "enved-filter-order set default: ~A" *enved-filter-order*))
+  (if (enved-in-dB)
+      (snd-display "enved-in-dB set default: ~A" (enved-in-dB)))
+  (if (not (equal? *enved-style* envelope-linear)) 
+      (snd-display "enved-style set default: ~A" *enved-style*))
+  (if (fneq *enved-power* 3.0)
+      (snd-display "enved-power set default: ~A" *enved-power*))
+  (if (not (eqv? *enved-target* 0)) 
+      (snd-display "enved-target set default: ~A" *enved-target*))
+  (if *enved-wave?*
+      (snd-display "enved-wave? set default: ~A" *enved-wave?*))
+  (if (and with-gui
+	   (pair? (enved-envelope)))
+      (snd-display "enved-envelope set default: ~A" (enved-envelope)))
+  (if (not (equal? *eps-file* "snd.eps")) 
+      (snd-display "eps-file set default: ~A" *eps-file*))
+  (if (fneq *eps-bottom-margin* 0.0)
+      (snd-display "eps-bottom-margin set default: ~A" *eps-bottom-margin*))
+  (if (fneq *eps-left-margin* 0.0)
+      (snd-display "eps-left-margin set default: ~A" *eps-left-margin*))
+  (if (fneq *eps-size* 1.0)
+      (snd-display "eps-size set default: ~A" *eps-size*))
+  (if (fneq *fft-window-alpha* 0.0)
+      (snd-display "fft-window-alpha set default: ~A" *fft-window-alpha*))
+  (if (fneq *fft-window-beta* 0.0)
+      (snd-display "fft-window-beta set default: ~A" *fft-window-beta*))
+  (if *fft-log-frequency*
+      (snd-display "fft-log-frequency set default: ~A" *fft-log-frequency*))
+  (if *fft-log-magnitude*
+      (snd-display "fft-log-magnitude set default: ~A" *fft-log-magnitude*))
+  (if *fft-with-phases*
+      (snd-display "fft-with-phases set default: ~A" *fft-with-phases*))
+  (if (not (memv *transform-size* '(1024 4096)))
+      (snd-display "transform-size set default: ~A" *transform-size*))
+  (if (not (equal? *transform-graph-type* graph-once))
+      (snd-display "transform-graph-type set default: ~A" *transform-graph-type*))
+  (if (not (eqv? *fft-window* 6)) 
+      (snd-display "fft-window set default: ~A" *fft-window*))
+  (if (not (eqv? *graph-cursor* 34)) 
+      (snd-display "graph-cursor set default: ~A" *graph-cursor*))
+  (if (not (equal? *graph-style* graph-lines)) 
+      (snd-display "graph-style set default: ~A" *graph-style*))
+  (if (not *graphs-horizontal*)
+      (snd-display "graphs-horizontal set default: ~A" *graphs-horizontal*))
+  (if (not (equal? *html-dir* ".")) 
+      (snd-display "html-dir set default: ~A" *html-dir*))
+  (if (not (equal? *html-program* "firefox")) 
+      (snd-display "html-program set default: ~A" *html-program*))
+  (if (not *just-sounds*) 
+      (snd-display "just-sounds set default: ~A" *just-sounds*))
+  (if (not (string? *listener-prompt*)) 
+      (snd-display "listener-prompt set default: ~A" *listener-prompt*))
+  (if (not (string? *stdin-prompt*)) 
+      (snd-display "stdin-prompt set default: ~A" *stdin-prompt*))
+  (unless (eqv? *max-transform-peaks* 100)
+    (snd-display "max-transform-peaks set default: ~A" *max-transform-peaks*))
+  (if (not (eqv? *max-regions* 16)) 
+      (snd-display "max-regions set default: ~A" *max-regions*))
+  (if (fneq *min-dB* -60.0)
+      (snd-display "min-dB set default: ~A" *min-dB*))
+  (if (fneq *log-freq-start* 32.0)
+      (snd-display "log-freq-start set default: ~A" *log-freq-start*))
+  (if (not *selection-creates-region*) 
+      (snd-display "selection-creates-region set default: ~A" *selection-creates-region*))
+  (if (not (equal? *transform-normalization* normalize-by-channel)) 
+      (snd-display "transform-normalization set default: ~A" *transform-normalization*))
+  
+  (if (and with-motif 
+	   (not (eqv? (view-files-sort) 0))) 
+      (snd-display "view-files-sort set default: ~A" (view-files-sort)))
+  
+  (if (not (memv *print-length* '(12 32)))
+      (snd-display "print-length set default: ~A" *print-length*))
+  (if (not (eqv? *play-arrow-size* 10)) 
+      (snd-display "play-arrow-size set default: ~A" *play-arrow-size*))
+  (if (not (equal? *save-state-file* "saved-snd.scm")) 
+      (snd-display "save-state-file set default: ~A" *save-state-file*))
+  (if (not (eqv? *show-axes* 1)) 
+      (snd-display "show-axes set default: ~A" *show-axes*))
+  (if (not (boolean? *show-transform-peaks*)) 
+      (snd-display "show-transform-peaks set default: ~A" *show-transform-peaks*))
+  (if (not (boolean? *show-indices*)) 
+      (snd-display "show-indices set default: ~A" *show-indices*))
+  (if (not *show-marks*)
+      (snd-display "show-marks set default: ~A" *show-marks*))
+  (if (not *show-mix-waveforms*) 
+      (snd-display "show-mix-waveforms set default: ~A" *show-mix-waveforms*))
+  (if *show-selection-transform*
+      (snd-display "show-selection-transform set default: ~A" *show-selection-transform*))
+  (if *show-y-zero*
+      (snd-display "show-y-zero set default: ~A" *show-y-zero*))
+  (if *show-grid*
+      (snd-display "show-grid set default: ~A" *show-grid*))
+  (if (fneq *grid-density* 1.0)
+      (snd-display "grid-density set default: ~A" *grid-density*))
+  (if *show-sonogram-cursor* 
+      (snd-display "show-sonogram-cursor set default: ~A" *show-sonogram-cursor*))
+  (if (not (eqv? *sinc-width* 10)) 
+      (snd-display "sinc-width set default: ~A" *sinc-width*))
+  (if (fneq *spectrum-end* 1.0)
+      (snd-display "spectrum-end set default: ~A" *spectrum-end*))
+  (if (not (eqv? *spectro-hop* 4)) 
+      (snd-display "spectro-hop set default: ~A" *spectro-hop*))
+  (if (fneq *spectrum-start* 0.0)
+      (snd-display "spectrum-start set default: ~A" *spectrum-start*))
+  (if (fneq *spectro-x-angle* (if (provided? 'gl) 300.0 90.0))
+      (snd-display "spectro-x-angle set default: ~A" *spectro-x-angle*))
+  (if (fneq *spectro-x-scale* (if (provided? 'gl) 1.5 1.0))
+      (snd-display "spectro-x-scale set default: ~A" *spectro-x-scale*))
+  (if (fneq *spectro-y-angle* (if (provided? 'gl) 320.0 0.0))
+      (snd-display "spectro-y-angle set default: ~A" *spectro-y-angle*))
+  (if (fneq *spectro-y-scale* 1.0)
+      (snd-display "spectro-y-scale set default: ~A" *spectro-y-scale*))
+  (if (fneq *spectro-z-angle* (if (provided? 'gl) 0.0 358.0))
+      (snd-display "spectro-z-angle set default: ~A" *spectro-z-angle*))
+  (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
+      (snd-display "spectro-z-scale set default: ~A" *spectro-z-scale*))
+  (if (and *temp-dir* (not (equal? *temp-dir* "/home/bil/zap/tmp")))
+      (snd-display "temp-dir set default: ~A" *temp-dir*))
+  (if (not (equal? *ladspa-dir* "")) 
+      (snd-display "ladspa-dir set default: ~A" *ladspa-dir*))
+  (if (and *peak-env-dir* (not (equal? *peak-env-dir* "/home/bil/peaks")))
+      (snd-display "peak-env-dir set default: ~A" *peak-env-dir*))
+  (if (not (member *tiny-font* '("6x12" "Sans 8")))
+      (snd-display "tiny-font set default: ~A" *tiny-font*))
+  (if (not (equal? *transform-type* fourier-transform)) 
+      (snd-display "transform-type set default: ~A" *transform-type*))
+  (if (not (eq? *with-file-monitor* #t)) 
+      (snd-display "with-file-monitor set default: ~A" *with-file-monitor*))
+  (if (not (eqv? *clm-table-size* 512)) 
+      (snd-display "clm-table-size set default: ~A" *clm-table-size*))
+  (if (fneq *clm-default-frequency* 0.0)
+      (snd-display "clm-default-frequency set default: ~A" *clm-default-frequency*))
+  (if (not (boolean? *with-verbose-cursor*)) 
+      (snd-display "with-verbose-cursor set default: ~A" *with-verbose-cursor*))
+  (if (not (boolean? *with-inset-graph*))
+      (snd-display "with-inset-graph set default: ~A" *with-inset-graph*))
+  (if (not *with-interrupts*)
+      (snd-display "with-interrupts set default: ~A" *with-interrupts*))
+  (if *remember-sound-state*
+      (snd-display "remember-sound-state set default: ~A" *remember-sound-state*))
+  (if *with-smpte-label*
+      (snd-display "with-smpte-label set default: ~A" *with-smpte-label*))
+  (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
+      (snd-display "with-toolbar set default: ~A" *with-toolbar*))
+  (if (not *with-tooltips*)
+      (snd-display "with-tooltips set default: ~A" *with-tooltips*))
+  (if (not (boolean? *with-menu-icons*))
+      (snd-display "with-menu-icons set default: ~A" *with-menu-icons*))
+  (if *save-as-dialog-src*
+      (snd-display "save-as-dialog-src set default: ~A" *save-as-dialog-src*))
+  (if *save-as-dialog-auto-comment*
+      (snd-display "save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
+  (if (not (boolean? *with-pointer-focus*)) 
+      (snd-display "with-pointer-focus set default: ~A" *with-pointer-focus*))
+  (if (not (eqv? *wavelet-type* 0)) 
+      (snd-display "wavelet-type set default: ~A" *wavelet-type*))
+  (if (not (equal? *time-graph-type* graph-once)) 
+      (snd-display "time-graph-type set default: ~A" *time-graph-type*))
+  (if (not (eqv? *wavo-hop* 3)) 
+      (snd-display "wavo-hop set default: ~A" *wavo-hop*))
+  (if (not (eqv? *wavo-trace* 64)) 
+      (snd-display "wavo-trace set default: ~A" *wavo-trace*))
+  (if (not (eqv? *x-axis-style* 0)) 
+      (snd-display "x-axis-style set default: ~A" *x-axis-style*))
+  (if (fneq *beats-per-minute* 60.0)
+      (snd-display "beats-per-minute set default: ~A" *beats-per-minute*))
+  (if (not (= *beats-per-measure* 4))
+      (snd-display "beats-per-measure set default: ~A" *beats-per-measure*))
+  (if (not (eqv? *zero-pad* 0)) 
+      (snd-display "zero-pad set default: ~A" *zero-pad*))
+  (if (not (null? (zero-pad #t #t)))
+      (snd-display "zero-pad #t: ~A" (zero-pad #t #t)))
+  (if (not (eqv? *zoom-focus-style* 2)) 
+      (snd-display "zoom-focus-style set default: ~A" *zoom-focus-style*))
+  (if (not (equal? *sync-style* sync-by-sound)) 
+      (snd-display "sync-style set default: ~A" *sync-style*))    
+  (if (not (eqv? *mix-waveform-height* 20)) 
+      (snd-display "mix-waveform-height set default: ~A" *mix-waveform-height*))
+  (if (not (eqv? *mix-tag-width* 6)) 
+      (snd-display "mix-tag-width set default: ~A" *mix-tag-width*))
+  (if (not (eqv? *mix-tag-height* 14)) 
+      (snd-display "mix-tag-height set default: ~A" *mix-tag-height*))
+  (if (not (eqv? *mark-tag-width* 10)) 
+      (snd-display "mark-tag-width set default: ~A" *mark-tag-width*))
+  (if (not (eqv? *mark-tag-height* 4)) 
+      (snd-display "mark-tag-height set default: ~A" *mark-tag-height*))
+  
+  (if (not (equal? *region-graph-style* graph-lines))
+      (snd-display "* region-graph-style set default: ~A" *region-graph-style*))
+  (if *ask-about-unsaved-edits*
+      (snd-display "* ask-about-unsaved-edits set default: ~A" *ask-about-unsaved-edits*))
+  (if *show-full-range*
+      (snd-display "* show-full-range set default: ~A" *show-full-range*))
+  (if (fneq *initial-beg* 0.0)
+      (snd-display "* initial-beg set default: ~A" *initial-beg*))
+  (if (fneq *initial-dur* 0.1)
+      (snd-display "* initial-dur set default: ~A" *initial-dur*))
+  (if *ask-before-overwrite*
+      (snd-display "* ask-before-overwrite set default: ~A" *ask-before-overwrite*))
+  (if (not *auto-resize*) 
+      (snd-display "* auto-resize set default: ~A" *auto-resize*))
+  (if *auto-update*
+      (snd-display "* auto-update set default: ~A" *auto-update*))
+  (if (not (eqv? *channel-style* 1)) 
+      (snd-display "* channel-style set default: ~A" *channel-style*))
+  (if (and (fneq *color-cutoff* 0.003) (fneq *color-cutoff* 0.001))
+      (snd-display "* color-cutoff set default: ~A" *color-cutoff*))
+  (if (not (eq? *color-inverted* #t)) 
+      (snd-display "* color-inverted set default: ~A" *color-inverted*))
+  (if (fneq *color-scale* 1.0)
+      (snd-display "* color-scale set default: ~A" *color-scale*))
+  (if (fneq *auto-update-interval* 60.0)
+      (snd-display "* auto-update-interval set default: ~A" *auto-update-interval*))
+  (if (fneq *cursor-update-interval* 0.05)
+      (snd-display "* cursor-update-interval set default: ~A" *cursor-update-interval*))
+  (if (not (= *cursor-location-offset* 0))
+      (snd-display "* cursor-location-offset set default: ~A" *cursor-location-offset*))
+  (if (not (eq? *dac-combines-channels* #t)) 
+      (snd-display "* dac-combines-channels set default: ~A" *dac-combines-channels*))
+  (if (not (eqv? *dac-size* 256)) 
+      (snd-display "* dac-size set default: ~A" *dac-size*))
+  (if *clipping*
+      (snd-display "* clipping set default: ~A" *clipping*))
+  (if (not (eqv? *default-output-chans* 1)) 
+      (snd-display "* default-output-chans set default: ~A" *default-output-chans*))
+  (if (not (or (equal? *default-output-sample-type* mus-bdouble)
+	       (equal? *default-output-sample-type* mus-ldouble)))
+      (snd-display "* default-output-sample-type set default: ~A" *default-output-sample-type*))
+  (if (not (eqv? *default-output-srate* 44100)) 
+      (snd-display "* default-output-srate set default: ~A" *default-output-srate*))
+  (if (not (equal? *default-output-header-type* mus-next)) 
+      (snd-display "* default-output-header-type set default: ~A" *default-output-header-type*))
+  (if (not (eqv? *dot-size* 1)) 
+      (snd-display "* dot-size set default: ~A" *dot-size*))
+  (if (not (eqv? *cursor-size* 15)) 
+      (snd-display "* cursor-size set default: ~A" *cursor-size*))
+  (if (not (equal? *cursor-style* cursor-cross)) 
+      (snd-display "* cursor-style set default: ~A" *cursor-style*))
+  (if (not (equal? *tracking-cursor-style* cursor-line)) 
+      (snd-display "* tracking-cursor-style set default: ~A" *tracking-cursor-style*))
+  (if (fneq *enved-base* 1.0)
+      (snd-display "* enved-base set default: ~A" *enved-base*))
+  (if (not (eqv? *enved-filter-order* 40)) 
+      (snd-display "* enved-filter-order set default: ~A" *enved-filter-order*))
+  (if (not (equal? *enved-style* envelope-linear)) 
+      (snd-display "* enved-style set default: ~A" *enved-style*))
+  (if (fneq *enved-power* 3.0)
+      (snd-display "* enved-power set default: ~A" *enved-power*))
+  (if (not (eqv? *enved-target* 0)) 
+      (snd-display "* enved-target set default: ~A" *enved-target*))
+  (if *enved-wave?*
+      (snd-display "* enved-wave? set default: ~A" *enved-wave?*))
+  (if (not (equal? *eps-file* "snd.eps")) 
+      (snd-display "* eps-file set default: ~A" *eps-file*))
+  (if (fneq *eps-bottom-margin* 0.0)
+      (snd-display "* eps-bottom-margin set default: ~A" *eps-bottom-margin*))
+  (if (fneq *eps-left-margin* 0.0)
+      (snd-display "* eps-left-margin set default: ~A" *eps-left-margin*))
+  (if (fneq *eps-size* 1.0)
+      (snd-display "* eps-size set default: ~A" *eps-size*))
+  (if (fneq *fft-window-alpha* 0.0)
+      (snd-display "* fft-window-alpha set default: ~A" *fft-window-alpha*))
+  (if (fneq *fft-window-beta* 0.0)
+      (snd-display "* fft-window-beta set default: ~A" *fft-window-beta*))
+  (if *fft-log-frequency*
+      (snd-display "* fft-log-frequency set default: ~A" *fft-log-frequency*))
+  (if *fft-log-magnitude*
+      (snd-display "* fft-log-magnitude set default: ~A" *fft-log-magnitude*))
+  (if *fft-with-phases*
+      (snd-display "* fft-with-phases set default: ~A" *fft-with-phases*))
+  (if (not (memv *transform-size* '(1024 4096)))
+      (snd-display "* transform-size set default: ~A" *transform-size*))
+  (if (not (equal? *transform-graph-type* graph-once))
+      (snd-display "* transform-graph-type set default: ~A" *transform-graph-type*))
+  (if (not (eqv? *fft-window* 6)) 
+      (snd-display "* fft-window set default: ~A" *fft-window*))
+  (if (not (eqv? *graph-cursor* 34)) 
+      (snd-display "* graph-cursor set default: ~A" *graph-cursor*))
+  (if (not (equal? *graph-style* graph-lines)) 
+      (snd-display "* graph-style set default: ~A" *graph-style*))
+  (if (not *graphs-horizontal*) 
+      (snd-display "* graphs-horizontal set default: ~A" *graphs-horizontal*))
+  (if (not (equal? *html-dir* ".")) 
+      (snd-display "* html-dir set default: ~A" *html-dir*))
+  (if (not (equal? *html-program* "firefox")) 
+      (snd-display "* html-program set default: ~A" *html-program*))
+  (if (not *just-sounds*) 
+      (snd-display "* just-sounds set default: ~A" *just-sounds*))
+  (if (not (eqv? *max-transform-peaks* 100)) 
+      (snd-display "* max-transform-peaks set default: ~A" *max-transform-peaks*))
+  (if (not (eqv? *max-regions* 16)) 
+      (snd-display "* max-regions set default: ~A" *max-regions*))
+  (if (fneq *min-dB* -60.0)
+      (snd-display "* min-dB set default: ~A" *min-dB*))
+  (if (fneq *log-freq-start* 32.0)
+      (snd-display "* log-freq-start set default: ~A" *log-freq-start*))
+  (if (not (eq? *selection-creates-region* #t)) 
+      (snd-display "* selection-creates-region set default: ~A" *selection-creates-region*))
+  (if (not (equal? *transform-normalization* normalize-by-channel)) 
+      (snd-display "* transform-normalization set default: ~A" *transform-normalization*))
+  
+  (if (and with-motif 
+	   (not (eqv? *view-files-sort* 0)))
+      (snd-display "* view-files-sort set default: ~A" *view-files-sort*))
+  
+  (if (not (eqv? *play-arrow-size* 10)) 
+      (snd-display "* play-arrow-size set default: ~A" *play-arrow-size*))
+  (if (not (equal? *save-state-file* "saved-snd.scm")) 
+      (snd-display "* save-state-file set default: ~A" *save-state-file*))
+  (if (not (eqv? *show-axes* 1)) 
+      (snd-display "* show-axes set default: ~A" *show-axes*))
+  (if (not *show-marks*) 
+      (snd-display "* show-marks set default: ~A" *show-marks*))
+  (if (not *show-mix-waveforms*) 
+      (snd-display "* show-mix-waveforms set default: ~A" *show-mix-waveforms*))
+  (if *show-selection-transform*
+      (snd-display "* show-selection-transform set default: ~A" *show-selection-transform*))
+  (if *show-y-zero*
+      (snd-display "* show-y-zero set default: ~A" *show-y-zero*))
+  (if *show-grid*
+      (snd-display "* show-grid set default: ~A" *show-grid*))
+  (if (fneq *grid-density* 1.0)
+      (snd-display "* grid-density set default: ~A" *grid-density*))
+  (if *show-sonogram-cursor*
+      (snd-display "* show-sonogram-cursor set default: ~A" *show-sonogram-cursor*))
+  (if (not (eqv? *sinc-width* 10)) 
+      (snd-display "* sinc-width set default: ~A" *sinc-width*))
+  (if (fneq *spectrum-end* 1.0)
+      (snd-display "* spectrum-end set default: ~A" *spectrum-end*))
+  (if (not (eqv? *spectro-hop* 4)) 
+      (snd-display "* spectro-hop set default: ~A" *spectro-hop*))
+  (if (fneq *spectrum-start* 0.0)
+      (snd-display "* spectrum-start set default: ~A" *spectrum-start*))
+  (if (fneq *spectro-x-angle* (if (provided? 'gl) 300.0 90.0))
+      (snd-display "* spectro-x-angle set default: ~A" *spectro-x-angle*))
+  (if (fneq *spectro-x-scale* (if (provided? 'gl) 1.5 1.0))
+      (snd-display "* spectro-x-scale set default: ~A" *spectro-x-scale*))
+  (if (fneq *spectro-y-angle* (if (provided? 'gl) 320.0 0.0))
+      (snd-display "* spectro-y-angle set default: ~A" *spectro-y-angle*))
+  (if (fneq *spectro-y-scale* 1.0)
+      (snd-display "* spectro-y-scale set default: ~A" *spectro-y-scale*))
+  (if (fneq *spectro-z-angle* (if (provided? 'gl) 0.0 358.0))
+      (snd-display "* spectro-z-angle set default: ~A" *spectro-z-angle*))
+  (if (fneq *spectro-z-scale* (if (provided? 'gl) 1.0 0.1))
+      (snd-display "* spectro-z-scale set default: ~A" *spectro-z-scale*))
+  (if (not (member *tiny-font* '("6x12" "Sans 8")))
+      (snd-display "* tiny-font set default: ~A" *tiny-font*))
+  (if (not *with-file-monitor*) 
+      (snd-display "* with-file-monitor set default: ~A" *with-file-monitor*))
+  (if (not *with-interrupts*)
+      (snd-display "* with-interrupts set default: ~A" *with-interrupts*))
+  (if *remember-sound-state*
+      (snd-display "* remember-sound-state set default: ~A" *remember-sound-state*))
+  (if *with-smpte-label*
+      (snd-display "* with-smpte-label set default: ~A" *with-smpte-label*))
+  (if (not (eq? *with-toolbar* (provided? 'snd-gtk)))
+      (snd-display "* with-toolbar set default: ~A" *with-toolbar*))
+  (if (not *with-tooltips*)
+      (snd-display "* with-tooltips set default: ~A" *with-tooltips*))
+  (if *save-as-dialog-src*
+      (snd-display "* save-as-dialog-src set default: ~A" *save-as-dialog-src*))
+  (if *save-as-dialog-auto-comment*
+      (snd-display "* save-as-dialog-auto-comment set default: ~A" *save-as-dialog-auto-comment*))
+  (if (not (eqv? *wavelet-type* 0)) 
+      (snd-display "* wavelet-type set default: ~A" *wavelet-type*))
+  (if (not (equal? *time-graph-type* graph-once)) 
+      (snd-display "* time-graph-type set default: ~A" *time-graph-type*))
+  (if (not (eqv? *wavo-hop* 3)) 
+      (snd-display "* wavo-hop set default: ~A" *wavo-hop*))
+  (if (not (eqv? *wavo-trace* 64)) 
+      (snd-display "* wavo-trace set default: ~A" *wavo-trace*))
+  (if (not (eqv? *x-axis-style* 0)) 
+      (snd-display "* x-axis-style set default: ~A" *x-axis-style*))
+  (if (fneq *beats-per-minute* 60.0)
+      (snd-display "* beats-per-minute set default: ~A" *beats-per-minute*))
+  (if (not (= *beats-per-measure* 4))
+      (snd-display "* beats-per-measure set default: ~A" *beats-per-measure*))
+  (if (not (eqv? *zero-pad* 0)) 
+      (snd-display "* zero-pad set default: ~A" *zero-pad*))
+  (if (not (eqv? *zoom-focus-style* 2)) 
+      (snd-display "* zoom-focus-style set default: ~A" *zoom-focus-style*))
+  (if (not (equal? *sync-style* sync-by-sound)) 
+      (snd-display "* sync-style set default: ~A" *sync-style*))    
+  (if (not (eqv? *mix-waveform-height* 20)) 
+      (snd-display "* mix-waveform-height set default: ~A" *mix-waveform-height*))
+  (if (not (eqv? *mix-tag-width* 6)) 
+      (snd-display "* mix-tag-width set default: ~A" *mix-tag-width*))
+  (if (not (eqv? *mix-tag-height* 14)) 
+      (snd-display "* mix-tag-height set default: ~A" *mix-tag-height*))
+  (if (not (eqv? *mark-tag-width* 10)) 
+      (snd-display "* mark-tag-width set default: ~A" *mark-tag-width*))
+  (if (not (eqv? *mark-tag-height* 4)) 
+      (snd-display "* mark-tag-height set default: ~A" *mark-tag-height*))
+  
+  (if (and with-motif
+	   (not (= (view-files-sort) 0)))
+      (snd-display "view-files-sort def: ~A" (view-files-sort)))
+  
+  (let-temporarily ((*mus-max-malloc* (expt 2 36)))
+    (if (not (= *mus-max-malloc* (expt 2 36)))
+	(snd-display "mus-max-malloc as bignum: ~A" *mus-max-malloc*)))
+  
+  (let-temporarily ((*mus-max-table-size* (expt 2 36)))
+    (if (not (= *mus-max-table-size* (expt 2 36)))
+	(snd-display "mus-max-table-size as bignum: ~A" *mus-max-table-size*)))
+  
+  (if (not (provided? 'snd-gtk))
+      (for-each
+       (lambda (func name)
+	 (let ((val (func)))
+	   (set! (func) "8x123")
+	   (if (not (and (string? (func))
+			 (string=? val (func))))
+	       (snd-display "set ~A to bogus value: ~A ~A" name val (func)))))
+       (list axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)
+       '(axis-label-font axis-numbers-font tiny-font peaks-font bold-peaks-font)))
+  
+  (set! *ask-about-unsaved-edits* #f)
+  (set! *remember-sound-state* #f))
 
 
 
@@ -10549,7 +10541,7 @@ EDITS: 2
 		)))))))
       
   ;; ----------------
-  (define (poly-roots-tests)
+  (define poly-roots-tests
     (letrec ((ceql (lambda (a b)
 		     (if (null? a)
 			 (null? b)
@@ -10557,149 +10549,150 @@ EDITS: 2
 			      (not (or (fneq (real-part (car a)) (real-part (car b)))
 				       (fneq (imag-part (car a)) (imag-part (car b)))))
 			      (ceql (cdr a) (cdr b)))))))
-      
-      ;; degree=0
-      (let ((val (poly-roots (float-vector 0.0))))
-	(if (pair? val) (snd-display "poly-roots 0.0: ~A" val)))
-      (let ((val (poly-roots (float-vector 12.3))))
-	(if (pair? val) (snd-display "poly-roots 12.3: ~A" val)))
-      
-      ;; degree 0 + x=0
-      (let ((val (poly-roots (float-vector 0.0 1.0))))
-	(if (not (ceql val '(0.0))) (snd-display "poly-roots 0.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector 0.0 0.0 0.0 121.0))))
-	(if (not (ceql val '(0.0 0.0 0.0))) (snd-display "poly-roots 0.0 0.0 0.0 121.0: ~A" val)))
-      
-      ;; degree=1
-      (let ((val (poly-roots (float-vector -1.0 1.0))))
-	(if (not (ceql val '(1.0))) (snd-display "poly-roots -1.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector -2.0 4.0))))
-	(if (not (ceql val '(0.5))) (snd-display "poly-roots -2.0 4.0: ~A" val)))
-      (let ((val (poly-as-vector-roots (vector 0.0-i 1))))
-	(if (not (ceql val '(-0.0+1.0i))) (snd-display "poly-roots: -i 1: ~A" val)))
-      
-      ;; linear x^n
-      (let ((val (poly-roots (float-vector -1.0 0.0 0.0 0.0 1.0))))
-	(if (not (or (ceql val '(0.0-1.0i -1.0 0.0+1.0i 1.0))
-		     (ceql val '(1.0 -1.0 0.0+1.0i -0.0-1.0i))))
-	    (snd-display "poly-roots -1.0 0.0 0.0 0.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector -16.0 0.0 0.0 0.0 1.0))))
-	(if (not (or (ceql val '(0.0-2.0i -2.0 0.0+2.0i 2.0))
-		     (ceql val '(2.0 -2.0 0.0+2.0i -0.0-2.0i))))
-	    (snd-display "poly-roots -16.0 0.0 0.0 0.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector -32.0 0 0 0 0 0 0.5))))
-	(if (not (ceql val '(1.0-1.7320i -1.0-1.7320i -2.0 -1.0+1.7320i 1.0+1.7320i 2.0))) (snd-display "poly-roots 32 0 0 0 0 0 0.5: ~A" val)))
-      
-      ;; linear + x=0
-      (let ((val (poly-roots (float-vector 0.0 -2.0 4.0))))
-	(if (not (ceql val '(0.0 0.5))) (snd-display "poly-roots 0.0 -2.0 4.0: ~A" val)))
-      
-      ;; degree=2
-      (let ((val (poly-roots (float-vector -1.0 0.0 1.0))))
-	(if (not (ceql val '(1.0 -1.0))) (snd-display "poly-roots -1.0 0.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector 15.0 -8.0 1.0))))
-	(if (not (ceql val '(5.0 3.0))) (snd-display "poly-roots 15.0 -8.0 1.0: ~A" val)))
-      (let ((val (poly-roots (float-vector 1 -2 1))))
-	(if (not (ceql val '(1.0 1.0))) (snd-display "poly-roots 1 -2 1: ~A" val)))
-      (let ((val (poly-as-vector-roots (vector -1 0.0+2i 1))))
-	(if (not (ceql val '(0.0-1.0i 0.0-1.0i))) (snd-display "poly-roots -1 2i 1: ~A" val)))
-      (let ((val (poly-roots (float-vector 1 1 5))))
-	(if (not (ceql val '(-0.1+0.43589i -0.1-0.43589i))) (snd-display "poly-roots 1 1 5: ~A" val)))
-      
-      ;; 2 + x=0
-      (let ((val (poly-roots (float-vector 0.0 0.0 -1.0 0.0 1.0))))
-	(if (not (ceql val '(0.0 0.0 1.0 -1.0))) (snd-display "poly-roots 0.0 0.0 -1.0 0.0 1.0: ~A" val)))
-      
-      ;; quadratic in x^(n/2)
-      (let ((vals (poly-roots (float-vector 1.0 0.0 -2.0 0.0 1.0))))
-	(if (not (or (ceql vals '(-1.0 1.0 -1.0 1.0))
-		     (ceql vals '(1.0 1.0 -1.0 -1.0))))
-	    (snd-display "poly-roots 1 0 -2 0 1: ~A" vals)))
-      (let ((vals (poly-roots (float-vector 64.0 0.0 0.0 -16.0 0.0 0.0 1.0))))
-	(if (not (ceql vals '(-1.0-1.73205i -1.0+1.73205i 2.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
-	    (snd-display "poly-roots 64 0 0 -16 0 0 1: ~A" vals)))
-      
-      ;; degree=3
-      (let ((val (poly-roots (float-vector -15.0 23.0 -9.0 1.0))))
-	(if (not (ceql val '(5.0 1.0 3.0))) (snd-display "poly-roots 5 1 3: ~A" val)))
-      (let ((val (poly-roots (float-vector -126 -15 0 1))))
-	(if (not (ceql val '(6.0 -3.0+3.46410i -3.0-3.46410i))) (snd-display "poly-roots -126 -15 0 1: ~A" val)))
-      
-      (let ((val (poly-roots (float-vector -1 3 -3 1))))
-	(if (not (ceql val '(1.0 1.0 1.0))) (snd-display "poly-roots -1 3 -3 1: ~A" val))) 
-      (let ((val (poly-roots (float-vector 1 -1 -1 1))))
-	(if (not (or (ceql val '(1.0 -1.0 1.0))
-		     (ceql val '(-1.0 1.0 1.0))))
-	    (snd-display "poly-roots 1 -1 1: ~A" val)))
-      (let ((val (poly-roots (float-vector 2 -2 -2 2))))
-	(if (not (or (ceql val '(1.0 -1.0 1.0))
-		     (ceql val '(-1.0 1.0 1.0))))
-	    (snd-display "poly-roots 2 -2 -2 2: ~A" val)))
-      
-      (let ((vals (poly-roots (float-vector -64 0 0 0 0 0 1))))
-	(if (not (ceql vals '(0.999999999999999-1.73205080756888i -1.0-1.73205080756888i -2.0 -1.0+1.73205080756888i 1.0+1.73205080756888i 2.0)))
-	    (snd-display "poly-roots 64 6: ~A" vals)))
-      (let ((vals (poly-roots (float-vector 64 0 0 -16 0 0 1))))
-	(if (not (ceql vals '(-1.0-1.73205080756888i -1.0+1.73205080756888i 2.0 -1.0-1.73205080756888i -1.0+1.73205080756888i 2.0)))
-	    (snd-display "poly-roots 64 16 6: ~A" vals)))
-      (do ((i 0 (+ i 1))) ((= i 10)) (poly-roots (float-vector (random 1.0) (random 1.0) (random 1.0))))
-      (do ((i 0 (+ i 1))) ((= i 10)) (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
-      
-      (let ((vals1 (convolution (float-vector 1 2 3 0 0 0 0 0) (float-vector 1 2 3 0 0 0 0 0) 8))
-	    (vals2 (poly* (float-vector 1 2 3 0) (float-vector 1 2 3 0))))
-	(if (not (mus-arrays-equal? vals1 vals2))
-	    (snd-display "poly* convolve: ~A ~A" vals1 vals2)))
-      
-      (let ((random-complex (lambda () (complex (mus-random 1.0) (mus-random 1.0)))))
-	(do ((i 0 (+ i 1))) ((= i 10)) 
-	  (poly-as-vector-roots (vector (random-complex) (random-complex))))
+      (lambda ()
 	
-	(do ((i 0 (+ i 1))) ((= i 10)) 
-	  (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex))))
+	;; degree=0
+	(let ((val (poly-roots (float-vector 0.0))))
+	  (if (pair? val) (snd-display "poly-roots 0.0: ~A" val)))
+	(let ((val (poly-roots (float-vector 12.3))))
+	  (if (pair? val) (snd-display "poly-roots 12.3: ~A" val)))
 	
-	(do ((i 0 (+ i 1))) ((= i 10)) 
-	  (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
+	;; degree 0 + x=0
+	(let ((val (poly-roots (float-vector 0.0 1.0))))
+	  (if (not (ceql val '(0.0))) (snd-display "poly-roots 0.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector 0.0 0.0 0.0 121.0))))
+	  (if (not (ceql val '(0.0 0.0 0.0))) (snd-display "poly-roots 0.0 0.0 0.0 121.0: ~A" val)))
 	
-	(do ((i 0 (+ i 1))) ((= i 10)) 
-	  (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex) (random-complex)))))
-      
-      (do ((i 3 (+ i 1))) ((= i 20)) 
-	(let ((v (make-float-vector i)))
-	  (set! (v 0) (mus-random 1.0))
-	  (set! (v (- i 1)) 1.0)
-	  (poly-roots v)))
-      
-      (do ((i 3 (+ i 2))) ((= i 21)) 
-	(let ((v (make-float-vector i)))
-	  (set! (v 0) (mus-random 1.0))
-	  (set! (v (- i 1)) 1.0)
-	  (set! (v (/ (- i 1) 2)) 1.0)
-	  (poly-roots v)))
-      
-      (let ((vals (poly-roots (float-vector 1 -1 -1 1))))
-	(if (not (or (ceql vals '(1.0 -1.0 1.0))
-		     (ceql vals '(-1.0 1.0 1.0))))
-	    (snd-display "poly-roots 1-1-11: ~A" vals)))
-      (let ((vals (poly-roots (float-vector 2 -1 -2 1))))
-	(if (not (ceql vals '(2.0 -1.0 1.0))) (snd-display "poly-roots 2-1-21: ~A" vals)))
-      (let ((vals (poly-roots (float-vector -1 1 1 1))))
-	(if (not (ceql vals '(0.543689012692076 -0.771844506346038+1.11514250803994i -0.771844506346038-1.11514250803994i)))
-	    (snd-display "poly-roots -1111: ~A" vals)))
-      (let ((vals (poly-roots (float-vector -1 3 -3 1))))
-	(if (not (ceql vals '(1.0 1.0 1.0))) (snd-display "poly-roots -13-31: ~A" vals)))
+	;; degree=1
+	(let ((val (poly-roots (float-vector -1.0 1.0))))
+	  (if (not (ceql val '(1.0))) (snd-display "poly-roots -1.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector -2.0 4.0))))
+	  (if (not (ceql val '(0.5))) (snd-display "poly-roots -2.0 4.0: ~A" val)))
+	(let ((val (poly-as-vector-roots (vector 0.0-i 1))))
+	  (if (not (ceql val '(-0.0+1.0i))) (snd-display "poly-roots: -i 1: ~A" val)))
+	
+	;; linear x^n
+	(let ((val (poly-roots (float-vector -1.0 0.0 0.0 0.0 1.0))))
+	  (if (not (or (ceql val '(0.0-1.0i -1.0 0.0+1.0i 1.0))
+		       (ceql val '(1.0 -1.0 0.0+1.0i -0.0-1.0i))))
+	      (snd-display "poly-roots -1.0 0.0 0.0 0.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector -16.0 0.0 0.0 0.0 1.0))))
+	  (if (not (or (ceql val '(0.0-2.0i -2.0 0.0+2.0i 2.0))
+		       (ceql val '(2.0 -2.0 0.0+2.0i -0.0-2.0i))))
+	      (snd-display "poly-roots -16.0 0.0 0.0 0.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector -32.0 0 0 0 0 0 0.5))))
+	  (if (not (ceql val '(1.0-1.7320i -1.0-1.7320i -2.0 -1.0+1.7320i 1.0+1.7320i 2.0))) (snd-display "poly-roots 32 0 0 0 0 0 0.5: ~A" val)))
+	
+	;; linear + x=0
+	(let ((val (poly-roots (float-vector 0.0 -2.0 4.0))))
+	  (if (not (ceql val '(0.0 0.5))) (snd-display "poly-roots 0.0 -2.0 4.0: ~A" val)))
+	
+	;; degree=2
+	(let ((val (poly-roots (float-vector -1.0 0.0 1.0))))
+	  (if (not (ceql val '(1.0 -1.0))) (snd-display "poly-roots -1.0 0.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector 15.0 -8.0 1.0))))
+	  (if (not (ceql val '(5.0 3.0))) (snd-display "poly-roots 15.0 -8.0 1.0: ~A" val)))
+	(let ((val (poly-roots (float-vector 1 -2 1))))
+	  (if (not (ceql val '(1.0 1.0))) (snd-display "poly-roots 1 -2 1: ~A" val)))
+	(let ((val (poly-as-vector-roots (vector -1 0.0+2i 1))))
+	  (if (not (ceql val '(0.0-1.0i 0.0-1.0i))) (snd-display "poly-roots -1 2i 1: ~A" val)))
+	(let ((val (poly-roots (float-vector 1 1 5))))
+	  (if (not (ceql val '(-0.1+0.43589i -0.1-0.43589i))) (snd-display "poly-roots 1 1 5: ~A" val)))
+	
+	;; 2 + x=0
+	(let ((val (poly-roots (float-vector 0.0 0.0 -1.0 0.0 1.0))))
+	  (if (not (ceql val '(0.0 0.0 1.0 -1.0))) (snd-display "poly-roots 0.0 0.0 -1.0 0.0 1.0: ~A" val)))
+	
+	;; quadratic in x^(n/2)
+	(let ((vals (poly-roots (float-vector 1.0 0.0 -2.0 0.0 1.0))))
+	  (if (not (or (ceql vals '(-1.0 1.0 -1.0 1.0))
+		       (ceql vals '(1.0 1.0 -1.0 -1.0))))
+	      (snd-display "poly-roots 1 0 -2 0 1: ~A" vals)))
+	(let ((vals (poly-roots (float-vector 64.0 0.0 0.0 -16.0 0.0 0.0 1.0))))
+	  (if (not (ceql vals '(-1.0-1.73205i -1.0+1.73205i 2.0 -1.0-1.73205i -1.0+1.73205i 2.0)))
+	      (snd-display "poly-roots 64 0 0 -16 0 0 1: ~A" vals)))
+	
+	;; degree=3
+	(let ((val (poly-roots (float-vector -15.0 23.0 -9.0 1.0))))
+	  (if (not (ceql val '(5.0 1.0 3.0))) (snd-display "poly-roots 5 1 3: ~A" val)))
+	(let ((val (poly-roots (float-vector -126 -15 0 1))))
+	  (if (not (ceql val '(6.0 -3.0+3.46410i -3.0-3.46410i))) (snd-display "poly-roots -126 -15 0 1: ~A" val)))
+	
+	(let ((val (poly-roots (float-vector -1 3 -3 1))))
+	  (if (not (ceql val '(1.0 1.0 1.0))) (snd-display "poly-roots -1 3 -3 1: ~A" val))) 
+	(let ((val (poly-roots (float-vector 1 -1 -1 1))))
+	  (if (not (or (ceql val '(1.0 -1.0 1.0))
+		       (ceql val '(-1.0 1.0 1.0))))
+	      (snd-display "poly-roots 1 -1 1: ~A" val)))
+	(let ((val (poly-roots (float-vector 2 -2 -2 2))))
+	  (if (not (or (ceql val '(1.0 -1.0 1.0))
+		       (ceql val '(-1.0 1.0 1.0))))
+	      (snd-display "poly-roots 2 -2 -2 2: ~A" val)))
+	
+	(let ((vals (poly-roots (float-vector -64 0 0 0 0 0 1))))
+	  (if (not (ceql vals '(0.999999999999999-1.73205080756888i -1.0-1.73205080756888i -2.0 -1.0+1.73205080756888i 1.0+1.73205080756888i 2.0)))
+	      (snd-display "poly-roots 64 6: ~A" vals)))
+	(let ((vals (poly-roots (float-vector 64 0 0 -16 0 0 1))))
+	  (if (not (ceql vals '(-1.0-1.73205080756888i -1.0+1.73205080756888i 2.0 -1.0-1.73205080756888i -1.0+1.73205080756888i 2.0)))
+	      (snd-display "poly-roots 64 16 6: ~A" vals)))
+	(do ((i 0 (+ i 1))) ((= i 10)) (poly-roots (float-vector (random 1.0) (random 1.0) (random 1.0))))
+	(do ((i 0 (+ i 1))) ((= i 10)) (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
+	
+	(let ((vals1 (convolution (float-vector 1 2 3 0 0 0 0 0) (float-vector 1 2 3 0 0 0 0 0) 8))
+	      (vals2 (poly* (float-vector 1 2 3 0) (float-vector 1 2 3 0))))
+	  (if (not (mus-arrays-equal? vals1 vals2))
+	      (snd-display "poly* convolve: ~A ~A" vals1 vals2)))
+	
+	(let ((random-complex (lambda () (complex (mus-random 1.0) (mus-random 1.0)))))
+	  (do ((i 0 (+ i 1))) ((= i 10)) 
+	    (poly-as-vector-roots (vector (random-complex) (random-complex))))
+	  
+	  (do ((i 0 (+ i 1))) ((= i 10)) 
+	    (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex))))
+	  
+	  (do ((i 0 (+ i 1))) ((= i 10)) 
+	    (poly-roots (float-vector (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
+	  
+	  (do ((i 0 (+ i 1))) ((= i 10)) 
+	    (poly-as-vector-roots (vector (random-complex) (random-complex) (random-complex) (random-complex)))))
+	
+	(do ((i 3 (+ i 1))) ((= i 20)) 
+	  (let ((v (make-float-vector i)))
+	    (set! (v 0) (mus-random 1.0))
+	    (set! (v (- i 1)) 1.0)
+	    (poly-roots v)))
+	
+	(do ((i 3 (+ i 2))) ((= i 21)) 
+	  (let ((v (make-float-vector i)))
+	    (set! (v 0) (mus-random 1.0))
+	    (set! (v (- i 1)) 1.0)
+	    (set! (v (/ (- i 1) 2)) 1.0)
+	    (poly-roots v)))
+	
+	(let ((vals (poly-roots (float-vector 1 -1 -1 1))))
+	  (if (not (or (ceql vals '(1.0 -1.0 1.0))
+		       (ceql vals '(-1.0 1.0 1.0))))
+	      (snd-display "poly-roots 1-1-11: ~A" vals)))
+	(let ((vals (poly-roots (float-vector 2 -1 -2 1))))
+	  (if (not (ceql vals '(2.0 -1.0 1.0))) (snd-display "poly-roots 2-1-21: ~A" vals)))
+	(let ((vals (poly-roots (float-vector -1 1 1 1))))
+	  (if (not (ceql vals '(0.543689012692076 -0.771844506346038+1.11514250803994i -0.771844506346038-1.11514250803994i)))
+	      (snd-display "poly-roots -1111: ~A" vals)))
+	(let ((vals (poly-roots (float-vector -1 3 -3 1))))
+	  (if (not (ceql vals '(1.0 1.0 1.0))) (snd-display "poly-roots -13-31: ~A" vals)))
 					;      (let ((vals (poly-roots (float-vector 1 -4 6 -4 1))))
 					;	(if (not (ceql vals '(1.0 1.0 1.0 1.0))) (snd-display "poly-roots 1-46-41: ~A" vals)))
-      (let ((vals (poly-roots (float-vector 0.5 0 0 1.0))))
-	(if (not (or (ceql vals '(0.396850262992049-0.687364818499302i -0.7937005259841 0.39685026299205+0.687364818499301i))
-		     (ceql vals '(0.39685026299205+0.687364818499301i 0.39685026299205-0.687364818499301i -0.7937005259841))
-		  (ceql vals '(-7.9370052598409979172089E-1 3.968502629920498958E-1+6.873648184993013E-1i 3.96850262992049E-1-6.873648184993E-1i))))
-	    (snd-display "poly-roots 0..5 3: ~A" vals)))
-      (let ((vals (poly-roots (poly* (poly* (poly* (float-vector -1 1) (float-vector 1 1))
-					    (poly* (float-vector -2 1) (float-vector 2 1)))
-				     (poly* (float-vector -3 1) (float-vector 3 1))))))
-	(if (not (ceql vals '(-3.0 3.0 -1.0 1.0 -2.0 2.0)))
-	    (snd-display "cube in 2: ~A" vals)))))
-
+	(let ((vals (poly-roots (float-vector 0.5 0 0 1.0))))
+	  (if (not (or (ceql vals '(0.396850262992049-0.687364818499302i -0.7937005259841 0.39685026299205+0.687364818499301i))
+		       (ceql vals '(0.39685026299205+0.687364818499301i 0.39685026299205-0.687364818499301i -0.7937005259841))
+		       (ceql vals '(-7.9370052598409979172089E-1 3.968502629920498958E-1+6.873648184993013E-1i 3.96850262992049E-1-6.873648184993E-1i))))
+	      (snd-display "poly-roots 0..5 3: ~A" vals)))
+	(let ((vals (poly-roots (poly* (poly* (poly* (float-vector -1 1) (float-vector 1 1))
+					      (poly* (float-vector -2 1) (float-vector 2 1)))
+				       (poly* (float-vector -3 1) (float-vector 3 1))))))
+	  (if (not (ceql vals '(-3.0 3.0 -1.0 1.0 -2.0 2.0)))
+	      (snd-display "cube in 2: ~A" vals))))))
+  
   ;; -----------------
   (define (test-fm-components)
     (if (and (provided? 'gsl)
@@ -17621,33 +17614,34 @@ EDITS: 2
 	  (snd-display "locsig 24(8): ~A" (locsig-data gen))))
     
     (for-each 
-     (let ((locsig-scalers (lambda (chans degree type)
-			     (define (xmodulo a b)
-			       (- a (* (floor (/ a b)) b)))
-			     (if (= chans 1)
-				 (float-vector 1.0)
-				 (let* ((pos (let ((deg (if (= chans 2)
-							    (max 0.0 (min 90.0 degree))
-							    (xmodulo degree 360.0)))
-						   (degs-per-chan (if (= chans 2)
-								      90.0
-								      (/ 360.0 chans))))
-					       (/ deg degs-per-chan)))
-					(left (floor pos)))
-				   (let ((right (xmodulo (+ left 1) chans))
-					 (frac (- pos left))
-					 (v (make-float-vector chans)))
-				     (if (= type mus-interp-linear)
-					 (begin
-					   (set! (v left) (- 1.0 frac))
-					   (set! (v right) frac))
-					 (let ((ldeg (* (/ pi 2) (- 0.5 frac))))
-					   (let ((norm (/ (sqrt 2.0)))
-						 (c (cos ldeg))
-						 (s (sin ldeg)))
-					     (set! (v left) (* norm (+ c s)))
-					     (set! (v right) (* norm (- c s))))))
-				     v))))))
+     (let ((locsig-scalers 
+	    (let ((xmodulo (lambda (a b)
+			     (- a (* (floor (/ a b)) b)))))
+	      (lambda (chans degree type)
+		(if (= chans 1)
+		    (float-vector 1.0)
+		    (let* ((pos (let ((deg (if (= chans 2)
+					       (max 0.0 (min 90.0 degree))
+					       (xmodulo degree 360.0)))
+				      (degs-per-chan (if (= chans 2)
+							 90.0
+							 (/ 360.0 chans))))
+				  (/ deg degs-per-chan)))
+			   (left (floor pos)))
+		      (let ((right (xmodulo (+ left 1) chans))
+			    (frac (- pos left))
+			    (v (make-float-vector chans)))
+			(if (= type mus-interp-linear)
+			    (begin
+			      (set! (v left) (- 1.0 frac))
+			      (set! (v right) frac))
+			    (let ((ldeg (* (/ pi 2) (- 0.5 frac))))
+			      (let ((norm (/ (sqrt 2.0)))
+				    (c (cos ldeg))
+				    (s (sin ldeg)))
+				(set! (v left) (* norm (+ c s)))
+				(set! (v right) (* norm (- c s))))))
+			v)))))))
        (lambda (rev-chans)
 	 
 	 (if (file-exists? "test.reverb") (delete-file "test.reverb"))

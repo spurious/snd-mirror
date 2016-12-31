@@ -6922,11 +6922,9 @@ static s7_pointer g_set_outlet(s7_scheme *sc, s7_pointer args)
   new_outer = cadr(args);
   if (!is_let(new_outer))
     return(s7_wrong_type_arg_error(sc, "set! outlet", 2, new_outer, "a let"));
-  if (new_outer == sc->rootlet)
-    new_outer = sc->nil;
 
   if (env != sc->rootlet)
-    set_outlet(env, new_outer);
+    set_outlet(env, (new_outer == sc->rootlet) ? sc->nil : new_outer);
   return(new_outer);
 }
 
@@ -75231,14 +75229,43 @@ int main(int argc, char **argv)
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
+ * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
+ *   and how to generate tests for all cases?
+ *
  * scheme side method call needs attention: 
  *   (if (and (openlet? e) (defined? m e)) ((e m) ...)) involves two lookups but defined? can't return the value
  *   maybe (cond ((and (openlet? e) (symbol->value m e)) => (lambda (f) (f ...)))) but this requires an extra frame/binding
  *   if we knew there was a fallback (global def) then ((symbol->value m e)...) would work modulo infinite loops
  *   defined? can't return the value -- might be #f
  *   let-apply let func . args -> #<undefined> if none?
- * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
- *   and how to generate tests for all cases?
+ *   ((case (e m) ((#<undefined>) <error-func>) (else)) ...)
+ *   (cond (else)) -> else, (cond (#t)) -> #t, so (case x (else)) -> x
+ *   could be used as arg (rather than => which makes awkward assumptions about the target)
+ *     (case (read-char) ((#<eof> ...) (else)))
+ *   would want op_case_else? in null-else case, sc->value = selector at end
+ *     add nil res case to case: opt_case_eof|undefined_else, opt_case_simple_else
+ *     use ((case (env 'field) ((#<undefined>)...) (else)) ...)?
+ *   but this means hash-table -> #<undefined> not #f ?
+ *
+ * make-let via define*+copy curlet?
+ *   (define* (make-let (a 0) (b 1) (c 2)) (copy (curlet)))
+
+     <3> (define a1 (make-let))
+     (inlet 'a 0 'b 1 'c 2)
+     <4> a1
+     (inlet 'a 0 'b 1 'c 2)
+     <5> (define a2 (make-let :c 32))
+     (inlet 'a 0 'b 1 'c 32)
+     <6> (set! (a1 'b) 12)
+     12
+     <7> a1
+     (inlet 'a 0 'b 12 'c 2)
+     <8> a2
+     (inlet 'a 0 'b 1 'c 32)
+     
+     could also set outlet to rootlet to cut local chain
+       (define* (make-let (a 0) (b 1) (c 2)) (let ((e (copy (curlet)))) (set! (outlet e) (rootlet)) e))
+ *
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

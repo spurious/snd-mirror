@@ -5863,7 +5863,10 @@ the test result (if true of course).  In the case case, a similar approach might
 the selector value.  So should <code>(case x ((0 1)))</code> be an error, or equivalent
 to <code>(case x ((0 1) (begin)))</code> as in CL, or (my favorite) <code>(case x ((0 1) => values))</code>.
 If the latter, an empty else statement would also return the selector since it would be the
-same as <code>(else => values)</code>.
+same as <code>(else => values)</code>.  I think I'll implement this in s7.
+The fall-through value of case should be (and is in s7)
+#&lt;unspecified&gt;: case is a form of if, so
+<code>(if #f #f)</code>, <code>(cond (#f #f))</code>, and <code>(case #t ((#f) #f))</code> should be equal.
 </p>
 
 

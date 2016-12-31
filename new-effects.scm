@@ -564,188 +564,188 @@
     
 ;;; -------- Filtered echo
     
-    (let* ((flecho-scaler 0.5)
-	  (flecho-delay 0.9)
-	  (post-flecho-dialog
-	   (let ((flecho-label "Filtered echo")
-		 (flecho-dialog #f)
-		 (flecho-target 'sound)
-		 (flecho-truncate #t))
-	     (lambda ()
-	       (unless (Widget? flecho-dialog)
-		 ;; if flecho-dialog doesn't exist, create it
-		 (let ((initial-flecho-scaler 0.5)
-		       (initial-flecho-delay 0.9)
-		       (sliders ()))
-		   (set! flecho-dialog 
-			 (make-effect-dialog 
-			  flecho-label
-			  
-			  (lambda (w context info)
-			    (map-chan-over-target-with-sync
-			     (lambda (input-samps) 
-			       (let ((flt (make-fir-filter :order 4 
-							   :xcoeffs (float-vector .125 .25 .25 .125)))
-				     (del (make-delay (round (* flecho-delay (srate)))))
-				     (genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
-						     :length (+ input-samps 100))))
-				 (lambda (inval)
-				   (+ inval 
-				      (delay del 
-					     (fir-filter flt (* flecho-scaler 
-								(+ (tap del) 
-								   (* (env genv) inval)))))))))
-			     flecho-target 
-			     (lambda (target input-samps) 
-			       (format #f "effects-flecho-1 ~A ~A ~A"
-				       flecho-scaler flecho-delay
-				       (and (not (eq? target 'sound)) input-samps)))
-			     (and (not flecho-truncate) 
-				  (* 4 flecho-delay))))
-			  
-			  (lambda (w context info)
-			    (help-dialog "Filtered echo"
-					 "Move the sliders to set the filter scaler and the delay time in seconds."))
-			  
-			  (lambda (w c i)
-			    (set! flecho-scaler initial-flecho-scaler)
-			    (XtSetValues (sliders 0) (list XmNvalue (floor (* flecho-scaler 100))))
-			    (set! flecho-delay initial-flecho-delay)
-			    (XtSetValues (sliders 1) (list XmNvalue (floor (* flecho-delay 100)))))
-			  
-			  (lambda () 
-			    (effect-target-ok flecho-target))))
-		   
-		   (set! sliders
-			 (add-sliders flecho-dialog
-				      (list (list "filter scaler" 0.0 initial-flecho-scaler 1.0
-						  (lambda (w context info)
-						    (set! flecho-scaler (/ (.value info) 100.0)))
-						  100)
-					    (list "delay time (secs)" 0.0 initial-flecho-delay 3.0
-						  (lambda (w context info)
-						    (set! flecho-delay (/ (.value info) 100.0)))
-						  100))))
-		   (add-target (XtParent (car sliders)) 
-			       (lambda (target) 
-				 (set! flecho-target target)
-				 (XtSetSensitive (XmMessageBoxGetChild flecho-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-			       (lambda (truncate) 
-				 (set! flecho-truncate truncate)))))
-	       
-	       (activate-dialog flecho-dialog))))
-      
-	  (child (XtCreateManagedWidget "Filtered echo" xmPushButtonWidgetClass delay-menu
-					(list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-flecho-dialog)))
-      
-      (set! delay-menu-list (cons (lambda ()
-				    (change-label child (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
-				  delay-menu-list)))
+    (let ((flecho-scaler 0.5)
+	  (flecho-delay 0.9))
+      (let* ((post-flecho-dialog
+	      (let ((flecho-label "Filtered echo")
+		    (flecho-dialog #f)
+		    (flecho-target 'sound)
+		    (flecho-truncate #t))
+		(lambda ()
+		  (unless (Widget? flecho-dialog)
+		    ;; if flecho-dialog doesn't exist, create it
+		    (let ((initial-flecho-scaler 0.5)
+			  (initial-flecho-delay 0.9)
+			  (sliders ()))
+		      (set! flecho-dialog 
+			    (make-effect-dialog 
+			     flecho-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync
+				(lambda (input-samps) 
+				  (let ((flt (make-fir-filter :order 4 
+							      :xcoeffs (float-vector .125 .25 .25 .125)))
+					(del (make-delay (round (* flecho-delay (srate)))))
+					(genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
+							:length (+ input-samps 100))))
+				    (lambda (inval)
+				      (+ inval 
+					 (delay del 
+						(fir-filter flt (* flecho-scaler 
+								   (+ (tap del) 
+								      (* (env genv) inval)))))))))
+				flecho-target 
+				(lambda (target input-samps) 
+				  (format #f "effects-flecho-1 ~A ~A ~A"
+					  flecho-scaler flecho-delay
+					  (and (not (eq? target 'sound)) input-samps)))
+				(and (not flecho-truncate) 
+				     (* 4 flecho-delay))))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Filtered echo"
+					    "Move the sliders to set the filter scaler and the delay time in seconds."))
+			     
+			     (lambda (w c i)
+			       (set! flecho-scaler initial-flecho-scaler)
+			       (XtSetValues (sliders 0) (list XmNvalue (floor (* flecho-scaler 100))))
+			       (set! flecho-delay initial-flecho-delay)
+			       (XtSetValues (sliders 1) (list XmNvalue (floor (* flecho-delay 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok flecho-target))))
+		      
+		      (set! sliders
+			    (add-sliders flecho-dialog
+					 (list (list "filter scaler" 0.0 initial-flecho-scaler 1.0
+						     (lambda (w context info)
+						       (set! flecho-scaler (/ (.value info) 100.0)))
+						     100)
+					       (list "delay time (secs)" 0.0 initial-flecho-delay 3.0
+						     (lambda (w context info)
+						       (set! flecho-delay (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! flecho-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild flecho-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  (lambda (truncate) 
+				    (set! flecho-truncate truncate)))))
+		  
+		  (activate-dialog flecho-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Filtered echo" xmPushButtonWidgetClass delay-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-flecho-dialog)))
+	
+	(set! delay-menu-list (cons (lambda ()
+				      (change-label child (format #f "Filtered echo (~1,2F ~1,2F)" flecho-scaler flecho-delay)))
+				    delay-menu-list))))
     
     
 ;;; -------- Modulated echo
 ;;; -------- very slick
     
-    (let* ((zecho-scaler 0.5)
-	   (zecho-delay 0.75)
-	   (zecho-freq 6)
-	   (zecho-amp 10.0)
-	   (post-zecho-dialog
-	    (let ((zecho-label "Modulated echo")
-		  (zecho-dialog #f)
-		  (zecho-target 'sound)
-		  (zecho-truncate #t))
-	      (lambda ()
-		(unless (Widget? zecho-dialog)
-		  ;; if zecho-dialog doesn't exist, create it
-		  (let ((initial-zecho-scaler 0.5)
-			(initial-zecho-delay 0.75)
-			(initial-zecho-freq 6)
-			(initial-zecho-amp 10.0)
-			(sliders ())
-			(zecho-1 (lambda (scaler secs frq amp cutoff)
-				   (let ((os (make-oscil frq))
-					 (del (let ((len (round (* secs (srate)))))
-						(make-delay len :max-size (round (+ len amp 1)))))
-					 (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
-				     (lambda (inval)
-				       (+ inval 
-					  (delay del 
-						 (* scaler (+ (tap del) (* (env genv) inval)))
-						 (* amp (oscil os)))))))))
-		    (set! zecho-dialog 
-			  (make-effect-dialog 
-			   zecho-label
-			   
-			   (lambda (w context info)
-			     (map-chan-over-target-with-sync
-			      (lambda (input-samps)
-				(zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
-			      zecho-target
-			      (lambda (target input-samps) 
-				(format #f "effects-zecho-1 ~A ~A ~A ~A ~A"
-					zecho-scaler zecho-delay zecho-freq zecho-amp
-					(and (not (eq? target 'sound)) input-samps)))
-			      (and (not zecho-truncate)
-				   (* 4 zecho-delay))))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Modulated echo"
-					  "Move the sliders to set the echo scaler, 
+    (let ((zecho-scaler 0.5)
+	  (zecho-delay 0.75)
+	  (zecho-freq 6)
+	  (zecho-amp 10.0))
+      (let* ((post-zecho-dialog
+	      (let ((zecho-label "Modulated echo")
+		    (zecho-dialog #f)
+		    (zecho-target 'sound)
+		    (zecho-truncate #t))
+		(lambda ()
+		  (unless (Widget? zecho-dialog)
+		    ;; if zecho-dialog doesn't exist, create it
+		    (let ((initial-zecho-scaler 0.5)
+			  (initial-zecho-delay 0.75)
+			  (initial-zecho-freq 6)
+			  (initial-zecho-amp 10.0)
+			  (sliders ())
+			  (zecho-1 (lambda (scaler secs frq amp cutoff)
+				     (let ((os (make-oscil frq))
+					   (del (let ((len (round (* secs (srate)))))
+						  (make-delay len :max-size (round (+ len amp 1)))))
+					   (genv (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100))))
+				       (lambda (inval)
+					 (+ inval 
+					    (delay del 
+						   (* scaler (+ (tap del) (* (env genv) inval)))
+						   (* amp (oscil os)))))))))
+		      (set! zecho-dialog 
+			    (make-effect-dialog 
+			     zecho-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync
+				(lambda (input-samps)
+				  (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
+				zecho-target
+				(lambda (target input-samps) 
+				  (format #f "effects-zecho-1 ~A ~A ~A ~A ~A"
+					  zecho-scaler zecho-delay zecho-freq zecho-amp
+					  (and (not (eq? target 'sound)) input-samps)))
+				(and (not zecho-truncate)
+				     (* 4 zecho-delay))))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Modulated echo"
+					    "Move the sliders to set the echo scaler, 
 the delay time in seconds, the modulation frequency, and the echo amplitude."))
-			   
-			   (lambda (w c i)
-			     (set! zecho-scaler initial-zecho-scaler)
-			     (XtSetValues (sliders 0) (list XmNvalue (floor (* zecho-scaler 100))))
-			     (set! zecho-delay initial-zecho-delay)
-			     (XtSetValues (sliders 1) (list XmNvalue (floor (* zecho-delay 100))))
-			     (set! zecho-freq initial-zecho-freq)
-			     (XtSetValues (sliders 2) (list XmNvalue (floor (* zecho-freq 100))))
-			     (set! zecho-amp initial-zecho-amp)
-			     (XtSetValues (sliders 3) (list XmNvalue (floor (* zecho-amp 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok zecho-target))))
-		    
-		    (set! sliders
-			  (add-sliders zecho-dialog
-				       (list (list "echo scaler" 0.0 initial-zecho-scaler 1.0
-						   (lambda (w context info)
-						     (set! zecho-scaler (/ (.value info) 100.0)))
-						   100)
-					     (list "delay time (secs)" 0.0 initial-zecho-delay 3.0
-						   (lambda (w context info)
-						     (set! zecho-delay (/ (.value info) 100.0)))
-						   100)
-					     (list "modulation frequency" 0.0 initial-zecho-freq 100.0
-						   (lambda (w context info)
-						     (set! zecho-freq (/ (.value info) 100.0)))
-						   100)
-					     (list "modulation amplitude" 0.0 initial-zecho-amp 100.0
-						   (lambda (w context info)
-						     (set! zecho-amp (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! zecho-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild zecho-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				(lambda (truncate) 
-				  (set! zecho-truncate truncate)))))
-		(activate-dialog zecho-dialog))))
-      
-	   (child (XtCreateManagedWidget "Modulated echo" xmPushButtonWidgetClass delay-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-zecho-dialog)))
-      
-      (set! delay-menu-list (cons (lambda ()
-				    (change-label child (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" 
-								zecho-scaler zecho-delay zecho-freq zecho-amp)))
-				  delay-menu-list))))
+			     
+			     (lambda (w c i)
+			       (set! zecho-scaler initial-zecho-scaler)
+			       (XtSetValues (sliders 0) (list XmNvalue (floor (* zecho-scaler 100))))
+			       (set! zecho-delay initial-zecho-delay)
+			       (XtSetValues (sliders 1) (list XmNvalue (floor (* zecho-delay 100))))
+			       (set! zecho-freq initial-zecho-freq)
+			       (XtSetValues (sliders 2) (list XmNvalue (floor (* zecho-freq 100))))
+			       (set! zecho-amp initial-zecho-amp)
+			       (XtSetValues (sliders 3) (list XmNvalue (floor (* zecho-amp 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok zecho-target))))
+		      
+		      (set! sliders
+			    (add-sliders zecho-dialog
+					 (list (list "echo scaler" 0.0 initial-zecho-scaler 1.0
+						     (lambda (w context info)
+						       (set! zecho-scaler (/ (.value info) 100.0)))
+						     100)
+					       (list "delay time (secs)" 0.0 initial-zecho-delay 3.0
+						     (lambda (w context info)
+						       (set! zecho-delay (/ (.value info) 100.0)))
+						     100)
+					       (list "modulation frequency" 0.0 initial-zecho-freq 100.0
+						     (lambda (w context info)
+						       (set! zecho-freq (/ (.value info) 100.0)))
+						     100)
+					       (list "modulation amplitude" 0.0 initial-zecho-amp 100.0
+						     (lambda (w context info)
+						       (set! zecho-amp (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! zecho-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild zecho-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  (lambda (truncate) 
+				    (set! zecho-truncate truncate)))))
+		  (activate-dialog zecho-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Modulated echo" xmPushButtonWidgetClass delay-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-zecho-dialog)))
+	
+	(set! delay-menu-list (cons (lambda ()
+				      (change-label child (format #f "Modulated echo (~1,2F ~1,2F ~1,2F ~1,2F)" 
+								  zecho-scaler zecho-delay zecho-freq zecho-amp)))
+				    delay-menu-list)))))
   
 ;;; FILTERS
 ;;;
@@ -2231,14 +2231,14 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	(let ((ef (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)))
 	  (map-channel ef beg dur snd chn #f (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur))))))
   
-  (let* ((misc-menu-list ())
-	 (misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
-					  (list XmNbackground *basic-color*)))
-	 (misc-cascade (XtCreateManagedWidget "Various" xmCascadeButtonWidgetClass (main-menu effects-menu)
-					      (list XmNsubMenuId misc-menu
-						    XmNbackground *basic-color*))))
+  (let ((misc-menu-list ())
+	(misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
+					 (list XmNbackground *basic-color*))))
+    (let ((misc-cascade (XtCreateManagedWidget "Various" xmCascadeButtonWidgetClass (main-menu effects-menu)
+					       (list XmNsubMenuId misc-menu
+						     XmNbackground *basic-color*))))
     
-    (XtAddCallback misc-cascade XmNcascadingCallback (lambda (w c i) (update-label misc-menu-list)))
+      (XtAddCallback misc-cascade XmNcascadingCallback (lambda (w c i) (update-label misc-menu-list))))
     
     
 ;;; -------- Place sound
@@ -2251,19 +2251,20 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	    (let ((place-sound-label "Place sound")
 		  (place-sound-dialog #f)
 		  (place-sound-target 'sound)
-		  (place-sound-envelope #f))
+		  (place-sound-envelope #f)
 	      
-	      (define (place-sound mono-snd stereo-snd pan-env)
-		;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
-		;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
-		;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
-		(if (number? pan-env)
-		    (let ((pos (/ pan-env 90.0)))
-		      (effects-position-sound mono-snd pos stereo-snd 1)
-		      (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
-		    (begin
-		      (effects-position-sound mono-snd pan-env stereo-snd 1)
-		      (effects-position-sound mono-snd pan-env stereo-snd 0))))
+		  (place-sound 
+		   (lambda (mono-snd stereo-snd pan-env)
+		     ;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+		     ;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
+		     ;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
+		     (if (number? pan-env)
+			 (let ((pos (/ pan-env 90.0)))
+			   (effects-position-sound mono-snd pos stereo-snd 1)
+			   (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+			 (begin
+			   (effects-position-sound mono-snd pan-env stereo-snd 1)
+			   (effects-position-sound mono-snd pan-env stereo-snd 0))))))
 	      
 	      (lambda ()
 		(unless (Widget? place-sound-dialog)

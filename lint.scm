@@ -6002,7 +6002,9 @@
 	     tree)
 
 	    ((eq? (car tree) #_{list})
-	     (if (assq #_{apply_values} (cdr tree))
+	     (if (and (assq #_{apply_values} (cdr tree))
+		      (len=2? (cdr tree))
+		      (pair? (caddr tree)))
 		 (if (and (pair? (cadr tree))
 			  (eq? (caadr tree) #_{apply_values}))
 		     (list 'append (cadadr tree) (cadr (caddr tree)))
@@ -6010,7 +6012,7 @@
 		 (cons 'list (un_{list} (cdr tree)))))
 
 	    ((eq? (car tree) #_{append})
-	     (if (and (= (length tree) 3)
+	     (if (and (len=2? (cdr tree))
 		      (pair? (cadr tree))
 		      (eq? (caadr tree) #_{list}))
 		 (let ((lst (un_{list} (cadr tree)))
@@ -13494,7 +13496,7 @@
 			 (rewrite-define
 			  (lambda (form ok-funcs outer-args let-case)
 			    `(define ,(caadr form)       ; define* -> lambda* below
-			       (let ,(if let-case (funcs->list ok-funcs) ())
+			       (,(or let-case 'let) ,(if let-case (funcs->list ok-funcs) ())
 				 ,@(if let-case () (funcs->list ok-funcs))
 				 (,(if (eq? (car form) 'define*) 'lambda* 'lambda)
 				  ,(cdr outer-args)
@@ -13502,7 +13504,7 @@
 			 
 			 (rewrite-lambda 
 			  (lambda (form ok-funcs outer-args let-case)
-			    `(let ,(if let-case (funcs->list ok-funcs) ())
+			    `(,(or let-case 'let) ,(if let-case (funcs->list ok-funcs) ())
 			       ,@(if let-case () (funcs->list ok-funcs))
 			       (,(car form) ,outer-args ...)))))
 		    
@@ -13537,7 +13539,7 @@
 		      (largs->let caller form body largs outer-args define-case)
 		      (when (and (null? (cdr body))
 				 (len>2? (car body))
-				 (eq? (caar body) 'let)
+				 (memq (caar body) '(let letrec))
 				 (proper-list? (cadar body))
 				 (every? pair? (cadar body))
 				 (pair? (cddar body)))
@@ -13549,17 +13551,25 @@
 					    (append largs (map car (cadar body))))    
 					outer-args define-case))
 
+
 			;; if letrec, do cross-refs matter yes -- transport the entire letrec?
 			;;   so preset args to include all letrec vars [non-funcs + funcs not in cross-ref]
 			;; let* would be similar, but vars only up to current?
+			(if (eq? (caar body) 'letrec)
+			    (set! largs (append largs (map car (cadar body)))))
+
+			;; PERHAPS: remove ok-funcs from largs if there are no other refs?
+			;;   also does the code above preclude recursion? (current ok-func can be a member of its body if let-case=letrec)
+			;; also why not let* above for define cases even if not used below?
 			
 			;; if define-case (caadr form) is ok here, but confusing
-			;;    ok-funcs here are lambdas in a let, so the other let vars don't matter, and cross-refs can't happen
+			;;    if let-case='let, ok-funcs are lambdas in a let, the other let vars don't matter, and cross-refs can't happen
+
 			(do ((ok-funcs ())
 			     (p (cadar body) (cdr p)))
 			    ((null? p)
 			     (when (pair? ok-funcs)
-			       (rewrite-funcs caller form ok-funcs outer-args define-case #t)))
+			       (rewrite-funcs caller form ok-funcs outer-args define-case (caar body))))
 			  (let ((var&val (car p)))
 			    (if (and (len=2? var&val)
 				     (len>2? (cadr var&val))
@@ -13567,6 +13577,8 @@
 				(let ((val (cadr var&val)))
 				  (let ((fname (car var&val))
 					(fargs (args->proper-list (cadr val))))
+				    (if (eq? (caar body) 'letrec)
+					(set! fargs (cons fname fargs)))
 				    (if (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
 								(if (null? args)
 								    nargs
@@ -15832,7 +15844,8 @@
 						      `(or ,(car first-clause)
 							   (and ,@last-clause)))))))
 		
-		(when (and (equal? (cdr first-clause) else-clause) ; a = else result
+		(when (and (proper-list? else-clause)
+			   (equal? (cdr first-clause) else-clause) ; a = else result
 			   (pair? (cdr last-clause))               ; b does exist
 			   (not (eq? (cadr last-clause) '=>)))     ; no => in b
 		  ;; (cond (A a) (B b) (else a)) -> (if (or A (not B)) a b)
@@ -21911,8 +21924,9 @@
 ;;;    local-funcs->closure -- currently assumes cross-refs can't happen etc (i.e. restricted to let)
 ;;; "assuming we see all the set!s" is confused by globals -- if any outer vars occur, omit? [pointless-var]
 ;;;   and "f's 'x parameter is always y" should ignore cases like check-envs [value not accessible to f]
-;;; make-let via define*+copy curlet?
-;;; 
+;;; case nil can rewrite (if <x> (f z <x> y) <escape>) -> (f z (case <x> ((#f|etc) <escape>) (else)) y)
+;;;   but (f z (or <x> <escape>) y) is better in the #f case
+;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 196 29276 819770
+;;; 196 29276 821567
