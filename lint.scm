@@ -11016,6 +11016,8 @@
 		       (format outport "~NCdefine-expansion for ~A is not at the top-level, so it is ignored~%" 
 			       lint-left-margin #\space
 			       vname))
+		   
+		   ;; define* -> define is tricky: multiple-values, renaming possibilities, etc
 
 		   ;; look for port opened but not closed, or not used
 		   ;;    (let ((p (open-output-file str))) (display 32 p) x)
@@ -11401,7 +11403,7 @@
 						   (loop (cdr calls))))))
 			       (let ((pars (map list (proper-list (var-arglist local-var)))))
 				 (do ((clauses (var-history local-var) (cdr clauses)))
-				     ((null? (cdr clauses))) ; ignore the initial value
+				     ((null? (cdr clauses)))                                 ; ignore the initial value
 				   (if (and (pair? (car clauses))
 					    (eq? (caar clauses) vname))
 				       (for-each (lambda (arg par)                           ; collect all arguments for each parameter
@@ -11413,7 +11415,8 @@
 				 (for-each (lambda (p)
 					     (when (and (pair? (cdr p))
 							(not (symbol? (cadr p))))
-					       (if (null? (cddr p))
+					       (if (and (null? (cddr p))
+							(code-constant? (cadr p)))
 						   (lint-format "~A's '~A parameter is always ~S (~D calls)" caller
 								vname (car p) (cadr p) (var-ref local-var)))
 					       (when (and (pair? (cadr p))
@@ -13529,7 +13532,25 @@
 		      (when (pair? ok-funcs)
 			(set! last-lambda-let body)
 			(set! last-lambda-let-funcs ok-funcs)
-			(rewrite-funcs caller form ok-funcs outer-args define-case #f))))))
+			(rewrite-funcs caller form ok-funcs outer-args define-case #f)))))
+
+		 (ok-func? 
+		  (lambda (var&val let-case largs)
+		    (and (len=1? (cdr var&val))
+			 (len>2? (cadr var&val))
+			 (memq (caadr var&val) '(lambda lambda*))
+			 (let ((val (cadr var&val)))
+			   (let ((fargs (args->proper-list (cadr val))))
+			     (if (memq let-case '(letrec letrec*))
+				 (set! fargs (cons (car var&val) fargs)))
+			     (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
+						     (if (null? args)
+							 nargs
+							 (remove-shadows (cdr args) 
+									 (if (memq (car args) fargs)
+									     nargs
+									     (cons (car args) nargs)))))
+						   (cddr val)))))))))
 	    
 	    (lambda (caller form outer-args define-case)
 	      (let ((largs (args->proper-list outer-args))
@@ -13539,7 +13560,7 @@
 		      (largs->let caller form body largs outer-args define-case)
 		      (when (and (null? (cdr body))
 				 (len>2? (car body))
-				 (memq (caar body) '(let letrec))
+				 (memq (caar body) '(let let* letrec letrec*))
 				 (proper-list? (cadar body))
 				 (every? pair? (cadar body))
 				 (pair? (cddar body)))
@@ -13550,44 +13571,23 @@
 					    (cons (caadr form) (append largs (map car (cadar body))))
 					    (append largs (map car (cadar body))))    
 					outer-args define-case))
-
-
-			;; if letrec, do cross-refs matter yes -- transport the entire letrec?
-			;;   so preset args to include all letrec vars [non-funcs + funcs not in cross-ref]
-			;; let* would be similar, but vars only up to current?
-			(if (eq? (caar body) 'letrec)
-			    (set! largs (append largs (map car (cadar body)))))
-
-			;; PERHAPS: remove ok-funcs from largs if there are no other refs?
-			;;   also does the code above preclude recursion? (current ok-func can be a member of its body if let-case=letrec)
-			;; also why not let* above for define cases even if not used below?
-			
-			;; if define-case (caadr form) is ok here, but confusing
-			;;    if let-case='let, ok-funcs are lambdas in a let, the other let vars don't matter, and cross-refs can't happen
-
-			(do ((ok-funcs ())
-			     (p (cadar body) (cdr p)))
-			    ((null? p)
-			     (when (pair? ok-funcs)
-			       (rewrite-funcs caller form ok-funcs outer-args define-case (caar body))))
-			  (let ((var&val (car p)))
-			    (if (and (len=2? var&val)
-				     (len>2? (cadr var&val))
-				     (memq (caadr var&val) '(lambda lambda*)))
-				(let ((val (cadr var&val)))
-				  (let ((fname (car var&val))
-					(fargs (args->proper-list (cadr val))))
-				    (if (eq? (caar body) 'letrec)
-					(set! fargs (cons fname fargs)))
-				    (if (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
-								(if (null? args)
-								    nargs
-								    (remove-shadows (cdr args) 
-										    (if (memq (car args) fargs)
-											nargs
-											(cons (car args) nargs)))))
-							      (cddr val)))
-					(set! ok-funcs (cons (cons fname var&val) ok-funcs)))))))))))))))
+			(let ((let-case (caar body)))            ; if not 'let, add locals to outer-args
+			  (unless (eq? let-case 'let)
+			    (if (not (and (eq? let-case 'letrec)
+					  (every? (lambda (p)
+						    (ok-func? p let-case largs))
+						  (cadar body))))
+				(set! largs (append largs (map car (cadar body))))))
+			  (do ((ok-funcs ())
+			       (p (cadar body) (cdr p)))
+			      ((null? p)
+			       (when (pair? ok-funcs)
+				 (if (and (memq let-case '(let* letrec*))
+					  (null? (cdr ok-funcs)))
+				     (set! let-case 'let))
+				 (rewrite-funcs caller form ok-funcs outer-args define-case let-case)))
+			    (if (ok-func? (car p) let-case largs)
+				(set! ok-funcs (cons (cons (caar p) (car p)) ok-funcs))))))))))))
 
 	
 	;; ---------------- define and defmacro ----------------
@@ -18428,7 +18428,7 @@
 					changes 
 					(if (pair? (cdr changes)) "are" "is")
 					(lists->string form 
-						       (if (< (tree-leaves new-form) 200)
+						       (if (< (tree-leaves new-form) 100)
 							   (if (and (null? (cadr new-form))
 								    (null? (cdddr new-form))
 								    (not (and (pair? (caddr new-form))
@@ -21917,16 +21917,15 @@
 |#
 
 ;;; pp of vector should do something reasonable
-;;; tons of rewrites in lg* (2900 lines)
-;;; define* -> define (only used with all args, or no undef'd args can be #f)
-;;; top-level function used, but only in other func?
-;;; letrec sometimes can be moved from lambda body to closure 13541
-;;;    local-funcs->closure -- currently assumes cross-refs can't happen etc (i.e. restricted to let)
-;;; "assuming we see all the set!s" is confused by globals -- if any outer vars occur, omit? [pointless-var]
-;;;   and "f's 'x parameter is always y" should ignore cases like check-envs [value not accessible to f]
+;;; tons of rewrites in lg* (2700 lines)
 ;;; case nil can rewrite (if <x> (f z <x> y) <escape>) -> (f z (case <x> ((#f|etc) <escape>) (else)) y)
 ;;;   but (f z (or <x> <escape>) y) is better in the #f case
+;;; case => values? (let ((c (read-char))) (if (eof)... (f x c ...) cond=>values is pointless -- test is returned
+;;; (if X (f x X y) (escape)) -> (f x (cond (X) (else escape)) y) -- arg eval order problem
+;;; local set! -> func arg at end?
+;;; local copy
+;;; move define (or lambda) inward, not outward
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 196 29276 821567
+;;; 196 29280 815829

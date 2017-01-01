@@ -2443,10 +2443,16 @@ Environments are first class (and applicable) objects in s7.
 &gt; (let ((e (inlet 'a (inlet 'b 1 'c 2)))) (e 'a 'b)) ; in C terms, e-&gt;a-&gt;b 
 <em class="gray">1</em>  
 &gt; (let ((e (inlet 'a (inlet 'b 1 'c 2)))) (set! (e 'a 'b) 3) (e 'a 'b))
-<em class="gray">3</em>  
+<em class="gray">3</em>
+&gt; (define* (make-let (a 1) (b 2)) 
+    (let ((e (copy (curlet)))) 
+      (set! (outlet e) (rootlet))  ; not (funclet make-let)
+      e))
+<em class="gray">make-let</em>
+&gt; (make-let :b 32)
+<em class="gray">(inlet 'a 1 'b 32)</em>
 </pre>
 </blockquote>
-
 
 <p>As the names suggest, in s7 an environment is viewed as a disembodied let.  Environments are equal if they
 contain the same symbols with the same values leaving aside shadowing, and taking into account the environment
@@ -5835,9 +5841,8 @@ definition, and a later redefinition does not affect earlier uses.
 </ul>
 
 <p>There are several less-than-ideal names.  Perhaps s7 should use *pi*, *most-negative-fixnum*,
-*most-positive-fixnum* (*fixmost*?) so that all the built-in variables and constants have the
+*most-positive-fixnum* (*fixleast* and *fixmost*?) so that all the built-in variables and constants have the
 same kind of name (or +pi+ to show it is a constant?).  
-Perhaps object-&gt;string should be -&gt;string.
 get-output-string should be current-output-string. write-char behaves like display, not write.
 provided? should be feature? or *features* should be *provisions*.
 </p>
@@ -5863,8 +5868,13 @@ the test result (if true of course).  In the case case, a similar approach might
 the selector value.  So should <code>(case x ((0 1)))</code> be an error, or equivalent
 to <code>(case x ((0 1) (begin)))</code> as in CL, or (my favorite) <code>(case x ((0 1) => values))</code>.
 If the latter, an empty else statement would also return the selector since it would be the
-same as <code>(else => values)</code>.  I think I'll implement this in s7.
-The fall-through value of case should be (and is in s7)
+same as <code>(else => values)</code>.  I think I'll implement this in s7, but it has a ripple
+effect on hash-tables.  Currently hash-table-ref returns #f if the key is not in the table,
+mimicking assoc and aimed at cond with =&gt;, but if the latter can use case and #&lt;undefined&gt;,
+it seems more useful and maybe intuitive to mimic let-ref instead.  But if hash-table-ref returns
+#&lt;undefined&gt;, it's harder to use hash-tables as sets.  Hmm.
+In any case,
+the fall-through value of case should be (and is in s7)
 #&lt;unspecified&gt;: case is a form of if, so
 <code>(if #f #f)</code>, <code>(cond (#f #f))</code>, and <code>(case #t ((#f) #f))</code> should be equal.
 </p>

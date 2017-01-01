@@ -75233,39 +75233,10 @@ int main(int argc, char **argv)
  *   and how to generate tests for all cases?
  *
  * scheme side method call needs attention: 
- *   (if (and (openlet? e) (defined? m e)) ((e m) ...)) involves two lookups but defined? can't return the value
- *   maybe (cond ((and (openlet? e) (symbol->value m e)) => (lambda (f) (f ...)))) but this requires an extra frame/binding
- *   if we knew there was a fallback (global def) then ((symbol->value m e)...) would work modulo infinite loops
- *   defined? can't return the value -- might be #f
- *   let-apply let func . args -> #<undefined> if none?
- *   ((case (e m) ((#<undefined>) <error-func>) (else)) ...)
- *   (cond (else)) -> else, (cond (#t)) -> #t, so (case x (else)) -> x
- *   could be used as arg (rather than => which makes awkward assumptions about the target)
- *     (case (read-char) ((#<eof> ...) (else)))
+ *    ((case (e m) ((#<undefined>) <error-func>) (else)) ...)
+ *    (f x y (case (read-char) ((#<eof> ...) (else))))
  *   would want op_case_else? in null-else case, sc->value = selector at end
  *     add nil res case to case: opt_case_eof|undefined_else, opt_case_simple_else
- *     use ((case (env 'field) ((#<undefined>)...) (else)) ...)?
- *   but this means hash-table -> #<undefined> not #f ?
- *
- * make-let via define*+copy curlet?
- *   (define* (make-let (a 0) (b 1) (c 2)) (copy (curlet)))
-
-     <3> (define a1 (make-let))
-     (inlet 'a 0 'b 1 'c 2)
-     <4> a1
-     (inlet 'a 0 'b 1 'c 2)
-     <5> (define a2 (make-let :c 32))
-     (inlet 'a 0 'b 1 'c 32)
-     <6> (set! (a1 'b) 12)
-     12
-     <7> a1
-     (inlet 'a 0 'b 12 'c 2)
-     <8> a2
-     (inlet 'a 0 'b 1 'c 32)
-     
-     could also set outlet to rootlet to cut local chain
-       (define* (make-let (a 0) (b 1) (c 2)) (let ((e (copy (curlet)))) (set! (outlet e) (rootlet)) e))
- *
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

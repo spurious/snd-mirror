@@ -934,14 +934,14 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"))
 ;;; or change the comb length via an envelope:
 
 (define zcomb 
-  (let ((documentation "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
-envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"))
+  (letrec ((documentation "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
+envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))")
+	   (max-envelope-1 
+	    (lambda (e mx)
+	      (if (null? e)
+		  mx
+		  (max-envelope-1 (cddr e) (max mx (abs (cadr e))))))))
     (lambda (scaler size pm)
-      (define (max-envelope-1 e mx)
-	(if (null? e)
-	    mx
-	    (max-envelope-1 (cddr e) (max mx (abs (cadr e))))))
-      
       (let ((cmb (make-comb scaler size :max-size (floor (+ size 1 (max-envelope-1 pm 0.0)))))
 	    (penv (make-env pm :length (framples))))
 	(lambda (x)
@@ -1630,15 +1630,16 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 
 (define find-pitch 
   (let ((documentation "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
-In most cases, this will be slightly offset from the true beginning of the note"))
+In most cases, this will be slightly offset from the true beginning of the note")
+
+	(interpolated-peak-offset 
+	 (lambda (la pk ra)
+	   (let ((logla (log (/ (max la .0000001) pk) 10))
+		 (logra (log (/ (max ra .0000001) pk) 10)))
+	     (/ (* 0.5 (- logla logra))
+		(+ logla logra))))))
+      
     (lambda (pitch)
-      
-      (define (interpolated-peak-offset la pk ra)
-	(let ((logla (log (/ (max la .0000001) pk) 10))
-	      (logra (log (/ (max ra .0000001) pk) 10)))
-	  (/ (* 0.5 (- logla logra))
-	     (+ logla logra))))
-      
       (let ((data (make-float-vector *transform-size*))
 	    (data-loc 0))
 	(lambda (n)
