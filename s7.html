@@ -2444,10 +2444,7 @@ Environments are first class (and applicable) objects in s7.
 <em class="gray">1</em>  
 &gt; (let ((e (inlet 'a (inlet 'b 1 'c 2)))) (set! (e 'a 'b) 3) (e 'a 'b))
 <em class="gray">3</em>
-&gt; (define* (make-let (a 1) (b 2)) 
-    (let ((e (copy (curlet)))) 
-      (set! (outlet e) (rootlet))  ; not (funclet make-let)
-      e))
+&gt; (define* (make-let (a 1) (b 2)) (sublet (rootlet) (curlet)))
 <em class="gray">make-let</em>
 &gt; (make-let :b 32)
 <em class="gray">(inlet 'a 1 'b 32)</em>

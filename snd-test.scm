@@ -379,155 +379,155 @@
 	  (pair? (marks))
 	  (pair? (regions)))
       (snd-display "start up: ~A ~A ~A ~A" (sounds) (mixes) (marks) (regions)))
-  (do ((lst '(enved-amplitude 0 
-		  bartlett-window 4 
-		  bartlett-hann-window 21
-		  blackman2-window 6 
-		  blackman3-window 7 
-		  blackman4-window 8
-		  blackman5-window 24
-		  blackman6-window 25
-		  blackman7-window 26
-		  blackman8-window 27
-		  blackman9-window 28
-		  blackman10-window 29
-		  bohman-window 22
-		  cauchy-window 12 
-		  mlt-sine-window 33
-		  papoulis-window 34
-		  dpss-window 35
-		  sinc-window 36
-		  channels-combined 1 
-		  channels-separate 0 
-		  channels-superimposed 2
-		  connes-window 18
-		  cursor-in-middle 3
-		  cursor-in-view 0 
-		  cursor-on-left 1 
-		  cursor-on-right 2 
-		  dolph-chebyshev-window 16
-		  exponential-window 9 
-		  flat-top-window 23
-		  sync-none 0
-		  sync-all 1
-		  sync-by-sound 2
-		  zoom-focus-active 2
-		  zoom-focus-left 0
-		  zoom-focus-middle 3
-		  zoom-focus-right 1 
-		  gaussian-window 14 
-		  graph-dots 1
-		  graph-dots-and-lines 3 
-		  graph-filled 2 
-		  graph-lines 0 
-		  graph-lollipops 4
-		  hamming-window 5
-		  hann-window 1
-		  hann-poisson-window 17
-		  kaiser-window 11 
-		  keyboard-no-action 4
-		  graph-once 0 
-		  parzen-window 3
-		  poisson-window 13
-		  rectangular-window 0 
-		  riemann-window 10 
-		  rv2-window 30
-		  rv3-window 31
-		  rv4-window 32
-		  samaraki-window 19
-		  ultraspherical-window 20
-		  graph-as-sonogram 1
-		  graph-as-spectrogram 2 
-		  graph-once 0
-		  graph-as-wavogram 3
-		  enved-spectrum 1
-		  speed-control-as-float 0 
-		  speed-control-as-ratio 1 
-		  speed-control-as-semitone 2 
-		  enved-srate 2 
-		  tukey-window 15 
-		  welch-window 2 
-		  cursor-cross 0
-		  cursor-line 1
-		  dont-normalize 0
-		  envelope-linear 0
-		  envelope-exponential 1
-		  normalize-by-channel 1
-		  normalize-by-sound 2
-		  normalize-globally 3
-		  x-axis-in-samples 1 
-		  x-axis-in-beats 3
-		  x-axis-in-measures 4
-		  x-axis-in-seconds 0 
-		  x-axis-as-clock 5
-		  x-axis-as-percentage 2
-		  enved-add-point 0
-		  enved-delete-point 1
-		  enved-move-point 2
-		  time-graph 0
-		  transform-graph 1
-		  lisp-graph 2
-		  copy-context 0
-		  cursor-context 3
-		  selection-context 2
-		  mark-context 4
-		  show-no-axes 0
-		  show-all-axes 1
-		  show-x-axis 2
-		  show-all-axes-unlabelled 3
-		  show-x-axis-unlabelled 4
-		  show-bare-x-axis 5
+  (do ((lst '(bartlett-hann-window 21
+	      bartlett-window 4 
+	      blackman10-window 29
+	      blackman2-window 6 
+	      blackman3-window 7 
+	      blackman4-window 8
+	      blackman5-window 24
+	      blackman6-window 25
+	      blackman7-window 26
+	      blackman8-window 27
+	      blackman9-window 28
+	      bohman-window 22
+	      cauchy-window 12 
+	      channels-combined 1 
+	      channels-separate 0 
+	      channels-superimposed 2
+	      connes-window 18
+	      copy-context 0
+	      cursor-context 3
+	      cursor-cross 0
+	      cursor-in-middle 3
+	      cursor-in-view 0 
+	      cursor-line 1
+	      cursor-on-left 1 
+	      cursor-on-right 2 
+	      dolph-chebyshev-window 16
+	      dont-normalize 0
+	      dpss-window 35
+	      enved-add-point 0
+	      enved-amplitude 0 
+	      enved-delete-point 1
+	      enved-move-point 2
+	      enved-spectrum 1
+	      enved-srate 2 
+	      envelope-exponential 1
+	      envelope-linear 0
+	      exponential-window 9 
+	      flat-top-window 23
+	      gaussian-window 14 
+	      graph-as-sonogram 1
+	      graph-as-spectrogram 2 
+	      graph-as-wavogram 3
+	      graph-dots 1
+	      graph-dots-and-lines 3 
+	      graph-filled 2 
+	      graph-lines 0 
+	      graph-lollipops 4
+	      graph-once 0
+	      graph-once 0 
+	      hamming-window 5
+	      hann-poisson-window 17
+	      hann-window 1
+	      kaiser-window 11 
+	      keyboard-no-action 4
+	      lisp-graph 2
+	      mark-context 4
+	      mlt-sine-window 33
+	      normalize-by-channel 1
+	      normalize-by-sound 2
+	      normalize-globally 3
+	      papoulis-window 34
+	      parzen-window 3
+	      poisson-window 13
+	      rectangular-window 0 
+	      riemann-window 10 
+	      rv2-window 30
+	      rv3-window 31
+	      rv4-window 32
+	      samaraki-window 19
+	      selection-context 2
+	      show-all-axes 1
+	      show-all-axes-unlabelled 3
+	      show-bare-x-axis 5
+	      show-no-axes 0
+	      show-x-axis 2
+	      show-x-axis-unlabelled 4
+	      sinc-window 36
+	      speed-control-as-float 0 
+	      speed-control-as-ratio 1 
+	      speed-control-as-semitone 2 
+	      sync-all 1
+	      sync-by-sound 2
+	      sync-none 0
+	      time-graph 0
+	      transform-graph 1
+	      tukey-window 15 
+	      ultraspherical-window 20
+	      welch-window 2 
+	      x-axis-as-clock 5
+	      x-axis-as-percentage 2
+	      x-axis-in-beats 3
+	      x-axis-in-measures 4
+	      x-axis-in-samples 1 
+	      x-axis-in-seconds 0 
+	      zoom-focus-active 2
+	      zoom-focus-left 0
+	      zoom-focus-middle 3
+	      zoom-focus-right 1 
 		  
-		  ;; sndlib constants
-		  mus-unknown-header 0
-		  mus-next 1
-		  mus-aifc 2
-		  mus-riff 3
-		  mus-nist 6
-		  mus-raw 12
-		  mus-ircam 15
-		  mus-aiff 49
-		  mus-bicsf 5
-		  mus-voc 10
-		  mus-svx 9
-		  mus-soundfont 26
-		  mus-rf64 4
-		  mus-caff 60
+	      ;; sndlib constants
+	      mus-aifc 2
+	      mus-aiff 49
+	      mus-bicsf 5
+	      mus-caff 60
+	      mus-ircam 15
+	      mus-next 1
+	      mus-nist 6
+	      mus-raw 12
+	      mus-rf64 4
+	      mus-riff 3
+	      mus-soundfont 26
+	      mus-svx 9
+	      mus-unknown-header 0
+	      mus-voc 10
 		  
-		  mus-interp-none 0
-		  mus-interp-linear 1
-		  mus-interp-sinusoidal 2
-		  mus-interp-all-pass 3
-		  mus-interp-lagrange 4
-		  mus-interp-bezier 5
-		  mus-interp-hermite 6
+	      mus-interp-all-pass 3
+	      mus-interp-bezier 5
+	      mus-interp-hermite 6
+	      mus-interp-lagrange 4
+	      mus-interp-linear 1
+	      mus-interp-none 0
+	      mus-interp-sinusoidal 2
 		  
-		  mus-chebyshev-first-kind 1
-		  mus-chebyshev-second-kind 2
+	      mus-chebyshev-first-kind 1
+	      mus-chebyshev-second-kind 2
 		  
-		  mus-unknown-sample 0
-		  mus-bshort 1
-		  mus-lshort 10
-		  mus-mulaw 2
-		  mus-alaw 6
-		  mus-byte 3
-		  mus-ubyte 7
-		  mus-bfloat 4
-		  mus-lfloat 12
-		  mus-bint 5
-		  mus-lint 11
-		  mus-bintn 17
-		  mus-lintn 18
-		  mus-b24int 8
-		  mus-l24int 16
-		  mus-bdouble 9
-		  mus-ldouble 13
-		  mus-ubshort 14
-		  mus-ulshort 15
-		  mus-bfloat-unscaled 19
-		  mus-lfloat-unscaled 20
-		  mus-bdouble-unscaled 21
-		  mus-ldouble-unscaled 22)
+	      mus-alaw 6
+	      mus-b24int 8
+	      mus-bdouble 9
+	      mus-bdouble-unscaled 21
+	      mus-bfloat 4
+	      mus-bfloat-unscaled 19
+	      mus-bint 5
+	      mus-bintn 17
+	      mus-bshort 1
+	      mus-byte 3
+	      mus-l24int 16
+	      mus-ldouble 13
+	      mus-ldouble-unscaled 22
+	      mus-lfloat 12
+	      mus-lfloat-unscaled 20
+	      mus-lint 11
+	      mus-lintn 18
+	      mus-lshort 10
+	      mus-mulaw 2
+	      mus-ubshort 14
+	      mus-ubyte 7
+	      mus-ulshort 15
+	      mus-unknown-sample 0)
 	    (cddr lst)))
       ((null? lst))
     (if (not (= (symbol->value (car lst)) (cadr lst)))
@@ -1065,14 +1065,12 @@
 	'auto-resize *auto-resize* #t 
 	'auto-update *auto-update* #f
 	'auto-update-interval *auto-update-interval* 60.0 
-
 	'beats-per-measure *beats-per-measure* 4
 	'beats-per-minute *beats-per-minute* 60.0
 	'channel-style *channel-style* 1
 	'clipping *clipping* #f 
 	'clm-table-size *clm-table-size* 512
 	'clm-default-frequency *clm-default-frequency* 0.0
-
 	'color-cutoff *color-cutoff* '(0.003 0.001)
 	'color-inverted *color-inverted* #t
 	'color-scale *color-scale* 1.0 
@@ -1092,7 +1090,6 @@
 	'default-output-header-type *default-output-header-type* mus-next
 	'default-output-srate *default-output-srate* 44100
 	'dot-size *dot-size* 1 
-
 	'enved-base *enved-base* 1.0 
 	'enved-clip? (enved-clip?) #t
 	'enved-envelope (enved-envelope) ()
@@ -1138,7 +1135,6 @@
 	'ladspa-dir *ladspa-dir* ""
 	'peak-env-dir *peak-env-dir* (list "" "/home/bil/peaks")
 	'lisp-graph? (without-errors (lisp-graph?)) 'no-such-sound
-
 	'log-freq-start *log-freq-start* 32.0	
 	'mark-tag-height *mark-tag-height* 4
 	'mark-tag-width *mark-tag-width* 10
@@ -1208,7 +1204,6 @@
 	'wavo-trace *wavo-trace* 64 
 	'with-mix-tags *with-mix-tags* #t
 	'with-relative-panes *with-relative-panes* #t
-
 	'with-verbose-cursor *with-verbose-cursor* '(#f #t)
 	'with-inset-graph *with-inset-graph* '(#f #t)
 	'with-interrupts *with-interrupts* #t
@@ -1262,113 +1257,109 @@
 	    (list 'ask-before-overwrite #f #t)
 	    (list 'auto-resize #t #f)
 	    (list 'auto-update #f #t)
+	    (list 'auto-update-interval 60.0 120.0)
+	    (list 'beats-per-measure 1 120)
+	    (list 'beats-per-minute 30.0 120.0)
 	    (list 'channel-style 0 1)
+	    (list 'clipping #f #t)
 	    (list 'color-cutoff 0.003 0.01)
 	    (list 'color-inverted #t #f)
 	    (list 'color-scale 1.0 0.5)
 	    (list 'contrast-control-amp 1.0 0.5)
-	    (list 'auto-update-interval 60.0 120.0)
-	    (list 'cursor-update-interval 0.05 0.10)
 	    (list 'cursor-location-offset 0 32768)
-
 	    (list 'cursor-size 15 30)
 	    (list 'cursor-style cursor-cross cursor-line)
-	    (list 'tracking-cursor-style cursor-line cursor-cross)
+	    (list 'cursor-update-interval 0.05 0.10)
 	    (list 'dac-combines-channels #t #f)
 	    (list 'dac-size 256 512)
-	    (list 'clipping #f #t)
 	    (list 'default-output-chans 1 2)
+	    (list 'default-output-header-type mus-next mus-aifc)
 	    (list 'default-output-sample-type 1 1)
 	    (list 'default-output-srate 22050 44100)
-	    (list 'default-output-header-type mus-next mus-aifc)
 	    (list 'dot-size 1 4)
-
 	    (list 'enved-base 1.0  1.5)
-	    (list 'enved-style envelope-linear envelope-exponential)
+	    (list 'enved-filter-order 40 20)
 	    (list 'enved-power 3.0 3.5)
+	    (list 'enved-style envelope-linear envelope-exponential)
 	    (list 'enved-target 0 1)
 	    (list 'enved-wave? #f #t)
+	    (list 'eps-bottom-margin 0.0 36.0)
 	    (list 'eps-file "snd.eps" "snd-1.eps")
 	    (list 'eps-left-margin 0.0 72.0)
 	    (list 'eps-size 1.0 2.0)
-	    (list 'eps-bottom-margin 0.0 36.0)
 	    (list 'expand-control-hop 0.05 0.1)
 	    (list 'expand-control-jitter 0.1 0.2)
 	    (list 'expand-control-length 0.15 0.2)
 	    (list 'expand-control-ramp 0.4 0.2)
-
-	    (list 'fft-window-alpha 0.0  1.0)
-	    (list 'fft-window-beta 0.0  0.5)
 	    (list 'fft-log-frequency #f #t)
 	    (list 'fft-log-magnitude #f #t)
-	    (list 'fft-with-phases #f #t)
-	    (list 'transform-size 512 1024)
-	    (list 'transform-graph-type graph-once graph-as-sonogram)
 	    (list 'fft-window 6 5)
+	    (list 'fft-window-alpha 0.0  1.0)
+	    (list 'fft-window-beta 0.0  0.5)
+	    (list 'fft-with-phases #f #t)
 	    (list 'filter-control-in-dB #f #t)
-	    (list 'enved-filter-order 40 20)
 	    (list 'filter-control-in-hz #f #t)
 	    (list 'filter-control-order 20 40)
-
 	    (list 'graph-style 0 1)
+	    (list 'grid-density 1.0 0.5)
 	    (list 'initial-beg 0.0 1.0)
 	    (list 'initial-dur 0.1 1.0)
 	    (list 'just-sounds #f #t)
 	    (list 'listener-prompt ">" ":")
-	    (list 'stdin-prompt ">" "")
-	    (list 'max-transform-peaks 100 10)
-	    (list 'max-regions 16 6)
-	    (list 'min-dB -60.0 -90.0)
 	    (list 'log-freq-start 32.0 10.0)
-	    (list 'mix-waveform-height 20 40)
-	    (list 'mix-tag-height 14 20)
-	    (list 'mix-tag-width 6 20)
 	    (list 'mark-tag-height 4 20)
 	    (list 'mark-tag-width 10 20)
-	    (list 'selection-creates-region #t #f)
-	    (list 'transform-normalization normalize-by-channel dont-normalize)
+	    (list 'max-regions 16 6)
+	    (list 'max-transform-peaks 100 10)
+	    (list 'min-dB -60.0 -90.0)
+	    (list 'mix-tag-height 14 20)
+	    (list 'mix-tag-width 6 20)
+	    (list 'mix-waveform-height 20 40)
 	    (list 'play-arrow-size 10 16)
 	    (list 'print-length 12 16)
 	    (list 'region-graph-style graph-lines graph-lollipops)
 	    (list 'reverb-control-decay 1.0 2.0)
 	    (list 'reverb-control-feedback 1.09 1.6)
 	    (list 'reverb-control-lowpass 0.7 0.9)
+	    (list 'selection-creates-region #t #f)
 	    (list 'show-axes 1 0)
 	    (list 'show-full-duration #f #t)
 	    (list 'show-full-range #f #t)
-	    (list 'show-transform-peaks #f #t)
+	    (list 'show-grid #f #t)
 	    (list 'show-indices #f #t)
 	    (list 'show-marks #t #f)
 	    (list 'show-mix-waveforms #t #f)
 	    (list 'show-selection-transform #f #t)
-	    (list 'show-y-zero #f #t)
-	    (list 'show-grid #f #t)
-	    (list 'grid-density 1.0 0.5)
 	    (list 'show-sonogram-cursor #f #t)
+	    (list 'show-transform-peaks #f #t)
+	    (list 'show-y-zero #f #t)
 	    (list 'sinc-width 10 40)
-	    (list 'spectrum-end 1.0 0.7)
 	    (list 'spectro-hop 4 10)
-	    (list 'spectrum-start 0.0 0.1)
 	    (list 'spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0)
 	    (list 'spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0)
 	    (list 'spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0)
 	    (list 'spectro-y-scale 1.0 2.0)
 	    (list 'spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0)
 	    (list 'spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2)
+	    (list 'spectrum-end 1.0 0.7)
+	    (list 'spectrum-start 0.0 0.1)
 	    (list 'speed-control-style 0 1)
 	    (list 'speed-control-tones 12 18)
+	    (list 'stdin-prompt ">" "")
 	    (list 'sync-style sync-by-sound sync-all)
-	    (list 'tiny-font (if (provided? 'snd-gtk) (values "Sans 8" "Monospace 10") (values "6x12" "9x15")))
-	    (list 'with-verbose-cursor #f #t)
-	    (list 'wavelet-type 0 1)
 	    (list 'time-graph-type graph-once graph-as-wavogram)
+	    (list 'tiny-font (if (provided? 'snd-gtk) (values "Sans 8" "Monospace 10") (values "6x12" "9x15")))
+	    (list 'tracking-cursor-style cursor-line cursor-cross)
+	    (list 'transform-graph-type graph-once graph-as-sonogram)
+	    (list 'transform-normalization normalize-by-channel dont-normalize)
+	    (list 'transform-size 512 1024)
+	    (list 'wavelet-type 0 1)
 	    (list 'wavo-hop 3 6)
 	    (list 'wavo-trace 64 128)
-	    (list 'with-relative-panes #t #f)
 	    (list 'with-gl (provided? 'gl) #f)
+	    (list 'with-relative-panes #t #f)
+	    (list 'with-verbose-cursor #f #t)
 	    (list 'x-axis-style 0 1)
-	    (list 'beats-per-minute 30.0 120.0)
-	    (list 'beats-per-measure 1 120)
 	    (list 'zero-pad 0 1)
 	    (list 'zoom-focus-style 2 1))))
 	(close-sound s)))
@@ -1761,41 +1752,43 @@
 	  (list 'ask-before-overwrite #f #t)
 	  (list 'auto-resize #t #f)
 	  (list 'auto-update #f #t)
+	  (list 'auto-update-interval 60.0 120.0)
+	  (list 'beats-per-measure 1 120)
+	  (list 'beats-per-minute 30.0 120.0)
 	  (list 'channel-style 0 1)
-	  (list 'colormap good-colormap better-colormap)
+	  (list 'clipping #f #t)
 	  (list 'color-cutoff 0.003 0.01)
 	  (list 'color-inverted #t #f)
 	  (list 'color-scale 1.0 0.5)
+	  (list 'colormap good-colormap better-colormap)
 	  (list 'contrast-control 0.0 0.5)
-	  (list 'contrast-control-bounds (list 0.0 10.0) (list 1.0 5.0))
 	  (list 'contrast-control-amp 1.0 0.5)
+	  (list 'contrast-control-bounds (list 0.0 10.0) (list 1.0 5.0))
 	  (list 'contrast-control? #f #t)
-	  (list 'auto-update-interval 60.0 120.0)
-	  (list 'cursor-update-interval 0.05 0.10)
 	  (list 'cursor-location-offset 0 32768)
-	  (list 'with-tracking-cursor #f #t)
 	  (list 'cursor-size 15 30)
 	  (list 'cursor-style cursor-cross cursor-line)
-	  (list 'tracking-cursor-style cursor-line cursor-cross)
+	  (list 'cursor-update-interval 0.05 0.10)
 	  (list 'dac-combines-channels #t #f)
 	  (list 'dac-size 256 512)
-	  (list 'clipping #f #t)
 	  (list 'default-output-chans 1 2)
+	  (list 'default-output-header-type mus-next mus-aifc)
 	  (list 'default-output-sample-type 1 1)
 	  (list 'default-output-srate 22050 44100)
-	  (list 'default-output-header-type mus-next mus-aifc)
 	  (list 'dot-size 1 4)
 	  (list 'enved-base 1.0  1.5)
 	  (list 'enved-clip? #f #t)
+	  (list 'enved-filter #t #f)
+	  (list 'enved-filter-order 40 20)
 	  (list 'enved-in-dB #f #t)
-	  (list 'enved-style envelope-linear envelope-exponential)
 	  (list 'enved-power 3.0 3.5)
+	  (list 'enved-style envelope-linear envelope-exponential)
 	  (list 'enved-target 0 1)
 	  (list 'enved-wave? #f #t)
+	  (list 'eps-bottom-margin 0.0 36.0)
 	  (list 'eps-file "snd.eps" "snd-1.eps")
 	  (list 'eps-left-margin 0.0 72.0)
 	  (list 'eps-size 1.0 2.0)
-	  (list 'eps-bottom-margin 0.0 36.0)
 	  (list 'expand-control 1.0 2.0)
 	  (list 'expand-control-bounds (list .001 20.0) (list 1.0 2.0))
 	  (list 'expand-control-hop 0.05 0.1)
@@ -1803,41 +1796,34 @@
 	  (list 'expand-control-length 0.15 0.2)
 	  (list 'expand-control-ramp 0.4 0.2)
 	  (list 'expand-control? #f #t)
-	  (list 'fft-window-alpha 0.0  1.0)
-	  (list 'fft-window-beta 0.0  0.5)
 	  (list 'fft-log-frequency #f #t)
 	  (list 'fft-log-magnitude #f #t)
-	  (list 'fft-with-phases #f #t)
-	  (list 'transform-size 512 1024)
-	  (list 'transform-graph-type graph-once graph-as-sonogram)
 	  (list 'fft-window 6 5)
-	  (list 'transform-graph? #f #t)
-	  (list 'filter-control-in-dB #f #t)
+	  (list 'fft-window-alpha 0.0  1.0)
+	  (list 'fft-window-beta 0.0  0.5)
+	  (list 'fft-with-phases #f #t)
 	  (list 'filter-control-envelope (list 0.0 1.0 1.0 1.0) (list 0.0 1.0 1.0 0.0))
-	  (list 'enved-filter #t #f)
-	  (list 'enved-filter-order 40 20)
+	  (list 'filter-control-in-dB #f #t)
 	  (list 'filter-control-in-hz #f #t)
 	  (list 'filter-control-order 20 40)
 	  (list 'filter-control? #f #t)
 	  (list 'graph-cursor 34 32)
 	  (list 'graph-style 0 1)
+	  (list 'grid-density 1.0 0.5)
 	  (list 'initial-beg 0.0 1.0)
 	  (list 'initial-dur 0.1 1.0)
 	  (list 'just-sounds #f #t)
 	  (list 'listener-prompt ">" ":")
-	  (list 'stdin-prompt "" ">")
-	  (list 'max-transform-peaks 100 10)
-	  (list 'max-regions 16 6)
-	  (list 'min-dB -60.0 -90.0)
 	  (list 'log-freq-start 32.0 10.0)
-	  (list 'mix-waveform-height 20 40)
-	  (list 'mix-tag-height 14 20)
-	  (list 'mix-tag-width 6 20)
 	  (list 'mark-tag-height 4 20)
 	  (list 'mark-tag-width 10 20)
+	  (list 'max-regions 16 6)
+	  (list 'max-transform-peaks 100 10)
+	  (list 'min-dB -60.0 -90.0)
+	  (list 'mix-tag-height 14 20)
+	  (list 'mix-tag-width 6 20)
+	  (list 'mix-waveform-height 20 40)
 	  (list 'mus-clipping #f #t)
-	  (list 'selection-creates-region #t #f)
-	  (list 'transform-normalization normalize-by-channel dont-normalize)
 	  (list 'play-arrow-size 10 16)
 	  (list 'print-length 12 16)
 	  (list 'region-graph-style graph-lines graph-lollipops)
@@ -1849,50 +1835,53 @@
 	  (list 'reverb-control-scale 0.0 0.2)
 	  (list 'reverb-control-scale-bounds (list 0.0 4.0) (list 0.0 0.2))
 	  (list 'reverb-control? #f #t)
+	  (list 'selection-creates-region #t #f)
 	  (list 'show-axes 1 0)
 	  (list 'show-full-duration #f #t)
 	  (list 'show-full-range #f #t)
-	  (list 'show-transform-peaks #f #t)
+	  (list 'show-grid #f #t)
 	  (list 'show-indices #f #t)
 	  (list 'show-marks #t #f)
 	  (list 'show-mix-waveforms #t #f)
 	  (list 'show-selection-transform #f #t)
-	  (list 'show-y-zero #f #t)
-	  (list 'show-grid #f #t)
-	  (list 'grid-density 1.0 0.5)
 	  (list 'show-sonogram-cursor #f #t)
+	  (list 'show-transform-peaks #f #t)
+	  (list 'show-y-zero #f #t)
 	  (list 'sinc-width 10 40)
-	  (list 'spectrum-end 1.0 0.7)
 	  (list 'spectro-hop 4 10)
-	  (list 'spectrum-start 0.0 0.1)
 	  (list 'spectro-x-angle (if (provided? 'gl) 300.0 90.0) 60.0)
 	  (list 'spectro-x-scale (if (provided? 'gl) 1.5 1.0) 2.0)
 	  (list 'spectro-y-angle (if (provided? 'gl) 320.0 0.0) 60.0)
 	  (list 'spectro-y-scale 1.0 2.0)
 	  (list 'spectro-z-angle (if (provided? 'gl) 0.0 358.0) 60.0)
 	  (list 'spectro-z-scale (if (provided? 'gl) 1.0 0.1) 0.2)
+	  (list 'spectrum-end 1.0 0.7)
+	  (list 'spectrum-start 0.0 0.1)
 	  (list 'speed-control 1.0 0.5)
 	  (list 'speed-control-bounds (list 0.05 20.0) (list 1.0 5.0))
 	  (list 'speed-control-style 0 1)
 	  (list 'speed-control-tones 12 18)
+	  (list 'stdin-prompt "" ">")
 	  (list 'sync 0 1)
 	  (list 'sync-style sync-by-sound sync-all)
-	  (list 'tiny-font (if (provided? 'snd-gtk) 
-					 (values "Sans 8" "Monospace 10")
-					 (values "6x12" "9x15")))
-	  (list 'transform-type fourier-transform autocorrelation)
-	  (list 'with-verbose-cursor #f #t)
-	  (list 'wavelet-type 0 1)
-	  (list 'time-graph? #f #t)
 	  (list 'time-graph-type graph-once graph-as-wavogram)
+	  (list 'time-graph? #f #t)
+	  (list 'tiny-font (if (provided? 'snd-gtk) (values "Sans 8" "Monospace 10") (values "6x12" "9x15")))
+	  (list 'tracking-cursor-style cursor-line cursor-cross)
+	  (list 'transform-graph-type graph-once graph-as-sonogram)
+	  (list 'transform-graph? #f #t)
+	  (list 'transform-normalization normalize-by-channel dont-normalize)
+	  (list 'transform-size 512 1024)
+	  (list 'transform-type fourier-transform autocorrelation)
+	  (list 'wavelet-type 0 1)
 	  (list 'wavo-hop 3 6)
 	  (list 'wavo-trace 64 128)
+	  (list 'with-gl (provided? 'gl) #f)
 	  (list 'with-mix-tags #t #f)
 	  (list 'with-relative-panes #t #f)
-	  (list 'with-gl (provided? 'gl) #f)
+	  (list 'with-tracking-cursor #f #t)
+	  (list 'with-verbose-cursor #f #t)
 	  (list 'x-axis-style 0 1)
-	  (list 'beats-per-minute 30.0 120.0)
-	  (list 'beats-per-measure 1 120)
 	  (list 'zero-pad 0 1)
 	  (list 'zoom-focus-style 2 1))))
       

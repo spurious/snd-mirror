@@ -75231,6 +75231,14 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
  *   and how to generate tests for all cases?
+ * mv hitch: (define (gate . args) (if (null? args) 0 (apply values args))) (define (fence . args) (apply + args))
+ *   how to make the null case transparent? (fence (gate 1 2 3) (gate 2 3 4) (gate)) -> 15
+ *   here we need (values) as arg to be omitted, but that means (abs -1 (values)) is ok...
+ *   perhaps fence should omit #<unspecified> args, or s7 should finally treat (values) as no-values
+ *   see 49388 for old discussion -- add to s7.html?
+ *   apply|list|append-values, use supply/consume in example above, old vals deprecated
+ * null-let eqv as active -- check code (symbol==built-in and it's safe, and is a symbol! and no accessor)
+ *   (safe-eval in lint and sandlet for macro expansion in lint) -- see sandlet in t490.scm
  *
  * scheme side method call needs attention: 
  *    ((case (e m) ((#<undefined>) <error-func>) (else)) ...)

@@ -21925,6 +21925,7 @@
 ;;; local set! -> func arg at end?
 ;;; local copy
 ;;; move define (or lambda) inward, not outward
+;;; t347 unexpected dot or/and bug
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
