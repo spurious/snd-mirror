@@ -1125,17 +1125,17 @@ It's almost as easy to write the actual macro body as the backquoted version of 
 &gt; (define-macro (hi a) `(+ 1 ,a))
 <em class="gray">hi</em>
 &gt; (procedure-source hi)
-<em class="gray">(lambda (a) ({list} '+ 1 a))</em>
+<em class="gray">(lambda (a) (list-values '+ 1 a))</em>
 
 &gt; (define-macro (hi a) `(+ 1 ,@a))
 <em class="gray">hi</em>
 &gt; (procedure-source hi)
-<em class="gray">(lambda (a) ({list} '+ 1 ({apply_values} a)))</em>
+<em class="gray">(lambda (a) (list-values '+ 1 (apply-values a)))</em>
 </pre>
 
-<p>{list} is a special version of list to avoid name collisions
-and handle a few tricky details (similarly for {apply_values}).  There is no unquote-splicing
-macro in s7;  ",@(...)" becomes "(unquote ({apply_values} ...))" at read-time.  There shouldn't be any unquote
+<p>list-values and apply-values are quasiquote helper functions described <a href="#listvalues">below</a>.
+There is no unquote-splicing
+macro in s7;  ",@(...)" becomes "(unquote (apply-values ...))" at read-time.  There shouldn't be any unquote
 either.  In Scheme the reader turns ,x into (unquote x), so:
 </p>
 
@@ -1410,7 +1410,7 @@ to be evaluated in its definition environment:
 ; (macroexpand (mac 2 3))
 ; (with-let (inlet :a 2 :b 3) (+ a b))
 ; (procedure-source mac)
-; (lambda (a b) (list 'with-let (list 'inlet :a a :b b) ({list} '+ 'a 'b)))
+; (lambda (a b) (list 'with-let (list 'inlet :a a :b b) (list-values '+ 'a 'b)))
 -->
 
 
@@ -3308,7 +3308,33 @@ tells s7 that its arguments should be handled in a special way, and the multiple
 as soon as the arguments are spliced into some caller's arguments.  
 </p>
 
-<p>Internally, s7 uses <code>(apply values ...)</code> to implement unquote splicing (",@") in quasiquote.
+<p id="listvalues">There are two helper functions for multiple values, apply-values and list-values,
+both intended primarily for quasiquote where (apply-values ...) implements what other schemes call unquote-splicing (",@...").
+(apply-values lst) is like (apply values lst),
+and (list-values ...) is like (list ...) except in one special case.  It is common in writing macros
+to create some piece of code to be spliced into the output, but if that code is nil, the resulting
+macro code should contain nothing (not nil).  apply-values and list-values cooperate with quasiquote to implement
+this.  As an example:
+</p>
+<pre class="indented">
+&gt; (list-values 1 2 (apply-values) 3)
+<em class="gray">(1 2 3)</em>
+&gt; (define (supply . args) (apply-values args))
+<em class="gray">supply</em>
+&gt; (define (consume f . args) (apply f (apply list-values args)))
+<em class="gray">consume</em>
+&gt; (consume + (supply 1 2) (supply 3 4 5) (supply))
+<em class="gray">15</em>
+&gt; (consume + (supply))
+<em class="gray">0</em>
+</pre>
+
+<p>It might seem simpler to return "nothing" from (values), rather than #&lt;unspecified&gt;,
+but that has drawbacks.  First, <code>(abs -1 (values))</code>, or worse <code>(abs (f x) (f y))</code>
+is no longer an error at the level of the program text; you lose the ability to see at a glance that
+a normal function has the right number of arguments.  Second, a lot of code currently assumes that
+(values) returns #&lt;unspecified&gt;, and that implies that <code>(apply values ())</code> does as well.
+
 <!--
 Is <code>(apply apply func arglist)</code> the same as <code>(apply func (apply values arglist))</code>,
 or (leaving aside <code>'(()))</code>, <code>(func (apply values (apply values arglist)))</code>?
@@ -3327,6 +3353,7 @@ is 15, as anyone would expect.
 </p>
 
 </div>
+
 
 <!--
 <details>
@@ -3434,7 +3461,7 @@ s7 handles it this way:
        ((cond 
           ((cond ((assoc 'x '((x 1 2 3))) =&gt; cdr)
                  (else #f))
-            =&gt; {apply_values}) ; ouch!
+            =&gt; apply-values) 
           (else #f))
          =&gt; +)
        (else #f))
@@ -3456,7 +3483,7 @@ to the fed-to function; or equivalently, indicate which argument in the fed-to f
 gets the assoc value (=&lt;?).
 Currently you have to use let or lambda, which partly defeats the
 purpose of =&gt;.  The multi-cond example above is as close as I've come so far,
-but it depends on an s7-internal function (the quasiquote helper {apply_values})
+but it depends on an s7-internal function (the quasiquote helper apply-values)
 which I'd much rather avoid.
 </p>
 

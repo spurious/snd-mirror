@@ -5462,7 +5462,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   name[0] = '{';
   if (plen > 0) memcpy((void *)(name + 1), prefix, plen);
   name[plen + 1] = '}';
-  name[plen + 2] = '-';
+  name[plen + 2] = '-'; /* {gensym}-nnn */
 
   p = pos_int_to_str(sc->gensym_counter++, &len, '\0');
   memcpy((void *)(name + plen + 3), (void *)p, len);
@@ -49415,7 +49415,7 @@ s7_pointer s7_values(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 {
-  #define H_qq_list "({list} ...) returns its arguments in a list (internal to quasiquote)"
+  #define H_qq_list "(list-values ...) returns its arguments in a list (internal to quasiquote)"
   #define Q_qq_list s7_make_circular_signature(sc, 1, 2, sc->is_list_symbol, sc->T)
 
   s7_pointer x, y, px;
@@ -49431,9 +49431,9 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
     return(args);
 
   /* this is not maximally efficient, but it's not important:
-   *   we've hit the rare special case where ({apply_values} ())) needs to be ignored
+   *   we've hit the rare special case where (apply-values ())) needs to be ignored
    *   in the splicing process (i.e. the arglist acts as if the thing never happened)
-   *   ({list} ({apply_values} ())) -> (), also ({list} ({apply_values})) -> ()
+   *   (list-values (apply-values ())) -> (), also (list-values (apply-values)) -> ()
    */
   px = sc->nil;
   for (x = args, y = args; is_pair(y); y = cdr(y))
@@ -49460,7 +49460,7 @@ static s7_pointer g_qq_list(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 {
-  #define H_apply_values "({apply_values} var) applies values to var.  This is an internal function."
+  #define H_apply_values "(apply-values var) applies values to var.  This is an internal function."
   #define Q_apply_values pcl_t
   s7_pointer x;
 
@@ -49586,9 +49586,9 @@ and splices the resultant list into the outer list. `(1 ,(+ 1 1) ,@(list 3 4)) -
 		(cadr(orig) == sc->unquote_symbol))
 	      {
 		/* `(1 . ,(+ 1 1)) -> '(1 unquote (+ 1 1)) -> '(1 . 2)
-		 * `(1 . ,@'((2 3))) -> (1 unquote ({apply_values} '((2 3)))) -> ({append} ({list} 1) ({apply_values} '((2 3)))) -> '(1 2 3)
+		 * `(1 . ,@'((2 3))) -> (1 unquote (apply-values '((2 3)))) -> (append (list-values 1) (apply-values '((2 3)))) -> '(1 2 3)
 		 * this used to be `(1 . ,@('(2 3))).
-		 *     This now becomes (1 unquote ({apply_values} ('(2 3)))) -> ({append} ({list} 1) ({apply_values} ('(2 3)))) -> error
+		 *     This now becomes (1 unquote (apply-values ('(2 3)))) -> (append (list-values 1) (apply-values ('(2 3)))) -> error
 		 * `(1 . (,@'(2 3))) works in both cases, and `(1 . (,(+ 1 1)))
 		 */
 		set_car(bq, g_quasiquote_1(sc, car(orig)));
@@ -53835,7 +53835,7 @@ static bool optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	  if ((bad_pairs == 1) &&
 	      (is_safe_c_s(arg1)))
 	    {
-	      /* unsafe func here won't work unless we check that later and make the new arg list (for {list} etc)
+	      /* unsafe func here won't work unless we check that later and make the new arg list (for list-values etc)
 	       *   (and it has to be the last pair else the unknown_g stuff can mess up)
 	       */
 	      if (car(arg2) == sc->quote_symbol)
@@ -74693,17 +74693,16 @@ s7_scheme *s7_init(void)
   /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
   sc->stacktrace_symbol =            defun("stacktrace",	stacktrace,		0, 5, false);
 
-  { /* these are internal for quasiquote's use */
+  { /* these are primarily for quasiquote */
     s7_pointer sym;
-    sym = unsafe_defun("{apply_values}", apply_values, 0, 0, true);
+
+    sym = unsafe_defun("apply-values", apply_values, 0, 0, true);
     set_immutable(sym);
     sc->qq_apply_values_function = slot_value(global_slot(sym));
 
-    sym = unsafe_defun("{append}", append, 0, 0, true);
-    set_immutable(sym);
-    sc->qq_append_function = slot_value(global_slot(sym));
+    sc->qq_append_function = slot_value(global_slot(sc->append_symbol));
 
-    sym = unsafe_defun("{list}", qq_list, 0, 0, true);
+    sym = unsafe_defun("list-values", qq_list, 0, 0, true);
     set_immutable(sym);
     sc->qq_list_function = slot_value(global_slot(sym));
     set_type(sc->qq_list_function, T_C_RST_ARGS_FUNCTION | T_PROCEDURE | T_COPY_ARGS);
@@ -75121,6 +75120,9 @@ s7_scheme *s7_init(void)
 
 #if (!DISABLE_DEPRECATED)
   s7_eval_c_string(sc, "(begin                                                    \n\
+                          (define-constant {apply_values}    apply-values)        \n\
+                          (define-constant {list}            list-values)         \n\
+                          (define-constant {append}          append)              \n\
                           (define global-environment         rootlet)             \n\
                           (define current-environment        curlet)              \n\
                           (define make-procedure-with-setter dilambda)            \n\
@@ -75231,12 +75233,7 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
  *   and how to generate tests for all cases?
- * mv hitch: (define (gate . args) (if (null? args) 0 (apply values args))) (define (fence . args) (apply + args))
- *   how to make the null case transparent? (fence (gate 1 2 3) (gate 2 3 4) (gate)) -> 15
- *   here we need (values) as arg to be omitted, but that means (abs -1 (values)) is ok...
- *   perhaps fence should omit #<unspecified> args, or s7 should finally treat (values) as no-values
- *   see 49388 for old discussion -- add to s7.html?
- *   apply|list|append-values, use supply/consume in example above, old vals deprecated
+ *
  * null-let eqv as active -- check code (symbol==built-in and it's safe, and is a symbol! and no accessor)
  *   (safe-eval in lint and sandlet for macro expansion in lint) -- see sandlet in t490.scm
  *

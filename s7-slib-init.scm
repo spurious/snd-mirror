@@ -235,9 +235,9 @@
 (define (output-port-height . arg) 24)
 
 ;;@ (CURRENT-ERROR-PORT)
-(define current-error-port
-  (let ((port (current-output-port)))
-    (lambda () port)))
+;; (define current-error-port
+;;   (let ((port (current-output-port)))
+;;    (lambda () port)))
 
 ;;@ (TMPNAM) makes a temporary file name.
 (define tmpnam (let ((cntr 100))

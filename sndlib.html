@@ -832,8 +832,7 @@ or, at run time, use s7's loader and s7_init_sndlib:
 
 <pre>
 (let ((sndlib (load "libsndlib.so" 
-                (inlet (curlet)
-                  (cons 'init_func 's7_init_sndlib)))))
+                (inlet (curlet) :init_func 's7_init_sndlib))))
   ....)
 </pre>
 

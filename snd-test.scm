@@ -27690,8 +27690,7 @@ EDITS: 2
 	    (if (not (= sd 2)) (snd-display "channels of vector2: ~A" sd))
 	    (if (not (= mxv 1)) (snd-display "channels of mix: ~A" mxv))
 	    (if (not (= reg 1)) (snd-display "channels of region: ~A" reg))
-	    (if (not (= ply 1)) (snd-display "channels of player: ~A" ply))
-	    )
+	    (if (not (= ply 1)) (snd-display "channels of player: ~A" ply)))
 	  (close-sound snd))
 	
 	;; framples as generic
@@ -28085,8 +28084,7 @@ EDITS: 2
 			(cadr chan-list)
 			cur-maxamps
 			cur-edits
-			cur-framples)))
-		))))))
+			cur-framples)))))))))
 	
     (define (amp-envs-equal? snd chn pos0 pos1 df)
       (let ((env0 (channel-amp-envs snd chn pos0))
@@ -30563,8 +30561,7 @@ EDITS: 1
 		(lambda (snd i)
 		  (clm-channel (make-two-zero .5 .5)))
 		(lambda (snd i)
-		  (reverse-channel (* i 10) (* i 100)))
-		))))
+		  (reverse-channel (* i 10) (* i 100)))))))
 	  
 	  (let ((ind (new-sound "fmv.snd" :size 50)))
 	    (set! *sinc-width* 10)
@@ -31084,7 +31081,8 @@ EDITS: 1
 		(if (not (vmus-arrays-equal? v (float-vector 0.01198528796961999 0.1035793306415383 0.2059748594814547 0.3060708098272395 0.4072307780331241 
 							     0.5077603318367317 0.6062448605128621 0.7086656575233007 0.8045885470214085 0.9128440616541418 
 							     0.9536620711423869 0.8562080426776515 0.7579855746854125 0.6566287955350736 0.5575138524566664 
-							     0.4569842986530586 0.3574772574131896 0.2546643622412894 0.1572853567216201 0.04987330456145658 -0.0009027286222166014)))
+							     0.4569842986530586 0.3574772574131896 0.2546643622412894 0.1572853567216201 0.04987330456145658 
+							     -0.0009027286222166014)))
 		    (format *stderr* "src 2, 40 0 10: ~A~%" v)))
 	      (close-sound res))
 	    
@@ -31295,27 +31293,26 @@ EDITS: 1
 					  snd chn lisp-graph cr)
 			     (free-cairo cr)))))))
 
-    (let ((-> 
-	   (let ((documentation "draw an arrow pointing (from the left) at the point (x0 y0)"))
-	     (lambda (x0 y0 size snd chn cr)
-	       (let ((points (make-vector 8)))
-		 
-		 (let ((x x0) 
-		       (y y0)
-		       (point (lambda (i x y)
-				(set! (points (* i 2)) x)
-				(set! (points (+ (* i 2) 1)) y))))
-		   (point 0 x y)
-		   (point 1 (- x (* 2 size)) (- y size))
-		   (point 2 (- x (* 2 size)) (+ y size))
-		   (point 3 x y)
-		   (fill-polygon points snd chn time-graph cr))
-		 
-		 (fill-rectangle (- x0 (* 4 size)) 
-				 (floor (- y0 (* .4 size)))
-				 (* 2 size)
-				 (floor (* .8 size))
-				 snd chn time-graph #f cr))))))
+    (let ((-> (let ((documentation "draw an arrow pointing (from the left) at the point (x0 y0)"))
+		(lambda (x0 y0 size snd chn cr)
+		  (let ((points (make-vector 8)))
+		    
+		    (let ((x x0) 
+			  (y y0)
+			  (point (lambda (i x y)
+				   (set! (points (* i 2)) x)
+				   (set! (points (+ (* i 2) 1)) y))))
+		      (point 0 x y)
+		      (point 1 (- x (* 2 size)) (- y size))
+		      (point 2 (- x (* 2 size)) (+ y size))
+		      (point 3 x y)
+		      (fill-polygon points snd chn time-graph cr))
+		    
+		    (fill-rectangle (- x0 (* 4 size)) 
+				    (floor (- y0 (* .4 size)))
+				    (* 2 size)
+				    (floor (* .8 size))
+				    snd chn time-graph #f cr))))))
       (let ((ind (open-sound "oboe.snd"))
 	    (wids (channel-widgets))
 	    (wids1 (channel-widgets (selected-sound)))
@@ -32727,9 +32724,7 @@ EDITS: 1
 		(lambda () (effects-hello-dentist 50.0 0.5 0 #f))
 		(lambda () (effects-fp 1.0 0.3 20.0 0 #f))
 		(lambda () (effects-flange 5.0 2.0 0.001 0 #f))
-		(lambda () (effects-jc-reverb-1 0.1 0 #f))
-		
-		)
+		(lambda () (effects-jc-reverb-1 0.1 0 #f)))
 	       '((lambda (snd chn) (insert-float-vector (float-vector 1.0 0.5) 0 2 snd chn))
 		 (lambda (snd chn) (clm-channel-test snd chn))
 		 
@@ -32792,8 +32787,7 @@ EDITS: 1
 		 (lambda (snd chn) (effects-fp 1.0 0.3 20.0 0 #f snd chn))
 		 (lambda (snd chn) (effects-flange 5.0 2.0 0.001 0 #f snd chn))
 		 (lambda (snd chn) (effects-jc-reverb-1 0.1 0 #f snd chn))))))
-	  (close-sound ind)
-	  )
+	  (close-sound ind))
 	
 	
 	;; ---- apply controls edit lists
@@ -35149,16 +35143,16 @@ EDITS: 1
 	
 	(show-greeting 
 	 (lambda* ((snd 0) (chn 0))
-	 (let ((ls (left-sample snd chn))
-	       (rs (right-sample snd chn)))
-	   (if (< ls 1000 rs)
-	       (let ((pos (x->position (/ 1000.0 (srate))))
-		     (cr (make-cairo (car (channel-widgets snd chn)))))
-		 (let-temporarily (((foreground-color) (make-color 0.75 0.75 0.75)))
-		   (fill-rectangle pos 10 50 20 snd chn time-graph #f cr)
-		   (set! (foreground-color) (make-color 1 0 0))
-		   (draw-string "hi!" (+ pos 5) 12 snd chn time-graph cr)
-		   (free-cairo cr))))))))
+	   (let ((ls (left-sample snd chn))
+		 (rs (right-sample snd chn)))
+	     (if (< ls 1000 rs)
+		 (let ((pos (x->position (/ 1000.0 (srate))))
+		       (cr (make-cairo (car (channel-widgets snd chn)))))
+		   (let-temporarily (((foreground-color) (make-color 0.75 0.75 0.75)))
+		     (fill-rectangle pos 10 50 20 snd chn time-graph #f cr)
+		     (set! (foreground-color) (make-color 1 0 0))
+		     (draw-string "hi!" (+ pos 5) 12 snd chn time-graph cr)
+		     (free-cairo cr))))))))
     (lambda ()
       (do ((test-ctr 0 (+ 1 test-ctr))) ((= test-ctr tests)) 
 	(log-mem test-ctr)
@@ -35606,8 +35600,7 @@ EDITS: 1
 			      (if (not (eq-func (func ind-2 0) old-2-0)) (snd-display "~A set (#t 0) 2 channel-func: ~A ~A" name (func ind-2 0) old-2-0))
 			      (if (not (eq-func (func ind-2 1) old-2-0)) (snd-display "~A set (#t 1) 2 channel-func: ~A ~A" name (func ind-2 1) old-2-0))
 			      (set! (func ind-2 0) old-2-0)
-			      (set! (func ind-2 1) old-2-1))
-			    )))
+			      (set! (func ind-2 1) old-2-1)))))
 		       (test-channel-func 
 			(lambda (func name ind-1 ind-2 new-val eq-func leq-func settable global)
 			  (test-sound-func-1 func name ind-1 ind-2 new-val eq-func leq-func settable #t global)
@@ -36237,8 +36230,7 @@ EDITS: 1
 	  (let ((g550 (goertzel-channel 550.0))
 		(g1700 (goertzel-channel 1700.0)))
 	    (if (> (* 1000 g1700) g550) (snd-display "goertzel-channel oboe: ~A ~A" g550 g1700))
-	    (close-sound ind)))
-	))))
+	    (close-sound ind)))))))
 
 
 ;;; ---------------- test 21: optimizer ----------------
@@ -36942,7 +36934,8 @@ EDITS: 1
 	   (i 0 (+ i 1)))
 	  ((= i 10) fv)
 	(float-vector-set! fv i (+ (env e) (rand-interp r)))))
-    (test (fv64) (float-vector -0.001775140394296145 0.1075608303225188 0.2168968010393338 0.3262327717561487 0.4355687424729637 0.5449047131897787 0.6542406839065937 0.7635766546234087 0.8729126253402237 0.9822485960570387))
+    (test (fv64) (float-vector -0.001775140394296145 0.1075608303225188 0.2168968010393338 0.3262327717561487 
+			       0.4355687424729637 0.5449047131897787 0.6542406839065937 0.7635766546234087 0.8729126253402237 0.9822485960570387))
     
     (define (fv65)
       (set! (mus-rand-seed) 1234)
@@ -36952,7 +36945,8 @@ EDITS: 1
 	   (i 0 (+ i 1)))
 	  ((= i 10) fv)
 	(float-vector-set! fv i (+ (triangle-wave e) (rand-interp r)))))
-    (test (fv65) (float-vector -0.001775140394296145 0.0418011931343102 0.08537752666291655 0.1289538601915229 0.1725301937201293 0.2161065272487356 0.2596828607773419 0.3032591943059482 0.3468355278345545 0.3904118613631609))
+    (test (fv65) (float-vector -0.001775140394296145 0.0418011931343102 0.08537752666291655 0.1289538601915229 
+			       0.1725301937201293 0.2161065272487356 0.2596828607773419 0.3032591943059482 0.3468355278345545 0.3904118613631609))
     
     (define (fv66)
       (let ((fv (make-float-vector 8))
@@ -46771,4 +46765,28 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   345,704,896  clm.c:run_hilbert [/home/bil/motif-snd/snd]
   330,406,288  clm.c:fb_many_with_amps_c1_c2 [/home/bil/motif-snd/snd]
 
+2-Jan-16:
+40,365,626,332
+5,490,099,643  s7.c:eval'2 [/home/bil/motif-snd/snd]
+2,848,387,254  ???:sin [/lib64/libm-2.12.so]
+2,014,790,092  ???:cos [/lib64/libm-2.12.so]
+1,267,013,962  clm.c:fir_ge_20 [/home/bil/motif-snd/snd]
+1,135,195,524  s7.c:eval [/home/bil/motif-snd/snd]
+1,045,606,298  clm.c:mus_src [/home/bil/motif-snd/snd]
+  976,057,808  s7.c:gc [/home/bil/motif-snd/snd]
+  902,125,544  ???:t2_32 [/home/bil/motif-snd/snd]
+  803,333,049  ???:t2_64 [/home/bil/motif-snd/snd]
+  675,050,078  snd-edits.c:channel_local_maxamp [/home/bil/motif-snd/snd]
+  627,021,459  clm.c:mus_phase_vocoder_with_editors [/home/bil/motif-snd/snd]
+  594,199,460  clm.c:fb_one_with_amps_c1_c2 [/home/bil/motif-snd/snd]
+  489,246,418  io.c:mus_read_any_1 [/home/bil/motif-snd/snd]
+  459,910,388  ???:n1_64 [/home/bil/motif-snd/snd]
+  412,068,324  clm2xen.c:outa_x_rf_to_mus_xen [/home/bil/motif-snd/snd]
+  394,019,684  vct.c:vct_add [/home/bil/motif-snd/snd]
+  370,136,022  ???:memcpy [/lib64/ld-2.12.so]
+  358,200,130  clm.c:mus_env_linear [/home/bil/motif-snd/snd]
+  345,704,896  clm.c:run_hilbert [/home/bil/motif-snd/snd]
+  339,193,555  clm.c:filter_ge_10 [/home/bil/motif-snd/snd]
+  337,020,228  clm.c:mus_src_to_buffer [/home/bil/motif-snd/snd]
+  330,406,288  clm.c:fb_many_with_amps_c1_c2 [/home/bil/motif-snd/snd]
 |#

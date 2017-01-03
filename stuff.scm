@@ -237,7 +237,7 @@
 
 
 (define-macro* (incf sym (inc 1))
-  `(set! ,sym (+ ,sym ,inc))) ; or ({list} set! sym ({list} + sym inc))
+  `(set! ,sym (+ ,sym ,inc))) ; or (list-values set! sym (list-values + sym inc))
 
 ;; (define-bacro* (incf-1 sym (inc 1)) (apply set! sym (list + sym inc) ()))
 
@@ -787,11 +787,11 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		      (if (memq (car clause) '(#t else))
 			  clause
 			  (if (= (length (car clause)) 1)
-			      `((,(caar clause) ,obj) ,@(cdr clause))
-			      `((or ,@(map (lambda (type)
-					     (list type obj))
-					   (car clause)))
-				,@(cdr clause)))))
+			      (cons (list (caar clause) obj) (cdr clause))
+			      (cons (cons 'or (map (lambda (type)
+						     (list type obj))
+						   (car clause)))
+				    (cdr clause)))))
 		    clauses)))))
 
 
@@ -1979,12 +1979,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 				  ((proper-list? args)
 				   (if (memq :rest args)
 				       (append (butlast (butlast no-noise-args))   ; also omit the :rest
-					       (list (list '{apply_values} (last args))))
+					       (list (list 'apply-values (last args))))
 				       arg-names))                                 ; (... y x)
 				  ((pair? args)
-				   (append (butlast no-noise-args)            ; (... y ({apply_values} x))
-					   (list (list '{apply_values} (last args)))))
-				  (else (list (list '{apply_values} args))))))     ; (... ({apply_values} x))
+				   (append (butlast no-noise-args)            ; (... y (apply-values x))
+					   (list (list 'apply-values (last args)))))
+				  (else (list (list 'apply-values args))))))     ; (... (apply-values x))
 	    `(define ,func
 	       (define-macro* ,(cons (gensym) args)                                ; args might be a symbol etc
 		 `((lambda* ,(cons ',e ',arg-names)                                ; prepend added env arg because there might be a rest arg
