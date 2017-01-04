@@ -2048,6 +2048,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
    :stacktrace-defaults           (*s7* 'stacktrace-defaults)
    :max-stack-size                (*s7* 'max-stack-size)
    :symbol-table-locked?          (*s7* 'symbol-table-locked?)
+   :autoloading?                  (*s7* 'autoloading?)
    :undefined-identifier-warnings (*s7* 'undefined-identifier-warnings)
    :catches                       (*s7* 'catches)
    :exits                         (*s7* 'exits)))
@@ -2127,3 +2128,144 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			      (rootlet))
 		    (sublet lt)))))))
 
+
+(define sandbox 
+  (let ((built-in-functions (let ((ht (make-hash-table))) ; bad guys removed
+			      (for-each
+			       (lambda (op) 
+				 (set! (ht op) #t))
+			       '(symbol? gensym? keyword? let? openlet? iterator? constant? macro? c-pointer? c-object? 
+			         input-port? output-port? eof-object? integer? number? real? complex? rational? random-state? 
+			         char? string? list? pair? vector? float-vector? int-vector? byte-vector? hash-table? 
+			         continuation? procedure? dilambda? boolean? float? proper-list? sequence? null? gensym 
+			         symbol->string string->keyword symbol->keyword 
+			         inlet coverlet openlet let-ref make-iterator iterate iterator-sequence
+			         iterator-at-end? provided? provide defined? c-pointer port-line-number port-filename 
+			         pair-line-number pair-filename port-closed? let->list char-ready? flush-output-port 
+			         open-input-string open-output-string get-output-string 
+			         newline write display read-char peek-char write-char write-string read-byte write-byte 
+			         read-line read-string call-with-input-string with-input-from-string 
+			         call-with-output-string with-output-to-string 
+			         real-part imag-part numerator denominator even? odd? zero? positive? 
+			         negative? infinite? nan? complex magnitude angle rationalize abs exp log sin cos tan asin 
+			         acos atan sinh cosh tanh asinh acosh atanh sqrt expt floor ceiling truncate round lcm gcd
+			         + - * / max min quotient remainder modulo = < > <= >= logior logxor logand lognot ash 
+			         random-state random inexact->exact exact->inexact integer-length make-polar make-rectangular 
+			         logbit? integer-decode-float exact? inexact? random-state->list number->string string->number 
+			         char-upcase char-downcase char->integer integer->char char-upper-case? char-lower-case? 
+			         char-alphabetic? char-numeric? char-whitespace? char=? char<? char>? char<=? char>=? 
+			         char-position string-position make-string string-ref string-set! string=? string<? string>? 
+			         string<=? string>=? char-ci=? char-ci<? char-ci>? char-ci<=? char-ci>=? string-ci=? string-ci<? 
+			         string-ci>? string-ci<=? string-ci>=? string-copy string-fill! list->string string-length 
+			         string->list string-downcase string-upcase string-append substring string object->string 
+			         format cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr 
+			         cdddr cdadr cddar caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr 
+			         cdadar cddaar cdaddr cddddr cddadr cdddar assoc member list list-ref list-set! list-tail 
+			         make-list length copy fill! reverse reverse! sort! append assq assv memq memv vector-append 
+			         list->vector vector-fill! vector-length vector->list vector-ref vector-set! vector-dimensions 
+			         make-vector make-shared-vector vector float-vector make-float-vector float-vector-set! 
+			         float-vector-ref int-vector make-int-vector int-vector-set! int-vector-ref string->byte-vector 
+			         byte-vector make-byte-vector hash-table hash-table* make-hash-table hash-table-ref 
+			         hash-table-set! hash-table-entries cyclic-sequences call/cc call-with-current-continuation 
+			         call-with-exit apply for-each map dynamic-wind values 
+			         catch throw error procedure-documentation procedure-signature help procedure-source
+			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? s7-version
+			         dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
+				 pi most-positive-fixnum most-negative-fixnum nan.0 inf.0 -nan.0 -inf.0 *features*
+				 quote if begin let let* letrec letrec* cond case or and do set! unless when
+				 with-let with-baffle
+				 lambda lambda* define define* 
+				 define-macro define-macro* define-bacro define-bacro*))
+			      ht)))
+    (lambda (code)
+      ;; block any change to calling program, or access to files, etc
+      (let ((new-code 
+	     (call-with-exit
+	      (lambda (quit)
+		(let walk ((tree code))
+		  (if (symbol? tree)
+		      (let ((val (symbol->value tree)))
+			;; don't accept any symbol with an accessor
+			(if (or (symbol-access tree)
+				(memq tree '(*s7* unquote abort))
+				(let? val)) ; (let? *s7*) -> #t
+			    (quit #f))
+			;; don't accept anything except safe built-ins and local vars
+			(if (not (or (hash-table-ref built-in-functions tree)
+				     (eq? (symbol->value tree (outlet (funclet sandbox))) #<undefined>)))
+			    (quit #f))
+			;; if value is also in rootlet, check that it's safe (i.e. (set! abs exit) sometime earlier)
+			(if (or (procedure? val)
+				(macro? val))
+			    (let ((unval (symbol->value tree (sublet (rootlet) (unlet))))) ; unlet returns the new unshadowing let
+			      (if (not (eq? val unval))
+				  (quit #f))
+			      (if (memq unval (list #_eval #_eval-string #_load #_autoload #_define-constant #_define-expansion #_require
+						    #_string->symbol #_symbol->value #_symbol->dynamic-value #_symbol-table #_symbol #_keyword->symbol
+						    #_call/cc #_gc
+						    #_open-output-file #_call-with-output-file #_with-output-to-file
+						    #_read #_open-input-file #_call-with-input-file #_with-input-from-file
+						    #_current-output-port #_current-error-port #_close-output-port 
+						    #_let-set! #_varlet #_cutlet #_rootlet #_curlet #_owlet #_outlet #_funclet
+						    #_exit #_emergency-exit
+						    (reader-cond
+						     ((provided? 'system-extras)
+						      #_getenv #_system #_delete-file #_directory->list #_directory? #_file-exists? #_file-mtime))
+						    ))
+				  (quit #f))))
+			tree)
+		      ;; if tree is a procedure (#_??) quit
+		      (if (or (procedure? tree)
+			      (macro? tree))
+			  (quit #f)
+			  (if (not (pair? tree))
+			      tree
+			      (begin
+				;; in IO funcs, make sure port is ok -- this messes up string ports I think
+				(case (car tree)
+				  ((format) 
+				   (if (not (and (pair? (cdr tree))
+						 (memq (cadr tree) '(#f #t () *stdout* *stderr*))))
+				       (quit #f)))
+				  ((newline)
+				   (if (not (or (null? (cdr tree))
+						(and (pair? (cdr tree))
+						     (memq (cadr tree) '(#f *stdout* *stderr*)))))
+				       (quit #f)))
+				  ((write write-char write-byte write-string display)
+				   (if (not (and (pair? (cdr tree))
+						 (or (null? (cddr tree))
+						     (and (pair? (cddr tree))
+							  (memq (caddr tree) '(#f *stdout* *stderr*))))))
+				       (quit #f)))
+				  ;; don't accept generalized set!
+				  ((set!)
+				   (if (not (and (pair? (cdr tree))
+						 (symbol? (cadr tree))))
+				       (quit #f))))
+				(cons (walk (car tree))
+				      (walk (cdr tree))))))))))))
+	(and new-code
+	     ;; make sure *s7* will not call any outside code upon error, clear out readers, etc
+	     (let-temporarily ((*#readers* ())
+			       (*libraries* ())
+			       ((*s7* 'max-stack-size) 10000) ; block infinite recursion
+			       ((*s7* 'autoloading?) #f)      ; turn off the autoloader
+			       ((hook-functions *unbound-variable-hook*) ())
+			       ((hook-functions *missing-close-paren-hook*) ())
+			       ((hook-functions *load-hook*) ())
+			       ((hook-functions *error-hook*) ())
+			       ((hook-functions *read-error-hook*) ())
+			       ((hook-functions *rootlet-redefinition-hook*) ())
+			       ((current-output-port) *stdout*)
+			       ((current-error-port) *stderr*))
+	       (catch #t
+		 (lambda ()
+		   (eval new-code (sublet (rootlet) (unlet))))
+		 (lambda args
+		   (format #f "error: ~A"
+			   (catch #t
+			     (lambda ()
+			       (apply format #f (cadr args)))
+			     (lambda args
+			       (copy "?"))))))))))))

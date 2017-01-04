@@ -896,7 +896,7 @@ struct s7_scheme {
   unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
   unsigned long long int capture_let_counter;
-  bool symbol_table_is_locked, short_print;
+  bool symbol_table_is_locked, short_print, is_autoloading;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_int default_hash_table_length, initial_string_port_length, print_length, history_size, true_history_size;
@@ -1030,7 +1030,7 @@ struct s7_scheme {
   /* s7 env symbols */
   s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol,
              free_heap_size_symbol, file_names_symbol, symbol_table_symbol, cpu_time_symbol, c_objects_symbol, float_format_precision_symbol,
-             stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol,
+             stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol, autoloading_symbol,
              strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, hash_tables_symbol, gensyms_symbol,
              catches_symbol, exits_symbol, stack_symbol, default_rationalize_error_symbol, max_string_length_symbol, default_random_state_symbol,
              max_list_length_symbol, max_vector_length_symbol, max_vector_dimensions_symbol, default_hash_table_length_symbol, profile_info_symbol,
@@ -28946,7 +28946,8 @@ The symbols refer to the argument to \"provide\"."
 	    sym = cadar(p);
 	  else return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "require: ~S is not a symbol"), car(p))));
 	}
-      if (!is_slot(find_symbol(sc, sym)))
+      if ((!is_slot(find_symbol(sc, sym))) &&
+	  (sc->is_autoloading))
 	{
 	  s7_pointer f;
 	  f = g_autoloader(sc, list_1(sc, sym));
@@ -50348,7 +50349,8 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 
 #if (!DISABLE_AUTOLOAD)
       /* check sc->autoload_names */
-      if (sc->autoload_names)
+      if ((sc->is_autoloading) &&
+	  (sc->autoload_names))
 	{
 	  const char *file;
 	  bool loaded = false;
@@ -50381,7 +50383,8 @@ static s7_pointer unbound_variable(s7_scheme *sc, s7_pointer sym)
 	{
 #if (!DISABLE_AUTOLOAD)
 	  /* check the *autoload* hash table */
-	  if (is_hash_table(sc->autoload_table))
+	  if ((sc->is_autoloading) &&
+	      (is_hash_table(sc->autoload_table)))
 	    {
 	      s7_pointer val;
 	      /* it was possible to get in a loop here: missing paren in x.scm, checks last symbol, sees
@@ -73016,6 +73019,7 @@ static void init_s7_let(s7_scheme *sc)
   sc->float_format_precision_symbol =        s7_make_symbol(sc, "float-format-precision");
   sc->history_size_symbol =                  s7_make_symbol(sc, "history-size");
   sc->profile_info_symbol =                  s7_make_symbol(sc, "profile-info");
+  sc->autoloading_symbol =                   s7_make_symbol(sc, "autoloading?");
 }
 
 #ifdef __linux__
@@ -73117,6 +73121,8 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, sc->rootlet_entries));
   if (sym == sc->safety_symbol)                                          /* safety */
     return(s7_make_integer(sc, sc->safety));
+  if (sym == sc->autoloading_symbol)                                     /* autoloading? */
+    return(s7_make_boolean(sc, sc->is_autoloading));
   if (sym == sc->undefined_identifier_warnings_symbol)                   /* undefined-identifier-warnings */
     return(s7_make_boolean(sc, sc->undefined_identifier_warnings));
   if (sym == sc->cpu_time_symbol)                                        /* cpu-time */
@@ -73319,6 +73325,12 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_integer(val)) {sc->safety = s7_integer(val); return(val);}
       return(simple_wrong_type_argument(sc, sym, val, T_INTEGER));
+    }
+
+  if (sym == sc->autoloading_symbol)
+    {
+      if (s7_is_boolean(val)) {sc->is_autoloading = s7_boolean(sc, val); return(val);}
+      return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
     }
 
   if (sym == sc->undefined_identifier_warnings_symbol)
@@ -73746,6 +73758,7 @@ s7_scheme *s7_init(void)
   sc->autoload_names_sizes = NULL;
   sc->autoloaded_already = NULL;
   sc->autoload_names_loc = 0;
+  sc->is_autoloading = true;
 
   sc->port_heap = NULL;
   sc->permanent_objects = NULL;
@@ -75225,17 +75238,15 @@ int main(int argc, char **argv)
  * with-let setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
- * perhaps keyword paralleling symbol, keyword->string since string->keyword
  * could (apply append (map...)) omit the extra copy?
  * maybe use 'not for signature of #f? or #f?
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
+ *   GC already checked via standard macros (car etc)
  *   and how to generate tests for all cases?
- *
- * null-let eqv as active -- check code (symbol==built-in and it's safe, and is a symbol! and no accessor)
- *   (safe-eval in lint and sandlet for macro expansion in lint) -- see sandlet in t490.scm
+ * sandbox in stuff.scm needs a lot of testing
  *
  * scheme side method call needs attention: 
  *    ((case (e m) ((#<undefined>) <error-func>) (else)) ...)

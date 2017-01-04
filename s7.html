@@ -1322,8 +1322,11 @@ control over the environment at any point:
                                  ;   but (+ a b) is 15 because at that point + is *: (* 1 15)
 </pre>
 
-<p>Hygienic macros are trivial!  So s7 does not have syntax-rules because it is not needed.
-s7's lint.scm will warn you about any such problematic macro expansion, so I'd
+<p>Hygienic macros are trivial!  Who needs syntax-rules?
+To avoid the variable capture, avoid local variables in the generated code, or
+protect them via with-let; to avoid shadowing of functions and syntax, make the
+environment explicit (via #_ for example).
+s7's lint.scm will warn you about a problematic macro expansion, so I'd
 say just write macros as simply as possible, then let lint tell you
 that it's time to do the with-let shuffle. When that happens, wrap the macro body in
 a with-let that captures the current environment, and at each use of a macro argument
@@ -5714,6 +5717,7 @@ file-names                    currently loaded files (a list)
 
 safety                        0
 undefined-identifier-warnings #f 
+autoloading?                  #t
 
 catches                       a list of the currently active catch tags
 exits                         a list of active call-with-exit exit functions
@@ -5746,7 +5750,7 @@ Use the standard environment syntax to access these fields:
 
 <p>
 Set (*s7* 'safety) to 2 or higher
-to turn off optimization.
+to turn off optimization.  Set (*s7* 'autoloading) to #f to turn off the autoloader.
 </p>
 
 <p>stacktrace-defaults is a list of four integers and a boolean that tell the error
@@ -5826,10 +5830,6 @@ definition, and a later redefinition does not affect earlier uses.
 
 </div>
 
-<!-- null-environment does not fit very well; how to shadow earlier define-constant for example
-     one of which is unlet; perhaps make a special environment at init time? 
-     the code for that is save_null_environment, but it is untested and commented out.
--->
 
 <div class="indented">
 
