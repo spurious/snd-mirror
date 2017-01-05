@@ -21925,9 +21925,8 @@
 ;;; tons of rewrites in lg* (2700 lines)
 ;;; case nil can rewrite (if <x> (f z <x> y) <escape>) -> (f z (case <x> ((#f|etc) <escape>) (else)) y)
 ;;;   but (f z (or <x> <escape>) y) is better in the #f case
-;;; case => values? (let ((c (read-char))) (if (eof)... (f x c ...) cond=>values is pointless -- test is returned
 ;;; (if X (f x X y) (escape)) -> (f x (cond (X) (else escape)) y) -- arg eval order problem
-;;; move define (or lambda) inward, not outward [reduce-let*-var-scope and tighten let for locals]
+;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
 ;;;

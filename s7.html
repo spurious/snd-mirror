@@ -5883,16 +5883,16 @@ so the read-time decision involves normal evaluation.
 </p>
 
 <p>Then there's the case case: a case clause without a result appears to be an error in r7rs.
-But the notation used to indicate that is the same as that used for begin.
-So if we allow <code>(begin)</code>, we should allow case clauses to have no explicit result.
-Currently in s7, the case case is an error and <code>(begin)</code> returns nil, which strikes me
-as, *horrors*, inconsistent.  But in cond,
+But the notation used to indicate that is the same as that used for begin,
+so if we allow <code>(begin)</code>, we should allow case clauses to have no explicit result.
+In cond,
 the "implicit progn" (in CL terminology) includes the test expression, so a clause without a result returns
-the test result (if true of course).  In the case case, a similar approach might return
-the selector value.  So should <code>(case x ((0 1)))</code> be an error, or equivalent
-to <code>(case x ((0 1) (begin)))</code> as in CL, or (my favorite) <code>(case x ((0 1) => values))</code>.
-If the latter, an empty else statement would also return the selector since it would be the
-same as <code>(else => values)</code>.  I think I'll implement this in s7, but it has a ripple
+the test result (if true of course).  In the case case, s7 returns the selector.
+<code>(case x ((0 1)))</code> is equivalent
+to <code>(case x ((0 1) => values))</code>.
+We want this mainly to handle method lookup: <code>((case (obj 'abs) ((#&lt;undefined&gt;) abs) (else)) ...)</code>;
+without this we have to save the lookup result or do it twice.
+But this choice has a ripple
 effect on hash-tables.  Currently hash-table-ref returns #f if the key is not in the table,
 mimicking assoc and aimed at cond with =&gt;, but if the latter can use case and #&lt;undefined&gt;,
 it seems more useful and maybe intuitive to mimic let-ref instead.  But if hash-table-ref returns

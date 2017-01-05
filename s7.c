@@ -1049,7 +1049,7 @@ struct s7_scheme {
              no_catch_symbol, io_error_symbol, invalid_escape_function_symbol, wrong_type_arg_symbol, out_of_range_symbol;
 
   /* optimizer symbols */
-  s7_pointer and_p2_symbol, and_p_symbol, and_unchecked_symbol, begin_unchecked_symbol, case_simple_symbol, case_simpler_1_symbol,
+  s7_pointer and_p2_symbol, and_p_symbol, and_unchecked_symbol, begin_unchecked_symbol, case_simple_symbol, case_simpler_1_symbol, case_else_symbol,
              case_simpler_ss_symbol, case_simpler_symbol, case_simplest_ss_symbol, case_simplest_symbol, case_unchecked_symbol,
              cond_all_x_2_symbol, cond_all_x_symbol, cond_s_symbol, cond_simple_symbol, cond_unchecked_symbol, decrement_1_symbol,
              define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
@@ -2731,7 +2731,7 @@ enum {OP_NO_OP,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq,
       OP_LET_opSq, OP_LET_ALL_opSq, OP_LET_opSq_P, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1,
 
-      OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS, OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, 
+      OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS, OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_ELSE, OP_CASE_ELSE_1,
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_AND_P2, OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1, OP_OR_P2,
       OP_IF_P_FEED, OP_IF_P_FEED_1, OP_WHEN_S, OP_UNLESS_S,
 
@@ -2911,7 +2911,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "let_star_all_x", "let_opcq", "let_opssq",
       "let_opsq", "let_all_opsq", "let_opsq_p", "let_one", "let_one_1", "let_z", "let_z_1",
 
-      "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss", "case_simplest", "case_simplest_ss", 
+      "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss", "case_simplest", "case_simplest_ss", "case_else", "case_else_1",
       "if_unchecked", "and_unchecked", "and_p", "and_p1", "and_p2", "or_unchecked", "or_p", "or_p1", "or_p2",
       "if_p_feed", "if_p_feed_1", "when_s", "unless_s",
 
@@ -55161,7 +55161,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    s7_pointer p;
 	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false))) return(false);
 	    for (p = cddr(x); is_pair(p); p = cdr(p))
-	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end)))
+	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end))) /* null cdar(p) ok here */
 		return(false);
 	  }
 	  break;
@@ -55584,7 +55584,7 @@ static s7_pointer check_unless(s7_scheme *sc)
 
 static s7_pointer check_case(s7_scheme *sc)
 {
-  bool keys_simple = true, have_else = false, has_feed_to = false, keys_single = true, bodies_simple = true, bodies_simplest = true;
+  bool keys_simple = true, have_else = false, has_feed_to = false, keys_single = true, bodies_simple = true;
   s7_pointer x;
 
   if (!is_pair(sc->code))                                            /* (case) or (case . 1) */
@@ -55597,33 +55597,17 @@ static s7_pointer check_case(s7_scheme *sc)
   for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
     {
       s7_pointer y;
-      if ((!is_pair(x)) ||                                        /* (case 1 ((2) 1) . 1) */
+      if ((!is_pair(x)) ||                                           /* (case 1 ((2) 1) . 1) */
 	  (!is_pair(car(x))))
 	eval_error(sc, "case clause ~A messed up", x);
-      if (!is_pair(cdar(x)))                                      /* (case 1 ((1))) */
-	eval_error(sc, "case clause result missing: ~A", car(x));
 
-      if ((bodies_simple) && (!is_null(cddar(x))))
-	{
-	  bodies_simple = false;
-	  bodies_simplest = false;
-	}
-      if (bodies_simplest)
-	{
-	  if ((is_pair(cadar(x))) &&
-	      (caadar(x) != sc->quote_symbol))
-	    {
-	      if (is_pair(caar(x)))
-		bodies_simplest = false;
-	      else
-		{
-		  if ((caar(x) != sc->else_object) && (caar(x) != sc->else_symbol) &&
-		      ((!is_symbol(caar(x))) ||
-		       (s7_symbol_value(sc, caar(x)) != sc->else_object)))
-		    bodies_simplest = false;
-		}
-	    }
-	}
+      if (!s7_is_list(sc, cdar(x)))                                  /* (case 1 ((1))) */
+	eval_error(sc, "case clause result messed up: ~A", car(x));
+
+      if ((bodies_simple) &&
+	  ((is_null(cdar(x))) || (!is_null(cddar(x)))))
+	bodies_simple = false;
+	
       y = caar(x);
       if (!is_pair(y))
 	{
@@ -55664,7 +55648,8 @@ static s7_pointer check_case(s7_scheme *sc)
 	    }
 	}
       y = car(x);
-      if ((cadr(y) == sc->feed_to_symbol) &&
+      if ((is_pair(cdr(y))) &&
+	  (cadr(y) == sc->feed_to_symbol) &&
 	  (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
 	{
 	  has_feed_to = true;
@@ -55681,7 +55666,9 @@ static s7_pointer check_case(s7_scheme *sc)
       for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 	{
 	  set_opt_key(x, caar(x));
-	  if (is_pair(opt_key(x))) set_opt_clause(x, cadar(x));
+	  if ((is_pair(opt_key(x))) &&
+	      (is_pair(cdar(x))))
+	      set_opt_clause(x, cadar(x));
 	}
       pair_set_syntax_symbol(sc->code, sc->case_unchecked_symbol);
 
@@ -55690,19 +55677,27 @@ static s7_pointer check_case(s7_scheme *sc)
 	{
 	  if (have_else) /* don't combine ifs ! */
 	    {
-	      if (is_symbol(car(sc->code)))
-		pair_set_syntax_symbol(sc->code, sc->case_simple_symbol);
+	      if (is_symbol(car(sc->code)))                                /* (case + ((-) 0) ((+) 2) (else 3)) */
+		pair_set_syntax_symbol(sc->code, sc->case_simple_symbol);  /* can include (else) case */
+	      /* perhaps if null result skip case_simple? no impact in timings */
+
+	      if ((is_pair(car(sc->code))) &&
+		  (is_pair(cdr(sc->code))) &&
+		  (is_pair(cddr(sc->code))) &&
+		  (is_null(cdddr(sc->code))) &&
+		  (is_null(cdr(caddr(sc->code)))))
+		pair_set_syntax_symbol(sc->code, sc->case_else_symbol);
 	    }
 	  else
 	    {
 	      if (keys_single)
 		{
-		  if ((bodies_simple) &&
+		  if ((bodies_simple) &&                                    /* (case x ((a) 1)) */
 		      (is_symbol(car(sc->code))))
 		    pair_set_syntax_symbol(sc->code, sc->case_simplest_symbol);
 		  else
 		    {
-		      if ((is_optimized(car(sc->code))) &&
+		      if ((is_optimized(car(sc->code))) &&                  /* (case (string-ref s i) ((#\a) 1) ((#\i) 2)) */
 			  (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
 			pair_set_syntax_symbol(sc->code, sc->case_simplest_ss_symbol);
 		    }
@@ -55713,18 +55708,18 @@ static s7_pointer check_case(s7_scheme *sc)
 		{
 		  if (bodies_simple)
 		    {
-		      if (is_symbol(car(sc->code)))
+		      if (is_symbol(car(sc->code)))                          /* (case head ((and if cond when) arg1) ((or if2) (list 'not arg1))) */
 			pair_set_syntax_symbol(sc->code, sc->case_simpler_1_symbol);
 		      else
 			{
-			  if ((is_optimized(car(sc->code))) &&
+			  if ((is_optimized(car(sc->code))) &&               /* (case (string-ref s i) ((#\a #\h) 1) ((#\i #\o) 2)) */
 			      (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
 			    pair_set_syntax_symbol(sc->code, sc->case_simpler_ss_symbol);
 			}
 		    }
 		  else
 		    {
-		      if (is_symbol(car(sc->code)))
+		      if (is_symbol(car(sc->code)))                          /* (case x ((lambda lambda*) (display "x") (+ 2 3)) ((case when) 3))) */
 			pair_set_syntax_symbol(sc->code, sc->case_simpler_symbol);
 		    }
 		}
@@ -63867,9 +63862,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer val1, args;
 		    args = cdr(code);
 		    val1 = find_symbol_checked(sc, car(args));                     /* a */
-		    set_car(sc->t2_2, find_symbol_checked(sc, opt_sym2(args)));           /* b */
-		    set_car(sc->t2_1, opt_con1(args));                       /* 1 */
-		    set_car(sc->t2_2, c_call(cadr(args))(sc, sc->t2_1)); /* (- 1 b) */
+		    set_car(sc->t2_2, find_symbol_checked(sc, opt_sym2(args)));    /* b */
+		    set_car(sc->t2_1, opt_con1(args));                             /* 1 */
+		    set_car(sc->t2_2, c_call(cadr(args))(sc, sc->t2_1));           /* (- 1 b) */
 		    set_car(sc->t2_1, val1);
 		    sc->value = c_call(code)(sc, sc->t2_1);
 		    goto START;
@@ -68040,6 +68035,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_not_null(x))
 	      {
 		sc->code = cdar(x);
+		if (is_null(sc->code))  /* sc->value is already the selector */
+		  goto START;
 		
 		/* check for => */
 		if ((car(sc->code) == sc->feed_to_symbol) &&
@@ -68055,6 +68052,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = sc->unspecified; /* this was sc->nil but the spec says case value is unspecified if no clauses match */
 	  }
 	  break;
+
+
+	case OP_CASE_ELSE:
+	  push_stack_no_args(sc, OP_CASE_ELSE_1, cdr(sc->code));
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	case OP_CASE_ELSE_1:
+	  if (sc->value == caar(sc->code))
+	    {
+	      sc->code = cdar(sc->code);
+	      goto BEGIN1;
+	    }
+	  goto START;
+
 	  
 	case OP_CASE_SIMPLE:
 	  /* assume symbol as selector, all keys are simple, and no => */
@@ -68067,12 +68079,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (!is_pair(y)) /* else? */
 		  {
 		    sc->code = cdar(x);
+		    if (is_null(sc->code))
+		      {
+			sc->value = selector;
+			goto START;
+		      }
 		    goto BEGIN1;
 		  }
 		do {
 		  if (car(y) == selector)
 		    {
 		      sc->code = cdar(x);
+		      if (is_null(sc->code))
+			{
+			  sc->value = selector;
+			  goto START;
+			}
 		      goto BEGIN1;
 		    }
 		  y = cdr(y);
@@ -68094,6 +68116,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (car(y) == selector)
 		    {
 		      sc->code = cdar(x);
+		      if (is_null(sc->code)) 
+			{
+			  sc->value = selector;
+			  goto START;
+			}
 		      goto BEGIN1;
 		    }
 		  y = cdr(y);
@@ -68114,7 +68141,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		do {
 		  if (car(y) == selector)
 		    {
-		      sc->code = opt_clause(x); /* cadar(x); */
+		      sc->code = opt_clause(x); /* cadar(x) can't be nil */
 		      goto EVAL;
 		    }
 		  y = cdr(y);
@@ -68139,7 +68166,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		do {
 		  if (car(y) == selector)
 		    {
-		      sc->code = opt_clause(x); /* cadar(x); */
+		      sc->code = opt_clause(x); /* cadar(x) can't be nil */
 		      goto EVAL;
 		    }
 		  y = cdr(y);
@@ -68161,6 +68188,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (opt_key(x) == selector)
 		{
 		  sc->code = cdar(x);
+		  if (is_null(sc->code)) 
+		    {
+		      sc->value = selector;
+		      goto START;
+		    }
 		  goto BEGIN1;
 		}
 	    sc->value = sc->unspecified;
@@ -68175,7 +68207,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
 	      if (opt_key(x) == selector)
 		{
-		  sc->code = opt_clause(x); /* cadar(x); */
+		  sc->code = opt_clause(x); /* cadar(x) can't be nil */
 		  goto EVAL;
 		}
 	    sc->value = sc->unspecified;
@@ -74092,6 +74124,7 @@ s7_scheme *s7_init(void)
   sc->case_simpler_ss_symbol =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS);
   sc->case_simplest_symbol =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST);
   sc->case_simplest_ss_symbol =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS);
+  sc->case_else_symbol =             assign_internal_syntax(sc, "case",        OP_CASE_ELSE);
   sc->cond_unchecked_symbol =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
   sc->cond_simple_symbol =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
   sc->do_unchecked_symbol =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
@@ -75243,16 +75276,17 @@ int main(int argc, char **argv)
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
+ *
  * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
  *   GC already checked via standard macros (car etc)
  *   and how to generate tests for all cases?
- * sandbox in stuff.scm needs a lot of testing
- *
- * scheme side method call needs attention: 
- *    ((case (e m) ((#<undefined>) <error-func>) (else)) ...)
- *    (f x y (case (read-char) ((#<eof> ...) (else))))
- *   would want op_case_else? in null-else case, sc->value = selector at end
- *     add nil res case to case: opt_case_eof|undefined_else, opt_case_simple_else
+ *   for local see below, but more problematic are tn_n and its friends
+ *      #define save_elocal_2(Var1, Var2) s7_pointer elocal_1 = Var1, elocal_2 = Var2;
+ *      #define check_elocal_2(Var1, Var2) if ((Var1 != elocal_1) || (Var2 != elocal_2)) abort();
+ *      set args val1
+ *      save_elocal_2(args, val1);
+ *      use args, val1
+ *      check_elocal_2(args, val1);
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
