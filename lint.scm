@@ -1636,10 +1636,6 @@
     
 
     (define* (make-fvar name ftype arglist decl initial-value env)
-      (let ((str (if (symbol? name) (symbol->string name) "")))
-	(if (string-position "copy" str)
-	    (format *stderr* "~A~%~%" (lint-pp initial-value))))
-
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
 
@@ -16797,9 +16793,7 @@
 		   (set! ctr (+ ctr 1))
 		   (let ((keys (car clause))
 			 (exprs (cdr clause)))
-		     (if (null? exprs)
-			 ;; (case x (0))
-			 (lint-format "clause result is missing: ~A" caller clause))
+		     ;; exprs can be null (4-Jan-17)
 		     (if (eq? result :unset)
 			 (set! result exprs)
 			 (if (not (equal? result exprs))
@@ -21929,6 +21923,7 @@
 ;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
+;;; accept and use case else changes
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;

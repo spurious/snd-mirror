@@ -55681,7 +55681,8 @@ static s7_pointer check_case(s7_scheme *sc)
 		pair_set_syntax_symbol(sc->code, sc->case_simple_symbol);  /* can include (else) case */
 	      /* perhaps if null result skip case_simple? no impact in timings */
 
-	      if ((is_pair(car(sc->code))) &&
+	      if ((keys_single) &&
+		  (is_pair(car(sc->code))) &&
 		  (is_pair(cdr(sc->code))) &&
 		  (is_pair(cddr(sc->code))) &&
 		  (is_null(cdddr(sc->code))) &&
@@ -68055,14 +68056,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 	case OP_CASE_ELSE:
-	  push_stack_no_args(sc, OP_CASE_ELSE_1, cdr(sc->code));
+	  push_stack_no_args(sc, OP_CASE_ELSE_1, cadr(sc->code));
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case OP_CASE_ELSE_1:
+	  /* sc->code here is of the form ((#<undefined>) ...) */
 	  if (sc->value == caar(sc->code))
 	    {
-	      sc->code = cdar(sc->code);
+	      sc->code = cdr(sc->code);
 	      goto BEGIN1;
 	    }
 	  goto START;
