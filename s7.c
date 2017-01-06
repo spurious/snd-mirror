@@ -6111,7 +6111,7 @@ static s7_pointer g_is_openlet(s7_scheme *sc, s7_pointer args)
   #define H_is_openlet "(openlet? obj) returns #t is 'obj' has methods."
   #define Q_is_openlet pl_bt
 
-  /* if car(args) is not a let (or possibly have one), should this raise an error? */
+  /* if car(args) is not a let, should this raise an error? -- no, easier to use this way in cond */
   check_method(sc, car(args), sc->is_openlet_symbol, args);
   return(make_boolean(sc, has_methods(car(args))));
 }
@@ -75304,5 +75304,4 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
- * snd-test.scm for rest of numerics.scm?
  */

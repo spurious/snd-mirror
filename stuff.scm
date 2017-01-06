@@ -2201,32 +2201,35 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	     (call-with-exit
 	      (lambda (quit)
 		(let walk ((tree code))
-		  (if (symbol? tree)
-		      (let ((val (symbol->value tree)))
-			;; don't accept any symbol with an accessor
-			(if (or (symbol-access tree)
-				(memq tree '(*s7* unquote abort))
-				(let? val))  ; not sure about this
-			    (quit #f))
-			;; don't accept anything except safe built-ins and local vars
-			(if (not (or (hash-table-ref built-ins tree)
-				     (eq? (symbol->value tree (outlet (funclet sandbox))) #<undefined>)))
-			    (quit #f))
-			;; if value is also in rootlet, check that it's safe (protect against (set! abs exit) sometime earlier)
-			(if (or (procedure? val)
-				(macro? val))
-			    (let ((unval (symbol->value tree (sublet (rootlet) (unlet))))) ; unlet returns the new unshadowing let
-			      (if (not (eq? val unval))
-				  (quit #f))))
-			tree)
-		      ;; if tree is a bad procedure (probably via #_) quit
-		      (if (memq tree baddies)
-			  (quit #f)
-			  (if (not (pair? tree))
-			      tree
-			      ;; do we need to check IO ports and set! here?
-			      (cons (walk (car tree))
-				    (walk (cdr tree)))))))))))
+		  (cond ((symbol? tree)
+			 (let ((val (symbol->value tree)))
+			   ;; don't accept any symbol with an accessor
+			   (if (or (symbol-access tree)
+				   (memq tree '(*s7* unquote abort))
+				   (let? val))  ; not sure about this
+			       (quit #f))
+			   ;; don't accept anything except safe built-ins and local vars
+			   (if (not (or (hash-table-ref built-ins tree)
+					(eq? (symbol->value tree (outlet (funclet sandbox))) #<undefined>)))
+			       (quit #f))
+			   ;; if value is also in rootlet, check that it's safe (protect against (set! abs exit) sometime earlier)
+			   (if (or (procedure? val)
+				   (macro? val))
+			       (let ((unval (symbol->value tree (sublet (rootlet) (unlet))))) ; unlet returns the new unshadowing let
+				 (if (not (eq? val unval))
+				     (quit #f))))
+			   tree))
+			
+			((memq tree baddies)  ; if tree is a bad procedure (probably via #_) quit
+			 (quit #f))
+			
+			((not (pair? tree))
+			 tree)
+			
+			(else
+			 ;; do we need to check IO ports and set! here?
+			 (cons (walk (car tree))
+			       (walk (cdr tree))))))))))
 	(and new-code
 	     ;; make sure *s7* will not call any outside code upon error, clear out readers, etc
 	     (let-temporarily ((*#readers* ())

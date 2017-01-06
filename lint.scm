@@ -9965,7 +9965,6 @@
 
     (define (unused-parameter? x) #t)
     (define (unused-set-parameter? x) #t)
-
     
     (define check-args 
       ;; check for obvious argument type problems
@@ -9987,7 +9986,7 @@
 		  (case checker 
 		    ((integer:real?) (if at-end 'real? 'integer?))
 		    ((integer:any?)  (or at-end 'integer?))
-		    (else checker))))
+		    (else))))
 	       
 	       (any-checker?
 		(lambda (types arg)
@@ -12852,7 +12851,7 @@
 				       (,(case definer 
 					   ((define) 'lambda)
 					   ((define*) 'lambda*)
-					   (else definer))
+					   (else))
 					,args
 					,@(cdr body)))))))
 	(set! body (cdr body))) ; ignore old-style doc-string
@@ -14751,6 +14750,9 @@
 		       (lint-format "perhaps ~A" caller (lists->string form false))))
 		  
 		  ((code-equal? true false)   ; (if x (+ y 1) (+ y 1)) -> (+ y 1)
+		   ;; this uses equal? so it thinks "" and #u8() are the same
+		   ;;   but so does string=?: (string=? "" #u8()) -> #t, eq? might work
+		   ;;   or (eq? (->simple-type true) (->simple-type false)) if one is code-constant
 		   (lint-format "if is not needed here: ~A" caller 
 				(lists->string form (if (not (side-effect? expr env))
 							true
@@ -15312,6 +15314,28 @@
 							       (if ,expr ,(cadr true-rest) ,(cadr false-rest))
 							       ,(caddr true-rest)))))))))))
 	  
+	  ;; -------- if->case-else --------
+	  (define (if->case-else caller form test true false)
+	    (if (and (len=3? test)
+		     (memq (car test) '(eq? eqv? =))
+		     (or (and (unquoted-pair? false)   ; see also let->case-else
+			      (member false test))
+			 (and (unquoted-pair? true) 
+			      (member true test)))
+		     (any? code-constant? test))
+		(lint-format "perhaps use case: ~A" caller
+			     (lists->string form
+					    (let ((selector ((if (unquoted-pair? (cadr test)) cadr caddr) test))
+						  (key ((if (unquoted-pair? (cadr test)) caddr cadr) test)))
+					      (if (pair? key) (set! key (cadr key)))
+					      (if (equal? true selector)
+						  `(case ,selector 
+						     ((,key))
+						     (else ,false))
+						  `(case ,selector 
+						     ((,key) ,true)
+						     (else))))))))
+
 	  ;;-------- if->or/begin --------
 	  (define (if->or/begin caller form expr true false env)
 	    ;; cond version of this gets no hits
@@ -15395,6 +15419,7 @@
 			   (when (= len 4)
 			     (when (= suggestion made-suggestion) ; not redundant (if->cond above)
 			       (shorter-branch-first caller form expr true false env))
+			     (if->case-else caller form test true false)
 			     (unrepeat-test caller form expr true false)
 			     (evert-if caller form expr true false env)
 			     (when (and (= suggestion made-suggestion)      ; not redundant -- this will repeat the earlier suggestion in many cases
@@ -16798,8 +16823,8 @@
 			 (set! result exprs)
 			 (if (not (equal? result exprs))
 			     (set! result :unequal)))
-		     
-		     (if (and (len>1? exprs)
+
+		     (if (and (len>1? exprs)           ; this gets no hits -- it paralells a similar bug in cond: (test expr => expr)
 			      (memq '=> (cdr exprs)))
 			 (lint-format "'=> has no effect here: ~A~%" caller (truncated-list->string clause)))
 		     
@@ -16807,17 +16832,28 @@
 			 (set! exprs-repeated exprs)
 			 (set! all-exprs (cons exprs all-exprs)))
 		     
-		     (if (and (len=1? exprs)
-			      (len=2? (car exprs))
-			      (equal? selector (cadar exprs)))
-			 (if (and (pair? keys)
+		     (when (len=1? exprs)
+		       (if (or (equal? (car exprs) (cadr form))       ; (case x ((0 1) x) (else #f))
+			       (and (pair? keys)
+				    (null? (cdr keys))
+				    (code-constant? (car exprs))
+				    (eqv? (car keys) (car exprs))))
+			   (lint-format "in ~A, the result can be ~Aomitted" caller 
+					clause
+					(if (and (pair? (car exprs))  ; all this paranoia for one hit
+						 (equal? (car exprs) (cadr form))
+						 (side-effect? (car exprs) env))
+					    "probably " "")))
+		     
+		       (when (and (len=2? (car exprs))
+				  (equal? selector (cadar exprs)))
+			 (if (and (pair? keys)                        ; (case x ((0) (f x)) ((1) (not x)))
 				  (eq? (caar exprs) 'not)
 				  (not (memq #f keys)))
-			     ;; (case x ((0) (f x)) ((1) (not x)))
 			     (lint-format "in ~A, perhaps replace ~A with #f" caller clause (car exprs))
 			     (if (eq? keys 'else)
 				 (lint-format "perhaps use => here: ~A" caller 
-					      (lists->string clause (list 'else '=> (caar exprs)))))))
+					      (lists->string clause (list 'else '=> (caar exprs))))))))
 		     
 		     (if (pair? keys)
 			 (if (not (proper-list? keys))
@@ -17000,7 +17036,9 @@
 						 `(case ,selector
 						    ,@(if (memv (car (caaddr form)) (cdar svs)) () '(...))
 						    ,@(map (lambda (sv)
-							     (list (reverse (cdr sv)) '=> (if (eq? (car sv) #_list-values) 'list (car sv))))
+							     (list (reverse (cdr sv)) '=> (case (car sv) 
+											    ((#_list-values) 'list)
+											    (else))))
 							   svs)
 						    ,@(if others '(...) ())))))))
 	      (let ((c (car p)))
@@ -18510,7 +18548,7 @@
 							    (cons 'begin (cddr form)))))))))
 	  
 	  ;; -------- let->cond --------
-	  (define let->cond  ; not named-let here
+	  (define let->cond                                ; not named-let here
 	    ;; (let ((x (A))) (if x (f x) B)) -> (cond ((A) => f) (else B)
 	    (let ((wrap-new-form 
 		   (lambda (header new-form trailer)
@@ -18895,6 +18933,36 @@
 							       ,@(map rewrite-funcs ok-funcs))
 							   ...))))))))))
 
+	  ;; -------- let->case-else --------
+	  (define (let->case-else caller form varlist body)
+	    (when (and (null? (cdr varlist))
+		     (null? (cdr body)))
+		(let ((expr (car body)))
+		  (when (and (eq? (car expr) 'if)
+			     (= (length expr) 4)
+			     (eqv? (length (cadr expr)) 3))
+		    (let ((test (cadr expr))
+			  (true (caddr expr))
+			  (false (cadddr expr))
+			  (var (caar varlist)))
+		      (when (and (memq (car test) '(eq? eqv? =))
+				 (or (eq? false var)
+				     (eq? true var))
+				 (memq var test)
+				 (any? code-constant? test))
+			(lint-format "perhaps use case: ~A" caller
+				     (lists->string form
+						    (let ((selector (cadar varlist))
+							  (key ((if (eq? (cadr test) var) caddr cadr) test)))
+						      (if (pair? key) (set! key (cadr key)))
+						      (if (eq? false var)
+							  `(case ,selector 
+							     ((,key) ,true)
+							     (else))
+							  `(case ,selector 
+							     ((,key))
+							     (else ,false))))))))))))
+	  
 	  ;; -------- let-walker --------
 	  (define (let-walker caller form env)
 	    (if (or (< (length form) 3)             ; (let ((a 1) (set! a 2)))
@@ -18936,6 +19004,7 @@
 					 (len>1? (car body)))
 				(let->cond caller form env)
 				(when (null? (cdr body))
+				  (let->case-else caller form varlist body)
 				  (move-let-into-if caller form env)
 				  (when (= suggest made-suggestion)
 				    (embed-let caller form env))))
@@ -21915,16 +21984,16 @@
     #f))
 |#
 
-;;; pp of vector should do something reasonable
 ;;; tons of rewrites in lg* (2700 lines)
-;;; case nil can rewrite (if <x> (f z <x> y) <escape>) -> (f z (case <x> ((#f|etc) <escape>) (else)) y)
-;;;   but (f z (or <x> <escape>) y) is better in the #f case
 ;;; (if X (f x X y) (escape)) -> (f x (cond (X) (else escape)) y) -- arg eval order problem
 ;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
-;;; accept and use case else changes
+;;; in both ->case-else cases, test op could be extended to eqf cases (cond->case?)
+;;;   and let might check for cond as well as if, and case -- => could also be accomodated
+;;;   and allow more vars? and embedded if? (let ((x <>)) (f ... (if (eq? x ...) x ...) ...))
+;;;   see t347
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 196 29272 819866
+;;; 196 29385 820533
