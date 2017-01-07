@@ -313,11 +313,13 @@
 	(*e* #f)
 	(other-identifiers (make-hash-table))
 	(quote-warnings 0)
+	;; these line numbers are trying to reduce redundant output
 	(last-simplify-boolean-line-number -1)
 	(last-simplify-numeric-line-number -1)
 	(last-simplify-cxr-line-number -1)
 	(last-if-line-number -1)
 	(last-if->case-line-number -1)
+	(last-let->case-line-number -1)
 	(last-checker-line-number -1)
 	(last-cons-line-number -1)
 	(last-rewritten-internal-define #f)
@@ -450,16 +452,16 @@
     (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
     (define var-side-effect (dilambda (lambda (v) 
-					(if (null? (let-ref (cdr v) 'side-effect))
-					    (let-set! (cdr v) 'side-effect (get-side-effect v))
-					    (let-ref (cdr v) 'side-effect)))
+					(case (let-ref (cdr v) 'side-effect)
+					  ((()) (let-set! (cdr v) 'side-effect (get-side-effect v)))
+					  (else)))
 				      (lambda (v x) 
 					(let-set! (cdr v) 'side-effect x))))
 
     (define var-signature (dilambda (lambda (v) 
-				      (if (null? (let-ref (cdr v) 'signature))
-					  (let-set! (cdr v) 'signature (get-signature v))
-					  (let-ref (cdr v) 'signature)))
+				      (case (let-ref (cdr v) 'signature)
+					((()) (let-set! (cdr v) 'signature (get-signature v)))
+					(else)))
 				    (lambda (v x) 
 				      (let-set! (cdr v) 'signature x))))
     
@@ -2123,9 +2125,7 @@
 	  (cons (car lst) 
 		(if (pair? (cdr lst)) 
 		    (proper-list (cdr lst)) 
-		    (if (null? (cdr lst)) 
-			() 
-			(list (cdr lst)))))))
+		    (case (cdr lst) ((())) (else => list))))))
     
     (define (keywords lst)
       (do ((count 0)
@@ -7979,10 +7979,8 @@
 					     ((and (pair? (car lst))
 						   (eq? (caar lst) 'append)
 						   (proper-list? (cdar lst))) ; for append below
-					      (if (null? (cdar lst))
-						  (if (null? (cdr lst)) ; (append) at end -> () to keep copy intact?
-						      (list ())
-						      (splice-append (cdr lst)))
+					      (if (null? (cdar lst))          ; (append) at end -> () to keep copy intact?
+						  (case (cdr lst) ((()) (list ())) (else => splice-append))
 						  (append (splice-append (cdar lst)) 
 							  (splice-append (cdr lst)))))
 
@@ -9019,10 +9017,8 @@
 					  (pair? (cddr arg1))))
 				 (len>1? (cadr arg1))
 				 (memq (caadr arg1) '(string->list vector->list)))
-			(let ((string-case (eq? (caadr arg1) 'string->list))
-			      (len-diff (if (eq? (car arg1) 'list-tail)
-					    (caddr arg1)
-					    (cdr-count (car arg1))))) ; (cdr (vector->list v)) -> (make-shared-vector v (- (length v) 1) 1)
+			(let ((string-case (eq? (caadr arg1) 'string->list))    ; (cdr (vector->list v)) -> (make-shared-vector v (- (length v) 1) 1)
+			      (len-diff (case (car arg1) ((list-tail) (caddr arg1)) (else => cdr-count))))
 			  (lint-format "~A accepts ~A arguments, so perhaps ~A" caller head 
 				       (if string-case 'string 'vector)
 				       (lists->string arg1 (if string-case
@@ -15315,26 +15311,47 @@
 							       ,(caddr true-rest)))))))))))
 	  
 	  ;; -------- if->case-else --------
-	  (define (if->case-else caller form test true false)
-	    (if (and (len=3? test)
-		     (memq (car test) '(eq? eqv? =))
-		     (or (and (unquoted-pair? false)   ; see also let->case-else
-			      (member false test))
-			 (and (unquoted-pair? true) 
-			      (member true test)))
-		     (any? code-constant? test))
-		(lint-format "perhaps use case: ~A" caller
-			     (lists->string form
-					    (let ((selector ((if (unquoted-pair? (cadr test)) cadr caddr) test))
-						  (key ((if (unquoted-pair? (cadr test)) caddr cadr) test)))
-					      (if (pair? key) (set! key (cadr key)))
-					      (if (equal? true selector)
-						  `(case ,selector 
-						     ((,key))
-						     (else ,false))
-						  `(case ,selector 
-						     ((,key) ,true)
-						     (else))))))))
+	  (define (if->case-else caller form test true false) ; (if (eq? (caddr x) 'a) b (caddr x)) -> (case (caddr x) ((a) b) (else))
+	    (when (and (not (= last-let->case-line-number line-number))
+		       (or (and (len=2? test)
+				(memq (car test) '(null? not eof-object?)))   ; memx/charx got no hits
+			   (and (len=3? test)
+				(memq (car test) '(eq? eqv? =))
+				(any? code-constant? test)))
+		       (or (and (unquoted-pair? false)
+				(or (member false test)
+				    (and (len=2? false)
+					 (unquoted-pair? (cadr false))
+					 (member (cadr false) test))))
+			   (and (unquoted-pair? true)
+				(or (member true test)
+				    (and (len=2? true)
+					 (unquoted-pair? (cadr true))
+					 (member (cadr true) test))))))
+	      (lint-format "perhaps use case: ~A" caller
+			   (lists->string form
+					  (let ((key #f)
+						(selector #f)
+						(result #f))
+					    
+					    (if (memq (car test) '(null? not eof-object?))
+						(begin
+						  (set! key (case (car test) ((not) #f) ((eof-object?) #<eof>) (else ())))
+						  (set! selector (cadr test)))
+						(begin
+						  (set! selector ((if (unquoted-pair? (cadr test)) cadr caddr) test))
+						  (set! key ((if (code-constant? (cadr test)) cadr caddr) test))
+						  (if (pair? key) (set! key (cadr key)))))
+
+					    (if (or (member false test)
+						    (and (len=2? false)
+							 (member (cadr false) test)))
+						`(case ,selector 
+						   ((,key) ,true)
+						   (else ,@(if (member false test) () (list '=> (car false)))))
+						`(case ,selector 
+						   ((,key) ,@(if (member true test) () (list '=> (car true))))
+						   (else ,false))))))))
 
 	  ;;-------- if->or/begin --------
 	  (define (if->or/begin caller form expr true false env)
@@ -15383,8 +15400,9 @@
 			 (unless (equal? expr test)             ; (or (not (pair? x)) (not (pair? z))) -> (not (and (pair? x) (pair? z)))
 			   (lint-format "perhaps ~A" caller (lists->string test expr)))
 			 ;; (if (cond...)...) doesn't happen much and is tricky to rewrite
+
 			 ;; (if ([=] x y) (f x) (f y)) gets only 2 hits, (if ([=] x y) x y) gets 1 hit -- are these so dumb we can't ignore them?
-			 ;; the if (not...) case here gets no hits
+			 ;; (if (not (null? o)) o '()) gets 2 hits
 
 			 (let ((suggestion made-suggestion))
 			   (sensible-if? caller form test true false env)
@@ -18934,34 +18952,56 @@
 							   ...))))))))))
 
 	  ;; -------- let->case-else --------
-	  (define (let->case-else caller form varlist body)
-	    (when (and (null? (cdr varlist))
-		     (null? (cdr body)))
-		(let ((expr (car body)))
-		  (when (and (eq? (car expr) 'if)
-			     (= (length expr) 4)
-			     (eqv? (length (cadr expr)) 3))
-		    (let ((test (cadr expr))
-			  (true (caddr expr))
-			  (false (cadddr expr))
-			  (var (caar varlist)))
-		      (when (and (memq (car test) '(eq? eqv? =))
-				 (or (eq? false var)
-				     (eq? true var))
-				 (memq var test)
-				 (any? code-constant? test))
-			(lint-format "perhaps use case: ~A" caller
-				     (lists->string form
-						    (let ((selector (cadar varlist))
-							  (key ((if (eq? (cadr test) var) caddr cadr) test)))
-						      (if (pair? key) (set! key (cadr key)))
-						      (if (eq? false var)
-							  `(case ,selector 
-							     ((,key) ,true)
-							     (else))
-							  `(case ,selector 
-							     ((,key))
-							     (else ,false))))))))))))
+	  (define (let->case-else caller form var selector body) ; (let ((q (caddr x))) (if (eq? q 'a) b q)) -> (case (caddr x) ((a) b) (else))
+	    (let ((expr (car body)))                             ;   this function also called by let*-walker
+	      ;; scan of multiple vars for useful one got no hits
+	      (when (and (eq? (car expr) 'if)
+			 (= (length expr) 4)
+			 (pair? (cadr expr)))
+		(let ((test (cadr expr))
+		      (true (caddr expr))
+		      (false (cadddr expr)))
+		  (when (and (memq var test)
+			     (or (and (len=2? test)
+				      (memq (car test) '(null? not eof-object?)))   ; memx/charx got no hits
+				 (and (len=2? (cdr test))
+				      (memq (car test) '(eq? eqv? =))
+				      (any? code-constant? test)))
+			     (or (and (or (eq? false var)
+					  (and (len=2? false)
+					       (eq? var (cadr false))))
+				      (not (tree-memq var true)))  ; shadowing happens very rarely
+				 (and (or (eq? true var)
+					  (and (len=2? true)
+					       (eq? var (cadr true))))
+				      (not (tree-memq var false)))))
+		    (set! last-let->case-line-number line-number)
+		    (lint-format "perhaps use case: ~A" caller
+				 (let ((new-form (let ((key #f)
+						       (result #f))
+						   (if (memq (car test) '(null? not eof-object?))
+						       (set! key (case (car test) ((not) #f) ((eof-object?) #<eof>) (else ())))
+						       (begin
+							 (set! key ((if (eq? (cadr test) var) caddr cadr) test))
+							 (if (pair? key) (set! key (cadr key)))))
+						   (if (or (eq? false var)
+							   (and (len=2? false)
+								(eq? var (cadr false))))
+						       `(case ,selector 
+							  ((,key) ,true)
+							  (else ,@(if (eq? false var) () (list '=> (car false)))))
+						       `(case ,selector 
+							  ((,key) ,@(if (eq? true var) () (list '=> (car true))))
+							  (else ,false))))))
+				   (lists->string form
+						  (if (or (eq? (car form) 'let)
+							  (null? (cdadr form)))
+						      new-form
+						      (if (null? (cddadr form))
+							  `(let (,(caadr form))
+							     ,new-form)
+							  `(let* ,(copy (cadr form) (make-list (- (length (cadr form)) 1)))
+							     ,new-form)))))))))))
 	  
 	  ;; -------- let-walker --------
 	  (define (let-walker caller form env)
@@ -19004,7 +19044,10 @@
 					 (len>1? (car body)))
 				(let->cond caller form env)
 				(when (null? (cdr body))
-				  (let->case-else caller form varlist body)
+				  (if (and ;(= suggest made-suggestion)
+				       (null? (cdr varlist))
+				       (pair? (cdar varlist)))
+				      (let->case-else caller form (caar varlist) (cadar varlist) body))
 				  (move-let-into-if caller form env)
 				  (when (= suggest made-suggestion)
 				    (embed-let caller form env))))
@@ -19598,7 +19641,6 @@
 			       (proper-pair? varlist))
 		      (when (pair? vars)
 			(let*->let+let caller form vars env))
-		      
 		      (let*+let*->let* caller form)
 		      (let*->let+do caller form env)
 		      ;; (define...) as first in body rarely happens in rewritable contexts
@@ -19608,7 +19650,11 @@
 		      (combine-let*-vars caller form vars env)
 		      
 		      (let ((last-var (last-par varlist)))
-			(combine-let*-last-var caller form last-var env))
+			(combine-let*-last-var caller form last-var env)
+			(if (and (null? (cdr body))
+				 (len>1? (car body))
+				 (len=2? last-var))
+			    (let->case-else caller form (car last-var) (cadr last-var) body)))
 		      ;; last var -> if/cond in car(body) as in let only happens a few times (leaving aside stuff caught above)
 		      
 		      (when (and (> (length body) 3)
@@ -20689,22 +20735,14 @@
 					(format outport "~NCperhaps ~A -> (~A~{ ~A~})~%" lint-left-margin #\space
 						(truncated-list->string new-form)
 						(var-name fv)
-						(map (lambda (a)
-						       (if (null? (car a))
-							   (values)
-							   (car a)))
-						     outer-vars))
+						(map (lambda (a) (case (car a) ((()) (values)) (else))) outer-vars))
 					(ok)))
 				    fvars)
 			  (format outport "~NCif '~A were in scope, perhaps ~A -> (~A~{ ~A~})~%" lint-left-margin #\space
 				  (var-name (car fvars))
 				  (truncated-list->string new-form)
 				  (var-name (car fvars))
-				  (map (lambda (a)
-					 (if (null? (car a))
-					     (values)
-					     (car a)))
-				       outer-vars))))))))))))))
+				  (map (lambda (a) (case (car a) ((()) (values)) (else))) outer-vars))))))))))))))
 
     (define (lint-fragment form env)
       (if (memq (car form) '(or and))
@@ -21098,7 +21136,7 @@
 
 		      (when (eq? head #_list-values)
 			(case (length form)
-			  ((1) ())
+			  ((1) #f)  ; this never happens
 			  ((2)
 			   (let ((arg1 (cadr form)))
 			     (cond ((and (pair? arg1)
@@ -21445,11 +21483,7 @@
 							     (if (not (and (> size 10)
 									   (val 5)))
 								 ""
-								 (let ((vars (map (lambda (v)
-										    (if (null? (car v))
-											(values)
-											(car v)))
-										  (val 5))))
+								 (let ((vars (map (lambda (v) (case (car v) ((()) (values)) (else))) (val 5))))
 								   (if (pair? vars)
 								       (format #f "~%~NCwith var~P: ~{~A ~}" 
 									       (+ lint-left-margin 4) #\space (length vars) vars)
@@ -21560,6 +21594,7 @@
 	(set! last-cons-line-number -1)
 	(set! last-if-line-number -1)
 	(set! last-if->case-line-number -1)
+	(set! last-let->case-line-number -1)
 	(set! last-rewritten-internal-define #f)
 	(set! last-lambda-let #f)
 	(set! last-lambda-let-funcs #f)
@@ -21985,15 +22020,11 @@
 |#
 
 ;;; tons of rewrites in lg* (2700 lines)
-;;; (if X (f x X y) (escape)) -> (f x (cond (X) (else escape)) y) -- arg eval order problem
 ;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
-;;; in both ->case-else cases, test op could be extended to eqf cases (cond->case?)
-;;;   and let might check for cond as well as if, and case -- => could also be accomodated
-;;;   and allow more vars? and embedded if? (let ((x <>)) (f ... (if (eq? x ...) x ...) ...))
-;;;   see t347
+;;; (let+)cond->case-else?
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 196 29385 820533
+;;; 196 29385 821921
