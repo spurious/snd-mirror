@@ -5820,6 +5820,7 @@ static s7_pointer find_let(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
 {
+  /* currently called only by safe do */
   s7_pointer p;
 #if DEBUGGING
   for (p = let_slots(e); is_slot(p);)
@@ -5833,8 +5834,28 @@ static s7_pointer free_let(s7_scheme *sc, s7_pointer e)
   for (p = let_slots(e); is_slot(p); p = next_slot(p))
     free_cell(sc, p);
 #endif
+
   free_cell(sc, e);
   return(sc->nil);
+}
+
+
+static s7_pointer let_fill(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer e, val, p;
+  e = car(args);
+
+  if (e == sc->rootlet)
+    return(out_of_range(sc, sc->fill_symbol, small_int(1), e, make_string_wrapper(sc, "can't fill! rootlet")));
+  if (e == sc->owlet)
+    return(out_of_range(sc, sc->fill_symbol, small_int(1), e, make_string_wrapper(sc, "can't fill! owlet")));
+  if (is_function_env(e))
+    return(out_of_range(sc, sc->fill_symbol, small_int(1), e, make_string_wrapper(sc, "can't fill! a funclet")));
+
+  val = cadr(args);
+  for (p = let_slots(e); is_slot(p); p = next_slot(p))
+    slot_set_value(p, val);
+  return(val);
 }
 
 
@@ -23708,7 +23729,7 @@ You can later apply random-state to this list to continue a random number sequen
 
 #define g_random_state_to_list s7_random_state_to_list
 
-s7_pointer c_random_state_to_list(s7_scheme *sc, s7_pointer x) {return(s7_random_state_to_list(sc, set_plist_1(sc, x)));}
+static s7_pointer c_random_state_to_list(s7_scheme *sc, s7_pointer x) {return(s7_random_state_to_list(sc, set_plist_1(sc, x)));}
 PF_TO_PF(random_state_to_list, c_random_state_to_list)
 
 
@@ -41606,7 +41627,7 @@ static s7_pointer hash_table_copy(s7_scheme *sc, s7_pointer old_hash, s7_pointer
   return(new_hash);
 }
 
-s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
+static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer val, table;
   table = car(args);
@@ -45019,6 +45040,10 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
 
     case T_HASH_TABLE:
       return(hash_table_fill(sc, args));
+
+    case T_LET:
+      check_method(sc, p, sc->fill_symbol, args);
+      return(let_fill(sc, args));
 
     case T_C_OBJECT:
       check_method(sc, p, sc->fill_symbol, args);
@@ -66917,7 +66942,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_LET_opSq:
 	  {
 	    s7_pointer binding;
-	    binding = caar(sc->code);
+	    binding = _TPair(caar(sc->code));
 	    set_car(sc->t1_1, find_symbol_checked(sc, opt_sym2(sc->code)));
 	    sc->value = c_call(cadr(binding))(sc, sc->t1_1);
 	    new_frame_with_slot(sc, sc->envir, sc->envir, car(binding), sc->value);
@@ -66930,7 +66955,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_LET_opSq_P:
 	  {
 	    s7_pointer binding;
-	    binding = caar(sc->code);
+	    binding = _TPair(caar(sc->code));
 	    set_car(sc->t1_1, find_symbol_checked(sc, opt_sym2(sc->code)));
 	    sc->value = c_call(cadr(binding))(sc, sc->t1_1);
 	    new_frame_with_slot(sc, sc->envir, sc->envir, car(binding), sc->value);
@@ -66966,7 +66991,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_LET_opSSq:  /* one var, init is safe_c_ss */
 	  {
 	    s7_pointer largs, in_val;
-	    largs = opt_pair2(sc->code);                                 /* cadr(caar(sc->code)); */
+	    largs = _TPair(opt_pair2(sc->code));                            /* cadr(caar(sc->code)); */
 	    in_val = find_symbol_checked(sc, cadr(largs));
 	    set_car(sc->t2_2, find_symbol_checked(sc, opt_sym3(sc->code))); /* caddr(largs)); */
 	    set_car(sc->t2_1, in_val);
@@ -75262,10 +75287,6 @@ int main(int argc, char **argv)
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
- *
- * does fill! let #<undefined> clear the let?
- *    no: (fill! hi #<undefined>) -> error: fill! argument 1, (inlet 'a 1 'b 2), is an environment but should be a sequence
- *    but if let=rootlet?
  *
  * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
  *   GC already checked via standard macros (car etc)

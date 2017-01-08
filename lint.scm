@@ -18953,14 +18953,29 @@
 
 	  ;; -------- let->case-else --------
 	  (define (let->case-else caller form var selector body) ; (let ((q (caddr x))) (if (eq? q 'a) b q)) -> (case (caddr x) ((a) b) (else))
-	    (let ((expr (car body)))                             ;   this function also called by let*-walker
+	    (let ((expr (car body))                             ;   this function also called by let*-walker
+		  (test #f)
+		  (true #f)
+		  (false #f))
 	      ;; scan of multiple vars for useful one got no hits
-	      (when (and (eq? (car expr) 'if)
-			 (= (length expr) 4)
-			 (pair? (cadr expr)))
-		(let ((test (cadr expr))
-		      (true (caddr expr))
-		      (false (cadddr expr)))
+	      (when (or (and (eq? (car expr) 'if)
+			     (= (length expr) 4)
+			     (pair? (cadr expr)))
+			(and (eq? (car expr) 'cond)
+			     (= (length expr) 3)
+			     (len=2? (cadr expr))
+			     (len=2? (caddr expr))
+			     (pair? (caadr expr))
+			     (eq? (caaddr expr) 'else)))
+		(if (eq? (car expr) 'if)
+		    (begin
+		      (set! test (cadr expr))
+		      (set! true (caddr expr))
+		      (set! false (cadddr expr)))
+		    (begin
+		      (set! test (caadr expr))
+		      (set! true (cadr (cadr expr)))
+		      (set! false (cadr (caddr expr)))))
 		  (when (and (memq var test)
 			     (or (and (len=2? test)
 				      (memq (car test) '(null? not eof-object?)))   ; memx/charx got no hits
@@ -19001,7 +19016,7 @@
 							  `(let (,(caadr form))
 							     ,new-form)
 							  `(let* ,(copy (cadr form) (make-list (- (length (cadr form)) 1)))
-							     ,new-form)))))))))))
+							     ,new-form))))))))))
 	  
 	  ;; -------- let-walker --------
 	  (define (let-walker caller form env)
@@ -22023,7 +22038,7 @@
 ;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
-;;; (let+)cond->case-else?
+;;; "cond+not+repeat inverted"
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
