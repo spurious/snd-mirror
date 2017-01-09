@@ -16552,10 +16552,11 @@
 	  ;; -------- cond-walker --------
 
 	  (define (cond-walker-1 caller form len suggest env has-else has-combinations simplifications all-eqv eqv-select)
-	    
+
 	    (when (and (= len 2)
 		       (not (check-bool-cond caller form (cadr form) (caddr form) env)))
 	      (cond-remove-not caller form env))
+	    ;; not+repeat got no 1 hit
 	    
 	    (when has-combinations
 	      (cond->or caller form all-eqv eqv-select simplifications env)
@@ -22038,7 +22039,6 @@
 ;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
 ;;;   but tighten-let quits if any open-definers in body -- excessively careful!
 ;;;   does the lambda case need ok-func check? is it localizable, then is it movable
-;;; "cond+not+repeat inverted"
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
