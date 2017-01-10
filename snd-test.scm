@@ -13602,16 +13602,16 @@ EDITS: 2
     (let ((gen (make-asymmetric-fm 40.0 0.0 1.0 0.1))
 	  (gen1 (make-asyfm :frequency 40.0 :ratio .1 :index 2.0))
 	  (incr (/ (* 2 pi 40.0) *clm-srate*))
-	  (r 1.0)
-	  (ratio 0.1)
-	  (index 2.0))
-      (do ((cr (* 0.5 (- r (/ 1.0 r))))
+	  (r 1.0))
+      (do ((ratio 0.1)
+	   (cr (* 0.5 (- r (/ 1.0 r))))
 	   (sr (* 0.5 (+ r (/ 1.0 r))))
 	   (i 0 (+ i 1))
 	   (a 0.0 (+ a incr)))
 	  ((= i 1100))
 	(let ((val1 (asymmetric-fm gen 2.0)) ; 1.0=index
 	      (val3 (asyfm-J gen1 0.0))
+	      (index 2.0)
 	      (mth (* ratio a)))
 	  (let ((val2 (* (exp (* index cr (+ 1.0 (cos mth))))
 			 (cos (+ a (* index sr (sin mth)))))))
@@ -42807,25 +42807,25 @@ EDITS: 1
 	(if (not (string=? XmNhiho "hiho")) (snd-display "add-resource XmNhiho: ~A" XmNhiho)))
       
       (open-sound "cardinal.snd")
-      (let ((mouse_width 32)
-	    (mouse_height 32)
-	    (mouse_bits (list
-			 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			 #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-			 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
-			 #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
-			 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-			 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
-			 #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
-			 #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
-			 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
-			 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
-	    (rb (list
-		 #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
-		 #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
-	    (iconw ((sound-widgets) 8)))
-	(let ((dpy (XtDisplay iconw))
+      (let ((iconw ((sound-widgets) 8)))
+	(let ((mouse_width 32)
+	      (mouse_height 32)
+	      (mouse_bits (list
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x80 #xff #xff #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+			   #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01 #x80 #x00 #x01 #x01
+			   #x80 #x00 #x01 #x01 #x80 #xff #xff #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00 #x00 #x01
+			   #x80 #x00 #x00 #x01 #x00 #x01 #x80 #x00 #x00 #x01 #x80 #x00
+			   #x00 #x06 #x60 #x00 #x00 #xf8 #x1f #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00
+			   #x00 #x00 #x00 #x00 #x00 #x00 #x00 #x00))
+	      (rb (list
+		   #x00 #x04 #x10 #x08 #x00 #x10 #x04 #x20 #x00 #x40 #xa5 #xbf
+		   #x00 #x40 #x04 #x20 #x00 #x10 #x10 #x08 #x00 #x04 #x00 #x00))
+	      (dpy (XtDisplay iconw))
 	      (win (XtWindow iconw)))
 	  (XCreateBitmapFromData dpy win rb 16 12)
 	  (XCreateBitmapFromData dpy win mouse_bits mouse_width mouse_height)

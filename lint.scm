@@ -360,7 +360,7 @@
 						     i))
 				"..."))))))
     
-    (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-var also collides)
+    (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-lint-var also collides)
     (define lint-pretty-print #f)
     (let ()
       (require write.scm)
@@ -451,21 +451,34 @@
     (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
     (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
-    (define var-side-effect (dilambda (lambda (v) 
-					(case (let-ref (cdr v) 'side-effect)
-					  ((()) (let-set! (cdr v) 'side-effect (get-side-effect v)))
-					  (else)))
-				      (lambda (v x) 
-					(let-set! (cdr v) 'side-effect x))))
+    (define var-refenv  
+      (dilambda (lambda (v) 
+		  (let-ref (cdr v) 'refenv))  
+		(lambda (v e)
+		  (let ((old-e (let-ref (cdr v) 'refenv)))
+		    (if (null? old-e)                         ; nil if unset
+			(let-set! (cdr v) 'refenv e)          ;   so set to current
+			(if (not (eq? old-e e))               ; not eq, so (for now) set to #f
+			    (let-set! (cdr v) 'refenv #f))))
+		  e)))
 
-    (define var-signature (dilambda (lambda (v) 
-				      (case (let-ref (cdr v) 'signature)
-					((()) (let-set! (cdr v) 'signature (get-signature v)))
-					(else)))
-				    (lambda (v x) 
-				      (let-set! (cdr v) 'signature x))))
+    (define var-side-effect 
+      (dilambda (lambda (v) 
+		  (case (let-ref (cdr v) 'side-effect)
+		    ((()) (let-set! (cdr v) 'side-effect (get-side-effect v)))
+		    (else)))
+		(lambda (v x) 
+		  (let-set! (cdr v) 'side-effect x))))
     
-    (define* (make-var name initial-value definer)
+    (define var-signature 
+      (dilambda (lambda (v) 
+		  (case (let-ref (cdr v) 'signature)
+		    ((()) (let-set! (cdr v) 'signature (get-signature v)))
+		    (else)))
+		(lambda (v x) 
+		  (let-set! (cdr v) 'signature x))))
+    
+    (define (make-lint-var name initial-value definer)
       (let ((old (hash-table-ref other-identifiers name)))
 	(cons name (inlet 'initial-value initial-value 
 			  'definer definer 
@@ -475,6 +488,8 @@
 					 (if initial-value (cons initial-value old) old))
 				       (if initial-value (list initial-value) ()))
 			  'scope ()
+			  'env ()
+			  'refenv ()
 			  'setters ()
 			  'set 0 
 			  'ref (if old (length old) 0)))))
@@ -863,7 +878,8 @@
     (define (code-constant? x)
       (and (or (not (symbol? x))
 	       (keyword? x))
-	   (not (unquoted-pair? x))))
+	   (or (not (pair? x))
+	       (eq? (car x) 'quote))))
     
     (define constant-expression?
       (let ((constant-functions (let ((ht (make-hash-table)))
@@ -1640,7 +1656,6 @@
     (define* (make-fvar name ftype arglist decl initial-value env)
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
-
       (improper-arglist->define* name ftype arglist initial-value)
 
       (let ((new (let ((old (hash-table-ref other-identifiers name)))
@@ -1651,6 +1666,7 @@
 						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
 						       (eq? (last-par arglist) :allow-other-keys))
 				'scope ()
+				'refenv ()
 				'setters ()
 				'env env
 				'initial-value initial-value
@@ -1952,7 +1968,7 @@
 			   (e env))
 		       (when (symbol? (cadr form))
 			 (set! syms (caddr form))
-			 (let ((fv (make-var (cadr form) #f 'let)))
+			 (let ((fv (make-lint-var (cadr form) #f 'let)))
 			   (varlet (cdr fv) 'side-effect #f)
 			   (varlet (cdr fv) 'ftype 'let)
 			   (set! e (cons fv env)))
@@ -2089,6 +2105,7 @@
 
 
     (define (set-ref name caller form env)
+;      (format *stderr* "ref ~A ~A~%" name form)
       ;; if name is in env, set its "I've been referenced" flag
       (when (symbol? name)
 	(let ((data (var-member name env)))
@@ -2097,7 +2114,9 @@
 		(set! (var-ref data) (+ (var-ref data) 1))
 		(update-scope data caller env)
 		(if (and form (not (memq form (var-history data))))
-		    (set! (var-history data) (cons form (var-history data)))))
+		    (begin
+		      (set! (var-history data) (cons form (var-history data)))
+		      (set! (var-refenv data) env))))
 	      (if (not (defined? name (rootlet)))
 		  (let ((old (hash-table-ref other-identifiers name)))
 		    (check-for-bad-variable-name caller name)
@@ -2113,7 +2132,9 @@
 	  (if (not (memq caller (var-setters data)))
 	      (set! (var-setters data) (cons caller (var-setters data))))
 	  (if (not (memq form (var-history data)))
-	      (set! (var-history data) (cons form (var-history data))))
+	      (begin
+		(set! (var-history data) (cons form (var-history data)))
+		(set! (var-refenv data) env)))
 	  (set! (var-signature data) #f)
 	  (set! (var-ftype data) #f))))
     
@@ -10329,7 +10350,9 @@
 				 (let ((v (var-member (car arg) env)))
 				   (if (and (var? v)
 					    (not (memq form (var-history v))))
-				       (set! (var-history v) (cons form (var-history v)))))
+				       (begin
+					 (set! (var-history v) (cons form (var-history v)))
+					 (set! (var-refenv v) env))))
 				 
 				 ;; checker is arg-type, op is expression type (can also be a pair)
 				 (if (and (not (memq op '(#f #t values)))
@@ -11084,6 +11107,8 @@
 										 (list (cadr writer)))))))))))))))))
 										   
 		   ;; redundant vars are hard to find -- tons of false positives
+
+;		   (format *stderr* "~A: ~A~%" vname (var-ref local-var))
 		   
 		   (if (zero? (var-ref local-var))
 		       (when (and (or (not (equal? head ""))
@@ -11122,7 +11147,46 @@
 					 (lint-format "~A not used, value: ~A" caller vname (truncated-list->string val))))))))
 		       ;; not zero var-ref
 		       (let ((arg-type #f))
+
+
+			 ;; -------- move local var inward
+			 ;; for a local function if defined in body, it is the head of its env
+			 ;;   so search var-scope for a let?
+
+			 ;; TODO: if a do loop or named-let intervenes, the var should probably be moved to the do decls or not moved
+			 ;;   also track funcs and other local defines
+			 ;;   and let* var not otherwise needed in remaining let*
+			 ;;   and letrec if possible
+			 ;;   maybe be smarter about enclosing envs in set refenv
 			 
+			 (when (and (pair? (var-refenv local-var))
+				    (pair? (var-env local-var))
+				    (zero? (var-set local-var)) ; counter in for-each, etc
+				    (not (eq? (var-refenv local-var) (var-env local-var)))
+				    (code-constant? (var-initial-value local-var)))
+			   ;; code-constant? is very restrictive, but side-effect? leaves too many complications:
+			   ;;   (let ((a (car b))) (set! b c) (let ...))
+			   (let ((refval (var-initial-value (car (var-refenv local-var))))
+				 (makval (var-initial-value (car (var-env local-var)))))
+			     (when (and (pair? refval)
+					(eq? (car refval) 'let)
+					(pair? (cadr refval))
+					(pair? makval)
+					(eq? (car makval) 'let)
+					(pair? (cadr makval))            ; not a named let
+					(not (and (pair? (caddr makval)) ; not lambda's closure
+						  (null? (cdddr makval))
+						  (memq (caaddr makval) '(lambda lambda*)))))
+			       (lint-format "perhaps move '~A~A into the inner let~A: ~A" caller
+					    vname
+					    (local-line-number (caadr makval))
+					    (local-line-number (caadr refval))
+					    (truncated-lists->string 
+					     makval
+					     `(let ((,vname ,(var-initial-value local-var)) ,@(cadr refval)) ,@(cddr refval)))))))
+			 ;; --------
+
+
 			 (when (and (not (memq (var-definer local-var) '(parameter named-let named-let*)))
 				    (pair? (var-history local-var))
 				    (or (zero? (var-set local-var))
@@ -13056,13 +13120,13 @@
 		  env)
 		(let ((args-as-vars 
 		       (if (symbol? args)                            ; this is getting arg names to add to the environment
-			   (list (make-var :name args :definer 'parameter))
+			   (list (make-lint-var args #f 'parameter))
 			   (let ((star-definer (memq definer '(define* lambda* defmacro* define-macro* define-bacro* definstrument define*-public))))
 			     (map (lambda (arg)
 				    (if (symbol? arg)
 					(if (memq arg '(:rest :allow-other-keys))
 					    (values)                  ; omit :rest and :allow-other-keys
-					    (make-var :name arg :definer 'parameter))
+					    (make-lint-var arg #f 'parameter))
 					(if (not (and star-definer (len=2? arg)))
 					    (begin
 					      (lint-format "strange parameter for ~A: ~S" function-name definer arg)
@@ -13072,12 +13136,12 @@
 							   (eq? definer 'define*-public))) ; who knows?
 						  (lint-format "the default argument value is #f in ~A, so ~A can be ~A" function-name
 							       definer arg (car arg)))
-					      (make-var :name (car arg) :definer 'parameter)))))
+					      (make-lint-var (car arg) #f 'parameter)))))
 				  (proper-list args))))))
-		  
-		  (let* ((cur-env (cons (make-var :name :let
-						  :initial-value form
-						  :definer definer)
+
+;		  (format *stderr* "got args: ~A~%" (proper-list args))
+
+		  (let* ((cur-env (cons (make-lint-var :let form definer)
 					(append args-as-vars (if fvar (cons fvar env) env))))
 			 (nvars (let ((e (lint-walk-function-body definer function-name args body cur-env)))
 				  (and (not (eq? e cur-env))
@@ -13195,7 +13259,18 @@
 			     (values (cadr p) (other-case (cadr p)))))
 			(else               (error 'wrong-type-arg "oops"))))
 		    (cdr test))))
-	    exprs))
+
+	    (cond ((not (null? (cdr exprs)))
+		   exprs)
+
+		((equal? eqv-select (car exprs))
+		 ())
+
+		((and (len=2? (car exprs))
+		      (equal? eqv-select (cadar exprs)))
+		 (list '=> (caar exprs)))
+
+		(else exprs))))
     
     (define (cond->case eqv-select new-clauses)
       (cons 'case 
@@ -13205,9 +13280,20 @@
 			       (exprs (cdr clause)))
 			   (if (null? exprs)                   ; cond returns the test result if no explicit results
 			       (set! exprs (list #t)))         ;   but all tests here return a boolean, and we win only if #t?? (memx is an exception)
-			   (if (memq test '(else #t))
-			       (cons 'else exprs)
-			       (case-branch test eqv-select exprs))))
+			   (cond ((not (memq test '(else #t)))
+				  (case-branch test eqv-select exprs))
+
+			       ((not (null? (cdr exprs)))
+				(cons 'else exprs))
+
+			       ((equal? eqv-select (car exprs))
+				(list 'else))
+
+			       ((and (len=2? (car exprs))
+				     (equal? eqv-select (cadar exprs)))
+				(list 'else '=> (caar exprs)))
+
+			       (else (cons 'else exprs)))))
 		       new-clauses))))
     
     (define (eqv-code-constant? x)
@@ -13917,7 +14003,7 @@
 						(hash-table-ref other-identifiers sym))
 					   => (lambda (p)
 						(lint-format "~A is used before it is defined: ~A" caller sym form))))
-				    (cons (make-var :name sym :initial-value (car val) :definer head) env))
+				    (cons (make-lint-var sym (car val) head) env))
 				  
 				  (let ((e (lint-walk (if (and (pair? (car val))
 							       (eq? (caar val) 'letrec))
@@ -13926,7 +14012,7 @@
 				    (if (or (not (pair? e))
 					    (eq? e env)
 					    (not (memq (var-name (car e)) '(:lambda :dilambda)))) ; (define x (lambda ...))
-					(cons (make-var :name sym :initial-value (car val) :definer head) env)
+					(cons (make-lint-var sym (car val) head) env)
 					(begin
 					  (if (eq? (var-name (car e)) :lambda)
 					      (recursion->iteration sym 
@@ -14057,7 +14143,7 @@
 					  env))
 		  
 		  (lint-walk-function head sym args body form env)
-		  (cons (make-var :name sym :initial-value form :definer head) env))))
+		  (cons (make-lint-var sym form head) env))))
 	  
 	  (hash-walker 'defmacro defmacro-walker)
 	  (hash-walker 'defmacro* defmacro-walker))
@@ -17210,12 +17296,13 @@
 			  vars)
 		
 		(lint-walk caller (cadar bindings) env)
-		(let ((new-var (let ((v (make-var :name (caar bindings) 
-						  :definer 'do
-						  :initial-value (cadar bindings))))
+		(let ((new-var (let ((v (make-lint-var (caar bindings) (cadar bindings) 'do)))
 				 (let ((stepper (and (pair? (cddar bindings)) (caddar bindings))))
 				   (varlet (cdr v) :step stepper)
-				   (if stepper (set! (var-history v) (cons (list 'set! (caar bindings) stepper) (var-history v)))))
+				   (if stepper 
+				       (begin
+					 (set! (var-history v) (cons (list 'set! (caar bindings) stepper) (var-history v)))
+					 (set! (var-refenv v) env))))
 				 v)))
 		  (set! vars (cons new-var vars))))))
 	    
@@ -17369,9 +17456,7 @@
 		    
 	  ;; -------- walk-do-body --------
 	  (define (walk-do-body caller form vars inner-env env)
-	    (lint-walk-body caller 'do (cdddr form) (cons (make-var :name :let
-								    :initial-value form
-								    :definer 'do)
+	    (lint-walk-body caller 'do (cdddr form) (cons (make-lint-var :let form 'do)
 							  inner-env))
 
 	    ;; before report-usage, check for unused variables, and don't complain about them if
@@ -17643,11 +17728,14 @@
 
 	  ;; -------- walk-letx-body --------
 	  (define (walk-letx-body caller form body vars env)
-	    (let* ((cur-env (cons (make-var :name :let
-					    :initial-value form
-					    :definer 'let)
+	    (let* ((cur-env (cons (make-lint-var :let form 'let)
 				  (append vars env)))
 		   (e (lint-walk-body caller (car form) body cur-env)))
+	      (if (eq? (car form) 'let)
+		  (for-each (lambda (v)
+			      (if (null? (var-env v))
+				  (set! (var-env v) cur-env)))
+			    vars))
 	      (let ((nvars (and (not (eq? e cur-env))
 				(env-difference caller e cur-env ()))))
 		(if (pair? nvars)
@@ -17748,9 +17836,7 @@
 			    (set! (var-name (car e)) (caar bindings))
 			    (set! (ldata 'initial-value) val)
 			    (set! vars (cons (car e) vars)))
-			  (set! vars (cons (make-var :name (caar bindings) 
-						     :initial-value val 
-						     :definer (if named-let 'named-let 'let))
+			  (set! vars (cons (make-lint-var (caar bindings) val (if named-let 'named-let 'let))
 					   vars)))))))
 	      
 	      (check-unordered-exprs caller form 
@@ -18975,7 +19061,7 @@
 		      (set! false (cadddr expr)))
 		    (begin
 		      (set! test (caadr expr))
-		      (set! true (cadr (cadr expr)))
+		      (set! true (cadadr expr))
 		      (set! false (cadr (caddr expr)))))
 		  (when (and (memq var test)
 			     (or (and (len=2? test)
@@ -19069,7 +19155,7 @@
 				    (embed-let caller form env))))
 			      (when (= suggest made-suggestion)
 				(useless-let caller form env)))
-			    
+
 			    (let ((es (walk-letx-body caller form body vars env)))
 			      (set! vars (car es))
 			      (set! env (cdr es)))
@@ -19182,9 +19268,7 @@
 			    (set! (var-name (car e)) (caar bindings))
 			    (set! (ldata 'initial-value) expr)
 			    (set! vars (cons (car e) vars)))
-			  (set! vars (cons (make-var :name (caar bindings) 
-						     :initial-value expr
-						     :definer (if named-let 'named-let* 'let*))
+			  (set! vars (cons (make-lint-var (caar bindings) expr (if named-let 'named-let* 'let*))
 					   vars))))
 		    
 		    ;; look for duplicate values
@@ -19563,8 +19647,8 @@
 								   (copy varlist (make-list (- varlist-len 1)))
 								   (cadr last-var)))))))))))
 	    
-	  ;; -------- reduce-let*-var-scope
-	  (define (reduce-let*-var-scope caller form vars)
+	  ;; -------- reduce-let*-scope
+	  (define (reduce-let*-scope caller form vars)
 	    (let ((last-ref (vector (var-name (car vars)) #f 0 (car vars)))
 		  (body (cddr form))
 		  (varlist (cadr form)))
@@ -19678,7 +19762,7 @@
 				 (not (tree-set-car-member '(define define* define-macro define-macro* 
 							     define-bacro define-bacro* define-constant define-expansion)
 							   body)))
-			(reduce-let*-var-scope caller form vars))))))))
+			(reduce-let*-scope caller form vars))))))))
 
 	    env)
 	  (hash-walker 'let* let*-walker)		
@@ -19798,9 +19882,7 @@
 				    ;; in letrec* ((x 12) (x x)) is an error
 				    #<undefined>)
 				  (cadar bindings))))
-		    (set! vars (cons (make-var :name (caar bindings) 
-					       :initial-value init
-					       :definer head)
+		    (set! vars (cons (make-lint-var (caar bindings) init head)
 				     vars)))))
 	      vars))
 
@@ -19940,9 +20022,7 @@
 	  (define (with-baffle-walker caller form env)
 	    ;; with-baffle introduces a new frame, so we need to handle it here
 	    (lint-walk-body caller 'with-baffle (cdr form) 
-			    (cons (make-var :name :let
-					    :initial-value form
-					    :definer 'with-baffle)
+			    (cons (make-lint-var :let form 'with-baffle)
 				  env))
 	    env)
 	  (hash-walker 'with-baffle with-baffle-walker))
@@ -19969,12 +20049,10 @@
 			    (if (and (null? (cdr e))
 				     (eq? (car e) 'curlet))    ;  (with-let (curlet) x)
 				(lint-format "~A is not needed here: ~A" 'with-let caller (truncated-list->string form)))
-			    (lint-walk caller e (cons (make-var :name :let
-								:initial-value form
-								:definer 'with-let)
+			    (lint-walk caller e (cons (make-lint-var :let form 'with-let)
 						      env)))))
 		  (let ((walked #f)
-			(new-env (cons (make-var :name :with-let :initial-value form :definer 'with-let) env)))
+			(new-env (cons (make-lint-var :with-let form 'with-let) env)))
 		    (if (or (and (symbol? e)
 				 (memq e '(*gtk* *motif* *gl* *libc* *libm* *libgdbm* *libgsl*)))
 			    (and (len>1? e)
@@ -20105,17 +20183,15 @@
 							      (list head (if (= len 2)
 									     (caar body)
 									     (values (cadr form) (caar body))))))
-				  (let ((cc (make-var :name port
-						      :initial-value (list (case head 
-									     ((call-with-input-string)  'open-input-string)
-									     ((call-with-output-string) 'open-output-string)
-									     ((call-with-input-file)    'open-input-file)
-									     ((call-with-output-file)   'open-output-file)))
-						      :definer head)))
+				  (let ((cc (make-lint-var port
+						      (list (case head 
+							      ((call-with-input-string)  'open-input-string)
+							      ((call-with-output-string) 'open-output-string)
+							      ((call-with-input-file)    'open-input-file)
+							      ((call-with-output-file)   'open-output-file)))
+						      head)))
 				    (lint-walk-body caller head body (cons cc 
-									   (cons (make-var :name :let
-											   :initial-value form
-											   :definer head)
+									   (cons (make-lint-var :let form head)
 										 env)))
 				    (report-usage caller head (list cc) env))))))))))
 	    env)
@@ -20145,12 +20221,8 @@
 		  (let ((body (caddr form))
 			(error-handler (cadddr form)))
 		    ;; empty catch+catch apparently never happens
-		    (lint-walk caller body (cons (make-var :name :let
-							   :initial-value form
-							   :definer 'catch)
-						 (cons (make-var :name :catch
-								 :initial-value form
-								 :definer 'catch)
+		    (lint-walk caller body (cons (make-lint-var :let form 'catch)
+						 (cons (make-lint-var :catch form 'catch)
 						       env)))
 		    (lint-walk caller error-handler env))))
 	    env)
@@ -20194,9 +20266,7 @@
 			      ;; (call-with-exit (lambda (return) (display x) (return (+ x y))))
 			      (lint-format "~A is redundant here: ~A" caller continuation (truncated-list->string last)))))
 		    
-		    (let ((cc (make-var :name continuation 
-					:initial-value (if (eq? head 'call-with-exit) :call/exit :call/cc)
-					:definer head)))
+		    (let ((cc (make-lint-var continuation (if (eq? head 'call-with-exit) :call/exit :call/cc) head)))
 		      (lint-walk-body caller head body (cons cc env))
 		      (report-usage caller head (list cc) env)))))
 	    env)
@@ -20812,7 +20882,9 @@
 	      (let ((v (var-member head env)))
 		(if (and (var? v) 
 			 (not (memq form (var-history v))))
-		    (set! (var-history v) (cons form (var-history v))))
+		    (begin
+		      (set! (var-history v) (cons form (var-history v)))
+		      (set! (var-refenv v) env)))
 		(check-call caller head form env)
 		
 		;; look for one huge argument leaving lonely trailing arguments somewhere off the screen
@@ -20927,22 +20999,17 @@
 				  (let ((v (var-member arg env)))
 				    (if (and (var? v)
 					     (not (memq form (var-history v))))
-					(set! (var-history v) (cons form (var-history v)))))))
+					(begin
+					  (set! (var-history v) (cons form (var-history v)))
+					  (set! (var-refenv v) env))))))
 			    form)
 		  
 		  (if (set!? form env)
 		      (set-set (cadr form) caller form env)))
 		
 		(if (var? v)
-		    (if (and (memq (var-ftype v) '(define lambda define* lambda*))
-			     (not (memq caller (var-scope v))))
-			(let ((cv (var-member caller env)))
-			  (set! (var-scope v) 
-				(cons (if (and (var? cv)
-					       (memq (var-ftype cv) '(define lambda define* lambda*))) ; named-let does not define ftype (?? -- 'let)
-					  caller
-					  (cons caller env))
-				      (var-scope v)))))
+		    (if (memq (var-ftype v) '(define lambda define* lambda*))
+			(update-scope v caller env))
 		    (begin
 		      (cond ((hash-table-ref special-case-functions head)
 			     => (lambda (f)
@@ -22035,11 +22102,12 @@
     #f))
 |#
 
-;;; tons of rewrites in lg* (2700 lines)
-;;; move define (or lambda) inward, not outward [reduce-let*-var-scope[only looks at last var] and tighten let for locals]
-;;;   but tighten-let quits if any open-definers in body -- excessively careful!
-;;;   does the lambda case need ok-func check? is it localizable, then is it movable
+;;; tons of rewrites in lg* (2900 lines)
+;;; move locals (especially define or lambda) inward, not outward -- see refenv in report-usage [11150] which is let-specific currently
+;;; lint-format line-number is sometimes irritating (end of form, not start)
+;;;    (cond ((string=? residue-type "ALA") #\A) ((string=? residue-type "ARG") #\R)...) -> cond + assoc+stirng=? -> cdr
+;;;    bad name: is-<x>? -> <x>?
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 196 29385 821921
+;;; 197 29398 822490
