@@ -6,7 +6,6 @@
 
 (provide 'lint.scm)
 
-
 (define *report-unused-parameters* #f)                    ; many of these are reported anyway if they are passed some non-#f value
 (define *report-unused-top-level-functions* #f)           ; very common in Scheme, but #t makes the ghastly leakage of names obvious
 (define *report-shadowed-variables* #f)                   ; shadowed parameters, etc
@@ -2082,11 +2081,12 @@
 
 	(lambda (caller vname)
 	  (when (symbol? vname)
+	    (let* ((sname (symbol->string (if (keyword? vname) (keyword->symbol vname) vname)))
+		   (slen (length sname)))
 
-	    (if (> (length (symbol->string vname)) *report-ridiculous-variable-names*)
-		(lint-format "the name ~A (~A chars!) is unreadable" caller vname (length (symbol->string vname))))
+	      (if (> slen *report-ridiculous-variable-names*)
+		  (lint-format "the name ~A (~A chars!) is unreadable" caller vname slen))
 
-	    (let ((sname (symbol->string vname)))
 	      (if (or (cond ((assq (sname 0) bad-var-names) =>
 			     (lambda (baddies)
 			       (or (assq vname (cdr baddies))
@@ -2096,16 +2096,18 @@
 					 (cdr baddies)))))
 			    (else #f))
 		      (and (char=? (sname 0) #\c)
-			   (> (length sname) 8)
-			   (or (string=? "compute" (substring sname 0 7))      ; compute-* is as bad as get-*
-			       (string=? "calculate" (substring sname 0 9))))) ;   perhaps one exception: computed-goto*
+			   (> slen 8)
+			   (or (string=? "compute" (substring sname 0 7))       ; compute-* is as bad as get-*
+			       (string=? "calculate" (substring sname 0 9)))))  ;   perhaps one exception: computed-goto*
 		  (lint-format "surely there's a better name for this variable than ~A" caller vname)
-		  ;; polar notation (see tmp) gets 3 hits (in a test suite)!
-		  ))))))
+
+		  (if (eqv? (string-position "is-" sname) 0)                    ; is-x? -> x?
+		      (if (char=? (sname (- slen 1)) #\?)
+			  (lint-format "'~A is redundant: perhaps use '~A" caller vname (string->symbol (substring sname 3)))
+			  (lint-format "perhaps use '~A?, not '~A" caller (string->symbol (substring sname 3)) vname)))))))))
 
 
     (define (set-ref name caller form env)
-;      (format *stderr* "ref ~A ~A~%" name form)
       ;; if name is in env, set its "I've been referenced" flag
       (when (symbol? name)
 	(let ((data (var-member name env)))
@@ -8459,9 +8461,10 @@
 						      (and (pair? (car sig))
 							   (memq 'string? (car sig)))))))))
 			    (lint-format "perhaps ~A" caller             ; (format #f "~S" x) -> (object->string x)
-					 (lists->string form (cons 'object->string
-								   (cons (cadddr form) 
-									 (if (string=? (caddr form) "~A") '(#f) ())))))))
+					 (lists->string form 
+							(cons 'object->string
+							      (cons (cadddr form) 
+								    (if (string=? (caddr form) "~A") '(#f) ())))))))
 		    (if (and (eq? (cadr form) 't)                          ; (format t " ")
 			     (not (var-member 't env)))
 			(lint-format "'t in ~A should probably be #t" caller (truncated-list->string form))))
@@ -8494,39 +8497,44 @@
 			       (lint-format "pointless ~~^ in ~S" caller control-string)))))
 		  
 		  (when (pair? args)
-		    (for-each
-		     (lambda (a)
-		       (when (len>1? a)
-			 (case (car a)
-			   ((number->string)
-			    (if (null? (cddr a))                      ; (format #f "~A" (number->string x))
-				(lint-format "~A arg ~A could be ~A" caller head a (cadr a))
-				(if (and (pair? (cddr a))
-					 (integer? (caddr a))
-					 (memv (caddr a) '(2 8 10 16)))
-				    (if (= (caddr a) 10)
-					(lint-format "~A arg ~A could be ~A" caller head a (cadr a))
-					(lint-format "~A arg ~A could use the format directive ~~~A and change the argument to ~A" caller head a
-						     (case (caddr a) ((2) "B") ((8) "O") (else "X"))
-						     (cadr a))))))
-			   
-			   ((symbol->string list->string object->string vector->string) ; (format #f "~A" (symbol->string 'x))
-			    (lint-format "~A arg ~A could be ~A" caller head a (cadr a)))
-			   
-			   ((make-string)                             ; (format #f "~A" (make-string len c))
-			    (if (pair? (cddr a))
-				(lint-format "~A arg ~A could use the format directive ~~NC and change the argument to ... ~A ~A ..." caller head a
-					     (cadr a) (if (char? (caddr a)) (format #f "~W" (caddr a)) (caddr a)))))
-			   
-			   ((apply)
-			    (if (and (len=3? a)
-				     (memq (cadr a) '(append string-append vector-append)))
-				(lint-format "use ~~{...~~} rather than ~A: ~A" caller (cadr a) a)))
-			   
-			   ((string-append)                           ; (format #f "~A" (string-append x y))
-			    (if (eq? head 'format)
-				(lint-format "format appends strings, so ~A seems wasteful" caller a))))))
-		     args)))))
+		    (let ((pos (and (string? control-string)
+				    (char-position #\~ control-string))))
+		      (for-each
+		       (lambda (a)
+			 (when (len>1? a)
+			   (let ((directive (and (integer? pos)
+						 (control-string (+ pos 1)))))
+			     (unless (memv directive '(#\S #\s))
+			       (case (car a)
+				 ((number->string)
+				  (if (null? (cddr a))                      ; (format #f "~A" (number->string x))
+				      (lint-format "~A arg ~A could be ~A" caller head a (cadr a))
+				      (if (and (pair? (cddr a))
+					       (integer? (caddr a))
+					       (memv (caddr a) '(2 8 10 16)))
+					  (if (= (caddr a) 10)
+					      (lint-format "~A arg ~A could be ~A" caller head a (cadr a))
+					      (lint-format "~A arg ~A could use the format directive ~~~A and change the argument to ~A" caller head a
+							   (case (caddr a) ((2) "B") ((8) "O") (else "X"))
+							   (cadr a))))))
+				 
+				 ((symbol->string object->string string->symbol) ; (format #f "~A" (symbol->string 'x))
+				  (lint-format "~A arg ~A could be ~A" caller head a (cadr a)))
+				 
+				 ((make-string)                             ; (format #f "~A" (make-string len c))
+				  (if (pair? (cddr a))
+				      (lint-format "~A arg ~A could use the format directive ~~NC and change the argument to ... ~A ~A ..." caller head a
+						   (cadr a) (if (char? (caddr a)) (format #f "~W" (caddr a)) (caddr a)))))
+				 
+				 ((apply)
+				  (if (and (len=3? a)
+					   (memq (cadr a) '(append string-append vector-append)))
+				      (lint-format "use ~~{...~~} rather than ~A: ~A" caller (cadr a) a)))
+				 
+				 ((string-append)                           ; (format #f "~A" (string-append x y))
+				  (if (eq? head 'format)
+				      (lint-format "format appends strings, so ~A seems wasteful" caller a))))))))
+		       args))))))
 	  (hash-special 'format sp-format))
 	
 	;; ---------------- error/throw ----------------
@@ -10801,7 +10809,6 @@
 
 	  (let ((old-line-number line-number)
 		(outer-form (cond ((var-member :let env) => var-initial-value) (else #f))))
-	    
 	    (for-each 
 	     (lambda (local-var)
 	       (let ((vname (var-name local-var))
@@ -11148,42 +11155,114 @@
 		       ;; not zero var-ref
 		       (let ((arg-type #f))
 
-
-			 ;; -------- move local var inward
-			 ;; for a local function if defined in body, it is the head of its env
-			 ;;   so search var-scope for a let?
-
-			 ;; TODO: if a do loop or named-let intervenes, the var should probably be moved to the do decls or not moved
-			 ;;   also track funcs and other local defines
-			 ;;   and let* var not otherwise needed in remaining let*
-			 ;;   and letrec if possible
-			 ;;   maybe be smarter about enclosing envs in set refenv
 			 
-			 (when (and (pair? (var-refenv local-var))
-				    (pair? (var-env local-var))
-				    (zero? (var-set local-var)) ; counter in for-each, etc
-				    (not (eq? (var-refenv local-var) (var-env local-var)))
-				    (code-constant? (var-initial-value local-var)))
-			   ;; code-constant? is very restrictive, but side-effect? leaves too many complications:
-			   ;;   (let ((a (car b))) (set! b c) (let ...))
-			   (let ((refval (var-initial-value (car (var-refenv local-var))))
-				 (makval (var-initial-value (car (var-env local-var)))))
-			     (when (and (pair? refval)
-					(eq? (car refval) 'let)
-					(pair? (cadr refval))
-					(pair? makval)
-					(eq? (car makval) 'let)
-					(pair? (cadr makval))            ; not a named let
-					(not (and (pair? (caddr makval)) ; not lambda's closure
-						  (null? (cdddr makval))
-						  (memq (caaddr makval) '(lambda lambda*)))))
-			       (lint-format "perhaps move '~A~A into the inner let~A: ~A" caller
-					    vname
-					    (local-line-number (caadr makval))
-					    (local-line-number (caadr refval))
-					    (truncated-lists->string 
-					     makval
-					     `(let ((,vname ,(var-initial-value local-var)) ,@(cadr refval)) ,@(cddr refval)))))))
+			 ;; -------- move local var inward
+
+			 ;; TODO: get the lambda+define case too (see t347) and maybe closure letrec? or local letrec?
+			 ;; TODO: check the define+define case -- now also check above
+			 ;; lambda+define case has :lambda for :let in local-env, gets to last check below
+
+			 (let ((func (memq (var-ftype local-var) '(define define* lambda lambda*)))
+			       (local-env (var-env local-var)))
+			   (if (and func
+				    (pair? local-env))
+			       (let crawler ((ref (cdr local-env)))
+				 (if (pair? ref)
+				     (if (keyword? (caar ref))
+					 (set! local-env ref)
+					 (crawler (cdr ref))))))
+
+			   ;(format *stderr* "~A:~%~A~%~%~A~%~%" vname local-env (var-refenv local-var))
+			   
+			   (when (and (pair? (var-refenv local-var))
+				      (pair? (var-env local-var))
+				      (zero? (var-set local-var)) ; counter in for-each, etc
+				      (not (eq? local-env (var-refenv local-var)))
+				      (or func 
+					  (code-constant? (var-initial-value local-var)))
+				      (let ((target (car (var-env local-var))))       ; the enclosing env
+					(let crawler ((ref (var-refenv local-var)))   ; the var's restricted env
+					  (and (pair? ref)
+					       (or (eq? (car ref) target) 
+						   (and (not (eq? (caar ref) :do))     ; try not to move the variable inside a loop
+							(not (and (eq? (caar ref) :let)
+								  (symbol? (cadr (var-initial-value (car ref))))))
+							(crawler (cdr ref)))))))
+				      (or (not func)
+					  (let* ((source (var-initial-value local-var))
+						 (source-args (args->proper-list ((if (memq (var-ftype local-var) '(define define*)) cdadr cadr) source)))
+						 (target (car (var-env local-var)))
+						 (lets (if (memq (var-ftype local-var) '(define define*)) 1 0))
+						 (let-args (let crawler ((ref (var-refenv local-var)) (largs ()))
+							     ;; this includes locals that can't act as shadows
+							     (if (eq? (caar ref) :let)
+								 (set! lets (+ lets 1)))
+							     (if (eq? (car ref) target)
+								 largs
+								 (crawler (cdr ref)
+									  (if (and (pair? (car ref))
+										   (not (keyword? (caar ref)))
+										   (not (eq? (caar ref) vname)))
+									      (cons (caar ref) largs)
+									      largs))))))
+#|
+					    (format *stderr* "lets: ~A, let-args: ~A, source-args: ~A -> ~A ~A~%" lets let-args source-args
+						    (let remove-args ((args let-args) (nargs ()))
+						      (if (null? args)
+							  nargs
+							  (remove-args (cdr args) 
+								       (if (memq (car args) source-args)
+									   nargs
+									   (cons (car args) nargs)))))
+						    (cddr source))
+|#			     						    
+					    (and (> lets 2)
+						 (not (tree-set-member (let remove-args ((args let-args) (nargs ()))
+									 (if (null? args)
+									     nargs
+									     (remove-args (cdr args) 
+											  (if (memq (car args) source-args)
+											      nargs
+											      (cons (car args) nargs)))))
+								       (cddr source)))))))
+			     
+			     ;; possibilities are :let :catch :call/exit :call/cc :do :with-let :with-baffle
+			     ;; code-constant? is very restrictive, but side-effect? leaves too many complications:
+			     ;;   (let ((a (car b))) (set! b c) (let ...))
+			     
+			     (let ((refval (var-initial-value (car (var-refenv local-var))))
+				   (makval (var-initial-value (car (var-env local-var)))))
+
+			       ;(format *stderr* "refval: ~A~%makval: ~A~%" refval makval)
+			       (when (and (pair? refval)
+					  (eq? (car refval) 'let)
+					  (pair? (cadr refval))
+					  (pair? makval)
+					  (or (memq (car makval) '(define define* lambda lambda*))
+					      (and (memq (car makval) '(let let*))  ; check last var in let*, any var in let
+						   (pair? (cadr makval))            ; not a named let
+						   (not (and (pair? (caddr makval)) ; not lambda's closure
+							     (null? (cdddr makval))
+							     (memq (caaddr makval) '(lambda lambda*)))))))
+				 (lint-format "perhaps move '~A~A into the inner let~A: ~A" caller
+					      vname
+					      (local-line-number (if (pair? (cadr makval))
+								     (if (pair? (caadr makval))
+									 (caadr makval)
+									 (cadr makval))
+								     makval))
+					      (local-line-number (caadr refval))
+					      (truncated-lists->string 
+					       makval
+					       (let ((new-var&val (list vname
+									(if (not (memq (var-ftype local-var) '(define define*)))
+									    (var-initial-value local-var)
+									    (cons (if (eq? (var-ftype local-var) 'define) 'lambda 'lambda*)
+										  (cons (cdadr (var-initial-value local-var))
+											(cddr (var-initial-value local-var))))))))
+						 `(let (,new-var&val
+							,@(cadr refval))
+						    ,@(cddr refval)))))))))
 			 ;; --------
 
 
@@ -13138,8 +13217,6 @@
 							       definer arg (car arg)))
 					      (make-lint-var (car arg) #f 'parameter)))))
 				  (proper-list args))))))
-
-;		  (format *stderr* "got args: ~A~%" (proper-list args))
 
 		  (let* ((cur-env (cons (make-lint-var :let form definer)
 					(append args-as-vars (if fvar (cons fvar env) env))))
@@ -17456,7 +17533,7 @@
 		    
 	  ;; -------- walk-do-body --------
 	  (define (walk-do-body caller form vars inner-env env)
-	    (lint-walk-body caller 'do (cdddr form) (cons (make-lint-var :let form 'do)
+	    (lint-walk-body caller 'do (cdddr form) (cons (make-lint-var :do form 'do)
 							  inner-env))
 
 	    ;; before report-usage, check for unused variables, and don't complain about them if
@@ -17731,11 +17808,16 @@
 	    (let* ((cur-env (cons (make-lint-var :let form 'let)
 				  (append vars env)))
 		   (e (lint-walk-body caller (car form) body cur-env)))
-	      (if (eq? (car form) 'let)
-		  (for-each (lambda (v)
-			      (if (null? (var-env v))
-				  (set! (var-env v) cur-env)))
-			    vars))
+
+	      (when (pair? vars)
+		(if (eq? (car form) 'let)
+		    (for-each (lambda (v)
+				(if (null? (var-env v))
+				    (set! (var-env v) cur-env)))
+			      vars)
+		    (if (eq? (car form) 'let*)                 ; could also scan vars (stored backwards here) for any not ref'd later in vals
+			(set! (var-env (car vars)) cur-env)))) ;   but this only gets 3 hits
+
 	      (let ((nvars (and (not (eq? e cur-env))
 				(env-difference caller e cur-env ()))))
 		(if (pair? nvars)
@@ -18739,7 +18821,7 @@
 				   (eq? vname (cadr p)))    ;   not tree-subst or trailing (pair) args: the let might be forcing evaluation order
 			  (let ((v (var-member (car p) env)))
 			    (if (or (and (var? v)
-					 (memq (var-definer v) '(define define* lambda lambda*)))
+					 (memq (var-ftype v) '(define define* lambda lambda*))) ; was definer??
 				    (hash-table-ref built-in-functions (car p)))
 				(lint-format "perhaps ~A" caller (lists->string form 
 										(wrap-new-form header (list (car p) vvalue) trailer)))
@@ -20022,7 +20104,7 @@
 	  (define (with-baffle-walker caller form env)
 	    ;; with-baffle introduces a new frame, so we need to handle it here
 	    (lint-walk-body caller 'with-baffle (cdr form) 
-			    (cons (make-lint-var :let form 'with-baffle)
+			    (cons (make-lint-var :with-baffle form 'with-baffle)
 				  env))
 	    env)
 	  (hash-walker 'with-baffle with-baffle-walker))
@@ -21719,13 +21801,13 @@
 				#f))
 
 		    (cons #\' (lambda (str)                      ; for Guile (and syntax-rules, I think)
-				(list 'syntax (if (string=? str "'") (read) (string->symbol str)))))
+				(list 'syntax (if (string=? str "'") (read) (string->symbol (substring str 1))))))
 
 		    (cons #\` (lambda (str)                      ; for Guile (sigh)
-				(list 'quasisyntax (if (string=? str "'") (read) (string->symbol str)))))
+				(list 'quasisyntax (if (string=? str "`") (read) (string->symbol (substring str 1))))))
 
 		    (cons #\, (lambda (str)                      ; the same, the last is #,@ -> unsyntax-splicing -- right.
-				(list 'unsyntax (if (string=? str "'") (read) (string->symbol str)))))
+				(list 'unsyntax (if (string=? str ",") (read) (string->symbol (substring str 1))))))
 
 		    (cons #\& (lambda (str)                      ; ancient Guile code
 				(string->keyword (substring str 1))))
@@ -21779,8 +21861,15 @@
 					(case (data 0)
 					  ((#\;) (read) (values))
 					  
-					  ((#\T) (string=? data "T"))
-					  ((#\F) (and (string=? data "F") ''#f))
+					  ((#\T)
+					   (and (string=? data "T")
+						(format outport "#T should be #t~%")
+						#t))
+
+					  ((#\F) 
+					   (and (string=? data "F") 
+						(format outport "#F should be #f~%")
+						''#f))
 
 					  ((#\X #\B #\O #\D) 
 					   (let ((num (string->number (substring data 1) (case (data 0) ((#\X) 16) ((#\O) 8) ((#\B) 2) ((#\D) 10)))))
@@ -21832,7 +21921,7 @@
 						       ((string-position end c)
 							(values)))
 						   (string->symbol data))))
-					  
+
 					  ((#\\) 
 					   (cond ((assoc data '(("\\newline"   . #\newline)
 								("\\return"    . #\return)
@@ -22103,11 +22192,9 @@
 |#
 
 ;;; tons of rewrites in lg* (2900 lines)
-;;; move locals (especially define or lambda) inward, not outward -- see refenv in report-usage [11150] which is let-specific currently
+;;; report-usage needs to be broken up
 ;;; lint-format line-number is sometimes irritating (end of form, not start)
-;;;    (cond ((string=? residue-type "ALA") #\A) ((string=? residue-type "ARG") #\R)...) -> cond + assoc+stirng=? -> cdr
-;;;    bad name: is-<x>? -> <x>?
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 197 29398 822490
+;;; 197 29398 832179
