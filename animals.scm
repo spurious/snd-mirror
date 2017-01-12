@@ -865,7 +865,6 @@
 (define-animal (spring-peeper beg amp)
   (let ((dur 0.17)
 	(pause 0.23)
-	(dur2 .13)
 	(index (hz->radians (* 0.1 2900))))
     ;; first note
     (let ((start (seconds->samples beg))
@@ -884,7 +883,8 @@
 				       (+ (* 0.2 (oscil gen2 (* 0.5 frq))) 
 					  (* 1.5 (oscil gen2a frq)))))))))) ; end is not quite right (original has a catch)
       ;; second note
-      (let ((start2 (+ stop (seconds->samples pause))))
+      (let ((start2 (+ stop (seconds->samples pause)))
+	    (dur2 .13))	    
 	(let ((stop2 (+ start2 (seconds->samples dur2)))
 	      (ampf2 (make-env '(0 0 .125 .8 1 .9 2 .7 4 1 10 0) :base .1 :duration dur2 :scaler (* .4 amp)))
 	      (frqf2 (make-env '(0 0 2 1 3 .75) :duration dur2 :base .03 :scaler (hz->radians 300)))

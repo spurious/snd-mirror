@@ -45,7 +45,6 @@
 	  (apply #_make-hash-table args))))
 
 (define bytevector byte-vector)
-;(define ->bytevector string->byte-vector)
 (define bytevector? byte-vector?)
 (define make-bytevector make-byte-vector)
 (define bytevector-ref string-ref)

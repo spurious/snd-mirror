@@ -39470,7 +39470,9 @@ static s7_pf_t implicit_gf_sequence_set(s7_scheme *sc, s7_pointer v, s7_pointer 
 
 static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
 {
-  /* macro version of this (below) is much slower! */
+  /* macro version of this (below) is much slower! Since this is almost never false, 
+   *   I tried __builtin_expect throughout eval below.  The result was not faster.
+   */
   s7_pointer p;
 
   p = car(x);

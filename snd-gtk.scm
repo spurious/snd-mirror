@@ -833,7 +833,8 @@
     
     (define (force-update wid)
       (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
-      (gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t))
+      ;(gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t)
+      )
     
     (define (widget? w) (and (pair? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
     
