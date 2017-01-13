@@ -307,7 +307,7 @@
 |#
 
 (define-macro (and-let* vars . body)      ; bind vars, if any is #f stop, else evaluate body with those bindings
-  `(let () (and ,@(map (lambda (v) `(define ,@v)) vars) (begin ,@body))))
+  `(let () (and ,@(map (lambda (v) (cons 'define v)) vars) (begin ,@body))))
 
 (define-macro (let*-temporarily vars . body)
   `(with-let (#_inlet :orig (#_curlet) 

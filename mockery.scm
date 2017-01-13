@@ -498,22 +498,21 @@
 ;;; --------------------------------------------------------------------------------
 
 (define *mock-number*
-  (let ((mock-number? #f))
+  (let ((mock-number? #f)
 
-    (define* (range-method-1 func arg start end)
-      (func arg (if (not end)
-		    (start 'value)
-		    (if (not (let? start)) 
-			(values start (end 'value)) 
-			(values (start 'value) end)))))
+	(range-method-1 (lambda* (func arg start end)
+			  (func arg (if (not end)
+					(start 'value)
+					(if (not (let? start)) 
+					    (values start (end 'value)) 
+					    (values (start 'value) end))))))
 
-    (define* (range-method-2 func arg1 arg2 start end)
-      (func arg1 arg2 (if (not end)
-			  (start 'value)
-			  (if (not (let? start)) 
-			      (values start (end 'value)) 
-			      (values (start 'value) end)))))
-
+	(range-method-2 (lambda* (func arg1 arg2 start end)
+			  (func arg1 arg2 (if (not end)
+					      (start 'value)
+					      (if (not (let? start)) 
+						  (values start (end 'value)) 
+						  (values (start 'value) end)))))))
     (let ((mock-number-class
 	   (openlet
 	    (inlet 

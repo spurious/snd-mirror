@@ -159,7 +159,7 @@
 	      (if (symbol? (car lst))
 		  (symbol->value (car lst))
 		  (and (pair? (car lst))
-		       (apply lambda '(x) `((or (,(caar lst) x) (,(cadar lst) x)))))))))
+		       (apply lambda '(x) (list (list 'or (list (caar lst) 'x) (list (cadar lst) 'x)))))))))
 
 (define baddies '(exit emergency-exit abort autotest 
 		  all delete-file system set-cdr! stacktrace test-sym

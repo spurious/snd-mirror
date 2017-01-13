@@ -75285,8 +75285,8 @@ int main(int argc, char **argv)
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * with-let+lambda to increase opt? glosure for example
  * could (apply append (map...)) omit the extra copy?
- * maybe use 'not for signature of #f? or #f?
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
+ *   also write-up grepl called from anywhere
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
  *

@@ -509,10 +509,6 @@
 	  (arg-start 0)
 	  (line-len 0))
       
-      (define (hey-start)
-	;; start of checked line
-	(set! line-len 0))
-      
       (define (hey-mark)
 	;; start of checked line
 	(set! arg-start line-len))
@@ -522,15 +518,6 @@
 	(let ((line (apply format #f args)))
 	  (set! line-len (+ line-len (length line)))
 	  (heyc line)))
-      
-      (define (hey-ok arg)
-	;; cr ok after arg
-	(set! line-len (+ line-len (length arg)))
-	(heyc arg)
-	(if (> line-len 120)
-	    (begin
-	      (format gl-file "~%~NC" arg-start #\space)
-	      (set! line-len arg-start))))
       
       (check-glu name)
       (if (member name glu-1-2) (hey "#ifdef GLU_VERSION_1_2~%"))
@@ -606,7 +593,10 @@
 		 (set! ctr (+ 1 ctr))))
 	     args)))
       (let ((using-result (and (> refargs 0)
-			       (not (string=? return-type "void")))))
+			       (not (string=? return-type "void"))))
+	    (hey-start (lambda ()
+			 ;; start of checked line
+			 (set! line-len 0))))
 	(if using-result
 	    (begin
 	      (hey "  {~%")
@@ -626,7 +616,15 @@
 	      (for-each
 	       (lambda (arg)
 		 (let ((argname (cadr arg))
-		       (argtype (car arg)))
+		       (argtype (car arg))
+		       (hey-ok (lambda (arg)
+				 ;; cr ok after arg
+				 (set! line-len (+ line-len (length arg)))
+				 (heyc arg)
+				 (if (> line-len 120)
+				     (begin
+				       (format gl-file "~%~NC" arg-start #\space)
+				       (set! line-len arg-start))))))
 		   (if previous-arg (hey-ok ", "))
 		   (if (and (not previous-arg)
 			    (> (length data) 4)

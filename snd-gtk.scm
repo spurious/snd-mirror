@@ -829,44 +829,44 @@
 	     (list (sound->integer snd) (channel-data snd 0))))
 	  (else #f)))))
   
-  (define (variable-display var widget)
-    
-    (define (force-update wid)
-      (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
-      ;(gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t)
-      )
-    
-    (define (widget? w) (and (pair? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
-    
-    ;; (let ((wid1 (make-variable-display "do-loop" "i*1" 'spectrum))) (variable-display 0.1 wid1))
-    
-    (if (widget? widget)
-	(if (GTK_IS_LABEL widget)
-	    (begin
-	      (gtk_label_set_text (GTK_LABEL widget) (object->string var))
-	      (force-update widget)))
-	
-	(when (and (pair? widget)
-		   (or (number? (car widget))
-		       (sound? (car widget))))
-	  ;; graph/spectrum -- does this need an explicit update?
-	  (let ((snd (car widget))
-		(data (cadr widget)))
-	    (let ((len (length data))
-		  (loc (cursor snd 0)))
-	      (set! (data loc) var)
-	      (if (time-graph? snd) (update-time-graph snd))
-	      (if (transform-graph? snd) (update-transform-graph snd))
-	      (set! (cursor snd 0) (if (= (+ loc 1) len) 0 (+ loc 1))))
-	    (if (GTK_IS_PROGRESS_BAR (car widget))
-		;; "thermometer"
-		(let ((y0 (cadr widget))
-		      (y1 (caddr widget)))
-		  ;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
-		  (gtk_progress_bar_set_fraction 
-		   (GTK_PROGRESS_BAR (car widget))
-		   (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0))))))))))
-    var)
+  (define variable-display 
+    (let ((force-update (lambda (wid)
+			  (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
+			  ;;(gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t)
+			  ))
+	  (widget? (lambda (w) 
+		     (and (pair? w) 
+			  (= (length w) 2)
+			  (eq? (car w) 'GtkWidget_)))))
+      ;; (let ((wid1 (make-variable-display "do-loop" "i*1" 'spectrum))) (variable-display 0.1 wid1))
+      (lambda (var widget)
+	(if (widget? widget)
+	    (if (GTK_IS_LABEL widget)
+		(begin
+		  (gtk_label_set_text (GTK_LABEL widget) (object->string var))
+		  (force-update widget)))
+	    
+	    (when (and (pair? widget)
+		       (or (number? (car widget))
+			   (sound? (car widget))))
+	      ;; graph/spectrum -- does this need an explicit update?
+	      (let ((snd (car widget))
+		    (data (cadr widget)))
+		(let ((len (length data))
+		      (loc (cursor snd 0)))
+		  (set! (data loc) var)
+		  (if (time-graph? snd) (update-time-graph snd))
+		  (if (transform-graph? snd) (update-transform-graph snd))
+		  (set! (cursor snd 0) (if (= (+ loc 1) len) 0 (+ loc 1))))
+		(if (GTK_IS_PROGRESS_BAR (car widget))
+		    ;; "thermometer"
+		    (let ((y0 (cadr widget))
+			  (y1 (caddr widget)))
+		      ;; (define wid (make-variable-display "do-loop" "i*2" 'scale))
+		      (gtk_progress_bar_set_fraction 
+		       (GTK_PROGRESS_BAR (car widget))
+		       (max 0.0 (min 1.0 (/ (- var y0) (- y1 y0))))))))))
+	var)))
 
   (define (notebook-with-top-tabs)
     (gtk_notebook_set_tab_pos (GTK_NOTEBOOK ((main-widgets) 5)) GTK_POS_TOP))
