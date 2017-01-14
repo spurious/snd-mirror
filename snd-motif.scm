@@ -1818,32 +1818,33 @@
 	(define (number-name chan) (if (= chan 0) (copy "amp-number") (format #f "amp-number-~D" chan)))
 	(define (scroller-name chan) (if (= chan 0) (copy "amp") (format #f "amp-~D" chan)))
 	
-	(define (amp-callback w c info)
+	(define amp-callback 
 	  ;; c is (list number-widget snd chan)
-	  (define (scroll->amp snd val)
-	    (cond ((<= val 0)    (car (amp-control-bounds snd)))
-		  ((>= val 9000) (cadr (amp-control-bounds snd)))
-		  ((> val 4500)  (+ (* (- (/ val 4500.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0))
-		  (else          (+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 4500.0)) (car (amp-control-bounds snd))))))
-	  
-	  (let* ((snd (cadr c))
-		 (amp (scroll->amp snd (.value info)))
-		 (ampstr (XmStringCreateLocalized (format #f "~,3F " amp)))
-		 (chn (- (channels snd) 1 (caddr c)))
-		 (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
-	    (XtSetValues (car c) (list XmNlabelString ampstr))
-	    (XmStringFree ampstr)
-	    (if ctrl
-		(let ((snd-amp (find-child ((sound-widgets snd) 2) "snd-amp"))
-		      (chns (channels snd)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i chns))
-		    (let* ((ampscr (find-child snd-amp (scroller-name i)))
-			   (ampvals (cdr (XmScrollBarGetValues ampscr))))
-		      (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t)
-		      (set! (amp-control snd i) amp))))
-		(set! (amp-control snd chn) amp))))
-	
+	  (let ((scroll->amp 
+		 (lambda (snd val)
+		   (cond ((<= val 0)    (car (amp-control-bounds snd)))
+			 ((>= val 9000) (cadr (amp-control-bounds snd)))
+			 ((> val 4500)  (+ (* (- (/ val 4500.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0))
+			 (else          (+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 4500.0)) (car (amp-control-bounds snd))))))))
+	    (lambda (w c info)
+	      (let* ((snd (cadr c))
+		     (amp (scroll->amp snd (.value info)))
+		     (ampstr (XmStringCreateLocalized (format #f "~,3F " amp)))
+		     (chn (- (channels snd) 1 (caddr c)))
+		     (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
+		(XtSetValues (car c) (list XmNlabelString ampstr))
+		(XmStringFree ampstr)
+		(if ctrl
+		    (let ((snd-amp (find-child ((sound-widgets snd) 2) "snd-amp"))
+			  (chns (channels snd)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i chns))
+			(let* ((ampscr (find-child snd-amp (scroller-name i)))
+			       (ampvals (cdr (XmScrollBarGetValues ampscr))))
+			  (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t)
+			  (set! (amp-control snd i) amp))))
+		    (set! (amp-control snd chn) amp))))))
+	    
 	(define (reset-to-one scroller number)
 	  (XtSetValues scroller (list XmNvalue 4500))
 	  (let ((ampstr (XmStringCreateLocalized "1.000 ")))
@@ -1851,7 +1852,7 @@
 	    (XmStringFree ampstr)))
 	
 	(define (amp-controls-reflect-chans snd)
-
+	  
 	  (define (make-amp-control snd chan parent)
 	    (let* ((s1 (XmStringCreateLocalized "amp:"))
 		   (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
@@ -1905,7 +1906,7 @@
 	      (XmStringFree s1)
 	      (XmStringFree s2)
 	      label))
-      
+	      
 	  (let* ((ctrls ((sound-widgets snd) 2))
 		 (snd-amp (find-child ctrls "snd-amp"))
 		 (chns (channels snd)))
@@ -1964,7 +1965,7 @@
 		(XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
 		(XtManageChild ctrls)
 		(XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
-	
+	    
 	(define (amp-controls-clear snd)
 	  (if (> (channels snd) 1)
 	      (let ((snd-amp (find-child ((sound-widgets snd) 2) "snd-amp"))

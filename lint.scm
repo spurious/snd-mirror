@@ -1035,13 +1035,19 @@
 							(a2 (signer (cadddr endb))))
 						    (and (equal? a1 a2) a1))))
 					    
-					    ((let let* letrec letrec* unless when)
+					    ((let let* letrec letrec* unless when with-let let-temporarily with-baffle)
 					     (and (> len 2)
 						  (signer (list-ref endb (- len 1)))))
 					    
 					    ((begin)
 					     (and (> len 1)
 						  (signer (list-ref endb (- len 1)))))
+
+					    ((do)
+					     (and (> len 2)
+						  (pair? (caddr endb))
+						  (pair? (cdaddr endb)) ; if nil -> unspecified?
+						  (signer (last-par (cdaddr endb)))))
 					    
 					    (else #f)))))))))
 		 (if (not (pair? sig))
@@ -8504,41 +8510,46 @@
 				    (char-position #\~ control-string))))
 		      (for-each
 		       (lambda (a)
-			 (when (len>1? a)
-			   (let ((directive (and (integer? pos)
-						 (control-string (+ pos 1)))))
-			     (if (integer? pos)
-				 (set! pos (char-position #\~ control-string (+ pos 2))))
-			     (unless (memv directive '(#\S #\s))
-			       (case (car a)
-				 ((number->string)
-				  (if (null? (cddr a))                      ; (format #f "~A" (number->string x))
-				      (lint-format "~A arg ~A could be ~A" caller head a (cadr a))
-				      (if (and (pair? (cddr a))
-					       (integer? (caddr a))
-					       (memv (caddr a) '(2 8 10 16)))
-					  (if (= (caddr a) 10)
-					      (lint-format "~A arg ~A could be ~A" caller head a (cadr a))
-					      (lint-format "~A arg ~A could use the format directive ~~~A and change the argument to ~A" caller head a
-							   (case (caddr a) ((2) "B") ((8) "O") (else "X"))
-							   (cadr a))))))
-				 
-				 ((symbol->string object->string string->symbol) ; (format #f "~A" (symbol->string 'x))
-				  (lint-format "~A arg ~A could be ~A" caller head a (cadr a)))
-				 
-				 ((make-string)                             ; (format #f "~A" (make-string len c))
-				  (if (pair? (cddr a))
-				      (lint-format "~A arg ~A could use the format directive ~~NC and change the argument to ... ~A ~A ..." caller head a
-						   (cadr a) (if (char? (caddr a)) (format #f "~W" (caddr a)) (caddr a)))))
-				 
-				 ((apply)
-				  (if (and (len=3? a)
-					   (memq (cadr a) '(append string-append vector-append)))
-				      (lint-format "use ~~{...~~} rather than ~A: ~A" caller (cadr a) a)))
-				 
-				 ((string-append)                           ; (format #f "~A" (string-append x y))
-				  (if (eq? head 'format)
-				      (lint-format "format appends strings, so ~A seems wasteful" caller a))))))))
+			 (let ((directive (and (integer? pos)
+					       (control-string (+ pos 1)))))
+			   (if (integer? pos)
+			       (set! pos (char-position #\~ control-string (+ pos 2))))
+
+			   (if (quoted-symbol? a) ; not integer -- might be counter, keyword and things like () get no hits
+			       (lint-format "perhaps put the argument ~A in the control string: ~A" caller 
+					    a (truncated-list->string form))
+			       
+			       (when (and (len>1? a)
+					  (not (memv directive '(#\S #\s))))
+				 (case (car a)
+				   ((number->string)
+				    (if (null? (cddr a))                      ; (format #f "~A" (number->string x))
+					(lint-format "~A arg ~A could be ~A" caller head a (cadr a))
+					(if (and (pair? (cddr a))
+						 (integer? (caddr a))
+						 (memv (caddr a) '(2 8 10 16)))
+					    (if (= (caddr a) 10)
+						(lint-format "~A arg ~A could be ~A" caller head a (cadr a))
+						(lint-format "~A arg ~A could use the format directive ~~~A and change the argument to ~A" caller head a
+							     (case (caddr a) ((2) "B") ((8) "O") (else "X"))
+							     (cadr a))))))
+				   
+				   ((symbol->string object->string string->symbol) ; (format #f "~A" (symbol->string 'x))
+				    (lint-format "~A arg ~A could be ~A" caller head a (cadr a)))
+				   
+				   ((make-string)                             ; (format #f "~A" (make-string len c))
+				    (if (pair? (cddr a))
+					(lint-format "~A arg ~A could use the format directive ~~NC and change the argument to ... ~A ~A ..." caller head a
+						     (cadr a) (if (char? (caddr a)) (format #f "~W" (caddr a)) (caddr a)))))
+				   
+				   ((apply)
+				    (if (and (len=3? a)
+					     (memq (cadr a) '(append string-append vector-append)))
+					(lint-format "use ~~{...~~} rather than ~A: ~A" caller (cadr a) a)))
+				   
+				   ((string-append)                           ; (format #f "~A" (string-append x y))
+				    (if (eq? head 'format)
+					(lint-format "format appends strings, so ~A seems wasteful" caller a))))))))
 		       args))))))
 	  (hash-special 'format sp-format))
 	
@@ -20173,11 +20184,27 @@
 	  (hash-walker 'with-baffle with-baffle-walker))
 	
 	
+	;; ---------------- let-temporarily ----------------
+	(let ()
+	  (define (let-temporarily-walker caller form env)
+	    (if (< (length form) 2)  ; empty body is ok here
+		(lint-format "let-temporarily is messed up: ~A" 'caller (truncated-list->string form))
+		(let* ((new-env (cons (make-lint-var :let form 'let-temporarily) env))
+		       (e (lint-walk-body caller 'let-temporarily (cddr form) new-env)))
+		  (report-usage caller 'let-temporarily
+				(if (eq? e new-env) 
+				    () 
+				    (env-difference caller e new-env ())) 
+				new-env)))
+	    env)
+	  (hash-walker 'let-temporarily let-temporarily-walker))
+	
+	
 	;; -------- with-let --------
 	(let ()
 	  (define (with-let-walker caller form env)
 	    (if (< (length form) 3)
-		(lint-format "~A is messed up: ~A" 'with-let caller (truncated-list->string form))
+		(lint-format "with-let is messed up: ~A" caller (truncated-list->string form))
 		(let ((e (cadr form)))
 		  (if (or (and (code-constant? e)
 			       (not (let? e)))
@@ -20192,37 +20219,33 @@
 		      (if (pair? e)
 			  (begin
 			    (if (and (null? (cdr e))
-				     (eq? (car e) 'curlet))    ;  (with-let (curlet) x)
+				     (eq? (car e) 'curlet))                 ;  (with-let (curlet) x)
 				(lint-format "~A is not needed here: ~A" 'with-let caller (truncated-list->string form)))
 			    (lint-walk caller e (cons (make-lint-var :let form 'with-let)
 						      env)))))
-		  (let ((walked #f)
-			(new-env (cons (make-lint-var :with-let form 'with-let) env)))
-		    (if (or (and (symbol? e)
-				 (memq e '(*gtk* *motif* *gl* *libc* *libm* *libgdbm* *libgsl*)))
+		  (let ((lib #f)
+			(new-env (cons (make-lint-var :with-let form 'with-let) env))
+			(ignore-usage (memq e '(*gtk* *motif* *gl* *libc* *libm* *libgdbm* *libgsl*))))
+		    (if (or ignore-usage
 			    (and (len>1? e)
 				 (eq? (car e) 'sublet)
 				 (memq (cadr e) '(*gtk* *motif* *gl* *libc* *libm* *libgdbm* *libgsl*))
 				 (set! e (cadr e))))
-			(let ((lib (if (defined? e)
+			(set! lib (if (defined? e)
 				       (symbol->value e)
 				       (let ((file (*autoload* e)))
 					 (and (string? file) 
 					      (load file))))))
-			  (when (let? lib)
-			    (let-temporarily ((*e* lib)
-					      (lint-in-with-let #t))
-			      (let ((e (lint-walk-open-body caller 'with-let (cddr form) new-env)))
-				(report-usage caller 'with-let 
-					      (if (eq? e env) 
-						  () 
-						  (env-difference caller e env ())) 
-					      new-env)))
-			    (set! walked #t))))
-		    
-		    (unless walked
-		      (let-temporarily ((lint-in-with-let #t))
-			(lint-walk-open-body caller 'with-let (cddr form) new-env))))))
+		    (let-temporarily ((*e* (if (let? lib) lib *e*))
+				      (lint-in-with-let #t))
+		      (let ((e (lint-walk-open-body caller 'with-let (cddr form) new-env)))
+			(if (not (or ignore-usage
+				     (tree-memq 'curlet (cddr form))))
+			    (report-usage caller 'with-let 
+					  (if (eq? e new-env) 
+					      () 
+					      (env-difference caller e new-env ())) 
+					  new-env)))))))
 	    env)
 	  (hash-walker 'with-let with-let-walker))
 	
@@ -22254,9 +22277,10 @@
     #f))
 |#
 
-;;; tons of rewrites in lg* (3300 lines)
+;;; tons of rewrites in lg* (3000 lines)
 ;;; expand-in-place simple functions and simplify
+;;; (define x (let () ...defines... (lambda (...) (let...)))) suggests moving defines into the interior let (pvoc.scm)
 ;;;
 ;;; count opt-style patterns throughout and seqs thereof
 ;;;
-;;; 201 29421 825884
+;;; 201 29437 826503

@@ -41646,8 +41646,7 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 	  hash_entry_t **hp, **hn;
 	  hash_entry_t *p;
 	  hp = entries;
-	  hn = (hash_entry_t **)(hp + len);
-	  for (; hp < hn; hp++)
+	  if (len == 1)
 	    {
 	      if (*hp)
 		{
@@ -41656,13 +41655,28 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 		  p->next = hash_free_list;
 		  hash_free_list = *hp;
 		}
-	      hp++;
-	      if (*hp)
+	    }
+	  else
+	    {
+	      /* here we assume we can go by 2's */
+	      hn = (hash_entry_t **)(hp + len);
+	      for (; hp < hn; hp++)
 		{
-		  p = *hp;
-		  while (p->next) p = p->next;
-		  p->next = hash_free_list;
-		  hash_free_list = *hp;
+		  if (*hp)
+		    {
+		      p = *hp;
+		      while (p->next) p = p->next;
+		      p->next = hash_free_list;
+		      hash_free_list = *hp;
+		    }
+		  hp++;
+		  if (*hp)
+		    {
+		      p = *hp;
+		      while (p->next) p = p->next;
+		      p->next = hash_free_list;
+		      hash_free_list = *hp;
+		    }
 		}
 	    }
 	  memset(entries, 0, len * sizeof(hash_entry_t *));

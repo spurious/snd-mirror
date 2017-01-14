@@ -416,65 +416,6 @@
 ;;; DELAY EFFECTS
 ;;;
   
-  (define effects-echo 
-    (let ((documentation "(effects-echo input-samps-1 delay-time echo-amount beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (input-samps-1 delay-time echo-amount beg dur snd chn)
-	(let ((del (make-delay (round (* delay-time (srate snd)))))
-	      (len (or dur (framples snd chn))))
-	  (let ((input-samps (or input-samps-1 len)))
-	    (as-one-edit
-	     (lambda ()
-	       (map-channel
-		(lambda (inval)
-		  (+ inval
-		     (delay del (* echo-amount (+ (tap del) inval)))))
-		beg input-samps snd chn)
-	       (if (> len input-samps)
-		   (map-channel
-		    (lambda (inval)
-		      (+ inval
-			 (delay del (* echo-amount (tap del)))))
-		    (+ beg input-samps) (- dur input-samps) snd chn)))
-	     (format #f "effects-echo ~A ~A ~A ~A ~A" input-samps-1 delay-time echo-amount beg dur)))))))
-  
-  (define effects-flecho-1 
-    (let ((documentation "(effects-flecho-1 scaler secs input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (scaler secs input-samps-1 beg dur snd chn)
-	(let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
-	      (del (make-delay (round (* secs (srate snd))))))
-	  (if (not (or input-samps-1 dur))
-	      (map-channel (lambda (inval)
-			     (+ inval 
-				(delay del 
-				       (fir-filter flt (* scaler (+ (tap del) inval))))))
-			   beg #f snd chn #f
-			   (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg #f))
-	      (let ((genv (let ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1)))
-			    (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100)))))
-		(map-channel (lambda (inval)
-			       (+ inval 
-				  (delay del 
-					 (fir-filter flt (* scaler (+ (tap del) (* (env genv) inval)))))))
-			     beg dur snd chn #f
-			     (format #f "effects-flecho-1 ~A ~A ~A ~A ~A" scaler secs input-samps-1 beg dur))))))))
-  
-  (define effects-zecho-1 
-    (let ((documentation "(effects-zecho-1 scaler secs frq amp input-samps-1 beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (scaler secs frq amp input-samps-1 beg dur snd chn)
-	(let ((os (make-oscil frq))
-	      (del (let ((len (round (* secs (srate snd)))))
-		     (make-delay len :max-size (round (+ len amp 1)))))
-	      (genv (let ((cutoff (- (or input-samps-1 dur (framples snd chn)) 1)))
-		      (make-env (list 0.0 1.0 cutoff 1.0 (+ cutoff 1) 0.0 (+ cutoff 100) 0.0) :length (+ cutoff 100)))))
-	  (map-channel (lambda (inval)
-			 (+ inval 
-			    (delay del 
-				   (* scaler (+ (tap del) (* (env genv) inval)))
-				   (* amp (oscil os)))))
-		       beg dur snd chn #f
-		       (format #f "effects-zecho-1 ~A ~A ~A ~A ~A ~A ~A" scaler secs frq amp input-samps-1 beg dur))))))
-  
-  
   (let ((delay-menu-list ())
 	(delay-menu (XmCreatePulldownMenu (main-menu effects-menu) "Delay Effects"
 					  (list XmNbackground *basic-color*))))
@@ -597,7 +538,7 @@
 								      (* (env genv) inval)))))))))
 				flecho-target 
 				(lambda (target input-samps) 
-				  (format #f "effects-flecho-1 ~A ~A ~A"
+				  (format #f "effects-flecho ~A ~A ~A"
 					  flecho-scaler flecho-delay
 					  (and (not (eq? target 'sound)) input-samps)))
 				(and (not flecho-truncate) 
@@ -686,7 +627,7 @@
 				  (zecho-1 zecho-scaler zecho-delay zecho-freq zecho-amp input-samps)) 
 				zecho-target
 				(lambda (target input-samps) 
-				  (format #f "effects-zecho-1 ~A ~A ~A ~A ~A"
+				  (format #f "effects-zecho ~A ~A ~A ~A ~A"
 					  zecho-scaler zecho-delay zecho-freq zecho-amp
 					  (and (not (eq? target 'sound)) input-samps)))
 				(and (not zecho-truncate)
@@ -761,55 +702,6 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 	      (set! delay-loc (+ 1 delay-loc))
 	      (if (= delay-loc size) (set! delay-loc 0))
 	      result))))))
-  
-  (define effects-comb-chord 
-    (let ((documentation "(effects-comb-chord scaler size amp interval-one interval-two beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (scaler size amp interval-one interval-two beg dur snd chn)
-	(let ((cs (make-comb-bank (vector (make-comb scaler size)
-					  (make-comb scaler (* size interval-one))
-					  (make-comb scaler (* size interval-two))))))
-	  (map-channel (lambda (x)
-			 (* amp (comb-bank cs x)))
-		       beg dur snd chn #f
-		       (format #f "effects-comb-chord ~A ~A ~A ~A ~A ~A ~A" scaler size amp interval-one interval-two beg dur))))))
-  
-  (define effects-moog 
-    (let ((documentation "(effects-moog freq Q beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq Q beg dur snd chn)
-	(let ((gen (make-moog-filter freq Q)))
-	  (map-channel (lambda (inval)
-			 (moog-filter gen inval))
-		       beg dur snd chn #f
-		       (format #f "effects-moog ~A ~A ~A ~A" freq Q beg dur))))))
-  
-  (define effects-bbp 
-    (let ((documentation "(effects-bbp freq bw beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq bw beg dur snd chn)
-	(let ((flt (make-butter-band-pass freq bw)))
-	  (clm-channel flt beg dur snd chn #f #f
-		       (format #f "effects-bbp ~A ~A ~A ~A" freq bw beg dur))))))
-  
-  (define effects-bbr 
-    (let ((documentation "(effects-bbr freq bw beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq bw beg dur snd chn)
-	(let ((flt (make-butter-band-reject freq bw)))
-	  (clm-channel flt beg dur snd chn #f #f
-		       (format #f "effects-bbr ~A ~A ~A ~A" freq bw beg dur))))))
-  
-  (define effects-bhp 
-    (let ((documentation "(effects-bhp freq beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq beg dur snd chn)
-	(let ((flt (make-butter-high-pass freq)))
-	  (clm-channel flt beg dur snd chn #f #f
-		       (format #f "effects-bhp ~A ~A ~A" freq beg dur))))))
-  
-  (define effects-blp 
-    (let ((documentation "(effects-blp freq beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq beg dur snd chn)
-	(let ((flt (make-butter-low-pass freq)))
-	  (clm-channel flt beg dur snd chn #f #f
-		       (format #f "effects-blp ~A ~A ~A" freq beg dur))))))
-  
   
   (let* ((filter-menu-list ())
 	 (filter-menu (XmCreatePulldownMenu (main-menu effects-menu) "Filter Effects"
@@ -1624,32 +1516,6 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;; MODULATION EFFECTS
 ;;;
   
-  (define effects-am 
-    (let ((documentation "(effects-am freq en beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq en beg dur snd chn)
-	(let ((os (make-oscil freq))
-	      (e (and en (make-env en :length dur))))
-	  (map-channel (if e
-			   (lambda (inval)
-			     (amplitude-modulate 1.0 inval (* (env e) (oscil os))))
-			   (lambda (inval)
-			     (amplitude-modulate 1.0 inval (oscil os))))
-		       beg dur snd chn #f
-		       (format #f "effects-am ~A ~A ~A ~A" freq (and en (format #f "'~A" en)) beg dur))))))
-  
-  (define effects-rm 
-    (let ((documentation "(effects-rm freq gliss-env beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (freq gliss-env beg dur snd chn)
-	(let ((os (make-oscil freq))
-	      (e (and gliss-env (make-env gliss-env :length dur))))
-	  (map-channel (if e
-			   (lambda (inval)
-			     (* inval (env e) (oscil os)))
-			   (lambda (inval)
-			     (* inval (oscil os))))
-		       beg dur snd chn #f
-		       (format #f "effects-rm ~A ~A ~A ~A" freq (and gliss-env (format #f "'~A" gliss-env)) beg dur))))))
-  
   (let* ((mod-menu-list ())
 	 (mod-menu (XmCreatePulldownMenu (main-menu effects-menu) "Modulation Effects"
 					 (list XmNbackground *basic-color*)))
@@ -1893,10 +1759,6 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 	      (+ inval
 		 (delay outdel1 (comb-bank combs (all-pass-bank allpasses (* inval (env e))))))))))))
   
-  (define* (effects-jc-reverb-1 volume beg dur snd chn)
-    (let ((ef (effects-jc-reverb volume (or beg 0) (or dur (framples snd chn)) snd chn)))
-      (map-channel ef (or beg 0) dur snd chn #f (format #f "effects-jc-reverb-1 ~A ~A ~A" volume beg dur))))
-  
   (let ((reverb-menu-list ())
 	(reverb-menu (XmCreatePulldownMenu (main-menu effects-menu) "Reverbs"
 					   (list XmNbackground *basic-color*))))
@@ -2020,7 +1882,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				(effects-jc-reverb jc-reverb-volume samps (framples)))
 			      jc-reverb-target 
 			      (lambda (target samps) 
-				(format #f "effects-jc-reverb-1 ~A" jc-reverb-volume))
+				(format #f "effects-jc-reverb ~A" jc-reverb-volume))
 			      (and (not jc-reverb-truncate) jc-reverb-decay)))
 			   
 			   (lambda (w context info)
@@ -2181,20 +2043,6 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 		(map-channel ef 0 len snd chn #f (format #f "effects-position-sound ~A '~A" mono-snd pos))))))))
 
   
-  (define effects-flange 
-    (let ((documentation "(effects-flange amount speed time beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (amount speed time beg dur snd chn)
-	(let ((ri (make-rand-interp :frequency speed :amplitude amount))
-	      (del (let ((len (round (* time (srate snd)))))
-		     (make-delay len :max-size (round (+ len amount 1))))))
-	  (map-channel (lambda (inval)
-			 (* .75 (+ inval
-				   (delay del
-					  inval
-					  (rand-interp ri)))))
-		       beg dur snd chn #f (format #f "effects-flange ~A ~A ~A ~A ~A"
-						  amount speed time beg (and (number? dur) (not (= dur (framples snd chn))) dur)))))))
-  
   (define effects-cross-synthesis 
     (let ((documentation "(effects-cross-synthesis cross-snd amp fftsize r) is used by the effects dialog to tie into edit-list->function"))
       (lambda (cross-snd amp fftsize r)
@@ -2224,13 +2072,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	      (set! ctr (+ ctr 1))
 	      (float-vector-add! spectr fdr)
 	      (* amp (formant-bank formants inval))))))))
-  
-  (define effects-cross-synthesis-1 
-    (let ((documentation "(effects-cross-synthesis-1 cross-snd amp fftsize r beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (cross-snd amp fftsize r beg dur snd chn)
-	(let ((ef (effects-cross-synthesis (if (sound? cross-snd) cross-snd (car (sounds))) amp fftsize r)))
-	  (map-channel ef beg dur snd chn #f (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A ~A ~A" cross-snd amp fftsize r beg dur))))))
-  
+
   (let ((misc-menu-list ())
 	(misc-menu (XmCreatePulldownMenu (main-menu effects-menu) "Various"
 					 (list XmNbackground *basic-color*))))
@@ -2487,7 +2329,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 				    (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
 				  cross-synth-target 
 				  (lambda (target samps)
-				    (format #f "effects-cross-synthesis-1 ~A ~A ~A ~A"
+				    (format #f "effects-cross-synthesis ~A ~A ~A ~A"
 					    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
 				  #f))
 			       
@@ -3002,36 +2844,34 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (smooth-sound (- click 2) 4)
 		       (remove-click (+ click 2)))))))
   
-  (define* (effects-remove-dc snd chn)
-    (let* ((len (framples snd chn))
-	   (data (make-float-vector len))
-	   (reader (make-sampler 0 snd chn)))
-      (do ((lastx 0.0)
-	   (lasty 0.0)
-	   (i 0 (+ i 1)))
-	  ((= i len))
-	(let ((inval (next-sample reader)))
-	  (set! lasty (- (+ inval (* 0.999 lasty)) lastx))
-	  (set! lastx inval)
-	  (float-vector-set! data i lasty)))
-      (float-vector->channel data 0 len snd chn current-edit-position "effects-remove-dc")))
-  
-  (add-to-menu effects-menu "Remove DC" effects-remove-dc)
+  (add-to-menu effects-menu "Remove DC" 
+	       (lambda* (snd chn)
+		 (let* ((len (framples snd chn))
+			(data (make-float-vector len))
+			(reader (make-sampler 0 snd chn)))
+		   (do ((lastx 0.0)
+			(lasty 0.0)
+			(i 0 (+ i 1)))
+		       ((= i len))
+		     (let ((inval (next-sample reader)))
+		       (set! lasty (- (+ inval (* 0.999 lasty)) lastx))
+		       (set! lastx inval)
+		       (float-vector-set! data i lasty)))
+		   (float-vector->channel data 0 len snd chn current-edit-position "effects-remove-dc"))))
   
   (add-to-menu effects-menu "Spiker" spike)
   
-  (define* (effects-compand snd chn)
-    (let ((tbl (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
-			     0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
-      (let ((len (framples snd chn)))
-	(let ((reader (make-sampler 0 snd chn))
-	      (data (make-float-vector len)))
-	  (do ((i 0 (+ i 1)))
-	      ((= i len))
-	    (float-vector-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)))
-	  (float-vector->channel data 0 len snd chn current-edit-position "effects-compand")))))
-  
-  (add-to-menu effects-menu "Compand" effects-compand)
+  (add-to-menu effects-menu "Compand" 
+	       (lambda* (snd chn)
+		 (let ((tbl (float-vector -1.000 -0.960 -0.900 -0.820 -0.720 -0.600 -0.450 -0.250
+					  0.000 0.250 0.450 0.600 0.720 0.820 0.900 0.960 1.000)))
+		   (let ((len (framples snd chn)))
+		     (let ((reader (make-sampler 0 snd chn))
+			   (data (make-float-vector len)))
+		       (do ((i 0 (+ i 1)))
+			   ((= i len))
+			 (float-vector-set! data i (array-interp tbl (+ 8.0 (* 8.0 (next-sample reader))) 17)))
+		       (float-vector->channel data 0 len snd chn current-edit-position "effects-compand"))))))
   
   (add-to-menu effects-menu "Invert" (lambda () (scale-by -1)))
   (add-to-menu effects-menu "Reverse" reverse-sound)

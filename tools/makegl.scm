@@ -509,10 +509,6 @@
 	  (arg-start 0)
 	  (line-len 0))
       
-      (define (hey-mark)
-	;; start of checked line
-	(set! arg-start line-len))
-      
       (define (hey-on . args)
 	;; no cr -- just append
 	(let ((line (apply format #f args)))
@@ -593,15 +589,12 @@
 		 (set! ctr (+ 1 ctr))))
 	     args)))
       (let ((using-result (and (> refargs 0)
-			       (not (string=? return-type "void"))))
-	    (hey-start (lambda ()
-			 ;; start of checked line
-			 (set! line-len 0))))
+			       (not (string=? return-type "void")))))
 	(if using-result
 	    (begin
 	      (hey "  {~%")
 	      (hey "    Xen result;~%")))
-	(hey-start)
+	(set! line-len 0)
 	(if (string=? return-type "void")
 	    (hey-on "  ")
 	    (hey-on (if (= refargs 0)
@@ -610,22 +603,22 @@
 		    (no-stars return-type)))
 	
 	(hey-on "~A(" name)
-	(hey-mark)
+	(set! arg-start line-len)
 	(if (> argslen 0)
 	    (let ((previous-arg #f))
 	      (for-each
 	       (lambda (arg)
 		 (let ((argname (cadr arg))
-		       (argtype (car arg))
-		       (hey-ok (lambda (arg)
-				 ;; cr ok after arg
-				 (set! line-len (+ line-len (length arg)))
-				 (heyc arg)
-				 (if (> line-len 120)
-				     (begin
-				       (format gl-file "~%~NC" arg-start #\space)
-				       (set! line-len arg-start))))))
-		   (if previous-arg (hey-ok ", "))
+		       (argtype (car arg)))
+		   (if previous-arg 
+		       (let ((arg ", "))
+			 ;; cr ok after arg
+			 (set! line-len (+ line-len (length arg)))
+			 (heyc arg)
+			 (if (> line-len 120)
+			     (begin
+			       (format gl-file "~%~NC" arg-start #\space)
+			       (set! line-len arg-start)))))
 		   (if (and (not previous-arg)
 			    (> (length data) 4)
 			    (eq? (data 4) 'const))

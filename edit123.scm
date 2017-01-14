@@ -28,7 +28,7 @@
 
 (define status 0)
 (define curpos 0)
-(define is-playing 0)
+(define playing? 0)
 
 (define open-next-file-in-directory
   (let ((last-file-opened #f)
@@ -119,12 +119,12 @@
 
 (hook-push start-playing-hook 
 	   (lambda (hook)
-	     (set! is-playing 1)))
+	     (set! playing? 1)))
 
 
 (hook-push stop-playing-hook 
 	   (lambda (hook)
-	     (set! is-playing 0)))
+	     (set! playing? 0)))
 
 (define (eos )
   (set! (cursor) (+ (selection-position) (selection-framples))))
@@ -299,7 +299,7 @@
   )
 
 (define (toggle-play)
-  (lambda () (case is-playing
+  (lambda () (case playing?
 	       ((1) (stop-playing))
 	       ((0) (play))
 	       )))

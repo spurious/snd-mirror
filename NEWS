@@ -1,13 +1,14 @@
-Snd 17.0.
+Snd 17.1:
 
-Tito Latini fixed many bugs, especially in save-state and snd-mix, 
-  and made it possible to move dialogs between desktops in Motif.
+*rootlet-redefinition-hook*
+{apply_values} -> apply-values, {list} -> list-values, {append} -> append
+a case clause without a result returns the selector
+(*s7* 'autoloading) to turn the autoloader on and off
+sandbox in stuff.scm for protected evaluation
 
-Mike Scholz updated snd-test.fs|rb and made clm.rb compatible
-  with the latest Ruby.
+in clm: clm.asd updated by Tito Latini.
 
-checked: gtk 3.22.2|3|4, gtk 3.89.1, sbcl 1.3.11|12.
+checked:  gsl 2.2.1, gtk 3.89.2, sbcl 1.13.3, FreeBSD 11.0
 
-Thanks!: Mike Scholz, Anders Vinjar, Tito Latini, Kjetil Matheussen, 
-         IOhannes m zmölnig.
+Thanks!: Tito Latini, Kjetil Matheussen, Juan Cerillo, Mike Scholz.
 
