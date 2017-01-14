@@ -1450,9 +1450,9 @@
 		  (let ((nf (cdar body))
 			(sequence (case (car initial-value)
 				    ((let let*) ; named-let, not define
-				     (let ((args (caddr initial-value)))
-				       (and (pair? (cdar args))
-					    (cadar args))))
+				     (let ((args (cdar (caddr initial-value))))
+				       (and (pair? args)
+					    (car args))))
 				    ((lambda lambda*)
 				     (caadr initial-value))
 				    (else (cadadr initial-value)))))
@@ -2547,19 +2547,19 @@
 	    (let ((new-e (case (car (->eqf (car arg1)))
 			   ((eq?)
 			    (case (car a2)
-			      ((memq assq eq?) (car a2))
+			      ((memq assq eq?))
 			      ((memv member) 'memq)
 			      ((assv assoc) 'assq)
 			      ((eqv? equal?) 'eq?)))
 			   ((eqv?)
 			    (case (car a2)
-			      ((memv assv eqv?) (car a2))
+			      ((memv assv eqv?))
 			      ((memq member) 'memv)
 			      ((assq assoc) 'assv)
 			      ((eq? equal?) 'eqv?)))
 			   ((equal?)
 			    (case (car a2)
-			      ((member assoc equal?) (car a2))
+			      ((member assoc equal?))
 			      ((memq memv) 'member)
 			      ((assq assv) 'assoc)
 			      ((eq? eqv?) 'equal?)))
@@ -4478,7 +4478,7 @@
 	      
 	      (define (num+ args form env)
 		(case (length args)
-		  ((0) 0)
+		  ((0))
 		  ((1) (car args))
 		  (else 
 		   (let ((val (remove-all 0 (splice-if '+ args))))
@@ -4523,7 +4523,7 @@
 					      env))
 			 
 			 (case (length val)
-			   ((0) 0)                                      ; (+) -> 0
+			   ((0))                                        ; (+) -> 0
 			   ((1) (car val))                              ; (+ x) -> x
 			   ((2)
 			    (let ((arg1 (car val))
@@ -5078,74 +5078,75 @@
 
 	    (let ()
 	      (define (numtrig args form env)
-		;; perhaps someday, for amusement:
-		;;    (sin (acos x)) == (cos (asin x)) == (sqrt (- 1 (expt x 2)))
-		;;    (asin (cos x)) == (acos (sin x)) == (- (* 1/2 pi) x)
-		;; also since (for example) sin(x - y) = -sin(y - x) and cos(x - y) = cos(y - x), can other simplifiers swap?
-		(cond ((not (len=1? args))
-		       (cons (car form) args))
-
-		      ((and (len=2? (car args))                 ; (sin (asin x)) -> x
-			    (eq? (caar args)
-				 (case (car form)
-				   ((sin) 'asin)
-				   ((cos) 'acos)
-				   ((tan) 'atan)
-				   ((asin) 'sin)
-				   ((acos) 'cos)
-				   ((atan) 'tan)
-				   ((sinh) 'asinh)
-				   ((cosh) 'acosh)
-				   ((tanh) 'atanh)
-				   ((asinh) 'sinh)
-				   ((acosh) 'cosh)
-				   ((atanh) 'tanh)
-				   ((log) 'exp)
-				   ((exp) 'log))))
-		       (cadar args))
-
-		      ((eqv? (car args) 0)                     ; (sin 0) -> 0
-		       (case (car form)
-			 ((sin asin sinh asinh tan tanh atanh) 0)
-			 ((exp cos cosh) 1)
-			 (else (cons (car form) args))))
-
-		      ((and (eq? (car form) 'cos)              ; (cos (- x)) -> (cos x)
-			    (len=2? (car args))
-			    (eq? (caar args) '-))
-		       (list 'cos (cadar args)))
-
-		      ((or (eq? (car args) 'pi)                ; (sin pi) -> 0.0
-			   (and (len=2? (car args))
-				(eq? (caar args) '-)
-				(eq? (cadar args) 'pi)))
-		       (case (car form)
-			 ((sin tan) 0.0)
-			 ((cos) -1.0)
-			 (else (cons (car form) args))))
-
-		      ((eqv? (car args) 0.0)                   ; (sin 0.0) -> 0.0
-		       ((symbol->value (car form)) 0.0))
-
-		      ((and (eq? (car form) 'acos)             ; (acos -1) -> pi
-			    (eqv? (car args) -1))
-		       'pi)
-
-		      ((and (eq? (car form) 'exp)              ; (exp (* a (log b))) -> (expt b a)
-			    (pair? (car args))
-			    (eq? (caar args) '*))
-		       (let ((targ (cdar args)))
-			 (cond ((not (= (length targ) 2))
-				(cons (car form) args))
-			       ((and (len=2? (car targ))
-				     (eq? (caar targ) 'log))
-				(list 'expt (cadar targ) (cadr targ)))
-			       ((and (len=2? (cadr targ))
-				     (eq? (caadr targ) 'log))
-				(list 'expt (cadadr targ) (car targ)))
-			       (else (cons (car form) args)))))
-
-		      (else (cons (car form) args))))
+		(let ((head (car form)))
+		  ;; perhaps someday, for amusement:
+		  ;;    (sin (acos x)) == (cos (asin x)) == (sqrt (- 1 (expt x 2)))
+		  ;;    (asin (cos x)) == (acos (sin x)) == (- (* 1/2 pi) x)
+		  ;; also since (for example) sin(x - y) = -sin(y - x) and cos(x - y) = cos(y - x), can other simplifiers swap?
+		  (cond ((not (len=1? args))
+			 (cons head args))
+			
+			((and (len=2? (car args))                 ; (sin (asin x)) -> x
+			      (eq? (caar args)
+				   (case head
+				     ((sin) 'asin)
+				     ((cos) 'acos)
+				     ((tan) 'atan)
+				     ((asin) 'sin)
+				     ((acos) 'cos)
+				     ((atan) 'tan)
+				     ((sinh) 'asinh)
+				     ((cosh) 'acosh)
+				     ((tanh) 'atanh)
+				     ((asinh) 'sinh)
+				     ((acosh) 'cosh)
+				     ((atanh) 'tanh)
+				     ((log) 'exp)
+				     ((exp) 'log))))
+			 (cadar args))
+			
+			((eqv? (car args) 0)                     ; (sin 0) -> 0
+			 (case head
+			   ((sin asin sinh asinh tan tanh atanh) 0)
+			   ((exp cos cosh) 1)
+			   (else (cons head args))))
+			
+			((and (eq? head 'cos)              ; (cos (- x)) -> (cos x)
+			      (len=2? (car args))
+			      (eq? (caar args) '-))
+			 (list 'cos (cadar args)))
+			
+			((or (eq? (car args) 'pi)                ; (sin pi) -> 0.0
+			     (and (len=2? (car args))
+				  (eq? (caar args) '-)
+				  (eq? (cadar args) 'pi)))
+			 (case head
+			   ((sin tan) 0.0)
+			   ((cos) -1.0)
+			   (else (cons head args))))
+			
+			((eqv? (car args) 0.0)                   ; (sin 0.0) -> 0.0
+			 ((symbol->value head) 0.0))
+			
+			((and (eq? head 'acos)             ; (acos -1) -> pi
+			      (eqv? (car args) -1))
+			 'pi)
+			
+			((and (eq? head 'exp)              ; (exp (* a (log b))) -> (expt b a)
+			      (pair? (car args))
+			      (eq? (caar args) '*))
+			 (let ((targ (cdar args)))
+			   (cond ((not (= (length targ) 2))
+				  (cons head args))
+				 ((and (len=2? (car targ))
+				       (eq? (caar targ) 'log))
+				  (list 'expt (cadar targ) (cadr targ)))
+				 ((and (len=2? (cadr targ))
+				       (eq? (caadr targ) 'log))
+				  (list 'expt (cadadr targ) (car targ)))
+				 (else (cons head args)))))
+			
+			(else (cons head args)))))
 	      (for-each
 	       (lambda (f)
 		 (hash-table-set! h f numtrig))
@@ -5358,20 +5359,21 @@
 	    
 	    (let ()
 	      (define (numrat args form env)
-		(let ((len (length args)))
+		(let ((len (length args))
+		      (head (car form)))
 		  (cond ((just-rationals? args)
 			 (catch #t ; catch needed here for things like (ash 2 64)
 			   (lambda ()
-			     (apply (symbol->value (car form)) args))
+			     (apply (symbol->value head) args))
 			   (lambda ignore
-			     (cons (car form) args)))) ; use this form to pick up possible arg changes
+			     (cons head args)))) ; use this form to pick up possible arg changes
 			
-			((and (eq? (car form) 'ash)          ; (ash x 0) -> x
+			((and (eq? head 'ash)          ; (ash x 0) -> x
 			      (= len 2) 
 			      (eqv? (cadr args) 0))
 			 (car args))
 			
-			((case (car form)
+			((case head
 			   ((quotient)                       ; (quotient (remainder x y) y) -> 0
 			    (and (= len 2)
 				 (pair? (car args))
@@ -5383,13 +5385,13 @@
 			   (else #f))
 			 0)
 			
-			((and (eq? (car form) 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
+			((and (eq? head 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
 			      (= len 2)
 			      (pair? (car args))
 			      (eq? (caar args) 'abs))
 			 (list 'modulo (cadar args) (cadr args)))
 			
-			(else (cons (car form) args)))))
+			(else (cons head args)))))
 	      (for-each
 	       (lambda (f)
 		 (hash-table-set! h f numrat))
@@ -6842,7 +6844,7 @@
 							((string>=?) 'string-ci>=?)
 							((string<?) 'string-ci<?)
 							((string>?) 'string-ci>?)
-							(else head))))
+							(else))))
 					      (cons op (map (lambda (a)
 							      (if (and (pair? a)
 								       (memq (car a) '(string-upcase string-downcase)))
@@ -20498,19 +20500,20 @@
 	
 	(hash-walker 'define-method   ; guile and mit-scheme have different syntaxes here
 		     (lambda (caller form env)
-		       (if (not (len>1? (cdr form)))
-			   env
-			   (if (symbol? (cadr form))
-			       (if (keyword? (cadr form))
-				   (lint-walk-body caller 'define-method (cdddr form) env)
-				   (let ((new-env (if (var-member (cadr form) env)
-						      env
-						      (cons (make-fvar (cadr form) :ftype 'define-method) env))))
-				     (lint-walk-body caller (cadr form) (cdddr form) new-env)))
-			       (let ((new-env (if (var-member (caadr form) env)
-						  env
-						  (cons (make-fvar (caadr form) :ftype 'define-method) env))))
-				 (lint-walk-body caller (caadr form) (cddr form) new-env))))))
+		       (let ((cdr-form (cdr form)))
+			 (if (not (len>1? cdr-form))
+			     env
+			     (if (symbol? (car cdr-form))
+				 (if (keyword? (car cdr-form))
+				     (lint-walk-body caller 'define-method (cddr cdr-form) env)
+				     (let ((new-env (if (var-member (car cdr-form) env)
+							env
+							(cons (make-fvar (car cdr-form) :ftype 'define-method) env))))
+				       (lint-walk-body caller (car cdr-form) (cddr cdr-form) new-env)))
+				 (let ((new-env (if (var-member (caar cdr-form) env)
+						    env
+						    (cons (make-fvar (caar cdr-form) :ftype 'define-method) env))))
+				   (lint-walk-body caller (caar cdr-form) (cdr cdr-form) new-env)))))))
 	
 	(hash-walker 'let-syntax (lambda (caller form env)
 				   (lint-walk-body caller 'define-method (cddr form) env)

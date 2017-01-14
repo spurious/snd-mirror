@@ -79,24 +79,23 @@
 			    (all-chans)
 			    (list (list (selected-sound)) (list (selected-channel)))))))))))
   
-  (define yellow-pixel
-    (let ((pix #f))
-      (lambda ()
-	(if (not pix)
-	    (let* ((dpy (XtDisplay (cadr (main-widgets))))
-		   (cmap (DefaultColormap dpy (DefaultScreen dpy)))
-		   (col (XColor)))
-	      (if (= (XAllocNamedColor dpy cmap "yellow" col col) 0)
-		  (snd-error "can't allocate yellow!")
-		  (set! pix (.pixel col)))))
-	pix)))
-
-  
   (define (add-target mainform target-callback truncate-callback)
     ;; add a set of 3 radio buttons at the bottom of the main section for choice between sound, selection, between-marks
     ;;   target-callback should take one arg, a symbol: 'sound, 'selection, 'marks, and apply the effect accordingly (upon "DoIt")
     ;;   truncate-callback (if any) takes one arg: boolean representing toggle state (#t = on)
     
+    (define yellow-pixel
+      (let ((pix #f))
+	(lambda ()
+	  (if (not pix)
+	      (let* ((dpy (XtDisplay (cadr (main-widgets))))
+		     (cmap (DefaultColormap dpy (DefaultScreen dpy)))
+		     (col (XColor)))
+		(if (= (XAllocNamedColor dpy cmap "yellow" col col) 0)
+		    (snd-error "can't allocate yellow!")
+		    (set! pix (.pixel col)))))
+	  pix)))
+  
     (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
 			   (list XmNorientation      XmHORIZONTAL
 				 XmNseparatorType    XmSHADOW_ETCHED_OUT
@@ -714,147 +713,147 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     
 ;;; -------- Butterworth band-pass filter
     
-    (let* ((band-pass-freq 1000)
-	   (band-pass-bw 100)
-	   (post-band-pass-dialog
-	    (let ((band-pass-label "Band-pass filter")
-		  (band-pass-dialog #f)
-		  (band-pass-target 'sound))
-	      (lambda ()
-		(unless (Widget? band-pass-dialog)
-		  ;; if band-pass-dialog doesn't exist, create it
-		  (let ((initial-band-pass-freq 1000)
-			(initial-band-pass-bw 100)
-			(sliders ()))
-		    (set! band-pass-dialog 
-			  (make-effect-dialog 
-			   band-pass-label
-			   
-			   (lambda (w context info)
-			     (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
-			       (case band-pass-target 
-				 ((sound)
-				  (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw)))
-				 ((selection)
-				  (filter-selection flt))
-				 (else
-				  (let ((ms (plausible-mark-samples)))
-				    (let ((bg (car ms))
-					  (nd (- (+ (cadr ms) 1) (car ms))))
-				      (clm-channel flt bg nd #f #f #f #f 
-						   (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
-			   (lambda (w context info)
-			     (help-dialog "Band-pass filter"
-					  "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
-			   
-			   (lambda (w c i)
-			     (set! band-pass-freq initial-band-pass-freq)
-			     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 band-pass-freq 22050)))
-			     (set! band-pass-bw initial-band-pass-bw)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor band-pass-bw))))
-			   
-			   (lambda () 
-			     (effect-target-ok band-pass-target))))
-		    
-		    (set! sliders
-			  (add-sliders band-pass-dialog
-				       (list (list "center frequency" 20 initial-band-pass-freq 22050
-						   (lambda (w context info)
-						     (set! band-pass-freq (scale-linear->log 20 (.value info) 22050)))
-						   1 'log)
-					     (list "bandwidth" 0 initial-band-pass-bw 1000
-						   (lambda (w context info)
-						     (set! band-pass-bw (.value info)))
-						   1))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! band-pass-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild band-pass-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog band-pass-dialog))))
-      
-	   (child (XtCreateManagedWidget "Band-pass filter" xmPushButtonWidgetClass filter-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-band-pass-dialog)))
-      
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Band-pass filter (~,2F ~D" band-pass-freq band-pass-bw)))
-				   filter-menu-list)))
+    (let ((band-pass-freq 1000)
+	  (band-pass-bw 100))
+      (let* ((post-band-pass-dialog
+	      (let ((band-pass-label "Band-pass filter")
+		    (band-pass-dialog #f)
+		    (band-pass-target 'sound))
+		(lambda ()
+		  (unless (Widget? band-pass-dialog)
+		    ;; if band-pass-dialog doesn't exist, create it
+		    (let ((initial-band-pass-freq 1000)
+			  (initial-band-pass-bw 100)
+			  (sliders ()))
+		      (set! band-pass-dialog 
+			    (make-effect-dialog 
+			     band-pass-label
+			     
+			     (lambda (w context info)
+			       (let ((flt (make-butter-band-pass band-pass-freq band-pass-bw)))
+				 (case band-pass-target 
+				   ((sound)
+				    (filter-sound flt #f #f #f #f (format #f "effects-bbp ~A ~A 0 #f" band-pass-freq band-pass-bw)))
+				   ((selection)
+				    (filter-selection flt))
+				   (else
+				    (let ((ms (plausible-mark-samples)))
+				      (let ((bg (car ms))
+					    (nd (- (+ (cadr ms) 1) (car ms))))
+					(clm-channel flt bg nd #f #f #f #f 
+						     (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd))))))))
+			     (lambda (w context info)
+			       (help-dialog "Band-pass filter"
+					    "Butterworth band-pass filter. Move the sliders to change the center frequency and bandwidth."))
+			     
+			     (lambda (w c i)
+			       (set! band-pass-freq initial-band-pass-freq)
+			       (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 band-pass-freq 22050)))
+			       (set! band-pass-bw initial-band-pass-bw)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor band-pass-bw))))
+			     
+			     (lambda () 
+			       (effect-target-ok band-pass-target))))
+		      
+		      (set! sliders
+			    (add-sliders band-pass-dialog
+					 (list (list "center frequency" 20 initial-band-pass-freq 22050
+						     (lambda (w context info)
+						       (set! band-pass-freq (scale-linear->log 20 (.value info) 22050)))
+						     1 'log)
+					       (list "bandwidth" 0 initial-band-pass-bw 1000
+						     (lambda (w context info)
+						       (set! band-pass-bw (.value info)))
+						     1))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! band-pass-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild band-pass-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog band-pass-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Band-pass filter" xmPushButtonWidgetClass filter-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-band-pass-dialog)))
+	
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Band-pass filter (~,2F ~D" band-pass-freq band-pass-bw)))
+				     filter-menu-list))))
     
 ;;; -------- Butterworth band-reject (notch) filter
     
-    (let* ((notch-freq 100)
-	   (notch-bw 100)
-	   (post-notch-dialog
-	    (let ((notch-label "Band-reject filter")
-		  (notch-dialog #f)
-		  (notch-target 'sound))
-	      (lambda ()
-		(unless (Widget? notch-dialog)
-		  ;; if notch-dialog doesn't exist, create it
-		  (let ((initial-notch-freq 100)
-			(initial-notch-bw 100)
-			(sliders ()))
-		    (set! notch-dialog 
-			  (make-effect-dialog 
-			   notch-label
-			   
-			   (lambda (w context info) 
-			     (let ((flt (make-butter-band-reject notch-freq notch-bw)))
-			       (case notch-target 
-				 ((sound)
-				  (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw)))
-				 ((selection)
-				  (filter-selection flt))
-				 (else
-				  (let ((ms (plausible-mark-samples)))
-				    (let ((bg (car ms))
-					  (nd (- (+ (cadr ms) 1) (car ms))))
-				      (clm-channel flt bg nd #f #f #f #f 
-						   (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
-			   (lambda (w context info)
-			     (help-dialog "Band-reject filter"
-					  "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
-			   
-			   (lambda (w c i)
-			     (set! notch-freq initial-notch-freq)
-			     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 notch-freq 22050)))
-			     (set! notch-bw initial-notch-bw)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor notch-bw))))
-			   
-			   (lambda () 
-			     (effect-target-ok notch-target))))
-		    
-		    (set! sliders
-			  (add-sliders notch-dialog
-				       (list (list "center frequency" 20 initial-notch-freq 22050
-						   (lambda (w context info)
-						     (set! notch-freq (scale-linear->log 20 (.value info) 22050)))
-						   1 'log)
-					     (list "bandwidth" 0 initial-notch-bw 1000
-						   (lambda (w context info)
-						     (set! notch-bw (.value info)))
-						   1))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! notch-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild notch-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog notch-dialog))))
-      
-	   (child (XtCreateManagedWidget "Band-reject filter" xmPushButtonWidgetClass filter-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-notch-dialog)))
-      
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
-				   filter-menu-list)))
+    (let ((notch-freq 100)
+	  (notch-bw 100))
+      (let* ((post-notch-dialog
+	      (let ((notch-label "Band-reject filter")
+		    (notch-dialog #f)
+		    (notch-target 'sound))
+		(lambda ()
+		  (unless (Widget? notch-dialog)
+		    ;; if notch-dialog doesn't exist, create it
+		    (let ((initial-notch-freq 100)
+			  (initial-notch-bw 100)
+			  (sliders ()))
+		      (set! notch-dialog 
+			    (make-effect-dialog 
+			     notch-label
+			     
+			     (lambda (w context info) 
+			       (let ((flt (make-butter-band-reject notch-freq notch-bw)))
+				 (case notch-target 
+				   ((sound)
+				    (filter-sound flt #f #f #f #f (format #f "effects-bbr ~A ~A 0 #f" notch-freq notch-bw)))
+				   ((selection)
+				    (filter-selection flt))
+				   (else
+				    (let ((ms (plausible-mark-samples)))
+				      (let ((bg (car ms))
+					    (nd (- (+ (cadr ms) 1) (car ms))))
+					(clm-channel flt bg nd #f #f #f #f 
+						     (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd))))))))
+			     (lambda (w context info)
+			       (help-dialog "Band-reject filter"
+					    "Butterworth band-reject filter. Move the sliders to change the center frequency and bandwidth."))
+			     
+			     (lambda (w c i)
+			       (set! notch-freq initial-notch-freq)
+			       (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 notch-freq 22050)))
+			       (set! notch-bw initial-notch-bw)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor notch-bw))))
+			     
+			     (lambda () 
+			       (effect-target-ok notch-target))))
+		      
+		      (set! sliders
+			    (add-sliders notch-dialog
+					 (list (list "center frequency" 20 initial-notch-freq 22050
+						     (lambda (w context info)
+						       (set! notch-freq (scale-linear->log 20 (.value info) 22050)))
+						     1 'log)
+					       (list "bandwidth" 0 initial-notch-bw 1000
+						     (lambda (w context info)
+						       (set! notch-bw (.value info)))
+						     1))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! notch-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild notch-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog notch-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Band-reject filter" xmPushButtonWidgetClass filter-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-notch-dialog)))
+	
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Band-reject filter (~,2F ~D)" notch-freq notch-bw)))
+				     filter-menu-list))))
     
 ;;; -------- Butterworth high-pass filter
     
@@ -993,254 +992,254 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;;
 ;;; (truncate)
     
-    (let* ((comb-scaler 0.1)
-	  (comb-size 50)
-	  (post-comb-dialog
-	   (let ((comb-label "Comb filter")
-		 (comb-dialog #f)
-		 (comb-target 'sound))
-	     (lambda ()
-	       (unless (Widget? comb-dialog)
-		 ;; if comb-dialog doesn't exist, create it
-		 (let ((initial-comb-scaler 0.1)
-		       (initial-comb-size 50)
-		       (sliders ()))
-		   (set! comb-dialog 
-			 (make-effect-dialog 
-			  comb-label
-			  
-			  (lambda (w context info) 
-			    (map-chan-over-target-with-sync
-			     (lambda (ignored) 
-			       (effects-comb-filter comb-scaler comb-size)) 
-			     comb-target 
-			     (lambda (target samps)
-			       (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
-			     #f))
-			  
-			  (lambda (w context info)
-			    (help-dialog "Comb filter"
-					 "Move the sliders to change the comb scaler and size."))
-			  
-			  (lambda (w c i)
-			    (set! comb-scaler initial-comb-scaler)
-			    (XtSetValues (car sliders) (list XmNvalue (floor (* comb-scaler 100))))
-			    (set! comb-size initial-comb-size)
-			    (XtSetValues (cadr sliders) (list XmNvalue (floor comb-size))))
-			  
-			  (lambda () 
-			    (effect-target-ok comb-target))))
-		   
-		   (set! sliders
-			 (add-sliders comb-dialog
-				      (list (list "scaler" 0.0 initial-comb-scaler 1.0
-						  (lambda (w context info)
-						    (set! comb-scaler (/ (.value info) 100.0)))
-						  100)
-					    (list "size" 0 initial-comb-size 100
-						  (lambda (w context info)
-						    (set! comb-size (.value info)))
-						  1))))
-		   (add-target (XtParent (car sliders)) 
-			       (lambda (target) 
-				 (set! comb-target target)
-				 (XtSetSensitive (XmMessageBoxGetChild comb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-			       #f)))
-	       
-	       (activate-dialog comb-dialog))))
-	  
-	  (child (XtCreateManagedWidget "Comb filter" xmPushButtonWidgetClass filter-menu
-					(list XmNbackground *basic-color*))))
-      
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-comb-dialog)))
-      
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
-				   filter-menu-list)))
+    (let ((comb-scaler 0.1)
+	  (comb-size 50))
+      (let* ((post-comb-dialog
+	      (let ((comb-label "Comb filter")
+		    (comb-dialog #f)
+		    (comb-target 'sound))
+		(lambda ()
+		  (unless (Widget? comb-dialog)
+		    ;; if comb-dialog doesn't exist, create it
+		    (let ((initial-comb-scaler 0.1)
+			  (initial-comb-size 50)
+			  (sliders ()))
+		      (set! comb-dialog 
+			    (make-effect-dialog 
+			     comb-label
+			     
+			     (lambda (w context info) 
+			       (map-chan-over-target-with-sync
+				(lambda (ignored) 
+				  (effects-comb-filter comb-scaler comb-size)) 
+				comb-target 
+				(lambda (target samps)
+				  (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))
+				#f))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Comb filter"
+					    "Move the sliders to change the comb scaler and size."))
+			     
+			     (lambda (w c i)
+			       (set! comb-scaler initial-comb-scaler)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* comb-scaler 100))))
+			       (set! comb-size initial-comb-size)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor comb-size))))
+			     
+			     (lambda () 
+			       (effect-target-ok comb-target))))
+		      
+		      (set! sliders
+			    (add-sliders comb-dialog
+					 (list (list "scaler" 0.0 initial-comb-scaler 1.0
+						     (lambda (w context info)
+						       (set! comb-scaler (/ (.value info) 100.0)))
+						     100)
+					       (list "size" 0 initial-comb-size 100
+						     (lambda (w context info)
+						       (set! comb-size (.value info)))
+						     1))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! comb-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild comb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog comb-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Comb filter" xmPushButtonWidgetClass filter-menu
+					   (list XmNbackground *basic-color*))))
+	
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-comb-dialog)))
+	
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Comb filter (~1,2F ~D)" comb-scaler comb-size)))
+				     filter-menu-list))))
     
 ;;; -------- Comb-chord filter
 ;;;
 ;;; (truncate)
     
-    (let* ((new-comb-chord-scaler 0.95)
-	   (new-comb-chord-size 60)
-	   (new-comb-chord-amp 0.3)
-	   (new-comb-chord-interval-one 0.75)
-	   (new-comb-chord-interval-two 1.20)
-	   (post-new-comb-chord-dialog
-	    (let ((new-comb-chord-label "Comb chord filter")
-		  (new-comb-chord-dialog #f)
-		  (new-comb-chord-target 'sound))
-	      (lambda ()
-		(unless (Widget? new-comb-chord-dialog)
-		  ;; if new-comb-chord-dialog doesn't exist, create it
-		  (let ((initial-new-comb-chord-scaler 0.95)
-			(initial-new-comb-chord-size 60)
-			(initial-new-comb-chord-amp 0.3)
-			(initial-new-comb-chord-interval-one 0.75)
-			(initial-new-comb-chord-interval-two 1.20)
-			(sliders ())
-			(new-comb-chord (lambda (scaler size amp interval-one interval-two)
-					  ;; Comb chord filter: create chords by using filters at harmonically related sizes.
-					  (let ((cs (make-comb-bank (vector (make-comb scaler size)
-									    (make-comb scaler (floor (* size interval-one)))
-									    (make-comb scaler (floor (* size interval-two)))))))
-					    (lambda (x)
-					      (* amp (comb-bank cs x)))))))
-		    (set! new-comb-chord-dialog
-			  (make-effect-dialog 
-			   new-comb-chord-label
-			   
-			   (lambda (w context info)
-			     (map-chan-over-target-with-sync
-			      (lambda (ignored)
-				(new-comb-chord new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
-						new-comb-chord-interval-one new-comb-chord-interval-two))
-			      new-comb-chord-target
-			      (lambda (target samps)
-				(format #f "effects-comb-chord ~A ~A ~A ~A ~A" 
-					new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
-					new-comb-chord-interval-one new-comb-chord-interval-two))
-			      #f))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Comb chord filter"
-					  "Creates chords by using filters at harmonically related sizes. Move the sliders to set the comb chord parameters."))
-			   
-			   (lambda (w c i)
-			     (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
-			     (XtSetValues (sliders 0) (list XmNvalue (floor (* new-comb-chord-scaler 100))))
-			     (set! new-comb-chord-size initial-new-comb-chord-size)
-			     (XtSetValues (sliders 1) (list XmNvalue new-comb-chord-size))
-			     (set! new-comb-chord-amp initial-new-comb-chord-amp)
-			     (XtSetValues (sliders 2) (list XmNvalue (floor (* new-comb-chord-amp 100))))
-			     (set! new-comb-chord-interval-one initial-new-comb-chord-interval-one)
-			     (XtSetValues (sliders 3) (list XmNvalue (floor (* new-comb-chord-interval-one 100))))
-			     (set! new-comb-chord-interval-two initial-new-comb-chord-interval-two)
-			     (XtSetValues (sliders 4) (list XmNvalue (floor (* new-comb-chord-interval-two 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok new-comb-chord-target))))
-		    
-		    (set! sliders
-			  (add-sliders new-comb-chord-dialog
-				       (list (list "chord scaler" 0.0 initial-new-comb-chord-scaler 1.0
-						   (lambda (w context info)
-						     (set! new-comb-chord-scaler (/ (.value info) 100.0)))
-						   100)
-					     (list "chord size" 0 initial-new-comb-chord-size 100
-						   (lambda (w context info)
-						     (set! new-comb-chord-size (.value info)))
-						   1)
-					     (list "amplitude" 0.0 initial-new-comb-chord-amp 1.0
-						   (lambda (w context info)
-						     (set! new-comb-chord-amp (/ (.value info) 100.0)))
-						   100)
-					     (list "interval one" 0.0 initial-new-comb-chord-interval-one 2.0
-						   (lambda (w context info)
-						     (set! new-comb-chord-interval-one (/ (.value info) 100.0)))
-						   100)
-					     (list "interval two" 0.0 initial-new-comb-chord-interval-two 2.0
-						   (lambda (w context info)
-						     (set! new-comb-chord-interval-two (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! new-comb-chord-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild new-comb-chord-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog new-comb-chord-dialog))))
+    (let ((new-comb-chord-scaler 0.95)
+	  (new-comb-chord-size 60)
+	  (new-comb-chord-amp 0.3)
+	  (new-comb-chord-interval-one 0.75)
+	  (new-comb-chord-interval-two 1.20))
+      (let* ((post-new-comb-chord-dialog
+	      (let ((new-comb-chord-label "Comb chord filter")
+		    (new-comb-chord-dialog #f)
+		    (new-comb-chord-target 'sound))
+		(lambda ()
+		  (unless (Widget? new-comb-chord-dialog)
+		    ;; if new-comb-chord-dialog doesn't exist, create it
+		    (let ((initial-new-comb-chord-scaler 0.95)
+			  (initial-new-comb-chord-size 60)
+			  (initial-new-comb-chord-amp 0.3)
+			  (initial-new-comb-chord-interval-one 0.75)
+			  (initial-new-comb-chord-interval-two 1.20)
+			  (sliders ())
+			  (new-comb-chord (lambda (scaler size amp interval-one interval-two)
+					    ;; Comb chord filter: create chords by using filters at harmonically related sizes.
+					    (let ((cs (make-comb-bank (vector (make-comb scaler size)
+									      (make-comb scaler (floor (* size interval-one)))
+									      (make-comb scaler (floor (* size interval-two)))))))
+					      (lambda (x)
+						(* amp (comb-bank cs x)))))))
+		      (set! new-comb-chord-dialog
+			    (make-effect-dialog 
+			     new-comb-chord-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync
+				(lambda (ignored)
+				  (new-comb-chord new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
+						  new-comb-chord-interval-one new-comb-chord-interval-two))
+				new-comb-chord-target
+				(lambda (target samps)
+				  (format #f "effects-comb-chord ~A ~A ~A ~A ~A" 
+					  new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp
+					  new-comb-chord-interval-one new-comb-chord-interval-two))
+				#f))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Comb chord filter"
+					    "Creates chords by using filters at harmonically related sizes. Move the sliders to set the comb chord parameters."))
+			     
+			     (lambda (w c i)
+			       (set! new-comb-chord-scaler initial-new-comb-chord-scaler)
+			       (XtSetValues (sliders 0) (list XmNvalue (floor (* new-comb-chord-scaler 100))))
+			       (set! new-comb-chord-size initial-new-comb-chord-size)
+			       (XtSetValues (sliders 1) (list XmNvalue new-comb-chord-size))
+			       (set! new-comb-chord-amp initial-new-comb-chord-amp)
+			       (XtSetValues (sliders 2) (list XmNvalue (floor (* new-comb-chord-amp 100))))
+			       (set! new-comb-chord-interval-one initial-new-comb-chord-interval-one)
+			       (XtSetValues (sliders 3) (list XmNvalue (floor (* new-comb-chord-interval-one 100))))
+			       (set! new-comb-chord-interval-two initial-new-comb-chord-interval-two)
+			       (XtSetValues (sliders 4) (list XmNvalue (floor (* new-comb-chord-interval-two 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok new-comb-chord-target))))
+		      
+		      (set! sliders
+			    (add-sliders new-comb-chord-dialog
+					 (list (list "chord scaler" 0.0 initial-new-comb-chord-scaler 1.0
+						     (lambda (w context info)
+						       (set! new-comb-chord-scaler (/ (.value info) 100.0)))
+						     100)
+					       (list "chord size" 0 initial-new-comb-chord-size 100
+						     (lambda (w context info)
+						       (set! new-comb-chord-size (.value info)))
+						     1)
+					       (list "amplitude" 0.0 initial-new-comb-chord-amp 1.0
+						     (lambda (w context info)
+						       (set! new-comb-chord-amp (/ (.value info) 100.0)))
+						     100)
+					       (list "interval one" 0.0 initial-new-comb-chord-interval-one 2.0
+						     (lambda (w context info)
+						       (set! new-comb-chord-interval-one (/ (.value info) 100.0)))
+						     100)
+					       (list "interval two" 0.0 initial-new-comb-chord-interval-two 2.0
+						     (lambda (w context info)
+						       (set! new-comb-chord-interval-two (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! new-comb-chord-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild new-comb-chord-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog new-comb-chord-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Comb chord filter" xmPushButtonWidgetClass filter-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-new-comb-chord-dialog)))
+	
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child 
+						     (format #f "Comb chord filter (~1,2F ~D ~1,2F ~1,2F ~1,2F)"  
+							     new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
+							     new-comb-chord-interval-one new-comb-chord-interval-two)))
+				     filter-menu-list))))
       
-	   (child (XtCreateManagedWidget "Comb chord filter" xmPushButtonWidgetClass filter-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-new-comb-chord-dialog)))
-      
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child 
-						   (format #f "Comb chord filter (~1,2F ~D ~1,2F ~1,2F ~1,2F)"  
-							   new-comb-chord-scaler new-comb-chord-size new-comb-chord-amp 
-							   new-comb-chord-interval-one new-comb-chord-interval-two)))
-				   filter-menu-list)))
-    
 ;;; -------- Moog filter
 ;;;
     
-    (let* ((moog-cutoff-frequency 10000)
-	   (moog-resonance 0.5)
-	   (post-moog-dialog
-	    (let ((moog-label "Moog filter")
-		  (moog-dialog #f)
-		  (moog-target 'sound))
-	      
-	      (define (moog freq Q)
-		(let ((gen (make-moog-filter freq Q)))
-		  (lambda (inval)
-		    (moog-filter gen inval))))
-	      
-	      (lambda ()
-		(unless (Widget? moog-dialog)
-		  ;; if moog-dialog doesn't exist, create it
-		  (let ((initial-moog-cutoff-frequency 10000)
-			(initial-moog-resonance 0.5)
-			(sliders ()))
-		    (set! moog-dialog 
-			  (make-effect-dialog 
-			   moog-label
-			   
-			   (lambda (w context info)
-			     (map-chan-over-target-with-sync
-			      (lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) 
-			      moog-target 
-			      (lambda (target samps)
-				(format #f "effects-moog-filter ~A ~A" moog-cutoff-frequency moog-resonance))
-			      #f))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Moog filter"
-					  "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.
-Move the sliders to set the filter cutoff frequency and resonance."))
-			   
-			   (lambda (w c i)
-			     (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
-			     (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 moog-cutoff-frequency 22050)))
-			     (set! moog-resonance initial-moog-resonance)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* moog-resonance 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok moog-target))))
-		    
-		    (set! sliders
-			  (add-sliders moog-dialog
-				       (list (list "cutoff frequency" 20 initial-moog-cutoff-frequency 22050
-						   (lambda (w context info)
-						     (set! moog-cutoff-frequency (scale-linear->log 20 (.value info) 22050)))
-						   1 'log)
-					     (list "resonance" 0.0 initial-moog-resonance 1.0
-						   (lambda (w context info)
-						     (set! moog-resonance (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! moog-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild moog-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
+    (let ((moog-cutoff-frequency 10000)
+	  (moog-resonance 0.5))
+      (let* ((post-moog-dialog
+	      (let ((moog-label "Moog filter")
+		    (moog-dialog #f)
+		    (moog-target 'sound))
 		
-		(activate-dialog moog-dialog))))
-      
-	   (child (XtCreateManagedWidget "Moog filter" xmPushButtonWidgetClass filter-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-moog-dialog)))
-      
-      (set! filter-menu-list (cons (lambda ()
-				     (change-label child (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
-				   filter-menu-list))))
+		(define (moog freq Q)
+		  (let ((gen (make-moog-filter freq Q)))
+		    (lambda (inval)
+		      (moog-filter gen inval))))
+		
+		(lambda ()
+		  (unless (Widget? moog-dialog)
+		    ;; if moog-dialog doesn't exist, create it
+		    (let ((initial-moog-cutoff-frequency 10000)
+			  (initial-moog-resonance 0.5)
+			  (sliders ()))
+		      (set! moog-dialog 
+			    (make-effect-dialog 
+			     moog-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync
+				(lambda (ignored) (moog moog-cutoff-frequency moog-resonance)) 
+				moog-target 
+				(lambda (target samps)
+				  (format #f "effects-moog-filter ~A ~A" moog-cutoff-frequency moog-resonance))
+				#f))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Moog filter"
+					    "Moog-style 4-pole lowpass filter with 24db/oct rolloff and variable resonance.
+Move the sliders to set the filter cutoff frequency and resonance."))
+			     
+			     (lambda (w c i)
+			       (set! moog-cutoff-frequency initial-moog-cutoff-frequency)
+			       (XtSetValues (car sliders) (list XmNvalue (scale-log->linear 20 moog-cutoff-frequency 22050)))
+			       (set! moog-resonance initial-moog-resonance)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* moog-resonance 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok moog-target))))
+		      
+		      (set! sliders
+			    (add-sliders moog-dialog
+					 (list (list "cutoff frequency" 20 initial-moog-cutoff-frequency 22050
+						     (lambda (w context info)
+						       (set! moog-cutoff-frequency (scale-linear->log 20 (.value info) 22050)))
+						     1 'log)
+					       (list "resonance" 0.0 initial-moog-resonance 1.0
+						     (lambda (w context info)
+						       (set! moog-resonance (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! moog-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild moog-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog moog-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Moog filter" xmPushButtonWidgetClass filter-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-moog-dialog)))
+	
+	(set! filter-menu-list (cons (lambda ()
+				       (change-label child (format #f "Moog filter (~,2F ~1,2F)" moog-cutoff-frequency moog-resonance)))
+				     filter-menu-list)))))
   
 
 ;;; FREQUENCY EFFECTS
@@ -1321,104 +1320,104 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;; -------- Time and pitch scaling by granular synthesis and sampling rate conversion
 ;;;
     
-    (let* ((time-scale 1.0)
-	  (pitch-scale 1.0)
-	  (post-expsrc-dialog
-	   (let ((expsrc-label "Time/pitch scaling")
-		 (expsrc-dialog #f)
-		 (expsrc-target 'sound)
-		 (hop-size 0.05)
-		 (segment-length 0.15)
-		 (ramp-scale 0.5))
-	     (lambda ()
-	       (unless (Widget? expsrc-dialog)
-		 (let ((initial-time-scale 1.0)
-		       (initial-hop-size 0.05)
-		       (initial-segment-length 0.15)
-		       (initial-ramp-scale 0.5)
-		       (initial-pitch-scale 1.0)
-		       (sliders ()))
-		   (set! expsrc-dialog 
-			 (make-effect-dialog 
-			  expsrc-label
-			  
-			  (lambda (w context info)
-			    (let ((snd (selected-sound)))
-			      (save-controls snd)
-			      (reset-controls snd)
-			      (set! (speed-control snd) pitch-scale)
-			      (let ((new-time (* pitch-scale time-scale)))
-				(if (not (= new-time 1.0))
-				    (begin
-				      (set! (expand-control? snd) #t)
-				      (set! (expand-control snd) new-time)
-				      (set! (expand-control-hop snd) hop-size)
-				      (set! (expand-control-length snd) segment-length)
-				      (set! (expand-control-ramp snd) ramp-scale))))
-			      (if (eq? expsrc-target 'marks)
-				  (let ((ms (plausible-mark-samples)))
-				    (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
-				  (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
-			      (restore-controls snd)))
-			  
-			  (lambda (w context info)
-			    (help-dialog "Time/pitch scaling"
-					 "Move the sliders to change the time/pitch scaling parameters."))
-			  
-			  (lambda (w c i)
-			    (set! time-scale initial-time-scale)
-			    (XtSetValues (sliders 0) (list XmNvalue (floor (* time-scale 100))))
-			    (set! hop-size initial-hop-size)
-			    (XtSetValues (sliders 1) (list XmNvalue (floor (* hop-size 100))))
-			    (set! segment-length initial-segment-length)
-			    (XtSetValues (sliders 2) (list XmNvalue (floor (* segment-length 100))))
-			    (set! ramp-scale initial-ramp-scale)
-			    (XtSetValues (sliders 3) (list XmNvalue (floor (* ramp-scale 100))))
-			    (set! pitch-scale initial-pitch-scale)
-			    (XtSetValues (sliders 4) (list XmNvalue (floor (* pitch-scale 100)))))
-			  
-			  (lambda () 
-			    (effect-target-ok expsrc-target))))
-		   
-		   (set! sliders
-			 (add-sliders expsrc-dialog
-				      (list (list "time scale" 0.0 initial-time-scale 5.0
-						  (lambda (w context info)
-						    (set! time-scale (/ (.value info) 100.0)))
-						  100)
-					    (list "hop size" 0.0 initial-hop-size 1.0
-						  (lambda (w context info)
-						    (set! hop-size (/ (.value info) 100.0)))
-						  100)
-					    (list "segment length" 0.0 initial-segment-length 0.5
-						  (lambda (w context info)
-						    (set! segment-length (/ (.value info) 100.0)))
-						  100)
-					    (list "ramp scale" 0.0 initial-ramp-scale 0.5
-						  (lambda (w context info)
-						    (set! ramp-scale (/ (.value info) 100.0)))
-						  1000)
-					    (list "pitch scale" 0.0 initial-pitch-scale 5.0
-						  (lambda (w context info)
-						    (set! pitch-scale (/ (.value info) 100.0)))
-						  100))))
-		   (add-target (XtParent (car sliders)) 
-			       (lambda (target) 
-				 (set! expsrc-target target)
-				 (XtSetSensitive (XmMessageBoxGetChild expsrc-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-			       #f)))
-	       
-	       (activate-dialog expsrc-dialog))))
-      
-	  (child (XtCreateManagedWidget "Time/pitch scaling" xmPushButtonWidgetClass freq-menu
-					(list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-expsrc-dialog)))
-      
-      (set! freq-menu-list (cons (lambda ()
-				   (change-label child (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
-				 freq-menu-list)))
+    (let ((time-scale 1.0)
+	  (pitch-scale 1.0))
+      (let *((post-expsrc-dialog
+	      (let ((expsrc-label "Time/pitch scaling")
+		    (expsrc-dialog #f)
+		    (expsrc-target 'sound)
+		    (hop-size 0.05)
+		    (segment-length 0.15)
+		    (ramp-scale 0.5))
+		(lambda ()
+		  (unless (Widget? expsrc-dialog)
+		    (let ((initial-time-scale 1.0)
+			  (initial-hop-size 0.05)
+			  (initial-segment-length 0.15)
+			  (initial-ramp-scale 0.5)
+			  (initial-pitch-scale 1.0)
+			  (sliders ()))
+		      (set! expsrc-dialog 
+			    (make-effect-dialog 
+			     expsrc-label
+			     
+			     (lambda (w context info)
+			       (let ((snd (selected-sound)))
+				 (save-controls snd)
+				 (reset-controls snd)
+				 (set! (speed-control snd) pitch-scale)
+				 (let ((new-time (* pitch-scale time-scale)))
+				   (if (not (= new-time 1.0))
+				       (begin
+					 (set! (expand-control? snd) #t)
+					 (set! (expand-control snd) new-time)
+					 (set! (expand-control-hop snd) hop-size)
+					 (set! (expand-control-length snd) segment-length)
+					 (set! (expand-control-ramp snd) ramp-scale))))
+				 (if (eq? expsrc-target 'marks)
+				     (let ((ms (plausible-mark-samples)))
+				       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
+				     (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
+				 (restore-controls snd)))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Time/pitch scaling"
+					    "Move the sliders to change the time/pitch scaling parameters."))
+			     
+			     (lambda (w c i)
+			       (set! time-scale initial-time-scale)
+			       (XtSetValues (sliders 0) (list XmNvalue (floor (* time-scale 100))))
+			       (set! hop-size initial-hop-size)
+			       (XtSetValues (sliders 1) (list XmNvalue (floor (* hop-size 100))))
+			       (set! segment-length initial-segment-length)
+			       (XtSetValues (sliders 2) (list XmNvalue (floor (* segment-length 100))))
+			       (set! ramp-scale initial-ramp-scale)
+			       (XtSetValues (sliders 3) (list XmNvalue (floor (* ramp-scale 100))))
+			       (set! pitch-scale initial-pitch-scale)
+			       (XtSetValues (sliders 4) (list XmNvalue (floor (* pitch-scale 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok expsrc-target))))
+		      
+		      (set! sliders
+			    (add-sliders expsrc-dialog
+					 (list (list "time scale" 0.0 initial-time-scale 5.0
+						     (lambda (w context info)
+						       (set! time-scale (/ (.value info) 100.0)))
+						     100)
+					       (list "hop size" 0.0 initial-hop-size 1.0
+						     (lambda (w context info)
+						       (set! hop-size (/ (.value info) 100.0)))
+						     100)
+					       (list "segment length" 0.0 initial-segment-length 0.5
+						     (lambda (w context info)
+						       (set! segment-length (/ (.value info) 100.0)))
+						     100)
+					       (list "ramp scale" 0.0 initial-ramp-scale 0.5
+						     (lambda (w context info)
+						       (set! ramp-scale (/ (.value info) 100.0)))
+						     1000)
+					       (list "pitch scale" 0.0 initial-pitch-scale 5.0
+						     (lambda (w context info)
+						       (set! pitch-scale (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! expsrc-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild expsrc-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog expsrc-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Time/pitch scaling" xmPushButtonWidgetClass freq-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-expsrc-dialog)))
+	
+	(set! freq-menu-list (cons (lambda ()
+				     (change-label child (format #f "Time/pitch scaling (~1,2F ~1,2F)" time-scale pitch-scale)))
+				   freq-menu-list))))
     
     
 ;;; -------- Time-varying sample rate conversion (resample)
@@ -1620,105 +1619,105 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;; -------- Ring modulation
 ;;;
     
-    (let* ((rm-frequency 100)
-	   (rm-radians 100)
-	   (post-rm-dialog
-	    (let ((rm-label "Ring modulation")
-		  (rm-target 'sound)
-		  (rm-envelope #f)
-		  (rm-dialog #f))
-	      (lambda ()
-		(define rm-effect ; avoid collision with examp.scm
-		  (lambda (freq gliss-env)
-		    (let ((os (make-oscil freq))
-			  (e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
-				  (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
-		      (if (env? e)
-			  (lambda (inval)
-			    (* inval (env e) (oscil os)))
-			  (lambda (inval)
-			    (* inval (oscil os)))))))
-		
-		(if (Widget? rm-dialog)
-		    (activate-dialog rm-dialog)
-		    ;; if rm-dialog doesn't exist, create it
-		    (let ((initial-rm-frequency 100)
-			  (sliders ()))
-		      (let ((initial-rm-radians 100))
-			(set! rm-dialog
-			      (make-effect-dialog 
-			       rm-label
-			       
-			       (lambda (w context info)
-				 (map-chan-over-target-with-sync
-				  (lambda (ignored) 
-				    (rm-effect rm-frequency #f)) ;(list 0 0 1 (hz->radians rm-radians)) -- gliss-env is not implemented above
-				  rm-target 
-				  (lambda (target samps)
-				    (format #f "effects-rm ~A ~A" rm-frequency
-					    (let ((e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
-							  (xe-envelope rm-envelope))))
-					      (and e (format #f "'~A" e)))))
-				  #f))
-			       
-			       (lambda (w context info)
-				 (help-dialog "Ring modulation"
-					      "Move the slider to change the ring modulation parameters."))
-			       
-			       (lambda (w c i)
-				 (set! rm-frequency initial-rm-frequency)
-				 (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-				 (XtSetValues (car sliders) (list XmNvalue rm-frequency))
-				 (set! rm-radians initial-rm-radians)
-				 (XtSetValues (cadr sliders) (list XmNvalue rm-radians)))
-			       
-			       (lambda () 
-				 (effect-target-ok rm-target))))
-			
-			(set! sliders
-			      (add-sliders rm-dialog
-					   (list 
-					    (list "modulation frequency" 0 initial-rm-frequency 1000
-						  (lambda (w context info)
-						    (set! rm-frequency (.value info)))
-						  1)
-					    (list "modulation radians" 0 initial-rm-radians 360
-						  (lambda (w context info)
-						    (set! rm-radians (.value info)))
-						  1)))))
-		      (let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
-						      (list XmNheight              200
-							    XmNleftAttachment      XmATTACH_FORM
-							    XmNrightAttachment     XmATTACH_FORM
-							    XmNtopAttachment       XmATTACH_WIDGET
-							    XmNtopWidget           (sliders (- (length sliders) 1))
-							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT)))
-			     (target-row (add-target (XtParent (XtParent (car sliders))) 
-						     (lambda (target) 
-						       (set! rm-target target)
-						       (XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-						     #f)))
-			
-			(activate-dialog rm-dialog)
-			(set! rm-envelope (xe-create-enved "rm frequency"  fr
-							   (list XmNheight 200)
-							   '(0.0 1.0 0.0 1.0)))
-			(set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
-			(XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
-						XmNbottomWidget     target-row))))))))
-      
-	   (child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-rm-dialog)))
-      
-      (set! mod-menu-list (cons (lambda ()
-				  (change-label child (format #f "Ring modulation (~D ~D)" rm-frequency rm-radians)))
-				mod-menu-list))))
-  
-
+    (let ((rm-frequency 100)
+	  (rm-radians 100))
+      (let* ((post-rm-dialog
+	      (let ((rm-label "Ring modulation")
+		    (rm-target 'sound)
+		    (rm-envelope #f)
+		    (rm-dialog #f))
+		(lambda ()
+		  (define rm-effect ; avoid collision with examp.scm
+		    (lambda (freq gliss-env)
+		      (let ((os (make-oscil freq))
+			    (e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
+				    (make-env (xe-envelope rm-envelope) :length (effect-framples rm-target)))))
+			(if (env? e)
+			    (lambda (inval)
+			      (* inval (env e) (oscil os)))
+			    (lambda (inval)
+			      (* inval (oscil os)))))))
+		  
+		  (if (Widget? rm-dialog)
+		      (activate-dialog rm-dialog)
+		      ;; if rm-dialog doesn't exist, create it
+		      (let ((initial-rm-frequency 100)
+			    (sliders ()))
+			(let ((initial-rm-radians 100))
+			  (set! rm-dialog
+				(make-effect-dialog 
+				 rm-label
+				 
+				 (lambda (w context info)
+				   (map-chan-over-target-with-sync
+				    (lambda (ignored) 
+				      (rm-effect rm-frequency #f)) ;(list 0 0 1 (hz->radians rm-radians)) -- gliss-env is not implemented above
+				    rm-target 
+				    (lambda (target samps)
+				      (format #f "effects-rm ~A ~A" rm-frequency
+					      (let ((e (and (not (equal? (xe-envelope rm-envelope) '(0.0 1.0 1.0 1.0)))
+							    (xe-envelope rm-envelope))))
+						(and e (format #f "'~A" e)))))
+				    #f))
+				 
+				 (lambda (w context info)
+				   (help-dialog "Ring modulation"
+						"Move the slider to change the ring modulation parameters."))
+				 
+				 (lambda (w c i)
+				   (set! rm-frequency initial-rm-frequency)
+				   (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+				   (XtSetValues (car sliders) (list XmNvalue rm-frequency))
+				   (set! rm-radians initial-rm-radians)
+				   (XtSetValues (cadr sliders) (list XmNvalue rm-radians)))
+				 
+				 (lambda () 
+				   (effect-target-ok rm-target))))
+			  
+			  (set! sliders
+				(add-sliders rm-dialog
+					     (list 
+					      (list "modulation frequency" 0 initial-rm-frequency 1000
+						    (lambda (w context info)
+						      (set! rm-frequency (.value info)))
+						    1)
+					      (list "modulation radians" 0 initial-rm-radians 360
+						    (lambda (w context info)
+						      (set! rm-radians (.value info)))
+						    1)))))
+			(let* ((fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+							  (list XmNheight              200
+								XmNleftAttachment      XmATTACH_FORM
+								XmNrightAttachment     XmATTACH_FORM
+								XmNtopAttachment       XmATTACH_WIDGET
+								XmNtopWidget           (sliders (- (length sliders) 1))
+								XmNshadowThickness     4
+								XmNshadowType          XmSHADOW_ETCHED_OUT)))
+			       (target-row (add-target (XtParent (XtParent (car sliders))) 
+						       (lambda (target) 
+							 (set! rm-target target)
+							 (XtSetSensitive (XmMessageBoxGetChild rm-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+						       #f)))
+			  
+			  (activate-dialog rm-dialog)
+			  (set! rm-envelope (xe-create-enved "rm frequency"  fr
+							     (list XmNheight 200)
+							     '(0.0 1.0 0.0 1.0)))
+			  (set! (xe-envelope rm-envelope) (list 0.0 1.0 1.0 1.0))
+			  (XtVaSetValues fr (list XmNbottomAttachment XmATTACH_WIDGET
+						  XmNbottomWidget     target-row))))))))
+	     
+	     (child (XtCreateManagedWidget "Ring modulation" xmPushButtonWidgetClass mod-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-rm-dialog)))
+	
+	(set! mod-menu-list (cons (lambda ()
+				    (change-label child (format #f "Ring modulation (~D ~D)" rm-frequency rm-radians)))
+				  mod-menu-list)))))
+    
+    
 ;;; REVERBS
 ;;;
   
@@ -1773,226 +1772,225 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 ;;;
 ;;; (truncate)
     
-    (let* ((reverb-amount 0.1)
-	   (reverb-filter 0.5)
-	   (reverb-feedback 1.09)    ;; add reverb-control-decay (with ramp?) and reverb-truncate
-	   (post-reverb-dialog
-	    (let ((reverb-label "McNabb reverb")
-		  (reverb-dialog #f)
-		  (reverb-target 'sound))
-	      (lambda ()
-		(unless (Widget? reverb-dialog)
-		  ;; if reverb-dialog doesn't exist, create it
-		  (let ((initial-reverb-amount 0.1)
-			(initial-reverb-filter 0.5)
-			(initial-reverb-feedback 1.09)
-			(sliders ()))
-		    (set! reverb-dialog 
-			  (make-effect-dialog 
-			   reverb-label
-			   
-			   (lambda (w context info)
-			     (let ((snd (selected-sound)))
-			       (save-controls snd)
-			       (reset-controls snd)
-			       (set! (reverb-control? snd) #t)
-			       (set! (reverb-control-scale snd) reverb-amount)
-			       (set! (reverb-control-lowpass snd) reverb-filter)
-			       (set! (reverb-control-feedback snd) reverb-feedback)
-			       (if (eq? reverb-target 'marks)
-				   (let ((ms (plausible-mark-samples)))
-				     (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
-				   (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
-			       (restore-controls snd)))
-			   
-			   (lambda (w context info)
-			     (help-dialog "McNabb reverb"
-					  "Reverberator from Michael McNabb. 
+    (let ((reverb-amount 0.1)
+	  (reverb-filter 0.5)
+	  (reverb-feedback 1.09))    ;; add reverb-control-decay (with ramp?) and reverb-truncate
+      (let* ((post-reverb-dialog
+	      (let ((reverb-label "McNabb reverb")
+		    (reverb-dialog #f)
+		    (reverb-target 'sound))
+		(lambda ()
+		  (unless (Widget? reverb-dialog)
+		    ;; if reverb-dialog doesn't exist, create it
+		    (let ((initial-reverb-amount 0.1)
+			  (initial-reverb-filter 0.5)
+			  (initial-reverb-feedback 1.09)
+			  (sliders ()))
+		      (set! reverb-dialog 
+			    (make-effect-dialog 
+			     reverb-label
+			     
+			     (lambda (w context info)
+			       (let ((snd (selected-sound)))
+				 (save-controls snd)
+				 (reset-controls snd)
+				 (set! (reverb-control? snd) #t)
+				 (set! (reverb-control-scale snd) reverb-amount)
+				 (set! (reverb-control-lowpass snd) reverb-filter)
+				 (set! (reverb-control-feedback snd) reverb-feedback)
+				 (if (eq? reverb-target 'marks)
+				     (let ((ms (plausible-mark-samples)))
+				       (apply-controls snd 0 (car ms) (- (+ (cadr ms) 1) (car ms))))
+				     (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
+				 (restore-controls snd)))
+			     
+			     (lambda (w context info)
+			       (help-dialog "McNabb reverb"
+					    "Reverberator from Michael McNabb. 
 Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Move the sliders to change the reverb parameters."))
-			   
-			   (lambda (w c i)
-			     (set! reverb-amount initial-reverb-amount)
-			     (XtSetValues (car sliders) (list XmNvalue (floor (* reverb-amount 100))))
-			     (set! reverb-filter initial-reverb-filter)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* reverb-filter 100))))
-			     (set! reverb-feedback initial-reverb-feedback)
-			     (XtSetValues (caddr sliders) (list XmNvalue (floor (* reverb-feedback 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok reverb-target))))
-		    
-		    (set! sliders
-			  (add-sliders reverb-dialog
-				       (list (list "reverb amount" 0.0 initial-reverb-amount 1.0
-						   (lambda (w context info)
-						     (set! reverb-amount (/ (.value info) 100.0)))
-						   100)
-					     (list "reverb filter" 0.0 initial-reverb-filter 1.0
-						   (lambda (w context info)
-						     (set! reverb-filter (/ (.value info) 100.0)))
-						   100)
-					     (list "reverb feedback" 0.0 initial-reverb-feedback 1.25
-						   (lambda (w context info)
-						     (set! reverb-feedback (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! reverb-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild reverb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog reverb-dialog))))
-	  
-	   (child (XtCreateManagedWidget "McNabb reverb" xmPushButtonWidgetClass reverb-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-reverb-dialog)))
-      
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" 
-								 reverb-amount reverb-filter reverb-feedback)))
-				   reverb-menu-list)))
+			     
+			     (lambda (w c i)
+			       (set! reverb-amount initial-reverb-amount)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* reverb-amount 100))))
+			       (set! reverb-filter initial-reverb-filter)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* reverb-filter 100))))
+			       (set! reverb-feedback initial-reverb-feedback)
+			       (XtSetValues (caddr sliders) (list XmNvalue (floor (* reverb-feedback 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok reverb-target))))
+		      
+		      (set! sliders
+			    (add-sliders reverb-dialog
+					 (list (list "reverb amount" 0.0 initial-reverb-amount 1.0
+						     (lambda (w context info)
+						       (set! reverb-amount (/ (.value info) 100.0)))
+						     100)
+					       (list "reverb filter" 0.0 initial-reverb-filter 1.0
+						     (lambda (w context info)
+						       (set! reverb-filter (/ (.value info) 100.0)))
+						     100)
+					       (list "reverb feedback" 0.0 initial-reverb-feedback 1.25
+						     (lambda (w context info)
+						       (set! reverb-feedback (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! reverb-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild reverb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog reverb-dialog))))
+	     
+	     (child (XtCreateManagedWidget "McNabb reverb" xmPushButtonWidgetClass reverb-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-reverb-dialog)))
+	
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "McNabb reverb (~1,2F ~1,2F ~1,2F)" 
+								   reverb-amount reverb-filter reverb-feedback)))
+				     reverb-menu-list))))
     
     
 ;;; -------- Chowning reverb
 ;;;
     
-    (let* ((jc-reverb-decay 2.0)
-	   (jc-reverb-volume 0.1)
-	   (post-jc-reverb-dialog
-	    (let ((jc-reverb-label "Chowning reverb")
-		  (jc-reverb-dialog #f)
-		  (jc-reverb-target 'sound)
-		  (jc-reverb-truncate #f))
-	      (lambda ()
-		(unless (Widget? jc-reverb-dialog)
-		  ;; if jc-reverb-dialog doesn't exist, create it
-		  (let ((initial-jc-reverb-decay 2.0)
-			(initial-jc-reverb-volume 0.1)
-			(sliders ()))
-		    (set! jc-reverb-dialog
-			  (make-effect-dialog 
-			   jc-reverb-label
-			   
-			   (lambda (w context info) 
+    (let ((jc-reverb-decay 2.0)
+	  (jc-reverb-volume 0.1))
+      (let* ((post-jc-reverb-dialog
+	      (let ((jc-reverb-label "Chowning reverb")
+		    (jc-reverb-dialog #f)
+		    (jc-reverb-target 'sound)
+		    (jc-reverb-truncate #f))
+		(lambda ()
+		  (unless (Widget? jc-reverb-dialog)
+		    ;; if jc-reverb-dialog doesn't exist, create it
+		    (let ((initial-jc-reverb-decay 2.0)
+			  (initial-jc-reverb-volume 0.1)
+			  (sliders ()))
+		      (set! jc-reverb-dialog
+			    (make-effect-dialog 
+			     jc-reverb-label
+			     
+			     (lambda (w context info) 
 					;(pad-channel (- (framples) 1) (srate))
-			     (map-chan-over-target-with-sync
-			      (lambda (samps) 
-				(effects-jc-reverb jc-reverb-volume samps (framples)))
-			      jc-reverb-target 
-			      (lambda (target samps) 
-				(format #f "effects-jc-reverb ~A" jc-reverb-volume))
-			      (and (not jc-reverb-truncate) jc-reverb-decay)))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Chowning reverb"
-					  "Nice reverb from John Chowning. Move the sliders to set the reverb parameters."))
-			   
-			   (lambda (w c i)
-			     (set! jc-reverb-decay initial-jc-reverb-decay)
-			     (XtSetValues (sliders 0) (list XmNvalue (floor (* jc-reverb-decay 100))))
-			     (set! jc-reverb-volume initial-jc-reverb-volume)
-			     (XtSetValues (sliders 1) (list XmNvalue (floor (* jc-reverb-volume 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok jc-reverb-target))))
-		    
-		    (set! sliders
-			  (add-sliders jc-reverb-dialog
-				       (list (list "decay duration" 0.0 initial-jc-reverb-decay 10.0
-						   (lambda (w context info)
-						     (set! jc-reverb-decay (/ (.value info) 100)))
-						   100)
-					     (list "reverb volume" 0.0 initial-jc-reverb-volume 1.0
-						   (lambda (w context info)
-						     (set! jc-reverb-volume (/ (.value info) 100)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! jc-reverb-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild jc-reverb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				(lambda (truncate) 
-				  (set! jc-reverb-truncate truncate)))))
-		(activate-dialog jc-reverb-dialog))))
-      
-	   (child (XtCreateManagedWidget "Chowning reverb" xmPushButtonWidgetClass reverb-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-jc-reverb-dialog)))
-      
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
-				   reverb-menu-list)))
+			       (map-chan-over-target-with-sync
+				(lambda (samps) 
+				  (effects-jc-reverb jc-reverb-volume samps (framples)))
+				jc-reverb-target 
+				(lambda (target samps) 
+				  (format #f "effects-jc-reverb ~A" jc-reverb-volume))
+				(and (not jc-reverb-truncate) jc-reverb-decay)))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Chowning reverb"
+					    "Nice reverb from John Chowning. Move the sliders to set the reverb parameters."))
+			     
+			     (lambda (w c i)
+			       (set! jc-reverb-decay initial-jc-reverb-decay)
+			       (XtSetValues (sliders 0) (list XmNvalue (floor (* jc-reverb-decay 100))))
+			       (set! jc-reverb-volume initial-jc-reverb-volume)
+			       (XtSetValues (sliders 1) (list XmNvalue (floor (* jc-reverb-volume 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok jc-reverb-target))))
+		      
+		      (set! sliders
+			    (add-sliders jc-reverb-dialog
+					 (list (list "decay duration" 0.0 initial-jc-reverb-decay 10.0
+						     (lambda (w context info)
+						       (set! jc-reverb-decay (/ (.value info) 100)))
+						     100)
+					       (list "reverb volume" 0.0 initial-jc-reverb-volume 1.0
+						     (lambda (w context info)
+						       (set! jc-reverb-volume (/ (.value info) 100)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! jc-reverb-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild jc-reverb-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  (lambda (truncate) 
+				    (set! jc-reverb-truncate truncate)))))
+		  (activate-dialog jc-reverb-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Chowning reverb" xmPushButtonWidgetClass reverb-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-jc-reverb-dialog)))
+	
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "Chowning reverb (~1,2F ~1,2F)" jc-reverb-decay jc-reverb-volume)))
+				     reverb-menu-list))))
     
 ;;; -------- Convolution
 ;;;
 ;;; (progress report? truncate?)
     
-    (let* ((convolve-sound-one 0)
-	   (convolve-sound-two 1)
-	   (convolve-amp 0.01)
-	   (post-convolve-dialog
-	    (let ((convolve-label "Convolution")
-		  (convolve-dialog #f))
-	      (lambda ()
-		(unless (Widget? convolve-dialog)
-		  ;; if convolve-dialog doesn't exist, create it
-		  (let ((initial-convolve-sound-one 0)
-			(initial-convolve-sound-two 1)
-			(initial-convolve-amp 0.01)
-			(sliders ()))
-		    (set! convolve-dialog
-			  (make-effect-dialog 
-			   convolve-label
-			   
-			   (lambda (w context info) 
-			     (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Convolution"
-					  "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler. Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output. The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
-			   
-			   (lambda (w c i)
-			     (set! convolve-sound-one initial-convolve-sound-one)
-			     (XtSetValues (sliders 0) (list XmNvalue convolve-sound-one))
-			     (set! convolve-sound-two initial-convolve-sound-two)
-			     (XtSetValues (sliders 1) (list XmNvalue convolve-sound-two))
-			     (set! convolve-amp initial-convolve-amp)
-			     (XtSetValues (sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
-			   
-			   (lambda () 
-			     (pair? (sounds)))))
-		    
-		    (set! sliders
-			  (add-sliders convolve-dialog
-				       (list (list "impulse response file" 0 initial-convolve-sound-one 24
-						   (lambda (w context info)
-						     (set! convolve-sound-one (.value info)))
-						   1)
-					     (list "sound file" 0 initial-convolve-sound-two 24
-						   (lambda (w context info)
-						     (set! convolve-sound-two (.value info)))
-						   1)
-					     (list "amplitude" 0.0 initial-convolve-amp 0.10
-						   (lambda (w context info)
-						     (set! convolve-amp (/ (.value info) 100.0)))
-						   1000))))))
-		(activate-dialog convolve-dialog))))
-      
-	   (child (XtCreateManagedWidget "Convolution" xmPushButtonWidgetClass reverb-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-convolve-dialog)))
-      
-      (set! reverb-menu-list (cons (lambda ()
-				     (change-label child (format #f "Convolution (~D ~D ~1,2F)" 
-								 convolve-sound-one convolve-sound-two convolve-amp)))
-				   reverb-menu-list)))
-    )
-  
+    (let ((convolve-sound-one 0)
+	  (convolve-sound-two 1)
+	  (convolve-amp 0.01))
+      (let* ((post-convolve-dialog
+	      (let ((convolve-label "Convolution")
+		    (convolve-dialog #f))
+		(lambda ()
+		  (unless (Widget? convolve-dialog)
+		    ;; if convolve-dialog doesn't exist, create it
+		    (let ((initial-convolve-sound-one 0)
+			  (initial-convolve-sound-two 1)
+			  (initial-convolve-amp 0.01)
+			  (sliders ()))
+		      (set! convolve-dialog
+			    (make-effect-dialog 
+			     convolve-label
+			     
+			     (lambda (w context info) 
+			       (effects-cnv convolve-sound-one convolve-amp convolve-sound-two))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Convolution"
+					    "Very simple convolution. Move the sliders to set the numbers of the soundfiles to be convolved and the amount for the amplitude scaler. Output will be scaled to floating-point values, resulting in very large (but not clipped) amplitudes. Use the Normalize amplitude effect to rescale the output. The convolution data file typically defines a natural reverberation source, and the output from this effect can provide very striking reverb effects. You can find convolution data files on sites listed at http://www.bright.net/~dlphilp/linux_csound.html under Impulse Response Data."))
+			     
+			     (lambda (w c i)
+			       (set! convolve-sound-one initial-convolve-sound-one)
+			       (XtSetValues (sliders 0) (list XmNvalue convolve-sound-one))
+			       (set! convolve-sound-two initial-convolve-sound-two)
+			       (XtSetValues (sliders 1) (list XmNvalue convolve-sound-two))
+			       (set! convolve-amp initial-convolve-amp)
+			       (XtSetValues (sliders 2) (list XmNvalue (floor (* convolve-amp 100)))))
+			     
+			     (lambda () 
+			       (pair? (sounds)))))
+		      
+		      (set! sliders
+			    (add-sliders convolve-dialog
+					 (list (list "impulse response file" 0 initial-convolve-sound-one 24
+						     (lambda (w context info)
+						       (set! convolve-sound-one (.value info)))
+						     1)
+					       (list "sound file" 0 initial-convolve-sound-two 24
+						     (lambda (w context info)
+						       (set! convolve-sound-two (.value info)))
+						     1)
+					       (list "amplitude" 0.0 initial-convolve-amp 0.10
+						     (lambda (w context info)
+						       (set! convolve-amp (/ (.value info) 100.0)))
+						     1000))))))
+		  (activate-dialog convolve-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Convolution" xmPushButtonWidgetClass reverb-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-convolve-dialog)))
+	
+	(set! reverb-menu-list (cons (lambda ()
+				       (change-label child (format #f "Convolution (~D ~D ~1,2F)" 
+								   convolve-sound-one convolve-sound-two convolve-amp)))
+				     reverb-menu-list)))))
+    
 ;;; VARIOUS AND MISCELLANEOUS
 ;;;
   
@@ -2086,100 +2084,99 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 ;;; -------- Place sound
 ;;;
     
-    (let* ((mono-snd 0)
-	   (stereo-snd 1)
-	   (pan-pos 45)
-	   (post-place-sound-dialog
-	    (let ((place-sound-label "Place sound")
-		  (place-sound-dialog #f)
-		  (place-sound-target 'sound)
-		  (place-sound-envelope #f)
-	      
-		  (place-sound 
-		   (lambda (mono-snd stereo-snd pan-env)
-		     ;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
-		     ;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
-		     ;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
-		     (if (number? pan-env)
-			 (let ((pos (/ pan-env 90.0)))
-			   (effects-position-sound mono-snd pos stereo-snd 1)
-			   (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
-			 (begin
-			   (effects-position-sound mono-snd pan-env stereo-snd 1)
-			   (effects-position-sound mono-snd pan-env stereo-snd 0))))))
-	      
-	      (lambda ()
-		(unless (Widget? place-sound-dialog)
-		  (let ((fr #f))
-		    (let ((sliders ())
-			  (initial-mono-snd 0)
-			  (initial-stereo-snd 1)
-			  (initial-pan-pos 45))
-		      (set! place-sound-dialog 
-			    (make-effect-dialog 
-			     place-sound-label
-			     
-			     (lambda (w context info) 
-			       (let ((e (xe-envelope place-sound-envelope)))
-				 (place-sound mono-snd stereo-snd (if (not (equal? e '(0.0 1.0 1.0 1.0))) e pan-pos))))
-			     
-			     (lambda (w context info)
-			       (help-dialog "Place sound"
-					    "Mixes mono sound into stereo sound field."))
-			     
-			     (lambda (w c i)
-			       (set! mono-snd initial-mono-snd)
-			       (XtSetValues (sliders 0) (list XmNvalue mono-snd))
-			       (set! stereo-snd initial-stereo-snd)
-			       (XtSetValues (sliders 1) (list XmNvalue stereo-snd))
-			       (set! pan-pos initial-pan-pos)
-			       (XtSetValues (sliders 2) (list XmNvalue pan-pos)))
-			     
-			     (lambda () 
-			       (effect-target-ok place-sound-target))))
-		      
-		      (set! sliders
-			    (add-sliders place-sound-dialog
-					 (list (list "mono sound" 0 initial-mono-snd 50
-						     (lambda (w context info)
-						       (set! mono-snd (.value info)))
-						     1)
-					       (list "stereo sound" 0 initial-stereo-snd 50
-						     (lambda (w context info)
-						       (set! stereo-snd (.value info)))
-						     1)
-					       (list "pan position" 0 initial-pan-pos 90
-						     (lambda (w context info)
-						       (set! pan-pos (.value info)))
-						     1))))
-		      (set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
-						      (list XmNheight              200
-							    XmNleftAttachment      XmATTACH_FORM
-							    XmNrightAttachment     XmATTACH_FORM
-							    XmNtopAttachment       XmATTACH_WIDGET
-							    XmNbottomAttachment    XmATTACH_FORM
-							    XmNtopWidget           (sliders (- (length sliders) 1))
-							    XmNshadowThickness     4
-							    XmNshadowType          XmSHADOW_ETCHED_OUT))))
-		    (activate-dialog place-sound-dialog)
-		    (set! place-sound-envelope (xe-create-enved "panning"  fr
-								(list XmNheight 200
-								      XmNbottomAttachment XmATTACH_FORM
-								      )
-								'(0.0 1.0 0.0 1.0)))
-		    (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))))
+    (let ((mono-snd 0)
+	  (stereo-snd 1)
+	  (pan-pos 45))
+      (let* ((post-place-sound-dialog
+	      (let ((place-sound-label "Place sound")
+		    (place-sound-dialog #f)
+		    (place-sound-target 'sound)
+		    (place-sound-envelope #f)
+		    
+		    (place-sound 
+		     (lambda (mono-snd stereo-snd pan-env)
+		       ;; (place-sound mono-snd stereo-snd pan-env) mixes a mono sound into a stereo sound, splitting 
+		       ;; it into two copies whose amplitudes depend on the envelope 'pan-env'.  If 'pan-env' is 
+		       ;; a number, the sound is split such that 0 is all in channel 0 and 90 is all in channel 1.
+		       (if (number? pan-env)
+			   (let ((pos (/ pan-env 90.0)))
+			     (effects-position-sound mono-snd pos stereo-snd 1)
+			     (effects-position-sound mono-snd (- 1.0 pos) stereo-snd 0))
+			   (begin
+			     (effects-position-sound mono-snd pan-env stereo-snd 1)
+			     (effects-position-sound mono-snd pan-env stereo-snd 0))))))
 		
-		(activate-dialog place-sound-dialog))))
-      
-	   (child (XtCreateManagedWidget "Place sound" xmPushButtonWidgetClass misc-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-place-sound-dialog)))
-      
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Place sound (~D ~D ~D)" mono-snd stereo-snd pan-pos)))
-				 misc-menu-list)))
+		(lambda ()
+		  (unless (Widget? place-sound-dialog)
+		    (let ((fr #f))
+		      (let ((sliders ())
+			    (initial-mono-snd 0)
+			    (initial-stereo-snd 1)
+			    (initial-pan-pos 45))
+			(set! place-sound-dialog 
+			      (make-effect-dialog 
+			       place-sound-label
+			       
+			       (lambda (w context info) 
+				 (let ((e (xe-envelope place-sound-envelope)))
+				   (place-sound mono-snd stereo-snd (if (not (equal? e '(0.0 1.0 1.0 1.0))) e pan-pos))))
+			       
+			       (lambda (w context info)
+				 (help-dialog "Place sound"
+					      "Mixes mono sound into stereo sound field."))
+			       
+			       (lambda (w c i)
+				 (set! mono-snd initial-mono-snd)
+				 (XtSetValues (sliders 0) (list XmNvalue mono-snd))
+				 (set! stereo-snd initial-stereo-snd)
+				 (XtSetValues (sliders 1) (list XmNvalue stereo-snd))
+				 (set! pan-pos initial-pan-pos)
+				 (XtSetValues (sliders 2) (list XmNvalue pan-pos)))
+			       
+			       (lambda () 
+				 (effect-target-ok place-sound-target))))
+			
+			(set! sliders
+			      (add-sliders place-sound-dialog
+					   (list (list "mono sound" 0 initial-mono-snd 50
+						       (lambda (w context info)
+							 (set! mono-snd (.value info)))
+						       1)
+						 (list "stereo sound" 0 initial-stereo-snd 50
+						       (lambda (w context info)
+							 (set! stereo-snd (.value info)))
+						       1)
+						 (list "pan position" 0 initial-pan-pos 90
+						       (lambda (w context info)
+							 (set! pan-pos (.value info)))
+						       1))))
+			(set! fr (XtCreateManagedWidget "fr" xmFrameWidgetClass (XtParent (XtParent (car sliders)))
+							(list XmNheight              200
+							      XmNleftAttachment      XmATTACH_FORM
+							      XmNrightAttachment     XmATTACH_FORM
+							      XmNtopAttachment       XmATTACH_WIDGET
+							      XmNbottomAttachment    XmATTACH_FORM
+							      XmNtopWidget           (sliders (- (length sliders) 1))
+							      XmNshadowThickness     4
+							      XmNshadowType          XmSHADOW_ETCHED_OUT))))
+		      (activate-dialog place-sound-dialog)
+		      (set! place-sound-envelope (xe-create-enved "panning"  fr
+								  (list XmNheight 200
+									XmNbottomAttachment XmATTACH_FORM)
+								  '(0.0 1.0 0.0 1.0)))
+		      (set! (xe-envelope place-sound-envelope) (list 0.0 1.0 1.0 1.0))))
+		  
+		  (activate-dialog place-sound-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Place sound" xmPushButtonWidgetClass misc-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-place-sound-dialog)))
+	
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Place sound (~D ~D ~D)" mono-snd stereo-snd pan-pos)))
+				   misc-menu-list))))
     
     
 ;;; -------- Insert silence (at cursor, silence-amount in secs)
@@ -2302,263 +2299,263 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 ;;; -------- Cross synthesis
 ;;;
     
-    (let* ((cross-synth-sound 1)
-	   (cross-synth-amp .5)
-	   (cross-synth-fft-size 128)
-	   (cross-synth-radius 6.0)
-	   (post-cross-synth-dialog
-	    (let ((cross-synth-label "Cross synthesis")
-		  (cross-synth-dialog #f)
-		  (cross-synth-default-fft-widget #f)
-		  (cross-synth-target 'sound))
-	      (lambda ()
-		(unless (Widget? cross-synth-dialog)
-		  ;; if cross-synth-dialog doesn't exist, create it
-		  (let ((sliders ()))
-		    (let ((initial-cross-synth-sound 1)
-			  (initial-cross-synth-amp .5)
-			  (initial-cross-synth-radius 6.0))
-		      (let ((initial-cross-synth-fft-size 128))
-			(set! cross-synth-dialog
-			      (make-effect-dialog 
-			       cross-synth-label
-			       
-			       (lambda (w context info)
-				 (map-chan-over-target-with-sync
-				  (lambda (ignored) 
-				    (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-				  cross-synth-target 
-				  (lambda (target samps)
-				    (format #f "effects-cross-synthesis ~A ~A ~A ~A"
-					    cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
-				  #f))
-			       
-			       (lambda (w context info)
-				 (help-dialog "Cross synthesis"
-					      "The sliders set the number of the soundfile to be cross-synthesized, 
+    (let ((cross-synth-sound 1)
+	  (cross-synth-amp .5)
+	  (cross-synth-fft-size 128)
+	  (cross-synth-radius 6.0))
+      (let* ((post-cross-synth-dialog
+	      (let ((cross-synth-label "Cross synthesis")
+		    (cross-synth-dialog #f)
+		    (cross-synth-default-fft-widget #f)
+		    (cross-synth-target 'sound))
+		(lambda ()
+		  (unless (Widget? cross-synth-dialog)
+		    ;; if cross-synth-dialog doesn't exist, create it
+		    (let ((sliders ()))
+		      (let ((initial-cross-synth-sound 1)
+			    (initial-cross-synth-amp .5)
+			    (initial-cross-synth-radius 6.0))
+			(let ((initial-cross-synth-fft-size 128))
+			  (set! cross-synth-dialog
+				(make-effect-dialog 
+				 cross-synth-label
+				 
+				 (lambda (w context info)
+				   (map-chan-over-target-with-sync
+				    (lambda (ignored) 
+				      (effects-cross-synthesis cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+				    cross-synth-target 
+				    (lambda (target samps)
+				      (format #f "effects-cross-synthesis ~A ~A ~A ~A"
+					      cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius))
+				    #f))
+				 
+				 (lambda (w context info)
+				   (help-dialog "Cross synthesis"
+						"The sliders set the number of the soundfile to be cross-synthesized, 
 the synthesis amplitude, the FFT size, and the radius value."))
-			       
-			       (lambda (w c i)
-				 (set! cross-synth-sound initial-cross-synth-sound)
-				 (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
-				 (set! cross-synth-amp initial-cross-synth-amp)
-				 (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
-				 (set! cross-synth-fft-size initial-cross-synth-fft-size)
-				 (if use-combo-box-for-fft-size ; defined in effects-utils.scm
-				     (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
-				     (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
-				 (set! cross-synth-radius initial-cross-synth-radius)
-				 (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
-			       
-			       (lambda () 
-				 (effect-target-ok cross-synth-target)))))
+				 
+				 (lambda (w c i)
+				   (set! cross-synth-sound initial-cross-synth-sound)
+				   (XtSetValues (sliders 0) (list XmNvalue cross-synth-sound))
+				   (set! cross-synth-amp initial-cross-synth-amp)
+				   (XtSetValues (sliders 1) (list XmNvalue (floor (* cross-synth-amp 100))))
+				   (set! cross-synth-fft-size initial-cross-synth-fft-size)
+				   (if use-combo-box-for-fft-size ; defined in effects-utils.scm
+				       (XtSetValues cross-synth-default-fft-widget (list XmNselectedPosition 1))
+				       (XmToggleButtonSetState cross-synth-default-fft-widget #t #t))
+				   (set! cross-synth-radius initial-cross-synth-radius)
+				   (XtSetValues (sliders 2) (list XmNvalue (floor (* cross-synth-radius 100)))))
+				 
+				 (lambda () 
+				   (effect-target-ok cross-synth-target)))))
+			
+			(set! sliders
+			      (add-sliders cross-synth-dialog
+					   (list (list "input sound" 0 initial-cross-synth-sound 20
+						       (lambda (w context info)
+							 (set! cross-synth-sound (.value info)))
+						       1)
+						 (list "amplitude" 0.0 initial-cross-synth-amp 1.0
+						       (lambda (w context info)
+							 (set! cross-synth-amp (/ (.value info) 100)))
+						       100)
+						 (list "radius" 0.0 initial-cross-synth-radius 360.0
+						       (lambda (w context info)
+							 (set! cross-synth-radius (/ (.value info) 100)))
+						       100)))))
 		      
-		      (set! sliders
-			    (add-sliders cross-synth-dialog
-					 (list (list "input sound" 0 initial-cross-synth-sound 20
-						     (lambda (w context info)
-						       (set! cross-synth-sound (.value info)))
-						     1)
-					       (list "amplitude" 0.0 initial-cross-synth-amp 1.0
-						     (lambda (w context info)
-						       (set! cross-synth-amp (/ (.value info) 100)))
-						     100)
-					       (list "radius" 0.0 initial-cross-synth-radius 360.0
-						     (lambda (w context info)
-						       (set! cross-synth-radius (/ (.value info) 100)))
-						     100)))))
-		    
-		    ;; now add either a radio-button box or a combo-box for the fft size
-		    ;;   need to use XtParent here since "mainform" isn't returned by add-sliders
-		    
-		    (if use-combo-box-for-fft-size
-			;; this block creates a "combo box" to handle the fft size
-			(let* ((s1 (XmStringCreateLocalized "FFT size"))
-			       (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-									(list XmNborderWidth 1
-									      XmNshadowType XmSHADOW_ETCHED_IN
-									      XmNpositionIndex 2))))
-				      (XtCreateManagedWidget "frm" xmFormWidgetClass frame
+		      ;; now add either a radio-button box or a combo-box for the fft size
+		      ;;   need to use XtParent here since "mainform" isn't returned by add-sliders
+		      
+		      (if use-combo-box-for-fft-size
+			  ;; this block creates a "combo box" to handle the fft size
+			  (let* ((s1 (XmStringCreateLocalized "FFT size"))
+				 (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
+									  (list XmNborderWidth 1
+										XmNshadowType XmSHADOW_ETCHED_IN
+										XmNpositionIndex 2))))
+					(XtCreateManagedWidget "frm" xmFormWidgetClass frame
+							       (list XmNleftAttachment      XmATTACH_FORM
+								     XmNrightAttachment     XmATTACH_FORM
+								     XmNtopAttachment       XmATTACH_FORM
+								     XmNbottomAttachment    XmATTACH_FORM
+								     XmNbackground          *basic-color*))))
+				 (lab (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
 							     (list XmNleftAttachment      XmATTACH_FORM
-								   XmNrightAttachment     XmATTACH_FORM
+								   XmNrightAttachment     XmATTACH_NONE
 								   XmNtopAttachment       XmATTACH_FORM
 								   XmNbottomAttachment    XmATTACH_FORM
-								   XmNbackground          *basic-color*))))
-			       (lab (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
-							   (list XmNleftAttachment      XmATTACH_FORM
-								 XmNrightAttachment     XmATTACH_NONE
-								 XmNtopAttachment       XmATTACH_FORM
-								 XmNbottomAttachment    XmATTACH_FORM
-								 XmNlabelString         s1
-								 XmNbackground          *basic-color*)))
-			       (fft-labels (map XmStringCreateLocalized '("64" "128" "256" "512" "1024" "4096")))
-			       (combo (XtCreateManagedWidget "fftsize" xmComboBoxWidgetClass frm
-							     (list XmNleftAttachment      XmATTACH_WIDGET
-								   XmNleftWidget          lab
-								   XmNrightAttachment     XmATTACH_FORM
-								   XmNtopAttachment       XmATTACH_FORM
-								   XmNbottomAttachment    XmATTACH_FORM
-								   XmNitems               fft-labels
-								   XmNitemCount           (length fft-labels)
-								   XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
-								   XmNbackground          *basic-color*))))
-			  (set! cross-synth-default-fft-widget combo)
-			  (for-each XmStringFree fft-labels)
-			  (XmStringFree s1)
-			  (XtSetValues combo (list XmNselectedPosition 1))
-			  (XtAddCallback combo XmNselectionCallback
-					 (lambda (w c i)
-					   (set! cross-synth-fft-size 
-						 (string->number (XmStringUnparse (.item_or_text i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))))))
-			;; this block creates a "radio button box"
-			(let* ((s1 (XmStringCreateLocalized "FFT size"))
-			       (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
-									(list XmNborderWidth 1
-									      XmNshadowType XmSHADOW_ETCHED_IN
-									      XmNpositionIndex 2))))
-				      (XtCreateManagedWidget "frm" xmFormWidgetClass frame
-							     (list XmNleftAttachment      XmATTACH_FORM
-								   XmNrightAttachment     XmATTACH_FORM
-								   XmNtopAttachment       XmATTACH_FORM
-								   XmNbottomAttachment    XmATTACH_FORM
-								   XmNbackground          *basic-color*))))
-			       (rc (XtCreateManagedWidget "rc" xmRowColumnWidgetClass frm
-							  (list XmNorientation XmHORIZONTAL
-								XmNradioBehavior #t
-								XmNradioAlwaysOne #t
-								XmNentryClass xmToggleButtonWidgetClass
-								XmNisHomogeneous #t
-								XmNleftAttachment      XmATTACH_FORM
-								XmNrightAttachment     XmATTACH_FORM
-								XmNtopAttachment       XmATTACH_FORM
-								XmNbottomAttachment    XmATTACH_NONE
-								XmNbackground          *basic-color*))))
-			  (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
-						 (list XmNleftAttachment      XmATTACH_FORM
-						       XmNrightAttachment     XmATTACH_FORM
-						       XmNtopAttachment       XmATTACH_WIDGET
-						       XmNtopWidget           rc
-						       XmNbottomAttachment    XmATTACH_FORM
-						       XmNlabelString         s1
-						       XmNalignment           XmALIGNMENT_BEGINNING
-						       XmNbackground          *basic-color*))
-			  (for-each 
-			   (lambda (size)
-			     (let ((button (XtCreateManagedWidget (format #f "~D" size) xmToggleButtonWidgetClass rc
-								  (list XmNbackground           *basic-color*
-									XmNvalueChangedCallback (list (lambda (w c i) 
-													(if (.set i) 
-													    (set! cross-synth-fft-size c))) 
-												      size)
-									XmNset                  (= size cross-synth-fft-size)))))
-			       (if (= size cross-synth-fft-size)
-				   (set! cross-synth-default-fft-widget button))))
-			   '(64 128 256 512 1024 4096))
-			  (XmStringFree s1)))
-		    
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! cross-synth-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild cross-synth-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog cross-synth-dialog))))
-      
-	   (child (XtCreateManagedWidget "Cross synthesis" xmPushButtonWidgetClass misc-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-cross-synth-dialog)))
-      
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
-							       cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
-				 misc-menu-list)))
+								   XmNlabelString         s1
+								   XmNbackground          *basic-color*)))
+				 (fft-labels (map XmStringCreateLocalized '("64" "128" "256" "512" "1024" "4096")))
+				 (combo (XtCreateManagedWidget "fftsize" xmComboBoxWidgetClass frm
+							       (list XmNleftAttachment      XmATTACH_WIDGET
+								     XmNleftWidget          lab
+								     XmNrightAttachment     XmATTACH_FORM
+								     XmNtopAttachment       XmATTACH_FORM
+								     XmNbottomAttachment    XmATTACH_FORM
+								     XmNitems               fft-labels
+								     XmNitemCount           (length fft-labels)
+								     XmNcomboBoxType        XmDROP_DOWN_COMBO_BOX
+								     XmNbackground          *basic-color*))))
+			    (set! cross-synth-default-fft-widget combo)
+			    (for-each XmStringFree fft-labels)
+			    (XmStringFree s1)
+			    (XtSetValues combo (list XmNselectedPosition 1))
+			    (XtAddCallback combo XmNselectionCallback
+					   (lambda (w c i)
+					     (set! cross-synth-fft-size 
+						   (string->number (XmStringUnparse (.item_or_text i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))))))
+			  ;; this block creates a "radio button box"
+			  (let* ((s1 (XmStringCreateLocalized "FFT size"))
+				 (frm (let ((frame (XtCreateManagedWidget "frame" xmFrameWidgetClass (XtParent (car sliders))
+									  (list XmNborderWidth 1
+										XmNshadowType XmSHADOW_ETCHED_IN
+										XmNpositionIndex 2))))
+					(XtCreateManagedWidget "frm" xmFormWidgetClass frame
+							       (list XmNleftAttachment      XmATTACH_FORM
+								     XmNrightAttachment     XmATTACH_FORM
+								     XmNtopAttachment       XmATTACH_FORM
+								     XmNbottomAttachment    XmATTACH_FORM
+								     XmNbackground          *basic-color*))))
+				 (rc (XtCreateManagedWidget "rc" xmRowColumnWidgetClass frm
+							    (list XmNorientation XmHORIZONTAL
+								  XmNradioBehavior #t
+								  XmNradioAlwaysOne #t
+								  XmNentryClass xmToggleButtonWidgetClass
+								  XmNisHomogeneous #t
+								  XmNleftAttachment      XmATTACH_FORM
+								  XmNrightAttachment     XmATTACH_FORM
+								  XmNtopAttachment       XmATTACH_FORM
+								  XmNbottomAttachment    XmATTACH_NONE
+								  XmNbackground          *basic-color*))))
+			    (XtCreateManagedWidget "FFT size" xmLabelWidgetClass frm
+						   (list XmNleftAttachment      XmATTACH_FORM
+							 XmNrightAttachment     XmATTACH_FORM
+							 XmNtopAttachment       XmATTACH_WIDGET
+							 XmNtopWidget           rc
+							 XmNbottomAttachment    XmATTACH_FORM
+							 XmNlabelString         s1
+							 XmNalignment           XmALIGNMENT_BEGINNING
+							 XmNbackground          *basic-color*))
+			    (for-each 
+			     (lambda (size)
+			       (let ((button (XtCreateManagedWidget (format #f "~D" size) xmToggleButtonWidgetClass rc
+								    (list XmNbackground           *basic-color*
+									  XmNvalueChangedCallback (list (lambda (w c i) 
+													  (if (.set i) 
+													      (set! cross-synth-fft-size c))) 
+													size)
+									  XmNset                  (= size cross-synth-fft-size)))))
+				 (if (= size cross-synth-fft-size)
+				     (set! cross-synth-default-fft-widget button))))
+			     '(64 128 256 512 1024 4096))
+			    (XmStringFree s1)))
+		      
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! cross-synth-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild cross-synth-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog cross-synth-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Cross synthesis" xmPushButtonWidgetClass misc-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-cross-synth-dialog)))
+	
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Cross synthesis (~D ~1,2F ~D ~1,2F)" 
+								 cross-synth-sound cross-synth-amp cross-synth-fft-size cross-synth-radius)))
+				   misc-menu-list))))
     
 ;;; -------- Flange and phasing
 ;;;
     
-    (let* ((flange-speed 2.0)
-	   (flange-amount 5.0)
-	   (flange-time 0.001)
-	   (post-flange-dialog
-	    (let ((flange-label "Flange")
-		  (flange-dialog #f)
-		  (flange-target 'sound))
-	      (lambda ()
-		(unless (Widget? flange-dialog)
-		  ;; if flange-dialog doesn't exist, create it
-		  (let ((initial-flange-speed 2.0)
-			(initial-flange-amount 5.0)
-			(initial-flange-time 0.001)
-			(sliders ()))
-		    (set! flange-dialog
-			  (make-effect-dialog 
-			   flange-label
-			   
-			   (lambda (w context info)
-			     (map-chan-over-target-with-sync 
-			      (lambda (ignored)
-				(let ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
-				      (del (let ((len (round (* flange-time (srate)))))
-					     (make-delay len :max-size (round (+ len flange-amount 1))))))
-				  (lambda (inval)
-				    (* .75 (+ inval
-					      (delay del
-						     inval
-						     (rand-interp ri)))))))
-			      flange-target 
-			      (lambda (target samps) 
-				(format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
-			      #f))
-			   
-			   (lambda (w context info)
-			     (help-dialog "Flange"
-					  "Move the sliders to change the flange speed, amount, and time"))
-			   
-			   (lambda (w c i)
-			     (set! flange-speed initial-flange-speed)
-			     (XtSetValues (car sliders) (list XmNvalue (floor (* flange-speed 10))))
-			     (set! flange-amount initial-flange-amount)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* flange-amount 10))))
-			     (set! flange-time initial-flange-time)
-			     (XtSetValues (caddr sliders) (list XmNvalue (floor (* flange-time 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok flange-target))))
-		    
-		    (set! sliders
-			  (add-sliders flange-dialog
-				       (list (list "flange speed" 0.0 initial-flange-speed 100.0
-						   (lambda (w context info)
-						     (set! flange-speed (/ (.value info) 10.0)))
-						   10)
-					     (list "flange amount" 0.0 initial-flange-amount 100.0
-						   (lambda (w context info)
-						     (set! flange-amount (/ (.value info) 10.0)))
-						   10)
-					     ;; flange time ought to use a non-linear scale (similar to amp in control panel)
-					     (list "flange time" 0.0 initial-flange-time 1.0
-						   (lambda (w context info)
-						     (set! flange-time (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! flange-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild flange-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog flange-dialog))))
-      
-	   (child (XtCreateManagedWidget "Flange" xmPushButtonWidgetClass misc-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-flange-dialog)))
-      
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
-				 misc-menu-list)))
+    (let ((flange-speed 2.0)
+	  (flange-amount 5.0)
+	  (flange-time 0.001))
+      (let* ((post-flange-dialog
+	      (let ((flange-label "Flange")
+		    (flange-dialog #f)
+		    (flange-target 'sound))
+		(lambda ()
+		  (unless (Widget? flange-dialog)
+		    ;; if flange-dialog doesn't exist, create it
+		    (let ((initial-flange-speed 2.0)
+			  (initial-flange-amount 5.0)
+			  (initial-flange-time 0.001)
+			  (sliders ()))
+		      (set! flange-dialog
+			    (make-effect-dialog 
+			     flange-label
+			     
+			     (lambda (w context info)
+			       (map-chan-over-target-with-sync 
+				(lambda (ignored)
+				  (let ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
+					(del (let ((len (round (* flange-time (srate)))))
+					       (make-delay len :max-size (round (+ len flange-amount 1))))))
+				    (lambda (inval)
+				      (* .75 (+ inval
+						(delay del
+						       inval
+						       (rand-interp ri)))))))
+				flange-target 
+				(lambda (target samps) 
+				  (format #f "effects-flange ~A ~A ~A" flange-amount flange-speed flange-time))
+				#f))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Flange"
+					    "Move the sliders to change the flange speed, amount, and time"))
+			     
+			     (lambda (w c i)
+			       (set! flange-speed initial-flange-speed)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* flange-speed 10))))
+			       (set! flange-amount initial-flange-amount)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* flange-amount 10))))
+			       (set! flange-time initial-flange-time)
+			       (XtSetValues (caddr sliders) (list XmNvalue (floor (* flange-time 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok flange-target))))
+		      
+		      (set! sliders
+			    (add-sliders flange-dialog
+					 (list (list "flange speed" 0.0 initial-flange-speed 100.0
+						     (lambda (w context info)
+						       (set! flange-speed (/ (.value info) 10.0)))
+						     10)
+					       (list "flange amount" 0.0 initial-flange-amount 100.0
+						     (lambda (w context info)
+						       (set! flange-amount (/ (.value info) 10.0)))
+						     10)
+					       ;; flange time ought to use a non-linear scale (similar to amp in control panel)
+					       (list "flange time" 0.0 initial-flange-time 1.0
+						     (lambda (w context info)
+						       (set! flange-time (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! flange-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild flange-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog flange-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Flange" xmPushButtonWidgetClass misc-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-flange-dialog)))
+	
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Flange (~1,2F ~1,2F ~1,3F)" flange-speed flange-amount flange-time)))
+				   misc-menu-list))))
     
     
 ;;; -------- Randomize phase
@@ -2614,78 +2611,78 @@ the synthesis amplitude, the FFT size, and the radius value."))
 ;;;
 ;;; (progress report?)
     
-    (let* ((samp-rate 1.0)
-	   (osc-amp 0.3)
-	   (osc-freq 20)
-	   (post-robotize-dialog
-	    (let ((robotize-label "Robotize")
-		  (robotize-dialog #f)
-		  (robotize-target 'sound))
-	      (lambda ()
-		(unless (Widget? robotize-dialog)
-		  ;; if robotize-dialog doesn't exist, create it
-		  (let ((initial-samp-rate 1.0)
-			(initial-osc-amp 0.3)
-			(initial-osc-freq 20)
-			(sliders ()))
-		    (set! robotize-dialog
-			  (make-effect-dialog 
-			   robotize-label
-			   
-			   (lambda (w context info)
-			     (let ((ms (and (eq? robotize-target 'marks)
-					    (plausible-mark-samples))))
-			       (effects-fp samp-rate osc-amp osc-freq
-					   (case robotize-target 
-					     ((sound)     (values 0 (framples)))
-					     ((selection) (values (selection-position) (selection-framples)))
-					     (else        (values (car ms) (- (cadr ms) (car ms))))))))
-			   (lambda (w context info)
-			     (help-dialog "Robotize"
-					  "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
-			   
-			   (lambda (w c i)
-			     (set! samp-rate initial-samp-rate)
-			     (XtSetValues (car sliders) (list XmNvalue (floor (* samp-rate 100))))
-			     (set! osc-amp initial-osc-amp)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* osc-amp 100))))
-			     (set! osc-freq initial-osc-freq)
-			     (XtSetValues (caddr sliders) (list XmNvalue (floor (* osc-freq 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok robotize-target))))
-		    
-		    (set! sliders
-			  (add-sliders robotize-dialog
-				       (list (list "sample rate" 0.0 initial-samp-rate 2.0
-						   (lambda (w context info)
-						     (set! samp-rate (/ (.value info) 100.0)))
-						   100)
-					     (list "oscillator amplitude" 0.0 initial-osc-amp 1.0
-						   (lambda (w context info)
-						     (set! osc-amp (/ (.value info) 100.0)))
-						   100)
-					     (list "oscillator frequency" 0.0 initial-osc-freq 60
-						   (lambda (w context info)
-						     (set! osc-freq (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! robotize-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild robotize-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog robotize-dialog))))
-      
-	   (child (XtCreateManagedWidget "Robotize" xmPushButtonWidgetClass misc-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-robotize-dialog)))
-      
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
-				 misc-menu-list)))
+    (let ((samp-rate 1.0)
+	  (osc-amp 0.3)
+	  (osc-freq 20))
+      (let* ((post-robotize-dialog
+	      (let ((robotize-label "Robotize")
+		    (robotize-dialog #f)
+		    (robotize-target 'sound))
+		(lambda ()
+		  (unless (Widget? robotize-dialog)
+		    ;; if robotize-dialog doesn't exist, create it
+		    (let ((initial-samp-rate 1.0)
+			  (initial-osc-amp 0.3)
+			  (initial-osc-freq 20)
+			  (sliders ()))
+		      (set! robotize-dialog
+			    (make-effect-dialog 
+			     robotize-label
+			     
+			     (lambda (w context info)
+			       (let ((ms (and (eq? robotize-target 'marks)
+					      (plausible-mark-samples))))
+				 (effects-fp samp-rate osc-amp osc-freq
+					     (case robotize-target 
+					       ((sound)     (values 0 (framples)))
+					       ((selection) (values (selection-position) (selection-framples)))
+					       (else        (values (car ms) (- (cadr ms) (car ms))))))))
+			     (lambda (w context info)
+			       (help-dialog "Robotize"
+					    "Move the sliders to set the sample rate, oscillator amplitude, and oscillator frequency."))
+			     
+			     (lambda (w c i)
+			       (set! samp-rate initial-samp-rate)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* samp-rate 100))))
+			       (set! osc-amp initial-osc-amp)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* osc-amp 100))))
+			       (set! osc-freq initial-osc-freq)
+			       (XtSetValues (caddr sliders) (list XmNvalue (floor (* osc-freq 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok robotize-target))))
+		      
+		      (set! sliders
+			    (add-sliders robotize-dialog
+					 (list (list "sample rate" 0.0 initial-samp-rate 2.0
+						     (lambda (w context info)
+						       (set! samp-rate (/ (.value info) 100.0)))
+						     100)
+					       (list "oscillator amplitude" 0.0 initial-osc-amp 1.0
+						     (lambda (w context info)
+						       (set! osc-amp (/ (.value info) 100.0)))
+						     100)
+					       (list "oscillator frequency" 0.0 initial-osc-freq 60
+						     (lambda (w context info)
+						       (set! osc-freq (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! robotize-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild robotize-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog robotize-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Robotize" xmPushButtonWidgetClass misc-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-robotize-dialog)))
+	
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Robotize (~1,2F ~1,2F ~1,2F)" samp-rate osc-amp osc-freq)))
+				   misc-menu-list))))
     
 ;;; -------- Rubber sound
 ;;;
@@ -2746,72 +2743,72 @@ the synthesis amplitude, the FFT size, and the radius value."))
 ;;;
 ;;; (progress report)
     
-    (let* ((wobble-frequency 50)
-	   (wobble-amplitude 0.5)
-	   (post-wobble-dialog
-	    (let ((wobble-label "Wobble")
-		  (wobble-dialog #f)
-		  (wobble-target 'sound))
-	      (lambda ()
-		(unless (Widget? wobble-dialog)
-		  ;; if wobble-dialog doesn't exist, create it
-		  (let ((initial-wobble-frequency 50)
-			(initial-wobble-amplitude 0.5)
-			(sliders ()))
-		    (set! wobble-dialog
-			  (make-effect-dialog 
-			   wobble-label
-			   
-			   (lambda (w context info)
-			     (let ((ms (and (eq? wobble-target 'marks)
-					    (plausible-mark-samples))))
-			       (effects-hello-dentist
-				wobble-frequency wobble-amplitude
-				(case wobble-target 
-				  ((sound)     (values 0 (framples)))
-				  ((selection) (values (selection-position) (selection-framples)))
-				  (else        (values (car ms)	(- (cadr ms) (car ms))))))))
-
-			   (lambda (w context info)
-			     (help-dialog "Wobble"
-					  "Move the sliders to set the wobble frequency and amplitude."))
-			   
-			   (lambda (w c i)
-			     (set! wobble-frequency initial-wobble-frequency)
-			     (XtSetValues (car sliders) (list XmNvalue (floor (* wobble-frequency 100))))
-			     (set! wobble-amplitude initial-wobble-amplitude)
-			     (XtSetValues (cadr sliders) (list XmNvalue (floor (* wobble-amplitude 100)))))
-			   
-			   (lambda () 
-			     (effect-target-ok wobble-target))))
-		    
-		    (set! sliders
-			  (add-sliders wobble-dialog
-				       (list (list "wobble frequency" 0 initial-wobble-frequency 100
-						   (lambda (w context info)
-						     (set! wobble-frequency (/ (.value info) 100.0)))
-						   100)
-					     (list "wobble amplitude" 0.0 initial-wobble-amplitude 1.0
-						   (lambda (w context info)
-						     (set! wobble-amplitude (/ (.value info) 100.0)))
-						   100))))
-		    (add-target (XtParent (car sliders)) 
-				(lambda (target) 
-				  (set! wobble-target target)
-				  (XtSetSensitive (XmMessageBoxGetChild wobble-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
-				#f)))
-		
-		(activate-dialog wobble-dialog))))
-      
-	   (child (XtCreateManagedWidget "Wobble" xmPushButtonWidgetClass misc-menu
-					 (list XmNbackground *basic-color*))))
-      (XtAddCallback child XmNactivateCallback
-		     (lambda (w c i)
-		       (post-wobble-dialog)))
-      
-      (set! misc-menu-list (cons (lambda ()
-				   (change-label child (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
-				 misc-menu-list))))
+    (let ((wobble-frequency 50)
+	  (wobble-amplitude 0.5))
+      (let* ((post-wobble-dialog
+	      (let ((wobble-label "Wobble")
+		    (wobble-dialog #f)
+		    (wobble-target 'sound))
+		(lambda ()
+		  (unless (Widget? wobble-dialog)
+		    ;; if wobble-dialog doesn't exist, create it
+		    (let ((initial-wobble-frequency 50)
+			  (initial-wobble-amplitude 0.5)
+			  (sliders ()))
+		      (set! wobble-dialog
+			    (make-effect-dialog 
+			     wobble-label
+			     
+			     (lambda (w context info)
+			       (let ((ms (and (eq? wobble-target 'marks)
+					      (plausible-mark-samples))))
+				 (effects-hello-dentist
+				  wobble-frequency wobble-amplitude
+				  (case wobble-target 
+				    ((sound)     (values 0 (framples)))
+				    ((selection) (values (selection-position) (selection-framples)))
+				    (else        (values (car ms)	(- (cadr ms) (car ms))))))))
+			     
+			     (lambda (w context info)
+			       (help-dialog "Wobble"
+					    "Move the sliders to set the wobble frequency and amplitude."))
+			     
+			     (lambda (w c i)
+			       (set! wobble-frequency initial-wobble-frequency)
+			       (XtSetValues (car sliders) (list XmNvalue (floor (* wobble-frequency 100))))
+			       (set! wobble-amplitude initial-wobble-amplitude)
+			       (XtSetValues (cadr sliders) (list XmNvalue (floor (* wobble-amplitude 100)))))
+			     
+			     (lambda () 
+			       (effect-target-ok wobble-target))))
+		      
+		      (set! sliders
+			    (add-sliders wobble-dialog
+					 (list (list "wobble frequency" 0 initial-wobble-frequency 100
+						     (lambda (w context info)
+						       (set! wobble-frequency (/ (.value info) 100.0)))
+						     100)
+					       (list "wobble amplitude" 0.0 initial-wobble-amplitude 1.0
+						     (lambda (w context info)
+						       (set! wobble-amplitude (/ (.value info) 100.0)))
+						     100))))
+		      (add-target (XtParent (car sliders)) 
+				  (lambda (target) 
+				    (set! wobble-target target)
+				    (XtSetSensitive (XmMessageBoxGetChild wobble-dialog XmDIALOG_OK_BUTTON) (effect-target-ok target)))
+				  #f)))
+		  
+		  (activate-dialog wobble-dialog))))
+	     
+	     (child (XtCreateManagedWidget "Wobble" xmPushButtonWidgetClass misc-menu
+					   (list XmNbackground *basic-color*))))
+	(XtAddCallback child XmNactivateCallback
+		       (lambda (w c i)
+			 (post-wobble-dialog)))
+	
+	(set! misc-menu-list (cons (lambda ()
+				     (change-label child (format #f "Wobble (~1,2F ~1,2F)" wobble-frequency wobble-amplitude)))
+				   misc-menu-list)))))
   
 ;;;
 ;;; END PARAMETRIZED EFFECTS

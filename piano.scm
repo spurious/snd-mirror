@@ -162,30 +162,6 @@
 		(set! len-frac (+ len-frac 1.0))))
 	  (list len-int (get-allpass-coef len-frac wT))))))
   
-  (define tune-piano 
-    (let ((apPhase (lambda (a1 wT)
-		     (atan (* (- (* a1 a1) 1.0) 
-			      (sin wT))
-			   (+ (* 2.0 a1) 
-			      (* (+ (* a1 a1) 1.0) 
-				 (cos wT))))))
-	  (opozPhase (lambda (b0 b1 a1 wT)
-		       (let ((s (sin wT))
-			     (c (cos wT)))
-			 (atan (- (* a1 s (+ b0 (* b1 c))) 
-				  (* b1 s (+ 1 (* a1 c))))
-			       (+ (* (+ b0 (* b1 c)) 
-				     (+ 1 (* a1 c))) 
-				  (* b1 s a1 s)))))))
-      (lambda (frequency stiffnessCoefficient numAllpasses b0 b1 a1)
-	(let* ((wT (/ (* frequency two-pi) *clm-srate*))
-	       (len (/ (+ two-pi
-			  (* numAllpasses
-			     (apPhase stiffnessCoefficient wT))
-			  (opozPhase (+ 1 (* 3 b0)) (+ a1 (* 3 b1)) a1 wT))
-		       wT)))
-	  (apfloor len wT)))))
-  
   (let (;;look-up parameters in tables (or else use the override value)
 	(loudPole (or loudPole (envelope-interp keyNum loudPole-table)))
 	(softPole (or softPole (envelope-interp keyNum softPole-table)))
@@ -276,6 +252,30 @@
 		  (agraffe-delay1 (make-delay dlen1))
 		  (agraffe-tuning-ap1 (make-one-pole-all-pass 1 apcoef1)))
 	      
+	      (define tune-piano 
+		(let ((apPhase (lambda (a1 wT)
+				 (atan (* (- (* a1 a1) 1.0) 
+					  (sin wT))
+				       (+ (* 2.0 a1) 
+					  (* (+ (* a1 a1) 1.0) 
+					     (cos wT))))))
+		      (opozPhase (lambda (b0 b1 a1 wT)
+				   (let ((s (sin wT))
+					 (c (cos wT)))
+				     (atan (- (* a1 s (+ b0 (* b1 c))) 
+					      (* b1 s (+ 1 (* a1 c))))
+					   (+ (* (+ b0 (* b1 c)) 
+						 (+ 1 (* a1 c))) 
+					      (* b1 s a1 s)))))))
+		  (lambda (frequency stiffnessCoefficient numAllpasses b0 b1 a1)
+		    (let* ((wT (/ (* frequency two-pi) *clm-srate*))
+			   (len (/ (+ two-pi
+				      (* numAllpasses
+					 (apPhase stiffnessCoefficient wT))
+				      (opozPhase (+ 1 (* 3 b0)) (+ a1 (* 3 b1)) a1 wT))
+				   wT)))
+		      (apfloor len wT)))))
+  
 	      (let ((couplingFilter-pair (make-one-pole-one-zero cfb0 cfb1 cfa1))
 		    ;;initialize the coupled-string elements
 		    (vals1 (tune-piano freq1 stiffnessCoefficientL number-of-stiffness-allpasses cfb0 cfb1 cfa1))

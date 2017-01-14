@@ -1158,24 +1158,22 @@
   
   (define select-file
     
-    (let ((file-selector-dialogs ()))
-      ;; (list (list widget inuse func title help) ...)
-      (define (find-free-dialog ds)
-	(and (pair? ds)
-	     (pair? (car ds))
-	     (pair? (cdar ds))
-	     (if (cadar ds)
-		 (find-free-dialog (cdr ds))
-		 (begin
-		   (set! ((car ds) 1) #t)
-		   (caar ds)))))
-		 
-      (define (find-dialog-widget wid ds)
-	(and (pair? ds)
-	     (pair? (car ds))
-	     (if (equal? wid (caar ds))
-		 (car ds)
-		 (find-dialog-widget wid (cdr ds)))))
+    (letrec ((file-selector-dialogs ())    ; (list (list widget inuse func title help) ...)
+	     (find-free-dialog (lambda (ds)
+				 (and (pair? ds)
+				      (pair? (car ds))
+				      (pair? (cdar ds))
+				      (if (cadar ds)
+					  (find-free-dialog (cdr ds))
+					  (begin
+					    (set! ((car ds) 1) #t)
+					    (caar ds))))))
+	     (find-dialog-widget (lambda (wid ds)
+				   (and (pair? ds)
+					(pair? (car ds))
+					(if (equal? wid (caar ds))
+					    (car ds)
+					    (find-dialog-widget wid (cdr ds)))))))
       (lambda args
 	;; (file-select func title dir filter help)
 	(let* ((func (and (pair? args) (args 0)))
@@ -1349,26 +1347,27 @@
 		(thumbnail-graph dpy wn gc mins width height)
 		(thumbnail-graph dpy wn gc maxes width height))))
 	
-	(define (make-sound-icon filename parent peak-func gc width height args)
-	  (define (cast-to-window n) (list 'Window (cadr n)))
-	  (let* ((dpy (XtDisplay parent))
-		 (pix (XCreatePixmap dpy (XtWindow parent) width height (screen-depth)))
-		 (str (XmStringCreateLocalized filename))
-		 (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
-	    (XSetForeground dpy gc *basic-color*)
-	    (XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
-	    (XSetForeground dpy gc *data-color*)
-	    (make-sound-button-pixmap dpy (cast-to-window pix) data width height)
-	    (let ((icon (XtCreateManagedWidget filename xmIconGadgetClass parent
-					       (append (list XmNbackground      *basic-color*
-							     XmNforeground      *data-color*
-							     XmNlabelString     str
-							     XmNlargeIconPixmap pix
-							     XmNsmallIconPixmap pix)
-						       args))))
-	      (set! (sound-button data) icon)
-	      (set! sound-buttons (cons data sound-buttons))
-	      icon)))
+	(define make-sound-icon
+	  (let ((cast-to-window (lambda (n) (list 'Window (cadr n)))))
+	    (lambda (filename parent peak-func gc width height args)
+	      (let* ((dpy (XtDisplay parent))
+		     (pix (XCreatePixmap dpy (XtWindow parent) width height (screen-depth)))
+		     (str (XmStringCreateLocalized filename))
+		     (data (list gc filename #f (channel-amp-envs filename 0 width peak-func))))
+		(XSetForeground dpy gc *basic-color*)
+		(XFillRectangle dpy (cast-to-window pix) gc 0 0 width height)
+		(XSetForeground dpy gc *data-color*)
+		(make-sound-button-pixmap dpy (cast-to-window pix) data width height)
+		(let ((icon (XtCreateManagedWidget filename xmIconGadgetClass parent
+						   (append (list XmNbackground      *basic-color*
+								 XmNforeground      *data-color*
+								 XmNlabelString     str
+								 XmNlargeIconPixmap pix
+								 XmNsmallIconPixmap pix)
+							   args))))
+		  (set! (sound-button data) icon)
+		  (set! sound-buttons (cons data sound-buttons))
+		  icon)))))
 	
 	;; now the actual sound-box maker
 	(lambda (name parent select-func peak-func snds args)
