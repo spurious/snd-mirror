@@ -746,7 +746,8 @@
 	       (tree-equal-member sym (cdr tree)))))
 
     (define (tree-unquoted-member sym tree)
-      (and (unquoted-pair? tree)
+      (and (pair? tree)
+	   (not (eq? (car tree) 'quote))
 	   (or (eq? (car tree) sym)
 	       (tree-unquoted-member sym (car tree))
 	       (tree-unquoted-member sym (cdr tree)))))
@@ -770,10 +771,11 @@
 
     (define (tree-set-member set tree1)
       (let ts ((tree tree1))
-	(and (unquoted-pair? tree)
+	(and (pair? tree)
+	     (not (eq? (car tree) 'quote))
 	     (or (memq (car tree) set)
-	       (ts (car tree))
-	       (ts (cdr tree))))))
+		 (ts (car tree))
+		 (ts (cdr tree))))))
     
     (define (tree-table-member table tree)
       (and (pair? tree)
@@ -22284,6 +22286,4 @@
 ;;; expand-in-place simple functions and simplify
 ;;; (define x (let () ...defines... (lambda (...) (let...)))) suggests moving defines into the interior let (pvoc.scm)
 ;;;
-;;; count opt-style patterns throughout and seqs thereof
-;;;
-;;; 201 29437 826503
+;;; 201 29437 826315
