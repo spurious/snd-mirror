@@ -5146,6 +5146,7 @@ static s7_pointer make_symbol_with_length(s7_scheme *sc, const char *name, unsig
 
 static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, unsigned long long int hash, unsigned int location)
 {
+  /* name might not be null-terminated */
   s7_pointer x, str, p;
   unsigned char *base, *val;
 
@@ -62412,7 +62413,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  else
 	    {
-	      /* (do ((...)) () ...) -- no endtest */
+	    DO_END2:
 	      if (is_pair(sc->code))
 		{
 		  if (is_null(car(sc->args)))
@@ -62421,9 +62422,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto BEGIN1;
 		}
 	      else
-		{
-		  /* no body? */
-		  if (is_null(car(sc->args)))
+		{ 
+		  if (is_null(car(sc->args))) /* no steppers */
 		    goto DO_END;
 		  goto DO_STEP;
 		}
@@ -62436,7 +62436,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      /* we're done -- deal with result exprs
 	       *   if there isn't an end test, there also isn't a result (they're in the same list)
 	       */
-	      sc->code = cddr(sc->args);                /* result expr (a list -- implicit begin) */
+	      sc->code = _TLst(cddr(sc->args));   /* result expr (a list -- implicit begin) */
 	      free_cell(sc, sc->args);
 	      sc->args = sc->nil;
 	      if (is_null(sc->code))
@@ -62444,21 +62444,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->value = sc->nil;
 		  goto START;
 		}
+	      goto BEGIN1;
 	    }
-	  else
-	    {
-	      /* evaluate the body and step vars, etc */
-	      if (is_null(car(sc->args)))
-		push_stack(sc, OP_DO_END, sc->args, sc->code);
-	      else push_stack(sc, OP_DO_STEP, sc->args, sc->code);
-	      /* sc->code is ready to go, but can be nil */
-	      if (is_null(sc->code))
-		{
-		  sc->value = sc->nil; /* this used to return #<unspecified> in a convoluted way */
-		  goto START;
-		}
-	    }
-	  goto BEGIN1;
+	  goto DO_END2;
 	  
 	  
 	SAFE_DO_END_CLAUSES:
@@ -75298,7 +75286,7 @@ int main(int argc, char **argv)
  * with-let+lambda to increase opt? glosure for example
  * could (apply append (map...)) omit the extra copy?
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
- *   also write-up grepl called from anywhere
+ *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
  *

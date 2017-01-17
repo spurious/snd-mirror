@@ -2179,7 +2179,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	      quote if begin let let* letrec letrec* cond case or and do set! unless when else 
 	      with-let with-baffle
 	      lambda lambda* define define* 
-	      define-macro define-macro* define-bacro define-bacro*))
+	      define-macro define-macro* define-bacro define-bacro* macroexpand)) ; not sure about macroexpand
 	   ht))
 	(baddies (list #_eval #_eval-string #_load #_autoload #_define-constant #_define-expansion #_require
 		       #_string->symbol #_symbol->value #_symbol->dynamic-value #_symbol-table #_symbol #_keyword->symbol 
