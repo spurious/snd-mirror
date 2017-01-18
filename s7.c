@@ -4249,7 +4249,7 @@ static void unmark_permanent_objects(s7_scheme *sc)
 }
 
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   #include <time.h>
   #include <sys/time.h>
   static struct timeval start_time;
@@ -4298,7 +4298,7 @@ static int gc(s7_scheme *sc)
 #if DEBUGGING
       fprintf(stdout, "%s[%d] ", last_gc_func, last_gc_line);
 #endif
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
       /* this is apparently deprecated in favor of clock_gettime -- what compile-time switch to use here?
        *   _POSIX_TIMERS, or perhaps use CLOCK_REALTIME, but clock_gettime requires -lrt -- no thanks.
        */
@@ -4507,7 +4507,7 @@ static int gc(s7_scheme *sc)
 
   if (show_gc_stats(sc))
     {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
       struct timeval t0;
       double secs;
       gettimeofday(&t0, &z0);
@@ -4936,23 +4936,13 @@ static void pop_stack(s7_scheme *sc)
       fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
-  sc->code =  sc->stack_end[0];
+  sc->code =  _NFre(sc->stack_end[0]);
   sc->envir = _TLid(sc->stack_end[1]);
-  sc->args =  sc->stack_end[2];
+  sc->args =  _NFre(sc->stack_end[2]);
   sc->op =    (opcode_t)(sc->stack_end[3]);
   if (sc->op > OP_MAX_DEFINED) 
     {
       fprintf(stderr, "%spop_stack[%d] invalid opcode: " INT_FORMAT "%s\n", BOLD_TEXT, __LINE__, sc->op, UNBOLD_TEXT);
-      if (stop_at_error) abort();
-    }
-  if (unchecked_type(sc->code) == T_FREE)
-    {
-      fprintf(stderr, "%s%s[%d]: stack code is free, op: %s -> %s%s\n", BOLD_TEXT, __func__, __LINE__, op_names[cur_op], op_names[sc->op], UNBOLD_TEXT);
-      if (stop_at_error) abort();
-    }
-  if (unchecked_type(sc->args) == T_FREE)
-    {
-      fprintf(stderr, "%s%s[%d]: stack args is free, op: %s -> %s%s\n", BOLD_TEXT, __func__, __LINE__, op_names[cur_op], op_names[sc->op], UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
 }
@@ -4967,19 +4957,9 @@ static void pop_stack_no_op(s7_scheme *sc)
       fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
-  sc->code =  sc->stack_end[0];
+  sc->code =  _NFre(sc->stack_end[0]);
   sc->envir = _TLid(sc->stack_end[1]);
-  sc->args =  sc->stack_end[2];
-  if (unchecked_type(sc->code) == T_FREE)
-    {
-      fprintf(stderr, "%s%s[%d]: stack code is free, op: %s -> %s%s\n", BOLD_TEXT, __func__, __LINE__, op_names[cur_op], op_names[sc->op], UNBOLD_TEXT);
-      if (stop_at_error) abort();
-    }
-  if (unchecked_type(sc->args) == T_FREE)
-    {
-      fprintf(stderr, "%s%s[%d]: stack args is free, op: %s -> %s%s\n", BOLD_TEXT, __func__, __LINE__, op_names[cur_op], op_names[sc->op], UNBOLD_TEXT);
-      if (stop_at_error) abort();
-    }
+  sc->args =  _NFre(sc->stack_end[2]);
 }
 
 static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
@@ -27428,7 +27408,7 @@ static s7_pointer string_read_name(s7_scheme *sc, s7_pointer pt)
 static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_size, const char *caller)
 {
   s7_pointer port;
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   long size;
 #endif
   unsigned int port_loc;
@@ -27449,7 +27429,7 @@ static s7_pointer read_file(s7_scheme *sc, FILE *fp, const char *name, long max_
   port_line_number(port) = 1;  /* first line is numbered 1 */
   add_input_port(sc, port);
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   /* this doesn't work in MS C */
   fseek(fp, 0, SEEK_END);
   size = ftell(fp);
@@ -33779,7 +33759,7 @@ system captures the output as a string and returns it."
 }
 
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
 #include <dirent.h>
 
 static s7_pointer c_directory_to_list(s7_scheme *sc, s7_pointer name)
@@ -73498,7 +73478,7 @@ static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)
 }
 
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
 /* gdb stacktrace decoding */
 
 static bool is_decodable(s7_scheme *sc, s7_pointer p)
@@ -73645,7 +73625,7 @@ s7_scheme *s7_init(void)
   s7_pointer sym;
   static bool already_inited = false;
 
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   setlocale(LC_NUMERIC, "C"); /* use decimal point in floats */
 #endif
 
@@ -74484,7 +74464,7 @@ s7_scheme *s7_init(void)
   sc->delete_file_symbol =           defun("delete-file",	delete_file,		1, 0, false);
   sc->getenv_symbol =                defun("getenv",		getenv,			1, 0, false);
   sc->system_symbol =                defun("system",		system,			1, 1, false);
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
   sc->directory_to_list_symbol =     defun("directory->list",   directory_to_list,	1, 0, false);
   sc->file_mtime_symbol =            defun("file-mtime",	file_mtime,		1, 0, false);
 #endif
@@ -75229,7 +75209,7 @@ int main(int argc, char **argv)
     }
   else 
     {
-#ifndef _MSC_VER
+#if (!MS_WINDOWS)
       s7_load(sc, "repl.scm");              /* this is libc dependent */
       s7_eval_c_string(sc, "((*repl* 'run))");
 #else

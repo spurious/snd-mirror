@@ -520,6 +520,12 @@
 	   (pair? (cdr x))
 	   (pair? (cddr x))))
 
+    (define (last-ref x)
+      (let ((len (length x)))
+	(and (integer? len)
+	     (positive? len)
+	     (x (- len 1)))))
+    
     (define (proper-pair? x)
       (and (pair? x)
 	   (proper-list? (cdr x))))
@@ -989,7 +995,7 @@
 	    (mx #f))
 	(if (pair? body)
 	    (let counter ((ignored #f) ; 'ignored is for member's benefit
-			  (tree (list-ref body (- (length body) 1))))
+			  (tree (last-ref body)))
 	      (if (pair? tree)
 		  (if (eq? (car tree) 'values)
 		      (if (pair? (cdr tree))
@@ -1018,7 +1024,7 @@
 	(let ((body (and (memq ftype '(define define* lambda lambda* let))
 			 (cddr initial-value))))
 	  (and (pair? body)
-	       (let ((sig (let signer ((endb (list-ref body (- (length body) 1))))
+	       (let ((sig (let signer ((endb (last-ref body)))
 			    (and (not (side-effect? endb env))
 				 (cond ((not (pair? endb))
 					(and (not (symbol? endb))
@@ -1049,7 +1055,7 @@
 					     (and (> len 2)
 						  (pair? (caddr endb))
 						  (pair? (cdaddr endb)) ; if nil -> unspecified?
-						  (signer (last-par (cdaddr endb)))))
+						  (signer (last-ref (cdaddr endb)))))
 					    
 					    (else #f)))))))))
 		 (if (not (pair? sig))
@@ -1222,12 +1228,6 @@
 			(side-effect-with-vars? f env outvars))
 		      body))))))
 
-    (define (last-par x)
-      (let ((len (length x)))
-	(and (integer? len)
-	     (positive? len)
-	     (x (- len 1)))))
-    
     (define (tree-subst new old tree)
       (cond ((equal? old tree)
 	     new)
@@ -1398,7 +1398,7 @@
 					 (or (and (eq? name (car cdrf))
 						  (set! recur cdrf))
 					     (and (memq (car cdrf) '(begin let let*))
-						  (let ((ret (last-par cdrf)))
+						  (let ((ret (last-ref cdrf)))
 						    (and (pair? ret)
 							 (eq? name (car ret))
 							 (set! recur ret)))))   ; recur is the looper
@@ -1527,7 +1527,7 @@
 					  (or (and (eq? name (car lst))
 						   (find-iter (cdr lst)))
 					      (and (memq (car lst) '(begin when unless let let*))
-						   (let ((ret (last-par lst)))
+						   (let ((ret (last-ref lst)))
 						     (and (pair? ret)
 							  (eq? name (car ret))
 							  (find-iter (cdr ret))))))))
@@ -1568,7 +1568,7 @@
 			(let ((call (if (eq? (car do-body) name)
 					do-body
 					(and (eq? (car do-body) 'begin)
-					     (let ((lp (last-par do-body)))
+					     (let ((lp (last-ref do-body)))
 					       (and (pair? lp)
 						    (eq? (car lp) name)
 						    lp))))))
@@ -1686,7 +1686,7 @@
 				'side-effect ()
 				'allow-other-keys (and (pair? arglist)
 						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
-						       (eq? (last-par arglist) :allow-other-keys))
+						       (eq? (last-ref arglist) :allow-other-keys))
 				'scope ()
 				'refenv ()
 				'setters ()
@@ -2292,9 +2292,12 @@
 		  (format outport "~NC~A: :rest parameter can't specify a default value: ~A~%" lint-left-margin #\space f args)))))
       
       (let ((a (memq :allow-other-keys args)))
-	(if (len>1? a)
-	    (format outport "~NC~A: :allow-other-keys should be at the end of the parameter list: ~A~%" lint-left-margin #\space f 
-		    (focus-str (object->string args) ":allow-other-keys"))))
+	(when (pair? a)
+	  (if (pair? (cdr a))
+	      (format outport "~NC~A: :allow-other-keys should be at the end of the parameter list: ~A~%" lint-left-margin #\space f 
+		      (focus-str (object->string args) ":allow-other-keys")))
+	  (if (len=1? args)
+	      (format outport "~NC~A: :allow-other-keys can't be the only parameter: ~A~%" lint-left-margin #\space f args))))
 
       (for-each (lambda (p)
 		  (if (len>1? p)
@@ -3579,7 +3582,7 @@
 		    ((not (and (len>2? e)                   ; (and ... (or ... 123) ...) -> splice out or
 			       (pair? (cdr exprs))
 			       (eq? (car e) 'or)
-			       (cond ((list-ref e (- (length e) 1)) => code-constant?) ; (or ... #f)
+			       (cond ((last-ref e) => code-constant?) ; (or ... #f)
 				     (else #f))))
 		     (if (not (and (pair? new-form)
 				   (or (eq? val (car new-form)) ; omit repeated tests
@@ -3773,7 +3776,7 @@
 			   (return arg1))
 		       (if (and (pair? arg1)     ; (or (and ... A) A) -> A
 				(eq? (car arg1) 'and)
-				(equal? arg2 (list-ref arg1 (- (length arg1) 1)))
+				(equal? arg2 (last-ref arg1))
 				(not (side-effect? arg1 env)))
 			   (return arg2))
 		       
@@ -8322,7 +8325,7 @@
 						    
 						    ;; need to check for only one apply values
 						    ((#_list-values)          ; (apply f `(,x ,@z)) -> (apply f x z)
-						     (let ((last-arg (list-ref args (- (length args) 1))))
+						     (let ((last-arg (last-ref args)))
 						       (if (and (pair? last-arg)
 								(eq? (car last-arg) #_apply-values)
 								(tree-nonce #_apply-values args))
@@ -9585,7 +9588,7 @@
 		 (if (not (null? (cadr init)))
 		     (lint-format "dynamic-wind init function should be a thunk: ~A" caller init))
 		 (if (pair? (cddr init))
-		     (let ((last-expr (list-ref init (- (length init) 1))))
+		     (let ((last-expr (last-ref init)))
 		       (if (not (pair? last-expr))
 			   (if (null? (cdddr init))
 			       (set! empty 1))
@@ -9605,7 +9608,7 @@
 		 (if (not (null? (cadr end)))
 		     (lint-format "dynamic-wind end function should be a thunk: ~A" caller end))
 		 (if (pair? (cddr end))
-		     (let ((last-expr (list-ref end (- (length end) 1))))
+		     (let ((last-expr (last-ref end)))
 		       (if (not (pair? last-expr))
 			   (if (null? (cdddr end))
 			       (set! empty (+ empty 1)))
@@ -10317,7 +10320,7 @@
 				   (let ((end+res (caddr arg)))
 				     (check-arg (if (and (pair? end+res)
 							 (> (length end+res) 1))
-						    (list-ref end+res (- (length end+res) 1))
+						    (last-ref end+res)
 						    ())))))
 			      
 			      ((case)
@@ -10327,7 +10330,7 @@
 				      (if (and (pair? clause)
 					       (> (length clause) 1)
 					       (not (eq? (cadr clause) '=>)))
-					  (check-arg (list-ref clause (- (length clause) 1)))))
+					  (check-arg (last-ref clause))))
 				    (cddr arg))))
 			      
 			      ((cond)
@@ -10338,7 +10341,7 @@
 					(if (pair? (cdr clause))
 					    (if (and (not (eq? (cadr clause) '=>))
 						     (proper-list? (cdr clause)))
-						(check-arg (list-ref clause (- (length clause) 1))))
+						(check-arg (last-ref clause)))
 					    (check-cond-arg (car clause)))))
 				  (cdr arg))))
 			      
@@ -10383,7 +10386,7 @@
 						 (done)
 						 (set! checkers (cdr checkers)))))
 				       (cdr arg) (cddr arg))
-				      (check-arg (list-ref arg (- (length arg) 1))))))
+				      (check-arg (last-ref arg)))))
 			      
 			      (else 
 			       (let ((op (return-type (car arg) env)))
@@ -10914,7 +10917,7 @@
 			      (let ((getdots (if (null? getargs) "" " ..."))
 				    (setdots (if (or (not (pair? setargs)) (null? (cdr setargs))) "" " ..."))
 				    (setvalue (and (proper-list? setargs)
-						   (list-ref setargs (- (length setargs) 1)))))
+						   (last-ref setargs))))
 				(if setvalue
 				    (format outport "~NC~A: perhaps use dilambda and generalized set! for ~A and ~A:~%~
                                                   ~NCreplace (~A~A) with (~A~A) and (~A~A ~A) with (set! (~A~A) ~A)~%~
@@ -11032,7 +11035,7 @@
 	  (when (and (pair? outer-form)
 		     (not (memq (var-definer local-var) '(call-with-input-string call-with-input-file call-with-output-string call-with-output-file)))
 		     ;; call-with-io-walker below uses open-input-string et al for the initial value to get type checks
-		     (let ((last (list-ref outer-form (- (length outer-form) 1))))
+		     (let ((last (last-ref outer-form)))
 		       (or (not (tree-memq (var-name local-var) last))
 			   (and (pair? last)
 				(memq (car last) '(close-input-port close-output-port close-port close))))))
@@ -11765,7 +11768,7 @@
 		 ;; here all but last result exprs are already checked
 		 ;;   redundant begin can confuse this, but presumably we'll complain about that elsewhere
 		 ;;   also even in mid-body, if else clause has a side-effect, an earlier otherwise pointless clause might be avoiding that
-		 (let ((has-else (let ((last-clause (list-ref f (- (length f) 1))))
+		 (let ((has-else (let ((last-clause (last-ref f)))
 				   (and (pair? last-clause)
 					(memq (car last-clause) '(else #t))
 					(any? (lambda (c)
@@ -11775,7 +11778,7 @@
 			       (if (and (len>1? c)
 					(proper-list? c)
 					(not (memq '=> (cdr c))))
-				   (let ((last-expr (list-ref c (- (length c) 1))))
+				   (let ((last-expr (last-ref c)))
 				     (cond ((side-effect? last-expr env)
 					    (if (pair? last-expr)
 						(check-returns caller last-expr env)))
@@ -11802,7 +11805,7 @@
 	      ((let let*)
 	       (if (and (len>1? (cdr f))
 			(not (symbol? (cadr f))))
-		   (let ((last-expr (list-ref f (- (length f) 1))))
+		   (let ((last-expr (last-ref f)))
 		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
 			     (check-returns caller last-expr env))		 
@@ -11833,7 +11836,7 @@
 
 	      ((letrec letrec* with-let unless when begin with-baffle)
 	       (if (len>1? (cdr f))
-		   (let ((last-expr (list-ref f (- (length f) 1))))
+		   (let ((last-expr (last-ref f)))
 		     (if (side-effect? last-expr env)
 			 (if (pair? last-expr)
 			     (check-returns caller last-expr env))
@@ -11848,7 +11851,7 @@
 				   (let* ((end+res (caddr f))
 					  (len (or (length end+res) -1)))
 				     (if (> len 1)
-					 (list-ref end+res (- (length end+res) 1)))))))
+					 (last-ref end+res))))))
 		 (unless (eq? returned #<unspecified>)
 		   (if (and (pair? returned)
 			    (side-effect? returned env))
@@ -11921,6 +11924,7 @@
 		  (fbody (cddar body)))
 	      (when (and (symbol? fname)
 			 (proper-list? fargs)
+			 (proper-list? body)
 			 (tree-nonce fname (cdr body))
 			 (not (any? keyword? fargs)))
 		(let ((call (find-call fname (cdr body))))
@@ -11991,7 +11995,7 @@
 		  (if (tree-set-member names (cdr expr))
 		      (set! letx 'let*))
 		  (set! names (cons (car expr) names)))))))
-	
+
 	(let ((len (length body)))
 	  (when (> len 2)                           ; ... (define (x...)...) (x ...) -> (let (...) ...) or named let -- this happens a lot!
 	    (let ((n-1 (list-ref body (- len 2)))   ; or (define (x ...)...) (some expr calling x once) -> named let etc
@@ -12482,6 +12486,7 @@
 		      (let ((v (var-member func-name env)))                                  ; only use of env
 			(if (or (and (var? v)
 				     (memq (var-ftype v) '(define define* lambda lambda*)))
+				(procedure? func-name) ; e.g. list-values 
 				(procedure? (symbol->value func-name *e*)))
 			    ;; (let () (write-byte 0) (write-byte 1) (write-byte 2) (write-byte 3) (write-byte 4)) ->
 			    ;;    (for-each write-byte '(0 1 2 3 4))
@@ -12610,7 +12615,7 @@
 			      (car prev-f) (truncated-list->string f))))
 	    
 	    ((vector-set! float-vector-set! int-vector-set! string-set! list-set! hash-table-set! let-set!  set-car! set-cdr!)
-	     (if (equal? f (list-ref prev-f (- (length prev-f) 1)))
+	     (if (equal? f (last-ref prev-f))
 		 ;; (begin (vector-set! x 0 (* y 2)) (* y 2))
 		 (lint-format "~A returns the new value, so this could be omitted: ~A" caller 
 			      (car prev-f) (truncated-list->string f)))
@@ -12931,15 +12936,14 @@
     
     
     (define (return-walker last func)
-      (if (not (pair? last))
+      (if (not (and (pair? last)
+		    (proper-list? last)))
 	  (func last)
 	  (case (car last)
 	    
 	    ((begin let let* letrec letrec* when unless with-baffle with-let)
 	     (when (pair? (cdr last))
-	       (let ((len (length last)))
-		 (when (positive? len)
-		   (return-walker (list-ref last (- len 1)) func)))))
+	       (return-walker (last-ref last) func)))
 	    
 	    ((if)
 	     (when (len>1? (cdr last))
@@ -12951,36 +12955,48 @@
 	     (when (pair? (cdr last))
 	       (for-each (lambda (c)
 			   (when (pair? c)
-			     (let ((len (length c)))
-			       (if (and (integer? len)
-					(> len 1))
-				   (return-walker (list-ref c (- len 1)) func)))))
+			     (return-walker (last-ref c) func)))
 			 (cdr last))))
 	    
 	    ((case)
 	     (when (len>1? (cdr last))
 	       (for-each (lambda (c)
 			   (when (pair? c)
-			     (let ((len (length c)))
-			       (if (and (integer? len)
-					(> len 1))
-				   (return-walker (list-ref c (- len 1)) func)))))
+			     (return-walker (last-ref c) func)))
 			 (cddr last))))
 	    
 	    ((do)
 	     (if (and (len>1? (cdr last))
 		      (proper-list? (caddr last))
 		      (len>1? (caddr last)))
-		 (return-walker (list-ref (caddr last) (- (length (caddr last)) 1)) func)))
+		 (return-walker (last-ref (caddr last)) func)))
 
 	    ((set!)
 	     (if (len>1? (cdr last))
 		 (func (caddr last))))
 
+	    ((not)
+	     (func #f))
+
+	    ((or)
+	     (func #f)
+	     (for-each (lambda (c)
+			 (return-walker c func))
+		       (cdr last)))
+
+	    ((and)
+	     (func #f)
+	     (return-walker (last-ref last) func))
+
+	    ((dynamic-wind catch)
+	     (let ((body (and (= (length last) 4)
+			      (caddr last))))
+	       (if (and (pair? body)
+			(eq? (car body) 'lambda))
+		   (return-walker (last-ref (cddr body)) func))))
+
 	    (else (func last)) ; includes quote
 
-	    ;; call-with-exit et al also or|and
-	    ;; or|and -- call return-walker on each entry?
 	    ;; call-with-exit: walker on last on body, and scan for return func, walker on arg(s...)->values?
 	    )))
 		   
@@ -13101,7 +13117,7 @@
       (let ((tag 'yup))
 	(catch 'sequence-constant-done
 	  (lambda ()
-	    (check-sequence-constant function-name (list-ref body (- (length body) 1))) ; some of these are innocuous -- lambda forms in midst of outer body etc
+	    (check-sequence-constant function-name (last-ref body)) ; some of these are innocuous -- lambda forms in midst of outer body etc
 	    (set! tag 'nope))
 	  (lambda args #f))
 	(if (eq? tag 'yup)
@@ -13245,16 +13261,16 @@
 			 (eval (list definer (cadr form) #f)))
 			
 			((lambda*)
-			 (set! (fvar-let 'allow-other-keys) (eq? (last-par (cadr form)) :allow-other-keys))
+			 (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cadr form)) :allow-other-keys))
 			 (eval (list definer (copy (cadr form)) #f)))         ; eval can remove :allow-other-keys!
 			
 			((define*)
-			 (set! (fvar-let 'allow-other-keys) (eq? (last-par (cdadr form)) :allow-other-keys))
+			 (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cdadr form)) :allow-other-keys))
 			 (eval (list definer (cons '_ (copy (cdadr form))) #f)))
 			
 			((defmacro defmacro*)
 			 (set! (fvar-let 'allow-other-keys) (or (not (eq? definer 'defmacro*))
-							     (eq? (last-par (caddr form)) :allow-other-keys)))
+							     (eq? (last-ref (caddr form)) :allow-other-keys)))
 			 (eval (list definer '_ (caddr form) #f)))
 			
 			((define-constant)
@@ -13263,7 +13279,7 @@
 			
 			(else
 			 (set! (fvar-let 'allow-other-keys) (or (not (memq definer '(define-macro* define-bacro*)))
-								(eq? (last-par (cdadr form)) :allow-other-keys)))
+								(eq? (last-ref (cdadr form)) :allow-other-keys)))
 			 (eval (list definer (cons '_ (cdadr form)) #f)))))
 		    (lambda args
 		      'error)))))
@@ -14102,7 +14118,7 @@
 			   (char=? #\? (sym-name (- (length sym-name) 1)))))
 		(catch 'one-is-enough
 		  (lambda ()
-		    (return-walker (list-ref val (- (length val) 1))
+		    (return-walker (last-ref val)
 				   (lambda (last)
 				     (when (or (and (code-constant? last)
 						    (not (boolean? last))
@@ -14124,7 +14140,7 @@
 	  ;; -------- rewrite-let-optionals --------
 	  (define (rewrite-let-optionals caller form outer-name outer-args val)
 	    (let ((args (args->proper-list outer-args)))
-	      (if (and (eq? (cadar val) (last-par args))
+	      (if (and (eq? (cadar val) (last-ref args))
 		       (every? len=2? (caddar val))) ; some seem to include a type check?
 		  (lint-format "perhaps ~A" caller
 			       (lists->string form
@@ -16199,6 +16215,7 @@
 	      (if (and (len>1? a)              ; is (else) a legal cond clause? -- yes, it returns else...
 		       (equal? (cdr a) (cdr e))
 		       (len>1? b)
+		       (proper-list? b)
 		       (not (eq? (cadr b) '=>)))
 		  (let ((expr (simplify-boolean `(or ,(car a) (not ,(car b))) () () env)))
 		    (lint-format "perhaps ~A" caller
@@ -16371,11 +16388,11 @@
 
 	  ;; -------- cond-one-result --------
 	  (define (cond-one-result caller form last-clause len env)
-	    (let ((result (list-ref (cadr form) (- (length (cadr form)) 1)))
+	    (let ((result (last-ref (cadr form)))
 		  (else-clause (cdr (list-ref form len))))
 	      (when (every? (lambda (c)
 			      (and (len>1? c)
-				   (equal? result (list-ref c (- (length c) 1)))))
+				   (equal? result (last-ref c))))
 			    (cddr form))
 		;;  (cond ((and (display x) x) 32) (#t 32)) -> (begin (and (display x) x) 32)
 		(lint-format "perhaps ~A" caller
@@ -16622,7 +16639,7 @@
 										  (map (lambda (c)
 											 (append c (list result)))
 										       (cdr first-sequel))
-										  (if (memq (car (last-par first-sequel)) '(else #t))
+										  (if (memq (car (last-ref first-sequel)) '(else #t))
 										      ()
 										      (list (list 'else result)))))))
 					((if)
@@ -18710,7 +18727,7 @@
 	    (let ((body (cddr form))
 		  (varlist (cadr form)))
 	      ;; if last is (set! local-var...) and no complications, complain
-	      (let ((last (list-ref body (- (length body) 1))))
+	      (let ((last (last-ref body)))
 		(when (and (len>2? last)
 			   (eq? (car last) 'set!)
 			   (symbol? (cadr last))
@@ -19923,7 +19940,7 @@
 			(remove-unneeded-let*-vars caller form env))
 		      (combine-let*-vars caller form vars env)
 		      
-		      (let ((last-var (last-par varlist)))
+		      (let ((last-var (last-ref varlist)))
 			(combine-let*-last-var caller form last-var env)
 			(if (and (null? (cdr body))
 				 (len>1? (car body))
@@ -20446,7 +20463,7 @@
 				     continuation
 				     (truncated-list->string form))
 			(let ((last (and (proper-list? body)
-					 (list-ref body (- (length body) 1)))))
+					 (last-ref body))))
 			  (if (and (pair? last)
 				   (eq? (car last) continuation))
 			      ;; (call-with-exit (lambda (return) (display x) (return (+ x y))))
@@ -20586,7 +20603,7 @@
 			    (arglist (let ((arg1 (car clause1))
 					   (arg2 (car clause2)))	  
 				       (if (> (car lens) (cadr lens)) arg2 arg1))) ; lens is reversed
-			    (arg-name (list-ref arglist (- (length arglist) 1)))
+			    (arg-name (last-ref arglist))
 			    (diffs (let arg->defaults ((arg arg-name)
 						       (b1 body1)
 						       (b2 body2)
@@ -20829,7 +20846,7 @@
 							    (map cadr lvars)
 							    (let ((lst (map cadr lvars)))
 							      (append (copy lst (make-list (- (length lst) 1)))
-								      (list-ref lst (- (length lst) 1))))))))
+								      (last-ref lst)))))))
 				     (cons 'lambda (cons new-args new-body))))
 				  
 				  ((lambda*)
@@ -20838,7 +20855,8 @@
 						     (proper-list? (cadr tree)))))
 				       (quit))
 				   (let ((old-args (args->proper-list (cadr tree))))
-				     (if (not (pair? old-args))
+				     (if (or (not (pair? old-args))
+					     (every? keyword? old-args))  ; (:allow-other-keys)
 					 (quit))
 				     (let* ((lvars (map (lambda (a)
 							  (if (memq a '(:rest :allow-other-keys))
@@ -21110,7 +21128,7 @@
 							 (truncated-list->string (list-ref body len)))))))))
 			(when (and (eq? (car arg) 'or)
 				   (proper-list? arg))
-			  (let ((else-clause (let ((last-clause (list-ref arg (- (length arg) 1))))
+			  (let ((else-clause (let ((last-clause (last-ref arg)))
 					       (if (and (pair? last-clause)
 							(memq (car last-clause) '(error throw)))
 						   last-clause
@@ -21166,8 +21184,7 @@
 						     (if (and (memq (caar p) '(let let*))
 							      (list? (cadar p))
 							      (not (assq head (cadar p)))) ; actually not intersection header+trailer (map car cadr)
-							 (let ((last (let ((body (cddar p)))
-								       (list-ref body (- (length body) 1)))))
+							 (let ((last (last-ref (cddar p))))
 							   (if (< (tree-leaves last) 12)
 							       (format #f "(~A ... ~A)"
 								       (caar p)
@@ -22313,4 +22330,4 @@
 ;;; expand-in-place simple functions and simplify?
 ;;; (define x (let () ...defines... (lambda (...) (let...)))) suggests moving defines into the interior let (pvoc.scm)
 ;;;
-;;; 201 29437 826315
+;;; 201 29437 826253
