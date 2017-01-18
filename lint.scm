@@ -12175,9 +12175,10 @@
 								,@(cadr f))
 							       ,@(cddr f)))))
 			  ;; just changing define -> let seems officious, though it does reduce (cadr prev-f)'s scope
-			  (if (or (and (eq? (car f) 'let)
-				       (not (tree-memq (cadr prev-f) (cadr f))))
-				  (eq? (car f) 'let*))
+			  (if (and (proper-list? (cadr f))
+				   (or (and (eq? (car f) 'let)
+					    (not (tree-memq (cadr prev-f) (cadr f))))
+				       (eq? (car f) 'let*)))
 			      (lint-format "perhaps ~A" caller
 					   (lists->string 
 					    `(... ,prev-f ,f ,@(if (null? (cdr fs)) () '(...)))
@@ -12589,8 +12590,8 @@
 	;; -------- redundant-set --------
 	(define (redundant-set caller prev-f f env)
 	  (cond ((and (eq? f #t)
-		      (or (and (eq? (car prev-f) 'set!)
-			       (len=2? (cdr prev-f))
+		      (if (eq? (car prev-f) 'set!)
+			  (and (len=2? (cdr prev-f))
 			       (pair? (caddr prev-f))
 			       (arg-signature (caaddr prev-f) env))
 			  (arg-signature (car prev-f) env)))
@@ -13592,7 +13593,7 @@
 	       ;; args can be reversed, but rarely match as symbols
 	       (when (and (null? p)
 			  (or (null? a)
-			      (and (null? (cdr a))
+			      (and (len=1? a)
 				   (pair? (cdar a))
 				   (code-constant? (cadar a)))))
 		 (let* ((args-match (do ((p1 outer-args (cdr p1))
@@ -13738,7 +13739,7 @@
 			      (if (or all-bad
 				      (not (symbol? fname))
 				      (memq fname largs)
-				      (not (pair? ((if (symbol? (cadr f)) caddr cadr) f)))
+				      (not (pair? ((if (symbol? (cadr f)) (if (len>1? (caddr f)) caddr not) cadr) f)))
 				      (let ((fargs (args->proper-list (if (symbol? (cadr f)) (cadr (caddr f)) (cdadr f)))))
 					(tree-set-member (remq-set fargs largs) (cddr f))))
 				  (set! bad-funcs (cons fname bad-funcs))
@@ -14122,7 +14123,7 @@
 				   (lambda (last)
 				     (when (or (and (code-constant? last)
 						    (not (boolean? last))
-						    (not (and (pair? last)
+						    (not (and (len=2? last)
 							      (eq? (car last) 'quote)
 							      (boolean? (cadr last)))))
 					       (and (pair? last)

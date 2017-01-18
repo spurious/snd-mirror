@@ -786,12 +786,12 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
        (cond ,@(map (lambda (clause)         
 		      (if (memq (car clause) '(#t else))
 			  clause
-			  (if (= (length (car clause)) 1)
-			      (cons (list (caar clause) obj) (cdr clause))
-			      (cons (cons 'or (map (lambda (type)
+			  (cons (if (= (length (car clause)) 1)
+				    (list (caar clause) obj)
+				    (cons 'or (map (lambda (type)
 						     (list type obj))
-						   (car clause)))
-				    (cdr clause)))))
+						   (car clause))))
+				(cdr clause))))
 		    clauses)))))
 
 

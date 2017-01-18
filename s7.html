@@ -207,7 +207,7 @@ indented and on a sort of brownish background.
   <li><a href="#define*">define*, named let*</a>
   <li><a href="#macros">define-macro</a>
   <li><a href="#pws">procedure-setter</a>
-  <li><a href="#generalizedset">generalized set!</a>
+  <li><a href="#generalizedset">generic functions, generalized set!</a>
   <li><a href="#multidimensionalvectors">multidimensional vectors</a>
   <li><a href="#hashtables">hash tables</a>
   <li><a href="#environments">environments</a>
@@ -1801,6 +1801,24 @@ or even <code>(&gt; 1 0+i)</code>.
 (<a href="#morallyequalp">morally-equal?</a> obj1 obj2)
 </pre>
 
+<p><b>copy</b> returns a (shallow) copy of its argument.  If a destination is provided,
+it need not match the source in size or type.  The start and end indices refer to the source.
+</p>
+<pre class="indented">
+&gt; (copy '(1 2 3 4) (make-list 2))
+<em class="gray">(1 2)</em>
+&gt; (copy #(1 2 3 4) (make-list 5) 1) ; start at 1 in the source
+<em class="gray">(2 3 4 #f #f)</em>
+&gt; (copy "1234" (make-vector 2))
+<em class="gray">#(#\1 #\2)</em>
+&gt; (define lst (list 1 2 3 4 5))
+<em class="gray">(1 2 3 4 5)</em>
+&gt; (copy #(8 9) (cddr lst))
+<em class="gray">(8 9 5)</em>
+&gt; lst
+<em class="gray">(1 2 8 9 5)</em>
+</pre>
+
 <p><b>reverse!</b> is an in-place version of reverse.  That is, 
 it modifies the sequence passed to it in the process of reversing its contents.  
 If the sequence is a list, remember to use set!:
@@ -1808,6 +1826,14 @@ If the sequence is a list, remember to use set!:
 but historically, lisp programmers have treated the in-place reverse as the fast
 version, so s7 follows suit.
 </p>
+<pre class="indented">
+&gt; (define lst (list 1 2 3))
+<em class="gray">(1 2 3)</em>
+&gt; (reverse! lst)
+<em class="gray">(3 2 1)</em>
+&gt; lst
+<em class="gray">(1)</em>
+</pre>
 
 <p>Leaving aside the weird list case,
 <b>append</b> returns a sequence of the same type as its first argument.

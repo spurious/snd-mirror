@@ -190,6 +190,8 @@ void drag_and_drop_mix_at_x_y(int data, const char *filename, int x, int y)
 }
 
 
+static int mix_infos_ctr = 0;
+
 int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool with_tag, file_delete_t auto_delete, mix_sync_t all_chans, int *out_chans)
 {
   chan_info *cp;
@@ -222,7 +224,6 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
       cps[0] = cp;
       chans = 1;
     }
-  if (out_chans) (*out_chans) = chans;
 
   id = mix_file(beg, len, chans, cps, fullname, auto_delete, NULL, with_tag, 0);
   if (si) 
@@ -234,9 +235,22 @@ int mix_complete_file(snd_info *sp, mus_long_t beg, const char *fullname, bool w
     }
   sp->sync = old_sync;
 
-  if (mix_exists(id))
-    mix_set_file_name(id, chans, fullname);
-
+  if (mix_exists(id)) /* bugfix thanks to Tito Latini, 18-Jan-17 */
+    {
+      if (chans > 1)
+        {
+          chans = mix_infos_ctr - id;
+          if (chans > 1)
+            {
+              int i, sync = GET_NEW_SYNC;
+              for (i = 0; i < chans; i++)
+                sync = mix_set_sync_from_id(id + i, sync);
+            }
+        }
+      if (out_chans) (*out_chans) = chans;
+      mix_set_file_name(id, chans, fullname);
+    }
+  
   return(id);
 }
 
@@ -246,8 +260,6 @@ static const char *b2s(bool val)
   return((val) ? PROC_TRUE : PROC_FALSE);  /* cast needed by g++ > 3.4 */
 } 
 
-
-static int mix_infos_ctr = 0;
 
 static char *tagged_mix_to_string(const char *mixinfile, mus_long_t beg, int file_channel, bool delete_file)
 {

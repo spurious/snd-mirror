@@ -35,7 +35,7 @@
 
 (define mouse-down 0)
 (define mouse-up 0)
-(define click-time 10) ; .1 sec?
+(define click-time (/ internal-time-units-per-second 10.0)) ; sets whether a mouse motion is a click or a drag
 (define mouse-pos 0)
 (define mouse-new #f)
 
@@ -104,15 +104,12 @@
 				  (- (list-ref cur-env (+ mouse-pos 2)) .001))))))
 	    (ly (max 0.0 (min y 1.0))))
 	(set! (channel-envelope snd chn) 
-	      (let ((pos mouse-pos) 
-		    (x lx) 
-		    (y ly))
-		(do ((new-env ())
-		     (e cur-env (cddr e))
-		     (npos 0 (+ npos 2)))
-		    ((= npos pos) 
-		     (append new-env (list x y) (cddr e)))
-		  (set! new-env (append new-env (list (car e) (cadr e)))))))
+	      (do ((new-env ())
+		   (e cur-env (cddr e))
+		   (npos 0 (+ npos 2)))
+		  ((= npos mouse-pos) 
+		   (append new-env (list lx ly) (cddr e)))
+		(set! new-env (append new-env (list (car e) (cadr e))))))
 	(update-lisp-graph snd chn)))))
 
 
@@ -128,13 +125,12 @@
 			 (= mouse-pos 0)
 			 (>= mouse-pos (- (length cur-env) 2))))
 		(set! (channel-envelope snd chn)
-		      (let ((pos mouse-pos)
-			    (new-env ()))
+		      (let ((new-env ()))
 			(let search-point ((e cur-env)
 					   (npos 0))
 			  (if (null? e)
 			      new-env
-			      (if (= pos npos)
+			      (if (= mouse-pos npos)
 				  (append new-env (cddr e))
 				  (begin
 				    (set! new-env (append new-env (list (car e) (cadr e))))
