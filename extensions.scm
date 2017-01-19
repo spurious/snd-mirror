@@ -159,20 +159,14 @@ a list (file-name-or-sound-object [beg [channel]])."))
 		
 		;; a virtual mix -- use simplest method available
 		((sound? input)          ; sound object case
-		 (let ((input-snd input)
-		       (input-chn input-channel)
-		       (input-len len)
-		       (output-snd snd)
-		       (output-chn chn)
-		       (output-beg start))
-		   (if (< input-len 1000000)
-		       (mix-float-vector (channel->float-vector input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
-		       (let* ((output-name (snd-tempnam))
-			      (output (new-sound output-name :size input-len)))
-			 (float-vector->channel (samples input-beg input-len input-snd input-chn) 0 input-len output 0)
-			 (save-sound output)
-			 (close-sound output)
-			 (mix output-name output-beg 0 output-snd output-chn #t #t)))))
+		 (if (< len 1000000)
+		     (mix-float-vector (channel->float-vector input-beg len input input-channel) start snd chn #t)
+		     (let* ((output-name (snd-tempnam))
+			    (output (new-sound output-name :size len)))
+		       (float-vector->channel (samples input-beg len input input-channel) 0 len output 0)
+		       (save-sound output)
+		       (close-sound output)
+		       (mix output-name start 0 snd chn #t #t))))
 		
 		((and (= start 0)        ; file input
 		      (= len (framples input)))

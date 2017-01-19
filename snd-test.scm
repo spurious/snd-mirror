@@ -13283,36 +13283,32 @@ EDITS: 2
 	     (snd-display "ncos +-: ~A" mx)))
       (set! mx (max mx (abs (- (gen1) (gen2))))))
 
-    (let ((test-simple-ncos 
-	   (lambda (n)
-	     (let ((p (make-ncos 400.0 n))
-		   (vp (make-float-vector 200))
-		   (vo (make-float-vector 200)))
-	       (let ((ob (make-oscil-bank 
-			  (apply float-vector (do ((frqs ())
-						   (i 1 (+ i 1)))
-						  ((> i n)
-						   (reverse frqs))  
-						(set! frqs (cons (hz->radians (* i 400.0)) frqs))))
-			  (make-float-vector n (/ pi 2.0))
-			  (make-float-vector n (mus-scaler p))
-			  #t)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i 200))
-		   (float-vector-set! vp i (ncos p)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i 200))
-		   (float-vector-set! vo i (oscil-bank ob)))
-		 (if (not (mus-arrays-equal? vp vo))
-		     (format *stderr* ";simple ncos ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
-			     n 
-			     (float-vector-peak (float-vector-subtract! (copy vp) vo))
-			     vp vo
-			     p ob)))))))
-      
-      (test-simple-ncos 1)
-      (test-simple-ncos 3)
-      (test-simple-ncos 10))
+    (for-each (lambda (n)
+		(let ((p (make-ncos 400.0 n))
+		      (vp (make-float-vector 200))
+		      (vo (make-float-vector 200)))
+		  (let ((ob (make-oscil-bank 
+			     (apply float-vector (do ((frqs ())
+						      (i 1 (+ i 1)))
+						     ((> i n)
+						      (reverse frqs))  
+						   (set! frqs (cons (hz->radians (* i 400.0)) frqs))))
+			     (make-float-vector n (/ pi 2.0))
+			     (make-float-vector n (mus-scaler p))
+			     #t)))
+		    (do ((i 0 (+ i 1)))
+			((= i 200))
+		      (float-vector-set! vp i (ncos p)))
+		    (do ((i 0 (+ i 1)))
+			((= i 200))
+		      (float-vector-set! vo i (oscil-bank ob)))
+		    (if (not (mus-arrays-equal? vp vo))
+			(format *stderr* ";simple ncos ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
+				n 
+				(float-vector-peak (float-vector-subtract! (copy vp) vo))
+				vp vo
+				p ob)))))
+	      '(1 3 10))
     
     (let ((gen (make-nsin 440.0 10))
 	  (v0 (make-float-vector 10)))
@@ -13349,33 +13345,30 @@ EDITS: 2
 	     (snd-display "nsin +-: ~A" mx)))
       (set! mx (max mx (abs (+ (gen1) (gen2))))))
 
-    (let ((test-simple-nsin 
-	   (lambda (n)
-	     (let ((p (make-nsin 400.0 n))
-		   (vp (make-float-vector 200))
-		   (vo (make-float-vector 200))
-		   (parts (apply float-vector
-				 (do ((frqs ())
-				      (i 1 (+ i 1)))
-				     ((> i n)
-				      (reverse frqs))   
-				   (set! frqs (cons (hz->radians (* i 400.0)) frqs))))))
-	       (let ((ob (make-oscil-bank parts (make-float-vector n) (make-float-vector n (mus-scaler p)) #t)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i 200))
-		   (float-vector-set! vp i (nsin p)))
-		 (do ((i 0 (+ i 1)))
-		     ((= i 200))
-		   (float-vector-set! vo i (oscil-bank ob)))
-		 (if (not (mus-arrays-equal? vp vo))
-		     (format *stderr* ";simple nsin ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
-			     n 
-			     (float-vector-peak (float-vector-subtract! (copy vp) vo))
-			     vp vo
-			     p ob)))))))
-      (test-simple-nsin 1)
-      (test-simple-nsin 3)
-      (test-simple-nsin 10))
+    (for-each (lambda (n)
+		(let ((p (make-nsin 400.0 n))
+		      (vp (make-float-vector 200))
+		      (vo (make-float-vector 200))
+		      (parts (apply float-vector
+				    (do ((frqs ())
+					 (i 1 (+ i 1)))
+					((> i n)
+					 (reverse frqs))   
+				      (set! frqs (cons (hz->radians (* i 400.0)) frqs))))))
+		  (let ((ob (make-oscil-bank parts (make-float-vector n) (make-float-vector n (mus-scaler p)) #t)))
+		    (do ((i 0 (+ i 1)))
+			((= i 200))
+		      (float-vector-set! vp i (nsin p)))
+		    (do ((i 0 (+ i 1)))
+			((= i 200))
+		      (float-vector-set! vo i (oscil-bank ob)))
+		    (if (not (mus-arrays-equal? vp vo))
+			(format *stderr* ";simple nsin ~A: ~A~%    ~A~%    ~A~%~A ~A~%" 
+				n 
+				(float-vector-peak (float-vector-subtract! (copy vp) vo))
+				vp vo
+				p ob)))))
+	      '(1 3 10))
     
     (let ((gen (make-nrxysin 440.0)))
       (print-and-check gen 
@@ -14291,36 +14284,37 @@ EDITS: 2
       
       (revert-sound)
 
-      (let ((test-scanned-synthesis
-	     ;; check out scanned-synthesis
-	     (lambda (amp dur mass xspring damp)
-	       (let ((size 256))
-		 (let ((x0 (make-float-vector size))	   
-		       (x1 (make-float-vector size))	   
-		       (x2 (make-float-vector size)))
-		   (do ((i 0 (+ i 1)))
-		       ((= i 12))
-		     (let ((val (sin (/ (* 2 pi i) 12.0))))
-		       (set! (x1 (- (+ i (/ size 4)) 6)) val)))
-		   (let ((data (make-float-vector dur)))
-		     (let ((recompute-samps 30) ;just a quick guess
-			   (gen1 (make-table-lookup 440.0 :wave x1))
-			   (gen2 (make-table-lookup 440.0 :wave x2)))
-		       (do ((i 0 (+ i 1))
-			    (k 0.0)
-			    (kincr (/ 1.0 recompute-samps)))
-			   ((= i dur))
-			 (if (>= k 1.0)
-			     (begin
-			       (set! k 0.0)
-			       (vibrating-uniform-circular-string size x0 x1 x2 mass xspring damp))
-			     (set! k (+ k kincr)))
-			 (let ((g1 (table-lookup gen1))
-			       (g2 (table-lookup gen2)))
-			   (set! (data i) (+ g2 (* k (- g1 g2)))))))
-		     (float-vector-scale! data (/ amp (float-vector-peak data)))
-		     (float-vector->channel data 0 dur)))))))
-	(test-scanned-synthesis .1 10000 1.0 0.1 0.0))
+    (let ((amp 0.1000)
+          (dur 10000)
+          (mass 1.0000)
+          (xspring 0.1000)
+          (damp 0.0000)
+	  (size 256))
+      (let ((x0 (make-float-vector size))	   
+	    (x1 (make-float-vector size))	   
+	    (x2 (make-float-vector size)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 12))
+	  (let ((val (sin (/ (* 2 pi i) 12.0))))
+	    (set! (x1 (- (+ i (/ size 4)) 6)) val)))
+	(let ((data (make-float-vector dur)))
+	  (let ((recompute-samps 30) ;just a quick guess
+		(gen1 (make-table-lookup 440.0 :wave x1))
+		(gen2 (make-table-lookup 440.0 :wave x2)))
+	    (do ((i 0 (+ i 1))
+		 (k 0.0)
+		 (kincr (/ 1.0 recompute-samps)))
+		((= i dur))
+	      (if (>= k 1.0)
+		  (begin
+		    (set! k 0.0)
+		    (vibrating-uniform-circular-string size x0 x1 x2 mass xspring damp))
+		  (set! k (+ k kincr)))
+	      (let ((g1 (table-lookup gen1))
+		    (g2 (table-lookup gen2)))
+		(set! (data i) (+ g2 (* k (- g1 g2)))))))
+	  (float-vector-scale! data (/ amp (float-vector-peak data)))
+	  (float-vector->channel data 0 dur))))
       
       (close-sound ind))
     
@@ -18954,33 +18948,36 @@ EDITS: 2
 	(select-channel 0)
 	(if (not (equal? (selected-sound) nind)) (snd-display "selected-sound: ~A?" (selected-sound)))
 	(if (not (= (selected-channel) 0)) (snd-display "selected-channel: ~A?" (selected-channel)))
-	(let ((snd-test-jc-reverb 
-	       (lambda (decay-dur low-pass volume amp-env)
-		 (let ((allpass1 (make-all-pass -0.700 0.700 1051))
-		       (allpass2 (make-all-pass -0.700 0.700  337))
-		       (allpass3 (make-all-pass -0.700 0.700  113))
-		       (comb1 (make-comb 0.742 4799))
-		       (comb2 (make-comb 0.733 4999))
-		       (comb3 (make-comb 0.715 5399))
-		       (comb4 (make-comb 0.697 5801))
-		       (dur (+ decay-dur (/ (framples) (srate))))
-		       (outdel (make-delay (seconds->samples .013))))
-		   (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
-			 (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
-		     (if (or amp-env low-pass)
-			 (let ((delf (let ((flt (and low-pass (make-fir-filter 3 (float-vector 0.25 0.5 0.25))))
-					   (envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration dur)))
-				       (if low-pass
-					   (lambda (inval)
-					     (+ inval (delay outdel (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses inval)))))))
-					   (lambda (inval)
-					     (+ inval (delay outdel (* (env envA) (comb-bank combs (all-pass-bank allpasses inval))))))))))
-			   (map-channel delf 0 (round (* dur (srate)))))
-			 (map-channel
-			  (lambda (inval)
-			    (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval))))))
-			  0 (round (* dur (srate))))))))))
-	  (snd-test-jc-reverb 1.0 #f .1 #f))
+
+	(let ((decay-dur 1.0000)
+	      (low-pass #f)
+	      (volume 0.1000)
+	      (amp-env #f))
+	  (let ((allpass1 (make-all-pass -0.700 0.700 1051))
+		(allpass2 (make-all-pass -0.700 0.700  337))
+		(allpass3 (make-all-pass -0.700 0.700  113))
+		(comb1 (make-comb 0.742 4799))
+		(comb2 (make-comb 0.733 4999))
+		(comb3 (make-comb 0.715 5399))
+		(comb4 (make-comb 0.697 5801))
+		(dur (+ decay-dur (/ (framples) (srate))))
+		(outdel (make-delay (seconds->samples .013))))
+	    (let ((combs (make-comb-bank (vector comb1 comb2 comb3 comb4)))
+		  (allpasses (make-all-pass-bank (vector allpass1 allpass2 allpass3))))
+	      (if (or amp-env low-pass)
+		  (let ((delf (let ((flt (and low-pass (make-fir-filter 3 (float-vector 0.25 0.5 0.25))))
+				    (envA (make-env :envelope (or amp-env '(0 1 1 1)) :scaler volume :duration dur)))
+				(if low-pass
+				    (lambda (inval)
+				      (+ inval (delay outdel (* (env envA) (fir-filter flt (comb-bank combs (all-pass-bank allpasses inval)))))))
+				    (lambda (inval)
+				      (+ inval (delay outdel (* (env envA) (comb-bank combs (all-pass-bank allpasses inval))))))))))
+		    (map-channel delf 0 (round (* dur (srate)))))
+		  (map-channel
+		   (lambda (inval)
+		     (+ inval (delay outdel (* volume (comb-bank combs (all-pass-bank allpasses inval))))))
+		   0 (round (* dur (srate))))))))
+
 	(play nind :wait #t)
 	(voiced->unvoiced 1.0 256 2.0 2.0) 
 	(pulse-voice 80 20.0 1.0 1024 0.01)
@@ -19452,8 +19449,7 @@ EDITS: 2
 	(set! pv (make-phase-vocoder (lambda (dir) (next-sample reader))
 				     512 4 256 1.0
 				     (lambda (v infunc)
-				       (set! incalls (+ incalls 1))
-				       #t)
+				       (set! incalls (+ incalls 1)))
 				     #f ;no change to edits
 				     (lambda (v)
 				       (set! outcalls (+ outcalls 1))
@@ -22447,6 +22443,13 @@ EDITS: 2
 		(set! happy #f)
 		(snd-display "copy mix at ~A: ~A ~A ~A" i x1 x2 (* i .001)))))))
       (close-sound snd))
+
+    (let ((ind (new-sound "mix-test.snd" :channels 4 :size 100)))
+      (let ((mx (mix "2a.snd" 0 #t)))
+	(if (not (and (= (length mx) 2)
+		      (= (length (car (mixes))) 4)))
+	    (snd-display "mixes 4+2: ~A ~A" mx (mixes))))
+      (close-sound ind))
     
     (when all-args
       ;; waltz
@@ -38166,11 +38169,6 @@ EDITS: 1
       (do ((i 0 (+ i 1)) (x 0.0 (+ x .01))) ((= i 100)) (float-vector-set! v-1 i x))
       (define v0 (make-float-vector 10))
       
-      (define args1 (list 1.5 '(oscil o1) '(env e1) 'x 'i '(oscil o) '(- 1.0 x) '(oscil (vector-ref oscs k))))
-      (define args2 (list 1.5 '(oscil o2) '(env e2) 'y 'i '(float-vector-ref v-1 i)))
-      (define args3 (list 1.5 '(oscil o3) '(env e3) 'z 'i '(cos x)))
-					;(define args4 (list 1.5 '(oscil o4) '(env e4) 'x 'i))
-      
       (define (try str)
 	(eval-string
 	 (call-with-output-string
@@ -38478,8 +38476,10 @@ EDITS: 1
 		       `("      (format *stderr* \"env let ~A:~~%    ~~A~~%    ~~A~~%\" v9 v10))~%~%" ,str)
 		       `("  (if (not (mus-arrays-equal? v11 v12))~%")
 		       `("      (format *stderr* \"letx ~A:~~%    ~~A~~%    ~~A~~%\" v11 v12))))~%~%" ,str)))))))
-      
-      (define (out-args)
+	
+      (let ((args1 #(1.5 (oscil o1) (env e1) x i (oscil o) (- 1.0 x) (oscil (vector-ref oscs k))))
+	    (args2 #(1.5 (oscil o2) (env e2) y i (float-vector-ref v-1 i)))
+	    (args3 #(1.5 (oscil o3) (env e3) z i (cos x))))
 	
 	(for-each 
 	 (lambda (a) 
@@ -38563,9 +38563,7 @@ EDITS: 1
 				       (format #f "(+ (sin (oscil o ~A ~A)) ~A)" a b c))))
 	       args3))
 	    args2))
-	 args1))
-      (out-args)
-      )))
+	 args1)))))
 
 
 

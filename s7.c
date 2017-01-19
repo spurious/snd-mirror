@@ -75269,19 +75269,10 @@ int main(int argc, char **argv)
  *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
+ * maybe (set! (e 'x) y)=let-set! should return an error if no x in e? -- returning #<undefined> can't be useful and is inconsistent
+ *   but check means an extra lookup -- why the current choice? 6710
  *
- * how to add debugging checks that sc->tn_n are not stepped on and eval-local temps are not GC'd?
- *   GC already checked via standard macros (car etc)
- *   and how to generate tests for all cases?
- *   for local see below, but more problematic are tn_n and its friends
- *      #define save_elocal_2(Var1, Var2) s7_pointer elocal_1 = Var1, elocal_2 = Var2;
- *      #define check_elocal_2(Var1, Var2) if ((Var1 != elocal_1) || (Var2 != elocal_2)) abort();
- *      set args val1
- *      save_elocal_2(args, val1);
- *      use args, val1
- *      check_elocal_2(args, val1);
- *
- * any 1-arg safe func where all refs to are to that arg -- no lookup needed, or env, 
+ * any 1-arg safe func where all refs are to that arg -- no lookup needed, or env, 
  *   how to organize this? op_safe_1_g|closure_... -- could match args here, or and_all_x_2 but replacing lookup with args ref
  *
  * Snd:
