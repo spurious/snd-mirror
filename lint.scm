@@ -620,7 +620,7 @@
 	      (cons (copy-tree (car lis))
 		    (copy-tree (cdr lis)))
 	      lis))))
-    
+
     (define (tree-nonce x tree)
       (let ((count 0))
 	(let nonce ((t tree))
