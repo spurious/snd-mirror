@@ -35,6 +35,7 @@
 (define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
 (define *report-repeated-code-fragments* 200)             ; #t, #f, or an int = min reported fragment size * uses * uses, #t=130.
 (define *report-quasiquote-rewrites* #t)                  ; simple quasiquote stuff rewritten as a normal list expression
+(define *report-||-rewrites* #t)                          ; | has no special meaning in s7, |...| does not represent the symbol ...
 
 (define *fragment-max-size* 128)  ; biggest seen if 512: 180 -- appears to be in a test suite, if 128 max at 125
 (define *fragment-min-size* 5)    ; smallest seen - 1 -- maybe 8 would be better
@@ -438,7 +439,7 @@
     (define var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
     (define var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
     (define var-history (dilambda (lambda (v) (let-ref (cdr v) 'history)) (lambda (v x) (let-set! (cdr v) 'history x))))
-    (define var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (let-set! (cdr v) 'ftype x))))
+    (define var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (if (defined? 'ftype (cdr v)) (let-set! (cdr v) 'ftype x)))))
     (define var-retcons (dilambda (lambda (v) (let-ref (cdr v) 'retcons)) (lambda (v x) (let-set! (cdr v) 'retcons x))))
     (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
     (define var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
@@ -474,8 +475,9 @@
 		  (case (let-ref (cdr v) 'signature)
 		    ((()) (let-set! (cdr v) 'signature (get-signature v)))
 		    (else)))
-		(lambda (v x) 
-		  (let-set! (cdr v) 'signature x))))
+		(lambda (v x)
+		  (if (defined? 'signature (cdr v))
+		      (let-set! (cdr v) 'signature x))))) ; perhaps fallback on varlet here and in var-ftype above?
     
     (define (make-lint-var name initial-value definer)
       (let ((old (hash-table-ref other-identifiers name)))
@@ -640,7 +642,8 @@
 	    (if (or (not (pair? tree))
 		    (eq? (car tree) 'quote))
 		count
-		(counter (counter count (car tree)) (cdr tree))))))
+		(counter (counter count (car tree)) 
+			 (cdr tree))))))
     
     (define (tree-count2 x tree1)
       (let counter ((count 0) (tree tree1))
@@ -650,7 +653,9 @@
 		    (not (pair? tree))
 		    (eq? (car tree) 'quote))
 		count
-		(counter (counter count (car tree)) (cdr tree))))))
+		(counter (counter count (car tree)) 
+			 (cdr tree))))))
+
     
     (define (proper-tree? tree)
       (or (not (pair? tree))
@@ -738,7 +743,7 @@
 			(cdr tree))
 		       #f))))))
     
-    (define (tree-member sym tree1)
+    (define (tree-member sym tree1) ; tree-memq ignoring quote and no match if tree1 == bare sym -- nearly all of these "members" should be "memqs"
       (let tm ((tree tree1))
 	(and (pair? tree)
 	     (or (eq? (car tree) sym)
@@ -2105,12 +2110,13 @@
 	(lambda (caller vname)
 	  (when (symbol? vname)
 	    (let* ((sname (symbol->string (if (keyword? vname) (keyword->symbol vname) vname)))
-		   (slen (length sname)))
+		   (slen (length sname))
+		   (s0 (sname 0)))
 
 	      (if (> slen *report-ridiculous-variable-names*)
 		  (lint-format "the name ~A (~A chars!) is unreadable" caller vname slen))
 
-	      (if (or (cond ((assq (sname 0) bad-var-names) =>
+	      (if (or (cond ((assq s0 bad-var-names) =>
 			     (lambda (baddies)
 			       (or (assq vname (cdr baddies))
 				   (any? (lambda (b)
@@ -2118,7 +2124,7 @@
 						(string->number (substring sname (caddr b)))))
 					 (cdr baddies)))))
 			    (else #f))
-		      (and (char=? (sname 0) #\c)
+		      (and (char=? s0 #\c)
 			   (> slen 8)
 			   (or (string=? "compute" (substring sname 0 7))       ; compute-* is as bad as get-*
 			       (string=? "calculate" (substring sname 0 9)))))  ;   perhaps one exception: computed-goto*
@@ -2127,7 +2133,27 @@
 		  (if (eqv? (string-position "is-" sname) 0)                    ; is-x? -> x?
 		      (if (char=? (sname (- slen 1)) #\?)
 			  (lint-format "'~A is redundant: perhaps use '~A" caller vname (string->symbol (substring sname 3)))
-			  (lint-format "perhaps use '~A?, not '~A" caller (string->symbol (substring sname 3)) vname)))))))))
+			  (lint-format "perhaps use '~A?, not '~A" caller (string->symbol (substring sname 3)) vname))
+
+		      (case s0
+			((#\@) 
+			 (lint-format "the name ~A will be problematic in quasiquote" caller vname))
+			;; a check for other malformed numbers got no hits
+
+			((#\+) 
+			 (if (memq vname '(+i +2i +0.i +1.0i +2.0i +2.i +3.141592653589793i))
+			     (lint-format "~A is not a number in s7" caller vname)))
+
+			((#\-) 
+			 (if (memq vname '(-i -0.i -1.0i -2.0i -2i -3.141592653589793i -8.i -8i))
+			     (lint-format "~A is not a number in s7" caller vname)))
+
+			((#\|)
+			 (if (and *report-||-rewrites*
+				  (> slen 2)
+				  (eqv? (char-position #\| (substring sname 1)) (- slen 2))) ; starting at 1, so ends -2
+			     (lint-format "| is not a special character in s7, so ~A is not the symbol ~A" caller 
+					  vname (substring sname 1 (- slen 1)))))))))))))
 
 
     (define (set-ref name caller form env)
@@ -11185,7 +11211,9 @@
 		  (deflet (var-env local-var))
 		  (source (var-initial-value local-var))
 		  (vname (var-name local-var)))
-	      (if (and func
+	      ;; if (define f (let ... (lambda ...))) the f is not in the deflet yet
+
+	      (if (and deffunc
 		       (pair? local-env))
 		  (let crawler ((ref (cdr local-env)))
 		    (if (pair? ref)
@@ -11196,7 +11224,7 @@
 	      (when (and (pair? reflet)
 			 (pair? deflet)
 			 (not (eq? local-env reflet))
-			 (or func 
+			 (or deffunc 
 			     (code-constant? source))
 			 ;; code-constant? is very restrictive, but side-effect? leaves too many complications:
 			 ;;   (let ((a (car b))) (set! b c) (let ...))
@@ -11247,11 +11275,6 @@
 				      (not (and (pair? (caddr makval)) ; not lambda's closure
 						(null? (cdddr makval))
 						(memq (caaddr makval) '(lambda lambda*)))))))
-		    
-		    (if (and (not deffunc)
-			     (memq (car makval) '(define define*)))
-			(set! makval `(define ,caller ...)))
-		    
 		    (lint-format "perhaps move '~A~A into the inner let~A: ~A" caller
 				 vname
 				 (if (or deffunc
@@ -21647,8 +21670,6 @@
     ;; -------- lint-walk --------
     (define (lint-walk caller form env)
       (cond ((symbol? form)
-	     (if (memq form '(+i -i)) ; a check for other malformed numbers got no hits
-		 (format outport "~NC~A is not a number in s7~%" lint-left-margin #\space form))
 	     (set-ref form caller #f env)) ; returns env
 
 	    ((pair? form)
@@ -22332,10 +22353,5 @@
 
 ;;; tons of rewrites in lg* (2500 lines)
 ;;; expand-in-place simple functions and simplify? s7 should do this...
-;;; (define x (let () ...defines... (lambda (...) (let...)))) suggests moving defines into the interior let (pvoc.scm)
-;;;    but that clearly crosses lambda??
-;;; any name starting with @ or , is trouble in quasiquote, also 0+i 0.0f etc
-;;;   can we see this collision in walk-qq?
-;;;   what about |ABS| -- s7 is case sensitive, and it doesn't treat | as special, so |ABS| is legit but not eq ABS -- maybe warn? add switch?
 ;;;
-;;; 203 29436 826086
+;;; 202 29453 830372

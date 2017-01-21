@@ -1168,25 +1168,22 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
       
 ;;; -------- Moog filter
 ;;;
-    
     (let ((moog-cutoff-frequency 10000)
 	  (moog-resonance 0.5))
       (let* ((post-moog-dialog
-	      (let ((moog-label "Moog filter")
-		    (moog-dialog #f)
-		    (moog-target 'sound))
-		
-		(define (moog freq Q)
-		  (let ((gen (make-moog-filter freq Q)))
-		    (lambda (inval)
-		      (moog-filter gen inval))))
-		
+	      (let ((moog-dialog #f)
+		    (moog-target 'sound)
+		    (moog (lambda (freq Q)
+			    (let ((gen (make-moog-filter freq Q)))
+			      (lambda (inval)
+				(moog-filter gen inval))))))
 		(lambda ()
 		  (unless (Widget? moog-dialog)
 		    ;; if moog-dialog doesn't exist, create it
 		    (let ((initial-moog-cutoff-frequency 10000)
 			  (initial-moog-resonance 0.5)
-			  (sliders ()))
+			  (sliders ())
+			  (moog-label "Moog filter"))
 		      (set! moog-dialog 
 			    (make-effect-dialog 
 			     moog-label

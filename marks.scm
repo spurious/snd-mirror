@@ -298,24 +298,24 @@
 (define snap-mark-to-beat
   (let ((documentation "(snap-mark-to-beat) ensures that when a mark is dragged, its released position is always on a beat"))
     (lambda ()
-      (let ((mark-release 4))
-	(hook-push mark-hook 
-		   (lambda (hook)
-		     (let ((mrk (hook 'id))
-			   (snd (hook 'snd))
-			   (chn (hook 'chn))
-			   (reason (hook 'reason)))
-		       (if (= reason mark-release)
-			   (let* ((samp (mark-sample mrk))
-				  (bps (/ (beats-per-minute snd chn) 60.0))
-				  (sr (srate snd))
-				  (beat (floor (/ (* samp bps) sr))))
-			     (let ((lower (floor (/ (* beat sr) bps)))
-				   (higher (floor (/ (* (+ 1 beat) sr) bps))))
-			       (set! (mark-sample mrk)
-				     (if (< (- samp lower) (- higher samp))
-					 lower
-					 higher))))))))))))
+      (hook-push mark-hook 
+		 (lambda (hook)
+		   (let ((mrk (hook 'id))
+			 (snd (hook 'snd))
+			 (chn (hook 'chn))
+			 (reason (hook 'reason))
+			 (mark-release 4))			   
+		     (if (= reason mark-release)
+			 (let* ((samp (mark-sample mrk))
+				(bps (/ (beats-per-minute snd chn) 60.0))
+				(sr (srate snd))
+				(beat (floor (/ (* samp bps) sr))))
+			   (let ((lower (floor (/ (* beat sr) bps)))
+				 (higher (floor (/ (* (+ 1 beat) sr) bps))))
+			     (set! (mark-sample mrk)
+				   (if (< (- samp lower) (- higher samp))
+				       lower
+				       higher)))))))))))
 
 ;;; -------- mark-explode
 ;;;

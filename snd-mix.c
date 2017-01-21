@@ -847,6 +847,66 @@ void delete_any_remaining_mix_temp_files_at_exit(chan_info *cp)
 }
 
 
+void mix_info_to_file(FILE *fd, chan_info *cp)
+{
+  int i, n;
+  bool write_info = false;
+  
+  for (i = 0, n = 0; i < mix_infos_ctr; i++)
+    {
+      mix_info *md;
+      md = mix_infos[i];
+      if ((md) && (md->cp == cp))
+        {
+          if ((!write_info) &&
+              ((md->sync > 0) ||
+#if (!USE_NO_GUI)
+               (md->tag_y > 0) ||
+               (md->color != ss->mix_color) ||
+#endif
+               (md->name)))
+            {
+              write_info = true;
+              fprintf(fd, "      (let ((m (list->vector (mixes sfile %d))))\n"
+		      "        (when (> (length m) 0)",
+                      cp->chan);
+            }
+          if (md->sync > 0)
+            fprintf(fd, "\n          (set! (mix-sync (m %d)) %d)", n, md->sync);
+          if (md->name)
+            fprintf(fd, "\n          (set! (mix-name (m %d)) \"%s\")", n, md->name);
+#if (!USE_NO_GUI)
+          if (md->tag_y > 0)
+            fprintf(fd, "\n          (set! (mix-tag-y (m %d)) %d)", n, md->tag_y);
+          if (md->color != ss->mix_color)
+            {
+              float r, g, b;
+#if USE_MOTIF
+              XColor tmp_color;
+              Display *dpy;
+              dpy = XtDisplay(main_shell(ss));
+              tmp_color.flags = DoRed | DoGreen | DoBlue;
+              tmp_color.pixel = md->color;
+              XQueryColor(dpy, DefaultColormap(dpy, DefaultScreen(dpy)), &tmp_color);
+              r = rgb_to_float(tmp_color.red);
+              g = rgb_to_float(tmp_color.green);
+              b = rgb_to_float(tmp_color.blue);
+#else
+              color_t pix = md->color;
+              r = rgb_to_float(pix->red);
+              g = rgb_to_float(pix->green);
+              b = rgb_to_float(pix->blue);
+#endif
+              fprintf(fd, "\n          (set! (mix-color (m %d)) (make-color %f %f %f))",
+                      n, r, g, b);
+            }
+#endif
+          n++;
+        }
+    }
+  if (write_info) fprintf(fd, "))\n");
+}
+
 
 static int compare_mix_positions(const void *umx1, const void *umx2)
 {

@@ -1146,6 +1146,9 @@ void save_sound_state(snd_info *sp, void *ptr)
 	  }
       }
 
+#if HAVE_SCHEME
+      mix_info_to_file(fd, cp);
+#endif
       if (cursor_sample(cp) != 0) pcp_sod(fd, S_cursor, cursor_sample(cp), chan);
       check_selection(fd, cp);
       if ((!sp->remembering) &&

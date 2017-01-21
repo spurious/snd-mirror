@@ -1349,7 +1349,7 @@ is a physical model of a flute:
 (definstrument (lbj-piano begin-time duration frequency amplitude pfreq
 			  (degree 45) (reverb-amount 0) (distance 1))
 
-  (define (get-piano-partials freq)
+  (define get-piano-partials
     (let ((piano-spectra #((1.97 .0326  2.99 .0086  3.95 .0163  4.97 .0178  5.98 .0177  6.95 .0315  8.02 .0001
 				 8.94 .0076  9.96 .0134 10.99 .0284 11.98 .0229 13.02 .0229 13.89 .0010 15.06 .0090 16.00 .0003
 				 17.08 .0078 18.16 .0064 19.18 .0129 20.21 .0085 21.27 .0225 22.32 .0061 23.41 .0102 24.48 .0005
@@ -1751,9 +1751,9 @@ is a physical model of a flute:
 			   
 			   (1.00 .0080  2.00 .0005  3.19 .0001)
 			   
-			   (1.01 .0298  2.01 .0005)))
-	  (pitch (round (* 12 (log (/ freq 32.703) 2)))))
-      (piano-spectra pitch)))
+			   (1.01 .0298  2.01 .0005))))
+      (lambda (freq)
+	(piano-spectra (round (* 12 (log (/ freq 32.703) 2)))))))
 
   (let ((*piano-attack-duration* .04)
 	(*piano-release-duration* .2))
