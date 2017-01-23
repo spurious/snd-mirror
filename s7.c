@@ -782,7 +782,7 @@ typedef struct s7_cell {
   } object;
 
 #if DEBUGGING
-  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, clear_line, alloc_line, uses;
+  int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, alloc_line, uses;
   const char *current_alloc_func, *previous_alloc_func, *gc_func, *alloc_func;
 #endif
 
@@ -1306,7 +1306,7 @@ static s7_scheme *hidden_sc = NULL;
       p->current_alloc_line = __LINE__;					\
       p->current_alloc_func = __func__;					\
       p->current_alloc_type = f;					\
-      p->uses++; p->clear_line = 0;					\
+      p->uses++; 					                \
       if ((((f) & 0xff) == T_FREE) || (((f) & 0xff) >= NUM_TYPES))	\
         fprintf(stderr, "%d: set free %p type to %x\n", __LINE__, p, f); \
       else								\
@@ -1318,8 +1318,6 @@ static s7_scheme *hidden_sc = NULL;
 	}								\
       typeflag(p) = f;							\
     } while (0)
-
-  #define clear_type(p) do {p->clear_line = __LINE__; typeflag(p) = T_FREE;} while (0)
 
   /* these check most s7cell field references (and many type bits) for consistency */
   #define _TI(P)   check_ref(P, T_INTEGER,           __func__, __LINE__, NULL, NULL)
@@ -1375,7 +1373,6 @@ static s7_scheme *hidden_sc = NULL;
   #define unchecked_type(p)           ((p)->tf.type_field)
   #define type(p)                     ((p)->tf.type_field)
   #define set_type(p, f)              typeflag(p) = f
-  #define clear_type(p)               typeflag(p) = T_FREE
   #define _TSet(P)                    P
   #define _TI(P)                      P
   #define _TR(P)                      P
@@ -1872,7 +1869,7 @@ static int not_heap = -1;
 #define has_opt_back(P)               (cdr(opt_back(P)) == P )
 #define opt_cfunc(P)                  _NFre(opt1(P,              E_CFUNC))
 #define set_opt_cfunc(P, X)           set_opt1(P, _NFre(X),      E_CFUNC)
-#define opt_lambda_unchecked(P)       _NFre(opt1(P,              E_LAMBDA))
+#define opt_lambda_unchecked(P)       opt1(P,                    E_LAMBDA) /* can be free/null? from s7_call? */
 #define opt_lambda(P)                 _TClo(opt1(P,              E_LAMBDA))
 #define set_opt_lambda(P, X)          set_opt1(P, _NFre(X),      E_LAMBDA)
 #define opt_goto(P)                   _TGot(opt1(P,              E_GOTO))
@@ -4152,6 +4149,9 @@ static void gf_mark(s7_scheme *sc)
 }
 
 
+#define clear_type(p) typeflag(p) = T_FREE
+
+
 static void init_mark_functions(void)
 {
   mark_function[T_FREE]                = mark_noop;
@@ -5987,7 +5987,6 @@ static s7_pointer make_slot(s7_scheme *sc, s7_pointer variable, s7_pointer value
   s7_pointer y;
   new_cell(sc, y, T_SLOT);
   slot_set_symbol(y, variable);
-  if (!is_symbol(variable)) abort();
   slot_set_value(y, value);
   return(y);
 }
@@ -6736,11 +6735,7 @@ static s7_pointer let_set_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7
   if (!err) err = s7_make_permanent_string("let-set! ~A is not defined in ~A");
   return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_3(sc, err, symbol, env)));
   /* return(sc->undefined); */
-  /* not sure about this: it's inconsistent with the rest of s7 because the set! returns #<undefined>
-   *   (not the value) if the variable is not found, but if we throw an error, we need to check
-   *   the let twice or wrap it in catch.  And then set! (e v) behaves differently from (e v).
-   * can't mimic hash-table-set! here because it adds the key if its not found.
-   */
+  /* not sure about this -- what's the most useful choice? */
 }
 
 s7_pointer s7_let_set(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
@@ -31716,12 +31711,12 @@ static s7_pointer check_nref(s7_pointer p, const char *func, int line)
 
 static void print_gc_info(s7_pointer obj, int line)
 {
-  fprintf(stderr, "%s%p is free (line %d), current: %s[%d], previous: %s[%d],  gc call: %s[%d], clear: %d, alloc: %s[%d]%s\n",
+  fprintf(stderr, "%s%p is free (line %d), current: %s[%d], previous: %s[%d],  gc call: %s[%d], alloc: %s[%d]%s\n",
 	  BOLD_TEXT, 
 	  obj, line,
 	  obj->current_alloc_func, obj->current_alloc_line,
 	  obj->previous_alloc_func, obj->previous_alloc_line,
-	  obj->gc_func, obj->gc_line, obj->clear_line, obj->alloc_func, obj->alloc_line,
+	  obj->gc_func, obj->gc_line, obj->alloc_func, obj->alloc_line,
 	  UNBOLD_TEXT);
   abort();
 }
@@ -31990,12 +31985,12 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   tmpbuf_malloc(str, len);
 
   nlen = snprintf(str, len,
-		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %s[%d], clear: %d, alloc: %s[%d]>",
+		  "\n<%s %s,\n  current: %s[%d] %s,\n  previous: %s[%d] %s\n  hloc: %d (%d uses), free: %s[%d], alloc: %s[%d]>",
 		  excl_name, current_bits,
 		  obj->current_alloc_func, obj->current_alloc_line, allocated_bits,
 		  obj->previous_alloc_func, obj->previous_alloc_line, previous_bits,
 		  heap_location(obj), obj->uses,
-		  obj->gc_func, obj->gc_line, obj->clear_line, obj->alloc_func, obj->alloc_line);
+		  obj->gc_func, obj->gc_line, obj->alloc_func, obj->alloc_line);
 
   free(current_bits);
   free(allocated_bits);
@@ -36742,6 +36737,15 @@ static s7_pointer list_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 }
 
 
+static void check_list_validity(s7_scheme *sc, s7_pointer lst)
+{
+  s7_pointer p;
+  for (p = lst; is_pair(p); p = cdr(p))
+    if (!s7_is_valid(sc, car(p)))
+      fprintf(stderr, "bad ptr to s7_list: %p\n", car(p));
+}
+
+
 s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
 {
   int i;
@@ -36756,6 +36760,9 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
   for (i = 0; i < num_values; i++)
     sc->w = cons(sc, va_arg(ap, s7_pointer), sc->w);
   va_end(ap);
+
+  if (sc->safety > 0) /* if DEBUGGING, this is partly redundant because cons checks for free cells */
+    check_list_validity(sc, sc->w);
 
   p = sc->w;
   sc->w = sc->nil;
@@ -47988,15 +47995,9 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     }
   else
     {
-#if DEBUGGING
-      {
-	s7_pointer p;
-	int argnum;
-	/* incoming args may be non-s7 cells -- check now before they reach the GC */
-	for (argnum = 0, p = _NFre(args); is_pair(p); argnum++, p = _NFre(cdr(p)))
-	  _NFre(car(p));
-      }
-#endif
+      if (sc->safety > 0)
+	check_list_validity(sc, args);
+
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
       sc->args = args;
       sc->code = func;
@@ -58190,10 +58191,8 @@ static int set_pair_ex(s7_scheme *sc)
   return(goto_EVAL);
 }
 
-static void activate_let(s7_scheme *sc)
+static void activate_let(s7_scheme *sc, s7_pointer e)
 {
-  s7_pointer e;
-  e = sc->value;
   if (!is_let(e))                    /* (with-let . "hi") */
     eval_error_no_return(sc, sc->wrong_type_arg_symbol, "with-let takes an environment argument: ~A", e);
   if (e == sc->rootlet)
@@ -66613,42 +66612,68 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case OP_SET_WITH_LET_1:
-	  /* here sc->value is the new value for the settee, args has the (as yet unevaluated) let and settee-expression. */
-	  /* fprintf(stderr, "with_let_1: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
-	  if (is_symbol(car(sc->args)))
-	    {
-	      s7_pointer p;
-	      p = list_2(sc, cadr(sc->args), sc->value);
-	      sc->value = find_symbol_checked(sc, car(sc->args));
-	      sc->args = p;
-	      /* fall through */
-	    }
-	  else
-	    {
-	      sc->code = car(sc->args);
-	      sc->args = list_2(sc, cadr(sc->args), sc->value);
-	      push_stack(sc, OP_SET_WITH_LET_2, sc->args, sc->code);
-	      goto EVAL;
-	    }
+	  {
+	    s7_pointer e, b, x;
+	    /* from the T_SYNTAX branch of set_pair_ex: (set! (with-let e b) x) as in let-temporarily
+	     *   here sc->value is the new value for the settee = x, args has the (as yet unevaluated) let and settee-expression.
+	     *   'b above can be a pair = generalized set in the 'e environment.
+	     */
+	    /* fprintf(stderr, "with_let_1: %s %s %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
+	    e = car(sc->args);
+	    b = cadr(sc->args);
+	    x = sc->value;
+	    if (is_symbol(e))
+	      {
+		if (is_symbol(b))
+		  {
+		    e = find_symbol_checked(sc, e); /* the let */
+		    sc->value = let_set_1(sc, e, b, x);
+		    goto START;
+		  }
+		sc->value = find_symbol_checked(sc, e);
+		sc->code = list_2(sc, b, ((is_symbol(x)) || (is_pair(x))) ? set_plist_2(sc, sc->quote_symbol, x) : x);
+		goto SET_WITH_LET;
+	      }
+	    else
+	      {
+		sc->code = e;                       /* 'e above, an expression we need to evaluate */
+		sc->args = list_2(sc, b, x);        /* can't reuse sc->args here via set-car! etc */
+		push_stack(sc, OP_SET_WITH_LET_2, sc->args, sc->code);
+		goto EVAL;
+	      }
+	  }
 
 	case OP_SET_WITH_LET_2:
-	  /* fprintf(stderr, "with_let_2: value: %s, code: %s, args: %s\n", DISPLAY(sc->value), DISPLAY(sc->code), DISPLAY(sc->args)); */
-	  if (is_symbol(car(sc->args)))
+	  {
+	    s7_pointer b, x;
+	    /* here sc->value = let = 'e, args = '(b x) where 'b might be a pair */
+	    b = car(sc->args);
+	    x = cadr(sc->args);
+	    if (is_symbol(b))   /* b is a symbol -- everything else is ready so call let-set! */
+	      {
+		sc->value = let_set_1(sc, sc->value, b, x);
+		goto START;
+	      }
+	    if ((is_symbol(x)) || (is_pair(x)))
+	      sc->code = list_2(sc, b, ((is_symbol(x)) || (is_pair(x))) ? set_plist_2(sc, sc->quote_symbol, x) : x);
+	    else sc->code = sc->args;
+	  }
+
+	SET_WITH_LET:
+	  activate_let(sc, sc->value);  /* this activates sc->value, so the set! will happen in that environment */
+	  /* fprintf(stderr, "with_let_2 code: %s\n", DISPLAY(sc->code)); */
+	  if (is_pair(car(sc->code)))
 	    {
-	      let_set_1(sc, sc->value, car(sc->args), cadr(sc->args));
-	      sc->value = cadr(sc->args);
-	      goto START;
+	      int choice;
+	      choice = set_pair_ex(sc);
+	      if (choice == goto_EVAL) goto EVAL;
+	      if (choice == goto_START) goto START;
+	      if (choice == goto_APPLY) goto APPLY;
+	      goto EVAL_ARGS;
 	    }
-
-	  /* avoid double evaluation */
-	  if ((is_symbol(cadr(sc->args))) ||
-	      (is_pair(cadr(sc->args))))
-	    sc->code = cons(sc, sc->set_symbol, list_2(sc, car(sc->args), list_2(sc, sc->quote_symbol, cadr(sc->args))));
-	  else sc->code = cons(sc, sc->set_symbol, sc->args);
-	  activate_let(sc);  /* this activates sc->value, so the set! will happen in that environment */
-	  goto EVAL;
-
+	  return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't set ~S"), sc->args)));	  
 	  
+
 	  
 	  /* -------------------------------- IF -------------------------------- */
 	case OP_IF:
@@ -68417,7 +68442,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 	case OP_WITH_LET1:
-	  activate_let(sc);
+	  activate_let(sc, sc->value);
 	  goto BEGIN1;
 	  
 	  
@@ -73950,7 +73975,11 @@ s7_scheme *s7_init(void)
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
+#if DEBUGGING
+  sc->safety = 1;
+#else
   sc->safety = 0;
+#endif
   sc->print_length = 8;
   sc->history_size = DEFAULT_HISTORY_SIZE;
   sc->true_history_size = DEFAULT_HISTORY_SIZE;
@@ -75317,7 +75346,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176 | 4171
  * titer         |      |      | 7503 | 5218 | 5227
  * thash         |      |      | 50.7 | 8491 | 8518
- * lint          |      |      |      | 7731 | 4935
+ * lint          |      |      |      | 7731 | 4782
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0
@@ -75327,14 +75356,15 @@ int main(int argc, char **argv)
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
- * with-let setter (op_set_with_let) still sometimes conses up the new expression
  * if with_history, each func could keep a (circular) history of calls(args/results/stack), vars via symbol-access?
  * could (apply append (map...)) omit the extra copy?
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
- * op_closure_car|cdr
+ * is sc->let cache possible (no slots in GC) or could closure_p see non-tail followed by tail and reuse everything?
+ *   how many lets are there normally?
+ * extend the validity checks to all FFI funcs and add info about caller etc
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

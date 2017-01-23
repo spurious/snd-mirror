@@ -758,10 +758,7 @@
 
     (define (tree-unquoted-member sym tree)
       (and (pair? tree)
-	   (not (eq? (car tree) 'quote))
-	   (or (eq? (car tree) sym)
-	       (tree-unquoted-member sym (car tree))
-	       (tree-unquoted-member sym (cdr tree)))))
+	   (tree-memq sym tree)))
     
     (define (tree-car-member sym tree)
       (and (pair? tree)
@@ -781,12 +778,18 @@
 			(member #f (cdr tree) (lambda (a b) (tree-sym-set-member sym set b))))))))
 
     (define (tree-set-member set tree1)
-      (let ts ((tree tree1))
-	(and (pair? tree)
-	     (not (eq? (car tree) 'quote))
-	     (or (memq (car tree) set)
-		 (ts (car tree))
-		 (ts (cdr tree))))))
+      (case (length set)
+	((0) #f)
+	((1) (tree-memq (car set) tree1))
+	((2) (or (tree-memq (car set) tree1)
+		 (tree-memq (cadr set) tree1)))
+	(else
+	 (let ts ((tree tree1))
+	   (if (pair? tree)
+	       (and (not (eq? (car tree) 'quote))
+		    (or (ts (car tree))
+			(ts (cdr tree))))
+	       (memq tree set))))))
     
     (define (tree-table-member table tree)
       (and (pair? tree)
@@ -13622,7 +13625,7 @@
 	       (when (and (null? p)
 			  (or (null? a)
 			      (and (len=1? a)
-				   (pair? (cdar a))
+				   (len>1? (car a))
 				   (code-constant? (cadar a)))))
 		 (let* ((args-match (do ((p1 outer-args (cdr p1))
 					 (a1 inner-args (cdr a1)))
@@ -22352,6 +22355,5 @@
 |#
 
 ;;; tons of rewrites in lg* (2500 lines)
-;;; expand-in-place simple functions and simplify? s7 should do this...
 ;;;
 ;;; 202 29453 830372
