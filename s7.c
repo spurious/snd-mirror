@@ -3350,6 +3350,12 @@ static s7_pointer g_is_constant(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- GC -------------------------------- */
 
+/* in most code, pairs, lets, and slots dominate the heap -- each about 25% to 40% of the
+ *   total cell allocations.  In snd-test, reals are 50%. slots need not be in the heap,
+ *   but moving them out to their own free list was actually slower because we need (in that
+ *   case) to manage them in the sweep process by tracking lets.  
+ */
+
 unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
   unsigned int loc;
@@ -3686,19 +3692,6 @@ static void sweep(s7_scheme *sc)
     }
 #endif
 }
-
-
-static void add_string(s7_scheme *sc, s7_pointer p)
-{
-  if (sc->strings_loc == sc->strings_size)
-    {
-      sc->strings_size *= 2;
-      sc->strings = (s7_pointer *)realloc(sc->strings, sc->strings_size * sizeof(s7_pointer));
-    }
-  sc->strings[sc->strings_loc++] = p;
-}
-
-#define Add_String(Str) if (sc->strings_loc == sc->strings_size) add_string(sc, Str); else sc->strings[sc->strings_loc++] = Str
 
 
 static void add_gensym(s7_scheme *sc, s7_pointer p)
@@ -4151,7 +4144,6 @@ static void gf_mark(s7_scheme *sc)
 
 #define clear_type(p) typeflag(p) = T_FREE
 
-
 static void init_mark_functions(void)
 {
   mark_function[T_FREE]                = mark_noop;
@@ -4562,7 +4554,7 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
     {
       s7_double x;
       x = next_random(sc->default_rng);
-      if (x > .995)
+      if (x > .999)
 	{
 	  ctr = 0;
 	  return(true);
@@ -4936,6 +4928,10 @@ static void pop_stack(s7_scheme *sc)
       fprintf(stderr, "%sstack underflow%s\n", BOLD_TEXT, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
+  /* here and in push_stack, both code and args might be non-free only because they've been retyped
+   *   inline (as in named let) -- they actually don't make sense in these cases, but are ignored,
+   *   and are carried around as GC protection in other cases.
+   */
   sc->code =  _NFre(sc->stack_end[0]);
   sc->envir = _TLid(sc->stack_end[1]);
   sc->args =  _NFre(sc->stack_end[2]);
@@ -5694,13 +5690,22 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   } while (0)
 
 
-static s7_pointer old_frame_in_env(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
+static s7_pointer reuse_as_let(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
+  /* we're reusing frame here as a let -- it was probably a pair */
   set_type(frame, T_LET);
   let_set_slots(frame, sc->nil);
   set_outlet(frame, next_frame);
   let_id(frame) = ++sc->let_number;
   return(frame);
+}
+
+static s7_pointer reuse_as_slot(s7_pointer slot, s7_pointer symbol, s7_pointer value)
+{
+  set_type(slot, T_SLOT);
+  slot_set_symbol(slot, symbol);
+  slot_set_value(slot, _NFre(value));
+  return(slot);
 }
 
 
@@ -24734,6 +24739,13 @@ PPIF_TO_PF(string_position, c_string_position_pp, c_string_position_ppi)
 
 /* -------------------------------- strings -------------------------------- */
 
+static void resize_strings(s7_scheme *sc)
+{
+  sc->strings_size *= 2;
+  sc->strings = (s7_pointer *)realloc(sc->strings, sc->strings_size * sizeof(s7_pointer));
+}
+
+
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
@@ -24745,7 +24757,8 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  Add_String(x);
+  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
+  sc->strings[sc->strings_loc++] = x;
   return(x);
 }
 
@@ -24758,7 +24771,8 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  add_string(sc, x);
+  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
+  sc->strings[sc->strings_loc++] = x;
   return(x);
 }
 
@@ -24790,7 +24804,8 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   string_hash(x) = 0;
   string_length(x) = len;
   string_needs_free(x) = true;
-  add_string(sc, x);
+  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
+  sc->strings[sc->strings_loc++] = x;
   return(x);
 }
 
@@ -34368,7 +34383,8 @@ static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
   if (sym == tree) return(true);
   return((is_pair(tree)) &&
 	 (car(tree) != sc->quote_symbol) &&
-	 ((tree_memq(sc, sym, car(tree))) || (tree_memq(sc, sym, cdr(tree)))));
+	 ((tree_memq(sc, sym, car(tree))) || 
+	  (tree_memq(sc, sym, cdr(tree)))));
 }
 
 static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
@@ -48911,10 +48927,18 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 
 /* ---------------------------------------- for-each ---------------------------------------- */
 
+#if DEBUGGING
+#define make_counter(Sc, Iter) make_counter_1(Sc, Iter, __LINE__)
+static s7_pointer make_counter_1(s7_scheme *sc, s7_pointer iter, int line)
+#else
 static s7_pointer make_counter(s7_scheme *sc, s7_pointer iter)
+#endif
 {
   s7_pointer x;
   new_cell(sc, x, T_COUNTER);
+#if DEBUGGING
+  x->alloc_line = line;
+#endif
   counter_set_result(x, sc->nil);
   counter_set_list(x, iter);     /* iterator -- here it's always either an iterator or a pair */
   counter_set_capture(x, 0);     /* will be capture_let_counter */
@@ -48932,8 +48956,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
   s7_pointer p, f;
   int len;
   bool got_nil = false;
-
-  /* fprintf(stderr, "for-each: %s\n", DISPLAY(args)); */
 
   /* try the normal case first */
   f = car(args);                                /* the function */
@@ -49216,7 +49238,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		set_car(val, cons(sc, z, car(val)));
 	    }
 	}
-
       push_stack(sc, OP_MAP_1, make_counter(sc, car(sc->z)), f);
       sc->z = sc->nil;
       return(sc->nil);
@@ -55063,7 +55084,7 @@ static bool optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poin
 static s7_pointer optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 {
   s7_pointer x;
-  if (sc->safety > 1) return(NULL);
+  if (sc->safety > 2) return(NULL);
   /* fprintf(stderr, "optimize %s %d %s\n", DISPLAY_80(code), hop, DISPLAY(e)); */
   for (x = code; (is_pair(x)) && (!is_checked(x)); x = cdr(x))
     {
@@ -56821,17 +56842,13 @@ static void unsafe_closure_star(s7_scheme *sc)
   
   for (x = closure_args(sc->code), z = sc->args; is_pair(x); x = cdr(x))
     {
-      s7_pointer sym, args, val;
+      s7_pointer sym, args;
       if (is_pair(car(x)))
 	sym = caar(x);
       else sym = car(x);
-      val = car(z);
       args = cdr(z);
-      
-      set_type(z, T_SLOT);
-      slot_set_symbol(z, sym);
+      reuse_as_slot(z, sym, unchecked_car(z));
       symbol_set_local(sym, id, z);
-      slot_set_value(z, val);
       set_next_slot(z, let_slots(e));
       let_set_slots(e, z);
       z = args;
@@ -59681,7 +59698,7 @@ static int do_init_ex(s7_scheme *sc)
   
   /* sc->envir = new_frame_in_env(sc, sc->envir); */
   /* sc->args was cons'd above, so it should be safe to reuse it as the new frame */
-  sc->envir = old_frame_in_env(sc, z, sc->envir);
+  sc->envir = reuse_as_let(sc, z, sc->envir);
   
   /* run through sc->code and sc->args adding '( caar(car(code)) . car(args) ) to sc->envir,
    *    also reuse the value cells as the new frame slots.
@@ -59690,14 +59707,10 @@ static int do_init_ex(s7_scheme *sc)
   y = sc->args;
   for (x = car(sc->code); is_not_null(y); x = cdr(x))
     {
-      s7_pointer sym, args, val;
+      s7_pointer sym, args;
       sym = caar(x);
-      val = car(y);
       args = cdr(y);
-      
-      set_type(y, T_SLOT);
-      slot_set_symbol(y, sym);
-      slot_set_value(y, val);
+      reuse_as_slot(y, sym, unchecked_car(y));
       set_next_slot(y, let_slots(sc->envir));
       let_set_slots(sc->envir, y);
       symbol_set_local(sym, let_id(sc->envir), y);
@@ -59705,9 +59718,8 @@ static int do_init_ex(s7_scheme *sc)
       if (is_not_null(cddar(x)))                /* else no incr expr, so ignore it henceforth */
 	{
 	  s7_pointer p;
-	  p = cons(sc, caddar(x), val);
+	  p = cons(sc, caddar(x), sc->gc_nil);  /* this is where we store the new value */
 	  set_opt_slot1(p, y);
-	  /* val is just a place-holder -- this is where we store the new value */
 	  sc->value = cons_unchecked(sc, p, sc->value);
 	}
       y = args;
@@ -60924,7 +60936,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   
   for (x = closure_args(sc->code), z = _TLst(sc->args); is_pair(x); x = cdr(x)) /* closure_args can be a symbol, for example */
     {
-      s7_pointer sym, args, val;
+      s7_pointer sym, args;
       /* reuse the value cells as the new frame slots */
       
       if (is_null(z))
@@ -60940,12 +60952,9 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
        */
       
       sym = car(x);
-      val = _NFre(car(z));
       args = cdr(z);
-      set_type(z, T_SLOT);
-      slot_set_symbol(z, sym);
+      reuse_as_slot(z, sym, unchecked_car(z));
       symbol_set_local(sym, id, z);
-      slot_set_value(z, val);
       set_next_slot(z, let_slots(e));
       let_set_slots(e, z);
       z = args;
@@ -61661,7 +61670,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (iterator_is_at_end(car(y)))
 		  {
 		    sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
-		    /* here and below it is not safe to pre-release sc->args (the counter) */
+		    /* here and below it is not safe to pre-release sc->args (the counter) -- see t101.scm map case -- not sure why it fails */
 		    goto START;
 		  }
 		sc->x = cons(sc, x, sc->x);
@@ -61748,7 +61757,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		sc->value = sc->unspecified;
 		goto START;
 	      }
-	    code = sc->code;
+	    code = _TClo(sc->code);
 	    arg = car(lst);
 	    counter_set_list(c, cdr(lst));
 	    if (sc->op == OP_FOR_EACH_3)
@@ -66607,7 +66616,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case OP_SET_WITH_ACCESSOR:
 	  if (sc->value == sc->error_symbol) /* backwards compatibility... */
-	    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't set ~S"), sc->args)));
+	    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't set ~S"), sc->code)));
 	  slot_set_value(sc->code, sc->value);
 	  break;
 
@@ -67267,7 +67276,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->code = car(x); /* restore the original form */
 	    y = cdr(x);        /* use sc->args as the new frame */
 	    sc->y = y;
-	    sc->envir = old_frame_in_env(sc, x, sc->envir);
+	    sc->envir = reuse_as_let(sc, x, sc->envir);
 	    
 	    {
 	      bool named_let;
@@ -67302,21 +67311,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  sc->envir = new_frame_in_env(sc, sc->envir);
 		  for (x = cadr(sc->code); is_not_null(y); x = cdr(x))
 		    {
-		      s7_pointer sym, args, val;
+		      s7_pointer sym, args;
 		      /* reuse the value cells as the new frame slots */
 		      
 		      sym = caar(x);
 		      if (sym == let_name) let_name = sc->nil;
-		      val = car(y);
 		      args = cdr(y);
-		      
-		      set_type(y, T_SLOT);
-		      slot_set_symbol(y, sym);
-		      slot_set_value(y, val);
+		      reuse_as_slot(y, sym, unchecked_car(y));
 		      set_next_slot(y, let_slots(sc->envir));
 		      let_set_slots(sc->envir, y);
 		      symbol_set_local(sym, let_id(sc->envir), y);
-		      
 		      y = args;
 		    }
 		  sc->code = _TPair(cddr(sc->code));
@@ -67331,17 +67335,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  for (x = car(sc->code); is_not_null(y); x = cdr(x))
 		    {
-		      s7_pointer sym, args, val;
+		      s7_pointer sym, args;
 		      /* reuse the value cells as the new frame slots */
 		      
 		      sym = caar(x);
-		      val = car(y);
 		      args = cdr(y);
-		      
-		      set_type(y, T_SLOT);
-		      slot_set_symbol(y, sym);
+		      reuse_as_slot(y, sym, unchecked_car(y));
 		      symbol_set_local(sym, id, y);
-		      slot_set_value(y, val);
 		      set_next_slot(y, let_slots(e));
 		      let_set_slots(e, y);
 		      
@@ -75346,7 +75346,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176 | 4171
  * titer         |      |      | 7503 | 5218 | 5227
  * thash         |      |      | 50.7 | 8491 | 8518
- * lint          |      |      |      | 7731 | 4782
+ * lint          |      |      |      | 7731 | 4750
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0
@@ -75362,9 +75362,10 @@ int main(int argc, char **argv)
  *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
  * update libgsl.scm
  * pretty-print needs docs/tests [s7test has some minimal tests]
- * is sc->let cache possible (no slots in GC) or could closure_p see non-tail followed by tail and reuse everything?
- *   how many lets are there normally?
  * extend the validity checks to all FFI funcs and add info about caller etc
+ * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
+ * perhaps (*s7* 'optimizing?) instead of safety>1 -- needs to be fast
+ * free counter (env if safe??) -- t101 has a weird case
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

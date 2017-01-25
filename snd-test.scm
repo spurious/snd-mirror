@@ -46792,4 +46792,30 @@ callgrind_annotate --auto=yes callgrind.out.<pid> > hi
   339,193,555  clm.c:filter_ge_10 [/home/bil/motif-snd/snd]
   337,020,228  clm.c:mus_src_to_buffer [/home/bil/motif-snd/snd]
   330,406,288  clm.c:fb_many_with_amps_c1_c2 [/home/bil/motif-snd/snd]
+
+4-Jan-17:
+40,444,112,752
+5,554,262,169  s7.c:eval'2 [/home/bil/motif-snd/snd]
+2,847,440,755  ???:sin [/lib64/libm-2.12.so]
+2,008,826,659  ???:cos [/lib64/libm-2.12.so]
+1,267,013,962  clm.c:fir_ge_20 [/home/bil/motif-snd/snd]
+1,131,280,306  s7.c:eval [/home/bil/motif-snd/snd]
+1,046,123,928  clm.c:mus_src [/home/bil/motif-snd/snd]
+  985,044,773  s7.c:gc [/home/bil/motif-snd/snd]
+  901,961,680  ???:t2_32 [/home/bil/motif-snd/snd]
+  803,333,049  ???:t2_64 [/home/bil/motif-snd/snd]
+  627,021,459  clm.c:mus_phase_vocoder_with_editors [/home/bil/motif-snd/snd]
+  608,930,865  snd-edits.c:channel_local_maxamp [/home/bil/motif-snd/snd]
+  594,199,460  clm.c:fb_one_with_amps_c1_c2 [/home/bil/motif-snd/snd]
+  489,290,304  io.c:mus_read_any_1 [/home/bil/motif-snd/snd]
+  459,835,320  ???:n1_64 [/home/bil/motif-snd/snd]
+  412,138,226  clm2xen.c:outa_x_rf_to_mus_xen [/home/bil/motif-snd/snd]
+  394,019,684  vct.c:vct_add [/home/bil/motif-snd/snd]
+  371,153,394  clm.c:mus_env_linear [/home/bil/motif-snd/snd]
+  350,476,620  ???:memcpy [/lib64/ld-2.12.so]
+  345,704,896  clm.c:run_hilbert [/home/bil/motif-snd/snd]
+  339,193,555  clm.c:filter_ge_10 [/home/bil/motif-snd/snd]
+  337,020,228  clm.c:mus_src_to_buffer [/home/bil/motif-snd/snd]
+  330,406,288  clm.c:fb_many_with_amps_c1_c2 [/home/bil/motif-snd/snd]
+ 
 |#
