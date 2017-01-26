@@ -139,7 +139,7 @@
 ;;; ----------------------------------------
 (format *stderr* "reader~%")
 
-(define data "/home/bil/test/bench/src/bib")
+(define data "/home/bil/test/scheme/bench/src/bib")
 (define counts (make-hash-table (expt 2 18) string=?))
 
 (define (reader)

@@ -5775,7 +5775,7 @@ Use the standard environment syntax to access these fields:
 </p>
 
 <p>
-Set (*s7* 'safety) to 2 or higher
+Set (*s7* 'safety) to 3 or higher
 to turn off optimization.  Set (*s7* 'autoloading) to #f to turn off the autoloader.
 </p>
 
@@ -6130,7 +6130,7 @@ it is GC'd.  Here is an example:
 
 <p>Put this is a file, load it into the interpreter, then call <code>(bad-idea)</code> a
 few times.  You can turn off the optimization in question by setting the variable <code>(*s7* 'safety)</code>
-to 1.  <code>(*s7* 'safety)</code> defaults to 0.  
+to 3.  <code>(*s7* 'safety)</code> defaults to 0.  
 </p>
 
 <p>A similar problem arises when you want to walk a function's source or reuse a piece of

@@ -2388,7 +2388,8 @@
 					(< pos (length sig))
 					(list-ref sig pos))))))
 	      (set! last-and-incomplete-arg2 arg2)             ; ignore unwanted repetitions due to recursive simplifications
-	      (if (symbol? arg-type)
+	      (if (and (symbol? arg-type)
+		       (not (eq? arg-type 'unused-parameter?)))
 		  (let ((ln (and (< 0 line-number 100000) line-number))
 			(comment (if (and (eq? arg-type 'procedure?)
 					  (= pos 0)
@@ -7998,7 +7999,7 @@
 		      
 		      (cond ((or (eq? op 'list)         ; (cons x (list ...)) -> (list x ...)
 				 (and (eq? op #_list-values)
-				      (not (tree-member #_apply-values (cdaddr form)))))
+				      (not (tree-memq #_apply-values (cdaddr form)))))
 			     (lint-format "perhaps ~A" caller (lists->string form (cons 'list (cons (cadr form) (unlist-values (cdaddr form)))))))
 			    
 			    ((and (pair? (cadr form))                   ; (cons (car x) (cdr x)) -> (copy x)
@@ -12088,7 +12089,7 @@
 			       (if (and (< k last-ref (+ k 2)) 
 					(pair? (list-ref body (+ k 1))))
 				   (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
-					 (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+					 (letx (if (tree-memq name (cddr expr)) 'letrec 'let))
 					 (use-expr (list-ref body (+ k 1)))
 					 (seen-earlier (or (var-member name env)
 							   (do ((s body (cdr s)))
@@ -12152,7 +12153,7 @@
 					      (pair? (list-ref body (+ k 1)))
 					      (pair? (list-ref body (+ k 2))))
 				     (let ((end-dots (if (< last-ref (- len 1)) '(...) ()))
-					   (letx (if (tree-member name (cddr expr)) 'letrec 'let))
+					   (letx (if (tree-memq name (cddr expr)) 'letrec 'let))
 					   (seen-earlier (or (var-member name env)
 							     (do ((s body (cdr s)))
 								 ((or (eq? s q)
@@ -12943,7 +12944,7 @@
 		    
 		    (if (and macdef
 			     (pair? f)
-			     (tree-member 'unquote f))
+			     (tree-memq 'unquote f))
 			(lint-format "~A probably has too many unquotes: ~A" caller head (truncated-list->string f)))
 		    
 		    (set! prev-f f)
@@ -20265,13 +20266,14 @@
 	  (define (let-temporarily-walker caller form env)
 	    (if (< (length form) 2)  ; empty body is ok here
 		(lint-format "let-temporarily is messed up: ~A" 'caller (truncated-list->string form))
-		(let* ((new-env (cons (make-lint-var :let form 'let-temporarily) env))
-		       (e (lint-walk-body caller 'let-temporarily (cddr form) new-env)))
-		  (report-usage caller 'let-temporarily
-				(if (eq? e new-env) 
-				    () 
-				    (env-difference caller e new-env ())) 
-				new-env)))
+		(let ((new-env (cons (make-lint-var :let form 'let-temporarily) env)))
+		  (lint-walk caller (cadr form) new-env)
+		  (let ((e (lint-walk-body caller 'let-temporarily (cddr form) new-env)))
+		    (report-usage caller 'let-temporarily
+				  (if (eq? e new-env) 
+				      () 
+				      (env-difference caller e new-env ())) 
+				  new-env))))
 	    env)
 	  (hash-walker 'let-temporarily let-temporarily-walker))
 	
@@ -22366,4 +22368,4 @@
 
 ;;; tons of rewrites in lg* (2500 lines)
 ;;;
-;;; 202 29453 830372
+;;; 200 29464 830020

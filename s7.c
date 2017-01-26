@@ -46839,6 +46839,8 @@ static s7_pointer stack_entries(s7_scheme *sc, s7_pointer stack, int top)
 typedef bool (*catch_function)(s7_scheme *sc, int i, s7_pointer type, s7_pointer info, bool *reset_hook);
 static catch_function catchers[OP_MAX_DEFINED + 1];
 
+/* here and below, don't free the catcher */
+
 static bool catch_all_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer info, bool *reset_hook)
 {
   s7_pointer catcher;
@@ -61600,7 +61602,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   * since each "<" op above goes to OP_APPLY, we have ca 5 labels, and ca 25-50 lines
 	   */
 	  
-	  
 	  /* -------------------------------- MAP -------------------------------- */
 	case OP_MAP_GATHER_1:
 	  if (sc->value != sc->no_value)
@@ -61621,6 +61622,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (iterator_is_at_end(p))
 	      {
 		sc->value = safe_reverse_in_place(sc, counter_result(args));
+#define FREEZE 1
+		/* an experiment */	  
+#if FREEZE
+		free_cell(sc, sc->args);
+		sc->args = sc->nil; 
+#endif
 		goto START;
 	      }
 	    push_stack(sc, OP_MAP_GATHER_1, args, code);
@@ -61670,7 +61677,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (iterator_is_at_end(car(y)))
 		  {
 		    sc->value = safe_reverse_in_place(sc, counter_result(sc->args));
-		    /* here and below it is not safe to pre-release sc->args (the counter) -- see t101.scm map case -- not sure why it fails */
+#if FREEZE
+		    free_cell(sc, sc->args); 
+		    sc->args = sc->nil;
+#endif
 		    goto START;
 		  }
 		sc->x = cons(sc, x, sc->x);
@@ -61698,6 +61708,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (iterator_is_at_end(car(y)))
 		  {
 		    sc->value = sc->unspecified;
+#if FREEZE
+		    free_cell(sc, sc->args);
+		    sc->args = sc->nil;
+#endif
 		    goto START;
 		  }
 	      }
@@ -61726,6 +61740,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (iterator_is_at_end(p))
 	      {
 		sc->value = sc->unspecified;
+#if FREEZE
+		free_cell(sc, counter);
+		sc->args = sc->nil;
+#endif
 		goto START;
 	      }
 	    code = sc->code;
@@ -61755,6 +61773,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (!is_pair(lst))  /* '(1 2 . 3) as arg? -- counter_list can be anything here */
 	      {
 		sc->value = sc->unspecified;
+#if FREEZE
+		free_cell(sc, c);
+		sc->args = sc->nil;
+#endif
 		goto START;
 	      }
 	    code = _TClo(sc->code);
@@ -61766,6 +61788,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (counter_result(c) == counter_list(c))
 		  {
 		    sc->value = sc->unspecified;
+#if FREEZE
+		    free_cell(sc, c);
+		    sc->args = sc->nil;
+#endif
 		    goto START;
 		  }
 		push_stack(sc, OP_FOR_EACH_2, c, code);
@@ -75346,7 +75372,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176 | 4171
  * titer         |      |      | 7503 | 5218 | 5227
  * thash         |      |      | 50.7 | 8491 | 8518
- * lint          |      |      |      | 7731 | 4750
+ * lint          |      |      |      | 7731 | 4736
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0
@@ -75364,8 +75390,8 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * extend the validity checks to all FFI funcs and add info about caller etc
  * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
- * perhaps (*s7* 'optimizing?) instead of safety>1 -- needs to be fast
- * free counter (env if safe??) -- t101 has a weird case
+ * perhaps (*s7* 'optimizing?) instead of safety>1 -- needs to be fast -- is this useful at all?
+ * empty let 1/20 of total lets more or less -- does make_slot_1 etc happen often?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

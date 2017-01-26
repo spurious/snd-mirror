@@ -30,8 +30,9 @@ The configure script has a bunch of arguments:
                          mv ruby.pc /usr/local/lib/pkgconfig/ruby.pc
                          You may also have to set PKG_CONFIG_PATH:
 			 PKG_CONFIG_PATH=.:/opt/X11/lib/pkgconfig/ ./configure --with-gtk --with-ruby --with-portaudio 
+			 (Debian: ruby-dev)
   
-     --with-forth      use Forth (Mike Scholz's FTH) as the extension language.
+     --with-forth      use Forth (Mike Scholz's FTH) as the extension language. (libfth or fth at sourceforge)
   
      --without-extension-language  build Snd without any extension language
   
@@ -45,17 +46,17 @@ The configure script has a bunch of arguments:
                          in *BSD, pkg install open-motif, or perhaps use pkgin?
                          in Debian, apt-get install libmotif4, libmotif-dev, libxt-dev, libxpm-dev
 
-     --with-gtk        use Gtk+
+     --with-gtk        use Gtk+ (Debian package libgtk-3-dev).
   
      --with-gui        make Snd with graphics support (actually intended for use as --without-gui)
   
-     --with-gl         include support for OpenGL (default: no, Motif only)
+     --with-gl         include support for OpenGL (default: no, Motif only) (debian: libgl-dev libglu-dev)
        --with-gl2ps    include gl2ps (postscript output from OpenGL graphics)
   
 
    Audio:
 
-     --with-alsa       use ALSA if possible (the default in Linux)
+     --with-alsa       use ALSA if possible (the default in Linux) (Debian: libasound2-dev)
 
      --with-oss        use OSS (not tested in a long time)
   
@@ -70,8 +71,10 @@ The configure script has a bunch of arguments:
    Other options:
 
      --with-gmp        use gmp, mpfr, and mpc to implement multiprecision arithmetic
+                       (Debian: libgmp-dev libmpfr-dev libmpc-dev)
 
      --with-ladspa     include LADSPA plugin support (default: yes in Linux)
+                       (get ladaps.h and put it in /usr/local/include or some such directory)
   
      --with-temp-dir   directory to use for temp files (default: ".")
      --with-save-dir   directory to use for saved-state files (default: ".")
@@ -606,10 +609,10 @@ There is also a port in /usr/ports/audio/snd with version 13.0 from August
 
 -------- Debian --------
 
-The last time I installed Debian (via netinstall) I installed the following
+The last time I installed Debian (25-Jan-17) I installed the following
 Snd-related packages by hand:
-  libgmp-dev fftw-dev libgtk-3-dev libmpfr-dev libmpc-dev
-  libgsl0-dev libasound2-dev libgl1-mesa-dev
+   libfftw3-3 libgsl2 libgtk-3-dev libmotif-dev libxpm-dev libxt-dev libmpfr-dev libmpc-dev
+   libgsl-dev libfftw3-dev libgl-dev libglu-dev libutf8proc-dev libjack-dev ruby-dev libasound2-dev
 
 
 and for Fedora Core 22:
