@@ -690,26 +690,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 ;;; FILTERS
 ;;;
   
-  (define effects-comb-filter 
-    (let ((documentation "(effects-comb-filter scaler-1 size beg dur snd chn) is used by the effects dialog to tie into edit-list->function"))
-      (lambda* (scaler size beg dur snd chn)
-	(let ((delay-line (make-float-vector size))
-	      (delay-loc 0))
-	  (lambda (x)
-	    (let ((result (delay-line delay-loc)))
-	      (set! (delay-line delay-loc) (+ x (* scaler result)))
-	      (set! delay-loc (+ 1 delay-loc))
-	      (if (= delay-loc size) (set! delay-loc 0))
-	      result))))))
-  
-  (let* ((filter-menu-list ())
-	 (filter-menu (XmCreatePulldownMenu (main-menu effects-menu) "Filter Effects"
-					    (list XmNbackground *basic-color*)))
-	 (filter-cascade (XtCreateManagedWidget "Filter Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
-						(list XmNsubMenuId filter-menu
-						      XmNbackground *basic-color*))))
-    
-    (XtAddCallback filter-cascade XmNcascadingCallback (lambda (w c i) (update-label filter-menu-list)))
+  (let ((filter-menu-list ())
+	(filter-menu (XmCreatePulldownMenu (main-menu effects-menu) "Filter Effects"
+					   (list XmNbackground *basic-color*))))
+
+    (let ((filter-cascade (XtCreateManagedWidget "Filter Effects" xmCascadeButtonWidgetClass (main-menu effects-menu)
+						 (list XmNsubMenuId filter-menu
+						       XmNbackground *basic-color*))))
+      (XtAddCallback filter-cascade XmNcascadingCallback (lambda (w c i) (update-label filter-menu-list))))
     
 ;;; -------- Butterworth band-pass filter
     
@@ -1011,7 +999,14 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			     (lambda (w context info) 
 			       (map-chan-over-target-with-sync
 				(lambda (ignored) 
-				  (effects-comb-filter comb-scaler comb-size)) 
+				  (let ((delay-line (make-float-vector comb-size))
+					(delay-loc 0))
+				    (lambda (x)
+				      (let ((result (delay-line delay-loc)))
+					(set! (delay-line delay-loc) (+ x (* comb-scaler result)))
+					(set! delay-loc (+ 1 delay-loc))
+					(if (= delay-loc comb-size) (set! delay-loc 0))
+					result))))
 				comb-target 
 				(lambda (target samps)
 				  (format #f "effects-comb-filter ~A ~A" comb-scaler comb-size))

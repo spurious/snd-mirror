@@ -16,22 +16,18 @@
 ;(define wd (make-pixmap (cadr (main-widgets)) rough)) ; this comes from new-backgrounds.scm
 ;(for-each-child (cadr (main-widgets)) (lambda (w) (XtSetValues w (list XmNbackgroundPixmap wd))))
 
-(define wd (make-pixmap (cadr (main-widgets)) rough))
 
-;(define (paint-all widget)
-;  (for-each-child
-;    widget
-;    (lambda (w)
-;      (XtSetValues w (list XmNbackgroundPixmap wd)))))
 
-(define (paint-all widget)
-   (for-each-child
-     widget
-     (lambda (w)
-       (if (and (Widget? w)
-		(or (not (XmIsPushButton w))
-		    (member (XtName w) '("revscl-label" "contrast-label" "expand-label" "srate-label" "amp-label") string=?)))
-	   (XtSetValues w (list XmNbackgroundPixmap wd))))))
+(define paint-all 
+  (let ((wd (make-pixmap (cadr (main-widgets)) rough)))
+    (lambda (widget)
+      (for-each-child
+       widget
+       (lambda (w)
+	 (if (and (Widget? w)
+		  (or (not (XmIsPushButton w))
+		      (member (XtName w) '("revscl-label" "contrast-label" "expand-label" "srate-label" "amp-label") string=?)))
+	     (XtSetValues w (list XmNbackgroundPixmap wd))))))))
 
 (paint-all (cadr (main-widgets)))
 (for-each

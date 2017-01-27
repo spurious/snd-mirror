@@ -1850,120 +1850,122 @@
 	    (XtSetValues number (list XmNlabelString ampstr))
 	    (XmStringFree ampstr)))
 	
-	(define (amp-controls-reflect-chans snd)
+	(define amp-controls-reflect-chans 
 	  
-	  (define (make-amp-control snd chan parent)
-	    (let* ((s1 (XmStringCreateLocalized "amp:"))
-		   (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
-						 (list XmNbackground       *basic-color*
-						       XmNalignment        XmALIGNMENT_BEGINNING
-						       XmNtopAttachment    XmATTACH_FORM
-						       XmNbottomAttachment XmATTACH_NONE
-						       XmNleftAttachment   XmATTACH_FORM
-						       XmNrightAttachment  XmATTACH_NONE
-						       XmNlabelString      s1
-						       XmNmarginHeight     1
-						       XmNrecomputeSize    #f
-						       XmNshadowThickness  0
-						       XmNhighlightThickness 0
-						       XmNfillOnArm        #f)))
-		   (s2 (XmStringCreateLocalized "1.000 ")))
-	      (let* ((number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
-						    (list XmNbackground       *basic-color*
-							  XmNalignment        XmALIGNMENT_BEGINNING
-							  XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-							  XmNtopWidget        label
-							  XmNbottomAttachment XmATTACH_NONE
-							  XmNleftAttachment   XmATTACH_WIDGET
-							  XmNleftWidget       label
-							  XmNrightAttachment  XmATTACH_NONE
-							  XmNlabelString      s2
-							  XmNmarginHeight     1
-							  XmNmarginRight      3
-							  XmNrecomputeSize    #f)))
-		     (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
-						    (list XmNbackground       *position-color*
-							  XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
-							  XmNtopWidget        label
-							  XmNbottomAttachment XmATTACH_NONE
-							  XmNheight           16
-							  XmNleftAttachment   XmATTACH_WIDGET
-							  XmNleftWidget       number
-							  XmNrightAttachment  XmATTACH_FORM
-							  XmNorientation      XmHORIZONTAL
-							  XmNmaximum          10000
-							  XmNvalue            4500
-							  XmNdragCallback     (list amp-callback (list number snd chan))
-							  XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
-		(XtOverrideTranslations scroll
-					(XtParseTranslationTable "c<Btn1Down>: Select()
+	  (let ((make-amp-control 
+		 (lambda (snd chan parent)
+		   (let* ((s1 (XmStringCreateLocalized "amp:"))
+			  (label (XtCreateManagedWidget (label-name chan) xmPushButtonWidgetClass parent
+							(list XmNbackground       *basic-color*
+							      XmNalignment        XmALIGNMENT_BEGINNING
+							      XmNtopAttachment    XmATTACH_FORM
+							      XmNbottomAttachment XmATTACH_NONE
+							      XmNleftAttachment   XmATTACH_FORM
+							      XmNrightAttachment  XmATTACH_NONE
+							      XmNlabelString      s1
+							      XmNmarginHeight     1
+							      XmNrecomputeSize    #f
+							      XmNshadowThickness  0
+							      XmNhighlightThickness 0
+							      XmNfillOnArm        #f)))
+			  (s2 (XmStringCreateLocalized "1.000 ")))
+		     (let* ((number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
+							   (list XmNbackground       *basic-color*
+								 XmNalignment        XmALIGNMENT_BEGINNING
+								 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+								 XmNtopWidget        label
+								 XmNbottomAttachment XmATTACH_NONE
+								 XmNleftAttachment   XmATTACH_WIDGET
+								 XmNleftWidget       label
+								 XmNrightAttachment  XmATTACH_NONE
+								 XmNlabelString      s2
+								 XmNmarginHeight     1
+								 XmNmarginRight      3
+								 XmNrecomputeSize    #f)))
+			    (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
+							   (list XmNbackground       *position-color*
+								 XmNtopAttachment    XmATTACH_OPPOSITE_WIDGET
+								 XmNtopWidget        label
+								 XmNbottomAttachment XmATTACH_NONE
+								 XmNheight           16
+								 XmNleftAttachment   XmATTACH_WIDGET
+								 XmNleftWidget       number
+								 XmNrightAttachment  XmATTACH_FORM
+								 XmNorientation      XmHORIZONTAL
+								 XmNmaximum          10000
+								 XmNvalue            4500
+								 XmNdragCallback     (list amp-callback (list number snd chan))
+								 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
+		       (XtOverrideTranslations scroll
+					       (XtParseTranslationTable "c<Btn1Down>: Select()
                                                         c<Btn1Motion>: Moved()
 						        c<Btn1Up>:   Release()"))
-		
-		(XtAddCallback label XmNactivateCallback (lambda (w c i)
-							   (reset-to-one scroll number))))
-	      (XmStringFree s1)
-	      (XmStringFree s2)
-	      label))
-	      
-	  (let* ((ctrls ((sound-widgets snd) 2))
-		 (snd-amp (find-child ctrls "snd-amp"))
-		 (chns (channels snd)))
+		       
+		       (XtAddCallback label XmNactivateCallback (lambda (w c i)
+								  (reset-to-one scroll number))))
+		     (XmStringFree s1)
+		     (XmStringFree s2)
+		     label))))
 	    
-	    (when (Widget? snd-amp)
-	      (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
-		    (panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
-		    (panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
-		(XtUnmanageChild ctrls)
+	    (lambda (snd)	      
+	      (let* ((ctrls ((sound-widgets snd) 2))
+		     (snd-amp (find-child ctrls "snd-amp"))
+		     (chns (channels snd)))
 		
-		(if (not (sound-property 'amp-controls snd))
-		    (let ((orig-amp (find-child snd-amp "amp")))
-		      (XtOverrideTranslations orig-amp
-					      (XtParseTranslationTable "c<Btn1Down>: Select()
+		(when (Widget? snd-amp)
+		  (let ((height (cadr (XtGetValues ctrls (list XmNheight 0))))
+			(panemin (cadr (XtGetValues ctrls (list XmNpaneMinimum 0))))
+			(panemax (cadr (XtGetValues ctrls (list XmNpaneMaximum 0)))))
+		    (XtUnmanageChild ctrls)
+		    
+		    (if (not (sound-property 'amp-controls snd))
+			(let ((orig-amp (find-child snd-amp "amp")))
+			  (XtOverrideTranslations orig-amp
+						  (XtParseTranslationTable "c<Btn1Down>: Select()
                                                                     c<Btn1Motion>: Moved()
 						                    c<Btn1Up>:   Release()"))
-		      (XtAddCallback orig-amp XmNdragCallback
-				     (lambda (w c info)
-				       (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
-					   (do ((i 1 (+ i 1)))
-					       ((= i chns))
-					     (let* ((ampscr (find-child snd-amp (scroller-name i)))
-						    (ampvals (cdr (XmScrollBarGetValues ampscr))))
-					       (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t))))))))
-		(let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
-		  (if (< existing-controls chns)
-		      (begin
-			(if (> height 20)
-			    (set! height (+ height (* 18 (- chns existing-controls)))))
-			(do ((i existing-controls (+ i 1)))
-			    ((= i chns))
-			  (make-amp-control snd i snd-amp))
-			(set! (sound-property 'amp-controls snd) chns)
-			(set! existing-controls chns)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i existing-controls))
-		    (let ((ampn (find-child snd-amp (number-name i)))
-			  (amp (find-child snd-amp (scroller-name i))))
-		      (XtUnmanageChild (find-child snd-amp (label-name i)))
-		      (XtUnmanageChild ampn)
-		      (XtUnmanageChild amp)))
-		  (do ((i 0 (+ i 1)))
-		      ((= i chns))
-		    (let ((ampc (find-child snd-amp (label-name i)))
-			  (ampn (find-child snd-amp (number-name i)))
-			  (amp (find-child snd-amp (scroller-name i))))
-		      (let ((next-amp (and (< i (- chns 1))
-					   (find-child snd-amp (label-name (+ i 1))))))
-			(reset-to-one amp ampn)
-			(XtSetValues ampc (list XmNtopAttachment 
-						(if next-amp (values XmATTACH_WIDGET XmNtopWidget next-amp) XmATTACH_FORM))))
-		      (XtManageChild ampc)
-		      (XtManageChild ampn)
-		      (XtManageChild amp))))
-		
-		(XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
-		(XtManageChild ctrls)
-		(XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))
+			  (XtAddCallback orig-amp XmNdragCallback
+					 (lambda (w c info)
+					   (if (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))
+					       (do ((i 1 (+ i 1)))
+						   ((= i chns))
+						 (let* ((ampscr (find-child snd-amp (scroller-name i)))
+							(ampvals (cdr (XmScrollBarGetValues ampscr))))
+						   (XmScrollBarSetValues ampscr (.value info) (car ampvals) (cadr ampvals) (caddr ampvals) #t))))))))
+		    (let ((existing-controls (or (sound-property 'amp-controls snd) 1)))
+		      (if (< existing-controls chns)
+			  (begin
+			    (if (> height 20)
+				(set! height (+ height (* 18 (- chns existing-controls)))))
+			    (do ((i existing-controls (+ i 1)))
+				((= i chns))
+			      (make-amp-control snd i snd-amp))
+			    (set! (sound-property 'amp-controls snd) chns)
+			    (set! existing-controls chns)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i existing-controls))
+			(let ((ampn (find-child snd-amp (number-name i)))
+			      (amp (find-child snd-amp (scroller-name i))))
+			  (XtUnmanageChild (find-child snd-amp (label-name i)))
+			  (XtUnmanageChild ampn)
+			  (XtUnmanageChild amp)))
+		      (do ((i 0 (+ i 1)))
+			  ((= i chns))
+			(let ((ampc (find-child snd-amp (label-name i)))
+			      (ampn (find-child snd-amp (number-name i)))
+			      (amp (find-child snd-amp (scroller-name i))))
+			  (let ((next-amp (and (< i (- chns 1))
+					       (find-child snd-amp (label-name (+ i 1))))))
+			    (reset-to-one amp ampn)
+			    (XtSetValues ampc (list XmNtopAttachment 
+						    (if next-amp (values XmATTACH_WIDGET XmNtopWidget next-amp) XmATTACH_FORM))))
+			  (XtManageChild ampc)
+			  (XtManageChild ampn)
+			  (XtManageChild amp))))
+		    
+		    (XtSetValues ctrls (list XmNpaneMinimum height XmNpaneMaximum height))
+		    (XtManageChild ctrls)
+		    (XtSetValues ctrls (list XmNpaneMinimum panemin XmNpaneMaximum panemax))))))))
 	    
 	(define (amp-controls-clear snd)
 	  (if (> (channels snd) 1)

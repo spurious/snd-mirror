@@ -1908,10 +1908,9 @@ value in the closure's environment:
     (make-iterator 
      (let ((iterator? #t))
        (lambda ()
-         (let ((result (iter)))
-	   (if (eof-object? result)
-	       ((set! iter (make-iterator obj)))
-	       result)))))))
+         (case (iter) 
+           ((#&lt;eof&gt;) ((set! iter (make-iterator obj))))
+           (else)))))))
 </pre>
 <p>The 'iterator? variable is similar to the 'documentation variable used by procedure-documentation.
 It gives make-iterator some hope of catching inadvertent bogus function arguments that would
@@ -2181,7 +2180,9 @@ Perhaps we could use different colors?  Or different size parentheses?
 
 <p>A similar problem afflicts homogeneous vectors.  We need some reasonable way to express
 such a vector even when it has more than one dimension.  My first thought was <code>#(...)#</code>,
-but that makes <code>(let ((b1 0)) (#(1 2)#b1))</code> ambiguous.
+but that makes <code>(let ((b1 0)) (#(1 2)#b1))</code> ambiguous.  Perhaps the reader could
+choose the most restrictive vector type based on the #(...) data.  Then the r7rs #u8(...) 
+notation would not be needed.
 </p>
 
 </div>
@@ -5262,7 +5263,7 @@ rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 	      (define (traverse tree)
 		(if (pair? tree)                                             
 		    (cons (traverse (car tree))                             
-			  (if (null? (cdr tree)) () (traverse (cdr tree))))
+			  (case (cdr tree) ((()) ()) (else =&gt; traverse)))
 		    (if (memq tree '(and or not)) tree                 
 			(and (symbol? tree) (provided? tree)))))
 	      (if (eval (traverse e))
@@ -5914,8 +5915,8 @@ so if we allow <code>(begin)</code>, we should allow case clauses to have no exp
 In cond,
 the "implicit progn" (in CL terminology) includes the test expression, so a clause without a result returns
 the test result (if true of course).  In the case case, s7 returns the selector.
-<code>(case x ((0 1)))</code> is equivalent to <code>(case x ((0 1) => values))</code>, 
-just as <code>(cond (A))</code> is equivalent to <code>(cond (A => values))</code>.
+<code>(case x ((0 1)))</code> is equivalent to <code>(case x ((0 1) =&gt; values))</code>, 
+just as <code>(cond (A))</code> is equivalent to <code>(cond (A =&gt; values))</code>.
 One application is method lookup: <code>((case (obj 'abs) ((#&lt;undefined&gt;) abs) (else)) ...)</code>;
 we would otherwise have to save the lookup result or do it twice.
 This choice has a ripple

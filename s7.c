@@ -4920,8 +4920,6 @@ static void resize_op_stack(s7_scheme *sc)
 #if DEBUGGING
 static void pop_stack(s7_scheme *sc)
 {
-  opcode_t cur_op;
-  cur_op = sc->op;
   sc->stack_end -= 4;
   if (sc->stack_end < sc->stack_start) 
     {
@@ -4945,8 +4943,6 @@ static void pop_stack(s7_scheme *sc)
 
 static void pop_stack_no_op(s7_scheme *sc)
 {
-  opcode_t cur_op;
-  cur_op = sc->op;
   sc->stack_end -= 4;
   if (sc->stack_end < sc->stack_start) 
     {
@@ -32502,6 +32498,10 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
+  if ((sc->safety > 0) &&
+      (!s7_is_valid(sc, obj)))
+    fprintf(stderr, "bad arg to %s: %p\n", __func__, obj);
+
   return(s7_object_to_c_string_1(sc, obj, USE_WRITE, NULL));
 }
 
@@ -36753,12 +36753,13 @@ static s7_pointer list_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer
 }
 
 
-static void check_list_validity(s7_scheme *sc, s7_pointer lst)
+static void check_list_validity(s7_scheme *sc, const char *caller, s7_pointer lst)
 {
   s7_pointer p;
-  for (p = lst; is_pair(p); p = cdr(p))
+  int i;
+  for (i = 1, p = lst; is_pair(p); p = cdr(p), i++)
     if (!s7_is_valid(sc, car(p)))
-      fprintf(stderr, "bad ptr to s7_list: %p\n", car(p));
+      fprintf(stderr, "bad arg (#%d) to %s: %p\n", i, caller, car(p));
 }
 
 
@@ -36778,7 +36779,7 @@ s7_pointer s7_list(s7_scheme *sc, int num_values, ...)
   va_end(ap);
 
   if (sc->safety > 0) /* if DEBUGGING, this is partly redundant because cons checks for free cells */
-    check_list_validity(sc, sc->w);
+    check_list_validity(sc, "s7_list", sc->w);
 
   p = sc->w;
   sc->w = sc->nil;
@@ -47927,6 +47928,15 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e)
 {
   declare_jump_info();
+
+  if (sc->safety > 0)
+    {
+      if (!s7_is_valid(sc, code))
+	fprintf(stderr, "bad code arg to %s: %p\n", __func__, code);
+      if (!s7_is_valid(sc, e))
+	fprintf(stderr, "bad environment arg to %s: %p\n", __func__, e);
+    }
+
 #if DEBUGGING
   _NFre(code);
 #endif
@@ -48014,7 +48024,7 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   else
     {
       if (sc->safety > 0)
-	check_list_validity(sc, args);
+	check_list_validity(sc, "s7_call", args);
 
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
       sc->args = args;
@@ -64426,7 +64436,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer p;
 		    new_frame(sc, sc->envir, sc->envir);
 		    /* catch_all needs 3 pieces of info: the goto/op locs and the result
-		     *   the locs are unsigned ints, so this fits in the new frame's dox1/2 fields.
+		     *   the locs are unsigned ints, so this fits in the new frame's trailing fields.
+		     * we could store the result in sc->args, push_stacked below and recovered
+		     *   in catch_all_function, and have a free list of empty lets, holding
+		     *   sc->capture_let_counter in the result slot.  But there's no gain in
+		     *   speed -- the gc time saved is exactly offset by the empty-let list
+		     *   handling.  The current choice is simpler, though gc pauses are worse.
 		     */
 		    p = sc->envir;
 		    catch_all_set_goto_loc(p, s7_stack_top(sc));
@@ -75162,12 +75177,12 @@ s7_scheme *s7_init(void)
                           (letrec ((traverse (lambda (tree)                                                   \n\
 		                               (if (pair? tree)                                               \n\
 			                            (cons (traverse (car tree))                               \n\
-				                          (if (null? (cdr tree)) () (traverse (cdr tree))))   \n\
+				                          (case (cdr tree) ((())) (else => traverse)))        \n\
 			                            (if (memq tree '(and or not else)) tree                   \n\
 			                                (and (symbol? tree) (provided? tree)))))))            \n\
                             (cons 'cond (map (lambda (clause)                                                 \n\
 		                               (cons (traverse (car clause))                                  \n\
-			                             (if (null? (cdr clause)) '(#f) (cdr clause))))           \n\
+			                             (case (cdr clause) ((()) '(#f)) (else))))                \n\
 		                             clauses))))");
 #endif
 
@@ -75184,7 +75199,7 @@ s7_scheme *s7_init(void)
                                                         (cadr clause)                                         \n\
                                                         (apply values (map quote (cdr clause)))))))))         \n\
                                 clauses)                                                                      \n\
-                              (values))))");
+                              (values))))"); /* this is not redundant */
 
   s7_eval_c_string(sc, "(define make-hook                                                                     \n\
                           (let ((signature '(procedure?))                                                     \n\
@@ -75390,8 +75405,11 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * extend the validity checks to all FFI funcs and add info about caller etc
  * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
- * perhaps (*s7* 'optimizing?) instead of safety>1 -- needs to be fast -- is this useful at all?
- * empty let 1/20 of total lets more or less -- does make_slot_1 etc happen often?
+ * for-eac/map lambdas -> defined funcs (via lint?)
+ * #(...) -> int|float-vector if data fits? These are gc-trouble like '(...)?
+ *    the "bad-idea" function (gc of list constant) seems to be fine -- why does this work now? 
+ *    multidim byte-vectors via univect-ref|set as in int|float cases
+ * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
