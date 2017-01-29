@@ -1096,7 +1096,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	      buffer = (mus_float_t *)(bufs[0]);
 	      if (buffer)
 		{
-		  memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes);
+		  /* memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes); */
+		  mus_float_t *src, *dst;
+		  mus_long_t i;
+		  src = (mus_float_t *)(fd->saved_data[0] + beg);
+		  dst = buffer;
+		  for (i = lim; i > 0; i--) *dst++ = *src++;
 		  if (lim < nints)
 		    memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
 		}
@@ -1109,7 +1114,12 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    buffer = (mus_float_t *)(bufs[k]);
 		    if (buffer)
 		      {
-			memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes);
+			/* memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes); */
+			mus_float_t *src, *dst;
+			mus_long_t i;
+			src = (mus_float_t *)(fd->saved_data[k] + beg);
+			dst = buffer;
+			for (i = lim; i > 0; i--) *dst++ = *src++;
 			if (lim < nints)
 			  memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
 		      }
@@ -3335,11 +3345,6 @@ bool mus_strcmp(const char *s1, const char *s2)
       if (c1 == '\0') break;
     }
   return(true);
-#if 0
-  return((str1 == str2) ||
-	 ((str1) && (str2) &&
-	  (strcmp(str1, str2) == 0)));
-#endif
 }
 
 

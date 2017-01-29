@@ -29638,12 +29638,12 @@ EDITS: 2
 		       (let ((away (string-append home-dir "/test/sound/away.snd")))
 			 (list "1a.snd" "oboe.snd" "storm.snd" (if (file-exists? away) away "lola.snd"))))))
 	    
-	    (snd-display "         scl    rev    env    map    scn    pad    wrt    clm    mix    src    del")
-	    (snd-display "1a:   ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "   0.0") (format #f "~6,2F" a))) (car data)))
-	    (snd-display "oboe: ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "   0.0") (format #f "~6,2F" a))) (cdar data)))
-	    (snd-display "storm:~{~A ~}" (map (lambda (a) (if (< a .005) (copy "   0.0") (format #f "~6,2F" a))) (caddr data)))
+	    (snd-display "         scl   rev   env   map   scn   pad   wrt   clm   mix   src   del")
+	    (snd-display "1a:   ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "  0.0") (format #f "~5,2F" a))) (car data)))
+	    (snd-display "oboe: ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "  0.0") (format #f "~5,2F" a))) (cdar data)))
+	    (snd-display "storm:~{~A ~}" (map (lambda (a) (if (< a .005) (copy "  0.0") (format #f "~5,2F" a))) (caddr data)))
 	    (if (pair? (cadddr data))
-		(snd-display "away: ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "   0.0") (format #f "~6,2F" a))) (cadddr data)))))
+		(snd-display "away: ~{~A ~}" (map (lambda (a) (if (< a .005) (copy "  0.0") (format #f "~5,2F" a))) (cadddr data)))))
 	  
 	  (when with-big-file
 	    (when all-args

@@ -8300,7 +8300,13 @@ vct *samples_to_vct(mus_long_t beg, mus_long_t len, chan_info *cp, int pos, mus_
 
 	  if (sf->runf == next_sample_value_unscaled)
 	    {
-	      memcpy((void *)(fvals + i), (void *)(sf->data + sf->loc), dur * sizeof(mus_float_t));
+	      /* memcpy((void *)(fvals + i), (void *)(sf->data + sf->loc), dur * sizeof(mus_float_t)); */
+	      mus_float_t *src, *dst;
+	      mus_long_t j;
+	      src = (mus_float_t *)(sf->data + sf->loc);
+	      dst = (mus_float_t *)(fvals + i);
+	      for (j = dur; j > 0; j--)
+		*dst++ = *src++;
 	      i += dur;
 	    }
 	  else

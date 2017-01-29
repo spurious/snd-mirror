@@ -576,24 +576,25 @@
     
     (define applicable? arity)
     
-    (define every? 
-      (let ((documentation "(every? func sequence) returns #t if func approves of every member of sequence")
-	    (signature '(boolean? procedure? sequence?)))
+    (define lint-every? 
+      (let ((documentation "(lint-every? func sequence) returns #t if func approves of every member of the list sequence")
+	    (signature '(boolean? procedure? list?)))
 	(lambda (f sequence)
-	  (and (sequence? sequence)
-	       (call-with-exit
-		(lambda (return) 
-		  (for-each (lambda (arg) (if (not (f arg)) (return #f))) sequence)))))))
-    
-    (define any? 
-      (let ((documentation "(any? func sequence) returns #t if func approves of any member of sequence")
-	    (signature '(boolean? procedure? sequence?)))
+	  (and (list? sequence)
+	       (do ((arg sequence (cdr arg)))
+		   ((not (and (pair? arg)
+			      (f (car arg))))
+		    (null? arg)))))))
+
+    (define lint-any? 
+      (let ((documentation "(lint-any? func sequence) returns #t if func approves of any member of the list sequence")
+	    (signature '(boolean? procedure? list?)))
 	(lambda (f sequence)
-	  (and (sequence? sequence)
-	       (call-with-exit
-		(lambda (return) 
-		  (for-each (lambda (arg) (if (f arg) (return #t))) sequence)
-		  #f))))))
+	  (and (list? sequence)
+	       (do ((arg sequence (cdr arg)))
+		   ((or (not (pair? arg))
+			(f (car arg)))
+		    (pair? arg)))))))
     
     (define collect-if 
       (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
@@ -668,7 +669,7 @@
     (define (proper-tree? tree)
       (or (not (pair? tree))
 	  (and (proper-list? tree)
-	       (every? proper-tree? (cdr tree)))))
+	       (lint-every? proper-tree? (cdr tree)))))
 
     (define (shadowed? sym tree1)
       (let shadow? ((tree tree1))
@@ -954,7 +955,7 @@
 	      (and (pair? val)
 		   (hash-table-ref constant-functions (car val))
 		   (not (var-member (car val) env))
-		   (every? code-constant? (cdr val)))))))
+		   (lint-every? code-constant? (cdr val)))))))
 
     (define (list-any? f lst)
       (if (pair? lst)
@@ -1078,7 +1079,7 @@
 		     (set! sig (list #t)))
 		 
 		 (when (and (proper-list? arglist)
-			    (not (any? keyword? arglist)))
+			    (not (lint-any? keyword? arglist)))
 		   (for-each
 		    (lambda (arg)       ; new function's parameter
 		      (set! sig (cons #t sig))
@@ -1100,7 +1101,7 @@
 						     (not (memq chk '(integer:any? integer:real?))))
 						(set-car! sig chk)))))))))))
 		    arglist))
-		 (and (any? (lambda (a) (not (eq? a #t))) sig)
+		 (and (lint-any? (lambda (a) (not (eq? a #t))) sig)
 		      (reverse sig)))))))
 
     (define (args->proper-list args)
@@ -1240,7 +1241,7 @@
 		  (let ((fv (copy v)))
 		    (let-set! (cdr fv) 'side-effect #f)
 		    (set! env (cons fv env))))
-		(any? (lambda (f) 
+		(lint-any? (lambda (f) 
 			(side-effect-with-vars? f env outvars))
 		      body))))))
 
@@ -1532,7 +1533,7 @@
 			(when (and (null? (cddr nf))
 				   (let ((lst (cadr nf))
 					 (find-iter (lambda (args)
-						      (any? (lambda (p)
+						      (lint-any? (lambda (p)
 							      (and (pair? p)
 								   (eq? (car p) 'cdr)
 								   (let ((sym (cadr p)))
@@ -1985,7 +1986,7 @@
 		     (let case-effect? ((f (cddr form)))
 		       (and (pair? f)
 			    (or (not (pair? (car f)))
-				(any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cdar f))
+				(lint-any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cdar f))
 				(case-effect? (cdr f)))))))
 		
 		((cond)
@@ -1995,7 +1996,7 @@
 					(e env))
 		       (and (pair? f)
 			    (or (and (pair? (car f)) 
-				     (any? (lambda (ff) (side-effect-with-vars? ff e vars)) (car f)))
+				     (lint-any? (lambda (ff) (side-effect-with-vars? ff e vars)) (car f)))
 				(cond-effect? (cdr f) e))))))
 		
 		((let let* letrec letrec*)
@@ -2024,7 +2025,7 @@
 				      (not (pair? (cdar f))) ; an error, reported elsewhere: (let ((x)) x)
 				      (side-effect-with-vars? (cadar f) e vars)
 				      (let-effect? (cdr f)))))
-			   (any? (lambda (ff) 
+			   (lint-any? (lambda (ff) 
 				   (side-effect-with-vars? ff e vars))
 				 body)))))
 		
@@ -2040,13 +2041,13 @@
 				(and (pair? (cddar f))
 				     (side-effect-with-vars? (caddar f) e vars))
 				(do-effect? (cdr f) e))))
-		     (any? (lambda (ff) (side-effect-with-vars? ff env vars)) (caddr form))
-		     (any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cdddr form))))
+		     (lint-any? (lambda (ff) (side-effect-with-vars? ff env vars)) (caddr form))
+		     (lint-any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cdddr form))))
 		
-		;; ((lambda lambda*) (any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cddr form))) ; this is trickier than it looks
+		;; ((lambda lambda*) (lint-any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cddr form))) ; this is trickier than it looks
 		
 		(else
-		 (or (any? (lambda (f)                                   ; any subform has a side-effect
+		 (or (lint-any? (lambda (f)                                   ; any subform has a side-effect
 			     (and (not (null? f))
 				  (side-effect-with-vars? f env vars)))
 			   (cdr form))
@@ -2076,7 +2077,7 @@
 	       (hash-table-ref no-side-effect-functions (car form))
 	       (hash-table-ref built-in-functions (car form)) ; and not hook-functions
 	       (not (var-member (car form) env)) ; e.g. exp declared locally as a list
-	       (every? (lambda (p) (just-constants? p env)) (cdr form)))))
+	       (lint-every? (lambda (p) (just-constants? p env)) (cdr form)))))
 
     
     (define (repeated-member? lst env)
@@ -2114,7 +2115,7 @@
 
 	(set! (symbol-access '*report-bad-variable-names*) ; update these local variables if the global variable changes
 	      (lambda (sym val)
-		(when (every? symbol? val)
+		(when (lint-every? symbol? val)
 		  (initialize-bad-var-names val))
 		val))
 
@@ -2130,7 +2131,7 @@
 	      (if (or (cond ((assq s0 bad-var-names) =>
 			     (lambda (baddies)
 			       (or (assq vname (cdr baddies))
-				   (any? (lambda (b)
+				   (lint-any? (lambda (b)
 					   (and (eqv? (string-position (cadr b) sname) 0)
 						(string->number (substring sname (caddr b)))))
 					 (cdr baddies)))))
@@ -2805,7 +2806,7 @@
 	       (and (null? p)
 		    (pair? locals)
 		    (or diffs
-			(any? (lambda (a) (pair? (cddr a))) locals))
+			(lint-any? (lambda (a) (pair? (cddr a))) locals))
 		    (let ((keepers ()))
 		      (for-each (lambda (a)
 				  (let ((next-a (cdr a)))
@@ -3336,7 +3337,7 @@
 				    (and (equal? selector arg1)
 					 (pair? (cddr expr))
 					 (quoted-pair? (caddr expr))
-					 (not (any? (lambda (g)
+					 (not (lint-any? (lambda (g)
 						      (memv g keys))
 						    (cadr (caddr expr))))
 					 (set! keys (append (cadr (caddr expr)) keys))))
@@ -3461,7 +3462,7 @@
 		    ((not (or (memq val new-form)
 			      (and (len>1? val)         ;   and redundant tests
 				   (hash-table-ref booleans (car val))
-				   (any? (lambda (p)
+				   (lint-any? (lambda (p)
 					   (and (len>1? p)
 						(subsumes? (car p) (car val))
 						(equal? (cadr val) (cadr p))))
@@ -3626,7 +3627,7 @@
 				   (or (eq? val (car new-form)) ; omit repeated tests
 				       (and (len>1? val)         ;   and redundant tests
 					    (hash-table-ref booleans (car val))
-					    (any? (lambda (p)
+					    (lint-any? (lambda (p)
 						    (and (len>1? p)
 							 (subsumes? (car val) (car p))
 							 (equal? (cadr val) (cadr p))))
@@ -3651,12 +3652,12 @@
 		      (else #f))))
 	    (if (and op
 		     (>= len 3)
-		     (every? (lambda (p) 
+		     (lint-every? (lambda (p) 
 			       (and (len>2? p)
 				    (eq? (car p) op)))
 			     (cdr form)))
 		(let ((first (cadadr form)))
-		  (if (every? (lambda (p) 
+		  (if (lint-every? (lambda (p) 
 				(equal? (cadr p) first)) 
 			      (cddr form))
 		      (set! form `(,op ,first (,(car form) ,@(map (lambda (p)
@@ -3666,7 +3667,7 @@
 								  (cdr form)))))
 		      (if (null? (cdddr (cadr form)))
 			  (let ((last (caddr (cadr form))))
-			    (if (every? (lambda (p) 
+			    (if (lint-every? (lambda (p) 
 					  (and (null? (cdddr p))
 					       (equal? (caddr p) last)))
 					(cddr form))
@@ -4227,7 +4228,7 @@
 			;; len > 3 or nothing was caught above
 			(invert-successive-nots return form len env)
 			
-			(if (every? (lambda (a)
+			(if (lint-every? (lambda (a)
 				      (and (len>1? a)
 					   (or (eq? (car a) 'zero?)
 					       (and (eq? (car a) '=)
@@ -4445,14 +4446,14 @@
 	  (when (and (or (assq 'exact->inexact val)
 			 (assq 'inexact val))
 		     (not (tree-memq 'random val))
-		     (any? number? val))
+		     (lint-any? number? val))
 	    (set! val (map (lambda (x)
 			     (if (and (len>1? x)
 				      (memq (car x) '(inexact exact->inexact)))
 				 (cadr x)
 				 x))
 			   val))
-	    (if (not (any? (lambda (x)
+	    (if (not (lint-any? (lambda (x)
 			     (and (number? x)
 				  (inexact? x)))
 			   val))
@@ -4535,7 +4536,7 @@
 		  ((1) (car args))
 		  (else 
 		   (let ((val (remove-all 0 (splice-if '+ args))))
-		     (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+		     (if (lint-every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 			 (let ((rats (collect-if list rational? val)))
 			   (if (len>1? rats)
 			       (let ((y (apply + rats)))
@@ -4543,7 +4544,7 @@
 					       (collect-non-numbers val)
 					       (cons y (collect-non-numbers val))))))))
 		     (set! val (remove-inexactions val))
-		     (if (any? (lambda (p)        ; collect all + and - vals -> (- (+ ...) ...)
+		     (if (lint-any? (lambda (p)        ; collect all + and - vals -> (- (+ ...) ...)
 				 (and (pair? p) 
 				      (eq? (car p) '-)))
 			       val)
@@ -4626,7 +4627,7 @@
 				    
 				    ((and (eq? (car arg1) '*)           ; (+ (* a b) (* a c)) -> (* a (+ b c))
 					  (eq? (car arg2) '*)
-					  (any? (lambda (a)
+					  (lint-any? (lambda (a)
 						  (member a (cdr arg2)))
 						(cdr arg1)))
 				     (do ((times ())
@@ -4673,7 +4674,7 @@
 		  ((1) (car args))
 		  (else 
 		   (let ((val (remove-all 1 (splice-if '* args))))
-		     (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+		     (if (lint-every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 			 (let ((rats (collect-if list rational? val)))
 			   (if (len>1? rats)
 			       (let ((y (apply * rats)))
@@ -4814,7 +4815,7 @@
 					    (if (eqv? (caddr gif) 0) 0 (cons '* (cons (caddr gif) other-args)))
 					    (if (eqv? (cadddr gif) 0) 0 (cons '* (cons (cadddr gif) other-args)))))))
 			      
-			      ((any? (lambda (p)              ; collect * and / vals -> (/ (* ...) ...)
+			      ((lint-any? (lambda (p)              ; collect * and / vals -> (/ (* ...) ...)
 				       (and (pair? p) 
 					    (eq? (car p) '/)))
 				     val)
@@ -4923,7 +4924,7 @@
 		     (if (just-rationals? args)
 			 (apply - args)
 			 (let ((val (remove-all 0 (splice-if '+ (cdr args)))))
-			   (if (every? (lambda (x) (or (not (number? x)) (rational? x))) val)
+			   (if (lint-every? (lambda (x) (or (not (number? x)) (rational? x))) val)
 			       (let ((rats (collect-if list rational? val)))
 				 (if (len>1? rats) 
 				     (let ((y (apply + rats)))
@@ -5536,10 +5537,10 @@
 		      ((not (and (pair? (car args))
 				 (not (eq? (caar args) 'random))
 				 (hash-table-ref numeric-ops (caar args))
-				 (any? number? (cdar args))))
+				 (lint-any? number? (cdar args))))
 		       (cons (car form) args))
 		      
-		      ((any? (lambda (x)
+		      ((lint-any? (lambda (x)
 			       (and (number? x)
 				    (inexact? x)))
 			     (cdar args))
@@ -5567,7 +5568,7 @@
 	      
 	      (define (numior args form env)
 		(let ((args (lint-remove-duplicates (remove-all 0 (splice-if 'logior args)) env)))
-		  (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		  (if (lint-every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		      (let ((rats (collect-if list integer? args)))
 			(if (len>1? rats) 
 			    (let ((y (apply logior rats)))
@@ -5583,7 +5584,7 @@
 	      
 	      (define (numand args form env)
 		(let ((args (lint-remove-duplicates (remove-all -1 (splice-if 'logand args)) env)))
-		  (if (every? (lambda (x) (or (not (number? x)) (integer? x))) args)
+		  (if (lint-every? (lambda (x) (or (not (number? x)) (integer? x))) args)
 		      (let ((rats (collect-if list integer? args)))
 			(if (len>1? rats) 
 			    (let ((y (apply logand rats)))
@@ -5657,7 +5658,7 @@
 		    form
 		    (begin
 		      (set! args (lint-remove-duplicates (splice-if (car form) args) env))
-		      (if (any? (lambda (p) ; if non-negative-op, remove any non-positive numbers
+		      (if (lint-any? (lambda (p) ; if non-negative-op, remove any non-positive numbers
 				  (and (pair? p)
 				       (hash-table-ref non-negative-ops (car p))))
 				args)
@@ -5777,7 +5778,7 @@
 
     (define (check-char-cmp caller op form)
       (if (and (tree-memq 'char->integer (cdr form))
-	       (every? (lambda (x) 
+	       (lint-every? (lambda (x) 
 			 (or (and (integer? x)
 				  (<= 0 x 255))
 			     (and (len=2? x)
@@ -6073,7 +6074,7 @@
 		 (else (mv-range (car producer) env))))))
     
     (define (eval-constant-expression caller form)
-      (if (every? code-constant? (cdr form))
+      (if (lint-every? code-constant? (cdr form))
 	  (catch #t
 	    (lambda ()
 	      (let ((val (eval (copy form :readable))))
@@ -6254,12 +6255,12 @@
 					  (keys (if (eq? (car items) 'quote)
 						    (if (memq head '(memq memv member))
 							elements 
-							(and (every? pair? elements)
+							(and (lint-every? pair? elements)
 							     (map car elements)))
 						    (if (memq head '(memq memv member))
-							(and (every? code-constant? elements)
+							(and (lint-every? code-constant? elements)
 							     elements)
-							(and (every? (lambda (e)
+							(and (lint-every? (lambda (e)
 								       (and (len=2? e)
 									    (eq? (car e) 'quote)
 									    (pair? (cadr e))))
@@ -6851,7 +6852,7 @@
 						     (if op
 							 (eq? op (car a))
 							 (set! op (car a)))))))))
-			     (every? casef (cdr form))))
+			     (lint-every? casef (cdr form))))
 		  (lint-format "perhaps ~A" caller
 			       (lists->string form   ; (char=? #\a (char-downcase x)) -> (char-ci=? #\a x)
 					      (cons 'char-ci=? (map (lambda (a)
@@ -6884,7 +6885,7 @@
 					   (if op
 					       (eq? op (car a))
 					       (set! op (car a))))))))
-		       (every? casef (cdr form))))
+		       (lint-every? casef (cdr form))))
 		(lint-format "perhaps ~A" caller    ; (string=? (string-downcase x) (string-downcase y)) -> (string-ci=? x y)
 			     (lists->string form
 					    (let ((op (case head
@@ -6901,7 +6902,7 @@
 								  a))
 							    (cdr form)))))))
 
-	    (if (any? (lambda (a) ; string-copy is redundant in arg list
+	    (if (lint-any? (lambda (a) ; string-copy is redundant in arg list
 			(and (len=2? a)
 			     (memq (car a) '(copy string-copy))))
 		      (cdr form))
@@ -6944,7 +6945,7 @@
 			(lint-format "perhaps ~A" caller
 				     (lists->string form (list 'char=? (list 'string-ref (cadr s2) 0) (string-ref s1 0))))))))
 	    
-	    (if (every? (lambda (a)                     ; (string=? "#" (string (string-ref s 0))) -> (char=? #\# (string-ref s 0))
+	    (if (lint-every? (lambda (a)                     ; (string=? "#" (string (string-ref s 0))) -> (char=? #\# (string-ref s 0))
 			  (or (and (string? a)
 				   (= (length a) 1))
 			      (and (len>1? a)
@@ -7134,7 +7135,7 @@
 	;; ---------------- string ----------------
 	(let ()
 	  (define (sp-string caller head form env)
-	    (if (every? (lambda (x) 
+	    (if (lint-every? (lambda (x) 
 			  (and (char? x)
 			       (char<=? #\space x #\~))) ; #\0xx chars here look dumb
 			(cdr form))
@@ -7150,7 +7151,7 @@
 					       (lists->string form 
 							      (list 'substring (car arg) (cadr arg) (+ 1 (cadr arg))))))))
 			(if (and (memq (caadr form) '(char-upcase char-downcase))
-				 (every? (lambda (p)
+				 (lint-every? (lambda (p)
 					   (eq? (caadr form) (car p)))
 					 (cddr form)))
 			    ;; (string (char-downcase (string-ref x 1)) (char-downcase (string-ref x 2))) ->
@@ -7266,7 +7267,7 @@
 	      
 	      (if (equal? (cadr form) "")
 		  (lint-format "~A is an error" caller form)
-		  (when (every? code-constant? (cdr form))      ; (string-ref "abc" 0) -> #\a
+		  (when (lint-every? code-constant? (cdr form))      ; (string-ref "abc" 0) -> #\a
 		    (catch #t
 		      (lambda ()
 			(let ((val (eval form)))
@@ -7308,7 +7309,7 @@
 		  (when (code-constant? (cadr form))
 		    (if (eqv? (length (cadr form)) 0)
 			(lint-format "~A is an error" caller form)
-			(when (every? code-constant? (cddr form))      ; (vector-ref #(1 2) 0) -> 1
+			(when (lint-every? code-constant? (cddr form))      ; (vector-ref #(1 2) 0) -> 1
 			  (catch #t
 			    (lambda ()
 			      (let ((val (eval form)))
@@ -7574,7 +7575,7 @@
 	    ;; not string->number -- no point in copying a number and it's caught below
 	    (when (pair? (cdr form))
 
-	      (if (every? code-constant? (cdr form))
+	      (if (lint-every? code-constant? (cdr form))
 		  (let ((seq (checked-eval form)))
 		    (if (not (eq? seq :checked-eval-error))   ;  (symbol->string 'abs) -> "abs"
 			(lint-format "perhaps ~A -> ~A~A" caller
@@ -7631,7 +7632,7 @@
 
 			  ((and (eq? head 'list->vector)          ; (list->vector (append (vector->list v1) ...)) -> (append v1 ...)
 				(eq? func-of-arg 'append)
-				(every? (lambda (a)
+				(lint-every? (lambda (a)
 					  (and (pair? a)
 					       (eq? (car a) 'vector->list)))
 					(cdadr form)))
@@ -7885,7 +7886,7 @@
 	    (unless (= line-number last-checker-line-number)
 	      (let ((args (remove-all "" (splice-if 'string-append (cdr form))))
 		    (combined #f))
-		(when (any? (lambda (s)
+		(when (lint-any? (lambda (s)
 			      (or (string? s)
 				  (and (pair? s)
 				       (memq (car s) '(string apply)))))
@@ -7929,10 +7930,10 @@
 			   (lint-format "perhaps ~A~A" caller (lists->string form (car args))
 					(if combined "" ", or use copy")))) ; (string-append x "") appears to be a common substitute for string-copy
 		      
-		      ((every? string? args)        ; (string-append "a" "b") -> "ab"
+		      ((lint-every? string? args)        ; (string-append "a" "b") -> "ab"
 		       (lint-format "perhaps ~A" caller (lists->string form (apply string-append args))))
 		      
-		      ((every? (lambda (a)          ; (string-append "a" (string #\b)) -> "ab"
+		      ((lint-every? (lambda (a)          ; (string-append "a" (string #\b)) -> "ab"
 				 (or (string? a)
 				     (and (pair? a)
 					  (eq? (car a) 'string)
@@ -7941,13 +7942,13 @@
 			       args)
 		       (catch #t
 			 (lambda ()                 ; (string-append (string #\C) "ZLl*()def") -> "CZLl*()def"
-			   (let ((val (if (not (any? pair? args))
+			   (let ((val (if (not (lint-any? pair? args))
 					  (apply string-append args)
 					  (eval (cons 'string-append args)))))
 			     (lint-format "perhaps ~A -> ~S" caller (truncated-list->string form) val)))
 			 (lambda args #f)))
 		      
-		      ((every? (lambda (c)          ; (string-append (make-string 3 #\a) (make-string 2 #\b)) -> (format #f "~NC~NC" 3 #\a 2 #\b)
+		      ((lint-every? (lambda (c)          ; (string-append (make-string 3 #\a) (make-string 2 #\b)) -> (format #f "~NC~NC" 3 #\a 2 #\b)
 				 (and (len>2? c)
 				      (eq? (car c) 'make-string)))
 			       (cdr form))
@@ -7978,7 +7979,7 @@
 		      ((null? (cdr args))              ; (vector-append x) -> (copy x)
 		       (lint-format "perhaps ~A" caller (lists->string form (list 'copy (car args)))))
 		      
-		      ((every? vector? args)           ;  (vector-append #(1 2) (vector-append #(3))) -> #(1 2 3)
+		      ((lint-every? vector? args)           ;  (vector-append #(1 2) (vector-append #(3))) -> #(1 2 3)
 		       (lint-format "perhaps ~A" caller (lists->string form (apply vector-append args))))
 		      
 		      ((not (equal? args (cdr form)))  ; (vector-append x (vector-append y z)) -> (vector-append x y z)
@@ -8185,7 +8186,7 @@
 			       ((not (equal? (cdr form) new-args))      ; (append () '(1 2) 1) -> (append '(1 2) 1)
 				(lint-format "perhaps ~A" caller (lists->string form (cons 'append new-args)))))))
 		      (else
-		       (cond ((every? (lambda (item)
+		       (cond ((lint-every? (lambda (item)
 					(and (pair? item)
 					     (or (eq? (car item) 'list)
 						 (and (eq? (car item) 'cons)
@@ -8531,7 +8532,7 @@
 			     (not (var-member 't env)))
 			(lint-format "'t in ~A should probably be #t" caller (truncated-list->string form))))
 		  
-		  (if (any? all-caps-warning (cdr form))
+		  (if (lint-any? all-caps-warning (cdr form))
 		      (lint-format "There's no need to shout: ~A" caller (truncated-list->string form)))
 
 		  (if (not (string? control-string))
@@ -8642,7 +8643,7 @@
 	;; ---------------- substring ----------------
 	(let ()
 	  (define (sp-substring caller head form env)
-	    (if (every? code-constant? (cdr form))
+	    (if (lint-every? code-constant? (cdr form))
 		(catch #t
 		  (lambda ()
 		    (let ((val (eval form)))     ; (substring "abracadabra" 2 7) -> "racad"
@@ -8708,7 +8709,7 @@
 			      (let ((v (var-member end env)))
 				(if (and (var? v)
 					 (equal? (list 'string-length str) (var-initial-value v))
-					 (not (any? (lambda (p)
+					 (not (lint-any? (lambda (p)
 						      (set!? p env))
 						    (var-history v))))   ;  if len is still (string-length x), (substring x 1 len) -> (substring x 1)
 				    (lint-format "perhaps, if ~A is still ~A, ~A" caller end (var-initial-value v)
@@ -8742,13 +8743,13 @@
 			(let ((f (caadr form)))     ;    map orders this process whereas list is unordered?
 			  ;; not any-macro? f?? or no side-effect? in the args?
 			  (if (and (not (memq f '(quote values)))
-				   (every? (lambda (p)
+				   (lint-every? (lambda (p)
 					     (and (len=2? p)
 						  (eq? f (car p))))
 					   (cddr form)))
 			      (lint-format "perhaps ~A" caller 
 					   (truncated-lists->string form
-								    (if (every? (lambda (p) 
+								    (if (lint-every? (lambda (p) 
 										  (code-constant? (cadr p)))
 							(cdr form))
 						`(map ,f ',(map (lambda (p) ; p = arg which might be quoted (not = f)
@@ -8763,7 +8764,7 @@
 	      ;; the only other hits in this area are and/or and test macros
 
 	      (when (and (> len 4)
-			 (every? (lambda (a) (equal? a val)) (cddr form)))
+			 (lint-every? (lambda (a) (equal? a val)) (cddr form)))
 		(if (code-constant? val)        ; (vector 12 12 12 12 12 12) -> (make-vector 6 12)
 		    (lint-format "perhaps ~A~A" caller
 				 (lists->string form 
@@ -8989,8 +8990,8 @@
 			(ary #f))
 
 		    ;; if zero or one args, the map/for-each is either a no-op or a function call
-		    (if (or (any? any-null? (cddr form))  ; (map abs ())
-			    (any? (lambda (p)
+		    (if (or (lint-any? any-null? (cddr form))  ; (map abs ())
+			    (lint-any? (lambda (p)
 				    (or (and (code-constant? p)
 					     (eqv? (length p) 0))
 					(and (pair? p)
@@ -9004,9 +9005,9 @@
 				  (cddr form)))
 			(lint-format "this ~A has no effect (~A arg)" caller
 				     (truncated-list->string form)
-				     (if (any? any-null? (cddr form)) "null" "zero length"))
+				     (if (lint-any? any-null? (cddr form)) "null" "zero length"))
 			(if (and (not (tree-memq 'values form)) ; e.g. flatten in s7.html
-				 (any? (lambda (p)
+				 (lint-any? (lambda (p)
 					 (or (and (code-constant? p)
 						  (eqv? (length p) 1))
 					     (and (len>1? p)
@@ -9053,7 +9054,7 @@
 				   (pair? (caddr form))
 				   (or (eq? (caaddr form) 'quote)
 				       (and (eq? (caaddr form) 'list)
-					    (every? code-constant? (cdaddr form)))))
+					    (lint-every? code-constant? (cdaddr form)))))
 			      (catch #t
 				(lambda ()          ; (map symbol->string '(a b c d)) -> '("a" "b" "c" "d")
 				  (let ((val (eval form)))
@@ -9125,7 +9126,7 @@
 		    (when (and (eq? head 'for-each)
 			       (len>1? (cadr form))            ; (for-each (lambda (x) (+ (abs x) 1)) lst)
 			       (eq? (caadr form) 'lambda)
-			       (not (any? (lambda (x) (side-effect? x env)) (cddadr form))))
+			       (not (lint-any? (lambda (x) (side-effect? x env)) (cddadr form))))
 		      (lint-format "pointless for-each: ~A" caller (truncated-list->string form)))
 		    
 		    (when (= args 1)
@@ -9195,7 +9196,7 @@
 						     (caadr func))))
 				      (when (and (symbol? larg)
 						 (null? (cdadr func)) ; just one arg (one sequence to for-each) for now
-						 (every? (lambda (x)
+						 (lint-every? (lambda (x)
 							   (and (pair? x)
 								(memq (car x) '(display write newline write-char write-string))
 								(or (eq? (car x) 'newline)
@@ -9277,7 +9278,7 @@
 						   (unlist-values (cadr form))
 						   (cadr form)))))
 		  ((and (assq #_list-values (cdr form))
-			(not (any? (lambda (a)
+			(not (lint-any? (lambda (a)
 				     (and (pair? a)
 					  (memq (car a) '(#_list-values #_apply-values))
 					  (qq-tree? a)))
@@ -9409,7 +9410,7 @@
 						      `((lambda ,(car call)
 							  ,@(cddr form))
 							,(cadr call))))))
-		    (if (every? len>1? (cadr form))
+		    (if (lint-every? len>1? (cadr form))
 			(lint-format "perhaps ~A" caller        ;  (let-values (((x) (values 1)) ((y) (values 2))) (list x y)) ...
 				     (lists->string 
 				      form
@@ -9430,7 +9431,7 @@
 	  (lambda (caller head form env)
 	    (if (and (pair? (cdr form))
 		     (proper-pair? (cadr form))   ; every? uses for-each which ignores dotted-list cdr?
-		     (every? len>1? (cadr form))) 
+		     (lint-every? len>1? (cadr form))) 
 		(lint-format "perhaps ~A" caller
 			     (lists->string form               ;   (let*-values (((a) (f x))) (+ a b)) -> (let ((a (f x))) (+ a b))
 					    (let loop ((var-data (cadr form)))
@@ -9499,7 +9500,7 @@
 			    (lint-format "perhaps ~A" caller (lists->string form (list 'eval-string (cadadr arg))))))
 		       
 		       ((list)
-			(if (every? (lambda (p)        ;  (eval (list '* 2 x)) -> (* 2 (eval x))
+			(if (lint-every? (lambda (p)        ;  (eval (list '* 2 x)) -> (* 2 (eval x))
 				      (or (symbol? p)
 					  (code-constant? p)))
 				    (cdr arg))
@@ -9734,7 +9735,7 @@
 	;; ---------------- cond-expand ----------------
 	(let ()
 	  (define (sp-cond-expand caller head form env)
-	    (if (every? (lambda (c)
+	    (if (lint-every? (lambda (c)
 			  (not (len>1? c)))
 			(cdr form))
 		(lint-format "pointless cond-expand: ~A" caller (truncated-list->string form))
@@ -10200,28 +10201,28 @@
 					 ((let let*)
 					  (if (len>1? (cdr tree))
 					      (let ((vs ((if (symbol? (cadr tree)) caddr cadr) tree)))
-						(if (not (any? (lambda (a) (or (not (pair? a)) (eq? sym (car a)))) vs))
+						(if (not (lint-any? (lambda (a) (or (not (pair? a)) (eq? sym (car a)))) vs))
 						    (fwalk sym ((if (symbol? (cadr tree)) cdddr cddr) tree))))))
 					 
 					 ((do letrec letrec*)
 					  (if (and (len>1? (cdr tree))
-						   (not (any? (lambda (a) (or (not (pair? a)) (eq? sym (car a)))) (cadr tree))))
+						   (not (lint-any? (lambda (a) (or (not (pair? a)) (eq? sym (car a)))) (cadr tree))))
 					      (fwalk sym (cddr tree))))
 					 
 					 ((lambda lambda*)
 					  (if (and (len>1? (cdr tree))
-						   (not (any? (lambda (a) (eq? sym a)) (args->proper-list (cadr tree)))))
+						   (not (lint-any? (lambda (a) (eq? sym a)) (args->proper-list (cadr tree)))))
 					      (fwalk sym (cddr tree))))
 					 
 					 ((define define-constant)
 					  (if (and (not (eq? sym (cadr tree)))
 						   (pair? (cadr tree))
-						   (not (any? (lambda (a) (eq? sym a)) (args->proper-list (cdadr tree)))))
+						   (not (lint-any? (lambda (a) (eq? sym a)) (args->proper-list (cdadr tree)))))
 					      (fwalk sym (cddr tree))))
 					 
 					 ((define* define-macro define-macro* define-expansion define-bacro define-bacro*)
 					  (if (and (len>1? (cdr tree))
-						   (not (any? (lambda (a) (eq? sym a)) (args->proper-list (cdadr tree)))))
+						   (not (lint-any? (lambda (a) (eq? sym a)) (args->proper-list (cdadr tree)))))
 					      (fwalk sym (cddr tree))))
 					 
 					 ((quote) #f)
@@ -10546,7 +10547,7 @@
 			       ((fill! string-fill! vector-fill!  reverse! sort! set! set-cdr!)
 				;; here there's trouble if cadr used anywhere -- but we need to check for shadowing which is tedious:
 				(if (and (len>1? p)
-					 (any? (lambda (np)
+					 (lint-any? (lambda (np)
 						 (and (not (eq? np p))
 						      (tree-memq (cadr p) np)
 						      (not (shadowed? (cadr p) np))))
@@ -10851,7 +10852,7 @@
 							  (and (memq nt '(pair? null? proper-list?))
 							       (memq base-type '(pair? null? proper-list?))
 							       (set! base-type 'list?))))))))
-				   (and (every? typef (var-history v))
+				   (and (lint-every? typef (var-history v))
 					base-type))))))
 
 	;; -------- defined-twice
@@ -11012,13 +11013,13 @@
 			     (len>1? (cdr hist))
 			     (pair? (cdr first))
 			     (not (side-effect? first env))
-			     (every? (lambda (a)
+			     (lint-every? (lambda (a)
 				       (or (eq? a vname)
 					   (code-constant? a)))
 				     (cdr first))
 			     (or (code-constant? (var-initial-value local-var))
 				 (tree-nonce vname first))
-			     (every? (lambda (a) 
+			     (lint-every? (lambda (a) 
 				       (and (pair? a)
 					    (or (equal? first a)
 						(and (eq? (hash-table-ref reversibles (car first)) (car a))
@@ -11062,7 +11063,7 @@
 			       (and (eq? (car init) 'quote)
 				    (pair? (cdr init))
 				    (pair? (cadr init))))
-			   (every? (lambda (p)
+			   (lint-every? (lambda (p)
 				     (and (pair? p)
 					  (or (eq? p init)
 					      (eq? (car p) vname)
@@ -11087,7 +11088,7 @@
 		  (open-set '(open-input-string open-input-file open-output-string open-output-file))
 		  (open-form #f)
 		  (vname (var-name local-var)))
-	      (when (any? (lambda (tree)
+	      (when (lint-any? (lambda (tree)
 			    (and (pair? tree)
 				 (or (and (memq (car tree) open-set)
 					  (not (and (pair? (cdr tree))
@@ -11545,7 +11546,7 @@
 					     (and (not (memq (caar call) '(make-vector make-float-vector)))
 						  (> (cdr call) (max 3 (/ 20 (tree-leaves (car call))))))) ; was 5
 					 (or (null? (cddar call))
-					     (every? (lambda (p)               ; make sure only current var is involved
+					     (lint-every? (lambda (p)               ; make sure only current var is involved
 						       (or (not (symbol? p))
 							   (eq? p vname)))
 						     (cdar call))))
@@ -11617,7 +11618,7 @@
 							(set! res (cons i res))))))
 				      (if (and (pair? unused)
 					       (or (null? (cddr p))
-						   (every? (lambda (arg)
+						   (lint-every? (lambda (arg)
 							     (and (pair? arg)
 								  (eq? (car arg) 'lambda)
 								  (proper-list? (cadr arg))
@@ -11812,7 +11813,7 @@
 		 (let ((has-else (let ((last-clause (last-ref f)))
 				   (and (pair? last-clause)
 					(memq (car last-clause) '(else #t))
-					(any? (lambda (c)
+					(lint-any? (lambda (c)
 						(side-effect? c env))
 					      (cdr last-clause))))))
 		   (for-each (lambda (c)
@@ -11834,7 +11835,7 @@
 								 (truncated-list->string c)))))
 					   ((and (eq? (car f) 'case)
 						 (or (eq? last-expr (cadr c))
-						     (not (any? (lambda (p) (side-effect? p env)) (cdr c)))))
+						     (not (lint-any? (lambda (p) (side-effect? p env)) (cdr c)))))
 					    (lint-format "this case clause can be omitted: ~A" caller
 							 (truncated-list->string c)))
 					   
@@ -11967,7 +11968,7 @@
 			 (proper-list? fargs)
 			 (proper-list? body)
 			 (tree-nonce fname (cdr body))
-			 (not (any? keyword? fargs)))
+			 (not (lint-any? keyword? fargs)))
 		(let ((call (find-call fname (cdr body))))
 		  (when (pair? call)
 		    (let ((new-args (if (eq? (caar body) 'define)
@@ -12204,7 +12205,7 @@
 			  ;; (... (define z (f x)) (do ((i z (+ i 1))) ((= i 3)) (display (+ z i))) ...) -> (do ((i (f x) (+ i 1))) ((= i 3)) (display (+ z i)))
 			  (lint-format "perhaps ~A" caller
 				       (lists->string (list '... prev-f f '...)
-						      (if (any? (lambda (p)
+						      (if (lint-any? (lambda (p)
 								  (and (len>1? p)
 								       (tree-memq (cadr prev-f) (cadr p))))
 								(cadr f))
@@ -12744,7 +12745,7 @@
 	(define (check-escape caller fs f next-to-last? env)
 	  (if (and (escape? f env)
 		   (pair? (cdr fs)) ; do special case
-		   (every? (lambda (arg)
+		   (lint-every? (lambda (arg)
 			     (not (and (symbol? arg)
 				       (let ((v (var-member arg env)))
 					 (and (var? v)
@@ -12801,7 +12802,7 @@
 			   (eq? (cadr f) (cadr fs)))
 		      (and (symbol? (car prev-f))
 			   (or (and (eq? (car prev-f) 'begin)
-				    (every? (lambda (p)
+				    (lint-every? (lambda (p)
 					      (and (pair? p)
 						   (symbol? (car p))
 						   (let ((fstr (symbol->string (car p))))
@@ -13102,7 +13103,7 @@
 	     (when (and (zero? (var-set local-var))
 			(not (eq? (var-definer local-var) 'parameter))
 			(constant-expression? vvalue env)
-			(every? (lambda (p)
+			(lint-every? (lambda (p)
 				  (not (and (pair? p)
 					    (or (memq (car p) '(vector-set! float-vector-set! int-vector-set! 
 								string-set! list-set! hash-table-set! let-set!
@@ -13112,7 +13113,7 @@
 				(var-history local-var)))
 	       (lint-format "~A can ~Abe moved to ~A's closure" lint-function-name
 		       vname 
-		       (if (any? (lambda (p)
+		       (if (lint-any? (lambda (p)
 				   (and (pair? p)
 					(side-effect? p env)))
 				 (var-history local-var))
@@ -13550,7 +13551,7 @@
 		  (pair? (caddr clause))
 		  (eq? (caaddr clause) 'quote)
 		  (or (not (eq? (car clause) 'member))
-		      (every? (lambda (x)
+		      (lint-every? (lambda (x)
 				(or (number? x)
 				    (char? x)
 				    (symbol? x)
@@ -13558,7 +13559,7 @@
 			      (cdaddr clause)))))
 	    ((or)
 	     (and or-ok
-		  (every? (lambda (p)
+		  (lint-every? (lambda (p)
 			    (cond-eqv? p eqv-select #f))
 			  (cdr clause))))
 
@@ -13870,7 +13871,7 @@
 				 (len>2? (car body))
 				 (memq (caar body) '(let let* letrec letrec*))
 				 (proper-list? (cadar body))
-				 (every? pair? (cadar body))
+				 (lint-every? pair? (cadar body))
 				 (pair? (cddar body)))
 			(if (func-definer? (caddar body))
 			    (largs->let caller form 
@@ -13882,7 +13883,7 @@
 			(let ((let-case (caar body)))            ; if not 'let, add locals to outer-args
 			  (unless (or (eq? let-case 'let)
 				      (and (eq? let-case 'letrec)
-					   (every? (lambda (p)
+					   (lint-every? (lambda (p)
 						     (ok-func? p let-case largs))
 						   (cadar body))))
 			    (set! largs (append largs (map car (cadar body)))))
@@ -13935,7 +13936,7 @@
 				 
 				 (if (and (not (hash-table-ref syntaces (cadadr body)))
 					  (not (any-macro? (cadadr body) env))
-					  (every? (lambda (a)
+					  (lint-every? (lambda (a)
 						    (or (code-constant? a)
 							(and (memq a outer-args)
 							     (tree-nonce a (cddr body)))))
@@ -14184,7 +14185,7 @@
 	  (define (rewrite-let-optionals caller form outer-name outer-args val)
 	    (let ((args (args->proper-list outer-args)))
 	      (if (and (eq? (cadar val) (last-ref args))
-		       (every? len=2? (caddar val))) ; some seem to include a type check?
+		       (lint-every? len=2? (caddar val))) ; some seem to include a type check?
 		  (lint-format "perhaps ~A" caller
 			       (lists->string form
 					      `(define* (,outer-name 
@@ -14738,7 +14739,7 @@
 		      (unless (or (and (equal? true-op (caadr diff))   ; (if x (+ y 1) (- y 1)) -- are we trying to keep really simple stuff out?
 				       (or (hash-table-ref syntaces true-op)
 					   (hash-table-ref syntaces false-op))
-				       (any? pair? true-rest))         ; (if x (set! y (+ x 1)) (set! y 1))
+				       (lint-any? pair? true-rest))         ; (if x (set! y (+ x 1)) (set! y 1))
 				  (and (eq? true-op 'set!)             ; (if x (set! y w) (set! z w))
 				       (equal? (caar diff) (car true-rest))))
 			(let ((subst-loc (car diff)))
@@ -15118,9 +15119,9 @@
 	      (let ((true-rest (cdr true))
 		    (false-rest (cdr false)))
 		(when (and (pair? (car true-rest))
-			   (every? pair? (car true-rest))
+			   (lint-every? pair? (car true-rest))
 			   (pair? (car false-rest))
-			   (every? pair? (car false-rest)))
+			   (lint-every? pair? (car false-rest)))
 		  (let ((true-vars (map car (car true-rest)))
 			(false-vars (map car (car false-rest)))
 			(shared-vars ()))
@@ -15628,7 +15629,7 @@
 				(memq (car test) '(null? not eof-object?)))   ; memx/charx got no hits
 			   (and (len=3? test)
 				(memq (car test) '(eq? eqv? =))
-				(any? code-constant? test)))
+				(lint-any? code-constant? test)))
 		       (or (and (unquoted-pair? false)
 				(or (member false test)
 				    (and (len=2? false)
@@ -15900,7 +15901,7 @@
 				     (not (eq? first-func 'values))
 				     (or (not (hash-table-ref syntaces first-func))
 					 (eq? first-func 'set!))
-				     (every? (lambda (c)
+				     (lint-every? (lambda (c)
 					       (and (len=2? c)
 						    (len>1? (cadr c))
 						    (or (equal? first-func (caadr c))
@@ -15953,13 +15954,13 @@
 			
 			;; not escaping else here because the trailing args might be evaluated first
 			(when (and (not (hash-table-ref syntaces (car first-result)))
-				   (every? (lambda (c)
+				   (lint-every? (lambda (c)
 					     (and (len=2? c)
 						  (pair? (cadr c))
 						  (not (hash-table-ref syntaces (caadr c)))
 						  (equal? (cdadr c) (cdr first-result))))
 					   (cddr form)))
-			  (if (every? (lambda (c)
+			  (if (lint-every? (lambda (c)
 					(eq? first-func (caadr c)))         ; all result clauses are the same!?
 				      (cddr form))                          ; possibly no else, so not always a duplicate message
 			      ;; (cond (X (f y z)) (Y (f y z)) (Z (f y z))) -> (if (or X Y Z) (f y z))
@@ -16432,7 +16433,7 @@
 	  (define (cond-one-result caller form last-clause len env)
 	    (let ((result (last-ref (cadr form)))
 		  (else-clause (cdr (list-ref form len))))
-	      (when (every? (lambda (c)
+	      (when (lint-every? (lambda (c)
 			      (and (len>1? c)
 				   (equal? result (last-ref c))))
 			    (cddr form))
@@ -16927,7 +16928,7 @@
 	    (let ((len (- (length form) 1))
 		  (suggest made-suggestion))
 	      (if (or (< len 1)
-		      (not (every? pair? (cdr form))))
+		      (not (lint-every? pair? (cdr form))))
 		  (lint-format "cond is messed up: ~A" caller (truncated-list->string form))
 		  (begin
 		    (cond->header+cond+trailer caller form len env) ; obviously out-of-place...
@@ -16949,7 +16950,7 @@
 			 (len=1? (cdr first-clause))
 			 (len>1? (cadr first-clause))
 			 (not (hash-table-ref syntaces (caadr first-clause)))
-			 (every? (lambda (c)
+			 (lint-every? (lambda (c)
 				   (and (len=2? c)
 					(pair? (cadr c))
 					(not (hash-table-ref syntaces (caadr c)))
@@ -16990,7 +16991,7 @@
 			     (not (eq? first-func 'values))
 			     (or (not (hash-table-ref syntaces first-func))
 				 (eq? first-func 'set!))
-			     (every? (lambda (c)
+			     (lint-every? (lambda (c)
 				       (and (len=2? c)
 					    (len>1? (cadr c))
 					    (or (equal? first-func (caadr c))
@@ -17095,7 +17096,7 @@
 		    (let* ((akey (null? (cdaar clauses)))
 			   (keylist ((if akey caaar caar) clauses))
 			   (quoted (or (not akey) (symbol? keylist)))
-			   (op (if (every? symbol? (caar clauses))
+			   (op (if (lint-every? symbol? (caar clauses))
 				   (if akey 'eq? 'memq)
 				   (if akey 'eqv? 'memv))))
 		      ;; can't use '= or 'char=? here because the selector may return anything
@@ -17261,9 +17262,9 @@
 	      (let ((key-phrase 
 		     (let ((keylen (length all-keys)))
 		       (cond ((< keylen 20))
-			     ((every? char? all-keys)
+			     ((lint-every? char? all-keys)
 			      "vector (indexed by char->integer)")
-			     ((every? (lambda (k) (and (integer? k) (<= 0 k 1000))) all-keys)
+			     ((lint-every? (lambda (k) (and (integer? k) (<= 0 k 1000))) all-keys)
 			      "vector")
 			     ((> keylen 40)
 			      "hash-table")))))
@@ -17341,9 +17342,9 @@
 			(for-each 
 			 (lambda (clause)
 			   (if (len>1? (car clause))
-			       (if (every? integer? (car clause))
+			       (if (lint-every? integer? (car clause))
 				   (set-car! clause (sort! (car clause) <))
-				   (if (every? char? (car clause))
+				   (if (lint-every? char? (car clause))
 				       (set-car! clause (sort! (car clause) char<?))))))
 			 new-keys-and-exprs)
 			(let ((new-form (if (pair? else-clause)
@@ -17390,7 +17391,7 @@
 				   (set-cdr! sv-data (cons (caar c) (cdr sv-data)))))
 			     (else (set! svs (cons (list 'symbol->value (caar c)) svs)))))
 		      
-		      ((and (every? symbol? (car c))         ; ((a b c) (eval selector))
+		      ((and (lint-every? symbol? (car c))         ; ((a b c) (eval selector))
 			    (len=2? (cadr c))
 			    (memq (caadr c) '(eval symbol->value))
 			    (equal? (cadadr c) selector))
@@ -17428,9 +17429,9 @@
 		;; also unlike cond, only 'else marks a default branch (not #t)
 
 		(if (or (< (length form) 3)
-			(not (every? pair? (cddr form))))    ; (case 3)
+			(not (lint-every? pair? (cddr form))))    ; (case 3)
 		    (lint-format "case is messed up: ~A" caller (truncated-list->string form))
-		    ;; perhaps also (every? (lambda (c) (or (pair? c) (eq? c 'else))) (car clause)) above
+		    ;; perhaps also (lint-every? (lambda (c) (or (pair? c) (eq? c 'else))) (car clause)) above
 		    (let ((suggest made-suggestion))
 		      
 		      ;; if regular case + else, focus case on diff
@@ -17589,7 +17590,7 @@
 				     step-vars)))
 		  (if (or (null? (cdr baddies))
 			  (let ((trails new-sets))
-			    (not (any? (lambda (v)     ; for each baddy, is it used in any following set!?
+			    (not (lint-any? (lambda (v)     ; for each baddy, is it used in any following set!?
 					 (and (pair? (cdr trails))
 					      (set! trails (cdr trails))
 					      (tree-unquoted-member v trails)))
@@ -17719,7 +17720,7 @@
 		(if (and (eq? (caar body) 'let)
 			 (len>1? (cdar body)) ; body not ((let))!
 			 (not (symbol? (cadar body)))
-			 (every? (lambda (c) (and (len>1? c) (code-constant? (cadr c)))) (cadar body)))
+			 (lint-every? (lambda (c) (and (len>1? c) (code-constant? (cadr c)))) (cadar body)))
 		    ;; (do ((i 0 (+ i 1))) ((= i 3)) (let ((a 12)) (set! a (+ a i)) (display a))) ->
 		    ;;    (do ((i 0 (+ i 1)) (a 12 12)) ((= i 3)) (set! a (+ a i)) ...)
 		    (lint-format "perhaps ~A" caller
@@ -17992,7 +17993,7 @@
 		      (keyword? named-let)
 		      (not (or (null? (caddr form))
 			       (and (proper-list? (caddr form))
-				    (every? pair? (caddr form))))))
+				    (lint-every? pair? (caddr form))))))
 		  ()
 		  (let ((vars (map car (caddr form))))
 		    (list (make-fvar :name named-let 
@@ -18012,7 +18013,7 @@
 		(if (or (eq? form lint-current-form) ; i.e. we're in a body?
 			(null? (cdddr form)))
 		    (lint-format "pointless let: ~A" caller (truncated-list->string form))
-		    (if (every? (lambda (p)
+		    (if (lint-every? (lambda (p)
 				  (or (not (pair? p))
 				      (hash-table-ref built-in-functions (car p))
 				      (hash-table-ref syntaces (car p))
@@ -18092,7 +18093,7 @@
 	    ;; move let in:
 	    ;;   (let ((a (car x))) (if b (+ a (f a)) (display c))) -> (if b (let ((a (car x))) (+ a (f a))) (display c))
 	    ;;   let* version gets only 3 hits
-	    (unless (any? (lambda (c)
+	    (unless (lint-any? (lambda (c)
 			    (not (and (len>1? c)
 				      (symbol? (car c))
 				      (not (side-effect? (cadr c) env)))))
@@ -18209,7 +18210,7 @@
 					  (or (set! vals-ok (and (code-constant? (var-initial-value v))
 								 (code-constant? setval)))
 					      (and (<= (tree-count2 settee setval) 1)
-						   (not (any? (lambda (v1)
+						   (not (lint-any? (lambda (v1)
 								(or (tree-memq settee (cadr v1))
 								    (and (not (eq? (car v1) settee))
 									 (or (tree-memq (car v1) setval)
@@ -18327,13 +18328,13 @@
 	  (define (normal-let->do caller form env)
 	    (let ((varlist (cadr form))
 		  (body (cddr form)))
-	      (when (every? len=2? varlist)
+	      (when (lint-every? len=2? varlist)
 		(when (and (null? (cdr body))  ; removing this restriction gets only 3 hits
 			   (pair? (cdar body))
 			   (pair? (cadar body))
-			   (every? len>1? (cadar body)))
+			   (lint-every? len>1? (cadar body)))
 		  (let ((inits (map cadr (cadar body))))
-		    (when (every? (lambda (v)
+		    (when (lint-every? (lambda (v)
 				    (and (tree-nonce (car v) (car body))
 					 (tree-memq (car v) inits)))
 				  varlist)
@@ -18357,16 +18358,16 @@
 			   (<= (tree-leaves (cdr body)) *max-cdr-len*))
 		  (let ((inits (if (and (pair? (cdar body))
 					(pair? (cadar body))
-					(every? len>1? (cadar body)))
+					(lint-every? len>1? (cadar body)))
 				   (map cadr (cadar body))
 				   ()))
 			(locals (if (and (pair? (cdar body))
 					 (pair? (cadar body))
-					 (every? pair? (cadar body)))
+					 (lint-every? pair? (cadar body)))
 				    (map car (cadar body))
 				    ())))
 		    (unless (and (pair? inits)
-				 (any? (lambda (v)
+				 (lint-any? (lambda (v)
 					 (or (memq (car v) locals) ; shadowing
 					     (tree-memq (car v) inits)
 					     (side-effect? (cadr v) env))) ; let var opens *stdin*, do stepper reads it at init
@@ -18541,7 +18542,7 @@
 			       (symbol? inner-vars))
 		      (let ((named-body (cdddr inner))
 			    (named-args (caddr inner)))
-			(unless (any? (lambda (v)
+			(unless (lint-any? (lambda (v)
 					(or (not (tree-nonce (car v) named-args))
 					    (tree-memq (car v) named-body)))
 				      varlist)
@@ -18565,7 +18566,7 @@
 			  (and (pair? forms)
 			       (or (and (pair? (car forms))
 					(or (tree-set-member vars (car forms))
-					    (any? (lambda (a) 
+					    (lint-any? (lambda (a) 
 						    (or (not (pair? a))
 							(not (pair? (cdr a))) 
 							(side-effect? (cadr a) env)))
@@ -18720,7 +18721,7 @@
 							    (<= (v 2) cur-end))
 							(positive? (var-ref (v 3)))
 							(let ((expr (var-initial-value (v 3))))
-							  (not (any? (lambda (ov) ; watch out for shadowed vars
+							  (not (lint-any? (lambda (ov) ; watch out for shadowed vars
 								       (tree-memq (car ov) expr))
 								     varlist))))
 					       (set! mnv (if (= (v 2) cur-end)
@@ -18836,14 +18837,14 @@
 	      (when (and (< (length varlist) 8)
 			 (not (or (memq (caar body) '(lambda lambda* define define* define-macro))
 				  (and (eq? (caar body) 'set!)
-				       (any? (lambda (v) (and (eq? (car v) (cadar body)))) varlist))
+				       (lint-any? (lambda (v) (and (eq? (car v) (cadar body)))) varlist))
 				  (any-macro? (caar body) env)
-				  (any? (lambda (p)
+				  (lint-any? (lambda (p)
 					  (and (unquoted-pair? p)
 					       (or (not (hash-table-ref no-side-effect-functions (car p)))
-						   (any? pair? (cdr p)))))
+						   (lint-any? pair? (cdr p)))))
 					(cdar body))))
-			 (every? (lambda (v)
+			 (lint-every? (lambda (v)
 				   (and (len>1? v)
 					(< (tree-leaves (cadr v)) 8)
 					(tree-nonce (car v) body)))
@@ -18871,12 +18872,12 @@
 	  ;; -------- useless-let --------
 	  (define (useless-let caller form env)
 	    (when (and (pair? (cadr form))         ; (let ((x x)) (+ x 1)) -> (+ x 1), (let ((x x))...) does not copy x if x is a sequence
-		       (every? (lambda (c)       
+		       (lint-every? (lambda (c)       
 				 (and (len>1? c)  ; the usual... (let binding might be messed up)
 				      (eq? (car c) (cadr c))))
 			       (cadr form)))
 	      (let ((vs (map car (cadr form))))
-		(unless (any? (lambda (p) 
+		(unless (lint-any? (lambda (p) 
 				(and (pair? p)
 				     (memq (cadr p) vs)
 				     (or (eq? (car p) 'set!)
@@ -18907,7 +18908,7 @@
 			(vname #f)
 			(vvalue #f)
 			(header ()))
-		    (when (any? (lambda (v)
+		    (when (lint-any? (lambda (v)
 				  (and (len=2? v)
 				       (< 0 (tree-count (car v) p) 4)
 				       (not (tree-memq (car v) trailer))
@@ -19154,12 +19155,12 @@
 				(not (tree-memq name p))) ; we could split the body into for-each sections, but that would repeat the lambda
 			   (lint-format "perhaps ~A" caller
 					(lists->string form
-						       (let ((fe (let ((a1 (if (every? code-constant? arg1)
+						       (let ((fe (let ((a1 (if (lint-every? code-constant? arg1)
 									       (list 'quote (map unquoted (reverse arg1)))
 									       (cons 'list (reverse arg1))))
 								       (a2 (if (not (pair? arg2))
 									       ()
-									       (if (every? code-constant? arg2)
+									       (if (lint-every? code-constant? arg2)
 										   (list 'quote (map unquoted (reverse arg2)))
 										   (cons 'list (reverse arg2))))))
 								   (if (pair? arg2)
@@ -19236,7 +19237,7 @@
 					ok-funcs)))
 		(when (pair? ok-funcs)
 		  (let* ((func-names (map car ok-funcs))
-			 (letrec? (any? (lambda (f)
+			 (letrec? (lint-any? (lambda (f)
 					  (tree-set-member func-names (cdddr f)))
 					ok-funcs))
 			 (old-vars (if (< (tree-leaves (cadr form)) local-function-context)
@@ -19305,7 +19306,7 @@
 				      (memq (car test) '(null? not eof-object?)))   ; memx/charx got no hits
 				 (and (len=2? (cdr test))
 				      (memq (car test) '(eq? eqv? =))
-				      (any? code-constant? test)))
+				      (lint-any? code-constant? test)))
 			     (or (and (or (eq? false var)
 					  (and (len=2? false)
 					       (eq? var (cadr false))))
@@ -19361,7 +19362,7 @@
 			(body ((if named-let cdddr cddr) form)))
 		    
 		    (if (not (and (proper-list? varlist)
-				  (every? pair? varlist)))
+				  (lint-every? pair? varlist)))
 			(lint-format "let is messed up: ~A" caller (truncated-list->string form))
 			(begin
 			  (if (and (null? varlist)
@@ -19436,7 +19437,7 @@
 			 (pair? (car body))
 			 (eq? (caar body) 'do)
 			 (len>2? (car body))
-			 (every? len>1? (cadar body))
+			 (lint-every? len>1? (cadar body))
 			 (< (tree-leaves (cdr body)) *max-cdr-len*))
 		(let ((inits (if (pair? (cadar body))
 				 (map cadr (cadar body))
@@ -19478,7 +19479,7 @@
 		   (if (or (null? varlist)
 			   (len=1? varlist)                  ; (let* ((x (log y))) x)
 			   (not (or side-effects             ; (let* ((x (log y)) (z 32))...)
-				    (any? (lambda (v) (positive? (var-ref v))) vars))))
+				    (lint-any? (lambda (v) (positive? (var-ref v))) vars))))
 		       (lint-format "let* could be let: ~A" caller (truncated-list->string form))))
 		;; in s7, let evaluates var values top down, so this message is correct
 		;;   even in cases like (let ((ind (open-sound...)) (mx (maxamp))) ...)
@@ -19611,7 +19612,7 @@
 			   (value (var-initial-value v)))
 
 		      (if (or (side-effect? value env)
-			      (any? (lambda (trailing-var)
+			      (lint-any? (lambda (trailing-var)
 				      ;; vname is possible inner let var if it is not mentioned in any trailing initial value
 				      ;;   (repeated name can't happen here)
 				      (tree-memq vname (var-initial-value trailing-var)))
@@ -19730,7 +19731,7 @@
 				   (and (not (eq? (var-definer data) 'parameter))
 					(or (null? (var-setters data))
 					    (not (tree-set-member (var-setters data) body)))))
-			       (not (any? (lambda (p)
+			       (not (lint-any? (lambda (p)
 					    (and (len>1? p)
 						 (or (set-target (cadr v) (cdr p) env)
 						     (set-target (car v) (cdr p) env)
@@ -19789,7 +19790,7 @@
 				       (symbol? (cadadr nxt-var))))
 			     (or (not (pair? (cadr nxt-var)))
 				 (not (side-effect? (cadr cur-var) env))
-				 (every? (lambda (a)
+				 (lint-every? (lambda (a)
 					   (or (code-constant? a)
 					       (assq a varlist)))
 					 (cdadr nxt-var)))
@@ -19818,10 +19819,10 @@
 			   (not (and (eq? (caar body) 'set!)
 				     (eq? (car last-var) (cadar body))))
 			   (not (any-macro? (caar body) env))
-			   (not (any? (lambda (p)
+			   (not (lint-any? (lambda (p)
 					(and (unquoted-pair? p)
 					     (or (not (hash-table-ref no-side-effect-functions (car p)))
-						 (any? pair? (cdr p)))))
+						 (lint-any? pair? (cdr p)))))
 				      (cdar body))))
 		  ;; (let* ((a 1) (b 2) (c (+ a 1))) (* c 2)) -> (let* ((a 1) (b 2)) (* (+ a 1) 2))
 		  (lint-format "perhaps ~A" caller 
@@ -19933,7 +19934,7 @@
 	    (let ((ok-funcs (local-movable-funcs body largs)))
 	      (when (pair? ok-funcs)
 		(let* ((func-names (map car ok-funcs))
-		       (letrec? (any? (lambda (f)
+		       (letrec? (lint-any? (lambda (f)
 					(tree-set-member func-names (cdddr f)))
 				      ok-funcs)))
 		  (lint-format "the inner function~A ~{~A~^, ~} could be moved out of the let*: ~A" caller
@@ -19956,7 +19957,7 @@
 			(body ((if named-let cdddr cddr) form)))
 		    
 		    (if (not (and (proper-list? varlist)
-				  (every? pair? varlist)))
+				  (lint-every? pair? varlist)))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form))
 			(begin
 		    (when (and (pair? body)
@@ -20031,7 +20032,7 @@
 
 	      (when (and (eq? (car form) 'letrec*)
 			 (len>1? (cadr form)) ; len=1 case handle elsewhere
-			 (every? (lambda (p)
+			 (lint-every? (lambda (p)
 				   (and (len=2? p)
 					(pair? (cadr p))
 					(eq? (caadr p) 'lambda)))
@@ -20092,7 +20093,7 @@
 			   (len>1? (car bindings))
 			   ;; type of current var is not important -- if used in non-function elsewhere,
 			   ;;   it has to be letrec*
-			   (any? (lambda (b)
+			   (lint-any? (lambda (b)
 				   (and (len>1? b)
 					(or (and (not (pair? (cadr b)))
 						 (eq? (caar bindings) (cadr b)))
@@ -20164,7 +20165,7 @@
 	  (define (letrec-walker caller form env)
 	    (if (not (and (>= (length form) 3)                 ;  (letrec () . 1)
 			  (proper-list? (cadr form))
-			  (every? pair? (cadr form))))
+			  (lint-every? pair? (cadr form))))
 		(begin
 		  (lint-format "~A is messed up: ~A" caller (car form) (truncated-list->string form))
 		  env)
@@ -20356,7 +20357,7 @@
 	  (define (require-walker caller form env)
 	    (if (not (pair? (cdr form)))                   ; (require)
 		(lint-format "~A is pointless" caller form) 
-		(if (any? string? (cdr form))              ; (require "repl.scm")
+		(if (lint-any? string? (cdr form))              ; (require "repl.scm")
 		    (lint-format "in s7, require's arguments should be symbols: ~A" caller (truncated-list->string form))))
 	    (if (not *report-loaded-files*)
 		env
@@ -20539,7 +20540,7 @@
 	    
 	  (define (walk-import caller form env)   ; report repeated entries in import and export lists -- this does not apply to s7
 	    (if (and (> (length form) 12)
-		     (every? symbol? (cdr form)))
+		     (lint-every? symbol? (cdr form)))
 		(get-repeats caller (cdr form)))
 	    env)
 
@@ -20903,7 +20904,7 @@
 				       (quit))
 				   (let ((old-args (args->proper-list (cadr tree))))
 				     (if (or (not (pair? old-args))
-					     (every? keyword? old-args))  ; (:allow-other-keys)
+					     (lint-every? keyword? old-args))  ; (:allow-other-keys)
 					 (quit))
 				     (let* ((lvars (map (lambda (a)
 							  (if (memq a '(:rest :allow-other-keys))
@@ -21275,7 +21276,7 @@
 				      (when (let constable? ((cp p))
 					      (and (len>1? cp)
 						   (memq (car cp) '(list vector))
-						   (every? (lambda (inp) 
+						   (lint-every? (lambda (inp) 
 							     (or (code-constant? inp)
 								 (constable? inp)))
 							   (cdr cp))))
@@ -21392,7 +21393,7 @@
 				   (cons 'let (cons () (cddr head)))))))
 		
 		((and (proper-pair? (cddr head)) ; ((lambda (...) ...) ...) -> (let ...) -- lambda here is ugly and slow
-		      (not (any? (lambda (a) (mv-range a env)) (cdr form))))
+		      (not (lint-any? (lambda (a) (mv-range a env)) (cdr form))))
 		 (call-with-exit
 		  (lambda (quit)          ; uncountably many things can go wrong with the lambda form
 		    (let ((vars ())
@@ -21589,7 +21590,7 @@
 				  (not (tree-set-member '(#_apply-values #_list-values #_append unquote) (cdr p)))))
 			   
 			   (let ((args (cdr form)))      ; car is #_list-values
-			     (cond ((every? (lambda (p)              ; `((f . ,a) (g . ,b)...) -> (list (cons f a) (cons g b) ...)
+			     (cond ((lint-every? (lambda (p)              ; `((f . ,a) (g . ,b)...) -> (list (cons f a) (cons g b) ...)
 					      (and (pair? p)         ;     from (append (list x) y) -> (cons x y) 
 						   (eq? (car p) #_append)
 						   (len=2? (cdr p))
@@ -21601,7 +21602,7 @@
 									  `(list (cons ,(cadadr (car args)) ,(caddar args))
 										 (cons ,(cadadr (cadr args)) ,(caddr (cadr args)))
 										 ...))))
-				   ((not (every? safe-av? (cddr args)))
+				   ((not (lint-every? safe-av? (cddr args)))
 				    (if (and (len=3? args)
 					     (safe-av? (car args))   ; `(,@x ,@y ,z) -> (append x y (list z)) etc
 					     (safe-av? (cadr args))
@@ -22372,4 +22373,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 119 29464 829629
+;;; 112 29464 829629

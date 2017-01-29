@@ -1578,10 +1578,25 @@ static int fill_dac_buffers(int write_ok)
   framples = snd_dacp->framples;
   /* clear buffers */
   for (i = 0; i < snd_dacp->channels; i++) 
-    memset(dac_buffers[i], 0, framples * sizeof(mus_float_t));
+    /* memset(dac_buffers[i], 0, framples * sizeof(mus_float_t)); */
+    {
+      int k;
+      mus_float_t *dst;
+      dst = dac_buffers[i];
+      for (k = framples; k > 0; k--)
+	*dst++ = 0.0;
+    }
   if (global_rev)
     for (i = 0; i < snd_dacp->channels; i++) 
-      memset(rev_ins[i], 0, framples * sizeof(mus_float_t));
+      /* memset(rev_ins[i], 0, framples * sizeof(mus_float_t)); */
+      {
+	int k;
+	mus_float_t *dst;
+	dst = rev_ins[i];
+	for (k = framples; k > 0; k--)
+	  *dst++ = 0.0;
+      }
+      
 
   if (dac_pausing) 
     cursor_change = false;

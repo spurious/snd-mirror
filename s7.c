@@ -27029,9 +27029,8 @@ static void string_write_string(s7_scheme *sc, const char *str, int len, s7_poin
   new_len = port_position(pt) + len;
   if (new_len >= (int)port_data_size(pt))
     resize_port_data(pt, new_len * 2);
-
   memcpy((void *)(port_data(pt) + port_position(pt)), (void *)str, len);
-  /* memcpy is much faster than the equivalent while loop */
+  /* memcpy is much faster than the equivalent while loop, and faster than using the 4-bytes-at-a-time shuffle */
   port_position(pt) = new_len;
 }
 
@@ -38827,39 +38826,48 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
 
 s7_pointer s7_vector_copy(s7_scheme *sc, s7_pointer old_vect)
 {
-  s7_int len;
+  s7_int i, len;
   s7_pointer new_vect;
 
   len = vector_length(old_vect);
   if (is_float_vector(old_vect))
     {
+      s7_double *src, *dst;
       if (vector_rank(old_vect) > 1)
 	new_vect = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), real_zero, sc->T), sc->make_float_vector_symbol);
       else new_vect = make_vector_1(sc, len, NOT_FILLED, T_FLOAT_VECTOR);
-      if (len > 0) 
-	memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_double));
+      /* if (len > 0) memcpy((void *)(float_vector_elements(new_vect)), (void *)(float_vector_elements(old_vect)), len * sizeof(s7_double)); */
+      src = (s7_double *)float_vector_elements(old_vect);
+      dst = (s7_double *)float_vector_elements(new_vect);
+      for (i = len; i > 0; i--) *dst++ = *src++;
     }
   else
     {
       if (is_int_vector(old_vect))
 	{
+	  s7_int *src, *dst;
 	  if (vector_rank(old_vect) > 1)
 	    new_vect = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, old_vect)), small_int(0), sc->T), sc->make_int_vector_symbol);
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_INT_VECTOR);
-	  if (len > 0) 
-	    memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_int));
+	  /* if (len > 0) memcpy((void *)(int_vector_elements(new_vect)), (void *)(int_vector_elements(old_vect)), len * sizeof(s7_int)); */
+	  src = (s7_int *)int_vector_elements(old_vect);
+	  dst = (s7_int *)int_vector_elements(new_vect);
+	  for (i = len; i > 0; i--) *dst++ = *src++;
 	}
       else
 	{
+	  s7_pointer *src, *dst;
 	  if (vector_rank(old_vect) > 1)
 	    new_vect = g_make_vector(sc, set_plist_1(sc, g_vector_dimensions(sc, list_1(sc, old_vect))));
 	  else new_vect = make_vector_1(sc, len, NOT_FILLED, T_VECTOR);
 
 	  /* here and in vector-fill! we have a problem with bignums -- should new bignums be allocated? (copy_list also) */
-	  if (len > 0) 
-	    memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer));
+	  /* if (len > 0) memcpy((void *)(vector_elements(new_vect)), (void *)(vector_elements(old_vect)), len * sizeof(s7_pointer)); */
+	  src = (s7_pointer *)vector_elements(old_vect);
+	  dst = (s7_pointer *)vector_elements(new_vect);
+	  for (i = len; i > 0; i--) *dst++ = *src++;
 	}
-    }
+      }
   return(new_vect);
 }
 
@@ -67669,13 +67677,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			{
 			  sc->args = multiple_value(sc->value);
 			  clear_multiple_value(sc->args);
+			  if (needs_copied_args(sc->code))
+			    sc->args = copy_list(sc, sc->args);
 			}
 		      else sc->args = list_1(sc, sc->value);
 		      if (is_symbol(cadr(sc->code)))
 			{
 			  sc->code = find_symbol_checked(sc, cadr(sc->code));      /* car is => */
-			  if (needs_copied_args(sc->code))
-			    sc->args = copy_list(sc, sc->args);
 			  goto APPLY;
 			}
 		      else 
@@ -67707,8 +67715,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	case OP_COND1_1:
 	  sc->code = sc->value;
-	  if (needs_copied_args(sc->code))
-	    sc->args = copy_list(sc, sc->args);
 	  goto APPLY;
 	  
 	case OP_COND_SIMPLE:
@@ -68779,6 +68785,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_vector(sc, sc->value);
 	  else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
+	  /* here and below all of the sc->value list can be freed, but my tests showed no speed up even in large cases */
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -75377,21 +75384,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                           
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170
- * teq           |      |      | 6612 | 2380 | 2380
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889
- * tcopy         |      |      | 13.6 | 3204 | 3088
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221
- * tform         |      |      | 6816 | 3627 | 3724
- * tmap          |      |      |  9.3 | 4176 | 4171
- * titer         |      |      | 7503 | 5218 | 5227
- * thash         |      |      | 50.7 | 8491 | 8518
- * lint          |      |      |      | 7731 | 4736
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 1221
+ * teq           |      |      | 6612 | 2380 | 2380 2454
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 2961
+ * tcopy         |      |      | 13.6 | 3204 | 3088 3186
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 3520
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3548
+ * tform         |      |      | 6816 | 3627 | 3724 3803
+ * tmap          |      |      |  9.3 | 4176 | 4171 4419
+ * lint          |      |      |      | 7731 | 4736 4908
+ * titer         |      |      | 7503 | 5218 | 5227 5805
+ * thash         |      |      | 50.7 | 8491 | 8518 8945
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 12.6
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 18.1
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 41.7
  * 
  * --------------------------------------------------------------------
  *
@@ -75405,11 +75412,14 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * extend the validity checks to all FFI funcs and add info about caller etc
  * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
- * for-eac/map lambdas -> defined funcs (via lint?)
+ * for-each/map lambdas -> defined funcs (via lint?)
  * #(...) -> int|float-vector if data fits? These are gc-trouble like '(...)?
  *    the "bad-idea" function (gc of list constant) seems to be fine -- why does this work now? 
  *    multidim byte-vectors via univect-ref|set as in int|float cases
  * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
+ * since cond and case return the test if no result, why not do?  It currently returns () I think -- kinda useless.
+ *   just leave sc->value alone around 62533 (may have to set it to #t in clm-opt cases?)
+ * check memsets
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
