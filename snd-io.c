@@ -673,8 +673,6 @@ snd_data *copy_snd_data(snd_data *sd, mus_long_t beg, int bufsize)
 snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr)
 {
   snd_data *sf;
-  mus_float_t *src, *dst;
-  mus_long_t i;
 
   sf = (snd_data *)calloc(1, sizeof(snd_data));
   sf->type = SND_DATA_BUFFER;
@@ -685,12 +683,7 @@ snd_data *make_snd_data_buffer(mus_float_t *data, int len, int ctr)
    *   C > (make-region 1000 2000) (insert-region (cursor)) C-v hits this empty slot and gets confused about the previously final sample value 
    */
 
-  /* memcpy((void *)(sf->buffered_data), (void *)data, len * sizeof(mus_float_t)); */
-  src = data;
-  dst = sf->buffered_data;
-  for (i = len; i > 0; i--)
-    *dst++ = *src++;
-
+  copy_floats(sf->buffered_data, data, len);
   sf->buffered_data[len] = 0.0;
   sf->edit_ctr = ctr;
   sf->copy = false;

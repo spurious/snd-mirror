@@ -1082,8 +1082,6 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 
       if (fd->saved)
 	{
-	  /* fprintf(stderr, "mus_read_any_1 %d use saved data\n", tfd); */
-
 	  lim = nints;
 	  if (lim > fd->framples)
 	    lim = fd->framples;
@@ -1096,14 +1094,9 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 	      buffer = (mus_float_t *)(bufs[0]);
 	      if (buffer)
 		{
-		  /* memcpy((void *)buffer, (void *)(fd->saved_data[0] + beg), bytes); */
-		  mus_float_t *src, *dst;
-		  mus_long_t i;
-		  src = (mus_float_t *)(fd->saved_data[0] + beg);
-		  dst = buffer;
-		  for (i = lim; i > 0; i--) *dst++ = *src++;
+		  copy_floats(buffer, fd->saved_data[0] + beg, lim);
 		  if (lim < nints)
-		    memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+		    clear_floats(buffer + lim, nints - lim);
 		}
 	    }
 	  else
@@ -1114,14 +1107,9 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    buffer = (mus_float_t *)(bufs[k]);
 		    if (buffer)
 		      {
-			/* memcpy((void *)buffer, (void *)(fd->saved_data[k] + beg), bytes); */
-			mus_float_t *src, *dst;
-			mus_long_t i;
-			src = (mus_float_t *)(fd->saved_data[k] + beg);
-			dst = buffer;
-			for (i = lim; i > 0; i--) *dst++ = *src++;
+			copy_floats(buffer, fd->saved_data[k] + beg, lim);
 			if (lim < nints)
-			  memset((void *)(buffer + lim), 0, (nints - lim) * sizeof(mus_float_t));
+			  clear_floats(buffer + lim, nints - lim);
 		      }
 		  }
 	    }
@@ -1183,7 +1171,7 @@ static mus_long_t mus_read_any_1(int tfd, mus_long_t beg, int chans, mus_long_t 
 		    {
 		      mus_float_t *p;
 		      p = bufs[k];
-		      memset((void *)(p + loc), 0, (nints - loc) * sizeof(mus_float_t));
+		      clear_floats(p + loc, nints - loc);
 		    }
 	      return(total_read);
 	    }
@@ -1738,7 +1726,7 @@ mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus
 	  buffer = bufs[k];
 	  /* this happens routinely in mus_outa + initial write (reads ahead in effect) */
 	  /* fprintf(stderr, "clear from %lld for %lld\n", rtn, num-rtn); */
-	  memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
+	  clear_floats(buffer + rtn, num - rtn);
 	}
     }
   return(num);
@@ -1748,19 +1736,22 @@ mus_long_t mus_file_read(int tfd, mus_long_t beg, mus_long_t num, int chans, mus
 mus_long_t mus_file_read_chans(int tfd, mus_long_t beg, mus_long_t num, int chans, mus_float_t **bufs, mus_float_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
-  mus_long_t rtn, k;
+  mus_long_t rtn;
 
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
 
-  if (rtn < num) 
-    for (k = 0; k < chans; k++)
-      if ((!cm) || (cm[k]))
-	{
-	  mus_float_t *buffer;
-	  buffer = bufs[k];
-	  memset((void *)(buffer + rtn), 0, (num - rtn) * sizeof(mus_float_t));
-	}
+  if (rtn < num)
+    {
+      mus_long_t k;
+      for (k = 0; k < chans; k++)
+	if ((!cm) || (cm[k]))
+	  {
+	    mus_float_t *buffer;
+	    buffer = bufs[k];
+	    clear_floats(buffer + rtn, num - rtn);
+	  }
+    }
 
   return(num);
 }

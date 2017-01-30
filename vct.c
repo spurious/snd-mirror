@@ -442,7 +442,7 @@ static Xen g_vct_copy(Xen obj)
   if (len > 0)
     {
       copied_data = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-      memcpy((void *)copied_data, (void *)(mus_vct_data(v)), (len * sizeof(mus_float_t)));
+      copy_floats(copied_data, mus_vct_data(v), len);
     }
   return(xen_make_vct(len, copied_data));
 }
@@ -758,7 +758,7 @@ static Xen g_vct_equal(Xen uv1, Xen uv2, Xen udiff)
 static void vct_scale(mus_float_t *d, mus_float_t scl, mus_long_t len)
 {
   if (scl == 0.0)
-    memset((void *)d, 0, len * sizeof(mus_float_t));
+    clear_floats(d, len);
   else
     {
       if (scl != 1.0)
@@ -896,7 +896,7 @@ static Xen g_vct_fill(Xen obj1, Xen obj2)
 
   scl = Xen_real_to_C_double(obj2);
   if (scl == 0.0)
-    memset((void *)d, 0, mus_vct_length(v1) * sizeof(mus_float_t));
+    clear_floats(d, mus_vct_length(v1));
   else 
     {
       mus_long_t lim8;

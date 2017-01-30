@@ -5920,7 +5920,9 @@ just as <code>(cond (A))</code> is equivalent to <code>(cond (A =&gt; values))</
 One application is method lookup: <code>((case (obj 'abs) ((#&lt;undefined&gt;) abs) (else)) ...)</code>;
 we would otherwise have to save the lookup result or do it twice.
 This choice has a ripple
-effect on hash-tables.  Currently hash-table-ref returns #f if the key is not in the table,
+effect on do: if no result is specified for do, s7 returns the test result.
+It also affects 
+hash-tables.  Currently hash-table-ref returns #f if the key is not in the table,
 mimicking assoc and aimed at cond with =&gt;, but if we also use case and #&lt;undefined&gt;,
 it seems more useful and maybe intuitive to mimic let-ref instead.  But if hash-table-ref returns
 #&lt;undefined&gt;, it's harder to use hash-tables as sets.  Hmm.

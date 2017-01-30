@@ -370,31 +370,6 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
 }
 
 
-/* see dac_buffers also */
-#if 0
-#define clear_floats(Arr, Len) memset((void *)(Arr), 0, (Len) * sizeof(mus_float_t))
-#define copy_floats(Dst, Src, Len) memcpy((void *)(Dst), (void *)(Src), (Len) * sizeof(mus_float_t))
-#else
-#define clear_floats(Arr, Len)			\
-  do {						\
-    mus_long_t K;				\
-    mus_float_t *dst;				\
-    dst = Arr;				\
-    for (K = Len; K > 0; K--)		\
-      *dst++ = 0.0;			\
-  } while (0)
-#define copy_floats(Dst, Src, Len)		\
-  do {						\
-    mus_long_t K;				\
-    mus_float_t *dst, *src;			\
-    dst = Dst;					\
-    src = Src;					\
-    for (K = Len; K > 0; K--)			\
-      *dst++ = *src++;				\
-    } while (0)
-#endif
-
-
 
 /* ---------------- generic functions ---------------- */
 

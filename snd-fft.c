@@ -47,7 +47,7 @@ static void wavelet_transform(mus_float_t *data, mus_long_t num, mus_float_t *cc
 	      data1[ii + nh] += cr[k] * data[jf];
 	    }
 	}
-      memcpy((void *)data, (void *)data1, n * sizeof(mus_float_t));
+      copy_floats(data, data1, n);
     }
 
   if (data1) free(data1);
@@ -742,15 +742,15 @@ void fourier_spectrum(snd_fd *sf, mus_float_t *fft_data, mus_long_t fft_size, mu
     }
 
   if (data_len < fft_size) 
-    memset((void *)(fft_data + data_len), 0, (fft_size - data_len) * sizeof(mus_float_t));
+    clear_floats(fft_data + data_len, fft_size - data_len);
   if (fft_size <= fs_idata_size)
-    memset((void *)fs_idata, 0, fft_size * sizeof(mus_float_t));
+    clear_floats(fs_idata, fft_size);
   else
     {
       if (!fs_idata)
 	fs_idata = (mus_float_t *)malloc(fft_size * sizeof(mus_float_t));
       else fs_idata = (mus_float_t *)realloc(fs_idata, fft_size * sizeof(mus_float_t));
-      memset((void *)fs_idata, 0, fft_size * sizeof(mus_float_t));
+      clear_floats(fs_idata, fft_size);
       fs_idata_size = fft_size;
     }
 
@@ -838,35 +838,35 @@ static void apply_fft(fft_state *fs)
     case WAVELET:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(mus_float_t));
+	clear_floats(fft_data + data_len, fs->size - data_len);
       wavelet_transform(fft_data, fs->size, wavelet_data[cp->wavelet_type], wavelet_sizes[cp->wavelet_type]);
       break;
 
     case HAAR:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(mus_float_t));
+	clear_floats(fft_data + data_len, fs->size - data_len);
       haar_transform(fft_data, fs->size);
       break;
 
     case CEPSTRUM:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(mus_float_t));
+	clear_floats(fft_data + data_len, fs->size - data_len);
       mus_cepstrum(fft_data, fs->size);
       break;
 
     case WALSH:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(mus_float_t));
+	clear_floats(fft_data + data_len, fs->size - data_len);
       walsh_transform(fft_data, fs->size);
       break;
 
     case AUTOCORRELATION:
       for (i = 0; i < data_len; i++) fft_data[i] = read_sample(sf);
       if (data_len < fs->size) 
-	memset((void *)(fft_data + data_len), 0, (fs->size - data_len) * sizeof(mus_float_t));
+	clear_floats(fft_data + data_len, fs->size - data_len);
       mus_autocorrelate(fft_data, fs->size);
       break;
 
@@ -887,7 +887,7 @@ static void apply_fft(fft_state *fs)
 	    mus_long_t len;
 	    v = Xen_to_vct(res);
 	    len = mus_vct_length(v);
-	    memcpy((void *)fft_data, (void *)(mus_vct_data(v)), len * sizeof(mus_float_t));
+	    copy_floats(fft_data, mus_vct_data(v), len);
 	  }
 	snd_unprotect_at(gc_loc);
 	snd_unprotect_at(sf_loc);
@@ -1303,7 +1303,7 @@ static void one_fft(fft_state *fs)
 	      last_wintype = fs->wintype;
 	      last_zero = fs->pad_zero;
 	    }
-	  memcpy(fs->window, (void *)last_window, fs->size * sizeof(mus_float_t));
+	  copy_floats(fs->window, last_window, fs->size);
 	}
       apply_fft(fs);
     }
@@ -1871,7 +1871,7 @@ void c_convolve(const char *fname, mus_float_t amp, int filec, mus_long_t filehd
 	  else 
 	    {
 	      /* amp == 0.0 means un-normalized output */
-	      memcpy((void *)pbuf, (void *)rl0, data_size * sizeof(mus_float_t));
+	      copy_floats(pbuf, rl0, data_size);
 	    }
 	  progress_report(gcp, .9);
 
@@ -2069,7 +2069,7 @@ return a " S_vct " (obj if it's passed), with the current transform data from sn
 	  if (v1)
 	    fvals = mus_vct_data(v1);
 	  else fvals = (mus_float_t *)malloc(len * sizeof(mus_float_t));
-	  memcpy((void *)fvals, (void *)(fp->data), len * sizeof(mus_float_t));
+	  copy_floats(fvals, fp->data, len);
 	  if (v1)
 	    return(v);
 	  else return(xen_make_vct(len, fvals));

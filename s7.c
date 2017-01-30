@@ -665,7 +665,7 @@ typedef struct s7_cell {
     } cons;
 
     struct {
-      s7_pointer sym_car, sym_cdr;
+      s7_pointer unused_car, unused_cdr;
       unsigned long long int hash;
       const char *fstr;
       unsigned int op, line;
@@ -41668,7 +41668,7 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
       /* hash-table-ref returns #f if it can't find a key, so val == #f here means empty the table */
       if (val == sc->F)
 	{
-	  hash_entry_t **hp, **hn;
+	  hash_entry_t **hp;
 	  hash_entry_t *p;
 	  hp = entries;
 	  if (len == 1)
@@ -41683,6 +41683,7 @@ static s7_pointer hash_table_fill(s7_scheme *sc, s7_pointer args)
 	    }
 	  else
 	    {
+	      hash_entry_t **hn;
 	      /* here we assume we can go by 2's */
 	      hn = (hash_entry_t **)(hp + len);
 	      for (; hp < hn; hp++)
@@ -47886,7 +47887,8 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 	    return(apply_list_error(sc, args));
 	  set_cdr(q, car(p));
 	  /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
-	   *   but it omits the arg number check
+	   *   but it omits the arg number check, but if we copy the APPLY table here (returning sc->value)
+	   *   the overhead from the now non-inline function calls is greater than the fewer-eval-jumps savings.
 	   */
 	  push_stack(sc, OP_APPLY, cdr(args), sc->code);
 	  return(sc->nil);
@@ -55161,33 +55163,38 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  /* in the name binders, we first have to check that "func" actually is the same thing as the caller's func */
 	case OP_LET:
 	case OP_LET_STAR:
-	  if (is_symbol(cadr(x)))
-	    return(false);
-
 	case OP_LETREC:
 	case OP_LETREC_STAR:
-	  if (is_pair(cadr(x)))
-	    {
-	      s7_pointer vars;
-	      for (vars = cadr(x); is_pair(vars); vars = cdr(vars))
-		{
-		  s7_pointer let_var;
+	  {
+	    s7_pointer vars;
+	    vars = cadr(x);
+	    if (is_symbol(vars))
+	      {
+		if (vars == func)
+		  return(false);
+		vars = caddr(x);
+	      }
 
-		  let_var = car(vars);
-		  if ((!is_pair(let_var)) ||
-		      (!is_pair(cdr(let_var))))
-		    return(false);
-
-		  if (car(let_var) == func)
-		    return(false); /* it's shadowed */
-
-		  if ((is_pair(cadr(let_var))) &&
-		      (!form_is_safe(sc, func, cadr(let_var), false)))
-		    return(false);
-		}
+	    for (; is_pair(vars); vars = cdr(vars))
+	      {
+		s7_pointer let_var;
+		
+		let_var = car(vars);
+		if ((!is_pair(let_var)) ||
+		    (!is_pair(cdr(let_var))))
+		  return(false);
+		
+		if (car(let_var) == func)
+		  return(false); /* it's shadowed */
+		
+		if ((is_pair(cadr(let_var))) &&
+		    (!form_is_safe(sc, func, cadr(let_var), false)))
+		  return(false);
+	      }
+	    
+	    if (!body_is_safe(sc, func, cddr(x), at_end))
+	      return(false);
 	    }
-	  if (!body_is_safe(sc, func, cddr(x), at_end))
-	    return(false);
 	  break;
 
 	case OP_IF:
@@ -58799,7 +58806,7 @@ static bool dox_pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, s7_functio
 		  slot_set_value(slot, slot_pending_value(slot));
 	      
 	      (*rp)++;
-	      if (is_true(sc, pf(sc, rp)))
+	      if (is_true(sc, sc->value = pf(sc, rp)))
 		{
 		  s7_xf_free(sc);
 		  sc->code = cdadr(scc);
@@ -58833,7 +58840,7 @@ static bool dox_pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, s7_functio
 		  slot_set_value(slot, slot_pending_value(slot));
 
 	      (*rp)++;
-	      if (is_true(sc, pf(sc, rp)))
+	      if (is_true(sc, sc->value = pf(sc, rp)))
 		{
 		  s7_xf_free(sc);
 		  sc->code = cdadr(scc);
@@ -58903,7 +58910,7 @@ static int dox_ex(s7_scheme *sc)
   for (slot = let_slots(frame); is_slot(slot); slot = next_slot(slot))
     symbol_set_local(slot_symbol(slot), id, slot);
   
-  if (is_true(sc, c_call(cdr(sc->code))(sc, opt_pair2(sc->code))))
+  if (is_true(sc, sc->value = c_call(cdr(sc->code))(sc, opt_pair2(sc->code))))
     {
       /* if no end result exprs, we return nil, but others probably #<unspecified>
        *    (let ((x (do ((i 0 (+ i 1))) (#t)))) x) -> ()
@@ -58931,7 +58938,7 @@ static int dox_ex(s7_scheme *sc)
 
       if (!is_slot(slots))
 	{
-	  while (!is_true(sc, endf(sc, endp)));
+	  while (!is_true(sc, sc->value = endf(sc, endp)));
 	  sc->code = cdadr(scc);
 	  return(goto_DO_END_CLAUSES);
 	}
@@ -58952,7 +58959,7 @@ static int dox_ex(s7_scheme *sc)
 	  while (true) /* thash titer */
 	    {
 	      slot_set_value(slots, f(sc, a));
-	      if (is_true(sc, endf(sc, endp)))
+	      if (is_true(sc, sc->value = endf(sc, endp)))
 		{
 		  sc->code = cdadr(scc);
 		  return(goto_DO_END_CLAUSES);
@@ -58967,7 +58974,7 @@ static int dox_ex(s7_scheme *sc)
 	      for (slt = slots; is_slot(slt); slt = next_slot(slt))
 		if (is_pair(slot_expression(slt)))
 		  slot_set_value(slt, c_call(slot_expression(slt))(sc, car(slot_expression(slt))));
-	      if (is_true(sc, endf(sc, endp)))
+	      if (is_true(sc, sc->value = endf(sc, endp)))
 		{
 		  sc->code = cdadr(scc); 
 		  return(goto_DO_END_CLAUSES);
@@ -59049,6 +59056,7 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	      slot_set_value(ctr, c_add_s1(sc, slot_value(ctr)));
 	      if (is_true(sc, c_equal_2(sc, slot_value(ctr), slot_value(end))))
 		{
+		  sc->value = sc->T;
 		  s7_xf_free(sc);
 		  sc->code = cdr(cadr(code));
 		  return(goto_DO_END_CLAUSES);
@@ -59068,7 +59076,7 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	  
 	  set_car(sc->t2_1, slot_value(ctr));
 	  set_car(sc->t2_2, slot_value(end));
-	  if (is_true(sc, endf(sc, sc->t2_1)))
+	  if (is_true(sc, sc->value = endf(sc, sc->t2_1)))
 	    {
 	      s7_xf_free(sc);
 	      sc->code = cdr(cadr(code));
@@ -59200,6 +59208,7 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
 		}
 	    }
 	}
+      sc->value = sc->T;
       s7_xf_free(sc);
       sc->code = cdadr(scc);
       return(true);
@@ -59398,6 +59407,7 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
 		    }
 		}
 	    }
+	  sc->value = sc->T;
 	  s7_xf_free(sc);
 	  sc->code = cdr(cadr(scc));
 	  return(goto_SAFE_DO_END_CLAUSES);
@@ -59448,12 +59458,14 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	       (is_null(cdr(sc->code)))))
 	    {
 	      numerator(slot_value(sc->args)) = s7_integer(end_val);
+	      sc->value = sc->T;
 	      sc->code = cdr(cadr(code));
 	      return(goto_SAFE_DO_END_CLAUSES);
 	    }
 	  
 	  if (s7_integer(init_val) == s7_integer(end_val))
 	    {
+	      sc->value = sc->T;
 	      sc->code = cdr(cadr(code));
 	      return(goto_SAFE_DO_END_CLAUSES);
 	    }
@@ -59571,6 +59583,7 @@ static int safe_do_ex(s7_scheme *sc)
       ((s7_integer(init_val) > s7_integer(end_val)) &&
        (opt_cfunc(car(cadr(code))) == geq_2)))
     {
+      sc->value = sc->T;
       sc->code = cdr(cadr(code));
       return(goto_SAFE_DO_END_CLAUSES);
     }
@@ -59643,7 +59656,7 @@ static int dotimes_p_ex(s7_scheme *sc)
   
   set_car(sc->t2_1, slot_value(dox_slot1(sc->envir)));
   set_car(sc->t2_2, slot_value(dox_slot2(sc->envir)));
-  if (is_true(sc, c_call(caadr(code))(sc, sc->t2_1)))
+  if (is_true(sc, sc->value = c_call(caadr(code))(sc, sc->t2_1)))
     {
       sc->code = cdadr(code);
       return(goto_DO_END_CLAUSES);
@@ -61933,6 +61946,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    numerator(arg)++;
 	    if (numerator(arg) == denominator(arg))
 	      {
+		sc->value = sc->T;
 		sc->code = cdr(cadr(sc->code));
 		goto DO_END_CLAUSES;
 	      }
@@ -61951,6 +61965,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    numerator(arg)++;
 	    if (numerator(arg) == denominator(arg))
 	      {
+		sc->value = sc->T;
 		sc->code = cdr(cadr(sc->code));
 		goto DO_END_CLAUSES;
 	      }
@@ -61972,6 +61987,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    numerator(arg)++;
 	    if (numerator(arg) == denominator(arg))
 	      {
+		sc->value = sc->T;
 		sc->code = cdr(cadr(sc->code));
 		goto DO_END_CLAUSES;
 	      }
@@ -61989,6 +62005,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    numerator(arg)++;
 	    if (numerator(arg) == denominator(arg))
 	      {
+		sc->value = sc->T;
 		sc->code = cdr(cadr(sc->code));
 		goto DO_END_CLAUSES;
 	      }
@@ -62031,6 +62048,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		((step > end) &&
 		 (opt_cfunc(caadr(code)) == geq_2)))
 		{
+		  sc->value = sc->T;
 		  sc->code = cdadr(code);
 		  goto DO_END_CLAUSES;
 		}
@@ -62088,7 +62106,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    dox_set_slot2(sc->envir, sc->args);
 	    set_car(sc->t2_1, slot_value(dox_slot1(sc->envir)));
 	    set_car(sc->t2_2, slot_value(dox_slot2(sc->envir)));
-	    if (is_true(sc, c_call(caadr(code))(sc, sc->t2_1)))
+	    sc->value = c_call(caadr(code))(sc, sc->t2_1);
+	    if (is_true(sc, sc->value))
 	      {
 		sc->code = cdadr(code);
 		goto DO_END_CLAUSES;
@@ -62150,7 +62169,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    set_car(sc->t2_1, slot_value(ctr));
 	    set_car(sc->t2_2, slot_value(end));
-	    if (is_true(sc, c_call(caadr(code))(sc, sc->t2_1)))
+	    sc->value = c_call(caadr(code))(sc, sc->t2_1);
+	    if (is_true(sc, sc->value))
 	      {
 		sc->code = cdr(cadr(code));
 		goto DO_END_CLAUSES;
@@ -62192,6 +62212,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    if (index == integer(end))
 		      {
+			sc->value = sc->T;
 			sc->code = cdr(cadr(code));
 			goto DO_END_CLAUSES;
 		      }
@@ -62202,6 +62223,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_car(sc->t2_2, end);
 		    if (is_true(sc, g_equal_2(sc, sc->t2_1)))
 		      {
+			sc->value = sc->T;
 			sc->code = cdr(cadr(code));
 			goto DO_END_CLAUSES;
 		      }
@@ -62215,6 +62237,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		set_car(sc->t2_2, end);
 		if (is_true(sc, g_equal_2(sc, sc->t2_1)))
 		  {
+		    sc->value = sc->T;
 		    sc->code = cdr(cadr(code));
 		    goto DO_END_CLAUSES;
 		  }
@@ -62261,6 +62284,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			((integer(now) > integer(end)) &&
 			 (opt_cfunc(end_test) == geq_2)))
 			{
+			  sc->value = sc->T;
 			  sc->code = cdadr(code);
 			  goto DO_END_CLAUSES;
 			}
@@ -62269,7 +62293,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    set_car(sc->t2_1, now);
 		    set_car(sc->t2_2, end);
-		    if (is_true(sc, c_call(end_test)(sc, sc->t2_1)))
+		    sc->value = c_call(end_test)(sc, sc->t2_1);
+		    if (is_true(sc, sc->value))
 		      {
 			sc->code = cdadr(code);
 			goto DO_END_CLAUSES;
@@ -62283,7 +62308,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		/* (define (hi) (let ((x 0.0) (y 1.0)) (do ((i y (+ i 1))) ((= i 6)) (do ((i i (+ i 1))) ((>= i 7)) (set! x (+ x i)))) x)) */
 		set_car(sc->t2_1, slot_value(ctr));
 		set_car(sc->t2_2, end);
-		if (is_true(sc, c_call(end_test)(sc, sc->t2_1)))
+		sc->value = c_call(end_test)(sc, sc->t2_1);
+		if (is_true(sc, sc->value))
 		  {
 		    sc->code = cdadr(code);
 		    goto DO_END_CLAUSES;
@@ -62320,7 +62346,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    for (slot = let_slots(sc->envir); is_slot(slot); slot = next_slot(slot))
 	      if (is_pair(slot_expression(slot)))
 		slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
-	    if (is_true(sc, c_call(cdr(sc->code))(sc, opt_pair2(sc->code))))
+	    sc->value = c_call(cdr(sc->code))(sc, opt_pair2(sc->code));
+	    if (is_true(sc, sc->value))
 	      {
 		sc->code = cdadr(sc->code);
 		goto DO_END_CLAUSES;
@@ -62338,7 +62365,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_pair(slot_expression(slot)))
 		slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
 	    
-	    if (is_true(sc, c_call(cdr(sc->code))(sc, opt_pair2(sc->code))))
+	    sc->value = c_call(cdr(sc->code))(sc, opt_pair2(sc->code));
+	    if (is_true(sc, sc->value))
 	      {
 		sc->code = cdadr(sc->code);
 		goto DO_END_CLAUSES;
@@ -62418,7 +62446,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	       *   I think not; the closure retains the current env chain, not the slots, so we need a new env.
 	       */
 	      
-	      sc->value = sc->nil;
+	      /* sc->value = sc->nil; */
 	      pop_stack_no_op(sc);
 	      goto DO_END;
 	    }
@@ -62519,7 +62547,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->args = sc->nil;
 	      if (is_null(sc->code))
 		{
-		  sc->value = sc->nil;
+		  /* sc->value = sc->nil; */
 		  goto START;
 		}
 	      goto BEGIN1;
@@ -62531,8 +62559,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (is_null(sc->code))
 	    {
 	      /* sc->args = sc->nil; */
-	      sc->envir = free_let(sc, sc->envir);
-	      sc->value = sc->nil;
+	      sc->envir = free_let(sc, sc->envir); /* free_let returns sc->nil */
+	      /* sc->value = sc->nil; */ 
 	      goto START;
 	    }
 	  goto DO_END_CODE;
@@ -62540,7 +62568,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	DO_END_CLAUSES:
 	  if (is_null(sc->code))
 	    {
-	      sc->value = sc->nil;
+	      /* sc->value = sc->nil; */
 	      goto START;
 	    }
 	DO_END_CODE:
@@ -75386,19 +75414,19 @@ int main(int argc, char **argv)
  *                                           
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 1221
  * teq           |      |      | 6612 | 2380 | 2380 2454
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 2961
- * tcopy         |      |      | 13.6 | 3204 | 3088 3186
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 2960
+ * tcopy         |      |      | 13.6 | 3204 | 3088 3193
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 3520
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3548
- * tform         |      |      | 6816 | 3627 | 3724 3803
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3311
+ * tform         |      |      | 6816 | 3627 | 3724 3821
  * tmap          |      |      |  9.3 | 4176 | 4171 4419
  * lint          |      |      |      | 7731 | 4736 4908
- * titer         |      |      | 7503 | 5218 | 5227 5805
- * thash         |      |      | 50.7 | 8491 | 8518 8945
+ * titer         |      |      | 7503 | 5218 | 5227 5812
+ * thash         |      |      | 50.7 | 8491 | 8518 8947
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 12.6
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 18.1
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 41.7
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 41.6
  * 
  * --------------------------------------------------------------------
  *
@@ -75417,9 +75445,8 @@ int main(int argc, char **argv)
  *    the "bad-idea" function (gc of list constant) seems to be fine -- why does this work now? 
  *    multidim byte-vectors via univect-ref|set as in int|float cases
  * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
- * since cond and case return the test if no result, why not do?  It currently returns () I think -- kinda useless.
- *   just leave sc->value alone around 62533 (may have to set it to #t in clm-opt cases?)
- * check memsets
+ * can do test change simplify more for recur->iter in lint?
+ * can T_COPY_ARGS be restricted if apply added?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -35,7 +35,7 @@ env *copy_env(env *e)
       ne->pts = e->pts;
       ne->data_size = e->pts * 2;
       ne->data = (mus_float_t *)malloc(ne->data_size * sizeof(mus_float_t));
-      memcpy((void *)(ne->data), (void *)(e->data), ne->data_size * sizeof(mus_float_t));
+      copy_floats(ne->data, e->data, ne->data_size);
       ne->base = e->base;
       return(ne);
     }

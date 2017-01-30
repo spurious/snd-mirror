@@ -1662,9 +1662,11 @@ static Xen g_mus_reset(Xen gen)
   if (s7_is_float_vector(gen))
     {
       s7_int len;
-      len = s7_vector_length(gen);
-      if (len > 0)
-	memset((void *)s7_float_vector_elements(gen), 0, len * sizeof(s7_double));
+      s7_double *dst;
+      dst = s7_float_vector_elements(gen);
+      /* memset((void *)s7_float_vector_elements(gen), 0, len * sizeof(s7_double)); */
+      for (len = s7_vector_length(gen); len > 0; len--)
+	*dst++ = 0.0;
       return(gen);
     }
   {
@@ -2756,7 +2758,7 @@ static Xen g_make_delay_1(xclm_delay_t choice, Xen arglist)
 	  for (i = 0; i < max_size; i++) 
 	    line[i] = initial_element;
 	}
-      else memset((void *)line, 0, max_size * sizeof(mus_float_t));
+      else clear_floats(line, max_size);
     }
   else
     {
@@ -2984,7 +2986,7 @@ static Xen g_make_moving_any(xclm_moving_t choice, const char *caller, Xen argli
 	    line[i] = initial_element;
 	  sum = initial_element * size;
 	}
-      else memset((void *)line, 0, size * sizeof(mus_float_t));
+      else clear_floats(line, size);
     }
   else
     {
