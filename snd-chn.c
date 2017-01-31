@@ -5188,7 +5188,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
       else
 	return(mus_format("(%.1f%s: %.*f%s (unscaled: %.*f)",
 			  xf,
-			  ((cp->transform_type == AUTOCORRELATION) ? " samps" : " Hz"),
+			  (((cp->transform_type == AUTOCORRELATION) || (cp->transform_type == CEPSTRUM)) ? " samps" : " Hz"),
 			  digits,
 			  (cp->fft_log_magnitude) ? in_dB(cp->min_dB, cp->lin_dB, (fp->data[ind] * fp->scale)) : (fp->data[ind] * fp->scale),
 			  (cp->fft_log_magnitude) ? "dB" : "",

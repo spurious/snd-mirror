@@ -2831,7 +2831,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X,
 
       /* these can't be embedded, and have to be the last thing called */
-      OP_APPLY_SS, HOP_APPLY_SS,
+      OP_APPLY_SS, HOP_APPLY_SS, 
       OP_C_ALL_X, HOP_C_ALL_X, OP_CALL_WITH_EXIT, HOP_CALL_WITH_EXIT, OP_C_CATCH, HOP_C_CATCH, OP_C_CATCH_ALL, HOP_C_CATCH_ALL,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, OP_C_SS, HOP_C_SS,
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_Z, HOP_C_Z, OP_C_SP, HOP_C_SP,
@@ -5586,10 +5586,10 @@ static s7_pointer add_sym_to_list(s7_scheme *sc, s7_pointer sym)
 #define new_frame(Sc, Old_Env, New_Env)		      \
   do {						      \
     s7_pointer _x_;				      \
-      new_cell(Sc, _x_, T_LET); \
+      new_cell(Sc, _x_, T_LET | T_SAFE_PROCEDURE);    \
       let_id(_x_) = ++sc->let_number;		      \
       let_set_slots(_x_, Sc->nil);	              \
-      set_outlet(_x_, Old_Env);	      \
+      set_outlet(_x_, Old_Env);			      \
       New_Env = _x_;				      \
   } while (0)
 
@@ -5598,7 +5598,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 {
   /* return(cons(sc, sc->nil, old_env)); */
   s7_pointer x;
-  new_cell(sc, x, T_LET);
+  new_cell(sc, x, T_LET | T_SAFE_PROCEDURE);
   let_id(x) = ++sc->let_number;
   let_set_slots(x, sc->nil);
   set_outlet(x, old_env);
@@ -5609,7 +5609,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer make_simple_let(s7_scheme *sc)
 {
   s7_pointer frame;
-  new_cell(sc, frame, T_LET);
+  new_cell(sc, frame, T_LET | T_SAFE_PROCEDURE);
   let_id(frame) = sc->let_number + 1;
   let_set_slots(frame, sc->nil);
   set_outlet(frame, sc->envir);
@@ -5650,7 +5650,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
   do {								 \
     s7_pointer _x_, _slot_, _sym_, _val_;			 \
     _sym_ = Symbol; _val_ = Value;				\
-    new_cell(Sc, _x_, T_LET);			                \
+    new_cell(Sc, _x_, T_LET | T_SAFE_PROCEDURE);		\
     let_id(_x_) = ++sc->let_number;				\
     set_outlet(_x_, Old_Env);			                \
     New_Env = _x_;						\
@@ -5668,7 +5668,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
     s7_pointer _x_, _slot_, _sym1_, _val1_, _sym2_, _val2_;		\
     _sym1_ = Symbol1; _val1_ = Value1;					\
     _sym2_ = Symbol2; _val2_ = Value2;					\
-    new_cell(Sc, _x_, T_LET);				                \
+    new_cell(Sc, _x_, T_LET | T_SAFE_PROCEDURE);			\
     let_id(_x_) = ++sc->let_number;					\
     set_outlet(_x_, Old_Env);				                \
     New_Env = _x_;							\
@@ -5689,7 +5689,7 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 static s7_pointer reuse_as_let(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
   /* we're reusing frame here as a let -- it was probably a pair */
-  set_type(frame, T_LET);
+  set_type(frame, T_LET | T_SAFE_PROCEDURE);
   let_set_slots(frame, sc->nil);
   set_outlet(frame, next_frame);
   let_id(frame) = ++sc->let_number;
@@ -6989,6 +6989,7 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* fin
 	  return(slot_value(y));
     }
 
+  /* for a global, the loop above is not hit */
   x = global_slot(symbol);
   if (is_slot(x))
     return(slot_value(x));
@@ -34349,25 +34350,34 @@ static bool symbol_is_in_arg_list(s7_pointer sym, s7_pointer lst)
 }
 
 
-static s7_int tree_len(s7_scheme *sc, s7_pointer p, s7_int i)
+static s7_int tree_len_1(s7_scheme *sc, s7_pointer p)
 {
-  if (is_null(p))
-    return(i);
+  s7_int sum;
   if ((!is_pair(p)) ||
       (car(p) == sc->quote_symbol))
-    return(i + 1);
-  return(tree_len(sc, car(p), tree_len(sc, cdr(p), i)));
+    return(1);
+  for (sum = 0; is_pair(p); p = cdr(p))
+    sum += tree_len_1(sc, car(p));
+  if (!is_null(p)) sum++;
+  return(sum);
+}
+
+static s7_int tree_len(s7_scheme *sc, s7_pointer p)
+{
+  if (is_null(p))
+    return(0);
+  return(tree_len_1(sc, p));
 }
 
 static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 {
-  return(s7_make_integer(sc, tree_len(sc, car(args), 0)));
+  return(s7_make_integer(sc, tree_len(sc, car(args))));
 }
 
 
 static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
 {
-  if (tree_len(sc, code, 0) > sc->print_length)
+  if (tree_len(sc, code) > sc->print_length)
     {
       char *str;
       str = object_to_truncated_string(sc, code, sc->print_length * 10);
@@ -34380,10 +34390,17 @@ static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
 static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
   if (sym == tree) return(true);
-  return((is_pair(tree)) &&
-	 (car(tree) != sc->quote_symbol) &&
-	 ((tree_memq(sc, sym, car(tree))) || 
-	  (tree_memq(sc, sym, cdr(tree)))));
+  if ((!is_pair(tree)) ||
+      (car(tree) == sc->quote_symbol))
+    return(false);
+  do {
+    if ((sym == cdr(tree)) || 
+	(tree_memq(sc, sym, car(tree))))
+      return(true);
+    tree = cdr(tree);
+  } while (is_pair(tree));
+  return((!is_null(tree)) &&
+	 (sym == tree));
 }
 
 static s7_pointer g_tree_memq(s7_scheme *sc, s7_pointer args)
@@ -36492,9 +36509,14 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
       set_opt_fast(y, x);
       set_opt_slow(y, x);
       push_stack(sc, OP_MEMBER_IF, y, eq_func);
-      set_car(sc->t2_1, car(args));
-      set_car(sc->t2_2, car(x));
-      push_stack(sc, OP_APPLY, sc->t2_1, eq_func);
+      if (needs_copied_args(eq_func))
+	push_stack(sc, OP_APPLY, list_2(sc, car(args), car(x)), eq_func);
+      else
+	{
+	  set_car(sc->t2_1, car(args));
+	  set_car(sc->t2_2, car(x));
+	  push_stack(sc, OP_APPLY, sc->t2_1, eq_func);
+	}
       return(sc->unspecified);
     }
 
@@ -46879,10 +46901,14 @@ static bool catch_2_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
       sc->stack_end = (s7_pointer *)(sc->stack_start + loc);
       sc->code = catch_handler(x);
 
-      set_car(sc->t2_1, type);
-      set_car(sc->t2_2, info);
-      sc->args = sc->t2_1; /* copied in op_apply? */
-
+      if (needs_copied_args(sc->code))
+	sc->args = list_2(sc, type, info);
+      else
+	{
+	  set_car(sc->t2_1, type);
+	  set_car(sc->t2_2, info);
+	  sc->args = sc->t2_1;
+	}
       sc->op = OP_APPLY;
       return(true);
     }
@@ -47004,9 +47030,14 @@ static bool catch_1_function(s7_scheme *sc, int i, s7_pointer type, s7_pointer i
       /* since make_closure_with_let sets needs_copied_args and we're going to OP_APPLY,
        *   we don't need a new list here.
        */
-      set_car(sc->t2_1, type);
-      set_car(sc->t2_2, info);
-      sc->args = sc->t2_1;
+      if (needs_copied_args(sc->code))
+	sc->args = list_2(sc, type, info);
+      else
+	{
+	  set_car(sc->t2_1, type);
+	  set_car(sc->t2_2, info);
+	  sc->args = sc->t2_1;
+	}
       sc->op = OP_APPLY;
 
       /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c)
@@ -47265,8 +47296,8 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
       /* if the *error-hook* functions trigger an error, we had better not have *error-hook* still set! */
 
       push_stack(sc, OP_ERROR_HOOK_QUIT, sc->nil, error_hook_func); /* restore *error-hook* upon successful (or any!) evaluation */
-      sc->args = list_2(sc, type, info);
       sc->code = error_hook_func;
+      sc->args = list_2(sc, type, info);
 
       /* if we drop into the longjmp below, the hook functions are not called!
        *   OP_ERROR_HOOK_QUIT performs the longjmp, so it should be safe to go to eval.
@@ -47860,6 +47891,8 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
   return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "apply's last argument should be a proper list: ~S"), lst)));
 }
 
+static s7_int c_pair_line_number(s7_scheme *sc, s7_pointer p);
+
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
@@ -47873,39 +47906,38 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
    */
   sc->code = car(args);
   if (is_null(cdr(args)))
-    sc->args = sc->nil;
-  else
     {
-      if (is_safe_procedure(sc->code))
-	{
-	  s7_pointer p, q;
-
-	  for (q = args, p = cdr(args); is_not_null(cdr(p)); q = p, p = cdr(p));
-	  /* the last arg is supposed to be a list, it will be spliced onto the end of the previous arg list (if any) below */
-
-	  if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
-	    return(apply_list_error(sc, args));
-	  set_cdr(q, car(p));
-	  /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
-	   *   but it omits the arg number check, but if we copy the APPLY table here (returning sc->value)
-	   *   the overhead from the now non-inline function calls is greater than the fewer-eval-jumps savings.
-	   */
-	  push_stack(sc, OP_APPLY, cdr(args), sc->code);
-	  return(sc->nil);
-	}
-      else
-	{
-	  /* here we have to copy the arg list */
-	  if (is_null(cddr(args)))
-	    sc->args = cadr(args);
-	  else sc->args = apply_list_star(sc, cdr(args));
-
-	  if (!is_proper_list(sc, sc->args))        /* (apply + #f) etc */
-	    return(apply_list_error(sc, args));
-	}
+      sc->args = sc->nil;
+      push_stack(sc, OP_APPLY, sc->args, sc->code);
+      return(sc->nil);
     }
 
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  if (is_safe_procedure(sc->code))
+    {
+      s7_pointer p, q;
+      
+      for (q = args, p = cdr(args); is_not_null(cdr(p)); q = p, p = cdr(p));
+      /* the last arg is supposed to be a list, it will be spliced onto the end of the previous arg list (if any) below */
+      
+      if (!is_proper_list(sc, car(p)))        /* (apply + #f) etc */
+	return(apply_list_error(sc, args));
+      set_cdr(q, car(p));
+      /* this would work: if (is_c_function(sc->code)) return(c_function_call(sc->code)(sc, cdr(args)));
+       *   but it omits the arg number check, but if we copy the APPLY table here (returning sc->value)
+       *   the overhead from the now non-inline function calls is greater than the fewer-eval-jumps savings.
+       */
+      push_stack(sc, OP_APPLY, cdr(args), sc->code);
+      return(sc->nil);
+    }
+
+  /* here we may have to copy the arg list */
+  if (is_null(cddr(args)))
+    sc->args = cadr(args);
+  else sc->args = apply_list_star(sc, cdr(args));
+  if (!is_proper_list(sc, sc->args)) 
+    return(apply_list_error(sc, args));
+  
+  push_stack(sc, OP_APPLY, (needs_copied_args(sc->code)) ? copy_list(sc, sc->args) : sc->args, sc->code);
   return(sc->nil);
 }
 
@@ -47925,8 +47957,8 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
     return(c_function_call(fnc)(sc, args));
 
   push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-  sc->args = args;
   sc->code = fnc;
+  sc->args = (needs_copied_args(sc->code)) ? copy_list(sc, args) : args;
   eval(sc, OP_APPLY);
   /* we're limited in choices here -- the caller might be (say) car(sc->t1_1) = c_call(...) where the c_call
    *   happens to fallback on a method -- we can't just push OP_APPLY and drop back into the evaluator normally.
@@ -48037,8 +48069,8 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 	check_list_validity(sc, "s7_call", args);
 
       push_stack(sc, OP_EVAL_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
-      sc->args = args;
       sc->code = func;
+      sc->args = (needs_copied_args(func)) ? copy_list(sc, args) : args;
       /* besides a closure, "func" can also be an object (T_C_OBJECT) -- in Snd, a generator for example  */
       eval(sc, OP_APPLY);
     }
@@ -66096,6 +66128,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   and the function-local overhead currently otherwise 0 (I assume because the compiler can simply plug it in here).
 	   */
 	APPLY:
+	case OP_APPLY:
 	  /* fprintf(stderr, "apply %s to %s\n", DISPLAY(sc->code), DISPLAY(sc->args)); */
 	  switch (type(sc->code))
 	    {
@@ -66125,20 +66158,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		push_stack(sc, OP_EXPANSION, sc->nil, sc->nil);
 	      else push_stack(sc, OP_EVAL_MACRO, sc->nil, sc->nil);
 	      new_frame(sc, closure_let(sc->code), sc->envir);
-	      apply_lambda(sc);
-	      goto BEGIN1;
+	      goto APPLY_LAMBDA;
 	      
 	    case T_BACRO: 
 	      push_stack(sc, OP_EVAL_MACRO, sc->nil, sc->nil);
 	      new_frame(sc, sc->envir, sc->envir);       /* like let* -- we'll be adding macro args, so might as well sequester things here */
-	      apply_lambda(sc);
-	      goto BEGIN1;
+	      goto APPLY_LAMBDA;
 	      
 	    case T_CLOSURE:
 	      check_stack_size(sc);
 	      new_frame(sc, closure_let(sc->code), sc->envir);
-	      apply_lambda(sc);
-	      goto BEGIN1;
+	      goto APPLY_LAMBDA;
 	      
 	    case T_MACRO_STAR:
 	      push_stack(sc, OP_EVAL_MACRO, sc->nil, sc->nil);
@@ -66161,15 +66191,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    default:
 	      return(apply_error(sc, sc->code, sc->args));
 	    }
-	  
-	  
-	case OP_APPLY:      /* apply 'code' to 'args' */
-	  if (needs_copied_args(sc->code))
-	    sc->args = _TLst(copy_list(sc, sc->args));
-	  goto APPLY;
-	  /* (let ((lst '((1 2)))) (define (identity x) x) (cons (apply identity lst) lst)) */
-	  
-	  
+
+	APPLY_LAMBDA:
+	  apply_lambda(sc);
+	  goto BEGIN1;
+
+
 	case OP_LAMBDA_STAR_DEFAULT:
 	  /* sc->args is the current closure arg list position, sc->value is the default expression's value */
 	  slot_set_value(sc->args, sc->value);
@@ -66215,13 +66242,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	    case T_MACRO:
 	      new_frame(sc, closure_let(sc->code), sc->envir);
-	      apply_lambda(sc);
-	      goto BEGIN1;
+	      goto APPLY_LAMBDA;
 	      
 	    case T_BACRO:
 	      new_frame(sc, sc->envir, sc->envir);
-	      apply_lambda(sc);
-	      goto BEGIN1;
+	      goto APPLY_LAMBDA;
 	      
 	    case T_MACRO_STAR:
 	      new_frame(sc, closure_let(sc->code), sc->envir);
@@ -74080,7 +74105,7 @@ s7_scheme *s7_init(void)
   sc->dox_slot_symbol = s7_make_symbol(sc, "(dox_slot)");
 
   sc->rootlet = s7_make_vector(sc, ROOTLET_SIZE);
-  set_type(sc->rootlet, T_LET);
+  set_type(sc->rootlet, T_LET | T_SAFE_PROCEDURE);
   sc->rootlet_entries = 0;
   for (i = 0; i < ROOTLET_SIZE; i++)
     vector_element(sc->rootlet, i) = sc->nil;
@@ -75255,12 +75280,11 @@ s7_scheme *s7_init(void)
                               (lambda (hook)                                                                  \n\
                                 ((funclet hook) 'body))                                                       \n\
                               (lambda (hook lst)                                                              \n\
-                                (if (or (null? lst)                                                           \n\
-                                        (and (pair? lst)                                                      \n\
-                                             (apply and (map (lambda (f)                                      \n\
-                                                               (and (procedure? f)                            \n\
-                                                                    (aritable? f 1)))                         \n\
-                                                             lst))))                                          \n\
+                                (if (do ((p lst (cdr p)))                                                     \n\
+                                        ((not (and (pair? p)                                                  \n\
+                                                   (procedure? (car p))                                       \n\
+                                                   (aritable? (car p) 1)))                                    \n\
+                                         (null? p)))                                                          \n\
                                     (set! ((funclet hook) 'body) lst)                                         \n\
                                     (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst))))))");
 
@@ -75414,13 +75438,13 @@ int main(int argc, char **argv)
  *                                           
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 1221
  * teq           |      |      | 6612 | 2380 | 2380 2454
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 2960
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 3004
  * tcopy         |      |      | 13.6 | 3204 | 3088 3193
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 3520
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3311
  * tform         |      |      | 6816 | 3627 | 3724 3821
- * tmap          |      |      |  9.3 | 4176 | 4171 4419
- * lint          |      |      |      | 7731 | 4736 4908
+ * tmap          |      |      |  9.3 | 4176 | 4171 4283
+ * lint          |      |      |      | 7731 | 4736 4852 [211.2]
  * titer         |      |      | 7503 | 5218 | 5227 5812
  * thash         |      |      | 50.7 | 8491 | 8518 8947
  *               |      |      |      |      |
@@ -75446,7 +75470,9 @@ int main(int argc, char **argv)
  *    multidim byte-vectors via univect-ref|set as in int|float cases
  * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  * can do test change simplify more for recur->iter in lint?
- * can T_COPY_ARGS be restricted if apply added?
+ * can lint complain about globals reused? -- like set_local in s7
+ * string free-lists by length?
+ * get-overhead cases as in apply_lambda or tree_leaves?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75462,4 +75488,5 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
+ * the menu bar drop-down menus don't work in gtk 3.22?
  */
