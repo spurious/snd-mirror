@@ -46642,9 +46642,10 @@ EDITS: 1
 |#
 
 (gc) (gc)
-(s7-version)
 
-(if with-exit (exit))
+(when (not (defined? 'no-exit))
+  (s7-version)
+  (if with-exit (exit)))
 
 ;;; ---------------- test the end
 

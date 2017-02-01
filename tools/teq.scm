@@ -63,7 +63,7 @@
 (define hash-3 (hash-table* :a vect-0 :b list-0))
 (define hash-4 (hash-table* :a hash-1))
 
-(define-constant vars (vector list-0 list-1 list-2 list-3 list-4
+(define-constant teq-vars (vector list-0 list-1 list-2 list-3 list-4
 			      vect-0 vect-1 vect-2 vect-3 vect-4
 			      hash-0 hash-1 hash-2 hash-3 hash-4
 			      let-0 let-1 let-2 let-3 let-4))
@@ -78,15 +78,15 @@
 	(iter #f))
     (do ((i 0 (+ i 1)))
 	((= i size))
-      (set! iter (make-iterator vars))
+      (set! iter (make-iterator teq-vars))
       (do ((j 0 (+ j 1))
 	   (vj (iterate iter) (iterate iter)))
 	  ((= j 20))
 	(do ((k 0 (+ k 1)))
 	    ((= k 20))
-	  (if (equal? vj (vector-ref vars k))
+	  (if (equal? vj (vector-ref teq-vars k))
 	      (if (not (= j k))
-		  (format *stderr* "oops! (~D ~D): ~A ~A~%" j k vj (vector-ref vars k)))))
+		  (format *stderr* "oops! (~D ~D): ~A ~A~%" j k vj (vector-ref teq-vars k)))))
 		  ;;(display "oops"))))
 	(write vj p)
 	(set! str (get-output-string p #t))
@@ -102,10 +102,10 @@
 	(p (open-output-string)))
     (do ((i 0 (+ i 1)))
 	((= i size))
-      (do ((a vars (cdr a)))
+      (do ((a teq-vars (cdr a)))
 	  ((null? a))
 	(set! vj (car a))
-	(do ((b vars (cdr b)))
+	(do ((b teq-vars (cdr b)))
 	    ((null? b))
 	  (if (equal? vj (car b))
 	      (if (not (eq? a b))
@@ -134,21 +134,23 @@
 		(if (not (= j k))
 		    (format *stderr* "oops! (~D ~D): ~A ~A~%" j k vj w)))
 	    (set! j (+ j 1)))
-	  vars)
+	  teq-vars)
 	 (set! k (+ k 1))
 	 (write vj p)
 	 (set! str (get-output-string p #t))
 	 (set! str (object->string vj))
 	 (set! str (format #f "~A~%" vj))
 	 (set! str (cyclic-sequences vj)))
-       vars))
+       teq-vars))
     (close-output-port p)))
 |#
 
 
 (tests 10000)
 
-(s7-version)
-(exit)
+(when (not (defined? 'no-exit))
+  (s7-version)
+  (exit))
+
 
 	

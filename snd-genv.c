@@ -136,10 +136,7 @@ static void help_enved_callback(GtkWidget *w, gpointer context)
 static void force_update(GtkWidget *wid)
 {
   if ((wid) && (WIDGET_TO_WINDOW(wid)))
-    {
-      gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), NULL, true);
-      gdk_window_process_updates(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), true);
-    }
+    gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), NULL, true);
 }
 
 

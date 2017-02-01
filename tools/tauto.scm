@@ -32,7 +32,7 @@
 ;(define value 1) ; this causes an infinite loop somewhere
 ;(openlet (inlet 'i 0 'list-set! (lambda (l . args) (apply #_list-set! l ((car args) 'i) (cdr args))))))
 
-(define-constant constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
+(define-constant auto-constants (list #f #t () #\a (/ most-positive-fixnum) (/ -1 most-positive-fixnum) 1.5+i
 			"hi455" :key hi: 'hi (list 1) (list 1 2) (cons 1 2) (list (list 1 2)) (list (list 1)) (list ()) #() 
 			1/0+i 0+0/0i 0+1/0i 1+0/0i 0/0+0i 0/0+0/0i 1+1/0i 0/0+i cons ''2 
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 #\xff (string #\xff) 1e308 
@@ -65,11 +65,11 @@
 			np mp nv mv ns ms (gensym)
 			))
       
-(define car-constants (car constants))
-(define-constant cdr-constants (cdr constants))
+(define car-auto-constants (car auto-constants))
+(define-constant cdr-auto-constants (cdr auto-constants))
 
 (define low 0)
-(define-constant arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
+(define-constant auto-arglists (vector (make-list 1) (make-list 2) (make-list 3) (make-list 4) (make-list 5) (make-list 6)))
 
 (define-constant (autotest func args args-now args-left sig)
   ;; args-left is at least 1, args-now starts at 0, args starts at ()
@@ -88,14 +88,14 @@
 		      (memq (car any) '(wrong-type-arg wrong-number-of-args syntax-error)))
 		 (quit)))))
      
-     (let ((c-args (vector-ref arglists args-now)))
+     (let ((c-args (vector-ref auto-arglists args-now)))
        (copy args c-args)
 
        (let ((p (list-tail c-args args-now)))
 	 (if (= args-left 1)
 	     (call-with-exit
 	      (lambda (quit)
-		(set-car! p car-constants)
+		(set-car! p car-auto-constants)
 		(catch #t
 		  (lambda ()
 		    (apply func c-args))
@@ -118,7 +118,7 @@
 			       (apply func c-args))
 			     (lambda any 
 			       'error))))
-		       cdr-constants)
+		       cdr-auto-constants)
 		      (for-each
 		       (lambda (c)
 			 (catch #t 
@@ -127,7 +127,7 @@
 			     (apply func c-args))
 			   (lambda any 
 			     'error)))
-		       cdr-constants)))))
+		       cdr-auto-constants)))))
 	   
 	     (let ((checker (and (pair? sig) (car sig))))
 	       (if checker
@@ -136,12 +136,12 @@
 		      (when (checker c)
 			(set-car! p c)
 			(autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ()))))
-		    constants)
+		    auto-constants)
 		   (for-each
 		    (lambda (c)
 		      (set-car! p c)
 		      (autotest func c-args (+ args-now 1) (- args-left 1) (if (pair? sig) (cdr sig) ())))
-		    constants)))))))))
+		    auto-constants)))))))))
 
 (define safe-fill!
   (let ((signature '(#t sequence? #t)))
@@ -208,9 +208,11 @@
     ;(test-sym 'object->string)
     ;(test-sym 'for-each)
     (format *stderr* "~%all done~%")
-    (s7-version)
     ))
 
 ;(test-sym 'write)
 (all)
-(exit)
+
+(when (not (defined? 'no-exit))
+  (s7-version)
+  (exit))

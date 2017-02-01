@@ -795,7 +795,7 @@
 		    (or (ts (car tree))
 			(ts (cdr tree))))
 	       (memq tree set))))))
-    
+
     (define (tree-table-member table tree)
       (and (pair? tree)
 	   (or (hash-table-ref table (car tree))
@@ -10213,6 +10213,7 @@
 					 
 					 ((define* define-macro define-macro* define-expansion define-bacro define-bacro*)
 					  (if (and (len>1? (cdr tree))
+						   (pair? (cadr tree))
 						   (not (lint-any? (lambda (a) (eq? sym a)) (args->proper-list (cdadr tree)))))
 					      (fwalk sym (cddr tree))))
 					 
@@ -22391,4 +22392,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 80 30111 829629
+;;; 79 30111 829629

@@ -114,9 +114,9 @@
 
 (test-chars)
 
-(s7-version)
-
-(exit)
+(when (not (defined? 'no-exit))
+  (s7-version)
+  (exit))
 
 #|
 valgrind --vgdb=yes --vgdb-error=0 repl

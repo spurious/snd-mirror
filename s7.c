@@ -946,9 +946,12 @@ struct s7_scheme {
   int num_fdats;
   s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3;
 
-  s7_pointer *strings, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
-  unsigned int strings_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
-  unsigned int strings_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
+  s7_pointer *strings, *strings1, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
+  unsigned int strings_size, strings1_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
+  unsigned int strings_loc, strings1_loc, vectors_loc, input_ports_loc, output_ports_loc, continuations_loc, c_objects_loc, hash_tables_loc, gensyms_loc, setters_loc;
+
+  char ***string_lists;
+  int *string_locs, *string_sizes, *string_max_sizes;
 
   unsigned int syms_tag;
   int ht_iter_tag, baffle_ctr, bignum_precision;
@@ -1626,6 +1629,7 @@ static s7_scheme *hidden_sc = NULL;
 #define set_clean_symbol(p)           typeflag(_TSym(p)) |= T_CLEAN_SYMBOL
 /* set if we know the symbol name can be printed without quotes (slashification) */
 
+
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 16))
 #define is_immutable(p)               ((typeflag(_NFre(p)) & T_IMMUTABLE) != 0)
 #define is_immutable_port(p)          ((typeflag(_TPrt(p)) & T_IMMUTABLE) != 0)
@@ -1742,6 +1746,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 static int not_heap = -1;
 #define heap_location(p)              (p)->hloc
 #define not_in_heap(p)                ((_NFre(p))->hloc < 0)
+#define in_heap(p)                    ((p)->hloc >= 0)
 #define unheap(p)                     (p)->hloc = not_heap--
 
 #define is_eof(p)                     (_NFre(p) == sc->eof_object)
@@ -3467,31 +3472,113 @@ static void free_port(s7_scheme *sc, port_t *p)
 
 static void close_output_port(s7_scheme *sc, s7_pointer p);
 
+#define STRING_LISTS 256
+#define STRING_LIST_INIT_SIZE 2
+
+static void init_string_free_lists(s7_scheme *sc)
+{
+  int i;
+  sc->string_lists = (char ***)calloc(STRING_LISTS, sizeof(char **));
+  sc->string_locs = (int *)calloc(STRING_LISTS, sizeof(int));
+  sc->string_sizes = (int *)malloc(STRING_LISTS * sizeof(int));
+  sc->string_max_sizes = (int *)malloc(STRING_LISTS * sizeof(int));
+  for (i = 0; i < STRING_LISTS; i++)
+    {
+      sc->string_lists[i] = (char **)calloc(STRING_LIST_INIT_SIZE, sizeof(char *));
+      sc->string_sizes[i] = STRING_LIST_INIT_SIZE;
+      if (i < 16)
+	sc->string_max_sizes[i] = 4096;
+      else
+	{
+	  if (i < 32)
+	    sc->string_max_sizes[i] = 1024;
+	  else 
+	    {
+	      if (i < 64)
+		sc->string_max_sizes[i] = 256;
+	      else sc->string_max_sizes[i] = 32;
+	    }
+	}
+    }
+}
+
+static char *alloc_string(s7_scheme *sc, int len)
+{
+  if ((len < STRING_LISTS) &&
+      (sc->string_locs[len] > 0))
+    return(sc->string_lists[len][--sc->string_locs[len]]);
+  return((char *)malloc((len + 1) * sizeof(char)));
+}
+
+static void string_to_free_list(s7_scheme *sc, char *value, int len)
+{
+  if (len >= STRING_LISTS)
+    free(value);
+  else
+    {
+      if (sc->string_locs[len] >= sc->string_sizes[len])
+	{
+	  if (sc->string_sizes[len] >= sc->string_max_sizes[len])
+	    {
+	      free(value);
+	      return;
+	    }
+	  sc->string_sizes[len] *= 2;
+	  sc->string_lists[len] = (char **)realloc((void *)(sc->string_lists[len]), sc->string_sizes[len] * sizeof(char *));
+	}
+      sc->string_lists[len][sc->string_locs[len]++] = value;
+    }
+}
+
+
 static void sweep(s7_scheme *sc)
 {
   unsigned int i, j;
+  s7_pointer s1;
+
   if (sc->strings_loc > 0)
     {
       /* unrolling this loop is not an improvement */
       for (i = 0, j = 0; i < sc->strings_loc; i++)
 	{
-	  s7_pointer s1;
 	  s1 = sc->strings[i];
+	  if (is_free_and_clear(s1))
+	    {
+	      if (string_needs_free(s1))
+		string_to_free_list(sc, string_value(s1), string_length(s1));
+	    }
+	  else 
+	    {
+	      /* remove_from_heap can remove a string from the heap; we need to notice that removal
+	       *   via in_heap, and remove it also from this cache; otherwise it just stays here
+	       *   forever, slowing down the loop. 
+	       */
+	      if (in_heap(s1)) /* this costs more than it saves */
+		sc->strings[j++] = s1;
+	    }
+	}
+      sc->strings_loc = j;
+    }
+
+  if (sc->strings1_loc > 0)
+    {
+      for (i = 0, j = 0; i < sc->strings1_loc; i++)
+	{
+	  s1 = sc->strings1[i];
 	  if (is_free_and_clear(s1))
 	    {
 	      if (string_needs_free(s1))
 		free(string_value(s1));
 	    }
-	  else sc->strings[j++] = s1;
+	  else sc->strings1[j++] = s1;
 	}
-      sc->strings_loc = j;
+      sc->strings1_loc = j;
     }
 
   if (sc->gensyms_loc > 0)
     {
       for (i = 0, j = 0; i < sc->gensyms_loc; i++)
 	{
-	  s7_pointer s1;
 	  s1 = sc->gensyms[i];
 	  if (is_free_and_clear(s1))
 	    {
@@ -3515,9 +3602,10 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->c_objects_loc; i++)
 	{
-	  if (is_free_and_clear(sc->c_objects[i]))
-	    free_object(sc->c_objects[i]);
-	  else sc->c_objects[j++] = sc->c_objects[i];
+	  s1 = sc->c_objects[i];
+	  if (is_free_and_clear(s1))
+	    free_object(s1);
+	  else sc->c_objects[j++] = s1;
 	}
       sc->c_objects_loc = j;
     }
@@ -3526,35 +3614,29 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->vectors_loc; i++)
 	{
-	  if (is_free_and_clear(sc->vectors[i]))
+	  s1 = sc->vectors[i];
+	  if (is_free_and_clear(s1))
 	    {
-	      s7_pointer a;
-	      a = sc->vectors[i];
-
 	      /* a multidimensional empty vector can have dimension info, wrapped vectors always have dimension info */
-	      if (vector_dimension_info(a))
+	      if (vector_dimension_info(s1))
 		{
-		  if (vector_dimensions_allocated(a))
+		  if (vector_dimensions_allocated(s1))
 		    {
-		      free(vector_dimensions(a));
-		      free(vector_offsets(a));
+		      free(vector_dimensions(s1));
+		      free(vector_offsets(s1));
 		    }
-		  if (vector_elements_allocated(a))
-		    free(vector_elements(a));      /* I think this will work for any vector (int/float too) */
-		  if (vector_dimension_info(a) != sc->wrap_only)
-		    free(vector_dimension_info(a));
+		  if (vector_elements_allocated(s1))
+		    free(vector_elements(s1));      /* I think this will work for any vector (int/float too) */
+		  if (vector_dimension_info(s1) != sc->wrap_only)
+		    free(vector_dimension_info(s1));
 		}
 	      else
 		{
-		  if (vector_length(a) != 0)
-		    free(vector_elements(a));
+		  if (vector_length(s1) != 0)
+		    free(vector_elements(s1));
 		}
 	    }
-	  else sc->vectors[j++] = sc->vectors[i];
-	  /* here (in the else branch) if a vector constant in a global function has been removed from the heap,
-	   *   not_in_heap(heap_location(v)), and we'll never see it freed, so if there were a lot of these, they might
-	   *   glom up this loop.  Surely not a big deal!?
-	   */
+	  else sc->vectors[j++] = s1;
 	}
       sc->vectors_loc = j;
     }
@@ -3563,12 +3645,13 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->hash_tables_loc; i++)
 	{
-	  if (is_free_and_clear(sc->hash_tables[i]))
+	  s1 = sc->hash_tables[i];
+	  if (is_free_and_clear(s1))
 	    {
-	      if (hash_table_mask(sc->hash_tables[i]) > 0)
-		free_hash_table(sc->hash_tables[i]);
+	      if (hash_table_mask(s1) > 0)
+		free_hash_table(s1);
 	    }
-	  else sc->hash_tables[j++] = sc->hash_tables[i];
+	  else sc->hash_tables[j++] = s1;
 	}
       sc->hash_tables_loc = j;
     }
@@ -3577,29 +3660,28 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->input_ports_loc; i++)
 	{
-	  if (is_free_and_clear(sc->input_ports[i]))
+	  s1 = sc->input_ports[i];
+	  if (is_free_and_clear(s1))
 	    {
-	      s7_pointer a;
-	      a = sc->input_ports[i];
-	      if (port_needs_free(a))
+	      if (port_needs_free(s1))
 		{
-		  if (port_data(a))
+		  if (port_data(s1))
 		    {
-		      free(port_data(a));
-		      port_data(a) = NULL;
-		      port_data_size(a) = 0;
+		      free(port_data(s1));
+		      port_data(s1) = NULL;
+		      port_data_size(s1) = 0;
 		    }
-		  port_needs_free(a) = false;
+		  port_needs_free(s1) = false;
 		}
 
-	      if (port_filename(a))
+	      if (port_filename(s1))
 		{
-		  free(port_filename(a));
-		  port_filename(a) = NULL;
+		  free(port_filename(s1));
+		  port_filename(s1) = NULL;
 		}
-	      free_port(sc, port_port(a));
+	      free_port(sc, port_port(s1));
 	    }
-	  else sc->input_ports[j++] = sc->input_ports[i];
+	  else sc->input_ports[j++] = s1;
 	}
       sc->input_ports_loc = j;
     }
@@ -3608,12 +3690,13 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->output_ports_loc; i++)
 	{
-	  if (is_free_and_clear(sc->output_ports[i]))
+	  s1 = sc->output_ports[i];
+	  if (is_free_and_clear(s1))
 	    {
-	      close_output_port(sc, sc->output_ports[i]); /* needed for free filename, etc */
-	      free_port(sc, port_port(sc->output_ports[i]));
+	      close_output_port(sc, s1); /* needed for free filename, etc */
+	      free_port(sc, port_port(s1));
 	    }
-	  else sc->output_ports[j++] = sc->output_ports[i];
+	  else sc->output_ports[j++] = s1;
 	}
       sc->output_ports_loc = j;
     }
@@ -3622,18 +3705,17 @@ static void sweep(s7_scheme *sc)
     {
       for (i = 0, j = 0; i < sc->continuations_loc; i++)
 	{
-	  if (is_free_and_clear(sc->continuations[i]))
+	  s1 = sc->continuations[i];
+	  if (is_free_and_clear(s1))
 	    {
-	      s7_pointer c;
-	      c = sc->continuations[i];
-	      if (continuation_op_stack(c))
+	      if (continuation_op_stack(s1))
 		{
-		  free(continuation_op_stack(c));
-		  continuation_op_stack(c) = NULL;
+		  free(continuation_op_stack(s1));
+		  continuation_op_stack(s1) = NULL;
 		}
-	      free(continuation_data(c));
+	      free(continuation_data(s1));
 	    }
-	  else sc->continuations[j++] = sc->continuations[i];
+	  else sc->continuations[j++] = s1;
 	}
       sc->continuations_loc = j;
     }
@@ -3818,16 +3900,19 @@ static void add_bignumber(s7_scheme *sc, s7_pointer p)
 #endif
 
 
-#define INIT_GC_CACHE_SIZE 64
+#define INIT_GC_CACHE_SIZE 4
 static void init_gc_caches(s7_scheme *sc)
 {
-  sc->strings_size = INIT_GC_CACHE_SIZE * 16;
+  sc->strings_size = INIT_GC_CACHE_SIZE;
   sc->strings_loc = 0;
   sc->strings = (s7_pointer *)malloc(sc->strings_size * sizeof(s7_pointer));
+  sc->strings1_size = INIT_GC_CACHE_SIZE;
+  sc->strings1_loc = 0;
+  sc->strings1 = (s7_pointer *)malloc(sc->strings1_size * sizeof(s7_pointer));
   sc->gensyms_size = INIT_GC_CACHE_SIZE;
   sc->gensyms_loc = 0;
   sc->gensyms = (s7_pointer *)malloc(sc->gensyms_size * sizeof(s7_pointer));
-  sc->vectors_size = INIT_GC_CACHE_SIZE * 8;
+  sc->vectors_size = INIT_GC_CACHE_SIZE;
   sc->vectors_loc = 0;
   sc->vectors = (s7_pointer *)malloc(sc->vectors_size * sizeof(s7_pointer));
   sc->hash_tables_size = INIT_GC_CACHE_SIZE;
@@ -4736,6 +4821,7 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
   s7_pointer p;
+  /* this is not called if DEBUGGING is on -- safety > 0 */
 
   /* global functions are very rarely redefined, so we can remove the function body from
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
@@ -6989,7 +7075,9 @@ static s7_pointer find_symbol_unchecked(s7_scheme *sc, s7_pointer symbol) /* fin
 	  return(slot_value(y));
     }
 
-  /* for a global, the loop above is not hit */
+  /* for a global, the loop above is not hit.  If a global is used locally (as a function parameter name for example),
+   *   we run the entire search loop -- 10 to 100 times slower!  So don't use a local variable or parameter named 'car!
+   */
   x = global_slot(symbol);
   if (is_slot(x))
     return(slot_value(x));
@@ -24747,8 +24835,8 @@ s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len)
 {
   s7_pointer x;
   new_cell(sc, x, T_STRING | T_SAFE_PROCEDURE);
-  string_value(x) = (char *)malloc((len + 1) * sizeof(char));
-  if (len != 0)                                             /* memcpy can segfault if string_value(x) is NULL */
+  string_value(x) = alloc_string(sc, len); 
+  if (len != 0)                                  /* memcpy can segfault if string_value(x) is NULL */
     memcpy((void *)string_value(x), (void *)str, len);
   string_value(x)[len] = 0;
   string_length(x) = len;
@@ -24768,8 +24856,12 @@ static s7_pointer make_string_uncopied_with_length(s7_scheme *sc, char *str, int
   string_length(x) = len;
   string_hash(x) = 0;
   string_needs_free(x) = true;
-  if (sc->strings_loc == sc->strings_size) resize_strings(sc); 
-  sc->strings[sc->strings_loc++] = x;
+  if (sc->strings1_loc == sc->strings1_size)
+    {
+      sc->strings1_size *= 2;
+      sc->strings1 = (s7_pointer *)realloc(sc->strings1, sc->strings1_size * sizeof(s7_pointer));
+    }
+  sc->strings1[sc->strings1_loc++] = x;
   return(x);
 }
 
@@ -24794,7 +24886,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   new_cell(sc, x, T_STRING);
-  string_value(x) = (char *)malloc((len + 1) * sizeof(char));
+  string_value(x) = alloc_string(sc, len);
   if (fill != 0)
     memset((void *)(string_value(x)), fill, len);
   string_value(x)[len] = 0;
@@ -32012,6 +32104,7 @@ static void print_debugging_state(s7_scheme *sc, s7_pointer obj, s7_pointer port
   tmpbuf_free(str, len);
 }
 
+
 static s7_pointer check_null_sym(s7_scheme *sc, s7_pointer p, s7_pointer sym, int line, const char *func)
 {
   if (!p)
@@ -34390,9 +34483,13 @@ static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
 static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
   if (sym == tree) return(true);
-  if ((!is_pair(tree)) ||
-      (car(tree) == sc->quote_symbol))
-    return(false);
+  if (!is_pair(tree)) return(false);
+  if ((car(tree) == sc->quote_symbol))
+    {
+      if ((is_symbol(sym)) || (is_pair(sym)))
+	return(false);
+      return(sym == cadr(tree));
+    }
   do {
     if ((sym == cdr(tree)) || 
 	(tree_memq(sc, sym, car(tree))))
@@ -35123,7 +35220,7 @@ static void init_car_a_list(void)
   an_unsigned_byte_string =       s7_make_permanent_string("an unsigned byte");
   something_applicable_string =   s7_make_permanent_string("a procedure or something applicable");
   a_random_state_object_string =  s7_make_permanent_string("a random-state object");
-  a_format_port_string =          s7_make_permanent_string("#f, #t, or an open output port");
+  a_format_port_string =          s7_make_permanent_string("#f, #t, (), or an open output port");
   a_binding_string =              s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
   a_non_constant_symbol_string =  s7_make_permanent_string("a non-constant symbol");
   a_sequence_string =             s7_make_permanent_string("a sequence");
@@ -47891,7 +47988,6 @@ static s7_pointer apply_list_error(s7_scheme *sc, s7_pointer lst)
   return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "apply's last argument should be a proper list: ~S"), lst)));
 }
 
-static s7_int c_pair_line_number(s7_scheme *sc, s7_pointer p);
 
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
@@ -48168,6 +48264,7 @@ static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
   #define Q_s7_version pcl_s
+
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -50913,6 +51010,7 @@ static s7_pointer g_format_just_newline(s7_scheme *sc, s7_pointer args)
   pt = car(args);
   str = cadr(args);
 
+  if (is_null(pt)) pt = sc->output_port;
   if (pt == sc->F)
     return(s7_make_string_with_length(sc, string_value(str), string_length(str)));
 
@@ -73285,7 +73383,9 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   len = 0;
   for (i = 0; i < (int)(sc->strings_loc); i++)
     len += string_length(sc->strings[i]);
-  fprintf(stderr, "strings: %u, %d bytes\n", sc->strings_loc, len); /* also doc strings, permanent strings, etc */
+  for (i = 0; i < (int)(sc->strings1_loc); i++)
+    len += string_length(sc->strings1[i]);
+  fprintf(stderr, "strings: %u, %d bytes\n", sc->strings_loc + sc->strings1_loc, len); /* also doc strings, permanent strings, etc */
 
   {
     int hs;
@@ -73847,6 +73947,7 @@ s7_scheme *s7_init(void)
   sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->gc_stats = 0;
   init_gc_caches(sc);
+  init_string_free_lists(sc);
 
   sc->longjmp_ok = false;
   sc->setjmp_loc = NO_SET_JUMP;
@@ -75340,9 +75441,10 @@ s7_scheme *s7_init(void)
 					"*read-error-hook* functions are called by the reader if it is unhappy, passing the current program string as (hook 'data).");
 
   /* -------- *rootlet-redefinition-hook* -------- */
-  sc->rootlet_redefinition_hook = s7_eval_c_string(sc, "(make-hook 'symbol 'value)");
+  sc->rootlet_redefinition_hook = s7_eval_c_string(sc, "(make-hook 'name 'value)");
   s7_define_constant_with_documentation(sc, "*rootlet-redefinition-hook*", sc->rootlet_redefinition_hook, 
-					"*rootlet-redefinition-hook* functions are called when a top-level variable's value is changed, (hook 'symbol 'value).");
+					"*rootlet-redefinition-hook* functions are called when a top-level variable's value is changed, (hook 'name 'value).");
+  /* first parameter was originally 'symbol, but that collides with the built-in symbol function */
 
   s7_define_constant(sc, "*s7*",
     s7_openlet(sc, s7_inlet(sc,
@@ -75436,21 +75538,21 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                           
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 1221
- * teq           |      |      | 6612 | 2380 | 2380 2454
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 3004
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 1190
+ * teq           |      |      | 6612 | 2380 | 2380 2512
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 2997
  * tcopy         |      |      | 13.6 | 3204 | 3088 3193
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 3520
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3311
- * tform         |      |      | 6816 | 3627 | 3724 3821
- * tmap          |      |      |  9.3 | 4176 | 4171 4283
- * lint          |      |      |      | 7731 | 4736 4852 [211.2]
- * titer         |      |      | 7503 | 5218 | 5227 5812
- * thash         |      |      | 50.7 | 8491 | 8518 8947
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 3495
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3300
+ * tform         |      |      | 6816 | 3627 | 3724 3787
+ * tmap          |      |      |  9.3 | 4176 | 4171 4267
+ * lint          |      |      |      | 7731 | 4736 4705 [207.4]
+ * titer         |      |      | 7503 | 5218 | 5227 5897
+ * thash         |      |      | 50.7 | 8491 | 8518 8894
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 12.6
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 18.1
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 41.6
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 17.7
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 41.0
  * 
  * --------------------------------------------------------------------
  *
@@ -75471,8 +75573,10 @@ int main(int argc, char **argv)
  * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  * can do test change simplify more for recur->iter in lint?
  * can lint complain about globals reused? -- like set_local in s7
- * string free-lists by length?
- * get-overhead cases as in apply_lambda or tree_leaves?
+ * hook tests that check that pars exist and are not built-ins
+ * check bignum free_list
+ * can car_s be a second pass in optimize_expression?
+ *   maybe safe_c_s looks and resets to car_s or safe_c_s_1?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
@@ -75488,5 +75592,4 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
- * the menu bar drop-down menus don't work in gtk 3.22?
  */

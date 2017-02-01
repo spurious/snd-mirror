@@ -707,5 +707,8 @@
  )
 
 ;(gc)
-(s7-version)
-(exit)
+
+(when (not (defined? 'no-exit))
+  (s7-version)
+  (exit))
+

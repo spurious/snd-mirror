@@ -4765,7 +4765,7 @@ a top-level variable is redefined (via define and friends, not set!).
 <pre class="indented">
 (set! (hook-functions *rootlet-redefinition-hook*) 
       (list (lambda (hook) 
-              (format *stderr* "~A ~A~%" (hook 'symbol) (hook 'value)))))
+              (format *stderr* "~A ~A~%" (hook 'name) (hook 'value)))))
 </pre>
 <p>will print out the variable's name and the new value.
 </p>
