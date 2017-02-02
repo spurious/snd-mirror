@@ -97,7 +97,6 @@
 
 (test)
 
-(when (not (defined? 'no-exit))
-  (s7-version)	
-  (exit))
+(s7-version)	
+(exit)
 

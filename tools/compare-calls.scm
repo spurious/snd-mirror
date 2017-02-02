@@ -75,10 +75,15 @@
 			    (let ((num (string->number-ignoring-commas (substring line k end))))
 			      (when num
 				(let ((func-end (char-position #\space line (+ end 2))))
-				  (when (and (number? func-end)
+				  (when (and (integer? func-end)
 					     (> func-end (+ end 2)))
-				    (let ((func (string->symbol (substring line (+ end 2) func-end))))
-				      (set! (h func) num))))))))))))))))
+				    (let ((func (substring line (+ end 2) func-end)))
+				      (let ((colon-pos (char-position #\: func)))
+					(if (integer? colon-pos)
+					    (let ((isra-pos (char-position #\. func colon-pos)))
+					      (if (integer? isra-pos)
+						  (set! func (substring func 0 isra-pos))))))
+				      (set! (h (string->symbol func)) num))))))))))))))))
     h))
     
 

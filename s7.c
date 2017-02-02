@@ -5921,8 +5921,16 @@ static s7_pointer let_fill(s7_scheme *sc, s7_pointer args)
     return(out_of_range(sc, sc->fill_symbol, small_int(1), e, make_string_wrapper(sc, "can't fill! a funclet")));
 
   val = cadr(args);
-  for (p = let_slots(e); is_slot(p); p = next_slot(p))
-    slot_set_value(p, val);
+  if (val == sc->undefined)
+    {
+      let_set_slots(e, sc->nil);
+      let_id(e) = ++sc->let_number; /* else previous symbol_id matches! */
+    }
+  else
+    {
+      for (p = let_slots(e); is_slot(p); p = next_slot(p))
+	slot_set_value(p, val);
+    }
   return(val);
 }
 
@@ -6657,6 +6665,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
   /* (let ((a 1)) ((curlet) 'a))
    * ((rootlet) 'abs)
    */
+
   if (is_keyword(symbol))
     symbol = keyword_symbol(symbol);
 
@@ -67246,27 +67255,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LET_opCq:  /* one var, init is safe_c_c */
-#if DEBUGGING
-	  {
-	    s7_pointer old_code, old_env; /* trying to define lots of Snd function safe -- they crash here if they aren't actually safe */
-	    old_code = sc->code;          /*   so, add a bandage while I track them down... */
-	    old_env = sc->envir;
-	    sc->value = c_call(opt_pair2(sc->code))(sc, cdr(opt_pair2(sc->code)));
-	    if ((sc->code != old_code) ||
-		(sc->envir != old_env))
-	      fprintf(stderr, "something changed: %s -> %s, %s -> %s\n",
-		      DISPLAY(old_code), DISPLAY(sc->code),
-		      DISPLAY(old_env), DISPLAY(sc->envir));
-	    new_frame_with_slot(sc, sc->envir, sc->envir, opt_sym3(old_code), sc->value);
-	    sc->code = _TPair(cdr(old_code));
-	    goto BEGIN1;
-	  }
-#else
 	  sc->value = c_call(opt_pair2(sc->code))(sc, cdr(opt_pair2(sc->code)));
 	  new_frame_with_slot(sc, sc->envir, sc->envir, opt_sym3(sc->code), sc->value);
 	  sc->code = _TPair(cdr(sc->code));
 	  goto BEGIN1;
-#endif
 	  
 	  
 	case OP_LET_opSSq:  /* one var, init is safe_c_ss */
@@ -75572,11 +75564,8 @@ int main(int argc, char **argv)
  *    multidim byte-vectors via univect-ref|set as in int|float cases
  * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  * can do test change simplify more for recur->iter in lint?
- * can lint complain about globals reused? -- like set_local in s7
+ * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
  * hook tests that check that pars exist and are not built-ins
- * check bignum free_list
- * can car_s be a second pass in optimize_expression?
- *   maybe safe_c_s looks and resets to car_s or safe_c_s_1?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

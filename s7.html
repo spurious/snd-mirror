@@ -2453,7 +2453,7 @@ Environments are first class (and applicable) objects in s7.
 (<em class=def id="lettemporarily">let-temporarily</em> vars . body)
 </pre>
 
-<br>
+
 <blockquote>
 <pre class="indented">
 &gt; (inlet 'a 1 'b 2)
@@ -2614,6 +2614,9 @@ that unlet accesses is not accessible from scheme code, so there's no way
 that those values can be clobbered).
 </p>
 
+<p>
+<code>(fill! lt &lt;undefined&gt;)</code> removes all bindings from the let lt.
+</p>
 <blockquote>
 
 <div class="indented">

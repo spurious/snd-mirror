@@ -311,9 +311,9 @@
   (fe13 size)
   (fe13 1))
 
-(when (not (defined? 'no-exit))
-  (s7-version)
-  (exit))
+(s7-version)
+(exit)
+
 
 
 

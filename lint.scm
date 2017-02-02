@@ -481,17 +481,17 @@
     
     (define (make-lint-var name initial-value definer)
       (let ((old (hash-table-ref other-identifiers name)))
-	(cons name (inlet 'initial-value initial-value 
+	(cons name (inlet 'scope ()
+			  'env ()
+			  'refenv ()
+			  'setters ()
+			  'initial-value initial-value 
 			  'definer definer 
 			  'history (if old 
 				       (begin
 					 (hash-table-set! other-identifiers name #f)
 					 (if initial-value (cons initial-value old) old))
 				       (if initial-value (list initial-value) ()))
-			  'scope ()
-			  'env ()
-			  'refenv ()
-			  'setters ()
 			  'set 0 
 			  'ref (if old (length old) 0)))))
     
@@ -1689,30 +1689,30 @@
 
       (let ((new (let ((old (hash-table-ref other-identifiers name)))
 		   (cons name 
-			 (inlet 'signature ()
-				'side-effect ()
-				'allow-other-keys (and (pair? arglist)
+			 (inlet 'allow-other-keys (and (pair? arglist)
 						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
 						       (eq? (last-ref arglist) :allow-other-keys))
 				'scope ()
 				'refenv ()
 				'setters ()
 				'env env
-				'initial-value initial-value
 				'nvalues (and (pair? initial-value) 
 					      (tree-memq 'values initial-value)
 					      (count-values (cddr initial-value)))
 				'leaves #f
 				'match-list #f
+				'retcons #f
 				'decl decl
 				'arglist arglist
-				'ftype ftype
-				'retcons #f
 				'history (if old 
 					     (begin
 					       (hash-table-set! other-identifiers name #f)
 					       (if initial-value (cons initial-value old) old))
 					     (if initial-value (list initial-value) ()))
+				'signature ()
+				'side-effect ()
+				'ftype ftype
+				'initial-value initial-value
 				'set 0 
 				'ref (if old (length old) 0))))))
 	(reduce-function-tree new env)
@@ -13167,15 +13167,15 @@
 
     (define hide-args
       (letrec ((rewrite-arg (lambda (arg)
-			      (if (null? arg)
-				  ()
-				  (if (symbol? arg)
-				      (if (constant? arg)
-					  arg
-					  (symbol "|" (symbol->string arg) "|"))
-				      (if (pair? arg)
-					  (cons (rewrite-arg (car arg)) (cdr arg))
-					  arg))))))
+			      (cond ((null? arg)
+				     ())
+				    ((symbol? arg)
+				     (if (constant? arg)
+					 arg
+					 (symbol "|" (symbol->string arg) "|")))
+				    ((pair? arg)
+				     (cons (rewrite-arg (car arg)) (cdr arg)))
+				    (else arg)))))
 	(lambda (args)
 	  (if (not (pair? args))
 	      (rewrite-arg args)
@@ -13860,8 +13860,8 @@
 		    (and (len=1? (cdr var&val))
 			 (len>2? (cadr var&val))
 			 (memq (caadr var&val) '(lambda lambda*))
-			 (let* ((val (cadr var&val))
-				(fargs (args->proper-list (cadr val))))
+			 (let* ((val (cdadr var&val))
+				(fargs (args->proper-list (car val))))
 			   (if (memq let-case '(letrec letrec*))
 			       (set! fargs (cons (car var&val) fargs)))
 			   (not (tree-set-member (let remove-shadows ((args largs) (nargs ()))
@@ -13871,7 +13871,7 @@
 								       (if (memq (car args) fargs)
 									   nargs
 									   (cons (car args) nargs)))))
-						 (cddr val))))))))
+						 (cdr val))))))))
 	    
 	    (lambda (caller form outer-args define-case)
 	      (let ((largs (args->proper-list outer-args))
@@ -13936,55 +13936,56 @@
 				   (truncated-list->string (list 'define (list outer-name) (unquoted body)))))
 		  
 		  (when (pair? body)
-		    (case (car body)
-		      ((#_list-values)
-		       (when (quoted-symbol? (cadr body))
-			 (if (proper-list? outer-args)
-			     (if (and (equal? (cddr body) outer-args)
-				      (or (not (hash-table-ref syntaces (cadadr body))) ; (define-macro (x y) `(lambda () ,y))
-					  (memq (cadadr body) '(set! define))))
-				 (lint-format "perhaps ~A" caller                ; (define-macro (fx x) `(abs ,x)) -> (define fx abs)
-					      (lists->string form (list 'define outer-name (cadadr body))))
-				 
-				 (if (and (not (hash-table-ref syntaces (cadadr body)))
-					  (not (any-macro? (cadadr body) env))
-					  (lint-every? (lambda (a)
-						    (or (code-constant? a)
-							(and (memq a outer-args)
-							     (tree-nonce a (cddr body)))))
-						  (cddr body)))  
-				     ;; marginal -- there are many debatable cases here
-				     (lint-format "perhaps ~A" caller
-						  (lists->string form `(define (,outer-name ,@outer-args)
-									 (,(cadadr body) ,@(map unquoted (cddr body))))))))
-			     
-			     (if (or (and (symbol? outer-args)          ; (define-macro (f . x) `(+ ,@x)) -> (define f +)
-					  (len=2? (cdr body))
-					  (len=2? (caddr body))
-					  (memq (caaddr body) '(#_apply-values apply-values))
-					  (eq? (cadr (caddr body)) outer-args))
-				     (and (eqv? (length outer-args) -1) ; (define-macro (f a . x) `(+ a ,@x)) -> (define f +)
-					  (len=3? (cdr body))
-					  (eq? (caddr body) (car outer-args))
-					  (len=2? (cadddr body))
-					  (memq (car (cadddr body)) '(#_apply-values apply-values))
-					  (eq? (cadr (cadddr body)) (cdr outer-args))))
-				 (lint-format "perhaps ~A"  caller
-					      (lists->string form (list 'define outer-name (cadadr body)))))))
-		       
-		       (let ((pargs (args->proper-list outer-args)))
-			 (for-each (lambda (p)
-				     (if (and (quoted-pair? p)
-					      (tree-set-member pargs (cadr p)))
-					 (lint-format "missing comma? ~A" caller form)))
-				   (cdr body))))
-		      
-		      ((quote)
-		       ;; extra comma (unquote) is already caught elsewhere
-		       (if (and (pair? (cdr body))
-				(pair? (cadr body))
-				(tree-set-member (args->proper-list outer-args) (cadr body)))
-			   (lint-format "missing comma? ~A" caller form)))))))))
+		    (let ((args (cdr body)))
+		      (case (car body)
+			((#_list-values)
+			 (when (quoted-symbol? (car args))
+			   (if (proper-list? outer-args)
+			       (if (and (equal? (cdr args) outer-args)
+					(or (not (hash-table-ref syntaces (cadar args))) ; (define-macro (x y) `(lambda () ,y))
+					    (memq (cadar args) '(set! define))))
+				   (lint-format "perhaps ~A" caller                ; (define-macro (fx x) `(abs ,x)) -> (define fx abs)
+						(lists->string form (list 'define outer-name (cadar args))))
+				   
+				   (if (and (not (hash-table-ref syntaces (cadar args)))
+					    (not (any-macro? (cadar args) env))
+					    (lint-every? (lambda (a)
+							   (or (code-constant? a)
+							       (and (memq a outer-args)
+								    (tree-nonce a (cdr args)))))
+							 (cdr args)))  
+				       ;; marginal -- there are many debatable cases here
+				       (lint-format "perhaps ~A" caller
+						    (lists->string form `(define (,outer-name ,@outer-args)
+									   (,(cadar args) ,@(map unquoted (cdr args))))))))
+			       
+			       (if (or (and (symbol? outer-args)          ; (define-macro (f . x) `(+ ,@x)) -> (define f +)
+					    (len=2? args)
+					    (len=2? (cadr args))
+					    (memq (caadr args) '(#_apply-values apply-values))
+					    (eq? (cadadr args) outer-args))
+				       (and (eqv? (length outer-args) -1) ; (define-macro (f a . x) `(+ a ,@x)) -> (define f +)
+					    (len=3? args)
+					    (eq? (cadr args) (car outer-args))
+					    (len=2? (caddr args))
+					    (memq (caaddr args) '(#_apply-values apply-values))
+					    (eq? (cadr (caddr args)) (cdr outer-args))))
+				   (lint-format "perhaps ~A"  caller
+						(lists->string form (list 'define outer-name (cadar args)))))))
+			 
+			 (let ((pargs (args->proper-list outer-args)))
+			   (for-each (lambda (p)
+				       (if (and (quoted-pair? p)
+						(tree-set-member pargs (cadr p)))
+					   (lint-format "missing comma? ~A" caller form)))
+				     args)))
+			
+			((quote)
+			 ;; extra comma (unquote) is already caught elsewhere
+			 (if (and (pair? args)
+				  (pair? (car args))
+				  (tree-set-member (args->proper-list outer-args) (car args)))
+			     (lint-format "missing comma? ~A" caller form))))))))))
 	  
 	  
 	  ;; -------- uncurry --------
@@ -14167,10 +14168,10 @@
 
 	  ;; -------- check-boolean-function --------
 	  (define (check-boolean-function caller form env)
-	    (let ((sym (cadr form))
+	    (let ((sym (caadr form))
 		  (val (cddr form)))
-	      (when (and (symbol? (car sym))
-			 (let ((sym-name (symbol->string (car sym))))
+	      (when (and (symbol? sym)
+			 (let ((sym-name (symbol->string sym)))
 			   (char=? #\? (sym-name (- (length sym-name) 1)))))
 		(catch 'one-is-enough
 		  (lambda ()
@@ -14188,7 +14189,7 @@
 								    (tree-set-member '(boolean? #t values) (car sig))
 								    (memq (car sig) '(boolean? #t values))))))))
 				       (lint-format "~A looks boolean, but it can return ~A" caller 
-						    (car sym) 
+						    sym 
 						    (truncated-list->string last))
 				       (throw 'one-is-enough)))))
 		  (lambda args #f)))))
@@ -17119,13 +17120,9 @@
 						  (cond ((and (boolean? (cadar clauses))
 							      (boolean? (cadadr clauses)))
 							 (if (cadadr clauses)
-							     (if quoted
-								 (list 'not (list op selector (list 'quote keylist)))
-								 (list 'not (list op selector keylist)))
-							     (if quoted
-								 (list op selector (list 'quote keylist))
-								 (list op selector keylist))))
-							
+							     (list 'not (list op selector (if quoted (list 'quote keylist) keylist)))
+							     (list op selector (if quoted (list 'quote keylist) keylist))))
+
 							((not (cadadr clauses)) ; (else #f) happens a few times
 							 (simplify-boolean 
 							  (if quoted
@@ -21940,7 +21937,195 @@
     ;;; lint itself
     ;;;
     (let ((documentation "(lint file port) looks for infelicities in file's scheme code")
-	  (signature (list #t string? output-port? boolean?)))
+	  (signature (list #t string? output-port? boolean?))
+	  (readers 
+	   (list (cons #\e (lambda (str)
+			     (unless (string=? str "e")
+			       (let ((num (string->number (substring str 1))))
+				 (cond ((not num))
+				       ((rational? num)
+					(format outport "~NCthis #e is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
+				       ((not (real? num))
+					(format outport "~NC#e can't handle complex numbers, #~A -> ~A~%" lint-left-margin #\space str num))
+				       ((= num (floor num))
+					(format outport "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (floor num))))))
+			     #f))
+		 (cons #\i (lambda (str)
+			     (unless (string=? str "i")
+			       (let ((num (string->number (substring str 1))))
+				 (when num 
+				   (format outport 
+					   (if (not (rational? num))
+					       (values "~NCthis #i is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1))
+					       (values "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (* 1.0 num)))))))
+			     #f))
+		 (cons #\d (lambda (str)
+			     (if (and (not (string=? str "d"))
+				      (string->number (substring str 1)))
+				 (format outport "~NC#d is pointless, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
+			     #f))
+		 
+		 (cons #\' (lambda (str)                      ; for Guile (and syntax-rules, I think)
+			     (list 'syntax (if (string=? str "'") (read) (string->symbol (substring str 1))))))
+		 
+		 (cons #\` (lambda (str)                      ; for Guile (sigh)
+			     (list 'quasisyntax (if (string=? str "`") (read) (string->symbol (substring str 1))))))
+		 
+		 (cons #\, (lambda (str)                      ; the same, the last is #,@ -> unsyntax-splicing -- right.
+			     (list 'unsyntax (if (string=? str ",") (read) (string->symbol (substring str 1))))))
+		 
+		 (cons #\& (lambda (str)                      ; ancient Guile code
+			     (string->keyword (substring str 1))))
+		 
+		 (cons #\\ (lambda (str)
+			     (cond ((assoc str '(("\\x0"        . #\null)
+						 ("\\x7"        . #\alarm)
+						 ("\\x8"        . #\backspace)
+						 ("\\x9"        . #\tab)
+						 ("\\xd"        . #\return)
+						 ("\\xa"        . #\newline)
+						 ("\\1b"        . #\escape)
+						 ("\\x20"       . #\space)
+						 ("\\x7f"       . #\delete)))
+				    => (lambda (c)
+					 (format outport "~NC#\\~A is ~W~%" lint-left-margin #\space (substring str 1) (cdr c)))))
+			     #f))
+		 
+		 (cons #\! (lambda (str)
+			     (if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true" "!r6rs") string-ci=?) ; for MIT-scheme
+				 (string->keyword (substring str 1))
+				 (if (string=? str "!eof") ; Bigloo? or Chicken? Guile writes it as #<eof> but can't read it
+				     (begin
+				       (format outport "~NC#!eof is probably #<eof> in s7~%" lint-left-margin #\space)
+				       #<eof>)
+				     (let ((lc (str 0)))   ; s7 should handle this, but...
+				       (do ((c (read-char) (read-char)))
+					   ((or (and (eof-object? c)
+						     (or (format outport "~NCunclosed block comment~%" lint-left-margin #\space)
+							 #t))
+						(and (char=? lc #\!)
+						     (char=? c #\#)))
+					    #f)
+					 (set! lc c)))))))))
+	  (read-hooks
+	   ;; try to get past all the # and \ stuff in other Schemes
+	   ;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example)
+	   (list (lambda (h)
+		   (let ((data (h 'data))
+			 (line (port-line-number)))
+		     (if (not (h 'type))
+			 (begin
+			   (format outport "~NCreader[~A]: unknown \\ usage: \\~C~%" lint-left-margin #\space line data)
+			   (set! (h 'result) data))
+			 (begin
+			   (format outport "~NCreader[~A]: unknown # object: #~A~%" lint-left-margin #\space line data)
+			   (set! (h 'result)
+				 (catch #t
+				   (lambda ()
+				     (case (data 0)
+				       ((#\;) (read) (values))
+				       
+				       ((#\T)
+					(and (string=? data "T")
+					     (format outport "#T should be #t~%")
+					     #t))
+				       
+				       ((#\F) 
+					(and (string=? data "F") 
+					     (format outport "#F should be #f~%")
+					     ''#f))
+				       
+				       ((#\X #\B #\O #\D) 
+					(let ((num (string->number (substring data 1) (case (data 0) ((#\X) 16) ((#\O) 8) ((#\B) 2) ((#\D) 10)))))
+					  (if (number? num)
+					      (begin
+						(format outport "~NCuse #~A~A not #~A~%" 
+							lint-left-margin #\space 
+							(char-downcase (data 0)) (substring data 1) data)
+						num)
+					      (string->symbol data))))
+				       
+				       ((#\l #\z)
+					(let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
+					  (if (number? num)
+					      (begin
+						(format outport "~NCjust omit this silly #~C!~%" lint-left-margin #\space (data 0))
+						num)
+					      (string->symbol data))))
+				       
+				       ((#\u) ; for Bigloo
+					(if (string=? data "unspecified")
+					    (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
+					;; #<unspecified> seems to hit the no-values check?
+					(string->symbol data))
+				       ;; Bigloo also seems to use #" for here-doc concatenation??
+				       
+				       ((#\v) ; r6rs byte-vectors?
+					(if (string=? data "vu8")
+					    (format outport "~NCuse #u8 in s7, not #vu8~%" lint-left-margin #\space))
+					(string->symbol data))
+				       
+				       ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
+					(do ((last #\#)
+					     (c (read-char) (read-char))) 
+					    ((and (char=? last #\<) 
+						  (char=? c #\#)) 
+					     (values))
+					  (if (char=? c #\newline)
+					      (set! (port-line-number ()) (+ (port-line-number) 1)))
+					  (set! last c)))
+				       
+				       ((#\<) ; Chicken also, #<<EOF -> EOF
+					(if (string=? data "<undef>") ; #<undef> chibi et al
+					    #<undefined> 
+					    (if (and (char=? (data 1) #\<)
+						     (> (length data) 2))
+						(do ((end (substring data 2))
+						     (c (read-line) (read-line)))
+						    ((string-position end c)
+						     (values)))
+						(string->symbol data))))
+				       
+				       ((#\\) 
+					(cond ((assoc data '(("\\newline"   . #\newline)
+							     ("\\return"    . #\return)
+							     ("\\space"     . #\space)
+							     ("\\tab"       . #\tab)
+							     ("\\null"      . #\null)
+							     ("\\nul"       . #\null)
+							     ("\\linefeed"  . #\linefeed)
+							     ("\\alarm"     . #\alarm)
+							     ("\\esc"       . #\escape)
+							     ("\\escape"    . #\escape)
+							     ("\\rubout"    . #\delete)
+							     ("\\delete"    . #\delete)
+							     ("\\backspace" . #\backspace)
+							     ("\\page"      . #\xc)
+							     ("\\altmode"   . #\escape)
+							     ("\\bel"       . #\alarm) ; #\x07
+							     ("\\sub"       . #\x1a)
+							     ("\\soh"       . #\x01)
+							     
+							     ;; these are for Guile
+							     ("\\vt"        . #\xb)
+							     ("\\bs"        . #\backspace)
+							     ("\\cr"        . #\newline)
+							     ("\\sp"        . #\space)
+							     ("\\lf"        . #\linefeed)
+							     ("\\nl"        . #\null)
+							     ("\\ht"        . #\tab)
+							     ("\\ff"        . #\xc)
+							     ("\\np"        . #\xc))
+						      string-ci=?)
+					       => (lambda (c)
+						    (format outport "~NCperhaps use ~W instead~%" (+ lint-left-margin 4) #\space (cdr c))
+						    (cdr c)))
+					      (else 
+					       (string->symbol (substring data 1)))))
+				       (else 
+					(string->symbol data))))
+				   (lambda args #f))))))))))
+
       (lambda* (file (outp *output-port*) (report-input #t))
 	(set! outport outp)
 	(set! other-identifiers (make-hash-table))
@@ -21971,195 +22156,8 @@
 	(set! *report-input* report-input)
 	(set! *report-nested-if* (if (integer? *report-nested-if*) (max 3 *report-nested-if*) 4))
 	(set! *report-short-branch* (if (integer? *report-short-branch*) (max 0 *report-short-branch*) 12))
-
-	(set! *#readers*
-	      (list (cons #\e (lambda (str)
-				(unless (string=? str "e")
-				  (let ((num (string->number (substring str 1))))
-				    (cond ((not num))
-					  ((rational? num)
-					   (format outport "~NCthis #e is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
-					  ((not (real? num))
-					   (format outport "~NC#e can't handle complex numbers, #~A -> ~A~%" lint-left-margin #\space str num))
-					  ((= num (floor num))
-					   (format outport "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (floor num))))))
-				#f))
-		    (cons #\i (lambda (str)
-				(unless (string=? str "i")
-				  (let ((num (string->number (substring str 1))))
-				    (when num 
-				      (format outport 
-					      (if (not (rational? num))
-						  (values "~NCthis #i is dumb, #~A -> ~A~%" lint-left-margin #\space str (substring str 1))
-						  (values "~NCperhaps #~A -> ~A~%" lint-left-margin #\space str (* 1.0 num)))))))
-				#f))
-		    (cons #\d (lambda (str)
-				(if (and (not (string=? str "d"))
-					 (string->number (substring str 1)))
-				    (format outport "~NC#d is pointless, #~A -> ~A~%" lint-left-margin #\space str (substring str 1)))
-				#f))
-
-		    (cons #\' (lambda (str)                      ; for Guile (and syntax-rules, I think)
-				(list 'syntax (if (string=? str "'") (read) (string->symbol (substring str 1))))))
-
-		    (cons #\` (lambda (str)                      ; for Guile (sigh)
-				(list 'quasisyntax (if (string=? str "`") (read) (string->symbol (substring str 1))))))
-
-		    (cons #\, (lambda (str)                      ; the same, the last is #,@ -> unsyntax-splicing -- right.
-				(list 'unsyntax (if (string=? str ",") (read) (string->symbol (substring str 1))))))
-
-		    (cons #\& (lambda (str)                      ; ancient Guile code
-				(string->keyword (substring str 1))))
-
-		    (cons #\\ (lambda (str)
-				(cond ((assoc str '(("\\x0"        . #\null)
-						    ("\\x7"        . #\alarm)
-						    ("\\x8"        . #\backspace)
-						    ("\\x9"        . #\tab)
-						    ("\\xd"        . #\return)
-						    ("\\xa"        . #\newline)
-						    ("\\1b"        . #\escape)
-						    ("\\x20"       . #\space)
-						    ("\\x7f"       . #\delete)))
-				       => (lambda (c)
-					    (format outport "~NC#\\~A is ~W~%" lint-left-margin #\space (substring str 1) (cdr c)))))
-				#f))
-
-		    (cons #\! (lambda (str)
-				(if (member str '("!optional" "!default" "!rest" "!key" "!aux" "!false" "!true" "!r6rs") string-ci=?) ; for MIT-scheme
-				    (string->keyword (substring str 1))
-				    (if (string=? str "!eof") ; Bigloo? or Chicken? Guile writes it as #<eof> but can't read it
-					(begin
-					  (format outport "~NC#!eof is probably #<eof> in s7~%" lint-left-margin #\space)
-					  #<eof>)
-					(let ((lc (str 0)))   ; s7 should handle this, but...
-					  (do ((c (read-char) (read-char)))
-					      ((or (and (eof-object? c)
-							(or (format outport "~NCunclosed block comment~%" lint-left-margin #\space)
-							    #t))
-						   (and (char=? lc #\!)
-							(char=? c #\#)))
-					       #f)
-					    (set! lc c)))))))))
-	
-	;; try to get past all the # and \ stuff in other Schemes
-	;;   main remaining problem: [] used as parentheses (Gauche and Chicken for example)
-	(set! (hook-functions *read-error-hook*)  
-	      (list (lambda (h)
-		      (let ((data (h 'data))
-			    (line (port-line-number)))
-			(if (not (h 'type))
-			    (begin
-			      (format outport "~NCreader[~A]: unknown \\ usage: \\~C~%" lint-left-margin #\space line data)
-			      (set! (h 'result) data))
-			    (begin
-			      (format outport "~NCreader[~A]: unknown # object: #~A~%" lint-left-margin #\space line data)
-			      (set! (h 'result)
-				    (catch #t
-				      (lambda ()
-					(case (data 0)
-					  ((#\;) (read) (values))
-					  
-					  ((#\T)
-					   (and (string=? data "T")
-						(format outport "#T should be #t~%")
-						#t))
-
-					  ((#\F) 
-					   (and (string=? data "F") 
-						(format outport "#F should be #f~%")
-						''#f))
-
-					  ((#\X #\B #\O #\D) 
-					   (let ((num (string->number (substring data 1) (case (data 0) ((#\X) 16) ((#\O) 8) ((#\B) 2) ((#\D) 10)))))
-					     (if (number? num)
-						 (begin
-						   (format outport "~NCuse #~A~A not #~A~%" 
-							   lint-left-margin #\space 
-							   (char-downcase (data 0)) (substring data 1) data)
-						   num)
-						 (string->symbol data))))
-					  
-					  ((#\l #\z)
-					   (let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
-					     (if (number? num)
-						 (begin
-						   (format outport "~NCjust omit this silly #~C!~%" lint-left-margin #\space (data 0))
-						   num)
-						 (string->symbol data))))
-					  
-					  ((#\u) ; for Bigloo
-					   (if (string=? data "unspecified")
-					       (format outport "~NCuse #<unspecified>, not #unspecified~%" lint-left-margin #\space))
-					   ;; #<unspecified> seems to hit the no-values check?
-					   (string->symbol data))
-					  ;; Bigloo also seems to use #" for here-doc concatenation??
-					  
-					  ((#\v) ; r6rs byte-vectors?
-					   (if (string=? data "vu8")
-					       (format outport "~NCuse #u8 in s7, not #vu8~%" lint-left-margin #\space))
-					   (string->symbol data))
-					  
-					  ((#\>) ; for Chicken, apparently #>...<# encloses in-place C code
-					   (do ((last #\#)
-						(c (read-char) (read-char))) 
-					       ((and (char=? last #\<) 
-						     (char=? c #\#)) 
-						(values))
-					     (if (char=? c #\newline)
-						 (set! (port-line-number ()) (+ (port-line-number) 1)))
-					     (set! last c)))
-					  
-					  ((#\<) ; Chicken also, #<<EOF -> EOF
-					   (if (string=? data "<undef>") ; #<undef> chibi et al
-					       #<undefined> 
-					       (if (and (char=? (data 1) #\<)
-							(> (length data) 2))
-						   (do ((end (substring data 2))
-							(c (read-line) (read-line)))
-						       ((string-position end c)
-							(values)))
-						   (string->symbol data))))
-
-					  ((#\\) 
-					   (cond ((assoc data '(("\\newline"   . #\newline)
-								("\\return"    . #\return)
-								("\\space"     . #\space)
-								("\\tab"       . #\tab)
-								("\\null"      . #\null)
-								("\\nul"       . #\null)
-								("\\linefeed"  . #\linefeed)
-								("\\alarm"     . #\alarm)
-								("\\esc"       . #\escape)
-								("\\escape"    . #\escape)
-								("\\rubout"    . #\delete)
-								("\\delete"    . #\delete)
-								("\\backspace" . #\backspace)
-								("\\page"      . #\xc)
-								("\\altmode"   . #\escape)
-								("\\bel"       . #\alarm) ; #\x07
-								("\\sub"       . #\x1a)
-								("\\soh"       . #\x01)
-								
-								;; these are for Guile
-								("\\vt"        . #\xb)
-								("\\bs"        . #\backspace)
-								("\\cr"        . #\newline)
-								("\\sp"        . #\space)
-								("\\lf"        . #\linefeed)
-								("\\nl"        . #\null)
-								("\\ht"        . #\tab)
-								("\\ff"        . #\xc)
-								("\\np"        . #\xc))
-							 string-ci=?)
-						  => (lambda (c)
-						       (format outport "~NCperhaps use ~W instead~%" (+ lint-left-margin 4) #\space (cdr c))
-						       (cdr c)))
-						 (else 
-						  (string->symbol (substring data 1)))))
-					  (else 
-					   (string->symbol data))))
-				      (lambda args #f)))))))))
+	(set! *#readers* readers)
+	(set! (hook-functions *read-error-hook*) read-hooks)
 
 	;; preset list-tail and list-ref
 	(hash-table-set! (fragments 10) '((if (zero? _2_) _1_ (_F_ (cdr _1_) (- _2_ 1))))
@@ -22392,4 +22390,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 79 30111 829629
+;;; 78 30111 829629

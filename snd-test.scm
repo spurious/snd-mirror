@@ -46643,9 +46643,8 @@ EDITS: 1
 
 (gc) (gc)
 
-(when (not (defined? 'no-exit))
-  (s7-version)
-  (if with-exit (exit)))
+(s7-version)
+(if with-exit (exit))
 
 ;;; ---------------- test the end
 
