@@ -413,7 +413,11 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	{
 	  ssize_t bytes_read;
 	  
-	  bytes_read = read(es->fd, (char *)(es->direct_data), lm * es->bytes);
+	  /* there might be trailing chunks, so we have to keep track of es->samples (Tito Latini 2-Feb-17) */
+	  bytes_read = es->samples * mus_bytes_per_sample(es->format) * es->chans;
+	  if (bytes_read > (lm * es->bytes))
+	    bytes_read = lm * es->bytes;
+	  bytes_read = read(es->fd, (char *)(es->direct_data), bytes_read);
 	  if (bytes_read < lm * es->bytes)
 	    {
 	      int zero_byte;

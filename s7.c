@@ -944,7 +944,7 @@ struct s7_scheme {
   shared_info *circle_info;
   format_data **fdats;
   int num_fdats;
-  s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3;
+  s7_pointer elist_1, elist_2, elist_3, elist_4, elist_5, plist_1, plist_2, plist_3, qlist_2;
 
   s7_pointer *strings, *strings1, *vectors, *input_ports, *output_ports, *continuations, *c_objects, *hash_tables, *gensyms, *setters;
   unsigned int strings_size, strings1_size, vectors_size, input_ports_size, output_ports_size, continuations_size, c_objects_size, hash_tables_size, gensyms_size, setters_size;
@@ -3245,6 +3245,13 @@ static s7_pointer set_plist_2(s7_scheme *sc, s7_pointer x1, s7_pointer x2)
   return(sc->plist_2);
 } 
 
+static s7_pointer set_qlist_2(s7_scheme *sc, s7_pointer x1, s7_pointer x2)
+{
+  set_car(sc->qlist_2, x1);
+  set_cadr(sc->qlist_2, x2);
+  return(sc->qlist_2);
+} 
+
 static s7_pointer set_plist_3(s7_scheme *sc, s7_pointer x1, s7_pointer x2, s7_pointer x3)
 {
   return(set_wlist_3(sc, sc->plist_3, x1, x2, x3));
@@ -4457,6 +4464,8 @@ static int gc(s7_scheme *sc)
   S7_MARK(car(sc->plist_3));
   S7_MARK(cadr(sc->plist_3));
   S7_MARK(caddr(sc->plist_3));
+  S7_MARK(car(sc->qlist_2));
+  S7_MARK(cadr(sc->qlist_2));
 
   {
     unsigned int i;
@@ -4821,8 +4830,6 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
 {
   int loc;
   s7_pointer p;
-  /* this is not called if DEBUGGING is on -- safety > 0 */
-
   /* global functions are very rarely redefined, so we can remove the function body from
    *   the heap when it is defined.  If redefined, we currently lose the memory held by the
    *   old definition.  (It is not trivial to recover this memory because it is allocated
@@ -6659,15 +6666,32 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- let-ref -------------------------------- */
-static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
+
+static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer x, y;
+  #define H_let_ref "(let-ref env sym) returns the value of the symbol sym in the environment env"
+  #define Q_let_ref s7_make_signature(sc, 3, sc->T, sc->is_let_symbol, sc->is_symbol_symbol)
+  s7_pointer env, symbol, x, y;
+
   /* (let ((a 1)) ((curlet) 'a))
    * ((rootlet) 'abs)
    */
 
+  env = car(args);
+  if (!is_let(env))
+    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, a_let_string));
+
+  symbol = cadr(args);
   if (is_keyword(symbol))
     symbol = keyword_symbol(symbol);
+
+  if (!is_symbol(symbol))
+    {
+      check_method(sc, env, sc->let_ref_symbol, args);
+      if (has_ref_fallback(env))
+	check_method(sc, env, sc->let_ref_fallback_symbol, args);
+      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, a_symbol_string));
+    }
 
   if (env == sc->rootlet)
     {
@@ -6691,7 +6715,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
    *   get into infinite recursion.  So, 'let-ref-fallback...
    */
   if (has_ref_fallback(env))
-    check_method(sc, env, sc->let_ref_fallback_symbol, sc->w = list_2(sc, env, symbol));
+    check_method(sc, env, sc->let_ref_fallback_symbol, args);
 
   /* why did this ignore a global value? Changed 24-May-16 to check rootlet if no methods --
    *   apparently I was using #<undefined> here (pre-rootlet-check) to indicate that an
@@ -6710,38 +6734,7 @@ static s7_pointer let_ref_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 
 s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer symbol)
 {
-  if (!is_let(env))
-    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, env, a_let_string));
-    
-  if (!is_symbol(symbol))
-    {
-      check_method(sc, env, sc->let_ref_symbol, sc->w = list_2(sc, env, symbol));
-      if (has_ref_fallback(env))
-	check_method(sc, env, sc->let_ref_fallback_symbol, sc->w = list_2(sc, env, symbol));
-      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, symbol, a_symbol_string));
-    }
-  return(let_ref_1(sc, env, symbol));
-}
-
-static s7_pointer g_let_ref(s7_scheme *sc, s7_pointer args)
-{
-  #define H_let_ref "(let-ref env sym) returns the value of the symbol sym in the environment env"
-  #define Q_let_ref s7_make_signature(sc, 3, sc->T, sc->is_let_symbol, sc->is_symbol_symbol)
-  s7_pointer e, s;
-
-  e = car(args);
-  if (!is_let(e))
-    return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 1, e, a_let_string));
-
-  s = cadr(args);
-  if (!is_symbol(s))
-    {
-      check_method(sc, e, sc->let_ref_symbol, args);
-      if (has_ref_fallback(e))
-	check_method(sc, e, sc->let_ref_fallback_symbol, args);
-      return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, s, a_symbol_string));
-    }
-  return(let_ref_1(sc, e, s));
+  return(g_let_ref(sc, set_plist_2(sc, env, symbol)));
 }
 
 
@@ -28733,7 +28726,7 @@ defaults to the rootlet.  To load into the current environment instead, pass (cu
       {
 	s7_pointer init;
 
-	init = let_ref_1(sc, sc->envir, s7_make_symbol(sc, "init_func"));
+	init = g_let_ref(sc, set_plist_2(sc, sc->envir, s7_make_symbol(sc, "init_func")));
 	if (is_symbol(init))
 	  {
 	    void *library;
@@ -34493,7 +34486,7 @@ static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
   if (sym == tree) return(true);
   if (!is_pair(tree)) return(false);
-  if ((car(tree) == sc->quote_symbol))
+  if (car(tree) == sc->quote_symbol)
     {
       if ((is_symbol(sym)) || (is_pair(sym)))
 	return(false);
@@ -48269,11 +48262,11 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
 }
 
 /* -------------------------------- s7-version -------------------------------- */
+
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
 {
   #define H_s7_version "(s7-version) returns some string describing the current s7"
   #define Q_s7_version pcl_s
-
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
 }
 
@@ -52195,7 +52188,7 @@ static s7_pointer g_or_all_x_2s(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer and_all_x, and_all_x_2;
+static s7_pointer and_all_x, and_all_x_2, and_all_x_uc;
 static s7_pointer g_and_all_x(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, x = sc->T;
@@ -52217,6 +52210,16 @@ static s7_pointer g_and_all_x_2(s7_scheme *sc, s7_pointer args)
   return(c_call(p)(sc, car(p)));
 }
 
+static s7_pointer g_and_all_x_uc(s7_scheme *sc, s7_pointer args)
+{
+   s7_pointer p;
+   p = car(args);
+   set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(p)));
+   p = c_call(p)(sc, sc->t1_1);
+   if (p == sc->F) return(p);
+   p = cadr(args);
+   return(c_call(p)(sc, cdr(p)));
+}
 
 static s7_pointer if_all_x1;
 static s7_pointer g_if_all_x1(s7_scheme *sc, s7_pointer args)
@@ -52990,6 +52993,7 @@ static void init_choosers(s7_scheme *sc)
   or_all_x_2s = s7_make_function(sc, "or", g_or_all_x_2s, 2, 0, false, "or opt");
   and_all_x = s7_make_function(sc, "and", g_and_all_x, 0, 0, true, "and opt");
   and_all_x_2 = s7_make_function(sc, "and", g_and_all_x_2, 2, 0, false, "and opt");
+  and_all_x_uc = s7_make_function(sc, "and", g_and_all_x_uc, 2, 0, false, "and opt");
   if_all_x1 = s7_make_function(sc, "if", g_if_all_x1, 2, 0, false, "if opt");
   if_all_x2 = s7_make_function(sc, "if", g_if_all_x2, 3, 0, false, "if opt");
   if_all_not_x1 = s7_make_function(sc, "if", g_if_all_not_x1, 2, 0, false, "if opt");
@@ -53356,6 +53360,11 @@ static bool optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fun
 	{
 	  if (func_is_safe)                  /* safe c function */
 	    {
+#if 0
+	      if ((symbols == 1) &&
+		  (pair_symbol_is_safe(sc, arg1, e)))
+		fprintf(stderr, "%s is safe\n", DISPLAY(expr));
+#endif
 	      set_safe_optimize_op(expr, hop + ((symbols == 0) ? OP_SAFE_C_C : OP_SAFE_C_S));
 	      /* we can't simply check is_global here to forego symbol value lookup later because we aren't
 	       *    tracking local vars, so the global bit may be on right now, but won't be when
@@ -54905,7 +54914,12 @@ static bool optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int
 		  if (op == OP_AND)
 		    {
 		      if (s7_list_length(sc, cdr(expr)) == 2)
-			set_c_function(expr, and_all_x_2);
+			{
+			  if ((c_call(cdr(expr)) == all_x_c_u) &&
+			      (c_call(cddr(expr)) == all_x_c_c))
+			    set_c_function(expr, and_all_x_uc);
+			  else set_c_function(expr, and_all_x_2);
+			}
 		      else set_c_function(expr, and_all_x);
 		    }
 		  else
@@ -55727,19 +55741,19 @@ static void check_lambda(s7_scheme *sc)
    *   one problem the hop=0 fixes is that safe closures assume the old frame exists, so we need to check for define below
    *   I wonder about apply define...
    */
-  if ((sc->safety == 0) &&
-      ((main_stack_op(sc) == OP_DEFINE1) ||
-       (((sc->stack_end - sc->stack_start) > 4) &&
-	(((opcode_t)(sc->stack_end[-5])) == OP_DEFINE1) &&  /* surely if define is ok, so is define dilambda? 16-Apr-16 */
-	(sc->op_stack_now > sc->op_stack) &&
-	((*(sc->op_stack_now - 1)) == (s7_pointer)slot_value(global_slot(sc->dilambda_symbol)))))) 
+  if ((main_stack_op(sc) == OP_DEFINE1) ||
+      (((sc->stack_end - sc->stack_start) > 4) &&
+       (((opcode_t)(sc->stack_end[-5])) == OP_DEFINE1) &&  /* surely if define is ok, so is define dilambda? 16-Apr-16 */
+       (sc->op_stack_now > sc->op_stack) &&
+       ((*(sc->op_stack_now - 1)) == (s7_pointer)slot_value(global_slot(sc->dilambda_symbol)))))
     optimize_lambda(sc, true, sc->gc_nil, car(code), body); /* why was lambda the func? */
   else optimize(sc, body, 0, sc->nil);
-  
+
   if ((is_overlaid(code)) &&
       (has_opt_back(code)))
     pair_set_syntax_symbol(code, sc->lambda_unchecked_symbol);
 }
+
 
 static void check_lambda_star(s7_scheme *sc)
 {
@@ -55759,6 +55773,7 @@ static void check_lambda_star(s7_scheme *sc)
       (has_opt_back(sc->code)))
     pair_set_syntax_symbol(sc->code, sc->lambda_star_unchecked_symbol);
 }
+
 
 static s7_pointer check_when(s7_scheme *sc)
 {
@@ -65510,7 +65525,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer s;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sc->value = s7_let_ref(sc, s, cadr(code));
+		    sc->value = g_let_ref(sc, set_qlist_2(sc, s, cadr(code)));
 		    goto START;
 		  }
 		  
@@ -65521,7 +65536,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer s;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sc->value = s7_let_ref(sc, s, find_symbol_checked(sc, cadr(code)));
+		    sc->value = g_let_ref(sc, set_qlist_2(sc, s, find_symbol_checked(sc, cadr(code))));
 		    goto START;
 		  }
 		  
@@ -65529,13 +65544,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_ENVIRONMENT_Q:
 		case HOP_ENVIRONMENT_Q:
 		  {
-		    s7_pointer s, sym;
+		    s7_pointer s;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sym = cadr(cadr(code));
-		    if (is_symbol(sym))
-		      sc->value = let_ref_1(sc, s, sym);
-		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, a_symbol_string)); /* (e '(1)) */
+		    sc->value = g_let_ref(sc, set_qlist_2(sc, s, cadr(cadr(code))));
 		    goto START;
 		  }
 		  
@@ -65544,13 +65556,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!indirect_cq_function_is_ok(sc, cadr(code))) break;
 		case HOP_ENVIRONMENT_A:
 		  {
-		    s7_pointer s, sym;
+		    s7_pointer s;
 		    s = find_symbol_checked(sc, car(code));
 		    if (!is_let(s)) break;
-		    sym = c_call(cdr(code))(sc, cadr(code));
-		    if (is_symbol(sym))
-		      sc->value = let_ref_1(sc, s, sym);
-		    else return(wrong_type_argument_with_type(sc, sc->let_ref_symbol, 2, sym, a_symbol_string)); /* (e expr) where expr->#f */
+		    sc->value = g_let_ref(sc, set_qlist_2(sc, s, c_call(cdr(code))(sc, cadr(code))));
 		    goto START;
 		  }
 		  
@@ -74169,11 +74178,7 @@ s7_scheme *s7_init(void)
   sc->s7_call_line = 0;
   sc->s7_call_file = NULL;
   sc->s7_call_name = NULL;
-#if DEBUGGING
-  sc->safety = 1;
-#else
   sc->safety = 0;
-#endif
   sc->print_length = 8;
   sc->history_size = DEFAULT_HISTORY_SIZE;
   sc->true_history_size = DEFAULT_HISTORY_SIZE;
@@ -74187,6 +74192,7 @@ s7_scheme *s7_init(void)
   sc->plist_1 = permanent_list(sc, 1);
   sc->plist_2 = permanent_list(sc, 2);
   sc->plist_3 = permanent_list(sc, 3);
+  sc->qlist_2 = permanent_list(sc, 2);
   sc->elist_1 = permanent_list(sc, 1);
   sc->elist_2 = permanent_list(sc, 2);
   sc->elist_3 = permanent_list(sc, 3);
@@ -75112,7 +75118,6 @@ s7_scheme *s7_init(void)
   sc->require_symbol = s7_define_macro(sc, "require", g_require, 0, 0, true, H_require);
   sc->stacktrace_defaults = s7_list(sc, 5, small_int(3), small_int(45), small_int(80), small_int(45), sc->T);
 
-
   /* -------- *#readers* -------- */
   sym = s7_define_variable(sc, "*#readers*", sc->nil);
   sc->sharp_readers = global_slot(sym);
@@ -75538,7 +75543,7 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 3300
  * tform         |      |      | 6816 | 3627 | 3724 3787
  * tmap          |      |      |  9.3 | 4176 | 4171 4267
- * lint          |      |      |      | 7731 | 4736 4705 [207.4]
+ * lint          |      |      |      | 7731 | 4736 4585 [205.3]
  * titer         |      |      | 7503 | 5218 | 5227 5897
  * thash         |      |      | 50.7 | 8491 | 8518 8894
  *               |      |      |      |      |
@@ -75566,6 +75571,14 @@ int main(int argc, char **argv)
  * can do test change simplify more for recur->iter in lint?
  * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
  * hook tests that check that pars exist and are not built-ins
+ * safe_c_s et al: add '(expr . new-op) to pending-fixups, and at end of optimize, set_optimize_op(expr, new-op)
+ *   c_s -> c_u if pair_is_safe(symbol, env) -- also car/cdr fixups and so on
+ *   hash_entry as carrier?  if pair_is_safe etc -- no problem (hop_safe_c_s is ignored anyway)
+ *   make_hash_entry -> hash_free_list, list follows next
+ *   c|car|cdr|cadr|symbol|null|pair_u
+ *   c_c: and_all_x_uc|2
+ *   c_opsq: similar to c_s
+ *   closure_s(_p)
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
