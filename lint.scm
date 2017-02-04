@@ -604,11 +604,8 @@
 	       (and (pair? p)
 		    (car p)))))))
 
-    (define collect-if 
-      (let ((documentation "(collect-if type func sequence) gathers the elements of sequence that satisfy func, and returns them via type:\n\
-              (collect-if list integer? #(1.4 2/3 1 1+i 2)) -> '(1 2)"))
-	(lambda (type f sequence)
-	  (apply type (map (lambda (arg) (if (f arg) arg (values))) sequence)))))
+    (define (collect-if f lst)
+      (map (lambda (arg) (if (f arg) arg (values))) lst))
 
     (define (collect-if-rational lst)
       (map (lambda (x) (if (rational? x) x (values))) lst))
@@ -5672,13 +5669,13 @@
 					  (set! nums (list (apply (symbol->value (car form)) nums))))
 				      (let ((new-args (append nums (collect-non-numbers args))))
 					(let ((c1 (car nums)))
-					  (set! new-args (collect-if list (lambda (x)
-									    (or (not (pair? x))
-										(<= (length x) 2)
-										(not (eq? (car x) other))
-										(let ((c2 (lint-find-if real? (cdr x))))
-										  (or (not c2)
-										      (relop c1 c2)))))
+					  (set! new-args (collect-if (lambda (x)
+								       (or (not (pair? x))
+									   (<= (length x) 2)
+									   (not (eq? (car x) other))
+									   (let ((c2 (lint-find-if real? (cdr x))))
+									     (or (not c2)
+										 (relop c1 c2)))))
 								     new-args)))
 					(if (< (length new-args) (length args))
 					    (set! args new-args)))))            ; might set args to ()?
