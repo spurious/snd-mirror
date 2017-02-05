@@ -19124,27 +19124,27 @@
 							     (wrap-new-form header (tree-subst vvalue vname p) trailer)))))
 			    ((if)
 			     (when (len=3? p)
-			       (let ((true (and (pair? next-args) (car next-args))))
-				 (if (eq? first-arg vname)
-				     (let ((calls (tree-count-upto 2 vname body)))
-				       (if (= calls 1)
-					   (lint-format "perhaps ~A" caller
-							(lists->string form
-								       (wrap-new-form header (tree-subst vvalue vname p) trailer)))
+			       (if (eq? first-arg vname)
+				   (let ((calls (tree-count-upto 2 vname body)))
+				     (if (= calls 1)
+					 (lint-format "perhaps ~A" caller
+						      (lists->string form
+								     (wrap-new-form header (tree-subst vvalue vname p) trailer)))
+					 (let ((true (and (pair? next-args) (car next-args))))
 					   (if (and (= calls 2)
 						    (len=2? true)
 						    (eq? first-arg (cadr true)))
 					       (lint-format "perhaps ~A" caller
 							    (lists->string form
-									   (wrap-new-form header (list 'cond (list vvalue '=> (car true))) trailer))))))
-				     (if (and (len=2? first-arg)
-					      (eq? (car first-arg) 'not)
-					      (eq? (cadr first-arg) vname)
-					      (tree-nonce vname body))
-					 (lint-format "perhaps ~A" caller
-						      (lists->string form
-								     (wrap-new-form header (tree-subst vvalue vname p) trailer)))))))))))))))))
-	  
+									   (wrap-new-form header (list 'cond (list vvalue '=> (car true))) trailer)))))))
+				   (if (and (len=2? first-arg)
+					    (eq? (car first-arg) 'not)
+					    (eq? (cadr first-arg) vname)
+					    (tree-nonce vname body))
+				       (lint-format "perhaps ~A" caller
+						    (lists->string form
+								   (wrap-new-form header (tree-subst vvalue vname p) trailer))))))))))))))))
+	
 	  ;; -------- let->for-each --------
 	  (define (let->for-each caller form varlist body)
 	    (when (and (len>2? body)

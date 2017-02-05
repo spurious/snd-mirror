@@ -15821,8 +15821,28 @@ mus_float_t mus_phase_vocoder_with_editors(mus_any *ptr,
 	      mus_float_t diff;
 	      diff = pv->freqs[i] - pv->lastphase[i];
 	      pv->lastphase[i] = pv->freqs[i];
-	      while (diff > M_PI) diff -= TWO_PI;
-	      while (diff < -M_PI) diff += TWO_PI;
+	      
+	      /* this used to be two while loops adding/subtracting two pi, but that can get into an infinite loop
+	       *   while (diff > M_PI) diff -= TWO_PI;
+	       *   while (diff < -M_PI) diff += TWO_PI;
+	       * (anything to avoid fmod!)
+	       */
+	      if (diff > M_PI)
+		{
+		  diff -= TWO_PI;
+		  if (diff > M_PI)
+		    diff = fmod(diff, TWO_PI);
+		}
+	      if (diff < -M_PI)
+		{
+		  diff += TWO_PI;
+		  if (diff < -M_PI)
+		    {
+		      diff = fmod(diff, TWO_PI);
+		      if (diff < -M_PI) 
+			diff += TWO_PI;
+		    }
+		}
 	      pv->freqs[i] = pv->pitch * (diff * pscl + ks);
 	    }
 	}
