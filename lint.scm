@@ -83,6 +83,9 @@
 |#
 
 
+(define var-name car)
+(define var-member assq)
+
 ;;; --------------------------------------------------------------------------------
 (define lint
 
@@ -432,9 +435,7 @@
 
     
     ;; -------- vars -------- 
-    (define var-name car)
     (define (var? v) (and (pair? v) (let? (cdr v))))
-    (define var-member assq)
     
     (define var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
     (define var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
@@ -22389,4 +22390,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 78 30111 829629
+;;; 77 30111 829629

@@ -685,7 +685,10 @@ typedef struct s7_cell {
       } str_ext;
       char *svalue;
       unsigned long long int hash;          /* string hash-index */
-      s7_pointer initial_slot;
+      union {
+	s7_pointer initial_slot;
+	long long int local_id;
+      } sym_info;
       union {
 	char *documentation;
 	s7_pointer ksym;
@@ -783,6 +786,7 @@ typedef struct s7_cell {
 
 #if DEBUGGING
   int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, alloc_line, uses;
+  long long int sid;
   const char *current_alloc_func, *previous_alloc_func, *gc_func, *alloc_func;
 #endif
 
@@ -2021,12 +2025,13 @@ static int not_heap = -1;
  *    callgrind says this is faster than an unsigned int!
  */
 #define symbol_syntax_op(p)           (_TSym(p))->object.sym.op
-/* #define symbol_function_op(p)         (_TSym(p))->object.sym.op */
 
 #define global_slot(p)                (_TSym(p))->object.sym.global_slot
 #define set_global_slot(p, Val)       (_TSym(p))->object.sym.global_slot = _TSld(Val)
-#define initial_slot(p)               (symbol_name_cell(p))->object.string.initial_slot
-#define set_initial_slot(p, Val)      (symbol_name_cell(p))->object.string.initial_slot = _TSld(Val)
+#define initial_slot(p)               (symbol_name_cell(p))->object.string.sym_info.initial_slot
+#define set_initial_slot(p, Val)      (symbol_name_cell(p))->object.string.sym_info.initial_slot = _TSld(Val)
+#define symbol_local_id(p)            (symbol_name_cell(p))->object.string.sym_info.local_id
+#define set_symbol_local_id(p, Val)   (symbol_name_cell(p))->object.string.sym_info.local_id = Val
 #define local_slot(p)                 (_TSym(p))->object.sym.local_slot
 #define set_local_slot(p, Val)        (_TSym(p))->object.sym.local_slot = _TSln(Val)
 #define keyword_symbol(p)             (symbol_name_cell(p))->object.string.doc.ksym
@@ -2212,7 +2217,7 @@ static void pair_set_syntax_symbol(s7_pointer p, s7_pointer op) {set_car(opt_bac
 #define c_function_ip(f)              c_function_data(f)->ip
 #define c_function_pp(f)              c_function_data(f)->pp
 #define c_function_gp(f)              c_function_data(f)->gp
-#define set_c_function(f, X)          do {s7_pointer _x_; _x_ = X; set_opt_cfunc(f, _x_); set_c_call(f, c_function_call(_x_));} while (0)
+#define set_c_function(X, f)          do {set_opt_cfunc(X, f); set_c_call(X, c_function_call(f));} while (0)
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
 #define c_macro_data(f)               (_TMac(f))->object.fnc.c_proc
@@ -2767,7 +2772,9 @@ enum {OP_NO_OP,
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
-enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CDR_S, HOP_SAFE_CDR_S,
+enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
+      OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_CADR_S, HOP_SAFE_CADR_S,
+      OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_NULL_S, HOP_SAFE_IS_NULL_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, 
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS,
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ,
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC,
@@ -2945,7 +2952,9 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 };
 
 static const char* opt_names[OPT_MAX_DEFINED] =
-     {"safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", "safe_car_s", "h_safe_car_s", "safe_cdr_s", "h_safe_cdr_s",
+     {"safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
+      "safe_car_s", "h_safe_car_s", "safe_cdr_s", "h_safe_cdr_s", "safe_cadr_s", "h_safe_cadr_s",
+      "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_null_s", "h_safe_is_null_s", "safe_is_symbol_s", "h_safe_is_symbol_s", 
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs",
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq",
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc",
@@ -3120,6 +3129,17 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       return(Sc->F);                                         \
     return(Sc->T);                                           \
   }
+
+#define eval_boolean_method(Sc, Checker, Method, Arg) \
+    if (Checker(Arg))				      \
+      Sc->value = Sc->T;			      \
+    else					      \
+      {						      \
+	s7_pointer func;						\
+	if ((has_methods(Arg)) && ((func = find_method(Sc, find_let(Sc, Arg), Method)) != Sc->undefined)) \
+	  Sc->value = s7_apply_function(Sc, func, list_1(Sc, Arg));	\
+	else Sc->value = Sc->F;						\
+      }
 
  #define method_or_bust(Sc, Obj, Method, Args, Type, Num)	\
   {                                             \
@@ -4638,6 +4658,7 @@ int s7_gc_freed(s7_scheme *sc) {return(sc->gc_freed);}
    *   to check it repeatedly after the first such check.
    */
 #else
+/* DEBUGGING */
 static bool for_any_other_reason(s7_scheme *sc, int line)
 {
 #if 0
@@ -4663,14 +4684,14 @@ static bool for_any_other_reason(s7_scheme *sc, int line)
   do {						\
     if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top))); \
-    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;	\
+    Obj->alloc_line = __LINE__; Obj->alloc_func = __func__; Obj->debugger_bits = 0;	\
     set_type(Obj, Type);	      \
     } while (0)
 
 #define new_cell_no_check(Sc, Obj, Type)		    \
   do {							    \
     Obj = (*(--(Sc->free_heap_top)));			    \
-    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__;\
+    Obj->alloc_line = __LINE__;	 Obj->alloc_func = __func__; Obj->debugger_bits = 0; \
     set_type(Obj, Type);				    \
     } while (0)
 #endif
@@ -4861,6 +4882,9 @@ static void s7_remove_from_heap(s7_scheme *sc, s7_pointer x)
       p = alloc_pointer();
       sc->heap[loc] = p;
       (*sc->free_heap_top++) = p;
+#if DEBUGGING
+      p->debugger_bits = 0;
+#endif
       heap_location(p) = loc;
 #if 0
       /* this code fixes the problem above, but at some cost (gc + mark_pair up by about 2% in the worst case (snd-test.scm)) */
@@ -5219,6 +5243,10 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
     return(s7_error(sc, sc->error_symbol, set_elist_1(sc, make_string_wrapper(sc, "can't make symbol: symbol table is locked!"))));
 
   base = (unsigned char *)malloc(sizeof(s7_cell) * 3 + len + 1);
+#if DEBUGGING
+  /* clear at least debugger_bits here and below */
+  memset((void *)base, 0, sizeof(s7_cell) * 3 + len + 1);
+#endif
   x = (s7_pointer)base;
   str = (s7_pointer)(base + sizeof(s7_cell));
   p = (s7_pointer)(base + 2 * sizeof(s7_cell));
@@ -5538,7 +5566,11 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   location = hash % SYMBOL_TABLE_SIZE;
 
   /* make-string for symbol name */
-  str = (s7_cell *)malloc(sizeof(s7_cell));  /* was calloc? */
+#if DEBUGGING
+  str = (s7_cell *)calloc(1, sizeof(s7_cell));
+#else
+  str = (s7_cell *)malloc(sizeof(s7_cell));
+#endif
   unheap(str);
 #if DEBUGGING
   typeflag(str) = 0;
@@ -5557,7 +5589,11 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   symbol_set_local(x, 0LL, sc->nil);
 
   /* place new symbol in symbol-table, but using calloc so we can easily free it (remove it from the table) in GC sweep */
-  stc = (s7_cell *)malloc(sizeof(s7_cell)); /* was calloc? */
+#if DEBUGGING
+  stc = (s7_cell *)calloc(1, sizeof(s7_cell));
+#else
+  stc = (s7_cell *)malloc(sizeof(s7_cell));
+#endif
 #if DEBUGGING
   typeflag(stc) = 0;
 #endif
@@ -5782,6 +5818,9 @@ static s7_pointer make_simple_let(s7_scheme *sc)
 static s7_pointer reuse_as_let(s7_scheme *sc, s7_pointer frame, s7_pointer next_frame)
 {
   /* we're reusing frame here as a let -- it was probably a pair */
+#if DEBUGGING
+  frame->debugger_bits = 0;
+#endif
   set_type(frame, T_LET | T_SAFE_PROCEDURE);
   let_set_slots(frame, sc->nil);
   set_outlet(frame, next_frame);
@@ -5791,6 +5830,9 @@ static s7_pointer reuse_as_let(s7_scheme *sc, s7_pointer frame, s7_pointer next_
 
 static s7_pointer reuse_as_slot(s7_pointer slot, s7_pointer symbol, s7_pointer value)
 {
+#if DEBUGGING
+  slot->debugger_bits = 0;
+#endif
   set_type(slot, T_SLOT);
   slot_set_symbol(slot, symbol);
   slot_set_value(slot, _NFre(value));
@@ -39689,29 +39731,33 @@ static bool c_function_is_ok(s7_scheme *sc, s7_pointer x)
    */
   s7_pointer p;
 
-  p = car(x);
-
-  /* let_id + ptr to let -- is it let ids match? */
-  /* var-name = car, but the symbol is not global, similarly var-member = assq */
-  /* so if not global but symbol_id=stored val, use local_slot? */
-  /* opt_any1 = opt1 = val = opt_cfunc?  opt2=c_call */
-
-  /* maybe use symbol_syntax_op = sym.op = unsigned int like c_proc->id = function_class
-   *   set_c_function would set symbol_function_op to the function_class of the (value) function
-   *   then here we check that symbol_function_op(car(x)) == c_function_class(opt_cfunc(x))
-   *   no global check, no lookup, if not a match then look it up and fixup the function_op?
-   *   same symbol can be diff c funcs... -- in that case lookup is needed!
-   *   if (is_symbol(car(f))) symbol_function_op(car(f)) = c_function_class(_x_)
+  /* save id of first local let definition (min of all subsequent?)
+   *   if here symbol_id still is that let_id, then it's a local var never rebound
+   *   so can't we just use local_slot?  Isn't this the case everywhere?
+   * so to save it: extra 8-byte trailer?  gensym can release it in sweep.
+   * also move initial_slot to trailers? initial_slot not used if purely local -- use as id?
+   * even if same, sym might be inaccessible at ref point -- but unchecked lookups are safe in that regard
+   *
+   * so add union initial_slot initial_local_id
+   *   use t_mutable|t_safe_stepper|t_safe_procedure bit to distinguish
+   *   add to symbol_set_local: if symbol_id==0 and !is_slot(global|initial_slot) save new id (if not 0)
+   *   set t_local_symbol bit
+   * in any lookup if id==0, use global, if id=local use local, else current search
+   * maybe swap local_id and op/tag?
    */
 
-  if (is_global(p)) p = slot_value(global_slot(p)); else p = find_symbol_unchecked(sc, p);
+  p = car(x); /* function name (symbol) */
+  if (is_global(p)) 
+    p = slot_value(global_slot(p)); 
+  else p = find_symbol_unchecked(sc, p);
+
   /* this is nearly always global and p == opt_cfunc(x) 
    * p can be null if we evaluate some code, optimizing it, then eval it again in a context
    *   where the incoming p was undefined(!) -- explicit use of eval and so on.
    *   I guess ideally eval would ignore optimization info -- copy :readable or something.
    */
   return((p == opt_any1(x)) ||
-	 ((is_any_c_function(p)) && /* (opt_cfunc(x)) && */
+	 ((is_any_c_function(p)) &&
 	  (c_function_class(p) == c_function_class(opt_cfunc(x)))));
 }
 
@@ -48519,9 +48565,26 @@ static s7_pointer all_x_car_s(s7_scheme *sc, s7_pointer arg)
   return((is_pair(val)) ? car(val) : g_car(sc, set_plist_1(sc, val)));
 }
 
-static s7_pointer all_x_null_s(s7_scheme *sc, s7_pointer arg)
+static s7_pointer all_x_cadr_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer val;
+  val = find_symbol_unchecked(sc, cadr(arg));
+  return(((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, set_plist_1(sc, val)));
+}
+
+static s7_pointer all_x_is_null_s(s7_scheme *sc, s7_pointer arg)
 {
   return(make_boolean(sc, is_null(find_symbol_unchecked(sc, cadr(arg)))));
+}
+
+static s7_pointer all_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
+{
+  return(make_boolean(sc, is_symbol(find_symbol_unchecked(sc, cadr(arg)))));
+}
+
+static s7_pointer all_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
+{
+  return(make_boolean(sc, is_pair(find_symbol_unchecked(sc, cadr(arg)))));
 }
 
 static s7_pointer all_x_c_sc(s7_scheme *sc, s7_pointer arg)
@@ -48886,6 +48949,10 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_S] = all_x_c_s;
   all_x_function[HOP_SAFE_CAR_S] = all_x_car_s;
   all_x_function[HOP_SAFE_CDR_S] = all_x_cdr_s;
+  all_x_function[HOP_SAFE_CADR_S] = all_x_cadr_s;
+  all_x_function[HOP_SAFE_IS_PAIR_S] = all_x_is_pair_s;
+  all_x_function[HOP_SAFE_IS_NULL_S] = all_x_is_null_s;
+  all_x_function[HOP_SAFE_IS_SYMBOL_S] = all_x_is_symbol_s;
 
   all_x_function[HOP_SAFE_C_opCq] = all_x_c_opcq;
   all_x_function[HOP_SAFE_C_opSq] = all_x_c_opsq;
@@ -48949,7 +49016,10 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_
 	    case HOP_SAFE_C_S:
 	      if (car(arg) == sc->cdr_symbol) return(all_x_cdr_s);
 	      if (car(arg) == sc->car_symbol) return(all_x_car_s);
-	      if (car(arg) == sc->is_null_symbol) return(all_x_null_s);
+	      if (car(arg) == sc->cadr_symbol) return(all_x_cadr_s);
+	      if (car(arg) == sc->is_null_symbol) return(all_x_is_null_s);
+	      if (car(arg) == sc->is_pair_symbol) return(all_x_is_pair_s);
+	      if (car(arg) == sc->is_symbol_symbol) return(all_x_is_symbol_s);
 	      return(all_x_c_s);
 
 	    case HOP_SAFE_C_SSS:
@@ -51383,16 +51453,12 @@ static s7_pointer add_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer 
 
       if (arg2 == small_int(1))
 	{
-	  if ((is_optimized(expr)) &&
-	      (op_no_hop(expr) == OP_SAFE_C_SC))
+	  if (is_symbol(arg1))
 	    {
-	      if (is_symbol(arg1))
-		{
-		  set_optimize_op(expr, HOP_SAFE_C_C);
-		  return(add_cs1);
-		}
-	      return(add_s1);
+	      set_optimize_op(expr, HOP_SAFE_C_C);
+	      return(add_cs1);
 	    }
+	  return(add_s1);
 	}
 #if HAVE_OVERFLOW_CHECKS
       if (s7_is_integer(arg2))
@@ -53251,11 +53317,9 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	      if ((symbols == 1) &&
 		  (!pair_symbol_is_safe(sc, arg1, e)) &&
 		  (!is_slot(find_symbol(sc, arg1))))
-		/* so an expression in a function that refers to an outer variable that is defined later is not optimized */
-		{
-		  /* fprintf(stderr, "can't find %s for %s\n", DISPLAY(arg1), DISPLAY(expr)); */
-		  return(OPT_F);
-		}
+		return(OPT_F);
+	      /* so an expression in a function that refers to an outer variable that is defined later is not optimized */
+
 	      set_safe_optimize_op(expr, hop + ((symbols == 0) ? OP_SAFE_C_C : OP_SAFE_C_S));
 	      /* we can't simply check is_global here to forego symbol value lookup later because we aren't
 	       *    tracking local vars, so the global bit may be on right now, but won't be when
@@ -53272,20 +53336,33 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_CAR_S));
 		  if (c_call(expr) == g_cdr)
 		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_CDR_S));
+		  if (c_call(expr) == g_cadr)
+		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_CADR_S));
+		  if (c_call(expr) == g_is_pair)
+		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_IS_PAIR_S));
+		  if (c_call(expr) == g_is_null)
+		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_IS_NULL_S));
+		  if (c_call(expr) == g_is_symbol)
+		    add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_IS_SYMBOL_S));
 		}
 	      return(OPT_T);
 	    }
 	  else                               /* c function is not safe */
 	    {
-	      set_unsafely_optimized(expr);
 	      if (symbols == 0)
 		{
+		  set_unsafely_optimized(expr);
 		  set_optimize_op(expr, hop + OP_C_A);
 		  annotate_arg(sc, cdr(expr), e);
 		  set_arglist_length(expr, small_int(1));
 		}
 	      else
 		{
+		  if ((!pair_symbol_is_safe(sc, arg1, e)) &&
+		      (!is_slot(find_symbol(sc, arg1))))
+		    return(OPT_F);
+
+		  set_unsafely_optimized(expr);
 		  if (c_function_call(func) == g_read)
 		    set_optimize_op(expr, hop + OP_READ_S);
 		  else set_optimize_op(expr, hop + OP_C_S);
@@ -53404,6 +53481,10 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	{
 	  if (is_symbol(arg1))
 	    {
+	      if ((!pair_symbol_is_safe(sc, arg1, e)) &&
+		  (!is_slot(find_symbol(sc, arg1))))
+		return(OPT_F);
+
 	      if (safe_case)
 		{
 		  set_optimize_op(expr, hop + ((global_case) ? OP_SAFE_GLOSURE_S : OP_SAFE_CLOSURE_S));
@@ -53667,7 +53748,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	      if (c_function_call(func) == g_apply)
 		{
 		  set_optimize_op(expr, hop + OP_APPLY_SS);
-		  set_opt_cfunc(expr, func);
+		  set_opt_cfunc(expr, func); /* not quite set_c_function */
 		  set_opt_sym2(expr, arg2);
 		}
 	      else
@@ -60126,12 +60207,15 @@ static int unknown_g_ex(s7_scheme *sc, s7_pointer f)
 	{
 	  if (sym_case)
 	    {
-	      if ((is_safe_procedure(f)) &&
-		  (is_slot(find_symbol(sc, cadr(code)))))
-		set_optimize_op(code, hop + OP_SAFE_C_S);
-	      else set_optimize_op(code, hop + OP_C_S);
-	      set_c_function(code, f);
-	      return(goto_OPT_EVAL);
+	      if (is_slot(find_symbol(sc, cadr(code))))
+		{
+		  if (is_safe_procedure(f))
+		    set_optimize_op(code, hop + OP_SAFE_C_S);
+		  else set_optimize_op(code, hop + OP_C_S);
+		  set_c_function(code, f);
+		  return(goto_OPT_EVAL);
+		}
+	      return(fall_through);
 	    }
 	  else
 	    {
@@ -61511,7 +61595,7 @@ static void profile(s7_scheme *sc, s7_pointer expr)
   do {						\
     if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc); if ((Sc->begin_hook) && (call_begin_hook(Sc))) return(Sc->F);} \
     Obj = (*(--(Sc->free_heap_top))); \
-    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;	\
+    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__; Obj->debugger_bits = 0;	\
     set_type(Obj, Type);	      \
     } while (0)
 #endif
@@ -62855,7 +62939,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* -------------------------------------------------------------------------------- */
 		case OP_SAFE_C_C:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_C:
 		  sc->value = c_call(code)(sc, cdr(code)); /* this includes all safe calls where all args are constants */
 		  goto START;
@@ -62863,7 +62946,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_Q:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_Q:
 		  set_car(sc->t1_1, cadr(cadr(code)));
 		  sc->value = c_call(code)(sc, sc->t1_1);
@@ -62872,7 +62954,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_S:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_S:
 		  set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(code)));
 		  sc->value = c_call(code)(sc, sc->t1_1);
@@ -62881,7 +62962,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_CAR_S:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_CAR_S:
 		  {
 		    s7_pointer val;
@@ -62892,7 +62972,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_CDR_S:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_CDR_S:
 		  {
 		    s7_pointer val;
@@ -62901,9 +62980,48 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 		  
+		case OP_SAFE_CADR_S:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_CADR_S:
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, cadr(code));
+		    sc->value = ((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, list_1(sc, val));
+		    goto START;
+		  }
+		  
+		case OP_SAFE_IS_PAIR_S:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_IS_PAIR_S:
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, cadr(code));
+		    eval_boolean_method(sc, is_pair, sc->is_pair_symbol, val);
+		    goto START;
+		  }
+
+		case OP_SAFE_IS_NULL_S:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_IS_NULL_S:
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, cadr(code));
+		    eval_boolean_method(sc, is_null, sc->is_null_symbol, val);
+		    goto START;
+		  }
+
+		case OP_SAFE_IS_SYMBOL_S:  
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_IS_SYMBOL_S:
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, cadr(code));
+		    eval_boolean_method(sc, is_symbol, sc->is_symbol_symbol, val);
+		    goto START;
+		  }
+		  
 		case OP_SAFE_C_SS:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_SS:
 		  {
 		    s7_pointer val, args;
@@ -62918,7 +63036,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_ALL_S:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_ALL_S:
 		  {
 		    int num_args;
@@ -62944,7 +63061,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_SC:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_SC:
 		  {
 		    s7_pointer args;
@@ -62958,7 +63074,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_CS:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_CS:
 		  {
 		    s7_pointer args;
@@ -62972,7 +63087,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_SQ:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_SQ:
 		  {
 		    s7_pointer args;
@@ -62986,7 +63100,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_QS:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_QS:
 		  {
 		    s7_pointer args;
@@ -63000,7 +63113,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_QQ:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_QQ:
 		  {
 		    s7_pointer args;
@@ -63014,7 +63126,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_CQ:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_CQ:
 		  {
 		    s7_pointer args;
@@ -63028,7 +63139,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_C_QC:
 		  if (!c_function_is_ok(sc, code)) break;
-		  
 		case HOP_SAFE_C_QC:
 		  {
 		    s7_pointer args;
@@ -64496,7 +64606,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_C_S:
-		  sc->args = list_1(sc, find_symbol_checked(sc, cadr(code)));
+		  sc->args = list_1(sc, find_symbol_unchecked(sc, cadr(code)));
 		  sc->value = c_call(code)(sc, sc->args);
 		  goto START;
 		  
@@ -64773,7 +64883,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		   *   after we do the lookup -- it might be the current func's arg, and we're
 		   *   about to call the same func.
 		   */
-		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
+		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
 		  sc->code = _TPair(closure_body(opt_lambda(code)));
 		  goto BEGIN1;
 		  
@@ -64782,7 +64892,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_S_P:
-		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
+		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
 		  sc->code = car(closure_body(opt_lambda(code)));
 		  sc->op = (opcode_t)pair_syntax_op(sc->code);
 		  sc->code = cdr(sc->code);
@@ -64794,7 +64904,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_GLOSURE_S:
-		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
+		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
 		  sc->code = _TPair(closure_body(opt_lambda(code)));
 		  goto BEGIN1;
 		  /* one would naively think: if cdr(body) is null and car is all_x-able, why not call annotate_arg on car(body)
@@ -64808,7 +64918,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 
 		case HOP_SAFE_GLOSURE_S_E:
-		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_checked(sc, opt_sym2(code)));
+		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
 		  sc->code = _TPair(car(closure_body(opt_lambda(code))));
 		  goto OPT_EVAL;
 		  
@@ -65276,7 +65386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_GLOSURE_S:
-		  sc->value = find_symbol_checked(sc, opt_sym2(code));
+		  sc->value = find_symbol_unchecked(sc, opt_sym2(code));
 		  check_stack_size(sc);
 		  code = opt_lambda(code);
 		  new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
@@ -65288,7 +65398,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_CLOSURE_S:
-		  sc->value = find_symbol_checked(sc, opt_sym2(code));
+		  sc->value = find_symbol_unchecked(sc, opt_sym2(code));
 		  check_stack_size(sc);
 		  code = opt_lambda(code);
 		  new_frame_with_slot(sc, closure_let(code), sc->envir, car(closure_args(code)), sc->value);
@@ -69032,7 +69142,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_READ_APPLY_VALUES:
-	  if (is_symbol(sc->value))
+	  if ((is_symbol(sc->value)) &&
+	      (is_slot(find_symbol(sc, sc->value))))
 	    {
 	      s7_pointer lst;
 	      lst = list_2(sc, sc->qq_apply_values_function, sc->value);
@@ -69075,7 +69186,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   do {									\
     if ((Sc->free_heap_top <= Sc->free_heap_trigger) || (for_any_other_reason(sc, __LINE__))) {last_gc_line = __LINE__; last_gc_func = __func__; try_to_call_gc(Sc);} \
     Obj = (*(--(Sc->free_heap_top)));					\
-    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__;		\
+    Obj->alloc_line = __LINE__;	Obj->alloc_func = __func__; Obj->debugger_bits = 0;		\
     set_type(Obj, Type);						\
   } while (0)
 #endif
@@ -75615,7 +75726,7 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3455
  * tform         |      |      | 6816 | 3627 | 3724 [3649] 3823
  * tmap          |      |      |  9.3 | 4176 | 4171 [4148] 4263
- * lint          |      |      |      | 7731 | 4736 [4325] 4548 [203.3]
+ * lint          |      |      |      | 7731 | 4736 [4325] 4449 [198.2]
  * titer         |      |      | 7503 | 5218 | 5227 [5227] 5889
  * thash         |      |      | 50.7 | 8491 | 8518 [8548] 8863
  *               |      |      |      |      |
@@ -75645,15 +75756,12 @@ int main(int argc, char **argv)
  *   fix the lambda check eval in lint!
  * hook tests that check that pars exist and are not built-ins
  * optimizer_fixups:
- *   c_s -> cadr|symbol|null|pair?
  *   c_c: and_all_x_sc|2
  *   c_opsq: similar to c_s
  *   closure_s(_p)
  * eval should clear_all_optimizations
  * slot_value(lx) in increment_ss -> unchecked
- * count + report non-globals in c_function_is_ok -- surely we know this at optimize time?
- * 51378: add_s1 is not quite right -- what other op hits this?
- * check set_c_function timing
+ * macro for is_symbol et al in eval loop
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
