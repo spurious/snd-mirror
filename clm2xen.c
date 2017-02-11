@@ -177,6 +177,18 @@ static Xen clm_mus_error(int type, const char *msg, const char *caller)
 }
 
 
+#if HAVE_SCHEME
+static s7_pointer mus_error_symbol, clm_error_info;
+#define CLM_ERROR mus_error_symbol
+static void clm_error(const char *caller, const char *msg, Xen val)
+{
+  s7_list_set(s7, clm_error_info, 1, s7_make_string(s7, caller));
+  s7_list_set(s7, clm_error_info, 2, s7_make_string(s7, msg));
+  s7_list_set(s7, clm_error_info, 3, val);
+  s7_error(s7, mus_error_symbol, clm_error_info);
+}
+#else
+
 #define CLM_ERROR Xen_make_error_type("mus-error")
 
 static void clm_error(const char *caller, const char *msg, Xen val)
@@ -187,6 +199,7 @@ static void clm_error(const char *caller, const char *msg, Xen val)
 		       C_string_to_Xen_string(msg),
 		       val));
 }
+#endif
 
 
 
@@ -5989,7 +6002,7 @@ static Xen g_make_rxyk(bool sin_case, const char *caller, Xen arglist)
 
 static Xen g_make_rxyksin(Xen arglist)
 {
-  #define H_make_rxyksin "(" S_make_rxyksin " (frequency *clm-default-frequency*) (initial-phase 0.0) (ratio 1.0) (r 0.5)): \
+  #define H_make_rxyksin "(" S_make_rxyksin " (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5)): \
 return a new rxyksin generator."
 
   return(g_make_rxyk(true, S_make_rxyksin, arglist));
@@ -5997,7 +6010,7 @@ return a new rxyksin generator."
 
 static Xen g_make_rxykcos(Xen arglist)
 {
-  #define H_make_rxykcos "(" S_make_rxykcos " (frequency *clm-default-frequency*) (initial-phase 0.0) (ratio 1.0) (r 0.5)): \
+  #define H_make_rxykcos "(" S_make_rxykcos " (frequency *clm-default-frequency*) (ratio 1.0) (r 0.5)): \
 return a new rxykcos generator."
 
   return(g_make_rxyk(false, S_make_rxykcos, arglist));
@@ -12509,6 +12522,10 @@ static void mus_xen_init(void)
   as_needed_arglist = Xen_list_1(Xen_integer_zero);
   Xen_GC_protect(as_needed_arglist);
   s7_set_object_print_readably(mus_xen_tag, mus_generator_to_readable_string);
+
+  mus_error_symbol = s7_make_symbol(s7, "mus-error");
+  clm_error_info = s7_list(s7, 4, s7_make_string(s7, "~A: ~A ~A"), s7_nil(s7), s7_nil(s7), s7_nil(s7));
+  s7_gc_protect(s7, clm_error_info);
 
   s = s7_make_symbol(s7, "string?");
   i = s7_make_symbol(s7, "integer?");
