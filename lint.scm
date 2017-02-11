@@ -824,21 +824,22 @@
     
     (define (tree-symbol-walk tree syms)
       (if (pair? tree)
-	  (if (eq? (car tree) 'quote)
-	      (if (and (pair? (cdr tree))
-		       (symbol? (cadr tree))
-		       (not (memq (cadr tree) (car syms))))
-		  (tree-symbol-walk (cddr tree) (begin (set-car! syms (cons (cadr tree) (car syms))) syms)))
-	      (if (eq? (car tree) 'list-values)
-		  (if (and (pair? (cdr tree))
-			   (pair? (cadr tree))
-			   (eq? (caadr tree) 'quote)
-			   (symbol? (cadadr tree))
-			   (not (memq (cadadr tree) (cadr syms))))
-		      (tree-symbol-walk (cddr tree) (begin (list-set! syms 1 (cons (cadadr tree) (cadr syms))) syms)))
-		  (begin
-		    (tree-symbol-walk (car tree) syms)
-		    (tree-symbol-walk (cdr tree) syms))))))
+	  (case (car tree)
+	    ((quote)
+	     (if (and (pair? (cdr tree))
+		      (symbol? (cadr tree))
+		      (not (memq (cadr tree) (car syms))))
+		 (tree-symbol-walk (cddr tree) (begin (set-car! syms (cons (cadr tree) (car syms))) syms))))
+	    ((list-values)
+	     (if (and (pair? (cdr tree))
+		      (pair? (cadr tree))
+		      (eq? (caadr tree) 'quote)
+		      (symbol? (cadadr tree))
+		      (not (memq (cadadr tree) (cadr syms))))
+		 (tree-symbol-walk (cddr tree) (begin (list-set! syms 1 (cons (cadadr tree) (cadr syms))) syms))))
+	    (else
+	     (tree-symbol-walk (car tree) syms)
+	     (tree-symbol-walk (cdr tree) syms)))))
     
     (define (unbegin x)
       ((if (and (pair? x)
@@ -6073,10 +6074,10 @@
 	      #t))))
 
     (define (unlist-values tree)
-      (cond ((not (pair? tree))
-	     tree)
-
-	    ((eq? (car tree) 'list-values)
+      (if (not (pair? tree))
+	  tree
+	  (case (car tree) 
+	    ((list-values)
 	     (if (and (assq 'apply-values (cdr tree))
 		      (len=2? (cdr tree))
 		      (pair? (caddr tree)))
@@ -6085,8 +6086,8 @@
 		     (list 'append (cadadr tree) (cadr (caddr tree)))
 		     (list 'cons (cadr tree) (cadr (caddr tree))))
 		 (cons 'list (unlist-values (cdr tree)))))
-
-	    ((eq? (car tree) 'append)
+	    
+	    ((append)
 	     (if (and (len=2? (cdr tree))
 		      (pair? (cadr tree))
 		      (eq? (caadr tree) 'list-values))
@@ -6100,8 +6101,8 @@
 		       (else (cons 'append (unlist-values (cdr tree)))))))))
 	    
 	    (else (cons (unlist-values (car tree))
-			(unlist-values (cdr tree))))))
-
+			(unlist-values (cdr tree)))))))
+      
     (define (qq-tree? tree)
       (and (pair? tree)
 	   (or (eq? (car tree) 'apply-values)
@@ -22383,4 +22384,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 75 30111 829629
+;;; 75 29997 844257

@@ -5867,7 +5867,7 @@ definition, and a later redefinition does not affect earlier uses.
 </p>
 
 <ul>
-<li>remove the exact/inexact distinction including #i and #e
+<li>remove the exact/inexact distinction including #i and #e (the latter are now disabled by default)
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
@@ -5875,7 +5875,7 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
 <li>remove *-ci functions
-<li>remove #d
+<li>remove #d (this is now disabled by default)
 </ul>
 
 <p>(most of these are removed if you set the compiler flag WITH_PURE_S7), and perhaps:
@@ -6710,6 +6710,7 @@ WITH_IMMUTATBLE_UNQUOTE        1 if you want "unquote" omitted (default is 0)
 WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 0)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
                                    (in 2 million lines of open-source Scheme, there is not one use of these silly things)
+WITH_OLD_STYLE_IE              1 if you want #i, #e, and #d as in standard Scheme (defauly is 0).
 WITH_SYSTEM_EXTRAS             1 if you want some additional OS-related functions built-in (default is 0)
 WITH_MAIN                      1 if you want s7.c to include a main program section that runs a REPL.
 WITH_C_LOADER		       1 if you want to be able to load shared object files with load.

@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.14"
-#define S7_DATE "2-Jan-17"
+#define S7_VERSION "4.15"
+#define S7_DATE "11-Feb-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -779,6 +779,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 11-Feb:    #e, #i, #d disabled.  set WITH_OLD_STYLE_IE to re-enable.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.
  * --------
  * 23-Sep:    make-keyword -> string->keyword.

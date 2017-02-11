@@ -205,6 +205,11 @@
   /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S") */
 #endif
 
+#ifndef WITH_OLD_STYLE_IE
+  #define WITH_OLD_STYLE_IE 0
+  /* #i<num> and #e<num> in ancient scheme for inexact/exact */
+#endif
+
 #ifndef WITH_SYSTEM_EXTRAS
   #define WITH_SYSTEM_EXTRAS (!_MSC_VER)
   /* this adds several functions that access file info, directories, times, etc
@@ -12451,12 +12456,14 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 
       /* -------- #o #d #x #b -------- */
     case 'o':   /* #o (octal) */
+#if WITH_OLD_STYLE_IE
     case 'd':   /* #d (decimal) */
+#endif
     case 'x':   /* #x (hex) */
     case 'b':   /* #b (binary) */
       {
 	int num_at = 1;
-#if (!WITH_PURE_S7)
+#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
 	bool to_inexact = false, to_exact = false;
 
 	if (name[1] == '#')
@@ -12485,7 +12492,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 	if (is_abnormal(x))
 	  return(unknown_sharp_constant(sc, name));
 
-#if (!WITH_PURE_S7)
+#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
 	if ((!to_exact) && (!to_inexact))
 	  return(x);
 
@@ -12509,7 +12516,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
       }
       break;
 
-#if (!WITH_PURE_S7)
+#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
       /* -------- #i -------- */
     case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
       if (name[1] == '#')
@@ -12592,7 +12599,6 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 #endif
       return(inexact_to_exact(sc, x, with_error));
 #endif /* !WITH_PURE_S7 */
-
 
       /* -------- #_... -------- */
     case '_':
@@ -39430,68 +39436,68 @@ void init_hash_maps(void)
       morally_equal_hash_checks[i] = hash_equal_any;
       default_hash_checks[i] = hash_equal;
     }
-  default_hash_map[T_INTEGER] =      hash_map_int;
-  default_hash_map[T_RATIO] =        hash_map_ratio;
-  default_hash_map[T_REAL] =         hash_map_real;
-  default_hash_map[T_COMPLEX] =      hash_map_complex;
-  default_hash_map[T_CHARACTER] =    hash_map_char;
-  default_hash_map[T_SYMBOL] =       hash_map_symbol;
-  default_hash_map[T_SYNTAX] =       hash_map_syntax;
-  default_hash_map[T_STRING] =       hash_map_string;
-  default_hash_map[T_HASH_TABLE] =   hash_map_hash_table;
-  default_hash_map[T_VECTOR] =       hash_map_vector;
-  default_hash_map[T_INT_VECTOR] =   hash_map_int_vector;
-  default_hash_map[T_FLOAT_VECTOR] = hash_map_float_vector;
-  default_hash_map[T_LET] =          hash_map_let;
-  default_hash_map[T_PAIR] =         hash_map_pair;
+  default_hash_map[T_INTEGER] =       hash_map_int;
+  default_hash_map[T_RATIO] =         hash_map_ratio;
+  default_hash_map[T_REAL] =          hash_map_real;
+  default_hash_map[T_COMPLEX] =       hash_map_complex;
+  default_hash_map[T_CHARACTER] =     hash_map_char;
+  default_hash_map[T_SYMBOL] =        hash_map_symbol;
+  default_hash_map[T_SYNTAX] =        hash_map_syntax;
+  default_hash_map[T_STRING] =        hash_map_string;
+  default_hash_map[T_HASH_TABLE] =    hash_map_hash_table;
+  default_hash_map[T_VECTOR] =        hash_map_vector;
+  default_hash_map[T_INT_VECTOR] =    hash_map_int_vector;
+  default_hash_map[T_FLOAT_VECTOR] =  hash_map_float_vector;
+  default_hash_map[T_LET] =           hash_map_let;
+  default_hash_map[T_PAIR] =          hash_map_pair;
 #if WITH_GMP
-  default_hash_map[T_BIG_INTEGER] =  hash_map_big_int;
-  default_hash_map[T_BIG_RATIO] =    hash_map_big_ratio;
-  default_hash_map[T_BIG_REAL] =     hash_map_big_real;
-  default_hash_map[T_BIG_COMPLEX] =  hash_map_big_complex;
+  default_hash_map[T_BIG_INTEGER] =   hash_map_big_int;
+  default_hash_map[T_BIG_RATIO] =     hash_map_big_ratio;
+  default_hash_map[T_BIG_REAL] =      hash_map_big_real;
+  default_hash_map[T_BIG_COMPLEX] =   hash_map_big_complex;
 #endif
   
   for (i = 0; i < NUM_TYPES; i++) morally_equal_hash_map[i] = default_hash_map[i];
 
-  string_eq_hash_map[T_STRING] =     hash_map_string;
-  char_eq_hash_map[T_CHARACTER] =    hash_map_char;
+  string_eq_hash_map[T_STRING] =      hash_map_string;
+  char_eq_hash_map[T_CHARACTER] =     hash_map_char;
 #if (!WITH_PURE_S7)
-  string_ci_eq_hash_map[T_STRING] =  hash_map_ci_string;
-  char_ci_eq_hash_map[T_CHARACTER] = hash_map_ci_char;
+  string_ci_eq_hash_map[T_STRING] =   hash_map_ci_string;
+  char_ci_eq_hash_map[T_CHARACTER] =  hash_map_ci_char;
 #endif
 
-  number_eq_hash_map[T_INTEGER] =    hash_map_int;
-  number_eq_hash_map[T_RATIO] =      hash_map_ratio_eq;
-  number_eq_hash_map[T_REAL] =       hash_map_real_eq;
-  number_eq_hash_map[T_COMPLEX] =    hash_map_complex;
+  number_eq_hash_map[T_INTEGER] =     hash_map_int;
+  number_eq_hash_map[T_RATIO] =       hash_map_ratio_eq;
+  number_eq_hash_map[T_REAL] =        hash_map_real_eq;
+  number_eq_hash_map[T_COMPLEX] =     hash_map_complex;
 #if (WITH_GMP)
-  number_eq_hash_map[T_BIG_INTEGER] =  hash_map_big_int;
-  number_eq_hash_map[T_BIG_RATIO] =    hash_map_big_ratio;
-  number_eq_hash_map[T_BIG_REAL] =     hash_map_big_real;
-  number_eq_hash_map[T_BIG_COMPLEX] =  hash_map_big_complex;
+  number_eq_hash_map[T_BIG_INTEGER] = hash_map_big_int;
+  number_eq_hash_map[T_BIG_RATIO] =   hash_map_big_ratio;
+  number_eq_hash_map[T_BIG_REAL] =    hash_map_big_real;
+  number_eq_hash_map[T_BIG_COMPLEX] = hash_map_big_complex;
 #endif
 
-  eqv_hash_map[T_INTEGER] =          hash_map_int;
-  eqv_hash_map[T_RATIO] =            hash_map_ratio_eq;
-  eqv_hash_map[T_REAL] =             hash_map_real_eq;
-  eqv_hash_map[T_COMPLEX] =          hash_map_complex;
+  eqv_hash_map[T_INTEGER] =           hash_map_int;
+  eqv_hash_map[T_RATIO] =             hash_map_ratio_eq;
+  eqv_hash_map[T_REAL] =              hash_map_real_eq;
+  eqv_hash_map[T_COMPLEX] =           hash_map_complex;
 
   morally_equal_hash_map[T_INTEGER] = hash_map_int;
   morally_equal_hash_map[T_RATIO] =   hash_map_ratio_eq;
   morally_equal_hash_map[T_REAL] =    hash_map_real_eq;
   morally_equal_hash_map[T_COMPLEX] = hash_map_complex;
 
-  equal_hash_checks[T_REAL] =             hash_equal_real;
-  equal_hash_checks[T_COMPLEX] =          hash_equal_complex;
-  equal_hash_checks[T_SYNTAX] =           hash_equal_syntax;
-  equal_hash_checks[T_SYMBOL] =           hash_equal_eq;
-  equal_hash_checks[T_CHARACTER] =        hash_equal_eq;
+  equal_hash_checks[T_REAL] =         hash_equal_real;
+  equal_hash_checks[T_COMPLEX] =      hash_equal_complex;
+  equal_hash_checks[T_SYNTAX] =       hash_equal_syntax;
+  equal_hash_checks[T_SYMBOL] =       hash_equal_eq;
+  equal_hash_checks[T_CHARACTER] =    hash_equal_eq;
 
-  default_hash_checks[T_STRING] =    hash_string;
-  default_hash_checks[T_INTEGER] =   hash_int;
-  default_hash_checks[T_REAL] =      hash_float;
-  default_hash_checks[T_SYMBOL] =    hash_symbol;
-  default_hash_checks[T_CHARACTER] = hash_char;
+  default_hash_checks[T_STRING] =     hash_string;
+  default_hash_checks[T_INTEGER] =    hash_int;
+  default_hash_checks[T_REAL] =       hash_float;
+  default_hash_checks[T_SYMBOL] =     hash_symbol;
+  default_hash_checks[T_CHARACTER] =  hash_char;
 }
 
 
@@ -50609,7 +50615,7 @@ static void init_choosers(s7_scheme *sc)
 #define UNTRUSTED_SYMBOL 0x7fffffff
 
 
-static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, s7_pointer e)
+static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop)
 {
   if (is_immutable_symbol(car(expr)))
     hop = 1;
@@ -52926,7 +52932,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 		{
 		  switch (args)
 		    {
-		    case 0:  return(optimize_thunk(sc, expr, func, hop, e));
+		    case 0:  return(optimize_thunk(sc, expr, func, hop));
 		    case 1:  return(optimize_func_one_arg(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs, e));
 		    case 2:  return(optimize_func_two_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs, e));
 		    case 3:  return(optimize_func_three_args(sc, expr, func, hop, pairs, symbols, quotes, bad_pairs, e));
@@ -56912,7 +56918,7 @@ static int dox_ex(s7_scheme *sc)
       else
 	{
 	  if (is_symbol(expr))
-	    val = find_symbol_checked(sc, expr);
+	    val = find_symbol_checked(sc, expr); /* symbol as init? */
 	  else val = expr;
 	}
       new_cell_no_check(sc, slot, T_SLOT);
@@ -57892,6 +57898,10 @@ static int do_init_ex(s7_scheme *sc)
 #if (!WITH_GCC)
 #define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
 #define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
+#define new_closure_is_ok(Sc, Code, Type, Args)      (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
+#define new_closure_star_is_ok(Sc, Code, Type, Args) (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
+#define new_closure_is_equal(Sc, Code)		     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
+#define global_closure_is_equal(Sc, Code)            ((symbol_id(car(Code)) == 0) && (opt_any1(Code) == slot_value(global_slot(car(Code)))))
 #else
 
 /* it is almost never the case that we already have the value and can see it in the current environment directly,
@@ -57927,13 +57937,25 @@ static bool closure_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type,
 {
   s7_pointer f;
   f = find_symbol_unexamined(sc, car(code));
-  return ((f == opt_lambda_unchecked(code)) ||
-	  ((f) &&
-	   (typesflag(f) == type) &&
-	   ((closure_arity(f) == args) || (closure_arity_to_int(sc, f) == args)) &&
-	   (set_opt_lambda(code, f))));
+  return((f == opt_lambda_unchecked(code)) ||
+	 ((f) &&
+	  (typesflag(f) == type) &&
+	  ((closure_arity(f) == args) || 
+	   (closure_arity_to_int(sc, f) == args)) &&
+	  (set_opt_lambda(code, f))));
 }
 
+static bool closure_star_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
+{
+  s7_pointer val; 
+  val = find_symbol_unexamined(sc, car(code));
+  return((val == opt_any1(code)) ||
+	 ((val) &&
+	  (typesflag(val) == (unsigned short)type) &&
+	  ((closure_arity(val) >= args) || 
+	   (closure_star_arity_to_int(sc, val) >= args)) &&
+	  (set_opt_lambda(code, val))));
+}
 
 #define new_closure_is_ok(Sc, Code, Type, Args)			\
   (((symbol_ctr(car(Code)) == 1) &&				\
@@ -57957,6 +57979,11 @@ static bool closure_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type,
        ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
        (set_opt_lambda(Code, _val_)))); })
 
+#define new_closure_star_is_ok(Sc, Code, Type, Args)			\
+  (((symbol_ctr(car(Code)) == 1) &&				\
+    (unchecked_type(local_slot(car(Code))) == T_SLOT) && 	\
+    (slot_value(local_slot(car(Code))) == opt_lambda(Code))) ||	\
+   (closure_star_is_ok_1(Sc, Code, Type, Args)))
 #endif
 
 #define MATCH_UNSAFE_CLOSURE      (T_CLOSURE |      T_PROCEDURE)
@@ -62885,7 +62912,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SS:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SS:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), 
@@ -62896,7 +62923,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SC:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SC:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, cadr(code)), opt_con2(code));
@@ -62905,7 +62932,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_CS:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_CS:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), cadr(code), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -62914,7 +62941,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SA:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
+		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SA:
 		  {
@@ -62928,7 +62955,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_AA:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
+		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_AA:
 		  {
@@ -63013,7 +63040,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* -------------------------------------------------------------------------------- */
 		  
 		case OP_SAFE_CLOSURE_STAR_SS:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_SS:
 		  {
@@ -63032,7 +63059,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 
 		case OP_SAFE_CLOSURE_STAR_SC:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_SC:
 		  {
@@ -63048,7 +63075,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_CLOSURE_STAR_SA:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
+		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
 		  
 		case HOP_SAFE_CLOSURE_STAR_SA:
 		  {
@@ -63109,7 +63136,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_STAR:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR:
 		  /* (let () (define* (hi (a 100)) (random a)) (define (ho) (hi)) (ho)) */
@@ -63120,7 +63147,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_CLOSURE_STAR_S0:
-		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  /* if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;} */
+		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S0:
 		  /* here we know we have (let-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
@@ -63158,7 +63186,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_STAR_S:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -73259,6 +73287,9 @@ s7_scheme *s7_init(void)
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
 #endif
+#if WITH_OLD_STYLE_IE
+  s7_provide(sc, "old-style-ie");
+#endif
 #if WITH_SYSTEM_EXTRAS
   s7_provide(sc, "system-extras");
 #endif
@@ -73658,8 +73689,8 @@ int main(int argc, char **argv)
  * teq           |      |      | 6612 | 2380 | 2380 [2377] 2500 2483
  * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2680] 2960 2972
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3398
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3116] 3287 3402
  * tcopy         |      |      | 13.6 | 3204 | 3088 [3083] 3190 3423
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3116] 3287 3430
  * tform         |      |      | 6816 | 3627 | 3724 [3649] 3768 3855
  * tmap          |      |      |  9.3 | 4176 | 4171 [4148] 4263 4518
  * lint          |      |      |      | 7731 | 4736 [4325] 4360 [194.2]
@@ -73668,7 +73699,7 @@ int main(int argc, char **argv)
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.2] 12.0 12.2
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 [15.0] 17.7 17.7
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.0] 41.9 41.7
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.0] 41.9 [138.7] 41.7
  * 
  * --------------------------------------------------------------------
  *
@@ -73700,7 +73731,7 @@ int main(int argc, char **argv)
  *    if at end of binder, and there are pending, set transparent
  * check rest of s cases -- if|and|set* 55950 set_pair_ex -- 87 left to check
  * closure_is_ok with ctrs throughout
- * #i(...) #i2d(...) #f(...) #f2d(...) as constant vects?
+ * #i(...) #i2d(...) #f(...) #f2d(...) as constant vects
  * slot type check should not be needed in new_closure* (why is indexable? special? -- doesn't the check mean we may miss unbound vars?)
  *
  * Snd:
