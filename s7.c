@@ -996,7 +996,7 @@ struct s7_scheme {
              is_keyword_symbol, is_let_symbol, is_list_symbol, is_macro_symbol, is_morally_equal_symbol, is_nan_symbol, is_negative_symbol,
              is_null_symbol, is_number_symbol, is_odd_symbol, is_openlet_symbol, is_output_port_symbol, is_pair_symbol, 
              is_port_closed_symbol, is_positive_symbol, is_procedure_symbol, is_proper_list_symbol, is_provided_symbol,
-             is_random_state_symbol, is_rational_symbol, is_real_symbol, is_sequence_symbol, is_string_symbol, is_symbol_symbol,
+             is_random_state_symbol, is_rational_symbol, is_real_symbol, is_sequence_symbol, is_string_symbol, is_symbol_symbol, is_syntax_symbol,
              is_vector_symbol, is_zero_symbol, iterate_symbol, iterator_is_at_end_symbol, iterator_sequence_symbol,
              is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, is_unspecified_symbol,
              keyword_to_symbol_symbol, 
@@ -5634,17 +5634,24 @@ s7_pointer s7_name_to_value(s7_scheme *sc, const char *name)
 }
 
 
-bool s7_is_symbol(s7_pointer p)
-{
-  return(is_symbol(p));
-}
-
-
 bool s7_is_syntax(s7_pointer p)
 {
   return(is_syntax(p));
 }
 
+static s7_pointer g_is_syntax(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_syntax "(syntax? obj) returns #t if obj is a syntactic value (e.g. lambda)"
+  #define Q_is_syntax pl_bt
+
+  check_boolean_method(sc, is_syntax, sc->is_syntax_symbol, args);
+}
+
+
+bool s7_is_symbol(s7_pointer p)
+{
+  return(is_symbol(p));
+}
 
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
@@ -47569,6 +47576,7 @@ static s7_pointer g_apply_values(s7_scheme *sc, s7_pointer args)
 
 static bool is_simple_code(s7_scheme *sc, s7_pointer form)
 {
+  /* TODO: perhaps tree_memq here? the cycle check below is inadequate, and the last check looks dumb */
   s7_pointer tmp;
   for (tmp = form; is_pair(tmp); tmp = cdr(tmp))
     if (is_pair(car(tmp)))
@@ -47727,6 +47735,16 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
     case EOF:
       s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_wrapper(sc, "unexpected '#' at end of input")));
       break;
+
+      /* for #i #f, call read_sharp, if return=token_vector, return token_int|float_vector (sc->w has dims)
+       *   else something is awry, so just break.  In reader use old code to make the vector.  Need to
+       *   handle these specially in writer -- how to distinguish?  Right now (vector 1 2) prints as #(1 2)
+       *   which is questionable.  (Guile, chicken also do this).  See OP_READ_VECTOR for more.
+       *   The r7rs spec is inconsistent -- calls #(...) a self-evaluating vector constant, but says all
+       *   vectors are written using #(...)!  Lists are handled the same way, and strings ...
+       *   maybe just #u for a byte-vector -- we already spell it differently.
+       *   #(#(1 2) #(3 4)) where it's really (vector #(1 2) (vector 3 4)) 
+       */
 
     case '(':
       sc->w = small_int(1);
@@ -50009,7 +50027,7 @@ static s7_pointer g_or_x_2s(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer and_x, and_x_2, and_x_uc, and_x_3;
+static s7_pointer and_x, and_x_2, and_x_sc, and_x_3;
 static s7_pointer g_and_x(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, x = sc->T;
@@ -50043,7 +50061,7 @@ static s7_pointer g_and_x_3(s7_scheme *sc, s7_pointer args)
   return(c_call(p)(sc, car(p)));
 }
 
-static s7_pointer g_and_x_uc(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_and_x_sc(s7_scheme *sc, s7_pointer args)
 {
    s7_pointer p;
    p = car(args);
@@ -50596,7 +50614,7 @@ static void init_choosers(s7_scheme *sc)
   and_x = s7_make_function(sc, "and", g_and_x, 0, 0, true, "and opt");
   and_x_2 = s7_make_function(sc, "and", g_and_x_2, 2, 0, false, "and opt");
   and_x_3 = s7_make_function(sc, "and", g_and_x_3, 3, 0, false, "and opt");
-  and_x_uc = s7_make_function(sc, "and", g_and_x_uc, 2, 0, false, "and opt");
+  and_x_sc = s7_make_function(sc, "and", g_and_x_sc, 2, 0, false, "and opt");
   if_x1 = s7_make_function(sc, "if", g_if_x1, 2, 0, false, "if opt");
   if_x2 = s7_make_function(sc, "if", g_if_x2, 3, 0, false, "if opt");
   if_not_x1 = s7_make_function(sc, "if", g_if_not_x1, 2, 0, false, "if opt");
@@ -52738,7 +52756,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 		      if ((c_call(cdr(expr)) == all_x_c_s) &&
 			  (c_call(cddr(expr)) == all_x_c_s))
 			set_c_function(expr, or_x_2s);
-		      else add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_C_OR2)); /* why not OP_OR_SAFE_P2 etc? */
+		      else add_optimizer_fixup(sc, expr, (unsigned int)(hop + OP_SAFE_C_OR2));
 		    }
 		  else set_c_function(expr, or_x);
 		}
@@ -52750,7 +52768,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 			{
 			  if ((c_call(cdr(expr)) == all_x_c_s) &&
 			      (c_call(cddr(expr)) == all_x_c_c))
-			    set_c_function(expr, and_x_uc);
+			    set_c_function(expr, and_x_sc);
 			  else 
 			    {
 			      set_c_function(expr, and_x_2);
@@ -59434,14 +59452,16 @@ static void define2_ex(s7_scheme *sc)
 static bool a_is_ok(s7_scheme *sc, s7_pointer p)
 {
   /* "A" here need not be a function call or "p" a pair (all_x_c etc) */
-  if (is_pair(p))
+  if ((is_pair(p)) &&
+      (car(p) != sc->quote_symbol))
     {
+      s7_pointer np;
       if ((is_optimized(p)) &&
-	  (!c_function_is_ok(sc, p)))
-	return(false);
-      if (car(p) != sc->quote_symbol)
-	return((a_is_ok(sc, car(p))) &&
-	       (a_is_ok(sc, cdr(p))));
+	   (!c_function_is_ok(sc, p)))
+	  return(false);
+      for (np = p; is_pair(np); np = cdr(np))
+	if (!a_is_ok(sc, car(p)))
+	  return(false);
     }
   return(true);
 }
@@ -67107,16 +67127,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_READ_APPLY_VALUES:
-	  if ((is_symbol(sc->value)) &&
-	      (is_slot(find_symbol(sc, sc->value))))
-	    {
-	      s7_pointer lst;
-	      lst = list_2(sc, sc->apply_values_symbol, sc->value);
-	      set_unsafe_optimize_op(lst, HOP_C_S);
-	      set_c_function(lst, sc->apply_values_function);
-	      sc->value = list_2(sc, sc->unquote_symbol, lst);
-	    }
-	  else sc->value = list_2(sc, sc->unquote_symbol, list_2(sc, sc->apply_values_symbol, sc->value));
+	  sc->value = list_2(sc, sc->unquote_symbol, list_2(sc, sc->apply_values_symbol, sc->value)); 
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -72745,6 +72756,7 @@ s7_scheme *s7_init(void)
   pl_bt = s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->T);
 
   sc->is_symbol_symbol =             defun("symbol?",		is_symbol,		1, 0, false);
+  sc->is_syntax_symbol =             defun("syntax?",		is_syntax,		1, 0, false);
   sc->is_gensym_symbol =             defun("gensym?",		is_gensym,		1, 0, false); 
   sc->is_keyword_symbol =            defun("keyword?",		is_keyword,		1, 0, false);
   sc->is_let_symbol =                defun("let?",		is_let,			1, 0, false);
@@ -72780,7 +72792,6 @@ s7_scheme *s7_init(void)
   sc->is_proper_list_symbol =        defun("proper-list?",      is_proper_list,         1, 0, false);
   sc->is_sequence_symbol =           defun("sequence?",	        is_sequence,		1, 0, false);
   sc->is_null_symbol =               defun("null?",		is_null,		1, 0, false);
-  /* do we need 'syntax? */
 
   /* these are for signatures */
   sc->is_unspecified_symbol = s7_make_symbol(sc, "unspecified?");
@@ -73685,19 +73696,19 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                           
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1133] 1171 1163
- * teq           |      |      | 6612 | 2380 | 2380 [2377] 2500 2483
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2680] 2960 2972
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1133] 1171 1162
+ * teq           |      |      | 6612 | 2380 | 2380 [2377] 2500 2480
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2680] 2960 2973
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3398
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3116] 3287 3402
  * tcopy         |      |      | 13.6 | 3204 | 3088 [3083] 3190 3423
- * tform         |      |      | 6816 | 3627 | 3724 [3649] 3768 3855
+ * tform         |      |      | 6816 | 3627 | 3724 [3649] 3768 3871
+ * lint          |      |      |      | 7731 | 4736 [4325] 4346 [194.1]
  * tmap          |      |      |  9.3 | 4176 | 4171 [4148] 4263 4518
- * lint          |      |      |      | 7731 | 4736 [4325] 4360 [194.2]
- * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5961
+ * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5946
  * thash         |      |      | 50.7 | 8491 | 8518 [8548] 8858 11.6
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.2] 12.0 12.2
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.2] 12.0 12.1
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 [15.0] 17.7 17.7
  * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.0] 41.9 [138.7] 41.7
  * 
@@ -73713,17 +73724,12 @@ int main(int argc, char **argv)
  * pretty-print needs docs/tests [s7test has some minimal tests]
  * extend the validity checks to all FFI funcs and add info about caller etc
  * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
- * for-each/map lambdas -> defined funcs (via lint?)
- * does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  * can do test change simplify more for recur->iter in lint?
  * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
- *   fix the lambda check eval in lint!
- *   also complain about func name collisions -- report-shadowed-functions
+ *    fix the lambda check eval in lint!
+ *    also complain about func name collisions -- report-shadowed-functions
+ *    does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
  * hook tests that check that pars exist and are not built-ins
- * optimizer_fixups:
- *   c_c: and_all_x_sc|2
- *   c_opsq: similar to c_s
- *   closure_s(_p)
  * eval should clear_all_optimizations
  * The Plan: transparent let
  *    in optimize_syntax, each binder get local bindings, if no collisions adds its names to no-cross-ref and adds itself to pending-transparencies

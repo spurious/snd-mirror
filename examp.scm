@@ -574,7 +574,7 @@ otherwise it moves the cursor to the first offending sample"))
 	(call-with-exit
 	 (lambda (quit)
 	   (do ((i 0 (+ i 1)))
-	       ((= i len) #t)
+	       ((= i len)) ; returns #t
 	     (if (not (proc (next-sample reader)))
 		 (begin
 		   (set! (cursor) i)

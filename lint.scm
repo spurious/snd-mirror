@@ -441,7 +441,6 @@
     
     ;; -------- vars -------- 
     (define (var? v) (and (pair? v) (let? (cdr v))))
-    
     (define var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
     (define var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
     (define var-history (dilambda (lambda (v) (let-ref (cdr v) 'history)) (lambda (v x) (let-set! (cdr v) 'history x))))
@@ -952,17 +951,6 @@
 		   (hash-table-ref constant-functions (car val))
 		   (not (var-member (car val) env))
 		   (lint-every? code-constant? (cdr val)))))))
-    
-    (define syntax? 
-      (let ((syns (let ((h (make-hash-table)))
-		    (for-each (lambda (x)
-				(hash-table-set! h x #t))
-			      (list quote if when unless begin set! let let* letrec letrec* cond and or case do
-				    lambda lambda* define define* define-macro define-macro* define-bacro define-bacro*
-				    define-constant with-baffle macroexpand with-let))
-		    h)))
-	(lambda (obj) ; a value, not a symbol
-	  (hash-table-ref syns obj))))
 
     
     ;; -------- func info --------
@@ -1901,13 +1889,13 @@
 	  (string-append (prettify-checker-unq (car op)) " or " (prettify-checker-unq (cadr op)))
 	  (case op
 	    ((rational?) "rational")
-	    ((real?) "real")
-	    ((complex?) "complex")
-	    ((null?) "null")
-	    ((length) "a sequence")
+	    ((real?)     "real")
+	    ((complex?)  "complex")
+	    ((null?)     "null")
+	    ((length)    "a sequence")
 	    ((unspecified?) "untyped")
 	    ((undefined?) "not defined")
-	    (else 
+	    (else
 	     (let ((op-name (symbol->string op)))
 	       (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ")
 			      (substring op-name 0 (- (length op-name) 1))))))))
@@ -1915,12 +1903,16 @@
     (define (prettify-checker op)
       (if (pair? op)
 	  (string-append (prettify-checker-unq (car op)) " or " (prettify-checker (cadr op)))
-	  (let ((op-name (symbol->string op)))
-	    (case op
-	      ((rational? real? complex? null?) op-name)
-	      ((unspecified?) "untyped")
-	      ((undefined?) "not defined")
-	      (else (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
+	  (case op
+	    ((rational?) "rational?")
+	    ((real?)     "real?")
+	    ((complex?)  "complex?")
+	    ((null?)     "null?")
+	    ((unspecified?) "untyped")
+	    ((undefined?) "not defined")
+	    (else 
+	     (let ((op-name (symbol->string op)))
+	       (string-append (if (memv (op-name 0) '(#\a #\e #\i #\o #\u)) "an " "a ") op-name))))))
     
     (define (side-effect-with-vars? form env vars)
       ;; could evaluation of form have any side effects (like IO etc)
@@ -4454,9 +4446,6 @@
 			 (set-car! p (* 1.0 (car p))))))))
 	  val)
 	
-	(define (collect-non-numbers args)
-	  (collect-if-not-number args))
-
 	;; polar notation (@) is never used anywhere except test suites
 	
 	(define numerics-table
@@ -4531,8 +4520,8 @@
 			   (if (len>1? rats)
 			       (let ((y (apply + rats)))
 				 (set! val (if (zero? y) 
-					       (collect-non-numbers val)
-					       (cons y (collect-non-numbers val))))))))
+					       (collect-if-not-number val)
+					       (cons y (collect-if-not-number val))))))))
 		     (set! val (remove-inexactions val))
 		     (if (lint-any? (lambda (p)        ; collect all + and - vals -> (- (+ ...) ...)
 				      (and (pair? p) 
@@ -4669,8 +4658,8 @@
 			   (if (len>1? rats)
 			       (let ((y (apply * rats)))
 				 (set! val (if (= y 1)
-					       (collect-non-numbers val)
-					       (cons y (collect-non-numbers val))))))))
+					       (collect-if-not-number val)
+					       (cons y (collect-if-not-number val))))))))
 		     (set! val (remove-inexactions val))
 		     
 		     (case (length val)
@@ -4919,8 +4908,8 @@
 				 (if (len>1? rats) 
 				     (let ((y (apply + rats)))
 				       (set! val (if (zero? y)
-						     (collect-non-numbers val)
-						     (cons y (collect-non-numbers val))))))))
+						     (collect-if-not-number val)
+						     (cons y (collect-if-not-number val))))))))
 			   (let ((first-arg (car args))
 				 (nargs val))
 			     (if (member first-arg nargs)
@@ -5563,8 +5552,8 @@
 			(if (len>1? rats) 
 			    (let ((y (apply logior rats)))
 			      (set! args (if (zero? y)
-					     (collect-non-numbers args)
-					     (cons y (collect-non-numbers args))))))))
+					     (collect-if-not-number args)
+					     (cons y (collect-if-not-number args))))))))
 		  (cond ((null? args) 0)                ; (logior) -> 0
 			((null? (cdr args)) (car args)) ; (logior x) -> x
 			((memv -1 args) -1)             ; (logior ... -1 ...) -> -1
@@ -5579,8 +5568,8 @@
 			(if (len>1? rats) 
 			    (let ((y (apply logand rats)))
 			      (set! args (if (= y -1)
-					     (collect-non-numbers args)
-					     (cons y (collect-non-numbers args))))))))
+					     (collect-if-not-number args)
+					     (cons y (collect-if-not-number args))))))))
 		  (cond ((null? args) -1)
 			((null? (cdr args)) (car args)) ; (logand x) -> x
 			((memv 0 args) 0)
@@ -5668,7 +5657,7 @@
 				    (let ((relop (if (eq? (car form) 'min) >= <=)))
 				      (if (pair? (cdr nums))
 					  (set! nums (list (apply (symbol->value (car form)) nums))))
-				      (let ((new-args (append nums (collect-non-numbers args))))
+				      (let ((new-args (append nums (collect-if-not-number args))))
 					(let ((c1 (car nums)))
 					  (set! new-args (collect-if (lambda (x)
 								       (or (not (pair? x))
@@ -14710,7 +14699,7 @@
 	      ;; move-if-inward
 	      (when (and (pair? true)
 			 (pair? false)
-			 (not (memq true-op (list 'quote 'list-values 'not)))
+			 (not (memq true-op '(quote list-values not)))
 			 (not (any-macro? true-op env))
 			 (or (not (hash-table-ref syntaces true-op))
 			     (memq true-op '(let let* set! and or begin)))
@@ -15599,9 +15588,9 @@
 		       (= (length true) (length false) 4)
 		       (equal? (cadr true) (cadr false)))
 	      (let ((true-rest (and (pair? true) (cdr true)))
-		    (false-rest (and (pair? false) (cdr false))))
-		(if (and (equal? (cadr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B b a)) -> (if (eq? (not A) (not B)) a b) 
-			 (equal? (caddr true-rest) (cadr false-rest)))
+		    (false-rest (and (pair? false) (cddr false))))
+		(if (and (equal? (cadr true-rest) (cadr false-rest)) ; (if A (if B a b) (if B b a)) -> (if (eq? (not A) (not B)) a b) 
+			 (equal? (caddr true-rest) (car false-rest)))
 		    (let* ((switch #f)
 			   (a (if (and (pair? expr)
 				       (eq? (car expr) 'not))
@@ -15614,20 +15603,20 @@
 		      (lint-format "perhaps ~A" caller
 				   (lists->string form 
 						  (if switch
-						      `(if (eq? ,a ,b) ,(cadr false-rest) ,(cadr true-rest))
-						      `(if (eq? ,a ,b) ,(cadr true-rest) ,(cadr false-rest))))))
+						      `(if (eq? ,a ,b) ,(car false-rest) ,(cadr true-rest))
+						      `(if (eq? ,a ,b) ,(cadr true-rest) ,(car false-rest))))))
 		    (unless (or (side-effect? expr env)
-				(equal? (cdr true-rest) (cdr false-rest))) ; handled elsewhere
-		      (if (equal? (cadr true-rest) (cadr false-rest))  ; (if A (if B a b) (if B a c)) -> (if B a (if A b c))
+				(equal? (cdr true-rest) false-rest)) ; handled elsewhere
+		      (if (equal? (cadr true-rest) (car false-rest))  ; (if A (if B a b) (if B a c)) -> (if B a (if A b c))
 			  (lint-format "perhaps ~A" caller
 				       (lists->string form
 						      `(if ,(car true-rest) ,(cadr true-rest) 
-							   (if ,expr ,(caddr true-rest) ,(caddr false-rest)))))
-			  (if (equal? (caddr true-rest) (caddr false-rest)) ; (if A (if B a b) (if B c b)) -> (if B (if A a c) b)
+							   (if ,expr ,(caddr true-rest) ,(cadr false-rest)))))
+			  (if (equal? (caddr true-rest) (cadr false-rest)) ; (if A (if B a b) (if B c b)) -> (if B (if A a c) b)
 			      (lint-format "perhaps ~A" caller
 					   (lists->string form
 							  `(if ,(car true-rest)
-							       (if ,expr ,(cadr true-rest) ,(cadr false-rest))
+							       (if ,expr ,(cadr true-rest) ,(car false-rest))
 							       ,(caddr true-rest)))))))))))
 	  
 	  ;; -------- if->case-else --------
@@ -15849,11 +15838,12 @@
 			       (proper-list? body))
 			  (lint-format "perhaps ~A" caller
 				       (truncated-lists->string form
-								`(cond (,(if (eq? (car form) 'when)
-									     (simplify-boolean `(not ,(cadr form)) () () env)
-									     (cadr form))
-									#f)
-								       ,@(cdr body))))
+								(cons 'cond
+								      (cons (list (if (eq? (car form) 'when)
+										      (simplify-boolean (list 'not (cadr form)) () () env)
+										      (cadr form))
+										  #f)
+									    (cdr body)))))
 			  (when (or (memq (car body) '(when unless))
 				    (and (eq? (car body) 'if)
 					 (len=3? body)))
@@ -20157,12 +20147,12 @@
 			
 			(call-with-exit
 			 (lambda (quit)
-			   (let ((vs (out-vars lr-name pars (cddr lr-lambda))))
-			     (when (pair? (car vs))
+			   (let ((vs (car (out-vars lr-name pars (cddr lr-lambda)))))
+			     (when (pair? vs)
 			       (for-each (lambda (v)
 					   (if (shadowed? v (caddr form)) ; this never happens
 					       (quit)))
-					 (car vs))))                      ; set (cadr) appears to include args which leads to false positives here
+					 vs)))                            ; set (cadr) appears to include args which leads to false positives here
 			   (lint-format "perhaps ~A" caller
 					(lists->string form
 						       (tree-subst `(let ,lr-name ,(map list pars lr-args)
@@ -22384,4 +22374,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 75 29997 844257
+;;; 74 29997 844257

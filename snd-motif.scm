@@ -1810,12 +1810,12 @@
 ;;; the max scrollbar value can change (it's now 10000), so ideally this code should notice it
   
   (define add-amp-controls
-    (let ((documentation "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds"))
+    (let ((documentation "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds")
+	  (label-name (lambda (chan) (if (= chan 0) (copy "amp-label") (format #f "amp-label-~D" chan))))
+	  (number-name (lambda (chan) (if (= chan 0) (copy "amp-number") (format #f "amp-number-~D" chan))))
+	  (scroller-name (lambda (chan) (if (= chan 0) (copy "amp") (format #f "amp-~D" chan)))))
+
       (lambda ()
-	
-	(define (label-name chan) (if (= chan 0) (copy "amp-label") (format #f "amp-label-~D" chan)))
-	(define (number-name chan) (if (= chan 0) (copy "amp-number") (format #f "amp-number-~D" chan)))
-	(define (scroller-name chan) (if (= chan 0) (copy "amp") (format #f "amp-~D" chan)))
 	
 	(define amp-callback 
 	  ;; c is (list number-widget snd chan)
