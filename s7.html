@@ -597,7 +597,7 @@ we can maintain backwards compatibility via:
 (define (exact-&gt;inexact x) (* x 1.0))
 </pre>
 
-<p>#i and #e are also useless because you can
+<p>Standard Scheme's #i and #e are also useless because you can
 have any number after, for example, #b:
 </p>
 
@@ -610,7 +610,8 @@ have any number after, for example, #b:
 <em class="gray">15.625+1i</em>
 </pre>
 
-<p>Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
+<p>(But s7 uses #i for int-vector and does not implement #e).
+Speaking of #b and friends, what should <code>(string-&gt;number "#xffff" 2)</code> return?
 </p>
 </div>
 
@@ -2096,6 +2097,8 @@ homogeneous vector functions are currently built-in:
 
 <p>Multidimensional vector constant syntax is modelled after CL: #nd(...) or #nD(...) 
 signals that the lists specify the elements of an 'n' dimensional vector: <code>#2D((1 2 3) (4 5 6))</code>
+int-vector constants use #i, float-vectors use #r.  I wanted to use #f, but that is already taken.
+Append the "nD" business after the type indication: <code>#i2d((1 2) (3 4))</code>.
 </p>
 
 <pre class="indented">
@@ -2177,13 +2180,6 @@ Perhaps we could use different colors?  Or different size parentheses?
 #2D<em class=green>(</em><em class=red>(</em>(0) (0) ((0))<em class=red>)</em> <em class=red>(</em>(0) 0 ((0))<em class=red>)</em><em class=green>)</em>
 #2D<em class="bigger">(</em><em class="big">(</em>(0) (0) ((0))<em class="big">)</em> <em class="big">(</em>(0) 0 ((0))<em class="big">)</em><em class="bigger">)</em>
 </pre>
-
-<p>A similar problem afflicts homogeneous vectors.  We need some reasonable way to express
-such a vector even when it has more than one dimension.  My first thought was <code>#(...)#</code>,
-but that makes <code>(let ((b1 0)) (#(1 2)#b1))</code> ambiguous.  Perhaps the reader could
-choose the most restrictive vector type based on the #(...) data.  Then the r7rs #u8(...) 
-notation would not be needed.
-</p>
 
 </div>
 
@@ -5185,7 +5181,7 @@ tokens that start with "#".  <b><em class=def id="sharpreaders">*#readers*</em><
 one argument, the string that follows the #-sign up to the next delimiter.  "func" is called
 when #&lt;char&gt; is encountered.  If it returns something other than #f, the #-expression
 is replaced with that value.  Scheme has several predefined #-readers for cases such
-as #b1, #\a, #i123, and so on, but you can override these if you like.  If the string
+as #b1, #\a, and so on, but you can override these if you like.  If the string
 passed in is not the complete #-expression, the function can use read-char or read to get the
 rest.  Say we'd like #t&lt;number&gt; to interpret the number in base 12:
 </p>
@@ -5761,9 +5757,7 @@ stack                         the current stack entries
 stacktrace-defaults           stacktrace formatting info for error handler
 
 symbol-table                  a vector
-symbol-table-locked?          #f (if #t, no new symbols can be added to the symbol table)
 rootlet-size                  the number of globals
-
 heap-size                     total cells currently available
 free-heap-size                the number of currently unused cells
 gc-freed                      number of cells freed by the last GC pass
@@ -5867,7 +5861,7 @@ definition, and a later redefinition does not affect earlier uses.
 </p>
 
 <ul>
-<li>remove the exact/inexact distinction including #i and #e (the latter are now disabled by default)
+<li>remove the exact/inexact distinction including #i and #e (done! #i means int-vector constant).
 <li>remove call-with-values and its friends
 <li>remove char-ready?
 <li>change eof-object? to eof? or just omit it (you can use eq? #&lt;eof&gt;)
@@ -5875,7 +5869,7 @@ definition, and a later redefinition does not affect earlier uses.
 <li>remove unquote (the name, not the functionality).
 <li>remove cond-expand.
 <li>remove *-ci functions
-<li>remove #d (this is now disabled by default)
+<li>remove #d (done!)
 </ul>
 
 <p>(most of these are removed if you set the compiler flag WITH_PURE_S7), and perhaps:
@@ -5977,7 +5971,7 @@ Better ideas are always welcome!
 <li>omits unquote (the name)
 <li>omits d/f/s/l exponents
 <li>omits make-polar and make-rectangular (use complex)
-<li>omits integer-length, exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact, #i and #e
+<li>omits integer-length, exact?, inexact?, exact-&gt;inexact, inexact-&gt;exact
 <li>omits set-current-output-port and set-current-input-port
 </ul>
 
@@ -6710,7 +6704,6 @@ WITH_IMMUTATBLE_UNQUOTE        1 if you want "unquote" omitted (default is 0)
 WITH_EXTRA_EXPONENT_MARKERS    1 if you want "d", "f", "l", and "s" in addition to "e" as exponent markers (default is 0)
                                    if someone defends these exponent markers, ask him to read 1l11+11l1i
                                    (in 2 million lines of open-source Scheme, there is not one use of these silly things)
-WITH_OLD_STYLE_IE              1 if you want #i, #e, and #d as in standard Scheme (defauly is 0).
 WITH_SYSTEM_EXTRAS             1 if you want some additional OS-related functions built-in (default is 0)
 WITH_MAIN                      1 if you want s7.c to include a main program section that runs a REPL.
 WITH_C_LOADER		       1 if you want to be able to load shared object files with load.

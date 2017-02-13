@@ -779,7 +779,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 11-Feb:    #e, #i, #d disabled.  set WITH_OLD_STYLE_IE to re-enable.
+ * 11-Feb:    #e, #i, #d removed. #i(...) is an int-vector constant, #r(...) a float-vector.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.
  * --------
  * 23-Sep:    make-keyword -> string->keyword.

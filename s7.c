@@ -205,11 +205,6 @@
   /* if 1, s7 recognizes "d", "f", "l", and "s" as exponent markers, in addition to "e" (also "D", "F", "L", "S") */
 #endif
 
-#ifndef WITH_OLD_STYLE_IE
-  #define WITH_OLD_STYLE_IE 0
-  /* #i<num> and #e<num> in ancient scheme for inexact/exact */
-#endif
-
 #ifndef WITH_SYSTEM_EXTRAS
   #define WITH_SYSTEM_EXTRAS (!_MSC_VER)
   /* this adds several functions that access file info, directories, times, etc
@@ -457,7 +452,7 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE,
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST,
-	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR} token_t;
+	      TOKEN_VECTOR, TOKEN_BYTE_VECTOR, TOKEN_INT_VECTOR, TOKEN_FLOAT_VECTOR} token_t;
 
 typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
 
@@ -903,7 +898,7 @@ struct s7_scheme {
   unsigned int gensym_counter, cycle_counter, f_class, add_class, multiply_class, subtract_class, equal_class;
   int format_column;
   unsigned long long int capture_let_counter;
-  bool symbol_table_is_locked, short_print, is_autoloading;
+  bool short_print, is_autoloading;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
   s7_int default_hash_table_length, initial_string_port_length, print_length, history_size, true_history_size;
@@ -1038,7 +1033,7 @@ struct s7_scheme {
 #endif
 
   /* s7 env symbols */
-  s7_pointer stack_top_symbol, symbol_table_is_locked_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol,
+  s7_pointer stack_top_symbol, heap_size_symbol, gc_freed_symbol, gc_protected_objects_symbol,
              free_heap_size_symbol, file_names_symbol, symbol_table_symbol, cpu_time_symbol, c_objects_symbol, float_format_precision_symbol,
              stack_size_symbol, rootlet_size_symbol, c_types_symbol, safety_symbol, max_stack_size_symbol, gc_stats_symbol, autoloading_symbol,
              strings_symbol, vectors_symbol, input_ports_symbol, output_ports_symbol, continuations_symbol, hash_tables_symbol, gensyms_symbol,
@@ -2585,6 +2580,31 @@ static bool local_strncmp(const char *s1, const char *s2, unsigned int n)
 }
 
 
+#define SHOW_DEBUG_HISTORY 0
+#if DEBUGGING && SHOW_DEBUG_HISTORY
+  #define DEBUG_HISTORY_SIZE 32
+  static char *debug_history[DEBUG_HISTORY_SIZE];
+  static int debug_history_loc = 0;
+  static void add_debug_history(char *str)
+  {
+    if (debug_history[debug_history_loc])
+      free(debug_history[debug_history_loc]);
+    debug_history[debug_history_loc++] = copy_string(str);
+    if (debug_history_loc >= DEBUG_HISTORY_SIZE)
+      debug_history_loc = 0;
+  }
+  static void show_debug_history(void)
+  {
+    int i;
+    for (i = debug_history_loc; i < DEBUG_HISTORY_SIZE; i++)
+      fprintf(stderr, "%s\n", debug_history[i]);
+    for (i = 0; i < debug_history_loc; i++)
+      fprintf(stderr, "%s\n", debug_history[i]);
+    fprintf(stderr, "\n");
+  }
+#endif
+
+
 /* ---------------- forward decls ---------------- */
 
 static char *number_to_string_base_10(s7_pointer obj, int width, int precision, char float_choice, int *nlen, use_write_t choice);
@@ -2713,7 +2733,7 @@ enum {OP_NO_OP,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
       OP_READ_QUASIQUOTE, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
-      OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_DONE,
+      OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_INT_VECTOR, OP_READ_FLOAT_VECTOR, OP_READ_DONE,
       OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_DONE,
       OP_CATCH, OP_DYNAMIC_WIND, OP_DEFINE_CONSTANT, OP_DEFINE_CONSTANT1,
       OP_DO, OP_DO_END, OP_DO_END1, OP_DO_STEP, OP_DO_STEP2, OP_DO_INIT,
@@ -2897,7 +2917,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "define_macro", "define_macro_star", "define_expansion",
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
       "read_quasiquote", "read_unquote", "read_apply_values",
-      "read_vector", "read_byte_vector", "read_done",
+      "read_vector", "read_byte_vector", "read_int_vector", "read_float_vector", "read_done",
       "load_return_if_eof", "load_close_and_pop_if_eof", "eval_done",
       "catch", "dynamic_wind", "define_constant", "define_constant1",
       "do", "do_end", "do_end1", "do_step", "do_step2", "do_init",
@@ -5253,9 +5273,6 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
   /* name might not be null-terminated */
   s7_pointer x, str, p;
   unsigned char *base, *val;
-
-  if (sc->symbol_table_is_locked)
-    return(s7_error(sc, sc->error_symbol, set_elist_1(sc, make_string_wrapper(sc, "can't make symbol: symbol table is locked!"))));
 
   base = (unsigned char *)malloc(sizeof(s7_cell) * 3 + len + 1);
 #if DEBUGGING
@@ -12463,149 +12480,18 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top, in
 
       /* -------- #o #d #x #b -------- */
     case 'o':   /* #o (octal) */
-#if WITH_OLD_STYLE_IE
-    case 'd':   /* #d (decimal) */
-#endif
     case 'x':   /* #x (hex) */
     case 'b':   /* #b (binary) */
       {
 	int num_at = 1;
-#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
-	bool to_inexact = false, to_exact = false;
-
-	if (name[1] == '#')
-	  {
-	    if (!at_top)
-	      return(unknown_sharp_constant(sc, name));
-	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i'))) /* r6rs includes caps here */
-	      {
-		if ((len > 3) && (name[3] == '#'))
-		  return(unknown_sharp_constant(sc, name));
-		to_inexact = (name[2] == 'i');
-		to_exact = (name[2] == 'e');
-		num_at = 3;
-	      }
-	    else return(unknown_sharp_constant(sc, name));
-	  }
-#endif
 	/* the #b or whatever overrides any radix passed in earlier */
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), NO_SYMBOLS, with_error);
-
-	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted.
-	 * here we can get #b#e0/0 or #b#e+1/0 etc.
-	 * surely if #e1+i is an error (or #f), and #e#x1+i is an error,
-	 *   #x#e1+i should also be an error, but #e1+0i is not an error I guess since there actually isn't any imaginary part
-	 */
 	if (is_abnormal(x))
 	  return(unknown_sharp_constant(sc, name));
-
-#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
-	if ((!to_exact) && (!to_inexact))
-	  return(x);
-
-	if ((s7_imag_part(x) != 0.0) && (to_exact))  /* #x#e1+i */
-	  return(unknown_sharp_constant(sc, name));
-
-#if WITH_GMP
-	if (s7_is_bignum(x))
-	  {
-	    if (to_exact)
-	      return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
-	    return(big_exact_to_inexact(sc, set_plist_1(sc, x)));
-	  }
-#endif
-	if (to_exact)
-	  return(inexact_to_exact(sc, x, with_error));
-	return(exact_to_inexact(sc, x));
-#else
 	return(x);
-#endif
       }
       break;
 
-#if (!WITH_PURE_S7) && (WITH_OLD_STYLE_IE)
-      /* -------- #i -------- */
-    case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
-      if (name[1] == '#')
-	{
-	  /* there are special cases here: "#e0/0" or "#e#b0/0" -- all infs are complex:
-	   *    #i1/0=nan.0 but #i1/0+i=inf+1i so e->i is a no-op but i->e is not
-	   *
-	   * even trickier: a *#reader* like #t<num> could be used as #e#t13.25 so make_sharp_constant
-	   *   needs to be willing to call the readers even when not at_top (i.e. when NESTED_SHARP).
-	   */
-
-	  if ((name[2] == 'e') ||                        /* #i#e1 -- assume these aren't redefinable? */
-	      (name[2] == 'i'))
-	    return(unknown_sharp_constant(sc, name));
-
-	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
-	  if (s7_is_number(x))
-	    {
-	      if (is_abnormal(x))
-		return(unknown_sharp_constant(sc, name));
-#if WITH_GMP
-	      if (s7_is_bignum(x))                        /* (string->number "#b#e-11e+111") */
-		return(big_exact_to_inexact(sc, set_plist_1(sc, x)));
-#endif
-	      return(exact_to_inexact(sc, x));
-	    }
-	  return(unknown_sharp_constant(sc, name));
-	}
-      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
-      if (!s7_is_number(x))  /* not is_abnormal(x) -- #i0/0 -> nan etc */
-	return(unknown_sharp_constant(sc, name));
-#if WITH_GMP
-      if (s7_is_bignum(x))
-	return(big_exact_to_inexact(sc, set_plist_1(sc, x)));
-#endif
-      return(exact_to_inexact(sc, x));
-
-
-      /* -------- #e -------- */
-    case 'e':   /* #e<num> = ->exact */
-      if (name[1] == '#')
-	{
-	  if ((name[2] == 'e') ||                        /* #e#e1 */
-	      (name[2] == 'i'))
-	    return(unknown_sharp_constant(sc, name));
-
-	  x = make_sharp_constant(sc, (char *)(name + 2), NESTED_SHARP, radix, with_error);
-	  if (s7_is_number(x))
-	    {
-	      if (is_abnormal(x))                        /* (string->number "#e#b0/0") */
-		return(unknown_sharp_constant(sc, name));
-	      if (!s7_is_real(x))                        /* (string->number "#e#b1+i") */
-		return(unknown_sharp_constant(sc, name));
-#if WITH_GMP
-	      return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
-#endif
-	      return(inexact_to_exact(sc, x, with_error));
-	    }
-	  return(unknown_sharp_constant(sc, name));
-	}
-
-      x = make_atom(sc, (char *)(name + 1), radix, NO_SYMBOLS, with_error);
-#if WITH_GMP
-      /* #e1e310 is a simple case */
-      if (s7_is_bignum(x))
-	return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
-#endif
-      if (is_abnormal(x))                                /* (string->number "#e0/0") */
-	return(unknown_sharp_constant(sc, name));
-      if (!s7_is_real(x))                                /* (string->number "#e1+i") */
-	return(unknown_sharp_constant(sc, name));
-
-#if WITH_GMP
-      /* there are non-big floats that are greater than most-positive-fixnum:
-       *    :(> .1e20 most-positive-fixnum) -> #t
-       *    :(bignum? .1e20) -> #f
-       * so we have to check that, not just is it a bignum.
-       */
-      return(big_inexact_to_exact(sc, set_plist_1(sc, x)));
-#endif
-      return(inexact_to_exact(sc, x, with_error));
-#endif /* !WITH_PURE_S7 */
 
       /* -------- #_... -------- */
     case '_':
@@ -29542,7 +29428,11 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
   else
     {
       if (plen <= 0)
-	port_write_string(port)(sc, "#(...)", 6, port);
+	{
+	  if (is_float_vector(vect))
+	    port_write_string(port)(sc, "#r(...)", 7, port);
+	  else port_write_string(port)(sc, "#i(...)", 7, port);
+	}
       else
 	{
 	  char buf[128];
@@ -29553,13 +29443,12 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	    }
 	  if (is_int_vector(vect))
 	    {
-	      if (vector_rank(vect) > 1)
-		port_write_string(port)(sc, "(make-shared-vector (int-vector", 31, port);
-	      else port_write_string(port)(sc, "(int-vector", 11, port);
-
+	      port_write_string(port)(sc, "#i(", 3, port);
 	      if (!is_string_port(port))
 		{
-		  for (i = 0; i < len; i++)
+		  plen = snprintf(buf, 128, "%lld", int_vector_element(vect, 0));
+		  port_write_string(port)(sc, buf, plen, port);
+		  for (i = 1; i < len; i++)
 		    {
 		      plen = snprintf(buf, 128, " %lld", int_vector_element(vect, i));
 		      port_write_string(port)(sc, buf, plen, port);
@@ -29574,7 +29463,15 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 		  next_len = port_data_size(port) - 128;
 		  dbuf = port_data(port);
 
-		  for (i = 0; i < len; i++)
+		  if (new_len >= next_len)
+		    {
+		      resize_port_data(port, port_data_size(port) * 2);
+		      next_len = port_data_size(port) - 128;
+		      dbuf = port_data(port);
+		    }
+		  plen = snprintf((char *)(dbuf + new_len), 128, "%lld", int_vector_element(vect, 0));
+		  new_len += plen;
+		  for (i = 1; i < len; i++)
 		    {
 		      if (new_len >= next_len)
 			{
@@ -29590,14 +29487,14 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	    }
 	  else
 	    {
-	      if (vector_rank(vect) > 1)
-		port_write_string(port)(sc, "(make-shared-vector (float-vector", 33, port);
-	      else port_write_string(port)(sc, "(float-vector", 13, port);
-
-	      for (i = 0; i < len; i++)
+	      port_write_string(port)(sc, "#r(", 3, port);
+	      plen = snprintf(buf, 124, float_format_g, float_format_precision, float_vector_element(vect, 0)); /* 124 so floatify has room */
+	      floatify(buf, &plen);
+	      port_write_string(port)(sc, buf, plen, port);
+	      for (i = 1; i < len; i++)
 		{
 		  port_write_character(port)(sc, ' ', port);
-		  plen = snprintf(buf, 124, float_format_g, float_format_precision, float_vector_element(vect, i)); /* 124 so floatify has room */
+		  plen = snprintf(buf, 124, float_format_g, float_format_precision, float_vector_element(vect, i));
 		  floatify(buf, &plen);
 		  port_write_string(port)(sc, buf, plen, port);
 		}
@@ -29606,20 +29503,6 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	  if (too_long)
 	    port_write_string(port)(sc, " ...)", 5, port);
 	  else port_write_character(port)(sc, ')', port);
-
-	  if (vector_rank(vect) > 1)
-	    {
-	      unsigned int dim;
-	      port_write_string(port)(sc, " '(", 3, port);
-	      for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
-		{
-		  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
-		  port_write_string(port)(sc, buf, plen, port);
-		}
-	      plen = snprintf(buf, 128, "%lld", vector_dimension(vect, dim));
-	      port_write_string(port)(sc, buf, plen, port);
-	      port_write_string(port)(sc, "))", 2, port);
-	    }
 	}
     }
 }
@@ -37259,6 +37142,36 @@ static s7_pointer g_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
     return(s7_multivector_error(sc, (err == MULTIVECTOR_TOO_MANY_ELEMENTS) ? "found too many elements" : "not enough elements found", data));
 
   return(vec);
+}
+
+static s7_pointer g_int_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
+{
+  /* dims > 1, sc->value is a pair (not null) */
+  s7_pointer *src;
+  s7_int i, len;
+  sc->value = g_multivector(sc, dims, sc->value);
+  src = (s7_pointer *)vector_elements(sc->value);
+  len = vector_length(sc->value);
+  for (i = 0; i < len; i++)
+    if (!is_t_integer(src[i]))
+      return(s7_wrong_type_arg_error(sc, "#i(...)", i + 1, src[i], "an integer"));
+  sc->args = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, sc->value)), small_int(0), sc->T), sc->make_int_vector_symbol);
+  return(s7_copy(sc, set_plist_2(sc, sc->value, sc->args)));
+}
+
+static s7_pointer g_float_multivector(s7_scheme *sc, s7_int dims, s7_pointer data)
+{
+  /* dims > 1, sc->value is a pair (not null) */
+  s7_pointer *src;
+  s7_int i, len;
+  sc->value = g_multivector(sc, dims, sc->value);
+  src = (s7_pointer *)vector_elements(sc->value);
+  len = vector_length(sc->value);
+  for (i = 0; i < len; i++)
+    if (!is_t_real(src[i]))
+      return(s7_wrong_type_arg_error(sc, "#r(...)", i + 1, src[i], "a float (a non-rational real)"));
+  sc->args = g_make_vector_1(sc, set_plist_3(sc, g_vector_dimensions(sc, set_plist_1(sc, sc->value)), real_zero, sc->T), sc->make_float_vector_symbol);
+  return(s7_copy(sc, set_plist_2(sc, sc->value, sc->args)));
 }
 
 
@@ -47715,8 +47628,10 @@ static void back_up_stack(s7_scheme *sc)
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
   if ((top_op == OP_READ_VECTOR) ||
-      (top_op == OP_READ_BYTE_VECTOR))
-    {
+      (top_op == OP_READ_BYTE_VECTOR) ||
+      (top_op == OP_READ_INT_VECTOR) ||
+      (top_op == OP_READ_FLOAT_VECTOR))
+   {
       pop_stack(sc);
       top_op = stack_op(sc->stack, s7_stack_top(sc) - 1);
     }
@@ -47736,19 +47651,19 @@ static token_t read_sharp(s7_scheme *sc, s7_pointer pt)
       s7_error(sc, sc->read_error_symbol, set_elist_1(sc, make_string_wrapper(sc, "unexpected '#' at end of input")));
       break;
 
-      /* for #i #f, call read_sharp, if return=token_vector, return token_int|float_vector (sc->w has dims)
-       *   else something is awry, so just break.  In reader use old code to make the vector.  Need to
-       *   handle these specially in writer -- how to distinguish?  Right now (vector 1 2) prints as #(1 2)
-       *   which is questionable.  (Guile, chicken also do this).  See OP_READ_VECTOR for more.
-       *   The r7rs spec is inconsistent -- calls #(...) a self-evaluating vector constant, but says all
-       *   vectors are written using #(...)!  Lists are handled the same way, and strings ...
-       *   maybe just #u for a byte-vector -- we already spell it differently.
-       *   #(#(1 2) #(3 4)) where it's really (vector #(1 2) (vector 3 4)) 
-       */
-
     case '(':
       sc->w = small_int(1);
       return(TOKEN_VECTOR);
+
+    case 'i':
+      if (read_sharp(sc, pt) == TOKEN_VECTOR)
+	return(TOKEN_INT_VECTOR);
+      break;
+
+    case 'r':
+      if (read_sharp(sc, pt) == TOKEN_VECTOR)
+	return(TOKEN_FLOAT_VECTOR);
+      break;
 
     case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
       {
@@ -48225,7 +48140,17 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(sc->eof_object);
 
 	case TOKEN_BYTE_VECTOR:
-	  push_stack_no_code(sc, OP_READ_BYTE_VECTOR, sc->nil);
+	  push_stack_no_code(sc, OP_READ_BYTE_VECTOR, sc->nil); /* assume 1-dim for now */
+	  sc->tok = TOKEN_LEFT_PAREN;
+	  break;
+
+	case TOKEN_INT_VECTOR:
+	  push_stack_no_code(sc, OP_READ_INT_VECTOR, sc->w);
+	  sc->tok = TOKEN_LEFT_PAREN;
+	  break;
+
+	case TOKEN_FLOAT_VECTOR:
+	  push_stack_no_code(sc, OP_READ_FLOAT_VECTOR, sc->w);
 	  sc->tok = TOKEN_LEFT_PAREN;
 	  break;
 
@@ -51953,6 +51878,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 	      return(OPT_T);
 	    }
 	  if ((is_closure(func)) &&
+	      (closure_arity_to_int(sc, func) == 3) &&
 	      (!arglist_has_rest(sc, closure_args(func))))
 	    {
 	      set_unsafely_optimized(expr);
@@ -54894,17 +54820,6 @@ static int lambda_star_default(s7_scheme *sc)
   return(fall_through);
 }
 
-#if 0
-static void unsafe_closure_2(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2)
-{
-  s7_pointer code, args;
-  if (sc->stack_end >= sc->stack_resize_trigger) resize_stack(sc); /* not check_stack_size because it tries to return sc->F */
-  code = opt_lambda(sc->code);
-  args = closure_args(code);
-  new_frame_with_two_slots(sc, closure_let(code), sc->envir, car(args), arg1, cadr(args), arg2);
-  sc->code = closure_body(code);
-}
-#else
 #define unsafe_closure_2(Sc, Arg1, Arg2) \
 { \
   s7_pointer Code, Args, A1, A2; A1 = Arg1; A2 = Arg2; \
@@ -54914,7 +54829,6 @@ static void unsafe_closure_2(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2)
   new_frame_with_two_slots(Sc, closure_let(Code), Sc->envir, car(Args), A1, cadr(Args), A2); \
   Sc->code = closure_body(Code); \
 }
-#endif
 
 static void unsafe_closure_star(s7_scheme *sc)
 {
@@ -57913,33 +57827,9 @@ static int do_init_ex(s7_scheme *sc)
 }
   
   
-#if (!WITH_GCC)
-#define closure_is_ok(Sc, Code, Type, Args)          (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
-#define closure_star_is_ok(Sc, Code, Type, Args)     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
-#define new_closure_is_ok(Sc, Code, Type, Args)      (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
-#define new_closure_star_is_ok(Sc, Code, Type, Args) (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
-#define new_closure_is_equal(Sc, Code)		     (find_symbol_unchecked(Sc, car(Code)) == opt_lambda_unchecked(Code))
-#define global_closure_is_equal(Sc, Code)            ((symbol_id(car(Code)) == 0) && (opt_any1(Code) == slot_value(global_slot(car(Code)))))
-#else
+#define global_closure_is_equal(Sc, Code) ((symbol_id(car(Code)) == 0) && (opt_lambda_unchecked(Code) == slot_value(global_slot(car(Code)))))
 
-/* it is almost never the case that we already have the value and can see it in the current environment directly,
- * but once found, the value usually matches the current (opt_lambda(code))
- *
- * (_val_) is needed below because car(code) might be undefined (with-let can cause this confusion),
- *   and find_symbol_unchecked returns NULL in that case.
- */
-#if 1
-/* unlike the c_function_is_ok case, the macro form here is faster?? callgrind and time agree on this.
- *   opt_lambda(_code_) here can (legitimately) be a free cell or almost anything.
- */
-#define closure_is_ok(Sc, Code, Type, Args) \
-  ({ s7_pointer _code_, _val_; _code_ = Code; _val_ = find_symbol_unexamined(Sc, car(_code_)); \
-     ((_val_ == opt_any1(_code_)) || \
-      ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
-       ((closure_arity(_val_) == Args) || (closure_arity_to_int(Sc, _val_) == Args)) && \
-       (set_opt_lambda(_code_, _val_)))); })
-#else
-static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
+static bool closure_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
 {
   s7_pointer f;
   f = find_symbol_unexamined(sc, car(code));
@@ -57949,25 +57839,12 @@ static bool closure_is_ok(s7_scheme *sc, s7_pointer code, unsigned short type, i
 	   ((closure_arity(f) == args) || (closure_arity_to_int(sc, f) == args)) &&
 	   (set_opt_lambda(code, f))));
 }
-#endif
-
-static bool closure_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
-{
-  s7_pointer f;
-  f = find_symbol_unexamined(sc, car(code));
-  return((f == opt_lambda_unchecked(code)) ||
-	 ((f) &&
-	  (typesflag(f) == type) &&
-	  ((closure_arity(f) == args) || 
-	   (closure_arity_to_int(sc, f) == args)) &&
-	  (set_opt_lambda(code, f))));
-}
 
 static bool closure_star_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short type, int args)
 {
   s7_pointer val; 
   val = find_symbol_unexamined(sc, car(code));
-  return((val == opt_any1(code)) ||
+  return((val == opt_lambda_unchecked(code)) ||
 	 ((val) &&
 	  (typesflag(val) == (unsigned short)type) &&
 	  ((closure_arity(val) >= args) || 
@@ -57975,34 +57852,31 @@ static bool closure_star_is_ok_1(s7_scheme *sc, s7_pointer code, unsigned short 
 	  (set_opt_lambda(code, val))));
 }
 
-#define new_closure_is_ok(Sc, Code, Type, Args)			\
+/* it is almost never the case that we already have the value and can see it in the current environment directly,
+ * but once found, the value usually matches the current (opt_lambda(code))
+ *
+ * (_val_) is needed below because car(code) might be undefined (with-let can cause this confusion),
+ *   and find_symbol_unchecked returns NULL in that case.
+ */
+
+#define closure_is_ok(Sc, Code, Type, Args)			\
   (((symbol_ctr(car(Code)) == 1) &&				\
     (unchecked_type(local_slot(car(Code))) == T_SLOT) && 	\
-    (slot_value(local_slot(car(Code))) == opt_lambda(Code))) ||	\
+    (slot_value(local_slot(car(Code))) == opt_lambda_unchecked(Code))) ||	\
    (closure_is_ok_1(Sc, Code, Type, Args)))
 
-#define new_closure_is_equal(Sc, Code)				\
+#define closure_is_equal(Sc, Code)				\
   (((symbol_ctr(car(Code)) == 1) &&				\
     (unchecked_type(local_slot(car(Code))) == T_SLOT) &&  	\
-    (slot_value(local_slot(car(Code))) == opt_lambda(Code))) ||	\
-   (find_symbol_unexamined(Sc, car(Code)) == opt_any1(Code)))
+    (slot_value(local_slot(car(Code))) == opt_lambda_unchecked(Code))) ||	\
+   (find_symbol_unexamined(Sc, car(Code)) == opt_lambda_unchecked(Code)))
 
-#define global_closure_is_equal(Sc, Code) ((symbol_id(car(Code)) == 0) && (opt_any1(Code) == slot_value(global_slot(car(Code)))))
-
-
-#define closure_star_is_ok(Sc, Code, Type, Args) \
-  ({ s7_pointer _val_; _val_ = find_symbol_unexamined(Sc, car(Code)); \
-     ((_val_ == opt_any1(Code)) || \
-      ((_val_) && (typesflag(_val_) == (unsigned short)Type) &&		\
-       ((closure_arity(_val_) >= Args) || (closure_star_arity_to_int(Sc, _val_) >= Args)) && \
-       (set_opt_lambda(Code, _val_)))); })
-
-#define new_closure_star_is_ok(Sc, Code, Type, Args)			\
+#define closure_star_is_ok(Sc, Code, Type, Args)		\
   (((symbol_ctr(car(Code)) == 1) &&				\
     (unchecked_type(local_slot(car(Code))) == T_SLOT) && 	\
-    (slot_value(local_slot(car(Code))) == opt_lambda(Code))) ||	\
+    (slot_value(local_slot(car(Code))) == opt_lambda_unchecked(Code))) ||	\
    (closure_star_is_ok_1(Sc, Code, Type, Args)))
-#endif
+
 
 #define MATCH_UNSAFE_CLOSURE      (T_CLOSURE |      T_PROCEDURE)
 #define MATCH_SAFE_CLOSURE        (T_CLOSURE |      T_PROCEDURE | T_SAFE_CLOSURE)
@@ -59194,6 +59068,8 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   unsigned long long int id;
   e = sc->envir;
   id = let_id(e);
+
+  /* fprintf(stderr, "args: %s, code: %s\n", DISPLAY(closure_args(sc->code)), DISPLAY(closure_body(sc->code))); */
   
   for (x = closure_args(sc->code), z = _TLst(sc->args); is_pair(x); x = cdr(x)) /* closure_args can be a symbol, for example */
     {
@@ -59220,6 +59096,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       let_set_slots(e, z);
       z = args;
     }
+  /* fprintf(stderr, "x: %s, z: %s\n", DISPLAY(x), DISPLAY(z)); */
   if (is_null(x))
     {
       if (is_not_null(z))
@@ -59232,10 +59109,12 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
     }
   else
     {
+      /* fprintf(stderr, "rest arg: %s %s\n", DISPLAY(x), DISPLAY(z)); */
       sc->temp6 = z; /* the rest arg */
       make_slot_1(sc, sc->envir, x, z);
       sc->temp6 = sc->nil;
     }
+  /* fprintf(stderr, "sc->envir: %s\n", DISPLAY(sc->envir)); */
   sc->code = closure_body(sc->code);
 }
 
@@ -59566,6 +59445,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     START_WITHOUT_POP_STACK:
       /* fprintf(stderr, "%s (%d)\n", op_names[sc->op], (int)(sc->op)); */
+#if SHOW_DEBUG_HISTORY
+      add_debug_history((char *)op_names[sc->op]);
+#endif
       switch (sc->op)
 	{
 	case OP_NO_OP:
@@ -60845,6 +60727,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      s7_pointer code;
 	      /* fprintf(stderr, "    %s\n", opt_names[optimize_op(sc->code)]); */
+#if SHOW_DEBUG_HISTORY
+	      add_debug_history((char *)opt_names[optimize_op(sc->code)]);
+#endif
 
 	    OPT_EVAL:
 #if WITH_PROFILE
@@ -62771,7 +62656,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  /* -------------------------------------------------------------------------------- */
 		case OP_THUNK:
-		  if (!new_closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_THUNK:
 		  check_stack_size(sc);
@@ -62790,7 +62675,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_THUNK:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK: /* no frame needed */
 		  /* (let ((x 1)) (let () (define (f) x) (let ((x 0)) (define (g) (set! x 32) (f)) (g)))) */
@@ -62800,7 +62685,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_E:
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_E:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -62809,7 +62694,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 
 		case OP_SAFE_THUNK_P:
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_THUNK_P:
 		  sc->envir = closure_let(opt_lambda(code));
@@ -62820,7 +62705,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_S:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;} 
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;} 
 		  
 		case HOP_SAFE_CLOSURE_S:
 		  /* since a tail call is safe, we can't change the current env's let_id until
@@ -62834,7 +62719,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_CLOSURE_S_A:
 		  /* here and below the closure has to be the original -- matches are no good */
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 
 		case HOP_SAFE_CLOSURE_S_A:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -62844,7 +62729,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_S_P:
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_S_P:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -62877,7 +62762,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_C:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_C:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), cadr(code));
@@ -62886,7 +62771,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_Q:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_Q:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), cadr(cadr(code)));
@@ -62904,7 +62789,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_A:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_A:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
@@ -62913,7 +62798,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_A_A:
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_A_A:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
@@ -62932,7 +62817,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SS:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SS:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), 
@@ -62943,7 +62828,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SC:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SC:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, cadr(code)), opt_con2(code));
@@ -62952,7 +62837,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_CS:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_CS:
 		  sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), cadr(code), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -62961,7 +62846,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_SA:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_SA:
 		  {
@@ -62975,7 +62860,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_AA:
-		  if (!new_closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 2)) {set_optimize_op(code, OP_UNKNOWN_AA); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_AA:
 		  {
@@ -63014,7 +62899,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer args, p, env, x, z;
 		    int num_args;
 		    unsigned long long int id;
-		    
+
 		    num_args = integer(arglist_length(code));
 		    if ((num_args != 0) &&
 			(num_args < NUM_SAFE_LISTS) &&
@@ -63039,6 +62924,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			slot_set_value(x, car(z));
 			symbol_set_local(slot_symbol(x), id, x);
 		      }
+#if DEBUGGING
+		    if (is_not_null(z))
+		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(sc->code), DISPLAY(code));
+#endif		    
 		    sc->envir = env;
 		    sc->code = closure_body(sc->code);
 		    
@@ -63060,7 +62949,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  /* -------------------------------------------------------------------------------- */
 		  
 		case OP_SAFE_CLOSURE_STAR_SS:
-		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_SS:
 		  {
@@ -63079,7 +62968,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 
 		case OP_SAFE_CLOSURE_STAR_SC:
-		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
+		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {set_optimize_op(code, OP_UNKNOWN_GG); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_SC:
 		  {
@@ -63095,7 +62984,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_SAFE_CLOSURE_STAR_SA:
-		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
+		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
 		  
 		case HOP_SAFE_CLOSURE_STAR_SA:
 		  {
@@ -63156,7 +63045,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_STAR:
-		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
+		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 0)) {set_optimize_op(code, OP_UNKNOWN); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR:
 		  /* (let () (define* (hi (a 100)) (random a)) (define (ho) (hi)) (ho)) */
@@ -63168,7 +63057,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_SAFE_CLOSURE_STAR_S0:
 		  /* if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;} */
-		  if (!new_closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S0:
 		  /* here we know we have (let-set! arg1 'name arg2) (with-env arg1 ...) as the safe closure body.
@@ -63206,7 +63095,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_SAFE_CLOSURE_STAR_S:
-		  if (!new_closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
+		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_SAFE_CLOSURE_STAR_S:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
@@ -63304,7 +63193,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_CLOSURE_A_P:
-		  if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  /* if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;} */
 		  
 		case HOP_CLOSURE_A_P:
 		  sc->value = c_call(cdr(code))(sc, cadr(code));
@@ -63318,8 +63208,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_GLOSURE_A:
-		  if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code)))))
-		    {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
+		  /* if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) */
+		  if (!global_closure_is_equal(sc, code)) 
+		     {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;} 
 		  
 		case HOP_GLOSURE_A:
 		  sc->value = c_call(cdr(code))(sc, cadr(code));
@@ -63331,7 +63222,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GLOSURE_P:
-		  if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) break;
+		  /* if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) break; */
+		  if (!global_closure_is_equal(sc, code)) break;
 		  
 		case HOP_GLOSURE_P:
 		  push_stack(sc, OP_CLOSURE_P_1, sc->nil, code);
@@ -63340,7 +63232,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GLOSURE_S:
-		  if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code)))))
+		  /* if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code))))) */
+		  if (!global_closure_is_equal(sc, code)) 
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
 		case HOP_GLOSURE_S:
@@ -63417,6 +63310,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->z = e;
 		    for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
 		      add_slot(e, car(p), find_symbol_unchecked(sc, car(args)));
+#if DEBUGGING
+		    if (is_not_null(args))
+		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
+#endif		    
 		    sc->envir = e;
 		    sc->z = sc->nil;
 		    sc->code = _TPair(closure_body(func));
@@ -63440,6 +63337,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			val = c_call(args)(sc, car(args));
 			add_slot_checked(e, car(p), val); /* can't use add_slot here -- all_x_c_* hit trigger? */
 		      }
+#if DEBUGGING
+		    if (is_not_null(args))
+		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
+#endif		    
 		    sc->envir = e;
 		    sc->z = sc->nil;
 		    sc->code = _TPair(closure_body(func));
@@ -63480,6 +63381,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			else set_car(new_args, sc->F);
 		      }
+#if DEBUGGING
+		    if (is_not_null(new_args))
+		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
+#endif		    
 		    sc->code = opt_lambda(code);
 		    unsafe_closure_star(sc);
 		    goto BEGIN1;
@@ -67100,17 +67005,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
 	  /* here and below all of the sc->value list can be freed, but my tests showed no speed up even in large cases */
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
-
-	  /* read-vector-s7.c has code to choose vector|int-vector|float-vector depending on the data in sc->value,
-	   *   but this is not quite ready yet.  #(0 1) prints as (int-vector 0 1) for example, even when it is
-	   *   a constant, as in #(#(0 1)), and multidimensional cases print (make-shared-vector (int-vector 0 1 2 3) '(2 2)) etc.
-	   *   Also a lot of code (at least in s7test) assumes we can set #(...) elements!  
-	   */
 	  break;
-	  
-	  
+
+	case OP_READ_INT_VECTOR:
+	  if (!is_proper_list(sc, sc->value))
+	    return(read_error(sc, "vector constant data is not a proper list"));
+	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
+	    sc->value = g_int_vector(sc, sc->value);
+	  else sc->value = g_int_multivector(sc, s7_integer(sc->args), sc->value);
+	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
+	  break;
+
+	case OP_READ_FLOAT_VECTOR:
+	  if (!is_proper_list(sc, sc->value))
+	    return(read_error(sc, "vector constant data is not a proper list"));
+	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
+	    sc->value = g_float_vector(sc, sc->value);
+	  else sc->value = g_float_multivector(sc, s7_integer(sc->args), sc->value);
+	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
+	  break;	  
+
 	case OP_READ_BYTE_VECTOR:
-	  if (!is_proper_list(sc, sc->value))       /* #u8(1 . 2) */
+	  if (!is_proper_list(sc, sc->value))
 	    return(read_error(sc, "byte-vector constant data is not a proper list"));
 	  sc->value = g_byte_vector(sc, sc->value);
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
@@ -71449,7 +71365,6 @@ static void init_s7_let(s7_scheme *sc)
   sc->stack_top_symbol =                     s7_make_symbol(sc, "stack-top");
   sc->stack_size_symbol =                    s7_make_symbol(sc, "stack-size");
   sc->stacktrace_defaults_symbol =           s7_make_symbol(sc, "stacktrace-defaults");
-  sc->symbol_table_is_locked_symbol =        s7_make_symbol(sc, "symbol-table-locked?");
   sc->heap_size_symbol =                     s7_make_symbol(sc, "heap-size");
   sc->free_heap_size_symbol =                s7_make_symbol(sc, "free-heap-size");
   sc->gc_freed_symbol =                      s7_make_symbol(sc, "gc-freed");
@@ -71589,8 +71504,6 @@ static s7_pointer g_s7_let_ref_fallback(s7_scheme *sc, s7_pointer args)
   if (sym == sc->stacktrace_defaults_symbol)                             /* stacktrace-defaults (used to be *stacktrace*) */
     return(sc->stacktrace_defaults);
 
-  if (sym == sc->symbol_table_is_locked_symbol)                          /* symbol-table-locked? */
-    return(make_boolean(sc, sc->symbol_table_is_locked));
   if (sym == sc->symbol_table_symbol)                                    /* symbol-table (the raw vector) */
     return(sc->symbol_table);
   if (sym == sc->rootlet_size_symbol)                                    /* rootlet-size */
@@ -71772,12 +71685,6 @@ static s7_pointer g_s7_let_set_fallback(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_boolean(val)) {sc->gc_stats = ((val == sc->T) ? GC_STATS : 0); return(val);}
       if (s7_is_integer(val)) {sc->gc_stats = s7_integer(val); return(val);}
-      return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
-    }
-
-  if (sym == sc->symbol_table_is_locked_symbol) 
-    {
-      if (s7_is_boolean(val)) {sc->symbol_table_is_locked = (val == sc->T); return(val);}
       return(simple_wrong_type_argument(sc, sym, val, T_BOOLEAN));
     }
 
@@ -72102,6 +72009,11 @@ s7_scheme *s7_init(void)
       else float_format_g = "%.*g"; /* float and double */
     }
 
+#if DEBUGGING && SHOW_DEBUG_HISTORY
+  for (i = 0; i < DEBUG_HISTORY_SIZE; i++)
+    debug_history[i] = NULL;
+  debug_history_loc = 0;
+#endif
   sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
   hidden_sc = sc;                                 /* for gdb/debugging */
   sc->gc_off = true;                              /* sc->args and so on are not set yet, so a gc during init -> segfault */
@@ -72111,7 +72023,6 @@ s7_scheme *s7_init(void)
 
   sc->longjmp_ok = false;
   sc->setjmp_loc = NO_SET_JUMP;
-  sc->symbol_table_is_locked = false;
 
   if (sizeof(s7_int) == 4)
     sc->max_vector_length = (1 << 24);
@@ -73298,9 +73209,6 @@ s7_scheme *s7_init(void)
 #if WITH_EXTRA_EXPONENT_MARKERS
   s7_provide(sc, "dfls-exponents");
 #endif
-#if WITH_OLD_STYLE_IE
-  s7_provide(sc, "old-style-ie");
-#endif
 #if WITH_SYSTEM_EXTRAS
   s7_provide(sc, "system-extras");
 #endif
@@ -73696,14 +73604,14 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                           
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1133] 1171 1162
- * teq           |      |      | 6612 | 2380 | 2380 [2377] 2500 2480
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1133] 1171 1160
+ * teq           |      |      | 6612 | 2380 | 2380 [2377] 2500 2475
  * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2680] 2960 2973
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3398
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3393
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3116] 3287 3402
  * tcopy         |      |      | 13.6 | 3204 | 3088 [3083] 3190 3423
- * tform         |      |      | 6816 | 3627 | 3724 [3649] 3768 3871
- * lint          |      |      |      | 7731 | 4736 [4325] 4346 [194.1]
+ * tform         |      |      | 6816 | 3627 | 3724 [3649] 3768 3879
+ * lint          |      |      |      | 7731 | 4736 [4325] 4330 [193.1]
  * tmap          |      |      |  9.3 | 4176 | 4171 [4148] 4263 4518
  * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5946
  * thash         |      |      | 50.7 | 8491 | 8518 [8548] 8858 11.6
@@ -73736,9 +73644,11 @@ int main(int argc, char **argv)
  *    any global ref that collides also so need to track all non-local names as no-cross-ref
  *    if at end of binder, and there are pending, set transparent
  * check rest of s cases -- if|and|set* 55950 set_pair_ex -- 87 left to check
- * closure_is_ok with ctrs throughout
- * #i(...) #i2d(...) #f(...) #f2d(...) as constant vects
+ * #i #r:
+ *   output (object_to_port 29560 needs to show dimensions as lists and nD -- i.e. readable back to original)
+ *   need docs/tests, docs: examples
  * slot type check should not be needed in new_closure* (why is indexable? special? -- doesn't the check mean we may miss unbound vars?)
+ * currently rest args are not optimized
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
