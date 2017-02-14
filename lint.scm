@@ -452,7 +452,10 @@
     (define var-scope   (dilambda (lambda (v) (let-ref (cdr v) 'scope))   (lambda (v x) (let-set! (cdr v) 'scope x))))
     (define var-setters (dilambda (lambda (v) (let-ref (cdr v) 'setters)) (lambda (v x) (let-set! (cdr v) 'setters x))))
     (define var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
-    (define var-decl    (dilambda (lambda (v) (let-ref (cdr v) 'decl))    (lambda (v x) (let-set! (cdr v) 'decl x))))
+    (define (var-arity v) 
+      (let ((val (let-ref (cdr v) 'arit)))
+	(and (not (eq? val #<undefined>))
+	     val)))
     (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
     (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
@@ -970,8 +973,7 @@
       (and (symbol? fnc)
 	   (let ((fd (var-member fnc env)))
 	     (if (var? fd)
-		 (and (not (eq? (var-decl fd) 'error))
-		      (arity (var-decl fd)))
+		 (var-arity fd)
 		 (let ((f (symbol->value fnc *e*)))
 		   (and (procedure? f)
 			(arity f)))))))
@@ -1669,8 +1671,47 @@
 							      (list 'lambda* new-arglist
 								    new-body)))))))))))))))))
     
+    (define (form->arity form)
+      (and (pair? form)
+	   (let ((args (case (car form)
+			 ((lambda lambda*) 
+			  (cadr form))
+			 ((define define* define-macro define-macro* define-bacro define-bacro* define-constant)
+			  (and (pair? (cadr form))
+			       (cdadr form)))
+			 ((defmacro defmacro*)
+			  (caddr form))
+			 ((let let*)
+			  (caddr form))
+			 (else #f))))
+	     (and args
+		  (let ((has-rest (and (pair? args) 
+				       (or (memq :rest args) 
+					   (memq :allow-other-keys args))))
+			(len (and (list? args)
+				  (let ((ln 0))
+				    (let loop ((p args))
+				      (if (pair? p)
+					  (begin
+					    (if (not (keyword? (car p)))
+						(set! ln (+ ln 1)))
+					    (loop (cdr p)))
+					  (if (null? p)
+					      ln
+					      (- ln)))))))
+			(mx (cdr (arity +))))
+		    (if (not len)
+			(cons 0 mx)
+			(if (memq (car form) '(lambda* define-macro* define-bacro* define*))
+			    (if (>= len 0)
+				(cons 0 (if has-rest mx len))
+				(cons 0 mx))
+			    (if (>= len 0)
+				(cons len (if has-rest mx len))
+				(cons (abs len) mx)))))))))
 
-    (define* (make-fvar name ftype arglist decl initial-value env)
+
+    (define* (make-fvar name ftype arglist initial-value env)
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
       (improper-arglist->define* name ftype arglist initial-value)
@@ -1690,7 +1731,7 @@
 				'leaves #f
 				'match-list #f
 				'retcons #f
-				'decl decl
+				'arit (form->arity initial-value)
 				'arglist arglist
 				'history (if old 
 					     (begin
@@ -10573,8 +10614,7 @@
 		  ;; a local var
 		  (when (symbol? (let-ref fdata 'ftype))
 		    (let ((args (let-ref fdata 'arglist))
-			  (ary (and (not (eq? (let-ref fdata 'decl) 'error))
-				    (arity (let-ref fdata 'decl))))
+			  (ary (let-ref fdata 'arit))
 			  (sig (var-signature data)))
 		      (when (pair? ary)
 			(let ((opt (cdr ary))
@@ -13154,26 +13194,6 @@
 
       (lint-walk-body function-name definer body env))
 
-    (define hide-args
-      (letrec ((rewrite-arg (lambda (arg)
-			      (cond ((null? arg)
-				     ())
-				    ((symbol? arg)
-				     (if (constant? arg)
-					 arg
-					 (symbol "|" (symbol->string arg) "|")))
-				    ((pair? arg)
-				     (cons (rewrite-arg (car arg)) (cdr arg)))
-				    (else arg)))))
-	(lambda (args)
-	  (if (not (pair? args))
-	      (rewrite-arg args)
-	      (let rewrite ((p args))
-		(if (pair? p)
-		    (cons (rewrite-arg (car p))
-			  (rewrite (cdr p)))
-		    (rewrite-arg p)))))))
-
     (define (lint-walk-function definer function-name args body form env)
       ;; check out function arguments (adding them to the current env), then walk its body
       ;; first check for (define (hi...) (ho...)) where ho has no opt args (and try to ignore possible string constant doc string)
@@ -13296,37 +13316,23 @@
 					    form)))))
 	(when fvar
 	  (let ((fvar-let (cdr fvar)))
-	    (set! (fvar-let 'decl)
-		  (catch #t
-		    (lambda ()
-		      (case definer
-			((lambda)
-			 (set! (fvar-let 'allow-other-keys) #t)
-			 (eval (list definer (hide-args (cadr form)) #f)))
-			
-			((lambda*)
-			 (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cadr form)) :allow-other-keys))
-			 (eval (list definer (hide-args (cadr form)) #f)))         ; eval can remove :allow-other-keys!
-			
-			((define*)
-			 (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cdadr form)) :allow-other-keys))
-			 (eval (list definer (cons '_ (hide-args (cdadr form))) #f)))
-			
-			((defmacro defmacro*)
-			 (set! (fvar-let 'allow-other-keys) (or (not (eq? definer 'defmacro*))
-							     (eq? (last-ref (caddr form)) :allow-other-keys)))
-			 (eval (list definer '_ (hide-args (caddr form)) #f)))
-			
-			((define-constant)
-			 (set! (fvar-let 'allow-other-keys) #t)
-			 (eval (list 'define (cons '_ (hide-args (cdadr form))) #f)))
-			
-			(else
-			 (set! (fvar-let 'allow-other-keys) (or (not (memq definer '(define-macro* define-bacro*)))
-								(eq? (last-ref (cdadr form)) :allow-other-keys)))
-			 (eval (list definer (cons '_ (hide-args (cdadr form))) #f)))))
-		    (lambda args
-		      'error)))))
+	    (case definer
+	      ((lambda define-constant)
+	       (set! (fvar-let 'allow-other-keys) #t))
+	      
+	      ((lambda*)
+	       (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cadr form)) :allow-other-keys)))
+	      
+	      ((define*)
+	       (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cdadr form)) :allow-other-keys)))
+	      
+	      ((defmacro defmacro*)
+	       (set! (fvar-let 'allow-other-keys) (or (not (eq? definer 'defmacro*))
+						      (eq? (last-ref (caddr form)) :allow-other-keys))))
+	      
+	      (else
+	       (set! (fvar-let 'allow-other-keys) (or (not (memq definer '(define-macro* define-bacro*)))
+						      (eq? (last-ref (cdadr form)) :allow-other-keys)))))))
 	
 	(if (null? args)
 	    (begin
@@ -17997,9 +18003,6 @@
 		  (let ((vars (map car (caddr form))))
 		    (list (make-fvar :name named-let 
 				     :ftype (car form)
-				     :decl (dummy-func caller form (list (if (eq? (car form) 'let) 'define 'define*)
-									 (cons '_ (hide-args (map car (caddr form))))
-									 #f))
 				     :arglist vars
 				     :initial-value form
 				     :env env))))))
@@ -22028,6 +22031,14 @@
 							(char-downcase (data 0)) (substring data 1) data)
 						num)
 					      (string->symbol data))))
+
+				       ((#\i)
+					(format outport "#i is used for int-vectors in s7, not numbers.~%")
+					(cond ((string->number (substring data 1)) => exact->inexact) (else #f)))
+				       
+				       ((#\r)
+					(format outport "#r is used for float-vectors in s7, not numbers.~%")
+					#f)
 				       
 				       ((#\l #\z)
 					(let ((num (string->number (substring data 1)))) ; Bigloo (also has #ex #lx #z and on and on)
@@ -22374,4 +22385,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 74 29997 844257
+;;; 73 29997 844257

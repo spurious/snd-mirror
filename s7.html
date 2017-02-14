@@ -1965,9 +1965,7 @@ vector-dimensions returns a list of the dimensions.
 </pre>
 
 <p>make-int-vector and make-float-vector produce homogeneous vectors holding
-s7_ints or s7_doubles.
-These are mostly useful in conjunction with C code.  These
-homogeneous vector functions are currently built-in:
+s7_ints or s7_doubles:
 </p>
 
 <pre class="indented">
@@ -1994,7 +1992,7 @@ homogeneous vector functions are currently built-in:
 (<em class=def id="bytevectorset">byte-vector-set!</em> vect index byte)
 (<em class=def id="stringtobytevector">string-&gt;byte-vector</em> str)
 </pre>
-<p>but these are really just strings in disguise.</p>
+<p>but byte-vectors are just strings in disguise.</p>
 </div>
 
 <p>To access a vector's elements with different dimensions than the original had, use 
@@ -2106,6 +2104,12 @@ Append the "nD" business after the type indication: <code>#i2d((1 2) (3 4))</cod
 <em class="gray">6</em>
 &gt; (matrix-multiply #2d((-1 0) (0 -1)) #2d((2 0) (-2 2)))
 <em class="gray">#2D((-2 0) (2 -2))</em>
+&gt; (int-vector 1 2 3)
+<em class="gray">#i(1 2 3)</em>
+&gt; (make-float-vector '(2 3) 1.0)
+<em class="gray">#r2D((1.0 1.0 1.0) (1.0 1.0 1.0))</em>
+&gt; (vector (vector 1 2) (int-vector 1 2) (float-vector 1 2))
+<em class="gray">#(#(1 2) #i(1 2) #r(1.0 2.0))</em>
 </pre>
 
 <p>If any dimension has 0 length, you get an n-dimensional empty vector.  It is not

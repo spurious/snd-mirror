@@ -91,13 +91,11 @@
 		(gen-make (symbol "make-" name)))
 	    (list (make-fvar :name gen?
 			     :ftype 'define
-			     :decl (dummy-func 'define `(define (,gen? x) (let? x)) '(define (_ x) #f))
 			     :initial-value `(define (,gen? x) (let? x))
 			     :arglist (list 'x)
 			     :env env)
 		  (make-fvar :name gen-make
 			     :ftype 'define*
-			     :decl (dummy-func 'define* `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x)) '(define (_ . x) #f))
 			     :initial-value `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x))
 			     :arglist (list :rest 'x :allow-other-keys)
 			     :env env)))))))
