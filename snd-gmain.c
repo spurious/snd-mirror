@@ -411,7 +411,11 @@ void snd_doit(int argc, char **argv)
   GtkWidget *shell;
   int i;
 
+#if (GTK_CHECK_VERSION(3, 90, 0))
+  gtk_init();
+#else
   gtk_init(&argc, &argv);
+#endif  
 
 #if (!GTK_CHECK_VERSION(3, 0, 0)) && (!__APPLE__)
   gdk_set_locale();

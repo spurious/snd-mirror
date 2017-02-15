@@ -57,6 +57,7 @@
       ((= i 25))
     (read-line))
   ;; read about 500 lines and store in a hash table as (func . timing)
+  ;; names can match!
   (let ((h (make-hash-table)))
     (call-with-exit
      (lambda (quit)
@@ -83,7 +84,9 @@
 					    (let ((isra-pos (char-position #\. func colon-pos)))
 					      (if (integer? isra-pos)
 						  (set! func (substring func 0 isra-pos))))))
-				      (set! (h (string->symbol func)) num))))))))))))))))
+				      (let ((sym (string->symbol func)))
+					(let ((curval (h sym)))
+					  (set! (h sym) (+ (or curval 0) num)))))))))))))))))))
     h))
     
 

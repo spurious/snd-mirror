@@ -992,8 +992,10 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
 
     }
   else recolor_graph(cp, false); /* in case selection color left over from previous use */
+#if (!GTK_CHECK_VERSION(3, 90, 0))
   if ((sp->channel_style != CHANNELS_COMBINED) || (channel == 0))
     gtk_widget_show_all(cw[W_main_window]);
+#endif
 
   if ((need_extra_scrollbars) && (sp->channel_style != CHANNELS_COMBINED))
     hide_gz_scrollbars(sp); /* default is on in this case */  
@@ -1199,7 +1201,9 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      cp->ax->w = channel_to_widget(cp);
 		      cp->ax->wn = WIDGET_TO_WINDOW(cp->ax->w);
 		      cw = cp->chan_widgets;
+#if (!GTK_CHECK_VERSION(3, 90, 0))
 		      gtk_widget_show_all(cw[W_main_window]);
+#endif
 		    }
 		  set_toggle_button(unite_button(sp), false, false, (void *)sp);
 		  if (sp->selected_channel > 0) color_selected_channel(sp);

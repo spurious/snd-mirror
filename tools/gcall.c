@@ -199,7 +199,12 @@ int main(int argc, char **argv)
 
   s7 = s7_init();  
 
+#if (GTK_CHECK_VERSION(3, 90, 0))
+  gtk_init();
+#else
   gtk_init(&argc, &argv);
+#endif  
+
   shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(shell), "delete_event", G_CALLBACK(quit_repl), NULL);
 

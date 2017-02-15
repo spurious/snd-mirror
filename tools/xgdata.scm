@@ -2430,6 +2430,7 @@
 ;;; (CFNC "void gtk_init int* {argc} char*** |argv|")
 ;;; (CFNC "gboolean gtk_init_check int* {argc} char*** |argv|")
 ;;;   these two are done by hand in makexg.scm to improve error handling
+;;; both out gtk 4
 
 ;(CFNC "void gtk_init_abi_check int* argc char*** argv int num_checks size_t sizeof_GtkWindow")
 ;(CFNC "gboolean gtk_init_check_abi_check int* argc char*** argv int num_checks size_t sizeof_GtkWindow")
@@ -3344,13 +3345,13 @@
 (CFNC "GtkWidget* gtk_toggle_button_new void")
 (CFNC "GtkWidget* gtk_toggle_button_new_with_label gchar* label")
 (CFNC "GtkWidget* gtk_toggle_button_new_with_mnemonic gchar* label")
-(CFNC "void gtk_toggle_button_set_mode GtkToggleButton* toggle_button gboolean draw_indicator")
-(CFNC "gboolean gtk_toggle_button_get_mode GtkToggleButton* toggle_button")
+;;; gtk 4 (CFNC "void gtk_toggle_button_set_mode GtkToggleButton* toggle_button gboolean draw_indicator")
+;;; gtk 4 (CFNC "gboolean gtk_toggle_button_get_mode GtkToggleButton* toggle_button")
 (CFNC "void gtk_toggle_button_set_active GtkToggleButton* toggle_button gboolean is_active")
 (CFNC "gboolean gtk_toggle_button_get_active GtkToggleButton* toggle_button")
 (CFNC "void gtk_toggle_button_toggled GtkToggleButton* toggle_button")
-(CFNC "void gtk_toggle_button_set_inconsistent GtkToggleButton* toggle_button gboolean setting")
-(CFNC "gboolean gtk_toggle_button_get_inconsistent GtkToggleButton* toggle_button")
+;;; gtk 4 (CFNC "void gtk_toggle_button_set_inconsistent GtkToggleButton* toggle_button gboolean setting")
+;;; gtk 4 (CFNC "gboolean gtk_toggle_button_get_inconsistent GtkToggleButton* toggle_button")
 (CCAST "GTK_TOOLBAR(obj)" "GtkToolbar*")
 (CCHK "GTK_IS_TOOLBAR(obj)" "GtkToolbar*")
 ;;; out 2.3 (CINT "GTK_TOOLBAR_CHILD_SPACE" "GtkToolbarChildType")
@@ -3633,7 +3634,7 @@
 (CFNC "gboolean gtk_tree_view_get_reorderable GtkTreeView* tree_view")
 (CFNC "void gtk_tree_view_set_cursor GtkTreeView* tree_view GtkTreePath* path GtkTreeViewColumn* focus_column gboolean start_editing")
 (CFNC "void gtk_tree_view_get_cursor GtkTreeView* tree_view GtkTreePath** [path] GtkTreeViewColumn** [focus_column]")
-(CFNC "GdkWindow* gtk_tree_view_get_bin_window GtkTreeView* tree_view")
+;;; gtk 4 (CFNC "GdkWindow* gtk_tree_view_get_bin_window GtkTreeView* tree_view")
 (CFNC "gboolean gtk_tree_view_get_path_at_pos GtkTreeView* tree_view gint x gint y GtkTreePath** [path] GtkTreeViewColumn** [column] gint* [cell_x] gint* [cell_y]")
 (CFNC "void gtk_tree_view_get_cell_area GtkTreeView* tree_view GtkTreePath* @path GtkTreeViewColumn* @column GdkRectangle* rect")
 (CFNC "void gtk_tree_view_get_background_area GtkTreeView* tree_view GtkTreePath* @path GtkTreeViewColumn* @column GdkRectangle* rect")
@@ -3775,7 +3776,7 @@
 (CFNC "void gtk_widget_show GtkWidget* widget")
 (CFNC "void gtk_widget_show_now GtkWidget* widget")
 (CFNC "void gtk_widget_hide GtkWidget* widget")
-(CFNC "void gtk_widget_show_all GtkWidget* widget")
+;;; gtk 4 (CFNC "void gtk_widget_show_all GtkWidget* widget")
 ;;; (CFNC-gtk2 "void gtk_widget_hide_all GtkWidget* widget")
 (CFNC "void gtk_widget_map GtkWidget* widget")
 (CFNC "void gtk_widget_unmap GtkWidget* widget")
@@ -4642,8 +4643,8 @@
 ;;;(CFNC "void gtk_toolbar_unhighlight_drop_location GtkToolbar* toolbar")
 (CFNC "void gtk_tree_view_column_set_expand GtkTreeViewColumn* tree_column gboolean expand")
 (CFNC "gboolean gtk_tree_view_column_get_expand GtkTreeViewColumn* tree_column")
-(CFNC "void gtk_widget_set_no_show_all GtkWidget* widget gboolean no_show_all")
-(CFNC "gboolean gtk_widget_get_no_show_all GtkWidget* widget")
+;;; gtk 4 (CFNC "void gtk_widget_set_no_show_all GtkWidget* widget gboolean no_show_all")
+;;; gtk 4 (CFNC "gboolean gtk_widget_get_no_show_all GtkWidget* widget")
 (CFNC "void gtk_widget_queue_resize_no_redraw GtkWidget* widget")
 (CFNC "void gtk_window_set_default_icon GdkPixbuf* icon")
 (CFNC "void gtk_window_set_keep_above GtkWindow* window gboolean setting")
@@ -7220,7 +7221,7 @@
 ;;; 2.19.0
 (CFNC-2.20 "GtkWidget* gtk_dialog_get_widget_for_response GtkDialog* dialog gint response_id")
 ;;; (CFNC-2.20 "void gtk_tooltip_set_icon_from_gicon GtkTooltip* tooltip GIcon* gicon GtkIconSize size")
-(CFNC-2.20 "GdkWindow* gtk_viewport_get_bin_window GtkViewport* viewport")
+;;; gtk 4 (CFNC-2.20 "GdkWindow* gtk_viewport_get_bin_window GtkViewport* viewport")
 (CFNC-2.20 "GtkWidget* gtk_spinner_new void")
 (CFNC-2.20 "void gtk_spinner_start GtkSpinner* spinner")
 (CFNC-2.20 "void gtk_spinner_stop GtkSpinner* spinner")
@@ -7399,7 +7400,7 @@
 (CFNC-3.0 "void gtk_calendar_mark_day GtkCalendar* calendar guint day")
 (CFNC-3.0 "void gtk_calendar_unmark_day GtkCalendar* calendar guint day")
 (CFNC-3.0 "GdkWindow* gdk_drag_context_get_source_window GdkDragContext* context")
-(CFNC-3.0 "GdkWindow* gtk_viewport_get_view_window GtkViewport* viewport")
+;;; gtk 4 (CFNC-3.0 "GdkWindow* gtk_viewport_get_view_window GtkViewport* viewport")
 
 ;;; 2.90.4
 ;;; 2.90.6 (CFNC-3.0 "gpointer gdk_image_get_pixels GdkImage* image")
@@ -7933,7 +7934,7 @@
 (CFNC-3.0 "void gtk_orientable_set_orientation GtkOrientable* orientable GtkOrientation orientation")
 (CFNC-3.0 "GtkOrientation gtk_orientable_get_orientation GtkOrientable* orientable")
 
-(CFNC-3.0 "void gtk_parse_args int* {argc} char*** |argv|")
+;;; gtk 4 (CFNC-3.0 "void gtk_parse_args int* {argc} char*** |argv|")
 (CFNC-3.0 "guint gtk_get_major_version void" 'const-return)
 (CFNC-3.0 "guint gtk_get_minor_version void" 'const-return)
 (CFNC-3.0 "guint gtk_get_micro_version void" 'const-return)
@@ -8092,8 +8093,8 @@
 (CFNC-3.0 "void gtk_cell_view_set_draw_sensitive GtkCellView* cell_view gboolean draw_sensitive")
 (CFNC-3.0 "gboolean gtk_cell_view_get_fit_model GtkCellView* cell_view")
 (CFNC-3.0 "void gtk_cell_view_set_fit_model GtkCellView* cell_view gboolean fit_model")
-(CFNC-3.0 "GtkWidget* gtk_combo_box_new_with_area GtkCellArea* area")
-(CFNC-3.0 "GtkWidget* gtk_combo_box_new_with_area_and_entry GtkCellArea* area")
+;;; gtk 4 (CFNC-3.0 "GtkWidget* gtk_combo_box_new_with_area GtkCellArea* area")
+;;; gtk 4 (CFNC-3.0 "GtkWidget* gtk_combo_box_new_with_area_and_entry GtkCellArea* area")
 (CFNC-3.0 "GtkWidget* gtk_icon_view_new_with_area GtkCellArea* area")
 (CFNC-3.0 "void gtk_menu_item_set_reserve_indicator GtkMenuItem* menu_item gboolean reserve")
 (CFNC-3.0 "gboolean gtk_menu_item_get_reserve_indicator GtkMenuItem* menu_item")
@@ -9551,4 +9552,27 @@
 (CFNC-3.99 "GdkDrawingContext* gdk_window_begin_draw_frame GdkWindow* window GdkDrawContext* context cairo_region_t* region")
 (CFNC-3.99 "GtkFlowBoxChild* gtk_flow_box_get_child_at_pos GtkFlowBox* box gint x gint y")
 
- 
+;;; 3.89.4
+
+;; widget_show_all gone
+
+(CFNC-3.99 "gchar* gtk_about_dialog_get_system_information GtkAboutDialog* about" 'const-return)
+(CFNC-3.99 "void gtk_about_dialog_set_system_information GtkAboutDialog* about gchar* system_information" 'const)
+(CFNC-3.99 "void gtk_action_bar_set_revealed GtkActionBar* action_bar gboolean revealed")
+(CFNC-3.99 "gboolean gtk_action_bar_get_revealed GtkActionBar* action_bar")
+(CFNC-3.99 "void gtk_check_button_set_draw_indicator GtkCheckButton* check_button gboolean draw_indicator")
+(CFNC-3.99 "gboolean gtk_check_button_get_draw_indicator GtkCheckButton* check_button")
+(CFNC-3.99 "void gtk_check_button_set_inconsistent GtkCheckButton* check_button gboolean inconsistent")
+(CFNC-3.99 "gboolean gtk_check_button_get_inconsistent GtkCheckButton* check_button")
+(CFNC-3.99 "void gtk_info_bar_set_revealed GtkInfoBar* info_bar gboolean revealed")
+(CFNC-3.99 "gboolean gtk_info_bar_get_revealed GtkInfoBar* info_bar")
+;(CFNC-3.99 "void gtk_init void")
+;(CFNC-3.99 "gboolean gtk_init_check void")
+;handled in makexg.scm
+(CFNC-3.99 "GtkWidget* gtk_widget_get_first_child GtkWidget* widget")
+(CFNC-3.99 "GtkWidget* gtk_widget_get_last_child GtkWidget* widget")
+(CFNC-3.99 "GtkWidget* gtk_widget_get_next_sibling GtkWidget* widget")
+(CFNC-3.99 "GtkWidget* gtk_widget_get_prev_sibling GtkWidget* widget")
+(CFNC-3.99 "void gtk_widget_set_focus_child GtkWidget* widget GtkWidget* child")
+;(CFNC-3.99 "void gtk_widget_snapshot_child GtkWidget* widget GtkWidget* child GtkSnapshot* snapshot")
+

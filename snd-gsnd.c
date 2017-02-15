@@ -2104,7 +2104,9 @@ void snd_info_cleanup(snd_info *sp)
 
 void show_controls(snd_info *sp)
 {
+#if (!GTK_CHECK_VERSION(3, 90, 0))
   gtk_widget_show_all(CONTROL_PANEL(sp));
+#endif
   /* control panel is pane 2 of SND_PANE(sp); PANE_BOX is pane 1 */
   /* gtk_paned_set_position(GTK_PANED(sound_pane(ss)), (gint)(widget_height(sound_pane(ss)) * .75)); (glistener) */
 }
