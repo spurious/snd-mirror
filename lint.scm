@@ -13315,25 +13315,18 @@
 					      (else cdadr))
 					    form)))))
 	(when fvar
-	  (let ((fvar-let (cdr fvar)))
-	    (case definer
-	      ((lambda define-constant)
-	       (set! (fvar-let 'allow-other-keys) #t))
-	      
-	      ((lambda*)
-	       (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cadr form)) :allow-other-keys)))
-	      
-	      ((define*)
-	       (set! (fvar-let 'allow-other-keys) (eq? (last-ref (cdadr form)) :allow-other-keys)))
-	      
-	      ((defmacro defmacro*)
-	       (set! (fvar-let 'allow-other-keys) (or (not (eq? definer 'defmacro*))
-						      (eq? (last-ref (caddr form)) :allow-other-keys))))
-	      
-	      (else
-	       (set! (fvar-let 'allow-other-keys) (or (not (memq definer '(define-macro* define-bacro*)))
-						      (eq? (last-ref (cdadr form)) :allow-other-keys)))))))
-	
+	  (let-set! (cdr fvar) 'allow-other-keys
+		    (case definer
+		      ((lambda define-constant) #t)
+		      ((lambda*) (eq? (last-ref (cadr form)) :allow-other-keys))
+		      ((define*) (eq? (last-ref (cdadr form)) :allow-other-keys))
+		      ((defmacro defmacro*)
+		       (or (not (eq? definer 'defmacro*))
+			   (eq? (last-ref (caddr form)) :allow-other-keys)))
+		      (else
+		       (or (not (memq definer '(define-macro* define-bacro*)))
+			   (eq? (last-ref (cdadr form)) :allow-other-keys))))))
+      
 	(if (null? args)
 	    (begin
 	      (if (memq definer '(define* lambda* defmacro* define-macro* define-bacro*))
@@ -22385,4 +22378,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 73 29997 844257
+;;; 73 30004 845059

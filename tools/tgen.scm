@@ -245,10 +245,8 @@
 
 	(checkout-1 ',form V (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) (tester-11) (tester-12))
 	)))
-      (eval body)
-      )))
-;      (define the-body (apply lambda () (list (copy body :readable))))
-;      (the-body))))
+      (define the-body (apply lambda () (list (copy body :readable))))
+      (the-body))))
 
 (define (try2 form gen)
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
@@ -342,9 +340,8 @@
 		  (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
 		  (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
 	)))
-      (eval body))))
-;      (define the-body (apply lambda () (list (copy body :readable))))
-;      (the-body))))
+      (define the-body (apply lambda () (list (copy body :readable))))
+      (the-body))))
 
 (define (try34 form gen args)
   (let ((make-gen (string->symbol (string-append "make-" (symbol->string gen)))))
@@ -440,9 +437,8 @@
 		      (tester-1) (tester-2) (tester-3) (tester-4) (tester-5) (tester-6) 
 		      (tester-7) (tester-8) (tester-9) (tester-10) (tester-11) (tester-12))
 	    ))))
-      (eval body))))
-;      (define the-body (apply lambda () (list (copy body :readable))))
-;      (the-body))))
+      (define the-body (apply lambda () (list (copy body :readable))))
+      (the-body))))
 
 (define (test-gen gen nargs)
   (define args1 (list 1.5 (list gen 'p) '(env a) 'x 'i (list gen 'o) '(- 1.0 x) (list gen '(vector-ref oscs k))))

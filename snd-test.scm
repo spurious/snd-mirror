@@ -24155,8 +24155,8 @@ EDITS: 2
     (set! (hook-functions help-hook) ())
     (let ((hi (snd-help 'cursor-position)))
       (hook-push help-hook (lambda (hook)
-			     (let ((a (hook (list-ref (hook 'args) 0)))
-				   (b (hook (list-ref (hook 'args) 1))))
+			     (let ((a (hook (list-ref (hook 'hook-args) 0))) ; this is a bad idea!  we're depending on the make-hook arg name
+				   (b (hook (list-ref (hook 'hook-args) 1))))
 			       (if (not (string=? a "cursor-position"))
 				   (snd-display "help-hook subject: ~A" a))
 			       (if (not (string=? b "(cursor-position :optional snd chn): current cursor position (x y in pixels) in snd's channel chn"))
