@@ -901,11 +901,10 @@
 	       (null? p)))))
     
     (define (code-constant? x)
-      (and (or (not (symbol? x))
-	       (keyword? x))
+      (and (constant? x)
 	   (or (not (pair? x))
 	       (eq? (car x) 'quote))))
-    
+
     (define constant-expression?
       (let ((constant-functions (let ((ht (make-hash-table)))
 				  (for-each
@@ -963,18 +962,14 @@
 	     (if (var? fd)
 		 (and (symbol? (var-ftype fd))
 		      (var-signature fd))
-		 (or (and (eq? *e* *lint*)
-			  (procedure-signature fnc))
-		     (let ((f (symbol->value fnc *e*)))
-		       (and (procedure? f)
-			    (procedure-signature f))))))))
+		 (procedure-signature fnc)))))
     
     (define (arg-arity fnc env)
       (and (symbol? fnc)
 	   (let ((fd (var-member fnc env)))
 	     (if (var? fd)
 		 (var-arity fd)
-		 (let ((f (symbol->value fnc *e*)))
+		 (let ((f (symbol->value fnc (rootlet))))
 		   (and (procedure? f)
 			(arity f)))))))
     
@@ -2736,18 +2731,18 @@
 						   (typer c2))
 					      (cond ((or (eq? op1 op2)
 							 (eq? op2 (cadr (assq op1 relops))))
-						     (return (if ((symbol->value op1) c1 c2)
+						     (return (if ((symbol->value op1 (rootlet)) c1 c2)
 								 (list op1 x c1)
 								 (list op2 x c2))))
 
 						    ((eq? op1 (caddr (assq op2 relops)))
-						     (if ((symbol->value op1) c2 c1)
+						     (if ((symbol->value op1 (rootlet)) c2 c1)
 							 (return (list op1 c2 x c1))
 							 (if (memq op1 gts)
 							     (return #f))))
 
 						    ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-							  ((symbol->value op1) c1 c2))
+							  ((symbol->value op1 (rootlet)) c1 c2))
 						     (return #f))))
 
 					     ((eq? op2 (caddr (assq op1 relops)))
@@ -2771,17 +2766,17 @@
 						   (typer c2))
 					      (cond ((or (eq? op1 op2)
 							 (eq? op2 (cadr (assq op1 relops))))
-						     (return (if ((symbol->value op1) c1 c2) 
+						     (return (if ((symbol->value op1 (rootlet)) c1 c2) 
 								 (list op2 x c2)
 								 (list op1 x c1))))
 
 						    ((eq? op1 (caddr (assq op2 relops)))
-						     (if ((symbol->value op1) c2 c1)
+						     (if ((symbol->value op1 (rootlet)) c2 c1)
 							 (return #t))
 						     (return (list 'not (list (cadr (assq op1 relops)) c1 x c2))))
 
 						    ((and (eq? op2 (hash-table-ref reversibles (cadr (assq op1 relops))))
-							  ((symbol->value op1) c2 c1))
+							  ((symbol->value op1 (rootlet)) c2 c1))
 						     (return #t))))
 
 					     ((eq? op2 (caddr (assq op1 relops)))
@@ -4115,7 +4110,7 @@
 							       (cdr arg1))))
 						(and (or (not (code-constant? arg1-1))
 							 (not (code-constant? arg2-2))
-							 ((symbol->value op1) arg1-1 arg2-2))
+							 ((symbol->value op1 (rootlet)) arg1-1 arg2-2))
 						     (list op1 arg1-1 arg2-1 arg2-2))))
 					   
 					   ((equal? arg1-1 arg2-2)       ; (and (op x y) (op z x)) -> (op z x y)
@@ -4124,21 +4119,21 @@
 						     arg1)
 						(and (or (not (code-constant? arg2-1))
 							 (not (code-constant? arg1-2))
-							 ((symbol->value op1) arg2-1 arg1-2))
+							 ((symbol->value op1 (rootlet)) arg2-1 arg1-2))
 						     (list op1 arg2-1 arg1-1 arg1-2))))
 					   
 					   ;; here we're restricted to equalities and we know arg1 != arg2
 					   ((equal? arg1-1 arg2-1)        ; (and (op x y) (op x z)) -> (op x y z)
 					    (if (and (code-constant? arg1-2)
 						     (code-constant? arg2-2))
-						(and ((symbol->value op1) arg1-2 arg2-2)
+						(and ((symbol->value op1 (rootlet)) arg1-2 arg2-2)
 						     arg1)
 						(list op1 arg1-1 arg1-2 arg2-2)))
 					   
 					   ;; equalities again
 					   ((and (code-constant? arg1-1)
 						 (code-constant? arg2-1))
-					    (and ((symbol->value op1) arg1-1 arg2-1)
+					    (and ((symbol->value op1 (rootlet)) arg1-1 arg2-1)
 						 arg1))
 					   
 					   (else (list op1 arg1-1 arg1-2 arg2-1)))))))
@@ -5198,7 +5193,7 @@
 			   (else (cons head args))))
 			
 			((eqv? (car args) 0.0)                   ; (sin 0.0) -> 0.0
-			 ((symbol->value head) 0.0))
+			 ((symbol->value head (rootlet)) 0.0))
 			
 			((and (eq? head 'acos)             ; (acos -1) -> pi
 			      (eqv? (car args) -1))
@@ -5282,7 +5277,7 @@
 		      
 		      ((number? (car args))
 		       (catch #t 
-			 (lambda () (apply (symbol->value (car form)) args)) 
+			 (lambda () (apply (symbol->value (car form) (rootlet)) args)) 
 			 (lambda any (cons (car form) args))))
 		      
 		      ((not (len>1? (car args)))
@@ -5436,7 +5431,7 @@
 		  (cond ((just-rationals? args)
 			 (catch #t ; catch needed here for things like (ash 2 64)
 			   (lambda ()
-			     (apply (symbol->value head) args))
+			     (apply (symbol->value head (rootlet)) args))
 			   (lambda ignore
 			     (cons head args)))) ; use this form to pick up possible arg changes
 			
@@ -5691,13 +5686,13 @@
 			  (car args)
 			  (if (and (len>1? args)
 				   (just-reals? args))
-			      (apply (symbol->value (car form)) args)
+			      (apply (symbol->value (car form) (rootlet)) args)
 			      (let ((nums (collect-if-real args))
 				    (other (if (eq? (car form) 'min) 'max 'min)))
 				(if (pair? nums)
 				    (let ((relop (if (eq? (car form) 'min) >= <=)))
 				      (if (pair? (cdr nums))
-					  (set! nums (list (apply (symbol->value (car form)) nums))))
+					  (set! nums (list (apply (symbol->value (car form) (rootlet)) nums))))
 				      (let ((new-args (append nums (collect-if-not-number args))))
 					(let ((c1 (car nums)))
 					  (set! new-args (collect-if (lambda (x)
@@ -8653,7 +8648,7 @@
 		  (if (memq func '(= eq? eqv? equal? string=? char=? string-ci=? char-ci=?))
 		      (lint-format "sort! with ~A may hang: ~A" caller func (truncated-list->string form))
 		      (if (symbol? func)
-			  (let ((sig (procedure-signature (symbol->value func))))
+			  (let ((sig (procedure-signature (symbol->value func (rootlet)))))
 			    (if (and (pair? sig)
 				     (not (eq? 'boolean? (car sig)))
 				     (not (and (pair? (car sig))
@@ -10827,7 +10822,7 @@
 					(lint-format "this looks odd: ~A" caller (truncated-list->string form))))
 				  
 				  ;; now try to check arg types 
-				  (let ((arg-data (cond ((procedure-signature (symbol->value head *e*)) => cdr) (else #f))))
+				  (let ((arg-data (cond ((procedure-signature head-value) => cdr) (else #f))))
 				    (if (pair? arg-data)
 					(check-args caller head form arg-data env max-arity))
 				    ))))))))))))))
@@ -22378,4 +22373,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 73 30004 845059
+;;; 70 30046 845047
