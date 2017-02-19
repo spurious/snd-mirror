@@ -13317,7 +13317,8 @@
 		      ((define*) (eq? (last-ref (cdadr form)) :allow-other-keys))
 		      ((defmacro defmacro*)
 		       (or (not (eq? definer 'defmacro*))
-			   (eq? (last-ref (caddr form)) :allow-other-keys)))
+			   (and (pair? (caddr form))
+				(eq? (last-ref (caddr form)) :allow-other-keys))))
 		      (else
 		       (or (not (memq definer '(define-macro* define-bacro*)))
 			   (eq? (last-ref (cdadr form)) :allow-other-keys))))))
@@ -20680,9 +20681,9 @@
     (define (hash-fragment reduced-form leaves env func orig-form line outer-vars)
       ;; func here is either #f or an env-style entry (cons name let) as produced by make-fvar,
       ;;   the let entries accessed are initial-value, history, arglist
-      (let ((old (hash-table-ref (fragments leaves) reduced-form)))
+      (let ((old (hash-table-ref (vector-ref fragments leaves) reduced-form)))
 	(if (not (vector? old))
-	    (hash-table-set! (fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f outer-vars))
+	    (hash-table-set! (vector-ref fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f outer-vars))
 	    ;; key = reduced-form
 	    ;; value = #(list uses line-numbers fvar original-form)
 	    (begin
@@ -21055,7 +21056,7 @@
 		 
 		 (unless (and (pair? lint-function-body)
 			      (equal? new-form (car lint-function-body)))
-		   (let ((fvars (let ((fcase (hash-table-ref (fragments leaves) (list reduced-form))))
+		   (let ((fvars (let ((fcase (hash-table-ref (vector-ref fragments leaves) (list reduced-form))))
 				  (and (vector? fcase)
 				       (vector-ref fcase 2)))))
 		     (when (pair? fvars)
@@ -21481,6 +21482,7 @@
 			   (let ((arg1 (cadr form)))
 			     (cond ((and (pair? arg1)
 					 (eq? (car arg1) 'apply-values)  ; `(,@x) -> (copy x)
+					 (pair? (cdr arg1))
 					 (not (qq-tree? (cadr arg1))))
 				    (lint-format "perhaps ~A" caller
 						 (lists->string form
@@ -21782,7 +21784,7 @@
 									  (values)))
 								    (reverse (vector-ref vals 1))))
 					   (set! reportables (cons (list score i kv) reportables)))))))
-				 (fragments i)))
+				 (vector-ref fragments i)))
 		     (let ((reported-lines ())
 			   (reported #f)
 			   (reports 0))
@@ -22117,7 +22119,7 @@
 
 	(do ((i 0 (+ i 1))) 
 	    ((= i *fragment-max-size*))
-	  (fill! (fragments i) #f))
+	  (fill! (vector-ref fragments i) #f))
 
 	(set! last-simplify-boolean-line-number -1)
 	(set! last-simplify-numeric-line-number -1)
@@ -22143,7 +22145,7 @@
 	(set! (hook-functions *read-error-hook*) read-hooks)
 
 	;; preset list-tail and list-ref
-	(hash-table-set! (fragments 10) '((if (zero? _2_) _1_ (_F_ (cdr _1_) (- _2_ 1))))
+	(hash-table-set! (vector-ref fragments 10) '((if (zero? _2_) _1_ (_F_ (cdr _1_) (- _2_ 1))))
 			 (vector 0 () 
 				 (list (cons 'list-tail 
 					     (inlet :initial-value '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
@@ -22152,7 +22154,7 @@
 				 '(define (list-tail x k) (if (zero? k) x (list-tail (cdr x) (- k 1))))
 				 #f))
 	
-	(hash-table-set! (fragments 12) '((if (= _2_ 0) (car _1_) (_F_ (cdr _1_) (- _2_ 1))))
+	(hash-table-set! (vector-ref fragments 12) '((if (= _2_ 0) (car _1_) (_F_ (cdr _1_) (- _2_ 1))))
 			 (vector 0 ()
 				 (list (cons 'list-ref (inlet :initial-value '(define (list-ref items n) (if (= n 0) (car items) (list-ref (cdr items) (- n 1))))
 							      :arglist '(items n)
@@ -22373,4 +22375,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 70 30046 845047
+;;; 69 30046 845047

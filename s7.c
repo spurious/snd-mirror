@@ -2842,7 +2842,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_C_op_opSq_q, HOP_SAFE_C_op_opSq_q, 
       OP_SAFE_C_C_op_S_opCqq, HOP_SAFE_C_C_op_S_opCqq,
       OP_SAFE_C_op_S_opSq_q, HOP_SAFE_C_op_S_opSq_q, OP_SAFE_C_op_opSq_S_q, HOP_SAFE_C_op_opSq_S_q, 
-      OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q, OP_SAFE_C_opCDRq_Q, HOP_SAFE_C_opCDRq_Q, OP_SAFE_C_opSq_Q_S, HOP_SAFE_C_opSq_Q_S,
+      OP_SAFE_C_opSq_Q, HOP_SAFE_C_opSq_Q, OP_SAFE_C_opCDRq_Q, HOP_SAFE_C_opCDRq_Q, OP_SAFE_C_opSq_QS, HOP_SAFE_C_opSq_QS,
 
       OP_SAFE_C_Z, HOP_SAFE_C_Z, OP_SAFE_C_ZZ, HOP_SAFE_C_ZZ, OP_SAFE_C_SZ, HOP_SAFE_C_SZ, OP_SAFE_C_ZS, HOP_SAFE_C_ZS,
       OP_SAFE_C_CZ, HOP_SAFE_C_CZ, OP_SAFE_C_ZC, HOP_SAFE_C_ZC,
@@ -7552,7 +7552,7 @@ static s7_pointer make_macro(s7_scheme *sc)
   else s7_make_slot(sc, sc->envir, sc->code, mac); /* was current but we've checked immutable already */
 
   clear_symbol_list(sc); /* tracks names local to this macro */
-  if (optimize(sc, closure_body(mac), 0, collect_parameters(sc, closure_args(mac), sc->nil)) == OPT_OOPS)
+  if (optimize(sc, closure_body(mac), 1, collect_parameters(sc, closure_args(mac), sc->nil)) == OPT_OOPS)
     clear_all_optimizations(sc, closure_body(mac));
 
   sc->temp6 = sc->nil;
@@ -46651,7 +46651,7 @@ static s7_pointer all_x_c_opcdrq_q(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t2_1));
 }
 
-static s7_pointer all_x_c_opsq_q_s(s7_scheme *sc, s7_pointer arg)
+static s7_pointer all_x_c_opsq_qs(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
   largs = cadr(arg);
@@ -46904,7 +46904,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_opSq_C] = all_x_c_opsq_c;
   all_x_function[HOP_SAFE_C_opSq_Q] = all_x_c_opsq_q;
   all_x_function[HOP_SAFE_C_opCDRq_Q] = all_x_c_opcdrq_q;
-  all_x_function[HOP_SAFE_C_opSq_Q_S] = all_x_c_opsq_q_s;
+  all_x_function[HOP_SAFE_C_opSq_QS] = all_x_c_opsq_qs;
   all_x_function[HOP_SAFE_C_S_opSq] = all_x_c_s_opsq;
   all_x_function[HOP_SAFE_C_S_opCq] = all_x_c_s_opcq;
   all_x_function[HOP_SAFE_C_opCq_S] = all_x_c_opcq_s;
@@ -47136,7 +47136,11 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      set_car(y, s7_iterate(sc, x));
 	      if (iterator_is_at_end(x))
 		{
-		  pop_stack(sc);
+		  /* not pop_stack here since that can clobber sc->code et al, and if this map call is
+		   *   begin treated as safe, c_call(map) assumes everywhere that sc->code is left alone.
+		   */
+		  sc->stack_end -= 4;
+		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	      func(sc, y);
@@ -47152,8 +47156,8 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      set_car(y, s7_iterate(sc, car(x)));
 	      if (iterator_is_at_end(car(x)))
 		{
-
-		  pop_stack(sc);
+		  sc->stack_end -= 4;
+		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	    }
@@ -47193,12 +47197,14 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      slot_set_value(slot, s7_iterate(sc, iter));
 	      if (iterator_is_at_end(iter))
 		{
-		  pop_stack(sc);
+		  sc->stack_end -= 4;
+		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	      func(sc, expr);
 	    }
 	}
+      /* multi expr all_x does not get any hits here or in map */
       push_stack(sc, OP_FOR_EACH_1, make_counter(sc, caar(sc->z)), f);
       sc->z = sc->nil;
       return(sc->unspecified);
@@ -47288,7 +47294,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      set_car(y, s7_iterate(sc, car(x)));
 	      if (iterator_is_at_end(car(x)))
 		{
-		  pop_stack(sc);
+		  sc->stack_end -= 4;
+		  /* pop_stack(sc); */
 		  sc->args = old_args;
 		  return(safe_reverse_in_place(sc, car(val))); 
 		}
@@ -47337,7 +47344,8 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      slot_set_value(slot, s7_iterate(sc, iter));
 	      if (iterator_is_at_end(iter))
 		{
-		  pop_stack(sc);
+		  sc->stack_end -= 4;
+		  /* pop_stack(sc); */
 		  return(safe_reverse_in_place(sc, car(val)));
 		}
 	      z = func(sc, expr);
@@ -52175,7 +52183,9 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 		      (car(arg2) == sc->quote_symbol) &&
 		      (is_safe_c_s(arg1)))
 		    {
-		      set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q_S);
+		      set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_QS);
+		      set_opt_con1(cdr(expr), cadr(arg2));
+		      set_opt_sym2(cdr(expr), arg3);
 		      choose_c_function(sc, expr, func, 3);
 		      return(OPT_T);
 		    }
@@ -53249,6 +53259,7 @@ static opt_t optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
   #define indirect_cq_function_is_ok(Sc, X) ((!is_optimized(X)) || ((optimize_op(X) & 0x1) != 0) || (c_function_is_ok(Sc, X)))
 #endif
 
+
 static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
 
 static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_end)
@@ -53286,13 +53297,15 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_LETREC:
 	case OP_LETREC_STAR:
 	  {
-	    s7_pointer vars;
+	    s7_pointer vars, body;
 	    vars = cadr(x);
+	    body = cddr(x);
 	    if (is_symbol(vars))
 	      {
 		if (vars == func)
 		  return(false);
 		vars = caddr(x);
+		body = cdddr(x);
 	      }
 
 	    for (; is_pair(vars); vars = cdr(vars))
@@ -53312,23 +53325,30 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  return(false);
 	      }
 	    
-	    if (!body_is_safe(sc, func, cddr(x), at_end))
+	    if (!body_is_safe(sc, func, body, at_end))
 	      return(false);
 	    }
 	  break;
 
 	case OP_IF:
-	  if (!is_pair(cdr(x))) return(false); /* (if) ! */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) return(false);
-	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), at_end)))) return(false);
-	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end)))) return(false);
+	  if (!is_pair(cdr(x))) 
+	    return(false); /* (if) ! */
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false))))
+	    return(false);
+	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), at_end))))
+	    return(false);
+	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end))))
+	    return(false);
 	  break;
 
 	case OP_WHEN:
 	case OP_UNLESS:
-	  if (!is_pair(cdr(x))) return(false); /* (when) */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) return(false);
-	  if (!body_is_safe(sc, func, cddr(x), at_end)) return(false);
+	  if (!is_pair(cdr(x))) 
+	    return(false); /* (when) */
+	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) 
+	    return(false);
+	  if (!body_is_safe(sc, func, cddr(x), at_end))
+	    return(false);
 	  break;
 
 	case OP_COND:
@@ -53354,7 +53374,8 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_CASE:
 	  {
 	    s7_pointer p;
-	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false))) return(false);
+	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false))) 
+	      return(false);
 	    for (p = cddr(x); is_pair(p); p = cdr(p))
 	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end))) /* null cdar(p) ok here */
 		return(false);
@@ -53400,14 +53421,14 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	  /* if we set func, we have to make sure we abandon the tail call scan:
 	   * (let () (define (hi a) (let ((v (vector 1 2 3))) (set! hi v) (hi a))) (hi 1))
 	   */
-	  if (!is_pair(cdr(x))) return(false); /* (set!) ! */
+	  if (!is_pair(cdr(x)))
+	    return(false); /* (set!) ! */
 	  if (cadr(x) == func)
 	    return(false);
 
 	  /* car(x) is set!, cadr(x) is settee or obj, caddr(x) is val */
 	  if (is_symbol(caddr(x)))
 	    return(false);          /* ?? because it might be a local function that has captured local state? */
-
 	  if (((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), false))) &&
 	      ((is_symbol(cadr(x))) ||
 	       ((is_pair(cadr(x))) && (form_is_safe(sc, func, cadr(x), false)))))
@@ -53417,7 +53438,6 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_WITH_LET:
 	  if (is_pair(cadr(x)))
 	    return(false);
-
 	  if (!body_is_safe(sc, sc->F, cddr(x), at_end))
 	    return(false);
 	  break;
@@ -53445,7 +53465,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
 		if ((is_pair(car(p))) &&
 		    (((!is_optimized(car(p))) && (caar(p) != sc->quote_symbol)) ||
-		     (is_unsafe(car(p))) ||
+		     (!form_is_safe(sc, func, car(p), false)) ||
 		     (caar(p) == func)))    /* func called as arg, so not tail call */
 		  return(false);
 
@@ -53456,57 +53476,57 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 
 	  if (is_symbol(expr))
 	    {
-	      if (is_global(expr))
+	      s7_pointer f, f_slot;
+	      f_slot = find_symbol(sc, expr);
+	      if (!is_slot(f_slot))
+		return(false);
+	      f = slot_value(f_slot);
+
+	      if (((is_c_function(f)) &&
+		   ((is_safe_procedure(f)) ||
+		    ((is_possibly_safe(f)) && 
+		     (is_pair(cdr(x))) &&
+		     (is_pair(cddr(x))) &&
+		     (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
+		  ((is_closure(f)) &&
+		   (is_safe_closure(f))))
 		{
-		  s7_pointer f;
-		  f = find_symbol_checked(sc, expr);
-		  if (((is_c_function(f)) &&
-		       ((is_safe_procedure(f)) ||
-			((is_possibly_safe(f)) && 
-			 (is_pair(cdr(x))) &&
-			 (is_pair(cddr(x))) &&
-			 (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
-		      ((is_closure(f)) &&
-		       (is_safe_closure(f))))
-		    {
-		      s7_pointer p;
-		      for (p = cdr(x); is_pair(p); p = cdr(p))
-			if ((is_pair(car(p))) &&
-			    ((!is_optimized(car(p))) ||
-			     (is_unsafe(car(p)))))
-			  {
-			    if ((caar(p) != func) ||
-				(!is_null(cdr(p))))
-			      return(false);
-			  }
-		      if (!is_null(p))
-			return(false);
-		    }
+		  s7_pointer p;
+		  for (p = cdr(x); is_pair(p); p = cdr(p))
+		    if ((is_pair(car(p))) &&
+			(caar(p) != sc->quote_symbol) &&
+			((!is_optimized(car(p))) ||
+			 (!form_is_safe(sc, func, car(p), false))))
+		      {
+			if ((caar(p) != func) ||
+			    (!is_null(cdr(p))))
+			  return(false);
+		      }
+		  if (!is_null(p))
+		    return(false);
+		  return(true);
 		}
 	      else
 		{
-		  s7_pointer f;
-		  f = find_symbol(sc, expr);
-		  if (is_slot(f))
+		  if ((is_syntax(f)) ||
+		      (is_any_macro(f)))
+		    return(false);
+		  if ((is_closure(f)) &&
+		      (is_safe_closure(f)))
 		    {
-		      if ((is_syntax(slot_value(f))) || (is_any_macro(slot_value(f))))
-			return(false);
-		      if ((is_closure(slot_value(f))) &&
-			  (is_safe_closure(slot_value(f))))
-			{
-			  s7_pointer p;
-			  /* the calling function is safe, but what about its arguments? */
-			  for (p = cdr(x); is_pair(p); p = cdr(p))
-			    if ((is_pair(car(p))) &&
-				(caar(p) == func)) /* this would be a recursive call on func that is not in tail-call position */
-			      return(false);
-			  return(true);
-			}
+		      s7_pointer p;
+		      /* the calling function is safe, but what about its arguments? */
+		      for (p = cdr(x); is_pair(p); p = cdr(p))
+			if ((is_pair(car(p))) &&
+			    (caar(p) == func)) /* this would be a recursive call on func that is not in tail-call position */
+			  return(false);
+		      return(true);
 		    }
 		}
 	    }
 	  return(false);
 	}
+      /* else if car is a pair, perhaps a computed func -- how to check? */
     }
   return(true);
 }
@@ -54710,7 +54730,7 @@ static s7_pointer check_if(s7_scheme *sc)
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
   int len;
-  /* fprintf(stderr, "opt %s %s %s %d\n", DISPLAY(func), DISPLAY(args), DISPLAY(body), (is_symbol(func)) && (is_global(func))); */
+  /* fprintf(stderr, "opt %s %s %s, global: %d\n", DISPLAY(func), DISPLAY(args), DISPLAY(body), (is_symbol(func)) && (is_global(func))); */
 
   len = s7_list_length(sc, body);
   if (len < 0)                                                               /* (define (hi) 1 . 2) */
@@ -54819,7 +54839,6 @@ static s7_pointer check_define(s7_scheme *sc)
 	    s7_warn(sc, 128, "%s: syntactic keywords tend to behave badly if redefined", DISPLAY(func));
 	  set_local(func);
 	}
-
       if ((is_pair(cadr(sc->code))) &&               /* look for (define sym (lambda ...)) and treat it like (define (sym ...)...) */
 	  ((caadr(sc->code) == sc->lambda_symbol) ||
 	   (caadr(sc->code) == sc->lambda_star_symbol)) &&
@@ -56558,12 +56577,7 @@ static bool do_is_safe(s7_scheme *sc, s7_pointer body, s7_pointer steppers, s7_p
 	      else
 		{
 		  if ((!is_optimized(expr)) ||
-		      (is_unsafe(expr)) ||
 		      (!do_is_safe(sc, cdr(expr), steppers, var_list, has_set)))
-		    /* this is unreasonably retrictive because optimize_expression returns "unsafe"
-		     *   even when everything is safe -- it's merely saying it could not find a
-		     *   special optimization case for the expression.
-		     */
 		    return(false);
 		  else
 		    {
@@ -57177,8 +57191,37 @@ static int dox_ex(s7_scheme *sc)
 		}
 	    }
 	}
+      else
+	{
+	  s7_pointer p;
+	  for (p = code; is_pair(p); p = cdr(p))
+	    if (!is_all_x_safe(sc, car(p)))
+	      break;
+	  if (is_null(p))
+	    {
+	      s7_pointer endp, slots;
+	      endp = opt_pair2(sc->code);
+	      slots = let_slots(sc->envir);
+	      annotate_args(sc, code, sc->envir);
+		  
+	      while (true)
+		{
+		  s7_pointer slot;
+		  for (p = code; is_pair(p); p = cdr(p))
+		    c_call(p)(sc, car(p));
+
+		  for (slot = slots; is_slot(slot); slot = next_slot(slot))
+		    if (is_pair(slot_expression(slot)))
+		      slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
+		  if (is_true(sc, sc->value = endf(sc, endp)))
+		    {
+		      sc->code = cdadr(sc->code);
+		      return(goto_DO_END_CLAUSES);
+		    }
+		}
+	    }
+	}
     }
-  
 
   if ((!is_unsafe_do(sc->code)) &&
       (dox_pf_ok(sc, code, sc->code, endf, all_pairs)))
@@ -57210,6 +57253,29 @@ static int dox_ex(s7_scheme *sc)
   return(fall_through);
 }
 
+#if 0
+static void find_symbols(s7_scheme *sc, s7_pointer tree, s7_pointer e)
+{
+  if (is_symbol(tree))
+    {
+      if ((!is_global(tree)) &&
+	  (symbol_id(tree) != let_id(e)))
+	{
+	  fprintf(stderr,  "update %s\n", DISPLAY(tree));
+	  symbol_set_id(tree, let_id(e)); 
+	  symbol_increment_ctr(tree);
+	}
+    }
+  else
+    {
+      if (is_pair(tree))
+	{
+	  find_symbols(sc, car(tree), e);
+	  find_symbols(sc, cdr(tree), e);
+	}
+    }
+}
+#endif
 	  
 static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 {
@@ -57304,6 +57370,9 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 	      s7_int i, start, stop;
 	      start = integer(slot_value(ctr));
 	      stop = integer(slot_value(end));
+
+	      /* find_symbols(sc, body, sc->envir); */
+	      /* let_id(sc->envir) = let_id(outlet(sc->envir)); */
 	      
 	      for (i = start; i < stop; i++)
 		{
@@ -60402,8 +60471,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      }
 
 	    set_opt_pair2(code, cddr(code));
-	    if ((is_null(cdr(opt_pair2(code)))) &&
-		(is_pair(car(opt_pair2(code)))) &&
+	    if ((is_null(cdr(opt_pair2(code)))) &&    /* one expr in body */
+		(is_pair(car(opt_pair2(code)))) &&    /*   and it is a pair */
 		(is_symbol(cadr(caddr(caar(code)))))) /* caar=(i 0 (+ i 1)), caddr=(+ i 1), so this is apparently checking that the stepf is reasonable? */
 	      {
 		int choice;
@@ -62396,6 +62465,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer args;
 		    args = cadr(code);
+		    check_stack_size(sc);
 		    set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(args)));
 		    push_stack(sc, OP_SAFE_C_opSq_P_1, c_call(args)(sc, sc->t1_1), sc->code);
 		    sc->code = caddr(code);
@@ -62431,17 +62501,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		  
-		case OP_SAFE_C_opSq_Q_S:
+		case OP_SAFE_C_opSq_QS:
 		  if (!c_function_is_ok_cadr(sc, code)) break;
 		  
-		case HOP_SAFE_C_opSq_Q_S:
+		case HOP_SAFE_C_opSq_QS:
 		  {
 		    s7_pointer arg1, arg3;  /* (let-set! (cdr v) 'x y) */
 		    arg1 = cadr(code);
-		    arg3 = find_symbol_unchecked(sc, cadddr(code));
+		    arg3 = find_symbol_unchecked(sc, opt_sym2(cdr(code)));  /* cadddr(code) */
 		    set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(arg1)));
 		    set_car(sc->t3_1, c_call(arg1)(sc, sc->t1_1));
-		    set_car(sc->t3_2, cadr(caddr(code)));
+		    set_car(sc->t3_2, opt_con1(cdr(code)));                 /* cadr(caddr(code)) */
 		    set_car(sc->t3_3, arg3);
 		    sc->value = c_call(code)(sc, sc->t3_1);
 		    goto START;
@@ -73105,7 +73175,8 @@ s7_scheme *s7_init(void)
   /* read can't be safe because it messes with the stack, expecting to be all by itself in the call sequence 
    *   (not embedded in OP_SAFE_C_opSq for example) -- that is, it pushes OP_READ_INTERNAL, then returns
    *   expecting goto START, which would be nonsense if arg=c_call(read) -> c_call(arg).
-   *   a safe procedure leaves its argument list alone and does not push anything on the stack
+   *   a safe procedure leaves its argument list alone, does not push anything on the stack,
+   *   and leaves sc->code|args unscathed (c_call assumes that is the case).
    */
 
   sc->call_with_input_string_symbol = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
@@ -73897,15 +73968,15 @@ int main(int argc, char **argv)
  *                                             f4old f4new
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1116] 1171 1153
  * teq           |      |      | 6612 | 2380 | 2380 [2340] 2500 2457
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2709] 2960 2970
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3210] 3287 3379
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2709] 2960 2978
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3210] 3287 3357
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3393
- * tcopy         |      |      | 13.6 | 3204 | 3088 [3287] 3190 3423
- * tform         |      |      | 6816 | 3627 | 3724 [3584] 3768 3911
- * lint          |      |      |      | 7731 | 4736 [4016] 4181 [185.9]
- * tmap          |      |      |  9.3 | 4176 | 4171 [4338] 4263 4512
- * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5914
- * thash         |      |      | 50.7 | 8491 | 8518 [10.6] 8858 11.5
+ * tcopy         |      |      | 13.6 | 3204 | 3088 [3287] 3190 3409
+ * tform         |      |      | 6816 | 3627 | 3724 [3584] 3768 3938
+ * lint          |      |      |      | 7731 | 4736 [4016] 4178 [185.0]
+ * tmap          |      |      |  9.3 | 4176 | 4171 [4338] 4263 4510
+ * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5922
+ * thash         |      |      | 50.7 | 8491 | 8518 [10.6] 8858 11.4
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.3] 12.0 12.1
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 [15.0] 17.7 17.7
@@ -73930,21 +74001,18 @@ int main(int argc, char **argv)
  * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
  *    also complain about func name collisions -- report-shadowed-functions
  *    does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
- *    use apply for eval in lint just-* cases (quoted symbol etc)
  *    can do test change simplify more for recur->iter in lint?
  * hook tests that check that pars exist and are not built-ins
  * The Plan: transparent let
  *    in optimize_syntax, each binder get local bindings, if no collisions adds its names to no-cross-ref and adds itself to pending-transparencies
  *    any global ref that collides also so need to track all non-local names as no-cross-ref
  *    if at end of binder, and there are pending, set transparent
- * check unsafe closure -- safe closure calls are ok and tail recursion
  * vector|list|string printers for readable case might try to compress (all eq -> use make-vector etc)
  * check where or/and need jump -- maybe splittable
- * if end or result is simple, no need to push? [check trailers also here eval_args_2|4 are major cases]
- * map/for-each closure body->P or A cases
  * profiler cores up?  Appears to be in list output.
  *   profiler misses all_x counts, and start?
- * opt_con1|2 for more field accesses?
+ * maybe remove the old integer-length based overflow checks
+ * all _P: cases need stack size check?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
