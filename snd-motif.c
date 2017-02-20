@@ -24732,7 +24732,7 @@ static void make_listener_widget(int height)
       XtVaSetValues(main_shell(ss), XmNallowShellResize, false, NULL);
 
       XtManageChild(listener_text);
-      XmTextSetCursorPosition(listener_text, 1);
+      XmTextSetCursorPosition(listener_text, ss->listener_prompt_length);
       if (!transTable4) 
 	transTable4 = XtParseTranslationTable(TextTrans4);
       XtOverrideTranslations(listener_text, transTable4);

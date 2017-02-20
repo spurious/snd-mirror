@@ -1120,7 +1120,7 @@ struct s7_scheme {
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
 
-#define NUM_SAFE_LISTS 16
+#define NUM_SAFE_LISTS 20
 #define INITIAL_AUTOLOAD_NAMES_SIZE 4
 
 
@@ -46293,13 +46293,14 @@ static int all_x_count(s7_pointer x)
 
 /* arg here is the full expression */
 
-static s7_pointer all_x_else(s7_scheme *sc, s7_pointer arg) {return(sc->T);} /* used in cond_all_x */
-static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)    {return(arg);}
-static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)    {return(cadr(arg));}
-static s7_pointer all_x_unsafe_s(s7_scheme *sc, s7_pointer arg) {return(find_symbol_checked(sc, arg));}
-static s7_pointer all_x_s(s7_scheme *sc, s7_pointer arg)    {return(find_symbol_unchecked(sc, arg));}
-static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)    {return(arg);}
-static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)  {return(c_call(arg)(sc, cdr(arg)));}
+static s7_pointer all_x_else(s7_scheme *sc, s7_pointer arg)    {return(sc->T);} /* used in cond_all_x */
+static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
+static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
+static s7_pointer all_x_unsafe_s(s7_scheme *sc, s7_pointer arg){return(find_symbol_checked(sc, arg));}
+static s7_pointer all_x_s(s7_scheme *sc, s7_pointer arg)       {return(find_symbol_unchecked(sc, arg));}
+static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)       {return(arg);}
+static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)     {return(c_call(arg)(sc, cdr(arg)));}
+static s7_pointer all_x_not_c_c(s7_scheme *sc, s7_pointer arg) {return(make_boolean(sc, is_false(sc, c_call(cadr(arg))(sc, cdadr(arg)))));}
 
 static s7_pointer all_x_c_add1(s7_scheme *sc, s7_pointer arg)  
 {
@@ -46328,6 +46329,32 @@ static s7_pointer all_x_c_char_eq(s7_scheme *sc, s7_pointer arg)
   if (s7_is_character(c))
     return(sc->F);
   method_or_bust(sc, c, sc->char_eq_symbol, set_plist_2(sc, c, caddr(arg)), T_CHARACTER, 1);
+}
+
+static s7_pointer all_x_not_is_eq_car_q(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer lst, a;
+  a = cdadr(arg);
+  lst = find_symbol_unchecked(sc, cadar(a));
+  if (!is_pair(lst))
+    return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), cadr(cadr(a)))))));
+  return(make_boolean(sc, car(lst) != cadr(cadr(a))));
+}
+
+static s7_pointer all_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = find_symbol_unchecked(sc, cadadr(arg));
+  if (is_pair(p)) return(sc->F);
+  return(sc->T);
+}
+
+static s7_pointer all_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = find_symbol_unchecked(sc, cadadr(arg));
+  if (is_pair(cdr(p))) return(sc->T);
+  return(sc->F);
 }
 
 static s7_pointer all_x_c_q(s7_scheme *sc, s7_pointer arg)
@@ -46936,6 +46963,12 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_CSC] = all_x_c_csc;
 }
 
+static s7_pointer g_not_c_c(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_is_pair_cdr(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_is_eq_car(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_is_eq_car_q(s7_scheme *sc, s7_pointer args);
+
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_sym_t *checker)
 {
   /* fprintf(stderr, "all_x_eval: %s %s\n", DISPLAY(arg), DISPLAY(e)); */
@@ -46946,6 +46979,10 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_
 	  switch (optimize_op(arg))
 	    {
 	    case HOP_SAFE_C_C:
+	      if (c_call(arg) == g_not_is_pair)
+		return(all_x_not_is_pair);
+	      if (c_call(arg) == g_is_pair_cdr)
+		return(all_x_is_pair_cdr);
 	      if (c_call(arg) == g_add_cs1) 
 		return(all_x_c_add1);
 	      if ((c_call(arg) == g_add_si) &&
@@ -46954,6 +46991,12 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_
 	      if ((c_call(arg) == g_char_equal_s_ic) &&
 		  (checker(sc, cadr(arg), e)))
 		return(all_x_c_char_eq);
+	      if (c_call(arg) == g_not_c_c)
+		{
+		  if (c_call(cadr(arg)) == g_is_eq_car_q)
+		    return(all_x_not_is_eq_car_q);
+		  return(all_x_not_c_c);
+		}
 	      return(all_x_c_c);
 
 	    case HOP_SAFE_C_S:
@@ -47140,7 +47183,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 		   *   begin treated as safe, c_call(map) assumes everywhere that sc->code is left alone.
 		   */
 		  sc->stack_end -= 4;
-		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	      func(sc, y);
@@ -47157,7 +47199,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      if (iterator_is_at_end(car(x)))
 		{
 		  sc->stack_end -= 4;
-		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	    }
@@ -47198,7 +47239,6 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 	      if (iterator_is_at_end(iter))
 		{
 		  sc->stack_end -= 4;
-		  /* pop_stack(sc); */
 		  return(sc->unspecified);
 		}
 	      func(sc, expr);
@@ -47295,7 +47335,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      if (iterator_is_at_end(car(x)))
 		{
 		  sc->stack_end -= 4;
-		  /* pop_stack(sc); */
 		  sc->args = old_args;
 		  return(safe_reverse_in_place(sc, car(val))); 
 		}
@@ -47345,7 +47384,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      if (iterator_is_at_end(iter))
 		{
 		  sc->stack_end -= 4;
-		  /* pop_stack(sc); */
 		  return(safe_reverse_in_place(sc, car(val)));
 		}
 	      z = func(sc, expr);
@@ -47476,7 +47514,7 @@ static s7_pointer splice_in_values(s7_scheme *sc, s7_pointer args)
       set_multiple_value(args);
       eval_error_with_caller(sc, "~A: can't bind some variable to ~S", sc->let_symbol, args);
       /* "some variable" is ugly, but the actual name is tricky to find at this point --
-       *   it's in main_stack_args, but finding the right one is a mess.  It's isn't sc->code.
+       *   it's in main_stack_args, but finding the right one is a mess.  It isn't sc->code.
        */
       
     case OP_LET_STAR1:
@@ -59323,7 +59361,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
   e = sc->envir;
   id = let_id(e);
 
-  /* fprintf(stderr, "args: %s, code: %s\n", DISPLAY(closure_args(sc->code)), DISPLAY(closure_body(sc->code))); */
+  /* fprintf(stderr, "apply_lambda args: %s, code: %s\n", DISPLAY(closure_args(sc->code)), DISPLAY(closure_body(sc->code))); */
   
   for (x = closure_args(sc->code), z = _TLst(sc->args); is_pair(x); x = cdr(x)) /* closure_args can be a symbol, for example */
     {
@@ -64055,7 +64093,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    set_syntactic_pair(code);      /* leave other bits (T_LINE_NUMBER) intact */
 		    set_car(code, syntax_symbol(slot_value(initial_slot(carc)))); /* clear possible optimization confusion */
-		    sc->op = (opcode_t)symbol_syntax_op(car(code));
+		    sc->op = (opcode_t)symbol_syntax_op(carc);
 		    pair_set_syntax_op(code, sc->op);
 		    sc->code = cdr(code);
 		    goto START_WITHOUT_POP_STACK;
@@ -73973,14 +74011,14 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3393
  * tcopy         |      |      | 13.6 | 3204 | 3088 [3287] 3190 3409
  * tform         |      |      | 6816 | 3627 | 3724 [3584] 3768 3938
- * lint          |      |      |      | 7731 | 4736 [4016] 4178 [185.0]
+ * lint          |      |      |      | 7731 | 4736 [4016] 4178 [182.8]
  * tmap          |      |      |  9.3 | 4176 | 4171 [4338] 4263 4510
  * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5922
  * thash         |      |      | 50.7 | 8491 | 8518 [10.6] 8858 11.4
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.3] 12.0 12.1
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 [15.0] 17.7 17.7
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.3] 41.9 [138.7] 41.6
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.3] 41.9 [135.0] 41.6
  * 
  * --------------------------------------------------------------------
  *
@@ -74011,8 +74049,14 @@ int main(int argc, char **argv)
  * check where or/and need jump -- maybe splittable
  * profiler cores up?  Appears to be in list output.
  *   profiler misses all_x counts, and start?
+ *   profile uses line number which is very confusing
  * maybe remove the old integer-length based overflow checks
  * all _P: cases need stack size check?
+ * more overheads: all_x_and2 all_x_is_pair_s g_is_pair_cdr
+ * need an annotator for scheme code showing opts and losers, then also accurate profiling
+ * split let_one? 
+ * what is the effect of boolean_not_method in all_x_is_pair_cdr?
+ * track down the clm_error -- test 8?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
