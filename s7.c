@@ -782,6 +782,9 @@ typedef struct s7_cell {
     } winder;
   } object;
 
+#if WITH_PROFILE
+  int file_and_line;
+#endif
 #if DEBUGGING
   int current_alloc_line, previous_alloc_line, current_alloc_type, previous_alloc_type, debugger_bits, gc_line, alloc_line, uses;
   long long int sid;
@@ -2805,10 +2808,11 @@ enum {OP_NO_OP,
 
 typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
-enum {OP_SAFE_C_C, HOP_SAFE_C_C, OP_SAFE_C_S, HOP_SAFE_C_S, 
+enum {OP_SAFE_C_C, HOP_SAFE_C_C, 
       OP_SAFE_C_AND2, HOP_SAFE_C_AND2, OP_SAFE_C_OR2, HOP_SAFE_C_OR2,
+      OP_SAFE_C_S, HOP_SAFE_C_S,
       OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_CADR_S, HOP_SAFE_CADR_S,
-      OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_NULL_S, HOP_SAFE_IS_NULL_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, 
+      OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_NULL_S, HOP_SAFE_IS_NULL_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, /* order matters here */
       OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS,
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ,
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC,
@@ -2989,8 +2993,9 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 };
 
 static const char* opt_names[OPT_MAX_DEFINED] =
-     {"safe_c_c", "h_safe_c_c", "safe_c_s", "h_safe_c_s", 
+     {"safe_c_c", "h_safe_c_c", 
       "safe_c_and2", "h_safe_c_and2", "safe_c_or2", "h_safe_c_or2",
+      "safe_c_s", "h_safe_c_s", 
       "safe_car_s", "h_safe_car_s", "safe_cdr_s", "h_safe_cdr_s", "safe_cadr_s", "h_safe_cadr_s",
       "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_null_s", "h_safe_is_null_s", "safe_is_symbol_s", "h_safe_is_symbol_s", 
       "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs",
@@ -3098,9 +3103,9 @@ static bool is_h_optimized(s7_pointer p)
 	 (!is_unknown_op(optimize_op(p))));
 }
 
-#define is_h_safe_c_c(P) ((is_optimized(P)) && (optimize_op(P) == HOP_SAFE_C_C))
-#define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_op(P) == HOP_SAFE_C_S))
-#define is_safe_c_s(P)   ((is_optimized(P)) && (op_no_hop(P) == OP_SAFE_C_S))
+#define is_h_safe_c_c(P) ((is_optimized(P)) && (optimize_op(P) >= HOP_SAFE_C_C) && (optimize_op(P) < OP_SAFE_C_S) && ((optimize_op(P) & 1) != 0)) 
+#define is_h_safe_c_s(P) ((is_optimized(P)) && (optimize_op(P) >= HOP_SAFE_C_S) && (optimize_op(P) <= HOP_SAFE_IS_SYMBOL_S) && ((optimize_op(P) & 1) != 0))
+#define is_safe_c_s(P)   ((is_optimized(P)) && (optimize_op(P) >= HOP_SAFE_C_S) && (optimize_op(P) <= HOP_SAFE_IS_SYMBOL_S))
 
 static int position_of(s7_pointer p, s7_pointer args)
 {
@@ -7987,12 +7992,13 @@ static s7_pointer g_is_c_pointer(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer arg;
   #define H_c_pointer "(c-pointer int) returns a c-pointer object."
   #define Q_c_pointer s7_make_signature(sc, 2, sc->is_c_pointer_symbol, sc->is_integer_symbol)
 
-  arg = car(args);
+  s7_pointer arg;
   ptr_int p;
+
+  arg = car(args);
   if (!s7_is_integer(arg))
     method_or_bust(sc, arg, sc->c_pointer_symbol, list_1(sc, arg), T_INTEGER, 1);
   p = (ptr_int)s7_integer(arg);             /* (c-pointer (bignum "1234")) */
@@ -8017,20 +8023,7 @@ static void resize_xf(s7_scheme *sc, xf_t *rc)
    */
   s7_int loc;
   loc = rc->cur - rc->data;
-
-#if DEBUGGING
-  int i;
-  s7_pointer *old;
-  old = rc->data;
-  rc->data = (s7_pointer *)calloc(rc->size * 2, sizeof(s7_pointer));
-  for (i = 0; i < rc->size; i++)
-    {
-      rc->data[i] = old[i];
-      old[i] = NULL;
-    }
-#else
   rc->data = (s7_pointer *)realloc(rc->data, rc->size * 2 * sizeof(s7_pointer));
-#endif
   rc->cur = (s7_pointer *)(rc->data + loc);
   rc->size *= 2;
   rc->end = (s7_pointer *)(rc->data + rc->size);
@@ -19852,8 +19845,6 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       if (is_null(p)) return(x);
       y = car(p);
       p = cdr(p);
-      /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(x), DISPLAY(y)); */
-
       switch (type(y))
 	{
 	case T_INTEGER:
@@ -19892,8 +19883,6 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
       if (is_null(p)) return(x);
       y = car(p);
       p = cdr(p);
-      /* fprintf(stderr, "%d: %s %s\n", __LINE__, DISPLAY(x), DISPLAY(y)); */
-
       switch (type(y))
 	{
 	case T_INTEGER:
@@ -19958,8 +19947,6 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 			  s7_int vala, valb;
 			  vala = num_a / den_a;
 			  valb = num_b / den_b;
-			  /* fprintf(stderr, "val: %lld %lld %d %d\n", vala, valb, -1/2, 0); */
-			  
 			  if (!((vala > valb) ||
 				((vala == valb) && (is_t_integer(y)))))
 			    {
@@ -28681,8 +28668,8 @@ static shared_info *make_shared_info(s7_scheme *sc, s7_pointer top, bool stop_at
       x = top;
       if (stop_at_print_length)
 	{
-	  stop_len = sc->print_length;
 	  s7_pointer slow;
+	  stop_len = sc->print_length;
 	  slow = top;
 	  for (k = 0; k < stop_len; k += 2)
 	    {
@@ -29569,7 +29556,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 {
   /* we need list_to_starboard... */
   s7_pointer x;
-  int i, len, true_len;
+  s7_int i, len, true_len;
 
   true_len = s7_list_length(sc, lst);
   if (true_len < 0)                    /* a dotted list -- handle cars, then final cdr */
@@ -29614,7 +29601,7 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	  char buf[128];
 
 	  port_write_string(port)(sc, "let (({lst} (make-list ", 23, port);
-	  plen = snprintf(buf, 128, "%d))) ", len);
+	  plen = snprintf(buf, 128, "%lld))) ", len);
 	  port_write_string(port)(sc, buf, plen, port);
 
 	  if ((shared_ref(ci, lst) < 0))
@@ -29692,11 +29679,30 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	}
       else
 	{
-	  for (x = lst, i = 0; (is_pair(x)) && (i < len); i++, x = cdr(x))
+	  s7_int len1;
+	  len1 = len - 1;
+	  if (is_string_port(port))
+	    {
+	      for (x = lst, i = 0; (is_pair(x)) && (i < len1); i++, x = cdr(x))
+		{
+		  object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
+		  if (port_position(port) >= port_data_size(port))
+		    resize_port_data(port, port_data_size(port) * 2);
+		  port_data(port)[port_position(port)++] = (unsigned char)' ';
+		}
+	    }
+	  else
+	    {
+	      for (x = lst, i = 0; (is_pair(x)) && (i < len1); i++, x = cdr(x))
+		{
+		  object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
+		  port_write_character(port)(sc, ' ', port);
+		}
+	    }
+	  if (is_pair(x))
 	    {
 	      object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
-	      if (i < (len - 1))
-		port_write_character(port)(sc, ' ', port);
+	      x = cdr(x);
 	    }
 	  if (is_not_null(x))
 	    {
@@ -29987,7 +29993,6 @@ static void collect_locals(s7_scheme *sc, s7_pointer body, s7_pointer e, s7_poin
 	}
     }
 }
-
 
 
 static s7_pointer find_closure(s7_scheme *sc, s7_pointer closure, s7_pointer cur_env)
@@ -45513,7 +45518,6 @@ static s7_pointer read_error_1(s7_scheme *sc, const char *errmsg, bool string_er
   int len;
   s7_pointer pt;
 
-  /* fprintf(stderr, "read error: %s\n", errmsg); */
   pt = sc->input_port;
   if (!string_error)
     {
@@ -46353,8 +46357,9 @@ static s7_pointer all_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer p;
   p = find_symbol_unchecked(sc, cadadr(arg));
-  if (is_pair(cdr(p))) return(sc->T);
-  return(sc->F);
+  if (is_pair(p))
+    return(make_boolean(sc, is_pair(cdr(p))));
+  return(g_is_pair(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
 }
 
 static s7_pointer all_x_c_q(s7_scheme *sc, s7_pointer arg)
@@ -46968,6 +46973,8 @@ static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_pair_cdr(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_eq_car(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_eq_car_q(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_and_2(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_or_2(s7_scheme *sc, s7_pointer args);
 
 static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_sym_t *checker)
 {
@@ -46997,6 +47004,10 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_
 		    return(all_x_not_is_eq_car_q);
 		  return(all_x_not_c_c);
 		}
+	      if (c_call(arg) == g_and_2)
+		return(all_x_and2);
+	      if (c_call(arg) == g_or_2)
+		return(all_x_or2);
 	      return(all_x_c_c);
 
 	    case HOP_SAFE_C_S:
@@ -49296,7 +49307,7 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer 
 	    }
 	}
 
-      if (optimize_op(cadr(expr)) == HOP_SAFE_C_C)
+      if (is_h_safe_c_c(cadr(expr)))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  if (c_callee(cadr(expr)) == g_is_pair_car)
@@ -49591,8 +49602,7 @@ static s7_pointer multiply_chooser(s7_scheme *sc, s7_pointer f, int args, s7_poi
 	      return(sqr_ss);
 	    }
 
-	  if ((is_optimized(arg2)) &&
-	      (optimize_op(arg2) == HOP_SAFE_C_S) &&
+	  if ((is_h_safe_c_s(arg2)) &&
 	      ((car(arg2) == sc->sin_symbol) || (car(arg2) == sc->cos_symbol)) &&
 	      ((optimize_op(expr) == HOP_SAFE_C_S_opSq) ||
 	       (is_h_safe_c_c(expr))))
@@ -49818,7 +49828,7 @@ static s7_pointer equal_chooser(s7_scheme *sc, s7_pointer ur_f, int args, s7_poi
 	      f = c_callee(arg1);
 	      if (f == g_length)
 		{
-		  if (optimize_op(arg1) == HOP_SAFE_C_S)
+		  if (is_h_safe_c_s(arg1))
 		    {
 		      set_optimize_op(expr, HOP_SAFE_C_C);
 		      return(equal_length_ic);
@@ -50757,7 +50767,7 @@ static void init_choosers(s7_scheme *sc)
 #define UNTRUSTED_SYMBOL 0x7fffffff
 
 
-static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop)
+static opt_t optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop)
 {
   if (is_immutable_symbol(car(expr)))
     hop = 1;
@@ -50793,13 +50803,13 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 	  else set_unsafe_optimize_op(expr, hop + OP_THUNK);
 	  set_opt_lambda(expr, func);
 	}
-      return(false);                                    /* false because currently the C_PP stuff assumes safe procedure calls */
+      return(OPT_F);                                    /* false (OPT_F) because currently the C_PP stuff assumes safe procedure calls */
     }
 
   if (is_c_function(func))
     {
       if (c_function_required_args(func) != 0)
-	return(false);
+	return(OPT_F);
 
       if ((is_safe_procedure(func)) ||
 	  (c_function_call(func) == g_list) ||          /* (list) is safe */
@@ -50807,9 +50817,9 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 	{
 	  set_safe_optimize_op(expr, hop + OP_SAFE_C_C);
 	  choose_c_function(sc, expr, func, 0);
-	  return(true);
+	  return(OPT_T);
 	}
-      return(false);
+      return(OPT_F);
     }
 
   if (is_closure_star(func))
@@ -50821,7 +50831,7 @@ static bool optimize_thunk(s7_scheme *sc, s7_pointer expr, s7_pointer func, int 
 	  set_opt_lambda(expr, func);
 	}
     }
-  return(false);
+  return(OPT_F);
 }
 
 
@@ -50850,6 +50860,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_A:      return(OP_SAFE_C_opAq);
 	case OP_SAFE_C_AA:     return(OP_SAFE_C_opAAq);
 	case OP_SAFE_C_AAA:    return(OP_SAFE_C_opAAAq);
+	  /* car_s opsq_opsq c_opsq s_opcq opcq_s opsq_c opcq_c, but they don't amount to anything in safe_c_a|z */
 	}
       return(OP_SAFE_C_Z); /* this splits out to A in optimize_func_one_arg */
 
@@ -50906,6 +50917,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SSA:
 	case OP_SAFE_C_AAA:
 	  return(OP_SAFE_C_S_opAAAq);
+	  /* opssq opsq opcq qs opsq_opsq s_opsq */
 	}
       return(OP_SAFE_C_SZ);
 
@@ -50919,6 +50931,11 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SS: return(OP_SAFE_C_opSSq_S);
 	case OP_SAFE_C_opSq:  return(OP_SAFE_C_op_opSq_q_S);
 	case OP_SAFE_C_opSSq: return(OP_SAFE_C_op_opSSq_q_S);
+	    /* safe_c_aaa (sas too), safe_c_qs, opsq_opsq, opsq_s and s_opsq sss
+	     *    s_opcq opsq_s sss opsq_opsq
+	     *    s_opsq all_s sss aaa aa a opsq_opsq csa
+	     *    s_opcq
+	     */
 	}
       return(OP_SAFE_C_ZS);
 
@@ -50932,6 +50949,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	case OP_SAFE_C_SC:    return(OP_SAFE_C_opSCq_C);
 	case OP_SAFE_C_opSq:  return(OP_SAFE_C_op_opSq_q_C);
 	case OP_SAFE_C_opSSq: return(OP_SAFE_C_op_opSSq_q_C);
+	  /* aaa a c_opcq
+	   */
 	}
       return(OP_SAFE_C_ZC);
 
@@ -50963,6 +50982,7 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 
 	case OP_SAFE_C_S_opCq:
 	  return(OP_SAFE_C_C_op_S_opCqq);
+	  /* q opcq a */
 	}
       return(OP_SAFE_C_CZ);
 
@@ -50996,6 +51016,8 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 	  if (optimize_op_match(e1, OP_SAFE_C_S))
 	    return(OP_SAFE_C_opSq_opSSq);
 	  break;
+	  /* qs sq opcq opsq a */
+
 	}
       return(OP_SAFE_C_ZZ);
 
@@ -54024,6 +54046,10 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 
   if (is_pair(cadr(binding)))
     {
+      /*
+      if (caadr(binding) == sc->car_symbol)
+	fprintf(stderr, "%s %d %s\n", DISPLAY_80(binding), is_optimized(cadr(binding)), (is_optimized(cadr(binding))) ? opt_names[optimize_op(cadr(binding))] : "none");
+      */
       if (is_h_optimized(cadr(binding)))
 	{
 	  if (is_null(cddr(sc->code)))                   /* one statement body */
@@ -54083,7 +54109,7 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
 	    }
 	  else
 	    {
-	      if (optimize_op(cadr(binding)) == HOP_SAFE_C_C)
+	      if (is_h_safe_c_c(cadr(binding)))
 		{
 		  set_opt_sym3(sc->code, car(binding));
 		  pair_set_syntax_symbol(sc->code, sc->let_opcq_symbol);
@@ -54629,7 +54655,7 @@ static s7_pointer check_if(s7_scheme *sc)
 	{
 	  if (is_h_optimized(test))
 	    {
-	      if (optimize_op(test) == HOP_SAFE_C_C)
+	      if (is_h_safe_c_c(test))
 		{
 		  set_opt_pair2(sc->code, cdr(test));
 		  if (c_callee(test) == g_and_2)
@@ -55573,7 +55599,7 @@ static s7_pointer check_set(s7_scheme *sc)
 			      if (is_h_optimized(value))
 				{
 				  pair_set_syntax_symbol(sc->code, sc->set_symbol_z_symbol);
-				  if (optimize_op(value) == HOP_SAFE_C_C)
+				  if (is_h_safe_c_c(value))
 				    {
 				      pair_set_syntax_symbol(sc->code, sc->set_symbol_opcq_symbol);
 				      /* opt1 here points back? */
@@ -55698,7 +55724,6 @@ static s7_pointer check_set(s7_scheme *sc)
 
 static bool set_pair_p_3(s7_scheme *sc, s7_pointer obj, s7_pointer arg, s7_pointer value)
 {
-  /* fprintf(stderr, "%s: %s %s\n", __func__, DISPLAY(arg), DISPLAY(value)); */
   if (is_slot(obj))
     obj = slot_value(obj);
   else eval_error(sc, "no generalized set for ~A", caar(sc->code));
@@ -56774,7 +56799,7 @@ static s7_pointer check_do(s7_scheme *sc)
 
 	      if ((is_optimized(step_expr)) &&
 		  (((optimize_op(step_expr) == HOP_SAFE_C_SC) && (car(vars) == cadr(step_expr))) ||
-		   ((optimize_op(step_expr) == HOP_SAFE_C_C) && (car(vars) == cadr(step_expr)) &&
+		   ((is_h_safe_c_c(step_expr)) && (car(vars) == cadr(step_expr)) &&
 		    ((opt_cfunc(step_expr) == add_cs1) || (opt_cfunc(step_expr) == subtract_cs1))) ||
 		   ((optimize_op(step_expr) == HOP_SAFE_C_CS) && (car(vars) == caddr(step_expr)))))
 		{
@@ -57581,8 +57606,6 @@ static int let_pf_ok(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool s
   s7_rf_t varf = NULL;
   s7_pointer old_e, stepper;
   int var_len;
-
-  /* fprintf(stderr, "%lld %lld %s %d\n", numerator(step_slot), denominator(step_slot), DISPLAY(scc), safe_case); */
 
   let_code = caddr(scc);
   let_body = cddr(let_code);
@@ -59388,7 +59411,7 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
       let_set_slots(e, z);
       z = args;
     }
-  /* fprintf(stderr, "x: %s, z: %s\n", DISPLAY(x), DISPLAY(z)); */
+
   if (is_null(x))
     {
       if (is_not_null(z))
@@ -59401,12 +59424,10 @@ static void apply_lambda(s7_scheme *sc)                              /* --------
     }
   else
     {
-      /* fprintf(stderr, "rest arg: %s %s\n", DISPLAY(x), DISPLAY(z)); */
       sc->temp6 = z; /* the rest arg */
       make_slot_1(sc, sc->envir, x, z);
       sc->temp6 = sc->nil;
     }
-  /* fprintf(stderr, "sc->envir: %s\n", DISPLAY(sc->envir)); */
   sc->code = closure_body(sc->code);
 }
 
@@ -59647,6 +59668,9 @@ static bool a_is_ok(s7_scheme *sc, s7_pointer p)
 
 
 #if WITH_PROFILE
+#define profile_location(p)        p->file_and_line
+#define profile_set_location(p, N) p->file_and_line = N
+
 static void profile(s7_scheme *sc, s7_pointer expr)
 {
   /* I tried using SIGPROF and a tick counter below (in addition to the line counter), but the added info
@@ -59661,15 +59685,30 @@ static void profile(s7_scheme *sc, s7_pointer expr)
       s7_gc_protect(sc, sc->profile_info);
     }
   if ((is_pair(expr)) &&
-      (has_line_number(expr)))
+      (profile_location(expr) > 0))
     {
       s7_pointer val, key;
-      key = s7_make_integer(sc, pair_line(expr)); /* file + line */
+      key = s7_make_integer(sc, profile_location(expr)); /* file + line */
       val = s7_hash_table_ref(sc, sc->profile_info, key);
       if (val == sc->F)
-	s7_hash_table_set(sc, sc->profile_info, key, cons(sc, make_mutable_integer(sc, 1), expr));
+	s7_hash_table_set(sc, sc->profile_info, key, cons(sc, make_mutable_integer(sc, 1), object_to_truncated_string(sc, expr, 120)));
+      /* can't save the actual expr here -- it can be stepped on */
       else integer(car(val))++;
     }
+}
+
+static s7_pointer g_profile_line_number(s7_scheme *sc, s7_pointer args)
+{
+  #define H_profile_line_number "(profile-line-number obj) returns the line number at which the profiler read obj"
+  #define Q_profile_line_number s7_make_signature(sc, 2, sc->is_integer_symbol, sc->T)
+  return(make_integer(sc, remembered_line_number(integer(car(args)))));
+}
+
+static s7_pointer g_profile_filename(s7_scheme *sc, s7_pointer args)
+{
+  #define H_profile_filename "(profile-filename obj) returns the name of the file containing obj"
+  #define Q_profile_filename s7_make_signature(sc, 2, sc->is_string_symbol, sc->T)
+  return(remembered_file_name(integer(car(args))));
 }
 #endif
 
@@ -59711,6 +59750,10 @@ static s7_pointer check_for_cyclic_code(s7_scheme *sc, s7_pointer code)
   return(sc->F);
 }
 
+#if WITH_PROFILE
+  static s7_pointer profile_at_start = NULL;
+#endif
+
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
@@ -59745,6 +59788,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fprintf(stderr, "%s (%d)\n", op_names[sc->op], (int)(sc->op)); */
 #if SHOW_DEBUG_HISTORY
       add_debug_history((char *)op_names[sc->op]);
+#endif
+#if WITH_PROFILE
+      profile_at_start = sc->code;
+      profile(sc, sc->code);
 #endif
       switch (sc->op)
 	{
@@ -61010,7 +61057,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
 #if WITH_PROFILE
-	      profile(sc, sc->code);
+	      if (sc->code != profile_at_start)
+		profile(sc, sc->code);
 #endif
 	      set_current_code(sc, sc->code);         /* in case an error occurs, this helps tell us where we are */
 	      sc->op = (opcode_t)pair_syntax_op(sc->code);
@@ -61028,7 +61076,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	    OPT_EVAL:
 #if WITH_PROFILE
-	      profile(sc, sc->code);
+	      if (sc->code != profile_at_start)
+		profile(sc, sc->code);
 #endif
 	      code = sc->code;
 	      set_current_code(sc, code);
@@ -61045,7 +61094,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_AND2:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_AND2:
-		  /* fprintf(stderr, "and2: %s\n", DISPLAY(code)); */
 		  code = cdr(code);
 		  sc->value = c_call(code)(sc, car(code));
 		  if (is_false(sc, sc->value))
@@ -61057,7 +61105,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_C_OR2:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_OR2:
-		  /* fprintf(stderr, "or2: %s\n", DISPLAY(code)); */
 		  code = cdr(code);
 		  sc->value = c_call(code)(sc, car(code));
 		  if (is_true(sc, sc->value))
@@ -64084,7 +64131,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_pair(code))
 	      {
 #if WITH_PROFILE
-		profile(sc, code);
+		if (sc->code != profile_at_start)
+		  profile(sc, code);
 #endif
 		set_current_code(sc, code);
 		carc = car(code);
@@ -65298,7 +65346,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 	SET_WITH_LET:
 	  activate_let(sc, sc->value);  /* this activates sc->value, so the set! will happen in that environment */
-	  /* fprintf(stderr, "with_let_2 code: %s\n", DISPLAY(sc->code)); */
 	  if (is_pair(car(sc->code)))
 	    {
 	      int choice;
@@ -66466,7 +66513,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (is_not_null(cdr(sc->code)))
 		push_stack_no_args(sc, OP_AND_P1, cdr(sc->code));
 	      sc->code = car(sc->code);
-	      /* fprintf(stderr, "%s\n", DISPLAY(sc->code)); */
 	      goto EVAL;
 	    }
 	  
@@ -67135,6 +67181,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    set_car(x, sc->value);
 	    set_cdr(x, sc->args);
 	    sc->args = x;
+#if WITH_PROFILE
+	    profile_set_location(x, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
+#endif
 	  }
 	  
 	case OP_READ_NEXT:       /* this is 75% of the token calls, so expanding it saves lots of time */
@@ -67174,6 +67223,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      set_car(x, sc->value);
 		      set_cdr(x, sc->nil);
 		      sc->args = x;
+#if WITH_PROFILE
+		      profile_set_location(x, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
+#endif
 		      c = port_read_white_space(pt)(sc, pt);
 		      goto READ_C;
 		    }
@@ -67189,6 +67241,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    set_car(x, sc->value);
 		    set_cdr(x, sc->nil);
 		    sc->args = x;
+#if WITH_PROFILE
+		    profile_set_location(x, remember_location(port_line_number(sc->input_port), port_file_number(sc->input_port)));
+#endif
 		    c = port_read_white_space(pt)(sc, pt);
 		    goto READ_C;
 		  }
@@ -73175,7 +73230,10 @@ s7_scheme *s7_init(void)
   sc->port_filename_symbol =         defun("port-filename",	port_filename,		0, 1, false);
   sc->pair_line_number_symbol =      defun("pair-line-number",  pair_line_number,	1, 0, false);
   sc->pair_filename_symbol =         defun("pair-filename",     pair_filename,	        1, 0, false);
-
+#if WITH_PROFILE
+                                     defun("profile-line-number", profile_line_number,	1, 0, false);
+                                     defun("profile-filename",    profile_filename,     1, 0, false);
+#endif
   sc->is_port_closed_symbol =        defun("port-closed?",	is_port_closed,		1, 0, false);
 
   sc->current_input_port_symbol =    defun("current-input-port", current_input_port,	0, 0, false);
@@ -74003,22 +74061,22 @@ int main(int argc, char **argv)
 /* --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  |  16  |  17
- *                                             f4old f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | 1170 [1116] 1171 1153
- * teq           |      |      | 6612 | 2380 | 2380 [2340] 2500 2457
- * tauto     265 |   89 |  9   |  8.4 | 2638 | 2694 [2709] 2960 2978
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | 2889 [3210] 3287 3357
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | 3221 [3171] 3403 3393
- * tcopy         |      |      | 13.6 | 3204 | 3088 [3287] 3190 3409
- * tform         |      |      | 6816 | 3627 | 3724 [3584] 3768 3938
- * lint          |      |      |      | 7731 | 4736 [4016] 4178 [182.8]
- * tmap          |      |      |  9.3 | 4176 | 4171 [4338] 4263 4510
- * titer         |      |      | 7503 | 5218 | 5227 [5227] 5873 5922
- * thash         |      |      | 50.7 | 8491 | 8518 [10.6] 8858 11.4
+ *                                             f4new
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1112] 1171 1151
+ * teq           |      |      | 6612 | 2380 | [2318] 2500 2468
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2978
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [3195] 3287 3369
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3101] 3403 3372
+ * tcopy         |      |      | 13.6 | 3204 | [3271] 3190 3409
+ * tform         |      |      | 6816 | 3627 | [3701] 3768 3944
+ * lint          |      |      |      | 7731 | [3954] 4126 [182.3]
+ * tmap          |      |      |  9.3 | 4176 | [4327] 4263 4510
+ * titer         |      |      | 7503 | 5218 | [5291] 5873 5915
+ * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | 11.9 [11.3] 12.0 12.1
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 | 15.0 [15.0] 17.7 17.7
- * calls     359 |  275 | 54   | 34.7 | 37.1 | 40.2 [41.3] 41.9 [135.0] 41.6
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [11.4] 12.0 12.1
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [135.0] 41.5
  * 
  * --------------------------------------------------------------------
  *
@@ -74045,18 +74103,10 @@ int main(int argc, char **argv)
  *    in optimize_syntax, each binder get local bindings, if no collisions adds its names to no-cross-ref and adds itself to pending-transparencies
  *    any global ref that collides also so need to track all non-local names as no-cross-ref
  *    if at end of binder, and there are pending, set transparent
- * vector|list|string printers for readable case might try to compress (all eq -> use make-vector etc)
+ *    first tests of this: it's slower???
  * check where or/and need jump -- maybe splittable
- * profiler cores up?  Appears to be in list output.
- *   profiler misses all_x counts, and start?
- *   profile uses line number which is very confusing
  * maybe remove the old integer-length based overflow checks
- * all _P: cases need stack size check?
- * more overheads: all_x_and2 all_x_is_pair_s g_is_pair_cdr
- * need an annotator for scheme code showing opts and losers, then also accurate profiling
- * split let_one? 
- * what is the effect of boolean_not_method in all_x_is_pair_cdr?
- * track down the clm_error -- test 8?
+ * all _P: cases need stack size check? and all_x* need methods?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

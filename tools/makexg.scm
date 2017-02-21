@@ -1567,7 +1567,7 @@
  (cdr all-types))
 
 (define other-types 
-  (list 'idler 'GtkCellRendererPixbuf_ 'GtkCheckButton_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
+  (list 'idler 'GtkCellRendererPixbuf_ 'GtkScrollbar_ 'GtkSeparator_ 'GtkSeparatorMenuItem_
 	'GdkEventExpose_ 'GdkEventNoExpose_ 'GdkEventVisibility_ 'GdkEventButton_ 'GdkEventScroll_ 'GdkEventCrossing_
 	'GdkEventFocus_ 'GdkEventConfigure_ 'GdkEventProperty_ 'GdkEventSelection_ 'GdkEventProximity_ 'GdkEventSetting_
 	'GdkEventWindowState_ 'GdkEventDND_ 'GtkFileChooserDialog_ 'GtkFileChooserWidget_ 'GtkColorButton_ 'GtkAccelMap
@@ -1579,7 +1579,8 @@
 
 (for-each
  (lambda (typ)
-   (hey ", xg_~A_symbol" typ))
+   (if (not (member typ all-types))
+       (hey ", xg_~A_symbol" typ)))
  other-types)
  
 (hey ";~%~%")
