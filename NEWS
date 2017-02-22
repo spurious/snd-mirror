@@ -1,14 +1,15 @@
-Snd 17.1:
+Snd 17.2:
 
-*rootlet-redefinition-hook*
-{apply_values} -> apply-values, {list} -> list-values, {append} -> append
-a case clause without a result returns the selector
-(*s7* 'autoloading) to turn the autoloader on and off
-sandbox in stuff.scm for protected evaluation
+Tito Latini greatly improved the mix saved state info, and fixed many bugs.
 
-in clm: clm.asd updated by Tito Latini.
+in s7:
+  let-set! now raises an error if the target variable doesn't exist
+  if no result is specified, do returns the test result
+     => works here as in cond and case, and multiple-values.
+  in *rootlet-redefinition-hook* the first parameter is 'name, not 'symbol.
+  #e, #i, #d removed.  #i(...) is an int-vector constant, #r(...) a float-vector.
 
-checked:  gsl 2.2.1, gtk 3.89.2, sbcl 1.13.3, FreeBSD 11.0
+checked: sbcl 1.3.14, gtk 3.89.4
 
-Thanks!: Tito Latini, Kjetil Matheussen, Juan Cerillo, Mike Scholz.
+Thanks!: Tito Latini.
 

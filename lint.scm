@@ -15861,6 +15861,49 @@
 	  (hash-walker 'unless when-walker))
 	
 	
+	;; -------- check-results --------
+	;; called in cond, case, and do for => primarily
+	(define (check-results caller syn clause sequel env)
+	  (cond ((not (pair? sequel))
+		 (if (not (null? sequel))  ; (not (null?...)) here is correct -- we're looking for stray dots
+		     (lint-format "~A clause is messed up: ~A" caller syn (truncated-list->string clause))))
+		
+		((not (eq? (car sequel) '=>))
+		 (lint-walk-open-body caller syn sequel env))
+		
+		((or (not (pair? (cdr sequel)))
+		     (pair? (cddr sequel)))
+		 ;; (cond (x =>))
+		 (lint-format "~A => target is messed up: ~A" caller syn (truncated-list->string clause)))
+		
+		(else (let ((f (cadr sequel)))
+			(if (symbol? f)
+			    (let ((val (symbol->value f *e*)))
+			      (when (procedure? val)
+				(if (not (aritable? val 1)) ; here values might be in test expr
+				    ;; (cond (x => expt))
+				    (lint-format "=> target (~A) may be unhappy: ~A" caller f clause))
+				(let ((sig (procedure-signature val)))
+				  (if (len>1? sig)
+				      (let ((from-type (->lint-type ((if (or (memq syn '(cond do-result)) 
+									     (not (pair? (car clause))))
+									 car caar) clause)))
+					    (to-type (cadr sig)))
+					(if (not (or (memq from-type '(#f #t values))
+						     (memq to-type '(#f #t values))
+						     (any-compatible? to-type from-type)))
+					    ;; (cond ((> x 0) => abs) (else y))
+					    (lint-format "in ~A, ~A returns a ~A, but ~A expects ~A" caller
+							 (truncated-list->string clause)
+							 (car clause) (prettify-checker-unq from-type)
+							 f to-type)))))))
+			    (if (and (len>1? f)
+				     (eq? (car f) 'lambda)
+				     (pair? (cadr f))
+				     (not (= (length (cadr f)) 1)))
+				(lint-format "=> target (~A) may be unhappy: ~A" caller f clause)))
+			(lint-walk caller f env)))))
+	
 	;; ---------------- cond ----------------
 	(let ()
 
@@ -16524,7 +16567,7 @@
 						      (list (list 'else (if (car else-clause) 
 									    (list 'not (car last-clause))
 									    (car last-clause)))))))))))
-
+	    
 	  ;; -------- cond-scan-clauses --------
 	  (define (cond-scan-clauses caller form len env)
 	    (let ((ctr 0)
@@ -16779,43 +16822,7 @@
 		       (if (not (equal? result sequel))
 			   (set! result :unequal)))
 		   
-		   (cond ((not (pair? sequel))
-			  (if (not (null? sequel))  ; (not (null?...)) here is correct -- we're looking for stray dots
-			      (lint-format "cond clause is messed up: ~A" caller (truncated-list->string clause))))
-			 
-			 ((not (eq? first-sequel '=>))
-			  (lint-walk-open-body caller 'cond sequel env))
-			 
-			 ((or (not (pair? (cdr sequel)))
-			      (pair? (cddr sequel)))
-			  ;; (cond (x =>))
-			  (lint-format "cond => target is messed up: ~A" caller (truncated-list->string clause)))
-			 
-			 (else (let ((f (cadr sequel)))
-				 (if (symbol? f)
-				     (let ((val (symbol->value f *e*)))
-				       (when (procedure? val)
-					 (if (not (aritable? val 1)) ; here values might be in test expr
-					     ;; (cond (x => expt))
-					     (lint-format "=> target (~A) may be unhappy: ~A" caller f clause))
-					 (let ((sig (procedure-signature val)))
-					   (if (len>1? sig)
-					       (let ((from-type (->lint-type expr))
-						     (to-type (cadr sig)))
-						 (if (not (or (memq from-type '(#f #t values))
-							      (memq to-type '(#f #t values))
-							      (any-compatible? to-type from-type)))
-						     ;; (cond ((> x 0) => abs) (else y))
-						     (lint-format "in ~A, ~A returns a ~A, but ~A expects ~A" caller
-								  (truncated-list->string clause)
-								  expr (prettify-checker-unq from-type)
-								  f to-type)))))))
-				     (if (and (len>1? f)
-					      (eq? (car f) 'lambda)
-					      (pair? (cadr f))
-					      (not (= (length (cadr f)) 1)))
-					 (lint-format "=> target (~A) may be unhappy: ~A" caller f clause)))
-				 (lint-walk caller f env))))
+		   (check-results caller 'cond clause sequel env)
 		   
 		   (if (side-effect? expr env)
 		       (begin
@@ -17239,13 +17246,8 @@
 						      (list (case-branch (cadr expr) selector (list (caddr expr)))
 							    (list 'else (cadddr expr)))
 						      (list (case-branch (cadr expr) selector (cddr expr))))))))))))))
-		     
-		     (lint-walk-open-body caller (car form) 
-					  (if (and (pair? exprs)
-						   (eq? (car exprs) '=>))
-					      (cdr exprs)
-					      exprs)
-					  env))) ; walk the result exprs
+
+		     (check-results caller (car form) clause exprs env))) ; walk the result exprs
 		 (cddr form)))
 	      
 	      (let ((key-phrase 
@@ -17624,18 +17626,19 @@
 		  (let ((end (car end+result)))
 		    (lint-walk caller end inner-env) ; this will call simplify-boolean
 		    (if (pair? (cdr end+result))
-			(if (null? (cddr end+result))
-			    (begin
-			      (if (or (equal? (car end+result) (cadr end+result))
-				      (and (eq? (cadr end+result) #t)
-					   (pair? (car end+result))
-					   (let ((sig (arg-signature (caar end+result) env)))
-					     (and (pair? sig)
-						  (eq? (car sig) 'boolean?)))))
-				  ;; (do ((i 0 (+ i 1))) ((= i 3) ()) (display i))
-				  (lint-format "return value is redundant: ~A" caller end+result))
-			      (lint-walk caller (cadr end+result) inner-env))
-			    (lint-walk-open-body caller 'do-result (cdr end+result) inner-env)))
+			(begin
+			  (check-results caller 'do-result end+result (cdr end+result) inner-env)
+			  (if (null? (cddr end+result))
+			      (begin
+				(if (or (equal? (car end+result) (cadr end+result))
+					(and (eq? (cadr end+result) #t)
+					     (pair? (car end+result))
+					     (let ((sig (arg-signature (caar end+result) env)))
+					       (and (pair? sig)
+						    (eq? (car sig) 'boolean?)))))
+				    ;; (do ((i 0 (+ i 1))) ((= i 3) ()) (display i))
+				    (lint-format "return value is redundant: ~A" caller end+result))))))
+
 		    (if (and (symbol? end) (memq end '(= > < >= <= null? not)))
 			;; (do ((i 0 (+ i 1))) (= i 10) (display i))
 			(lint-format "perhaps missing parens: ~A" caller end+result))
@@ -18095,7 +18098,7 @@
 		   (when (pair? (cddr first-expr))
 		     (let ((test (cadr first-expr))
 			   (true (caddr first-expr))
-			   (false (and (pair? (cdddr first-expr)) (car (cdddr first-expr))))
+			   (false (and (pair? (cdddr first-expr)) (cadddr first-expr)))
 			   (vars (map car (cadr form)))
 			   (false-let #f))
 		       (when (and (not (memq test vars))
@@ -18944,7 +18947,7 @@
 				   (len=2? first-arg)
 				   (eq? (car first-arg) vname)
 				   (or (and (len=2? (cadr first-arg))  ; one arg to func
-					    (eq? vname (cadr (cadr first-arg))))
+					    (eq? vname (cadadr first-arg)))
 				       (eq? vname (cadr first-arg)))
 				   (or (null? next-args)
 				       (not (tree-memq vname next-args))))
@@ -21745,7 +21748,7 @@
 			    (when *report-input*
 			      (format outport 
 				      (if (and (output-port? outport)
-					       (not (memq outport (list *stderr* *stdout*))))
+					       (not (member outport (list *stderr* *stdout*))))
 					  (values "~%~NC~%;~A~%" (+ lint-left-margin 16) #\-)
 					  ";~A~%")
 				      file))

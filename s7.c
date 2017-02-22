@@ -1488,7 +1488,7 @@ static s7_scheme *hidden_sc = NULL;
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typesflag(_TPair(p)) |= T_OPTIMIZED
-#define clear_optimized(p)            typesflag(_TPair(p)) &= (~T_OPTIMIZED)
+#define clear_optimized(p)            typeflag(_TPair(p)) &= (~(T_OPTIMIZED | T_OVERLAY | T_SYNTACTIC))
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
 /*   this is faster than the bit extraction above and the same speed as xor */
@@ -1726,9 +1726,9 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 #define clear_list_in_use(p)          typeflag(_TPair(p)) &= (~T_LIST_IN_USE)
 /* these could all be one permanent list, indexed from inside, and this bit is never actually protecting anything across a call */
 
-#define T_FUNCLET                T_GENSYM
-#define is_funclet(p)            ((typeflag(_TLet(p)) & T_FUNCLET) != 0)
-#define set_funclet(p)           typeflag(_TLet(p)) |= T_FUNCLET
+#define T_FUNCLET                     T_GENSYM
+#define is_funclet(p)                 ((typeflag(_TLet(p)) & T_FUNCLET) != 0)
+#define set_funclet(p)                typeflag(_TLet(p)) |= T_FUNCLET
 /* this marks a funclet */
 
 #define T_DOCUMENTED                  T_GENSYM
@@ -7494,6 +7494,7 @@ static void clear_all_optimizations(s7_scheme *sc, s7_pointer p)
 	{
 	  clear_optimized(p);
 	  clear_optimize_op(p);
+
 	  /* these apparently make no difference */
 	  p->object.cons.opt1 = sc->nil;
 	  p->object.cons.opt2 = sc->nil;
@@ -29128,9 +29129,26 @@ static void string_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 {
   if (string_length(obj) > 0)
     {
-      /* this used to check for length > 1<<24 -- is that still necessary?
-       * since string_length is a scheme length, not C, this write can embed nulls from C's point of view
-       */
+      /* since string_length is a scheme length, not C, this write can embed nulls from C's point of view */
+      if (string_length(obj) > 10000)
+	{
+	  size_t size;
+	  char buf[128];
+	  buf[0] = string_value(obj)[0];
+	  buf[1] = '\0';
+	  size = strspn((const char *)(string_value(obj) + 1), buf); /* if all #\null, this won't work */
+	  if (size == string_length(obj) - 1)
+	    {
+	      int nlen;
+	      s7_pointer c;
+	      c = chars[(int)buf[0]];
+	      nlen = snprintf(buf, 128, "(make-string %u ", string_length(obj));
+	      port_write_string(port)(sc, buf, nlen, port);
+	      port_write_string(port)(sc, character_name(c), character_name_length(c), port);
+	      port_write_character(port)(sc, ')', port);
+	      return;
+	    }
+	}
       if (use_write == USE_DISPLAY)
 	port_write_string(port)(sc, string_value(obj), string_length(obj), port);
       else
@@ -29627,6 +29645,29 @@ static void byte_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port,
 	      too_long = true;
 	      len = plen;
 	    }
+
+	  if (len > 1000)
+	    {
+	      unsigned int vlen;
+	      char c;
+	      char *data;
+	      vlen = string_length(vect);
+	      data = string_value(vect);
+	      c = data[0];
+	      for (i = 1; i < vlen; i++)
+		if (data[i] != c)
+		  break;
+	      if (i == vlen)
+		{
+		  char buf[128];
+		  plen = snprintf(buf, 128, "(make-byte-vector %u ", vlen);
+		  port_write_string(port)(sc, buf, plen, port);
+		  plen = snprintf(buf, 128, "%d)", (unsigned int)c);
+		  port_write_string(port)(sc, buf, plen, port);
+		  return;
+		}
+	    }
+
 	  port_write_string(port)(sc, "#u8(", 4, port);
 	  for (i = 0; i < len - 1; i++)
 	    {
@@ -74221,6 +74262,7 @@ int main(int argc, char **argv)
  *    each cell a (debugger) history; s7_history(), s7_add_history()
  *    ((funclet func) 'history)
  *    allocation location (file/func/line in *.c/scm) for any cell if debugging, then report as part of free cell complaint
+ *
  * could (apply append (map...)) omit the extra copy?
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
@@ -74242,7 +74284,6 @@ int main(int argc, char **argv)
  * check all_x* need methods? [need s7test entries!]
  *   hook tests that check that pars exist and are not built-ins
  *   pretty-print needs docs/tests [s7test has some minimal tests]
- * byte-vector + string should be like *vector printout (use strspn to find other?)
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
