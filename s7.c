@@ -3223,8 +3223,6 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
       if (!_Err_) _Err_ = s7_make_permanent_string(ErrMsg); \
       return(s7_error(Sc, Sc->syntax_error_symbol, set_elist_3(Sc, _Err_, Caller, Obj)));} while (0)
 
-static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code);
-
 #define eval_error_with_caller_and_print_limit(Sc, ErrMsg, Caller, Obj)	\
   do {static s7_pointer _Err_ = NULL; \
       if (!_Err_) _Err_ = s7_make_permanent_string(ErrMsg); \
@@ -7678,8 +7676,10 @@ static void annotate_expansion(s7_pointer p)
       annotate_expansion(car(p));
 }
 
+
 static s7_pointer copy_body(s7_scheme *sc, s7_pointer p)
 {
+  /* ideally we'd use tree_len here, but it currently does not protect against cycles */
   if (8192 >= (sc->free_heap_top - sc->free_heap))
     {
       gc(sc);
@@ -29243,6 +29243,42 @@ static int multivector_to_port(s7_scheme *sc, s7_pointer vec, s7_pointer port,
 }
 
 
+static void make_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port)
+{
+  s7_int vlen;
+  int plen;
+  char buf[128];
+  const char* vtyp = "";
+
+  if (is_float_vector(vect))
+    vtyp = "float-";
+  else
+    {
+      if (is_int_vector(vect))
+	vtyp = "int-";
+    }
+
+  vlen = vector_length(vect);
+  if (vector_rank(vect) == 1)
+    {
+      plen = snprintf(buf, 128, "(make-%svector %lld ", vtyp, vlen);
+      port_write_string(port)(sc, buf, plen, port);
+    }
+  else
+    {
+      unsigned int dim;
+      plen = snprintf(buf, 128, "(make-%svector '(", vtyp);
+      port_write_string(port)(sc, buf, plen, port);
+      for (dim = 0; dim < vector_ndims(vect) - 1; dim++)
+	{
+	  plen = snprintf(buf, 128, "%lld ", vector_dimension(vect, dim));
+	  port_write_string(port)(sc, buf, plen, port);
+	}
+      plen = snprintf(buf, 128, "%lld) ", vector_dimension(vect, dim));
+      port_write_string(port)(sc, buf, plen, port);
+    }
+}
+  
 static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_write_t use_write, shared_info *ci)
 {
   s7_int i, len;
@@ -29264,8 +29300,7 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 
   if (use_write != USE_READABLE_WRITE)
     {
-      plen = sc->print_length;
-      if (plen <= 0)
+      if (sc->print_length <= 0)
 	{
 	  if (vector_rank(vect) > 1)
 	    {
@@ -29276,11 +29311,31 @@ static void vector_to_port(s7_scheme *sc, s7_pointer vect, s7_pointer port, use_
 	  return;
 	}
 
-      if (len > plen)
+      if (len > sc->print_length)
 	{
 	  too_long = true;
-	  len = plen;
+	  len = sc->print_length;
 	}
+    }
+  if ((!ci) &&
+      (len > 1000))
+    {
+      s7_int vlen;
+      s7_pointer p0;
+      s7_pointer *els;
+      vlen = vector_length(vect);
+      els = vector_elements(vect);
+      p0 = els[0];
+      for (i = 1; i < vlen; i++)
+	if (els[i] != p0)
+	  break;
+      if (i == vlen)
+	{
+	  make_vector_to_port(sc, vect, port);
+	  object_to_port(sc, p0, port, use_write, NULL);
+	  port_write_character(port)(sc, ')', port);
+	}
+      return;
     }
 
   if (use_write == USE_READABLE_WRITE)
@@ -29431,6 +29486,42 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
     {
       too_long = true;
       len = plen;
+    }
+
+  if (len > 1000)
+    {
+      s7_int vlen;
+      vlen = vector_length(vect);
+      if (is_float_vector(vect))
+	{
+	  s7_double first;
+	  s7_double *els;
+	  els = float_vector_elements(vect);
+	  first = els[0];
+	  for (i = 1; i < vlen; i++)
+	    if (els[i] != first)
+	      break;
+	}
+      else
+	{
+	  s7_int first;
+	  s7_int *els;
+	  els = int_vector_elements(vect);
+	  first = els[0];
+	  for (i = 1; i < vlen; i++)
+	    if (els[i] != first)
+	      break;
+	}
+      if (i == vlen)
+	{
+	  make_vector_to_port(sc, vect, port);
+	  if (is_float_vector(vect))
+	    plen = snprintf(buf, 128, float_format_g, float_format_precision, float_vector_element(vect, 0));
+	  else plen = snprintf(buf, 128, "%lld", int_vector_element(vect, 0));
+	  port_write_string(port)(sc, buf, plen, port);
+	  port_write_character(port)(sc, ')', port);
+	}
+      return;
     }
 
   if (vector_rank(vect) == 1)
@@ -33153,18 +33244,6 @@ static s7_pointer g_tree_leaves(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
-{
-  if (tree_len(sc, code) > sc->print_length)
-    {
-      char *str;
-      str = object_to_truncated_string(sc, code, sc->print_length * 10);
-      return(make_string_uncopied_with_length(sc, str, safe_strlen(str)));
-    }
-  return(code);
-}  
-
-
 static bool tree_memq(s7_scheme *sc, s7_pointer sym, s7_pointer tree)
 {
   if (sym == tree) return(true);
@@ -33222,6 +33301,17 @@ static s7_pointer g_tree_set_memq(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, tree_set_memq(sc, tree)));
 }
 
+
+static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
+{
+  if (tree_len(sc, code) > sc->print_length)
+    {
+      char *str;
+      str = object_to_truncated_string(sc, code, sc->print_length * 10);
+      return(make_string_uncopied_with_length(sc, str, safe_strlen(str)));
+    }
+  return(code);
+}  
  
 
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
@@ -46081,9 +46171,13 @@ pass (rootlet):\n\
       else sc->envir = e;
     }
   sc->code = car(args);
-  if (is_optimized(sc->code))
-    clear_all_optimizations(sc, sc->code);
-
+  if (sc->safety > 0)
+    sc->code = copy_body(sc, sc->code);
+  else
+   {
+     if (is_optimized(sc->code))
+       clear_all_optimizations(sc, sc->code);
+   }
   if (s7_stack_top(sc) < 12)
     push_stack(sc, OP_BARRIER, sc->nil, sc->nil);
   push_stack(sc, OP_EVAL, sc->args, sc->code);
@@ -53179,7 +53273,8 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 	    (!is_optimized(expr)))
 	  {
 	    /* len=0 case is almost entirely arglists */
-	    set_opt_con1(expr, sc->gc_nil);
+	    if ((!is_overlaid(expr)) || (!has_opt_back(expr))) /* gad, what's going on here?? */
+	      set_opt_con1(expr, sc->gc_nil); 
 	    if (pairs == 0)
 	      {
 		if (len == 0)
@@ -55344,6 +55439,7 @@ static s7_pointer check_cond(s7_scheme *sc)
 {
   bool has_feed_to = false;
   s7_pointer x;
+  
   if (!is_pair(sc->code))                                             /* (cond) or (cond . 1) */
     eval_error(sc, "cond, but no body: ~A", sc->code);
 
@@ -55425,6 +55521,41 @@ static s7_pointer check_cond(s7_scheme *sc)
 	}
     }
   return(sc->code);
+}
+
+static bool feed_to(s7_scheme *sc)
+{
+  /* old form (pre 6-June-16): this causes a double evaluation:
+   *   (let ((x 'y) (y 32)) (cond ((values x y) => list))) -> '(32 32)
+   *   but it should be '(y 32)
+   * it's also extremely slow: make/eval a list?!
+   *
+   *   if (is_multiple_value(sc->value)) 
+   *     sc->code = cons(sc, cadr(sc->code), multiple_value(sc->value));
+   *   else sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value));
+   *   goto EVAL;
+   */
+
+  if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
+    {
+      sc->args = multiple_value(sc->value);
+      clear_multiple_value(sc->args);
+    }
+  else sc->args = list_1(sc, sc->value);
+
+  if (is_symbol(cadr(sc->code)))
+    {
+      sc->code = find_symbol_checked(sc, cadr(sc->code));      /* car is => */
+      if (needs_copied_args(sc->code))
+	sc->args = copy_list(sc, sc->args);
+      return(true);
+    }
+
+  /* need to evaluate the target function */
+  push_stack(sc, OP_COND1_1, sc->args, sc->code);
+  sc->code = cadr(sc->code);
+  sc->args = sc->nil;
+  return(false);
 }
 
 
@@ -60982,8 +61113,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->args = sc->nil;
 	      if (is_null(sc->code))
 		{
-		  /* sc->value = sc->nil; */
+		  if (is_multiple_value(sc->value))  /* (define (f) (+ 1 (do ((i 2 (+ i 1))) ((values i (+ i 1)))))) -> 6 */
+		    sc->value = splice_in_values(sc, multiple_value(sc->value));
+		  /* similarly, if the result is a multiple value:
+		   * (define (f) (+ 1 (do ((i 2 (+ i 1))) ((= i 3) (values i (+ i 1)))))) -> 8
+		   */
 		  goto START;
+		}
+	      /* might be => here as in cond and case */
+	      if ((car(sc->code) == sc->feed_to_symbol) &&
+		  (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
+		{
+		  if (feed_to(sc))
+		    goto APPLY;
+		  goto EVAL;
 		}
 	      goto BEGIN1;
 	    }
@@ -60993,6 +61136,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	SAFE_DO_END_CLAUSES:
 	  if (is_null(sc->code))
 	    {
+	      /* I don't think multiple values (as test result) can happen here -- all safe do loops involve counters by 1 to some integer end */
 	      sc->envir = free_let(sc, sc->envir); /* free_let returns sc->nil */
 	      goto START;
 	    }
@@ -61000,11 +61144,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	DO_END_CLAUSES:
 	  if (is_null(sc->code))
-	    goto START;
+	    {
+	      if (is_multiple_value(sc->value))
+		sc->value = splice_in_values(sc, multiple_value(sc->value));
+	      goto START;
+	    }
 
 	DO_END_CODE:
 	  if (is_pair(cdr(sc->code)))
 	    {
+	      if ((car(sc->code) == sc->feed_to_symbol) &&
+		  (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
+		{
+		  if (feed_to(sc))
+		    goto APPLY;
+		  goto EVAL;
+		}
 	      push_stack_no_args(sc, OP_BEGIN1, cdr(sc->code));
 	      sc->code = car(sc->code);
 	      goto EVAL;
@@ -61993,6 +62148,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_SP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_P_2, find_symbol_unchecked(sc, cadr(code)), code);
 		  sc->code = caddr(code);
 		  goto EVAL;
@@ -62002,6 +62158,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if ((!c_function_is_ok(sc, code)) || (!a_is_ok(sc, cadr(code)))) break;
 		  
 		case HOP_SAFE_C_AP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_P_2, c_call(cdr(code))(sc, cadr(code)), code);
 		  sc->code = caddr(code);
 		  goto EVAL;
@@ -62011,6 +62168,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_CP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_P_2, cadr(code), code);
 		  sc->code = caddr(code);
 		  goto EVAL;
@@ -62020,6 +62178,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_QP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_P_2, cadr(cadr(code)), code);
 		  sc->code = caddr(code);
 		  goto EVAL;
@@ -62029,6 +62188,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_PP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_SAFE_C_PP_1, sc->nil, code);
 		  sc->code = cadr(code);
 		  goto EVAL;
@@ -62038,6 +62198,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_SAFE_C_SSP:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_EVAL_ARGS_SSP_1, sc->nil, code);
 		  sc->code = cadddr(code);
 		  goto EVAL;
@@ -62886,6 +63047,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		  
 		case HOP_C_SP:
+		  /* check_stack_size(sc); */
+		  /*   op_c_sp_1 sends us to apply which calls check_stack_size I think */
 		  push_stack(sc, OP_C_SP_1, find_symbol_unchecked(sc, cadr(code)), code);
 		  sc->code = caddr(code);
 		  goto EVAL;
@@ -63583,7 +63746,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		case OP_CLOSURE_A_P:
 		  if (!closure_is_equal(sc, code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;}
-		  /* if (find_symbol_unexamined(sc, car(code)) != opt_any1(code)) {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;} */
 		  
 		case HOP_CLOSURE_A_P:
 		  sc->value = c_call(cdr(code))(sc, cadr(code));
@@ -63597,7 +63759,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 		  
 		case OP_GLOSURE_A:
-		  /* if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) */
 		  if (!global_closure_is_equal(sc, code)) 
 		     {set_optimize_op(code, OP_UNKNOWN_A); goto OPT_EVAL;} 
 		  
@@ -63611,17 +63772,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  
 		case OP_GLOSURE_P:
-		  /* if ((symbol_id(car(code)) != 0) || (opt_lambda_unchecked(code) != slot_value(global_slot(car(code))))) break; */
 		  if (!global_closure_is_equal(sc, code)) break;
 		  
 		case HOP_GLOSURE_P:
+		  check_stack_size(sc);
 		  push_stack(sc, OP_CLOSURE_P_1, sc->nil, code);
 		  sc->code = cadr(code);
 		  goto EVAL;
 		  
 		  
 		case OP_GLOSURE_S:
-		  /* if ((symbol_id(car(code)) != 0) || (opt_any1(code) != slot_value(global_slot(car(code))))) */
 		  if (!global_closure_is_equal(sc, code)) 
 		    {set_optimize_op(code, OP_UNKNOWN_G); goto OPT_EVAL;}
 		  
@@ -65505,7 +65665,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      goto EVAL;
 	    }
-	  sc->value = sc->nil; /* since it's actually cond -- perhaps push as sc->args above */
+	  sc->value = sc->unspecified; /* it's cond -- perhaps push as sc->args above; this was nil until 21-Feb-17! */
 	  break;
 	  
 	  
@@ -65704,7 +65864,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  
 	case OP_LET_C:
-	  /* one var, init is constant, incoming sc->code is '(((var val))...)! */
+	  /* one var, init is constant, incoming sc->code is '(((var val))...)! 
+	   *   somehow we can get here from make-hook (let ((result #<unspecified>))...) with opt_sym3 and opt_con2 unset??
+	   */
 	  new_frame_with_slot(sc, sc->envir, sc->envir, opt_sym3(sc->code), opt_con2(sc->code));
 	  sc->code = _TPair(cdr(sc->code));
 	  goto BEGIN1;
@@ -66315,37 +66477,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if ((car(sc->code) == sc->feed_to_symbol) &&
 		      (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
 		    {
-		      /* old form (pre 6-June-16): this causes a double evaluation:
-		       *   (let ((x 'y) (y 32)) (cond ((values x y) => list))) -> '(32 32)
-		       *   but it should be '(y 32)
-		       * it's also extremely slow: make/eval a list?!
-		       *
-		       *   if (is_multiple_value(sc->value)) 
-		       *     sc->code = cons(sc, cadr(sc->code), multiple_value(sc->value));
-		       *   else sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value));
-		       *   goto EVAL;
-		       */
-		      if (is_multiple_value(sc->value))                             /* (cond ((values 1 2) => +)) */
-			{
-			  sc->args = multiple_value(sc->value);
-			  clear_multiple_value(sc->args);
-			  if (needs_copied_args(sc->code))
-			    sc->args = copy_list(sc, sc->args);
-			}
-		      else sc->args = list_1(sc, sc->value);
-		      if (is_symbol(cadr(sc->code)))
-			{
-			  sc->code = find_symbol_checked(sc, cadr(sc->code));      /* car is => */
-			  goto APPLY;
-			}
-		      else 
-			{
-			  /* need to evaluate the target function */
-			  push_stack(sc, OP_COND1_1, sc->args, sc->code);
-			  sc->code = cadr(sc->code);
-			  sc->args = sc->nil;
-			  goto EVAL;
-			}
+		      if (feed_to(sc))
+			goto APPLY;
+		      goto EVAL;
 		    }
 		  goto BEGIN1;
 		}
@@ -74091,22 +74225,24 @@ int main(int argc, char **argv)
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  *   also write-up grepl called from anywhere -- currently grepl.c is a C program -- need a loadable version
  * update libgsl.scm
- * pretty-print needs docs/tests [s7test has some minimal tests]
  * extend the validity checks to all FFI funcs and add info about caller etc
- * s7_eval if safety>0 use copy :readable, and copy unquote/spliced stuff
+ *
  * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
  *    also complain about func name collisions -- report-shadowed-functions
  *    does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
- *    can do test change simplify more for recur->iter in lint?
- * hook tests that check that pars exist and are not built-ins
+ *
  * The Plan: transparent let
  *    in optimize_syntax, each binder get local bindings, if no collisions adds its names to no-cross-ref and adds itself to pending-transparencies
  *    any global ref that collides also so need to track all non-local names as no-cross-ref
  *    if at end of binder, and there are pending, set transparent
  *    first tests of this: it's slower???
+ *
  * check where or/and need jump -- maybe splittable
  * maybe remove the old integer-length based overflow checks
- * all _P: cases need stack size check? and all_x* need methods?
+ * check all_x* need methods? [need s7test entries!]
+ *   hook tests that check that pars exist and are not built-ins
+ *   pretty-print needs docs/tests [s7test has some minimal tests]
+ * byte-vector + string should be like *vector printout (use strspn to find other?)
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

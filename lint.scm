@@ -12611,7 +12611,7 @@
 		       (lint-format "perhaps ~A" caller (lists->string f (list 'set! settee (cadr prev-f))))))
 		  
 		  ((not (and (pair? arg2)          ; (set! x 0) (set! x 1) -> "this could be omitted: (set! x 0)"
-			     (tree-unquoted-member settee arg2)))
+			     (tree-memq settee arg2)))
 		   (if (not (or (side-effect? arg1 env)
 				(side-effect? arg2 env)))
 		       (lint-format "this could be omitted: ~A" caller prev-f)))
@@ -13919,7 +13919,8 @@
 		    (let ((args (cdr body)))
 		      (case (car body)
 			((list-values)
-			 (when (quoted-symbol? (car args))
+			 (when (and (pair? args)
+				    (quoted-symbol? (car args)))
 			   (if (proper-list? outer-args)
 			       (if (and (equal? (cdr args) outer-args)
 					(or (not (hash-table-ref syntaces (cadar args))) ; (define-macro (x y) `(lambda () ,y))
@@ -17553,7 +17554,7 @@
 						   (not (eq? (var-name v) step-name))
 						   (or (eq? (var-name v) step-step)
 						       (and (pair? step-step)
-							    (tree-unquoted-member (var-name v) step-step))))
+							    (tree-memq (var-name v) step-step))))
 					      (set! baddies (cons step-name baddies))))
 					vars))))
 			step-vars)
@@ -17581,7 +17582,7 @@
 			    (not (lint-any? (lambda (v)     ; for each baddy, is it used in any following set!?
 					      (and (pair? (cdr trails))
 						   (set! trails (cdr trails))
-						   (tree-unquoted-member v trails)))
+						   (tree-memq v trails)))
 					    (reverse baddies)))))
 		      (lint-format "perhaps ~A" caller
 				   (lists->string form
@@ -17698,7 +17699,7 @@
 		       (lambda (nv)
 			 (if (or (eq? (var-name var) (var-step nv))
 				 (and (pair? (var-step nv))
-				      (tree-unquoted-member (var-name var) (var-step nv))))
+				      (tree-memq (var-name var) (var-step nv))))
 			     (set! (var-ref var) (+ (var-ref var) 1))))
 		       (cdr v))))))
 	    (report-usage caller 'do vars inner-env))
@@ -18946,7 +18947,7 @@
 					    (eq? vname (cadr (cadr first-arg))))
 				       (eq? vname (cadr first-arg)))
 				   (or (null? next-args)
-				       (not (tree-unquoted-member vname next-args))))
+				       (not (tree-memq vname next-args))))
 			  (lint-format "perhaps ~A" caller 
 				       (lists->string form 
 						      (wrap-new-form
@@ -19000,7 +19001,7 @@
 				(let ((else-clause (if (eq? if-true vname)
 						       (list (list 'else #f))
 						       (if (and (pair? if-true)
-								(tree-unquoted-member vname if-true))
+								(tree-memq vname if-true))
 							   :oops! ; if the let var appears in the else portion, we can't do anything with =>
 							   (list (list 'else if-true))))))
 				  (unless (eq? else-clause :oops!)
@@ -19065,7 +19066,7 @@
 						     (if (eq? (cadr next-args) vname)
 							 (list (list 'else #f)) ; this stands in for the local var
 							 (if (and (pair? (cadr next-args))
-								  (tree-unquoted-member vname (cadr next-args)))
+								  (tree-memq vname (cadr next-args)))
 							     :oops!   ; if the let var appears in the else portion, we can't do anything with =>
 							     (list (list 'else (cadr next-args)))))
 						     (case (car p)
@@ -19837,7 +19838,7 @@
 					       (if (eq? (cadddr p) (car last-var))
 						   `((else #f)) ; this stands in for the local var
 						   (if (and (pair? (cadddr p))
-							    (tree-unquoted-member (car last-var) (cadddr p)))
+							    (tree-memq (car last-var) (cadddr p)))
 						       :oops! ; if the let var appears in the else portion, we can't do anything with =>
 						       (list (list 'else (cadddr p)))))
 					       (case (car p)
