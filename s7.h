@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.15"
-#define S7_DATE "11-Feb-17"
+#define S7_VERSION "4.16"
+#define S7_DATE "22-Feb-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -670,9 +670,6 @@ typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
 s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
 
-void s7_gf_set_function(s7_pointer f, s7_pp_t gp);
-s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func);
-
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
 void s7_xf_free(s7_scheme *sc);
 s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
@@ -683,7 +680,6 @@ s7_pointer *s7_xf_start(s7_scheme *sc);
 s7_pointer *s7_xf_top(s7_scheme *sc, void *ur);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
-bool s7_arg_to_gf(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_pf(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_if(s7_scheme *sc, s7_pointer a1);
 bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
@@ -779,6 +775,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 22-Feb:    removed the "gf" clm optimization functions.
  * 11-Feb:    #e, #i, #d removed. #i(...) is an int-vector constant, #r(...) a float-vector.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.
  * --------

@@ -100,8 +100,8 @@ static s7_pointer g_listener_load_hook(s7_scheme *sc, s7_pointer args)
 {
   /* arg is the hook, (hook 'name) is the file */
   s7_pointer hook, file;
-  if (!(ss->listener)) return(args);
   char msg[128];
+  if (!(ss->listener)) return(args);
   hook = s7_car(args);
   file = s7_let_ref(s7, hook, s7_make_symbol(s7, "name"));
   if (!s7_is_string(file))
