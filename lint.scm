@@ -8285,7 +8285,7 @@
 					
 					(cond ((eq? f 'list)                      ; (apply list x) -> x?
 					       (lint-format "perhaps ~A" caller (lists->string form args)))
-					      
+
 					      ((any-null? args)                   ; (apply f ()) -> (f)
 					       (lint-format "perhaps ~A" caller (lists->string form (list f))))
 					      
@@ -8363,8 +8363,11 @@
 												    (list 'apply string (cadr cdr-args)))))))
 							
 							((append)        ; (apply append (map vector->list args)) -> (vector->list (apply append args))
-							 (and  (eq? (car cdr-args) 'vector->list)
-							       (lint-format "perhaps ~A" caller (lists->string form `(vector->list (apply append ,@(cdr cdr-args)))))))
+							 (case (car cdr-args)
+							   ((vector->list)
+							    (lint-format "perhaps ~A" caller (lists->string form `(vector->list (apply append ,@(cdr cdr-args))))))
+							   ((list)       ; (apply append (map list args)) -> args
+							    (lint-format "perhaps ~A" caller (lists->string form (cadr cdr-args))))))
 							
 							(else #f)))
 						     ;; (apply append (map f ...)) is very common but changing it to
@@ -10382,7 +10385,7 @@
 				     (check-arg (if (and (pair? end+res)
 							 (> (length end+res) 1))
 						    (last-ref end+res)
-						    ())))))
+						    (car end+res)))))) ; car=test which is returned if no result
 			      
 			      ((case)
 			       (if (len>1? (cdr arg))
@@ -17486,14 +17489,15 @@
 
 	  ;; -------- pointless-do --------
 	  (define (pointless-do caller form)
+	    ;; called only if no side-effects in form
 	    ;; a much more permissive check here (allowing sets of locals etc) got only a half-dozen hits
 	    (let ((end+result (caddr form)))
-	      (if (or (not (pair? end+result))
-		      (null? (cdr end+result)))                ; (do ((i 0 (+ i 1))) ((= i 1)))
-		  (lint-format "this do-loop could be replaced by (): ~A" caller (truncated-list->string form))
-		  (if (and (null? (cddr end+result))
-			   (code-constant? (cadr end+result))) ; (begin (z 1) (do ((i 0 (+ i 1))) ((= i n) 32))): 32
-		      (lint-format "this do-loop could be replaced by ~A: ~A" caller (cadr end+result) (truncated-list->string form))))))
+	      (if (pair? end+result)
+		  (if (null? (cdr end+result))                ; (do ((i 0 (+ i 1))) ((= i 1)))
+		      (lint-format "this do-loop could probably be replaced by the end test in a let: ~A" caller (truncated-list->string form))
+		      (if (and (null? (cddr end+result))
+			       (code-constant? (cadr end+result))) ; (begin (z 1) (do ((i 0 (+ i 1))) ((= i n) 32))): 32
+			  (lint-format "this do-loop could be replaced by ~A: ~A" caller (cadr end+result) (truncated-list->string form)))))))
 
 	  ;; -------- walk-do-inits --------
 	  (define (walk-do-inits caller form env)

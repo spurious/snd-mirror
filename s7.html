@@ -8976,6 +8976,13 @@ end
 document s7value
 print the value of the variable passed by its print name: s7v "*features*"
 end
+
+define s7let
+print s7_show_let(hidden_sc)
+end
+document s7let
+show all non-global variables that are currently accessible
+end
 </pre>
 
 <p>gdbinit also has s7cell to decode every field of an s7_pointer, and two backtrace

@@ -36,6 +36,14 @@ print the value of the variable passed by its print name: s7v "*features*"
 end
 
 
+define s7let
+print s7_show_let(hidden_sc)
+end
+document s7let
+show all non-global variables that are currently accessible
+end
+
+
 define s7bt
 set logging overwrite on
 set logging redirect on
@@ -208,7 +216,7 @@ define s7cell
   end
 
   if (($type == T_SYMBOL) || ($is_bad_type))
-      printf "sym:            name: %p, global_slot: %p, local_slot: %p, \n                    id: %d, tag: %d, accessor: %d\n", \
+      printf "sym:            name: %p, global_slot: %p, local_slot: %p, \n                    id: %d, tag: %d, accessor: %u\n", \
          $cell.object.sym.name, $cell.object.sym.global_slot, $cell.object.sym.local_slot, $cell.object.sym.id, $cell.object.sym.tag, $cell.object.string.str_ext.accessor
   end
 

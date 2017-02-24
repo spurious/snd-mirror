@@ -1350,8 +1350,9 @@ void xen_repl(int argc, char **argv)
 	    }
 	  if (expr_ok)
 	    {
-	      char *str, *temp;
+	      char *temp;
 #if USE_SND
+	      char *str;
 	      str = stdin_check_for_full_expression(buffer); /* "str" here is actually stdin_str, so we need to clear it explicitly */
 	      if (!str) {expr_ok = false; continue;}
 	      len = strlen(str) + 16;
