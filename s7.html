@@ -8609,6 +8609,39 @@ function j0.  See <a href="#cload">cload.scm</a> for more details.
 </p>
 
 
+<p>Here's a shorter example:
+</p>
+<div class="indented">
+<pre>
+add1.c:
+
+#include &lt;stdlib.h&gt;
+#include "s7.h"
+
+static s7_pointer add1(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_integer(s7_car(args)))
+    return(s7_make_integer(sc, 1 + s7_integer(s7_car(args))));
+  return(s7_wrong_type_arg_error(sc, "add1", 1, s7_car(args), "an integer"));
+}
+
+void add1_init(s7_scheme *sc);
+void add1_init(s7_scheme *sc)
+{
+  s7_define_function(sc, "add1", add1, 1, 0, false, "(add1 int) adds 1 to int");
+}
+
+/* gcc -fpic -c add1.c
+ * gcc -shared -Wl,-soname,libadd1.so -o libadd1.so add1.o -lm -lc
+ * gcc s7.c -o repl -fpic -DWITH_MAIN -I. -ldl -lm -Wl,-export-dynamic -DUSE_SND=0
+ * repl
+ *   (load "libadd1.so" (inlet 'init_func 'add1_init))
+ *   (add1 2)
+ */
+</pre>
+</div>
+
+
 
 <div class="header" id="gmpex"><h4>Bignums in C</h4></div>
 
