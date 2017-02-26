@@ -1710,34 +1710,39 @@
 	(recursion->iteration name ftype arglist initial-value env))
       (improper-arglist->define* name ftype arglist initial-value)
 
-      (let ((new (let ((old (hash-table-ref other-identifiers name)))
-		   (cons name 
-			 (inlet 'allow-other-keys (and (pair? arglist)
-						       (memq ftype '(define* define-macro* define-bacro* defmacro*))
-						       (eq? (last-ref arglist) :allow-other-keys))
-				'scope ()
-				'refenv ()
-				'setters ()
-				'env env
-				'nvalues (and (pair? initial-value) 
-					      (tree-memq 'values initial-value)
-					      (count-values (cddr initial-value)))
-				'leaves #f
-				'match-list #f
-				'retcons #f
-				'arit (form->arity initial-value)
-				'arglist arglist
-				'history (if old 
-					     (begin
-					       (hash-table-set! other-identifiers name #f)
-					       (if initial-value (cons initial-value old) old))
-					     (if initial-value (list initial-value) ()))
-				'signature ()
-				'side-effect ()
-				'ftype ftype
-				'initial-value initial-value
-				'set 0 
-				'ref (if old (length old) 0))))))
+      (let ((new (let ((old (hash-table-ref other-identifiers name))
+		       (allow-keys (and (pair? arglist)
+					(memq ftype '(define* define-macro* define-bacro* defmacro*))
+					(eq? (last-ref arglist) :allow-other-keys)))
+		       (nv (and (pair? initial-value) 
+				(tree-memq 'values initial-value)
+				(count-values (cddr initial-value)))))
+		   (let ((hist (if old 
+				   (begin
+				     (hash-table-set! other-identifiers name #f)
+				     (if initial-value (cons initial-value old) old))
+				   (if initial-value (list initial-value) ())))
+			 (rf (if old (length old) 0))
+			 (ar (form->arity initial-value)))
+		     (cons name 
+			   (inlet 'allow-other-keys allow-keys
+				  'scope ()
+				  'refenv ()
+				  'setters ()
+				  'env env
+				  'nvalues nv
+				  'leaves #f
+				  'match-list #f
+				  'retcons #f
+				  'arit ar
+				  'arglist arglist
+				  'history hist
+				  'signature ()
+				  'side-effect ()
+				  'ftype ftype
+				  'initial-value initial-value
+				  'set 0 
+				  'ref rf))))))
 	(reduce-function-tree new env)
 	new))
     
@@ -21717,19 +21722,41 @@
 	     env)
 
 	    ((vector? form)
-	     (let ((happy #t))
-	       (for-each
-		(lambda (x)
-		  (when (and (pair? x)
-			     (eq? (car x) 'unquote))
-		    (lint-walk caller (cadr x) env) ; register refs
-		    (set! happy #f)))
-		form)
-	       ;; (begin (define x 1) `#(,x))
-	       (if (not happy)
-		   (lint-format "quasiquoted vectors are not supported: ~A~%~NCperhaps use `(vector ...) rather than `#(...)" caller 
-				(truncated-list->string form)
-				(+ lint-left-margin 4) #\space)))
+	     (when (not (or (int-vector? form)
+			    (float-vector? form)))
+	       (let ((len (length form)))
+		 (when (positive? len)
+		   (if (integer? (form 0))
+		       (do ((i 1 (+ i 1)))
+			   ((or (= i len)
+				(not (integer? (vector-ref form i))))
+			    (if (= i len)
+				(lint-format "~A could be ~A" caller 
+					     (let-temporarily (((*s7* 'print-length) 8))
+					       (values (object->string form)
+						       (object->string (copy form (make-int-vector len)))))))))
+		       (if (float? (form 0))
+			   (do ((i 1 (+ i 1)))
+			       ((or (= i len)
+				    (not (float? (vector-ref form i))))
+				(if (= i len)
+				    (lint-format "~A could be ~A" caller 
+						 (let-temporarily (((*s7* 'print-length) 8))
+						   (values (object->string form)
+							   (object->string (copy form (make-float-vector len)))))))))))
+		   (let ((happy #t))
+		     (for-each
+		      (lambda (x)
+			(when (and (pair? x)
+				   (eq? (car x) 'unquote))
+			  (lint-walk caller (cadr x) env) ; register refs
+			  (set! happy #f)))
+		      form)
+		     ;; (begin (define x 1) `#(,x))
+		     (if (not happy)
+			 (lint-format "quasiquoted vectors are not supported: ~A~%~NCperhaps use `(vector ...) rather than `#(...)" caller 
+				      (truncated-list->string form)
+				      (+ lint-left-margin 4) #\space))))))
 	           ;; `(x #(,x)) for example will not work in s7, but `(,x ,(vector x)) will 
 	     env)
 	    

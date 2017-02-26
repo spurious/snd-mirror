@@ -6674,6 +6674,56 @@ new environment. (inlet :a 1 :b 2) or (inlet '(a . 1) '(b . 2))"
 
 #define g_inlet s7_inlet
 
+static s7_pointer simple_inlet;
+static s7_pointer g_simple_inlet(s7_scheme *sc, s7_pointer args)
+{
+  /* here all args are paired with normal symbol/value, no fallbacks, no immutable symbols etc */
+  s7_pointer new_e, x;
+  long long int id;
+  new_e = new_frame_in_env(sc, sc->nil);
+  sc->temp3 = new_e;
+  id = let_id(new_e);
+  for (x = args; is_pair(x); x = cddr(x))
+    {
+      s7_pointer symbol, slot;
+      symbol = car(x);
+      new_cell(sc, slot, T_SLOT);
+      slot_set_symbol(slot, symbol);
+      slot_set_value(slot, cadr(x));
+      set_next_slot(slot, let_slots(new_e));
+      let_set_slots(new_e, slot);
+      set_local(symbol);
+      symbol_set_local(symbol, id, slot);
+    }
+  sc->temp3 = sc->nil;
+  return(new_e);
+}
+
+static s7_pointer inlet_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
+{
+  if ((args > 0) &&
+      ((args % 2) == 0))
+    {
+      s7_pointer p;
+      for (p = cdr(expr); is_pair(p); p = cddr(p))
+	{
+	  s7_pointer sym;
+	  if ((!is_pair(car(p))) ||
+	      (caar(p) != sc->quote_symbol))
+	    return(f);
+	  sym = cadar(p);
+	  if ((!is_symbol(sym)) ||
+	      (is_immutable(sym)) ||
+	      (sym == sc->let_ref_fallback_symbol) ||
+	      (sym == sc->let_set_fallback_symbol))
+	    return(f);
+	}
+      return(simple_inlet);
+    }
+  return(f);
+}
+
+
 
 /* -------------------------------- let->list -------------------------------- */
 s7_pointer s7_let_to_list(s7_scheme *sc, s7_pointer env)
@@ -46689,19 +46739,25 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
 /* an experiment */
 static s7_pointer local_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  /* return(make_boolean(sc, is_pair(slot_value(let_slots(sc->envir))))); */
   return(make_boolean(sc, is_pair(slot_value(local_slot(cadr(arg))))));
 }
 
 static s7_pointer local_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer p;
-  /* p = slot_value(let_slots(sc->envir)); */
-  /* p = slot_value(local_slot(cadadr(arg))); */
   p = slot_value(local_slot(opt_sym2(cdr(arg))));
   if (is_pair(p))
     return(make_boolean(sc, is_pair(cdr(p))));
   return(g_is_pair(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
+}
+
+static s7_pointer local_x_is_null_cdr(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = slot_value(local_slot(opt_sym2(cdr(arg))));
+  if (is_pair(p))
+    return(make_boolean(sc, is_null(cdr(p))));
+  return(g_is_null(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
 }
 
 /* in optimizer, where that is set, any closure if arg and no shadow, and let if var and no shadow
@@ -50365,6 +50421,10 @@ static void init_choosers(s7_scheme *sc)
 
   /* eval-string */
   set_function_chooser(sc, sc->eval_string_symbol, eval_string_chooser);
+  
+  /* inlet */
+  f = set_function_chooser(sc, sc->inlet_symbol, inlet_chooser);
+  simple_inlet = make_function_with_class(sc, f, "inlet", g_simple_inlet, 0, 0, true, "inlet opt");
 
   or_n = s7_make_function(sc, "or", g_or_n, 0, 0, true, "or opt");
   or_2 = s7_make_function(sc, "or", g_or_2, 2, 0, false, "or opt");
@@ -50925,31 +50985,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 			{
 			  if ((is_pair(bexpr)) &&
 			      (is_h_safe_c_c(bexpr)))
-			    {
-			      set_optimize_op(expr, hop + OP_SAFE_CLOSURE_S_A);
-
-			      /* an experiment */
-			      if ((c_call(bexpr) == g_and_2) ||
-				  (c_call(bexpr) == g_and_3) ||
-				  (c_call(bexpr) == g_and_n))
-				{
-				  /* set 52576, branches are all_x_safe */
-				  s7_pointer b1, b2;
-				  b1 = cadr(bexpr);
-				  b2 = caddr(bexpr);
-				  if (((optimize_op(b1) == HOP_SAFE_IS_PAIR_S) || 
-				       ((optimize_op(b1) == HOP_SAFE_C_S) && (car(b1) == sc->is_pair_symbol))) &&
-				      (cadr(b1) == car(closure_args(func))))
-				    set_c_call(cdr(bexpr), local_x_is_pair_s);
-				  if ((optimize_op(b2) == HOP_SAFE_C_C) &&
-				      (c_call(b2) == g_is_pair_cdr) &&
-				      (cadadr(b2) == car(closure_args(func))))
-				    {
-				      set_c_call(cddr(bexpr), local_x_is_pair_cdr);
-				      set_opt_sym2(cdr(b2), cadadr(b2));
-				    }
-				}
-			    }
+			    set_optimize_op(expr, hop + OP_SAFE_CLOSURE_S_A);
 			  else
 			    {
 			      if ((is_pair(bexpr)) &&
@@ -52970,18 +53006,28 @@ static opt_t optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
 #endif
 
 
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end);
+typedef enum {UNSAFE_BODY, SAFE_BODY, VERY_SAFE_BODY} body_t;
 
-static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_end)
+static body_t min_body(body_t b1, body_t b2)
+{
+  if ((b2 == UNSAFE_BODY) || (b1 == UNSAFE_BODY)) return(UNSAFE_BODY);
+  if ((b1 == SAFE_BODY) || (b2 == SAFE_BODY)) return(SAFE_BODY);
+  return(VERY_SAFE_BODY);
+}
+
+static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, s7_pointer args, bool at_end);
+
+static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_pointer args, bool at_end)
 {
   /* called only from body_is_safe and itself */
   s7_pointer expr;
+  body_t result = VERY_SAFE_BODY;
 
   sc->cycle_counter++;
   if ((!is_proper_list(sc, x)) ||
       (sc->cycle_counter > 5000))
-    return(false);
-
+    return(UNSAFE_BODY);
+  
   expr = car(x);
   if (is_syntactic_symbol(expr))
     {
@@ -52991,16 +53037,15 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	case OP_AND:
 	case OP_BEGIN:
 	case OP_WITH_BAFFLE:
-	  if (!body_is_safe(sc, func, cdr(x), at_end))
-	    return(false);
-	  break;
-
+	  return(body_is_safe(sc, func, cdr(x), args, at_end));
+	  
 	case OP_MACROEXPAND:
-	  return(false);
-
+	  return(UNSAFE_BODY);
+	  
 	case OP_QUOTE:
+	  return(VERY_SAFE_BODY);
 	  break;
-
+	  
 	  /* in the name binders, we first have to check that "func" actually is the same thing as the caller's func */
 	case OP_LET:
 	case OP_LET_STAR:
@@ -53012,12 +53057,12 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	    body = cddr(x);
 	    if (is_symbol(vars))
 	      {
-		if (vars == func)
-		  return(false);
+		if (vars == func)        /* named let shadows caller */
+		  return(UNSAFE_BODY);
 		vars = caddr(x);
 		body = cdddr(x);
 	      }
-
+	    
 	    for (; is_pair(vars); vars = cdr(vars))
 	      {
 		s7_pointer let_var;
@@ -53025,40 +53070,55 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		let_var = car(vars);
 		if ((!is_pair(let_var)) ||
 		    (!is_pair(cdr(let_var))))
-		  return(false);
+		  return(UNSAFE_BODY);
 		
-		if (car(let_var) == func)
-		  return(false); /* it's shadowed */
+		if (car(let_var) == func)  /* let var shadows caller */
+		  return(UNSAFE_BODY); 
+		if (is_pair(s7_memq(sc, car(let_var), args)))
+		  result = min_body(result, SAFE_BODY);
 		
-		if ((is_pair(cadr(let_var))) &&
-		    (!form_is_safe(sc, func, cadr(let_var), false)))
-		  return(false);
+		if (is_pair(cadr(let_var)))
+		  {
+		    result = min_body(result, form_is_safe(sc, func, cadr(let_var), args, false));
+		    if (result == UNSAFE_BODY)
+		      return(UNSAFE_BODY);
+		  }
 	      }
-	    
-	    if (!body_is_safe(sc, func, body, at_end))
-	      return(false);
-	    }
-	  break;
+	    return(min_body(result, body_is_safe(sc, func, body, args, at_end)));
+	  }
 
 	case OP_IF:
-	  if (!is_pair(cdr(x))) 
-	    return(false); /* (if) ! */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false))))
-	    return(false);
-	  if (!((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), at_end))))
-	    return(false);
-	  if (!((!is_pair(cdddr(x))) || (!is_pair(cadddr(x))) || (form_is_safe(sc, func, cadddr(x), at_end))))
-	    return(false);
+	  if (!is_pair(cdr(x)))     /* (if) ! */   
+	    return(UNSAFE_BODY); 
+	  if (is_pair(cadr(x)))
+	    {
+	      result = form_is_safe(sc, func, cadr(x), args, false);
+	      if (result == UNSAFE_BODY) 
+		return(UNSAFE_BODY);
+	    }
+	  if (is_pair(caddr(x)))
+	    {
+	      result = min_body(result, form_is_safe(sc, func, caddr(x), args, at_end));
+	      if (result == UNSAFE_BODY) 
+		return(UNSAFE_BODY);
+	    }
+	  if ((is_pair(cdddr(x))) &&
+	      (is_pair(cadddr(x))))
+	    return(min_body(result, form_is_safe(sc, func, cadddr(x), args, at_end)));
+	  return(result);
 	  break;
-
+	  
 	case OP_WHEN:
 	case OP_UNLESS:
-	  if (!is_pair(cdr(x))) 
-	    return(false); /* (when) */
-	  if (!((!is_pair(cadr(x))) || (form_is_safe(sc, func, cadr(x), false)))) 
-	    return(false);
-	  if (!body_is_safe(sc, func, cddr(x), at_end))
-	    return(false);
+	  if (!is_pair(cdr(x)))      /* (when) */
+	    return(UNSAFE_BODY); 
+	  if (is_pair(cadr(x)))
+	    {
+	      result = form_is_safe(sc, func, cadr(x), args, false);
+	      if (result == UNSAFE_BODY) 
+		return(UNSAFE_BODY);
+	    }
+	  return(min_body(result, body_is_safe(sc, func, cddr(x), args, at_end)));
 	  break;
 
 	case OP_COND:
@@ -53068,36 +53128,55 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	      {
 		s7_pointer ex;
 		ex = car(p);
-		if (is_pair(ex)) /* ?? */
+		if (!is_pair(ex)) return(UNSAFE_BODY);
+		if (is_pair(car(ex)))
 		  {
-		    if ((is_pair(car(ex))) && (!form_is_safe(sc, func, car(ex), false)))
-		      return(false);
-		    if ((is_pair(cdr(ex))) && (!body_is_safe(sc, func, cdr(ex), at_end)))
-		      return(false);
+		    result = min_body(result, form_is_safe(sc, func, car(ex), args, false));
+		    if (result == UNSAFE_BODY) 
+		      return(UNSAFE_BODY);
+		  }
+		if (is_pair(cdr(ex)))
+		  {
+		    result = min_body(result, body_is_safe(sc, func, cdr(ex), args, at_end));
+		    if (result == UNSAFE_BODY) 
+		      return(UNSAFE_BODY);
 		  }
 	      }
 	    if (is_not_null(p))
-	      return(false);
+	      return(UNSAFE_BODY);
+	    return(result);
 	  }
 	  break;
-
+	  
 	case OP_CASE:
 	  {
 	    s7_pointer p;
-	    if ((is_pair(cadr(x))) && (!form_is_safe(sc, func, cadr(x), false))) 
-	      return(false);
+	    if (is_pair(cadr(x)))
+	      {
+		result = form_is_safe(sc, func, cadr(x), args, false);
+		if (result == UNSAFE_BODY) 
+		  return(UNSAFE_BODY);
+	      }
 	    for (p = cddr(x); is_pair(p); p = cdr(p))
-	      if ((is_pair(car(p))) && (!body_is_safe(sc, func, cdar(p), at_end))) /* null cdar(p) ok here */
-		return(false);
+	      {
+		if (!is_pair(car(p))) return(UNSAFE_BODY);
+		if (is_pair(cdar(p)))
+		  {
+		    result = min_body(result, body_is_safe(sc, func, cdar(p), args, at_end)); /* null cdar(p) ok here */
+		    if (result == UNSAFE_BODY) 
+		      return(UNSAFE_BODY);
+		  }
+	      }
+	    return(result);
 	  }
 	  break;
-
-	case OP_DO:
-	  /* (do (...) (...) ...) */
+	  
+	case OP_DO:	  /* (do (...) (...) ...) */
 	  if (!is_pair(cddr(x)))
-	    return(false);
-	  if (!body_is_safe(sc, func, cdddr(x), false))
-	    return(false);
+	    return(UNSAFE_BODY);
+	  result = body_is_safe(sc, func, cdddr(x), args, false);
+	  if (result == UNSAFE_BODY) 
+	    return(UNSAFE_BODY);
 	  if (is_pair(cadr(x)))
 	    {
 	      s7_pointer vars;
@@ -53106,53 +53185,62 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		  s7_pointer do_var;
 		  do_var = car(vars);
 		  if (!is_pair(do_var))
-		    return(false);
-
+		    return(UNSAFE_BODY);
+		  
 		  if ((car(do_var) == func) ||
 		      (!is_pair(cdr(do_var))))   /* (do ((a . 1) (b . 2)) ...) */
-		    return(false);
+		    return(UNSAFE_BODY);
 
-		  if ((is_pair(cadr(do_var))) &&
-		      (!form_is_safe(sc, func, cadr(do_var), false)))
-		    return(false);
-
+		  if (is_pair(s7_memq(sc, car(do_var), args)))
+		    result = min_body(result, SAFE_BODY);
+		  
+		  if (is_pair(cadr(do_var)))
+		    {
+		      result = min_body(result, form_is_safe(sc, func, cadr(do_var), args, false));
+		      if (result == UNSAFE_BODY) 
+			return(UNSAFE_BODY);
+		    }
 		  if ((is_pair(cddr(do_var))) &&
-		      (is_pair(caddr(do_var))) &&
-		      (!form_is_safe(sc, func, caddr(do_var), false)))
-		    return(false);
+		      (is_pair(caddr(do_var))))
+		    {
+		      result = min_body(result, form_is_safe(sc, func, caddr(do_var), args, false));
+		      if (result == UNSAFE_BODY) 
+			return(UNSAFE_BODY);
+		    }
 		}
 	    }
-	  if ((is_pair(caddr(x))) &&
-	      (!body_is_safe(sc, func, caddr(x), at_end)))
-	    return(false);
+	  if (is_pair(caddr(x)))
+	    return(min_body(result, body_is_safe(sc, func, caddr(x), args, at_end)));
+	  return(result);
 	  break;
-
+	  
 	case OP_SET:
 	  /* if we set func, we have to make sure we abandon the tail call scan:
 	   * (let () (define (hi a) (let ((v (vector 1 2 3))) (set! hi v) (hi a))) (hi 1))
 	   */
 	  if (!is_pair(cdr(x)))
-	    return(false); /* (set!) ! */
+	    return(UNSAFE_BODY); /* (set!) ! */
 	  if (cadr(x) == func)
-	    return(false);
-
+	    return(UNSAFE_BODY);
+	  
 	  /* car(x) is set!, cadr(x) is settee or obj, caddr(x) is val */
-	  if (is_symbol(caddr(x)))
-	    return(false);          /* ?? because it might be a local function that has captured local state? */
-	  if (((!is_pair(caddr(x))) || (form_is_safe(sc, func, caddr(x), false))) &&
-	      ((is_symbol(cadr(x))) ||
-	       ((is_pair(cadr(x))) && (form_is_safe(sc, func, cadr(x), false)))))
-	    return(true);
-	  return(false);
-
+	  if (is_pair(caddr(x)))
+	    {
+	      result = form_is_safe(sc, func, caddr(x), args, false);
+	      if (result == UNSAFE_BODY) 
+		return(UNSAFE_BODY);
+	    }
+	  if (is_pair(cadr(x)))
+	    return(min_body(result, form_is_safe(sc, func, cadr(x), args, false)));
+	  return(result);
+	  
 	case OP_WITH_LET:
 	  if (is_pair(cadr(x)))
-	    return(false);
-	  if (!body_is_safe(sc, sc->F, cddr(x), at_end))
-	    return(false);
+	    return(UNSAFE_BODY);
+	  return(body_is_safe(sc, sc->F, cddr(x), args, at_end));
 	  break;
-
-	  /* op_define and friends are not safe: (define (a) (define b 3)...) tries to put b in the current env,
+	  
+	  /* define and friends are not safe: (define (a) (define b 3)...) tries to put b in the current env,
 	   *   but in a safe func, that's a constant.  See s7test L 1865 for an example.
 	   */
 	default:
@@ -53160,7 +53248,7 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 	   * (let () (define (hi1 a) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   * (let () (define (hi1 a) (define (ho1 b) b) (define (hi1 b) (+ b 1)) (hi1 a)) (hi1 1))
 	   */
-	  return(false);
+	  return(UNSAFE_BODY);
 	}
     }
   else /* car(x) is not syntactic ?? */
@@ -53168,30 +53256,42 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
       if ((!is_optimized(x)) ||
 	  (is_unsafe(x)))
 	{
-	  if (expr == func) /* try to catch tail call */
+	  if (expr == func) /* try to catch tail call, expr is car(x) */
 	    {
 	      s7_pointer p;
-
+	      
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
-		if ((is_pair(car(p))) &&
-		    (((!is_optimized(car(p))) && (caar(p) != sc->quote_symbol)) ||
-		     (!form_is_safe(sc, func, car(p), false)) ||
-		     (caar(p) == func)))    /* func called as arg, so not tail call */
-		  return(false);
-
+		{
+		  if (is_pair(car(p)))
+		    {
+		      if ((!is_optimized(car(p))) && 
+			  (caar(p) != sc->quote_symbol))
+			return(UNSAFE_BODY);
+		      if (caar(p) == func)    /* func called as arg, so not tail call */
+			return(UNSAFE_BODY);
+		      result = min_body(result, form_is_safe(sc, func, car(p), args, false));
+		      if (result == UNSAFE_BODY)
+			return(UNSAFE_BODY);
+		    }
+		  else
+		    {
+		      if (car(p) == func)
+			return(UNSAFE_BODY);
+		    }
+		}
 	      if ((at_end) && (is_null(p))) /* tail call, so safe */
-		return(true);
-	      return(false);
+		return(result); /* maybe not very safe? */
+	      return(UNSAFE_BODY);
 	    }
-
+	      
 	  if (is_symbol(expr))
 	    {
 	      s7_pointer f, f_slot;
 	      f_slot = find_symbol(sc, expr);
 	      if (!is_slot(f_slot))
-		return(false);
+		return(UNSAFE_BODY);
 	      f = slot_value(f_slot);
-
+	      
 	      if (((is_c_function(f)) &&
 		   ((is_safe_procedure(f)) ||
 		    ((is_possibly_safe(f)) && 
@@ -53202,55 +53302,61 @@ static bool form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, bool at_e
 		   (is_safe_closure(f))))
 		{
 		  s7_pointer p;
+		  result = (is_closure(f) ? SAFE_BODY : VERY_SAFE_BODY);
 		  for (p = cdr(x); is_pair(p); p = cdr(p))
-		    if ((is_pair(car(p))) &&
-			(caar(p) != sc->quote_symbol) &&
-			((!is_optimized(car(p))) ||
-			 (!form_is_safe(sc, func, car(p), false))))
-		      {
-			if ((caar(p) != func) ||
-			    (!is_null(cdr(p))))
-			  return(false);
-		      }
+		    {
+		      if ((is_pair(car(p))) &&
+			  (caar(p) != sc->quote_symbol))
+			{
+			  if ((caar(p) == func) ||
+			      (!is_optimized(car(p))))
+			    return(UNSAFE_BODY);
+			  result = min_body(result, form_is_safe(sc, func, car(p), args, false));
+			  if (result == UNSAFE_BODY)
+			    return(UNSAFE_BODY);
+			}
+		      else
+			{
+			  if (car(p) == func)
+			    return(UNSAFE_BODY);
+			}
+		    }
 		  if (!is_null(p))
-		    return(false);
-		  return(true);
+		    return(UNSAFE_BODY);
+		  return(result);
 		}
 	      else
 		{
 		  if ((is_syntax(f)) ||
 		      (is_any_macro(f)))
-		    return(false);
-		  if ((is_closure(f)) &&
-		      (is_safe_closure(f)))
-		    {
-		      s7_pointer p;
-		      /* the calling function is safe, but what about its arguments? */
-		      for (p = cdr(x); is_pair(p); p = cdr(p))
-			if ((is_pair(car(p))) &&
-			    (caar(p) == func)) /* this would be a recursive call on func that is not in tail-call position */
-			  return(false);
-		      return(true);
-		    }
+		    return(UNSAFE_BODY);
 		}
 	    }
-	  return(false);
+	  return(UNSAFE_BODY);
 	}
       /* else if car is a pair, perhaps a computed func -- how to check? */
     }
-  return(true);
+  return(result);
 }
 
 
-static bool body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, bool at_end)
+static body_t body_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer body, s7_pointer args, bool at_end)
 {
   /* called in optimize_lambda and above */
   s7_pointer p;
+  body_t result = VERY_SAFE_BODY;
   for (p = body; is_pair(p); p = cdr(p))
-    if ((is_pair(car(p))) &&
-	(!form_is_safe(sc, func, car(p), (at_end) && (is_null(cdr(p))))))
-      return(false);
-  return(is_null(p));
+    {
+      if (is_pair(car(p)))
+	{
+	  result = min_body(result, form_is_safe(sc, func, car(p), args, (at_end) && (is_null(cdr(p)))));
+	  if (result == UNSAFE_BODY)
+	    return(UNSAFE_BODY);
+	}
+    }
+  if (!is_null(p))
+    return(UNSAFE_BODY);
+  return(result);
 }
 
 
@@ -54440,6 +54546,45 @@ static s7_pointer check_if(s7_scheme *sc)
   return(sc->code);
 }
 
+static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args)
+{
+  if (is_pair(body))
+    {
+      s7_pointer p;
+      p = car(body);
+      /* if all_x case is is_pair_s set to local if symbols agree */
+      if (is_h_safe_c_s(p))
+	{
+	  if (is_pair(s7_memq(sc, cadr(p), args)))
+	    {
+	      if (c_call(p) == g_is_pair)
+		set_c_call(body, local_x_is_pair_s);
+	    }
+	}
+      else
+	{
+	  if (is_h_safe_c_c(p))
+	    {
+	      if (c_call(p) == g_is_pair_cdr)
+		{
+		  set_c_call(body, local_x_is_pair_cdr);
+		  set_opt_sym2(cdr(p), cadadr(p));
+		}
+	      else
+		{
+		  if (c_call(p) == g_is_null_cdr)
+		    {
+		      set_c_call(body, local_x_is_null_cdr);
+		      set_opt_sym2(cdr(p), cadadr(p));
+		    }
+		  else fixup_lookups(sc, cdr(p), args);
+		}
+	    }
+	  else fixup_lookups(sc, car(body), args);
+	}
+      fixup_lookups(sc, cdr(body), args);
+    }
+}
 
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
@@ -54447,12 +54592,12 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
   /* fprintf(stderr, "opt %s %s %s, global: %d\n", DISPLAY(func), DISPLAY(args), DISPLAY(body), (is_symbol(func)) && (is_global(func))); */
 
   len = s7_list_length(sc, body);
-  if (len < 0)                                                               /* (define (hi) 1 . 2) */
+  if (len < 0)                /* (define (hi) 1 . 2) */
     eval_error_with_caller(sc, "~A: function body messed up, ~A", (unstarred_lambda) ? sc->lambda_symbol : sc->lambda_star_symbol, sc->code);
 
   if (len > 0)  /* i.e. not circular */
     {
-      clear_symbol_list(sc); /* tracks locals */
+      clear_symbol_list(sc);  /* tracks locals */
       if (is_symbol(func))    /* func can be sc->gc_nil (see check_lambda and check_lambda_star) */
  	{
  	  s7_pointer lst;
@@ -54494,12 +54639,23 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		set_simple_args(body);
 	    }
 	  sc->cycle_counter = 0;
-	  if (((unstarred_lambda) || (has_simple_args(body))) &&
-	      (body_is_safe(sc, func, body, true)))
+	  if ((unstarred_lambda) || (has_simple_args(body)))
 	    {
-	      /* there is one problem with closure* here -- we can't trust anything that has fancy (non-constant) default argument values. */
-	      set_safe_closure(body);
-	      /* this bit is set on the function itself in make_closure and friends */
+	      body_t result;
+	      result = body_is_safe(sc, func, body, args, true);
+	      if (result != UNSAFE_BODY)
+		{
+		  /* fprintf(stderr, "%s: %d\n", DISPLAY(func), result); */
+		  /* there is one problem with closure* here -- we can't trust anything that has fancy (non-constant) default argument values. */
+		  set_safe_closure(body);
+		  /* this bit is set on the function itself in make_closure and friends */
+
+		  /* if result is VERY_SAFE_BODY, walk the body changing symbol lookups of known-safe-locals to local_slot accesses */
+		  
+		  if (result == VERY_SAFE_BODY)
+		    fixup_lookups(sc, body, args);
+		}
+	      /* else fprintf(stderr, "unsafe: %s\n", DISPLAY(func)); */
 	    }
 	}
     }
@@ -73598,7 +73754,7 @@ int main(int argc, char **argv)
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3101] 3403 3371
  * tcopy         |      |      | 13.6 | 3204 | [3271] 3190 3405
  * tform         |      |      | 6816 | 3627 | [3701] 3768 3927
- * lint          |      |      |      | 7731 | [3954] 4118 [181.8]
+ * lint          |      |      |      | 7731 | [3954] 4118 [181.6]
  * tmap          |      |      |  9.3 | 4176 | [4327] 4263 4509
  * titer         |      |      | 7503 | 5218 | [5291] 5873 5899
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
@@ -73624,11 +73780,13 @@ int main(int argc, char **argv)
  *
  * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
  *    also complain about func name collisions -- report-shadowed-functions
- *    does lint see vector->int|float|byte cases? -- apparently not, also doesn't catch ->#() cases??
- *      yes: for args to map/for-each: (lint "(map abs (vector 1 2 3))") -> " map: perhaps (vector 1 2 3) -> #(1 2 3)
+ *    for args to map/for-each: (lint "(map abs (vector 1 2 3))") -> " map: perhaps (vector 1 2 3) -> #i(1 2 3)
  *      if we had access to the safe-builtin data, this list could be extended -- maybe use no-side-effect-functions?
  *    perhaps catch do end -> (f end) and use => f
  *
+ * let(*) and do can check body (and steppers) and if very-safe, fixup_lookups independent of closures
+ *    defines are ok if inside let and no shadows and not returned if closure -- just an extension of the let
+ *    lambdas are ok if as arg to map and so on -- unsafe_is_safe?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
