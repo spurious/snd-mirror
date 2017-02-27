@@ -11007,8 +11007,8 @@ EDITS: 2
     (if (fneq (Si 1.0) 0.9460830708394717) (snd-display "Si: ~A" (Si 1.0)))
     (if (fneq (Ci 1.0) 0.3374039233633503) (snd-display "Ci: ~A" (Ci 1.0)))
     (if (fneq (bernoulli-poly 1 1.0) 0.5) (snd-display "bernoulli-poly: ~A" (bernoulli-poly 1 1.0)))
-    (let ((val1 (sin-m*pi/n 1 (* 257 17)))
-	  (val2 (sin-m*pi/n 2 (* 3 5))))
+    (let ((val1 (sin-m*pi/n 1 4369)) ;(* 257 17)))
+	  (val2 (sin-m*pi/n 2 15)))  ;(* 3 5))))
       (let ((num1 (eval val1))
 	    (num2 (eval val2)))
 	(if (fneq num1 0.0007190644044087482) ; (sin (/ (* 1 pi) (* 257 17)))
@@ -19938,7 +19938,7 @@ EDITS: 2
 				 (func gen)
 				 (set! (func gen) arg1))
 			       (lambda args #f)))
-			   (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #(0 1) 3/4 'mus-error 0+i
+			   (list 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 3/4 'mus-error 0+i
 				 (lambda () #t) (make-float-vector '(2 3)) :order 0 1 -1 #f #t #\c 0.0 1.0 -1.0 
 				 () 3 4 64 -64 #() '(1 . 2) (expt 2.0 21.5) (expt 2.0 -18.0)
 				 (lambda (a) a)))
@@ -19972,7 +19972,7 @@ EDITS: 2
 	
 	(let ((random-args (vector
 			    (expt 2.0 21.5) (expt 2.0 -18.0)
-			    1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #(0 1) 3/4 0+i (make-delay 32)
+			    1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .1 .2 .3)  #i(0 1) 3/4 0+i (make-delay 32)
 			    (lambda () 0.0) (lambda (dir) 1.0) (lambda (a b c) 1.0) 0 1 -1 #f #t #\c 0.0 1.0 -1.0 () 32 '(1 . 2))))
 	  (define (random-gen args)
 	    (let ((gen-make-procs (list make-all-pass make-asymmetric-fm make-moving-average make-moving-max make-moving-norm
@@ -36205,10 +36205,11 @@ EDITS: 1
 		(snd-display "snddiff change sample 100: ~A" diff)))
 	  (revert-sound ind0)
 	  (pad-channel 0 100 ind0 0)
-	  (let ((diff (snddiff ind0 0 ind1 0)))
-	    (if (or (not (and (eq? (diff 0) 'lag)
-			      (= (diff 1) 100)
-			      (eq? (diff 2) 'no-difference)))
+	  (let* ((diff (snddiff ind0 0 ind1 0))
+		 (lag-diff (and (eq? (diff 0) 'lag)
+				(= (diff 1) 100)
+				(eq? (diff 2) 'no-difference))))
+	    (if (or (not lag-diff)
 		    (fneq (diff 3) 0.0)
 		    (diff 4)
 		    (diff 5)
@@ -36739,7 +36740,7 @@ EDITS: 1
     (test (fv43) (float-vector 0 -1 -2 -3))
     
     (define (permute op . args)
-      (eval (copy `(let () 
+      (let ((form `(let () 
 		     (define (t1)
 		       (let ((x 1.5) (y 3.5) (g0 (make-oscil 1000)) (g1 (make-oscil 2000)) (fv (make-float-vector 4)))
 			 (do ((i 0 (+ i 1)))
@@ -36753,8 +36754,8 @@ EDITS: 1
 		     (let ((v1 (t1))
 			   (v2 (copy (t2) (make-float-vector 4))))
 		       (if (not (morally-equal? v1 v2))
-			   (format *stderr* "~D: ~A -> ~A ~A~%" args v1 v2))))
-		  :readable)))
+			   (format *stderr* "~D: ~A -> ~A ~A~%" args v1 v2))))))
+	(eval (copy form :readable))))
 
     (set! (*s7* 'morally-equal-float-epsilon) 1e-12)    
     (for-each
@@ -37307,7 +37308,7 @@ EDITS: 1
     
     (when all-args
       (define (do-permute init step end)
-	(eval (copy `(let () 
+	(let ((form `(let () 
 		       (define (t1)
 			 (let ((fv (make-float-vector 4)))
 			   (if (<= ,step 0) (error 'out-of-range "step > 0"))
@@ -37325,8 +37326,8 @@ EDITS: 1
 		       (let ((v1 (catch #t t1 (lambda args 'error)))
 			     (v2 (catch #t (lambda () (copy (t2) (make-float-vector 4))) (lambda args 'error))))
 			 (if (not (morally-equal? v1 v2))
-			     (format *stderr* "~D: permute ~A, ~A -> ~A ~A, ~A~%" op args v1 v2 (float-vector-peak (float-vector-subtract! v1 v2))))))
-		    :readable)))
+			     (format *stderr* "~D: permute ~A, ~A -> ~A ~A, ~A~%" op args v1 v2 (float-vector-peak (float-vector-subtract! v1 v2))))))))
+	  (eval (copy form :readable))))
       
       (set! (*s7* 'morally-equal-float-epsilon) 1e-12)
       
@@ -37567,7 +37568,7 @@ EDITS: 1
     (test (fv130) (float-vector 10.0 11.0 12.0 13.0))
 
     (define (char-permute op . args)
-      (eval (copy `(let () 
+      (let ((form `(let () 
 		     (define (t1)
 		       (let ((x #\a) (y #\A) (fv (make-float-vector 4)))
 			 (do ((i 0 (+ i 1))
@@ -37587,8 +37588,8 @@ EDITS: 1
 		     (let ((v1 (t1))
 			   (v2 (t2)))
 		       (if (not (morally-equal? v1 v2))
-			   (format *stderr* "char-permute ~A, ~A -> ~A ~A~%" op args v1 v2))))
-		  :readable)))
+			   (format *stderr* "char-permute ~A, ~A -> ~A ~A~%" op args v1 v2))))))
+	(eval (copy form :readable))))
     
     (for-each
      (lambda (op)

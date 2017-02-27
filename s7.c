@@ -1099,6 +1099,7 @@ struct s7_scheme {
   s7_pointer wrong_type_arg_info, out_of_range_info, simple_wrong_type_arg_info, simple_out_of_range_info;
   s7_pointer too_many_arguments_string, not_enough_arguments_string, division_by_zero_error_string;
   s7_pointer *safe_lists, *syn_docs; /* prebuilt evaluator arg lists, syntax doc strings */
+  int current_safe_list;
 
   s7_pointer autoload_table, libraries, profile_info;
   const char ***autoload_names;
@@ -1120,7 +1121,7 @@ struct s7_scheme {
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
 
-#define NUM_SAFE_LISTS 20
+#define NUM_SAFE_LISTS 64
 #define INITIAL_AUTOLOAD_NAMES_SIZE 4
 
 
@@ -2805,10 +2806,12 @@ typedef enum{E_C_P, E_C_PP, E_C_CP, E_C_SP, E_C_PC, E_C_PS} combine_op_t;
 
 enum {OP_SAFE_C_C, HOP_SAFE_C_C, 
       OP_SAFE_C_AND2, HOP_SAFE_C_AND2, OP_SAFE_C_OR2, HOP_SAFE_C_OR2,
-      OP_SAFE_C_S, HOP_SAFE_C_S,
+      OP_SAFE_C_S, HOP_SAFE_C_S, OP_SAFE_C_L, HOP_SAFE_C_L,
       OP_SAFE_CAR_S, HOP_SAFE_CAR_S, OP_SAFE_CDR_S, HOP_SAFE_CDR_S, OP_SAFE_CADR_S, HOP_SAFE_CADR_S,
+      OP_SAFE_CAR_L, HOP_SAFE_CAR_L, OP_SAFE_CDR_L, HOP_SAFE_CDR_L, OP_SAFE_CADR_L, HOP_SAFE_CADR_L,
       OP_SAFE_IS_PAIR_S, HOP_SAFE_IS_PAIR_S, OP_SAFE_IS_NULL_S, HOP_SAFE_IS_NULL_S, OP_SAFE_IS_SYMBOL_S, HOP_SAFE_IS_SYMBOL_S, /* order matters here */
-      OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS,
+      OP_SAFE_C_SS, HOP_SAFE_C_SS, OP_SAFE_C_LL, HOP_SAFE_C_LL, 
+      OP_SAFE_C_SC, HOP_SAFE_C_SC, OP_SAFE_C_CS, HOP_SAFE_C_CS,
       OP_SAFE_C_Q, HOP_SAFE_C_Q, OP_SAFE_C_SQ, HOP_SAFE_C_SQ, OP_SAFE_C_QS, HOP_SAFE_C_QS, OP_SAFE_C_QQ, HOP_SAFE_C_QQ,
       OP_SAFE_C_CQ, HOP_SAFE_C_CQ, OP_SAFE_C_QC, HOP_SAFE_C_QC,
       OP_SAFE_C_SSS, HOP_SAFE_C_SSS, OP_SAFE_C_SCS, HOP_SAFE_C_SCS, OP_SAFE_C_SSC, HOP_SAFE_C_SSC, OP_SAFE_C_CSS, HOP_SAFE_C_CSS,
@@ -2990,10 +2993,12 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
 static const char* opt_names[OPT_MAX_DEFINED] =
      {"safe_c_c", "h_safe_c_c", 
       "safe_c_and2", "h_safe_c_and2", "safe_c_or2", "h_safe_c_or2",
-      "safe_c_s", "h_safe_c_s", 
+      "safe_c_s", "h_safe_c_s", "safe_c_l", "h_safe_c_l", 
       "safe_car_s", "h_safe_car_s", "safe_cdr_s", "h_safe_cdr_s", "safe_cadr_s", "h_safe_cadr_s",
+      "safe_car_l", "h_safe_car_l", "safe_cdr_l", "h_safe_cdr_l", "safe_cadr_l", "h_safe_cadr_l",
       "safe_is_pair_s", "h_safe_is_pair_s", "safe_is_null_s", "h_safe_is_null_s", "safe_is_symbol_s", "h_safe_is_symbol_s", 
-      "safe_c_ss", "h_safe_c_ss", "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs",
+      "safe_c_ss", "h_safe_c_ss", "safe_c_ll", "h_safe_c_ll", 
+      "safe_c_sc", "h_safe_c_sc", "safe_c_cs", "h_safe_c_cs",
       "safe_c_q", "h_safe_c_q", "safe_c_sq", "h_safe_c_sq", "safe_c_qs", "h_safe_c_qs", "safe_c_qq", "h_safe_c_qq",
       "safe_c_cq", "h_safe_c_cq", "safe_c_qc", "h_safe_c_qc",
       "safe_c_sss", "h_safe_c_sss", "safe_c_scs", "h_safe_c_scs", "safe_c_ssc", "h_safe_c_ssc", "safe_c_css", "h_safe_c_css",
@@ -4528,8 +4533,10 @@ static int gc(s7_scheme *sc)
   {
     unsigned int i;
     s7_pointer p;
+    /* perhaps: if (sc->current_safe_list > 0) ... but this loop is down in the noise */
     for (i = 1; i < NUM_SAFE_LISTS; i++)
-      if (list_is_in_use(sc->safe_lists[i]))
+      if ((is_pair(sc->safe_lists[i])) &&
+	  (list_is_in_use(sc->safe_lists[i])))
 	for (p = sc->safe_lists[i]; is_pair(p); p = cdr(p))
 	  S7_MARK(car(p));
     for (i = 0; i < sc->setters_loc; i++)
@@ -4882,6 +4889,16 @@ static void free_cell(s7_scheme *sc, s7_pointer p)
 #endif
   clear_type(p);
   (*(sc->free_heap_top++)) = p;
+}
+
+static void free_vlist(s7_scheme *sc, s7_pointer lst)
+{
+  if (is_pair(lst))
+    {
+      s7_pointer p, np;
+      for (p = lst, np = cdr(lst); is_pair(p); p = np, np = cdr(np))
+	free_cell(sc, p);
+    }
 }
 
 
@@ -44941,7 +44958,11 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   sc->format_depth = -1;
   sc->gc_off = false;            /* this is in case we were triggered from the sort function -- clumsy! */
   s7_xf_clear(sc);
-
+  if (sc->current_safe_list > 0) 
+    {
+      clear_list_in_use(sc->safe_lists[sc->current_safe_list]);
+      sc->current_safe_list = 0;
+    }
   slot_set_value(sc->error_type, type);
   slot_set_value(sc->error_data, info);
 
@@ -45984,6 +46005,7 @@ static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
 static s7_pointer all_x_unsafe_s(s7_scheme *sc, s7_pointer arg){return(find_symbol_checked(sc, arg));}
 static s7_pointer all_x_s(s7_scheme *sc, s7_pointer arg)       {return(find_symbol_unchecked(sc, arg));}
+/* static s7_pointer local_x_s(s7_scheme *sc, s7_pointer arg)     {return(slot_value(local_slot(arg)));} */
 static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)     {return(c_call(arg)(sc, cdr(arg)));}
 static s7_pointer all_x_not_c_c(s7_scheme *sc, s7_pointer arg) {return(make_boolean(sc, is_false(sc, c_call(cadr(arg))(sc, cdadr(arg)))));}
@@ -46044,6 +46066,24 @@ static s7_pointer all_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
   return(g_is_pair(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
 }
 
+static s7_pointer local_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = slot_value(local_slot(opt_sym2(cdr(arg))));
+  if (is_pair(p))
+    return(make_boolean(sc, is_pair(cdr(p))));
+  return(g_is_pair(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
+}
+
+static s7_pointer local_x_is_null_cdr(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = slot_value(local_slot(opt_sym2(cdr(arg))));
+  if (is_pair(p))
+    return(make_boolean(sc, is_null(cdr(p))));
+  return(g_is_null(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
+}
+
 static s7_pointer all_x_c_q(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t1_1, cadr(cadr(arg)));
@@ -46056,10 +46096,23 @@ static s7_pointer all_x_c_s(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t1_1));
 }
 
+static s7_pointer local_x_c_s(s7_scheme *sc, s7_pointer arg)
+{
+  set_car(sc->t1_1, slot_value(local_slot(cadr(arg))));
+  return(c_call(arg)(sc, sc->t1_1));
+}
+
 static s7_pointer all_x_cdr_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
   val = find_symbol_unchecked(sc, cadr(arg));
+  return((is_pair(val)) ? cdr(val) : g_cdr(sc, set_plist_1(sc, val)));
+}
+
+static s7_pointer local_x_cdr_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer val;
+  val = slot_value(local_slot(cadr(arg)));
   return((is_pair(val)) ? cdr(val) : g_cdr(sc, set_plist_1(sc, val)));
 }
 
@@ -46070,10 +46123,24 @@ static s7_pointer all_x_car_s(s7_scheme *sc, s7_pointer arg)
   return((is_pair(val)) ? car(val) : g_car(sc, set_plist_1(sc, val)));
 }
 
+static s7_pointer local_x_car_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer val;
+  val = slot_value(local_slot(cadr(arg)));
+  return((is_pair(val)) ? car(val) : g_car(sc, set_plist_1(sc, val)));
+}
+
 static s7_pointer all_x_cadr_s(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer val;
   val = find_symbol_unchecked(sc, cadr(arg));
+  return(((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, set_plist_1(sc, val)));
+}
+
+static s7_pointer local_x_cadr_s(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer val;
+  val = slot_value(local_slot(cadr(arg)));
   return(((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, set_plist_1(sc, val)));
 }
 
@@ -46082,14 +46149,29 @@ static s7_pointer all_x_is_null_s(s7_scheme *sc, s7_pointer arg)
   return(make_boolean(sc, is_null(find_symbol_unchecked(sc, cadr(arg)))));
 }
 
+static s7_pointer local_x_is_null_s(s7_scheme *sc, s7_pointer arg)
+{
+  return(make_boolean(sc, is_null(slot_value(local_slot(cadr(arg))))));
+}
+
 static s7_pointer all_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
 {
   return(make_boolean(sc, is_symbol(find_symbol_unchecked(sc, cadr(arg)))));
 }
 
+static s7_pointer local_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
+{
+  return(make_boolean(sc, is_symbol(slot_value(local_slot(cadr(arg))))));
+}
+
 static s7_pointer all_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
   return(make_boolean(sc, is_pair(find_symbol_unchecked(sc, cadr(arg)))));
+}
+
+static s7_pointer local_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
+{
+  return(make_boolean(sc, is_pair(slot_value(local_slot(cadr(arg))))));
 }
 
 static s7_pointer all_x_c_sc(s7_scheme *sc, s7_pointer arg)
@@ -46110,6 +46192,13 @@ static s7_pointer all_x_c_ss(s7_scheme *sc, s7_pointer arg)
 {
   set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(arg)));
   set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(arg)));
+  return(c_call(arg)(sc, sc->t2_1));
+}
+
+static s7_pointer local_x_c_ss(s7_scheme *sc, s7_pointer arg)
+{
+  set_car(sc->t2_1, slot_value(local_slot(cadr(arg))));
+  set_car(sc->t2_2, slot_value(local_slot(caddr(arg))));
   return(c_call(arg)(sc, sc->t2_1));
 }
 
@@ -46593,12 +46682,16 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_Q] = all_x_c_q;
   all_x_function[HOP_SAFE_C_A] = all_x_c_a;
   all_x_function[HOP_SAFE_C_S] = all_x_c_s;
+  all_x_function[HOP_SAFE_C_L] = local_x_c_s;
   all_x_function[HOP_SAFE_CAR_S] = all_x_car_s;
   all_x_function[HOP_SAFE_CDR_S] = all_x_cdr_s;
   all_x_function[HOP_SAFE_CADR_S] = all_x_cadr_s;
   all_x_function[HOP_SAFE_IS_PAIR_S] = all_x_is_pair_s;
   all_x_function[HOP_SAFE_IS_NULL_S] = all_x_is_null_s;
   all_x_function[HOP_SAFE_IS_SYMBOL_S] = all_x_is_symbol_s;
+  all_x_function[HOP_SAFE_CAR_L] = local_x_car_s;
+  all_x_function[HOP_SAFE_CDR_L] = local_x_cdr_s;
+  all_x_function[HOP_SAFE_CADR_L] = local_x_cadr_s;
 
   all_x_function[HOP_SAFE_C_opCq] = all_x_c_opcq;
   all_x_function[HOP_SAFE_C_opSq] = all_x_c_opsq;
@@ -46613,6 +46706,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_SQ] = all_x_c_sq;
   all_x_function[HOP_SAFE_C_QS] = all_x_c_qs;
   all_x_function[HOP_SAFE_C_SS] = all_x_c_ss;
+  all_x_function[HOP_SAFE_C_LL] = local_x_c_ss;
 
   all_x_function[HOP_SAFE_C_opSq_S] = all_x_c_opsq_s;
   all_x_function[HOP_SAFE_C_opSq_C] = all_x_c_opsq_c;
@@ -46701,6 +46795,15 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e, safe_
 	      if (car(arg) == sc->is_symbol_symbol) return(all_x_is_symbol_s);
 	      return(all_x_c_s);
 
+	    case HOP_SAFE_C_L:
+	      if (car(arg) == sc->cdr_symbol) return(local_x_cdr_s);
+	      if (car(arg) == sc->car_symbol) return(local_x_car_s);
+	      if (car(arg) == sc->cadr_symbol) return(local_x_cadr_s);
+	      if (car(arg) == sc->is_null_symbol) return(local_x_is_null_s);
+	      if (car(arg) == sc->is_pair_symbol) return(local_x_is_pair_s);
+	      if (car(arg) == sc->is_symbol_symbol) return(local_x_is_symbol_s);
+	      return(local_x_c_s);
+
 	    case HOP_SAFE_C_opSq:
 	      if (car(arg) == sc->not_symbol) return(all_x_c_not_opsq);
 	      if (caadr(arg) == sc->car_symbol) return(all_x_c_car_s);
@@ -46734,42 +46837,6 @@ static s7_function cond_all_x_eval(s7_scheme *sc, s7_pointer arg, s7_pointer e)
   return(all_x_eval(sc, arg, e, let_symbol_is_safe));
 }
 
-
-
-/* an experiment */
-static s7_pointer local_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
-{
-  return(make_boolean(sc, is_pair(slot_value(local_slot(cadr(arg))))));
-}
-
-static s7_pointer local_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer p;
-  p = slot_value(local_slot(opt_sym2(cdr(arg))));
-  if (is_pair(p))
-    return(make_boolean(sc, is_pair(cdr(p))));
-  return(g_is_pair(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
-}
-
-static s7_pointer local_x_is_null_cdr(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer p;
-  p = slot_value(local_slot(opt_sym2(cdr(arg))));
-  if (is_pair(p))
-    return(make_boolean(sc, is_null(cdr(p))));
-  return(g_is_null(sc, list_1(sc, g_cdr(sc, set_plist_1(sc, p)))));
-}
-
-/* in optimizer, where that is set, any closure if arg and no shadow, and let if var and no shadow
- *   so these can be used anywhere we know the symbol is current.
- *   i.e. it's in e as direct memq, and not bound in body -- see shadowed? in lint
- *   outside safe closure args, we need a list in optimize
- * in body_is_safe before opt pass?, list closure_args, in form_is_safe if shadowed, mark them somewhere (closure_args list?)
- * at end unmark, use T_OVERLAY perhaps
- * safe_closure can call other such, so shadowing can happen in arglists
- * body_is_safe comes after optimization -- too late
- * actually safe: no_side_effect_function, 
- */
 
 
 
@@ -53325,12 +53392,6 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
 		    return(UNSAFE_BODY);
 		  return(result);
 		}
-	      else
-		{
-		  if ((is_syntax(f)) ||
-		      (is_any_macro(f)))
-		    return(UNSAFE_BODY);
-		}
 	    }
 	  return(UNSAFE_BODY);
 	}
@@ -54553,34 +54614,55 @@ static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args)
       s7_pointer p;
       p = car(body);
       /* if all_x case is is_pair_s set to local if symbols agree */
-      if (is_h_safe_c_s(p))
+      if (is_safe_c_s(p))
 	{
 	  if (is_pair(s7_memq(sc, cadr(p), args)))
 	    {
-	      if (c_call(p) == g_is_pair)
+	      if ((c_call(p) == g_is_pair) &&
+		  ((optimize_op(p) & 1) != 0))
 		set_c_call(body, local_x_is_pair_s);
+	      switch (op_no_hop(p))
+		{
+		case OP_SAFE_CAR_S: set_optimize_op(p, OP_SAFE_CAR_L | (optimize_op(p) & 1));   break;
+		case OP_SAFE_CDR_S: set_optimize_op(p, OP_SAFE_CDR_L | (optimize_op(p) & 1));   break;
+		case OP_SAFE_CADR_S: set_optimize_op(p, OP_SAFE_CADR_L | (optimize_op(p) & 1)); break;
+		default:
+		  set_optimize_op(p, OP_SAFE_C_L + (optimize_op(p) & 1));
+		  break;
+		}
 	    }
 	}
       else
 	{
 	  if (is_h_safe_c_c(p))
 	    {
-	      if (c_call(p) == g_is_pair_cdr)
+	      if ((c_call(p) == g_is_pair_cdr) &&
+		  (is_pair(s7_memq(sc, cadadr(p), args))))
 		{
 		  set_c_call(body, local_x_is_pair_cdr);
 		  set_opt_sym2(cdr(p), cadadr(p));
 		}
 	      else
 		{
-		  if (c_call(p) == g_is_null_cdr)
+		  if ((c_call(p) == g_is_null_cdr) &&
+		      (is_pair(s7_memq(sc, cadadr(p), args))))
 		    {
 		      set_c_call(body, local_x_is_null_cdr);
 		      set_opt_sym2(cdr(p), cadadr(p));
 		    }
-		  else fixup_lookups(sc, cdr(p), args);
 		}
 	    }
-	  else fixup_lookups(sc, car(body), args);
+	  else
+	    {
+	      if ((is_optimized(p)) &&
+		  (op_no_hop(p) == OP_SAFE_C_SS) &&
+		  (is_pair(s7_memq(sc, cadr(p), args))) &&
+		  (is_pair(s7_memq(sc, caddr(p), args))))
+		{
+		  set_optimize_op(p, OP_SAFE_C_LL + (optimize_op(p) & 1));
+		}
+	      else fixup_lookups(sc, car(body), args);
+	    }
 	}
       fixup_lookups(sc, cdr(body), args);
     }
@@ -59598,6 +59680,25 @@ static s7_pointer check_for_cyclic_code(s7_scheme *sc, s7_pointer code)
   static s7_pointer profile_at_start = NULL;
 #endif
 
+static s7_pointer safe_list_if_possible(s7_scheme *sc, s7_pointer p)
+{
+  int num_args;
+  num_args = integer(arglist_length(p));
+  if ((num_args != 0) &&
+      (num_args < NUM_SAFE_LISTS))
+    {
+      sc->current_safe_list = num_args;
+      if (!is_pair(sc->safe_lists[num_args]))
+	sc->safe_lists[num_args] = permanent_list(sc, num_args);
+      if (!list_is_in_use(sc->safe_lists[num_args]))
+	{
+	  set_list_in_use(sc->safe_lists[num_args]);
+	  return(sc->safe_lists[num_args]);
+	}
+    }
+  return(make_list(sc, num_args, sc->nil));
+}
+
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
@@ -60998,6 +61099,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto START;
 		  
 		  
+		case OP_SAFE_C_L:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_C_L:
+		  set_car(sc->t1_1, slot_value(local_slot(cadr(code))));
+		  sc->value = c_call(code)(sc, sc->t1_1);
+		  goto START;
+		  
+		  
 		case OP_SAFE_CAR_S:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_CAR_S:
@@ -61024,6 +61133,36 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  {
 		    s7_pointer val;
 		    val = find_symbol_unchecked(sc, cadr(code));
+		    sc->value = ((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, list_1(sc, val));
+		    goto START;
+		  }
+		  
+		case OP_SAFE_CAR_L:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_CAR_L:
+		  {
+		    s7_pointer val;
+		    val = slot_value(local_slot(cadr(code)));
+		    sc->value = (is_pair(val)) ? car(val) : g_car(sc, list_1(sc, val));
+		    goto START;
+		  }
+		  
+		case OP_SAFE_CDR_L:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_CDR_L:
+		  {
+		    s7_pointer val;
+		    val = slot_value(local_slot(cadr(code)));
+		    sc->value = (is_pair(val)) ? cdr(val) : g_cdr(sc, list_1(sc, val));
+		    goto START;
+		  }
+		  
+		case OP_SAFE_CADR_L:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_CADR_L:
+		  {
+		    s7_pointer val;
+		    val = slot_value(local_slot(cadr(code)));
 		    sc->value = ((is_pair(val)) && (is_pair(cdr(val)))) ? cadr(val) : g_cadr(sc, list_1(sc, val));
 		    goto START;
 		  }
@@ -61072,27 +61211,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    goto START;
 		  }
 		  
+		case OP_SAFE_C_LL:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_SAFE_C_LL:
+		  {
+		    s7_pointer val, args;
+		    args = cdr(code);
+		    val = slot_value(local_slot(car(args)));
+		    set_car(sc->t2_2, slot_value(local_slot(cadr(args))));
+		    set_car(sc->t2_1, val);
+		    sc->value = c_call(code)(sc, sc->t2_1);
+		    goto START;
+		  }
+		  
 		  
 		case OP_SAFE_C_ALL_S:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ALL_S:
 		  {
-		    int num_args;
 		    s7_pointer args, p;
 
-		    num_args = integer(arglist_length(code));
-		    if ((num_args != 0) &&
-			(num_args < NUM_SAFE_LISTS) &&
-			(!list_is_in_use(sc->safe_lists[num_args])))
-		      {
-			sc->args = sc->safe_lists[num_args];
-			set_list_in_use(sc->args);
-		      }
-		    else sc->args = make_list(sc, num_args, sc->nil);
-		    
+		    sc->args = safe_list_if_possible(sc, code);
 		    for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		      set_car(p, find_symbol_unchecked(sc, car(args)));
 		    clear_list_in_use(sc->args);
+		    sc->current_safe_list = 0;
 		    sc->value = c_call(code)(sc, sc->args);
 		    goto START;
 		  }
@@ -61576,22 +61719,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!a_is_ok(sc, code)) break;
 		case HOP_SAFE_C_ALL_X:
 		  {
-		    int num_args;
 		    s7_pointer args, p;
 		    
-		    num_args = integer(arglist_length(code));
-		    if ((num_args != 0) &&
-			(num_args < NUM_SAFE_LISTS) &&
-			(!list_is_in_use(sc->safe_lists[num_args])))
-		      {
-			sc->args = sc->safe_lists[num_args];
-			set_list_in_use(sc->args);
-		      }
-		    else sc->args = make_list(sc, num_args, sc->nil);
-		    
+		    sc->args = safe_list_if_possible(sc, code);
 		    for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		      set_car(p, c_call(args)(sc, car(args)));
 		    clear_list_in_use(sc->args);
+		    sc->current_safe_list = 0;
 		    
 		    sc->value = c_call(code)(sc, sc->args);
 		    /* we can't release a temp here:
@@ -63024,22 +63158,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case HOP_SAFE_CLOSURE_ALL_X:
 		  {
 		    s7_pointer args, p, env, x, z;
-		    int num_args;
 		    unsigned long long int id;
 
-		    num_args = integer(arglist_length(code));
-		    if ((num_args != 0) &&
-			(num_args < NUM_SAFE_LISTS) &&
-			(!list_is_in_use(sc->safe_lists[num_args])))
-		      {
-			sc->args = sc->safe_lists[num_args];
-			set_list_in_use(sc->args);
-		      }
-		    else sc->args = make_list(sc, num_args, sc->nil);
-		    
+		    sc->args = safe_list_if_possible(sc, code);
 		    for (args = cdr(code), p = sc->args; is_pair(args); args = cdr(args), p = cdr(p))
 		      set_car(p, c_call(args)(sc, car(args)));
 		    clear_list_in_use(sc->args);
+		    sc->current_safe_list = 0;
 		    sc->code = opt_lambda(code);
 		    
 		    id = ++sc->let_number;
@@ -67125,35 +67250,51 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_READ_VECTOR:
 	  if (!is_proper_list(sc, sc->value))       /* #(1 . 2) */
 	    return(read_error(sc, "vector constant data is not a proper list"));
+	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_vector(sc, sc->value);
 	  else sc->value = g_multivector(sc, s7_integer(sc->args), sc->value);
 	  /* here and below all of the sc->value list can be freed, but my tests showed no speed up even in large cases */
+#if FREEZE
+	  free_vlist(sc, sc->v);
+#endif
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 
 	case OP_READ_INT_VECTOR:
 	  if (!is_proper_list(sc, sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
+	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_int_vector(sc, sc->value);
 	  else sc->value = g_int_multivector(sc, s7_integer(sc->args), sc->value);
+#if FREEZE
+	  free_vlist(sc, sc->v);
+#endif
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 
 	case OP_READ_FLOAT_VECTOR:
 	  if (!is_proper_list(sc, sc->value))
 	    return(read_error(sc, "vector constant data is not a proper list"));
+	  sc->v = sc->value;
 	  if (sc->args == small_int(1))             /* sc->args was sc->w earlier from read_sharp */
 	    sc->value = g_float_vector(sc, sc->value);
 	  else sc->value = g_float_multivector(sc, s7_integer(sc->args), sc->value);
+#if FREEZE
+	  free_vlist(sc, sc->v);
+#endif
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;	  
 
 	case OP_READ_BYTE_VECTOR:
 	  if (!is_proper_list(sc, sc->value))
 	    return(read_error(sc, "byte-vector constant data is not a proper list"));
+	  sc->v = sc->value;
 	  sc->value = g_byte_vector(sc, sc->value);
+#if FREEZE
+	  free_vlist(sc, sc->v);
+#endif
 	  if (main_stack_op(sc) == OP_READ_LIST) goto POP_READ_LIST;
 	  break;
 	  
@@ -72233,7 +72374,8 @@ s7_scheme *s7_init(void)
 
   sc->safe_lists = (s7_pointer *)calloc(NUM_SAFE_LISTS, sizeof(s7_pointer));
   for (i = 1; i < NUM_SAFE_LISTS; i++)
-    sc->safe_lists[i] = permanent_list(sc, i);
+    sc->safe_lists[i] = sc->nil; /* permanent_list(sc, i); */
+  sc->current_safe_list = 0;
 
   sc->input_port_stack = sc->nil;
   sc->code = sc->nil;
@@ -73747,46 +73889,43 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1112] 1171 1153
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1112] 1171 1151
  * teq           |      |      | 6612 | 2380 | [2318] 2500 2460
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2965
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [3195] 3287 3353
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3101] 3403 3371
- * tcopy         |      |      | 13.6 | 3204 | [3271] 3190 3405
- * tform         |      |      | 6816 | 3627 | [3701] 3768 3927
- * lint          |      |      |      | 7731 | [3954] 4118 [181.6]
- * tmap          |      |      |  9.3 | 4176 | [4327] 4263 4509
- * titer         |      |      | 7503 | 5218 | [5291] 5873 5899
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2959
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [3195] 3287 3368
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3101] 3403 3352
+ * tcopy         |      |      | 13.6 | 3204 | [3271] 3190 3403
+ * tform         |      |      | 6816 | 3627 | [3701] 3768 3919
+ * lint          |      |      |      | 7731 | [3954] 4116 [181.3]
+ * tmap          |      |      |  9.3 | 4176 | [4327] 4263 4501
+ * titer         |      |      | 7503 | 5218 | [5291] 5873 5891
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | [11.4] 12.0 12.1
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [11.4] 12.0 12.3
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
- * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [135.0] 41.5
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [135.0] 41.4
  * 
  * --------------------------------------------------------------------
  *
  * new snd version: snd.h configure.ac HISTORY.Snd NEWS barchive
  *
+ * s7:
  * if with_history, each func could keep a (circular) history of calls(args/results/caller [line?])
  *    each variable a set! history [and where set -- line?]
  *    each cell a (debugger) history; s7_history(), s7_add_history()
  *    ((funclet func) 'history)
  *    allocation location (file/func/line in *.c/scm) for any cell if debugging, then report as part of free cell complaint
  *
- * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
- * update libgsl.scm
+ * let(*) and do can check body (and steppers) and if very-safe, fixup_lookups independent of closures
+ *    defines are ok if no shadows and not returned if closure -- just an extension of the let
+ *    lambdas are ok if as arg to map and so on -- unsafe_is_safe?
+ *    partial cases: remove shadowed args, but fixup the rest
+ * remove opCDRq_Q and make it specific to let_ref -- known symbol etc
  * extend the validity checks to all FFI funcs and add info about caller etc
  * check all_x* need methods? [need s7test entries!]
  *
- * can lint complain about globals reused? -- like set_local in s7 -- can safety>0 complain also in s7?
- *    also complain about func name collisions -- report-shadowed-functions
- *    for args to map/for-each: (lint "(map abs (vector 1 2 3))") -> " map: perhaps (vector 1 2 3) -> #i(1 2 3)
- *      if we had access to the safe-builtin data, this list could be extended -- maybe use no-side-effect-functions?
- *    perhaps catch do end -> (f end) and use => f
- *
- * let(*) and do can check body (and steppers) and if very-safe, fixup_lookups independent of closures
- *    defines are ok if inside let and no shadows and not returned if closure -- just an extension of the let
- *    lambdas are ok if as arg to map and so on -- unsafe_is_safe?
+ * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
+ * update libgsl.scm
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

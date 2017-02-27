@@ -1705,10 +1705,22 @@
 			   (cons len (if has-rest mx len)))
 			  (else (cons (abs len) mx))))))))
 
+    (define (report-shadower caller head vtype v expr env)
+      (when (symbol? v)
+	(if (var-member v env)
+	    (lint-format "~A ~A ~A in ~S shadows an earlier declaration" caller head vtype v expr)
+	    (if (defined? v (rootlet))
+		(lint-format "~A ~A ~A shadows built-in ~A" caller head vtype v v)))))
+
     (define* (make-fvar name ftype arglist initial-value env)
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
       (improper-arglist->define* name ftype arglist initial-value)
+      
+      (when *report-shadowed-variables*
+	(for-each (lambda (v)
+		    (report-shadower ftype name 'parameter v arglist env))
+		  (args->proper-list arglist)))
 
       (let ((new (let ((old (hash-table-ref other-identifiers name))
 		       (allow-keys (and (pair? arglist)
@@ -5758,7 +5770,6 @@
 			(f args form env)))
 		  (else (cons (car form) args)))))))
     
-    
     (define (binding-ok? caller head binding env second-pass)
       ;; check let-style variable binding for various syntactic problems
       (cond (second-pass
@@ -5790,9 +5801,8 @@
 			 (memq (var-ftype fv) '(define lambda let define* lambda*)))))
 	     (lint-format "~A variable ~A in ~S shadows the current function?" caller head caller binding)
 	     #t)
-	    ((and *report-shadowed-variables*      ; (let ((x 1)) (+ (let ((x 2)) (+ x 1)) x))
-		  (var-member (car binding) env))
-	     (lint-format "~A variable ~A in ~S shadows an earlier declaration" caller head (car binding) binding)
+	    (*report-shadowed-variables*               ; (let ((x 1)) (+ (let ((x 2)) (+ x 1)) x))
+	     (report-shadower caller head 'variable (car binding) binding env)
 	     #t)
 	    (else #t)))
 
@@ -10127,11 +10137,6 @@
 	       
 	       (report-arg-trouble 
 		(lambda (caller form head arg-number checker arg uop env)
-		  (define (prettify-arg-number argn)
-		    (if (or (not (= argn 1))
-			    (pair? (cddr form)))
-			(format #f "~D " argn)
-			""))
 		  (when (and (or arg (not (eq? checker 'output-port?)))
 			     (not (and (eq? checker 'string?)
 				       (len>1? arg)
@@ -10142,7 +10147,12 @@
 		    (let ((op (if (and (eq? checker 'real?)
 				       (eq? uop 'number?))
 				  'complex?
-				  uop)))
+				  uop))
+			  (prettify-arg-number (lambda (argn)
+						 (if (or (not (= argn 1))
+							 (pair? (cddr form)))
+						     (format #f "~D " argn)
+						     ""))))
 		      (if (and (pair? op)
 			       (member checker op any-compatible?))
 			  (if (and *report-sloppy-assoc*
@@ -10387,11 +10397,9 @@
 			      ((do)
 			       (if (len>1? (cdr arg))
 				   (let ((end+res (caddr arg)))
-				     (check-arg (if (and (pair? end+res)
-							 (> (length end+res) 1))
-						    (last-ref end+res)
-						    (car end+res)))))) ; car=test which is returned if no result
-			      
+				     (if (pair? end+res)
+					 (check-arg ((if (> (length end+res) 1) last-ref car) end+res)))))) ; car=test which is returned if no result
+
 			      ((case)
 			       (if (len>1? (cdr arg))
 				   (for-each
@@ -17639,15 +17647,21 @@
 			(begin
 			  (check-results caller 'do-result end+result (cdr end+result) inner-env)
 			  (if (null? (cddr end+result))
-			      (begin
-				(if (or (equal? (car end+result) (cadr end+result))
-					(and (eq? (cadr end+result) #t)
-					     (pair? (car end+result))
-					     (let ((sig (arg-signature (caar end+result) env)))
+			      (let ((end (car end+result))
+				    (result (cadr end+result)))
+				(if (or (equal? end result)
+					(and (eq? result #t)
+					     (pair? end)
+					     (let ((sig (arg-signature (car end) env)))
 					       (and (pair? sig)
 						    (eq? (car sig) 'boolean?)))))
 				    ;; (do ((i 0 (+ i 1))) ((= i 3) ()) (display i))
-				    (lint-format "return value is redundant: ~A" caller end+result))))))
+				    (lint-format "return value is redundant: ~A" caller end+result)
+				    (if (and (len=2? result)
+					     (equal? end (cadr result)))
+					(lint-format "perhaps use => here: ~A" caller 
+						     (lists->string end+result 
+								    (list end '=> (car result))))))))))
 
 		    (if (and (symbol? end) (memq end '(= > < >= <= null? not)))
 			;; (do ((i 0 (+ i 1))) (= i 10) (display i))
@@ -19357,8 +19371,10 @@
 		  (if (keyword? named-let)          ; (let :x ((i y)) (x i))
 		      (lint-format "bad let name: ~A" caller named-let))
 		  
-		  (unless named-let
-		    (remove-null-let caller form env))
+		  (if named-let
+		      (if *report-shadowed-variables*
+			  (report-shadower caller 'let 'named-let-function-name named-let named-let env))
+		      (remove-null-let caller form env))
 		  
 		  (let ((vars (declare-named-let caller form env))
 			(varlist ((if named-let caddr cadr) form))
@@ -19958,7 +19974,11 @@
 		  (let ((vars (declare-named-let caller form env))
 			(varlist ((if named-let caddr cadr) form))
 			(body ((if named-let cdddr cddr) form)))
-		    
+
+		    (if (and named-let
+			     *report-shadowed-variables*)
+			(report-shadower caller 'let* 'named-let*-function-name named-let named-let env))
+
 		    (if (not (and (proper-list? varlist)
 				  (lint-every? pair? varlist)))
 			(lint-format "let* is messed up: ~A" caller (truncated-list->string form))
@@ -20424,30 +20444,35 @@
 			(let ((body (cddr func))
 			      (port (and (pair? args) (car args)))
 			      (head (car form)))
+
+			  (when *report-shadowed-variables*
+			    (report-shadower caller head 'port port func env))
+
 			  (if (or (not port)
 				  (pair? (cdr args)))
 			      ;; (lambda () (write args) (newline))
 			      (lint-format "~A argument should be a function of one argument: ~A" caller head func)
-			      (if (and (len=1? body)
-				       (len=2? (car body))
-				       (eq? (cadar body) port))
-				  ;; (call-with-input-file "file" (lambda (p) (read-char p))) -> (call-with-input-file "file" read-char)
-				  (lint-format "perhaps ~A" caller 
-					       (lists->string form 
-							      (list head (if (= len 2)
-									     (caar body)
-									     (values (cadr form) (caar body))))))
-				  (let ((cc (make-lint-var port
-						      (list (case head 
-							      ((call-with-input-string)  'open-input-string)
-							      ((call-with-output-string) 'open-output-string)
-							      ((call-with-input-file)    'open-input-file)
-							      ((call-with-output-file)   'open-output-file)))
-						      head)))
-				    (lint-walk-body caller head body (cons cc 
-									   (cons (make-lint-var :let form head)
-										 env)))
-				    (report-usage caller head (list cc) env))))))))))
+			      (begin
+				(if (and (len=1? body)
+					 (len=2? (car body))
+					 (eq? (cadar body) port))
+				    ;; (call-with-input-file "file" (lambda (p) (read-char p))) -> (call-with-input-file "file" read-char)
+				    (lint-format "perhaps ~A" caller 
+						 (lists->string form 
+								(list head (if (= len 2)
+									       (caar body)
+									       (values (cadr form) (caar body)))))))
+				(let ((cc (make-lint-var port
+							 (list (case head 
+								 ((call-with-input-string)  'open-input-string)
+								 ((call-with-output-string) 'open-output-string)
+								 ((call-with-input-file)    'open-input-file)
+								 ((call-with-output-file)   'open-output-file)))
+							 head)))
+				  (lint-walk-body caller head body (cons cc 
+									 (cons (make-lint-var :let form head)
+									       env)))
+				  (report-usage caller head (list cc) env))))))))))
 	    env)
 	  (for-each (lambda (op)
 		      (hash-walker op call-with-io-walker))
@@ -20497,6 +20522,11 @@
 		  (lint-walk caller (cdr form) env)
 		  (let ((body (cddadr form))
 			(head (car form)))
+
+		    (when *report-shadowed-variables*
+		      (report-shadower caller head
+				       (if (eq? head 'call-with-exit) 'exit-function 'continuation)
+				       continuation form env))
 		    
 		    (if (not (or (eq? head 'call-with-exit)    ;   (call/cc (lambda (p) (+ x (p 1))))
 				 (eq? continuation (car body)) ; and (null? (cdr) I think (call/cc (lambda (k) k)) is intended 
@@ -21280,7 +21310,7 @@
 			  (for-each (lambda (p)
 				      (when (let constable? ((cp p))
 					      (and (len>1? cp)
-						   (memq (car cp) '(list vector))
+						   (memq (car cp) '(list vector int-vector float-vector byte-vector))
 						   (lint-every? (lambda (inp) 
 								  (or (code-constant? inp)
 								      (constable? inp)))
@@ -22422,4 +22452,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 69 30046 845047
+;;; 69 31250 850616
