@@ -17570,7 +17570,7 @@
 			    (let ((step-name (car stepper))
 				  (step-step (caddr stepper)))
 			      (for-each (lambda (v)
-					  (if (and (var-step v)
+					  (if (and ;(var-step v)  ; a toss-up
 						   (not (eq? (var-name v) step-name))
 						   (or (eq? (var-name v) step-step)
 						       (and (pair? step-step)
@@ -17729,6 +17729,43 @@
 				      (tree-memq (var-name var) (var-step nv))))
 			     (set! (var-ref var) (+ (var-ref var) 1))))
 		       (cdr v))))))
+
+	    ;; try to catch step-var sets at the body end and move to the step expr
+	    ;;   (do ((i 0 (+ i 1)) (j 1)) ((= i 3)) (display (+ i j)) (set! j (+ j 1))), move (+ j 1)
+	    (let ((last-expr (last-ref (cdddr form))))
+	      (when (and (len=3? last-expr)
+			 (eq? (car last-expr) 'set!))
+		(let ((var (cadr last-expr))
+		      (val (caddr last-expr)))
+		  (cond ((var-member var vars)
+			 => (lambda (v)
+			      (if (and (var-step v)
+				       (not (tree-memq (var-name v) (var-step v))))
+				  (if (side-effect? val env)
+				      (lint-format "this set! is pointless: ~A; perhaps replace it with ~A" caller
+						   (truncated-list->string last-expr)
+						   (truncated-list->string val))
+				      (lint-format "this set! is pointless: ~A" caller
+						   (truncated-list->string last-expr)))
+				  (if (and (or (not (var-step v))
+					       (tree-nonce (var-name v) (var-step v)))
+					   ;; don't move if caddr contains ref to other step var(s)
+					   (not (tree-set-memq (remove (var-name v) (map var-name vars)) val)))
+				      (lint-format "perhaps move ~A to ~A's step expression: ~A" caller
+						   (truncated-list->string last-expr)
+						   (var-name v)
+						   (list (var-name v) 
+							 (var-initial-value v) 
+							 (if (not (var-step v))
+							     val
+							     (let ((expr (tree-subst val (var-name v) (var-step v))))
+							       (if (not (pair? expr))
+								   expr
+								   (if (hash-table-ref numeric-ops (car expr))
+								       (simplify-numerics expr env)
+								       (if (memq (car expr) '(and or not))
+									   (simplify-boolean expr () () env)
+									   expr)))))))))))))))
 	    (report-usage caller 'do vars inner-env))
 
 	  ;; -------- simplify-do --------
@@ -22455,4 +22492,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 69 31250 850616
+;;; 69 31313 851686
