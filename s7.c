@@ -1488,7 +1488,7 @@ static s7_scheme *hidden_sc = NULL;
 
 #define T_OPTIMIZED                   (1 << (TYPE_BITS + 3))
 #define set_optimized(p)              typesflag(_TPair(p)) |= T_OPTIMIZED
-#define clear_optimized(p)            typeflag(_TPair(p)) &= (~(T_OPTIMIZED | T_OVERLAY | T_SYNTACTIC))
+#define clear_optimized(p)            typeflag(_TPair(p)) &= (~(T_OPTIMIZED | T_OVERLAY | T_SYNTACTIC | T_HAS_ALL_X))
 #define OPTIMIZED_PAIR                (unsigned short)(T_PAIR | T_OPTIMIZED)
 #define is_optimized(p)               (typesflag(p) == OPTIMIZED_PAIR)
 /*   this is faster than the bit extraction above and the same speed as xor */
@@ -3103,6 +3103,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_ssp", "h_safe_c_ssp",
 };
 #endif
+
+#define in_reader(Sc) ((Sc->op >= OP_READ_LIST) && (Sc->op <= OP_READ_DONE) && (is_input_port(Sc->input_port)))
 
 #define is_safe_c_op(op) (op < OP_THUNK)                               /* used only in safe_stepper */
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_PP))
@@ -45183,9 +45185,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 	    }
 	  else
 	    {
-	      if ((sc->op >= OP_READ_LIST) && 
-		  (sc->op <= OP_READ_DONE) &&
-		  (is_input_port(sc->input_port)))
+	      if (in_reader(sc))
 		{
 		  slot_set_value(sc->error_line, make_integer(sc, port_line_number(sc->input_port)));
 		  slot_set_value(sc->error_file, make_string_wrapper_with_length(sc, port_filename(sc->input_port), port_filename_length(sc->input_port)));
@@ -45200,9 +45200,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
     }
   else
     {
-      if ((sc->op >= OP_READ_LIST) && 
-	  (sc->op <= OP_READ_DONE) &&
-	  (is_input_port(sc->input_port)))
+      if (in_reader(sc))
 	{
 	  slot_set_value(sc->error_line, make_integer(sc, port_line_number(sc->input_port)));
 	  slot_set_value(sc->error_file, make_string_wrapper_with_length(sc, port_filename(sc->input_port), port_filename_length(sc->input_port)));
@@ -46207,7 +46205,7 @@ static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
 static s7_pointer all_x_unsafe_s(s7_scheme *sc, s7_pointer arg){return(find_symbol_checked(sc, arg));}
 static s7_pointer all_x_s(s7_scheme *sc, s7_pointer arg)       {return(find_symbol_unchecked(sc, arg));}
-/* static s7_pointer local_x_s(s7_scheme *sc, s7_pointer arg)     {return(slot_value(local_slot(arg)));} */
+static s7_pointer local_x_s(s7_scheme *sc, s7_pointer arg)     {return(slot_value(local_slot(arg)));}
 static s7_pointer all_x_k(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_c_c(s7_scheme *sc, s7_pointer arg)     {return(c_call(arg)(sc, cdr(arg)));}
 static s7_pointer all_x_not_c_c(s7_scheme *sc, s7_pointer arg) {return(make_boolean(sc, is_false(sc, c_call(cadr(arg))(sc, cdadr(arg)))));}
@@ -53583,7 +53581,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
 		   (is_safe_closure(f))))
 		{
 		  s7_pointer p;
-		  result = (is_closure(f) ? SAFE_BODY : VERY_SAFE_BODY);
+		  result = ((is_c_function(f)) && (is_global(expr))) ? VERY_SAFE_BODY : SAFE_BODY;
 		  for (p = cdr(x); is_pair(p); p = cdr(p))
 		    {
 		      if ((is_pair(car(p))) &&
@@ -54169,7 +54167,142 @@ static s7_pointer check_let_one_var(s7_scheme *sc, s7_pointer start)
   return(sc->code);
 }
 
-static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args);
+
+static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args)
+{
+  /* fprintf(stderr, "body: %s %d\n", DISPLAY(body), (is_pair(body)) && (has_all_x(body))); */
+  if (is_pair(body))
+    {
+      s7_pointer p;
+      p = car(body);
+      /* if all_x case is is_pair_s set to local if symbols agree */
+      if (has_all_x(body))
+	{
+	  if ((is_symbol(p)) &&
+	      (is_pair(s7_memq(sc, p, args))))
+	    {
+	      /* fprintf(stderr, "sym: %s %d\n", DISPLAY(p), c_call(body) == all_x_s); */
+	      if (c_call(body) == all_x_s)
+		set_c_call(body, local_x_s);
+	    }
+	  if ((is_pair(p)) &&
+	      (is_pair(s7_memq(sc, cadr(p), args))))
+	    {
+	      /* fprintf(stderr, "pair: %s %d\n", DISPLAY(p), c_call(body) == all_x_c_s); */
+	      if (c_call(body) == all_x_c_s)
+		set_c_call(body, local_x_c_s);
+	      if (c_call(body) == all_x_is_pair_s)
+		set_c_call(body, local_x_is_pair_s);
+	      if (c_call(body) == all_x_is_symbol_s)
+		set_c_call(body, local_x_is_symbol_s);
+	      if (c_call(body) == all_x_is_null_s)
+		set_c_call(body, local_x_is_null_s);
+	      if (c_call(body) == all_x_car_s)
+		set_c_call(body, local_x_car_s);
+	      if (c_call(body) == all_x_cdr_s)
+		set_c_call(body, local_x_cdr_s);
+	      if (c_call(body) == all_x_cadr_s)
+		set_c_call(body, local_x_cadr_s);
+	    }
+
+	  if ((c_call(body) == all_x_is_pair_cdr) &&
+	      (is_pair(s7_memq(sc, cadadr(p), args))))
+	    {
+	      /* fprintf(stderr, "pair_cdr: %s\n", DISPLAY(p)); */
+	      set_c_call(body, local_x_is_pair_cdr);
+	    }
+	}
+      if (is_safe_c_s(p))
+	{
+	  if (is_pair(s7_memq(sc, cadr(p), args)))
+	    {
+	      if ((c_call(p) == g_is_pair) &&
+		  ((optimize_op(p) & 1) != 0))
+		set_c_call(body, local_x_is_pair_s);
+	      switch (op_no_hop(p))
+		{
+		case OP_SAFE_CAR_S: set_optimize_op(p, OP_SAFE_CAR_L | (optimize_op(p) & 1));   break;
+		case OP_SAFE_CDR_S: set_optimize_op(p, OP_SAFE_CDR_L | (optimize_op(p) & 1));   break;
+		case OP_SAFE_CADR_S: set_optimize_op(p, OP_SAFE_CADR_L | (optimize_op(p) & 1)); break;
+		default:
+		  set_optimize_op(p, OP_SAFE_C_L + (optimize_op(p) & 1));
+		  break;
+		}
+	    }
+	}
+      else
+	{
+	  if (is_h_safe_c_c(p))
+	    {
+	      if ((c_call(p) == g_is_pair_cdr) &&
+		  (is_pair(s7_memq(sc, cadadr(p), args))))
+		{
+		  set_c_call(body, local_x_is_pair_cdr);
+		  set_opt_sym2(cdr(p), cadadr(p));
+		}
+	      else
+		{
+		  if ((c_call(p) == g_is_null_cdr) &&
+		      (is_pair(s7_memq(sc, cadadr(p), args))))
+		    {
+		      set_c_call(body, local_x_is_null_cdr);
+		      set_opt_sym2(cdr(p), cadadr(p));
+		    }
+		  else
+		    {
+		      if ((c_call(p) == g_lint_let_ref) &&
+			  (is_pair(s7_memq(sc, cadadr(p), args))))
+			{
+			  set_c_call(p, g_local_lint_let_ref);
+			}
+		    }
+		}
+	    }
+	  else
+	    {
+	      if ((is_optimized(p)) &&
+		  (op_no_hop(p) == OP_SAFE_C_SS) &&
+		  (is_pair(s7_memq(sc, cadr(p), args))) &&
+		  (is_pair(s7_memq(sc, caddr(p), args))))
+		{
+		  set_optimize_op(p, OP_SAFE_C_LL + (optimize_op(p) & 1));
+		}
+	    }
+	}
+      if (is_pair(p))
+	fixup_lookups(sc, p, args);
+      if (is_pair(cdr(body)))
+	fixup_lookups(sc, cdr(body), args);
+    }
+}
+
+static void check_let_locals(s7_scheme *sc)
+{
+  if (is_pair(car(sc->code)))
+    {
+      s7_pointer p, args;
+      for (sc->w = sc->nil, p = car(sc->code); is_pair(p); p = cdr(p))
+	sc->w = cons(sc, caar(p), sc->w);
+      args = sc->w;
+      for (p = car(sc->code); is_pair(p); p = cdr(p))
+	if ((is_pair(cadar(p))) &&
+	    (form_is_safe(sc, sc->gc_nil, cadar(p), args, true) != VERY_SAFE_BODY))
+	  break;
+      if (is_null(p))
+	{
+	  body_t result;
+	  result = body_is_safe(sc, sc->gc_nil, cdr(sc->code), args, true);
+	  if (result == VERY_SAFE_BODY)
+	    {
+	      /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code)); */
+	      set_safe_locals(sc->code);
+	      fixup_lookups(sc, cdr(sc->code), args);
+	    }
+	}
+      /* else fprintf(stderr, "bad vals: %s\n", DISPLAY_80(car(p))); */
+    }
+}
+
 
 static s7_pointer check_let(s7_scheme *sc)
 {
@@ -54353,30 +54486,8 @@ static s7_pointer check_let(s7_scheme *sc)
 	      else pair_set_syntax_symbol(sc->code, sc->let_unchecked_symbol);
 	    }
 	  
-	  if ((!named_let) &&
-	      (is_pair(car(sc->code))))
-	    {
-	      s7_pointer p, args;
-	      for (sc->w = sc->nil, p = car(sc->code); is_pair(p); p = cdr(p))
-		sc->w = cons(sc, caar(p), sc->w);
-	      args = sc->w;
-	      for (p = car(sc->code); is_pair(p); p = cdr(p))
-		if ((is_pair(cadar(p))) &&
-		    /* (car(cadar(p)) != sc->quote_symbol) && */
-		    (form_is_safe(sc, sc->gc_nil, cadar(p), args, true) != VERY_SAFE_BODY))
-		  break;
-	      if (is_null(p))
-		{
-		  body_t result;
-		  result = body_is_safe(sc, sc->gc_nil, cdr(sc->code), args, true);
-		  if (result == VERY_SAFE_BODY)
-		    {
-		      /* fprintf(stderr, "safe: %s\n", DISPLAY_80(sc->code)); */
-		      fixup_lookups(sc, cdr(sc->code), args);
-		    }
-		}
-	      /* else fprintf(stderr, "bad vals: %s\n", DISPLAY_80(car(p))); */
-	    }
+	  if (!named_let)
+	    check_let_locals(sc);
 
 	}
       if (pair_syntax_symbol(sc->code) == sc->let_all_x_symbol)
@@ -54511,25 +54622,9 @@ static s7_pointer check_let_star(s7_scheme *sc)
 	      pair_set_syntax_symbol(sc->code, op);
 	    }
 
-	  if ((!named_let) &&
-	      (is_pair(car(sc->code))))
-	    {
-	      s7_pointer p, args;
-	      for (sc->w = sc->nil, p = car(sc->code); is_pair(p); p = cdr(p))
-		sc->w = cons(sc, caar(p), sc->w);
-	      args = sc->w;
-	      /* any reuse of a variable name, even in the binding values is trouble */
-	      for (p = car(sc->code); is_pair(p); p = cdr(p))
-		if (form_is_safe(sc, sc->gc_nil, cadar(p), args, true) != VERY_SAFE_BODY)
-		  break;
-	      if (is_null(p))
-		{
-		  body_t result;
-		  result = body_is_safe(sc, sc->gc_nil, cdr(sc->code), args, true);
-		  if (result == VERY_SAFE_BODY)
-		    fixup_lookups(sc, cdr(sc->code), args);
-		}
-	    }
+	  if (!named_let)
+	    check_let_locals(sc);
+	 
 	}
 
       if ((pair_syntax_symbol(sc->code) == sc->let_all_x_symbol) ||
@@ -54591,26 +54686,7 @@ static s7_pointer check_letrec(s7_scheme *sc, bool letrec)
       (has_opt_back(sc->code)))
     {
       pair_set_syntax_symbol(sc->code, (letrec) ? sc->letrec_unchecked_symbol : sc->letrec_star_unchecked_symbol);
-
-      if (is_pair(car(sc->code)))
-	{
-	  s7_pointer p, args;
-	  for (sc->w = sc->nil, p = car(sc->code); is_pair(p); p = cdr(p))
-	    sc->w = cons(sc, caar(p), sc->w);
-	  args = sc->w;
-	  /* any reuse of a variable name, even in the binding values is trouble */
-	  for (p = car(sc->code); is_pair(p); p = cdr(p))
-	    if (form_is_safe(sc, sc->gc_nil, cadar(p), args, true) != VERY_SAFE_BODY)
-	      break;
-	  if (is_null(p))
-	    {
-	      body_t result;
-	      result = body_is_safe(sc, sc->gc_nil, cdr(sc->code), args, true);
-	      if (result == VERY_SAFE_BODY)
-		fixup_lookups(sc, cdr(sc->code), args);
-	    }
-	}
-
+      check_let_locals(sc);
     }
   return(sc->code);
 }
@@ -54895,75 +54971,6 @@ static s7_pointer check_if(s7_scheme *sc)
   return(sc->code);
 }
 
-static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args)
-{
-  if (is_pair(body))
-    {
-      s7_pointer p;
-      p = car(body);
-      /* if all_x case is is_pair_s set to local if symbols agree */
-      if (is_safe_c_s(p))
-	{
-	  if (is_pair(s7_memq(sc, cadr(p), args)))
-	    {
-	      if ((c_call(p) == g_is_pair) &&
-		  ((optimize_op(p) & 1) != 0))
-		set_c_call(body, local_x_is_pair_s);
-	      switch (op_no_hop(p))
-		{
-		case OP_SAFE_CAR_S: set_optimize_op(p, OP_SAFE_CAR_L | (optimize_op(p) & 1));   break;
-		case OP_SAFE_CDR_S: set_optimize_op(p, OP_SAFE_CDR_L | (optimize_op(p) & 1));   break;
-		case OP_SAFE_CADR_S: set_optimize_op(p, OP_SAFE_CADR_L | (optimize_op(p) & 1)); break;
-		default:
-		  set_optimize_op(p, OP_SAFE_C_L + (optimize_op(p) & 1));
-		  break;
-		}
-	    }
-	}
-      else
-	{
-	  if (is_h_safe_c_c(p))
-	    {
-	      if ((c_call(p) == g_is_pair_cdr) &&
-		  (is_pair(s7_memq(sc, cadadr(p), args))))
-		{
-		  set_c_call(body, local_x_is_pair_cdr);
-		  set_opt_sym2(cdr(p), cadadr(p));
-		}
-	      else
-		{
-		  if ((c_call(p) == g_is_null_cdr) &&
-		      (is_pair(s7_memq(sc, cadadr(p), args))))
-		    {
-		      set_c_call(body, local_x_is_null_cdr);
-		      set_opt_sym2(cdr(p), cadadr(p));
-		    }
-		  else
-		    {
-		      if ((c_call(p) == g_lint_let_ref) &&
-			  (is_pair(s7_memq(sc, cadadr(p), args))))
-			{
-			  set_c_call(p, g_local_lint_let_ref);
-			}
-		    }
-		}
-	    }
-	  else
-	    {
-	      if ((is_optimized(p)) &&
-		  (op_no_hop(p) == OP_SAFE_C_SS) &&
-		  (is_pair(s7_memq(sc, cadr(p), args))) &&
-		  (is_pair(s7_memq(sc, caddr(p), args))))
-		{
-		  set_optimize_op(p, OP_SAFE_C_LL + (optimize_op(p) & 1));
-		}
-	      else fixup_lookups(sc, car(body), args);
-	    }
-	}
-      fixup_lookups(sc, cdr(body), args);
-    }
-}
-
 static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_pointer func, s7_pointer args, s7_pointer body)
 {
   int len;
@@ -55033,7 +55040,10 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		  /* if result is VERY_SAFE_BODY, walk the body changing symbol lookups of known-safe-locals to local_slot accesses */
 		  
 		  if (result == VERY_SAFE_BODY)
-		    fixup_lookups(sc, body, args);
+		    {
+		      /* set_safe_locals(body); */ /* TODO: set this on -> args? */
+		      fixup_lookups(sc, body, args);
+		    }
 		}
 	      /* else fprintf(stderr, "unsafe: %s\n", DISPLAY(func)); */
 	    }
@@ -56915,6 +56925,53 @@ static bool preserves_type(s7_scheme *sc, unsigned int x)
 	 (x == sc->multiply_class));
 }
 
+static void check_do_locals(s7_scheme *sc)
+{
+  if (is_pair(car(sc->code)))
+    {
+      s7_pointer p, args;
+      for (sc->w = sc->nil, p = car(sc->code); is_pair(p); p = cdr(p))
+	sc->w = cons(sc, caar(p), sc->w);
+      args = sc->w;
+      for (p = car(sc->code); is_pair(p); p = cdr(p))
+	{
+	  s7_pointer obj;
+	  obj = car(p);
+	  if (((is_pair(cadr(obj))) &&
+	       (form_is_safe(sc, sc->gc_nil, cadr(obj), args, true) != VERY_SAFE_BODY)) ||
+	      ((is_pair(cddr(obj))) &&
+	       (is_pair(caddr(obj))) &&
+	       (form_is_safe(sc, sc->gc_nil, caddr(obj), args, true) != VERY_SAFE_BODY)))
+	    {
+	      /* fprintf(stderr, "bad: %s\n", DISPLAY(obj)); */
+	      break;
+	    }
+	}
+      if (is_null(p))
+	{
+	  if (is_pair(cadr(sc->code)))
+	    {
+	      p = cadr(sc->code);
+	      if ((!is_pair(car(p))) ||
+		  (form_is_safe(sc, sc->gc_nil, car(p), args, true) == VERY_SAFE_BODY))
+		{
+		  if ((!is_pair(cdr(p))) ||
+		      (body_is_safe(sc, sc->gc_nil, cdr(p), args, true) == VERY_SAFE_BODY))
+		    {
+		      if (body_is_safe(sc, sc->gc_nil, cddr(sc->code), args, true) == VERY_SAFE_BODY)
+			{
+			  /* fprintf(stderr, "do safe: %s\n", DISPLAY_80(sc->code)); */
+			  set_safe_locals(sc->code);
+			  fixup_lookups(sc, cdr(sc->code), args);
+			}
+		    }
+		}
+	    }
+	}
+      /* else fprintf(stderr, "bad do: %s\n", DISPLAY_80(car(p))); */
+    }
+}
+
 
 static s7_pointer check_do(s7_scheme *sc)
 {
@@ -57113,6 +57170,7 @@ static s7_pointer check_do(s7_scheme *sc)
 				pair_set_syntax_symbol(sc->code, sc->safe_dotimes_symbol);
 			    }
 			}
+		      check_do_locals(sc);
 		      return(sc->nil); 
 		    }
 		}
@@ -57126,6 +57184,8 @@ static s7_pointer check_do(s7_scheme *sc)
        */
       vars = car(sc->code);
       end = cadr(sc->code);
+
+      check_do_locals(sc);
 
       /* check end expression first */
       if ((is_pair(car(end))) &&
@@ -74184,7 +74244,7 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [3040] 3287 3363
  * tcopy         |      |      | 13.6 | 3204 | [3264] 3190 3403
  * tform         |      |      | 6816 | 3627 | [3708] 3768 3903
- * lint          |      |      |      | 7731 | [3942] 4106 [177.8]
+ * lint          |      |      |      | 7731 | [3942] 4106 [177.4]
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4445
  * titer         |      |      | 7503 | 5218 | [5291] 5873 5899
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
@@ -74204,12 +74264,17 @@ int main(int argc, char **argv)
  *    ((funclet func) 'history)
  *    allocation location (file/func/line in *.c/scm) for any cell if debugging, then report as part of free cell complaint
  *
- * let(*) and do can check body (and steppers) and if very-safe, fixup_lookups independent of closures
+ * locals:
  *    defines are ok if no shadows and not returned if closure -- just an extension of the let
  *    lambdas are ok if as arg to map and so on -- unsafe_is_safe?
  *    partial cases: remove shadowed args, but fixup the rest
- *    let|let*|letrec seem ok? just do left!
  *    in last pass, need to catch safe-lets et al and add them to the local decisions
+ *    let* previous vars are ok
+ *    need g->local_g/op->oplocal, and all_x->local_x translators
+ *    all_x_s, safe_closure_s_a, closure_all_s_p, op_if_css
+ *
+ * should s7 flag (reverse! #(...)) et al? (set! fill! sort!)
+ *   it looks like the bit is being set, then ignored -- maybe a safety choice?
  *
  * extend the validity checks to all FFI funcs and add info about caller etc
  * check all_x* need methods? [need s7test entries!]
@@ -74218,8 +74283,6 @@ int main(int argc, char **argv)
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
- * does lint (or s7!) flag (reverse! #(...)) et al? (set! fill! sort!) -- no, neither.
- *   it looks like the bit is being set, then ignored -- maybe a safety choice?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -473,7 +473,7 @@
 					 (map-chan-over-target-with-sync
 					  (lambda (input-samps) 
 					    (let ((flt (make-fir-filter :order 4 
-									:xcoeffs (float-vector .125 .25 .25 .125)))
+									:xcoeffs #r(.125 .25 .25 .125)))
 						  (del (make-delay (round (* flecho-delay (srate)))))
 						  (genv (make-env (list 0.0 1.0 input-samps 1.0 (+ input-samps 1) 0.0 (+ input-samps 100) 0.0) 
 								  :length (+ input-samps 100))))

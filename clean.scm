@@ -312,7 +312,7 @@
     (float-vector->channel data)
     (let ((dc (goertzel 0.0))
 	  (sig (goertzel 35.0)))
-      (let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
+      (let ((dcflt (make-filter 2 #r(1 -1) #r(0 -0.99))))
 	(map-channel (lambda (y) (filter dcflt y)))
 	(let ((ndc (goertzel 0.0))
 	      (nsig (goertzel 35.0)))
@@ -410,7 +410,7 @@
   ;; look for DC
   (let ((dc (check-freq 0.0 snd chn)))
     (if (> dc 30.0)
-	(let ((dcflt (make-filter 2 (float-vector 1 -1) (float-vector 0 -0.99))))
+	(let ((dcflt (make-filter 2 #r(1 -1) #r(0 -0.99))))
 	  (map-channel (lambda (y) (filter dcflt y)) 0 (framples snd chn) snd chn)
 	  (format () "~%; block DC: ~A -> ~A" dc (check-freq 0.0 snd chn)))))
 

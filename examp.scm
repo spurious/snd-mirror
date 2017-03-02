@@ -901,9 +901,10 @@ section: (float-vector->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"))
 		      (do ((incr (let ((offset1 (- old1 new1)))
 				   (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps))))
 			   (i 0 (+ i 1))
-			   (trend offset0 (+ trend incr)))
+			   (trend offset0))
 			  ((= i samps))
-			(set! (rl i) (+ (rl i) trend)))
+			(set! (rl i) (+ (rl i) trend))
+			(set! trend (+ trend incr)))
 		      rl))))))))))
 
 
@@ -1062,7 +1063,7 @@ formants, then calls map-channel: (osc-formants .99 (float-vector 400.0 800.0 12
 (define flecho 
   (let ((documentation "(flecho scaler secs) returns a low-pass filtered echo maker: (map-channel (flecho .5 .9) 0 75000)"))
     (lambda (scaler secs)
-      (let ((flt (make-fir-filter :order 4 :xcoeffs (float-vector .125 .25 .25 .125)))
+      (let ((flt (make-fir-filter :order 4 :xcoeffs #r(.125 .25 .25 .125)))
 	    (del (make-delay  (round (* secs (srate))))))
 	(lambda (inval)
 	  (+ inval 
