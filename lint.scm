@@ -12873,7 +12873,6 @@
 	;; -------- walk-open-body --------
 	(lambda (caller head body env)
 	  ;; walk a body (a list of forms, the value of the last of which might be returned)
-	  
 	  (if (not (proper-list? body))
 	      (lint-format "stray dot? ~A" caller (truncated-list->string body))
 	      
@@ -13378,6 +13377,7 @@
 					(if (memq arg '(:rest :allow-other-keys))
 					    (values)                  ; omit :rest and :allow-other-keys
 					    (make-lint-var arg #f 'parameter))
+
 					(if (not (and star-definer (len=2? arg)))
 					    (begin
 					      (lint-format "strange parameter for ~A: ~S" function-name definer arg)
@@ -14555,33 +14555,34 @@
 			  (lint-format "can't set! ~A" caller (truncated-list->string form)))
 			 
 			 (else
-			  (let ((target (car settee)))
-			    (cond ((memq target '(vector-ref list-ref string-ref hash-table-ref int-vector-ref float-vector-ref byte-vector-ref let-ref))
-				   ;; (set! (vector-ref v 0) 3)
-				   (lint-format "perhaps ~A" caller 
-						(truncated-lists->string 
-						 form
-						 (cons (case target
-							 ((vector-ref) 'vector-set!)
-							 ((int-vector-ref) 'int-vector-set!)
-							 ((float-vector-ref) 'float-vector-set!)
-							 ((byte-vector-ref) 'byte-vector-set!)
-							 ((list-ref) 'list-set!)
-							 ((string-ref) 'string-set!)
-							 ((hash-table-ref) 'hash-table-set!)
-							 ((let-ref) 'let-set!))
-						       (append (cdadr form) (cddr form))))))
-
-				  ((and (eq? target 'symbol-access)
-					(len>1? setval)
-					(eq? (car setval) 'lambda)
-					(list? (cadr setval))
-					(not (= (length (cadr setval)) 2)))
-				   (lint-format "symbol-access function should take 2 arguments: ~A" caller (truncated-list->string form)))
-				  
-				  ((or (string? target)
-				       (vector? target))
-				   (lint-format "~S is a constant so ~A is problematic" caller target (truncated-list->string form)))))
+			  (when (proper-list? settee)
+			    (let ((target (car settee)))
+			      (cond ((memq target '(vector-ref list-ref string-ref hash-table-ref int-vector-ref float-vector-ref byte-vector-ref let-ref))
+				     ;; (set! (vector-ref v 0) 3)
+				     (lint-format "perhaps ~A" caller 
+						  (truncated-lists->string 
+						   form
+						   (cons (case target
+							   ((vector-ref) 'vector-set!)
+							   ((int-vector-ref) 'int-vector-set!)
+							   ((float-vector-ref) 'float-vector-set!)
+							   ((byte-vector-ref) 'byte-vector-set!)
+							   ((list-ref) 'list-set!)
+							   ((string-ref) 'string-set!)
+							   ((hash-table-ref) 'hash-table-set!)
+							   ((let-ref) 'let-set!))
+							 (append (cdadr form) (cddr form))))))
+				    
+				    ((and (eq? target 'symbol-access)
+					  (len>1? setval)
+					  (eq? (car setval) 'lambda)
+					  (list? (cadr setval))
+					  (not (= (length (cadr setval)) 2)))
+				     (lint-format "symbol-access function should take 2 arguments: ~A" caller (truncated-list->string form)))
+				    
+				    ((or (string? target)
+					 (vector? target))
+				     (lint-format "~S is a constant so ~A is problematic" caller target (truncated-list->string form))))))
 			  
 			  (lint-walk caller settee env) ; this counts as a reference since it's by reference so to speak
 			  
@@ -17797,18 +17798,26 @@
 	    (report-usage caller 'do vars inner-env))
 
 	  ;; -------- simplify-do --------
-	  (define (simplify-do caller form env)
+	  (define (simplify-do caller form vars env)
 	    (let ((body (cdddr form)))
 	      (when (and (len=1? body)
 			 (pair? (car body)))
-		;; do+let: tons of hits but how to distinguish the rewritable ones? 
-		;;    very tricky if val is not a constant
+		;; do+let
+		;;   no hits for define here
 		(if (and (eq? (caar body) 'let)
-			 (len>1? (cdar body)) ; body not ((let))!
-			 (not (symbol? (cadar body)))
-			 (lint-every? (lambda (c) (and (len>1? c) (code-constant? (cadr c)))) (cadar body)))
+			 (len>1? (cdar body))         ; body not ((let))!
+			 (not (symbol? (cadar body))) ; not named let
+			 (let ((varset (map car vars)))
+			   (lint-every? (lambda (c) 
+					  (and (len>1? c)
+					       (not (memq (car c) varset)) ; no shadowing
+					       (or (code-constant? (cadr c))
+						   (not (or (side-effect? (cadr c) env) ; might change end-test calc?
+							    (tree-set-memq varset (cadr c)))))))
+					(cadar body))))
 		    ;; (do ((i 0 (+ i 1))) ((= i 3)) (let ((a 12)) (set! a (+ a i)) (display a))) ->
 		    ;;    (do ((i 0 (+ i 1)) (a 12 12)) ((= i 3)) (set! a (+ a i)) ...)
+		    ;; maybe a better suggestion: declare in do vars, then use set! in the body
 		    (lint-format "perhaps ~A" caller
 				 (lists->string form
 						`(do (,@(cadr form)
@@ -17984,7 +17993,7 @@
 		    (walk-do-steps caller form vars inner-env env)
 		    (walk-do-end+result caller form vars inner-env env)
 		    (walk-do-body caller form vars inner-env env)
-		    (simplify-do caller form env)
+		    (simplify-do caller form vars env)
 		    (do->for-each caller form env)
 		    (do->copy caller form vars))))
 	    env)
@@ -22522,4 +22531,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 66 31313 850903
+;;; 67 31567 850874
