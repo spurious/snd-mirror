@@ -3683,7 +3683,8 @@ from a simple procedure.
 <p>object-&gt;string returns the string representation of its argument.  Its optional second argument
 can be #f (use display), #t (the default, use write), or :readable.  In the latter case, object-&gt;string
 tries to produce a string that can be evaluated via eval-string to return an object equal to the
-original.
+original.  The optional third argument sets the maximum desired string length; if object-&gt;string
+notices it has exceeded this limit, it returns the partial string.
 </p>
 
 <pre class="indented">

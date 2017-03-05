@@ -354,10 +354,8 @@
     ;; -------- lint-format --------
     (define target-line-length 80)
 
-    (define (truncated-list->string form)
-      ;; return form -> string with limits on its length
-      (let* ((str (object->string form))
-	     (len (length str)))
+    (define (truncate-string str)
+      (let ((len (length str)))
 	(if (< len target-line-length)
 	    str
 	    (do ((i (- target-line-length 6) (- i 1)))
@@ -367,6 +365,10 @@
 						     (- target-line-length 6)
 						     i))
 				"..."))))))
+
+    (define (truncated-list->string form)
+      ;; return form -> string with limits on its length
+      (truncate-string (object->string form #t target-line-length)))
     
     (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-lint-var also collides)
     (define lint-pretty-print #f)
@@ -377,21 +379,22 @@
     
     (define (lists->string f1 f2)
       ;; same but 2 strings that may need to be lined up vertically
-      (let ((str1 (object->string f1))
-	    (str2 (object->string f2)))
+      (let ((str1 (object->string f1 #t (+ target-line-length 2)))
+	    (str2 (object->string f2 #t (+ target-line-length 2))))
 	(let ((len1 (length str1))
 	      (len2 (length str2)))
 	  (when (> len1 target-line-length)
-	    (set! str1 (truncated-list->string f1))
+	    (set! str1 (truncate-string str1))
 	    (set! len1 (length str1)))
 	  (when (> len2 target-line-length)
-	    (let ((old-len2 len2))
+	    (let ((old-len2 len2)
+		  (old-str2 str2))
 	      (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) pp-left-margin)
 	      (set! ((funclet lint-pretty-print) '*pretty-print-length*) (- 114 pp-left-margin))
 	      (set! str2 (lint-pp f2))
 	      (set! len2 (length str2))
-	      (when (> len2 (* 10 old-len2)) ; this is aimed at some pathological s7test cases -- never hit otherwise I think
-		(set! str2 (truncated-list->string f2))
+	      (when (> len2 (* 100 old-len2))
+		(set! str2 (truncate-string old-str2))
 		(set! len2 (length str2)))))
 	  (if (< (+ len1 len2) target-line-length)
 	      (format #f "~A -> ~A" str1 str2)
@@ -399,19 +402,11 @@
     
     (define (truncated-lists->string f1 f2)
       ;; same but 2 strings that may need to be lined up vertically and both are truncated
-      (let ((str1 (object->string f1))
-	    (str2 (object->string f2)))
-	(let ((len1 (length str1))
-	      (len2 (length str2)))
-	  (when (> len1 target-line-length)
-	    (set! str1 (truncated-list->string f1))
-	    (set! len1 (length str1)))
-	  (when (> len2 target-line-length)
-	    (set! str2 (truncated-list->string f2))
-	    (set! len2 (length str2)))
-	  (if (< (+ len1 len2) target-line-length)
-	      (format #f "~A -> ~A" str1 str2)
-	      (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))))
+      (let ((str1 (truncate-string (object->string f1 #t (+ target-line-length 2))))
+	    (str2 (truncate-string (object->string f2 #t (+ target-line-length 2)))))
+	(if (< (+ (length str1) (length str2)) target-line-length)
+	    (format #f "~A -> ~A" str1 str2)
+	    (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))
     
     (define made-suggestion 0)
 
@@ -3138,161 +3133,155 @@
 	
 	;; -------- or->memx --------
 	(define (or->memx return form env)
-	  (let ((sym #f)
-		(eqfnc #f)
-		(vals ())
-		(start #f))
-	    
-	    (define collect-vals
-	      (let ()
-		(define (constant-arg p)
-		  (if (code-constant? (cadr p))
-		      (set! vals (cons (cadr p) vals))
-		      (and (code-constant? (caddr p))
-			   (set! vals (cons (caddr p) vals)))))
-		
-		(define (upgrade-eqf)
-		  (set! eqfnc (case eqfnc 
-				((string=? string-ci=? = equal?) 'equal?)
-				((#f eq?) 'eq?)
-				(else 'eqv?))))
-		
-		(lambda (p)
-		  ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
-		  ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
-		  ;;   We could add both: 1 1.0 as in cond?
-		  ;;
-		  ;; another problem: using memx below means the returned value of the expression
-		  ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
-		  ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
-		  ;;
-		  ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
-		  ;;   is more sensible, but that also changes the behavior of the expression:
-		  ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
-		  ;;
-		  ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
+	  (do ((sym #f)
+	       (eqfnc #f)
+	       (vals ())
+	       (start #f)
+	       (fp (cdr form) (cdr fp)))
+	      ((null? fp))
+	    (let ((p (car fp)))
+	      (if (and (pair? p)
+		       (if (not sym)
+			   (set! sym (eqv-selector p))
+			   (equal? sym (eqv-selector p)))
+		       (or (not (memq eqfnc '(char-ci=? string-ci=? =)))
+			   (memq (car p) '(char-ci=? string-ci=? =)))
+		       
+		       ;; = can't share: (equal? 1 1.0) -> #f, so (or (not x) (= x 1)) can't be simplified
+		       ;;   except via member+morally-equal? but that brings in float-epsilon and NaN differences.
+		       ;;   We could add both: 1 1.0 as in cond?
+		       ;;
+		       ;; another problem: using memx below means the returned value of the expression
+		       ;;   may not match the original (#t -> '(...)), so perhaps we should add a one-time
+		       ;;   warning about this, and wrap it in (pair? (mem...)) as an example.
+		       ;;
+		       ;; and another thing... the original might be broken: (eq? x #(1)) where equal?
+		       ;;   is more sensible, but that also changes the behavior of the expression:
+		       ;;   (memq x '(#(1))) may be #f (or #t!) when (member x '(#(1))) is '(#(1)).
+		       ;;
+		       ;; I think I'll try to turn out a more-or-less working expression, but warn about it.
+		       
+		       (case (car p) 
+			 ((string=? equal?)
+			  (set! eqfnc (if (or (not eqfnc)
+					      (eq? eqfnc (car p)))
+					  (car p)
+					  'equal?))
+			  (and (= (length p) 3)
+			       (if (code-constant? (cadr p))
+				   (set! vals (cons (cadr p) vals))
+				   (and (code-constant? (caddr p))
+					(set! vals (cons (caddr p) vals))))))
+			 ((char=?)
+			  (if (memq eqfnc '(#f char=?))
+			      (set! eqfnc 'char=?)
+			      (if (not (eq? eqfnc 'equal?))
+				  (set! eqfnc 'eqv?)))
+			  (and (= (length p) 3)
+			       (if (code-constant? (cadr p))
+				   (set! vals (cons (cadr p) vals))
+				   (and (code-constant? (caddr p))
+					(set! vals (cons (caddr p) vals))))))
+			 
+			 ((eq? eqv?)
+			  (let ((leqf (car (->eqf (->lint-type ((if (code-constant? (cadr p)) cadr caddr) p))))))
+			    (cond ((not eqfnc) 
+				   (set! eqfnc leqf))
+				  
+				  ((or (memq leqf '(#t equal?))
+				       (not (eq? eqfnc leqf)))
+				   (set! eqfnc 'equal?))
+				  
+				  ((memq eqfnc '(#f eq?))
+				   (set! eqfnc leqf))))
+			  (and (= (length p) 3)
+			       (if (code-constant? (cadr p))
+				   (set! vals (cons (cadr p) vals))
+				   (and (code-constant? (caddr p))
+					(set! vals (cons (caddr p) vals))))))
+			 
+			 ((char-ci=? string-ci=? =)
+			  (and (or (not eqfnc)
+				   (eq? eqfnc (car p)))
+			       (set! eqfnc (car p))
+			       (= (length p) 3)
+			       (if (code-constant? (cadr p))
+				   (set! vals (cons (cadr p) vals))
+				   (and (code-constant? (caddr p))
+					(set! vals (cons (caddr p) vals))))))
+			 
+			 ((eof-object?)
+			  (set! eqfnc (case eqfnc ((string=? string-ci=? = equal?) 'equal?) ((#f eq?) 'eq?) (else 'eqv?)))
+			  (set! vals (cons #<eof> vals)))
+			 
+			 ((not)
+			  (set! eqfnc (case eqfnc ((string=? string-ci=? = equal?) 'equal?) ((#f eq?) 'eq?) (else 'eqv?)))
+			  (set! vals (cons #f vals)))
+			 
+			 ((boolean?) 
+			  (set! eqfnc (case eqfnc ((string=? string-ci=? = equal?) 'equal?) ((#f eq?) 'eq?) (else 'eqv?)))
+			  (set! vals (cons #f (cons #t vals))))
+			 
+			 ((zero?)
+			  (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
+			  (set! vals (cons 0 (cons 0.0 vals))))
+			 
+			 ((null?)
+			  (set! eqfnc (case eqfnc ((string=? string-ci=? = equal?) 'equal?) ((#f eq?) 'eq?) (else 'eqv?)))
+			  (set! vals (cons () vals)))
+			 
+			 ((memq memv member)
+			  (cond ((eq? (car p) 'member)
+				 (set! eqfnc 'equal?))
+				
+				((eq? (car p) 'memv)
+				 (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
+				
+				((not eqfnc)
+				 (set! eqfnc 'eq?)))
+			  (and (= (length p) 3)
+			       (quoted-pair? (caddr p))
+			       (proper-list? (cadr (caddr p)))
+			       (set! vals (append (cadr (caddr p)) vals))))
+			 
+			 (else #f)))
 		  
-		  (case (car p) 
-		    ((string=? equal?)
-		     (set! eqfnc (if (or (not eqfnc)
-					 (eq? eqfnc (car p)))
-				     (car p)
-				     'equal?))
-		     (and (= (length p) 3)
-			  (constant-arg p)))
-		    
-		    ((char=?)
-		     (if (memq eqfnc '(#f char=?))
-			 (set! eqfnc 'char=?)
-			 (if (not (eq? eqfnc 'equal?))
-			     (set! eqfnc 'eqv?)))
-		     (and (= (length p) 3)
-			  (constant-arg p)))
-		    
-		    ((eq? eqv?)
-		     (let ((leqf (car (->eqf (->lint-type ((if (code-constant? (cadr p)) cadr caddr) p))))))
-		       (cond ((not eqfnc) 
-			      (set! eqfnc leqf))
-			     
-			     ((or (memq leqf '(#t equal?))
-				  (not (eq? eqfnc leqf)))
-			      (set! eqfnc 'equal?))
-			     
-			     ((memq eqfnc '(#f eq?))
-			      (set! eqfnc leqf))))
-		     (and (= (length p) 3)
-			  (constant-arg p)))
-		    
-		    ((char-ci=? string-ci=? =)
-		     (and (or (not eqfnc)
-			      (eq? eqfnc (car p)))
-			  (set! eqfnc (car p))
-			  (= (length p) 3)
-			  (constant-arg p)))
-		    
-		    ((eof-object?)
-		     (upgrade-eqf)
-		     (set! vals (cons #<eof> vals)))
-		    
-		    ((not)
-		     (upgrade-eqf)
-		     (set! vals (cons #f vals)))
-		    
-		    ((boolean?) 
-		     (upgrade-eqf)
-		     (set! vals (cons #f (cons #t vals))))
-		    
-		    ((zero?)
-		     (if (memq eqfnc '(#f eq?)) (set! eqfnc 'eqv?))
-		     (set! vals (cons 0 (cons 0.0 vals))))
-		    
-		    ((null?)
-		     (upgrade-eqf)
-		     (set! vals (cons () vals)))
-		    
-		    ((memq memv member)
-		     (cond ((eq? (car p) 'member)
-			    (set! eqfnc 'equal?))
-			   
-			   ((eq? (car p) 'memv)
-			    (set! eqfnc (if (eq? eqfnc 'string=?) 'equal? 'eqv?)))
-			   
-			   ((not eqfnc)
-			    (set! eqfnc 'eq?)))
-		     (and (= (length p) 3)
-			  (quoted-pair? (caddr p))
-			  (proper-list? (cadr (caddr p)))
-			  (set! vals (append (cadr (caddr p)) vals))))
-		    
-		    (else #f)))))
-	    
-	    (do ((fp (cdr form) (cdr fp)))
-		((null? fp))
-	      (let ((p (car fp)))
-		(if (and (pair? p)
-			 (if (not sym)
-			     (set! sym (eqv-selector p))
-			     (equal? sym (eqv-selector p)))
-			 (or (not (memq eqfnc '(char-ci=? string-ci=? =)))
-			     (memq (car p) '(char-ci=? string-ci=? =)))
-			 (collect-vals p))
-		    
-		    (if (not start)
-			(set! start fp) ; we're in a loop above...
-			(if (and (proper-list? form)
-				 (len=1? fp))
-			    (return (if (eq? start (cdr form))
-					(gather-or-eqf-elements eqfnc sym vals env)
-					`(or ,@(copy (cdr form) (make-list (do ((g (cdr form) (cdr g))
-										(len 0 (+ len 1)))
-									       ((eq? g start) 
-										len))))
-					     ,(gather-or-eqf-elements eqfnc sym vals env))))))
-		    
-		    ;; false branch of if above -- not consequent on previous
-		    (when (pair? start)
-		      (if (eq? fp (cdr start))
-			  (begin
-			    (set! sym #f)
-			    (set! eqfnc #f)
-			    (set! vals ())
-			    (set! start #f))
-			  ;; here we have possible header stuff + more than one match + trailing stuff
-			  (let ((trailer (if (not (len>1? fp))
-					     fp
-					     (let ((nfp (simplify-boolean (cons 'or fp) () () env)))
-					       ((if (and (pair? nfp)
-							 (eq? (car nfp) 'or))
-						    cdr list)
-						nfp)))))
-			    (return (if (eq? start (cdr form))
-					(cons 'or (cons (gather-or-eqf-elements eqfnc sym vals env) trailer))
-					`(or ,@(copy (cdr form) (make-list (do ((g (cdr form) (cdr g)) 
-										(len 0 (+ len 1)))
-									       ((eq? g start) 
-										len))))
-					     ,(gather-or-eqf-elements eqfnc sym vals env)
-					     ,@trailer)))))))))))
+		  (if (not start)
+		      (set! start fp) ; we're in a loop above...
+		      (if (and (proper-list? form)
+			       (len=1? fp))
+			  (return (if (eq? start (cdr form))
+				      (gather-or-eqf-elements eqfnc sym vals env)
+				      `(or ,@(copy (cdr form) (make-list (do ((g (cdr form) (cdr g))
+									      (len 0 (+ len 1)))
+									     ((eq? g start) 
+									      len))))
+					   ,(gather-or-eqf-elements eqfnc sym vals env))))))
+		  
+		  ;; false branch of if above -- not consequent on previous
+		  (when (pair? start)
+		    (if (eq? fp (cdr start))
+			(begin
+			  (set! sym #f)
+			  (set! eqfnc #f)
+			  (set! vals ())
+			  (set! start #f))
+			;; here we have possible header stuff + more than one match + trailing stuff
+			(let ((trailer (if (not (len>1? fp))
+					   fp
+					   (let ((nfp (simplify-boolean (cons 'or fp) () () env)))
+					     ((if (and (pair? nfp)
+						       (eq? (car nfp) 'or))
+						  cdr list)
+					      nfp)))))
+			  (return (if (eq? start (cdr form))
+				      (cons 'or (cons (gather-or-eqf-elements eqfnc sym vals env) trailer))
+				      `(or ,@(copy (cdr form) (make-list (do ((g (cdr form) (cdr g)) 
+									      (len 0 (+ len 1)))
+									     ((eq? g start) 
+									      len))))
+					   ,(gather-or-eqf-elements eqfnc sym vals env)
+					     ,@trailer))))))))))
 	
 	;; -------- or->case --------
 	(define (or->case return form)
@@ -8432,6 +8421,94 @@
 	
 	;; ---------------- format ----------------
 	(let ()
+	  (define count-directives 
+	    (let ((format-control-char (let ((chars (make-vector 256 #f)))
+					 (for-each
+					  (lambda (c)
+					    (vector-set! chars (char->integer c) #t))
+					  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\P #\N #\W #\, #\{ #\} #\* #\@
+					    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\n #\w
+					    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
+					 chars)))
+	      (lambda (head str caller form)
+		(let ((curlys 0)
+		      (dirs 0)
+		      (pos (char-position #\~ str)))
+		  (when pos
+		    (do ((len (length str))
+			 (tilde-time #t)
+			 (i (+ pos 1) (+ i 1)))
+			((>= i len)
+			 (if tilde-time         ; (format #f "asdf~")
+			     (lint-format "~A control string ends in tilde: ~A" caller head (truncated-list->string form))))
+		      (if tilde-time
+			  (let ((c (string-ref str i)))
+			    (when (and (= curlys 0)
+				       (not (memv c '(#\~ #\T #\t #\& #\% #\^ #\| #\newline #\}))) ; ~* consumes an arg
+				       (not (call-with-exit
+					     (lambda (return)
+					       (do ((k i (+ k 1)))
+						   ((= k len) #f)
+						 ;; this can be confused by pad chars in ~T
+						 (if (not (or (char-numeric? (string-ref str k))
+							      (char=? (string-ref str k) #\,)))
+						     (return (char-ci=? (string-ref str k) #\t))))))))
+			      ;; the possibilities are endless, so I'll stick to the simplest
+			      (if (not (vector-ref format-control-char (char->integer c))) ; (format #f "~H" 1)
+				  (lint-format "unrecognized format directive: ~C in ~S, ~S" caller c str form))
+			      (set! dirs (+ dirs 1))
+			      
+			      ;; ~n so try to figure out how many args are needed (this is not complete)
+			      (when (char-ci=? c #\n)
+				(let ((j (+ i 1)))
+				  (if (>= j len)             ; (format p "~A~A" x)
+				      (lint-format "missing format directive: ~S" caller str)
+				      (begin
+					;; if ,n -- add another, if then not T, add another
+					(cond ((not (char=? (string-ref str j) #\,)))
+					      ((>= (+ j 1) len)
+					       (lint-format "missing format directive: ~S" caller str))
+					      ((char-ci=? (string-ref str (+ j 1)) #\n)
+					       (set! dirs (+ dirs 1))
+					       (set! j (+ j 2)))
+					      ((char-numeric? (string-ref str (+ j 1)))
+					       (set! j (+ j 2)))
+					      (else (set! j (+ j 1))))
+					(if (>= j len)
+					    (lint-format "missing format directive: ~S" caller str)
+					    (if (not (char-ci=? (string-ref str j) #\t))
+						(set! dirs (+ dirs 1)))))))))
+			    
+			    (set! tilde-time #f)
+			    (case c 
+			      ((#\{) (set! curlys (+ curlys 1)))
+			      ((#\}) (set! curlys (- curlys 1)))
+			      ((#\^ #\|)
+			       (if (zero? curlys)   ; (format #f "~^")
+				   (lint-format "~A has ~~~C outside ~~{~~}?" caller str c))))
+			    (if (and (< (+ i 2) len)
+				     (member (substring str i (+ i 3)) '("%~&" "^~^" "|~|" "&~&" "\n~\n") string=?))
+				(lint-format "~A in ~A could be ~A" caller  ;  (format #f "~%~&")
+					     (substring str (- i 1) (+ i 3))
+					     str
+					     (substring str (- i 1) (+ i 1)))))
+			  (begin
+			    (set! pos (char-position #\~ str i))
+			    (if pos 
+				(begin
+				  (set! tilde-time #t)
+				  (set! i pos))
+				(set! i len))))))
+		  
+		  (if (not (= curlys 0))   ;  (format #f "~{~A" 1)
+		      (lint-format "~A has ~D unmatched ~A~A: ~A"
+				   caller head 
+				   (abs curlys) 
+				   (if (positive? curlys) "{" "}") 
+				   (if (> curlys 1) "s" "") 
+				   (truncated-list->string form)))
+		  dirs))))
+	  
 	  (define (sp-format caller head form env)
 	    (if (< (length form) 3)
 		(begin
@@ -8454,94 +8531,6 @@
 		
 		(let ((control-string ((if (string? (cadr form)) cadr caddr) form))
 		      (args ((if (string? (cadr form)) cddr cdddr) form)))
-		  
-		  (define count-directives 
-		    (let ((format-control-char (let ((chars (make-vector 256 #f)))
-						 (for-each
-						  (lambda (c)
-						    (vector-set! chars (char->integer c) #t))
-						  '(#\A #\S #\C #\F #\E #\G #\O #\D #\B #\X #\P #\N #\W #\, #\{ #\} #\* #\@
-						    #\a #\s #\c #\f #\e #\g #\o #\d #\b #\x #\p #\n #\w
-						    #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9))
-						 chars)))
-		      (lambda (str caller form)
-			(let ((curlys 0)
-			      (dirs 0)
-			      (pos (char-position #\~ str)))
-			  (when pos
-			    (do ((len (length str))
-				 (tilde-time #t)
-				 (i (+ pos 1) (+ i 1)))
-				((>= i len)
-				 (if tilde-time         ; (format #f "asdf~")
-				     (lint-format "~A control string ends in tilde: ~A" caller head (truncated-list->string form))))
-			      (if tilde-time
-				  (let ((c (string-ref str i)))
-				    (when (and (= curlys 0)
-					       (not (memv c '(#\~ #\T #\t #\& #\% #\^ #\| #\newline #\}))) ; ~* consumes an arg
-					       (not (call-with-exit
-						     (lambda (return)
-						       (do ((k i (+ k 1)))
-							   ((= k len) #f)
-							 ;; this can be confused by pad chars in ~T
-							 (if (not (or (char-numeric? (string-ref str k))
-								      (char=? (string-ref str k) #\,)))
-							     (return (char-ci=? (string-ref str k) #\t))))))))
-				      ;; the possibilities are endless, so I'll stick to the simplest
-				      (if (not (vector-ref format-control-char (char->integer c))) ; (format #f "~H" 1)
-					  (lint-format "unrecognized format directive: ~C in ~S, ~S" caller c str form))
-				      (set! dirs (+ dirs 1))
-				      
-				      ;; ~n so try to figure out how many args are needed (this is not complete)
-				      (when (char-ci=? c #\n)
-					(let ((j (+ i 1)))
-					  (if (>= j len)             ; (format p "~A~A" x)
-					      (lint-format "missing format directive: ~S" caller str)
-					      (begin
-						;; if ,n -- add another, if then not T, add another
-						(cond ((not (char=? (string-ref str j) #\,)))
-						      ((>= (+ j 1) len)
-						       (lint-format "missing format directive: ~S" caller str))
-						      ((char-ci=? (string-ref str (+ j 1)) #\n)
-						       (set! dirs (+ dirs 1))
-						       (set! j (+ j 2)))
-						      ((char-numeric? (string-ref str (+ j 1)))
-						       (set! j (+ j 2)))
-						      (else (set! j (+ j 1))))
-						(if (>= j len)
-						    (lint-format "missing format directive: ~S" caller str)
-						    (if (not (char-ci=? (string-ref str j) #\t))
-							(set! dirs (+ dirs 1)))))))))
-				    
-				    (set! tilde-time #f)
-				    (case c 
-				      ((#\{) (set! curlys (+ curlys 1)))
-				      ((#\}) (set! curlys (- curlys 1)))
-				      ((#\^ #\|)
-				       (if (zero? curlys)   ; (format #f "~^")
-					   (lint-format "~A has ~~~C outside ~~{~~}?" caller str c))))
-				    (if (and (< (+ i 2) len)
-					     (member (substring str i (+ i 3)) '("%~&" "^~^" "|~|" "&~&" "\n~\n") string=?))
-					(lint-format "~A in ~A could be ~A" caller  ;  (format #f "~%~&")
-						     (substring str (- i 1) (+ i 3))
-						     str
-						     (substring str (- i 1) (+ i 1)))))
-				  (begin
-				    (set! pos (char-position #\~ str i))
-				    (if pos 
-					(begin
-					  (set! tilde-time #t)
-					  (set! i pos))
-					(set! i len))))))
-			  
-			  (if (not (= curlys 0))   ;  (format #f "~{~A" 1)
-			      (lint-format "~A has ~D unmatched ~A~A: ~A"
-					   caller head 
-					   (abs curlys) 
-					   (if (positive? curlys) "{" "}") 
-					   (if (> curlys 1) "s" "") 
-					   (truncated-list->string form)))
-			  dirs))))
 		  
 		  (when (eq? head 'format)
 		    (if (string? (cadr form)) ; (format "s")
@@ -8570,7 +8559,7 @@
 		  (if (not (string? control-string))
 		      (if (not (proper-list? args))
 			  (lint-format "~S looks suspicious" caller form))
-		      (let ((ndirs (count-directives control-string caller form))
+		      (let ((ndirs (count-directives head control-string caller form))
 			    (nargs (if (list? args) (length args) 0)))
 			(let ((pos (char-position #\null control-string)))
 			  (if (and pos (< pos (length control-string)))  ; (format #f "~a\x00b" x)
@@ -10205,7 +10194,7 @@
 			   
 			   (let ((ari (if (symbol? arg)
 					  (arg-arity arg env)
-					  (and (pair? arg)
+					  (and (len>1? arg)
 					       (eq? (car arg) 'lambda)
 					       (let ((len (length (cadr arg))))
 						 (and (integer? len)
@@ -17807,6 +17796,7 @@
 		(if (and (eq? (caar body) 'let)
 			 (len>1? (cdar body))         ; body not ((let))!
 			 (not (symbol? (cadar body))) ; not named let
+			 (not (tree-set-memq definers (cddar body))) ; no let capture
 			 (let ((varset (map car vars)))
 			   (lint-every? (lambda (c) 
 					  (and (len>1? c)
@@ -22531,4 +22521,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 67 31567 850874
+;;; 65 31567 835822

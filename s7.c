@@ -902,7 +902,7 @@ struct s7_scheme {
   bool short_print, is_autoloading;
   long long int let_number;
   double default_rationalize_error, morally_equal_float_epsilon, hash_table_float_epsilon;
-  s7_int default_hash_table_length, initial_string_port_length, print_length, history_size, true_history_size;
+  s7_int default_hash_table_length, initial_string_port_length, print_length, objstr_max_len, history_size, true_history_size;
   s7_int max_vector_length, max_string_length, max_list_length, max_vector_dimensions;
   s7_pointer stacktrace_defaults;
   vdims_t *wrap_only;
@@ -6153,6 +6153,8 @@ static s7_pointer make_slot_1(s7_scheme *sc, s7_pointer env, s7_pointer symbol, 
   return(slot);
 }
 
+static hash_entry_t *hash_eq(s7_scheme *sc, s7_pointer table, s7_pointer key);
+static s7_pointer hash_table_iterate(s7_scheme *sc, s7_pointer iterator);
 
 s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value)
 {
@@ -6160,15 +6162,12 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
       (env == sc->rootlet)) /* TODO: what about shadow-rootlet for repl? */
     {
       s7_pointer ge, slot;
-
       if ((sc->safety == 0) && (has_closure_let(value)))
 	{
 	  s7_remove_from_heap(sc, closure_args(value));
 	  s7_remove_from_heap(sc, closure_body(value));
-#if 0
-	  /* remove closure if it's local to current func
-	   *   this code appears to work, but doesn't save as much as I hoped (lint=32000 cells approximately)
-	   */
+
+	  /* remove closure if it's local to current func */
 	  {
 	    s7_pointer lt;
 	    lt = closure_let(value);
@@ -6190,12 +6189,39 @@ s7_pointer s7_make_slot(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_poi
 				s7_remove_from_heap(sc, closure_args(val));
 				s7_remove_from_heap(sc, closure_body(val));
 			      }
+			    else
+			      {
+				/* an experiment... */
+				if (is_hash_table(val))
+				  {
+				    s7_pointer iterator, p;
+				    unsigned int gc_iter;
+				    int i, len;
+				    
+				    len = hash_table_entries(val);
+				    iterator = s7_make_iterator(sc, val);
+				    gc_iter = s7_gc_protect(sc, iterator);
+				    p = cons(sc, sc->F, sc->F);
+				    iterator_current(iterator) = p;
+				    set_mark_seq(iterator);
+				    for (i = 0; i < len; i++)
+				      {
+					s7_pointer key_val;
+					key_val = hash_table_iterate(sc, iterator);
+					if (has_closure_let(cdr(key_val)))
+					  {
+					    s7_remove_from_heap(sc, closure_args(cdr(key_val)));
+					    s7_remove_from_heap(sc, closure_body(cdr(key_val)));
+					  }
+				      }
+				    s7_gc_unprotect_at(sc, gc_iter);
+				  }
+			      }
 			  }
 		      }
 		  }
 	      }
 	  }
-#endif
 
 	}
 
@@ -24215,28 +24241,37 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, use_write_t 
 
 static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_object_to_string "(object->string obj (write #t)) returns a string representation of obj."
-  #define Q_object_to_string s7_make_signature(sc, 3, sc->is_string_symbol, sc->T, s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_keyword_symbol))
+  #define H_object_to_string "(object->string obj (write #t) (max-len most-positive-fixnum)) returns a string representation of obj."
+  #define Q_object_to_string s7_make_signature(sc, 4, sc->is_string_symbol, sc->T, s7_make_signature(sc, 2, sc->is_boolean_symbol, sc->is_keyword_symbol), sc->is_integer_symbol)
 
   use_write_t choice;
   char *str;
   s7_pointer obj;
-  int len = 0;
+  int out_len = 0;
+  sc->objstr_max_len = s7_int_max;
 
   if (is_not_null(cdr(args)))
     {
       choice = write_choice(sc, cadr(args));
       if (choice == USE_WRITE_WRONG)
 	method_or_bust(sc, cadr(args), sc->object_to_string_symbol, args, T_BOOLEAN, 2);
+
+      if (is_not_null(cddr(args)))
+	{
+	  if (!is_integer(caddr(args)))
+	    return(wrong_type_argument(sc, sc->object_to_string_symbol, 3, caddr(args), T_INTEGER));
+	  sc->objstr_max_len = integer(caddr(args));
+	}
     }
   else choice = USE_WRITE;
   /* can't use s7_object_to_string here anymore because it assumes use_write arg is a boolean */
 
   obj = car(args);
   check_method(sc, obj, sc->object_to_string_symbol, args);
-  str = s7_object_to_c_string_1(sc, obj, choice, &len);
+  str = s7_object_to_c_string_1(sc, obj, choice, &out_len);
+  sc->objstr_max_len = s7_int_max;
   if (str)
-    return(make_string_uncopied_with_length(sc, str, len));
+    return(make_string_uncopied_with_length(sc, str, out_len));
   return(s7_make_string_with_length(sc, "", 0));
 }
 
@@ -29619,6 +29654,8 @@ static void list_to_port(s7_scheme *sc, s7_pointer lst, s7_pointer port, use_wri
 	      for (x = lst, i = 0; (is_pair(x)) && (i < len1); i++, x = cdr(x))
 		{
 		  object_to_port(sc, car(x), port, DONT_USE_DISPLAY(use_write), ci);
+		  if (port_position(port) >= sc->objstr_max_len)
+		    return;
 		  if (port_position(port) >= port_data_size(port))
 		    resize_port_data(port, port_data_size(port) * 2);
 		  port_data(port)[port_position(port)++] = (unsigned char)' ';
@@ -46292,6 +46329,15 @@ static s7_pointer all_x_c_add1(s7_scheme *sc, s7_pointer arg)
   return(g_add_s1_1(sc, x, cdr(arg))); /* arg=(+ x 1) */
 }
 
+static s7_pointer local_x_c_add1(s7_scheme *sc, s7_pointer arg)  
+{
+  s7_pointer x;
+  x = slot_value(local_slot(cadr(arg)));
+  if (is_integer(x))
+    return(make_integer(sc, integer(x) + 1));
+  return(g_add_s1_1(sc, x, cdr(arg))); /* arg=(+ x 1) */
+}
+
 static s7_pointer all_x_c_addi(s7_scheme *sc, s7_pointer arg)  
 {
   s7_pointer x;
@@ -54471,6 +54517,8 @@ static void fixup_lookups(s7_scheme *sc, s7_pointer body, s7_pointer args)
 		set_c_call(body, local_x_c_sq);
 	      if (c_call(body) == all_x_c_sc)
 		set_c_call(body, local_x_c_sc);
+	      if (c_call(body) == all_x_c_add1)
+		set_c_call(body, local_x_c_add1);
 	    }
 
 	  if ((c_call(body) == all_x_c_opsq) &&
@@ -54605,7 +54653,8 @@ static void check_let_locals(s7_scheme *sc, s7_pointer lt)
       set_localized(lt);
       for (sc->w = sc->nil, p = car(lt); is_pair(p); p = cdr(p))
 	{
-	  if (is_pair(car(p)))
+	  if ((is_pair(car(p))) &&
+	      (is_pair(cdr(p))))
 	    sc->w = cons(sc, caar(p), sc->w);
 	  else return;
 	}
@@ -57273,10 +57322,18 @@ static void check_do_locals(s7_scheme *sc, s7_pointer dt)
     {
       s7_pointer p, args;
       unsigned int gc_loc;
+      if (!is_pair(car(dt))) return;
+
       for (sc->w = sc->nil, p = car(dt); is_pair(p); p = cdr(p))
-	sc->w = cons(sc, caar(p), sc->w);
+	{
+	  if ((is_pair(car(p))) &&
+	      (is_pair(cdr(p))))
+	    sc->w = cons(sc, caar(p), sc->w);
+	  else return;
+	}
       args = sc->w;
       gc_loc = s7_gc_protect(sc, args);
+      
       for (p = car(dt); is_pair(p); p = cdr(p))
 	{
 	  s7_pointer obj;
@@ -60224,8 +60281,7 @@ static void define2_ex(s7_scheme *sc)
       let_set_slots(new_env, sc->nil);
       funclet_set_function(new_env, sc->code);
       
-      if (/* (!is_let(sc->envir)) && */
-	  (port_filename(sc->input_port)) &&
+      if ((port_filename(sc->input_port)) &&
 	  (port_file(sc->input_port) != stdin))
 	{
 	  /* unbound_variable will be called if __func__ is encountered, and will return this info as if __func__ had some meaning */
@@ -73950,7 +74006,7 @@ s7_scheme *s7_init(void)
   sc->string_append_symbol =         defun("string-append",	string_append,		0, 0, true);
   sc->substring_symbol =             defun("substring",	        substring,		2, 1, false);
   sc->string_symbol =                defun("string",		string,			0, 0, true);
-  sc->object_to_string_symbol =      defun("object->string",	object_to_string,	1, 1, false);
+  sc->object_to_string_symbol =      defun("object->string",	object_to_string,	1, 2, false);
   sc->format_symbol =                defun("format",		format,			1, 0, true);
   /* this was unsafe, but was that due to the (ill-advised) use of temp_call_2 in the arg lists? */
   sc->object_to_let_symbol =         defun("object->let",	object_to_let,	        1, 0, false);
@@ -74335,6 +74391,7 @@ s7_scheme *s7_init(void)
     s7_define_constant(sc, "pi", real_pi);
     sc->pi_symbol = s7_make_symbol(sc, "pi");
 
+    sc->objstr_max_len = s7_int_max;
     {
       s7_pointer p;
       new_cell(sc, p, T_RANDOM_STATE);
@@ -74593,8 +74650,8 @@ int main(int argc, char **argv)
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2965] 3287 3156
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3087] 3403 3359
  * tcopy         |      |      | 13.6 | 3204 | [3264] 3190 3404
+ * lint          |      |      |      | 7731 | [3512] 3626 [162.8]
  * tform         |      |      | 6816 | 3627 | [3708] 3768 3916
- * lint          |      |      |      | 7731 | [3650] 3781 [166.9]
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4448
  * titer         |      |      | 7503 | 5218 | [5291] 5873 5666
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.3
@@ -74628,11 +74685,14 @@ int main(int argc, char **argv)
  * check all_x* need methods? [need s7test entries!]
  * use the tags not cons in the fixup lists (these rarely matter) [tgen]
  * the opt lists can be freed (free_vlist)
- * test the remove_from_heap stuff -- 6170 -- saves 750 in lint (mark_pair primarily)
- * also there's this bug: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
+ *   also arg to for-each/map if created as arg
+ * make let-temporarily built-in, need a tmac macro timing set
+ * extend max-len objstr arg to non-pair cases, add s7test cases
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
+ * lint: lists->string to truncated-lists->string wherever possible
+ *   also there's this bug: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
