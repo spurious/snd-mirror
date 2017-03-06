@@ -1625,7 +1625,7 @@ static s7_scheme *hidden_sc = NULL;
 
 #define T_UNSAFE                      (1 << (TYPE_BITS + 15))
 #define set_unsafe(p)                 typeflag(_TPair(p)) |= T_UNSAFE
-#define set_unsafely_optimized(p)     typeflag(_TPair(p)) |= (T_UNSAFE | T_OPTIMIZED)
+#define set_unsafely_optimized(p)     typeflag(_TPair(p)) = (typeflag(p) & (~T_OVERLAY)) | (T_UNSAFE | T_OPTIMIZED)
 #define is_unsafe(p)                  ((typeflag(_TPair(p)) & T_UNSAFE) != 0)
 #define clear_unsafe(p)               typeflag(_TPair(p)) &= (~T_UNSAFE)
 #define is_safely_optimized(p)        ((typeflag(p) & (T_OPTIMIZED | T_UNSAFE)) == T_OPTIMIZED)
@@ -2744,7 +2744,8 @@ enum {OP_NO_OP,
       OP_DEFINE, OP_DEFINE1, OP_BEGIN, OP_BEGIN_UNCHECKED, OP_BEGIN1,
       OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
-      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1, OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
+      OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1,
+      OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
       OP_CASE, OP_CASE1, 
@@ -2934,7 +2935,8 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "define", "define1", "begin", "begin_unchecked", "begin1",
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
       "let", "let1", "let_star", "let_star1", "let_star2",
-      "letrec", "letrec1", "letrec_star", "letrec_star1", "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
+      "letrec", "letrec1", "letrec_star", "letrec_star1", 
+      "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
       "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
@@ -25587,10 +25589,17 @@ static s7_pointer string_read_line(s7_scheme *sc, s7_pointer port, bool with_eol
 
 /* -------- write character functions -------- */
 
-static void resize_port_data(s7_pointer pt, int new_size)
+static void resize_port_data(s7_pointer pt, unsigned int new_size)
 {
-  int loc;
+  unsigned int loc;
   loc = port_data_size(pt);
+  if (new_size < loc) 
+    {
+#if DEBUGGING
+      fprintf(stderr, "%s[%d], old: %u, new: %u\n", __func__, __LINE__, loc, new_size);
+#endif
+      return;
+    }
   port_data_size(pt) = new_size;
   port_data(pt) = (unsigned char *)realloc(port_data(pt), new_size * sizeof(unsigned char));
   memclr((void *)(port_data(pt) + loc), new_size - loc);
@@ -25695,10 +25704,10 @@ static void stderr_write_string(s7_scheme *sc, const char *str, int len, s7_poin
 
 static void string_write_string(s7_scheme *sc, const char *str, int len, s7_pointer pt)
 {
-  int new_len;  /* len is known to be non-zero */
+  unsigned int new_len;  /* len is known to be non-zero */
 
-  new_len = port_position(pt) + len;
-  if (new_len >= (int)port_data_size(pt))
+  new_len = port_position(pt) + (unsigned int)len;
+  if (new_len >= port_data_size(pt))
     resize_port_data(pt, new_len * 2);
   memcpy((void *)(port_data(pt) + port_position(pt)), (void *)str, len);
   /* memcpy is much faster than the equivalent while loop, and faster than using the 4-bytes-at-a-time shuffle */
@@ -28950,9 +28959,9 @@ static void symbol_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
 	port_write_character(port)(sc, '\'', port);
       if (is_string_port(port))
 	{
-	  int new_len;
+	  unsigned int new_len;
 	  new_len = port_position(port) + symbol_name_length(obj);
-	  if (new_len >= (int)port_data_size(port))
+	  if (new_len >= port_data_size(port))
 	    resize_port_data(port, new_len * 2);
 	  memcpy((void *)(port_data(port) + port_position(port)), (void *)symbol_name(obj), symbol_name_length(obj));
 	  port_position(port) = new_len;
@@ -29396,7 +29405,7 @@ static void int_or_float_vector_to_port(s7_scheme *sc, s7_pointer vect, s7_point
 	  else
 	    {
 	      /* an experiment */
-	      int new_len, next_len;
+	      unsigned int new_len, next_len;
 	      unsigned char *dbuf;
 	      new_len = port_position(port);
 	      next_len = port_data_size(port) - 128;
@@ -53422,8 +53431,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 	    (!is_optimized(expr)))
 	  {
 	    /* len=0 case is almost entirely arglists */
-	    if ((!is_overlaid(expr)) || (!has_opt_back(expr))) /* gad, what's going on here?? */
-	      set_opt_con1(expr, sc->gc_nil); 
+	    set_opt_con1(expr, sc->gc_nil); 
 	    if (pairs == 0)
 	      {
 		if (len == 0)
@@ -53814,23 +53822,60 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
     }
   else /* car(x) is not syntactic ?? */
     {
-#if 0
-      if ((!is_optimized(x)) ||
-	  (is_unsafe(x)))
+      if (expr == func) /* try to catch tail call, expr is car(x) */
 	{
-#endif
-	  if (expr == func) /* try to catch tail call, expr is car(x) */
+	  s7_pointer p;
+	  
+	  for (p = cdr(x); is_pair(p); p = cdr(p))
+	    {
+	      if (is_pair(car(p)))
+		{
+		  if ((!is_optimized(car(p))) && 
+		      (caar(p) != sc->quote_symbol))
+		    return(UNSAFE_BODY);
+		  if (caar(p) == func)    /* func called as arg, so not tail call */
+		    return(UNSAFE_BODY);
+		  result = min_body(result, form_is_safe(sc, func, car(p), args, false));
+		  if (result == UNSAFE_BODY)
+		    return(UNSAFE_BODY);
+		}
+	      else
+		{
+		  if (car(p) == func)
+		    return(UNSAFE_BODY);
+		}
+	    }
+	  if ((at_end) && (is_null(p))) /* tail call, so safe */
+	    return(result); /* maybe not very safe? */
+	  return(UNSAFE_BODY);
+	}
+      
+      if (is_symbol(expr))
+	{
+	  s7_pointer f, f_slot;
+	  f_slot = find_symbol(sc, expr);
+	  if (!is_slot(f_slot))
+	    return(UNSAFE_BODY);
+	  f = slot_value(f_slot);
+	  
+	  if (((is_c_function(f)) &&
+	       ((is_safe_procedure(f)) ||
+		((is_possibly_safe(f)) && 
+		 (is_pair(cdr(x))) &&
+		 (is_pair(cddr(x))) &&
+		 (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
+	      ((is_closure(f)) &&
+	       (is_safe_closure(f))))
 	    {
 	      s7_pointer p;
-	      
+	      result = ((is_c_function(f)) && (is_global(expr))) ? VERY_SAFE_BODY : SAFE_BODY;
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
 		{
-		  if (is_pair(car(p)))
+		  if ((is_pair(car(p))) &&
+		      (caar(p) != sc->quote_symbol))
 		    {
-		      if ((!is_optimized(car(p))) && 
-			  (caar(p) != sc->quote_symbol))
-			return(UNSAFE_BODY);
-		      if (caar(p) == func)    /* func called as arg, so not tail call */
+		      if ((caar(p) == func) ||
+			  (!is_optimized(car(p))))
 			return(UNSAFE_BODY);
 		      result = min_body(result, form_is_safe(sc, func, car(p), args, false));
 		      if (result == UNSAFE_BODY)
@@ -53842,58 +53887,12 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
 			return(UNSAFE_BODY);
 		    }
 		}
-	      if ((at_end) && (is_null(p))) /* tail call, so safe */
-		return(result); /* maybe not very safe? */
-	      return(UNSAFE_BODY);
-	    }
-	      
-	  if (is_symbol(expr))
-	    {
-	      s7_pointer f, f_slot;
-	      f_slot = find_symbol(sc, expr);
-	      if (!is_slot(f_slot))
+	      if (!is_null(p))
 		return(UNSAFE_BODY);
-	      f = slot_value(f_slot);
-	      
-	      if (((is_c_function(f)) &&
-		   ((is_safe_procedure(f)) ||
-		    ((is_possibly_safe(f)) && 
-		     (is_pair(cdr(x))) &&
-		     (is_pair(cddr(x))) &&
-		     (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
-		  ((is_closure(f)) &&
-		   (is_safe_closure(f))))
-		{
-		  s7_pointer p;
-		  result = ((is_c_function(f)) && (is_global(expr))) ? VERY_SAFE_BODY : SAFE_BODY;
-		  for (p = cdr(x); is_pair(p); p = cdr(p))
-		    {
-		      if ((is_pair(car(p))) &&
-			  (caar(p) != sc->quote_symbol))
-			{
-			  if ((caar(p) == func) ||
-			      (!is_optimized(car(p))))
-			    return(UNSAFE_BODY);
-			  result = min_body(result, form_is_safe(sc, func, car(p), args, false));
-			  if (result == UNSAFE_BODY)
-			    return(UNSAFE_BODY);
-			}
-		      else
-			{
-			  if (car(p) == func)
-			    return(UNSAFE_BODY);
-			}
-		    }
-		  if (!is_null(p))
-		    return(UNSAFE_BODY);
-		  return(result);
-		}
+	      return(result);
 	    }
-	  return(UNSAFE_BODY);
-#if 0
 	}
-      /* else if car is a pair, perhaps a computed func -- how to check? */
-#endif
+      return(UNSAFE_BODY);
     }
   return(result);
 }
@@ -56281,9 +56280,8 @@ static s7_pointer check_set(s7_scheme *sc)
 				    }
 				}
 			    }
-
 			  if ((is_h_optimized(value)) &&
-			      (!is_unsafe(value)) &&
+			      (!is_unsafe(value)) &&                   /* is_unsafe(value) can happen! */
 			      (is_not_null(cdr(value))))               /* (set! x (y)) */
 			    {
 			      if (is_not_null(cddr(value)))
@@ -60385,7 +60383,17 @@ static void profile(s7_scheme *sc, s7_pointer expr)
       key = s7_make_integer(sc, profile_location(expr)); /* file + line */
       val = s7_hash_table_ref(sc, sc->profile_info, key);
       if (val == sc->F)
-	s7_hash_table_set(sc, sc->profile_info, key, cons(sc, make_mutable_integer(sc, 1), object_to_truncated_string(sc, expr, 120)));
+	{
+	  bool old_short_print;
+	  old_short_print = sc->short_print;
+	  sc->short_print = true;
+
+	  s7_hash_table_set(sc, sc->profile_info, key, 
+			    cons(sc, 
+				 make_mutable_integer(sc, 1), 
+				 g_object_to_string(sc, set_plist_3(sc, expr, sc->T, small_int(120)))));
+	  sc->short_print = old_short_print;
+	}
       /* can't save the actual expr here -- it can be stepped on */
       else integer(car(val))++;
     }
@@ -74139,7 +74147,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->apply_values_symbol);
   sc->apply_values_function = slot_value(global_slot(sc->apply_values_symbol));
 
-  sc->list_values_symbol =           unsafe_defun("list-values", list_values, 0, 0, true);
+  sc->list_values_symbol =           unsafe_defun("list-values", list_values, 0, 0, true); /* see comment above */
   set_immutable(sc->list_values_symbol);
   
   sc->procedure_documentation_symbol = defun("procedure-documentation", procedure_documentation, 1, 0, false);
@@ -74645,18 +74653,18 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1141
- * teq           |      |      | 6612 | 2380 | [2329] 2500 2457
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2946
+ * teq           |      |      | 6612 | 2380 | [2329] 2500 2459
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2972
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2965] 3287 3156
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3087] 3403 3359
  * tcopy         |      |      | 13.6 | 3204 | [3264] 3190 3404
- * lint          |      |      |      | 7731 | [3512] 3626 [162.8]
- * tform         |      |      | 6816 | 3627 | [3708] 3768 3916
+ * lint          |      |      |      | 7731 | [3512] 3626 [162.5]
+ * tform         |      |      | 6816 | 3627 | [3708] 3768 3949
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4448
  * titer         |      |      | 7503 | 5218 | [5291] 5873 5666
- * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.3
+ * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.2] 12.0 13.8
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.2] 12.0 12.7
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
  * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [135.0] 41.2
  * 
@@ -74686,13 +74694,25 @@ int main(int argc, char **argv)
  * use the tags not cons in the fixup lists (these rarely matter) [tgen]
  * the opt lists can be freed (free_vlist)
  *   also arg to for-each/map if created as arg
- * make let-temporarily built-in, need a tmac macro timing set
+ * make let-temporarily built-in
+ *   save slots, current vals, and new vals
+ *     push dynamic-wind equivalent [old-vals sets]
+ *     set new vals
+ *     eval body
+ *     set old vals, pop away dynwind,
+ *     return body result?
+ *
  * extend max-len objstr arg to non-pair cases, add s7test cases
+ * partial safe locals -- no need for very-safe check -- any local is safe if nothing has intervened to clobber it
+ *   need to mark symbol refs that are known safe-local anywhere
+ *   so safe-locals/localized flag replaced by symbol-local local-lookup
+ *   then fixup traverses the entire tree looking for these
+ * map/for-each with one list arg -- do the iteration in place!
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
- * lint: lists->string to truncated-lists->string wherever possible
- *   also there's this bug: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
+ * lint: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
+ *    many equal?s could be much simplified -- but is that where pair_equal is?
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

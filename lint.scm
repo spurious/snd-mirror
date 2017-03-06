@@ -33,10 +33,11 @@
 (define *report-bloated-arg* 24)                          ; min arg expr tree size that can trigger a rewrite-as-let suggestion (32 is too high I think)
 (define *report-clobbered-function-return-value* #f)      ; function returns constant sequence, which is then stomped on -- very rare!
 (define *report-boolean-functions-misbehaving* #t)        ; function name ends in #\? but function returns a non-boolean value -- dubious.
-(define *report-repeated-code-fragments* 200)             ; #t, #f, or an int = min reported fragment size * uses * uses, #t=130.
 (define *report-quasiquote-rewrites* #t)                  ; simple quasiquote stuff rewritten as a normal list expression
 (define *report-||-rewrites* #t)                          ; | has no special meaning in s7, |...| does not represent the symbol ...
 
+;;; these turn out to be less useful than I expected
+(define *report-repeated-code-fragments* 200)             ; #t, #f, or an int = min reported fragment size * uses * uses, #t=130.
 (define *fragment-max-size* 128)  ; biggest seen if 512: 180 -- appears to be in a test suite, if 128 max at 125
 (define *fragment-min-size* 5)    ; smallest seen - 1 -- maybe 8 would be better
 
@@ -352,7 +353,7 @@
 	h))
 
     ;; -------- lint-format --------
-    (define target-line-length 80)
+    (define target-line-length 80) ; also 120 via let-temporarily
 
     (define (truncate-string str)
       (let ((len (length str)))
@@ -371,35 +372,25 @@
       (truncate-string (object->string form #t target-line-length)))
     
     (define lint-pp #f) ; avoid crosstalk with other schemes' definitions of pp and pretty-print (make-lint-var also collides)
-    (define lint-pretty-print #f)
+    (define lint-pp-funclet #f)
     (let ()
       (require write.scm)
       (set! lint-pp pp);
-      (set! lint-pretty-print pretty-print))
+      (set! lint-pp-funclet (funclet pretty-print)))
     
     (define (lists->string f1 f2)
-      ;; same but 2 strings that may need to be lined up vertically
-      (let ((str1 (object->string f1 #t (+ target-line-length 2)))
-	    (str2 (object->string f2 #t (+ target-line-length 2))))
-	(let ((len1 (length str1))
-	      (len2 (length str2)))
-	  (when (> len1 target-line-length)
-	    (set! str1 (truncate-string str1))
-	    (set! len1 (length str1)))
-	  (when (> len2 target-line-length)
-	    (let ((old-len2 len2)
-		  (old-str2 str2))
-	      (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) pp-left-margin)
-	      (set! ((funclet lint-pretty-print) '*pretty-print-length*) (- 114 pp-left-margin))
-	      (set! str2 (lint-pp f2))
-	      (set! len2 (length str2))
-	      (when (> len2 (* 100 old-len2))
-		(set! str2 (truncate-string old-str2))
-		(set! len2 (length str2)))))
-	  (if (< (+ len1 len2) target-line-length)
-	      (format #f "~A -> ~A" str1 str2)
-	      (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))))
-    
+      (let ((str1 (truncate-string (object->string f1 #t (+ target-line-length 2)))))
+	(if (> (tree-leaves f2) 10)
+	    (begin
+	      (set! (lint-pp-funclet '*pretty-print-left-margin*) pp-left-margin)
+	      (set! (lint-pp-funclet '*pretty-print-length*) (- 114 pp-left-margin))
+	      (let ((str2 (lint-pp f2)))
+		(format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))
+	    (let ((str2 (truncate-string (object->string f2 #t (+ target-line-length 2)))))
+	      (if (< (+ (length str1) (length str2)) target-line-length)
+		  (format #f "~A -> ~A" str1 str2)
+		  (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2))))))
+	
     (define (truncated-lists->string f1 f2)
       ;; same but 2 strings that may need to be lined up vertically and both are truncated
       (let ((str1 (truncate-string (object->string f1 #t (+ target-line-length 2))))
@@ -17796,7 +17787,8 @@
 		(if (and (eq? (caar body) 'let)
 			 (len>1? (cdar body))         ; body not ((let))!
 			 (not (symbol? (cadar body))) ; not named let
-			 (not (tree-set-memq definers (cddar body))) ; no let capture
+			 (or (null? (cadar body))
+			     (not (tree-set-memq definers (cddar body)))) ; no let capture
 			 (let ((varset (map car vars)))
 			   (lint-every? (lambda (c) 
 					  (and (len>1? c)
@@ -18738,12 +18730,12 @@
 			 (if (and (< end (/ i lint-let-reduction-factor))
 				  (eq? form lint-current-form)
 				  (< (tree-leaves (car body)) 100))
-			     (let ((old-start (let ((old-pp ((funclet lint-pretty-print) '*pretty-print-left-margin*)))
-						(set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) (+ lint-left-margin 4))
+			     (let ((old-start (let ((old-pp (lint-pp-funclet '*pretty-print-left-margin*)))
+						(set! (lint-pp-funclet '*pretty-print-left-margin*) (+ lint-left-margin 4))
 						(let ((res (lint-pp (cons 'let 
 									  (cons (cadr form) 
 										(copy body (make-list (+ end 1))))))))
-						  (set! ((funclet lint-pretty-print) '*pretty-print-left-margin*) old-pp)
+						  (set! (lint-pp-funclet '*pretty-print-left-margin*) old-pp)
 						  res))))
 			       (lint-format "this let could be tightened:~%~NC~A ->~%~NC~A~%~NC~A ..." caller
 					    (+ lint-left-margin 4) #\space
