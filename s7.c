@@ -997,8 +997,8 @@ struct s7_scheme {
              is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, is_unspecified_symbol,
              keyword_to_symbol_symbol, 
              lcm_symbol, length_symbol, leq_symbol, let_ref_fallback_symbol, let_ref_symbol, let_set_fallback_symbol,
-             let_set_symbol, list_ref_symbol, list_set_symbol, list_symbol, list_tail_symbol, list_values_symbol, load_path_symbol,
-             load_symbol, log_symbol, logand_symbol, logbit_symbol, logior_symbol, lognot_symbol, logxor_symbol, lt_symbol,
+             let_set_symbol, let_temporarily_symbol, list_ref_symbol, list_set_symbol, list_symbol, list_tail_symbol, list_values_symbol, 
+             load_path_symbol, load_symbol, log_symbol, logand_symbol, logbit_symbol, logior_symbol, lognot_symbol, logxor_symbol, lt_symbol,
              magnitude_symbol, make_byte_vector_symbol, make_float_vector_symbol, make_hash_table_symbol, make_int_vector_symbol,
              make_iterator_symbol, string_to_keyword_symbol, make_list_symbol, make_shared_vector_symbol, make_string_symbol,
              make_vector_symbol, map_symbol, max_symbol, member_symbol, memq_symbol, memv_symbol, min_symbol, modulo_symbol,
@@ -1072,7 +1072,8 @@ struct s7_scheme {
              let_all_opsq_symbol, let_all_s_symbol, let_all_x_symbol, let_c_symbol, let_no_vars_symbol, let_one_symbol,
              let_opcq_symbol, let_opsq_p_symbol, let_opsq_symbol, let_opssq_symbol, let_opssq_e_symbol, let_s_symbol, let_star2_symbol, let_a_symbol,
              let_star_all_x_symbol, let_star_unchecked_symbol, let_unchecked_symbol, let_z_symbol, letrec_star_unchecked_symbol,
-             letrec_unchecked_symbol, named_let_no_vars_symbol, named_let_star_symbol, named_let_symbol, or_p2_symbol, or_p_symbol, or_safe_p2_symbol, or_safe_p_symbol,
+             letrec_unchecked_symbol, named_let_no_vars_symbol, named_let_star_symbol, named_let_symbol, let_temporarily_unchecked_symbol,
+             or_p2_symbol, or_p_symbol, or_safe_p2_symbol, or_safe_p_symbol,
              or_unchecked_symbol, quote_unchecked_symbol, safe_do_symbol, safe_dotimes_symbol, set_cons_symbol, set_let_all_x_symbol,
              set_let_s_symbol, set_normal_symbol, set_pair_a_symbol, set_pair_c_p_symbol, set_pair_c_symbol, set_pair_p_symbol,
              set_pair_symbol, set_pair_z_symbol, set_pair_za_symbol, set_pws_symbol, set_symbol_a_symbol, set_symbol_c_symbol,
@@ -2745,6 +2746,7 @@ enum {OP_NO_OP,
       OP_IF, OP_IF1, OP_WHEN, OP_WHEN1, OP_UNLESS, OP_UNLESS1, OP_SET, OP_SET1, OP_SET2,
       OP_LET, OP_LET1, OP_LET_STAR, OP_LET_STAR1, OP_LET_STAR2,
       OP_LETREC, OP_LETREC1, OP_LETREC_STAR, OP_LETREC_STAR1,
+      OP_LET_TEMPORARILY, OP_LET_TEMP_UNCHECKED, OP_LET_TEMP_INIT1, OP_LET_TEMP_INIT2, OP_LET_TEMP_DONE, OP_LET_TEMP_DONE1,
       OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
@@ -2936,6 +2938,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "if", "if1", "when", "when1", "unless", "unless1", "set", "set1", "set2",
       "let", "let1", "let_star", "let_star1", "let_star2",
       "letrec", "letrec1", "letrec_star", "letrec_star1", 
+      "let_temporarily", "let_temp_unchecked", "let_temp_init1", "let_temp_init2", "let_temp_done", "let_temp_done1",
       "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
@@ -10574,6 +10577,14 @@ s7_pointer s7_make_continuation(s7_scheme *sc)
   return(x);
 }
 
+static void let_temp_done(s7_scheme *sc, s7_pointer args, s7_pointer code)
+{
+  push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+  sc->args = args;
+  sc->code = code;
+  eval(sc, OP_LET_TEMP_DONE);
+}
+
 
 static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 {
@@ -10586,12 +10597,14 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
       switch (op)
 	{
 	case OP_DYNAMIC_WIND:
+	case OP_LET_TEMP_DONE:
 	  {
 	    s7_pointer x;
 	    int j;
 	    x = stack_code(sc->stack, i);
 	    for (j = 3; j < continuation_stack_top(c); j += 4)
-	      if ((stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) &&
+	      if (((stack_op(continuation_stack(c), j) == OP_DYNAMIC_WIND) || 
+		   (stack_op(continuation_stack(c), j) == OP_LET_TEMP_DONE)) &&
 		  (x == stack_code(continuation_stack(c), j)))
 		{
 		  s_base = i;
@@ -10602,17 +10615,21 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	    if (s_base != 0)
 	      break;
 
-	    if (dynamic_wind_state(x) == DWIND_BODY)
+	    if (op == OP_DYNAMIC_WIND)
 	      {
-		dynamic_wind_state(x) = DWIND_FINISH;
-		if (dynamic_wind_out(x) != sc->F)
+		if (dynamic_wind_state(x) == DWIND_BODY)
 		  {
-		    push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
-		    sc->args = sc->nil;
-		    sc->code = dynamic_wind_out(x);
-		    eval(sc, OP_APPLY);
+		    dynamic_wind_state(x) = DWIND_FINISH;
+		    if (dynamic_wind_out(x) != sc->F)
+		      {
+			push_stack(sc, OP_EVAL_DONE, sc->args, sc->code);
+			sc->args = sc->nil;
+			sc->code = dynamic_wind_out(x);
+			eval(sc, OP_APPLY);
+		      }
 		  }
 	      }
+	    else let_temp_done(sc, stack_args(sc->stack, i), stack_code(sc->stack, i));
 	  }
 	  break;
 
@@ -10656,6 +10673,11 @@ static bool check_for_dynamic_winds(s7_scheme *sc, s7_pointer c)
 	{
 	  if (op == OP_DEACTIVATE_GOTO)
 	    call_exit_active(stack_args(continuation_stack(c), i)) = true;
+	  else
+	    {
+	      if (op == OP_LET_TEMP_DONE)
+		let_temp_done(sc, stack_args(continuation_stack(c), i), stack_code(continuation_stack(c), i));
+	    }
 	}
     }
   return(true);
@@ -10759,6 +10781,10 @@ static void call_with_exit(s7_scheme *sc)
 	  call_exit_active(stack_args(sc->stack, i)) = false;
 	  break;
 
+	case OP_LET_TEMP_DONE:
+	  let_temp_done(sc, stack_args(sc->stack, i), stack_code(sc->stack, i));
+	  break;
+
 	  /* call/cc does not close files, but I think call-with-exit should */
 	case OP_GET_OUTPUT_STRING_1:
 	case OP_UNWIND_OUTPUT:
@@ -10847,6 +10873,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
   s7_pointer p, x;
   /* (call-with-exit (lambda (return) ...)) */
+
   p = car(args);
   if (!is_procedure(p))                           /* this includes continuations */
     method_or_bust_with_type(sc, p, sc->call_with_exit_symbol, args, a_procedure_string, 0);
@@ -37961,7 +37988,7 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
   compare_func = NULL;
   compare_args = sc->t2_1;
   compare_sc = sc;
-  
+
   if ((is_safe_procedure(lessp)) &&     /* (sort! a <) */
       (is_c_function(lessp)))
     {
@@ -47391,7 +47418,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
   f = car(args);                                /* the function */
   len = safe_list_length(sc, cdr(args));
 
-  if (is_closure(f))                        /* not lambda* that might get confused about arg names */
+  if (is_closure(f))                            /* not lambda* that might get confused about arg names */
     {
       if ((len == 1) &&
 	  (is_pair(closure_args(f))) &&
@@ -47561,6 +47588,49 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
   bool got_nil = false;
 
   f = car(args);                                /* the function */
+
+  /* if function is safe c func, do the map locally */
+  if ((is_c_function(f)) &&
+      (is_safe_procedure(f)))
+    {
+      if ((is_pair(cadr(args))) &&
+	  (is_null(cddr(args))) &&
+	  (s7_is_aritable(sc, f, 1)))
+	{
+	  s7_pointer f_args, val, fast, slow, arg;
+	  s7_function func;
+	  func = c_function_call(f);
+	  f_args = list_1(sc, sc->F);
+	  val = list_1(sc, sc->nil);
+	  push_stack(sc, OP_NO_OP, f_args, val);
+	  arg = cadr(args);
+	  for (fast = arg, slow = arg; is_pair(fast); fast = cdr(fast), slow = cdr(slow))
+	    {
+	      s7_pointer z;
+	      set_car(f_args, car(fast));
+	      z = func(sc, f_args);
+	      if (z != sc->no_value)
+		set_car(val, cons(sc, z, car(val)));
+	      if (is_pair(cdr(fast)))
+		{
+		  fast = cdr(fast);
+		  if (fast == slow)
+		    break;
+		  set_car(f_args, car(fast));
+		  z = func(sc, f_args);
+		  if (z != sc->no_value)
+		    set_car(val, cons(sc, z, car(val)));
+		}
+	    }
+	  sc->stack_end -= 4;
+	  return(safe_reverse_in_place(sc, car(val))); 
+	}
+      /* to mimic map values handling elsewhere:
+       *   ((lambda args (format *stderr* "~A~%" (map values args))) (values)):   ()
+       *   ((lambda args (format *stderr* "~A~%" (map values args))) (values #<unspecified>)): #<unspecified> etc
+       */
+    }
+
   if (!is_applicable(f))
     method_or_bust_with_type(sc, f, sc->map_symbol, args, something_applicable_string, 1);
 
@@ -47604,44 +47674,6 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
     }
   sc->z = safe_reverse_in_place(sc, sc->z);
   sc->temp3 = sc->nil;
-
-  /* if function is safe c func, do the map locally */
-  if ((is_safe_procedure(f)) &&
-      (is_c_function(f)))
-    {
-      s7_function func;
-      s7_pointer val, val1, old_args, iter_list;
-
-      val1 = cons(sc, sc->z, make_list(sc, len, sc->nil));
-      iter_list = sc->z;
-      old_args = sc->args;
-      func = c_function_call(f);
-      push_stack(sc, OP_NO_OP, val1, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection: need to protect val1, iter_list, val */
-      sc->z = sc->nil;
-
-      while (true)
-	{
-	  s7_pointer x, y, z;
-	  for (x = iter_list, y = cdr(val1); is_pair(x); x = cdr(x), y = cdr(y))
-	    {
-	      set_car(y, s7_iterate(sc, car(x)));
-	      if (iterator_is_at_end(car(x)))
-		{
-		  sc->stack_end -= 4;
-		  sc->args = old_args;
-		  return(safe_reverse_in_place(sc, car(val))); 
-		}
-	    }
-	  z = func(sc, cdr(val1)); /* can this contain multiple-values? */
-	  if (z != sc->no_value)
-	    set_car(val, cons(sc, z, car(val)));
-
-	  /* to mimic map values handling elsewhere:
-	   *   ((lambda args (format *stderr* "~A~%" (map values args))) (values)):   ()
-	   *   ((lambda args (format *stderr* "~A~%" (map values args))) (values #<unspecified>)): #<unspecified> etc
-	   */
-	}
-    }
 
   /* if closure call is straightforward, use OP_MAP_1 */
   if ((len == 1) &&
@@ -47688,6 +47720,37 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
       sc->z = sc->nil;
       return(sc->nil);
     }
+
+  if ((is_safe_procedure(f)) &&
+      (is_c_function(f)))
+    {
+      s7_function func;
+      s7_pointer val, val1, old_args, iter_list;
+      val1 = cons(sc, sc->z, make_list(sc, len, sc->nil));
+      iter_list = sc->z;
+      old_args = sc->args;
+      func = c_function_call(f);
+      push_stack(sc, OP_NO_OP, val1, val = cons(sc, sc->nil, sc->code)); /* temporary GC protection: need to protect val1, iter_list, val */
+      sc->z = sc->nil;
+      while (true)
+	{
+	  s7_pointer x, y, z;
+	  for (x = iter_list, y = cdr(val1); is_pair(x); x = cdr(x), y = cdr(y))
+	    {
+	      set_car(y, s7_iterate(sc, car(x)));
+	      if (iterator_is_at_end(car(x)))
+		{
+		  sc->stack_end -= 4;
+		  sc->args = old_args;
+		  return(safe_reverse_in_place(sc, car(val))); 
+		}
+	    }
+	  z = func(sc, cdr(val1)); /* can this contain multiple-values? */
+	  if (z != sc->no_value)
+	    set_car(val, cons(sc, z, car(val)));
+	}
+    }
+
   push_stack(sc, OP_MAP, make_counter(sc, sc->z), f);
   sc->z = sc->nil;
   return(sc->nil);
@@ -51497,7 +51560,8 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 			{
 			  if ((c_function_call(func) == g_call_with_exit) &&
 			      (is_pair(cadr(lambda_expr))) &&
-			      (is_null(cdadr(lambda_expr))))
+			      (is_null(cdadr(lambda_expr))) &&
+			      (is_symbol(caadr(lambda_expr))))
 			    {
 			      set_unsafe_optimize_op(expr, hop + OP_CALL_WITH_EXIT);
 			      choose_c_function(sc, expr, func, 1);
@@ -55064,6 +55128,45 @@ static s7_pointer check_letrec(s7_scheme *sc, bool letrec)
       pair_set_syntax_symbol(sc->code, (letrec) ? sc->letrec_unchecked_symbol : sc->letrec_star_unchecked_symbol);
       check_let_locals(sc, sc->code);
     }
+  return(sc->code);
+}
+
+
+static s7_pointer check_let_temporarily(s7_scheme *sc)
+{
+  s7_pointer x;
+  /* fprintf(stderr, "code: %s %d\n", DISPLAY(sc->code), is_overlaid(sc->code)); */
+
+  if ((!is_pair(sc->code)) ||                 /* (let-temporarily . 1) */
+      (!s7_is_list(sc, car(sc->code))))       /* (let-temporarily 1 ...) */
+    eval_error(sc, "let-temporarily: variable list is messed up: ~A", sc->code);
+  /* cdr(sc->code) = body can be nil */
+
+  for (x = car(sc->code); is_not_null(x); x = cdr(x))
+    {
+      s7_pointer carx;
+      if (!is_pair(x))                        /* (let-temporarily ((a 1) . 2) ...) */
+	eval_error(sc, "let-temporarily: improper list of variables? ~A", sc->code);
+
+      carx = car(x);
+      if (!is_pair(carx))                 /* (let-temporarily (1 2) #t) */
+	eval_error(sc, "let-temporarily: bad variable ~S", carx);
+
+      if ((is_symbol(car(carx))) && 
+	  (is_immutable_symbol(car(carx))))
+	return(s7_error(sc, sc->wrong_type_arg_symbol,	set_elist_2(sc, make_string_wrapper(sc, "can't bind an immutable object: ~S"), x)));
+
+      if (!is_pair(cdr(carx)))                /* (let-temporarily ((x . 1))...) */
+	eval_error(sc, "let-temporarily: variable declaration value is messed up: ~S", carx);
+
+      if (is_not_null(cddr(carx)))            /* (let-temporarily ((x 1 2 3)) ...) */
+	eval_error(sc, "let-temporarily: variable declaration has more than one value?: ~A", carx);
+    }
+  
+  if ((is_overlaid(sc->code)) &&
+      (has_opt_back(sc->code)))
+    pair_set_syntax_symbol(sc->code, sc->let_temporarily_unchecked_symbol);
+
   return(sc->code);
 }
 
@@ -66882,7 +66985,90 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		goto BEGIN1;
 	      }
 	  }
+
+
+	  /* -------------------------------- LET-TEMPORARILY -------------------------------- */
 	  
+	case OP_LET_TEMPORARILY:
+	  check_let_temporarily(sc);
+	  
+	case OP_LET_TEMP_UNCHECKED:
+	  push_stack(sc, OP_NO_OP, sc->args = list_4(sc, car(sc->code), sc->nil, sc->nil, sc->nil), sc->code);
+	  /* sc->args: varlist, settees, old_values, new_values */
+	  goto LET_TEMP_INIT1;
+
+	  case OP_LET_TEMP_INIT1:
+	    caddr(sc->args) = cons(sc, sc->value, caddr(sc->args));
+
+	  LET_TEMP_INIT1:
+	    while (is_pair(car(sc->args)))
+	      {
+		/* eval car, add result to old-vals list, if any vars undefined, error */
+		s7_pointer binding, settee, new_value;
+		binding = caar(sc->args);
+		settee = car(binding);
+		new_value = cadr(binding);
+		cadr(sc->args) = cons(sc, settee, cadr(sc->args));
+		cadddr(sc->args) = cons(sc, new_value, cadddr(sc->args));
+		car(sc->args) = cdar(sc->args);
+		if (is_symbol(settee))
+		  caddr(sc->args) = cons(sc, find_symbol_checked(sc, settee), caddr(sc->args));
+		else
+		  {
+		    if (is_pair(settee))
+		      {
+			push_stack(sc, OP_LET_TEMP_INIT1, sc->args, sc->code);
+			sc->code = settee;
+			goto EVAL;
+		      }
+		    else caddr(sc->args) = cons(sc, new_value, caddr(sc->args));
+		  }
+	      }
+	    car(sc->args) = cadr(sc->args);
+
+	case OP_LET_TEMP_INIT2:
+	  /* now eval set car new-val, cadr=settees, cadddr= new_values */
+	  while (is_pair(car(sc->args)))
+	    {
+	      s7_pointer settee, new_value;
+	      settee = car(car(sc->args));
+	      new_value = car(cadddr(sc->args));
+	      cadddr(sc->args) = cdr(cadddr(sc->args));
+	      car(sc->args) = cdr(car(sc->args));
+	      push_stack(sc, OP_LET_TEMP_INIT2, sc->args, sc->code);
+	      sc->code = list_3(sc, sc->set_symbol, settee, new_value);
+	      goto EVAL;
+	    }
+	  car(sc->args) = cadr(sc->args);
+	  pop_stack(sc);
+	  push_stack(sc, OP_LET_TEMP_DONE, sc->args, sc->code);
+	  sc->code = cdr(sc->code);
+	  if (is_pair(sc->code))
+	    goto BEGIN1;
+	  else sc->value = sc->nil; /* so (let-temporarily (<vars)) -> () like begin I guess */
+
+	case OP_LET_TEMP_DONE:
+	  push_stack(sc, OP_NO_OP, sc->args, sc->value);
+	  
+	case OP_LET_TEMP_DONE1:
+	  while (is_pair(car(sc->args)))
+	    {
+	      s7_pointer settee, old_value;
+	      settee = car(car(sc->args));
+	      old_value = car(caddr(sc->args));
+	      caddr(sc->args) = cdr(caddr(sc->args));
+	      car(sc->args) = cdr(car(sc->args));
+	      /* if symbol split out here remember accessors */
+	      push_stack(sc, OP_LET_TEMP_DONE1, sc->args, sc->code);
+	      sc->code = list_3(sc, sc->set_symbol, settee, list_2(sc, sc->quote_symbol, old_value));
+	      goto EVAL;
+	    }
+	  pop_stack(sc);
+	  sc->value = sc->code;
+	  if (is_multiple_value(sc->value))
+	    sc->value = splice_in_values(sc, multiple_value(sc->value));
+	  break;
+
 	  
 	  /* -------------------------------- COND -------------------------------- */
 	case OP_COND:
@@ -73439,6 +73625,7 @@ s7_scheme *s7_init(void)
   #define with_baffle_help       "(with-baffle ...) evaluates its body in a context that is safe from outside interference."
   #define macroexpand_help       "(macroexpand macro-call) returns the result of the expansion phase of evaluating the macro call."
   #define with_let_help          "(with-let env ...) evaluates its body in the environment env."
+  #define let_temporarily_help   "(let-temporarily ((var value)...) . body) sets each var to its new value, evals body, then returns each var to its original value."
 
   sc->quote_symbol =             assign_syntax(sc, "quote",           OP_QUOTE,             small_int(1), small_int(1), quote_help);
   sc->if_symbol =                assign_syntax(sc, "if",              OP_IF,                small_int(2), small_int(3), if_help);
@@ -73468,6 +73655,7 @@ s7_scheme *s7_init(void)
   sc->with_baffle_symbol =       assign_syntax(sc, "with-baffle",     OP_WITH_BAFFLE,       small_int(1), max_arity,    with_baffle_help);
   sc->macroexpand_symbol =       assign_syntax(sc, "macroexpand",     OP_MACROEXPAND,       small_int(1), small_int(1), macroexpand_help);
   sc->with_let_symbol =          assign_syntax(sc, "with-let",        OP_WITH_LET,          small_int(1), max_arity,    with_let_help);
+  sc->let_temporarily_symbol =   assign_syntax(sc, "let-temporarily", OP_LET_TEMPORARILY,   small_int(2), max_arity,    let_temporarily_help);
   set_immutable(sc->with_let_symbol);
 
 #if WITH_OPTIMIZATION
@@ -73510,6 +73698,7 @@ s7_scheme *s7_init(void)
   sc->let_star2_symbol =             assign_internal_syntax(sc, "let*",        OP_LET_STAR2);
   sc->with_let_unchecked_symbol =    assign_internal_syntax(sc, "with-let",    OP_WITH_LET_UNCHECKED);
   sc->with_let_s_symbol =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S);
+  sc->let_temporarily_unchecked_symbol = assign_internal_syntax(sc, "let-temporarily", OP_LET_TEMP_UNCHECKED);
   sc->case_unchecked_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
   sc->case_a_symbol =                assign_internal_syntax(sc, "case",        OP_CASE_A);
   sc->case_simple_symbol =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE);
@@ -74502,31 +74691,6 @@ s7_scheme *s7_init(void)
                                     (set! ((funclet hook) 'body) lst)                                         \n\
                                     (error 'wrong-type-arg \"hook-functions must be a list of functions, each accepting one argument: ~S\" lst))))))");
 
-  s7_eval_c_string(sc, "(define-macro (let-temporarily vars . body)                                           \n\
-                          `(with-let (#_inlet :orig (#_curlet)                                                \n\
-                        		      :saved (#_list ,@(map car vars))                                \n\
-                        		      :new (#_list ,@(map cadr vars)))                                \n\
-                             (when (memq #<undefined> saved)                                                  \n\
-                               (error 'unbound-variable \"let-temporarily: ~A is unbound\"                    \n\
-	                              (car (list-ref ',vars (- (length saved) (length (memq #<undefined> saved))))))) \n\
-                             (dynamic-wind                                                                    \n\
-                               (lambda () #f)                                                                 \n\
-                               (lambda ()                                                                     \n\
-                        	 ,@(map (let ((ctr -1))                                                       \n\
-                        	          (lambda (v)                                                         \n\
-                        		    (if (symbol? (car v))                                             \n\
-                        			`(set! (orig ',(car v)) (list-ref new ,(set! ctr (+ ctr 1)))) \n\
-                        			`(set! (with-let orig ,(car v)) (list-ref new ,(set! ctr (+ ctr 1))))))) \n\
-                        		  vars)                                                               \n\
-                                 ,(and (pair? body) `(with-let orig ,@body)))                                 \n\
-                               (lambda ()                                                                     \n\
-                        	 ,@(map (let ((ctr -1))                                                       \n\
-                        	          (lambda (v)                                                         \n\
-                        		    (if (symbol? (car v))                                             \n\
-                        			`(set! (orig ',(car v)) (list-ref saved ,(set! ctr (+ ctr 1)))) \n\
-                        			`(set! (with-let orig ,(car v)) (list-ref saved ,(set! ctr (+ ctr 1))))))) \n\
-                        		vars)))))");
-
 
   /* -------- *unbound-variable-hook* -------- */
   sc->unbound_variable_hook = s7_eval_c_string(sc, "(make-hook 'variable)");
@@ -74655,13 +74819,14 @@ int main(int argc, char **argv)
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1141
  * teq           |      |      | 6612 | 2380 | [2329] 2500 2459
  * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2972
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2965] 3287 3156
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2965] 3287 3169
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3087] 3403 3359
  * tcopy         |      |      | 13.6 | 3204 | [3264] 3190 3404
- * lint          |      |      |      | 7731 | [3512] 3626 [162.5]
- * tform         |      |      | 6816 | 3627 | [3708] 3768 3949
+ * lint          |      |      |      | 7731 | [3512] 3626 [162.3]
+ * tform         |      |      | 6816 | 3627 | [3708] 3768 3935
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4448
- * titer         |      |      | 7503 | 5218 | [5291] 5873 5666
+ * titer         |      |      | 7503 | 5218 | [5291] 5873 5674
+ * tmac          |      |      |      |      |        7374  419
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 11.4
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.2] 12.0 12.7
@@ -74685,6 +74850,10 @@ int main(int argc, char **argv)
  *    partial cases: remove shadowed args, but fixup the rest
  *    let* previous vars are ok
  *    need g->local_g/op->oplocal
+ * partial safe locals -- no need for very-safe check -- any local is safe if nothing has intervened to clobber it
+ *   need to mark symbol refs that are known safe-local anywhere
+ *   so safe-locals/localized flag replaced by symbol-local local-lookup
+ *   then fixup traverses the entire tree looking for these
  *
  * should s7 flag (reverse! #(...)) et al? (set! fill! sort!)
  *   it looks like the bit is being set, then ignored -- maybe a safety choice?
@@ -74694,20 +74863,12 @@ int main(int argc, char **argv)
  * use the tags not cons in the fixup lists (these rarely matter) [tgen]
  * the opt lists can be freed (free_vlist)
  *   also arg to for-each/map if created as arg
- * make let-temporarily built-in
- *   save slots, current vals, and new vals
- *     push dynamic-wind equivalent [old-vals sets]
- *     set new vals
- *     eval body
- *     set old vals, pop away dynwind,
- *     return body result?
+ *
+ * new let-temp code can be greatly optimized by using slots, not on-the-fly code. remember slot-accessors.
+ *   also need more tests (t531 for some)
  *
  * extend max-len objstr arg to non-pair cases, add s7test cases
- * partial safe locals -- no need for very-safe check -- any local is safe if nothing has intervened to clobber it
- *   need to mark symbol refs that are known safe-local anywhere
- *   so safe-locals/localized flag replaced by symbol-local local-lookup
- *   then fixup traverses the entire tree looking for these
- * map/for-each with one list arg -- do the iteration in place!
+ *   maybe extend short_print to hash-tables etc -- another *s7* field?
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
