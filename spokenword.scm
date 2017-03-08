@@ -70,17 +70,17 @@
 
 (define next-phrase
   (lambda (position)
-    (do ((i 0 (+ i 1)) (found #f))
+    (do ((i 0 (+ i 1)) 
+	 (found #f (phrase-start? position)))
         ((or (= i 100) found (= position (framples))) position)
-          (set! position (min (framples) (+ position jump-length)))
-          (set! found (phrase-start? position)))))
+          (set! position (min (framples) (+ position jump-length))))))
 
 (define previous-phrase
   (lambda (position)
-    (do ((i 0 (+ i 1)) (found #f))
+    (do ((i 0 (+ i 1)) 
+	 (found #f (phrase-start? position)))
         ((or (= i 100) found (= position 0)) position)
-          (set! position (max 0 (- position jump-length)))
-          (set! found (phrase-start? position)))))
+          (set! position (max 0 (- position jump-length))))))
 
 (define mark-out
   (lambda (position)

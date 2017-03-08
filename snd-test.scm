@@ -2337,11 +2337,10 @@
       (if (not (string=? str "23-Nov 06:56 PST"))
 	  (snd-display "mus-sound-write-date pistol.snd: ~A?" str)))
     
-    (let ((long-file-name (do ((name "test")
+    (let ((long-file-name (do ((name "test" (string-append name "-test"))
 			       (i 0 (+ i 1)))
 			      ((= i 10)
-			       (string-append name ".snd"))
-			    (set! name (string-append name "-test")))))
+			       (string-append name ".snd")))))
       (let ((index (open-sound "oboe.snd")))
 	(if (variable-graph? index) (snd-display "variable-graph thinks anything is a graph..."))
 	(if (player? index) (snd-display "player? thinks anything is a player..."))
@@ -25362,7 +25361,7 @@ EDITS: 2
     (lambda ()
       (hook-push after-open-hook (lambda (hook)
 				   (set! (hook 'result) (make-player (hook 'snd) 0))))
-      (do ((open-files ())
+      (do ((open-files () ())
 	   (cur-dir-files (test-remove-if 
 			   (lambda (file)
 			     (catch #t
@@ -26077,8 +26076,7 @@ EDITS: 2
 	    (set! *transform-size* (min *transform-size* 128))))
 	(set! *sinc-width* 10)
 	(if (pair? open-files) (for-each close-sound open-files))
-	(set! *sync-style* sync-none)
-	(set! open-files ()))
+	(set! *sync-style* sync-none))
       (set! (mus-rand-seed) 1234)
       (if (not (= (mus-rand-seed) 1234)) (snd-display "mus-rand-seed: ~A (1234)!" (mus-rand-seed)))
       (let ((val (mus-random 1.0))
@@ -33613,11 +33611,10 @@ EDITS: 1
 	      (let ((temp (data j)))
 		(set! (data j) (data i))
 		(set! (data i) temp)))
-	  (do ((m (/ n 2)))
+	  (do ((m (/ n 2) (/ m 2)))
 	      ((not (<= 2 m j))
 	       (set! j (+ j m)))   
-	    (set! j (- j m))
-	    (set! m (/ m 2))))
+	    (set! j (- j m))))
 	(do ((ipow (floor (log n 2)))
 	     (prev 1)
 	     (lg 0 (+ lg 1))
@@ -33655,11 +33652,10 @@ EDITS: 1
 	      (set! (im j) (im i))
 	      (set! (rl i) tempr)
 	      (set! (im i) tempi)))
-	(do ((m (/ n 2)))
+	(do ((m (/ n 2) (/ m 2)))
 	    ((not (<= 2 m j))
 	     (set! j (+ j m)))
-	  (set! j (- j m))
-	  (set! m (/ m 2))))
+	  (set! j (- j m))))
       (do ((ipow (floor (log n 2)))
 	   (prev 1)
 	   (lg 0 (+ lg 1))
@@ -37338,11 +37334,10 @@ EDITS: 1
     (define (fv109)
       (let ((fv (make-float-vector 10)))
 	(do ((locs (make-locsig :output fv))
-	     (k 0)
+	     (k 0 (+ k 1))
 	     (i 0 (+ i 1)))
 	    ((= i 10) fv)
-	  (locsig locs k (* .1 i))
-	  (set! k (+ k 1)))))
+	  (locsig locs k (* .1 i)))))
     (test (fv109) #r(0 .1 .2 .3 .4 .5 .6 .7 .8 .9))
 
     (define (fv110)
@@ -44699,26 +44694,26 @@ EDITS: 1
 	 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) (make-color-with-catch .95 .95 .95) #i(0 1) 3/4 (vector 0 1)
 	       0+i (make-delay 32) :frequency -1 0 #f #t () #()))
 	
-	(if all-args
-	    ;; ---------------- 3 Args
-	    (for-each 
-	     (lambda (arg1)
-	       (for-each 
-		(lambda (arg2)
-		  (for-each 
-		   (lambda (arg3)
-		     (for-each 
-		      (lambda (n)
-			(catch #t
-			  (lambda () (n arg1 arg2 arg3))
-			  (lambda args (car args))))
-		      xm-procs3))
-		   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-			 :start -1 0 #f #t () #())))
-		(list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-		      :phase -1 0 #f #t () #())))
-	     (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
-		   :channels -1 0 #f #t () #())))
+	(when all-args
+	  ;; ---------------- 3 Args
+	  (for-each 
+	   (lambda (arg1)
+	     (for-each 
+	      (lambda (arg2)
+		(for-each 
+		 (lambda (arg3)
+		   (for-each 
+		    (lambda (n)
+		      (catch #t
+			(lambda () (n arg1 arg2 arg3))
+			(lambda args (car args))))
+		    xm-procs3))
+		 (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+		       :start -1 0 #f #t () #())))
+	      (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+		    :phase -1 0 #f #t () #())))
+	   (list win 1.5 "/hiho" (list 0 1) 1234 (make-float-vector 3) #i(0 1) 0+i (make-delay 32) (vector 0 1)
+		 :channels -1 0 #f #t () #())))
 	
 	(let ((struct-accessors #(.pixel .red .green .blue .flags .pad .x .y .width .height .angle1 .angle2 .ptr
 			          .x1 .y1 .x2 .y2 .dashes .dash_offset .clip_mask .clip_y_origin .clip_x_origin .graphics_exposures

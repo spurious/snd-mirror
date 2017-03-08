@@ -907,9 +907,8 @@
 " 	c None"
 ".	c #0D5483")
 		 (do ((i 0 (+ i 1))
-		      (lst ()))
-		     ((= i 64) lst)
-		   (set! lst (cons (make-string 64 #\.) lst)))))
+		      (lst () (cons (make-string 64 #\.) lst)))
+		     ((= i 64) lst))))
 
 (define smoke (list
 "244 244 63 1"
