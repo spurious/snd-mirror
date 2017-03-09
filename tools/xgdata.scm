@@ -7915,7 +7915,7 @@
 (CFNC-3.0 "void gtk_tooltip_trigger_tooltip_query GdkDisplay* display")
 ;;; 3.89 (CFNC-3.0 "void gtk_button_set_image_position GtkButton* button GtkPositionType position")
 ;;; 3.89 (CFNC-3.0 "GtkPositionType gtk_button_get_image_position GtkButton* button")
-(CFNC-3.0 "gboolean gtk_show_uri GdkScreen* screen gchar* uri guint32 timestamp GError** [error]" 'const)
+;;; ??? (CFNC-3.0 "gboolean gtk_show_uri GdkScreen* screen gchar* uri guint32 timestamp GError** [error]" 'const)
 (CFNC-3.0 "GtkTreeViewColumn* gtk_tree_view_column_new_with_area GtkCellArea* area")
 (CFNC-3.0 "GtkWidget* gtk_tree_view_column_get_button GtkTreeViewColumn* tree_column")
 (CFNC-3.0 "void gtk_tree_view_column_focus_cell GtkTreeViewColumn* tree_column GtkCellRenderer* cell")
@@ -9519,6 +9519,8 @@
 ;;; 3.22.2: nothing new (many deprecations)
 ;;; 3.22.3: same
 ;;; 3.22.4: no changes
+(CFNC-3.22 "gboolean gtk_show_uri_on_window GdkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
+;;; 3.22 reports gtk_show_uri is deprecated, but it isn't??
 
 ;;; 3.89.1: 
 

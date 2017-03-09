@@ -920,19 +920,18 @@
     (define (arg-signature fnc env)
       (and (symbol? fnc)
 	   (let ((fd (var-member fnc env)))
-	     (if (var? fd)
+	     (if fd
 		 (and (symbol? (var-ftype fd))
 		      (var-signature fd))
 		 (procedure-signature fnc)))))
     
     (define (arg-arity fnc env)
       (and (symbol? fnc)
-	   (let ((fd (var-member fnc env)))
-	     (if (var? fd)
-		 (var-arity fd)
-		 (let ((f (symbol->value fnc (rootlet))))
-		   (and (procedure? f)
-			(arity f)))))))
+	   (cond ((var-member fnc env) => var-arity)
+		 (else 
+		  (let ((f (symbol->value fnc (rootlet))))
+		    (and (procedure? f)
+			 (arity f)))))))
     
     (define (dummy-func caller form f)
       (catch #t 
@@ -1729,14 +1728,14 @@
 	(lambda (f env)
 	  (or (hash-table-ref macros f)
 	      (let ((fd (var-member f env)))
-		(and (var? fd)
+		(and fd
 		     (memq (var-ftype fd) '(define-macro define-macro* define-expansion 
 					    define-bacro define-bacro* defmacro defmacro* define-syntax))))))))
 
     (define (any-procedure? f env)
       (or (hash-table-ref built-in-functions f)
 	  (let ((v (var-member f env)))
-	    (and (var? v)
+	    (and v
 		 (memq (var-ftype v) '(define define* lambda lambda*))))))
 
     (define ->simple-type
@@ -1931,7 +1930,7 @@
 	  (and (symbol? form)
 	       (or (eq? form '=>)                         ; (cond ((x => y))...) -- someday check y...
 		   (let ((e (var-member form env)))
-		     (if (var? e)
+		     (if e
 			 (and (symbol? (var-ftype e))
 			      (var-side-effect e))
 			 (and (not (hash-table-ref no-side-effect-functions form))
@@ -1942,7 +1941,7 @@
 		   ;; if it's not in the no-side-effect table and ...
 		   
 		   (let ((e (var-member (car form) env)))
-		     (or (not (var? e))
+		     (or (not e)
 			 (not (symbol? (var-ftype e)))
 			 (var-side-effect e)))
 		   
@@ -2081,7 +2080,7 @@
 		  (assq caller (var-scope v)))
 	(let ((cv (var-member caller env)))
 	  (set! (var-scope v) 
-		(cons (if (and (var? cv)
+		(cons (if (and cv
 			       (memq (var-ftype cv) '(define lambda define* lambda*))) ; named-let does not define ftype
 			  caller
 			  (cons caller env))
@@ -2160,7 +2159,7 @@
       ;; if name is in env, set its "I've been referenced" flag
       (when (symbol? name)
 	(let ((data (var-member name env)))
-	  (if (var? data)
+	  (if data
 	      (begin
 		(set! (var-ref data) (+ (var-ref data) 1))
 		(update-scope data caller env)
@@ -2177,7 +2176,7 @@
     
     (define (set-set name caller form env)
       (let ((data (var-member name env)))
-	(when (var? data)
+	(when data
 	  (set! (var-set data) (+ (var-set data) 1))
 	  (update-scope data caller env)
 	  (if (not (memq caller (var-setters data)))
@@ -2358,7 +2357,7 @@
       (unless (memq (car arg2) '(and or not list cons vector)) ; these don't tell us anything about arg1's type
 	(let ((v (var-member arg1 env)))                       ; try to avoid the member->cdr trope
 	  (unless (or (eq? arg2 last-and-incomplete-arg2)
-		      (and (var? v)
+		      (and v
 			   (pair? (var-history v))
 			   (member #f (var-history v)
 				   (lambda (a b)
@@ -5745,7 +5744,7 @@
 	     #f)
 	    ((and (eq? caller (car binding))
 		  (let ((fv (var-member caller env)))
-		    (and (var? fv)
+		    (and fv
 			 (memq (var-ftype fv) '(define lambda let define* lambda*)))))
 	     (lint-format "~A variable ~A in ~S shadows the current function?" caller head caller binding)
 	     #t)
@@ -6033,7 +6032,7 @@
     (define (mv-range producer env)
       (if (symbol? producer)
 	  (let ((v (var-member producer env)))
-	    (and (var? v)
+	    (and v
 		 (pair? ((cdr v) 'nvalues))
 		 ((cdr v) 'nvalues)))
           (and (pair? producer)
@@ -7764,7 +7763,7 @@
 		(if (eq? head 'reverse!)
 		    (if (symbol? (cadr form))
 			(let ((v (var-member (cadr form) env)))
-			  (if (and (var? v)
+			  (if (and v
 				   (eq? (var-definer v) 'parameter))
 			      (lint-format "if ~A (a function argument) is a pair, ~A is ill-advised" caller
 					   (cadr form) 
@@ -8726,7 +8725,7 @@
 			    
 			    (when (symbol? end)
 			      (let ((v (var-member end env)))
-				(if (and (var? v)
+				(if (and v
 					 (equal? (list 'string-length str) (var-initial-value v))
 					 (not (lint-any? (lambda (p)
 							   (set!? p env))
@@ -10167,7 +10166,7 @@
 	(lambda (caller head form checkers env max-arity)
 	  (when *report-func-as-arg-arity-mismatch*
 	    (let ((v (var-member head env)))
-	      (when (and (var? v)
+	      (when (and v
 			 (memq (var-ftype v) '(define define* lambda lambda*))
 			 (zero? (var-set v)) ; perhaps this needs to wait for report-usage?
 			 (pair? (var-arglist v)))
@@ -10458,7 +10457,7 @@
 			      (else 
 			       (let ((op (return-type (car arg) env)))
 				 (let ((v (var-member (car arg) env)))
-				   (if (and (var? v)
+				   (if (and v
 					    (not (memq form (var-history v))))
 				       (begin
 					 (set! (var-history v) (cons form (var-history v)))
@@ -10608,7 +10607,7 @@
 		     (any-procedure? head env))
 		(check-unordered-exprs caller form (cdr form) env))
 
-	    (if (var? data)
+	    (if data
 		(let ((fdata (cdr data)))
 		  ;; a local var
 		  (when (symbol? (let-ref fdata 'ftype))
@@ -10629,7 +10628,7 @@
 				  (for-each (lambda (p)
 					      (if (pair? p)
 						  (let ((v (var-member (car p) env)))
-						    (if (var? v)
+						    (if v
 							(let ((vals (let-ref (cdr v) 'nvalues)))
 							  (if (pair? vals)
 							      (set! call-args (+ call-args -1 (cadr vals)))))))))
@@ -11341,7 +11340,7 @@
 	      (let ((func #f)
 		    (retcons? (and (pair? start) ; is this var's initial value from a function that returns a constant sequence?
 				   (let ((v (var-member (car start) env)))
-				     (and (var? v)
+				     (and v
 					  (eq? (var-retcons v) #t))))))
 		(for-each (lambda (f)
 			    (when (pair? f)
@@ -11351,7 +11350,7 @@
 						     (eq? (cadr f) vname)
 						     (pair? (caddr f))
 						     (let ((v (var-member (caaddr f) env)))
-						       (and (var? v)
+						       (and v
 							    (eq? #t (var-retcons v))
 							    (set! func f))))))
 				((string-set! list-set! vector-set! set-car! set-cdr!)
@@ -11970,7 +11969,7 @@
     (define (escape? form env)
       (and (pair? form)
 	   (let ((v (var-member (car form) env)))
-	     (if (var? v)
+	     (if v
 		 (memq (var-definer v) '(call/cc call-with-current-continuation call-with-exit))
 		 (memq (car form) '(error throw))))))
 
@@ -12549,7 +12548,7 @@
 				   func
 				   (map unquoted (reverse args)))
 		      (let ((v (var-member func-name env)))                                  ; only use of env
-			(if (or (and (var? v)
+			(if (or (and v
 				     (memq (var-ftype v) '(define define* lambda lambda*)))
 				(procedure? func-name) ; e.g. list-values??
 				(procedure? (symbol->value func-name *e*)))
@@ -12561,7 +12560,7 @@
 					 pp-left-margin #\space
 					 func
 					 (reverse args))
-			    (if (not (or (var? v)
+			    (if (not (or v
 					 (macro? (symbol->value func-name *e*))))
 				;; (let () (writ 0) (writ 1) (writ 2) (writ 3) (writ (* x 2))) -> (for-each writ (vector 0 1 2 3 (* x 2)))
 				(lint-format "assuming ~A is not a macro, perhaps ~A" caller
@@ -12771,7 +12770,7 @@
 		   (lint-every? (lambda (arg)
 				  (not (and (symbol? arg)
 					    (let ((v (var-member arg env)))
-					      (and (var? v)
+					      (and v
 						   (eq? (var-initial-value v) :call/cc))))))
 				(cdr f)))
 	      (if next-to-last?
@@ -13186,7 +13185,7 @@
 	  (lambda args #f))
 	(if (eq? tag 'yup)
 	    (let ((v (var-member function-name env)))
-	      (if (and (var? v)
+	      (if (and v
 		       (symbol? (var-ftype v)))
 		  (set! (var-retcons v) #t)))))
       
@@ -13221,7 +13220,6 @@
 		   (if (or (procedure? p)
 			   (let ((e (var-member cval env) ))
 			     (and e
-				  (var? e)
 				  (symbol? (var-ftype e))
 				  (let ((def (var-initial-value e)) 
 					(e-args (var-arglist e)))
@@ -14512,7 +14510,7 @@
 			  (if (constant? settee)  ; (set! pi 3)
 			      (lint-format "can't set! ~A (it is a constant)" caller (truncated-list->string form))
 			      (let ((v (var-member settee env)))
-				(cond ((var? v)
+				(cond (v
 				       (if (eq? (var-definer v) 'define-constant)
 					   (let ((line (if (and (pair? (var-initial-value v))
 								(positive? (pair-line-number (var-initial-value v))))
@@ -17758,8 +17756,14 @@
 						   (truncated-list->string last-expr)))
 				  (if (and (or (not (var-step v))
 					       (= (tree-count (var-name v) (var-step v) 2) 1))
-					   ;; don't move if caddr contains ref to other step var(s)
-					   (not (tree-set-memq (remove (var-name v) (map var-name vars)) val)))
+					   ;; don't move if val contains ref to other step vars
+					   (not (tree-set-memq (remove (var-name v) (map var-name vars)) val))
+					   ;; don't move if var is referred to in any other step expr
+					   (not (lint-any? (lambda (binding)
+							     (and (not (eq? (car binding) var))
+								  (pair? (cddr binding))
+								  (tree-memq var (caddr binding))))
+							   (cadr form))))
 				      (lint-format "perhaps move ~A to ~A's step expression: ~A" caller
 						   (truncated-list->string last-expr)
 						   (var-name v)
@@ -17810,7 +17814,7 @@
 						   ,@(one-call-and-dots (cddar body))))))
 		;; do+lambda in body with stepper as free var never happens
 		(let ((v (var-member (caar body) env)))
-		  (when (and (var? v)
+		  (when (and v
 			     (memq (var-ftype v) '(define lambda)))
 		    (let* ((vfunc (var-initial-value v))
 			   (vbody (cddr vfunc)))
@@ -17884,7 +17888,7 @@
 				      (memq (car end-var) '(length string-length vector-length)))
 				 (set! end-var (cadr end-var))
 				 (let ((v (var-member end-var env)))
-				   (if (and (var? v)
+				   (if (and v
 					    (pair? (var-initial-value v))
 					    (memq (car (var-initial-value v)) '(length string-length vector-length)))
 				       (set! end-var (cadr (var-initial-value v))))))
@@ -18896,7 +18900,7 @@
 			       (not (set-target (cadr v) body env))
 			       (not (set-target (car v) body env))
 			       (let ((data (var-member (cadr v) env)))
-				 (or (not (var? data))
+				 (or (not data)
 				     (and (not (eq? (var-definer data) 'parameter))
 					  (or (null? (var-setters data))
 					      (not (tree-set-memq (var-setters data) body)))))))
@@ -19052,7 +19056,7 @@
 			(when (and (null? next-args)         ; (let ((x (+ y 1))) (abs x)) -> (abs (+ y 1))
 				   (eq? vname first-arg))      ;   not tree-subst or trailing (pair) args: the let might be forcing evaluation order
 			  (let ((v (var-member (car p) env)))
-			    (if (or (and (var? v)
+			    (if (or (and v
 					 (memq (var-ftype v) '(define define* lambda lambda*))) ; was definer??
 				    (hash-table-ref built-in-functions (car p)))
 				(lint-format "perhaps ~A" caller (lists->string form 
@@ -19802,7 +19806,7 @@
 			 (not (set-target (car v) body env))
 			 (not (set-target (cadr v) body env)))
 		    (let ((data (var-member (cadr v) env)))
-		      (if (and (or (not (var? data))
+		      (if (and (or (not data)
 				   (and (not (eq? (var-definer data) 'parameter))
 					(or (null? (var-setters data))
 					    (not (tree-set-memq (var-setters data) body)))))
@@ -19810,7 +19814,7 @@
 						 (and (len>1? p)
 						      (or (set-target (cadr v) (cdr p) env)
 							  (set-target (car v) (cdr p) env)
-							  (and (var? data)
+							  (and data
 							       (pair? (var-setters data))
 							       (tree-set-memq (var-setters data) body)))))
 					       (cdr vs))))
@@ -19856,7 +19860,7 @@
 		      (nxt-var (cadr v)))
 		  (when (and (len>1? cur-var)
 			     (let ((v (var-member (car cur-var) vars)))
-			       (and (var? v)
+			       (and v
 				    (zero? (var-set v))))
 			     (len>1? nxt-var)
 			     (< (tree-leaves (cadr cur-var)) 8)
@@ -21224,7 +21228,7 @@
 	    
 	    (lambda (caller head form env)
 	      (let ((v (var-member head env)))
-		(if (and (var? v) 
+		(if (and v
 			 (not (memq form (var-history v))))
 		    (begin
 		      (set! (var-history v) (cons form (var-history v)))
@@ -21340,7 +21344,7 @@
 		  (for-each (lambda (arg)
 			      (if (symbol? arg)
 				  (let ((v (var-member arg env)))
-				    (if (and (var? v)
+				    (if (and v
 					     (not (memq form (var-history v))))
 					(begin
 					  (set! (var-history v) (cons form (var-history v)))
@@ -21543,15 +21547,15 @@
 	    (lambda (caller head form env)
 	      (for-each (lambda (p)
 			  (let ((sym (and (symbol? p) p)))
-			    (when sym
-			      (let ((v (var-member sym env)))
-				(if (var? v)
-				    (set-ref sym caller form env)
-				    (if (not (defined? sym (rootlet)))
-					(hash-table-set! other-identifiers sym
-							 (if (not (hash-table-ref other-identifiers sym))
-							     (list form)
-							     (cons form (hash-table-ref other-identifiers sym))))))))))
+			    (cond ((not sym) 
+				   #f)
+				  ((var-member sym env)
+				   (set-ref sym caller form env))
+				  ((not (defined? sym (rootlet)))
+				   (hash-table-set! other-identifiers sym
+						    (if (not (hash-table-ref other-identifiers sym))
+							(list form)
+							(cons form (hash-table-ref other-identifiers sym))))))))
 			(cdr form))
 	      
 	      (let ((old-current-form lint-current-form))
@@ -22513,4 +22517,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 66 31567 861747
+;;; 66 31567 863054
