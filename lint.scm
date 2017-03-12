@@ -20833,11 +20833,13 @@
 	  (call-with-exit
 	   (lambda (quit)
 	     (let ((outer-vars (if fvar
-				   (do ((e (list (list (var-name fvar) (symbol "_F_") 0 ())))
-					(i 1 (+ i 1))
-					(args (args->proper-list (var-arglist fvar)) (cdr args)))
-				       ((not (pair? args)) e)
-				     (set! e (cons (list (car args) (symbol "_" (number->string i) "_") i ()) e)))
+				   (let ((init-args (args->proper-list (var-arglist fvar)))
+					 (init-e (list (list (var-name fvar) (symbol "_F_") 0 ()))))
+				     (do ((e init-e)
+					  (i 1 (+ i 1))
+					  (args init-args (cdr args)))
+					 ((not (pair? args)) e)
+				       (set! e (cons (list (car args) (symbol "_" (number->string i) "_") i ()) e))))
 				   (list (list () '_1_) (list () '_2_) (list () '_3_) (list () '_4_))))
 		   (local-ctr 0))
 	       (let ((line (pair-line-number orig-form))

@@ -1548,7 +1548,7 @@ static s7_scheme *hidden_sc = NULL;
 
 #define T_GLOBAL                      (1 << (TYPE_BITS + 8))
 #define is_global(p)                  ((typeflag(_TSym(p)) & T_GLOBAL) != 0)
-#define set_global(p)                 typeflag(_TSym(p)) |= T_GLOBAL
+#define set_global(p)                 do {if (!is_local(p)) typeflag(_TSym(p)) |= T_GLOBAL;} while (0)
 #if 0
   /* to find who is stomping on our symbols: */
   static char *object_to_truncated_string(s7_scheme *sc, s7_pointer p, int len);
@@ -1561,7 +1561,7 @@ static s7_scheme *hidden_sc = NULL;
   }
   #define set_local(Symbol) set_local_1(sc, Symbol, __func__, __LINE__)
 #else
-#define set_local(p)                  typeflag(_TSym(p)) &= ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC)
+#define set_local(p)                  typeflag(_TSym(p)) = ((typeflag(p) | T_LOCAL) & ~(T_DONT_EVAL_ARGS | T_GLOBAL | T_SYNTACTIC))
 #endif
 /* this (T_GLOBAL) marks something defined (bound) at the top-level, and never defined locally */
 
@@ -1621,6 +1621,9 @@ static s7_scheme *hidden_sc = NULL;
 #define is_overlaid(p)                ((typeflag(_TPair(p)) & T_OVERLAY) != 0)
 #define clear_overlay(p)              typeflag(_TPair(p)) &= (~T_OVERLAY)
 /* optimizer flag that marks a cell whose opt_back [ie opt1] points to the previous cell in a list */
+
+#define T_LOCAL                       T_OVERLAY
+#define is_local(p)                   ((typeflag(_TSym(p)) & T_LOCAL) != 0)
 
 #define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 13))
 #define is_safe_procedure(p)          ((typeflag(_NFre(p)) & T_SAFE_PROCEDURE) != 0)
@@ -2920,6 +2923,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_C_S_opSq, HOP_C_S_opSq, OP_C_S_opCq, HOP_C_S_opCq, OP_C_SS, HOP_C_SS,
       OP_C_S, HOP_C_S, OP_READ_S, HOP_READ_S, OP_C_P, HOP_C_P, OP_C_Z, HOP_C_Z, OP_C_SP, HOP_C_SP,
       OP_C_SZ, HOP_C_SZ, OP_C_A, HOP_C_A, OP_C_SCS, HOP_C_SCS,
+      OP_C_FA, HOP_C_FA, OP_C_AA, HOP_C_AA,
 
       OP_GOTO, HOP_GOTO, OP_GOTO_C, HOP_GOTO_C, OP_GOTO_S, HOP_GOTO_S, OP_GOTO_A, HOP_GOTO_A,
 
@@ -3108,6 +3112,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "c_s_opsq", "h_c_s_opsq", "c_s_opcq", "h_c_s_opcq", "c_ss", "h_c_ss",
       "c_s", "h_c_s", "read_s", "h_read_s", "c_p", "h_c_p", "c_z", "h_c_z", "c_sp", "h_c_sp",
       "c_sz", "h_c_sz", "c_a", "h_c_a", "c_scs", "h_c_scs",
+      "c_fa", "h_c_fa", "c_aa", "h_c_aa",
 
       "goto", "h_goto", "goto_c", "h_goto_c", "goto_s", "h_goto_s", "goto_a", "h_goto_a",
       "vector_c", "h_vector_c", "vector_s", "h_vector_s", "vector_a", "h_vector_a", "vector_cc", "h_vector_cc",
@@ -40121,7 +40126,7 @@ static s7_pointer g_funclet(s7_scheme *sc, s7_pointer args)
     }
   check_method(sc, p, sc->funclet_symbol, args);
 
-  if (!is_procedure_or_macro(p))
+  if (!((is_procedure_or_macro(p)) || (is_c_object(p))))
     return(simple_wrong_type_argument_with_type(sc, sc->funclet_symbol, p, make_string_wrapper(sc, "a procedure or a macro")));
 
   e = find_let(sc, p);
@@ -51977,6 +51982,8 @@ static bool unsafe_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer arg1, s7_p
   return(false);
 }
 
+static void check_lambda(s7_scheme *sc);
+
 static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, int pairs, int symbols, int quotes, int bad_pairs, s7_pointer e)
 {
   s7_pointer arg1, arg2;
@@ -52003,7 +52010,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  set_arglist_length(expr, small_int(2));
 	  if (is_c_function(func))
 	    {
-	      set_safe_optimize_op(expr, hop + ((is_safe_procedure(func)) ? OP_SAFE_C_AA : OP_C_ALL_X));
+	      set_safe_optimize_op(expr, hop + ((is_safe_procedure(func)) ? OP_SAFE_C_AA : OP_C_AA));
 	      set_c_function(expr, func);
 	      return(OPT_T);
 	    }
@@ -52076,7 +52083,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	    }
 	  else
 	    {
-	      set_optimize_op(expr, hop + OP_C_ALL_X);
+	      set_optimize_op(expr, hop + OP_C_AA);
 	      annotate_args(sc, cdr(expr), e);
 	      set_arglist_length(expr, small_int(2));
 	      choose_c_function(sc, expr, func, 2);
@@ -52256,7 +52263,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	    {
 	      if (pairs == 1)
 		{
-		  set_unsafe_optimize_op(expr, hop + OP_C_ALL_X);
+		  set_unsafe_optimize_op(expr, hop + OP_C_AA);
 		  annotate_args(sc, cdr(expr), e);
 		  set_arglist_length(expr, small_int(2));
 		  choose_c_function(sc, expr, func, 2);
@@ -52275,7 +52282,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	      choose_c_function(sc, expr, func, 2);
 	      return(OPT_T);
 	    }
-	  set_unsafe_optimize_op(expr, hop + OP_C_ALL_X);
+	  set_unsafe_optimize_op(expr, hop + OP_C_AA);
 	  annotate_args(sc, cdr(expr), e);
 	  set_arglist_length(expr, small_int(2));
 	  choose_c_function(sc, expr, func, 2);
@@ -52437,6 +52444,42 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  choose_c_function(sc, expr, func, 2);
 	  return(OPT_F);
 	}
+
+      if ((!func_is_safe) &&
+	  (is_pair(arg1)) &&
+	  (car(arg1) == sc->lambda_symbol) &&
+	  ((!is_pair(arg2)) ||
+	   ((is_optimized(arg2)) &&
+	    (is_all_x_op(optimize_op(arg2))))))
+	{
+	  s7_pointer code;
+	  /* fprintf(stderr, "fa: %s\n", DISPLAY_80(expr)); */
+	  annotate_arg(sc, cddr(expr), e);
+	  set_unsafe_optimize_op(expr, hop + OP_C_FA);
+	  code = sc->code;               /* save old -- not of direct interest here -- just avoiding unexpected clobberage */
+	  sc->code = cdr(cadr(expr));
+	  /* fprintf(stderr, "lambda: %s\n", DISPLAY_80(sc->code)); */
+	  check_lambda(sc);
+	  sc->code = code;
+	  choose_c_function(sc, expr, func, 2);
+	  return(OPT_F);
+	}
+
+      if ((!func_is_safe) &&
+	  ((!is_pair(arg1)) ||
+	   ((is_optimized(arg1)) &&
+	    (is_all_x_op(optimize_op(arg1))))) &&
+	  ((!is_pair(arg2)) ||
+	   ((is_optimized(arg2)) &&
+	    (is_all_x_op(optimize_op(arg2))))))
+	{
+	      set_unsafe_optimize_op(expr, hop + OP_C_AA);
+	      annotate_args(sc, cdr(expr), e);
+	      set_arglist_length(expr, small_int(2));
+	      choose_c_function(sc, expr, func, 2);
+	      return(OPT_F);
+	}
+
       return((is_optimized(expr)) ? OPT_T : OPT_F);
     }
 
@@ -52487,6 +52530,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  set_arglist_length(expr, small_int(2));
 	  return(OPT_F);
 	}
+
       return((is_optimized(expr)) ? OPT_T : OPT_F);
     }
 
@@ -62029,7 +62073,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* main part of evaluation
 	   *   at this point, it's sc->code we care about; sc->args is not relevant.
 	   */
-	  /* fprintf(stderr, "    eval: %s %d %d\n", DISPLAY_80(sc->code), (typesflag(sc->code) == SYNTACTIC_PAIR), (is_optimized(sc->code))); */
+	  /* fprintf(stderr, "    eval: %s\n", DISPLAY_80(sc->code)); */
 
 	  if (typesflag(sc->code) == SYNTACTIC_PAIR)  /* xor is not faster here */
 	    {
@@ -62052,6 +62096,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #endif
 
 	    OPT_EVAL:
+	     /*  fprintf(stderr, "opt_eval: %s %s\n", opt_names[optimize_op(sc->code)], DISPLAY_80(sc->code)); */
+
 #if WITH_PROFILE
 	      if (sc->code != profile_at_start)
 		profile(sc, sc->code);
@@ -63776,6 +63822,27 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto EVAL;
 		  
 		  
+		case OP_C_FA:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_C_FA:
+		  sc->code = cdr(cadr(code));
+		  /* need to check lambda if not done already */
+		  make_closure_with_let(sc, sc->value, car(sc->code), cdr(sc->code), sc->envir);  /* sc->value=new closure cell, car=args, cdr=body */
+		  sc->args = list_2(sc, sc->value, c_call(cddr(code))(sc, caddr(code)));
+		  sc->value = c_call(code)(sc, sc->args);
+		  goto START;
+
+		  
+		case OP_C_AA:
+		  if (!c_function_is_ok(sc, code)) break;
+		case HOP_C_AA:
+		  sc->code = c_call(cdr(code))(sc, cadr(code));
+		  sc->value = c_call(cddr(code))(sc, caddr(code));
+		  sc->args = list_2(sc, sc->code, sc->value);
+		  sc->value = c_call(code)(sc, sc->args);
+		  goto START;
+		  
+		  
 		case OP_APPLY_SS:
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_APPLY_SS:
@@ -64518,8 +64585,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    unsafe_closure_2(sc, sc->temp2, c_call(cdr(args))(sc, cadr(args)));
 		    goto BEGIN1;
 		  }
-		  
-		  
+
+
 		case OP_CLOSURE_ALL_S:
 		  if (!closure_is_ok(sc, code, MATCH_UNSAFE_CLOSURE, integer(arglist_length(code))))
 		    {
@@ -74976,20 +75043,20 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1141
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1137
  * teq           |      |      | 6612 | 2380 | [2329] 2500 2456
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2704] 3287 2898
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2962
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3087] 3403 3334
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2704] 3287 2889
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2950
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3087] 3403 3316
  * tcopy         |      |      | 13.6 | 3204 | [3264] 3190 3403
- * lint          |      |      |      | 7731 | [3478] 3584 [162.3]
- * tform         |      |      | 6816 | 3627 | [3708] 3768 3892
+ * lint          |      |      |      | 7731 | [3478] 3546 [160.4]
+ * tform         |      |      | 6816 | 3627 | [3708] 3768 3931
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4450
  * titer         |      |      | 7503 | 5218 | [5042] 5873 5580
  * tmac          |      |      |      |      |        18.7 1050
  * thash         |      |      | 50.7 | 8491 | [10.5] 8858 10.8
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.2] 12.0 12.7
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.2] 12.0 12.6
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
  * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [135.0] 40.9
  * 
@@ -75013,9 +75080,15 @@ int main(int argc, char **argv)
  *   also arg to for-each/map if created as arg
  * extend max-len objstr arg to non-pair cases, add s7test cases
  * if profile, add profile-count and use that to annotate pp output via [count]-symbol pre-rewrite
+ *   requires another object field for the counter -- current is in hash-table by file/line
  *
  * perhaps all_x_c_all_x or all_x_c_s_opall_xq? see all_x_eval, maybe other safe_c_<>p and p<> cases? why so much eval_args? must be closure args: closure_sp?
  *   why so many symbols as trailers?
+ *   need support for op_safe_c_ifss_a|aa ((if <> s s) <>)
+ * op_c_sp -> ap?
+ * does op_c_fa assume old_frame if safe?
+ * t537->s7test
+ * are glosure* still needed?
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
