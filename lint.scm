@@ -591,7 +591,8 @@
     
     (define lint-find-if 
       (let ((documentation "(lint-find-if func lst) applies func to each member of the list lst.\n\
-              If func approves of one, find-if returns that member of the sequence"))
+              If func approves of one, find-if returns that member of the sequence")
+	    (signature '(#t procedure? list?)))
 	(lambda (f lst)
 	  (do ((p lst (cdr p)))
 	      ((or (not (pair? p))
@@ -22519,4 +22520,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 66 31603 864135
+;;; 66 31603 864143

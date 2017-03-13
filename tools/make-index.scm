@@ -477,7 +477,8 @@
        (when (pair? binding)
 	 (let ((symbol (car binding))
 	       (value (cdr binding)))
-	   (when (procedure? value)
+	   (when (and (procedure? value)
+		      (let? (funclet value)))
 	     (let ((file (let ((addr (with-let (funclet value) __func__)))
 			   ;; this misses scheme-side pws because their environment is (probably) the global env
 			   (and (pair? addr)
