@@ -13356,7 +13356,6 @@
 					(if (memq arg '(:rest :allow-other-keys))
 					    (values)                  ; omit :rest and :allow-other-keys
 					    (make-lint-var arg #f 'parameter))
-
 					(if (not (and star-definer (len=2? arg)))
 					    (begin
 					      (lint-format "strange parameter for ~A: ~S" function-name definer arg)

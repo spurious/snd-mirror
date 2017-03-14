@@ -1297,6 +1297,7 @@ static s7_scheme *hidden_sc = NULL;
   static s7_pointer check_ref10(s7_pointer p, const char *func, int line);
   static s7_pointer check_ref11(s7_pointer p, const char *func, int line);
   static s7_pointer check_nref(s7_pointer p, const char *func, int line);
+  static s7_pointer check_cell(s7_pointer p, const char *func, int line);
   static void print_gc_info(s7_pointer obj, int line);
 
   static s7_pointer opt1_1(s7_scheme *sc, s7_pointer p, unsigned int role, const char *func, int line);
@@ -1392,6 +1393,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TArg(P) check_ref10(P,                    __func__, __LINE__) /* closure arg (list, symbol) */
   #define _TApp(P) check_ref11(P,                    __func__, __LINE__) /* setter (any_procedure or #f) */
   #define _NFre(P) check_nref(P,                     __func__, __LINE__) /* not free */
+  #define _Cell(P) check_cell(P,                     __func__, __LINE__) /* any cell */
   #define _TSet(P) check_seti(sc, P,                 __func__, __LINE__) /* set of immutable value */
 
 #else
@@ -1445,6 +1447,7 @@ static s7_scheme *hidden_sc = NULL;
   #define _TApp(P)                    P
   #define _TExp(P)                    P
   #define _NFre(P)                    P
+  #define _Cell(P)                    P
 #endif
 
 #define is_number(P)                  t_number_p[type(P)]
@@ -2142,6 +2145,7 @@ static int not_heap = -1;
 #define unique_name(p)                (p)->object.unq.name
 #define unique_name_length(p)         (p)->object.unq.len
 #define is_unspecified(p)             (type(p) == T_UNSPECIFIED)
+#define unique_car(p)                 (p)->object.unq.unused_slots
 #define unique_cdr(p)                 (p)->object.unq.unused_nxt
 
 #define vector_length(p)              ((p)->object.vector.length)
@@ -3443,6 +3447,8 @@ bool s7_is_constant(s7_pointer p)
   /* this means "always evaluates to the same thing", sort of, not "evaluates to itself":
    *   (let ((x 'x)) (and (not (constant? x)) (equal? x (eval x))))
    *   (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1)))))
+   * but since (constant? (vector 1 2 3)) and (constant? #(1 2 3)) are both #t,
+   *   how to tell in scheme that (vector-set! x 0 y) is safe?
    */
   return((type(p) != T_SYMBOL) || (is_immutable_symbol(p)));
 }
@@ -4458,7 +4464,7 @@ static int gc(s7_scheme *sc)
 #if DEBUGGING
   #define gc_call(P, Tp) \
     p = (*tp++); \
-    if (is_marked(p)) \
+    if (is_marked(_Cell(p))) \
        clear_mark(p); \
     else \
       { \
@@ -4625,7 +4631,7 @@ static int gc(s7_scheme *sc)
 	/* from here down is gc_call, but I wanted one case explicit for readability */
 	p = (*tp++);
 
-	if (is_marked(p))          /* this order is faster than checking typeflag(p) != T_FREE first */
+	if (is_marked(_Cell(p)))          /* this order is faster than checking typeflag(p) != T_FREE first */
 	  clear_mark(p);
 	else
 	  {
@@ -5658,7 +5664,6 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
 
   /* make-string for symbol name */
 #if DEBUGGING
-  /* fprintf(stderr, "gensym %s %s\n", DISPLAY(args), name); */
   str = (s7_cell *)calloc(1, sizeof(s7_cell));
 #else
   str = (s7_cell *)malloc(sizeof(s7_cell));
@@ -5765,6 +5770,8 @@ static s7_pointer g_symbol_to_string_uncopied(s7_scheme *sc, s7_pointer args)
   sym = car(args);
   if (!is_symbol(sym))
     method_or_bust(sc, sym, sc->symbol_to_string_symbol, args, T_SYMBOL, 0);
+  if (is_gensym(sym))
+    return(s7_make_string_with_length(sc, symbol_name(sym), symbol_name_length(sym)));    /* return a copy of gensym name (which will be freed) */
   return(symbol_name_cell(sym));
 }
 
@@ -30517,7 +30524,7 @@ static s7_pointer check_sym(s7_scheme *sc, s7_pointer sym)
   return(local_val);
 }
 
-static s7_pointer check_nref(s7_pointer p, const char *func, int line)
+static s7_pointer check_cell(s7_pointer p, const char *func, int line)
 {
   int typ;
   if (!p)
@@ -30526,14 +30533,22 @@ static s7_pointer check_nref(s7_pointer p, const char *func, int line)
       if (stop_at_error) abort();
     }    
   typ = unchecked_type(p);
-  if (typ == T_FREE)
-    {
-      fprintf(stderr, "%s%s[%d]: attempt to use cleared type%s\n", BOLD_TEXT, func, line, UNBOLD_TEXT);
-      if (stop_at_error) abort();
-    }
   if ((typ < 0) || (typ >= NUM_TYPES))
     {
       fprintf(stderr, "%s%s[%d]: attempt to use messed up cell (type: %d)%s\n", BOLD_TEXT, func, line, typ, UNBOLD_TEXT);
+      if (stop_at_error) abort();
+    }
+  return(p);
+}
+
+static s7_pointer check_nref(s7_pointer p, const char *func, int line)
+{
+  int typ;
+  check_cell(p, func, line);
+  typ = unchecked_type(p);
+  if (typ == T_FREE)
+    {
+      fprintf(stderr, "%s%s[%d]: attempt to use cleared type%s\n", BOLD_TEXT, func, line, UNBOLD_TEXT);
       if (stop_at_error) abort();
     }
   return(p);
@@ -41410,7 +41425,7 @@ static s7_pointer bind_accessed_symbol(s7_scheme *sc, opcode_t op, s7_pointer sy
 	  set_car(sc->t2_2, new_value);
 	  new_value = c_function_call(func)(sc, sc->t2_1);
 	  if (new_value == sc->error_symbol)
-	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, make_string_wrapper(sc, "can't bind ~S to ~S"), symbol, old_value)));
+ 	    return(s7_error(sc, sc->error_symbol, set_elist_3(sc, make_string_wrapper(sc, "can't bind ~S to ~S"), symbol, old_value)));
 	}
       else
 	{
@@ -43030,6 +43045,11 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
   #define Q_reverse_in_place s7_make_signature(sc, 2, sc->is_sequence_symbol, sc->is_sequence_symbol)
 
   p = car(args);
+
+  if ((sc->safety > 0) &&
+      (is_immutable(p)))
+    return(s7_error(sc, sc->error_symbol, set_elist_2(sc, make_string_wrapper(sc, "can't reverse! ~S (it is immutable)"), p)));
+
   switch (type(p))
     {
     case T_NIL:
@@ -47040,6 +47060,21 @@ static s7_pointer all_x_c_opsq_opsq(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t2_1));
 }
 
+static s7_pointer all_x_c_opsq_opssq(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer largs;
+  largs = cdr(arg);
+  set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(car(largs))));
+  sc->temp3 = c_call(car(largs))(sc, sc->t1_1);
+  largs = cadr(largs);
+  set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(largs)));
+  set_car(sc->t2_2, find_symbol_unchecked(sc, caddr(largs)));
+  set_car(sc->t2_2, c_call(largs)(sc, sc->t2_1));
+  set_car(sc->t2_1, sc->temp3);
+  sc->temp3 = sc->nil;
+  return(c_call(arg)(sc, sc->t2_1));
+}
+
 static s7_pointer all_x_c_opssq_opsq(s7_scheme *sc, s7_pointer arg)
 {
   s7_pointer largs;
@@ -47283,6 +47318,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_S_opSSq] = all_x_c_s_opssq;
   all_x_function[HOP_SAFE_C_S_opSCq] = all_x_c_s_opscq;
   all_x_function[HOP_SAFE_C_opSq_opSq] = all_x_c_opsq_opsq;
+  all_x_function[HOP_SAFE_C_opSq_opSSq] = all_x_c_opsq_opssq;
   all_x_function[HOP_SAFE_C_opCq_opCq] = all_x_c_opcq_opcq;
   all_x_function[HOP_SAFE_C_opSSq_opSq] = all_x_c_opssq_opsq;
   all_x_function[HOP_SAFE_C_opSSq_opSSq] = all_x_c_opssq_opssq;
@@ -59582,7 +59618,6 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
 			  (is_syntactic_symbol(caar(body))))
 			{
 			  set_optimize_op(code, OP_CLOSURE_A_P);
-			  if (!c_callee(cdr(code))) fprintf(stderr, "unknown a_p callee missing\n");
 			  if (typesflag(car(body)) != SYNTACTIC_PAIR)
 			    {
 			      pair_set_syntax_op(car(body), symbol_syntax_op(caar(body)));
@@ -65136,20 +65171,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = c_function_base(opt_cfunc(sc->code));
 	  goto APPLY; /* (define (hi) (log (values 1 2) 3)) ? */
 	  
-	  
 	case OP_SAFE_C_ZC_1:
 	  set_car(sc->t2_1, sc->value);
 	  set_car(sc->t2_2, sc->args);
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_SZ_1:
 	  set_car(sc->t2_1, sc->args);
 	  set_car(sc->t2_2, sc->value);
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
 	  break;
-	  
 	  
 	case OP_SAFE_C_SZ_SZ:
 	  /* S_opSZq actually, in (nominal second, only actual) SZ, S=args, Z=value,
@@ -65162,26 +65194,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_ZA_1:
 	  set_car(sc->t2_2, c_call(cddr(sc->code))(sc, caddr(sc->code)));
 	  set_car(sc->t2_1, sc->value);
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_ZZ_1:
 	  push_stack(sc, OP_SAFE_C_ZZ_2, sc->value, sc->code);
 	  sc->code = _TPair(caddr(sc->code));
 	  goto OPT_EVAL;
-	  
 	  
 	case OP_SAFE_C_ZZ_2:
 	  set_car(sc->t2_1, sc->args);
 	  set_car(sc->t2_2, sc->value);
 	  sc->value = c_call(sc->code)(sc, sc->t2_1);
 	  break;
-	  
 	  
 	case OP_SAFE_C_ZAA_1:
 	  set_car(sc->a3_1, sc->value);
@@ -65190,14 +65218,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->a3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_AZA_1:
 	  set_car(sc->t3_3, c_call(cdddr(sc->code))(sc, cadddr(sc->code)));
 	  set_car(sc->t3_2, sc->value);
 	  set_car(sc->t3_1, sc->args);
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
-	  
 	  
 	case OP_SAFE_C_SSZ_1:
 	  set_car(sc->t3_1, sc->args);
@@ -65206,7 +65232,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_AAZ_1:
 	  set_car(sc->t3_1, pop_op_stack(sc));
 	  set_car(sc->t3_2, sc->args);
@@ -65214,13 +65239,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_ZZA_1:
 	  push_op_stack(sc, sc->value);
 	  push_stack(sc, OP_SAFE_C_ZZA_2, sc->args, sc->code);
 	  sc->code = _TPair(caddr(sc->code));
 	  goto OPT_EVAL;
-	  
 	  
 	case OP_SAFE_C_ZZA_2:
 	  set_car(sc->a3_1, pop_op_stack(sc));
@@ -65229,13 +65252,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->a3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_ZAZ_1:
 	  push_op_stack(sc, sc->value);
 	  push_stack(sc, OP_SAFE_C_ZAZ_2, c_call(cddr(sc->code))(sc, caddr(sc->code)),  sc->code);
 	  sc->code = _TPair(cadddr(sc->code));
 	  goto OPT_EVAL;
-	  
 	  
 	case OP_SAFE_C_ZAZ_2:
 	  set_car(sc->t3_1, pop_op_stack(sc));
@@ -65244,13 +65265,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_AZZ_1:
 	  push_op_stack(sc, sc->value);
 	  push_stack(sc, OP_SAFE_C_AZZ_2, sc->args, sc->code);
 	  sc->code = _TPair(cadddr(sc->code));
 	  goto OPT_EVAL;
-	  
 	  
 	case OP_SAFE_C_AZZ_2:
 	  set_car(sc->t3_1, sc->args);
@@ -65259,12 +65278,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
 	  
-	  
 	case OP_SAFE_C_ZZZ_1:
 	  push_stack(sc, OP_SAFE_C_ZZZ_2, sc->value, sc->code);
 	  sc->code = _TPair(caddr(sc->code));
 	  goto OPT_EVAL;
-	  
 	  
 	case OP_SAFE_C_ZZZ_2:
 	  push_op_stack(sc, sc->value);
@@ -65272,14 +65289,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = _TPair(cadddr(sc->code));
 	  goto OPT_EVAL;
 	  
-	  
 	case OP_SAFE_C_ZZZ_3:
 	  set_car(sc->t3_1, sc->args);
 	  set_car(sc->t3_2, pop_op_stack(sc));
 	  set_car(sc->t3_3, sc->value);
 	  sc->value = c_call(sc->code)(sc, sc->t3_1);
 	  break;
-	  
 
 	case OP_SAFE_C_opSq_P_1:
 	  /* this is the no-multiple-values case */
@@ -66161,7 +66176,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_IF1:
 	  if (is_true(sc, sc->value))
 	    sc->code = car(sc->code);
-	  else sc->code = cadr(sc->code);   /* even pre-optimization, (if #f #f) ==> #<unspecified> because car(sc->nil) = sc->unspecified */
+	  else sc->code = cadr(sc->code);   /* even pre-optimization, (if #f #f) ==> #<unspecified> because unique_car(sc->nil) = sc->unspecified */
 	  if (is_pair(sc->code))
 	    goto EVAL;
 	  if (is_symbol(sc->code))
@@ -73402,7 +73417,8 @@ s7_scheme *s7_init(void)
   sc->unspecified = make_unique_object("#<unspecified>", T_UNSPECIFIED);
   sc->no_value =    make_unique_object("#<unspecified>", T_UNSPECIFIED);
 
-  set_car(sc->nil, set_cdr(sc->nil, sc->unspecified));
+  unique_car(sc->nil) = sc->unspecified;
+  unique_cdr(sc->nil) = sc->unspecified;
   /* this is mixing two different s7_cell structs, cons and envr, but luckily
    *    envr has two initial s7_pointer fields, equivalent to car and cdr, so
    *    let_id which is the same as opt1 is unaffected.  To get the names
@@ -74971,7 +74987,10 @@ int main(int argc, char **argv)
  *
  * unbound-variable could suggest respelling
  * should s7 flag (reverse! #(...)) et al? (set! fill! sort!)
- *   it looks like the bit is being set, then ignored -- maybe a safety choice?
+ *   see reverse! and s7_is_constant -- we need some way in scheme code to distinguish (vector 1) from #(1)
+ *   and read-time constants need to be set to immutable (reverse! "123") etc
+ *   maybe add mutable? but the name is pretentious
+ *
  * extend the validity checks to all FFI funcs and add info about caller etc
  * check all_x* need methods? [need s7test entries!]
  * the opt lists can be freed (free_vlist)
@@ -74979,17 +74998,14 @@ int main(int argc, char **argv)
  * extend max-len objstr arg to non-pair cases, add s7test cases
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
- * t480: gensym -> malloc trouble??
  *
- * maybe other safe_c_<>p and p<> cases? closure_sp?
- *    closure_fa? = (lint-any (lambda...) arg)
- *    op_c_fp = (map (lambda...) (closure...))
- *    op_c_aaf? op_safe_c_if...[op_safe_c_ifss_a|aa ((if <> s s) <>)]
+ * maybe other safe_c_<>p and p<> cases? closure_sp? safe_closure_safe_closure?
+ *    op_safe_c_if...[op_safe_c_ifa_a|aa ((if <> s s) <>)] -- here the two results can be pre-looked-up
+ *    op_safe_c_case_a
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
  * lint: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
- *   many equal?s could be much simplified -- but is that where pair_equal is?
  *   cond-expand->reader-cond?  if provided? -> reader-cond? 
  *
  * Snd:
