@@ -851,9 +851,10 @@
 	   (not (cadr x))))
     
     (define (quoted-symbol? x)
-      (and (len=2? x)
-	   (eq? (car x) 'quote)
-	   (symbol? (cadr x))))
+      (and (and (pair? x)
+		(eq? (car x) 'quote)
+		(pair? (cdr x))
+		(symbol? (cadr x)))))
     
     (define (just-symbols? form)
       (or (symbol? form)
@@ -2035,7 +2036,7 @@
 		;; ((lambda lambda*) (lint-any? (lambda (ff) (side-effect-with-vars? ff env vars)) (cddr form))) ; this is trickier than it looks
 		
 		(else
-		 (or (lint-any? (lambda (f)                                   ; any subform has a side-effect
+		 (or (lint-any? (lambda (f)                              ; any subform has a side-effect
 				  (and (not (null? f))
 				       (side-effect-with-vars? f env vars)))
 			   (cdr form))
@@ -22519,4 +22520,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 66 31603 864143
+;;; 64 31603 864143

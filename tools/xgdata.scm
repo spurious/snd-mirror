@@ -7915,7 +7915,7 @@
 (CFNC-3.0 "void gtk_tooltip_trigger_tooltip_query GdkDisplay* display")
 ;;; 3.89 (CFNC-3.0 "void gtk_button_set_image_position GtkButton* button GtkPositionType position")
 ;;; 3.89 (CFNC-3.0 "GtkPositionType gtk_button_get_image_position GtkButton* button")
-;;; ??? (CFNC-3.0 "gboolean gtk_show_uri GdkScreen* screen gchar* uri guint32 timestamp GError** [error]" 'const)
+;;; 3.89 (CFNC-3.0 "gboolean gtk_show_uri GdkScreen* screen gchar* uri guint32 timestamp GError** [error]" 'const)
 (CFNC-3.0 "GtkTreeViewColumn* gtk_tree_view_column_new_with_area GtkCellArea* area")
 (CFNC-3.0 "GtkWidget* gtk_tree_view_column_get_button GtkTreeViewColumn* tree_column")
 (CFNC-3.0 "void gtk_tree_view_column_focus_cell GtkTreeViewColumn* tree_column GtkCellRenderer* cell")
@@ -8537,7 +8537,7 @@
 ;;; 3.89.2 (CFNC-3.10 "void gtk_widget_get_preferred_height_and_baseline_for_width GtkWidget* widget gint width gint* [minimum_height] gint* [natural_height] gint* [minimum_baseline] gint* [natural_baseline]")
 ;;; (CFNC-3.10 "void gtk_widget_get_preferred_size_and_baseline GtkWidget* widget GtkRequisition* minimum_size GtkRequisition* natural_size gint* [minimum_baseline] gint* [natural_baseline]")
 (CFNC-3.10 "int gtk_widget_get_allocated_baseline GtkWidget* widget")
-(CFNC-3.10 "GtkAlign gtk_widget_get_valign_with_baseline GtkWidget* widget")
+;;; 3.89.5 (CFNC-3.10 "GtkAlign gtk_widget_get_valign_with_baseline GtkWidget* widget")
 (CFNC-3.10 "void gtk_widget_init_template GtkWidget* widget")
 ;;; (CFNC-3.10 "GObject* gtk_widget_get_automated_child GtkWidget* widget GType widget_type gchar* name" 'const)
 ;;; GObject* is apparently the problem here
@@ -9578,3 +9578,4 @@
 (CFNC-3.99 "void gtk_widget_set_focus_child GtkWidget* widget GtkWidget* child")
 ;(CFNC-3.99 "void gtk_widget_snapshot_child GtkWidget* widget GtkWidget* child GtkSnapshot* snapshot")
 
+;;; 3.89.5
