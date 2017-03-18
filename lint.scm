@@ -1667,7 +1667,7 @@
 	    (if (defined? v (rootlet))
 		(lint-format "~A ~A ~A shadows built-in ~A" caller head vtype v v)))))
 
-    (define* (make-fvar name ftype arglist initial-value env)
+    (define (make-fvar name ftype arglist initial-value env)
       (unless (keyword? name)
 	(recursion->iteration name ftype arglist initial-value env))
       (improper-arglist->define* name ftype arglist initial-value)
@@ -13303,18 +13303,16 @@
 		   ((4) (lint-format "~A could be (define ~A cddddr)" function-name function-name function-name)))))))
       
       (let ((fvar (and (symbol? function-name)
-		       (make-fvar :name (case definer 
-					  ((lambda lambda*) :lambda)
-					  ((dilambda)       :dilambda)
-					  (else function-name))
-				  :ftype definer
-				  :initial-value form
-				  :env env
-				  :arglist ((case definer 
-					      ((lambda lambda*) cadr)
-					      ((defmacro defmacro*) caddr)
-					      (else cdadr))
-					    form)))))
+		       (let ((fname (case definer 
+				      ((lambda lambda*) :lambda)
+				      ((dilambda)       :dilambda)
+				      (else             function-name)))
+			     (fargs ((case definer 
+				       ((lambda lambda*)     cadr)
+				       ((defmacro defmacro*) caddr)
+				       (else                 cdadr))
+				     form)))
+			 (make-fvar fname definer fargs form env)))))
 	(when fvar
 	  (let-set! (cdr fvar) 'allow-other-keys
 		    (case definer
@@ -13376,42 +13374,41 @@
 				       (env-difference function-name e cur-env ())))))
 		    (report-usage function-name definer (append (or nvars ()) args-as-vars) cur-env))
 
-		  (when (and (var? fvar)
-			     (memq definer '(define lambda define-macro)))
-		    ;; look for unused parameters that are passed a value other than #f
-		    (let ((set ())
-			  (unused ()))
-		      (for-each 
-		       (lambda (arg-var)
-			 (if (zero? (var-ref arg-var))
-			     (if (positive? (var-set arg-var))
-				 (set! set (cons (var-name arg-var) set))
-				 (if (not (memq (var-name arg-var) '(documentation signature iterator?)))
-				     (set! unused (cons (var-name arg-var) unused))))))
-		       args-as-vars)
-		      (when (or (pair? set)
-				(pair? unused))
-			(let ((proper-args (args->proper-list args)))
-			  (let ((sig (var-signature fvar))
-				(len (+ (length proper-args) 1)))
-			    (if (not sig)
-				(set! sig (make-list len #t))
-				(if (< (length sig) len)
-				    (set! sig (copy sig (make-list len #t)))))
-			    (let ((siglist (cdr sig)))
-			      (for-each
-			       (lambda (arg)
-				 (if (memq arg unused)
-				     (set-car! siglist 'unused-parameter?)
-				     (if (memq arg set)
-					 (set-car! siglist 'unused-set-parameter?)))
-				 (set! siglist (cdr siglist)))
-			       proper-args))
-			    (set! (var-signature fvar) sig))))))
-		  (if fvar 
-		      (cons fvar env)
+		  (if fvar
+		      (begin
+			(when (memq definer '(define lambda define-macro))
+			  ;; look for unused parameters that are passed a value other than #f
+			  (let ((set ())
+				(unused ()))
+			    (for-each 
+			     (lambda (arg-var)
+			       (if (zero? (var-ref arg-var))
+				   (if (positive? (var-set arg-var))
+				       (set! set (cons (var-name arg-var) set))
+				       (if (not (memq (var-name arg-var) '(documentation signature iterator?)))
+					   (set! unused (cons (var-name arg-var) unused))))))
+			     args-as-vars)
+			    (when (or (pair? set)
+				      (pair? unused))
+			      (let ((proper-args (args->proper-list args)))
+				(let ((sig (var-signature fvar))
+				      (len (+ (length proper-args) 1)))
+				  (if (not sig)
+				      (set! sig (make-list len #t))
+				      (if (< (length sig) len)
+					  (set! sig (copy sig (make-list len #t)))))
+				  (let ((siglist (cdr sig)))
+				    (for-each
+				     (lambda (arg)
+				       (if (memq arg unused)
+					   (set-car! siglist 'unused-parameter?)
+					   (if (memq arg set)
+					       (set-car! siglist 'unused-set-parameter?)))
+				       (set! siglist (cdr siglist)))
+				     proper-args))
+				  (set! (var-signature fvar) sig))))))
+			(cons fvar env))
 		      env))))))
-    
     
     (define (check-bool-cond caller form c1 c2 env)
       ;; (cond (x #f) (#t #t)) -> (not x)
@@ -18078,11 +18075,8 @@
 				    (lint-every? pair? (caddr form))))))
 		  ()
 		  (let ((vars (map car (caddr form))))
-		    (list (make-fvar :name named-let 
-				     :ftype (car form)
-				     :arglist vars
-				     :initial-value form
-				     :env env))))))
+		    (list (make-fvar named-let (car form) vars form env))))))
+
 	  
 	  ;; -------- remove-null-let --------
 	  (define (remove-null-let caller form env)
@@ -20670,7 +20664,7 @@
 		       (if (and (pair? (cdr form))
 				(symbol? (cadr form))
 				(not (keyword? (cadr form)))) ; !! this thing is a disaster from the very start
-			   (cons (make-fvar (cadr form) :ftype 'define-syntax) env)
+			   (cons (make-fvar (cadr form) 'define-syntax #f #f #f) env)
 			   env)))
 	
 	(hash-walker 'define-method   ; guile and mit-scheme have different syntaxes here
@@ -20683,11 +20677,11 @@
 				     (lint-walk-body caller 'define-method (cddr cdr-form) env)
 				     (let ((new-env (if (var-member (car cdr-form) env)
 							env
-							(cons (make-fvar (car cdr-form) :ftype 'define-method) env))))
+							(cons (make-fvar (car cdr-form) 'define-method #f #f #f) env))))
 				       (lint-walk-body caller (car cdr-form) (cddr cdr-form) new-env)))
 				 (let ((new-env (if (var-member (caar cdr-form) env)
 						    env
-						    (cons (make-fvar (caar cdr-form) :ftype 'define-method) env))))
+						    (cons (make-fvar (caar cdr-form) 'define-method #f #f #f) env))))
 				   (lint-walk-body caller (caar cdr-form) (cdr cdr-form) new-env)))))))
 	
 	(hash-walker 'let-syntax (lambda (caller form env)

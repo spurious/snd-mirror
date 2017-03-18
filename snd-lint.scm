@@ -89,16 +89,8 @@
 	  
 	  (let ((gen? (symbol name "?"))
 		(gen-make (symbol "make-" name)))
-	    (list (make-fvar :name gen?
-			     :ftype 'define
-			     :initial-value `(define (,gen? x) (let? x))
-			     :arglist (list 'x)
-			     :env env)
-		  (make-fvar :name gen-make
-			     :ftype 'define*
-			     :initial-value `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x))
-			     :arglist (list :rest 'x :allow-other-keys)
-			     :env env)))))))
+	    (list (make-fvar gen? 'define (list 'x) `(define (,gen? x) (let? x)) env)
+		  (make-fvar gen-make 'define* (list :rest 'x :allow-other-keys) `(define* (,gen-make :rest x :allow-other-keys) (apply inlet x)) env)))))))
   
   (hash-table-set! (*lint* 'walker-functions) 'defgenerator
 		   (lambda (caller form env)
