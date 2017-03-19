@@ -13374,7 +13374,8 @@
 				       (env-difference function-name e cur-env ())))))
 		    (report-usage function-name definer (append (or nvars ()) args-as-vars) cur-env))
 
-		  (if fvar
+		  (if (not fvar)
+		      env
 		      (begin
 			(when (memq definer '(define lambda define-macro))
 			  ;; look for unused parameters that are passed a value other than #f
@@ -13407,8 +13408,7 @@
 				       (set! siglist (cdr siglist)))
 				     proper-args))
 				  (set! (var-signature fvar) sig))))))
-			(cons fvar env))
-		      env))))))
+			(cons fvar env))))))))
     
     (define (check-bool-cond caller form c1 c2 env)
       ;; (cond (x #f) (#t #t)) -> (not x)

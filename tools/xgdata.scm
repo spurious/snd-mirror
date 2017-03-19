@@ -9519,7 +9519,7 @@
 ;;; 3.22.2: nothing new (many deprecations)
 ;;; 3.22.3: same
 ;;; 3.22.4: no changes
-(CFNC-3.22 "gboolean gtk_show_uri_on_window GdkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
+;;; 3.89 changed type? (CFNC-3.22 "gboolean gtk_show_uri_on_window GdkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
 ;;; 3.22 reports gtk_show_uri is deprecated, but it isn't??
 
 ;;; 3.89.1: 
@@ -9579,3 +9579,5 @@
 ;(CFNC-3.99 "void gtk_widget_snapshot_child GtkWidget* widget GtkWidget* child GtkSnapshot* snapshot")
 
 ;;; 3.89.5
+
+(CFNC-3.99 "gboolean gtk_show_uri_on_window GtkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
