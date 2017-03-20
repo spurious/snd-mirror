@@ -1156,6 +1156,17 @@ Started from `snd-ruby-mode', `snd-forth-mode' or `snd-scheme-mode'."
       (comint-send-string (snd-proc) (concat "include " filename "\n"))
     (comint-send-string (snd-proc) (concat "(load \"" filename"\"\)\n"))))
 
+;;; this from Orm Finnendahl 20-Mar-17
+(defun snd-scheme-open-file (filename)
+  "Open file in a running inferior Snd-Scheme process. Start the process if necessary."
+  (interactive "FOpen Soundfile:")
+  (if (comint-check-proc inf-snd-scheme-buffer)
+      (inf-snd-send-string (format "(open-sound \"%s\")" filename))
+    (progn
+      (set-buffer (apply 'make-comint inf-snd-scheme-buffer-name inf-snd-scheme-program-name nil (list filename)))
+      (inf-snd-scheme-mode)
+      (snd-send-invisible "#f"))))
+
 (defun snd-save-state ()
   "Synchronize the inferior Snd process with the edit buffer."
   (and (snd-proc)

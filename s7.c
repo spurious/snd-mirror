@@ -1055,7 +1055,7 @@ struct s7_scheme {
 
   /* optimizer symbols */
   s7_pointer and_p2_symbol, and_p_symbol, and_safe_p2_symbol, and_safe_p_symbol, 
-             and_unchecked_symbol, begin_unchecked_symbol, case_else_symbol, case_a_symbol, case_unchecked_symbol,
+             and_unchecked_symbol, begin_unchecked_symbol, case_a_symbol, case_unchecked_symbol,
              cond_all_x_2_symbol, cond_all_x_symbol, cond_simple_symbol, cond_unchecked_symbol, decrement_1_symbol,
              define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
              do_unchecked_symbol, dotimes_p_symbol, dox_symbol, cond_feed_symbol, 
@@ -2847,7 +2847,6 @@ enum {OP_NO_OP,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_opSSq_E, OP_LET_opaSSq_E,
       OP_LET_opSq, OP_LET_ALL_opSq, OP_LET_opSq_P, OP_LET_CAR, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1, OP_LET_A,
 
-      OP_CASE_ELSE, OP_CASE_ELSE_1,
       OP_CASE_A_E_S, OP_CASE_A_I_S, OP_CASE_A_G_S, OP_CASE_A_E_G, OP_CASE_A_G_G, 
       OP_CASE_S_E_S, OP_CASE_S_I_S, OP_CASE_S_G_S, OP_CASE_S_E_G, OP_CASE_S_G_G, 
       OP_CASE_P_E_S, OP_CASE_P_I_S, OP_CASE_P_G_S, OP_CASE_P_E_G, OP_CASE_P_G_G, 
@@ -3054,7 +3053,6 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "let_star_all_x", "let_opcq", "let_opssq", "let_opssq_e", "let_opassq_e",
       "let_opsq", "let_all_opsq", "let_opsq_p", "let_car", "let_one", "let_one_1", "let_z", "let_z_1", "let_a",
 
-      "case_else", "case_else_1",
       "case_a_e_s", "case_a_i_s", "case_a_g_s", "case_a_e_g", "case_a_g_g", 
       "case_s_e_s", "case_s_i_s", "case_s_g_s", "case_s_e_g", "case_s_g_g", 
       "case_p_e_s", "case_p_i_s", "case_p_g_s", "case_p_e_g", "case_p_g_g", 
@@ -54593,8 +54591,8 @@ static void check_lambda_star(s7_scheme *sc)
 
 static s7_pointer check_case(s7_scheme *sc)
 {
-  bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, bodies_simple = true;
-  int key_type = T_FREE, keys = 0;
+  bool keys_simple = true, has_feed_to = false, keys_single = true, bodies_simple = true;
+  int key_type = T_FREE;
   s7_pointer x;
 
   if (!is_pair(sc->code))                                            /* (case) or (case . 1) */
@@ -54629,7 +54627,6 @@ static s7_pointer check_case(s7_scheme *sc)
 	    eval_error(sc, "case clause key list ~A is not a proper list or 'else'", y);
 	  if (is_not_null(cdr(x)))                                  /* (case 1 (else 1) ((2) 1)) */
 	    eval_error(sc, "case 'else' clause, ~A, is not the last clause", x);
-	  has_else = true;
 	  if (is_pair(cddr(car_x)))
 	    {
 	      set_opt_else(sc->code, cdr(car_x));
@@ -54651,7 +54648,6 @@ static s7_pointer check_case(s7_scheme *sc)
 	    keys_simple = false;
 	  if (!is_null(cdr(y)))
 	    keys_single = false;
-	  keys++;
 	  if (key_type == T_FREE)
 	    key_type = type(car(y));
 	  else
@@ -54668,7 +54664,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		keys_simple = false;
 	      if (key_type != type(car(y)))
 		key_type = NUM_TYPES;
-	      keys++;
 	    }
 	}
       y = car_x;
@@ -54714,8 +54709,8 @@ static s7_pointer check_case(s7_scheme *sc)
       
       pair_set_syntax_symbol(sc->code, sc->case_unchecked_symbol);
 #if 0
-      fprintf(stderr, "%s:\n   keys: %d, key_type: %d simple: %d, keys_single: %d, has=>: %d, bodies_simple: %d, else: %d\n\n",
-	      DISPLAY_80(sc->code), keys, key_type, keys_simple, keys_single, has_feed_to, bodies_simple, has_else);
+      fprintf(stderr, "%s:\n   key_type: %d simple: %d, keys_single: %d, has=>: %d, bodies_simple: %d\n",
+	      DISPLAY_80(sc->code), key_type, keys_simple, keys_single, has_feed_to, bodies_simple);
 #endif
       if ((has_feed_to) ||
 	  (!bodies_simple) ||  /* x_x_g g=general keys or bodies */
@@ -54779,14 +54774,6 @@ static s7_pointer check_case(s7_scheme *sc)
 		    }
 		  else pair_set_syntax_symbol(sc->code, sc->case_p_e_s_symbol);
 		}
-	      
-	      if ((has_else) && /* don't combine ifs ! */
-		  (is_pair(car(sc->code))) &&
-		  (is_pair(cdr(sc->code))) &&
-		  (is_pair(cddr(sc->code))) &&
-		  (is_null(cdddr(sc->code))) &&
-		  (is_null(cdr(caddr(sc->code)))))
-		pair_set_syntax_symbol(sc->code, sc->case_else_symbol);
 	    }
 	}
     }
@@ -67770,7 +67757,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case OP_CASE_G_G:
 	  {
 	    s7_pointer x, y;
-	    /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	    sc->code = cdr(sc->code);
 	    if (is_simple(sc->value))
 	      {
@@ -67825,87 +67811,58 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  /* selector A, key type: E=eq (symbol/char), I=integer, G=any, S=single keys and single bodies */
 	case OP_CASE_A_E_S:
 	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_E_S;
 
 	case OP_CASE_A_I_S:
 	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_I_S;
 
-	case OP_CASE_A_G_S:
-	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
-	  goto CASE_G_S;
-
-	  /* selector A, key type: E=eq (symbol/char), G=any, G=general keys and general bodies */
 	case OP_CASE_A_E_G:
 	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_E_G;
 
 	case OP_CASE_A_G_G:
 	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_G_G;
-
-	  /* selector = symbol */
-	case OP_CASE_S_E_S:
-	  sc->value = find_symbol_checked(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
-	  goto CASE_E_S;
-
-	case OP_CASE_S_I_S:
-	  sc->value = find_symbol_checked(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
-	  goto CASE_I_S;
 
 	case OP_CASE_S_G_S:
 	  sc->value = find_symbol_checked(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_G_S;
-
-	  /* selector A, key type: E=eq (symbol/char), G=any, G=general keys and general bodies */
-	case OP_CASE_S_E_G:
-	  sc->value = find_symbol_checked(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
-	  goto CASE_E_G;
 
 	case OP_CASE_S_G_G:
 	  sc->value = find_symbol_checked(sc, car(sc->code));
-	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
 	  goto CASE_G_G;
 
 	  /* selector = any */
 	case OP_CASE_P_E_S:
-	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
 	  push_stack_no_args(sc, OP_CASE_E_S, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case OP_CASE_P_I_S:
-	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
 	  push_stack_no_args(sc, OP_CASE_I_S, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case OP_CASE_P_G_S:
-	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
 	  push_stack_no_args(sc, OP_CASE_G_S, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case OP_CASE_P_E_G:
-	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
 	  push_stack_no_args(sc, OP_CASE_E_G, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
 
 	case OP_CASE_P_G_G:
-	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
 	  push_stack_no_args(sc, OP_CASE_G_G, sc->code);
 	  sc->code = car(sc->code);
 	  goto EVAL;
+
+
+	case OP_CASE_S_E_S:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* goto CASE_E_S; */
 
 	CASE_E_S:
 	case OP_CASE_E_S:
@@ -67925,6 +67882,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL;
 	  }
 	  break;
+
+
+	case OP_CASE_S_I_S:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* goto CASE_I_S; */
 
 	CASE_I_S:
 	case OP_CASE_I_S:
@@ -67974,6 +67936,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  break;
 
+
+	case OP_CASE_A_G_S:
+	  sc->value = c_call(sc->code)(sc, car(sc->code));
+	  /* goto CASE_G_S; */
+
 	CASE_G_S:
 	case OP_CASE_G_S:
 	  {
@@ -67989,6 +67956,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto EVAL;
 	  }
 	  break;
+
+
+	case OP_CASE_S_E_G:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* goto CASE_E_G; */
 
 	CASE_E_G:
 	case OP_CASE_E_G:
@@ -68034,29 +68006,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		goto BEGIN1;
 	      }
-	    
-	    /* no match found */
-	    sc->value = sc->unspecified; /* this was sc->nil but the spec says case value is unspecified if no clauses match */
+	    sc->value = sc->unspecified;
 	  }
 	  break;
 
 
-	case OP_CASE_ELSE:
-	  push_stack_no_args(sc, OP_CASE_ELSE_1, cadr(sc->code));
-	  sc->code = car(sc->code);
-	  goto EVAL;
-
-	case OP_CASE_ELSE_1:
-	  /* sc->code here is of the form ((#<undefined>) ...) */
-	  if (sc->value == caar(sc->code))
-	    {
-	      sc->code = _TPair(cdr(sc->code));
-	      goto BEGIN1;
-	    }
-	  goto START;
-
-
-	  
 	case OP_ERROR_QUIT:
 	  if (sc->stack_end <= sc->stack_start)
 	    stack_reset(sc); /* sets stack_end to stack_start, then pushes op_barrier and op_eval_done */
@@ -74088,7 +74042,6 @@ s7_scheme *s7_init(void)
   assign_if(is_null, IS_NULL)
   assign_if(is_symbol, IS_SYMBOL)
 
-  sc->case_else_symbol =             assign_internal_syntax(sc, "case",        OP_CASE_ELSE);
   #define assign_case(Sym, Op) \
     sc->case_ ## Sym ## _e_s_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _E_S); \
     sc->case_ ## Sym ## _i_s_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _I_S); \
@@ -75177,8 +75130,8 @@ int main(int argc, char **argv)
  * g_assq?, g_is_keyword? g_is_eq_car_q? is_pair_cdr is_null_cadr(?)
  * track down the pair_equal/equal_ref calls -- printing trees I think -- are there more like the is_collected change?
  * why not use op_quote_unchecked? set-cdr! of constant! If marked immutable, we could catch this case and clear
- * case_e_g split (e_sg)? no need to count keys in check_case, if else not symbol/pair no need to goto eval
- *    case_else got lost, (car x) is most common selector: case_car_e_g best if local
+ * case_e_g split (e_sg)? if else not symbol/pair no need to goto eval
+ *    (car x) is most common selector: case_car_e_g best if local
  *
  * (*s7* 'print-length) appears to be ignored for lists
  *
@@ -75203,5 +75156,5 @@ int main(int argc, char **argv)
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
  *
- * put Orm's emacs code into snd-inf.el or somewhere.
+ * put Orm's emacs code into inf-snd.el or somewhere.
  */
