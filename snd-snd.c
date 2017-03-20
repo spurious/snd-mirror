@@ -638,8 +638,11 @@ int peak_env_graph(chan_info *cp, mus_float_t samples_per_pixel, int srate)
       k = (int)xf;
       xf += step;
       kk = (int)xf;
-      if (kk >= ep->peak_env_size) 
-	kk = ep->peak_env_size - 1;
+      if (kk >= ep->peak_env_size)
+	{
+	  kk = ep->peak_env_size - 1;
+          if (k > kk) k = kk; /* make sure we get a value below */
+	}
       for (; k <= kk; k++)
 	{
 	  if (ep->data_min[k] < ymin) ymin = ep->data_min[k];
