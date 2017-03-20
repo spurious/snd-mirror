@@ -1055,24 +1055,27 @@ struct s7_scheme {
 
   /* optimizer symbols */
   s7_pointer and_p2_symbol, and_p_symbol, and_safe_p2_symbol, and_safe_p_symbol, 
-             and_unchecked_symbol, begin_unchecked_symbol, case_simple_symbol, case_simpler_1_symbol, case_else_symbol, case_a_symbol,
-             case_simpler_ss_symbol, case_simpler_symbol, case_simplest_ss_symbol, case_simplest_symbol, case_unchecked_symbol,
+             and_unchecked_symbol, begin_unchecked_symbol, case_else_symbol, case_a_symbol, case_unchecked_symbol,
              cond_all_x_2_symbol, cond_all_x_symbol, cond_simple_symbol, cond_unchecked_symbol, decrement_1_symbol,
              define_constant_unchecked_symbol, define_funchecked_symbol, define_star_unchecked_symbol, define_unchecked_symbol,
              do_unchecked_symbol, dotimes_p_symbol, dox_symbol, cond_feed_symbol, 
              if_unchecked_symbol,
 
+             case_a_e_s_symbol, case_a_i_s_symbol, case_a_g_s_symbol, case_a_e_g_symbol, case_a_g_g_symbol, 
+             case_s_e_s_symbol, case_s_i_s_symbol, case_s_g_s_symbol, case_s_e_g_symbol, case_s_g_g_symbol, 
+             case_p_e_s_symbol, case_p_i_s_symbol, case_p_g_s_symbol, case_p_e_g_symbol, case_p_g_g_symbol, 
+
              if_a_p_p_symbol, if_a_p_symbol, if_a_r_symbol, if_a_n_n_symbol, if_a_n_symbol, 
-             if_and2_p_p_symbol, if_and2_p_symbol, if_and2_r_symbol, if_and2_n_n_symbol, if_and2_n_symbol,
-             if_andp_p_p_symbol, if_andp_p_symbol, if_andp_r_symbol, if_andp_n_n_symbol, if_andp_n_symbol,
-             if_cc_p_p_symbol, if_cc_p_symbol, if_cc_r_symbol, if_cc_n_n_symbol, if_cc_n_symbol,
+             if_c_p_p_symbol, if_c_p_symbol, if_c_r_symbol, if_c_n_n_symbol, if_c_n_symbol,
              if_cs_p_p_symbol, if_cs_p_symbol, if_cs_r_symbol, if_cs_n_n_symbol, if_cs_n_symbol, 
              if_csc_p_p_symbol, if_csc_p_symbol, if_csc_r_symbol, if_csc_n_n_symbol, if_csc_n_symbol,
              if_csq_p_p_symbol, if_csq_p_symbol, if_csq_r_symbol, if_csq_n_n_symbol, if_csq_n_symbol,
              if_css_p_p_symbol, if_css_p_symbol, if_css_r_symbol, if_css_n_n_symbol, if_css_n_symbol,
              if_is_pair_p_p_symbol, if_is_pair_p_symbol, if_is_pair_r_symbol, if_is_pair_n_n_symbol, if_is_pair_n_symbol,
              if_is_symbol_p_p_symbol, if_is_symbol_p_symbol, if_is_symbol_r_symbol, if_is_symbol_n_n_symbol, if_is_symbol_n_symbol,
-             if_opssq_p_p_symbol, if_opssq_p_symbol, if_opssq_r_symbol, if_opssq_n_n_symbol, if_opssq_n_symbol,
+             if_opsq_p_p_symbol, if_opsq_p_symbol, if_opsq_r_symbol, if_opsq_n_n_symbol, if_opsq_n_symbol,
+             if_and2_p_p_symbol, if_and2_p_symbol, if_and2_r_symbol, if_and2_n_n_symbol, if_and2_n_symbol,
+             if_andp_p_p_symbol, if_andp_p_symbol, if_andp_r_symbol, if_andp_n_n_symbol, if_andp_n_symbol,
              if_or2_p_p_symbol, if_or2_p_symbol, if_or2_r_symbol, if_or2_n_n_symbol, if_or2_n_symbol,
              if_orp_p_p_symbol, if_orp_p_symbol, if_orp_r_symbol, if_orp_n_n_symbol, if_orp_n_symbol,
              if_p_p_p_symbol, if_p_p_symbol, if_p_r_symbol, if_p_n_n_symbol, if_p_n_symbol,
@@ -1801,7 +1804,7 @@ bool s7_is_stepper(s7_pointer p)      {return(is_stepper(p));}
 
 /* these two are using bits already in use on pairs, but the contexts never overlap, I hope... I need more bits. */
 #define T_HAS_ALL_X                   T_SETTER
-#define set_all_x(p)                  typeflag(_TPair(p)) |= T_HAS_ALL_X
+#define set_has_all_x(p)              typeflag(_TPair(p)) |= T_HAS_ALL_X
 #define has_all_x(p)                  ((typeflag(_TPair(p)) & T_HAS_ALL_X) != 0)
 
 #define T_LOCALIZED                   T_SAFE_STEPPER
@@ -1966,7 +1969,7 @@ static int not_heap = -1;
 #define c_callee(f)                   ((s7_function)opt2(f,      F_CALL))
 #define c_call(f)                     ((s7_function)opt2(f,      F_CALL))
 #define set_c_call(f, X)              set_opt2(f, (s7_pointer)X, F_CALL)
-#define set_x_call(f, X)              do {set_opt2(f, (s7_pointer)X, F_CALL); set_all_x(f);} while (0)
+#define set_x_call(f, X)              do {set_opt2(f, (s7_pointer)X, F_CALL); set_has_all_x(f);} while (0)
 #define opt_key(P)                    _NFre(opt2(P,              F_KEY))
 #define set_opt_key(P, X)             set_opt2(P, _NFre(X),      F_KEY)
 #define opt_slow(P)                   _TLst(opt2(P,              F_SLOW))
@@ -1986,6 +1989,8 @@ static int not_heap = -1;
 #define set_opt_sym3(P, X)            set_opt3(P, _TSym(X),      G_SYM)
 #define opt_and_2_test(P)             _TPair(opt3(P,             G_AND))
 #define set_opt_and_2_test(P, X)      set_opt3(P, _TPair(X),     G_AND)
+#define opt_else(P)                   _NFre(opt3(P,              G_AND))
+#define set_opt_else(P, X)            set_opt3(P, _NFre(X),      G_AND)
 
 
 #define car(p)                        (_TLst(p))->object.cons.car
@@ -2803,7 +2808,7 @@ enum {OP_NO_OP,
       OP_COND, OP_COND1, OP_COND1_1, OP_COND_SIMPLE, OP_COND1_SIMPLE,
       OP_AND, OP_AND1, OP_OR, OP_OR1,
       OP_DEFINE_MACRO, OP_DEFINE_MACRO_STAR, OP_DEFINE_EXPANSION,
-      OP_CASE, OP_CASE1, 
+      OP_CASE, 
       OP_READ_LIST, OP_READ_NEXT, OP_READ_DOT, OP_READ_QUOTE,
       OP_READ_QUASIQUOTE, OP_READ_UNQUOTE, OP_READ_APPLY_VALUES,
       OP_READ_VECTOR, OP_READ_BYTE_VECTOR, OP_READ_INT_VECTOR, OP_READ_FLOAT_VECTOR, OP_READ_DONE,
@@ -2842,20 +2847,25 @@ enum {OP_NO_OP,
       OP_LET_STAR_ALL_X, OP_LET_opCq, OP_LET_opSSq, OP_LET_opSSq_E, OP_LET_opaSSq_E,
       OP_LET_opSq, OP_LET_ALL_opSq, OP_LET_opSq_P, OP_LET_CAR, OP_LET_ONE, OP_LET_ONE_1, OP_LET_Z, OP_LET_Z_1, OP_LET_A,
 
-      OP_CASE_A, OP_CASE_SIMPLE, OP_CASE_SIMPLER, OP_CASE_SIMPLER_1, OP_CASE_SIMPLER_SS, OP_CASE_SIMPLEST, OP_CASE_SIMPLEST_SS, OP_CASE_ELSE, OP_CASE_ELSE_1,
+      OP_CASE_ELSE, OP_CASE_ELSE_1,
+      OP_CASE_A_E_S, OP_CASE_A_I_S, OP_CASE_A_G_S, OP_CASE_A_E_G, OP_CASE_A_G_G, 
+      OP_CASE_S_E_S, OP_CASE_S_I_S, OP_CASE_S_G_S, OP_CASE_S_E_G, OP_CASE_S_G_G, 
+      OP_CASE_P_E_S, OP_CASE_P_I_S, OP_CASE_P_G_S, OP_CASE_P_E_G, OP_CASE_P_G_G, 
+      OP_CASE_E_S, OP_CASE_I_S, OP_CASE_G_S, OP_CASE_E_G, OP_CASE_G_G, 
+
       OP_IF_UNCHECKED, OP_AND_UNCHECKED, OP_AND_P, OP_AND_P1, OP_AND_P2, OP_AND_SAFE_P, OP_AND_SAFE_P2, 
       OP_OR_UNCHECKED, OP_OR_P, OP_OR_P1, OP_OR_P2, OP_OR_SAFE_P, OP_OR_SAFE_P2,
       OP_COND_FEED, OP_COND_FEED_1, OP_WHEN_S, OP_WHEN_A, OP_WHEN_P, OP_UNLESS_S, OP_UNLESS_A,
 
       OP_IF_S_P, OP_IF_S_P_P, OP_IF_S_R, OP_IF_S_N, OP_IF_S_N_N,
-      OP_IF_CC_P, OP_IF_CC_P_P, OP_IF_CC_R, OP_IF_CC_N, OP_IF_CC_N_N,
+      OP_IF_C_P, OP_IF_C_P_P, OP_IF_C_R, OP_IF_C_N, OP_IF_C_N_N,
       OP_IF_CS_P, OP_IF_CS_P_P, OP_IF_CS_R, OP_IF_CS_N, OP_IF_CS_N_N,
       OP_IF_CSQ_P, OP_IF_CSQ_P_P, OP_IF_CSQ_R, OP_IF_CSQ_N, OP_IF_CSQ_N_N,
       OP_IF_CSS_P, OP_IF_CSS_P_P, OP_IF_CSS_R, OP_IF_CSS_N, OP_IF_CSS_N_N,
       OP_IF_CSC_P, OP_IF_CSC_P_P, OP_IF_CSC_R, OP_IF_CSC_N, OP_IF_CSC_N_N,
       OP_IF_IS_PAIR_P, OP_IF_IS_PAIR_P_P, OP_IF_IS_PAIR_R, OP_IF_IS_PAIR_N, OP_IF_IS_PAIR_N_N,
       OP_IF_IS_NULL_P, OP_IF_IS_NULL_P_P, OP_IF_IS_NULL_R, OP_IF_IS_NULL_N, OP_IF_IS_NULL_N_N,
-      OP_IF_opSSq_P, OP_IF_opSSq_P_P, OP_IF_opSSq_R, OP_IF_opSSq_N, OP_IF_opSSq_N_N, 
+      OP_IF_opSq_P, OP_IF_opSq_P_P, OP_IF_opSq_R, OP_IF_opSq_N, OP_IF_opSq_N_N, 
       OP_IF_S_opCq_P, OP_IF_S_opCq_P_P, OP_IF_S_opCq_R, OP_IF_S_opCq_N, OP_IF_S_opCq_N_N, 
       OP_IF_IS_SYMBOL_P, OP_IF_IS_SYMBOL_P_P, OP_IF_IS_SYMBOL_R, OP_IF_IS_SYMBOL_N, OP_IF_IS_SYMBOL_N_N,
       OP_IF_A_P, OP_IF_A_P_P, OP_IF_A_R, OP_IF_A_N, OP_IF_A_N_N,
@@ -3006,7 +3016,7 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "cond", "cond1", "cond1_1", "cond_simple", "cond1_simple",
       "and", "and1", "or", "or1",
       "define_macro", "define_macro_star", "define_expansion",
-      "case", "case1", "read_list", "read_next", "read_dot", "read_quote",
+      "case", "read_list", "read_next", "read_dot", "read_quote",
       "read_quasiquote", "read_unquote", "read_apply_values",
       "read_vector", "read_byte_vector", "read_int_vector", "read_float_vector", "read_done",
       "load_return_if_eof", "load_close_and_pop_if_eof", "eval_done",
@@ -3044,20 +3054,25 @@ static const char *op_names[OP_MAX_DEFINED_1] = {
       "let_star_all_x", "let_opcq", "let_opssq", "let_opssq_e", "let_opassq_e",
       "let_opsq", "let_all_opsq", "let_opsq_p", "let_car", "let_one", "let_one_1", "let_z", "let_z_1", "let_a",
 
-      "case_a", "case_simple", "case_simpler", "case_simpler_1", "case_simpler_ss", "case_simplest", "case_simplest_ss", "case_else", "case_else_1",
+      "case_else", "case_else_1",
+      "case_a_e_s", "case_a_i_s", "case_a_g_s", "case_a_e_g", "case_a_g_g", 
+      "case_s_e_s", "case_s_i_s", "case_s_g_s", "case_s_e_g", "case_s_g_g", 
+      "case_p_e_s", "case_p_i_s", "case_p_g_s", "case_p_e_g", "case_p_g_g", 
+      "case_e_s", "case_i_s", "case_g_s", "case_e_g", "case_g_g", 
+
       "if_unchecked", "and_unchecked", "and_p", "and_p1", "and_p2", "and_safe_p", "and_safe_p2", 
       "or_unchecked", "or_p", "or_p1", "or_p2", "or_safe_p", "or_safe_p2",
       "cond_feed", "cond_feed_1", "when_s", "when_a", "when_p", "unless_s", "unless_a",
 
       "if_s_p", "if_s_p_p", "if_s_r", "if_s_n", "if_s_n_n",
-      "if_cc_p", "if_cc_p_p", "if_cc_r", "if_cc_n", "if_cc_n_n",
+      "if_c_p", "if_c_p_p", "if_c_r", "if_c_n", "if_c_n_n",
       "if_cs_p", "if_cs_p_p", "if_cs_r", "if_cs_n", "if_cs_n_n",
       "if_csq_p", "if_csq_p_p", "if_csq_r", "if_csq_n", "if_csq_n_n",
       "if_css_p", "if_css_p_p", "if_css_r","if_css_n", "if_css_n_n",
       "if_csc_p", "if_csc_p_p", "if_csc_r", "if_csc_n", "if_csc_n_n",
       "if_is_pair_p", "if_is_pair_p_p", "if_is_pair_r", "if_is_pair_n", "if_is_pair_n_n",
       "if_is_null_p", "if_is_null_p_p", "if_is_null_r", "if_is_null_n", "if_is_null_n_n",
-      "if_opssq_p", "if_opssq_p_p", "if_opssq_r", "if_opssq_n", "if_opssq_n_n",
+      "if_opsq_p", "if_opsq_p_p", "if_opsq_r", "if_opsq_n", "if_opsq_n_n",
       "if_s_opcq_p", "if_s_opcq_p_p", "if_s_opcq_r","if_s_opcq_n", "if_s_opcq_n_n",
       "if_is_symbol_p", "if_is_symbol_p_p", "if_is_symbol_r", "if_is_symbol_n", "if_is_symbol_n_n",
       "if_a_p", "if_a_p_p", "if_a_r", "if_a_n", "if_a_n_n",
@@ -54578,7 +54593,8 @@ static void check_lambda_star(s7_scheme *sc)
 
 static s7_pointer check_case(s7_scheme *sc)
 {
-  bool keys_simple = true, have_else = false, has_feed_to = false, keys_single = true, bodies_simple = true;
+  bool keys_simple = true, has_else = false, has_feed_to = false, keys_single = true, bodies_simple = true;
+  int key_type = T_FREE, keys = 0;
   s7_pointer x;
 
   if (!is_pair(sc->code))                                            /* (case) or (case . 1) */
@@ -54587,22 +54603,24 @@ static s7_pointer check_case(s7_scheme *sc)
     eval_error(sc, "case has no clauses?:  ~A", sc->code);
   if (!is_pair(cadr(sc->code)))                                      /* (case 1 1) */
     eval_error(sc, "case clause is not a list? ~A", sc->code);
+  set_opt_else(sc->code, sc->unspecified);
 
   for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
     {
-      s7_pointer y;
+      s7_pointer y, car_x;
       if ((!is_pair(x)) ||                                           /* (case 1 ((2) 1) . 1) */
 	  (!is_pair(car(x))))
 	eval_error(sc, "case clause ~A messed up", x);
+      car_x = car(x);
 
-      if (!s7_is_list(sc, cdar(x)))                                  /* (case 1 ((1))) */
-	eval_error(sc, "case clause result messed up: ~A", car(x));
+      if (!s7_is_list(sc, cdr(car_x)))                               /* (case 1 ((1))) */
+	eval_error(sc, "case clause result messed up: ~A", car_x);
 
       if ((bodies_simple) &&
-	  ((is_null(cdar(x))) || (!is_null(cddar(x)))))
+	  ((is_null(cdr(car_x))) || (!is_null(cddr(car_x)))))
 	bodies_simple = false;
 	
-      y = caar(x);
+      y = car(car_x);
       if (!is_pair(y))
 	{
 	  if ((y != sc->else_symbol) &&                              /* (case 1 (2 1)) */
@@ -54611,27 +54629,36 @@ static s7_pointer check_case(s7_scheme *sc)
 	    eval_error(sc, "case clause key list ~A is not a proper list or 'else'", y);
 	  if (is_not_null(cdr(x)))                                  /* (case 1 (else 1) ((2) 1)) */
 	    eval_error(sc, "case 'else' clause, ~A, is not the last clause", x);
-	  have_else = true;
+	  has_else = true;
+	  if (is_pair(cddr(car_x)))
+	    {
+	      set_opt_else(sc->code, cdr(car_x));
+	      /* fprintf(stderr, "else not simple\n"); */
+	      bodies_simple = false;
+	    }
+	  else
+	    {
+	      if ((bodies_simple) && 
+		  (keys_single))
+		set_opt_else(sc->code, cadr(car_x));
+	      else set_opt_else(sc->code, cdr(car_x));
+	      set_opt_clause(x, cadr(car_x));
+	    }
 	}
       else
 	{
-	  /* what about (case 1 ((1) #t) ((1) #f)) [this is ok by guile]
-	   *            (case 1 ((1) #t) ())
-	   *            (case 1 ((2 2 2) 1)): guile says #<unspecified>
-	   * but we do support: (let ((otherwise else)) (case 0 ((1) 2) (otherwise 3))) -> 3!
-	   *   is that consistent? 
-	   *   (let ((else #f)) (case 0 ((1) 2) (else 3))) -> 3
-	   *   (case 0 ((1) 2) (else (let ((else 3)) else))) -> 3
-	   * the selector (sc->value) is evaluated, but the search key is not
-	   *    (case '2 ((2) 3) (else 1)) -> 3
-	   *    (case '2 (('2) 3) (else 1)) -> 1
-	   * another approach: make else a value, not a symbol, like #<unspecified>, evaluates to itself
-	   * or set it to be immutable, but I guess I'll say "use #_else" for now.
-	   */
 	  if (!is_simple(car(y)))
 	    keys_simple = false;
 	  if (!is_null(cdr(y)))
 	    keys_single = false;
+	  keys++;
+	  if (key_type == T_FREE)
+	    key_type = type(car(y));
+	  else
+	    {
+	      if (key_type != type(car(y)))
+		key_type = NUM_TYPES;
+	    }
 
 	  for (y = cdr(y); is_not_null(y); y = cdr(y))
 	    {
@@ -54639,9 +54666,12 @@ static s7_pointer check_case(s7_scheme *sc)
 		eval_error(sc, "case key list is improper? ~A", x);
 	      if (!is_simple(car(y)))
 		keys_simple = false;
+	      if (key_type != type(car(y)))
+		key_type = NUM_TYPES;
+	      keys++;
 	    }
 	}
-      y = car(x);
+      y = car_x;
       if ((is_pair(cdr(y))) &&
 	  (cadr(y) == sc->feed_to_symbol) &&
 	  (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
@@ -54657,73 +54687,106 @@ static s7_pointer check_case(s7_scheme *sc)
   if ((is_overlaid(sc->code)) &&
       (has_opt_back(sc->code)))
     {
-      for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
+      if ((keys_single) &&
+	  (bodies_simple))
 	{
-	  set_opt_key(x, caar(x));
-	  if ((is_pair(opt_key(x))) &&
-	      (is_pair(cdar(x))))
-	      set_opt_clause(x, cadar(x));
-	}
-      
-      if (is_all_x_safe(sc, car(sc->code)))
-	{
-	  pair_set_syntax_symbol(sc->code, sc->case_a_symbol);
-	  set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
-	}
-      else pair_set_syntax_symbol(sc->code, sc->case_unchecked_symbol);
-
-      if ((!has_feed_to) &&
-	  (keys_simple))
-	{
-	  if (have_else) /* don't combine ifs ! */
+	  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
 	    {
-	      if (is_symbol(car(sc->code)))                                /* (case + ((-) 0) ((+) 2) (else 3)) */
-		pair_set_syntax_symbol(sc->code, sc->case_simple_symbol);  /* can include (else) case */
-	      /* perhaps if null result skip case_simple? no impact in timings */
-
-	      if ((keys_single) &&
+	      set_opt_key(x, caar(x));
+	      if (is_pair(opt_key(x)))
+		{
+		  set_opt_key(x, car(opt_key(x)));
+		  if (is_pair(cdar(x)))
+		    set_opt_clause(x, cadar(x));
+		}
+	    }
+	}
+      else
+	{
+	  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
+	    {
+	      set_opt_key(x, caar(x));
+	      if ((is_pair(opt_key(x))) &&
+		  (is_pair(cdar(x))))
+		set_opt_clause(x, cadar(x));
+	    }
+      }
+      
+      pair_set_syntax_symbol(sc->code, sc->case_unchecked_symbol);
+#if 0
+      fprintf(stderr, "%s:\n   keys: %d, key_type: %d simple: %d, keys_single: %d, has=>: %d, bodies_simple: %d, else: %d\n\n",
+	      DISPLAY_80(sc->code), keys, key_type, keys_simple, keys_single, has_feed_to, bodies_simple, has_else);
+#endif
+      if ((has_feed_to) ||
+	  (!bodies_simple) ||  /* x_x_g g=general keys or bodies */
+	  (!keys_single))
+	{
+	  if (!keys_simple)  /* x_g_g (no int case here) */
+	    {
+	      if (is_symbol(car(sc->code)))
+		pair_set_syntax_symbol(sc->code, sc->case_s_g_g_symbol);
+	      else
+		{
+		  if (is_all_x_safe(sc, car(sc->code)))
+		    {
+		      pair_set_syntax_symbol(sc->code, sc->case_a_g_g_symbol);
+		      set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
+		    }
+		  else pair_set_syntax_symbol(sc->code, sc->case_p_g_g_symbol);
+		}
+	    }
+	  else             /* x_e_g */
+	    {
+	      if (is_symbol(car(sc->code)))
+		pair_set_syntax_symbol(sc->code, sc->case_s_e_g_symbol);
+	      else
+		{
+		  if (is_all_x_safe(sc, car(sc->code)))
+		    {
+		      pair_set_syntax_symbol(sc->code, sc->case_a_e_g_symbol);
+		      set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
+		    }
+		  else pair_set_syntax_symbol(sc->code, sc->case_p_e_g_symbol);
+		}
+	    }
+	}
+      else                /* x_x_s */
+	{
+	  if (!keys_simple)  /* x_g|i_s */
+	    {
+	      if (is_symbol(car(sc->code)))
+		pair_set_syntax_symbol(sc->code, (key_type == T_INTEGER) ? sc->case_s_i_s_symbol: sc->case_s_g_s_symbol);
+	      else
+		{
+		  if (is_all_x_safe(sc, car(sc->code)))
+		    {
+		      pair_set_syntax_symbol(sc->code, (key_type == T_INTEGER) ? sc->case_a_i_s_symbol : sc->case_a_g_s_symbol);
+		      set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
+		    }
+		  else pair_set_syntax_symbol(sc->code, (key_type == T_INTEGER) ? sc->case_p_i_s_symbol : sc->case_p_g_s_symbol);
+		}
+	    }
+	  else             /* x_e_s */
+	    {
+	      if (is_symbol(car(sc->code)))
+		pair_set_syntax_symbol(sc->code, sc->case_s_e_s_symbol);
+	      else
+		{
+		  if (is_all_x_safe(sc, car(sc->code)))
+		    {
+		      pair_set_syntax_symbol(sc->code, sc->case_a_e_s_symbol);
+		      set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
+		    }
+		  else pair_set_syntax_symbol(sc->code, sc->case_p_e_s_symbol);
+		}
+	      
+	      if ((has_else) && /* don't combine ifs ! */
 		  (is_pair(car(sc->code))) &&
 		  (is_pair(cdr(sc->code))) &&
 		  (is_pair(cddr(sc->code))) &&
 		  (is_null(cdddr(sc->code))) &&
 		  (is_null(cdr(caddr(sc->code)))))
 		pair_set_syntax_symbol(sc->code, sc->case_else_symbol);
-	    }
-	  else
-	    {
-	      if (keys_single)
-		{
-		  if ((bodies_simple) &&                                    /* (case x ((a) 1)) */
-		      (is_symbol(car(sc->code))))
-		    pair_set_syntax_symbol(sc->code, sc->case_simplest_symbol);
-		  else
-		    {
-		      if ((is_optimized(car(sc->code))) &&                  /* (case (string-ref s i) ((#\a) 1) ((#\i) 2)) */
-			  (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
-			pair_set_syntax_symbol(sc->code, sc->case_simplest_ss_symbol);
-		    }
-		  for (x = cdr(sc->code); is_not_null(x); x = cdr(x))
-		    set_opt_key(x, caaar(x));
-		}
-	      else
-		{
-		  if (bodies_simple)
-		    {
-		      if (is_symbol(car(sc->code)))                          /* (case head ((and if cond when) arg1) ((or if2) (list 'not arg1))) */
-			pair_set_syntax_symbol(sc->code, sc->case_simpler_1_symbol);
-		      else
-			{
-			  if ((is_optimized(car(sc->code))) &&               /* (case (string-ref s i) ((#\a #\h) 1) ((#\i #\o) 2)) */
-			      (optimize_op(car(sc->code)) == HOP_SAFE_C_SS))
-			    pair_set_syntax_symbol(sc->code, sc->case_simpler_ss_symbol);
-			}
-		    }
-		  else
-		    {
-		      if (is_symbol(car(sc->code)))                          /* (case x ((lambda lambda*) (display "x") (+ 2 3)) ((case when) 3))) */
-			pair_set_syntax_symbol(sc->code, sc->case_simpler_symbol);
-		    }
-		}
 	    }
 	}
     }
@@ -55587,101 +55650,90 @@ static void set_if_opts(s7_scheme *sc, bool one_branch, bool reversed)
 	{
 	  if (is_h_safe_c_c(test))
 	    {
-	      set_opt_pair2(sc->code, cdr(test));
 	      if (c_callee(test) == g_and_2)
 		{
 		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_and2, one_branch, reversed, not_case));
+		  set_opt_pair2(sc->code, cdr(test));
 		  set_opt_and_2_test(sc->code, cddr(test));
+		  return;
 		}
+	      if (c_callee(test) == g_or_2)
+		{
+		  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_or2, one_branch, reversed, not_case));
+		  set_opt_pair2(sc->code, cdr(test));
+		  set_opt_and_2_test(sc->code, cddr(test));
+		  return;
+		}
+	      set_opt_pair2(sc->code, cdr(test));
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_c, one_branch, reversed, not_case));
+	      return;
+	    }
+
+	  if (is_h_safe_c_s(test))
+	    {
+	      /* these miss methods? */
+	      if (car(test) == sc->is_pair_symbol)
+		pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_pair, one_branch, reversed, not_case));
 	      else
 		{
-		  if (c_callee(test) == g_or_2)
+		  if (car(test) == sc->is_null_symbol)
+		    pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_null, one_branch, reversed, not_case));
+		  else
 		    {
-		      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_or2, one_branch, reversed, not_case));
-		      set_opt_and_2_test(sc->code, cddr(test));
+		      if (car(test) == sc->is_symbol_symbol)
+			pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_symbol, one_branch, reversed, not_case));
+		      else pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_cs, one_branch, reversed, not_case));
 		    }
-		  else pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_cc, one_branch, reversed, not_case));
 		}
+	      set_opt_sym2(sc->code, cadr(test));
+	      return;
+	    }
+
+	  if (optimize_op(test) == HOP_SAFE_C_SQ)
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_csq, one_branch, reversed, not_case));
+	      set_opt_con2(sc->code, cadr(caddr(test)));
+	      set_opt_sym3(sc->code, cadr(test));
+	      return;
+	    }
+	  if (optimize_op(test) == HOP_SAFE_C_SS)
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_css, one_branch, reversed, not_case));
+	      set_opt_sym2(sc->code, caddr(test));
+	      set_opt_sym3(sc->code, cadr(test));
+	      return;
+	    }
+	  if (optimize_op(test) == HOP_SAFE_C_SC)
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_csc, one_branch, reversed, not_case));
+	      set_opt_con2(sc->code, caddr(test));
+	      set_opt_sym3(sc->code, cadr(test));
+	      return;
+	    }
+	  if (optimize_op(test) == HOP_SAFE_C_S_opCq)
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_s_opcq, one_branch, reversed, not_case));
+	      set_opt_pair2(sc->code, caddr(test));
+	      set_opt_sym3(sc->code, cadr(test));
+	      return;
+	    }
+	  if (optimize_op(test) == HOP_SAFE_C_opSq)
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_opsq, one_branch, reversed, not_case));
+	      set_opt_pair2(sc->code, cadr(test));
+	      set_opt_sym3(sc->code, cadr(cadr(test)));
+	      return;
+	    }
+	  if (is_all_x_safe(sc, test))
+	    {
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_a, one_branch, reversed, not_case));
+	      if (not_case)
+		set_x_call(cdar(sc->code), all_x_eval(sc, cdar(sc->code), sc->envir, let_symbol_is_safe));
+	      else set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
 	    }
 	  else
 	    {
-	      if (is_h_safe_c_s(test))
-		{
-		  /* these miss methods? */
-		  if (car(test) == sc->is_pair_symbol)
-		    pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_pair, one_branch, reversed, not_case));
-		  else
-		    {
-		      if (car(test) == sc->is_null_symbol)
-			pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_null, one_branch, reversed, not_case));
-		      else
-			{
-			  if (car(test) == sc->is_symbol_symbol)
-			    pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_is_symbol, one_branch, reversed, not_case));
-			  else pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_cs, one_branch, reversed, not_case));
-			}
-		    }
-		  set_opt_sym2(sc->code, cadr(test));
-		}
-	      else
-		{
-		  if (optimize_op(test) == HOP_SAFE_C_SQ)
-		    {
-		      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_csq, one_branch, reversed, not_case));
-		      set_opt_con2(sc->code, cadr(caddr(test)));
-		      set_opt_sym3(sc->code, cadr(test));
-		    }
-		  else
-		    {
-		      if (optimize_op(test) == HOP_SAFE_C_SS)
-			{
-			  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_css, one_branch, reversed, not_case));
-			  set_opt_sym2(sc->code, caddr(test));
-			  set_opt_sym3(sc->code, cadr(test));
-			}
-		      else
-			{
-			  if (optimize_op(test) == HOP_SAFE_C_SC)
-			    {
-			      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_csc, one_branch, reversed, not_case));
-			      set_opt_con2(sc->code, caddr(test));
-			      set_opt_sym3(sc->code, cadr(test));
-			    }
-			  else
-			    {
-			      if (optimize_op(test) == HOP_SAFE_C_S_opCq)
-				{
-				  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_s_opcq, one_branch, reversed, not_case));
-				  set_opt_pair2(sc->code, caddr(test));
-				  set_opt_sym3(sc->code, cadr(test));
-				}
-			      else
-				{
-				  if (optimize_op(test) == HOP_SAFE_C_opSSq)
-				    {
-				      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_opssq, one_branch, reversed, not_case));
-				      set_opt_pair2(sc->code, cadr(test));
-				      set_opt_sym3(sc->code, caddr(cadr(test)));
-				    }
-				  else
-				    {
-				      if (is_all_x_safe(sc, test))
-					{
-					  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_a, one_branch, reversed, not_case));
-					  if (not_case)
-					    set_x_call(cdar(sc->code), all_x_eval(sc, cdar(sc->code), sc->envir, let_symbol_is_safe));
-					  else set_x_call(sc->code, all_x_eval(sc, sc->code, sc->envir, let_symbol_is_safe));
-					}
-				      else
-					{
-					  pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_z, one_branch, reversed, not_case));
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
+	      pair_set_syntax_symbol(sc->code, choose_if_opt(sc->if_z, one_branch, reversed, not_case));
 	    }
 	}
       else
@@ -55719,6 +55771,10 @@ static void set_if_opts(s7_scheme *sc, bool one_branch, bool reversed)
     }
 }
 
+
+/* (cond <> (else <>)) only happens in old-fashioned code, so set_if_opts covers if/when/unless but not cond 
+ * g_and_3 and g_or_3 are slightly slower here??
+ */
 
 static s7_pointer check_if(s7_scheme *sc)
 {
@@ -66187,7 +66243,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (is_true(sc, c_call(sc->code)(sc, car(sc->code)))),	
 		  if (is_false(sc, c_call(cdar(sc->code))(sc, cadar(sc->code)))))
    
-	  IF_CASE(OP_IF_CC, 
+	  IF_CASE(OP_IF_C, 
 		  if (is_true(sc, c_call(car(sc->code))(sc, opt_pair2(sc->code)))),
 		  if (is_false(sc, c_call(cadar(sc->code))(sc, opt_pair2(sc->code)))))
 	    
@@ -66239,21 +66295,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  set_car(sc->t2_1, find_symbol_unchecked(sc, opt_sym3(sc->code))); \
 		  if (is_false(sc, c_call(cadar(sc->code))(sc, sc->t2_1))))
 
-	  IF_CASE(OP_IF_opSSq, 
-		  { s7_pointer args; s7_pointer val1;			\
-		    args = opt_pair2(sc->code);				\
-		    val1 = find_symbol_unchecked(sc, cadr(args));	\
-		    set_car(sc->t2_2, find_symbol_unchecked(sc, opt_sym3(sc->code))); \
-		    set_car(sc->t2_1, val1);				\
-		    set_car(sc->t1_1, c_call(args)(sc, sc->t2_1));}	\
-		    if (is_true(sc, c_call(car(sc->code))(sc, sc->t1_1))),
-		  { s7_pointer args; s7_pointer val1;			\
-		    args = opt_pair2(sc->code);				\
-		    val1 = find_symbol_unchecked(sc, cadr(args));	\
-		    set_car(sc->t2_2, find_symbol_unchecked(sc, opt_sym3(sc->code))); \
-		    set_car(sc->t2_1, val1);				\
-		    set_car(sc->t1_1, c_call(args)(sc, sc->t2_1));}	\
-		    if (is_false(sc, c_call(cadar(sc->code))(sc, sc->t1_1))))
+	  IF_CASE(OP_IF_opSq, 
+		  set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym3(sc->code))); \
+		  set_car(sc->t1_1, c_call(opt_pair2(sc->code))(sc, sc->t1_1));     \
+		  if (is_true(sc, c_call(car(sc->code))(sc, sc->t1_1))),
+		  set_car(sc->t1_1, find_symbol_unchecked(sc, opt_sym3(sc->code))); \
+		  set_car(sc->t1_1, c_call(opt_pair2(sc->code))(sc, sc->t1_1));     \
+		  if (is_false(sc, c_call(cadar(sc->code))(sc, sc->t1_1))))
 	    
 	  IF_CASE(OP_IF_AND2, 
 		  if ((is_true(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) && \
@@ -66266,7 +66314,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		      (is_true(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))),
 		  if ((is_false(sc, c_call(opt_pair2(sc->code))(sc, car(opt_pair2(sc->code))))) && \
 		      (is_false(sc, c_call(opt_and_2_test(sc->code))(sc, car(opt_and_2_test(sc->code)))))))
-	    
+
 	case OP_IF_P_P: push_stack_no_args(sc, OP_IF_PP, cadr(sc->code)); sc->code = car(sc->code); goto EVAL;
 	case OP_IF_P_N: push_stack_no_args(sc, OP_IF_PR, cadr(sc->code)); sc->code = cadar(sc->code); goto EVAL;
 	case OP_IF_P_R: push_stack_no_args(sc, OP_IF_PR, cadr(sc->code)); sc->code = car(sc->code); goto EVAL;
@@ -67708,21 +67756,22 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		if (is_symbol(carc))
 		  sc->value = find_symbol_checked(sc, carc);
 		else sc->value = carc;
-		sc->code = cdr(sc->code);
 		/* fall through */
 	      }
 	    else
 	      {
-		push_stack_no_args(sc, OP_CASE1, cdr(sc->code));
+		push_stack_no_args(sc, OP_CASE_G_G, sc->code);
 		sc->code = carc;
 		goto EVAL;
 	      }
 	  }
 	  
-	CASE1:
-	case OP_CASE1:
+	CASE_G_G:
+	case OP_CASE_G_G:
 	  {
 	    s7_pointer x, y;
+	    /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	    sc->code = cdr(sc->code);
 	    if (is_simple(sc->value))
 	      {
 		for (x = sc->code; is_pair(x); x = cdr(x))
@@ -67772,10 +67821,225 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	  break;
 
-	case OP_CASE_A:
+
+	  /* selector A, key type: E=eq (symbol/char), I=integer, G=any, S=single keys and single bodies */
+	case OP_CASE_A_E_S:
 	  sc->value = c_call(sc->code)(sc, car(sc->code));
-	  sc->code = cdr(sc->code);
-	  goto CASE1;
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_E_S;
+
+	case OP_CASE_A_I_S:
+	  sc->value = c_call(sc->code)(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_I_S;
+
+	case OP_CASE_A_G_S:
+	  sc->value = c_call(sc->code)(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_G_S;
+
+	  /* selector A, key type: E=eq (symbol/char), G=any, G=general keys and general bodies */
+	case OP_CASE_A_E_G:
+	  sc->value = c_call(sc->code)(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_E_G;
+
+	case OP_CASE_A_G_G:
+	  sc->value = c_call(sc->code)(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_G_G;
+
+	  /* selector = symbol */
+	case OP_CASE_S_E_S:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_E_S;
+
+	case OP_CASE_S_I_S:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_I_S;
+
+	case OP_CASE_S_G_S:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_G_S;
+
+	  /* selector A, key type: E=eq (symbol/char), G=any, G=general keys and general bodies */
+	case OP_CASE_S_E_G:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_E_G;
+
+	case OP_CASE_S_G_G:
+	  sc->value = find_symbol_checked(sc, car(sc->code));
+	  /* fprintf(stderr, "%s: %s\n", op_names[sc->op], DISPLAY(sc->value)); */
+	  goto CASE_G_G;
+
+	  /* selector = any */
+	case OP_CASE_P_E_S:
+	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
+	  push_stack_no_args(sc, OP_CASE_E_S, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	case OP_CASE_P_I_S:
+	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
+	  push_stack_no_args(sc, OP_CASE_I_S, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	case OP_CASE_P_G_S:
+	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
+	  push_stack_no_args(sc, OP_CASE_G_S, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	case OP_CASE_P_E_G:
+	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
+	  push_stack_no_args(sc, OP_CASE_E_G, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	case OP_CASE_P_G_G:
+	  /* fprintf(stderr, "%s\n", op_names[sc->op]); */
+	  push_stack_no_args(sc, OP_CASE_G_G, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
+
+	CASE_E_S:
+	case OP_CASE_E_S:
+	  {
+	    s7_pointer x, selector;
+	    selector = sc->value;
+	    if (is_simple(selector))
+	      {
+	        for (x = cdr(sc->code); is_pair(x); x = cdr(x))
+		  if (opt_key(x) == selector)
+		    {
+ 	              sc->code = opt_clause(x);
+		      goto EVAL;
+		    }
+	      }
+	    sc->code = opt_else(sc->code);
+	    goto EVAL;
+	  }
+	  break;
+
+	CASE_I_S:
+	case OP_CASE_I_S:
+	  {
+	    s7_pointer x, selector, else_clause;
+	    selector = sc->value;
+	    else_clause = opt_else(sc->code);
+	    if (else_clause != sc->unspecified)
+	      {
+		if (is_integer(selector))
+		  {
+		    s7_int val;
+		    val = integer(selector);
+		    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
+		      {
+			if (is_integer(opt_key(x)))
+			  {
+			    if (integer(opt_key(x)) == val)
+			      {
+				sc->code = opt_clause(x);
+				goto EVAL;
+			      }
+			  }
+			else break;
+		      }
+		  }
+		sc->code = else_clause;
+		goto EVAL;
+	      }
+	    else
+	      {
+		if (is_integer(selector))
+		  {
+		    s7_int val;
+		    val = integer(selector);
+		    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
+		      {
+			if (integer(opt_key(x)) == val)
+			  {
+			    sc->code = opt_clause(x);
+			    goto EVAL;
+			  }
+		      }
+		  }
+		sc->value = sc->unspecified;
+	      }
+	  }
+	  break;
+
+	CASE_G_S:
+	case OP_CASE_G_S:
+	  {
+	    s7_pointer x, selector;
+	    selector = sc->value;
+	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
+	      if (s7_is_eqv(opt_key(x), selector))
+		{
+		  sc->code = opt_clause(x);
+		  goto EVAL;
+		}
+	    sc->code = opt_else(sc->code);
+	    goto EVAL;
+	  }
+	  break;
+
+	CASE_E_G:
+	case OP_CASE_E_G:
+	  {
+	    s7_pointer x, y, selector;
+	    selector = sc->value;
+	    if (is_simple(selector))
+	      {
+		for (x = cdr(sc->code); is_pair(x); x = cdr(x))
+		  {
+		    y = opt_key(x);
+		    if (!is_pair(y))
+		      goto ELSE_CASE_1;
+		    do {
+		      if (car(y) == selector)
+			goto ELSE_CASE_1;
+		      y = cdr(y);
+		    } while (is_pair(y));
+		  }
+	      }
+	    else 
+	      {
+		sc->code = opt_else(sc->code);
+		if (is_pair(sc->code))
+		  goto ELSE_CASE_2;
+		goto START;
+	      }
+	    /* x is the entire matching clause, (case 2 ((2) 3)), x: (((2) 3)) */
+	  ELSE_CASE_1:
+	    if (is_not_null(x))
+	      {
+		sc->code = _TLst(cdar(x));
+		if (is_null(sc->code))  /* sc->value is already the selector */
+		  goto START;
+
+	      ELSE_CASE_2:
+		/* check for => */
+		if ((car(sc->code) == sc->feed_to_symbol) &&
+		    (s7_symbol_value(sc, sc->feed_to_symbol) == sc->undefined))
+		  {
+		    sc->code = list_2(sc, cadr(sc->code), list_2(sc, sc->quote_symbol, sc->value));
+		    goto EVAL;
+		  }
+		goto BEGIN1;
+	      }
+	    
+	    /* no match found */
+	    sc->value = sc->unspecified; /* this was sc->nil but the spec says case value is unspecified if no clauses match */
+	  }
+	  break;
+
 
 	case OP_CASE_ELSE:
 	  push_stack_no_args(sc, OP_CASE_ELSE_1, cadr(sc->code));
@@ -67791,153 +68055,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  goto START;
 
-	  
-	case OP_CASE_SIMPLE:
-	  /* assume symbol as selector, all keys are simple, and no => */
-	  {
-	    s7_pointer x, y, selector;
-	    selector = find_symbol_unchecked(sc, car(sc->code));
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = opt_key(x);
-		if (!is_pair(y)) /* else? */
-		  {
-		    sc->code = _TLst(cdar(x));
-		    if (is_null(sc->code))
-		      {
-			sc->value = selector;
-			goto START;
-		      }
-		    goto BEGIN1;
-		  }
-		do {
-		  if (car(y) == selector)
-		    {
-		      sc->code = _TLst(cdar(x));
-		      if (is_null(sc->code))
-			{
-			  sc->value = selector;
-			  goto START;
-			}
-		      goto BEGIN1;
-		    }
-		  y = cdr(y);
-		} while (is_pair(y));
-	      }
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
-	case OP_CASE_SIMPLER:
-	  /* assume symbol as selector, all keys are simple, and no => and no else */
-	  {
-	    s7_pointer x, y, selector;
-	    selector = find_symbol_unchecked(sc, car(sc->code));
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = opt_key(x);
-		do {
-		  if (car(y) == selector)
-		    {
-		      sc->code = _TLst(cdar(x));
-		      if (is_null(sc->code)) 
-			{
-			  sc->value = selector;
-			  goto START;
-			}
-		      goto BEGIN1;
-		    }
-		  y = cdr(y);
-		} while (is_pair(y));
-	      }
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
-	case OP_CASE_SIMPLER_1:
-	  /* assume symbol as selector, all keys are simple, and no => and no else, bodies are 1 liners */
-	  {
-	    s7_pointer x, y, selector;
-	    selector = find_symbol_unchecked(sc, car(sc->code));
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = opt_key(x);
-		do {
-		  if (car(y) == selector)
-		    {
-		      sc->code = opt_clause(x); /* cadar(x) can't be nil */
-		      goto EVAL;
-		    }
-		  y = cdr(y);
-		} while (is_pair(y));
-	      }
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
-	case OP_CASE_SIMPLER_SS:
-	  /* assume hop_safe_ss as selector, all keys are simple, and no => and no else, bodies are 1 liners */
-	  {
-	    s7_pointer x, y, selector, args;
-	    args = cdar(sc->code);
-	    x = find_symbol_unchecked(sc, car(args));
-	    set_car(sc->t2_2, find_symbol_unchecked(sc, cadr(args)));
-	    set_car(sc->t2_1, x);
-	    selector = c_call(car(sc->code))(sc, sc->t2_1);
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      {
-		y = opt_key(x);
-		do {
-		  if (car(y) == selector)
-		    {
-		      sc->code = opt_clause(x); /* cadar(x) can't be nil */
-		      goto EVAL;
-		    }
-		  y = cdr(y);
-		} while (is_pair(y));
-	      }
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
-	case OP_CASE_SIMPLEST_SS:
-	  {
-	    s7_pointer x, selector, args;
-	    args = cdar(sc->code);
-	    x = find_symbol_unchecked(sc, car(args));
-	    set_car(sc->t2_2, find_symbol_unchecked(sc, cadr(args)));
-	    set_car(sc->t2_1, x);
-	    selector = c_call(car(sc->code))(sc, sc->t2_1);
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      if (opt_key(x) == selector)
-		{
-		  sc->code = _TLst(cdar(x));
-		  if (is_null(sc->code)) 
-		    {
-		      sc->value = selector;
-		      goto START;
-		    }
-		  goto BEGIN1;
-		}
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
-	case OP_CASE_SIMPLEST:
-	  /* assume symbol as selector, all keys are simple and singletons, and no => and no else, bodies are 1 liners */
-	  {
-	    s7_pointer x, selector;
-	    selector = find_symbol_unchecked(sc, car(sc->code));
-	    for (x = cdr(sc->code); is_pair(x); x = cdr(x))
-	      if (opt_key(x) == selector)
-		{
-		  sc->code = opt_clause(x); /* cadar(x) can't be nil */
-		  goto EVAL;
-		}
-	    sc->value = sc->unspecified;
-	  }
-	  break;
-	  
+
 	  
 	case OP_ERROR_QUIT:
 	  if (sc->stack_end <= sc->stack_start)
@@ -73889,14 +74007,6 @@ s7_scheme *s7_init(void)
   sc->with_let_s_symbol =            assign_internal_syntax(sc, "with-let",    OP_WITH_LET_S);
   sc->let_temporarily_unchecked_symbol = assign_internal_syntax(sc, "let-temporarily", OP_LET_TEMP_UNCHECKED);
   sc->case_unchecked_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_UNCHECKED);
-  sc->case_a_symbol =                assign_internal_syntax(sc, "case",        OP_CASE_A);
-  sc->case_simple_symbol =           assign_internal_syntax(sc, "case",        OP_CASE_SIMPLE);
-  sc->case_simpler_symbol =          assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER);
-  sc->case_simpler_1_symbol =        assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_1);
-  sc->case_simpler_ss_symbol =       assign_internal_syntax(sc, "case",        OP_CASE_SIMPLER_SS);
-  sc->case_simplest_symbol =         assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST);
-  sc->case_simplest_ss_symbol =      assign_internal_syntax(sc, "case",        OP_CASE_SIMPLEST_SS);
-  sc->case_else_symbol =             assign_internal_syntax(sc, "case",        OP_CASE_ELSE);
   sc->cond_unchecked_symbol =        assign_internal_syntax(sc, "cond",        OP_COND_UNCHECKED);
   sc->cond_simple_symbol =           assign_internal_syntax(sc, "cond",        OP_COND_SIMPLE);
   sc->do_unchecked_symbol =          assign_internal_syntax(sc, "do",          OP_DO_UNCHECKED);
@@ -73967,16 +74077,27 @@ s7_scheme *s7_init(void)
   assign_if(z, Z)
   assign_if(s, S)
   assign_if(a, A)
-  assign_if(cc, CC)
+  assign_if(c, C)
   assign_if(cs, CS)
   assign_if(csq, CSQ)
   assign_if(css, CSS)
   assign_if(csc, CSC)
   assign_if(s_opcq, S_opCq)
-  assign_if(opssq, opSSq)
+  assign_if(opsq, opSq)
   assign_if(is_pair, IS_PAIR)
   assign_if(is_null, IS_NULL)
   assign_if(is_symbol, IS_SYMBOL)
+
+  sc->case_else_symbol =             assign_internal_syntax(sc, "case",        OP_CASE_ELSE);
+  #define assign_case(Sym, Op) \
+    sc->case_ ## Sym ## _e_s_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _E_S); \
+    sc->case_ ## Sym ## _i_s_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _I_S); \
+    sc->case_ ## Sym ## _g_s_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _G_S); \
+    sc->case_ ## Sym ## _e_g_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _E_G); \
+    sc->case_ ## Sym ## _g_g_symbol = assign_internal_syntax(sc, "case", OP_CASE_ ## Op ## _G_G);
+  assign_case(a, A)
+  assign_case(s, S)
+  assign_case(p, P)
 
   sc->when_s_symbol =                assign_internal_syntax(sc, "when",        OP_WHEN_S);
   sc->when_a_symbol =                assign_internal_syntax(sc, "when",        OP_WHEN_A);
@@ -75006,13 +75127,13 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1124
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1132
  * teq           |      |      | 6612 | 2380 | [2329] 2500 2453
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2696] 3287 2883
  * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2984
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3043] 3403 3285
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3043] 3403 3267
  * tcopy         |      |      | 13.6 | 3204 | [3272] 3190 3414
- * lint          |      |      |      | 7731 | [3346] 4926 3436 [155.6]
+ * lint          |      |      |      | 7731 | [3346] 4926 3401 [154.4]
  * tform         |      |      | 6816 | 3627 | [3645] 3768 3890
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4450
  * titer         |      |      | 7503 | 5218 | [5054] 5873 5576
@@ -75038,7 +75159,7 @@ int main(int argc, char **argv)
  * should s7 flag (reverse! #(...)) et al? (set! fill! sort!)
  *   see reverse! and s7_is_constant -- we need some way in scheme code to distinguish (vector 1) from #(1)
  *   and read-time constants need to be set to immutable (reverse! "123") etc
- *   maybe add mutable?
+ *   maybe add mutable? ambiguous -- need to indicate that contents are expected to be unchanged whereas pi the value is unchangeable
  *
  * extend the validity checks to all FFI funcs and add info about caller etc
  * check all_x* need methods? [need s7test entries!]
@@ -75050,17 +75171,14 @@ int main(int argc, char **argv)
  *
  * maybe other safe_c_<>p and p<> cases? safe_closure_safe_closure?
  * extend unknown_a_ex changes to other "a" cases, and maybe all of them (includes the break->unknown in op_[safe_]c_*)
+ *   why the combine_ops in unknown_a_ex? we only get there for *_a I think.
  * main gotos (gotos.scm): for_each_2, apply_lambda, for_each_1, map_1, closure_aa, let_one_1, closure_ss, closure_s, let_s, closure_a, closure_all_x
  * remove *_cas? or use all_x_bbb -> one is a, rest g, cas used only in tall
- * g_assq?, g_is_keyword? g_is_eq_car_q? 
- * if_and3|or3 is_pair_cdr is_null_cadr(?)
+ * g_assq?, g_is_keyword? g_is_eq_car_q? is_pair_cdr is_null_cadr(?)
  * track down the pair_equal/equal_ref calls -- printing trees I think -- are there more like the is_collected change?
  * why not use op_quote_unchecked? set-cdr! of constant! If marked immutable, we could catch this case and clear
- * case1 -> case+all-eq-keys (even low ints/chars)
- *   case -- if all keys are same type (or all simple), check that type and jump to else if any
- *   need stored type or type checker and pointer to else or #<unspecified> -- in cddr(form)? 
- *   case_simpler_ss/simplest_sss -> case_a
- * when_a split for all_x_c_c?, if_a split opsq
+ * case_e_g split (e_sg)? no need to count keys in check_case, if else not symbol/pair no need to goto eval
+ *    case_else got lost, (car x) is most common selector: case_car_e_g best if local
  *
  * (*s7* 'print-length) appears to be ignored for lists
  *
@@ -75084,4 +75202,6 @@ int main(int argc, char **argv)
  * remove as many edpos args as possible, and num+bool->num
  * snd namespaces: clm2xen, dac, edits, fft, gxcolormaps, mix, region, snd.  for snd-mix, tie-ins are in place
  * gtk4: no draw signal -- need to set the draw func
+ *
+ * put Orm's emacs code into snd-inf.el or somewhere.
  */
