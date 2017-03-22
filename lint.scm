@@ -403,13 +403,13 @@
 
     (define (lint-format str caller . args)
       (let ((outstr (apply format #f 
-			   (string-append (if (< 0 line-number 100000)
+			   (string-append (if line-number
 					      "~NC~A (line ~D): " 
 					      "~NC~A: ")
 					  str "~%")
 			   lint-left-margin #\space
 			   (truncated-list->string caller)
-			   (if (< 0 line-number 100000)
+			   (if line-number
 			       (values line-number args)
 			       args))))
 	(set! made-suggestion (+ made-suggestion 1))
@@ -418,8 +418,8 @@
 	    (newline outport))))
 
     (define (local-line-number tree)
-      (let ((tree-line (if (pair? tree) (pair-line-number tree) 0)))
-	(if (and (< 0 tree-line 100000)
+      (let ((tree-line (and (pair? tree) (pair-line-number tree))))
+	(if (and tree-line
 		 (not (= tree-line line-number)))
 	    (format #f " (line ~D)" tree-line)
 	    "")))
@@ -11739,10 +11739,8 @@
 			     (do ((clause (var-history local-var) (cdr clause)))
 				 ((null? (cdr clause)))             ; ignore the initial value which depends on a different env
 			       (let ((call (car clause)))
-				 (if (or (= line-number -1)
-					 (and (pair? call)
-					      (positive? (pair-line-number call))))
-				     (set! line-number (pair-line-number call)))
+				 (if (pair? call)
+				     (set! line-number (or (pair-line-number call) line-number)))
 				 
 				 (when (pair? call)
 				   (let ((func (car call))
@@ -13723,13 +13721,11 @@
 				       (if (and (eq? (var-definer v) 'define-constant)
 						(len>2? form)
 						(not (equal? (caddr form) (var-initial-value v))))
-					   (let ((line (if (and (pair? (var-initial-value v))
-								(positive? (pair-line-number (var-initial-value v))))
-							   (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-							   "")))
+					   (let ((line (and (pair? (var-initial-value v))
+							    (pair-line-number (var-initial-value v)))))
 					     (lint-format "~A in ~A is already a constant, defined ~A~A" caller sym
 							  (truncated-list->string form)
-							  line
+							  (if line (format #f "(line ~D): " line) "")
 							  (truncated-list->string (var-initial-value v)))))))
 
 	    ((memq sym '(else =>)) ; also in r7rs ... and _, but that is for syntax-rules
@@ -14510,13 +14506,11 @@
 			      (let ((v (var-member settee env)))
 				(cond (v
 				       (if (eq? (var-definer v) 'define-constant)
-					   (let ((line (if (and (pair? (var-initial-value v))
-								(positive? (pair-line-number (var-initial-value v))))
-							   (format #f "(line ~D): " (pair-line-number (var-initial-value v)))
-							   "")))
+					   (let ((line (and (pair? (var-initial-value v))
+							    (pair-line-number (var-initial-value v)))))
 					     (lint-format "can't set! ~A in ~A (it is a constant: ~A~A)" caller settee
 							  (truncated-list->string form)
-							  line
+							  (if line (format #f "(line ~D): " line) "")
 							  (truncated-list->string (var-initial-value v))))))
 
 				      ((and (not lint-in-with-let)
@@ -20807,7 +20801,7 @@
 				  ((not (var-member vname env))
 				   (lint-format "~A is the same as ~A" caller
 						func-name
-						(if (< 0 (pair-line-number (var-initial-value v)) 100000)
+						(if (pair-line-number (var-initial-value v))
 						    (format #f "~A (line ~D)" vname (pair-line-number (var-initial-value v)))
 						    (if (eq? func-name vname)
 							(format #f "previous ~A" vname)
@@ -21127,14 +21121,12 @@
 					    (cadar ovars))
 					  (set-outer (cdr ovars))))))))))
 		 
-		 (unless (< 0 line 100000)
+		 (unless line
 		   (set! line (let search ((tree orig-form))
 				(and (pair? tree)
-				     (let ((nl (pair-line-number tree)))
-				       (if (< 0 nl 100000)
-					   nl
-					   (or (search (car tree))
-					       (search (cdr tree))))))))
+				     (or (pair-line-number tree)
+					 (search (car tree))
+					 (search (cdr tree))))))
 		   (if (not line) (set! line 0)))
 		 
 		 (set! leaves (tree-leaves reduced-form))        ; if->when, for example, so tree length might change
@@ -21760,9 +21752,7 @@
 	(lambda (caller form env)
 	  (let ((head (car form)))
 	    
-	    (if (or (= line-number -1)
-		    (positive? (pair-line-number form)))
-		(set! line-number (pair-line-number form)))
+	    (set! line-number (or (pair-line-number form) line-number))
 	    
 	    (lint-fragment form env)
 	    ;; (error...) as arg happens very rarely (a half-dozen hits, one: (values (error...))!
@@ -21979,7 +21969,7 @@
 		 vars) ; lint-file-1 should return the environment
 	      
 	      (if (pair? form)
-		  (set! line (max line (pair-line-number form))))
+		  (set! line (max line (or (pair-line-number form) 0))))
 	      
 	      (if (not (or (= last-line-number -1)
 			   (side-effect? last-form vars)))
@@ -21999,7 +21989,7 @@
 			     (hash-table-ref built-in-functions f))
 			(format outport "~NCtop-level ~Aredefinition of built-in function ~A: ~A~%" 
 				lint-left-margin #\space 
-				(if (> (pair-line-number form) 0)
+				(if (pair-line-number form)
 				    (format #f "(line ~D) " (pair-line-number form))
 				    "")
 				f (truncated-list->string form)))))

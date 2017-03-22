@@ -386,6 +386,10 @@ tab on /Applications, adapt the Path by adding Object and typing /usr/local/bin/
 Create your shortcut in XQuartz so it will start immediately by typing Command-s
 
 
+Later this update:
+./configure CFLAGS="-arch x86_64  -I/opt/X11/include" LDFLAGS="-L/opt/X11/lib -lmx -bind_at_load" --with-motif
+
+
 ---- old, possibly out-of-date instructions
 
 You can use either Motif or Gtk running under X11; to start Snd from an
