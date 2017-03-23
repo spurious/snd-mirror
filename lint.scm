@@ -6062,7 +6062,8 @@
 	      #t))))
 
     (define (unlist-values tree)
-      (if (not (pair? tree))
+      (if (not (and (pair? tree)
+		    (list? (cdr tree))))
 	  tree
 	  (case (car tree) 
 	    ((list-values)
@@ -14798,6 +14799,13 @@
 						  (tree-subst-eq (simplify-boolean (cons 'or (cadr diff)) () () env)
 								 subst-loc true))
 						 
+						 ((and (len=2? test)
+						       (eq? (car test) 'not)
+						       (equal? (cadadr diff) (cadr test)))
+						  ;;          (if (not x) (set! y z) (set! y x)) -> (set! y (or x z))
+						  (tree-subst-eq (simplify-boolean (cons 'or (reverse (cadr diff))) () () env)
+								 subst-loc true))
+						 
 						 ((or (memq true-op '(set! begin and or))
 						      (let list-memq ((a subst-loc) (lst true))
 							(and (pair? lst)
@@ -17534,7 +17542,6 @@
 				    (lint-format "~A in ~A refers to the caller's ~A, not the do-loop variable" caller
 						 (var-name v) (car bindings) (var-name v)))))
 			  vars)
-		
 		(lint-walk caller (cadar bindings) env)
 		(let ((new-var (let ((v (make-lint-var (caar bindings) (cadar bindings) 'do)))
 				 (let ((stepper (and (pair? (cddar bindings)) (caddar bindings))))
@@ -21131,18 +21138,6 @@
 		 
 		 (set! leaves (tree-leaves reduced-form))        ; if->when, for example, so tree length might change
 		 (hash-fragment reduced-form leaves env fvar orig-form line outer-vars)
-
-		 (if (and (memq (car reduced-form) '(or and))
-			  (> (length reduced-form) 3))
-		     (do ((i (- (length reduced-form) 1) (- i 1))
-			  (rfsize leaves))
-			 ((or (= i 2)
-			      (<= rfsize *fragment-min-size*)))
-		       (let ((rf (copy reduced-form (make-list i))))
-			 (set! rfsize (tree-leaves rf))
-			 (when (> rfsize *fragment-min-size*)
-			   (hash-fragment rf rfsize env #f (copy orig-form (make-list i)) line outer-vars)))))
-		 
 		 (when fvar (quit))
 		 
 		 (unless (and (pair? lint-function-body)
@@ -21754,7 +21749,9 @@
 	    
 	    (set! line-number (or (pair-line-number form) line-number))
 	    
-	    (lint-fragment form env)
+	    (if *report-repeated-code-fragments*
+		(lint-fragment form env))
+
 	    ;; (error...) as arg happens very rarely (a half-dozen hits, one: (values (error...))!
 	    
 	    (cond 
@@ -21902,7 +21899,7 @@
 								    (counter (car tree))
 								    (counter (cdr tree)))
 								  (if (and (symbol? tree)
-									   (memq tree '(_1_ _2_ _3_ _4_ _5_ _6_)))
+									   (memq tree '(_1_ _2_ _3_ _4_)))
 								      (set! count (+ count 1)))))
 							    (> (- i count) *fragment-min-size*))))
 					     (vector-set! vals 1 (map (lambda (b) ; line numbers of use points
