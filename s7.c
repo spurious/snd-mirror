@@ -3269,24 +3269,24 @@ static s7_pointer check_values(s7_scheme *sc, s7_pointer obj, s7_pointer args)
  *   go ahead. It's mostly boilerplate:
  */
 
+static s7_pointer apply_boolean_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
+
 #define check_boolean_method(Sc, Checker, Method, Args)      \
   {                                                          \
     s7_pointer p;                                            \
     p = car(Args);                                           \
     if (Checker(p)) return(Sc->T);                           \
-    check_method(Sc, p, Method, Args);                       \
-    return(Sc->F);                                           \
+    if (!has_methods(p)) return(Sc->F);		       \
+    return(apply_boolean_method(Sc, p, Method));	       \
   }
 
 #define check_boolean_not_method(Sc, Checker, Method, Args)  \
   {                                                          \
-    s7_pointer p, func;					     \
-    p = find_symbol_checked(Sc, cadar(Args));                \
+    s7_pointer p;                                            \
+    p = find_symbol_unchecked(sc, cadar(Args));                                           \
     if (Checker(p)) return(Sc->F);                           \
-    if ((has_methods(p)) && ((func = find_method(Sc, find_let(Sc, p), Method)) != Sc->undefined) && \
-	(s7_apply_function(Sc, func, list_1(Sc, p)) != Sc->F))		\
-      return(Sc->F);                                         \
-    return(Sc->T);                                           \
+    if (!has_methods(p)) return(Sc->T);		       \
+    return((apply_boolean_method(Sc, p, Method) == sc->F) ? sc->T : sc->F); \
   }
 
 #define eval_boolean_method(Sc, Checker, Method, Arg) \
@@ -4242,7 +4242,7 @@ static void mark_pair(s7_pointer p)
    *   Now I've already forgotten the rest of the story, and it was just an hour ago! -- the upshot is that temp_cell_2|3
    *   are not now used as arg list members.
    */
-  for (x = cdr(p); is_pair(x) && (!is_marked(x)); x = cdr(x))
+  for (x = cdr(p); (is_pair(x)) & (!is_marked(x)); x = cdr(x))
     {
       set_mark(x);
       S7_MARK(car(x));
@@ -28451,26 +28451,6 @@ static void enlarge_shared_info(shared_info *ci)
 }
 
 
-static void add_equal_ref(shared_info *ci, s7_pointer x, s7_pointer y)
-{
-  /* assume neither x nor y is in the table, and that they should share a ref value,
-   *   called only in equality check, not printer.
-   */
-
-  if ((ci->top + 2) >= ci->size)
-    enlarge_shared_info(ci);
-
-  set_collected(x);
-  set_collected(y);
-
-  ci->ref++;
-  ci->objs[ci->top] = x;
-  ci->refs[ci->top++] = ci->ref;
-  ci->objs[ci->top] = y;
-  ci->refs[ci->top++] = ci->ref;
-}
-
-
 static void add_shared_ref(shared_info *ci, s7_pointer x, int ref_x)
 {
   /* called only in equality check, not printer */
@@ -33688,7 +33668,6 @@ static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
   /* as a generic this could be: has_structure and length == 0 */
 }
 
-
 static s7_pointer g_is_pair(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_pair "(pair? obj) returns #t if obj is a pair (a non-empty list)"
@@ -34090,9 +34069,9 @@ static s7_pointer g_car(s7_scheme *sc, s7_pointer args)
 
   s7_pointer lst;
   lst = car(args);
-  if (!is_pair(lst))
-    method_or_bust(sc, lst, sc->car_symbol, args, T_PAIR, 0);
-  return(car(lst));
+  if (is_pair(lst))
+    return(car(lst));
+  method_or_bust(sc, lst, sc->car_symbol, args, T_PAIR, 0);
 }
 
 
@@ -34119,9 +34098,9 @@ static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
 
   s7_pointer lst;
   lst = car(args);
-  if (!is_pair(lst))
-    method_or_bust(sc, lst, sc->cdr_symbol, args, T_PAIR, 0);
-  return(cdr(lst));
+  if (is_pair(lst))
+    return(cdr(lst));
+  method_or_bust(sc, lst, sc->cdr_symbol, args, T_PAIR, 0);
 }
 
 
@@ -41670,27 +41649,39 @@ static bool port_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
 	 (local_strncmp((const char *)port_data(x), (const char *)port_data(y), (is_input_port(x)) ? port_data_size(x) : port_position(x))));
 }
 
-static int equal_ref(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci)
-{
-  /* here we know x and y are pointers to the same type of structure */
-  int ref_x, ref_y;
-  ref_x = (is_collected(x)) ? peek_shared_ref(ci, x) : 0;
-  ref_y = (is_collected(y)) ? peek_shared_ref(ci, y) : 0;
+#define equal_ref(Sc, X, Y, Ci) \
+  do {   \
+    /* here we know x and y are pointers to the same type of structure */ \
+    int ref_x, ref_y;							\
+    ref_x = (is_collected(X)) ? peek_shared_ref(Ci, X) : 0;		\
+    ref_y = (is_collected(Y)) ? peek_shared_ref(Ci, Y) : 0;		\
+    if ((ref_x != 0) && (ref_y != 0))					\
+      return(ref_x == ref_y);						\
+    /* try to harmonize the new guy -- there can be more than one structure equal to the current one */ \
+    if (ref_x != 0)							\
+      add_shared_ref(Ci, Y, ref_x);					\
+    else								\
+      {									\
+	if (ref_y != 0)							\
+	  add_shared_ref(Ci, X, ref_y);					\
+	else								\
+	  {								\
+	    /* assume neither x nor y is in the table, and that they should share a ref value, \
+	     *   called only in equality check, not printer.		\
+	     */								\
+	    if ((Ci->top + 2) >= Ci->size)				\
+	      enlarge_shared_info(Ci);					\
+	    set_collected(X);						\
+	    set_collected(Y);						\
+	    Ci->objs[Ci->top] = X;					\
+	    Ci->ref++;							\
+	    Ci->refs[Ci->top++] = Ci->ref;				\
+	    Ci->objs[Ci->top] = Y;					\
+	    Ci->refs[Ci->top++] = Ci->ref;				\
+	  }								\
+      }									\
+  } while (0)
 
-  if ((ref_x != 0) && (ref_y != 0))
-    return((ref_x == ref_y) ? 1 : 0);
-
-  /* try to harmonize the new guy -- there can be more than one structure equal to the current one */
-  if (ref_x != 0)
-    add_shared_ref(ci, y, ref_x);
-  else
-    {
-      if (ref_y != 0)
-	add_shared_ref(ci, x, ref_y);
-      else add_equal_ref(ci, x, y);
-    }
-  return(-1);
-}
 
 static bool s7_is_equal_1(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally);
 
@@ -41714,11 +41705,7 @@ static bool hash_table_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_i
       return(false);
     }
   if (ci)
-    {
-      i = equal_ref(sc, x, y, ci);
-      if (i == 0) return(false);
-      if (i == 1) return(true);
-    }
+    equal_ref(sc, x, y, ci);
 
   if (hash_table_entries(x) != hash_table_entries(y))
     return(false);
@@ -41802,12 +41789,7 @@ static bool let_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci
     return(false);
 
   if (ci)
-    {
-      int i;
-      i = equal_ref(sc, x, y, ci);
-      if (i == 0) return(false);
-      if (i == 1) return(true);
-    }
+    equal_ref(sc, x, y, ci);
 
   clear_symbol_list(sc);
   for (x_len = 0, ex = x; (is_let(ex)) && (ex != sc->rootlet); ex = outlet(ex))
@@ -41871,7 +41853,6 @@ static bool closure_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info
 
 static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *ci, bool morally)
 {
-  int i;
   s7_pointer px, py;
   shared_info *nci = ci;
 
@@ -41889,20 +41870,14 @@ static bool pair_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info *c
       return(false);
     }
   if (ci)
-    {
-      i = equal_ref(sc, x, y, ci);
-      if (i == 0) return(false);
-      if (i == 1) return(true);
-    }
+    equal_ref(sc, x, y, ci);
   else nci = new_shared_info(sc);
 
   if (!s7_is_equal_1(sc, car(x), car(y), nci, morally)) return(false);
   for (px = cdr(x), py = cdr(y); (is_pair(px)) && (is_pair(py)); px = cdr(px), py = cdr(py))
     {
       if (!s7_is_equal_1(sc, car(px), car(py), nci, morally)) return(false);
-      i = equal_ref(sc, px, py, nci);
-      if (i == 0) return(false);
-      if (i == 1) return(true);
+      equal_ref(sc, px, py, nci);
     }
   return(s7_is_equal_1(sc, px, py, nci, morally));
 }
@@ -42027,11 +42002,7 @@ static bool vector_equal(s7_scheme *sc, s7_pointer x, s7_pointer y, shared_info 
     }
 
   if (ci)
-    {
-      i = equal_ref(sc, x, y, ci);
-      if (i == 0) return(false);
-      if (i == 1) return(true);
-    }
+    equal_ref(sc, x, y, ci);
   else nci = new_shared_info(sc);
 
   for (i = 0; i < len; i++)
@@ -46465,8 +46436,32 @@ static int all_x_count(s7_scheme *sc, s7_pointer x)
 }
 
 
-/* arg here is the full expression */
+static s7_pointer apply_boolean_method(s7_scheme *sc, s7_pointer obj, s7_pointer method)
+{
+  s7_pointer func;
+  func = find_method(sc, find_let(sc, obj), method);
+  if (func == sc->undefined) return(sc->F);
+  return(s7_apply_function(sc, func, list_1(sc, obj)));
+}
 
+#define all_x_bool(Sc, Checker, Method, Arg1)		       \
+  {							       \
+    s7_pointer Arg = Arg1;				       \
+    if (Checker(Arg)) return(Sc->T);                           \
+    if (!has_methods(Arg)) return(sc->F);		       \
+    return(apply_boolean_method(sc, Arg, Method));			       \
+  }
+
+#define all_x_not_bool(Sc, Checker, Method, Arg1)		       \
+  {							       \
+    s7_pointer Arg = Arg1;				       \
+    if (Checker(Arg)) return(Sc->F);                           \
+    if (!has_methods(Arg)) return(sc->T);		       \
+    return((apply_boolean_method(sc, Arg, Method) == sc->F) ? sc->T : sc->F);			       \
+  }
+
+
+/* arg here is the full expression */
 static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
 static s7_pointer all_x_unsafe_s(s7_scheme *sc, s7_pointer arg){return(find_symbol_checked(sc, arg));}
@@ -46532,22 +46527,6 @@ static s7_pointer local_x_not_is_eq_car_q(s7_scheme *sc, s7_pointer arg)
   if (!is_pair(lst))
     return(make_boolean(sc, is_false(sc, g_is_eq(sc, set_plist_2(sc, g_car(sc, set_plist_1(sc, lst)), cadr(cadr(a)))))));
   return(make_boolean(sc, car(lst) != cadr(cadr(a))));
-}
-
-static s7_pointer all_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer p;
-  p = find_symbol_unchecked(sc, cadadr(arg));
-  if (is_pair(p)) return(sc->F);
-  return(sc->T);
-}
-
-static s7_pointer local_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
-{
-  s7_pointer p;
-  p = local_symbol_value(cadadr(arg));
-  if (is_pair(p)) return(sc->F);
-  return(sc->T);
 }
 
 static s7_pointer all_x_is_pair_cdr(s7_scheme *sc, s7_pointer arg)
@@ -46633,52 +46612,62 @@ static s7_pointer local_x_cadr_s(s7_scheme *sc, s7_pointer arg)
 
 static s7_pointer all_x_is_null_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_null(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_null, sc->is_null_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer local_x_is_null_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_null(local_symbol_value(cadr(arg)))));
+  all_x_bool(sc, is_null, sc->is_null_symbol, local_symbol_value(cadr(arg)));
 }
 
 static s7_pointer all_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_symbol(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_symbol, sc->is_symbol_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer local_x_is_symbol_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_symbol(local_symbol_value(cadr(arg)))));
+  all_x_bool(sc, is_symbol, sc->is_symbol_symbol, local_symbol_value(cadr(arg)));
 }
 
 static s7_pointer all_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_pair(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer local_x_is_pair_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_pair(local_symbol_value(cadr(arg)))));
+  all_x_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(cadr(arg)));
 }
 
 static s7_pointer all_x_is_keyword_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_keyword(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_keyword, sc->is_keyword_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer all_x_is_integer_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_integer(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_integer, sc->is_integer_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer all_x_is_procedure_s(s7_scheme *sc, s7_pointer arg)
 {
-  return(make_boolean(sc, is_procedure(find_symbol_unchecked(sc, cadr(arg)))));
+  all_x_bool(sc, is_procedure, sc->is_procedure_symbol, find_symbol_unchecked(sc, cadr(arg)));
 }
 
 static s7_pointer all_x_not_s(s7_scheme *sc, s7_pointer arg)
 {
   return(make_boolean(sc, is_false(sc, find_symbol_unchecked(sc, cadr(arg)))));
+}
+
+static s7_pointer all_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
+{
+  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, find_symbol_unchecked(sc, cadadr(arg)));
+}
+
+static s7_pointer local_x_not_is_pair(s7_scheme *sc, s7_pointer arg)
+{
+  all_x_not_bool(sc, is_pair, sc->is_pair_symbol, local_symbol_value(cadadr(arg)));
 }
 
 static s7_pointer all_x_c_sc(s7_scheme *sc, s7_pointer arg)
@@ -47407,11 +47396,34 @@ static s7_pointer all_x_c_as(s7_scheme *sc, s7_pointer arg)
   return(c_call(arg)(sc, sc->t2_1));
 }
 
+static s7_pointer all_x_if_x2(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p;
+  p = cdr(arg);
+  if (is_true(sc, c_call(p)(sc, car(p))))
+    p = cdr(p);
+  else p = cddr(p);
+  return(c_call(p)(sc, car(p)));
+}
+
 static s7_pointer all_x_and2(s7_scheme *sc, s7_pointer arg)
 {
   /* arg is the full expr: (and ...) */
   s7_pointer p, val;
   p = cdr(arg);
+  val = c_call(p)(sc, car(p));
+  if (val == sc->F) return(val);
+  p = cdr(p);
+  return(c_call(p)(sc, car(p)));
+}
+
+static s7_pointer all_x_and3(s7_scheme *sc, s7_pointer arg)
+{
+  s7_pointer p, val;
+  p = cdr(arg);
+  val = c_call(p)(sc, car(p));
+  if (val == sc->F) return(val);
+  p = cdr(p);
   val = c_call(p)(sc, car(p));
   if (val == sc->F) return(val);
   p = cdr(p);
@@ -47511,7 +47523,9 @@ static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_pair_cdr(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_eq_car(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_is_eq_car_q(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_if_x2(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_and_2(s7_scheme *sc, s7_pointer args);
+static s7_pointer g_and_3(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_or_2(s7_scheme *sc, s7_pointer args);
 static s7_pointer check_quote(s7_scheme *sc, s7_pointer code);
 
@@ -47533,10 +47547,14 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 		return((is_local_symbol(cdr(cadr(arg)))) ? local_x_is_pair_cdr : all_x_is_pair_cdr);
 	      if (c_call(arg) == g_add_cs1)
 		return((is_local_symbol(cdr(arg))) ? local_x_c_add1 : all_x_c_add1);
+	      if (c_call(arg) == g_if_x2)
+		return(all_x_if_x2);
 	      if (c_call(arg) == g_and_2)
 		return(all_x_and2);
 	      if (c_call(arg) == g_or_2)
 		return(all_x_or2);
+	      if (c_call(arg) == g_and_3)
+		return(all_x_and3);
 	      if ((c_call(arg) == g_add_si) &&
 		  (checker(sc, cadr(arg), e)))
 		return(all_x_c_addi);
@@ -75259,17 +75277,17 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1127
- * teq           |      |      | 6612 | 2380 | [2329] 2500 2445
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2690] 3287 2865
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2963
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3014] 3403 3256
- * lint          |      |      |      | 7731 | [3252] 4926 3314 [151.8]
- * tcopy         |      |      | 13.6 | 3204 | [3272] 3190 3414
- * tform         |      |      | 6816 | 3627 | [3645] 3768 3877
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1096] 1171 1124
+ * teq           |      |      | 6612 | 2380 | [2329] 2500 2392
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2690] 3287 2883
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 2951
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [3004] 3403 3256
+ * lint          |      |      |      | 7731 | [3208] 4926 3311 [151.2]
+ * tcopy         |      |      | 13.6 | 3204 | [3272] 3190 3418
+ * tform         |      |      | 6816 | 3627 | [3645] 3768 3863
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4450
- * titer         |      |      | 7503 | 5218 | [5054] 5873 5591
- * tmac          |      |      |      |      |        18.7 1054
+ * titer         |      |      | 7503 | 5218 | [5015] 5873 5331
+ * tmac          |      |      |      |      |        18.7 1052
  * thash         |      |      | 50.7 | 8491 | [9888] 8858 10.6
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.5
@@ -75306,9 +75324,8 @@ int main(int argc, char **argv)
  * also op_safe_c_opsq?
  * overhead: car cons car_s cadr
  * alls: string? vector? proper-list? number->string, (not (proper-list? s))
- * safe_c_opfsq_c? c_s_opfsq? 
  * case should ideally use feed_to, not a cons'd list
- * all_x: if_x2 and_3 (from c_c)
+ * rest of apply_boolean_method usages, and extend this throughout
  *
  * (*s7* 'print-length) appears to be ignored for lists
  *
