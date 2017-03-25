@@ -29974,7 +29974,6 @@ static Widget *iconify_active_dialogs = NULL;
 static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boolean *cont) 
 {
   XMapEvent *ev = (XMapEvent *)event;
-  int i;
   if ((!ss) || (!(ss->dialogs)))
     return;
 
@@ -30004,7 +30003,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
     {
       Atom _NET_WM_STATE, _NET_WM_STATE_HIDDEN, actual_type;
       int actual_format;
-      unsigned long i, nitems, bytes_after;
+      unsigned long nitems, bytes_after;
       unsigned char *prop = NULL;
       
       /* this code thanks to Tito Latini */
@@ -30017,6 +30016,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
         {
           Atom *atoms = (Atom *)prop;
           bool iconified = false;
+	  unsigned long i;
           for (i = 0; i < nitems; i++)
             {
               if (atoms[i] == _NET_WM_STATE_HIDDEN)
@@ -30031,14 +30031,17 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 
       if (iconify_active_dialogs) free(iconify_active_dialogs);
       iconify_active_dialogs = (Widget *)calloc(ss->num_dialogs, sizeof(Widget));
-
-      for (i = 0; i < ss->num_dialogs; i++)
-	if (ss->dialogs[i])
-	  {
-	    if (XtIsManaged(ss->dialogs[i]))
-	      iconify_active_dialogs[i] = ss->dialogs[i];
-	    XtUnmanageChild(ss->dialogs[i]);
-	  }
+      
+      {
+	int i;
+	for (i = 0; i < ss->num_dialogs; i++)
+	  if (ss->dialogs[i])
+	    {
+	      if (XtIsManaged(ss->dialogs[i]))
+		iconify_active_dialogs[i] = ss->dialogs[i];
+	      XtUnmanageChild(ss->dialogs[i]);
+	    }
+      }
     }
   else
     {
@@ -30046,6 +30049,7 @@ static void minify_maxify_window(Widget w, XtPointer context, XEvent *event, Boo
 	{
 	  if (iconify_active_dialogs) 
 	    {
+	      int i;
 	      for (i = 0; i < ss->num_dialogs; i++)
 		if (iconify_active_dialogs[i])
 		  XtManageChild(iconify_active_dialogs[i]);

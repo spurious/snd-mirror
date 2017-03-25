@@ -384,8 +384,7 @@
 	    (begin
 	      (set! (lint-pp-funclet '*pretty-print-left-margin*) pp-left-margin)
 	      (set! (lint-pp-funclet '*pretty-print-length*) (- 114 pp-left-margin))
-	      (let ((str2 (lint-pp f2)))
-		(format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space str2)))
+	      (format #f "~%~NC~A ->~%~NC~A" pp-left-margin #\space str1 pp-left-margin #\space (lint-pp f2)))
 	    (let ((str2 (truncate-string (object->string f2 #t (+ target-line-length 2)))))
 	      (if (< (+ (length str1) (length str2)) target-line-length)
 		  (format #f "~A -> ~A" str1 str2)
@@ -5391,7 +5390,7 @@
 	    
 	    (let ()
 	      (define (numrat args form env)
-		(let ((len (length args))
+		(let ((len2 (= (length args) 2))
 		      (head (car form)))
 		  (cond ((just-rationals? args)
 			 (catch #t ; catch needed here for things like (ash 2 64)
@@ -5401,23 +5400,23 @@
 			     (cons head args)))) ; use this form to pick up possible arg changes
 			
 			((and (eq? head 'ash)          ; (ash x 0) -> x
-			      (= len 2) 
+			      len2 
 			      (eqv? (cadr args) 0))
 			 (car args))
 			
 			((case head
 			   ((quotient)                       ; (quotient (remainder x y) y) -> 0
-			    (and (= len 2)
+			    (and len2
 				 (len=3? (car args))
 				 (eq? (caar args) 'remainder)
 				 (eqv? (caddar args) (cadr args))))
 			   ((ash modulo)                     ; (modulo 0 x) -> 0
-			    (and (= len 2) (eqv? (car args) 0)))
+			    (and len2 (eqv? (car args) 0)))
 			   (else #f))
 			 0)
 			
 			((and (eq? head 'modulo)       ; (modulo (abs x) y) -> (modulo x y)
-			      (= len 2)
+			      len2
 			      (pair? (car args))
 			      (eq? (caar args) 'abs))
 			 (list 'modulo (cadar args) (cadr args)))
@@ -17771,13 +17770,16 @@
 							 (if (not (var-step v))
 							     val
 							     (let ((expr (tree-subst val (var-name v) (var-step v))))
-							       (if (not (pair? expr))
-								   expr
-								   (if (hash-table-ref numeric-ops (car expr))
-								       (simplify-numerics expr env)
-								       (if (memq (car expr) '(and or not))
-									   (simplify-boolean expr () () env)
-									   expr)))))))))))))))
+							       (cond ((not (pair? expr)) 
+								      expr)
+
+								     ((hash-table-ref numeric-ops (car expr))
+								      (simplify-numerics expr env))
+
+								     ((memq (car expr) '(and or not)) 
+								      (simplify-boolean expr () () env))
+
+								     (else expr))))))))))))))
 	    (report-usage caller 'do vars inner-env))
 
 	  ;; -------- simplify-do --------
@@ -20829,13 +20831,11 @@
 	  (call-with-exit
 	   (lambda (quit)
 	     (let ((outer-vars (if fvar
-				   (let ((init-args (args->proper-list (var-arglist fvar)))
-					 (init-e (list (list (var-name fvar) (symbol "_F_") 0 ()))))
-				     (do ((e init-e)
-					  (i 1 (+ i 1))
-					  (args init-args (cdr args)))
-					 ((not (pair? args)) e)
-				       (set! e (cons (list (car args) (symbol "_" (number->string i) "_") i ()) e))))
+				   (do ((e (list (list (var-name fvar) (symbol "_F_") 0 ())))
+					(i 1 (+ i 1))
+					(args (args->proper-list (var-arglist fvar)) (cdr args)))
+				       ((not (pair? args)) e)
+				     (set! e (cons (list (car args) (symbol "_" (number->string i) "_") i ()) e)))
 				   (list (list () '_1_) (list () '_2_) (list () '_3_) (list () '_4_))))
 		   (local-ctr 0))
 	       (let ((line (pair-line-number orig-form))
@@ -21137,12 +21137,15 @@
 		   (if (not line) (set! line 0)))
 		 
 		 (set! leaves (tree-leaves reduced-form))        ; if->when, for example, so tree length might change
-		 (hash-fragment reduced-form leaves env fvar orig-form line outer-vars)
+		 (if (and (<= *fragment-min-size* leaves)
+			  (< leaves *fragment-max-size*))
+		     (hash-fragment reduced-form leaves env fvar orig-form line outer-vars))
 		 (when fvar (quit))
 		 
 		 (unless (and (pair? lint-function-body)
 			      (equal? new-form (car lint-function-body)))
-		   (let ((fvars (let ((fcase (hash-table-ref (vector-ref fragments leaves) (list reduced-form))))
+		   (let ((fvars (let ((fcase (and (< leaves *fragment-max-size*)
+						  (hash-table-ref (vector-ref fragments leaves) (list reduced-form)))))
 				  (and (vector? fcase)
 				       (vector-ref fcase 2)))))
 		     (when (pair? fvars)
@@ -22501,4 +22504,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 63 31603 864148
+;;; 62 31733 864043
