@@ -221,7 +221,7 @@ static int greater_compare(const void *a, const void *b)
 
 int main(int argc, char **argv)
 {
-  int i, j, fd, chars, k, in_comment = 0, in_cpp_comment = 0, in_white = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
+  int i, j, fd, chars, k, in_comment = 0, in_cpp_comment = 0, calls = 0, in_parens = 0, in_quotes = 0, in_define = 0, in_curly = 0, in_enum = 0;
   int maxc[NAME_SIZE], maxf[NAME_SIZE], maxg[NAME_SIZE], mcalls[NAME_SIZE];
   qdata **qs;
   char input[MAX_CHARS];
@@ -371,7 +371,6 @@ int main(int argc, char **argv)
     {
       k = 0;
       in_quotes = 0;
-      in_white = 0;
       in_parens = 0;
       in_comment = 0;
       in_cpp_comment = 0;
@@ -389,14 +388,12 @@ int main(int argc, char **argv)
 		    {
 		      if ((isalpha(input[j])) || (isdigit(input[j])) || (input[j] == '_'))
 			{
-			  in_white = 0;
 			  if (k < ID_SIZE)
 			    curname[k++] = input[j];
 			  else fprintf(stderr, "0: curname overflow: %s[%d]: %s%c\n", headers[i], j, curname, input[j]);
 			}
 		      else
 			{
-			  in_white = 1;
 			  if (k < ID_SIZE)
 			    curname[k] = 0;
 			  else fprintf(stderr, "1: curname overflow: %s[%d]: %s\n", headers[i], j, curname);
@@ -499,10 +496,8 @@ int main(int argc, char **argv)
     {
       fprintf(stderr, "%d names ", names_ctr);
 
-      k = 0;
       in_comment = 0;
       in_cpp_comment = 0;
-      in_white = 0;
       in_define = 0;
       in_enum = 0;
       for (i = 0; i < files_ctr; i++)
@@ -756,7 +751,7 @@ int main(int argc, char **argv)
       for (i = 0; i < names_ctr; i++)
 	{
 	  qdata *q;
-	  q = calloc(1, sizeof(qdata));
+	  q = (qdata *)calloc(1, sizeof(qdata));
 	  qs[i] = q;
 	  q->i = i;
 	  q->v = voids[i];
@@ -771,7 +766,7 @@ int main(int argc, char **argv)
       for (i = 0; i < names_ctr; i++)
 	{
 	  bool menu_case, file_case, nonogui_case, static_case, x_case = true, ffitest_case;
-	  int menu_count = 0, file_count = 0, rec_count = 0, x_count = 0;
+	  int menu_count = 0, file_count = 0, x_count = 0;
 	  int nfiles;
 	  nfiles = 0;
 	  /* try to get rid of a bunch of annoying false positives */
@@ -824,7 +819,6 @@ int main(int argc, char **argv)
 
 	      menu_count  = 0;
 	      file_count = 0;
-	      rec_count = 0;
 	      
 	      nonogui_case = in_nogui_h(qs[i]->name);
 	      if ((nonogui_case) && (counts[qs[i]->i]))

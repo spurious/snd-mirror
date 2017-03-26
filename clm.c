@@ -15695,8 +15695,8 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
   pv->outctr = interp;
   pv->filptr = 0;
   pv->pitch = pitch;
-  pv->ampinc = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
-  pv->freqs = (mus_float_t *)malloc(fftsize * sizeof(mus_float_t));
+  pv->ampinc = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
+  pv->freqs = (mus_float_t *)calloc(fftsize, sizeof(mus_float_t));
   pv->amps = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
   pv->phases = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
   pv->lastphase = (mus_float_t *)calloc(N2, sizeof(mus_float_t));
@@ -15734,10 +15734,10 @@ mus_any *mus_make_phase_vocoder(mus_float_t (*input)(void *arg, int direction),
    *   in Linux at least, sincos is faster than sin+sin -- in my timing tests, although
    *   callgrind is crazy, the actual runtimes are about 25% faster (sincos vs sin+sin).
    */
-  pv->cs = (double *)malloc(fftsize * sizeof(double));
-  pv->sn = (double *)malloc(fftsize * sizeof(double));
+  pv->cs = (double *)calloc(fftsize, sizeof(double));
+  pv->sn = (double *)calloc(fftsize, sizeof(double));
   pv->sc_safe = (bool *)calloc(fftsize, sizeof(bool));
-  pv->indices = (int *)malloc(N2 * sizeof(int));
+  pv->indices = (int *)calloc(N2, sizeof(int));
 #endif
   return((mus_any *)pv);
 }

@@ -2975,7 +2975,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_CLOSURE_SS, HOP_SAFE_CLOSURE_SS, OP_SAFE_CLOSURE_SC, HOP_SAFE_CLOSURE_SC, OP_SAFE_CLOSURE_CS, HOP_SAFE_CLOSURE_CS,
       OP_SAFE_CLOSURE_A, HOP_SAFE_CLOSURE_A, OP_SAFE_CLOSURE_SA, HOP_SAFE_CLOSURE_SA, OP_SAFE_CLOSURE_S_P, HOP_SAFE_CLOSURE_S_P,
       OP_SAFE_CLOSURE_SAA, HOP_SAFE_CLOSURE_SAA, OP_SAFE_CLOSURE_S_C, HOP_SAFE_CLOSURE_S_C,
-      OP_SAFE_CLOSURE_A_A, HOP_SAFE_CLOSURE_A_A, OP_SAFE_CLOSURE_SP, HOP_SAFE_CLOSURE_SP, 
+      OP_SAFE_CLOSURE_A_C, HOP_SAFE_CLOSURE_A_C, OP_SAFE_CLOSURE_SP, HOP_SAFE_CLOSURE_SP, 
       OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA,
 
       OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
@@ -3181,7 +3181,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_closure_ss", "h_safe_closure_ss", "safe_closure_sc", "h_safe_closure_sc", "safe_closure_cs", "h_safe_closure_cs",
       "safe_closure_a", "h_safe_closure_a", "safe_closure_sa", "h_safe_closure_sa", "safe_closure_s_p", "h_safe_closure_s_p",
       "safe_closure_saa", "h_safe_closure_saa", "safe_closure_s_c", "h_safe_closure_s_c",
-      "safe_closure_a_a", "h_safe_closure_a_a", "safe_closure_sp", "h_safe_closure_sp",
+      "safe_closure_a_c", "h_safe_closure_a_c", "safe_closure_sp", "h_safe_closure_sp",
       "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa",
 
       "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss",
@@ -3555,6 +3555,7 @@ bool s7_is_constant(s7_pointer p)
    *   (and (constant? (list + 1)) (not (equal? (list + 1) (eval (list + 1)))))
    * but since (constant? (vector 1 2 3)) and (constant? #(1 2 3)) are both #t,
    *   how to tell in scheme that (vector-set! x 0 y) is safe?
+   *   see end of this file
    */
   return((type(p) != T_SYMBOL) || (is_immutable_symbol(p)));
 }
@@ -30689,7 +30690,7 @@ static void print_gc_info(s7_pointer obj, int line)
 static char* show_debugger_bits(unsigned int bits)
 {
   char *bits_str;
-  bits_str = calloc(256, sizeof(char));
+  bits_str = (char *)calloc(256, sizeof(char));
   snprintf(bits_str, 256, " %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	  ((bits & E_SET) != 0) ? " e-set" : "",
 	  ((bits & E_FAST) != 0) ? " fast" : "",
@@ -36105,30 +36106,17 @@ s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, s7_int index, s7_pointer
 }
 
 
-s7_pointer *s7_vector_elements(s7_pointer vec)
-{
-  return(vector_elements(vec));
-}
-
-
-s7_int *s7_int_vector_elements(s7_pointer vec)
-{
-  return(int_vector_elements(vec));
-}
-
-
-s7_double *s7_float_vector_elements(s7_pointer vec)
-{
-  return(float_vector_elements(vec));
-}
+s7_pointer *s7_vector_elements(s7_pointer vec)      {return(vector_elements(vec));}
+s7_int *s7_int_vector_elements(s7_pointer vec)      {return(int_vector_elements(vec));}
+s7_double *s7_float_vector_elements(s7_pointer vec) {return(float_vector_elements(vec));}
 
 
 s7_int *s7_vector_dimensions(s7_pointer vec)
 {
-  s7_int *dims;
+  static s7_int *dims = NULL;
   if (vector_dimension_info(vec))
     return(vector_dimensions(vec));
-  dims = (s7_int *)malloc(sizeof(s7_int));
+  if (!dims) dims = (s7_int *)malloc(sizeof(s7_int));
   dims[0] = vector_length(vec);
   return(dims);
 }
@@ -36136,10 +36124,10 @@ s7_int *s7_vector_dimensions(s7_pointer vec)
 
 s7_int *s7_vector_offsets(s7_pointer vec)
 {
-  s7_int *offs;
+  static s7_int *offs = NULL;
   if (vector_dimension_info(vec))
     return(vector_offsets(vec));
-  offs = (s7_int *)malloc(sizeof(s7_int));
+  if (!offs) offs = (s7_int *)malloc(sizeof(s7_int));
   offs[0] = 1;
   return(offs);
 }
@@ -49986,12 +49974,12 @@ static s7_pointer g_not_is_zero(s7_scheme *sc, s7_pointer args)     {check_boole
 /* eq? does not check for methods */
 static s7_pointer g_not_is_eq_sq(s7_scheme *sc, s7_pointer args)
 {
-  return(make_boolean(sc, find_symbol_unchecked(sc, cadar(args)) != opt_sym3(args)));
+  return(make_boolean(sc, find_symbol_unchecked(sc, cadar(args)) != opt_con2(args)));       /* cadr(caddr(car(args))) */
 }
 
 static s7_pointer g_not_is_eq_ss(s7_scheme *sc, s7_pointer args)
 {
-  return(make_boolean(sc, find_symbol_unchecked(sc, cadar(args)) != find_symbol_unchecked(sc, opt_sym3(args))));
+  return(make_boolean(sc, find_symbol_unchecked(sc, cadar(args)) != find_symbol_unchecked(sc, opt_sym3(args)))); /* caddr(car(args)) */
 }
 
 /* here the method finder is in either car or cdr */
@@ -50066,7 +50054,7 @@ static s7_pointer not_chooser(s7_scheme *sc, s7_pointer g, int args, s7_pointer 
 	  (c_callee(cadr(expr)) == g_is_eq))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
-	  set_opt_sym3(cdr(expr), cadr(caddr(cadr(expr))));
+	  set_opt_con2(cdr(expr), cadr(caddr(cadr(expr))));
 	  return(not_is_eq_sq);
 	}
 
@@ -52125,7 +52113,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		      set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A);
 		      if ((is_pair(car(body))) &&
 			  (is_h_safe_c_c(car(body))))
-			set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_A);
+			set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_C);
 		    }
 		  else 
 		    {
@@ -52153,7 +52141,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	  if ((safe_case) &&
 	      (is_pair(car(body))) &&
 	      (is_h_safe_c_c(car(body))))
-	    set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_A);
+	    set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_C);
 	  else set_unsafe_optimize_op(expr, hop + ((safe_case ? OP_SAFE_CLOSURE_A : OP_CLOSURE_A)));
 	  annotate_arg(sc, cdr(expr), e);
 	  set_opt_lambda(expr, func);
@@ -56230,7 +56218,7 @@ static int define_unchecked_ex(s7_scheme *sc)
 
 static s7_pointer make_funclet(s7_scheme *sc, s7_pointer new_func, s7_pointer func_name, s7_pointer outer_env)
 {
-  s7_pointer new_env, arg;
+  s7_pointer new_env;
   new_cell_no_check(sc, new_env, T_LET | T_FUNCLET);
   let_id(new_env) = ++sc->let_number;
   let_set_slots(new_env, sc->nil);
@@ -56239,6 +56227,7 @@ static s7_pointer make_funclet(s7_scheme *sc, s7_pointer new_func, s7_pointer fu
   funclet_set_function(new_env, func_name);
   if (is_safe_closure(new_func))
     {
+      s7_pointer arg;
       for (arg = closure_args(new_func); is_pair(arg); arg = cdr(arg))
 	{
 	  if (is_pair(car(arg)))
@@ -61023,6 +61012,18 @@ static s7_pointer safe_list_if_possible(s7_scheme *sc, s7_pointer p)
   return(make_list(sc, num_args, sc->nil));
 }
 
+#if DEBUGGING
+#define overwrite_check(Val, Code) \
+  do {						\
+    push_stack(sc, OP_NO_OP, Val, sc->code);	\
+    Code;					\
+    pop_stack(sc);							\
+    if (Val != sc->args) fprintf(stderr, "%d: aa trouble: %s %s\n", __LINE__, DISPLAY(sc->args), DISPLAY(Val)); \
+  } while (0)
+#else
+#define overwrite_check(Val, Code) Code      
+#endif
+
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 {
@@ -62920,7 +62921,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  if (!c_function_is_ok(sc, code)) break;
 		case HOP_SAFE_C_AA:
 		  set_car(sc->a2_1, c_call(cdr(code))(sc, cadr(code)));
-		  set_car(sc->a2_2, c_call(cddr(code))(sc, caddr(code)));
+		  overwrite_check(car(sc->a2_1), 
+				  set_car(sc->a2_2, c_call(cddr(code))(sc, caddr(code))));
 		  sc->value = c_call(code)(sc, sc->a2_1);
 		  goto START;
 		  
@@ -64373,9 +64375,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  goto BEGIN1;
 
 		  
-		case OP_SAFE_CLOSURE_A_A:
+		case OP_SAFE_CLOSURE_A_C:
 		  if (!closure_is_equal(sc, code)) {if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
-		case HOP_SAFE_CLOSURE_A_A:
+		case HOP_SAFE_CLOSURE_A_C:
 		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
 		  sc->code = car(closure_body(opt_lambda(code)));
 		  sc->value = c_call(sc->code)(sc, cdr(sc->code));
@@ -73196,7 +73198,7 @@ static s7_pointer describe_memory_usage(s7_scheme *sc)
   fprintf(stderr, "symbol table: %d (%d symbols, %lld bytes)\n", SYMBOL_TABLE_SIZE, syms, 
 	  (s7_int)(SYMBOL_TABLE_SIZE * sizeof(s7_pointer) + syms * 3 * sizeof(s7_cell)));
 
-  fprintf(stderr, "stack: %u (%lld bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), s7_stack_top(sc));
+  fprintf(stderr, "stack: %u (%lld bytes, current top: %ld)\n", sc->stack_size, (s7_int)(sc->stack_size * sizeof(s7_pointer)), (long int)s7_stack_top(sc));
   fprintf(stderr, "c_functions: %d (%d bytes)\n", c_functions, (int)(c_functions * sizeof(c_proc_t)));
 
   len = 0;
@@ -74552,7 +74554,10 @@ s7_scheme *s7_init(void)
    *   (not embedded in OP_SAFE_C_opSq for example) -- that is, it pushes OP_READ_INTERNAL, then returns
    *   expecting goto START, which would be nonsense if arg=c_call(read) -> c_call(arg).
    *   a safe procedure leaves its argument list alone, does not push anything on the stack,
-   *   and leaves sc->code|args unscathed (c_call assumes that is the case).
+   *   and leaves sc->code|args unscathed (c_call assumes that is the case).  The stack part can
+   *   be hidden: if a c_function calls s7_apply_function (lambda passed as arg as in some clm gens)
+   *   then is called with args that use all_x*, and the lambda func does the same, the two calls
+   *   can step on each other.  
    */
 
   sc->call_with_input_string_symbol = unsafe_defun("call-with-input-string", call_with_input_string, 2, 0, false);
@@ -75343,7 +75348,7 @@ int main(int argc, char **argv)
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4387
  * titer         |      |      | 7503 | 5218 | [5015] 5873 5086
  * tmac          |      |      |      |      |        18.7 1049
- * thash         |      |      | 50.7 | 8491 | [9888] 8858 10.4
+ * thash         |      |      | 50.7 | 8491 | [9853] 8858 10.4
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.5
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
@@ -75372,10 +75377,12 @@ int main(int argc, char **argv)
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
  *
- * extend unknown_a_ex changes to other "a" cases, and maybe all of them (includes the break->unknown in op_[safe_]c_*)
+ * extend unknown_a_ex changes to other "a" cases (c_fa -> (f (allx))) is this case, so others maybe can't currently happen?)
  * lots of caddr(cadr()) etc
- * check local_x_is_* 
- * check what dox_ex all_x needs, why so many unopt'd do's?
+ * check what dox_ex all_x needs, why so many unopt'd do's? split each section into allx/eval, check cond too
+ *   hop_safe_closure_a|s_c should be ok, but does it happen?
+ * does copy :readable clear all opts?  (make-hook oddness)
+ * add overwrite_check under debugging for all aa* ops
  *
  * (*s7* 'print-length) appears to be ignored for lists
  *

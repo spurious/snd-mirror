@@ -204,6 +204,9 @@ static void clm_error(const char *caller, const char *msg, Xen val)
 
 
 /* ---------------- optional-key ---------------- */
+#if HAVE_SCHEME
+  static s7_pointer extra_args_string;
+#endif
 
 int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, int *orig)
 {
@@ -233,8 +236,16 @@ int mus_optkey_unscramble(const char *caller, int nkeys, Xen *keys, Xen *args, i
 	  /* type checking on the actual values has to be the caller's problem */
 
 	  if (arg_ctr >= nkeys) /* we aren't handling a keyword arg, so the underlying args should only take nkeys args */
+#if HAVE_SCHEME
+	    {
+	      s7_list_set(s7, clm_error_info, 1, s7_make_string(s7, caller));
+	      s7_list_set(s7, clm_error_info, 2, extra_args_string);
+	      s7_list_set(s7, clm_error_info, 3, key);
+	      s7_error(s7, mus_error_symbol, clm_error_info);
+	    }
+#else
 	    clm_error(caller, "extra trailing args?", key);
-
+#endif
 	  keys[arg_ctr] = key;
 	  orig[arg_ctr] = arg_ctr + 1;
 	  arg_ctr++;
@@ -12527,6 +12538,9 @@ static void mus_xen_init(void)
   clm_error_info = s7_list(s7, 4, s7_make_string(s7, "~A: ~A ~A"), s7_nil(s7), s7_nil(s7), s7_nil(s7));
   s7_gc_protect(s7, clm_error_info);
 
+  extra_args_string = s7_make_string(s7, "extra trailing args?");
+  s7_gc_protect(s7, extra_args_string);
+
   s = s7_make_symbol(s7, "string?");
   i = s7_make_symbol(s7, "integer?");
   p = s7_make_symbol(s7, "pair?");
@@ -13069,7 +13083,7 @@ static void mus_xen_init(void)
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_env), t));
   Xen_define_typed_procedure(S_env_interp,		g_env_interp_w,            2, 0, 0, H_env_interp,		pl_drc);
   Xen_define_typed_procedure(S_envelope_interp,		g_envelope_interp_w,       2, 1, 0, H_envelope_interp,		pl_rrpr);
-  Xen_define_typed_procedure(S_env_any,			g_env_any_w,               2, 0, 0, H_env_any,                  pl_dct);
+  Xen_define_unsafe_typed_procedure(S_env_any,		g_env_any_w,               2, 0, 0, H_env_any,                  pl_dct);
 
   Xen_define_typed_procedure(S_is_locsig,		g_is_locsig_w,             1, 0, 0, H_is_locsig,		pl_bt);
   Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			
@@ -13155,7 +13169,7 @@ static void mus_xen_init(void)
 			    S_set S_mus_increment, g_mus_set_increment_w,  1, 0, 2, 0, pl_dc, pl_dcr);
 
   Xen_define_typed_procedure(S_is_granulate,		g_is_granulate_w,          1, 0, 0, H_is_granulate,		pl_bt);
-  Xen_define_typed_procedure(S_granulate,		g_granulate_w,             1, 2, 0, H_granulate,		
+  Xen_define_unsafe_typed_procedure(S_granulate,	g_granulate_w,             1, 2, 0, H_granulate,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_granulate), t));
   Xen_define_typed_procedure(S_make_granulate,		g_make_granulate_w,        0, 0, 1, H_make_granulate,           
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_granulate), t));
@@ -13166,22 +13180,22 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_clear_sincs,		g_mus_clear_sincs_w,       0, 0, 0, "clears out any sinc tables", NULL);
   Xen_define_typed_procedure(S_is_src,			g_is_src_w,                1, 0, 0, H_is_src,			pl_bt);
-  Xen_define_typed_procedure(S_src,			g_src_w,                   1, 2, 0, H_src,			
+  Xen_define_unsafe_typed_procedure(S_src,		g_src_w,                   1, 2, 0, H_src,			
 			     s7_make_signature(s7, 4, d, s7_make_symbol(s7, S_is_src), r, t));
   Xen_define_typed_procedure(S_make_src,		g_make_src_w,              0, 6, 0, H_make_src,                 
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_src), t));
 
 
   Xen_define_typed_procedure(S_is_convolve,		g_is_convolve_w,           1, 0, 0, H_is_convolve,		pl_bt);
-  Xen_define_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		
+  Xen_define_unsafe_typed_procedure(S_convolve,		g_convolve_w,              1, 1, 0, H_convolve_gen,		
 			     s7_make_signature(s7, 3, d, s7_make_symbol(s7, S_is_convolve), t));
   Xen_define_typed_procedure(S_make_convolve,		g_make_convolve_w,         0, 0, 1, H_make_convolve,            
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_convolve), t));
   Xen_define_typed_procedure(S_convolve_files,		g_convolve_files_w,        2, 2, 0, H_convolve_files,		pl_sssrs);
 
   Xen_define_typed_procedure(S_is_phase_vocoder,	g_is_phase_vocoder_w,      1, 0, 0, H_is_phase_vocoder,		pl_bt);
-  Xen_define_typed_procedure(S_phase_vocoder,		g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		
-			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_phase_vocoder), t));
+  Xen_define_unsafe_typed_procedure(S_phase_vocoder,    g_phase_vocoder_w,         1, 4, 0, H_phase_vocoder,		
+				    s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_phase_vocoder), t));
   Xen_define_typed_procedure(S_make_phase_vocoder,	g_make_phase_vocoder_w,    0, 0, 1, H_make_phase_vocoder,       
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_phase_vocoder), t));
   Xen_define_typed_procedure(S_phase_vocoder_amp_increments, g_phase_vocoder_amp_increments_w, 1, 0, 0, H_phase_vocoder_amp_increments, pl_fc);

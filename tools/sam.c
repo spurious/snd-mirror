@@ -1547,7 +1547,7 @@ static void ticks_command(int cmd)
 	    char *dot;
 	    int i, len;
 	    len = strlen(filename);
-	    output_filename = malloc(len + 1);
+	    output_filename = (char *)malloc(len + 1);
 	    strcpy(output_filename, filename);
 	    /* dot = strchr(output_filename, '.');
 	     *     can be confused by ../test/TEST.SAM

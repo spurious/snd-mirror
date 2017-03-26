@@ -274,8 +274,8 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (
 bool s7_is_vector(s7_pointer p);                                            /* (vector? p) */
 s7_int s7_vector_length(s7_pointer vec);                                    /* (vector-length vec) */
 int s7_vector_rank(s7_pointer vect);                                        /* number of dimensions in vect */
-s7_int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions */
-s7_int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing */
+s7_int *s7_vector_dimensions(s7_pointer vec);                               /* dimensions (don't free the pointer) */
+s7_int *s7_vector_offsets(s7_pointer vec);                                  /* precalculated offsets to speed-up addressing (don't free) */
 s7_pointer *s7_vector_elements(s7_pointer vec);                             /* a pointer to the array of s7_pointers */
 s7_int *s7_int_vector_elements(s7_pointer vec);
 s7_double *s7_float_vector_elements(s7_pointer vec);
