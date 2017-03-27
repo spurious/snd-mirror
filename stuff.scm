@@ -2128,6 +2128,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 			      (rootlet))
 		    (sublet lt)))))))
 
+;;; (sandbox '(let ((x 1)) (+ x 2))) -> 3
 
 (define sandbox 
   (let ((documentation "(sandbox code) evaluates code in an environment where nothing outside that code can be affected by its evaluation.")

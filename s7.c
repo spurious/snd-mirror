@@ -1840,6 +1840,7 @@ static int not_heap = -1;
 #define is_null(p)                    ((_NFre(p)) == sc->nil)
 #define is_not_null(p)                ((_NFre(p)) != sc->nil)
 
+#define raw_opt1(p)                   ((p)->object.cons.opt1)
 
 #if (!DEBUGGING)
 
@@ -2789,7 +2790,7 @@ static s7_pointer car_a_list_string, cdr_a_list_string, caar_a_list_string, cadr
                   an_association_list_string, an_output_port_string, an_input_port_string, an_open_port_string, 
                   a_normal_real_string, a_rational_string, a_boolean_string, a_number_string, a_let_string, 
                   a_procedure_string, a_proper_list_string, a_thunk_string, something_applicable_string, a_symbol_string, 
-                  a_non_negative_integer_string, a_format_port_string, an_unsigned_byte_string, a_binding_string, 
+                  a_non_negative_integer_string, a_format_port_string, an_unsigned_byte_string, value_is_missing_string,
                   a_non_constant_symbol_string, an_eq_func_string, a_sequence_string, its_too_small_string, 
                   a_normal_procedure_string, its_too_large_string, its_negative_string, result_is_too_large_string, 
                   its_nan_string, its_infinite_string, too_many_indices_string, a_valid_radix_string, an_input_string_port_string, 
@@ -4933,7 +4934,16 @@ static void resize_heap(s7_scheme *sc)
   sc->previous_free_heap_top = sc->free_heap_top;
 
   if (show_heap_stats(sc))
-    fprintf(stderr, "heap grows to %u\n", sc->heap_size);
+    {
+      fprintf(stderr, "heap grows to %u\n", sc->heap_size);
+#if DEBUGGING
+      if (sc->heap_size > 500000000) /* maybe a max-heap-size? */
+	{
+	  s7_show_let(sc);
+	  abort();
+	}
+#endif
+    }
 }
 
 static void try_to_call_gc(s7_scheme *sc)
@@ -6672,7 +6682,7 @@ to the environment env, and returns the environment."
 	    sym = keyword_symbol(p);
 	  else sym = p;
 	  if (!is_pair(cdr(x)))
-	    return(wrong_type_argument_with_type(sc, sc->varlet_symbol, position_of(x, args), p, a_binding_string));
+	    s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, sc->varlet_symbol, car(x)));
 	  x = cdr(x);
 	  val = car(x);
 	  break;
@@ -6810,7 +6820,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
       s7_pointer x;
       sc->temp3 = new_e;
 
-      for (x = bindings; is_not_null(x); x = cdr(x))
+      for (x = bindings; is_pair(x); x = cdr(x))
 	{
 	  s7_pointer p, sym, val;
 
@@ -6822,7 +6832,7 @@ static s7_pointer sublet_1(s7_scheme *sc, s7_pointer e, s7_pointer bindings, s7_
 		sym = keyword_symbol(p);
 	      else sym = p;
 	      if (!is_pair(cdr(x)))
-		return(wrong_type_argument_with_type(sc, caller, position_of(x, bindings), p, a_binding_string));
+		s7_error(sc, sc->error_symbol, set_elist_3(sc, value_is_missing_string, caller, car(x)));
 	      x = cdr(x);
 	      val = car(x);
 	      break;
@@ -7151,9 +7161,9 @@ static s7_pointer g_local_lint_let_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer let_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_h_safe_c_c(expr)) &&
-      (opt_cfunc(expr) == lint_let_ref))
+      (raw_opt1(expr) == lint_let_ref))
     return(lint_let_ref);
-
+  
   if (optimize_op(expr) == HOP_SAFE_C_opSq_Q)
     {
       s7_pointer arg1, arg2;
@@ -7352,7 +7362,7 @@ static s7_pointer g_local_lint_let_set(s7_scheme *sc, s7_pointer args)
 static s7_pointer let_set_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_h_safe_c_c(expr)) &&
-      (opt_cfunc(expr) == lint_let_set))
+      (raw_opt1(expr) == lint_let_set))
     return(lint_let_set);
 
   if (optimize_op(expr) == HOP_SAFE_C_opSq_QS)
@@ -8639,20 +8649,9 @@ static s7_pp_t pf_function(s7_pointer f)
   return(NULL);
 }
 
-static s7_pp_t gf_function(s7_pointer f)
-{
-  switch (type(f))
-    {
-    case T_C_FUNCTION_STAR: case T_C_FUNCTION: case T_C_ANY_ARGS_FUNCTION: case T_C_OPT_ARGS_FUNCTION: case T_C_RST_ARGS_FUNCTION:
-      return(c_function_gp(f));
-    }
-  return(NULL);
-}
-
 s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func) {return(rf_function(func));}
 s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func) {return(if_function(func));}
 s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func) {return(pf_function(func));}
-s7_pp_t s7_gf_function(s7_scheme *sc, s7_pointer func) {return(gf_function(func));}
 
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp)
 {
@@ -8769,17 +8768,6 @@ static s7_pf_t xf_opt(s7_scheme *sc, s7_pointer lp)
       xf_go(loc + 1);
     }
 
-  pp = gf_function(f);
-  if (pp)
-    {
-      s7_pf_t pf;
-      pf = pp(sc, lp);
-      if (pf)
-	{
-	  xf_store_at(loc, (s7_pointer)pf);
-	  return(pf);
-	}
-    }
   return(NULL);
 }
 
@@ -34077,7 +34065,6 @@ static void init_car_a_list(void)
   something_applicable_string =   s7_make_permanent_string("a procedure or something applicable");
   a_random_state_object_string =  s7_make_permanent_string("a random-state object");
   a_format_port_string =          s7_make_permanent_string("#f, #t, (), or an open output port");
-  a_binding_string =              s7_make_permanent_string("a pair whose car is a symbol: '(symbol . value)");
   a_non_constant_symbol_string =  s7_make_permanent_string("a non-constant symbol");
   a_sequence_string =             s7_make_permanent_string("a sequence");
   a_valid_radix_string =          s7_make_permanent_string("should be between 2 and 16");
@@ -34088,6 +34075,7 @@ static void init_car_a_list(void)
   its_nan_string =                s7_make_permanent_string("NaN usually indicates a numerical error");
   its_infinite_string =           s7_make_permanent_string("it is infinite");
   too_many_indices_string =       s7_make_permanent_string("too many indices");
+  value_is_missing_string =       s7_make_permanent_string("~A argument '~A's value is missing");
 #if (!HAVE_COMPLEX_NUMBERS)
   no_complex_numbers_string =     s7_make_permanent_string("this version of s7 does not support complex numbers");
 #endif
@@ -40914,18 +40902,21 @@ static s7_pointer c_set_setter(s7_scheme *sc, s7_pointer p, s7_pointer setter)
     case T_C_OPT_ARGS_FUNCTION:
     case T_C_RST_ARGS_FUNCTION:
       c_function_set_setter(p, setter);
-      if (is_any_closure(setter))
+      if ((is_any_closure(setter)) ||
+	  (is_any_macro(setter)))
 	add_setter(sc, p, setter);
       break;
 
     case T_C_FUNCTION_STAR:
       c_function_set_setter(p, setter);
-      if (is_any_closure(setter))
+      if ((is_any_closure(setter)) ||
+	  (is_any_macro(setter)))
 	add_setter(sc, p, setter);
       break;
 
     case T_C_MACRO:
-      if (is_any_closure(setter))
+      if ((is_any_closure(setter)) ||
+	  (is_any_macro(setter)))
 	add_setter(sc, p, setter);
       c_macro_set_setter(p, setter);
       break;
@@ -42426,9 +42417,10 @@ static s7_pointer string_setter(s7_scheme *sc, s7_pointer str, s7_int loc, s7_po
    *   error: copy argument 3, 3, is an integer but should be a character
    * perhaps better, copy #(3) to string, 3 is not a character
    */
-#if DEBUGGING
-  if (!copy_to_string_error) {fprintf(stderr, "string_error not set\n"); abort();}
-#endif
+
+  if (!copy_to_string_error)
+    copy_to_string_error = s7_make_permanent_string("copy ~A to string, ~S is not a character");
+
   set_car(sc->elist_3, copy_to_string_error);
   set_caddr(sc->elist_3, val);
   return(s7_error(sc, sc->wrong_type_arg_symbol, sc->elist_3));
@@ -42445,9 +42437,10 @@ static s7_pointer byte_vector_setter(s7_scheme *sc, s7_pointer str, s7_int loc, 
       else return(simple_wrong_type_argument_with_type(sc, sc->copy_symbol, val, an_unsigned_byte_string));
       return(val);
     }
-#if DEBUGGING
-  if (!copy_to_byte_vector_error) {fprintf(stderr, "byte_vector_error not set\n"); abort();}
-#endif
+
+  if (!copy_to_byte_vector_error)
+    copy_to_byte_vector_error = s7_make_permanent_string("copy ~A to byte-vector, ~S is not a byte");
+
   set_car(sc->elist_3, copy_to_byte_vector_error);
   set_caddr(sc->elist_3, val);
   return(s7_error(sc, sc->wrong_type_arg_symbol, sc->elist_3));
@@ -42932,6 +42925,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 	      for (i = start; i < end; i++)
 		{
 		  while (!x) x = elements[++loc];
+		  if (!is_symbol(x->key))
+		    return(simple_wrong_type_argument(sc, sc->copy_symbol, x->key, T_SYMBOL));
 		  make_slot_1(sc, dest, x->key, x->value);
 		  x = x->next;
 		}
@@ -47562,6 +47557,8 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_CSS] = all_x_c_css;
   all_x_function[HOP_SAFE_C_CSC] = all_x_c_csc;
 }
+
+/* hop_safe_closure_a|s_c could work, but in context it is (currently) never hop_safe */
 
 static s7_pointer g_not_c_c(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args);
@@ -58256,8 +58253,7 @@ static s7_pointer check_do(s7_scheme *sc)
 			    (s7_integer(cadr(step_expr)) == 1))) &&
 			  (c_function_class(opt_cfunc(step_expr)) == sc->add_class) &&
 			  ((c_function_class(opt_cfunc(end)) == sc->equal_class) ||
-			   (opt_cfunc(end) == geq_2))
-			  )
+			   (opt_cfunc(end) == geq_2)))
 			{
 			  if (do_is_safe(sc, body, sc->w = list_1(sc, car(vars)), sc->nil, &has_set))
 			    {
@@ -62713,7 +62709,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer arg;
 		    arg = cadr(code);
 		    set_car(sc->a2_1, c_call(cdr(arg))(sc, cadr(arg)));
-		    set_car(sc->a2_2, c_call(cddr(arg))(sc, caddr(arg)));
+		    overwrite_check(car(sc->a2_1),
+					set_car(sc->a2_2, c_call(cddr(arg))(sc, caddr(arg))));
 		    set_car(sc->t1_1, c_call(arg)(sc, sc->a2_1));
 		    sc->value = c_call(code)(sc, sc->t1_1);
 		    goto START;
@@ -62727,8 +62724,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer arg;
 		    arg = cadr(code);
 		    set_car(sc->a3_1, c_call(cdr(arg))(sc, cadr(arg)));
-		    set_car(sc->a3_2, c_call(cddr(arg))(sc, caddr(arg)));
-		    set_car(sc->a3_3, c_call(cdddr(arg))(sc, cadddr(arg)));
+		    overwrite_check(car(sc->a3_1),
+				    set_car(sc->a3_2, c_call(cddr(arg))(sc, caddr(arg))));
+		    overwrite_check(car(sc->a3_2),
+				    set_car(sc->a3_3, c_call(cdddr(arg))(sc, cadddr(arg))));
 		    set_car(sc->t1_1, c_call(arg)(sc, sc->a3_1));
 		    sc->value = c_call(code)(sc, sc->t1_1);
 		    goto START;
@@ -62756,7 +62755,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s7_pointer arg;
 		    arg = caddr(code);
 		    set_car(sc->a2_1, c_call(cdr(arg))(sc, cadr(arg)));
-		    set_car(sc->a2_2, c_call(cddr(arg))(sc, caddr(arg)));
+		    overwrite_check(car(sc->a2_1),
+				    set_car(sc->a2_2, c_call(cddr(arg))(sc, caddr(arg))));
 		    set_car(sc->t2_2, c_call(arg)(sc, sc->a2_1));
 		    set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(code)));
 		    sc->value = c_call(code)(sc, sc->t2_1);
@@ -62773,9 +62773,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    arg = cdr(p);
 		    set_car(sc->a3_1, c_call(arg)(sc, car(arg)));
 		    arg = cdr(arg);
-		    set_car(sc->a3_2, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a3_1),
+				    set_car(sc->a3_2, c_call(arg)(sc, car(arg))));
 		    arg = cdr(arg);
-		    set_car(sc->a3_3, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a3_2),
+				    set_car(sc->a3_3, c_call(arg)(sc, car(arg))));
 		    set_car(sc->t2_2, c_call(p)(sc, sc->a3_1));
 		    set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(code)));
 		    sc->value = c_call(code)(sc, sc->t2_1);
@@ -62935,9 +62937,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    arg = cdr(code);
 		    set_car(sc->a3_1, c_call(arg)(sc, car(arg)));
 		    arg = cdr(arg);
-		    set_car(sc->a3_2, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a3_1) ,
+				    set_car(sc->a3_2, c_call(arg)(sc, car(arg))));
 		    arg = cdr(arg);
-		    set_car(sc->a3_3, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a3_2) ,
+				    set_car(sc->a3_3, c_call(arg)(sc, car(arg))));
 		    sc->value = c_call(code)(sc, sc->a3_1);
 		    goto START;
 		  }
@@ -63015,11 +63019,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    arg = cdr(code);
 		    set_car(sc->a4_1, c_call(arg)(sc, car(arg)));
 		    arg = cdr(arg);
-		    set_car(sc->a4_2, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a4_1),
+				    set_car(sc->a4_2, c_call(arg)(sc, car(arg))));
 		    arg = cdr(arg);
-		    set_car(sc->a4_3, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a4_2),
+				    set_car(sc->a4_3, c_call(arg)(sc, car(arg))));
 		    arg = cdr(arg);
-		    set_car(sc->a4_4, c_call(arg)(sc, car(arg)));
+		    overwrite_check(car(sc->a4_3),
+				    set_car(sc->a4_4, c_call(arg)(sc, car(arg))));
 		    sc->value = c_call(code)(sc, sc->a4_1);
 		    goto START;
 		  }
@@ -75336,23 +75343,23 @@ int main(int argc, char **argv)
 /* --------------------------------------------------------------------
  *
  *           12  |  13  |  14  |  15  |  16  |  17
- *                                             f4new
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1119
- * teq           |      |      | 6612 | 2380 | [2329] 2500 2385
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2690] 3287 2822
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3191
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3222
- * lint          |      |      |      | 7731 | [3208] 4926 3288 [149.8]
- * tcopy         |      |      | 13.6 | 3204 | [3272] 3190 3407
- * tform         |      |      | 6816 | 3627 | [3645] 3768 3838
- * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4387
- * titer         |      |      | 7503 | 5218 | [5015] 5873 5086
- * tmac          |      |      |      |      |        18.7 1049
- * thash         |      |      | 50.7 | 8491 | [9853] 8858 10.4
+ *                                             f4new                  no-clm-opt no-pf
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1119         1126
+ * teq           |      |      | 6612 | 2380 | [2329] 2500 2385         2384
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2690] 3287 2822         2852
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3191         3315    3315
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3222         3487    3485 [dox_pf_ok fv_set_rf, fft/spectralnorm]
+ * lint          |      |      |      | 7731 | [3208] 4926 3288 [149.8] 3292
+ * tcopy         |      |      | 13.6 | 3204 | [3272] 3190 3407         3407
+ * tform         |      |      | 6816 | 3627 | [3645] 3768 3838         3845
+ * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4387         4818    4768
+ * titer         |      |      | 7503 | 5218 | [5015] 5873 5086         5096
+ * tmac          |      |      |      |      |        18.7 1049         1049
+ * thash         |      |      | 50.7 | 8491 | [9853] 8858 10.4         10.4
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.5
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7
- * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [133.0] 40.7
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.5         13.2    12.6
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.7         46.6    17.8
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [133.0] 40.7 68.0    42.6 [fv+set here also]
  * 
  * --------------------------------------------------------------------
  *
@@ -75379,12 +75386,16 @@ int main(int argc, char **argv)
  *
  * extend unknown_a_ex changes to other "a" cases (c_fa -> (f (allx))) is this case, so others maybe can't currently happen?)
  * lots of caddr(cadr()) etc
- * check what dox_ex all_x needs, why so many unopt'd do's? split each section into allx/eval, check cond too
- *   hop_safe_closure_a|s_c should be ok, but does it happen?
- * does copy :readable clear all opts?  (make-hook oddness)
- * add overwrite_check under debugging for all aa* ops
- *
+ * does copy :readable clear all opts?  (make-hook oddness) -- no just the type-based stuff
+ * for clm-unopt: if sig->float|int choosers can use that just as in rf_opt et al, also local symbols
+ *   goto faster than recursion, so this could eventually be faster!
+ *   add_rf_1 + clm_add_rf in clm2xen etc, would need parallels to the *_rf funcs 
+ *   and for clm2xen, the default chooser [currently s7_rf_function]
+ *   could start with fv_set: if val-sig=float, fv_set_direct=set+index-error-check (using rf_func for val? we still need that info)
+ *     oscil_rf is mus_oscil_unmodulated
  * (*s7* 'print-length) appears to be ignored for lists
+ * (hash-table (procedure-signature /)) produces a hash-table with a cyclic element, then (for-each f h) is an infinite loop
+ *    and safety>0 does not notice
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
