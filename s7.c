@@ -3214,7 +3214,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
 
 #define in_reader(Sc) ((Sc->op >= OP_READ_LIST) && (Sc->op <= OP_READ_DONE) && (is_input_port(Sc->input_port)))
 
-#define is_safe_c_op(op) (op < OP_THUNK)                               /* used only in safe_stepper */
+#define is_safe_c_op(op) (op < OP_THUNK)
 #define is_unknown_op(op) ((op >= OP_UNKNOWN) && (op < OP_SAFE_C_PP))
 #define is_callable_c_op(op) ((op < OP_THUNK) || (op > OP_UNKNOWN_AA)) /* used only in check_set */
 
@@ -7161,7 +7161,7 @@ static s7_pointer g_local_lint_let_ref(s7_scheme *sc, s7_pointer args)
 static s7_pointer let_ref_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((is_h_safe_c_c(expr)) &&
-      (raw_opt1(expr) == lint_let_ref))
+      (raw_opt1(expr) == lint_let_ref)) /* perhaps check is_safe_c_op(expr) then opt_cfunc(expr) rather than using raw_opt here and in the set case below */
     return(lint_let_ref);
   
   if (optimize_op(expr) == HOP_SAFE_C_opSq_Q)
@@ -43959,7 +43959,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
 	    /* I think port_data need not be null-terminated, but s7_make_string assumes it is:
 	     *   both valgrind and lib*san complain about the uninitialized data during strlen.
 	     */
-	    s7_varlet(sc, let, s7_make_symbol(sc, "data"), s7_make_string_with_length(sc, (const char *)port_data(obj), port_data_size(obj)));
+	    s7_varlet(sc, let, s7_make_symbol(sc, "data"), s7_make_string_with_length(sc, (const char *)port_data(obj), port_position(obj)));
 	  }
 	s7_gc_unprotect_at(sc, gc_loc);
 	return(let);
@@ -46244,7 +46244,11 @@ pass (rootlet):\n\
     }
   sc->code = car(args);
   if (sc->safety > 0)
-    sc->code = copy_body(sc, sc->code);
+    {
+      if (cyclic_sequences(sc, sc->code, false) == sc->T)
+	return(wrong_type_argument_with_type(sc, sc->eval_symbol, 1, sc->code, a_proper_list_string));
+      sc->code = copy_body(sc, sc->code);
+    }
   else
    {
      if (is_optimized(sc->code))
@@ -50714,6 +50718,7 @@ static bool returns_char(s7_scheme *sc, s7_pointer arg)
   /* also if arg is immutable symbol + value is char */
   if (s7_is_character(arg)) return(true);
   if ((is_h_optimized(arg)) &&
+      (is_safe_c_op(optimize_op(arg))) && /* make sure opt_cfunc has been set */
       (is_c_function(opt_cfunc(arg))))
     {
       s7_pointer sig;
@@ -75381,6 +75386,7 @@ int main(int argc, char **argv)
  *
  * extend the validity checks to all FFI funcs and add info about caller etc
  * extend max-len objstr arg to non-pair cases, add s7test cases
+ *   (*s7* 'print-length) appears to be ignored for lists
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
  *
@@ -75393,9 +75399,6 @@ int main(int argc, char **argv)
  *   and for clm2xen, the default chooser [currently s7_rf_function]
  *   could start with fv_set: if val-sig=float, fv_set_direct=set+index-error-check (using rf_func for val? we still need that info)
  *     oscil_rf is mus_oscil_unmodulated
- * (*s7* 'print-length) appears to be ignored for lists
- * (hash-table (procedure-signature /)) produces a hash-table with a cyclic element, then (for-each f h) is an infinite loop
- *    and safety>0 does not notice
  *
  * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm

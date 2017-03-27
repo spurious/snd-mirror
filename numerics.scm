@@ -28,6 +28,8 @@
 	  (set! (factorials n) (* n (factorial (- n 1)))))
       (factorials n))))
 
+;; (factorial 3) 6
+
 #|
 ;;; maxima uses this:
 
@@ -69,7 +71,10 @@
 		       (i 2 (+ i 1)))
 		      ((> i mn) cnk)
 		    (set! cnk (/ (* cnk (+ mx i)) i))))))))))
-    
+ 
+;; (n-choose-k 10 6) 210
+;; (n-choose-k 10 9) 10
+;; same for binomial-direct
     
 
 ;;; --------------------------------------------------------------------------------
@@ -129,6 +134,7 @@
 		       x))
 
 ;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ i 1)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
+;; (legendre 3 1.0) 1.0
 
 #|
 ;; if l odd, there seems to be sign confusion:
@@ -173,6 +179,7 @@
 		    (set! fn1 fn)))))))))
 
 ;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ i 1)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
+;; (gegenbauer 3 1.0) -0.6599949977336302
 
 #|
 (with-sound (:scaled-to 0.5)
@@ -205,6 +212,8 @@
     (set! (a n) 1.0)
     (chebyshev-polynomial a x kind)))
 
+;; (chebyshev 3 1.0) 1.0
+
 
 (define (hermite-polynomial a x)
   (let ((n (- (length a) 1)))
@@ -227,6 +236,8 @@
   (let ((a (make-vector (+ 1 n) 0.0)))
     (set! (a n) 1.0)
     (hermite-polynomial a x)))
+
+;; (hermite 3 1.0) -4.0
 
 
 (define* (laguerre-polynomial a x (alpha 0.0))
@@ -251,6 +262,8 @@
   (let ((a (make-vector (+ 1 n) 0.0)))
     (set! (a n) 1.0)
     (laguerre-polynomial a x alpha)))
+
+;; (laguerre 3 1.0) -0.6666666666666666
 
 
 #|
@@ -411,6 +424,10 @@
 	(set! unhappy (> (abs xs) err))
 	(set! sum (+ sum xs)))))
 
+;; (Si 1.0) 0.9460830708394717
+;; (Ci 1.0) 0.3374039233633503
+
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -451,6 +468,8 @@
 		     (* fact (bernoulli3 i)))))))
 
 #|
+;; (bernoulli-poly 1 1.0) 0.5
+
 (with-sound (:clipped #f :channels 2)
   (let ((x 0.0)
 	(incr (hz->radians 100.0))
@@ -768,8 +787,20 @@
 		   (- (+ (* 4.0 s1) (* -2.0 s2)) s3 s4))))
 	(set! pid (- (+ 1.0 pid) (floor pid)))
 	(ihex pid 10 chx)
-	(format #t " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))))
+	(format #f " position = ~D~% fraction = ~,15F~% hex digits =  ~S~%" id pid chx)))))
   
+#|
+(show-digits-of-pi-starting-at-digit 0)
+" position = 0
+ fraction = 1.141592653589793
+ hex digits =  \"243F6A8885       \"
+"
+(show-digits-of-pi-starting-at-digit 1000)
+" position = 1000
+ fraction = 1.288845098351256
+ hex digits =  \"49F1C09B07       \"
+"
+|#
 
 #|
 ;;; from the CL bboard, perhaps written by Justin Grant
@@ -831,6 +862,10 @@
 		(if (> right cur)
 		    (set! x (+ x zig-size))))
 	      (set! x (- x zig-size))))))))
+
+;; (sin-nx-peak 100) (1.999876644816418 1.555089933857112)
+;; (sin-nx-peak 1) (5.551115123125783e-16 2.576105496457603)
+
 	
 
 ;;; --------------------------------------------------------------------------------
@@ -839,3 +874,7 @@
   (cond ((zero? b) 1)
         ((even? b) (exptmod (modulo (* a a) n) (quotient b 2) n))
         (else (modulo (* a (exptmod (modulo (* a a) n) (quotient b 2) n)) n))))
+
+;; (exptmod 3 100 5) 1
+;; (exptmod 3 101 5) 3
+;; (exptmod 3 100 3) 0
