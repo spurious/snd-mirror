@@ -759,7 +759,6 @@
   (define (make-variables-dialog)
     (set! variables-dialog (gtk_dialog_new))
     (gtk_window_set_title (GTK_WINDOW variables-dialog) "Variables")
-    ;(gtk_container_set_border_width (GTK_CONTAINER variables-dialog) 10)
     (gtk_window_set_default_size (GTK_WINDOW variables-dialog) -1 -1)
     (gtk_window_set_resizable (GTK_WINDOW variables-dialog) #t)
     (gtk_widget_realize variables-dialog)
@@ -832,7 +831,6 @@
   (define variable-display 
     (let ((force-update (lambda (wid)
 			  (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
-			  ;;(gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t)
 			  ))
 	  (widget? (lambda (w) 
 		     (and (pair? w) 

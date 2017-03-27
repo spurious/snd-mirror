@@ -1,15 +1,10 @@
-Snd 17.2:
+Snd 17.3.
 
-Tito Latini greatly improved the mix saved state info, and fixed many bugs.
+snd-init.el and snd-scheme-open-file from Orm Finnendahl.
+More bug fixes from Tito.
 
-in s7:
-  let-set! now raises an error if the target variable doesn't exist
-  if no result is specified, do returns the test result
-     => works here as in cond and case, and multiple-values.
-  in *rootlet-redefinition-hook* the first parameter is 'name, not 'symbol.
-  #e, #i, #d removed.  #i(...) is an int-vector constant, #r(...) a float-vector.
+s7: pair-line-number now returns #f if there is no line number.
 
-checked: sbcl 1.3.14, gtk 3.89.4
+checked: sbcl 1.3.15|16, gtk 3.89.5
 
-Thanks!: Tito Latini.
-
+Thanks!: Orm Finnendahl, Tito Latini, Daniel Hensel.

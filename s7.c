@@ -4937,7 +4937,7 @@ static void resize_heap(s7_scheme *sc)
     {
       fprintf(stderr, "heap grows to %u\n", sc->heap_size);
 #if DEBUGGING
-      if (sc->heap_size > 500000000) /* maybe a max-heap-size? */
+      if (sc->heap_size > 50000000) /* maybe a max-heap-size? */
 	{
 	  s7_show_let(sc);
 	  abort();
@@ -60603,6 +60603,8 @@ static int apply_pair(s7_scheme *sc)                              /* -------- li
       /* car of values can be anything, so conjure up a new expression, and apply again */
       sc->x = multiple_value(sc->code);                             /* ((values + 1 2) 3) */
       sc->code = car(sc->x);
+      if (!is_proper_list(sc, cdr(sc->x)))
+	s7_error(sc, sc->syntax_error_symbol, set_elist_2(sc, make_string_wrapper(sc, "values arglist is a dotted list: ~A"), sc->x));
       sc->args = s7_append(sc, cdr(sc->x), sc->args);
       sc->x = sc->nil;
       return(goto_APPLY);
@@ -75393,16 +75395,14 @@ int main(int argc, char **argv)
  * extend unknown_a_ex changes to other "a" cases (c_fa -> (f (allx))) is this case, so others maybe can't currently happen?)
  * lots of caddr(cadr()) etc
  * does copy :readable clear all opts?  (make-hook oddness) -- no just the type-based stuff
- * for clm-unopt: if sig->float|int choosers can use that just as in rf_opt et al, also local symbols
+ * for clm-unopt: if sig->float|int choosers can use that just as in rf_opt et al, also local symbols [see returns_char]
  *   goto faster than recursion, so this could eventually be faster!
  *   add_rf_1 + clm_add_rf in clm2xen etc, would need parallels to the *_rf funcs 
  *   and for clm2xen, the default chooser [currently s7_rf_function]
  *   could start with fv_set: if val-sig=float, fv_set_direct=set+index-error-check (using rf_func for val? we still need that info)
  *     oscil_rf is mus_oscil_unmodulated
  *
- * repl: why does it drop the initial open paren? [string too long confusion -- why not broken?]
  * update libgsl.scm
- * lint: (lint-test "(define (mdi) (define reader1 (lambda* (quit) (reader1))))" "")
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)

@@ -60,13 +60,13 @@ ffitest
 gcc s7.c -o repl -Wall -DWITH_MAIN -DUSE_SND=0 -I. -O2 -g3 -Wl,-export-dynamic -ldl -lm
 
 echo '#define WITH_SYSTEM_EXTRAS 0' >mus-config.h
-cc -c s7.c -o s7.o -Wall
+gcc -c s7.c -o s7.o -Wall
 rm s7.o
 echo '#define WITH_C_LOADER 0' >mus-config.h
-cc -c s7.c -o s7.o -Wall
+gcc -c s7.c -o s7.o -Wall
 rm s7.o
 echo '#define WITH_EXTRA_EXPONENT_MARKERS 1' >mus-config.h
-cc -c s7.c -o s7.o -Wall
+gcc -c s7.c -o s7.o -Wall
 rm s7.o
 
 make clmclean
