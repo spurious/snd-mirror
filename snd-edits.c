@@ -9149,37 +9149,6 @@ static s7_rf_t next_sample_rf(s7_scheme *sc, s7_pointer expr)
     }
   return(NULL);
 }
-
-static s7_pointer is_sampler_at_end_pf_s(s7_scheme *sc, s7_pointer **p)
-{
-  snd_fd *fd;
-  fd = (snd_fd *)(*(*p)); (*p)++;
-  return(s7_make_boolean(sc, fd->at_eof));
-}
-
-static s7_pf_t is_sampler_at_end_pf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer sym, o;
-  snd_fd *g;
-  
-  if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);
-  sym = s7_cadr(expr);
-  if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_xf_is_stepper(sc, sym)) return(NULL);
-  o = s7_symbol_value(sc, sym);
-  g = (snd_fd *)s7_object_value_checked(o, sf_tag);
-  if (g)
-    {
-      s7_xf_store(sc, (s7_pointer)g);
-      return(is_sampler_at_end_pf_s);
-    }
-  if (is_mix_sampler(o))
-    {
-      s7_xf_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
-      return(is_sampler_at_end_pf_s);
-    }
-  return(NULL);
-}
 #endif
 
 
@@ -9362,9 +9331,6 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
     f = s7_name_to_value(s7, "read-sample");
     s7_rf_set_function(f, read_sample_rf);
-
-    f = s7_name_to_value(s7, "sampler-at-end?");
-    s7_pf_set_function(f, is_sampler_at_end_pf);
   }
 #endif
 

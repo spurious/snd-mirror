@@ -53,6 +53,7 @@
 
 /* -------------------------------------------------------------------------------- */
 #if HAVE_SCHEME
+
 static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
@@ -957,35 +958,6 @@ data in " S_vct "s rl and im from polar (spectrum) to rectangular (fft)"
 
   return(g_fft_window_1(G_POLAR_RECTANGULAR, val1, val2, Xen_undefined, S_polar_to_rectangular));
 }
-
-#if HAVE_SCHEME
-#if (!WITH_GMP)
-#define PF2_TO_PF(CName, Cfnc)					  \
-  static s7_pointer CName ## _pf_a(s7_scheme *sc, s7_pointer **p) \
-  {								  \
-    s7_pf_t f;							  \
-    s7_pointer x, y;						  \
-    f = (s7_pf_t)(**p); (*p)++;					  \
-    x = f(sc, p);						  \
-    f = (s7_pf_t)(**p); (*p)++;					  \
-    y = f(sc, p);						  \
-    return(Cfnc);						  \
-  }								  \
-  static s7_pf_t CName ## _pf(s7_scheme *sc, s7_pointer expr)	  \
-  {									\
-    if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))) && (s7_is_null(sc, s7_cdddr(expr))) && \
-        (s7_arg_to_pf(sc, s7_cadr(expr))) &&				\
-        (s7_arg_to_pf(sc, s7_caddr(expr))))				\
-      return(CName ## _pf_a);						\
-    return(NULL);							\
-  }
-
-PF2_TO_PF(rectangular_to_polar, g_rectangular_to_polar(x, y))
-PF2_TO_PF(polar_to_rectangular, g_polar_to_rectangular(x, y))
-PF2_TO_PF(rectangular_to_magnitudes, g_rectangular_to_magnitudes(x, y))
-#endif
-#endif
-
 
 static Xen g_mus_fft(Xen url, Xen uim, Xen len, Xen usign)
 {
@@ -9777,19 +9749,6 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
     g = cadr_gen(sc, expr);						\
     if ((g) && (mus_is_ ## Type(g))) {s7_xf_store(sc, (s7_pointer)g); return(Type ## _rf_g);} \
     return(NULL);							\
-  }									\
-  static s7_pointer is_ ## Type ## _pf_g(s7_scheme *sc, s7_pointer **p) \
-  {									\
-    mus_xen *gn;							\
-    s7_pf_t pf; pf = (s7_pf_t)(**p); (*p)++;				\
-    gn = (mus_xen *)s7_object_value_checked(pf(sc, p), mus_xen_tag);	\
-    return(s7_make_boolean(sc, (gn) && (mus_is_ ## Type(gn->gen))));	\
-  }									\
-  static s7_pf_t is_ ## Type ## _pf(s7_scheme *sc, s7_pointer expr)	\
-  {									\
-    if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);			\
-    if (s7_arg_to_pf(sc, s7_cadr(expr))) return(is_ ## Type ## _pf_g);	\
-    return(NULL);							\
   }
 
 #define GEN_RF(Type, Func1, Func2)				\
@@ -9841,19 +9800,6 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
         if (s7_is_pair(a2))						\
           return(caddr_rf(sc, a2, Type ## _rf_gx));			\
       }									\
-    return(NULL);							\
-  }									\
-  static s7_pointer is_ ## Type ## _pf_g(s7_scheme *sc, s7_pointer **p) \
-  {									\
-    mus_xen *gn;							\
-    s7_pf_t pf; pf = (s7_pf_t)(**p); (*p)++;				\
-    gn = (mus_xen *)s7_object_value_checked(pf(sc, p), mus_xen_tag);	\
-    return(s7_make_boolean(sc, (gn) && (mus_is_ ## Type(gn->gen))));	\
-  }									\
-  static s7_pf_t is_ ## Type ## _pf(s7_scheme *sc, s7_pointer expr)	\
-  {									\
-    if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);			\
-    if (s7_arg_to_pf(sc, s7_cadr(expr))) return(is_ ## Type ## _pf_g);	\
     return(NULL);							\
   }
 
@@ -10926,163 +10872,6 @@ static s7_rf_t file_to_sample_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_pointer file_to_frample_pf_sss(s7_scheme *sc, s7_pointer **p)
-{
-  /* (file->frample gen loc fv) -> fv */
-  s7_pointer fv;
-  s7_int ind;
-  mus_any *stream;
-
-  stream = (mus_any *)(**p); (*p)++;
-  ind = s7_slot_integer_value(**p); (*p)++;
-  fv = s7_slot_value(**p); (*p)++;
-  mus_file_to_frample(stream, ind, s7_float_vector_elements(fv));
-  return(fv);
-}
-
-static s7_pf_t file_to_frample_pf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer ind_sym, ind_slot, fv_slot, fv_sym, sym, o;
-  mus_xen *gn;
-  
-  if (!s7_is_null(sc, s7_cddddr(expr))) return(NULL);
-
-  sym = s7_cadr(expr);
-  if (!s7_is_symbol(sym)) return(NULL);
-  o = s7_symbol_value(sc, sym);
-  gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
-  if (!gn) return(NULL);
-  s7_xf_store(sc, (s7_pointer)(gn->gen));
-
-  ind_sym = s7_caddr(expr);
-  if (!s7_is_symbol(ind_sym)) return(NULL);
-  ind_slot = s7_slot(sc, ind_sym);
-  if ((ind_slot == xen_undefined) || (!s7_is_stepper(ind_slot))) return(NULL);
-  if (!s7_is_integer(s7_slot_value(ind_slot))) return(NULL);
-  s7_xf_store(sc, ind_slot);
-
-  fv_sym = s7_cadddr(expr);
-  if (!s7_is_symbol(fv_sym)) return(NULL);
-  fv_slot = s7_slot(sc, fv_sym);
-  if (fv_slot == xen_undefined) return(NULL);
-  if (!s7_is_float_vector(s7_slot_value(fv_slot))) return(NULL);
-  s7_xf_store(sc, fv_slot);
-  
-  return(file_to_frample_pf_sss);
-}
-
-
-static s7_pointer frample_to_file_pf_sss(s7_scheme *sc, s7_pointer **p)
-{
-  /* (frample->file gen loc fv) -> fv */
-  s7_pointer fv;
-  s7_int ind;
-  mus_any *stream;
-
-  stream = (mus_any *)(**p); (*p)++;
-  ind = s7_slot_integer_value(**p); (*p)++;
-  fv = s7_slot_value(**p); (*p)++;
-  mus_frample_to_file(stream, ind, s7_float_vector_elements(fv));
-  return(fv);
-}
-
-static s7_pointer frample_to_file_pf_ssx(s7_scheme *sc, s7_pointer **p)
-{
-  /* (frample->file gen loc fv) -> fv */
-  s7_pointer fv;
-  s7_int ind;
-  s7_pf_t pf;
-  mus_any *stream;
-
-  stream = (mus_any *)(**p); (*p)++;
-  ind = s7_slot_integer_value(**p); (*p)++;
-  pf = (s7_pf_t)(**p); (*p)++;
-  fv = pf(sc, p);
-  mus_frample_to_file(stream, ind, s7_float_vector_elements(fv));
-  return(fv);
-}
-
-static s7_pf_t frample_to_file_pf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer ind_sym, ind_slot, fv_slot, fv_sym, sym, o;
-  mus_xen *gn;
-  if (!s7_is_null(sc, s7_cddddr(expr))) return(NULL);
-
-  sym = s7_cadr(expr);
-  if (!s7_is_symbol(sym)) return(NULL);
-  o = s7_symbol_value(sc, sym);
-  gn = (mus_xen *)s7_object_value_checked(o, mus_xen_tag);
-  if (!gn) return(NULL);
-  s7_xf_store(sc, (s7_pointer)(gn->gen));
-
-  ind_sym = s7_caddr(expr);
-  if (!s7_is_symbol(ind_sym)) return(NULL);
-  ind_slot = s7_slot(sc, ind_sym);
-  if ((ind_slot == xen_undefined) || (!s7_is_stepper(ind_slot))) return(NULL);
-  if (!s7_is_integer(s7_slot_value(ind_slot))) return(NULL);
-  s7_xf_store(sc, ind_slot);
-
-  fv_sym = s7_cadddr(expr);
-  if (s7_is_symbol(fv_sym))
-    {
-      fv_slot = s7_slot(sc, fv_sym);
-      if (fv_slot == xen_undefined) return(NULL);
-      if (!s7_is_float_vector(s7_slot_value(fv_slot))) return(NULL);
-      s7_xf_store(sc, fv_slot);
-      return(frample_to_file_pf_sss);
-    }
-  if (s7_is_pair(fv_sym))
-    {
-      s7_pp_t pp;
-      s7_pf_t pf;
-      s7_int loc;
-      pp = s7_pf_function(sc, s7_symbol_value(sc, s7_car(fv_sym)));
-      if (!pp) return(NULL);
-      loc = s7_xf_store(sc, NULL);
-      pf = pp(sc, fv_sym);
-      if (!pf) return(NULL);
-      s7_xf_store_at(sc, loc, (s7_pointer)pf);
-      return(frample_to_file_pf_ssx);
-    }
-  return(NULL);
-}
-
-
-static s7_pointer frample_to_frample_pf_all_s(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pointer matrix, in_data, in_chans, out_data, out_chans;
-  matrix = s7_slot_value(**p); (*p)++;
-  in_data = s7_slot_value(**p); (*p)++;
-  in_chans = s7_slot_value(**p); (*p)++;
-  out_data = s7_slot_value(**p); (*p)++;
-  out_chans = s7_slot_value(**p); (*p)++;
-
-  mus_frample_to_frample(s7_float_vector_elements(matrix), (int)sqrt(s7_vector_length(matrix)),
-			 s7_float_vector_elements(in_data), s7_integer(in_chans),
-			 s7_float_vector_elements(out_data), s7_integer(out_chans));
-  return(out_data);
-}
-
-static s7_pf_t frample_to_frample_pf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_int i;
-  s7_pointer p;
-  for (i = 0, p = s7_cdr(expr); (s7_is_pair(p)) && (i < 5); i++, p = s7_cdr(p))
-    {
-      if (s7_is_symbol(s7_car(p)))
-	{
-	  s7_pointer slot;
-	  slot = s7_slot(sc, s7_car(p));
-	  if (slot == xen_undefined) return(NULL);
-	  s7_xf_store(sc, slot);
-	}
-      else return(NULL);
-    }
-  if ((i == 5) && (s7_is_null(sc, p)))
-    return(frample_to_frample_pf_all_s);
-  return(NULL);
-}
-
 static s7_double ina_rf_ss(s7_scheme *sc, s7_pointer **p)
 {
   s7_int ind;
@@ -11715,164 +11504,6 @@ static s7_rf_t env_rf_1(s7_scheme *sc, s7_pointer expr)
 }
 
 
-static s7_double chebyshev_t_rf_a(s7_scheme *sc, s7_pointer **p)
-{
-  s7_rf_t rf;
-  s7_pf_t pf;
-  s7_double x;
-  s7_pointer fv;
-  rf = (s7_rf_t)(**p); (*p)++;
-  x = rf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++;
-  fv = pf(sc, p);
-  return(mus_chebyshev_t_sum(x, s7_vector_length(fv), s7_float_vector_elements(fv)));
-}
-
-static s7_rf_t chebyshev_t_rf(s7_scheme *sc, s7_pointer expr)
-{
-  if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))) && (s7_is_null(sc, s7_cdddr(expr))) &&
-      (s7_arg_to_rf(sc, s7_cadr(expr))) &&
-      (s7_arg_to_pf(sc, s7_caddr(expr))))
-    return(chebyshev_t_rf_a);
-  return(NULL);
-}
-
-static s7_double chebyshev_u_rf_a(s7_scheme *sc, s7_pointer **p)
-{
-  s7_rf_t rf;
-  s7_pf_t pf;
-  s7_double x;
-  s7_pointer fv;
-  rf = (s7_rf_t)(**p); (*p)++;
-  x = rf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++;
-  fv = pf(sc, p);
-  return(mus_chebyshev_u_sum(x, s7_vector_length(fv), s7_float_vector_elements(fv)));
-}
-
-static s7_rf_t chebyshev_u_rf(s7_scheme *sc, s7_pointer expr)
-{
-  if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))) && (s7_is_null(sc, s7_cdddr(expr))) &&
-      (s7_arg_to_rf(sc, s7_cadr(expr))) &&
-      (s7_arg_to_pf(sc, s7_caddr(expr))))
-    return(chebyshev_u_rf_a);
-  return(NULL);
-}
-
-static s7_double chebyshev_tu_rf_a(s7_scheme *sc, s7_pointer **p)
-{
-  s7_rf_t rf;
-  s7_pf_t pf;
-  s7_double x;
-  s7_pointer t, u;
-  rf = (s7_rf_t)(**p); (*p)++;
-  x = rf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++;
-  t = pf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++;
-  u = pf(sc, p);
-  return(mus_chebyshev_tu_sum(x, s7_vector_length(t), s7_float_vector_elements(t), s7_float_vector_elements(u)));
-}
-
-static s7_rf_t chebyshev_tu_rf(s7_scheme *sc, s7_pointer expr)
-{
-  if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))) && (s7_is_pair(s7_cdddr(expr))) && (s7_is_null(sc, s7_cddddr(expr))) &&
-      (s7_arg_to_rf(sc, s7_cadr(expr))) &&
-      (s7_arg_to_pf(sc, s7_caddr(expr))) &&
-      (s7_arg_to_pf(sc, s7_cadddr(expr))))
-    return(chebyshev_tu_rf_a);
-  return(NULL);
-}
-
-
-#define PF2_TO_RF(CName, Cfnc)					  \
-  static s7_double CName ## _rf_a(s7_scheme *sc, s7_pointer **p) \
-  {								  \
-    s7_pf_t f;							  \
-    s7_pointer x, y;						  \
-    f = (s7_pf_t)(**p); (*p)++;					  \
-    x = f(sc, p);						  \
-    f = (s7_pf_t)(**p); (*p)++;					  \
-    y = f(sc, p);						  \
-    return(Cfnc);						  \
-  }								  \
-  static s7_rf_t CName ## _rf(s7_scheme *sc, s7_pointer expr)	  \
-  {									\
-    if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))) && (s7_is_null(sc, s7_cdddr(expr))) && \
-        (s7_arg_to_pf(sc, s7_cadr(expr))) &&				\
-        (s7_arg_to_pf(sc, s7_caddr(expr))))				\
-      return(CName ## _rf_a);						\
-    return(NULL);							\
-  }
-
-static s7_double c_dot_product(s7_scheme *sc, s7_pointer x, s7_pointer y)
-{
-  s7_int len, lim;
-  len = s7_vector_length(x);
-  lim = s7_vector_length(y);
-  if (lim < len) len = lim;
-  if (len == 0) return(0.0);
-  return(mus_dot_product(s7_float_vector_elements(x), s7_float_vector_elements(y), len));
-}
-
-PF2_TO_RF(dot_product, c_dot_product(sc, x, y))
-
-static s7_pointer mus_fft_pf_i2(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pf_t pf;
-  s7_if_t xf;
-  s7_pointer rl, im;
-  s7_int size, dir; 
-  pf = (s7_pf_t)(**p); (*p)++; rl = pf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++; im = pf(sc, p);
-  xf = (s7_if_t)(**p); (*p)++; size = xf(sc, p);
-  xf = (s7_if_t)(**p); (*p)++; dir = xf(sc, p);
-  mus_fft(s7_float_vector_elements(rl), s7_float_vector_elements(im), size, dir);
-  return(rl);
-}
-
-static s7_pointer mus_fft_pf_i1(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pf_t pf;
-  s7_if_t xf;
-  s7_pointer rl, im;
-  s7_int size; 
-  pf = (s7_pf_t)(**p); (*p)++; rl = pf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++; im = pf(sc, p);
-  xf = (s7_if_t)(**p); (*p)++; size = xf(sc, p);
-  mus_fft(s7_float_vector_elements(rl), s7_float_vector_elements(im), size, 1);
-  return(rl);
-}
-
-static s7_pointer mus_fft_pf_i0(s7_scheme *sc, s7_pointer **p)
-{
-  s7_pf_t pf;
-  s7_pointer rl, im; 
-  pf = (s7_pf_t)(**p); (*p)++; rl = pf(sc, p);
-  pf = (s7_pf_t)(**p); (*p)++; im = pf(sc, p);
-  mus_fft(s7_float_vector_elements(rl), s7_float_vector_elements(im), s7_vector_length(rl), 1);
-  return(rl);
-}
-
-static s7_pf_t mus_fft_pf(s7_scheme *sc, s7_pointer expr)
-{
-  if ((s7_is_pair(s7_cdr(expr))) && (s7_is_pair(s7_cddr(expr))))
-    {
-      s7_pointer trailers;
-      if (!s7_arg_to_pf(sc, s7_cadr(expr))) return(NULL);
-      if (!s7_arg_to_pf(sc, s7_caddr(expr))) return(NULL);
-      trailers = s7_cdddr(expr);
-      if (s7_is_null(sc, trailers)) return(mus_fft_pf_i0);
-      if (!s7_arg_to_if(sc, s7_car(trailers))) return(NULL);
-      if (s7_is_null(sc, s7_cdr(trailers))) return(mus_fft_pf_i1);
-      if (!s7_arg_to_if(sc, s7_cadr(trailers))) return(NULL);
-      if (!s7_is_null(sc, s7_cddr(trailers))) return(NULL);
-      return(mus_fft_pf_i2);
-    }
-  return(NULL); 
-}
-
-
 #define MG_RF(Method, Func)						\
   static s7_double mus_ ## Method ## _rf_g(s7_scheme *sc, s7_pointer **p)	\
   {									\
@@ -11888,37 +11519,6 @@ static s7_pf_t mus_fft_pf(s7_scheme *sc, s7_pointer expr)
     return(NULL);							\
   }
 
-#define MG_IF(Method, Func)						\
-  static s7_int mus_ ## Method ## _if_g(s7_scheme *sc, s7_pointer **p)		\
-  {									\
-    mus_any *g; g = (mus_any *)(**p); (*p)++;				\
-    return(Func(g));							\
-  }									\
-  static s7_if_t mus_ ## Method ## _if(s7_scheme *sc, s7_pointer expr)		\
-  {									\
-    mus_any *g;								\
-    if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);			\
-    g = cadr_gen(sc, expr);						\
-    if (g) {s7_xf_store(sc, (s7_pointer)g); return(mus_ ## Method ## _if_g);}	\
-    return(NULL);							\
-  }
-
-#define PF_PF(Method, Func)						\
-  static s7_pointer mus_ ## Method ## _pf_g(s7_scheme *sc, s7_pointer **p)		\
-  {									\
-    s7_pf_t f;								\
-    s7_pointer g;							\
-    f = (s7_pf_t)(**p); (*p)++;						\
-    g = f(sc, p);							\
-    return(Func(g));							\
-  }									\
-  static s7_pf_t mus_ ## Method ## _pf(s7_scheme *sc, s7_pointer expr)	\
-  {									\
-    if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);			\
-    if (s7_arg_to_pf(sc, s7_cadr(expr))) return(mus_ ## Method ## _pf_g); \
-    return(NULL);							\
-  }
-
 MG_RF(scaler, mus_scaler)
 MG_RF(phase, mus_phase)
 MG_RF(frequency, mus_frequency)
@@ -11927,27 +11527,6 @@ MG_RF(width, mus_width)
 MG_RF(increment, mus_increment)
 MG_RF(feedforward, mus_feedforward)
 MG_RF(feedback, mus_feedback)
-
-MG_IF(length, mus_length)
-MG_IF(order, mus_order)
-MG_IF(location, mus_location)
-MG_IF(channel, mus_channel)
-MG_IF(channels, mus_channels)
-MG_IF(ramp, mus_ramp)
-MG_IF(hop, mus_hop)
-
-
-PF_PF(data, g_mus_data)
-PF_PF(reset, g_mus_reset)
-
-#if 0
-MG_RFIF(xcoeff, mus_xcoeff) 
-MG_RFIF(ycoeff, mus_ycoeff)
-MG_PF(xcoeffs, c_mus_xcoeffs) -- x|ycoeffs are complicated and may involve wrapper creation
-MG_PF(ycoeffs, c_mus_ycoeffs)
-MG_PF(file_name, c_mus_file_name) -- requires c->xen string creation
-MG_PF(copy, c_mus_copy) -- allocation
-#endif
 #endif /* gmp */
 
 
@@ -11993,9 +11572,6 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_outb), outb_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_ina), ina_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_file_to_sample), file_to_sample_rf);
-  s7_pf_set_function(s7_name_to_value(sc, S_file_to_frample), file_to_frample_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_frample_to_file), frample_to_file_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_frample_to_frample), frample_to_frample_pf);
   s7_rf_set_function(s7_name_to_value(sc, S_oscil), oscil_rf_3);
   s7_rf_set_function(s7_name_to_value(sc, S_polywave), polywave_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_wave_train), wave_train_rf);
@@ -12077,68 +11653,6 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_ring_modulate), ring_modulate_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_array_interp), array_interp_rf);
 
-  s7_pf_set_function(s7_name_to_value(sc, S_is_all_pass), is_all_pass_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_asymmetric_fm), is_asymmetric_fm_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_comb), is_comb_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_comb_bank), is_comb_bank_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_all_pass_bank), is_all_pass_bank_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_convolve), is_convolve_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_delay), is_delay_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_env), is_env_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_filter), is_filter_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_filtered_comb), is_filtered_comb_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_filtered_comb_bank), is_filtered_comb_bank_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_fir_filter), is_fir_filter_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_firmant), is_firmant_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_formant), is_formant_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_granulate), is_granulate_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_iir_filter), is_iir_filter_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_moving_average), is_moving_average_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_moving_max), is_moving_max_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_moving_norm), is_moving_norm_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_ncos), is_ncos_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_notch), is_notch_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_nrxycos), is_nrxycos_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_nrxysin), is_nrxysin_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_nsin), is_nsin_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_one_pole), is_one_pole_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_one_pole_all_pass), is_one_pole_all_pass_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_one_zero), is_one_zero_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_oscil), is_oscil_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_oscil_bank), is_oscil_bank_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_phase_vocoder), is_phase_vocoder_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_polyshape), is_polyshape_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_polywave), is_polywave_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_pulse_train), is_pulse_train_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_pulsed_env), is_pulsed_env_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_rand), is_rand_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_rand_interp), is_rand_interp_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_readin), is_readin_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_rxykcos), is_rxykcos_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_rxyksin), is_rxyksin_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_sawtooth_wave), is_sawtooth_wave_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_square_wave), is_square_wave_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_src), is_src_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_table_lookup), is_table_lookup_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_triangle_wave), is_triangle_wave_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_two_pole), is_two_pole_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_two_zero), is_two_zero_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_wave_train), is_wave_train_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_ssb_am), is_ssb_am_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_is_tap), is_tap_pf);
-
-  s7_rf_set_function(s7_name_to_value(sc, S_dot_product), dot_product_rf);
-  s7_pf_set_function(s7_name_to_value(sc, S_mus_fft), mus_fft_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_rectangular_to_polar), rectangular_to_polar_pf);  
-  s7_pf_set_function(s7_name_to_value(sc, S_polar_to_rectangular), polar_to_rectangular_pf);  
-  s7_pf_set_function(s7_name_to_value(sc, S_rectangular_to_magnitudes), rectangular_to_magnitudes_pf);
-  s7_rf_set_function(s7_name_to_value(sc, S_mus_chebyshev_t_sum), chebyshev_t_rf);
-  s7_rf_set_function(s7_name_to_value(sc, S_mus_chebyshev_u_sum), chebyshev_u_rf);
-  s7_rf_set_function(s7_name_to_value(sc, S_mus_chebyshev_tu_sum), chebyshev_tu_rf);
-
-  s7_pf_set_function(s7_name_to_value(sc, S_mus_data), mus_data_pf);
-  s7_pf_set_function(s7_name_to_value(sc, S_mus_reset), mus_reset_pf);
-
   s7_rf_set_function(s7_name_to_value(sc, S_mus_scaler), mus_scaler_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_phase), mus_phase_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_frequency), mus_frequency_rf);
@@ -12147,14 +11661,6 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_mus_increment), mus_increment_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_feedforward), mus_feedforward_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_feedback), mus_feedback_rf);
-
-  s7_if_set_function(s7_name_to_value(sc, S_mus_length), mus_length_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_order), mus_order_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_location), mus_location_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_channel), mus_channel_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_channels), mus_channels_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_ramp), mus_ramp_if);
-  s7_if_set_function(s7_name_to_value(sc, S_mus_hop), mus_hop_if);
 #endif /* gmp */
 }
 #endif /*s7 */

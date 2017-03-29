@@ -91,22 +91,6 @@ echo ' -------------------------------- that was snd-test pure-s7 --------------
 echo ' '
 echo ' '
 
-echo ' -------------------------------- no opt -------------------------------- '
-make allclean
-rm -f snd
-rm -f config.cache
-./configure --quiet CFLAGS="-Wall -I/usr/local/include -DWITH_OPTIMIZATION=0" --without-gui --disable-deprecated
-make
-echo ' '
-echo ' '
-./snd --version
-./snd -l snd-test
-echo ' '
-echo ' '
-echo ' -------------------------------- that was snd-test without optimization -------------------------------- '
-echo ' '
-echo ' '
-
 echo ' -------------------------------- no choosers -------------------------------- '
 make allclean
 rm -f snd

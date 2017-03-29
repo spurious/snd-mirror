@@ -218,8 +218,6 @@
 	  (macros ())     ; these are protected by #ifdef ... #endif
 	  (inits ())      ; C code (a string in s7) inserted in the library initialization function
 	  (p #f)
-	  (if-funcs ())   ; if-functions (guaranteed to return int, so we can optimize away make-integer etc)
-	  (rf-funcs ())  ; rf-functions
 	  (sig-symbols (list (cons 'integer? 0) (cons 'boolean? 0) (cons 'real?  0) (cons 'float? 0) 
 			     (cons 'char? 0) (cons 'string? 0) (cons 'c-pointer? 0) (cons 't 0)))
 	  (signatures (make-hash-table)))
@@ -362,46 +360,6 @@
 			    ";~%  return(s7_unspecified(sc));~%"))
 	      (format p "}~%"))
 	    
-	    ;; add optimizer connection
-	    (when (and (eq? return-type 'double)     ; double (f double) -- s7_rf_t: double f(s7, s7_pointer **p)
-		       (eq? (car arg-types) 'double)
-		       (or (= num-args 1)
-			   (and (= num-args 2)       ; double (f double double)
-				(eq? (cadr arg-types) 'double))))
-	      (set! rf-funcs (cons (cons func-name scheme-name) rf-funcs))
-	      (format p (if (= num-args 1)	    
-			    "static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~
-                          {s7_rf_t f; s7_double x; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); return(~A(x));}~%" 
-			    "static s7_double ~A_rf_r(s7_scheme *sc, s7_pointer **p)~%  ~
-                          {s7_rf_t f; s7_double x, y; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); f = (s7_rf_t)(**p); (*p)++; y = f(sc, p); return(~A(x, y));}~%")
-		      func-name func-name)
-	      (format p "static s7_rf_t ~A_rf(s7_scheme *sc, s7_pointer expr) ~
-                      {if (s7_arg_to_rf(sc, s7_cadr(expr))) return(~A_rf_r); return(NULL);}~%" 
-		      func-name func-name))
-	    
-	    (when (and (eq? return-type 'int)        ; int (f int|double|void)
-		       (memq (car arg-types) '(int double void))
-		       (<= num-args 1))
-	      (set! if-funcs (cons (cons func-name scheme-name) if-funcs))
-	      (case (car arg-types)
-		((double)
-		 (format p "static s7_int ~A_if_r(s7_scheme *sc, s7_pointer **p)~
-                         {s7_rf_t f; s7_double x; f = (s7_rf_t)(**p); (*p)++; x = f(sc, p); return(~A(x));}~%" 
-			 func-name func-name)
-		 (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) ~
-                         {if (s7_arg_to_if(sc, s7_cadr(expr))) return(~A_if_r); return(NULL);}~%" 
-			 func-name func-name))
-		((int)
-		 (format p "static s7_int ~A_if_i(s7_scheme *sc, s7_pointer **p)~
-                         {s7_if_t f; s7_int x; f = (s7_if_t)(**p); (*p)++; x = f(sc, p); return(~A(x));}~%" 
-			 func-name (if (string=? func-name "abs") "llabs" func-name))
-		 (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) ~
-                         {if (s7_arg_to_if(sc, s7_cadr(expr))) return(~A_if_i); return(NULL);}~%" 
-			 func-name func-name))
-		((void)
-		 (format p "static s7_int ~A_if_i(s7_scheme *sc, s7_pointer **p) {return(~A());}~%" func-name func-name)
-		 (format p "static s7_if_t ~A_if(s7_scheme *sc, s7_pointer expr) {return(~A_if_i);}~%" func-name func-name))))
-	    
 	    (format p "~%")
 	    (set! functions (cons (list scheme-name base-name 
 					(if (and (string? doc)
@@ -516,21 +474,6 @@
 		     help
 		     (if (pair? sig) (signatures sig) 'NULL))))
 	 functions)
-	
-	;; optimizer connection
-	(when (pair? rf-funcs)
-	  (format p "~%  /* rf optimizer connections */~%")
-	  (for-each
-	   (lambda (f)
-	     (format p "  s7_rf_set_function(s7_name_to_value(sc, ~S), ~A_rf);~%" (cdr f) (car f)))
-	   rf-funcs))
-	
-	(when (pair? if-funcs)
-	  (format p "~%  /* if optimizer connections */~%")
-	  (for-each
-	   (lambda (f)
-	     (format p "  s7_if_set_function(s7_name_to_value(sc, ~S), ~A_if);~%" (cdr f) (car f)))
-	   if-funcs))
 	
 	(format p "}~%")
 	(close-output-port p)

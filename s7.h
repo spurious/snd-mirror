@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.16"
-#define S7_DATE "22-Feb-17"
+#define S7_VERSION "4.17"
+#define S7_DATE "28-Mar-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -652,23 +652,17 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
-  /* these are aimed at the CLM optimizer -- they change daily! */
+s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+
+
+/* these are aimed at the CLM optimizer -- they change daily! (and will slowly be removed/replaced) */
 typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
 typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
 void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
 s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
 s7_rf_t s7_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
 s7_rf_t s7_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
-
-typedef s7_int (*s7_if_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_if_t (*s7_ip_t)(s7_scheme *sc, s7_pointer expr);
-void s7_if_set_function(s7_pointer f, s7_ip_t rp);
-s7_ip_t s7_if_function(s7_scheme *sc, s7_pointer func);
-
-typedef s7_pointer (*s7_pf_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_pf_t (*s7_pp_t)(s7_scheme *sc, s7_pointer expr);
-void s7_pf_set_function(s7_pointer f, s7_pp_t rp);
-s7_pp_t s7_pf_function(s7_scheme *sc, s7_pointer func);
+bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
 
 void *s7_xf_new(s7_scheme *sc, s7_pointer e);
 void s7_xf_free(s7_scheme *sc);
@@ -680,16 +674,12 @@ s7_pointer *s7_xf_start(s7_scheme *sc);
 s7_pointer *s7_xf_top(s7_scheme *sc, void *ur);
 bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
-bool s7_arg_to_pf(s7_scheme *sc, s7_pointer a1);
-bool s7_arg_to_if(s7_scheme *sc, s7_pointer a1);
-bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
-
 s7_int s7_slot_integer_value(s7_pointer slot);
 bool s7_is_stepper(s7_pointer p);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 
-void s7_object_type_set_xf(int tag, s7_ip_t ip, s7_ip_t set_ip, s7_rp_t rp, s7_rp_t set_rp);
+void s7_object_type_set_xf(int tag, s7_rp_t rp, s7_rp_t set_rp);
 void s7_object_type_set_direct(int tag, 
 			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
 			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
@@ -775,6 +765,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 28-Mar:    removed the "pf" and "if" clm optimization functions. s7_optimize.
  * 22-Feb:    removed the "gf" clm optimization functions.
  * 11-Feb:    #e, #i, #d removed. #i(...) is an int-vector constant, #r(...) a float-vector.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.
