@@ -337,6 +337,13 @@
 
 #include "s7.h"
 
+
+/* temporary! */
+typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_xf_free(s7_scheme *sc);
+
+
 enum {NO_JUMP, CALL_WITH_EXIT_JUMP, THROW_JUMP, CATCH_JUMP, ERROR_JUMP, ERROR_QUIT_JUMP};
 enum {NO_SET_JUMP, READ_SET_JUMP, LOAD_SET_JUMP, DYNAMIC_WIND_SET_JUMP, S7_CALL_SET_JUMP, EVAL_SET_JUMP};
 
@@ -486,6 +493,8 @@ typedef struct {
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
   s7_rp_t rp;
+  s7_dv_t dv;
+  s7_dvd_t dvd;
 } c_proc_t;
 
 
@@ -2284,6 +2293,9 @@ static int not_heap = -1;
 #define c_function_rp(f)              c_function_data(f)->rp
 #define set_c_function(X, f)          do {set_opt_cfunc(X, f); set_c_call(X, c_function_call(f));} while (0)
 
+#define c_function_dv(f)              c_function_data(f)->dv
+#define c_function_dvd(f)             c_function_data(f)->dvd
+
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
 #define c_macro_data(f)               (_TMac(f))->object.fnc.c_proc
 #define c_macro_call(f)               (_TMac(f))->object.fnc.ff
@@ -2918,7 +2930,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_C_opSSq_opCq, HOP_SAFE_C_opSSq_opCq, OP_SAFE_C_opSSq_opSq, HOP_SAFE_C_opSSq_opSq, OP_SAFE_C_opSq_opSSq, HOP_SAFE_C_opSq_opSSq,
       OP_SAFE_C_opSSq_S, HOP_SAFE_C_opSSq_S, OP_SAFE_C_opSCq_S, HOP_SAFE_C_opSCq_S, OP_SAFE_C_opCSq_S, HOP_SAFE_C_opCSq_S,
       OP_SAFE_C_opSCq_C, HOP_SAFE_C_opSCq_C, OP_SAFE_C_opCq_opSSq, HOP_SAFE_C_opCq_opSSq,
-      OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq,
+      OP_SAFE_C_S_op_opSSq_Sq, HOP_SAFE_C_S_op_opSSq_Sq, OP_SAFE_C_S_op_S_opSSqq, HOP_SAFE_C_S_op_S_opSSqq, OP_SAFE_C_S_op_S_opSqq, HOP_SAFE_C_S_op_S_opSqq,
       OP_SAFE_C_op_opSSq_q_C, HOP_SAFE_C_op_opSSq_q_C, OP_SAFE_C_op_opSq_q_C, HOP_SAFE_C_op_opSq_q_C, 
       OP_SAFE_C_op_opSSq_q_S, HOP_SAFE_C_op_opSSq_q_S, OP_SAFE_C_op_opSq_q_S, HOP_SAFE_C_op_opSq_q_S, 
       OP_SAFE_C_S_op_opSSq_opSSqq, HOP_SAFE_C_S_op_opSSq_opSSqq,
@@ -3124,7 +3136,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_c_opssq_opcq", "h_safe_c_opssq_opcq", "safe_c_opssq_opsq", "h_safe_c_opssq_opsq", "safe_c_opsq_opssq", "h_safe_c_opsq_opssq",
       "safe_c_opssq_s", "h_safe_c_opssq_s", "safe_c_opscq_s", "h_safe_c_opscq_s", "safe_c_opcsq_s", "h_safe_c_opcsq_s",
       "safe_c_opscq_c", "h_safe_c_opscq_c", "safe_c_opcq_opssq", "h_safe_c_opcq_opssq",
-      "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq",
+      "safe_c_s_op_opssq_sq", "h_safe_c_s_op_opssq_sq", "safe_c_s_op_s_opssqq", "h_safe_c_s_op_s_opssqq", "safe_c_s_op_s_opsqq", "h_safe_c_s_op_s_opsqq",
       "safe_c_op_opssq_q_c", "h_safe_c_op_opssq_q_c", "safe_c_op_opsq_q_c", "h_safe_c_op_opsq_q_c", 
       "safe_c_op_opssq_q_s", "h_safe_c_op_opssq_q_s", "safe_c_op_opsq_q_s", "h_safe_c_op_opsq_q_s", 
       "safe_c_s_op_opssq_opssqq", "h_safe_c_s_op_opssq_opssqq",
@@ -8426,6 +8438,30 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 
 /* --------------------------------- rf (CLM optimizer) ----------------------------------------------- */
+
+void s7_set_dv_function(s7_pointer f, s7_dv_t df)
+{
+  if (!is_c_function(f)) return;
+  c_function_dv(f) = df;
+}
+
+s7_dv_t s7_dv_function(s7_pointer f)
+{
+  return(c_function_dv(f));
+}
+
+void s7_set_dvd_function(s7_pointer f, s7_dvd_t df)
+{
+  if (!is_c_function(f)) return;
+  c_function_dvd(f) = df;
+}
+
+s7_dvd_t s7_dvd_function(s7_pointer f)
+{
+  return(c_function_dvd(f));
+}
+
+
 
 s7_pointer *s7_xf_start(s7_scheme *sc)
 {
@@ -38286,12 +38322,12 @@ static s7_pointer get_signature(s7_scheme *sc, s7_pointer x)
   return(sc->F);
 }
 
-static s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer x)
+s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func)
 {
-  if ((is_any_c_function(x)) ||
-      (is_c_macro(x)))
-    return((s7_pointer)c_function_signature(x));
-  return(get_signature(sc, x));
+  if ((is_any_c_function(func)) ||
+      (is_c_macro(func)))
+    return((s7_pointer)c_function_signature(func));
+  return(get_signature(sc, func));
 }
 
 static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
@@ -44232,15 +44268,6 @@ static s7_pointer apply_boolean_method(s7_scheme *sc, s7_pointer obj, s7_pointer
   }
 
 
-s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
-{
-  if ((is_optimized(car(expr))) &&
-      (is_all_x_safe(sc, car(expr))))
-    return(all_x_eval(sc, expr, env, let_symbol_is_safe));
-  return(NULL);
-}
-
-
 /* arg here is the full expression */
 static s7_pointer all_x_c(s7_scheme *sc, s7_pointer arg)       {return(arg);}
 static s7_pointer all_x_q(s7_scheme *sc, s7_pointer arg)       {return(cadr(arg));}
@@ -45091,6 +45118,20 @@ static s7_pointer all_x_c_op_opsq_q(s7_scheme *sc, s7_pointer code)
   return(c_call(code)(sc, sc->t1_1));
 }
 
+static s7_pointer all_c_s_op_s_opsqq(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer args, val, val1;
+  args = caddr(code); 
+  val1 = caddr(args);
+  val = find_symbol_unchecked(sc, cadr(args));
+  set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(val1))); 
+  set_car(sc->t2_2, c_call(val1)(sc, sc->t1_1));
+  set_car(sc->t2_1, val);
+  set_car(sc->t2_2, c_call(args)(sc, sc->t2_1));
+  set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(code))); 
+  return(c_call(code)(sc, sc->t2_1)); 
+}
+
 static s7_pointer all_x_c_op_opsq_q_s(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer arg;
@@ -45305,7 +45346,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_op_opSq_q_C] = all_x_c_op_opsq_q_c;
   all_x_function[HOP_SAFE_C_op_S_opSq_q] = all_x_c_op_s_opsq_q;
   all_x_function[HOP_SAFE_C_op_opSq_S_q] = all_x_c_op_opsq_s_q;
-
+  all_x_function[HOP_SAFE_C_S_op_S_opSqq] = all_c_s_op_s_opsqq;
   all_x_function[HOP_SAFE_C_CSA] = all_x_c_csa;
   all_x_function[HOP_SAFE_C_SCA] = all_x_c_sca;
   all_x_function[HOP_SAFE_C_SAS] = all_x_c_sas;
@@ -45485,6 +45526,20 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
   return(all_x_c);
 }
 
+
+s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
+{
+  if (is_optimized(car(expr)))
+    {
+      if (is_all_x_safe(sc, car(expr)))
+	return(all_x_eval(sc, expr, env, let_symbol_is_safe));
+
+      if ((optimize_op(car(expr)) == HOP_C_S) &&
+	  (is_c_function(s7_symbol_value(sc, caar(expr)))))
+	return(all_x_c_s);
+    }
+  return(NULL);
+}
 
 
 
@@ -49336,6 +49391,9 @@ static int combine_ops(s7_scheme *sc, combine_op_t op1, s7_pointer e1, s7_pointe
 
 	case OP_SAFE_C_S_opSSq:
 	  return(OP_SAFE_C_S_op_S_opSSqq);
+
+	case OP_SAFE_C_S_opSq:
+	  return(OP_SAFE_C_S_op_S_opSqq);
 
 	case OP_SAFE_C_opSSq_opSSq:
 	  return(OP_SAFE_C_S_op_opSSq_opSSqq);
@@ -61211,6 +61269,25 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		  
 		  
+		case OP_SAFE_C_S_op_S_opSqq:
+		  if ((!c_function_is_ok(sc, code)) || (!c_function_is_ok(sc, caddr(code))) || (!c_function_is_ok(sc, caddr(caddr(code))))) break;
+		case HOP_SAFE_C_S_op_S_opSqq:
+		  {
+		    /* (let () (define (hi a c d) (+ a (* d (- c)))) (define (ho) (hi 1 3 4)) (ho)) */
+		    s7_pointer args, val, val1;
+		    args = caddr(code); 
+		    val1 = caddr(args);
+		    val = find_symbol_unchecked(sc, cadr(args)); 
+		    set_car(sc->t1_1, find_symbol_unchecked(sc, cadr(val1))); 
+		    set_car(sc->t2_2, c_call(val1)(sc, sc->t1_1));
+		    set_car(sc->t2_1, val);
+		    set_car(sc->t2_2, c_call(args)(sc, sc->t2_1));
+		    set_car(sc->t2_1, find_symbol_unchecked(sc, cadr(code))); 
+		    sc->value = c_call(code)(sc, sc->t2_1); 
+		    goto START;
+		  }
+		  
+		  
 		case OP_SAFE_C_S_op_S_opSSqq:
 		  if ((!c_function_is_ok(sc, code)) || (!c_function_is_ok(sc, caddr(code))) || (!c_function_is_ok(sc, caddr(caddr(code))))) break;
 		case HOP_SAFE_C_S_op_S_opSSqq:
@@ -72992,9 +73069,8 @@ int main(int argc, char **argv)
  *     set_float|int|char_function? check choosers for how often sigs are available etc
  * what was the no-overflow 0 problem in quotient?
  * for tmap int|float-vector-set, random-i? univect_set now
- * s7_xf: snd-sig|edits, clm2xen, this file -- try s7_optimize in snd-sig (map-channel), snd-edits is read_sample_rf: mostly used in fv-set and map-channel arg
- *   map-chan arg case could be the float_function call
- *
+ * s7_xf: snd-edits, clm2xen, this file -- snd-edits is read_sample_rf: mostly used in fv-set
+ *   add dvid support for fv-set?
  * update libgsl.scm
  *
  * Snd:

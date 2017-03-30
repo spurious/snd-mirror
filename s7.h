@@ -576,6 +576,7 @@ s7_pointer s7_typed_dilambda(s7_scheme *sc,
  		       s7_pointer get_sig, s7_pointer set_sig);
 
 s7_pointer s7_procedure_setter(s7_scheme *sc, s7_pointer obj);
+s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func);
 s7_pointer s7_values(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e);
 bool s7_is_iterator(s7_pointer obj);
@@ -654,36 +655,23 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
+typedef s7_double (*s7_dv_t)(void *v);
+void s7_set_dv_function(s7_pointer f, s7_dv_t df);
+s7_dv_t s7_dv_function(s7_pointer f);
 
-/* these are aimed at the CLM optimizer -- they change daily! (and will slowly be removed/replaced) */
-typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
-void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
-s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
-s7_rf_t s7_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
-s7_rf_t s7_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
-bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
+typedef s7_double (*s7_dvd_t)(void *v, s7_double d);
+void s7_set_dvd_function(s7_pointer f, s7_dvd_t df);
+s7_dvd_t s7_dvd_function(s7_pointer f);
 
-void *s7_xf_new(s7_scheme *sc, s7_pointer e);
-void s7_xf_free(s7_scheme *sc);
-s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
-void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
-void *s7_xf_detach(s7_scheme *sc);
-void s7_xf_attach(s7_scheme *sc, void *ur);
-s7_pointer *s7_xf_start(s7_scheme *sc);
-s7_pointer *s7_xf_top(s7_scheme *sc, void *ur);
-bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
 
+/* these are possibly temporary */
+void s7_object_type_set_direct(int tag, 
+			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
+			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
 s7_int s7_slot_integer_value(s7_pointer slot);
 bool s7_is_stepper(s7_pointer p);
 s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
-
-void s7_object_type_set_xf(int tag, s7_rp_t rp, s7_rp_t set_rp);
-void s7_object_type_set_direct(int tag, 
-			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
-			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
-/* end CLM stuff */
 
 
   /* this is experimental */
@@ -765,7 +753,8 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 28-Mar:    removed the "pf" and "if" clm optimization functions. s7_optimize.
+ * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
+ *            s7_optimize, s7_procedure_signature.
  * 22-Feb:    removed the "gf" clm optimization functions.
  * 11-Feb:    #e, #i, #d removed. #i(...) is an int-vector constant, #r(...) a float-vector.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.

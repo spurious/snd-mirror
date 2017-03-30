@@ -54,6 +54,26 @@
 /* -------------------------------------------------------------------------------- */
 #if HAVE_SCHEME
 
+/* temporary! */
+typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
+s7_rp_t s7_rf_function(s7_scheme *sc, s7_pointer func);
+s7_rf_t s7_rf_1(s7_scheme *sc, s7_pointer expr, s7_rf_t r, s7_rf_t s, s7_rf_t x);
+s7_rf_t s7_rf_2(s7_scheme *sc, s7_pointer expr, s7_rf_t rr, s7_rf_t sr, s7_rf_t xr, s7_rf_t rs, s7_rf_t ss, s7_rf_t xs, s7_rf_t rx, s7_rf_t sx, s7_rf_t xx);
+bool s7_arg_to_rf(s7_scheme *sc, s7_pointer a1);
+
+void *s7_xf_new(s7_scheme *sc, s7_pointer e);
+void s7_xf_free(s7_scheme *sc);
+s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
+void s7_xf_store_at(s7_scheme *sc, s7_int index, s7_pointer val);
+void *s7_xf_detach(s7_scheme *sc);
+void s7_xf_attach(s7_scheme *sc, void *ur);
+s7_pointer *s7_xf_start(s7_scheme *sc);
+s7_pointer *s7_xf_top(s7_scheme *sc, void *ur);
+bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
+void s7_object_type_set_xf(int tag, s7_rp_t rp, s7_rp_t set_rp);
+
 static bool mus_simple_out_any_to_file(mus_long_t samp, mus_float_t val, int chan, mus_any *IO)
 {
   rdout *gen = (rdout *)IO;
@@ -9742,6 +9762,11 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
     mus_any *g; g = (mus_any *)(**p); (*p)++;				\
     return(Func(g));							\
   }									\
+  static s7_double mus_ ## Type ## _dv(void *o)				\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func(gn->gen));						\
+  }									\
   static s7_rf_t Type ## _rf(s7_scheme *sc, s7_pointer expr)		\
   {									\
     mus_any *g;								\
@@ -9756,7 +9781,17 @@ static s7_rf_t caddr_rf(s7_scheme *sc, s7_pointer a2, s7_rf_t func)
   {								\
     mus_any *g; g = (mus_any *)(*(*p));	(*p)++;			\
     return(Func1(g));						\
-  }								\
+  }									\
+  static s7_double mus_ ## Type ## _dv(void *o)				\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func1(gn->gen));						\
+  }									\
+  static s7_double mus_ ## Type ## _dvd(void *o, s7_double d)		\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func2(gn->gen, d));						\
+  }									\
   static s7_double Type ## _rf_gr(s7_scheme *sc, s7_pointer **p)	\
   {								\
     s7_pointer a2;						\
@@ -11661,6 +11696,102 @@ static void init_choosers(s7_scheme *sc)
   s7_rf_set_function(s7_name_to_value(sc, S_mus_increment), mus_increment_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_feedforward), mus_feedforward_rf);
   s7_rf_set_function(s7_name_to_value(sc, S_mus_feedback), mus_feedback_rf);
+
+
+  s7_set_dv_function(s7_name_to_value(sc, S_all_pass), mus_all_pass_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_all_pass_bank), mus_all_pass_bank_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_asymmetric_fm), mus_asymmetric_fm_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_comb), mus_comb_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_comb_bank), mus_comb_bank_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_convolve), mus_convolve_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_delay), mus_delay_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_env), mus_env_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_filter), mus_filter_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_filtered_comb), mus_filtered_comb_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_filtered_comb_bank), mus_filtered_comb_bank_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_fir_filter), mus_fir_filter_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_firmant), mus_firmant_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_formant), mus_formant_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_granulate), mus_granulate_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_iir_filter), mus_iir_filter_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_moving_average), mus_moving_average_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_moving_max), mus_moving_max_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_moving_norm), mus_moving_norm_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_ncos), mus_ncos_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_notch), mus_notch_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_nrxycos), mus_nrxycos_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_nrxysin), mus_nrxysin_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_nsin), mus_nsin_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_one_pole), mus_one_pole_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_one_pole_all_pass), mus_one_pole_all_pass_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_one_zero), mus_one_zero_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_oscil), mus_oscil_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_oscil_bank), mus_oscil_bank_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_phase_vocoder), mus_phase_vocoder_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_polyshape), mus_polyshape_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_polywave), mus_polywave_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_pulse_train), mus_pulse_train_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_pulsed_env), mus_pulsed_env_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_rand), mus_rand_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_rand_interp), mus_rand_interp_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_readin), mus_readin_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_rxykcos), mus_rxykcos_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_rxyksin), mus_rxyksin_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_sawtooth_wave), mus_sawtooth_wave_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_square_wave), mus_square_wave_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_src), mus_src_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_ssb_am), mus_ssb_am_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_table_lookup), mus_table_lookup_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_tap), mus_tap_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_triangle_wave), mus_triangle_wave_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_two_pole), mus_two_pole_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_two_zero), mus_two_zero_dv);
+  s7_set_dv_function(s7_name_to_value(sc, S_wave_train), mus_wave_train_dv);
+
+  s7_set_dvd_function(s7_name_to_value(sc, S_all_pass), mus_all_pass_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_all_pass_bank), mus_all_pass_bank_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_asymmetric_fm), mus_asymmetric_fm_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_comb), mus_comb_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_comb_bank), mus_comb_bank_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_delay), mus_delay_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_filter), mus_filter_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_filtered_comb), mus_filtered_comb_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_filtered_comb_bank), mus_filtered_comb_bank_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_fir_filter), mus_fir_filter_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_firmant), mus_firmant_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_formant), mus_formant_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_iir_filter), mus_iir_filter_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_moving_average), mus_moving_average_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_moving_max), mus_moving_max_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_moving_norm), mus_moving_norm_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_ncos), mus_ncos_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_notch), mus_notch_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_nrxycos), mus_nrxycos_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_nrxysin), mus_nrxysin_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_nsin), mus_nsin_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_one_pole), mus_one_pole_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_one_pole_all_pass), mus_one_pole_all_pass_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_one_zero), mus_one_zero_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_oscil), mus_oscil_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_polyshape), mus_polyshape_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_polywave), mus_polywave_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_pulse_train), mus_pulse_train_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_pulsed_env), mus_pulsed_env_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_rand), mus_rand_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_rand_interp), mus_rand_interp_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_rxykcos), mus_rxykcos_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_rxyksin), mus_rxyksin_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_sawtooth_wave), mus_sawtooth_wave_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_square_wave), mus_square_wave_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_src), mus_src_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_ssb_am), mus_ssb_am_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_table_lookup), mus_table_lookup_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_tap), mus_tap_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_triangle_wave), mus_triangle_wave_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_two_pole), mus_two_pole_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_two_zero), mus_two_zero_dvd);
+  s7_set_dvd_function(s7_name_to_value(sc, S_wave_train), mus_wave_train_dvd);
+
 #endif /* gmp */
 }
 #endif /*s7 */

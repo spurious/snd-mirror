@@ -1,5 +1,14 @@
 #include "snd.h"
 
+#if HAVE_SCHEME
+/* temporary! */
+typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
+typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
+void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
+s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
+bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
+#endif
+
 static Xen save_hook;
 
 static bool dont_save(snd_info *sp, const char *newname)
@@ -6958,7 +6967,6 @@ static Xen g_sampler_position(Xen obj)
 	  return(C_llong_to_Xen_llong(region_current_location(fd)));
 	}
     }
-
   if (is_mix_sampler(obj))
     return(g_mix_sampler_position(obj));
 
@@ -6988,7 +6996,6 @@ if 'obj' is a mix-sampler, the id of underlying mix"
 			    C_int_to_Xen_integer(fd->cp->chan)));
 	}
     }
-
   if (is_mix_sampler(obj))
     return(g_mix_sampler_home(obj));
 
@@ -7155,7 +7162,6 @@ static Xen g_is_sampler(Xen obj)
       fd = Xen_to_C_sampler(obj);
       return(C_bool_to_Xen_boolean(fd->type == SAMPLER));
     }
-
   if (is_mix_sampler(obj))
     return(C_string_to_Xen_symbol("mix"));
 
@@ -7163,9 +7169,9 @@ static Xen g_is_sampler(Xen obj)
 }
 
 
-static Xen g_region_is_sampler(Xen obj)
+static Xen g_is_region_sampler(Xen obj)
 {
-  #define H_region_is_sampler "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
+  #define H_is_region_sampler "(" S_is_region_sampler " obj): " PROC_TRUE " if obj is a region sampler."
   if (is_sampler(obj))
     {
       snd_fd *fd;
@@ -7203,7 +7209,6 @@ static Xen g_copy_sampler(Xen obj)
 	}
       return(Xen_false);
     }
-
   if (is_mix_sampler(obj))
     return(g_copy_mix_sampler(obj));
 
@@ -7300,9 +7305,9 @@ static Xen g_free_sampler(Xen obj)
       free_snd_fd_almost(fd); /* this is different from sf_free! */
       if (sp) completely_free_snd_info(sp);
     }
-
   if (is_mix_sampler(obj))
     return(g_free_mix_sampler(obj));
+
   return(Xen_false);
 }
 
@@ -9074,6 +9079,36 @@ static Xen g_edit_list_to_function(Xen snd, Xen chn, Xen start, Xen end)
 }
 
 #if HAVE_SCHEME
+/* sampler? -> unwrap via s7_object_value = c_object_value = s7_object_value
+ * s7_dv_function: s7_double (*dv)(void *v)
+ */
+static s7_double next_sample_dv(void *o)
+{
+  snd_fd *fd = (snd_fd *)o;
+  return(protected_next_sample(fd));
+}
+
+static s7_double read_sample_dv(void *o)
+{
+  snd_fd *fd = (snd_fd *)o;
+  return(read_sample(fd));
+}
+
+static s7_double next_mix_sample_dv(void *o)
+{
+  snd_fd *fd;
+  fd = (snd_fd *)mf_to_snd_fd(o);
+  return(protected_next_sample(fd));
+}
+
+static s7_double read_mix_sample_dv(void *o)
+{
+  snd_fd *fd;
+  fd = (snd_fd *)mf_to_snd_fd(o);
+  return(read_sample(fd));
+}
+
+
 static s7_double next_sample_rf_s(s7_scheme *sc, s7_pointer **p)
 {
   snd_fd *fd;
@@ -9123,6 +9158,7 @@ static s7_rf_t read_sample_rf(s7_scheme *sc, s7_pointer expr)
       s7_xf_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
       return(read_mix_sample_rf_s);
     }
+
   return(NULL);
 }
 
@@ -9147,6 +9183,7 @@ static s7_rf_t next_sample_rf(s7_scheme *sc, s7_pointer expr)
       s7_xf_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
       return(next_mix_sample_rf_s);
     }
+
   return(NULL);
 }
 #endif
@@ -9162,7 +9199,7 @@ Xen_wrap_1_arg(g_free_sampler_w, g_free_sampler)
 Xen_wrap_1_arg(g_sampler_home_w, g_sampler_home)
 Xen_wrap_1_arg(g_sampler_position_w, g_sampler_position)
 Xen_wrap_1_arg(g_is_sampler_w, g_is_sampler)
-Xen_wrap_1_arg(g_region_is_sampler_w, g_region_is_sampler)
+Xen_wrap_1_arg(g_is_region_sampler_w, g_is_region_sampler)
 Xen_wrap_1_arg(g_sampler_at_end_w, g_sampler_at_end)
 Xen_wrap_1_arg(g_copy_sampler_w, g_copy_sampler)
 Xen_wrap_3_optional_args(g_save_edit_history_w, g_save_edit_history)
@@ -9217,7 +9254,8 @@ void g_init_edits(void)
   smp = s7_make_symbol(s7, "sampler?");
   x = s7_make_signature(s7, 2, smp, s7_make_symbol(s7, "mix-sampler?"));
   t = s7_t(s7);
-  pl_fx = s7_make_signature(s7, 2, f, x);
+  /* pl_fx = s7_make_signature(s7, 2, f, x); */
+  pl_fx = s7_make_signature(s7, 2, f, smp);
 
   sf_tag = s7_new_type_x(s7, "<sampler>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL, length_sf, NULL, NULL, NULL);
 #else
@@ -9247,7 +9285,7 @@ void g_init_edits(void)
   Xen_define_typed_procedure(S_free_sampler,        g_free_sampler_w,        1, 0, 0, H_free_sampler,     s7_make_signature(s7, 2, b, x));
   Xen_define_typed_procedure(S_sampler_home,        g_sampler_home_w,        1, 0, 0, H_sampler_home,     s7_make_signature(s7, 2, t, x));
   Xen_define_typed_procedure(S_is_sampler,          g_is_sampler_w,          1, 0, 0, H_is_sampler,       s7_make_signature(s7, 2, b, t));
-  Xen_define_typed_procedure(S_is_region_sampler,   g_region_is_sampler_w,   1, 0, 0, H_region_is_sampler, s7_make_signature(s7, 2, b, x));
+  Xen_define_typed_procedure(S_is_region_sampler,   g_is_region_sampler_w,   1, 0, 0, H_is_region_sampler, s7_make_signature(s7, 2, b, x));
   Xen_define_typed_procedure(S_is_sampler_at_end,   g_sampler_at_end_w,      1, 0, 0, H_sampler_at_end,   s7_make_signature(s7, 2, b, x));
   Xen_define_typed_procedure(S_sampler_position,    g_sampler_position_w,    1, 0, 0, H_sampler_position, s7_make_signature(s7, 2, i, x));
   Xen_define_typed_procedure(S_copy_sampler,        g_copy_sampler_w,        1, 0, 0, H_copy_sampler,     s7_make_signature(s7, 2, x, x));
@@ -9328,9 +9366,17 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
     f = s7_name_to_value(s7, "next-sample");
     s7_rf_set_function(f, next_sample_rf);
+    s7_set_dv_function(f, next_sample_dv);
 
     f = s7_name_to_value(s7, "read-sample");
     s7_rf_set_function(f, read_sample_rf);
+    s7_set_dv_function(f, read_sample_dv);
+
+    f = s7_name_to_value(s7, "next-mix-sample");
+    s7_set_dv_function(f, next_mix_sample_dv);
+
+    f = s7_name_to_value(s7, "read-mix-sample");
+    s7_set_dv_function(f, read_mix_sample_dv);
   }
 #endif
 
