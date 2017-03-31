@@ -40,6 +40,7 @@ s7_scheme *s7_init(void);
    */
 
 typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* that is, obj = func(s7, args) -- args is a list of arguments */
+typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
 
 s7_pointer s7_f(s7_scheme *sc);                                      /* #f */
 s7_pointer s7_t(s7_scheme *sc);                                      /* #t */
@@ -654,6 +655,7 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
 typedef s7_double (*s7_dv_t)(void *v);
 void s7_set_dv_function(s7_pointer f, s7_dv_t df);
@@ -754,7 +756,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  *        s7 changes
  *
  * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
- *            s7_optimize, s7_procedure_signature.
+ *            s7_optimize, s7_float_optimize, s7_procedure_signature.
  * 22-Feb:    removed the "gf" clm optimization functions.
  * 11-Feb:    #e, #i, #d removed. #i(...) is an int-vector constant, #r(...) a float-vector.
  * 2-Jan-17:  {apply_values} -> apply-values, {list} -> list-values, and {append} -> append.

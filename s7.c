@@ -1137,6 +1137,13 @@ struct s7_scheme {
   bool undefined_identifier_warnings;
 
   hash_entry_t *optimizer_fixups;
+
+  s7_function opt_func;
+  s7_pointer opt_v;
+  s7_double opt_c;
+  void *dv_obj;
+  s7_dv_t dv_f;
+  s7_dvd_t dvd_f;
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -1493,6 +1500,7 @@ static s7_scheme *hidden_sc = NULL;
 #define is_t_big_ratio(p)             (type(p) == T_BIG_RATIO)
 #define is_t_big_real(p)              (type(p) == T_BIG_REAL)
 #define is_t_big_complex(p)           (type(p) == T_BIG_COMPLEX)
+#define is_float(p)                   ((is_real(p)) && (!is_rational(p)))
 
 #define is_free(p)                    (type(p) == T_FREE)
 #define is_free_and_clear(p)          (typeflag(p) == T_FREE)
@@ -21126,8 +21134,7 @@ static s7_pointer random_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  return(random_ic);
 	}
-      if ((is_real(arg1)) &&
-	  (!is_rational(arg1)))
+      if (is_float(arg1))
 	{
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  return(random_rc);
@@ -45118,7 +45125,7 @@ static s7_pointer all_x_c_op_opsq_q(s7_scheme *sc, s7_pointer code)
   return(c_call(code)(sc, sc->t1_1));
 }
 
-static s7_pointer all_c_s_op_s_opsqq(s7_scheme *sc, s7_pointer code)
+static s7_pointer all_x_c_s_op_s_opsqq(s7_scheme *sc, s7_pointer code)
 {
   s7_pointer args, val, val1;
   args = caddr(code); 
@@ -45346,7 +45353,7 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_op_opSq_q_C] = all_x_c_op_opsq_q_c;
   all_x_function[HOP_SAFE_C_op_S_opSq_q] = all_x_c_op_s_opsq_q;
   all_x_function[HOP_SAFE_C_op_opSq_S_q] = all_x_c_op_opsq_s_q;
-  all_x_function[HOP_SAFE_C_S_op_S_opSqq] = all_c_s_op_s_opsqq;
+  all_x_function[HOP_SAFE_C_S_op_S_opSqq] = all_x_c_s_op_s_opsqq;
   all_x_function[HOP_SAFE_C_CSA] = all_x_c_csa;
   all_x_function[HOP_SAFE_C_SCA] = all_x_c_sca;
   all_x_function[HOP_SAFE_C_SAS] = all_x_c_sas;
@@ -45527,6 +45534,8 @@ static s7_function all_x_eval(s7_scheme *sc, s7_pointer holder, s7_pointer e, sa
 }
 
 
+/* -------------------------------------------------------------------------------- */
+
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   if (is_optimized(car(expr)))
@@ -45540,6 +45549,158 @@ s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
     }
   return(NULL);
 }
+
+static s7_double opt_unwrap_float(s7_scheme *sc, s7_pointer expr)
+{
+  return(s7_number_to_real(sc, sc->opt_func(sc, expr))); 
+}
+
+static s7_double opt_float_dv(s7_scheme *sc, s7_pointer expr)
+{
+  return(sc->dv_f(sc->dv_obj));
+}
+
+static s7_double opt_float_dvd_c(s7_scheme *sc, s7_pointer expr)
+{
+  return(sc->dvd_f(sc->dv_obj, sc->opt_c));
+}
+
+static s7_double opt_float_dvd_s(s7_scheme *sc, s7_pointer expr)
+{
+  return(sc->dvd_f(sc->dv_obj, real(slot_value(sc->opt_v))));
+}
+
+s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
+{
+  s7_function opt;
+  s7_pointer car_x;
+  car_x = car(expr);
+
+  if (!is_pair(car_x))
+
+  if (is_symbol(car(car_x)))
+    {
+      /* get func, check sig, check all args */
+      s7_pointer s_func;
+      s_func = s7_symbol_local_value(sc, car(car_x), env);
+      if (is_procedure(s_func))
+	{
+	  s7_pointer sig;
+	  sig = s7_procedure_signature(sc, s_func);
+	  if (is_pair(sig))
+	    {
+	      s7_pointer rtn_type;
+	      rtn_type = car(sig);
+	      if ((rtn_type == sc->is_float_symbol) ||
+		  (rtn_type == sc->is_real_symbol) ||
+		  (rtn_type == sc->is_number_symbol))
+		{
+		  if ((is_pair(cdr(sig))) &&
+		      (is_symbol(cadr(sig))) &&
+		      (is_pair(cdr(car_x))) &&
+		      (is_symbol(cadr(car_x))))
+		    {
+		      s7_pointer obj, checker;
+		      checker = s7_symbol_value(sc, cadr(sig));
+		      obj = s7_symbol_value(sc, cadr(car_x));
+		      if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+			{
+			  if (is_null(cddr(car_x)))
+			    {
+			      s7_dv_t flt_func;
+			      flt_func = s7_dv_function(s_func);
+			      if (flt_func)
+				{
+				  sc->dv_obj = (void *)s7_object_value(obj);
+				  sc->dv_f = flt_func;
+				  return(opt_float_dv);
+				}
+			    }
+			  else
+			    {
+			      if (is_pair(cddr(sig)))
+				{
+				  s7_pointer fm, fm_type;
+				  fm_type = caddr(sig);
+				  fm = caddr(car_x);
+				  if ((fm_type == sc->is_float_symbol) ||
+				      (fm_type == sc->is_real_symbol) ||
+				      (fm_type == sc->is_number_symbol))
+				    {
+				      if ((is_null(cdddr(car_x))) &&
+					  (!is_pair(fm)))
+					{
+					  s7_dvd_t flt_func;
+					  flt_func = s7_dvd_function(s_func);
+					  if (flt_func)
+					    {
+					      sc->dv_obj = (void *)s7_object_value(obj);
+					      sc->dvd_f = flt_func;
+					      if (is_real(fm))
+						{
+						  sc->opt_c = s7_number_to_real(sc, fm);
+						  return(opt_float_dvd_c);
+						}
+					      sc->opt_v = find_symbol(sc, fm);
+					      if (is_slot(sc->opt_v))
+						return(opt_float_dvd_s);
+					    }
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		  /* fallback on the more general case (all_x_eval, but still guaranteed to be a number) */
+		  opt = s7_optimize(sc, expr, env);
+		  if (opt)
+		    {
+		      sc->opt_func = opt;
+		      /* fprintf(stderr, "unwrap %s\n", DISPLAY(expr)); */
+		      return(opt_unwrap_float);
+		    }
+		}
+	    }
+	}
+    }
+  
+  return(NULL);
+}
+
+/* opt_info f: double (f)(s7_scheme *sc) in all cases
+ *   v s o f
+ *   each call incrs ptr in info list
+ * (opt sc) for each pair-arg, for-each o->f(sc, o)
+ * simple cases (as above) use base ptrs -- no change, opt_float_opt(sc, expr) -- set ptr to top, return(opt(sc))
+ * opf->f is opt_c|s|dv|dvd|d2|d3 etc dvi=fv_ref dvid=fv_set i2|i3 bi2 p2 tp ...
+ * opt_dv[d] applies dv_f or dvd_f (etc) to args, so each opt_info needs the function slots
+ * struct opt_info {s7_double c; s7_pointer s; s7_double (*f)(s7_scheme *sc); s7_double (*dv_f)(...)...;
+ * opt(sc, o) {opt_info *o; o = sc->opts[sc->index++]; return(o->f(sc, o));}
+ */
+
+/* (+ (flt) (flt)) (flt (flt)) (mus-random) (* c (osc)) (* s (osc))
+ * so: dd with +-*, and 2nd gen as fm or arg
+ * (set! v ...) -> d3?
+ */
+
+/* recursive s7_float_optimize: keep pointer into sc struct of opts vars and choose opt_float
+ *   if index overflow, give up
+ *   get * + - and the rest 
+ *   get 3 arg case for gens
+ *   fv handlers (need ints)
+ *   mul_d2: (* a b) known to be float etc
+ *
+ * so everything is of the form double f(void *p) or int f(void *p)
+ *   each gets its own (prebuilt) struct
+ *   then eval order is opt order
+ * differs from ex_parser and current rf because all complexity is here
+ *   other ops/gens merely provide double f(void *...) and set dv_t or d2_t in c_proc
+ *   so it's extensible to all types via added struct entries (or different structs)
+ *   and no alloc/free
+ *   no p++ and opaque types, uses sigs to type check everything
+ * why do I hesitate...
+ * why not split out do-loops as well?
+ */
 
 
 
@@ -71239,7 +71400,7 @@ static s7_pointer g_is_float(s7_scheme *sc, s7_pointer args)
   #define Q_is_float pl_bt
   s7_pointer p;
   p = car(args);
-  return(make_boolean(sc, ((is_real(p)) && (!is_rational(p)))));
+  return(make_boolean(sc, is_float(p)));
 }
 
 static s7_pointer g_is_proper_list(s7_scheme *sc, s7_pointer args)

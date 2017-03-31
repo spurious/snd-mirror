@@ -3547,152 +3547,40 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	    }
 
 	  {
-	    s7_pointer e;
-	    s7_pointer yp, old_e, y, s_func = NULL;
-	    s7_function opt_func = NULL;
+	    /* try s7_float_optimize */
+	    s7_pointer e, yp, old_e;
+	    s7_float_function opt_func;
 	    e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
-	    old_e = s7_set_curlet(s7, e);                  /* new env for scan lambda */
-	    y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
-	    yp = s7_make_slot(s7, e, arg, y);
-
-	    /* res is a pair */
-	    /* fprintf(stderr, "map %s\n", DISPLAY(body)); */
-	    if (s7_is_symbol(s7_car(res)))
-	      {
-		s7_pointer sig;
-		s_func = s7_symbol_value(s7, s7_car(res));
-		sig = s7_procedure_signature(s7, s_func);
-		/* fprintf(stderr, "sig: %s\n", DISPLAY(sig)); */
-		if (s7_is_pair(sig))
-		  {
-		    s7_pointer rtn_type;
-		    rtn_type = s7_car(sig);
-		    if ((rtn_type == s7_make_symbol(s7, "float?")) ||
-			(rtn_type == s7_make_symbol(s7, "number?")) ||
-			(rtn_type == s7_make_symbol(s7, "real?")))
-		      {
-			if ((s7_is_pair(s7_cdr(sig))) &&
-			    (s7_is_symbol(s7_cadr(sig))))
-			  {
-			    s7_pointer checker;
-			    checker = s7_symbol_value(s7, s7_cadr(sig));
-			    /* fprintf(stderr, "checker: %s\n", DISPLAY(checker)); */
-			    if ((s7_is_pair(s7_cdr(res))) &&
-				(s7_is_symbol(s7_cadr(res))))
-			      {
-				s7_pointer obj;
-				obj = s7_symbol_value(s7, s7_cadr(res));
-				/* fprintf(stderr, "obj: %s\n", DISPLAY(obj)); */
-				if (s7_apply_function(s7, checker, s7_cons(s7, obj, s7_nil(s7))) == s7_t(s7))
-				  {
-				    if (s7_is_null(s7, s7_cddr(res)))
-				      {
-					s7_dv_t flt_func;
-					flt_func = s7_dv_function(s_func);
-					if (flt_func)
-					  {
-					    void *p;
-					    /* fprintf(stderr, "direct: %s\n", DISPLAY(body));*/
-					    p = (void *)s7_object_value(obj);
-					    data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-					    for (kp = 0; kp < num; kp++)
-					      data[kp] = flt_func(p);
-					    free_snd_fd(sf);
-					    change_samples(beg, num, data, cp, caller, pos, -1.0);
-					    free(data);
-					    s7_set_curlet(s7, old_e);
-					    return(res);
-					  }
-				      }
-				    else
-				      {
-					/* fprintf(stderr, "sig: %s, res: %s, arg: %s\n", DISPLAY(sig), DISPLAY(res), DISPLAY(arg)); */
-					if (((s7_caddr(sig) == s7_make_symbol(s7, "float?")) ||
-					     (s7_caddr(sig) == s7_make_symbol(s7, "real?"))) &&
-					    (s7_is_null(s7, s7_cdddr(res))))
-					  {
-					    s7_dvd_t flt_func;
-					    flt_func = s7_dvd_function(s_func);
-					    if (flt_func)
-					      {
-						void *p;
-						p = (void *)s7_object_value(obj);
-						/* arg can be lambda arg or constant or symbol or float-rtn expr? */
-						/* fprintf(stderr, "2 args: %s\n", DISPLAY(res)); */
-						if (s7_caddr(res) == arg)
-						  {
-						    data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-						    samples_to_vct_with_reader(num, data, sf);
-						    for (kp = 0; kp < num; kp++)
-						      data[kp] = flt_func(p, data[kp]);
-						    free_snd_fd(sf);
-						    change_samples(beg, num, data, cp, caller, pos, -1.0);
-						    free(data);
-						    s7_set_curlet(s7, old_e);
-						    return(res);
-						  }
-						else
-						  {
-						    if (!s7_is_pair(s7_caddr(res)))
-						      {
-							s7_double x;
-							data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-							x = s7_number_to_real(s7, (s7_is_symbol(s7_caddr(res))) ? s7_symbol_value(s7, s7_caddr(res)) : s7_caddr(res));
-							for (kp = 0; kp < num; kp++)
-							  data[kp] = flt_func(p, x);
-							free_snd_fd(sf);
-							change_samples(beg, num, data, cp, caller, pos, -1.0);
-							free(data);
-							s7_set_curlet(s7, old_e);
-							return(res);
-						      }
-						    /* else fprintf(stderr, "pair: %s\n", DISPLAY(res)); */
-						    /* (filter lp (filter hp y)) -> flt1(p1, flt2(p2, y))
-						     */
-						  }
-					      }
-					  }
-				      }
-				  }
-			      }
-			  }
-			/* fprintf(stderr, "try opt: %s\n", s7_object_to_c_string(s7, body)); */
+	    old_e = s7_set_curlet(s7, e);
+	    yp = s7_make_slot(s7, e, arg, s7_make_mutable_real(s7, 1.5));
 			
-			opt_func = s7_optimize(s7, body, e);
-			if (opt_func)
-			  {
-			    data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
-			    if (tree_memq(s7, arg, res))
-			      {
-				samples_to_vct_with_reader(num, data, sf);
-				for (kp = 0; kp < num; kp++)
-				  {
-				    s7_slot_set_real_value(s7, yp, data[kp]);
-				    data[kp] = s7_number_to_real(s7, opt_func(s7, res));
-				  }
-			      }
-			    else
-			      {
-				for (kp = 0; kp < num; kp++)
-				  data[kp] = s7_number_to_real(s7, opt_func(s7, res));
-			      }
-			    free_snd_fd(sf);
-			    change_samples(beg, num, data, cp, caller, pos, -1.0);
-			    free(data);
-			    s7_set_curlet(s7, old_e);
-			    return(res);
-			  }
-			/* else fprintf(stderr, "sig ok but opt lost: %s\n", s7_object_to_c_string(s7, body)); */
+	    opt_func = s7_float_optimize(s7, body, e);
+	    if (opt_func)
+	      {
+		data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
+		if (tree_memq(s7, arg, res))
+		  {
+		    samples_to_vct_with_reader(num, data, sf);
+		    for (kp = 0; kp < num; kp++)
+		      {
+			s7_slot_set_real_value(s7, yp, data[kp]);
+			data[kp] = opt_func(s7, res);
 		      }
-		    /* else fprintf(stderr, "sig ok but lost: %s\n", s7_object_to_c_string(s7, body)); */
 		  }
-		/* else fprintf(stderr, "sig not num, lost: %s\n", s7_object_to_c_string(s7, body)); */
+		else
+		  {
+		    for (kp = 0; kp < num; kp++)
+		      data[kp] = opt_func(s7, res);
+		  }
+		free_snd_fd(sf);
+		change_samples(beg, num, data, cp, caller, pos, -1.0);
+		free(data);
+		s7_set_curlet(s7, old_e);
+		return(res);
 	      }
-	    /* else fprintf(stderr, "car not sym, lost: %s\n", s7_object_to_c_string(s7, body)); */
-	    s7_set_curlet(s7, old_e);
 	  }
-	}
-      
+	} /* is one expr body */
+
       arg = s7_car(s7_closure_args(s7, proc));
       e = s7_sublet(s7, s7_closure_let(s7, proc), s7_nil(s7));
       gc_loc = s7_gc_protect(s7, e);
@@ -4020,7 +3908,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	  func = s7_optimize(s7, body, e);
 	  if (func)
 	    {
-	      /* fprintf(stderr, "found %s\n", s7_object_to_c_string(s7, body)); */
 	      for (kp = 0; kp < num; kp++)
 		{
 		  s7_slot_set_real_value(s7, yp, read_sample(sf));
@@ -4045,7 +3932,6 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 		return(C_int_to_Xen_integer(counts));
 	      return(val);
 	    }
-	  /* else fprintf(stderr, "lost: %s\n", s7_object_to_c_string(s7, body)); */
 	  s7_set_curlet(s7, old_e);
 	}
       
