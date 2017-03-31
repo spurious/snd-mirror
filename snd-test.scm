@@ -16990,7 +16990,10 @@ EDITS: 2
       (if (fneq (mus-frequency gen) 10000.0) (snd-display "rand frequency: ~F?" (mus-frequency gen)))
       (set! (mus-scaler gen) 0.5)
       (if (fneq (mus-scaler gen) 0.5) (snd-display "set! mus-scaler rand: ~A" (mus-scaler gen)))
-      (if (= (v0 1) (v0 8)) (snd-display "rand output: ~A" v0)))
+      (if (= (v0 1) (v0 8)) (snd-display "rand output: ~A" v0))
+      (mus-reset gen)
+      (let ((val (rand gen)))
+	(if (zero? val) (snd-display "mus-reset rand: ~A" val))))
     
     (let ((gen (make-rand 10000.0 :envelope '(0 0 1 1)))
 	  (v0 (make-float-vector 10)))

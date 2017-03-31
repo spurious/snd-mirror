@@ -6705,7 +6705,7 @@ static mus_float_t randi_set_scaler(mus_any *ptr, mus_float_t val)
 static void noi_reset(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
-  gen->phase = 0.0;
+  gen->phase = TWO_PI; /* 2*pi is the trigger, otherwise value after mus-reset is always 0.0, as Tito Latini noticed */
   gen->output = 0.0;
 }
 

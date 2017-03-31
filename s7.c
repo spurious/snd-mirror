@@ -821,6 +821,19 @@ typedef struct xf_t {
 } xf_t;
 
 
+typedef struct {
+  s7_double x; 
+  s7_pointer slot; 
+  void *obj;
+  s7_scheme *sc;
+  s7_double (*f)(void *o);
+  s7_double (*dv_f)(void *obj);
+  s7_double (*dvd_f)(void *obj, s7_double fm);
+  s7_pointer (*all_f)(s7_scheme *sc, s7_pointer expr);
+} opt_info;
+
+
+
 static s7_pointer *small_ints, *chars;
 static s7_pointer real_zero, real_NaN, real_pi, real_one, arity_not_set, max_arity, real_infinity, real_minus_infinity, minus_one, minus_two;
 
@@ -1138,12 +1151,9 @@ struct s7_scheme {
 
   hash_entry_t *optimizer_fixups;
 
-  s7_function opt_func;
-  s7_pointer opt_v;
-  s7_double opt_c;
-  void *dv_obj;
-  s7_dv_t dv_f;
-  s7_dvd_t dvd_f;
+  int opt_index;
+  #define OPTS_SIZE 16
+  opt_info *opts[OPTS_SIZE];
 };
 
 typedef enum {USE_DISPLAY, USE_WRITE, USE_READABLE_WRITE, USE_WRITE_WRONG} use_write_t;
@@ -28456,10 +28466,15 @@ static s7_pointer check_ref(s7_pointer p, int expected_type, const char *func, i
 
 static s7_pointer check_ref2(s7_pointer p, int expected_type, int other_type, const char *func, int line, const char *func1, const char *func2)
 {
-  int typ;
-  typ = unchecked_type(p);
-  if ((typ != expected_type) && (typ != other_type))
-    return(check_ref(p, expected_type, func, line, func1, func2));
+  if (!p)
+    fprintf(stderr, "%s[%d]: null pointer pass to check_ref2\n", func, line);
+  else
+    {
+      int typ;
+      typ = unchecked_type(p);
+      if ((typ != expected_type) && (typ != other_type))
+	return(check_ref(p, expected_type, func, line, func1, func2));
+    }
   return(p);
 }
 
@@ -45550,25 +45565,49 @@ s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
   return(NULL);
 }
 
-static s7_double opt_unwrap_float(s7_scheme *sc, s7_pointer expr)
+static s7_double opt_float_any(s7_scheme *sc, s7_pointer expr)
 {
-  return(s7_number_to_real(sc, sc->opt_func(sc, expr))); 
+  sc->opt_index = 0;
+  return(sc->opts[0]->f(sc->opts[0]));
 }
 
-static s7_double opt_float_dv(s7_scheme *sc, s7_pointer expr)
+
+static s7_double opt_unwrap_float(void *p)
 {
-  return(sc->dv_f(sc->dv_obj));
+  s7_scheme *sc;
+  opt_info *o = (opt_info *)p;
+  sc = o->sc;
+  return(s7_number_to_real(sc, o->all_f(sc, car(o->slot))));
 }
 
-static s7_double opt_float_dvd_c(s7_scheme *sc, s7_pointer expr)
+static s7_double opt_dv(void *p)
 {
-  return(sc->dvd_f(sc->dv_obj, sc->opt_c));
+  opt_info *o = (opt_info *)p;
+  return(o->dv_f(o->obj));
 }
 
-static s7_double opt_float_dvd_s(s7_scheme *sc, s7_pointer expr)
+static s7_double opt_dvd_c(void *p)
 {
-  return(sc->dvd_f(sc->dv_obj, real(slot_value(sc->opt_v))));
+  opt_info *o = (opt_info *)p;
+  return(o->dvd_f(o->obj, o->x));
 }
+
+static s7_double opt_dvd_f(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->dvd_f(o->obj, o1->f(o1)));
+}
+
+static s7_double opt_dvd_s(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->dvd_f(o->obj, real(slot_value(o->slot))));
+}
+
 
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
@@ -45576,12 +45615,18 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
   s7_pointer car_x;
   car_x = car(expr);
 
+  /* fprintf(stderr, "float_opt: %s\n", DISPLAY(expr)); */
   if (!is_pair(car_x))
+    return(NULL);
 
   if (is_symbol(car(car_x)))
     {
       /* get func, check sig, check all args */
       s7_pointer s_func;
+      opt_info *cur_info;
+      cur_info = sc->opts[sc->opt_index];
+      cur_info->sc = sc;
+
       s_func = s7_symbol_local_value(sc, car(car_x), env);
       if (is_procedure(s_func))
 	{
@@ -45607,13 +45652,16 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 			{
 			  if (is_null(cddr(car_x)))
 			    {
+			      /* TODO: here we might have (random|abs x) etc -- is checker known type or something (not c-object?) */
+			      
 			      s7_dv_t flt_func;
 			      flt_func = s7_dv_function(s_func);
 			      if (flt_func)
 				{
-				  sc->dv_obj = (void *)s7_object_value(obj);
-				  sc->dv_f = flt_func;
-				  return(opt_float_dv);
+				  cur_info->obj = (void *)s7_object_value(obj);
+				  cur_info->dv_f = flt_func;
+				  cur_info->f = opt_dv;
+				  return(opt_float_any);
 				}
 			    }
 			  else
@@ -45627,6 +45675,8 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 				      (fm_type == sc->is_real_symbol) ||
 				      (fm_type == sc->is_number_symbol))
 				    {
+				      /* TODO: more args and pair fm and non-obj cadr: (* x y) etc */
+				      
 				      if ((is_null(cdddr(car_x))) &&
 					  (!is_pair(fm)))
 					{
@@ -45634,16 +45684,20 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 					  flt_func = s7_dvd_function(s_func);
 					  if (flt_func)
 					    {
-					      sc->dv_obj = (void *)s7_object_value(obj);
-					      sc->dvd_f = flt_func;
+					      cur_info->obj = (void *)s7_object_value(obj);
+					      cur_info->dvd_f = flt_func;
 					      if (is_real(fm))
 						{
-						  sc->opt_c = s7_number_to_real(sc, fm);
-						  return(opt_float_dvd_c);
+						  cur_info->x = s7_number_to_real(sc, fm);
+						  cur_info->f = opt_dvd_c;
+						  return(opt_float_any);
 						}
-					      sc->opt_v = find_symbol(sc, fm);
-					      if (is_slot(sc->opt_v))
-						return(opt_float_dvd_s);
+					      cur_info->slot = find_symbol(sc, fm);
+					      if (is_slot(cur_info->slot))
+						{
+						  cur_info->f = opt_dvd_s;
+						  return(opt_float_any);
+						}
 					    }
 					}
 				    }
@@ -45655,9 +45709,10 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 		  opt = s7_optimize(sc, expr, env);
 		  if (opt)
 		    {
-		      sc->opt_func = opt;
-		      /* fprintf(stderr, "unwrap %s\n", DISPLAY(expr)); */
-		      return(opt_unwrap_float);
+		      cur_info->all_f = opt;
+		      cur_info->f = opt_unwrap_float;
+		      cur_info->slot = expr;
+		      return(opt_float_any);
 		    }
 		}
 	    }
@@ -45667,38 +45722,22 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
   return(NULL);
 }
 
-/* opt_info f: double (f)(s7_scheme *sc) in all cases
- *   v s o f
- *   each call incrs ptr in info list
- * (opt sc) for each pair-arg, for-each o->f(sc, o)
- * simple cases (as above) use base ptrs -- no change, opt_float_opt(sc, expr) -- set ptr to top, return(opt(sc))
+/* opt_info
  * opf->f is opt_c|s|dv|dvd|d2|d3 etc dvi=fv_ref dvid=fv_set i2|i3 bi2 p2 tp ...
  * opt_dv[d] applies dv_f or dvd_f (etc) to args, so each opt_info needs the function slots
- * struct opt_info {s7_double c; s7_pointer s; s7_double (*f)(s7_scheme *sc); s7_double (*dv_f)(...)...;
- * opt(sc, o) {opt_info *o; o = sc->opts[sc->index++]; return(o->f(sc, o));}
- */
-
-/* (+ (flt) (flt)) (flt (flt)) (mus-random) (* c (osc)) (* s (osc))
+ *
+ * (+ (flt) (flt)) (flt (flt)) (mus-random) (* c (osc)) (* s (osc))
  * so: dd with +-*, and 2nd gen as fm or arg
  * (set! v ...) -> d3?
- */
-
-/* recursive s7_float_optimize: keep pointer into sc struct of opts vars and choose opt_float
+ *
+ * recursive s7_float_optimize: keep pointer into sc struct of opts vars and choose opt_float
  *   if index overflow, give up
- *   get * + - and the rest 
+ *   get * + - and the rest
+ *       static s7_double add_d2(sc, s7_double x, y) return(+ x y)
  *   get 3 arg case for gens
  *   fv handlers (need ints)
  *   mul_d2: (* a b) known to be float etc
  *
- * so everything is of the form double f(void *p) or int f(void *p)
- *   each gets its own (prebuilt) struct
- *   then eval order is opt order
- * differs from ex_parser and current rf because all complexity is here
- *   other ops/gens merely provide double f(void *...) and set dv_t or d2_t in c_proc
- *   so it's extensible to all types via added struct entries (or different structs)
- *   and no alloc/free
- *   no p++ and opaque types, uses sigs to type check everything
- * why do I hesitate...
  * why not split out do-loops as well?
  */
 
@@ -71804,6 +71843,8 @@ s7_scheme *s7_init(void)
       string_value(p) = (char *)malloc(INITIAL_TMP_STR_SIZE * sizeof(char));
       string_temp_true_length(p) = INITIAL_TMP_STR_SIZE;
     }
+  for (i = 0; i < OPTS_SIZE; i++) 
+    sc->opts[i] = (opt_info *)malloc(sizeof(opt_info));
   sc->typnam = NULL;
   sc->typnam_len = 0;
   sc->help_arglist = NULL;
