@@ -6598,7 +6598,7 @@ static mus_float_t rand_interp_unmodulated_with_distribution(mus_any *ptr)
   if (gen->phase >= TWO_PI)
     {
       gen->phase -= TWO_PI;
-      gen->incr = (random_any(gen) - gen->output) / (ceil(TWO_PI / gen->freq));
+      gen->incr = (random_any(gen) - gen->output) * gen->norm;
     }
   gen->phase += gen->freq;
   return(gen->output);
@@ -6613,8 +6613,7 @@ static mus_float_t rand_interp_unmodulated(mus_any *ptr)
   if (gen->phase >= TWO_PI)
     {
       gen->phase -= TWO_PI;
-      randx = randx * 1103515245 + 12345;
-      gen->incr = ((gen->base * ((mus_float_t)((unsigned int)(randx >> 16) & 32767) * INVERSE_MAX_RAND - 1.0)) - gen->output) * gen->norm;
+      gen->incr = (mus_random(gen->base) - gen->output) * gen->norm;
     }
   return(gen->output);
 }
@@ -6706,7 +6705,7 @@ static void noi_reset(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   gen->phase = TWO_PI; /* 2*pi is the trigger, otherwise value after mus-reset is always 0.0, as Tito Latini noticed */
-  gen->output = 0.0;
+  gen->output = mus_is_rand_interp(ptr) ? random_any(gen) - gen->incr : 0.0;
 }
 
 
@@ -6817,7 +6816,7 @@ mus_any *mus_make_rand(mus_float_t freq, mus_float_t base)
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
   gen->incr = 0.0;
-  gen->output = random_any(gen); /* this was always starting at 0.0 (changed 23-Dec-06) */
+  gen->output = mus_random(base); /* this was always starting at 0.0 (changed 23-Dec-06) */
   return((mus_any *)gen);
 }
 
@@ -6825,9 +6824,14 @@ mus_any *mus_make_rand(mus_float_t freq, mus_float_t base)
 mus_any *mus_make_rand_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size)
 {
   noi *gen;
-  gen = (noi *)mus_make_rand(freq, base);
+  gen = (noi *)calloc(1, sizeof(noi));
+  gen->core = &RAND_CLASS;
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
+  if (freq < 0.0) freq = -freq;
+  gen->freq = mus_hz_to_radians(freq);
+  gen->base = base;
+  gen->incr = 0.0;
   gen->output = random_any(gen);
   return((mus_any *)gen);
 }
@@ -6842,8 +6846,9 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
   if (freq < 0.0) freq = -freq;
   gen->freq = mus_hz_to_radians(freq);
   gen->base = base;
-  gen->incr =  mus_random(base) * freq / sampling_rate;
-  gen->output = 0.0;
+  gen->output = mus_random(base);
+  gen->incr = (mus_random(base) - gen->output) * freq / sampling_rate;
+  gen->output -= gen->incr;
   if (gen->freq != 0.0)
     gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
   else gen->norm = 1.0;
@@ -6855,9 +6860,19 @@ mus_any *mus_make_rand_interp(mus_float_t freq, mus_float_t base)
 mus_any *mus_make_rand_interp_with_distribution(mus_float_t freq, mus_float_t base, mus_float_t *distribution, int distribution_size)
 {
   noi *gen;
-  gen = (noi *)mus_make_rand_interp(freq, base);
+  gen = (noi *)calloc(1, sizeof(noi));
+  gen->core = &RAND_INTERP_CLASS;
   gen->distribution = distribution;
   gen->distribution_size = distribution_size;
+  if (freq < 0.0) freq = -freq;
+  gen->freq = mus_hz_to_radians(freq);
+  gen->base = base;
+  gen->output = random_any(gen);
+  gen->incr = (random_any(gen) - gen->output) * freq / sampling_rate;
+  gen->output -= gen->incr;
+  if (gen->freq != 0.0)
+    gen->norm = 1.0 / (ceil(TWO_PI / gen->freq));
+  else gen->norm = 1.0;
   gen->ran_unmod = ((base == 0.0) ? zero_unmodulated : rand_interp_unmodulated_with_distribution);
   return((mus_any *)gen);
 }

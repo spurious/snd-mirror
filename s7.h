@@ -654,36 +654,44 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
+/* the new clm optimizer!  this time for sure! 
+ *    d=double, i=integer, v=c_object, p=s7_pointer
+ *    first return type, then arg types, d_vd -> returns double takes c_object and double (i.e. a standard clm generator)
+ */
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
-typedef s7_double (*s7_d_t)(s7_double x);
+typedef s7_double (*s7_d_t)(void);
 void s7_set_d_function(s7_pointer f, s7_d_t df);
 s7_d_t s7_d_function(s7_pointer f);
 
-typedef s7_double (*s7_dd_t)(s7_double x1, s7_double x2);
-void s7_set_dd_function(s7_pointer f, s7_dd_t df);
-s7_dd_t s7_dd_function(s7_pointer f);
+typedef s7_double (*s7_d_d_t)(s7_double x);
+void s7_set_d_d_function(s7_pointer f, s7_d_d_t df);
+s7_d_d_t s7_d_d_function(s7_pointer f);
 
-typedef s7_double (*s7_ddd_t)(s7_double x1, s7_double x2, s7_double x3);
-void s7_set_ddd_function(s7_pointer f, s7_ddd_t df);
-s7_ddd_t s7_ddd_function(s7_pointer f);
+typedef s7_double (*s7_d_dd_t)(s7_double x1, s7_double x2);
+void s7_set_d_dd_function(s7_pointer f, s7_d_dd_t df);
+s7_d_dd_t s7_d_dd_function(s7_pointer f);
 
-typedef s7_double (*s7_dddd_t)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
-void s7_set_dddd_function(s7_pointer f, s7_dddd_t df);
-s7_dddd_t s7_dddd_function(s7_pointer f);
+typedef s7_double (*s7_d_ddd_t)(s7_double x1, s7_double x2, s7_double x3);
+void s7_set_d_ddd_function(s7_pointer f, s7_d_ddd_t df);
+s7_d_ddd_t s7_d_ddd_function(s7_pointer f);
 
-typedef s7_double (*s7_dv_t)(void *v);
-void s7_set_dv_function(s7_pointer f, s7_dv_t df);
-s7_dv_t s7_dv_function(s7_pointer f);
+typedef s7_double (*s7_d_dddd_t)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
+void s7_set_d_dddd_function(s7_pointer f, s7_d_dddd_t df);
+s7_d_dddd_t s7_d_dddd_function(s7_pointer f);
 
-typedef s7_double (*s7_dvd_t)(void *v, s7_double d);
-void s7_set_dvd_function(s7_pointer f, s7_dvd_t df);
-s7_dvd_t s7_dvd_function(s7_pointer f);
+typedef s7_double (*s7_d_v_t)(void *v);
+void s7_set_d_v_function(s7_pointer f, s7_d_v_t df);
+s7_d_v_t s7_d_v_function(s7_pointer f);
 
-typedef s7_double (*s7_dpid_t)(s7_pointer v, s7_int i, s7_double d);
-void s7_set_dpid_function(s7_pointer f, s7_dpid_t df);
-s7_dpid_t s7_dpid_function(s7_pointer f);
+typedef s7_double (*s7_d_vd_t)(void *v, s7_double d);
+void s7_set_d_vd_function(s7_pointer f, s7_d_vd_t df);
+s7_d_vd_t s7_d_vd_function(s7_pointer f);
+
+typedef s7_double (*s7_d_pid_t)(s7_pointer v, s7_int i, s7_double d);
+void s7_set_d_pid_function(s7_pointer f, s7_d_pid_t df);
+s7_d_pid_t s7_d_pid_function(s7_pointer f);
 
 
 /* these are possibly temporary */

@@ -493,13 +493,14 @@ typedef struct {
   s7_pointer *arg_defaults, *arg_names;
   s7_pointer call_args;
   s7_rp_t rp;
-  s7_dv_t dv;
-  s7_dvd_t dvd;
-  s7_dpid_t dpid;
+  s7_d_v_t d_v;
+  s7_d_vd_t d_vd;
+  s7_d_pid_t d_pid;
   s7_d_t d;
-  s7_dd_t dd;
-  s7_ddd_t ddd;
-  s7_dddd_t dddd;
+  s7_d_d_t d_d;
+  s7_d_dd_t d_dd;
+  s7_d_ddd_t d_ddd;
+  s7_d_dddd_t d_dddd;
 } c_proc_t;
 
 
@@ -834,13 +835,14 @@ typedef struct {
   s7_scheme *sc;
   s7_double (*f)(void *o);
   union {
-    s7_double (*d_f)(s7_double x);
-    s7_double (*dd_f)(s7_double x1, s7_double x2);
-    s7_double (*ddd_f)(s7_double x1, s7_double x2, s7_double x3);
-    s7_double (*dddd_f)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
-    s7_double (*dv_f)(void *obj);
-    s7_double (*dvd_f)(void *obj, s7_double fm);
-    s7_double (*dpid_f)(s7_pointer obj, s7_int i1, s7_double x);
+    s7_double (*d_f)(void);
+    s7_double (*d_d_f)(s7_double x);
+    s7_double (*d_dd_f)(s7_double x1, s7_double x2);
+    s7_double (*d_ddd_f)(s7_double x1, s7_double x2, s7_double x3);
+    s7_double (*d_dddd_f)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
+    s7_double (*d_v_f)(void *obj);
+    s7_double (*d_vd_f)(void *obj, s7_double fm);
+    s7_double (*d_pid_f)(s7_pointer obj, s7_int i1, s7_double x);
     s7_pointer (*all_f)(s7_scheme *sc, s7_pointer expr);
   } func;
 } opt_info;
@@ -2324,13 +2326,14 @@ static int not_heap = -1;
 #define c_function_rp(f)              c_function_data(f)->rp
 #define set_c_function(X, f)          do {set_opt_cfunc(X, f); set_c_call(X, c_function_call(f));} while (0)
 
-#define c_function_dv(f)              c_function_data(f)->dv
-#define c_function_dvd(f)             c_function_data(f)->dvd
-#define c_function_dpid(f)            c_function_data(f)->dpid
+#define c_function_d_v(f)             c_function_data(f)->d_v
+#define c_function_d_vd(f)            c_function_data(f)->d_vd
+#define c_function_d_pid(f)           c_function_data(f)->d_pid
 #define c_function_d(f)               c_function_data(f)->d
-#define c_function_dd(f)              c_function_data(f)->dd
-#define c_function_ddd(f)             c_function_data(f)->ddd
-#define c_function_dddd(f)            c_function_data(f)->dddd
+#define c_function_d_d(f)             c_function_data(f)->d_d
+#define c_function_d_dd(f)            c_function_data(f)->d_dd
+#define c_function_d_ddd(f)           c_function_data(f)->d_ddd
+#define c_function_d_dddd(f)          c_function_data(f)->d_dddd
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
 #define c_macro_data(f)               (_TMac(f))->object.fnc.c_proc
@@ -8473,31 +8476,34 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 
 
-/* --------------------------------- rf (CLM optimizer) ----------------------------------------------- */
+/* --------------------------------- CLM optimizer ----------------------------------------------- */
 
 void s7_set_d_function(s7_pointer f, s7_d_t df) {if (!is_c_function(f)) return; c_function_d(f) = df;}
 s7_d_t s7_d_function(s7_pointer f) {return(c_function_d(f));}
 
-void s7_set_dd_function(s7_pointer f, s7_dd_t df) {if (!is_c_function(f)) return; c_function_dd(f) = df;}
-s7_dd_t s7_dd_function(s7_pointer f) {return(c_function_dd(f));}
+void s7_set_d_d_function(s7_pointer f, s7_d_d_t df) {if (!is_c_function(f)) return; c_function_d_d(f) = df;}
+s7_d_d_t s7_d_d_function(s7_pointer f) {return(c_function_d_d(f));}
 
-void s7_set_ddd_function(s7_pointer f, s7_ddd_t df) {if (!is_c_function(f)) return; c_function_ddd(f) = df;}
-s7_ddd_t s7_ddd_function(s7_pointer f) {return(c_function_ddd(f));}
+void s7_set_d_dd_function(s7_pointer f, s7_d_dd_t df) {if (!is_c_function(f)) return; c_function_d_dd(f) = df;}
+s7_d_dd_t s7_d_dd_function(s7_pointer f) {return(c_function_d_dd(f));}
 
-void s7_set_dddd_function(s7_pointer f, s7_dddd_t df) {if (!is_c_function(f)) return; c_function_dddd(f) = df;}
-s7_dddd_t s7_dddd_function(s7_pointer f) {return(c_function_dddd(f));}
+void s7_set_d_ddd_function(s7_pointer f, s7_d_ddd_t df) {if (!is_c_function(f)) return; c_function_d_ddd(f) = df;}
+s7_d_ddd_t s7_d_ddd_function(s7_pointer f) {return(c_function_d_ddd(f));}
 
-void s7_set_dv_function(s7_pointer f, s7_dv_t df) {if (!is_c_function(f)) return; c_function_dv(f) = df;}
-s7_dv_t s7_dv_function(s7_pointer f) {return(c_function_dv(f));}
+void s7_set_d_dddd_function(s7_pointer f, s7_d_dddd_t df) {if (!is_c_function(f)) return; c_function_d_dddd(f) = df;}
+s7_d_dddd_t s7_d_dddd_function(s7_pointer f) {return(c_function_d_dddd(f));}
 
-void s7_set_dvd_function(s7_pointer f, s7_dvd_t df) {if (!is_c_function(f)) return; c_function_dvd(f) = df;}
-s7_dvd_t s7_dvd_function(s7_pointer f) {return(c_function_dvd(f));}
+void s7_set_d_v_function(s7_pointer f, s7_d_v_t df) {if (!is_c_function(f)) return; c_function_d_v(f) = df;}
+s7_d_v_t s7_d_v_function(s7_pointer f) {return(c_function_d_v(f));}
 
-void s7_set_dpid_function(s7_pointer f, s7_dpid_t df) {if (!is_c_function(f)) return; c_function_dpid(f) = df;}
-s7_dpid_t s7_dpid_function(s7_pointer f) {return(c_function_dpid(f));}
+void s7_set_d_vd_function(s7_pointer f, s7_d_vd_t df) {if (!is_c_function(f)) return; c_function_d_vd(f) = df;}
+s7_d_vd_t s7_d_vd_function(s7_pointer f) {return(c_function_d_vd(f));}
+
+void s7_set_d_pid_function(s7_pointer f, s7_d_pid_t df) {if (!is_c_function(f)) return; c_function_d_pid(f) = df;}
+s7_d_pid_t s7_d_pid_function(s7_pointer f) {return(c_function_d_pid(f));}
 
 
-
+/* old optimizer -- will be deleted as soon as possible */
 s7_pointer *s7_xf_start(s7_scheme *sc)
 {
   sc->cur_rf->cur = sc->cur_rf->data;
@@ -12703,7 +12709,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double abs_d(s7_double x) {return((x < 0.0) ? (-x) : x);} 
+static s7_double abs_d_d(s7_double x) {return((x < 0.0) ? (-x) : x);} 
 
 static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-arg) : arg);} 
 DIRECT_RF_TO_RF(fabs)
@@ -15942,10 +15948,10 @@ static void init_add_ops(void)
 #endif
 
 
-static s7_double add_d(s7_double x) {return(x);}
-static s7_double add_dd(s7_double x1, s7_double x2) {return(x1 + x2);}
-static s7_double add_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 + x2 + x3);}
-static s7_double add_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 + x2 + x3 + x4);}
+static s7_double add_d_d(s7_double x) {return(x);}
+static s7_double add_d_dd(s7_double x1, s7_double x2) {return(x1 + x2);}
+static s7_double add_d_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 + x2 + x3);}
+static s7_double add_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 + x2 + x3 + x4);}
 
 
 /* ---------------------------------------- subtract ---------------------------------------- */
@@ -16759,10 +16765,10 @@ static s7_rf_t subtract_rf(s7_scheme *sc, s7_pointer expr)
 
 #endif
 
-static s7_double subtract_d(s7_double x) {return(-x);}
-static s7_double subtract_dd(s7_double x1, s7_double x2) {return(x1 - x2);}
-static s7_double subtract_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 - x2 - x3);}
-static s7_double subtract_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 - x2 - x3 - x4);}
+static s7_double subtract_d_d(s7_double x) {return(-x);}
+static s7_double subtract_d_dd(s7_double x1, s7_double x2) {return(x1 - x2);}
+static s7_double subtract_d_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 - x2 - x3);}
+static s7_double subtract_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 - x2 - x3 - x4);}
 
 
 /* ---------------------------------------- multiply ---------------------------------------- */
@@ -17635,10 +17641,10 @@ static void init_multiply_ops(void)
 }
 #endif /* with-gmp */
 
-static s7_double multiply_d(s7_double x) {return(x);}
-static s7_double multiply_dd(s7_double x1, s7_double x2) {return(x1 * x2);}
-static s7_double multiply_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 * x2 * x3);}
-static s7_double multiply_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 * x2 * x3 * x4);}
+static s7_double multiply_d_d(s7_double x) {return(x);}
+static s7_double multiply_d_dd(s7_double x1, s7_double x2) {return(x1 * x2);}
+static s7_double multiply_d_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 * x2 * x3);}
+static s7_double multiply_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 * x2 * x3 * x4);}
 
 
 
@@ -45605,7 +45611,6 @@ s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 
 static s7_double opt_float_any(s7_scheme *sc, s7_pointer expr)
 {
-  /* fprintf(stderr, "%s: %d\n", DISPLAY(expr), sc->opt_index); */
   sc->opt_index = 0;
   return(sc->opts[0]->f(sc->opts[0]));
 }
@@ -45623,65 +45628,84 @@ static s7_double opt_unwrap_float(void *p)
 static s7_double opt_d_c(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.d_f(o->x1));
+  return(o->x1);
 }
 
 static s7_double opt_d_s(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.d_f(real(slot_value(o->p1))));
+  return(s7_number_to_real(o->sc, slot_value(o->p1)));
 }
 
 static s7_double opt_d_f(void *p)
 {
   opt_info *o = (opt_info *)p;
-  opt_info *o1;
-  s7_scheme *sc;
-  sc = o->sc;
-  o1 = sc->opts[++sc->opt_index];
-  return(o->func.d_f(o1->f(o1)));
+  return(o->func.d_f());
 }
 
 
-static s7_double opt_dd_cc(void *p)
+static s7_double opt_d_d_c(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.dd_f(o->x1, o->x2));
+  return(o->func.d_d_f(o->x1));
 }
 
-static s7_double opt_dd_cs(void *p)
+static s7_double opt_d_d_s(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.dd_f(o->x1, real(slot_value(o->p1))));
+  return(o->func.d_d_f(real(slot_value(o->p1))));
 }
 
-static s7_double opt_dd_ss(void *p)
-{
-  opt_info *o = (opt_info *)p;
-  return(o->func.dd_f(real(slot_value(o->p1)), real(slot_value(o->p2))));
-}
-
-static s7_double opt_dd_cf(void *p)
+static s7_double opt_d_d_f(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
   s7_scheme *sc;
   sc = o->sc;
   o1 = sc->opts[++sc->opt_index];
-  return(o->func.dd_f(o->x1, o1->f(o1)));
+  return(o->func.d_d_f(o1->f(o1)));
 }
 
-static s7_double opt_dd_sf(void *p)
+
+static s7_double opt_d_dd_cc(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.d_dd_f(o->x1, o->x2));
+}
+
+static s7_double opt_d_dd_cs(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.d_dd_f(o->x1, real(slot_value(o->p1))));
+}
+
+static s7_double opt_d_dd_ss(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.d_dd_f(real(slot_value(o->p1)), real(slot_value(o->p2))));
+}
+
+static s7_double opt_d_dd_cf(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
   s7_scheme *sc;
   sc = o->sc;
   o1 = sc->opts[++sc->opt_index];
-  return(o->func.dd_f(real(slot_value(o->p1)), o1->f(o1)));
+  return(o->func.d_dd_f(o->x1, o1->f(o1)));
 }
 
-static s7_double opt_dd_ff(void *p)
+static s7_double opt_d_dd_sf(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.d_dd_f(real(slot_value(o->p1)), o1->f(o1)));
+}
+
+static s7_double opt_d_dd_ff(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1, *o2;
@@ -45689,68 +45713,95 @@ static s7_double opt_dd_ff(void *p)
   sc = o->sc;
   o1 = sc->opts[++sc->opt_index];
   o2 = sc->opts[++sc->opt_index];
-  return(o->func.dd_f(o1->f(o1), o2->f(o2)));
+  return(o->func.d_dd_f(o1->f(o1), o2->f(o2)));
 }
 
 
-static s7_double opt_dv(void *p)
+static s7_double opt_d_v(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.dv_f(o->obj));
+  return(o->func.d_v_f(o->obj));
 }
 
-static s7_double opt_dvd_c(void *p)
+static s7_double opt_d_vd_c(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.dvd_f(o->obj, o->x1));
+  return(o->func.d_vd_f(o->obj, o->x1));
 }
 
-static s7_double opt_dvd_s(void *p)
+static s7_double opt_d_vd_s(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->func.dvd_f(o->obj, real(slot_value(o->p1))));
+  return(o->func.d_vd_f(o->obj, real(slot_value(o->p1))));
 }
 
-static s7_double opt_dvd_f(void *p)
-{
-  opt_info *o = (opt_info *)p;
-  opt_info *o1;
-  s7_scheme *sc;
-  sc = o->sc;
-  o1 = sc->opts[++sc->opt_index];
-  return(o->func.dvd_f(o->obj, o1->f(o1)));
-}
-
-static s7_double opt_dpid_ssf(void *p)
+static s7_double opt_d_vd_f(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
   s7_scheme *sc;
   sc = o->sc;
   o1 = sc->opts[++sc->opt_index];
-  return(o->func.dpid_f(slot_value(o->p1), integer(slot_value(o->p2)), o1->f(o1)));
+  return(o->func.d_vd_f(o->obj, o1->f(o1)));
 }
+
+static s7_double opt_d_pid_ssf(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.d_pid_f(slot_value(o->p1), integer(slot_value(o->p2)), o1->f(o1)));
+}
+
+
+static s7_float_function opt_not_pair(s7_scheme *sc, s7_pointer car_x)
+{
+  opt_info *cur_info;
+  if (is_real(car_x))
+    {
+      cur_info = sc->opts[sc->opt_index++];
+      cur_info->x1 = s7_number_to_real(sc, car_x);
+      cur_info->f = opt_d_c;
+      return(opt_float_any);
+    }
+  if (is_symbol(car_x))
+    {
+      s7_pointer p;
+      p = find_symbol(sc, car_x);
+      if ((is_slot(p)) &&
+	  (is_real(slot_value(p))))
+	{
+	  cur_info = sc->opts[sc->opt_index++];
+	  cur_info->p1 = p;
+	  cur_info->f = opt_d_s;
+	  return(opt_float_any);
+	}
+    }
+  return(NULL);
+}
+
 
 
 s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   s7_function opt;
   s7_pointer car_x;
+  opt_info *cur_info;
 
   /* fprintf(stderr, "float_opt: %s\n", DISPLAY(expr)); */
   if (sc->opt_index >= OPTS_SIZE)
     return(NULL);
 
   car_x = car(expr);
-  if (!is_pair(car_x))
-    return(NULL);
+  if (!is_pair(car_x)) /* wrap constants/symbols */
+    return(opt_not_pair(sc, car_x));
 
   if (is_symbol(car(car_x)))
     {
       /* get func, check sig, check all args */
       s7_pointer s_func;
-      opt_info *cur_info;
-      cur_info = sc->opts[sc->opt_index++];
 
       s_func = s7_symbol_local_value(sc, car(car_x), env);
       if (is_procedure(s_func))
@@ -45765,30 +45816,44 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 		  (rtn_type == sc->is_real_symbol) ||
 		  (rtn_type == sc->is_number_symbol))
 		{
+		  cur_info = sc->opts[sc->opt_index++];
 		  
-		  /* dpid: (procedure-signature float-vector-set!) (real? float-vector? integer? . #1=(integer:real? . #1#)) */
+		  if ((is_null(cdr(car_x))) &&
+		      (is_null(cdr(sig))))
+		    {
+		      s7_d_t func;
+		      func = s7_d_function(s_func);
+		      if (func)
+			{
+			  cur_info->f = opt_d_f;
+			  cur_info->func.d_f = func;
+			  return(opt_float_any);
+			}
+		    }
+
+		  /* d_pid: (procedure-signature float-vector-set!) (real? float-vector? integer? . #1=(integer:real? . #1#)) */
 		  /* (procedure-signature +) #1=(number? . #1#) */
-		  /* did: outa = real integer real #t -- #t is the optional stream */
-		  /* dvid: locsig */
+		  /* d_id: outa = real integer real #t -- #t is the optional stream */
+		  /* d_vid: locsig */
 
 		  if ((is_pair(cdr(sig))) &&
 		      (is_symbol(cadr(sig))) &&
 		      (is_pair(cdr(car_x))))
 		    {
-		      if ((is_null(cddr(car_x))) &&
+		      if ((is_null(cddr(car_x))) &&    /* 1 arg */
 			  ((cadr(sig) == sc->is_float_symbol) ||
 			   (cadr(sig) == sc->is_real_symbol) ||
 			   (cadr(sig) == sc->is_number_symbol)))
 			{
-			  s7_d_t func;
-			  func = s7_d_function(s_func);
+			  s7_d_d_t func;
+			  func = s7_d_d_function(s_func);
 			  if (func)
 			    {
-			      cur_info->func.d_f = func;
+			      cur_info->func.d_d_f = func;
 			      if (is_real(cadr(car_x)))
 				{
 				  cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
-				  cur_info->f = opt_d_c;
+				  cur_info->f = opt_d_d_c;
 				  return(opt_float_any);
 				}
 			      if (is_symbol(cadr(car_x)))
@@ -45797,7 +45862,7 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 				  if ((is_slot(cur_info->p1)) &&
 				      (is_real(slot_value(cur_info->p1))))
 				    {
-				      cur_info->f = opt_d_s;
+				      cur_info->f = opt_d_d_s;
 				      return(opt_float_any);
 				    }
 				}
@@ -45807,7 +45872,7 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 				  f = s7_float_optimize_1(sc, cdr(car_x), env);
 				  if (f)
 				    {
-				      cur_info->f = opt_d_f;
+				      cur_info->f = opt_d_d_f;
 				      return(opt_float_any);
 				    }
 				}
@@ -45822,13 +45887,13 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 			    {
 			      if (is_null(cddr(car_x)))
 				{
-				  s7_dv_t flt_func;
-				  flt_func = s7_dv_function(s_func);
+				  s7_d_v_t flt_func;
+				  flt_func = s7_d_v_function(s_func);
 				  if (flt_func)
 				    {
 				      cur_info->obj = (void *)s7_object_value(obj);
-				      cur_info->func.dv_f = flt_func;
-				      cur_info->f = opt_dv;
+				      cur_info->func.d_v_f = flt_func;
+				      cur_info->f = opt_d_v;
 				      return(opt_float_any);
 				    }
 				}
@@ -45847,11 +45912,11 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 					  
 					  if (is_null(cdddr(car_x)))
 					    {
-					      s7_dvd_t flt_func;
-					      flt_func = s7_dvd_function(s_func);
+					      s7_d_vd_t flt_func;
+					      flt_func = s7_d_vd_function(s_func);
 					      if (flt_func)
 						{
-						  cur_info->func.dvd_f = flt_func;
+						  cur_info->func.d_vd_f = flt_func;
 						  if (!is_pair(fm))
 						    {
 						      /* fprintf(stderr, "fm not pair\n"); */
@@ -45859,15 +45924,15 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 						      if (is_real(fm))
 							{
 							  cur_info->x1 = s7_number_to_real(sc, fm);
-							  cur_info->f = opt_dvd_c;
+							  cur_info->f = opt_d_vd_c;
 							  return(opt_float_any);
 							}
 						      cur_info->p1 = find_symbol(sc, fm);
 						      if ((is_slot(cur_info->p1)) &&
 							  (is_real(slot_value(cur_info->p1))))
 							{
-							  /* fprintf(stderr, "use dvd_s at %d - 1\n", sc->opt_index); */
-							  cur_info->f = opt_dvd_s;
+							  /* fprintf(stderr, "use d_vd_s at %d - 1\n", sc->opt_index); */
+							  cur_info->f = opt_d_vd_s;
 							  return(opt_float_any);
 							}
 						    }
@@ -45879,7 +45944,7 @@ s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer
 						      if (f)
 							{
 							  cur_info->obj = (void *)s7_object_value(obj);
-							  cur_info->f = opt_dvd_f;
+							  cur_info->f = opt_d_vd_f;
 							  return(opt_float_any);
 							}
 						    }
@@ -45921,25 +45986,6 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
  *   each portion of expr resides in an opt_info struct, evalled by calling its "f" function on itself
  *   f chooses the basic form of the expr, calling one of the underlying functions in opts[n] such as opt_d_c
  *   finally that calls the actual function such as abs_d
- */
-
-/* opt_info
- * opf->f is opt_c|s|dv|dvd|d2|d3 etc dpi=fv_ref dpid=fv_set i2|i3 bi2 p2 tp ...
- * opt_dv[d] applies dv_f or dvd_f (etc) to args, so each opt_info needs the function slots
- *
- * (+ (flt) (flt)) (flt (flt)) (mus-random) (* c (osc)) (* s (osc))
- * so: dd with +-*, and 2nd gen as fm or arg
- * (set! v ...) -> d3?
- *
- * recursive s7_float_optimize: keep pointer into sc struct of opts vars and choose opt_float
- *   if index overflow, give up
- *   get * + - and the rest
- *       static s7_double add_d2(sc, s7_double x, y) return(+ x y)
- *   get 3 arg case for gens
- *   fv handlers (need ints)
- *   mul_d2: (* a b) known to be float etc
- *
- * why not split out do-loops as well?
  */
 
 
@@ -73171,21 +73217,24 @@ s7_scheme *s7_init(void)
   c_function_set_setter(slot_value(global_slot(sc->port_line_number_symbol)), s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter"));
 
   
-  s7_set_dpid_function(slot_value(global_slot(sc->float_vector_set_symbol)), float_vector_set_d);
-  s7_set_d_function(slot_value(global_slot(sc->abs_symbol)), abs_d);
+  s7_set_d_pid_function(slot_value(global_slot(sc->float_vector_set_symbol)), float_vector_set_d);
+  s7_set_d_d_function(slot_value(global_slot(sc->abs_symbol)), abs_d_d);
 
-  s7_set_d_function(slot_value(global_slot(sc->add_symbol)), add_d);
-  s7_set_d_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d);
-  s7_set_d_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d);
-  s7_set_dd_function(slot_value(global_slot(sc->add_symbol)), add_dd);
-  s7_set_dd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_dd);
-  s7_set_dd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_dd);
-  s7_set_ddd_function(slot_value(global_slot(sc->add_symbol)), add_ddd);
-  s7_set_ddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_ddd);
-  s7_set_ddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_ddd);
-  s7_set_dddd_function(slot_value(global_slot(sc->add_symbol)), add_dddd);
-  s7_set_dddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_dddd);
-  s7_set_dddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_dddd);
+  s7_set_d_d_function(slot_value(global_slot(sc->add_symbol)), add_d_d);
+  s7_set_d_d_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d_d);
+  s7_set_d_d_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d_d);
+
+  s7_set_d_dd_function(slot_value(global_slot(sc->add_symbol)), add_d_dd);
+  s7_set_d_dd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d_dd);
+  s7_set_d_dd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d_dd);
+
+  s7_set_d_ddd_function(slot_value(global_slot(sc->add_symbol)), add_d_ddd);
+  s7_set_d_ddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d_ddd);
+  s7_set_d_ddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d_ddd);
+
+  s7_set_d_dddd_function(slot_value(global_slot(sc->add_symbol)), add_d_dddd);
+  s7_set_d_dddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d_dddd);
+  s7_set_d_dddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d_dddd);
 
   {
     int i, top;

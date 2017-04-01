@@ -9366,17 +9366,17 @@ keep track of which files are in a given saved state batch, and a way to rename 
 
     f = s7_name_to_value(s7, "next-sample");
     s7_rf_set_function(f, next_sample_rf);
-    s7_set_dv_function(f, next_sample_dv);
+    s7_set_d_v_function(f, next_sample_dv);
 
     f = s7_name_to_value(s7, "read-sample");
     s7_rf_set_function(f, read_sample_rf);
-    s7_set_dv_function(f, read_sample_dv);
+    s7_set_d_v_function(f, read_sample_dv);
 
     f = s7_name_to_value(s7, "next-mix-sample");
-    s7_set_dv_function(f, next_mix_sample_dv);
+    s7_set_d_v_function(f, next_mix_sample_dv);
 
     f = s7_name_to_value(s7, "read-mix-sample");
-    s7_set_dv_function(f, read_mix_sample_dv);
+    s7_set_d_v_function(f, read_mix_sample_dv);
   }
 #endif
 
