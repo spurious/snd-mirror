@@ -657,6 +657,22 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
+typedef s7_double (*s7_d_t)(s7_double x);
+void s7_set_d_function(s7_pointer f, s7_d_t df);
+s7_d_t s7_d_function(s7_pointer f);
+
+typedef s7_double (*s7_dd_t)(s7_double x1, s7_double x2);
+void s7_set_dd_function(s7_pointer f, s7_dd_t df);
+s7_dd_t s7_dd_function(s7_pointer f);
+
+typedef s7_double (*s7_ddd_t)(s7_double x1, s7_double x2, s7_double x3);
+void s7_set_ddd_function(s7_pointer f, s7_ddd_t df);
+s7_ddd_t s7_ddd_function(s7_pointer f);
+
+typedef s7_double (*s7_dddd_t)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
+void s7_set_dddd_function(s7_pointer f, s7_dddd_t df);
+s7_dddd_t s7_dddd_function(s7_pointer f);
+
 typedef s7_double (*s7_dv_t)(void *v);
 void s7_set_dv_function(s7_pointer f, s7_dv_t df);
 s7_dv_t s7_dv_function(s7_pointer f);
@@ -664,6 +680,10 @@ s7_dv_t s7_dv_function(s7_pointer f);
 typedef s7_double (*s7_dvd_t)(void *v, s7_double d);
 void s7_set_dvd_function(s7_pointer f, s7_dvd_t df);
 s7_dvd_t s7_dvd_function(s7_pointer f);
+
+typedef s7_double (*s7_dpid_t)(s7_pointer v, s7_int i, s7_double d);
+void s7_set_dpid_function(s7_pointer f, s7_dpid_t df);
+s7_dpid_t s7_dpid_function(s7_pointer f);
 
 
 /* these are possibly temporary */

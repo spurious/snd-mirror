@@ -11099,7 +11099,8 @@ RF_0(srate)
   static s7_rf_t Call ## _rf(s7_scheme *sc, s7_pointer expr)	\
   {									\
     return(s7_rf_1(sc, expr, Call ## _rf_c, Call ## _rf_s, Call ## _rf_r)); \
-  }
+  }									\
+  static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
 
 RF_1(odd_weight)
 RF_1(even_weight)
@@ -11791,6 +11792,16 @@ static void init_choosers(s7_scheme *sc)
   s7_set_dvd_function(s7_name_to_value(sc, S_two_pole), mus_two_pole_dvd);
   s7_set_dvd_function(s7_name_to_value(sc, S_two_zero), mus_two_zero_dvd);
   s7_set_dvd_function(s7_name_to_value(sc, S_wave_train), mus_wave_train_dvd);
+
+  s7_set_d_function(s7_name_to_value(sc, S_odd_weight), mus_odd_weight_d);
+  s7_set_d_function(s7_name_to_value(sc, S_even_weight), mus_even_weight_d);
+  s7_set_d_function(s7_name_to_value(sc, S_hz_to_radians), mus_hz_to_radians_d);
+  s7_set_d_function(s7_name_to_value(sc, S_radians_to_hz), mus_radians_to_hz_d);
+  s7_set_d_function(s7_name_to_value(sc, S_db_to_linear), mus_db_to_linear_d);
+  s7_set_d_function(s7_name_to_value(sc, S_linear_to_db), mus_linear_to_db_d);
+  s7_set_d_function(s7_name_to_value(sc, S_radians_to_degrees), mus_radians_to_degrees_d);
+  s7_set_d_function(s7_name_to_value(sc, S_degrees_to_radians), mus_degrees_to_radians_d);
+  s7_set_d_function(s7_name_to_value(sc, S_mus_random), mus_random_d);
 
 #endif /* gmp */
 }
@@ -12724,7 +12735,7 @@ static void mus_xen_init(void)
 
   Xen_define_typed_procedure(S_is_locsig,		g_is_locsig_w,             1, 0, 0, H_is_locsig,		pl_bt);
   Xen_define_typed_procedure(S_locsig,			g_locsig_w,                3, 0, 0, H_locsig,			
-			     s7_make_circular_signature(s7, 2, 3, r, s7_make_symbol(s7, S_is_locsig), r));
+			     s7_make_signature(s7, 4, r, s7_make_symbol(s7, S_is_locsig), i, r));
   Xen_define_typed_procedure(S_make_locsig,		g_make_locsig_w,           0, 0, 1, H_make_locsig,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_locsig), t));
   Xen_define_typed_procedure(S_move_locsig,		g_move_locsig_w,           3, 0, 0, H_move_locsig,		pl_ccrr);

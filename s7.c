@@ -495,6 +495,11 @@ typedef struct {
   s7_rp_t rp;
   s7_dv_t dv;
   s7_dvd_t dvd;
+  s7_dpid_t dpid;
+  s7_d_t d;
+  s7_dd_t dd;
+  s7_ddd_t ddd;
+  s7_dddd_t dddd;
 } c_proc_t;
 
 
@@ -822,14 +827,22 @@ typedef struct xf_t {
 
 
 typedef struct {
-  s7_double x; 
-  s7_pointer slot; 
+  s7_double x1, x2, x3; 
+  s7_int i1;
+  s7_pointer p1, p2, p3; 
   void *obj;
   s7_scheme *sc;
   s7_double (*f)(void *o);
-  s7_double (*dv_f)(void *obj);
-  s7_double (*dvd_f)(void *obj, s7_double fm);
-  s7_pointer (*all_f)(s7_scheme *sc, s7_pointer expr);
+  union {
+    s7_double (*d_f)(s7_double x);
+    s7_double (*dd_f)(s7_double x1, s7_double x2);
+    s7_double (*ddd_f)(s7_double x1, s7_double x2, s7_double x3);
+    s7_double (*dddd_f)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
+    s7_double (*dv_f)(void *obj);
+    s7_double (*dvd_f)(void *obj, s7_double fm);
+    s7_double (*dpid_f)(s7_pointer obj, s7_int i1, s7_double x);
+    s7_pointer (*all_f)(s7_scheme *sc, s7_pointer expr);
+  } func;
 } opt_info;
 
 
@@ -2313,6 +2326,11 @@ static int not_heap = -1;
 
 #define c_function_dv(f)              c_function_data(f)->dv
 #define c_function_dvd(f)             c_function_data(f)->dvd
+#define c_function_dpid(f)            c_function_data(f)->dpid
+#define c_function_d(f)               c_function_data(f)->d
+#define c_function_dd(f)              c_function_data(f)->dd
+#define c_function_ddd(f)             c_function_data(f)->ddd
+#define c_function_dddd(f)            c_function_data(f)->dddd
 
 #define is_c_macro(p)                 (type(p) == T_C_MACRO)
 #define c_macro_data(f)               (_TMac(f))->object.fnc.c_proc
@@ -8457,27 +8475,26 @@ static s7_pointer g_c_pointer(s7_scheme *sc, s7_pointer args)
 
 /* --------------------------------- rf (CLM optimizer) ----------------------------------------------- */
 
-void s7_set_dv_function(s7_pointer f, s7_dv_t df)
-{
-  if (!is_c_function(f)) return;
-  c_function_dv(f) = df;
-}
+void s7_set_d_function(s7_pointer f, s7_d_t df) {if (!is_c_function(f)) return; c_function_d(f) = df;}
+s7_d_t s7_d_function(s7_pointer f) {return(c_function_d(f));}
 
-s7_dv_t s7_dv_function(s7_pointer f)
-{
-  return(c_function_dv(f));
-}
+void s7_set_dd_function(s7_pointer f, s7_dd_t df) {if (!is_c_function(f)) return; c_function_dd(f) = df;}
+s7_dd_t s7_dd_function(s7_pointer f) {return(c_function_dd(f));}
 
-void s7_set_dvd_function(s7_pointer f, s7_dvd_t df)
-{
-  if (!is_c_function(f)) return;
-  c_function_dvd(f) = df;
-}
+void s7_set_ddd_function(s7_pointer f, s7_ddd_t df) {if (!is_c_function(f)) return; c_function_ddd(f) = df;}
+s7_ddd_t s7_ddd_function(s7_pointer f) {return(c_function_ddd(f));}
 
-s7_dvd_t s7_dvd_function(s7_pointer f)
-{
-  return(c_function_dvd(f));
-}
+void s7_set_dddd_function(s7_pointer f, s7_dddd_t df) {if (!is_c_function(f)) return; c_function_dddd(f) = df;}
+s7_dddd_t s7_dddd_function(s7_pointer f) {return(c_function_dddd(f));}
+
+void s7_set_dv_function(s7_pointer f, s7_dv_t df) {if (!is_c_function(f)) return; c_function_dv(f) = df;}
+s7_dv_t s7_dv_function(s7_pointer f) {return(c_function_dv(f));}
+
+void s7_set_dvd_function(s7_pointer f, s7_dvd_t df) {if (!is_c_function(f)) return; c_function_dvd(f) = df;}
+s7_dvd_t s7_dvd_function(s7_pointer f) {return(c_function_dvd(f));}
+
+void s7_set_dpid_function(s7_pointer f, s7_dpid_t df) {if (!is_c_function(f)) return; c_function_dpid(f) = df;}
+s7_dpid_t s7_dpid_function(s7_pointer f) {return(c_function_dpid(f));}
 
 
 
@@ -12686,6 +12703,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     }
 }
 
+static s7_double abs_d(s7_double x) {return((x < 0.0) ? (-x) : x);} 
+
 static s7_double c_abs_r(s7_scheme *sc, s7_double arg) {return((arg < 0.0) ? (-arg) : arg);} 
 DIRECT_RF_TO_RF(fabs)
 
@@ -15923,6 +15942,12 @@ static void init_add_ops(void)
 #endif
 
 
+static s7_double add_d(s7_double x) {return(x);}
+static s7_double add_dd(s7_double x1, s7_double x2) {return(x1 + x2);}
+static s7_double add_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 + x2 + x3);}
+static s7_double add_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 + x2 + x3 + x4);}
+
+
 /* ---------------------------------------- subtract ---------------------------------------- */
 
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
@@ -16733,6 +16758,11 @@ static s7_rf_t subtract_rf(s7_scheme *sc, s7_pointer expr)
 }
 
 #endif
+
+static s7_double subtract_d(s7_double x) {return(-x);}
+static s7_double subtract_dd(s7_double x1, s7_double x2) {return(x1 - x2);}
+static s7_double subtract_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 - x2 - x3);}
+static s7_double subtract_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 - x2 - x3 - x4);}
 
 
 /* ---------------------------------------- multiply ---------------------------------------- */
@@ -17604,6 +17634,11 @@ static void init_multiply_ops(void)
   multiply_r_ops->ppp = multiply_rf_xxx;
 }
 #endif /* with-gmp */
+
+static s7_double multiply_d(s7_double x) {return(x);}
+static s7_double multiply_dd(s7_double x1, s7_double x2) {return(x1 * x2);}
+static s7_double multiply_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 * x2 * x3);}
+static s7_double multiply_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 * x2 * x3 * x4);}
 
 
 
@@ -35538,6 +35573,9 @@ static s7_pointer g_float_vector_set(s7_scheme *sc, s7_pointer args)
   return(univect_set(sc, args, true));
 }
 
+static s7_double float_vector_set_d(s7_pointer v, s7_int i, s7_double x) {float_vector_element(v, i) = x; return(x);}
+
+
 static s7_pointer g_int_vector_ref(s7_scheme *sc, s7_pointer args)
 {
   #define H_int_vector_ref "(int-vector-ref v ...) returns an element of the int-vector v."
@@ -45567,6 +45605,7 @@ s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 
 static s7_double opt_float_any(s7_scheme *sc, s7_pointer expr)
 {
+  /* fprintf(stderr, "%s: %d\n", DISPLAY(expr), sc->opt_index); */
   sc->opt_index = 0;
   return(sc->opts[0]->f(sc->opts[0]));
 }
@@ -45577,19 +45616,99 @@ static s7_double opt_unwrap_float(void *p)
   s7_scheme *sc;
   opt_info *o = (opt_info *)p;
   sc = o->sc;
-  return(s7_number_to_real(sc, o->all_f(sc, car(o->slot))));
+  return(s7_number_to_real(sc, o->func.all_f(sc, car(o->p1))));
 }
+
+
+static s7_double opt_d_c(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.d_f(o->x1));
+}
+
+static s7_double opt_d_s(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.d_f(real(slot_value(o->p1))));
+}
+
+static s7_double opt_d_f(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.d_f(o1->f(o1)));
+}
+
+
+static s7_double opt_dd_cc(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.dd_f(o->x1, o->x2));
+}
+
+static s7_double opt_dd_cs(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.dd_f(o->x1, real(slot_value(o->p1))));
+}
+
+static s7_double opt_dd_ss(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.dd_f(real(slot_value(o->p1)), real(slot_value(o->p2))));
+}
+
+static s7_double opt_dd_cf(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.dd_f(o->x1, o1->f(o1)));
+}
+
+static s7_double opt_dd_sf(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.dd_f(real(slot_value(o->p1)), o1->f(o1)));
+}
+
+static s7_double opt_dd_ff(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1, *o2;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  o2 = sc->opts[++sc->opt_index];
+  return(o->func.dd_f(o1->f(o1), o2->f(o2)));
+}
+
 
 static s7_double opt_dv(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->dv_f(o->obj));
+  return(o->func.dv_f(o->obj));
 }
 
 static s7_double opt_dvd_c(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->dvd_f(o->obj, o->x));
+  return(o->func.dvd_f(o->obj, o->x1));
+}
+
+static s7_double opt_dvd_s(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  return(o->func.dvd_f(o->obj, real(slot_value(o->p1))));
 }
 
 static s7_double opt_dvd_f(void *p)
@@ -45599,23 +45718,30 @@ static s7_double opt_dvd_f(void *p)
   s7_scheme *sc;
   sc = o->sc;
   o1 = sc->opts[++sc->opt_index];
-  return(o->dvd_f(o->obj, o1->f(o1)));
+  return(o->func.dvd_f(o->obj, o1->f(o1)));
 }
 
-static s7_double opt_dvd_s(void *p)
+static s7_double opt_dpid_ssf(void *p)
 {
   opt_info *o = (opt_info *)p;
-  return(o->dvd_f(o->obj, real(slot_value(o->slot))));
+  opt_info *o1;
+  s7_scheme *sc;
+  sc = o->sc;
+  o1 = sc->opts[++sc->opt_index];
+  return(o->func.dpid_f(slot_value(o->p1), integer(slot_value(o->p2)), o1->f(o1)));
 }
 
 
-s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
+s7_float_function s7_float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   s7_function opt;
   s7_pointer car_x;
-  car_x = car(expr);
 
   /* fprintf(stderr, "float_opt: %s\n", DISPLAY(expr)); */
+  if (sc->opt_index >= OPTS_SIZE)
+    return(NULL);
+
+  car_x = car(expr);
   if (!is_pair(car_x))
     return(NULL);
 
@@ -45624,8 +45750,7 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
       /* get func, check sig, check all args */
       s7_pointer s_func;
       opt_info *cur_info;
-      cur_info = sc->opts[sc->opt_index];
-      cur_info->sc = sc;
+      cur_info = sc->opts[sc->opt_index++];
 
       s_func = s7_symbol_local_value(sc, car(car_x), env);
       if (is_procedure(s_func))
@@ -45640,63 +45765,124 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 		  (rtn_type == sc->is_real_symbol) ||
 		  (rtn_type == sc->is_number_symbol))
 		{
+		  
+		  /* dpid: (procedure-signature float-vector-set!) (real? float-vector? integer? . #1=(integer:real? . #1#)) */
+		  /* (procedure-signature +) #1=(number? . #1#) */
+		  /* did: outa = real integer real #t -- #t is the optional stream */
+		  /* dvid: locsig */
+
 		  if ((is_pair(cdr(sig))) &&
 		      (is_symbol(cadr(sig))) &&
-		      (is_pair(cdr(car_x))) &&
-		      (is_symbol(cadr(car_x))))
+		      (is_pair(cdr(car_x))))
 		    {
-		      s7_pointer obj, checker;
-		      checker = s7_symbol_value(sc, cadr(sig));
-		      obj = s7_symbol_value(sc, cadr(car_x));
-		      if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+		      if ((is_null(cddr(car_x))) &&
+			  ((cadr(sig) == sc->is_float_symbol) ||
+			   (cadr(sig) == sc->is_real_symbol) ||
+			   (cadr(sig) == sc->is_number_symbol)))
 			{
-			  if (is_null(cddr(car_x)))
+			  s7_d_t func;
+			  func = s7_d_function(s_func);
+			  if (func)
 			    {
-			      /* TODO: here we might have (random|abs x) etc -- is checker known type or something (not c-object?) */
-			      
-			      s7_dv_t flt_func;
-			      flt_func = s7_dv_function(s_func);
-			      if (flt_func)
+			      cur_info->func.d_f = func;
+			      if (is_real(cadr(car_x)))
 				{
-				  cur_info->obj = (void *)s7_object_value(obj);
-				  cur_info->dv_f = flt_func;
-				  cur_info->f = opt_dv;
+				  cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
+				  cur_info->f = opt_d_c;
 				  return(opt_float_any);
 				}
-			    }
-			  else
-			    {
-			      if (is_pair(cddr(sig)))
+			      if (is_symbol(cadr(car_x)))
 				{
-				  s7_pointer fm, fm_type;
-				  fm_type = caddr(sig);
-				  fm = caddr(car_x);
-				  if ((fm_type == sc->is_float_symbol) ||
-				      (fm_type == sc->is_real_symbol) ||
-				      (fm_type == sc->is_number_symbol))
+				  cur_info->p1 = find_symbol(sc, cadr(car_x));
+				  if ((is_slot(cur_info->p1)) &&
+				      (is_real(slot_value(cur_info->p1))))
 				    {
-				      /* TODO: more args and pair fm and non-obj cadr: (* x y) etc */
-				      
-				      if ((is_null(cdddr(car_x))) &&
-					  (!is_pair(fm)))
+				      cur_info->f = opt_d_s;
+				      return(opt_float_any);
+				    }
+				}
+			      else /* is pair arg */
+				{
+				  s7_float_function f;
+				  f = s7_float_optimize_1(sc, cdr(car_x), env);
+				  if (f)
+				    {
+				      cur_info->f = opt_d_f;
+				      return(opt_float_any);
+				    }
+				}
+			    }
+			}
+		      if (is_symbol(cadr(car_x)))
+			{
+			  s7_pointer obj, checker;
+			  checker = s7_symbol_value(sc, cadr(sig));
+			  obj = s7_symbol_value(sc, cadr(car_x));
+			  if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+			    {
+			      if (is_null(cddr(car_x)))
+				{
+				  s7_dv_t flt_func;
+				  flt_func = s7_dv_function(s_func);
+				  if (flt_func)
+				    {
+				      cur_info->obj = (void *)s7_object_value(obj);
+				      cur_info->func.dv_f = flt_func;
+				      cur_info->f = opt_dv;
+				      return(opt_float_any);
+				    }
+				}
+			      else
+				{
+				  if (is_pair(cddr(sig)))
+				    {
+				      s7_pointer fm, fm_type;
+				      fm_type = caddr(sig);
+				      fm = caddr(car_x);
+				      if ((fm_type == sc->is_float_symbol) ||
+					  (fm_type == sc->is_real_symbol) ||
+					  (fm_type == sc->is_number_symbol))
 					{
-					  s7_dvd_t flt_func;
-					  flt_func = s7_dvd_function(s_func);
-					  if (flt_func)
+					  /* TODO: more args and pair fm and non-obj cadr: (* x y) etc */
+					  
+					  if (is_null(cdddr(car_x)))
 					    {
-					      cur_info->obj = (void *)s7_object_value(obj);
-					      cur_info->dvd_f = flt_func;
-					      if (is_real(fm))
+					      s7_dvd_t flt_func;
+					      flt_func = s7_dvd_function(s_func);
+					      if (flt_func)
 						{
-						  cur_info->x = s7_number_to_real(sc, fm);
-						  cur_info->f = opt_dvd_c;
-						  return(opt_float_any);
-						}
-					      cur_info->slot = find_symbol(sc, fm);
-					      if (is_slot(cur_info->slot))
-						{
-						  cur_info->f = opt_dvd_s;
-						  return(opt_float_any);
+						  cur_info->func.dvd_f = flt_func;
+						  if (!is_pair(fm))
+						    {
+						      /* fprintf(stderr, "fm not pair\n"); */
+						      cur_info->obj = (void *)s7_object_value(obj);
+						      if (is_real(fm))
+							{
+							  cur_info->x1 = s7_number_to_real(sc, fm);
+							  cur_info->f = opt_dvd_c;
+							  return(opt_float_any);
+							}
+						      cur_info->p1 = find_symbol(sc, fm);
+						      if ((is_slot(cur_info->p1)) &&
+							  (is_real(slot_value(cur_info->p1))))
+							{
+							  /* fprintf(stderr, "use dvd_s at %d - 1\n", sc->opt_index); */
+							  cur_info->f = opt_dvd_s;
+							  return(opt_float_any);
+							}
+						    }
+						  else /* is pair fm */
+						    {
+						      s7_float_function f;
+						      /* fprintf(stderr, "fm: %s\n", DISPLAY(fm)); */
+						      f = s7_float_optimize_1(sc, cddr(car_x), env);
+						      if (f)
+							{
+							  cur_info->obj = (void *)s7_object_value(obj);
+							  cur_info->f = opt_dvd_f;
+							  return(opt_float_any);
+							}
+						    }
 						}
 					    }
 					}
@@ -45706,12 +45892,13 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
 			}
 		    }
 		  /* fallback on the more general case (all_x_eval, but still guaranteed to be a number) */
+		  /* fprintf(stderr, "fallback %s\n", DISPLAY(expr)); */
 		  opt = s7_optimize(sc, expr, env);
 		  if (opt)
 		    {
-		      cur_info->all_f = opt;
+		      cur_info->func.all_f = opt;
 		      cur_info->f = opt_unwrap_float;
-		      cur_info->slot = expr;
+		      cur_info->p1 = expr;
 		      return(opt_float_any);
 		    }
 		}
@@ -45722,8 +45909,22 @@ s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer e
   return(NULL);
 }
 
+s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
+{
+  sc->opt_index = 0;
+  return(s7_float_optimize_1(sc, expr, env));
+}
+
+/* caller: s7_float_optimize(sc, expr, env) to return a function that when called evaluates expr in env
+ *   s7_float_optimize returns an s7_float_function (s7_double opt_float_any(s7_scheme *sc, s7_pointer expr) normally)
+ *   s7_float_any evaluates the program stored in sc->opts by calling opts[0]->f(opts[0])
+ *   each portion of expr resides in an opt_info struct, evalled by calling its "f" function on itself
+ *   f chooses the basic form of the expr, calling one of the underlying functions in opts[n] such as opt_d_c
+ *   finally that calls the actual function such as abs_d
+ */
+
 /* opt_info
- * opf->f is opt_c|s|dv|dvd|d2|d3 etc dvi=fv_ref dvid=fv_set i2|i3 bi2 p2 tp ...
+ * opf->f is opt_c|s|dv|dvd|d2|d3 etc dpi=fv_ref dpid=fv_set i2|i3 bi2 p2 tp ...
  * opt_dv[d] applies dv_f or dvd_f (etc) to args, so each opt_info needs the function slots
  *
  * (+ (flt) (flt)) (flt (flt)) (mus-random) (* c (osc)) (* s (osc))
@@ -56694,6 +56895,26 @@ static bool pf_ok(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool safe_step
     set_safe_stepper(sc->args);
   else set_safe_stepper(dox_slot1(sc->envir));
   body_len = s7_list_length(sc, code);
+
+#if 0
+  if ((safe_step) &&
+      (body_len == 1))
+    {
+      s7_float_function opt_func;
+      opt_func = s7_float_optimize(sc, code, sc->envir);
+      if (opt_func)
+	{
+	  s7_pointer stepper;
+	  s7_int end;
+	  fprintf(stderr, "%s\n", DISPLAY(code));
+	  stepper = slot_value(sc->args);
+	  end = denominator(stepper);
+	  for (; numerator(stepper) < end; numerator(stepper)++)
+	    opt_func(sc, car(code));
+	  /* outa/fv_set */
+	}
+    }
+#endif
 
   s7_xf_new(sc, sc->envir);
   for (i = 0, p = code; is_pair(p); i++, p = cdr(p))
@@ -71843,8 +72064,11 @@ s7_scheme *s7_init(void)
       string_value(p) = (char *)malloc(INITIAL_TMP_STR_SIZE * sizeof(char));
       string_temp_true_length(p) = INITIAL_TMP_STR_SIZE;
     }
-  for (i = 0; i < OPTS_SIZE; i++) 
-    sc->opts[i] = (opt_info *)malloc(sizeof(opt_info));
+  for (i = 0; i < OPTS_SIZE; i++)
+    {
+      sc->opts[i] = (opt_info *)malloc(sizeof(opt_info));
+      sc->opts[i]->sc = sc;
+    }
   sc->typnam = NULL;
   sc->typnam_len = 0;
   sc->help_arglist = NULL;
@@ -72946,6 +73170,23 @@ s7_scheme *s7_init(void)
   c_function_set_setter(slot_value(global_slot(sc->outlet_symbol)), s7_make_function(sc, "(set! outlet)", g_set_outlet, 2, 0, false, "outlet setter"));
   c_function_set_setter(slot_value(global_slot(sc->port_line_number_symbol)), s7_make_function(sc, "(set! port-line-number)", g_set_port_line_number, 1, 1, false, "port line setter"));
 
+  
+  s7_set_dpid_function(slot_value(global_slot(sc->float_vector_set_symbol)), float_vector_set_d);
+  s7_set_d_function(slot_value(global_slot(sc->abs_symbol)), abs_d);
+
+  s7_set_d_function(slot_value(global_slot(sc->add_symbol)), add_d);
+  s7_set_d_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d);
+  s7_set_d_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d);
+  s7_set_dd_function(slot_value(global_slot(sc->add_symbol)), add_dd);
+  s7_set_dd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_dd);
+  s7_set_dd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_dd);
+  s7_set_ddd_function(slot_value(global_slot(sc->add_symbol)), add_ddd);
+  s7_set_ddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_ddd);
+  s7_set_ddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_ddd);
+  s7_set_dddd_function(slot_value(global_slot(sc->add_symbol)), add_dddd);
+  s7_set_dddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_dddd);
+  s7_set_dddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_dddd);
+
   {
     int i, top;
 #if WITH_GMP
@@ -73262,17 +73503,9 @@ int main(int argc, char **argv)
  * extend unknown_a_ex changes to other "a" cases (c_fa -> (f (allx))) is this case, so others maybe can't currently happen?)
  * lots of caddr(cadr()) etc
  * does copy :readable clear all opts?  (make-hook oddness) -- no just the type-based stuff
- * for clm-unopt: if sig->float|int choosers can use that just as in rf_opt et al, also local symbols [see returns_char]
- *   goto faster than recursion, so this could eventually be faster!
- *   add_rf_1 + clm_add_rf in clm2xen etc, would need parallels to the *_rf funcs 
- *   and for clm2xen, the default chooser [currently s7_rf_function]
- *   could start with fv_set: if val-sig=float, fv_set_direct=set+index-error-check (using rf_func for val? we still need that info)
- *     oscil_rf is mus_oscil_unmodulated
- *     set_float|int|char_function? check choosers for how often sigs are available etc
  * what was the no-overflow 0 problem in quotient?
  * for tmap int|float-vector-set, random-i? univect_set now
  * s7_xf: snd-edits, clm2xen, this file -- snd-edits is read_sample_rf: mostly used in fv-set
- *   add dvid support for fv-set?
  * update libgsl.scm
  *
  * Snd:
