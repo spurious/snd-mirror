@@ -1,14 +1,5 @@
 #include "snd.h"
 
-#if HAVE_SCHEME
-/* temporary! */
-typedef s7_double (*s7_rf_t)(s7_scheme *sc, s7_pointer **p);
-typedef s7_rf_t (*s7_rp_t)(s7_scheme *sc, s7_pointer expr);
-void s7_rf_set_function(s7_pointer f, s7_rp_t rp);
-s7_int s7_xf_store(s7_scheme *sc, s7_pointer val);
-bool s7_xf_is_stepper(s7_scheme *sc, s7_pointer sym);
-#endif
-
 static Xen save_hook;
 
 static bool dont_save(snd_info *sp, const char *newname)
@@ -9079,9 +9070,6 @@ static Xen g_edit_list_to_function(Xen snd, Xen chn, Xen start, Xen end)
 }
 
 #if HAVE_SCHEME
-/* sampler? -> unwrap via s7_object_value = c_object_value = s7_object_value
- * s7_dv_function: s7_double (*dv)(void *v)
- */
 static s7_double next_sample_dv(void *o)
 {
   snd_fd *fd = (snd_fd *)o;
@@ -9106,85 +9094,6 @@ static s7_double read_mix_sample_dv(void *o)
   snd_fd *fd;
   fd = (snd_fd *)mf_to_snd_fd(o);
   return(read_sample(fd));
-}
-
-
-static s7_double next_sample_rf_s(s7_scheme *sc, s7_pointer **p)
-{
-  snd_fd *fd;
-  fd = (snd_fd *)(*(*p)); (*p)++;
-  return(protected_next_sample(fd));
-}
-
-static s7_double read_sample_rf_s(s7_scheme *sc, s7_pointer **p)
-{
-  snd_fd *fd;
-  fd = (snd_fd *)(*(*p)); (*p)++;
-  return(read_sample(fd));
-}
-
-static s7_double next_mix_sample_rf_s(s7_scheme *sc, s7_pointer **p)
-{
-  snd_fd *fd;
-  fd = (snd_fd *)(*(*p)); (*p)++;
-  return(protected_next_sample(fd));
-}
-
-static s7_double read_mix_sample_rf_s(s7_scheme *sc, s7_pointer **p)
-{
-  snd_fd *fd;
-  fd = (snd_fd *)(*(*p)); (*p)++;
-  return(read_sample(fd));
-}
-
-static s7_rf_t read_sample_rf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer sym, o;
-  snd_fd *g;
-
-  if (!s7_is_null(sc, s7_cddr(expr))) return(NULL); /* just (gen s) for now */
-  sym = s7_cadr(expr);
-  if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_xf_is_stepper(sc, sym)) return(NULL);
-  o = s7_symbol_value(sc, sym);
-  g = (snd_fd *)s7_object_value_checked(o, sf_tag);
-  if (g)
-    {
-      s7_xf_store(sc, (s7_pointer)g);
-      return(read_sample_rf_s);
-    }
-  if (is_mix_sampler(o))
-    {
-      s7_xf_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
-      return(read_mix_sample_rf_s);
-    }
-
-  return(NULL);
-}
-
-static s7_rf_t next_sample_rf(s7_scheme *sc, s7_pointer expr)
-{
-  s7_pointer sym, o;
-  snd_fd *g;
-  
-  if (!s7_is_null(sc, s7_cddr(expr))) return(NULL);
-  sym = s7_cadr(expr);
-  if (!s7_is_symbol(sym)) return(NULL);
-  if (s7_xf_is_stepper(sc, sym)) return(NULL);
-  o = s7_symbol_value(sc, sym);
-  g = (snd_fd *)s7_object_value_checked(o, sf_tag);
-  if (g)
-    {
-      s7_xf_store(sc, (s7_pointer)g);
-      return(next_sample_rf_s);
-    }
-  if (is_mix_sampler(o))
-    {
-      s7_xf_store(sc, (s7_pointer)mf_to_snd_fd(s7_object_value(o)));
-      return(next_mix_sample_rf_s);
-    }
-
-  return(NULL);
 }
 #endif
 
@@ -9365,11 +9274,9 @@ keep track of which files are in a given saved state batch, and a way to rename 
     edit_finish = s7_make_function(s7, "(finish-as-one-edit)", g_edit_finish, 0, 0, false, "");
 
     f = s7_name_to_value(s7, "next-sample");
-    s7_rf_set_function(f, next_sample_rf);
     s7_set_d_v_function(f, next_sample_dv);
 
     f = s7_name_to_value(s7, "read-sample");
-    s7_rf_set_function(f, read_sample_rf);
     s7_set_d_v_function(f, read_sample_dv);
 
     f = s7_name_to_value(s7, "next-mix-sample");

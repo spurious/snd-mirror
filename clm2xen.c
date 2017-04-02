@@ -50,6 +50,8 @@
   #endif
 #endif
 
+static Xen xen_float_zero;
+
 
 /* -------------------------------------------------------------------------------- */
 #if HAVE_SCHEME
@@ -4916,7 +4918,7 @@ static Xen g_pink_noise(Xen gens)
   v = Xen_to_vct(gens);
   size = mus_vct_length(v);
   if (size == 0)
-    return(XEN_ZERO); /* needs to be upper case for Forth/Ruby */
+    return(xen_float_zero);
   Xen_check_type((size & 1) == 0, gens, 1, S_pink_noise, "an even length " S_vct);
 
   return(C_double_to_Xen_real(mus_pink_noise(v)));
@@ -6539,7 +6541,7 @@ static Xen g_envelope_interp(Xen ux, Xen e, Xen ubase)
   Xen_check_type(Xen_is_list(e), e, 2, S_envelope_interp, "a list");
 
   if (Xen_is_null(e))
-    return(Xen_integer_zero);
+    return(xen_float_zero);
 
   x = Xen_real_to_C_double(ux);
   if (Xen_is_bound(ubase)) base = Xen_real_to_C_double(ubase);
@@ -6778,7 +6780,7 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
     {
       /* mus_out_any will check the writer so output_p is pointless */
       mus_out_any(pos, inv, chn, mus_xen_to_mus_any(gn));
-      return(Xen_integer_zero);
+      return(xen_float_zero);
     }
 
   if (mus_is_vct(outp))
@@ -6805,7 +6807,7 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
 	    vdata[pos] += inv;
 	}
 #endif
-      return(Xen_integer_zero);
+      return(xen_float_zero);
     }
 
   if (Xen_is_vector(outp))
@@ -6814,7 +6816,7 @@ static Xen fallback_out_any_2(Xen outp, mus_long_t pos, mus_float_t inv, int chn
 	Xen_vector_set(outp, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(outp, pos)) + inv));
     }
 
-  return(Xen_integer_zero);
+  return(xen_float_zero);
 }
 
 #if HAVE_SCHEME
@@ -6831,14 +6833,14 @@ static vct *clm_output_vct;
 static Xen out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
   mus_out_any(pos, inv, chn, clm_output_gen);
-  return(xen_zero);
+  return(xen_float_zero);
 }
 
 static Xen safe_out_any_2_to_mus_xen(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
   if (!mus_simple_out_any_to_file(pos, inv, chn, clm_output_gen))
     mus_safe_out_any_to_file(pos, inv, chn, clm_output_gen);
-  return(xen_zero);
+  return(xen_float_zero);
 }
 
 
@@ -6871,7 +6873,7 @@ static Xen out_any_2_to_vct(mus_long_t pos, mus_float_t inv, int chn, const char
 	}
     }
 #endif
-  return(xen_zero);
+  return(xen_float_zero);
 }
 
 
@@ -6879,12 +6881,12 @@ static Xen out_any_2_to_vector(mus_long_t pos, mus_float_t inv, int chn, const c
 {
   if (pos < Xen_vector_length(CLM_OUTPUT))
     Xen_vector_set(CLM_OUTPUT, pos, C_double_to_Xen_real(Xen_real_to_C_double(Xen_vector_ref(CLM_OUTPUT, pos)) + inv));
-  return(xen_zero);
+  return(xen_float_zero);
 }
 
 static Xen out_any_2_no_op(mus_long_t pos, mus_float_t inv, int chn, const char *caller)
 {
-  return(xen_zero);
+  return(xen_float_zero);
 }
 
 static s7_pointer g_clm_output_set(s7_scheme *sc, s7_pointer args)
@@ -12166,10 +12168,10 @@ static char *mus_generator_to_readable_string(s7_scheme *sc, void *obj)
 static void mus_xen_init(void)
 {
 #if HAVE_SCHEME
-  s7_pointer s, i, p, t, r, c, f, v, b, d, j;
+  s7_pointer s, i, p, t, r, c, f, v, b, d, j, z;
 
   s7_pointer pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
-    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_rirt, pl_riirfff, pl_rirfff, pl_rrpr, 
+    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_zirt, pl_riirfff, pl_rirfff, pl_rrpr, 
     pl_sc, pl_sssrs, pl_tc, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
     pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_djr, pl_it, pl_iti;
 #endif
@@ -12197,6 +12199,7 @@ static void mus_xen_init(void)
   t = s7_t(s7);
   r = s7_make_symbol(s7, "real?");
   c = s7_t(s7); /* s7_make_symbol(s7, "c-object?"): this should be mus-generator which should match against oscil? etc -- maybe someday... */
+  z = s7_make_symbol(s7, "float?");
   f = s7_make_symbol(s7, "float-vector?");
   j = s7_make_symbol(s7, "int-vector?");
   v = s7_make_symbol(s7, "vector?");
@@ -12249,7 +12252,7 @@ static void mus_xen_init(void)
   pl_rcir = s7_make_signature(s7, 4, r, c, i, r);
   pl_ririt = s7_make_signature(s7,5, r, i, r, i, t);
   pl_rcrr = s7_make_signature(s7, 4, r, c, r, r);
-  pl_rirt = s7_make_signature(s7, 4, r, i, r, t);
+  pl_zirt = s7_make_signature(s7, 4, z, i, r, t);
   pl_riirfff = s7_make_signature(s7, 7, r, i, i, r, f, f, f);
   pl_rirfff = s7_make_signature(s7, 6, r, i, r, f, f, f);
   pl_rrpr = s7_make_signature(s7, 4, r, r, p, r);
@@ -12265,6 +12268,8 @@ static void mus_xen_init(void)
   Xen_GC_protect(xen_one);
   xen_minus_one = C_int_to_Xen_integer(-1);
   Xen_GC_protect(xen_minus_one);
+  xen_float_zero = C_double_to_Xen_real(0.0);
+  Xen_GC_protect(xen_float_zero);
 
 #if HAVE_FORTH
   fth_set_object_inspect(mus_xen_tag, print_mus_xen);
@@ -12795,10 +12800,10 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_ina,			g_ina_w,                   2, 0, 0, H_ina,			pl_dit);  
   Xen_define_typed_procedure(S_inb,			g_inb_w,                   2, 0, 0, H_inb,			pl_dit);
   Xen_define_typed_procedure(S_out_any,			g_out_any_w,               3, 1, 0, H_out_any,			pl_ririt);
-  Xen_define_typed_procedure(S_outa,			g_outa_w,                  2, 1, 0, H_outa,			pl_rirt);
-  Xen_define_typed_procedure(S_outb,			g_outb_w,                  2, 1, 0, H_outb,			pl_rirt);
-  Xen_define_typed_procedure(S_outc,			g_outc_w,                  2, 1, 0, H_outc,			pl_rirt);
-  Xen_define_typed_procedure(S_outd,			g_outd_w,                  2, 1, 0, H_outd,			pl_rirt);
+  Xen_define_typed_procedure(S_outa,			g_outa_w,                  2, 1, 0, H_outa,			pl_zirt);
+  Xen_define_typed_procedure(S_outb,			g_outb_w,                  2, 1, 0, H_outb,			pl_zirt);
+  Xen_define_typed_procedure(S_outc,			g_outc_w,                  2, 1, 0, H_outc,			pl_zirt);
+  Xen_define_typed_procedure(S_outd,			g_outd_w,                  2, 1, 0, H_outd,			pl_zirt);
   Xen_define_typed_procedure(S_mus_close,		g_mus_close_w,             1, 0, 0, H_mus_close,		pl_tc);
 
   Xen_define_typed_dilambda(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,

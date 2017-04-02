@@ -36933,6 +36933,25 @@ EDITS: 1
 	(float-vector-set! fv i (+ (triangle-wave e) (rand-interp r)))))
     (test (fv65) #r(-0.07828369138846 -0.03315338340607316 0.01197692457631369 0.05710723255870052 0.1022375405410874 0.1473678485234742 
                     0.1924981565058611 0.2376284644882479 0.2827587724706346 0.3278890804530215))
+
+    ;; from Tito Latini
+    (define (rand-test constr fn seed rep)
+      (set! (mus-rand-seed) seed)
+      (let ((r (constr (/ *clm-srate* 4))))
+	(do ((i 0 (+ i 1))
+	     (j (fn r) (fn r))
+	     (acc ()))
+	    ((= i rep) (reverse! acc))
+	  (when (= (logand i 3) 0)
+	    ;; Skip duplicated or interpolated values.
+	    (set! acc (cons j acc))))))
+    
+    (test (rand-test make-rand rand 12345 32)
+	  '(0.3103027354484 -0.3903808588755999 0.3499145518871001 -0.7864990232626 0.0331420906901001 -0.02069091716649996 0.2048950205183 -0.2601318353313999))
+
+    (test (rand-test make-rand-interp rand-interp 12345 32)
+	  '(0.3103027354484 -0.3903808588755999 0.3499145518871001 -0.7864990232625999 0.0331420906901001 -0.02069091716649996 0.2048950205183 -0.2601318353313999))
+
     
     (define (fv66)
       (let ((fv (make-float-vector 8))
