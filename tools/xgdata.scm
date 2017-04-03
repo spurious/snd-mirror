@@ -3886,7 +3886,7 @@
 ;(CFNC "void gtk_decorated_window_move_resize_window GtkWindow* window gint x gint y gint width gint height")
 (CFNC "gboolean gtk_widget_can_activate_accel GtkWidget* widget guint signal_id")
 (CFNC "gboolean gtk_window_is_active GtkWindow* window")
-(CFNC "gboolean gtk_window_has_toplevel_focus GtkWindow* window")
+;;; 3.90.0 (CFNC "gboolean gtk_window_has_toplevel_focus GtkWindow* window")
 (CCAST "GTK_WINDOW(obj)" "GtkWindow*")
 (CCHK "GTK_IS_WINDOW(obj)" "GtkWindow*")
 ;;;;(CFNC "GType gtk_window_get_type void")
@@ -6907,7 +6907,7 @@
 
 (CFNC-2.14 "gboolean gtk_accel_group_get_is_locked GtkAccelGroup* accel_group")
 ;;; 3.3.16 (CFNC-2.14 "GtkWidget* gtk_color_selection_dialog_get_color_selection GtkColorSelectionDialog* colorsel")
-(CFNC-2.14 "GtkWidget* gtk_container_get_focus_child GtkContainer* container")
+;;; 3.90.0 (CFNC-2.14 "GtkWidget* gtk_container_get_focus_child GtkContainer* container")
 ;;; 3.12? (CFNC-2.14 "GtkWidget* gtk_dialog_get_action_area GtkDialog* dialog")
 (CFNC-2.14 "GtkWidget* gtk_dialog_get_content_area GtkDialog* dialog")
 (CFNC-2.14 "void gtk_entry_set_overwrite_mode GtkEntry* entry gboolean overwrite")
@@ -7968,7 +7968,7 @@
 (CFNC-3.0 "gboolean gtk_container_get_focus_chain GtkContainer* container GList** [focusable_widgets]")
 (CFNC-3.0 "void gtk_container_unset_focus_chain GtkContainer* container")
 ;;; 3.13.2 (CFNC-3.0 "void gtk_container_set_reallocate_redraws GtkContainer* container gboolean needs_redraws")
-(CFNC-3.0 "void gtk_container_set_focus_child GtkContainer* container GtkWidget* child")
+;;; 3.90.0 (CFNC-3.0 "void gtk_container_set_focus_child GtkContainer* container GtkWidget* child")
 (CFNC-3.0 "void gtk_container_set_focus_vadjustment GtkContainer* container GtkAdjustment* adjustment")
 (CFNC-3.0 "GtkAdjustment* gtk_container_get_focus_vadjustment GtkContainer* container")
 (CFNC-3.0 "void gtk_container_set_focus_hadjustment GtkContainer* container GtkAdjustment* adjustment")
@@ -9581,3 +9581,5 @@
 ;;; 3.89.5
 
 (CFNC-3.99 "gboolean gtk_show_uri_on_window GtkWindow* parent char* uri guint32 timestamp GError** [error]" 'const)
+
+;;; 3.90.0

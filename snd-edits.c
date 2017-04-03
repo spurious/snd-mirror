@@ -7151,7 +7151,7 @@ static Xen g_is_sampler(Xen obj)
     {
       snd_fd *fd;
       fd = Xen_to_C_sampler(obj);
-      return(C_bool_to_Xen_boolean(fd->type == SAMPLER));
+      return(C_bool_to_Xen_boolean((fd->type == SAMPLER) || (fd->type == REGION_READER)));
     }
   if (is_mix_sampler(obj))
     return(C_string_to_Xen_symbol("mix"));

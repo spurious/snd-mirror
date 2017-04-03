@@ -40,7 +40,6 @@ s7_scheme *s7_init(void);
    */
 
 typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer args);   /* that is, obj = func(s7, args) -- args is a list of arguments */
-typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
 
 s7_pointer s7_f(s7_scheme *sc);                                      /* #f */
 s7_pointer s7_t(s7_scheme *sc);                                      /* #t */
@@ -654,12 +653,18 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
 
+/* -------------------------------------------------------------------------------- */
 /* the new clm optimizer!  this time for sure! 
  *    d=double, i=integer, v=c_object, p=s7_pointer
  *    first return type, then arg types, d_vd -> returns double takes c_object and double (i.e. a standard clm generator)
  */
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+
+typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+
+typedef s7_int (*s7_int_function)(s7_scheme *sc, s7_pointer args);
+/* s7_int_function s7_int_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env); */
 
 typedef s7_double (*s7_d_t)(void);
 void s7_set_d_function(s7_pointer f, s7_d_t df);
@@ -705,14 +710,25 @@ typedef s7_double (*s7_d_pid_t)(s7_pointer v, s7_int i, s7_double d);
 void s7_set_d_pid_function(s7_pointer f, s7_d_pid_t df);
 s7_d_pid_t s7_d_pid_function(s7_pointer f);
 
+typedef s7_int (*s7_i_i_t)(s7_int x);
+void s7_set_i_i_function(s7_pointer f, s7_i_i_t df);
+s7_i_i_t s7_i_i_function(s7_pointer f);
+
+typedef s7_int (*s7_i_d_t)(s7_double x);
+void s7_set_i_d_function(s7_pointer f, s7_i_d_t df);
+s7_i_d_t s7_i_d_function(s7_pointer f);
+
+typedef s7_int (*s7_i_ii_t)(s7_int i1, s7_int i2);
+void s7_set_i_ii_function(s7_pointer f, s7_i_ii_t df);
+s7_i_ii_t s7_i_ii_function(s7_pointer f);
+
+/* -------------------------------------------------------------------------------- */
+
 
 /* these are possibly temporary */
 void s7_object_type_set_direct(int tag, 
 			       s7_pointer (*dref)(s7_scheme *sc, s7_pointer obj, s7_int index), 
 			       s7_pointer (*dset)(s7_scheme *sc, s7_pointer obj, s7_int index, s7_pointer val));
-s7_int s7_slot_integer_value(s7_pointer slot);
-bool s7_is_stepper(s7_pointer p);
-s7_double s7_slot_real_value(s7_scheme *sc, s7_pointer slot, const char *caller);
 void s7_slot_set_real_value(s7_scheme *sc, s7_pointer slot, s7_double value);
 
 

@@ -23920,11 +23920,9 @@ EDITS: 2
 		      (rd22 (copy-sampler rd2)))
 		  (if (not (and (region-sampler? rd11) (region-sampler? rd22)))
 		      (snd-display "copy-sampler (region): ~A ~A" rd11 rd22))
-		  (if (or (mix-sampler? rd11) (mix-sampler? rd22)
-			  (sampler? rd11) (sampler? rd22))
-		      (snd-display "copy (region) sampler-p trouble: ~A ~A ~A ~A"
-				   (mix-sampler? rd11) (mix-sampler? rd22)
-				   (sampler? rd11) (sampler? rd22)))
+		  (if (or (mix-sampler? rd11) (mix-sampler? rd22))
+		      (snd-display "copy (region) sampler-p trouble: ~A ~A"
+				   (mix-sampler? rd11) (mix-sampler? rd22)))
 		  (if (not (and (equal? (sampler-home rd11) (list reg 0))
 				(equal? (sampler-home rd22) (list reg 1))))
 		      (snd-display "copy region reader home: ~A ~A" (sampler-home rd11) (sampler-home rd22)))
@@ -23944,8 +23942,6 @@ EDITS: 2
 		 (rd (make-region-sampler reg 0)))
 	    (if (mix-sampler? rd) (snd-display "region sampler: mix ~A" rd))
 	    (if (not (region-sampler? rd)) (snd-display "region sampler: region ~A" rd))
-	    (if (sampler? rd) (snd-display "region sampler: normal ~A" rd))
-					;(if (not (= (sampler-position rd) 0)) (snd-display "region sampler position: ~A" (sampler-position rd)))
 	    (if (not (equal? (sampler-home rd) (list reg 0))) (snd-display "region sampler home: ~A" (sampler-home rd)))
 	    (if (sampler-at-end? rd) (snd-display "region sampler at end?: ~A" (sampler-at-end? rd)))
 	    (let ((val (rd)))
