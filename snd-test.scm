@@ -36728,7 +36728,11 @@ EDITS: 1
 		     (let ((v1 (t1))
 			   (v2 (copy (t2) (make-float-vector 4))))
 		       (if (not (morally-equal? v1 v2))
-			   (format *stderr* "~D: ~A -> ~A ~A~%" args v1 v2))))))
+			   (do ((max-diff 0.0)
+				(i 0 (+ i 1)))
+			       ((= i 4)
+				(format *stderr* "~A: ~A -> ~A ~A: ~A~%" op args v1 v2 max-diff))
+			     (set! max-diff (max max-diff (abs (- (v1 i) (v2 i)))))))))))
 	(eval (copy form :readable))))
 
     (set! (*s7* 'morally-equal-float-epsilon) 1e-12)    
@@ -36741,6 +36745,7 @@ EDITS: 1
 	(list 'x '(oscil g0) 2.0 '(oscil g1) 'y)))
      '(+ * -))
     
+    (set! (*s7* 'morally-equal-float-epsilon) 5e-12)    
     (for-each-subset
      (lambda s-args
        (if (pair? s-args)

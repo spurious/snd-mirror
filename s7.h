@@ -694,6 +694,10 @@ typedef s7_double (*s7_d_vd_t)(void *v, s7_double d);
 void s7_set_d_vd_function(s7_pointer f, s7_d_vd_t df);
 s7_d_vd_t s7_d_vd_function(s7_pointer f);
 
+typedef s7_double (*s7_d_vdd_t)(void *v, s7_double x1, s7_double x2);
+void s7_set_d_vdd_function(s7_pointer f, s7_d_vdd_t df);
+s7_d_vdd_t s7_d_vdd_function(s7_pointer f);
+
 typedef s7_double (*s7_d_vid_t)(void *v, s7_int i, s7_double d);
 void s7_set_d_vid_function(s7_pointer f, s7_d_vid_t df);
 s7_d_vid_t s7_d_vid_function(s7_pointer f);
@@ -705,6 +709,10 @@ s7_d_id_t s7_d_id_function(s7_pointer f);
 typedef s7_double (*s7_d_pi_t)(s7_pointer v, s7_int i);
 void s7_set_d_pi_function(s7_pointer f, s7_d_pi_t df);
 s7_d_pi_t s7_d_pi_function(s7_pointer f);
+
+typedef s7_double (*s7_d_pd_t)(s7_pointer v, s7_double x);
+void s7_set_d_pd_function(s7_pointer f, s7_d_pd_t df);
+s7_d_pd_t s7_d_pd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_pid_t)(s7_pointer v, s7_int i, s7_double d);
 void s7_set_d_pid_function(s7_pointer f, s7_d_pid_t df);

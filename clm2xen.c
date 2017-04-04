@@ -9564,14 +9564,14 @@ static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_e
 static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
 static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
 
-#define GEN_RF_1(Type, Func)						\
+#define GEN_1(Type, Func)						\
   static s7_double mus_ ## Type ## _dv(void *o)				\
   {									\
     mus_xen *gn = (mus_xen *)o;						\
     return(Func(gn->gen));						\
   }
 
-#define GEN_RF(Type, Func1, Func2)				\
+#define GEN_2(Type, Func1, Func2)					\
   static s7_double mus_ ## Type ## _dv(void *o)				\
   {									\
     mus_xen *gn = (mus_xen *)o;						\
@@ -9581,6 +9581,23 @@ static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocode
   {									\
     mus_xen *gn = (mus_xen *)o;						\
     return(Func2(gn->gen, d));						\
+  }
+
+#define GEN_3(Type, Func1, Func2, Func3)				\
+  static s7_double mus_ ## Type ## _dv(void *o)				\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func1(gn->gen));						\
+  }									\
+  static s7_double mus_ ## Type ## _dvd(void *o, s7_double d)		\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func2(gn->gen, d));						\
+  }									\
+  static s7_double mus_ ## Type ## _dvdd(void *o, s7_double x1, s7_double x2)		\
+  {									\
+    mus_xen *gn = (mus_xen *)o;						\
+    return(Func3(gn->gen, x1, x2));					\
   }
 
 static mus_float_t mus_one_pole_0(mus_any *p) {return(mus_one_pole(p, 0.0));}
@@ -9608,79 +9625,80 @@ static mus_float_t mus_formant_0(mus_any *p) {return(mus_formant(p, 0.0));}
 static mus_float_t mus_firmant_0(mus_any *p) {return(mus_firmant(p, 0.0));}
 static mus_float_t mus_ssb_am_0(mus_any *p) {return(mus_ssb_am(p, 0.0, 0.0));}
 
-GEN_RF(all_pass, mus_all_pass_0, mus_all_pass_unmodulated)
-GEN_RF(asymmetric_fm, mus_asymmetric_fm_0, mus_asymmetric_fm_unmodulated)
-GEN_RF(comb, mus_comb_0, mus_comb_unmodulated)
-GEN_RF(comb_bank, mus_comb_bank_0, mus_comb_bank)
-GEN_RF(all_pass_bank, mus_all_pass_bank_0, mus_all_pass_bank)
-GEN_RF_1(convolve, mus_convolve_simple)
-GEN_RF(delay, mus_delay_0, mus_delay_unmodulated)
-GEN_RF_1(env, mus_env)
-GEN_RF(filter, mus_filter_0, mus_filter)
-GEN_RF(filtered_comb, mus_filtered_comb_0, mus_filtered_comb_unmodulated)
-GEN_RF(filtered_comb_bank, mus_filtered_comb_bank_0, mus_filtered_comb_bank)
-GEN_RF(fir_filter, mus_fir_filter_0, mus_fir_filter)
-GEN_RF(firmant, mus_firmant_0, mus_firmant)
-GEN_RF(formant, mus_formant_0, mus_formant)
-GEN_RF_1(granulate, mus_granulate_simple)
-GEN_RF(iir_filter, mus_iir_filter_0, mus_iir_filter)
-GEN_RF(moving_average, mus_moving_average_0, mus_moving_average)
-GEN_RF(moving_max, mus_moving_max_0, mus_moving_max)
-GEN_RF(moving_norm, mus_moving_norm_0, mus_moving_norm)
-GEN_RF(ncos, mus_ncos_unmodulated, mus_ncos)
-GEN_RF(notch, mus_notch_0, mus_notch_unmodulated)
-GEN_RF(nrxycos, mus_nrxycos_unmodulated, mus_nrxycos)
-GEN_RF(nrxysin, mus_nrxysin_unmodulated, mus_nrxysin)
-GEN_RF(nsin, mus_nsin_unmodulated, mus_nsin)
-GEN_RF(one_pole, mus_one_pole_0, mus_one_pole)
-GEN_RF(one_pole_all_pass, mus_one_pole_all_pass_0, mus_one_pole_all_pass)
-GEN_RF(one_zero, mus_one_zero_0, mus_one_zero)
-GEN_RF(oscil, mus_oscil_unmodulated, mus_oscil_fm)
-GEN_RF_1(oscil_bank, mus_oscil_bank)
-GEN_RF_1(phase_vocoder, mus_phase_vocoder_simple)
-GEN_RF(polyshape, mus_polyshape_0, mus_polyshape_unmodulated)
-GEN_RF(polywave, mus_polywave_unmodulated, mus_polywave)
-GEN_RF(pulse_train, mus_pulse_train_unmodulated, mus_pulse_train)
-GEN_RF(pulsed_env, mus_pulsed_env_unmodulated, mus_pulsed_env)
-GEN_RF(rand, mus_rand_unmodulated, mus_rand)
-GEN_RF(rand_interp, mus_rand_interp_unmodulated, mus_rand_interp)
-GEN_RF_1(readin, mus_readin)
-GEN_RF(rxykcos, mus_rxykcos_unmodulated, mus_rxykcos)
-GEN_RF(rxyksin, mus_rxyksin_unmodulated, mus_rxyksin)
-GEN_RF(sawtooth_wave, mus_sawtooth_wave_unmodulated, mus_sawtooth_wave)
-GEN_RF(square_wave, mus_square_wave_unmodulated, mus_square_wave)
-GEN_RF(src, mus_src_simple, mus_src_two)
-GEN_RF(table_lookup, mus_table_lookup_unmodulated, mus_table_lookup)
-GEN_RF(triangle_wave, mus_triangle_wave_unmodulated, mus_triangle_wave)
-GEN_RF(two_pole, mus_two_pole_0, mus_two_pole)
-GEN_RF(two_zero, mus_two_zero_0, mus_two_zero)
-GEN_RF(wave_train, mus_wave_train_unmodulated, mus_wave_train)
-GEN_RF(ssb_am, mus_ssb_am_0, mus_ssb_am_unmodulated)
-GEN_RF(tap, mus_tap_unmodulated, mus_tap)
+GEN_3(all_pass, mus_all_pass_0, mus_all_pass_unmodulated, mus_all_pass)
+GEN_2(asymmetric_fm, mus_asymmetric_fm_0, mus_asymmetric_fm_unmodulated)
+GEN_3(comb, mus_comb_0, mus_comb_unmodulated, mus_comb)
+GEN_2(comb_bank, mus_comb_bank_0, mus_comb_bank)
+GEN_2(all_pass_bank, mus_all_pass_bank_0, mus_all_pass_bank)
+GEN_1(convolve, mus_convolve_simple)
+GEN_2(delay, mus_delay_0, mus_delay_unmodulated)
+GEN_1(env, mus_env)
+GEN_2(filter, mus_filter_0, mus_filter)
+GEN_2(filtered_comb, mus_filtered_comb_0, mus_filtered_comb_unmodulated)
+GEN_2(filtered_comb_bank, mus_filtered_comb_bank_0, mus_filtered_comb_bank)
+GEN_2(fir_filter, mus_fir_filter_0, mus_fir_filter)
+GEN_3(firmant, mus_firmant_0, mus_firmant, mus_firmant_with_frequency)
+GEN_3(formant, mus_formant_0, mus_formant, mus_formant_with_frequency)
+GEN_1(granulate, mus_granulate_simple)
+GEN_2(iir_filter, mus_iir_filter_0, mus_iir_filter)
+GEN_2(moving_average, mus_moving_average_0, mus_moving_average)
+GEN_2(moving_max, mus_moving_max_0, mus_moving_max)
+GEN_2(moving_norm, mus_moving_norm_0, mus_moving_norm)
+GEN_2(ncos, mus_ncos_unmodulated, mus_ncos)
+GEN_3(notch, mus_notch_0, mus_notch_unmodulated, mus_notch)
+GEN_2(nrxycos, mus_nrxycos_unmodulated, mus_nrxycos)
+GEN_2(nrxysin, mus_nrxysin_unmodulated, mus_nrxysin)
+GEN_2(nsin, mus_nsin_unmodulated, mus_nsin)
+GEN_2(one_pole, mus_one_pole_0, mus_one_pole)
+GEN_2(one_pole_all_pass, mus_one_pole_all_pass_0, mus_one_pole_all_pass)
+GEN_2(one_zero, mus_one_zero_0, mus_one_zero)
+GEN_3(oscil, mus_oscil_unmodulated, mus_oscil_fm, mus_oscil)
+GEN_1(oscil_bank, mus_oscil_bank)
+GEN_1(phase_vocoder, mus_phase_vocoder_simple)
+GEN_2(polyshape, mus_polyshape_0, mus_polyshape_unmodulated)
+GEN_2(polywave, mus_polywave_unmodulated, mus_polywave)
+GEN_2(pulse_train, mus_pulse_train_unmodulated, mus_pulse_train)
+GEN_2(pulsed_env, mus_pulsed_env_unmodulated, mus_pulsed_env)
+GEN_2(rand, mus_rand_unmodulated, mus_rand)
+GEN_2(rand_interp, mus_rand_interp_unmodulated, mus_rand_interp)
+GEN_1(readin, mus_readin)
+GEN_2(rxykcos, mus_rxykcos_unmodulated, mus_rxykcos)
+GEN_2(rxyksin, mus_rxyksin_unmodulated, mus_rxyksin)
+GEN_2(sawtooth_wave, mus_sawtooth_wave_unmodulated, mus_sawtooth_wave)
+GEN_2(square_wave, mus_square_wave_unmodulated, mus_square_wave)
+GEN_2(src, mus_src_simple, mus_src_two)
+GEN_2(table_lookup, mus_table_lookup_unmodulated, mus_table_lookup)
+GEN_2(triangle_wave, mus_triangle_wave_unmodulated, mus_triangle_wave)
+GEN_2(two_pole, mus_two_pole_0, mus_two_pole)
+GEN_2(two_zero, mus_two_zero_0, mus_two_zero)
+GEN_2(wave_train, mus_wave_train_unmodulated, mus_wave_train)
+GEN_3(ssb_am, mus_ssb_am_0, mus_ssb_am_unmodulated, mus_ssb_am)
+GEN_2(tap, mus_tap_unmodulated, mus_tap)
 
-static s7_double outa_di(s7_int pos, s7_double x)
+static s7_double outa_did(s7_int pos, s7_double x)
 {
   out_any_2(pos, x, 0, S_outa);
   return(x);
 }
 
-static s7_double outb_di(s7_int pos, s7_double x)
+static s7_double outb_did(s7_int pos, s7_double x)
 {
   out_any_2(pos, x, 1, S_outb);
   return(x);
 }
 
-static s7_double outc_di(s7_int pos, s7_double x)
+static s7_double outc_did(s7_int pos, s7_double x)
 {
   out_any_2(pos, x, 2, S_outc);
   return(x);
 }
 
-static s7_double outd_di(s7_int pos, s7_double x)
+static s7_double outd_did(s7_int pos, s7_double x)
 {
   out_any_2(pos, x, 3, S_outd);
   return(x);
 }
+
 
 static s7_double locsig_d_vid(void *obj, s7_int ind, s7_double x)
 {
@@ -9689,8 +9707,23 @@ static s7_double locsig_d_vid(void *obj, s7_int ind, s7_double x)
   return(x);
 }
 
-#define RF_1(Call)						\
-  static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
+#if 0
+/* needs mus_any* vector */
+static s7_double format_bank_d_pd(s7_pointer v, s7_double x)
+{
+  return(mus_formant_bank(v, x));
+}
+#endif
+#if 0
+/* might be vector, need length: s7_vector_length(p)? */
+static s7_double polynomial_d_pd(s7_pointer v, s7_double x)
+{
+  return(mus_polynomial(v, x));
+}
+#endif
+
+#define RF_1(Call) static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
+#define RF_2(Call) static s7_double mus_ ## Call ## _d(s7_double x1, s7_double x2) {return((s7_double)mus_ ## Call((mus_float_t)x1, (mus_float_t)x2));}
 
 RF_1(odd_weight)
 RF_1(even_weight)
@@ -9701,6 +9734,11 @@ RF_1(linear_to_db)
 RF_1(radians_to_degrees)
 RF_1(degrees_to_radians)
 RF_1(random)
+
+RF_2(contrast_enhancement)
+RF_2(odd_multiple)
+RF_2(even_multiple)
+RF_2(ring_modulate)
 #endif /* gmp */
 
 
@@ -9827,6 +9865,14 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_vd_function(s7_name_to_value(sc, S_two_zero), mus_two_zero_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_wave_train), mus_wave_train_dvd);
 
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_oscil), mus_oscil_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_all_pass), mus_all_pass_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_comb), mus_comb_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_notch), mus_notch_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_ssb_am), mus_ssb_am_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_formant), mus_formant_dvdd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_firmant), mus_firmant_dvdd);
+
   s7_set_d_d_function(s7_name_to_value(sc, S_odd_weight), mus_odd_weight_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_even_weight), mus_even_weight_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_hz_to_radians), mus_hz_to_radians_d);
@@ -9837,13 +9883,27 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_d_function(s7_name_to_value(sc, S_degrees_to_radians), mus_degrees_to_radians_d);
   s7_set_d_d_function(s7_name_to_value(sc, S_mus_random), mus_random_d);
 
-  s7_set_d_id_function(s7_name_to_value(sc, S_outa), outa_di);
-  s7_set_d_id_function(s7_name_to_value(sc, S_outb), outb_di);
-  s7_set_d_id_function(s7_name_to_value(sc, S_outc), outc_di);
-  s7_set_d_id_function(s7_name_to_value(sc, S_outd), outd_di);
+  s7_set_d_dd_function(s7_name_to_value(sc, S_even_multiple), mus_even_multiple_d);
+  s7_set_d_dd_function(s7_name_to_value(sc, S_odd_multiple), mus_odd_multiple_d);
+  s7_set_d_dd_function(s7_name_to_value(sc, S_ring_modulate), mus_ring_modulate_d);
+  s7_set_d_dd_function(s7_name_to_value(sc, S_contrast_enhancement), mus_contrast_enhancement_d);
 
+  s7_set_d_id_function(s7_name_to_value(sc, S_outa), outa_did);
+  s7_set_d_id_function(s7_name_to_value(sc, S_outb), outb_did);
+  s7_set_d_id_function(s7_name_to_value(sc, S_outc), outc_did);
+  s7_set_d_id_function(s7_name_to_value(sc, S_outd), outd_did);
+#if 0
+  /* the nutty inputs are a problem here */
+  s7_set_d_id_function(s7_name_to_value(sc, S_ina), ina_did);
+  s7_set_d_id_function(s7_name_to_value(sc, S_inb), inb_did);
+#endif
   s7_set_d_vid_function(s7_name_to_value(sc, S_locsig), locsig_d_vid);
-
+#if 0
+  s7_set_d_pd_function(s7_name_to_value(sc, S_formant_bank), formant_bank_d_pd);
+#endif
+#if 0
+  s7_set_d_pd_function(s7_name_to_value(sc, S_polynomial), polynomial_d_pd);
+#endif
 #endif /* gmp */
 }
 #endif /*s7 */

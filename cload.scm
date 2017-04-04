@@ -218,6 +218,8 @@
 	  (macros ())     ; these are protected by #ifdef ... #endif
 	  (inits ())      ; C code (a string in s7) inserted in the library initialization function
 	  (p #f)
+	  (int-funcs ())  ; functions guaranteed to return int
+	  (double-funcs ())  ; functions returning double
 	  (sig-symbols (list (cons 'integer? 0) (cons 'boolean? 0) (cons 'real?  0) (cons 'float? 0) 
 			     (cons 'char? 0) (cons 'string? 0) (cons 'c-pointer? 0) (cons 't 0)))
 	  (signatures (make-hash-table)))
@@ -360,6 +362,52 @@
 			    ";~%  return(s7_unspecified(sc));~%"))
 	      (format p "}~%"))
 	    
+	    ;; add optimizer connection
+	    (when (and (eq? return-type 'double)
+		       (or (= num-args 0)
+			   (and (= num-args 1)
+				(eq? (car arg-types) 'double))
+			   (and (= num-args 2)
+				(eq? (car arg-types) 'double)
+				(eq? (cadr arg-types) 'double))))
+	      (let ((local-name #f))
+		(case num-args
+		  ((0)
+		   (set! local-name "_d")
+		   (format p "static s7_double ~A~A(void) {return(~A());}~%" func-name local-name func-name))
+		  ((1)
+		   (set! local-name "_d_d")
+		   (format p "static s7_double ~A~A(s7_double x) {return(~A(x));}~%" func-name local-name func-name))
+		  ((2)
+		   (set! local-name "_d_dd")
+		   (format p "static s7_double ~A~A(s7_double x1, s7_double x2) {return(~A(x1, x2));}~%" func-name local-name func-name)))
+		(set! double-funcs (cons (list func-name scheme-name local-name) double-funcs))))
+	    
+	    (when (and (eq? return-type 'int)        ; int (f int|double|void)
+		       (or ;(= num-args 0)
+			   (and (= num-args 1)
+				(memq (car arg-types) '(int double)))
+			   (and (= num-args 2)
+				(eq? (car arg-types) 'int)
+				(eq? (cadr arg-types) 'int))))
+	      (let ((local-name #f))
+		(case (car arg-types)
+		  ((void)
+		   (set! local-name "_i")
+		   (format p "static s7_int ~A~A(void) {return(~A());}~%" func-name local-name func-name))
+		  ((double)
+		   (set! local-name "_i_d")
+		   (format p "static s7_int ~A~A(s7_double x) {return(~A(x));}~%" func-name local-name func-name))
+		  ((int)
+		   (if (= num-args 1)
+		       (begin
+			 (set! local-name "_i_i")
+			 (format p "static s7_int ~A~A(s7_int i1) {return(~A(i1));}~%" func-name local-name (if (string=? func-name "abs") "llabs" func-name)))
+		       (begin
+			 (set! local-name "_i_ii")
+			 (format p "static s7_int ~A~A(s7_int i1, s7_int i2) {return(~A(i1, i2));}~%" func-name local-name func-name)))))
+		(set! int-funcs (cons (list func-name scheme-name local-name) int-funcs))))
+	    
 	    (format p "~%")
 	    (set! functions (cons (list scheme-name base-name 
 					(if (and (string? doc)
@@ -474,6 +522,21 @@
 		     help
 		     (if (pair? sig) (signatures sig) 'NULL))))
 	 functions)
+	
+	;; optimizer connection
+	(when (pair? double-funcs)
+	  (format p "~%  /* double optimizer connections */~%")
+	  (for-each
+	   (lambda (f)
+	     (format p "  s7_set~A_function(s7_name_to_value(sc, ~S), ~A~A);~%" (caddr f) (cadr f) (car f) (caddr f)))
+	   double-funcs))
+	
+	(when (pair? int-funcs)
+	  (format p "~%  /* int optimizer connections */~%")
+	  (for-each
+	   (lambda (f)
+	     (format p "  s7_set~A_function(s7_name_to_value(sc, ~S), ~A~A);~%" (caddr f) (cadr f) (car f) (caddr f)))
+	   int-funcs))
 	
 	(format p "}~%")
 	(close-output-port p)
