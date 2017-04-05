@@ -6643,6 +6643,56 @@ static Xen g_is_frample_to_file(Xen obj)
 static mus_float_t (*in_any_2)(mus_long_t pos, int chn);
 #endif
 
+static mus_float_t in_any_3(const char *caller, mus_long_t pos, int in_chan, Xen inp)
+{
+#if HAVE_SCHEME
+  if (Xen_is_false(inp)) return(0.0); /* ws.scm default for *clm-reverb* is #f */
+  if (inp == CLM_REVERB)
+    return(in_any_2(pos, in_chan));
+#endif
+
+  if (mus_is_xen(inp))
+    {
+      Xen_check_type(mus_is_input(Xen_to_mus_any(inp)), inp, 3, caller, "an input generator");
+      return(mus_in_any(pos, in_chan, (mus_any *)Xen_to_mus_any(inp)));
+    }
+
+  if (mus_is_vct(inp))
+    {
+#if HAVE_SCHEME
+      if (pos < s7_vector_length(inp))
+	{
+	  s7_double *els;
+	  els = s7_float_vector_elements(inp);
+	  if (s7_vector_rank(inp) > 1)
+	    {
+	      s7_int *offsets;
+	      offsets = s7_vector_offsets(inp);
+	      return(els[in_chan * offsets[0] + pos]);
+	    }
+	  return(els[pos]);
+	}
+      return(0.0);
+#else
+      vct *v;
+      mus_float_t *vdata;
+      v = Xen_to_vct(inp);
+      vdata = mus_vct_data(v);
+      if (pos < mus_vct_length(v))
+	return(vdata[pos]);
+      return(0.0);
+#endif
+    }
+
+  if (Xen_is_vector(inp))
+    {
+      if (pos < Xen_vector_length(inp))
+	return(Xen_real_to_C_double(Xen_vector_ref(inp, pos)));
+    }
+
+  return(0.0);
+}
+
 static Xen g_in_any_1(const char *caller, Xen frample, int in_chan, Xen inp)
 {
   mus_long_t pos;
@@ -6656,46 +6706,7 @@ static Xen g_in_any_1(const char *caller, Xen frample, int in_chan, Xen inp)
   if (in_chan < 0) 
     Xen_out_of_range_error(caller, 2, C_int_to_Xen_integer(in_chan), "must be >= 0");    
 
-#if HAVE_SCHEME
-  if (Xen_is_false(inp)) return(C_double_to_Xen_real(0.0)); /* ws.scm default for *clm-reverb* is #f */
-  if (inp == CLM_REVERB)
-    return(s7_make_real(s7, in_any_2(pos, in_chan)));
-#endif
-
-  if (mus_is_xen(inp))
-    {
-      Xen_check_type(mus_is_input(Xen_to_mus_any(inp)), inp, 3, caller, "an input generator");
-      return(C_double_to_Xen_real(mus_in_any(pos, in_chan, (mus_any *)Xen_to_mus_any(inp))));
-    }
-
-  if (mus_is_vct(inp))
-    {
-#if HAVE_SCHEME
-      if (pos < s7_vector_length(inp))
-	{
-	  if (s7_vector_rank(inp) > 1)
-	    return(s7_vector_ref_n(s7, inp, 2, in_chan, pos));
-	  return(s7_vector_ref(s7, inp, pos));
-	}
-      return(C_double_to_Xen_real(0.0));
-#else
-      vct *v;
-      mus_float_t *vdata;
-      v = Xen_to_vct(inp);
-      vdata = mus_vct_data(v);
-      if (pos < mus_vct_length(v))
-	return(C_double_to_Xen_real(vdata[pos]));
-      return(C_double_to_Xen_real(0.0));
-#endif
-    }
-
-  if (Xen_is_vector(inp))
-    {
-      if (pos < Xen_vector_length(inp))
-	return(Xen_vector_ref(inp, pos));
-    }
-
-  return(C_double_to_Xen_real(0.0));
+  return(C_double_to_Xen_real(in_any_3(caller, pos, in_chan, inp)));
 }
 
 
@@ -9542,12 +9553,6 @@ Xen_wrap_no_args(g_get_internal_real_time_w, g_get_internal_real_time)
 
 #if HAVE_SCHEME
 #if (!WITH_GMP)
-#define car(E)    s7_car(E)
-#define cdr(E)    s7_cdr(E)
-#define cadr(E)   s7_cadr(E)
-#define caddr(E)  s7_caddr(E)
-#define cadddr(E) s7_cadddr(E)
-#define cadddr(E) s7_cadddr(E)
 
 static mus_float_t mus_nsin_unmodulated(mus_any *p) {return(mus_nsin(p, 0.0));}
 static mus_float_t mus_ncos_unmodulated(mus_any *p) {return(mus_ncos(p, 0.0));}
@@ -9700,6 +9705,17 @@ static s7_double outd_did(s7_int pos, s7_double x)
 }
 
 
+static s7_double ina_dip(s7_int pos, s7_pointer p)
+{
+  return(in_any_3(S_ina, pos, 0, p));
+}
+
+static s7_double inb_dip(s7_int pos, s7_pointer p)
+{
+  return(in_any_3(S_inb, pos, 1, p));
+}
+
+
 static s7_double locsig_d_vid(void *obj, s7_int ind, s7_double x)
 {
   mus_xen *gn = (mus_xen *)obj;
@@ -9707,13 +9723,45 @@ static s7_double locsig_d_vid(void *obj, s7_int ind, s7_double x)
   return(x);
 }
 
-#if 0
-/* needs mus_any* vector */
-static s7_double format_bank_d_pd(s7_pointer v, s7_double x)
+static s7_double locsig_set_d_vid(void *obj, s7_int ind, s7_double x)
 {
-  return(mus_formant_bank(v, x));
+  mus_xen *gn = (mus_xen *)obj;
+  mus_locsig_set(gn->gen, ind, x); /* clm.c's mus_locsig is a void func? */
+  return(x);
 }
-#endif
+
+
+static s7_double mus_formant_bank_dvd(void *o, s7_double x)
+{
+  mus_xen *gn = (mus_xen *)o;
+  return(mus_formant_bank(gn->gen, x));
+}
+
+static s7_double mus_set_formant_frequency_dvd(void *o, s7_double x)
+{
+  mus_xen *gn = (mus_xen *)o;
+  return(mus_set_formant_frequency(gn->gen, x));
+}
+
+static s7_double mus_set_formant_radius_and_frequency_dvdd(void *o, s7_double x1, s7_double x2)
+{
+  mus_xen *gn = (mus_xen *)o;
+  mus_set_formant_radius_and_frequency(gn->gen, x1, x2);
+  return(x2);
+}
+
+
+static s7_double out_bank_d_pid(s7_pointer gens, s7_int loc, s7_double x)
+{
+  int i, len;
+  s7_pointer *els;
+  els = s7_vector_elements(gens);
+  len = s7_vector_length(gens);
+  for (i = 0; i < len; i++)
+    out_any_2(loc, mus_apply(((mus_xen *)(s7_object_value(els[i])))->gen, x, 0.0), i, S_out_bank);
+  return(x);
+}
+
 #if 0
 /* might be vector, need length: s7_vector_length(p)? */
 static s7_double polynomial_d_pd(s7_pointer v, s7_double x)
@@ -9722,23 +9770,23 @@ static s7_double polynomial_d_pd(s7_pointer v, s7_double x)
 }
 #endif
 
-#define RF_1(Call) static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
-#define RF_2(Call) static s7_double mus_ ## Call ## _d(s7_double x1, s7_double x2) {return((s7_double)mus_ ## Call((mus_float_t)x1, (mus_float_t)x2));}
+#define DF_1(Call) static s7_double mus_ ## Call ## _d(s7_double x) {return((s7_double)mus_ ## Call((mus_float_t)x));}
+#define DF_2(Call) static s7_double mus_ ## Call ## _d(s7_double x1, s7_double x2) {return((s7_double)mus_ ## Call((mus_float_t)x1, (mus_float_t)x2));}
 
-RF_1(odd_weight)
-RF_1(even_weight)
-RF_1(hz_to_radians)
-RF_1(radians_to_hz)
-RF_1(db_to_linear)
-RF_1(linear_to_db)
-RF_1(radians_to_degrees)
-RF_1(degrees_to_radians)
-RF_1(random)
+DF_1(odd_weight)
+DF_1(even_weight)
+DF_1(hz_to_radians)
+DF_1(radians_to_hz)
+DF_1(db_to_linear)
+DF_1(linear_to_db)
+DF_1(radians_to_degrees)
+DF_1(degrees_to_radians)
+DF_1(random)
 
-RF_2(contrast_enhancement)
-RF_2(odd_multiple)
-RF_2(even_multiple)
-RF_2(ring_modulate)
+DF_2(contrast_enhancement)
+DF_2(odd_multiple)
+DF_2(even_multiple)
+DF_2(ring_modulate)
 #endif /* gmp */
 
 
@@ -9833,6 +9881,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_vd_function(s7_name_to_value(sc, S_fir_filter), mus_fir_filter_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_firmant), mus_firmant_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_formant), mus_formant_dvd);
+  s7_set_d_vd_function(s7_name_to_value(sc, S_formant_bank), mus_formant_bank_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_iir_filter), mus_iir_filter_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_moving_average), mus_moving_average_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_moving_max), mus_moving_max_dvd);
@@ -9865,6 +9914,9 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_vd_function(s7_name_to_value(sc, S_two_zero), mus_two_zero_dvd);
   s7_set_d_vd_function(s7_name_to_value(sc, S_wave_train), mus_wave_train_dvd);
 
+  s7_set_d_vd_function(s7_name_to_value(sc, S_mus_set_formant_frequency), mus_set_formant_frequency_dvd);
+  s7_set_d_vdd_function(s7_name_to_value(sc, S_mus_set_formant_radius_and_frequency), mus_set_formant_radius_and_frequency_dvdd);
+
   s7_set_d_vdd_function(s7_name_to_value(sc, S_oscil), mus_oscil_dvdd);
   s7_set_d_vdd_function(s7_name_to_value(sc, S_all_pass), mus_all_pass_dvdd);
   s7_set_d_vdd_function(s7_name_to_value(sc, S_comb), mus_comb_dvdd);
@@ -9892,15 +9944,14 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_id_function(s7_name_to_value(sc, S_outb), outb_did);
   s7_set_d_id_function(s7_name_to_value(sc, S_outc), outc_did);
   s7_set_d_id_function(s7_name_to_value(sc, S_outd), outd_did);
-#if 0
-  /* the nutty inputs are a problem here */
-  s7_set_d_id_function(s7_name_to_value(sc, S_ina), ina_did);
-  s7_set_d_id_function(s7_name_to_value(sc, S_inb), inb_did);
-#endif
+
+  s7_set_d_ip_function(s7_name_to_value(sc, S_ina), ina_dip);
+  s7_set_d_ip_function(s7_name_to_value(sc, S_inb), inb_dip);
+
   s7_set_d_vid_function(s7_name_to_value(sc, S_locsig), locsig_d_vid);
-#if 0
-  s7_set_d_pd_function(s7_name_to_value(sc, S_formant_bank), formant_bank_d_pd);
-#endif
+  s7_set_d_vid_function(s7_name_to_value(sc, S_locsig_set), locsig_set_d_vid);
+
+  s7_set_d_pid_function(s7_name_to_value(sc, S_out_bank), out_bank_d_pid);
 #if 0
   s7_set_d_pd_function(s7_name_to_value(sc, S_polynomial), polynomial_d_pd);
 #endif
@@ -10267,8 +10318,8 @@ static void mus_xen_init(void)
 #if HAVE_SCHEME
   s7_pointer s, i, p, t, r, c, f, v, b, d, j;
 
-  s7_pointer pl_rcr, pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
-    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_rcrr, pl_dirt, pl_riirfff, pl_rirfff, pl_rrpr, 
+  s7_pointer pl_bt, pl_ir, pl_cc, pl_ccic, pl_ccrr, pl_fc, pl_fcif, pl_cs, pl_ff, pl_tt, pl_fffifi, pl_ffftii, pl_fffi, 
+    pl_fti, pl_fif, pl_fiir, pl_fttb, pl_ic, pl_rciir, pl_rcir, pl_ririt, pl_dirt, pl_riirfff, pl_rirfff, pl_rrpr, 
     pl_sc, pl_sssrs, pl_tc, pl_ici, pl_i, pl_fcf, pl_dcr, pl_dr, pl_dffi, pl_dfri, pl_dirfir, pl_dc, pl_dci, pl_dcir, pl_dv, 
     pl_dvir, pl_drf, pl_drc, pl_diit, pl_dit, pl_dct, pl_d, pl_djr, pl_it, pl_iti;
 #endif
@@ -10303,7 +10354,6 @@ static void mus_xen_init(void)
   d = s7_make_symbol(s7, "float?");
   
   pl_bt = s7_make_signature(s7, 2, b, t);
-  pl_rcr = s7_make_signature(s7, 3, r, c, r);
   
   pl_d = s7_make_signature(s7, 1, d);
   pl_dcr = s7_make_circular_signature(s7, 2, 3, d, c, r);
@@ -10347,7 +10397,6 @@ static void mus_xen_init(void)
   pl_rciir = s7_make_signature(s7, 5, r, c, i, i, r);
   pl_rcir = s7_make_signature(s7, 4, r, c, i, r);
   pl_ririt = s7_make_signature(s7,5, r, i, r, i, t);
-  pl_rcrr = s7_make_signature(s7, 4, r, c, r, r);
   pl_dirt = s7_make_signature(s7, 4, d, i, r, t);
   pl_riirfff = s7_make_signature(s7, 7, r, i, i, r, f, f, f);
   pl_rirfff = s7_make_signature(s7, 6, r, i, r, f, f, f);
@@ -10768,9 +10817,10 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_one_pole_all_pass,	g_one_pole_all_pass_w,     1, 1, 0, H_one_pole_all_pass,	
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_one_pole_all_pass), r));
 
-  Xen_define_typed_procedure(S_mus_set_formant_frequency, g_set_formant_frequency_w, 2, 0, 0, H_mus_set_formant_frequency, pl_rcr);
-  Xen_define_typed_procedure(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency, pl_rcrr);
-
+  Xen_define_typed_procedure(S_mus_set_formant_frequency, g_set_formant_frequency_w, 2, 0, 0, H_mus_set_formant_frequency,
+			     s7_make_signature(s7, 3, d, s7_make_symbol(s7, S_is_formant), r));
+  Xen_define_typed_procedure(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency, 
+			     s7_make_signature(s7, 4, d, s7_make_symbol(s7, S_is_formant), r, r));
 
   Xen_define_typed_procedure(S_make_polyshape,		g_make_polyshape_w,        0, 0, 1, H_make_polyshape,		
 			     s7_make_circular_signature(s7, 1, 2, s7_make_symbol(s7, S_is_polyshape), t));
@@ -10853,7 +10903,8 @@ static void mus_xen_init(void)
   Xen_define_procedure(S_locsig_reverb_ref,		g_locsig_reverb_ref_w,     2, 0, 0, H_locsig_reverb_ref);
 #endif
 
-  Xen_define_typed_procedure(S_locsig_set,		g_locsig_set_w,            3, 0, 0, H_locsig_set,		pl_rcir);
+  Xen_define_typed_procedure(S_locsig_set,		g_locsig_set_w,            3, 0, 0, H_locsig_set,
+			     s7_make_signature(s7, 4, d, s7_make_symbol(s7, S_is_locsig), i, r));
 
 #if HAVE_SCHEME || HAVE_FORTH
   Xen_define_typed_dilambda(S_locsig_ref, g_locsig_ref_w, H_locsig_ref, 
