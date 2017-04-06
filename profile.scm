@@ -25,7 +25,7 @@
 		(let ((file (profile-filename key))
 		      (line (profile-line-number key)))
 		  (if (> line 0)
-		      (format *stderr* "~A[~A]: ~A~30T~A~%" 
+		      (format *stderr* "~A[~A]: ~A ~30T~A~%" 
 			      file line count
 			      (if (> (length expr) 60)
 				  (string-append (substring expr 0 56) " ...")

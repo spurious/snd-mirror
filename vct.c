@@ -1213,6 +1213,13 @@ static mus_float_t vct_max(mus_float_t *d, mus_long_t len)
   return(mx);
 }
 
+#if HAVE_SCHEME
+static s7_double float_vector_max_d_p(s7_pointer v)
+{
+  return(vct_max(s7_float_vector_elements(v), s7_vector_length(v)));
+}
+#endif
+
 static Xen g_vct_max(Xen vobj)
 {
   #define H_vct_max "(" S_vct_max " v): returns the maximum element of " S_vct
@@ -1239,6 +1246,13 @@ static mus_float_t vct_min(mus_float_t *d, mus_long_t len)
       mx = d[i];
   return(mx);
 }
+
+#if HAVE_SCHEME
+static s7_double float_vector_min_d_p(s7_pointer v)
+{
+  return(vct_min(s7_float_vector_elements(v), s7_vector_length(v)));
+}
+#endif
 
 static Xen g_vct_min(Xen vobj)
 {
@@ -1719,5 +1733,8 @@ void mus_vct_init(void)
 #else
   Xen_define_typed_procedure(S_vct_spatter,     g_vct_spatter_w,     4, 0, 0, H_vct_spatter,           pl_rfvir);
   Xen_define_typed_procedure(S_vct_interpolate, g_vct_interpolate_w, 7, 0, 0, H_vct_interpolate,       pl_rfiir);
+
+  s7_set_d_p_function(s7_name_to_value(s7, S_vct_min), float_vector_min_d_p);
+  s7_set_d_p_function(s7_name_to_value(s7, S_vct_max), float_vector_max_d_p);
 #endif
 }

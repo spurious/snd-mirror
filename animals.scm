@@ -688,7 +688,7 @@
 	    
 	    (do ((k 0 (+ k 1)))
 		((= k pulse-out))
-	      (set! (rk k) (rk!cos gen1 (env pulse-frqf))))
+	      (float-vector-set! rk k (rk!cos gen1 (env pulse-frqf))))
 	    
 	    (do ((k i (+ k 1)))
 		((= k reset-stop))
@@ -1347,7 +1347,7 @@
 		    (outa n (* pulse-amp
 			       (env pulse-ampf)
 			       (+ (* (env low-ampf) 
-				     (polywave gp (ina k saved-frq)))
+				     (polywave gp (float-vector-ref saved-frq k)))
 				  (polywave gen1 (env frqf))))))
 		  (mus-reset pulse-ampf)
 		  (set! (mus-location ampf) (- i attack-stop))
