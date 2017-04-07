@@ -363,13 +363,15 @@
 	      (format p "}~%"))
 	    
 	    ;; add optimizer connection
+	    (define (sig-every? f sequence)
+	      (do ((arg sequence (cdr arg)))
+		  ((not (and (pair? arg)
+			     (f (car arg))))
+		   (null? arg))))
+
 	    (when (and (eq? return-type 'double)
-		       (or (= num-args 0)
-			   (and (= num-args 1)
-				(eq? (car arg-types) 'double))
-			   (and (= num-args 2)
-				(eq? (car arg-types) 'double)
-				(eq? (cadr arg-types) 'double))))
+		       (< num-args 5)
+		       (sig-every? (lambda (p) (eq? p 'double)) arg-types))
 	      (let ((local-name #f))
 		(case num-args
 		  ((0)
@@ -380,7 +382,13 @@
 		   (format p "static s7_double ~A~A(s7_double x) {return(~A(x));}~%" func-name local-name func-name))
 		  ((2)
 		   (set! local-name "_d_dd")
-		   (format p "static s7_double ~A~A(s7_double x1, s7_double x2) {return(~A(x1, x2));}~%" func-name local-name func-name)))
+		   (format p "static s7_double ~A~A(s7_double x1, s7_double x2) {return(~A(x1, x2));}~%" func-name local-name func-name))
+		  ((3)
+		   (set! local-name "_d_ddd")
+		   (format p "static s7_double ~A~A(s7_double x1, s7_double x2, s7_double x3) {return(~A(x1, x2, x3));}~%" func-name local-name func-name))
+		  ((4)
+		   (set! local-name "_d_dddd")
+		   (format p "static s7_double ~A~A(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(~A(x1, x2, x3, x4));}~%" func-name local-name func-name)))
 		(set! double-funcs (cons (list func-name scheme-name local-name) double-funcs))))
 	    
 	    (when (and (eq? return-type 'int)        ; int (f int|double|void)

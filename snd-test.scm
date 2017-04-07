@@ -17176,7 +17176,7 @@ EDITS: 2
 	      (snd-display "mus-random: ~A" val1))))
       (if (or (< maxp .9)
 	      (> minp -.9))
-	  (snd-display "mus-random: ~A ~A" minp maxp))
+	  (snd-display "mus-random min/max: ~A ~A" minp maxp))
       (set! minp 12.0)
       (set! maxp -12.0)
       (do ((i 0 (+ i 1)))
@@ -17188,7 +17188,7 @@ EDITS: 2
 	      (snd-display "mus-random (12): ~A" val1))))
       (if (or (< maxp 11.0)
 	      (> minp -11.0))
-	  (snd-display "mus-random (12): ~A ~A" minp maxp)))
+	  (snd-display "mus-random (12) min/max: ~A ~A" minp maxp)))
     
     (let ((n 1000) ; chi^2 or mus-random
 	   (hits (make-vector 10 0)))

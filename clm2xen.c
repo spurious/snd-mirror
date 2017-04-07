@@ -9721,6 +9721,14 @@ static s7_double outd_did(s7_int pos, s7_double x)
   return(x);
 }
 
+#if 0
+/* need s7_d_idi_t */
+static s7_double out_any_did(s7_int pos, s7_double x, s7_int i)
+{
+  out_any_2(pos, x, i, S_out_any);
+  return(x);
+}
+#endif
 
 static s7_double ina_dip(s7_int pos, s7_pointer p)
 {
