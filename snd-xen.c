@@ -645,7 +645,6 @@ char *procedure_ok(Xen proc, int args, const char *caller, const char *arg_name,
 {
   int rargs;
   /* if string returned, needs to be freed */
-  /* 0 args is special => "thunk" meaning in this case that optional args are not ok (applies to as-one-edit and two menu callbacks) */
 
   if (!(Xen_is_procedure(proc)))
     {

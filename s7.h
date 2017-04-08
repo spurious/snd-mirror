@@ -663,9 +663,6 @@ s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
-typedef s7_int (*s7_int_function)(s7_scheme *sc, s7_pointer args);
-typedef bool (*s7_bool_function)(s7_scheme *sc, s7_pointer args);
-
 typedef s7_double (*s7_d_t)(void);
 void s7_set_d_function(s7_pointer f, s7_d_t df);
 s7_d_t s7_d_function(s7_pointer f);

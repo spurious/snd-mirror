@@ -9570,9 +9570,9 @@ static mus_float_t mus_sawtooth_wave_unmodulated(mus_any *p) {return(mus_sawtoot
 
 static mus_float_t mus_src_simple(mus_any *p) {return(mus_src(p, 0.0, NULL));}
 static mus_float_t mus_src_two(mus_any *p, mus_float_t x) {return(mus_src(p, x, NULL));}
-static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_editor(p, NULL, NULL));}
+/* static mus_float_t mus_granulate_simple(mus_any *p) {return(mus_granulate_with_editor(p, NULL, NULL));} */
 static mus_float_t mus_convolve_simple(mus_any *p) {return(mus_convolve(p, NULL));}
-static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));}
+/* static mus_float_t mus_phase_vocoder_simple(mus_any *p) {return(mus_phase_vocoder(p, NULL));} */
 
 #define GEN_1(Type, Func)						\
   static bool is_ ## Type ## _b(s7_pointer p)			\
@@ -9661,7 +9661,7 @@ GEN_2(filtered_comb_bank, mus_filtered_comb_bank_0, mus_filtered_comb_bank)
 GEN_2(fir_filter, mus_fir_filter_0, mus_fir_filter)
 GEN_3(firmant, mus_firmant_0, mus_firmant, mus_firmant_with_frequency)
 GEN_3(formant, mus_formant_0, mus_formant, mus_formant_with_frequency)
-GEN_1(granulate, mus_granulate_simple)
+/* GEN_1(granulate, mus_granulate_simple) */
 GEN_2(iir_filter, mus_iir_filter_0, mus_iir_filter)
 GEN_2(moving_average, mus_moving_average_0, mus_moving_average)
 GEN_2(moving_max, mus_moving_max_0, mus_moving_max)
@@ -9676,7 +9676,7 @@ GEN_2(one_pole_all_pass, mus_one_pole_all_pass_0, mus_one_pole_all_pass)
 GEN_2(one_zero, mus_one_zero_0, mus_one_zero)
 GEN_3(oscil, mus_oscil_unmodulated, mus_oscil_fm, mus_oscil)
 GEN_1(oscil_bank, mus_oscil_bank)
-GEN_1(phase_vocoder, mus_phase_vocoder_simple)
+/* GEN_1(phase_vocoder, mus_phase_vocoder_simple) */
 GEN_2(polyshape, mus_polyshape_0, mus_polyshape_unmodulated)
 GEN_2(polywave, mus_polywave_unmodulated, mus_polywave)
 GEN_2(pulse_train, mus_pulse_train_unmodulated, mus_pulse_train)
@@ -9696,6 +9696,24 @@ GEN_2(two_zero, mus_two_zero_0, mus_two_zero)
 GEN_2(wave_train, mus_wave_train_unmodulated, mus_wave_train)
 GEN_3(ssb_am, mus_ssb_am_0, mus_ssb_am_unmodulated, mus_ssb_am)
 GEN_2(tap, mus_tap_unmodulated, mus_tap)
+
+/* convolve and phase-vocoder are omitted because their editing functions can
+ *   involve loops, causing the optimizer to step on itself.  Ideally, and
+ *   maybe eventually, the optimized program would be sequestered, but for
+ *   now these two generators will run slower.  One quick fix would be to 
+ *   have a simple-granulate|phase-vocoder that had no internal lambdas.
+ *   All we need is the name.  (Also I'm assuming that if src|convolve
+ *   have input functions, they won't involve loops -- here also we really
+ *   need a simple version of the generator).
+ */
+
+static s7_double mus_env_dp(s7_pointer p)
+{						
+  mus_any *g = NULL;
+  mus_xen *gn;
+  Xen_to_C_generator(p, gn, g, mus_is_env, S_env, "an env");
+  return(mus_env(g));			
+}
 
 static s7_double outa_did(s7_int pos, s7_double x)
 {
@@ -9856,7 +9874,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_v_function(s7_name_to_value(sc, S_fir_filter), mus_fir_filter_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_firmant), mus_firmant_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_formant), mus_formant_dv);
-  s7_set_d_v_function(s7_name_to_value(sc, S_granulate), mus_granulate_dv);
+  /* s7_set_d_v_function(s7_name_to_value(sc, S_granulate), mus_granulate_dv); */
   s7_set_d_v_function(s7_name_to_value(sc, S_iir_filter), mus_iir_filter_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_moving_average), mus_moving_average_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_moving_max), mus_moving_max_dv);
@@ -9871,7 +9889,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_v_function(s7_name_to_value(sc, S_one_zero), mus_one_zero_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_oscil), mus_oscil_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_oscil_bank), mus_oscil_bank_dv);
-  s7_set_d_v_function(s7_name_to_value(sc, S_phase_vocoder), mus_phase_vocoder_dv);
+  /* s7_set_d_v_function(s7_name_to_value(sc, S_phase_vocoder), mus_phase_vocoder_dv); */
   s7_set_d_v_function(s7_name_to_value(sc, S_polyshape), mus_polyshape_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_polywave), mus_polywave_dv);
   s7_set_d_v_function(s7_name_to_value(sc, S_pulse_train), mus_pulse_train_dv);
@@ -9972,6 +9990,8 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_ip_function(s7_name_to_value(sc, S_ina), ina_dip);
   s7_set_d_ip_function(s7_name_to_value(sc, S_inb), inb_dip);
 
+  s7_set_d_p_function(s7_name_to_value(sc, S_env), mus_env_dp);
+
   s7_set_d_pd_function(s7_name_to_value(sc, S_piano_noise), piano_noise_d_pd);
   s7_set_d_pd_function(s7_name_to_value(sc, S_polynomial), polynomial_d_pd);
 
@@ -9994,7 +10014,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_b_p_function(s7_name_to_value(sc, S_is_fir_filter), is_fir_filter_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_firmant), is_firmant_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_formant), is_formant_b);
-  s7_set_b_p_function(s7_name_to_value(sc, S_is_granulate), is_granulate_b);
+  /* s7_set_b_p_function(s7_name_to_value(sc, S_is_granulate), is_granulate_b); */
   s7_set_b_p_function(s7_name_to_value(sc, S_is_iir_filter), is_iir_filter_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_moving_average), is_moving_average_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_moving_max), is_moving_max_b);
@@ -10009,7 +10029,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_b_p_function(s7_name_to_value(sc, S_is_one_zero), is_one_zero_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_oscil), is_oscil_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_oscil_bank), is_oscil_bank_b);
-  s7_set_b_p_function(s7_name_to_value(sc, S_is_phase_vocoder), is_phase_vocoder_b);
+  /* s7_set_b_p_function(s7_name_to_value(sc, S_is_phase_vocoder), is_phase_vocoder_b); */
   s7_set_b_p_function(s7_name_to_value(sc, S_is_polyshape), is_polyshape_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_polywave), is_polywave_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_pulse_train), is_pulse_train_b);
@@ -10721,7 +10741,7 @@ static void mus_xen_init(void)
   Xen_define_typed_procedure(S_delay_tick,		g_delay_tick_w,            1, 1, 0, H_delay_tick,		
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r)); 
   Xen_define_typed_procedure(S_tap,			g_tap_w,                   1, 1, 0, H_tap,			
-			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_delay), r));
+			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_tap), r));
   Xen_define_typed_procedure(S_notch,			g_notch_w,                 1, 2, 0, H_notch,			
 			     s7_make_circular_signature(s7, 2, 3, d, s7_make_symbol(s7, S_is_notch), r));
   Xen_define_typed_procedure(S_comb,			g_comb_w,                  1, 2, 0, H_comb,			
