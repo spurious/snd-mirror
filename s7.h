@@ -658,6 +658,17 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
  *    d=double, i=integer, v=c_object, p=s7_pointer
  *    first return type, then arg types, d_vd -> returns double takes c_object and double (i.e. a standard clm generator)
  */
+
+/* It is possible to tell s7 to call a foreign function directly, without any scheme-related
+ *   overhead.  The call needs to take the form of one of the s7_*_t functions in s7.h.  For example,
+ *   one way to call + is to pass it two s7_double arguments and get an s7_double back.  This is the
+ *   s7_d_dd_t function (the first letter gives the return type, the rest give successive argument types).
+ *   We tell s7 about it via s7_set_d_dd_function.  Whenever s7's optimizer encounters + with two arguments
+ *   that it (the optimizer) knows are s7_doubles, in a context where an s7_double result is expected,
+ *   s7 calls the s7_d_dd_t function directly without consing a list of arguments, and without
+ *   wrapping up the result as a scheme cell.
+ */
+
 s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 
 typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
