@@ -762,6 +762,18 @@ typedef bool (*s7_b_p_t)(s7_pointer p);
 void s7_set_b_p_function(s7_pointer f, s7_b_p_t df);
 s7_b_p_t s7_b_p_function(s7_pointer f);
 
+typedef bool (*s7_b_pp_t)(s7_pointer p1, s7_pointer p2);
+void s7_set_b_pp_function(s7_pointer f, s7_b_pp_t df);
+s7_b_pp_t s7_b_pp_function(s7_pointer f);
+
+typedef bool (*s7_b_ii_t)(s7_int p1, s7_int p2);
+void s7_set_b_ii_function(s7_pointer f, s7_b_ii_t df);
+s7_b_ii_t s7_b_ii_function(s7_pointer f);
+
+typedef bool (*s7_b_dd_t)(s7_double p1, s7_double p2);
+void s7_set_b_dd_function(s7_pointer f, s7_b_dd_t df);
+s7_b_dd_t s7_b_dd_function(s7_pointer f);
+
 typedef s7_pointer (*s7_p_pp_t)(s7_pointer p1, s7_pointer p2);
 void s7_set_p_pp_function(s7_pointer f, s7_p_pp_t df);
 s7_p_pp_t s7_p_pp_function(s7_pointer f);
