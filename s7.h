@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.17"
-#define S7_DATE "28-Mar-17"
+#define S7_VERSION "4.18"
+#define S7_DATE "10-Apr-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -580,7 +580,7 @@ s7_pointer s7_procedure_signature(s7_scheme *sc, s7_pointer func);
 s7_pointer s7_values(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e);
 bool s7_is_iterator(s7_pointer obj);
-bool s7_iterator_is_at_end(s7_pointer obj);
+bool s7_iterator_is_at_end(s7_scheme *sc, s7_pointer obj);
 s7_pointer s7_iterate(s7_scheme *sc, s7_pointer iter);
 
   /* ancient form -- backwards compatibility */
@@ -718,6 +718,10 @@ typedef s7_double (*s7_d_ip_t)(s7_int i, s7_pointer p);
 void s7_set_d_ip_function(s7_pointer f, s7_d_ip_t df);
 s7_d_ip_t s7_d_ip_function(s7_pointer f);
 
+typedef s7_double (*s7_d_p_t)(s7_pointer p);
+void s7_set_d_p_function(s7_pointer f, s7_d_p_t df);
+s7_d_p_t s7_d_p_function(s7_pointer f);
+
 typedef s7_double (*s7_d_pi_t)(s7_pointer v, s7_int i);
 void s7_set_d_pi_function(s7_pointer f, s7_d_pi_t df);
 s7_d_pi_t s7_d_pi_function(s7_pointer f);
@@ -742,6 +746,10 @@ typedef s7_int (*s7_i_ii_t)(s7_int i1, s7_int i2);
 void s7_set_i_ii_function(s7_pointer f, s7_i_ii_t df);
 s7_i_ii_t s7_i_ii_function(s7_pointer f);
 
+typedef s7_int (*s7_i_p_t)(s7_pointer p);
+void s7_set_i_p_function(s7_pointer f, s7_i_p_t df);
+s7_i_p_t s7_i_p_function(s7_pointer f);
+
 typedef s7_int (*s7_i_pi_t)(s7_pointer p, s7_int i1);
 void s7_set_i_pi_function(s7_pointer f, s7_i_pi_t df);
 s7_i_pi_t s7_i_pi_function(s7_pointer f);
@@ -750,17 +758,13 @@ typedef s7_int (*s7_i_pii_t)(s7_pointer p, s7_int i1, s7_int i2);
 void s7_set_i_pii_function(s7_pointer f, s7_i_pii_t df);
 s7_i_pii_t s7_i_pii_function(s7_pointer f);
 
-typedef s7_pointer (*s7_p_p_t)(s7_pointer p);
-void s7_set_p_p_function(s7_pointer f, s7_p_p_t df);
-s7_p_p_t s7_p_p_function(s7_pointer f);
-
-typedef s7_double (*s7_d_p_t)(s7_pointer p);
-void s7_set_d_p_function(s7_pointer f, s7_d_p_t df);
-s7_d_p_t s7_d_p_function(s7_pointer f);
-
 typedef bool (*s7_b_p_t)(s7_pointer p);
 void s7_set_b_p_function(s7_pointer f, s7_b_p_t df);
 s7_b_p_t s7_b_p_function(s7_pointer f);
+
+typedef s7_pointer (*s7_p_p_t)(s7_pointer p);
+void s7_set_p_p_function(s7_pointer f, s7_p_p_t df);
+s7_p_p_t s7_p_p_function(s7_pointer f);
 
 typedef bool (*s7_b_pp_t)(s7_pointer p1, s7_pointer p2);
 void s7_set_b_pp_function(s7_pointer f, s7_b_pp_t df);
@@ -880,6 +884,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 10-Apr:    added s7_scheme first argument to s7_iterator_is_at_end.
  * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
  *            s7_optimize, s7_float_optimize, s7_procedure_signature.
  * 22-Feb:    removed the "gf" clm optimization functions.
