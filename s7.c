@@ -8465,6 +8465,13 @@ static s7_pointer g_string_to_keyword(s7_scheme *sc, s7_pointer args)
   return(s7_make_keyword(sc, string_value(car(args))));
 }
 
+static s7_pointer string_to_keyword_p_p(s7_pointer p) 
+{
+  if (!is_string(p))
+    simple_wrong_type_argument(hidden_sc, hidden_sc->string_to_keyword_symbol, p, T_STRING);
+  return(s7_make_keyword(hidden_sc, string_value(p)));
+}
+
 
 /* -------------------------------- keyword->symbol -------------------------------- */
 static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
@@ -8479,6 +8486,13 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   return(keyword_symbol(sym));
 }
 
+static s7_pointer keyword_to_symbol_p_p(s7_pointer p) 
+{
+  if (!is_keyword(p))
+    simple_wrong_type_argument_with_type(hidden_sc, hidden_sc->keyword_to_symbol_symbol, p, make_string_wrapper(hidden_sc, "a keyword"));
+  return(keyword_symbol(p));
+}
+
 
 /* -------------------------------- symbol->keyword -------------------------------- */
 static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
@@ -8491,6 +8505,12 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
   return(s7_make_keyword(sc, symbol_name(car(args))));
 }
 
+static s7_pointer symbol_to_keyword_p_p(s7_pointer p) 
+{
+  if (!is_symbol(p))
+    simple_wrong_type_argument(hidden_sc, hidden_sc->symbol_to_keyword_symbol, p, T_SYMBOL);
+  return(s7_make_keyword(hidden_sc, symbol_name(p)));
+}
 
 
 /* ---------------- uninterpreted pointers ---------------- */
@@ -35248,8 +35268,10 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			  /* TODO: is_all_x_safe not needed, if int|float-vector init arg small_int(0) or real_zero and mutable
 			   *         then use that in sort_func?
 			   */
+#if 0
 			  if (is_all_x_safe(sc, expr))
 			    {
+#endif
 			      new_frame_with_two_slots(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
 			      set_stepper(let_slots(sc->envir));
 			      set_stepper(next_slot(let_slots(sc->envir)));
@@ -35288,7 +35310,9 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			      compare_v1 = let_slots(sc->envir);
 			      compare_v2 = next_slot(let_slots(sc->envir));
 			    }
+#if 0
 			}
+#endif
 		    }
 		  set_optimize_op(expr, orig_data);
 		}
@@ -45976,7 +46000,6 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
        gcd get-output-string getenv 
        hash-table hash-table* help 
        imag-part inexact->exact inexact? infinite? inlet int-vector integer->char integer-decode-float integer-length iterate iterator-sequence 
-       keyword->symbol 
        lcm length let->list let-ref let-set! list list->string list->vector list-tail list-values load log logbit? 
        magnitude make-byte-vector make-float-vector make-hash-table make-int-vector make-iterator make-list 
          make-polar make-shared-vector make-string make-vector map max member memq memv min 
@@ -45986,8 +46009,8 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
          procedure-setter procedure-signature procedure-source provide
        random-state random-state->list rationalize real-part reverse reverse!
        set-car! set-cdr! set-current-error-port set-current-input-port set-current-output-port sort! sqrt 
-         stacktrace string string->byte-vector string->keyword string->list string->number string->symbol string-append
-	 string-copy string-downcase string-fill! string-position string-upcase sublet substring symbol symbol->dynamic-value symbol->keyword 
+         stacktrace string string->byte-vector string->list string->number string->symbol string-append
+	 string-copy string-downcase string-fill! string-position string-upcase sublet substring symbol symbol->dynamic-value
 	 symbol->value symbol-access system 
        throw tree-count tree-memq tree-set-memq 
        values varlet vector vector->list vector-append vector-dimensions vector-fill!
@@ -47341,6 +47364,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
   s7_pointer car_x;
 
   /* fprintf(stderr, "bool_opt: %s\n", DISPLAY(expr)); */
+
   if (sc->opt_index >= OPTS_SIZE)
     {
 #if DEBUGGING && OPT_PRINT
@@ -74774,6 +74798,9 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->string_to_symbol_symbol)), string_to_symbol_p);
   s7_set_p_p_function(slot_value(global_slot(sc->symbol_to_string_symbol)), symbol_to_string_p);
   s7_set_p_p_function(slot_value(global_slot(sc->number_to_string_symbol)), number_to_string_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_to_keyword_symbol)), string_to_keyword_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->symbol_to_keyword_symbol)), symbol_to_keyword_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->keyword_to_symbol_symbol)), keyword_to_symbol_p_p);
 
   s7_set_p_function(slot_value(global_slot(sc->gc_symbol)), gc_p);
   s7_set_p_p_function(slot_value(global_slot(sc->gc_symbol)), gc_p_p);
