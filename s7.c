@@ -32251,16 +32251,19 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 
 		  new_frame_with_two_slots(sc, sc->envir, sc->envir, car(closure_args(eq_func)), car(args), cadr(closure_args(eq_func)), sc->F);
 		  func = s7_bool_optimize(sc, body, sc->envir);
-		  /* func = all_x_eval(sc, body, sc->envir, let_symbol_is_safe); */ /* safe since local */
-		  b = next_slot(let_slots(sc->envir));
-
-		  for (; is_pair(x); x = cdr(x))
+		  if (func)
 		    {
-		      slot_set_value(b, caar(x));
-		      if (is_true(sc, func(sc, car(body))))
-			return(car(x));
+		      /* func = all_x_eval(sc, body, sc->envir, let_symbol_is_safe); */ /* safe since local */
+		      b = next_slot(let_slots(sc->envir));
+		      
+		      for (; is_pair(x); x = cdr(x))
+			{
+			  slot_set_value(b, caar(x));
+			  if (is_true(sc, func(sc, car(body))))
+			    return(car(x));
+			}
+		      return(sc->F);
 		    }
-		  return(sc->F);
 		}
 	    }
 	}
@@ -32700,15 +32703,18 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 
 		  new_frame_with_two_slots(sc, sc->envir, sc->envir, car(closure_args(eq_func)), car(args), cadr(closure_args(eq_func)), sc->F);
 		  func = s7_bool_optimize(sc, body, sc->envir);
-		  b = next_slot(let_slots(sc->envir));
-
-		  for (; is_pair(x); x = cdr(x))
+		  if (func)
 		    {
-		      slot_set_value(b, car(x));
-		      if (is_true(sc, func(sc, car(body))))
-			return(x);
+		      b = next_slot(let_slots(sc->envir));
+		      
+		      for (; is_pair(x); x = cdr(x))
+			{
+			  slot_set_value(b, car(x));
+			  if (is_true(sc, func(sc, car(body))))
+			    return(x);
+			}
+		      return(sc->F);
 		    }
-		  return(sc->F);
 		}
 	    }
 	}
@@ -35261,6 +35267,8 @@ static s7_function compare_func;
 static s7_pointer compare_args, compare_begin, compare_v1, compare_v2;
 static opcode_t compare_op;
 static s7_function s7_bool_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+static s7_pointer opt_bool_any(s7_scheme *sc, s7_pointer expr);
+static bool (*bool_compare_func)(s7_scheme *sc, s7_pointer expr);
 
 static int vector_compare(const void *v1, const void *v2)
 {
@@ -35293,9 +35301,21 @@ static int all_x_compare(const void *v1, const void *v2)
 {
   slot_set_value(compare_v1, (*(s7_pointer *)v1));
   slot_set_value(compare_v2, (*(s7_pointer *)v2));
-  if (is_true(compare_sc, compare_func(compare_sc, compare_args)))
-    return(-1);
-  return(1);
+  return((compare_func(compare_sc, compare_args) != compare_sc->F) ? -1 : 1);
+}
+
+static int opt_bool_compare(const void *v1, const void *v2)
+{
+  slot_set_value(compare_v1, (*(s7_pointer *)v1));
+  slot_set_value(compare_v2, (*(s7_pointer *)v2));
+  return((bool_compare_func(compare_sc, compare_args)) ? -1 : 1);
+}
+
+static bool opt_bool_call(s7_scheme *sc, s7_pointer args)
+{
+  hidden_sc = sc;
+  sc->opt_index = 0;
+  return(sc->opts[0]->caller.fb(sc->opts[0]));
 }
 
 static int closure_compare(const void *v1, const void *v2)
@@ -35428,36 +35448,43 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			      
 			      /* compare_func = all_x_eval(sc, closure_body(lessp), sc->envir, let_symbol_is_safe); */
 			      compare_func = s7_bool_optimize(sc, closure_body(lessp), sc->envir);
-			      
-			      /* if int-vect, try b_ii, float-vect b_dd else b_pp I guess */
-#if (!WITH_GMP) /* gmp version doesn't have less+2 or greater_2 */
-			      if ((is_int_vector(data)) || (is_float_vector(data)))
+			      if (compare_func)
 				{
-				  s7_pointer p;
-				  for (p = expr; is_pair(p); p = cdr(p))
-				    if ((has_all_x(p)) &&
-					(c_call(p) == local_x_c_ss) &&
-					(direct_memq(cadar(p), largs)) &&
-					(direct_memq(caddar(p), largs)))
-				      {
-					if (opt_cfunc(car(p)) == less_2)
+				  /* if int-vect, try b_ii, float-vect b_dd else b_pp I guess */
+#if (!WITH_GMP) /* gmp version doesn't have less+2 or greater_2 */
+				  if ((is_int_vector(data)) || (is_float_vector(data)))
+				    {
+				      s7_pointer p;
+				      for (p = expr; is_pair(p); p = cdr(p))
+					if ((has_all_x(p)) &&
+					    (c_call(p) == local_x_c_ss) &&
+					    (direct_memq(cadar(p), largs)) &&
+					    (direct_memq(caddar(p), largs)))
 					  {
-					    if (is_float_vector(data))
-					      set_c_call(car(p), g_dbl_less);
-					    else set_c_call(car(p), g_int_less);
+					    if (opt_cfunc(car(p)) == less_2)
+					      {
+						if (is_float_vector(data))
+						  set_c_call(car(p), g_dbl_less);
+						else set_c_call(car(p), g_int_less);
+					      }
+					    if (opt_cfunc(car(p)) == greater_2)
+					      {
+						if (is_float_vector(data))
+						  set_c_call(car(p), g_dbl_greater);
+						else set_c_call(car(p), g_int_greater);
+					      }
 					  }
-					if (opt_cfunc(car(p)) == greater_2)
-					  {
-					    if (is_float_vector(data))
-					      set_c_call(car(p), g_dbl_greater);
-					    else set_c_call(car(p), g_int_greater);
-					  }
-				      }
-				}
+				    }
 #endif
-			      sort_func = all_x_compare;
-			      compare_v1 = let_slots(sc->envir);
-			      compare_v2 = next_slot(let_slots(sc->envir));
+				  if (compare_func == opt_bool_any)
+				    {
+				      sort_func = opt_bool_compare;
+				      bool_compare_func = opt_bool_call;
+				    }
+				  else sort_func = all_x_compare;
+				  compare_v1 = let_slots(sc->envir);
+				  compare_v2 = next_slot(let_slots(sc->envir));
+				}
 			    }
 #if 0
 			}
@@ -46143,8 +46170,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
  *
  * thash: inlet/float-vector/list/int-vector/ *-for-cell (wrapped float-opt??)
  */
-/* pf: string<? args known to be string so _direct no type checks, why opt_wrap_bool in this case? all_x_compare assumes it!
- *       could look for opt_bool_any and go down 2 levels
+/* pf: string<? args known to be string so _direct no type checks, still 1 extra wrapper here
  */
 /* no opt_data:  
          p_i integer->char c-pointer(?)
@@ -74961,8 +74987,10 @@ s7_scheme *s7_init(void)
   c_function_p_ppp_direct(slot_value(global_slot(sc->hash_table_set_symbol))) = hash_table_set_p_ppp_direct;
 
   s7_set_p_pp_function(slot_value(global_slot(sc->fill_symbol)), fill_p_pp);
+#if (!WITH_GMP)
   s7_set_p_pp_function(slot_value(global_slot(sc->complex_symbol)), complex_p_pp);
   s7_set_p_p_function(slot_value(global_slot(sc->random_symbol)), random_p_p);
+#endif
 
   s7_set_p_p_function(slot_value(global_slot(sc->car_symbol)), car_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->cdr_symbol)), cdr_p_p);
