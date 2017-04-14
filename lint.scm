@@ -20351,9 +20351,11 @@
 	(let ()
 	  (define (let-temporarily-walker caller form env)
 	    (if (< (length form) 2)  ; empty body is ok here
-		(lint-format "let-temporarily is messed up: ~A" 'caller (truncated-list->string form))
+		(lint-format "let-temporarily is messed up: ~A" caller (truncated-list->string form))
 		(let ((new-env (cons (make-lint-var :let form 'let-temporarily) env)))
-		  (lint-walk caller (cadr form) new-env)
+		  (if (null? (cadr form))
+		      (lint-format "let-temporarily with no vars? ~A" caller (truncated-list->string form))
+		      (lint-walk caller (cadr form) new-env))
 		  (let ((e (lint-walk-body caller 'let-temporarily (cddr form) new-env)))
 		    (report-usage caller 'let-temporarily
 				  (if (eq? e new-env) 
@@ -22504,4 +22506,4 @@
 
 ;;; tons of rewrites in lg* (2300 lines)
 ;;;
-;;; 64 31733 879283
+;;; 64 31733 879305
