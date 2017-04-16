@@ -1044,7 +1044,7 @@ struct s7_scheme {
              ceiling_symbol, char_downcase_symbol, char_eq_symbol, char_geq_symbol, char_gt_symbol, char_leq_symbol, char_lt_symbol,
              char_position_symbol, char_to_integer_symbol, char_upcase_symbol, cload_directory_symbol, close_input_port_symbol, 
              close_output_port_symbol, complex_symbol, cons_symbol, copy_symbol, cos_symbol, cosh_symbol, coverlet_symbol, 
-             curlet_symbol, current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, 
+             curlet_symbol, current_error_port_symbol, current_input_port_symbol, current_output_port_symbol, cutlet_symbol, cyclic_sequences_symbol,
              denominator_symbol, dilambda_symbol, display_symbol, divide_symbol, dynamic_wind_symbol,
              eq_symbol, error_symbol, eval_string_symbol, eval_symbol, exact_to_inexact_symbol, exit_symbol, exp_symbol, expt_symbol,
              features_symbol, fill_symbol, float_vector_ref_symbol, float_vector_set_symbol, float_vector_symbol, floor_symbol, 
@@ -7147,6 +7147,8 @@ static s7_pointer g_let_to_list(s7_scheme *sc, s7_pointer args)
     }
   return(s7_let_to_list(sc, env));
 }
+
+static s7_pointer let_to_list_p_p(s7_pointer p) {return(g_let_to_list(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 
 
@@ -7942,6 +7944,8 @@ static s7_pointer g_symbol_to_dynamic_value(s7_scheme *sc, s7_pointer args)
     return(s7_symbol_value(sc, sym));
   return(val);
 }
+
+static s7_pointer symbol_to_dynamic_value_p_p(s7_pointer p) {return(g_symbol_to_dynamic_value(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 typedef bool (safe_sym_t)(s7_scheme *sc, s7_pointer sym, s7_pointer e);
@@ -11936,6 +11940,9 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
   return(g_string_to_number_1(sc, args, sc->string_to_number_symbol));
 }
 
+static s7_pointer string_to_number_p_p(s7_pointer p) {return(g_string_to_number(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer string_to_number_p_pp(s7_pointer p1, s7_pointer p2) {return(g_string_to_number(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
 {
@@ -12086,6 +12093,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
     }
 }
 
+static s7_pointer magnitude_p_p(s7_pointer z) {return(g_magnitude(hidden_sc, set_plist_1(hidden_sc, z)));}
 
 
 /* -------------------------------- rationalize -------------------------------- */
@@ -12167,6 +12175,10 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
     }
   return(sc->F); /* make compiler happy */
 }
+
+static s7_pointer rationalize_p_p(s7_pointer p) {return(g_rationalize(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer rationalize_p_pp(s7_pointer p1, s7_pointer p2) {return(g_rationalize(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 
 /* -------------------------------- angle -------------------------------- */
@@ -12330,6 +12342,8 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
    *    (make-polar 1.0 1e40) -> -0.76267273202438+0.64678458842683i, not 8.218988919070239214448025364432557517335E-1-5.696334009536363273080341815735687231337E-1i
    */
 }
+
+static s7_pointer make_polar_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_polar(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 #endif
 
 
@@ -13513,6 +13527,7 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 }
 
 
+
 /* -------------------------------- gcd -------------------------------- */
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
@@ -13988,8 +14003,23 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_int floor_i_d(s7_double x) {return((s7_int)floor(x));}
-static s7_double floor_d_d(s7_double x) {return(floor(x));}
+static s7_int floor_i_d(s7_double x) 
+{
+  if (is_NaN(x))
+    simple_out_of_range(hidden_sc, hidden_sc->floor_symbol, make_real(hidden_sc, x), its_nan_string);
+  if (fabs(x) > REAL_TO_INT_LIMIT)
+    simple_out_of_range(hidden_sc, hidden_sc->floor_symbol, make_real(hidden_sc, x), its_too_large_string);
+  return((s7_int)floor(x));
+}
+
+static s7_double floor_d_d(s7_double x) 
+{
+  if (is_NaN(x))
+    simple_out_of_range(hidden_sc, hidden_sc->floor_symbol, make_real(hidden_sc, x), its_nan_string);
+  if (fabs(x) > REAL_TO_INT_LIMIT)
+    simple_out_of_range(hidden_sc, hidden_sc->floor_symbol, make_real(hidden_sc, x), its_too_large_string);
+  return(floor(x));
+}
 
 
 /* -------------------------------- ceiling -------------------------------- */
@@ -14034,8 +14064,27 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_int ceiling_i_d(s7_double x) {return((s7_int)ceil(x));}
-static s7_double ceiling_d_d(s7_double x) {return(ceil(x));}
+static s7_int ceiling_i_d(s7_double x) 
+{
+  if (is_NaN(x))
+    simple_out_of_range(hidden_sc, hidden_sc->ceiling_symbol, make_real(hidden_sc, x), its_nan_string);
+  if ((is_inf(x)) ||
+      (x > REAL_TO_INT_LIMIT) ||
+      (x < -REAL_TO_INT_LIMIT))
+    simple_out_of_range(hidden_sc, hidden_sc->ceiling_symbol, make_real(hidden_sc, x), its_too_large_string);
+  return((s7_int)ceil(x));
+}
+
+static s7_double ceiling_d_d(s7_double x) 
+{
+  if (is_NaN(x))
+    simple_out_of_range(hidden_sc, hidden_sc->ceiling_symbol, make_real(hidden_sc, x), its_nan_string);
+  if ((is_inf(x)) ||
+      (x > REAL_TO_INT_LIMIT) ||
+      (x < -REAL_TO_INT_LIMIT))
+    simple_out_of_range(hidden_sc, hidden_sc->ceiling_symbol, make_real(hidden_sc, x), its_too_large_string);
+  return(ceil(x));
+}
 
 
 /* -------------------------------- truncate -------------------------------- */
@@ -14071,8 +14120,20 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_double truncate_d_d(s7_double x) {if (x > 0.0) return(floor(x)); return(ceil(x));}
-static s7_int truncate_i_d(s7_double x) {return((s7_int)truncate_d_d(x));}
+static s7_double truncate_d_d(s7_double x) 
+{
+  if (is_NaN(x))
+    simple_out_of_range(hidden_sc, hidden_sc->truncate_symbol, make_real(hidden_sc, x), its_nan_string);
+  if (is_inf(x))
+    simple_out_of_range(hidden_sc, hidden_sc->truncate_symbol, make_real(hidden_sc, x), its_infinite_string);
+  if (x > 0.0) return(floor(x)); 
+  return(ceil(x));
+}
+
+static s7_int truncate_i_d(s7_double x) 
+{
+  return((s7_int)truncate_d_d(x));
+}
 
 
 /* -------------------------------- round -------------------------------- */
@@ -14142,8 +14203,27 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
     }
 }
 
-static s7_int round_i_d(s7_double x) {return((s7_int)round_per_R5RS(x));}
-static s7_double round_d_d(s7_double x) {return(round_per_R5RS(x));}
+static s7_int round_i_d(s7_double z) 
+{
+  if (is_NaN(z))
+    simple_out_of_range(hidden_sc, hidden_sc->round_symbol, make_real(hidden_sc, z), its_nan_string);
+  if ((is_inf(z)) ||
+      (z > REAL_TO_INT_LIMIT) ||
+      (z < -REAL_TO_INT_LIMIT))
+    simple_out_of_range(hidden_sc, hidden_sc->round_symbol, make_real(hidden_sc, z), its_too_large_string);
+  return((s7_int)round_per_R5RS(z));
+}
+
+static s7_double round_d_d(s7_double z) 
+{
+  if (is_NaN(z))
+    simple_out_of_range(hidden_sc, hidden_sc->round_symbol, make_real(hidden_sc, z), its_nan_string);
+  if ((is_inf(z)) ||
+      (z > REAL_TO_INT_LIMIT) ||
+      (z < -REAL_TO_INT_LIMIT))
+    simple_out_of_range(hidden_sc, hidden_sc->round_symbol, make_real(hidden_sc, z), its_too_large_string);
+  return(round_per_R5RS(z));
+}
 
 
 static s7_int c_mod(s7_int x, s7_int y)
@@ -18856,6 +18936,13 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
   return(sc->T);
 }
 #endif
+
+static bool lt_pp(s7_pointer i1, s7_pointer i2) {return(g_less_2(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);}
+static bool leq_pp(s7_pointer i1, s7_pointer i2) {return(g_leq_2(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);}
+static bool gt_pp(s7_pointer i1, s7_pointer i2) {return(g_greater_2(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);}
+static bool geq_pp(s7_pointer i1, s7_pointer i2) {return(g_geq_2(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);}
+static bool req_pp(s7_pointer i1, s7_pointer i2) {return(g_equal(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);}
+
 /* end (!WITH_GMP) */
 
 static bool req_ii(s7_int i1, s7_int i2) {return(i1 == i2);}
@@ -18868,16 +18955,6 @@ static bool lt_dd(s7_double i1, s7_double i2) {return(i1 < i2);}
 static bool leq_dd(s7_double i1, s7_double i2) {return(i1 <= i2);}
 static bool gt_dd(s7_double i1, s7_double i2) {return(i1 > i2);}
 static bool geq_dd(s7_double i1, s7_double i2) {return(i1 >= i2);}
-static bool lt_pp(s7_pointer i1, s7_pointer i2) {return(real_to_double(hidden_sc, i1, "<") < real_to_double(hidden_sc, i2, "<"));}
-static bool leq_pp(s7_pointer i1, s7_pointer i2) {return(real_to_double(hidden_sc, i1, "<=") <= real_to_double(hidden_sc, i2, "<="));}
-static bool gt_pp(s7_pointer i1, s7_pointer i2) {return(real_to_double(hidden_sc, i1, ">") > real_to_double(hidden_sc, i2, ">"));}
-static bool geq_pp(s7_pointer i1, s7_pointer i2) {return(real_to_double(hidden_sc, i1, ">=") >= real_to_double(hidden_sc, i2, ">="));}
-
-static bool req_pp(s7_pointer i1, s7_pointer i2)
-{
-  return(g_equal(hidden_sc, set_plist_2(hidden_sc, i1, i2)) != hidden_sc->F);
-}
-
 
 
 /* ---------------------------------------- real-part imag-part ---------------------------------------- */
@@ -19419,6 +19496,9 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   #define Q_inexact_to_exact s7_make_signature(sc, 2, sc->is_rational_symbol, sc->is_real_symbol)
   return(inexact_to_exact(sc, car(args), WITH_OVERFLOW_ERROR));
 }
+
+static s7_pointer exact_to_inexact_p_p(s7_pointer p) {return(g_exact_to_inexact(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer inexact_to_exact_p_p(s7_pointer p) {return(g_inexact_to_exact(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 /* (!WITH_GMP) */
 
@@ -19597,6 +19677,8 @@ sign of 'x' (1 = positive, -1 = negative).  (integer-decode-float 0.0): (0 0 1)"
 		make_integer(sc, (s7_int)(((num.value.ix & 0x7fffffffffffffffLL) >> 52) - 1023 - 52)),
 		make_integer(sc, ((num.value.ix & 0x8000000000000000LL) != 0) ? -1 : 1)));
 }
+
+static s7_pointer integer_decode_float_p_p(s7_pointer p) {return(g_integer_decode_float(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 /* -------------------------------- logior -------------------------------- */
@@ -19818,6 +19900,9 @@ Pass this as the second argument to 'random' to get a repeatable random number s
 }
 
 #define g_random_state s7_random_state
+
+static s7_pointer random_state_p_p(s7_pointer seed) {return(g_random_state(hidden_sc, set_plist_1(hidden_sc, seed)));}
+static s7_pointer random_state_p_pp(s7_pointer seed, s7_pointer carry) {return(g_random_state(hidden_sc, set_plist_2(hidden_sc, seed, carry)));}
 #endif
 
 static s7_pointer rng_copy(s7_scheme *sc, s7_pointer args)
@@ -19886,6 +19971,8 @@ void s7_set_default_random_state(s7_scheme *sc, s7_int seed, s7_int carry)
   sc->default_rng = p;
 #endif
 }
+
+static s7_pointer random_state_to_list_p_p(s7_pointer p) {return(g_random_state_to_list(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 #if (!WITH_GMP)
 /* -------------------------------- random -------------------------------- */
@@ -20093,6 +20180,8 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument_with_type(sc, sc->integer_to_char_symbol, x, make_string_wrapper(sc, "an integer that can represent a character")));
   return(s7_make_character(sc, (unsigned char)ind));
 }
+
+static s7_pointer integer_to_char_p_p(s7_pointer p) {return(g_integer_to_char(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static unsigned char uppers[256], lowers[256];
@@ -20697,6 +20786,8 @@ static s7_pointer g_char_position(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+static s7_pointer char_position_p_pp(s7_pointer p1, s7_pointer p2) {return(g_char_position(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer char_position_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_char_position(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 static s7_pointer char_position_csi;
 static s7_pointer g_char_position_csi(s7_scheme *sc, s7_pointer args)
@@ -20781,6 +20872,8 @@ static s7_pointer g_string_position(s7_scheme *sc, s7_pointer args)
   return(make_integer(sc, p2 - s2));
 }
 
+static s7_pointer string_position_p_pp(s7_pointer p1, s7_pointer p2) {return(g_string_position(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer string_position_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_string_position(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 
 /* -------------------------------- strings -------------------------------- */
@@ -20975,6 +21068,9 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
     memset((void *)string_value(n), 0, (int)len);
   return(n);
 }
+
+static s7_pointer make_string_p_p(s7_pointer p) {return(g_make_string(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_string_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_string(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 #if (!WITH_PURE_S7)
@@ -21338,6 +21434,8 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
     method_or_bust(sc, p, sc->string_copy_symbol, args, T_STRING, 1);
   return(s7_make_string_with_length(sc, string_value(p), string_length(p)));
 }
+
+static s7_pointer string_copy_p_p(s7_pointer p) {return(g_string_copy(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 
 
@@ -21498,6 +21596,9 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
   return(s7_make_string_with_length(sc, "", 0));
 }
 
+static s7_pointer object_to_string_p_p(s7_pointer p) {return(g_object_to_string(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer object_to_string_p_pp(s7_pointer p1, s7_pointer p2) {return(g_object_to_string(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer object_to_string_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_object_to_string(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 
 /* -------------------------------- string comparisons -------------------------------- */
@@ -22007,6 +22108,8 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
   return(chr);
 }
 
+static s7_pointer string_fill_p_pp(s7_pointer obj, s7_pointer val) {return(g_string_fill(hidden_sc, set_plist_2(hidden_sc, obj, val)));}
+
 
 static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, s7_pointer sym)
 {
@@ -22059,6 +22162,12 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
   return(g_string_1(sc, args, sc->string_symbol));
 }
 
+static s7_pointer string_p(void) {return(s7_make_string_with_length(hidden_sc, "", 0));}
+static s7_pointer string_p_p(s7_pointer p) {return(g_string(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer string_p_pp(s7_pointer p1, s7_pointer p2) {return(g_string(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer string_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_string(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
+
+
 #if (!WITH_PURE_S7)
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
@@ -22072,6 +22181,8 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
     method_or_bust_with_type_one_arg(sc, car(args), sc->list_to_string_symbol, args, make_string_wrapper(sc, "a (proper, non-circular) list of characters"));
   return(g_string_1(sc, car(args), sc->list_to_string_symbol));
 }
+
+static s7_pointer list_to_string_p_p(s7_pointer p) {return(g_list_to_string(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 
 static s7_pointer s7_string_to_list(s7_scheme *sc, const char *str, int len)
@@ -22131,6 +22242,8 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->nil;
   return(p);
 }
+
+static s7_pointer string_to_list_p_p(s7_pointer p) {return(g_string_to_list(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 
 
@@ -22167,6 +22280,8 @@ static s7_pointer g_string_to_byte_vector(s7_scheme *sc, s7_pointer args)
   return(str);
 }
 
+static s7_pointer string_to_byte_vector_p_p(s7_pointer p) {return(g_string_to_byte_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -22200,6 +22315,9 @@ static s7_pointer g_make_byte_vector(s7_scheme *sc, s7_pointer args)
   set_byte_vector(str);
   return(str);
 }
+
+static s7_pointer make_byte_vector_p_p(s7_pointer p) {return(g_make_byte_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_byte_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_byte_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 static s7_pointer g_byte_vector(s7_scheme *sc, s7_pointer args)
@@ -22374,6 +22492,9 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
     return(c_port_filename(sc, sc->input_port));
   return(c_port_filename(sc, car(args)));
 }
+
+static s7_pointer port_filename_p(void) {return(c_port_filename(hidden_sc, hidden_sc->input_port));}
+static s7_pointer port_filename_p_p(s7_pointer p) {return(c_port_filename(hidden_sc, p));}
 
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p)
@@ -23632,6 +23753,9 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
   return(open_input_file_1(sc, string_value(name), "r", "open-input-file"));
 }
 
+static s7_pointer open_input_file_p_p(s7_pointer p) {return(g_open_input_file(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer open_input_file_p_pp(s7_pointer p1, s7_pointer p2) {return(g_open_input_file(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static void make_standard_ports(s7_scheme *sc)
 {
@@ -23773,6 +23897,9 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
   return(s7_open_output_file(sc, string_value(name), "w"));
 }
 
+static s7_pointer open_output_file_p_p(s7_pointer p) {return(g_open_output_file(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer open_output_file_p_pp(s7_pointer p1, s7_pointer p2) {return(g_open_output_file(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static s7_pointer open_input_string(s7_scheme *sc, const char *input_string, int len)
 {
@@ -23836,6 +23963,8 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
   port = open_and_protect_input_string(sc, input_string);
   return(port);
 }
+
+static s7_pointer open_input_string_p_p(s7_pointer p) {return(g_open_input_string(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 #define FORMAT_PORT_LENGTH 128
@@ -23918,6 +24047,9 @@ If the optional 'clear-port' is #t, the current string is flushed."
     }
   return(result);
 }
+
+static s7_pointer get_output_string_p_p(s7_pointer p) {return(g_get_output_string(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer get_output_string_p_pp(s7_pointer p1, s7_pointer p2) {return(g_get_output_string(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port))
@@ -24914,6 +25046,8 @@ in the file, or by the function."
   return(s7_wrong_type_arg_error(sc, "autoload", 2, value, "a string (file-name) or a thunk"));
 }
 
+static s7_pointer autoload_p_pp(s7_pointer p1, s7_pointer p2) {return(g_autoload(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static s7_pointer g_autoloader(s7_scheme *sc, s7_pointer args)
 {
@@ -25586,6 +25720,8 @@ static s7_pointer g_iterate(s7_scheme *sc, s7_pointer args)
   return((iterator_next(iter))(sc, iter));
 }
 
+static s7_pointer iterate_p_p(s7_pointer p) {return(g_iterate(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 s7_pointer s7_iterate(s7_scheme *sc, s7_pointer obj)
 {
@@ -25626,6 +25762,8 @@ static s7_pointer g_iterator_sequence(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument(sc, sc->iterator_sequence_symbol, iter, T_ITERATOR));
   return(iterator_sequence(iter));
 }
+
+static s7_pointer iterator_sequence_p_p(s7_pointer p) {return(g_iterator_sequence(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static s7_pointer g_iterator_is_at_end(s7_scheme *sc, s7_pointer args)
@@ -26057,6 +26195,8 @@ static int circular_list_entries(s7_pointer lst)
 	  return(i);
     }
 }
+
+static s7_pointer cyclic_sequences_p_p(s7_pointer p) {return(g_cyclic_sequences(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static void object_to_port_with_circle_check(s7_scheme *sc, s7_pointer vr, s7_pointer port, use_write_t use_write, shared_info *ci);
@@ -30051,6 +30191,8 @@ static s7_pointer g_getenv(s7_scheme *sc, s7_pointer args)
   return(s7_make_string(sc, getenv(string_value(name))));
 }
 
+static s7_pointer getenv_p_p(s7_pointer p) {return(g_getenv(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 static s7_pointer g_system(s7_scheme *sc, s7_pointer args)
 {
@@ -30128,6 +30270,8 @@ static s7_pointer g_directory_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->nil;
   return(result);
 }
+
+static s7_pointer directory_to_list_p_p(s7_pointer p) {return(g_directory_to_list(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static s7_pointer g_file_mtime(s7_scheme *sc, s7_pointer args)
@@ -31164,6 +31308,9 @@ static s7_pointer g_make_list(s7_scheme *sc, s7_pointer args)
   return(make_list(sc, (int)len, init));
 }
 
+static s7_pointer make_list_p_p(s7_pointer p) {return(g_make_list(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_list_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_list(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 
 /* -------------------------------- list-ref -------------------------------- */
@@ -31393,6 +31540,8 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   return(p);
 }
 
+static s7_pointer list_tail_p_pp(s7_pointer p1, s7_pointer p2) {return(g_list_tail(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 
 /* -------------------------------- cons -------------------------------- */
@@ -31524,6 +31673,14 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   method_or_bust(sc, p, sc->set_car_symbol, args, T_PAIR, 1);
 }
 
+static s7_pointer set_car_p_pp(s7_pointer p1, s7_pointer p2)
+{
+  if (!is_pair(p1))
+    simple_wrong_type_argument(hidden_sc, hidden_sc->set_car_symbol, p1, T_PAIR);
+  set_car(p1, p2);
+  return(p2);
+}
+
 
 /* -------- cdr -------- */
 static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
@@ -31558,6 +31715,14 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
 
   set_cdr(p, cadr(args));
   return(cdr(p));
+}
+
+static s7_pointer set_cdr_p_pp(s7_pointer p1, s7_pointer p2)
+{
+  if (!is_pair(p1))
+    simple_wrong_type_argument(hidden_sc, hidden_sc->set_cdr_symbol, p1, T_PAIR);
+  set_cdr(p1, p2);
+  return(p2);
 }
 
 
@@ -32433,8 +32598,7 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
 	      s7_pointer body;
 	      body = closure_body(eq_func);
 	      if ((is_optimized(car(body))) &&
-		  (is_null(cdr(body))) ) /* &&
-		  (is_all_x_safe(sc, car(body)))) */
+		  (is_null(cdr(body))))
 		{
 		  s7_function func;
 		  s7_pointer b;
@@ -32519,6 +32683,10 @@ If 'func' is a function of 2 arguments, it is used for the comparison instead of
     }
   return(sc->F); /* not reached */
 }
+
+static s7_pointer assq_p_pp(s7_pointer p1, s7_pointer p2) {return(g_assq(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer assv_p_pp(s7_pointer p1, s7_pointer p2) {return(g_assv(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer assoc_p_pp(s7_pointer p1, s7_pointer p2) {return(g_assoc(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 
@@ -32883,8 +33051,7 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	      s7_pointer body;
 	      body = closure_body(eq_func);
 	      if ((is_optimized(car(body))) &&
-		  (is_null(cdr(body)))) /* &&
-		  (is_all_x_safe(sc, car(body)))) */
+		  (is_null(cdr(body))))
 		{
 		  s7_function func;
 		  s7_pointer b;
@@ -32934,6 +33101,9 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
   return(member(sc, obj, x));
 }
 
+static s7_pointer memq_p_pp(s7_pointer p1, s7_pointer p2) {return(g_memq(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer memv_p_pp(s7_pointer p1, s7_pointer p2) {return(g_memv(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer member_p_pp(s7_pointer p1, s7_pointer p2) {return(g_member(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 static s7_pointer member_sq;
 static s7_pointer g_member_sq(s7_scheme *sc, s7_pointer args)
@@ -33144,6 +33314,11 @@ static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
   #define Q_list s7_make_circular_signature(sc, 1, 2, sc->is_proper_list_symbol, sc->T)
   return(copy_list(sc, args));
 }
+
+static s7_pointer list_p(void) {return(hidden_sc->nil);}
+static s7_pointer list_p_p(s7_pointer p) {return(g_list(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer list_p_pp(s7_pointer p1, s7_pointer p2) {return(g_list(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer list_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_list(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 static s7_pointer flist_0, flist_1, flist_2;
 static s7_pointer g_list_0(s7_scheme *sc, s7_pointer args)
@@ -33746,6 +33921,8 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
   return(fill);
 }
 
+static s7_pointer vector_fill_p_pp(s7_pointer obj, s7_pointer val) {return(g_vector_fill(hidden_sc, set_plist_2(hidden_sc, obj, val)));}
+
 
 s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, s7_int index)
 {
@@ -33992,6 +34169,8 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
   sc->w = sc->nil;
   return(p);
 }
+
+static s7_pointer vector_to_list_p_p(s7_pointer p) {return(g_vector_to_list(hidden_sc, set_plist_1(hidden_sc, p)));}
 #endif
 
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, s7_int len, s7_pointer fill)
@@ -34023,6 +34202,10 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+static s7_pointer vector_p(void) {return(make_vector_1(hidden_sc, 0, NOT_FILLED, T_VECTOR));}
+static s7_pointer vector_p_p(s7_pointer p) {return(g_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer vector_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_vector(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 static s7_pointer g_is_float_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -34057,6 +34240,10 @@ static s7_pointer g_float_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+static s7_pointer float_vector_p(void) {return(make_vector_1(hidden_sc, 0, NOT_FILLED, T_FLOAT_VECTOR));}
+static s7_pointer float_vector_p_p(s7_pointer p) {return(g_float_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer float_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_float_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer float_vector_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_float_vector(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
 
 static s7_pointer g_is_int_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -34089,6 +34276,11 @@ static s7_pointer g_int_vector(s7_scheme *sc, s7_pointer args)
   return(vec);
 }
 
+static s7_pointer int_vector_p(void) {return(make_vector_1(hidden_sc, 0, NOT_FILLED, T_INT_VECTOR));}
+static s7_pointer int_vector_p_p(s7_pointer p) {return(g_int_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer int_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_int_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+static s7_pointer int_vector_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_int_vector(hidden_sc, set_plist_3(hidden_sc, p1, p2, p3)));}
+
 
 s7_int s7_vector_length(s7_pointer vec)
 {
@@ -34112,6 +34304,8 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 
   return(g_vector(sc, p));  
 }
+
+static s7_pointer list_to_vector_p_p(s7_pointer p) {return(g_list_to_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
@@ -34810,6 +35004,9 @@ returns a 2 dimensional vector of 6 total elements, all initialized to 1.0."
   return(g_make_vector_1(sc, args, sc->make_vector_symbol));
 }
 
+static s7_pointer make_vector_p_p(s7_pointer p) {return(g_make_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -34861,6 +35058,9 @@ static s7_pointer g_make_float_vector(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+static s7_pointer make_float_vector_p_p(s7_pointer p) {return(g_make_float_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_float_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_float_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
+
 
 static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
 {
@@ -34907,6 +35107,8 @@ static s7_pointer g_make_int_vector(s7_scheme *sc, s7_pointer args)
   return(x);
 }
 
+static s7_pointer make_int_vector_p_p(s7_pointer p) {return(g_make_int_vector(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer make_int_vector_p_pp(s7_pointer p1, s7_pointer p2) {return(g_make_int_vector(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
@@ -34947,6 +35149,8 @@ static s7_pointer g_vector_dimensions(s7_scheme *sc, s7_pointer args)
     }
   return(list_1(sc, make_integer(sc, vector_length(x))));
 }
+
+static s7_pointer vector_dimensions_p_p(s7_pointer p) {return(g_vector_dimensions(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 #define MULTIVECTOR_TOO_MANY_ELEMENTS -1
@@ -35619,61 +35823,59 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			}
 		      else
 			{
-			  /* TODO: is_all_x_safe not needed, if int|float-vector init arg small_int(0) or real_zero and mutable
-			   *         then use that in sort_func?
-			   */
-#if 0
-			  if (is_all_x_safe(sc, expr))
+			  s7_pointer init_val;
+			  if (is_float_vector(data))
+			    init_val = real_zero;
+			  else
 			    {
-#endif
-			      new_frame_with_two_slots(sc, closure_let(lessp), sc->envir, car(largs), sc->F, cadr(largs), sc->F);
-			      set_stepper(let_slots(sc->envir));
-			      set_stepper(next_slot(let_slots(sc->envir)));
-			      compare_args = expr;
-			      
-			      /* compare_func = all_x_eval(sc, closure_body(lessp), sc->envir, let_symbol_is_safe); */
-			      compare_func = s7_bool_optimize(sc, closure_body(lessp), sc->envir);
-			      if (compare_func)
-				{
-				  /* if int-vect, try b_ii, float-vect b_dd else b_pp I guess */
-#if (!WITH_GMP) /* gmp version doesn't have less+2 or greater_2 */
-				  if ((is_int_vector(data)) || (is_float_vector(data)))
-				    {
-				      s7_pointer p;
-				      for (p = expr; is_pair(p); p = cdr(p))
-					if ((has_all_x(p)) &&
-					    (c_call(p) == local_x_c_ss) &&
-					    (direct_memq(cadar(p), largs)) &&
-					    (direct_memq(caddar(p), largs)))
-					  {
-					    if (opt_cfunc(car(p)) == less_2)
-					      {
-						if (is_float_vector(data))
-						  set_c_call(car(p), g_dbl_less);
-						else set_c_call(car(p), g_int_less);
-					      }
-					    if (opt_cfunc(car(p)) == greater_2)
-					      {
-						if (is_float_vector(data))
-						  set_c_call(car(p), g_dbl_greater);
-						else set_c_call(car(p), g_int_greater);
-					      }
-					  }
-				    }
-#endif
-				  if (compare_func == opt_bool_any)
-				    {
-				      sort_func = opt_bool_compare;
-				      bool_compare_func = opt_bool_call;
-				    }
-				  else sort_func = all_x_compare;
-				  compare_v1 = let_slots(sc->envir);
-				  compare_v2 = next_slot(let_slots(sc->envir));
-				}
+			      if (is_int_vector(data))
+				init_val = small_int(0);
+			      else init_val = sc->F;
 			    }
-#if 0
-			}
+			  new_frame_with_two_slots(sc, closure_let(lessp), sc->envir, car(largs), init_val, cadr(largs), init_val);
+			  set_stepper(let_slots(sc->envir));
+			  set_stepper(next_slot(let_slots(sc->envir)));
+			  compare_args = expr;
+			  
+			  compare_func = s7_bool_optimize(sc, closure_body(lessp), sc->envir);
+			  if (compare_func)
+			    {
+			      /* if int-vect, try b_ii, float-vect b_dd else b_pp I guess */
+#if (!WITH_GMP) /* gmp version doesn't have less_2 or greater_2 */
+			      if ((is_int_vector(data)) || (is_float_vector(data)))
+				{
+				  s7_pointer p;
+				  for (p = expr; is_pair(p); p = cdr(p))
+				    if ((has_all_x(p)) &&
+					(c_call(p) == local_x_c_ss) &&
+					(direct_memq(cadar(p), largs)) &&
+					(direct_memq(caddar(p), largs)))
+				      {
+					if (opt_cfunc(car(p)) == less_2)
+					  {
+					    if (is_float_vector(data))
+					      set_c_call(car(p), g_dbl_less);
+					    else set_c_call(car(p), g_int_less);
+					  }
+					if (opt_cfunc(car(p)) == greater_2)
+					  {
+					    if (is_float_vector(data))
+					      set_c_call(car(p), g_dbl_greater);
+					    else set_c_call(car(p), g_int_greater);
+					  }
+				      }
+				}
 #endif
+			      if (compare_func == opt_bool_any)
+				{
+				  sort_func = opt_bool_compare;
+				  bool_compare_func = opt_bool_call;
+				}
+			      else sort_func = all_x_compare;
+			      compare_v1 = let_slots(sc->envir);
+			      compare_v2 = next_slot(let_slots(sc->envir));
+			    }
+			}
 		    }
 		  set_optimize_op(expr, orig_data);
 		}
@@ -37665,6 +37867,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   return(sc->nil);
 }
 
+static s7_pointer procedure_source_p_p(s7_pointer p) {return(g_procedure_source(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 s7_pointer s7_funclet(s7_scheme *sc, s7_pointer p)
 {
@@ -37969,6 +38173,8 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
   return(s7_make_string(sc, s7_procedure_documentation(sc, p)));
 }
 
+static s7_pointer procedure_documentation_p_p(s7_pointer p) {return(g_procedure_documentation(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 /* -------------------------------- help -------------------------------- */
 const char *s7_help(s7_scheme *sc, s7_pointer obj)
@@ -38044,6 +38250,7 @@ static s7_pointer g_procedure_signature(s7_scheme *sc, s7_pointer args)
   return(s7_procedure_signature(sc, p));
 }
 
+static s7_pointer procedure_signature_p_p(s7_pointer p) {return(g_procedure_signature(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 /* -------------------------------- new types (c_objects) -------------------------------- */
@@ -38464,6 +38671,8 @@ static s7_pointer g_procedure_setter(s7_scheme *sc, s7_pointer args)
   return(s7_wrong_type_arg_error(sc, "procedure-setter", 0, p, "a procedure or a reasonable facsimile thereof"));
 }
 
+static s7_pointer procedure_setter_p_p(s7_pointer p) {return(g_procedure_setter(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 static s7_pointer g_procedure_set_setter(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p, setter;
@@ -38658,6 +38867,8 @@ static s7_pointer g_arity(s7_scheme *sc, s7_pointer args)
   /* check_method(sc, p, sc->arity_symbol, args); */
   return(s7_arity(sc, car(args)));
 }
+
+static s7_pointer arity_p_p(s7_pointer p) {return(g_arity(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static bool closure_is_aritable(s7_scheme *sc, s7_pointer x, s7_pointer x_args, int args)
@@ -38910,6 +39121,9 @@ static s7_pointer g_symbol_access(s7_scheme *sc, s7_pointer args)
 
   return(sc->F);
 }
+
+static s7_pointer symbol_access_p_p(s7_pointer p) {return(g_symbol_access(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer symbol_access_p_pp(s7_pointer p1, s7_pointer p2) {return(g_symbol_access(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 static s7_pointer g_symbol_set_access(s7_scheme *sc, s7_pointer args)
@@ -39868,6 +40082,8 @@ list has infinite length.  Length of anything else returns #f."
  *   but we're actually looking at the port, so its length is what remains to be read? (if input port)
  */
 
+static s7_pointer length_p_p(s7_pointer p) {return(g_length(hidden_sc, set_plist_1(hidden_sc, p)));}
+
 
 
 /* -------------------------------- copy -------------------------------- */
@@ -40495,6 +40711,8 @@ s7_pointer s7_copy(s7_scheme *sc, s7_pointer args)
 
 #define g_copy s7_copy
 
+static s7_pointer copy_p_p(s7_pointer p) {return(g_copy(hidden_sc, set_plist_1(hidden_sc, p)));}
+static s7_pointer copy_p_pp(s7_pointer p1, s7_pointer p2) {return(g_copy(hidden_sc, set_plist_2(hidden_sc, p1, p2)));}
 
 
 /* -------------------------------- reverse -------------------------------- */
@@ -40791,10 +41009,7 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args)
  *   similarly for length, reverse etc
  */
 
-static s7_pointer fill_p_pp(s7_pointer obj, s7_pointer val)
-{
-  return(s7_fill(hidden_sc, set_plist_2(hidden_sc, obj, val)));
-}
+static s7_pointer fill_p_pp(s7_pointer obj, s7_pointer val) {return(s7_fill(hidden_sc, set_plist_2(hidden_sc, obj, val)));}
 
 
 /* -------------------------------- append -------------------------------- */
@@ -41534,6 +41749,7 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+static s7_pointer object_to_let_p_p(s7_pointer p) {return(g_object_to_let(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 /* ---------------- stacktrace ---------------- */
@@ -46124,6 +46340,8 @@ static bool opt_float_not_pair(s7_scheme *sc, s7_pointer car_x)
   opt_info *cur_info;
   if (is_real(car_x))
     {
+      if (s7_is_ratio(car_x))
+	return(false);
       cur_info = sc->opts[sc->opt_index++];
       cur_info->x1 = s7_number_to_real(sc, car_x);
       cur_info->caller.fd = opt_d_c;
@@ -46136,6 +46354,8 @@ static bool opt_float_not_pair(s7_scheme *sc, s7_pointer car_x)
       if ((is_slot(p)) &&
 	  (is_real(slot_value(p))))
 	{
+	  if (s7_is_ratio(slot_value(p)))
+	    return(false);
 	  cur_info = sc->opts[sc->opt_index++];
 	  cur_info->p1 = p;
 	  if (is_float(slot_value(p)))
@@ -46352,39 +46572,19 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
  *
  * finish the t563.scm bugs:
  *    a couple number type problems 31905 30802 
- *    floor et al with nan/infs, < et al with tricky ratios/ints
  * map int problem may be arg initial value problem -- add_p_pp here?
  *
  * thash: inlet/float-vector/list/int-vector/ *-for-cell (wrapped float-opt??)
+ *   ref/set index=ctr and end<=size -- no need for bounds check
+ *   int|float-vector not noticed -- need p|d|i_dx|ix|px ? at least 1-arg
  *
- * no opt_data:  
-         p_i integer->char c-pointer
-	 p   values vector(etc)
-	 d_p: magnitude exact->inexact
-
-       append apply apply-values arity assoc assq assv autoload 
-       byte-vector
-       c-pointer call-with-exit call-with-input-file call-with-input-string call-with-output-file 
-         call-with-output-string call/cc catch char-position copy cutlet cyclic-sequences 
-       dilambda directory->list dynamic-wind 
-       error eval eval-string exact->inexact
-       float-vector for-each format
-       gcd get-output-string getenv 
-       hash-table hash-table*
-       inexact->exact inlet int-vector integer->char integer-decode-float iterate iterator-sequence 
-       lcm length let->list let-ref let-set! list list->string list->vector list-tail list-values load logbit? 
-       magnitude make-byte-vector make-float-vector make-hash-table make-int-vector make-iterator make-list 
-         make-polar make-shared-vector make-string make-vector map max member memq memv min 
-       object->let object->string open-input-file open-input-string open-output-file
-       pair-filename port-filename procedure-documentation procedure-setter procedure-signature procedure-source
-       random-state random-state->list rationalize
-       set-car! set-cdr! sort! stacktrace string string->byte-vector string->list string->number string->symbol string-append
-	 string-copy string-fill! string-position sublet substring symbol symbol->dynamic-value symbol->value symbol-access system 
-       throw tree-count
-       values varlet vector vector->list vector-append vector-dimensions vector-fill!
-       with-input-from-file with-input-from-string with-output-to-file with-output-to-string write-string 
-*/
-
+ * can't be optimized here, I think: load eval eval-string with* call-with* call/cc catch cutlet varlet dynamic-wind
+ *     also iterate with closure? what about member/assoc with func? sort!? map for-each
+ *  TODO:
+ *     append apply apply-values byte-vector c-pointer dilambda error format gcd hash-table hash-table*
+ *     inlet lcm let-ref let-set! list-values logbit? make-hash-table make-iterator make-shared-vector max min 
+ *     stacktrace string-append sublet substring symbol symbol->value system throw tree-count values vector-append write-string 
+ */
 
 
 #define OPT_PRINT 0
@@ -48184,18 +48384,15 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       body = closure_body(f);
       expr = car(body);
       if ((is_null(cdr(body))) &&           /* TODO: 1-expr body is not a necessary map/for-each */
-	  (is_optimized(expr)) ) /* &&
-	  (is_all_x_op(optimize_op(expr)))) */
+	  (is_optimized(expr)))
 	{
 	  s7_function func;
 	  s7_pointer slot, iter;
 	  iter = caar(sc->z);
-	  /* sc->z = sc->nil; */
 	  push_stack(sc, OP_NO_OP, iter, f);
 	  sc->envir = new_frame_in_env(sc, sc->envir);
 	  slot = make_slot_1(sc, sc->envir, car(closure_args(f)), sc->F);
-	  /* func = all_x_eval(sc, body, sc->envir, let_symbol_is_safe); */
-	  func = s7_optimize(sc, body, sc->envir);
+	  func = s7_optimize(sc, body, sc->envir);  /* TODO: s7_optimize_nr? op_dotimes but use cell_optimize */
 	  if (func)
 	    {
 	      sc->z = sc->nil;
@@ -49796,6 +49993,8 @@ static s7_pointer g_pair_filename(s7_scheme *sc, s7_pointer args)
     }
   return(sc->F);
 }
+
+static s7_pointer pair_filename_p_p(s7_pointer p) {return(g_pair_filename(hidden_sc, set_plist_1(hidden_sc, p)));}
 
 
 static s7_pointer lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
@@ -56210,13 +56409,11 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
       if (is_symbol(func))    /* func can be sc->gc_nil (see check_lambda and check_lambda_star) */
  	{
  	  s7_pointer lst;
- 	  unsigned int gc_loc;
  	  lst = cons(sc, add_symbol_to_list(sc, func), sc->nil);
- 	  gc_loc = s7_gc_protect(sc, lst); /* perhaps use sc->temp10 here */
-	  /* fprintf(stderr, "%s[%d]: %s\n", __func__, __LINE__, DISPLAY(body)); */
+	  sc->temp10 = lst;
  	  if (optimize(sc, body, 1, collect_parameters(sc, args, lst)) == OPT_OOPS)
 	    clear_all_optimizations(sc, body);
- 	  s7_gc_unprotect_at(sc, gc_loc);
+	  sc->temp10 = sc->nil;
  	}
       else 
 	{
@@ -74852,7 +75049,7 @@ s7_scheme *s7_init(void)
   sc->hash_table_set_symbol =        defun("hash-table-set!",	hash_table_set,		3, 0, false);
   sc->hash_table_entries_symbol =    defun("hash-table-entries", hash_table_entries,	1, 0, false);
 
-                                     defun("cyclic-sequences",  cyclic_sequences,	1, 0, false);
+  sc->cyclic_sequences_symbol =      defun("cyclic-sequences",  cyclic_sequences,	1, 0, false);
   sc->call_cc_symbol =               unsafe_defun("call/cc",	call_cc,		1, 0, false);
   sc->call_with_current_continuation_symbol = unsafe_defun("call-with-current-continuation", call_cc, 1, 0, false);
   sc->call_with_exit_symbol =        unsafe_defun("call-with-exit", call_with_exit,	1, 0, false);
@@ -74876,7 +75073,7 @@ s7_scheme *s7_init(void)
   /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
   sc->stacktrace_symbol =            defun("stacktrace",	stacktrace,		0, 5, false);
 
-  sc->apply_values_symbol =           unsafe_defun("apply-values", apply_values, 0, 0, true);
+  sc->apply_values_symbol =          unsafe_defun("apply-values", apply_values, 0, 0, true);
   set_immutable(sc->apply_values_symbol);
   sc->apply_values_function = slot_value(global_slot(sc->apply_values_symbol));
 
@@ -74906,7 +75103,7 @@ s7_scheme *s7_init(void)
   sc->exit_symbol =                  defun("exit",		exit,			0, 1, false);
 #if DEBUGGING
   s7_define_function(sc, "abort", g_abort, 0, 0, true, "drop into gdb I hope");
-  s7_define_function(sc, "s7-optimize", g_optimize, 1, 0, false, "short-term debugging aide");
+  s7_define_function(sc, "s7-optimize", g_optimize, 1, 0, false, "short-term debugging aid");
 #endif
 
   sym = s7_define_function(sc, "(c-object set)", g_internal_object_set, 1, 0, true, "internal object setter redirection");
@@ -75203,7 +75400,9 @@ s7_scheme *s7_init(void)
 #endif
 
   s7_set_p_p_function(slot_value(global_slot(sc->car_symbol)), car_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->set_car_symbol)), set_car_p_pp);
   s7_set_p_p_function(slot_value(global_slot(sc->cdr_symbol)), cdr_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->set_cdr_symbol)), set_cdr_p_pp);
   s7_set_p_p_function(slot_value(global_slot(sc->caar_symbol)), caar_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->cadr_symbol)), cadr_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->cdar_symbol)), cdar_p_p);
@@ -75260,10 +75459,36 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->flush_output_port_symbol)), flush_output_port_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->close_output_port_symbol)), close_output_port_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->close_input_port_symbol)), close_input_port_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->pair_filename_symbol)), pair_filename_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->port_filename_symbol)), port_filename_p_p);
+  s7_set_p_function(slot_value(global_slot(sc->port_filename_symbol)), port_filename_p);
   s7_set_p_p_function(slot_value(global_slot(sc->pair_line_number_symbol)), pair_line_number_p_p);
   s7_set_i_p_function(slot_value(global_slot(sc->port_line_number_symbol)), port_line_number_i_p);
   s7_set_p_p_function(slot_value(global_slot(sc->reverse_symbol)), reverse_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->reverseb_symbol)), reverse_in_place_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->copy_symbol)), copy_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->copy_symbol)), copy_p_pp);
+
+  s7_set_p_function(slot_value(global_slot(sc->vector_symbol)), vector_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->vector_symbol)), vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->vector_symbol)), vector_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->vector_symbol)), vector_p_ppp);
+  s7_set_p_function(slot_value(global_slot(sc->float_vector_symbol)), float_vector_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->float_vector_symbol)), float_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->float_vector_symbol)), float_vector_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->float_vector_symbol)), float_vector_p_ppp);
+  s7_set_p_function(slot_value(global_slot(sc->int_vector_symbol)), int_vector_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->int_vector_symbol)), int_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->int_vector_symbol)), int_vector_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->int_vector_symbol)), int_vector_p_ppp);
+  s7_set_p_function(slot_value(global_slot(sc->list_symbol)), list_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->list_symbol)), list_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->list_symbol)), list_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->list_symbol)), list_p_ppp);
+  s7_set_p_function(slot_value(global_slot(sc->string_symbol)), string_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_symbol)), string_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->string_symbol)), string_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->string_symbol)), string_p_ppp);
 
   s7_set_p_function(slot_value(global_slot(sc->read_symbol)), read_p);
   s7_set_p_p_function(slot_value(global_slot(sc->read_symbol)), read_p_p);
@@ -75281,6 +75506,14 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->number_to_string_symbol)), number_to_string_p_p);
   s7_set_p_pp_function(slot_value(global_slot(sc->number_to_string_symbol)), number_to_string_p_pp);
   s7_set_p_pp_function(slot_value(global_slot(sc->cons_symbol)), cons_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->random_state_to_list_symbol)), random_state_to_list_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->object_to_let_symbol)), object_to_let_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->object_to_string_symbol)), object_to_string_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->object_to_string_symbol)), object_to_string_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->object_to_string_symbol)), object_to_string_p_ppp);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_to_byte_vector_symbol)), string_to_byte_vector_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->cyclic_sequences_symbol)), cyclic_sequences_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->symbol_to_dynamic_value_symbol)), symbol_to_dynamic_value_p_p);
 
   s7_set_p_function(slot_value(global_slot(sc->s7_version_symbol)), s7_version_p);
   s7_set_p_function(slot_value(global_slot(sc->symbol_table_symbol)), symbol_table_p);
@@ -75292,8 +75525,21 @@ s7_scheme *s7_init(void)
   s7_set_p_function(slot_value(global_slot(sc->current_output_port_symbol)), current_output_port_p);
   s7_set_p_function(slot_value(global_slot(sc->current_error_port_symbol)), current_error_port_p);
   s7_set_p_function(slot_value(global_slot(sc->open_output_string_symbol)), open_output_string_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->open_input_string_symbol)), open_input_string_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->open_input_file_symbol)), open_input_file_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->open_input_file_symbol)), open_input_file_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->open_output_file_symbol)), open_output_file_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->open_output_file_symbol)), open_output_file_p_pp);
 
   s7_set_p_p_function(slot_value(global_slot(sc->help_symbol)), help_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->procedure_source_symbol)), procedure_source_p_p);
+  s7_set_p_p_function(slot_value(global_slot(s7_make_symbol(sc, "procedure-setter"))), procedure_setter_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->procedure_signature_symbol)), procedure_signature_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->procedure_documentation_symbol)), procedure_documentation_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->arity_symbol)), arity_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->iterate_symbol)), iterate_p_p);
+
+  s7_set_p_p_function(slot_value(global_slot(sc->iterator_sequence_symbol)), iterator_sequence_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->string_downcase_symbol)), string_downcase_p);
   s7_set_p_p_function(slot_value(global_slot(sc->string_upcase_symbol)), string_upcase_p);
   s7_set_p_p_function(slot_value(global_slot(sc->char_downcase_symbol)), char_downcase_p);
@@ -75303,6 +75549,42 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->coverlet_symbol)), coverlet_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->outlet_symbol)), outlet_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->funclet_symbol)), funclet_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->integer_decode_float_symbol)), integer_decode_float_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->vector_dimensions_symbol)), vector_dimensions_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_to_number_symbol)), string_to_number_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->string_to_number_symbol)), string_to_number_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_string_symbol)), make_string_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_string_symbol)), make_string_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_list_symbol)), make_list_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_list_symbol)), make_list_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_vector_symbol)), make_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_vector_symbol)), make_vector_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_int_vector_symbol)), make_int_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_int_vector_symbol)), make_int_vector_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_float_vector_symbol)), make_float_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_float_vector_symbol)), make_float_vector_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->make_byte_vector_symbol)), make_byte_vector_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_byte_vector_symbol)), make_byte_vector_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->vector_fill_symbol)), vector_fill_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->string_fill_symbol)), string_fill_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->get_output_string_symbol)), get_output_string_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->get_output_string_symbol)), get_output_string_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->autoload_symbol)), autoload_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->list_tail_symbol)), list_tail_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->symbol_access_symbol)), symbol_access_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->symbol_access_symbol)), symbol_access_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->length_symbol)), length_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->char_position_symbol)), char_position_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->char_position_symbol)), char_position_p_ppp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->string_position_symbol)), string_position_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(sc->string_position_symbol)), string_position_p_ppp);
+
+  s7_set_p_pp_function(slot_value(global_slot(sc->memq_symbol)), memq_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->memv_symbol)), memv_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->member_symbol)), member_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->assq_symbol)), assq_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->assv_symbol)), assv_p_pp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->assoc_symbol)), assoc_p_pp);
 
 #if (!WITH_GMP)
   s7_set_i_i_function(slot_value(global_slot(sc->abs_symbol)), abs_i_i);
@@ -75340,7 +75622,8 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->atanh_symbol)), atanh_p_p);
 
   s7_set_p_pp_function(slot_value(global_slot(sc->expt_symbol)), expt_p_pp);
-
+  s7_set_p_p_function(slot_value(global_slot(sc->rationalize_symbol)), rationalize_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->rationalize_symbol)), rationalize_p_pp);
 #endif
 
   s7_set_d_d_function(slot_value(global_slot(sc->add_symbol)), add_d_d);
@@ -75373,6 +75656,9 @@ s7_scheme *s7_init(void)
   s7_set_d_p_function(slot_value(global_slot(sc->imag_part_symbol)), imag_part_d_p);
 
 #if (!WITH_GMP)
+  s7_set_p_p_function(slot_value(global_slot(sc->random_state_symbol)), random_state_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(sc->random_state_symbol)), random_state_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->magnitude_symbol)), magnitude_p_p);
   s7_set_d_p_function(slot_value(global_slot(sc->angle_symbol)), angle_d_p);
   s7_set_i_d_function(slot_value(global_slot(sc->round_symbol)), round_i_d);
   s7_set_i_d_function(slot_value(global_slot(sc->floor_symbol)), floor_i_d);
@@ -75401,16 +75687,25 @@ s7_scheme *s7_init(void)
   s7_set_i_i_function(slot_value(global_slot(sc->integer_length_symbol)), integer_length_i_i);
   s7_set_i_p_function(slot_value(global_slot(sc->string_length_symbol)), string_length_i);
   s7_set_i_p_function(slot_value(global_slot(sc->vector_length_symbol)), vector_length_i);
+  s7_set_p_p_function(slot_value(global_slot(sc->vector_to_list_symbol)), vector_to_list_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->list_to_vector_symbol)), list_to_vector_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->list_to_string_symbol)), list_to_string_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_to_list_symbol)), string_to_list_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->string_copy_symbol)), string_copy_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->let_to_list_symbol)), let_to_list_p_p);
 #endif
   s7_set_i_p_function(slot_value(global_slot(sc->numerator_symbol)), numerator_i);
   s7_set_i_p_function(slot_value(global_slot(sc->denominator_symbol)), denominator_i);
   s7_set_i_p_function(slot_value(global_slot(sc->char_to_integer_symbol)), char_to_integer_i);
+  s7_set_p_p_function(slot_value(global_slot(sc->integer_to_char_symbol)), integer_to_char_p_p);
   s7_set_i_p_function(slot_value(global_slot(sc->hash_table_entries_symbol)), hash_table_entries_i);
   s7_set_i_p_function(slot_value(global_slot(s7_make_symbol(sc, "tree-leaves"))), tree_leaves_i);
 
 #if (!WITH_PURE_S7)
   s7_set_b_p_function(slot_value(global_slot(sc->is_exact_symbol)), s7_is_rational);
   s7_set_b_p_function(slot_value(global_slot(sc->is_char_ready_symbol)), is_char_ready_b_p);
+  s7_set_b_p_function(slot_value(global_slot(sc->is_exact_symbol)), is_exact_b);
+  s7_set_b_p_function(slot_value(global_slot(sc->is_inexact_symbol)), is_inexact_b);
 #endif
   s7_set_b_p_function(slot_value(global_slot(sc->is_boolean_symbol)), s7_is_boolean);
   s7_set_b_p_function(slot_value(global_slot(sc->is_byte_vector_symbol)), s7_is_byte_vector);
@@ -75423,12 +75718,10 @@ s7_scheme *s7_init(void)
   s7_set_b_p_function(slot_value(global_slot(sc->is_dilambda_symbol)), s7_is_dilambda);
   s7_set_b_p_function(slot_value(global_slot(sc->is_eof_object_symbol)), s7_is_eof_object);
   s7_set_b_p_function(slot_value(global_slot(sc->is_even_symbol)), is_even_b);
-  s7_set_b_p_function(slot_value(global_slot(sc->is_exact_symbol)), is_exact_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_float_symbol)), is_float_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_float_vector_symbol)), s7_is_float_vector);
   s7_set_b_p_function(slot_value(global_slot(sc->is_gensym_symbol)), s7_is_gensym);
   s7_set_b_p_function(slot_value(global_slot(sc->is_hash_table_symbol)), s7_is_hash_table);
-  s7_set_b_p_function(slot_value(global_slot(sc->is_inexact_symbol)), is_inexact_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_infinite_symbol)), is_infinite_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_input_port_symbol)), is_input_port_b);
   s7_set_b_p_function(slot_value(global_slot(sc->is_integer_symbol)), s7_is_integer);
@@ -75476,6 +75769,8 @@ s7_scheme *s7_init(void)
   s7_set_b_p_function(slot_value(global_slot(sc->is_directory_symbol)), is_directory_b);
   s7_set_b_p_function(slot_value(global_slot(sc->file_exists_symbol)), file_exists_b);
   s7_set_p_p_function(slot_value(global_slot(sc->delete_file_symbol)), delete_file_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->directory_to_list_symbol)), directory_to_list_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->getenv_symbol)), getenv_p_p);
 #endif
 
   s7_set_b_ii_function(slot_value(global_slot(sc->eq_symbol)), req_ii);
@@ -75488,11 +75783,13 @@ s7_scheme *s7_init(void)
   s7_set_b_dd_function(slot_value(global_slot(sc->leq_symbol)), leq_dd);
   s7_set_b_dd_function(slot_value(global_slot(sc->gt_symbol)), gt_dd);
   s7_set_b_dd_function(slot_value(global_slot(sc->geq_symbol)), geq_dd);
+#if (!WITH_GMP)
   s7_set_b_pp_function(slot_value(global_slot(sc->eq_symbol)), req_pp);
   s7_set_b_pp_function(slot_value(global_slot(sc->lt_symbol)), lt_pp);
   s7_set_b_pp_function(slot_value(global_slot(sc->leq_symbol)), leq_pp);
   s7_set_b_pp_function(slot_value(global_slot(sc->gt_symbol)), gt_pp);
   s7_set_b_pp_function(slot_value(global_slot(sc->geq_symbol)), geq_pp);
+#endif
   s7_set_b_pp_function(slot_value(global_slot(sc->is_eq_symbol)), s7_is_eq);
   s7_set_b_pp_function(slot_value(global_slot(sc->is_eqv_symbol)), s7_is_eqv);
   s7_set_b_pp_function(slot_value(global_slot(sc->is_equal_symbol)), is_equal_pp);
@@ -75521,6 +75818,11 @@ s7_scheme *s7_init(void)
 
   s7_set_b_pp_function(slot_value(global_slot(sc->is_aritable_symbol)), is_aritable_b_pp);
 #if (!WITH_PURE_S7)
+#if (!WITH_GMP)
+  s7_set_p_pp_function(slot_value(global_slot(sc->make_polar_symbol)), make_polar_p_pp);
+  s7_set_p_p_function(slot_value(global_slot(sc->exact_to_inexact_symbol)), exact_to_inexact_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->inexact_to_exact_symbol)), inexact_to_exact_p_p);
+#endif
   s7_set_b_pp_function(slot_value(global_slot(sc->char_ci_lt_symbol)), char_ci_lt_b);
   s7_set_b_pp_function(slot_value(global_slot(sc->char_ci_leq_symbol)), char_ci_leq_b);
   s7_set_b_pp_function(slot_value(global_slot(sc->char_ci_gt_symbol)), char_ci_gt_b);
@@ -75664,7 +75966,6 @@ s7_scheme *s7_init(void)
                           (define make-random-state          random-state)        \n\
                           (define make-complex               complex)             \n\
                           (define make-keyword               string->keyword)     \n\
-                          (define ->byte-vector              string->byte-vector) \n\
                           (define (procedure-arity obj) (let ((c (arity obj))) (list (car c) (- (cdr c) (car c)) (> (cdr c) 100000)))))");
 #endif
 #if DEBUGGING
@@ -75745,17 +76046,18 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new                    new clm opt
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1126            1131
- * teq           |      |      | 6612 | 2380 | [2329] 2500 2385            2385
+ * teq           |      |      | 6612 | 2380 | [2306] 2500 2385            2385
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2491] 3287 2859            2875 2637
  * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3319            3255
- * lint          |      |      |      | 7731 | [3208] 4926 3292 [152.4]    3296      [152.3]
+ * lint          |      |      |      | 7731 | [3208] 4926 3292 [152.4]    3296      [152.4]
  * tcopy         |      |      | 13.6 | 3204 | [3266] 3190 3418            3418 3375
  * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3487            3485
  * tform         |      |      | 6816 | 3627 | [3532] 3768 3864            3872 3638
  * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4415            4407 4450
  * titer         |      |      | 7503 | 5218 | [5015] 5873 5086            5142 5070
  * tmac          |      |      |      |      |        18.7 1049            1050
- * thash         |      |      | 50.7 | 8491 | [9768] 8858 10.4            10.7 9989
+ * tsort         |      |      |      | 8825 | [7396]                      7422
+ * thash         |      |      | 50.7 | 8491 | [9768] 8858 10.4            10.7 10.1
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.6            13.1 12.5
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.8            43.3 20.4

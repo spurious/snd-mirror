@@ -38,8 +38,8 @@
 			1+i 1+1e10i 1e15+1e15i 0+1e18i 1e18 #\xff (string #\xff) 1e308 
 			most-positive-fixnum most-negative-fixnum (- most-positive-fixnum 1) (+ most-negative-fixnum 1)
 			-1 0 0.0 1 1.5 1.0-1.0i 3/4 #\null -63 (make-hash-table) (hash-table '(a . 2) '(b . 3))
-			'((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #(1) "1") '(1 2 . 3) (list (cons 'a 2) (cons 'b 3))
-			#(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one
+			'((1 2) (3 4)) '((1 (2)) (((3) 4))) "" (list #i(1) "1") '(1 2 . 3) (list (cons 'a 2) (cons 'b 3))
+			#i(1 2) (vector 1 '(3)) (let ((x 3)) (lambda (y) (+ x y))) abs 'a 'b one
 			(lambda args args) (lambda* ((a 3) (b 2)) (+ a b)) (lambda () 3)
 			(sublet () 'a 1) (rootlet)
 			*load-hook*  *error-hook* (random-state 123)
@@ -49,11 +49,11 @@
 			#<undefined> #<unspecified> (make-int-vector 3) (make-float-vector 3 -1.4)
 			(make-vector '(2 3) "hi") #("hiho" "hi" "hoho") (make-shared-vector (make-int-vector '(2 3) 1) '(6))
 			(make-shared-vector (make-shared-vector (make-float-vector '(2 3) 1.0) '(6)) '(2 2))
-			(vector-ref #2d((#(1 2 3)) (#(3 4 5))) 0 0) (define-macro (m a) `(+ ,a 1))
+			(vector-ref #2d((#i(1 2 3)) (#i(3 4 5))) 0 0) (define-macro (m a) `(+ ,a 1))
 			(c-pointer 0) (c-pointer -1) :readable :else (define-bacro* (m (a 1)) `(+ ,a 1))
 			(byte-vector 0 1 2) (byte-vector) (byte-vector 255 0 127) (make-iterator #((a . 2)))
 			(lambda (dir) 1.0) (float-vector) (make-float-vector '(2 32)) 
-			'((a . 1)) #(1) '((((A . B) C . D) (E . F) G . H) ((I . J) K . L) (M . N) O . P)
+			'((a . 1)) #i(1) '((((A . B) C . D) (E . F) G . H) ((I . J) K . L) (M . N) O . P)
 
 			(mock-number 0) (mock-number 1-i) (mock-number 4/3) (mock-number 2.0)
 			(mock-string #\h #\o #\h #\o)
@@ -161,7 +161,7 @@
 		  (and (pair? (car lst))
 		       (apply lambda '(x) (list (list 'or (list (caar lst) 'x) (list (cadar lst) 'x)))))))))
 
-(define baddies '(exit emergency-exit abort autotest 
+(define baddies '(exit emergency-exit abort autotest s7-optimize
 		  all delete-file system set-cdr! stacktrace test-sym
 		  cutlet varlet gc cond-expand reader-cond
 		  openlet coverlet eval vector list cons hash-table* hash-table values
@@ -176,7 +176,7 @@
 		  *mock-symbol* *mock-port* *mock-hash-table*
 
 		  c-define-1 apropos map-values ;set-current-output-port
-		  outlet-member make-method make-object))
+		  tree-count outlet-member make-method make-object))
 
 (define (test-sym sym)
   (if (and (not (memq sym baddies))

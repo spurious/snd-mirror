@@ -4897,10 +4897,12 @@ static Xen g_piano_noise(Xen gen, XEN amp)
   return(C_double_to_Xen_real(piano_noise(s7_int_vector_elements(gen), Xen_real_to_C_double(amp))));
 }
 
+#if (!WITH_GMP)
 static s7_double piano_noise_d_pd(s7_pointer v, s7_double x)
 {
   return(piano_noise(s7_int_vector_elements(v), x));
 }
+#endif
 
 
 #define S_singer_filter "singer-filter"
