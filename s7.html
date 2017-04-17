@@ -6555,9 +6555,7 @@ so misleading that I feel guilty about it):
 	(display ".")))
   (newline))
 
-(for-each
- (lambda (n) (do-loop n))
- (list 1000 1000000 10000000))
+(for-each do-loop (list 1000 1000000 10000000))
 </pre>
 
 <p>In s7, that takes 0.24 seconds on my home machine.  In tinyScheme, from
@@ -9016,7 +9014,7 @@ print the value of the variable passed by its print name: s7v "*features*"
 end
 
 define s7let
-print s7_show_let(hidden_sc)
+print s7_show_let(cur_sc)
 end
 document s7let
 show all non-global variables that are currently accessible

@@ -2410,7 +2410,34 @@ static Xen g_mus_set_length(Xen gen, Xen val)
   return(val);
 }
 
+#if HAVE_SCHEME
+#define D_METHOD(Func)					\
+  static s7_double mus_ ## Func ## _dp(s7_pointer o)	\
+  {							\
+   return(mus_ ## Func(Xen_to_mus_any(o)));		\
+  }
+D_METHOD(scaler)
+D_METHOD(phase)
+D_METHOD(frequency)
+D_METHOD(offset)
+D_METHOD(width)
+D_METHOD(increment)
+D_METHOD(feedforward)
+D_METHOD(feedback)
 
+#define I_METHOD(Func)					\
+  static s7_int mus_ ## Func ## _ip(s7_pointer o)	\
+  {							\
+   return(mus_ ## Func(Xen_to_mus_any(o)));		\
+  }
+I_METHOD(length)
+I_METHOD(order)
+I_METHOD(location)
+I_METHOD(channel)
+I_METHOD(channels)
+I_METHOD(ramp)
+I_METHOD(hop)
+#endif
 
 
 
@@ -10051,6 +10078,23 @@ static void init_choosers(s7_scheme *sc)
   s7_set_b_p_function(s7_name_to_value(sc, S_is_wave_train), is_wave_train_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_ssb_am), is_ssb_am_b);
   s7_set_b_p_function(s7_name_to_value(sc, S_is_tap), is_tap_b);
+
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_scaler), mus_scaler_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_phase), mus_phase_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_frequency), mus_frequency_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_offset), mus_offset_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_width), mus_width_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_increment), mus_increment_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_feedforward), mus_feedforward_dp);
+  s7_set_d_p_function(s7_name_to_value(sc, S_mus_feedback), mus_feedback_dp);
+
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_length), mus_length_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_order), mus_order_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_location), mus_location_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_channel), mus_channel_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_channels), mus_channels_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_ramp), mus_ramp_ip);
+  s7_set_i_p_function(s7_name_to_value(sc, S_mus_hop), mus_hop_ip);
 
 #endif /* gmp */
 }

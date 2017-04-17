@@ -1,5 +1,5 @@
 define s7print
-print s7_object_to_c_string(hidden_sc, $arg0)
+print s7_object_to_c_string(cur_sc, $arg0)
 end
 document s7print
 interpret the argument as an s7 value and display it
@@ -13,7 +13,7 @@ end
 
 
 define s7eval
-print s7_object_to_c_string(hidden_sc, s7_eval_c_string(hidden_sc, $arg0))
+print s7_object_to_c_string(cur_sc, s7_eval_c_string(cur_sc, $arg0))
 end
 document s7eval
 eval the argument (a string)
@@ -21,7 +21,7 @@ end
 
 
 define s7stack
-print s7_object_to_c_string(hidden_sc, s7_stacktrace(sc))
+print s7_object_to_c_string(cur_sc, s7_stacktrace(sc))
 end
 document s7stack
 display the currently active local environments
@@ -29,7 +29,7 @@ end
 
 
 define s7value
-print s7_object_to_c_string(hidden_sc, s7_name_to_value(hidden_sc, $arg0))
+print s7_object_to_c_string(cur_sc, s7_name_to_value(cur_sc, $arg0))
 end
 document s7value
 print the value of the variable passed by its print name: s7v "*features*"
@@ -37,7 +37,7 @@ end
 
 
 define s7let
-print s7_show_let(hidden_sc)
+print s7_show_let(cur_sc)
 end
 document s7let
 show all non-global variables that are currently accessible
@@ -77,7 +77,7 @@ define s7cell
   set $type = $cell.tf.type_field
   set $is_bad_type = (($type <= T_FREE) || ($type >= NUM_TYPES))
 
-  printf "%s\n", describe_type_bits(hidden_sc, $cell)
+  printf "%s\n", describe_type_bits(cur_sc, $cell)
   printf "hloc: %d, ", $cell.hloc
 
   printf "fields: %p %p %p %p %p\n",\
