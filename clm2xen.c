@@ -10021,6 +10021,7 @@ static void init_choosers(s7_scheme *sc)
 
   s7_set_d_p_function(s7_name_to_value(sc, S_env), mus_env_dp);
 
+  s7_set_d_p_function(s7_name_to_value(sc, S_pink_noise), mus_pink_noise);
   s7_set_d_pd_function(s7_name_to_value(sc, S_piano_noise), piano_noise_d_pd);
   s7_set_d_pd_function(s7_name_to_value(sc, S_polynomial), polynomial_d_pd);
 

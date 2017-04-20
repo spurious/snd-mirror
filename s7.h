@@ -710,21 +710,9 @@ typedef s7_double (*s7_d_vid_t)(void *v, s7_int i, s7_double d);
 void s7_set_d_vid_function(s7_pointer f, s7_d_vid_t df);
 s7_d_vid_t s7_d_vid_function(s7_pointer f);
 
-typedef s7_double (*s7_d_id_t)(s7_int i, s7_double d);
-void s7_set_d_id_function(s7_pointer f, s7_d_id_t df);
-s7_d_id_t s7_d_id_function(s7_pointer f);
-
-typedef s7_double (*s7_d_ip_t)(s7_int i, s7_pointer p);
-void s7_set_d_ip_function(s7_pointer f, s7_d_ip_t df);
-s7_d_ip_t s7_d_ip_function(s7_pointer f);
-
 typedef s7_double (*s7_d_p_t)(s7_pointer p);
 void s7_set_d_p_function(s7_pointer f, s7_d_p_t df);
 s7_d_p_t s7_d_p_function(s7_pointer f);
-
-typedef s7_double (*s7_d_pi_t)(s7_pointer v, s7_int i);
-void s7_set_d_pi_function(s7_pointer f, s7_d_pi_t df);
-s7_d_pi_t s7_d_pi_function(s7_pointer f);
 
 typedef s7_double (*s7_d_pd_t)(s7_pointer v, s7_double x);
 void s7_set_d_pd_function(s7_pointer f, s7_d_pd_t df);
@@ -733,6 +721,10 @@ s7_d_pd_t s7_d_pd_function(s7_pointer f);
 typedef s7_double (*s7_d_pid_t)(s7_pointer v, s7_int i, s7_double d);
 void s7_set_d_pid_function(s7_pointer f, s7_d_pid_t df);
 s7_d_pid_t s7_d_pid_function(s7_pointer f);
+
+typedef s7_double (*s7_d_id_t)(s7_int i, s7_double d);
+void s7_set_d_id_function(s7_pointer f, s7_d_id_t df);
+s7_d_id_t s7_d_id_function(s7_pointer f);
 
 typedef s7_int (*s7_i_i_t)(s7_int x);
 void s7_set_i_i_function(s7_pointer f, s7_i_i_t df);
@@ -746,65 +738,19 @@ typedef s7_int (*s7_i_ii_t)(s7_int i1, s7_int i2);
 void s7_set_i_ii_function(s7_pointer f, s7_i_ii_t df);
 s7_i_ii_t s7_i_ii_function(s7_pointer f);
 
+typedef s7_double (*s7_d_ip_t)(s7_int i, s7_pointer p);
+void s7_set_d_ip_function(s7_pointer f, s7_d_ip_t df);
+s7_d_ip_t s7_d_ip_function(s7_pointer f);
+
 typedef s7_int (*s7_i_p_t)(s7_pointer p);
 void s7_set_i_p_function(s7_pointer f, s7_i_p_t df);
 s7_i_p_t s7_i_p_function(s7_pointer f);
-
-typedef s7_int (*s7_i_pi_t)(s7_pointer p, s7_int i1);
-void s7_set_i_pi_function(s7_pointer f, s7_i_pi_t df);
-s7_i_pi_t s7_i_pi_function(s7_pointer f);
-
-typedef s7_int (*s7_i_pii_t)(s7_pointer p, s7_int i1, s7_int i2);
-void s7_set_i_pii_function(s7_pointer f, s7_i_pii_t df);
-s7_i_pii_t s7_i_pii_function(s7_pointer f);
 
 typedef bool (*s7_b_p_t)(s7_pointer p);
 void s7_set_b_p_function(s7_pointer f, s7_b_p_t df);
 s7_b_p_t s7_b_p_function(s7_pointer f);
 
-typedef s7_pointer (*s7_p_p_t)(s7_pointer p);
-void s7_set_p_p_function(s7_pointer f, s7_p_p_t df);
-s7_p_p_t s7_p_p_function(s7_pointer f);
 
-typedef s7_pointer (*s7_p_t)(void);
-void s7_set_p_function(s7_pointer f, s7_p_t df);
-s7_p_t s7_p_function(s7_pointer f);
-
-typedef bool (*s7_b_pp_t)(s7_pointer p1, s7_pointer p2);
-void s7_set_b_pp_function(s7_pointer f, s7_b_pp_t df);
-s7_b_pp_t s7_b_pp_function(s7_pointer f);
-
-typedef bool (*s7_b_d_t)(s7_double p1);
-void s7_set_b_d_function(s7_pointer f, s7_b_d_t df);
-s7_b_d_t s7_b_d_function(s7_pointer f);
-
-typedef bool (*s7_b_i_t)(s7_int p1);
-void s7_set_b_i_function(s7_pointer f, s7_b_i_t df);
-s7_b_i_t s7_b_i_function(s7_pointer f);
-
-typedef bool (*s7_b_ii_t)(s7_int p1, s7_int p2);
-void s7_set_b_ii_function(s7_pointer f, s7_b_ii_t df);
-s7_b_ii_t s7_b_ii_function(s7_pointer f);
-
-typedef bool (*s7_b_dd_t)(s7_double p1, s7_double p2);
-void s7_set_b_dd_function(s7_pointer f, s7_b_dd_t df);
-s7_b_dd_t s7_b_dd_function(s7_pointer f);
-
-typedef s7_pointer (*s7_p_pp_t)(s7_pointer p1, s7_pointer p2);
-void s7_set_p_pp_function(s7_pointer f, s7_p_pp_t df);
-s7_p_pp_t s7_p_pp_function(s7_pointer f);
-
-typedef s7_pointer (*s7_p_ppp_t)(s7_pointer p1, s7_pointer p2, s7_pointer p3);
-void s7_set_p_ppp_function(s7_pointer f, s7_p_ppp_t df);
-s7_p_ppp_t s7_p_ppp_function(s7_pointer f);
-
-typedef s7_pointer (*s7_p_pi_t)(s7_pointer p1, s7_int i1);
-void s7_set_p_pi_function(s7_pointer f, s7_p_pi_t df);
-s7_p_pi_t s7_p_pi_function(s7_pointer f);
-
-typedef s7_pointer (*s7_p_pip_t)(s7_pointer p1, s7_int i1, s7_pointer p2);
-void s7_set_p_pip_function(s7_pointer f, s7_p_pip_t df);
-s7_p_pip_t s7_p_pip_function(s7_pointer f);
 
 
 /* -------------------------------------------------------------------------------- */
