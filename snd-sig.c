@@ -3472,7 +3472,8 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
-      (s7_is_pair(s7_closure_args(s7, proc))))
+      (s7_is_pair(s7_closure_args(s7, proc))) &&
+      (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body)))
     {
       s7_pointer arg;
       if (s7_is_null(s7, s7_cdr(body)))
@@ -3874,7 +3875,8 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 
   body = s7_closure_body(s7, proc);
   if ((s7_is_pair(body)) &&
-      (s7_is_pair(s7_closure_args(s7, proc))))
+      (s7_is_pair(s7_closure_args(s7, proc))) &&
+      (!s7_tree_memq(s7, s7_make_symbol(s7, "set!"), body)))
     {
       s7_pointer arg, expr;
 
