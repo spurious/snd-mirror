@@ -387,59 +387,60 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 #define T_FREE                 0
 #define T_PAIR                 1
 #define T_NIL                  2
-#define T_UNIQUE               3
+#define T_UNDEFINED            3
 #define T_UNSPECIFIED          4
-#define T_BOOLEAN              5
-#define T_CHARACTER            6
-#define T_SYMBOL               7
-#define T_SYNTAX               8
+#define T_EOF_OBJECT           5
+#define T_BOOLEAN              6
+#define T_CHARACTER            7
+#define T_SYMBOL               8
+#define T_SYNTAX               9
 
-#define T_INTEGER              9
-#define T_RATIO               10
-#define T_REAL                11
-#define T_COMPLEX             12
+#define T_INTEGER             10
+#define T_RATIO               11
+#define T_REAL                12
+#define T_COMPLEX             13
 
-#define T_BIG_INTEGER         13 /* these four used only if WITH_GMP -- order matters */
-#define T_BIG_RATIO           14
-#define T_BIG_REAL            15
-#define T_BIG_COMPLEX         16  
+#define T_BIG_INTEGER         14 /* these four used only if WITH_GMP -- order matters */
+#define T_BIG_RATIO           15
+#define T_BIG_REAL            16
+#define T_BIG_COMPLEX         17  
 
-#define T_STRING              17
-#define T_C_OBJECT            18
-#define T_VECTOR              19
-#define T_INT_VECTOR          20
-#define T_FLOAT_VECTOR        21
+#define T_STRING              18
+#define T_C_OBJECT            19
+#define T_VECTOR              20
+#define T_INT_VECTOR          21
+#define T_FLOAT_VECTOR        22
 
-#define T_CATCH               22
-#define T_DYNAMIC_WIND        23
-#define T_HASH_TABLE          24
-#define T_LET                 25
-#define T_ITERATOR            26
-#define T_STACK               27
-#define T_COUNTER             28
-#define T_SLOT                29
-#define T_C_POINTER           30
-#define T_OUTPUT_PORT         31
-#define T_INPUT_PORT          32
-#define T_BAFFLE              33
-#define T_RANDOM_STATE        34
+#define T_CATCH               23
+#define T_DYNAMIC_WIND        24
+#define T_HASH_TABLE          25
+#define T_LET                 26
+#define T_ITERATOR            27
+#define T_STACK               28
+#define T_COUNTER             29
+#define T_SLOT                30
+#define T_C_POINTER           31
+#define T_OUTPUT_PORT         32
+#define T_INPUT_PORT          33
+#define T_BAFFLE              34
+#define T_RANDOM_STATE        35
 
-#define T_GOTO                35
-#define T_CONTINUATION        36
-#define T_CLOSURE             37
-#define T_CLOSURE_STAR        38
-#define T_C_MACRO             39
-#define T_MACRO               40
-#define T_MACRO_STAR          41
-#define T_BACRO               42
-#define T_BACRO_STAR          43
-#define T_C_FUNCTION_STAR     44
-#define T_C_FUNCTION          45
-#define T_C_ANY_ARGS_FUNCTION 46
-#define T_C_OPT_ARGS_FUNCTION 47
-#define T_C_RST_ARGS_FUNCTION 48
+#define T_GOTO                36
+#define T_CONTINUATION        37
+#define T_CLOSURE             38
+#define T_CLOSURE_STAR        39
+#define T_C_MACRO             40
+#define T_MACRO               41
+#define T_MACRO_STAR          42
+#define T_BACRO               43
+#define T_BACRO_STAR          44
+#define T_C_FUNCTION_STAR     45
+#define T_C_FUNCTION          46
+#define T_C_ANY_ARGS_FUNCTION 47
+#define T_C_OPT_ARGS_FUNCTION 48
+#define T_C_RST_ARGS_FUNCTION 49
 
-#define NUM_TYPES        49
+#define NUM_TYPES        50
 
 /* T_STACK, T_SLOT, T_BAFFLE, T_DYNAMIC_WIND, and T_COUNTER are internal
  * I tried T_CASE_SELECTOR that turned a case statement into an array, but it was slower!
@@ -1037,7 +1038,7 @@ struct s7_scheme {
              is_port_closed_symbol, is_positive_symbol, is_procedure_symbol, is_proper_list_symbol, is_provided_symbol,
              is_random_state_symbol, is_rational_symbol, is_real_symbol, is_sequence_symbol, is_string_symbol, is_symbol_symbol, is_syntax_symbol,
              is_vector_symbol, is_zero_symbol, iterate_symbol, iterator_is_at_end_symbol, iterator_sequence_symbol,
-             is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, is_unspecified_symbol,
+             is_float_symbol, is_integer_or_real_at_end_symbol, is_integer_or_any_at_end_symbol, is_unspecified_symbol, is_undefined_symbol,
              keyword_to_symbol_symbol, 
              lcm_symbol, length_symbol, leq_symbol, let_ref_fallback_symbol, let_ref_symbol, let_set_fallback_symbol,
              let_set_symbol, let_temporarily_symbol, list_ref_symbol, list_set_symbol, list_symbol, list_tail_symbol, list_values_symbol, 
@@ -1061,7 +1062,7 @@ struct s7_scheme {
              string_set_symbol, string_symbol, string_to_number_symbol, string_to_symbol_symbol, string_upcase_symbol,
              sublet_symbol, substring_symbol, subtract_symbol, symbol_access_symbol, symbol_symbol, symbol_to_dynamic_value_symbol,
              symbol_to_keyword_symbol, symbol_to_string_symbol, symbol_to_value_symbol, s7_version_symbol,
-             tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, truncate_symbol,
+             tan_symbol, tanh_symbol, throw_symbol, string_to_byte_vector_symbol, truncate_symbol, type_of_symbol,
              unlet_symbol, 
              values_symbol, varlet_symbol, vector_append_symbol, vector_dimensions_symbol, vector_fill_symbol, vector_ref_symbol,
              vector_set_symbol, vector_symbol, 
@@ -1330,7 +1331,8 @@ static void init_types(void)
   t_has_closure_let[T_CLOSURE_STAR] = true;
 
   t_simple_p[T_NIL] = true;
-  t_simple_p[T_UNIQUE] = true;
+  t_simple_p[T_UNDEFINED] = true;
+  t_simple_p[T_EOF_OBJECT] = true;
   t_simple_p[T_BOOLEAN] = true;
   t_simple_p[T_CHARACTER] = true;
   t_simple_p[T_SYMBOL] = true;
@@ -1446,7 +1448,7 @@ static s7_scheme *cur_sc = NULL;
   #define _TSlt(P) check_ref(P, T_SLOT,              __func__, __LINE__, NULL, NULL)
   #define _TSlp(P) check_ref2(P, T_SLOT, T_PAIR,     __func__, __LINE__, NULL, NULL)
   #define _TSln(P) check_ref2(P, T_SLOT, T_NIL,      __func__, __LINE__, NULL, NULL)
-  #define _TSld(P) check_ref2(P, T_SLOT, T_UNIQUE,   __func__, __LINE__, NULL, NULL)
+  #define _TSld(P) check_ref2(P, T_SLOT, T_UNDEFINED,__func__, __LINE__, NULL, NULL)
   #define _TSyn(P) check_ref(P, T_SYNTAX,            __func__, __LINE__, NULL, NULL)
   #define _TMac(P) check_ref(P, T_C_MACRO,           __func__, __LINE__, NULL, NULL)
   #define _TLet(P) check_ref(P, T_LET,               __func__, __LINE__, NULL, NULL)
@@ -1778,15 +1780,14 @@ static s7_scheme *cur_sc = NULL;
 #define set_byte_vector(p)            typeflag(_TStr(p)) |= T_BYTE_VECTOR
 /* marks a string that the caller considers a byte_vector */
 
-#define T_STEPPER                     T_MUTABLE
-#define is_stepper(p)                 ((typeflag(_TSlt(p)) & T_STEPPER) != 0)
-#define set_stepper(p)                typeflag(_TSlt(p)) |= T_STEPPER
-/* marks a slot that holds a do-loop's step variable (if int, can be numerator=current, denominator=end) */
+#define T_STEP_END                    T_MUTABLE
+#define is_step_end(p)                ((typeflag(_TSlt(p)) & T_STEP_END) != 0)
+#define set_step_end(p)               typeflag(_TSlt(p)) |= T_STEP_END
+/* marks a slot that holds a do-loop's step-ro-end variable, numerator=current, denominator=end */
 
 #define T_SAFE_STEPPER                (1 << (TYPE_BITS + 19))
 #define is_safe_stepper(p)            ((typeflag(_TSlp(p)) & T_SAFE_STEPPER) != 0)
 #define set_safe_stepper(p)           typeflag(_TSlp(p)) |= T_SAFE_STEPPER
-#define is_unsafe_stepper(p)          ((typeflag(_TSlp(p)) & (T_STEPPER | T_SAFE_STEPPER)) == T_STEPPER)
 /* an experiment */
 
 #define T_PRINT_NAME                  T_SAFE_STEPPER
@@ -4479,7 +4480,8 @@ static void mark_input_port(s7_pointer p)
 static void init_mark_functions(void)
 {
   mark_function[T_FREE]                = mark_noop;
-  mark_function[T_UNIQUE]              = mark_noop;
+  mark_function[T_UNDEFINED]           = mark_noop;
+  mark_function[T_EOF_OBJECT]          = mark_noop;
   mark_function[T_UNSPECIFIED]         = mark_noop;
   mark_function[T_NIL]                 = mark_noop;
   mark_function[T_BOOLEAN]             = mark_noop;
@@ -6956,6 +6958,8 @@ new environment. (inlet :a 1 :b 2) or (inlet '(a . 1) '(b . 2))"
 }
 
 #define g_inlet s7_inlet
+
+static s7_pointer inlet_p_pp(s7_pointer p1, s7_pointer p2) {return(g_inlet(cur_sc, set_plist_2(cur_sc, p1, p2)));}
 
 static s7_pointer simple_inlet;
 static s7_pointer g_simple_inlet(s7_scheme *sc, s7_pointer args)
@@ -13548,7 +13552,12 @@ static s7_double c_quo_dbl(s7_scheme *sc, s7_double x, s7_double y)
 }
 
 static s7_int quotient_i_ii(s7_int i1, s7_int i2) {return(c_quo_int(cur_sc, i1, i2));}
-static s7_double quotient_d_dd(s7_double x1, s7_double x2) {return(c_quo_dbl(cur_sc, x1, x2));}
+static s7_double quotient_d_dd(s7_double x1, s7_double x2) 
+{
+  if ((is_inf(x1)) || (is_NaN(x1)))
+    wrong_type_argument_with_type(cur_sc, cur_sc->quotient_symbol, 1, make_real(cur_sc, x1), a_normal_real_string);
+  return(c_quo_dbl(cur_sc, x1, x2));
+}
 
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
@@ -13698,7 +13707,12 @@ static s7_double c_rem_dbl(s7_scheme *sc, s7_double x, s7_double y)
 }
 
 static s7_int remainder_i_ii(s7_int i1, s7_int i2) {return(c_rem_int(cur_sc, i1, i2));}
-static s7_double remainder_d_dd(s7_double x1, s7_double x2) {return(c_rem_dbl(cur_sc, x1, x2));}
+static s7_double remainder_d_dd(s7_double x1, s7_double x2) 
+{
+  if ((is_inf(x1)) || (is_NaN(x1)))
+    wrong_type_argument_with_type(cur_sc, cur_sc->remainder_symbol, 1, set_elist_1(cur_sc, make_real(cur_sc, x1)), a_normal_real_string);
+  return(c_rem_dbl(cur_sc, x1, x2));
+}
 
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
@@ -16361,6 +16375,7 @@ static s7_double multiply_d_dd(s7_double x1, s7_double x2) {return(x1 * x2);}
 static s7_double multiply_d_ddd(s7_double x1, s7_double x2, s7_double x3) {return(x1 * x2 * x3);}
 static s7_double multiply_d_dddd(s7_double x1, s7_double x2, s7_double x3, s7_double x4) {return(x1 * x2 * x3 * x4);}
 
+static s7_pointer multiply_p_pp(s7_pointer x1, s7_pointer x2) {return(g_multiply_2(cur_sc, set_plist_2(cur_sc, x1, x2)));}
 
 
 /* ---------------------------------------- divide ---------------------------------------- */
@@ -28545,13 +28560,12 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
       let_to_port(sc, obj, port, use_write, ci);
       break;
 
-    case T_UNIQUE:
+    case T_EOF_OBJECT:
       /* if file has #<eof> it causes read to return #<eof> -> end of read! what is readable version? '#<eof> or (begin #<eof>) as below
        * but this is silly -- to fool read, the #<eof> has to be all by itself at the top-level!
        * and the read of #<eof> does not affect the port, so if you know it's there, just ignore #<eof> and continue reading.
        */
-      if ((use_write == USE_READABLE_WRITE) &&
-	  (obj == sc->eof_object))
+      if (use_write == USE_READABLE_WRITE)
 	port_write_string(port)(sc, "(begin #<eof>)", 14, port);
       else port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
       break;
@@ -28559,6 +28573,7 @@ static void object_to_port(s7_scheme *sc, s7_pointer obj, s7_pointer port, use_w
     case T_BOOLEAN:
     case T_NIL:
     case T_UNSPECIFIED:
+    case T_UNDEFINED:
       port_write_string(port)(sc, unique_name(obj), unique_name_length(obj), port);
       break;
 
@@ -30882,6 +30897,10 @@ static s7_pointer g_tree_count(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, tree_count(sc, car(args), cadr(args), 0)));
   return(s7_make_integer(sc, tree_count_at_least(sc, car(args), cadr(args), 0, s7_integer(caddr(args)))));
 }
+
+/* i_pp(p) would be better */
+static s7_pointer tree_count_p_pp(s7_pointer p1, s7_pointer p2) {return(g_tree_count(cur_sc, set_plist_2(cur_sc, p1, p2)));}
+static s7_pointer tree_count_p_ppp(s7_pointer p1, s7_pointer p2, s7_pointer p3) {return(g_tree_count(cur_sc, set_plist_3(cur_sc, p1, p2, p3)));}
 
 
 static s7_pointer print_truncate(s7_scheme *sc, s7_pointer code)
@@ -35789,8 +35808,6 @@ static s7_pointer g_sort(s7_scheme *sc, s7_pointer args)
 			      else init_val = sc->F;
 			    }
 			  new_frame_with_two_slots(sc, closure_let(lessp), sc->envir, car(largs), init_val, cadr(largs), init_val);
-			  set_stepper(let_slots(sc->envir));
-			  set_stepper(next_slot(let_slots(sc->envir)));
 			  compare_args = expr;
 			  
 			  compare_func = s7_bool_optimize(sc, closure_body(lessp), sc->envir);
@@ -41320,13 +41337,16 @@ static s7_pointer g_object_to_let(s7_scheme *sc, s7_pointer args)
       return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_null_symbol)));
 
     case T_UNSPECIFIED:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_unspecified_symbol)));
+
+    case T_UNDEFINED:
       return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, obj)));
 
     case T_SYNTAX:
-      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, s7_make_symbol(sc, "syntax?"))));
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_syntax_symbol)));
 
-    case T_UNIQUE:
-      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, (is_eof(obj)) ? sc->is_eof_object_symbol : obj)));
+    case T_EOF_OBJECT:
+      return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_eof_object_symbol)));
 
     case T_BOOLEAN:
       return(s7_inlet(sc, s7_list(sc, 4, sc->value_symbol, obj, sc->type_symbol, sc->is_boolean_symbol)));
@@ -42159,8 +42179,9 @@ static const char *type_name_from_type(s7_scheme *sc, int typ, int article)
     {
     case T_FREE:            return(frees[article]);
     case T_NIL:             return(nils[article]);
-    case T_UNIQUE:          return(uniques[article]);
+    case T_EOF_OBJECT:      return(uniques[article]);
     case T_UNSPECIFIED:     return(uniques[article]);
+    case T_UNDEFINED:       return(uniques[article]);
     case T_BOOLEAN:         return(booleans[article]);
     case T_STRING:          return(strings[article]);
     case T_SYMBOL:          return(symbols[article]);
@@ -44024,6 +44045,78 @@ static s7_pointer implicit_index(s7_scheme *sc, s7_pointer obj, s7_pointer indic
       return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, obj, indices)));
     }
 }
+
+
+/* -------------------------------- type-of -------------------------------- */
+static s7_pointer type_to_typers[NUM_TYPES];
+static void init_typers(s7_scheme *sc)
+{
+  type_to_typers[T_FREE] = sc->F;
+  type_to_typers[T_PAIR] = sc->is_pair_symbol;
+  type_to_typers[T_NIL] = sc->is_null_symbol;
+  type_to_typers[T_EOF_OBJECT] = sc->is_eof_object_symbol;
+  type_to_typers[T_UNDEFINED] = sc->is_undefined_symbol;
+  type_to_typers[T_UNSPECIFIED] = sc->is_unspecified_symbol;
+  type_to_typers[T_BOOLEAN] = sc->is_boolean_symbol;
+  type_to_typers[T_CHARACTER] = sc->is_char_symbol;
+  type_to_typers[T_SYMBOL] = sc->is_symbol_symbol;
+  type_to_typers[T_SYNTAX] = sc->is_syntax_symbol;
+  type_to_typers[T_INTEGER] = sc->is_integer_symbol;
+  type_to_typers[T_RATIO] = sc->is_rational_symbol;
+  type_to_typers[T_REAL] = sc->is_float_symbol;
+  type_to_typers[T_COMPLEX] = sc->is_complex_symbol;
+  type_to_typers[T_BIG_INTEGER] = sc->is_integer_symbol;
+  type_to_typers[T_BIG_RATIO] = sc->is_rational_symbol;
+  type_to_typers[T_BIG_REAL] = sc->is_float_symbol;
+  type_to_typers[T_BIG_COMPLEX] = sc->is_complex_symbol;
+  type_to_typers[T_STRING] = sc->is_string_symbol;
+  type_to_typers[T_C_OBJECT] = sc->is_c_object_symbol;
+  type_to_typers[T_VECTOR] = sc->is_vector_symbol;
+  type_to_typers[T_INT_VECTOR] = sc->is_int_vector_symbol;
+  type_to_typers[T_FLOAT_VECTOR] = sc->is_float_vector_symbol;
+  type_to_typers[T_CATCH] = sc->F;
+  type_to_typers[T_DYNAMIC_WIND] = sc->F;
+  type_to_typers[T_HASH_TABLE] = sc->is_hash_table_symbol;
+  type_to_typers[T_LET] = sc->is_let_symbol;
+  type_to_typers[T_ITERATOR] = sc->is_iterator_symbol;
+  type_to_typers[T_STACK] = sc->F;
+  type_to_typers[T_COUNTER] = sc->F;
+  type_to_typers[T_SLOT] = sc->F;
+  type_to_typers[T_C_POINTER] = sc->is_c_pointer_symbol;
+  type_to_typers[T_OUTPUT_PORT] = sc->is_output_port_symbol;
+  type_to_typers[T_INPUT_PORT] = sc->is_input_port_symbol;
+  type_to_typers[T_BAFFLE] = sc->F;
+  type_to_typers[T_RANDOM_STATE] = sc->is_random_state_symbol;
+  type_to_typers[T_GOTO] = sc->F;                     /* (continuation? goto) -> #f -- we need a type indicator for this */
+  type_to_typers[T_CONTINUATION] = sc->is_continuation_symbol;
+  type_to_typers[T_CLOSURE] = sc->is_procedure_symbol;
+  type_to_typers[T_CLOSURE_STAR] = sc->is_procedure_symbol;
+  type_to_typers[T_C_MACRO] = sc->is_macro_symbol;
+  type_to_typers[T_MACRO] = sc->is_macro_symbol;
+  type_to_typers[T_MACRO_STAR] = sc->is_macro_symbol;
+  type_to_typers[T_BACRO] = sc->is_macro_symbol;
+  type_to_typers[T_BACRO_STAR] = sc->is_macro_symbol;
+  type_to_typers[T_C_FUNCTION] = sc->is_procedure_symbol;
+  type_to_typers[T_C_FUNCTION_STAR] = sc->is_procedure_symbol;
+  type_to_typers[T_C_ANY_ARGS_FUNCTION] = sc->is_procedure_symbol;
+  type_to_typers[T_C_OPT_ARGS_FUNCTION] = sc->is_procedure_symbol; 
+  type_to_typers[T_C_RST_ARGS_FUNCTION] = sc->is_procedure_symbol;
+}
+
+s7_pointer s7_type_of(s7_pointer arg) {return(type_to_typers[type(arg)]);}
+
+static s7_pointer g_type_of(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_type_of "(type-of obj) returns a symbol describing obj's type"
+  #define Q_type_of s7_make_signature(sc, 2, s7_make_signature(sc, 2, sc->is_symbol_symbol, sc->is_boolean_symbol), sc->T)
+  int tp;
+
+  tp = type(car(args));
+  if ((tp >= 0) && (tp < NUM_TYPES))
+    return(type_to_typers[type(car(args))]);
+  return(s7_make_symbol(sc, "unknown!"));
+}
+
 
 /* -------------------------------- s7-version -------------------------------- */
 static s7_pointer g_s7_version(s7_scheme *sc, s7_pointer args)
@@ -46586,6 +46679,7 @@ static s7_double opt_d_ip_ss(void *p)
 #if OPT_DEBUG
   show_opt(__func__, o);
 #endif
+  /* PERHAPS: type check as below */
   return(o->func.d_ip_f(integer(slot_value(o->p1)), slot_value(o->p2)));
 }
 
@@ -46601,10 +46695,17 @@ static s7_double opt_d_pi_sc(void *p)
 static s7_double opt_d_pi_ss(void *p)
 {
   opt_info *o = (opt_info *)p;
+  s7_pointer index;
 #if OPT_DEBUG
   show_opt(__func__, o);
 #endif
-  return(o->func.d_pi_f(slot_value(o->p1), integer(slot_value(o->p2))));
+  index = slot_value(o->p2);
+  if (!is_t_integer(index))
+    {
+      simple_wrong_type_argument(cur_sc, s7_make_symbol(cur_sc, "accessor index"), index, T_INTEGER);
+      return(0.0);
+    }
+  return(o->func.d_pi_f(slot_value(o->p1), integer(index)));
 }
 
 static s7_double opt_d_pi_sf(void *p)
@@ -46633,11 +46734,18 @@ static s7_double opt_d_pid_ssf(void *p)
 {
   opt_info *o = (opt_info *)p;
   opt_info *o1;
+  s7_pointer index;
 #if OPT_DEBUG
   show_opt(__func__, o);
 #endif
+  index = slot_value(o->p2);
+  if (!is_t_integer(index))
+    {
+      simple_wrong_type_argument(cur_sc, s7_make_symbol(cur_sc, "accessor index"), index, T_INTEGER);
+      return(0.0);
+    }
   o1 = cur_sc->opts[++cur_sc->opt_index];
-  return(o->func.d_pid_f(slot_value(o->p1), integer(slot_value(o->p2)), o1->caller.fd(o1)));
+  return(o->func.d_pid_f(slot_value(o->p1), integer(index), o1->caller.fd(o1)));
 }
 
 static s7_double opt_d_pid_sff(void *p)
@@ -46661,6 +46769,7 @@ static s7_double opt_d_vid_ssf(void *p)
 #if OPT_DEBUG
   show_opt(__func__, o);
 #endif
+  /* PERHAPS: check index type as above */
   o1 = cur_sc->opts[++cur_sc->opt_index];
   return(o->func.d_vid_f(o->obj, integer(slot_value(o->p1)), o1->caller.fd(o1)));
 }
@@ -47197,12 +47306,10 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
 /* need n-arg -/ and gen-set-methods, implicit c-obj ref| all sets?, dot-product d_pp?, various chebys: d_dpp and d_dp
  *   file->sample requires d_vi or d_vii (rare apparently)
  *   vct.c: need s7_d_pp_t
- *   ref indices unchecked if we know bounds are ok -- this could be checked in opt_dotimes (unless expr for index)
  * need debugger consistency checks throughout opts
  * extend cload to rest of types? d_i i_d b_p
  * fallback to all_x is ending in double->real -- remove this if result not used
  *   we must be missing unsafe_do (set! sum (+ sum (* (h m) (x (- n m)))))
- *   dox_ex assumes body is all_x_safe throughout -- change to optimizable?
  * see rfs
  * also make sure no openlets in any vals, annotate steppers? and openlet itself->return null!
  * tgen: out-any (f (vector-ref ...))
@@ -47213,18 +47320,14 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env);
  *   opt_set_ss sf sc
  *   if pair, get setter from car of pair, choose optimizers, use the setter?
  * need set! case bool? implicit cell set?
- * maybe cell set! should insist on type -- then the do_ex opt_dotimes checks won't be needed
- *
- * the p_p* entries seem pointless -- why not a flag that says this safe c_function can be wrapped in opt_cell?
- * combine opts by combining arg calls
- *
+ * cell set! type check is dumb
  * finish the t563.scm bugs:
  *    a couple number type problems 31905 30802 
- * thash: dox_ex -> opt* [use opt_dotimes code below dox_ex 60400)
+ * perhaps for pid parlous cases, use ppp
  *
  * can't be optimized here, I think: load eval eval-string with* call-with* call/cc catch cutlet varlet dynamic-wind read
  *     also iterate with closure? what about member/assoc with func? sort!? map for-each error throw dilambda
- *  TODO: apply apply-values gcd hash-table hash-table* inlet lcm list-values sublet tree-count values write-string 
+ *  TODO: apply apply-values gcd hash-table hash-table* lcm list-values sublet values write-string 
  */
 
 
@@ -47235,7 +47338,7 @@ static bool index_is_safe(s7_scheme *sc, s7_pointer car_x, s7_pointer v)
       s7_pointer slot;
       slot = find_symbol(sc, caddr(car_x));
       return((is_slot(slot)) &&
-	     (is_stepper(slot)) &&
+	     (is_step_end(slot)) &&
 	     (denominator(slot_value(slot)) <= integer(s7_length(sc, slot_value(v)))));
     }
   return(false);
@@ -47335,7 +47438,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				    {
 				      cur_info->caller.fd = opt_d_pid_ssf;
 				      cur_info->p2 = slot;
-				      if ((is_stepper(cur_info->p2)) &&
+				      if ((is_step_end(cur_info->p2)) &&
 					  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(settee))))
 					cur_info->func.d_pid_f = float_vector_set_unchecked;
 				      return(true);
@@ -47384,7 +47487,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		      cur_info->caller.fd = opt_d_pi_ss;
 		      cur_info->func.d_pi_f = float_vector_ref_d;
 		      cur_info->p2 = slot;
-		      if ((is_stepper(cur_info->p2)) &&
+		      if ((is_step_end(cur_info->p2)) &&
 			  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 			cur_info->func.d_pi_f = float_vector_ref_unchecked;
 		      return(true);
@@ -47601,10 +47704,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 						      else
 							{
 							  if (float_optimize_1(sc, cdr(car_x), env))
-							    {
-							      fprintf(stderr, "fc: %s\n", DISPLAY(expr));
-							      cur_info->caller.fd = opt_d_dd_fc;
-							    }
+							    cur_info->caller.fd = opt_d_dd_fc;
 							  else return(false);
 							}
 						      return(true);
@@ -47827,7 +47927,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 						    {
 						      cur_info->caller.fd = opt_d_pi_ss;
 						      if ((car(car_x) == sc->float_vector_ref_symbol) &&
-							  (is_stepper(cur_info->p2)) &&
+							  (is_step_end(cur_info->p2)) &&
 							  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 							cur_info->func.d_pi_f = float_vector_ref_unchecked;
 						      return(true);
@@ -47897,7 +47997,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 						(float_optimize_1(sc, cdddr(car_x), env)))
 					      {
 						cur_info->caller.fd = opt_d_pid_ssf;
-						if ((is_stepper(cur_info->p2)) &&
+						if ((is_step_end(cur_info->p2)) &&
 						    (car(car_x) == sc->float_vector_set_symbol) &&
 						    (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 						  cur_info->func.d_pid_f = float_vector_set_unchecked;
@@ -48121,7 +48221,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				    {
 				      cur_info->caller.fi = opt_i_pii_ssf;
 				      cur_info->p2 = slot;
-				      if ((is_stepper(cur_info->p2)) &&
+				      if ((is_step_end(cur_info->p2)) &&
 					  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(settee))))
 					cur_info->func.i_pii_f = int_vector_set_unchecked;
 				      return(true);
@@ -48170,7 +48270,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		      cur_info->caller.fi = opt_i_pi_ss;
 		      cur_info->func.i_pi_f = int_vector_ref_i;
 		      cur_info->p2 = slot;
-		      if ((is_stepper(cur_info->p2)) &&
+		      if ((is_step_end(cur_info->p2)) &&
 			  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 			cur_info->func.i_pi_f = int_vector_ref_unchecked;
 		      return(true);
@@ -48413,7 +48513,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 					{
 					  cur_info->caller.fi = opt_i_pi_ss;
 					  if ((car(car_x) == sc->int_vector_ref_symbol) &&
-					      (is_stepper(cur_info->p2)) &&
+					      (is_step_end(cur_info->p2)) &&
 					      (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 					    cur_info->func.i_pi_f = int_vector_ref_unchecked;
 					  return(true);
@@ -48461,7 +48561,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 					  (int_optimize_1(sc, cdddr(car_x), env)))
 					{
 					  cur_info->caller.fi = opt_i_pii_ssf;
-					  if ((is_stepper(cur_info->p2)) &&
+					  if ((is_step_end(cur_info->p2)) &&
 					      (car(car_x) == sc->int_vector_set_symbol) &&
 					      (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 					    cur_info->func.i_pii_f = int_vector_set_unchecked;
@@ -48538,6 +48638,70 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 }
 
 
+static s7_pointer opt_arg_type(s7_scheme *sc, s7_pointer argp, s7_pointer env)
+{
+  s7_pointer arg;
+  arg = car(argp);
+  if (is_pair(arg))
+    {
+      if ((is_symbol(car(arg))) &&
+	  ((is_global(car(arg))) ||
+	   ((is_slot(global_slot(car(arg)))) &&
+	    (find_symbol(sc, car(arg)) == global_slot(car(arg))))))
+	{
+	  s7_pointer a_func;
+	  a_func = slot_value(global_slot(car(arg)));
+	  if (is_c_function(a_func))
+	    {
+	      s7_pointer sig;
+	      sig = s7_procedure_signature(sc, a_func);
+	      if (is_pair(sig))
+		{
+		  if (car(sig) == sc->is_real_symbol)
+		    {
+		      int start;
+		      start = sc->opt_index;
+		      if (int_optimize_1(sc, argp, env))
+			{
+			  sc->opt_index = start;
+			  return(sc->is_integer_symbol);
+			}
+		      if (float_optimize_1(sc, argp, env))
+			{
+			  sc->opt_index = start;
+			  return(sc->is_float_symbol);
+			}
+		      sc->opt_index = start;
+		    }
+		  return(car(sig)); /* we want the function's return type in this context */
+		}
+	    }
+	}
+      return(sc->T);
+    }
+  if (is_symbol(arg))
+    {
+      s7_pointer slot;
+      slot = find_symbol(sc, arg);
+      if ((!is_slot(slot)) ||
+	  (has_methods(slot_value(slot))))
+	return(sc->T);
+      return(s7_type_of(slot_value(slot)));
+    }
+  return(s7_type_of(arg));
+}
+
+static bool is_some_number(s7_scheme *sc, s7_pointer tp)
+{
+  return((tp == sc->is_integer_symbol) ||
+	 (tp == sc->is_float_symbol) ||
+	 (tp == sc->is_real_symbol) ||
+	 (tp == sc->is_complex_symbol) ||
+	 (tp == sc->is_number_symbol) ||
+	 (tp == sc->is_rational_symbol));
+}
+
+
 static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   s7_pointer car_x;
@@ -48590,8 +48754,14 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		  if ((is_slot(settee)) &&
 		      (!is_syntax(slot_value(settee))))
 		    {
+		      /* type changes here can confuse the rest of the optimizer */
+		      s7_pointer atype, stype;
+		      atype = opt_arg_type(sc, cddr(car_x), env);
+		      stype = s7_type_of(slot_value(settee));
+
+		      if ((is_some_number(sc, atype)) && (!is_some_number(sc, stype))) return(false);
 		      cur_info->p1 = settee;
-		      /* TODO: make sure types agree */
+		      
 		      if (cell_optimize_1(sc, cddr(car_x), env))
 			{
 			  cur_info->caller.fp = opt_set_p_p_f;
@@ -48660,7 +48830,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			  cur_info->caller.fp = opt_p_pi_ss;
 			  cur_info->func.p_pi_f = vector_ref_p_pi_direct;
 			  cur_info->p2 = slot;
-			  if ((is_stepper(cur_info->p2)) &&
+			  if ((is_step_end(cur_info->p2)) &&
 			      (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
 			    cur_info->func.p_pi_f = vector_ref_unchecked;
 			  return(true);
@@ -48704,7 +48874,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				    {
 				      cur_info->caller.fp = opt_p_pi_ss;
 				      if ((is_string(obj)) &&
-					  (is_stepper(cur_info->p2)) &&
+					  (is_step_end(cur_info->p2)) &&
 					  (denominator(slot_value(cur_info->p2)) <= string_length(obj)))
 					cur_info->func.p_pi_f = string_ref_unchecked;
 				      return(true);
@@ -49049,7 +49219,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				      s7_pointer slot;
 				      slot = find_symbol(sc, caddr(car_x));
 				      if ((is_slot(slot)) &&
-					  (is_stepper(slot)) &&
+					  (is_step_end(slot)) &&
 					  (denominator(slot_value(slot)) <= integer(s7_length(sc, slot_value(cur_info->p1)))))
 					switch (type(slot_value(cur_info->p1)))
 					  {
@@ -49138,67 +49308,6 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
     }
 #endif
   return(false);
-}
-
-static s7_pointer opt_arg_type(s7_scheme *sc, s7_pointer argp, s7_pointer env)
-{
-  s7_pointer arg;
-  arg = car(argp);
-  if (is_pair(arg))
-    {
-      if ((is_symbol(car(arg))) &&
-	  ((is_global(car(arg))) ||
-	   ((is_slot(global_slot(car(arg)))) &&
-	    (find_symbol(sc, car(arg)) == global_slot(car(arg))))))
-	{
-	  s7_pointer a_func;
-	  a_func = slot_value(global_slot(car(arg)));
-	  if (is_c_function(a_func))
-	    {
-	      s7_pointer sig;
-	      sig = s7_procedure_signature(sc, a_func);
-	      if (is_pair(sig))
-		{
-		  if (car(sig) == sc->is_real_symbol)
-		    {
-		      int start;
-		      start = sc->opt_index;
-		      if (int_optimize_1(sc, argp, env))
-			{
-			  sc->opt_index = start;
-			  return(sc->is_integer_symbol);
-			}
-		      if (float_optimize_1(sc, argp, env))
-			{
-			  sc->opt_index = start;
-			  return(sc->is_float_symbol);
-			}
-		      sc->opt_index = start;
-		    }
-		  return(car(sig)); /* we want the function's return type in this context */
-		}
-	    }
-	}
-      return(sc->T);
-    }
-  if (is_symbol(arg))
-    {
-      s7_pointer slot;
-      slot = find_symbol(sc, arg);
-      if ((!is_slot(slot)) ||
-	  (has_methods(slot_value(slot))))
-	return(sc->T);
-      if (is_integer(slot_value(slot)))
-	return(sc->is_integer_symbol);
-      if (is_t_real(slot_value(slot)))
-	return(sc->is_float_symbol);
-      return(sc->T);
-    }
-  if (is_integer(arg))
-    return(sc->is_integer_symbol);
-  if (is_t_real(arg))
-    return(sc->is_float_symbol);
-  return(sc->T);
 }
 
 static bool symbols_ok(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, opt_info *cur_info)
@@ -54516,6 +54625,8 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	       */
 	      if (car(arg2) == sc->quote_symbol)
 		{
+		  if (!is_pair(cdr(arg2)))
+		    return(OPT_OOPS);
 		  set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_Q);
 		  set_opt_con1(cdr(expr), cadadr(expr));
 		  set_opt_con2(cdr(expr), cadr(caddr(expr)));
@@ -60301,7 +60412,9 @@ static int dox_ex(s7_scheme *sc)
   long long int id;
   s7_pointer frame, vars, slot, code;
   s7_function endf;
-	    
+
+  /* fprintf(stderr, "dox_ex: %d %s\n", is_unsafe_do(sc->code), DISPLAY_80(sc->code)); */
+
   new_frame(sc, sc->envir, frame);   /* new frame is not tied into the symbol lookup process yet */
   sc->temp11 = frame;
   for (vars = car(sc->code); is_pair(vars); vars = cdr(vars))
@@ -60323,7 +60436,6 @@ static int dox_ex(s7_scheme *sc)
       new_cell_no_check(sc, slot, T_SLOT);
       slot_set_symbol(slot, caar(vars));
       slot_set_value(slot, val);
-      set_stepper(slot);
       slot_set_expression(slot, cddar(vars));
 
       if (is_pair(slot_expression(slot)))
@@ -60421,23 +60533,34 @@ static int dox_ex(s7_scheme *sc)
     }
   else
     {
-
-      /* is let activated? also multiexpr body  and other allx? */
-      if ((is_null(cdr(code))) &&
-	  (is_pair(car(code))))
+      if (!is_unsafe_do(sc->code))
 	{
-	  s7_pointer lcode;
-	  lcode = car(code);
-	  if (is_all_x_safe(sc, lcode))
+	  s7_pointer sp, slots;
+	  slots = let_slots(sc->envir);
+	  /* is let activated? also multiexpr body  and other allx? */
+
+	  /* if any of the step vars is unsafe, we can't use s7_optimize */
+	  for (sp = slots; is_slot(sp); sp = next_slot(sp))
+	    if (!is_safe_stepper(sp))
+	      break;
+
+	  if ((is_null(cdr(code))) &&
+	      (is_pair(car(code))))
 	    {
-	      s7_function body;
-	      body = all_x_eval(sc, code, sc->envir, let_symbol_is_safe);
+	      s7_pointer lcode;
+	      s7_function body = NULL;
+	      lcode = car(code);
+	      if (is_null(sp))
+		body = s7_optimize_nr(sc, code, sc->envir);
+	      else 
+		{
+		  if (is_all_x_safe(sc, lcode))
+		    body = all_x_eval(sc, code, sc->envir, let_symbol_is_safe);
+		}
 	      if (body)
 		{
-		  s7_pointer endp, slots;
+		  s7_pointer endp;
 		  endp = opt_pair2(sc->code);
-		  slots = let_slots(sc->envir);
-		  
 		  while (true)
 		    {
 		      s7_pointer slot;
@@ -60453,40 +60576,69 @@ static int dox_ex(s7_scheme *sc)
 		    }
 		}
 	    }
-	}
-      else
-	{
-	  s7_pointer p;
-	  for (p = code; is_pair(p); p = cdr(p))
-	    if (!is_all_x_safe(sc, car(p)))
-	      break;
-	  if (is_null(p))
+	  else
 	    {
-	      s7_pointer endp, slots;
-	      endp = opt_pair2(sc->code);
-	      slots = let_slots(sc->envir);
-	      annotate_args(sc, code, sc->envir);
-		  
-	      while (true)
-		{
-		  s7_pointer slot;
-		  for (p = code; is_pair(p); p = cdr(p))
-		    c_call(p)(sc, car(p));
+	      s7_pointer p;
+	      int body_len;
 
-		  for (slot = slots; is_slot(slot); slot = next_slot(slot))
-		    if (is_pair(slot_expression(slot)))
-		      slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
-		  if (is_true(sc, sc->value = endf(sc, endp)))
+	      if (is_null(sp))
+		{
+		  sc->opt_index = 0;
+		  for (p = code, body_len = 0; is_pair(p); p = cdr(p), body_len++)
+		    if (!cell_optimize_1(sc, p, sc->envir))
+		      break;
+		}
+	      else
+		{
+		  for (p = code; is_pair(p); p = cdr(p))
+		    if (!is_all_x_safe(sc, car(p)))
+		      break;
+		}
+
+	      if (is_null(p))
+		{
+		  s7_pointer endp;
+		  int i;
+
+		  endp = opt_pair2(sc->code);
+		  if (!is_null(sp))
+		    annotate_args(sc, code, sc->envir);
+
+		  while (true)
 		    {
-		      sc->code = cdadr(sc->code);
-		      return(goto_DO_END_CLAUSES);
+		      s7_pointer slot;
+		      if (is_null(sp))
+			{
+			  sc->opt_index = 0;
+			  for (i = 0; i < body_len; i++)
+			    {
+			      opt_info *o;
+			      o = sc->opts[sc->opt_index];
+			      o->caller.fp(o);
+			      sc->opt_index++;
+			    }
+			}
+		      else
+			{
+			  for (p = code; is_pair(p); p = cdr(p))
+			    c_call(p)(sc, car(p));
+			}
+
+		      for (slot = slots; is_slot(slot); slot = next_slot(slot))
+			if (is_pair(slot_expression(slot)))
+			  slot_set_value(slot, c_call(slot_expression(slot))(sc, car(slot_expression(slot))));
+		      if (is_true(sc, sc->value = endf(sc, endp)))
+			{
+			  sc->code = cdadr(sc->code);
+			  return(goto_DO_END_CLAUSES);
+			}
 		    }
 		}
 	    }
+	  set_unsafe_do(sc->code);
 	}
     }
 
-  set_unsafe_do(sc->code);
   if ((is_null(cdr(code))) && /* one expr */
       (is_pair(car(code))))
     {
@@ -60534,7 +60686,6 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
   step_var = caddr(step_expr);
 
 #if (!WITH_GMP)
-  set_stepper(ctr);
   if (((stepf == g_subtract_s1) && (endf == g_less_s0)) ||
       ((stepf == g_add_s1) && (endf == g_equal_2)))
     set_safe_stepper(ctr);
@@ -60710,6 +60861,7 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
 		{
 		  sc->opt_index = 0;
 		  fp(o);
+		  /* TODO: are these type checks needed now? -- could check setter+integer etc in cell_optimize */
 		  if (!is_integer(slot_value(step_slot)))
 		    {
 		      slot_set_value(step_slot, g_add_1s(sc, set_plist_2(sc, small_int(1), slot_value(step_slot))));
@@ -60861,11 +61013,6 @@ static int opt_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool saf
   cur_opt_ctr = sc->opt_ctr;
 #endif
 
-#if 0
-  if (sc->args != step_slot)
-    fprintf(stderr, "args: %p %p\n", sc->args, step_slot);
-  fprintf(stderr, "step_slot: %p\n", step_slot);
-#endif
   if (is_null(p))
     {
       int i;
@@ -60873,10 +61020,7 @@ static int opt_let(s7_scheme *sc, s7_pointer step_slot, s7_pointer scc, bool saf
 
       end = denominator(stepper);
       let_set_slots(sc->envir, reverse_slots(sc, let_slots(sc->envir)));
-#if 0      
-      fprintf(stderr, "let_pf: %s\n  env: %s, step: %s\n    %lld %lld %d\n", 
-	      DISPLAY(scc), DISPLAY(sc->envir), DISPLAY(step_slot), numerator(stepper), denominator(stepper), body_len);
-#endif
+
       if ((var_len == 1) && (body_len == 1))
 	{
 	  s7_pointer slot;
@@ -60957,7 +61101,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 	  sc->args = make_slot_1(sc, sc->envir, caaar(code), make_mutable_integer(sc, s7_integer(init_val)));
 	  
 	  denominator(slot_value(sc->args)) = s7_integer(end_val);
-	  set_stepper(sc->args);
+	  /* fprintf(stderr, "set %s end: %s\n", DISPLAY(sc->args), DISPLAY(sc->code)); */
+	  set_step_end(sc->args);  /* safe_dotimes step is by 1 */
 
 	  /* (define (hi) (do ((i 1 (+ 1 i))) ((= i 1) i))) -- we need the frame even if the loop is not evaluated */
 	  if ((is_null(sc->code)) ||
@@ -61103,8 +61248,6 @@ static int safe_do_ex(s7_scheme *sc)
       ((!is_optimized(caadr(code))) ||
        (opt_cfunc(caadr(code)) != geq_2)))
     {
-      set_stepper(dox_slot1(sc->envir));
-
       if (opt_dotimes(sc, cddr(sc->code), sc->code, false))
 	return(goto_SAFE_DO_END_CLAUSES);
       set_unsafe_do(sc->code);
@@ -61177,7 +61320,7 @@ static int dotimes_p_ex(s7_scheme *sc)
       sc->args = dox_slot1(sc->envir);
       slot_set_value(sc->args, make_mutable_integer(sc, integer(slot_value(dox_slot1(sc->envir)))));
       denominator(slot_value(sc->args)) = integer(slot_value(dox_slot2(sc->envir)));
-      set_stepper(sc->args);
+      set_step_end(sc->args);  /* dotimes step is by 1 */
       
       if (((typesflag(body) == SYNTACTIC_PAIR) ||
 	   (typesflag(car(body)) == SYNTACTIC_TYPE)) &&
@@ -75574,11 +75717,11 @@ s7_scheme *s7_init(void)
   sc->read_line_buf_size = 0;
 
   sc->nil =         make_unique_object("()",             T_NIL);
-  sc->gc_nil =      make_unique_object("#<nil>",         T_UNIQUE);
+  sc->gc_nil =      make_unique_object("#<nil>",         T_NIL);        /* ?? perhaps a unique type for this? */
   sc->T =           make_unique_object("#t",             T_BOOLEAN);
   sc->F =           make_unique_object("#f",             T_BOOLEAN);
-  sc->eof_object =  make_unique_object("#<eof>",         T_UNIQUE);
-  sc->undefined =   make_unique_object("#<undefined>",   T_UNIQUE);
+  sc->eof_object =  make_unique_object("#<eof>",         T_EOF_OBJECT);
+  sc->undefined =   make_unique_object("#<undefined>",   T_UNDEFINED);
   sc->unspecified = make_unique_object("#<unspecified>", T_UNSPECIFIED);
   sc->no_value =    make_unique_object("#<unspecified>", T_UNSPECIFIED);
 
@@ -76230,6 +76373,7 @@ s7_scheme *s7_init(void)
 
   /* these are for signatures */
   sc->is_unspecified_symbol = s7_make_symbol(sc, "unspecified?");
+  sc->is_undefined_symbol = s7_make_symbol(sc, "undefined?");
   sc->is_integer_or_real_at_end_symbol = s7_make_symbol(sc, "integer:real?");
   sc->is_integer_or_any_at_end_symbol =  s7_make_symbol(sc, "integer:any?");
 
@@ -76656,6 +76800,7 @@ s7_scheme *s7_init(void)
   sc->is_eqv_symbol =                defun("eqv?",		is_eqv,			2, 0, false);
   sc->is_equal_symbol =              defun("equal?",		is_equal,		2, 0, false);
   sc->is_morally_equal_symbol =      defun("morally-equal?",	is_morally_equal,	2, 0, false);
+  sc->type_of_symbol =               defun("type-of",		type_of,		1, 0, false);
 
   sc->gc_symbol =                    defun("gc",		gc,			0, 1, false);
   sc->s7_version_symbol =            defun("s7-version",	s7_version,		0, 0, false);
@@ -76925,6 +77070,7 @@ s7_scheme *s7_init(void)
 #endif
 
   init_choosers(sc);
+  init_typers(sc);
 
   /* -------------------------------------------------------------------------------- */
   s7_set_d_pi_function(slot_value(global_slot(sc->float_vector_ref_symbol)), float_vector_ref_d);
@@ -76995,6 +77141,7 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->cddadr_symbol)), cddadr_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->cddddr_symbol)), cddddr_p_p);
 
+  s7_set_p_p_function(slot_value(global_slot(sc->type_of_symbol)), s7_type_of);
   s7_set_p_p_function(slot_value(global_slot(sc->symbol_symbol)), symbol_p_p);
   s7_set_p_pp_function(slot_value(global_slot(sc->symbol_symbol)), symbol_p_pp);
   s7_set_p_ppp_function(slot_value(global_slot(sc->symbol_symbol)), symbol_p_ppp);
@@ -77111,6 +77258,8 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->iterate_symbol)), iterate_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->make_iterator_symbol)), make_iterator_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->c_pointer_symbol)), c_pointer_p_p);
+  s7_set_p_pp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-count"))), tree_count_p_pp);
+  s7_set_p_ppp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-count"))), tree_count_p_ppp);
 
   s7_set_p_p_function(slot_value(global_slot(sc->iterator_sequence_symbol)), iterator_sequence_p_p);
   s7_set_p_p_function(slot_value(global_slot(sc->string_downcase_symbol)), string_downcase_p);
@@ -77165,6 +77314,7 @@ s7_scheme *s7_init(void)
   s7_set_p_p_function(slot_value(global_slot(sc->format_symbol)), format_p_p);
   s7_set_p_pp_function(slot_value(global_slot(sc->format_symbol)), format_p_pp);
   s7_set_p_ppp_function(slot_value(global_slot(sc->format_symbol)), format_p_ppp);
+  s7_set_p_pp_function(slot_value(global_slot(sc->inlet_symbol)), inlet_p_pp);
 
   s7_set_p_pp_function(slot_value(global_slot(sc->memq_symbol)), memq_p_pp);
   s7_set_p_pp_function(slot_value(global_slot(sc->memv_symbol)), memv_p_pp);
@@ -77240,6 +77390,8 @@ s7_scheme *s7_init(void)
   s7_set_d_dddd_function(slot_value(global_slot(sc->subtract_symbol)), subtract_d_dddd);
   s7_set_d_dddd_function(slot_value(global_slot(sc->multiply_symbol)), multiply_d_dddd);
   s7_set_d_dddd_function(slot_value(global_slot(sc->divide_symbol)), divide_d_dddd);
+
+  s7_set_p_pp_function(slot_value(global_slot(sc->multiply_symbol)), multiply_p_pp);
 
   s7_set_d_p_function(slot_value(global_slot(sc->real_part_symbol)), real_part_d_p);
   s7_set_d_p_function(slot_value(global_slot(sc->imag_part_symbol)), imag_part_d_p);
@@ -77655,23 +77807,23 @@ int main(int argc, char **argv)
  *
  *           12  |  13  |  14  |  15  |  16  |  17
  *                                             f4new                    new clm opt
- * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1126            1130
- * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2491] 3287 2859            2875 2600
- * teq           |      |      | 6612 | 2380 | [2306] 2500 2385            2390 2652
- * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3319            3251
- * lint          |      |      |      | 7731 | [3208] 4926 3292 [152.4]    3349      [152.4]
- * tcopy         |      |      | 13.6 | 3204 | [3266] 3190 3418            3418 3369
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3487            3485
- * tform         |      |      | 6816 | 3627 | [3532] 3768 3864            3872 3721
- * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4415            4407 4335
- * titer         |      |      | 7503 | 5218 | [5015] 5873 5086            5142 5070
  * tmac          |      |      |      |      |        18.7 1049            1050
- * tsort         |      |      |      | 8825 | [7301]                      7422 7347
- * thash         |      |      | 50.7 | 8491 | [8913] 8858 10.4            10.7 9131
+ * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1126            1130
+ * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2491] 3287 2859            2875 2622
+ * teq           |      |      | 6612 | 2380 | [2306] 2500 2385            2390 2652
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3487            3485 3246
+ * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3319            3251
+ * lint          |      |      |      | 7731 | [3208] 4926 3292 [152.4]    3349 3341 [155.6]
+ * tcopy         |      |      | 13.6 | 3204 | [3266] 3190 3418            3418 3369
+ * tform         |      |      | 6816 | 3627 | [3532] 3768 3864            3872 3739
+ * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4415            4407 4350
+ * titer         |      |      | 7503 | 5218 | [5015] 5873 5086            5142 5078
+ * tsort         |      |      |      | 8825 | [7301]                      7422 7355
+ * thash         |      |      | 50.7 | 8491 | [8913] 8858 10.4            10.7 9041
  *               |      |      |      |      |
  * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.6            13.1 12.5
- * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.8            43.3 20.2
- * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 [133.0] 41.9    56.9 43.2
+ * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.8            43.3 20.1
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 41.9 [133.0]    56.9 43.0
  * 
  * --------------------------------------------------------------------
  *

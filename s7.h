@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "4.19"
-#define S7_DATE "20-Apr-17"
+#define S7_VERSION "5.0"
+#define S7_DATE "21-Apr-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -652,6 +652,8 @@ void s7_autoload_set_names(s7_scheme *sc, const char **names, int size);
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);
 
+s7_pointer s7_type_of(s7_pointer arg);
+
 
 /* -------------------------------------------------------------------------------- */
 /* the new clm optimizer!  this time for sure! 
@@ -842,7 +844,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 20-Apr:    s7_tree_memq (for Snd), many changes for new clm optimizer.
+ * 20-Apr:    s7_tree_memq (for Snd), s7_type_of, many changes for new clm optimizer.
  * 10-Apr:    added s7_scheme first argument to s7_iterator_is_at_end.
  * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
  *            s7_optimize, s7_float_optimize, s7_procedure_signature.

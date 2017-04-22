@@ -734,6 +734,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 		     (append rest (map (lambda (subset) (cons (car set) subset)) rest)))))))))
 
 ;;; ----------------
+;;;   now superseded by built-in type-of
 (define ->predicate
   (let ((predicates (list integer? rational? real? complex? number?
 			  byte-vector? string?
@@ -2170,7 +2171,7 @@ Unlike full-find-if, safe-find-if can handle any circularity in the sequences.")
 	      float-vector-ref int-vector make-int-vector int-vector-set! int-vector-ref string->byte-vector 
 	      byte-vector make-byte-vector hash-table hash-table* make-hash-table hash-table-ref 
 	      hash-table-set! hash-table-entries cyclic-sequences call/cc call-with-current-continuation 
-	      call-with-exit apply for-each map dynamic-wind values 
+	      call-with-exit apply for-each map dynamic-wind values type-of
 	      catch throw error procedure-documentation procedure-signature help procedure-source
 	      procedure-setter arity aritable? not eq? eqv? equal? morally-equal? s7-version
 	      dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let

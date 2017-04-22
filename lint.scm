@@ -129,7 +129,7 @@
 	      string-ci<=? string-ci<? string-ci=? string-ci>=? string-ci>? string-downcase string-length
 	      string-position string-ref string-upcase string<=? string<? string=? string>=? string>? string?
 	      sublet substring symbol symbol->dynamic-value symbol->keyword symbol->string symbol->value symbol?
-	      tan tanh tree-leaves tree-memq truncate
+	      tan tanh tree-leaves tree-memq truncate type-of
 	      unless
 	      values vector vector-append vector->list vector-dimensions vector-length vector-ref vector?
 	      when with-baffle with-let with-input-from-file with-input-from-string with-output-to-string
@@ -181,7 +181,7 @@
 			         catch throw error procedure-documentation procedure-signature help procedure-source funclet 
 			         procedure-setter arity aritable? not eq? eqv? equal? morally-equal? gc s7-version emergency-exit 
 			         exit dilambda make-hook hook-functions stacktrace tree-leaves tree-memq object->let
-				 getenv directory? file-exists?
+				 getenv directory? file-exists? type-of
 				 list-values apply-values unquote))
 			      ht))
 
@@ -1745,38 +1745,17 @@
 			   (cons :dilambda 'dilambda?)
 			   (cons :lambda 'procedure?))))
 	(lambda (c)
-	  (cond ((pair? c)         'pair?)
-		((integer? c)      'integer?)
-		((rational? c)     'rational?)
-		((real? c)	   'real?)
-		((number? c)       'number?)
-		((byte-vector? c)  'byte-vector?)
-		((string? c)       'string?)
-		((null? c)	   'null?)
-		((char? c)	   'char?)
-		((boolean? c)      'boolean?)
-		((keyword? c)
+	  (case (type-of c)
+	    ((symbol?)
+	     (if (keyword? c) 
 		 (cond ((assq c markers) => cdr)
-		       (else 'keyword?)))
-		((float-vector? c) 'float-vector?)
-		((int-vector? c)   'int-vector?)
-		((vector? c)       'vector?)
-		((let? c)	   'let?)
-		((hash-table? c)   'hash-table?)
-		((input-port? c)   'input-port?)
-		((output-port? c)  'output-port?)
-		((iterator? c)     'iterator?)
-		((continuation? c) 'continuation?)
-		((dilambda? c)     'dilambda?)
-		((procedure? c)    'procedure?)
-		((macro? c)        'macro?)
-		((random-state? c) 'random-state?)
-		((c-pointer? c)    'c-pointer?)
-		((c-object? c)     'c-object?)
-		((eof-object? c)   'eof-object?)
-		((syntax? c)       'syntax?)
-		((assq c '((#<unspecified> . unspecified?) (#<undefined> . undefined?))) => cdr)
-		(#t #t)))))
+		       (else 'keyword?))
+		 #t))
+	    ((string?)
+	     (if (byte-vector? c) 'byte-vector? 'string?))
+	    ((procedure?)
+	     (if (dilambda? c) 'dilambda? 'procedure?))
+	    (else)))))
     
     (define (define->type c)
       (and (pair? c)
@@ -2227,7 +2206,7 @@
     (define (->eqf x)
       (case x
 	((char?) '(eqv? char=?))
-	((integer? rational? real? number? complex?) '(eqv? =))
+	((integer? rational? real? number? complex? float?) '(eqv? =))
 	((symbol? keyword? boolean? null? procedure? syntax? macro? undefined? unspecified?) '(eq? eq?))
 	((string? byte-vector?) '(equal? string=?))
 	((pair? vector? float-vector? int-vector? hash-table?) '(equal? equal?))
