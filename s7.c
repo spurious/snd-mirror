@@ -68,6 +68,7 @@
  *    generic length, copy, reverse, fill!, append
  *    error handlers
  *    sundry leftovers
+ *    the optimizers
  *    multiple-values, quasiquote
  *    eval
  *    multiprecision arithmetic
@@ -1788,6 +1789,7 @@ static s7_scheme *cur_sc = NULL;
 #define T_SAFE_STEPPER                (1 << (TYPE_BITS + 19))
 #define is_safe_stepper(p)            ((typeflag(_TSlp(p)) & T_SAFE_STEPPER) != 0)
 #define set_safe_stepper(p)           typeflag(_TSlp(p)) |= T_SAFE_STEPPER
+#define clear_safe_stepper(p)         typesflag(p) &= (~T_SAFE_STEPPER)
 /* an experiment */
 
 #define T_PRINT_NAME                  T_SAFE_STEPPER
@@ -22408,12 +22410,15 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 
 int s7_port_line_number(s7_pointer p)
 {
-  if (is_input_port(p))
-    return(port_line_number(p));
-  return(0);
+  if (!(is_input_port(p)))
+    simple_wrong_type_argument(cur_sc, cur_sc->port_line_number_symbol, p, T_INPUT_PORT);
+  return(port_line_number(p));
 }
 
-static s7_int port_line_number_i_p(s7_pointer p) {return(s7_port_line_number(p));}
+static s7_int port_line_number_i_p(s7_pointer p) 
+{
+  return(s7_port_line_number(p));
+}
 
 static s7_pointer g_set_port_line_number(s7_scheme *sc, s7_pointer args)
 {
@@ -44059,7 +44064,7 @@ static void init_typers(s7_scheme *sc)
   type_to_typers[T_UNSPECIFIED] = sc->is_unspecified_symbol;
   type_to_typers[T_BOOLEAN] = sc->is_boolean_symbol;
   type_to_typers[T_CHARACTER] = sc->is_char_symbol;
-  type_to_typers[T_SYMBOL] = sc->is_symbol_symbol;
+  type_to_typers[T_SYMBOL] = sc->is_symbol_symbol;      /* and keyword? */
   type_to_typers[T_SYNTAX] = sc->is_syntax_symbol;
   type_to_typers[T_INTEGER] = sc->is_integer_symbol;
   type_to_typers[T_RATIO] = sc->is_rational_symbol;
@@ -44069,7 +44074,7 @@ static void init_typers(s7_scheme *sc)
   type_to_typers[T_BIG_RATIO] = sc->is_rational_symbol;
   type_to_typers[T_BIG_REAL] = sc->is_float_symbol;
   type_to_typers[T_BIG_COMPLEX] = sc->is_complex_symbol;
-  type_to_typers[T_STRING] = sc->is_string_symbol;
+  type_to_typers[T_STRING] = sc->is_string_symbol;      /* and byte-vector? */
   type_to_typers[T_C_OBJECT] = sc->is_c_object_symbol;
   type_to_typers[T_VECTOR] = sc->is_vector_symbol;
   type_to_typers[T_INT_VECTOR] = sc->is_int_vector_symbol;
@@ -44087,7 +44092,7 @@ static void init_typers(s7_scheme *sc)
   type_to_typers[T_INPUT_PORT] = sc->is_input_port_symbol;
   type_to_typers[T_BAFFLE] = sc->F;
   type_to_typers[T_RANDOM_STATE] = sc->is_random_state_symbol;
-  type_to_typers[T_GOTO] = sc->F;                     /* (continuation? goto) -> #f -- we need a type indicator for this */
+  type_to_typers[T_GOTO] = sc->F;                       /* (continuation? goto) -> #f -- we need a type indicator for this */
   type_to_typers[T_CONTINUATION] = sc->is_continuation_symbol;
   type_to_typers[T_CLOSURE] = sc->is_procedure_symbol;
   type_to_typers[T_CLOSURE_STAR] = sc->is_procedure_symbol;
@@ -45787,6 +45792,14 @@ static s7_pointer b_to_p(void *p)
   return((o1->caller.fb(o1)) ? cur_sc->T : cur_sc->F);
 }
 
+static s7_pointer d_to_p(void *p)
+{
+  /* opt_info *o = (opt_info *)p; */
+  opt_info *o1;
+  o1 = cur_sc->opts[++cur_sc->opt_index];
+  return(make_real(cur_sc, o1->caller.fd(o1)));
+}
+
 static s7_double opt_unwrap_float(void *p)
 {
   opt_info *o = (opt_info *)p;
@@ -46055,6 +46068,34 @@ static s7_pointer opt_set_p_p_f(void *p)
 #endif
   o1 = cur_sc->opts[++cur_sc->opt_index];
   x = o1->caller.fp(o1);
+  slot_set_value(o->p1, x);
+  return(x);
+}
+
+static s7_pointer opt_set_p_i_f(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_pointer x;
+#if OPT_DEBUG
+  show_opt(__func__, o);
+#endif
+  o1 = cur_sc->opts[++cur_sc->opt_index];
+  x = s7_make_integer(cur_sc, o1->caller.fi(o1));
+  slot_set_value(o->p1, x);
+  return(x);
+}
+
+static s7_pointer opt_set_p_d_f(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_pointer x;
+#if OPT_DEBUG
+  show_opt(__func__, o);
+#endif
+  o1 = cur_sc->opts[++cur_sc->opt_index];
+  x = make_real(cur_sc, o1->caller.fd(o1));
   slot_set_value(o->p1, x);
   return(x);
 }
@@ -47176,13 +47217,23 @@ static s7_pointer opt_unless_p(void *p)
 }
 
 
+/* -------------------------------- */
+
+static bool return_false(s7_scheme *sc, s7_pointer expr, int line)
+{
+#if OPT_PRINT
+  fprintf(stderr, "   %s%d%s: %s\n", BOLD_TEXT, line, UNBOLD_TEXT, DISPLAY_80(expr));
+#endif
+  return(false);
+}
+
 static bool opt_float_not_pair(s7_scheme *sc, s7_pointer car_x)
 {
   opt_info *cur_info;
   if (is_real(car_x))
     {
       if (s7_is_ratio(car_x))
-	return(false);
+	return(return_false(sc, car_x, __LINE__));
       cur_info = sc->opts[sc->opt_index++];
       cur_info->x1 = s7_number_to_real(sc, car_x);
       cur_info->caller.fd = opt_d_c;
@@ -47196,7 +47247,7 @@ static bool opt_float_not_pair(s7_scheme *sc, s7_pointer car_x)
 	  (is_real(slot_value(p))))
 	{
 	  if (s7_is_ratio(slot_value(p)))
-	    return(false);
+	    return(return_false(sc, car_x, __LINE__));
 	  cur_info = sc->opts[sc->opt_index++];
 	  cur_info->p1 = p;
 	  if (is_float(slot_value(p)))
@@ -47205,7 +47256,7 @@ static bool opt_float_not_pair(s7_scheme *sc, s7_pointer car_x)
 	  return(true);
 	}
     }
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 static bool opt_int_not_pair(s7_scheme *sc, s7_pointer car_x)
@@ -47231,7 +47282,7 @@ static bool opt_int_not_pair(s7_scheme *sc, s7_pointer car_x)
 	  return(true);
 	}
     }
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 static bool opt_cell_not_pair(s7_scheme *sc, s7_pointer car_x)
@@ -47250,20 +47301,20 @@ static bool opt_cell_not_pair(s7_scheme *sc, s7_pointer car_x)
   if (is_slot(p))
     {
       if (has_methods(slot_value(p)))
-	return(false);
+	return(return_false(sc, car_x, __LINE__));
       cur_info = sc->opts[sc->opt_index++];
       cur_info->p1 = p;
       cur_info->caller.fp = opt_p_s;
       return(true);
     }
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 static bool opt_cell_quote(s7_scheme *sc, s7_pointer car_x)
 {
   opt_info *cur_info;
   if (!is_null(cddr(car_x)))
-    return(false);
+    return(return_false(sc, car_x, __LINE__));
   cur_info = sc->opts[sc->opt_index++];
   cur_info->p1 = cadr(car_x);
   cur_info->caller.fp = opt_p_c;
@@ -47278,7 +47329,7 @@ static bool opt_bool_not_pair(s7_scheme *sc, s7_pointer car_x)
   if (!is_symbol(car_x))
     {
       if (!s7_is_boolean(car_x))
-	return(false); /* i.e. use cell_optimize */
+	return(return_false(sc, car_x, __LINE__)); /* i.e. use cell_optimize */
       cur_info = sc->opts[sc->opt_index++];
       cur_info->p1 = car_x;
       cur_info->caller.fb = opt_b_c;
@@ -47289,13 +47340,13 @@ static bool opt_bool_not_pair(s7_scheme *sc, s7_pointer car_x)
     {
       if ((has_methods(slot_value(p))) ||
 	  (!s7_is_boolean(slot_value(p))))
-	return(false);
+	return(return_false(sc, car_x, __LINE__));
       cur_info = sc->opts[sc->opt_index++];
       cur_info->p1 = p;
       cur_info->caller.fb = opt_b_s;
       return(true);
     }
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 
@@ -47341,7 +47392,7 @@ static bool index_is_safe(s7_scheme *sc, s7_pointer car_x, s7_pointer v)
 	     (is_step_end(slot)) &&
 	     (denominator(slot_value(slot)) <= integer(s7_length(sc, slot_value(v)))));
     }
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 
@@ -47352,8 +47403,7 @@ static bool index_is_safe(s7_scheme *sc, s7_pointer car_x, s7_pointer v)
 static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   s7_function opt;
-  s7_pointer car_x;
-  int len;
+  s7_pointer car_x, head;
 
 #if DEBUGGING
   sc->opt_ctr++;
@@ -47370,25 +47420,27 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 #if DEBUGGING && OPT_PRINT
       fprintf(stderr, "opts overflow: %s\n", DISPLAY(expr));
 #endif
-      return(false);
+      return(return_false(sc, expr, __LINE__));
     }
   car_x = car(expr);
-  len = s7_list_length(sc, car_x);
-
   if (!is_pair(car_x)) /* wrap constants/symbols */
     return(opt_float_not_pair(sc, car_x));
 
-  if (is_symbol(car(car_x)))
+  head = car(car_x);
+  if (is_symbol(head))
     {
       /* get func, check sig, check all args */
       s7_pointer s_func;
       opt_info *cur_info;
+      int len;
 
+      len = s7_list_length(sc, car_x);
       /* need to check int_opt here */
 
-      if (car(car_x) == sc->set_symbol)
+      if (is_syntactic(head))
 	{
-	  if (len == 3)
+	  if ((head == sc->set_symbol) &&
+	      (len == 3))
 	    {
 	      cur_info = sc->opts[sc->opt_index++];
 	      if (is_symbol(cadr(car_x)))
@@ -47396,14 +47448,14 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		  s7_pointer settee;
 		  if ((is_immutable(cadr(car_x))) ||
 		      (symbol_has_accessor(cadr(car_x))))
-		    return(false);
+		    return(return_false(sc, car_x, __LINE__));
 		  settee = find_symbol(sc, cadr(car_x));
 		  if (is_slot(settee))
 		    {
 		      cur_info->p1 = settee;
 		      if ((is_integer(slot_value(settee))) ||
 			  (!is_number(slot_value(settee))))
-			return(false);
+			return(return_false(sc, car_x, __LINE__));
 		      if ((is_real(slot_value(settee))) &&
 			  (float_optimize_1(sc, cddr(car_x), env)))
 			{
@@ -47458,17 +47510,17 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		    }
 		}
 	    }
-	  return(false);
+	  return(return_false(sc, car_x, __LINE__));
 	}
-      
-      if ((is_global(car(car_x))) ||
-	  ((is_slot(global_slot(car(car_x)))) &&
-	   (find_symbol(sc, car(car_x)) == global_slot(car(car_x)))))
-	s_func = slot_value(global_slot(car(car_x)));
+
+      if ((is_global(head)) ||
+	  ((is_slot(global_slot(head))) &&
+	   (find_symbol(sc, head) == global_slot(head))))
+	s_func = slot_value(global_slot(head));
       else
 	{
 	  s7_pointer s_slot;
-	  s_slot = find_symbol(sc, car(car_x));
+	  s_slot = find_symbol(sc, head);
 	  if ((is_slot(s_slot)) &&
 	      (len == 2) &&
 	      (is_float_vector(slot_value(s_slot))) &&
@@ -47502,633 +47554,589 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		    }
 		}
 	    }
-	  return(false);
+	  return(return_false(sc, car_x, __LINE__));
 	}
 
       if (is_c_function(s_func))
 	{
-	  s7_pointer sig;
-	  sig = s7_procedure_signature(sc, s_func);
-	  if (is_pair(sig))
+	  s7_pointer sig = NULL;
+	  int orig_index;
+	  cur_info = sc->opts[sc->opt_index++];
+	  orig_index = sc->opt_index;
+	  switch (len)
 	    {
-	      s7_pointer rtn_type;
-	      rtn_type = car(sig);
-	      if ((rtn_type == sc->is_float_symbol) ||
-		  (rtn_type == sc->is_real_symbol) ||
-		  (rtn_type == sc->is_number_symbol) ||
-		  (rtn_type == sc->is_integer_symbol))
-		{
-		  int orig_index;
-		  cur_info = sc->opts[sc->opt_index++];
-		  orig_index = sc->opt_index;
-		  switch (len)
-		    {
-		    case 1:
+	    case 1:
+	      {
+		s7_d_t func;                   /* (f): (mus-srate) */
+		func = s7_d_function(s_func);
+		if (func)
+		  {
+		    cur_info->caller.fd = opt_d_f;
+		    cur_info->func.d_f = func;
+		    return(true);
+		  }
+	      }
+	      break;
+	      
+	    case 2:                            /* (f v) or (f d): (env e) or (abs x) */
+	      {
+		s7_d_d_t func;
+		s7_d_p_t dpf;
+		s7_d_v_t flt_func;
+		
+		func = s7_d_d_function(s_func);
+		if (func)
+		  {
+		    cur_info->func.d_d_f = func;
+		    if (is_real(cadr(car_x)))
 		      {
-			s7_d_t func;                   /* (f): (mus-srate) */
-			func = s7_d_function(s_func);
-			if (func)
+			cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
+			cur_info->caller.fd = opt_d_d_c;
+			return(true);
+		      }
+		    if (is_symbol(cadr(car_x)))
+		      {
+			cur_info->p1 = find_symbol(sc, cadr(car_x));
+			if ((is_slot(cur_info->p1)) &&
+			    (!has_methods(slot_value(cur_info->p1))))
 			  {
-			    cur_info->caller.fd = opt_d_f;
-			    cur_info->func.d_f = func;
+			    if (is_float(slot_value(cur_info->p1)))
+			      cur_info->caller.fd = opt_d_d_s;
+			    else 
+			      {
+				if (float_optimize_1(sc, cdr(car_x), env))
+				  cur_info->caller.fd = opt_d_d_f;
+				else return(return_false(sc, car_x, __LINE__));
+			      }
 			    return(true);
 			  }
 		      }
-		      break;
-
-		    case 2:                            /* (f v) or (f d): (env e) or (abs x) */
-		      if ((is_pair(cdr(sig))) &&
-			  (is_symbol(cadr(sig))))
-			{
-			  if ((cadr(sig) == sc->is_float_symbol) ||  /* look first for double f(double) */
-			      (cadr(sig) == sc->is_real_symbol) ||
-			      (cadr(sig) == sc->is_number_symbol))
-			    {
-			      /* do we need to worry aout complex numbers here? */
-			      s7_d_d_t func;
-			      func = s7_d_d_function(s_func);
-			      if (func)
-				{
-				  cur_info->func.d_d_f = func;
-				  if (is_real(cadr(car_x)))
-				    {
-				      cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
-				      cur_info->caller.fd = opt_d_d_c;
-				      return(true);
-				    }
-				  if (is_symbol(cadr(car_x)))
-				    {
-				      cur_info->p1 = find_symbol(sc, cadr(car_x));
-				      if (is_slot(cur_info->p1))
-					{
-					  if (is_float(slot_value(cur_info->p1)))
-					    cur_info->caller.fd = opt_d_d_s;
-					  else 
-					    {
-					      if (float_optimize_1(sc, cdr(car_x), env))
-						cur_info->caller.fd = opt_d_d_f;
-					      else return(false);
-					    }
-					  return(true);
-					}
-				    }
-				  else /* is pair arg */
-				    {
-				      if (float_optimize_1(sc, cdr(car_x), env))
-					{
-					  cur_info->caller.fd = opt_d_d_f;
-					  return(true);
-					}
-				    }
-				}
-			    }
-			  else /* not float arg */
-			    {
-			      s7_d_p_t dpf;
-			      if (is_symbol(cadr(car_x)))           /* look for (oscil g) */
-				{
-				  s7_pointer obj, checker;
-				  checker = s7_symbol_value(sc, cadr(sig));
-				  obj = s7_symbol_value(sc, cadr(car_x));
-				  /* fprintf(stderr, "%s: %s %s\n", DISPLAY(cadr(car_x)), DISPLAY(obj), DISPLAY(checker)); */
-				  if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
-				    {
-				      s7_d_v_t flt_func;
-				      flt_func = s7_d_v_function(s_func);
-				      /* fprintf(stderr, "flt: %p\n", flt_func); */
-				      if (flt_func)
-					{
-					  cur_info->obj = (void *)s7_object_value(obj);
-					  cur_info->func.d_v_f = flt_func;
-					  cur_info->caller.fd = opt_d_v;
-					  return(true);
-					}
-				    }
-				}
-			      dpf = s7_d_p_function(s_func);
-			      if (dpf)
-				{
-				  cur_info->func.d_p_f = dpf;
-				  if (is_symbol(cadr(car_x)))
-				    {
-				      cur_info->p1 = find_symbol(sc, cadr(car_x));
-				      if (!is_slot(cur_info->p1)) return(false);
-				      cur_info->caller.fd = opt_d_p_s;
-				      return(true);
-				    }
-				  if (cell_optimize_1(sc, cdr(car_x), env))
-				    {
-				      cur_info->caller.fd = opt_d_p_f;
-				      return(true);
-				    }
-				}
-			    }
-			}
-		      break;
-		      
-		    case 3:
-		      if (is_pair(cddr(sig)))
-			{
-			  s7_pointer arg1_type, arg2_type, arg1, arg2;
-			  bool arg1_is_num, arg2_is_num;
-			  arg1_type = cadr(sig);
-			  arg2_type = caddr(sig);
-			  arg1 = cadr(car_x);
-			  arg2 = caddr(car_x);
-			  arg1_is_num = ((arg1_type == sc->is_float_symbol) ||
-					 (arg1_type == sc->is_real_symbol) ||
-					 (arg1_type == sc->is_number_symbol));
-			  arg2_is_num = ((arg2_type == sc->is_float_symbol) ||
-					 (arg2_type == sc->is_real_symbol) ||
-					 ((is_pair(arg2_type)) && (direct_memq(sc->is_real_symbol, arg2_type))) ||
-					 (arg2_type == sc->is_number_symbol));
-
-			  /* there's also stuff like (+ 1.5 i) where we want i->float */
-			  if ((arg1_is_num) && 
-			      (arg2_is_num))
-			    {
-			      s7_d_dd_t func;
-			      func = s7_d_dd_function(s_func);
-			      if (func)
-				{
-				  cur_info->func.d_dd_f = func;
-				  if (is_real(arg1))
-				    {
-				      cur_info->x1 = s7_number_to_real(sc, arg1);
-				      if (is_real(arg2))
-					{
-					  cur_info->x2 = s7_number_to_real(sc, arg2);
-					  cur_info->caller.fd = opt_d_dd_cc;
-					  return(true);
-					}
-				      if (is_symbol(arg2))
-					{
-					  cur_info->p1 = find_symbol(sc, arg2);
-					  if (is_slot(cur_info->p1))
-					    {
-					      if (is_float(slot_value(cur_info->p1)))
-						cur_info->caller.fd = opt_d_dd_cs;
-					      else 
-						{
-						  if (float_optimize_1(sc, cddr(car_x), env))
-						    cur_info->caller.fd = opt_d_dd_cf;
-						  else return(false);
-						}
-					      return(true);
-					    }
-					}
-				      else
-					{
-					  if (float_optimize_1(sc, cddr(car_x), env))
-					    {
-					      cur_info->caller.fd = opt_d_dd_cf;
-					      return(true);
-					    }
-					}
-				    }
-				  else
-				    {
-				      if (is_symbol(arg1))
-					{
-					  cur_info->p1 = find_symbol(sc, arg1);
-					  if ((is_slot(cur_info->p1)) &&
-					      (is_real(slot_value(cur_info->p1))))
-					    {
-					      if (is_float(slot_value(cur_info->p1)))
-						{
-						  if (is_real(arg2))
-						    {
-						      cur_info->x1 = s7_number_to_real(sc, arg2);
-						      if (is_float(slot_value(cur_info->p1)))
-							cur_info->caller.fd = opt_d_dd_sc;
-						      else
-							{
-							  if (float_optimize_1(sc, cdr(car_x), env))
-							    cur_info->caller.fd = opt_d_dd_fc;
-							  else return(false);
-							}
-						      return(true);
-						    }
-						  if (is_symbol(arg2))
-						    {
-						      cur_info->p2 = find_symbol(sc, arg2);
-						      if (is_slot(cur_info->p2))
-							{
-							  if (is_float(slot_value(cur_info->p2)))
-							    cur_info->caller.fd = opt_d_dd_ss;
-							  else
-							    {
-							      if (float_optimize_1(sc, cddr(car_x), env))
-								cur_info->caller.fd = opt_d_dd_sf;
-							      else return(false);
-							    }
-							  return(true);
-							}
-						    }
-						  else
-						    {
-						      if (float_optimize_1(sc, cddr(car_x), env))
-							{
-							  cur_info->caller.fd = opt_d_dd_sf;
-							  return(true);
-							}
-						    }
-						}
-					      else
-						{
-						  if ((float_optimize_1(sc, cdr(car_x), env)) &&
-						      (float_optimize_1(sc, cddr(car_x), env)))
-						    {
-						      cur_info->caller.fd = opt_d_dd_ff;
-						      return(true);
-						    }
-						}
-					    }
-					  else return(false); /* arg1 trouble */
-					  /* TODO: d_ddd has a similar bug and check arg2 */
-					}
-				      else
-					{
-					  if (float_optimize_1(sc, cdr(car_x), env))
-					    {
-					      if (is_real(arg2))
-						{
-						  cur_info->x1 = s7_number_to_real(sc, arg2);
-						  cur_info->caller.fd = opt_d_dd_fc;
-						  return(true);
-						}
-					      if (is_symbol(arg2))
-						{
-						  cur_info->p1 = find_symbol(sc, arg2);
-						  if (is_slot(cur_info->p1))
-						    {
-						      if (is_float(slot_value(cur_info->p1)))
-							cur_info->caller.fd = opt_d_dd_fs;
-						      else
-							{
-							  if (float_optimize_1(sc, cddr(car_x), env))
-							    cur_info->caller.fd = opt_d_dd_ff;
-							  else return(false);
-							}
-						      return(true);
-						    }
-						}
-					      else
-						{
-						  if (float_optimize_1(sc, cddr(car_x), env))
-						    {
-						      cur_info->caller.fd = opt_d_dd_ff;
-						      return(true);
-						    }
-						}
-					    }
-					}
-				    }
-				}
-			    }
-
-			  if ((!arg1_is_num) &&
-			      (is_symbol(arg1_type)) &&
-			      (is_symbol(arg1)))
-			    {
-			      s7_pointer obj, checker;
-			      checker = s7_symbol_value(sc, arg1_type);
-			      obj = s7_symbol_value(sc, arg1);
-			      if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
-				{
-				  if ((arg2_is_num) ||
-				      (arg2_type == sc->is_real_symbol) ||
-				      (arg2_type == sc->is_float_symbol) ||
-				      ((is_pair(arg2_type)) && (direct_memq(sc->is_real_symbol, arg2_type))))				    
-				    {
-				      s7_d_vd_t flt_func;
-				      flt_func = s7_d_vd_function(s_func);
-				      if (flt_func)
-					{
-					  cur_info->func.d_vd_f = flt_func;
-					  if (!is_pair(arg2))
-					    {
-					      /* fprintf(stderr, "arg2 not pair\n"); */
-					      cur_info->obj = (void *)s7_object_value(obj);
-					      if (is_real(arg2))
-						{
-						  cur_info->x1 = s7_number_to_real(sc, arg2);
-						  cur_info->caller.fd = opt_d_vd_c;
-						  return(true);
-						}
-					      cur_info->p1 = find_symbol(sc, arg2);
-					      if (is_slot(cur_info->p1))
-						{
-						  if (is_float(slot_value(cur_info->p1)))
-						    cur_info->caller.fd = opt_d_vd_s;
-						  else
-						    {
-						      if (float_optimize_1(sc, cddr(car_x), env))
-							cur_info->caller.fd = opt_d_vd_f;
-						      else return(false);
-						    }
-						  return(true);
-						}
-					    }
-					  else /* is pair arg2 */
-					    {
-					      if (float_optimize_1(sc, cddr(car_x), env))
-						{
-						  cur_info->obj = (void *)s7_object_value(obj);
-						  cur_info->caller.fd = opt_d_vd_f;
-						  return(true);
-						}
-					    }
-					}
-				      else
-					{
-					  s7_d_pd_t func;
-					  func = s7_d_pd_function(s_func);
-					  if ((func) &&
-					      (float_optimize_1(sc, cddr(car_x), env)))
-					    {
-					      cur_info->p1 = find_symbol(sc, arg1);
-					      if (!is_slot(cur_info->p1)) return(false);
-					      cur_info->func.d_pd_f = func;
-					      cur_info->caller.fd = opt_d_pd_sf;
-					      return(true);
-					    }
-					  if (arg1_type == sc->is_integer_symbol)
-					    {
-					      s7_d_id_t flt_func;
-					      flt_func = s7_d_id_function(s_func);
-					      if (flt_func)
-						{
-						  cur_info->func.d_id_f = flt_func;
-						  if (is_symbol(arg1))
-						    {
-						      cur_info->p1 = find_symbol(sc, arg1);
-						      if ((is_slot(cur_info->p1)) &&
-							  (is_integer(slot_value(cur_info->p1))) &&
-							  (float_optimize_1(sc, cddr(car_x), env)))
-							{
-							  cur_info->caller.fd = opt_d_id_sf;
-							  return(true);
-							}
-						    }
-						}
-					    }
-					}
-				    }
-				  else
-				    {
-				      if (arg1_type == sc->is_integer_symbol)
-					{
-					  s7_d_ip_t flt_func;
-					  flt_func = s7_d_ip_function(s_func);
-					  if (flt_func)
-					    {
-					      cur_info->func.d_ip_f = flt_func;
-					      if ((is_symbol(arg1)) &&
-						  (is_symbol(arg2)))
-						{
-						  cur_info->p1 = find_symbol(sc, arg1);
-						  cur_info->p2 = find_symbol(sc, arg2);
-						  if ((is_slot(cur_info->p1)) &&
-						      (is_integer(slot_value(cur_info->p1))) &&
-						      (is_slot(cur_info->p2)))
-						    {
-						      /* (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .4 :reverb-amount .5)) */
-						      cur_info->caller.fd = opt_d_ip_ss;
-						      return(true);
-						    }
-						}
-					    }
-					}
-				      if (arg2_type == sc->is_integer_symbol)
-					{
-					  s7_d_pi_t func;
-					  func = s7_d_pi_function(s_func);
-					  if (func)
-					    {
-					      cur_info->p1 = find_symbol(sc, arg1);
-					      if (!is_slot(cur_info->p1)) return(false);
-					      if ((car(car_x) == sc->float_vector_ref_symbol) &&
-						  ((!is_float_vector(slot_value(cur_info->p1))) ||
-						   (vector_rank(slot_value(cur_info->p1)) > 1)))
-						return(false);
-					      cur_info->func.d_pi_f = func;
-					      if (!is_pair(arg2))
-						{
-						  if (is_integer(arg2))
-						    {
-						      cur_info->i1 = integer(arg2);
-						      cur_info->caller.fd = opt_d_pi_sc;
-						      return(true);
-						    }
-						  cur_info->p2 = find_symbol(sc, arg2);
-						  if ((is_slot(cur_info->p2)) &&
-						      (is_integer(slot_value(cur_info->p2))))
-						    {
-						      cur_info->caller.fd = opt_d_pi_ss;
-						      if ((car(car_x) == sc->float_vector_ref_symbol) &&
-							  (is_step_end(cur_info->p2)) &&
-							  (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
-							cur_info->func.d_pi_f = float_vector_ref_unchecked;
-						      return(true);
-						    }
-						}
-					      else
-						{
-						  if (int_optimize_1(sc, cddr(car_x), env))
-						    {
-						      cur_info->caller.fd = opt_d_pi_sf;
-						      return(true);
-						    }
-						}
-					    }
-					}
-				    }
-				}
-			    }
-			}
-		      break;
-
-		    case 4:
+		    else /* is pair arg */
 		      {
-			s7_pointer arg1, arg2;
-			arg1 = cadr(car_x);
-			arg2 = caddr(car_x);
-
-			if ((car(car_x) == sc->add_symbol) ||
-			    (car(car_x) == sc->subtract_symbol) ||
-			    (car(car_x) == sc->multiply_symbol) ||
-			    (car(car_x) == sc->divide_symbol))
+			if (float_optimize_1(sc, cdr(car_x), env))
 			  {
-			    if ((float_optimize_1(sc, cdr(car_x), env)) &&
-				(float_optimize_1(sc, cddr(car_x), env)) &&
-				(float_optimize_1(sc, cdddr(car_x), env)))
-			      {
-				cur_info->func.d_ddd_f = s7_d_ddd_function(s_func);
-				cur_info->caller.fd = opt_d_ddd_fff;
-				return(true);
-			      }
+			    cur_info->caller.fd = opt_d_d_f;
+			    return(true);
 			  }
-
-			if ((caddr(sig) == sc->is_integer_symbol) &&
-			    ((cadr(sig) == sc->is_float_vector_symbol) ||
-			     (cadr(sig) == sc->is_vector_symbol)))
+		      }
+		  }
+		
+		flt_func = s7_d_v_function(s_func);
+		if (flt_func)
+		  {
+		    if (!sig)
+		      sig = s7_procedure_signature(sc, s_func);
+		    if ((is_pair(sig)) &&
+			(is_symbol(cadr(car_x))))           /* look for (oscil g) */
+		      {
+			s7_pointer obj, checker;
+			checker = s7_symbol_value(sc, cadr(sig));
+			obj = s7_symbol_value(sc, cadr(car_x));
+			if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
 			  {
-			    /* fprintf(stderr, "fv: %s\n", DISPLAY(car_x)); */
-			    if (is_symbol(arg1))
+			    cur_info->obj = (void *)s7_object_value(obj);
+			    cur_info->func.d_v_f = flt_func;
+			    cur_info->caller.fd = opt_d_v;
+			    return(true);
+			  }
+		      }
+		  }
+		
+		dpf = s7_d_p_function(s_func);
+		if (dpf)
+		  {
+		    cur_info->func.d_p_f = dpf;
+		    if (is_symbol(cadr(car_x)))
+		      {
+			cur_info->p1 = find_symbol(sc, cadr(car_x));
+			if ((is_slot(cur_info->p1)) &&
+			    (!has_methods(slot_value(cur_info->p1))))
+			  {
+			    cur_info->caller.fd = opt_d_p_s;
+			    return(true);
+			  }
+			else return(return_false(sc, car_x, __LINE__));
+		      }
+		    if (cell_optimize_1(sc, cdr(car_x), env))
+		      {
+			cur_info->caller.fd = opt_d_p_f;
+			return(true);
+		      }
+		  }
+	      }
+	      break;
+	      
+	    case 3:
+	      {
+		s7_d_dd_t func;
+		s7_pointer arg1, arg2;
+		arg1 = cadr(car_x);
+		arg2 = caddr(car_x);
+		
+		func = s7_d_dd_function(s_func);
+		if (func)
+		  {
+		    cur_info->func.d_dd_f = func;
+		    if (is_real(arg1))
+		      {
+			cur_info->x1 = s7_number_to_real(sc, arg1);
+			if (is_real(arg2))
+			  {
+			    cur_info->x2 = s7_number_to_real(sc, arg2);
+			    cur_info->caller.fd = opt_d_dd_cc;
+			    return(true);
+			  }
+			if (is_symbol(arg2))
+			  {
+			    cur_info->p1 = find_symbol(sc, arg2);
+			    if (is_slot(cur_info->p1))
 			      {
-				s7_d_pid_t f;
-				f = s7_d_pid_function(s_func);
-				if (f)
+				if (is_float(slot_value(cur_info->p1)))
+				  cur_info->caller.fd = opt_d_dd_cs;
+				else 
 				  {
-				    cur_info->func.d_pid_f = f;
-				    cur_info->p1 = find_symbol(sc, arg1);
-				    if (is_slot(cur_info->p1))
-				      {
-					if ((car(car_x) == sc->float_vector_set_symbol) &&
-					    ((!is_float_vector(slot_value(cur_info->p1))) ||
-					     (vector_rank(slot_value(cur_info->p1)) > 1)))
-					  return(false);
-					if (is_symbol(arg2))
-					  {
-					    cur_info->p2 = find_symbol(sc, arg2);
-					    if ((is_slot(cur_info->p2)) &&
-						(is_integer(slot_value(cur_info->p2))) &&
-						(float_optimize_1(sc, cdddr(car_x), env)))
-					      {
-						cur_info->caller.fd = opt_d_pid_ssf;
-						if ((is_step_end(cur_info->p2)) &&
-						    (car(car_x) == sc->float_vector_set_symbol) &&
-						    (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
-						  cur_info->func.d_pid_f = float_vector_set_unchecked;
-						return(true);
-					      }
-					  }
-					else
-					  {
-					    if ((int_optimize_1(sc, cddr(car_x), env)) &&
-						(float_optimize_1(sc, cdddr(car_x), env)))
-					      {
-						cur_info->caller.fd = opt_d_pid_sff;
-						return(true);
-					      }
-					  }
-				      }
+				    if (float_optimize_1(sc, cddr(car_x), env))
+				      cur_info->caller.fd = opt_d_dd_cf;
+				    else return(return_false(sc, car_x, __LINE__));
 				  }
+				return(true);
 			      }
 			  }
 			else
 			  {
-			    if ((is_symbol(arg1)) &&
-				(is_symbol(arg2)) &&
-				(is_symbol(cadr(sig))))
+			    if (float_optimize_1(sc, cddr(car_x), env))
 			      {
-				s7_d_vid_t flt;
-				flt = s7_d_vid_function(s_func);
-				/* fprintf(stderr, "%s: %p\n", DISPLAY(car(car_x)), flt); */
-				if (flt)
+				cur_info->caller.fd = opt_d_dd_cf;
+				return(true);
+			      }
+			  }
+		      }
+		    else
+		      {
+			if (is_symbol(arg1))
+			  {
+			    cur_info->p1 = find_symbol(sc, arg1);
+			    if ((is_slot(cur_info->p1)) &&
+				(is_real(slot_value(cur_info->p1))))
+			      {
+				if (is_float(slot_value(cur_info->p1)))
 				  {
-				    s7_pointer obj, checker;
-				    cur_info->func.d_vid_f = flt;
-				    checker = s7_symbol_value(sc, cadr(sig));
-				    obj = s7_symbol_value(sc, arg1);
-				    if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+				    if (is_real(arg2))
 				      {
-					cur_info->caller.fd = opt_d_vid_ssf;
-					cur_info->obj = (void *)s7_object_value(obj);
-					cur_info->p1 = find_symbol(sc, arg2);
-					if ((is_slot(cur_info->p1)) &&
-					    (is_integer(slot_value(cur_info->p1))) &&
-					    (float_optimize_1(sc, cdddr(car_x), env)))
-					  return(true);
+					cur_info->x1 = s7_number_to_real(sc, arg2);
+					if (is_float(slot_value(cur_info->p1)))
+					  cur_info->caller.fd = opt_d_dd_sc;
+					else
+					  {
+					    if (float_optimize_1(sc, cdr(car_x), env))
+					      cur_info->caller.fd = opt_d_dd_fc;
+					    else return(return_false(sc, car_x, __LINE__));
+					  }
+					return(true);
+				      }
+				    if (is_symbol(arg2))
+				      {
+					cur_info->p2 = find_symbol(sc, arg2);
+					if (is_slot(cur_info->p2))
+					  {
+					    if (is_float(slot_value(cur_info->p2)))
+					      cur_info->caller.fd = opt_d_dd_ss;
+					    else
+					      {
+						if (float_optimize_1(sc, cddr(car_x), env))
+						  cur_info->caller.fd = opt_d_dd_sf;
+						else return(return_false(sc, car_x, __LINE__));
+					      }
+					    return(true);
+					  }
+				      }
+				    else
+				      {
+					if (float_optimize_1(sc, cddr(car_x), env))
+					  {
+					    cur_info->caller.fd = opt_d_dd_sf;
+					    return(true);
+					  }
+				      }
+				  }
+				else
+				  {
+				    if ((float_optimize_1(sc, cdr(car_x), env)) &&
+					(float_optimize_1(sc, cddr(car_x), env)))
+				      {
+					cur_info->caller.fd = opt_d_dd_ff;
+					return(true);
 				      }
 				  }
 			      }
+			    else return(return_false(sc, car_x, __LINE__)); /* arg1 trouble */
+			    /* TODO: d_ddd has a similar bug and check arg2 */
 			  }
-			if ((is_symbol(arg1)) &&
-			    (is_symbol(cadr(sig))))
+			else
 			  {
-			    s7_d_vdd_t flt;
-			    flt = s7_d_vdd_function(s_func);
-			    if (flt)
+			    if (float_optimize_1(sc, cdr(car_x), env))
 			      {
-				s7_pointer obj, checker;
-				cur_info->func.d_vdd_f = flt;
-				checker = s7_symbol_value(sc, cadr(sig));
-				obj = s7_symbol_value(sc, arg1);
-				if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+				if (is_real(arg2))
 				  {
-				    if ((float_optimize_1(sc, cddr(car_x), env)) &&
-					(float_optimize_1(sc, cdddr(car_x), env)))
+				    cur_info->x1 = s7_number_to_real(sc, arg2);
+				    cur_info->caller.fd = opt_d_dd_fc;
+				    return(true);
+				  }
+				if (is_symbol(arg2))
+				  {
+				    cur_info->p1 = find_symbol(sc, arg2);
+				    if (is_slot(cur_info->p1))
 				      {
-					/* fprintf(stderr, "vdd: %s\n", DISPLAY(car_x)); */
-					cur_info->obj = (void *)s7_object_value(obj);
-					cur_info->caller.fd = opt_d_vdd_ff;
+					if (is_float(slot_value(cur_info->p1)))
+					  cur_info->caller.fd = opt_d_dd_fs;
+					else
+					  {
+					    if (float_optimize_1(sc, cddr(car_x), env))
+					      cur_info->caller.fd = opt_d_dd_ff;
+					    else return(return_false(sc, car_x, __LINE__));
+					  }
+					return(true);
+				      }
+				  }
+				else
+				  {
+				    if (float_optimize_1(sc, cddr(car_x), env))
+				      {
+					cur_info->caller.fd = opt_d_dd_ff;
 					return(true);
 				      }
 				  }
 			      }
 			  }
 		      }
-		      break;
-		      
-		    case 5:
-		      if ((car(car_x) == sc->add_symbol) ||
-			  (car(car_x) == sc->subtract_symbol) ||
-			  (car(car_x) == sc->multiply_symbol) ||
-			  (car(car_x) == sc->divide_symbol))
-			{
-			  if ((float_optimize_1(sc, cdr(car_x), env)) &&
-			      (float_optimize_1(sc, cddr(car_x), env)) &&
-			      (float_optimize_1(sc, cdddr(car_x), env)) &&
-			      (float_optimize_1(sc, cddddr(car_x), env)))
-			    {
-			      cur_info->func.d_dddd_f = s7_d_dddd_function(s_func);
-			      cur_info->caller.fd = opt_d_dddd_ffff;
-			      return(true);
-			    }
-			}
-		      break;
+		  }
 
-		    default:
-		      if ((car(car_x) == sc->add_symbol) ||
-			  (car(car_x) == sc->multiply_symbol))
-			{
-			  s7_pointer p;
-			  cur_info->i1 = (len - 1);
-			  for (p = cdr(car_x); is_pair(p); p = cdr(p))
-			    if (!float_optimize_1(sc, p, env))
-			      break;
-			  if (is_null(p))
-			    {
-			      cur_info->caller.fd = (car(car_x) == sc->add_symbol) ? opt_d_add_any_f : opt_d_multiply_any_f;
-			      return(true);
-			    }
-			}
-		      break;
-		    }
+		if (is_symbol(arg1))
+		  {
+		    s7_d_pd_t func;
+		    s7_d_id_t flt_func;
+		    s7_d_pi_t ifunc;
+		    s7_d_vd_t vfunc;
 
-		  if ((car(car_x) != sc->float_vector_ref_symbol) && /* sigh -- signature is actually wrong */
-		      (car(sig) != sc->is_number_symbol))
+		    vfunc = s7_d_vd_function(s_func);
+		    if (vfunc)
+		      {
+			if (!sig)
+			  sig = s7_procedure_signature(sc, s_func);
+			if ((is_pair(sig)) &&
+			    (is_symbol(cadr(sig))))
+			  {
+			    s7_pointer obj, checker;
+			    checker = s7_symbol_value(sc, cadr(sig));
+			    obj = s7_symbol_value(sc, arg1);
+			    if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+			      {
+				cur_info->func.d_vd_f = vfunc;
+				if (!is_pair(arg2))
+				  {
+				    cur_info->obj = (void *)s7_object_value(obj);
+				    if (is_real(arg2))
+				      {
+					cur_info->x1 = s7_number_to_real(sc, arg2);
+					cur_info->caller.fd = opt_d_vd_c;
+					return(true);
+				      }
+				    cur_info->p1 = find_symbol(sc, arg2);
+				    if (is_slot(cur_info->p1))
+				      {
+					if (is_float(slot_value(cur_info->p1)))
+					  cur_info->caller.fd = opt_d_vd_s;
+					else
+					  {
+					    if (float_optimize_1(sc, cddr(car_x), env))
+					      cur_info->caller.fd = opt_d_vd_f;
+					    else return(return_false(sc, car_x, __LINE__));
+					  }
+					return(true);
+				      }
+				  }
+				else /* is pair arg2 */
+				  {
+				    if (float_optimize_1(sc, cddr(car_x), env))
+				      {
+					cur_info->obj = (void *)s7_object_value(obj);
+					cur_info->caller.fd = opt_d_vd_f;
+					return(true);
+				      }
+				  }
+			      }
+			  }
+		      }
+
+		    func = s7_d_pd_function(s_func);
+		    if ((func) &&
+			(float_optimize_1(sc, cddr(car_x), env)))
+		      {
+			cur_info->p1 = find_symbol(sc, arg1);
+			if (!is_slot(cur_info->p1)) return(return_false(sc, car_x, __LINE__));
+			cur_info->func.d_pd_f = func;
+			cur_info->caller.fd = opt_d_pd_sf;
+			return(true);
+		      }
+
+		    flt_func = s7_d_id_function(s_func);
+		    if (flt_func)
+		      {
+			cur_info->func.d_id_f = flt_func;
+			cur_info->p1 = find_symbol(sc, arg1);
+			if ((is_slot(cur_info->p1)) &&
+			    (is_integer(slot_value(cur_info->p1))) &&
+			    (float_optimize_1(sc, cddr(car_x), env)))
+			  {
+			    cur_info->caller.fd = opt_d_id_sf;
+			    return(true);
+			  }
+		      }
+
+		    if (is_symbol(arg2))
+		      {
+			s7_d_ip_t pfunc;
+			pfunc = s7_d_ip_function(s_func);
+			if (pfunc)
+			  {
+			    cur_info->func.d_ip_f = pfunc;
+			    cur_info->p1 = find_symbol(sc, arg1);
+			    cur_info->p2 = find_symbol(sc, arg2);
+			    if ((is_slot(cur_info->p1)) &&
+				(is_integer(slot_value(cur_info->p1))) &&
+				(is_slot(cur_info->p2)))
+			      {
+				/* (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .4 :reverb-amount .5)) */
+				cur_info->caller.fd = opt_d_ip_ss;
+				return(true);
+			      }
+			  }
+		      }
+
+		    ifunc = s7_d_pi_function(s_func);
+		    if (ifunc)
+		      {
+			cur_info->p1 = find_symbol(sc, arg1);
+			if (!is_slot(cur_info->p1)) 
+			  return(return_false(sc, car_x, __LINE__));
+			if ((head == sc->float_vector_ref_symbol) &&
+			    ((!is_float_vector(slot_value(cur_info->p1))) ||
+			     (vector_rank(slot_value(cur_info->p1)) > 1)))
+			  return(return_false(sc, car_x, __LINE__));
+			cur_info->func.d_pi_f = ifunc;
+			if (!is_pair(arg2))
+			  {
+			    if (is_integer(arg2))
+			      {
+				cur_info->i1 = integer(arg2);
+				cur_info->caller.fd = opt_d_pi_sc;
+				return(true);
+			      }
+			    cur_info->p2 = find_symbol(sc, arg2);
+			    if ((is_slot(cur_info->p2)) &&
+				(is_integer(slot_value(cur_info->p2))))
+			      {
+				cur_info->caller.fd = opt_d_pi_ss;
+				if ((head == sc->float_vector_ref_symbol) &&
+				    (is_step_end(cur_info->p2)) &&
+				    (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
+				  cur_info->func.d_pi_f = float_vector_ref_unchecked;
+				return(true);
+			      }
+			  }
+			else
+			  {
+			    if (int_optimize_1(sc, cddr(car_x), env))
+			      {
+				cur_info->caller.fd = opt_d_pi_sf;
+				return(true);
+			      }
+			  }
+		      }
+		  }
+	      }
+	      break;
+	      
+	    case 4:
+	      {
+		s7_d_ddd_t f;
+		s7_pointer arg1;
+		
+		f = s7_d_ddd_function(s_func);
+		if (f)
+		  {
+		    if ((float_optimize_1(sc, cdr(car_x), env)) &&
+			(float_optimize_1(sc, cddr(car_x), env)) &&
+			(float_optimize_1(sc, cdddr(car_x), env)))
+		      {
+			cur_info->func.d_ddd_f = f;
+			cur_info->caller.fd = opt_d_ddd_fff;
+			return(true);
+		      }
+		  }
+		
+		arg1 = cadr(car_x);
+		if (is_symbol(arg1))
+		  {
+		    s7_d_pid_t f;
+		    s7_pointer arg2;
+		    arg2 = caddr(car_x);
+		    f = s7_d_pid_function(s_func);
+		    if (f)
+		      {
+			cur_info->func.d_pid_f = f;
+			cur_info->p1 = find_symbol(sc, arg1);
+			if (is_slot(cur_info->p1))
+			  {
+			    if ((head == sc->float_vector_set_symbol) &&
+				((!is_float_vector(slot_value(cur_info->p1))) ||
+				 (vector_rank(slot_value(cur_info->p1)) > 1)))
+			      return(return_false(sc, car_x, __LINE__));
+			    if (is_symbol(arg2))
+			      {
+				cur_info->p2 = find_symbol(sc, arg2);
+				if ((is_slot(cur_info->p2)) &&
+				    (is_integer(slot_value(cur_info->p2))) &&
+				    (float_optimize_1(sc, cdddr(car_x), env)))
+				  {
+				    cur_info->caller.fd = opt_d_pid_ssf;
+				    if ((is_step_end(cur_info->p2)) &&
+					(head == sc->float_vector_set_symbol) &&
+					(denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
+				      cur_info->func.d_pid_f = float_vector_set_unchecked;
+				    return(true);
+				  }
+			      }
+			    else
+			      {
+				if ((int_optimize_1(sc, cddr(car_x), env)) &&
+				    (float_optimize_1(sc, cdddr(car_x), env)))
+				  {
+				    cur_info->caller.fd = opt_d_pid_sff;
+				    return(true);
+				  }
+			      }
+			  }
+		      }
+		    
+		    if (is_symbol(arg2))
+		      {
+			s7_d_vid_t flt;
+			flt = s7_d_vid_function(s_func);
+			if (flt)
+			  {
+			    s7_pointer obj, checker;
+			    cur_info->func.d_vid_f = flt;
+			    if (!sig)
+			      sig = s7_procedure_signature(sc, s_func);
+			    if (is_pair(sig))
+			      {
+				checker = s7_symbol_value(sc, cadr(sig));
+				obj = s7_symbol_value(sc, arg1);
+				if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+				  {
+				    cur_info->caller.fd = opt_d_vid_ssf;
+				    cur_info->obj = (void *)s7_object_value(obj);
+				    cur_info->p1 = find_symbol(sc, arg2);
+				    if ((is_slot(cur_info->p1)) &&
+					(is_integer(slot_value(cur_info->p1))) &&
+					(float_optimize_1(sc, cdddr(car_x), env)))
+				      return(true);
+				  }
+			      }
+			  }
+		      }
+		    
 		    {
-		      /* fallback on the more general case (all_x_eval, but still guaranteed to be a number) */
-		      opt = all_x_optimize_1(sc, expr, env);
-		      if (opt)
+		      s7_d_vdd_t flt;
+		      flt = s7_d_vdd_function(s_func);
+		      if (flt)
 			{
-#if DEBUGGING && OPT_PRINT
-			  if (expr != last_float_bad)
+			  s7_pointer obj, checker;
+			  cur_info->func.d_vdd_f = flt;
+			  if (!sig)
+			    sig = s7_procedure_signature(sc, s_func);
+			  if (is_pair(sig))
 			    {
-			      fprintf(stderr, "float fallback %s %s\n", DISPLAY(expr), opt_names[optimize_op(car(expr))]);
-			      last_float_bad = expr;
+			      checker = s7_symbol_value(sc, cadr(sig));
+			      obj = s7_symbol_value(sc, arg1);
+			      if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+				{
+				  if ((float_optimize_1(sc, cddr(car_x), env)) &&
+				      (float_optimize_1(sc, cdddr(car_x), env)))
+				    {
+				      /* fprintf(stderr, "vdd: %s\n", DISPLAY(car_x)); */
+				      cur_info->obj = (void *)s7_object_value(obj);
+				      cur_info->caller.fd = opt_d_vdd_ff;
+				      return(true);
+				    }
+				}
 			    }
-#endif
-			  sc->opt_index = orig_index;
-			  cur_info->func.all_f = opt;
-			  cur_info->caller.fd = opt_unwrap_float;
-			  cur_info->p1 = expr;
-			  return(true);
 			}
 		    }
+		  }
+	      }
+	      break;
+	      
+	    case 5:
+	      {
+		s7_d_dddd_t f;
+		f = s7_d_dddd_function(s_func);
+		if (f)
+		  {
+		    if ((float_optimize_1(sc, cdr(car_x), env)) &&
+			(float_optimize_1(sc, cddr(car_x), env)) &&
+			(float_optimize_1(sc, cdddr(car_x), env)) &&
+			(float_optimize_1(sc, cddddr(car_x), env)))
+		      {
+			cur_info->func.d_dddd_f = f;
+			cur_info->caller.fd = opt_d_dddd_ffff;
+			return(true);
+		      }
+		  }
+	      }
+	      break;
+	      
+	    default:
+	      if ((head == sc->add_symbol) ||
+		  (head == sc->multiply_symbol))
+		{
+		  s7_pointer p;
+		  cur_info->i1 = (len - 1);
+		  for (p = cdr(car_x); is_pair(p); p = cdr(p))
+		    if (!float_optimize_1(sc, p, env))
+		      break;
+		  if (is_null(p))
+		    {
+		      cur_info->caller.fd = (head == sc->add_symbol) ? opt_d_add_any_f : opt_d_multiply_any_f;
+		      return(true);
+		    }
+		}
+	      break;
+	    }
+	  
+	  if (!sig)
+	    sig = s7_procedure_signature(sc, s_func);
+	  if ((is_pair(sig)) &&
+	      ((car(sig) == sc->is_float_symbol) ||
+	       (car(sig) == sc->is_real_symbol)))
+	    {
+	      /* fallback on the more general case (all_x_eval, but still guaranteed to be a number) */
+	      opt = all_x_optimize_1(sc, expr, env);
+	      if (opt)
+		{
+#if DEBUGGING && OPT_PRINT
+		  if (expr != last_float_bad)
+		    {
+		      fprintf(stderr, "float fallback %s %s\n", DISPLAY(expr), opt_names[optimize_op(car(expr))]);
+		      last_float_bad = expr;
+		    }
+#endif
+		  sc->opt_index = orig_index;
+		  cur_info->func.all_f = opt;
+		  cur_info->caller.fd = opt_unwrap_float;
+		  cur_info->p1 = expr;
+		  return(true);
 		}
 	    }
 	}
@@ -48140,15 +48148,14 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       last_float_bad = expr;
     }
 #endif
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 } 
 
 
 static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   s7_function opt;
-  s7_pointer car_x;
-  int len;
+  s7_pointer car_x, head;
 
 #if DEBUGGING
   sc->opt_ctr++;
@@ -48158,23 +48165,25 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 #if DEBUGGING && OPT_PRINT
       fprintf(stderr, "opts overflow: %s\n", DISPLAY(expr));
 #endif
-      return(false);
+      return(return_false(sc, expr, __LINE__));
     }
   car_x = car(expr);
-  len = s7_list_length(sc, car_x);
   /* fprintf(stderr, "int opt: %s\n", DISPLAY(car_x)); */
-
   if (!is_pair(car_x)) /* wrap constants/symbols */
     return(opt_int_not_pair(sc, car_x));
 
-  if (is_symbol(car(car_x)))
+  head = car(car_x);
+  if (is_symbol(head))
     {
       opt_info *cur_info;
-      s7_pointer s_func;
+      s7_pointer s_func, sig = NULL;
+      int len;
+      len = s7_list_length(sc, car_x);
 
-      if (car(car_x) == sc->set_symbol)
+      if (is_syntactic(head))
 	{
-	  if (len == 3)
+	  if ((head == sc->set_symbol) &&
+	      (len == 3))
 	    {
 	      cur_info = sc->opts[sc->opt_index++];
 	      if (is_symbol(cadr(car_x)))
@@ -48182,7 +48191,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		  s7_pointer settee;
 		  if ((is_immutable(cadr(car_x))) ||
 		      (symbol_has_accessor(cadr(car_x))))
-		    return(false);
+		    return(return_false(sc, car_x, __LINE__));
 		  settee = find_symbol(sc, cadr(car_x));
 		  if (is_slot(settee))
 		    {
@@ -48241,17 +48250,17 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		    }
 		}
 	    }
-	  return(false);
+	  return(return_false(sc, car_x, __LINE__));
 	}
 
-      if ((is_global(car(car_x))) ||
-	  ((is_slot(global_slot(car(car_x)))) &&
-	   (find_symbol(sc, car(car_x)) == global_slot(car(car_x)))))
-	s_func = slot_value(global_slot(car(car_x)));
+      if ((is_global(head)) ||
+	  ((is_slot(global_slot(head))) &&
+	   (find_symbol(sc, head) == global_slot(head))))
+	s_func = slot_value(global_slot(head));
       else
 	{
 	  s7_pointer s_slot;
-	  s_slot = find_symbol(sc, car(car_x));
+	  s_slot = find_symbol(sc, head);
 	  if ((is_slot(s_slot)) &&
 	      (len == 2) &&
 	      (is_int_vector(slot_value(s_slot))) &&
@@ -48282,347 +48291,342 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		    {
 		      cur_info->caller.fi = opt_i_pi_sf;
 		      cur_info->func.i_pi_f = int_vector_ref_i;
+		      return(true);
 		    }
 		}
 	    }
-	  return(false);
+	  return(return_false(sc, car_x, __LINE__));
 	}
 
       if (is_c_function(s_func))
 	{
-	  s7_pointer sig;
-	  sig = s7_procedure_signature(sc, s_func);
-	  if (is_pair(sig))
+	  int orig_index;
+	  cur_info = sc->opts[sc->opt_index++];
+	  orig_index = sc->opt_index;
+	  
+	  switch (len)
 	    {
-	      s7_pointer rtn_type;
-	      rtn_type = car(sig);
-	      if ((rtn_type == sc->is_integer_symbol) ||
-		  (rtn_type == sc->is_real_symbol) ||
-		  (rtn_type == sc->is_number_symbol))
+	    case 2:
+	      {
+		s7_i_i_t func;
+		s7_i_d_t idf;
+		s7_i_p_t ipf;
+		func = s7_i_i_function(s_func);
+		if (func)
+		  {
+		    cur_info->func.i_i_f = func;
+		    if (is_integer(cadr(car_x)))
+		      {
+			cur_info->i1 = integer(cadr(car_x));
+			cur_info->caller.fi = opt_i_i_c;
+			return(true);
+		      }
+		    if (is_symbol(cadr(car_x)))
+		      {
+			cur_info->p1 = find_symbol(sc, cadr(car_x));
+			if ((is_slot(cur_info->p1)) &&
+			    (is_integer(slot_value(cur_info->p1))))
+			  {
+			    cur_info->caller.fi = opt_i_i_s;
+			    return(true);
+			  }
+		      }
+		    else /* is pair arg */
+		      {
+			if (int_optimize_1(sc, cdr(car_x), env))
+			  {
+			    cur_info->caller.fi = opt_i_i_f;
+			    return(true);
+			  }
+		      }
+		  }
+		idf = s7_i_d_function(s_func);
+		if (idf)
+		  {
+		    cur_info->func.i_d_f = idf;
+		    if (is_real(cadr(car_x)))
+		      {
+			cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
+			cur_info->caller.fi = opt_i_d_c;
+			return(true);
+		      }
+		    if (is_symbol(cadr(car_x)))
+		      {
+			cur_info->p1 = find_symbol(sc, cadr(car_x));
+			if (is_slot(cur_info->p1))
+			  {
+			    if (is_float(slot_value(cur_info->p1)))
+			      cur_info->caller.fi = opt_i_d_s;
+			    else
+			      {
+				if (float_optimize_1(sc, cdr(car_x), env))
+				  cur_info->caller.fi = opt_i_d_f;
+				else return(return_false(sc, car_x, __LINE__));
+			      }
+			    return(true);
+			  }
+		      }
+		    else /* is pair arg */
+		      {
+			if (float_optimize_1(sc, cdr(car_x), env))
+			  {
+			    cur_info->caller.fi = opt_i_d_f;
+			    return(true);
+			  }
+		      }
+		  }
+		ipf = s7_i_p_function(s_func);
+		if (ipf)
+		  {
+		    cur_info->func.i_p_f = ipf;
+		    if (cell_optimize_1(sc, cdr(car_x), env))
+		      {
+			cur_info->caller.fi = opt_i_p_f;
+			return(true);
+		      }
+		  }
+	      }
+	      break;
+	      
+	    case 3:
+	      {
+		s7_i_ii_t ifunc;
+		s7_i_pi_t pfunc;
+		ifunc = s7_i_ii_function(s_func);
+		pfunc = s7_i_pi_function(s_func);
+		if ((ifunc) || (pfunc))
+		  {
+		    s7_pointer obj, checker;
+		    sig = s7_procedure_signature(sc, s_func);
+		    if (is_pair(sig))
+		      {
+			s7_pointer arg1, arg2;
+			arg1 = cadr(car_x);
+			arg2 = caddr(car_x);
+			
+			if (ifunc)
+			  {
+			    cur_info->func.i_ii_f = ifunc;
+			    if (is_integer(arg1))
+			      {
+				cur_info->i1 = integer(arg1);
+				if (is_integer(arg2))
+				  {
+				    cur_info->i2 = integer(arg2);
+				    cur_info->caller.fi = opt_i_ii_cc;
+				    return(true);
+				  }
+				if (is_symbol(arg2))
+				  {
+				    cur_info->p1 = find_symbol(sc, arg2);
+				    if (is_slot(cur_info->p1))
+				      {
+					if (is_integer(slot_value(cur_info->p1)))
+					  {
+					    cur_info->caller.fi = opt_i_ii_cs;
+					    return(true);
+					  }
+				      }
+				  }
+				else
+				  {
+				    if (int_optimize_1(sc, cddr(car_x), env))
+				      {
+					cur_info->caller.fi = opt_i_ii_cf;
+					return(true);
+				      }
+				  }
+			      }
+			    else
+			      {
+				if (is_symbol(arg1))
+				  {
+				    cur_info->p1 = find_symbol(sc, arg1);
+				    if (is_slot(cur_info->p1))
+				      {
+					if (is_integer(slot_value(cur_info->p1)))
+					  {
+					    if (is_integer(arg2))
+					      {
+						cur_info->i1 = integer(arg2);
+						cur_info->caller.fi = opt_i_ii_sc;
+						return(true);
+					      }
+					    if (is_symbol(arg2))
+					      {
+						cur_info->p2 = find_symbol(sc, arg2);
+						if ((is_slot(cur_info->p2)) &&
+						    (is_integer(slot_value(cur_info->p2))))
+						  {
+						    cur_info->caller.fi = opt_i_ii_ss;
+						    return(true);
+						  }
+					      }
+					    else
+					      {
+						if (int_optimize_1(sc, cddr(car_x), env))
+						  {
+						    cur_info->caller.fi = opt_i_ii_sf;
+						    return(true);
+						  }
+					      }
+					  }
+				      }
+				  }
+				else
+				  {
+				    if ((int_optimize_1(sc, cdr(car_x), env)) &&
+					(int_optimize_1(sc, cddr(car_x), env)))
+				      {
+					cur_info->caller.fi = opt_i_ii_ff;
+					return(true);
+				      }
+				  }
+			      }
+			  }
+			if (pfunc)
+			  {
+			    if ((is_symbol(cadr(sig))) &&
+				(is_symbol(arg1)))
+			      {
+				checker = s7_symbol_value(sc, cadr(sig));
+				obj = s7_symbol_value(sc, arg1);
+				if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+				  {
+				    cur_info->p1 = find_symbol(sc, arg1);
+				    if (is_slot(cur_info->p1))
+				      {
+					if ((head == sc->int_vector_ref_symbol) &&
+					    ((!is_int_vector(slot_value(cur_info->p1))) ||
+					     (vector_rank(slot_value(cur_info->p1)) > 1)))
+					  return(return_false(sc, car_x, __LINE__));
+					
+					if (is_symbol(arg2))
+					  {
+					    cur_info->p2 = find_symbol(sc, arg2);
+					    if ((is_slot(cur_info->p2)) &&
+						(is_integer(slot_value(cur_info->p2))))
+					      {
+						cur_info->caller.fi = opt_i_pi_ss;
+						if ((head == sc->int_vector_ref_symbol) &&
+						    (is_step_end(cur_info->p2)) &&
+						    (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
+						  cur_info->func.i_pi_f = int_vector_ref_unchecked;
+						return(true);
+					      }
+					  }
+					if (int_optimize_1(sc, cddr(car_x), env))
+					  {
+					    cur_info->func.i_pi_f = pfunc;
+					    cur_info->caller.fi = opt_i_pi_sf;
+					    return(true);
+					  }
+				      }
+				  }
+				else return(return_false(sc, car_x, __LINE__));
+			      }
+			  }
+		      }
+		  }
+	      }
+	      break;
+	      
+	    case 4:
+	      {
+		s7_i_pii_t func;
+		func = s7_i_pii_function(s_func);
+		if (func)
+		  {
+		    s7_pointer obj, checker;
+		    sig = s7_procedure_signature(sc, s_func);
+		    if ((is_pair(sig)) &&
+			(is_symbol(cadr(car_x))))
+		      {
+			checker = s7_symbol_value(sc, cadr(sig));
+			obj = s7_symbol_value(sc, cadr(car_x));
+			if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
+			  {
+			    cur_info->p1 = find_symbol(sc, cadr(car_x));
+			    if (is_slot(cur_info->p1))
+			      {
+				s7_pointer arg2;
+				if ((head == sc->int_vector_set_symbol) &&
+				    ((!is_int_vector(slot_value(cur_info->p1))) ||
+				     (vector_rank(slot_value(cur_info->p1)) > 1)))
+				  return(return_false(sc, car_x, __LINE__));
+				arg2 = caddr(car_x);
+				if (is_symbol(arg2))
+				  {
+				    cur_info->p2 = find_symbol(sc, arg2);
+				    if ((is_slot(cur_info->p2)) &&
+					(is_integer(slot_value(cur_info->p2))) &&
+					(int_optimize_1(sc, cdddr(car_x), env)))
+				      {
+					cur_info->caller.fi = opt_i_pii_ssf;
+					if ((is_step_end(cur_info->p2)) &&
+					    (head == sc->int_vector_set_symbol) &&
+					    (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
+					  cur_info->func.i_pii_f = int_vector_set_unchecked;
+					return(true);
+				      }
+				  }
+				else
+				  {
+				    if ((int_optimize_1(sc, cddr(car_x), env)) &&
+					(int_optimize_1(sc, cdddr(car_x), env)))
+				      {
+					cur_info->func.i_pii_f = func;
+					cur_info->caller.fi = opt_i_pii_sff;
+					return(true);
+				      }
+				  }
+			      }
+			  }
+			else return(return_false(sc, car_x, __LINE__));
+		      }
+		  }
+	      }
+	      break;
+	      
+	    default:
+	      if ((head == sc->add_symbol) ||
+		  (head == sc->multiply_symbol))
 		{
-		  int len, orig_index;
-		  cur_info = sc->opts[sc->opt_index++];
-		  orig_index = sc->opt_index;
-		  len = s7_list_length(sc, car_x);
-		  switch (len)
+		  s7_pointer p;
+		  cur_info->i1 = (len - 1);
+		  for (p = cdr(car_x); is_pair(p); p = cdr(p))
+		    if (!int_optimize_1(sc, p, env))
+		      break;
+		  if (is_null(p))
 		    {
-		    case 2:
-		      if ((is_pair(cdr(sig))) &&
-			  (is_symbol(cadr(sig))))
-			{
-			  s7_i_i_t func;
-			  s7_i_d_t idf;
-			  s7_i_p_t ipf;
-			  func = s7_i_i_function(s_func);
-			  if (func)
-			    {
-			      cur_info->func.i_i_f = func;
-			      if (is_integer(cadr(car_x)))
-				{
-				  cur_info->i1 = integer(cadr(car_x));
-				  cur_info->caller.fi = opt_i_i_c;
-				  return(true);
-				}
-			      if (is_symbol(cadr(car_x)))
-				{
-				  cur_info->p1 = find_symbol(sc, cadr(car_x));
-				  if ((is_slot(cur_info->p1)) &&
-				      (is_integer(slot_value(cur_info->p1))))
-				    {
-				      cur_info->caller.fi = opt_i_i_s;
-				      return(true);
-				    }
-				}
-			      else /* is pair arg */
-				{
-				  if (int_optimize_1(sc, cdr(car_x), env))
-				    {
-				      cur_info->caller.fi = opt_i_i_f;
-				      return(true);
-				    }
-				}
-			    }
-			  idf = s7_i_d_function(s_func);
-			  if (idf)
-			    {
-			      cur_info->func.i_d_f = idf;
-			      if (is_real(cadr(car_x)))
-				{
-				  cur_info->x1 = s7_number_to_real(sc, cadr(car_x));
-				  cur_info->caller.fi = opt_i_d_c;
-				  return(true);
-				}
-			      if (is_symbol(cadr(car_x)))
-				{
-				  cur_info->p1 = find_symbol(sc, cadr(car_x));
-				  if (is_slot(cur_info->p1))
-				    {
-				      if (is_float(slot_value(cur_info->p1)))
-					cur_info->caller.fi = opt_i_d_s;
-				      else
-					{
-					  if (float_optimize_1(sc, cdr(car_x), env))
-					    cur_info->caller.fi = opt_i_d_f;
-					  else return(false);
-					}
-				      return(true);
-				    }
-				}
-			      else /* is pair arg */
-				{
-				  if (float_optimize_1(sc, cdr(car_x), env))
-				    {
-				      cur_info->caller.fi = opt_i_d_f;
-				      return(true);
-				    }
-				}
-			    }
-			  ipf = s7_i_p_function(s_func);
-			  if (ipf)
-			    {
-			      cur_info->func.i_p_f = ipf;
-			      if (cell_optimize_1(sc, cdr(car_x), env))
-				{
-				  cur_info->caller.fi = opt_i_p_f;
-				  return(true);
-				}
-			    }
-			}
-		      break;
-		      
-		    case 3:
-		      if ((is_pair(cddr(sig))) &&
-			  ((cadr(sig) == sc->is_integer_symbol) ||
-			   (cadr(sig) == sc->is_real_symbol) ||
-			   (cadr(sig) == sc->is_number_symbol)) &&
-			  ((caddr(sig) == sc->is_integer_symbol) ||
-			   (caddr(sig) == sc->is_real_symbol) ||
-			   (caddr(sig) == sc->is_number_symbol)))
-			{
-			  s7_pointer arg1, arg2;
-			  s7_i_ii_t func;
-			  arg1 = cadr(car_x);
-			  arg2 = caddr(car_x);
-			  func = s7_i_ii_function(s_func);
-			  if (func)
-			    {
-			      cur_info->func.i_ii_f = func;
-			      if (is_integer(arg1))
-				{
-				  cur_info->i1 = integer(arg1);
-				  if (is_integer(arg2))
-				    {
-				      cur_info->i2 = integer(arg2);
-				      cur_info->caller.fi = opt_i_ii_cc;
-				      return(true);
-				    }
-				  if (is_symbol(arg2))
-				    {
-				      cur_info->p1 = find_symbol(sc, arg2);
-				      if (is_slot(cur_info->p1))
-					{
-					  if (is_integer(slot_value(cur_info->p1)))
-					    {
-					      cur_info->caller.fi = opt_i_ii_cs;
-					      return(true);
-					    }
-					}
-				    }
-				  else
-				    {
-				      if (int_optimize_1(sc, cddr(car_x), env))
-					{
-					  cur_info->caller.fi = opt_i_ii_cf;
-					  return(true);
-					}
-				    }
-				}
-			      else
-				{
-				  if (is_symbol(arg1))
-				    {
-				      cur_info->p1 = find_symbol(sc, arg1);
-				      if (is_slot(cur_info->p1))
-					{
-					  if (is_integer(slot_value(cur_info->p1)))
-					    {
-					      if (is_integer(arg2))
-						{
-						  cur_info->i1 = integer(arg2);
-						  cur_info->caller.fi = opt_i_ii_sc;
-						  return(true);
-						}
-					      if (is_symbol(arg2))
-						{
-						  cur_info->p2 = find_symbol(sc, arg2);
-						  if ((is_slot(cur_info->p2)) &&
-						      (is_integer(slot_value(cur_info->p2))))
-						    {
-						      cur_info->caller.fi = opt_i_ii_ss;
-						      return(true);
-						    }
-						}
-					      else
-						{
-						  if (int_optimize_1(sc, cddr(car_x), env))
-						    {
-						      cur_info->caller.fi = opt_i_ii_sf;
-						      return(true);
-						    }
-						}
-					    }
-					}
-				    }
-				  else
-				    {
-				      if ((int_optimize_1(sc, cdr(car_x), env)) &&
-					  (int_optimize_1(sc, cddr(car_x), env)))
-					{
-					  cur_info->caller.fi = opt_i_ii_ff;
-					  return(true);
-					}
-				    }
-				}
-			    }
-			}
-		      if ((is_pair(cddr(sig))) &&
-			  (is_symbol(cadr(car_x))) &&
-			  (caddr(sig) == sc->is_integer_symbol))
-			{
-			  s7_pointer obj, checker;
-			  checker = s7_symbol_value(sc, cadr(sig));
-			  obj = s7_symbol_value(sc, cadr(car_x));
-			  if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
-			    {
-			      s7_i_pi_t func;
-			      cur_info->p1 = find_symbol(sc, cadr(car_x));
-			      func = s7_i_pi_function(s_func);
-			      if ((func) &&
-				  (is_slot(cur_info->p1)))
-				{
-				  if ((car(car_x) == sc->int_vector_ref_symbol) &&
-				      ((!is_int_vector(slot_value(cur_info->p1))) ||
-				       (vector_rank(slot_value(cur_info->p1)) > 1)))
-				    return(false);
-
-				  if (is_symbol(caddr(car_x)))
-				    {
-				      cur_info->p2 = find_symbol(sc, caddr(car_x));
-				      if ((is_slot(cur_info->p2)) &&
-					  (is_integer(slot_value(cur_info->p2))))
-					{
-					  cur_info->caller.fi = opt_i_pi_ss;
-					  if ((car(car_x) == sc->int_vector_ref_symbol) &&
-					      (is_step_end(cur_info->p2)) &&
-					      (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
-					    cur_info->func.i_pi_f = int_vector_ref_unchecked;
-					  return(true);
-					}
-				    }
-				  if (int_optimize_1(sc, cddr(car_x), env))
-				    {
-				      cur_info->func.i_pi_f = func;
-				      cur_info->caller.fi = opt_i_pi_sf;
-				      return(true);
-				    }
-				}
-			    }
-			  else return(false);
-			}
-		      break;
-
-		    case 4:
-		      if ((is_symbol(cadr(car_x))) &&
-			  (caddr(sig) == sc->is_integer_symbol) &&
-			  (cadddr(sig) == sc->is_integer_symbol))
-			{
-			  s7_pointer obj, checker;
-			  checker = s7_symbol_value(sc, cadr(sig));
-			  obj = s7_symbol_value(sc, cadr(car_x));
-			  if (s7_apply_function(sc, checker, set_plist_1(sc, obj)) == sc->T)
-			    {
-			      s7_i_pii_t func;
-			      cur_info->p1 = find_symbol(sc, cadr(car_x));
-			      func = s7_i_pii_function(s_func);
-			      if ((func) &&
-				  (is_slot(cur_info->p1)))
-				{
-				  s7_pointer arg2;
-				  if ((car(car_x) == sc->int_vector_set_symbol) &&
-				      ((!is_int_vector(slot_value(cur_info->p1))) ||
-				       (vector_rank(slot_value(cur_info->p1)) > 1)))
-				    return(false);
-				  arg2 = caddr(car_x);
-				  if (is_symbol(arg2))
-				    {
-				      cur_info->p2 = find_symbol(sc, arg2);
-				      if ((is_slot(cur_info->p2)) &&
-					  (is_integer(slot_value(cur_info->p2))) &&
-					  (int_optimize_1(sc, cdddr(car_x), env)))
-					{
-					  cur_info->caller.fi = opt_i_pii_ssf;
-					  if ((is_step_end(cur_info->p2)) &&
-					      (car(car_x) == sc->int_vector_set_symbol) &&
-					      (denominator(slot_value(cur_info->p2)) <= vector_length(slot_value(cur_info->p1))))
-					    cur_info->func.i_pii_f = int_vector_set_unchecked;
-					  return(true);
-					}
-				    }
-				  else
-				    {
-				      if ((int_optimize_1(sc, cddr(car_x), env)) &&
-					  (int_optimize_1(sc, cdddr(car_x), env)))
-					{
-					  cur_info->func.i_pii_f = func;
-					  cur_info->caller.fi = opt_i_pii_sff;
-					  return(true);
-					}
-				    }
-				}
-			    }
-			  else return(false);
-			}
-		      break;
-
-		    default:
-		      if ((car(car_x) == sc->add_symbol) ||
-			  (car(car_x) == sc->multiply_symbol))
-			{
-			  s7_pointer p;
-			  cur_info->i1 = (len - 1);
-			  for (p = cdr(car_x); is_pair(p); p = cdr(p))
-			    if (!int_optimize_1(sc, p, env))
-			      break;
-			  if (is_null(p))
-			    {
-			      cur_info->caller.fi = (car(car_x) == sc->add_symbol) ? opt_i_add_any_f : opt_i_multiply_any_f;
-			      return(true);
-			    }
-			}
-		      break;
+		      cur_info->caller.fi = (head == sc->add_symbol) ? opt_i_add_any_f : opt_i_multiply_any_f;
+		      return(true);
 		    }
+		}
+	      break;
+	    }
 
-		  if ((rtn_type == sc->is_integer_symbol) &&
-		      (car(car_x) != sc->int_vector_ref_symbol)) /* sigh -- signature is actually wrong */
-		    {
-		      /* fallback on the more general case (all_x_eval, but still guaranteed to be an integer) */
-		      opt = all_x_optimize_1(sc, expr, env);
-		      if (opt)
-			{
+	  if (!sig)
+	    sig = s7_procedure_signature(sc, s_func);	  
+	  if ((is_pair(sig)) &&
+	      (car(sig) == sc->is_integer_symbol))
+	    {
+	      /* fallback on the more general case (all_x_eval, but still guaranteed to be an integer) */
+	      opt = all_x_optimize_1(sc, expr, env);
+	      if (opt)
+		{
 #if DEBUGGING && OPT_PRINT
-			  if (expr != last_int_bad)
-			    {
-			      fprintf(stderr, "int fallback %s %s\n", DISPLAY(expr), opt_names[optimize_op(car(expr))]);
-			      last_int_bad = expr;
-			    }
-#endif
-			  sc->opt_index = orig_index;
-			  cur_info->func.all_f = opt;
-			  cur_info->caller.fi = opt_unwrap_int;
-			  cur_info->p1 = expr;
-			  return(true);
-			}
+		  if (expr != last_int_bad)
+		    {
+		      fprintf(stderr, "int fallback %s %s\n", DISPLAY(expr), opt_names[optimize_op(car(expr))]);
+		      last_int_bad = expr;
 		    }
+#endif
+		  sc->opt_index = orig_index;
+		  cur_info->func.all_f = opt;
+		  cur_info->caller.fi = opt_unwrap_int;
+		  cur_info->p1 = expr;
+		  return(true);
 		}
 	    }
 	}
@@ -48634,7 +48638,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       last_int_bad = expr;
     }
 #endif
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 
@@ -48704,8 +48708,7 @@ static bool is_some_number(s7_scheme *sc, s7_pointer tp)
 
 static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
-  s7_pointer car_x;
-  int len;
+  s7_pointer car_x, head;
   /* cell_optimize should also try *-optimize(?? -- this is premature) and wrap the results if cell-opt doesn't work */
 
 #if DEBUGGING
@@ -48718,98 +48721,242 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 #if DEBUGGING && OPT_PRINT
       fprintf(stderr, "opts overflow: %s\n", DISPLAY(expr));
 #endif
-      return(false);
+      return(return_false(sc, expr, __LINE__));
     }
   car_x = car(expr);
-  len = s7_list_length(sc, car_x);
-
   if (!is_pair(car_x)) /* wrap constants/symbols */
     return(opt_cell_not_pair(sc, car_x));
 
-  if (car(car_x) == sc->quote_symbol)
-    {
-      if (is_pair(cdr(car_x)))
-	return(opt_cell_quote(sc, car_x));
-      return(false);
-    }
-
-  if (is_symbol(car(car_x)))
+  head = car(car_x);
+  if (is_symbol(head))
     {
       /* get func, check sig, check all args */
-      s7_pointer s_func;
+      s7_pointer s_func = NULL;
       opt_info *cur_info;
+      int len;
 
-      if (car(car_x) == sc->set_symbol)
+      if (is_syntactic(head))
 	{
-	  if (len == 3)
+	  if (head == sc->quote_symbol)
 	    {
-	      cur_info = sc->opts[sc->opt_index++];
-	      if (is_symbol(cadr(car_x)))
+	      if (is_pair(cdr(car_x)))
+		return(opt_cell_quote(sc, car_x));
+	      return(return_false(sc, car_x, __LINE__));
+	    }
+	  
+	  len = s7_list_length(sc, car_x);
+	  
+	  if (head == sc->set_symbol)
+	    {
+	      if (len == 3)
 		{
-		  s7_pointer settee;
-		  if ((is_immutable_symbol(cadr(car_x))) ||
-		      (symbol_has_accessor(cadr(car_x))))
-		    return(false);
-		  settee = find_symbol(sc, cadr(car_x));
-		  if ((is_slot(settee)) &&
-		      (!is_syntax(slot_value(settee))))
+		  cur_info = sc->opts[sc->opt_index++];
+		  if (is_symbol(cadr(car_x)))
 		    {
-		      /* type changes here can confuse the rest of the optimizer */
-		      s7_pointer atype, stype;
-		      atype = opt_arg_type(sc, cddr(car_x), env);
-		      stype = s7_type_of(slot_value(settee));
-
-		      if ((is_some_number(sc, atype)) && (!is_some_number(sc, stype))) return(false);
-		      cur_info->p1 = settee;
-		      
-		      if (cell_optimize_1(sc, cddr(car_x), env))
+		      s7_pointer settee;
+		      if ((is_immutable_symbol(cadr(car_x))) ||
+			  (symbol_has_accessor(cadr(car_x))))
+			return(return_false(sc, car_x, __LINE__));
+		      settee = find_symbol(sc, cadr(car_x));
+		      if ((is_slot(settee)) &&
+			  (!is_syntax(slot_value(settee))))
 			{
-			  cur_info->caller.fp = opt_set_p_p_f;
-			  return(true);
+			  /* type changes here can confuse the rest of the optimizer */
+			  s7_pointer atype, stype;
+			  
+			  cur_info->p1 = settee;
+			  stype = s7_type_of(slot_value(settee));
+			  
+			  /* fprintf(stderr, "%s %s\n", DISPLAY_80(car_x), DISPLAY(stype)); */
+			  
+			  if (stype == sc->is_integer_symbol)
+			    {
+			      if (!int_optimize_1(sc, cddr(car_x), env))
+				return(return_false(sc, car_x, __LINE__));
+			      cur_info->caller.fp = opt_set_p_i_f;
+			      return(true);
+			    }
+			  if (stype == sc->is_float_symbol)
+			    {
+			      if (!float_optimize_1(sc, cddr(car_x), env))
+				return(return_false(sc, car_x, __LINE__));
+			      cur_info->caller.fp = opt_set_p_d_f;
+			      return(true);
+			    }
+			  atype = opt_arg_type(sc, cddr(car_x), env);
+			  
+			  if ((is_some_number(sc, atype)) && (!is_some_number(sc, stype))) return(return_false(sc, car_x, __LINE__));
+			  cur_info->p1 = settee;
+			  
+			  if (cell_optimize_1(sc, cddr(car_x), env))
+			    {
+			      cur_info->caller.fp = opt_set_p_p_f;
+			      return(true);
+			    }
 			}
 		    }
 		}
+	      return(return_false(sc, car_x, __LINE__));
+	    }
+	  
+	  if ((head == sc->begin_symbol) &&
+	      (len > 1))
+	    {
+	      s7_pointer p;
+	      cur_info = sc->opts[sc->opt_index++];
+	      for (p = cdr(car_x); is_pair(p); p = cdr(p))
+		if (!cell_optimize_1(sc, p, env))
+		  return(return_false(sc, car_x, __LINE__));
+	      cur_info->i1 = len - 1;
+	      cur_info->caller.fp = opt_begin_p;
+	      return(true);
+	    }
+	  
+	  if (((head == sc->when_symbol) || (head == sc->unless_symbol)) &&
+	      (len > 2))
+	    {
+	      s7_pointer p;
+	      cur_info = sc->opts[sc->opt_index++];
+	      if (!bool_optimize_1(sc, cdr(car_x), env))
+		return(return_false(sc, car_x, __LINE__));
+	      for (p = cddr(car_x); is_pair(p); p = cdr(p))
+		if (!cell_optimize_1(sc, p, env))
+		  return(return_false(sc, car_x, __LINE__));
+	      cur_info->i1 = len - 2;
+	      cur_info->i2 = sc->opt_index - 1;
+	      cur_info->caller.fp = ((head == sc->when_symbol) ? opt_when_p : opt_unless_p);
+	      return(true);
+	    }
+	  if ((head == sc->or_symbol) || (head == sc->and_symbol))
+	    {
+	      cur_info = sc->opts[sc->opt_index++];
+	      if (len == 3)
+		{
+		  opt_info *wrapper;
+		  int start;
+		  cur_info->caller.fp = ((head == sc->or_symbol) ? opt_or_pp : opt_and_pp);
+		  wrapper = sc->opts[sc->opt_index];
+		  start = sc->opt_index + 1;
+		  if (!cell_optimize_1(sc, cdr(car_x), env))
+		    {
+		      sc->opt_index = start;
+		      if (!bool_optimize_1(sc, cdr(car_x), env))
+			return(return_false(sc, car_x, __LINE__));
+		      wrapper->caller.fp = b_to_p;
+		    }
+		  wrapper = sc->opts[sc->opt_index];
+		  start = sc->opt_index + 1;
+		  if (!cell_optimize_1(sc, cddr(car_x), env))
+		    {
+		      sc->opt_index = start;
+		      if (!bool_optimize_1(sc, cddr(car_x), env))
+			return(return_false(sc, car_x, __LINE__));
+		      wrapper->caller.fp = b_to_p;
+		    }
+		  cur_info->i1 = sc->opt_index - 1;
+		  return(true);
+		}
+	      else
+		{
+		  if (len > 0)
+		    {
+		      s7_pointer p;
+		      cur_info->i1 = (len - 1);
+		      cur_info->caller.fp = ((head == sc->or_symbol) ? opt_or_any_p : opt_and_any_p);
+		      for (p = cdr(car_x); is_pair(p); p = cdr(p))
+			{
+			  opt_info *wrapper;
+			  int start;
+			  wrapper = sc->opts[sc->opt_index];
+			  start = sc->opt_index + 1;
+			  if (!cell_optimize_1(sc, p, env))
+			    {
+			      sc->opt_index = start;
+			      if (!bool_optimize_1(sc, cddr(car_x), env))
+				return(return_false(sc, car_x, __LINE__));
+			      wrapper->caller.fp = b_to_p;
+			    }
+			}
+		      cur_info->i2 = sc->opt_index - 1;
+		      return(true);
+		    }
+		}
+	      return(return_false(sc, car_x, __LINE__));
+	    }
+	  
+	  if (head == sc->if_symbol)
+	    {
+	      cur_info = sc->opts[sc->opt_index++];
+	      if (len == 3)
+		{
+		  opt_info *next;
+		  next = sc->opts[sc->opt_index];
+		  if ((is_pair(cadr(car_x))) &&
+		      (caadr(car_x) == sc->not_symbol))
+		    {
+		      if ((bool_optimize_1(sc, cdadr(car_x), env)) &&
+			  (cell_optimize_1(sc, cddr(car_x), env)))
+			{
+			  cur_info->caller.fp = opt_if_nbp;
+			  cur_info->i1 = sc->opt_index - 1;
+			  if (next->caller.fb == opt_b_p_f)
+			    {
+			      cur_info->func.b_p_f = next->func.b_p_f;
+			      cur_info->caller.fp = opt_if_nbp_f;
+			    }
+			  return(true);
+			}
+		    }
+		  else
+		    {
+		      if ((bool_optimize_1(sc, cdr(car_x), env)) &&
+			  (cell_optimize_1(sc, cddr(car_x), env)))
+			{
+			  cur_info->caller.fp = opt_if_bp;
+			  cur_info->i1 = sc->opt_index - 1;
+			  if (next->caller.fb == opt_b_p_f)
+			    {
+			      cur_info->func.b_p_f = next->func.b_p_f;
+			      cur_info->caller.fp = opt_if_bp_f;
+			    }
+			  return(true);
+			}
+		    }
+		  return(return_false(sc, car_x, __LINE__));
+		}
+	      else
+		{
+		  if (len == 4)
+		    {
+		      if ((bool_optimize_1(sc, cdr(car_x), env)) &&
+			  (cell_optimize_1(sc, cddr(car_x), env)))
+			{
+			  cur_info->caller.fp = opt_if_bpp;
+			  cur_info->i1 = sc->opt_index - 1;
+			  if (cell_optimize_1(sc, cdddr(car_x), env))
+			    {
+			      cur_info->i2 = sc->opt_index - 1;
+			      return(true);
+			    }
+			}
+		    }
+		}
+	      return(return_false(sc, car_x, __LINE__));
 	    }
 	  return(false);
 	}
-
-      if ((car(car_x) == sc->begin_symbol) &&
-	  (len > 1))
-	{
-	  s7_pointer p;
-	  cur_info = sc->opts[sc->opt_index++];
-	  for (p = cdr(car_x); is_pair(p); p = cdr(p))
-	    if (!cell_optimize_1(sc, p, env))
-	      return(false);
-	  cur_info->i1 = len - 1;
-	  cur_info->caller.fp = opt_begin_p;
-	  return(true);
-	}
-
-      if (((car(car_x) == sc->when_symbol) || (car(car_x) == sc->unless_symbol)) &&
-	  (len > 2))
-	{
-	  s7_pointer p;
-	  cur_info = sc->opts[sc->opt_index++];
-	  if (!bool_optimize_1(sc, cdr(car_x), env))
-	    return(false);
-	  for (p = cddr(car_x); is_pair(p); p = cdr(p))
-	    if (!cell_optimize_1(sc, p, env))
-	      return(false);
-	  cur_info->i1 = len - 2;
-	  cur_info->i2 = sc->opt_index - 1;
-	  cur_info->caller.fp = ((car(car_x) == sc->when_symbol) ? opt_when_p : opt_unless_p);
-	  return(true);
-	}
-
-      if ((is_global(car(car_x))) ||
-	  ((is_slot(global_slot(car(car_x)))) &&
-	   (find_symbol(sc, car(car_x)) == global_slot(car(car_x)))))
-	s_func = slot_value(global_slot(car(car_x)));
+      
+      len = s7_list_length(sc, car_x);
+      
+      if ((is_global(head)) ||
+	  ((is_slot(global_slot(head))) &&
+	   (find_symbol(sc, head) == global_slot(head))))
+	s_func = slot_value(global_slot(head));
       else
 	{
 	  s7_pointer s_slot;
-	  s_slot = find_symbol(sc, car(car_x));
+	  s_slot = find_symbol(sc, head);
+	  
 	  if ((is_slot(s_slot)) &&
 	      (len == 2))
 	    {
@@ -48819,7 +48966,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		{
 		  /* implicit vector-ref */
 		  if (vector_rank(slot_value(s_slot)) != 1) 
-		    return(false);
+		    return(return_false(sc, car_x, __LINE__));
 		  if (is_symbol(cadr(car_x)))
 		    {
 		      s7_pointer slot;
@@ -48858,7 +49005,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			case T_PAIR:       cur_info->func.p_pi_f = list_ref_p_pi;              break;
 			case T_HASH_TABLE: cur_info->func.p_pp_f = hash_table_ref_p_pp_direct; break;
 			case T_LET:        cur_info->func.p_pp_f = let_ref_p_pp;               break;
-			default: return(false);
+			default: return(return_false(sc, car_x, __LINE__));
 			}
 		      if (is_symbol(cadr(car_x)))
 			{
@@ -48879,7 +49026,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 					cur_info->func.p_pi_f = string_ref_unchecked;
 				      return(true);
 				    }
-				  else return(false);
+				  else return(return_false(sc, car_x, __LINE__));
 				}
 			      cur_info->caller.fp = opt_p_pp_ss;
 			      return(true);
@@ -48895,7 +49042,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				  cur_info->caller.fp = opt_p_pi_sf;
 				  return(true);
 				}
-			      return(false);
+			      return(return_false(sc, car_x, __LINE__));
 			    }
 			  if (cell_optimize_1(sc, cdr(car_x), env))
 			    {
@@ -48906,132 +49053,15 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 		    }
 		}
 	    }
-	  return(false);
+	  return(return_false(sc, car_x, __LINE__));
 	}
-
-      if ((car(car_x) == sc->or_symbol) || (car(car_x) == sc->and_symbol))
-	{
-	  cur_info = sc->opts[sc->opt_index++];
-	  if (len == 3)
-	    {
-	      opt_info *wrapper;
-	      int start;
-	      cur_info->caller.fp = ((car(car_x) == sc->or_symbol) ? opt_or_pp : opt_and_pp);
-	      wrapper = sc->opts[sc->opt_index];
-	      start = sc->opt_index + 1;
-	      if (!cell_optimize_1(sc, cdr(car_x), env))
-		{
-		  sc->opt_index = start;
-		  if (!bool_optimize_1(sc, cdr(car_x), env))
-		    return(false);
-		  wrapper->caller.fp = b_to_p;
-		}
-	      wrapper = sc->opts[sc->opt_index];
-	      start = sc->opt_index + 1;
-	      if (!cell_optimize_1(sc, cddr(car_x), env))
-		{
-		  sc->opt_index = start;
-		  if (!bool_optimize_1(sc, cddr(car_x), env))
-		    return(false);
-		  wrapper->caller.fp = b_to_p;
-		}
-	      cur_info->i1 = sc->opt_index - 1;
-	      return(true);
-	    }
-	  else
-	    {
-	      if (len > 0)
-		{
-		  s7_pointer p;
-		  cur_info->i1 = (len - 1);
-		  cur_info->caller.fp = ((car(car_x) == sc->or_symbol) ? opt_or_any_p : opt_and_any_p);
-		  for (p = cdr(car_x); is_pair(p); p = cdr(p))
-		    {
-		      opt_info *wrapper;
-		      int start;
-		      wrapper = sc->opts[sc->opt_index];
-		      start = sc->opt_index + 1;
-		      if (!cell_optimize_1(sc, p, env))
-			{
-			  sc->opt_index = start;
-			  if (!bool_optimize_1(sc, cddr(car_x), env))
-			    return(false);
-			  wrapper->caller.fp = b_to_p;
-			}
-		    }
-		  cur_info->i2 = sc->opt_index - 1;
-		  return(true);
-		}
-	    }
-	  return(false);
-	}
-
-      if (car(car_x) == sc->if_symbol)
-	{
-	  cur_info = sc->opts[sc->opt_index++];
-	  if (len == 3)
-	    {
-	      opt_info *next;
-	      next = sc->opts[sc->opt_index];
-	      if ((is_pair(cadr(car_x))) &&
-		  (caadr(car_x) == sc->not_symbol))
-		{
-		  if ((bool_optimize_1(sc, cdadr(car_x), env)) &&
-		      (cell_optimize_1(sc, cddr(car_x), env)))
-		    {
-		      cur_info->caller.fp = opt_if_nbp;
-		      cur_info->i1 = sc->opt_index - 1;
-		      if (next->caller.fb == opt_b_p_f)
-			{
-			  cur_info->func.b_p_f = next->func.b_p_f;
-			  cur_info->caller.fp = opt_if_nbp_f;
-			}
-		      return(true);
-		    }
-		}
-	      else
-		{
-		  if ((bool_optimize_1(sc, cdr(car_x), env)) &&
-		      (cell_optimize_1(sc, cddr(car_x), env)))
-		    {
-		      cur_info->caller.fp = opt_if_bp;
-		      cur_info->i1 = sc->opt_index - 1;
-		      if (next->caller.fb == opt_b_p_f)
-			{
-			  cur_info->func.b_p_f = next->func.b_p_f;
-			  cur_info->caller.fp = opt_if_bp_f;
-			}
-		      return(true);
-		    }
-		}
-	      return(false);
-	    }
-	  else
-	    {
-	      if (len == 4)
-		{
-		  if ((bool_optimize_1(sc, cdr(car_x), env)) &&
-		      (cell_optimize_1(sc, cddr(car_x), env)))
-		    {
-		      cur_info->caller.fp = opt_if_bpp;
-		      cur_info->i1 = sc->opt_index - 1;
-		      if (cell_optimize_1(sc, cdddr(car_x), env))
-			{
-			  cur_info->i2 = sc->opt_index - 1;
-			  return(true);
-			}
-		    }
-		}
-	    }
-	  return(false);
-	}
-
+	  
       if (is_c_function(s_func))
 	{
 	  s7_function opt;
 	  s7_pointer sig, checker = NULL;
 	  int orig_index;
-
+	  
 	  orig_index = sc->opt_index;
 	  sig = s7_procedure_signature(sc, s_func);
 	  if ((is_pair(sig)) &&
@@ -49048,10 +49078,10 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 	      slot = find_symbol(sc, cadr(car_x));
 	      if ((!is_slot(slot)) || 
 		  (has_methods(slot_value(slot))))
-		return(false);
+		return(return_false(sc, car_x, __LINE__));
 	      if ((s7_is_vector(slot_value(slot))) &&
 		  (vector_rank(slot_value(slot)) > 1))
-		return(false);
+		return(return_false(sc, car_x, __LINE__));
 	      cur_info->p1 = slot;
 	    }
 
@@ -49088,7 +49118,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			cur_info->p1 = find_symbol(sc, cadr(car_x));
 			if ((!is_slot(cur_info->p1)) || 
 			    (has_methods(slot_value(cur_info->p1)))) 
-			  return(false);
+			  return(return_false(sc, car_x, __LINE__));
 #endif
 			cur_info->caller.fp = opt_p_p_s;
 			return(true);
@@ -49151,6 +49181,26 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				  cur_info->caller.fp = opt_p_pi_sf;
 				  return(true);
 				}
+			    }
+			}
+		      else
+			{
+			  if ((car(sig) == sc->is_float_symbol) ||
+			      (car(sig) == sc->is_real_symbol))
+			    {
+			      int start;
+			      s7_d_pi_t f;
+			      start = sc->opt_index;
+			      f = s7_d_pi_function(s_func);
+			      if (f)
+				{
+				  if (float_optimize_1(sc, expr, env))
+				    {
+				      cur_info->caller.fp = d_to_p;
+				      return(true);
+				    }
+				}
+			      sc->opt_index = start;
 			    }
 			}
 		    }
@@ -49232,6 +49282,28 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			  cur_info->caller.fp = opt_p_pip_sff;
 			  return(true);
 			}
+		      else
+			{
+			  /* fprintf(stderr, "%s %s\n", DISPLAY(sig), DISPLAY_80(car_x)); */
+			  if ((car(sig) == sc->is_float_symbol) ||
+			      (car(sig) == sc->is_real_symbol))
+			    {
+			      int start;
+			      s7_d_pid_t f;
+			      start = sc->opt_index;
+			      f = s7_d_pid_function(s_func);
+			      if (f)
+				{
+				  if (float_optimize_1(sc, expr, env))
+				    {
+				      cur_info->caller.fp = d_to_p;
+				      return(true);
+				    }
+				}
+			      sc->opt_index = start;
+			    }
+			}
+
 		    }
 		  else
 		    {
@@ -49259,7 +49331,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 	      break;
 	      
 	    default:
-	      if (car(car_x) == sc->format_symbol)
+	      if (head == sc->format_symbol)
 		{
 		  s7_pointer p;
 		  cur_info->i1 = (len - 1);
@@ -49307,7 +49379,7 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       last_cell_bad = expr;
     }
 #endif
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 static bool symbols_ok(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, opt_info *cur_info)
@@ -49322,15 +49394,14 @@ static bool symbols_ok(s7_scheme *sc, s7_pointer arg1, s7_pointer arg2, opt_info
 	     (is_slot(cur_info->p2)) &&
 	     (!has_methods(slot_value(cur_info->p2))));
     }
-  return(false);
+  return(return_false(sc, arg1, __LINE__));
 }
 
 
 static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 {
   opt_info *cur_info;
-  s7_pointer car_x;
-  int len;
+  s7_pointer car_x, head;
 
   /* fprintf(stderr, "bool_opt: %s\n", DISPLAY(expr)); */
 
@@ -49339,7 +49410,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 #if DEBUGGING && OPT_PRINT
       fprintf(stderr, "opts overflow: %s\n", DISPLAY(expr));
 #endif
-      return(false);
+      return(return_false(sc, expr, __LINE__));
     }
 
 #if DEBUGGING
@@ -49347,82 +49418,87 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 #endif
 
   car_x = car(expr);
-  len = s7_list_length(sc, car_x);
-
   if (!is_pair(car_x)) /* wrap constants/symbols */
     return(opt_bool_not_pair(sc, car_x));
 
-  if (is_symbol(car(car_x)))
+  head = car(car_x);
+  if (is_symbol(head))
     {
       s7_pointer s_func;
+      int len;
+      len = s7_list_length(sc, car_x);
 
-      if ((is_global(car(car_x))) ||
-	  ((is_slot(global_slot(car(car_x)))) &&
-	   (find_symbol(sc, car(car_x)) == global_slot(car(car_x)))))
-	s_func = slot_value(global_slot(car(car_x)));
-      else return(false);
-
-      if (car(car_x) == sc->and_symbol)
+      if (is_syntactic(head))
 	{
-	  cur_info = sc->opts[sc->opt_index++];
-	  if (len == 3)
+	  if (head == sc->and_symbol)
 	    {
-	      cur_info->caller.fb = opt_and_bb;
-	      if ((bool_optimize_1(sc, cdr(car_x), env)) &&
-		  (bool_optimize_1(sc, cddr(car_x), env)))
+	      cur_info = sc->opts[sc->opt_index++];
+	      if (len == 3)
 		{
-		  cur_info->i1 = sc->opt_index - 1;
-		  return(true);
+		  cur_info->caller.fb = opt_and_bb;
+		  if ((bool_optimize_1(sc, cdr(car_x), env)) &&
+		      (bool_optimize_1(sc, cddr(car_x), env)))
+		    {
+		      cur_info->i1 = sc->opt_index - 1;
+		      return(true);
+		    }
+		  else return(return_false(sc, car_x, __LINE__));
 		}
-	      else return(false);
+	      else
+		{
+		  s7_pointer p;
+		  cur_info->i1 = (len - 1);
+		  for (p = cdr(car_x); is_pair(p); p = cdr(p))
+		    if (!bool_optimize_1(sc, p, env))
+		      break;
+		  if (is_null(p))
+		    {
+		      cur_info->caller.fb = opt_and_any_b;
+		      cur_info->i2 = sc->opt_index - 1;
+		      return(true);
+		    }
+		}
+	      return(return_false(sc, car_x, __LINE__));
 	    }
-	  else
+	  if (head == sc->or_symbol)
 	    {
-	      s7_pointer p;
-	      cur_info->i1 = (len - 1);
-	      for (p = cdr(car_x); is_pair(p); p = cdr(p))
-		if (!bool_optimize_1(sc, p, env))
-		  break;
-	      if (is_null(p))
+	      cur_info = sc->opts[sc->opt_index++];
+	      if (len == 3)
 		{
-		  cur_info->caller.fb = opt_and_any_b;
-		  cur_info->i2 = sc->opt_index - 1;
-		  return(true);
+		  cur_info->caller.fb = opt_or_bb;
+		  if ((bool_optimize_1(sc, cdr(car_x), env)) &&
+		      (bool_optimize_1(sc, cddr(car_x), env)))
+		    {
+		      cur_info->i1 = sc->opt_index - 1;
+		      return(true);
+		    }
+		  else return(return_false(sc, car_x, __LINE__));
 		}
+	      else
+		{
+		  s7_pointer p;
+		  cur_info->i1 = (len - 1);
+		  for (p = cdr(car_x); is_pair(p); p = cdr(p))
+		    if (!bool_optimize_1(sc, p, env))
+		      break;
+		  if (is_null(p))
+		    {
+		      cur_info->caller.fb = opt_or_any_b;
+		      cur_info->i2 = sc->opt_index - 1;
+		      return(true);
+		    }
+		}
+	      return(return_false(sc, car_x, __LINE__));
 	    }
 	  return(false);
 	}
-      if (car(car_x) == sc->or_symbol)
-	{
-	  cur_info = sc->opts[sc->opt_index++];
-	  if (len == 3)
-	    {
-	      cur_info->caller.fb = opt_or_bb;
-	      if ((bool_optimize_1(sc, cdr(car_x), env)) &&
-		  (bool_optimize_1(sc, cddr(car_x), env)))
-		{
-		  cur_info->i1 = sc->opt_index - 1;
-		  return(true);
-		}
-	      else return(false);
-	    }
-	  else
-	    {
-	      s7_pointer p;
-	      cur_info->i1 = (len - 1);
-	      for (p = cdr(car_x); is_pair(p); p = cdr(p))
-		if (!bool_optimize_1(sc, p, env))
-		  break;
-	      if (is_null(p))
-		{
-		  cur_info->caller.fb = opt_or_any_b;
-		  cur_info->i2 = sc->opt_index - 1;
-		  return(true);
-		}
-	    }
-	  return(false);
-	}
-
+      
+      if ((is_global(head)) ||
+	  ((is_slot(global_slot(head))) &&
+	   (find_symbol(sc, head) == global_slot(head))))
+	s_func = slot_value(global_slot(head));
+      else return(return_false(sc, car_x, __LINE__));
+      
       if (is_c_function(s_func))
 	{
 	  switch (len)
@@ -49491,7 +49567,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			  p = find_symbol(sc, cadr(car_x));
 			  if ((!is_slot(p)) || 
 			      (has_methods(slot_value(p))))
-			    return(false);
+			    return(return_false(sc, car_x, __LINE__));
 			  cur_info->p1 = p;
 			  cur_info->caller.fb = opt_b_p_s;
 			  return(true);
@@ -49544,7 +49620,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				cur_info->p1 = find_symbol(sc, arg1);
 				if ((!is_slot(cur_info->p1)) ||
 				    (has_methods(slot_value(cur_info->p1))))
-				  return(false);
+				  return(return_false(sc, car_x, __LINE__));
 				cur_info->i1 = integer(arg2);
 				cur_info->caller.fb = opt_b_ii_sc;
 				return(true);
@@ -49556,11 +49632,11 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 				    cur_info->p1 = find_symbol(sc, arg2);
 				    if ((!is_slot(cur_info->p1)) ||
 					(has_methods(slot_value(cur_info->p1))))
-				      return(false);
+				      return(return_false(sc, car_x, __LINE__));
 				    cur_info->caller.fb = opt_b_ii_fs;
 				    return(true);
 				  }
-				return(false);
+				return(return_false(sc, car_x, __LINE__));
 			      }
 			    if ((int_optimize_1(sc, cdr(car_x), env)) &&
 				(int_optimize_1(sc, cddr(car_x), env)))
@@ -49610,11 +49686,11 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			    cur_info->p1 = find_symbol(sc, arg1);
 			    if ((!is_slot(cur_info->p1)) ||
 				(has_methods(slot_value(cur_info->p1))))
-			      return(false);
+			      return(return_false(sc, car_x, __LINE__));
 			    cur_info->caller.fb = opt_b_pp_sf;
 			    return(true);
 			  }
-			return(false);
+			return(return_false(sc, car_x, __LINE__));
 		      }
 		    if (is_symbol(arg2))
 		      {
@@ -49623,11 +49699,11 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
 			    cur_info->p1 = find_symbol(sc, arg2);
 			    if ((!is_slot(cur_info->p1)) ||
 				(has_methods(slot_value(cur_info->p1))))
-			      return(false);
+			      return(return_false(sc, car_x, __LINE__));
 			    cur_info->caller.fb = opt_b_pp_fs;
 			    return(true);
 			  }
-			return(false);
+			return(return_false(sc, car_x, __LINE__));
 		      }
 
 		    if ((cell_optimize_1(sc, cdr(car_x), env)) &&
@@ -49670,7 +49746,7 @@ static bool bool_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       last_bool_bad = expr;
     }
 #endif
-  return(false);
+  return(return_false(sc, car_x, __LINE__));
 }
 
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env)
@@ -60440,13 +60516,38 @@ static int dox_ex(s7_scheme *sc)
 
       if (is_pair(slot_expression(slot)))
 	{
+	  /* fprintf(stderr, "%s %d\n", DISPLAY(slot), is_safe_stepper(slot_expression(slot))); */
 	  if (is_safe_stepper(slot_expression(slot)))
 	    {
 	      s7_pointer step_expr;
-	      step_expr = car(slot_expression(slot));
-	      if ((is_pair(cddr(step_expr))) &&
-		  (type(val) == type(caddr(step_expr))))
+	      step_expr = cddar(slot_expression(slot));
+	      /* caddr(step_expr) can be a constant or a symbol or a pair
+	       *   constant, check direct, symbol check value (shadowing??), else func sig? */
+	      if (!(is_pair(step_expr))) /* presumably no step */
 		set_safe_stepper(slot);
+	      else
+		{
+		  /* fprintf(stderr, "%d %d %d %s %s\n", is_safe_stepper(slot), type(val), type(car(step_expr)), DISPLAY(step_expr), DISPLAY(val)); */
+		  if (is_symbol(car(step_expr)))
+		    {
+		      s7_pointer p;
+		      p = find_symbol(sc, car(step_expr));
+		      if ((is_slot(p)) &&
+			  (!has_methods(p)) &&
+			  (type(val) == type(slot_value(p))))
+			set_safe_stepper(slot);
+		    }
+		  else
+		    {
+		      if (!is_pair(car(step_expr)))
+			{
+			  if (type(val) == type(car(step_expr)))
+			    set_safe_stepper(slot);
+			  else clear_safe_stepper(slot_expression(slot));
+			}
+		    }
+		  /* fprintf(stderr, "slot %s %d\n", DISPLAY(slot), is_safe_stepper(slot)); */
+		}
 	    }
 	}
       set_next_slot(slot, let_slots(frame));
@@ -60531,7 +60632,7 @@ static int dox_ex(s7_scheme *sc)
 	    }
 	}
     }
-  else
+  else /* there is a body */
     {
       if (!is_unsafe_do(sc->code))
 	{
@@ -60543,6 +60644,11 @@ static int dox_ex(s7_scheme *sc)
 	  for (sp = slots; is_slot(sp); sp = next_slot(sp))
 	    if (!is_safe_stepper(sp))
 	      break;
+#if 0
+	  if (is_slot(sp))
+	    fprintf(stderr, "unsafe stepper: %s\n", DISPLAY(sp));
+#endif
+	  /* sp = sc->nil; */
 
 	  if ((is_null(cdr(code))) &&
 	      (is_pair(car(code))))
@@ -60576,7 +60682,7 @@ static int dox_ex(s7_scheme *sc)
 		    }
 		}
 	    }
-	  else
+	  else /* more than one expr */
 	    {
 	      s7_pointer p;
 	      int body_len;
@@ -77809,21 +77915,21 @@ int main(int argc, char **argv)
  *                                             f4new                    new clm opt
  * tmac          |      |      |      |      |        18.7 1049            1050
  * index    44.3 | 3291 | 1725 | 1276 | 1156 | [1088] 1171 1126            1130
+ * teq           |      |      | 6612 | 2380 | [2306] 2500 2385            2390 2578
  * s7test   1721 | 1358 |  995 | 1194 | 1122 | [2491] 3287 2859            2875 2622
- * teq           |      |      | 6612 | 2380 | [2306] 2500 2385            2390 2652
- * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3487            3485 3246
+ * bench    42.7 | 8752 | 4220 | 3506 | 3230 | [2999] 3403 3487            3485 3244
  * tauto     265 |   89 |  9   |  8.4 | 2638 | [2706] 2960 3319            3251
  * lint          |      |      |      | 7731 | [3208] 4926 3292 [152.4]    3349 3341 [155.6]
  * tcopy         |      |      | 13.6 | 3204 | [3266] 3190 3418            3418 3369
- * tform         |      |      | 6816 | 3627 | [3532] 3768 3864            3872 3739
- * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4415            4407 4350
- * titer         |      |      | 7503 | 5218 | [5015] 5873 5086            5142 5078
+ * tform         |      |      | 6816 | 3627 | [3532] 3768 3864            3872 3719
+ * tmap          |      |      |  9.3 | 4176 | [4288] 4263 4415            4407 4337
+ * titer         |      |      | 7503 | 5218 | [5015] 5873 5086            5142 5062
  * tsort         |      |      |      | 8825 | [7301]                      7422 7355
- * thash         |      |      | 50.7 | 8491 | [8913] 8858 10.4            10.7 9041
+ * thash         |      |      | 50.7 | 8491 | [8913] 8858 10.4            10.7 9052
  *               |      |      |      |      |
- * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.6            13.1 12.5
+ * tgen          |   71 | 70.6 | 38.0 | 12.0 | [12.0] 12.0 12.6            13.1 12.4
  * tall       90 |   43 | 14.5 | 12.7 | 15.0 | [15.0] 17.7 17.8            43.3 20.1
- * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 41.9 [133.0]    56.9 43.0
+ * calls     359 |  275 | 54   | 34.7 | 37.1 | [41.3] 41.9 41.9 [133.0]    56.9 42.7 [134.8]
  * 
  * --------------------------------------------------------------------
  *
