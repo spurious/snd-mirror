@@ -76,7 +76,7 @@
 (define-macro (reader-cond . clauses) `(values))          ; clobber reader-cond to avoid (incorrect) unbound-variable errors
 
 #|
-;; debugging version
+;; debugging version -- does not work in repl's listener
 (define-expansion (lint-format str caller . args)
   `(begin
      (format outport "lint.scm line ~A~%" ,(port-line-number))
@@ -10126,7 +10126,9 @@
 		      (if (and (pair? op)
 			       (member checker op any-compatible?))
 			  (if (and *report-sloppy-assoc*
-				   (not (var-member :catch env)))   ; (round (char-position #\a "asb"))
+				   (not (var-member :catch env))   ; (round (char-position #\a "asb"))
+				   (or (not (pair? arg))
+				       (not (memq (car arg) '(int-vector-ref float-vector-ref)))))
 			      (lint-format "in ~A,~%~NC~A's argument ~Ashould be ~A, but ~A might also be ~A" caller
 					   (truncated-list->string form)
 					   (+ lint-left-margin 4) #\space
