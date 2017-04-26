@@ -720,7 +720,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                 --with-gl --with-gl2ps         ------ '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-motif --with-gl --quiet --with-gl2ps
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"  --with-motif --with-gl --quiet --with-gl2ps --without-gsl
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xm 'gl2ps"
