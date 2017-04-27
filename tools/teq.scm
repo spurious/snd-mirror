@@ -63,7 +63,7 @@
 (define hash-3 (hash-table* :a vect-0 :b list-0))
 (define hash-4 (hash-table* :a hash-1))
 
-(define-constant teq-vars (vector list-0 list-1 list-2 list-3 list-4
+(define-constant teq-vars (list list-0 list-1 list-2 list-3 list-4
 			      vect-0 vect-1 vect-2 vect-3 vect-4
 			      hash-0 hash-1 hash-2 hash-3 hash-4
 			      let-0 let-1 let-2 let-3 let-4))
@@ -71,7 +71,7 @@
 ;(format *stderr* "~A ~A ~A ~A ~A~%" (length hash-0) (length hash-1) (length hash-2) (length hash-3) (length hash-4))
 
 (set! (*s7* 'initial-string-port-length) 64)
-
+#|
 (define (tests size)
   (let ((str #f)
 	(p (open-output-string))
@@ -94,8 +94,8 @@
 	(set! str (format #f "~A~%" vj))
 	(set! str (cyclic-sequences vj))))
     (close-output-port p)))
+|#
 
-#|
 (define (tests size)
   (let ((str #f)
 	(vj #f)
@@ -116,7 +116,7 @@
 	(set! str (format #f "~A~%" vj))
 	(set! str (cyclic-sequences vj))))
     (close-output-port p)))
-
+#|
 ;; almost as fast
 (define (tests size)
   (let ((str #f)
