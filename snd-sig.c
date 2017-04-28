@@ -4070,7 +4070,19 @@ apply 'func' to samples in current channel (or the specified channel). \
 if 'func' returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned.\n  " scan_chan_example
 
   Snd_assert_channel(S_scan_chan, snd, chn, 4); 
+
+#if HAVE_SCHEME
+  {
+    unsigned int gc_loc;
+    s7_pointer result;
+    gc_loc = s7_gc_protect(s7, proc);
+    result = g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, Xen_false);
+    s7_gc_unprotect_at(s7, gc_loc);
+    return(result);
+  }
+#else
   return(g_sp_scan(proc, beg, end, snd, chn, S_scan_chan, false, edpos, 6, Xen_false));
+#endif
 }
 #endif
 
@@ -4092,7 +4104,19 @@ func is a function of one argument, the current sample. \
 if func returns non-" PROC_FALSE ", the scan stops, and the current sample number is returned. \n  " scan_channel_example
 
   Snd_assert_channel(S_scan_channel, snd, chn, 4); 
+
+#if HAVE_SCHEME
+  {
+    unsigned int gc_loc;
+    s7_pointer result;
+    gc_loc = s7_gc_protect(s7, proc);
+    result = g_sp_scan(proc, beg, Xen_false, snd, chn, S_scan_channel, false, edpos, 6, (Xen_is_bound(dur)) ? dur : Xen_false);
+    s7_gc_unprotect_at(s7, gc_loc);
+    return(result);
+  }
+#else
   return(g_sp_scan(proc, beg, Xen_false, snd, chn, S_scan_channel, false, edpos, 6, (Xen_is_bound(dur)) ? dur : Xen_false));
+#endif
 }
 
 
@@ -4112,7 +4136,18 @@ static Xen g_map_chan(Xen proc, Xen s_beg, Xen s_end, Xen org, Xen snd, Xen chn,
   #define H_map_chan "(" S_map_chan " func :optional (start 0) (end len) edname snd chn edpos): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_chan_example
 
+#if HAVE_SCHEME
+  {
+    unsigned int gc_loc;
+    s7_pointer result;
+    gc_loc = s7_gc_protect(s7, proc);
+    result = g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, Xen_false, S_map_chan);
+    s7_gc_unprotect_at(s7, gc_loc);
+    return(result);
+  }
+#else
   return(g_map_chan_1(proc, s_beg, s_end, org, snd, chn, edpos, Xen_false, S_map_chan));
+#endif
 }
 #endif
 
@@ -4132,7 +4167,18 @@ static Xen g_map_channel(Xen proc, Xen s_beg, Xen s_dur, Xen snd, Xen chn, Xen e
   #define H_map_channel "(" S_map_channel " func :optional (start 0) (dur len) snd chn edpos edname): \
 apply func to samples in current channel; edname is the edit history name for this editing operation.\n  " map_channel_example
 
+#if HAVE_SCHEME
+  {
+    unsigned int gc_loc;
+    s7_pointer result;
+    gc_loc = s7_gc_protect(s7, proc);
+    result = g_map_chan_1(proc, s_beg, Xen_false, org, snd, chn, edpos, (Xen_is_bound(s_dur)) ? s_dur : Xen_false, S_map_channel);
+    s7_gc_unprotect_at(s7, gc_loc);
+    return(result);
+  }
+#else
   return(g_map_chan_1(proc, s_beg, Xen_false, org, snd, chn, edpos, (Xen_is_bound(s_dur)) ? s_dur : Xen_false, S_map_channel));
+#endif
 }
 
 
