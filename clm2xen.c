@@ -2410,7 +2410,7 @@ static Xen g_mus_set_length(Xen gen, Xen val)
   return(val);
 }
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && (!WITH_GMP)
 #define D_METHOD(Func)					\
   static s7_double mus_ ## Func ## _dp(s7_pointer o)	\
   {							\
