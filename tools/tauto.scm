@@ -108,7 +108,7 @@
 			(quit))))
 		 
 		(let ((checker (and (pair? sig) (car sig))))
-		  (if checker
+		  (if checker ; map-values -> function here
 		      (for-each
 		       (lambda (c)
 			 (when (checker c)
