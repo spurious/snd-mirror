@@ -9744,6 +9744,14 @@ static s7_double mus_env_dp(s7_pointer p)
   return(mus_env(g));			
 }
 
+static s7_double file_to_sample_dpi(s7_pointer p, s7_int index)
+{
+  mus_any *g = NULL;
+  mus_xen *gn;
+  Xen_to_C_generator(p, gn, g, mus_is_file_to_sample, S_file_to_sample, "a file->sample generator");
+  return(mus_file_to_sample(g, index, 0));			
+}
+
 static s7_double outa_did(s7_int pos, s7_double x)
 {
   out_any_2(pos, x, 0, S_outa);
@@ -10020,6 +10028,7 @@ static void init_choosers(s7_scheme *sc)
   s7_set_d_ip_function(s7_name_to_value(sc, S_inb), inb_dip);
 
   s7_set_d_p_function(s7_name_to_value(sc, S_env), mus_env_dp);
+  s7_set_d_pi_function(s7_name_to_value(sc, S_file_to_sample), file_to_sample_dpi);
 
   s7_set_d_p_function(s7_name_to_value(sc, S_pink_noise), mus_pink_noise);
   s7_set_d_pd_function(s7_name_to_value(sc, S_piano_noise), piano_noise_d_pd);

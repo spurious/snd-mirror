@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.0"
-#define S7_DATE "21-Apr-17"
+#define S7_VERSION "5.1"
+#define S7_DATE "1-May-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -752,8 +752,9 @@ typedef bool (*s7_b_p_t)(s7_pointer p);
 void s7_set_b_p_function(s7_pointer f, s7_b_p_t df);
 s7_b_p_t s7_b_p_function(s7_pointer f);
 
-
-
+typedef s7_double (*s7_d_pi_t)(s7_pointer v, s7_int i);
+void s7_set_d_pi_function(s7_pointer f, s7_d_pi_t df);
+s7_d_pi_t s7_d_pi_function(s7_pointer f);
 
 /* -------------------------------------------------------------------------------- */
 
