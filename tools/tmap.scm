@@ -1,7 +1,7 @@
 ;;; sequence tests
 
 (define (less-than a b)
-  (or (< a b) #f))
+  (or (< a b) (> b a)))
 
 (define (less-than-2 a b)
   (if (not (real? a)) (display "oops"))
@@ -194,7 +194,7 @@
 	  ((null? p))
 	(set-car! p (- (random 100000) 50000)))
       (let ((fv-ran (copy fv)))
-	(sort! fv <)
+	(set! fv (sort! fv <))
 	(call-with-exit
 	 (lambda (quit)
 	   (do ((p0 fv (cdr p0))
@@ -204,7 +204,7 @@
 	     (when (> (car p0) (car p1))
 	       (format *stderr* "list: ~A > ~A at ~D~%" (car p0) (car p1) i)
 	       (quit)))))
-	(sort! fv-ran (lambda (a b) (< a b)))
+	(set! fv-ran (sort! fv-ran (lambda (a b) (< a b))))
 	(if (not (equal? fv fv-ran))
 	    (format *stderr* "pair closure not equal~%")))
 	
