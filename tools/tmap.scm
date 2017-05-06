@@ -8,7 +8,7 @@
   (cond ((< a b) #t) (#t #f)))
 
 (define (char-less-than a b) 
-  (cond ((char<? a b) #t) (#t #f)))
+  (cond ((char<? a b) #t) (else #f)))
 
 
 (define (fv-tst len)

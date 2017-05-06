@@ -36338,6 +36338,8 @@ EDITS: 1
 	    (float-vector-set! fv i (oscil g))))))
     
     (test (fv3) #r(0.0 0.9916648104524686 -0.9589242746631385))
+    ;; (oscil (make-oscil 200 1.7)): 0.9916648104524686
+    ;; (oscil (make-oscil 300 5.0)): -0.9589242746631385
     
     (define (fv4)
       (do ((fv-a (make-float-vector 4))

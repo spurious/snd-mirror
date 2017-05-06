@@ -5069,7 +5069,10 @@
 		     (if (and (just-rationals? args)
 			      (not (memv 0 (cdr args)))
 			      (not (memv 0.0 (cdr args))))
-			 (apply / args)
+			 (catch #t 
+			   (lambda () 
+			     (apply / args)) ; if no overflow catch we can hit divide by zero here
+			   (lambda a form))
 			 (let ((nargs                            ; (/ x a (* b 1 c) d) -> (/ x a b c d)
 				(remove-all 1 (splice-if '* (cdr args)))))
 			   (if (null? nargs) ; (/ x 1 1) -> x

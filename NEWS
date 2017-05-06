@@ -1,10 +1,8 @@
-Snd 17.3.
+Snd 17.4:
 
-snd-init.el and snd-scheme-open-file from Orm Finnendahl.
-More bug fixes from Tito.
+the clm optimizer has been totally rewritten.
+s7 new built-in function: type-of
 
-s7: pair-line-number now returns #f if there is no line number.
+checked: gtk 3.90.0, sbcl 1.3.17
 
-checked: sbcl 1.3.15|16, gtk 3.89.5
-
-Thanks!: Orm Finnendahl, Tito Latini, Daniel Hensel.
+Thanks!: Tito Latini, Kjetil Matheussen, Renato Fabbri.
