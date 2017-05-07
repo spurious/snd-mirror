@@ -371,10 +371,10 @@ static int float_format_precision = WRITE_REAL_PRECISION;
 
 #if (((defined(SIZEOF_VOID_P)) && (SIZEOF_VOID_P == 4)) || ((defined(__SIZEOF_POINTER__)) && (__SIZEOF_POINTER__ == 4)))
   #define opcode_t unsigned int
-  #define PRINT_NAME_PADDING 8
-  #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2)
   #define ptr_int unsigned int
   #define INT_FORMAT "%u"
+  #define PRINT_NAME_PADDING 16
+  #define PRINT_NAME_SIZE (20 - PRINT_NAME_PADDING - 2) /* pointless */
 #else
   #define opcode_t unsigned long long int
   #define ptr_int unsigned long long int
@@ -1355,13 +1355,13 @@ static void init_types(void)
 }
 
 #if WITH_HISTORY
-#define current_code(Sc) car(Sc->cur_code)
+#define current_code(Sc)           car(Sc->cur_code)
 #define set_current_code(Sc, Code) do {Sc->cur_code = cdr(Sc->cur_code); set_car(Sc->cur_code, Code);} while (0)
-#define mark_current_code(Sc) do {int i; s7_pointer p; for (p = Sc->cur_code, i = 0; i < sc->history_size; i++, p = cdr(p)) S7_MARK(car(p));} while (0)
+#define mark_current_code(Sc)      do {int i; s7_pointer p; for (p = Sc->cur_code, i = 0; i < sc->history_size; i++, p = cdr(p)) S7_MARK(car(p));} while (0)
 #else
-#define current_code(Sc) Sc->cur_code
+#define current_code(Sc)           Sc->cur_code
 #define set_current_code(Sc, Code) Sc->cur_code = Code
-#define mark_current_code(Sc) S7_MARK(Sc->cur_code)
+#define mark_current_code(Sc)      S7_MARK(Sc->cur_code)
 #endif
 
 #define typeflag(p)  ((p)->tf.flag)
@@ -1609,6 +1609,9 @@ static s7_scheme *cur_sc = NULL;
  *   set_safe_closure happens only in optimize_lambda, clear only in procedure_source, bits only here
  *   this has to be separate from T_SAFE_PROCEDURE, and should be in the second byte.
  *   It can be set on either the body (a pair) or the closure itself.
+ * define -> optimize_lambda sets safe -> define_funchecked -> make_funclet for the frame
+ *   similarly, named let -> optimize_lambda, then let creates the frame if safe
+ *   thereafter, optimizer uses OP_SAFE_CLOSURE* which calls old_frame*
  */
 
 #define T_DONT_EVAL_ARGS              (1 << (TYPE_BITS + 5))
@@ -2522,6 +2525,12 @@ static int num_object_types = 0;
 
 static void set_print_name(s7_pointer p, const char *name, int len)
 {
+#if (PRINT_NAME_PADDING == 8)
+  return;
+  /* this is currently useless because there's no room in the 32-bit case for a print name.
+   *    in the distant past, we used int/float (in C), so we had room.
+   */
+#else
   if ((len < PRINT_NAME_SIZE) &&
       (!is_mutable(p)))
     {
@@ -2529,6 +2538,7 @@ static void set_print_name(s7_pointer p, const char *name, int len)
       print_name_length(p) = (unsigned char)(len & 0xff);
       memcpy((void *)print_name(p), (void *)name, len);
     }
+#endif
 }
 
 #if WITH_GCC
@@ -43189,6 +43199,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   return(sc->nil);
 }
 
+
 s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
 {
 #if DEBUGGING
@@ -43200,6 +43211,9 @@ s7_pointer s7_apply_function(s7_scheme *sc, s7_pointer fnc, s7_pointer args)
       _NFre(car(p));
   }
 #endif
+  if (sc->safety > 0)
+    set_current_code(sc, cons(sc, fnc, args));
+  else set_current_code(sc, fnc);
 
   if (is_c_function(fnc))
     return(c_function_call(fnc)(sc, args));
@@ -43303,10 +43317,14 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 {
   declare_jump_info();
 
+  if (sc->safety > 0)
+    set_current_code(sc, cons(sc, func, args));
+  else set_current_code(sc, func); 
+
   if (is_c_function(func))
     return(c_function_call(func)(sc, _NFre(args)));  /* no check for wrong-number-of-args -- is that reasonable? */
 
-  sc->temp1 = _NFre(func); /* this is feeble GC protection */
+  sc->temp1 = _NFre(func);                           /* this is feeble GC protection */
   sc->temp2 = _NFre(args);
 
   store_jump_info(sc);
@@ -58914,10 +58932,7 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		  /* this bit is set on the function itself in make_closure and friends */
 		  /* if result is VERY_SAFE_BODY, walk the body changing symbol lookups of known-safe-locals to local_slot accesses */
 		  if (result == VERY_SAFE_BODY)
-		    {
-		      /* set_safe_locals(body); */ /* TODO: set this on -> args? */
-		      fixup_lookups(sc, body, args);
-		    }
+		    fixup_lookups(sc, body, args);
 		}
 	    }
 	}
@@ -59093,6 +59108,12 @@ static s7_pointer make_funclet(s7_scheme *sc, s7_pointer new_func, s7_pointer fu
 	  else make_slot_1(sc, new_env, car(arg), sc->nil);
 	}
       let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
+#if 0
+      /* hung in s7test */
+      if ((is_null(cdr(closure_body(new_func)))) &&
+	  (s7_optimize(sc, closure_body(new_func), closure_let(new_func))))
+	fprintf(stderr, "%s %s ok\n", DISPLAY(new_func), DISPLAY(closure_body(new_func)));
+#endif
     }
   return(new_env);
 }
@@ -61030,10 +61051,10 @@ static s7_pointer check_do(s7_scheme *sc)
       pair_set_syntax_symbol(sc->code, sc->do_unchecked_symbol);
 
       /* an extremely annoying kludge -- define in the body can clobber the step expressions set up below! 
+       *      (let ((x 2)) (do ((i 0 (+ i x))) ((= i 4)) (define x 1) (display i)) (newline)) -- steps by 1
        *   perhaps add a frame at the body so defines can't leak into the steppers?
        *   or add a check at define -- if optimized do let interpose a let?
-       *   walking the tree here is very expensive, and no one ever actually does this, so I'll wait.
-       *   maybe insert this into the loop above
+       *   walking the tree here is expensive, and no one ever actually does this, so I'll wait.
        */
       if ((is_pair(body)) && 
 	  (is_pair(car(body))) &&
@@ -61280,7 +61301,6 @@ static int dox_ex(s7_scheme *sc)
   /* fprintf(stderr, "dox_ex: %d %s\n", is_unsafe_do(sc->code), DISPLAY_80(sc->code)); */
 
 #if 0
-  /* snd-test: 8 9 10 11 12 13 14 15 17 18 19    22 23 24 25 26 27 28 29 30 */
   if (!is_no_opt(sc->code))
     {
       endf = s7_optimize(sc, cons(sc, cons(sc, sc->do_symbol, sc->code), sc->nil), sc->envir);
@@ -61579,6 +61599,7 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
 #endif
 
   /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY_80(opt_pair2(code))); */
+
   body = car(opt_pair2(code));
   if (!is_symbol(car(body)))
     return(fall_through);
@@ -61996,6 +62017,8 @@ static int safe_dotimes_ex(s7_scheme *sc)
 {
   s7_pointer init_val;
 
+  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY_80(sc->code)); */
+
   init_val = cadr(caar(sc->code));
   if (is_symbol(init_val))
     init_val = find_symbol_checked(sc, init_val);
@@ -62123,6 +62146,7 @@ static int safe_do_ex(s7_scheme *sc)
    */
   s7_pointer end, init_val, end_val, code;
 
+  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY_80(sc->code)); */
   code = sc->code;
 
   init_val = cadaar(code);
@@ -62191,6 +62215,8 @@ static int dotimes_p_ex(s7_scheme *sc)
 {
   s7_pointer init, end, code, init_val, end_val, slot;
   /* (do ... (set! args ...)) -- one line, syntactic */
+
+  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY_80(sc->code)); */
 
   code = sc->code;
   init = cadaar(code);
@@ -62278,6 +62304,7 @@ static int dotimes_p_ex(s7_scheme *sc)
 static int do_init_ex(s7_scheme *sc)
 {
   s7_pointer x, y, z;
+  /* fprintf(stderr, "%s: %s\n", __func__, DISPLAY_80(sc->code)); */
   while (true)
     {
       sc->args = cons(sc, sc->value, sc->args);    /* code will be last element (first after reverse) */
@@ -63489,7 +63516,7 @@ static void apply_iterator(s7_scheme *sc)                          /* -------- i
   sc->value = s7_iterate(sc, sc->code);
 }
 
-static void apply_lambda(s7_scheme *sc)                              /* -------- normal function (lambda), or macro -------- */
+static void apply_lambda(s7_scheme *sc)                            /* -------- normal function (lambda), or macro -------- */
 {             /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
   s7_pointer x, z, e;
   unsigned long long int id;
