@@ -67,8 +67,8 @@
 				(values "~%    ~S" (car x)))))
 		(format p "~%"))
 	     (set! history (cons (car x) history))
-	     (set! lines (cons (pair-line-number (car x)) lines))
-	     (set! files (cons (pair-filename (car x)) files)))))
+	     (set! lines (cons (and (pair? (car x)) (pair-line-number (car x))) lines))
+	     (set! files (cons (and (pair? (car x)) (pair-filename (car x))) files)))))
        
        ;; show the enclosing contexts
        (let ((old-print-length (*s7* 'print-length)))

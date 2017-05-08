@@ -1201,8 +1201,8 @@ struct s7_scheme {
   hash_entry_t *optimizer_fixups;
 
   int opt_index;
-  #define OPTS_SIZE 128 /* 32 overflows in animals.scm */
-  opt_info *opts[OPTS_SIZE];
+  #define OPTS_SIZE 128 /* 32 overflows in animals.scm, 128 overflow in s7test */
+  opt_info **opts, **orig_opts;
 #if DEBUGGING
   int opt_ctr;
 #endif
@@ -1888,21 +1888,23 @@ static s7_scheme *cur_sc = NULL;
 #define clear_mark(p)                 typeflag(p) &= (~T_GC_MARK)
 /* using bit 23 for this makes a big difference in the GC */
 
-
 /* these two are using bits already in use on pairs, but the contexts never overlap, I hope... I need more bits. */
 #define T_HAS_ALL_X                   T_SETTER
 #define set_has_all_x(p)              typeflag(_TPair(p)) |= T_HAS_ALL_X
 #define has_all_x(p)                  ((typeflag(_TPair(p)) & T_HAS_ALL_X) != 0)
 
-
-#define T_NO_OPT                      T_MUTABLE
-#define set_no_opt(p)                 typeflag(_TPair(p)) |= T_NO_OPT
-#define is_no_opt(p)                  ((typeflag(_TPair(p)) & T_NO_OPT) != 0)
-
-
 #define T_LOCALIZED                   T_SAFE_STEPPER
 #define set_localized(p)              typeflag(_TPair(p)) |= T_LOCALIZED
 #define is_localized(p)              ((typeflag(_TPair(p)) & T_LOCALIZED) != 0)
+
+
+#define T_PAIR_NO_OPT                 T_MUTABLE
+#define set_pair_no_opt(p)            typeflag(_TPair(p)) |= T_PAIR_NO_OPT
+#define pair_no_opt(p)                ((typeflag(_TPair(p)) & T_PAIR_NO_OPT) != 0)
+
+#define T_CLOSURE_NO_OPT              T_MUTABLE
+#define set_closure_no_opt(p)         typeflag(_TClo(p)) |= T_CLOSURE_NO_OPT
+#define closure_no_opt(p)             ((typeflag(_TClo(p)) & T_CLOSURE_NO_OPT) != 0)
 
 
 static int not_heap = -1;
@@ -41563,6 +41565,28 @@ line to be preceded by a semicolon."
 }
 
 
+/* -------- s7_history, s7_add_to_history -------- */
+
+s7_pointer s7_add_to_history(s7_scheme *sc, s7_pointer entry)
+{
+#if WITH_HISTORY
+  set_current_code(sc, entry);
+#endif
+  return(entry);
+}
+
+s7_pointer s7_history(s7_scheme *sc)
+{
+#if WITH_HISTORY
+  if (sc->using_history1)
+    return(sc->eval_history1);
+  return(sc->eval_history2);
+#else
+  return(sc->nil);
+#endif
+}
+
+
 
 /* -------- error handlers -------- */
 
@@ -42525,6 +42549,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
   sc->no_values = 0;
   sc->format_depth = -1;
   sc->gc_off = false;            /* this is in case we were triggered from the sort function -- clumsy! */
+  sc->opts = sc->orig_opts;
   if (sc->current_safe_list > 0) 
     {
       clear_list_in_use(sc->safe_lists[sc->current_safe_list]);
@@ -47237,11 +47262,7 @@ static opt_info *copy_opt_info_list(s7_scheme *sc, opt_info *p, int len)
   return(top);
 }
 
-/* TODO: */
-/* in make_funclet (the safe_closure saved let), we run s7_optimize over the function body,
- *   and save the optlist in closure_optlist.
- * If we see that closure in the optimizer, we can add opt_call_??? where the ? represent
- *   argument exprs, 
+/* TODO: 
  * opt_call: 
  *   set funclet entries from arg exprs [as if do inits]
  *   save current sc->opt_index and opts, set index=0 and sc->opts=closure_optlist
@@ -47249,22 +47270,37 @@ static opt_info *copy_opt_info_list(s7_scheme *sc, opt_info *p, int len)
  *   reset opts and opt_index, return result
  * so opt_call: i1:n args, p1: optlist->body with n exprs, maybe p2->funclet
  * 
- * but: an error can happen in the body -- how to ensure sc->opts is put back?
- *   maybe save orig_opts and reset in s7_error
  * named let is also a possibility, and sort et all could look for pre-existing lists
- *
  * need to set optlist_num_exprs 
- * when we call lint 10000 times are we re-optimizing? yes...
- *   make_funclet is called 2.5mil times -- why? [all from define_funchecked] -- they're local funcs not in closure
- * maybe for start, just optimize if outlet(funclet)->rootlet?
- *   then if safe call in do-loop, opt and save for subsequent loop
- * better: don't opt until encountered, if has_optlist(f) use closure_optlist(f),
+ *
+ * don't opt until encountered, if has_optlist(f) use closure_optlist(f),
  *   if (!closure_no_opt(f)) try to optimize
  * so remove current code from make_funclet, add closure_no_opt bit 
  * tail-recursive calls will work here: add opt_call for recursion
  * and if optimized safe call encountered elsewhere -- eval via eqivalent of opt_wrap_cell?
+ *
+ * (set_)closure_no_opt
+ * if safe_closure removed from heap, is optlist still protected?
  */
 
+#if 0
+      if (!closure_no_opt(new_func)) /* permanent funclet assumed */
+	{
+      if (setjmp(sc->opt_exit) == 0)
+	{
+	  if ((is_null(cdr(closure_body(new_func)))) &&
+	      (s7_optimize(sc, closure_body(new_func), closure_let(new_func))))
+	    {
+	      s7_pointer op;
+	      op = make_optlist(sc);
+	      optlist_opts(op) = copy_opt_info_list(sc, sc->opts[0], sc->opt_index);
+	      closure_set_optlist_addr(new_func, optlist_addr(op));
+	      set_has_optlist(new_func);
+	    }
+	}
+      else set_closure_no_opt(new_func);
+      }
+#endif
 
 /* extend cload to rest of types? d_i i_d b_p
  * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
@@ -48136,7 +48172,7 @@ static bool float_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       else
 	{
 	  if ((is_macro(s_func)) &&
-	      (!is_no_opt(expr)))
+	      (!pair_no_opt(expr)))
 	    {
 	      return(float_optimize_1(sc, set_plist_1(sc, s7_macroexpand(sc, s_func, cdar(expr))), env));
 	    }
@@ -48691,7 +48727,7 @@ static bool int_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       else
 	{
 	  if ((is_macro(s_func)) &&
-	      (!is_no_opt(expr)))
+	      (!pair_no_opt(expr)))
 	    {
 	      return(int_optimize_1(sc, set_plist_1(sc, s7_macroexpand(sc, s_func, cdar(expr))), env));
 	    }
@@ -50445,10 +50481,10 @@ static bool cell_optimize_1(s7_scheme *sc, s7_pointer expr, s7_pointer env)
       else
 	{
 	  if ((is_macro(s_func)) &&
-	      (!is_no_opt(expr)))
+	      (!pair_no_opt(expr)))
 	    {
 	      if (!cell_optimize_1(sc, set_plist_1(sc, s7_macroexpand(sc, s_func, cdar(expr))), env))
-		set_no_opt(expr);
+		set_pair_no_opt(expr);
 	    }
 	}
     }
@@ -51226,7 +51262,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
       expr = car(body);
       if (is_null(cdr(body)))         /* TODO: 1-expr body is not a necessary restriction in map/for-each */
 	{
-	  if (!is_no_opt(body))
+	  if (!pair_no_opt(body))
 	    {
 	      s7_function func;
 	      s7_pointer slot;
@@ -51276,7 +51312,7 @@ Each object can be a list, string, vector, hash-table, or any other sequence."
 			}
 		    }
 		}
-	      set_no_opt(body);
+	      set_pair_no_opt(body);
 	    }
 	  p = cadr(args);
 	  if (is_pair(p))
@@ -51436,7 +51472,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 	      expr = car(body);
 	      if ((is_pair(cadr(args))) &&
 		  (is_null(cdr(body)))  &&
-		  (!is_no_opt(body)) &&
+		  (!pair_no_opt(body)) &&
 		  (is_optimized(expr)))
 		{
 		  s7_function func;
@@ -51472,7 +51508,7 @@ a list of the results.  Its arguments can be lists, vectors, strings, hash-table
 		      sc->stack_end -= 4;
 		      return(safe_reverse_in_place(sc, car(val))); 
 		    }
-		  set_no_opt(body);
+		  set_pair_no_opt(body);
 		}
 	      sc->z = (!is_iterator(cadr(args))) ? s7_make_iterator(sc, cadr(args)) : cadr(args);
 	      push_stack(sc, OP_MAP_1, make_counter(sc, sc->z), f);
@@ -59332,23 +59368,6 @@ static s7_pointer make_funclet(s7_scheme *sc, s7_pointer new_func, s7_pointer fu
 	  else make_slot_1(sc, new_env, car(arg), sc->nil);
 	}
       let_set_slots(new_env, reverse_slots(sc, let_slots(new_env)));
-#if 0
-      /* fprintf(stderr, "check %s %s\n", DISPLAY(new_func), DISPLAY(closure_body(new_func))); */
-
-      if (setjmp(sc->opt_exit) == 0)
-	{
-	  if ((is_null(cdr(closure_body(new_func)))) &&
-	      (s7_optimize(sc, closure_body(new_func), closure_let(new_func))))
-	    {
-	      s7_pointer op;
-	      /* fprintf(stderr, "   %s ok\n", DISPLAY_80(new_func)); */
-	      op = make_optlist(sc);
-	      optlist_opts(op) = copy_opt_info_list(sc, sc->opts[0], sc->opt_index);
-	      closure_set_optlist_addr(new_func, optlist_addr(op));
-	      set_has_optlist(new_func);
-	    }
-	}
-#endif
     }
   return(new_env);
 }
@@ -61535,7 +61554,7 @@ static int dox_ex(s7_scheme *sc)
   /* fprintf(stderr, "dox_ex: %d %s\n", is_unsafe_do(sc->code), DISPLAY_80(sc->code)); */
 
 #if 0
-  if (!is_no_opt(sc->code))
+  if (!pair_no_opt(sc->code))
     {
       endf = s7_optimize(sc, cons(sc, cons(sc, sc->do_symbol, sc->code), sc->nil), sc->envir);
       if (endf)
@@ -61544,7 +61563,7 @@ static int dox_ex(s7_scheme *sc)
 	  sc->code = sc->nil;
 	  return(goto_SAFE_DO_END_CLAUSES);
 	}
-      set_no_opt(sc->code);
+      set_pair_no_opt(sc->code);
     }
 #endif
 
@@ -61854,12 +61873,12 @@ static int simple_do_ex(s7_scheme *sc, s7_pointer code)
     set_safe_stepper(ctr);
 #endif
   
-  if (!is_no_opt(opt_pair2(code)))
+  if (!pair_no_opt(opt_pair2(code)))
     {
       func = s7_optimize_nr(sc, opt_pair2(code), sc->envir);
       if (!func) 
 	{
-	  set_no_opt(opt_pair2(code));
+	  set_pair_no_opt(opt_pair2(code));
 	  return(fall_through);
 	}
     }
@@ -61955,11 +61974,11 @@ static bool opt_dotimes(s7_scheme *sc, s7_pointer code, s7_pointer scc, bool saf
     {
       s7_function func;
 
-      if (is_no_opt(code)) return(false);
+      if (pair_no_opt(code)) return(false);
       func = s7_optimize_nr(sc, code, sc->envir);
       if (!func) 
 	{
-	  set_no_opt(code);
+	  set_pair_no_opt(code);
 	  return(false);
 	}
 
@@ -77040,12 +77059,14 @@ s7_scheme *s7_init(void)
     }
   {
     opt_info *o = NULL;
+    sc->opts = (opt_info **)malloc(OPTS_SIZE * sizeof(opt_info *));
     for (i = 0; i < OPTS_SIZE; i++)
       {
 	sc->opts[i] = (opt_info *)calloc(1, sizeof(opt_info));
 	if (o) o->next = sc->opts[i];
 	o = sc->opts[i];
       }
+    sc->orig_opts = sc->opts;
   }
       
 #if DEBUGGING

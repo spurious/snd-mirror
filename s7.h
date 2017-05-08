@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "5.1"
-#define S7_DATE "1-May-17"
+#define S7_VERSION "5.2"
+#define S7_DATE "9-May-17"
 
 typedef long long int s7_int; /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
 typedef double s7_double;     /*   similarly for Scheme reals; only "double" works in C++ */
@@ -93,7 +93,6 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   /* set arg_n to 0 to indicate that caller takes only one argument (so the argument number need not be reported */
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
-s7_pointer s7_stacktrace(s7_scheme *sc);
 
   /* these are equivalent to (error ...) in Scheme
    *   the first argument to s7_error is a symbol that can be caught (via (catch tag ...))
@@ -115,6 +114,10 @@ s7_pointer s7_stacktrace(s7_scheme *sc);
    *  error function.  If no handler is found, the default error handler is called,
    *  normally printing the error arguments to current-error-port.
    */
+
+s7_pointer s7_stacktrace(s7_scheme *sc);
+s7_pointer s7_history(s7_scheme *sc);                                /* the current (circular backwards) history buffer */
+s7_pointer s7_add_to_history(s7_scheme *sc, s7_pointer entry);       /* add entry to the history buffer */
 
 unsigned int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
@@ -845,6 +848,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
+ * 9-May:     s7_add_to_history.
  * 20-Apr:    s7_tree_memq (for Snd), s7_type_of, many changes for new clm optimizer.
  * 10-Apr:    added s7_scheme first argument to s7_iterator_is_at_end.
  * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
