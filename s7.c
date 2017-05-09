@@ -1806,6 +1806,10 @@ static s7_scheme *cur_sc = NULL;
 /* #define set_mutable(p)             typeflag(_TNum(p)) |= T_MUTABLE */
 /* used for mutable numbers */
 
+#define T_HAS_KEYWORD                 T_MUTABLE
+#define has_keyword(p)                ((typeflag(_TSym(p)) & T_HAS_KEYWORD) != 0)
+#define set_has_keyword(p)            typeflag(_TSym(p)) |= T_HAS_KEYWORD
+
 #define T_MARK_SEQ                    T_MUTABLE
 #define is_mark_seq(p)                ((typeflag(_TItr(p)) & T_MARK_SEQ) != 0)
 #define set_mark_seq(p)               typeflag(_TItr(p)) |= T_MARK_SEQ
@@ -5617,6 +5621,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	{
 	  typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	  keyword_set_symbol(x, make_symbol_with_length(sc, (char *)(name + 1), len - 1));
+	  set_has_keyword(keyword_symbol(x));
 	  set_global_slot(x, s7_make_slot(sc, sc->nil, x, x));
 	}
       else
@@ -5634,6 +5639,7 @@ static s7_pointer new_symbol(s7_scheme *sc, const char *name, unsigned int len, 
 	      kstr[klen] = 0;
 	      typeflag(x) |= (T_IMMUTABLE | T_KEYWORD);
 	      keyword_set_symbol(x, make_symbol_with_length(sc, kstr, klen));
+	      set_has_keyword(keyword_symbol(x));
 	      set_global_slot(x, s7_make_slot(sc, sc->nil, x, x));
 	      free(kstr);
 	    }
@@ -54998,20 +55004,6 @@ static void opt_generator(s7_scheme *sc, s7_pointer func, s7_pointer expr, int h
     }
 }
 
-static bool rdirect_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
-{
-  s7_pointer x;
-  for (x = symbols; is_pair(x); x = cdr(x))
-    {
-      if (car(x) == symbol)
-	return(true);
-      x = cdr(x);
-      if (car(x) == symbol) /* car(nil)=unspec, cdr(unspec)=unspec! This only works for lists known to be undotted and non-circular */
-	return(true);
-    }
-  return(false);
-}
-
 static bool is_lambda(s7_scheme *sc, s7_pointer sym)
 {
   return((sym == sc->lambda_symbol) && (symbol_id(sym) == 0));
@@ -55389,13 +55381,29 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 }
 
 
+static bool let_memq(s7_scheme *sc, s7_pointer symbol, s7_pointer symbols)
+{
+  s7_pointer x;
+  /* fprintf(stderr, "%s in %s\n", DISPLAY(symbol), DISPLAY(symbols)); */
+  for (x = symbols; is_pair(x); x = cdr(x))
+    {
+      if (car(x) == symbol)
+	return(true);
+    }
+  return(false);
+}
+
 static s7_pointer find_uncomplicated_symbol(s7_scheme *sc, s7_pointer symbol, s7_pointer e)
 {
   s7_pointer x;
   long long int id;
 
   if ((symbol_is_in_list(sc, symbol)) &&
-      (rdirect_memq(sc, symbol, e)))   /* it's probably a local variable reference */
+      (let_memq(sc, symbol, e)))   /* it's probably a local variable reference */
+    return(sc->nil);
+
+  if ((has_keyword(symbol)) &&
+      (symbol_is_in_list(sc, s7_make_keyword(sc, symbol_name(symbol)))))
     return(sc->nil);
 
   if (is_global(symbol))
@@ -56613,15 +56621,26 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
   return((is_optimized(expr)) ? OPT_T : OPT_F);
 }
 
+#if DEBUGGING
+#define optimize_expression(Sc, Expr, Hop, E) optimize_expression_1(Sc, Expr, Hop, E, __func__, __LINE__)
+static opt_t optimize_expression_1(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e, const char *func, int line);
+#else
 static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e);
+#endif
 
+#if DEBUGGING
+#define optimize_syntax(Sc, Expr, Func, Hop, E) optimize_syntax_1(Sc, Expr, Func, Hop, E, __func__, __LINE__)
+static opt_t optimize_syntax_1(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, s7_pointer e, const char *cfunc, int line)
+#else
 static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, int hop, s7_pointer e)
+#endif
 {
   opcode_t op;
   s7_pointer p, body;
-  bool allow_export = false;
   /* TODO: those not allowed need to be passed back and treated as unsafe symbols (find_uncomplicated_symbol etc) */
-
+#if DEBUGGING && (0)
+  fprintf(stderr, "%s (%s[%d]): %s %s\n", __func__, cfunc, line, DISPLAY_80(expr), DISPLAY(e));
+#endif
   if (!is_pair(cdr(expr))) /* cddr(expr) might be null if, for example, (begin (let ...)) */
     return(OPT_F);
 
@@ -56650,6 +56669,8 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  {
 	    vars = cadr(expr);
 	    body = cddr(expr);
+	    if (is_null(vars))
+	      e = cons(sc, sc->nil, e);
 	  }
 	for (p = vars; is_pair(p); p = cdr(p))
 	  {
@@ -56670,7 +56691,6 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	    sc->w = e;
 	  }
       }
-      allow_export = true;
       break;
 	  
     case OP_LET_STAR:
@@ -56688,6 +56708,8 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	  {
 	    vars = cadr(expr);
 	    body = cddr(expr);
+	    if (is_null(vars))
+	      e = cons(sc, sc->nil, e);
 	  }
 	for (p = vars; is_pair(p); p = cdr(p))
 	  {
@@ -56713,13 +56735,15 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	    sc->w = e;
 	  }
       }
-      allow_export = true;
       break;
 
     case OP_DO:
       {
 	s7_pointer vars;
+
 	vars = cadr(expr);
+	if (is_null(vars))
+	  e = cons(sc, sc->nil, e);
 	body = cddr(expr);
 
 	for (p = vars; is_pair(p); p = cdr(p))
@@ -56759,36 +56783,58 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
     case OP_DEFINE_EXPANSION:
     case OP_DEFINE:
     case OP_DEFINE_STAR:
-      if (is_pair(cadr(expr)))
-	{
-	  s7_pointer name_args;
-	  name_args = cadr(expr);
-	  if (is_symbol(car(name_args)))
-	    {
-	      if (is_pair(e))
-		set_cdr(e, cons(sc, add_symbol_to_list(sc, car(name_args)), cdr(e))); /* export it */
-	      else e = cons(sc, add_symbol_to_list(sc, car(name_args)), e);
-	    }
-	  e = collect_parameters(sc, cdr(name_args), e);
-	}
-      else 
-	{
-	  if (is_symbol(cadr(expr)))
-	    {
-	      if (is_pair(e))
-		set_cdr(e, cons(sc, add_symbol_to_list(sc, cadr(expr)), cdr(e)));     /* export it */
-	      else e = cons(sc, add_symbol_to_list(sc, cadr(expr)), e);
-	    }
-	}
-
-      body = cddr(expr);
+      /* fprintf(stderr, "  %s before: %s\n", DISPLAY(car(expr)), DISPLAY(e)); */
+      /* define adds a name to the incoming env (e), the added name is inserted into e after the first, so the caller
+       *   can flush added symbols by maintaining its own pointer into the list if blockers set the car.
+       * the list is used both to see local symbols and to catch "complicated" functions (find_uncomplicated_symbol).
+       * In cases like (if expr (define...)) we can't tell at this level whether the define takes place, so
+       *   its name should not be in "e", but it needs to be marked for find_uncomplicated_symbol in a way
+       *   that can be distinguished from members of "e".  So in that (rare) case, we use the associated keyword.
+       *   Then find_uncomplicated_symbol can use has_keyword to tell if the keyword search is needed.
+       */
+      {
+	s7_pointer name_args;
+	name_args = cadr(expr);
+	if (is_pair(name_args))
+	  {
+	    if (is_symbol(car(name_args)))
+	      {
+		add_symbol_to_list(sc, car(name_args));
+		if (is_pair(e))
+		  {
+		    if (car(e) != sc->key_rest_symbol)
+		      set_cdr(e, cons(sc, car(name_args), cdr(e))); /* export it */
+		    else add_symbol_to_list(sc, s7_make_keyword(sc, symbol_name(car(name_args))));
+		  }
+		else e = cons(sc, car(name_args), e);
+	      }
+	    e = collect_parameters(sc, cdr(name_args), e);
+	  }
+	else 
+	  {
+	    if (is_symbol(name_args))
+	      {
+		add_symbol_to_list(sc, name_args);
+		if (is_pair(e))
+		  {
+		    if (car(e) != sc->key_rest_symbol)
+		      set_cdr(e, cons(sc, name_args, cdr(e)));     /* export it */
+		    else add_symbol_to_list(sc, s7_make_keyword(sc, symbol_name(name_args)));
+		  }
+		else e = cons(sc, name_args, e);
+	      }
+	  }
+	/* fprintf(stderr, "  %s after: %s\n", DISPLAY(car(expr)), DISPLAY(e)); */
+	body = cddr(expr);
+      }
       break;
 
     case OP_LAMBDA:
     case OP_LAMBDA_STAR:
+      if (is_null(cadr(expr)))
+	e = cons(sc, sc->nil, e);
       e = collect_parameters(sc, cadr(expr), e);
       body = cddr(expr);
-      allow_export = true;
       break;
 
     case OP_SET:
@@ -56832,6 +56878,7 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	    s7_pointer test, rest;
 	    test = caar(p);
 	    rest = cdar(p);
+	    e = cons(sc, sc->key_rest_symbol, e);
 	    if (((is_pair(test)) && (optimize_expression(sc, test, hop, e) == OPT_OOPS)) ||
 		((is_pair(rest)) && (optimize_expression(sc, rest, hop, e) == OPT_OOPS)))
 	      return(OPT_OOPS);
@@ -56839,8 +56886,12 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
       return(OPT_F);
       break;
 
-    case OP_BEGIN:
-      allow_export = true;
+    case OP_IF:
+    case OP_WHEN:
+    case OP_UNLESS:
+    case OP_OR:
+    case OP_AND:
+      e = cons(sc, sc->key_rest_symbol, e);
       break;
 
     default:
@@ -56850,15 +56901,18 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
   {
     unsigned int gc_loc;
     gc_loc = s7_gc_protect(sc, e); /* perhaps use sc->temp9 here TODO: or t_temp */
+    /* fprintf(stderr, "   %s e at start: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
     for (p = body; is_pair(p); p = cdr(p))
       {
 	if ((is_pair(car(p))) && 
 	    (!is_checked(car(p)))) /* ((typeflag & (0xff | T_CHECKED)) == T_PAIR) is not faster */
 	  {
-	    if (optimize_expression(sc, car(p), hop, (allow_export) ? e : copy_list(sc, e)) == OPT_OOPS)
+	    if (optimize_expression(sc, car(p), hop, e) == OPT_OOPS)
 	      return(OPT_OOPS);
 	  }
+	/* fprintf(stderr, "     %s e mid: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
       }
+    /* fprintf(stderr, "   %s e at end: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
     s7_gc_unprotect_at(sc, gc_loc);
   }
 
@@ -57005,9 +57059,16 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 }
 
 
+#if DEBUGGING
+static opt_t optimize_expression_1(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e, const char *func, int line)
+#else
 static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_pointer e)
+#endif
 {
   s7_pointer car_expr;
+#if DEBUGGING && (0)
+  fprintf(stderr, "%s (%s[%d]): %s %s\n", __func__, func, line, DISPLAY_80(expr), DISPLAY(e));
+#endif
   /* fprintf(stderr, "opt %d %s %s\n", hop, DISPLAY(expr), DISPLAY(e)); */
   /* if (is_checked(expr)) return(OPT_T); */
 
@@ -57347,8 +57408,12 @@ static opt_t optimize(s7_scheme *sc, s7_pointer code, int hop, s7_pointer e)
     {
       set_checked(x);
       if ((is_pair(car(x))) && (!is_checked(car(x))))
-	if (optimize_expression(sc, car(x), hop, e) == OPT_OOPS)
-	  return(OPT_OOPS);
+	{
+	  /* fprintf(stderr, "   e in: %s\n", DISPLAY(e)); */
+	  if (optimize_expression(sc, car(x), hop, e) == OPT_OOPS)
+	    return(OPT_OOPS);
+	  /* fprintf(stderr, "   e out: %s\n", DISPLAY(e)); */
+	}
     }
   handle_optimizer_fixups(sc);
   if ((!is_null(x)) &&
