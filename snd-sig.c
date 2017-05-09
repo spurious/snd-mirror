@@ -3555,7 +3555,7 @@ static Xen map_channel_to_buffer(chan_info *cp, snd_fd *sf, Xen proc, mus_long_t
 	    old_e = s7_set_curlet(s7, e);
 	    yp = s7_make_slot(s7, e, arg, s7_make_mutable_real(s7, 1.5));
 			
-	    opt_func = s7_float_optimize(s7, body, e);
+	    opt_func = s7_float_optimize(s7, body);
 	    if (opt_func)
 	      {
 		data = (mus_float_t *)calloc(num, sizeof(mus_float_t));
@@ -3907,7 +3907,7 @@ static Xen g_sp_scan(Xen proc_and_list, Xen s_beg, Xen s_end, Xen snd, Xen chn, 
 	  y = s7_make_mutable_real(s7, 1.5);             /* slot for the scan lambda arg */
 	  yp = s7_make_slot(s7, e, arg, y);
 	  val = y;
-	  func = s7_optimize(s7, body, e);
+	  func = s7_optimize(s7, body);
 	  if (func)
 	    {
 	      for (kp = 0; kp < num; kp++)

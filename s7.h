@@ -674,10 +674,10 @@ s7_pointer s7_type_of(s7_pointer arg);
  *   wrapping up the result as a scheme cell.
  */
 
-s7_function s7_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+s7_function s7_optimize(s7_scheme *sc, s7_pointer expr);
 
 typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
-s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr, s7_pointer env);
+s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr);
 
 typedef s7_double (*s7_d_t)(void);
 void s7_set_d_function(s7_pointer f, s7_d_t df);
@@ -848,7 +848,7 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
  * 
  *        s7 changes
  *
- * 9-May:     s7_add_to_history.
+ * 9-May:     s7_history, s7_add_to_history.
  * 20-Apr:    s7_tree_memq (for Snd), s7_type_of, many changes for new clm optimizer.
  * 10-Apr:    added s7_scheme first argument to s7_iterator_is_at_end.
  * 28-Mar:    removed the "rf", "pf" and "if" clm optimization functions. 
