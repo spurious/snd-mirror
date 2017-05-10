@@ -619,7 +619,7 @@ typedef struct s7_cell {
   int hloc;
   union {
 
-    union {
+    union {                       /* integers, floats */
       s7_int integer_value;
       s7_double real_value;
 
@@ -628,21 +628,21 @@ typedef struct s7_cell {
 	char name[PRINT_NAME_SIZE + 2];
       } pval;
 
-      struct {
+      struct {                    /* ratios */
 	s7_int numerator;
 	s7_int denominator;
       } fraction_value;
 
-      struct {
+      struct {                    /* complex numbers */
 	s7_double rl;
 	s7_double im;
       } complex_value;
 
-      unsigned long ul_value;           /* these two are not used by s7 in any way */
+      unsigned long ul_value;     /* these two are not used by s7 in any way */
       unsigned long long ull_value;
 
 #if WITH_GMP
-      mpz_t big_integer;
+      mpz_t big_integer;          /* bignums */
       mpq_t big_ratio;
       mpfr_t big_real;
       mpc_t big_complex;
@@ -654,27 +654,27 @@ typedef struct s7_cell {
 #endif
     } number;
 
-    struct {
+    struct {                       /* ports */
       port_t *port;
       unsigned char *data;
-      unsigned int size, point;        /* these limit the in-core portion of a string-port to 2^31 bytes */
+      unsigned int size, point;    /* these limit the in-core portion of a string-port to 2^31 bytes */
       unsigned int line_number, file_number;
       bool is_closed;
       port_type_t ptype;
     } prt;
 
-    struct{
+    struct{                        /* characters */
       unsigned char c, up_c;
       int length;
       bool alpha_c, digit_c, space_c, upper_c, lower_c;
       char c_name[12];
     } chr;
 
-    void *c_pointer;
+    void *c_pointer;               /* c-pointers */
 
-    int baffle_key;
+    int baffle_key;                /* baffles */
 
-    struct {
+    struct {                       /* vectors */
       s7_int length;
       union {
 	s7_pointer *objects;
@@ -686,14 +686,14 @@ typedef struct s7_cell {
       s7_pointer (*vset)(s7_scheme *sc, s7_pointer vec, s7_int loc, s7_pointer val);
     } vector;
 
-    struct {
+    struct {                        /* stacks (internal) */
       s7_int length;
       s7_pointer *objects;
       vdims_t *dim_info;
       int top;
     } stk;
 
-    struct {
+    struct {                        /* hash-tables */
       unsigned int mask, entries;
       hash_entry_t **elements;
       hash_check_t hash_func;
@@ -701,7 +701,7 @@ typedef struct s7_cell {
       s7_pointer dproc;
     } hasher;
 
-    struct {
+    struct {                        /* iterators */
       s7_pointer obj, cur;
       union {
 	s7_int loc;
@@ -716,30 +716,35 @@ typedef struct s7_cell {
     } iter;
 
     struct {
-      c_proc_t *c_proc;                /* C functions, macros */
+      c_proc_t *c_proc;              /* C functions, macros */
       s7_function ff;
       s7_pointer setter;
       unsigned int required_args, optional_args, all_args;
       bool rest_arg;
     } fnc;
 
-    struct {                           /* pairs */
+    struct {                         /* pairs */
       s7_pointer car, cdr, opt1, opt2, opt3;
     } cons;
 
-    struct {
+    struct {                         /* special purpose pairs (symbol-table etc) */
       s7_pointer unused_car, unused_cdr;
       unsigned long long int hash;
       const char *fstr;
-      unsigned int op, line; /* op=optimize_op, line=pair_line or saved symbol_ctr */
+      unsigned int op, line;         /* op=optimize_op, line=pair_line or saved symbol_ctr */
     } sym_cons;
 
-    struct {
+    struct {                        /* scheme functions */
       s7_pointer args, body, env, setter;  /* args can be a symbol, as well as a list */
       int arity, opt_addr;
     } func;
 
-    struct {
+    struct {                        /* optlist (internal) */
+      opt_info *opts;
+      int num_exprs, num_args, addr, pc, tag;
+    } opt;
+
+    struct {                        /* strings */
       unsigned int length;
       union {
 	bool needs_free;
@@ -747,7 +752,7 @@ typedef struct s7_cell {
 	int temp_len;
       } str_ext;
       char *svalue;
-      unsigned long long int hash;          /* string hash-index */
+      unsigned long long int hash;  /* string hash-index */
       s7_pointer initial_slot;
       union {
 	char *documentation;
@@ -771,7 +776,7 @@ typedef struct s7_cell {
       s7_pointer sym, val, nxt, pending_value, expr;
     } slt;
 
-    struct {                       /* environments (frames) */
+    struct {                       /* environments (frames, lets) */
       s7_pointer slots, nxt;
       long long int id;            /* id of rootlet is -1 */
       union {
@@ -789,7 +794,7 @@ typedef struct s7_cell {
       } edat;
     } envr;
 
-    struct {
+    struct {                        /* special stuff like #<unspecified> */
       /* these 3 are just place-holders */
       s7_pointer unused_slots, unused_nxt;
       long long int unused_id;
@@ -803,12 +808,7 @@ typedef struct s7_cell {
       unsigned long long int cap;          /* sc->capture_let_counter for frame reuse */
     } ctr;
 
-    struct {                        /* optlist (internal) */
-      opt_info *opts;
-      int num_exprs, addr;
-    } opt;
-
-    struct {
+    struct {                        /* random-state */
 #if WITH_GMP
       gmp_randstate_t state;
 #else
@@ -816,31 +816,31 @@ typedef struct s7_cell {
 #endif
     } rng;
 
-    struct {               /* additional object types (C) */
+    struct {                        /* additional object types (C) */
       int type;
-      void *value;         /*  the value the caller associates with the object */
-      s7_pointer e;        /*   the method list, if any (openlet) */
+      void *value;                  /*  the value the caller associates with the object */
+      s7_pointer e;                 /*   the method list, if any (openlet) */
       s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_int pos);
     } c_obj;
 
-    struct {
+    struct {                        /* continuations */
       continuation_t *continuation;
       s7_pointer stack;
       s7_pointer *stack_start, *stack_end, *op_stack;
     } cwcc;
 
-    struct {               /* call-with-exit */
+    struct {                        /* call-with-exit */
       unsigned int goto_loc, op_stack_loc;
       bool active;
     } rexit;
 
-    struct {               /* catch */
+    struct {                        /* catch */
       unsigned int goto_loc, op_stack_loc;
       s7_pointer tag;
       s7_pointer handler;
     } rcatch; /* C++ reserves "catch" I guess */
 
-    struct {               /* dynamic-wind */
+    struct {                       /* dynamic-wind */
       s7_pointer in, out, body;
       unsigned int state;
     } winder;
@@ -1018,7 +1018,7 @@ struct s7_scheme {
   char ***string_lists;
   int *string_locs, *string_sizes, *string_max_sizes;
 
-  unsigned int syms_tag;
+  unsigned int syms_tag, opt_tag;
   int ht_iter_tag, baffle_ctr, bignum_precision;
   s7_pointer default_rng;
 
@@ -1797,9 +1797,25 @@ static s7_scheme *cur_sc = NULL;
  *   (define* (f :allow-other-keys)...) because there's only one nil, and besides, it does say "other".
  */
 
-#define T_HAS_OPTLIST                 T_SETTER
-#define set_has_optlist(p)            typeflag(_TClo(p)) |= T_HAS_OPTLIST
-#define has_optlist(p)                ((typeflag(_TClo(p)) & T_HAS_OPTLIST) != 0)
+/* closure stored optlists */
+#define T_HAS_INT_OPTLIST             T_SETTER
+#define set_has_int_optlist(p)        typeflag(_TClo(p)) |= T_HAS_INT_OPTLIST
+#define has_int_optlist(p)            ((typeflag(_TClo(p)) & T_HAS_INT_OPTLIST) != 0)
+
+#define T_HAS_FLOAT_OPTLIST           T_LINE_NUMBER
+#define set_has_float_optlist(p)      typeflag(_TClo(p)) |= T_HAS_FLOAT_OPTLIST
+#define has_float_optlist(p)          ((typeflag(_TClo(p)) & T_HAS_FLOAT_OPTLIST) != 0)
+
+#define T_HAS_BOOL_OPTLIST            T_OVERLAY
+#define set_has_bool_optlist(p)       typeflag(_TClo(p)) |= T_HAS_BOOL_OPTLIST
+#define has_bool_optlist(p)           ((typeflag(_TClo(p)) & T_HAS_BOOL_OPTLIST) != 0)
+
+#define T_HAS_CELL_OPTLIST            T_UNSAFE
+#define set_has_cell_optlist(p)       typeflag(_TClo(p)) |= T_HAS_CELL_OPTLIST
+#define has_cell_optlist(p)           ((typeflag(_TClo(p)) & T_HAS_CELL_OPTLIST) != 0)
+
+#define has_optlist(p)                ((typeflag(_TClo(p)) & (T_HAS_INT_OPTLIST | T_HAS_FLOAT_OPTLIST | T_HAS_BOOL_OPTLIST | T_HAS_CELL_OPTLIST)) != 0)
+
 
 #define T_MUTABLE                     (1 << (TYPE_BITS + 18))
 #define is_mutable(p)                 ((typeflag(_TNum(p)) & T_MUTABLE) != 0)
@@ -2450,10 +2466,22 @@ static int not_heap = -1;
 #define closure_optlist_addr(p)       (_TClo(p))->object.func.opt_addr
 #define closure_set_optlist_addr(p, addr) (_TClo(p))->object.func.opt_addr = addr
 #define closure_optlist(p)            stored_optlists[closure_optlist_addr(p)]
+#define closure_pc(p)                 optlist_pc(closure_optlist(p))
+#define closure_set_pc(p, pc)         optlist_set_pc(closure_optlist(p), pc)
 #define CLOSURE_ARITY_NOT_SET         0x40000000
 #define MAX_ARITY                     0x20000000
 #define closure_arity_unknown(p)      (closure_arity(p) == CLOSURE_ARITY_NOT_SET)
 #define is_thunk(Sc, Fnc)             ((type(Fnc) >= T_GOTO) && (s7_is_aritable(Sc, Fnc, 0)))
+
+#define is_optlist(p)                 (type(p) == T_OPTLIST)
+#define optlist_opts(p)               (_TOpt(p))->object.opt.opts
+#define optlist_num_exprs(p)          (_TOpt(p))->object.opt.num_exprs
+#define optlist_addr(p)               (_TOpt(p))->object.opt.addr
+#define optlist_pc(p)                 (_TOpt(p))->object.opt.pc
+#define optlist_set_pc(p, Val)        (_TOpt(p))->object.opt.pc = Val
+#define optlist_tag(p)                (_TOpt(p))->object.opt.tag
+#define optlist_set_tag(p, Val)       (_TOpt(p))->object.opt.tag = Val
+#define optlist_num_args(p)           (_TOpt(p))->object.opt.num_args
 
 #define hook_has_functions(p)         (is_pair(s7_hook_functions(sc, _TClo(p))))
 
@@ -2516,11 +2544,6 @@ static int num_object_types = 0;
 #define counter_set_let(p, L)         (_TCtr(p))->object.ctr.env = _TLid(L)
 #define counter_slots(p)              (_TCtr(p))->object.ctr.slots
 #define counter_set_slots(p, Val)     (_TCtr(p))->object.ctr.slots = _TSln(Val)
-
-#define is_optlist(p)                 (type(p) == T_OPTLIST)
-#define optlist_opts(p)               (_TOpt(p))->object.opt.opts
-#define optlist_num_exprs(p)          (_TOpt(p))->object.opt.num_exprs
-#define optlist_addr(p)               (_TOpt(p))->object.opt.addr
 
 #define is_baffle(p)                  (type(p) == T_BAFFLE)
 #define baffle_key(p)                 (_TBfl(p))->object.baffle_key
@@ -47271,23 +47294,48 @@ static opt_info *copy_opt_info_list(s7_scheme *sc, opt_info *p, int len)
   return(top);
 }
 
+static s7_int opt_int_call(void *p)
+{
+  opt_info *o = (opt_info *)p;
+  opt_info *o1;
+  s7_pointer fp, old_e;
+  int i;
+  s7_int result;
+
+  /* arguments */
+  for (i = 0, fp = let_slots(o->p1); i < o->i1; i++, fp = next_slot(fp))
+    {
+      o1 = cur_sc->opts[++cur_sc->pc];
+      slot_set_value(fp, o1->caller.fp(o1));
+    }
+  fprintf(stderr, "e: %s\n", s7_object_to_c_string(cur_sc, o->p1));
+
+  old_e = cur_sc->envir;
+  cur_sc->envir = o->p1;
+  cur_sc->pc = o->vx.i3 - 1; /* preincr below */
+
+  /* body */
+  for (i = 0; i < o->i2 - 1; i++)
+    {
+      o1 = cur_sc->opts[++cur_sc->pc];
+      o1->caller.fp(o1);
+    }
+  o1 = cur_sc->opts[++cur_sc->pc];
+  result = o1->caller.fi(o1);
+
+  cur_sc->envir = old_e;
+  cur_sc->pc = o->vi.i4;
+  fprintf(stderr, "opt_call: %lld\n", result);
+
+  return(result);
+}
+
 /* TODO: 
- * opt_call: 
- *   set funclet entries from arg exprs [as if do inits]
- *   if not optlist: save start index, set sc->envir=funclet, optimize body, make optlist to call back
- *   else if optlist already in opts, make call back
- *   else copy into opts and save entry (in optlist?)
- *   get result, reset sc->envir, reset sc->pc
- *   run func optlist like opt_begin (returning last result)
- * so opt_call: i1:n args, p1: optlist->body with n exprs, maybe p2->funclet, i2=entry loc
- * if has_optlist how to tell it's been copied? another tag?
- * 
+ * extend current int_opt code to other cases
+ * if has_optlist how to tell it's been copied? another tag? sc->opt_tag -> optlist_tag(closure_optlist(p))
  * named let is also a possibility, and sort et all could look for pre-existing lists
  * need to set optlist_num_exprs -- can next be used to stop eval?
  * if safe_closure removed from heap, need to check that optlist is ok
- *
- * don't opt until encountered, if has_optlist(f) use closure_optlist(f),
- *   if (!closure_no_opt(f)) try to optimize
  * tail-recursive calls will work here: add opt_call for recursion
  * and if optimized safe call encountered elsewhere -- eval via eqivalent of opt_wrap_cell?
  */
@@ -47314,8 +47362,8 @@ static opt_info *copy_opt_info_list(s7_scheme *sc, opt_info *p, int len)
  * is_opt_real, how to handle ratio args if none float?
  * need accessors for opt_info fields and cross checks for unions
  * need to test opt_sizes escape in sort et al
- *
- * to print these lists, we need to distinguish all the opt-* funcs (not the o_* enum entries)
+ * need to autotest the undefined ident stuff
+ * to print optlists, we need to distinguish all the opt-* funcs (not the o_* enum entries)
  *   if each had a printer associated via switch? then the outer level is opt_printer(o)(sc, o)
  */
 
@@ -48289,6 +48337,7 @@ static bool int_optimize(s7_scheme *sc, s7_pointer expr)
 	    }
 	  return(return_false(sc, car_x, __func__, __LINE__));
 	}
+      /* fprintf(stderr, "int: %s\n", DISPLAY_80(car_x)); */
 
       if ((is_global(head)) ||
 	  ((is_slot(global_slot(head))) &&
@@ -48733,14 +48782,30 @@ static bool int_optimize(s7_scheme *sc, s7_pointer expr)
 	  else
 	    {
 #if 0
-	      fprintf(stderr, "int: %s: %d %d\n", DISPLAY(car_x), is_closure(s_func), is_safe_closure(s_func));
+	      /* fprintf(stderr, "int: %s: %d %d\n", DISPLAY_80(car_x), is_closure(s_func), is_safe_closure(s_func)); */
 	      if ((is_closure(s_func)) &&
-		  (is_safe_closure(s_func)))
+		  (is_safe_closure(s_func)) &&
+
+		  /* just for now... */
+		  (is_pair(cdr(car_x))) &&
+		  (is_null(cddr(car_x))) &&
+		  (is_symbol(cadr(car_x))))
 		{
-		  fprintf(stderr, "closure: %s\n", DISPLAY(car_x));
-		  if (has_optlist(s_func))
+		  /* fprintf(stderr, "closure: %s %d %d\n", DISPLAY(car_x), has_int_optlist(s_func), closure_no_opt(s_func)); */
+		  if (has_int_optlist(s_func))
 		    {
+		      opt_info *cur_info;
+
 		      fprintf(stderr, "optlist ok\n");
+
+		      cur_info = sc->opts[sc->pc++];
+		      cur_info->caller.fi = opt_int_call;
+		      cur_info->i1 = 1;
+		      cur_info->i2 = 1;
+		      cur_info->vx.i3 = closure_pc(s_func);
+		      cur_info->vi.i4 = sc->pc;
+		      if (cell_optimize(sc, cdr(car_x)))
+			return(true);
 		      /* TODO: load closure-let and use the optlist */
 		    }
 		  else
@@ -48749,38 +48814,52 @@ static bool int_optimize(s7_scheme *sc, s7_pointer expr)
 			{
 			  if (setjmp(sc->opt_exit) == 0)
 			    {
-			      int start;
 			      s7_pointer old_e;
-			      start = sc->pc;
+                              opt_info *cur_info;
+			      cur_info = sc->opts[sc->pc++];
 			      old_e = sc->envir;
 
 			      /* TODO: load up closure_let before trying to optimize it */
 			      /* TODO: check that closure is top-level for now */
 			      
-			      if (is_symbol(cadr(car_x)))
-				slot_set_value(let_slots(closure_let(s_func)), find_symbol_checked(sc, cadr(car_x)));
-			      sc->envir = closure_let(s_func);
-
-			      if ((is_null(cdr(closure_body(s_func)))) &&
-				  (int_optimize(sc, closure_body(s_func))))
+			      fprintf(stderr, "at opt: %s %s\n", DISPLAY(sc->envir), DISPLAY(cdr(car_x)));
+			      if (cell_optimize(sc, cdr(car_x)))
 				{
-				  s7_pointer op;
-				  fprintf(stderr, "got oplist\n");
-				  op = make_optlist(sc);
-				  optlist_opts(op) = copy_opt_info_list(sc, sc->opts[start], sc->pc - start);
-				  closure_set_optlist_addr(s_func, optlist_addr(op));
-				  set_has_optlist(s_func);
+				  int start;
+				  start = sc->pc;
+				  if (is_symbol(cadr(car_x)))
+				    slot_set_value(let_slots(closure_let(s_func)), find_symbol_checked(sc, cadr(car_x)));
 
-				  sc->pc = start;
-				  
-				  /* TODO: now use the new optlist 
-				   *    opt_call: get arg->funclet, eval optlist
-				   */
+				  sc->envir = closure_let(s_func);
+				  cur_info->i1 = 1;
+				  cur_info->i2 = 1;
+				  cur_info->vx.i3 = start;
+
+				  fprintf(stderr, "got arg\n");
+
+				  if ((is_null(cdr(closure_body(s_func)))) &&
+				      (int_optimize(sc, closure_body(s_func))))
+				    {
+				      s7_pointer op;
+
+				      fprintf(stderr, "got optlist %d\n", sc->pc - start);
+
+				      op = make_optlist(sc);
+				      optlist_opts(op) = copy_opt_info_list(sc, sc->opts[start], sc->pc - start);
+				      closure_set_optlist_addr(s_func, optlist_addr(op));
+				      set_has_int_optlist(s_func);
+				      closure_set_pc(s_func, start);
+				      cur_info->vi.i4 = sc->pc;
+				      cur_info->p1 = sc->envir;
+				      cur_info->caller.fi = opt_int_call;
+				      sc->envir = old_e;
+				      return(true);
+				    }
 				}
 			      sc->envir = old_e;
 			    }
+			  set_closure_no_opt(s_func);
 			}
-		      else set_closure_no_opt(s_func);
 		    }
 		}
 #endif
@@ -56899,8 +56978,9 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
     }
 
   {
-    unsigned int gc_loc;
-    gc_loc = s7_gc_protect(sc, e); /* perhaps use sc->temp9 here TODO: or t_temp */
+    /* unsigned int gc_loc; */
+    /* gc_loc = s7_gc_protect(sc, e); */
+    sc->temp9 = e;
     /* fprintf(stderr, "   %s e at start: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
     for (p = body; is_pair(p); p = cdr(p))
       {
@@ -56913,7 +56993,8 @@ static opt_t optimize_syntax(s7_scheme *sc, s7_pointer expr, s7_pointer func, in
 	/* fprintf(stderr, "     %s e mid: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
       }
     /* fprintf(stderr, "   %s e at end: %s\n", DISPLAY_80(expr), DISPLAY(e)); */
-    s7_gc_unprotect_at(sc, gc_loc);
+    /* s7_gc_unprotect_at(sc, gc_loc); */
+    sc->temp9 = sc->nil;
   }
 
   if ((hop == 1) &&
@@ -77233,6 +77314,7 @@ s7_scheme *s7_init(void)
   sc->profile_info = sc->nil;
   sc->baffle_ctr = 0;
   sc->syms_tag = 0;
+  sc->opt_tag = 0;
   sc->class_name_symbol = make_symbol(sc, "class-name");
   sc->circle_info = NULL;
   sc->fdats = (format_data **)calloc(8, sizeof(format_data *));
@@ -78825,7 +78907,7 @@ s7_scheme *s7_init(void)
 #endif
 
   /* fprintf(stderr, "size: %d, max op: %d, opt: %d\n", (int)sizeof(s7_cell), OP_MAX_DEFINED, OPT_MAX_DEFINED); */
-  /* 64 bit machine: size: 48 [size 72 if gmp, 120 if debugging], op: 330, opt: 434 */
+  /* 64 bit machine: size: 48 [size 72 if gmp, 120 if debugging], op: 409, opt: 410 */
 
   if (sizeof(void *) > sizeof(s7_int))
     fprintf(stderr, "s7_int is too small: it has %d bytes, but void* has %d\n", (int)sizeof(s7_int), (int)sizeof(void *));
@@ -78940,7 +79022,6 @@ int main(int argc, char **argv)
  * update libgsl.scm
  * lint: (define (permute1 op . args) `(format *stderr* "~D: ~A -> ~A ~A~%" ,args v1 v2))
  *   maybe call qq with _n_ args? then lint that
- * use t_temps, not args and stack? also in opt*
  *
  * Snd:
  * dac loop [need start/end of loop in dac_info, reader goes to start when end reached (requires rebuffering)
