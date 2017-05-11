@@ -83,7 +83,7 @@ define s7cell
   printf "fields: %p %p %p %p %p\n",\
      $cell.object.cons.car, $cell.object.cons.cdr, $cell.object.cons.opt1, $cell.object.cons.opt2, $cell.object.cons.opt3
 
-  if (($type == T_NIL) || ($type == T_BOOLEAN) || ($type == T_UNIQUE))
+  if (($type == T_NIL) || ($type == T_BOOLEAN) || ($type == T_UNDEFINED) || ($type == T_EOF_OBJECT))
       printf "constant:       %s\n", $cell.object.unq.name
   end
 
@@ -247,22 +247,29 @@ define s7cell
   end
 
   if (($type == T_CATCH) || ($is_bad_type))
-      printf "rcatch:     goto_loc: %d, op_stack_loc: %d, tag: %p, handler: %p\n", \
+      printf "rcatch:         goto_loc: %d, op_stack_loc: %d, tag: %p, handler: %p\n", \
          $cell.object.rcatch.goto_loc, $cell.object.rcatch.op_stack_loc, $cell.object.rcatch.tag, $cell.object.rcatch.handler
   end
 
   if (($type == T_GOTO) || ($is_bad_type))
-      printf "rexit:      goto_loc: %d, op_stack_loc: %d, active: %d\n", $cell.object.rexit.goto_loc, $cell.object.rexit.op_stack_loc, $cell.object.rexit.active
+      printf "rexit:          goto_loc: %d, op_stack_loc: %d, active: %d\n", $cell.object.rexit.goto_loc, $cell.object.rexit.op_stack_loc, $cell.object.rexit.active
   end
 
   if (($type == T_DYNAMIC_WIND) || ($is_bad_type))
-      printf "winder:     in: %p, out: %p, body: %p, state: %d\n", \
+      printf "winder:         in: %p, out: %p, body: %p, state: %d\n", \
          $cell.object.winder.in, $cell.object.winder.out, $cell.object.winder.body, $cell.object.winder.state
   end
 
+  if (($type == T_OPTLIST) || ($is_bad_type))
+      printf("optlist:        opts: %p, num_exprs: %d, num_args: %d, len: %d, addr: %d, pc: %d, tag: %d\n", \
+         $cell.object.opt.opts, $cell.object.opt.num_exprs, $cell.object.opt.num_args, \
+         $cell.object.opt.len, $cell.object.opt.addr, $cell.object.opt.pc, $cell.object.opt.tag
+  end
+
   if (($type == T_CLOSURE) || ($type == T_CLOSURE_STAR) || ($type == T_MACRO) || ($type == T_BACRO) || ($is_bad_type))
-      printf "func:           args: %p, body: %p, env: %p, setter: %p, arity: %d\n", \
-         $cell.object.func.args, $cell.object.func.body, $cell.object.func.env, $cell.object.func.setter, $cell.object.func.arity
+      printf "func:           args: %p, body: %p, env: %p, setter: %p, arity: %d, opt_addr: %d\n", \
+         $cell.object.func.args, $cell.object.func.body, $cell.object.func.env, $cell.object.func.setter, \
+	 $cell.object.func.arity, $cell.object.func.opt_addr
   end
  
   if (($type >= T_C_FUNCTION_STAR) || ($is_bad_type))
