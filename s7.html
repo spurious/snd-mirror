@@ -6585,31 +6585,37 @@ Finally, begin, explicit or otherwise, does not pretend to emulate letrec*.
 <p>If we allow defines anywhere, the notion of "lexical scope" becomes problematic.
 Scheme is already a mess in that regard: take
 </p>
+
 <pre class="indented">
 (let ((x 1))
   (do ((y x x)
        (x 3))
       ((> y 1) y)))
 </pre>
+
 <p>In <code>(y x x)</code> the first x is the outer one, and the second is the
 following do variable, so this returns 3!  But sticking to define, in
 </p>
+
 <pre class="indented">
 (let ((x 1))
   (define y x)
   (define x 2)
   y)
 </pre>
+
 <p>s7 returns 1 even though technically the second x is in y's environment.
 Since we treat this as a REPL, y gets its value from the only x defined at
 the point it is defined.  However,
-</pre>
+</p>
+
 <pre class="indented">
 (let ((x 1))
   (define y (lambda () x))
   (define x 2)
   (y))
 </pre>
+
 <p>returns 2 in s7 because the x in y's function body is not evaluated
 until after the second x is defined. 
 </p>

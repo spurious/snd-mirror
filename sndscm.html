@@ -3648,7 +3648,7 @@ parameters refer to channel numbers.
 <pre class="indented">
 <em class=def id="channelpolynomial">channel-polynomial</em> coeffs snd chn
 <em class=def id="spectralpolynomial">spectral-polynomial</em> coeffs snd chn
-<em class=def id="vctpolynomial">float-vector-polynomial</em> v coeffs
+<em class=def id="fvpolynomial">float-vector-polynomial</em> v coeffs
 </pre>
 
 <p>float-vector-polynomial returns the evaluation of the polynomial (given its coefficients) over an entire
@@ -5447,7 +5447,7 @@ directories, returning a text file with segment start and end times, and segment
 
 <p>window-samples returns (in a float-vector) the samples
 displayed in the current window for the given channel.
-This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&gt;float-vector</a>.
+This is just a trivial wrapper for <a href="extsnd.html#channeltofv">channel-&gt;float-vector</a>.
 </p>
 <div class="spacer"></div>
 
@@ -6918,7 +6918,7 @@ mix-sound mixes 'file' (all chans) into the currently selected sound at 'start'.
 
 <!-- mix->float-vector -->
 <pre class="indented">
-<em class=def id="mixtovct">mix-&gt;float-vector</em> mix
+<em class=def id="mixtofv">mix-&gt;float-vector</em> mix
 </pre>
 mix-&gt;float-vector returns a mix's samples in a float-vector.
 <div class="spacer"></div>
@@ -7002,7 +7002,7 @@ pan-mix-selection is similar to pan-mix above, but mixes the current selection, 
 
 <!-- pan-mix-float-vector -->
 <pre class="indented">
-<em class=def id="panmixvct">pan-mix-float-vector</em> data beg env snd
+<em class=def id="panmixfv">pan-mix-float-vector</em> data beg env snd
 </pre>
 pan-mix-float-vector is similar to pan-mix above, but mixes a float-vector, rather than a file.
 The argument 'data' represents one channel of sound.
