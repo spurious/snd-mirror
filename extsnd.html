@@ -3686,7 +3686,7 @@ Ruby use "vct".
 <!-- list->float-vector -->
 <pre class="indented">
 <em class=def id="listtofv">list-&gt;float-vector</em> lst
-<em>list-&gt;vct</em> lst
+<em class=emdef>list-&gt;vct</em> lst
 </pre>
 
 <p>return a new float-vector with elements of list 'lst' (equivalent to the <a href="#fv">float-vector</a> function).
@@ -3697,7 +3697,7 @@ Ruby use "vct".
 <!-- make-float-vector -->
 <pre class="indented">
 <em class=def id="makefv">make-float-vector</em> len (initial-element 0.0)
-<em>make-vct</em> len (initial-element 0.0)
+<em class=emdef>make-vct</em> len (initial-element 0.0)
 </pre>
 
 <p>make-float-vector creates a float-vector of size 'len'.
@@ -3708,7 +3708,7 @@ Ruby use "vct".
 <!-- float-vector -->
 <pre class="indented">
 <em class=def id="fv">float-vector</em> :rest args
-<em>vct</em> :rest args
+<em class=emdef>vct</em> :rest args
 </pre>
 
 <p>float-vector is equivalent to list-&gt;float-vector with 'args' as the list: <code>(float-vector 0.0 0.1 0.2)</code>.
@@ -3719,7 +3719,7 @@ Ruby use "vct".
 <!-- float-vector? -->
 <pre class="indented">
 <em class=def id="fvp">float-vector?</em> v
-<em>vct?</em> v
+<em class=emdef>vct?</em> v
 </pre>
 
 <p>float-vector? returns #t if 'v' is a float-vector.
@@ -3730,7 +3730,7 @@ Ruby use "vct".
 <!-- float-vector-abs! -->
 <pre class="indented">
 <em class=def id="fvabs">float-vector-abs!</em> v
-<em>vct-abs!</em> v
+<em class=emdef>vct-abs!</em> v
 </pre>
 
 <p>float-vector-abs! replaces each element of 'v' with its absolute value.
@@ -3741,7 +3741,7 @@ Ruby use "vct".
 <!-- float-vector-add! -->
 <pre class="indented">
 <em class=def id="fvadd">float-vector-add!</em> v1 v2 (off 0)
-<em>vct-add!</em> v1 v2 (off 0)
+<em class=emdef>vct-add!</em> v1 v2 (off 0)
 </pre>
 
 <p>float-vector-add! performs element-wise add: v1[i + off] += v2[i], returning 'v1'.
@@ -3752,7 +3752,7 @@ Ruby use "vct".
 <!-- float-vector-copy -->
 <pre class="indented">
 <em class=def id="fvcopy">copy</em> v
-<em>vct-copy</em> v
+<em class=emdef>vct-copy</em> v
 </pre>
 
 <p>float-vector-copy returns a copy of the float-vector 'v'.
@@ -3781,7 +3781,7 @@ copy transform data: <a href="#transformtofv">transform-&gt;float-vector</a><br>
 <!-- float-vector-equal? -->
 <pre class="indented">
 <em class=def id="fvequal">float-vector-equal?</em> v1 v2 diff
-<em>vct-equal?</em> v1 v2 diff
+<em class=emdef>vct-equal?</em> v1 v2 diff
 </pre>
 
 <p>float-vector-equal? is an element-wise relative difference check.
@@ -3795,7 +3795,7 @@ are of different lengths, the overlapping portion is checked.
 <!-- float-vector-fill! -->
 <pre class="indented">
 <em class=def id="fvfill">float-vector-fill!</em> v val
-<em>vct-fill!</em> v val
+<em class=emdef>vct-fill!</em> v val
 </pre>
 
 <p>float-vector-fill! sets each element of 'v' to 'val': v[i] = val.  It returns 'v'.
@@ -3806,7 +3806,7 @@ are of different lengths, the overlapping portion is checked.
 <!-- float-vector-length -->
 <pre class="indented">
 <em class=def id="fvlength">float-vector-length</em> v
-<em>vct-length</em> v
+<em class=emdef>vct-length</em> v
 </pre>
 
 <p>float-vector-length returns the length of 'v'.
@@ -3817,7 +3817,7 @@ are of different lengths, the overlapping portion is checked.
 <!-- float-vector-max -->
 <pre class="indented">
 <em class=def id="fvmax">float-vector-max</em> v
-<em>vct-max</em> v
+<em class=emdef>vct-max</em> v
 </pre>
 
 <p>float-vector-max returns the maximum value of the elements of 'v'.
@@ -3828,7 +3828,7 @@ are of different lengths, the overlapping portion is checked.
 <!-- float-vector-min -->
 <pre class="indented">
 <em class=def id="fvmin">float-vector-min</em> v
-<em>vct-min</em> v
+<em class=emdef>vct-min</em> v
 </pre>
 
 <p>float-vector-min returns the minimum value of the elements of 'v'.
@@ -3839,7 +3839,7 @@ are of different lengths, the overlapping portion is checked.
 <!-- float-vector-move! -->
 <pre class="indented">
 <em class=def id="fvmove">float-vector-move!</em> v new old backwards
-<em>vct-move!</em> v new old backwards
+<em class=emdef>vct-move!</em> v new old backwards
 </pre>
 
 <p>float-vector-move moves a block of values within a float-vector:  v[new++] = v[old++], or
@@ -3851,7 +3851,7 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 <!-- float-vector-multiply! -->
 <pre class="indented">
 <em class=def id="fvmultiply">float-vector-multiply!</em> v1 v2
-<em>vct-multiply!</em> v1 v2
+<em class=emdef>vct-multiply!</em> v1 v2
 </pre>
 
 <p>float-vector-multiply! performs element-wise multiply of two float-vectors: v1[i] *= v2[i].  It returns 'v1'.
@@ -3862,7 +3862,7 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 <!-- float-vector-offset! -->
 <pre class="indented">
 <em class=def id="fvoffset">float-vector-offset!</em> v val
-<em>vct-offset!</em> v val
+<em class=emdef>vct-offset!</em> v val
 </pre>
 
 <p>float-vector-offset! adds 'val' to each element of 'v':  v[i] += val.  It returns 'v'.
@@ -3873,7 +3873,7 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 <!-- float-vector-peak -->
 <pre class="indented">
 <em class=def id="fvpeak">float-vector-peak</em> v
-<em>vct-peak</em> v
+<em class=emdef>vct-peak</em> v
 </pre>
 
 <p>float-vector-peak returns the maximum absolute value of the elements of 'v'.
@@ -3884,7 +3884,7 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 <!-- float-vector-ref -->
 <pre class="indented">
 <em class=def id="fvref">float-vector-ref</em> v pos
-<em>vct-ref</em> v pos
+<em class=emdef>vct-ref</em> v pos
 </pre>
 
 <p>float-vector-ref returns the element 'pos' in 'v': v[pos].
@@ -3895,7 +3895,7 @@ if 'backwards' is #t: v[new--] = v[old--].  It returns 'v'.
 <!-- float-vector-reverse! -->
 <pre class="indented">
 <em class=def id="fvreverse">float-vector-reverse!</em> v size
-<em>vct-reverse!</em> v size
+<em class=emdef>vct-reverse!</em> v size
 </pre>
 
 <p>float-vector-reverse! reverses the elements of 'v' (in-place), returning 'v'.  
@@ -3907,7 +3907,7 @@ If 'size' is given, the reversal centers around it.
 <!-- float-vector-scale! -->
 <pre class="indented">
 <em class=def id="fvscale">float-vector-scale!</em> v scl
-<em>vct-scale!</em> v scl
+<em class=emdef>vct-scale!</em> v scl
 </pre>
 
 <p>float-vector-scale! multiplies each element of 'v' by 'scl': v[i] *= scl.  It returns 'v'.
@@ -3918,7 +3918,7 @@ If 'size' is given, the reversal centers around it.
 <!-- float-vector-set! -->
 <pre class="indented">
 <em class=def id="fvset">float-vector-set!</em> v pos val
-<em>vct-set!</em> v pos val
+<em class=emdef>vct-set!</em> v pos val
 </pre>
 
 <p>float-vector-set! sets the float-vector 'v' element at 'pos' to 'val': v[pos] = val. 
@@ -3930,7 +3930,7 @@ In Scheme, this is the same as (set! (v pos) val).
 <!-- float-vector-subtract! -->
 <pre class="indented">
 <em class=def id="fvsubtract">float-vector-subtract!</em> v1 v2
-<em>vct-subtract!</em> v1 v2
+<em class=emdef>vct-subtract!</em> v1 v2
 </pre>
 
 <p>float-vector-subtract! performs an element-wise subtract: v1[i] -= v2[i].  It returns 'v1'.
@@ -3941,7 +3941,7 @@ In Scheme, this is the same as (set! (v pos) val).
 <!-- float-vector-subseq -->
 <pre class="indented">
 <em class=def id="fvsubseq">float-vector-subseq</em> v start (end len) nv
-<em>vct-subseq</em> v start (end len) nv
+<em class=emdef>vct-subseq</em> v start (end len) nv
 </pre>
 
 <p>float-vector-subseq returns a new float-vector (or 'nv' if given) with the elements of 'v' between 'start' and 'end' inclusive.  'end' defaults
@@ -3953,7 +3953,7 @@ to the end of 'v'.
 <!-- float-vector+ -->
 <pre class="indented">
 <em class=def id="fvplus">float-vector+</em> obj1 obj2
-<em>vct+</em> obj1 obj2
+<em class=emdef>vct+</em> obj1 obj2
 </pre>
 
 <p>float-vector+ combines float-vector-add! and float-vector-offset!, 
@@ -3965,7 +3965,7 @@ depending on the type of its arguments.
 <!-- float-vector* -->
 <pre class="indented">
 <em class=def id="fvtimes">float-vector*</em> obj1 obj2
-<em>vct*</em> obj1 obj2
+<em class=emdef>vct*</em> obj1 obj2
 </pre>
 
 <p>float-vector* combines float-vector-multiply! and float-vector-scale!, 
@@ -3977,7 +3977,7 @@ depending on the type of its arguments.
 <!-- float-vector->channel -->
 <pre class="indented">
 <em class=def id="fvtochannel">float-vector-&gt;channel</em> v (beg 0) dur snd chn edpos origin
-<em>vct-&gt;channel</em> v (beg 0) dur snd chn edpos origin
+<em class=emdef>vct-&gt;channel</em> v (beg 0) dur snd chn edpos origin
 </pre>
 
 <p>float-vector-&gt;channel sets the samples from 'beg' to 'beg' + 'dur' from the values in 'v'.
@@ -3989,7 +3989,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 <!-- float-vector->list -->
 <pre class="indented">
 <em class=def id="fvtolist">float-vector-&gt;list</em> v
-<em>vct-&gt;list</em> v
+<em class=emdef>vct-&gt;list</em> v
 </pre>
 
 <p>float-vector-&gt;list returns a list with elements of 'v'.
@@ -4000,7 +4000,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 <!-- float-vector->string -->
 <pre class="indented">
 <em class=def id="fvtostring">float-vector-&gt;string</em> v
-<em>vct-&gt;string</em> v
+<em class=emdef>vct-&gt;string</em> v
 </pre>
 
 <p>float-vector-&gt;string returns a string describing 'v'.
@@ -4010,7 +4010,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 
 <!-- vct-&gt;vector -->
 <pre class="indented">
-<em>vct-&gt;vector</em> v
+<em class=emdef>vct-&gt;vector</em> v
 </pre>
 
 <p>vct-&gt;vector returns a vector with the elements of 'v'.
@@ -4020,7 +4020,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 
 <!-- vector-&gt;vct -->
 <pre class="indented">
-<em>vector-&gt;vct</em> vect
+<em class=emdef>vector-&gt;vct</em> vect
 </pre>
 
 <p>vector-&gt;vct returns a vct with elements of vector 'vect'.
