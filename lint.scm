@@ -333,6 +333,8 @@
 			(i 0 (+ i 1)))
 		       ((= i *fragment-max-size*) v)
 		     (set! (v i) (make-hash-table))))
+	(fragmin *fragment-max-size*)
+	(fragmax 0)
 	(*max-cdr-len* 16)) ; 40 is too high, 24 questionable, if #f the let+do rewrite is turned off
     
     (set! *e* (curlet))
@@ -20768,6 +20770,8 @@
       ;; func here is either #f or an env-style entry (cons name let) as produced by make-fvar,
       ;;   the let entries accessed are initial-value, history, arglist
       (let ((old (hash-table-ref (vector-ref fragments leaves) reduced-form)))
+	(set! fragmin (min leaves fragmin))
+	(set! fragmax (min *fragment-max-size* (max leaves fragmax)))
 	(if (not (vector? old))
 	    (hash-table-set! (vector-ref fragments leaves) reduced-form (vector 1 (list line) (and func (list func)) orig-form #f outer-vars))
 	    ;; key = reduced-form
@@ -22230,8 +22234,9 @@
 	(set! linted-files ())
 	(fill! other-names-counts 0)
 
-	(do ((i 0 (+ i 1))) 
-	    ((= i *fragment-max-size*))
+	(set! fragmax (min fragmax (- *fragment-max-size* 1)))
+	(do ((i fragmin (+ i 1))) 
+	    ((> i fragmax))
 	  (if (> (length (vector-ref fragments i)) 16)
 	      (vector-set! fragments i (make-hash-table))
 	      (fill! (vector-ref fragments i) #f)))
@@ -22252,6 +22257,8 @@
 	(set! pp-left-margin 0)
 	(set! lint-left-margin -3) ; lint-file above adds 4
 	(set! big-constants (make-hash-table))
+	(set! fragmin *fragment-max-size*)
+	(set! fragmax 0)
 
 	(set! *report-input* report-input)
 	(set! *report-nested-if* (if (integer? *report-nested-if*) (max 3 *report-nested-if*) 4))

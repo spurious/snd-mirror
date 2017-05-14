@@ -99,14 +99,13 @@
 	       x))
 	 sequence)))
 
-#|
+
 (define (count-table commands)
   (do ((count 0 (+ count 1))
        (c (memq 'table commands) (memq 'table (cdr c))))
       ((not c) count)))
-;;; but sadly the for-each version below is faster.
-|#
 
+#|
 (define (count-table commands)
   (let ((count 0))
     (for-each
@@ -115,7 +114,7 @@
 	   (set! count (+ count 1))))
      commands)
     count))
-
+|#
 
 
 (define (string</* a b)
