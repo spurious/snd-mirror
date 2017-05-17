@@ -116,10 +116,3 @@
 
 (s7-version)
 (exit)
-
-#|
-valgrind --vgdb=yes --vgdb-error=0 repl
-gdb repl
- target remote | /usr/local/lib/valgrind/../../bin/vgdb
- continue
-|#
