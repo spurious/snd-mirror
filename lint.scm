@@ -340,6 +340,8 @@
     (set! *e* (curlet))
     (set! *lint* (curlet))                ; external access to (for example) the built-in-functions hash-table via (*lint* 'built-in-functions)
 
+    (define denote define-constant)
+
     (define definers-table 
       (let ((h (make-hash-table)))
 	(for-each (lambda (d)
@@ -427,24 +429,24 @@
 
     
     ;; -------- vars -------- 
-    (define (var? v) (and (pair? v) (let? (cdr v))))
-    (define var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
-    (define var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
-    (define var-history (dilambda (lambda (v) (let-ref (cdr v) 'history)) (lambda (v x) (let-set! (cdr v) 'history x))))
-    (define var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (if (defined? 'ftype (cdr v)) (let-set! (cdr v) 'ftype x)))))
-    (define var-retcons (dilambda (lambda (v) (let-ref (cdr v) 'retcons)) (lambda (v x) (let-set! (cdr v) 'retcons x))))
-    (define var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
-    (define var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
-    (define var-leaves  (dilambda (lambda (v) (let-ref (cdr v) 'leaves))  (lambda (v x) (let-set! (cdr v) 'leaves x))))
-    (define var-scope   (dilambda (lambda (v) (let-ref (cdr v) 'scope))   (lambda (v x) (let-set! (cdr v) 'scope x))))
-    (define var-setters (dilambda (lambda (v) (let-ref (cdr v) 'setters)) (lambda (v x) (let-set! (cdr v) 'setters x))))
-    (define var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
+    (denote (var? v) (and (pair? v) (let? (cdr v))))
+    (denote var-ref     (dilambda (lambda (v) (let-ref (cdr v) 'ref))     (lambda (v x) (let-set! (cdr v) 'ref x))))
+    (denote var-set     (dilambda (lambda (v) (let-ref (cdr v) 'set))     (lambda (v x) (let-set! (cdr v) 'set x))))
+    (denote var-history (dilambda (lambda (v) (let-ref (cdr v) 'history)) (lambda (v x) (let-set! (cdr v) 'history x))))
+    (denote var-ftype   (dilambda (lambda (v) (let-ref (cdr v) 'ftype))   (lambda (v x) (if (defined? 'ftype (cdr v)) (let-set! (cdr v) 'ftype x)))))
+    (denote var-retcons (dilambda (lambda (v) (let-ref (cdr v) 'retcons)) (lambda (v x) (let-set! (cdr v) 'retcons x))))
+    (denote var-arglist (dilambda (lambda (v) (let-ref (cdr v) 'arglist)) (lambda (v x) (let-set! (cdr v) 'arglist x))))
+    (denote var-definer (dilambda (lambda (v) (let-ref (cdr v) 'definer)) (lambda (v x) (let-set! (cdr v) 'definer x))))
+    (denote var-leaves  (dilambda (lambda (v) (let-ref (cdr v) 'leaves))  (lambda (v x) (let-set! (cdr v) 'leaves x))))
+    (denote var-scope   (dilambda (lambda (v) (let-ref (cdr v) 'scope))   (lambda (v x) (let-set! (cdr v) 'scope x))))
+    (denote var-setters (dilambda (lambda (v) (let-ref (cdr v) 'setters)) (lambda (v x) (let-set! (cdr v) 'setters x))))
+    (denote var-env     (dilambda (lambda (v) (let-ref (cdr v) 'env))     (lambda (v x) (let-set! (cdr v) 'env x))))
     (define (var-arity v) 
       (let ((val (let-ref (cdr v) 'arit)))
 	(and (not (eq? val #<undefined>))
 	     val)))
-    (define var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
-    (define var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
+    (denote var-match-list (dilambda (lambda (v) (let-ref (cdr v) 'match-list)) (lambda (v x) (let-set! (cdr v) 'match-list x))))
+    (denote var-initial-value (lambda (v) (let-ref (cdr v) 'initial-value))) ; not (easily) settable
 
     (define var-refenv  
       (dilambda (lambda (v) 
@@ -494,26 +496,26 @@
     
     ;; -------- the usual list functions --------
 
-    (define (len=1? x)
+    (denote (len=1? x)
       (and (pair? x)
 	   (null? (cdr x))))
 
-    (define (len=2? x)
+    (denote (len=2? x)
       (and (pair? x)
 	   (pair? (cdr x))
 	   (null? (cddr x))))
 
-    (define (len=3? x)
+    (denote (len=3? x)
       (and (pair? x)
 	   (pair? (cdr x))
 	   (pair? (cddr x))
 	   (null? (cdddr x))))
 
-    (define (len>1? x)
+    (denote (len>1? x)
       (and (pair? x)
 	   (pair? (cdr x))))
 
-    (define (len>2? x)
+    (denote (len>2? x)
       (and (pair? x)
 	   (pair? (cdr x))
 	   (pair? (cddr x))))
@@ -524,11 +526,11 @@
 	     (positive? len)
 	     (list-ref x (- len 1)))))
     
-    (define (proper-pair? x)
+    (denote (proper-pair? x)
       (and (pair? x)
 	   (proper-list? (cdr x))))
 
-    (define (unquoted-pair? x)
+    (denote (unquoted-pair? x)
       (and (pair? x)
 	   (not (eq? (car x) 'quote))))
 

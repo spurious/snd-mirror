@@ -17624,6 +17624,8 @@ static s7_pointer equal_p_pi(s7_pointer p1, s7_int p2)
     return((integer(p1) == p2) ? cur_sc->T : cur_sc->F);
   if (is_t_real(p1))
     return((real(p1) == p2) ? cur_sc->T : cur_sc->F);
+  if (is_number(p1))
+    return(false);
   return(wrong_type_argument_with_type(cur_sc, cur_sc->eq_symbol, 1, p1, a_number_string));  
 }
 /* TODO: all the rest of the 2-arg cases */
@@ -18374,6 +18376,17 @@ static s7_pointer g_less_s0(s7_scheme *sc, s7_pointer args)
   method_or_bust(sc, x, sc->lt_symbol, args, T_REAL, 1);
 }
 
+static bool ratio_lt_pi(s7_pointer x, s7_int y)
+{
+  if ((y >= 0) && (numerator(x) < 0))
+    return(true);
+  if ((y <= 0) && (numerator(x) > 0))
+    return(false);
+  if (denominator(x) < s7_int32_max)
+    return(numerator(x) < (y * denominator(x)));
+  return(fraction(x) < y);
+}
+
 static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
 {
   s7_int y;
@@ -18386,24 +18399,10 @@ static s7_pointer g_less_s_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) < y));
-
-    case T_RATIO:
-      if ((y >= 0) && (numerator(x) < 0))
-	return(sc->T);
-      if ((y <= 0) && (numerator(x) > 0))
-	return(sc->F);
-      if (denominator(x) < s7_int32_max)
-	return(make_boolean(sc, (numerator(x) < (y * denominator(x)))));
-      return(make_boolean(sc, fraction(x) < y));
-
-    case T_REAL:
-      return(make_boolean(sc, real(x) < y));
-
-    case T_COMPLEX:
-    default:
-      method_or_bust(sc, x, sc->lt_symbol, args, T_REAL, 1);
+    case T_INTEGER: return(make_boolean(sc, integer(x) < y));
+    case T_RATIO:   return(make_boolean(sc, ratio_lt_pi(x, y)));
+    case T_REAL:    return(make_boolean(sc, real(x) < y));
+    default:        method_or_bust(sc, x, sc->lt_symbol, args, T_REAL, 1);
     }
   return(sc->T);
 }
@@ -18512,6 +18511,17 @@ static s7_pointer g_less_2(s7_scheme *sc, s7_pointer args)
   return(c_less_2_1(sc, x, y));
 }
 
+static bool ratio_leq_pi(s7_pointer x, s7_int y)
+{
+  if ((y >= 0) && (numerator(x) <= 0))
+    return(true);
+  if ((y <= 0) && (numerator(x) > 0))
+    return(false);
+  if (denominator(x) < s7_int32_max)
+    return(numerator(x) <= (y * denominator(x)));
+  return(fraction(x) <= y);
+}
+
 static s7_pointer leq_s_ic;
 static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -18523,23 +18533,10 @@ static s7_pointer g_leq_s_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) <= y));
-
-    case T_RATIO:
-      if ((y >= 0) && (numerator(x) <= 0))
-	return(sc->T);
-      if ((y <= 0) && (numerator(x) > 0))
-	return(sc->F);
-      if (denominator(x) < s7_int32_max)
-	return(make_boolean(sc, (numerator(x) <= (y * denominator(x)))));
-      return(make_boolean(sc, fraction(x) <= y));
-
-    case T_REAL:
-      return(make_boolean(sc, real(x) <= y));
-
-    default:
-      method_or_bust(sc, x, sc->leq_symbol, args, T_REAL, 1);
+    case T_INTEGER: return(make_boolean(sc, integer(x) <= y));
+    case T_RATIO:   return(make_boolean(sc, ratio_leq_pi(x, y)));
+    case T_REAL:    return(make_boolean(sc, real(x) <= y));
+    default:        method_or_bust(sc, x, sc->leq_symbol, args, T_REAL, 1);
     }
   return(sc->T);
 }
@@ -18621,7 +18618,6 @@ static s7_pointer g_leq_2(s7_scheme *sc, s7_pointer args)
   return(c_leq_2_1(sc, x, y));
 }
 
-
 static s7_pointer greater_s_ic, greater_s_fc;
 static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
 {
@@ -18632,19 +18628,10 @@ static s7_pointer g_greater_s_ic(s7_scheme *sc, s7_pointer args)
   y = integer(cadr(args));
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) > y));
-
-    case T_RATIO:
-      if (denominator(x) < s7_int32_max)               /* y has already been checked for range */
-	return(make_boolean(sc, (numerator(x) > (y * denominator(x)))));
-      return(make_boolean(sc, fraction(x) > y));
-
-    case T_REAL:
-      return(make_boolean(sc, real(x) > y));
-
-    default:
-      method_or_bust_with_type(sc, x, sc->gt_symbol, args, a_number_string, 1);
+    case T_INTEGER:  return(make_boolean(sc, integer(x) > y));
+    case T_RATIO:    return(make_boolean(sc, !ratio_leq_pi(x, y)));
+    case T_REAL:     return(make_boolean(sc, real(x) > y));
+    default:         method_or_bust_with_type(sc, x, sc->gt_symbol, args, a_number_string, 1);
     }
   return(sc->T);
 }
@@ -18864,25 +18851,10 @@ static s7_pointer g_geq_s_ic(s7_scheme *sc, s7_pointer args)
 
   switch (type(x))
     {
-    case T_INTEGER:
-      return(make_boolean(sc, integer(x) >= y));
-
-    case T_RATIO:
-      if ((y >= 0) && (numerator(x) < 0))
-	return(sc->F);
-      if ((y <= 0) && (numerator(x) >= 0))
-	return(sc->T);
-      if ((y < s7_int32_max) &&
-	  (y > s7_int32_min) &&
-	  (denominator(x) < s7_int32_max))
-	return(make_boolean(sc, (numerator(x) >= (y * denominator(x)))));
-      return(make_boolean(sc, fraction(x) >= y));
-
-    case T_REAL:
-      return(make_boolean(sc, real(x) >= y));
-
-    default:
-      method_or_bust(sc, x, sc->geq_symbol, args, T_REAL, 1);
+    case T_INTEGER: return(make_boolean(sc, integer(x) >= y));
+    case T_RATIO:   return(make_boolean(sc, !ratio_lt_pi(x, y)));
+    case T_REAL:    return(make_boolean(sc, real(x) >= y));
+    default:        method_or_bust(sc, x, sc->geq_symbol, args, T_REAL, 1);
     }
   return(sc->T);
 }
@@ -18903,10 +18875,12 @@ static bool req_pi(s7_pointer i1, s7_int i2) {return(equal_b_pi(cur_sc, i1, i2))
 static s7_pointer lt_p_pi(s7_pointer p1, s7_int p2) 
 {
   if (is_integer(p1)) 
-    return((integer(p1) < p2) ? cur_sc->T : cur_sc->F);
+    return(make_boolean(cur_sc, integer(p1) < p2));
   if (is_t_real(p1))
-    return((real(p1) < p2) ? cur_sc->T : cur_sc->F);
-  return(wrong_type_argument_with_type(cur_sc, cur_sc->lt_symbol, 1, p1, a_number_string));  
+    return(make_boolean(cur_sc, real(p1) < p2));
+  if (is_t_ratio(p1))
+    return(make_boolean(cur_sc, ratio_lt_pi(p1, p2)));
+  return(simple_wrong_type_argument(cur_sc, cur_sc->lt_symbol, p1, T_REAL));
 }
 
 static s7_pointer leq_p_pi(s7_pointer p1, s7_int p2) 
@@ -18915,16 +18889,21 @@ static s7_pointer leq_p_pi(s7_pointer p1, s7_int p2)
     return((integer(p1) <= p2) ? cur_sc->T : cur_sc->F);
   if (is_t_real(p1))
     return((real(p1) <= p2) ? cur_sc->T : cur_sc->F);
-  return(wrong_type_argument_with_type(cur_sc, cur_sc->leq_symbol, 1, p1, a_number_string));  
+  if (is_t_ratio(p1))
+    return(make_boolean(cur_sc, ratio_leq_pi(p1, p2)));
+  return(simple_wrong_type_argument(cur_sc, cur_sc->leq_symbol, p1, T_REAL));
 }
 
+/* TODO b_pi? */
 static s7_pointer gt_p_pi(s7_pointer p1, s7_int p2) 
 {
   if (is_integer(p1)) 
     return((integer(p1) > p2) ? cur_sc->T : cur_sc->F);
   if (is_t_real(p1))
     return((real(p1) > p2) ? cur_sc->T : cur_sc->F);
-  return(wrong_type_argument_with_type(cur_sc, cur_sc->gt_symbol, 1, p1, a_number_string));  
+  if (is_t_ratio(p1))
+    return(make_boolean(cur_sc, !ratio_leq_pi(p1, p2)));
+  return(simple_wrong_type_argument(cur_sc, cur_sc->gt_symbol, p1, T_REAL));
 }
 
 static s7_pointer geq_p_pi(s7_pointer p1, s7_int p2) 
@@ -18933,7 +18912,9 @@ static s7_pointer geq_p_pi(s7_pointer p1, s7_int p2)
     return((integer(p1) >= p2) ? cur_sc->T : cur_sc->F);
   if (is_t_real(p1))
     return((real(p1) >= p2) ? cur_sc->T : cur_sc->F);
-  return(wrong_type_argument_with_type(cur_sc, cur_sc->geq_symbol, 1, p1, a_number_string));  
+  if (is_t_ratio(p1))
+    return(make_boolean(cur_sc, !ratio_lt_pi(p1, p2)));
+  return(simple_wrong_type_argument(cur_sc, cur_sc->geq_symbol, p1, T_REAL));
 }
 
 #endif
@@ -20189,6 +20170,18 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
     return(simple_wrong_type_argument_with_type(sc, sc->integer_to_char_symbol, x, make_string_wrapper(sc, "an integer that can represent a character")));
   return(s7_make_character(sc, (unsigned char)ind));
 }
+
+static s7_pointer integer_to_char_p_p(s7_pointer x)
+{
+  s7_int ind;
+  if (!s7_is_integer(x))
+    simple_wrong_type_argument(cur_sc, cur_sc->integer_to_char_symbol, x, T_INTEGER);
+  ind = s7_integer(x);
+  if ((ind < 0) || (ind >= NUM_CHARS))
+    return(simple_wrong_type_argument_with_type(cur_sc, cur_sc->integer_to_char_symbol, x, make_string_wrapper(cur_sc, "an integer that can represent a character")));
+  return(s7_make_character(cur_sc, (unsigned char)ind));
+}
+
 
 static unsigned char uppers[256], lowers[256];
 static void init_uppers(void)
@@ -30323,10 +30316,8 @@ s7_pointer s7_make_circular_signature(s7_scheme *sc, int cycle_point, int len, .
 }
 
 
-bool s7_is_pair(s7_pointer p)
-{
-  return(is_pair(p));
-}
+bool s7_is_pair(s7_pointer p) {return(is_pair(p));}
+static s7_pointer is_pair_p_p(s7_pointer p) {return((is_pair(p)) ? cur_sc->T : cur_sc->F);}
 
 
 s7_pointer s7_car(s7_pointer p) {return(car(p));}
@@ -32695,6 +32686,10 @@ member uses equal?  If 'func' is a function of 2 arguments, it is used for the c
 	  func = c_function_call(eq_func);
 	  if (func == g_is_eq) return(s7_memq(sc, car(args), x));
 	  if (func == g_is_eqv) return(g_memv(sc, args));
+#if (!WITH_GMP)
+	  if (func == g_less) func = g_less_2;
+	  if (func == g_greater) func = g_greater_2;
+#endif
 	  set_car(sc->t2_1, car(args));
 	  
 	  for (slow = x; is_pair(x); x = cdr(x), slow = cdr(slow))
@@ -45057,6 +45052,28 @@ static s7_pointer all_x_or2(s7_scheme *sc, s7_pointer arg)
   return(c_call(p)(sc, car(p)));
 }
 
+static s7_pointer all_x_closure_s(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer result, old_e;
+  old_e = sc->envir;
+  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
+  code = car(closure_body(opt_lambda(code)));
+  result = c_call(code)(sc, cdr(code));
+  sc->envir = old_e;
+  return(result);
+}
+
+static s7_pointer all_x_closure_a(s7_scheme *sc, s7_pointer code)
+{
+  s7_pointer result, old_e;
+  old_e = sc->envir;
+  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), c_call(cdr(code))(sc, cadr(code)));
+  code = car(closure_body(opt_lambda(code)));
+  result = c_call(code)(sc, cdr(code));
+  sc->envir = old_e;
+  return(result);
+}
+
 static void all_x_function_init(void)
 {
   int i;
@@ -45133,9 +45150,9 @@ static void all_x_function_init(void)
   all_x_function[HOP_SAFE_C_SCS] = all_x_c_scs;
   all_x_function[HOP_SAFE_C_CSS] = all_x_c_css;
   all_x_function[HOP_SAFE_C_CSC] = all_x_c_csc;
+  all_x_function[HOP_SAFE_CLOSURE_S_C] = all_x_closure_s;
+  all_x_function[HOP_SAFE_CLOSURE_A_C] = all_x_closure_a;
 }
-
-/* hop_safe_closure_a|s_c could work, but in context it is (currently) never hop_safe */
 
 static s7_pointer g_not_c_c(s7_scheme *sc, s7_pointer args);
 static s7_pointer g_not_is_pair(s7_scheme *sc, s7_pointer args);
@@ -47842,11 +47859,17 @@ static void show_optlist(s7_scheme *sc, s7_pointer olst)
 #endif
 
 /* TODO:
+ * check_do_locals only if not s7_opt?  immutables can be locals, count find_symbol of local
  * can the _cf_ cases use possible c_call opts?  cases like multiply_p_di|id etc
  *   strings_are_less (via _cf_) -> str_less_2 etc
  * b_p funcs if symbol arg know it's not a method, so b_p_s becomes trivial: is_pair(slot_value(o->p1)) etc
- *   but they're already that even for f cases?  and p_cf_ if b_p could use a wrapper and incoporate the called func
- * the lt_pi funcs are not correct (need ratio support and a_number_string->t_real)
+ *   but they're already that even for f cases?  and p_cf_ if b_p could use a wrapper and incoporate the called func  but its much faster to declare the p_p func (see is_pair)
+ *   ip for pi cases
+ * c_ls_c -> all_x? need stats (check also 2-args etc), also what about all_x body?
+ *   recursive call in all_x: (f ...) -> if args are all_x or s, all_x_closure*?
+ *   so (f x) (and (pair? x) (or (eq? (car x) y) (f (cdr x)))) ?? -> all_x_and_2: all_x_or_2: all_x_opsq_s + all_x_closure_a
+ *   but how to tell it that (f (cdr x)) is the current f?
+ *   right now the body has to be h_safe_c_c -- see tmp for change to all_x, but it's slower
  * extend cload to rest of types? d_i i_d b_p
  * snd-test: if envelope-interp set! frample->file file->sample[d_p|vii] et al array-interp
  * d_any i_any
@@ -55957,6 +55980,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
        */
       safe_case = is_safe_closure(func);
       body = closure_body(func);
+      if (is_immutable(func)) hop = 1;
       /* fprintf(stderr, "%s clo: %s\n", (safe_case) ? "safe" : "unsafe", DISPLAY(func)); */
 
       if (pairs == 0)
@@ -56016,6 +56040,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		    {
 		      set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A);
 		      if ((is_pair(car(body))) &&
+			  (is_null(cdr(body))) &&
 			  (is_h_safe_c_c(car(body))))
 			set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_C);
 		    }
@@ -56682,6 +56707,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
     {
       if (closure_arity_to_int(sc, func) != 2)
 	return(OPT_F);
+      if (is_immutable(func)) hop = 1;
 
       if ((pairs == 0) &&
 	  (symbols >= 1))
@@ -57168,6 +57194,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
     {
       if (closure_arity_to_int(sc, func) != 3)
 	return(OPT_F);
+      if (is_immutable(func)) hop = 1;
 
       if ((symbols == 3) &&
 	  (!is_safe_closure(func)))
@@ -57308,6 +57335,7 @@ static opt_t optimize_func_many_args(s7_scheme *sc, s7_pointer expr, s7_pointer 
     {
       if (closure_arity_to_int(sc, func) != args)
 	return(OPT_F);
+      if (is_immutable(func)) hop = 1;
 
       if ((pairs == 0) &&
 	  ((symbols == args) || (symbols == 0)) &&
@@ -58437,7 +58465,7 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
 	  s7_pointer f, f_slot;
 	  f_slot = find_symbol(sc, expr);
 	  if (!is_slot(f_slot))
-	    {/* fprintf(stderr, "bad %d can't find %s\n", __LINE__, DISPLAY(expr)); */ return(UNSAFE_BODY);}
+	    {/* fprintf(stderr, "bad %d can't find %s in %s\n", __LINE__, DISPLAY(expr), DISPLAY(x)); */ return(UNSAFE_BODY);}
 	  f = slot_value(f_slot);
 	  
 	  if (((is_c_function(f)) &&
@@ -58447,10 +58475,11 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, s7_poin
 		 (is_pair(cddr(x))) &&
 		 (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
 	      ((is_closure(f)) &&
-	       (is_safe_closure(f))))
+	       (is_safe_closure(f))) ||
+	      (is_sequence(f)))
 	    {
 	      s7_pointer p;
-	      result = ((is_c_function(f)) && (is_global(expr))) ? VERY_SAFE_BODY : SAFE_BODY;
+	      result = ((is_sequence(f)) || ((is_c_function(f)) && (is_global(expr)))) ? VERY_SAFE_BODY : SAFE_BODY;
 	      for (p = cdr(x); is_pair(p); p = cdr(p))
 		{
 		  if ((is_pair(car(p))) &&
@@ -62014,12 +62043,11 @@ static void check_do_locals(s7_scheme *sc, s7_pointer dt)
     {
       s7_pointer p, args;
       unsigned int gc_loc;
-      if (!is_pair(car(dt))) return;
 
       for (sc->w = sc->nil, p = car(dt); is_pair(p); p = cdr(p))
 	{
 	  if ((is_pair(car(p))) &&
-	      (is_pair(cdr(p))))
+	      (is_pair(cdar(p))))
 	    sc->w = cons(sc, caar(p), sc->w);
 	  else return;
 	}
@@ -64738,7 +64766,9 @@ static int define1_ex(s7_scheme *sc)
     {
       s7_pointer x;
       
-      x = global_slot(sc->code); 
+      if (is_slot(global_slot(sc->code)))
+	x = global_slot(sc->code); 
+      else x = local_slot(sc->code);  /* added 18-May-17 */
       if ((!is_slot(x)) ||
 	  (type(sc->value) != unchecked_type(slot_value(x))) ||
 	  (!s7_is_morally_equal(sc, sc->value, slot_value(x))))      /* if value is unchanged, just ignore this (re)definition */
@@ -79266,6 +79296,9 @@ s7_scheme *s7_init(void)
   s7_set_b_pp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-memq"))), tree_memq_b_pp);
   s7_set_b_pp_function(slot_value(global_slot(s7_make_symbol(sc, "tree-set-memq"))), tree_set_memq_b_pp);
 
+  s7_set_p_p_function(slot_value(global_slot(sc->is_pair_symbol)), is_pair_p_p);
+  s7_set_p_p_function(slot_value(global_slot(sc->integer_to_char_symbol)), integer_to_char_p_p);
+
 #if WITH_SYSTEM_EXTRAS
   s7_set_b_p_function(slot_value(global_slot(sc->is_directory_symbol)), is_directory_b);
   s7_set_b_p_function(slot_value(global_slot(sc->file_exists_symbol)), file_exists_b);
@@ -79572,23 +79605,23 @@ int main(int argc, char **argv)
  *           12  |  13  |  14  |  15  ||  16  |  17
  * tmac          |      |      |      || 9041 |  601          602
  * index    44.3 | 3291 | 1725 | 1276 || 1231 | 1127         1131 1113
- * tref          |      |      | 2372 || 2083 | 1289         1289 1240
- * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008         2008 1478
+ * tref          |      |      | 2372 || 2083 | 1289         1289 1218
+ * tlet     3590 | 2400 | 2400 | 2244 || 2308 | 2008         2008 1448
  * teq           |      |      | 6612 || 2787 | 2210         2212 2209
- * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643         2652 2460
+ * s7test   1721 | 1358 |  995 | 1194 || 2932 | 2643         2652 2450
  * bench    42.7 | 8752 | 4220 | 3506 || 3507 | 3032         3036
  * tauto     265 |   89 |  9   |  8.4 || 2980 | 3248         3254
- * lint          |      |      |      || 4029 | 3308 [155.6] 3308 3321
+ * lint          |      |      |      || 4029 | 3308 [155.6] 3308 3184 [150.9]
  * tcopy         |      |      | 13.6 || 3185 | 3342         3343
  * tform         |      |      | 6816 || 3850 | 3627         3635
- * tmap          |      |      |  9.3 || 4300 | 3716         3724 3711
+ * tmap          |      |      |  9.3 || 4300 | 3716         3724 3677
  * tfft          |      | 14.3 | 15.2 || 16.4 | 4762         4781
  * titer         |      |      | 7503 || 5881 | 5069         5046 4851
- * tsort         |      |      |      || 9186 | 5403         5404 5219
- * thash         |      |      | 50.7 || 8926 | 8651         8725 8677
- * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4         12.4 12.2
+ * tsort         |      |      |      || 9186 | 5403         5404 5154
+ * thash         |      |      | 50.7 || 8926 | 8651         8725 8598
+ * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4         12.4 13.2
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1         20.1 20.0
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 [134.8] 42.5 42.3
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 [134.8] 42.5 42.2
  * 
  * --------------------------------------------------------------------
  *
