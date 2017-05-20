@@ -1744,6 +1744,10 @@ static s7_scheme *cur_sc = NULL;
 /* optimizer flag for an expression that has optimization info, it should be in the second byte
  */
 
+#define T_SCOPE_SAFE                  T_OPTIMIZED
+#define is_scope_safe(p)              ((typeflag(_TFnc(p)) & T_SCOPE_SAFE) != 0)
+#define set_is_scope_safe(p)          typeflag(_TFnc(p)) |= T_SCOPE_SAFE
+
 #define T_SAFE_CLOSURE                (1 << (TYPE_BITS + 4))
 #define is_safe_closure(p)            ((typesflag(_NFre(p)) & T_SAFE_CLOSURE) != 0)
 #define set_safe_closure(p)           typesflag(p) |= T_SAFE_CLOSURE
@@ -1867,6 +1871,7 @@ static s7_scheme *cur_sc = NULL;
 
 #define T_SAFE_PROCEDURE              (1 << (TYPE_BITS + 13))
 #define is_safe_procedure(p)          ((typeflag(_NFre(p)) & T_SAFE_PROCEDURE) != 0)
+#define is_scope_safe_procedure(p)    ((typeflag(_TFnc(p)) & (T_SCOPE_SAFE | T_SAFE_PROCEDURE)) != 0)
 /* applicable objects that do not return or modify their arg list directly (no :rest arg in particular),
  *    and that can't call apply themselves either directly or via s7_call, and that don't mess with the stack.
  */
@@ -1971,10 +1976,9 @@ static s7_scheme *cur_sc = NULL;
 #define set_has_print_name(p)         typeflag(_TNum(p)) |= T_PRINT_NAME
 /* marks numbers that have a saved version of their string representation */
 
-#define T_POSSIBLY_SAFE               T_SAFE_STEPPER
-#define is_possibly_safe(p)           ((typeflag(_TFnc(p)) & T_POSSIBLY_SAFE) != 0)
-#define set_is_possibly_safe(p)       typeflag(_TFnc(p)) |= T_POSSIBLY_SAFE
-/* marks c_functions [assoc/member] that are not always unsafe -- this bit didn't work out as intended */
+#define T_MAYBE_SAFE                  T_SAFE_STEPPER
+#define is_maybe_safe(p)              ((typeflag(_TFnc(p)) & T_MAYBE_SAFE) != 0)
+#define set_is_maybe_safe(p)          typeflag(_TFnc(p)) |= T_MAYBE_SAFE
 
 #define T_HAS_SET_FALLBACK            T_SAFE_STEPPER
 #define T_HAS_REF_FALLBACK            T_MUTABLE
@@ -7213,6 +7217,13 @@ static s7_pointer g_simple_inlet(s7_scheme *sc, s7_pointer args)
   return(new_e);
 }
 
+static bool is_proper_quote(s7_scheme *sc, s7_pointer p)
+{
+  return((is_pair(p)) &&
+	 (car(p) == sc->quote_symbol) &&
+	 (is_pair(cdr(p))));
+}
+
 static s7_pointer inlet_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
   if ((args > 0) &&
@@ -7222,8 +7233,7 @@ static s7_pointer inlet_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
       for (p = cdr(expr); is_pair(p); p = cddr(p))
 	{
 	  s7_pointer sym;
-	  if ((!is_pair(car(p))) ||
-	      (caar(p) != sc->quote_symbol))
+	  if (!is_proper_quote(sc, car(p)))
 	    return(f);
 	  sym = cadar(p);
 	  if ((!is_symbol(sym)) ||
@@ -25022,8 +25032,7 @@ The symbols refer to the argument to \"provide\"."
 	sym = car(p);
       else
 	{
-	  if ((is_pair(car(p))) && 
-	      (caar(p) == sc->quote_symbol) &&
+	  if ((is_proper_quote(sc, car(p))) && 
 	      (is_symbol(cadar(p))))
 	    sym = cadar(p);
 	  else return(s7_error(sc, sc->wrong_type_arg_symbol, set_elist_2(sc, make_string_wrapper(sc, "require: ~S is not a symbol"), car(p))));
@@ -32532,9 +32541,7 @@ static s7_pointer g_memq_car(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer memq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointer expr)
 {
-  if ((is_pair(caddr(expr))) &&
-      (car(caddr(expr)) == sc->quote_symbol) &&
-      (is_pair(cdr(caddr(expr)))) &&  /* (quote . x) */
+  if ((is_proper_quote(sc, caddr(expr))) &&
       (is_pair(cadr(caddr(expr)))))
     {
       int len;
@@ -32869,8 +32876,7 @@ static s7_pointer member_chooser(s7_scheme *sc, s7_pointer f, int args, s7_point
 	  if ((optimize_op(expr) == HOP_SAFE_C_SQ) ||
 	      ((is_h_safe_c_c(expr)) &&
 	       (is_symbol(cadr(expr))) &&
-	       (is_pair(caddr(expr))) &&
-	       (car(caddr(expr)) == sc->quote_symbol) &&
+	       (is_proper_quote(sc, caddr(expr))) &&
 	       (is_pair(cadr(caddr(expr))))))
 	    {
 	      set_optimize_op(expr, HOP_SAFE_C_C);
@@ -44022,7 +44028,7 @@ static s7_function all_x_function[OPT_MAX_DEFINED];
 static bool is_all_x_safe(s7_scheme *sc, s7_pointer p)
 {
   return((!is_pair(p)) ||
-	 ((car(p) == sc->quote_symbol) && (is_pair(cdr(p))) && (is_null(cddr(p)))) ||          /* (if #t (quote . -1)) */
+	 ((is_proper_quote(sc, p)) && (is_null(cddr(p)))) ||
 	 ((is_optimized(p)) && (is_all_x_op(optimize_op(p)))));
 }
 
@@ -49775,7 +49781,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 					  else
 					    {
 					      if ((!is_pair(caddr(car_x))) ||
-						  (caaddr(car_x) == sc->quote_symbol))
+						  (is_proper_quote(sc, caddr(car_x))))
 						{
 						  if (!is_pair(caddr(car_x)))
 						    opo_p3(opc) = caddr(car_x);
@@ -49813,8 +49819,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 					    }
 					  return(return_false(sc, car_x, __func__, __LINE__));
 					}
-				      if ((is_pair(cadadr(car_x))) &&
-					  (car (cadadr(car_x)) == sc->quote_symbol) &&
+				      if ((is_proper_quote(sc, cadadr(car_x))) &&
 					  (is_symbol(caddr(car_x))))
 					{
 					  s7_pointer val_slot;
@@ -50181,7 +50186,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				    slot_set_value(slot, cadr(var));
 				  else
 				    {
-				      if (caadr(var) == sc->quote_symbol)
+				      if (is_proper_quote(sc, cadr(var)))
 					slot_set_value(slot, cadadr(var));
 				      else
 					{
@@ -50854,7 +50859,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 			      return(return_false(sc, car_x, __func__, __LINE__));			    
 			    }
 			  if ((!is_pair(caddr(car_x))) ||
-			      (caaddr(car_x) == sc->quote_symbol))
+			      (is_proper_quote(sc, caddr(car_x))))
 			    {
 			      opo_p2(opc) = (!is_pair(caddr(car_x))) ? caddr(car_x) : cadr(caddr(car_x));
 			      opo_fp(opc) = opt_p_pp_sc;
@@ -50869,12 +50874,12 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 		      else
 			{
 			  if ((!is_pair(cadr(car_x))) ||
-			      (caadr(car_x) == sc->quote_symbol))
+			      (is_proper_quote(sc, cadr(car_x))))
 			    {
 			      opo_p1(opc) = (!is_pair(cadr(car_x))) ? cadr(car_x) : cadadr(car_x);
 			      if ((!is_symbol(caddr(car_x))) &&
 				  ((!is_pair(caddr(car_x))) ||
-				   (caaddr(car_x) == sc->quote_symbol)))
+				   (is_proper_quote(sc, caddr(car_x)))))
 				{
 				  opo_p2(opc) = (!is_pair(caddr(car_x))) ? caddr(car_x) : cadr(caddr(car_x));
 				  opo_fp(opc) = opt_p_pp_cc;
@@ -50906,7 +50911,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				  return(return_false(sc, car_x, __func__, __LINE__));			    
 				}
 			      if ((!is_pair(caddr(car_x))) ||
-				  (caaddr(car_x) == sc->quote_symbol))
+				  (is_proper_quote(sc, caddr(car_x))))
 				{
 				  if (is_t_integer(caddr(car_x)))
 				    {
@@ -51059,7 +51064,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				  else
 				    {
 				      if ((!is_pair(cadddr(car_x))) ||
-					  (car(cadddr(car_x)) == sc->quote_symbol))
+					  (is_proper_quote(sc, cadddr(car_x))))
 					{
 					  if (!is_pair(cadddr(car_x)))
 					    opo_p3(opc) = cadddr(car_x);
@@ -51209,8 +51214,7 @@ static bool cell_optimize(s7_scheme *sc, s7_pointer expr)
 				pc_fallback(sc, start);
 			      }
 			  }
-			if ((is_pair(caddr(car_x))) &&
-			    (caaddr(car_x) == sc->quote_symbol) &&
+			if ((is_proper_quote(sc, caddr(car_x))) &&
 			    (is_symbol(cadddr(car_x))))
 			  {
 			    s7_pointer val_slot;
@@ -54188,8 +54192,7 @@ static s7_pointer is_eq_chooser(s7_scheme *sc, s7_pointer f, int args, s7_pointe
 	  set_optimize_op(expr, HOP_SAFE_C_C);
 	  return(is_eq_car);
 	}
-      if ((is_pair(caddr(expr))) &&
-	  (caaddr(expr) == sc->quote_symbol))
+      if (is_proper_quote(sc, caddr(expr)))
 	{
 	  if (c_callee(cadr(expr)) == g_car)
 	    {
@@ -56324,7 +56327,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
       if (pairs == 0)
 	{
 	  if ((func_is_safe) ||
-	      ((is_possibly_safe(func)) && 
+	      ((is_maybe_safe(func)) && 
 	       (unsafe_is_safe(sc, func, arg1, arg2, NULL, e))))
 	    {
 	      /* another case here: set-car! and set-cdr! are safe if symbols==1 and arg1 is the symbol (i.e. arg2 is a constant) */
@@ -56389,7 +56392,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  (pairs == 2))
 	{
 	  if ((func_is_safe) ||
-	      ((is_possibly_safe(func)) && 
+	      ((is_maybe_safe(func)) && 
 	       (unsafe_is_safe(sc, func, arg1, arg2, NULL, e))))
 	    {
 	      int op;
@@ -56445,7 +56448,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	  (pairs == 1))
 	{
 	  if ((func_is_safe) ||
-	      ((is_possibly_safe(func)) && 
+	      ((is_maybe_safe(func)) && 
 	       (unsafe_is_safe(sc, func, arg1, arg2, NULL, e))))
 	    {
 	      combine_op_t orig_op;
@@ -56507,7 +56510,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
       if ((bad_pairs == 1) && (quotes == 1))
 	{
 	  if ((func_is_safe) ||
-	      ((is_possibly_safe(func)) && 
+	      ((is_maybe_safe(func)) && 
 	       (unsafe_is_safe(sc, func, arg1, arg2, NULL, e))))
 	    {
 	      if  (symbols == 1)
@@ -56549,7 +56552,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
       if (quotes == 2)
 	{
 	  if ((func_is_safe) ||
-	      ((is_possibly_safe(func)) && 
+	      ((is_maybe_safe(func)) && 
 	       (unsafe_is_safe(sc, func, arg1, arg2, NULL, e))))
 	    {
 	      set_safe_optimize_op(expr, hop + OP_SAFE_C_QQ);
@@ -56566,7 +56569,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
       if ((pairs == 1) &&
 	  (quotes == 0) &&
 	  ((func_is_safe) ||
-	   ((is_possibly_safe(func)) && 
+	   ((is_maybe_safe(func)) && 
 	    (unsafe_is_safe(sc, func, arg1, arg2, NULL, e)))))
 	{
 	  if (symbols == 1)
@@ -56646,7 +56649,7 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 
       if ((pairs == 2) &&
 	  ((func_is_safe) ||
-	   ((is_possibly_safe(func)) && 
+	   ((is_maybe_safe(func)) && 
 	    (unsafe_is_safe(sc, func, arg1, arg2, NULL, e)))))
 	{
 	  if ((bad_pairs == 1) &&
@@ -56960,7 +56963,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
        (!is_keyword(arg2))))
     {
       if ((is_safe_procedure(func)) ||
-	  ((is_possibly_safe(func)) && 
+	  ((is_maybe_safe(func)) && 
 	   (unsafe_is_safe(sc, func, arg1, arg2, arg3, e))))
 	{
 	  if (pairs == 0)
@@ -57058,8 +57061,7 @@ static opt_t optimize_func_three_args(s7_scheme *sc, s7_pointer expr, s7_pointer
 		    }
 		  if ((symbols == 1) &&
 		      (is_symbol(arg3)) &&
-		      (is_pair(arg2)) &&
-		      (car(arg2) == sc->quote_symbol) &&
+		      (is_proper_quote(sc, arg2)) &&
 		      (is_safe_c_s(arg1)))
 		    {
 		      set_safe_optimize_op(expr, hop + OP_SAFE_C_opSq_QS);
@@ -57978,8 +57980,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 			      if (res == OPT_F)
 				{
 				  bad_pairs++;
-				  if ((car(car_p) == sc->quote_symbol) &&
-				      (is_pair(cdr(car_p))) &&
+				  if ((is_proper_quote(sc, car_p)) &&
 				      (is_null(cddr(car_p))))
 				    quotes++;
 				}
@@ -57995,8 +57996,7 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 				  (is_unsafe(car_p)))
 				{
 				  bad_pairs++;
-				  if ((car(car_p) == sc->quote_symbol) &&
-				      (is_pair(cdr(car_p))) &&
+				  if ((is_proper_quote(sc, car_p)) &&
 				      (is_null(cddr(car_p))))
 				    quotes++;
 				}
@@ -58444,6 +58444,14 @@ static bool memq_sym(s7_pointer symbol, slist *top)
   return(false);
 }
 
+static void cancel_sym(s7_scheme *sc, s7_pointer symbol, slist *top)
+{
+  slist *p;
+  for (p = top; p; p = p->next)
+    if (p->sym == symbol)
+      p->sym = sc->gc_nil;
+}
+
 static void free_syms(slist *top)
 {
   if (top)
@@ -58695,8 +58703,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 		    return(UNSAFE_BODY); 
 		  }
 
-		if (memq_sym(car(let_var), top))
-		  result = min_body(result, SAFE_BODY);
+		/* if (memq_sym(car(let_var), top)) result = min_body(result, SAFE_BODY); */
+		cancel_sym(sc, car(let_var), top);
 		top = add_sym(car(let_var), top);
 		
 		if (is_pair(cadr(let_var)))
@@ -58742,8 +58750,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 			return(UNSAFE_BODY);
 		      }
 		    
-		    if (memq_sym(car(do_var), top))
-		      result = min_body(result, SAFE_BODY);
+		    /* if (memq_sym(car(do_var), top)) result = min_body(result, SAFE_BODY); */
+		    cancel_sym(sc, car(do_var), top);
 		    top = add_sym(car(do_var), top);
 		    
 		    result = min_body(result, form_is_safe(sc, func, cadr(do_var), top, false));
@@ -58830,14 +58838,8 @@ static body_t form_is_safe(s7_scheme *sc, s7_pointer func, s7_pointer x, slist *
 	    return(UNSAFE_BODY);
 	  f = slot_value(f_slot);
 	  
-	  if (((is_c_function(f)) &&
-	       ((is_safe_procedure(f)) ||
-		((is_possibly_safe(f)) && 
-		 (is_pair(cdr(x))) &&
-		 (is_pair(cddr(x))) &&
-		 (unsafe_is_safe(sc, f, cadr(x), caddr(x), (is_pair(cdddr(x))) ? cadddr(x) : NULL, sc->nil))))) ||
-	      ((is_closure(f)) &&
-	       (is_safe_closure(f))) ||
+	  if (((is_c_function(f)) && (is_scope_safe_procedure(f))) ||
+	      ((is_closure(f)) && (is_safe_closure(f))) ||
 	      (is_sequence(f)))
 	    {
 	      s7_pointer p;
@@ -58944,11 +58946,11 @@ static s7_pointer optimize_lambda(s7_scheme *sc, bool unstarred_lambda, s7_point
 		{
 		  s7_pointer arg;
 		  arg = car(p);
-		  if ((is_pair(arg)) &&                /* has default value */
-		      (is_pair(cdr(arg))) &&           /*   is not a ridiculous improper list */
-		      ((is_symbol(cadr(arg))) ||       /*   if default value might involve eval in any way, it isn't simple */
-		       ((is_pair(cadr(arg))) &&        /*   pair as default only ok if it is (quote ...) */
-			(car(cadr(arg)) != sc->quote_symbol))))
+		  if ((is_pair(arg)) &&                   /* has default value */
+		      (is_pair(cdr(arg))) &&              /*   is not a ridiculous improper list */
+		      ((is_symbol(cadr(arg))) ||          /*   if default value might involve eval in any way, it isn't simple */
+                      ((is_pair(cadr(arg))) &&            /*   pair as default only ok if it is (quote ...) */
+                       (car(cadr(arg)) != sc->quote_symbol))))
 		    {
 		      happy = false;
 		      break;
@@ -61635,8 +61637,7 @@ static int set_pair_ex(s7_scheme *sc)
 	  }
 
 	key = cadr(settee);
-	if ((is_pair(key)) &&
-	    (car(key) == sc->quote_symbol))
+	if (is_proper_quote(sc, key))
 	  {
 	    s7_pointer val;
 	    key = cadr(key);
@@ -69992,7 +69993,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    
 	    SET_CASE(OP_SET_SYMBOL_A, slot_set_value(lx, c_call(cdr(sc->code))(sc, cadr(sc->code))))
 	    
-	    SET_CASE(OP_SET_SYMBOL_L, slot_set_value(lx, slot_value(local_slot(cadr(sc->code)))))
+	    SET_CASE(OP_SET_SYMBOL_L, slot_set_value(lx, local_symbol_value(cadr(sc->code))))
 	    SET_CASE(OP_SET_SYMBOL_S, slot_set_value(lx, find_symbol_unchecked(sc, cadr(sc->code))))
 	    
 	    SET_CASE(OP_SET_CONS, slot_set_value(lx, cons(sc, find_symbol_unchecked(sc, opt_sym2(sc->code)), slot_value(lx))))  /* ([set!] bindings (cons v bindings)) */
@@ -78472,6 +78473,14 @@ s7_scheme *s7_init(void)
   sc->call_with_output_file_symbol =   unsafe_defun("call-with-output-file",   call_with_output_file,   2, 0, false);
   sc->with_output_to_string_symbol =   unsafe_defun("with-output-to-string",   with_output_to_string,   1, 0, false);
   sc->with_output_to_file_symbol =     unsafe_defun("with-output-to-file",     with_output_to_file,     2, 0, false);
+  set_is_scope_safe(slot_value(global_slot(sc->call_with_input_string_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->call_with_input_file_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->call_with_output_string_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->call_with_output_file_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->with_input_from_string_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->with_input_from_file_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->with_output_to_string_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->with_output_to_file_symbol)));
 
 #if WITH_SYSTEM_EXTRAS
   sc->is_directory_symbol =          defun("directory?",	is_directory,		1, 0, false);
@@ -78628,6 +78637,7 @@ s7_scheme *s7_init(void)
   sc->cdr_symbol =                   defun("cdr",		cdr,			1, 0, false);
   sc->set_car_symbol =               defun("set-car!",		set_car,		2, 0, false);
   sc->set_cdr_symbol =               unsafe_defun("set-cdr!",	set_cdr,		2, 0, false);
+  set_is_scope_safe(slot_value(global_slot(sc->set_cdr_symbol)));
   sc->caar_symbol =                  defun("caar",		caar,			1, 0, false);
   sc->cadr_symbol =                  defun("cadr",		cadr,			1, 0, false);
   sc->cdar_symbol =                  defun("cdar",		cdar,			1, 0, false);
@@ -78660,11 +78670,13 @@ s7_scheme *s7_init(void)
   sc->assq_symbol =                  defun("assq",		assq,			2, 0, false);
   sc->assv_symbol =                  defun("assv",		assv,			2, 0, false);
   sc->assoc_symbol =                 unsafe_defun("assoc",	assoc,			2, 1, false); 
-  set_is_possibly_safe(slot_value(global_slot(sc->assoc_symbol)));
+  set_is_maybe_safe(slot_value(global_slot(sc->assoc_symbol)));
+  set_is_scope_safe(slot_value(global_slot(sc->assoc_symbol)));
   sc->memq_symbol =                  defun("memq",		memq,			2, 0, false);
   sc->memv_symbol =                  defun("memv",		memv,			2, 0, false);
   sc->member_symbol =                unsafe_defun("member",	member,			2, 1, false); 
-  set_is_possibly_safe(slot_value(global_slot(sc->member_symbol)));
+  set_is_maybe_safe(slot_value(global_slot(sc->member_symbol))); 
+  set_is_scope_safe(slot_value(global_slot(sc->member_symbol)));
 
   sc->list_symbol =                  defun("list",		list,			0, 0, true);
   sc->list_ref_symbol =              defun("list-ref",		list_ref,		2, 0, true);
@@ -78678,6 +78690,7 @@ s7_scheme *s7_init(void)
   sc->reverse_symbol =               defun("reverse",		reverse,		1, 0, false);
   sc->reverseb_symbol =              defun("reverse!",		reverse_in_place,	1, 0, false);
   sc->sort_symbol =                  unsafe_defun("sort!",	sort,			2, 0, false); 
+  set_is_scope_safe(slot_value(global_slot(sc->sort_symbol)));
   sc->append_symbol =                defun("append",		append,			0, 0, true);
 
 #if (!WITH_PURE_S7)
@@ -78738,21 +78751,29 @@ s7_scheme *s7_init(void)
   /* (let ((x '((1 2) 3 4))) (catch #t (lambda () (apply apply apply x)) (lambda args 'error)) x) should not mess up x! */
 
   sc->for_each_symbol =              unsafe_defun("for-each",	for_each,		2, 0, true); 
+  set_is_scope_safe(slot_value(global_slot(sc->for_each_symbol)));
   sc->map_symbol =                   unsafe_defun("map",	map,			2, 0, true); 
+  set_is_scope_safe(slot_value(global_slot(sc->map_symbol)));
   sc->dynamic_wind_symbol =          unsafe_defun("dynamic-wind", dynamic_wind,	3, 0, false);
+  set_is_scope_safe(slot_value(global_slot(sc->dynamic_wind_symbol)));
   /* sc->values_symbol = */          unsafe_defun("values",	values,			0, 0, true);
   sc->catch_symbol =                 unsafe_defun("catch",	catch,			3, 0, false);
+  set_is_scope_safe(slot_value(global_slot(sc->catch_symbol)));
   sc->throw_symbol =                 unsafe_defun("throw",	throw,			1, 0, true);
+  set_is_scope_safe(slot_value(global_slot(sc->throw_symbol)));
   sc->error_symbol =                 unsafe_defun("error",	error,			0, 0, true);
+  set_is_scope_safe(slot_value(global_slot(sc->error_symbol)));
   /* it's faster to leave error/throw unsafe than to set needs_copied_args and use s7_define_safe_function because copy_list overwhelms any other savings */
   sc->stacktrace_symbol =            defun("stacktrace",	stacktrace,		0, 5, false);
 
   sc->apply_values_symbol =          unsafe_defun("apply-values", apply_values, 0, 0, true);
   set_immutable(sc->apply_values_symbol);
   sc->apply_values_function = slot_value(global_slot(sc->apply_values_symbol));
+  set_is_scope_safe(slot_value(global_slot(sc->apply_values_symbol)));
 
   sc->list_values_symbol =           unsafe_defun("list-values", list_values, 0, 0, true); /* see comment above */
   set_immutable(sc->list_values_symbol);
+  set_is_scope_safe(slot_value(global_slot(sc->list_values_symbol)));
   
   sc->procedure_documentation_symbol = defun("procedure-documentation", procedure_documentation, 1, 0, false);
   sc->procedure_signature_symbol =   defun("procedure-signature", procedure_signature,	1, 0, false);
