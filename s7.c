@@ -53835,10 +53835,12 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
    */
 
   bool allow_other_keys;
-  s7_pointer lx, cx, zx;
+  s7_pointer lx, cx, zx, code, args;
 
   /* get the current args, re-setting args that have explicit values */
-  cx = closure_args(sc->code);
+  code = sc->code;
+  args = sc->args;
+  cx = closure_args(code);
   allow_other_keys = ((is_pair(cx)) && (allows_other_keys(cx)));
   lx = sc->args;
 
@@ -53906,22 +53908,30 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 				  /* this case is not caught yet: ((lambda* (a b :allow-other-keys ) a) :b 1 :c :a :a ) */
 				  return(s7_error(sc, sc->wrong_type_arg_symbol,
 						  set_elist_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
-							      closure_name(sc, sc->code), lx, sc->args)));
+							      closure_name(sc, code), lx, args)));
 				}
 			    }
 			  else
 			    {
 			      return(s7_error(sc, sc->wrong_type_arg_symbol,
 					      set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-							  closure_name(sc, sc->code), lx, sc->args)));
+							  closure_name(sc, code), lx, args)));
 			    }
 			  /* (define* (f a (b :c)) b) (f :b 1 :d) */
 			}
 		      else
 			{
+#if 0
+			  fprintf(stderr, "%s: can't find %s in %s (%d)\n", DISPLAY(args), DISPLAY(sym), DISPLAY(sc->envir), outlet(sc->envir) == closure_let(code));
+#endif
 			  return(s7_error(sc, sc->wrong_type_arg_symbol,
 					  set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-						      closure_name(sc, sc->code), lx, sc->args)));
+						      closure_name(sc, code), lx, args)));
+			  /* possibilities: either sym is not an arg name (so error is correct), 
+			   *   or keyword_symbol(car_lx) is confused, or envir is not a sublet of closure_let,
+			   *   or closure_let entries are incorrect, or the entire error is confused --
+			   *   we were originally assuming sc->code|args were unchanged, but that is dubious.
+			   */
 			}
 		    }
 		}
@@ -53958,7 +53968,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
       else
 	{
 	  if (!allow_other_keys)                       /* ((lambda* (a) a) :a 1 2) */
-	    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, closure_name(sc, sc->code), sc->args)));
+	    return(s7_error(sc, sc->wrong_number_of_args_symbol, set_elist_3(sc, sc->too_many_arguments_string, closure_name(sc, code), args)));
 	  else
 	    {
 	      /* check trailing args for repeated keys or keys with no values or values with no keys */
@@ -53967,7 +53977,7 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		  if ((!is_keyword(car(lx))) ||     /* ((lambda* (a :allow-other-keys) a) :a 1 :b 2 3) */
 		      (!is_pair(cdr(lx))))          /* ((lambda* (a :allow-other-keys) a) :a 1 :b) */
 		    return(s7_error(sc, sc->wrong_type_arg_symbol,
-				    set_elist_3(sc, make_string_wrapper(sc, "~A: not a key/value pair: ~S"), closure_name(sc, sc->code), lx)));
+				    set_elist_3(sc, make_string_wrapper(sc, "~A: not a key/value pair: ~S"), closure_name(sc, code), lx)));
 		  /* errors not caught?
 		   *    ((lambda* (a :allow-other-keys) a) :a 1 :a 2)
 		   *    ((lambda* (:allow-other-keys ) #f) :b :a :a :b)
@@ -68282,7 +68292,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 
 		case OP_SAFE_CLOSURE_P:
-		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) {if (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
+		  if (!closure_is_ok(sc, code, MATCH_SAFE_CLOSURE, 1)) 
+		    {
+		      if ((has_all_x(cdr(code))) &&
+			  (unknown_a_ex(sc, sc->last_function) == goto_OPT_EVAL))
+			goto OPT_EVAL; 
+		      break;
+		    }
 		case HOP_SAFE_CLOSURE_P:
 		  push_stack(sc, OP_SAFE_CLOSURE_P_1, sc->args, sc->code);
 		  sc->code = cadr(code);
@@ -69011,7 +69027,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    s = find_symbol_unchecked(sc, car(code));
 		    if (!is_let(s)) 
 		      {
-			if (unknown_a_ex(sc, s) == goto_OPT_EVAL) goto OPT_EVAL;
+			if (has_all_x(cdr(code)))
+			  {
+			    if (unknown_a_ex(sc, s) == goto_OPT_EVAL) goto OPT_EVAL;
+			  }
 			break;
 		      }
 		    sc->value = g_let_ref(sc, set_qlist_2(sc, s, cadadr(code)));
