@@ -274,11 +274,11 @@
 
 /* -------------------------------------------------------------------------------- */
 
-#ifndef WITH_LOCKS
-  #define WITH_LOCKS 0
-  /* if using s7 in a multithreaded program -- this code courtesy of Kjetil Matheussen */
+#ifndef WITH_MULTITHREAD_CHECKS
+  #define WITH_MULTITHREAD_CHECKS 0
+  /* debugging aid if using s7 in a multithreaded program -- this code courtesy of Kjetil Matheussen */
 #endif
-
+ 
 #ifndef DEBUGGING
   #define DEBUGGING 0
 #endif
@@ -315,7 +315,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
-#if WITH_LOCKS
+#if WITH_MULTITHREAD_CHECKS
   #include <pthread.h>
 #endif
 
@@ -1059,7 +1059,8 @@ struct s7_scheme {
   bool using_history1;
 #endif
 
-#if WITH_LOCKS
+#if WITH_MULTITHREAD_CHECKS
+  int lock_count;
   pthread_mutex_t lock;
 #endif
 
@@ -3235,7 +3236,7 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_CLOSURE_ALL_X, HOP_CLOSURE_ALL_X, OP_CLOSURE_ALL_S, HOP_CLOSURE_ALL_S, OP_CLOSURE_ALL_S_P, HOP_CLOSURE_ALL_S_P,
       OP_CLOSURE_SP, HOP_CLOSURE_SP, OP_CLOSURE_FA, HOP_CLOSURE_FA,
 
-      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, OP_CLOSURE_STAR_SX, HOP_CLOSURE_STAR_SX,
+      OP_CLOSURE_STAR_S, HOP_CLOSURE_STAR_S, 
       OP_CLOSURE_STAR, HOP_CLOSURE_STAR, OP_CLOSURE_STAR_ALL_X, HOP_CLOSURE_STAR_ALL_X,
 
       OP_SAFE_THUNK, HOP_SAFE_THUNK, OP_SAFE_THUNK_E, HOP_SAFE_THUNK_E, OP_SAFE_THUNK_P, HOP_SAFE_THUNK_P,
@@ -3247,8 +3248,8 @@ enum {OP_SAFE_C_C, HOP_SAFE_C_C,
       OP_SAFE_CLOSURE_A_C, HOP_SAFE_CLOSURE_A_C, OP_SAFE_CLOSURE_SP, HOP_SAFE_CLOSURE_SP, 
       OP_SAFE_CLOSURE_ALL_X, HOP_SAFE_CLOSURE_ALL_X, OP_SAFE_CLOSURE_AA, HOP_SAFE_CLOSURE_AA,
 
-      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, OP_SAFE_CLOSURE_STAR_SS, HOP_SAFE_CLOSURE_STAR_SS, 
-      OP_SAFE_CLOSURE_STAR_SC, HOP_SAFE_CLOSURE_STAR_SC, OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
+      OP_SAFE_CLOSURE_STAR_S, HOP_SAFE_CLOSURE_STAR_S, 
+      OP_SAFE_CLOSURE_STAR_SA, HOP_SAFE_CLOSURE_STAR_SA, OP_SAFE_CLOSURE_STAR_S0, HOP_SAFE_CLOSURE_STAR_S0,
       OP_SAFE_CLOSURE_STAR, HOP_SAFE_CLOSURE_STAR, OP_SAFE_CLOSURE_STAR_ALL_X, HOP_SAFE_CLOSURE_STAR_ALL_X,
 
       /* these can't be embedded, and have to be the last thing called */
@@ -3441,7 +3442,7 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "closure_all_x", "h_closure_all_x", "closure_all_s", "h_closure_all_s", "closure_all_s_p", "h_closure_all_s_p",
       "closure_sp", "h_closure_sp", "closure_fa", "h_closure_fa",
 
-      "closure_star_s", "h_closure_star_s", "closure_star_sx", "h_closure_star_sx",
+      "closure_star_s", "h_closure_star_s", 
       "closure_star", "h_closure_star", "closure_star_all_x", "h_closure_star_all_x",
 
       "safe_thunk", "h_safe_thunk", "safe_thunk_e", "h_safe_thunk_e", "safe_thunk_p", "h_safe_thunk_p",
@@ -3453,8 +3454,8 @@ static const char* opt_names[OPT_MAX_DEFINED] =
       "safe_closure_a_c", "h_safe_closure_a_c", "safe_closure_sp", "h_safe_closure_sp",
       "safe_closure_all_x", "h_safe_closure_all_x", "safe_closure_aa", "h_safe_closure_aa",
 
-      "safe_closure_star_s", "h_safe_closure_star_s", "safe_closure_star_ss", "h_safe_closure_star_ss",
-      "safe_closure_star_sc", "h_safe_closure_star_sc", "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
+      "safe_closure_star_s", "h_safe_closure_star_s", 
+      "safe_closure_star_sa", "h_safe_closure_star_sa", "safe_closure_star_s0", "h_safe_closure_star_s0",
       "safe_closure_star", "h_safe_closure_star", "safe_closure_star_all_x", "h_safe_closure_star_all_x",
 
       "apply_ss", "h_apply_ss",
@@ -24580,9 +24581,31 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- load -------------------------------- */
 
-#if WITH_LOCKS
-static void leaving_scope(pthread_mutex_t **lock) {pthread_mutex_unlock(*lock);}
-#define TRACK(Sc) pthread_mutex_t *lock __attribute__ ((__cleanup__(leaving_scope))) = &Sc->lock; if (pthread_mutex_trylock(lock) != 0) abort();
+#if WITH_MULTITHREAD_CHECKS
+typedef struct {
+  s7_scheme* sc;
+  const int lock_count; /* Remember lock count in case we have skipped calls to leave_track_scope by longjmp-ing. */
+} lock_scope_t;
+
+static lock_scope_t enter_lock_scope(s7_scheme *sc) 
+{
+  if (pthread_mutex_trylock(&sc->lock) != 0) abort();
+  sc->lock_count++;
+  {
+    lock_scope_t st = {.sc = sc, .lock_count = sc->lock_count};
+    return(st);
+  }
+}
+
+static void leave_lock_scope(lock_scope_t *st)
+{
+  while (st->sc->lock_count > st->lock_count)
+    {
+      st->sc->lock_count--;
+      pthread_mutex_unlock(&st->sc->lock);
+    }
+}
+#define TRACK(Sc) lock_scope_t lock_scope __attribute__ ((__cleanup__(leave_lock_scope))) = enter_lock_scope(Sc)
 #else
 #define TRACK(Sc)
 #endif
@@ -47845,9 +47868,7 @@ static bool funcall_optimize(s7_scheme *sc, s7_pointer car_x, s7_pointer s_func)
 {
   if (sc->safety > 1)
     return(false);
-#if 0
-  return(false);
-#endif
+
   if (!closure_no_opt(s_func))
     {
       opt_info *opc;
@@ -47963,7 +47984,6 @@ static void show_optlist(s7_scheme *sc, s7_pointer olst)
 #endif
 
 /* TODO:
- * immutables can be locals, count find_symbol of local
  * can the _cf_ cases use possible c_call opts?  cases like multiply_p_di|id etc
  *   strings_are_less (via _cf_) -> str_less_2 etc
  * b_p funcs if symbol arg know it's not a method, so b_p_s becomes trivial: is_pair(slot_value(o->p1)) etc
@@ -47996,9 +48016,9 @@ static void show_optlist(s7_scheme *sc, s7_pointer olst)
  *    s7test 29596 _sort_ 23890 use-redef-1 etc
  *
  * what others like d_pid_sso? need stats... all opt_d_id_sf in opt_dotimes
- * opt_d_vd_f return(opo_d_vd_f(o)(opo_obj(o), opo_fd(o1)(o1))) f:d_v?
  *
- * if funcall_opt never hits all_x_opt, opt_call does not need to worry about env/sym id and so on
+ * if funcall_opt never hits all_x_opt, opt_call does not need to worry about env/sym id and so on: opt_call_no_env (same for thunk: opt_call_0)
+ *   do we even need to tie it into sc->envir -- maybe for debugging (safety>0?)
  */
 
 /* an experiment -- gains ca 100 in snd-test */
@@ -53954,18 +53974,22 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 	}
       else
 	{
-	  /* mock-symbols introduce an ambiguity here; if the object's value is a keyword, is that
-	   *   intended to be used as an argument name or value?
+	  /* mock-symbols introduce an ambiguity here; if the mock symbol's value is a keyword, is that
+	   *   intended to be used as an argument name or value? 
+	   * this applies to any evaluated arg that returns a keyword.  
+	   * 22-May-17: decided to use the value (i.e. treat a keyword as a keyword)
 	   */
 	  s7_pointer car_lx;
 	  car_lx = car(lx);
 	  if (has_methods(car_lx))
 	    car_lx = check_values(sc, car_lx, lx);
-	  if ((is_pair(cdr(lx))) &&
-	      (is_keyword(car_lx)))
+	  if (is_keyword(car_lx))
 	    {
-	      /* char *name; */                      /* found a keyword, check the lambda args via the corresponding symbol */
 	      s7_pointer sym;
+	      if (!is_pair(cdr(lx)))
+		return(s7_error(sc, sc->wrong_type_arg_symbol,
+				set_elist_4(sc, make_string_wrapper(sc, "~A: keyword argument's value is missing: ~S in ~S"),
+					    closure_name(sc, code), lx, args)));
 	      sym = keyword_symbol(car_lx);
 	      
 	      if (lambda_star_argument_set_value(sc, sym, cadr(lx)) == sc->no_value)
@@ -53984,46 +54008,12 @@ static s7_pointer lambda_star_set_args(s7_scheme *sc)
 		    }
 		  else
 		    {
-		      if ((is_pair(car(cx))) &&
-			  (is_keyword(cadar(cx))))
-			{
-			  /* cx is the closure args list, not the copy of it in the curlet */
-			  s7_pointer x;
-			  
-			  x = find_symbol(sc, caar(cx));
-			  if (is_slot(x))
-			    {
-			      if (is_not_checked_slot(x))
-				{
-				  set_checked_slot(x);
-				  slot_set_value(x, car(lx));
-				}
-			      else
-				{
-				  /* this case is not caught yet: ((lambda* (a b :allow-other-keys ) a) :b 1 :c :a :a ) */
-				  return(s7_error(sc, sc->wrong_type_arg_symbol,
-						  set_elist_4(sc, make_string_wrapper(sc, "~A: parameter set twice, ~S in ~S"),
-							      closure_name(sc, code), lx, args)));
-				}
-			    }
-			  else
-			    {
-			      return(s7_error(sc, sc->wrong_type_arg_symbol,
-					      set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-							  closure_name(sc, code), lx, args)));
-			    }
-			  /* (define* (f a (b :c)) b) (f :b 1 :d) */
-			}
-		      else
-			{
-			  return(s7_error(sc, sc->wrong_type_arg_symbol,
-					  set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
-						      closure_name(sc, code), lx, args)));
-			}
+		      return(s7_error(sc, sc->wrong_type_arg_symbol,
+				      set_elist_4(sc, make_string_wrapper(sc, "~A: unknown key: ~S in ~S"),
+						  closure_name(sc, code), lx, args)));
 		    }
 		}
-	      lx = cdr(lx);
-	      if (is_pair(lx)) lx = cdr(lx);
+	      lx = cddr(lx);
 	    }
 	  else                                  /* not a key/value pair */
 	    {
@@ -55971,9 +55961,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	{
 	  set_x_call(cdr(expr), all_x_unsafe_s); /* was set_c_call 21-May-17 */
 	  set_arglist_length(expr, small_int(1));
-#if DEBUGGING
-	  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cdr(expr))]);
-#endif
 	  if (is_c_function(func))
 	    {
 	      set_safe_optimize_op(expr, hop + ((is_safe_procedure(func)) ? OP_SAFE_C_A : OP_C_A));
@@ -56011,6 +55998,7 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
     {
       bool func_is_safe;
       func_is_safe = is_safe_procedure(func);
+
       if (pairs == 0)
 	{
 	  if (func_is_safe)                  /* safe c function */
@@ -56044,9 +56032,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		  set_optimize_op(expr, hop + OP_C_A);
 		  annotate_arg(sc, cdr(expr), e);
 		  set_arglist_length(expr, small_int(1));
-#if DEBUGGING
-		  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
 		}
 	      else
 		{
@@ -56083,9 +56068,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 			   */
 			  set_optimize_op(expr, hop + OP_SAFE_C_A);
 			  annotate_arg(sc, cdr(expr), e);
-#if DEBUGGING
-			  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
 			}
 		    }
 		  choose_c_function(sc, expr, func, 1);
@@ -56095,9 +56077,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		{
 		  set_unsafe_optimize_op(expr, hop + OP_C_A);
 		  annotate_arg(sc, cdr(expr), e);
-#if DEBUGGING
-		  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
 		  set_arglist_length(expr, small_int(1));
 		  choose_c_function(sc, expr, func, 1);
 		  return(OPT_F);
@@ -56112,9 +56091,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
                  if (func_is_safe)
                    {
                      set_safe_optimize_op(expr, hop + OP_SAFE_C_A);
-#if DEBUGGING
-		     if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
                      choose_c_function(sc, expr, func, 1);
                      return(OPT_T);
                    }
@@ -56234,9 +56210,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 		{
 		  set_unsafely_optimized(expr);
 		  annotate_arg(sc, cdr(expr), e);
-#if DEBUGGING
-		  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
 		  set_arglist_length(expr, small_int(1));
 		  if (safe_case)
 		    {
@@ -56275,9 +56248,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
 	    set_optimize_op(expr, hop + OP_SAFE_CLOSURE_A_C);
 	  else set_unsafe_optimize_op(expr, hop + ((safe_case ? OP_SAFE_CLOSURE_A : OP_CLOSURE_A)));
 	  annotate_arg(sc, cdr(expr), e);
-#if DEBUGGING
-	  if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
 	  set_opt_lambda(expr, func);
 	  set_arglist_length(expr, small_int(1));
 	  return(OPT_F);
@@ -56336,9 +56306,6 @@ static opt_t optimize_func_one_arg(s7_scheme *sc, s7_pointer expr, s7_pointer fu
     {
       set_unsafe_optimize_op(expr, hop + OP_VECTOR_A);
       annotate_arg(sc, cdr(expr), e);
-#if DEBUGGING
-      if (!has_all_x(cdr(expr))) fprintf(stderr, "%d: %s\n", __LINE__, opt_names[optimize_op(cadr(expr))]);
-#endif
       set_arglist_length(expr, small_int(1));
       set_opt_vector(expr, func);
       return(OPT_T);
@@ -56996,31 +56963,6 @@ static opt_t optimize_func_two_args(s7_scheme *sc, s7_pointer expr, s7_pointer f
 	   (closure_star_arity_to_int(sc, func) < 2) ||
 	   (arglist_has_keyword(cdr(expr)))))
 	return(OPT_F);
-
-      if ((pairs == 0) &&
-	  (symbols >= 1) &&
-	  (is_symbol(arg1)))
-	{
-	  set_unsafely_optimized(expr);
-	  if (symbols == 2)
-	    {
-	      set_optimize_op(expr, hop + ((is_safe_closure(func)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX));
-	      set_opt_sym2(expr, arg2);
-	    }
-	  else
-	    {
-	      if (is_safe_closure(func))
-		{
-		  set_optimize_op(expr, hop + OP_SAFE_CLOSURE_STAR_SC);
-		  set_opt_con2(expr, arg2);
-		  if (arg2 == real_zero)
-		    opt_generator(sc, func, expr, hop);
-		}
-	      else set_optimize_op(expr, hop + OP_CLOSURE_STAR_SX);
-	    }
-	  set_opt_lambda(expr, func);
-	  return(OPT_F);
-	}
 
       if ((!arglist_has_rest(sc, closure_args(func))) &&
 	  (all_x_count(sc, expr) == 2))
@@ -58074,10 +58016,11 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 	      s7_pointer p;
 
 	      orig_hop = hop;
-	      if ((is_any_closure(func)) ||      /* can't depend on opt1 here because it might not be global, or might be redefined locally */
-		  ((!is_global(car_expr)) &&
-		   ((!is_slot(global_slot(car_expr))) ||
-		    (slot_value(global_slot(car_expr)) != func))))
+	      if ((!is_immutable(car_expr)) &&     /* can't depend on opt1 here because it might not be global, or might be redefined locally */
+		  ((is_any_closure(func)) ||
+		   ((!is_global(car_expr)) &&
+		    ((!is_slot(global_slot(car_expr))) ||
+		     (slot_value(global_slot(car_expr)) != func)))))
 		{
 		  /* (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a)) (f1 12))
 		   * (let () (define (f2 a) (+ a 1)) (define (f1 a) (f2 a)) (define (f2 a) (- a 1)) (f1 12))
@@ -58092,7 +58035,6 @@ static opt_t optimize_expression(s7_scheme *sc, s7_pointer expr, int hop, s7_poi
 		   *   even a global function might be redefined at any time, and previous uses of it in other functions
 		   *   need to reflect its new value.
 		   *   So, closures are always checked, but built-in functions are used as if never redefined until that redefinition.
-		   *   costs: index 6/1380, t502: 2/12900, bench: 43/4134, snd-test: 22/37200
 		   * Syntax handling is already impure in s7, so the special handling of built-in functions doesn't
 		   *   offend me much.  Consider each a sort of reader macro until someone redefines it -- previous
 		   *   uses may not be affected because they might have been optimized away -- the result depends on the
@@ -63982,32 +63924,6 @@ static int unknown_gg_ex(s7_scheme *sc, s7_pointer f)
 	}
       break;
       
-    case T_CLOSURE_STAR:  /* the closure* opts assume args are not keywords, but we can check that! */
-      if ((s1) &&
-	  (!has_methods(f)))
-	{
-	  if (s2)
-	    {
-	      if ((!is_keyword(cadr(code))) &&
-		  (!is_keyword(caddr(code))) &&
-		  (has_simple_args(closure_body(f))) &&
-		  (closure_star_arity_to_int(sc, f) >= 2))
-		{
-		  set_opt_sym2(code, caddr(code));
-		  return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SS : OP_CLOSURE_STAR_SX)));
-		}
-	    }
-	  else
-	    {
-	      set_opt_con2(code, caddr(code));
-	      if ((!is_keyword(cadr(code))) &&
-		  (has_simple_args(closure_body(f))) &&
-		  (closure_star_arity_to_int(sc, f) >= 2))
-		return(fixup_unknown_op(sc, code, f, hop + ((is_safe_closure(f)) ? OP_SAFE_CLOSURE_STAR_SC : OP_CLOSURE_STAR_SX)));
-	    }
-	}
-      break;
-      
     default:
       break;
     }
@@ -64076,9 +63992,6 @@ static int unknown_a_ex(s7_scheme *sc, s7_pointer f)
 {
   s7_pointer code;
   code = sc->code;
-
-  if (!has_all_x(cdr(code)))
-    return(fall_through);
 
 #if DEBUGGING
   if (!has_all_x(cdr(code)))
@@ -68538,10 +68451,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			slot_set_value(x, car(z));
 			symbol_set_local(slot_symbol(x), id, x);
 		      }
-#if DEBUGGING
-		    if (is_not_null(z))
-		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(sc->code), DISPLAY(code));
-#endif		    
 		    sc->envir = env;
 		    sc->code = closure_body(sc->code);
 		    
@@ -68562,96 +68471,67 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  
 		  /* -------------------------------------------------------------------------------- */
 		  
-		case OP_SAFE_CLOSURE_STAR_SS:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
-		case HOP_SAFE_CLOSURE_STAR_SS:
-		  {
-		    s7_pointer x, val1, val2;
-		    /* the finders have to operate in the current environment, so we can't change sc->envir until later */
-		    val1 = find_symbol_unchecked(sc, cadr(code));
-		    val2 = find_symbol_unchecked(sc, opt_sym2(code)); /* caddr */
-		    sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), val1);
-		    
-		    x = next_slot(let_slots(closure_let(opt_lambda(code))));
-		    slot_set_value(x, val2);
-		    symbol_set_local(slot_symbol(x), let_id(sc->envir), x);
-		    fill_safe_closure_star(sc, next_slot(x), cddr(closure_args(opt_lambda(code))));
-		    goto BEGIN1;
-		  }
-		  
-
-		case OP_SAFE_CLOSURE_STAR_SC:
-		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
-		case HOP_SAFE_CLOSURE_STAR_SC:
-		  {
-		    s7_pointer x;
-		    sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, cadr(code)));
-		    
-		    x = next_slot(let_slots(closure_let(opt_lambda(code))));
-		    slot_set_value(x, caddr(code));
-		    symbol_set_local(slot_symbol(x), let_id(sc->envir), x);
-		    fill_safe_closure_star(sc, next_slot(x), cddr(closure_args(opt_lambda(code))));
-		    goto BEGIN1;
-		  }
-
-		  
 		case OP_SAFE_CLOSURE_STAR_SA:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 2)) break;
 		case HOP_SAFE_CLOSURE_STAR_SA:
 		  {
-		    s7_pointer arg;
-		    /* the second arg needs to be evaluated before we set sc->envir.
-		     *   we checked at optimize time that this closure takes only 2 args.
-		     */
-		    arg = cddr(code);
-		    arg = c_call(arg)(sc, car(arg));
-		    sc->envir = old_frame_with_two_slots(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, cadr(code)), arg);
-		    
+		    /* the func has 2 declared pars, and there are 2 passed args */
+		    s7_pointer arg1, arg2, clet, cargs;
+		    clet = closure_let(opt_lambda(code));
+		    cargs = closure_args(opt_lambda(code));
+		    arg1 = find_symbol_unchecked(sc, cadr(code));
+		    arg2 = c_call(cddr(code))(sc, caddr(code));
+
+		    if (is_keyword(arg1))
+		      {
+			if (keyword_symbol(arg1) == slot_symbol(let_slots(clet)))
+			  {
+			    arg1 = arg2;
+			    arg2 = cadr(cargs);
+			    if (is_pair(arg2)) arg2 = cadr(arg2); else arg2 = sc->F;
+			  }
+			else
+			  {
+			    if (keyword_symbol(arg1) == slot_symbol(next_slot(let_slots(clet))))
+			      {
+				arg1 = car(cargs);
+				if (is_pair(arg1)) arg1 = cadr(arg1); else arg1 = sc->F;
+			      }
+			    else
+			      s7_error(sc, sc->wrong_type_arg_symbol,
+				       set_elist_4(sc, make_string_wrapper(sc, "~A: unknown keyword argument: ~S in ~S"),
+						   closure_name(sc, opt_lambda(code)), arg1, code));
+			  }
+		      }
+		    else
+		      {
+			if (is_keyword(arg2))
+			  s7_error(sc, sc->wrong_type_arg_symbol,
+				   set_elist_4(sc, make_string_wrapper(sc, "~A: keyword argument's value is missing: ~S in ~S"),
+					       closure_name(sc, opt_lambda(code)), arg2, code));
+		      }
+		    sc->envir = old_frame_with_two_slots(sc, clet, arg1, arg2);
 		    sc->code = _TPair(closure_body(opt_lambda(code)));
 		    goto BEGIN1;
 		  }
-		  
 		  
 		case OP_SAFE_CLOSURE_STAR_ALL_X:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, integer(arglist_length(code)))) break;
 		case HOP_SAFE_CLOSURE_STAR_ALL_X:
 		  {
-		    s7_pointer args, p, orig_args, e;
-		    /* (let () (define* (hi (a 1)) (+ a 1)) (define (ho) (hi (* 2 3))) (ho))
-		     * (do ((i 0 (+ i 1))) ((= i 11)) (envelope-interp (/ i 21) '(0 0 100 1)))
-		     */
-		    e = closure_let(opt_lambda(code));
-		    for (args = cdr(code), p = let_slots(e), orig_args = closure_args(opt_lambda(code));
-			 is_pair(args);
-			 args = cdr(args), orig_args = cdr(orig_args), p = next_slot(p))
-		      slot_set_pending_value(p, c_call(args)(sc, car(args)));
-		    
-		    /* we're out of caller's args, so fill rest of environment slots from the defaults */
-		    for (; is_slot(p); p = next_slot(p), orig_args = cdr(orig_args))
-		      {
-			s7_pointer defval;
-			if (is_pair(car(orig_args)))
-			  {
-			    defval = cadar(orig_args);
-			    if (is_pair(defval))
-			      slot_set_pending_value(p, cadr(defval));
-			    else slot_set_pending_value(p, defval);
-			  }
-			else slot_set_pending_value(p, sc->F);
-		      }
-		    
-		    /* we have to put off the actual environment update in case this is a tail recursive call */
-		    let_id(e) = ++sc->let_number;
-		    for (p = let_slots(e); is_slot(p); p = next_slot(p))
-		      {
-			slot_set_value(p, slot_pending_value(p));
-			symbol_set_local(slot_symbol(p), let_id(e), p);
-		      }
-		    sc->envir = e;
-		    sc->code = _TPair(closure_body(opt_lambda(code)));
+		    s7_pointer p, old_args;
+		    sc->w = cdr(code);               /* args aren't evaluated yet */
+		    sc->args = make_list(sc, integer(arglist_length(code)), sc->F);
+		    for (p = sc->args, old_args = sc->w; is_pair(p); p = cdr(p), old_args = cdr(old_args))
+		      set_car(p, c_call(old_args)(sc, car(old_args)));
+		    sc->w = sc->nil;
+		    sc->code = opt_lambda(code);
+		    check_stack_size(sc);
+		    sc->envir = new_frame_in_env(sc, closure_let(sc->code));
+		    /* sc->envir = closure_let(sc->code); */
+		    if (apply_lambda_star(sc) == goto_EVAL) goto EVAL;
 		    goto BEGIN1;
 		  }
-		  
 		  
 		case OP_SAFE_CLOSURE_STAR:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 0)) {if (unknown_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}
@@ -68703,11 +68583,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		case OP_SAFE_CLOSURE_STAR_S:
 		  if (!closure_star_is_ok(sc, code, MATCH_SAFE_CLOSURE_STAR, 1)) {if (unknown_g_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
 		case HOP_SAFE_CLOSURE_STAR_S:
-		  sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), find_symbol_unchecked(sc, opt_sym2(code)));
-		  /* that sets the first arg to the passed symbol value; now set default values, if any */
-		  fill_safe_closure_star(sc, next_slot(let_slots(closure_let(opt_lambda(code)))), cdr(closure_args(opt_lambda(code))));
-		  goto BEGIN1;
-		  
+		  {
+		    s7_pointer val;
+		    val = find_symbol_unchecked(sc, opt_sym2(code));
+		    if (is_keyword(val))
+		      s7_error(sc, sc->wrong_type_arg_symbol,
+			       set_elist_4(sc, make_string_wrapper(sc, "~A: keyword argument's value is missing: ~S in ~S"),
+					   closure_name(sc, opt_lambda(code)), val, sc->args));
+		    sc->envir = old_frame_with_slot(sc, closure_let(opt_lambda(code)), val);
+		    /* that sets the first arg to the passed symbol value; now set default values, if any */
+		    fill_safe_closure_star(sc, next_slot(let_slots(closure_let(opt_lambda(code)))), cdr(closure_args(opt_lambda(code))));
+		    goto BEGIN1;
+		  }
+
 		  
 		  /* -------------------------------------------------------------------------------- */
 		  
@@ -68904,10 +68792,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->z = e;
 		    for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
 		      add_slot(e, car(p), find_symbol_unchecked(sc, car(args)));
-#if DEBUGGING
-		    if (is_not_null(args))
-		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
-#endif		    
 		    sc->envir = e;
 		    sc->z = sc->nil;
 		    sc->code = _TPair(closure_body(func));
@@ -68926,10 +68810,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    sc->z = e;
 		    for (p = closure_args(func), args = cdr(code); is_pair(p); p = cdr(p), args = cdr(args))
 		      add_slot(e, car(p), find_symbol_unchecked(sc, car(args)));
-#if DEBUGGING
-		    if (is_not_null(args))
-		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
-#endif		    
 		    sc->envir = e;
 		    sc->z = sc->nil;
 		    sc->code = car(closure_body(func));
@@ -68957,10 +68837,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			val = c_call(args)(sc, car(args));
 			add_slot_checked(e, car(p), val); /* can't use add_slot here -- all_x_c_* hit trigger? */
 		      }
-#if DEBUGGING
-		    if (is_not_null(args))
-		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
-#endif		    
 		    sc->envir = e;
 		    sc->z = sc->nil;
 		    sc->code = _TPair(closure_body(func));
@@ -69001,43 +68877,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  }
 			else set_car(new_args, sc->F);
 		      }
-#if DEBUGGING
-		    if (is_not_null(new_args))
-		      fprintf(stderr, "%d %s too many args: %s\n", __LINE__, DISPLAY(func), DISPLAY(code));
-#endif		    
 		    sc->code = opt_lambda(code);
 		    unsafe_closure_star(sc);
-		    goto BEGIN1;
-		  }
-		  
-		  
-		case OP_CLOSURE_STAR_SX:
-		  if (!closure_star_is_ok(sc, code, MATCH_UNSAFE_CLOSURE_STAR, 2)) {if (unknown_gg_ex(sc, sc->last_function) == goto_OPT_EVAL) goto OPT_EVAL; break;}		  
-		case HOP_CLOSURE_STAR_SX:
-		  {
-		    s7_pointer val1, val2, args;
-		    args = cddr(closure_args(opt_lambda(code)));
-		    val1 = find_symbol_unchecked(sc, cadr(code));
-		    val2 = caddr(code);
-		    if (is_symbol(val2))
-		      val2 = find_symbol_unchecked(sc, val2);
-		    if (is_null(args))
-		      {
-			set_car(sc->t2_1, val1);
-			set_car(sc->t2_2, val2);
-			code = opt_lambda(sc->code);
-			args = closure_args(code);
-			new_frame_with_two_slots(sc, closure_let(code), sc->envir, 
-						 (is_pair(car(args))) ? caar(args) : car(args), car(sc->t2_1),
-						 (is_pair(cadr(args))) ? caadr(args) : cadr(args), car(sc->t2_2));
-			sc->code = closure_body(code);
-		      }
-		    else
-		      {
-			sc->args = list_2(sc, val2, val1);
-			fill_closure_star(sc, args);
-			unsafe_closure_star(sc);
-		      }
 		    goto BEGIN1;
 		  }
 		  
@@ -78052,7 +77893,8 @@ s7_scheme *s7_init(void)
 #endif
     }
       
-#if WITH_LOCKS
+#if WITH_MULTITHREAD_CHECKS
+  sc->lock_count = 0;
   {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -79816,7 +79658,7 @@ int main(int argc, char **argv)
  * thash         |      |      | 50.7 || 8926 | 8651         8725 8567
  * tgen          |   71 | 70.6 | 38.0 || 12.7 | 12.4         12.4 12.6
  * tall       90 |   43 | 14.5 | 12.7 || 17.9 | 20.1         20.1 19.9
- * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 [134.8] 42.5 42.0
+ * calls     359 |  275 | 54   | 34.7 || 43.4 | 42.5 [134.8] 42.5 42.0 [133.4]
  * 
  * --------------------------------------------------------------------
  *
@@ -79841,6 +79683,9 @@ int main(int argc, char **argv)
  *   (*s7* 'print-length) appears to be ignored for lists
  * if profile, use line/file num to get at hashed count? and use that to annotate pp output via [count]-symbol pre-rewrite
  *   (profile-count file line)?
+ *
+ * ideally if (*s7* 'core-size-limit) was set, we'd check it periodically -- memory-usage in s7test?
+ *   also max-run-time? rusage.ru_utime: timeval struct: sec+usec, this could be used to implement max-eval-run-time (to catch infinite loops)
  *
  * update libgsl.scm
  * lint: (define (permute1 op . args) `(format *stderr* "~D: ~A -> ~A ~A~%" ,args v1 v2))
